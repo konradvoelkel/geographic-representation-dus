@@ -1,0 +1,4 @@
+# Mechanische Commits, die git blame überspringen soll (git config blame.ignoreRevsFile .git-blame-ignore-revs)
+fb0293ecf9ff797bf8dc63f0d12853b8e31d7f45  Modernisierung: ruff --select UP --fix
+0388a809bcfa64e2750605901dd066d347df3ffb  Ruff-Autofixes
+9daec2c8e4184c06630c1f454f34b2355f20e203  Formatierung: ruff format

@@ -221,7 +221,9 @@ def download_paper_metadata(endpoint: str) -> PaperList:
 
         pages_progress_bar.close()
         session.close()
-        return papers
+        # Phase 1: ein return im finally verschluckt jede Exception des try-Blocks (B012).
+        # Fällt mit der neuen Fehlerbehandlung des Downloads; bis dahin bewusst so belassen.
+        return papers  # noqa: B012
 
 
 def download_paper_pdf(paperList: PaperList) -> None:

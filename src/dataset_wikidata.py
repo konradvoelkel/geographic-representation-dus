@@ -194,7 +194,7 @@ def get_articles_for_shapefile() -> list[dict]:
     articles_list: list[dict] = []
 
     logger.info(f"Starte BBox-Abfrage für {len(shapefile)} Stimmbezirke.")
-    for id, stimmbezirk in tqdm(shapefile.iterrows()):
+    for _id, stimmbezirk in tqdm(shapefile.iterrows()):
         # Calculate Bounding Box
         geom: BaseGeometry = stimmbezirk.geometry
         bbox: tuple[float, float, float, float] = geom.bounds  # (minx, miny, maxx, maxy)

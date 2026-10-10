@@ -77,7 +77,7 @@ def get_streets_per_district(path: Path) -> dict[str, list[str]]:
 
     logger.info(f"Starte OSM-Abfrage für {len(stimmbezirke)} Stimmbezirke.")
 
-    for i, (idx, row) in enumerate(stimmbezirke.iterrows()):
+    for i, (_idx, row) in enumerate(stimmbezirke.iterrows()):
         geometry = row.geometry
         stimmbezirk_id = row.get("Stimm-/ Wahlbezirk")
         stimmbezirk_name = row.get("Kommunalwahlbezirk Name")
