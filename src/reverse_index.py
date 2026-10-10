@@ -7,6 +7,7 @@ Functions:
     - index_documents: Creates an inverted index based on the loaded data.
     - main: Orchestrates the loading, indexing, and saving of the inverted index.
 """
+
 import pandas as pd
 from flashtext import KeywordProcessor
 from loguru import logger
@@ -17,7 +18,7 @@ import src.config as cfg
 def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
     logger.info("Lade combined_searchdict und Paper-Texte...")
     # load searchdict
-    df_search = pd.read_csv(cfg.COMBINED_SEARCHDICT_PATH, sep=';')
+    df_search = pd.read_csv(cfg.COMBINED_SEARCHDICT_PATH, sep=";")
 
     # load papers
     df_paper = pd.read_json(cfg.PAPER_WITH_TEXT_PATH)
@@ -27,7 +28,12 @@ def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
 
 def index_documents() -> None:
     df_search, df_paper = load_data()
-    such_series = df_search['suchbegriffe'].str.lower().str.split(r'\s*,\s*').apply(lambda x: [s for s in x if s])
+    such_series = (
+        df_search["suchbegriffe"]
+        .str.lower()
+        .str.split(r"\s*,\s*")
+        .apply(lambda x: [s for s in x if s])
+    )
 
     # Step 1: Preparing KeywordProcessors
     keyword_processor = KeywordProcessor(case_sensitive=False)
@@ -35,7 +41,9 @@ def index_documents() -> None:
     keyword_processor.add_keywords_from_list(list(alle_begriffe))
 
     # Step 2: Searching and Creating Inverted Index
-    logger.info(f"Erstelle Invertierten Index. Suche nach {len(alle_begriffe)} Begriffen in {len(df_paper)} Dokumenten.")
+    logger.info(
+        f"Erstelle Invertierten Index. Suche nach {len(alle_begriffe)} Begriffen in {len(df_paper)} Dokumenten."
+    )
     index = {b: [] for b in alle_begriffe}
     for dok in df_paper.itertuples():
         gefundene_begriffe = keyword_processor.extract_keywords(dok.paper_text)
@@ -47,11 +55,13 @@ def index_documents() -> None:
     rows = []
     for term, ids in index.items():
         unique_ids = sorted(list(set(str(i) for i in ids if i is not None)))
-        rows.append({
-            'suchbegriffe': term,
-            'paper_ids': ';'.join(unique_ids),
-            'anzahl_treffer': len(unique_ids)
-        })
+        rows.append(
+            {
+                "suchbegriffe": term,
+                "paper_ids": ";".join(unique_ids),
+                "anzahl_treffer": len(unique_ids),
+            }
+        )
 
     df_index = pd.DataFrame(rows)
 
@@ -61,9 +71,6 @@ def index_documents() -> None:
     else:
         df_index.to_csv(cfg.INVERTED_INDEX_PATH, index=False)
         logger.success(f"Invertierter Index als CSV gespeichert unter: {cfg.INVERTED_INDEX_PATH}")
-
-
-
 
 
 def main() -> None:

@@ -48,7 +48,7 @@ def load_json_from_path(path: Path) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
 
-    with open(path, encoding='utf-8') as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -66,7 +66,7 @@ def save_json_to_path(data: dict | list, path: Path) -> None:
     :type path: Path
     :return: None
     """
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
 
@@ -83,7 +83,7 @@ def load_shapefile(path: Path) -> gpd.GeoDataFrame:
     :return: A GeoDataFrame containing the spatial data from the shapefile.
     :rtype: gpd.GeoDataFrame
     """
-    with open(path, encoding='utf-8') as f:
+    with open(path, encoding="utf-8") as f:
         return gpd.read_file(f)
 
 
@@ -100,7 +100,7 @@ def save_shapefile(df: gpd.GeoDataFrame, path: Path) -> None:
     :type path: Path
     :return: None
     """
-    df.to_file(path, driver='GeoJSON')
+    df.to_file(path, driver="GeoJSON")
 
 
 def point_in_polygon(point: Point, polygon: MultiPolygon) -> bool:

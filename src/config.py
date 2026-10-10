@@ -7,20 +7,22 @@ and file paths, and other configuration variables. These constants and configura
 used across the application for managing data, endpoints, and query executions.
 
 """
+
 import sys
 from pathlib import Path
 
 from loguru import logger
 
 
-#Logging-Setup
+# Logging-Setup
 def setup_logging():
     logger.remove()
     logger.add(
         sys.stderr,
         format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
-        level="DEBUG"
+        level="DEBUG",
     )
+
 
 setup_logging()
 
@@ -48,16 +50,67 @@ USER_AGENT = "Wikipedia-Geodata-Extractor/1.0 (Python/Bachelorarbeit)"
 WIKI_EXCLUDE_LIST = [
     "Düsseldorf",
     "Düssel",
-    "Stadtbezirk 1", "Altstadt", "Carlstadt", "Stadtmitte", "Pempelfort", "Derendorf", "Golzheim",
-"Stadtbezirk 2", "Flingern-Nord", "Flingern-Süd", "Düsseltal", "Flingern",
-"Stadtbezirk 3", "Oberbilk", "Unterbilk", "Bilk", "Friedrichstadt", "Hafen", "Hamm", "Flehe", "Volmerswerth",
-"Stadtbezirk 4", "Oberkassel", "Heerdt", "Lörick", "Niederkassel",
-"Stadtbezirk 5", "Stockum", "Lohausen", "Kaiserswerth", "Wittlaer", "Kalkum", "Angermund",
-"Stadtbezirk 6", "Lichtenbroich", "Unterrath", "Rath", "Mörsenbroich",
-"Stadtbezirk 7", "Gerresheim", "Grafenberg", "Ludenberg", "Hubbelrath", "Knittkuhl",
-"Stadtbezirk 8", "Eller", "Lierenfeld", "Vennhausen", "Unterbach",
-"Stadtbezirk 9", "Wersten", "Holthausen", "Reisholz", "Benrath", "Urdenbach", "Hassels", "Itter", "Himmelgeist",
-"Stadtbezirk 10", "Garath", "Hellerhof"
+    "Stadtbezirk 1",
+    "Altstadt",
+    "Carlstadt",
+    "Stadtmitte",
+    "Pempelfort",
+    "Derendorf",
+    "Golzheim",
+    "Stadtbezirk 2",
+    "Flingern-Nord",
+    "Flingern-Süd",
+    "Düsseltal",
+    "Flingern",
+    "Stadtbezirk 3",
+    "Oberbilk",
+    "Unterbilk",
+    "Bilk",
+    "Friedrichstadt",
+    "Hafen",
+    "Hamm",
+    "Flehe",
+    "Volmerswerth",
+    "Stadtbezirk 4",
+    "Oberkassel",
+    "Heerdt",
+    "Lörick",
+    "Niederkassel",
+    "Stadtbezirk 5",
+    "Stockum",
+    "Lohausen",
+    "Kaiserswerth",
+    "Wittlaer",
+    "Kalkum",
+    "Angermund",
+    "Stadtbezirk 6",
+    "Lichtenbroich",
+    "Unterrath",
+    "Rath",
+    "Mörsenbroich",
+    "Stadtbezirk 7",
+    "Gerresheim",
+    "Grafenberg",
+    "Ludenberg",
+    "Hubbelrath",
+    "Knittkuhl",
+    "Stadtbezirk 8",
+    "Eller",
+    "Lierenfeld",
+    "Vennhausen",
+    "Unterbach",
+    "Stadtbezirk 9",
+    "Wersten",
+    "Holthausen",
+    "Reisholz",
+    "Benrath",
+    "Urdenbach",
+    "Hassels",
+    "Itter",
+    "Himmelgeist",
+    "Stadtbezirk 10",
+    "Garath",
+    "Hellerhof",
 ]
 
 # Geodata
@@ -80,13 +133,13 @@ PROCESSED_DATA_PATH = ROOT / "data" / "processed"
 STIMMBEZIRK_SHAPEFILE_PATH = EXTERNAL_DATA_PATH / "Stimmbezirke_2025.geojson"
 WAHLERGEBNIS_PATH = EXTERNAL_DATA_PATH / "Stimmbezirk_Wahlergebnis.csv"
 
-#Raw Data: Import-Step
+# Raw Data: Import-Step
 PAPER_URL_LISTE = RAW_DATA_PATH / "paper_urls.json"
 PAPER_OBJECT_LISTE = RAW_DATA_PATH / "paper_objects.json"
 PDF_DUMP_PATH = RAW_DATA_PATH / "oparl_paper_pdf"
 STREET_PER_DISTRICT_PATH = RAW_DATA_PATH / "streets_per_district.json"
 WIKI_DICT = RAW_DATA_PATH / "wikipedia_dict.json"
-#Prepped data
+# Prepped data
 PAPER_WITH_TEXT_PATH = INTERIM_DATA_PATH / "paper_with_text.json"
 # Final data for analyzing
 AGG_STREETS_PER_WAHLBEZIRK_PATH = PROCESSED_DATA_PATH / "wahlbezirke_strassen.csv"
@@ -101,4 +154,3 @@ AUSWERTUNG_PATH = PROCESSED_DATA_PATH / "wahlbezirke_auswertung.csv"
 # Start and End dates of the observation period
 START = "2020-09-13"
 ENDE = "2025-09-14"
-

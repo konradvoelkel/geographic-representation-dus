@@ -31,7 +31,7 @@ def repair_geometry(geom) -> Polygon | MultiPolygon:
     repaired = make_valid(geom)
 
     if not isinstance(repaired, (Polygon, MultiPolygon)):
-        if hasattr(repaired, 'geoms'):
+        if hasattr(repaired, "geoms"):
             polygons = [g for g in repaired.geoms if isinstance(g, (Polygon, MultiPolygon))]
             if polygons:
                 if len(polygons) == 1:
@@ -40,7 +40,6 @@ def repair_geometry(geom) -> Polygon | MultiPolygon:
                     return MultiPolygon(polygons)
         return geom
     return repaired
-
 
 
 def get_streets_per_district(path: Path) -> dict[str, list[str]]:
@@ -70,7 +69,9 @@ def get_streets_per_district(path: Path) -> dict[str, list[str]]:
     invalid_geom = ~stimmbezirke.geometry.is_valid
     if invalid_geom.any():
         logger.warning(f"{invalid_geom.sum()} ungültige Geometrien gefunden. Starte Reparatur.")
-        stimmbezirke.loc[invalid_geom, 'geometry'] = stimmbezirke.loc[invalid_geom, 'geometry'].apply(repair_geometry)
+        stimmbezirke.loc[invalid_geom, "geometry"] = stimmbezirke.loc[
+            invalid_geom, "geometry"
+        ].apply(repair_geometry)
 
     streets_per_district = []
 
@@ -78,38 +79,42 @@ def get_streets_per_district(path: Path) -> dict[str, list[str]]:
 
     for i, (idx, row) in enumerate(stimmbezirke.iterrows()):
         geometry = row.geometry
-        stimmbezirk_id = row.get('Stimm-/ Wahlbezirk')
-        stimmbezirk_name = row.get('Kommunalwahlbezirk Name')
-        wahlbezirk_id = row.get('Kommunalwahlbezirk Nr.')
+        stimmbezirk_id = row.get("Stimm-/ Wahlbezirk")
+        stimmbezirk_name = row.get("Kommunalwahlbezirk Name")
+        wahlbezirk_id = row.get("Kommunalwahlbezirk Nr.")
         current_count = i + 1
         # additional validation before processing
         if not isinstance(geometry, (Polygon, MultiPolygon)):
-            logger.error(f"[{current_count}/{len(stimmbezirke)}] Stimmbezirk {stimmbezirk_id} hat ungültigen Geometrie-Typ: {type(geometry).__name__}")
+            logger.error(
+                f"[{current_count}/{len(stimmbezirke)}] Stimmbezirk {stimmbezirk_id} hat ungültigen Geometrie-Typ: {type(geometry).__name__}"
+            )
             continue
 
         if not geometry.is_valid:
-            logger.error(f"[{current_count}/{len(stimmbezirke)}] Stimmbezirk {stimmbezirk_id} ist ungültig. Überspringe.")
+            logger.error(
+                f"[{current_count}/{len(stimmbezirke)}] Stimmbezirk {stimmbezirk_id} ist ungültig. Überspringe."
+            )
             continue
 
         try:
-            logger.debug(f"[{current_count}/{len(stimmbezirke)}] Frage Straßen für Stimmbezirk {stimmbezirk_id} ({stimmbezirk_name}) ab.")
-            streets = ox.graph_from_polygon(geometry,
-                                            network_type='all',
-                                            simplify=True,
-                                            retain_all=False,
-                                            truncate_by_edge=True)
+            logger.debug(
+                f"[{current_count}/{len(stimmbezirke)}] Frage Straßen für Stimmbezirk {stimmbezirk_id} ({stimmbezirk_name}) ab."
+            )
+            streets = ox.graph_from_polygon(
+                geometry, network_type="all", simplify=True, retain_all=False, truncate_by_edge=True
+            )
             nodes_gdf, edges_gdf = ox.graph_to_gdfs(streets)
             street_names = set()
 
-            if 'name' in edges_gdf.columns:
-                names = edges_gdf['name'].dropna()
+            if "name" in edges_gdf.columns:
+                names = edges_gdf["name"].dropna()
                 for name in names:
                     if isinstance(name, str):
-                        for part in name.split(','):
+                        for part in name.split(","):
                             street_names.add(part.strip())
 
-            if 'street_name' in edges_gdf.columns:
-                names = edges_gdf['street_name'].dropna()
+            if "street_name" in edges_gdf.columns:
+                names = edges_gdf["street_name"].dropna()
                 for name in names:
                     if isinstance(name, str):
                         street_names.add(name.strip())
@@ -117,20 +122,24 @@ def get_streets_per_district(path: Path) -> dict[str, list[str]]:
             street_names = sorted(list(street_names))
 
             district_entry = {
-                'stimmbezirks_id': stimmbezirk_id,
-                'stimmbezirks_name': stimmbezirk_name,
-                'wahlbezirk_id': wahlbezirk_id,
-                'straßen': street_names
+                "stimmbezirks_id": stimmbezirk_id,
+                "stimmbezirks_name": stimmbezirk_name,
+                "wahlbezirk_id": wahlbezirk_id,
+                "straßen": street_names,
             }
             streets_per_district.append(district_entry)
             time.sleep(cfg.DELAY)
 
-
         except Exception as e:
-            logger.exception(f"[{current_count}/{len(stimmbezirke)}] Unerwarteter Fehler bei Stimmbezirk {stimmbezirk_id}: {e}")
+            logger.exception(
+                f"[{current_count}/{len(stimmbezirke)}] Unerwarteter Fehler bei Stimmbezirk {stimmbezirk_id}: {e}"
+            )
 
-    logger.success(f"Verarbeitung abgeschlossen. {len(streets_per_district)} Bezirke erfolgreich verarbeitet.")
+    logger.success(
+        f"Verarbeitung abgeschlossen. {len(streets_per_district)} Bezirke erfolgreich verarbeitet."
+    )
     return streets_per_district
+
 
 def main() -> None:
     logger.info("Starte Straßen-Download")
@@ -139,6 +148,6 @@ def main() -> None:
     save_json_to_path(street_dict, cfg.STREET_PER_DISTRICT_PATH)
     logger.info(f"Ergebnis gespeichert unter {cfg.STREET_PER_DISTRICT_PATH}")
 
+
 if __name__ == "__main__":
     main()
-

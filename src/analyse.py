@@ -19,34 +19,32 @@ def build_hits_per_wahlkreis() -> pd.DataFrame:
     df = df_suche_exploded.merge(df_index, on="suchbegriffe", how="inner")
 
     # Aggregation pro Wahlkreis
-    df_hits = df.groupby("wahlkreis_id").agg(
-        {
-            "suchbegriffe": (
-                lambda x: "; ".join(
-                    sorted(
-                        set(
-                            val
-                            for val in x
-                            if pd.notna(val) and val != "schulweg"
+    df_hits = (
+        df.groupby("wahlkreis_id")
+        .agg(
+            {
+                "suchbegriffe": (
+                    lambda x: "; ".join(
+                        sorted(set(val for val in x if pd.notna(val) and val != "schulweg"))
+                    )
+                ),
+                "paper_ids": (
+                    lambda x: ";".join(
+                        sorted(
+                            set(
+                                pid
+                                for val in x
+                                if pd.notna(val)
+                                for pid in str(val).split(";")
+                                if pid
+                            )
                         )
                     )
-                )
-            ),
-            "paper_ids": (
-                lambda x: ";".join(
-                    sorted(
-                        set(
-                            pid
-                            for val in x
-                            if pd.notna(val)
-                            for pid in str(val).split(";")
-                            if pid
-                        )
-                    )
-                )
-            ),
-        }
-    ).reset_index()
+                ),
+            }
+        )
+        .reset_index()
+    )
 
     # Anzahl der eindeutigen Dokumente pro Wahlkreis
     df_hits["anzahl_treffer"] = df_hits["paper_ids"].apply(
@@ -62,9 +60,7 @@ def join_with_voter_data(df_hits: pd.DataFrame) -> pd.DataFrame:
     df = df_hits.merge(df_votes, on="wahlkreis_id", how="inner")
 
     # Treffequote (Treffer pro Wahlberechtigtem)
-    df["trefferquote"] = (
-        df["anzahl_treffer"] / df["Wahlberechtigte_insgesamt"]
-    )
+    df["trefferquote"] = df["anzahl_treffer"] / df["Wahlberechtigte_insgesamt"]
 
     return df
 

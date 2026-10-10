@@ -38,7 +38,7 @@ def get_district_for_poi(articles: list[dict]) -> list[dict]:
     stimmbezirke = stimmbezirke.to_crs(cfg.CRS)
 
     for article in articles:
-        point = Point(article['lon'], article['lat'])
+        point = Point(article["lon"], article["lat"])
 
         # Get the district in which the point lies
         match = stimmbezirke[stimmbezirke.contains(point)]
@@ -48,13 +48,14 @@ def get_district_for_poi(articles: list[dict]) -> list[dict]:
             stimm_id = bezirk_data.get("Stimm-/ Wahlbezirk")
             wahl_id = bezirk_data.get("Kommunalwahlbezirk Nr.")
 
-            article['stimmbezirk_id'] = int(stimm_id) if stimm_id is not None else None
-            article['wahlkreis_id'] = int(wahl_id) if wahl_id is not None else None
+            article["stimmbezirk_id"] = int(stimm_id) if stimm_id is not None else None
+            article["wahlkreis_id"] = int(wahl_id) if wahl_id is not None else None
             logger.success(f"POI {article['label']} wurde erfolgreich einem Bezirk zugeordnet.")
         else:
             logger.warning(f"POI {article['label']} konnte keinem Bezirk zugeordnet werden.")
 
     return articles
+
 
 def get_data_from_sparql() -> list[dict]:
     """
@@ -79,31 +80,33 @@ def get_data_from_sparql() -> list[dict]:
         - `wahlkreis_id` (None): Placeholder for "wahlkreis_id", currently uninitialized.
     :rtype: list[dict]
     """
-    headers = {
-        'User-Agent': cfg.USER_AGENT,
-        'Accept': 'application/json; charset=utf-8'
-    }
-    response = requests.get(cfg.WIKIDATA_ENDPOINT, params={'query': cfg.QUERY, 'format': 'json'}, headers=headers)
-    response.encoding = 'utf-8'
+    headers = {"User-Agent": cfg.USER_AGENT, "Accept": "application/json; charset=utf-8"}
+    response = requests.get(
+        cfg.WIKIDATA_ENDPOINT, params={"query": cfg.QUERY, "format": "json"}, headers=headers
+    )
+    response.encoding = "utf-8"
 
     articles = []
     if response.status_code == 200:
         data = response.json()
-        for result in data['results']['bindings']:
-            coord_str = result['coord']['value']
-            coords = coord_str.replace('Point(', '').replace(')', '').split()
+        for result in data["results"]["bindings"]:
+            coord_str = result["coord"]["value"]
+            coords = coord_str.replace("Point(", "").replace(")", "").split()
 
-            articles.append({
-                'label': result['itemLabel']['value'],
-                'lon': float(coords[0]),
-                'lat': float(coords[1]),
-                'url': result['article']['value'],
-                'stimmbezirk_id': None,
-                'wahlkreis_id': None
-            })
+            articles.append(
+                {
+                    "label": result["itemLabel"]["value"],
+                    "lon": float(coords[0]),
+                    "lat": float(coords[1]),
+                    "url": result["article"]["value"],
+                    "stimmbezirk_id": None,
+                    "wahlkreis_id": None,
+                }
+            )
     logger.info(f"{len(articles)} Artikel über SPARQL gefunden.")
     articles = get_district_for_poi(articles)
     return articles
+
 
 def get_wikidata_for_bbox(bbox: tuple) -> list[dict]:
     """
@@ -139,36 +142,39 @@ def get_wikidata_for_bbox(bbox: tuple) -> list[dict]:
     gsbbox = f"{maxy}|{minx}|{miny}|{maxx}"
 
     params = {
-        'action': 'query',
-        'list': 'geosearch',
-        'gsbbox': gsbbox,
-        'gslimit': geosearch_limit,
-        'format': 'json'
+        "action": "query",
+        "list": "geosearch",
+        "gsbbox": gsbbox,
+        "gslimit": geosearch_limit,
+        "format": "json",
     }
 
     try:
-        response = requests.get(endpoint, params=params, headers={'User-Agent': user_agent})
+        response = requests.get(endpoint, params=params, headers={"User-Agent": user_agent})
         response.raise_for_status()
         data = response.json()
 
-        if 'query' in data and 'geosearch' in data['query']:
+        if "query" in data and "geosearch" in data["query"]:
             articles = []
-            for article in data['query']['geosearch']:
-                articles.append({
-                    'label': article['title'],
-                    'pageid': article['pageid'],
-                    'lat': article['lat'],
-                    'lon': article['lon'],
-                    'dist': article.get('dist', 0),
-                    'stimmbezirk_id': None,
-                    'wahlkreis_id': None
-                })
+            for article in data["query"]["geosearch"]:
+                articles.append(
+                    {
+                        "label": article["title"],
+                        "pageid": article["pageid"],
+                        "lat": article["lat"],
+                        "lon": article["lon"],
+                        "dist": article.get("dist", 0),
+                        "stimmbezirk_id": None,
+                        "wahlkreis_id": None,
+                    }
+                )
             return articles
         return []
 
     except Exception as e:
         logger.error(f"Fehler bei API-Abfrage für bbox {bbox}: {e}")
         return []
+
 
 def get_articles_for_shapefile() -> list[dict]:
     """
@@ -197,24 +203,22 @@ def get_articles_for_shapefile() -> list[dict]:
         wahlbezirk_nr = stimmbezirk.get("Kommunalwahlbezirk Nr.", None)
         stimmbezirk_id = stimmbezirk.get("Stimm-/ Wahlbezirk", None)
 
-        if stimmbezirk_id is not None and hasattr(stimmbezirk_id, 'item'):
+        if stimmbezirk_id is not None and hasattr(stimmbezirk_id, "item"):
             stimmbezirk_id = stimmbezirk_id.item()
-        if wahlbezirk_nr is not None and hasattr(wahlbezirk_nr, 'item'):
+        if wahlbezirk_nr is not None and hasattr(wahlbezirk_nr, "item"):
             wahlbezirk_nr = wahlbezirk_nr.item()
 
         # API-call with Bounding Box
         try:
             articles = get_wikidata_for_bbox(bbox)
 
-
             # Filter points within the polygon
             for article in articles:
-                point = Point(article['lon'], article['lat'])
+                point = Point(article["lon"], article["lat"])
                 if utils.point_in_polygon(point, stimmbezirk.geometry):
-                    article['stimmbezirk_id'] = stimmbezirk_id
-                    article['wahlkreis_id'] = wahlbezirk_nr
+                    article["stimmbezirk_id"] = stimmbezirk_id
+                    article["wahlkreis_id"] = wahlbezirk_nr
                     articles_list.append(article)
-
 
         except Exception as e:
             logger.exception(f"Unerwarteter Fehler bei Stimmbezirk {stimmbezirk_id}: {e}")
@@ -252,6 +256,6 @@ def main() -> None:
     utils.save_json_to_path(all_articles, cfg.WIKI_DICT)
     logger.success(f"Ergebnisse gespeichert unter {cfg.WIKI_DICT}")
 
+
 if __name__ == "__main__":
     main()
-

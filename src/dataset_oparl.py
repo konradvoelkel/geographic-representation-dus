@@ -27,18 +27,18 @@ class Paper:
 
 
 class PaperList(list[Paper]):
-
     def add_paper(self, paper: Paper) -> None:
         self.append(paper)
 
     def save_as_json(self, path: Path) -> None:
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         papers_dict = [asdict(paper) for paper in self]
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(papers_dict, f, ensure_ascii=False, indent=2)
 
     def __str__(self):
         return "\n".join(str(paper) for paper in self)
+
 
 def _as_paper_iter(papers_like: Any) -> Iterable[Paper]:
     """
@@ -89,7 +89,7 @@ def _paper_from_dict(d: dict[str, Any]) -> Paper:
     )
 
 
-def _check_for_existing_papers() ->tuple[set[str], list[dict]]:
+def _check_for_existing_papers() -> tuple[set[str], list[dict]]:
     """
     Checks for existing papers by reading from a JSON file. The JSON file is expected to contain
     a list of paper objects. Each paper object must be a dictionary with an 'id' key to be
@@ -108,11 +108,11 @@ def _check_for_existing_papers() ->tuple[set[str], list[dict]]:
         return set(), []
 
     try:
-        with open(papers_json_path, encoding='utf-8') as f:
+        with open(papers_json_path, encoding="utf-8") as f:
             known_paper = json.load(f)
         if not isinstance(known_paper, list):
             return set(), []
-        known_ids = {p.get('id') for p in known_paper if isinstance(p, dict) and p.get('id')}
+        known_ids = {p.get("id") for p in known_paper if isinstance(p, dict) and p.get("id")}
         return known_ids, known_paper
     except Exception:
         return set(), []
@@ -133,15 +133,16 @@ def download_paper_metadata(endpoint: str) -> PaperList:
     :raises KeyError: Raised if expected keys are missing in the API response.
     :raises Exception: Encapsulates other unexpected errors encountered during processing.
     """
-    pages_progress_bar = tqdm(desc="Verarbeitete Seiten: ",
-                              unit=" Seite(n)")
+    pages_progress_bar = tqdm(desc="Verarbeitete Seiten: ", unit=" Seite(n)")
     session = requests.Session()
     adapter = requests.adapters.HTTPAdapter(max_retries=5)
-    session.mount('http://', adapter)
+    session.mount("http://", adapter)
 
     known_ids, existing_papers_raw = _check_for_existing_papers()
     if known_ids:
-        logger.info(f"Resume aktiv: {len(known_ids)} Paper-IDs lokal bekannt -> überspringe bekannte Einträge.")
+        logger.info(
+            f"Resume aktiv: {len(known_ids)} Paper-IDs lokal bekannt -> überspringe bekannte Einträge."
+        )
     else:
         logger.info("Kein lokaler Stand gefunden -> vollständiger Download.")
 
@@ -154,33 +155,33 @@ def download_paper_metadata(endpoint: str) -> PaperList:
             response.raise_for_status()
             response = response.json()
 
-            for p in response['data']:
-                paper_id = p.get('id')
+            for p in response["data"]:
+                paper_id = p.get("id")
                 if paper_id in known_ids:
                     continue
 
                 mainfile_id = None
                 download_url = None
-                paper_date = p.get('date')
+                paper_date = p.get("date")
 
                 if cfg.START <= paper_date <= cfg.ENDE:
-                    if p.get('mainFile') is not None:
-                        mainfile = p.get('mainFile')
-                        mainfile_id = mainfile.get('id', None)
-                        download_url = mainfile.get('downloadUrl', None)
-                    elif p.get('auxiliaryFile') is not None and len(p.get('auxiliaryFile')) > 0:
-                        mainfile = p.get('auxiliaryFile')[0]
-                        mainfile_id = mainfile.get('id', None)
-                        download_url = mainfile.get('downloadUrl', None)
+                    if p.get("mainFile") is not None:
+                        mainfile = p.get("mainFile")
+                        mainfile_id = mainfile.get("id", None)
+                        download_url = mainfile.get("downloadUrl", None)
+                    elif p.get("auxiliaryFile") is not None and len(p.get("auxiliaryFile")) > 0:
+                        mainfile = p.get("auxiliaryFile")[0]
+                        mainfile_id = mainfile.get("id", None)
+                        download_url = mainfile.get("downloadUrl", None)
 
                     paper_dc = Paper(
-                        p.get('id', None),
-                        p.get('name', None),
-                        p.get('reference', None),
-                        p.get('date', None),
-                        p.get('paperType', None),
+                        p.get("id", None),
+                        p.get("name", None),
+                        p.get("reference", None),
+                        p.get("date", None),
+                        p.get("paperType", None),
                         mainfile_id,
-                        download_url
+                        download_url,
                     )
 
                     papers.add_paper(paper_dc)
@@ -198,14 +199,14 @@ def download_paper_metadata(endpoint: str) -> PaperList:
                 json.dump(combined, f, ensure_ascii=False, indent=2)
 
             url_liste.append(endpoint)
-            with open(cfg.PAPER_URL_LISTE, 'w', encoding='utf-8') as f:
+            with open(cfg.PAPER_URL_LISTE, "w", encoding="utf-8") as f:
                 json.dump(url_liste, f, indent=4, ensure_ascii=False)
 
-            if 'next' not in response['links']:
+            if "next" not in response["links"]:
                 logger.info("Letzte Seite erreicht.")
                 break
 
-            endpoint = response.get('links', {}).get('next')
+            endpoint = response.get("links", {}).get("next")
 
             time.sleep(cfg.DELAY)
             pages_progress_bar.update(1)
@@ -242,25 +243,26 @@ def download_paper_pdf(paperList: PaperList) -> None:
     :type paperList: PaperList
     :return: None
     """
-    progress_bar = tqdm(desc="Heruntergeladene Dateien: ",
-                        unit="Datei(en)")
+    progress_bar = tqdm(desc="Heruntergeladene Dateien: ", unit="Datei(en)")
     session = requests.Session()
     adapter = requests.adapters.HTTPAdapter(max_retries=5)
-    session.mount('http://', adapter)
+    session.mount("http://", adapter)
     download_err_counter = 0
     try:
         for paper in _as_paper_iter(paperList):
             url = paper.download_url
             if not url:
-                logger.warning(f"Überspringe Paper ohne download_url (id={paper.id}, mainFile={paper.mainFile})")
+                logger.warning(
+                    f"Überspringe Paper ohne download_url (id={paper.id}, mainFile={paper.mainFile})"
+                )
                 continue
-            if url.split('/')[-1] in [f.name for f in Path(cfg.PDF_DUMP_PATH).iterdir()]:
+            if url.split("/")[-1] in [f.name for f in Path(cfg.PDF_DUMP_PATH).iterdir()]:
                 continue
 
             response = session.get(url)
             response.raise_for_status()
 
-            with open(Path(cfg.PDF_DUMP_PATH / f"{url.split('/')[-1]}"), 'wb') as f:
+            with open(Path(cfg.PDF_DUMP_PATH / f"{url.split('/')[-1]}"), "wb") as f:
                 f.write(response.content)
 
             progress_bar.update(1)
@@ -273,12 +275,12 @@ def download_paper_pdf(paperList: PaperList) -> None:
         session.close()
 
 
-
 def main() -> None:
-    #setup_data_directories()
+    # setup_data_directories()
     paper_list = download_paper_metadata(cfg.OPARL_ENDPOINT)
-    #paper_list = load_json_from_path(cfg.PAPER_OBJECT_LISTE)
+    # paper_list = load_json_from_path(cfg.PAPER_OBJECT_LISTE)
     download_paper_pdf(paper_list)
+
 
 if __name__ == "__main__":
     main()
