@@ -1,0 +1,25 @@
+# serializer version: 1
+# name: test_text_after_betrifft_snapshot[00438685.pdf]
+  dict({
+    'after_betrifft': ':genehmigung der dringlichkeitsentscheidung gem. § 60 go nrw -lantz´scherskulpturenpark - kuratorisches konzeptfachberei',
+    'chars': 1370,
+  })
+# ---
+# name: test_text_after_betrifft_snapshot[00439409.pdf]
+  dict({
+    'after_betrifft': ':zulässigkeit und potenzielle rahmenbedingungen eines geordneten badebetriebsim angermunder see(anfrage fraktion bündnis',
+    'chars': 2880,
+  })
+# ---
+# name: test_text_after_betrifft_snapshot[00519825.pdf]
+  dict({
+    'after_betrifft': ': beschlusskontrolle der bezirksvertretung 9 - 1.halbjahr 2024 amt / institut: bezirksverwaltungsstelle 9 beratungsfolge',
+    'chars': 847,
+  })
+# ---
+# name: test_text_after_betrifft_snapshot[00552781.pdf]
+  dict({
+    'after_betrifft': ': fahrradspur auf der ludenberger straße  - antrag der spd-fraktion - antrag:  die bezirksvertretung 7 bittet die verwal',
+    'chars': 1178,
+  })
+# ---
