@@ -1,0 +1,250 @@
+# Entwicklungsplan: geographic-representation-dus auf Vordermann
+
+Stand 2026-10-10, freigegeben von Konrad am selben Tag mit zwei Änderungen: Polars statt pandas und Parquet wo möglich; Python 3.14. Dieser Plan wird nach Abschluss durch Beschreibungen ersetzt
+(README, `docs/`), nicht fortgeschrieben. Befund und Messlatte: `docs/baseline-2026-10-10.md`.
+
+## 1. Ziel
+
+Den Code so umbauen, dass
+
+1. kein Befehl Daten zerstört: Läufe sind idempotent, Schreibvorgänge atomar, Referenzdaten unantastbar;
+2. alle Netzabrufe gecacht sind, konfigurierbar über `settings.yml`, Daten und Cache standardmäßig außerhalb des Repos (bei Konrad auf xtraspace);
+3. `ruff`, `mypy --strict`, `uv` mit `pyproject.toml` und `uv.lock` der Normalzustand sind;
+4. eine Testsuite existiert, die in Sekunden läuft und das heutige Verhalten als Netz hält;
+5. Profiling einzelner Funktionen und ganzer Abläufe ein Befehl ist, mit gespeicherten Baselines;
+6. der Weg von Type Hints über Tests zu Design by Contract (deal + hypothesis, crosshair) gegangen ist, damit ein Agent nach jeder Änderung in Sekunden eine belastbare Antwort bekommt;
+7. die heißen Pfade hinter Protokollen liegen, sodass eine Rust-Implementierung ein Austausch ist, kein Umbau.
+
+## 2. Leitplanken (aus dem eipy-Skript und dem Playbook)
+
+- Reihenfolge nicht verhandelbar: verstehen, zum Laufen bringen, Verhalten einfrieren, modernisieren, umbauen.
+- Eine Refactoring-Sorte pro Commit. Formatierung und Modernisierung sind je ein eigener Commit und stehen in `.git-blame-ignore-revs`. Keine inhaltliche Änderung fährt mit.
+- Nach jedem Commit läuft der Charakterisierungstest. Wird er rot, war es kein Refactoring.
+- Definition of Done pro Phase: läuft aus frischem Klon (`git clone`, `uv sync`, `uv run …`), Charakterisierungstest grün, ruff und mypy nicht schlechter als die Baseline, eine Zeile im Changelog.
+- Zeit, Zufall und Netz sind Eingaben, keine Umwelt: injizieren, dann testen.
+- Golden Master klein halten, nichts Schwankendes einfrieren, nie blind aktualisieren.
+- Ruff-Regelsatz zuerst `E, F, I, UP, B`, dann `SIM, RUF, ANN`; `mypy strict = true` für neuen Code von Anfang an; Stubs statt `ignore_missing_imports`, Ausnahmen pro Modul mit Begründung.
+- Pydantic validiert an der Systemgrenze (OParl-JSON, Settings, Manifeste), Verträge sichern das Innere. `deal` und `icontract` nicht mischen. `deal test` ist mit typeguard 4 kaputt; Testgenerierung über hypothesis mit `deal.cases` und über `crosshair check`.
+- Erst messen, dann optimieren, dann nachmessen. Ein Rust-Port nur für einen gemessenen Flaschenhals.
+- Ein Cache oder Guard muss die Änderung sehen können, auf die er reagieren soll: Schlüssel enthalten Eingabe-Hashes, Settings-Hash und Code-Version.
+- Ein Schritt druckt die Anzahl, auf die er gewirkt hat, nicht nur, dass er lief.
+- Polars statt pandas, Parquet wo möglich (Vorgabe Konrad, 2026-10-10). Neuer Code fasst pandas nicht an. pandas bleibt bis zum Ende von Phase 3 nur als Abhängigkeit des Altcodes (direkt) und von osmnx/geopandas (transitiv) und verschwindet dann aus dem Lockfile; ein CI-Check (`uv tree --invert --package pandas` leer) belegt das.
+- Rejected alternatives werden mit ihren Kosten festgehalten (§ 7).
+
+## 3. Zielarchitektur
+
+### 3.1 Paket und Layout
+
+```
+pyproject.toml            uv_build, [project.scripts] georep = "georep.cli:main"
+uv.lock  .python-version  settings.yml (Defaults, eingecheckt)  settings.local.yml (gitignored)
+src/georep/
+  settings.py             pydantic-settings; YAML + Env-Präfix GEOREP_ + --settings
+  layout.py               DataLayout: raw/ interim/ processed/ cache/ unter data_root; reference_root nur lesend
+  io.py                   atomic_write, read/write JSONL, CSV, Manifest, Stamp
+  http.py                 Session-Factory: Timeout, Retry mit Backoff, User-Agent, requests-cache
+  models.py               Paper, POI, DistrictStreets, SearchTerm…: pydantic an der Grenze, dataclass/TypedDict innen
+  sources/  oparl.py opendata.py osm.py wiki.py      fetch_*(transport, params) -> Modelle; Transport injizierbar; osm.py fragt Overpass direkt
+  geo.py                  shapely + pyproj: GeoJSON lesen, nach EPSG:4326 projizieren, STRtree-Zuordnung Punkt -> Bezirk
+  prep/     papers.py voters.py streets.py wiki.py   reine Funktionen pl.DataFrame -> pl.DataFrame (Polars, LazyFrame wo es Pushdown bringt)
+  search/   dictionary.py matcher.py index.py         KeywordMatcher-Protokoll, FlashText-Implementierung
+  analysis/ hits.py regression.py                     Notebook-Mathematik als Modul, Notebook wird dünn
+  pipeline.py             Schrittregister: Name, Eingaben, Ausgaben, run(); Frische, --force, --dry-run
+  cli.py                  argparse, main(argv) -> int; Unterbefehle run, steps, status, bootstrap, profile
+tests/  conftest.py  unit/  property/  golden/  fixtures/mini/  fixtures/http/
+reference/                heutiges data/, eingefroren: der Datensatz der Arbeit, nie beschrieben
+docs/                     baseline, Entscheidungen, Profiling-Ergebnisse (datiert)
+noxfile.py                Sessions lint, typecheck, test, golden, verify, profile; CI ruft dieselben
+.github/workflows/ci.yml  uv sync --locked, nox; Actions per SHA gepinnt
+```
+
+Paketname `georep`, weil der Code über Düsseldorf hinaus verwendet werden soll. Die Umstellung
+läuft als Strangler Fig: `src/georep/` wächst neben `src/*.py`, alte Module werden Shims, dann gelöscht.
+
+### 3.2 Settings
+
+```yaml
+# settings.yml (eingecheckt; Defaults relativ zum Repo)
+data_root: ./data                  # Laufzeitdaten, gitignored
+cache_root: null                   # null = data_root/cache
+reference_root: ./reference        # nur lesen
+period: {start: 2020-09-13, end: 2025-09-14}
+sources:
+  oparl: {endpoint: https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers, delay_s: 1.0, timeout_s: 180, retries: 5}
+  opendata: {results_url: …, districts_url: …}
+  osm: {network_type: all}
+  wikidata: {entity: Q1718, language: de, geosearch_limit: 500}
+schema:                            # Spaltennamen der Quellen, heute hart kodiert
+  district_id: "Kommunalwahlbezirk Nr."
+  precinct_id: "Stimm-/ Wahlbezirk"
+  results: {sep: ";", encoding: latin-1, district: Kommunalwahlbezirk, eligible: Wahlberechtigte_insgesamt, voters: Waehler}
+search:
+  exclude: [Düsseldorf, Düssel, "Stadtbezirk 1", …]
+  generic_terms_count: true        # heute: "schulweg" zählt, wird nur nicht angezeigt; Entscheidung dokumentieren
+contracts: on                      # on | off; off = deal.disable()
+log_level: INFO
+```
+
+```yaml
+# settings.local.yml (gitignored), Konrads Rechner
+data_root: /media/konrad/xtraspace/georep/data
+```
+
+Auflösung: Defaults < `settings.yml` < `settings.local.yml` < `GEOREP_*` < `--settings pfad`.
+Pfade werden expandiert und bei Bedarf angelegt, nie geleert.
+
+### 3.3 Caching und Datenhaltung
+
+| Quelle | Cache | Schlüssel | Invalidierung |
+|---|---|---|---|
+| OParl-Seiten | requests-cache (SQLite unter `cache_root/http.sqlite`) | URL | TTL kurz (Entwicklung); Metadaten selbst werden pro Paper gespeichert, Seiten sind keine stabilen IDs |
+| OParl-Metadaten | `raw/papers.jsonl`, eine Zeile pro Paper | OParl-ID | inkrementell: Seiten sind neueste zuerst, Abbruch sobald Datum < start; bekannte IDs werden übersprungen |
+| PDFs | `cache_root/pdf/<sha1(url)>.pdf` + `manifest.jsonl` (url, sha256, Größe, HTTP-Status, Zeit) | URL | nie; Prüfung `%PDF`-Magic und Größe > 0; defekte Einträge werden neu geladen |
+| Text je PDF | `cache_root/text/<sha256(pdf)>.txt` | Inhalt des PDF | nie; neue Extraktor-Version = neuer Schlüsselpräfix |
+| OSM | osmnx-Cache eingeschaltet unter `cache_root/osmnx` + Ergebnis je Stimmbezirk unter `raw/streets/<geom-hash>.json` | Geometrie-Hash | manuell (`--force`) |
+| Wikidata/Wikipedia | requests-cache + `raw/pois.jsonl` | Query bzw. BBox | TTL 30 Tage |
+| Schritte | `<ausgabe>.stamp.json` mit Hashes der Eingaben, Settings-Hash, Code-Version | alle drei | automatisch, wenn einer der drei sich ändert |
+
+Formate: alles Abgeleitete als Parquet (zstd), gelesen mit `pl.scan_parquet`, Sortierung deterministisch.
+Append-only-Protokolle (Roh-Metadaten je Paper, PDF-Manifest) bleiben JSONL, weil eine Parquet-Datei
+unveränderlich ist; `prep` verdichtet sie zu Parquet. Der Korpus liegt als `interim/papers.parquet`
+(Spalten id, date, paper_type, text) und wird mit Projektion gelesen, wo der Text nicht gebraucht wird.
+CSV nur als Export für Menschen (`georep export`). Referenzdaten bleiben im Upstream-Format,
+`bootstrap` konvertiert sie beim Kopieren.
+
+### 3.4 Sicherheit: was „nichts geht kaputt" konkret heißt
+
+1. Die Pipeline schreibt nie unter `reference_root`; ein Test prüft das (Verzeichnis read-only einhängen, Lauf, kein Fehler).
+2. Jeder Schreibvorgang: Temporärdatei im Zielverzeichnis, `fsync`, `os.replace`. Ein Abbruch hinterlässt die alte Datei.
+3. Jeder Schritt hat Vor- und Nachbedingungen: Eingaben vorhanden und nicht leer, Pflichtspalten da; Ausgabe nicht leer, Zeilenzahl plausibel. Verletzung = Abbruch vor dem Schreiben. Beispiel: `prep_papers` verweigert, wenn null PDFs vorliegen oder das Ergebnis weniger Texte hätte als die bestehende Ausgabe.
+4. Wiederholung ohne Änderung ist ein No-op und sagt das (`übersprungen: 6 Schritte aktuell`).
+5. `--dry-run` zeigt den Plan, `--force` erzwingt, `clean` löscht nur unter `data_root` und nennt vorher, was.
+6. Netz: Timeout auf jedem Aufruf, Retry mit Backoff, Fehler pro Element isoliert, Fehlerzähler im Ergebnis, Teilergebnis bleibt erhalten, Exit-Code ungleich null ab einer Fehlerquote.
+7. Keine `except Exception` mehr: Domänenfehler (`FetchError`, `CorruptPdfError`, `SchemaError`) werden behandelt, Vertragsverletzungen sind Bugs und laufen durch.
+8. Deterministische Ausgaben (sortierte Begriffe und IDs), damit Golden-Vergleiche byteweise möglich sind.
+
+### 3.5 Heiße Pfade und Rust
+
+Geo-Schicht: geopandas und osmnx bringen pandas mit und werden in Phase 3 durch shapely, pyproj und
+eine direkte Overpass-Abfrage (`way[highway][name](poly:…)`) ersetzt. Treue wird gemessen: Überlappung
+der Straßennamen je Stimmbezirk mit `reference/` muss über 95 % liegen, sonst wird die Abweichung
+verstanden und dokumentiert, bevor der Wechsel bleibt.
+
+Protokolle `KeywordMatcher` (`add_terms`, `extract(text) -> set[str]`) und `PdfTextExtractor`
+(`extract(bytes) -> str`). Heute FlashText (reines Python, letzte Version 2018) und pypdf (reines
+Python). Kandidaten nach Messung: `pyahocorasick` (C) oder ein PyO3-Modul `georep_native` auf
+`aho-corasick` (maturin, optionales Extra), `pypdfium2` oder `pymupdf` für die Extraktion.
+Erwartung vor der Messung: Extraktion dominiert (19k PDFs), Matching ist mit 6 s unkritisch.
+Die Erwartung wird gemessen, nicht geglaubt. cargo 1.98 ist installiert, maturin nicht.
+
+## 4. Phasen
+
+Jede Phase läuft auf einem Branch `refactor/phase-<n>`, endet mit der Definition of Done aus § 2 und nach dem Merge nach `main` mit einem Tag `v0.<n+1>.0` (Phase 0 → `v0.1.0`).
+
+### Phase 0: Netz spannen (keine Verhaltensänderung)
+
+1. `pyproject.toml` ohne Umzug: `[tool.uv] package = false`, Abhängigkeiten aus den Pins, `dependency-groups.dev` (ruff, mypy, pandas-stubs, types-requests, pytest, pytest-cov, syrupy, hypothesis, deal, nox), `[tool.ruff]` (E F I UP B, line-length 100, target py314), `[tool.mypy]` (strict, Overrides mit Begründung für geopandas, osmnx, shapely, flashtext, loguru, pandas im Altcode), `[tool.pytest.ini_options]` (`testpaths`, `--strict-markers`, Marker `slow`, `network`). `.python-version` 3.14, `uv.lock`, `requirements.txt` entfällt. Polars, pydantic, pydantic-settings, pyyaml kommen dazu; pandas, geopandas, osmnx, scikit-learn bleiben als markierte Altlast, bis Phase 3 sie entfernt.
+2. venv-Ort: `UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep` dokumentiert in README und `.envrc`; der heutige Symlink `.venv` entfällt.
+3. Charakterisierungstests (`tests/golden/`, mit Polars geschrieben): Offline-Kette auf `reference/` gegen `wahlbezirke_auswertung.csv` (Treffer je Wahlbezirk exakt, Quoten `approx`), invertierter Index als Menge von (Begriff, sortierte IDs), Regressionskennzahlen auf vier Nachkommastellen (Tabelle 5). Kleine Fixture `tests/fixtures/mini/` (200 Dokumente, 3 Wahlbezirke, deterministisch aus `reference/` erzeugt, Skript liegt bei) für Tests unter 2 s; der volle Lauf als `slow`.
+4. Drei bis fünf kleine echte PDFs (je unter 150 KB) als Fixtures für `get_text_from_pdf` und den `betrifft`-Schnitt; einmalig geladen, eingecheckt, Herkunft dokumentiert.
+5. CI am ersten Tag: GitHub Actions, `uv sync --locked`, `nox -s lint typecheck test`; Push eines trivialen Commits und zusehen.
+6. Mechanik, je ein Commit, in `.git-blame-ignore-revs`: `ruff check --select UP --fix` (4), `ruff check --fix` nur sichere Fixes (23), `ruff format` (14 Dateien).
+7. `STATUS.md` und `CLAUDE.md` (Arbeitsregeln für Agenten: Befehle, was nie laufen darf, wo Daten liegen).
+
+### Phase 1: Risiken schließen (kleine, einzeln begründete Verhaltensänderungen, je mit rotem Test zuerst)
+
+1. Timeouts, Session mit Retry/Backoff, User-Agent (schließt B113 ×4).
+2. `atomic_write` und Einsatz in allen Schreibstellen.
+3. Guards: `prep_papers` ohne PDFs, leere Ergebnisse in `reverse_index` und `analyse`, Pflichtspalten in `prep_voters`.
+4. Download-Schleife: Fehler pro Datei, Zähler, Weiterlaufen.
+5. `response.content` statt latin-1-Text schreiben.
+6. Deterministische Sortierung der Ausgaben.
+7. `TARGET_ENTITY` in die SPARQL-Query verdrahten (für Q1718 verhaltensneutral).
+8. Logging konfigurierbar statt beim Import auf DEBUG.
+
+### Phase 2: Struktur (Strangler Fig, eine Refactoring-Sorte pro Commit)
+
+1. `src/georep/` anlegen, Paketierung mit `uv_build`, `[project.scripts]`; alte Module importieren aus `georep` (Shims).
+2. `settings.py` + `settings.yml` + `settings.local.yml`; `config.py` wird Shim und stirbt zuletzt.
+3. `layout.py`; `data/` → `reference/` (git mv); `data_root` gitignored; `georep bootstrap` kopiert Rohdaten und Korpus aus `reference/` nach `data_root`, damit die Offline-Kette ohne Netz läuft.
+4. Modelle (`models.py`), Spaltennamen aus den Settings, drei Module ohne hart kodierte Schlüssel. Jedes nach `georep` gezogene Modul ist Polars-nativ; der Golden Master belegt die Gleichheit mit dem pandas-Altcode.
+5. Schrittregister `pipeline.py` mit Eingaben/Ausgaben/Stamps; `cli.py` mit `run`, `steps`, `status`, `bootstrap`, `--dry-run`, `--force`.
+6. Extract Function auf den drei C-Funktionen; Parameter Objects, wo vier Werte gemeinsam reisen.
+7. `mypy --strict` ohne Fehler für `georep`; Legacy-Shims unter Override, bis sie weg sind.
+8. Notebook-Mathematik nach `analysis/regression.py` mit numpy und `scipy.stats.linregress`; scikit-learn entfällt (es lieferte nur ein zweites R²). Notebook ruft nur noch auf.
+
+### Phase 3: Fetch- und Cache-Schicht
+
+1. `http.py`: Session-Factory, requests-cache, `Transport`-Protokoll; `FakeTransport` liefert aufgezeichnete Antworten aus `tests/fixtures/http/` (einmal real aufgenommen, klein geschnitten).
+2. PDF-Store mit Manifest; `--limit`, `--since`; Parallelität konfigurierbar, Standard sequenziell mit `delay_s` (der Server ist langsam, nicht wir).
+3. Text-Store je PDF-Hash; Korpus als JSONL; `prep_papers` wird inkrementell.
+4. OParl inkrementell (neueste zuerst, Abbruch unter `start`); `modified_since` ausprobieren und dokumentieren, ob der Server es kann.
+5. Straßen per Overpass je Stimmbezirk, Ergebnis je Geometrie-Hash gecacht; POIs per shapely-STRtree statt Schleife; danach osmnx, geopandas, pandas, scikit-learn aus `pyproject.toml` entfernen und den Lockfile-Check in CI aktivieren.
+6. Netz-Integrationstests als `network`, nicht in CI; ein `georep status` zeigt Cache-Füllstände mit Zahlen.
+
+### Phase 4: Tests ausbauen
+
+1. Unit-Tests für reine Funktionen (Wörterbuchaufbau, Normalisierung, Aggregation, Zuordnung).
+2. hypothesis-Eigenschaften: `expand_street_names` ist idempotent, Obermenge, kleingeschrieben; jeder POI landet in höchstens einem Bezirk; Summe über Stimmbezirke gleich Wahlbezirk; jede ID im Index kommt im Korpus vor; `anzahl_treffer` gleich Mächtigkeit der ID-Menge; Trefferquote ≥ 0.
+3. Golden Master als `syrupy`-Snapshots, klein, mit Diff-Pflicht; Frame-Vergleiche über `polars.testing.assert_frame_equal`.
+4. Coverage als Untergrenze (`--cov-fail-under=80` für `georep`), nicht als Ziel; `mutmut` auf `search/` und `analysis/` einmal pro Phase, nicht als Gate.
+
+### Phase 5: Profiling-Infrastruktur
+
+1. `georep profile <schritt>`: cProfile nach `docs/profiling/<datum>-<schritt>.prof`, `snakeviz` als Anzeige; `nox -s profile -- <schritt>`.
+2. `pytest-benchmark` für Matcher über die Mini-Fixture, Extraktion pro PDF, Aggregation; `--benchmark-autosave`, Vergleich gegen gespeicherte Baseline, Fail bei Verschlechterung über 10 %.
+3. Zeilenebene bei Bedarf mit `line_profiler`/`scalene`, Speicher mit `memray`; Befehle in `docs/profiling/README.md`.
+4. Erstes datiertes Ergebnis: Verteilung der Laufzeit eines vollen Offline-Laufs und einer Extraktion über 200 PDFs. Danach erst die Entscheidung über pyahocorasick, pypdfium2 oder Rust.
+
+### Phase 6: Design by Contract
+
+1. `deal` auf den reinen Funktionen in `search/`, `prep/`, `analysis/`, `layout`: `@deal.pre` (nicht leer, Pflichtspalten, CRS EPSG:4326, ISO-Daten), `@deal.post`/`@deal.ensure` (Längen, Teilmengen, Nichtnegativität), `@deal.pure` wo zutreffend, `@deal.raises(FetchError, …)` an den Fetchern, `@deal.inv` auf den Stores (Manifest konsistent).
+2. Verträge an Batch-Grenzen, nicht pro Dokument in der heißen Schleife; `contracts: off` schaltet `deal.disable()`, gemessener Overhead steht in `docs/`.
+3. `deal.cases` in pytest, damit hypothesis die Verträge direkt angreift; `crosshair check` als `nox -s verify` auf die rein-pythonischen Module mit `--report_all` (ein Nicht-Fund ist nur eine Zeitangabe); pandas-lastige Funktionen bekommen nur Laufzeitverträge plus hypothesis.
+4. Pydantic-Modelle für OParl-JSON, Manifeste, Settings; Vertrag und Validierung sauber getrennt wie im Skript.
+
+### Phase 7: Abschluss
+
+1. README aus Sicht eines frischen Klons (drei Befehle), Systemabhängigkeiten (keine erwartet; geopandas-Wheels bringen pyogrio/pyproj mit), Datenherkunft, Lizenz CC0 bleibt.
+2. Plan durch Beschreibungen ersetzen: `docs/architecture.md`, `docs/decisions.md` mit verworfenen Alternativen und Kosten, `CHANGELOG.md`.
+3. Optional ein Pull Request an `lubar102` mit den risikoschließenden Änderungen aus Phase 1, falls gewünscht.
+
+## 5. Aufwand (grob, in Arbeitssitzungen von zwei bis drei Stunden)
+
+| Phase | Sitzungen |
+|---|---|
+| 0 Netz | 1 |
+| 1 Risiken | 1 |
+| 2 Struktur | 2 |
+| 3 Fetch/Cache | 2 |
+| 4 Tests | 1–2 |
+| 5 Profiling | 1 |
+| 6 DbC | 1–2 |
+| 7 Abschluss | 0,5 |
+
+## 6. Entscheidungen, die vor Phase 0 feststehen sollten (mit Vorschlag)
+
+| Frage | Vorschlag | Alternative und Kosten |
+|---|---|---|
+| Paketname | `georep` | `grd`, `geographic_representation`; nur Benennung, später teuer zu ändern |
+| Python | 3.14 (Konrad, 2026-10-10), an drei Stellen (`requires-python >=3.14`, `.python-version 3.14`, `mypy python_version`) | 3.15: kompilierte Abhängigkeiten (numpy, scipy, shapely, pydantic-core, polars) liefern Wheels erst Wochen bis Monate nach dem Release; 3.13 verschenkt ein Jahr |
+| DataFrames und Format | Polars, Parquet für alles Abgeleitete (Konrad, 2026-10-10) | pandas und CSV: größere Verbreitung, aber langsamer, kein Lazy/Pushdown, Typen schwächer |
+| Geo-Schicht | shapely + pyproj + Overpass direkt (Phase 3) | geopandas/osmnx: weniger eigener Code, aber pandas als Pflichtabhängigkeit und ein Graphaufbau für eine Namensliste |
+| Datenlayout | `data/` → `reference/` (eingefroren), Laufzeit in `data_root` außerhalb des Repos | `data/` behalten und beschreiben lassen: jeder Lauf erzeugt Diffs, Fehlläufe überschreiben die Arbeit |
+| Settings-Format | YAML über pydantic-settings | TOML mit `tomllib` (stdlib, keine Env-Overrides, keine Validierung); JSON (keine Kommentare) |
+| Verträge | `deal` | `icontract` hat besseres Fehlerbild, aber `deal.cases` und crosshair-Pfad fehlen; mischen verboten |
+| CLI | `argparse`, `main(argv)` | typer: hübscher, zieht click und rich mit, mypy-Overhead; später austauschbar |
+| Automatisierung | `nox` + pre-commit + GitHub Actions | justfile/Makefile: einfacher, aber CI und lokal driften |
+| venv-Ort | `UV_PROJECT_ENVIRONMENT` auf xtraspace | `.venv` im Repo auf der vollen Primärplatte (4,7 GB frei) |
+| Upstream-PR | nicht geplant | bei Interesse Phase-1-Änderungen als PR; Lukas' Entscheidung |
+
+## 7. Risiken des Refactorings selbst
+
+- Der Golden Master deckt nur die Offline-Kette; die Fetch-Schicht wird gegen aufgezeichnete Antworten getestet, der echte OParl-Server ist langsam und verändert sich täglich. Netztests bleiben manuell.
+- pandas 3.0 (Copy-on-Write, String-Dtype) ist jung; Pins bleiben über `uv.lock` eingefroren, Upgrades sind bewusste Commits mit grünem Golden Master.
+- crosshair kann keine C-Erweiterungen symbolisch ausführen; es prüft nur die rein-pythonischen Module. Das ist eine Einschränkung, keine Lücke im Netz.
+- `deal`-Dekoratoren mit `lambda` sind für mypy blind; Verträge werden zusätzlich durch hypothesis-Tests mit echten Typen abgedeckt.
+- FlashText ist unbetreut; das Protokoll in § 3.5 ist die Versicherung dagegen.
+- Polars 2.0.0 ist vom 2026-10-06, vier Tage alt. Pin `polars>=2,<3`; sollte ein Blocker auftauchen, ist 1.x die Rückfallebene, die API-Unterschiede sind klein und das Lockfile macht den Wechsel zu einem Commit.
+- crosshair auf Python 3.14 ist nicht gesichert; die nox-Session `verify` darf auf 3.13 laufen, der Rest auf 3.14.
+- Verworfen: pandas (Vorgabe Konrad); DuckDB (Polars deckt den Bedarf, eine Abhängigkeit weniger); Hydra/OmegaConf für Settings (für eine Pipeline mit einem Lauf zu schwer); `requests` durch `httpx` ersetzen (kein Gewinn).

@@ -1,0 +1,101 @@
+[project]
+name = "georep"
+version = "0.1.0"
+description = "Geografische Repräsentation in Ratsdokumenten: Ortsmarker je Wahlbezirk, Treffer in OParl-Dokumenten, Zusammenhang mit der Wahlbeteiligung"
+readme = "README.md"
+license = "CC0-1.0"
+authors = [{ name = "Lukas Bartzsch" }, { name = "Konrad Völkel" }]
+requires-python = ">=3.14"
+dependencies = [
+    # Pipeline
+    "flashtext>=2.7",
+    "loguru>=0.7.3",
+    "matplotlib>=3.10.7",
+    "numpy>=2.2.5",
+    "polars>=2,<3",
+    "pydantic>=2.14",
+    "pydantic-settings>=2.15",
+    "pypdf>=6.6.2",
+    "pyyaml>=6.0.3",
+    "requests>=2.32.4",
+    "scipy>=1.16.2",
+    "shapely>=2.1.2",
+    "tqdm>=4.67.1",
+    # Altlast: nur vom Altcode in src/*.py und regression.ipynb gebraucht.
+    # Verschwindet mit Phase 3 (DEVELOPMENT_PLAN.md § 4); neuer Code fasst pandas nicht an.
+    "geopandas>=1.1.1",
+    "osmnx>=2.0.7",
+    "pandas>=3.0.0",
+    "scikit-learn>=1.7.2",
+]
+
+[dependency-groups]
+dev = [
+    "crosshair-tool>=0.0.111",
+    "deal>=4.24.6",
+    "hypothesis>=6.168",
+    "mypy>=2.4",
+    "nox>=2025.5",
+    "pytest>=9.1",
+    "pytest-cov>=7.1",
+    "ruff>=0.17",
+    "syrupy>=5",
+    "types-pyyaml",
+    "types-requests",
+]
+notebook = ["jupyterlab"]
+
+[tool.uv]
+# Noch kein installierbares Paket: der Altcode liegt flach in src/ und wird als `src.*` importiert.
+# Phase 2 legt src/georep/ an und schaltet auf uv_build um.
+package = false
+default-groups = ["dev"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+# Das Notebook bleibt bis Phase 2, wie abgegeben; dann zieht die Mathematik ins Modul.
+extend-exclude = [".idea", "*.ipynb"]
+
+[tool.ruff.lint]
+# Die fuenf Gruppen des eipy-Skripts; SIM, RUF, ANN kommen dazu, sobald diese sauber sind.
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"] # Zeilenlaenge meldet der Formatter, nicht der Linter
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "georep"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"] # assert False ist in Tests in Ordnung
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+# Strict gilt fuer neuen Code (tests/, ab Phase 2 src/georep/). Der Altcode src/*.py wird in der
+# nox-Session `baseline` gegen die Zahl aus docs/baseline-2026-10-10.md geprueft: nicht schlechter.
+files = ["tests"]
+
+[[tool.mypy.overrides]]
+# Ohne Stubs und ohne py.typed, Stand 2026-10-10. flashtext (letzte Version 2018) bleibt bis zum
+# Matcher-Protokoll aus Phase 5; osmnx/geopandas/pandas gehen mit Phase 3.
+module = ["flashtext.*", "osmnx.*", "geopandas.*", "pandas.*", "sklearn.*", "scipy.*", "tqdm.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Altcode: wird von den Tests importiert, aber nicht hier gemeldet (nox -s baseline zaehlt ihn).
+module = ["src.*", "run"]
+follow_imports = "silent"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+pythonpath = ["."]
+markers = [
+    "slow: laeuft ueber den vollen Referenzkorpus (Sekunden bis Minuten)",
+    "network: braucht echte Endpunkte; nie in CI",
+]
