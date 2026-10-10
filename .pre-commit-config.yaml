@@ -1,0 +1,19 @@
+# Installieren: uvx pre-commit install. Nicht mit --all-files ueber data/ laufen lassen.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: ^(data/|tests/fixtures/)
+      - id: end-of-file-fixer
+        exclude: ^(data/|tests/fixtures/)
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-yaml
+      - id: check-toml
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
