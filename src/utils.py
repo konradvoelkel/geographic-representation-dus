@@ -47,7 +47,7 @@ def load_json_from_path(path: Path) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"File not found: {path}")
 
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, encoding='utf-8') as f:
         return json.load(f)
 
 
@@ -82,7 +82,7 @@ def load_shapefile(path: Path) -> gpd.GeoDataFrame:
     :return: A GeoDataFrame containing the spatial data from the shapefile.
     :rtype: gpd.GeoDataFrame
     """
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, encoding='utf-8') as f:
         return gpd.read_file(f)
 
 

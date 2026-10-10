@@ -2,7 +2,8 @@ import time
 from dataclasses import dataclass, field, asdict
 import json
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
+from collections.abc import Iterable
 from loguru import logger
 import requests
 from tqdm import tqdm
@@ -107,7 +108,7 @@ def _check_for_existing_papers() ->tuple[set[str], list[dict]]:
         return set(), []
 
     try:
-        with open(papers_json_path, 'r', encoding='utf-8') as f:
+        with open(papers_json_path, encoding='utf-8') as f:
             known_paper = json.load(f)
         if not isinstance(known_paper, list):
             return set(), []
