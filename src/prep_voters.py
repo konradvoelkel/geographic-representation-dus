@@ -10,9 +10,12 @@ Functions:
     main: Coordinates the aggregation and saves the results to a CSV file.
 """
 from pathlib import Path
+
 import pandas as pd
 from loguru import logger
+
 import src.config as cfg
+
 
 def group_data_by_district(path: Path) -> pd.DataFrame | None:
     try:
@@ -39,7 +42,7 @@ def group_data_by_district(path: Path) -> pd.DataFrame | None:
         df_voters['FDP_anteil'] = df_voters['FDP_Stimmen'] / df_voters['Waehler']
         df_voters['Die_Linke_anteil'] = df_voters['Die_Linke_Stimmen'] / df_voters['Waehler']
         df_voters['AfD_anteil'] = df_voters['AfD_Stimmen'] / df_voters['Waehler']
-        logger.success(f"Aggregation der Wahlergebnisse erfolgreich abgeschlossen.")
+        logger.success("Aggregation der Wahlergebnisse erfolgreich abgeschlossen.")
         return df_voters
 
     except Exception as e:

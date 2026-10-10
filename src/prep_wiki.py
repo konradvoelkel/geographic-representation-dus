@@ -11,10 +11,11 @@ Functions:
     main: Coordinates the cleaning, aggregation, and saves the results to a CSV file.
 """
 from pathlib import Path
+
 import pandas as pd
 from loguru import logger
-import src.config as cfg
 
+import src.config as cfg
 
 
 def clean_wikidata(path: Path) -> pd.DataFrame:

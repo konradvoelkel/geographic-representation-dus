@@ -8,9 +8,11 @@ Functions:
     - main: Orchestrates the loading, indexing, and saving of the inverted index.
 """
 import pandas as pd
-from loguru import logger
-import src.config as cfg
 from flashtext import KeywordProcessor
+from loguru import logger
+
+import src.config as cfg
+
 
 def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
     logger.info("Lade combined_searchdict und Paper-Texte...")

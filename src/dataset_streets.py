@@ -1,12 +1,14 @@
-from pathlib import Path
-import osmnx as ox
 import time
+from pathlib import Path
+
+import osmnx as ox
+from loguru import logger
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.polygon import Polygon
 from shapely.validation import make_valid
-from src.utils import load_shapefile, save_json_to_path, validate_crs
+
 import src.config as cfg
-from loguru import logger
+from src.utils import load_shapefile, save_json_to_path, validate_crs
 
 
 def repair_geometry(geom) -> Polygon | MultiPolygon:

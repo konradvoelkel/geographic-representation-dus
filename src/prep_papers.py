@@ -2,10 +2,13 @@
 Prepares paper data by extracting text from PDFs and adding it to the paper metadata.
 """
 from pathlib import Path
+
 from loguru import logger
+from pypdf import PdfReader
+
 import src.config as cfg
 from src.utils import load_json_from_path, save_json_to_path
-from pypdf import PdfReader
+
 
 def get_text_from_pdf(path: Path) -> str:
     try:

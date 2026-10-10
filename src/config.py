@@ -7,9 +7,11 @@ and file paths, and other configuration variables. These constants and configura
 used across the application for managing data, endpoints, and query executions.
 
 """
-from pathlib import Path
 import sys
+from pathlib import Path
+
 from loguru import logger
+
 
 #Logging-Setup
 def setup_logging():

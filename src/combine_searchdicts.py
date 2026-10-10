@@ -8,8 +8,10 @@ Functions:
       of datasets.
 """
 import pandas as pd
-import src.config as cfg
 from loguru import logger
+
+import src.config as cfg
+
 
 def main() -> None:
     logger.info("Starte Kombination von Suchbegriffen")

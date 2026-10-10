@@ -1,11 +1,14 @@
 import json
+
 import requests
 from loguru import logger
+
 import src.config as cfg
+
 
 def get_wahlergebnis() -> None:
     try:
-        logger.info(f"Lade Wahlergebnisse von OpenData-Portal herunter")
+        logger.info("Lade Wahlergebnisse von OpenData-Portal herunter")
         response = requests.get(cfg.OPENDATA_ENDPOINT_WAHLERGEBNIS)
         response.raise_for_status()
 
@@ -18,7 +21,7 @@ def get_wahlergebnis() -> None:
 
 def get_stimmbezirk_shapefile() -> None:
     try:
-        logger.info(f"Lade Stimmbezirks-Shapefile herunter")
+        logger.info("Lade Stimmbezirks-Shapefile herunter")
         response = requests.get(cfg.OPENDATA_ENDPOINT_STIMMBEZIRK)
         response.raise_for_status()
         data = response.json()

@@ -8,15 +8,16 @@ if a point is within a polygon, and validate or reproject GeoDataFrames to match
 a specified CRS.
 """
 
-from pathlib import Path
 import json
+from pathlib import Path
 
+import geopandas as gpd
 from geopandas import GeoDataFrame
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.point import Point
 
 import src.config as cfg
-import geopandas as gpd
+
 
 def setup_data_directories() -> None:
     """

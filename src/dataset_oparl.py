@@ -1,15 +1,15 @@
-import time
-from dataclasses import dataclass, field, asdict
 import json
+import time
+from collections.abc import Iterable
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
-from collections.abc import Iterable
-from loguru import logger
+
 import requests
+from loguru import logger
 from tqdm import tqdm
 
 import src.config as cfg
-from src.utils import setup_data_directories, load_json_from_path
 
 
 @dataclass

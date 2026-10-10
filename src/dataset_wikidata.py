@@ -1,13 +1,14 @@
+import time
+
 import geopandas as gpd
-from urllib.parse import unquote
+import requests
+from loguru import logger
+from shapely.geometry import Point
 from shapely.geometry.base import BaseGeometry
 from tqdm import tqdm
+
 import src.config as cfg
-import requests
 import src.utils as utils
-import time
-from shapely.geometry import Point
-from loguru import logger
 
 
 def get_district_for_poi(articles: list[dict]) -> list[dict]:
@@ -32,7 +33,7 @@ def get_district_for_poi(articles: list[dict]) -> list[dict]:
         logger.error(f"Shapefile nicht gefunden unter {shapefile_path}")
         return articles
 
-    logger.info(f"Lade Stimmbezirke für räumliche Zuordnung der SPARQL-Daten...")
+    logger.info("Lade Stimmbezirke für räumliche Zuordnung der SPARQL-Daten...")
     stimmbezirke = gpd.read_file(shapefile_path)
     stimmbezirke = stimmbezirke.to_crs(cfg.CRS)
 
