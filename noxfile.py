@@ -62,7 +62,7 @@ def golden(session: nox.Session) -> None:
 
 
 # Rein-pythonische Funktionen mit deal-Verträgen; Polars-Funktionen bleiben draußen, crosshair kann
-# keine Rust-Erweiterung symbolisch ausführen (DEVELOPMENT_PLAN.md § 4, Phase 6 Schritt 3).
+# keine Rust-Erweiterung symbolisch ausführen (docs/architecture.md, „Verträge").
 VERIFY_TARGETS = [
     "georep.prep.extract.after_marker",
     "georep.prep.extract.normalise_text",

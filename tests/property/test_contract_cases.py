@@ -5,7 +5,7 @@ angegebenen Strategien, ruft die Funktion und prüft pre, post, ensure, raises u
 deal.raises genannte Ausnahme gilt als erlaubt, Eingaben gegen eine Vorbedingung werden verworfen.
 Polars-Funktionen bleiben außen vor, hypothesis baut keine DataFrames aus Typen; sie haben ihre
 Invarianten in den anderen Modulen hier. check_types bleibt aus: typeguard ist nicht installiert,
-und ``deal test`` ist mit typeguard 4 kaputt (DEVELOPMENT_PLAN.md § 4, Phase 6 Schritt 3).
+und ``deal test`` ist mit typeguard 4 kaputt (docs/decisions.md, Punkt 15).
 """
 
 from __future__ import annotations

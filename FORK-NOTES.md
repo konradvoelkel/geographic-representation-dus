@@ -4,8 +4,9 @@ Lokaler Fork von <https://github.com/lubar102/geographic-representation-dus> (Lu
 Bachelorarbeit HHU, Januar 2026, Lizenz CC0). Remotes: `upstream` = Original,
 `origin` = <https://github.com/konradvoelkel/geographic-representation-dus>. Angelegt 2026-10-09.
 
-Was der Code tut, wie man ihn startet und wo was liegt, steht in `README.md`; der Umbau in
-`DEVELOPMENT_PLAN.md`, der Stand in `STATUS.md`, der Befund vor dem Umbau in `docs/baseline-2026-10-10.md`.
+Was der Code tut, wie man ihn startet und wo was liegt, steht in `README.md`; der Aufbau in
+`docs/architecture.md`, die Gründe in `docs/decisions.md`, der Stand in `STATUS.md`, der Befund vor dem Umbau in
+`docs/baseline-2026-10-10.md`.
 Hier bleibt nur, was an Konrads Rechner hängt.
 
 ## Umgebung auf diesem Rechner

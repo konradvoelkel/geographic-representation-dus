@@ -2,7 +2,7 @@
 
 Ein metrisches Arbeits-CRS, genau eine Stelle, die nach lon/lat zurückprojiziert (``to_lonlat``),
 ``always_xy=True`` überall, ``make_valid`` statt ``buffer(0)`` (Lehren aus bubatzblick,
-DEVELOPMENT_PLAN.md § 4a). Die Stimmbezirke kommen als GeoJSON in EPSG:4647 vom Open-Data-Portal.
+docs/decisions.md, Punkt 7). Die Stimmbezirke kommen als GeoJSON in EPSG:4647 vom Open-Data-Portal.
 """
 
 from __future__ import annotations

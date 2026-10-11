@@ -3,7 +3,7 @@
 Ein Stamp neben der ersten Ausgabe hält fest, womit sie entstand: Hashes der Eingaben,
 Fingerprint der Settings, Code-Version, Schema-Version. Stimmt alles, ist der Schritt aktuell
 und wird übersprungen; ``force`` erzwingt, ``dry_run`` plant nur. Jeder Lauf nennt, was er getan
-hat und warum (DEVELOPMENT_PLAN.md § 3.3 und § 3.4).
+hat und warum (docs/architecture.md, „Pipeline" und „Sicherheit").
 """
 
 from __future__ import annotations

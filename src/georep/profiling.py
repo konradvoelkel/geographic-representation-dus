@@ -1,7 +1,7 @@
 """Profil eines echten Schritts: cProfile um ``run_step``, Datei für snakeviz, Tabelle für die Konsole.
 
-Profiliert wird der Schritt aus ``build_steps``, erzwungen, kein Nachbau (DEVELOPMENT_PLAN.md § 4,
-Phase 5). Die ``.prof``-Datei landet datiert unter ``docs/profiling/`` und ist gitignored, weil sie
+Profiliert wird der Schritt aus ``build_steps``, erzwungen, kein Nachbau (docs/decisions.md,
+Punkt 13). Die ``.prof``-Datei landet datiert unter ``docs/profiling/`` und ist gitignored, weil sie
 rechnerspezifisch ist; die Zahlen, die bleiben sollen, stehen datiert in ``docs/profiling/README.md``.
 cProfile sieht nur Python-Frames: Zeit in Polars oder pypdf erscheint beim aufrufenden Frame.
 """

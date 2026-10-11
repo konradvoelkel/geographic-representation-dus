@@ -1,7 +1,11 @@
-# Entwicklungsplan: geographic-representation-dus auf Vordermann
+# Entwicklungsplan: geographic-representation-dus auf Vordermann (abgeschlossen 2026-10-11)
+
+Historisches Dokument: alle sieben Phasen sind abgeschlossen, die Beschreibung des Stands ist
+[architecture.md](architecture.md), die Gründe stehen in [decisions.md](decisions.md). Dieser Plan wird nicht
+mehr fortgeschrieben.
 
 Stand 2026-10-10, freigegeben von Konrad am selben Tag mit zwei Änderungen: Polars statt pandas und Parquet wo möglich; Python 3.14. Dieser Plan wird nach Abschluss durch Beschreibungen ersetzt
-(README, `docs/`), nicht fortgeschrieben. Befund und Messlatte: `docs/baseline-2026-10-10.md`.
+(README, `docs/`), nicht fortgeschrieben. Befund und Messlatte: `baseline-2026-10-10.md`.
 
 ## 1. Ziel
 
@@ -310,7 +314,11 @@ Testgenerierung läuft über `deal.cases` in pytest und `crosshair check`.
 4. Pydantic bleibt an der Systemgrenze (OParl, Records, Settings), Verträge im Inneren; die Abgrenzung wie im
    Skript. Mutationstests erneut versuchen, diesmal mit `pytest-gremlins` oder `fest` (`docs/mutation-2026-10-11.md`).
 
-### Phase 7: Abschluss
+### Phase 7: Abschluss — abgeschlossen 2026-10-11
+
+Ergebnis: README aus Sicht eines frischen Klons (geprüft mit `git clone`, `uv sync --locked`, `bootstrap`,
+`run`, `regress`, `nox`), `docs/architecture.md` und `docs/decisions.md`, dieser Plan archiviert. Kein Pull
+Request an `lubar102` (Konrad, 2026-10-11: Lukas arbeitet an anderen Projekten; decisions.md, Punkt 19).
 
 1. README aus Sicht eines frischen Klons (drei Befehle), Systemabhängigkeiten (keine erwartet; geopandas-Wheels bringen pyogrio/pyproj mit), Datenherkunft, Lizenz CC0 bleibt.
 2. Plan durch Beschreibungen ersetzen: `docs/architecture.md`, `docs/decisions.md` mit verworfenen Alternativen und Kosten, `CHANGELOG.md`.

@@ -1,6 +1,6 @@
 """Verträge (deal): der Schalter aus ``settings.contracts`` und die Prädikate, aus denen sie bestehen.
 
-Verträge prüfen Vor- und Nachbedingungen an Batch-Grenzen (DEVELOPMENT_PLAN.md § 4, Phase 6).
+Verträge prüfen Vor- und Nachbedingungen an Batch-Grenzen (docs/architecture.md, „Verträge").
 Eine Verletzung ist ein Programmierfehler, kein Domänenfehler: sie läuft als ``deal.ContractError``
 durch und wird nicht am Rand gefangen. ``"off"`` ruft ``deal.disable``, die Funktionen laufen dann
 ohne Prüfung; der gemessene Overhead steht in ``docs/profiling/README.md``. Der Schalter wirkt

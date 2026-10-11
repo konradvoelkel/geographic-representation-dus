@@ -29,7 +29,7 @@ Stand 2026-10-11, `main` auf `v0.7.0`, nächster Branch `refactor/phase-7`. Fakt
 
 ## Nächster Schritt
 
-Phase 7 auf `refactor/phase-7` (siehe `DEVELOPMENT_PLAN.md` § 4, Phase 7): README aus Sicht eines frischen
+Phase 7 auf `refactor/phase-7` (siehe `docs/development-plan-2026-10.md`, Phase 7): README aus Sicht eines frischen
 Klons, `docs/architecture.md` und `docs/decisions.md` mit den verworfenen Alternativen und ihren Kosten (die
 datierten Einzeldokumente unter `docs/` sind die Quelle), Plan durch Beschreibungen ersetzen, optional ein
 Pull Request an `lubar102` mit den risikoschließenden Änderungen aus Phase 1.

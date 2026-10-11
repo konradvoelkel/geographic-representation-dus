@@ -3,7 +3,7 @@
 ``PaperStore``: ``raw/papers.jsonl``, eine Zeile je Paper, sortiert nach ID; neuere ``modified``
 gewinnt. ``TextStore``: ``cache/text/texts.parquet`` mit Text, Extraktor, PDF-Hash und Herkunft je
 Dateiname, damit ein Text nur neu entsteht, wenn PDF oder Extraktor sich geändert haben
-(DEVELOPMENT_PLAN.md § 3.3).
+(docs/architecture.md, „Datenhaltung").
 """
 
 from __future__ import annotations

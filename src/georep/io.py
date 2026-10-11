@@ -1,7 +1,7 @@
 """Atomare Schreibvorgänge: Temporärdatei im Zielverzeichnis, fsync, ``os.replace``.
 
 Ein Abbruch durch Exception, Signal oder Stromausfall hinterlässt entweder die alte Datei oder
-die neue, nie eine halbe. Das ist Regel 2 in DEVELOPMENT_PLAN.md § 3.4.
+die neue, nie eine halbe. Das ist Regel 2 in docs/architecture.md, „Sicherheit".
 """
 
 from __future__ import annotations

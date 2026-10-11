@@ -1,6 +1,6 @@
 # Profiling und Benchmarks
 
-Erst messen, dann optimieren, dann nachmessen (DEVELOPMENT_PLAN.md § 2). Hier stehen die Werkzeuge und
+Erst messen, dann optimieren, dann nachmessen (decisions.md, Punkt 13 und 14). Hier stehen die Werkzeuge und
 die datierten Zahlen; die Rohdaten (`.prof`-Dateien, `.benchmarks/`) bleiben lokal, weil sie
 rechnerspezifisch sind. Alle Zahlen in dieser Datei stammen von Konrads Rechner (AMD Ryzen 7 5700X,
 Python 3.14.6, Linux 6.8 lowlatency), sofern nichts anderes dabeisteht.

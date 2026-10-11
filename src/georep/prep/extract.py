@@ -7,7 +7,7 @@ berechnet, wenn PDF-Hash oder Extraktor sich geändert haben.
 Die Bibliothek steht hinter ``PdfTextExtractor``: ``name`` ist der Cache-Schlüssel im Textstore,
 ``extract`` liefert den rohen Text aller Seiten. ``PypdfExtractor`` ist die Implementierung der
 Arbeit; ein Ersatz (pypdfium2, pymupdf) muss den Golden Master der vier Fixture-PDFs bestehen
-oder seine Abweichung dokumentieren (DEVELOPMENT_PLAN.md § 3.5).
+oder seine Abweichung dokumentieren (docs/architecture.md, „Nähte").
 """
 
 from __future__ import annotations

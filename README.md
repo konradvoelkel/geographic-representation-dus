@@ -8,7 +8,7 @@ Bezirk wird mit der Wahlbeteiligung der Kommunalwahl 2025 in Beziehung gesetzt.
 
 Ursprung: Bachelorarbeit von Lukas Bartzsch, Heinrich-Heine-Universität Düsseldorf, Januar 2026
 (<https://github.com/lubar102/geographic-representation-dus>). Dieser Fork baut den Code schrittweise um;
-Ziel und Phasen stehen in [DEVELOPMENT_PLAN.md](DEVELOPMENT_PLAN.md), der aktuelle Stand in [STATUS.md](STATUS.md),
+Ziel und Phasen standen in [docs/development-plan-2026-10.md](docs/development-plan-2026-10.md), der aktuelle Stand in [STATUS.md](STATUS.md),
 Änderungen aus Nutzersicht in [CHANGELOG.md](CHANGELOG.md).
 
 ## Loslegen

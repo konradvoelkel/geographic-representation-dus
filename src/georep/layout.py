@@ -2,7 +2,7 @@
 
 Laufzeitdaten unter ``data_root``, Caches unter ``cache_root``, der eingefrorene Datensatz der
 Arbeit unter ``reference_root``, und der wird nur gelesen: ``guard_writable`` verweigert jeden
-Pfad darunter (DEVELOPMENT_PLAN.md § 3.4, Regel 1). Eingaben behalten die Dateinamen und Formate
+Pfad darunter (docs/architecture.md, „Sicherheit", Regel 1). Eingaben behalten die Dateinamen und Formate
 der Quellen; alles Abgeleitete ist Parquet.
 """
 

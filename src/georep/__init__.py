@@ -1,7 +1,9 @@
 """georep: geografische Repräsentation in Ratsdokumenten.
 
-Das Paket wächst als Strangler Fig neben dem Altcode in ``src/*.py`` (DEVELOPMENT_PLAN.md § 3.1).
-Neuer Code ist vollständig typisiert, nutzt Polars statt pandas und schreibt atomar.
+Ortsmarker je Wahlbezirk aus OpenStreetMap, Wikidata und Wikipedia, Treffer in den OParl-Dokumenten des
+Stadtrats, Zusammenhang mit der Wahlbeteiligung. Aufbau in ``docs/architecture.md``, Gründe in
+``docs/decisions.md``. Vollständig typisiert, Polars für Tabellen, Parquet für Abgeleitetes, atomare
+Schreibvorgänge, deal-Verträge an den Batch-Grenzen.
 """
 
 __version__ = "0.7.0"

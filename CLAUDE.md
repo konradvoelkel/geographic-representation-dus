@@ -1,6 +1,6 @@
 # Arbeitsregeln für dieses Repo
 
-Plan und Phasen: `DEVELOPMENT_PLAN.md`. Messlatte: `docs/baseline-2026-10-10.md`. Stand: `STATUS.md`
+Plan und Phasen: `docs/development-plan-2026-10.md`. Messlatte: `docs/baseline-2026-10-10.md`. Stand: `STATUS.md`
 (im selben Commit nachziehen, wenn sich der Stand ändert). Maßstab für Stil und Vorgehen sind die
 Kapitel Brownfield, Code-Qualität, Testing, Profiling und Design by Contract des eipy-Skripts.
 
