@@ -22,6 +22,7 @@ from georep import __version__
 from georep.analysis.bodies import documents_by_body, hits_by_body
 from georep.analysis.bodies import summary as bodies_summary
 from georep.analysis.hits import DISTRICT, hits_by_district, join_voters
+from georep.analysis.timeline import WITH_TEXT, district_months, monthly_series
 from georep.analysis.ols import model_frame, model_terms, models_table
 from georep.analysis.parties import (
     classify_originators,
@@ -634,6 +635,21 @@ def build_steps(
         write_parquet(frame, layout.index, schema_version=1)
         return f"{frame.height} Begriffe, {int(frame.get_column('anzahl_treffer').sum())} Treffer in {corpus.height} Dokumenten"
 
+    # --- Option 07: Monitoring der laufenden Wahlperiode
+    def timeline() -> str:
+        meta = (
+            pl.scan_parquet(layout.corpus)
+            .select("id", "date", (pl.col("text") != "").alias(WITH_TEXT))
+            .collect()
+        )
+        index_frame = pl.read_parquet(layout.index)
+        monthly = monthly_series(meta, index_frame)
+        write_parquet(monthly, layout.timeline, schema_version=1)
+        per_district = district_months(pl.read_parquet(layout.dictionary), index_frame, meta)
+        write_parquet(per_district, layout.district_timeline, schema_version=1)
+        months = monthly.filter(pl.col("monat").is_not_null()).height
+        return f"{months} Monate, {per_district.height} Zeilen je Wahlbezirk und Monat"
+
     def results() -> str:
         hits = hits_by_district(
             pl.read_parquet(layout.dictionary),
@@ -962,6 +978,13 @@ def build_steps(
         # --- Option 06
         *([Step("topics", (layout.corpus,), topic_outputs, topics)] if with_topics else []),
         Step("index", (layout.dictionary, layout.corpus), (layout.index,), index),
+        # --- Option 07: Monitoring der laufenden Wahlperiode
+        Step(
+            "timeline",
+            (layout.corpus, layout.index, layout.dictionary),
+            (layout.timeline, layout.district_timeline),
+            timeline,
+        ),
         Step(
             "results", (layout.dictionary, layout.index, layout.voters), (layout.results,), results
         ),
@@ -1088,6 +1111,9 @@ def build_steps(
                     if with_parties
                     else ()
                 ),
+                # Option 07: die Monatsreihe und ihre Zerlegung je Wahlbezirk
+                layout.timeline,
+                layout.district_timeline,
             )
             + ((layout.topics, layout.topic_documents) if with_topics else ())
             # --- Option 02: der Vergleich und die Zuordnung der älteren Periode

@@ -548,6 +548,37 @@ TABLES.append(
     )
 )
 
+# Option 07: Monitoring der laufenden Wahlperiode (docs/plans/07-monitoring.md)
+MONTH_COLUMN = ("Monatserster; leer: Dokumente ohne Datum", "Datum")
+TABLES.extend(
+    [
+        PublishedTable(
+            "monatsreihe",
+            lambda layout: layout.timeline,
+            "Dokumente je Monat: alle, mit Text, mit mindestens einem Treffer",
+            {
+                "monat": MONTH_COLUMN,
+                "dokumente": ("Ratsdokumente mit Datum in diesem Monat", "Dokumente"),
+                "mit_text": ("davon mit extrahiertem Text", "Dokumente"),
+                "mit_treffer": ("davon mit mindestens einem Treffer im Wörterbuch", "Dokumente"),
+            },
+        ),
+        PublishedTable(
+            "wahlbezirke_monate",
+            lambda layout: layout.district_timeline,
+            "Treffer je Wahlbezirk und Monat (je Dokument einmal)",
+            {
+                "wahlkreis_id": DISTRICT_COLUMN,
+                "monat": MONTH_COLUMN,
+                "anzahl_treffer": (
+                    "Dokumente des Monats mit mindestens einem Treffer im Wörterbuch des Bezirks",
+                    "Dokumente",
+                ),
+            },
+        ),
+    ]
+)
+
 # Nur für ``georep export`` (CSV neben der Parquet-Datei), nicht auf der Seite.
 EXPORT_ONLY: list[PublishedTable] = [
     PublishedTable(

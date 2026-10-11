@@ -370,6 +370,17 @@ class Layout:
         """Option 01: Kernzahlen und Regression als JSON; die Schnittstelle des Städtevergleichs."""
         return self.site_data / "summary.json"
 
+    # Option 07: Monitoring der laufenden Wahlperiode
+    @property
+    def timeline(self) -> Path:
+        """Dokumente je Monat, stadtweit (Schritt ``timeline``)."""
+        return self.processed / "monatsreihe.parquet"
+
+    @property
+    def district_timeline(self) -> Path:
+        """Treffer je Wahlbezirk und Monat (Schritt ``timeline``)."""
+        return self.processed / "wahlbezirke_monate.parquet"
+
     def runtime_dirs(self) -> tuple[Path, ...]:
         return (
             self.external,
