@@ -92,6 +92,44 @@ def test_modified_since_goes_only_on_the_first_request() -> None:
     assert len(session.calls) == 2
 
 
+# --- Option 07: Monitoring der laufenden Wahlperiode ------------------------------------------
+
+OPEN = Period(start=dt.date(2025, 9, 15), election=dt.date(2025, 9, 14))
+
+
+def test_deleted_papers_land_in_the_report_and_not_in_the_records() -> None:
+    _, report = fetch_papers(FakeSession(_routes()), PAGE1, PERIOD)
+    assert report.deleted_ids == ("https://ris.invalid/papers/3",)
+    assert "1 gelöscht" in report.summary() and "2 im Zeitraum" in report.summary()
+
+
+def test_the_recorded_modified_since_page_gives_four_records_and_two_deletions() -> None:
+    from tests.conftest import REPO
+
+    url = "https://ris.invalid/papers?modified_since"
+    page = (REPO / "tests" / "fixtures" / "oparl" / "papers_modified_since.json").read_bytes()
+    session = FakeSession({url: response(url, content=page)})
+    records, report = fetch_papers(
+        session, url, OPEN, modified_since=dt.datetime(2026, 10, 1, tzinfo=dt.UTC)
+    )
+    assert (report.pages, report.seen, report.kept) == (1, 6, 4)
+    assert [r.id.rsplit("/", 1)[-1] for r in records] == ["114057", "112413", "114038", "112372"]
+    assert [i.rsplit("/", 1)[-1] for i in report.deleted_ids] == ["114106", "114088"]
+    assert all(r.modified is not None and r.date is not None for r in records)
+    assert not report.stopped_early  # eine Seite, kein next-Link
+    assert session.calls == [(url, {"modified_since": "2026-10-01T00:00:00+00:00"})]
+
+
+def test_an_open_period_has_no_upper_bound_and_stops_before_its_start() -> None:
+    routes = {
+        PAGE1: _page(PAGE1, [_paper(1, "2026-10-07"), _paper(2, "2025-09-15")], PAGE2),
+        PAGE2: _page(PAGE2, [_paper(3, "2025-09-14"), _paper(4, "2020-09-13")], PAGE3),
+    }
+    records, report = fetch_papers(FakeSession(routes), PAGE1, OPEN)
+    assert [r.id.rsplit("/", 1)[-1] for r in records] == ["1", "2"]  # kein oberes Ende
+    assert (report.pages, report.stopped_early) == (2, True)  # Seite 2 liegt vor dem Beginn
+
+
 def test_fetch_propagates_network_and_format_errors() -> None:
     routes = _routes()
     routes[PAGE2] = requests.ConnectionError("Seite 2 weg")
