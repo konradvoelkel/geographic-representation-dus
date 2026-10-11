@@ -88,15 +88,6 @@ STREET_PER_DISTRICT_PATH = _layout.streets
 WIKI_DICT = _layout.pois
 # Korpus im Altformat
 PAPER_WITH_TEXT_PATH = _layout.corpus_legacy
-# Ergebnisse des Altcodes (CSV); die Polars-Schritte schreiben daneben Parquet
-AGG_STREETS_PER_WAHLBEZIRK_PATH = _layout.processed / "wahlbezirke_strassen.csv"
-AGG_VOTERS_PER_WAHLBEZIRK_PATH = _layout.processed / "wahlbezirke_waehler.csv"
-AGG_WIKIDATA_PATH = _layout.processed / "wikidata_agg.csv"
-COMBINED_SEARCHDICT_PATH = _layout.processed / "combined_searchdict.csv"
-INVERTED_INDEX_PATH = _layout.processed / "inverted_index.csv"
-WIKIDATA_VIS_PATH = _layout.processed / "wikidata_vis.csv"
-AUSWERTUNG_PATH = _layout.processed / "wahlbezirke_auswertung.csv"
-
 # Beobachtungszeitraum, ISO-Strings wie im Altcode
 START = _settings.period.start.isoformat()
 ENDE = _settings.period.end.isoformat()

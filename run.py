@@ -1,33 +1,36 @@
+"""Voller Lauf: Netzschritte (noch Altcode), dann die Polars-Kette.
+
+Lädt alle Metadaten und PDFs neu und dauert Stunden; der OParl-Server brauchte am 2026-10-09
+85 s pro Seite. Für die Offline-Kette allein reicht ``georep bootstrap`` und ``georep run``.
+"""
+
+from __future__ import annotations
+
 from loguru import logger
 
-from src.analyse import main as analyse_main
-from src.combine_searchdicts import main as combine_main
+from georep.layout import Layout
+from georep.pipeline import build_steps, run_pipeline
+from georep.settings import load_settings
 from src.dataset_oparl import main as oparl_main
 from src.dataset_opendata import main as opendata_main
 from src.dataset_streets import main as streets_main
 from src.dataset_wikidata import main as wikidata_main
 from src.prep_papers import main as papers_main
-from src.prep_streets import main as streets_agg_main
-from src.prep_voters import main as voters_main
-from src.prep_wiki import main as wiki_main
-from src.reverse_index import main as index_main
-from src.utils import setup_data_directories
 
 
 def main() -> None:
-    logger.info("Starte alle Prozesse")
-    setup_data_directories()
+    settings = load_settings()
+    layout = Layout.from_settings(settings)
+    layout.ensure_dirs()
+    logger.info("Netzschritte (Altcode; Phase 3 ersetzt sie)")
     oparl_main()
     opendata_main()
     streets_main()
     wikidata_main()
     papers_main()
-    voters_main()
-    wiki_main()
-    streets_agg_main()
-    combine_main()
-    index_main()
-    analyse_main()
+    logger.info("Polars-Kette")
+    for outcome in run_pipeline(build_steps(settings, layout), settings):
+        print(outcome.line())
     logger.success("Alle Prozesse abgeschlossen")
 
 

@@ -92,12 +92,10 @@ def mini_chain(
     mini_root: Path, settings: Settings, tmp_path_factory: pytest.TempPathFactory
 ) -> dict[str, pl.DataFrame]:
     from georep.analysis.hits import hits_by_district, join_voters
-    from georep.bootstrap import legacy_corpus_to_parquet
+    from georep.prep.papers import corpus_from_legacy_json
     from georep.search.index import build_index
 
-    tmp = tmp_path_factory.mktemp("chain")
-    legacy_corpus_to_parquet(mini_root / "interim" / "paper_with_text.json", tmp / "papers.parquet")
-    corpus = pl.read_parquet(tmp / "papers.parquet")
+    corpus = corpus_from_legacy_json(mini_root / "interim" / "paper_with_text.json")
     voters = aggregate_voters(
         read_results_csv(
             mini_root / "external" / "Stimmbezirk_Wahlergebnis.csv", settings.columns.results

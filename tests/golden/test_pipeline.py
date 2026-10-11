@@ -49,18 +49,18 @@ def test_pipeline_runs_skips_and_reruns(
     steps = build_steps(settings, layout)
 
     planned = run_pipeline(steps, settings, dry_run=True)
-    assert [o.status for o in planned] == ["geplant"] * 6
+    assert [o.status for o in planned] == ["geplant"] * 7
     assert not layout.results.exists()
 
     first = run_pipeline(steps, settings)
-    assert [o.status for o in first] == ["ausgeführt"] * 6
+    assert [o.status for o in first] == ["ausgeführt"] * 7
     assert all(s.stamp_path.exists() for s in steps)
     _compare_results(
         _results_as_legacy(layout.results), mini_root / "expected" / "wahlbezirke_auswertung.csv"
     )
 
     second = run_pipeline(steps, settings)
-    assert [o.status for o in second] == ["übersprungen"] * 6
+    assert [o.status for o in second] == ["übersprungen"] * 7
     assert all(o.reason == "aktuell" for o in second)
 
     forced = run_pipeline(steps, settings, ["results"], force=True)
@@ -77,6 +77,7 @@ def test_pipeline_runs_skips_and_reruns(
         "streets": "übersprungen",
         "pois": "ausgeführt",
         "dictionary": "ausgeführt",
+        "corpus": "übersprungen",
         "index": "ausgeführt",
         "results": "ausgeführt",
     }
@@ -88,7 +89,6 @@ def test_missing_corpus_names_bootstrap(
 ) -> None:
     layout = _layout(tmp_path, mini_root)
     bootstrap(layout)
-    layout.corpus.unlink()
     with pytest.raises(MissingInputError, match="bootstrap"):
         run_pipeline(build_steps(settings, layout), settings, ["index"])
 

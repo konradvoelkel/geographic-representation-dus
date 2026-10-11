@@ -21,11 +21,10 @@ dependencies = [
     "scipy>=1.16.2",
     "shapely>=2.1.2",
     "tqdm>=4.67.1",
-    # Altlast: nur vom Altcode in src/*.py und regression.ipynb gebraucht.
-    # Verschwindet mit Phase 3 (DEVELOPMENT_PLAN.md § 4); neuer Code fasst pandas nicht an.
+    # Altlast: nur von den Netzschritten in src/*.py (geopandas, osmnx; beide ziehen pandas)
+    # und bis zur Notebook-Umstellung von scikit-learn gebraucht. Verschwindet mit Phase 3.
     "geopandas>=1.1.1",
     "osmnx>=2.0.7",
-    "pandas>=3.0.0",
     "scikit-learn>=1.7.2",
 ]
 

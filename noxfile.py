@@ -16,7 +16,7 @@ LEGACY = [*sorted(str(p) for p in Path("src").glob("*.py")), "run.py"]
 # Altcode-Baseline (docs/baseline-2026-10-10.md): 18 Fehler unter Python 3.12 und den alten Pins,
 # 14 unter dem Lockfile mit Python 3.14 vom 2026-10-10, 5 seit die Dataclass Paper None erlaubt
 # (2026-10-11). Gilt der strengere Wert.
-LEGACY_MYPY_ERRORS = 5
+LEGACY_MYPY_ERRORS = 4
 
 
 @nox.session

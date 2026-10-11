@@ -1,4 +1,4 @@
-"""Guards des Altcodes: ohne Eingabe kein Lauf, ohne Ergebnis keine Datei, falsche Spalten beim Namen."""
+"""Guards: ohne Eingabe kein Lauf, ohne Ergebnis keine Datei, falsche Spalten beim Namen."""
 
 from __future__ import annotations
 
@@ -6,11 +6,16 @@ import json
 import shutil
 from pathlib import Path
 
+import polars as pl
 import pytest
 
 import src.config as cfg
+from georep.analysis.hits import hits_by_district, join_voters
 from georep.errors import EmptyResultError, MissingInputError, SchemaError
-from src import analyse, prep_papers, prep_voters, reverse_index
+from georep.prep.voters import read_results_csv
+from georep.search.index import build_index
+from georep.settings import load_settings
+from src import prep_papers
 from tests.conftest import MINI, PDF_FIXTURES
 
 FIXTURE_PDFS = ["00438685.pdf", "00439409.pdf", "00519825.pdf", "00552781.pdf"]
@@ -79,7 +84,7 @@ def test_prep_papers_refuses_to_shrink_the_corpus(papers_layout: Path) -> None:
     assert sum(1 for t in _texts(papers_layout / "paper_with_text.json") if t) == 2
 
 
-def test_prep_voters_names_missing_columns(tmp_path: Path) -> None:
+def test_results_csv_names_missing_columns(tmp_path: Path) -> None:
     raw = (MINI / "external" / "Stimmbezirk_Wahlergebnis.csv").read_bytes().decode("latin-1")
     header, body = raw.split("\n", 1)
     assert "Waehler;" in header
@@ -87,35 +92,37 @@ def test_prep_voters_names_missing_columns(tmp_path: Path) -> None:
     broken.write_bytes(
         (header.replace("Waehler;", "Waehlerinnen;") + "\n" + body).encode("latin-1")
     )
+    columns = load_settings(cwd=Path("/nonexistent")).columns.results
     with pytest.raises(SchemaError, match="Waehler"):
-        prep_voters.group_data_by_district(broken)
+        read_results_csv(broken, columns)
 
 
-def test_reverse_index_refuses_an_index_without_hits(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    searchdict = tmp_path / "combined_searchdict.csv"
-    searchdict.write_text("wahlkreis_id;suchbegriffe\n1;xyzzyplugh, quuxfoo\n", encoding="utf-8")
-    monkeypatch.setattr(cfg, "COMBINED_SEARCHDICT_PATH", searchdict)
-    monkeypatch.setattr(cfg, "PAPER_WITH_TEXT_PATH", MINI / "interim" / "paper_with_text.json")
-    monkeypatch.setattr(cfg, "INVERTED_INDEX_PATH", tmp_path / "inverted_index.csv")
-    with pytest.raises(EmptyResultError):
-        reverse_index.main()
-    assert not (tmp_path / "inverted_index.csv").exists()
+def test_index_refuses_without_a_single_hit() -> None:
+    corpus = pl.DataFrame({"id": ["a", "b"], "text": ["hallo welt", ""]})
+    with pytest.raises(EmptyResultError, match="2 Dokumenten"):
+        build_index(corpus, ["xyzzyplugh", "quuxfoo"])
 
 
-def test_analyse_refuses_when_dictionary_and_index_do_not_overlap(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    (tmp_path / "combined_searchdict.csv").write_text("wahlkreis_id;suchbegriffe\n1;foo\n")
-    (tmp_path / "inverted_index.csv").write_text("suchbegriffe,paper_ids,anzahl_treffer\nbar,,0\n")
-    (tmp_path / "waehler.csv").write_text(
-        "wahlkreis_id,Wahlberechtigte_insgesamt,Waehler,wahlbeteiligung\n1,100,50,0.5\n"
+def test_hits_refuse_disjoint_dictionary_and_index() -> None:
+    dictionary = pl.DataFrame({"wahlkreis_id": [1], "suchbegriffe": [["foo"]]})
+    index = pl.DataFrame(
+        {"suchbegriffe": ["bar"], "paper_ids": [["p1"]], "anzahl_treffer": [1]},
+        schema={
+            "suchbegriffe": pl.String,
+            "paper_ids": pl.List(pl.String),
+            "anzahl_treffer": pl.Int64,
+        },
     )
-    monkeypatch.setattr(cfg, "COMBINED_SEARCHDICT_PATH", tmp_path / "combined_searchdict.csv")
-    monkeypatch.setattr(cfg, "INVERTED_INDEX_PATH", tmp_path / "inverted_index.csv")
-    monkeypatch.setattr(cfg, "AGG_VOTERS_PER_WAHLBEZIRK_PATH", tmp_path / "waehler.csv")
-    monkeypatch.setattr(cfg, "AUSWERTUNG_PATH", tmp_path / "auswertung.csv")
     with pytest.raises(EmptyResultError):
-        analyse.main()
-    assert not (tmp_path / "auswertung.csv").exists()
+        hits_by_district(dictionary, index)
+    hits = pl.DataFrame(
+        {
+            "wahlkreis_id": [1],
+            "suchbegriffe": [["foo"]],
+            "paper_ids": [["p1"]],
+            "anzahl_treffer": [1],
+        }
+    )
+    voters = pl.DataFrame({"wahlkreis_id": [2], "Wahlberechtigte_insgesamt": [100]})
+    with pytest.raises(EmptyResultError):
+        join_voters(hits, voters, "Wahlberechtigte_insgesamt")

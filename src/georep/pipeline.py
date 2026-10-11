@@ -25,6 +25,7 @@ from georep.analysis.hits import hits_by_district, join_voters
 from georep.errors import GeorepError, MissingInputError
 from georep.io import write_json, write_parquet
 from georep.layout import Layout
+from georep.prep.papers import CORPUS_SCHEMA_VERSION, corpus_from_legacy_json, documents_with_text
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
 from georep.prep.streets import read_streets_json, streets_by_district
 from georep.prep.voters import aggregate_voters, read_results_csv
@@ -172,7 +173,7 @@ def run_pipeline(
 
 
 def build_steps(settings: Settings, layout: Layout) -> list[Step]:
-    """Die Offline-Kette; die Netzschritte kommen in Phase 3 dazu."""
+    """Die Offline-Kette; die Netzschritte und die PDF-Extraktion kommen in Phase 3 dazu."""
     columns = settings.columns.results
 
     def voters() -> str:
@@ -198,6 +199,11 @@ def build_steps(settings: Settings, layout: Layout) -> list[Step]:
         )
         write_parquet(frame, layout.dictionary, schema_version=1)
         return f"{len(all_terms(frame))} Begriffe in {frame.height} Wahlbezirken"
+
+    def corpus() -> str:
+        frame = corpus_from_legacy_json(layout.corpus_legacy)
+        write_parquet(frame, layout.corpus, schema_version=CORPUS_SCHEMA_VERSION)
+        return f"{frame.height} Dokumente, {documents_with_text(frame)} mit Text"
 
     def index() -> str:
         terms = all_terms(pl.read_parquet(layout.dictionary))
@@ -228,6 +234,7 @@ def build_steps(settings: Settings, layout: Layout) -> list[Step]:
             (layout.dictionary,),
             dictionary,
         ),
+        Step("corpus", (layout.corpus_legacy,), (layout.corpus,), corpus, CORPUS_SCHEMA_VERSION),
         Step("index", (layout.dictionary, layout.corpus), (layout.index,), index),
         Step(
             "results", (layout.dictionary, layout.index, layout.voters), (layout.results,), results

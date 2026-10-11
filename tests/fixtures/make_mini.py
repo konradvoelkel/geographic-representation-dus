@@ -7,20 +7,17 @@ Aufruf aus dem Repo-Wurzelverzeichnis::
 Auswahl: die Wahlbezirke 1 (meiste Treffer), 10 (Ausreißer) und 38 (wenigste Treffer) der Arbeit;
 200 Dokumente, davon 150 mit mindestens einem Treffer in diesen Bezirken und 50 ohne, jeweils als
 feste Stichprobe über sortierte IDs. Die Dateien unter ``expected/`` stammen aus einem Lauf des
-Altcodes auf genau diesen Eingaben und sind der Golden Master für die Umstellung auf Polars.
+Altcodes (pandas) auf genau diesen Eingaben, Stand Tag v0.2.0, und sind der Golden Master der
+Polars-Kette; siehe ``mini/README.md`` zum Neuerzeugen.
 """
 
 from __future__ import annotations
 
 import json
-import shutil
-import tempfile
 from pathlib import Path
 from typing import Any
 
 import polars as pl
-
-from tests.legacy_runner import run_offline_chain
 
 REPO = Path(__file__).resolve().parents[2]
 REFERENCE = REPO / "reference"
@@ -94,32 +91,8 @@ def write_inputs() -> None:
     dst.write_bytes("".join([lines[0], *body]).encode("latin-1"))
 
 
-EXPECTED_FILES = [
-    "wahlbezirke_waehler.csv",
-    "wahlbezirke_strassen.csv",
-    "wikidata_vis.csv",
-    "wikidata_agg.csv",
-    "combined_searchdict.csv",
-    "inverted_index.csv",
-    "wahlbezirke_auswertung.csv",
-]
-
-
-def write_expected() -> None:
-    """Alle Ausgaben des Altcodes auf der Mini-Fixture: der Golden Master je Stufe."""
-    expected = MINI / "expected"
-    if expected.exists():
-        shutil.rmtree(expected)
-    with tempfile.TemporaryDirectory() as tmp:
-        run_offline_chain(MINI, Path(tmp))
-        expected.mkdir(parents=True)
-        for name in EXPECTED_FILES:
-            shutil.copy(Path(tmp) / name, expected)
-
-
 def main() -> None:
     write_inputs()
-    write_expected()
     n_docs = len(_load_json(MINI / "interim" / "paper_with_text.json"))
     print(f"mini fixture geschrieben: {n_docs} Dokumente, Wahlbezirke {sorted(DISTRICTS)}")
 
