@@ -10,6 +10,7 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
+from georep.analysis.regression import regression_pair
 from georep.bootstrap import bootstrap
 from georep.errors import MissingInputError
 from georep.layout import Layout
@@ -196,3 +197,63 @@ def _check_search_section(page: str) -> None:
     ascii_folded = [(fold_ascii(term), kind) for term, _, _, kind in entries]
     assert len(set(ascii_folded)) == len(ascii_folded)
     assert 'role="option"' not in page  # die Liste füllt erst das JavaScript
+
+
+@pytest.mark.slow
+def test_weighted_variants_reproduce_table_five_and_decompose_the_count(
+    tmp_path: Path, reference_root: Path, settings: Settings
+) -> None:
+    """Option 06 auf der Referenz: die Einheitsvariante ist Tabelle 5, die Themen zerlegen sie.
+
+    Die Zahlen von Tabelle 5 stehen eingefroren in ``test_regression_numbers.py``; hier müssen sie
+    aus ``trefferquote_gewichtet`` der Variante ``einheit`` auf dieselben Stellen fallen.
+    """
+    layout = _layout(tmp_path, reference_root)
+    bootstrap(layout)
+    run_pipeline(build_steps(settings, layout), settings)
+    results = pl.read_parquet(layout.results)
+    weighted = pl.read_parquet(layout.weighted)
+    variants = weighted.get_column("variante").unique().to_list()
+    assert "einheit" in variants and sum(1 for v in variants if v.startswith("thema_")) == 20
+    assert weighted.height == len(variants) * results.height
+
+    unit = weighted.filter(pl.col("variante") == "einheit").join(
+        results.select("wahlkreis_id", "wahlbeteiligung", "anzahl_treffer"), on="wahlkreis_id"
+    )
+    assert (
+        unit.get_column("anzahl_treffer_gewichtet")
+        == unit.get_column("anzahl_treffer").cast(pl.Float64)
+    ).all()
+    assert int(unit.get_column("anzahl_treffer_gewichtet").sum()) == 29_573
+    pair = regression_pair(unit, settings.analysis.exclude_districts, x="trefferquote_gewichtet")
+    assert pair.all.n == 41
+    assert pair.all.slope == pytest.approx(62.1337, abs=5e-4)
+    assert pair.all.r == pytest.approx(0.16125, abs=5e-5)
+    assert pair.all.p == pytest.approx(0.31385, abs=5e-5)
+    assert pair.without is not None and pair.without.n == 39
+    assert pair.without.slope == pytest.approx(215.3341, abs=5e-4)
+    assert pair.without.r == pytest.approx(0.338461, abs=5e-6)
+    assert pair.without.p == pytest.approx(0.035069, abs=5e-6)
+
+    # Die 20 Themenvarianten zerlegen die Einheitszählung je Wahlbezirk.
+    per_district = dict(
+        weighted.filter(pl.col("variante").str.starts_with("thema_"))
+        .group_by("wahlkreis_id")
+        .agg(pl.col("anzahl_treffer_gewichtet").sum())
+        .iter_rows()
+    )
+    for row in unit.iter_rows(named=True):
+        assert per_district[row["wahlkreis_id"]] == pytest.approx(
+            row["anzahl_treffer_gewichtet"], rel=1e-9
+        )
+    # Kein Gewicht über 1: die Summe bleibt unter der Zahl der Paare je Bezirk.
+    assert (
+        weighted.get_column("anzahl_treffer_gewichtet")
+        <= unit.get_column("anzahl_treffer_gewichtet").max()
+    ).all()
+    # Die Themenbeschriftungen tragen kein Funktionswort.
+    from georep.analysis.topics import load_stop_words
+
+    stop = load_stop_words(settings.topics.stop_words)
+    words = pl.read_parquet(layout.topics).get_column("woerter").to_list()
+    assert all(not (set(label) & stop) for label in words)
