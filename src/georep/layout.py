@@ -35,6 +35,9 @@ class Layout:
     # Option 03: Fremddaten je Raumeinheit, im Repo unter context/; wird nur gelesen.
     # None = keine Kontextdaten, dann fehlen die Schritte context_data, context und controls.
     context_root: Path | None = None
+    # Option 02: Dateiname des Stimmbezirks-GeoJSON unter external/; ein Periodenprofil nennt
+    # sein Jahr (``Stimmbezirke_2020.geojson``), damit der Ordner nicht lügt.
+    districts_file: str = "Stimmbezirke_2025.geojson"
 
     @classmethod
     def from_settings(cls, settings: Settings) -> Layout:
@@ -44,6 +47,7 @@ class Layout:
             reference_root=settings.reference_root,
             profile=settings.profile,
             context_root=settings.context.root,
+            districts_file=settings.sources.opendata.districts_file,
         )
 
     def reference_view(self) -> Layout:
@@ -53,12 +57,22 @@ class Layout:
             cache_root=self.reference_root / "cache",
             reference_root=self.reference_root,
             context_root=self.context_root,
+            districts_file=self.districts_file,
         )
 
-    def for_profile(self, profile: str) -> Layout:
-        """Dasselbe Layout für ein anderes Profil, etwa die Hauptperiode (``""``) derselben Stadt."""
+    def for_profile(self, profile: str, districts_file: str | None = None) -> Layout:
+        """Dasselbe Layout für ein anderes Profil, etwa die Hauptperiode (``""``) derselben Stadt.
+
+        ``districts_file`` nennt das Stimmbezirks-GeoJSON des anderen Profils, wenn es anders
+        heißt (der Crosswalk liest so den Zielzuschnitt); ohne Angabe bleibt der eigene Name.
+        """
         return Layout(
-            self.data_root, self.cache_root, self.reference_root, profile, self.context_root
+            data_root=self.data_root,
+            cache_root=self.cache_root,
+            reference_root=self.reference_root,
+            profile=profile,
+            context_root=self.context_root,
+            districts_file=self.districts_file if districts_file is None else districts_file,
         )
 
     # Verzeichnisse
@@ -106,7 +120,7 @@ class Layout:
 
     @property
     def districts_geojson(self) -> Path:
-        return self.external / "Stimmbezirke_2025.geojson"
+        return self.external / self.districts_file
 
     @property
     def papers(self) -> Path:
@@ -281,6 +295,33 @@ class Layout:
     @property
     def party_results(self) -> Path:
         return self.processed / "wahlbezirke_parteien.parquet"
+
+    # Option 02: Zuschnitt und Ergebnis eines älteren Wahlbezirkszuschnitts, Zuordnung der
+    # Stimmbezirke auf die Hauptperiode, Vergleich zweier Perioden, Fortschritt des Abrufs
+    @property
+    def district_shapes_geojson(self) -> Path:
+        """Die Wahlbezirksflächen der eigenen Periode (nur ein Periodenprofil mit Crosswalk)."""
+        return self.external / "Kommunalwahlbezirke.geojson"
+
+    @property
+    def district_results_csv(self) -> Path:
+        """Wahlergebnis je Wahlbezirk der eigenen Periode; liefert die Briefwähler je Bezirk."""
+        return self.external / "Wahlbezirk_Wahlergebnis.csv"
+
+    @property
+    def precinct_assignment(self) -> Path:
+        """Stimmbezirk der Periode -> Wahlbezirk der Periode und Anteil je Zielbezirk."""
+        return self.processed / "stimmbezirke_zuordnung.parquet"
+
+    @property
+    def comparison(self) -> Path:
+        """Beide Perioden je Wahlbezirk nebeneinander (Schritt ``compare``, Hauptperiode)."""
+        return self.processed / "wahlbezirke_vergleich.parquet"
+
+    @property
+    def papers_progress(self) -> Path:
+        """Die zuletzt vollständig gespeicherte OParl-Seite, für die Wiederaufnahme des Abrufs."""
+        return self.raw / "papers.progress.json"
 
     def runtime_dirs(self) -> tuple[Path, ...]:
         return (
