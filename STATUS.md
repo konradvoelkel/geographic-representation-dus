@@ -1,6 +1,8 @@
 # Status
 
-Stand 2026-10-11, `main` auf `v0.7.0`, nächster Branch `refactor/phase-7`. Fakten mit Datum, Invarianten ohne.
+Stand 2026-10-11, `main` auf `v0.8.0`. Der Umbau in sieben Phasen ist abgeschlossen
+(`docs/development-plan-2026-10.md`); Aufbau in `docs/architecture.md`, Gründe in `docs/decisions.md`. Fakten mit
+Datum, Invarianten ohne.
 
 ## Abgeschlossen
 
@@ -11,11 +13,12 @@ Stand 2026-10-11, `main` auf `v0.7.0`, nächster Branch `refactor/phase-7`. Fakt
 - Phase 4 (`v0.5.0`): Tests ausgebaut. `tests/property/` mit hypothesis: ein lesbares Orakel des Matcher-Vertrags, Invarianten für Wörterbuch, Aggregation, POI-Bereinigung, Straßen, Treffer, Index, STRtree, OParl-Roundtrip, Stores und `deep_merge`. Snapshot für `georep steps`, nox `test` parallel mit Abdeckung als Untergrenze (90 %).
 - Phase 5 (`v0.6.0`): Profiling-Infrastruktur. `georep profile`, `nox -s bench` (pytest-benchmark, rot ab 20 % langsamer im Minimum), Protokoll `PdfTextExtractor`. Messung in `docs/profiling/README.md`: Offline-Lauf 6,3 s, davon 4,1 s FlashText; Extraktion 38 ms je PDF; pypdf 6.20.0 reproduziert 197 von 200 Texten der Arbeit zeichengleich. Empfehlung: pypdf und FlashText bleiben, kein Rust-Port.
 - Phase 6 (`v0.7.0`): Design by Contract. 80 deal-Decorators an 30 Funktionen in `search`, `analysis`, `prep`, `geo`, `layout`, `stores`, `http`, `settings` und `sources`; Prädikate in `georep.contracts`; `settings.contracts = "off"` schaltet ab, Overhead unter einem Prozent. Fetcher werfen nur `FetchError` oder `NetworkError`, die CLI meldet einen abgebrochenen Abruf als eine Zeile. `deal.cases` greift zehn reine Funktionen an, `nox -s verify` (crosshair) fand und `nox -s mutate` (pytest-gremlins, 79 % getötet) deckte je einen echten Fehler auf: `street_names` bei kaputter Overpass-Antwort und deals nicht reentranter `HasPatcher`, der nach `deep_merge` Socket und stdout gepatcht ließ. Beides behoben, `docs/mutation-2026-10-11.md`.
+- Phase 7 (`v0.8.0`): Abschluss. README aus Sicht eines frischen Klons (geprüft am 2026-10-11 auf xtraspace: `uv sync --locked`, `bootstrap`, `run` in 6 s, `regress`, `nox`, slow-Test), `docs/architecture.md` und `docs/decisions.md` ersetzen den Plan, der archiviert ist; Code-Docstrings verweisen auf die lebenden Beschreibungen. Kein Pull Request an `lubar102` (Konrads Entscheidung, decisions.md Punkt 19).
 
 ## Zahlen (2026-10-11)
 
 - Tests: 171, davon einer `slow` und zehn `bench`; schnelle Suite parallel in 9 s; Abdeckung 98 %.
-- Code `src/georep/`: 35 Dateien, rund 3250 Zeilen, mypy strict mit deal-Plugin ohne Befund.
+- Code `src/georep/`: 35 Dateien, rund 3250 Zeilen, mypy strict mit deal-Plugin ohne Befund; Commits seit dem Fork: 78 in sieben Phasen.
 - Laufzeit: voller Offline-Lauf 6,4 bis 6,7 s mit wie ohne Verträge (Index 4,1 bis 4,3 s); `nox -s verify` 2,5 bis 3 min; `nox -s mutate` 100 s.
 
 ## Bekannt
@@ -29,7 +32,7 @@ Stand 2026-10-11, `main` auf `v0.7.0`, nächster Branch `refactor/phase-7`. Fakt
 
 ## Nächster Schritt
 
-Phase 7 auf `refactor/phase-7` (siehe `docs/development-plan-2026-10.md`, Phase 7): README aus Sicht eines frischen
-Klons, `docs/architecture.md` und `docs/decisions.md` mit den verworfenen Alternativen und ihren Kosten (die
-datierten Einzeldokumente unter `docs/` sind die Quelle), Plan durch Beschreibungen ersetzen, optional ein
-Pull Request an `lubar102` mit den risikoschließenden Änderungen aus Phase 1.
+Keiner geplant; der Umbau ist fertig. Was offensteht, wenn jemand es will: ein voller `georep fetch` von Grund
+auf (Stunden; zeigt, ob der OParl-Server `modified_since` beachtet); ein Ersatz für FlashText oder pypdf nur
+nach neuer Messung (`docs/decisions.md`, Punkt 14); die beiden deal-Eigenheiten upstream melden; die Abweichung
+in Tabelle 5 „ohne Ausreißer" mit Lukas klären, falls es je wieder darauf ankommt.

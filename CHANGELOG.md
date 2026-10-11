@@ -2,6 +2,14 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.8.0 (2026-10-11), Phase 7
+
+- README aus Sicht eines frischen Klons: vier Befehle bis zu Tabelle 5, Herkunft der Daten mit Quellen und
+  Lizenzen; geprüft aus einem frischen Klon.
+- `docs/architecture.md` beschreibt den Aufbau, `docs/decisions.md` zwanzig Entscheidungen mit verworfenen
+  Alternativen und Kosten; der Entwicklungsplan ist abgeschlossen und liegt unter
+  `docs/development-plan-2026-10.md`. Kein Pull Request an das Original.
+
 ## 0.7.0 (2026-10-11), Phase 6
 
 - Verträge mit deal auf Suche, Auswertung, Aufbereitung, Geometrie, Layout, Stores, HTTP, Settings und

@@ -1,19 +1,21 @@
 # Arbeitsregeln für dieses Repo
 
-Plan und Phasen: `docs/development-plan-2026-10.md`. Messlatte: `docs/baseline-2026-10-10.md`. Stand: `STATUS.md`
-(im selben Commit nachziehen, wenn sich der Stand ändert). Maßstab für Stil und Vorgehen sind die
-Kapitel Brownfield, Code-Qualität, Testing, Profiling und Design by Contract des eipy-Skripts.
+Aufbau: `docs/architecture.md`. Gründe und verworfene Alternativen: `docs/decisions.md`. Stand und Bekanntes:
+`STATUS.md` (im selben Commit nachziehen, wenn sich der Stand ändert). Der Umbau 2026-10 ist abgeschlossen; sein
+Plan liegt historisch unter `docs/development-plan-2026-10.md`, der Befund davor in `docs/baseline-2026-10-10.md`.
+Maßstab für Stil und Vorgehen sind die Kapitel Brownfield, Code-Qualität, Testing, Profiling und Design by
+Contract des eipy-Skripts.
 
 ## Einstieg in eine neue Sitzung
 
-1. `git switch refactor/phase-<n>` (der offene Branch steht in `STATUS.md` unter „Nächster Schritt"; existiert er
-   noch nicht, von `main` abzweigen). `main` trägt den letzten Phasen-Tag.
+1. `git switch main && git pull`. Jedes Vorhaben bekommt einen eigenen Branch; `main` trägt den letzten Tag
+   (`v0.8.0` am 2026-10-11).
 2. Auf Konrads Rechner vor allem anderen, weil die Primärplatte voll ist:
    `export UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep UV_CACHE_DIR=/media/konrad/xtraspace/uv-cache`;
    `settings.local.toml` (gitignored, vorhanden) zeigt `data_root` und `cache_root` auf `/media/konrad/xtraspace/georep/`.
 3. `uv sync && uv run nox && uv run pytest -m slow`: alles grün ist der Ausgangspunkt, sonst zuerst das klären.
-4. Lesen: `STATUS.md` (Stand, Bekanntes, nächster Schritt), dann im Plan den Abschnitt der Phase, dann § 2 (Leitplanken)
-   und § 4a (Lehren aus bubatzblick). Die Lehren aus den bisherigen Phasen stehen unten unter „Commits" und „Arbeitsweise".
+4. Lesen: `STATUS.md` (Stand, Bekanntes), `docs/architecture.md` für den betroffenen Teil, `docs/decisions.md`,
+   bevor eine Entscheidung dort umgestoßen wird. Die Lehren aus dem Umbau stehen unten unter „Commits" und „Arbeitsweise".
 5. Push geht per SSH; in nicht-interaktiven Sitzungen hält der Keyring-Agent den Schlüssel:
    `SSH_AUTH_SOCK=/run/user/1000/gcr/ssh git push`. Das gh-Token hat keinen `workflow`-Scope.
 
@@ -56,10 +58,10 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - Nach jedem Commit `uv run nox`. Wird der Golden Master rot, war es kein Refactoring: zurücknehmen und bewusst entscheiden.
 - Verhaltensänderungen zuerst mit rotem Test, dann die Änderung, je ein Commit.
 - Eine Eigenschaft, die für alle Eingaben gilt, wird ein hypothesis-Test in `tests/property/`, kein Beispieltest; wer den Matcher ersetzt, misst sich an `tests/property/oracle_matcher.py`. Snapshots (`syrupy`) nur für kleine, stabile Ausgaben und nie blind mit `--snapshot-update` erneuern.
-- Phasen laufen auf `refactor/phase-<n>`. Am Phasenende: Push, grüne CI abwarten, Merge nach `main` (fast-forward), Tag `v0.<n+1>.0`, Push. So hat Konrad es am 2026-10-11 für Phase 0 angewiesen.
+- Größere Vorhaben laufen auf einem Branch. Am Ende: Push, grüne CI abwarten (über die Actions-REST-API; `gh run list` liefert für dieses Repo leer), Merge nach `main` (fast-forward), Tag bei Versionssprung, Push. So hat Konrad es am 2026-10-11 angewiesen; Versionen stehen in `pyproject.toml`, `src/georep/__init__.py` und `uv.lock` (`uv lock`), jede mit einer Zeile im `CHANGELOG.md`.
 - Prüfschritte in Skripten nie hinter eine Pipe stellen (`uv run pytest | tail`): die Pipe frisst den Exit-Code, und am 2026-10-11 landeten so zwei rote Commits. Erst der Befehl allein, dann die Ausgabe ansehen.
 
-## Arbeitsweise, aus den Phasen 0 bis 4 gelernt
+## Arbeitsweise, gelernt im Umbau 2026-10
 
 - `set -e` greift in der zsh dieser Umgebung nicht zuverlässig; jede Prüfung bekommt eine eigene Exit-Code-Abfrage (`cmd || exit 1`).
 - Textersetzungen im Code auf den Wortlaut aufsetzen, den Ruff zuletzt formatiert hat (vorher `grep -n`), sonst scheitern Anker, und eine halb angewandte Änderung bleibt liegen. Nach `ruff format` ändern sich Umbrüche.
