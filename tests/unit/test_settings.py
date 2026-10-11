@@ -339,3 +339,77 @@ def test_a_label_is_an_display_value_and_stays_out_of_the_fingerprint(tmp_path: 
         rules.format("Anträge halb").replace("0.5", "0.25"), encoding="utf-8"
     )
     assert load_settings(cwd=tmp_path).fingerprint() != first.fingerprint()
+
+
+# --- Option 03: Kontextdaten und Kontrollvariablen ---------------------------------------------
+
+
+def test_context_defaults_name_files_variables_and_models(tmp_path: Path) -> None:
+    s = load_settings(cwd=tmp_path)
+    context = s.context
+    assert context.root == Path("context")
+    assert context.files.table.file.endswith(".csv")
+    assert context.files.units.file.endswith(".geojson")
+    assert context.files.indicators.file.endswith(".csv")
+    names = [v.name for v in context.variables]
+    assert len(names) == len(set(names)) and "trefferquote" not in names
+    for model in (context.models.main, context.models.parties, context.models.single):
+        assert all(term == "trefferquote" or term in names for term in model)
+    assert context.models.main[0] == "trefferquote" and len(context.models.main) >= 2
+    assert all(v.scale in context.scales for v in context.variables if v.kind == "ordinal")
+    assert 0 < context.max_missing_weight < 1 and 0 < context.min_coverage <= 1
+    assert context.dataset.license_url.startswith("https://")
+
+
+def test_context_root_empty_means_no_context_data(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text('[context]\nroot = ""\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).context.root is None
+
+
+def test_context_model_with_unknown_variable_is_rejected(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[context.models]\nmain = ["trefferquote", "gibtsnicht"]\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="gibtsnicht"):
+        load_settings(cwd=tmp_path)
+
+
+def test_context_scale_values_must_be_distinct(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[context.scales.handlungsbedarf]\ngering = 1\n"eher gering" = 1\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="handlungsbedarf"):
+        load_settings(cwd=tmp_path)
+
+
+def test_context_ordinal_variable_needs_a_known_scale(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        "[[context.variables]]\n"
+        'name = "x"\nlabel = "x"\nunit = ""\nkind = "ordinal"\ncolumns = ["Sozialer_HB"]\n'
+        'scale = "fehlt"\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValidationError, match="fehlt"):
+        load_settings(cwd=tmp_path)
+
+
+def test_unknown_key_in_context_is_rejected(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text("[context]\nwurzel = 1\n", encoding="utf-8")
+    with pytest.raises(ValidationError, match="wurzel"):
+        load_settings(cwd=tmp_path)
+
+
+def test_fingerprint_ignores_context_paths_and_display_values_but_sees_models(
+    tmp_path: Path,
+) -> None:
+    base = load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        '[context]\nroot = "/anderswo"\n[context.dataset]\nfetched = 2030-01-01\n'
+        '[context.files.table]\nfile = "andere.csv"\n',
+        encoding="utf-8",
+    )
+    assert load_settings(cwd=tmp_path).fingerprint() == base.fingerprint()
+    (tmp_path / "settings.toml").write_text(
+        '[context.models]\nmain = ["trefferquote"]\n', encoding="utf-8"
+    )
+    assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
