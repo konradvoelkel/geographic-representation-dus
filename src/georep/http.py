@@ -9,7 +9,7 @@ kommen aber per Redirect von https.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Protocol
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -20,6 +20,16 @@ DEFAULT_RETRIES = 5
 DEFAULT_BACKOFF_S = 1.0
 DEFAULT_USER_AGENT = "georep/0.1 (+https://github.com/konradvoelkel/geographic-representation-dus)"
 RETRY_STATUSES = (429, 500, 502, 503, 504)
+
+
+class Transport(Protocol):
+    """Das, was Fetcher vom Netz brauchen. ``requests.Session`` erfüllt es, Fakes in Tests auch.
+
+    Netz ist eine Eingabe, keine Umwelt: Funktionen nehmen einen ``Transport`` entgegen und
+    bekommen ohne Angabe eine echte Session aus ``make_session``.
+    """
+
+    def get(self, url: str, *, params: Any = None, headers: Any = None) -> requests.Response: ...
 
 
 class TimeoutSession(requests.Session):
