@@ -36,9 +36,11 @@ und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
 400 KB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
 der Karte der 41 Wahlbezirke (Trefferquote oder Wahlbeteiligung, Tooltips, Klick-Markierung, die 1309 Orte als
 Punkte), dem Streudiagramm mit beiden Regressionsgeraden und Tabelle 5, einer sortierbaren Tabelle je
-Wahlbezirk, den Begriffen, Methode und Grenzen, Lizenzen. Daneben liegen unter `data/site/data/` die Ergebnisse
-zum Weiterverarbeiten: die sechs Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326) und
-`schema.json` mit dem Spaltenschema; Größe und SHA-256 jeder Datei stehen auf der Seite. Der Workflow
+Wahlbezirk, den Begriffen (ein Klick zeigt die Dokumente mit Datum, Drucksache und PDF-Link), Methode und
+Grenzen, Lizenzen. `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
+braucht Netz). Daneben liegen unter `data/site/data/` die Ergebnisse zum Weiterverarbeiten: die sechs
+Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema
+und `dokumente.json` (Dokumente mit Treffer ohne Texte); Größe und SHA-256 jeder Datei stehen auf der Seite. Der Workflow
 `.github/workflows/pages.yml` baut die Seite bei jedem Push auf `main` aus den Referenzdaten (`bootstrap`, `run`,
 kein Netzabruf) und veröffentlicht sie über GitHub Pages unter
 <https://konradvoelkel.github.io/geographic-representation-dus/> (Plan und Entscheidungen:

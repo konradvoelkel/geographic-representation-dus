@@ -1,8 +1,8 @@
 # Status
 
-Stand 2026-10-11, `main` auf `v0.9.0`. Der Umbau in sieben Phasen ist abgeschlossen
+Stand 2026-10-11, `main` auf `v0.10.0`. Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
-Stufen A bis F, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>). Aufbau in
+Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>). Aufbau in
 `docs/architecture.md`, Gründe in `docs/decisions.md`. Fakten mit Datum, Invarianten ohne.
 
 ## Abgeschlossen
@@ -18,11 +18,13 @@ Stufen A bis F, Seite unter <https://konradvoelkel.github.io/geographic-represen
 
 - Berichtsseite (`v0.9.0`): Schritt `report` als neunter Offline-Schritt; `data/site/index.html` (400 KB, inline SVG und JavaScript, hell und dunkel, Deutsch mit englischer Kurzfassung) und `data/site/data/` mit den sechs Tabellen als Parquet und CSV, `wahlbezirke.geojson`, `schema.json`, je mit SHA-256 auf der Seite. Mini-Fixture mit GeoJSON, `report/` mit `model`, `geometry`, `charts`, `render`, `build`; Lizenzen des Open-Data-Portals am 2026-10-11 auf den Datensatzseiten nachgesehen. Geprüft in Hell und Dunkel mit headless Chrome.
 
+- Stufe G (`v0.10.0`): Dokumente je Begriff als nachgeladener Dialog aus `dokumente.json`, Orte mit Namen auf der Karte, `karte.html` mit Leaflet (gepinnt) und OpenStreetMap-Kacheln als zweite Datei.
+
 ## Zahlen (2026-10-11)
 
-- Tests: 218, davon einer `slow` und zehn `bench`; schnelle Suite parallel in 9 bis 10 s; Abdeckung 98,5 %.
-- Code `src/georep/`: 41 Python-Dateien, rund 4550 Zeilen, dazu die Vorlage der Berichtsseite (350 Zeilen); mypy strict mit deal-Plugin ohne Befund; Commits seit dem Fork: 97.
-- Laufzeit: voller Offline-Lauf rund 7 s (Index 4,2 s, Berichtsseite 0,9 s); `nox -s bench` am 2026-10-11 grün gegen die Baseline; `nox -s verify` 2,5 bis 3 min; `nox -s mutate` 100 s.
+- Tests: 223, davon einer `slow` und zehn `bench`; schnelle Suite parallel in 9 bis 10 s; Abdeckung 98,5 %.
+- Code `src/georep/`: 42 Python-Dateien, rund 4750 Zeilen, dazu zwei Vorlagen der Berichtsseite (rund 500 Zeilen); mypy strict mit deal-Plugin ohne Befund; Commits seit dem Fork: 102.
+- Laufzeit: voller Offline-Lauf rund 7 s (Index 4,2 s, Berichtsseite 1,0 s); `nox -s bench` am 2026-10-11 grün gegen die Baseline; `nox -s verify` 2,5 bis 3 min; `nox -s mutate` 100 s.
 
 ## Bekannt
 
@@ -37,11 +39,10 @@ Stufen A bis F, Seite unter <https://konradvoelkel.github.io/geographic-represen
 
 ## Nächster Schritt
 
-Nichts Zwingendes. Die Berichtsseite wird bei jedem Push auf `main` neu gebaut und veröffentlicht
+Nichts Zwingendes; der Plan der Berichtsseite ist mit Stufe G vollständig umgesetzt. Die Seite wird bei jedem Push auf `main` neu gebaut und veröffentlicht
 (`.github/workflows/pages.yml`, Pages-Quelle „GitHub Actions" seit 2026-10-11); abgenommen am 2026-10-11: Workflow
 grün, Seite erreichbar, Downloads laden, SHA-256 stimmen. Optional nach Bedarf: Stufe G des Plans (Dokumente je
-Begriff, braucht den Korpus ohne Texte auf der Seite) und der Umzug auf Konrads VPS (`rsync` von `data/site`,
-Stufe F.4).
+Begriff: erledigt) und der Umzug auf Konrads VPS (`rsync` von `data/site`, Stufe F.4).
 
 Außerdem offen, wenn jemand es will: ein voller `georep fetch` von Grund
 auf (Stunden; zeigt, ob der OParl-Server `modified_since` beachtet); ein Ersatz für FlashText oder pypdf nur

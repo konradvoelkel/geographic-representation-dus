@@ -1,6 +1,6 @@
 # Architektur
 
-Stand 2026-10-11, `v0.9.0`. Diese Datei beschreibt, was das Programm ist und wie es gebaut ist. Warum es so
+Stand 2026-10-11, `v0.10.0`. Diese Datei beschreibt, was das Programm ist und wie es gebaut ist. Warum es so
 gebaut ist, steht mit den verworfenen Alternativen in [decisions.md](decisions.md); was sich aus Nutzersicht
 geändert hat, in [../CHANGELOG.md](../CHANGELOG.md); der Befund vor dem Umbau in
 [baseline-2026-10-10.md](baseline-2026-10-10.md); Messwerte datiert in [profiling/README.md](profiling/README.md).
@@ -43,7 +43,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `profiling` | `profile_step`: ein echter Schritt unter cProfile, `.prof` datiert nach `docs/profiling/` |
 | `cli` | `georep run, fetch, steps, status, bootstrap, export, regress, profile`; `main(argv) -> int`; Exit 0, 1 (Domänenfehler), 2 (Bedienung) |
 | `export` | Parquet-Ergebnisse als CSV neben die Dateien; `csv_plan` und `write_csv` nutzt auch der Schritt `report` |
-| `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, `COLUMN_DOCS`), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, Choroplethe und Streudiagramm als SVG), `render` (Jinja2 mit Autoescape, Allowlist der Links), `build` (der Schritt `report`: Downloads, Schema, Seite) |
+| `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, `COLUMN_DOCS`), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, Choroplethe und Streudiagramm als SVG), `documents` (Dokumente mit Treffer ohne Texte, Begriffe als Indizes, für `dokumente.json`), `render` (Jinja2 mit Autoescape, Allowlist der Links; `render_map` für die Leaflet-Datei), `build` (der Schritt `report`: Downloads, Schema, Seiten) |
 
 ## Pipeline
 
@@ -65,7 +65,7 @@ Vierzehn Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzsc
 | `corpus` | nein | Metadaten und Texte | `interim/papers.parquet` |
 | `index` | nein | Wörterbuch, Korpus | `processed/inverted_index.parquet` |
 | `results` | nein | Wörterbuch, Index, Wähler | `processed/wahlbezirke_auswertung.parquet` |
-| `report` | nein | die sechs Ergebnistabellen, Korpus, Stimmbezirks-GeoJSON | `site/index.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`) |
+| `report` | nein | die sechs Ergebnistabellen, Korpus, Stimmbezirks-GeoJSON | `site/index.html`, `site/karte.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`, `dokumente.json`) |
 
 Neben der ersten Ausgabe jedes Schritts liegt `<datei>.stamp.json` mit den SHA-256-Hashes der Eingaben, dem
 Settings-Fingerprint, der Code-Version und der Schema-Version. Stimmt alles, ist der Schritt aktuell und wird
@@ -83,7 +83,7 @@ data_root/                 Standard ./data, gitignored
   raw/                     papers.jsonl, streets_per_district.json, wikipedia_dict.json
   interim/                 papers.parquet (Korpus: Metadaten plus Text)
   processed/               die sieben Ergebnistabellen als Parquet (zstd), je mit Stamp
-  site/                    die Berichtsseite: index.html (mit Stamp) und data/ mit den Download-Dateien
+  site/                    die Berichtsseite: index.html (mit Stamp), karte.html (Leaflet) und data/ mit den Download-Dateien
 cache_root/                Standard data_root/cache
   pdf/                     <dateiname>.pdf, manifest.jsonl (URL, SHA-256, Größe, Zeit)
   text/texts.parquet       alle Texte mit Extraktorname, PDF-Hash, Herkunft, Zeichenzahl
@@ -165,9 +165,15 @@ aus EPSG:25832 auf eine `viewBox` abgebildet) und das Streudiagramm (`report.cha
 (`report.render`, Jinja2 mit Autoescape; Nachbedingung: jeder Link nach außen steht in `ALLOWED_LINKS`). Die
 Choroplethe hat fünf Quantilklassen (weniger, wenn es weniger verschiedene Werte gibt) in einer Blau-Rampe, die
 je Modus getrennt gewählt und mit dem Validator der Skill `dataviz` geprüft ist; der Umschalter auf die
-Wahlbeteiligung tauscht nur CSS-Klassen über `data-`-Attribute. Entscheidungen und verworfene Alternativen
-stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. Auf der Referenz: 41 Wahlbezirke, 15 Dateien,
-5,5 MB, davon `index.html` 400 KB, 0,9 s (2026-10-11).
+Wahlbeteiligung tauscht nur CSS-Klassen über `data-`-Attribute. Begriffe sind Schaltflächen: ein Klick lädt
+`data/dokumente.json` nach (`report.documents`: die Dokumente mit Treffer ohne Texte, neueste zuerst, je Begriff
+Indizes; der PDF-Link entsteht aus einem gemeinsamen Präfix) und zeigt die Dokumente in einem `<dialog>`; die
+Orte der Karte tragen Namen und Wahlbezirk. `karte.html` ist die zweite Datei und die einzige mit
+Fremdressourcen: Leaflet 1.9.4 per Subresource Integrity gepinnt, OpenStreetMap-Kacheln mit Namensnennung,
+Flächen und Orte inline als JSON (`</` escaped), eigene Allowlist in `render_map`. Entscheidungen und verworfene
+Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. Auf der Referenz: 41 Wahlbezirke,
+17 Dateien, 8,4 MB, davon `index.html` rund 690 KB, `karte.html` 255 KB, `dokumente.json` 2,1 MB; 1,0 s
+(2026-10-11).
 
 ## Verträge
 
@@ -206,7 +212,7 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `verify` | crosshair über die reinen Funktionen mit Verträgen, rund drei Minuten | lokal |
 | `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung | lokal |
 
-Stand 2026-10-11: 218 Tests, schnelle Suite in 10 s, Abdeckung 98,5 %; Mutationsquote 79 %
+Stand 2026-10-11: 223 Tests, schnelle Suite in 10 s, Abdeckung 98,5 %; Mutationsquote 79 %
 ([mutation-2026-10-11.md](mutation-2026-10-11.md)).
 
 ## Bekannte Grenzen

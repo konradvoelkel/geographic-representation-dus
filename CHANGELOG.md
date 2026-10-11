@@ -2,6 +2,16 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.10.0 (2026-10-11), Berichtsseite: Dokumente, Orte, Leaflet
+
+- Ein Klick auf einen Begriff zeigt die Dokumente, in denen er vorkommt: Datum, Drucksache, Titel, Art und
+  Link auf das PDF im Ratsinformationssystem. Die Liste kommt aus `data/dokumente.json` (11 051 Dokumente ohne
+  Texte, Begriffe als Indizes, 2,1 MB, gzip 0,5 MB) und wird beim ersten Klick nachgeladen; aus dem
+  Dateisystem geöffnet sagt die Seite, warum das nicht geht.
+- Die Orte auf der Karte tragen Namen und Wahlbezirk im Tooltip.
+- `karte.html`: dieselben Flächen und Orte auf OpenStreetMap-Kacheln mit Leaflet 1.9.4 (per Subresource
+  Integrity gepinnt), als einzige Seite mit Fremdressourcen; die Hauptseite bleibt ohne Netz nutzbar.
+
 ## 0.9.0 (2026-10-11), Berichtsseite
 
 - Neuer Pipeline-Schritt `report` am Ende der Kette: `georep run` schreibt `data/site/index.html`, eine in sich
