@@ -16,7 +16,8 @@ Contract des eipy-Skripts.
    `settings.local.toml` (gitignored, vorhanden) zeigt `data_root` und `cache_root` auf `/media/konrad/xtraspace/georep/`.
 3. `uv sync && uv run nox && uv run pytest -m slow`: alles grün ist der Ausgangspunkt, sonst zuerst das klären.
 4. Lesen: `STATUS.md` (Stand, Bekanntes), `docs/architecture.md` für den betroffenen Teil, `docs/decisions.md`,
-   bevor eine Entscheidung dort umgestoßen wird. Die Lehren aus dem Umbau stehen unten unter „Commits" und „Arbeitsweise".
+   bevor eine Entscheidung dort umgestoßen wird. Für die Berichtsseite: `docs/plan-report-2026-10.md`, § 8 nennt
+   die Reihenfolge. Die Lehren aus dem Umbau stehen unten unter „Commits" und „Arbeitsweise".
 5. Push geht per SSH; in nicht-interaktiven Sitzungen hält der Keyring-Agent den Schlüssel:
    `SSH_AUTH_SOCK=/run/user/1000/gcr/ssh git push`. Das gh-Token hat keinen `workflow`-Scope.
 

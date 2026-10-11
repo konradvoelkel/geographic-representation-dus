@@ -35,8 +35,10 @@ Datum, Invarianten ohne.
 Die Berichtsseite: eine in sich geschlossene HTML-Seite mit Kernzahlen, Karte der Trefferquote je Wahlbezirk,
 Streudiagramm mit Regression, sortierbarer Tabelle, Begriffen, Methode und den Ergebnissen zum Download als
 Parquet, CSV und GeoJSON mit Spaltenschema; gebaut als Pipeline-Schritt `report`, veröffentlicht über GitHub Pages
-aus einem Actions-Workflow. Plan in Stufen mit Abnahmekriterien: `docs/plan-report-2026-10.md` (Konrad,
-2026-10-11). Gearbeitet wird direkt auf `main`, keine Branches mehr.
+aus einem Actions-Workflow, später nach Bedarf auf Konrads VPS, optional unter `georep.konradvoelkel.de`. Plan in
+Stufen mit Abnahmekriterien und Startanleitung: `docs/plan-report-2026-10.md` (Konrad, 2026-10-11; offene Fragen
+beantwortet, Plan freigegeben). Gearbeitet wird direkt auf `main`, keine Branches mehr. Für Konrad bleibt ein
+Handgriff: Pages in den Repo-Einstellungen auf „GitHub Actions" stellen, sobald Stufe F erreicht ist.
 
 Außerdem offen, wenn jemand es will: ein voller `georep fetch` von Grund
 auf (Stunden; zeigt, ob der OParl-Server `modified_since` beachtet); ein Ersatz für FlashText oder pypdf nur

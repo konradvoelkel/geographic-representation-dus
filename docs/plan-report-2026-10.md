@@ -1,6 +1,7 @@
 # Plan: Berichtsseite mit Karte und Download der Ergebnisse
 
-Stand 2026-10-11, Auftrag von Konrad am selben Tag. Dieser Plan ist so geschrieben, dass ein frischer Agent ihn
+Stand 2026-10-11, Auftrag von Konrad am selben Tag, offene Fragen am selben Tag beantwortet (§ 7); der Plan
+ist damit freigegeben. Er ist so geschrieben, dass ein frischer Agent ihn
 ohne weitere Rückfragen übernehmen kann: Ziel, Entscheidungen, Datenlage, Bauplan in Stufen mit
 Abnahmekriterien, Fallstricke. Arbeitsregeln (Commits, nox, Verträge, nie unter `reference/` schreiben)
 stehen in [../CLAUDE.md](../CLAUDE.md); der Aufbau des Programms in [architecture.md](architecture.md).
@@ -32,7 +33,8 @@ reichen IDs und URLs.
 | Zahlenformat | deutsch, von Hand (`format_de`): Tausender mit schmalem Leerzeichen, Dezimalkomma, feste Nachkommastellen je Größe | kein `locale`-Modul (plattformabhängig); eine kleine reine Funktion mit Vertrag |
 | Integration | neuer Pipeline-Schritt `report` am Ende der Kette, Eingaben und Stamp wie alle anderen; keine neue CLI-Unterbefehle, `georep run report` reicht | derselbe Mechanismus für Frische, `--force`, `--dry-run`; die Seite ist ein Ergebnis wie die Parquet-Dateien |
 | Ort der Ausgabe | `data_root/site/` (`Layout.site`, `Layout.site_index`, `Layout.site_data`) | neben den anderen Ergebnissen, gitignored, nie unter `reference/` |
-| Veröffentlichung | GitHub Pages aus einem Actions-Workflow, der die Seite aus den Referenzdaten baut (`bootstrap`, `run`), also ohne Netzabrufe; Quelle „GitHub Actions" in den Repo-Einstellungen | reproduzierbar aus dem Repo; kein eigener Branch (Konrad, 2026-10-11: keine Branches mehr). Verworfen: `gh-pages`-Branch, Veröffentlichung von Hand |
+| Veröffentlichung | zuerst GitHub Pages aus einem Actions-Workflow, der die Seite aus den Referenzdaten baut (`bootstrap`, `run`), also ohne Netzabrufe; Quelle „GitHub Actions" in den Repo-Einstellungen. Später nach Bedarf Konrads VPS (statische Dateien, `rsync`), optional unter `georep.konradvoelkel.de` | reproduzierbar aus dem Repo; kein eigener Branch (Konrad, 2026-10-11: keine Branches mehr). Die Seite benutzt nur relative Pfade (`data/…`), damit der Umzug ein Kopieren ist. Verworfen: `gh-pages`-Branch, Veröffentlichung von Hand |
+| Sprache | Deutsch; eine englische Kurzfassung von drei bis vier Sätzen im Kopf (`<p lang="en">`), sonst nichts Englisches | Konrad, 2026-10-11 |
 | Lizenzhinweise | auf der Seite: Ergebnisse CC0; Straßennamen abgeleitet aus OpenStreetMap (ODbL, Namensnennung „© OpenStreetMap-Mitwirkende"); Wikidata CC0; Wikipedia-Artikeltitel; Open-Data-Portal Düsseldorf mit der Lizenz, die das Portal nennt (vor dem Veröffentlichen dort nachsehen und wörtlich zitieren) | Pflicht bei ODbL-abgeleiteten Daten |
 
 ## 3. Datenlage (Stand 2026-10-11, Spalten exakt)
@@ -72,7 +74,9 @@ Die Dateien unter `expected/` dürfen dabei nicht neu erzeugt werden (Golden Mas
 
 1. **Kopf**: Titel „Geografische Repräsentation in Düsseldorfer Ratsdokumenten", ein Absatz mit der Frage,
    Datenstand (Wahl 14.09.2025, Dokumente 13.09.2020 bis 14.09.2025, Straßen und Orte mit Abrufdatum aus den
-   Stamps), Version `georep x.y.z`, Link zum Repository.
+   Stamps), Version `georep x.y.z`, Link zum Repository. Darunter die englische Kurzfassung: drei bis vier
+   Sätze in einem `<p lang="en">` (Frage, Methode, Ergebnis in einer Zahl, Hinweis auf die Downloads); das ist
+   das einzige Englisch auf der Seite.
 2. **Kernzahlen** als Kacheln: 41 Wahlbezirke, 306 Stimmbezirke, 19 108 Dokumente (19 033 mit Text), 5841
    Begriffe, Dokumente mit mindestens einem Treffer (Vereinigung aller `paper_ids`), Median und Spannweite der
    Trefferquote, Median der Wahlbeteiligung. Jede Zahl aus den Daten, keine fest kodiert.
@@ -186,9 +190,16 @@ Jede Stufe ist ein oder zwei Commits, nach jedem `uv run nox` grün, Verträge a
    `actions/deploy-pages`; Actions per SHA gepinnt wie in `ci.yml`; Berechtigungen `pages: write`,
    `id-token: write`. Push per SSH (das gh-Token hat keinen `workflow`-Scope, SSH-Pushes sind davon nicht
    betroffen).
-2. Konrad schaltet in den Repo-Einstellungen Pages auf „GitHub Actions". Danach URL in README und auf der Seite.
+2. Konrad schaltet in den Repo-Einstellungen Pages auf „GitHub Actions" (Settings, Pages, Source). Danach die URL
+   `https://konradvoelkel.github.io/geographic-representation-dus/` in README und auf der Seite.
 3. Abnahme: der Workflow läuft grün (Actions-REST-API abfragen, `gh run list` liefert hier leer), die Seite ist
    unter der Pages-URL erreichbar, Downloads laden, die SHA-256 auf der Seite stimmen mit den Dateien überein.
+4. Variante VPS, später nach Bedarf (Konrad, 2026-10-11): die Seite ist statisch und benutzt nur relative Pfade,
+   der Umzug ist `rsync -a --delete data/site/ <vps>:/var/www/georep/` plus ein statischer vhost (nginx oder
+   Caddy, `index.html`, korrekte MIME-Typen für `.parquet` als `application/vnd.apache.parquet` und `.geojson`
+   als `application/geo+json`). Optional die Domain `georep.konradvoelkel.de`: als CNAME auf Pages (Datei
+   `CNAME` im Artefakt, DNS-Eintrag bei Konrad) oder als vhost auf dem VPS; beides ohne Änderung an der Seite.
+   Ein kleines nox-Target `publish -- <ziel>` darf das `rsync` kapseln, mit Trockenlauf als Standard.
 
 ### Stufe G (optional, erst nach F)
 
@@ -211,8 +222,28 @@ Karte mit den Orten als interaktiven Punkten. Leaflet-Variante mit OSM-Kacheln a
 - Jinja2 ist eine Laufzeitabhängigkeit; `uv add jinja2`, nicht `--group dev`.
 - Vor dem ersten Diagramm die Skill `dataviz` laden (Farbskalen, Achsen, Legenden), falls der Agent sie hat.
 
-## 7. Offene Fragen an Konrad (nicht blockierend; Vorschlag in Klammern)
+## 7. Antworten von Konrad (2026-10-11)
 
-- Domain: Pages-Standard-URL `konradvoelkel.github.io/geographic-representation-dus` (ja, keine eigene Domain).
-- Sprache der Seite: Deutsch (ja; eine englische Kurzfassung im Kopf, zwei Sätze).
-- Sollen die Dokument-URLs je Treffer auf der Seite stehen (Stufe G) oder nur in den Downloads (zunächst nur Downloads).
+- Domain: zuerst GitHub Pages unter der Standard-URL; später nach Bedarf Umzug auf Konrads VPS; eine eigene
+  Domain ist kaum nötig, möglich wäre `georep.konradvoelkel.de`. Umgesetzt in § 2 und Stufe F.
+- Sprache: alles Deutsch, eine kleine englische Kurzfassung genügt. Umgesetzt in § 2 und § 4, Punkt 1.
+- Dokument-URLs je Treffer auf der Seite: nicht beantwortet, der Vorschlag gilt: zunächst nur in den Downloads
+  (`paper_ids` in `wahlbezirke_auswertung.parquet` und `inverted_index.parquet`), Unterseiten in Stufe G.
+
+## 8. Start für den frischen Agenten
+
+1. Lesen, in dieser Reihenfolge: `CLAUDE.md` (Regeln, Umgebung, Lehren), `STATUS.md`, diesen Plan ganz,
+   `docs/architecture.md` (Abschnitte Pipeline, Datenhaltung, Verträge, Tests), `src/georep/pipeline.py`,
+   `src/georep/export.py`, `src/georep/geo.py`, `tests/golden/test_pipeline.py`, `tests/fixtures/make_mini.py`.
+2. Einstieg nach CLAUDE.md: `git switch main && git pull`; auf Konrads Rechner die uv-Variablen setzen (sonst
+   legt uv eine `.venv` auf der vollen Primärplatte an); `uv sync && uv run nox && uv run pytest -m slow` grün.
+3. Stufen A bis E in der Reihenfolge des Plans, je Stufe ein bis zwei Commits direkt auf `main`, nach jedem
+   Commit `uv run nox`, dann Push; Verhaltensänderungen zuerst mit rotem Test. Nach Stufe E: Version 0.9.0
+   (`pyproject.toml`, `src/georep/__init__.py`, `uv lock`), eine Zeile im `CHANGELOG.md`, `STATUS.md`
+   nachziehen, Tag `v0.9.0`, Push von `main` und Tag. Dann Stufe F; der Schritt „Pages aktivieren" ist Konrads.
+4. Vor dem ersten Diagramm die Skill `dataviz` laden, falls vorhanden.
+5. Definition of Done: aus einem frischen Klon erzeugen `uv sync --locked && uv run georep bootstrap &&
+   uv run georep run` die Datei `data/site/index.html`; sie öffnet ohne Netz mit Karte, Diagramm, Tabelle und
+   Downloads; `uv run nox`, `uv run pytest -m slow` und `uv run nox -s bench` sind grün; der Pages-Workflow
+   läuft grün, sobald Pages aktiviert ist. `docs/architecture.md` und `STATUS.md` beschreiben den neuen Stand;
+   dieser Plan bekommt oben die Zeile „abgeschlossen am <Datum>" und wird nicht fortgeschrieben.
