@@ -442,8 +442,9 @@ Die Antworten trägt der Supervisor in `docs/plans/fragen.md` ein. Ohne Antwort 
    und Herkunft, auf der Seite verwendet werden? Annahme: ja, nur offene Daten, Lizenz wörtlich im Fuß.
 6. **Versionen**: eine Minor-Version je gemergter Option mit Tag, oder eine Sammelversion am Ende? Annahme:
    je Option.
-7. **Rechnerlast**: Wie viele Kerne und wie viel RAM hat der Rechner, und dürfen vier Agenten gleichzeitig
-   `nox` laufen lassen? Annahme: Wellen zu vier, `pytest -n 2` im Alltag.
+7. **Rechnerlast**: Der Rechner hat 16 Kerne und 62 GB RAM, davon am 2026-10-11 rund 24 GB verfügbar
+   (`nproc`, `free -g`). Dürfen vier Agenten gleichzeitig `nox` laufen lassen? Annahme: Wellen zu vier,
+   `pytest -n 2` im Alltag, volles `nox` nur vor Commits.
 
 ## 10. Start-Prompt für den Supervisor
 
