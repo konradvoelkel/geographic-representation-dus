@@ -37,11 +37,14 @@ Gründe in `docs/decisions.md`. Fakten mit Datum, Invarianten ohne.
 
 ## Nächster Schritt
 
-Stufe F des Plans (`docs/plan-report-2026-10.md`): ein Actions-Workflow `pages.yml`, der aus den Referenzdaten
-`bootstrap` und `run` ausführt und `data/site` nach GitHub Pages lädt; Actions per SHA gepinnt, Push per SSH.
-Für Konrad bleibt ein Handgriff: in den Repo-Einstellungen Pages auf „GitHub Actions" stellen; danach kommen die
-URL `https://konradvoelkel.github.io/geographic-representation-dus/` in README und auf die Seite. Später nach
-Bedarf der Umzug auf Konrads VPS (`rsync` der statischen Dateien) und Stufe G (Dokumente je Begriff).
+Stufe F ist eingerichtet: `.github/workflows/pages.yml` baut bei jedem Push auf `main` die Seite aus den
+Referenzdaten (`bootstrap`, `run`) und lädt `data/site` nach GitHub Pages (Actions per SHA gepinnt). Für Konrad
+bleibt ein Handgriff: in den Repo-Einstellungen Pages auf „GitHub Actions" stellen (Settings, Pages, Source);
+bis dahin schlägt der Job `deploy` fehl, der Job `build` zeigt, dass die Seite entsteht. Danach die Abnahme aus
+dem Plan: Workflow grün (Actions-REST-API, `gh run list` liefert hier leer), Seite unter
+`https://konradvoelkel.github.io/geographic-representation-dus/` erreichbar, Downloads laden, SHA-256 stimmen;
+dann bekommt der Plan die Zeile „abgeschlossen am". Später nach Bedarf der Umzug auf Konrads VPS (`rsync` der
+statischen Dateien, Stufe F.4) und Stufe G (Dokumente je Begriff).
 
 Außerdem offen, wenn jemand es will: ein voller `georep fetch` von Grund
 auf (Stunden; zeigt, ob der OParl-Server `modified_since` beachtet); ein Ersatz für FlashText oder pypdf nur

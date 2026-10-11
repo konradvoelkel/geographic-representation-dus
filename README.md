@@ -38,10 +38,12 @@ der Karte der 41 Wahlbezirke (Trefferquote oder Wahlbeteiligung, Tooltips, Klick
 Punkte), dem Streudiagramm mit beiden Regressionsgeraden und Tabelle 5, einer sortierbaren Tabelle je
 Wahlbezirk, den Begriffen, Methode und Grenzen, Lizenzen. Daneben liegen unter `data/site/data/` die Ergebnisse
 zum Weiterverarbeiten: die sechs Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326) und
-`schema.json` mit dem Spaltenschema; Größe und SHA-256 jeder Datei stehen auf der Seite. Die Seite wird über
-GitHub Pages aus einem Actions-Workflow veröffentlicht, der sie aus den Referenzdaten baut (Plan und
-Entscheidungen: [docs/plan-report-2026-10.md](docs/plan-report-2026-10.md); Aufbau:
-[docs/architecture.md](docs/architecture.md), Abschnitt „Berichtsseite").
+`schema.json` mit dem Spaltenschema; Größe und SHA-256 jeder Datei stehen auf der Seite. Der Workflow
+`.github/workflows/pages.yml` baut die Seite bei jedem Push auf `main` aus den Referenzdaten (`bootstrap`, `run`,
+kein Netzabruf) und veröffentlicht sie über GitHub Pages unter
+<https://konradvoelkel.github.io/geographic-representation-dus/>, sobald Pages in den Repo-Einstellungen auf
+„GitHub Actions" steht (Plan und Entscheidungen: [docs/plan-report-2026-10.md](docs/plan-report-2026-10.md);
+Aufbau: [docs/architecture.md](docs/architecture.md), Abschnitt „Berichtsseite").
 
 ## Befehle
 
