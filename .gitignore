@@ -206,12 +206,14 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# Directories
-/data/raw/oparl_paper_pdf
-# georep (ab 2026-10-10)
-/data/            # Laufzeitdaten (data_root); der Datensatz der Arbeit liegt unter reference/
+# georep (ab 2026-10-10). Kommentare nur auf eigenen Zeilen: git liest sonst den Kommentar als
+# Teil des Musters, und die Zeile ignoriert nichts (so lagen /data/ und mutants/ bis 2026-10-11 offen).
+# Laufzeitdaten (data_root); der Datensatz der Arbeit liegt unter reference/
+/data/
 .nox/
 .benchmarks/
 settings.local.toml
-mutants/          # mutmut-Arbeitskopie
-docs/profiling/*.prof  # cProfile-Dateien sind rechnerspezifisch; die Zahlen stehen im README daneben
+# mutmut-Arbeitskopie
+mutants/
+# cProfile-Dateien sind rechnerspezifisch; die Zahlen stehen im README daneben
+docs/profiling/*.prof
