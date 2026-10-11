@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|fetch|steps|status|bootstrap|export|regress``.
+"""Kommandozeile: ``georep run|fetch|steps|status|bootstrap|export|regress|profile``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
@@ -20,7 +20,8 @@ from georep.bootstrap import bootstrap
 from georep.errors import GeorepError
 from georep.export import export_csv
 from georep.layout import Layout
-from georep.pipeline import build_steps, freshness, run_pipeline
+from georep.pipeline import build_steps, freshness, run_pipeline, select_steps
+from georep.profiling import profile_step
 from georep.settings import Settings, load_settings, settings_files
 from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextStore
@@ -62,6 +63,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     reg = sub.add_parser("regress", help="Regression Trefferquote -> Wahlbeteiligung")
     reg.add_argument("--exclude", type=int, nargs="*", default=[], help="Wahlbezirke auslassen")
+
+    prof = sub.add_parser(
+        "profile", help="Schritte erzwungen unter cProfile ausführen; .prof-Datei für snakeviz"
+    )
+    prof.add_argument("steps", nargs="*", help="Namen (Standard: alle Offline-Schritte)")
+    prof.add_argument(
+        "--out", type=Path, default=Path("docs/profiling"), help="Verzeichnis der .prof-Dateien"
+    )
+    prof.add_argument("--top", type=int, default=25, help="Zeilen der Tabelle je Schritt")
+    prof.add_argument(
+        "--sort", choices=["cumulative", "tottime"], default="cumulative", help="Sortierung"
+    )
+    prof.add_argument("--online", action="store_true", help="auch Netzschritte profilieren")
     return parser
 
 
@@ -144,6 +158,22 @@ def _cmd_export(layout: Layout) -> int:
     return 0
 
 
+def _cmd_profile(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
+    layout.ensure_dirs()
+    PdfStore(layout.pdf_dir).ensure()
+    steps = build_steps(settings, layout)
+    names = args.steps or [s.name for s in steps if not s.network]
+    for step in select_steps(steps, names):
+        result = profile_step(
+            step, settings, args.out, online=args.online, top=args.top, sort=args.sort
+        )
+        print(result.outcome.line())
+        if result.path is not None:
+            print(result.table, end="")
+            print(f"Profil: {result.path}; Anzeige: uv run snakeviz {result.path}")
+    return 0
+
+
 def _cmd_regress(args: argparse.Namespace, layout: Layout) -> int:
     results = pl.read_parquet(layout.results)
     print("alle:", regress(results).summary())
@@ -170,6 +200,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cmd_export(layout)
         if args.command == "regress":
             return _cmd_regress(args, layout)
+        if args.command == "profile":
+            return _cmd_profile(args, settings, layout)
     except (GeorepError, FileNotFoundError) as error:
         print(f"Fehler: {error}", file=sys.stderr)
         return 1

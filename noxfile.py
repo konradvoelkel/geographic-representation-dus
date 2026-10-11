@@ -59,3 +59,9 @@ def test(session: nox.Session) -> None:
 def golden(session: nox.Session) -> None:
     """Volle Referenz, Sekunden."""
     session.run("uv", "run", "pytest", "-m", "slow", *session.posargs)
+
+
+@nox.session
+def profile(session: nox.Session) -> None:
+    """cProfile eines echten Schritts, ``nox -s profile -- index``; Anzeige: ``uv run snakeviz <datei>``."""
+    session.run("uv", "run", "georep", "profile", *session.posargs)

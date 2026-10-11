@@ -118,3 +118,18 @@ def test_regress_without_results_is_a_domain_error(
 ) -> None:
     assert main(["regress"]) == 1
     assert "wahlbezirke_auswertung.parquet" in capsys.readouterr().err
+
+
+def test_profile_writes_one_file_per_offline_step(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    main(["bootstrap"])
+    capsys.readouterr()
+    assert main(["profile", "--out", "prof", "--top", "3"]) == 0
+    out = capsys.readouterr().out
+    assert "voters       ausgeführt    erzwungen; 3 Wahlbezirke" in out
+    assert out.count("function calls") == 8 and out.count("Anzeige: uv run snakeviz") == 8
+    assert len(list((project / "prof").glob("*.prof"))) == 8
+    assert main(["profile", "opendata", "--out", "prof"]) == 0
+    assert "Netz aus" in capsys.readouterr().out
+    assert len(list((project / "prof").glob("*.prof"))) == 8

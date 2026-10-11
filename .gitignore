@@ -214,3 +214,4 @@ __marimo__/
 .benchmarks/
 settings.local.toml
 mutants/          # mutmut-Arbeitskopie
+docs/profiling/*.prof  # cProfile-Dateien sind rechnerspezifisch; die Zahlen stehen im README daneben
