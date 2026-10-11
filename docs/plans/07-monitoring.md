@@ -533,11 +533,18 @@ Gemessen am 2026-10-12 im Worktree (13 Kerne geteilt, `POLARS_MAX_THREADS=4`):
 | `uv run nox` | 16 bis 25 s |
 | `uv run pytest -m slow` | 12 s |
 | `uv run georep run` (nur `timeline` und `report` offen) | 3,3 s, davon `timeline` 0,2 s |
+| `uv run georep run --force` (zehn Offline-Schritte) | 11,5 s, davon `timeline` 0,2 s und `report` 1,4 s |
 | `monatsreihe.parquet` | 61 Zeilen (2020-09 bis 2025-09, lückenlos), 2 490 Bytes, Summe 19 108 Dokumente |
 | `wahlbezirke_monate.parquet` | 2 491 Zeilen, 3 740 Bytes, Summe 29 573 Treffer |
 | Hauptseite `index.html` | 719 909 Bytes (vorher 686 088), Budget 1,5 MB |
 | Profilseite aus dem Testdatensatz | 126 312 Bytes, vier Dokumente in vier Monaten |
 | Trockenlauf durch die Nutzereinheit | 7 bis 9 s, Exit 0 |
+
+`uv run nox -s bench` ist unter der Last dieser Phase nicht aussagekräftig: derselbe Commit verglich
+sich am 2026-10-12 bei `load average` 14 einmal rot (pypdf-Extraktion und FlashText-Matcher 25 bis 53 %
+über der Minute alten Baseline) und unmittelbar danach grün. Beide Messpunkte liegen in Funktionen, die
+diese Option nicht anfasst; der Schritt `timeline` hat keine Bench-Stufe, weil er 0,2 s auf dem vollen
+Korpus braucht. Die Messung gehört bei ruhigem Rechner wiederholt.
 
 Die Seiten sind in Hell und Dunkel mit headless Chrome angesehen (Streifen im Scratchpad); bei 375 px
 Breite ist `scrollWidth` gleich `clientWidth`, es gibt kein waagerechtes Scrollen.
