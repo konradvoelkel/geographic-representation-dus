@@ -25,6 +25,8 @@ dependencies = [
     # Verschwindet mit Phase 3 (DEVELOPMENT_PLAN.md § 4).
     "geopandas>=1.1.1",
     "osmnx>=2.0.7",
+    "pyproj>=3.7",
+    "requests-cache>=1.2",
 ]
 
 [project.scripts]
@@ -43,6 +45,7 @@ dev = [
     "syrupy>=5",
     "types-pyyaml",
     "types-requests",
+    "types-shapely>=2.1.0.20260728",
 ]
 notebook = ["jupyterlab"]
 
