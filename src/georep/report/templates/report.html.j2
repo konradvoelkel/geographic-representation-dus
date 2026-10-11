@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Geografische Repräsentation in Düsseldorfer Ratsdokumenten</title>
+<meta name="description" content="Wie sichtbar sind die 41 Kommunalwahlbezirke Düsseldorfs in den Ratsdokumenten 2020 bis 2025, und hängt das mit der Wahlbeteiligung zusammen? Karte, Tabellen, Downloads.">
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11, 11, 11, 0.10); --accent: #2a78d6;
+  --selected: #eb6834;
+  --q0: #86b6ef; --q1: #5598e7; --q2: #2a78d6; --q3: #1c5cab; --q4: #0d366b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10); --accent: #3987e5;
+    --selected: #d95926;
+    --q0: #184f95; --q1: #256abf; --q2: #3987e5; --q3: #6da7ec; --q4: #b7d3f6;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+body { margin: 0 auto; padding: 1.5rem 1rem 3rem; max-width: 72em; }
+h1 { font-size: 1.75rem; line-height: 1.25; margin: 0 0 .5rem; }
+h2 { font-size: 1.3rem; margin: 2.5rem 0 .75rem; }
+h3 { font-size: 1.05rem; margin: 1.5rem 0 .5rem; }
+p, li { max-width: 48em; }
+a { color: var(--accent); }
+.meta, .note, .footnote, footer { color: var(--ink-2); font-size: .9rem; }
+p[lang="en"] { border-left: 3px solid var(--grid); padding-left: .75rem; color: var(--ink-2); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5em, 1fr)); gap: .75rem; margin: 1rem 0; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: .75rem .9rem; }
+.tile .label { color: var(--ink-2); font-size: .85rem; }
+.tile .value { font-size: 1.6rem; font-weight: 600; line-height: 1.2; }
+.tile .sub { color: var(--muted); font-size: .8rem; }
+.controls { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; margin: .5rem 0 1rem; }
+fieldset { border: 0; padding: 0; margin: 0; display: inline-flex; gap: 1rem; }
+legend { color: var(--ink-2); font-size: .85rem; padding: 0; }
+.map-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 14em; gap: 1rem; align-items: start; }
+@media (max-width: 40em) { .map-wrap { grid-template-columns: 1fr; } }
+svg.map { width: 100%; height: auto; background: var(--surface); border-radius: 6px; }
+svg.scatter { width: 100%; max-width: 40em; height: auto; background: var(--surface); border-radius: 6px; }
+.district { stroke: var(--surface); stroke-width: 1.5px; vector-effect: non-scaling-stroke; cursor: pointer; transition: filter .1s; }
+.district:hover, .district:focus { filter: brightness(1.15); outline: none; }
+.district.selected { stroke: var(--selected); stroke-width: 2.5px; }
+.q0 { fill: var(--q0); } .q1 { fill: var(--q1); } .q2 { fill: var(--q2); } .q3 { fill: var(--q3); } .q4 { fill: var(--q4); }
+.map-labels text { font-size: 11px; fill: var(--ink); text-anchor: middle; dominant-baseline: middle; pointer-events: none; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.pois { display: none; } .pois.on { display: initial; } .pois circle { fill: var(--ink-2); opacity: .7; pointer-events: none; }
+.legend { font-size: .85rem; }
+.legend ul, .line-legend ul { list-style: none; padding: 0; margin: 0; }
+.legend li, .line-legend li { display: flex; align-items: center; gap: .5rem; margin: .25rem 0; }
+.swatch { display: inline-block; width: 1.1em; height: 1.1em; border-radius: 3px; flex: none; }
+.line-legend { display: flex; gap: 1.5rem; font-size: .85rem; margin: .5rem 0; }
+.key { display: inline-block; width: 2em; border-top: 2px solid var(--ink-2); }
+.key.dashed { border-top-style: dashed; }
+.grid line { stroke: var(--grid); stroke-width: 1; }
+.axis line { stroke: var(--axis); stroke-width: 1; }
+.ticks text, .axis-label { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.fit { stroke: var(--ink-2); stroke-width: 2; fill: none; stroke-linecap: round; }
+.fit-without { stroke-dasharray: 6 4; }
+.hit { fill: transparent; cursor: pointer; }
+.dot { fill: var(--accent); stroke: var(--surface); stroke-width: 2; pointer-events: none; }
+.dot-label { font-size: 10px; fill: var(--muted); pointer-events: none; }
+.point:focus { outline: none; }
+.point:hover .dot, .point:focus .dot, .point.selected .dot { fill: var(--selected); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; background: var(--surface); }
+th, td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; }
+th[data-sort] { cursor: pointer; user-select: none; }
+th[data-sort]::after { content: " ↕"; color: var(--muted); }
+th[aria-sort="ascending"]::after { content: " ↑"; color: var(--ink); }
+th[aria-sort="descending"]::after { content: " ↓"; color: var(--ink); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.selected td { background: color-mix(in srgb, var(--selected) 18%, var(--surface)); }
+.scroll { overflow-x: auto; }
+.small { font-size: .85rem; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8em; overflow-wrap: anywhere; }
+details { margin: .4rem 0; }
+summary { cursor: pointer; }
+ol.terms { columns: 3; column-gap: 1.5rem; padding-left: 1.4em; font-size: .85rem; max-width: none; }
+@media (max-width: 40em) { ol.terms { columns: 1; } }
+ol.terms li { break-inside: avoid; }
+.count { color: var(--muted); }
+#tooltip { position: absolute; z-index: 10; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .7rem; font-size: .85rem; max-width: 20em; box-shadow: 0 2px 8px rgba(0, 0, 0, .15); pointer-events: none; }
+#tooltip strong { display: block; font-size: 1rem; }
+#tooltip .terms { color: var(--ink-2); }
+footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem; }
+</style>
+</head>
+<body>
+<header>
+<h1>Geografische Repräsentation in Düsseldorfer Ratsdokumenten</h1>
+<p class="lead">Wie sichtbar sind die {{ model.figures.districts }} Kommunalwahlbezirke Düsseldorfs in den Dokumenten des Stadtrats, und hängt das mit der Wahlbeteiligung zusammen? Für jeden Wahlbezirk gibt es ein Wörterbuch aus Straßennamen und Orten; die {{ model.figures.documents|num }} Ratsdokumente der Wahlperiode werden danach durchsucht; die Zahl der Dokumente mit mindestens einem Treffer, geteilt durch die Wahlberechtigten, ist die Trefferquote des Bezirks.</p>
+<p class="meta">Datenstand: Kommunalwahl {{ model.stand.election|date_de }}; Dokumente {{ model.stand.period_start|date_de }} bis {{ model.stand.period_end|date_de }}; Straßen und Orte {% if model.stand.streets_fetched and model.stand.pois_fetched %}abgerufen am {{ model.stand.streets_fetched|date_de }} (OpenStreetMap) und {{ model.stand.pois_fetched|date_de }} (Wikidata, Wikipedia){% else %}aus dem Datensatz der Arbeit (Stand November 2025){% endif %}. Gebaut mit georep {{ model.version }}; Quelltext und Daten im <a href="{{ links.repository }}">Repository</a>.</p>
+<p lang="en">This page summarises how visible each of Düsseldorf's {{ model.figures.districts }} municipal election districts is in the city council's documents of the 2020 to 2025 term: every district has a dictionary of street and place names, {{ model.figures.documents|num }} council documents were searched, and the number of documents mentioning a district, divided by its eligible voters, is compared with the district's turnout in the 2025 local election. Across all districts the linear regression gives p = {{ model.regression.all.p|num(3) }}{% if model.regression.all.p >= 0.05 %}, so no relationship is established{% endif %}. The results are available below as Parquet, CSV and GeoJSON, with a documented column schema.</p>
+</header>
+<main>
+<section id="kernzahlen">
+<h2>Kernzahlen</h2>
+<div class="tiles">
+<div class="tile"><div class="label">Wahlbezirke</div><div class="value">{{ model.figures.districts|num }}</div><div class="sub">aus {{ model.figures.precincts|num }} Stimmbezirken</div></div>
+<div class="tile"><div class="label">Ratsdokumente</div><div class="value">{{ model.figures.documents|num }}</div><div class="sub">{{ model.figures.documents_with_text|num }} mit Text</div></div>
+<div class="tile"><div class="label">Suchbegriffe</div><div class="value">{{ model.figures.terms|num }}</div><div class="sub">Straßen und Orte, alle Bezirke</div></div>
+<div class="tile"><div class="label">Dokumente mit Treffer</div><div class="value">{{ model.figures.documents_hit|num }}</div><div class="sub">{{ (model.figures.documents_hit / model.figures.documents)|pct(1) }} aller Dokumente</div></div>
+<div class="tile"><div class="label">Trefferquote, Median</div><div class="value">{{ model.figures.rate_median|num(3) }}</div><div class="sub">Spannweite {{ model.figures.rate_min|num(3) }} bis {{ model.figures.rate_max|num(3) }}</div></div>
+<div class="tile"><div class="label">Wahlbeteiligung, Median</div><div class="value">{{ model.figures.turnout_median|pct(1) }}</div><div class="sub">je Wahlbezirk</div></div>
+</div>
+</section>
+
+<section id="karte">
+<h2>Karte der Wahlbezirke</h2>
+<div class="controls">
+<fieldset><legend>Einfärbung</legend>
+<label><input type="radio" name="metric" value="rate" checked> Trefferquote</label>
+<label><input type="radio" name="metric" value="turnout"> Wahlbeteiligung</label>
+</fieldset>
+{% if visuals.pois %}
+<label><input type="checkbox" id="show-pois"> {{ visuals.pois|num }} Orte als Punkte zeigen</label>
+{% endif %}
+</div>
+<div class="map-wrap">
+{{ visuals.map_svg|safe }}
+<div>
+<div class="legend" id="legend-rate"><strong>Trefferquote</strong> (Dokumente je Wahlberechtigtem)
+<ul>{% for entry in visuals.rate_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
+<div class="legend" id="legend-turnout" hidden><strong>Wahlbeteiligung</strong>
+<ul>{% for entry in visuals.turnout_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
+<p class="note">Klassen nach Quantilen. Zeigen oder Tippen nennt die Kennzahlen, ein Klick markiert den Bezirk auch in der Tabelle.</p>
+</div>
+</div>
+<p class="note">Projektion {{ model.working_crs }}, Grenzen vereinfacht auf {{ visuals.simplify_m|num }} m.</p>
+</section>
+
+<section id="zusammenhang">
+<h2>Trefferquote und Wahlbeteiligung</h2>
+{{ visuals.scatter_svg|safe }}
+<div class="line-legend"><ul>
+<li><span class="key"></span>Regressionsgerade, alle {{ model.regression.all.n }} Wahlbezirke</li>
+{% if model.regression.without %}<li><span class="key dashed"></span>ohne die Wahlbezirke {{ model.regression.excluded|join(' und ') }}</li>{% endif %}
+</ul></div>
+<h3>Lineare Regression (Tabelle 5 der Arbeit)</h3>
+<div class="scroll"><table>
+<thead><tr><th scope="col"></th><th scope="col" class="num">alle Wahlbezirke</th>{% if model.regression.without %}<th scope="col" class="num">ohne {{ model.regression.excluded|join(' und ') }}</th>{% endif %}</tr></thead>
+<tbody>
+{% set r = model.regression %}
+<tr><th scope="row">n</th><td class="num">{{ r.all.n }}</td>{% if r.without %}<td class="num">{{ r.without.n }}</td>{% endif %}</tr>
+<tr><th scope="row">Steigung</th><td class="num">{{ r.all.slope|num(2) }}</td>{% if r.without %}<td class="num">{{ r.without.slope|num(2) }}</td>{% endif %}</tr>
+<tr><th scope="row">Achsenabschnitt</th><td class="num">{{ r.all.intercept|num(2) }}</td>{% if r.without %}<td class="num">{{ r.without.intercept|num(2) }}</td>{% endif %}</tr>
+<tr><th scope="row">r</th><td class="num">{{ r.all.r|num(3) }}</td>{% if r.without %}<td class="num">{{ r.without.r|num(3) }}</td>{% endif %}</tr>
+<tr><th scope="row">R²</th><td class="num">{{ r.all.r2|num(3) }}</td>{% if r.without %}<td class="num">{{ r.without.r2|num(3) }}</td>{% endif %}</tr>
+<tr><th scope="row">p</th><td class="num">{{ r.all.p|num(3) }}</td>{% if r.without %}<td class="num">{{ r.without.p|num(3) }}</td>{% endif %}</tr>
+</tbody></table></div>
+<p>Die Wahlbeteiligung in Prozent wird auf die Trefferquote regressiert. {% if r.all.p >= 0.05 %}Über alle Wahlbezirke belegt p = {{ r.all.p|num(2) }} keinen Zusammenhang{% else %}Über alle Wahlbezirke ist der Zusammenhang mit p = {{ r.all.p|num(3) }} auf dem 5-%-Niveau signifikant{% endif %}{% if r.without %}; ohne die Wahlbezirke {{ r.excluded|join(' und ') }} (die beiden höchsten Trefferquoten) {% if r.without.p < 0.05 %}wird er mit p = {{ r.without.p|num(3) }} signifikant, erklärt aber nur R² = {{ r.without.r2|num(2) }} der Streuung{% else %}bleibt p = {{ r.without.p|num(3) }}{% endif %}{% endif %}.</p>
+</section>
+
+<section id="wahlbezirke">
+<h2>Je Wahlbezirk</h2>
+<p class="note">Spaltenköpfe sortieren. Die fünf häufigsten Begriffe zählen Dokumente, in denen der Begriff vorkommt.</p>
+<div class="scroll"><table id="districts">
+<thead><tr>
+<th scope="col" class="num" data-sort="num">Nr.</th>
+<th scope="col" data-sort="text">Name</th>
+<th scope="col" class="num" data-sort="num">Treffer</th>
+<th scope="col" class="num" data-sort="num">Wahlberechtigte</th>
+<th scope="col" class="num" data-sort="num">Wähler</th>
+<th scope="col" class="num" data-sort="num">Wahlbeteiligung</th>
+<th scope="col" class="num" data-sort="num">Trefferquote</th>
+<th scope="col" class="num" data-sort="num">Begriffe</th>
+<th scope="col">häufigste Begriffe</th>
+</tr></thead>
+<tbody>
+{% for d in model.districts %}
+<tr id="bezirk-{{ d.id }}" data-id="{{ d.id }}">
+<td class="num" data-value="{{ d.id }}">{{ d.id }}</td>
+<td>{{ d.name }}</td>
+<td class="num" data-value="{{ d.hits }}">{{ d.hits|num }}</td>
+<td class="num" data-value="{{ d.eligible }}">{{ d.eligible|num }}</td>
+<td class="num" data-value="{{ d.voters }}">{{ d.voters|num }}</td>
+<td class="num" data-value="{{ d.turnout }}">{{ d.turnout|pct(1) }}</td>
+<td class="num" data-value="{{ d.rate }}">{{ d.rate|num(3) }}</td>
+<td class="num" data-value="{{ d.terms_total }}">{{ d.terms_total|num }}</td>
+<td>{% for t in d.top_terms %}{{ t.term }} ({{ t.hits|num }}){% if not loop.last %}, {% endif %}{% endfor %}</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+</section>
+
+<section id="begriffe">
+<h2>Begriffe</h2>
+<h3>Die {{ model.top_terms|length }} trefferstärksten Begriffe stadtweit</h3>
+<div class="scroll"><table>
+<thead><tr><th scope="col">Begriff</th><th scope="col" class="num">Dokumente</th><th scope="col">Wahlbezirk</th></tr></thead>
+<tbody>
+{% for t in model.top_terms %}
+<tr><td>{{ t.term }}</td><td class="num">{{ t.hits|num }}</td><td>{{ t.districts|join(', ') }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<h3>Begriffe je Wahlbezirk</h3>
+{% for d in model.districts %}
+<details>
+<summary>{{ d.id }} {{ d.name }}: {{ d.terms|length|num }} Begriffe mit Treffer, {{ d.terms_without_hits|num }} ohne</summary>
+<ol class="terms">
+{% for t in d.terms %}<li>{{ t.term }} <span class="count">{{ t.hits|num }}</span></li>
+{% endfor %}
+</ol>
+</details>
+{% endfor %}
+{% if model.hidden_terms %}
+<p class="footnote">Nicht aufgeführt, aber in den Treffern mitgezählt (Verhalten der Arbeit): {{ model.hidden_terms|join(', ') }}.</p>
+{% endif %}
+</section>
+
+<section id="methode">
+<h2>Methode und Grenzen</h2>
+<p>Die Stimmbezirke der Kommunalwahl 2025 und das Wahlergebnis stammen vom <a href="{{ links.opendata }}">Open-Data-Portal der Stadt Düsseldorf</a>; je Stimmbezirk liefert die Overpass-API die Straßennamen aus OpenStreetMap, Wikidata (SPARQL) und die Wikipedia-GeoSearch die Orte mit Koordinate. Die Begriffe werden kleingeschrieben, zu jedem Begriff mit „straße" kommt die Variante mit „str." dazu, Stadtteil- und Stadtbezirksnamen sind ausgeschlossen. Die Ratsdokumente kommen über die OParl-Schnittstelle des <a href="{{ links.oparl }}">Ratsinformationssystems</a>; der Text jedes PDFs wird extrahiert und ab dem ersten „betrifft" durchsucht, Treffer zählen an Wortgrenzen, der längste Begriff gewinnt. Ein Dokument zählt je Wahlbezirk einmal, auch wenn mehrere seiner Begriffe vorkommen. Die Trefferquote teilt diese Zahl durch die Wahlberechtigten; eine lineare Regression setzt sie zur Wahlbeteiligung in Beziehung.</p>
+<p>Grenzen: Begriffe wie „Hofgarten" oder „Königsallee" stehen in vielen Dokumenten, die nicht vom Bezirk handeln; Straßennamen über Bezirksgrenzen zählen für jeden Bezirk, der sie führt; Ortsnamen, die sich nur durch ein Komma unterscheiden, fallen zusammen. Die Spalte „ohne Ausreißer" der Arbeit weicht von der Neuberechnung ab, vermutlich ein früherer Datenstand; die Zahlen hier sind die Neuberechnung aus den veröffentlichten Daten. Die Arbeit von Lukas Bartzsch liegt im <a href="{{ links.thesis }}">Original-Repository</a>, der Aufbau des Programms in <a href="{{ links.architecture }}">docs/architecture.md</a>.</p>
+</section>
+
+<section id="downloads">
+<h2>Downloads</h2>
+<p>Parquet trägt Typen und Listen und ist das primäre Format; CSV daneben für Tabellenkalkulationen (Listen mit „; " verbunden); GeoJSON in EPSG:4326 für GIS; <code>schema.json</code> beschreibt die Spalten maschinenlesbar. Prüfsummen sind SHA-256.</p>
+<div class="scroll"><table id="downloads-table">
+<thead><tr><th scope="col">Datei</th><th scope="col">Format</th><th scope="col" class="num">Zeilen</th><th scope="col" class="num">Größe</th><th scope="col">Beschreibung</th><th scope="col">SHA-256</th></tr></thead>
+<tbody>
+{% for d in model.downloads %}
+<tr><td><a href="data/{{ d.name }}">{{ d.name }}</a></td><td>{{ d.format }}</td><td class="num">{% if d.rows is not none %}{{ d.rows|num }}{% endif %}</td><td class="num">{{ d.bytes|kib }}</td><td>{{ d.description }}</td><td><code>{{ d.sha256 }}</code></td></tr>
+{% endfor %}
+</tbody></table></div>
+<h3>Spaltenschema</h3>
+{% for table in tables %}
+<details>
+<summary><code>{{ table }}</code></summary>
+<div class="scroll"><table class="small">
+<thead><tr><th scope="col">Spalte</th><th scope="col">Typ</th><th scope="col">Bedeutung</th><th scope="col">Einheit</th></tr></thead>
+<tbody>
+{% for c in model.columns if c.table == table %}
+<tr><td><code>{{ c.column }}</code></td><td>{{ c.dtype }}</td><td>{{ c.description }}</td><td>{{ c.unit }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+</details>
+{% endfor %}
+</section>
+</main>
+<footer>
+<p>Ergebnisse und Quelltext: <a href="{{ links.cc0 }}">CC0 1.0</a>. Straßennamen abgeleitet aus OpenStreetMap, © <a href="{{ links.osm }}">OpenStreetMap-Mitwirkende</a>, <a href="{{ links.odbl }}">ODbL</a>. Orte aus <a href="{{ links.wikidata }}">Wikidata</a> (CC0) und Artikeltiteln der deutschsprachigen <a href="{{ links.wikipedia }}">Wikipedia</a>. Vom Open-Data-Portal der Landeshauptstadt Düsseldorf: das Wahlergebnis der Ratswahl 2025 unter der <a href="{{ links.dl_de_by }}">Datenlizenz Deutschland Namensnennung 2.0</a>, die Stimmbezirkseinteilung unter der <a href="{{ links.dl_de_zero }}">Datenlizenz Deutschland – Zero – Version 2.0</a> (Stand der Datensatzseiten 11.10.2026). Ratsdokumente aus dem Ratsinformationssystem der Landeshauptstadt Düsseldorf; die Seite nennt nur ihre Kennungen.</p>
+<p>Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}.</p>
+</footer>
+<div id="tooltip" role="tooltip" hidden></div>
+<script>
+(function () {
+  "use strict";
+  var tooltip = document.getElementById("tooltip");
+  var rows = {};
+  document.querySelectorAll("#districts tbody tr").forEach(function (tr) { rows[tr.dataset.id] = tr; });
+
+  function line(parent, text, cls) {
+    var el = document.createElement(cls === "strong" ? "strong" : "div");
+    if (cls && cls !== "strong") el.className = cls;
+    el.textContent = text;
+    parent.appendChild(el);
+  }
+  function showTooltip(el, x, y) {
+    var d = el.dataset;
+    tooltip.textContent = "";
+    line(tooltip, d.id + " " + d.name, "strong");
+    line(tooltip, d.hits + " Dokumente, " + d.eligible + " Wahlberechtigte");
+    line(tooltip, "Trefferquote " + d.rate + ", Wahlbeteiligung " + d.turnout);
+    if (d.terms) line(tooltip, d.terms, "terms");
+    tooltip.hidden = false;
+    var w = tooltip.offsetWidth, h = tooltip.offsetHeight;
+    var left = x + 14, top = y + 14;
+    if (left + w > window.scrollX + document.documentElement.clientWidth - 8) left = x - w - 14;
+    if (top + h > window.scrollY + document.documentElement.clientHeight - 8) top = y - h - 14;
+    tooltip.style.left = Math.max(window.scrollX + 4, left) + "px";
+    tooltip.style.top = Math.max(window.scrollY + 4, top) + "px";
+  }
+  function hideTooltip() { tooltip.hidden = true; }
+  function select(id) {
+    document.querySelectorAll(".selected").forEach(function (el) { el.classList.remove("selected"); });
+    if (id === null) return;
+    document.querySelectorAll('[data-id="' + id + '"]').forEach(function (el) {
+      el.classList.add("selected");
+      if (el.classList.contains("district")) el.parentNode.appendChild(el);
+    });
+    if (rows[id]) rows[id].scrollIntoView({ block: "nearest" });
+  }
+  var marks = document.querySelectorAll(".district, .point");
+  marks.forEach(function (el) {
+    el.addEventListener("pointermove", function (e) { showTooltip(el, e.pageX, e.pageY); });
+    el.addEventListener("pointerleave", hideTooltip);
+    el.addEventListener("focus", function () {
+      var r = el.getBoundingClientRect();
+      showTooltip(el, r.left + window.scrollX + r.width / 2, r.top + window.scrollY + r.height / 2);
+    });
+    el.addEventListener("blur", hideTooltip);
+    el.addEventListener("click", function () {
+      select(el.classList.contains("selected") ? null : el.dataset.id);
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); }
+    });
+  });
+  Object.keys(rows).forEach(function (id) {
+    rows[id].addEventListener("click", function () { select(rows[id].classList.contains("selected") ? null : id); });
+  });
+
+  document.querySelectorAll('input[name="metric"]').forEach(function (radio) {
+    radio.addEventListener("change", function () {
+      var metric = radio.value;
+      document.querySelectorAll(".district").forEach(function (path) {
+        path.setAttribute("class", "district q" + (metric === "rate" ? path.dataset.classRate : path.dataset.classTurnout) + (path.classList.contains("selected") ? " selected" : ""));
+      });
+      document.getElementById("legend-rate").hidden = metric !== "rate";
+      document.getElementById("legend-turnout").hidden = metric !== "turnout";
+    });
+  });
+  var pois = document.getElementById("show-pois");
+  if (pois) pois.addEventListener("change", function () {
+    document.querySelectorAll(".pois").forEach(function (g) { g.classList.toggle("on", pois.checked); });
+  });
+
+  document.querySelectorAll("th[data-sort]").forEach(function (th) {
+    th.addEventListener("click", function () {
+      var table = th.closest("table"), tbody = table.tBodies[0];
+      var index = Array.prototype.indexOf.call(th.parentNode.children, th);
+      var ascending = th.getAttribute("aria-sort") !== "ascending";
+      var numeric = th.dataset.sort === "num";
+      var list = Array.prototype.slice.call(tbody.rows);
+      list.sort(function (a, b) {
+        var ca = a.cells[index], cb = b.cells[index];
+        if (numeric) return (parseFloat(ca.dataset.value) - parseFloat(cb.dataset.value)) * (ascending ? 1 : -1);
+        return ca.textContent.localeCompare(cb.textContent, "de") * (ascending ? 1 : -1);
+      });
+      list.forEach(function (tr) { tbody.appendChild(tr); });
+      table.querySelectorAll("th[data-sort]").forEach(function (other) { other.removeAttribute("aria-sort"); });
+      th.setAttribute("aria-sort", ascending ? "ascending" : "descending");
+    });
+  });
+})();
+</script>
+</body>
+</html>
