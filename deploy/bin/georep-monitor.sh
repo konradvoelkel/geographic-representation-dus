@@ -123,18 +123,20 @@ step mainsite georep run
 unset GEOREP_REPORT__MONITORING_URL
 
 # (7) Veröffentlichungsordner zusammenstellen: Hauptseite nach out/, Profil nach out/<profil>/
-if [ -d "$MAIN_SITE" ]; then
+# Geprüft wird index.html, nicht das Verzeichnis: `bootstrap` legt ein leeres site/ an, und im
+# Trockenlauf bleibt es leer (2026-10-12 in der Simulation aufgefallen).
+if [ -f "$MAIN_SITE/index.html" ]; then
   rsync -a --delete --exclude="/$PROFILE/" "$MAIN_SITE/" "$OUT/" || fail "Hauptseite nach out/"
 else
   log "ohne Hauptseite unter $MAIN_SITE: nichts zu kopieren"
 fi
-if [ -d "$PROFILE_SITE" ]; then
+if [ -f "$PROFILE_SITE/index.html" ]; then
   mkdir -p "$OUT/$PROFILE" || fail "Profilordner anlegen"
   rsync -a --delete --exclude=/snapshots/ "$PROFILE_SITE/" "$OUT/$PROFILE/" ||
     fail "Profilseite nach out/"
   SNAPSHOTS=$OUT/$PROFILE/snapshots
   MONTH=$(date +%Y-%m)
-  if [ -d "$OUT/$PROFILE/data" ] && [ ! -d "$SNAPSHOTS/$MONTH" ]; then
+  if [ -n "$(ls -A "$OUT/$PROFILE/data" 2>/dev/null)" ] && [ ! -d "$SNAPSHOTS/$MONTH" ]; then
     mkdir -p "$SNAPSHOTS/$MONTH" || fail "Schnappschuss $MONTH anlegen"
     cp -r "$OUT/$PROFILE/data/." "$SNAPSHOTS/$MONTH/" || fail "Schnappschuss $MONTH kopieren"
     (cd "$SNAPSHOTS/$MONTH" && sha256sum -- * >SHA256SUMS) || fail "SHA256SUMS $MONTH"
