@@ -567,3 +567,25 @@ Stimmbezirks- oder Wahlbezirksnummer besteht aus 0 bis 9. `prep.precincts.is_num
 Gefunden hat das crosshair (`nox -s verify`) als Gegenbeispiel zum Vertrag von `district_from_id`; der Test
 nennt beide Fälle. Verworfen: `isdecimal()` (es ließe arabisch-indische Ziffern durch) und ein `try: int(...)`
 (dann wäre der Fehler eine Ausnahme von `int`, keine Aussage über die Quelle).
+
+## Punkt: Die laufende Wahlperiode als zweites Profil mit eigenem Lauf (Option 07, 2026-10-12)
+
+Die Periode seit der Kommunalwahl vom 14.09.2025 wird fortgeschrieben, ohne die Kette der Arbeit anzufassen:
+ein Settings-Profil `settings.2025.toml` (`profile = "2025"`, `period.start = 2025-09-15`, `end` leer,
+`election = 2025-09-14`) legt Daten unter `data_root/2025/` und PDFs wie Texte unter `cache_root/2025/`. Der
+Abruf holt je Lauf nur Geändertes (`modified_since`), der Store entfernt gelöschte Paper, der neue Schritt
+`timeline` zählt Dokumente je Monat, und die Seite des Profils entsteht aus derselben Vorlage mit zwei
+Zweigen weniger (keine Regression, kein Kartenumschalter) und zwei Abschnitten mehr („Je Monat", und auf der
+Hauptseite „Laufende Wahlperiode"). Der wiederkehrende Lauf ist ein idempotentes Skript hinter einem
+systemd-Timer (`deploy/`), nicht GitHub Actions: Actions hat keinen dauerhaften Speicher für 600 MB PDFs und
+ein Zeitlimit von sechs Stunden. Das Wörterbuch aus Straßen und Orten bleibt eingefroren (Stand der Arbeit,
+November 2025), damit Änderungen der Treffer nur von den Dokumenten kommen.
+
+Verworfen: eine Datenwurzel mit Periodenfilter im Schritt `corpus` (jeder Schritt müsste filtern, der Golden
+Master verschöbe sich); `end = 2030-09-13` als Platzhalter statt eines offenen Endes (der Wahltermin steht
+nicht fest, und ein Datum in der Zukunft sagt „geschlossen"); den Korpus der Arbeit in den Store des Profils
+zu kopieren (dann lüde `pdfs` 19 108 alte PDFs); ein Monitoring-Abschnitt in der Hauptseite statt einer
+Unterseite (Pages kann keine zweite Datenwurzel lesen); cron statt systemd (kein `Persistent=`, kein Journal,
+keine Credentials); feste Pfade im Skript. Kosten: ein Schritt und zwei Tabellen mehr in jedem Profil, rund
+34 KB mehr auf der Hauptseite, und ein Rechner, der täglich zwei Minuten arbeitet. Offene Fragen (Hostname,
+R2-Bucket, Freigabe des Erstabrufs) stehen in [plans/fragen.md](plans/fragen.md).

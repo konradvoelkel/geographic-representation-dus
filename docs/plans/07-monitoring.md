@@ -1,6 +1,6 @@
 # Plan 07: Monitoring
 
-Stand 2026-10-12, Branch `feat/07-monitoring`. Status: in Arbeit.
+Stand 2026-10-12, Branch `feat/07-monitoring`. Status: im Review.
 
 Auftrag: Briefing § 7.7 des Meta-Plans ([../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md)) und Konrads
 Antwort zu Frage 4 ([fragen.md](fragen.md)): die laufende Wahlperiode ab dem 15.09.2025 inkrementell abrufen
@@ -416,6 +416,9 @@ Infra-Rolle (nach eigenem Ermessen), Erstabruf (3 h Wanduhr, unbeaufsichtigt).
 | 7 | Datenplattform: Zenodo-Record je Jahr mit DOI plus Hugging-Face-Dataset für die Parquet-Tabellen, oder nur eines davon; unter wessen Namen und Affiliation (HHU für GovData)? | bestimmt Datensatzkarte, Lizenzzeile, `CITATION.cff` und ob ein GovData-Eintrag überhaupt möglich ist | beides vorbereiten (Karte, Lizenz, Zitierdatei), nichts hochladen; GovData nicht verfolgen |
 | 8 | Bleibt das Wörterbuch der Referenz (November 2025) für die ganze laufende Periode eingefroren, oder wird es jährlich erneuert? | Vergleichbarkeit der Monatsreihe gegen Aktualität neuer Straßen und Orte | eingefroren; eine Erneuerung wäre ein eigener, datierter Lauf mit neuem Stamp |
 | 9 | Soll die Monatsreihe 2020 bis 2025 auch auf der Hauptseite stehen (rund 20 KB)? | Seitenbudget und Fokus der Hauptseite | ja, weil das Budget es erlaubt; die Synergiephase darf sie streichen |
+| 11 | Soll der Trockenlauf (`DRY_RUN=1`) die Hauptseite wirklich bauen, oder soll auch sie nur geplant werden? | ohne eine echte Seite zeigt die Simulation nichts; die Hauptseite braucht kein Netz und schreibt nur in die eigene Datenwurzel | ja, sie wird gebaut; nur Abruf, rclone und rsync bleiben trocken (so umgesetzt, `deploy/README.md`) |
+| 12 | Soll die Kachel „Wahlbeteiligung, Median" auf der Profilseite stehen, obwohl es zur laufenden Periode keine Wahl gibt? | sonst widerspricht die Kachel dem Satz, dass es keine Wahlbeteiligung gibt | sie bleibt und nennt die Wahl, aus der sie stammt („je Wahlbezirk, Kommunalwahl 14.09.2025") |
+| 13 | Bleibt die Pages-Seite dauerhaft ohne Link auf die laufende Periode, oder soll sie später absolut auf den VPS zeigen? | ein absoluter Link bräuchte die Domain in `ALLOWED_LINKS` und damit einen Codecommit | Pages bleibt ohne Link (`report.monitoring_url` ist dort leer), nur die VPS-Kopie trägt ihn relativ |
 | 10 | Reicht `modified_since` = letztes `modified` minus ein Tag, oder soll der Lauf gelegentlich (monatlich) die Liste ohne Filter bis zum Periodenbeginn lesen, um Lücken zu schließen? | ein Paper, dessen `modified` älter als der Filter ist, würde nie nachgeholt (Server-Uhrzeitfehler) | minus ein Tag reicht; ein monatlicher Volllauf (`GEOREP_SOURCES__OPARL__INCREMENTAL=false`, 21 Seiten) steht als Befehl im README, der Timer macht ihn nicht |
 
 ## 9. Vorbereitung für Option 10 (was wird konfigurierbar, welche Modulgrenze entsteht)
@@ -495,3 +498,46 @@ Für Option 7 im Besonderen:
   `--profile 2025` geladen; bis dahin `--settings settings.2025.toml`.
 - **Reihenfolge**: 07 merged als Letzte.
 - **Fragen**: 7.1, 7.2, 7.4, 7.6 offen (fragen.md); 7.3, 7.5, 7.7 bis 7.10 wie angenommen.
+
+## 11. Umsetzung: Abweichungen vom Bauplan und Messwerte (2026-10-12)
+
+Umgesetzt sind die Stufen A bis F und die Doku aus G; der Erstabruf (G.1, G.2) bleibt Konrads Lauf.
+Abweichungen vom Bauplan, je mit Grund:
+
+- **Umgebungsvariablen des Skripts heißen `MONITOR_*`, nicht `GEOREP_*`** (§ 5, Stufe E.1 hatte
+  `GEOREP_REPO` und `GEOREP_PROFILE` vorgesehen). `GEOREP_` ist das Präfix von pydantic-settings:
+  `GEOREP_PROFILE=settings.2025.toml` beendet jeden `georep`-Aufruf mit einem Validierungsfehler, weil
+  `profile` ein Ordnername ist (nachgestellt am 2026-10-12). Nur `GEOREP_DATA_ROOT`, `GEOREP_CACHE_ROOT`
+  und `GEOREP_LOG_LEVEL` sind weiter echte Einstellungen aus der Umgebung.
+- **`DRY_RUN=1` baut die Hauptseite wirklich.** Sonst hätte die Simulation keinen
+  Veröffentlichungsordner zu zeigen: ohne Abruf hat das Profil keine Dokumente, seine Kette kann nur
+  planen. Netzschritte, rclone und rsync bleiben trocken (Frage 11).
+- **Der Kettentest der Stufe B lässt `timeline` aus.** Der Schritt braucht den Index, und die vier
+  PDF-Fixtures treffen keinen Begriff des Mini-Wörterbuchs (nachgerechnet). Die Monatsreihe prüfen
+  stattdessen `tests/unit/test_timeline.py` (Mini-Fixture, gegen Polars nachgerechnet) und
+  `tests/property/test_timeline_props.py`.
+- **`KeyFigures.documents_without_text` ist eine Eigenschaft, kein Feld** (abgeleitet aus zwei Zahlen,
+  die schon im Modell stehen).
+- **`Axes.axis_titles` lässt leere Titel weg und `tick_labels(x=False)` die x-Zahlen** (Fundament F7
+  erweitert, Ausgabe des Streudiagramms unverändert); die y-Achse der Balken bekommt ganze Zahlen, weil
+  `nice_ticks` bei wenigen Dokumenten je Monat halbe Dokumente beschriftet hätte.
+- **Zwei Prädikate mehr in `georep.contracts`**: `months_in_order` und `keys_sorted_unique`.
+- **Gefundener Fehler, nicht geplant**: die Nachbedingung `added + updated <= total` von
+  `PaperStore.upsert` galt schon vor dieser Option nicht, wenn eine Charge dieselbe ID zweimal enthält
+  (die hypothesis-Eigenschaft hat es gefunden); sie heißt jetzt `added <= total + removed`.
+
+Gemessen am 2026-10-12 im Worktree (13 Kerne geteilt, `POLARS_MAX_THREADS=4`):
+
+| Größe | Wert |
+|---|---|
+| `uv run nox` | 16 bis 25 s |
+| `uv run pytest -m slow` | 12 s |
+| `uv run georep run` (nur `timeline` und `report` offen) | 3,3 s, davon `timeline` 0,2 s |
+| `monatsreihe.parquet` | 61 Zeilen (2020-09 bis 2025-09, lückenlos), 2 490 Bytes, Summe 19 108 Dokumente |
+| `wahlbezirke_monate.parquet` | 2 491 Zeilen, 3 740 Bytes, Summe 29 573 Treffer |
+| Hauptseite `index.html` | 719 909 Bytes (vorher 686 088), Budget 1,5 MB |
+| Profilseite aus dem Testdatensatz | 126 312 Bytes, vier Dokumente in vier Monaten |
+| Trockenlauf durch die Nutzereinheit | 7 bis 9 s, Exit 0 |
+
+Die Seiten sind in Hell und Dunkel mit headless Chrome angesehen (Streifen im Scratchpad); bei 375 px
+Breite ist `scrollWidth` gleich `clientWidth`, es gibt kein waagerechtes Scrollen.

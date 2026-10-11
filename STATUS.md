@@ -96,7 +96,7 @@ Crosswalk-Kern, Achsen-Helfer, Zähl-Tests), die Fragen der Pläne gebündelt in
 (Implementierung) läuft; Option 08 (Suche) ist gemerged (2026-10-12), Option 05 (Gremien) ist auf `feat/05-gremien` fertig und im Review: zwei neue
 Offline-Schritte (`bodies`, `body_hits`, zusammen 0,2 s), drei neue veröffentlichte Tabellen, ein dritter
 Kartenumschalter und der Abschnitt „Gremien"; 304 Tests statt 272, voller Offline-Lauf rund 9 s,
-`index.html` 732 KB, `wahlbezirke_auswertung.parquet` byteidentisch. Der Plan der Berichtsseite ist mit Stufe G vollständig umgesetzt. Die Seite wird bei jedem Push auf `main` neu gebaut und veröffentlicht
+`index.html` 732 KB, `wahlbezirke_auswertung.parquet` byteidentisch. Der Plan der Berichtsseite ist mit Stufe G vollständig umgesetzt. Die Seite wird bei jedem Push auf `main` neu gebaut und veröffentlicht Option 07 (Monitoring) liegt auf `feat/07-monitoring` im Review: Profil der laufenden Periode, inkrementeller Abruf mit Löschungen, Schritt `timeline`, Abschnitte „Je Monat" und „Laufende Wahlperiode", Lauf-Skript und systemd-Einheiten unter `deploy/`. Der Erstabruf (16 bis 30 min Metadaten, rund 2,3 h PDFs) ist dokumentiert, aber nicht gelaufen; er gehört Konrad (`deploy/README.md`).
 (`.github/workflows/pages.yml`, Pages-Quelle „GitHub Actions" seit 2026-10-11); abgenommen am 2026-10-11: Workflow
 grün, Seite erreichbar, Downloads laden, SHA-256 stimmen. Optional nach Bedarf: Stufe G des Plans (Dokumente je
 Begriff: erledigt) und der Umzug auf Konrads VPS (`rsync` von `data/site`, Stufe F.4).
