@@ -52,6 +52,9 @@ def test_oparl_paper_survives_a_json_roundtrip(paper: OparlPaper) -> None:
     assert again == paper
     record = PaperRecord.from_oparl(paper)
     assert record.id == paper.id and record.date == paper.date
+    assert record.has_originator == paper.has_originator
+    assert record.consultation_organizations == paper.consultation_organizations
+    assert PaperRecord.model_validate_json(record.model_dump_json()) == record
     primary = paper.main_file or (paper.auxiliary_file[0] if paper.auxiliary_file else None)
     assert record.download_url == (primary.download_url if primary else None)
     if record.download_url:
@@ -72,6 +75,11 @@ def test_oparl_paper_survives_a_json_roundtrip(paper: OparlPaper) -> None:
             id=st.text(alphabet="abc0123456789", min_size=1, max_size=8),
             name=opt_text,
             modified=st.one_of(st.none(), aware),
+            # Option 04: die vier URL-Tupel gehen durch JSONL und zurück, ohne Gleichheit zu verlieren
+            originator_person=urls,
+            originator_organization=urls,
+            under_direction_of=urls,
+            consultation_organizations=urls,
         ),
         max_size=12,
     )
