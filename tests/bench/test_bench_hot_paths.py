@@ -15,7 +15,9 @@ from pathlib import Path
 
 import polars as pl
 import pytest
+import shapely
 from pytest_benchmark.fixture import BenchmarkFixture
+from shapely.geometry import Polygon, box
 
 from georep.analysis.bodies import hits_by_body
 from georep.analysis.hits import hits_by_district, join_voters
@@ -28,6 +30,8 @@ from georep.analysis.weights import (
     weighted_hits,
 )
 from georep.bootstrap import bootstrap
+from georep.crosswalk import area_shares, transfer_counts
+from georep.geo import Area
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
 from georep.prep.bodies import ID, REFERENCE, BodyRules, classify_papers
@@ -208,3 +212,53 @@ def test_document_weights_over_the_pairs(benchmark: BenchmarkFixture, mini: Mini
 def test_classify_originators(benchmark: BenchmarkFixture, mini: MiniRun) -> None:
     frame = benchmark(classify_originators, mini.attribution_corpus, mini.settings.originators)
     assert frame.height == 200
+
+
+# --- Option 02: Flächen-Crosswalk auf 320 Quellen und 41 Zielen --------------------------------
+
+CROSSWALK_SOURCES = (20, 16)  # 320 Zellen, rund so viele wie die 316 Stimmbezirke von 2020
+CROSSWALK_TARGETS = (7, 6)  # 42 Zellen, zu 41 Zielbezirken verschmolzen
+
+
+def _grid(columns: int, rows: int, *, offset: float = 0.0) -> list[Polygon]:
+    """Ein Gitter über [0, 20000] x [0, 16000]; ``offset`` verschiebt die inneren Kanten."""
+    width, height = 20000.0, 16000.0
+    xs = [0.0, *(width * i / columns + offset for i in range(1, columns)), width]
+    ys = [0.0, *(height * j / rows + offset for j in range(1, rows)), height]
+    return [box(xs[i], ys[j], xs[i + 1], ys[j + 1]) for i in range(columns) for j in range(rows)]
+
+
+@pytest.fixture(scope="module")
+def crosswalk_grids() -> tuple[list[Area], list[Area]]:
+    sources = [Area(f"{i:04d}", cell) for i, cell in enumerate(_grid(*CROSSWALK_SOURCES))]
+    cells = _grid(*CROSSWALK_TARGETS, offset=137.0)
+    # Die letzten zwei Zellen werden ein Bezirk: 42 Zellen, 41 Ziele wie in Düsseldorf
+    targets = [Area(f"{i + 1}", cell) for i, cell in enumerate(cells[:-2])]
+    targets.append(Area(f"{len(cells) - 1}", shapely.unary_union(cells[-2:])))
+    return sources, targets
+
+
+def test_area_shares_316_to_41(
+    benchmark: BenchmarkFixture, crosswalk_grids: tuple[list[Area], list[Area]]
+) -> None:
+    sources, targets = crosswalk_grids
+    frame = benchmark(area_shares, sources, targets)
+    assert frame.get_column("source_id").n_unique() == len(sources)
+
+
+def test_transfer_counts_to_41_districts(
+    benchmark: BenchmarkFixture, crosswalk_grids: tuple[list[Area], list[Area]]
+) -> None:
+    sources, targets = crosswalk_grids
+    shares = area_shares(sources, targets)
+    keys = sorted(s.key for s in sources)
+    counts = pl.DataFrame(
+        {
+            "source_id": keys,
+            "wahlberechtigte": [1000 + i for i in range(len(keys))],
+            "waehler": [500 + i for i in range(len(keys))],
+        },
+        schema={"source_id": pl.String, "wahlberechtigte": pl.Int64, "waehler": pl.Int64},
+    )
+    frame = benchmark(transfer_counts, counts, shares, ["wahlberechtigte", "waehler"])
+    assert int(frame.get_column("waehler").sum()) == int(counts.get_column("waehler").sum())

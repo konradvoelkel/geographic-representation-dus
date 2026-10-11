@@ -18,13 +18,20 @@ in der Schnittflächenschleife (306 × k Aufrufe).
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 
 import deal
 import polars as pl
 import shapely
 
-from georep.contracts import all_nonnegative, has_columns, sums_to_one
+from georep.contracts import (
+    all_nonnegative,
+    columns_preserved,
+    has_columns,
+    sorted_unique,
+    sums_to_one,
+)
 from georep.errors import SchemaError
 from georep.geo import Area
 
@@ -219,4 +226,170 @@ def district_weights(table: pl.DataFrame, shares: pl.DataFrame) -> pl.DataFrame:
         .filter(pl.col(WEIGHT) > 0)
         .select(pl.col(DISTRICT), pl.col(TARGET).alias(UNIT), pl.col(WEIGHT))
         .sort([DISTRICT, WEIGHT, UNIT], descending=[False, True, False])
+    )
+
+
+# --- Option 02: ein älterer Zuschnitt auf die Wahlbezirke von heute ---------------------------
+#
+# ``area_shares`` oben liefert die Flächenanteile; hier kommt dazu, was eine *Periode* braucht:
+# die Zuordnung innerhalb eines Zuschnitts (``assign_by_point``), der Übertrag additiver
+# Zählgrößen (``transfer_counts`` mit ``largest_remainder``) und dieselbe Umrechnung als Gewichte
+# je Zielbezirk (``target_weights``). Die Schlüssel bleiben, wie ``area_shares`` sie gibt; wer
+# ganzzahlige Zielbezirke braucht, castet vorher (der Schritt ``precincts`` tut das, damit die
+# Reste beim Runden an die numerisch sortierten Bezirke gehen).
+
+
+def _targets_known(
+    sources: Sequence[Area],
+    targets: Sequence[Area],
+    result: dict[str, str] | None = None,
+) -> bool:
+    assert result is not None
+    return set(result) == {s.key for s in sources} and set(result.values()) <= {
+        t.key for t in targets
+    }
+
+
+@deal.pre(lambda sources, targets: bool(sources) and bool(targets))
+@deal.ensure(_targets_known, message="jede Quelle genau ein Ziel, jedes Ziel aus der Eingabe")
+@deal.raises(SchemaError)
+def assign_by_point(sources: Sequence[Area], targets: Sequence[Area]) -> dict[str, str]:
+    """Jede Quellfläche dem Ziel, in dem ihr repräsentativer Punkt liegt.
+
+    Für die Zuordnung Stimmbezirk zu Wahlbezirk **desselben** Zuschnitts: dort ist die Quelle
+    ganz im Ziel enthalten, ein Punkt genügt und ist billiger als die Schnittfläche. Keiner oder
+    mehrere Treffer sind ein Datenfehler (falsches CRS, überlappende Ziele), nicht ein Grenzfall:
+    der Fehler nennt die Quelle. Für Zuschnitte, die sich unterscheiden, ist ``area_shares``
+    zuständig.
+    """
+    tree = shapely.STRtree([t.geometry for t in targets])
+    found: dict[str, str] = {}
+    for source in sorted(sources, key=lambda s: s.key):
+        hits = tree.query(source.geometry.representative_point(), predicate="within")
+        if len(hits) != 1:
+            raise SchemaError(
+                f"Quelle {source.key!r}: {len(hits)} Zielflächen enthalten ihren Punkt, genau eine "
+                "wird erwartet (gleicher Zuschnitt, gleiches CRS?)"
+            )
+        found[source.key] = targets[int(hits[0])].key
+    return found
+
+
+@deal.pre(
+    lambda shares, counts, weight_column: (
+        has_columns(shares, SOURCE, TARGET, SHARE)
+        and has_columns(counts, SOURCE, weight_column)
+        and all_nonnegative(counts, weight_column)
+        and counts.get_column(SOURCE).n_unique() == counts.height
+        and sums_to_one(shares, SOURCE, SHARE)
+    ),
+    message="Anteile je Quelle mit Summe 1 und genau eine nicht negative Zählgröße je Quelle",
+)
+@deal.post(lambda result: result.columns == [SOURCE, TARGET, WEIGHT])
+@deal.post(lambda result: _in_unit_interval(result, WEIGHT), message="Gewichte in (0, 1]")
+@deal.post(
+    lambda result: sums_to_one(result, TARGET, WEIGHT),
+    message="die Gewichte je Zielbezirk summieren zu 1",
+)
+def target_weights(shares: pl.DataFrame, counts: pl.DataFrame, weight_column: str) -> pl.DataFrame:
+    """Gewicht jeder Quelle **am Ziel**: Flächenanteil mal Zählgröße, je Ziel auf 1 normiert.
+
+    Damit ist ein Anteil (Wahlbeteiligung, Stimmenanteil) direkt übertragbar, ohne dass Zähler
+    und Nenner getrennt gerechnet werden; ``transfer_counts`` geht den anderen Weg und ist für
+    Zählgrößen das Genauere. Zeilen mit Gewicht 0 fallen weg, ein Ziel ohne Zählgröße fehlt.
+
+    ``counts`` trägt eine Zeile je Quelle, wie bei ``transfer_counts``: eine Dublette würde den
+    Join vervielfachen und die Gewichte still verschieben, statt aufzufallen.
+    """
+    joined = (
+        shares.join(counts.select(SOURCE, weight_column), on=SOURCE, how="inner")
+        .with_columns((pl.col(SHARE) * pl.col(weight_column)).alias(WEIGHT))
+        .filter(pl.col(WEIGHT) > 0.0)
+    )
+    totals = joined.group_by(TARGET).agg(pl.col(WEIGHT).sum().alias("_total"))
+    return (
+        joined.join(totals, on=TARGET)
+        .with_columns((pl.col(WEIGHT) / pl.col("_total")).alias(WEIGHT))
+        .select(SOURCE, TARGET, WEIGHT)
+        .sort([TARGET, WEIGHT, SOURCE], descending=[False, True, False])
+    )
+
+
+def _rounded_total(values: Sequence[float]) -> int:
+    """Die Summe der Eingabe als ganze Zahl; dieselbe Rechnung im Vertrag wie in der Funktion."""
+    return round(math.fsum(values))
+
+
+@deal.pure
+@deal.pre(
+    lambda values: all(math.isfinite(v) and v >= 0.0 for v in values),
+    message="nicht negative, endliche Zählgrößen",
+)
+@deal.ensure(
+    lambda values, result: (
+        len(result) == len(values)
+        and sum(result) == _rounded_total(values)
+        and all(abs(n - v) < 1.0 for n, v in zip(result, values, strict=True))
+    ),
+    message="gleiche Länge, Summe erhalten, jeder Wert weicht um weniger als 1 ab",
+)
+def largest_remainder(values: Sequence[float]) -> list[int]:
+    """Nicht ganzzahlige Zählgrößen ganzzahlig machen, ohne die Summe zu verändern.
+
+    Jeder Wert wird abgerundet; die fehlenden Einheiten gehen an die größten Reste, bei gleichem
+    Rest an den kleineren Index (damit das Ergebnis reproduzierbar ist). Das ist das Verfahren
+    des größten Restes (Hare-Niemeyer); ohne es würden 41 gerundete Bezirkswerte die Stadtsumme
+    um einige Personen verfehlen.
+    """
+    floors = [math.floor(v) for v in values]
+    rest = _rounded_total(values) - sum(floors)
+    order = sorted(range(len(values)), key=lambda i: (floors[i] - values[i], i))
+    result = list(floors)
+    for i in order[: max(rest, 0)]:
+        result[i] += 1
+    return result
+
+
+@deal.pre(
+    lambda counts, shares, columns: (
+        len(columns) > 0
+        and has_columns(counts, SOURCE, *columns)
+        and has_columns(shares, SOURCE, TARGET, SHARE)
+        and all_nonnegative(counts, *columns)
+        and counts.get_column(SOURCE).n_unique() == counts.height
+        and set(shares.get_column(SOURCE)) == set(counts.get_column(SOURCE))
+    ),
+    message="eine Zeile je Quelle mit nicht negativen Zählgrößen, Anteile über genau diese Quellen",
+)
+@deal.post(lambda result: sorted_unique(result, TARGET))
+@deal.ensure(
+    lambda counts, shares, columns, result: columns_preserved(counts, result, columns),
+    message="die Spaltensummen bleiben exakt erhalten",
+)
+@deal.ensure(
+    lambda counts, shares, columns, result: all_nonnegative(result, *columns),
+    message="keine negativen Zählgrößen",
+)
+def transfer_counts(
+    counts: pl.DataFrame, shares: pl.DataFrame, columns: Sequence[str]
+) -> pl.DataFrame:
+    """Zählgrößen von den Quellflächen auf die Zielflächen übertragen, ganzzahlig und summentreu.
+
+    Anteil mal Wert, Summe je Ziel, dann ``largest_remainder`` je Spalte. Nur additive Größen
+    dürfen hier durch (Wahlberechtigte, Wähler, Stimmen); Anteile und Quoten entstehen **danach**
+    aus den übertragenen Zählgrößen, nie durch Übertrag des Anteils. Sortiert wird nach dem
+    Zielschlüssel, und in dieser Reihenfolge gehen die Reste: steht dort Text statt Zahlen, käme
+    „10" vor „2" -- der Aufrufer castet darum vorher.
+    """
+    summed = (
+        shares.join(counts.select(SOURCE, *columns), on=SOURCE, how="inner")
+        .group_by(TARGET)
+        .agg([(pl.col(SHARE) * pl.col(c)).sum().alias(c) for c in columns])
+        .sort(TARGET)
+    )
+    return summed.with_columns(
+        [
+            pl.Series(c, largest_remainder(summed.get_column(c).to_list()), dtype=pl.Int64)
+            for c in columns
+        ]
     )

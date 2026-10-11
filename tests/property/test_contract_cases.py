@@ -16,6 +16,7 @@ import deal
 from hypothesis import strategies as st
 
 from georep.analysis.weights import district_weight, idf_weight
+from georep.crosswalk import largest_remainder
 from georep.http import cache_pattern
 from georep.prep.bodies import BodyRules, parse_reference
 from georep.prep.extract import after_marker, normalise_text
@@ -190,4 +191,19 @@ def test_district_weight(case: deal.TestCase) -> None:
     kwargs={"df": st.integers(-5, 20_000), "n": st.integers(-5, 20_000)},
 )
 def test_idf_weight(case: deal.TestCase) -> None:
+    case()
+
+
+@deal.cases(
+    largest_remainder,
+    count=COUNT,
+    check_types=False,
+    kwargs={
+        "values": st.lists(
+            st.floats(min_value=0.0, max_value=1e6, allow_nan=False, allow_infinity=False),
+            max_size=50,
+        )
+    },
+)
+def test_largest_remainder(case: deal.TestCase) -> None:
     case()
