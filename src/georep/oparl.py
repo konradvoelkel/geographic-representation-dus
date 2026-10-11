@@ -1,10 +1,15 @@
 """OParl 1.1 als Vertrag: die Objekte, die wir vom Ratsinformationssystem lesen.
 
-Spezifikation: https://oparl.org/spezifikation/online-ansicht/ (Paper, File, Paginierung).
-Validiert an der Systemgrenze, damit der Rest des Codes mit Typen statt mit ``.get()``-Ketten
-arbeitet. Felder, die wir nicht brauchen, werden ignoriert; ``tests/fixtures/oparl`` hält eine
-echte Antwort vom 2026-10-09 fest, und ein Test schlägt an, sobald der Server Schlüssel liefert,
-die das Modell nicht kennt.
+Spezifikation: https://oparl.org/spezifikation/online-ansicht/ (Paper, File, Organization,
+Paginierung). Validiert an der Systemgrenze, damit der Rest des Codes mit Typen statt mit
+``.get()``-Ketten arbeitet. Felder, die wir nicht brauchen, werden ignoriert; ``tests/fixtures/oparl``
+hält echte Antworten fest (Paper-Seite vom 2026-10-09, Organisationen vom 2026-10-11), und ein Test
+schlägt an, sobald der Server Schlüssel liefert, die das Modell nicht kennt.
+
+Die Urheberfelder ``originatorPerson``, ``originatorOrganization`` und ``underDirectionOf`` sind
+Tupel von URLs (OParl 1.1, Paper); der Server der ITK Rheinland liefert sie für Düsseldorf nicht
+(Stand 2026-10-09), das Modell trägt sie trotzdem, damit die Quelle ``oparl`` in
+``georep.analysis.parties`` ohne Codeänderung greift, sobald sie gefüllt sind (Option 04).
 """
 
 from __future__ import annotations
@@ -51,10 +56,36 @@ class OparlPaper(_Oparl):
     main_file: OparlFile | None = Field(default=None, alias="mainFile")
     auxiliary_file: list[OparlFile] = Field(default_factory=list, alias="auxiliaryFile")
     consultation: list[dict[str, Any]] = Field(default_factory=list)
+    originator_person: tuple[str, ...] = Field(default=(), alias="originatorPerson")
+    originator_organization: tuple[str, ...] = Field(default=(), alias="originatorOrganization")
+    under_direction_of: tuple[str, ...] = Field(default=(), alias="underDirectionOf")
     web: str | None = None
     created: dt.datetime | None = None
     modified: dt.datetime | None = None
     deleted: bool = False
+
+    @property
+    def has_originator(self) -> bool:
+        """Mindestens eines der drei Urheberfelder ist gefüllt (Zähler im Abrufbericht)."""
+        return bool(
+            self.originator_person or self.originator_organization or self.under_direction_of
+        )
+
+    @property
+    def consultation_organizations(self) -> tuple[str, ...]:
+        """Die beratenden Gremien aus ``consultation[].organization``, sortiert und eindeutig.
+
+        Der Server schreibt eine Liste von URLs je Beratung, die Spezifikation erlaubt auch eine
+        einzelne; beides wird gelesen. Das ist das Gremium, nicht der Urheber (Option 5).
+        """
+        found: set[str] = set()
+        for entry in self.consultation:
+            value = entry.get("organization")
+            if isinstance(value, str):
+                found.add(value)
+            elif isinstance(value, list):
+                found.update(v for v in value if isinstance(v, str))
+        return tuple(sorted(found))
 
     @property
     def primary_file(self) -> OparlFile | None:
@@ -75,6 +106,38 @@ class OparlPaper(_Oparl):
         return start <= self.date and (end is None or self.date <= end)
 
 
+class OparlOrganization(_Oparl):
+    """oparl:Organization: Fraktion, Ausschuss, Bezirksvertretung, Gremium.
+
+    Der Server der ITK Rheinland setzt ``classification`` („Fraktion", „Ausschuss", „Bezirk",
+    „Gremium" oder nichts), nie ``organizationType``; ``membership`` sind URLs.
+    """
+
+    id: str
+    type: str | None = None
+    body: str | None = None
+    name: str | None = None
+    short_name: str | None = Field(default=None, alias="shortName")
+    classification: str | None = None
+    organization_type: str | None = Field(default=None, alias="organizationType")
+    start_date: dt.date | None = Field(default=None, alias="startDate")
+    end_date: dt.date | None = Field(default=None, alias="endDate")
+    membership: tuple[str, ...] = ()
+    sub_organization_of: str | None = Field(default=None, alias="subOrganizationOf")
+    meeting: str | None = None
+    location: dict[str, Any] | None = None
+    web: str | None = None
+    created: dt.datetime | None = None
+    modified: dt.datetime | None = None
+    deleted: bool = False
+
+    def active_on(self, day: dt.date) -> bool:
+        """Besteht die Organisation an diesem Tag? Ohne Daten gilt sie als immer bestehend."""
+        after_start = self.start_date is None or self.start_date <= day
+        before_end = self.end_date is None or day <= self.end_date
+        return after_start and before_end
+
+
 class Pagination(_Oparl):
     total_elements: int | None = Field(default=None, alias="totalElements")
     elements_per_page: int | None = Field(default=None, alias="elementsPerPage")
@@ -93,6 +156,14 @@ class PaperPage(_Oparl):
     """Eine Seite der Paper-Liste; ``links.next`` fehlt auf der letzten."""
 
     data: list[OparlPaper]
+    pagination: Pagination | None = None
+    links: Links = Links()
+
+
+class OrganizationPage(_Oparl):
+    """Eine Seite der Organisationsliste; Düsseldorf hat eine (58 Objekte, 2026-10-11)."""
+
+    data: list[OparlOrganization]
     pagination: Pagination | None = None
     links: Links = Links()
 

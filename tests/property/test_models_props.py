@@ -22,6 +22,10 @@ files = st.builds(
     file_name=opt_text,
     download_url=st.one_of(st.none(), text.map(lambda s: f"https://x/{s}.pdf")),
 )
+urls = st.lists(
+    st.text(alphabet="abc/0123456789", min_size=1, max_size=12).map(lambda s: f"https://x/{s}"),
+    max_size=3,
+).map(tuple)
 papers = st.builds(
     OparlPaper,
     id=st.text(alphabet="abc/0123456789", min_size=1, max_size=15),
@@ -31,6 +35,13 @@ papers = st.builds(
     paper_type=opt_text,
     main_file=st.one_of(st.none(), files),
     auxiliary_file=st.lists(files, max_size=2),
+    consultation=st.lists(
+        st.fixed_dictionaries({}, optional={"organization": urls.map(list), "role": text}),
+        max_size=3,
+    ),
+    originator_person=urls,
+    originator_organization=urls,
+    under_direction_of=urls,
     modified=st.one_of(st.none(), aware),
 )
 
@@ -45,6 +56,13 @@ def test_oparl_paper_survives_a_json_roundtrip(paper: OparlPaper) -> None:
     assert record.download_url == (primary.download_url if primary else None)
     if record.download_url:
         assert record.file_name == record.download_url.rsplit("/", 1)[-1]
+    # Option 04: die Urheberfelder bleiben Tupel, consultation wird zur sortierten URL-Menge
+    assert again.originator_organization == paper.originator_organization
+    assert paper.has_originator == bool(
+        paper.originator_person or paper.originator_organization or paper.under_direction_of
+    )
+    expected = sorted({u for c in paper.consultation for u in c.get("organization", [])})
+    assert list(paper.consultation_organizations) == expected
 
 
 @given(
