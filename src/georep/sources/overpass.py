@@ -30,14 +30,21 @@ def overpass_query(polygon_latlon: str, *, timeout_s: int = 90) -> str:
     return f'[out:json][timeout:{timeout_s}];way{OSM_FILTER}(poly:"{polygon_latlon}");out tags;'
 
 
+@deal.pure
 @deal.post(
     lambda result: result == sorted(set(result)) and all(n and n == n.strip() for n in result)
 )
 def street_names(data: dict[str, Any]) -> list[str]:
-    """Eindeutige, sortierte Namen aller Ways; ``a, b`` wird zu ``a`` und ``b`` wie in der Arbeit."""
+    """Eindeutige, sortierte Namen aller Ways; ``a, b`` wird zu ``a`` und ``b`` wie in der Arbeit.
+
+    Total über jedes dict: was kein Way mit ``tags.name`` als String ist, wird übergangen
+    (crosshair fand am 2026-10-11 ``{"elements": 0}`` als Gegenbeispiel zum alten Code).
+    """
     names: set[str] = set()
-    for element in data.get("elements", []):
-        name = element.get("tags", {}).get("name")
+    elements = data.get("elements")
+    for element in elements if isinstance(elements, list) else []:
+        tags = element.get("tags") if isinstance(element, dict) else None
+        name = tags.get("name") if isinstance(tags, dict) else None
         if isinstance(name, str):
             names.update(part.strip() for part in name.split(",") if part.strip())
     return sorted(names)
@@ -52,8 +59,9 @@ def fetch_street_names(http: Transport, endpoint: str, polygon_latlon: str) -> l
         data = response.json()
     except ValueError as error:
         raise FetchError(f"Overpass {endpoint}: kein JSON ({error})") from error
-    if "elements" not in data:
-        raise FetchError(f"Overpass {endpoint}: Antwort ohne elements ({data.get('remark', '')})")
+    if not isinstance(data, dict) or not isinstance(data.get("elements"), list):
+        remark = data.get("remark", "") if isinstance(data, dict) else type(data).__name__
+        raise FetchError(f"Overpass {endpoint}: Antwort ohne elements ({remark})")
     return street_names(data)
 
 

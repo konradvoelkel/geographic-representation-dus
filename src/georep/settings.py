@@ -194,7 +194,9 @@ class Settings(BaseSettings):
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
 
 
-@deal.pure
+# deal.safe, nicht deal.pure: deals has()-Patcher für socket und stdout ist nicht reentrant, und
+# deep_merge ruft sich selbst; nach dem Aufruf blieben die Patches stehen (2026-10-11).
+@deal.safe
 @deal.ensure(
     lambda base, override, result: set(result) == set(base) | set(override),
     message="die Schlüssel sind die Vereinigung beider Tabellen",

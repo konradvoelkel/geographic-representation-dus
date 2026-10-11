@@ -197,3 +197,17 @@ def test_geosearch_hit_without_coordinates_is_a_fetch_error(
         fetch_geosearch_pois(
             session, api, precincts[:1], index, settings.geo.working_crs, delay_s=0
         )
+
+
+def test_street_names_ignores_malformed_elements() -> None:
+    """crosshair fand am 2026-10-11 street_names({'elements': 0}) -> TypeError."""
+    assert street_names({"elements": 0}) == []
+    broken = [0, {"tags": 1}, {"tags": {"name": "B, A"}}, {"tags": {"name": 5}}, {}]
+    assert street_names({"elements": broken}) == ["A", "B"]
+
+
+def test_fetch_street_names_rejects_non_object_answers(settings: Settings) -> None:
+    endpoint = settings.sources.osm.overpass_endpoint
+    session = FakeSession({endpoint: response(endpoint, payload=[1, 2])})
+    with pytest.raises(FetchError, match="elements"):
+        fetch_street_names(session, endpoint, "51 6 51 7")
