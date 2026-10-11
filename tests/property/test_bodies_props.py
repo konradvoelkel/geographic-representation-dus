@@ -1,13 +1,15 @@
-"""Der Parser der Drucksachennummer gegen Nummern aus der eigenen Grammatik und gegen beliebigen Text."""
+"""Der Parser der Drucksachennummer und die Zuordnung Wahlbezirk zu Stadtbezirk als Eigenschaften."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import polars as pl
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+from georep.crosswalk import DISTRICT, WEIGHT
 from georep.prep.bodies import (
     ADVISORY,
     COMMITTEE,
@@ -21,6 +23,7 @@ from georep.prep.bodies import (
     counts_by_kind,
     parse_reference,
 )
+from georep.prep.voters import ELIGIBLE, UNIT, district_units
 from georep.settings import load_settings
 
 RULES = BodyRules.from_settings(load_settings(cwd=Path("/nonexistent")).bodies)
@@ -109,3 +112,70 @@ def test_classify_papers_counts_what_the_parser_says(
             ref.kind,
             ref.district,
         )
+
+
+# --- Zuordnung Wahlbezirk zu Stadtbezirk --------------------------------------------------------
+
+COLUMNS = load_settings(cwd=Path("/nonexistent")).columns.results
+cell = st.one_of(st.integers(0, 5000).map(str), st.just(" "), st.just(""), st.just("x"))
+
+
+def _as_int(value: str) -> int:
+    text = value.strip()
+    return int(text) if text.isdigit() else 0
+
+
+@given(
+    rows=st.lists(st.tuples(st.integers(1, 4), st.integers(1, 3), cell), min_size=1, max_size=40)
+)
+def test_district_units_weighs_eligible_voters(rows: list[tuple[int, int, str]]) -> None:
+    """Wie ``read_results_csv`` sie liefert: alle Zellen Text, Müll und Leerzeichen zählen 0."""
+    frame = pl.DataFrame(
+        {
+            COLUMNS.district: [str(r[0]) for r in rows],
+            COLUMNS.city_district: [str(r[1]) for r in rows],
+            COLUMNS.eligible: [r[2] for r in rows],
+        },
+        schema={
+            COLUMNS.district: pl.String,
+            COLUMNS.city_district: pl.String,
+            COLUMNS.eligible: pl.String,
+        },
+    )
+    weights = district_units(frame, COLUMNS)
+    totals: dict[int, int] = {}
+    pairs: dict[tuple[int, int], int] = {}
+    for district, unit, raw in rows:
+        n = _as_int(raw)
+        totals[district] = totals.get(district, 0) + n
+        pairs[district, unit] = pairs.get((district, unit), 0) + n
+    # Wahlbezirke ohne Wahlberechtigte fehlen; alle anderen kommen mit Summe 1 vor.
+    expected = {d for d, total in totals.items() if total > 0}
+    assert set(weights.get_column(DISTRICT)) == expected
+    for row in weights.iter_rows(named=True):
+        key = (row[DISTRICT], row[UNIT])
+        assert row[ELIGIBLE] == pairs[key] > 0
+        assert row[WEIGHT] == pytest.approx(pairs[key] / totals[row[DISTRICT]])
+    for district in expected:
+        mine = weights.filter(pl.col(DISTRICT) == district)
+        assert mine.get_column(WEIGHT).sum() == pytest.approx(1.0)
+        assert mine.get_column(ELIGIBLE).sum() == totals[district]
+
+
+@given(factor=st.integers(2, 1000))
+def test_scaling_the_counts_leaves_the_weights_alone(factor: int) -> None:
+    rows = [(40, 9, 8136), (40, 10, 4430), (41, 10, 3000)]
+
+    def build(scale: int) -> pl.DataFrame:
+        return pl.DataFrame(
+            {
+                COLUMNS.district: [str(r[0]) for r in rows],
+                COLUMNS.city_district: [str(r[1]) for r in rows],
+                COLUMNS.eligible: [str(r[2] * scale) for r in rows],
+            }
+        )
+
+    one = district_units(build(1), COLUMNS)
+    many = district_units(build(factor), COLUMNS)
+    assert one.get_column(WEIGHT).to_list() == pytest.approx(many.get_column(WEIGHT).to_list())
+    assert one.drop(ELIGIBLE, WEIGHT).equals(many.drop(ELIGIBLE, WEIGHT))
