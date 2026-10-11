@@ -218,6 +218,114 @@ class Bodies(_Strict):
         return frozenset(self.council) | frozenset(self.committees) | frozenset(self.advisory)
 
 
+# --- Option 06: Gewichtung (docs/plans/06-gewichtung.md) ----------------------------------------
+
+# Namen, die die festen Varianten der gewichteten Trefferquote tragen; ein Regelsatz darf keinen
+# davon tragen und nicht wie ein Thema heißen (``thema_NN``).
+FIXED_VARIANTS = ("einheit", "bezirke", "idf", "kombiniert")
+TOPIC_PREFIX = "thema_"
+_VARIANT_NAME = re.compile(r"[a-z][a-z0-9_]*")
+
+
+def _unit_interval(field: str, value: float) -> float:
+    if not 0.0 <= value <= 1.0:
+        raise ValueError(f"{field} {value} liegt nicht in [0, 1]; Gewichte sind Anteile")
+    return value
+
+
+class PaperTypeRule(_Strict):
+    """Eine Regel: Regex auf ``paper_type`` (ohne Groß/Klein) und das Gewicht, wenn sie trifft."""
+
+    pattern: str
+    weight: float
+
+    @field_validator("pattern")
+    @classmethod
+    def _pattern_compiles(cls, value: str) -> str:
+        try:
+            re.compile(value, re.IGNORECASE)
+        except re.error as error:
+            raise ValueError(
+                f"pattern {value!r} ist kein gültiger regulärer Ausdruck: {error}"
+            ) from error
+        return value
+
+    @field_validator("weight")
+    @classmethod
+    def _weight_in_unit_interval(cls, value: float) -> float:
+        return _unit_interval("weight", value)
+
+
+class PaperTypeVariant(_Strict):
+    """Ein Regelsatz = eine Variante: geordnete Regeln, die erste passende gewinnt, sonst ``default``."""
+
+    name: str
+    label: str  # Beschriftung der Zeile auf der Berichtsseite
+    default: float = 1.0
+    rules: list[PaperTypeRule] = []
+
+    @field_validator("name")
+    @classmethod
+    def _plain_and_not_reserved(cls, value: str) -> str:
+        if not _VARIANT_NAME.fullmatch(value):
+            raise ValueError(f"name {value!r}: nur Kleinbuchstaben, Ziffern und Unterstriche")
+        if value in FIXED_VARIANTS or value.startswith(TOPIC_PREFIX):
+            raise ValueError(
+                f"name {value!r} ist für eine feste Variante reserviert ({FIXED_VARIANTS}, {TOPIC_PREFIX}NN)"
+            )
+        return value
+
+    @field_validator("default")
+    @classmethod
+    def _default_in_unit_interval(cls, value: float) -> float:
+        return _unit_interval("default", value)
+
+
+class Weights(_Strict):
+    """Varianten der gewichteten Trefferquote; alle Gewichte liegen in [0, 1]."""
+
+    combined: list[str] = []  # Faktoren der Variante ``kombiniert`` (Produkt); leer = keine Zeile
+    paper_type: list[PaperTypeVariant] = []
+
+    @model_validator(mode="after")
+    def _names_unique_and_factors_known(self) -> Weights:
+        names = [v.name for v in self.paper_type]
+        if len(names) != len(set(names)):
+            raise ValueError(f"weights.paper_type: Variantennamen nicht eindeutig: {names}")
+        known = {"bezirke", "idf", *names}
+        unknown = [f for f in self.combined if f not in known]
+        if unknown or len(self.combined) != len(set(self.combined)):
+            raise ValueError(
+                f"weights.combined {self.combined}: unbekannte oder doppelte Faktoren; "
+                f"bekannt sind {sorted(known)}"
+            )
+        return self
+
+
+class Topics(_Strict):
+    """Themenmodell (TF-IDF und NMF); ``k = 0`` schaltet den Schritt ``topics`` ab."""
+
+    k: int = 20
+    min_df: int = 5
+    max_df: float = 0.5
+    max_features: int = 20_000
+    top_words: int = 10
+    stop_words: str = "de"  # Kürzel der Paketdatei analysis/stopwords_<kürzel>.txt; leer = keine
+    random_state: int = 0
+
+    @model_validator(mode="after")
+    def _bounds(self) -> Topics:
+        if self.k < 0:
+            raise ValueError(f"topics.k {self.k} darf nicht negativ sein (0 schaltet ab)")
+        if self.min_df < 1 or self.max_features < 1 or self.top_words < 1:
+            raise ValueError("topics.min_df, max_features und top_words müssen mindestens 1 sein")
+        if not 0.0 < self.max_df <= 1.0:
+            raise ValueError(f"topics.max_df {self.max_df} liegt nicht in (0, 1]")
+        if not re.fullmatch(r"[a-z]{0,8}", self.stop_words):
+            raise ValueError(f"topics.stop_words {self.stop_words!r}: ein Sprachkürzel oder leer")
+        return self
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_", env_nested_delimiter="__", extra="forbid", frozen=True
@@ -240,6 +348,8 @@ class Settings(BaseSettings):
     search: Search = Search()
     analysis: Analysis = Analysis()
     bodies: Bodies  # Option 05
+    weights: Weights = Weights()  # Option 06
+    topics: Topics = Topics()  # Option 06
 
     @field_validator("cache_root", mode="before")
     @classmethod

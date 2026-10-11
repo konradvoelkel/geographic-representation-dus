@@ -189,3 +189,29 @@ JURAT = "Jugendrat"            # aus Dokumenttiteln
 INTR = "Integrationsrat"       # OParl-organizations-Seite 2026-10-11
 BR = "Behindertenrat"          # aus Dokumenttiteln
 SENR = "Seniorenrat"           # OParl-organizations-Seite 2026-10-11
+
+# --- Option 06: Gewichtung (docs/plans/06-gewichtung.md). Alle Gewichte liegen in [0, 1]; ein Dokument
+# zählt je Wahlbezirk höchstens einmal (Maximum über seine Begriffe mal Dokumentart mal Thema).
+[weights]
+combined = ["idf", "antraege_halb"]  # Faktoren der Variante "kombiniert" als Produkt: feste Faktoren "idf", "bezirke" oder ein Regelsatz von unten; leer = keine Zeile
+
+[[weights.paper_type]]         # Regelsatz = eine Variante: geordnete Regex-Regeln auf paper_type (ohne Groß/Klein), die erste passende gewinnt, sonst default
+name = "antraege_halb"
+label = "Anträge, Anfragen, Eingaben halb"
+default = 1.0
+rules = [{ pattern = "^z?(antrag|anfrage|haushaltsantrag|eingabe)", weight = 0.5 }]  # deckt 30 Fraktionsvarianten ("Antrag SPD", "zAnfrage REP") mit einem Präfix; A+F Beschluss und Bedarfsbeschluss bleiben Vorlagen
+
+[[weights.paper_type]]
+name = "nur_vorlagen"
+label = "nur Verwaltungsvorlagen"
+default = 1.0
+rules = [{ pattern = "^z?(antrag|anfrage|haushaltsantrag|eingabe)", weight = 0.0 }]  # dieselbe Grenze mit Gewicht null
+
+[topics]                       # Themenmodell: TF-IDF und NMF (scikit-learn) über die Texte; je Thema eine Variante thema_NN
+k = 20                         # Zahl der Themen; lesbar auf der Seite, 3,8 s auf 19 033 Texten (2026-10-11); 0 schaltet den Schritt topics ab
+min_df = 5                     # ein Wort zählt erst ab 5 Dokumenten (Tippfehler, seltene Namen fallen weg)
+max_df = 0.5                   # ein Wort in mehr als der Hälfte der Dokumente ist ein Formularwort
+max_features = 20000           # die häufigsten Wörter; mehr ändert die Themen nicht und kostet Zeit
+top_words = 10                 # Wörter je Themenlabel; die Wörter beschreiben das Thema, sie benennen es nicht
+stop_words = "de"              # Funktionswörter aus der Paketdatei analysis/stopwords_de.txt (ohne sie entsteht ein Thema aus "auch, oder, sich"); "" = keine
+random_state = 0               # Startwert für NMF; nndsvda ist deterministisch, der Wert steht trotzdem hier
