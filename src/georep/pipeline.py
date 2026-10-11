@@ -90,7 +90,7 @@ def expected_stamp(step: Step, settings: Settings) -> dict[str, object]:
 
 
 def freshness(step: Step, settings: Settings) -> tuple[bool, str]:
-    """(aktuell?, Grund). Prüft Ausgaben, Stamp, Eingaben, Settings, Code, Schema."""
+    """(aktuell?, Grund). Prüft Ausgaben, Stamp, Eingaben, dann den Inhalt des Stamps."""
     missing_out = [p.name for p in step.outputs if not p.exists()]
     if missing_out:
         return False, f"Ausgabe fehlt: {', '.join(missing_out)}"
@@ -103,19 +103,24 @@ def freshness(step: Step, settings: Settings) -> tuple[bool, str]:
         stamped = json.loads(step.stamp_path.read_text(encoding="utf-8"))
     except ValueError:
         return False, "Stamp unlesbar"
+    reason = stamp_mismatch(stamped, step, settings)
+    return (True, "aktuell") if reason is None else (False, reason)
+
+
+def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -> str | None:
+    """Der erste Grund, aus dem ein gelesener Stamp nicht mehr zu Schritt und Settings passt."""
     if stamped.get("schema_version") != step.schema_version:
-        return False, "Schema geändert"
+        return "Schema geändert"
     if stamped.get("settings") != settings.fingerprint():
-        return False, "Settings geändert"
+        return "Settings geändert"
     if stamped.get("code") != __version__:
-        return False, f"Code-Version {stamped.get('code')} -> {__version__}"
-    stamped_inputs = stamped.get("inputs") or {}
-    changed = [
-        name for name, value in input_digests(step).items() if stamped_inputs.get(name) != value
-    ]
+        return f"Code-Version {stamped.get('code')} -> {__version__}"
+    stamped_inputs = stamped.get("inputs")
+    known = stamped_inputs if isinstance(stamped_inputs, dict) else {}
+    changed = [name for name, value in input_digests(step).items() if known.get(name) != value]
     if changed:
-        return False, f"Eingabe geändert: {', '.join(changed)}"
-    return True, "aktuell"
+        return f"Eingabe geändert: {', '.join(changed)}"
+    return None
 
 
 def run_step(
