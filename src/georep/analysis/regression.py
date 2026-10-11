@@ -9,10 +9,12 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+import deal
 import polars as pl
 from scipy.stats import linregress
 
 from georep.analysis.hits import DISTRICT, RATE
+from georep.contracts import has_columns
 from georep.errors import EmptyResultError
 from georep.prep.voters import TURNOUT
 
@@ -37,6 +39,21 @@ class RegressionResult:
         )
 
 
+@deal.pre(
+    lambda results, exclude=(), *, x=RATE, y=TURNOUT, y_scale=100.0: (
+        has_columns(results, DISTRICT, x, y) and y_scale > 0
+    )
+)
+@deal.post(
+    lambda result: (
+        result.n >= 3
+        and -1.0 <= result.r <= 1.0
+        and 0.0 <= result.p <= 1.0
+        and result.stderr >= 0.0
+    ),
+    message="r in [-1, 1], p in [0, 1], Standardfehler nicht negativ",
+)
+@deal.raises(EmptyResultError)
 def regress(
     results: pl.DataFrame,
     exclude: Iterable[int] = (),

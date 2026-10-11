@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+import deal
 import polars as pl
 
+from georep.contracts import clean_terms, has_columns, lists_sorted_unique, sorted_unique
 from georep.errors import EmptyResultError
 from georep.search.matcher import KeywordMatcher, make_matcher
 
@@ -20,6 +22,37 @@ HITS = "anzahl_treffer"
 INDEX_SCHEMA = {TERM: pl.String, PAPER_IDS: pl.List(pl.String), HITS: pl.Int64}
 
 
+def _covers_terms_with_corpus_ids(
+    corpus: pl.DataFrame,
+    terms: Sequence[str],
+    matcher: KeywordMatcher | None = None,
+    result: pl.DataFrame | None = None,
+) -> bool:
+    """Nachbedingung: jeder Begriff genau einmal, jede Dokument-ID stammt aus dem Korpus."""
+    assert result is not None
+    return result.get_column(TERM).to_list() == sorted(terms) and set(
+        result.get_column(PAPER_IDS).explode().drop_nulls().to_list()
+    ) <= set(corpus.get_column("id").to_list())
+
+
+@deal.pre(lambda corpus, terms, matcher=None: has_columns(corpus, "id", "text"))
+@deal.pre(
+    lambda corpus, terms, matcher=None: (
+        len(terms) > 0 and len(set(terms)) == len(terms) and clean_terms(list(terms))
+    ),
+    message="Begriffe nicht leer, eindeutig, kleingeschrieben und ohne Komma",
+)
+@deal.post(lambda result: result.columns == [TERM, PAPER_IDS, HITS])
+@deal.post(lambda result: sorted_unique(result, TERM))
+@deal.post(lambda result: lists_sorted_unique(result, PAPER_IDS))
+@deal.post(
+    lambda result: bool(
+        (result.get_column(HITS) == result.get_column(PAPER_IDS).list.len().cast(pl.Int64)).all()
+    ),
+    message="anzahl_treffer ist die Mächtigkeit der ID-Menge",
+)
+@deal.ensure(_covers_terms_with_corpus_ids, message="jeder Begriff einmal, jede ID aus dem Korpus")
+@deal.raises(EmptyResultError)
 def build_index(
     corpus: pl.DataFrame, terms: Sequence[str], matcher: KeywordMatcher | None = None
 ) -> pl.DataFrame:

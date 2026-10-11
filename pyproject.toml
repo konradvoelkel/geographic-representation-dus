@@ -75,6 +75,8 @@ known-first-party = ["src", "georep"]
 quote-style = "double"
 
 [tool.mypy]
+# Das deal-Plugin prüft die Lambda-Signaturen der Verträge gegen die Funktion (Phase 6).
+plugins = ["deal.mypy"]
 python_version = "3.14"
 strict = true
 # Basis src -> georep.*, Basis . -> tests.*; so heisst src/georep/io.py nur georep.io.

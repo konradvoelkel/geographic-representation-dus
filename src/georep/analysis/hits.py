@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+import deal
 import polars as pl
 
+from georep.contracts import all_nonnegative, has_columns, lists_sorted_unique, sorted_unique
 from georep.errors import EmptyResultError
 from georep.search.index import HITS, PAPER_IDS, TERM
 
@@ -19,6 +21,34 @@ TERMS = "suchbegriffe"
 RATE = "trefferquote"
 
 
+def _only_dictionary_districts(
+    dictionary: pl.DataFrame,
+    index: pl.DataFrame,
+    hide_in_display: Iterable[str] = (),
+    result: pl.DataFrame | None = None,
+) -> bool:
+    assert result is not None
+    return set(result.get_column(DISTRICT)) <= set(dictionary.get_column(DISTRICT))
+
+
+@deal.pre(
+    lambda dictionary, index, hide_in_display=(): (
+        has_columns(dictionary, DISTRICT, TERMS) and has_columns(index, TERM, PAPER_IDS, HITS)
+    )
+)
+@deal.post(lambda result: result.columns == [DISTRICT, TERMS, PAPER_IDS, HITS])
+@deal.post(lambda result: sorted_unique(result, DISTRICT))
+@deal.post(
+    lambda result: lists_sorted_unique(result, TERMS) and lists_sorted_unique(result, PAPER_IDS)
+)
+@deal.post(
+    lambda result: bool(
+        (result.get_column(HITS) == result.get_column(PAPER_IDS).list.len().cast(pl.Int64)).all()
+    ),
+    message="anzahl_treffer zählt die vereinigten Dokument-IDs",
+)
+@deal.ensure(_only_dictionary_districts, message="nur Wahlbezirke aus dem Wörterbuch")
+@deal.raises(EmptyResultError)
 def hits_by_district(
     dictionary: pl.DataFrame, index: pl.DataFrame, hide_in_display: Iterable[str] = ()
 ) -> pl.DataFrame:
@@ -38,6 +68,23 @@ def hits_by_district(
     )
 
 
+@deal.pre(
+    lambda hits, voters, eligible_column: (
+        has_columns(hits, DISTRICT, HITS) and has_columns(voters, DISTRICT, eligible_column)
+    )
+)
+@deal.pre(
+    lambda hits, voters, eligible_column: bool((voters.get_column(eligible_column) > 0).all()),
+    message="Wahlberechtigte je Wahlbezirk müssen positiv sein, sonst ist die Quote undefiniert",
+)
+@deal.post(lambda result: sorted_unique(result, DISTRICT) and all_nonnegative(result, RATE))
+@deal.ensure(
+    lambda hits, voters, eligible_column, result: (
+        set(result.get_column(DISTRICT))
+        <= set(hits.get_column(DISTRICT)) & set(voters.get_column(DISTRICT))
+    )
+)
+@deal.raises(EmptyResultError)
 def join_voters(hits: pl.DataFrame, voters: pl.DataFrame, eligible_column: str) -> pl.DataFrame:
     """Treffer mit den Wählerdaten verbinden; Trefferquote = Treffer je Wahlberechtigtem."""
     joined = hits.join(voters, on=DISTRICT, how="inner")

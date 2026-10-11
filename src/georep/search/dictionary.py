@@ -7,7 +7,10 @@ Begriffe kleingeschrieben und getrimmt; zu jedem Begriff mit ``straße`` kommt d
 
 from __future__ import annotations
 
+import deal
 import polars as pl
+
+from georep.contracts import clean_terms, has_columns, lists_sorted_unique, sorted_unique
 
 DISTRICT = "wahlkreis_id"
 TERMS = "suchbegriffe"
@@ -26,6 +29,25 @@ def normalise_terms(terms: pl.Expr) -> pl.Expr:
     return cleaned.list.concat(variants).list.unique().list.sort()
 
 
+@deal.pre(
+    lambda pois_by_district, streets_by_district: (
+        has_columns(pois_by_district, DISTRICT, TERMS)
+        and has_columns(streets_by_district, DISTRICT, TERMS)
+    ),
+    message="beide Eingaben brauchen wahlkreis_id und suchbegriffe",
+)
+@deal.post(lambda result: result.columns == [DISTRICT, TERMS])
+@deal.post(lambda result: sorted_unique(result, DISTRICT))
+@deal.post(lambda result: lists_sorted_unique(result, TERMS))
+@deal.post(lambda result: all(clean_terms(t) for t in result.get_column(TERMS).to_list()))
+@deal.ensure(
+    lambda pois_by_district, streets_by_district, result: (
+        set(result.get_column(DISTRICT))
+        == set(pois_by_district.get_column(DISTRICT))
+        & set(streets_by_district.get_column(DISTRICT))
+    ),
+    message="genau die Wahlbezirke, die in beiden Quellen vorkommen",
+)
 def build_dictionary(
     pois_by_district: pl.DataFrame, streets_by_district: pl.DataFrame
 ) -> pl.DataFrame:
@@ -39,6 +61,8 @@ def build_dictionary(
     ).sort(DISTRICT)
 
 
+@deal.pre(lambda dictionary: has_columns(dictionary, TERMS))
+@deal.post(lambda result: result == sorted(set(result)))
 def all_terms(dictionary: pl.DataFrame) -> list[str]:
     """Alle Begriffe über alle Wahlbezirke, eindeutig und sortiert."""
     return sorted(set(dictionary.get_column(TERMS).explode().drop_nulls().to_list()))
