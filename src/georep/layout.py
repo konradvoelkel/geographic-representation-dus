@@ -323,6 +323,17 @@ class Layout:
         """Die zuletzt vollständig gespeicherte OParl-Seite, für die Wiederaufnahme des Abrufs."""
         return self.raw / "papers.progress.json"
 
+    def target_view(self, settings: Settings) -> Layout:
+        """Das Layout, aus dem Flächen und Namen der Wahlbezirke kommen.
+
+        Ohne Crosswalk ist es dieses selbst. Ein Periodenprofil mit Crosswalk rechnet auf den
+        Wahlbezirken der Hauptperiode: Flächen, Namen und damit die Karte und die Bezirkstabelle
+        der Seite kommen dann aus deren Stimmbezirks-GeoJSON, nicht aus dem eigenen (Option 02).
+        """
+        if not settings.crosswalk.enabled:
+            return self
+        return self.for_profile("", settings.crosswalk.target_file)
+
     def runtime_dirs(self) -> tuple[Path, ...]:
         return (
             self.external,

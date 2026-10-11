@@ -15,14 +15,20 @@ Auswertung sie nicht aus den Settings erfragen muss; für die Hauptperiode ist d
 from __future__ import annotations
 
 import io
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 
 import deal
 import polars as pl
 
-from georep.contracts import all_nonnegative, has_columns, sorted_unique
-from georep.crosswalk import WEIGHT, unit_weights
+from georep.contracts import (
+    all_nonnegative,
+    columns_preserved,
+    has_columns,
+    sorted_unique,
+)
+from georep.crosswalk import WEIGHT, largest_remainder, unit_weights
 from georep.errors import SchemaError
 from georep.settings import ResultsColumns
 
@@ -165,3 +171,191 @@ def district_units(results: pl.DataFrame, columns: ResultsColumns) -> pl.DataFra
         _to_int(columns.eligible).alias(ELIGIBLE),
     )
     return unit_weights(typed, UNIT, ELIGIBLE)
+
+
+# --- Option 02: Wählerzahlen eines älteren Zuschnitts -----------------------------------------
+#
+# Die Ratswahl-CSV von 2020 trägt keinen Wahlbezirk, und 138 ihrer 454 Zeilen sind
+# Briefwahlbezirke ohne Geometrie. Der Weg ist darum: Urnenstimmbezirke lesen, die Briefwahl je
+# Wahlbezirk aus der Wahlbezirks-CSV erschließen (dort steht die Gesamtzahl) und proportional zu
+# den Wahlberechtigten mit Wahlschein auf die Stimmbezirke verteilen; danach übernimmt der
+# Crosswalk. Jede Stufe prüft ihre Summe gegen die Quelle, denn ein Fehler in der Zuordnung wäre
+# sonst erst an einer plausibel aussehenden Wahlbeteiligung zu erkennen.
+
+SOURCE_DISTRICT = "wahlbezirk_quelle"
+
+
+@dataclass(frozen=True)
+class PrecinctResults:
+    """Die Ergebniszeilen einer Wahl, getrennt in Urnen- und Briefwahlbezirke."""
+
+    urn: pl.DataFrame  # eine Zeile je Stimmbezirk mit Geometrie
+    postal: pl.DataFrame  # die Briefwahlbezirke; nur die Summenprobe liest sie
+
+
+def _precinct_input(columns: ResultsColumns) -> list[str]:
+    return [columns.precinct, columns.precinct_name, ELIGIBLE_POSTAL, *count_columns(columns)]
+
+
+@deal.pre(
+    lambda results, columns: (
+        bool(columns.precinct)
+        and bool(columns.postal_marker)
+        and has_columns(results, *_precinct_input(columns))
+    ),
+    message="Stimmbezirksergebnis mit Nummer, Name, Wahlscheinen und allen Zählspalten",
+)
+@deal.ensure(
+    lambda results, columns, result: (
+        result.urn.height + result.postal.height == results.height
+        and sorted_unique(result.urn, PRECINCT)
+        and all_nonnegative(result.urn, ELIGIBLE_POSTAL, *count_columns(columns))
+    ),
+    message="jede Zeile ist Urne oder Briefwahl, eine Zeile je Stimmbezirk, nichts negativ",
+)
+@deal.raises(SchemaError)
+def precinct_counts(results: pl.DataFrame, columns: ResultsColumns) -> PrecinctResults:
+    """Die Zählgrößen je Stimmbezirk; Briefwahlbezirke stehen getrennt (sie haben keine Fläche)."""
+    frame = results.select(
+        pl.col(columns.precinct).str.strip_chars().alias(PRECINCT),
+        pl.col(columns.precinct_name).alias("_name"),
+        *[_to_int(c) for c in (ELIGIBLE_POSTAL, *count_columns(columns))],
+    )
+    postal_row = pl.col("_name").str.contains(columns.postal_marker, literal=True)
+    urn = frame.filter(~postal_row).drop("_name").sort(PRECINCT)
+    if urn.get_column(PRECINCT).n_unique() != urn.height:
+        raise SchemaError(f"{columns.precinct}: Stimmbezirksnummern doppelt in der Ergebnis-CSV")
+    return PrecinctResults(urn=urn, postal=frame.filter(postal_row).drop("_name"))
+
+
+@deal.pre(
+    lambda results, columns: (
+        bool(columns.precinct) and has_columns(results, columns.precinct, *count_columns(columns))
+    ),
+    message="Wahlbezirksergebnis mit Nummer und allen Zählspalten",
+)
+@deal.post(lambda result: sorted_unique(result, SOURCE_DISTRICT))
+def district_results(results: pl.DataFrame, columns: ResultsColumns) -> pl.DataFrame:
+    """Die Zählgrößen je Wahlbezirk des alten Zuschnitts: der Maßstab, gegen den alles geprüft wird."""
+    counts = count_columns(columns)
+    return (
+        results.select(
+            _to_int(columns.precinct).alias(SOURCE_DISTRICT), *[_to_int(c) for c in counts]
+        )
+        .group_by(SOURCE_DISTRICT)
+        .agg([pl.col(c).sum() for c in counts])
+        .sort(SOURCE_DISTRICT)
+    )
+
+
+def _spread_in_group(missing: int, weights: Sequence[int]) -> list[int]:
+    """``missing`` Personen proportional zu ``weights`` verteilen, ganzzahlig und summentreu.
+
+    Ohne Gewichte (kein Stimmbezirk des Wahlbezirks hat Wahlscheine) wird gleichmäßig verteilt;
+    das kommt in den Daten von 2020 nicht vor, wäre aber sonst eine stille Division durch Null.
+    """
+    total = sum(weights)
+    if total == 0:
+        return largest_remainder([missing / len(weights)] * len(weights))
+    return largest_remainder([missing * w / total for w in weights])
+
+
+def _postal_totals_match(
+    urn: pl.DataFrame,
+    assignment: Mapping[str, int],
+    districts: pl.DataFrame,
+    counts: Sequence[str],
+    result: pl.DataFrame | None = None,
+) -> bool:
+    assert result is not None
+    return columns_preserved(districts, result, counts)
+
+
+@deal.pre(
+    lambda urn, assignment, districts, counts: (
+        len(counts) > 0
+        and has_columns(urn, PRECINCT, ELIGIBLE_POSTAL, *counts)
+        and has_columns(districts, SOURCE_DISTRICT, *counts)
+        and set(urn.get_column(PRECINCT)) == set(assignment)
+        and set(assignment.values()) == set(districts.get_column(SOURCE_DISTRICT))
+    ),
+    message="Zuordnung über genau die Urnenstimmbezirke und genau die Wahlbezirke der CSV",
+)
+@deal.post(lambda result: sorted_unique(result, PRECINCT))
+@deal.ensure(_postal_totals_match, message="jede Spaltensumme gleich der Wahlbezirks-CSV")
+@deal.raises(SchemaError)
+def spread_postal(
+    urn: pl.DataFrame,
+    assignment: Mapping[str, int],
+    districts: pl.DataFrame,
+    counts: Sequence[str],
+) -> pl.DataFrame:
+    """Die Briefwahl eines Wahlbezirks auf seine Stimmbezirke verteilen, nach Wahlscheinen gewichtet.
+
+    Was die Wahlbezirkszeile mehr ausweist als die Summe ihrer Urnenstimmbezirke, ist die
+    Briefwahl: ein Modell, keine Messung, denn die Briefwahlbezirke haben keine Geometrie. Als
+    Verteilschlüssel dienen die Wahlberechtigten mit Sperrvermerk, also die mit Wahlschein; die
+    Alternative (alle Wahlberechtigten) verschiebt die Wahlbeteiligung je Bezirk um bis zu 5,1
+    Prozentpunkte (Plan § 3.4, Frage 2.4). Die Wahlberechtigten selbst werden nicht verteilt, sie
+    stehen vollständig bei den Urnenstimmbezirken; dass das stimmt, ist die Summenprobe, die
+    zugleich die geometrische Zuordnung absichert.
+    """
+    ordered = urn.with_columns(
+        pl.col(PRECINCT).replace_strict(assignment, return_dtype=pl.Int64).alias(SOURCE_DISTRICT)
+    ).sort([SOURCE_DISTRICT, PRECINCT])
+    seen = ordered.group_by(SOURCE_DISTRICT).agg([pl.col(c).sum() for c in counts])
+    gap = (
+        districts.join(seen, on=SOURCE_DISTRICT, suffix="_urne")
+        .select(SOURCE_DISTRICT, *[(pl.col(c) - pl.col(f"{c}_urne")).alias(c) for c in counts])
+        .sort(SOURCE_DISTRICT)
+    )
+    off = gap.filter(pl.col(ELIGIBLE_TOTAL) != 0)
+    if off.height:
+        raise SchemaError(
+            "Zuordnung passt nicht zur Wahlbezirks-CSV: in "
+            f"{off.height} Wahlbezirken weichen die Wahlberechtigten der Urnenstimmbezirke ab "
+            f"(zuerst {off.get_column(SOURCE_DISTRICT).to_list()[:5]})"
+        )
+    negative = [c for c in counts if not bool((gap.get_column(c) >= 0).all())]
+    if negative:
+        raise SchemaError(
+            f"Mehr Urnenstimmen als im Wahlbezirk gemeldet, Spalten {negative}: die Zuordnung der "
+            "Stimmbezirke zu den Wahlbezirken kann nicht stimmen"
+        )
+    spread: dict[str, list[int]] = {c: [] for c in counts if c != ELIGIBLE_TOTAL}
+    gaps = {
+        int(row[SOURCE_DISTRICT]): {c: int(row[c]) for c in spread}
+        for row in gap.iter_rows(named=True)
+    }
+    for district, group in ordered.group_by(SOURCE_DISTRICT, maintain_order=True):
+        weights = [int(w) for w in group.get_column(ELIGIBLE_POSTAL).to_list()]
+        for column, values in spread.items():
+            values.extend(_spread_in_group(gaps[int(district[0])][column], weights))
+    return (
+        ordered.with_columns(
+            [(pl.col(c) + pl.Series(c, v, dtype=pl.Int64)).alias(c) for c, v in spread.items()]
+        )
+        .drop(SOURCE_DISTRICT)
+        .sort(PRECINCT)
+    )
+
+
+@deal.pre(
+    lambda postal, gap_column, expected: bool(gap_column) and has_columns(postal, gap_column),
+    message="Briefwahlzeilen mit der geprüften Zählspalte",
+)
+@deal.raises(SchemaError)
+def check_postal_total(postal: pl.DataFrame, gap_column: str, expected: int) -> int:
+    """Die Briefwahlzeilen müssen genau die Lücke füllen, die die Urnenstimmbezirke lassen.
+
+    Zwei unabhängige Wege zur selben Zahl: die Summe der 138 Briefwahlbezirke und die Differenz
+    zwischen den 41 Wahlbezirkszeilen und ihren Urnenstimmbezirken. Stimmen sie nicht überein,
+    ist eine der drei Dateien nicht die, für die wir sie halten.
+    """
+    found = int(postal.get_column(gap_column).sum())
+    if found != expected:
+        raise SchemaError(
+            f"Briefwahl: die Briefwahlbezirke melden {found} in {gap_column}, aus den "
+            f"Wahlbezirkszeilen folgen {expected}; die drei Dateien passen nicht zusammen"
+        )
+    return found

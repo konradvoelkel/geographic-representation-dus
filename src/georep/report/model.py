@@ -1116,7 +1116,10 @@ def build_report_model(
     results = pl.read_parquet(layout.results)
     dictionary = pl.read_parquet(layout.dictionary)
     index = pl.read_parquet(layout.index)
-    precincts = read_precincts(layout.districts_geojson, settings.columns, settings.geo.working_crs)
+    geometry = layout.target_view(settings)
+    precincts = read_precincts(
+        geometry.districts_geojson, settings.columns, settings.geo.working_crs
+    )
     hidden = tuple(settings.search.hide_in_display)
     counts = term_counts(dictionary, index)
     names = district_names(precincts)

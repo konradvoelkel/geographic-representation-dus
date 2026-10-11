@@ -265,7 +265,9 @@ def build_site(
     layout.guard_writable(layout.site_data).mkdir(parents=True, exist_ok=True)
     working_crs = settings.geo.working_crs
     downloads = write_tables(layout, settings)
-    precincts = read_precincts(layout.districts_geojson, settings.columns, working_crs)
+    precincts = read_precincts(
+        layout.target_view(settings).districts_geojson, settings.columns, working_crs
+    )
     shapes = district_shapes(precincts, SIMPLIFY_M)
     model = build_report_model(layout, settings, now=now, commit=commit)
     downloads.append(write_documents(layout, model, settings))
