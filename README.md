@@ -93,7 +93,8 @@ legt CSV daneben.
 
 ## Entwicklung
 
-- Prüfungen: `uv run nox` (lint, typecheck, deps, test) lokal und in CI rufen dieselben Sessions; `deps` verbietet pandas, geopandas, osmnx und scikit-learn im Lockfile; `uv run pytest -m slow` läuft die Kette über die volle Referenz und vergleicht mit den Ergebnissen der Arbeit.
+- Prüfungen: `uv run nox` (lint, typecheck, deps, test) lokal und in CI rufen dieselben Sessions; `deps` verbietet pandas, geopandas, osmnx und scikit-learn im Lockfile; `test` läuft parallel mit Abdeckung als Untergrenze (90 %); `uv run pytest -m slow` läuft die Kette über die volle Referenz und vergleicht mit den Ergebnissen der Arbeit.
+- Tests in drei Schichten: `tests/unit/` (eine Funktion, ein Verhalten), `tests/property/` (hypothesis-Invarianten; `tests/property/oracle_matcher.py` ist die lesbare Referenz des Matcher-Vertrags, die jeder Ersatz bestehen muss), `tests/golden/` (Mini-Fixture und Referenz gegen die eingefrorenen Ergebnisse der Arbeit). `HYPOTHESIS_PROFILE=ci` erhöht die Beispielzahl. Mutationstests stehen noch aus: mutmut 3 forkt, Polars blockiert im Kind (`docs/mutation-2026-10-11.md`).
 - Vor dem Commit: `uvx pre-commit install` einmalig; die Hooks formatieren und linten mit Ruff.
 - Regeln für Commits und für Agenten: [CLAUDE.md](CLAUDE.md). Befund vor dem Umbau: [docs/baseline-2026-10-10.md](docs/baseline-2026-10-10.md).
 - Struktur: `src/georep/` ist das ganze Programm (`settings`, `layout`, `io`, `http`, `geo`, `oparl`, `records`, `stores`, `errors`, `bootstrap`, `pipeline`, `cli`, `export`, `sources/`, `prep/`, `search/`, `analysis/`); vom Code der Arbeit ist nichts mehr übrig, ihr Datensatz liegt unter `reference/`. `tests/` mit `unit/`, `golden/` und `fixtures/` (Mini-Datensatz, PDFs, OParl-Seite, aufgezeichnete HTTP-Antworten).

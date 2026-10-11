@@ -213,3 +213,4 @@ __marimo__/
 .nox/
 .benchmarks/
 settings.local.toml
+mutants/          # mutmut-Arbeitskopie

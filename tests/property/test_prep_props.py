@@ -4,7 +4,7 @@ from pathlib import Path
 
 import polars as pl
 import pytest
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 
 from georep.prep.pois import clean_pois, pois_by_district
@@ -76,6 +76,13 @@ labels = st.text(alphabet="abcäö, ", min_size=1, max_size=6)
     ),
     exclude=st.sets(labels, max_size=3),
 )
+@example(
+    entries=[
+        {"label": " ", "lon": 6.75, "lat": 51.25, "stimmbezirk_id": 100, "wahlkreis_id": 1},
+        {"label": ", ", "lon": 6.75, "lat": 51.25, "stimmbezirk_id": 100, "wahlkreis_id": 1},
+    ],
+    exclude=set(),
+)
 def test_clean_pois_invariants(entries: list[dict[str, object]], exclude: set[str]) -> None:
     frame = pl.DataFrame(
         entries,
@@ -89,7 +96,10 @@ def test_clean_pois_invariants(entries: list[dict[str, object]], exclude: set[st
     )
     out = clean_pois(frame, exclude)
     assert out.columns == ["label", "wahlkreis_id", "lon", "lat"]
-    assert out["label"].n_unique() == out.height
+    # Eindeutig sind die rohen Labels; "a,b" und "ab" fallen nach dem Kommaentfernen zusammen
+    # (Reihenfolge der Arbeit: erst deduplizieren, dann Kommas weg). Das Wörterbuch dedupliziert später.
+    raw_labels = [str(e["label"]) for e in entries]
+    assert out.height <= len(set(raw_labels))
     assert out["wahlkreis_id"].null_count() == 0
     assert all("," not in label for label in out["label"].to_list())
     assert not set(out["label"].to_list()) & set(exclude)
