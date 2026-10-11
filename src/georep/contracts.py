@@ -48,6 +48,13 @@ def all_nonnegative(frame: pl.DataFrame, *columns: str) -> bool:
     return all(bool((frame.get_column(c) >= 0).all()) for c in columns)
 
 
+def in_unit_interval(frame: pl.DataFrame, *columns: str) -> bool:
+    """Jede Spalte liegt in [0, 1]: ein Gewicht ist ein Anteil, nie größer als das Ganze."""
+    return all(
+        bool(((frame.get_column(c) >= 0.0) & (frame.get_column(c) <= 1.0)).all()) for c in columns
+    )
+
+
 def clean_terms(terms: list[str]) -> bool:
     """Suchbegriffe, wie das Wörterbuch sie liefert: nicht leer, getrimmt, kleingeschrieben, ohne Komma."""
     return all(t and t == t.strip().lower() and "," not in t for t in terms)
