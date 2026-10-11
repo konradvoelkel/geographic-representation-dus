@@ -61,6 +61,45 @@ def golden(session: nox.Session) -> None:
     session.run("uv", "run", "pytest", "-m", "slow", *session.posargs)
 
 
+# Rein-pythonische Funktionen mit deal-Verträgen; Polars-Funktionen bleiben draußen, crosshair kann
+# keine Rust-Erweiterung symbolisch ausführen (DEVELOPMENT_PLAN.md § 4, Phase 6 Schritt 3).
+VERIFY_TARGETS = [
+    "georep.prep.extract.after_marker",
+    "georep.prep.extract.normalise_text",
+    "georep.http.cache_pattern",
+    "georep.settings.deep_merge",
+    "georep.sources.wiki.parse_point",
+    "georep.sources.wiki.geosearch_params",
+    "georep.sources.wiki.sparql_query",
+    "georep.sources.overpass.overpass_query",
+    "georep.sources.overpass.street_names",
+    "tests.property.oracle_matcher.oracle_extract",
+]
+
+
+@nox.session
+def verify(session: nox.Session) -> None:
+    """crosshair sucht Gegenbeispiele zu den deal-Verträgen der rein-pythonischen Funktionen.
+
+    Rot nur bei einem Gegenbeispiel (Exit 1); „Not confirmed" ist eine Zeitangabe, kein Befund,
+    darum --report_all. Rund drei Minuten bei 20 s CPU je Bedingung (2026-10-11). Der erste Lauf
+    fand street_names({"elements": 0}) -> TypeError.
+    """
+    session.run(
+        "uv",
+        "run",
+        "crosshair",
+        "check",
+        *VERIFY_TARGETS,
+        "--analysis_kind",
+        "deal",
+        "--report_all",
+        "--per_condition_timeout",
+        "20",
+        *session.posargs,
+    )
+
+
 @nox.session
 def bench(session: nox.Session) -> None:
     """Heiße Pfade gegen den letzten gespeicherten Lauf in .benchmarks/ (gitignored).
