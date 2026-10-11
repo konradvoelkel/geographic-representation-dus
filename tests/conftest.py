@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as dt
 import os
 from collections.abc import Iterator
 from pathlib import Path
@@ -10,10 +11,15 @@ from hypothesis import HealthCheck
 from hypothesis import settings as hypothesis_settings
 
 from georep.bootstrap import bootstrap
+from georep.geo import read_precincts
 from georep.io import write_json
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
 from georep.prep.precincts import canonical_precincts, read_source
+from georep.report.charts import choropleth, classify, legend, rate_label, scatter, turnout_label
+from georep.report.geometry import SIMPLIFY_M, bounds_of, district_shapes, fit
+from georep.report.model import ReportModel, build_report_model
+from georep.report.render import Visuals
 from georep.settings import Settings, load_settings
 
 # Profile: "dev" (Standard) ist schnell, "ci" gründlicher; Auswahl über HYPOTHESIS_PROFILE.
@@ -114,3 +120,37 @@ def mini_run(tmp_path_factory: pytest.TempPathFactory, default_settings: Setting
     bootstrap(layout, context_files=default_settings.context.files.names())
     run_pipeline(build_steps(default_settings, layout), default_settings)
     return layout
+
+
+@pytest.fixture(scope="session")
+def mini_model(mini_run: Layout, default_settings: Settings) -> ReportModel:
+    """Das Modell der Mini-Fixture mit fester Zeit; Option 01 prüft Kopf, Fuß und Methode daran."""
+    return build_report_model(
+        mini_run,
+        default_settings,
+        now=dt.datetime(2026, 10, 12, 9, 0, tzinfo=dt.UTC),
+        commit="abc1234",
+    )
+
+
+@pytest.fixture(scope="session")
+def mini_visuals(mini_model: ReportModel, mini_run: Layout, default_settings: Settings) -> Visuals:
+    precincts = read_precincts(mini_run.precincts_geojson, default_settings.geo.working_crs)
+    shapes = district_shapes(precincts)
+    projection = fit(bounds_of(shapes), 600.0)
+    rate = classify({d.id: d.rate for d in mini_model.districts})
+    turnout = classify({d.id: d.turnout for d in mini_model.districts})
+    return Visuals(
+        map_svg=choropleth(mini_model.districts, shapes, projection, rate, turnout),
+        scatter_svg=scatter(mini_model.districts, mini_model.regression),
+        rate_legend=legend(rate, rate_label),
+        turnout_legend=legend(turnout, turnout_label),
+        simplify_m=SIMPLIFY_M,
+        pois=0,
+    )
+
+
+@pytest.fixture(scope="session")
+def mini_page(mini_run: Layout) -> str:
+    """Die gebaute Seite der Mini-Fixture, wie der Schritt ``report`` sie geschrieben hat."""
+    return mini_run.site_index.read_text(encoding="utf-8")
