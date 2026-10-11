@@ -12,7 +12,7 @@ bleibt (``sorted_unique(result, DISTRICT)``) und dieselbe Eigenschaft überall d
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from typing import Literal
 
 import deal
@@ -58,6 +58,18 @@ def in_unit_interval(frame: pl.DataFrame, *columns: str) -> bool:
 def clean_terms(terms: list[str]) -> bool:
     """Suchbegriffe, wie das Wörterbuch sie liefert: nicht leer, getrimmt, kleingeschrieben, ohne Komma."""
     return all(t and t == t.strip().lower() and "," not in t for t in terms)
+
+
+def one_row_per_document(
+    frame: pl.DataFrame, corpus_ids: Iterable[str], column: str = "id"
+) -> bool:
+    """Genau eine Zeile je Korpus-ID: die Spalte ist aufsteigend, eindeutig und trägt genau die IDs.
+
+    Der gemeinsame Vertrag der Tabellen ``dokumente_<attribut>.parquet``
+    (docs/plans/00-synergien.md, § 5.6): Option 04 bringt den Urheber, 05 das Gremium, 06 die
+    Gewichte, alle mit demselben Schlüssel.
+    """
+    return sorted_unique(frame, column) and frame.get_column(column).to_list() == sorted(corpus_ids)
 
 
 def sums_to_one(frame: pl.DataFrame, group: str, column: str, tol: float = 1e-9) -> bool:

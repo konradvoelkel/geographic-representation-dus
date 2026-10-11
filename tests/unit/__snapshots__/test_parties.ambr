@@ -1,0 +1,29 @@
+# serializer version: 1
+# name: test_attribution_counts_are_stable
+  dict({
+    'klassen': dict({
+      'Eingabe': 9,
+      'Fraktion': 52,
+      'Person': 8,
+      'Verwaltung': 128,
+      'unbekannt': 3,
+    }),
+    'parteien': dict({
+      'AfD': 0,
+      'CDU': 14,
+      'Die_Linke': 9,
+      'FDP': 10,
+      'GRUENE': 12,
+      'PARTEI': 3,
+      'SPD': 10,
+      'T_FW': 3,
+      'VOLT': 0,
+    }),
+    'quellen': dict({
+      '': 3,
+      'name': 36,
+      'paper_type': 159,
+      'text': 2,
+    }),
+  })
+# ---
