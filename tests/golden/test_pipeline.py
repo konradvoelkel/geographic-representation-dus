@@ -14,7 +14,7 @@ from georep.layout import Layout
 from georep.pipeline import Outcome, UnknownStepError, build_steps, run_pipeline
 from georep.settings import Settings, load_settings
 
-NETWORK = {"opendata", "papers", "pdfs"}
+NETWORK = {"opendata", "papers", "pdfs", "streets_osm", "pois_wiki"}
 EXACT = ["wahlkreis_id", "anzahl_treffer", "Wahlberechtigte_insgesamt", "Waehler", "suchbegriffe"]
 FLOATS = ["wahlkreis_id", "trefferquote", "wahlbeteiligung"]
 

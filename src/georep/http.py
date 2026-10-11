@@ -36,6 +36,8 @@ class Transport(Protocol):
 
     def get(self, url: str, *, params: Any = None, headers: Any = None) -> requests.Response: ...
 
+    def post(self, url: str, *, data: Any = None, headers: Any = None) -> requests.Response: ...
+
 
 class TimeoutSession(requests.Session):
     """Session, die jedem Aufruf einen Timeout mitgibt, wenn der Aufrufer keinen setzt."""
@@ -106,6 +108,7 @@ def make_session(
                 k: (v if v > 0 else DO_NOT_CACHE) for k, v in (cache_rules or {}).items()
             },
             allowable_codes=(200,),
+            allowable_methods=("GET", "HEAD", "POST"),  # Overpass nimmt die Abfrage als POST
         )
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("https://", adapter)

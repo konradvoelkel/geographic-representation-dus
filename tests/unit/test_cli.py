@@ -29,9 +29,9 @@ def test_bootstrap_run_status_export_regress(
     assert main(["bootstrap"]) == 0
     assert "200 Paper und 200 Texte" in capsys.readouterr().out
     assert main(["run", "--dry-run"]) == 0
-    assert "3 übersprungen, 8 geplant" in capsys.readouterr().out
+    assert "5 übersprungen, 8 geplant" in capsys.readouterr().out
     assert main(["run"]) == 0
-    assert "8 ausgeführt, 3 übersprungen" in capsys.readouterr().out
+    assert "8 ausgeführt, 5 übersprungen" in capsys.readouterr().out
     assert main(["status"]) == 0
     status = capsys.readouterr().out
     assert status.count("aktuell") >= 7 and "200 Dokumente" in status and "[Netz]" in status

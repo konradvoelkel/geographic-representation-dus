@@ -33,6 +33,13 @@ class FakeSession:
             raise answer
         return answer
 
+    def post(self, url: str, *, data: Any = None, headers: Any = None) -> requests.Response:
+        self.calls.append((url, data))
+        answer = self.routes[url]
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
     @property
     def urls(self) -> list[str]:
         return [url for url, _ in self.calls]

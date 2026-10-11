@@ -43,10 +43,12 @@ wikipedia_api = "https://de.wikipedia.org/w/api.php"
 entity = "Q1718"               # Düsseldorf; Objekte mit P131* (liegt in) auf diese Verwaltungseinheit
 language = "de"
 geosearch_limit = 500          # Maximum der Wikipedia-GeoSearch je Bounding Box
+delay_s = 1.0                  # Pause zwischen den 306 GeoSearch-Abfragen
 
 [sources.osm]
 overpass_endpoint = "https://overpass-api.de/api/interpreter"
-delay_s = 1.0
+delay_s = 1.0                  # Pause zwischen den 306 Polygonabfragen; der öffentliche Server antwortet sonst mit 504
+simplify_m = 2.0               # Polygon vorher um 2 m vereinfachen (Douglas-Peucker), damit die Abfrage kurz bleibt
 
 [geo]
 working_crs = "EPSG:25832"     # metrisch rechnen (ETRS89 / UTM 32N); die Stimmbezirke kommen in EPSG:4647, dasselbe Datum mit Zonenpräfix

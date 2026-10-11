@@ -64,11 +64,13 @@ class WikidataSource(_Strict):
     entity: str
     language: str = "de"
     geosearch_limit: int = 500
+    delay_s: float = 1.0
 
 
 class OsmSource(_Strict):
     overpass_endpoint: str
     delay_s: float = 1.0
+    simplify_m: float = 2.0
 
 
 class Sources(_Strict):

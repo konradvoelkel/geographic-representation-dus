@@ -8,7 +8,8 @@ import requests
 
 import src.config as cfg
 from src.dataset_opendata import get_stimmbezirk_shapefile, get_wahlergebnis
-from tests.unit.test_dataset_oparl import FakeSession, _response
+from tests.fakes import FakeSession
+from tests.fakes import response as _response
 
 
 def test_wahlergebnis_is_stored_byte_for_byte(

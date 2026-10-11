@@ -22,6 +22,7 @@ import polars as pl
 from georep import __version__
 from georep.analysis.hits import hits_by_district, join_voters
 from georep.errors import GeorepError, MissingInputError
+from georep.geo import PrecinctIndex, read_precincts
 from georep.http import Transport
 from georep.io import write_bytes, write_json, write_parquet
 from georep.layout import Layout
@@ -36,7 +37,9 @@ from georep.settings import Settings
 from georep.sources import cached_session
 from georep.sources.oparl import fetch_papers
 from georep.sources.opendata import fetch_districts_geojson, fetch_results_csv
+from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
+from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_query
 from georep.stores import PaperStore, TextStore
 
 Status = Literal["ausgeführt", "übersprungen", "geplant"]
@@ -250,6 +253,43 @@ def build_steps(
         )
         return report.summary()
 
+    def streets_osm() -> str:
+        found = read_precincts(layout.districts_geojson, settings.columns, settings.geo.working_crs)
+        entries = fetch_streets_per_precinct(
+            transport(),
+            settings.sources.osm.overpass_endpoint,
+            found,
+            settings.geo.working_crs,
+            tolerance_m=settings.sources.osm.simplify_m,
+            delay_s=settings.sources.osm.delay_s,
+            sleep=sleep,
+        )
+        write_json(layout.streets, entries, indent=None)
+        names = sum(len(e["straßen"]) for e in entries)
+        return f"{len(entries)} Stimmbezirke, {names} Straßennamen"
+
+    def pois_wiki() -> str:
+        wiki = settings.sources.wikidata
+        found = read_precincts(layout.districts_geojson, settings.columns, settings.geo.working_crs)
+        index = PrecinctIndex(found, settings.geo.working_crs)
+        sparql = fetch_sparql_pois(
+            transport(), wiki.sparql_endpoint, sparql_query(wiki.entity, wiki.language), index
+        )
+        geosearch = fetch_geosearch_pois(
+            transport(),
+            wiki.wikipedia_api,
+            found,
+            index,
+            settings.geo.working_crs,
+            limit=wiki.geosearch_limit,
+            delay_s=wiki.delay_s,
+            sleep=sleep,
+        )
+        entries = sparql + geosearch
+        write_json(layout.pois, entries, indent=None)
+        assigned = sum(1 for e in entries if e["wahlkreis_id"] is not None)
+        return f"{len(sparql)} per SPARQL, {len(geosearch)} per GeoSearch, {assigned} zugeordnet"
+
     def texts() -> str:
         store = TextStore(layout.texts)
         names = [r.file_name for r in PaperStore(layout.papers).load().values() if r.file_name]
@@ -315,6 +355,10 @@ def build_steps(
         ),
         Step("papers", (), (layout.papers,), papers, network=True),
         Step("pdfs", (layout.papers,), (layout.pdf_manifest,), pdfs, network=True),
+        Step(
+            "streets_osm", (layout.districts_geojson,), (layout.streets,), streets_osm, network=True
+        ),
+        Step("pois_wiki", (layout.districts_geojson,), (layout.pois,), pois_wiki, network=True),
         Step("texts", (layout.papers, layout.pdf_manifest), (layout.texts,), texts),
         Step("voters", (layout.results_csv,), (layout.voters,), voters),
         Step("streets", (layout.streets,), (layout.streets_by_district,), streets),

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 import pytest
 import requests
@@ -12,34 +11,10 @@ import requests
 import src.config as cfg
 from georep.errors import SchemaError
 from src.dataset_oparl import Paper, download_paper_metadata, download_paper_pdf
+from tests.fakes import FakeSession
+from tests.fakes import response as _response
 
 PDF = b"%PDF-1.4\n%fake\n"
-
-
-def _response(
-    url: str, *, status: int = 200, content: bytes = b"", payload: object = None
-) -> requests.Response:
-    response = requests.Response()
-    response.status_code = status
-    response.url = url
-    response.reason = "OK" if status < 400 else "Error"
-    response._content = json.dumps(payload).encode() if payload is not None else content
-    return response
-
-
-class FakeSession:
-    """Antwortet aus einer Tabelle URL -> Response oder Exception und zählt die Aufrufe."""
-
-    def __init__(self, routes: dict[str, requests.Response | Exception]) -> None:
-        self.routes = routes
-        self.calls: list[str] = []
-
-    def get(self, url: str, *, params: Any = None, headers: Any = None) -> requests.Response:
-        self.calls.append(url)
-        answer = self.routes[url]
-        if isinstance(answer, Exception):
-            raise answer
-        return answer
 
 
 def _paper(i: int, url: str) -> Paper:
