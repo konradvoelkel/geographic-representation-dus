@@ -70,3 +70,86 @@ def test_dictionary_matches_legacy(mini_root: Path, settings: Settings) -> None:
     terms = all_terms(got)
     assert terms == sorted(set(terms))
     assert all("," not in t and t == t.lower() == t.strip() for t in terms)
+
+
+# --- Index, Treffer, Regression -------------------------------------------------------------
+
+
+def _index_sets(
+    frame: pl.DataFrame, ids_column: str, split: str | None
+) -> dict[str, frozenset[str]]:
+    out: dict[str, frozenset[str]] = {}
+    for row in frame.iter_rows(named=True):
+        ids = row[ids_column]
+        if split is not None:
+            ids = str(ids).split(split) if ids else []
+        out[str(row["suchbegriffe"])] = frozenset(ids)
+    return out
+
+
+@pytest.fixture(scope="module")
+def mini_chain(
+    mini_root: Path, settings: Settings, tmp_path_factory: pytest.TempPathFactory
+) -> dict[str, pl.DataFrame]:
+    from georep.analysis.hits import hits_by_district, join_voters
+    from georep.bootstrap import legacy_corpus_to_parquet
+    from georep.search.index import build_index
+
+    tmp = tmp_path_factory.mktemp("chain")
+    legacy_corpus_to_parquet(mini_root / "interim" / "paper_with_text.json", tmp / "papers.parquet")
+    corpus = pl.read_parquet(tmp / "papers.parquet")
+    voters = aggregate_voters(
+        read_results_csv(
+            mini_root / "external" / "Stimmbezirk_Wahlergebnis.csv", settings.columns.results
+        ),
+        settings.columns.results,
+    )
+    clean = clean_pois(
+        read_pois_json(mini_root / "raw" / "wikipedia_dict.json"), settings.search.exclude
+    )
+    streets = streets_by_district(
+        read_streets_json(mini_root / "raw" / "streets_per_district.json")
+    )
+    dictionary = build_dictionary(pois_by_district(clean), streets)
+    index = build_index(corpus, all_terms(dictionary))
+    hits = hits_by_district(dictionary, index, settings.search.hide_in_display)
+    results = join_voters(hits, voters, settings.columns.results.eligible)
+    return {"index": index, "results": results}
+
+
+def test_index_matches_legacy(mini_root: Path, mini_chain: dict[str, pl.DataFrame]) -> None:
+    exp = _expected(
+        mini_root,
+        "inverted_index.csv",
+        schema_overrides={"suchbegriffe": pl.String, "paper_ids": pl.String},
+    )
+    got = mini_chain["index"]
+    assert _index_sets(got, "paper_ids", None) == _index_sets(exp, "paper_ids", ";")
+    assert got["anzahl_treffer"].to_list() == got["paper_ids"].list.len().to_list()
+    assert got["suchbegriffe"].is_sorted()
+
+
+def test_results_match_legacy(mini_root: Path, mini_chain: dict[str, pl.DataFrame]) -> None:
+    exp = _expected(mini_root, "wahlbezirke_auswertung.csv").sort("wahlkreis_id")
+    got = mini_chain["results"].with_columns(
+        pl.col("suchbegriffe").list.join("; "), pl.col("paper_ids").list.join(";")
+    )
+    assert got.columns == exp.columns
+    assert_frame_equal(got, exp, rel_tol=1e-12)
+
+
+def test_regression_reproduces_table_5(reference_root: Path) -> None:
+    from georep.analysis.regression import regress
+
+    results = pl.read_csv(
+        reference_root / "processed" / "wahlbezirke_auswertung.csv", infer_schema_length=None
+    )
+    full = regress(results)
+    assert (full.n, round(full.slope, 4), round(full.intercept, 4)) == (41, 62.1337, 49.1993)
+    assert full.r == pytest.approx(0.16125, abs=5e-5)
+    assert full.p == pytest.approx(0.31385, abs=5e-5)
+    assert full.r2 == pytest.approx(0.026001, abs=5e-6)
+    trimmed = regress(results, exclude=(1, 10))
+    assert trimmed.n == 39
+    assert trimmed.slope == pytest.approx(215.3341, abs=5e-4)
+    assert "n=41" in full.summary()
