@@ -90,7 +90,7 @@ random_state = 0               # Startwert für NMF; nndsvda ist deterministisch
 
 # --- Option 03: Kontrollvariablen (docs/plans/03-kontrollvariablen.md) -----------------------------
 [crosswalk]                    # Umrechnung eines älteren Zuschnitts auf die Wahlbezirke der Hauptperiode (Profil "")
-enabled = false                # true nur in einem Periodenprofil (settings.2014.toml): Schritt precincts, Wähler über Flächenanteile der Stimmbezirke
+enabled = false                # true nur in einem Periodenprofil (profiles/duesseldorf-2014.toml): Schritt precincts, Wähler über Flächenanteile der Stimmbezirke
 target_file = "Stimmbezirke_2025.geojson"  # Stimmbezirksdatei der Hauptperiode, aus der die Zielbezirke vereinigt werden
 precinct_id = ""               # Eigenschaft der Stimmbezirksnummer im Stimmbezirks-GeoJSON der Periode (2020: "Stimmbezchar"); [columns] beschreibt weiter den Zielzuschnitt
 district_id = ""               # Eigenschaft der Wahlbezirksnummer in Kommunalwahlbezirke.geojson (2020: "Kommunalwahlbezirk")
@@ -98,5 +98,5 @@ district_name = ""             # Eigenschaft des Wahlbezirksnamens dort (2020: "
 min_coverage = 0.95            # kleinste zulässige Abdeckung einer Quellfläche durch die Zielbezirke; 2020 auf 2025 liegt sie bei 97,8 % bis 100 % (Stadtgrenze, Rhein), weniger heißt falsches CRS
 
 [compare]                      # Vergleich zweier Perioden, Schritt compare auf der Hauptperiode
-period = ""                    # Profil der älteren Periode (Ordner unter data_root); leer = kein Vergleich; settings.vergleich.toml setzt "2014-2020"
+period = ""                    # Profil der älteren Periode (Ordner unter data_root); leer = kein Vergleich; profiles/duesseldorf-vergleich.toml setzt "2014-2020"
 label = ""                     # Anzeigename der älteren Periode in der Vergleichstabelle und auf der Seite; leer = der Profilname

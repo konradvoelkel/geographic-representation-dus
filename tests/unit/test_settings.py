@@ -14,6 +14,7 @@ from georep.settings import (
     available_profiles,
     deep_merge,
     load_settings,
+    profiles_folder,
     settings_files,
 )
 
@@ -639,7 +640,7 @@ NOWHERE = Path("/nonexistent")  # kein settings.local.toml dazwischen, die Datei
 
 
 def test_period_profile_describes_the_old_cut_and_its_own_data_root() -> None:
-    settings = load_settings(explicit=REPO / "settings.2014.toml", cwd=NOWHERE)
+    settings = load_settings(profile="duesseldorf-2014", cwd=NOWHERE)
     assert settings.profile == "2014-2020"
     assert settings.reference_root == Path("snapshots/2014-2020")
     assert (settings.period.start, settings.period.end) == (date(2014, 5, 25), date(2020, 9, 12))
@@ -658,15 +659,15 @@ def test_period_profile_describes_the_old_cut_and_its_own_data_root() -> None:
 
 def test_the_two_profiles_differ_from_the_main_period_in_the_fingerprint() -> None:
     base = load_settings(cwd=NOWHERE)
-    period = load_settings(explicit=REPO / "settings.2014.toml", cwd=NOWHERE)
-    compared = load_settings(explicit=REPO / "settings.vergleich.toml", cwd=NOWHERE)
+    period = load_settings(profile="duesseldorf-2014", cwd=NOWHERE)
+    compared = load_settings(profile="duesseldorf-vergleich", cwd=NOWHERE)
     assert compared.profile == "" and compared.compare.period == period.profile
     prints = {base.fingerprint(), period.fingerprint(), compared.fingerprint()}
     assert len(prints) == 3
 
 
 def test_period_profile_puts_everything_under_its_own_root(tmp_path: Path) -> None:
-    settings = load_settings(explicit=REPO / "settings.2014.toml", cwd=NOWHERE).model_copy(
+    settings = load_settings(profile="duesseldorf-2014", cwd=NOWHERE).model_copy(
         update={"data_root": tmp_path / "data", "cache_root": tmp_path / "cache"}
     )
     layout = Layout.from_settings(settings)
@@ -675,28 +676,25 @@ def test_period_profile_puts_everything_under_its_own_root(tmp_path: Path) -> No
     assert layout.texts == tmp_path / "cache" / "2014-2020" / "text" / "texts.parquet"
     target = layout.for_profile("", settings.crosswalk.target_file)
     assert target.districts_geojson == tmp_path / "data" / "external" / "Stimmbezirke_2025.geojson"
+
+
 # --- Option 01: Paketprofile ------------------------------------------------------------------
 
 
 def _package_profile(folder: Path, slug: str, body: str = "") -> Path:
-    """Ein vollständiges Minimalprofil: alles, was ``defaults.toml`` stadtneutral offen lässt.
+    """Ein Profil im Testordner, das auf dem echten Stadtprofil aufsetzt.
 
-    Seit die Düsseldorfer Werte im Profil stehen, muss ein Profil die Quellen und Spalten seiner
-    Stadt nennen; ohne sie ist es kein Profil, sondern ein halbes.
+    Seit die Düsseldorfer Werte im Profil stehen, nennt ein vollständiges Profil Quellen, Spalten,
+    Gremien, Fremddaten und Urheber; ein Testprofil erbt sie mit ``base`` und überschreibt nur, was
+    es zeigen will (Option 01, ``profile_chain``).
     """
+    package = Path(str(profiles_folder() / "duesseldorf.toml"))
+    (folder / "duesseldorf.toml").write_text(package.read_text(encoding="utf-8"), encoding="utf-8")
     path = folder / f"{slug}.toml"
     path.write_text(
-        f'profile = "{slug}"\n'
+        f'base = "duesseldorf"\nprofile = "{slug}"\n'
         f'[city]\nslug = "{slug}"\nname = "Teststadt"\ngenitive = "Teststadts"\n'
-        f'adjective = "Teststädter"\nags = "05000000"\npublisher = "Stadt Teststadt"\n'
-        '[sources.oparl]\nendpoint = "https://ris.invalid/Oparl/bodies/0001/papers"\n'
-        '[sources.opendata]\nresults_url = "https://portal.invalid/ergebnis.csv"\n'
-        'results_file = "ergebnis.csv"\ndistricts_url = "https://portal.invalid/flaechen.geojson"\n'
-        'districts_file = "flaechen.geojson"\n'
-        '[sources.wikidata]\nentity = "Q1"\n'
-        '[columns]\ndistrict_id = "Nr"\ndistrict_name = "Name"\nprecinct_id = "Stimmbezirk"\n'
-        '[columns.results]\ndistrict = "Wahlbezirk"\neligible = "Wahlberechtigte_insgesamt"\n'
-        'voters = "Waehler"\nparties = { CDU = "CDU_Stimmen" }\n' + body,
+        f'adjective = "Teststädter"\nags = "05000000"\npublisher = "Stadt Teststadt"\n' + body,
         encoding="utf-8",
     )
     return path
@@ -717,37 +715,45 @@ def test_the_default_profile_keeps_every_value_of_the_thesis(tmp_path: Path) -> 
 
     Der Golden Master der Kette hängt an jedem einzelnen davon; am 2026-10-12 war der Vergleich
     der gemischten TOML-Schichten vor und nach dem Umzug leer (kein Schlüssel verloren, keiner
-    geändert), dieser Test hält das Ergebnis fest.
+    geändert). Geprüft werden die Werte, nicht die Menge der Schlüssel: jede weitere Option legt
+    hier welche dazu.
     """
-    dumped = load_settings(cwd=tmp_path).model_dump(mode="json")
-    assert dumped["period"] == {"start": "2020-09-13", "end": "2025-09-14", "election": None}
-    assert dumped["sources"]["oparl"]["endpoint"].endswith("/bodies/0015/papers")
-    assert dumped["sources"]["wikidata"]["entity"] == "Q1718"
-    assert dumped["columns"] == {
-        "district_id": "Kommunalwahlbezirk Nr.",
-        "district_name": "Kommunalwahlbezirk Name",
-        "precinct_id": "Stimm-/ Wahlbezirk",
-        "results": {
-            "sep": ";",
-            "encoding": "latin-1",
-            "district": "Kommunalwahlbezirk",
-            "eligible": "Wahlberechtigte_insgesamt",
-            "voters": "Waehler",
-            "parties": {
-                "CDU": "CDU_Stimmen",
-                "GRUENE": "GRUENE_Stimmen",
-                "SPD": "SPD_Stimmen",
-                "FDP": "FDP_Stimmen",
-                "Die_Linke": "Die_Linke_Stimmen",
-                "AfD": "AfD_Stimmen",
-            },
-        },
+    settings = load_settings(cwd=tmp_path)
+    assert (settings.period.start, settings.period.end) == (date(2020, 9, 13), date(2025, 9, 14))
+    assert settings.sources.oparl.endpoint.endswith("/bodies/0015/papers")
+    assert settings.sources.wikidata.entity == "Q1718"
+    assert settings.sources.opendata.results_file == "Stimmbezirk_Wahlergebnis.csv"
+    assert settings.sources.opendata.districts_file == "Stimmbezirke_2025.geojson"
+    columns = settings.columns
+    assert (columns.district_id, columns.district_name, columns.precinct_id) == (
+        "Kommunalwahlbezirk Nr.",
+        "Kommunalwahlbezirk Name",
+        "Stimm-/ Wahlbezirk",
+    )
+    assert (columns.results.sep, columns.results.encoding) == (";", "latin-1")
+    assert columns.results.district == "Kommunalwahlbezirk"
+    assert columns.results.eligible == "Wahlberechtigte_insgesamt"
+    assert columns.results.voters == "Waehler"
+    assert columns.results.parties == {
+        "CDU": "CDU_Stimmen",
+        "GRUENE": "GRUENE_Stimmen",
+        "SPD": "SPD_Stimmen",
+        "FDP": "FDP_Stimmen",
+        "Die_Linke": "Die_Linke_Stimmen",
+        "AfD": "AfD_Stimmen",
     }
-    assert dumped["search"]["text_split_marker"] == "betrifft"
-    assert dumped["search"]["hide_in_display"] == ["schulweg"]
-    assert dumped["analysis"]["exclude_districts"] == [1, 10]
-    assert dumped["sources"]["opendata"]["results_file"] == "Stimmbezirk_Wahlergebnis.csv"
-    assert dumped["sources"]["opendata"]["districts_file"] == "Stimmbezirke_2025.geojson"
+    precincts = settings.precincts
+    assert (precincts.enabled, precincts.format) == (True, "geojson")
+    assert precincts.id_property == "Stimm-/ Wahlbezirk"
+    assert precincts.district_property == "Kommunalwahlbezirk Nr."
+    assert precincts.name_property == "Kommunalwahlbezirk Name"
+    assert settings.search.text_split_marker == "betrifft"
+    assert settings.search.hide_in_display == ["schulweg"]
+    assert len(settings.search.exclude) == 63 and "Düsseldorf" in settings.search.exclude
+    assert settings.analysis.exclude_districts == [1, 10]
+    # Option 03 bis 06 haben ihre Tabellen mitgebracht; auch sie stehen jetzt im Profil
+    assert settings.bodies.district_body and settings.context.variables
+    assert settings.originators.parties
 
 
 def test_profile_argument_selects_a_package_profile_between_defaults_and_files(
@@ -792,9 +798,9 @@ def test_unknown_profile_names_the_available_ones(tmp_path: Path) -> None:
 def test_profile_slug_must_match_the_file_name(tmp_path: Path) -> None:
     profiles = tmp_path / "profiles"
     profiles.mkdir()
-    (profiles / "a.toml").write_text(
-        _package_profile(tmp_path, "b").read_text(encoding="utf-8"), encoding="utf-8"
-    )
+    content = _package_profile(profiles, "b").read_text(encoding="utf-8")
+    (profiles / "b.toml").unlink()
+    (profiles / "a.toml").write_text(content, encoding="utf-8")
     with pytest.raises(SchemaError, match="city.slug"):
         load_settings(cwd=tmp_path, profile="a", profiles_dir=profiles)
 

@@ -1,7 +1,7 @@
 """Die ganze Kette für ein Periodenprofil, offline auf der synthetischen Mini-Periode.
 
 Erst läuft die Hauptperiode auf ``tests/fixtures/mini/``, dann das Profil aus
-``settings.2014.toml`` auf ``tests/fixtures/mini-2014/`` mit derselben Datenwurzel: so liest es
+das Profil ``duesseldorf-2014`` auf ``tests/fixtures/mini-2014/`` mit derselben Datenwurzel: so liest es
 das Wörterbuch und den Zielzuschnitt der Hauptperiode, wie es auf Konrads Rechner auch wäre. Die
 Fixture ist erfunden (``tests/fixtures/mini-2014/README.md``); geprüft wird die Kette, nicht die
 Wahl: dass die Zuordnung eine Zerlegung ist, dass die Summen der Wahlbezirks-CSV erhalten
@@ -33,7 +33,7 @@ from georep.settings import Settings, load_settings
 
 REPO = Path(__file__).resolve().parents[2]
 MINI_2014 = REPO / "tests" / "fixtures" / "mini-2014"
-PROFILE = REPO / "settings.2014.toml"
+PROFILE = "duesseldorf-2014"
 NOWHERE = Path("/nonexistent")
 TARGET_DISTRICTS = [1, 10, 38]
 # Option 02 fügt ``precincts`` ein und lässt ``streets_osm`` und ``pois_wiki`` weg; welche
@@ -58,7 +58,7 @@ def period_run(
     base = Layout(root / "data", root / "cache", mini_root, context_root=mini_root / "context")
     bootstrap(base, context_files=default_settings.context.files.names())
     run_pipeline(build_steps(default_settings, base), default_settings)
-    settings = load_settings(explicit=PROFILE, cwd=NOWHERE).model_copy(
+    settings = load_settings(profile=PROFILE, cwd=NOWHERE).model_copy(
         update={
             "data_root": root / "data",
             "cache_root": root / "cache",
@@ -161,7 +161,7 @@ def test_the_corpus_of_the_period_lies_inside_the_period(period_run: PeriodRun) 
 
 # --- Stufe F: der Vergleich auf der Hauptperiode ------------------------------------------------
 
-COMPARE_PROFILE = REPO / "settings.vergleich.toml"
+COMPARE_PROFILE = "duesseldorf-vergleich"
 
 
 @dataclass(frozen=True)
@@ -173,9 +173,9 @@ class ComparedRun:
 
 @pytest.fixture(scope="module")
 def compared(period_run: PeriodRun, mini_root: Path, default_settings: Settings) -> ComparedRun:
-    """Die Hauptperiode noch einmal, diesmal mit ``settings.vergleich.toml``."""
+    """Die Hauptperiode noch einmal, diesmal mit das Profil ``duesseldorf-vergleich``."""
     base, base_settings = period_run.base, default_settings
-    settings = load_settings(explicit=COMPARE_PROFILE, cwd=NOWHERE).model_copy(
+    settings = load_settings(profile=COMPARE_PROFILE, cwd=NOWHERE).model_copy(
         update={
             "data_root": base.data_root,
             "cache_root": base.cache_root,
@@ -269,7 +269,7 @@ def test_without_the_compare_profile_the_main_page_has_no_comparison(mini_run: L
 
     ``mini_run`` ist der Lauf der Hauptperiode ohne jedes Profil, wie ihn ``main`` und die CI
     machen. Dass die beiden optionalen Tabellen dort fehlen, heißt: der Abschnitt und die
-    Downloads entstehen nur mit ``settings.vergleich.toml``.
+    Downloads entstehen nur mit das Profil ``duesseldorf-vergleich``.
     """
     page = mini_run.site_index.read_text(encoding="utf-8")
     assert '<section id="perioden">' not in page

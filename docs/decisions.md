@@ -474,3 +474,27 @@ Perioden; die Liste ist neueste zuerst, also ist eine zu kleine Startseite nur l
 verlöre Dokumente. Seite 90 trug am 2026-10-12 den Bereich Januar bis März 2022 und liegt damit rund 28
 Seiten (40 Minuten) vor der Grenze — bewusst mit Vorlauf, weil jedes neue Paper die alten Seiten nach
 hinten schiebt. `incremental = false`, weil `modified` bei alten Papern das Migrationsdatum 2024-12-30 ist.
+## Punkt: pyshp statt GDAL für Shapefiles (Option 01, 2026-10-12)
+
+Mönchengladbach veröffentlicht seine Stimmbezirksflächen nur als Shapefile im Zip
+(`Wahlen_EPSG25832_SHAPE.zip`, DL-DE Zero 2.0). `pyshp` 3.1.6 liest `.shp`, `.shx` und `.dbf` direkt aus dem
+Archiv, ist reines Python, hat keine eigenen Abhängigkeiten und steht unter MIT; das CRS kommt aus dem `.prj`
+über pyproj, das ohnehin im Projekt ist. Verworfen: `fiona` oder `pyogrio` (GDAL-Binärwheels, rund 20 MB, mehr
+Angriffsfläche und ein zweiter Geometrie-Stack neben shapely); Konvertierung von Hand mit `ogr2ogr` (nicht aus
+`georep fetch` reproduzierbar, und CI hat kein GDAL); geopandas (durch `nox -s deps` verboten, Konrads Vorgabe).
+Kosten: ein weiteres Paket im Lockfile und ein mypy-Override, weil pyshp Annotationen, aber keine
+`py.typed`-Marke mitbringt.
+
+## Punkt: ein kanonischer Stand der Stimmbezirke (Option 01, 2026-10-12)
+
+Zwischen der Quelldatei und allem, was Flächen liest, steht jetzt der Schritt `precincts`: aus GeoJSON oder
+Shapefile-Zip entsteht `interim/stimmbezirke.geojson` mit genau drei Eigenschaften (`stimmbezirk`,
+`wahlbezirk`, `wahlbezirk_name`) und dem CRS der Quelle. Die Regeln (welche Eigenschaft die Nummer trägt, ob
+der Wahlbezirk eine eigene Spalte ist oder als Zeichenausschnitt in der Nummer steckt, woher die Namen kommen)
+stehen in `[precincts]` im Profil; `geo.read_precincts` kennt nur noch die kanonische Datei und hat seinen
+`Columns`-Parameter verloren. Die Koordinaten bleiben die der Quelle: Düsseldorf rechnet weiter in einem Schritt
+von EPSG:4647 ins Arbeits-CRS, der Golden Master der 1 996 Orte bleibt grün. Verworfen: `read_precincts` mit
+immer mehr Parametern (jeder Leser wüsste von jeder Quelle); Umprojektion auf EPSG:4326 im kanonischen GeoJSON
+(zwei Transformationen statt einer, Rauschen an Bezirksgrenzen). Kosten: ein Schritt mehr in `georep steps`
+(Snapshot bewusst erneuert) und eine Zwischendatei; `georep fetch` führt ihn mit, weil die Netzschritte
+`streets_osm` und `pois_wiki` ihn brauchen.

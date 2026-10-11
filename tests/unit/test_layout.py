@@ -166,28 +166,33 @@ def test_districts_file_names_the_precinct_geojson_per_profile(tmp_path: Path) -
         f'[sources.opendata]\ndistricts_file = "{name_2020}"\n', encoding="utf-8"
     )
     assert Layout.from_settings(load_settings(cwd=tmp_path)).districts_file == name_2020
+
+
 # --- Option 01: Dateinamen der Quellen aus dem Profil -------------------------------------------
 
 
 def test_layout_takes_the_source_file_names_from_the_settings(tmp_path: Path) -> None:
     (tmp_path / "settings.toml").write_text(
         '[sources.opendata]\nresults_file = "ergebnis.csv"\ndistricts_file = "flaechen.zip"\n'
-        'streets_file = "strassen.csv"\ndistrict_names_file = "wahlbezirke.csv"\n',
+        'streets_url = "https://portal.invalid/strassen.csv"\nstreets_file = "strassen.csv"\n'
+        'district_names_url = "https://portal.invalid/wb.csv"\n'
+        'district_names_file = "wahlbezirke.csv"\n',
         encoding="utf-8",
     )
     layout = Layout.from_settings(load_settings(cwd=tmp_path))
     assert layout.results_csv == Path("data/external/ergebnis.csv")
-    assert layout.districts_source == Path("data/external/flaechen.zip")
+    assert layout.districts_geojson == Path("data/external/flaechen.zip")
     assert layout.streets_directory == Path("data/external/strassen.csv")
     assert layout.district_names_csv == Path("data/external/wahlbezirke.csv")
     assert layout.precincts_geojson == Path("data/interim/stimmbezirke.geojson")
     assert layout.site_summary == Path("data/site/data/summary.json")
+    assert layout.package_texts == Path("data/text/texts.parquet")
     assert layout.reference_view().results_csv == Path("reference/external/ergebnis.csv")
-    assert layout.for_profile("x").districts_source == Path("data/x/external/flaechen.zip")
+    assert layout.for_profile("x").districts_geojson == Path("data/x/external/flaechen.zip")
 
 
 def test_layout_without_optional_sources_has_no_paths_for_them(tmp_path: Path) -> None:
     layout = Layout.from_settings(load_settings(cwd=tmp_path))
     assert layout.streets_directory is None and layout.district_names_csv is None
     assert layout.results_csv.name == "Stimmbezirk_Wahlergebnis.csv"
-    assert layout.districts_source.name == "Stimmbezirke_2025.geojson"
+    assert layout.districts_geojson.name == "Stimmbezirke_2025.geojson"

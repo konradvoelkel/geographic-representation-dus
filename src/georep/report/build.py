@@ -19,7 +19,7 @@ import polars as pl
 from georep.analysis.hits import DISTRICT
 from georep.analysis.ols import CONSTANT, model_frame, partial_residuals
 from georep.export import write_csv
-from georep.geo import LONLAT, read_precincts, transformer
+from georep.geo import LONLAT, read_canonical_precincts, transformer
 from georep.io import atomic_path, digest, write_json, write_text
 from georep.layout import Layout
 from georep.prep.voters import TURNOUT
@@ -266,8 +266,8 @@ def build_site(
     layout.guard_writable(layout.site_data).mkdir(parents=True, exist_ok=True)
     working_crs = settings.geo.working_crs
     downloads = write_tables(layout, settings)
-    precincts = read_precincts(
-        layout.target_view(settings).districts_geojson, settings.columns, working_crs
+    precincts = read_canonical_precincts(
+        layout.target_view(settings).precincts_geojson, working_crs
     )
     shapes = district_shapes(precincts, SIMPLIFY_M)
     model = build_report_model(layout, settings, now=now, commit=commit)

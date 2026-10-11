@@ -275,6 +275,8 @@ def test_max_pages_changes_the_fingerprint(project: Path) -> None:
     assert _with_fetch_limits(base, 5, None).sources.oparl.pdf_limit == 5
     both = _with_fetch_limits(base, 5, 2).sources.oparl
     assert (both.pdf_limit, both.max_pages) == (5, 2)
+
+
 # --- Option 01: Profile -------------------------------------------------------------------------
 
 

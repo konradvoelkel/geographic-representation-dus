@@ -1,13 +1,15 @@
-# Die Wahlperiode 2014 bis 2020 als Profil: dieselbe Kette, eigene Datenwurzel
-# <data_root>/2014-2020/, eigene Stamps, eigene PDFs und Texte unter <cache_root>/2014-2020/.
+# Profil „Wahlperiode 2014 bis 2020" (Option 02), als Paketprofil derselben Stadt:
 #
-#   uv run georep --settings settings.2014.toml bootstrap
-#   uv run georep --settings settings.2014.toml run
+#   uv run georep --profile duesseldorf-2014 bootstrap
+#   uv run georep --profile duesseldorf-2014 run
 #
-# Gründe je Zeile stehen daneben, die ausführlichen in docs/plans/02-zeitreihe.md, § 2.
-# Rechnerspezifische Pfade gehören nie hierher, sondern in settings.local.toml (gitignored);
-# diese Datei ist committet und muss in der CI genauso gelten wie auf Konrads Rechner.
-# Lesereihenfolge: defaults.toml < settings.toml < settings.local.toml < diese Datei.
+# ``base`` setzt auf dem Stadtprofil auf; hier steht nur, was für diese Periode anders ist
+# (Option 01, § 9 des Plans: die Profilschicht trägt genauso eine Periode). Gründe je Zeile stehen
+# daneben, die ausführlichen in docs/plans/02-zeitreihe.md, § 2. Rechnerspezifische Pfade gehören
+# nie hierher, sondern in settings.local.toml (gitignored).
+# Lesereihenfolge: defaults.toml < profiles/duesseldorf.toml < diese Datei < settings*.toml.
+
+base = "duesseldorf"
 
 profile = "2014-2020"          # Ordnername unter data_root und cache_root; trennt Daten, Stamps, PDFs und Texte von der Hauptperiode
 reference_root = "snapshots/2014-2020"  # eingefrorener Datensatz dieser Periode (Konrads Lauf, Stufe H des Plans); fehlt er, nennt bootstrap die Dateien und bricht nicht ab
@@ -49,6 +51,9 @@ parties = { CDU = "D1", GRUENE = "D3", SPD = "D2", FDP = "D4", Die_Linke = "D5",
 
 [context]                      # Option 03: Kontrollvariablen gibt es für diese Periode nicht
 root = ""                      # der Quartiersatlas beschreibt den Stand 2021 auf den Raumeinheiten von heute; für eine Periode, die 2020 endet, wäre er keine Kontrollvariable, sondern eine Zeitreise. Leer heißt: die Schritte context_data, context und controls fehlen im Profil
+
+[precincts]                    # Option 01: diese Periode hat keine eigenen Wahlbezirke
+enabled = false                # das Stimmbezirks-GeoJSON von 2020 kennt nur die Nummer (Stimmbezchar); den Wahlbezirk liefert der Crosswalk, darum entfällt der Schritt shapes und die Seite liest die kanonischen Flächen der Hauptperiode
 
 [crosswalk]                    # Stimmbezirke 2020 über Flächenanteile auf die Wahlbezirke 2025
 enabled = true

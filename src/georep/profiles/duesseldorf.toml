@@ -63,6 +63,12 @@ districts_file = "Stimmbezirke_2025.geojson"  # Option 02: Dateiname des Stimmbe
 [sources.wikidata]
 entity = "Q1718"               # Düsseldorf; Objekte mit P131* (liegt in) auf diese Verwaltungseinheit
 
+[precincts]                    # Option 01: Regeln der Quellgeometrie (Schritt shapes)
+format = "geojson"             # Open-Data-Portal: FeatureCollection in EPSG:4647, crs-Mitglied vorhanden
+id_property = "Stimm-/ Wahlbezirk"
+district_property = "Kommunalwahlbezirk Nr."  # Düsseldorfs Stimmbezirksnummer kodiert den Stadtteil, nicht den Wahlbezirk (0101 liegt in Wahlbezirk 41): die Spalte ist nötig
+name_property = "Kommunalwahlbezirk Name"
+
 [search]
 text_split_marker = "betrifft" # der Vorlagenkopf vor dem ersten Vorkommen wird verworfen (Düsseldorfer Vorlagenformat)
 exclude = [                    # Stadtteil- und Stadtbezirksnamen: zu grob für einen Wahlbezirk

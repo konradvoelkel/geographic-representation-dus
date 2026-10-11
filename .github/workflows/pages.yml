@@ -38,9 +38,9 @@ jobs:
             echo "snapshots/2014-2020 fehlt: nur die Hauptperiode"
             exit 0
           fi
-          uv run georep --settings settings.2014.toml bootstrap || exit 1
-          uv run georep --settings settings.2014.toml run || exit 1
-          uv run georep --settings settings.vergleich.toml run || exit 1
+          uv run georep --profile duesseldorf-2014 bootstrap || exit 1
+          uv run georep --profile duesseldorf-2014 run || exit 1
+          uv run georep --profile duesseldorf-vergleich run || exit 1
           rm -rf data/site/2014-2020 || exit 1
           cp -r data/2014-2020/site data/site/2014-2020 || exit 1
       - run: ls -la data/site data/site/data && uv run georep status

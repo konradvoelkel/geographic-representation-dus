@@ -59,7 +59,7 @@ from georep.contracts import has_columns
 # Einheitsvariante (Option 06); beide heißen „einheit", meinen aber Verschiedenes.
 from georep.crosswalk import UNIT as CROSSWALK_UNIT
 from georep.errors import EmptyResultError, MissingInputError, SchemaError
-from georep.geo import Precinct, read_precincts
+from georep.geo import Precinct, read_canonical_precincts
 from georep.layout import Layout
 from georep.prep import bodies as prep_bodies
 from georep.prep.bodies import BodyRules
@@ -1236,7 +1236,7 @@ def period_comparison(
     """Option 02: der Vergleich, wenn ``compare.period`` gesetzt und die Tabelle gerechnet ist.
 
     Fehlt die Vergleichstabelle, fehlt der Abschnitt: der Schritt ``compare`` läuft nur mit dem
-    Profil ``settings.vergleich.toml``, und ohne ihn ist die Seite die von ``main``. Fehlt
+    Profil ``duesseldorf-vergleich``, und ohne ihn ist die Seite die von ``main``. Fehlt
     dagegen die Zuordnung der älteren Periode, ist das kein fehlender Abschnitt, sondern ein
     unvollständiger Lauf — und ein ``MissingInputError``, der sagt, welcher.
 
@@ -1285,10 +1285,10 @@ def build_report_model(
     results = pl.read_parquet(layout.results)
     dictionary = pl.read_parquet(layout.dictionary)
     index = pl.read_parquet(layout.index)
+    # Option 01 und 02: die Flächen kommen aus dem kanonischen Stand; ein Periodenprofil mit
+    # fremdem Zuschnitt liest den der Hauptperiode (``target_view``).
     geometry = layout.target_view(settings)
-    precincts = read_precincts(
-        geometry.districts_geojson, settings.columns, settings.geo.working_crs
-    )
+    precincts = read_canonical_precincts(geometry.precincts_geojson, settings.geo.working_crs)
     hidden = tuple(settings.search.hide_in_display)
     counts = term_counts(dictionary, index)
     names = district_names(precincts)

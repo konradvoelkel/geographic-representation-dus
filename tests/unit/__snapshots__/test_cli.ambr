@@ -3,6 +3,8 @@
   '''
   opendata     <- (nichts) [Netz]
                -> Stimmbezirk_Wahlergebnis.csv, Stimmbezirke_2025.geojson
+  shapes       <- Stimmbezirke_2025.geojson
+               -> stimmbezirke.geojson
   context_data <- (nichts) [Netz]
                -> quartiersatlas_2024.csv, sozialraeume_2021.geojson, quartiersatlas_2024_indikatoren.csv
   papers       <- (nichts) [Netz]
@@ -11,9 +13,9 @@
                -> organizations.json
   pdfs         <- papers.jsonl [Netz]
                -> manifest.jsonl
-  streets_osm  <- Stimmbezirke_2025.geojson [Netz]
+  streets_osm  <- stimmbezirke.geojson [Netz]
                -> streets_per_district.json
-  pois_wiki    <- Stimmbezirke_2025.geojson [Netz]
+  pois_wiki    <- stimmbezirke.geojson [Netz]
                -> wikipedia_dict.json
   texts        <- papers.jsonl, manifest.jsonl
                -> texts.parquet
@@ -45,7 +47,7 @@
                -> regression_kontrollen.parquet
   parties      <- papers.parquet, wahlbezirke_auswertung.parquet, wahlbezirke_waehler.parquet
                -> dokumente_urheber.parquet, wahlbezirke_urheber.parquet, wahlbezirke_parteien.parquet
-  report       <- wahlbezirke_auswertung.parquet, combined_searchdict.parquet, inverted_index.parquet, wahlbezirke_waehler.parquet, wikidata_vis.parquet, wahlbezirke_strassen.parquet, papers.parquet, Stimmbezirke_2025.geojson, wahlbezirke_gremien.parquet, gremien.parquet, wahlbezirke_stadtbezirke.parquet, wahlbezirke_gewichtet.parquet, gewichte_begriffe.parquet, wahlbezirke_kontext.parquet, wahlbezirke_crosswalk.parquet, regression_kontrollen.parquet, quartiersatlas_2024_indikatoren.csv, dokumente_urheber.parquet, wahlbezirke_urheber.parquet, wahlbezirke_parteien.parquet, themen.parquet, themen_dokumente.parquet
+  report       <- wahlbezirke_auswertung.parquet, combined_searchdict.parquet, inverted_index.parquet, wahlbezirke_waehler.parquet, wikidata_vis.parquet, wahlbezirke_strassen.parquet, papers.parquet, stimmbezirke.geojson, wahlbezirke_gremien.parquet, gremien.parquet, wahlbezirke_stadtbezirke.parquet, wahlbezirke_gewichtet.parquet, gewichte_begriffe.parquet, wahlbezirke_kontext.parquet, wahlbezirke_crosswalk.parquet, regression_kontrollen.parquet, quartiersatlas_2024_indikatoren.csv, dokumente_urheber.parquet, wahlbezirke_urheber.parquet, wahlbezirke_parteien.parquet, themen.parquet, themen_dokumente.parquet
                -> index.html, schema.json, karte.html
   
   '''

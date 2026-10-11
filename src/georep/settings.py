@@ -255,10 +255,53 @@ class ResultsColumns(_Strict):
 
 
 class Columns(_Strict):
+    # Die Eigenschaften der Quellgeometrie; ``read_precincts`` liest damit eine Quelldatei (der
+    # Crosswalk einer anderen Periode, Option 02). Der kanonische Stand (Option 01) hat feste
+    # Namen und braucht sie nicht.
     district_id: str
     district_name: str
     precinct_id: str
     results: ResultsColumns
+
+
+class Precincts(_Strict):
+    """Wie aus der Quellgeometrie die kanonischen Stimmbezirke werden (Option 01, Schritt ``precincts``).
+
+    Die Eigenschaftsnamen und die Regel für den Wahlbezirk sind je Quelle verschieden und stehen
+    darum im Profil; ``prep/precincts.py`` ist die einzige Stelle, die sie liest.
+    """
+
+    # Option 02: eine Periode mit fremdem Zuschnitt hat keine eigenen Wahlbezirke in der
+    # Quellgeometrie; dann entfällt der Schritt ``shapes`` und der Crosswalk ordnet zu.
+    enabled: bool = True
+    format: Literal["geojson", "shapefile-zip"] = "geojson"
+    member: str = ""  # Pfad des .shp im Zip; leer = das einzige im Archiv
+    source_crs: str = ""  # nur für GeoJSON ohne crs-Mitglied; Shapefiles bringen ihr .prj mit
+    id_property: str = ""  # trägt die Stimmbezirksnummer
+    district_property: str = ""  # trägt die Wahlbezirksnummer
+    district_from_id: tuple[int, int] | None = None  # sonst: Zeichenausschnitt [start, stop)
+    name_property: str = ""  # trägt den Namen des Wahlbezirks
+    names_from_results: bool = False  # sonst: Namen aus der Wahlbezirks-CSV der Quelle
+    names_id_column: str = "gebiet-nr"  # Spalten dieser CSV (votemanager)
+    names_name_column: str = "gebiet-name"
+    dbf_encoding: str = "utf-8"  # pyshp liest .dbf oft als latin-1; Fehler werden ersetzt
+
+    @model_validator(mode="after")
+    def _exactly_one_rule_each(self) -> Precincts:
+        if not self.enabled:
+            return self
+        if not self.id_property:
+            raise ValueError("precincts.id_property fehlt: welche Eigenschaft trägt die Nummer?")
+        if bool(self.district_property) == (self.district_from_id is not None):
+            raise ValueError("precincts: genau eines von district_property und district_from_id")
+        if bool(self.name_property) == self.names_from_results:
+            raise ValueError("precincts: genau eines von name_property und names_from_results")
+        if (
+            self.district_from_id is not None
+            and not 0 <= self.district_from_id[0] < (self.district_from_id[1])
+        ):
+            raise ValueError(f"precincts.district_from_id {self.district_from_id}: [start, stop)")
+        return self
 
 
 class Search(_Strict):
@@ -878,6 +921,7 @@ class Settings(BaseSettings):
     originators: Originators = Originators()  # Option 04
     crosswalk: Crosswalk = Crosswalk()  # Option 02
     compare: Compare = Compare()  # Option 02
+    precincts: Precincts  # Option 01: Regeln der Quellgeometrie, je Stadt im Profil
     # Option 01: der gewählte Profilname (``load_settings`` schreibt ihn hierher), die Stadt in
     # Worten, die Quellen für Kopf und Fuß der Seite und die Städte der Veröffentlichung.
     default_profile: str = ""
@@ -1140,14 +1184,23 @@ def load_settings(
     for _path, layer in files:
         merged = deep_merge(merged, layer)
     merged["default_profile"] = chosen
-    settings = Settings(**merged)
-    root = profile_chain(chosen, profiles_dir)[0]
-    if settings.city.slug != root:
-        raise SchemaError(
-            f"Profil {chosen!r}: city.slug ist {settings.city.slug!r}, erwartet {root!r}; "
-            "der Slug muss dem Dateinamen des Stadtprofils gleichen"
-        )
-    return settings
+    _slugs_match_their_file(chosen, profiles_dir)
+    return Settings(**merged)
+
+
+def _slugs_match_their_file(name: str, folder: Traversable | None = None) -> None:
+    """Wer ``city.slug`` setzt, muss so heißen wie seine Datei; wer erbt, schweigt dazu.
+
+    So kann ein Profil eine Periode derselben Stadt sein (``duesseldorf-2014`` erbt den Slug) oder
+    eine eigene Stadt (``moenchengladbach`` setzt ihn), und niemand verwechselt beides.
+    """
+    for step in profile_chain(name, folder):
+        city = _read_profile(step, folder).get("city")
+        slug = city.get("slug") if isinstance(city, dict) else None
+        if slug is not None and slug != step:
+            raise SchemaError(
+                f"Profil {step!r}: city.slug ist {slug!r}; der Slug muss dem Dateinamen gleichen"
+            )
 
 
 def _selected_profile(base: dict[str, Any], files: list[tuple[Path, dict[str, Any]]]) -> str:

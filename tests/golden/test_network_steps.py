@@ -170,6 +170,8 @@ def test_streets_and_pois_steps_use_recorded_answers(
         ],
     }
     layout.districts_geojson.write_text(json.dumps(one), encoding="utf-8")
+    # Option 01: zwischen Quelle und Netzschritt steht der kanonische Stand
+    run_pipeline(build_steps(settings, layout), settings, ["shapes"])
     routes: dict[str, Any] = {
         src.osm.overpass_endpoint: response(
             src.osm.overpass_endpoint,

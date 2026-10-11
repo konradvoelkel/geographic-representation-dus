@@ -142,6 +142,56 @@ def read_precincts(
     return precincts
 
 
+# --- Option 01: die kanonischen Stimmbezirke ----------------------------------------------------
+# Der Schritt ``shapes`` schreibt sie aus der Quellgeometrie (GeoJSON eines Portals oder
+# Shapefile-Zip) mit genau diesen drei Eigenschaften; alles, was danach Flächen liest, kennt nur
+# dieses Format und nicht mehr die Quelle (docs/plans/01-staedte.md, § 2).
+PRECINCT_PROPERTY = "stimmbezirk"
+DISTRICT_PROPERTY = "wahlbezirk"
+DISTRICT_NAME_PROPERTY = "wahlbezirk_name"
+
+
+@deal.post(
+    lambda result: (
+        len(result) > 0 and all(p.geometry.is_valid and not p.geometry.is_empty for p in result)
+    ),
+    message="jeder Stimmbezirk hat eine gültige, nicht leere Fläche",
+)
+@deal.raises(SchemaError)
+def read_canonical_precincts(
+    path: Path, working_crs: str, *, source_crs: str = LONLAT
+) -> list[Precinct]:
+    """Liest die kanonischen Stimmbezirke, repariert ungültige Geometrien, projiziert ins Arbeits-CRS.
+
+    Die Datei kommt aus dem Schritt ``shapes``; welche Quellform dahinter lag, weiß hier niemand
+    mehr. ``read_precincts`` daneben liest eine Quelldatei mit den Spaltennamen des Profils (der
+    Crosswalk braucht das für einen älteren Zuschnitt, Option 02).
+    """
+    features, trans = _features(path, working_crs, source_crs)
+    precincts: list[Precinct] = []
+    for feature in features:
+        props = feature.get("properties", {})
+        missing = [
+            c
+            for c in (PRECINCT_PROPERTY, DISTRICT_PROPERTY, DISTRICT_NAME_PROPERTY)
+            if c not in props
+        ]
+        if missing:
+            raise SchemaError(
+                f"{path.name}: Felder fehlen: {missing}; "
+                "die Datei kommt aus dem Schritt `shapes` (georep run shapes)"
+            )
+        precincts.append(
+            Precinct(
+                precinct_id=str(props[PRECINCT_PROPERTY]),
+                district_id=int(props[DISTRICT_PROPERTY]),
+                district_name=str(props[DISTRICT_NAME_PROPERTY]),
+                geometry=repaired(project(shape(feature["geometry"]), trans)),
+            )
+        )
+    return precincts
+
+
 @deal.post(
     lambda result: (
         len(result) > 0

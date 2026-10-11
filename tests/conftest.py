@@ -10,8 +10,10 @@ from hypothesis import HealthCheck
 from hypothesis import settings as hypothesis_settings
 
 from georep.bootstrap import bootstrap
+from georep.io import write_json
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
+from georep.prep.precincts import canonical_precincts, read_source
 from georep.settings import Settings, load_settings
 
 # Profile: "dev" (Standard) ist schnell, "ci" gründlicher; Auswahl über HYPOTHESIS_PROFILE.
@@ -63,6 +65,40 @@ def context_root() -> Path:
 @pytest.fixture(scope="session")
 def pdf_fixtures() -> Path:
     return PDF_FIXTURES
+
+
+def canonical_precincts_file(source: Path, target_dir: Path, settings: Settings) -> Path:
+    """Die kanonischen Stimmbezirke aus einer Quelldatei, wie der Schritt ``shapes`` sie schreibt.
+
+    Tests, die Flächen lesen, aber keine Kette laufen lassen, holen sie hier (Option 01: alles
+    hinter dem Schritt kennt nur die kanonische Datei). Die Koordinaten bleiben die der Quelle.
+    """
+    data = canonical_precincts(read_source(source, settings.precincts), settings.precincts)
+    target = target_dir / "stimmbezirke.geojson"
+    write_json(target, data, indent=None)
+    return target
+
+
+@pytest.fixture(scope="session")
+def reference_precincts(
+    tmp_path_factory: pytest.TempPathFactory, default_settings: Settings
+) -> Path:
+    """Die 306 Stimmbezirke der Referenz, kanonisch, einmal je Sitzung."""
+    return canonical_precincts_file(
+        REFERENCE / "external" / "Stimmbezirke_2025.geojson",
+        tmp_path_factory.mktemp("reference_precincts"),
+        default_settings,
+    )
+
+
+@pytest.fixture(scope="session")
+def mini_precincts(tmp_path_factory: pytest.TempPathFactory, default_settings: Settings) -> Path:
+    """Die 22 Stimmbezirke der Mini-Fixture, kanonisch, einmal je Sitzung."""
+    return canonical_precincts_file(
+        MINI / "external" / "Stimmbezirke_2025.geojson",
+        tmp_path_factory.mktemp("mini_precincts"),
+        default_settings,
+    )
 
 
 @pytest.fixture(scope="session")

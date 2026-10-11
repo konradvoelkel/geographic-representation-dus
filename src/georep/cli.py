@@ -125,7 +125,14 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
     if fetching:
         settings = _with_fetch_limits(settings, args.limit, args.max_pages)
     steps = build_steps(settings, layout)
-    default_names = [s.name for s in steps if s.network or s.name == "texts"] if fetching else None
+    # `fetch` ohne Namen heißt: alle Netzschritte, dazu die beiden Offline-Schritte, ohne die sie
+    # nicht laufen (`precincts` liefert die Flächen für streets_osm und pois_wiki) oder deren
+    # Ergebnis niemand ohne Netz nachholen kann (`texts` braucht die PDFs im Cache).
+    default_names = (
+        [s.name for s in steps if s.network or s.name in ("precincts", "texts")]
+        if fetching
+        else None
+    )
     outcomes = run_pipeline(
         steps,
         settings,
