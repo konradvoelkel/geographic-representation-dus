@@ -15,6 +15,7 @@ from hypothesis import strategies as st
 
 from georep.http import cache_pattern
 from georep.prep.extract import after_marker, normalise_text
+from georep.report.model import format_de
 from georep.settings import deep_merge
 from georep.sources.overpass import overpass_query, street_names
 from georep.sources.wiki import geosearch_params, parse_point, sparql_query
@@ -107,4 +108,17 @@ def test_street_names(case: deal.TestCase) -> None:
     kwargs={"text": words, "terms": st.lists(words, max_size=5)},
 )
 def test_oracle_extract(case: deal.TestCase) -> None:
+    case()
+
+
+@deal.cases(
+    format_de,
+    count=COUNT,
+    check_types=False,
+    kwargs={
+        "value": st.floats(allow_nan=False, allow_infinity=False),
+        "decimals": st.integers(0, 8),
+    },
+)
+def test_format_de(case: deal.TestCase) -> None:
     case()

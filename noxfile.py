@@ -73,6 +73,7 @@ VERIFY_TARGETS = [
     "georep.sources.wiki.sparql_query",
     "georep.sources.overpass.overpass_query",
     "georep.sources.overpass.street_names",
+    "georep.report.model.format_de",
     "tests.property.oracle_matcher.oracle_extract",
 ]
 
