@@ -380,6 +380,7 @@ class ContextDataset(_Strict):
 
 class ContextTable(_Strict):
     sep: str = ";"
+    encoding: str = "utf-8"
     decimal: str = ","
     missing: list[str] = ["."]  # Marker für fehlende oder anonymisierte Werte
     key: str
@@ -489,6 +490,14 @@ class ContextSettings(_Strict):
 
     def variable(self, name: str) -> ContextVariable:
         return next(v for v in self.variables if v.name == name)
+
+    def unit_variables(self) -> tuple[ContextVariable, ...]:
+        """Variablen, die aus der Tabelle je Raumeinheit kommen und umgerechnet werden müssen."""
+        return tuple(v for v in self.variables if v.kind != "district")
+
+    def district_variables(self) -> tuple[ContextVariable, ...]:
+        """Variablen, die schon je Wahlbezirk vorliegen (Spalten der Wählertabelle)."""
+        return tuple(v for v in self.variables if v.kind == "district")
 
 
 class Settings(BaseSettings):

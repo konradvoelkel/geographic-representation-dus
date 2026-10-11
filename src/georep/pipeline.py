@@ -22,13 +22,20 @@ from georep import __version__
 from georep.analysis.bodies import documents_by_body, hits_by_body
 from georep.analysis.bodies import summary as bodies_summary
 from georep.analysis.hits import hits_by_district, join_voters
+from georep.crosswalk import area_shares, district_weights
 from georep.errors import GeorepError, MissingInputError
-from georep.geo import PrecinctIndex, read_precincts
+from georep.geo import Area, PrecinctIndex, read_areas, read_precincts
 from georep.http import Transport
 from georep.io import digest, write_bytes, write_json, write_parquet
 from georep.layout import Layout
 from georep.prep.bodies import BODIES_SCHEMA_VERSION, BodyRules, classify_papers
 from georep.prep.bodies import summary as papers_bodies_summary
+from georep.prep.context import (
+    aggregate_context,
+    district_variables,
+    precinct_table,
+    read_context_table,
+)
 from georep.prep.extract import extract_missing
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus, documents_with_text
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
@@ -324,6 +331,32 @@ def build_steps(
         write_parquet(units, layout.district_units, schema_version=1)
         return f"{frame.height} Wahlbezirke, {units.height} Paare mit Stadtbezirk"
 
+    # --- Option 03: Raumeinheiten auf Wahlbezirke umrechnen und die Variablen mitteln
+    def context_step() -> str:
+        working = settings.geo.working_crs
+        precincts = read_precincts(layout.districts_geojson, settings.columns, working)
+        table = precinct_table(precincts, read_results_csv(layout.results_csv, columns), columns)
+        units = read_areas(layout.external / context.files.units.file, context.units.key, working)
+        shares = area_shares(
+            [Area.of(p) for p in precincts], units, min_coverage=context.min_coverage
+        )
+        weights = district_weights(table, shares)
+        values = read_context_table(layout.external / context.files.table.file, context)
+        frame = aggregate_context(weights, values, context).join(
+            district_variables(pl.read_parquet(layout.voters), context), on="wahlkreis_id"
+        )
+        write_parquet(frame, layout.context_table, schema_version=1)
+        named = weights.join(values.select("einheit", "einheit_name"), on="einheit", how="left")
+        write_parquet(
+            named.select("wahlkreis_id", "einheit", "einheit_name", "gewicht"),
+            layout.crosswalk,
+            schema_version=1,
+        )
+        return (
+            f"{frame.height} Wahlbezirke, {len(units)} {context.units.label}, "
+            f"{len(context.variables)} Variablen"
+        )
+
     def streets() -> str:
         frame = streets_by_district(read_streets_json(layout.streets))
         write_parquet(frame, layout.streets_by_district, schema_version=1)
@@ -474,6 +507,25 @@ def build_steps(
             (layout.results_csv,),
             (layout.voters, layout.district_units),  # Option 05: zweite Ausgabe
             voters,
+        ),
+        # --- Option 03
+        *(
+            [
+                Step(
+                    "context",
+                    (
+                        layout.districts_geojson,
+                        layout.results_csv,
+                        layout.external / context.files.units.file,
+                        layout.external / context.files.table.file,
+                        layout.voters,
+                    ),
+                    (layout.context_table, layout.crosswalk),
+                    context_step,
+                )
+            ]
+            if with_context
+            else []
         ),
         Step("streets", (layout.streets,), (layout.streets_by_district,), streets),
         Step("pois", (layout.pois,), (layout.pois_table, layout.pois_by_district), pois),

@@ -41,6 +41,7 @@ COVERAGE = "coverage"
 PRECINCT = "stimmbezirk_id"
 ELIGIBLE = "wahlberechtigte"
 UNIT = "einheit"
+UNIT_NAME = "einheit_name"
 SHARES_SCHEMA = {SOURCE: pl.String, TARGET: pl.String, SHARE: pl.Float64, COVERAGE: pl.Float64}
 
 

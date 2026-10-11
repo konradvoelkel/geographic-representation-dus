@@ -17,6 +17,8 @@
                -> texts.parquet
   voters       <- Stimmbezirk_Wahlergebnis.csv
                -> wahlbezirke_waehler.parquet, wahlbezirke_stadtbezirke.parquet
+  context      <- Stimmbezirke_2025.geojson, Stimmbezirk_Wahlergebnis.csv, sozialraeume_2021.geojson, quartiersatlas_2024.csv, wahlbezirke_waehler.parquet
+               -> wahlbezirke_kontext.parquet, wahlbezirke_crosswalk.parquet
   streets      <- streets_per_district.json
                -> wahlbezirke_strassen.parquet
   pois         <- wikipedia_dict.json

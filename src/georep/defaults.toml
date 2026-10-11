@@ -252,6 +252,7 @@ file = "quartiersatlas_2024_indikatoren.csv"
 
 [context.table]                # Form der Tabelle je Raumeinheit
 sep = ";"
+encoding = "utf-8"             # anders als die Wahlergebnis-CSV des Portals, die latin-1 trägt
 decimal = ","
 missing = [".", "x", "-", "#NV"] # "." anonymisiert Werte unter 3 (Hinweis des Portals); x, - und #NV stehen im Sozialraum ohne Daten
 key = "SRG_2021_Nr"            # Schlüssel der Einheit, als Text (führende Null)
