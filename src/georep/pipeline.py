@@ -40,7 +40,7 @@ from georep.search.index import build_index
 from georep.settings import Settings
 from georep.sources import cached_session
 from georep.sources.oparl import fetch_papers
-from georep.sources.opendata import fetch_districts_geojson, fetch_results_csv
+from georep.sources.opendata import fetch_csv, fetch_geojson
 from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
 from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_query
@@ -215,9 +215,9 @@ def build_steps(
         return session
 
     def opendata() -> str:
-        csv = fetch_results_csv(transport(), settings.sources.opendata.results_url, sep=columns.sep)
+        csv = fetch_csv(transport(), settings.sources.opendata.results_url, sep=columns.sep)
         write_bytes(layout.results_csv, csv)
-        geo = fetch_districts_geojson(transport(), settings.sources.opendata.districts_url)
+        geo = fetch_geojson(transport(), settings.sources.opendata.districts_url)
         write_json(layout.districts_geojson, geo, indent=None)
         return f"{len(csv)} Bytes Wahlergebnis, {len(geo['features'])} Stimmbezirke"
 

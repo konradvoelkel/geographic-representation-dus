@@ -155,7 +155,7 @@ def test_cache_pattern_passes_value_errors_through() -> None:
 
 def test_fetchers_declare_their_exceptions() -> None:
     """Eine fremde Ausnahme aus einem Fetcher ist eine Vertragsverletzung, keine Netzstörung."""
-    from georep.sources.opendata import fetch_results_csv
+    from georep.sources.opendata import fetch_csv
 
     class Exploding:
         def get(
@@ -169,7 +169,7 @@ def test_fetchers_declare_their_exceptions() -> None:
             raise RuntimeError("nie")
 
     with pytest.raises(deal.RaisesContractError) as caught:
-        fetch_results_csv(Exploding(), "https://x.invalid/a.csv")
+        fetch_csv(Exploding(), "https://x.invalid/a.csv")
     assert isinstance(caught.value.__cause__, RuntimeError)
 
 
