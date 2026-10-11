@@ -1,0 +1,2297 @@
+{
+ "version": 0.6,
+ "generator": "Overpass API 0.7.62.11 87bfad18",
+ "osm3s": {
+  "timestamp_osm_base": "2026-10-11T23:45:26Z",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+ },
+ "elements": [
+  {
+   "type": "way",
+   "id": 8097080,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "name": "Bau",
+    "postal_code": "41179",
+    "ref": "K 10",
+    "source:ref": "http://wiki.openstreetmap.org/wiki/Import/Catalogue/Strassen_NRW",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 8097082,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "name": "Gatzweiler",
+    "postal_code": "41179",
+    "ref": "K 10",
+    "source:ref": "http://wiki.openstreetmap.org/wiki/Import/Catalogue/Strassen_NRW",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 10153590,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Queens Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 11968935,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "name": "Bau",
+    "postal_code": "41179",
+    "source:maxspeed": "sign",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 11970360,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "name": "Woof",
+    "source:maxspeed": "sign",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 11973584,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Genhodder",
+    "name:etymology:wikidata": "Q1502203",
+    "postal_code": "41179",
+    "source:maxspeed": "sign",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 11998903,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "lit": "yes",
+    "maxlength:hgv": "10",
+    "maxspeed": "50",
+    "name": "Genhodderheide",
+    "name:etymology:wikidata": "Q1502203",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 11999443,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "name": "Genhodderheide",
+    "name:etymology:wikidata": "Q1502203",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 12000101,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "lit": "yes",
+    "maxlength": "10",
+    "maxspeed": "30",
+    "name": "Peel",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 12000647,
+   "tags": {
+    "highway": "service",
+    "motor_vehicle": "destination",
+    "name": "Am Rickelrather Weg",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 12001068,
+   "tags": {
+    "highway": "tertiary",
+    "lanes": "2",
+    "maxspeed": "50",
+    "name": "Peel",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 12002360,
+   "tags": {
+    "highway": "tertiary",
+    "name": "Peel",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 12005766,
+   "tags": {
+    "highway": "tertiary",
+    "lanes": "2",
+    "name": "Am Rickelrather Weg",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 12006981,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Peel",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 13798249,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "name": "Rochusstraße",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17906494,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "name": "Woof",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17906497,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "name": "Genhausen",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17906498,
+   "tags": {
+    "bicycle": "yes",
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Woof",
+    "postal_code": "41179",
+    "source:maxspeed": "sign",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17906506,
+   "tags": {
+    "highway": "unclassified",
+    "lane_markings": "no",
+    "lit": "no",
+    "maxspeed": "50",
+    "name": "Genhodder",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17906508,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "lit": "yes",
+    "motor_vehicle": "destination",
+    "name": "Genhodder",
+    "name:etymology:wikidata": "Q1502203",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17908062,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "name": "Peel",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17908512,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "name": "Peel",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17909855,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "name": "Peel",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19926743,
+   "tags": {
+    "bicycle": "yes",
+    "highway": "residential",
+    "lane_markings": "no",
+    "motor_vehicle": "agricultural;destination",
+    "name": "Eickelnberg",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19927004,
+   "tags": {
+    "highway": "unclassified",
+    "lane_markings": "no",
+    "motor_vehicle": "agricultural;destination",
+    "name": "Eickelnberg",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23722742,
+   "tags": {
+    "highway": "unclassified",
+    "lane_markings": "no",
+    "maxspeed": "50",
+    "name": "Eichhofweg",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23750980,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Wolseley Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23750981,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Fife Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23750982,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Warwick Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23750983,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Dundee Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751120,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Reading Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751121,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Bedford Walk",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751123,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Nairn Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751420,
+   "tags": {
+    "highway": "residential",
+    "name": "Eichhofweg"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751421,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Uxbridge Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751423,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Devonshire Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751424,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Auckland Crescent",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751425,
+   "tags": {
+    "highway": "service",
+    "name": "Devonshire Avenue"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751458,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Antrim Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751571,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Ottawa Avenue"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751572,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Canberra Crescent"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751743,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Tromp Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751811,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Tromp Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751812,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Tromp Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751971,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Clive Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751973,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Sussex Drive",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751974,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Roberts Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751975,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Lincoln Drive",
+    "oneway": "yes"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751977,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Londonderry Drive"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23751978,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Marlborough Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23752187,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Roberts Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23752188,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Hereford Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23752510,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Hertford Way"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23752511,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Roxburgh Drive"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23752514,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Brialmont Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23752670,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Belfast Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23752671,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Belfast Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23752834,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "name": "Norwich Walk",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23754493,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Cheshire Drive"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23754494,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Ballymena Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23754495,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Flint Drive"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23754497,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Worcester Way"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23754514,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Norwich Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23754794,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Snyders Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23754796,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Wellington Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23754797,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Otto-Schmalbruch-Straße"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23755123,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "St.Vincent Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23755124,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Brock Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23755126,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Chazal Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23755128,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "De Ruyter Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23755807,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Chazal Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23755902,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Brecon Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23755903,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Argyll Drive"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23761026,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Cambridge Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23761056,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Wolseley Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23761393,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Dorset Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23761442,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Fife Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23761443,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Fife Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23761549,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Moore Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23761550,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Moore Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762314,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Trenchard Road",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762411,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Trenchard Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762412,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Trenchard Road",
+    "oneway": "yes"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762413,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Trenchard Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762414,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Trenchard Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762490,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Oakham Way",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762666,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Cumberland Drive",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762667,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Pembroke Drive",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762668,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Pembroke Drive",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762951,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Ellington Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762952,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Ellington Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23762955,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Ellington Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23763001,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Roberts Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23763002,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Gordon Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23767637,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Kinross Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23767691,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Essex Drive"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23767692,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Cornwall Drive"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23767733,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Beresford Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23767764,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Grenville Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23768508,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Derby Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23768509,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Carlisle Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23768511,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Exeter Way"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23768732,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Gloucester Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769250,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Elgin Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769251,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Winchester Way"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769252,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Salisbury Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769253,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Forfar Way"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769254,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Bangor Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769255,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Dolgelly Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769257,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Dorchester Way"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769377,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Dingwall Way"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769378,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Monmouth Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769379,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Appleby Walk",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769380,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Shrewsbury Way"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769381,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Cupar Way"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769382,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Cardigan Way"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769383,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Lancaster Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769861,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Band Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769862,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "York Drive"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769863,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Newport Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769864,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Leeds Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769866,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Newport Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769868,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Perth Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769869,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Stornoway Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769870,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Douglas Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769871,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Plymouth Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769872,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Southampton Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769873,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Banff Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769874,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Huntingdon Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769875,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Holyhead Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769935,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Newcastle Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769936,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Ipswich Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769937,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Bath Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23769938,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Colchester Walk",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770002,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Wiltshire Close",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770003,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Somerset Close",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770004,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Shropshire Close",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770005,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Rutland Close"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770068,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Cromarty Terrace",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770069,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Carmarthen Terrace",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770070,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Caernarvon Terrace",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770119,
+   "tags": {
+    "access": "private",
+    "highway": "footway",
+    "name": "Norfolk Lane",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770120,
+   "tags": {
+    "access": "private",
+    "highway": "footway",
+    "name": "Berkshire Ride",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770121,
+   "tags": {
+    "created_by": "JOSM",
+    "highway": "footway",
+    "name": "Kent Ride",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770122,
+   "tags": {
+    "created_by": "JOSM",
+    "highway": "footway",
+    "name": "Surrey Ride",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770123,
+   "tags": {
+    "access": "private",
+    "highway": "footway",
+    "name": "Armagh Ride",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770124,
+   "tags": {
+    "access": "private",
+    "highway": "footway",
+    "name": "Westmoreland Lane",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770125,
+   "tags": {
+    "access": "private",
+    "highway": "footway",
+    "name": "Suffolk Lane",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23770126,
+   "tags": {
+    "access": "private",
+    "highway": "footway",
+    "name": "Sutherland Lane"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23771152,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Lee Potter Drive"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23776332,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Stephen Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 23885842,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Queens Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 29340409,
+   "tags": {
+    "highway": "service",
+    "motor_vehicle": "destination",
+    "name": "Gatzweiler"
+   }
+  },
+  {
+   "type": "way",
+   "id": 29343179,
+   "tags": {
+    "highway": "service",
+    "name": "Gatzweiler",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 29347124,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "name": "In Ellinghoven",
+    "postal_code": "41844",
+    "ref": "K 12",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 29347125,
+   "tags": {
+    "check_date:surface": "2025-02-21",
+    "highway": "unclassified",
+    "name": "Eickelnberg",
+    "postal_code": "41179",
+    "surface": "unpaved"
+   }
+  },
+  {
+   "type": "way",
+   "id": 29347975,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "maxspeed:type": "sign",
+    "name": "Genhausen",
+    "oneway": "no",
+    "ref": "K 10",
+    "source:ref": "http://wiki.openstreetmap.org/wiki/Import/Catalogue/Strassen_NRW",
+    "surface": "asphalt",
+    "width": "4"
+   }
+  },
+  {
+   "type": "way",
+   "id": 29493007,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Ballymena Walk"
+   }
+  },
+  {
+   "type": "way",
+   "id": 29494781,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Malta Way"
+   }
+  },
+  {
+   "type": "way",
+   "id": 29974844,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Warwick Drive"
+   }
+  },
+  {
+   "type": "way",
+   "id": 29975299,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Cambridge Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 30620042,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Queens Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 32515166,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Grattan Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 36309525,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "lit": "yes",
+    "maxspeed": "50",
+    "name": "Genhodderheide",
+    "name:etymology:wikidata": "Q1502203",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 36846410,
+   "tags": {
+    "created_by": "JOSM",
+    "highway": "footway",
+    "name": "Denbigh Lane",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 37578470,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "name": "Bau",
+    "postal_code": "41179",
+    "ref": "K 10",
+    "source:ref": "http://wiki.openstreetmap.org/wiki/Import/Catalogue/Strassen_NRW",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 37614548,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Queens Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 37614549,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Queens Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 37614550,
+   "tags": {
+    "access": "no",
+    "highway": "service",
+    "name": "Marlborough Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 41861384,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Woof",
+    "postal_code": "41179",
+    "source:maxspeed": "sign"
+   }
+  },
+  {
+   "type": "way",
+   "id": 45553273,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "name": "Woof",
+    "source:maxspeed": "sign",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 45553274,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "name": "Woof",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 45553285,
+   "tags": {
+    "highway": "tertiary",
+    "lanes": "2",
+    "maxspeed": "50",
+    "name": "Broicher Straße",
+    "name:etymology:wikidata": "Q925305",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 54390193,
+   "tags": {
+    "check_date:surface": "2025-02-21",
+    "highway": "service",
+    "name": "Ruth Foster Drive",
+    "postal_code": "41179",
+    "surface": "unpaved"
+   }
+  },
+  {
+   "type": "way",
+   "id": 147772474,
+   "tags": {
+    "highway": "track",
+    "lit": "no",
+    "name": "Orschelsweg",
+    "tracktype": "grade2"
+   }
+  },
+  {
+   "type": "way",
+   "id": 147772573,
+   "tags": {
+    "highway": "track",
+    "name": "Weißensteinsweg",
+    "surface": "paved",
+    "tracktype": "grade2"
+   }
+  },
+  {
+   "type": "way",
+   "id": 149462025,
+   "tags": {
+    "highway": "residential",
+    "name": "Marlborough Road",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 163490374,
+   "tags": {
+    "highway": "residential",
+    "name": "Eichhofweg"
+   }
+  },
+  {
+   "type": "way",
+   "id": 163490378,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "20",
+    "name": "Queens Avenue"
+   }
+  },
+  {
+   "type": "way",
+   "id": 163490379,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Queens Avenue"
+   }
+  },
+  {
+   "type": "way",
+   "id": 177307760,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "50",
+    "name": "Peel",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 177307762,
+   "tags": {
+    "bridge": "yes",
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "50",
+    "maxweight:signed": "no",
+    "name": "Peel",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 180353491,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "name": "Eickelnberg",
+    "postal_code": "41179",
+    "ref": "K 12",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445589,
+   "tags": {
+    "highway": "service",
+    "name": "Antrim Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445590,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Antrim Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445594,
+   "tags": {
+    "access": "private",
+    "highway": "residential",
+    "name": "Cambridge Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445595,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Cambridge Drive",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445599,
+   "tags": {
+    "highway": "service",
+    "name": "Collingwood Road"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445600,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Devonshire Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445601,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Devonshire Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445603,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Dundee Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445604,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Dundee Way",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445622,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Queens Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445623,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Queens Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445624,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Queens Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445625,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "Queens Avenue",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 217491311,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxheight": "2.8",
+    "maxspeed": "30",
+    "name": "Eickelnberg",
+    "ref": "K 12",
+    "source:maxspeed": "sign",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 310620059,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "name": "Peel",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 362610060,
+   "tags": {
+    "highway": "unclassified",
+    "name": "Eickelnberg",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 405804059,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Genhodder",
+    "name:etymology:wikidata": "Q1502203",
+    "postal_code": "41179",
+    "source:maxspeed": "sign",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 487177557,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "De Ruyter Road",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 487177558,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "name": "De Ruyter Road",
+    "oneway": "yes",
+    "postal_code": "41179"
+   }
+  },
+  {
+   "type": "way",
+   "id": 487177563,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "lanes": "2",
+    "name": "Queens Avenue",
+    "oneway": "yes",
+    "smoothness": "good",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 487177564,
+   "tags": {
+    "cycleway:both": "no",
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "name": "Queens Avenue",
+    "smoothness": "good",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 487177565,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "lanes": "1",
+    "name": "Queens Avenue",
+    "oneway": "yes",
+    "smoothness": "good",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 487177566,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "lanes": "1",
+    "name": "Queens Avenue",
+    "oneway": "yes",
+    "smoothness": "good",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 488991579,
+   "tags": {
+    "access": "private",
+    "highway": "service",
+    "lanes:backward": "1",
+    "lanes:forward": "1",
+    "name": "Queens Avenue",
+    "smoothness": "good",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 551257887,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "name": "Rochusstraße",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 551258479,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "name": "Woof",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 602813346,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "lit": "yes",
+    "maxlength:hgv": "10",
+    "maxspeed": "50",
+    "name": "Genhodderheide",
+    "name:etymology:wikidata": "Q1502203",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1050773514,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "name": "Peel",
+    "postal_code": "41179",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1191901485,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "name": "Genhausen",
+    "postal_code": "41179",
+    "ref": "K 10",
+    "source:maxspeed": "sign",
+    "source:ref": "http://wiki.openstreetmap.org/wiki/Import/Catalogue/Strassen_NRW",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1191901486,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "maxspeed:type": "sign",
+    "name": "Genhausen",
+    "postal_code": "41179",
+    "ref": "K 10",
+    "source:ref": "http://wiki.openstreetmap.org/wiki/Import/Catalogue/Strassen_NRW",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1272157237,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxspeed": "50",
+    "name": "Peel",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1272157238,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "maxspeed": "50",
+    "name": "Peel",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1272157240,
+   "tags": {
+    "highway": "service",
+    "name": "Antrim Drive",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1425997922,
+   "tags": {
+    "highway": "track",
+    "name": "Orschelsweg",
+    "tracktype": "grade3"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1441996871,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "50",
+    "name": "Koch",
+    "name:etymology:wikidata": "Q1479675",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1444734325,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "lit": "yes",
+    "maxspeed": "50",
+    "name": "Genhodderheide",
+    "name:etymology:wikidata": "Q1502203",
+    "postal_code": "41179",
+    "surface": "asphalt"
+   }
+  }
+ ]
+}

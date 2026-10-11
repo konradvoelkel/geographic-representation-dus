@@ -24,3 +24,19 @@ ohne `service=private`), weil die Referenz damit entstand.
 | GeoSearch | die 2 der Referenz dem Bezirk 1302 zugeordneten Orte | beide in der heutigen Antwort |
 
 Abweichungen sind OSM- und Wikidata-Pflege seit November 2025, keine Fehler der Abfrage.
+
+## Mönchengladbach (2026-10-12, Option 01)
+
+Dieselben drei Quellen für die zweite Stadt, je Stimmbezirk einer der drei Wahlbezirke der
+Mini-Fixture (`tests/fixtures/mg/`). Die Antworten liegen wieder neben ihrer Anfrage.
+
+| Datei | Quelle | Anfrage | Inhalt |
+|---|---|---|---|
+| `overpass_mg_11001.json` | overpass-api.de | Stimmbezirk 11001 (Wahlbezirk 10, Alter Markt) | 48 Ways, 18 Namen |
+| `overpass_mg_32201.json` | overpass-api.de | Stimmbezirk 32201 (Wahlbezirk 22, Rheindahlen-Land) | 51 Ways, 16 Namen |
+| `overpass_mg_40201.json` | overpass-api.de | Stimmbezirk 40201 (Wahlbezirk 02, Amtsgericht/Innenstadt) | 219 Ways, 126 Namen |
+| `wikidata_sparql_mg.json` | query.wikidata.org | dieselbe Query mit Q2758 | erste 25 von 1 190 Bindings |
+| `wikipedia_geosearch_mg_*.json` | de.wikipedia.org | GeoSearch in der Bounding Box der drei Stimmbezirke | 76, 39 und 35 Treffer |
+
+Overpass antwortete beim ersten Versuch mit 504 (Gateway Timeout) und beim zweiten sofort; die
+Session wiederholt POST nicht (`allowed_methods` der Retry-Regel), das Aufzeichnungsskript tut es.

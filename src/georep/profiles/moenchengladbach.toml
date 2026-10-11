@@ -1,0 +1,151 @@
+# Profil Mönchengladbach: die zweite Stadt, Kommunalwahl 2025, Ratsdokumente 2020 bis 2025.
+#
+# Alle Angaben am 2026-10-11 und 2026-10-12 an den Quellen nachgesehen (docs/plans/01-staedte.md,
+# § 3.2). Mönchengladbach ist die einzige der vier Kommunen am OParl-Server der ITK Rheinland, die
+# Stimmbezirksflächen als Open Data veröffentlicht; das Wahlergebnis kommt aus der
+# votemanager-Präsentation der ITK Rheinland, dieselbe Datei in demselben Format wie für jede
+# andere Kommune dieses Betreibers.
+
+profile = "moenchengladbach"   # eigener Unterordner unter data_root und cache_root; die PDF-Dateinamen der OParl-Bodies kollidieren sonst
+reference_root = "./reference/moenchengladbach"  # das Paket des vollen Laufs (Stufe G), noch nicht im Repo
+
+[city]
+slug = "moenchengladbach"
+name = "Mönchengladbach"
+genitive = "Mönchengladbachs"
+adjective = "Mönchengladbacher"
+ags = "05116000"               # Schlüssel der votemanager-Dateien
+publisher = "Stadt Mönchengladbach"
+council = "Stadtrat"
+election = "Ratswahl 2025"
+
+[report]
+ris_url = "https://ris-oparl.itk-rheinland.de/"
+notes = [
+    "Die Stimmbezirksflächen stammen aus dem Datensatz „Wahlen“ vom 08.06.2022 (Landtagswahl 2022); 175 der 179 Urnen-Stimmbezirke der Kommunalwahl 2025 kommen darin vor, alle 33 Wahlbezirkspräfixe. Gerechnet wird je Wahlbezirk, kleine Neuzuschnitte innerhalb eines Wahlbezirks fallen damit heraus.",
+    "Wahlbezirke heißen hier wie Stadtteile („Venn“, „Hardt“); die Ausschlussliste nimmt die Stadtteilnamen trotzdem heraus, weil ein Stadtteil mehr umfasst als der gleichnamige Wahlbezirk.",
+]
+
+[[report.sources]]
+name = "Ratswahl 2025, Ergebnis je Stimmbezirk und je Wahlbezirk, Straßenverzeichnis"
+publisher = "ITK Rheinland für die Stadt Mönchengladbach (votemanager)"
+url = "https://wep.itk-rheinland.de/vm/prod/kw_2025/05116000/"
+license = ""                   # auf den Seiten des Anbieters steht keine; Frage 1.4
+checked = 2026-10-12
+
+[[report.sources]]
+name = "Stimmbezirksflächen (Datensatz „Wahlen“, Stand 08.06.2022)"
+publisher = "Stadt Mönchengladbach, Geoportal"
+url = "https://geoportal.moenchengladbach.de/"
+license = "Datenlizenz Deutschland – Zero – Version 2.0"
+license_url = "https://www.govdata.de/dl-de/zero-2-0"
+checked = 2026-10-12
+
+[[report.sources]]
+name = "Ratsdokumente der Wahlperiode 2020 bis 2025"
+publisher = "Ratsinformationssystem der Stadt Mönchengladbach (OParl)"
+url = "https://ris-oparl.itk-rheinland.de/"
+license = ""
+checked = 2026-10-12
+
+[publish]
+cities = ["duesseldorf", "moenchengladbach"]
+
+[sources.oparl]
+endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0011/papers"  # Body 0011 = Mönchengladbach laut Serverkatalog; die Probe in docs/runbook-stadt.md bestätigt ihn
+
+[sources.opendata]
+results_url = "https://wep.itk-rheinland.de/vm/prod/kw_2025/05116000/daten/opendata/Open-Data-05116000-Ratswahl-Stimmbezirk.csv"
+results_file = "Open-Data-05116000-Ratswahl-Stimmbezirk.csv"
+districts_url = "https://geoportal.moenchengladbach.de/wms/Hotlinks/OpenData/Wahlen_EPSG25832_SHAPE.zip"
+districts_file = "Wahlen_EPSG25832_SHAPE.zip"
+streets_url = "https://wep.itk-rheinland.de/vm/prod/kw_2025/05116000/daten/opendata/opendata-strassen.csv"
+streets_file = "opendata-strassen.csv"
+district_names_url = "https://wep.itk-rheinland.de/vm/prod/kw_2025/05116000/daten/opendata/Open-Data-05116000-Ratswahl-Wahlbezirk.csv"
+district_names_file = "Open-Data-05116000-Ratswahl-Wahlbezirk.csv"
+
+[sources.wikidata]
+entity = "Q2758"               # Mönchengladbach; 1185 Objekte mit P131* und deutschem Artikel (Düsseldorf: 995)
+
+[precincts]
+format = "shapefile-zip"
+member = "Wahlen_EPSG25832_SHAPE/Stimmbezirke_MG.shp"  # im Zip liegt daneben Wahllokale_MG.shp
+id_property = "Nummer"         # fünf Zeichen: Stadtbezirk, Wahlbezirk, Stimmbezirk (10401)
+district_from_id = [1, 3]      # Zeichen 1 und 2 sind der Wahlbezirk; durch Summenvergleich mit der Wahlbezirks-CSV für alle 33 bestätigt
+names_from_results = true      # das Shapefile kennt nur die Nummer; die Namen stehen in der Wahlbezirks-CSV
+dbf_encoding = "latin-1"       # die Nummern sind ASCII, aber Esri schreibt .dbf meist in cp1252
+
+[columns.results]
+sep = ";"
+encoding = "utf-8"             # ohne BOM, anders als das Düsseldorfer Portal
+precinct = "gebiet-nr"
+district_from_precinct = [1, 3]  # votemanager führt den Wahlbezirk nicht als Spalte
+eligible = "A"
+voters = "B"
+# Legende aus daten/api/wahl_89/ergebnis_ebene_3_id_2_0.json, durch Spaltensummen bestätigt
+# (D1 CDU 31834, D2 SPD 27229, D3 GRÜNE 8242, D4 AfD 15079, D5 FDP 2666, D6 Die Linke 5382).
+# D7 bis D13 (Die PARTEI, dieBasis, BSW, FREIE WÄHLER, Einzelbewerber, Volt, WerteUnion) bleiben
+# draußen, weil die Auswertung der Arbeit sechs Parteien führt.
+parties = { CDU = "D1", SPD = "D2", GRUENE = "D3", AfD = "D4", FDP = "D5", Die_Linke = "D6" }
+party_names = { GRUENE = "Bündnis 90/Die Grünen", Die_Linke = "Die Linke" }
+
+[search]
+text_split_marker = "betrifft" # Annahme: gleiches Ratsinformationssystem, gleicher Betreiber (Frage 1.5); die Stichprobe in Stufe E misst den Anteil
+exclude = [                    # Stadt, Stadtbezirke, Fluss und die 44 Stadtteile (opendata.moenchengladbach.de, stadtteildemografie-20241231)
+    "Mönchengladbach",
+    "Gladbach",
+    "Rheydt",
+    "Niers",
+    "Stadtbezirk Nord",
+    "Stadtbezirk Ost",
+    "Stadtbezirk Süd",
+    "Stadtbezirk West",
+    "Am Wasserturm",
+    "Bettrath",
+    "Hoven",
+    "Bonnenbroich",
+    "Geneicken",
+    "Bungt",
+    "Dahl",
+    "Eicken",
+    "Flughafen",
+    "Geistenbeck",
+    "Giesenkirchen-Mitte",
+    "Giesenkirchen-Nord",
+    "Grenzlandstadion",
+    "Hardt-Mitte",
+    "Hardter Wald",
+    "Hardterbroich",
+    "Pesch",
+    "Hauptquartier",
+    "Hehn",
+    "Heyden",
+    "Hockstein",
+    "Holt",
+    "Lürrip",
+    "Mülfort",
+    "Neuwerk-Mitte",
+    "Odenkirchen-Mitte",
+    "Odenkirchen-West",
+    "Ohler",
+    "Pongs",
+    "Rheindahlen-Land",
+    "Rheindahlen-Mitte",
+    "Sasserath",
+    "Schelsen",
+    "Schloss Rheydt",
+    "Schmölderpark",
+    "Schrievers",
+    "Uedding",
+    "Venn",
+    "Waldhausen",
+    "Wanlo",
+    "Westend",
+    "Wickrath-Mitte",
+    "Wickrath-West",
+    "Wickrathberg",
+    "Windberg",
+]
+
+[analysis]
+exclude_districts = []         # bis zum ersten echten Lauf leer; danach die beiden höchsten Trefferquoten wie in Tabelle 5 (Frage 1.6)

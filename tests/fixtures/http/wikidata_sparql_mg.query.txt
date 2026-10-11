@@ -1,0 +1,9 @@
+
+SELECT ?item ?itemLabel ?coord ?article WHERE {
+  ?item wdt:P625 ?coord.
+  ?item wdt:P131* wd:Q2758.
+  ?article schema:about ?item;
+           schema:isPartOf <https://de.wikipedia.org/>;
+           schema:name ?articleName.
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "de". }
+}

@@ -1,0 +1,691 @@
+{
+ "batchcomplete": "",
+ "query": {
+  "geosearch": [
+   {
+    "pageid": 8538137,
+    "ns": 0,
+    "title": "Adenauerplatz 2 (Mönchengladbach)",
+    "lat": 51.196676,
+    "lon": 6.438739,
+    "dist": 33.4,
+    "primary": ""
+   },
+   {
+    "pageid": 8538161,
+    "ns": 0,
+    "title": "Adenauerplatz 3 (Mönchengladbach)",
+    "lat": 51.196632,
+    "lon": 6.438653,
+    "dist": 40.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8529164,
+    "ns": 0,
+    "title": "Albertusstraße 42 (Mönchengladbach)",
+    "lat": 51.197253,
+    "lon": 6.438547,
+    "dist": 49.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8804089,
+    "ns": 0,
+    "title": "Kaiserstraße 50 (Mönchengladbach)",
+    "lat": 51.197318,
+    "lon": 6.43849,
+    "dist": 57.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8791542,
+    "ns": 0,
+    "title": "Kaiserstraße 56 (Mönchengladbach)",
+    "lat": 51.197509,
+    "lon": 6.438892,
+    "dist": 66.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8804098,
+    "ns": 0,
+    "title": "Kaiserstraße 58 (Mönchengladbach)",
+    "lat": 51.197551,
+    "lon": 6.438976,
+    "dist": 70.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8792103,
+    "ns": 0,
+    "title": "Kaiserstraße 60 (Mönchengladbach)",
+    "lat": 51.197591,
+    "lon": 6.439058,
+    "dist": 74.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8529624,
+    "ns": 0,
+    "title": "Adenauerplatz 7 (Mönchengladbach)",
+    "lat": 51.196439,
+    "lon": 6.438253,
+    "dist": 75.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8791598,
+    "ns": 0,
+    "title": "Kaiserstraße 64 (Mönchengladbach)",
+    "lat": 51.197692,
+    "lon": 6.439265,
+    "dist": 87.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8804155,
+    "ns": 0,
+    "title": "Kaiserstraße 65 (Mönchengladbach)",
+    "lat": 51.197674,
+    "lon": 6.438613,
+    "dist": 88.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8545292,
+    "ns": 0,
+    "title": "Bismarckstraße 81 (Mönchengladbach)",
+    "lat": 51.197551,
+    "lon": 6.439818,
+    "dist": 89.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8528154,
+    "ns": 0,
+    "title": "Albertusstraße 44 a (Mönchengladbach)",
+    "lat": 51.197555,
+    "lon": 6.438201,
+    "dist": 91.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8804172,
+    "ns": 0,
+    "title": "Kaiserstraße 66 (Mönchengladbach)",
+    "lat": 51.197748,
+    "lon": 6.439374,
+    "dist": 95.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8893006,
+    "ns": 0,
+    "title": "Steinmetzstraße 31 (Mönchengladbach)",
+    "lat": 51.19607,
+    "lon": 6.43945,
+    "dist": 98.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8804231,
+    "ns": 0,
+    "title": "Kaiserstraße 69 (Mönchengladbach)",
+    "lat": 51.197818,
+    "lon": 6.438868,
+    "dist": 100.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8804198,
+    "ns": 0,
+    "title": "Kaiserstraße 68 (Mönchengladbach)",
+    "lat": 51.197782,
+    "lon": 6.439534,
+    "dist": 102.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8804262,
+    "ns": 0,
+    "title": "Kaiserstraße 71 (Mönchengladbach)",
+    "lat": 51.197851,
+    "lon": 6.438996,
+    "dist": 103.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8804269,
+    "ns": 0,
+    "title": "Kaiserstraße 73 (Mönchengladbach)",
+    "lat": 51.197913,
+    "lon": 6.439108,
+    "dist": 110.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8791583,
+    "ns": 0,
+    "title": "Kaiserstraße 49 (Mönchengladbach)",
+    "lat": 51.197102,
+    "lon": 6.437455,
+    "dist": 111.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8893672,
+    "ns": 0,
+    "title": "Steinmetzstraße 23 (Mönchengladbach)",
+    "lat": 51.19575,
+    "lon": 6.43869,
+    "dist": 131.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8568449,
+    "ns": 0,
+    "title": "Stadtbibliothek Mönchengladbach",
+    "lat": 51.197259,
+    "lon": 6.436971,
+    "dist": 147.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8538651,
+    "ns": 0,
+    "title": "Bismarckstraße 93 (Mönchengladbach)",
+    "lat": 51.198286,
+    "lon": 6.438899,
+    "dist": 152.4,
+    "primary": ""
+   },
+   {
+    "pageid": 8546183,
+    "ns": 0,
+    "title": "Bismarckstraße 95 (Mönchengladbach)",
+    "lat": 51.19835,
+    "lon": 6.438778,
+    "dist": 160.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8795015,
+    "ns": 0,
+    "title": "Hotel Burgund",
+    "lat": 51.198318,
+    "lon": 6.439907,
+    "dist": 167.4,
+    "primary": ""
+   },
+   {
+    "pageid": 8544000,
+    "ns": 0,
+    "title": "Bismarckstraße 97 (Mönchengladbach)",
+    "lat": 51.198439,
+    "lon": 6.438667,
+    "dist": 170.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8792610,
+    "ns": 0,
+    "title": "Kaiserstraße 78 (Mönchengladbach)",
+    "lat": 51.198218,
+    "lon": 6.440344,
+    "dist": 171.4,
+    "primary": ""
+   },
+   {
+    "pageid": 8349388,
+    "ns": 0,
+    "title": "Gladbacher Bank",
+    "lat": 51.19668,
+    "lon": 6.44146,
+    "dist": 171.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8529643,
+    "ns": 0,
+    "title": "Albertusstraße 53 (Mönchengladbach)",
+    "lat": 51.197989,
+    "lon": 6.437179,
+    "dist": 175.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8543950,
+    "ns": 0,
+    "title": "Bismarckstraße 99 (Mönchengladbach)",
+    "lat": 51.198529,
+    "lon": 6.438551,
+    "dist": 182.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8876982,
+    "ns": 0,
+    "title": "Sittardstraße 67 (Mönchengladbach)",
+    "lat": 51.198623,
+    "lon": 6.439923,
+    "dist": 199.7,
+    "primary": ""
+   },
+   {
+    "pageid": 10330540,
+    "ns": 0,
+    "title": "Sittardstraße 63",
+    "lat": 51.198622,
+    "lon": 6.440187,
+    "dist": 206.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8568485,
+    "ns": 0,
+    "title": "Croonsallee 40 (Mönchengladbach)",
+    "lat": 51.196084,
+    "lon": 6.436116,
+    "dist": 222.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8866040,
+    "ns": 0,
+    "title": "Regentenstraße 51 (Mönchengladbach)",
+    "lat": 51.198524,
+    "lon": 6.436926,
+    "dist": 230.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8865430,
+    "ns": 0,
+    "title": "Regentenstraße 57 (Mönchengladbach)",
+    "lat": 51.198691,
+    "lon": 6.437301,
+    "dist": 230.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8865356,
+    "ns": 0,
+    "title": "Regentenstraße 49 (Mönchengladbach)",
+    "lat": 51.198467,
+    "lon": 6.43679,
+    "dist": 232.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8870953,
+    "ns": 0,
+    "title": "Regentenstraße 59a (Mönchengladbach)",
+    "lat": 51.198845,
+    "lon": 6.437579,
+    "dist": 236.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8826135,
+    "ns": 0,
+    "title": "Lützowstraße 1 (Mönchengladbach)",
+    "lat": 51.198158,
+    "lon": 6.436206,
+    "dist": 239.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8568554,
+    "ns": 0,
+    "title": "Croonsallee 37 (Mönchengladbach)",
+    "lat": 51.195708,
+    "lon": 6.436098,
+    "dist": 244.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8865470,
+    "ns": 0,
+    "title": "Regentenstraße 45 (Mönchengladbach)",
+    "lat": 51.198027,
+    "lon": 6.435976,
+    "dist": 245.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8555686,
+    "ns": 0,
+    "title": "Industrie- und Handelskammer (Mönchengladbach)",
+    "lat": 51.199039,
+    "lon": 6.437929,
+    "dist": 247.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8870886,
+    "ns": 0,
+    "title": "Regentenstraße 43 (Mönchengladbach)",
+    "lat": 51.197967,
+    "lon": 6.435864,
+    "dist": 249.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8871483,
+    "ns": 0,
+    "title": "Regentenstraße 108 (Mönchengladbach)",
+    "lat": 51.199178,
+    "lon": 6.438975,
+    "dist": 251.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8867474,
+    "ns": 0,
+    "title": "Regentenstraße 41 (Mönchengladbach)",
+    "lat": 51.1979,
+    "lon": 6.43576,
+    "dist": 252.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8629686,
+    "ns": 0,
+    "title": "Hermannstraße 10 (Mönchengladbach)",
+    "lat": 51.196466,
+    "lon": 6.435421,
+    "dist": 255.9,
+    "primary": ""
+   },
+   {
+    "pageid": 9531868,
+    "ns": 0,
+    "title": "Minto (Einkaufszentrum)",
+    "lat": 51.194722222222,
+    "lon": 6.4377777777778,
+    "dist": 259.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8870436,
+    "ns": 0,
+    "title": "Regentenstraße 110 (Mönchengladbach)",
+    "lat": 51.199248,
+    "lon": 6.439104,
+    "dist": 259.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8871490,
+    "ns": 0,
+    "title": "Regentenstraße 112 (Mönchengladbach)",
+    "lat": 51.199311,
+    "lon": 6.439199,
+    "dist": 266.4,
+    "primary": ""
+   },
+   {
+    "pageid": 8870727,
+    "ns": 0,
+    "title": "Regentenstraße 37–39 (Mönchengladbach)",
+    "lat": 51.19781,
+    "lon": 6.43535,
+    "dist": 274.4,
+    "primary": ""
+   },
+   {
+    "pageid": 8780386,
+    "ns": 0,
+    "title": "Hermannstraße 7 (Mönchengladbach)",
+    "lat": 51.196268,
+    "lon": 6.435217,
+    "dist": 274.8,
+    "primary": ""
+   },
+   {
+    "pageid": 13418860,
+    "ns": 0,
+    "title": "Stadttheater Mönchengladbach",
+    "lat": 51.19463,
+    "lon": 6.4374,
+    "dist": 278.4,
+    "primary": ""
+   },
+   {
+    "pageid": 8805229,
+    "ns": 0,
+    "title": "Kaiserstraße 102 (Mönchengladbach)",
+    "lat": 51.198829,
+    "lon": 6.441622,
+    "dist": 279.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8788159,
+    "ns": 0,
+    "title": "Hohenzollernstraße 58 (Mönchengladbach)",
+    "lat": 51.199122,
+    "lon": 6.436899,
+    "dist": 286.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8788145,
+    "ns": 0,
+    "title": "Hohenzollernstraße 56 (Mönchengladbach)",
+    "lat": 51.199091,
+    "lon": 6.436805,
+    "dist": 286.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8788183,
+    "ns": 0,
+    "title": "Hohenzollernstraße 64 (Mönchengladbach)",
+    "lat": 51.199227,
+    "lon": 6.437173,
+    "dist": 287.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8628274,
+    "ns": 0,
+    "title": "Hohenzollernstraße 66 (Mönchengladbach)",
+    "lat": 51.199263,
+    "lon": 6.437269,
+    "dist": 288,
+    "primary": ""
+   },
+   {
+    "pageid": 8805283,
+    "ns": 0,
+    "title": "Kaiserstraße 104 (Mönchengladbach)",
+    "lat": 51.198901,
+    "lon": 6.441731,
+    "dist": 290.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8773491,
+    "ns": 0,
+    "title": "Hohenzollernstraße 44 (Mönchengladbach)",
+    "lat": 51.198762,
+    "lon": 6.435919,
+    "dist": 298,
+    "primary": ""
+   },
+   {
+    "pageid": 8796553,
+    "ns": 0,
+    "title": "Kaiserstraße 106 (Mönchengladbach)",
+    "lat": 51.198953,
+    "lon": 6.441856,
+    "dist": 300.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8793383,
+    "ns": 0,
+    "title": "Kaiserstraße 108 (Mönchengladbach)",
+    "lat": 51.199006,
+    "lon": 6.441973,
+    "dist": 310.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8886172,
+    "ns": 0,
+    "title": "Schillerstraße 47 (Mönchengladbach)",
+    "lat": 51.198828,
+    "lon": 6.442572,
+    "dist": 326,
+    "primary": ""
+   },
+   {
+    "pageid": 8887984,
+    "ns": 0,
+    "title": "Schillerstraße 49 (Mönchengladbach)",
+    "lat": 51.198903,
+    "lon": 6.442484,
+    "dist": 326.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8888010,
+    "ns": 0,
+    "title": "Schillerstraße 53 (Mönchengladbach)",
+    "lat": 51.199476,
+    "lon": 6.441595,
+    "dist": 336.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8888023,
+    "ns": 0,
+    "title": "Schillerstraße 55 (Mönchengladbach)",
+    "lat": 51.199532,
+    "lon": 6.441493,
+    "dist": 337.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8888313,
+    "ns": 0,
+    "title": "Schillerstraße 57 (Mönchengladbach)",
+    "lat": 51.199596,
+    "lon": 6.441382,
+    "dist": 340.1,
+    "primary": ""
+   },
+   {
+    "pageid": 12574502,
+    "ns": 0,
+    "title": "Haus Westland",
+    "lat": 51.197558333333,
+    "lon": 6.4439083333333,
+    "dist": 347.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8565622,
+    "ns": 0,
+    "title": "Blücherstraße 31 (Mönchengladbach)",
+    "lat": 51.198464,
+    "lon": 6.43466,
+    "dist": 349.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8452661,
+    "ns": 0,
+    "title": "Stadtsparkasse Mönchengladbach",
+    "lat": 51.19576,
+    "lon": 6.44371,
+    "dist": 351.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8882918,
+    "ns": 0,
+    "title": "Schillerstraße 16 (Mönchengladbach)",
+    "lat": 51.198588,
+    "lon": 6.443354,
+    "dist": 354.4,
+    "primary": ""
+   },
+   {
+    "pageid": 8883872,
+    "ns": 0,
+    "title": "Schillerstraße 18 (Mönchengladbach)",
+    "lat": 51.198631,
+    "lon": 6.443313,
+    "dist": 354.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8848278,
+    "ns": 0,
+    "title": "Margarethenstraße 37 (Mönchengladbach)",
+    "lat": 51.198978,
+    "lon": 6.44346,
+    "dist": 384.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8914585,
+    "ns": 0,
+    "title": "Baudenkmal Marienschule (Mönchengladbach)",
+    "lat": 51.194507,
+    "lon": 6.434979,
+    "dist": 388.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8773475,
+    "ns": 0,
+    "title": "Humboldtstraße 33 (Mönchengladbach)",
+    "lat": 51.198863,
+    "lon": 6.443845,
+    "dist": 399.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8620517,
+    "ns": 0,
+    "title": "Humboldtstraße 31 (Mönchengladbach)",
+    "lat": 51.198816,
+    "lon": 6.443907,
+    "dist": 400.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8837039,
+    "ns": 0,
+    "title": "Margarethenstraße 34 (Mönchengladbach)",
+    "lat": 51.199273,
+    "lon": 6.443527,
+    "dist": 408.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8792554,
+    "ns": 0,
+    "title": "Kaiserstraße 132 (Mönchengladbach)",
+    "lat": 51.199583,
+    "lon": 6.443138,
+    "dist": 412.4,
+    "primary": ""
+   },
+   {
+    "pageid": 12650542,
+    "ns": 0,
+    "title": "Wallstraße 5 (Mönchengladbach)",
+    "lat": 51.194461,
+    "lon": 6.434148,
+    "dist": 435.9,
+    "primary": ""
+   }
+  ]
+ }
+}
