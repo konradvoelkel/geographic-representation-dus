@@ -1,0 +1,8 @@
+# Drop-in für die Sicherung in Cloudflare R2: nach ~/.config/systemd/user/georep-monitor.service.d/r2.conf
+# (oder /etc/systemd/system/georep-monitor.service.d/r2.conf) kopieren, sobald Bucket und Token
+# da sind. Die rclone-Konfiguration liegt mit 0600 unter %E/georep/rclone.conf und wird nur für
+# die Laufzeit der Einheit eingeblendet; %d löst systemd im Unit-File auf (bei `systemd-run -p`
+# nicht, dort $CREDENTIALS_DIRECTORY im Kommando verwenden).
+[Service]
+LoadCredential=rclone.conf:%E/georep/rclone.conf
+Environment=RCLONE_CONFIG=%d/rclone.conf
