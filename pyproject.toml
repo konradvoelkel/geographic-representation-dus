@@ -36,6 +36,7 @@ dev = [
     "nox>=2025.5",
     "pytest>=9.1",
     "pytest-cov>=7.1",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.17",
     "syrupy>=5",
     "types-pyyaml",
