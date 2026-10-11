@@ -22,7 +22,7 @@ git clone git@github.com:konradvoelkel/geographic-representation-dus.git
 cd geographic-representation-dus
 uv sync --locked                        # Umgebung aus dem Lockfile
 uv run georep bootstrap                 # Datensatz der Arbeit nach ./data übernehmen
-uv run georep run                       # neun Offline-Schritte, rund 7 s; schreibt auch die Berichtsseite data/site/index.html
+uv run georep run                       # elf Offline-Schritte, rund 9 s; schreibt auch die Berichtsseite data/site/index.html
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 ```
 
@@ -93,6 +93,7 @@ cache_root = "/media/konrad/xtraspace/georep/cache"
 | Ratsdokumente 2020 bis 2025, Metadaten und Texte | Ratsinformationssystem Düsseldorf über OParl 1.1 (`ris-oparl.itk-rheinland.de`, Body 0015) | `reference/interim/`, die PDFs nicht |
 | Straßennamen je Stimmbezirk | OpenStreetMap über die Overpass-API (ODbL), Stand der Arbeit November 2025 | `reference/raw/` |
 | Orte je Stimmbezirk | Wikidata (CC0) per SPARQL, Wikipedia-GeoSearch | `reference/raw/` |
+| Kürzel und Namen der Gremien (Rat, Bezirksvertretungen, Ausschüsse, Beiräte) | Organisationsliste des Ratsinformationssystems (Stand 11.10.2026) und Dokumenttitel; das Gremium je Dokument liest der Parser aus der Drucksachennummer | `src/georep/defaults.toml`, Block `[bodies]` |
 
 `reference/` ist der eingefrorene Datensatz der Arbeit und wird nur gelesen; Läufe schreiben nach `data_root`
 (Standard `./data`), Caches nach `cache_root` (Standard `data_root/cache`). Abgeleitete Daten sind Parquet;

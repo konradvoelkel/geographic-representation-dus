@@ -168,3 +168,27 @@ Das sind die Nachbedingungen (Listen sortiert und eindeutig, Mengenvergleiche de
 Millisekunden-Stufen, absolut eine halbe Millisekunde je Schritt. Angenommen; der gespeicherte Lauf ist die
 neue Baseline. So soll der Gate arbeiten: rot bei einer Änderung, die man erklären und entweder zurücknehmen
 oder hier aufschreiben muss.
+
+## Die Schritte `bodies` und `body_hits` (2026-10-12, Option 05)
+
+`uv run georep profile bodies body_hits` auf der Referenz (19 108 Dokumente, 41 Wahlbezirke), derselbe
+Rechner wie oben, unter cProfile:
+
+| Schritt | unter cProfile | im Lauf (`georep run`) | was die Zeit kostet |
+|---|---|---|---|
+| `bodies` | 0,33 s | 0,1 s | 19 108 Aufrufe von `parse_reference` (0,09 s), Parquet schreiben |
+| `body_hits` | 0,10 s | 0,1 s | 44 Polars-`collect` (0,05 s) über 29 573 Dokument-Bezirk-Paare |
+
+Zusammen rund 0,2 s im Lauf; der volle Offline-Lauf steigt damit von rund 7 s auf rund 9 s (die zwei
+Schritte und das größere `report`). Das Budget aus dem Plan (unter 1 s für beide) ist eingehalten.
+
+**`deal.pure` in der Schleife, gemessen.** Das erste Profil zeigte `deal._has_patcher.patch` mit 19 108
+Aufrufen und 0,078 s von 0,242 s in `classify_papers`: `deal.pure` ist `deal.has()` plus `deal.safe`, und
+`has()` patcht je Aufruf prozessweit `socket` und `sys.stdout`. Ohne cProfile gemessen (Minimum von drei
+Läufen auf der Referenz): 0,076 s mit `deal.pure`, 0,053 s mit `deal.safe`, also rund 30 %. Der Parser
+trägt seitdem `deal.safe`; seine Reinheit prüfen `deal.cases` und crosshair (`nox -s verify`). Das ist die
+Regel aus CLAUDE.md („`deal.pure` nicht in heiße Schleifen") mit einer Zahl dahinter.
+
+**Benchmarks.** Zwei neue Einträge in `tests/bench/`: `classify_papers` über die 200 Dokumente der
+Mini-Fixture (Minimum 1,00 ms) und `hits_by_body` über die drei Wahlbezirke der Mini-Fixture (Minimum
+3,19 ms). Der erste `nox -s bench` legte ihre Baseline an, der zweite lief grün dagegen.

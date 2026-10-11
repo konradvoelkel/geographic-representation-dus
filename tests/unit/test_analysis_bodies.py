@@ -100,7 +100,8 @@ def test_own_district_body_for_a_district_in_two_city_districts() -> None:
             ("g", "XYZ", UNKNOWN, None),
         ]
     )
-    units = _units([(40, 9, 0.647), (40, 10, 0.353)])
+    # Absichtlich in der „falschen" Reihenfolge: die Ausgabe sortiert selbst nach Gewicht.
+    units = _units([(40, 10, 0.353), (40, 9, 0.647)])
     results = _results([(40, ["a", "b", "c", "d", "e", "f", "g"], 1000)])
     frame = hits_by_body(results, papers, units, ELIGIBLE)
     assert frame.columns == DISTRICT_BODY_COLUMNS
@@ -123,6 +124,10 @@ def test_a_district_without_hits_keeps_every_class_at_zero() -> None:
     units = _units([(1, 1, 1.0), (2, 2, 1.0)])
     results = _results([(1, ["a"], 500), (2, [], 400)])
     frame = hits_by_body(results, papers, units, ELIGIBLE)
+    # Genau ein Treffer ist die Grenze des „mehr als null Treffer" in der Anteilsrechnung.
+    single = frame.filter(pl.col("wahlkreis_id") == 1).row(0, named=True)
+    assert single["anzahl_treffer"] == 1 and single[OWN] == 1
+    assert single[OWN_SHARE] == 1.0 and single[COUNCIL_SHARE] == 0.0
     empty = frame.filter(pl.col("wahlkreis_id") == 2).row(0, named=True)
     assert [empty[c] for c in (OWN, OTHER, COUNCIL_HITS, COMMITTEE_HITS)] == [0, 0, 0, 0]
     # Ohne Treffer ist der Anteil 0, nicht null und keine Division durch 0.

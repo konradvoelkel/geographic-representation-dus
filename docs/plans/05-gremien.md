@@ -1,6 +1,6 @@
 # Plan 05: Gremien
 
-Stand 2026-10-11, Branch `feat/05-gremien`. Status: in Arbeit (seit 2026-10-12).
+Stand 2026-10-12, Branch `feat/05-gremien`. Status: im Review (umgesetzt am 2026-10-12).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.5; Regeln § 2; Vorlage § 8.3. Dieser
 Plan ist so geschrieben, dass ein frischer Agent ihn nach der Synergiephase ohne Rückfragen umsetzen kann:
@@ -417,6 +417,31 @@ Summe: rund 15 h, 9 bis 11 Commits.
 7. **Regressionssatz.** Ein Satz mit p für die Quote der eigenen BV, oder gar keine Regression in dieser
    Option (Kennzahlvarianten gehören Option 3 und 6)? Annahme: ein Satz über die vorhandene Funktion, keine
    Tabelle.
+
+Neu bei der Umsetzung (2026-10-12):
+
+8. **`main` war rot.** `src/georep/report/build.py` lag auf `main` mit `except OSError,
+   subprocess.TimeoutExpired:` (Python-2-Syntax); das Modul parste nicht, also lief weder ein Test noch
+   mypy noch ein Lauf. Ursache ist ein Formatierer-Fehler: **ruff 0.17.0 entfernt bei `except (A, B):` die
+   Klammern** und schreibt die Python-2-Form zurück (mit einer Minimaldatei nachgestellt). Repariert in
+   diesem Branch als erster Commit (`ad4cd44`), format-stabil über eine Tupel-Konstante. Zählt, weil es
+   alle acht Branches betrifft und beim nächsten `ruff format` jederzeit wieder passieren kann. Vorschlag
+   an Konrad: eine Zeile in CLAUDE.md unter „Arbeitsweise" und ein `ruff`-Pin oder ein Upstream-Bericht.
+   Annahme ohne Antwort: der Supervisor nimmt den Commit beim Merge mit und entscheidet über die Notiz.
+9. **`deal.pure` auf dem Parser.** Der Plan (§ 2, Entscheidung 10) forderte `deal.pure`; CLAUDE.md verbietet
+   `deal.pure`/`deal.has()` in heißen Schleifen, und `classify_papers` ruft den Parser 19 108 mal (gemessen
+   0,076 s gegen 0,053 s, rund 30 %, `docs/profiling/README.md`). Umgesetzt mit `deal.safe`; die Reinheit
+   prüfen `deal.cases` und crosshair. Annahme: so richtig, CLAUDE.md schlägt den Plan.
+10. **Die Tabelle je Wahlbezirk hat elf statt zwölf Spalten.** Mit zwölf lief sie bei 1280 px aus dem
+   Container (die letzte Spalte war abgeschnitten); Zahl und Anteil der eigenen BV stehen jetzt in einer
+   Zelle, die letzte Spalte heißt nur „Quote". Annahme: so richtig; wer alle Spalten einzeln will, lädt
+   `wahlbezirke_gremien.csv`.
+11. **Zahlen, die vom Prototyp des Plans abweichen.** Mit Entscheidung 4 (beide Bezirksvertretungen des
+   Wahlbezirks 40 zählen als eigene) ist der Höchstwert von `anteil_eigene_bv` 0,771 (Bezirk 40) statt
+   0,743 (Bezirk 41), der Median 0,497 statt 0,485, und die Regression auf `quote_eigene_bv` ergibt
+   r = 0,24 und p = 0,12 statt r = 0,20 und p = 0,22. Der Prototyp in § 3.3 hatte für Bezirk 40 teils noch
+   die Mehrheitszuordnung gerechnet. Annahme: die Zahlen hier sind die richtigen; § 3.3 bleibt als Stand
+   der Erkundung stehen.
 
 ## 9. Vorbereitung für Option 10 (was wird konfigurierbar, welche Modulgrenze entsteht)
 

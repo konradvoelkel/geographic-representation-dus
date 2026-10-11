@@ -141,8 +141,11 @@ def hits_by_body(
         (pl.col(KIND) == ADVISORY).sum().cast(pl.Int64).alias(ADVISORY_HITS),
         (pl.col(KIND) == UNKNOWN).sum().cast(pl.Int64).alias(UNKNOWN_HITS),
     )
-    # units ist nach Gewicht absteigend sortiert; der Hauptstadtbezirk steht vorn.
-    listed = units.group_by(DISTRICT, maintain_order=True).agg(pl.col(UNIT).alias(UNITS))
+    # Der Hauptstadtbezirk steht vorn: nach Gewicht absteigend, bei Gleichstand nach Nummer. Die
+    # Reihenfolge steht hier explizit, nicht als Verlass auf die Sortierung der Eingabe.
+    listed = units.group_by(DISTRICT).agg(
+        pl.col(UNIT).sort_by([pl.col(WEIGHT), pl.col(UNIT)], descending=[True, False]).alias(UNITS)
+    )
     share = pl.when(pl.col(HITS) > 0).then(pl.col(OWN) / pl.col(HITS)).otherwise(0.0)
     council_share = (
         pl.when(pl.col(HITS) > 0).then(pl.col(COUNCIL_HITS) / pl.col(HITS)).otherwise(0.0)
