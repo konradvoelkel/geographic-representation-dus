@@ -2,6 +2,15 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## Unreleased
+
+- Fundament für den Ausbau in acht Optionen (`docs/plans/00-synergien.md`): die Berichtsseite entsteht aus einem
+  Rahmen und Abschnittsdateien (`templates/sections/`), die veröffentlichten Tabellen stehen in einem Register,
+  die Ausreißer von Tabelle 5 in den Settings (`analysis.exclude_districts`), ein `profile` legt Daten und
+  Cache einer weiteren Stadt oder Periode in einen Unterordner, `period.end` darf offen bleiben (`election`
+  nennt dann den Wahltag), und `georep.crosswalk` rechnet Gebietseinheiten auf Wahlbezirke um. Ergebnisse und
+  Seite sind unverändert; die neuen Settings-Schlüssel lassen alle Schritte einmal neu laufen.
+
 ## 0.10.0 (2026-10-11), Berichtsseite: Dokumente, Orte, Leaflet
 
 - Ein Klick auf einen Begriff zeigt die Dokumente, in denen er vorkommt: Datum, Drucksache, Titel, Art und

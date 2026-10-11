@@ -24,8 +24,8 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 | Modul | Aufgabe |
 |---|---|
-| `settings` | `defaults.toml` im Paket, darüber `settings.toml`, `settings.local.toml`, `--settings`, Umgebung `GEOREP_*`; pydantic-settings, unbekannte Schlüssel sind ein Fehler; `fingerprint()` der ergebnisrelevanten Parameter |
-| `layout` | wo was liegt: `data_root`, `cache_root`, `reference_root`; `guard_writable` verweigert jeden Pfad unter der Referenz |
+| `settings` | `defaults.toml` im Paket, darüber `settings.toml`, `settings.local.toml`, `--settings`, Umgebung `GEOREP_*`; pydantic-settings, unbekannte Schlüssel sind ein Fehler; `fingerprint()` der ergebnisrelevanten Parameter; `profile` (Ordnername je Stadt oder Periode, nicht im Fingerprint), `period.end` optional mit `election` als Wahltag, `analysis.exclude_districts` (Ausreißer von Tabelle 5) |
+| `layout` | wo was liegt: `data_root`, `cache_root`, `reference_root`, `profile` (Unterordner `data_root/<profil>/` und `cache_root/<profil>/` für PDFs und Texte, HTTP-Cache geteilt; leer = flach); `for_profile` wechselt; `guard_writable` verweigert jeden Pfad unter der Referenz |
 | `io` | atomare Schreibvorgänge (Temporärdatei, fsync, `os.replace`), JSON, Parquet mit `schema_version` in den Metadaten, SHA-256 (`digest`) |
 | `http` | Session mit Timeout, Retry mit Backoff, User-Agent, requests-cache je Quelle; `Transport`-Protokoll als Testnaht; `network_errors` wandelt requests-Fehler in `NetworkError` |
 | `errors` | Domänenfehler: `MissingInputError`, `EmptyResultError`, `SchemaError`, `CorruptPdfError`, `FetchError`, `NetworkError` |
@@ -36,14 +36,15 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `geo` | GeoJSON lesen, nach EPSG:25832 projizieren, `make_valid`, `PrecinctIndex` (STRtree), eine Rückprojektion nach lon/lat |
 | `prep/` | `extract` (PDF-Text hinter `PdfTextExtractor`), `papers` (Korpus), `voters`, `streets`, `pois`: Polars-Funktionen Frame zu Frame |
 | `search/` | `dictionary` (Wörterbuch je Wahlbezirk), `matcher` (`KeywordMatcher`-Protokoll, FlashText), `index` (invertierter Index) |
-| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`) |
+| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings) |
+| `crosswalk` | Umrechnung von Gebietseinheiten auf Wahlbezirke: `unit_weights` wiegt je Wahlbezirk die Einheiten (Stadtbezirk, Stadtteil) mit einer Zählgröße je Stimmbezirk; Vertrag: Gewichte in (0, 1], Summe je Wahlbezirk 1 |
 | `pipeline` | Schrittregister: Name, Eingaben, Ausgaben, `run()`, Schema-Version; Stamps; `run_step`, `run_pipeline`, `build_steps` |
 | `bootstrap` | kopiert die Referenz nach `data_root` und baut daraus `papers.jsonl` und den Textstore |
 | `contracts` | `configure()` für `settings.contracts` und die Prädikate der deal-Verträge |
 | `profiling` | `profile_step`: ein echter Schritt unter cProfile, `.prof` datiert nach `docs/profiling/` |
 | `cli` | `georep run, fetch, steps, status, bootstrap, export, regress, profile`; `main(argv) -> int`; Exit 0, 1 (Domänenfehler), 2 (Bedienung) |
 | `export` | Parquet-Ergebnisse als CSV neben die Dateien; `csv_plan` und `write_csv` nutzt auch der Schritt `report` |
-| `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, `COLUMN_DOCS`), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, Choroplethe und Streudiagramm als SVG), `documents` (Dokumente mit Treffer ohne Texte, Begriffe als Indizes, für `dokumente.json`), `render` (Jinja2 mit Autoescape, Allowlist der Links; `render_map` für die Leaflet-Datei), `build` (der Schritt `report`: Downloads, Schema, Seiten) |
+| `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, `COLUMN_DOCS`), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, Choroplethe und Streudiagramm als SVG), `documents` (Dokumente mit Treffer ohne Texte, Begriffe als Indizes, für `dokumente.json`), `render` (Jinja2 mit Autoescape, Allowlist der Links; `sections` liest die Abschnitte aus `templates/sections/`; `render_map` für die Leaflet-Datei), `tables` (Register der veröffentlichten Tabellen: Datei, Beschreibung, Spaltendoku, CSV-Regeln), `build` (der Schritt `report`: Downloads, Schema, Seiten) |
 
 ## Pipeline
 
@@ -78,13 +79,13 @@ der Index und 1 s die Berichtsseite (2026-10-11).
 
 ```
 reference/                 der Datensatz der Arbeit; wird nur gelesen (guard_writable)
-data_root/                 Standard ./data, gitignored
+data_root/                 Standard ./data, gitignored; mit profile = "x" liegt alles unter data_root/x/
   external/                Eingaben des Open-Data-Portals, Dateinamen und Formate der Quelle
   raw/                     papers.jsonl, streets_per_district.json, wikipedia_dict.json
   interim/                 papers.parquet (Korpus: Metadaten plus Text)
   processed/               die sieben Ergebnistabellen als Parquet (zstd), je mit Stamp
   site/                    die Berichtsseite: index.html (mit Stamp), karte.html (Leaflet) und data/ mit den Download-Dateien
-cache_root/                Standard data_root/cache
+cache_root/                Standard data_root/cache; mit Profil liegen pdf/ und text/ unter cache_root/x/
   pdf/                     <dateiname>.pdf, manifest.jsonl (URL, SHA-256, Größe, Zeit)
   text/texts.parquet       alle Texte mit Extraktorname, PDF-Hash, Herkunft, Zeichenzahl
   http.sqlite              requests-cache; Lebensdauer je Quelle, PDFs nie
@@ -156,7 +157,17 @@ einen Ersatz; die Kandidaten stehen in decisions.md.
 
 Der letzte Schritt `report` (`georep.report.build.build_site`) macht aus den Parquet-Ergebnissen eine einzige
 `site/index.html` ohne externe Ressourcen: CSS, JavaScript und beide SVGs inline, nur relative Pfade, Deutsch
-mit einer englischen Kurzfassung, hell und dunkel über `prefers-color-scheme`. Reihenfolge: erst die Dateien
+mit einer englischen Kurzfassung, hell und dunkel über `prefers-color-scheme`. Die Vorlage
+`templates/report.html.j2` ist der Rahmen (Kopf, Fuß, Dialog, Tooltip, Basis-JavaScript); die Abschnitte liegen
+als `templates/sections/NN-name.html.j2` in Nummernfolge, je mit optionalem `NN-name.css` und `NN-name.js`, die
+der Rahmen in den Stil- und einen eigenen Skriptblock einfügt (`render.sections`; ein `.css` oder `.js` ohne
+Vorlage ist ein Fehler). Das Basis-JavaScript bietet `window.georep` (`select(ids, scroll)`,
+`showDocuments(terms, title)`, `rows`) für die Skripte der Abschnitte; der Umschalter der Karte liest
+`data-class-<kennzahl>` je Fläche und blendet `#legend-<kennzahl>` ein, eine neue Kennzahl ist ein Radio, ein
+Attribut (`choropleth(extra_classes=...)`) und eine Legende. Die veröffentlichten Tabellen stehen im Register
+`report/tables.py` (Datei, Beschreibung, Spaltendoku, CSV-Regeln, `optional` für profilabhängige Tabellen);
+daraus entstehen Downloads, `schema.json`, CSV-Dateien und die Spaltentabelle. Die Seite bleibt unter 1,5 MB
+(slow-Test). Reihenfolge: erst die Dateien
 unter `site/data/` (die sechs Tabellen als Parquet kopiert und als CSV mit den Regeln von `georep export`,
 `wahlbezirke.geojson` in EPSG:4326, `schema.json`), dann das Modell (`report.model`: frozen dataclasses, Polars
 bis zum Schluss, Zeit und Commit sind Eingaben) mit Größe und SHA-256 jeder Datei, dann die Karte
