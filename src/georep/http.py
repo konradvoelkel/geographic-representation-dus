@@ -69,7 +69,11 @@ class CachedTimeoutSession(CachedSession):
 
 @deal.has()
 @deal.raises(ValueError)  # urlsplit: ungültige IPv6-Klammern
-@deal.post(lambda result: result.endswith("*") and "://" not in result)
+@deal.ensure(
+    # Host und Pfad sind Teilstücke der URL, also nie länger als sie; der Pfad darf "://" enthalten
+    # (deal.cases fand am 2026-10-11 eine URL mit "://" im Pfad als Gegenbeispiel zur alten Bedingung)
+    lambda endpoint, result: result.endswith("*") and len(result) <= len(endpoint) + 1
+)
 def cache_pattern(endpoint: str) -> str:
     """requests-cache vergleicht Muster ohne Schema: ``host/pfad*``."""
     parts = urlsplit(endpoint)
