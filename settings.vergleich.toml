@@ -1,0 +1,12 @@
+# Die Hauptperiode mit dem Vergleich der beiden Wahlperioden: dieselbe Kette wie ohne Profil,
+# zusätzlich der Schritt compare und der Abschnitt „Zwei Wahlperioden" auf der Berichtsseite.
+#
+#   uv run georep --settings settings.2014.toml run    # erst die alte Periode rechnen
+#   uv run georep --settings settings.vergleich.toml run
+#
+# Ohne diese Datei ist die Kette der Hauptperiode unverändert und die Seite trägt den Abschnitt
+# nicht (fehlende Eingaben sind ein Fehler, kein stilles Überspringen: docs/architecture.md,
+# Regel 3). Begründung in docs/plans/02-zeitreihe.md, § 2, Zeile „Vergleich".
+
+[compare]
+period = "2014-2020"           # Profil der älteren Periode; ihre Ergebnisse liegen unter data_root/2014-2020/processed/

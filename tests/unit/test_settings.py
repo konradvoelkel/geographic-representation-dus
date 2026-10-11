@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from georep.layout import Layout
 from georep.settings import Period, deep_merge, load_settings, settings_files
 
 
@@ -621,3 +622,48 @@ def test_labels_and_file_names_stay_out_of_the_fingerprint(tmp_path: Path) -> No
     )
     renamed = load_settings(cwd=tmp_path)
     assert renamed.period.label == "Anders" and renamed.fingerprint() == base.fingerprint()
+
+
+# --- Option 02: die beiden Profildateien im Repo ----------------------------------------------
+
+REPO = Path(__file__).resolve().parents[2]
+NOWHERE = Path("/nonexistent")  # kein settings.local.toml dazwischen, die Datei allein zählt
+
+
+def test_period_profile_describes_the_old_cut_and_its_own_data_root() -> None:
+    settings = load_settings(explicit=REPO / "settings.2014.toml", cwd=NOWHERE)
+    assert settings.profile == "2014-2020"
+    assert settings.reference_root == Path("snapshots/2014-2020")
+    assert (settings.period.start, settings.period.end) == (date(2014, 5, 25), date(2020, 9, 12))
+    assert settings.period.election_day == date(2020, 9, 13)
+    assert settings.period.title == "Wahlperiode 2014 bis 2020"
+    assert settings.period.dictionary == "base"
+    assert settings.sources.oparl.first_page == 90 and not settings.sources.oparl.incremental
+    assert settings.columns.results.encoding == "utf-8"
+    assert settings.columns.results.district == "" and settings.crosswalk.enabled
+    # Reihenfolge und Namen der Parteien wie in der Hauptperiode, nur andere Quellspalten.
+    base = load_settings(cwd=NOWHERE)
+    assert list(settings.columns.results.parties) == list(base.columns.results.parties)
+    assert settings.columns.results.parties["GRUENE"] == "D3"
+    assert all(url for url in (settings.sources.opendata.district_shapes_url,))
+
+
+def test_the_two_profiles_differ_from_the_main_period_in_the_fingerprint() -> None:
+    base = load_settings(cwd=NOWHERE)
+    period = load_settings(explicit=REPO / "settings.2014.toml", cwd=NOWHERE)
+    compared = load_settings(explicit=REPO / "settings.vergleich.toml", cwd=NOWHERE)
+    assert compared.profile == "" and compared.compare.period == period.profile
+    prints = {base.fingerprint(), period.fingerprint(), compared.fingerprint()}
+    assert len(prints) == 3
+
+
+def test_period_profile_puts_everything_under_its_own_root(tmp_path: Path) -> None:
+    settings = load_settings(explicit=REPO / "settings.2014.toml", cwd=NOWHERE).model_copy(
+        update={"data_root": tmp_path / "data", "cache_root": tmp_path / "cache"}
+    )
+    layout = Layout.from_settings(settings)
+    assert layout.root == tmp_path / "data" / "2014-2020"
+    assert layout.districts_geojson.name == "Stimmbezirke_2020.geojson"
+    assert layout.texts == tmp_path / "cache" / "2014-2020" / "text" / "texts.parquet"
+    target = layout.for_profile("", settings.crosswalk.target_file)
+    assert target.districts_geojson == tmp_path / "data" / "external" / "Stimmbezirke_2025.geojson"

@@ -158,6 +158,11 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
     print(
         f"Profil:     {layout.profile or '(keines, Hauptperiode)'}; Daten unter {layout.root.resolve()}"
     )
+    period = settings.period
+    print(
+        f"Periode:    {period.title}, {period.start} bis {period.end or 'offen'}; "
+        f"Wahltag {period.election_day}"
+    )
     print(f"cache_root: {layout.cache_root.resolve()}")
     print(f"reference:  {layout.reference_root.resolve()}")
     pdfs = len(list(layout.pdf_dir.glob("*.pdf"))) if layout.pdf_dir.is_dir() else 0

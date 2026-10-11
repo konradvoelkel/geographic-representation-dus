@@ -1,0 +1,55 @@
+# Die Wahlperiode 2014 bis 2020 als Profil: dieselbe Kette, eigene Datenwurzel
+# <data_root>/2014-2020/, eigene Stamps, eigene PDFs und Texte unter <cache_root>/2014-2020/.
+#
+#   uv run georep --settings settings.2014.toml bootstrap
+#   uv run georep --settings settings.2014.toml run
+#
+# Gründe je Zeile stehen daneben, die ausführlichen in docs/plans/02-zeitreihe.md, § 2.
+# Rechnerspezifische Pfade gehören nie hierher, sondern in settings.local.toml (gitignored);
+# diese Datei ist committet und muss in der CI genauso gelten wie auf Konrads Rechner.
+# Lesereihenfolge: defaults.toml < settings.toml < settings.local.toml < diese Datei.
+
+profile = "2014-2020"          # Ordnername unter data_root und cache_root; trennt Daten, Stamps, PDFs und Texte von der Hauptperiode
+reference_root = "snapshots/2014-2020"  # eingefrorener Datensatz dieser Periode (Konrads Lauf, Stufe H des Plans); fehlt er, nennt bootstrap die Dateien und bricht nicht ab
+
+[period]                       # beide Grenzen einschließlich, disjunkt zur Hauptperiode (die beginnt am 2020-09-13)
+start = 2014-05-25             # Ratswahl 2014
+end = 2020-09-12               # Tag vor der Ratswahl 2020
+election = 2020-09-13          # Ratswahl, deren Ergebnis Nenner (Wahlberechtigte) und Zuschnitt liefert
+label = "Wahlperiode 2014 bis 2020"  # Anzeigename im Kopf, im Datenstand und auf der Unterseite
+dictionary = "base"            # Straßen und Orte der Hauptperiode (Stand November 2025) für beide Perioden: so unterscheiden sich nur die Dokumente, und keine Trefferquote muss zwischen Zuschnitten umgerechnet werden (Plan § 2, Frage 2.2)
+
+[sources.oparl]
+first_page = 90                # die Seiten 1 bis 95 tragen die Hauptperiode (Stand 2026-10, 200 Paper je Seite); fünf Seiten Vorlauf, weil jedes neue Paper die alten Seiten nach hinten schiebt
+incremental = false            # modified ist bei alten Papern das Migrationsdatum 2024-12-30; modified_since holte nach dem ersten Lauf nichts mehr
+stop_when_older = true         # abbrechen, sobald eine ganze Seite vor dem 25.05.2014 liegt (eine Seite spannt bis zu 14 Monate)
+
+[cache]
+oparl_pages_s = 2592000        # 30 Tage: die Seiten einer abgeschlossenen Periode ändern sich nicht, und der Abruf dauert Stunden und wird fortgesetzt
+
+[sources.opendata]             # Ratswahl 2020 und die Wahlgebietseinteilung 2020, Datensatzseiten am 2026-10-11 nachgesehen
+results_url = "https://opendata.duesseldorf.de/sites/default/files/Ratswahl%202020%20%20Stimmbezirke-Ergebnis.csv"  # 454 Zeilen: 316 Urnen-, 138 Briefwahlbezirke (zwei Leerzeichen vor „Stimmbezirke" sind Teil des Dateinamens)
+districts_url = "https://opendata.duesseldorf.de/sites/default/files/Stimmbezirke2020_neu_ETRS89_EPSG4647.geojson"  # 316 Flächen, EPSG:4647
+district_shapes_url = "https://opendata.duesseldorf.de/sites/default/files/Kommunalwahlbezirke_ETRS89_4647_Stand2020_B_0.geojson"  # die 41 Wahlbezirke von 2020; nur so lässt sich jeder Stimmbezirk seinem Wahlbezirk zuordnen
+district_results_url = "https://opendata.duesseldorf.de/sites/default/files/Ratswahl%202020%20%20Wahlbezirke-Ergebnis.csv"  # 41 Zeilen; liefert die Briefwähler je Wahlbezirk und die Summenprobe der Zuordnung
+districts_file = "Stimmbezirke_2020.geojson"  # Dateiname unter external/; das Jahr im Namen, damit der Ordner nicht lügt
+
+[columns.results]              # Spaltennamen des 2020-Formats; beim Lesen auf die kanonischen Namen umbenannt
+sep = ";"
+encoding = "utf-8"             # die 2020-Dateien sind UTF-8 ohne BOM (die 2025-Datei ist latin-1 mit BOM)
+district = ""                  # die 2020-CSV trägt keinen Wahlbezirk; er kommt aus der geometrischen Zuordnung (Schritt precincts)
+precinct = "gebiet-nr"         # vierstellig mit führender Null (0101), identisch mit Stimmbezchar im GeoJSON
+precinct_name = "gebiet-name"  # darin steht der postal_marker der Briefwahlbezirke
+eligible = "A"                 # Wahlberechtigte insgesamt (A1 ohne, A2 mit Sperrvermerk W, A3 nicht im Verzeichnis)
+voters = "B"                   # Wähler; bei den Briefwahlbezirken gleich B2
+eligible_postal = "A2"         # Wahlberechtigte mit Sperrvermerk W, also mit Wahlschein: Verteilschlüssel der Briefwähler (Plan § 2, Frage 2.4)
+postal_marker = "Briefwahlbezirk"  # 138 Zeilen ohne Geometrie und ohne Wahlbezirk, A = 0
+parties = { CDU = "D1", GRUENE = "D3", SPD = "D2", FDP = "D4", Die_Linke = "D5", AfD = "D6" }  # Stimmzettelreihenfolge 2020, gegen das Ergebnis-GeoJSON mit benannten Spalten geprüft; D7 bis D16 bleiben Option 4
+
+[crosswalk]                    # Stimmbezirke 2020 über Flächenanteile auf die Wahlbezirke 2025
+enabled = true
+target_file = "Stimmbezirke_2025.geojson"  # Stimmbezirke der Hauptperiode, aus denen die 41 Zielbezirke vereinigt werden (gelesen unter data_root/, nicht im Profil)
+precinct_id = "Stimmbezchar"   # einzige Eigenschaft des 2020-Stimmbezirks-GeoJSON
+district_id = "Kommunalwahlbezirk"  # Eigenschaften von Kommunalwahlbezirke.geojson, Stand 29.01.2020
+district_name = "Name"
+min_coverage = 0.95            # die Abdeckung liegt zwischen 97,76 % und 100 % (Stadtgrenze, Rhein); deutlich weniger heißt falsches CRS oder falsche Datei
