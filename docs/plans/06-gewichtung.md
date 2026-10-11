@@ -1,6 +1,6 @@
 # Plan 06: Gewichtung
 
-Stand 2026-10-11, Branch `feat/06-gewichtung`. Status: in Arbeit (seit 2026-10-12).
+Stand 2026-10-11, Branch `feat/06-gewichtung`. Status: im Review (umgesetzt am 2026-10-12; was anders kam als geplant, steht in § 11).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.6; Regeln in [../../CLAUDE.md](../../CLAUDE.md)
 und § 2 des Meta-Plans; Aufbau in [../architecture.md](../architecture.md). Alle Zahlen hier sind am 2026-10-11 auf
@@ -432,3 +432,34 @@ Für Option 6 im Besonderen:
   die Drucksachennummer, Option 4 den Urheber. Keine gemeinsame Datei.
 - **Reihenfolge**: 06 merged als Dritte (nach 08, 05), damit das Lockfile mit scikit-learn früh auf `main` ist.
 - **Fragen**: alle sieben vorentschieden (fragen.md); 6.7 ist durch das Fundament erledigt.
+
+## 11. Was anders kam als geplant (2026-10-12)
+
+Umgesetzt sind alle Stufen A bis F. Abweichungen, je mit Grund:
+
+- **`tol` und `max_iter` sind Settings geworden.** Mit dem geplanten `tol = 1e-4` lief NMF auf den 19 033
+  Texten in die Obergrenze von 200 Iterationen und druckte eine ConvergenceWarning; konvergiert wäre es erst
+  nach 412 Iterationen (13,4 s statt 6,9 s) für 0,03 % weniger Rekonstruktionsfehler. Mit `tol = 1e-3`
+  konvergiert es nach 120 Iterationen in 4,5 s. Beide Werte stehen mit der Messung in `defaults.toml`.
+- **Die TF-IDF-Matrix ist Float64, nicht Float32.** Mit Float32 unterläuft das Residuum in sklearns eigener
+  Fehlerformel bei einer fast exakten Zerlegung unter null; die Wurzel davon ist `nan`, und damit fällt die
+  Abbruchprüfung von `tol` still aus. Kosten: 1,4 s je Lauf, gleiche Ergebnisse. `themen_anteile.parquet`
+  ist dadurch 1,37 MB statt der geschätzten 0,93 MB (nicht veröffentlicht).
+- **Alle vier Tabellen sind `optional`**, nicht nur die beiden Themen-Tabellen: eine Datenwurzel ohne den
+  Schritt `weights` soll eine Seite ohne den Abschnitt bauen statt mit einem Schemafehler abzubrechen.
+- **Die Spaltengruppe „ohne 1 und 10" entfällt ganz**, wenn keine Variante eine zweite Regression hat (drei
+  Wahlbezirke in der Mini-Fixture); die geplanten zwölf Gedankenstriche je Zeile wären unlesbar.
+- **Die Themenzeilen tragen keine wiederholte Formel**, der Hinweis steht einmal über der Tabelle: ein
+  Trennzeile im `tbody` hätte beim Sortieren mitgewandert, ein zweites `tbody` wäre nicht sortierbar.
+- **`compile_rules` liefert einen Polars-Ausdruck**, keine Liste kompilierter Muster (§ 7 wollte ohnehin
+  `str.contains` statt `map_elements`).
+- **`georep regress --varianten`** ist gebaut und in README und CLI-Hilfe genannt.
+- **Neu gelernt und dokumentiert**: Polars teilt durch ein skalares Literal, indem es mit dem Kehrwert
+  multipliziert (ein ulp Abweichung zwischen `idf_weight` und dem Ausdruck; hypothesis fand es). Und das
+  Themenmodell ist nur je Rechner **und** je Thread-Zahl byteidentisch: zwischen 13 und 2 BLAS-Threads
+  unterscheiden sich die Anteile in den letzten Stellen, Labels und Kennzahlen bleiben gleich.
+- **Zahlen des Laufs** (Referenz, 2026-10-12): 26 Varianten, Einheit 29 573 Treffer; über alle 41
+  Wahlbezirke erreichen 2 Varianten das 5-%-Niveau (Thema 2 mit p = 0,025, Thema 11 mit p = 0,016), ohne die
+  Wahlbezirke 1 und 10 acht (einheit 0,035, bezirke 0,024, idf 0,031, Thema 2 0,009, Thema 3 0,027, Thema 6
+  0,026, Thema 11 0,001, Thema 18 0,021). Spearman zur ungewichteten Quote: 0,121 (Thema 1) bis 1,0.
+  `index.html` wuchs von 693 auf 726 KB.

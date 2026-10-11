@@ -4,6 +4,15 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- Gewichtete Trefferquoten (Option 06): die Berichtsseite hat einen Abschnitt „Was ändert die Gewichtung?" mit
+  einer Sensitivitätstabelle — Tabelle 5 unter 26 Gewichtungen, dazu die Rangkorrelation zur ungewichteten
+  Quote. Gewichtet wird je Begriff (in wie vielen Wahlbezirken er geführt wird, in wie vielen Dokumenten er
+  steht), je Dokumentart (Regex-Regeln aus den Settings, zwei Regelsätze) und je Thema; ein Themenmodell
+  (TF-IDF und NMF, scikit-learn, 20 Themen) verteilt jedes Dokument mit Text auf Themen. Mit Einheitsgewichten
+  ist die Rechnung exakt die Trefferquote der Arbeit. Zwei neue Schritte (`topics`, `weights`, zusammen rund
+  10 s), vier neue Tabellen zum Download, `georep regress --varianten` druckt dieselbe Tabelle im Terminal.
+  Auf der Referenz erreicht der Zusammenhang über alle 41 Wahlbezirke unter 2 von 26 Gewichtungen das
+  5-%-Niveau, ohne die Wahlbezirke 1 und 10 unter 8 von 26. `topics.k = 0` schaltet das Themenmodell ab.
 - Gremien (`docs/plans/05-gremien.md`): jedes Ratsdokument bekommt aus seiner Drucksachennummer das Gremium
   (Rat, eine der zehn Bezirksvertretungen, Ausschuss, Beirat oder „unbekannt"); auf der Referenz trifft das
   Muster alle 19 108 Nummern, 0 bleiben unbekannt. Die Berichtsseite bekommt den Abschnitt „Gremien" mit einer

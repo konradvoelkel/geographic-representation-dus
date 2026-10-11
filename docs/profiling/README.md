@@ -192,3 +192,63 @@ Regel aus CLAUDE.md („`deal.pure` nicht in heiße Schleifen") mit einer Zahl d
 **Benchmarks.** Zwei neue Einträge in `tests/bench/`: `classify_papers` über die 200 Dokumente der
 Mini-Fixture (Minimum 1,00 ms) und `hits_by_body` über die drei Wahlbezirke der Mini-Fixture (Minimum
 3,19 ms). Der erste `nox -s bench` legte ihre Baseline an, der zweite lief grün dagegen.
+## Profile vom 2026-10-12: Gewichtung und Themenmodell (Option 06)
+
+Gemessen auf Konrads Rechner, während sieben weitere Agenten darauf arbeiteten; darum liefen alle Messungen
+dieses Abschnitts mit gedrosselten Threads: `OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=2 MKL_NUM_THREADS=2
+POLARS_MAX_THREADS=4`. Ohne diese Grenzen ist der Schritt `topics` rund 25 % schneller (9,2 s gegen 9,8 s im
+Median, einmal gemessen). Die Zahlen sind damit eine Obergrenze, keine Bestleistung.
+
+### Schritt `topics`: 9 bis 12 s, davon zwei Drittel NMF
+
+`georep run topics --force`, drei Läufe ohne Profiler: 9,8 / 9,1 / 12,4 s. Unter cProfile 8,4 s (der
+Profiler sieht nur Python-Frames; TF-IDF und NMF rechnen in C und erscheinen beim aufrufenden Frame, darum
+verteuert er hier fast nichts).
+
+| Stufe | Zeit unter cProfile | Was passiert |
+|---|---|---|
+| `TfidfVectorizer.fit_transform` | 2,6 s | 19 033 Texte, 51 Millionen Zeichen, Vokabular auf 20 000 Wörter beschnitten (`min_df 5`, `max_df 0,5`), 1 970 953 Einträge |
+| `NMF.fit_transform` | 5,3 s | 20 Themen, Koordinatenabstieg, 120 Iterationen bis `tol = 1e-3`; davon 4,8 s in `_update_coordinate_descent` |
+| Parquet schreiben | 0,4 s | `themen.parquet` (3,3 kB), `themen_dokumente.parquet` (97 kB), `interim/themen_anteile.parquet` (1,37 MB) |
+
+Mit `tol = 1e-4` läuft NMF in die Obergrenze von 200 Iterationen (6,9 s, ConvergenceWarning) und konvergiert
+erst nach 412 Iterationen in 13,4 s, für 0,03 % weniger Rekonstruktionsfehler. LDA (online, 10 Iterationen)
+brauchte 47 s und lieferte Themen aus Funktionswörtern. Beides steht in `decisions.md`.
+
+### Schritt `weights`: 0,7 s für 26 Varianten
+
+`georep run weights --force`, drei Läufe: 0,6 / 0,8 / 0,7 s; unter cProfile 0,74 s, davon 0,55 s in
+`PyLazyFrame.collect` (631 Aufrufe: Polars rechnet je Variante ein halbes Dutzend kleiner Stufen). Die 26
+Varianten teilen sich dieselben Paare (51 887 Tripel) und Begriffsgewichte, `document_weights` kostet
+zusammen 0,28 s. Die Verträge (62 Aufrufe von `deal`) liegen im Rauschen.
+
+### Voller Offline-Lauf mit beiden Schritten: 18,9 s
+
+`georep run` nach einer Änderung des Settings-Fingerprints (alle Schritte neu), ungedrosselt gemessen:
+`texts` 0,5 s, `corpus` 0,7 s, **`topics` 9,2 s**, `index` 4,4 s, `results` 0,1 s, **`weights` 1,1 s**,
+`report` 1,6 s. Das Themenmodell ist damit der teuerste Schritt der Kette, bleibt aber weit unter der
+Schwelle von 60 s, ab der ein Schritt gesondert behandelt würde (Plan 06, Stufe C). `topics.k = 0` nimmt ihn
+ganz heraus.
+
+### Zwei Benchmarks mehr
+
+`weights_step` (alle Varianten ohne Themenmodell auf der Mini-Fixture) und `document_weights_over_the_pairs`
+stehen in `tests/bench/test_bench_hot_paths.py`. Das Themenmodell selbst ist kein Benchmark: NMF schwankt mit
+der BLAS-Bibliothek und der Zahl der Threads, dafür ist `georep profile topics` da.
+
+| Benchmark | Eingabe | Minimum (2026-10-12, gedrosselt) |
+|---|---|---|
+| `document_weights_over_the_pairs` | Gewichte je Paar plus Summen, drei Wahlbezirke | 0,96 ms |
+| `weights_step` | alle neun Varianten der Mini-Fixture ohne Themen | 12,2 ms |
+
+Beide liegen über den Polars-Stufen der Arbeit (0,6 bis 1,3 ms), weil `variants` je Variante ein halbes
+Dutzend kleiner Frames baut; auf der Referenz sind es 0,7 s für 26 Varianten. Der zweite Lauf gegen die
+frische Baseline blieb grün (12,0 gegen 12,2 ms).
+
+### Determinismus hat eine Grenze: die Threads
+
+Zwei Läufe im selben Prozess und mit derselben Thread-Zahl schreiben byteidentische Dateien (Golden-Master-Test).
+Zwischen 13 und 2 BLAS-Threads unterscheiden sich `themen.parquet` und `themen_anteile.parquet` dagegen in den
+Bytes (gemessen 2026-10-12): die Reduktionsreihenfolge in NMF ändert die letzten Stellen. Labels, dominierte
+Dokumente und alle Kennzahlen der Seite blieben dabei gleich. Darum prüfen die Golden-Master-Tests auf der
+Referenz nur Invarianten (20 Themen, Zerlegung der Zählung, Labels ohne Stoppwörter), keine einzelnen Zahlen.
