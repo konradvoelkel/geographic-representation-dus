@@ -33,10 +33,13 @@ Netz und ohne Schreiben ins Repo reproduzieren: `uv run pytest -m slow`.
 
 ## Daten
 
-`data/` ist der eingefrorene Datensatz der Arbeit: Rohdaten (Wahlergebnis, Stimmbezirke, Straßen,
+`reference/` ist der eingefrorene Datensatz der Arbeit: Rohdaten (Wahlergebnis, Stimmbezirke, Straßen,
 Orte), die Metadaten und extrahierten Texte von 19108 Ratsdokumenten (die PDFs selbst nicht) und
-die Ergebnistabellen. Die Tests lesen daraus und schreiben nie hinein. Ab Phase 2 heißt das
-Verzeichnis `reference/`, und Läufe schreiben in ein konfigurierbares Datenverzeichnis.
+die Ergebnistabellen. Er wird nur gelesen; ein Schreibversuch darunter ist ein Fehler. Läufe schreiben
+nach `data_root` (Standard `./data`, gitignored), Caches nach `cache_root`; beides steht in
+`settings.local.toml` (siehe `src/georep/defaults.toml` für alle Schlüssel und ihre Begründung).
+`georep.bootstrap` kopiert die Referenz dorthin und wandelt den Korpus nach Parquet, damit die
+Offline-Kette ohne Netz läuft.
 
 ## Entwicklung
 

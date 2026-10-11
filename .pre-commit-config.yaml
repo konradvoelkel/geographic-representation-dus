@@ -4,9 +4,9 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^(data/|tests/fixtures/)
+        exclude: ^(reference/|tests/fixtures/)
       - id: end-of-file-fixer
-        exclude: ^(data/|tests/fixtures/)
+        exclude: ^(reference/|tests/fixtures/)
       - id: check-added-large-files
         args: [--maxkb=1024]
       - id: check-yaml

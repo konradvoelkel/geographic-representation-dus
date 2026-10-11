@@ -19,9 +19,9 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 
 ## Nie
 
-- `uv run python run.py` oder `src.prep_papers` ohne PDFs unter `data/raw/oparl_paper_pdf/`: überschreibt den Korpus mit leeren Texten.
-- In `data/` schreiben lassen. Tests führen den Altcode über `tests/legacy_runner.py` mit umgebogenen Pfaden aus.
-- `pre-commit run --all-files` über `data/` oder `tests/fixtures/`.
+- `uv run python run.py` oder `src.prep_papers` ohne PDFs unter `cache_root/pdf/`: der Guard verweigert es, aber der volle Lauf lädt stundenlang.
+- In `reference/` schreiben. `Layout.guard_writable` verweigert es; Tests führen den Altcode über `tests/legacy_runner.py` mit umgebogenen Pfaden aus.
+- `pre-commit run --all-files` über `reference/` oder `tests/fixtures/`.
 - pandas in neuem Code. Neuer Code nutzt Polars und schreibt Parquet; er ist vollständig typisiert und besteht `mypy --strict`.
 - Netztests in CI. Der OParl-Server braucht 85 s pro Seite; Netztests tragen den Marker `network` und laufen nur von Hand. Netz in Unit-Tests kommt über das `Transport`-Protokoll aus `georep.http` und die Fake-Session in `tests/unit/test_dataset_oparl.py`.
 

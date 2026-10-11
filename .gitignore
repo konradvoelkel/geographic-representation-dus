@@ -209,6 +209,7 @@ __marimo__/
 # Directories
 /data/raw/oparl_paper_pdf
 # georep (ab 2026-10-10)
+/data/            # Laufzeitdaten (data_root); der Datensatz der Arbeit liegt unter reference/
 .nox/
 .benchmarks/
 settings.local.toml

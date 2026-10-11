@@ -37,11 +37,10 @@ Stand 2026-10-09 antwortet der OParl-Papers-Endpunkt mit rund 85 s pro Seite (20
 365 Seiten für 2020–2025), also 8–9 h allein für die Metadaten; `requests.get` läuft dort ohne
 Timeout. Neueste Einträge kommen zuerst, die Datumsfilterung (`START`/`ENDE`) passiert clientseitig.
 
-**Achtung:** `prep_papers` ohne vorhandene PDFs überschreibt `paper_with_text.json` mit leeren
-Texten. Nicht aufrufen, solange `data/raw/oparl_paper_pdf/` leer ist (Wiederherstellen mit
-`git checkout -- data/interim/`).
+**Hinweis:** `prep_papers` verweigert seit Phase 1 den Lauf ohne PDFs und schreibt keinen kleineren
+Korpus; die PDFs liegen unter `cache_root/pdf/`.
 
-Offline-Reproduktion ab Schritt 6 (schreibt in `data/processed/`, danach `git checkout -- data/`):
+Offline-Reproduktion ab Schritt 6 (seit Phase 2: zuerst `georep.bootstrap`, schreibt dann nach `data_root`):
 
 ```bash
 for m in prep_voters prep_wiki prep_streets combine_searchdicts reverse_index analyse; do uv run python -m src.$m; done

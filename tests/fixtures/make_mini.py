@@ -23,7 +23,7 @@ import polars as pl
 from tests.legacy_runner import run_offline_chain
 
 REPO = Path(__file__).resolve().parents[2]
-REFERENCE = REPO / "data"
+REFERENCE = REPO / "reference"
 MINI = Path(__file__).resolve().parent / "mini"
 DISTRICTS = frozenset({1, 10, 38})
 N_HIT = 150

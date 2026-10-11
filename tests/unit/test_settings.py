@@ -81,3 +81,13 @@ def test_settings_are_frozen(tmp_path: Path) -> None:
     s = load_settings(cwd=tmp_path)
     with pytest.raises(ValidationError):
         s.data_root = Path("/x")
+
+
+def test_log_level_comes_from_environment_and_is_validated(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GEOREP_LOG_LEVEL", "debug")
+    assert load_settings(cwd=tmp_path).log_level == "DEBUG"
+    monkeypatch.setenv("GEOREP_LOG_LEVEL", "laut")
+    with pytest.raises(ValidationError, match="log_level"):
+        load_settings(cwd=tmp_path)

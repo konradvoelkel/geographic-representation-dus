@@ -5,8 +5,8 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parents[1]
-# Phase 2 benennt data/ in reference/ um; bis dahin ist data/ der eingefrorene Datensatz der Arbeit.
-REFERENCE = REPO / "data"
+# Der eingefrorene Datensatz der Arbeit; wird nur gelesen.
+REFERENCE = REPO / "reference"
 MINI = REPO / "tests" / "fixtures" / "mini"
 PDF_FIXTURES = REPO / "tests" / "fixtures" / "pdf"
 
