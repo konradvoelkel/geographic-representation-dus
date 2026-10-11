@@ -8,19 +8,35 @@ used across the application for managing data, endpoints, and query executions.
 
 """
 
+import os
 import sys
+from collections.abc import Mapping
 from pathlib import Path
 
 from loguru import logger
 
-
 # Logging-Setup
-def setup_logging():
+LOG_LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
+DEFAULT_LOG_LEVEL = "INFO"
+
+
+def log_level_from_env(
+    default: str = DEFAULT_LOG_LEVEL, env: Mapping[str, str] | None = None
+) -> str:
+    """Level aus GEOREP_LOG_LEVEL, sonst ``default``. Bis 2026-10-11 stand DEBUG fest im Code."""
+    source = os.environ if env is None else env
+    level = source.get("GEOREP_LOG_LEVEL", default).upper()
+    if level not in LOG_LEVELS:
+        raise ValueError(f"GEOREP_LOG_LEVEL={level!r} ist kein loguru-Level {LOG_LEVELS}")
+    return level
+
+
+def setup_logging(level: str | None = None) -> None:
     logger.remove()
     logger.add(
         sys.stderr,
         format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
-        level="DEBUG",
+        level=level or log_level_from_env(),
     )
 
 
