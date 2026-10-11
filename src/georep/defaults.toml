@@ -1,4 +1,7 @@
-# Standardkonfiguration: Düsseldorf, Kommunalwahl 2025, Ratsdokumente der Wahlperiode 2020–2025.
+# Standardkonfiguration, stadtneutral: Kommunalwahl 2025 in Nordrhein-Westfalen, Ratsdokumente der
+# Wahlperiode 2020–2025. Alles Stadtspezifische (Endpunkte, Spaltennamen, Gremien, Fremddaten,
+# Urheber, Ausschlussliste, Lizenzen) steht im Profil der Stadt unter profiles/<slug>.toml; ohne
+# --profile gilt default_profile.
 # Jede Zahl trägt ihre Begründung. Überschreiben in ./settings.toml oder ./settings.local.toml
 # (gitignored, rechnerspezifisch; tiefer Merge, es reicht der geänderte Schlüssel) oder per
 # Umgebungsvariable GEOREP_<FELD>, verschachtelt mit __, z. B. GEOREP_SOURCES__OPARL__DELAY_S=2.
@@ -7,7 +10,8 @@
 data_root = "./data"           # Laufzeitdaten und Zwischenergebnisse, relativ zum Arbeitsverzeichnis; gitignored
 cache_root = ""                # leer = <data_root>/cache: PDFs, Texte, HTTP-Cache; bei Konrad auf xtraspace
 reference_root = "./reference" # eingefrorener Datensatz der Arbeit; wird nur gelesen
-profile = ""                   # Unterordner je Stadt oder Periode unter data_root und cache_root (settings.<profil>.toml setzt ihn); leer = die Hauptperiode, flach
+profile = ""                   # Unterordner je Stadt oder Periode unter data_root und cache_root (das Profil setzt ihn); leer = die Hauptperiode, flach
+default_profile = "duesseldorf" # Paketprofil, das ohne --profile und ohne GEOREP_PROFILE gilt (src/georep/profiles/<name>.toml)
 contracts = "on"               # "off" schaltet die deal-Verträge ab (deal.disable beim Start); zählt nicht zum Fingerprint
 log_level = "INFO"
 
@@ -31,8 +35,6 @@ wikipedia_s = 2592000
 overpass_s = 2592000           # Straßennamen ändern sich langsam; die Referenz stammt vom November 2025
 
 [sources.oparl]
-endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers"  # body 0015 = Düsseldorf; 0009 Neuss, 0011 Mönchengladbach, 0013 Grevenbroich, 0019 Rhein-Kreis Neuss
-organizations_endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations"  # Option 04: Fraktionen und Gremien, eine Seite, 58 Objekte, 0,47 s am 2026-10-11
 delay_s = 1.0                  # Pause zwischen Seiten und Dateien; der Server ist langsam, nicht wir
 stop_when_older = true         # Liste ist neueste zuerst: abbrechen, sobald eine Seite nur noch Paper vor period.start hat (spart 270 von 365 Seiten)
 incremental = true             # bei vorhandenem Store nur Paper mit modified_since (letztes modified minus ein Tag) holen
@@ -40,17 +42,9 @@ pdf_limit = 0                  # neue PDF-Downloads je Lauf; 0 = alle (`georep f
 max_pages = 0                  # Option 04: Metadatenseiten je Lauf; 0 = alle (`georep fetch papers --max-pages 1` ist die Probe, ob der Server Urheberfelder liefert)
 first_page = 1                 # Option 02: erste Seite des Abrufs; ein Periodenprofil überspringt so die Seiten jüngerer Perioden (2014 bis 2020: ab Seite 90, Stand 2026-10)
 
-[sources.opendata]
-results_url = "https://opendata.duesseldorf.de/sites/default/files/KW_Rat_2025_09_14_Endgültiges_Ergebnis_Stimmbezirke_0.csv"
-districts_url = "https://opendata.duesseldorf.de/sites/default/files/Stimmbezirke%202025_ETRS89_EPSG4647.geojson"
-district_shapes_url = ""       # Option 02: Flächen der Wahlbezirke eines älteren Zuschnitts (GeoJSON); leer = nicht abrufen
-district_results_url = ""      # Option 02: Wahlergebnis je Wahlbezirk desselben Zuschnitts (CSV, liefert die Briefwähler); leer = nicht abrufen
-districts_file = "Stimmbezirke_2025.geojson"  # Option 02: Dateiname des Stimmbezirks-GeoJSON unter external/ (ein Periodenprofil nennt sein Jahr)
-
 [sources.wikidata]
 sparql_endpoint = "https://query.wikidata.org/sparql"
 wikipedia_api = "https://de.wikipedia.org/w/api.php"
-entity = "Q1718"               # Düsseldorf; Objekte mit P131* (liegt in) auf diese Verwaltungseinheit
 language = "de"
 geosearch_limit = 500          # Maximum der Wikipedia-GeoSearch je Bounding Box
 delay_s = 1.0                  # Pause zwischen den 306 GeoSearch-Abfragen
@@ -61,148 +55,12 @@ delay_s = 1.0                  # Pause zwischen den 306 Polygonabfragen; der öf
 simplify_m = 2.0               # Polygon vorher um 2 m vereinfachen (Douglas-Peucker), damit die Abfrage kurz bleibt
 
 [geo]
-working_crs = "EPSG:25832"     # metrisch rechnen (ETRS89 / UTM 32N); die Stimmbezirke kommen in EPSG:4647, dasselbe Datum mit Zonenpräfix
+working_crs = "EPSG:25832"     # metrisch rechnen (ETRS89 / UTM 32N); die Quellgeometrie kommt je Stadt in EPSG:4647 oder EPSG:25832, dasselbe Datum, 4647 mit Zonenpräfix
 output_crs = "EPSG:4326"       # Overpass und Wikidata sprechen lon/lat; genau eine Reprojektionsstelle
 
-[columns]                      # Feldnamen der Quellen; bis Phase 2 in drei Modulen hart kodiert
-district_id = "Kommunalwahlbezirk Nr."
-district_name = "Kommunalwahlbezirk Name"
-precinct_id = "Stimm-/ Wahlbezirk"
-
-[columns.results]              # Wahlergebnis-CSV des Open-Data-Portals
-sep = ";"
-encoding = "latin-1"
-district = "Kommunalwahlbezirk"
-eligible = "Wahlberechtigte_insgesamt"
-voters = "Waehler"
-precinct = "gebietnr"          # Stimmbezirk, vierstellig; Schlüssel zu „Stimm-/ Wahlbezirk" im GeoJSON (Option 03, Crosswalk über Stimmbezirksflächen)
-parties = { CDU = "CDU_Stimmen", GRUENE = "GRUENE_Stimmen", SPD = "SPD_Stimmen", FDP = "FDP_Stimmen", Die_Linke = "Die_Linke_Stimmen", AfD = "AfD_Stimmen" }
-city_district = "Stadtbezirk" # Option 05: Stadtbezirk je Stimmbezirk, stimmt für alle 306 Stimmbezirke mit "Stadtbezirk Nr." des GeoJSON überein (2026-10-11)
-precinct_name = ""             # Option 02: Gebietsname je Zeile; darin steht der postal_marker der Briefwahlbezirke
-eligible_postal = ""           # Option 02: Wahlberechtigte mit Wahlschein je Stimmbezirk, Verteilschlüssel der Briefwähler
-postal_marker = ""             # Option 02: Namensbestandteil der Briefwahlbezirke (ohne Geometrie), etwa "Briefwahl"
-
 [search]
-text_split_marker = "betrifft" # der Vorlagenkopf vor dem ersten Vorkommen wird verworfen (Düsseldorfer Vorlagenformat)
 hide_in_display = ["schulweg"] # wird aus der Begriffsliste der Auswertung entfernt, zählt aber in den Treffern (Verhalten der Arbeit, Kap. 4.3.5)
-exclude = [                    # Stadtteil- und Stadtbezirksnamen: zu grob für einen Wahlbezirk
-    "Düsseldorf",
-    "Düssel",
-    "Stadtbezirk 1",
-    "Altstadt",
-    "Carlstadt",
-    "Stadtmitte",
-    "Pempelfort",
-    "Derendorf",
-    "Golzheim",
-    "Stadtbezirk 2",
-    "Flingern-Nord",
-    "Flingern-Süd",
-    "Düsseltal",
-    "Flingern",
-    "Stadtbezirk 3",
-    "Oberbilk",
-    "Unterbilk",
-    "Bilk",
-    "Friedrichstadt",
-    "Hafen",
-    "Hamm",
-    "Flehe",
-    "Volmerswerth",
-    "Stadtbezirk 4",
-    "Oberkassel",
-    "Heerdt",
-    "Lörick",
-    "Niederkassel",
-    "Stadtbezirk 5",
-    "Stockum",
-    "Lohausen",
-    "Kaiserswerth",
-    "Wittlaer",
-    "Kalkum",
-    "Angermund",
-    "Stadtbezirk 6",
-    "Lichtenbroich",
-    "Unterrath",
-    "Rath",
-    "Mörsenbroich",
-    "Stadtbezirk 7",
-    "Gerresheim",
-    "Grafenberg",
-    "Ludenberg",
-    "Hubbelrath",
-    "Knittkuhl",
-    "Stadtbezirk 8",
-    "Eller",
-    "Lierenfeld",
-    "Vennhausen",
-    "Unterbach",
-    "Stadtbezirk 9",
-    "Wersten",
-    "Holthausen",
-    "Reisholz",
-    "Benrath",
-    "Urdenbach",
-    "Hassels",
-    "Itter",
-    "Himmelgeist",
-    "Stadtbezirk 10",
-    "Garath",
-    "Hellerhof"
-]
 
-[analysis]                     # Parameter, die mehr als ein Modul liest
-exclude_districts = [1, 10]    # Tabelle 5 der Arbeit rechnet auch ohne die Wahlbezirke 1 und 10 (die zwei höchsten Trefferquoten); leer = keine zweite Regression
-
-# --- Option 05: Gremien aus der Drucksachennummer (docs/plans/05-gremien.md) ---------------------
-[bodies]                       # Gremium je Ratsdokument; alle Kürzel und Namen dieser Option stehen hier, keines im Code
-# Drucksachennummer KÜRZEL[NR]/laufende Nummer/Jahr[/Nachtrag], etwa BV6/108/2023, RAT/270/2023, OVA/117/2023/1;
-# das Muster trifft alle 19 108 Nummern der Referenz (2026-10-11). Die Gruppe code ist das Kürzel, number die
-# Nummer dahinter (bei Bezirksvertretungen der Stadtbezirk). Was nicht trifft oder in keiner Tabelle steht, ist
-# "unbekannt" und erscheint so mit Anteil auf der Seite, nie als stille Fehlklasse.
-reference_pattern = '^(?P<code>[A-ZÄÖÜ]+?)(?P<number>\d{1,2})?/\d+/\d{4}(?:[/-].*)?$'
-district_body = "BV"           # Kürzel der Bezirksvertretungen; die Nummer dahinter ist der Stadtbezirk (GO NRW: eine Bezirksvertretung je Stadtbezirk)
-district_body_name = "Bezirksvertretung {n}"  # Anzeigename, {n} ist der Stadtbezirk
-names_as_of = 2026-10-11       # Stand der Namen unten (OParl-organizations-Seite des Bodys und Sitzungstitel); nur Anzeige, nicht im Fingerprint
-
-[bodies.council]               # der Rat der Stadt, Kürzel -> Name
-RAT = "Rat"
-
-[bodies.committees]            # Ausschüsse des Rates, Kürzel -> Name; "" = Name nicht gesichert, die Seite zeigt dann das Kürzel
-# aus der OParl-organizations-Seite vom 2026-10-11 (shortName ist genau das Kürzel):
-GLA = "Ausschuss für Gleichstellung und Antidiskriminierung"
-ADIG = "Ausschuss für Digitalisierung und allgemeine Verwaltungsorganisation"  # bis 2024-09-19, danach "…, Personal und Organisation"
-AUS = "Ausschuss für Umwelt-, Klima- und Verbraucherschutz"
-"AÖE" = "Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz"
-AWIR = "Ausschuss für Wirtschaftsförderung, internationale und regionale Zusammenarbeit"
-AWIZ = "Ausschuss für Wirtschaftsförderung und internationale Zusammenarbeit"  # 2020-11-01 bis 2021-03-18, dann AWIR
-# aus Dokumenttiteln ("Sitzungstermine des …"):
-OVA = "Ordnungs- und Verkehrsausschuss"
-APS = "Ausschuss für Planung und Stadtentwicklung"
-BAU = "Bauausschuss"
-SPOA = "Sportausschuss"
-ABA = "Anregungs- und Beschwerdeausschuss"
-RPAU = "Rechnungsprüfungsausschuss"
-# Kürzel ohne gesicherten Namen (nur plausibel; nach dem Merge von Option 4 aus raw/organizations.json, fragen.md 5.2):
-KUA = ""
-JHA = ""
-SCHUA = ""
-AGS = ""
-AWM = ""
-SEBD = ""
-HFA = ""
-WALTW = ""
-WABTW = ""
-WPA = ""
-AWTL = ""
-
-[bodies.advisory]              # Beiräte: keine Ausschüsse des Rates; eigene Klasse in der Tabelle, nicht auf der Karte
-JURAT = "Jugendrat"            # aus Dokumenttiteln
-INTR = "Integrationsrat"       # OParl-organizations-Seite 2026-10-11
-BR = "Behindertenrat"          # aus Dokumenttiteln
-SENR = "Seniorenrat"           # OParl-organizations-Seite 2026-10-11
-
-# --- Option 06: Gewichtung (docs/plans/06-gewichtung.md). Alle Gewichte liegen in [0, 1]; ein Dokument
 # zählt je Wahlbezirk höchstens einmal (Maximum über seine Begriffe mal Dokumentart mal Thema).
 [weights]
 combined = ["idf", "antraege_halb"]  # Faktoren der Variante "kombiniert" als Produkt: feste Faktoren "idf", "bezirke" oder ein Regelsatz von unten; leer = keine Zeile
@@ -231,282 +89,6 @@ tol = 0.001                    # Abbruchschwelle: mit 1e-4 läuft NMF in die Obe
 random_state = 0               # Startwert für NMF; nndsvda ist deterministisch, der Wert steht trotzdem hier
 
 # --- Option 03: Kontrollvariablen (docs/plans/03-kontrollvariablen.md) -----------------------------
-# Fremddaten je Raumeinheit (hier der Quartiersatlas der Stadt je Sozialraum) werden über die
-# Stimmbezirke auf die Wahlbezirke umgerechnet und als Kontrollvariablen in eine multiple Regression
-# der Wahlbeteiligung auf die Trefferquote gesetzt (Tabelle 6 der Berichtsseite). Eine andere Stadt
-# tauscht diesen Block; der Code kennt weder „Sozialraum" noch „Quartiersatlas".
-[context]
-root = "./context"             # im Repo, wird nur gelesen; bootstrap kopiert nach data_root/external/, `georep fetch context_data` holt frisch; "" = keine Kontextdaten
-max_missing_weight = 0.1       # Anteil des Gewichts eines Wahlbezirks, der auf Einheiten ohne Wert liegen darf (Sozialraum 071009 hat 2021 keine Daten); darüber EmptyResultError
-min_coverage = 0.9             # Anteil der Stimmbezirksfläche, den die Einheiten mindestens bedecken müssen; auf der Referenz 0,9999 (2026-10-12); darunter SchemaError
-
-[context.dataset]              # Namensnennung (dl-de/by-2-0 verlangt Quelle und Datensatz) und Stand; nur Anzeige, nicht im Fingerprint
-title = "Quartiersatlas Düsseldorf 2024"
-url = "https://opendata.duesseldorf.de/dataset/quartiersatlas-d%C3%BCsseldorf-2024-sozialer-handlungsbedarf-und-fluktuation"
-publisher = "Landeshauptstadt Düsseldorf, Amt für Statistik und Wahlen"
-license = "Datenlizenz Deutschland – Namensnennung – Version 2.0"
-license_url = "https://www.govdata.de/dl-de/by-2-0"
-stand = 2021-12-31             # Datenstand laut Datensatzseite; die Wahl ist vom 14.09.2025, die Seite sagt das (Frage 3.4)
-fetched = 2026-10-12           # Abrufdatum der Dateien unter root (context/README.md); gilt, solange context_data nie lief
-
-[context.files.table]          # die Tabelle je Raumeinheit
-url = "https://opendata.duesseldorf.de/sites/default/files/Daten_QA_2024.csv"
-file = "quartiersatlas_2024.csv"
-
-[context.files.units]          # die Flächen der Raumeinheiten; das CRS steht in der Datei (CRS84, lon/lat)
-url = "https://opendata.duesseldorf.de/sites/default/files/Sozialr%C3%A4ume_QA_Daten_WGS84_EPSG_4326.geojson"
-file = "sozialraeume_2021.geojson"
-
-[context.files.indicators]     # Definitionen der Indikatoren, eine Zeile je Indikator, für den Abschnitt „Abgeleitete Daten"
-url = "https://opendata.duesseldorf.de/sites/default/files/Erl%C3%A4uterung_Indikatoren_QA_0.csv"
-file = "quartiersatlas_2024_indikatoren.csv"
-
-[context.table]                # Form der Tabelle je Raumeinheit
-sep = ";"
-encoding = "utf-8"             # anders als die Wahlergebnis-CSV des Portals, die latin-1 trägt
-decimal = ","
-missing = [".", "x", "-", "#NV"] # "." anonymisiert Werte unter 3 (Hinweis des Portals); x, - und #NV stehen im Sozialraum ohne Daten
-key = "SRG_2021_Nr"            # Schlüssel der Einheit, als Text (führende Null)
-name = "SRG_2021_Name"
-indicator = "Indikator"        # Spalten der Erläuterungsdatei: Name und Definition
-definition = "Berechnung"
-
-[context.units]
-label = "Sozialräume"          # Name der Raumeinheit auf der Seite
-key = "SOZIALRAUM"             # Eigenschaft im GeoJSON mit dem Schlüssel der Einheit
-
-[context.scales.handlungsbedarf] # Stufen des städtischen Index, gleichabständig als Score (Frage 3.2, Annahme gilt); eine andere Stufe ist ein SchemaError
-gering = 1
-"eher gering" = 2
-mittel = 3
-"erhöht" = 4                   # in Anführungszeichen: ein nackter TOML-Schlüssel kennt nur [A-Za-z0-9_-]
-hoch = 5
-
-# Variablen je Wahlbezirk. kind: value = eine Spalte der Tabelle, sum = Summe mehrerer Spalten, ordinal = Stufe
-# über eine Skala, district = Spalte der Wählertabelle (wahlbezirke_waehler) mal factor. indicator nennt die
-# Zeile der Erläuterungsdatei mit der Definition. Einheiten der Tabelle werden mit den Wahlberechtigten je
-# Stimmbezirk und dem Flächenanteil gewichtet gemittelt.
-[[context.variables]]
-name = "hb_score"
-label = "Sozialer Handlungsbedarf"
-unit = "Score 1 bis 5"
-kind = "ordinal"
-columns = ["Sozialer_HB"]
-scale = "handlungsbedarf"
-indicator = "Sozialer Handlungsbedarf"
-
-[[context.variables]]
-name = "fluktuation_score"
-label = "Handlungsbedarf Fluktuation"
-unit = "Score 1 bis 5"
-kind = "ordinal"
-columns = ["HB_Fluktuation"]
-scale = "handlungsbedarf"
-indicator = "Handlungsbedarf im Themenfeld Fluktuation"
-
-[[context.variables]]
-name = "anteil_65plus"
-label = "Anteil 65 Jahre und älter"
-unit = "% der Einwohner"
-kind = "sum"
-columns = ["65_bis_u80_Ant", "ue80_Ant"]
-indicator = "Bevoelkerung nach Alter und Geschlecht"
-
-[[context.variables]]
-name = "anteil_u18"
-label = "Anteil unter 18 Jahren"
-unit = "% der Einwohner"
-kind = "sum"
-columns = ["u6_Ant", "6_bis_u18_Ant"]
-indicator = "Bevoelkerung nach Alter und Geschlecht"
-
-[[context.variables]]
-name = "fluktuation"
-label = "Fluktuationsrate"
-unit = "je 1 000 Einwohner"
-kind = "value"
-columns = ["Fluktuationsrate"]
-indicator = "Fluktuationsrate"
-
-[[context.variables]]
-name = "wohndauer"
-label = "Durchschnittliche Wohndauer"
-unit = "Monate"
-kind = "value"
-columns = ["Durchschn_Wohndauer_Monate"]
-indicator = "Wohndauer"
-
-[[context.variables]]
-name = "mindestsicherung"
-label = "Mindestsicherungsquote"
-unit = "% der Einwohner"
-kind = "value"
-columns = ["Mindestsicherungsquote"]
-indicator = "Mindestsicherungsquote"
-
-[[context.variables]]
-name = "migrationshintergrund"
-label = "Anteil mit Migrationshintergrund"
-unit = "% der Einwohner"
-kind = "value"
-columns = ["Migrationshintergrund_Ant"]
-indicator = "Personen mit Migrationshintergrund"
-
-[[context.variables]]
-name = "einpersonen_hh"
-label = "Anteil Einpersonenhaushalte"
-unit = "% der Haushalte"
-kind = "value"
-columns = ["EinpersonenHH_Ant"]
-indicator = "Einpersonenhaushalte"
-
-[[context.variables]]
-name = "cdu"
-label = "Stimmenanteil CDU"
-unit = "% der Wähler"
-kind = "district"
-columns = ["CDU_anteil"]
-factor = 100
-
-[[context.variables]]
-name = "gruene"
-label = "Stimmenanteil Grüne"
-unit = "% der Wähler"
-kind = "district"
-columns = ["GRUENE_anteil"]
-factor = 100
-
-[[context.variables]]
-name = "spd"
-label = "Stimmenanteil SPD"
-unit = "% der Wähler"
-kind = "district"
-columns = ["SPD_anteil"]
-factor = 100
-
-[[context.variables]]
-name = "afd"
-label = "Stimmenanteil AfD"
-unit = "% der Wähler"
-kind = "district"
-columns = ["AfD_anteil"]
-factor = 100
-
-[context.models]               # sparsam bei n = 41: ein Hauptmodell, ein Parteimodell, jede Variable einzeln (Frage 3.1, Annahme)
-y_scale = 100                  # Wahlbeteiligung in Prozent, wie Tabelle 5
-main = ["trefferquote", "hb_score", "anteil_65plus", "fluktuation"]                  # B: k = 4
-parties = ["trefferquote", "hb_score", "anteil_65plus", "fluktuation", "cdu", "afd"] # C: die zwei Parteianteile mit der geringsten Korrelation untereinander (r = -0,09); alle sechs ergäben VIF bis 76
-single = ["hb_score", "fluktuation_score", "anteil_65plus", "anteil_u18", "fluktuation", "wohndauer", "mindestsicherung", "migrationshintergrund", "einpersonen_hh", "cdu", "gruene", "spd", "afd"] # Tabelle 6b: Trefferquote plus je eine Variable
-
-# --- Option 04: Urheber und Parteien
-# Der OParl-Server der ITK Rheinland liefert für Düsseldorf keine Urheberfelder (0 von 19 108
-# Rohobjekten, auch nicht auf der Seite vom 2026-10-09 bei einem „Antrag FDP"). Der Urheber steht
-# stattdessen im paperType, im Titel und im Textkopf; die Muster dafür stehen hier, nie im Code
-# (Vorbereitung für Option 10: eine zweite Kommune bringt andere paperType-Werte mit).
-# Reihenfolge der Quellen: oparl > paper_type > name > text; die erste mit Treffer gewinnt.
-[originators]
-# Die 9 933 Verwaltungsvorlagen: paperType ohne Urheber, Zahlen vom 2026-10-11 über alle 19 108 Dokumente
-admin_types = [
-    "Beschlussvorlage",                      # 4 001
-    "Bezirksvertretung Informationsvorlage", # 2 699
-    "Bezirksvertretung Beschlussvorlage",    # 1 474
-    "Informationsvorlage",                   # 1 327
-    "Berichtsvorlage",                       # 177
-    "A+F Beschluss",                         # 145, Ausschuss für Anregungen und Beschwerden
-    "Bedarfsbeschluss",                      # 78
-    "Beschlussvorlage RPA",                  # 32, Rechnungsprüfungsamt
-]
-citizen_types = ["Eingabe nach 24GO", "Eingabe nach 24 GO"]  # 73 + 51 Bürgeranträge nach § 24 GO NRW; weder Verwaltung noch Mandatsträger
-motion_prefixes = ["Haushaltsantrag", "Antrag", "Anfrage", "zAnfrage"]  # längste zuerst, sonst bleibt bei „Haushaltsantrag CDU/Grüne" ein „haushalts" stehen
-fraction_markers = ["frak\\w{0,2}ion", "interfraktionell", "überfraktionell", "ratsgruppe"]  # erst damit wird der Titel befragt; „die cdu beantragt" in einer Verwaltungsvorlage soll nicht zählen. frak\w{0,2}ion deckt den Tippfehler der Quelle „Antrag der CDU-Frakion" (BV7/018/2025, Stichprobe vom 2026-10-12)
-joint_markers = ["interfraktionell", "überfraktionell", "fraktionen"]  # Fraktion ohne nennbare Partei: 220 Dokumente („Interfraktioneller Antrag der Ratsfraktionen von …" nennt sie, andere nicht)
-person_markers = [
-    "bezirksvertreter", "ratsherr", "ratsfrau", "bürgermitglied", "bezirksbürgermeister",
-    "herrn? ", "frau ",        # „herrn? " deckt „Antrag von Herrn Butzke" und „(Antrag Herr Wolf …)"; das Leerzeichen hält „Herren" und „Frauenberatung" draußen
-]                              # 746 Dokumente: „Anfrage der Bezirksvertreterin Claudia Drossel"
-# Zwei Leserichtungen im Textkopf: „(anfrage cdu-fraktion vom 28. juli 2023)" und
-# „(interfraktioneller antrag)". Im ersten Muster steht .{0,80} und nicht [^.]{0,80}, weil die
-# Abkürzungen der Namen Punkte tragen („(anfrage frau dr.dr.hagen, fdp-fraktion, …)", Stichprobe
-# vom 2026-10-12); die Schranke von 80 Zeichen hält den Treffer trotzdem lokal. Die Lookbehinds
-# halten die Verbform draußen: „der beantragenden fraktionen" ist kein Antrag einer Fraktion
-# (BV3/134/2025, Review 2026-10-12). Eine Wortgrenze täte das auch, verlöre aber die
-# Zusammensetzungen („haushaltsantrag der cdu-fraktion", „antragsstellende liste und fraktion")
-# und die Fälle, in denen die PDF-Extraktion die Leerzeichen gefressen hat
-# („anfragefraktionbündnis90/diegrünen", BV5/054/2022): sechs Dokumente gemessen.
-text_markers = [
-    "(?<!be)(?<!ge)(antrag|anfrage).{0,80}?(fraktion|ratsfraktion|interfraktionell|überfraktionell)",
-    "(interfraktionell|überfraktionell)\\w*.{0,20}?(antrag|anfrage)",
-]
-# Schwaches Tor für den Titel, erst nach den Personenmarkern befragt: eine Antragsklammer, die
-# eine Partei ohne das Wort „Fraktion" nennt („(Antrag BÜNDNIS 90/DIE GRÜNEN)", BV3/065/2021).
-# Steht ein Mandatsträger in der Klammer („(Antrag Herr Lemmer-Freie Wähler)"), gewinnt die Klasse
-# Person, damit es gleich bleibt, ob der Titel „Herrn Salinger; AfD" oder die Klammer sagt.
-name_party_markers = ["\\((antrag|anfrage)[^)]{0,60}\\)"]
-text_head_chars = 600          # so viele Zeichen des Texts nach „betrifft"; der Volltext würde Zitate treffen („die cdu-fraktion beantragt" in einer Verwaltungsvorlage)
-text_window_chars = 80         # Fenster links und rechts um den Treffer; „(anfrage frau irmer, spd-fraktion, vom 2. august 2023)" braucht beide Seiten
-
-# Die sechs Parteien mit Stimmenspalte (columns.results.parties); patterns kleingeschrieben,
-# organizations sind OParl-Organisations-URLs der Seite vom 2026-10-11 (greifen, sobald der Server
-# originatorOrganization liefert; Suffix reicht, verglichen wird mit str.endswith).
-[[originators.parties]]
-key = "CDU"
-label = "CDU"
-short = "CDU"
-patterns = ['\bcdu\b']
-organizations = ["/organizations/gr/44"]  # CDU-Ratsfraktion
-[[originators.parties]]
-key = "GRUENE"
-label = "Bündnis 90/Die Grünen"
-short = "Grüne"
-patterns = ['grüne', 'gruene', 'bündnis ?90', 'bü ?90']  # Schreibvarianten im Titel, auch „BÜNDNINS 90"
-organizations = ["/organizations/gr/42"]  # Ratsfraktion BÜNDNIS 90/DIE GRÜNEN
-[[originators.parties]]
-key = "SPD"
-label = "SPD"
-short = "SPD"
-patterns = ['\bspd\b']
-organizations = ["/organizations/gr/400204"]  # Ratsfraktion SPD/Volt (ab 2020-11-01)
-[[originators.parties]]
-key = "FDP"
-label = "FDP"
-short = "FDP"
-patterns = ['\bfdp\b']
-organizations = ["/organizations/gr/49"]  # FDP-Ratsfraktion
-[[originators.parties]]
-key = "Die_Linke"
-label = "Die Linke"
-short = "Linke"
-patterns = ['\blinke\b']
-organizations = ["/organizations/gr/66"]  # Ratsfraktion Die Linke
-[[originators.parties]]
-key = "AfD"
-label = "AfD"
-short = "AfD"
-patterns = ['\bafd\b']                    # trifft auch die Schreibvariante „AFD" („Haushaltsantrag AFD", 2 Dokumente), weil kleingeschrieben verglichen wird
-organizations = ["/organizations/gr/400198", "/organizations/gr/162"]  # AfD-Ratsfraktion; gr/162 ist das Einzelmandat bis 2020-10-31
-
-# Fraktionen und Gruppen ohne Stimmenspalte im Wahlergebnis: sie zählen als Klasse „Fraktion"
-# (747 Dokumente), bekommen aber keine Hochburg-Kennzahl, weil es kein <Partei>_anteil gibt.
-[[originators.groups]]
-key = "T_FW"
-label = "Tierschutz/Freie Wähler"
-short = "T/FW"
-patterns = ['tierschutz', 'freie wähler', 'freie waehler']
-organizations = ["/organizations/gr/400202", "/organizations/gr/400238"]  # Gruppe bis 2025-10-31, danach Ratsgruppe Freie Wähler Tierschutz PARTEI
-[[originators.groups]]
-key = "PARTEI"
-label = "Die PARTEI"
-short = "PARTEI"
-patterns = ['die partei', 'partei-klima', 'klima-fraktion', 'klimafraktion']  # „DIE PARTEI-Klima-Fraktion", „Die Partei-KlimaFraktion"
-organizations = ["/organizations/gr/400205"]
-[[originators.groups]]
-key = "VOLT"
-label = "Volt"
-short = "Volt"
-patterns = ['\bvolt\b']
-organizations = []             # Volt sitzt in der Ratsfraktion SPD/Volt, hat also keine eigene Organisation
-
-# --- Option 02: Zeitreihe (docs/plans/02-zeitreihe.md, § 2)
 [crosswalk]                    # Umrechnung eines älteren Zuschnitts auf die Wahlbezirke der Hauptperiode (Profil "")
 enabled = false                # true nur in einem Periodenprofil (settings.2014.toml): Schritt precincts, Wähler über Flächenanteile der Stimmbezirke
 target_file = "Stimmbezirke_2025.geojson"  # Stimmbezirksdatei der Hauptperiode, aus der die Zielbezirke vereinigt werden

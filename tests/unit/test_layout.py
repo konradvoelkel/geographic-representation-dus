@@ -177,17 +177,17 @@ def test_layout_takes_the_source_file_names_from_the_settings(tmp_path: Path) ->
     )
     layout = Layout.from_settings(load_settings(cwd=tmp_path))
     assert layout.results_csv == Path("data/external/ergebnis.csv")
-    assert layout.districts_geojson == Path("data/external/flaechen.zip")
+    assert layout.districts_source == Path("data/external/flaechen.zip")
     assert layout.streets_directory == Path("data/external/strassen.csv")
     assert layout.district_names_csv == Path("data/external/wahlbezirke.csv")
     assert layout.precincts_geojson == Path("data/interim/stimmbezirke.geojson")
     assert layout.site_summary == Path("data/site/data/summary.json")
     assert layout.reference_view().results_csv == Path("reference/external/ergebnis.csv")
-    assert layout.for_profile("x").districts_geojson == Path("data/x/external/flaechen.zip")
+    assert layout.for_profile("x").districts_source == Path("data/x/external/flaechen.zip")
 
 
 def test_layout_without_optional_sources_has_no_paths_for_them(tmp_path: Path) -> None:
     layout = Layout.from_settings(load_settings(cwd=tmp_path))
     assert layout.streets_directory is None and layout.district_names_csv is None
     assert layout.results_csv.name == "Stimmbezirk_Wahlergebnis.csv"
-    assert layout.districts_geojson.name == "Stimmbezirke_2025.geojson"
+    assert layout.districts_source.name == "Stimmbezirke_2025.geojson"
