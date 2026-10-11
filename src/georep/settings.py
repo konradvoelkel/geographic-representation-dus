@@ -132,6 +132,7 @@ class ResultsColumns(_Strict):
     voters: str
     parties: dict[str, str]
     city_district: str  # Option 05: Stadtbezirk je Stimmbezirk, für die Zuordnung der Wahlbezirke
+    precinct: str = ""  # Option 03: Stimmbezirk in der CSV; "" = kein Crosswalk über Stimmbezirke
 
 
 class Columns(_Strict):
