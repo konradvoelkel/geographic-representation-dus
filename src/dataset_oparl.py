@@ -11,6 +11,7 @@ from loguru import logger
 from tqdm import tqdm
 
 import src.config as cfg
+from georep.errors import CorruptPdfError, SchemaError
 from georep.http import Transport
 from georep.io import write_bytes, write_json
 from src.utils import http_session
@@ -108,15 +109,16 @@ def _check_for_existing_papers() -> tuple[set[str], list[dict]]:
     if not papers_json_path.exists():
         return set(), []
 
-    try:
-        with open(papers_json_path, encoding="utf-8") as f:
-            known_paper = json.load(f)
-        if not isinstance(known_paper, list):
-            return set(), []
-        known_ids = {p.get("id") for p in known_paper if isinstance(p, dict) and p.get("id")}
-        return known_ids, known_paper
-    except Exception:
-        return set(), []
+    # Eine unlesbare Datei darf nicht als "kein Stand" gelten: bis 2026-10-11 begann der Lauf
+    # dann von vorn und überschrieb die Datei mit der neuen Teilliste.
+    with open(papers_json_path, encoding="utf-8") as f:
+        known_paper = json.load(f)
+    if not isinstance(known_paper, list):
+        raise SchemaError(
+            f"{papers_json_path}: Liste erwartet, {type(known_paper).__name__} gefunden"
+        )
+    known_ids = {p.get("id") for p in known_paper if isinstance(p, dict) and p.get("id")}
+    return known_ids, known_paper
 
 
 @dataclass
@@ -256,8 +258,10 @@ def download_paper_pdf(
                 try:
                     response = http.get(url)
                     response.raise_for_status()
+                    if b"%PDF" not in response.content[:1024]:
+                        raise CorruptPdfError("Antwort ist kein PDF")
                     write_bytes(target / name, response.content)
-                except (requests.RequestException, OSError) as e:
+                except (requests.RequestException, CorruptPdfError, OSError) as e:
                     report.failed += 1
                     report.errors.append((url, str(e)))
                     logger.error(f"Fehler beim Herunterladen von {url}: {e}")

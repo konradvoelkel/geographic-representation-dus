@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
+import requests
 
 import src.config as cfg
 from src.dataset_opendata import get_stimmbezirk_shapefile, get_wahlergebnis
@@ -32,3 +33,21 @@ def test_shapefile_is_stored_as_readable_json(
     raw = (tmp_path / "bezirke.geojson").read_text(encoding="utf-8")
     assert "Düsseltal" in raw
     assert json.loads(raw) == payload
+
+
+def test_network_errors_propagate_and_nothing_is_written(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(cfg, "WAHLERGEBNIS_PATH", tmp_path / "ergebnis.csv")
+    url = cfg.OPENDATA_ENDPOINT_WAHLERGEBNIS
+    with pytest.raises(requests.ConnectionError):
+        get_wahlergebnis(FakeSession({url: requests.ConnectionError("Portal weg")}))
+    assert not (tmp_path / "ergebnis.csv").exists()
+
+
+def test_http_errors_propagate(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cfg, "STIMMBEZIRK_SHAPEFILE_PATH", tmp_path / "bezirke.geojson")
+    url = cfg.OPENDATA_ENDPOINT_STIMMBEZIRK
+    with pytest.raises(requests.HTTPError):
+        get_stimmbezirk_shapefile(FakeSession({url: _response(url, status=503)}))
+    assert not (tmp_path / "bezirke.geojson").exists()

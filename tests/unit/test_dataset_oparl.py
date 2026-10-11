@@ -10,6 +10,7 @@ import pytest
 import requests
 
 import src.config as cfg
+from georep.errors import SchemaError
 from src.dataset_oparl import Paper, download_paper_metadata, download_paper_pdf
 
 PDF = b"%PDF-1.4\n%fake\n"
@@ -174,3 +175,29 @@ def test_metadata_resume_skips_known_ids(metadata_paths: Path) -> None:
     assert [p.id for p in papers] == ["u3"]
     saved = json.loads((metadata_paths / "paper_objects.json").read_text(encoding="utf-8"))
     assert sorted(p["id"] for p in saved) == ["u1", "u3"]
+
+
+def test_pdf_download_rejects_responses_that_are_not_pdfs(tmp_path: Path) -> None:
+    url = "https://ris.invalid/dl/x.pdf"
+    html = _response(url, content=b"<html>Fehlerseite statt PDF</html>")
+    report = download_paper_pdf([_paper(1, url)], FakeSession({url: html}), tmp_path)
+    assert (report.downloaded, report.failed) == (0, 1)
+    assert "kein PDF" in report.errors[0][1]
+    assert not (tmp_path / "x.pdf").exists()
+
+
+def test_metadata_refuses_a_corrupt_local_state_before_touching_the_network(
+    metadata_paths: Path,
+) -> None:
+    (metadata_paths / "paper_objects.json").write_text("{ kaputt", encoding="utf-8")
+    session = FakeSession(_pages())
+    with pytest.raises(json.JSONDecodeError):
+        download_paper_metadata(PAGE1, session)
+    assert session.calls == []
+    assert (metadata_paths / "paper_objects.json").read_text(encoding="utf-8") == "{ kaputt"
+
+
+def test_metadata_refuses_a_local_state_that_is_not_a_list(metadata_paths: Path) -> None:
+    (metadata_paths / "paper_objects.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(SchemaError):
+        download_paper_metadata(PAGE1, FakeSession({}))
