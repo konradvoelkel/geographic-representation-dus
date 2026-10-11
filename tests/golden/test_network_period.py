@@ -85,9 +85,19 @@ def test_both_geojson_files_of_2020_carry_the_expected_properties(period: Settin
     assert "4647" in str(precincts.get("crs")) and "4647" in str(districts.get("crs"))
 
 
-def test_the_first_page_of_the_old_period_parses_and_lies_in_it(period: Settings) -> None:
-    """Eine Seite, rund 85 s: trägt ``first_page`` noch in die Periode, und passt das Format?"""
+def test_the_first_page_still_lies_before_the_end_of_the_old_period(period: Settings) -> None:
+    """Eine Seite, rund 85 s: verliert ``first_page`` nichts, und passt das Format?
+
+    Die Liste ist neueste zuerst, also liegen die Paper der Periode auf **höheren** Seitenzahlen.
+    Sicher ist darum eine Startseite, die noch Paper **nach** dem Periodenende trägt: dann liegt
+    kein Paper der Periode auf einer früheren Seite. Zu früh zu beginnen kostet nur Zeit, denn
+    ``in_period`` filtert; zu spät zu beginnen verliert Dokumente, und das darf nicht passieren.
+    Am 2026-10-12 trug Seite 90 den Bereich 2022-01-10 bis 2022-03-01, lag also rund 28 Seiten
+    vor der Grenze: etwa 40 Minuten Vorlauf von drei Stunden, hingenommen für die Sicherheit.
+    """
     oparl = period.sources.oparl
+    end = period.period.end
+    assert end is not None, "eine laufende Periode braucht keine Startseite"
     url = start_url(oparl.endpoint, oparl.first_page)
     http = cached_session(period, period.cache_dir / "http.sqlite")
     answer = http.get(url)
@@ -96,8 +106,8 @@ def test_the_first_page_of_the_old_period_parses_and_lies_in_it(period: Settings
     assert page.data
     dates = [p.date for p in page.data if p.date is not None]
     assert dates, "eine Seite ohne Datum wäre neu"
-    assert max(dates) <= period.period.election_day, (
-        f"Seite {oparl.first_page} trägt noch Paper der Hauptperiode ({max(dates)}): "
-        "die Seitenzahl ist gewandert, first_page erhöhen"
+    assert max(dates) > end, (
+        f"Seite {oparl.first_page} trägt nur Paper bis {max(dates)}, also schon in der Periode: "
+        "frühere Seiten könnten Dokumente der Periode tragen, first_page senken"
     )
     assert page.links.next, "die Seite ist die letzte: first_page ist zu hoch"

@@ -16,7 +16,9 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from georep.analysis.periods import D_TURNOUT, comparison_columns
 from georep.bootstrap import bootstrap
+from georep.errors import SchemaError
 from georep.layout import Layout
 from georep.pipeline import Outcome, build_steps, run_pipeline
 from georep.prep.voters import (
@@ -51,8 +53,9 @@ def period_run(
     tmp_path_factory: pytest.TempPathFactory, default_settings: Settings, mini_root: Path
 ) -> PeriodRun:
     root = tmp_path_factory.mktemp("period")
-    base = Layout(root / "data", root / "cache", mini_root)
-    bootstrap(base)
+    # Wie ``mini_run`` in conftest: die Fremddaten (Option 03) liegen in der Mini-Fixture
+    base = Layout(root / "data", root / "cache", mini_root, context_root=mini_root / "context")
+    bootstrap(base, context_files=default_settings.context.files.names())
     run_pipeline(build_steps(default_settings, base), default_settings)
     settings = load_settings(explicit=PROFILE, cwd=NOWHERE).model_copy(
         update={
@@ -153,3 +156,75 @@ def test_the_corpus_of_the_period_lies_inside_the_period(period_run: PeriodRun) 
     assert period.end is not None
     assert min(dates) >= period.start and max(dates) <= period.end
     assert len(dates) == 100
+
+
+# --- Stufe F: der Vergleich auf der Hauptperiode ------------------------------------------------
+
+COMPARE_PROFILE = REPO / "settings.vergleich.toml"
+
+
+@dataclass(frozen=True)
+class ComparedRun:
+    settings: Settings
+    layout: Layout
+    outcomes: list[Outcome]
+
+
+@pytest.fixture(scope="module")
+def compared(period_run: PeriodRun, mini_root: Path, default_settings: Settings) -> ComparedRun:
+    """Die Hauptperiode noch einmal, diesmal mit ``settings.vergleich.toml``."""
+    base, base_settings = period_run.base, default_settings
+    settings = load_settings(explicit=COMPARE_PROFILE, cwd=NOWHERE).model_copy(
+        update={
+            "data_root": base.data_root,
+            "cache_root": base.cache_root,
+            "reference_root": mini_root,
+            "context": base_settings.context.model_copy(update={"root": mini_root / "context"}),
+        }
+    )
+    layout = Layout.from_settings(settings)
+    return ComparedRun(settings, layout, run_pipeline(build_steps(settings, layout), settings))
+
+
+def test_the_comparison_runs_only_with_the_compare_profile(
+    period_run: PeriodRun, compared: ComparedRun
+) -> None:
+    without = [s.name for s in build_steps(period_run.settings, period_run.base)]
+    assert "compare" not in without
+    steps = [s.name for s in build_steps(compared.settings, compared.layout)]
+    assert steps.index("compare") == steps.index("report") - 1
+    done = {o.step: o.status for o in compared.outcomes}
+    assert done["compare"] == "ausgeführt", done
+    assert "Wahlbezirke in beiden Perioden" in next(
+        o.reason for o in compared.outcomes if o.step == "compare"
+    )
+
+
+def test_the_comparison_table_holds_both_periods_per_district(compared: ComparedRun) -> None:
+    frame = pl.read_parquet(compared.layout.comparison)
+    assert frame.columns == comparison_columns()
+    assert frame.get_column("wahlkreis_id").to_list() == TARGET_DISTRICTS
+    assert set(frame.get_column("periode_alt")) == {"Wahlperiode 2014 bis 2020"}
+    assert set(frame.get_column("periode_neu")) == {"Wahlperiode 2020 bis 2025"}
+    differences = (
+        frame.get_column("wahlbeteiligung_neu") - frame.get_column("wahlbeteiligung_alt")
+    ).to_list()
+    assert frame.get_column(D_TURNOUT).to_list() == pytest.approx(differences)
+    assert all(0.0 < t < 1.0 for t in frame.get_column("wahlbeteiligung_alt").to_list())
+
+
+def test_the_comparison_needs_the_same_dictionary(compared: ComparedRun) -> None:
+    """Zwei Perioden mit verschiedenen Wörterbüchern wären nicht vergleichbar: ein Fehler."""
+    other = compared.layout.for_profile(compared.settings.compare.period)
+    saved = other.dictionary.read_bytes()
+    try:
+        other.dictionary.write_bytes(saved + b" ")
+        with pytest.raises(SchemaError, match="dasselbe Wörterbuch"):
+            run_pipeline(
+                build_steps(compared.settings, compared.layout),
+                compared.settings,
+                ["compare"],
+                force=True,
+            )
+    finally:
+        other.dictionary.write_bytes(saved)

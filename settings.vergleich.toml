@@ -10,3 +10,4 @@
 
 [compare]
 period = "2014-2020"           # Profil der älteren Periode; ihre Ergebnisse liegen unter data_root/2014-2020/processed/
+label = "Wahlperiode 2014 bis 2020"  # wie period.label in settings.2014.toml; der Vergleich kennt die Settings des anderen Profils nicht

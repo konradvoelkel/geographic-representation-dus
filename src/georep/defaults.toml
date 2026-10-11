@@ -517,3 +517,4 @@ min_coverage = 0.95            # kleinste zulässige Abdeckung einer Quellfläch
 
 [compare]                      # Vergleich zweier Perioden, Schritt compare auf der Hauptperiode
 period = ""                    # Profil der älteren Periode (Ordner unter data_root); leer = kein Vergleich; settings.vergleich.toml setzt "2014-2020"
+label = ""                     # Anzeigename der älteren Periode in der Vergleichstabelle und auf der Seite; leer = der Profilname

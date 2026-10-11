@@ -467,6 +467,65 @@ TABLES.extend(
     ]
 )
 
+# Option 02: zwei Tabellen, die nur in einem Profil entstehen (Vergleich beziehungsweise Crosswalk)
+_PERIOD = "Wahlperiode, wie die Settings sie benennen"
+TABLES.append(
+    PublishedTable(
+        "wahlbezirke_vergleich",
+        lambda layout: layout.comparison,
+        "Zwei Wahlperioden je Wahlbezirk: Treffer, Trefferquote, Wahlbeteiligung und ihre Änderung",
+        {
+            "wahlkreis_id": DISTRICT_COLUMN,
+            "periode_alt": (f"ältere {_PERIOD}", ""),
+            "periode_neu": (f"neuere {_PERIOD}", ""),
+            "anzahl_treffer_alt": ("Dokumente mit Treffer in der älteren Periode", "Dokumente"),
+            "Wahlberechtigte_insgesamt_alt": (
+                "Wahlberechtigte der älteren Wahl, auf diesen Zuschnitt umgerechnet",
+                "Personen",
+            ),
+            "trefferquote_alt": ("Trefferquote der älteren Periode", "Dokumente je Person"),
+            "wahlbeteiligung_alt": (
+                "Wahlbeteiligung der älteren Wahl, auf diesen Zuschnitt umgerechnet",
+                "Anteil 0 bis 1",
+            ),
+            "anzahl_treffer_neu": ("Dokumente mit Treffer in der neueren Periode", "Dokumente"),
+            "Wahlberechtigte_insgesamt_neu": ("Wahlberechtigte der neueren Wahl", "Personen"),
+            "trefferquote_neu": ("Trefferquote der neueren Periode", "Dokumente je Person"),
+            "wahlbeteiligung_neu": ("Wahlbeteiligung der neueren Wahl", "Anteil 0 bis 1"),
+            "d_trefferquote": ("trefferquote_neu minus trefferquote_alt", "Dokumente je Person"),
+            "d_wahlbeteiligung": (
+                "wahlbeteiligung_neu minus wahlbeteiligung_alt",
+                "Anteil 0 bis 1",
+            ),
+        },
+        optional=True,
+    )
+)
+TABLES.append(
+    PublishedTable(
+        "stimmbezirke_zuordnung",
+        lambda layout: layout.precinct_assignment,
+        "Umrechnung der Stimmbezirke dieser Periode auf die Wahlbezirke der Auswertung",
+        {
+            "stimmbezirk_id": ("Nummer des Stimmbezirks im Zuschnitt dieser Periode", ""),
+            "wahlbezirk_quelle": ("Wahlbezirk dieser Periode, geometrisch zugeordnet", ""),
+            "wahlbezirk_quelle_name": ("Name dieses Wahlbezirks laut Open-Data-Portal", ""),
+            "wahlkreis_id": DISTRICT_COLUMN,
+            "anteil": (
+                "Anteil der Fläche des Stimmbezirks, der in diesem Wahlbezirk liegt; "
+                "je Stimmbezirk summieren die Anteile zu 1",
+                "Anteil 0 bis 1",
+            ),
+            "abdeckung": (
+                "Anteil der Fläche des Stimmbezirks, der überhaupt in einem Wahlbezirk liegt "
+                "(unter 1 an Stadtgrenze und Rhein)",
+                "Anteil 0 bis 1",
+            ),
+        },
+        optional=True,
+    )
+)
+
 # Nur für ``georep export`` (CSV neben der Parquet-Datei), nicht auf der Seite.
 EXPORT_ONLY: list[PublishedTable] = [
     PublishedTable(

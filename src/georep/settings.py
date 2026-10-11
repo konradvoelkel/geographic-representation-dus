@@ -678,6 +678,9 @@ class Crosswalk(_Strict):
 # Option 02: Vergleich zweier Perioden; läuft auf der Hauptperiode gegen ein Periodenprofil
 class Compare(_Strict):
     period: str = ""  # Profil der älteren Periode; leer = kein Schritt compare
+    # Anzeigename der älteren Periode in der Vergleichstabelle; leer = der Profilname. Er steht in
+    # der Parquet-Datei und zählt darum zum Fingerprint, anders als period.label.
+    label: str = ""
 
     @field_validator("period")
     @classmethod

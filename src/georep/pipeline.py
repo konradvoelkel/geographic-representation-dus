@@ -30,6 +30,7 @@ from georep.analysis.parties import (
     party_hits,
     read_organizations,
 )
+from georep.analysis.periods import compare_periods, delta_regression
 from georep.crosswalk import (
     COVERAGE,
     SHARE,
@@ -40,7 +41,7 @@ from georep.crosswalk import (
     district_weights,
     transfer_counts,
 )
-from georep.errors import GeorepError, MissingInputError
+from georep.errors import GeorepError, MissingInputError, SchemaError
 from georep.geo import Area, PrecinctIndex, read_area_names, read_areas, read_precincts
 from georep.http import Transport
 from georep.io import digest, write_bytes, write_json, write_parquet
@@ -725,6 +726,24 @@ def build_steps(
             + (f"; {len(found)} Organisationen" if found else "")
         )
 
+    # --- Option 02: beide Perioden nebeneinander; nur mit compare.period
+    def compare() -> str:
+        other = layout.for_profile(settings.compare.period)
+        if digest(layout.dictionary) != digest(other.dictionary):
+            raise SchemaError(
+                "Vergleich setzt dasselbe Wörterbuch voraus: "
+                f"{layout.dictionary} und {other.dictionary} unterscheiden sich. "
+                'Das Profil der älteren Periode braucht period.dictionary = "base".'
+            )
+        frame = compare_periods(
+            pl.read_parquet(layout.results),
+            pl.read_parquet(other.results),
+            labels=(settings.compare.label or settings.compare.period, settings.period.title),
+        )
+        write_parquet(frame, layout.comparison, schema_version=1)
+        fit = delta_regression(frame)
+        return f"{frame.height} Wahlbezirke in beiden Perioden; Differenzen {fit.summary()}"
+
     def report() -> str:
         return build_site(
             layout, settings, now=dt.datetime.now(dt.UTC), commit=current_commit()
@@ -904,6 +923,24 @@ def build_steps(
             (layout.document_originators, layout.district_originators, layout.party_results),
             parties,
             PARTIES_SCHEMA,
+        ),
+        # --- Option 02: der Vergleich steht vor dem Bericht und wird seine letzte Eingabe
+        *(
+            [
+                Step(
+                    "compare",
+                    (
+                        layout.results,
+                        layout.for_profile(settings.compare.period).results,
+                        layout.dictionary,
+                        layout.for_profile(settings.compare.period).dictionary,
+                    ),
+                    (layout.comparison,),
+                    compare,
+                )
+            ]
+            if settings.compare.period
+            else []
         ),
         Step(
             "report",

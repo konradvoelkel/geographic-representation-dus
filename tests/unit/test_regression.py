@@ -48,6 +48,23 @@ def test_regression_pair_without_outliers_has_no_second_fit() -> None:
     assert regression_pair(frame, [1, 4]).without is None
 
 
+def test_a_constant_y_is_no_result_either() -> None:
+    """Ohne Streuung in y liefert scipy r und p als NaN; das ist kein Ergebnis (Option 02).
+
+    Mit echten Daten kommt der Fall nicht vor, mit den Differenzen zweier Perioden auf einer
+    kleinen Fixture schon: dort können alle Wahlbeteiligungen gleich sein.
+    """
+    frame = pl.DataFrame(
+        {
+            "wahlkreis_id": [1, 2, 3],
+            "trefferquote": [0.01, 0.02, 0.03],
+            "wahlbeteiligung": [0.5, 0.5, 0.5],
+        }
+    )
+    with pytest.raises(EmptyResultError, match="Streuung in wahlbeteiligung"):
+        regress(frame)
+
+
 # --- Option 06: Rangkorrelation ----------------------------------------------------------------
 
 
