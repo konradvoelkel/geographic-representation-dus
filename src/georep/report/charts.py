@@ -732,11 +732,15 @@ def bars(
     rows = [row for row in months if row.month is not None]
     labels = [row.month for row in rows if row.month is not None]
     highest = max(row.documents for row in rows)
+    ticks = nice_ticks(0.0, float(highest) if highest > 0 else 1.0)
+    if any(t != int(t) for t in ticks):
+        # Dokumente sind ganze Zahlen; bei wenigen je Monat gäbe nice_ticks Schritte unter 1.
+        ticks = tuple(float(i) for i in range(int(ticks[-1]) + 1))
     axes = Axes(
         width,
         height,
         x_ticks=(0.0, float(len(rows))),
-        y_ticks=nice_ticks(0.0, float(highest) if highest > 0 else 1.0),
+        y_ticks=ticks,
         margin=BARS_MARGIN,
     )
     slot = axes.plot_w / len(rows)

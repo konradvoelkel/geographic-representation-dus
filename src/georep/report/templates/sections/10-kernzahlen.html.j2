@@ -6,6 +6,6 @@
 <div class="tile"><div class="label">Suchbegriffe</div><div class="value">{{ model.figures.terms|num }}</div><div class="sub">Straßen und Orte, alle Bezirke</div></div>
 <div class="tile"><div class="label">Dokumente mit Treffer</div><div class="value">{{ model.figures.documents_hit|num }}</div><div class="sub">{{ (model.figures.documents_hit / model.figures.documents)|pct(1) }} aller Dokumente</div></div>
 <div class="tile"><div class="label">Trefferquote, Median</div><div class="value">{{ model.figures.rate_median|num(3) }}</div><div class="sub">Spannweite {{ model.figures.rate_min|num(3) }} bis {{ model.figures.rate_max|num(3) }}</div></div>
-<div class="tile"><div class="label">Wahlbeteiligung, Median</div><div class="value">{{ model.figures.turnout_median|pct(1) }}</div><div class="sub">je Wahlbezirk</div></div>
+<div class="tile"><div class="label">Wahlbeteiligung, Median</div><div class="value">{{ model.figures.turnout_median|pct(1) }}</div><div class="sub">je Wahlbezirk, Kommunalwahl {{ model.stand.election|date_de }}</div></div>
 </div>
 </section>

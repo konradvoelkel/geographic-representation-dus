@@ -412,3 +412,12 @@ def test_bars_need_at_least_one_dated_month() -> None:
 
 def test_bars_of_three_months_are_stable(snapshot: SnapshotAssertion) -> None:
     assert bars(THREE) == snapshot
+
+
+def test_bars_use_whole_numbers_on_the_y_axis() -> None:
+    """Wenige Dokumente je Monat: nice_ticks gäbe 0,5er-Schritte, Dokumente sind aber ganze Zahlen."""
+    svg = bars([MonthRow(dt.date(2025, 10, 1), 2, 2, 2), MonthRow(dt.date(2025, 11, 1), 1, 1, 1)])
+    root = ET.fromstring(svg)
+    group = root.find(f".//{NS}g[@class='ticks']")
+    assert group is not None
+    assert [text.text for text in group] == ["0", "1", "2"]
