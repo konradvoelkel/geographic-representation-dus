@@ -211,4 +211,4 @@ __marimo__/
 # georep (ab 2026-10-10)
 .nox/
 .benchmarks/
-settings.local.yml
+settings.local.toml

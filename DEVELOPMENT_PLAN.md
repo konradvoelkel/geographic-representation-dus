@@ -37,9 +37,9 @@ Den Code so umbauen, dass
 
 ```
 pyproject.toml            uv_build, [project.scripts] georep = "georep.cli:main"
-uv.lock  .python-version  settings.yml (Defaults, eingecheckt)  settings.local.yml (gitignored)
+uv.lock  .python-version  settings.toml (Defaults, eingecheckt)  settings.local.toml (gitignored)
 src/georep/
-  settings.py             pydantic-settings; YAML + Env-Präfix GEOREP_ + --settings
+  settings.py             pydantic-settings; TOML + Env-Präfix GEOREP_ + --settings
   layout.py               DataLayout: raw/ interim/ processed/ cache/ unter data_root; reference_root nur lesend
   io.py                   atomic_write, read/write JSONL, CSV, Manifest, Stamp
   http.py                 Session-Factory: Timeout, Retry mit Backoff, User-Agent, requests-cache
@@ -63,35 +63,60 @@ läuft als Strangler Fig: `src/georep/` wächst neben `src/*.py`, alte Module we
 
 ### 3.2 Settings
 
-```yaml
-# settings.yml (eingecheckt; Defaults relativ zum Repo)
-data_root: ./data                  # Laufzeitdaten, gitignored
-cache_root: null                   # null = data_root/cache
-reference_root: ./reference        # nur lesen
-period: {start: 2020-09-13, end: 2025-09-14}
-sources:
-  oparl: {endpoint: https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers, delay_s: 1.0, timeout_s: 180, retries: 5}
-  opendata: {results_url: …, districts_url: …}
-  osm: {network_type: all}
-  wikidata: {entity: Q1718, language: de, geosearch_limit: 500}
-schema:                            # Spaltennamen der Quellen, heute hart kodiert
-  district_id: "Kommunalwahlbezirk Nr."
-  precinct_id: "Stimm-/ Wahlbezirk"
-  results: {sep: ";", encoding: latin-1, district: Kommunalwahlbezirk, eligible: Wahlberechtigte_insgesamt, voters: Waehler}
-search:
-  exclude: [Düsseldorf, Düssel, "Stadtbezirk 1", …]
-  generic_terms_count: true        # heute: "schulweg" zählt, wird nur nicht angezeigt; Entscheidung dokumentieren
-contracts: on                      # on | off; off = deal.disable()
-log_level: INFO
+Format: TOML, nicht YAML (geändert 2026-10-11 nach Blick auf bubatzblick: dort `config/pipeline.toml`,
+gelesen mit `tomllib`, Modelle pydantic, Wurzel `BaseSettings` mit Env-Präfix und `__` als
+Verschachtelung; die Begründung jeder Zahl steht als Kommentar neben ihr). Kein pyyaml nötig.
+
+```toml
+# settings.toml (eingecheckt; Defaults relativ zum Repo)
+data_root = "./data"                 # Laufzeitdaten, gitignored
+cache_root = ""                      # leer = data_root/cache
+reference_root = "./reference"       # nur lesen
+contracts = "on"                     # on | off; off = deal.disable()
+log_level = "INFO"
+
+[period]
+start = 2020-09-13
+end = 2025-09-14
+
+[sources.oparl]
+endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers"
+delay_s = 1.0                        # der Server ist langsam, nicht wir; Downloads seriell
+timeout_s = 180                      # 85 s pro Seite gemessen am 2026-10-09
+retries = 5
+
+[sources.wikidata]
+entity = "Q1718"
+language = "de"
+geosearch_limit = 500
+
+[geo]
+working_crs = "EPSG:25832"           # metrisch rechnen, wie bubatzblick; Eingabe ist EPSG:4647
+output_crs = "EPSG:4326"             # genau eine Reprojektionsstelle, always_xy
+
+[schema]                             # Spaltennamen der Quellen, heute hart kodiert
+district_id = "Kommunalwahlbezirk Nr."
+precinct_id = "Stimm-/ Wahlbezirk"
+
+[schema.results]
+sep = ";"
+encoding = "latin-1"
+district = "Kommunalwahlbezirk"
+eligible = "Wahlberechtigte_insgesamt"
+voters = "Waehler"
+
+[search]
+exclude = ["Düsseldorf", "Düssel", "Stadtbezirk 1"]   # gekürzt
+generic_terms_count = true           # heute zählt "schulweg", wird nur nicht angezeigt
 ```
 
-```yaml
-# settings.local.yml (gitignored), Konrads Rechner
-data_root: /media/konrad/xtraspace/georep/data
+```toml
+# settings.local.toml (gitignored), Konrads Rechner
+data_root = "/media/konrad/xtraspace/georep/data"
 ```
 
-Auflösung: Defaults < `settings.yml` < `settings.local.yml` < `GEOREP_*` < `--settings pfad`.
-Pfade werden expandiert und bei Bedarf angelegt, nie geleert.
+Auflösung: Defaults < `settings.toml` < `settings.local.toml` < `GEOREP_*` (verschachtelt mit `__`)
+< `--settings pfad`. Pfade werden expandiert und bei Bedarf angelegt, nie geleert.
 
 ### 3.3 Caching und Datenhaltung
 
@@ -103,7 +128,7 @@ Pfade werden expandiert und bei Bedarf angelegt, nie geleert.
 | Text je PDF | `cache_root/text/<sha256(pdf)>.txt` | Inhalt des PDF | nie; neue Extraktor-Version = neuer Schlüsselpräfix |
 | OSM | osmnx-Cache eingeschaltet unter `cache_root/osmnx` + Ergebnis je Stimmbezirk unter `raw/streets/<geom-hash>.json` | Geometrie-Hash | manuell (`--force`) |
 | Wikidata/Wikipedia | requests-cache + `raw/pois.jsonl` | Query bzw. BBox | TTL 30 Tage |
-| Schritte | `<ausgabe>.stamp.json` mit Hashes der Eingaben, Settings-Hash, Code-Version | alle drei | automatisch, wenn einer der drei sich ändert |
+| Schritte | `<ausgabe>.stamp.json` mit Hashes der Eingaben, Settings-Hash, Code-Version und `schema_version` des Schritts | alle vier | automatisch, wenn einer sich ändert; `schema_version` wird von Hand erhöht, wenn sich Spalten oder Zeilenformat der Ausgabe ändern (Lehre bubatzblick 2026-09-28: ein Cache, der sein eigenes Ausgabeschema nicht kennt, übernimmt alte Zellen still) |
 
 Formate: alles Abgeleitete als Parquet (zstd), gelesen mit `pl.scan_parquet`, Sortierung deterministisch.
 Append-only-Protokolle (Roh-Metadaten je Paper, PDF-Manifest) bleiben JSONL, weil eine Parquet-Datei
@@ -126,7 +151,10 @@ CSV nur als Export für Menschen (`georep export`). Referenzdaten bleiben im Ups
 ### 3.5 Heiße Pfade und Rust
 
 Geo-Schicht: geopandas und osmnx bringen pandas mit und werden in Phase 3 durch shapely, pyproj und
-eine direkte Overpass-Abfrage (`way[highway][name](poly:…)`) ersetzt. Treue wird gemessen: Überlappung
+eine direkte Overpass-Abfrage (`way[highway][name](poly:…)`) ersetzt. Gerechnet wird metrisch in
+`EPSG:25832` (Eingabe 4647 ist dasselbe Datum mit Zonenpräfix); POI-Punkte werden mit
+`Transformer.from_crs(..., always_xy=True)` dorthin projiziert, Containment per STRtree; nach 4326
+wird an genau einer Stelle projiziert (die Overpass-Polygone). `make_valid`, nie `buffer(0)`. Treue wird gemessen: Überlappung
 der Straßennamen je Stimmbezirk mit `reference/` muss über 95 % liegen, sonst wird die Abweichung
 verstanden und dokumentiert, bevor der Wechsel bleibt.
 
@@ -143,7 +171,7 @@ Jede Phase läuft auf einem Branch `refactor/phase-<n>`, endet mit der Definitio
 
 ### Phase 0: Netz spannen (keine Verhaltensänderung)
 
-1. `pyproject.toml` ohne Umzug: `[tool.uv] package = false`, Abhängigkeiten aus den Pins, `dependency-groups.dev` (ruff, mypy, pandas-stubs, types-requests, pytest, pytest-cov, syrupy, hypothesis, deal, nox), `[tool.ruff]` (E F I UP B, line-length 100, target py314), `[tool.mypy]` (strict, Overrides mit Begründung für geopandas, osmnx, shapely, flashtext, loguru, pandas im Altcode), `[tool.pytest.ini_options]` (`testpaths`, `--strict-markers`, Marker `slow`, `network`). `.python-version` 3.14, `uv.lock`, `requirements.txt` entfällt. Polars, pydantic, pydantic-settings, pyyaml kommen dazu; pandas, geopandas, osmnx, scikit-learn bleiben als markierte Altlast, bis Phase 3 sie entfernt.
+1. `pyproject.toml` ohne Umzug: `[tool.uv] package = false`, Abhängigkeiten aus den Pins, `dependency-groups.dev` (ruff, mypy, pandas-stubs, types-requests, pytest, pytest-cov, syrupy, hypothesis, deal, nox), `[tool.ruff]` (E F I UP B, line-length 100, target py314), `[tool.mypy]` (strict, Overrides mit Begründung für geopandas, osmnx, shapely, flashtext, loguru, pandas im Altcode), `[tool.pytest.ini_options]` (`testpaths`, `--strict-markers`, Marker `slow`, `network`). `.python-version` 3.14, `uv.lock`, `requirements.txt` entfällt. Polars, pydantic, pydantic-settings kommen dazu; pandas, geopandas, osmnx, scikit-learn bleiben als markierte Altlast, bis Phase 3 sie entfernt.
 2. venv-Ort: `UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep` dokumentiert in README und `.envrc`; der heutige Symlink `.venv` entfällt.
 3. Charakterisierungstests (`tests/golden/`, mit Polars geschrieben): Offline-Kette auf `reference/` gegen `wahlbezirke_auswertung.csv` (Treffer je Wahlbezirk exakt, Quoten `approx`), invertierter Index als Menge von (Begriff, sortierte IDs), Regressionskennzahlen auf vier Nachkommastellen (Tabelle 5). Kleine Fixture `tests/fixtures/mini/` (200 Dokumente, 3 Wahlbezirke, deterministisch aus `reference/` erzeugt, Skript liegt bei) für Tests unter 2 s; der volle Lauf als `slow`.
 4. Drei bis fünf kleine echte PDFs (je unter 150 KB) als Fixtures für `get_text_from_pdf` und den `betrifft`-Schnitt; einmalig geladen, eingecheckt, Herkunft dokumentiert.
@@ -165,7 +193,7 @@ Jede Phase läuft auf einem Branch `refactor/phase-<n>`, endet mit der Definitio
 ### Phase 2: Struktur (Strangler Fig, eine Refactoring-Sorte pro Commit)
 
 1. `src/georep/` anlegen, Paketierung mit `uv_build`, `[project.scripts]`; alte Module importieren aus `georep` (Shims).
-2. `settings.py` + `settings.yml` + `settings.local.yml`; `config.py` wird Shim und stirbt zuletzt.
+2. `settings.py` + `settings.toml` + `settings.local.toml`; `config.py` wird Shim und stirbt zuletzt.
 3. `layout.py`; `data/` → `reference/` (git mv); `data_root` gitignored; `georep bootstrap` kopiert Rohdaten und Korpus aus `reference/` nach `data_root`, damit die Offline-Kette ohne Netz läuft.
 4. Modelle (`models.py`), Spaltennamen aus den Settings, drei Module ohne hart kodierte Schlüssel. Jedes nach `georep` gezogene Modul ist Polars-nativ; der Golden Master belegt die Gleichheit mit dem pandas-Altcode.
 5. Schrittregister `pipeline.py` mit Eingaben/Ausgaben/Stamps; `cli.py` mit `run`, `steps`, `status`, `bootstrap`, `--dry-run`, `--force`.
@@ -209,6 +237,21 @@ Jede Phase läuft auf einem Branch `refactor/phase-<n>`, endet mit der Definitio
 2. Plan durch Beschreibungen ersetzen: `docs/architecture.md`, `docs/decisions.md` mit verworfenen Alternativen und Kosten, `CHANGELOG.md`.
 3. Optional ein Pull Request an `lubar102` mit den risikoschließenden Änderungen aus Phase 1, falls gewünscht.
 
+## 4a. Lehren aus bubatzblick (gesichtet 2026-10-11)
+
+Konrads Geo-Pipeline für Sichtfelder löst verwandte Aufgaben; übernommen wird:
+
+- **Konfiguration** wie dort: TOML plus pydantic `BaseSettings`, Env-Präfix, Begründungen als Kommentar neben der Zahl (§ 3.2).
+- **Ein metrisches Arbeits-CRS, eine Reprojektionsstelle, `always_xy=True`**; Treue der eigenen Projektion gegen pyproj-Referenzpunkte testen, falls je eine eigene Implementierung entsteht (§ 3.5).
+- **Cache-Schlüssel enthalten Parameterversion und Ausgabeschema**; ein Manifest weist eine Wiederaufnahme bei geänderten Eingaben ab, statt alte Teile still für fertig zu halten; Vollständigkeitsmarken (`.stamp`) statt geratener Dateinamen; Parquet-Metadaten tragen den Schlüssel (§ 3.3).
+- **Downloads seriell**, Timeout 180 s, wenige Versuche mit wachsender Wartezeit, Prüfsumme oder Magic-Bytes vor dem Übernehmen, atomar über Geschwisterdatei (Phase 3).
+- **Rust als Austausch, nicht als Umbau**: Python bleibt Orakel (`tests/test_rust_vs_reference.py`), Toleranzen werden gemessen und mit Luft als Schranke festgeschrieben, Begründung steht im Test; PyO3 + maturin für das Testorakel, Crate-Name ungleich Modulname; für den Keyword-Matcher ist der Vertrag Mengengleichheit, nicht Toleranz (Phase 5).
+- **Tests**: `pytest -n auto` (xdist), hypothesis mit kalibrierten Schranken und ausgeschriebener Begründung, Golden-Läufe auf winzigen Fixtures, Vertragstests mit Namen, die die Eigenschaft nennen (Phase 4, 6).
+- **Polars-Entscheidung dort**: geopandas blieb, weil jede Tabelle Geometrie trägt; Polars für rein tabellarische Stufen. Hier ist Geometrie klein (306 Polygone, 2010 Punkte) und gehört in shapely, alle Tabellen in Polars; GeoParquet wird nicht gebraucht.
+- **Ein Lauf druckt die Zahl, auf die er gewirkt hat**, und ein Veröffentlichungsschritt steht hinter einer Prüfkette mit atomarem Tausch (§ 3.4, Regel 4 und 6).
+
+Nicht übernommen: Make als Orchestrierung (nox reicht, keine a priori unbekannten Ausgabemengen), PBF-Diffs (wir fragen Overpass je Polygon), Kachelstufen.
+
 ## 5. Aufwand (grob, in Arbeitssitzungen von zwei bis drei Stunden)
 
 | Phase | Sitzungen |
@@ -231,7 +274,7 @@ Jede Phase läuft auf einem Branch `refactor/phase-<n>`, endet mit der Definitio
 | DataFrames und Format | Polars, Parquet für alles Abgeleitete (Konrad, 2026-10-10) | pandas und CSV: größere Verbreitung, aber langsamer, kein Lazy/Pushdown, Typen schwächer |
 | Geo-Schicht | shapely + pyproj + Overpass direkt (Phase 3) | geopandas/osmnx: weniger eigener Code, aber pandas als Pflichtabhängigkeit und ein Graphaufbau für eine Namensliste |
 | Datenlayout | `data/` → `reference/` (eingefroren), Laufzeit in `data_root` außerhalb des Repos | `data/` behalten und beschreiben lassen: jeder Lauf erzeugt Diffs, Fehlläufe überschreiben die Arbeit |
-| Settings-Format | YAML über pydantic-settings | TOML mit `tomllib` (stdlib, keine Env-Overrides, keine Validierung); JSON (keine Kommentare) |
+| Settings-Format | TOML über pydantic-settings (geändert 2026-10-11, Muster bubatzblick) | YAML (pyyaml als Abhängigkeit, kein Vorbild in Konrads Repos); JSON (keine Kommentare) |
 | Verträge | `deal` | `icontract` hat besseres Fehlerbild, aber `deal.cases` und crosshair-Pfad fehlen; mischen verboten |
 | CLI | `argparse`, `main(argv)` | typer: hübscher, zieht click und rich mit, mypy-Overhead; später austauschbar |
 | Automatisierung | `nox` + pre-commit + GitHub Actions | justfile/Makefile: einfacher, aber CI und lokal driften |
