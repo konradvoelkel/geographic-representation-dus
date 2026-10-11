@@ -367,11 +367,71 @@ def build_steps(
         write_parquet(bodies_frame, layout.bodies_table, schema_version=1)
         return bodies_summary(districts, bodies_frame)
 
+    # --- Option 06: Themen je Dokument (docs/plans/06-gewichtung.md)
+    def topics() -> str:
+        # Erst hier importieren, nicht oben: sklearn kostet rund 0,4 s Importzeit, und nur wer
+        # rechnet, soll sie zahlen (``georep status`` lädt build_steps).
+        from georep.analysis.topics import dominant_topics, fit_topics
+
+        model = fit_topics(pl.read_parquet(layout.corpus, columns=["id", "text"]), settings.topics)
+        write_parquet(model.topics, layout.topics, schema_version=1)
+        write_parquet(dominant_topics(model.shares), layout.topic_documents, schema_version=1)
+        write_parquet(model.shares, layout.topic_shares, schema_version=1)
+        words = int(model.topics.get_column("woerter").list.len().sum())
+        return (
+            f"{model.topics.height} Themen, {model.shares.height} Dokumente, "
+            f"{words} Wörter in den Beschriftungen"
+        )
+
+    # --- Option 06: Gewichtete Trefferquoten
+    def weights() -> str:
+        from georep.analysis.weights import TypeRules, term_weights, variants
+
+        with_text = int(
+            pl.scan_parquet(layout.corpus).select((pl.col("text") != "").sum()).collect().item()
+        )
+        dictionary_frame = pl.read_parquet(layout.dictionary)
+        index_frame = pl.read_parquet(layout.index)
+        frame = variants(
+            dictionary_frame,
+            index_frame,
+            pl.read_parquet(layout.corpus, columns=["id", "paper_type"]),
+            pl.read_parquet(layout.voters),
+            columns.eligible,
+            with_text,
+            [
+                TypeRules(
+                    rule_set.name,
+                    rule_set.default,
+                    tuple((rule.pattern, rule.weight) for rule in rule_set.rules),
+                )
+                for rule_set in settings.weights.paper_type
+            ],
+            settings.weights.combined,
+            pl.read_parquet(layout.topic_shares) if settings.topics.k > 0 else None,
+        )
+        write_parquet(frame, layout.weighted, schema_version=1)
+        write_parquet(
+            term_weights(dictionary_frame, index_frame, with_text),
+            layout.term_weights,
+            schema_version=1,
+        )
+        unit = frame.filter(pl.col("variante") == "einheit").get_column("anzahl_treffer_gewichtet")
+        return (
+            f"{frame.get_column('variante').n_unique()} Varianten, "
+            f"{frame.get_column('wahlkreis_id').n_unique()} Wahlbezirke, "
+            f"Einheit = {int(unit.sum())} Treffer"
+        )
+
     def report() -> str:
         return build_site(
             layout, settings, now=dt.datetime.now(dt.UTC), commit=current_commit()
         ).line()
 
+    # Option 06: ohne Themenmodell (``topics.k = 0``) fehlt der Schritt und niemand nennt seine
+    # Ausgaben als Eingabe; die zwei Tabellen der Themen sind im Register ``optional``.
+    with_topics = settings.topics.k > 0
+    topic_outputs = (layout.topics, layout.topic_documents, layout.topic_shares)
     return [
         Step(
             "opendata", (), (layout.results_csv, layout.districts_geojson), opendata, network=True
@@ -404,6 +464,8 @@ def build_steps(
             corpus,
             CORPUS_SCHEMA_VERSION,
         ),
+        # --- Option 06
+        *([Step("topics", (layout.corpus,), topic_outputs, topics)] if with_topics else []),
         Step("index", (layout.dictionary, layout.corpus), (layout.index,), index),
         Step(
             "results", (layout.dictionary, layout.index, layout.voters), (layout.results,), results
@@ -423,6 +485,14 @@ def build_steps(
             (layout.district_bodies, layout.bodies_table),
             body_hits,
         ),
+        # --- Option 06
+        Step(
+            "weights",
+            (layout.dictionary, layout.index, layout.corpus, layout.voters)
+            + ((layout.topic_shares,) if with_topics else ()),
+            (layout.weighted, layout.term_weights),
+            weights,
+        ),
         Step(
             "report",
             (
@@ -438,7 +508,11 @@ def build_steps(
                 layout.district_bodies,
                 layout.bodies_table,
                 layout.district_units,
-            ),
+                # Option 06
+                layout.weighted,
+                layout.term_weights,
+            )
+            + ((layout.topics, layout.topic_documents) if with_topics else ()),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
         ),

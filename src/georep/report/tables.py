@@ -204,6 +204,86 @@ TABLES: list[PublishedTable] = [
     ),
 ]
 
+# Option 06: Gewichtung (docs/plans/06-gewichtung.md). ``themen`` und ``themen_dokumente`` sind
+# optional, weil ``topics.k = 0`` den Schritt ``topics`` abschaltet; die Anteilsmatrix selbst bleibt
+# ein Zwischenstand unter ``interim/`` und wird nicht veröffentlicht.
+TABLES.append(
+    PublishedTable(
+        "wahlbezirke_gewichtet",
+        lambda layout: layout.weighted,
+        "Gewichtete Treffer und Quoten je Wahlbezirk, eine Zeile je Gewichtungsvariante",
+        {
+            "wahlkreis_id": DISTRICT_COLUMN,
+            "variante": (
+                "Name der Gewichtung: einheit (wie die Arbeit), bezirke, idf, ein Regelsatz der "
+                "Dokumentart, kombiniert oder thema_NN",
+                "",
+            ),
+            "anzahl_treffer_gewichtet": (
+                "Summe der Dokumentgewichte; bei der Variante einheit gleich anzahl_treffer",
+                "Dokumente",
+            ),
+            "trefferquote_gewichtet": (
+                "anzahl_treffer_gewichtet geteilt durch Wahlberechtigte_insgesamt",
+                "Dokumente je Person",
+            ),
+        },
+    )
+)
+TABLES.append(
+    PublishedTable(
+        "gewichte_begriffe",
+        lambda layout: layout.term_weights,
+        "Gewicht je Suchbegriff: in wie vielen Wahlbezirken und Dokumenten er vorkommt",
+        {
+            "suchbegriffe": ("Suchbegriff, kleingeschrieben", ""),
+            "n_bezirke": ("Wahlbezirke, deren Wörterbuch den Begriff führt", "Wahlbezirke"),
+            "anzahl_treffer": (
+                "Dokumente mit dem Begriff, wie im invertierten Index",
+                "Dokumente",
+            ),
+            "gewicht_bezirke": ("1 geteilt durch n_bezirke", "Anteil 0 bis 1"),
+            "gewicht_idf": (
+                "normierte inverse Dokumenthäufigkeit (ln N − ln df) / ln N: 1 für einen Begriff "
+                "in einem einzigen Dokument, 0 für einen in allen",
+                "Anteil 0 bis 1",
+            ),
+        },
+    )
+)
+TABLES.append(
+    PublishedTable(
+        "themen",
+        lambda layout: layout.topics,
+        "Themen des Modells (TF-IDF und NMF): die stärksten Wörter je Thema",
+        {
+            "thema": ("Nummer des Themas; sie gilt nur für diesen Datenstand", ""),
+            "woerter": (
+                "die stärksten Wörter des Themas, absteigend; sie beschreiben das Thema, "
+                "sie benennen es nicht",
+                "Liste",
+            ),
+            "dokumente": ("Dokumente, deren stärkstes Thema dieses ist", "Dokumente"),
+            "gewicht_summe": ("Summe der Themenanteile über alle Dokumente", "Dokumente"),
+        },
+        joins={"woerter": "; "},
+        optional=True,
+    )
+)
+TABLES.append(
+    PublishedTable(
+        "themen_dokumente",
+        lambda layout: layout.topic_documents,
+        "Je Dokument mit Text das stärkste Thema und sein Anteil",
+        {
+            "id": ("OParl-URL des Dokuments", ""),
+            "thema": ("Nummer des stärksten Themas", ""),
+            "anteil": ("Anteil dieses Themas am Dokument, vier Stellen", "Anteil 0 bis 1"),
+        },
+        optional=True,
+    )
+)
+
 # Nur für ``georep export`` (CSV neben der Parquet-Datei), nicht auf der Seite.
 EXPORT_ONLY: list[PublishedTable] = [
     PublishedTable(

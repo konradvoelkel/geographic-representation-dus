@@ -91,11 +91,14 @@ def test_pipeline_runs_skips_and_reruns(
         "pois": "ausgeführt",
         "dictionary": "ausgeführt",
         "corpus": "übersprungen",
+        # Option 06: topics liest nur den Korpus und der ist unverändert; weights hängt am Index
+        "topics": "übersprungen",
         "index": "ausgeführt",
         "results": "ausgeführt",
         # Option 05: bodies hängt nur am Korpus, body_hits an der geänderten Auswertung
         "bodies": "übersprungen",
         "body_hits": "ausgeführt",
+        "weights": "ausgeführt",
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")
@@ -132,6 +135,12 @@ def test_two_runs_write_identical_parquet(
         "district_bodies",
         "bodies_table",
         "district_units",
+        # Option 06: auch das Themenmodell und die Gewichte sind reproduzierbar
+        "topics",
+        "topic_documents",
+        "topic_shares",
+        "term_weights",
+        "weighted",
     ):
         assert getattr(a, name).read_bytes() == getattr(b, name).read_bytes(), name
 
