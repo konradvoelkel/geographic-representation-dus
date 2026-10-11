@@ -12,25 +12,28 @@ import json
 import math
 import statistics
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import deal
 import polars as pl
 
 from georep import __version__
+from georep.analysis import bodies
 from georep.analysis.hits import DISTRICT, RATE, TERMS
 from georep.analysis.regression import RegressionPair, regression_pair
 from georep.contracts import has_columns
-from georep.errors import SchemaError
+from georep.errors import EmptyResultError, SchemaError
 from georep.geo import Precinct, read_precincts
 from georep.layout import Layout
+from georep.prep import bodies as prep_bodies
+from georep.prep.bodies import BodyRules
 from georep.prep.voters import TURNOUT
 from georep.report.search import SearchEntry, search_entries
 from georep.report.tables import GEOJSON_COLUMNS, GEOJSON_TABLE, PublishedTable, published
 from georep.search.dictionary import all_terms
 from georep.search.index import HITS, PAPER_IDS, TERM
-from georep.settings import ResultsColumns, Settings
+from georep.settings import Bodies, ResultsColumns, Settings
 
 NARROW_NBSP = "\u202f"  # schmales geschütztes Leerzeichen: Tausender und vor dem Prozentzeichen
 TOP_TERMS = 5  # Begriffe je Wahlbezirk in Karte und Tabelle
@@ -42,6 +45,27 @@ class TermRow:
     term: str
     hits: int  # Dokumente mit mindestens einem Treffer
     districts: tuple[int, ...]  # Wahlbezirke, deren Wörterbuch den Begriff führt
+
+
+@dataclass(frozen=True)
+class DistrictBodies:
+    """Die Treffer eines Wahlbezirks nach Gremium (Option 05)."""
+
+    own: int  # aus der Bezirksvertretung eines eigenen Stadtbezirks
+    other: int  # aus einer anderen Bezirksvertretung
+    council: int
+    committee: int
+    advisory: int
+    unknown: int
+    own_share: float  # ``own`` geteilt durch alle Treffer des Bezirks
+    council_share: float
+    own_rate: float  # ``own`` je Wahlberechtigtem
+    city_districts: tuple[int, ...]  # nach Gewicht absteigend; mehr als einer ist die Ausnahme
+
+    @property
+    def shared(self) -> bool:
+        """Der Wahlbezirk liegt in mehr als einem Stadtbezirk: die Fußnote der Seite gilt für ihn."""
+        return len(self.city_districts) > 1
 
 
 @dataclass(frozen=True)
@@ -57,6 +81,8 @@ class DistrictRow:
     terms_without_hits: int
     top_terms: tuple[TermRow, ...]  # die TOP_TERMS trefferstärksten, versteckte nicht
     terms: tuple[TermRow, ...]  # alle Begriffe mit Treffer, absteigend, versteckte nicht
+    # Neue Felder mit Default am Ende: Tests bauen DistrictRow positional (Option 05)
+    bodies: DistrictBodies | None = None
 
 
 @dataclass(frozen=True)
@@ -103,6 +129,42 @@ class DataStand:
     pois_fetched: dt.date | None
 
 
+# --- Option 05: Gremien ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class BodyRow:
+    """Eine Zeile der Gremientabelle; ``name`` ist leer, wenn die Settings keinen gesicherten kennen."""
+
+    code: str  # Kürzel der Drucksachennummer, etwa BV6; leer, wenn keine Nummer passte
+    name: str
+    kind: str  # eines aus prep.bodies.KINDS
+    kind_label: str  # „Bezirksvertretung", „Rat", „Ausschuss", „Beirat", „unbekannt"
+    city_district: int | None
+    documents: int
+    with_hits: int
+    local_share: float | None  # nur Bezirksvertretungen mit Treffern
+
+    @property
+    def label(self) -> str:
+        """Was die Seite zeigt: der Name, sonst das Kürzel (Entscheidung 9)."""
+        return self.name or self.code or "ohne Drucksachennummer"
+
+
+@dataclass(frozen=True)
+class BodyFigures:
+    """Die Zahlen über dem Abschnitt „Gremien"."""
+
+    documents: int
+    by_kind: tuple[tuple[str, str, int, float], ...]  # (Klasse, Label, Dokumente, Anteil)
+    unknown_share: float
+    bodies: int  # verschiedene Kürzel
+    without_name: int  # Kürzel ohne gesicherten Namen in den Settings
+    hits: int  # Dokument-Bezirk-Paare über alle Wahlbezirke
+    own_hits: int
+    names_as_of: dt.date | None  # Stand der Namen aus den Settings
+
+
 @dataclass(frozen=True)
 class ReportModel:
     generated_at: dt.datetime
@@ -119,6 +181,10 @@ class ReportModel:
     working_crs: str
     # Option 08: die Vorschläge der Suche; leer heißt „kein Abschnitt suche" in der Vorlage.
     search: tuple[SearchEntry, ...] = ()
+    # Option 05: ohne die Tabellen der Gremien bleibt der Abschnitt weg ({% if model.bodies %})
+    bodies: tuple[BodyRow, ...] = ()
+    body_figures: BodyFigures | None = None
+    body_regression: RegressionPair | None = None
 
 
 # --- Zahlenformat -----------------------------------------------------------------------------
@@ -262,6 +328,148 @@ def district_rows(
     return tuple(rows)
 
 
+# --- Option 05: Gremien im Modell -----------------------------------------------------------------
+
+
+def _every_row_has_bodies(
+    rows: Sequence[DistrictRow], frame: pl.DataFrame, result: tuple[DistrictRow, ...] = ()
+) -> bool:
+    return all(
+        r.bodies is not None
+        and 0.0 <= r.bodies.own_share <= 1.0
+        and 0.0 <= r.bodies.council_share <= 1.0
+        and r.bodies.own
+        + r.bodies.other
+        + r.bodies.council
+        + r.bodies.committee
+        + r.bodies.advisory
+        + r.bodies.unknown
+        == r.hits
+        for r in result
+    )
+
+
+@deal.pre(
+    lambda rows, frame: has_columns(frame, DISTRICT, bodies.UNITS, *bodies.PARTS),
+    message="Kennzahlen je Wahlbezirk aus wahlbezirke_gremien.parquet",
+)
+@deal.ensure(
+    _every_row_has_bodies,
+    message="jede Zeile mit Gremien, Anteile in [0, 1], Summe gleich den Treffern",
+)
+@deal.raises(SchemaError)
+def with_bodies(rows: Sequence[DistrictRow], frame: pl.DataFrame) -> tuple[DistrictRow, ...]:
+    """Dieselben Zeilen mit gefülltem ``bodies``; ein fehlender Wahlbezirk ist ein ``SchemaError``."""
+    by_district = {int(r[DISTRICT]): r for r in frame.iter_rows(named=True)}
+    missing = sorted(r.id for r in rows if r.id not in by_district)
+    if missing:
+        raise SchemaError(f"Wahlbezirke ohne Gremien-Kennzahlen: {missing}")
+    filled: list[DistrictRow] = []
+    for row in rows:
+        values = by_district[row.id]
+        filled.append(
+            replace(
+                row,
+                bodies=DistrictBodies(
+                    own=int(values[bodies.OWN]),
+                    other=int(values[bodies.OTHER]),
+                    council=int(values[bodies.COUNCIL_HITS]),
+                    committee=int(values[bodies.COMMITTEE_HITS]),
+                    advisory=int(values[bodies.ADVISORY_HITS]),
+                    unknown=int(values[bodies.UNKNOWN_HITS]),
+                    own_share=float(values[bodies.OWN_SHARE]),
+                    council_share=float(values[bodies.COUNCIL_SHARE]),
+                    own_rate=float(values[bodies.OWN_RATE]),
+                    city_districts=tuple(int(u) for u in values[bodies.UNITS]),
+                ),
+            )
+        )
+    return tuple(filled)
+
+
+@deal.pre(
+    lambda frame, settings: has_columns(
+        frame, prep_bodies.BODY, prep_bodies.KIND, bodies.DOCUMENTS, bodies.WITH_HITS
+    )
+)
+@deal.post(
+    lambda result: all(r.kind_label and r.documents >= r.with_hits for r in result),
+    message="jede Klasse hat ein Label, Treffer sind eine Teilmenge",
+)
+def body_rows(frame: pl.DataFrame, settings: Bodies) -> tuple[BodyRow, ...]:
+    """Die Gremientabelle: Kürzel, Name aus den Settings, Klasse, Dokumente, Lokalität.
+
+    Die Namen kommen aus ``[bodies]`` (Entscheidung 9); ein Kürzel ohne gesicherten Namen steht
+    ohne, die Vorlage zeigt dann das Kürzel (``BodyRow.label``). Sortiert nach Klasse in der
+    Reihenfolge von ``KINDS``, darin nach Dokumenten absteigend.
+    """
+    rules = BodyRules.from_settings(settings)
+    order = {kind: i for i, kind in enumerate(prep_bodies.KINDS)}
+    rows = [
+        BodyRow(
+            code=str(r[prep_bodies.BODY]),
+            name=rules.name_of(
+                prep_bodies.BodyRef(
+                    str(r[prep_bodies.KIND]),
+                    str(r[prep_bodies.BODY]),
+                    None
+                    if r[prep_bodies.CITY_DISTRICT] is None
+                    else int(r[prep_bodies.CITY_DISTRICT]),
+                )
+            ),
+            kind=str(r[prep_bodies.KIND]),
+            kind_label=prep_bodies.KIND_LABELS[str(r[prep_bodies.KIND])],
+            city_district=(
+                None if r[prep_bodies.CITY_DISTRICT] is None else int(r[prep_bodies.CITY_DISTRICT])
+            ),
+            documents=int(r[bodies.DOCUMENTS]),
+            with_hits=int(r[bodies.WITH_HITS]),
+            local_share=(None if r[bodies.LOCAL_SHARE] is None else float(r[bodies.LOCAL_SHARE])),
+        )
+        for r in frame.iter_rows(named=True)
+    ]
+    return tuple(sorted(rows, key=lambda r: (order[r.kind], -r.documents, r.code)))
+
+
+def _kind_shares_add_up(result: BodyFigures) -> bool:
+    expected = 1.0 if result.documents else 0.0
+    total = sum(share for _, _, _, share in result.by_kind)
+    counted = sum(count for _, _, count, _ in result.by_kind)
+    return (
+        abs(total - expected) <= 1e-9
+        and counted == result.documents
+        and 0.0 <= result.unknown_share <= 1.0
+    )
+
+
+@deal.post(
+    _kind_shares_add_up, message="die Klassen zerlegen die Dokumente, Anteile summieren zu 1"
+)
+def body_figures(
+    rows: Sequence[BodyRow], districts: Sequence[DistrictRow], settings: Bodies
+) -> BodyFigures:
+    """Dokumente je Klasse mit Anteil, Anteil „unbekannt", Treffer und Stand der Namen."""
+    documents = sum(r.documents for r in rows)
+    per_kind = {kind: 0 for kind in prep_bodies.KINDS}
+    for row in rows:
+        per_kind[row.kind] += row.documents
+    by_kind = tuple(
+        (kind, prep_bodies.KIND_LABELS[kind], count, count / documents if documents else 0.0)
+        for kind, count in per_kind.items()
+    )
+    own = sum(d.bodies.own for d in districts if d.bodies)
+    return BodyFigures(
+        documents=documents,
+        by_kind=by_kind,
+        unknown_share=per_kind[prep_bodies.UNKNOWN] / documents if documents else 0.0,
+        bodies=len(rows),
+        without_name=sum(1 for r in rows if not r.name),
+        hits=sum(d.hits for d in districts),
+        own_hits=own,
+        names_as_of=settings.names_as_of,
+    )
+
+
 @deal.post(lambda result: _descending(result) and len(result) <= TOP_TERMS_CITY)
 def top_terms_city(counts: pl.DataFrame, hidden: Sequence[str]) -> tuple[TermRow, ...]:
     """Die trefferstärksten Begriffe stadtweit, jeder einmal, mit allen Wahlbezirken, die ihn führen."""
@@ -339,13 +547,20 @@ def build_report_model(
     hidden = tuple(settings.search.hide_in_display)
     counts = term_counts(dictionary, index)
     names = district_names(precincts)
+    # Option 05: die drei Tabellen der Gremien; die Namen kommen aus den Settings
+    district_bodies = pl.read_parquet(layout.district_bodies)
+    rows = with_bodies(
+        district_rows(results, counts, names, settings.columns.results, hidden),
+        district_bodies,
+    )
+    table = body_rows(pl.read_parquet(layout.bodies_table), settings.bodies)
     return ReportModel(
         generated_at=now,
         version=__version__,
         commit=commit,
         stand=data_stand(layout, settings),
         figures=key_figures(results, dictionary, layout.corpus, len(precincts)),
-        districts=district_rows(results, counts, names, settings.columns.results, hidden),
+        districts=rows,
         top_terms=top_terms_city(counts, hidden),
         hidden_terms=hidden,
         regression=regression_pair(results, settings.analysis.exclude_districts),
@@ -361,4 +576,18 @@ def build_report_model(
             names,
             hidden,
         ),
+        bodies=table,
+        body_figures=body_figures(table, rows, settings.bodies),
+        body_regression=_body_regression(district_bodies, results, settings),
     )
+
+
+def _body_regression(
+    district_bodies: pl.DataFrame, results: pl.DataFrame, settings: Settings
+) -> RegressionPair | None:
+    """Wahlbeteiligung gegen die Quote der eigenen Bezirksvertretung; None ohne Streuung (Mini)."""
+    frame = bodies.regression_frame(district_bodies, results)
+    try:
+        return regression_pair(frame, settings.analysis.exclude_districts, x=bodies.OWN_RATE)
+    except EmptyResultError:
+        return None

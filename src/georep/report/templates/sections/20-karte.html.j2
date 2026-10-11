@@ -4,6 +4,9 @@
 <fieldset><legend>Einfärbung</legend>
 <label><input type="radio" name="metric" value="rate" checked> Trefferquote</label>
 <label><input type="radio" name="metric" value="turnout"> Wahlbeteiligung</label>
+{% if visuals.bodies_legend %}{# Option 05 #}
+<label><input type="radio" name="metric" value="bodies"> Anteil eigene Bezirksvertretung</label>
+{% endif %}
 </fieldset>
 {% if visuals.pois %}
 <label><input type="checkbox" id="show-pois"> {{ visuals.pois|num }} Orte als Punkte zeigen</label>
@@ -16,6 +19,11 @@
 <ul>{% for entry in visuals.rate_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
 <div class="legend" id="legend-turnout" hidden><strong>Wahlbeteiligung</strong>
 <ul>{% for entry in visuals.turnout_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
+{% if visuals.bodies_legend %}{# Option 05 #}
+<div class="legend" id="legend-bodies" hidden><strong>Anteil eigene Bezirksvertretung</strong> (an allen Treffern des Bezirks)
+<ul>{% for entry in visuals.bodies_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul>
+<p class="note">Treffer aus der Bezirksvertretung des eigenen Stadtbezirks, siehe <a href="#gremien">Gremien</a>.</p></div>
+{% endif %}
 <p class="note">Klassen nach Quantilen. Zeigen oder Tippen nennt die Kennzahlen, ein Klick markiert den Bezirk auch in der Tabelle.</p>
 </div>
 </div>

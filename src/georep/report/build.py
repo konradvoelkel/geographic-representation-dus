@@ -25,6 +25,7 @@ from georep.report.charts import (
     choropleth,
     classify,
     legend,
+    own_share_label,
     project_pois,
     rate_label,
     scatter,
@@ -231,13 +232,24 @@ def build_site(
         projection,
     )
     rate_legend = legend(rate, rate_label)
+    # Option 05: dritte Kennzahl der Karte, der Anteil der eigenen Bezirksvertretung
+    own = classify({d.id: d.bodies.own_share for d in model.districts if d.bodies})
     visuals = Visuals(
-        map_svg=choropleth(model.districts, shapes, projection, rate, turnout, points),
+        map_svg=choropleth(
+            model.districts,
+            shapes,
+            projection,
+            rate,
+            turnout,
+            points,
+            extra_classes={"bodies": own},
+        ),
         scatter_svg=scatter(model.districts, model.regression),
         rate_legend=rate_legend,
         turnout_legend=legend(turnout, turnout_label),
         simplify_m=SIMPLIFY_M,
         pois=len(points),
+        bodies_legend=legend(own, own_share_label),
     )
     map_html = render_map(
         model, _map_districts(geojson, model, rate.classes), _places_geojson(pois), rate_legend
