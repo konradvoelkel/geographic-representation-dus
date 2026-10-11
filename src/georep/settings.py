@@ -180,8 +180,10 @@ class ResultsColumns(_Strict):
     parties: dict[str, str]
     city_district: str  # Option 05: Stadtbezirk je Stimmbezirk, für die Zuordnung der Wahlbezirke
     precinct: str = ""  # Option 03: Stimmbezirk in der CSV; "" = kein Crosswalk über Stimmbezirke
-    # Option 02: Wahlberechtigte mit Wahlschein je Stimmbezirk (Verteilschlüssel der Briefwahl)
-    # und der Namensmarker der Briefwahlbezirke; die Stimmbezirksnummer steht oben (Option 03).
+    # Option 02: Gebietsname je Zeile (darin steht der postal_marker der Briefwahlbezirke),
+    # Wahlberechtigte mit Wahlschein (Verteilschlüssel der Briefwahl) und der Marker selbst;
+    # die Stimmbezirksnummer steht oben (Option 03).
+    precinct_name: str = ""
     eligible_postal: str = ""
     postal_marker: str = ""
 
@@ -651,6 +653,11 @@ class Crosswalk(_Strict):
     target_file: str = (
         "Stimmbezirke_2025.geojson"  # Stimmbezirksdatei der Hauptperiode (Zielzuschnitt)
     )
+    # Eigenschaften der beiden GeoJSON-Dateien des alten Zuschnitts; ``[columns]`` beschreibt
+    # weiter den Zielzuschnitt, damit die Berichtsseite des Profils ihn unverändert liest.
+    precinct_id: str = ""  # Stimmbezirksnummer im Stimmbezirks-GeoJSON der Periode
+    district_id: str = ""  # Wahlbezirksnummer in Kommunalwahlbezirke.geojson
+    district_name: str = ""  # Wahlbezirksname dort
     min_coverage: float = 0.95  # kleinste zulässige Abdeckung einer Quellfläche durch die Ziele
 
     @field_validator("min_coverage")
@@ -749,11 +756,18 @@ class Settings(BaseSettings):
                 )
             empty = [
                 key
-                for key in ("precinct", "eligible_postal", "postal_marker")
+                for key in ("precinct", "precinct_name", "eligible_postal", "postal_marker")
                 if not getattr(columns, key)
             ]
             if empty:
                 raise ValueError(f"crosswalk.enabled braucht columns.results.{', '.join(empty)}")
+            blank = [
+                key
+                for key in ("precinct_id", "district_id", "district_name")
+                if not getattr(self.crosswalk, key)
+            ]
+            if blank:
+                raise ValueError(f"crosswalk.enabled braucht crosswalk.{', '.join(blank)}")
         elif not columns.district:
             raise ValueError(
                 "columns.results.district ist leer: der Wahlbezirk kommt dann aus der Zuordnung, "

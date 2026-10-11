@@ -78,6 +78,7 @@ voters = "Waehler"
 precinct = "gebietnr"          # Stimmbezirk, vierstellig; Schlüssel zu „Stimm-/ Wahlbezirk" im GeoJSON (Option 03, Crosswalk über Stimmbezirksflächen)
 parties = { CDU = "CDU_Stimmen", GRUENE = "GRUENE_Stimmen", SPD = "SPD_Stimmen", FDP = "FDP_Stimmen", Die_Linke = "Die_Linke_Stimmen", AfD = "AfD_Stimmen" }
 city_district = "Stadtbezirk" # Option 05: Stadtbezirk je Stimmbezirk, stimmt für alle 306 Stimmbezirke mit "Stadtbezirk Nr." des GeoJSON überein (2026-10-11)
+precinct_name = ""             # Option 02: Gebietsname je Zeile; darin steht der postal_marker der Briefwahlbezirke
 eligible_postal = ""           # Option 02: Wahlberechtigte mit Wahlschein je Stimmbezirk, Verteilschlüssel der Briefwähler
 postal_marker = ""             # Option 02: Namensbestandteil der Briefwahlbezirke (ohne Geometrie), etwa "Briefwahl"
 
@@ -509,6 +510,9 @@ organizations = []             # Volt sitzt in der Ratsfraktion SPD/Volt, hat al
 [crosswalk]                    # Umrechnung eines älteren Zuschnitts auf die Wahlbezirke der Hauptperiode (Profil "")
 enabled = false                # true nur in einem Periodenprofil (settings.2014.toml): Schritt precincts, Wähler über Flächenanteile der Stimmbezirke
 target_file = "Stimmbezirke_2025.geojson"  # Stimmbezirksdatei der Hauptperiode, aus der die Zielbezirke vereinigt werden
+precinct_id = ""               # Eigenschaft der Stimmbezirksnummer im Stimmbezirks-GeoJSON der Periode (2020: "Stimmbezchar"); [columns] beschreibt weiter den Zielzuschnitt
+district_id = ""               # Eigenschaft der Wahlbezirksnummer in Kommunalwahlbezirke.geojson (2020: "Kommunalwahlbezirk")
+district_name = ""             # Eigenschaft des Wahlbezirksnamens dort (2020: "Name")
 min_coverage = 0.95            # kleinste zulässige Abdeckung einer Quellfläche durch die Zielbezirke; 2020 auf 2025 liegt sie bei 97,8 % bis 100 % (Stadtgrenze, Rhein), weniger heißt falsches CRS
 
 [compare]                      # Vergleich zweier Perioden, Schritt compare auf der Hauptperiode

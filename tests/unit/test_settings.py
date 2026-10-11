@@ -527,9 +527,12 @@ def test_opendata_source_knows_district_files_and_the_precinct_file_name(tmp_pat
 
 def _crosswalk_profile(extra: str = "") -> str:
     return (
-        'profile = "alt"\n[period]\ndictionary = "base"\n[crosswalk]\nenabled = true\n'
-        '[columns.results]\ndistrict = ""\nprecinct = "gebiet-nr"\neligible = "A"\n'
-        'voters = "B"\neligible_postal = "A2"\npostal_marker = "Briefwahl"\n' + extra
+        'profile = "alt"\n[period]\ndictionary = "base"\n'
+        '[columns.results]\ndistrict = ""\nprecinct = "gebiet-nr"\n'
+        'precinct_name = "gebiet-name"\neligible = "A"\n'
+        'voters = "B"\neligible_postal = "A2"\npostal_marker = "Briefwahl"\n'
+        '[crosswalk]\nenabled = true\nprecinct_id = "Stimmbezchar"\n'
+        'district_id = "Kommunalwahlbezirk"\ndistrict_name = "Name"\n' + extra
     )
 
 
@@ -548,6 +551,29 @@ def test_results_without_district_column_need_crosswalk_and_precinct_keys(tmp_pa
     without_marker = _crosswalk_profile().replace('postal_marker = "Briefwahl"\n', "")
     (tmp_path / "settings.toml").write_text(without_marker, encoding="utf-8")
     with pytest.raises(ValidationError, match="postal_marker"):
+        load_settings(cwd=tmp_path)
+    without_name = _crosswalk_profile().replace('precinct_name = "gebiet-name"\n', "")
+    (tmp_path / "settings.toml").write_text(without_name, encoding="utf-8")
+    with pytest.raises(ValidationError, match="precinct_name"):
+        load_settings(cwd=tmp_path)
+
+
+def test_crosswalk_names_the_properties_of_the_old_geojson_files(tmp_path: Path) -> None:
+    """Der alte Zuschnitt bringt seine Eigenschaftsnamen mit; ``[columns]`` bleibt der Zielzuschnitt."""
+    base = load_settings(cwd=tmp_path).crosswalk
+    assert (base.precinct_id, base.district_id, base.district_name) == ("", "", "")
+    (tmp_path / "settings.toml").write_text(_crosswalk_profile(), encoding="utf-8")
+    settings = load_settings(cwd=tmp_path)
+    assert settings.crosswalk.precinct_id == "Stimmbezchar"
+    assert (settings.crosswalk.district_id, settings.crosswalk.district_name) == (
+        "Kommunalwahlbezirk",
+        "Name",
+    )
+    # Der Zielzuschnitt behält die Spalten der Hauptperiode, sonst fände die Seite keine Namen.
+    assert settings.columns.district_name == "Kommunalwahlbezirk Name"
+    without_id = _crosswalk_profile().replace('district_id = "Kommunalwahlbezirk"\n', "")
+    (tmp_path / "settings.toml").write_text(without_id, encoding="utf-8")
+    with pytest.raises(ValidationError, match="crosswalk.district_id"):
         load_settings(cwd=tmp_path)
 
 
