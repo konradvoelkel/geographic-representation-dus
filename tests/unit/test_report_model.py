@@ -91,9 +91,8 @@ def test_hidden_terms_stay_hidden_but_counted(
     results = pl.read_parquet(mini_run.results)
     counts = term_counts(pl.read_parquet(mini_run.dictionary), pl.read_parquet(mini_run.index))
     names = {d.id: d.name for d in model.districts}
-    columns = default_settings.columns.results
     strongest = model.districts[0].top_terms[0].term
-    rows = district_rows(results, counts, names, columns, hidden=(strongest,))
+    rows = district_rows(results, counts, names, hidden=(strongest,))
     first, before = rows[0], model.districts[0]
     assert strongest not in [t.term for t in first.terms]
     assert first.terms_total == before.terms_total  # zählt weiter
@@ -200,11 +199,10 @@ def test_district_rows_need_a_name_for_every_district(default_settings: Settings
     counts = pl.DataFrame(
         {"wahlkreis_id": [1], "suchbegriffe": ["allee"], "anzahl_treffer": [2], "districts": [[1]]}
     )
-    columns = default_settings.columns.results
-    rows = district_rows(results, counts, {1: "Eins"}, columns, hidden=())
+    rows = district_rows(results, counts, {1: "Eins"}, hidden=())
     assert rows[0].name == "Eins" and rows[0].top_terms[0].term == "allee"
     with pytest.raises(SchemaError, match="ohne Geometrie"):
-        district_rows(results, counts, {2: "Zwei"}, columns, hidden=())
+        district_rows(results, counts, {2: "Zwei"}, hidden=())
 
 
 def test_stamp_written_reads_the_date_or_nothing(tmp_path: Path) -> None:

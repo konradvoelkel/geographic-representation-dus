@@ -36,7 +36,7 @@ from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
 from georep.prep.bodies import ID, REFERENCE, BodyRules, classify_papers
 from georep.prep.extract import extract_text
-from georep.prep.voters import aggregate_voters, read_results_csv
+from georep.prep.voters import ELIGIBLE_TOTAL, aggregate_voters, read_results_csv
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index, total_hits
 from georep.search.matcher import make_matcher
@@ -131,11 +131,11 @@ def test_build_dictionary(benchmark: BenchmarkFixture, mini: MiniRun) -> None:
 
 
 def test_hits_and_voter_join(benchmark: BenchmarkFixture, mini: MiniRun) -> None:
-    search, columns = mini.settings.search, mini.settings.columns.results
+    search = mini.settings.search
 
     def run() -> pl.DataFrame:
         hits = hits_by_district(mini.dictionary, mini.index, search.hide_in_display)
-        return join_voters(hits, mini.voters, columns.eligible)
+        return join_voters(hits, mini.voters, ELIGIBLE_TOTAL)
 
     assert benchmark(run).height == 3
 

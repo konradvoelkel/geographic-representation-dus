@@ -49,7 +49,12 @@ from georep.prep.extract import extract_missing
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus, documents_with_text
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
 from georep.prep.streets import read_streets_json, streets_by_district
-from georep.prep.voters import aggregate_voters, district_units, read_results_csv
+from georep.prep.voters import (
+    ELIGIBLE_TOTAL,
+    aggregate_voters,
+    district_units,
+    read_results_csv,
+)
 from georep.report.build import MAP_NAME, SCHEMA_NAME, build_site, current_commit
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
@@ -419,7 +424,7 @@ def build_steps(
             pl.read_parquet(layout.index),
             settings.search.hide_in_display,
         )
-        frame = join_voters(hits, pl.read_parquet(layout.voters), columns.eligible)
+        frame = join_voters(hits, pl.read_parquet(layout.voters), ELIGIBLE_TOTAL)
         write_parquet(frame, layout.results, schema_version=1)
         return (
             f"{frame.height} Wahlbezirke, {int(frame.get_column('anzahl_treffer').sum())} Treffer"

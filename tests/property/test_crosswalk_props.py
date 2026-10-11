@@ -9,7 +9,8 @@ import pytest
 import shapely
 from hypothesis import given
 from hypothesis import strategies as st
-from shapely.geometry import Polygon, box
+from shapely.geometry import box
+from shapely.geometry.base import BaseGeometry
 
 from georep.crosswalk import (
     area_shares,
@@ -205,7 +206,7 @@ def _cells(xs: list[int], ys: list[int]) -> list[Area]:
 
 
 def _merged(cells: list[Area], groups: dict[str, str]) -> list[Area]:
-    parts: dict[str, list[Polygon]] = {}
+    parts: dict[str, list[BaseGeometry]] = {}
     for cell in cells:
         parts.setdefault(groups[cell.key], []).append(cell.geometry)
     return [Area(key, shapely.unary_union(p)) for key, p in sorted(parts.items())]

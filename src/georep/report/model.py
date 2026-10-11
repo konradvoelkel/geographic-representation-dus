@@ -55,7 +55,7 @@ from georep.layout import Layout
 from georep.prep import bodies as prep_bodies
 from georep.prep.bodies import BodyRules
 from georep.prep.context import read_indicators
-from georep.prep.voters import TURNOUT
+from georep.prep.voters import ELIGIBLE_TOTAL, TURNOUT, VOTERS
 from georep.report.search import SearchEntry, search_entries
 from georep.report.tables import GEOJSON_COLUMNS, GEOJSON_TABLE, PublishedTable, published
 from georep.search.dictionary import all_terms
@@ -66,7 +66,6 @@ from georep.settings import (
     ContextDataset,
     ContextSettings,
     Party,
-    ResultsColumns,
     Settings,
     Weights,
 )
@@ -542,13 +541,13 @@ def _descending(rows: Sequence[TermRow]) -> bool:
 
 
 @deal.pre(
-    lambda results, counts, names, columns, hidden: (
-        has_columns(results, DISTRICT, HITS, RATE, TURNOUT, columns.eligible, columns.voters)
+    lambda results, counts, names, hidden: (
+        has_columns(results, DISTRICT, HITS, RATE, TURNOUT, ELIGIBLE_TOTAL, VOTERS)
         and has_columns(counts, DISTRICT, TERM, HITS, "districts")
     )
 )
 @deal.ensure(
-    lambda results, counts, names, columns, hidden, result: len(result) == results.height,
+    lambda results, counts, names, hidden, result: len(result) == results.height,
     message="eine Zeile je Wahlbezirk der Auswertung",
 )
 @deal.post(lambda result: all(r.name and r.rate >= 0 and 0 <= r.turnout <= 1 for r in result))
@@ -561,7 +560,6 @@ def district_rows(
     results: pl.DataFrame,
     counts: pl.DataFrame,
     names: Mapping[int, str],
-    columns: ResultsColumns,
     hidden: Sequence[str],
 ) -> tuple[DistrictRow, ...]:
     missing = sorted(set(results.get_column(DISTRICT)) - set(names))
@@ -580,8 +578,8 @@ def district_rows(
                 id=int(row[DISTRICT]),
                 name=names[int(row[DISTRICT])],
                 hits=int(row[HITS]),
-                eligible=int(row[columns.eligible]),
-                voters=int(row[columns.voters]),
+                eligible=int(row[ELIGIBLE_TOTAL]),
+                voters=int(row[VOTERS]),
                 turnout=float(row[TURNOUT]),
                 rate=float(row[RATE]),
                 terms_total=mine.height,
@@ -1125,7 +1123,7 @@ def build_report_model(
     # Option 05: die drei Tabellen der Gremien; die Namen kommen aus den Settings
     district_bodies = pl.read_parquet(layout.district_bodies)
     rows = with_bodies(
-        district_rows(results, counts, names, settings.columns.results, hidden),
+        district_rows(results, counts, names, hidden),
         district_bodies,
     )
     table = body_rows(pl.read_parquet(layout.bodies_table), settings.bodies)
