@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import polars as pl
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
@@ -176,3 +177,21 @@ def test_contracts_setting_reaches_deal(project: Path, capsys: pytest.CaptureFix
     assert "Verträge on" in capsys.readouterr().out
     with pytest.raises(deal.PreContractError):
         positive(-1)
+
+
+def test_regress_prints_a_line_per_weighting_variant(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Option 06: ``--varianten`` druckt die Sensitivitätstabelle als Text, ohne die Seite zu bauen."""
+    main(["bootstrap"])
+    main(["run"])
+    capsys.readouterr()
+    assert main(["regress", "--varianten"]) == 0
+    out = capsys.readouterr().out
+    variants = pl.read_parquet(
+        Layout.from_settings(load_settings(cwd=project)).weighted
+    ).get_column("variante")
+    for name in variants.unique().to_list():
+        assert f"{name} " in out
+    assert out.count("Summe") == variants.n_unique()
+    assert "rho=1.000" in out  # die Einheitsvariante ordnet wie die ungewichtete Quote
