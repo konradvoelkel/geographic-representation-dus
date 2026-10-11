@@ -45,10 +45,13 @@ dev = [
 ]
 notebook = ["jupyterlab"]
 
+[build-system]
+# uv_build packt nur src/georep/; der Altcode in src/*.py bleibt als `src.*` importierbar
+# (Repo-Wurzel auf dem Pfad), bis die Strangler Fig ihn ersetzt hat.
+requires = ["uv_build>=0.12,<0.13"]
+build-backend = "uv_build"
+
 [tool.uv]
-# Noch kein installierbares Paket: der Altcode liegt flach in src/ und wird als `src.*` importiert.
-# Phase 2 legt src/georep/ an und schaltet auf uv_build um.
-package = false
 default-groups = ["dev"]
 
 [tool.ruff]
@@ -76,9 +79,9 @@ python_version = "3.14"
 strict = true
 warn_redundant_casts = true
 warn_unused_ignores = true
-# Strict gilt fuer neuen Code (tests/, ab Phase 2 src/georep/). Der Altcode src/*.py wird in der
+# Strict gilt fuer neuen Code (src/georep/, tests/). Der Altcode src/*.py wird in der
 # nox-Session `baseline` gegen die Zahl aus docs/baseline-2026-10-10.md geprueft: nicht schlechter.
-files = ["tests"]
+files = ["src/georep", "tests"]
 
 [[tool.mypy.overrides]]
 # Ohne Stubs und ohne py.typed, Stand 2026-10-10. flashtext (letzte Version 2018) bleibt bis zum
