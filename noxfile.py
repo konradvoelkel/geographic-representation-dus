@@ -82,6 +82,7 @@ VERIFY_TARGETS = [
     "georep.report.search.canonical_term",
     "georep.report.charts.nice_ticks",
     "georep.prep.bodies.parse_reference",  # Option 05
+    "georep.prep.context.ordinal_score",  # Option 03
     "tests.property.oracle_matcher.oracle_extract",
 ]
 
