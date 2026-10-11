@@ -6,6 +6,9 @@ import pytest
 from syrupy.assertion import SnapshotAssertion
 
 from georep.cli import main
+from georep.layout import Layout
+from georep.pipeline import build_steps
+from georep.settings import load_settings
 
 
 @pytest.fixture
@@ -24,16 +27,26 @@ def test_steps_lists_the_chain(project: Path, capsys: pytest.CaptureFixture[str]
     assert "results" in out and "inverted_index.parquet" in out
 
 
+def _step_counts(project: Path) -> tuple[int, int]:
+    """(Offline-Schritte, Netzschritte) aus dem Register, damit neue Schritte keine Literale brechen."""
+    settings = load_settings(cwd=project)
+    steps = build_steps(settings, Layout.from_settings(settings))
+    network = sum(1 for s in steps if s.network)
+    return len(steps) - network, network
+
+
 def test_bootstrap_run_status_export_regress(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     assert main(["bootstrap"]) == 0
     assert "200 Paper und 200 Texte" in capsys.readouterr().out
+    offline, network = _step_counts(project)
     assert main(["run", "--dry-run"]) == 0
-    assert "5 übersprungen, 9 geplant" in capsys.readouterr().out
+    assert f"{network} übersprungen, {offline} geplant" in capsys.readouterr().out
     assert main(["run"]) == 0
     out = capsys.readouterr().out
-    assert "9 ausgeführt, 5 übersprungen" in out and "report       ausgeführt" in out
+    assert f"{offline} ausgeführt, {network} übersprungen" in out
+    assert "report       ausgeführt" in out
     assert (project / "data" / "site" / "index.html").exists()
     assert main(["status"]) == 0
     status = capsys.readouterr().out
@@ -130,11 +143,13 @@ def test_profile_writes_one_file_per_offline_step(
     assert main(["profile", "--out", "prof", "--top", "3"]) == 0
     out = capsys.readouterr().out
     assert "voters       ausgeführt    erzwungen; 3 Wahlbezirke" in out
-    assert out.count("function calls") == 9 and out.count("Anzeige: uv run snakeviz") == 9
-    assert len(list((project / "prof").glob("*.prof"))) == 9
+    offline, _ = _step_counts(project)
+    assert out.count("function calls") == offline
+    assert out.count("Anzeige: uv run snakeviz") == offline
+    assert len(list((project / "prof").glob("*.prof"))) == offline
     assert main(["profile", "opendata", "--out", "prof"]) == 0
     assert "Netz aus" in capsys.readouterr().out
-    assert len(list((project / "prof").glob("*.prof"))) == 9
+    assert len(list((project / "prof").glob("*.prof"))) == offline
 
 
 def test_contracts_setting_reaches_deal(project: Path, capsys: pytest.CaptureFixture[str]) -> None:

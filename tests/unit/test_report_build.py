@@ -22,7 +22,7 @@ from georep.report.build import (
 from georep.report.tables import GEOJSON_COLUMNS, csv_plan, published
 
 
-def test_site_has_index_map_and_fifteen_download_files(mini_run: Layout) -> None:
+def test_site_has_index_map_and_every_download_file(mini_run: Layout) -> None:
     assert mini_run.site_index.is_file() and (mini_run.site / MAP_NAME).is_file()
     names = sorted(p.name for p in mini_run.site_data.iterdir())
     tables = published(mini_run)
@@ -31,7 +31,7 @@ def test_site_has_index_map_and_fifteen_download_files(mini_run: Layout) -> None
         + [f"{t.name}.csv" for t in tables]
         + [GEOJSON_NAME, SCHEMA_NAME, DOCUMENTS_NAME]
     )
-    assert names == expected and len(names) == 2 * len(tables) + 3 == 15
+    assert names == expected and len(names) == 2 * len(tables) + 3
     assert mini_run.site_index.with_name("index.html.stamp.json").is_file()
 
 

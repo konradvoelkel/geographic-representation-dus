@@ -12,6 +12,7 @@ from georep.bootstrap import bootstrap
 from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.pipeline import Outcome, UnknownStepError, build_steps, run_pipeline
+from georep.report.tables import published
 from georep.settings import Settings, load_settings
 
 NETWORK = {"opendata", "papers", "pdfs", "streets_osm", "pois_wiki"}
@@ -53,7 +54,8 @@ def test_pipeline_runs_skips_and_reruns(
         return {o.step: o.status for o in outcomes if o.step not in NETWORK}
 
     planned = run_pipeline(steps, settings, dry_run=True)
-    assert set(offline(planned).values()) == {"geplant"} and len(offline(planned)) == 9
+    n_offline = sum(1 for s in steps if not s.network)
+    assert set(offline(planned).values()) == {"geplant"} and len(offline(planned)) == n_offline
     assert all(
         o.status == "übersprungen" and "Netz aus" in o.reason for o in planned if o.step in NETWORK
     )
@@ -129,8 +131,8 @@ def test_pipeline_reproduces_the_thesis_results(
     assert all(o.status == "ausgeführt" for o in outcomes if o.step not in NETWORK)
     page = layout.site_index.read_text(encoding="utf-8")
     assert "41 Kommunalwahlbezirke" in page and page.count('id="bezirk-') == 41
-    assert layout.site_index.stat().st_size < 3_000_000
-    assert len(list(layout.site_data.iterdir())) == 15
+    assert layout.site_index.stat().st_size < 1_500_000  # Budget der Seite, Meta-Plan 2026-10 § 2
+    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 3
     assert (layout.site / "karte.html").stat().st_size < 1_000_000
     _compare_results(
         _results_as_legacy(layout.results),
