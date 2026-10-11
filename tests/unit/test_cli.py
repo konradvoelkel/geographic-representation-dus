@@ -133,3 +133,26 @@ def test_profile_writes_one_file_per_offline_step(
     assert main(["profile", "opendata", "--out", "prof"]) == 0
     assert "Netz aus" in capsys.readouterr().out
     assert len(list((project / "prof").glob("*.prof"))) == 8
+
+
+def test_contracts_setting_reaches_deal(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    import deal
+
+    @deal.pre(lambda x: x > 0)
+    def positive(x: int) -> int:
+        return x
+
+    settings = project / "settings.toml"
+    settings.write_text(
+        settings.read_text(encoding="utf-8") + 'contracts = "off"\n', encoding="utf-8"
+    )
+    assert main(["status"]) == 0
+    assert "Verträge off" in capsys.readouterr().out
+    assert positive(-1) == -1
+    settings.write_text(
+        settings.read_text(encoding="utf-8").replace('"off"', '"on"'), encoding="utf-8"
+    )
+    assert main(["status"]) == 0
+    assert "Verträge on" in capsys.readouterr().out
+    with pytest.raises(deal.PreContractError):
+        positive(-1)

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from pathlib import Path
 
+import deal
 import pytest
 from hypothesis import HealthCheck
 from hypothesis import settings as hypothesis_settings
@@ -28,6 +30,13 @@ REPO = Path(__file__).resolve().parents[1]
 REFERENCE = REPO / "reference"
 MINI = REPO / "tests" / "fixtures" / "mini"
 PDF_FIXTURES = REPO / "tests" / "fixtures" / "pdf"
+
+
+@pytest.fixture(autouse=True)
+def _reset_contracts() -> Iterator[None]:
+    """deal schaltet prozessweit; ein Test, der Verträge abschaltet, darf keinen anderen anstecken."""
+    yield
+    deal.reset()
 
 
 @pytest.fixture(scope="session")

@@ -17,6 +17,7 @@ from loguru import logger
 from georep import __version__
 from georep.analysis.regression import regress
 from georep.bootstrap import bootstrap
+from georep.contracts import configure as configure_contracts
 from georep.errors import GeorepError
 from georep.export import export_csv
 from georep.layout import Layout
@@ -122,7 +123,10 @@ def _cmd_steps(settings: Settings, layout: Layout) -> int:
 
 
 def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
-    print(f"georep {__version__}, Settings-Fingerprint {settings.fingerprint()}")
+    print(
+        f"georep {__version__}, Settings-Fingerprint {settings.fingerprint()}, "
+        f"Verträge {settings.contracts}"
+    )
     files = settings_files(args.settings)
     print("Settings:   defaults.toml" + "".join(f" < {p}" for p in files))
     print(f"data_root:  {layout.data_root.resolve()}")
@@ -187,6 +191,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         settings = load_settings(explicit=args.settings)
         _setup_logging(settings.log_level)
+        configure_contracts(settings.contracts)
         layout = Layout.from_settings(settings)
         if args.command in ("run", "fetch"):
             return _cmd_run(args, settings, layout)
