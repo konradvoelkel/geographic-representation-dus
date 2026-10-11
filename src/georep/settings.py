@@ -211,6 +211,14 @@ class Geo(_Strict):
 
 
 class ResultsColumns(_Strict):
+    """Die Spalten der Wahlergebnis-CSV dieser Stadt und ihre Abbildung auf die Namen der Arbeit.
+
+    ``parties`` bildet den Schlüssel der Auswertung (``CDU``, ``GRUENE``, …) auf die Quellspalte ab
+    (Düsseldorf ``CDU_Stimmen``, votemanager ``D1``); ``party_names`` nennt den Anzeigenamen, wo er
+    vom Schlüssel abweicht. Den Wahlbezirk führt entweder eine Spalte (``district``) oder er steckt
+    in der Stimmbezirksnummer (``district_from_precinct``), Option 01.
+    """
+
     sep: str = ";"
     encoding: str = "latin-1"
     district: str = ""  # leer: der Wahlbezirk kommt aus der Zuordnung des Crosswalks (Option 02)

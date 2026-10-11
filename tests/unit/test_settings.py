@@ -747,6 +747,11 @@ def test_the_default_profile_keeps_every_value_of_the_thesis(tmp_path: Path) -> 
     assert precincts.id_property == "Stimm-/ Wahlbezirk"
     assert precincts.district_property == "Kommunalwahlbezirk Nr."
     assert precincts.name_property == "Kommunalwahlbezirk Name"
+    assert columns.results.party_names == {
+        "GRUENE": "Bündnis 90/Die Grünen",
+        "Die_Linke": "Die Linke",
+    }
+    assert columns.results.precinct == "gebietnr"
     assert settings.search.text_split_marker == "betrifft"
     assert settings.search.hide_in_display == ["schulweg"]
     assert len(settings.search.exclude) == 63 and "Düsseldorf" in settings.search.exclude

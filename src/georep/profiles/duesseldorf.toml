@@ -153,6 +153,7 @@ eligible = "Wahlberechtigte_insgesamt"
 voters = "Waehler"
 precinct = "gebietnr"          # Stimmbezirk, vierstellig; Schlüssel zu „Stimm-/ Wahlbezirk" im GeoJSON (Option 03, Crosswalk über Stimmbezirksflächen)
 parties = { CDU = "CDU_Stimmen", GRUENE = "GRUENE_Stimmen", SPD = "SPD_Stimmen", FDP = "FDP_Stimmen", Die_Linke = "Die_Linke_Stimmen", AfD = "AfD_Stimmen" }
+party_names = { GRUENE = "Bündnis 90/Die Grünen", Die_Linke = "Die Linke" }  # Option 01: Anzeigenamen auf der Seite und in der Spaltendoku
 city_district = "Stadtbezirk" # Option 05: Stadtbezirk je Stimmbezirk, stimmt für alle 306 Stimmbezirke mit "Stadtbezirk Nr." des GeoJSON überein (2026-10-11)
 precinct_name = ""             # Option 02: Gebietsname je Zeile; darin steht der postal_marker der Briefwahlbezirke
 eligible_postal = ""           # Option 02: Wahlberechtigte mit Wahlschein je Stimmbezirk, Verteilschlüssel der Briefwähler

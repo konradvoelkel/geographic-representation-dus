@@ -15,11 +15,11 @@ from pydantic import ValidationError
 from georep.errors import SchemaError
 from georep.prep.voters import (
     DISTRICT,
-    ELIGIBLE,
+    ELIGIBLE_TOTAL,
     TURNOUT,
     VOTERS,
     aggregate_voters,
-    canonical_columns,
+    canonical_names,
     read_results_csv,
 )
 from georep.settings import ResultsColumns, Settings, load_settings
@@ -30,6 +30,7 @@ VOTEMANAGER = ResultsColumns(
     encoding="utf-8",
     precinct="gebiet-nr",
     district_from_precinct=(1, 3),
+    city_district="",  # votemanager führt keinen Stadtbezirk (Option 05 rechnet auf dem Ziel)
     eligible="A",
     voters="B",
     parties={"CDU": "D1", "SPD": "D2", "GRUENE": "D3"},
@@ -53,15 +54,15 @@ def _csv(tmp_path: Path, rows: tuple[str, ...] = ROWS, header: str = HEADER) -> 
 
 
 def test_canonical_columns_are_the_names_of_the_thesis(default_settings: Settings) -> None:
-    assert canonical_columns(VOTEMANAGER) == {
-        "A": ELIGIBLE,
+    assert canonical_names(VOTEMANAGER) == {
+        "A": ELIGIBLE_TOTAL,
         "B": VOTERS,
         "D1": "CDU_Stimmen",
         "D2": "SPD_Stimmen",
         "D3": "GRUENE_Stimmen",
     }
     # Für Düsseldorf ist die Umbenennung die Identität; der Golden Master merkt nichts davon
-    duesseldorf = canonical_columns(default_settings.columns.results)
+    duesseldorf = canonical_names(default_settings.columns.results)
     assert all(source == target for source, target in duesseldorf.items())
 
 
@@ -69,7 +70,7 @@ def test_votemanager_rows_aggregate_to_the_canonical_table(tmp_path: Path) -> No
     frame = aggregate_voters(read_results_csv(_csv(tmp_path), VOTEMANAGER), VOTEMANAGER)
     assert frame.columns == [
         DISTRICT,
-        ELIGIBLE,
+        ELIGIBLE_TOTAL,
         VOTERS,
         "CDU_Stimmen",
         "SPD_Stimmen",
@@ -81,10 +82,10 @@ def test_votemanager_rows_aggregate_to_the_canonical_table(tmp_path: Path) -> No
     ]
     rows = {row[DISTRICT]: row for row in frame.iter_rows(named=True)}
     assert sorted(rows) == [4, 22]
-    assert rows[4][ELIGIBLE] == 2200  # die Briefwahlzeile trägt keine Wahlberechtigten
+    assert rows[4][ELIGIBLE_TOTAL] == 2200  # die Briefwahlzeile trägt keine Wahlberechtigten
     assert rows[4][VOTERS] == 1400 and rows[4]["CDU_Stimmen"] == 600
     assert rows[4][TURNOUT] == pytest.approx(1400 / 2200)
-    assert rows[22][ELIGIBLE] == 800 and rows[22]["GRUENE_Stimmen"] == 96
+    assert rows[22][ELIGIBLE_TOTAL] == 800 and rows[22]["GRUENE_Stimmen"] == 96
 
 
 def test_a_results_csv_without_the_precinct_column_says_so(tmp_path: Path) -> None:
@@ -101,10 +102,10 @@ def test_a_byte_order_mark_does_not_become_part_of_the_first_column(tmp_path: Pa
 
 
 def test_results_columns_demand_exactly_one_way_to_the_district() -> None:
-    with pytest.raises(ValidationError, match="district_from_precinct"):
-        ResultsColumns(eligible="A", voters="B", parties={"CDU": "D1"})
+    # Ohne beides ordnet der Crosswalk zu; das prüft Settings als Ganzes (Option 02), nicht hier
     with pytest.raises(ValidationError, match="district_from_precinct"):
         ResultsColumns(
+            city_district="",
             district="Wahlbezirk",
             precinct="gebiet-nr",
             district_from_precinct=(1, 3),
@@ -114,7 +115,11 @@ def test_results_columns_demand_exactly_one_way_to_the_district() -> None:
         )
     with pytest.raises(ValidationError, match="precinct"):
         ResultsColumns(
-            district_from_precinct=(1, 3), eligible="A", voters="B", parties={"CDU": "D1"}
+            city_district="",
+            district_from_precinct=(1, 3),
+            eligible="A",
+            voters="B",
+            parties={"CDU": "D1"},
         )
 
 
