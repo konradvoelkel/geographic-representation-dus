@@ -11,7 +11,7 @@ from hypothesis import HealthCheck
 from hypothesis import settings as hypothesis_settings
 
 from georep.bootstrap import bootstrap
-from georep.geo import read_precincts
+from georep.geo import read_canonical_precincts
 from georep.io import write_json
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
@@ -135,7 +135,9 @@ def mini_model(mini_run: Layout, default_settings: Settings) -> ReportModel:
 
 @pytest.fixture(scope="session")
 def mini_visuals(mini_model: ReportModel, mini_run: Layout, default_settings: Settings) -> Visuals:
-    precincts = read_precincts(mini_run.precincts_geojson, default_settings.geo.working_crs)
+    precincts = read_canonical_precincts(
+        mini_run.precincts_geojson, default_settings.geo.working_crs
+    )
     shapes = district_shapes(precincts)
     projection = fit(bounds_of(shapes), 600.0)
     rate = classify({d.id: d.rate for d in mini_model.districts})

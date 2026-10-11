@@ -22,6 +22,13 @@ from georep.analysis.ols import MODELS_SCHEMA
 from georep.crosswalk import UNIT, UNIT_NAME, WEIGHT
 from georep.layout import Layout
 from georep.prep.context import MISSING_SUFFIX
+from georep.prep.voters import (
+    ELIGIBLE_TOTAL,
+    TURNOUT,
+    VOTERS,
+    party_column,
+    party_share,
+)
 from georep.settings import Settings
 
 
@@ -47,25 +54,54 @@ class PublishedTable:
         return self.describe(settings) if self.describe is not None else self.columns
 
 
-DISTRICT_COLUMN = ("Nummer des Kommunalwahlbezirks (1 bis 41)", "")
+# Option 01: ohne Spannweite — wie viele Wahlbezirke es gibt, steht in den Kernzahlen und ist je
+# Stadt verschieden.
+DISTRICT_COLUMN = ("Nummer des Kommunalwahlbezirks", "")
 _VOTER_COLUMNS: dict[str, tuple[str, str]] = {
     "wahlkreis_id": DISTRICT_COLUMN,
-    "Wahlberechtigte_insgesamt": ("Wahlberechtigte, Summe über die Stimmbezirke", "Personen"),
-    "Waehler": ("Wählerinnen und Wähler, Summe über die Stimmbezirke", "Personen"),
-    "CDU_Stimmen": ("Stimmen für die CDU", "Stimmen"),
-    "GRUENE_Stimmen": ("Stimmen für Bündnis 90/Die Grünen", "Stimmen"),
-    "SPD_Stimmen": ("Stimmen für die SPD", "Stimmen"),
-    "FDP_Stimmen": ("Stimmen für die FDP", "Stimmen"),
-    "Die_Linke_Stimmen": ("Stimmen für Die Linke", "Stimmen"),
-    "AfD_Stimmen": ("Stimmen für die AfD", "Stimmen"),
-    "wahlbeteiligung": ("Wähler geteilt durch Wahlberechtigte", "Anteil 0 bis 1"),
-    "CDU_anteil": ("Stimmenanteil der CDU an den Wählern", "Anteil 0 bis 1"),
-    "GRUENE_anteil": ("Stimmenanteil von Bündnis 90/Die Grünen an den Wählern", "Anteil 0 bis 1"),
-    "SPD_anteil": ("Stimmenanteil der SPD an den Wählern", "Anteil 0 bis 1"),
-    "FDP_anteil": ("Stimmenanteil der FDP an den Wählern", "Anteil 0 bis 1"),
-    "Die_Linke_anteil": ("Stimmenanteil von Die Linke an den Wählern", "Anteil 0 bis 1"),
-    "AfD_anteil": ("Stimmenanteil der AfD an den Wählern", "Anteil 0 bis 1"),
+    ELIGIBLE_TOTAL: ("Wahlberechtigte, Summe über die Stimmbezirke", "Personen"),
+    VOTERS: ("Wählerinnen und Wähler, Summe über die Stimmbezirke", "Personen"),
+    TURNOUT: ("Wähler geteilt durch Wahlberechtigte", "Anteil 0 bis 1"),
 }
+
+
+# Option 01: welche Parteien es gibt, weiß erst das Profil; die Spaltendoku entsteht daraus.
+def party_columns(settings: Settings) -> dict[str, tuple[str, str]]:
+    """Spaltendoku der Parteispalten aus ``columns.results``: Stimmen und Anteil je Partei."""
+    columns = settings.columns.results
+    docs: dict[str, tuple[str, str]] = {}
+    for party in columns.parties:
+        name = columns.display_name(party)
+        docs[party_column(party)] = (f"Stimmen für {name}", "Stimmen")
+        docs[party_share(party)] = (f"Stimmenanteil von {name} an den Wählern", "Anteil 0 bis 1")
+    return docs
+
+
+def voter_columns(settings: Settings) -> dict[str, tuple[str, str]]:
+    """Die Wählertabelle: Zählgrößen, Parteien dieser Stadt, Beteiligung und Anteile."""
+    return {**_VOTER_COLUMNS, **party_columns(settings)}
+
+
+def results_columns(settings: Settings) -> dict[str, tuple[str, str]]:
+    """Die Auswertung je Wahlbezirk: Treffer und Begriffe, dazu die Wählerspalten."""
+    return {
+        "wahlkreis_id": DISTRICT_COLUMN,
+        "suchbegriffe": (
+            "Begriffe des Wörterbuchs, wie die Arbeit sie anzeigt (ohne die versteckten)",
+            "Liste",
+        ),
+        "paper_ids": ("OParl-URLs der Dokumente mit mindestens einem Treffer", "Liste"),
+        "anzahl_treffer": (
+            "Dokumente mit mindestens einem Treffer, Länge von paper_ids",
+            "Dokumente",
+        ),
+        **{k: v for k, v in voter_columns(settings).items() if k != "wahlkreis_id"},
+        "trefferquote": (
+            "anzahl_treffer geteilt durch Wahlberechtigte_insgesamt",
+            "Dokumente je Person",
+        ),
+    }
+
 
 # Reihenfolge = Reihenfolge der Downloads auf der Seite. Neue Einträge hängen Optionen unten an.
 TABLES: list[PublishedTable] = [
@@ -73,24 +109,9 @@ TABLES: list[PublishedTable] = [
         "wahlbezirke_auswertung",
         lambda layout: layout.results,
         "Auswertung je Wahlbezirk: Treffer, Begriffe, Dokument-IDs, Wähler, Trefferquote",
-        {
-            "wahlkreis_id": DISTRICT_COLUMN,
-            "suchbegriffe": (
-                "Begriffe des Wörterbuchs, wie die Arbeit sie anzeigt (ohne die versteckten)",
-                "Liste",
-            ),
-            "paper_ids": ("OParl-URLs der Dokumente mit mindestens einem Treffer", "Liste"),
-            "anzahl_treffer": (
-                "Dokumente mit mindestens einem Treffer, Länge von paper_ids",
-                "Dokumente",
-            ),
-            **{k: v for k, v in _VOTER_COLUMNS.items() if k != "wahlkreis_id"},
-            "trefferquote": (
-                "anzahl_treffer geteilt durch Wahlberechtigte_insgesamt",
-                "Dokumente je Person",
-            ),
-        },
+        {},
         joins={"suchbegriffe": "; ", "paper_ids": ";"},
+        describe=results_columns,
     ),
     PublishedTable(
         "inverted_index",
@@ -121,7 +142,8 @@ TABLES: list[PublishedTable] = [
         "wahlbezirke_waehler",
         lambda layout: layout.voters,
         "Wahlergebnis der Ratswahl dieser Wahlperiode je Wahlbezirk; der Wahltag steht im Datenstand",
-        dict(_VOTER_COLUMNS),
+        {},
+        describe=voter_columns,
     ),
     PublishedTable(
         "wikidata_vis",

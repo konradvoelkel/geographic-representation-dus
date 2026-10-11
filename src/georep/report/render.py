@@ -26,33 +26,16 @@ from georep.report.search import search_payload
 REPOSITORY = "https://github.com/konradvoelkel/geographic-representation-dus"
 THESIS = "https://github.com/lubar102/geographic-representation-dus"
 ARCHITECTURE = f"{REPOSITORY}/blob/main/docs/architecture.md"
-OPENDATA = "https://opendata.duesseldorf.de/"
-OPARL = "https://ris-oparl.itk-rheinland.de/"
 OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
 WIKIDATA = "https://www.wikidata.org/"
 WIKIPEDIA = "https://de.wikipedia.org/"
 CC0 = "https://creativecommons.org/publicdomain/zero/1.0/deed.de"
 ODBL = "https://opendatacommons.org/licenses/odbl/1-0/"
-# Lizenzen des Open-Data-Portals, nachgesehen am 2026-10-11 auf den Datensatzseiten:
-# Ratswahl 2025 „Datenlizenz Deutschland Namensnennung 2.0", Stimmbezirkseinteilung
-# „Datenlizenz Deutschland – Zero – Version 2.0".
-DL_DE_BY = "https://www.govdata.de/dl-de/by-2-0"
-DL_DE_ZERO = "https://www.govdata.de/dl-de/zero-2-0"
+# Option 01: die Links, die auf jeder Stadtseite stehen. Portal, Ratsinformationssystem und die
+# Lizenzen der Daten sind je Stadt verschieden; sie stehen im Profil und kommen über
+# ``model_links`` hinzu, sind also per Konstruktion erlaubt — Links aus Daten weiterhin nicht.
 ALLOWED_LINKS = frozenset(
-    {
-        REPOSITORY,
-        THESIS,
-        ARCHITECTURE,
-        OPENDATA,
-        OPARL,
-        OSM_COPYRIGHT,
-        WIKIDATA,
-        WIKIPEDIA,
-        CC0,
-        ODBL,
-        DL_DE_BY,
-        DL_DE_ZERO,
-    }
+    {REPOSITORY, THESIS, ARCHITECTURE, OSM_COPYRIGHT, WIKIDATA, WIKIPEDIA, CC0, ODBL}
 )
 _EXTERNAL = re.compile(r'(?:href|src)="(https?://[^"]*)"')
 
@@ -60,12 +43,16 @@ _EXTERNAL = re.compile(r'(?:href|src)="(https?://[^"]*)"')
 def model_links(model: ReportModel) -> frozenset[str]:
     """Links, die aus den Settings kommen und darum nicht als Konstante in ``ALLOWED_LINKS`` stehen.
 
+    Option 01: das Ratsinformationssystem und die Quellen der Stadt mit ihren Lizenzen.
     Option 03: Datensatzseite und Lizenz der Fremddaten; eine andere Stadt nennt andere, und die
     Nachbedingung von ``render_report`` soll trotzdem greifen.
     """
-    if model.derived is None:
-        return frozenset()
-    return frozenset({model.derived.url, model.derived.license_url})
+    found = {model.ris_url} | {
+        url for source in model.sources for url in (source.url, source.license_url)
+    }
+    if model.derived is not None:
+        found |= {model.derived.url, model.derived.license_url}
+    return frozenset(u for u in found if u)
 
 
 # Die Leaflet-Variante (karte.html) ist die eine Ausnahme von „keine Fremdressourcen": Leaflet 1.9.4
@@ -225,15 +212,13 @@ def render_report(model: ReportModel, visuals: Visuals) -> str:
             "repository": REPOSITORY,
             "thesis": THESIS,
             "architecture": ARCHITECTURE,
-            "opendata": OPENDATA,
-            "oparl": OPARL,
+            # Option 01: das Ratsinformationssystem nennt das Profil, nicht der Code
+            "ris": model.ris_url,
             "osm": OSM_COPYRIGHT,
             "wikidata": WIKIDATA,
             "wikipedia": WIKIPEDIA,
             "cc0": CC0,
             "odbl": ODBL,
-            "dl_de_by": DL_DE_BY,
-            "dl_de_zero": DL_DE_ZERO,
         },
     )
 

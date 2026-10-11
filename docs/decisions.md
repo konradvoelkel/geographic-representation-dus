@@ -498,3 +498,27 @@ immer mehr Parametern (jeder Leser wüsste von jeder Quelle); Umprojektion auf E
 (zwei Transformationen statt einer, Rauschen an Bezirksgrenzen). Kosten: ein Schritt mehr in `georep steps`
 (Snapshot bewusst erneuert) und eine Zwischendatei; `georep fetch` führt ihn mit, weil die Netzschritte
 `streets_osm` und `pois_wiki` ihn brauchen.
+
+## Punkt: Stadt, Quellen und Allowlist der Seite aus dem Profil (Option 01, 2026-10-12)
+
+Kopf, Fuß und „Methode und Grenzen" der Berichtsseite nennen jetzt die Stadt aus `[city]`
+(Name, Genitiv, Adjektiv, Rat, Wahl), die Quellen mit Lizenz und Prüfdatum aus `[[report.sources]]`
+und den Marker aus `search.text_split_marker`; stadtspezifische Sätze stehen als `report.notes` im
+Profil. Die Allowlist der Links entsteht aus Konstanten (Repository, Arbeit, Architektur, OSM,
+Wikidata, Wikipedia, CC0, ODbL) plus den URLs des Profils: Links aus dem Profil sind per
+Konstruktion erlaubt, Links aus Daten weiterhin nicht, und die Nachbedingung von `render_report`
+prüft gegen diese Menge statt gegen eine Konstante. Verworfen: eine Allowlist je Stadt im Code
+(dann wäre jede neue Stadt eine Codeänderung); Lizenztexte in der Vorlage mit `{% if city %}`
+(dieselbe Verzweigung in jeder Zeile). Kosten: `render_report` bekommt ein drittes Argument
+(`Links`), und die Spaltendoku der Parteien entsteht zur Laufzeit aus `columns.results`
+(`PublishedTable.extra_columns`), weil sie je Stadt verschieden ist.
+
+## Punkt: summary.json als Schnittstelle der Stadtseite (Option 01, 2026-10-12)
+
+Neben `schema.json` schreibt der Schritt `report` jetzt `site/data/summary.json`: Stadt,
+Datenstand, Kernzahlen und beide Regressionen als JSON, beschrieben in `schema.json` unter
+`summary`. Der Städtevergleich (`georep publish`) und Dritte lesen damit nur den veröffentlichten
+Ordner einer Stadt, nie ihre Zwischenergebnisse; der Vergleich hängt nicht an zwei Layouts und
+nicht an Parquet-Schemata. Verworfen: der Vergleich liest `processed/*.parquet` beider Läufe (dann
+wäre jede Änderung an einer Zwischentabelle ein Bruch des Vergleichs) und `summary.json` als
+`PublishedTable` (es ist keine Tabelle, es hat keine Spalten).

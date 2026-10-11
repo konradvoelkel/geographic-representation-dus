@@ -64,6 +64,7 @@ from georep.layout import Layout
 from georep.prep import bodies as prep_bodies
 from georep.prep.bodies import BodyRules
 from georep.prep.context import read_indicators
+from georep.prep.streets import Agreement, directory_agreement
 from georep.prep.voters import ELIGIBLE_TOTAL, PRECINCT, TURNOUT, VOTERS
 from georep.report.search import SearchEntry, search_entries
 from georep.report.tables import GEOJSON_COLUMNS, GEOJSON_TABLE, PublishedTable, published
@@ -72,9 +73,11 @@ from georep.search.index import HITS, PAPER_IDS, TERM
 from georep.settings import (
     RATE_TERM,
     Bodies,
+    City,
     ContextDataset,
     ContextSettings,
     Party,
+    ReportSource,
     Settings,
     Weights,
 )
@@ -514,6 +517,16 @@ class ReportModel:
 
     # Option 02: der optionale Vergleich mit einer zweiten Periode
     comparison: PeriodComparison | None = None
+    # Option 01: alles, was die Vorlage an Worten braucht und nicht aus den Daten kommt. Die
+    # Felder stehen am Ende und haben Vorgaben, damit ein Merge mechanisch bleibt
+    # (docs/plans/00-synergien.md, § 2); ``build_report_model`` füllt sie immer.
+    city: City | None = None
+    sources: tuple[ReportSource, ...] = ()
+    ris_url: str = ""  # Ratsinformationssystem; die Methode verlinkt es
+    marker: str = ""  # search.text_split_marker; die Methode nennt ihn
+    notes: tuple[str, ...] = ()  # stadtspezifische Sätze für „Methode und Grenzen"
+    agreement: Agreement | None = None  # Flächen gegen das Straßenverzeichnis der Wahl
+    data_note: str = ""  # Herkunft von Straßen und Orten ohne eigenen Abruf
 
 
 # --- Zahlenformat -----------------------------------------------------------------------------
@@ -1359,6 +1372,14 @@ def build_report_model(
         comparison=period_comparison(
             layout, settings, names, results.height, f"{settings.compare.period}/"
         ),
+        # Option 01: die Stadt, ihre Quellen und die Messung gegen das Straßenverzeichnis
+        city=settings.city,
+        sources=tuple(settings.report.sources),
+        ris_url=settings.report.ris_url,
+        marker=settings.search.text_split_marker,
+        notes=tuple(settings.report.notes),
+        agreement=street_agreement(layout, settings),
+        data_note=settings.report.data_note,
     )
 
 
@@ -1666,3 +1687,99 @@ def crosswalk_units(layout: Layout) -> int:
     return int(
         pl.scan_parquet(layout.crosswalk).select(pl.col(CROSSWALK_UNIT).n_unique()).collect().item()
     )
+
+
+def street_agreement(layout: Layout, settings: Settings) -> Agreement | None:
+    """Die Übereinstimmung der Flächen mit dem Straßenverzeichnis, wo die Stadt eines hat."""
+    directory = layout.streets_directory
+    if directory is None or not directory.is_file() or not layout.streets.is_file():
+        return None
+    return directory_agreement(
+        layout.streets, directory, settings.columns.results, settings.precincts
+    )
+
+
+# --- summary.json: die Schnittstelle des Städtevergleichs --------------------------------------
+
+SUMMARY_FIELDS: dict[str, str] = {
+    "city.slug": "Ordnername der Stadt im veröffentlichten Ordner",
+    "city.name": "Name der Stadt",
+    "city.ags": "amtlicher Gemeindeschlüssel",
+    "stand.election": "Wahltag, dessen Ergebnis die Nenner liefert (ISO-Datum)",
+    "stand.period_start": "Beginn der Wahlperiode (ISO-Datum)",
+    "stand.period_end": "Ende der Wahlperiode (ISO-Datum) oder null bei laufender Periode",
+    "figures.districts": "Zahl der Kommunalwahlbezirke",
+    "figures.precincts": "Zahl der Stimmbezirke",
+    "figures.documents": "Zahl der Ratsdokumente der Periode",
+    "figures.documents_with_text": "davon mit extrahiertem Text",
+    "figures.documents_hit": "Dokumente mit mindestens einem Treffer",
+    "figures.terms": "Begriffe im Wörterbuch",
+    "figures.rate_median": "Median der Trefferquote (Dokumente je Wahlberechtigtem)",
+    "figures.rate_min": "kleinste Trefferquote",
+    "figures.rate_max": "größte Trefferquote",
+    "figures.turnout_median": "Median der Wahlbeteiligung (Anteil 0 bis 1)",
+    "regression.all": "Regression Trefferquote auf Wahlbeteiligung über alle Wahlbezirke: n, slope, intercept, r, r2, p, stderr",
+    "regression.without": "dieselbe Regression ohne analysis.exclude_districts, oder null",
+    "regression.excluded": "die ausgeschlossenen Wahlbezirke",
+    "version": "Version von georep, die die Seite gebaut hat",
+    "generated_at": "Zeitpunkt des Baus (ISO-8601, UTC)",
+}
+
+
+def _regression_json(fit: RegressionResult | None) -> dict[str, float | int] | None:
+    """Eine Regression als JSON: n, Steigung, Achsenabschnitt, r, p, R² und Standardfehler."""
+    if fit is None:
+        return None
+    return {
+        "n": fit.n,
+        "slope": fit.slope,
+        "intercept": fit.intercept,
+        "r": fit.r,
+        "r2": fit.r2,
+        "p": fit.p,
+        "stderr": fit.stderr,
+    }
+
+
+def summary_payload(model: ReportModel) -> dict[str, object]:
+    """Kernzahlen, Regression und Datenstand als JSON-taugliches Dict.
+
+    Das ist die Schnittstelle des Städtevergleichs und für Dritte: ``georep publish`` liest je
+    Stadt nur den veröffentlichten Ordner, nie Zwischenergebnisse (docs/plans/01-staedte.md, § 2).
+    Die Felder sind in ``SUMMARY_FIELDS`` beschrieben; ``schema.json`` druckt sie mit.
+    """
+    figures = model.figures
+    if model.city is None:  # build_report_model setzt die Stadt immer; von Hand gebaut nicht
+        raise SchemaError("summary.json braucht die Stadt; das Modell trägt keine")
+    return {
+        "city": {
+            "slug": model.city.slug,
+            "name": model.city.name,
+            "ags": model.city.ags,
+            "election": model.city.election,
+        },
+        "stand": {
+            "election": model.stand.election.isoformat(),
+            "period_start": model.stand.period_start.isoformat(),
+            "period_end": model.stand.period_end.isoformat() if model.stand.period_end else None,
+        },
+        "figures": {
+            "districts": figures.districts,
+            "precincts": figures.precincts,
+            "documents": figures.documents,
+            "documents_with_text": figures.documents_with_text,
+            "documents_hit": figures.documents_hit,
+            "terms": figures.terms,
+            "rate_median": figures.rate_median,
+            "rate_min": figures.rate_min,
+            "rate_max": figures.rate_max,
+            "turnout_median": figures.turnout_median,
+        },
+        "regression": {
+            "all": _regression_json(model.regression.all),
+            "without": _regression_json(model.regression.without),
+            "excluded": list(model.regression.excluded),
+        },
+        "version": model.version,
+        "generated_at": model.generated_at.isoformat(),
+    }

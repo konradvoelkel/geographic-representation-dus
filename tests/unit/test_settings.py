@@ -766,11 +766,11 @@ def test_profile_argument_selects_a_package_profile_between_defaults_and_files(
 ) -> None:
     profiles = tmp_path / "profiles"
     profiles.mkdir()
-    _package_profile(profiles, "test-stadt", '[search]\ntext_split_marker = "aus-profil"\n')
+    _package_profile(profiles, "test-stadt")
     (tmp_path / "settings.toml").write_text("[sources.oparl]\ndelay_s = 9\n", encoding="utf-8")
     s = load_settings(cwd=tmp_path, profile="test-stadt", profiles_dir=profiles)
     assert s.profile == "test-stadt" and s.city.slug == "test-stadt"
-    assert s.search.text_split_marker == "aus-profil"  # Profil über defaults.toml
+    assert s.search.text_split_marker == "betrifft"  # aus dem Stadtprofil geerbt (base)
     assert s.sources.oparl.delay_s == 9  # settings.toml über dem Profil
     assert s.sources.oparl.endpoint  # alles andere kommt aus defaults.toml
     (tmp_path / "settings.toml").write_text(

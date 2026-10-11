@@ -1,8 +1,8 @@
 """Stimmbezirksflächen jeder Quelle in eine kanonische Datei: der Schritt ``precincts``.
 
-Jede Stadt liefert ihre Flächen anders: Düsseldorf ein GeoJSON in EPSG:4647 mit drei Spalten im
-Klartext, Mönchengladbach ein Shapefile-Zip in EPSG:25832, das nur die fünfstellige Nummer kennt
-und dessen Wahlbezirk in dieser Nummer steckt. Die Regeln dafür stehen im Profil (``[precincts]``);
+Jede Stadt liefert ihre Flächen anders: das eine Portal ein GeoJSON in EPSG:4647 mit drei Spalten
+im Klartext, das nächste ein Shapefile-Zip in EPSG:25832, das nur eine fünfstellige Nummer kennt,
+deren erste Stellen den Wahlbezirk tragen. Die Regeln dafür stehen im Profil (``[precincts]``);
 hier entsteht daraus ``interim/stimmbezirke.geojson`` mit genau drei Eigenschaften
 (``stimmbezirk``, ``wahlbezirk``, ``wahlbezirk_name``) und dem CRS der Quelle. Alles dahinter
 (Overpass, GeoSearch, STRtree, Karte, Seite) kennt nur dieses Format.

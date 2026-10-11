@@ -45,13 +45,21 @@ from georep.report.geometry import (
     fit,
     wahlbezirke_geojson,
 )
-from georep.report.model import Download, ReportModel, build_report_model, format_de
+from georep.report.model import (
+    SUMMARY_FIELDS,
+    Download,
+    ReportModel,
+    build_report_model,
+    format_de,
+    summary_payload,
+)
 from georep.report.render import Visuals, render_map, render_report
 from georep.report.tables import GEOJSON_TABLE, TABLES, PublishedTable, published
 from georep.settings import Settings
 
 GEOJSON_NAME = "wahlbezirke.geojson"
 SCHEMA_NAME = "schema.json"
+SUMMARY_NAME = "summary.json"
 DOCUMENTS_NAME = "dokumente.json"
 MAP_NAME = "karte.html"
 
@@ -145,9 +153,24 @@ def write_schema(layout: Layout, model: ReportModel) -> Download:
             "version": model.version,
             "generated_at": model.generated_at.isoformat(),
             "tables": tables,
+            # Option 01: summary.json ist keine Tabelle, steht aber im Schema
+            "summary": dict(SUMMARY_FIELDS),
         },
     )
     return _download(target, "JSON", None, "Spaltenschema aller Tabellen, maschinenlesbar")
+
+
+def write_summary(layout: Layout, model: ReportModel) -> Download:
+    """``summary.json``: Kernzahlen, beide Regressionen, Datenstand, Stadt (Option 01).
+
+    Das ist die Schnittstelle des Städtevergleichs: ``georep publish`` liest je Stadt nur den
+    veröffentlichten Ordner, nie Zwischenergebnisse.
+    """
+    target = layout.guard_writable(layout.site_summary)
+    write_json(target, summary_payload(model))
+    return _download(
+        target, "JSON", None, "Kernzahlen, Regression und Datenstand dieser Stadt, maschinenlesbar"
+    )
 
 
 def write_documents(layout: Layout, model: ReportModel, settings: Settings) -> Download:
@@ -274,7 +297,11 @@ def build_site(
     downloads.append(write_documents(layout, model, settings))
 
     geojson = wahlbezirke_geojson(
-        shapes, model.districts, working_crs, f"Kommunalwahlbezirke, {model.period.title}"
+        shapes,
+        model.districts,
+        working_crs,
+        # Option 01 und 02: Stadt und Periode stehen im Namen der FeatureCollection
+        f"Kommunalwahlbezirke {settings.city.name}, {model.period.title}",
     )
     geojson_target = layout.site_data / GEOJSON_NAME
     write_json(geojson_target, geojson, indent=None)
@@ -286,6 +313,9 @@ def build_site(
             f"Flächen der Wahlbezirke in EPSG:4326 mit den Kennzahlen (Tabelle {GEOJSON_TABLE})",
         )
     )
+    model = replace(model, downloads=tuple(downloads))
+    # Option 01: die Schnittstelle des Städtevergleichs, als eigener Download
+    downloads.append(write_summary(layout, model))
     model = replace(model, downloads=tuple(downloads))
     downloads.append(write_schema(layout, model))
     model = replace(model, downloads=tuple(downloads))

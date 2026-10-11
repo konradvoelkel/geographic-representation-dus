@@ -313,7 +313,7 @@ class Precincts(_Strict):
 
 
 class Search(_Strict):
-    text_split_marker: str = "betrifft"
+    text_split_marker: str  # Option 01: das Profil nennt ihn, er ist je Stadt verschieden
     hide_in_display: list[str] = []
     exclude: list[str] = []
 
@@ -919,7 +919,7 @@ class Settings(BaseSettings):
     sources: Sources
     geo: Geo = Geo()
     columns: Columns
-    search: Search = Search()
+    search: Search
     analysis: Analysis = Analysis()
     bodies: Bodies  # Option 05
     weights: Weights = Weights()  # Option 06

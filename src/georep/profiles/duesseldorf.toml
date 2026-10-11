@@ -19,6 +19,13 @@ election = "Ratswahl 2025"
 
 [report]
 ris_url = "https://ris-oparl.itk-rheinland.de/"
+data_note = "aus dem Datensatz der Arbeit (Stand November 2025)"  # steht im Kopf, solange kein eigener Abruf gelaufen ist
+# Sätze, die nur für diese Stadt in „Methode und Grenzen" stehen. Typografische Anführungszeichen
+# „…“: ein ASCII-" würde den TOML-String beenden, und als Daten escapt Jinja es zu &#34;.
+notes = [
+    "Begriffe wie „Hofgarten“ oder „Königsallee“ stehen in vielen Dokumenten, die nicht vom Bezirk handeln.",
+    "Die Spalte „ohne Ausreißer“ der Arbeit weicht von der Neuberechnung ab, vermutlich ein früherer Datenstand; die Zahlen hier sind die Neuberechnung aus den veröffentlichten Daten.",
+]
 
 # Die Quellen, wie sie im Fuß der Seite stehen: Lizenz wörtlich, mit Prüfdatum der Datensatzseite.
 [[report.sources]]

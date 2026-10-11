@@ -66,6 +66,11 @@ def _is_bijection(columns: ResultsColumns, result: dict[str, str] | None = None)
     return len(result) == expected and len(set(result.values())) == expected
 
 
+def party_share(party: str) -> str:
+    """``CDU`` wird ``CDU_anteil``: der Stimmenanteil einer Partei an den Wählern."""
+    return f"{party}_anteil"
+
+
 @deal.ensure(
     _is_bijection, message="jede Quellspalte auf genau einen kanonischen Namen und umgekehrt"
 )
@@ -157,7 +162,8 @@ def with_shares(aggregated: pl.DataFrame, parties: Iterable[str]) -> pl.DataFram
     Übertrag eines Anteils (Option 02, Plan § 2).
     """
     shares = [
-        (pl.col(party_column(party)) / pl.col(VOTERS)).alias(f"{party}_anteil") for party in parties
+        (pl.col(party_column(party)) / pl.col(VOTERS)).alias(party_share(party))
+        for party in parties
     ]
     return aggregated.with_columns(
         (pl.col(VOTERS) / pl.col(ELIGIBLE_TOTAL)).alias(TURNOUT), *shares

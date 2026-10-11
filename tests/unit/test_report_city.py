@@ -6,6 +6,7 @@ rendert ohne Düsseldorf, und ``summary.json`` trägt dieselben Zahlen wie die K
 
 from __future__ import annotations
 
+import ast
 import datetime as dt
 import json
 from dataclasses import replace
@@ -15,34 +16,77 @@ import pytest
 
 from georep.layout import Layout
 from georep.report.model import ReportModel, build_report_model, summary_payload
-from georep.report.render import Links, Visuals, allowed_links, page_links, render_report
+from georep.report.render import ALLOWED_LINKS, Visuals, model_links, render_report
 from georep.report.tables import party_columns
-from georep.settings import City, ReportSource, Settings, load_settings
+from georep.settings import City, ReportSource, Settings
 from tests.conftest import REPO
 
 CITY_WORDS = ("Düsseldorf", "duesseldorf", "Düsseldorfer", "Q1718", "0015", "betrifft")
 PROFILES = REPO / "src" / "georep" / "profiles"
+PACKAGE = REPO / "src" / "georep"
+# defaults.toml nennt den Slug des Standardprofils (default_profile) und verweist in Kommentaren
+# auf die Profildateien; beides muss es dürfen, sonst wüsste `georep` ohne --profile nichts.
+DEFAULTS = PACKAGE / "defaults.toml"
 
 
-def _sources() -> list[Path]:
-    root = REPO / "src" / "georep"
+def _string_constants(path: Path) -> list[str]:
+    """Alle Zeichenketten eines Moduls außer den Docstrings.
+
+    Prosa darf die Stadt der Arbeit als Beispiel nennen; ein Wert darf es nicht. Was zählt, ist
+    also nicht das Wort im Text, sondern das Wort in einer Konstante (Option 10).
+    """
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    docstrings = {
+        node.body[0].value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
+        and node.body
+        and isinstance(node.body[0], ast.Expr)
+        and isinstance(node.body[0].value, ast.Constant)
+        and isinstance(node.body[0].value.value, str)
+    }
     return [
-        path
-        for pattern in ("*.py", "*.j2", "*.css", "*.js", "*.toml")
-        for path in root.rglob(pattern)
-        if PROFILES not in path.parents
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str) and node not in docstrings
     ]
 
 
-def test_no_city_word_outside_the_profiles() -> None:
-    """Option 10: der Code kennt keine Stadt; jedes Stadtwort steht in ``profiles/<slug>.toml``."""
+def test_no_city_value_in_the_code() -> None:
+    """Option 10: kein Stadtwert im Code; jeder steht in ``profiles/<slug>.toml``."""
     found: dict[str, list[str]] = {}
-    for path in _sources():
-        text = path.read_text(encoding="utf-8")
-        hits = sorted({word for word in CITY_WORDS if word in text})
+    for path in sorted(PACKAGE.rglob("*.py")):
+        hits = sorted(
+            {word for text in _string_constants(path) for word in CITY_WORDS if word in text}
+        )
         if hits:
             found[str(path.relative_to(REPO))] = hits
-    assert found == {}, f"Stadtwörter im Code: {found}"
+    assert found == {}, f"Stadtwerte im Code: {found}"
+
+
+def test_no_city_word_in_the_templates() -> None:
+    """Die Seite spricht von der Stadt des Profils, nie von einer bestimmten."""
+    found: dict[str, list[str]] = {}
+    for pattern in ("*.j2", "*.css", "*.js"):
+        for path in sorted((PACKAGE / "report" / "templates").rglob(pattern)):
+            text = path.read_text(encoding="utf-8")
+            hits = sorted({word for word in CITY_WORDS if word in text})
+            if hits:
+                found[str(path.relative_to(REPO))] = hits
+    assert found == {}, f"Stadtwörter in der Vorlage: {found}"
+
+
+def test_only_the_selector_names_a_city_in_the_defaults() -> None:
+    lines = [
+        line
+        for line in DEFAULTS.read_text(encoding="utf-8").splitlines()
+        if any(word in line for word in CITY_WORDS)
+    ]
+    assert lines, "defaults.toml muss das Standardprofil nennen"
+    assert all(
+        line.startswith("default_profile") or line.lstrip().startswith("#") or "#" in line
+        for line in lines
+    ), lines
 
 
 def test_the_profile_is_where_the_city_words_live() -> None:
@@ -81,19 +125,19 @@ def test_the_duesseldorf_page_still_speaks_of_duesseldorf(mini_page: str) -> Non
 
 
 def test_another_city_renders_without_a_duesseldorf_word(
-    mini_model: ReportModel, mini_visuals: Visuals, default_settings: Settings
+    mini_model: ReportModel, mini_visuals: Visuals
 ) -> None:
-    other = replace(mini_model, city=OTHERLAND, sources=(SOURCE,), marker="gegenstand")
-    links: Links = page_links(default_settings)
-    allowed = links.allowed | {SOURCE.url, SOURCE.license_url}
-    page = render_report(other, mini_visuals, replace(links, allowed=allowed))
+    other = replace(
+        mini_model, city=OTHERLAND, sources=(SOURCE,), marker="gegenstand", notes=(), derived=None
+    )
+    page = render_report(other, mini_visuals)
     assert "Anderstädter Ratsdokumenten" in page and "Stadt Anderstadt" in page
     assert not any(word in page for word in ("Düsseldorf", "Düsseldorfer"))
     assert "gegenstand" in page and "betrifft" not in page
 
 
-def test_the_allowlist_is_built_from_the_profile(default_settings: Settings) -> None:
-    allowed = allowed_links(default_settings)
+def test_the_allowlist_is_built_from_the_model(mini_model: ReportModel) -> None:
+    allowed = ALLOWED_LINKS | model_links(mini_model)
     assert "https://opendata.duesseldorf.de/" in allowed
     assert "https://www.govdata.de/dl-de/by-2-0" in allowed
     assert "https://github.com/konradvoelkel/geographic-representation-dus" in allowed
@@ -124,9 +168,12 @@ def test_summary_payload_matches_the_model(mini_run: Layout, default_settings: S
         mini_run, default_settings, now=dt.datetime(2026, 10, 12, 9, 0, tzinfo=dt.UTC)
     )
     payload = summary_payload(model)
-    assert payload["figures"]["rate_median"] == pytest.approx(model.figures.rate_median)
-    assert payload["figures"]["documents"] == model.figures.documents
-    assert payload["regression"]["all"]["r"] == pytest.approx(model.regression.all.r)
+    figures = payload["figures"]
+    regression = payload["regression"]
+    assert isinstance(figures, dict) and isinstance(regression, dict)
+    assert figures["rate_median"] == pytest.approx(model.figures.rate_median)
+    assert figures["documents"] == model.figures.documents
+    assert regression["all"]["r"] == pytest.approx(model.regression.all.r)
     assert json.loads(json.dumps(payload)) == payload  # JSON-tauglich, ohne Umwege
 
 
@@ -136,13 +183,13 @@ def test_summary_is_a_download_and_the_schema_describes_it(mini_run: Layout) -> 
     assert "data/summary.json" in mini_run.site_index.read_text(encoding="utf-8")
 
 
-def test_other_cities_are_a_line_in_the_header(mini_run: Layout, tmp_path: Path) -> None:
-    (tmp_path / "settings.toml").write_text(
-        '[publish]\ncities = ["duesseldorf", "moenchengladbach"]\n', encoding="utf-8"
-    )
-    settings = load_settings(cwd=tmp_path)
-    model = build_report_model(
-        mini_run, settings, now=dt.datetime(2026, 10, 12, 9, 0, tzinfo=dt.UTC)
-    )
-    assert [other.slug for other in model.other_cities] == ["moenchengladbach"]
-    assert model.other_cities[0].href == "moenchengladbach/"
+def test_the_report_step_links_no_other_city(mini_run: Layout, mini_page: str) -> None:
+    """Der Schritt ``report`` weiß nicht, welche Stadtseiten es gibt; ``publish`` weiß es.
+
+    Stünde die Zeile schon hier, trüge die veröffentlichte Seite tote Links, solange das Paket
+    der zweiten Stadt fehlt (Review 2026-10-12).
+    """
+    assert "Weitere Städte" not in mini_page
+    assert "vergleich.html" not in mini_page and "moenchengladbach/" not in mini_page
+    # Die Stelle, die ``georep publish`` füllt (Stufe F); hier steht nur die Marke
+    assert mini_page.count("<!--georep:weitere-staedte-->") == 1

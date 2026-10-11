@@ -21,6 +21,37 @@ election = 2020-09-13          # Ratswahl, deren Ergebnis Nenner (Wahlberechtigt
 label = "Wahlperiode 2014 bis 2020"  # Anzeigename im Kopf, im Datenstand und auf der Unterseite
 dictionary = "base"            # Straßen und Orte der Hauptperiode (Stand November 2025) für beide Perioden: so unterscheiden sich nur die Dokumente, und keine Trefferquote muss zwischen Zuschnitten umgerechnet werden (Plan § 2, Frage 2.2)
 
+[city]                         # dieselbe Stadt, eine andere Wahl: der Slug bleibt der des Stadtprofils
+election = "Ratswahl 2020"     # ihr Ergebnis liefert Nenner und Zuschnitt dieser Periode
+
+# Option 01: die Quellen dieser Periode stehen hier, nicht die der Hauptperiode; der tiefe Merge
+# ersetzt Listen, die Fußzeile nennt damit genau die Dateien, aus denen diese Seite gerechnet ist.
+[report]
+data_note = "aus dem Datensatz der Arbeit (Stand November 2025)"
+
+[[report.sources]]
+name = "Ratswahl 2020, Ergebnis je Stimmbezirk und je Wahlbezirk"
+publisher = "Landeshauptstadt Düsseldorf, Open-Data-Portal"
+url = "https://opendata.duesseldorf.de/"
+license = "Datenlizenz Deutschland Namensnennung 2.0"
+license_url = "https://www.govdata.de/dl-de/by-2-0"
+checked = 2026-10-11
+
+[[report.sources]]
+name = "Stimmbezirks- und Kommunalwahlbezirkseinteilung 2020"
+publisher = "Landeshauptstadt Düsseldorf, Open-Data-Portal"
+url = "https://opendata.duesseldorf.de/"
+license = "Datenlizenz Deutschland – Zero – Version 2.0"
+license_url = "https://www.govdata.de/dl-de/zero-2-0"
+checked = 2026-10-11
+
+[[report.sources]]
+name = "Ratsdokumente der Wahlperiode 2014 bis 2020"
+publisher = "Ratsinformationssystem der Landeshauptstadt Düsseldorf (OParl)"
+url = "https://ris-oparl.itk-rheinland.de/"
+license = ""                   # kein Lizenzhinweis am Endpunkt; die Seite nennt nur die Kennungen
+checked = 2026-10-11
+
 [sources.oparl]
 first_page = 90                # die Liste ist neueste zuerst, die Periode liegt also auf hohen Seitenzahlen; Seite 90 trug am 2026-10-12 den Bereich 10.01.2022 bis 01.03.2022, liegt damit rund 28 Seiten vor der Grenze (40 min Vorlauf von drei Stunden) und verliert nichts: zu spaet zu beginnen wuerde Dokumente verlieren, zu frueh kostet nur Zeit, weil in_period filtert
 incremental = false            # modified ist bei alten Papern das Migrationsdatum 2024-12-30; modified_since holte nach dem ersten Lauf nichts mehr

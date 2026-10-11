@@ -116,7 +116,8 @@ def test_the_whole_chain_on_the_reference_publishes_both_sections(
 
     page = layout.site_index.read_text(encoding="utf-8")
     assert layout.site_index.stat().st_size < 1_500_000  # Budget der Seite, Meta-Plan 2026-10 § 2
-    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 3
+    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
+    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 4
     assert '<section id="kontrollvariablen">' in page and "Modell C" in page
     assert '<section id="abgeleitete-daten">' in page
     assert settings.context.dataset.license in page  # Namensnennung aus den Settings
