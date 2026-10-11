@@ -1,6 +1,6 @@
 # Plan 07: Monitoring
 
-Stand 2026-10-11, Branch `feat/07-monitoring`. Status: geplant.
+Stand 2026-10-11, Branch `feat/07-monitoring`. Status: umgeschrieben.
 
 Auftrag: Briefing § 7.7 des Meta-Plans ([../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md)) und Konrads
 Antwort zu Frage 4 ([fragen.md](fragen.md)): die laufende Wahlperiode ab dem 15.09.2025 inkrementell abrufen
@@ -435,4 +435,63 @@ Infrastruktur des Servers bleibt im Infra-Repo. Gemeinsame Bausteine mit anderen
 (1, 2), erweiterte `PaperRecord`-Felder und der Upsert (4, 5), der Abschnittsmechanismus und das Seitenbudget
 (alle), der Dokumentdialog auf der Profilseite (8).
 
-## 10. Änderungen durch die Synergiephase (füllt der Supervisor)
+## 10. Änderungen durch die Synergiephase
+
+Stand 2026-10-12, geschrieben vom Supervisor nach [00-synergien.md](00-synergien.md). Das Fundament liegt auf
+`main` (Commits `d7df0ed` bis `b8e44b1`, Branch rebased); was unten steht, gilt vor den Stufen in § 5. Für alle
+Optionen (00-synergien.md, § 2 und § 5):
+
+- **Vorlage**: `report.html.j2` ist Rahmen; ein neuer Abschnitt ist eine neue Datei
+  `src/georep/report/templates/sections/NN-name.html.j2` (Nummern in 00-synergien.md § 5.1), optional mit
+  `NN-name.css` und `NN-name.js` daneben; `render.sections()` bindet sie in Nummernfolge ein. Das Makro
+  `term` kommt aus `templates/macros.html.j2` (`{% from "macros.html.j2" import term %}`). Ein Abschnitt, der
+  nur mit einem Modellteil existiert, steht in `{% if model.<teil> %} … {% endif %}`, das Feld in `ReportModel`
+  hat Default `None` und steht am Ende der Klasse.
+- **JavaScript**: Abschnitts-Skripte sprechen mit `window.georep` (`select(ids, scroll)` für Zahl, Array
+  oder `null`; `showDocuments(terms, title)` mit mehreren Begriffen; `rows`). Der Kartenumschalter ist
+  generisch: Radio `input[name="metric"]` mit `value`, Attribut `data-class-<value>` je Fläche
+  (`charts.choropleth(..., extra_classes={"<value>": classification})`), Legende `.legend#legend-<value>`.
+- **Tabellen**: jede neue veröffentlichte Tabelle ist ein `PublishedTable`-Eintrag am Ende von `TABLES` in
+  `src/georep/report/tables.py` (Name, Pfad-Lambda, Beschreibung, Spaltendoku, CSV-Regeln, `optional`);
+  `published_tables`, `COLUMN_DOCS`, `DESCRIPTIONS` und `export.csv_plan` gibt es nicht mehr.
+- **Regression**: `analysis.regression.regression_pair(frame, exclude, *, x, y, y_scale)` rechnet beide
+  Spalten von Tabelle 5 für jede Kennzahlspalte; die Ausreißer kommen aus `settings.analysis.exclude_districts`
+  (`defaults.toml`, `[analysis]`), `OUTLIERS` gibt es nicht mehr.
+- **Settings**: neue Tabellen am Ende von `defaults.toml` in einem Block `# --- Option NN`, neue Modelle vor
+  `class Settings`, neue Felder am Ende von `Settings`; Pfade und reine Anzeigewerte aus `fingerprint()`
+  ausschließen (Kommentar dort). Neue Layout-Properties am Ende der Klasse vor `runtime_dirs`.
+- **Pipeline**: neue Schritte mit Kommentar `# --- Option NN` an der Stelle ihrer Abhängigkeit; neue Eingaben
+  von `report` am Ende seines Tupels.
+- **Tests**: `test_cli.py`, `test_pipeline.py`, `test_report_build.py` zählen Schritte und Dateien aus
+  `build_steps` und dem Register; eigene Erwartungen in eigene Tests. Den Snapshot `test_cli.ambr`
+  (`georep steps`) bewusst erneuern, Diff im Commit.
+- **Doku**: `decisions.md` neuer Punkt ohne feste Nummer („## Punkt: <Titel> (Option NN, Datum)"; Punkt 21
+  ist das Fundament, der Supervisor nummeriert beim Merge); CHANGELOG unter „Unreleased" als eigener Absatz.
+- **Vorschau**: lokaler Server auf Port `8700 + NN`; `.claude/launch.json` je Worktree anlegen. Browser-Prüfung
+  nach § 8.4 des Meta-Plans.
+- **Cache**: `cache_root` ist geteilt; nichts außer `bootstrap` schreibt den Textstore der Hauptperiode.
+- **Fragen**: die Antworten und Vorentscheidungen stehen in [fragen.md](fragen.md); neue Fragen in § 8 dieses
+  Plans eintragen, der Supervisor sammelt sie.
+
+Für Option 7 im Besonderen:
+
+- **Stufe A ist kleiner**: `Settings.profile`, `Layout` mit Profil (`data_root/2025/`, `cache_root/2025/pdf`
+  und `cache_root/2025/text/texts.parquet`), `Period.end` optional, `Period.election` und `election_day` liegen
+  im Fundament F4. Im Profil `settings.2025.toml`: `profile = "2025"`, `[period] start = 2025-09-15`,
+  `end = ""` (der tiefe Merge ließe das Datum aus `defaults.toml` sonst stehen), `election = 2025-09-14`.
+  `data_stand` nimmt `period.election_day`; `DataStand.period_end` ist `None` bei offener Periode und der Rahmen
+  schreibt dann „bis heute (laufende Wahlperiode)". Zu bauen bleiben `[bootstrap] seed_corpus`, `[report]
+  regression` und `monitoring_url`, `in_period` kennt das offene Ende schon.
+- **Cache je Profil**: PDFs und Textstore der laufenden Periode liegen unter `cache_root/2025/`; das
+  R2-Layout folgt dem (`cache/2025/pdf/`, `cache/2025/text/texts.parquet`); `rclone sync` entsprechend.
+- **Abschnitte**: `sections/55-monate.html.j2` (Balken über `charts.Axes`, Fundament F7) und
+  `sections/75-laufend.html.j2` (nur mit `model.monitoring_url`); die Zweige für `model.regression is None`
+  liegen in `sections/30-zusammenhang.html.j2` und `sections/20-karte.html.j2` (`{% if %}` um Streudiagramm,
+  Tabelle 5 und das Radio „Wahlbeteiligung").
+- **Tabellen**: `monatsreihe`, `wahlbezirke_monate` als Einträge in `TABLES`.
+- **Record und Löschungen**: 04 merged vor 07 und erweitert `PaperRecord` (Schema 3); `FetchReport.deleted_ids`
+  und `PaperStore.upsert(deleted=…)` baut 07 darauf.
+- **Paketprofil**: nach dem Merge von 01 wandert `settings.2025.toml` nach `src/georep/profiles/` und wird mit
+  `--profile 2025` geladen; bis dahin `--settings settings.2025.toml`.
+- **Reihenfolge**: 07 merged als Letzte.
+- **Fragen**: 7.1, 7.2, 7.4, 7.6 offen (fragen.md); 7.3, 7.5, 7.7 bis 7.10 wie angenommen.
