@@ -41,7 +41,11 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
 
 Der Ausbau in acht Optionen nach `docs/plan-ausbau-2026-10.md` (Städte, Zeitreihe, Kontrollvariablen, Parteien,
 Gremien, Gewichtung, Monitoring, Suche), geführt von einem Supervisor-Agenten mit acht Unteragenten auf eigenen
-Branches; Konrads Antworten auf § 9 des Plans stehen aus. Der Plan der Berichtsseite ist mit Stufe G vollständig umgesetzt. Die Seite wird bei jedem Push auf `main` neu gebaut und veröffentlicht
+Branches. Stand 2026-10-12: Phase 0 und 1 abgeschlossen (acht Worktrees auf xtraspace, acht Pläne unter
+`docs/plans/` auf den Branches), Phase 2 abgeschlossen: `docs/plans/00-synergien.md` und das Fundament F1 bis F7
+auf `main` (Abschnittsmechanismus der Seite, Register der Tabellen, `regression_pair`, Profil und offene Periode,
+Crosswalk-Kern, Achsen-Helfer, Zähl-Tests), die Fragen der Pläne gebündelt in `docs/plans/fragen.md`; Phase 3
+(Implementierung) läuft. Der Plan der Berichtsseite ist mit Stufe G vollständig umgesetzt. Die Seite wird bei jedem Push auf `main` neu gebaut und veröffentlicht
 (`.github/workflows/pages.yml`, Pages-Quelle „GitHub Actions" seit 2026-10-11); abgenommen am 2026-10-11: Workflow
 grün, Seite erreichbar, Downloads laden, SHA-256 stimmen. Optional nach Bedarf: Stufe G des Plans (Dokumente je
 Begriff: erledigt) und der Umzug auf Konrads VPS (`rsync` von `data/site`, Stufe F.4).
