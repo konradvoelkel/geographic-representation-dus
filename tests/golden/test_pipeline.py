@@ -19,7 +19,7 @@ from georep.report.search import fold, fold_ascii
 from georep.report.tables import published
 from georep.settings import Settings, load_settings
 
-NETWORK = {"opendata", "papers", "pdfs", "streets_osm", "pois_wiki"}
+NETWORK = {"opendata", "papers", "organizations", "pdfs", "streets_osm", "pois_wiki"}
 EXACT = ["wahlkreis_id", "anzahl_treffer", "Wahlberechtigte_insgesamt", "Waehler", "suchbegriffe"]
 FLOATS = ["wahlkreis_id", "trefferquote", "wahlbeteiligung"]
 
@@ -100,6 +100,7 @@ def test_pipeline_runs_skips_and_reruns(
         "bodies": "übersprungen",
         "body_hits": "ausgeführt",
         "weights": "ausgeführt",
+        "parties": "ausgeführt",  # Option 04: haengt an results
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")
@@ -142,6 +143,10 @@ def test_two_runs_write_identical_parquet(
         "topic_shares",
         "term_weights",
         "weighted",
+        # Option 04
+        "document_originators",
+        "district_originators",
+        "party_results",
     ):
         assert getattr(a, name).read_bytes() == getattr(b, name).read_bytes(), name
 

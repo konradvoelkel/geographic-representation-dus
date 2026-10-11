@@ -7,8 +7,10 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+from georep.analysis.hits import DISTRICT
 from georep.analysis.parties import (
     ART,
+    KLASSEN_SPALTEN,
     PARTEIEN,
     QUELLE,
     QUELLEN,
@@ -16,6 +18,8 @@ from georep.analysis.parties import (
     Patterns,
     classify_document,
     classify_originators,
+    originators_by_district,
+    party_hits,
 )
 from georep.settings import Originators, Settings
 
@@ -130,3 +134,88 @@ def test_the_batch_keeps_one_row_per_document_in_order(
         _, paper_type, name, text = by_id[row["id"]]
         one = classify_document(paper_type, name, text, patterns)
         assert (row[ART], tuple(row[PARTEIEN]), row[QUELLE]) == (one.art, one.parteien, one.quelle)
+
+
+# --- Kennzahlen: Partition, Schranken, Konstanz ----------------------------------------------------
+
+ids = st.text(alphabet="abcde", min_size=1, max_size=2)
+arten = st.sampled_from(URHEBER_ARTEN)
+
+
+@st.composite
+def corpora(draw: st.DrawFn) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame, list[str]]:
+    """Zufällige Dokumente mit Zuordnung, zufällige Trefferlisten je Bezirk, passende Wählerzeilen."""
+    keys = ["CDU", "SPD"]
+    document_ids = sorted(draw(st.lists(ids, min_size=1, max_size=8, unique=True)))
+    rows = []
+    for document in document_ids:
+        art = draw(arten)
+        parteien = (
+            sorted(draw(st.lists(st.sampled_from(keys), max_size=2, unique=True)))
+            if art == "Fraktion"
+            else []
+        )
+        rows.append((document, art, parteien))
+    documents = pl.DataFrame(
+        rows,
+        schema={"id": pl.String, ART: pl.String, PARTEIEN: pl.List(pl.String)},
+        orient="row",
+    )
+    districts = draw(st.lists(st.integers(1, 5), min_size=1, max_size=4, unique=True))
+    hits = [
+        sorted(draw(st.lists(st.sampled_from(document_ids), max_size=5, unique=True)))
+        for _ in districts
+    ]
+    results = pl.DataFrame(
+        {
+            DISTRICT: sorted(districts),
+            "paper_ids": [h for _, h in sorted(zip(districts, hits, strict=True))],
+        },
+        schema={DISTRICT: pl.Int64, "paper_ids": pl.List(pl.String)},
+    ).with_columns(pl.col("paper_ids").list.len().cast(pl.Int64).alias("anzahl_treffer"))
+    voters = pl.DataFrame(
+        {
+            DISTRICT: sorted(districts),
+            "Wahlberechtigte_insgesamt": [1000] * len(districts),
+            "CDU_Stimmen": [draw(st.integers(0, 400)) for _ in districts],
+            "SPD_Stimmen": [draw(st.integers(0, 400)) for _ in districts],
+        },
+        schema={
+            DISTRICT: pl.Int64,
+            "Wahlberechtigte_insgesamt": pl.Int64,
+            "CDU_Stimmen": pl.Int64,
+            "SPD_Stimmen": pl.Int64,
+        },
+    ).with_columns(
+        (pl.col("CDU_Stimmen") / 800).alias("CDU_anteil"),
+        (pl.col("SPD_Stimmen") / 800).alias("SPD_anteil"),
+    )
+    return results, documents, voters, keys
+
+
+@given(data=corpora())
+def test_the_partition_and_the_bounds_hold_for_random_data(
+    default_settings: Settings, data: tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame, list[str]]
+) -> None:
+    """Die Verträge der beiden Batch-Funktionen gelten für beliebige Zuordnungen und Trefferlisten
+    (die Laufzeitverträge selbst prüfen hier mit; ein Gegenbeispiel wäre ein ContractError)."""
+    results, documents, voters, keys = data
+    by_district = originators_by_district(results, documents)
+    assert by_district.height == results.height
+    for row in by_district.iter_rows(named=True):
+        assert sum(row[c] for c in KLASSEN_SPALTEN) == row["anzahl_treffer"]
+
+    parties = [p for p in default_settings.originators.parties if p.key in keys]
+    table = party_hits(results, documents, voters, parties)
+    assert table.height == results.height * len(parties)
+    totals = {key: documents.filter(pl.col(PARTEIEN).list.contains(key)).height for key in keys}
+    for row in table.iter_rows(named=True):
+        assert 0 <= row["treffer_allein"] <= row["anzahl_treffer"] <= row["dokumente_partei"]
+        assert row["dokumente_partei"] == totals[row["partei"]]
+        assert 0.0 <= row["anteil_dokumente"] <= 1.0
+        assert row["angetreten"] == (row["stimmen"] > 0)
+    # Die Treffer einer Partei im Bezirk können nie mehr sein als die Treffer des Bezirks
+    joined = table.join(results.select(DISTRICT, "anzahl_treffer"), on=DISTRICT, suffix="_bezirk")
+    assert (
+        joined.select(pl.col("anzahl_treffer") <= pl.col("anzahl_treffer_bezirk")).to_series().all()
+    )

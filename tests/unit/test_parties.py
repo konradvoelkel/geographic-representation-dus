@@ -11,7 +11,9 @@ from syrupy.assertion import SnapshotAssertion
 
 from georep.analysis.parties import (
     ART,
+    KLASSEN_SPALTEN,
     PARTEIEN,
+    PARTY_COLUMNS,
     QUELLE,
     TREFFER,
     URHEBER_ARTEN,
@@ -20,7 +22,11 @@ from georep.analysis.parties import (
     classify_originators,
     documents_per_party,
     originator_figures,
+    originators_by_district,
+    party_correlations,
+    party_hits,
 )
+from georep.errors import SchemaError
 from georep.layout import Layout
 from georep.oparl import OparlOrganization
 from georep.prep.papers import build_corpus
@@ -335,3 +341,121 @@ def test_a_typo_in_the_source_still_names_the_fraction(patterns: Patterns) -> No
         paper_type="Antrag",
         name="Situation in Gerresheim an Silvester 2024/2025 - Antrag der CDU-Frakion -",
     ) == ("Fraktion", ("CDU",), "name")
+
+
+# --- Kennzahlen je Wahlbezirk und Partei ----------------------------------------------------------
+
+
+def _toy() -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+    """Drei Wahlbezirke, sieben Dokumente, zwei Parteien; von Hand nachgerechnet."""
+    results = pl.DataFrame(
+        {
+            "wahlkreis_id": [1, 2, 3],
+            "paper_ids": [["a", "b", "c"], ["b", "d"], ["e", "f", "g"]],
+            "anzahl_treffer": [3, 2, 3],
+        },
+        schema={
+            "wahlkreis_id": pl.Int64,
+            "paper_ids": pl.List(pl.String),
+            "anzahl_treffer": pl.Int64,
+        },
+    )
+    documents = pl.DataFrame(
+        {
+            "id": ["a", "b", "c", "d", "e", "f", "g"],
+            ART: [
+                "Fraktion",
+                "Fraktion",
+                "Verwaltung",
+                "Person",
+                "Fraktion",
+                "Eingabe",
+                "Fraktion",
+            ],
+            PARTEIEN: [["CDU"], ["CDU", "SPD"], [], [], ["SPD"], [], ["SPD"]],
+        },
+        schema={"id": pl.String, ART: pl.String, PARTEIEN: pl.List(pl.String)},
+    )
+    voters = pl.DataFrame(
+        {
+            "wahlkreis_id": [1, 2, 3],
+            "Wahlberechtigte_insgesamt": [100, 200, 400],
+            "CDU_Stimmen": [40, 0, 80],
+            "SPD_Stimmen": [20, 60, 100],
+            "CDU_anteil": [0.4, 0.0, 0.2],
+            "SPD_anteil": [0.2, 0.3, 0.25],
+        },
+        schema={
+            "wahlkreis_id": pl.Int64,
+            "Wahlberechtigte_insgesamt": pl.Int64,
+            "CDU_Stimmen": pl.Int64,
+            "SPD_Stimmen": pl.Int64,
+            "CDU_anteil": pl.Float64,
+            "SPD_anteil": pl.Float64,
+        },
+    )
+    return results, documents, voters
+
+
+def test_the_classes_partition_the_hits_of_every_district() -> None:
+    results, documents, _ = _toy()
+    found = originators_by_district(results, documents)
+    assert found.columns == ["wahlkreis_id", "anzahl_treffer", *KLASSEN_SPALTEN]
+    rows = {r["wahlkreis_id"]: r for r in found.iter_rows(named=True)}
+    # Bezirk 1: a, b Fraktion, c Verwaltung -> 2 + 1 = 3
+    assert (rows[1]["fraktion"], rows[1]["verwaltung"], rows[1]["anzahl_treffer"]) == (2, 1, 3)
+    # Bezirk 2: b Fraktion, d Person; Bezirk 3: e und g Fraktion, f Eingabe
+    assert (rows[2]["fraktion"], rows[2]["person"]) == (1, 1)
+    assert (rows[3]["fraktion"], rows[3]["eingabe"]) == (2, 1)
+    for row in found.iter_rows(named=True):
+        assert sum(row[c] for c in KLASSEN_SPALTEN) == row["anzahl_treffer"]
+
+
+def test_a_document_missing_from_the_attribution_is_a_schema_error() -> None:
+    results, documents, _ = _toy()
+    with pytest.raises(SchemaError, match="fehlen in der Urheber-Tabelle"):
+        originators_by_district(results, documents.filter(pl.col("id") != "d"))
+
+
+def test_party_hits_counts_cooperations_for_both_and_marks_who_ran(
+    default_settings: Settings,
+) -> None:
+    results, documents, voters = _toy()
+    parties = [p for p in default_settings.originators.parties if p.key in ("CDU", "SPD")]
+    found = party_hits(results, documents, voters, parties)
+    assert found.height == 3 * 2 and found.columns == list(PARTY_COLUMNS)
+    rows = {(r["partei"], r["wahlkreis_id"]): r for r in found.iter_rows(named=True)}
+    # CDU: a (allein) und b (mit SPD) in Bezirk 1, b in Bezirk 2, nichts in Bezirk 3
+    assert (rows[("CDU", 1)]["anzahl_treffer"], rows[("CDU", 1)]["treffer_allein"]) == (2, 1)
+    assert (rows[("CDU", 2)]["anzahl_treffer"], rows[("CDU", 2)]["treffer_allein"]) == (1, 0)
+    assert rows[("CDU", 3)]["anzahl_treffer"] == 0
+    # dokumente_partei: CDU a und b, SPD b, e und g; je Partei konstant
+    assert {rows[("CDU", d)]["dokumente_partei"] for d in (1, 2, 3)} == {2}
+    assert {rows[("SPD", d)]["dokumente_partei"] for d in (1, 2, 3)} == {3}
+    assert rows[("CDU", 1)]["anteil_dokumente"] == 1.0  # 2 von 2
+    assert rows[("CDU", 1)]["trefferquote"] == pytest.approx(2 / 100)
+    assert rows[("SPD", 3)]["anzahl_treffer"] == 2 and rows[("SPD", 3)]["treffer_allein"] == 2
+    assert rows[("SPD", 3)]["anteil_dokumente"] == pytest.approx(2 / 3)
+    # Bezirk 2 ohne CDU-Wahlvorschlag: angetreten falsch, der Anteil 0 bedeutet dort nichts
+    assert rows[("CDU", 2)]["stimmen"] == 0 and rows[("CDU", 2)]["angetreten"] is False
+    assert rows[("CDU", 1)]["angetreten"] is True and rows[("SPD", 2)]["angetreten"] is True
+
+
+def test_party_correlations_skip_districts_where_the_party_did_not_run(
+    default_settings: Settings,
+) -> None:
+    results, documents, voters = _toy()
+    parties = [p for p in default_settings.originators.parties if p.key in ("CDU", "SPD")]
+    table = party_hits(results, documents, voters, parties)
+    by_key = {c.key: c for c in party_correlations(table)}
+    assert set(by_key) == {"CDU", "SPD"}
+    assert by_key["CDU"].n == 2 and by_key["SPD"].n == 3  # Bezirk 2 fehlt der CDU
+    assert by_key["CDU"].documents == 2 and by_key["CDU"].hits == 3
+    assert by_key["SPD"].documents == 3 and by_key["SPD"].hits == 4
+    assert by_key["CDU"].districts_hit == 2 and by_key["SPD"].districts_hit == 3
+    # Die CDU ist nur in zwei Bezirken angetreten, das ist unter min_n: kein r, kein p
+    assert by_key["CDU"].r is None and by_key["CDU"].p is None
+    assert by_key["SPD"].r is not None and -1.0 <= by_key["SPD"].r <= 1.0
+    assert by_key["SPD"].p is not None and by_key["SPD"].rho is not None
+    # Eine höhere Schranke nimmt auch der SPD das r, ohne dass die Funktion stolpert
+    assert all(c.r is None and c.p is None for c in party_correlations(table, min_n=4))

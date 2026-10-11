@@ -21,16 +21,22 @@ Settings-Schlüsseln, bei Nicht-Fraktionen leer. Alle Muster stehen in ``default
 
 from __future__ import annotations
 
+import json
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 
 import deal
 import polars as pl
 from polars._typing import PolarsDataType
+from scipy.stats import pearsonr, spearmanr
 
-from georep.contracts import has_columns, one_row_per_document
+from georep.analysis.hits import DISTRICT, RATE
+from georep.contracts import has_columns, one_row_per_document, sorted_unique
+from georep.errors import SchemaError
 from georep.oparl import OparlOrganization
+from georep.search.index import HITS, PAPER_IDS
 from georep.settings import Originators, Party
 
 # Die Partition: genau eine Klasse je Dokument, ihre Summe ist die Zahl der Dokumente.
@@ -150,6 +156,23 @@ class Patterns:
                 found.update(keys)
                 matched.append(url)
         return tuple(sorted(found, key=self.keys.index)), " ".join(matched)
+
+
+def read_organizations(path: Path) -> tuple[OparlOrganization, ...]:
+    """Die Organisationen aus ``raw/organizations.json``; leer, wenn der Netzschritt nie lief.
+
+    Der Schritt ``parties`` läuft auch ohne die Datei (dann greifen nur die URL-Endungen aus den
+    Settings), damit die Kette aus der Referenz ohne Netz durchläuft.
+    """
+    if not path.is_file():
+        return ()
+    try:
+        items = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as error:
+        raise SchemaError(f"{path.name}: kein gültiges JSON ({error})") from error
+    if not isinstance(items, list):
+        raise SchemaError(f"{path.name}: erwartet eine Liste von Organisationen")
+    return tuple(OparlOrganization.model_validate(item) for item in items)
 
 
 def _any_of(patterns: Sequence[str]) -> re.Pattern[str] | None:
@@ -393,3 +416,276 @@ def documents_per_party(attribution: pl.DataFrame, parties: Iterable[Party]) -> 
         zip(found.get_column(PARTEI).to_list(), found.get_column("len").to_list(), strict=True)
     )
     return {p.key: int(counts.get(p.key, 0)) for p in parties}
+
+
+# --- Kennzahlen je Wahlbezirk und Partei ----------------------------------------------------------
+
+
+def _partition_adds_up(
+    results: pl.DataFrame,
+    documents: pl.DataFrame,
+    result: pl.DataFrame | None = None,
+) -> bool:
+    assert result is not None
+    total = sum(
+        (pl.col(column) for column in KLASSEN_SPALTEN[1:]), start=pl.col(KLASSEN_SPALTEN[0])
+    )
+    return bool(result.select(total == pl.col(HITS)).to_series().all())
+
+
+@deal.pre(
+    lambda results, documents: (
+        has_columns(results, DISTRICT, PAPER_IDS, HITS) and has_columns(documents, "id", ART)
+    )
+)
+@deal.post(lambda result: result.columns == [DISTRICT, HITS, *KLASSEN_SPALTEN])
+@deal.post(lambda result: sorted_unique(result, DISTRICT))
+@deal.ensure(
+    _partition_adds_up,
+    message="die fünf Urheberklassen summieren je Wahlbezirk zu anzahl_treffer",
+)
+@deal.ensure(
+    lambda results, documents, result: result.height == results.height,
+    message="nur Wahlbezirke der Auswertung, jeder einmal",
+)
+@deal.raises(SchemaError)
+def originators_by_district(results: pl.DataFrame, documents: pl.DataFrame) -> pl.DataFrame:
+    """Je Wahlbezirk die Verteilung der Treffer auf die fünf Urheberklassen.
+
+    Der Vertrag ist die Partition: die Summe der Klassen ist die ``anzahl_treffer`` der Auswertung.
+    Fehlt eine ``paper_id`` der Auswertung in ``documents``, ist das ein Schemafehler und keine
+    stillschweigende Null.
+    """
+    pairs = results.select(DISTRICT, PAPER_IDS).explode(PAPER_IDS).rename({PAPER_IDS: "id"})
+    missing = pairs.join(documents.select("id"), on="id", how="anti")
+    if missing.height:
+        raise SchemaError(
+            f"{missing.height} Dokument-IDs der Auswertung fehlen in der Urheber-Tabelle, "
+            f"zum Beispiel {missing.get_column('id').head(3).to_list()}; "
+            "lief der Schritt parties auf demselben Korpus?"
+        )
+    counted = (
+        pairs.join(documents.select("id", ART), on="id", how="inner")
+        .group_by(DISTRICT, ART)
+        .len()
+        .pivot(ART, index=DISTRICT, values="len")
+    )
+    return (
+        results.select(DISTRICT, HITS)
+        .join(counted, on=DISTRICT, how="left")
+        .with_columns(
+            *(
+                pl.col(art).fill_null(0).cast(pl.Int64).alias(column)
+                if art in counted.columns
+                else pl.lit(0, dtype=pl.Int64).alias(column)
+                for art, column in zip(URHEBER_ARTEN, KLASSEN_SPALTEN, strict=True)
+            )
+        )
+        .select(DISTRICT, HITS, *KLASSEN_SPALTEN)
+        .sort(DISTRICT)
+    )
+
+
+PARTY_COLUMNS = (
+    DISTRICT,
+    PARTEI,
+    HITS,
+    "treffer_allein",
+    "dokumente_partei",
+    "anteil_dokumente",
+    RATE,
+    "stimmen",
+    "stimmenanteil",
+    "angetreten",
+)
+
+
+def _party_grid_is_complete(
+    results: pl.DataFrame,
+    documents: pl.DataFrame,
+    voters: pl.DataFrame,
+    parties: Sequence[Party],
+    eligible_column: str = "Wahlberechtigte_insgesamt",
+    result: pl.DataFrame | None = None,
+) -> bool:
+    assert result is not None
+    return result.height == results.height * len(parties)
+
+
+def _party_bounds_hold(
+    results: pl.DataFrame,
+    documents: pl.DataFrame,
+    voters: pl.DataFrame,
+    parties: Sequence[Party],
+    eligible_column: str = "Wahlberechtigte_insgesamt",
+    result: pl.DataFrame | None = None,
+) -> bool:
+    assert result is not None
+    checks = result.select(
+        ((pl.col("treffer_allein") >= 0) & (pl.col("treffer_allein") <= pl.col(HITS))).all(),
+        (pl.col(HITS) <= pl.col("dokumente_partei")).all(),
+        ((pl.col("anteil_dokumente") >= 0.0) & (pl.col("anteil_dokumente") <= 1.0)).all(),
+        ((pl.col("stimmenanteil") >= 0.0) & (pl.col("stimmenanteil") <= 1.0)).all(),
+        (pl.col("angetreten") == (pl.col("stimmen") > 0)).all(),
+        (pl.col(RATE) >= 0.0).all(),
+    )
+    return all(checks.row(0))
+
+
+def _documents_per_party_is_constant(
+    results: pl.DataFrame,
+    documents: pl.DataFrame,
+    voters: pl.DataFrame,
+    parties: Sequence[Party],
+    eligible_column: str = "Wahlberechtigte_insgesamt",
+    result: pl.DataFrame | None = None,
+) -> bool:
+    assert result is not None
+    found = result.group_by(PARTEI).agg(pl.col("dokumente_partei").n_unique())
+    return bool((found.get_column("dokumente_partei") == 1).all())
+
+
+@deal.pre(
+    lambda results, documents, voters, parties, eligible_column="Wahlberechtigte_insgesamt": (
+        has_columns(results, DISTRICT, PAPER_IDS, HITS)
+        and has_columns(documents, "id", ART, PARTEIEN)
+        and has_columns(voters, DISTRICT, eligible_column)
+        and len(parties) > 0
+    )
+)
+@deal.post(lambda result: list(result.columns) == list(PARTY_COLUMNS))
+@deal.ensure(_party_grid_is_complete, message="genau |Bezirke| x |Parteien| Zeilen")
+@deal.ensure(_party_bounds_hold, message="die Schranken je Partei und Bezirk")
+@deal.ensure(_documents_per_party_is_constant, message="dokumente_partei ist je Partei konstant")
+def party_hits(
+    results: pl.DataFrame,
+    documents: pl.DataFrame,
+    voters: pl.DataFrame,
+    parties: Sequence[Party],
+    eligible_column: str = "Wahlberechtigte_insgesamt",
+) -> pl.DataFrame:
+    """Je Wahlbezirk und Partei: Treffer, Alleinurheber, Anteil, Quote, Stimmen, Stimmenanteil.
+
+    Ein Dokument mit zwei Parteien zählt für jede voll (Entscheidung § 2 des Plans, Frage 4.2);
+    ``treffer_allein`` ist die Gegenprobe über die Dokumente mit genau einem Urheber.
+    ``angetreten`` ist falsch, wo die Partei keinen Wahlvorschlag hatte (Wahlbezirk 11 für Die
+    Linke): ein Stimmenanteil von 0 heißt dort „nicht angetreten", nicht „keine Zustimmung".
+    """
+    keys = [p.key for p in parties]
+    pairs = results.select(DISTRICT, PAPER_IDS).explode(PAPER_IDS).rename({PAPER_IDS: "id"})
+    attributed = documents.select("id", PARTEIEN, alleine=pl.col(PARTEIEN).list.len() == 1)
+    per_pair = (
+        pairs.join(attributed, on="id", how="inner")
+        .explode(PARTEIEN)
+        .rename({PARTEIEN: PARTEI})
+        .filter(pl.col(PARTEI).is_in(keys))
+        .group_by(DISTRICT, PARTEI)
+        .agg(pl.len().cast(pl.Int64).alias(HITS), pl.col("alleine").sum().alias("treffer_allein"))
+    )
+    totals = (
+        documents.select(pl.col(PARTEIEN).explode().alias(PARTEI))
+        .drop_nulls()
+        .filter(pl.col(PARTEI).is_in(keys))
+        .group_by(PARTEI)
+        .agg(pl.len().cast(pl.Int64).alias("dokumente_partei"))
+    )
+    grid = results.select(DISTRICT).join(pl.DataFrame({PARTEI: keys}), how="cross")
+    long_votes = _votes_long(voters, keys)
+    return (
+        grid.join(per_pair, on=[DISTRICT, PARTEI], how="left")
+        .with_columns(
+            pl.col(HITS).fill_null(0).cast(pl.Int64),
+            pl.col("treffer_allein").fill_null(0).cast(pl.Int64),
+        )
+        .join(totals, on=PARTEI, how="left")
+        .with_columns(pl.col("dokumente_partei").fill_null(0).cast(pl.Int64))
+        .join(voters.select(DISTRICT, eligible_column), on=DISTRICT, how="inner")
+        .join(long_votes, on=[DISTRICT, PARTEI], how="left")
+        .with_columns(
+            pl.when(pl.col("dokumente_partei") > 0)
+            .then(pl.col(HITS) / pl.col("dokumente_partei"))
+            .otherwise(0.0)
+            .alias("anteil_dokumente"),
+            (pl.col(HITS) / pl.col(eligible_column)).alias(RATE),
+            pl.col("stimmen").fill_null(0).cast(pl.Int64),
+            pl.col("stimmenanteil").fill_null(0.0),
+        )
+        .with_columns(angetreten=pl.col("stimmen") > 0)
+        .select(*PARTY_COLUMNS)
+        .sort([PARTEI, DISTRICT])
+    )
+
+
+def _votes_long(voters: pl.DataFrame, keys: Sequence[str]) -> pl.DataFrame:
+    """Die Stimmen und Anteile der Wählertabelle in Langform: eine Zeile je Bezirk und Partei."""
+    rows = [
+        voters.select(
+            DISTRICT,
+            pl.lit(key, dtype=pl.String).alias(PARTEI),
+            pl.col(f"{key}_Stimmen").cast(pl.Int64).alias("stimmen")
+            if f"{key}_Stimmen" in voters.columns
+            else pl.lit(0, dtype=pl.Int64).alias("stimmen"),
+            pl.col(f"{key}_anteil").cast(pl.Float64).alias("stimmenanteil")
+            if f"{key}_anteil" in voters.columns
+            else pl.lit(0.0, dtype=pl.Float64).alias("stimmenanteil"),
+        )
+        for key in keys
+    ]
+    return pl.concat(rows) if rows else pl.DataFrame(schema={DISTRICT: pl.Int64, PARTEI: pl.String})
+
+
+@dataclass(frozen=True)
+class PartyCorrelation:
+    """Je Partei der Zusammenhang zwischen Dokumentanteil und Stimmenanteil über die Bezirke."""
+
+    key: str
+    n: int  # Bezirke, in denen die Partei angetreten ist
+    documents: int
+    hits: int
+    districts_hit: int
+    r: float | None  # Pearson; None unter min_n oder ohne Streuung
+    p: float | None
+    rho: float | None  # Spearman, mitgeführt, nicht auf der Seite
+
+
+@deal.pre(lambda party_results, min_n=3: min_n >= 3)
+@deal.post(
+    lambda result: all(
+        c.r is None or (-1.0 <= c.r <= 1.0 and c.p is not None and 0.0 <= c.p <= 1.0)
+        for c in result
+    ),
+    message="r in [-1, 1], p in [0, 1] oder beides None",
+)
+def party_correlations(party_results: pl.DataFrame, min_n: int = 3) -> tuple[PartyCorrelation, ...]:
+    """Pearson r und p zwischen ``anteil_dokumente`` und ``stimmenanteil`` je Partei.
+
+    Gerechnet nur über die Bezirke mit ``angetreten``; unter ``min_n`` Bezirken oder ohne Streuung
+    in einer der beiden Reihen bleibt es bei ``None``. Spearman rho läuft mit, weil er bei 70
+    Treffern über 41 Bezirke robuster ist; die Seite zeigt r und p.
+    """
+    found: list[PartyCorrelation] = []
+    for key in party_results.get_column(PARTEI).unique(maintain_order=True).to_list():
+        mine = party_results.filter(pl.col(PARTEI) == key)
+        ran = mine.filter(pl.col("angetreten"))
+        r = p = rho = None
+        if ran.height >= min_n:
+            x = ran.get_column("anteil_dokumente").to_numpy()
+            y = ran.get_column("stimmenanteil").to_numpy()
+            if len(set(x.tolist())) > 1 and len(set(y.tolist())) > 1:
+                pearson = pearsonr(x, y)
+                spearman = spearmanr(x, y)
+                r, p = float(pearson.statistic), float(pearson.pvalue)
+                rho = float(spearman.statistic)
+        found.append(
+            PartyCorrelation(
+                key=str(key),
+                n=ran.height,
+                documents=int(mine.get_column("dokumente_partei").to_list()[0]),
+                hits=int(mine.get_column(HITS).sum()),
+                districts_hit=int(mine.filter(pl.col(HITS) > 0).height),
+                r=r,
+                p=p,
+                rho=rho,
+            )
+        )
+    return tuple(found)

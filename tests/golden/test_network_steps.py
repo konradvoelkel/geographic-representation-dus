@@ -8,6 +8,7 @@ from typing import Any
 import polars as pl
 import pytest
 
+from georep.bootstrap import bootstrap
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
 from georep.settings import Settings, load_settings
@@ -200,3 +201,64 @@ def test_streets_and_pois_steps_use_recorded_answers(
     assert "1 Stimmbezirke, 11 Straßennamen" in outcomes[0].reason
     assert "25 per SPARQL, 2 per GeoSearch" in outcomes[1].reason
     assert layout.streets_by_district.exists() and layout.pois_by_district.exists()
+
+
+# --- Option 04: der Netzschritt organizations und die Quelle „oparl" ------------------------------
+
+
+def test_organizations_step_feeds_the_party_attribution(tmp_path: Path, settings: Settings) -> None:
+    """Mit ``raw/organizations.json`` ordnet ``parties`` ein Paper mit ``originatorOrganization``
+    der FDP zu, Quelle ``oparl``; die Route antwortet mit der aufgezeichneten Seite vom 2026-10-11."""
+    from georep.analysis.parties import ART, PARTEIEN, QUELLE, read_organizations
+
+    layout = Layout(tmp_path / "data", tmp_path / "cache", MINI)
+    bootstrap(layout)
+    fixture = (MINI.parent / "oparl" / "organizations_page.json").read_text(encoding="utf-8")
+    endpoint = settings.sources.oparl.organizations_endpoint
+    session = FakeSession({endpoint: response(endpoint, content=fixture.encode())})
+    steps = build_steps(settings, layout, session, sleep=lambda _: None)
+    outcome = run_pipeline(steps, settings, ["organizations"], online=True)[0]
+    assert outcome.status == "ausgeführt" and "12 Organisationen auf 1 Seite(n)" in outcome.reason
+    found = read_organizations(layout.organizations)
+    assert len(found) == 12 and {o.short_name for o in found} >= {"FDP", "AfD"}
+
+    # Die Offline-Kette einmal rechnen, damit parties seine Eingaben hat
+    offline = [s.name for s in steps if not s.network]
+    assert all(o.status == "ausgeführt" for o in run_pipeline(steps, settings, offline))
+
+    # Ein Paper mit Urheberfeld in den Store schieben und die Kette ab corpus neu rechnen
+    store = PaperStore(layout.papers)
+    records = store.load()
+    one = sorted(records)[0]
+    fdp = next(o for o in found if o.short_name == "FDP")
+    store.save(
+        [
+            *(r for key, r in records.items() if key != one),
+            records[one].model_copy(update={"originator_organization": (fdp.id,)}),
+        ]
+    )
+    # Der Schritt parties muss organizations.json als Eingabe sehen: Schritte neu aufbauen
+    rebuilt = build_steps(settings, layout, session, sleep=lambda _: None)
+    parties_step = next(s for s in rebuilt if s.name == "parties")
+    assert layout.organizations in parties_step.inputs
+    run_pipeline(rebuilt, settings, ["corpus", "parties"], force=True)
+    attribution = pl.read_parquet(layout.document_originators)
+    row = attribution.filter(pl.col("id") == one).row(0, named=True)
+    assert (row[ART], row[QUELLE], row[PARTEIEN]) == ("Fraktion", "oparl", ["FDP"])
+    # Alle anderen Dokumente bleiben bei den Mustern
+    assert attribution.filter(pl.col(QUELLE) == "oparl").height == 1
+
+
+def test_the_parties_step_runs_without_the_organizations_file(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """Ohne den Netzschritt greifen nur die URL-Endungen der Settings; die Kette läuft trotzdem."""
+    layout = Layout(tmp_path / "data", tmp_path / "cache", MINI)
+    bootstrap(layout)
+    steps = build_steps(settings, layout)
+    parties_step = next(s for s in steps if s.name == "parties")
+    assert layout.organizations not in parties_step.inputs and not layout.organizations.exists()
+    outcomes = run_pipeline(steps, settings, [s.name for s in steps if not s.network])
+    assert all(o.status == "ausgeführt" for o in outcomes)
+    assert "Organisationen" not in next(o for o in outcomes if o.step == "parties").reason
+    assert pl.read_parquet(layout.document_originators).height == 200

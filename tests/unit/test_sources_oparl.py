@@ -8,7 +8,7 @@ import requests
 
 from georep.errors import FetchError, NetworkError
 from georep.settings import Period
-from georep.sources.oparl import fetch_papers
+from georep.sources.oparl import fetch_organizations, fetch_papers
 from tests.fakes import FakeSession, response
 
 PAGE1 = "https://ris.invalid/papers"
@@ -95,3 +95,81 @@ def test_fetch_propagates_network_and_format_errors() -> None:
     routes[PAGE2] = response(PAGE2, payload={"data": "keine Liste", "links": {}})
     with pytest.raises(FetchError, match="page=2"):
         fetch_papers(FakeSession(routes), PAGE1, PERIOD)
+
+
+# --- Option 04: Zähler für Urheberfelder und der Abruf der Organisationen -------------------------
+
+
+def test_the_report_counts_papers_with_an_originator_field() -> None:
+    """Der Zähler ist die Probe, ob der Server inzwischen Urheber liefert; er zählt alle gesehenen
+    Paper, auch die außerhalb der Periode und die gelöschten."""
+    routes = _routes()
+    assert fetch_papers(FakeSession(routes), PAGE1, PERIOD)[1].originators == 0
+    with_field = _paper(7, "2025-09-14")
+    with_field["originatorOrganization"] = [f"{ORGANIZATIONS}/gr/49"]
+    outside = _paper(8, "2026-10-07")
+    outside["originatorPerson"] = [f"{ORGANIZATIONS.replace('organizations', 'persons')}/1"]
+    routes[PAGE1] = _page(PAGE1, [with_field, outside], PAGE2)
+    _, report = fetch_papers(FakeSession(routes), PAGE1, PERIOD)
+    assert report.originators == 2 and report.kept == 2
+    assert "davon 2 mit Urheberfeld" in report.summary()
+
+
+ORGANIZATIONS = "https://ris.invalid/organizations"
+ORG_PAGE2 = "https://ris.invalid/organizations?page=2"
+
+
+def _organization(number: int, name: str, deleted: bool = False) -> dict[str, Any]:
+    return {
+        "id": f"{ORGANIZATIONS}/gr/{number}",
+        "type": "https://schema.oparl.org/1.1/Organization",
+        "name": name,
+        "shortName": name.split("-")[0],
+        "classification": "Fraktion",
+        "membership": [f"{ORGANIZATIONS}/gr/{number}/memberships/1"],
+        "deleted": deleted,
+    }
+
+
+def _org_page(url: str, items: list[dict[str, Any]], next_url: str | None) -> Any:
+    links = {"self": url, **({"next": next_url} if next_url else {})}
+    return response(url, payload={"data": items, "pagination": {"currentPage": 1}, "links": links})
+
+
+def test_fetch_organizations_follows_pages_and_skips_deleted() -> None:
+    routes = {
+        ORGANIZATIONS: _org_page(
+            ORGANIZATIONS,
+            [_organization(44, "CDU-Ratsfraktion"), _organization(49, "FDP-Ratsfraktion")],
+            ORG_PAGE2,
+        ),
+        ORG_PAGE2: _org_page(
+            ORG_PAGE2,
+            [
+                _organization(66, "Ratsfraktion Die Linke"),
+                _organization(63, "REP-Fraktion", deleted=True),
+                _organization(44, "CDU-Ratsfraktion"),  # Dublette über die Seitengrenze
+            ],
+            None,
+        ),
+    }
+    slept: list[float] = []
+    found, pages = fetch_organizations(
+        FakeSession(routes), ORGANIZATIONS, delay_s=0.25, sleep=slept.append
+    )
+    assert pages == 2 and slept == [0.25]
+    assert [o.short_name for o in found] == ["CDU", "FDP", "Ratsfraktion Die Linke"]
+    assert all(not o.deleted for o in found)
+    assert found[0].classification == "Fraktion" and found[0].membership
+
+
+def test_fetch_organizations_propagates_network_and_format_errors() -> None:
+    routes: dict[str, Any] = {ORGANIZATIONS: requests.ConnectionError("Server weg")}
+    with pytest.raises(NetworkError, match="Server weg"):
+        fetch_organizations(FakeSession(routes), ORGANIZATIONS)
+    routes[ORGANIZATIONS] = response(ORGANIZATIONS, content=b"{ kaputt")
+    with pytest.raises(FetchError, match="Organisationsseite"):
+        fetch_organizations(FakeSession(routes), ORGANIZATIONS)
+    routes[ORGANIZATIONS] = response(ORGANIZATIONS, payload={"data": {"keine": "Liste"}})
+    with pytest.raises(FetchError, match="Organisationsseite"):
+        fetch_organizations(FakeSession(routes), ORGANIZATIONS)

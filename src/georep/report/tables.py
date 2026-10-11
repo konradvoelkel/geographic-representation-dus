@@ -381,6 +381,89 @@ TABLES += [
     ),
 ]
 
+# Option 04: Urheber je Dokument, Urheberklassen je Wahlbezirk, Kennzahlen je Partei und Bezirk
+TABLES.extend(
+    [
+        PublishedTable(
+            "dokumente_urheber",
+            lambda layout: layout.document_originators,
+            "Urheber je Ratsdokument: Klasse, Parteien, Quelle der Zuordnung und die getroffene Zeichenkette",
+            {
+                "id": ("OParl-URL des Dokuments", ""),
+                "urheber_art": (
+                    "Verwaltung, Fraktion, Person, Eingabe oder unbekannt; genau eine Klasse je Dokument",
+                    "",
+                ),
+                "parteien": (
+                    "Parteikürzel der Fraktion, sortiert; leer außer bei der Klasse Fraktion",
+                    "Liste",
+                ),
+                "quelle": (
+                    "woher die Zuordnung kommt: oparl, paper_type, name, text oder leer",
+                    "",
+                ),
+                "treffer": (
+                    "die Zeichenkette mit Umgebung, die zur Zuordnung führte; leer bei unbekannt",
+                    "",
+                ),
+            },
+            joins={"parteien": "; "},
+        ),
+        PublishedTable(
+            "wahlbezirke_urheber",
+            lambda layout: layout.district_originators,
+            "Treffer je Wahlbezirk nach Urheberklasse; die fünf Klassen summieren zu anzahl_treffer",
+            {
+                "wahlkreis_id": DISTRICT_COLUMN,
+                "anzahl_treffer": (
+                    "Dokumente mit mindestens einem Treffer, wie in wahlbezirke_auswertung",
+                    "Dokumente",
+                ),
+                "verwaltung": ("davon Vorlagen der Verwaltung", "Dokumente"),
+                "fraktion": ("davon Anträge und Anfragen von Fraktionen", "Dokumente"),
+                "person": ("davon von einzelnen Mandatsträgern", "Dokumente"),
+                "eingabe": ("davon Eingaben nach § 24 GO NRW", "Dokumente"),
+                "unbekannt": ("davon ohne erkennbaren Urheber", "Dokumente"),
+            },
+        ),
+        PublishedTable(
+            "wahlbezirke_parteien",
+            lambda layout: layout.party_results,
+            "Je Wahlbezirk und Partei: Treffer, Anteil an den Dokumenten der Partei, Quote und Stimmenanteil",
+            {
+                "wahlkreis_id": DISTRICT_COLUMN,
+                "partei": ("Parteikürzel wie in den Spalten des Wahlergebnisses", ""),
+                "anzahl_treffer": (
+                    "Dokumente der Partei mit mindestens einem Treffer im Wahlbezirk",
+                    "Dokumente",
+                ),
+                "treffer_allein": (
+                    "davon Dokumente, deren einziger Urheber diese Partei ist",
+                    "Dokumente",
+                ),
+                "dokumente_partei": (
+                    "alle Dokumente der Partei in der Wahlperiode, je Partei konstant",
+                    "Dokumente",
+                ),
+                "anteil_dokumente": (
+                    "anzahl_treffer geteilt durch dokumente_partei",
+                    "Anteil 0 bis 1",
+                ),
+                "trefferquote": (
+                    "anzahl_treffer geteilt durch Wahlberechtigte_insgesamt",
+                    "Dokumente je Person",
+                ),
+                "stimmen": ("Stimmen für die Partei im Wahlbezirk", "Stimmen"),
+                "stimmenanteil": ("Stimmen geteilt durch Wähler", "Anteil 0 bis 1"),
+                "angetreten": (
+                    "hatte die Partei im Wahlbezirk einen Wahlvorschlag (Stimmen über 0)",
+                    "",
+                ),
+            },
+        ),
+    ]
+)
+
 # Nur für ``georep export`` (CSV neben der Parquet-Datei), nicht auf der Seite.
 EXPORT_ONLY: list[PublishedTable] = [
     PublishedTable(

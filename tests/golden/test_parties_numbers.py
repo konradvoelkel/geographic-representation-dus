@@ -17,6 +17,7 @@ import pytest
 
 from georep.analysis.parties import (
     ART,
+    KLASSEN_SPALTEN,
     PARTEIEN,
     QUELLE,
     Patterns,
@@ -136,3 +137,68 @@ def test_every_paper_type_of_the_corpus_is_known_to_the_settings(
         .to_list()
     )
     assert types <= {"Antrag", "Anfrage", "zAnfrage REP"}, types
+
+
+def test_the_partition_holds_in_all_41_districts_and_the_party_sums_match(
+    reference_root: Path, settings: Settings, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    """Die Kette auf der Referenz: in jedem der 41 Wahlbezirke summieren die fünf Urheberklassen
+    zu ``anzahl_treffer``, und die Treffer je Partei stimmen mit der Messung vom 2026-10-12."""
+    from georep.analysis.parties import originators_by_district, party_correlations
+    from georep.bootstrap import bootstrap
+    from georep.pipeline import build_steps, run_pipeline
+
+    root = tmp_path_factory.mktemp("parties_chain")
+    layout = Layout(root / "data", root / "cache", reference_root)
+    bootstrap(layout)
+    offline = [s.name for s in build_steps(settings, layout) if not s.network]
+    outcomes = run_pipeline(build_steps(settings, layout), settings, offline)
+    assert all(o.status == "ausgeführt" for o in outcomes)
+
+    attribution = pl.read_parquet(layout.document_originators)
+    results = pl.read_parquet(layout.results)
+    by_district = pl.read_parquet(layout.district_originators)
+    assert attribution.height == 19_108 and by_district.height == 41
+    assert by_district.equals(originators_by_district(results, attribution))
+    for row in by_district.iter_rows(named=True):
+        assert sum(row[c] for c in KLASSEN_SPALTEN) == row["anzahl_treffer"], row["wahlkreis_id"]
+    assert (
+        by_district.get_column("anzahl_treffer").sum() == results.get_column("anzahl_treffer").sum()
+    )
+
+    table = pl.read_parquet(layout.party_results)
+    assert table.height == 41 * len(settings.originators.parties)
+    per_party = dict(table.group_by("partei").agg(pl.col("anzahl_treffer").sum()).iter_rows())
+    # Gemessen am 2026-10-12: GRUENE 3408, CDU 2913, SPD 2278, FDP 973, Die_Linke 480, AfD 71
+    assert per_party["GRUENE"] >= per_party["CDU"] >= per_party["SPD"] >= per_party["FDP"]
+    assert per_party["FDP"] >= per_party["Die_Linke"] >= per_party["AfD"]
+    assert 50 <= per_party["AfD"] <= 150
+
+    # Wahlbezirk 11 hatte keinen Wahlvorschlag von Die Linke: n = 40 statt 41
+    linke = table.filter(pl.col("partei") == "Die_Linke")
+    assert linke.filter(~pl.col("angetreten")).get_column("wahlkreis_id").to_list() == [11]
+    by_key = {c.key: c for c in party_correlations(table)}
+    assert by_key["Die_Linke"].n == 40 and all(c.n in (40, 41) for c in by_key.values())
+    # Unter Bonferroni (0,05/6 = 0,008) bleibt nur die FDP; gemessen r = +0,448, p = 0,0033
+    significant = [k for k, c in by_key.items() if c.p is not None and c.p < 0.05 / 6]
+    assert significant == ["FDP"], {k: (c.r, c.p) for k, c in by_key.items()}
+
+
+def test_two_runs_write_the_same_party_tables(
+    reference_root: Path, settings: Settings, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    """Byteidentisch: der Schritt hängt nur von Korpus, Auswertung, Wählern und Settings ab."""
+    from georep.bootstrap import bootstrap
+    from georep.pipeline import build_steps, run_pipeline
+
+    roots = []
+    for name in ("a", "b"):
+        root = tmp_path_factory.mktemp(f"parties_twice_{name}")
+        layout = Layout(root / "data", root / "cache", reference_root)
+        bootstrap(layout)
+        steps = build_steps(settings, layout)
+        run_pipeline(steps, settings, [s.name for s in steps if not s.network])
+        roots.append(layout)
+    for attribute in ("document_originators", "district_originators", "party_results"):
+        a, b = (getattr(layout, attribute) for layout in roots)
+        assert a.read_bytes() == b.read_bytes(), attribute

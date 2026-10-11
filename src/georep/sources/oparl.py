@@ -17,7 +17,7 @@ import deal
 
 from georep.errors import FetchError, NetworkError
 from georep.http import Transport, network_errors
-from georep.oparl import PaperPage
+from georep.oparl import OparlOrganization, OrganizationPage, PaperPage
 from georep.records import PaperRecord
 from georep.settings import Period
 
@@ -28,10 +28,17 @@ class FetchReport:
     seen: int
     kept: int
     stopped_early: bool
+    # Option 04: alle gesehenen Paper mit mindestens einem Urheberfeld, auch die außerhalb der
+    # Periode. Die Zahl ist die Probe, ob der Server inzwischen originatorOrganization liefert;
+    # am 2026-10-09 war sie null (docs/plans/04-parteien.md, § 3.1).
+    originators: int = 0
 
     def summary(self) -> str:
         tail = "; Rest älter als der Periodenbeginn" if self.stopped_early else ""
-        return f"{self.pages} Seiten, {self.seen} Paper gesehen, {self.kept} im Zeitraum{tail}"
+        return (
+            f"{self.pages} Seiten, {self.seen} Paper gesehen, {self.kept} im Zeitraum, "
+            f"davon {self.originators} mit Urheberfeld{tail}"
+        )
 
 
 @deal.raises(FetchError, NetworkError)
@@ -48,7 +55,7 @@ def fetch_papers(
     sleep: Callable[[float], None] = time.sleep,
 ) -> tuple[list[PaperRecord], FetchReport]:
     records: list[PaperRecord] = []
-    pages = seen = 0
+    pages = seen = with_originator = 0
     stopped = False
     url: str | None = endpoint
     params = {"modified_since": modified_since.isoformat()} if modified_since else None
@@ -65,6 +72,8 @@ def fetch_papers(
         pages += 1
         seen += len(page.data)
         for paper in page.data:
+            if paper.has_originator:
+                with_originator += 1
             if not paper.deleted and paper.in_period(period.start, period.end):
                 records.append(PaperRecord.from_oparl(paper))
         dates = [p.date for p in page.data if p.date is not None]
@@ -74,4 +83,48 @@ def fetch_papers(
         url = page.links.next
         if url is not None and delay_s > 0:
             sleep(delay_s)
-    return records, FetchReport(pages, seen, len(records), stopped)
+    return records, FetchReport(pages, seen, len(records), stopped, with_originator)
+
+
+def _ids_are_unique(result: tuple[list[OparlOrganization], int]) -> bool:
+    ids = [o.id for o in result[0]]
+    return len(ids) == len(set(ids))
+
+
+@deal.raises(FetchError, NetworkError)
+@deal.post(_ids_are_unique, message="jede Organisation einmal")
+def fetch_organizations(
+    http: Transport,
+    endpoint: str,
+    *,
+    delay_s: float = 0.0,
+    sleep: Callable[[float], None] = time.sleep,
+) -> tuple[list[OparlOrganization], int]:
+    """Alle Organisationen (Fraktionen, Ausschüsse, Bezirksvertretungen) und die Zahl der Seiten.
+
+    Düsseldorf hat eine Seite mit 58 Objekten, die am 2026-10-11 in 0,47 s kam; die Funktion folgt
+    trotzdem ``links.next``, weil größere Körperschaften mehrere Seiten haben. Gelöschte
+    Organisationen bleiben draußen, Dubletten über Seitengrenzen werden verworfen (Nachbedingung).
+    """
+    found: list[OparlOrganization] = []
+    known: set[str] = set()
+    pages = 0
+    url: str | None = endpoint
+    while url is not None:
+        with network_errors(url):
+            response = http.get(url)
+            response.raise_for_status()
+        try:
+            page = OrganizationPage.model_validate(response.json())
+        except ValueError as error:
+            raise FetchError(f"OParl {url}: keine gültige Organisationsseite ({error})") from error
+        pages += 1
+        for organization in page.data:
+            if organization.deleted or organization.id in known:
+                continue
+            known.add(organization.id)
+            found.append(organization)
+        url = page.links.next
+        if url is not None and delay_s > 0:
+            sleep(delay_s)
+    return found, pages
