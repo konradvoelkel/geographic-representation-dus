@@ -1,29 +1,28 @@
 # Status
 
-Stand 2026-10-11, Branch `refactor/phase-3`. Fakten mit Datum, Invarianten ohne.
+Stand 2026-10-11, Branch `refactor/phase-4`. Fakten mit Datum, Invarianten ohne.
 
 ## Abgeschlossen
 
 - Phase 0 (`v0.1.0`): uv-Projekt auf Python 3.14, Charakterisierungstests, nox, pre-commit, CI, mechanische Ruff-Commits.
 - Phase 1 (`v0.2.0`): atomare Schreibvorgänge, Session mit Timeout und Retry, Fehlerisolation im Download, Guards, deterministische Ausgaben, Domänenfehler.
 - Phase 2 (`v0.3.0`): Settings in TOML, OParl 1.1 als Vertrag, Layout mit Schreibschutz auf `reference/`, Polars-Kette mit Parquet, Schrittregister mit Stamps, CLI `georep`.
-- Phase 3 (dieser Branch): Fetch- und Cache-Schicht. Geo mit shapely, pyproj und STRtree statt geopandas; Overpass statt osmnx; Wikidata und GeoSearch typisiert; requests-cache mit Lebensdauern je Quelle; PDF-Store mit Manifest; Textstore als Parquet mit Extraktor und PDF-Hash; inkrementeller OParl-Abruf mit frühem Abbruch; Netzschritte hinter `--online` und `georep fetch`. Der Code der Arbeit ist vollständig ersetzt und gelöscht; pandas, geopandas, osmnx, scikit-learn und tqdm sind aus dem Lockfile verschwunden, eine nox-Session verbietet ihre Rückkehr.
+- Phase 3 (`v0.4.0`): Fetch- und Cache-Schicht ohne geopandas und osmnx; der Code der Arbeit ist vollständig ersetzt.
+- Phase 4 (dieser Branch): Tests ausgebaut. `tests/property/` mit hypothesis: ein lesbares Orakel des Matcher-Vertrags (FlashText stimmt in 400 Zufallsfällen überein), Invarianten für Wörterbuch, Aggregation, POI-Bereinigung, Straßen, Treffer, Index, STRtree, OParl-Roundtrip, Stores und `deep_merge`. Abdeckungslücken geschlossen, Snapshot für `georep steps`, nox `test` parallel mit Abdeckung als Untergrenze (90 %), hypothesis-Profile `dev` und `ci`.
 
 ## Zahlen (2026-10-11)
 
-- Tests: 103, davon einer `slow` (volle Referenz, 8 s); `uv run nox` grün.
+- Tests: 122, davon einer `slow`; schnelle Suite parallel in 8 s; Abdeckung 98 %.
 - Code `src/georep/`: 33 Dateien, rund 2700 Zeilen, mypy strict ohne Befund.
-- Lockfile: 153 Pakete.
-- Treue der neuen Quellen gegen die Referenz der Arbeit: Straßen je Stimmbezirk 11/11, 7/7, 11/12 (Rest OSM-Pflege); SPARQL 949 von 950 Labels; Ortszuordnung 1996 von 1996 identisch (`tests/fixtures/http/README.md`, `tests/unit/test_geo.py`).
-- Echter Rauchtest am 2026-10-11: `georep fetch opendata` gegen das Portal, danach `georep run` auf den frischen Dateien.
 
 ## Bekannt
 
-- Ein voller `georep fetch` von Grund auf (Metadaten, 19108 PDFs, 306 Overpass- und 306 GeoSearch-Abfragen) wurde noch nicht durchlaufen; er dauert Stunden und ist wiederaufnehmbar. Der öffentliche Overpass-Server antwortete bei der Aufzeichnung einmal mit 504; die Session wiederholt mit Backoff.
-- Ob der OParl-Server `modified_since` beachtet, ist nicht gemessen; ohne Beachtung liest der inkrementelle Abruf wieder alle Seiten bis zum Periodenbeginn und ist nur durch den Abbruch günstiger.
+- Mutationstests stehen aus: mutmut 3 forkt, Polars blockiert im Kind (`docs/mutation-2026-10-11.md`); Kandidaten pytest-gremlins oder fest in Phase 6.
+- Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Ob der OParl-Server `modified_since` beachtet, zeigt erst dieser Lauf.
+- Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab (`docs/baseline-2026-10-10.md`).
 
 ## Nächster Schritt
 
-Phase 4 (Tests ausbauen: hypothesis-Eigenschaften, Snapshots, Coverage als Untergrenze, mutmut) und Phase 5
-(Profiling als Befehl, pytest-benchmark, Matcher- und Extraktor-Protokolle messen).
+Phase 5: Profiling als Befehl (`georep profile`), pytest-benchmark mit gespeicherten Baselines für Matcher,
+Extraktion und Aggregation; erst dann die Entscheidung über pyahocorasick, pypdfium2 oder Rust.

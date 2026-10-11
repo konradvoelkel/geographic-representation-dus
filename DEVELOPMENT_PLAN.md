@@ -225,7 +225,12 @@ Quellen gegen die Referenz: `tests/fixtures/http/README.md`.
 5. Straßen per Overpass je Stimmbezirk, Ergebnis je Geometrie-Hash gecacht; POIs per shapely-STRtree statt Schleife; danach osmnx, geopandas, pandas, scikit-learn aus `pyproject.toml` entfernen und den Lockfile-Check in CI aktivieren.
 6. Netz-Integrationstests als `network`, nicht in CI; ein `georep status` zeigt Cache-Füllstände mit Zahlen.
 
-### Phase 4: Tests ausbauen
+### Phase 4: Tests ausbauen — abgeschlossen 2026-10-11
+
+Abweichungen: Snapshots nur für `georep steps` und die PDF-Texte (die Golden-Frames vergleichen
+`polars.testing.assert_frame_equal`, dafür braucht es kein syrupy). Mutationstests vertagt, weil mutmut 3
+forkt und Polars im Kind blockiert (`docs/mutation-2026-10-11.md`). Dazugekommen: das Matcher-Orakel in
+`tests/property/oracle_matcher.py` als Spezifikation für jeden Ersatz-Matcher (Phase 5).
 
 1. Unit-Tests für reine Funktionen (Wörterbuchaufbau, Normalisierung, Aggregation, Zuordnung).
 2. hypothesis-Eigenschaften: `expand_street_names` ist idempotent, Obermenge, kleingeschrieben; jeder POI landet in höchstens einem Bezirk; Summe über Stimmbezirke gleich Wahlbezirk; jede ID im Index kommt im Korpus vor; `anzahl_treffer` gleich Mächtigkeit der ID-Menge; Trefferquote ≥ 0.
