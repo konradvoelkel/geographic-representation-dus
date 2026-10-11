@@ -19,6 +19,7 @@ from pytest_benchmark.fixture import BenchmarkFixture
 
 from georep.analysis.bodies import hits_by_body
 from georep.analysis.hits import hits_by_district, join_voters
+from georep.analysis.parties import classify_originators
 from georep.analysis.weights import (
     TypeRules,
     document_pairs,
@@ -58,6 +59,7 @@ class MiniRun:
     results: pl.DataFrame  # Option 05
     units: pl.DataFrame  # Option 05
     paper_types: pl.DataFrame  # Option 06
+    attribution_corpus: pl.DataFrame  # Option 04: Korpus mit den Spalten der Zuordnung
 
 
 @pytest.fixture(scope="module")
@@ -81,6 +83,10 @@ def mini(tmp_path_factory: pytest.TempPathFactory, mini_root: Path) -> MiniRun:
         results=pl.read_parquet(layout.results),
         units=pl.read_parquet(layout.district_units),
         paper_types=pl.read_parquet(layout.corpus, columns=["id", "paper_type"]),
+        attribution_corpus=pl.read_parquet(
+            layout.corpus,
+            columns=["id", "paper_type", "name", "text", "originator_organization"],
+        ),
     )
 
 
@@ -188,3 +194,17 @@ def test_document_weights_over_the_pairs(benchmark: BenchmarkFixture, mini: Mini
         return weighted_hits(document_weights(pairs), mini.voters, columns.eligible)
 
     assert benchmark(run).height == 3
+
+
+# --- Option 04 ------------------------------------------------------------------------------------
+# Gemessen wird nur ``classify_originators``: das ist die eine neue Schleife über jedes Dokument
+# (19 108 Aufrufe auf dem echten Korpus, 0,3 s), und ihr Minimum streute am 2026-10-12 über drei
+# Läufe gleichen Codes nur um 6 %. ``originators_by_district`` und ``party_hits`` sind ein paar
+# Polars-Joins über 41 beziehungsweise 246 Zeilen; ihr Minimum sprang zwischen drei Läufen gleichen
+# Codes von 6,5 auf 10,3 ms (58 %) und würde das 20-%-Gate ohne Codeänderung rot machen. Sie bleiben
+# draußen, wie die anderen Submillisekunden-Stufen (docs/profiling/README.md).
+
+
+def test_classify_originators(benchmark: BenchmarkFixture, mini: MiniRun) -> None:
+    frame = benchmark(classify_originators, mini.attribution_corpus, mini.settings.originators)
+    assert frame.height == 200
