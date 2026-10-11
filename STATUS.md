@@ -32,7 +32,13 @@ Datum, Invarianten ohne.
 
 ## Nächster Schritt
 
-Keiner geplant; der Umbau ist fertig. Was offensteht, wenn jemand es will: ein voller `georep fetch` von Grund
+Die Berichtsseite: eine in sich geschlossene HTML-Seite mit Kernzahlen, Karte der Trefferquote je Wahlbezirk,
+Streudiagramm mit Regression, sortierbarer Tabelle, Begriffen, Methode und den Ergebnissen zum Download als
+Parquet, CSV und GeoJSON mit Spaltenschema; gebaut als Pipeline-Schritt `report`, veröffentlicht über GitHub Pages
+aus einem Actions-Workflow. Plan in Stufen mit Abnahmekriterien: `docs/plan-report-2026-10.md` (Konrad,
+2026-10-11). Gearbeitet wird direkt auf `main`, keine Branches mehr.
+
+Außerdem offen, wenn jemand es will: ein voller `georep fetch` von Grund
 auf (Stunden; zeigt, ob der OParl-Server `modified_since` beachtet); ein Ersatz für FlashText oder pypdf nur
 nach neuer Messung (`docs/decisions.md`, Punkt 14); die beiden deal-Eigenheiten upstream melden; die Abweichung
 in Tabelle 5 „ohne Ausreißer" mit Lukas klären, falls es je wieder darauf ankommt.

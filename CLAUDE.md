@@ -1,15 +1,16 @@
 # Arbeitsregeln für dieses Repo
 
 Aufbau: `docs/architecture.md`. Gründe und verworfene Alternativen: `docs/decisions.md`. Stand und Bekanntes:
-`STATUS.md` (im selben Commit nachziehen, wenn sich der Stand ändert). Der Umbau 2026-10 ist abgeschlossen; sein
+`STATUS.md` (im selben Commit nachziehen, wenn sich der Stand ändert). Offenes Vorhaben: die Berichtsseite,
+`docs/plan-report-2026-10.md`. Der Umbau 2026-10 ist abgeschlossen; sein
 Plan liegt historisch unter `docs/development-plan-2026-10.md`, der Befund davor in `docs/baseline-2026-10-10.md`.
 Maßstab für Stil und Vorgehen sind die Kapitel Brownfield, Code-Qualität, Testing, Profiling und Design by
 Contract des eipy-Skripts.
 
 ## Einstieg in eine neue Sitzung
 
-1. `git switch main && git pull`. Jedes Vorhaben bekommt einen eigenen Branch; `main` trägt den letzten Tag
-   (`v0.8.0` am 2026-10-11).
+1. `git switch main && git pull`. Gearbeitet wird direkt auf `main`, keine Branches mehr (Konrad, 2026-10-11);
+   `main` trägt den letzten Tag (`v0.8.0` am 2026-10-11).
 2. Auf Konrads Rechner vor allem anderen, weil die Primärplatte voll ist:
    `export UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep UV_CACHE_DIR=/media/konrad/xtraspace/uv-cache`;
    `settings.local.toml` (gitignored, vorhanden) zeigt `data_root` und `cache_root` auf `/media/konrad/xtraspace/georep/`.
@@ -58,14 +59,14 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - Nach jedem Commit `uv run nox`. Wird der Golden Master rot, war es kein Refactoring: zurücknehmen und bewusst entscheiden.
 - Verhaltensänderungen zuerst mit rotem Test, dann die Änderung, je ein Commit.
 - Eine Eigenschaft, die für alle Eingaben gilt, wird ein hypothesis-Test in `tests/property/`, kein Beispieltest; wer den Matcher ersetzt, misst sich an `tests/property/oracle_matcher.py`. Snapshots (`syrupy`) nur für kleine, stabile Ausgaben und nie blind mit `--snapshot-update` erneuern.
-- Größere Vorhaben laufen auf einem Branch. Am Ende: Push, grüne CI abwarten (über die Actions-REST-API; `gh run list` liefert für dieses Repo leer), Merge nach `main` (fast-forward), Tag bei Versionssprung, Push. So hat Konrad es am 2026-10-11 angewiesen; Versionen stehen in `pyproject.toml`, `src/georep/__init__.py` und `uv.lock` (`uv lock`), jede mit einer Zeile im `CHANGELOG.md`.
+- Direkt auf `main`: nach jedem Commit `uv run nox`, dann Push; CI über die Actions-REST-API prüfen (`gh run list` liefert für dieses Repo leer). Tag bei Versionssprung; Versionen stehen in `pyproject.toml`, `src/georep/__init__.py` und `uv.lock` (`uv lock`), jede mit einer Zeile im `CHANGELOG.md`. So hat Konrad es am 2026-10-11 angewiesen.
 - Prüfschritte in Skripten nie hinter eine Pipe stellen (`uv run pytest | tail`): die Pipe frisst den Exit-Code, und am 2026-10-11 landeten so zwei rote Commits. Erst der Befehl allein, dann die Ausgabe ansehen.
 
 ## Arbeitsweise, gelernt im Umbau 2026-10
 
 - `set -e` greift in der zsh dieser Umgebung nicht zuverlässig; jede Prüfung bekommt eine eigene Exit-Code-Abfrage (`cmd || exit 1`).
 - Textersetzungen im Code auf den Wortlaut aufsetzen, den Ruff zuletzt formatiert hat (vorher `grep -n`), sonst scheitern Anker, und eine halb angewandte Änderung bleibt liegen. Nach `ruff format` ändern sich Umbrüche.
-- `ruff format` muss auch `noxfile.py` und `run.py`-artige Dateien einschließen (`ruff format .`), nicht nur `src tests`.
+- `ruff format` muss auch `noxfile.py` und andere Python-Dateien außerhalb von `src` und `tests` einschließen (`ruff format .`).
 - Ein Golden-Master-Vergleich über Labels oder Namen muss die Eindeutigkeit prüfen (Wikidata: „Itter" ist Stadtteil und Bach, ein Objekt kann zwei Koordinaten haben); über URL oder ID vergleichen.
 - Wenn die Laufzeit einer Suite sich plötzlich vervielfacht, ist meist ein neuer I/O-Pfad schuld (19108 Dateien mit fsync kosteten 143 s); erst messen, dann die Struktur ändern.
 - mutmut 3 forkt und blockiert mit Polars (`docs/mutation-2026-10-11.md`); Polars-Threads nicht nur für ein Werkzeug drosseln.
