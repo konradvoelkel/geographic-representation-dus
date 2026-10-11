@@ -15,26 +15,28 @@ def test_bootstrap_copies_inputs_and_converts_the_corpus(tmp_path: Path, mini_ro
     report = bootstrap(layout)
     assert sorted(report.copied) == [
         "Stimmbezirk_Wahlergebnis.csv",
+        "Stimmbezirke_2025.geojson",
         "streets_per_district.json",
         "wikipedia_dict.json",
     ]
-    assert report.missing == ["Stimmbezirke_2025.geojson"]
+    assert report.missing == []
     assert (report.papers, report.texts) == (200, 200)
     assert (
         layout.results_csv.read_bytes()
         == (mini_root / "external" / "Stimmbezirk_Wahlergebnis.csv").read_bytes()
     )
     assert layout.papers.exists() and layout.texts.exists() and not layout.corpus.exists()
-    assert "3 Dateien kopiert" in report.summary() and "200 Paper und 200 Texte" in report.summary()
+    assert "4 Dateien kopiert, 0 übersprungen, 0 in der Referenz nicht gefunden" in report.summary()
+    assert "200 Paper und 200 Texte" in report.summary()
 
 
 def test_bootstrap_is_idempotent_and_force_recopies(tmp_path: Path, mini_root: Path) -> None:
     layout = _layout(tmp_path, mini_root)
     bootstrap(layout)
     second = bootstrap(layout)
-    assert second.copied == [] and len(second.skipped) == 3 and second.papers is None
+    assert second.copied == [] and len(second.skipped) == 4 and second.papers is None
     forced = bootstrap(layout, force=True)
-    assert len(forced.copied) == 3 and forced.papers == 200
+    assert len(forced.copied) == 4 and forced.papers == 200
 
 
 def test_bootstrap_never_writes_into_the_reference(tmp_path: Path, mini_root: Path) -> None:

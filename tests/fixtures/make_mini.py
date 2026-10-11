@@ -6,9 +6,10 @@ Aufruf aus dem Repo-Wurzelverzeichnis::
 
 Auswahl: die Wahlbezirke 1 (meiste Treffer), 10 (Ausreißer) und 38 (wenigste Treffer) der Arbeit;
 200 Dokumente, davon 150 mit mindestens einem Treffer in diesen Bezirken und 50 ohne, jeweils als
-feste Stichprobe über sortierte IDs. Die Dateien unter ``expected/`` stammen aus einem Lauf des
-Altcodes (pandas) auf genau diesen Eingaben, Stand Tag v0.2.0, und sind der Golden Master der
-Polars-Kette; siehe ``mini/README.md`` zum Neuerzeugen.
+feste Stichprobe über sortierte IDs; dazu die Stimmbezirke dieser drei Wahlbezirke aus dem
+GeoJSON des Open-Data-Portals (seit 2026-10-11, für den Schritt ``report``). Die Dateien unter
+``expected/`` stammen aus einem Lauf des Altcodes (pandas) auf genau diesen Eingaben, Stand Tag
+v0.2.0, und sind der Golden Master der Polars-Kette; siehe ``mini/README.md`` zum Neuerzeugen.
 """
 
 from __future__ import annotations
@@ -90,11 +91,41 @@ def write_inputs() -> None:
     dst.parent.mkdir(parents=True, exist_ok=True)
     dst.write_bytes("".join([lines[0], *body]).encode("latin-1"))
 
+    write_geojson()
+
+
+def write_geojson() -> int:
+    """Die Stimmbezirke der drei Wahlbezirke als FeatureCollection mit dem ``crs`` der Quelle.
+
+    Kompakt geschrieben (kein Einzug): 22 Features, rund 95 KB statt der 1,8 MB der Referenz.
+    Liefert die Zahl der Features.
+    """
+    src = REFERENCE / "external" / "Stimmbezirke_2025.geojson"
+    with src.open(encoding="utf-8") as f:
+        collection: dict[str, Any] = json.load(f)
+    features = [
+        feature
+        for feature in collection["features"]
+        if feature["properties"]["Kommunalwahlbezirk Nr."] in DISTRICTS
+    ]
+    subset = {key: (features if key == "features" else value) for key, value in collection.items()}
+    dst = MINI / "external" / "Stimmbezirke_2025.geojson"
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    with dst.open("w", encoding="utf-8") as f:
+        json.dump(subset, f, ensure_ascii=False)
+    return len(features)
+
 
 def main() -> None:
     write_inputs()
     n_docs = len(_load_json(MINI / "interim" / "paper_with_text.json"))
-    print(f"mini fixture geschrieben: {n_docs} Dokumente, Wahlbezirke {sorted(DISTRICTS)}")
+    n_precincts = len(
+        json.loads((MINI / "external" / "Stimmbezirke_2025.geojson").read_text())["features"]
+    )
+    print(
+        f"mini fixture geschrieben: {n_docs} Dokumente, {n_precincts} Stimmbezirke, "
+        f"Wahlbezirke {sorted(DISTRICTS)}"
+    )
 
 
 if __name__ == "__main__":

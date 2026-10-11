@@ -36,7 +36,16 @@ def test_ensure_dirs_creates_runtime_dirs_only(tmp_path: Path) -> None:
     layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
     layout.ensure_dirs()
     assert all(d.is_dir() for d in layout.runtime_dirs())
+    assert layout.site_data.is_dir()
     assert not (tmp_path / "reference").exists()
+
+
+def test_site_lies_under_data_root(tmp_path: Path) -> None:
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    assert layout.site == tmp_path / "data" / "site"
+    assert layout.site_index == tmp_path / "data" / "site" / "index.html"
+    assert layout.site_data == tmp_path / "data" / "site" / "data"
+    assert layout.site in layout.runtime_dirs() and layout.site_data in layout.runtime_dirs()
 
 
 def test_data_root_inside_reference_is_refused(tmp_path: Path) -> None:

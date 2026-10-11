@@ -150,8 +150,30 @@ class Layout:
     def results(self) -> Path:
         return self.processed / "wahlbezirke_auswertung.parquet"
 
+    # Die Berichtsseite: eine in sich geschlossene index.html, daneben die Download-Dateien
+    @property
+    def site(self) -> Path:
+        return self.data_root / "site"
+
+    @property
+    def site_index(self) -> Path:
+        return self.site / "index.html"
+
+    @property
+    def site_data(self) -> Path:
+        return self.site / "data"
+
     def runtime_dirs(self) -> tuple[Path, ...]:
-        return (self.external, self.raw, self.interim, self.processed, self.pdf_dir, self.text_dir)
+        return (
+            self.external,
+            self.raw,
+            self.interim,
+            self.processed,
+            self.pdf_dir,
+            self.text_dir,
+            self.site,
+            self.site_data,
+        )
 
     def ensure_dirs(self) -> None:
         for directory in self.runtime_dirs():
