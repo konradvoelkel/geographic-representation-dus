@@ -76,10 +76,12 @@ class HttpSettings(_Strict):
 
 class OparlSource(_Strict):
     endpoint: str
+    organizations_endpoint: str = ""  # Option 04: Fraktionen und Gremien, eine Seite
     delay_s: float = 1.0
     stop_when_older: bool = True
     incremental: bool = True
     pdf_limit: int = 0
+    max_pages: int = 0  # Option 04: 0 = alle; `fetch papers --max-pages N` setzt es für einen Lauf
 
 
 class OpendataSource(_Strict):
@@ -500,6 +502,88 @@ class ContextSettings(_Strict):
         return tuple(v for v in self.variables if v.kind == "district")
 
 
+# --- Option 04: Urheber und Parteien -------------------------------------------------------------
+
+
+def _compiles(patterns: list[str], field: str) -> list[str]:
+    """Jedes Muster muss übersetzen; ein Tippfehler in der TOML soll beim Laden auffallen."""
+    for pattern in patterns:
+        try:
+            re.compile(pattern)
+        except re.error as error:
+            raise ValueError(
+                f"{field}: {pattern!r} ist kein gültiger regulärer Ausdruck ({error})"
+            ) from error
+    return patterns
+
+
+class Party(_Strict):
+    """Eine Partei, Fraktion oder Gruppe: Schlüssel, Anzeigename, Muster, OParl-Organisationen.
+
+    ``key`` einer ``[[originators.parties]]`` muss in ``columns.results.parties`` stehen (dort
+    hängt die Stimmenspalte); ``[[originators.groups]]`` sind Fraktionen ohne Stimmenspalte.
+    ``patterns`` sind kleingeschriebene reguläre Ausdrücke, ``organizations`` volle oder teilweise
+    OParl-Organisations-URLs, die auf diese Partei zeigen.
+    """
+
+    key: str
+    label: str
+    patterns: list[str]
+    organizations: list[str] = []
+
+    @field_validator("patterns")
+    @classmethod
+    def _patterns_compile(cls, value: list[str]) -> list[str]:
+        if not value:
+            raise ValueError("eine Partei braucht mindestens ein Muster")
+        return _compiles(value, "originators.parties[].patterns")
+
+
+class Originators(_Strict):
+    """Wie der Urheber eines Dokuments aus ``paperType``, Titel und Textkopf gelesen wird.
+
+    Alles Stadtspezifische steht hier und nicht im Code (Vorbereitung für Option 10): eine zweite
+    Kommune bringt andere ``paperType``-Werte und andere Fraktionsnamen mit.
+    """
+
+    admin_types: list[str] = []  # paperType-Werte der Verwaltung: Vorlagen ohne Urheber im Typ
+    citizen_types: list[str] = []  # Eingaben nach § 24 GO NRW: Bürgeranträge
+    motion_prefixes: list[str] = []  # „Antrag", „Anfrage": davor steht die Art, danach die Partei
+    fraction_markers: list[str] = []  # erst mit einem dieser Marker wird der Titel befragt
+    joint_markers: list[str] = []  # „interfraktionell": Fraktion ohne nennbare Partei
+    person_markers: list[str] = []  # „Bezirksvertreterin": Klasse Person
+    text_markers: list[str] = []  # Fenster im Textkopf: Antrag/Anfrage … Fraktion
+    text_head_chars: int = 600  # so viele Zeichen des Texts nach „betrifft" werden gelesen
+    text_window_chars: int = 80  # Fenster links und rechts um den Treffer im Textkopf
+    parties: list[Party] = []
+    groups: list[Party] = []
+
+    @field_validator("fraction_markers", "joint_markers", "person_markers", "text_markers")
+    @classmethod
+    def _markers_compile(cls, value: list[str]) -> list[str]:
+        return _compiles(value, "originators markers")
+
+    @field_validator("text_head_chars", "text_window_chars")
+    @classmethod
+    def _positive(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError(f"originators: Zeichenzahl muss positiv sein, nicht {value}")
+        return value
+
+    @model_validator(mode="after")
+    def _keys_are_unique(self) -> Originators:
+        keys = [p.key for p in (*self.parties, *self.groups)]
+        doubled = sorted({k for k in keys if keys.count(k) > 1})
+        if doubled:
+            raise ValueError(f"originators: doppelte Parteischlüssel {doubled}")
+        return self
+
+    @property
+    def all_keys(self) -> tuple[str, ...]:
+        """Alle Schlüssel, Parteien vor Gruppen; die Reihenfolge der Settings bleibt erhalten."""
+        return tuple(p.key for p in (*self.parties, *self.groups))
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_", env_nested_delimiter="__", extra="forbid", frozen=True
@@ -525,6 +609,23 @@ class Settings(BaseSettings):
     weights: Weights = Weights()  # Option 06
     topics: Topics = Topics()  # Option 06
     context: ContextSettings  # Option 03
+
+    originators: Originators = Originators()  # Option 04
+
+    @model_validator(mode="after")
+    def _party_keys_have_a_vote_column(self) -> Settings:
+        # Option 04: nur ein Schlüssel mit Stimmenspalte bekommt die Hochburg-Kennzahl; Gruppen
+        # ohne Spalte gehören in [[originators.groups]], sonst fehlt <Partei>_anteil beim Abgleich.
+        unknown = sorted(
+            p.key for p in self.originators.parties if p.key not in self.columns.results.parties
+        )
+        if unknown:
+            raise ValueError(
+                f"originators.parties: {unknown} stehen nicht in columns.results.parties "
+                f"({sorted(self.columns.results.parties)}); ohne Stimmenspalte gehören sie "
+                "nach originators.groups"
+            )
+        return self
 
     @field_validator("cache_root", mode="before")
     @classmethod

@@ -30,10 +30,12 @@ overpass_s = 2592000           # Straßennamen ändern sich langsam; die Referen
 
 [sources.oparl]
 endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers"  # body 0015 = Düsseldorf; 0009 Neuss, 0011 Mönchengladbach, 0013 Grevenbroich, 0019 Rhein-Kreis Neuss
+organizations_endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations"  # Option 04: Fraktionen und Gremien, eine Seite, 58 Objekte, 0,47 s am 2026-10-11
 delay_s = 1.0                  # Pause zwischen Seiten und Dateien; der Server ist langsam, nicht wir
 stop_when_older = true         # Liste ist neueste zuerst: abbrechen, sobald eine Seite nur noch Paper vor period.start hat (spart 270 von 365 Seiten)
 incremental = true             # bei vorhandenem Store nur Paper mit modified_since (letztes modified minus ein Tag) holen
 pdf_limit = 0                  # neue PDF-Downloads je Lauf; 0 = alle (`georep fetch pdfs --limit N` setzt es für einen Lauf)
+max_pages = 0                  # Option 04: Metadatenseiten je Lauf; 0 = alle (`georep fetch papers --max-pages 1` ist die Probe, ob der Server Urheberfelder liefert)
 
 [sources.opendata]
 results_url = "https://opendata.duesseldorf.de/sites/default/files/KW_Rat_2025_09_14_Endgültiges_Ergebnis_Stimmbezirke_0.csv"
@@ -386,3 +388,84 @@ y_scale = 100                  # Wahlbeteiligung in Prozent, wie Tabelle 5
 main = ["trefferquote", "hb_score", "anteil_65plus", "fluktuation"]                  # B: k = 4
 parties = ["trefferquote", "hb_score", "anteil_65plus", "fluktuation", "cdu", "afd"] # C: die zwei Parteianteile mit der geringsten Korrelation untereinander (r = -0,09); alle sechs ergäben VIF bis 76
 single = ["hb_score", "fluktuation_score", "anteil_65plus", "anteil_u18", "fluktuation", "wohndauer", "mindestsicherung", "migrationshintergrund", "einpersonen_hh", "cdu", "gruene", "spd", "afd"] # Tabelle 6b: Trefferquote plus je eine Variable
+
+# --- Option 04: Urheber und Parteien
+# Der OParl-Server der ITK Rheinland liefert für Düsseldorf keine Urheberfelder (0 von 19 108
+# Rohobjekten, auch nicht auf der Seite vom 2026-10-09 bei einem „Antrag FDP"). Der Urheber steht
+# stattdessen im paperType, im Titel und im Textkopf; die Muster dafür stehen hier, nie im Code
+# (Vorbereitung für Option 10: eine zweite Kommune bringt andere paperType-Werte mit).
+# Reihenfolge der Quellen: oparl > paper_type > name > text; die erste mit Treffer gewinnt.
+[originators]
+# Die 9 933 Verwaltungsvorlagen: paperType ohne Urheber, Zahlen vom 2026-10-11 über alle 19 108 Dokumente
+admin_types = [
+    "Beschlussvorlage",                      # 4 001
+    "Bezirksvertretung Informationsvorlage", # 2 699
+    "Bezirksvertretung Beschlussvorlage",    # 1 474
+    "Informationsvorlage",                   # 1 327
+    "Berichtsvorlage",                       # 177
+    "A+F Beschluss",                         # 145, Ausschuss für Anregungen und Beschwerden
+    "Bedarfsbeschluss",                      # 78
+    "Beschlussvorlage RPA",                  # 32, Rechnungsprüfungsamt
+]
+citizen_types = ["Eingabe nach 24GO", "Eingabe nach 24 GO"]  # 73 + 51 Bürgeranträge nach § 24 GO NRW; weder Verwaltung noch Mandatsträger
+motion_prefixes = ["Haushaltsantrag", "Antrag", "Anfrage", "zAnfrage"]  # längste zuerst, sonst bleibt bei „Haushaltsantrag CDU/Grüne" ein „haushalts" stehen
+fraction_markers = ["fraktion", "interfraktionell", "überfraktionell", "ratsgruppe"]  # erst damit wird der Titel befragt; „die cdu beantragt" in einer Verwaltungsvorlage soll nicht zählen
+joint_markers = ["interfraktionell", "überfraktionell", "fraktionen"]  # Fraktion ohne nennbare Partei: 220 Dokumente („Interfraktioneller Antrag der Ratsfraktionen von …" nennt sie, andere nicht)
+person_markers = [
+    "bezirksvertreter", "ratsherr", "ratsfrau", "bürgermitglied", "herrn ", "frau ",
+]                              # 746 Dokumente: „Anfrage der Bezirksvertreterin Claudia Drossel"
+text_markers = ["(antrag|anfrage)[^.]{0,80}?(fraktion|ratsfraktion|interfraktionell|überfraktionell)"]  # „(anfrage cdu-fraktion vom 28. juli 2023)": fängt die 641 Fälle, in denen der Titel die Fraktion verschweigt
+text_head_chars = 600          # so viele Zeichen des Texts nach „betrifft"; der Volltext würde Zitate treffen („die cdu-fraktion beantragt" in einer Verwaltungsvorlage)
+text_window_chars = 80         # Fenster links und rechts um den Treffer; „(anfrage frau irmer, spd-fraktion, vom 2. august 2023)" braucht beide Seiten
+
+# Die sechs Parteien mit Stimmenspalte (columns.results.parties); patterns kleingeschrieben,
+# organizations sind OParl-Organisations-URLs der Seite vom 2026-10-11 (greifen, sobald der Server
+# originatorOrganization liefert; Suffix reicht, verglichen wird mit str.endswith).
+[[originators.parties]]
+key = "CDU"
+label = "CDU"
+patterns = ['\bcdu\b']
+organizations = ["/organizations/gr/44"]  # CDU-Ratsfraktion
+[[originators.parties]]
+key = "GRUENE"
+label = "Bündnis 90/Die Grünen"
+patterns = ['grüne', 'gruene', 'bündnis ?90', 'bü ?90']  # Schreibvarianten im Titel, auch „BÜNDNINS 90"
+organizations = ["/organizations/gr/42"]  # Ratsfraktion BÜNDNIS 90/DIE GRÜNEN
+[[originators.parties]]
+key = "SPD"
+label = "SPD"
+patterns = ['\bspd\b']
+organizations = ["/organizations/gr/400204"]  # Ratsfraktion SPD/Volt (ab 2020-11-01)
+[[originators.parties]]
+key = "FDP"
+label = "FDP"
+patterns = ['\bfdp\b']
+organizations = ["/organizations/gr/49"]  # FDP-Ratsfraktion
+[[originators.parties]]
+key = "Die_Linke"
+label = "Die Linke"
+patterns = ['\blinke\b']
+organizations = ["/organizations/gr/66"]  # Ratsfraktion Die Linke
+[[originators.parties]]
+key = "AfD"
+label = "AfD"
+patterns = ['\bafd\b']                    # trifft auch die Schreibvariante „AFD" („Haushaltsantrag AFD", 2 Dokumente), weil kleingeschrieben verglichen wird
+organizations = ["/organizations/gr/400198", "/organizations/gr/162"]  # AfD-Ratsfraktion; gr/162 ist das Einzelmandat bis 2020-10-31
+
+# Fraktionen und Gruppen ohne Stimmenspalte im Wahlergebnis: sie zählen als Klasse „Fraktion"
+# (747 Dokumente), bekommen aber keine Hochburg-Kennzahl, weil es kein <Partei>_anteil gibt.
+[[originators.groups]]
+key = "T_FW"
+label = "Tierschutz/Freie Wähler"
+patterns = ['tierschutz', 'freie wähler', 'freie waehler']
+organizations = ["/organizations/gr/400202", "/organizations/gr/400238"]  # Gruppe bis 2025-10-31, danach Ratsgruppe Freie Wähler Tierschutz PARTEI
+[[originators.groups]]
+key = "PARTEI"
+label = "Die PARTEI"
+patterns = ['die partei', 'partei-klima', 'klima-fraktion', 'klimafraktion']  # „DIE PARTEI-Klima-Fraktion", „Die Partei-KlimaFraktion"
+organizations = ["/organizations/gr/400205"]
+[[originators.groups]]
+key = "VOLT"
+label = "Volt"
+patterns = ['\bvolt\b']
+organizations = []             # Volt sitzt in der Ratsfraktion SPD/Volt, hat also keine eigene Organisation
