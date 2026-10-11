@@ -148,7 +148,7 @@ CSV nur als Export für Menschen (`georep export`). Referenzdaten bleiben im Ups
 7. Keine `except Exception` mehr: Domänenfehler (`FetchError`, `CorruptPdfError`, `SchemaError`) werden behandelt, Vertragsverletzungen sind Bugs und laufen durch.
 8. Deterministische Ausgaben (sortierte Begriffe und IDs), damit Golden-Vergleiche byteweise möglich sind.
 
-### 3.5 Heiße Pfade und Rust (Stand 2026-10-11, nach Phase 4)
+### 3.5 Heiße Pfade und Rust (Stand 2026-10-11, nach Phase 5)
 
 Geo-Schicht ist fertig (`georep.geo`: shapely, pyproj, STRtree, Arbeits-CRS EPSG:25832, eine Rückprojektion).
 
@@ -157,16 +157,21 @@ Heiße Pfade und ihre Nähte:
 - Matcher: `georep.search.matcher.KeywordMatcher` (Protokoll: `add_terms`, `extract(text) -> set[str]`),
   Implementierung `FlashTextMatcher` (reines Python, FlashText 2.7 von 2018). Vertrag als Orakel in
   `tests/property/oracle_matcher.py` (längster Treffer an Wortgrenzen, Umlaute sind Grenzen, Terminator wird
-  verbraucht); jeder Ersatz muss `tests/property/test_matcher_contract.py` bestehen. Gemessen: 4 s für 5841
-  Begriffe über 19108 Dokumente (Schritt `index`).
-- Extraktion: `georep.prep.extract.extract_text(path)` mit pypdf; `EXTRACTOR = "pypdf-<version>"` ist der
-  Cache-Schlüssel im Textstore. Noch kein Protokoll; Phase 5 zieht eines ein (`PdfTextExtractor` mit
-  `name` und `extract(path) -> str`), damit pypdfium2 oder pymupdf austauschbar sind und der Textstore die
-  Version kennt. Erwartung: die Extraktion dominiert den vollen Lauf (19108 PDFs); nicht gemessen.
-- Aggregation und Index-Join: Polars, vermutlich unkritisch; messen.
+  verbraucht); jeder Ersatz muss `tests/property/test_matcher_contract.py` bestehen. Gemessen am 2026-10-11:
+  4,1 s für 5841 Begriffe über 19108 Dokumente (Schritt `index`), davon 3,8 s Eigenzeit in FlashTexts
+  `extract_keywords`, reines Python; der einzige heiße Pfad der Offline-Kette (6,3 s gesamt).
+- Extraktion: `georep.prep.extract` hinter dem Protokoll `PdfTextExtractor` (`name` ist der Cache-Schlüssel im
+  Textstore, `extract(path) -> str` der rohe Text aller Seiten); `PypdfExtractor` ist die Implementierung der
+  Arbeit (Phase 5). Gemessen am 2026-10-11 über 200 PDFs: 38 ms je PDF, 17 ms je Seite, hochgerechnet 12 min
+  für alle 19108; der Abruf mit 1 s Pause ist dreißigmal teurer. pypdf 6.20.0 reproduziert 197 von 200 Texten
+  der Arbeit zeichengleich, der Index danach ist byteidentisch.
+- Aggregation und Index-Join: Polars, je unter 0,1 s; gemessen, unkritisch.
 
-Kandidaten nach der Messung: `pyahocorasick` (C) oder ein PyO3-Modul auf `aho-corasick` (maturin, optionales
-Extra, Crate-Name ungleich Modulname); `pypdfium2` oder `pymupdf`. Rust nur für einen gemessenen Flaschenhals,
+Messung und Empfehlung stehen in `docs/profiling/README.md` (2026-10-11): kein Flaschenhals, den Python nicht
+in Sekunden erledigt; pypdf und FlashText bleiben, kein Rust-Port, solange der Index nur einmal je
+Datenänderung läuft. Kandidaten, falls sich das ändert: `pyahocorasick` (C, liefert überlappende Treffer, die
+nachgefiltert werden müssten) oder ein PyO3-Modul auf `aho-corasick` (maturin, optionales Extra, Crate-Name
+ungleich Modulname); `pypdfium2` oder `pymupdf` nur, wenn Treue zu den Texten der Arbeit nicht mehr zählt.
 Python bleibt Orakel. cargo 1.98 ist installiert, maturin nicht.
 
 ## 4. Phasen
@@ -241,7 +246,15 @@ forkt und Polars im Kind blockiert (`docs/mutation-2026-10-11.md`). Dazugekommen
 3. Golden Master als `syrupy`-Snapshots, klein, mit Diff-Pflicht; Frame-Vergleiche über `polars.testing.assert_frame_equal`.
 4. Coverage als Untergrenze (`--cov-fail-under=80` für `georep`), nicht als Ziel; `mutmut` auf `search/` und `analysis/` einmal pro Phase, nicht als Gate.
 
-### Phase 5: Profiling-Infrastruktur
+### Phase 5: Profiling-Infrastruktur — abgeschlossen 2026-10-11
+
+Ergebnis (2026-10-11): alle vier Schritte umgesetzt, Zahlen und Empfehlung in `docs/profiling/README.md`. Die
+Entscheidung über einen Ersatz fällt gegen den Austausch aus, solange nichts Neues gemessen wird: pypdf und
+FlashText bleiben, kein Rust. Abweichungen: `.prof`-Dateien sind gitignored (rechnerspezifisch), die Zahlen
+stehen im README; `nox -s bench` legt beim ersten Lauf nur die Baseline an, weil pytest-benchmark
+`--benchmark-compare-fail` ohne Vergleichslauf als Bedienfehler behandelt; die Schwelle ist 20 % statt 10 %,
+weil 10 % unter dem gemessenen Rauschen der Millisekunden-Stufen lagen (12,7 % ohne Codeänderung); ein Nebenbefund (`.gitignore` las
+Kommentare hinter Mustern als Teil des Musters) ist behoben.
 
 Werkzeuge noch nicht in der Dev-Gruppe (mit `uv add --group dev …` aufnehmen): `pytest-benchmark`,
 `snakeviz`; bei Bedarf `line_profiler`, `scalene`, `memray`, `py-spy` (Reihenfolge und Aufrufe: Skript,

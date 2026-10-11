@@ -27,6 +27,8 @@ uv run georep bootstrap && uv run georep run && uv run georep status
 uv run georep fetch opendata # der einzige schnelle Netzschritt; alles andere dauert Stunden
 uv run ruff check . && uv run ruff format --check .
 uv run mypy                  # strict für alles
+uv run nox -s bench          # heiße Pfade gegen die gespeicherte Baseline; der erste Lauf legt sie nur an
+uv run georep profile index  # echter Schritt unter cProfile; .prof nach docs/profiling/, Zahlen ins README dort
 ```
 
 Settings: `src/georep/defaults.toml` ist die Quelle; rechnerspezifisches (Pfade auf xtraspace) gehört in
@@ -62,3 +64,8 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - Ein Golden-Master-Vergleich über Labels oder Namen muss die Eindeutigkeit prüfen (Wikidata: „Itter" ist Stadtteil und Bach, ein Objekt kann zwei Koordinaten haben); über URL oder ID vergleichen.
 - Wenn die Laufzeit einer Suite sich plötzlich vervielfacht, ist meist ein neuer I/O-Pfad schuld (19108 Dateien mit fsync kosteten 143 s); erst messen, dann die Struktur ändern.
 - mutmut 3 forkt und blockiert mit Polars (`docs/mutation-2026-10-11.md`); Polars-Threads nicht nur für ein Werkzeug drosseln.
+- `.gitignore` kennt keine Kommentare hinter dem Muster; git liest sie als Teil des Musters, und die Zeile ignoriert nichts (so lagen `/data/` und `mutants/` bis 2026-10-11 offen). Kommentare auf eigene Zeilen, danach `git check-ignore -v`.
+- Ein Test darf nicht von der Laufzeit abhängen: ob ein Funktionsname in einer Top-N-Profiltabelle steht, wechselt unter xdist von Lauf zu Lauf (rot am 2026-10-11). Den äußersten Frame oder die Sortierzeile prüfen.
+- pytest-benchmark: `--benchmark-compare-fail` ohne gespeicherten Lauf ist ein Bedienfehler (Exit 4); die nox-Session `bench` prüft `.benchmarks/` vorher. Die CPU-Taktfrequenz schwankt zwischen Läufen, darum ist die `machine_info`-Warnung gefiltert. Eine Schwelle erst nach gemessenem Rauschen setzen: 10 % im Minimum schlugen bei 1-ms-Polars-Stufen ohne Codeänderung an (12,7 %), 20 % liegen über allem Gemessenen.
+- Messungen stehen datiert in `docs/profiling/README.md`, `.prof`-Dateien und `.benchmarks/` bleiben lokal. Ein Profil des echten Schritts (`georep profile`) vor jedem Nachbau; cProfile verdreifacht die Zeit reiner Python-Bibliotheken (pypdf), die Verteilung stimmt trotzdem.
+- `georep fetch pdfs --limit N` schreibt `pdf_limit` in den Settings-Fingerprint des Stamps; `status` zeigt `pdfs` danach als „offen: Settings geändert". Das ist richtig, nicht kaputt.

@@ -2,6 +2,18 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.6.0 (2026-10-11), Phase 5
+
+- `georep profile [SCHRITT …]` führt echte Schritte unter cProfile aus und schreibt `.prof`-Dateien für snakeviz;
+  `nox -s profile` ruft dasselbe, `nox -s bench` misst die heißen Pfade mit pytest-benchmark gegen den letzten
+  gespeicherten Lauf (rot ab 20 % langsamer im Minimum; 10 % lagen unter dem gemessenen Rauschen).
+- Die PDF-Bibliothek steht hinter dem Protokoll `PdfTextExtractor`; der Extraktorname ist der Cache-Schlüssel
+  des Textstores, ein neuer Name macht alte Texte veraltet.
+- Erste Messung in `docs/profiling/README.md`: Offline-Lauf 6,3 s, davon 4,1 s FlashText; Extraktion 38 ms je
+  PDF über 200 PDFs; pypdf 6.20.0 reproduziert 197 von 200 Texten der Arbeit zeichengleich. Empfehlung: pypdf
+  und FlashText bleiben, kein Rust-Port.
+- `.gitignore` ignorierte `/data/` und `mutants/` nicht (Kommentar hinter dem Muster); behoben.
+
 ## 0.5.0 (2026-10-11), Phase 4
 
 - Eigenschaftstests mit hypothesis für Suche, Aufbereitung, Treffer, Geometrie und Speicher; ein lesbares
