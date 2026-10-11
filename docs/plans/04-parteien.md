@@ -1,6 +1,6 @@
 # Plan 04: Parteien
 
-Stand 2026-10-11, Branch `feat/04-parteien`. Status: geplant.
+Stand 2026-10-11, Branch `feat/04-parteien`. Status: umgeschrieben.
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.4; Vorlage § 8.3; Regeln § 2.
 Dieser Plan ist so geschrieben, dass ein frischer Agent ihn in Phase 3 ohne Rückfragen umsetzen kann. Alle
@@ -493,4 +493,58 @@ Gemeinsame Bausteine mit anderen Optionen, die der Supervisor in `00-synergien.m
 
 ## 10. Änderungen durch die Synergiephase
 
-Füllt der Supervisor.
+Stand 2026-10-12, geschrieben vom Supervisor nach [00-synergien.md](00-synergien.md). Das Fundament liegt auf
+`main` (Commits `d7df0ed` bis `b8e44b1`, Branch rebased); was unten steht, gilt vor den Stufen in § 5. Für alle
+Optionen (00-synergien.md, § 2 und § 5):
+
+- **Vorlage**: `report.html.j2` ist Rahmen; ein neuer Abschnitt ist eine neue Datei
+  `src/georep/report/templates/sections/NN-name.html.j2` (Nummern in 00-synergien.md § 5.1), optional mit
+  `NN-name.css` und `NN-name.js` daneben; `render.sections()` bindet sie in Nummernfolge ein. Das Makro
+  `term` kommt aus `templates/macros.html.j2` (`{% from "macros.html.j2" import term %}`). Ein Abschnitt, der
+  nur mit einem Modellteil existiert, steht in `{% if model.<teil> %} … {% endif %}`, das Feld in `ReportModel`
+  hat Default `None` und steht am Ende der Klasse.
+- **JavaScript**: Abschnitts-Skripte sprechen mit `window.georep` (`select(ids, scroll)` für Zahl, Array
+  oder `null`; `showDocuments(terms, title)` mit mehreren Begriffen; `rows`). Der Kartenumschalter ist
+  generisch: Radio `input[name="metric"]` mit `value`, Attribut `data-class-<value>` je Fläche
+  (`charts.choropleth(..., extra_classes={"<value>": classification})`), Legende `.legend#legend-<value>`.
+- **Tabellen**: jede neue veröffentlichte Tabelle ist ein `PublishedTable`-Eintrag am Ende von `TABLES` in
+  `src/georep/report/tables.py` (Name, Pfad-Lambda, Beschreibung, Spaltendoku, CSV-Regeln, `optional`);
+  `published_tables`, `COLUMN_DOCS`, `DESCRIPTIONS` und `export.csv_plan` gibt es nicht mehr.
+- **Regression**: `analysis.regression.regression_pair(frame, exclude, *, x, y, y_scale)` rechnet beide
+  Spalten von Tabelle 5 für jede Kennzahlspalte; die Ausreißer kommen aus `settings.analysis.exclude_districts`
+  (`defaults.toml`, `[analysis]`), `OUTLIERS` gibt es nicht mehr.
+- **Settings**: neue Tabellen am Ende von `defaults.toml` in einem Block `# --- Option NN`, neue Modelle vor
+  `class Settings`, neue Felder am Ende von `Settings`; Pfade und reine Anzeigewerte aus `fingerprint()`
+  ausschließen (Kommentar dort). Neue Layout-Properties am Ende der Klasse vor `runtime_dirs`.
+- **Pipeline**: neue Schritte mit Kommentar `# --- Option NN` an der Stelle ihrer Abhängigkeit; neue Eingaben
+  von `report` am Ende seines Tupels.
+- **Tests**: `test_cli.py`, `test_pipeline.py`, `test_report_build.py` zählen Schritte und Dateien aus
+  `build_steps` und dem Register; eigene Erwartungen in eigene Tests. Den Snapshot `test_cli.ambr`
+  (`georep steps`) bewusst erneuern, Diff im Commit.
+- **Doku**: `decisions.md` neuer Punkt ohne feste Nummer („## Punkt: <Titel> (Option NN, Datum)"; Punkt 21
+  ist das Fundament, der Supervisor nummeriert beim Merge); CHANGELOG unter „Unreleased" als eigener Absatz.
+- **Vorschau**: lokaler Server auf Port `8700 + NN`; `.claude/launch.json` je Worktree anlegen. Browser-Prüfung
+  nach § 8.4 des Meta-Plans.
+- **Cache**: `cache_root` ist geteilt; nichts außer `bootstrap` schreibt den Textstore der Hauptperiode.
+- **Fragen**: die Antworten und Vorentscheidungen stehen in [fragen.md](fragen.md); neue Fragen in § 8 dieses
+  Plans eintragen, der Supervisor sammelt sie.
+
+Für Option 4 im Besonderen:
+
+- **Ein Schema-Sprung für alle**: `PaperRecord` und Korpus (2 auf 3) bekommen in Stufe A zusätzlich
+  `consultation_organizations: tuple[str, ...]` (die Organisations-URLs aus `consultation[].organization`,
+  sortiert, eindeutig), damit Option 5 später die Gremien direkt aus OParl lesen kann, ohne den Korpus erneut
+  zu ändern. `from_legacy` lässt das Feld leer.
+- **Dialog**: `showDocuments(terms, title)` aus dem Fundament F1 nimmt mehrere Begriffe; 04 hängt an
+  `documents.FIELDS` das Feld `urheber` an und zeigt es im Basis-JavaScript des Rahmens hinter der Drucksache
+  (eine Zeile im Rahmen, Kommentar `/* Option 04 */`).
+- **Abschnitt**: `sections/38-parteien.html.j2` mit eigenem `38-parteien.css` für die schattierten Zellen;
+  Absatz in `sections/60-methode.html.j2` am Ende.
+- **Tabellen**: `dokumente_urheber`, `wahlbezirke_urheber`, `wahlbezirke_parteien` als Einträge in `TABLES`.
+  Für Tabellen mit einer Zeile je Korpus-ID legt 04 das Prädikat `one_row_per_document(frame, corpus_ids)` in
+  `contracts.py` an (00-synergien.md § 5.6); 05 und 06 nutzen es nach dem Rebase.
+- **Urheber ist 04s Besitz**: Option 5 streicht ihre Spalte `herkunft`; 06 behält Regex-Gewichte auf
+  `paper_type`. Die Klassen Verwaltung, Fraktion, Person, Eingabe, unbekannt bleiben wie geplant.
+- **`max_pages`** und der Zähler „mit Urheberfeld" bleiben bei 04; 01, 02 und 07 nutzen den Schalter.
+- **Reihenfolge**: 04 merged als Fünfte (nach 08, 05, 06, 03), vor 02 und 07, die den Record erweitern.
+- **Fragen**: 4.4 offen (gebündelt mit dem Erstabruf von 07); 4.1, 4.2, 4.3, 4.5 bis 4.10 wie angenommen.
