@@ -47,6 +47,9 @@ GEOJSON_NAME = "wahlbezirke.geojson"
 SCHEMA_NAME = "schema.json"
 DOCUMENTS_NAME = "dokumente.json"
 MAP_NAME = "karte.html"
+# Als Tupel-Konstante, nicht als ``except (A, B)``: ruff 0.17.0 entfernt dort die Klammern und
+# hinterlässt Python-2-Syntax, die nicht mehr parst (2026-10-12, dieses Modul lag so auf main).
+GIT_ERRORS = (OSError, subprocess.TimeoutExpired)
 
 
 @dataclass(frozen=True)
@@ -73,7 +76,7 @@ def current_commit(cwd: Path | None = None) -> str | None:
             timeout=5,
             check=False,
         )
-    except OSError, subprocess.TimeoutExpired:
+    except GIT_ERRORS:
         return None
     return run.stdout.strip() or None
 
