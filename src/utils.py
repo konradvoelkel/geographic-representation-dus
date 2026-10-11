@@ -12,12 +12,21 @@ import json
 from pathlib import Path
 
 import geopandas as gpd
+import requests
 from geopandas import GeoDataFrame
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.point import Point
 
 import src.config as cfg
+from georep.http import make_session
 from georep.io import write_json
+
+
+def http_session() -> requests.Session:
+    """Session mit Timeout, Retry und User-Agent aus der Konfiguration (georep.http)."""
+    return make_session(
+        timeout_s=cfg.HTTP_TIMEOUT_S, retries=cfg.HTTP_RETRIES, user_agent=cfg.USER_AGENT
+    )
 
 
 def setup_data_directories() -> None:

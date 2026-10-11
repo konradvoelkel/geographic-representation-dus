@@ -1,7 +1,6 @@
 import time
 
 import geopandas as gpd
-import requests
 from loguru import logger
 from shapely.geometry import Point
 from shapely.geometry.base import BaseGeometry
@@ -81,7 +80,7 @@ def get_data_from_sparql() -> list[dict]:
     :rtype: list[dict]
     """
     headers = {"User-Agent": cfg.USER_AGENT, "Accept": "application/json; charset=utf-8"}
-    response = requests.get(
+    response = utils.http_session().get(
         cfg.WIKIDATA_ENDPOINT, params={"query": cfg.QUERY, "format": "json"}, headers=headers
     )
     response.encoding = "utf-8"
@@ -150,7 +149,9 @@ def get_wikidata_for_bbox(bbox: tuple) -> list[dict]:
     }
 
     try:
-        response = requests.get(endpoint, params=params, headers={"User-Agent": user_agent})
+        response = utils.http_session().get(
+            endpoint, params=params, headers={"User-Agent": user_agent}
+        )
         response.raise_for_status()
         data = response.json()
 

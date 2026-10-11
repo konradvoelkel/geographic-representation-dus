@@ -1,14 +1,14 @@
-import requests
 from loguru import logger
 
 import src.config as cfg
 from georep.io import write_json, write_text
+from src.utils import http_session
 
 
 def get_wahlergebnis() -> None:
     try:
         logger.info("Lade Wahlergebnisse von OpenData-Portal herunter")
-        response = requests.get(cfg.OPENDATA_ENDPOINT_WAHLERGEBNIS)
+        response = http_session().get(cfg.OPENDATA_ENDPOINT_WAHLERGEBNIS)
         response.raise_for_status()
 
         write_text(cfg.WAHLERGEBNIS_PATH, response.text, encoding="latin-1")
@@ -20,7 +20,7 @@ def get_wahlergebnis() -> None:
 def get_stimmbezirk_shapefile() -> None:
     try:
         logger.info("Lade Stimmbezirks-Shapefile herunter")
-        response = requests.get(cfg.OPENDATA_ENDPOINT_STIMMBEZIRK)
+        response = http_session().get(cfg.OPENDATA_ENDPOINT_STIMMBEZIRK)
         response.raise_for_status()
         data = response.json()
 

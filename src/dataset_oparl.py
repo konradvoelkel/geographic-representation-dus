@@ -5,12 +5,12 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-import requests
 from loguru import logger
 from tqdm import tqdm
 
 import src.config as cfg
 from georep.io import write_bytes, write_json
+from src.utils import http_session
 
 
 @dataclass
@@ -132,9 +132,7 @@ def download_paper_metadata(endpoint: str) -> PaperList:
     :raises Exception: Encapsulates other unexpected errors encountered during processing.
     """
     pages_progress_bar = tqdm(desc="Verarbeitete Seiten: ", unit=" Seite(n)")
-    session = requests.Session()
-    adapter = requests.adapters.HTTPAdapter(max_retries=5)
-    session.mount("http://", adapter)
+    session = http_session()
 
     known_ids, existing_papers_raw = _check_for_existing_papers()
     if known_ids:
@@ -239,9 +237,7 @@ def download_paper_pdf(paperList: PaperList) -> None:
     :return: None
     """
     progress_bar = tqdm(desc="Heruntergeladene Dateien: ", unit="Datei(en)")
-    session = requests.Session()
-    adapter = requests.adapters.HTTPAdapter(max_retries=5)
-    session.mount("http://", adapter)
+    session = http_session()
     download_err_counter = 0
     try:
         for paper in _as_paper_iter(paperList):

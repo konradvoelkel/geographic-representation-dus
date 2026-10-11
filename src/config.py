@@ -120,6 +120,8 @@ OSMNX_CACHING = False
 
 # Requests
 DELAY = 1
+HTTP_TIMEOUT_S = 180  # der OParl-Server brauchte am 2026-10-09 85 s pro Seite
+HTTP_RETRIES = 5
 
 # Directory-paths
 ROOT = Path(__file__).parent.parent.resolve()
