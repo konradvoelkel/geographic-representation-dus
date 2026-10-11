@@ -300,3 +300,33 @@ def test_status_names_profile_and_city(project: Path, capsys: pytest.CaptureFixt
     assert main(["--profile", "duesseldorf", "status"]) == 0
     out = capsys.readouterr().out
     assert "Profil:     duesseldorf (Düsseldorf)" in out and "flach" in out
+
+
+# --- Option 07: Monitoring -------------------------------------------------------------------
+
+
+def test_profile_2025_bootstraps_without_a_corpus_and_shows_its_root(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from tests.conftest import REPO
+
+    profile = str(REPO / "settings.2025.toml")
+    assert main(["--settings", profile, "status"]) == 0
+    status = capsys.readouterr().out
+    # Option 01 druckt den Namen des Paketprofils; der Ordner kommt aus dem Schlüssel profile
+    assert "Daten unter" in status and str(project / "data" / "2025") in status
+    assert "Periode:    Wahlperiode seit 2025, 2025-09-15 bis offen" in status
+    assert main(["--settings", profile, "bootstrap"]) == 0
+    out = capsys.readouterr().out
+    assert "Stores nicht aus der Referenz gefüllt" in out and "nicht gefunden" in out
+    root = project / "data" / "2025"
+    external = {p.name for p in (root / "external").iterdir()}
+    assert {"Stimmbezirk_Wahlergebnis.csv", "Stimmbezirke_2025.geojson"} <= external
+    assert {"streets_per_district.json", "wikipedia_dict.json"} <= {
+        p.name for p in (root / "raw").iterdir()
+    }
+    assert not (root / "raw" / "papers.jsonl").exists()  # kein Korpus der Hauptperiode
+    assert not (project / "data" / "raw").exists()  # die Hauptperiode bleibt unberuehrt
+    # Ohne Store plant der Metadatenschritt einen vollstaendigen Abruf; kein echter Abruf
+    assert main(["--settings", profile, "run", "--dry-run", "--online", "papers"]) == 0
+    assert "papers       geplant" in capsys.readouterr().out

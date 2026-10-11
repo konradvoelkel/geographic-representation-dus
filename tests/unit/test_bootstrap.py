@@ -83,3 +83,23 @@ def test_bootstrap_reports_missing_context_files_without_failing(
     report = bootstrap(layout, context_files=("fehlt.csv",))
     assert report.missing == ["fehlt.csv"] and len(report.copied) == 4
     assert "1 in Referenz oder Kontext nicht gefunden" in report.summary()
+
+
+# --- Option 07: Monitoring -------------------------------------------------------------------
+
+
+def test_bootstrap_without_seed_copies_inputs_and_leaves_the_stores_alone(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    layout = _layout(tmp_path, mini_root).for_profile("2025")
+    report = bootstrap(layout, seed_corpus=False)
+    assert len(report.copied) == 4 and report.missing == []
+    assert report.papers is None and report.texts is None
+    assert not layout.papers.exists() and not layout.texts.exists()
+    assert layout.pdf_manifest.is_file()  # der PDF-Store ist angelegt, die Eingabe von texts
+    assert layout.external == tmp_path / "data" / "2025" / "external"
+    assert "Stores nicht aus der Referenz gefüllt" in report.summary()
+    # Ein zweiter Aufruf, auch mit force, fuellt die Stores weiterhin nicht
+    forced = bootstrap(layout, force=True, seed_corpus=False)
+    assert len(forced.copied) == 4 and forced.papers is None
+    assert not layout.papers.exists() and not layout.texts.exists()
