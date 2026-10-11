@@ -771,6 +771,7 @@ name = "georep"
 version = "0.6.0"
 source = { editable = "." }
 dependencies = [
+    { name = "deal" },
     { name = "flashtext" },
     { name = "loguru" },
     { name = "matplotlib" },
@@ -790,7 +791,6 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "crosshair-tool" },
-    { name = "deal" },
     { name = "hypothesis" },
     { name = "mypy" },
     { name = "nox" },
@@ -811,6 +811,7 @@ notebook = [
 
 [package.metadata]
 requires-dist = [
+    { name = "deal", specifier = ">=4.24.6" },
     { name = "flashtext", specifier = ">=2.7" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", specifier = ">=3.10.7" },
@@ -830,7 +831,6 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "crosshair-tool", specifier = ">=0.0.111" },
-    { name = "deal", specifier = ">=4.24.6" },
     { name = "hypothesis", specifier = ">=6.168" },
     { name = "mypy", specifier = ">=2.4" },
     { name = "nox", specifier = ">=2025.5" },

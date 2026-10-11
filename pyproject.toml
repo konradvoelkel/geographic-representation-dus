@@ -22,6 +22,7 @@ dependencies = [
     "shapely>=2.1.2",
     "pyproj>=3.7",
     "requests-cache>=1.2",
+    "deal>=4.24.6",
 ]
 
 [project.scripts]
@@ -30,7 +31,6 @@ georep = "georep.cli:main"
 [dependency-groups]
 dev = [
     "crosshair-tool>=0.0.111",
-    "deal>=4.24.6",
     "hypothesis>=6.168",
     "mypy>=2.4",
     "nox>=2025.5",
