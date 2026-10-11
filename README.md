@@ -29,32 +29,47 @@ Systemabhängigkeiten: keine. Wer die Umgebung woanders ablegen will, setzt vor 
 
 ## Befehle
 
-`georep run [SCHRITT …] [--force] [--dry-run]` führt die Schritte aus und überspringt, was aktuell ist.
-`georep steps` zeigt Eingaben und Ausgaben, `georep status` Settings, Pfade und die Frische jedes Schritts
-mit Grund, `georep bootstrap [--force]` kopiert die Referenz, `georep export` schreibt CSV,
-`georep regress [--exclude …]` rechnet die Regression. `--settings DATEI` legt eine weitere TOML-Schicht
-darüber. Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf stderr), 2 Bedienfehler.
+`georep run [SCHRITT …] [--force] [--dry-run] [--online]` führt die Schritte aus und überspringt, was
+aktuell ist; Netzschritte laufen nur mit `--online`. `georep fetch [SCHRITT …] [--force] [--limit N]`
+führt die Netzschritte aus (`opendata`, `papers`, `pdfs`, `streets_osm`, `pois_wiki`) und danach `texts`;
+`--limit` begrenzt neue PDF-Downloads je Lauf. `georep steps` zeigt Eingaben und Ausgaben, `georep status`
+Settings, Pfade, Stores und die Frische jedes Schritts mit Grund, `georep bootstrap [--force]` übernimmt die
+Referenz, `georep export` schreibt CSV, `georep regress [--exclude …]` rechnet die Regression.
+`--settings DATEI` legt eine weitere TOML-Schicht darüber. Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile
+auf stderr), 2 Bedienfehler.
 
-Der volle Lauf mit allen Netzschritten ist `uv run python run.py`: er lädt Metadaten und PDFs neu und
-dauert Stunden, der OParl-Server brauchte am 2026-10-09 85 s pro Seite. Die Netzschritte sind noch der
-Code der Arbeit; Phase 3 ersetzt sie durch gecachte, wiederaufnehmbare Abrufe.
+Ein voller Abruf von Grund auf (`georep fetch` auf leerem `data_root`) dauert Stunden: der OParl-Server
+brauchte am 2026-10-09 85 s pro Seite, die PDFs kommen seriell mit einer Sekunde Pause. Alles ist
+wiederaufnehmbar: Metadaten werden nach jeder Seite gespeichert, PDFs einzeln, HTTP-Antworten liegen in
+`cache_root/http.sqlite`, und ein zweiter `fetch` holt nur Geändertes (`modified_since`) und fehlende PDFs.
 
 ## Pipeline
 
-| Schritt | liest | schreibt |
-|---|---|---|
-| `voters` | `external/Stimmbezirk_Wahlergebnis.csv` | `processed/wahlbezirke_waehler.parquet` |
-| `streets` | `raw/streets_per_district.json` | `processed/wahlbezirke_strassen.parquet` |
-| `pois` | `raw/wikipedia_dict.json` | `processed/wikidata_vis.parquet`, `wikidata_agg.parquet` |
-| `dictionary` | Orte und Straßen je Wahlbezirk | `processed/combined_searchdict.parquet` |
-| `corpus` | `interim/paper_with_text.json` | `interim/papers.parquet` |
-| `index` | Wörterbuch, Korpus | `processed/inverted_index.parquet` |
-| `results` | Wörterbuch, Index, Wähler | `processed/wahlbezirke_auswertung.parquet` |
+| Schritt | Netz | liest | schreibt |
+|---|---|---|---|
+| `opendata` | ja | Open-Data-Portal | `external/Stimmbezirk_Wahlergebnis.csv`, `external/Stimmbezirke_2025.geojson` |
+| `papers` | ja | OParl-Liste, neueste zuerst, Abbruch unter dem Periodenbeginn | `raw/papers.jsonl` |
+| `pdfs` | ja | Download-URLs der Paper | `cache/pdf/*.pdf`, `cache/pdf/manifest.jsonl` |
+| `streets_osm` | ja | Overpass je Stimmbezirk | `raw/streets_per_district.json` |
+| `pois_wiki` | ja | Wikidata-SPARQL, Wikipedia-GeoSearch je Stimmbezirk | `raw/wikipedia_dict.json` |
+| `texts` | nein | PDFs, die noch keinen Text haben | `cache/text/texts.parquet` |
+| `voters` | nein | Wahlergebnis-CSV | `processed/wahlbezirke_waehler.parquet` |
+| `streets` | nein | Straßen je Stimmbezirk | `processed/wahlbezirke_strassen.parquet` |
+| `pois` | nein | Orte | `processed/wikidata_vis.parquet`, `wikidata_agg.parquet` |
+| `dictionary` | nein | Orte und Straßen je Wahlbezirk | `processed/combined_searchdict.parquet` |
+| `corpus` | nein | Metadaten und Texte | `interim/papers.parquet` |
+| `index` | nein | Wörterbuch, Korpus | `processed/inverted_index.parquet` |
+| `results` | nein | Wörterbuch, Index, Wähler | `processed/wahlbezirke_auswertung.parquet` |
 
 Neben jeder Ausgabe liegt ein Stamp mit den Hashes der Eingaben, dem Fingerprint der Settings, der
 Code-Version und der Schema-Version des Schritts. Ändert sich eines davon, läuft der Schritt und alles
 dahinter neu; sonst wird er übersprungen und sagt das. Alle Schreibvorgänge sind atomar, ein leeres
 Ergebnis wird nicht geschrieben, und unter `reference/` schreibt nichts.
+
+Geometrie: die Stimmbezirke (EPSG:4647) werden einmal ins metrische EPSG:25832 projiziert, dort repariert
+und per STRtree abgefragt; nach lon/lat geht es an genau einer Stelle zurück (Overpass-Polygone, GeoSearch-
+Boxen). Der Overpass-Filter bildet den `network_type="all"` von osmnx nach, mit dem die Daten der Arbeit
+entstanden; Treue gegen die Referenz steht in `tests/fixtures/http/README.md`.
 
 ## Konfiguration
 
@@ -78,10 +93,11 @@ legt CSV daneben.
 
 ## Entwicklung
 
-- Prüfungen: `uv run nox` lokal und in CI (`.github/workflows/ci.yml`) rufen dieselben Sessions; `uv run pytest -m slow` läuft die Kette über die volle Referenz und vergleicht mit den Ergebnissen der Arbeit.
+- Prüfungen: `uv run nox` (lint, typecheck, deps, test) lokal und in CI rufen dieselben Sessions; `deps` verbietet pandas, geopandas, osmnx und scikit-learn im Lockfile; `uv run pytest -m slow` läuft die Kette über die volle Referenz und vergleicht mit den Ergebnissen der Arbeit.
 - Vor dem Commit: `uvx pre-commit install` einmalig; die Hooks formatieren und linten mit Ruff.
 - Regeln für Commits und für Agenten: [CLAUDE.md](CLAUDE.md). Befund vor dem Umbau: [docs/baseline-2026-10-10.md](docs/baseline-2026-10-10.md).
-- Struktur: `src/georep/` ist das Paket (`settings`, `layout`, `io`, `http`, `oparl`, `errors`, `bootstrap`, `pipeline`, `cli`, `export`, `prep/`, `search/`, `analysis/`); `src/*.py` ist der verbliebene Code der Arbeit für die Netzschritte; `tests/` mit `unit/`, `golden/` und `fixtures/`.
+- Struktur: `src/georep/` ist das ganze Programm (`settings`, `layout`, `io`, `http`, `geo`, `oparl`, `records`, `stores`, `errors`, `bootstrap`, `pipeline`, `cli`, `export`, `sources/`, `prep/`, `search/`, `analysis/`); vom Code der Arbeit ist nichts mehr übrig, ihr Datensatz liegt unter `reference/`. `tests/` mit `unit/`, `golden/` und `fixtures/` (Mini-Datensatz, PDFs, OParl-Seite, aufgezeichnete HTTP-Antworten).
+- Netz in Tests: nie echte Endpunkte; das `Transport`-Protokoll und die Fake-Session in `tests/fakes.py` liefern aufgezeichnete Antworten.
 
 ## Lizenz
 

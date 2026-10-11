@@ -8,11 +8,12 @@ Kapitel Brownfield, Code-Qualität, Testing, Profiling und Design by Contract de
 
 ```bash
 uv sync                      # Umgebung aus uv.lock
-uv run nox                   # lint, typecheck, baseline, test
-uv run pytest -m slow        # neue Kette über die volle Referenz, Vergleich mit der Arbeit
+uv run nox                   # lint, typecheck, deps, test
+uv run pytest -m slow        # Kette über die volle Referenz, Vergleich mit der Arbeit
 uv run georep bootstrap && uv run georep run && uv run georep status
+uv run georep fetch opendata # der einzige schnelle Netzschritt; alles andere dauert Stunden
 uv run ruff check . && uv run ruff format --check .
-uv run mypy                  # strict für src/georep/ und tests/
+uv run mypy                  # strict für alles
 ```
 
 Settings: `src/georep/defaults.toml` ist die Quelle; rechnerspezifisches (Pfade auf xtraspace) gehört in
@@ -23,11 +24,11 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 
 ## Nie
 
-- `uv run python run.py` oder `src.prep_papers` ohne PDFs unter `cache_root/pdf/`: der Guard verweigert es, aber der volle Lauf lädt stundenlang.
+- `georep fetch` ohne Not auf dem vollen Datensatz: Metadaten und 19108 PDFs dauern Stunden. `fetch opendata` ist der einzige schnelle Netzschritt.
 - In `reference/` schreiben. `Layout.guard_writable` verweigert es; Tests arbeiten in `tmp_path` mit `Layout(tmp/data, tmp/cache, mini_root)`.
 - `pre-commit run --all-files` über `reference/` oder `tests/fixtures/`.
-- pandas in neuem Code. Neuer Code nutzt Polars und schreibt Parquet; er ist vollständig typisiert und besteht `mypy --strict`.
-- Netztests in CI. Der OParl-Server braucht 85 s pro Seite; Netztests tragen den Marker `network` und laufen nur von Hand. Netz in Unit-Tests kommt über das `Transport`-Protokoll aus `georep.http` und die Fake-Session in `tests/unit/test_dataset_oparl.py`; OParl-JSON wird mit `georep.oparl` geparst, nie mit `.get()`-Ketten.
+- pandas, geopandas, osmnx: die nox-Session `deps` verbietet sie im Lockfile. Tabellen sind Polars, Dateien Parquet, Geometrie shapely und pyproj; alles ist typisiert und besteht `mypy --strict`.
+- Netztests in CI. Der OParl-Server braucht 85 s pro Seite; Netztests tragen den Marker `network` und laufen nur von Hand. Netz in Unit-Tests kommt über das `Transport`-Protokoll aus `georep.http` und die Fake-Session in `tests/fakes.py` mit den aufgezeichneten Antworten in `tests/fixtures/http/`; OParl-JSON wird mit `georep.oparl` geparst, nie mit `.get()`-Ketten.
 - Die Dateien unter `tests/fixtures/mini/expected/` neu erzeugen: sie sind der Golden Master aus dem Altcode (Tag `v0.2.0`), siehe `tests/fixtures/mini/README.md`.
 
 ## Commits

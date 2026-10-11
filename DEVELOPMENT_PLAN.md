@@ -210,7 +210,13 @@ Master sind die eingefrorenen Ausgaben in `tests/fixtures/mini/expected` und `re
 7. `mypy --strict` ohne Fehler für `georep`; Legacy-Shims unter Override, bis sie weg sind.
 8. Notebook-Mathematik nach `analysis/regression.py` mit numpy und `scipy.stats.linregress`; scikit-learn entfällt (es lieferte nur ein zweites R²). Notebook ruft nur noch auf.
 
-### Phase 3: Fetch- und Cache-Schicht
+### Phase 3: Fetch- und Cache-Schicht — abgeschlossen 2026-10-11
+
+Abweichungen: der Textstore ist eine Parquet-Datei statt je Dateiname eine Datei (19108 Dateien mit fsync
+kosteten 143 s); Straßen werden nicht je Geometrie-Hash gecacht, sondern über requests-cache je Overpass-
+Abfrage (POST-Body als Schlüssel), was dasselbe leistet; `texts` ist ein Offline-Schritt mit dem
+PDF-Manifest als Eingabe. Der Vertrag mit OParl (`georep.oparl`) kam schon in Phase 2. Treue der neuen
+Quellen gegen die Referenz: `tests/fixtures/http/README.md`.
 
 1. `http.py`: Session-Factory, requests-cache, `Transport`-Protokoll; `FakeTransport` liefert aufgezeichnete Antworten aus `tests/fixtures/http/` (einmal real aufgenommen, klein geschnitten).
 2. PDF-Store mit Manifest; `--limit`, `--since`; Parallelität konfigurierbar, Standard sequenziell mit `delay_s` (der Server ist langsam, nicht wir).

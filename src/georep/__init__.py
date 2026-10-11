@@ -4,4 +4,4 @@ Das Paket wächst als Strangler Fig neben dem Altcode in ``src/*.py`` (DEVELOPME
 Neuer Code ist vollständig typisiert, nutzt Polars statt pandas und schreibt atomar.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
