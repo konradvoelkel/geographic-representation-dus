@@ -4,8 +4,10 @@ Vertrag (so verhält sich FlashText, die Implementierung der Arbeit, und so ents
 Master): Treffer beginnen am Textanfang oder nach einem Grenzzeichen, enden am Textende oder vor
 einem Grenzzeichen, der längste passende Begriff gewinnt, Treffer überlappen nicht, Groß/Klein
 zählt nicht. Wortzeichen sind nur ASCII-Buchstaben, Ziffern und Unterstrich; Umlaute und ß sind
-Grenzen. Ein Ersatz-Matcher (pyahocorasick, Rust) muss dieses Orakel bestehen oder seine Abweichung
-am Golden Master belegen. Python bleibt das Orakel, wie bubatzblick es für Rust hält.
+Grenzen. Das Grenzzeichen, das einen Treffer beendet, wird verbraucht: der nächste Treffer kann
+frühestens dahinter beginnen (hypothesis fand am 2026-10-11 ``köölberg`` mit ``kö`` und ``ölberg``,
+FlashText liefert nur ``kö``). Ein Ersatz-Matcher (pyahocorasick, Rust) muss dieses Orakel bestehen
+oder seine Abweichung am Golden Master belegen. Python bleibt das Orakel, wie bubatzblick es für Rust hält.
 """
 
 from __future__ import annotations
@@ -28,7 +30,7 @@ def oracle_extract(text: str, terms: Iterable[str]) -> set[str]:
                 end = i + len(term)
                 if lowered.startswith(term, i) and (end == n or lowered[end] not in WORD_CHARS):
                     found.add(term)
-                    i = end
+                    i = end + 1  # das beendende Grenzzeichen ist verbraucht
                     break
             else:
                 i += 1

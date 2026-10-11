@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from hypothesis import given, settings
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
 from georep.search.matcher import FlashTextMatcher, make_matcher
@@ -58,6 +58,8 @@ term_sets = st.sets(st.sampled_from(TERMS), min_size=1, max_size=len(TERMS))
 
 
 @settings(max_examples=400, deadline=None)
+@example(text="am am köölberg am ", terms={"kö", "ölberg"})
+@example(text="ölberg kö ölberg", terms={"kö", "ölberg"})
 @given(text=texts, terms=term_sets)
 def test_flashtext_agrees_with_the_oracle(text: str, terms: set[str]) -> None:
     assert make_matcher(sorted(terms)).extract(text) == oracle_extract(text, terms)
@@ -80,3 +82,5 @@ def test_oracle_examples_that_fix_the_contract() -> None:
     assert oracle_extract("kölner straße", ["lner straße"]) == {"lner straße"}  # Umlaut ist Grenze
     assert oracle_extract("xkö", ["kö"]) == set()
     assert oracle_extract("Kö-Bogen", ["kö", "kö-bogen"]) == {"kö-bogen"}
+    assert oracle_extract("köölberg", ["kö", "ölberg"]) == {"kö"}  # Terminator verbraucht
+    assert oracle_extract("kö ölberg", ["kö", "ölberg"]) == {"kö", "ölberg"}
