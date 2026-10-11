@@ -1,6 +1,6 @@
 # Status
 
-Stand 2026-10-11, Branch `refactor/phase-4`. Fakten mit Datum, Invarianten ohne.
+Stand 2026-10-11, `main` auf `v0.5.0`, offener Branch `refactor/phase-5`. Fakten mit Datum, Invarianten ohne.
 
 ## Abgeschlossen
 
@@ -8,7 +8,7 @@ Stand 2026-10-11, Branch `refactor/phase-4`. Fakten mit Datum, Invarianten ohne.
 - Phase 1 (`v0.2.0`): atomare Schreibvorgänge, Session mit Timeout und Retry, Fehlerisolation im Download, Guards, deterministische Ausgaben, Domänenfehler.
 - Phase 2 (`v0.3.0`): Settings in TOML, OParl 1.1 als Vertrag, Layout mit Schreibschutz auf `reference/`, Polars-Kette mit Parquet, Schrittregister mit Stamps, CLI `georep`.
 - Phase 3 (`v0.4.0`): Fetch- und Cache-Schicht ohne geopandas und osmnx; der Code der Arbeit ist vollständig ersetzt.
-- Phase 4 (dieser Branch): Tests ausgebaut. `tests/property/` mit hypothesis: ein lesbares Orakel des Matcher-Vertrags (FlashText stimmt in 400 Zufallsfällen überein), Invarianten für Wörterbuch, Aggregation, POI-Bereinigung, Straßen, Treffer, Index, STRtree, OParl-Roundtrip, Stores und `deep_merge`. Abdeckungslücken geschlossen, Snapshot für `georep steps`, nox `test` parallel mit Abdeckung als Untergrenze (90 %), hypothesis-Profile `dev` und `ci`.
+- Phase 4 (`v0.5.0`): Tests ausgebaut. `tests/property/` mit hypothesis: ein lesbares Orakel des Matcher-Vertrags (FlashText stimmt in 400 Zufallsfällen überein), Invarianten für Wörterbuch, Aggregation, POI-Bereinigung, Straßen, Treffer, Index, STRtree, OParl-Roundtrip, Stores und `deep_merge`. Abdeckungslücken geschlossen, Snapshot für `georep steps`, nox `test` parallel mit Abdeckung als Untergrenze (90 %), hypothesis-Profile `dev` und `ci`.
 
 ## Zahlen (2026-10-11)
 
@@ -24,5 +24,7 @@ Stand 2026-10-11, Branch `refactor/phase-4`. Fakten mit Datum, Invarianten ohne.
 
 ## Nächster Schritt
 
-Phase 5: Profiling als Befehl (`georep profile`), pytest-benchmark mit gespeicherten Baselines für Matcher,
-Extraktion und Aggregation; erst dann die Entscheidung über pyahocorasick, pypdfium2 oder Rust.
+Phase 5 auf `refactor/phase-5` (siehe `DEVELOPMENT_PLAN.md` § 4, Phase 5, mit Werkzeugliste und dem Rezept
+für eine PDF-Stichprobe): Profiling als Befehl, pytest-benchmark mit gespeicherten Baselines für Matcher,
+Extraktion und Aggregation; erst dann die Entscheidung über pyahocorasick, pypdfium2 oder Rust. Danach
+Phase 6 (deal, crosshair).

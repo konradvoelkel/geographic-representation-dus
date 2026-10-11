@@ -4,6 +4,19 @@ Plan und Phasen: `DEVELOPMENT_PLAN.md`. Messlatte: `docs/baseline-2026-10-10.md`
 (im selben Commit nachziehen, wenn sich der Stand ändert). Maßstab für Stil und Vorgehen sind die
 Kapitel Brownfield, Code-Qualität, Testing, Profiling und Design by Contract des eipy-Skripts.
 
+## Einstieg in eine neue Sitzung
+
+1. `git switch refactor/phase-<n>` (der offene Branch steht in `STATUS.md` unter „Nächster Schritt"; existiert er
+   noch nicht, von `main` abzweigen). `main` trägt den letzten Phasen-Tag.
+2. Auf Konrads Rechner vor allem anderen, weil die Primärplatte voll ist:
+   `export UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep UV_CACHE_DIR=/media/konrad/xtraspace/uv-cache`;
+   `settings.local.toml` (gitignored, vorhanden) zeigt `data_root` und `cache_root` auf `/media/konrad/xtraspace/georep/`.
+3. `uv sync && uv run nox && uv run pytest -m slow`: alles grün ist der Ausgangspunkt, sonst zuerst das klären.
+4. Lesen: `STATUS.md` (Stand, Bekanntes, nächster Schritt), dann im Plan den Abschnitt der Phase, dann § 2 (Leitplanken)
+   und § 4a (Lehren aus bubatzblick). Die Lehren aus den bisherigen Phasen stehen unten unter „Commits" und „Arbeitsweise".
+5. Push geht per SSH; in nicht-interaktiven Sitzungen hält der Keyring-Agent den Schlüssel:
+   `SSH_AUTH_SOCK=/run/user/1000/gcr/ssh git push`. Das gh-Token hat keinen `workflow`-Scope.
+
 ## Befehle
 
 ```bash
@@ -40,3 +53,12 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - Eine Eigenschaft, die für alle Eingaben gilt, wird ein hypothesis-Test in `tests/property/`, kein Beispieltest; wer den Matcher ersetzt, misst sich an `tests/property/oracle_matcher.py`. Snapshots (`syrupy`) nur für kleine, stabile Ausgaben und nie blind mit `--snapshot-update` erneuern.
 - Phasen laufen auf `refactor/phase-<n>`. Am Phasenende: Push, grüne CI abwarten, Merge nach `main` (fast-forward), Tag `v0.<n+1>.0`, Push. So hat Konrad es am 2026-10-11 für Phase 0 angewiesen.
 - Prüfschritte in Skripten nie hinter eine Pipe stellen (`uv run pytest | tail`): die Pipe frisst den Exit-Code, und am 2026-10-11 landeten so zwei rote Commits. Erst der Befehl allein, dann die Ausgabe ansehen.
+
+## Arbeitsweise, aus den Phasen 0 bis 4 gelernt
+
+- `set -e` greift in der zsh dieser Umgebung nicht zuverlässig; jede Prüfung bekommt eine eigene Exit-Code-Abfrage (`cmd || exit 1`).
+- Textersetzungen im Code auf den Wortlaut aufsetzen, den Ruff zuletzt formatiert hat (vorher `grep -n`), sonst scheitern Anker, und eine halb angewandte Änderung bleibt liegen. Nach `ruff format` ändern sich Umbrüche.
+- `ruff format` muss auch `noxfile.py` und `run.py`-artige Dateien einschließen (`ruff format .`), nicht nur `src tests`.
+- Ein Golden-Master-Vergleich über Labels oder Namen muss die Eindeutigkeit prüfen (Wikidata: „Itter" ist Stadtteil und Bach, ein Objekt kann zwei Koordinaten haben); über URL oder ID vergleichen.
+- Wenn die Laufzeit einer Suite sich plötzlich vervielfacht, ist meist ein neuer I/O-Pfad schuld (19108 Dateien mit fsync kosteten 143 s); erst messen, dann die Struktur ändern.
+- mutmut 3 forkt und blockiert mit Polars (`docs/mutation-2026-10-11.md`); Polars-Threads nicht nur für ein Werkzeug drosseln.

@@ -148,22 +148,26 @@ CSV nur als Export für Menschen (`georep export`). Referenzdaten bleiben im Ups
 7. Keine `except Exception` mehr: Domänenfehler (`FetchError`, `CorruptPdfError`, `SchemaError`) werden behandelt, Vertragsverletzungen sind Bugs und laufen durch.
 8. Deterministische Ausgaben (sortierte Begriffe und IDs), damit Golden-Vergleiche byteweise möglich sind.
 
-### 3.5 Heiße Pfade und Rust
+### 3.5 Heiße Pfade und Rust (Stand 2026-10-11, nach Phase 4)
 
-Geo-Schicht: geopandas und osmnx bringen pandas mit und werden in Phase 3 durch shapely, pyproj und
-eine direkte Overpass-Abfrage (`way[highway][name](poly:…)`) ersetzt. Gerechnet wird metrisch in
-`EPSG:25832` (Eingabe 4647 ist dasselbe Datum mit Zonenpräfix); POI-Punkte werden mit
-`Transformer.from_crs(..., always_xy=True)` dorthin projiziert, Containment per STRtree; nach 4326
-wird an genau einer Stelle projiziert (die Overpass-Polygone). `make_valid`, nie `buffer(0)`. Treue wird gemessen: Überlappung
-der Straßennamen je Stimmbezirk mit `reference/` muss über 95 % liegen, sonst wird die Abweichung
-verstanden und dokumentiert, bevor der Wechsel bleibt.
+Geo-Schicht ist fertig (`georep.geo`: shapely, pyproj, STRtree, Arbeits-CRS EPSG:25832, eine Rückprojektion).
 
-Protokolle `KeywordMatcher` (`add_terms`, `extract(text) -> set[str]`) und `PdfTextExtractor`
-(`extract(bytes) -> str`). Heute FlashText (reines Python, letzte Version 2018) und pypdf (reines
-Python). Kandidaten nach Messung: `pyahocorasick` (C) oder ein PyO3-Modul `georep_native` auf
-`aho-corasick` (maturin, optionales Extra), `pypdfium2` oder `pymupdf` für die Extraktion.
-Erwartung vor der Messung: Extraktion dominiert (19k PDFs), Matching ist mit 6 s unkritisch.
-Die Erwartung wird gemessen, nicht geglaubt. cargo 1.98 ist installiert, maturin nicht.
+Heiße Pfade und ihre Nähte:
+
+- Matcher: `georep.search.matcher.KeywordMatcher` (Protokoll: `add_terms`, `extract(text) -> set[str]`),
+  Implementierung `FlashTextMatcher` (reines Python, FlashText 2.7 von 2018). Vertrag als Orakel in
+  `tests/property/oracle_matcher.py` (längster Treffer an Wortgrenzen, Umlaute sind Grenzen, Terminator wird
+  verbraucht); jeder Ersatz muss `tests/property/test_matcher_contract.py` bestehen. Gemessen: 4 s für 5841
+  Begriffe über 19108 Dokumente (Schritt `index`).
+- Extraktion: `georep.prep.extract.extract_text(path)` mit pypdf; `EXTRACTOR = "pypdf-<version>"` ist der
+  Cache-Schlüssel im Textstore. Noch kein Protokoll; Phase 5 zieht eines ein (`PdfTextExtractor` mit
+  `name` und `extract(path) -> str`), damit pypdfium2 oder pymupdf austauschbar sind und der Textstore die
+  Version kennt. Erwartung: die Extraktion dominiert den vollen Lauf (19108 PDFs); nicht gemessen.
+- Aggregation und Index-Join: Polars, vermutlich unkritisch; messen.
+
+Kandidaten nach der Messung: `pyahocorasick` (C) oder ein PyO3-Modul auf `aho-corasick` (maturin, optionales
+Extra, Crate-Name ungleich Modulname); `pypdfium2` oder `pymupdf`. Rust nur für einen gemessenen Flaschenhals,
+Python bleibt Orakel. cargo 1.98 ist installiert, maturin nicht.
 
 ## 4. Phasen
 
@@ -239,17 +243,44 @@ forkt und Polars im Kind blockiert (`docs/mutation-2026-10-11.md`). Dazugekommen
 
 ### Phase 5: Profiling-Infrastruktur
 
-1. `georep profile <schritt>`: cProfile nach `docs/profiling/<datum>-<schritt>.prof`, `snakeviz` als Anzeige; `nox -s profile -- <schritt>`.
-2. `pytest-benchmark` für Matcher über die Mini-Fixture, Extraktion pro PDF, Aggregation; `--benchmark-autosave`, Vergleich gegen gespeicherte Baseline, Fail bei Verschlechterung über 10 %.
-3. Zeilenebene bei Bedarf mit `line_profiler`/`scalene`, Speicher mit `memray`; Befehle in `docs/profiling/README.md`.
-4. Erstes datiertes Ergebnis: Verteilung der Laufzeit eines vollen Offline-Laufs und einer Extraktion über 200 PDFs. Danach erst die Entscheidung über pyahocorasick, pypdfium2 oder Rust.
+Werkzeuge noch nicht in der Dev-Gruppe (mit `uv add --group dev …` aufnehmen): `pytest-benchmark`,
+`snakeviz`; bei Bedarf `line_profiler`, `scalene`, `memray`, `py-spy` (Reihenfolge und Aufrufe: Skript,
+Kapitel Profiling). PDF-Stichprobe ohne stundenlangen Abruf: `uv run georep fetch pdfs --limit 200`
+(Metadaten kommen aus `bootstrap`, 200 Dateien seriell mit 1 s Pause, rund 5 Minuten; die vier PDFs unter
+`tests/fixtures/pdf/` reichen für Benchmarks, nicht für Profile).
+
+1. `georep profile <schritt>`: cProfile nach `docs/profiling/<datum>-<schritt>.prof`, `snakeviz` als Anzeige;
+   `nox -s profile -- <schritt>`. Profiliert wird der echte Schritt über `build_steps`, nicht ein Nachbau.
+2. `pytest-benchmark` für Matcher über die Mini-Fixture (`tests/fixtures/mini`), Extraktion je PDF, Aggregation
+   und Index-Join; `--benchmark-autosave`, Vergleich gegen gespeicherte Baseline, Fail bei Verschlechterung über
+   10 %; `.benchmarks/` ist gitignored, die Baseline-Zahlen stehen datiert in `docs/profiling/README.md`.
+3. `PdfTextExtractor`-Protokoll einziehen (siehe § 3.5), damit der Austausch ein Austausch ist.
+4. Erstes datiertes Ergebnis in `docs/profiling/`: Verteilung der Laufzeit eines vollen Offline-Laufs und einer
+   Extraktion über die 200 PDFs. Danach erst die Entscheidung über pyahocorasick, pypdfium2 oder Rust; ein
+   Ersatz-Matcher muss das Orakel bestehen, ein Ersatz-Extraktor den Golden Master der vier Fixture-PDFs
+   (`tests/unit/__snapshots__/test_extract.ambr`) oder seine Abweichung dokumentieren.
 
 ### Phase 6: Design by Contract
 
-1. `deal` auf den reinen Funktionen in `search/`, `prep/`, `analysis/`, `layout`: `@deal.pre` (nicht leer, Pflichtspalten, CRS EPSG:4326, ISO-Daten), `@deal.post`/`@deal.ensure` (Längen, Teilmengen, Nichtnegativität), `@deal.pure` wo zutreffend, `@deal.raises(FetchError, …)` an den Fetchern, `@deal.inv` auf den Stores (Manifest konsistent).
-2. Verträge an Batch-Grenzen, nicht pro Dokument in der heißen Schleife; `contracts: off` schaltet `deal.disable()`, gemessener Overhead steht in `docs/`.
-3. `deal.cases` in pytest, damit hypothesis die Verträge direkt angreift; `crosshair check` als `nox -s verify` auf die rein-pythonischen Module mit `--report_all` (ein Nicht-Fund ist nur eine Zeitangabe); pandas-lastige Funktionen bekommen nur Laufzeitverträge plus hypothesis.
-4. Pydantic-Modelle für OParl-JSON, Manifeste, Settings; Vertrag und Validierung sauber getrennt wie im Skript.
+Voraussetzungen sind da: `deal` und `crosshair-tool` stehen in der Dev-Gruppe, `settings.contracts` („on"/„off")
+existiert, wird aber noch nirgends gelesen. `deal test` ist mit typeguard 4 kaputt (Skript, Stand 2026-09-25);
+Testgenerierung läuft über `deal.cases` in pytest und `crosshair check`.
+
+1. `deal` auf den reinen Funktionen in `georep.search` (`normalise_terms`, `build_dictionary`, `build_index`),
+   `georep.prep` (`aggregate_voters`, `clean_pois`, `streets_by_district`, `after_marker`), `georep.analysis`
+   (`hits_by_district`, `join_voters`, `regress`), `georep.geo` (`PrecinctIndex.locate`, `overpass_polygon`) und
+   `georep.layout` (`guard_writable`): `@deal.pre` (nicht leer, Pflichtspalten, Begriffe kleingeschrieben und ohne
+   Komma, Arbeits-CRS metrisch), `@deal.post`/`@deal.ensure` (Längen, Teilmengen, Nichtnegativität, Sortierung),
+   `@deal.pure` wo zutreffend, `@deal.raises(FetchError, …)` an den Fetchern in `georep.sources`, `@deal.inv` auf
+   `PaperStore` und `TextStore`. Die hypothesis-Invarianten aus Phase 4 sind die Vorlage für die Nachbedingungen.
+2. Verträge an Batch-Grenzen, nicht pro Dokument in der heißen Schleife; `settings.contracts = "off"` ruft
+   `deal.disable()` beim Start (CLI), gemessener Overhead steht in `docs/`.
+3. `deal.cases` in pytest, damit hypothesis die Verträge direkt angreift; `crosshair check` als `nox -s verify` auf
+   die rein-pythonischen Module (`oracle_matcher`, `after_marker`, `parse_point`, `cache_pattern`, `deep_merge`)
+   mit `--report_all` (ein Nicht-Fund ist nur eine Zeitangabe). Polars-Funktionen bekommen nur Laufzeitverträge
+   plus hypothesis; crosshair kann keine Rust-Erweiterung symbolisch ausführen.
+4. Pydantic bleibt an der Systemgrenze (OParl, Records, Settings), Verträge im Inneren; die Abgrenzung wie im
+   Skript. Mutationstests erneut versuchen, diesmal mit `pytest-gremlins` oder `fest` (`docs/mutation-2026-10-11.md`).
 
 ### Phase 7: Abschluss
 
