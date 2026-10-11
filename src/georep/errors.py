@@ -26,3 +26,7 @@ class SchemaError(GeorepError):
 
 class CorruptPdfError(GeorepError):
     """pypdf kann die Datei nicht lesen, oder eine Antwort ist kein PDF."""
+
+
+class FetchError(GeorepError):
+    """Eine Quelle hat geantwortet, aber nicht mit dem, was wir brauchen (leer, falsches Format)."""

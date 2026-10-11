@@ -75,6 +75,16 @@ class Sources(_Strict):
     osm: OsmSource
 
 
+class CacheSettings(_Strict):
+    """Lebensdauer gecachter HTTP-Antworten in Sekunden je Quelle; 0 = nie cachen."""
+
+    oparl_pages_s: int = 3600
+    opendata_s: int = 2_592_000
+    wikidata_s: int = 2_592_000
+    wikipedia_s: int = 2_592_000
+    overpass_s: int = 2_592_000
+
+
 class Geo(_Strict):
     working_crs: str = "EPSG:25832"
     output_crs: str = "EPSG:4326"
@@ -114,6 +124,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     period: Period
     http: HttpSettings = HttpSettings()
+    cache: CacheSettings = CacheSettings()
     sources: Sources
     geo: Geo = Geo()
     columns: Columns
@@ -151,7 +162,8 @@ class Settings(BaseSettings):
     def fingerprint(self) -> str:
         """Kurzer Hash aller Parameter, die ein Ergebnis beeinflussen; Pfade und Log-Level nicht."""
         payload = self.model_dump(
-            mode="json", exclude={"data_root", "cache_root", "reference_root", "log_level"}
+            mode="json",
+            exclude={"data_root", "cache_root", "reference_root", "log_level", "cache"},
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
 

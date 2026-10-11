@@ -19,6 +19,13 @@ timeout_s = 180                # der OParl-Server brauchte am 2026-10-09 85 s pr
 retries = 5                    # 429 und 5xx mit exponentiellem Backoff
 user_agent = "georep/0.2 (+https://github.com/konradvoelkel/geographic-representation-dus)"
 
+[cache]                        # Lebensdauer gecachter HTTP-Antworten in cache_root/http.sqlite, Sekunden; 0 = nie
+oparl_pages_s = 3600           # Metadatenseiten ändern sich täglich; eine Stunde hilft beim Entwickeln und Wiederaufnehmen
+opendata_s = 2592000           # 30 Tage: Wahlergebnis und Stimmbezirke 2025 ändern sich nicht mehr
+wikidata_s = 2592000
+wikipedia_s = 2592000
+overpass_s = 2592000           # Straßennamen ändern sich langsam; die Referenz stammt vom November 2025
+
 [sources.oparl]
 endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers"  # body 0015 = Düsseldorf; 0009 Neuss, 0011 Mönchengladbach, 0013 Grevenbroich, 0019 Rhein-Kreis Neuss
 delay_s = 1.0                  # Pause zwischen Seiten und Dateien; der Server ist langsam, nicht wir
