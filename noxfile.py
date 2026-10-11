@@ -47,7 +47,7 @@ def test(session: nox.Session) -> None:
         "-n",
         "auto",
         "-m",
-        "not slow and not network",
+        "not slow and not network and not bench",
         "--cov=georep",
         "--cov-report=term-missing:skip-covered",
         "--cov-fail-under=90",
@@ -59,6 +59,38 @@ def test(session: nox.Session) -> None:
 def golden(session: nox.Session) -> None:
     """Volle Referenz, Sekunden."""
     session.run("uv", "run", "pytest", "-m", "slow", *session.posargs)
+
+
+@nox.session
+def bench(session: nox.Session) -> None:
+    """Heiße Pfade gegen den letzten gespeicherten Lauf in .benchmarks/ (gitignored).
+
+    Rot ab 10 % langsamer im Minimum; der erste Lauf auf einem Rechner legt nur die Baseline an,
+    denn ``--benchmark-compare-fail`` ohne Vergleichslauf ist für pytest-benchmark ein Bedienfehler
+    (Exit 4, 2026-10-11). Die Zahlen, die bleiben sollen, stehen datiert in docs/profiling/README.md.
+    """
+    saved = sorted(Path(".benchmarks").glob("*/*.json"))
+    if saved:
+        session.log(f"Vergleich gegen {saved[-1].name}")
+        compare = ["--benchmark-compare", "--benchmark-compare-fail=min:10%"]
+    else:
+        session.log("Keine Baseline in .benchmarks/: dieser Lauf legt sie an, kein Vergleich")
+        compare = []
+    session.run(
+        "uv",
+        "run",
+        "pytest",
+        "tests/bench",
+        "-m",
+        "bench",
+        "--benchmark-autosave",
+        # Die CPU-Taktfrequenz (hz_actual) schwankt zwischen zwei Läufen auf demselben Rechner;
+        # ohne den Filter druckt jeder Vergleich die komplette cpuinfo zweimal.
+        "-W",
+        "ignore:Benchmark machine_info is different",
+        *compare,
+        *session.posargs,
+    )
 
 
 @nox.session

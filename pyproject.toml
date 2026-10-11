@@ -97,6 +97,7 @@ pythonpath = ["."]
 markers = [
     "slow: laeuft ueber den vollen Referenzkorpus (Sekunden bis Minuten)",
     "network: braucht echte Endpunkte; nie in CI",
+    "bench: Laufzeit mit pytest-benchmark gegen die gespeicherte Baseline; nur in nox -s bench",
 ]
 
 [tool.coverage.run]
