@@ -12,7 +12,7 @@ Python 3.14.6, Linux 6.8 lowlatency), sofern nichts anderes dabeisteht.
 | `uv run georep profile [schritt …]` | führt die Schritte erzwungen unter cProfile aus, schreibt `docs/profiling/<datum>-<schritt>.prof` (gitignored) und druckt die pstats-Tabelle (`--top`, `--sort tottime`); ohne Namen alle Offline-Schritte, Netzschritte nur mit `--online` |
 | `uv run nox -s profile -- <schritt>` | dasselbe als nox-Session |
 | `uv run snakeviz docs/profiling/<datei>.prof` | Anzeige im Browser |
-| `uv run nox -s bench` | pytest-benchmark über `tests/bench/`, speichert jeden Lauf unter `.benchmarks/` (gitignored) und vergleicht mit dem letzten; rot ab 10 % langsamer im Minimum. Der erste Lauf auf einem Rechner legt nur die Baseline an |
+| `uv run nox -s bench` | pytest-benchmark über `tests/bench/`, speichert jeden Lauf unter `.benchmarks/` (gitignored) und vergleicht mit dem letzten; rot ab 20 % langsamer im Minimum. Der erste Lauf auf einem Rechner legt nur die Baseline an |
 
 Das Minimum ist die Vergleichsstatistik, weil es am wenigsten rauscht; Mittelwert und Maximum tragen GC
 und Scheduler mit. cProfile sieht nur Python-Frames: Zeit in Polars oder pypdf erscheint beim
@@ -43,6 +43,25 @@ Was sich daraus ablesen lässt:
 - Die Extraktion kostet 10 bis 40 ms je PDF, grob 20 ms je Seite. Hochgerechnet auf 19 108 PDFs sind das
   sechs bis sieben Minuten seriell, der Abruf aus dem Netz dagegen Stunden.
 - Die Polars-Stufen liegen im Millisekundenbereich und sind kein Kandidat für Optimierung.
+
+### Rauschen und Schwelle (2026-10-11)
+
+Sechs Läufe gleichen Codes am selben Nachmittag, Spanne = größtes durch kleinstes Minimum je Benchmark:
+
+| Benchmark | Spanne des Minimums | Spanne des Medians |
+|---|---|---|
+| `aggregate_voters` (0,6 ms) | 3,9 % | 40,9 % |
+| `build_dictionary` (0,9 ms) | 12,5 % | 12,6 % |
+| `hits_and_voter_join` (1,3 ms) | 12,7 % | 17,9 % |
+| `matcher_build` (1,4 ms) | 8,0 % | 11,0 % |
+| `extract_pdf[…]` (10 bis 42 ms) | 1,9 bis 3,7 % | 2,7 bis 3,8 % |
+| `matcher_extract_over_corpus` (46 ms) | 9,0 % | 7,9 % |
+| `index_step` (51 ms) | 5,8 % | 5,6 % |
+
+Die 10 % des Plans schlugen beim vierten Lauf ohne Codeänderung an (`build_dictionary`, 12,5 %). Die
+Schwelle steht darum auf 20 % im Minimum: über allem gemessenen Rauschen, aber jede Verdopplung einer
+Polars-Stufe und jede Verschlechterung von Matcher oder Extraktion um ein Fünftel bleibt rot. Der Median
+rauscht bei den kurzen Stufen stärker als das Minimum, er bleibt Anzeige, nicht Gate.
 
 ## Profile vom 2026-10-11: Offline-Lauf, Index, Extraktion
 

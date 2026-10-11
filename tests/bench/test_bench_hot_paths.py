@@ -1,8 +1,9 @@
 """Laufzeit-Benchmarks der heißen Pfade: Matcher, Extraktion, Aggregation, Index-Join.
 
 Nur in ``nox -s bench``: pytest-benchmark speichert jeden Lauf unter ``.benchmarks/`` (gitignored)
-und vergleicht mit dem zuletzt gespeicherten; rot ab 10 % langsamer im Minimum, denn das Minimum ist
-die Statistik mit dem geringsten Rauschen (Mittelwert und Maximum tragen GC und Scheduler mit). Die
+und vergleicht mit dem zuletzt gespeicherten; rot ab 20 % langsamer im Minimum, denn das Minimum ist
+die Statistik mit dem geringsten Rauschen (Mittelwert und Maximum tragen GC und Scheduler mit), und
+10 % lagen am 2026-10-11 noch unter dem Rauschen der Submillisekunden-Stufen (``docs/profiling/README.md``). Die
 Eingaben sind die Mini-Fixture (200 Dokumente, drei Wahlbezirke) und die vier PDF-Fixtures; die
 Baseline-Zahlen stehen datiert in ``docs/profiling/README.md``.
 """

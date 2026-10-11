@@ -65,14 +65,17 @@ def golden(session: nox.Session) -> None:
 def bench(session: nox.Session) -> None:
     """Heiße Pfade gegen den letzten gespeicherten Lauf in .benchmarks/ (gitignored).
 
-    Rot ab 10 % langsamer im Minimum; der erste Lauf auf einem Rechner legt nur die Baseline an,
-    denn ``--benchmark-compare-fail`` ohne Vergleichslauf ist für pytest-benchmark ein Bedienfehler
-    (Exit 4, 2026-10-11). Die Zahlen, die bleiben sollen, stehen datiert in docs/profiling/README.md.
+    Rot ab 20 % langsamer im Minimum: 10 % lagen unter dem gemessenen Rauschen (12,7 % zwischen sechs
+    Läufen gleichen Codes bei den 1-ms-Polars-Stufen, 2026-10-11), 20 % liegen über allem Gemessenen
+    und fangen jede echte Verschlechterung von Matcher (Rauschen 9 %) und Extraktion (4 %). Der erste
+    Lauf auf einem Rechner legt nur die Baseline an, denn ``--benchmark-compare-fail`` ohne
+    Vergleichslauf ist für pytest-benchmark ein Bedienfehler (Exit 4, 2026-10-11). Die Zahlen, die
+    bleiben sollen, stehen datiert in docs/profiling/README.md.
     """
     saved = sorted(Path(".benchmarks").glob("*/*.json"))
     if saved:
         session.log(f"Vergleich gegen {saved[-1].name}")
-        compare = ["--benchmark-compare", "--benchmark-compare-fail=min:10%"]
+        compare = ["--benchmark-compare", "--benchmark-compare-fail=min:20%"]
     else:
         session.log("Keine Baseline in .benchmarks/: dieser Lauf legt sie an, kein Vergleich")
         compare = []
