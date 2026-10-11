@@ -14,7 +14,6 @@ from georep.errors import SchemaError
 from georep.geo import Precinct
 from georep.layout import Layout
 from georep.report.model import (
-    COLUMN_DOCS,
     NARROW_NBSP,
     TOP_TERMS,
     ColumnDoc,
@@ -25,11 +24,11 @@ from georep.report.model import (
     district_rows,
     format_de,
     percent_de,
-    published_tables,
     stamp_written,
     term_counts,
     top_terms_city,
 )
+from georep.report.tables import GEOJSON_COLUMNS, TABLES, PublishedTable, published
 from georep.settings import Settings
 
 NOW = dt.datetime(2026, 10, 11, 20, 0, tzinfo=dt.UTC)
@@ -114,24 +113,47 @@ def test_data_stand_comes_from_settings_and_stamps(model: ReportModel) -> None:
 
 
 def test_column_docs_cover_every_published_column(model: ReportModel, mini_run: Layout) -> None:
-    tables = published_tables(mini_run)
+    tables = published(mini_run)
     documented = {(d.table, d.column) for d in model.columns}
-    for table, path in tables.items():
-        for column in pl.read_parquet_schema(path):
-            assert (table, column) in documented
+    for table in tables:
+        for column in pl.read_parquet_schema(table.path(mini_run)):
+            assert (table.name, column) in documented
     assert all(d.description for d in model.columns)
-    assert {d.table for d in model.columns} == set(tables) | {"wahlbezirke"}
+    assert {d.table for d in model.columns} == {t.name for t in tables} | {"wahlbezirke"}
     assert (
-        ColumnDoc("wahlbezirke", "name", "GeoJSON-Eigenschaft", *COLUMN_DOCS["wahlbezirke"]["name"])
+        ColumnDoc("wahlbezirke", "name", "GeoJSON-Eigenschaft", *GEOJSON_COLUMNS["name"])
         in model.columns
     )
+    assert len({t.name for t in TABLES}) == len(TABLES)
 
 
-def test_column_docs_refuse_mismatches(mini_run: Layout) -> None:
+def test_column_docs_refuse_mismatches(mini_run: Layout, monkeypatch: pytest.MonkeyPatch) -> None:
+    voters = next(t for t in TABLES if t.name == "wahlbezirke_waehler")
+    results = next(t for t in TABLES if t.name == "wahlbezirke_auswertung")
+    wrong_path = PublishedTable(voters.name, lambda layout: layout.results, "", voters.columns)
+    monkeypatch.setattr("georep.report.model.published", lambda layout: [wrong_path])
     with pytest.raises(SchemaError, match="ohne Beschreibung"):
-        column_docs({"wahlbezirke_waehler": mini_run.results})
+        column_docs(mini_run)
+    too_many = PublishedTable(results.name, lambda layout: layout.voters, "", results.columns)
+    monkeypatch.setattr("georep.report.model.published", lambda layout: [too_many])
     with pytest.raises(SchemaError, match="Beschreibung ohne Spalte"):
-        column_docs({"wahlbezirke_auswertung": mini_run.voters})
+        column_docs(mini_run)
+
+
+def test_optional_tables_are_published_only_when_their_file_exists(mini_run: Layout) -> None:
+    missing = PublishedTable(
+        "fehlt", lambda layout: layout.processed / "x.parquet", "", {}, optional=True
+    )
+    present = PublishedTable("da", lambda layout: layout.voters, "", {}, optional=True)
+    import georep.report.tables as tables
+
+    original = list(tables.TABLES)
+    tables.TABLES[:] = [*original, missing, present]
+    try:
+        names = [t.name for t in published(mini_run)]
+    finally:
+        tables.TABLES[:] = original
+    assert "da" in names and "fehlt" not in names
 
 
 def _precinct(precinct_id: str, district: int, name: str) -> Precinct:

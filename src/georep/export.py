@@ -13,25 +13,13 @@ import polars as pl
 
 from georep.io import atomic_path
 from georep.layout import Layout
+from georep.report.tables import csv_plan
 
 
 def _joined(frame: pl.DataFrame, joins: Mapping[str, str]) -> pl.DataFrame:
     return frame.with_columns(
         [pl.col(c).list.join(sep) for c, sep in joins.items() if c in frame.columns]
     )
-
-
-def csv_plan(layout: Layout) -> list[tuple[Path, dict[str, str], str]]:
-    """(Parquet-Datei, Listen-Spalte -> Trenner, Spaltentrenner) je Ergebnistabelle, wie der Altcode."""
-    return [
-        (layout.voters, {}, ","),
-        (layout.streets_by_district, {"suchbegriffe": "; "}, ","),
-        (layout.pois_table, {}, ","),
-        (layout.pois_by_district, {"suchbegriffe": "; "}, ","),
-        (layout.dictionary, {"suchbegriffe": ", "}, ";"),
-        (layout.index, {"paper_ids": ";"}, ","),
-        (layout.results, {"suchbegriffe": "; ", "paper_ids": ";"}, ","),
-    ]
 
 
 def write_csv(parquet: Path, target: Path, joins: Mapping[str, str], separator: str) -> None:

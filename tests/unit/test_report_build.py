@@ -8,7 +8,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from georep.export import csv_plan, write_csv
+from georep.export import write_csv
 from georep.io import digest
 from georep.layout import Layout
 from georep.report.build import (
@@ -19,18 +19,19 @@ from georep.report.build import (
     SiteSummary,
     current_commit,
 )
-from georep.report.model import COLUMN_DOCS, published_tables
+from georep.report.tables import GEOJSON_COLUMNS, csv_plan, published
 
 
 def test_site_has_index_map_and_fifteen_download_files(mini_run: Layout) -> None:
     assert mini_run.site_index.is_file() and (mini_run.site / MAP_NAME).is_file()
     names = sorted(p.name for p in mini_run.site_data.iterdir())
+    tables = published(mini_run)
     expected = sorted(
-        [p.name for p in published_tables(mini_run).values()]
-        + [f"{t}.csv" for t in published_tables(mini_run)]
+        [t.path(mini_run).name for t in tables]
+        + [f"{t.name}.csv" for t in tables]
         + [GEOJSON_NAME, SCHEMA_NAME, DOCUMENTS_NAME]
     )
-    assert names == expected and len(names) == 15
+    assert names == expected and len(names) == 2 * len(tables) + 3 == 15
     assert mini_run.site_index.with_name("index.html.stamp.json").is_file()
 
 
@@ -42,13 +43,15 @@ def test_page_lists_every_file_with_its_checksum(mini_run: Layout) -> None:
 
 
 def test_parquet_copies_are_byte_identical(mini_run: Layout) -> None:
-    for parquet in published_tables(mini_run).values():
+    for table in published(mini_run):
+        parquet = table.path(mini_run)
         assert (mini_run.site_data / parquet.name).read_bytes() == parquet.read_bytes()
 
 
 def test_csv_downloads_follow_the_export_rules(mini_run: Layout, tmp_path: Path) -> None:
     plan = {parquet: (joins, sep) for parquet, joins, sep in csv_plan(mini_run)}
-    for name, parquet in published_tables(mini_run).items():
+    for table in published(mini_run):
+        name, parquet = table.name, table.path(mini_run)
         joins, separator = plan[parquet]
         write_csv(parquet, tmp_path / f"{name}.csv", joins, separator)
         assert (mini_run.site_data / f"{name}.csv").read_bytes() == (
@@ -63,14 +66,15 @@ def test_csv_downloads_follow_the_export_rules(mini_run: Layout, tmp_path: Path)
 def test_geojson_and_schema_are_consistent_with_the_tables(mini_run: Layout) -> None:
     geojson = json.loads((mini_run.site_data / GEOJSON_NAME).read_text(encoding="utf-8"))
     assert [f["properties"]["wahlkreis_id"] for f in geojson["features"]] == [1, 10, 38]
-    assert set(geojson["features"][0]["properties"]) == set(COLUMN_DOCS["wahlbezirke"])
+    assert set(geojson["features"][0]["properties"]) == set(GEOJSON_COLUMNS)
     schema = json.loads((mini_run.site_data / SCHEMA_NAME).read_text(encoding="utf-8"))
-    assert set(schema["tables"]) == set(published_tables(mini_run)) | {"wahlbezirke"}
-    for table, parquet in published_tables(mini_run).items():
-        assert [c["column"] for c in schema["tables"][table]] == list(
-            pl.read_parquet_schema(parquet)
+    tables = published(mini_run)
+    assert set(schema["tables"]) == {t.name for t in tables} | {"wahlbezirke"}
+    for table in tables:
+        assert [c["column"] for c in schema["tables"][table.name]] == list(
+            pl.read_parquet_schema(table.path(mini_run))
         )
-        assert all(c["description"] for c in schema["tables"][table])
+        assert all(c["description"] for c in schema["tables"][table.name])
     assert schema["version"] and schema["generated_at"]
 
 

@@ -16,7 +16,7 @@ from pathlib import Path
 
 import polars as pl
 
-from georep.export import csv_plan, write_csv
+from georep.export import write_csv
 from georep.geo import LONLAT, read_precincts, transformer
 from georep.io import atomic_path, digest, write_json, write_text
 from georep.layout import Layout
@@ -38,29 +38,15 @@ from georep.report.geometry import (
     fit,
     wahlbezirke_geojson,
 )
-from georep.report.model import (
-    GEOJSON_TABLE,
-    Download,
-    ReportModel,
-    build_report_model,
-    format_de,
-    published_tables,
-)
+from georep.report.model import Download, ReportModel, build_report_model, format_de
 from georep.report.render import Visuals, render_map, render_report
+from georep.report.tables import GEOJSON_TABLE, published
 from georep.settings import Settings
 
 GEOJSON_NAME = "wahlbezirke.geojson"
 SCHEMA_NAME = "schema.json"
 DOCUMENTS_NAME = "dokumente.json"
 MAP_NAME = "karte.html"
-DESCRIPTIONS = {
-    "wahlbezirke_auswertung": "Auswertung je Wahlbezirk: Treffer, Begriffe, Dokument-IDs, Wähler, Trefferquote",
-    "inverted_index": "Invertierter Index: je Begriff die Dokumente mit Treffer",
-    "combined_searchdict": "Wörterbuch je Wahlbezirk mit allen Begriffen",
-    "wahlbezirke_waehler": "Wahlergebnis der Ratswahl 2025 je Wahlbezirk",
-    "wikidata_vis": "Orte mit Koordinate und Wahlbezirk",
-    "wahlbezirke_strassen": "Straßennamen je Wahlbezirk",
-}
 
 
 @dataclass(frozen=True)
@@ -101,20 +87,19 @@ def _rows(parquet: Path) -> int:
 
 
 def write_tables(layout: Layout) -> list[Download]:
-    """Die sechs Tabellen als Parquet (kopiert) und CSV nach ``site/data/``."""
+    """Die Tabellen des Registers als Parquet (kopiert) und CSV nach ``site/data/``."""
     data_dir = layout.guard_writable(layout.site_data)
-    plan = {parquet: (joins, sep) for parquet, joins, sep in csv_plan(layout)}
     downloads: list[Download] = []
-    for name, parquet in published_tables(layout).items():
+    for table in published(layout):
+        parquet = table.path(layout)
         rows = _rows(parquet)
         target = data_dir / parquet.name
         with atomic_path(target) as tmp:
             shutil.copyfile(parquet, tmp)
-        downloads.append(_download(target, "Parquet", rows, DESCRIPTIONS[name]))
-        joins, separator = plan[parquet]
-        csv_target = data_dir / f"{name}.csv"
-        write_csv(parquet, csv_target, joins, separator)
-        downloads.append(_download(csv_target, "CSV", rows, f"{DESCRIPTIONS[name]}, als CSV"))
+        downloads.append(_download(target, "Parquet", rows, table.description))
+        csv_target = data_dir / f"{table.name}.csv"
+        write_csv(parquet, csv_target, table.joins, table.separator)
+        downloads.append(_download(csv_target, "CSV", rows, f"{table.description}, als CSV"))
     return downloads
 
 

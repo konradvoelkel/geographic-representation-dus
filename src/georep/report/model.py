@@ -26,6 +26,7 @@ from georep.errors import SchemaError
 from georep.geo import Precinct, read_precincts
 from georep.layout import Layout
 from georep.prep.voters import TURNOUT
+from georep.report.tables import GEOJSON_COLUMNS, GEOJSON_TABLE, PublishedTable, published
 from georep.search.dictionary import all_terms
 from georep.search.index import HITS, PAPER_IDS, TERM
 from georep.settings import ResultsColumns, Settings
@@ -139,112 +140,31 @@ def percent_de(share: float, decimals: int = 1) -> str:
 
 # --- Spaltenschema ------------------------------------------------------------------------------
 
-# Tabelle -> Spalte -> (Bedeutung, Einheit). Jede veröffentlichte Spalte steht hier; ein Test prüft
-# beide Richtungen gegen die Parquet-Schemata.
-_VOTER_COLUMNS: dict[str, tuple[str, str]] = {
-    "wahlkreis_id": ("Nummer des Kommunalwahlbezirks (1 bis 41)", ""),
-    "Wahlberechtigte_insgesamt": ("Wahlberechtigte, Summe über die Stimmbezirke", "Personen"),
-    "Waehler": ("Wählerinnen und Wähler, Summe über die Stimmbezirke", "Personen"),
-    "CDU_Stimmen": ("Stimmen für die CDU", "Stimmen"),
-    "GRUENE_Stimmen": ("Stimmen für Bündnis 90/Die Grünen", "Stimmen"),
-    "SPD_Stimmen": ("Stimmen für die SPD", "Stimmen"),
-    "FDP_Stimmen": ("Stimmen für die FDP", "Stimmen"),
-    "Die_Linke_Stimmen": ("Stimmen für Die Linke", "Stimmen"),
-    "AfD_Stimmen": ("Stimmen für die AfD", "Stimmen"),
-    "wahlbeteiligung": ("Wähler geteilt durch Wahlberechtigte", "Anteil 0 bis 1"),
-    "CDU_anteil": ("Stimmenanteil der CDU an den Wählern", "Anteil 0 bis 1"),
-    "GRUENE_anteil": ("Stimmenanteil von Bündnis 90/Die Grünen an den Wählern", "Anteil 0 bis 1"),
-    "SPD_anteil": ("Stimmenanteil der SPD an den Wählern", "Anteil 0 bis 1"),
-    "FDP_anteil": ("Stimmenanteil der FDP an den Wählern", "Anteil 0 bis 1"),
-    "Die_Linke_anteil": ("Stimmenanteil von Die Linke an den Wählern", "Anteil 0 bis 1"),
-    "AfD_anteil": ("Stimmenanteil der AfD an den Wählern", "Anteil 0 bis 1"),
-}
-COLUMN_DOCS: dict[str, dict[str, tuple[str, str]]] = {
-    "wahlbezirke_auswertung": {
-        "wahlkreis_id": _VOTER_COLUMNS["wahlkreis_id"],
-        "suchbegriffe": (
-            "Begriffe des Wörterbuchs, wie die Arbeit sie anzeigt (ohne die versteckten)",
-            "Liste",
-        ),
-        "paper_ids": ("OParl-URLs der Dokumente mit mindestens einem Treffer", "Liste"),
-        "anzahl_treffer": (
-            "Dokumente mit mindestens einem Treffer, Länge von paper_ids",
-            "Dokumente",
-        ),
-        **{k: v for k, v in _VOTER_COLUMNS.items() if k != "wahlkreis_id"},
-        "trefferquote": (
-            "anzahl_treffer geteilt durch Wahlberechtigte_insgesamt",
-            "Dokumente je Person",
-        ),
-    },
-    "inverted_index": {
-        "suchbegriffe": ("Suchbegriff, kleingeschrieben", ""),
-        "paper_ids": ("OParl-URLs der Dokumente, in denen der Begriff vorkommt", "Liste"),
-        "anzahl_treffer": ("Länge von paper_ids", "Dokumente"),
-    },
-    "combined_searchdict": {
-        "wahlkreis_id": _VOTER_COLUMNS["wahlkreis_id"],
-        "suchbegriffe": (
-            "alle Begriffe des Wörterbuchs: Straßen und Orte, mit str.-Varianten, auch versteckte",
-            "Liste",
-        ),
-    },
-    "wahlbezirke_waehler": dict(_VOTER_COLUMNS),
-    "wikidata_vis": {
-        "label": ("Name des Orts aus Wikidata oder Wikipedia, Kommas entfernt", ""),
-        "wahlkreis_id": _VOTER_COLUMNS["wahlkreis_id"],
-        "lon": ("geografische Länge", "Grad, EPSG:4326"),
-        "lat": ("geografische Breite", "Grad, EPSG:4326"),
-    },
-    "wahlbezirke_strassen": {
-        "wahlkreis_id": _VOTER_COLUMNS["wahlkreis_id"],
-        "suchbegriffe": ("Straßennamen aus OpenStreetMap", "Liste"),
-    },
-    "wahlbezirke": {
-        "wahlkreis_id": _VOTER_COLUMNS["wahlkreis_id"],
-        "name": ("Name des Kommunalwahlbezirks laut Open-Data-Portal", ""),
-        "anzahl_treffer": ("Dokumente mit mindestens einem Treffer", "Dokumente"),
-        "trefferquote": (
-            "anzahl_treffer geteilt durch Wahlberechtigte_insgesamt",
-            "Dokumente je Person",
-        ),
-        "wahlbeteiligung": ("Wähler geteilt durch Wahlberechtigte", "Anteil 0 bis 1"),
-    },
-}
-GEOJSON_TABLE = "wahlbezirke"
 
-
-def published_tables(layout: Layout) -> dict[str, Path]:
-    """Name -> Parquet-Datei der sechs veröffentlichten Tabellen."""
-    return {
-        "wahlbezirke_auswertung": layout.results,
-        "inverted_index": layout.index,
-        "combined_searchdict": layout.dictionary,
-        "wahlbezirke_waehler": layout.voters,
-        "wikidata_vis": layout.pois_table,
-        "wahlbezirke_strassen": layout.streets_by_district,
-    }
-
-
-def column_docs(tables: Mapping[str, Path]) -> tuple[ColumnDoc, ...]:
-    """Spaltenschema aus den Parquet-Dateien, Bedeutung aus COLUMN_DOCS; beide müssen übereinstimmen."""
-    docs: list[ColumnDoc] = []
-    for table, path in tables.items():
-        schema = pl.read_parquet_schema(path)
-        known = COLUMN_DOCS.get(table, {})
-        undocumented = [c for c in schema if c not in known]
-        stale = [c for c in known if c not in schema]
-        if undocumented or stale:
-            raise SchemaError(
-                f"{table}: ohne Beschreibung {undocumented}, Beschreibung ohne Spalte {stale}"
-            )
-        docs.extend(
-            ColumnDoc(table, column, str(dtype), *known[column]) for column, dtype in schema.items()
+def _table_docs(table: PublishedTable, path: Path) -> list[ColumnDoc]:
+    """Spalten einer Parquet-Datei mit ihrer Bedeutung aus dem Register; beide Richtungen müssen passen."""
+    schema = pl.read_parquet_schema(path)
+    known = table.columns
+    undocumented = [c for c in schema if c not in known]
+    stale = [c for c in known if c not in schema]
+    if undocumented or stale:
+        raise SchemaError(
+            f"{table.name}: ohne Beschreibung {undocumented}, Beschreibung ohne Spalte {stale}"
         )
-    geojson = COLUMN_DOCS[GEOJSON_TABLE]
+    return [
+        ColumnDoc(table.name, column, str(dtype), *known[column])
+        for column, dtype in schema.items()
+    ]
+
+
+def column_docs(layout: Layout) -> tuple[ColumnDoc, ...]:
+    """Spaltenschema aller veröffentlichten Tabellen und des GeoJSON (``report.tables``)."""
+    docs: list[ColumnDoc] = []
+    for table in published(layout):
+        docs.extend(_table_docs(table, table.path(layout)))
     docs.extend(
         ColumnDoc(GEOJSON_TABLE, column, "GeoJSON-Eigenschaft", *text)
-        for column, text in geojson.items()
+        for column, text in GEOJSON_COLUMNS.items()
     )
     return tuple(docs)
 
@@ -428,6 +348,6 @@ def build_report_model(
         hidden_terms=hidden,
         regression=regression_pair(results, settings.analysis.exclude_districts),
         downloads=tuple(downloads),
-        columns=column_docs(published_tables(layout)),
+        columns=column_docs(layout),
         working_crs=settings.geo.working_crs,
     )
