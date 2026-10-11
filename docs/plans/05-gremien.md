@@ -420,14 +420,12 @@ Summe: rund 15 h, 9 bis 11 Commits.
 
 Neu bei der Umsetzung (2026-10-12):
 
-8. **`main` war rot.** `src/georep/report/build.py` lag auf `main` mit `except OSError,
-   subprocess.TimeoutExpired:` (Python-2-Syntax); das Modul parste nicht, also lief weder ein Test noch
-   mypy noch ein Lauf. Ursache ist ein Formatierer-Fehler: **ruff 0.17.0 entfernt bei `except (A, B):` die
-   Klammern** und schreibt die Python-2-Form zurück (mit einer Minimaldatei nachgestellt). Repariert in
-   diesem Branch als erster Commit (`ad4cd44`), format-stabil über eine Tupel-Konstante. Zählt, weil es
-   alle acht Branches betrifft und beim nächsten `ruff format` jederzeit wieder passieren kann. Vorschlag
-   an Konrad: eine Zeile in CLAUDE.md unter „Arbeitsweise" und ein `ruff`-Pin oder ein Upstream-Bericht.
-   Annahme ohne Antwort: der Supervisor nimmt den Commit beim Merge mit und entscheidet über die Notiz.
+8. ~~`main` war rot.~~ **Irrtum, zurückgenommen.** `except OSError, subprocess.TimeoutExpired:` ohne
+   Klammern ist seit Python 3.14 gültige Syntax (PEP 758), `ruff format` schreibt sie absichtlich so, und
+   mit dem Projekt-Python 3.14.6 importiert das Modul einwandfrei. Der Befund kam davon, dass die Datei mit
+   dem System-`python3` (3.12) geparst wurde; Prüfungen laufen nur über `uv run`. Der Commit `ad4cd44` ist
+   damit gegenstandslos und seine Änderung an `src/georep/report/build.py` ist zurückgenommen (die Datei
+   unterscheidet sich von `main` nur noch um die dritte Kartenkennzahl aus Stufe C). Keine Frage an Konrad.
 9. **`deal.pure` auf dem Parser.** Der Plan (§ 2, Entscheidung 10) forderte `deal.pure`; CLAUDE.md verbietet
    `deal.pure`/`deal.has()` in heißen Schleifen, und `classify_papers` ruft den Parser 19 108 mal (gemessen
    0,076 s gegen 0,053 s, rund 30 %, `docs/profiling/README.md`). Umgesetzt mit `deal.safe`; die Reinheit
