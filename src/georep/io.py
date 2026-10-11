@@ -6,6 +6,7 @@ die neue, nie eine halbe. Das ist Regel 2 in docs/architecture.md, „Sicherheit
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from collections.abc import Iterator
@@ -68,3 +69,12 @@ def write_parquet(frame: pl.DataFrame, target: Path, *, schema_version: int) -> 
         frame.write_parquet(
             tmp, compression="zstd", metadata={"georep.schema_version": str(schema_version)}
         )
+
+
+def digest(path: Path) -> str:
+    """SHA-256 einer Datei, in 1-MiB-Blöcken; für Stamps und die Prüfsummen der Downloads."""
+    sha = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            sha.update(chunk)
+    return sha.hexdigest()

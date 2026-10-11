@@ -219,3 +219,5 @@ mutants/
 docs/profiling/*.prof
 # pytest-gremlins: JSON- und HTML-Berichte; die Zahlen stehen in docs/mutation-2026-10-11.md
 coverage/
+# Browser-Vorschau der Berichtsseite (Claude Code), rechnerspezifische Pfade
+.claude/launch.json

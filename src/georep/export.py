@@ -1,7 +1,12 @@
-"""Parquet-Ergebnisse als CSV für Menschen und das Notebook, im Format des Altcodes."""
+"""Parquet-Ergebnisse als CSV für Menschen und das Notebook, im Format des Altcodes.
+
+Dieselben Regeln (Listen-Trenner, Spaltentrenner) nutzt der Schritt ``report`` für die
+Download-Dateien, darum stehen Plan und Schreiber hier und nicht in der CLI.
+"""
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 
 import polars as pl
@@ -10,15 +15,15 @@ from georep.io import atomic_path
 from georep.layout import Layout
 
 
-def _joined(frame: pl.DataFrame, joins: dict[str, str]) -> pl.DataFrame:
+def _joined(frame: pl.DataFrame, joins: Mapping[str, str]) -> pl.DataFrame:
     return frame.with_columns(
         [pl.col(c).list.join(sep) for c, sep in joins.items() if c in frame.columns]
     )
 
 
-def export_csv(layout: Layout) -> list[Path]:
-    """Schreibt neben jede vorhandene Parquet-Datei unter processed/ eine CSV; liefert die Pfade."""
-    plan: list[tuple[Path, dict[str, str], str]] = [
+def csv_plan(layout: Layout) -> list[tuple[Path, dict[str, str], str]]:
+    """(Parquet-Datei, Listen-Spalte -> Trenner, Spaltentrenner) je Ergebnistabelle, wie der Altcode."""
+    return [
         (layout.voters, {}, ","),
         (layout.streets_by_district, {"suchbegriffe": "; "}, ","),
         (layout.pois_table, {}, ","),
@@ -27,12 +32,21 @@ def export_csv(layout: Layout) -> list[Path]:
         (layout.index, {"paper_ids": ";"}, ","),
         (layout.results, {"suchbegriffe": "; ", "paper_ids": ";"}, ","),
     ]
+
+
+def write_csv(parquet: Path, target: Path, joins: Mapping[str, str], separator: str) -> None:
+    """Eine Parquet-Datei als CSV, atomar; Listen werden mit ihrem Trenner zu Text."""
+    with atomic_path(target) as tmp:
+        _joined(pl.read_parquet(parquet), joins).write_csv(tmp, separator=separator)
+
+
+def export_csv(layout: Layout) -> list[Path]:
+    """Schreibt neben jede vorhandene Parquet-Datei unter processed/ eine CSV; liefert die Pfade."""
     written: list[Path] = []
-    for parquet, joins, separator in plan:
+    for parquet, joins, separator in csv_plan(layout):
         if not parquet.exists():
             continue
         target = layout.guard_writable(parquet.with_suffix(".csv"))
-        with atomic_path(target) as tmp:
-            _joined(pl.read_parquet(parquet), joins).write_csv(tmp, separator=separator)
+        write_csv(parquet, target, joins, separator)
         written.append(target)
     return written

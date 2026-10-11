@@ -53,7 +53,7 @@ def test_pipeline_runs_skips_and_reruns(
         return {o.step: o.status for o in outcomes if o.step not in NETWORK}
 
     planned = run_pipeline(steps, settings, dry_run=True)
-    assert set(offline(planned).values()) == {"geplant"} and len(offline(planned)) == 8
+    assert set(offline(planned).values()) == {"geplant"} and len(offline(planned)) == 9
     assert all(
         o.status == "übersprungen" and "Netz aus" in o.reason for o in planned if o.step in NETWORK
     )
@@ -88,6 +88,7 @@ def test_pipeline_runs_skips_and_reruns(
         "corpus": "übersprungen",
         "index": "ausgeführt",
         "results": "ausgeführt",
+        "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")
     assert changed.reason.startswith("Eingabe geändert")
@@ -126,6 +127,10 @@ def test_pipeline_reproduces_the_thesis_results(
     bootstrap(layout)
     outcomes = run_pipeline(build_steps(settings, layout), settings)
     assert all(o.status == "ausgeführt" for o in outcomes if o.step not in NETWORK)
+    page = layout.site_index.read_text(encoding="utf-8")
+    assert "41 Kommunalwahlbezirke" in page and page.count('id="bezirk-') == 41
+    assert layout.site_index.stat().st_size < 3_000_000
+    assert len(list(layout.site_data.iterdir())) == 14
     _compare_results(
         _results_as_legacy(layout.results),
         reference_root / "processed" / "wahlbezirke_auswertung.csv",

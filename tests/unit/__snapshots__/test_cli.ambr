@@ -27,6 +27,8 @@
                -> inverted_index.parquet
   results      <- combined_searchdict.parquet, inverted_index.parquet, wahlbezirke_waehler.parquet
                -> wahlbezirke_auswertung.parquet
+  report       <- wahlbezirke_auswertung.parquet, combined_searchdict.parquet, inverted_index.parquet, wahlbezirke_waehler.parquet, wikidata_vis.parquet, wahlbezirke_strassen.parquet, papers.parquet, Stimmbezirke_2025.geojson
+               -> index.html, schema.json
   
   '''
 # ---

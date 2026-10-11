@@ -9,7 +9,6 @@ hat und warum (docs/architecture.md, „Pipeline" und „Sicherheit").
 from __future__ import annotations
 
 import datetime as dt
-import hashlib
 import json
 import time
 from collections.abc import Callable, Iterable, Sequence
@@ -24,13 +23,14 @@ from georep.analysis.hits import hits_by_district, join_voters
 from georep.errors import GeorepError, MissingInputError
 from georep.geo import PrecinctIndex, read_precincts
 from georep.http import Transport
-from georep.io import write_bytes, write_json, write_parquet
+from georep.io import digest, write_bytes, write_json, write_parquet
 from georep.layout import Layout
 from georep.prep.extract import extract_missing
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus, documents_with_text
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
 from georep.prep.streets import read_streets_json, streets_by_district
 from georep.prep.voters import aggregate_voters, read_results_csv
+from georep.report.build import SCHEMA_NAME, build_site, current_commit
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
 from georep.settings import Settings
@@ -74,14 +74,6 @@ class Outcome:
 
 class UnknownStepError(GeorepError):
     """Ein angeforderter Schrittname existiert nicht."""
-
-
-def digest(path: Path) -> str:
-    sha = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1 << 20), b""):
-            sha.update(chunk)
-    return sha.hexdigest()
 
 
 def input_digests(step: Step) -> dict[str, str]:
@@ -349,6 +341,11 @@ def build_steps(
             f"{frame.height} Wahlbezirke, {int(frame.get_column('anzahl_treffer').sum())} Treffer"
         )
 
+    def report() -> str:
+        return build_site(
+            layout, settings, now=dt.datetime.now(dt.UTC), commit=current_commit()
+        ).line()
+
     return [
         Step(
             "opendata", (), (layout.results_csv, layout.districts_geojson), opendata, network=True
@@ -379,5 +376,20 @@ def build_steps(
         Step("index", (layout.dictionary, layout.corpus), (layout.index,), index),
         Step(
             "results", (layout.dictionary, layout.index, layout.voters), (layout.results,), results
+        ),
+        Step(
+            "report",
+            (
+                layout.results,
+                layout.dictionary,
+                layout.index,
+                layout.voters,
+                layout.pois_table,
+                layout.streets_by_district,
+                layout.corpus,
+                layout.districts_geojson,
+            ),
+            (layout.site_index, layout.site_data / SCHEMA_NAME),
+            report,
         ),
     ]

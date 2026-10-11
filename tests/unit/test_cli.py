@@ -30,9 +30,11 @@ def test_bootstrap_run_status_export_regress(
     assert main(["bootstrap"]) == 0
     assert "200 Paper und 200 Texte" in capsys.readouterr().out
     assert main(["run", "--dry-run"]) == 0
-    assert "5 übersprungen, 8 geplant" in capsys.readouterr().out
+    assert "5 übersprungen, 9 geplant" in capsys.readouterr().out
     assert main(["run"]) == 0
-    assert "8 ausgeführt, 5 übersprungen" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "9 ausgeführt, 5 übersprungen" in out and "report       ausgeführt" in out
+    assert (project / "data" / "site" / "index.html").exists()
     assert main(["status"]) == 0
     status = capsys.readouterr().out
     assert status.count("aktuell") >= 7 and "200 Dokumente" in status and "[Netz]" in status
@@ -128,11 +130,11 @@ def test_profile_writes_one_file_per_offline_step(
     assert main(["profile", "--out", "prof", "--top", "3"]) == 0
     out = capsys.readouterr().out
     assert "voters       ausgeführt    erzwungen; 3 Wahlbezirke" in out
-    assert out.count("function calls") == 8 and out.count("Anzeige: uv run snakeviz") == 8
-    assert len(list((project / "prof").glob("*.prof"))) == 8
+    assert out.count("function calls") == 9 and out.count("Anzeige: uv run snakeviz") == 9
+    assert len(list((project / "prof").glob("*.prof"))) == 9
     assert main(["profile", "opendata", "--out", "prof"]) == 0
     assert "Netz aus" in capsys.readouterr().out
-    assert len(list((project / "prof").glob("*.prof"))) == 8
+    assert len(list((project / "prof").glob("*.prof"))) == 9
 
 
 def test_contracts_setting_reaches_deal(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
