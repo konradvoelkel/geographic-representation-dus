@@ -12,6 +12,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+import deal
 import numpy as np
 import numpy.typing as npt
 import shapely
@@ -60,6 +61,12 @@ def geojson_crs(collection: dict[str, object], default: str) -> str:
     return default
 
 
+@deal.post(
+    lambda result: (
+        len(result) > 0 and all(p.geometry.is_valid and not p.geometry.is_empty for p in result)
+    ),
+    message="jeder Stimmbezirk hat eine gültige, nicht leere Fläche",
+)
 def read_precincts(
     path: Path, columns: Columns, working_crs: str, *, source_crs: str = LONLAT
 ) -> list[Precinct]:
@@ -119,6 +126,10 @@ class PrecinctIndex:
         self._tree = shapely.STRtree([p.geometry for p in self.precincts])
         self._to_working = transformer(LONLAT, working_crs)
 
+    @deal.pre(
+        lambda self, lon, lat: -180.0 <= lon <= 180.0 and -90.0 <= lat <= 90.0,
+        message="lon/lat außerhalb des Wertebereichs: vertauscht? (always_xy)",
+    )
     def locate(self, lon: float, lat: float) -> Precinct | None:
         x, y = self._to_working.transform(lon, lat)
         hits = self._tree.query(shapely.Point(x, y), predicate="within")
@@ -133,12 +144,32 @@ def to_lonlat(geometry: BaseGeometry, working_crs: str) -> BaseGeometry:
     return project(geometry, transformer(working_crs, LONLAT))
 
 
+@deal.post(
+    lambda result: (
+        -180.0 <= result[0] <= result[2] <= 180.0 and -90.0 <= result[1] <= result[3] <= 90.0
+    ),
+    message="(min_lon, min_lat, max_lon, max_lat) in Grad",
+)
 def lonlat_bounds(geometry: BaseGeometry, working_crs: str) -> tuple[float, float, float, float]:
     """(min_lon, min_lat, max_lon, max_lat) wie ``shapely.bounds`` im Altcode."""
     minx, miny, maxx, maxy = to_lonlat(geometry, working_crs).bounds
     return (float(minx), float(miny), float(maxx), float(maxy))
 
 
+@deal.pre(
+    lambda geometry, working_crs, tolerance_m=0.0: tolerance_m >= 0 and not geometry.is_empty,
+    message="Toleranz nicht negativ, Geometrie nicht leer",
+)
+@deal.post(
+    lambda result: (
+        len(result.split()) >= 8
+        and len(result.split()) % 2 == 0
+        and all(-90.0 <= float(v) <= 90.0 for v in result.split()[0::2])
+        and all(-180.0 <= float(v) <= 180.0 for v in result.split()[1::2])
+    ),
+    message="geschlossener Ring aus mindestens vier lat-lon-Paaren in Grad",
+)
+@deal.raises(SchemaError)
 def overpass_polygon(geometry: BaseGeometry, working_crs: str, tolerance_m: float = 0.0) -> str:
     """Außenring des größten Polygons als ``lat lon lat lon …`` für ``(poly:"…")`` in Overpass.
 

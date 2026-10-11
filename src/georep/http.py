@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlsplit
 
+import deal
 import requests
 from requests.adapters import HTTPAdapter
 from requests_cache import DO_NOT_CACHE, CachedSession
@@ -63,6 +64,9 @@ class CachedTimeoutSession(CachedSession):
         return super().request(*args, **kwargs)
 
 
+@deal.has()
+@deal.raises(ValueError)  # urlsplit: ungültige IPv6-Klammern
+@deal.post(lambda result: result.endswith("*") and "://" not in result)
 def cache_pattern(endpoint: str) -> str:
     """requests-cache vergleicht Muster ohne Schema: ``host/pfad*``."""
     parts = urlsplit(endpoint)

@@ -9,8 +9,10 @@ from __future__ import annotations
 import io
 from pathlib import Path
 
+import deal
 import polars as pl
 
+from georep.contracts import all_nonnegative, has_columns, sorted_unique
 from georep.errors import SchemaError
 from georep.settings import ResultsColumns
 
@@ -34,6 +36,20 @@ def _to_int(column: str) -> pl.Expr:
     return pl.col(column).str.strip_chars().cast(pl.Int64, strict=False).fill_null(0)
 
 
+@deal.pre(
+    lambda results, columns: has_columns(
+        results, columns.district, columns.eligible, columns.voters, *columns.parties.values()
+    ),
+    message="Wahlergebnis braucht Wahlbezirk, Berechtigte, Wähler und alle Parteispalten",
+)
+@deal.post(lambda result: sorted_unique(result, DISTRICT))
+@deal.ensure(
+    lambda results, columns, result: (
+        result.height <= results.height
+        and all_nonnegative(result, columns.eligible, columns.voters, *columns.parties.values())
+    ),
+    message="höchstens ein Wahlbezirk je Stimmbezirk, Summen nicht negativ",
+)
 def aggregate_voters(results: pl.DataFrame, columns: ResultsColumns) -> pl.DataFrame:
     """Eine Zeile je Wahlbezirk: Berechtigte, Wähler, Stimmen je Partei, Beteiligung, Anteile."""
     counts = [columns.eligible, columns.voters, *columns.parties.values()]

@@ -11,6 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import deal
+
 from georep.errors import GeorepError
 from georep.settings import Settings
 
@@ -155,6 +157,8 @@ class Layout:
         for directory in self.runtime_dirs():
             self.guard_writable(directory).mkdir(parents=True, exist_ok=True)
 
+    @deal.ensure(lambda self, path, result: result is path)
+    @deal.raises(ReferenceWriteError, OSError)
     def guard_writable(self, path: Path) -> Path:
         """Gibt ``path`` zurück, wenn er nicht unter ``reference_root`` liegt; sonst Fehler."""
         reference = self.reference_root.resolve()

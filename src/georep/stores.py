@@ -12,6 +12,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
+import deal
 import polars as pl
 from pydantic import BaseModel, ConfigDict
 
@@ -34,6 +35,10 @@ class PaperStore:
     def __init__(self, path: Path) -> None:
         self.path = path
 
+    @deal.post(
+        lambda result: all(key == record.id for key, record in result.items()),
+        message="der Schlüssel ist die Paper-ID",
+    )
     def load(self) -> dict[str, PaperRecord]:
         if not self.path.exists():
             return {}
@@ -53,6 +58,7 @@ class PaperStore:
                 f.write("\n")
         return len(ordered)
 
+    @deal.post(lambda result: result.added + result.updated <= result.total)
     def upsert(self, incoming: Iterable[PaperRecord]) -> UpsertReport:
         existing = self.load()
         added = updated = unchanged = 0
@@ -139,6 +145,9 @@ class TextStore:
         row = self.rows.get(name)
         return str(row["text"]) if row is not None else None
 
+    @deal.pre(
+        lambda self, name, text, meta: name != "", message="ein Text braucht einen Dateinamen"
+    )
     def put(self, name: str, text: str, meta: TextMeta) -> None:
         self.rows[name] = {
             "name": name,

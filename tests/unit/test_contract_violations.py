@@ -6,6 +6,8 @@ eine Verletzung als deal.ContractError sichtbar wird und nicht als falsches Erge
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import deal
 import polars as pl
 import pytest
@@ -80,3 +82,67 @@ def test_regress_requires_its_columns_and_a_positive_scale() -> None:
         regress(frame.drop("trefferquote"))
     with pytest.raises(deal.PreContractError):
         regress(frame, y_scale=0)
+
+
+def test_prep_functions_require_their_columns() -> None:
+    from georep.prep.pois import clean_pois
+    from georep.prep.streets import streets_by_district
+    from georep.prep.voters import aggregate_voters
+    from georep.settings import load_settings
+
+    columns = load_settings(cwd=Path("/nonexistent")).columns.results
+    with pytest.raises(deal.PreContractError, match="Parteispalten"):
+        aggregate_voters(pl.DataFrame({columns.district: ["1"]}), columns)
+    with pytest.raises(deal.PreContractError):
+        clean_pois(pl.DataFrame({"label": ["a"], "wahlkreis_id": [1]}), [])
+    with pytest.raises(deal.PreContractError):
+        streets_by_district(pl.DataFrame({"wahlbezirk_id": [1], "strassen": [["a"]]}))
+
+
+def test_after_marker_needs_a_marker_and_returns_a_suffix() -> None:
+    from georep.prep.extract import after_marker, normalise_text
+
+    with pytest.raises(deal.PreContractError, match="leerer Marker"):
+        after_marker("kopf betrifft rest", "")
+    assert after_marker("kopf betrifft rest", "betrifft") == " rest"
+    assert normalise_text("A\nB") == "ab"
+
+
+def test_locate_rejects_coordinates_outside_degrees() -> None:
+    import shapely
+
+    from georep.geo import Precinct, PrecinctIndex
+
+    square = Precinct("1", 1, "eins", shapely.box(340000, 5670000, 341000, 5671000))
+    index = PrecinctIndex([square], "EPSG:25832")
+    assert index.locate(6.7, 51.2) is None
+    for lon, lat in ((6.7, 100.0), (200.0, 51.2)):
+        with pytest.raises(deal.PreContractError, match="vertauscht"):
+            index.locate(lon, lat)
+
+
+def test_overpass_polygon_rejects_negative_tolerance_and_yields_closed_ring() -> None:
+    import shapely
+
+    from georep.geo import overpass_polygon
+
+    square = shapely.box(340000, 5670000, 341000, 5671000)
+    with pytest.raises(deal.PreContractError, match="Toleranz"):
+        overpass_polygon(square, "EPSG:25832", tolerance_m=-1)
+    ring = overpass_polygon(square, "EPSG:25832").split()
+    assert len(ring) == 10 and ring[0:2] == ring[8:10]
+
+
+def test_text_store_put_needs_a_name(tmp_path: Path) -> None:
+    from georep.stores import TextMeta, TextStore
+
+    with pytest.raises(deal.PreContractError, match="Dateinamen"):
+        TextStore(tmp_path / "t.parquet").put("", "x", TextMeta(extractor="e"))
+
+
+def test_cache_pattern_passes_value_errors_through() -> None:
+    from georep.http import cache_pattern
+
+    assert cache_pattern("https://host/path?x=1") == "host/path*"
+    with pytest.raises(ValueError):
+        cache_pattern("http://[::1")

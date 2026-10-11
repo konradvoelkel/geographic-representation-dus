@@ -18,6 +18,7 @@ from importlib import resources
 from pathlib import Path
 from typing import Any, Literal
 
+import deal
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
@@ -184,6 +185,11 @@ class Settings(BaseSettings):
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
 
 
+@deal.pure
+@deal.ensure(
+    lambda base, override, result: set(result) == set(base) | set(override),
+    message="die Schlüssel sind die Vereinigung beider Tabellen",
+)
 def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Mischt ``override`` in eine Kopie von ``base``; Tabellen rekursiv, alles andere ersetzt."""
     merged = dict(base)

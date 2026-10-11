@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol
 
+import deal
 import pypdf
 from pypdf import PdfReader
 
@@ -56,6 +57,8 @@ class PypdfExtractor:
 DEFAULT_EXTRACTOR: PdfTextExtractor = PypdfExtractor()
 
 
+@deal.pure
+@deal.post(lambda result: "\n" not in result and result == result.lower())
 def normalise_text(raw: str) -> str:
     """Wie die Arbeit: Zeilenumbrüche weg, kleingeschrieben."""
     return raw.replace("\n", "").lower()
@@ -68,7 +71,13 @@ def extract_text(path: Path, extractor: PdfTextExtractor = DEFAULT_EXTRACTOR) ->
     return normalise_text(extractor.extract(path))
 
 
+@deal.pre(
+    lambda text, marker: marker != "", message="leerer Marker: str.split braucht einen Trenner"
+)
+@deal.ensure(lambda text, marker, result: text.endswith(result), message="der Rest ist ein Suffix")
+@deal.pure
 def after_marker(text: str, marker: str) -> str:
+    """Alles nach dem ersten Vorkommen von ``marker``; ohne Vorkommen der ganze Text."""
     parts = text.split(marker, 1)
     return parts[1] if len(parts) > 1 else parts[0]
 
