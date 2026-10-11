@@ -15,6 +15,8 @@ log_level = "INFO"
 start = 2020-09-13
 end = 2025-09-14               # end = "" für eine laufende Periode (der tiefe Merge ließe das Datum sonst stehen); dann ist election Pflicht
 # election = 2025-09-14        # Wahltag, dessen Ergebnis Nenner und Zuschnitt liefert; Standard: end
+label = ""                     # Option 02: Anzeigename der Periode auf der Seite; leer = „Wahlperiode <Startjahr> bis <Endjahr>"
+dictionary = "own"             # Option 02: "base" liest Straßen und Orte der Hauptperiode (Profil ""), dann gibt es streets_osm und pois_wiki im Profil nicht
 
 [http]
 timeout_s = 180                # der OParl-Server brauchte am 2026-10-09 85 s pro Seite
@@ -36,10 +38,14 @@ stop_when_older = true         # Liste ist neueste zuerst: abbrechen, sobald ein
 incremental = true             # bei vorhandenem Store nur Paper mit modified_since (letztes modified minus ein Tag) holen
 pdf_limit = 0                  # neue PDF-Downloads je Lauf; 0 = alle (`georep fetch pdfs --limit N` setzt es für einen Lauf)
 max_pages = 0                  # Option 04: Metadatenseiten je Lauf; 0 = alle (`georep fetch papers --max-pages 1` ist die Probe, ob der Server Urheberfelder liefert)
+first_page = 1                 # Option 02: erste Seite des Abrufs; ein Periodenprofil überspringt so die Seiten jüngerer Perioden (2014 bis 2020: ab Seite 90, Stand 2026-10)
 
 [sources.opendata]
 results_url = "https://opendata.duesseldorf.de/sites/default/files/KW_Rat_2025_09_14_Endgültiges_Ergebnis_Stimmbezirke_0.csv"
 districts_url = "https://opendata.duesseldorf.de/sites/default/files/Stimmbezirke%202025_ETRS89_EPSG4647.geojson"
+district_shapes_url = ""       # Option 02: Flächen der Wahlbezirke eines älteren Zuschnitts (GeoJSON); leer = nicht abrufen
+district_results_url = ""      # Option 02: Wahlergebnis je Wahlbezirk desselben Zuschnitts (CSV, liefert die Briefwähler); leer = nicht abrufen
+districts_file = "Stimmbezirke_2025.geojson"  # Option 02: Dateiname des Stimmbezirks-GeoJSON unter external/ (ein Periodenprofil nennt sein Jahr)
 
 [sources.wikidata]
 sparql_endpoint = "https://query.wikidata.org/sparql"
@@ -72,6 +78,8 @@ voters = "Waehler"
 precinct = "gebietnr"          # Stimmbezirk, vierstellig; Schlüssel zu „Stimm-/ Wahlbezirk" im GeoJSON (Option 03, Crosswalk über Stimmbezirksflächen)
 parties = { CDU = "CDU_Stimmen", GRUENE = "GRUENE_Stimmen", SPD = "SPD_Stimmen", FDP = "FDP_Stimmen", Die_Linke = "Die_Linke_Stimmen", AfD = "AfD_Stimmen" }
 city_district = "Stadtbezirk" # Option 05: Stadtbezirk je Stimmbezirk, stimmt für alle 306 Stimmbezirke mit "Stadtbezirk Nr." des GeoJSON überein (2026-10-11)
+eligible_postal = ""           # Option 02: Wahlberechtigte mit Wahlschein je Stimmbezirk, Verteilschlüssel der Briefwähler
+postal_marker = ""             # Option 02: Namensbestandteil der Briefwahlbezirke (ohne Geometrie), etwa "Briefwahl"
 
 [search]
 text_split_marker = "betrifft" # der Vorlagenkopf vor dem ersten Vorkommen wird verworfen (Düsseldorfer Vorlagenformat)
@@ -496,3 +504,12 @@ label = "Volt"
 short = "Volt"
 patterns = ['\bvolt\b']
 organizations = []             # Volt sitzt in der Ratsfraktion SPD/Volt, hat also keine eigene Organisation
+
+# --- Option 02: Zeitreihe (docs/plans/02-zeitreihe.md, § 2)
+[crosswalk]                    # Umrechnung eines älteren Zuschnitts auf die Wahlbezirke der Hauptperiode (Profil "")
+enabled = false                # true nur in einem Periodenprofil (settings.2014.toml): Schritt precincts, Wähler über Flächenanteile der Stimmbezirke
+target_file = "Stimmbezirke_2025.geojson"  # Stimmbezirksdatei der Hauptperiode, aus der die Zielbezirke vereinigt werden
+min_coverage = 0.95            # kleinste zulässige Abdeckung einer Quellfläche durch die Zielbezirke; 2020 auf 2025 liegt sie bei 97,8 % bis 100 % (Stadtgrenze, Rhein), weniger heißt falsches CRS
+
+[compare]                      # Vergleich zweier Perioden, Schritt compare auf der Hauptperiode
+period = ""                    # Profil der älteren Periode (Ordner unter data_root); leer = kein Vergleich; settings.vergleich.toml setzt "2014-2020"

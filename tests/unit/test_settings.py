@@ -477,3 +477,121 @@ def test_a_changed_pattern_changes_the_fingerprint(tmp_path: Path) -> None:
         "[originators]\ntext_head_chars = 800\n", encoding="utf-8"
     )
     assert load_settings(cwd=tmp_path).fingerprint() != base
+
+
+# --- Option 02: Periode als Profil -----------------------------------------------------------
+
+
+def test_period_label_and_dictionary_have_defaults_and_a_derived_title() -> None:
+    closed = Period(start=date(2014, 5, 25), end=date(2020, 9, 12), election=date(2020, 9, 13))
+    assert closed.label == "" and closed.dictionary == "own"
+    assert closed.title == "Wahlperiode 2014 bis 2020"
+    assert Period(start=date(2025, 9, 15), election=date(2025, 9, 14)).title == (
+        "Wahlperiode seit 2025"
+    )
+    assert Period(start=date(2014, 5, 25), end=date(2020, 9, 12), label="Rat 2014").title == (
+        "Rat 2014"
+    )
+
+
+def test_base_dictionary_needs_a_profile(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text('[period]\ndictionary = "base"\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match="dictionary"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        'profile = "alt"\n[period]\ndictionary = "base"\n', encoding="utf-8"
+    )
+    assert load_settings(cwd=tmp_path).period.dictionary == "base"
+    (tmp_path / "settings.toml").write_text('[period]\ndictionary = "fremd"\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match="dictionary"):
+        load_settings(cwd=tmp_path)
+
+
+def test_first_page_defaults_to_one_and_must_be_positive(tmp_path: Path) -> None:
+    assert load_settings(cwd=tmp_path).sources.oparl.first_page == 1
+    (tmp_path / "settings.toml").write_text("[sources.oparl]\nfirst_page = 0\n", encoding="utf-8")
+    with pytest.raises(ValidationError, match="first_page"):
+        load_settings(cwd=tmp_path)
+
+
+def test_opendata_source_knows_district_files_and_the_precinct_file_name(tmp_path: Path) -> None:
+    base = load_settings(cwd=tmp_path).sources.opendata
+    assert base.district_shapes_url == "" and base.district_results_url == ""
+    assert base.districts_file == "Stimmbezirke_2025.geojson"
+    (tmp_path / "settings.toml").write_text(
+        '[sources.opendata]\ndistricts_file = "a/b.geojson"\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="districts_file"):
+        load_settings(cwd=tmp_path)
+
+
+def _crosswalk_profile(extra: str = "") -> str:
+    return (
+        'profile = "alt"\n[period]\ndictionary = "base"\n[crosswalk]\nenabled = true\n'
+        '[columns.results]\ndistrict = ""\nprecinct = "gebiet-nr"\neligible = "A"\n'
+        'voters = "B"\neligible_postal = "A2"\npostal_marker = "Briefwahl"\n' + extra
+    )
+
+
+def test_results_without_district_column_need_crosswalk_and_precinct_keys(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text('[columns.results]\ndistrict = ""\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match="crosswalk"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(_crosswalk_profile(), encoding="utf-8")
+    columns = load_settings(cwd=tmp_path).columns.results
+    assert (columns.district, columns.precinct, columns.eligible_postal, columns.postal_marker) == (
+        "",
+        "gebiet-nr",
+        "A2",
+        "Briefwahl",
+    )
+    without_marker = _crosswalk_profile().replace('postal_marker = "Briefwahl"\n', "")
+    (tmp_path / "settings.toml").write_text(without_marker, encoding="utf-8")
+    with pytest.raises(ValidationError, match="postal_marker"):
+        load_settings(cwd=tmp_path)
+
+
+def test_crosswalk_needs_base_dictionary_and_counts_to_the_fingerprint(tmp_path: Path) -> None:
+    base = load_settings(cwd=tmp_path)
+    assert base.crosswalk.enabled is False and base.crosswalk.min_coverage == 0.95
+    assert base.crosswalk.target_file == "Stimmbezirke_2025.geojson"
+    (tmp_path / "settings.toml").write_text(
+        _crosswalk_profile().replace('dictionary = "base"', 'dictionary = "own"'), encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="crosswalk"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(_crosswalk_profile(), encoding="utf-8")
+    enabled = load_settings(cwd=tmp_path)
+    assert enabled.crosswalk.enabled and enabled.fingerprint() != base.fingerprint()
+    (tmp_path / "settings.toml").write_text(
+        _crosswalk_profile("min_coverage = 1.5\n"), encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="min_coverage"):
+        load_settings(cwd=tmp_path)
+
+
+def test_compare_period_is_a_profile_name_not_the_own_one(tmp_path: Path) -> None:
+    base = load_settings(cwd=tmp_path)
+    assert base.compare.period == ""
+    (tmp_path / "settings.toml").write_text('[compare]\nperiod = "2014-2020"\n', encoding="utf-8")
+    compared = load_settings(cwd=tmp_path)
+    assert compared.compare.period == "2014-2020" and compared.fingerprint() != base.fingerprint()
+    (tmp_path / "settings.toml").write_text('[compare]\nperiod = "../x"\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match="compare"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        'profile = "alt"\n[compare]\nperiod = "alt"\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="compare"):
+        load_settings(cwd=tmp_path)
+
+
+def test_labels_and_file_names_stay_out_of_the_fingerprint(tmp_path: Path) -> None:
+    base = load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        '[period]\nlabel = "Anders"\n[sources.opendata]\ndistricts_file = "x.geojson"\n'
+        '[crosswalk]\ntarget_file = "y.geojson"\n',
+        encoding="utf-8",
+    )
+    renamed = load_settings(cwd=tmp_path)
+    assert renamed.period.label == "Anders" and renamed.fingerprint() == base.fingerprint()
