@@ -29,6 +29,9 @@ dependencies = [
     "scikit-learn>=1.7.2",
 ]
 
+[project.scripts]
+georep = "georep.cli:main"
+
 [dependency-groups]
 dev = [
     "crosshair-tool>=0.0.111",

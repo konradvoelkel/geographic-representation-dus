@@ -12,6 +12,8 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
+import polars as pl
+
 
 def _fsync_path(path: Path, *, directory: bool = False) -> None:
     flags = os.O_RDONLY | (os.O_DIRECTORY if directory else 0)
@@ -57,3 +59,12 @@ def write_text(target: Path, text: str, *, encoding: str = "utf-8") -> None:
 def write_json(target: Path, data: object, *, indent: int | None = 2) -> None:
     """JSON mit ``ensure_ascii=False``: Umlaute bleiben lesbar, wie im Altcode."""
     write_text(target, json.dumps(data, ensure_ascii=False, indent=indent))
+
+
+def write_parquet(frame: pl.DataFrame, target: Path, *, schema_version: int) -> None:
+    """Parquet mit zstd, atomar; ``schema_version`` steht in den Metadaten (Lehre bubatzblick:
+    ein Cache muss sein eigenes Ausgabeschema kennen)."""
+    with atomic_path(target) as tmp:
+        frame.write_parquet(
+            tmp, compression="zstd", metadata={"georep.schema_version": str(schema_version)}
+        )
