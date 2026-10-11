@@ -68,6 +68,10 @@ def test_join_voters_requires_positive_eligible_voters() -> None:
     assert join_voters(hits, voters.with_columns(pl.lit(50).alias("berechtigte")), "berechtigte")[
         "trefferquote"
     ].to_list() == [0.02]
+    # ein Wahlberechtigter ist die Grenze: erlaubt (Mutant > 0 -> > 1 überlebte am 2026-10-11)
+    assert join_voters(hits, voters.with_columns(pl.lit(1).alias("berechtigte")), "berechtigte")[
+        "trefferquote"
+    ].to_list() == [1.0]
 
 
 def test_regress_requires_its_columns_and_a_positive_scale() -> None:

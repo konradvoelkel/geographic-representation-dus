@@ -217,3 +217,5 @@ settings.local.toml
 mutants/
 # cProfile-Dateien sind rechnerspezifisch; die Zahlen stehen im README daneben
 docs/profiling/*.prof
+# pytest-gremlins: JSON- und HTML-Berichte; die Zahlen stehen in docs/mutation-2026-10-11.md
+coverage/

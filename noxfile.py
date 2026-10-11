@@ -101,6 +101,34 @@ def verify(session: nox.Session) -> None:
 
 
 @nox.session
+def mutate(session: nox.Session) -> None:
+    """Mutationstest mit pytest-gremlins über search/ und analysis/, einmal pro Phase, kein Gate.
+
+    Subprocess-Executor, kein fork (mutmut 3 blockierte so mit Polars, docs/mutation-2026-10-11.md).
+    Rund 100 s mit sechs Arbeitern (2026-10-11); der Bericht liegt unter coverage/gremlins/ (gitignored),
+    die Zahlen und die Deutung der Überlebenden stehen datiert in docs/mutation-2026-10-11.md.
+    """
+    session.run(
+        "uv",
+        "run",
+        "pytest",
+        "tests/unit",
+        "tests/property",
+        "tests/golden",
+        "-m",
+        "not slow and not network and not bench",
+        "-p",
+        "no:cacheprovider",
+        "--gremlins",
+        "--gremlin-targets=src/georep/search,src/georep/analysis",
+        "--gremlin-report=console,json",
+        "--gremlin-workers=6",
+        "--gremlin-mutant-timeout=60",
+        *session.posargs,
+    )
+
+
+@nox.session
 def bench(session: nox.Session) -> None:
     """Heiße Pfade gegen den letzten gespeicherten Lauf in .benchmarks/ (gitignored).
 
