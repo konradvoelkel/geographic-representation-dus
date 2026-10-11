@@ -1,6 +1,6 @@
 # Plan 06: Gewichtung
 
-Stand 2026-10-11, Branch `feat/06-gewichtung`. Status: umgeschrieben.
+Stand 2026-10-11, Branch `feat/06-gewichtung`. Status: in Arbeit (seit 2026-10-12).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.6; Regeln in [../../CLAUDE.md](../../CLAUDE.md)
 und § 2 des Meta-Plans; Aufbau in [../architecture.md](../architecture.md). Alle Zahlen hier sind am 2026-10-11 auf
