@@ -50,3 +50,9 @@ def all_nonnegative(frame: pl.DataFrame, *columns: str) -> bool:
 def clean_terms(terms: list[str]) -> bool:
     """Suchbegriffe, wie das Wörterbuch sie liefert: nicht leer, getrimmt, kleingeschrieben, ohne Komma."""
     return all(t and t == t.strip().lower() and "," not in t for t in terms)
+
+
+def sums_to_one(frame: pl.DataFrame, group: str, column: str, tol: float = 1e-9) -> bool:
+    """Die Spalte summiert je Gruppe zu 1: Gewichte einer Umrechnung je Zielbezirk."""
+    sums = frame.group_by(group).agg(pl.col(column).sum())
+    return bool(((sums.get_column(column) - 1.0).abs() <= tol).all())
