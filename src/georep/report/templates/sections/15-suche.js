@@ -274,8 +274,9 @@
   function choose(item, share) {
     input.value = item.term;
     closeList();
-    status.textContent = kindLabel(item.kind) + ", " + item.districts.length +
-      (item.districts.length === 1 ? " Wahlbezirk" : " Wahlbezirke");
+    /* Die Statuszeile zaehlt die Vorschlaege (APG); nach der Wahl spricht der Ergebnisblock, und
+       zwei aria-live-Bereiche gleichzeitig wuerden doppelt vorgelesen. */
+    status.textContent = "";
     show(item);
     window.georep.select(item.districts, false);
     mark(item);

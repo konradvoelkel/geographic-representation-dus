@@ -368,5 +368,5 @@ Abweichungen vom Plan, je mit Grund:
 - **Statuszeile nennt den gesuchten Text**, wenn nichts gefunden wird (Frage 9).
 
 Gemessene Zahlen am 2026-10-12 auf der Referenz: 4176 Einträge (2828 `s`, 1239 `o`, 68 `so`, 41 `w`), 1618
-ohne Dokument; Payload 143 641 Byte (gzip 36 665); `index.html` 847 851 Byte (gzip 140 809), Budget
+ohne Dokument; Payload 143 641 Byte (gzip 36 665); `index.html` 847 904 Byte (gzip 140 867), Budget
 1 500 000; Schritt `report` 1,3 s; `search_entries` 65 ms.

@@ -135,7 +135,7 @@ neu gebaute Index ist byteidentisch mit dem vorherigen (31 024 Treffer, `results
 | Schritt `report` mit Sucheinträgen und Abschnitt | 1,3 s |
 | `search_entries` allein, 4176 Einträge, Verträge an | 65 ms |
 | dasselbe mit `contracts = "off"` | 45 ms |
-| `index.html` | 687 418 → 847 851 Byte (gzip 100 → 141 KB), Budget 1 500 000 |
+| `index.html` | 687 418 → 847 904 Byte (gzip 100 → 141 KB), Budget 1 500 000 |
 
 Die Verträge kosten hier 20 ms, fast alles im `ensure`, das die Zuordnung Begriff → Eintrag ein zweites Mal
 von Hand rechnet. Der erste Entwurf dieses Prädikats suchte die Mitglieder je Eintrag linear (4176 × 5841
