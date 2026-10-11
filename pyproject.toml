@@ -77,6 +77,10 @@ quote-style = "double"
 [tool.mypy]
 python_version = "3.14"
 strict = true
+# src/__init__.py macht src zum Paket; ohne explizite Basen hiesse src/georep/io.py zugleich
+# src.georep.io und georep.io. Basis src -> georep.*, Basis . -> tests.* und src.* (Altcode).
+explicit_package_bases = true
+mypy_path = ["src", "."]
 warn_redundant_casts = true
 warn_unused_ignores = true
 # Strict gilt fuer neuen Code (src/georep/, tests/). Der Altcode src/*.py wird in der
