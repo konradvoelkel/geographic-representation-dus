@@ -42,9 +42,11 @@ lebenden Beschreibungen verweisen; Verträge an Batch-Grenzen; jede Entscheidung
 - **Unteragenten reden nie mit Konrad.** Fragen kommen in den Abschnitt „Offene Fragen" ihres Plans; der
   Supervisor sammelt sie in [plans/fragen.md](plans/fragen.md) und gibt sie gebündelt weiter (§ 6). Ein Agent
   arbeitet weiter unter einer ausdrücklich notierten Annahme, wenn die Frage nicht blockiert.
-- **Netzabrufe nur, wenn Konrad sie für die Option freigegeben hat** (§ 9, Frage 1). Bis dahin bereiten die
-  Netz-Optionen alles vor (Settings, Fetcher, Tests mit aufgezeichneten Antworten in `tests/fixtures/http/`,
-  Trockenlauf mit `--dry-run`) und markieren den Abruf als eigenen, von Hand zu startenden Schritt.
+- **Netzabrufe nur stichprobenartig** (Konrad, 2026-10-11): mit Rate-Limiting rund fünf Minuten am Stück,
+  etwa um Formate zu prüfen, Fixtures aufzuzeichnen oder eine Stadt anzutesten. Alles wesentlich Längere
+  braucht Konrads Freigabe über `fragen.md` und sollte nicht nötig sein. Die Netz-Optionen bereiten den
+  vollen Abruf vor (Settings, Fetcher, Tests mit aufgezeichneten Antworten in `tests/fixtures/http/`,
+  Trockenlauf mit `--dry-run`) und dokumentieren ihn als eigenen, von Hand zu startenden Schritt.
 - **Nie unter `reference/` schreiben, nie `tests/fixtures/mini/expected/` neu erzeugen**; jede Option, die
   eine zweite Stadt oder Periode braucht, legt eine eigene kleine Fixture an (`tests/fixtures/<name>/`) mit
   README zur Herkunft.
@@ -96,10 +98,10 @@ der vollen Primärplatte. Der Cache (`cache_root`) darf geteilt werden (PDFs, HT
 adressiert); `data_root` ist je Worktree eigen, weil Stamps und Ergebnisse sonst kollidieren. Jeder
 Unteragent setzt die beiden `UV_*`-Variablen in jedem Shell-Aufruf (Shell-Zustand hält nicht über Aufrufe).
 
-Rechnerlast: `nox -s test` nutzt alle Kerne (`-n auto`). Während der Implementierung laufen die
-Unteragenten in Wellen (§ 5, Phase 3) und rufen im Alltag `uv run pytest -n 2 …`, das volle `nox` nur vor
-jedem Commit. Der Supervisor prüft vor der ersten Welle mit `nproc` und `free -g`, wie viele Agenten
-gleichzeitig tragbar sind (Faustregel: ein Agent je vier Kerne und je 4 GB frei).
+Rechnerlast: Der Rechner hat 16 Kerne und 62 GB RAM. Konrad erlaubt 13 Kerne insgesamt und so viel RAM wie
+nötig; alle acht Unteragenten dürfen gleichzeitig `nox` laufen lassen (2026-10-11). Im Alltag rufen sie
+`uv run pytest -n 2 …`, das volle `nox` vor jedem Commit; `nox -s test` nutzt `-n auto`, das verteilt sich
+über die Zeit. Der Supervisor behält `uptime` und `free -g` im Blick und drosselt, wenn die Last über 13 steigt.
 
 Worktrees und Venvs räumt der Supervisor nach dem Merge der Option auf (`git worktree remove`, Venv löschen).
 
@@ -155,8 +157,9 @@ nicht erfüllt ist (höchstens eine Runde).
 
 ### Phase 3: Implementierung (Unteragenten in Wellen)
 
-Welle 1: die Offline-Optionen 8, 5, 6, 3. Welle 2: 4, 2, 1, 7, sobald die Fragen zum Netz beantwortet sind
-(ohne Freigabe nur die Vorbereitung, § 2). Die Größe der Wellen passt der Supervisor an die Rechnerlast an.
+Alle acht Unteragenten dürfen gleichzeitig arbeiten (§ 4). Der Supervisor startet trotzdem zuerst die
+Offline-Optionen 8, 5, 6, 3 und kurz danach 4, 2, 1, 7, damit die Merge-Reihenfolge aus `00-synergien.md`
+früh Material bekommt; Netz nur stichprobenartig (§ 2).
 
 Jeder Unteragent bekommt den Prompt aus § 8.2, arbeitet nach seinem Plan, committet in kleinen Schritten auf
 seinem Branch, hält `nox` grün, schreibt Tests nach den Regeln in CLAUDE.md (hypothesis für Eigenschaften,
@@ -179,19 +182,21 @@ Je Option in der Reihenfolge aus `00-synergien.md`:
 2. Review mit der Skill `code-review` (Stufe high) und von Hand gegen die Abnahmekriterien; Befunde zurück an
    den Unteragenten oder selbst beheben, wenn klein.
 3. `uv run nox`, `uv run pytest -m slow`, `uv run nox -s bench` im Worktree auf dem rebasten Stand.
-4. Merge nach `main` als Merge-Commit mit `--no-ff` (die Branch-Historie bleibt lesbar; abweichend nur, wenn
-   Konrad Pull Requests will, § 9 Frage 2), dann `nox` auf `main`, Push per SSH, CI über die Actions-REST-API
-   prüfen (`gh run list` ist hier leer), Pages-Lauf grün, Seite live ansehen.
-5. Version: je gemergter Option eine Minor-Version (0.11.0, 0.12.0, …) mit `CHANGELOG.md`, `STATUS.md`,
-   `pyproject.toml`, `src/georep/__init__.py`, `uv lock`, Tag (falls Konrad nicht anders entscheidet, § 9 Frage 6).
+4. Merge nach `main` als Merge-Commit mit `--no-ff` (die Branch-Historie bleibt lesbar); der Supervisor
+   merged selbst nach Inspektion und darf Unteragenten um einen Rebase bitten und iterativ vorgehen (Konrad,
+   2026-10-11). Dann `nox` auf `main`, Push per SSH, CI über die Actions-REST-API prüfen (`gh run list` ist
+   hier leer), Pages-Lauf grün, Seite live ansehen.
+5. `CHANGELOG.md` unter „Unreleased" je Option ergänzen; `STATUS.md` nachziehen. Versioniert wird einmal am
+   Ende als Sammelversion (Konrad, 2026-10-11), Phase 5.
 6. `docs/plans/README.md` auf „gemerged" setzen, Worktree und Venv entfernen.
 
 ### Phase 5: Abschluss (Supervisor)
 
 `STATUS.md` (Stand, Zahlen, Bekanntes, nächster Schritt), `architecture.md` (Module, Pipeline, Datenhaltung,
 Berichtsseite), `decisions.md` (ein Punkt je Option, mit verworfenen Alternativen), README (Loslegen, Befehle,
-Daten und Herkunft, Lizenzen). Dieser Plan bekommt oben die Zeile „abgeschlossen am <Datum>" mit dem Stand je
-Option. Eine Übergabenachricht an Konrad: was live ist, was offen blieb, welche Fragen unbeantwortet waren und
+Daten und Herkunft, Lizenzen). Eine Sammelversion 0.11.0 (`pyproject.toml`, `src/georep/__init__.py`,
+`uv lock`, `CHANGELOG.md` aus „Unreleased", Tag, Push von `main` und Tag). Dieser Plan bekommt oben die Zeile
+„abgeschlossen am <Datum>" mit dem Stand je Option. Eine Übergabenachricht an Konrad: was live ist, was offen blieb, welche Fragen unbeantwortet waren und
 welche Annahmen deshalb gelten.
 
 ## 6. Protokoll für Fragen
@@ -227,8 +232,8 @@ Frage stellen, müssen die Abweichung aber begründen.
 - **Abnahme mindestens**: Mini-Fixture der zweiten Stadt mit Golden Master aus einem einmaligen echten Lauf
   (klein, mit README); `georep --settings settings.<stadt>.toml run` offline grün; kein Düsseldorf-Literal
   mehr im Code; Seite der zweiten Stadt baut; Vergleichsabschnitt mit Zahlen aus beiden Läufen.
-- **Offene Fragen**: Netzfreigabe (§ 9, Frage 1); welche Stadt zuerst (Vorschlag: die mit vollständigen Open
-  Data, sonst Neuss als nächste Nachbarin).
+- **Offene Fragen**: welche Stadt zuerst (Vorschlag: die mit vollständigen Open Data, sonst Neuss als nächste
+  Nachbarin). Netz nur stichprobenartig (§ 2); der volle Abruf je Stadt ist ein dokumentierter Lauf für Konrad.
 
 ### 7.2 Option 2: Zeitreihe
 
@@ -247,7 +252,8 @@ Frage stellen, müssen die Abweichung aber begründen.
 - **Abnahme mindestens**: Umrechnung mit Vertrag (Gewichte je Zielbezirk summieren zu 1) und
   hypothesis-Test; Mini-Fixture mit synthetischer zweiter Periode; `georep --settings settings.2014.toml run`
   offline grün; Seite zeigt beide Perioden.
-- **Offene Fragen**: Netzfreigabe; Zuschnitt 2020 als GeoJSON vorhanden?
+- **Offene Fragen**: Zuschnitt 2020 als GeoJSON vorhanden? Netz nur stichprobenartig (§ 2); der volle Abruf
+  der Periode ist ein dokumentierter Lauf für Konrad.
 
 ### 7.3 Option 3: Kontrollvariablen
 
@@ -268,7 +274,10 @@ Frage stellen, müssen die Abweichung aber begründen.
 - **Abnahme mindestens**: OLS gegen bekannte Werte getestet (bivariat gleich `linregress`); Verträge (p in
   [0, 1], n > Prädiktoren + 1); Crosswalk Stadtteil zu Wahlbezirk mit Vertrag; Seite zeigt Tabelle 6 mit
   Daten aus Dateien, deren Herkunft und Lizenz im Fuß stehen.
-- **Offene Fragen**: PDF-Tabellen scrapen erlaubt? (§ 9, Frage 5); statsmodels erlaubt oder numpy-OLS?
+- **Antworten (2026-10-11)**: Quartiersatlas ausdrücklich erlaubt; andere Daten dürfen mit Lizenz verarbeitet
+  werden, dann steht auf der Seite, was daraus abgeleitet wurde (eigener Abschnitt „Abgeleitete Daten" mit
+  Quelle, Lizenz, Abrufdatum je Variable). scikit-learn ist erlaubt (Frage 3), statsmodels bleibt eine
+  Entscheidung des Plans mit Eintrag in `decisions.md`.
 
 ### 7.4 Option 4: Parteien
 
@@ -287,7 +296,9 @@ Frage stellen, müssen die Abweichung aber begründen.
 - **Abnahme mindestens**: OParl-Fixture mit Urheberfeldern (eine echte Seite aufzeichnen), Roundtrip-Test;
   Kennzahl je Partei und Bezirk mit Vertrag (Summen stimmen); Seite mit Abschnitt; ohne Netzfreigabe: alles
   bis auf den Abruf, der als `georep fetch papers --force` dokumentiert ist.
-- **Offene Fragen**: Netzfreigabe; welche Parteien (die sechs aus `columns.results.parties`?).
+- **Offene Fragen**: welche Parteien (die sechs aus `columns.results.parties`?). Netz nur stichprobenartig
+  (§ 2): eine Seite mit Urheberfeldern aufzeichnen reicht für Fixture und Tests; der volle Metadaten-Abruf ist
+  ein dokumentierter Lauf für Konrad.
 
 ### 7.5 Option 5: Gremien
 
@@ -313,14 +324,14 @@ Frage stellen, müssen die Abweichung aber begründen.
 - **Datenlage**: `inverted_index.parquet`, `combined_searchdict.parquet`, `interim/papers.parquet` (Texte,
   15 MB) liegen vor; alles offline.
 - **Code**: `analysis/weights.py` (reine Funktionen auf Frames, Verträge: Gewichte in [0, 1], Summen);
-  Themenmodell ohne scikit-learn (`nox -s deps` verbietet es): TF-IDF in Polars und numpy, NMF selbst
-  implementiert oder gensim (neue Abhängigkeit, prüfen) (§ 9, Frage 3); Seite: Abschnitt „Was ändert die
-  Gewichtung?".
+  Themenmodell mit scikit-learn (Konrad, 2026-10-11: erlaubt; TF-IDF von Hand und gensim nicht nötig). Der
+  Branch nimmt `scikit-learn` aus `FORBIDDEN` in `noxfile.py`, begründet das in `decisions.md` und hält die
+  Abhängigkeit auf das Modul `analysis/topics.py` begrenzt; Seite: Abschnitt „Was ändert die Gewichtung?".
 - **Hürden**: Rechenzeit über 19 108 Texte (Profil vor jedem Nachbau, `georep profile`); Themen brauchen
   lesbare Labels (Top-Wörter je Thema), keine Interpretation versprechen.
 - **Abnahme mindestens**: jede Gewichtung reproduziert bei Einheitsgewichten exakt Tabelle 5 (Golden Master);
   Verträge; Laufzeit des Schritts unter 60 s auf der Referenz oder als eigener, optionaler Schritt markiert.
-- **Offene Fragen**: scikit-learn-Verbot lockern oder nicht.
+- **Offene Fragen**: keine blockierende (scikit-learn ist freigegeben).
 
 ### 7.7 Option 7: Monitoring
 
@@ -332,14 +343,21 @@ Frage stellen, müssen die Abweichung aber begründen.
 - **Code**: Settings-Profil `settings.2025.toml` (Periode offen: `end` optional), `pipeline.py` (Schritt
   `papers` mit offenem Ende), `report/` (Abschnitt mit Monatsreihe), ein Lauf-Skript oder nox-Target `monitor`
   (fetch, run, publish), Workflow oder systemd-Timer je nach Antwort (§ 9, Frage 4).
-- **Hürden**: Wo läuft der Abruf, wohin gehen die Daten: Actions hat keinen dauerhaften Speicher und ein
-  Zeitlimit von sechs Stunden; PDFs (Gigabyte) gehören nicht ins Repo. Vorschlag: Abruf auf Konrads Rechner
-  oder VPS per Timer, Veröffentlichung der kleinen Ergebnisdateien (Parquet unter 1 MB) als Commit in einen
-  Datenordner oder als Release-Artefakt, Seite baut daraus.
+- **Betrieb (Konrad, 2026-10-11)**: zuerst auf kookaburra (Konrads Heimrechner) simulieren und prüfen, aber
+  von Anfang an für den VPS vorbereiten: ein idempotentes Skript (fetch, run, publish) plus systemd-Timer mit
+  Unit-Dateien im Repo, Konfiguration über Settings und Umgebung, keine Pfade fest kodiert. Größere
+  aktualisierte Daten (PDFs, Textstore) gehören in ein Cloudflare-R2-Bucket wie bei bubatzblick (Konrads
+  Playbook `~/files/work/PLAYBOOK.md` kennt das Muster; prüfen, ob ein zweites Bucket nichts kostet); fertige
+  Datensätze bis 10 GB zum Download auf dem VPS, Kleines zuerst auf kookaburra. Später eine Datenplattform:
+  der Plan nennt Kandidaten mit Lizenz, Größe, DOI-Fähigkeit und Parquet-Unterstützung (Vorschläge des
+  Planers: Zenodo für zitierfähige Schnappschüsse mit DOI, Hugging Face Hub für Parquet mit Vorschau und
+  Versionierung, GovData oder das Open-Data-Portal NRW für die Einordnung als offene Verwaltungsdaten).
+- **Hürden**: Actions hat keinen dauerhaften Speicher und ein Zeitlimit von sechs Stunden; PDFs gehören nicht
+  ins Repo; Seite und Pipeline müssen mit einem Datenstand „bis gestern" umgehen (Stamps, Datenstand im Kopf).
 - **Abnahme mindestens**: Profil mit offener Periode, Tests mit Fake-Session (neue Seiten erscheinen, alte
   bleiben); Seite zeigt die Monatsreihe aus einem Testdatensatz; das Lauf-Skript ist dokumentiert und
   idempotent; ohne Freigabe kein echter Abruf.
-- **Offene Fragen**: Ort und Speicher des Abrufs (§ 9, Frage 4); Netzfreigabe.
+- **Offene Fragen**: keine blockierende; der volle Abruf ist Konrads Lauf auf kookaburra (§ 2).
 
 ### 7.8 Option 8: Suche
 
@@ -423,9 +441,14 @@ JavaScript prüft man über einen lokalen Server (`python3 -m http.server 8777 -
 Port 8765 ist belegt) und `javascript_tool` in der eingebauten Browser-Ansicht; Screenshots dort sind leer,
 wenn die Ansicht verborgen ist.
 
-## 9. Offene Fragen an Konrad (vom Planer, 2026-10-11)
+## 9. Fragen an Konrad und seine Antworten (2026-10-11)
 
-Die Antworten trägt der Supervisor in `docs/plans/fragen.md` ein. Ohne Antwort gelten die Annahmen.
+Alle sieben Fragen sind beantwortet; die Antworten stehen in `docs/plans/fragen.md` und sind in § 2, § 4,
+§ 5 und § 7 eingearbeitet. Kurz: Netz nur stichprobenartig (rund fünf Minuten mit Rate-Limiting), der
+Supervisor merged selbst und darf Rebases anfordern, scikit-learn ist erlaubt, Monitoring zuerst auf kookaburra
+und von Anfang an für den VPS mit R2-Bucket vorbereitet, Quartiersatlas und andere lizenzierte Daten mit
+Hinweis auf Abgeleitetes erlaubt, eine Sammelversion am Ende, 13 Kerne und acht parallele `nox`-Läufe.
+Die ursprünglichen Fragen mit ihren Annahmen bleiben hier zur Nachvollziehbarkeit stehen.
 
 1. **Netzabrufe**: Dürfen die Unteragenten stundenlange Abrufe gegen den OParl-Server und die Portale fahren
    (Option 1 je Stadt, Option 2 für 2014 bis 2020 mit rund 20 000 PDFs, Option 4 Metadaten neu, Option 7
