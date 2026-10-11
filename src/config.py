@@ -36,16 +36,25 @@ OPENDATA_ENDPOINT_STIMMBEZIRK = "https://opendata.duesseldorf.de/sites/default/f
 # SPARQL-Query (Wikidata)
 LANGUAGE = "de"
 TARGET_ENTITY = "Q1718"  # Düsseldorf
-QUERY = """
-SELECT ?item ?itemLabel ?coord ?article WHERE {
+
+
+def build_sparql_query(entity: str = TARGET_ENTITY, language: str = LANGUAGE) -> str:
+    """Alle Wikidata-Objekte mit Koordinaten in der Verwaltungseinheit ``entity`` (P131*)
+    samt Wikipedia-Artikel in ``language``. Bis 2026-10-11 stand Q1718 literal in der Query
+    und TARGET_ENTITY war ohne Wirkung."""
+    return f"""
+SELECT ?item ?itemLabel ?coord ?article WHERE {{
   ?item wdt:P625 ?coord.
-  ?item wdt:P131* wd:Q1718.  # liegt in Verwaltungseinheit Düsseldorf
+  ?item wdt:P131* wd:{entity}.
   ?article schema:about ?item;
-           schema:isPartOf <https://de.wikipedia.org/>;
+           schema:isPartOf <https://{language}.wikipedia.org/>;
            schema:name ?articleName.
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "de". }
-}
+  SERVICE wikibase:label {{ bd:serviceParam wikibase:language "{language}". }}
+}}
 """
+
+
+QUERY = build_sparql_query()
 USER_AGENT = "Wikipedia-Geodata-Extractor/1.0 (Python/Bachelorarbeit)"
 WIKI_EXCLUDE_LIST = [
     "Düsseldorf",
