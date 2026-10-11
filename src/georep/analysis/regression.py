@@ -39,6 +39,19 @@ class RegressionResult:
         )
 
 
+@dataclass(frozen=True)
+class RegressionPair:
+    """Tabelle 5: alle Wahlbezirke und dieselbe Regression ohne die Ausreißer.
+
+    ``without`` ist None, wenn keine Ausreißer benannt sind (``analysis.exclude_districts`` leer)
+    oder ohne sie zu wenige Bezirke bleiben.
+    """
+
+    all: RegressionResult
+    excluded: tuple[int, ...]
+    without: RegressionResult | None
+
+
 @deal.pre(
     lambda results, exclude=(), *, x=RATE, y=TURNOUT, y_scale=100.0: (
         has_columns(results, DISTRICT, x, y) and y_scale > 0
@@ -79,4 +92,34 @@ def regress(
         r=float(fit.rvalue),
         p=float(fit.pvalue),
         stderr=float(fit.stderr),
+    )
+
+
+@deal.post(
+    lambda result: result.without is None or result.without.n <= result.all.n,
+    message="ohne Ausreißer bleiben höchstens so viele Bezirke wie mit",
+)
+@deal.raises(EmptyResultError)
+def regression_pair(
+    results: pl.DataFrame,
+    exclude: Iterable[int] = (),
+    *,
+    x: str = RATE,
+    y: str = TURNOUT,
+    y_scale: float = 100.0,
+) -> RegressionPair:
+    """Beide Spalten von Tabelle 5 für eine Kennzahl ``x``: alle Bezirke und ohne ``exclude``.
+
+    Dieselbe Funktion rechnet jede Kennzahlvariante (gewichtete Quoten, andere Perioden), darum
+    sind ``x`` und ``y`` Parameter; die Ausreißer kommen aus ``settings.analysis.exclude_districts``.
+    """
+    excluded = tuple(exclude)
+    without: RegressionResult | None = None
+    if excluded:
+        try:
+            without = regress(results, exclude=excluded, x=x, y=y, y_scale=y_scale)
+        except EmptyResultError:
+            without = None
+    return RegressionPair(
+        all=regress(results, x=x, y=y, y_scale=y_scale), excluded=excluded, without=without
     )

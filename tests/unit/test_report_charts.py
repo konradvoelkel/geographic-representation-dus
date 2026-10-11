@@ -8,7 +8,7 @@ import deal
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
-from georep.analysis.regression import RegressionResult
+from georep.analysis.regression import RegressionPair, RegressionResult
 from georep.geo import read_precincts
 from georep.layout import Layout
 from georep.report.charts import (
@@ -26,7 +26,6 @@ from georep.report.geometry import bounds_of, district_shapes, fit
 from georep.report.model import (
     NARROW_NBSP,
     DistrictRow,
-    RegressionPair,
     ReportModel,
     TermRow,
     build_report_model,

@@ -127,6 +127,12 @@ class Search(_Strict):
         return value
 
 
+class Analysis(_Strict):
+    """Auswertungsparameter, die mehr als ein Modul lesen; Begründung je Zahl in ``defaults.toml``."""
+
+    exclude_districts: list[int] = []  # Tabelle 5 „ohne Ausreißer"; leer = keine zweite Regression
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_", env_nested_delimiter="__", extra="forbid", frozen=True
@@ -144,6 +150,7 @@ class Settings(BaseSettings):
     geo: Geo = Geo()
     columns: Columns
     search: Search = Search()
+    analysis: Analysis = Analysis()
 
     @field_validator("cache_root", mode="before")
     @classmethod

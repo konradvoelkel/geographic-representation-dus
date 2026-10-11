@@ -17,8 +17,9 @@ from dataclasses import dataclass
 import deal
 from shapely.geometry.base import BaseGeometry
 
+from georep.analysis.regression import RegressionPair
 from georep.report.geometry import Projection, label_point, svg_path
-from georep.report.model import DistrictRow, RegressionPair, format_de, percent_de
+from georep.report.model import DistrictRow, format_de, percent_de
 
 CLASSES = 5  # Quantilklassen der Choroplethe; weniger, wenn es weniger verschiedene Werte gibt
 MAP_WIDTH = 600.0

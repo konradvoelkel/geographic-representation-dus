@@ -20,9 +20,9 @@ import polars as pl
 
 from georep import __version__
 from georep.analysis.hits import DISTRICT, RATE, TERMS
-from georep.analysis.regression import RegressionResult, regress
+from georep.analysis.regression import RegressionPair, regression_pair
 from georep.contracts import has_columns
-from georep.errors import EmptyResultError, SchemaError
+from georep.errors import SchemaError
 from georep.geo import Precinct, read_precincts
 from georep.layout import Layout
 from georep.prep.voters import TURNOUT
@@ -31,7 +31,6 @@ from georep.search.index import HITS, PAPER_IDS, TERM
 from georep.settings import ResultsColumns, Settings
 
 NARROW_NBSP = "\u202f"  # schmales geschütztes Leerzeichen: Tausender und vor dem Prozentzeichen
-OUTLIERS = (1, 10)  # Tabelle 5 der Arbeit rechnet auch ohne die Wahlbezirke 1 und 10
 TOP_TERMS = 5  # Begriffe je Wahlbezirk in Karte und Tabelle
 TOP_TERMS_CITY = 20  # trefferstärkste Begriffe stadtweit
 
@@ -70,13 +69,6 @@ class KeyFigures:
     rate_min: float
     rate_max: float
     turnout_median: float
-
-
-@dataclass(frozen=True)
-class RegressionPair:
-    all: RegressionResult
-    excluded: tuple[int, ...]
-    without: RegressionResult | None  # None, wenn ohne die Ausreißer zu wenige Bezirke bleiben
 
 
 @dataclass(frozen=True)
@@ -386,15 +378,6 @@ def key_figures(
     )
 
 
-def regression_pair(results: pl.DataFrame, excluded: Sequence[int] = OUTLIERS) -> RegressionPair:
-    """Tabelle 5: alle Wahlbezirke und ohne die Ausreißer; ohne genug Bezirke bleibt die zweite leer."""
-    try:
-        without: RegressionResult | None = regress(results, exclude=excluded)
-    except EmptyResultError:
-        without = None
-    return RegressionPair(all=regress(results), excluded=tuple(excluded), without=without)
-
-
 def stamp_written(output: Path) -> dt.date | None:
     """Das Datum aus dem Stamp neben einer Schrittausgabe, falls der Schritt je lief."""
     stamp = output.with_name(output.name + ".stamp.json")
@@ -443,7 +426,7 @@ def build_report_model(
         ),
         top_terms=top_terms_city(counts, hidden),
         hidden_terms=hidden,
-        regression=regression_pair(results),
+        regression=regression_pair(results, settings.analysis.exclude_districts),
         downloads=tuple(downloads),
         columns=column_docs(published_tables(layout)),
         working_crs=settings.geo.working_crs,
