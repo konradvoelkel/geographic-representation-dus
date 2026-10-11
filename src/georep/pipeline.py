@@ -30,7 +30,7 @@ from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus, documents_wi
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
 from georep.prep.streets import read_streets_json, streets_by_district
 from georep.prep.voters import aggregate_voters, read_results_csv
-from georep.report.build import SCHEMA_NAME, build_site, current_commit
+from georep.report.build import MAP_NAME, SCHEMA_NAME, build_site, current_commit
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
 from georep.settings import Settings
@@ -389,7 +389,7 @@ def build_steps(
                 layout.corpus,
                 layout.districts_geojson,
             ),
-            (layout.site_index, layout.site_data / SCHEMA_NAME),
+            (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
         ),
     ]

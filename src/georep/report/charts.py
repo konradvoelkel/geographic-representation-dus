@@ -42,6 +42,16 @@ class LegendEntry:
     label: str
 
 
+@dataclass(frozen=True)
+class Poi:
+    """Ein Ort auf der Karte, schon in SVG-Koordinaten."""
+
+    x: float
+    y: float
+    label: str
+    district: int
+
+
 @deal.pre(
     lambda values, n=CLASSES: (
         n >= 1 and len(values) > 0 and all(math.isfinite(v) for v in values.values())
@@ -170,10 +180,11 @@ def choropleth(
     projection: Projection,
     rate: Classification,
     turnout: Classification,
-    pois: Sequence[tuple[float, float]] = (),
+    pois: Sequence[Poi] = (),
 ) -> str:
     """Eine ``<path>`` je Wahlbezirk mit Klasse nach der Trefferquote; die Wahlbeteiligungsklasse
-    steht daneben als ``data-class-turnout``, der Umschalter tauscht nur die Klasse."""
+    steht daneben als ``data-class-turnout``, der Umschalter tauscht nur die Klasse. Die Orte
+    tragen Name und Wahlbezirk als ``data-``-Attribute für den Tooltip."""
     by_id = {row.id: row for row in rows}
     parts = [
         f'<svg class="map" viewBox="{projection.view_box}" role="img" '
@@ -193,7 +204,12 @@ def choropleth(
     parts.append("</g>")
     if pois:
         parts.append('<g class="pois" aria-hidden="true">')
-        parts.extend(f'<circle cx="{_num(x)}" cy="{_num(y)}" r="1.5"/>' for x, y in pois)
+        parts.extend(
+            f'<circle cx="{_num(p.x)}" cy="{_num(p.y)}" r="2" data-name="{_attr(p.label)}" '
+            f'data-district="{p.district}"><title>{html.escape(p.label)} '
+            f"(Wahlbezirk {p.district})</title></circle>"
+            for p in pois
+        )
         parts.append("</g>")
     parts.append('<g class="map-labels" aria-hidden="true">')
     for district, geometry in sorted(shapes.items()):
@@ -208,6 +224,13 @@ def project_points(
 ) -> list[tuple[float, float]]:
     """Punkte im Arbeits-CRS auf die Karte."""
     return [projection.point(x, y) for x, y in points]
+
+
+def project_pois(
+    points: Sequence[tuple[float, float, str, int]], projection: Projection
+) -> list[Poi]:
+    """(x, y, Name, Wahlbezirk) im Arbeits-CRS zu Orten auf der Karte."""
+    return [Poi(*projection.point(x, y), label, district) for x, y, label, district in points]
 
 
 def scatter(

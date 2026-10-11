@@ -1,3 +1,4 @@
+{% macro term(t) %}<button class="term">{{ t.term }}</button>{% endmacro %}
 <!doctype html>
 <html lang="de">
 <head>
@@ -85,6 +86,18 @@ ol.terms { columns: 3; column-gap: 1.5rem; padding-left: 1.4em; font-size: .85re
 @media (max-width: 40em) { ol.terms { columns: 1; } }
 ol.terms li { break-inside: avoid; }
 .count { color: var(--muted); }
+button.term { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+button.term:hover, button.term:focus { text-decoration: underline; }
+.pois.on circle { pointer-events: all; cursor: pointer; }
+.pois circle:hover { fill: var(--selected); opacity: 1; }
+dialog#docs { max-width: 46em; width: calc(100% - 2rem); border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--ink); padding: 1rem 1.25rem; }
+dialog#docs::backdrop { background: rgba(0, 0, 0, .4); }
+dialog#docs h3 { margin: 0 2.5em .25rem 0; }
+dialog#docs form { position: absolute; right: .75rem; top: .75rem; }
+dialog#docs ol { padding-left: 1.4em; max-width: none; font-size: .9rem; }
+dialog#docs li { margin: .3rem 0; }
+dialog#docs .when { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: .4em; }
+dialog#docs .ref { color: var(--ink-2); font-size: .85em; }
 #tooltip { position: absolute; z-index: 10; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .7rem; font-size: .85rem; max-width: 20em; box-shadow: 0 2px 8px rgba(0, 0, 0, .15); pointer-events: none; }
 #tooltip strong { display: block; font-size: 1rem; }
 #tooltip .terms { color: var(--ink-2); }
@@ -132,7 +145,7 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
 <p class="note">Klassen nach Quantilen. Zeigen oder Tippen nennt die Kennzahlen, ein Klick markiert den Bezirk auch in der Tabelle.</p>
 </div>
 </div>
-<p class="note">Projektion {{ model.working_crs }}, Grenzen vereinfacht auf {{ visuals.simplify_m|num }} m.</p>
+<p class="note">Projektion {{ model.working_crs }}, Grenzen vereinfacht auf {{ visuals.simplify_m|num }} m. Dieselben Flächen auf OpenStreetMap-Kacheln: <a href="karte.html">karte.html</a> (braucht Netz).</p>
 </section>
 
 <section id="zusammenhang">
@@ -183,7 +196,7 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
 <td class="num" data-value="{{ d.turnout }}">{{ d.turnout|pct(1) }}</td>
 <td class="num" data-value="{{ d.rate }}">{{ d.rate|num(3) }}</td>
 <td class="num" data-value="{{ d.terms_total }}">{{ d.terms_total|num }}</td>
-<td>{% for t in d.top_terms %}{{ t.term }} ({{ t.hits|num }}){% if not loop.last %}, {% endif %}{% endfor %}</td>
+<td>{% for t in d.top_terms %}{{ term(t) }} ({{ t.hits|num }}){% if not loop.last %}, {% endif %}{% endfor %}</td>
 </tr>
 {% endfor %}
 </tbody></table></div>
@@ -191,12 +204,13 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
 
 <section id="begriffe">
 <h2>Begriffe</h2>
+<p class="note">Ein Klick auf einen Begriff zeigt die Dokumente, in denen er vorkommt, mit Datum, Drucksache und Link auf das PDF im Ratsinformationssystem; die Liste wird beim ersten Klick aus <code>data/dokumente.json</code> nachgeladen.</p>
 <h3>Die {{ model.top_terms|length }} trefferstärksten Begriffe stadtweit</h3>
 <div class="scroll"><table>
 <thead><tr><th scope="col">Begriff</th><th scope="col" class="num">Dokumente</th><th scope="col">Wahlbezirk</th></tr></thead>
 <tbody>
 {% for t in model.top_terms %}
-<tr><td>{{ t.term }}</td><td class="num">{{ t.hits|num }}</td><td>{{ t.districts|join(', ') }}</td></tr>
+<tr><td>{{ term(t) }}</td><td class="num">{{ t.hits|num }}</td><td>{{ t.districts|join(', ') }}</td></tr>
 {% endfor %}
 </tbody></table></div>
 <h3>Begriffe je Wahlbezirk</h3>
@@ -204,7 +218,7 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
 <details>
 <summary>{{ d.id }} {{ d.name }}: {{ d.terms|length|num }} Begriffe mit Treffer, {{ d.terms_without_hits|num }} ohne</summary>
 <ol class="terms">
-{% for t in d.terms %}<li>{{ t.term }} <span class="count">{{ t.hits|num }}</span></li>
+{% for t in d.terms %}<li>{{ term(t) }} <span class="count">{{ t.hits|num }}</span></li>
 {% endfor %}
 </ol>
 </details>
@@ -249,6 +263,7 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
 <p>Ergebnisse und Quelltext: <a href="{{ links.cc0 }}">CC0 1.0</a>. Straßennamen abgeleitet aus OpenStreetMap, © <a href="{{ links.osm }}">OpenStreetMap-Mitwirkende</a>, <a href="{{ links.odbl }}">ODbL</a>. Orte aus <a href="{{ links.wikidata }}">Wikidata</a> (CC0) und Artikeltiteln der deutschsprachigen <a href="{{ links.wikipedia }}">Wikipedia</a>. Vom Open-Data-Portal der Landeshauptstadt Düsseldorf: das Wahlergebnis der Ratswahl 2025 unter der <a href="{{ links.dl_de_by }}">Datenlizenz Deutschland Namensnennung 2.0</a>, die Stimmbezirkseinteilung unter der <a href="{{ links.dl_de_zero }}">Datenlizenz Deutschland – Zero – Version 2.0</a> (Stand der Datensatzseiten 11.10.2026). Ratsdokumente aus dem Ratsinformationssystem der Landeshauptstadt Düsseldorf; die Seite nennt nur ihre Kennungen.</p>
 <p>Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}.</p>
 </footer>
+<dialog id="docs" aria-labelledby="docs-title"><form method="dialog"><button type="submit">Schließen</button></form><h3 id="docs-title"></h3><p class="note"></p><ol></ol></dialog>
 <div id="tooltip" role="tooltip" hidden></div>
 <script>
 (function () {
@@ -266,10 +281,16 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
   function showTooltip(el, x, y) {
     var d = el.dataset;
     tooltip.textContent = "";
-    line(tooltip, d.id + " " + d.name, "strong");
-    line(tooltip, d.hits + " Dokumente, " + d.eligible + " Wahlberechtigte");
-    line(tooltip, "Trefferquote " + d.rate + ", Wahlbeteiligung " + d.turnout);
-    if (d.terms) line(tooltip, d.terms, "terms");
+    if (d.district !== undefined) {
+      line(tooltip, d.name, "strong");
+      var row = rows[d.district];
+      line(tooltip, "Wahlbezirk " + d.district + (row ? " " + row.cells[1].textContent : ""));
+    } else {
+      line(tooltip, d.id + " " + d.name, "strong");
+      line(tooltip, d.hits + " Dokumente, " + d.eligible + " Wahlberechtigte");
+      line(tooltip, "Trefferquote " + d.rate + ", Wahlbeteiligung " + d.turnout);
+      if (d.terms) line(tooltip, d.terms, "terms");
+    }
     tooltip.hidden = false;
     var w = tooltip.offsetWidth, h = tooltip.offsetHeight;
     var left = x + 14, top = y + 14;
@@ -321,6 +342,58 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
   var pois = document.getElementById("show-pois");
   if (pois) pois.addEventListener("change", function () {
     document.querySelectorAll(".pois").forEach(function (g) { g.classList.toggle("on", pois.checked); });
+  });
+  document.querySelectorAll(".pois circle").forEach(function (el) {
+    el.addEventListener("pointermove", function (e) { showTooltip(el, e.pageX, e.pageY); });
+    el.addEventListener("pointerleave", hideTooltip);
+  });
+
+  var dialog = document.getElementById("docs");
+  var docsPromise = null;
+  function loadDocs() {
+    if (!docsPromise) {
+      docsPromise = fetch("data/dokumente.json").then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      });
+    }
+    return docsPromise;
+  }
+  function germanDate(iso) {
+    var p = iso.split("-");
+    return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso;
+  }
+  function showDocuments(term) {
+    var title = dialog.querySelector("h3"), note = dialog.querySelector("p"), list = dialog.querySelector("ol");
+    title.textContent = term;
+    note.textContent = "Lade data/dokumente.json …";
+    list.textContent = "";
+    if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "");
+    loadDocs().then(function (data) {
+      var ids = data.terms[term] || [];
+      note.textContent = ids.length + " Dokumente mit diesem Begriff, neueste zuerst.";
+      ids.forEach(function (i) {
+        var doc = data.documents[i];
+        var li = document.createElement("li");
+        var when = document.createElement("span");
+        when.className = "when";
+        when.textContent = germanDate(doc[1]);
+        var a = document.createElement("a");
+        a.href = doc[0].indexOf("http") === 0 ? doc[0] : data.base + doc[0];
+        a.rel = "noopener";
+        a.textContent = doc[3];
+        var ref = document.createElement("div");
+        ref.className = "ref";
+        ref.textContent = doc[2] + (doc[4] ? ", " + doc[4] : "");
+        li.appendChild(when); li.appendChild(a); li.appendChild(ref);
+        list.appendChild(li);
+      });
+    }).catch(function () {
+      note.textContent = "Die Dokumentliste (data/dokumente.json) ließ sich nicht nachladen. Aus dem Dateisystem geöffnet erlaubt der Browser das nicht; über einen Webserver oder unter der veröffentlichten Adresse funktioniert es.";
+    });
+  }
+  document.querySelectorAll("button.term").forEach(function (button) {
+    button.addEventListener("click", function () { showDocuments(button.textContent); });
   });
 
   document.querySelectorAll("th[data-sort]").forEach(function (th) {

@@ -11,19 +11,26 @@ import pytest
 from georep.export import csv_plan, write_csv
 from georep.io import digest
 from georep.layout import Layout
-from georep.report.build import GEOJSON_NAME, SCHEMA_NAME, SiteSummary, current_commit
+from georep.report.build import (
+    DOCUMENTS_NAME,
+    GEOJSON_NAME,
+    MAP_NAME,
+    SCHEMA_NAME,
+    SiteSummary,
+    current_commit,
+)
 from georep.report.model import COLUMN_DOCS, published_tables
 
 
-def test_site_has_index_and_fourteen_download_files(mini_run: Layout) -> None:
-    assert mini_run.site_index.is_file()
+def test_site_has_index_map_and_fifteen_download_files(mini_run: Layout) -> None:
+    assert mini_run.site_index.is_file() and (mini_run.site / MAP_NAME).is_file()
     names = sorted(p.name for p in mini_run.site_data.iterdir())
     expected = sorted(
         [p.name for p in published_tables(mini_run).values()]
         + [f"{t}.csv" for t in published_tables(mini_run)]
-        + [GEOJSON_NAME, SCHEMA_NAME]
+        + [GEOJSON_NAME, SCHEMA_NAME, DOCUMENTS_NAME]
     )
-    assert names == expected and len(names) == 14
+    assert names == expected and len(names) == 15
     assert mini_run.site_index.with_name("index.html.stamp.json").is_file()
 
 
@@ -68,7 +75,25 @@ def test_geojson_and_schema_are_consistent_with_the_tables(mini_run: Layout) -> 
 
 
 def test_summary_line_counts_files_and_megabytes() -> None:
-    assert SiteSummary(41, 15, 1_234_567).line() == "41 Wahlbezirke, 15 Dateien, 1,2 MB"
+    assert SiteSummary(41, 17, 1_234_567).line() == "41 Wahlbezirke, 17 Dateien, 1,2 MB"
+
+
+def test_map_page_embeds_districts_and_places(mini_run: Layout) -> None:
+    page = (mini_run.site / MAP_NAME).read_text(encoding="utf-8")
+    assert page.startswith("<!doctype html>") and 'href="index.html"' in page
+    assert page.count("leaflet@1.9.4") == 2 and page.count('integrity="sha256-') == 2
+    districts = json.loads(
+        page.split('<script id="districts" type="application/json">')[1].split("</script>")[0]
+    )
+    assert [f["properties"]["wahlkreis_id"] for f in districts["features"]] == [1, 10, 38]
+    assert all(
+        "klasse" in f["properties"] and "quote_text" in f["properties"]
+        for f in districts["features"]
+    )
+    places = json.loads(
+        page.split('<script id="places" type="application/json">')[1].split("</script>")[0]
+    )
+    assert places["features"] and places["features"][0]["geometry"]["type"] == "Point"
 
 
 def test_current_commit_prefers_the_ci_variable_and_tolerates_no_repo(

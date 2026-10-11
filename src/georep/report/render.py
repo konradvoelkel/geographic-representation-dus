@@ -8,8 +8,9 @@ fertig aus ``georep.report.charts`` (dort schon escaped) und werden mit ``|safe`
 from __future__ import annotations
 
 import datetime as dt
+import json
 import re
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 import deal
@@ -50,6 +51,18 @@ ALLOWED_LINKS = frozenset(
     }
 )
 _EXTERNAL = re.compile(r'(?:href|src)="(https?://[^"]*)"')
+
+# Die Leaflet-Variante (karte.html) ist die eine Ausnahme von „keine Fremdressourcen": Leaflet 1.9.4
+# per SHA-256 gepinnt (Subresource Integrity, Hashes am 2026-10-11 aus den Dateien berechnet und
+# gleich den offiziellen), Kacheln von OpenStreetMap mit Namensnennung.
+LEAFLET = {
+    "css": "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+    "css_sri": "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=",
+    "js": "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+    "js_sri": "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=",
+}
+MAP_ALLOWED_LINKS = frozenset({LEAFLET["css"], LEAFLET["js"], OSM_COPYRIGHT, REPOSITORY})
+LIGHT_RAMP = ("#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#0d366b")  # wie --q0 bis --q4 hell
 
 
 @dataclass(frozen=True)
@@ -122,4 +135,33 @@ def render_report(model: ReportModel, visuals: Visuals) -> str:
             "dl_de_by": DL_DE_BY,
             "dl_de_zero": DL_DE_ZERO,
         },
+    )
+
+
+def _json_for_script(data: object) -> str:
+    """JSON für ein ``<script type="application/json">``: ``</`` darf das Element nicht beenden."""
+    return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+
+
+@deal.post(lambda result: result.startswith("<!doctype html>") and 'lang="de"' in result)
+@deal.post(
+    lambda result: set(external_links(result)) <= MAP_ALLOWED_LINKS,
+    message="nur Leaflet (gepinnt) und OpenStreetMap nach außen",
+)
+def render_map(
+    model: ReportModel,
+    districts: Mapping[str, object],
+    places: Mapping[str, object],
+    legend: Sequence[LegendEntry],
+) -> str:
+    """Die zweite Datei ``karte.html``: dieselben Flächen auf OpenStreetMap-Kacheln, braucht Netz."""
+    template = environment().get_template("map.html.j2")
+    return template.render(
+        model=model,
+        leaflet=LEAFLET,
+        links={"osm": OSM_COPYRIGHT, "repository": REPOSITORY},
+        districts_json=_json_for_script(districts),
+        pois_json=_json_for_script(places),
+        colors_json=_json_for_script(list(LIGHT_RAMP)),
+        legend_json=_json_for_script([[entry.klass, entry.label] for entry in legend]),
     )

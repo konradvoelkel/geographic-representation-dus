@@ -17,7 +17,7 @@ from georep.report.charts import (
     classify,
     legend,
     nice_ticks,
-    project_points,
+    project_pois,
     rate_label,
     scatter,
     turnout_label,
@@ -34,6 +34,10 @@ from georep.report.model import (
 from georep.settings import Settings
 
 NS = "{http://www.w3.org/2000/svg}"
+
+
+def pois_of(svg: str) -> int:
+    return svg.count("<circle cx=")
 
 
 @pytest.fixture(scope="module")
@@ -54,7 +58,7 @@ def map_svg(model: ReportModel, mini_run: Layout, default_settings: Settings) ->
     projection = fit(bounds_of(shapes), 600.0)
     rate = classify({d.id: d.rate for d in model.districts})
     turnout = classify({d.id: d.turnout for d in model.districts})
-    pois = project_points([(340_000.0, 5_670_000.0)], projection)
+    pois = project_pois([(340_000.0, 5_670_000.0, "Rheinturm <&>", 1)], projection)
     return choropleth(model.districts, shapes, projection, rate, turnout, pois)
 
 
@@ -102,7 +106,12 @@ def test_map_has_one_path_per_district_and_parses(map_svg: str, model: ReportMod
         assert path.find(f"{NS}title") is not None
     width, height = (float(v) for v in root.get("viewBox", "").split()[2:])
     assert width == 600.0 and height > 0
-    assert len(root.findall(f".//{NS}g[@class='pois']/{NS}circle")) == 1
+    circles = root.findall(f".//{NS}g[@class='pois']/{NS}circle")
+    assert len(circles) == 1 and circles[0].get("data-name") == "Rheinturm <&>"
+    assert circles[0].get("data-district") == "1"
+    title = circles[0].find(f"{NS}title")
+    assert title is not None and title.text == "Rheinturm <&> (Wahlbezirk 1)"
+    assert isinstance(pois_of(map_svg), int)
     assert [t.text for t in root.findall(f".//{NS}g[@class='map-labels']/{NS}text")] == [
         "1",
         "10",

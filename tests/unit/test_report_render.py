@@ -23,7 +23,7 @@ from georep.report.charts import (
 )
 from georep.report.geometry import SIMPLIFY_M, bounds_of, district_shapes, fit
 from georep.report.model import Download, ReportModel, build_report_model
-from georep.report.render import Visuals, external_links, kib, render_report
+from georep.report.render import Visuals, external_links, kib, render_map, render_report
 from georep.settings import Settings
 
 DOWNLOADS = (
@@ -131,3 +131,30 @@ def test_download_table_is_stable(page: str, snapshot: SnapshotAssertion) -> Non
 
 def test_kib_formats_kilobytes() -> None:
     assert kib(12345) == "12,3 KB" and kib(0) == "0,0 KB"
+
+
+def test_map_page_escapes_script_end_and_allows_only_leaflet_and_osm(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    districts = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {"wahlkreis_id": 1, "name": "x</script><b>", "klasse": 0},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [[[6.7, 51.2], [6.8, 51.2], [6.8, 51.3], [6.7, 51.2]]],
+                },
+            }
+        ],
+    }
+    places = {"type": "FeatureCollection", "features": []}
+    page = render_map(model, districts, places, visuals.rate_legend)
+    assert "</script><b>" not in page and "<\\/script><b>" in page
+    assert set(external_links(page)) == {
+        "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+        "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
+        "https://www.openstreetmap.org/copyright",
+    }
+    assert page.count("<script") == 4 and "tile.openstreetmap.org" in page

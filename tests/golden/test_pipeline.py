@@ -130,7 +130,8 @@ def test_pipeline_reproduces_the_thesis_results(
     page = layout.site_index.read_text(encoding="utf-8")
     assert "41 Kommunalwahlbezirke" in page and page.count('id="bezirk-') == 41
     assert layout.site_index.stat().st_size < 3_000_000
-    assert len(list(layout.site_data.iterdir())) == 14
+    assert len(list(layout.site_data.iterdir())) == 15
+    assert (layout.site / "karte.html").stat().st_size < 1_000_000
     _compare_results(
         _results_as_legacy(layout.results),
         reference_root / "processed" / "wahlbezirke_auswertung.csv",

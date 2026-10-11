@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Karte: Trefferquote je Wahlbezirk auf OpenStreetMap</title>
+<meta name="description" content="Die 41 Düsseldorfer Kommunalwahlbezirke mit ihrer Trefferquote in den Ratsdokumenten 2020 bis 2025, auf OpenStreetMap-Kacheln; die Hauptseite kommt ohne Netz aus.">
+<link rel="stylesheet" href="{{ leaflet.css }}" integrity="{{ leaflet.css_sri }}" crossorigin="">
+<script src="{{ leaflet.js }}" integrity="{{ leaflet.js_sri }}" crossorigin=""></script>
+<style>
+html, body { margin: 0; height: 100%; font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; color: #0b0b0b; }
+#map { position: absolute; inset: 0; }
+.bar { position: absolute; z-index: 1000; left: 0; right: 0; top: 0; background: rgba(252, 252, 251, .94); border-bottom: 1px solid rgba(11, 11, 11, .1); padding: .5rem .75rem; display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; align-items: baseline; }
+.bar strong { font-size: 1rem; }
+.bar a { color: #2a78d6; }
+.legend { background: rgba(252, 252, 251, .94); padding: .5rem .7rem; border-radius: 6px; box-shadow: 0 1px 4px rgba(0, 0, 0, .2); line-height: 1.6; }
+.legend .swatch { display: inline-block; width: 1em; height: 1em; border-radius: 3px; margin-right: .4rem; vertical-align: -.1em; }
+.leaflet-popup-content { font-size: 13px; }
+.leaflet-popup-content strong { display: block; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="bar"><strong>Trefferquote je Wahlbezirk</strong><span>Dokumente mit Treffer je Wahlberechtigtem, Kommunalwahl {{ model.stand.election|date_de }}</span><a href="index.html">zurück zur Auswertung</a></div>
+<div id="map" role="application" aria-label="Karte der Wahlbezirke"></div>
+<script id="districts" type="application/json">{{ districts_json|safe }}</script>
+<script id="places" type="application/json">{{ pois_json|safe }}</script>
+<script>
+(function () {
+  "use strict";
+  var colors = {{ colors_json|safe }};
+  var legend = {{ legend_json|safe }};
+  var districts = JSON.parse(document.getElementById("districts").textContent);
+  var places = JSON.parse(document.getElementById("places").textContent);
+  var map = L.map("map", { zoomControl: true });
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="{{ links.osm }}">OpenStreetMap</a>-Mitwirkende'
+  }).addTo(map);
+  function line(parent, text, strong) {
+    var el = document.createElement(strong ? "strong" : "div");
+    el.textContent = text;
+    parent.appendChild(el);
+  }
+  var areas = L.geoJSON(districts, {
+    style: function (f) { return { color: "#fcfcfb", weight: 1.5, fillColor: colors[f.properties.klasse], fillOpacity: 0.65 }; },
+    onEachFeature: function (f, layer) {
+      var p = f.properties;
+      var box = document.createElement("div");
+      line(box, p.wahlkreis_id + " " + p.name, true);
+      line(box, p.treffer_text + " Dokumente, Trefferquote " + p.quote_text);
+      line(box, "Wahlbeteiligung " + p.beteiligung_text);
+      layer.bindPopup(box);
+      layer.bindTooltip(p.wahlkreis_id + " " + p.name, { sticky: true });
+      layer.on("mouseover", function () { layer.setStyle({ fillOpacity: 0.85 }); });
+      layer.on("mouseout", function () { areas.resetStyle(layer); });
+    }
+  }).addTo(map);
+  var points = L.geoJSON(places, {
+    pointToLayer: function (f, latlng) {
+      return L.circleMarker(latlng, { radius: 4, color: "#fcfcfb", weight: 1, fillColor: "#52514e", fillOpacity: 0.9 });
+    },
+    onEachFeature: function (f, layer) {
+      layer.bindTooltip(f.properties.label + " (Wahlbezirk " + f.properties.wahlkreis_id + ")");
+    }
+  });
+  L.control.layers(null, { "Orte aus Wikidata und Wikipedia": points }, { collapsed: false }).addTo(map);
+  var box = L.control({ position: "bottomright" });
+  box.onAdd = function () {
+    var div = L.DomUtil.create("div", "legend");
+    line(div, "Trefferquote", true);
+    legend.forEach(function (entry) {
+      var row = document.createElement("div");
+      var swatch = document.createElement("span");
+      swatch.className = "swatch";
+      swatch.style.background = colors[entry[0]];
+      row.appendChild(swatch);
+      row.appendChild(document.createTextNode(entry[1]));
+      div.appendChild(row);
+    });
+    return div;
+  };
+  box.addTo(map);
+  map.fitBounds(areas.getBounds(), { padding: [20, 20] });
+})();
+</script>
+</body>
+</html>

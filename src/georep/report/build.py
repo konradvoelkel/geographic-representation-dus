@@ -25,11 +25,12 @@ from georep.report.charts import (
     choropleth,
     classify,
     legend,
-    project_points,
+    project_pois,
     rate_label,
     scatter,
     turnout_label,
 )
+from georep.report.documents import DOCUMENT_COLUMNS, documents_payload
 from georep.report.geometry import (
     SIMPLIFY_M,
     bounds_of,
@@ -45,11 +46,13 @@ from georep.report.model import (
     format_de,
     published_tables,
 )
-from georep.report.render import Visuals, render_report
+from georep.report.render import Visuals, render_map, render_report
 from georep.settings import Settings
 
 GEOJSON_NAME = "wahlbezirke.geojson"
 SCHEMA_NAME = "schema.json"
+DOCUMENTS_NAME = "dokumente.json"
+MAP_NAME = "karte.html"
 DESCRIPTIONS = {
     "wahlbezirke_auswertung": "Auswertung je Wahlbezirk: Treffer, Begriffe, Dokument-IDs, Wähler, Trefferquote",
     "inverted_index": "Invertierter Index: je Begriff die Dokumente mit Treffer",
@@ -63,7 +66,7 @@ DESCRIPTIONS = {
 @dataclass(frozen=True)
 class SiteSummary:
     districts: int
-    files: int  # Downloads plus index.html
+    files: int  # Downloads plus index.html und karte.html
     bytes: int
 
     def line(self) -> str:
@@ -138,6 +141,62 @@ def write_schema(layout: Layout, model: ReportModel) -> Download:
     return _download(target, "JSON", None, "Spaltenschema aller Tabellen, maschinenlesbar")
 
 
+def write_documents(layout: Layout, model: ReportModel) -> Download:
+    """``dokumente.json``: die Dokumente mit Treffer ohne Texte, je Begriff als Indizes."""
+    payload = documents_payload(
+        pl.read_parquet(layout.corpus, columns=DOCUMENT_COLUMNS),
+        pl.read_parquet(layout.index),
+        model.hidden_terms,
+        version=model.version,
+        generated_at=model.generated_at,
+    )
+    target = layout.site_data / DOCUMENTS_NAME
+    write_json(target, payload, indent=None)
+    documents = payload["documents"]
+    assert isinstance(documents, list)
+    return _download(
+        target,
+        "JSON",
+        len(documents),
+        "Dokumente mit Treffer: Link, Datum, Drucksache, Titel, Art; je Begriff die Dokumente als Indizes",
+    )
+
+
+def _places_geojson(pois: pl.DataFrame) -> dict[str, object]:
+    return {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {"label": row["label"], "wahlkreis_id": int(row["wahlkreis_id"])},
+                "geometry": {"type": "Point", "coordinates": [row["lon"], row["lat"]]},
+            }
+            for row in pois.iter_rows(named=True)
+        ],
+    }
+
+
+def _map_districts(
+    geojson: dict[str, object], model: ReportModel, classes: dict[int, int]
+) -> dict[str, object]:
+    """Die Flächen für karte.html: zusätzlich Klasse und formatierte Kennzahlen je Bezirk."""
+    rows = {d.id: d for d in model.districts}
+    features = geojson["features"]
+    assert isinstance(features, list)
+    enriched = []
+    for feature in features:
+        props = dict(feature["properties"])
+        row = rows[int(props["wahlkreis_id"])]
+        props.update(
+            klasse=classes[row.id],
+            treffer_text=format_de(row.hits),
+            quote_text=rate_label(row.rate),
+            beteiligung_text=turnout_label(row.turnout),
+        )
+        enriched.append({**feature, "properties": props})
+    return {**geojson, "features": enriched}
+
+
 def build_site(
     layout: Layout, settings: Settings, *, now: dt.datetime, commit: str | None
 ) -> SiteSummary:
@@ -147,11 +206,11 @@ def build_site(
     precincts = read_precincts(layout.districts_geojson, settings.columns, working_crs)
     shapes = district_shapes(precincts, SIMPLIFY_M)
     model = build_report_model(layout, settings, now=now, commit=commit)
+    downloads.append(write_documents(layout, model))
 
+    geojson = wahlbezirke_geojson(shapes, model.districts, working_crs)
     geojson_target = layout.site_data / GEOJSON_NAME
-    write_json(
-        geojson_target, wahlbezirke_geojson(shapes, model.districts, working_crs), indent=None
-    )
+    write_json(geojson_target, geojson, indent=None)
     downloads.append(
         _download(
             geojson_target,
@@ -167,20 +226,38 @@ def build_site(
     projection = fit(bounds_of(shapes), MAP_WIDTH)
     rate = classify({d.id: d.rate for d in model.districts})
     turnout = classify({d.id: d.turnout for d in model.districts})
-    pois = pl.read_parquet(layout.pois_table, columns=["lon", "lat"])
+    pois = pl.read_parquet(layout.pois_table, columns=["label", "wahlkreis_id", "lon", "lat"])
     xs, ys = transformer(LONLAT, working_crs).transform(
         pois.get_column("lon").to_numpy(), pois.get_column("lat").to_numpy()
     )
-    points = project_points(list(zip(xs.tolist(), ys.tolist(), strict=True)), projection)
+    points = project_pois(
+        list(
+            zip(
+                xs.tolist(),
+                ys.tolist(),
+                pois.get_column("label").to_list(),
+                pois.get_column("wahlkreis_id").to_list(),
+                strict=True,
+            )
+        ),
+        projection,
+    )
+    rate_legend = legend(rate, rate_label)
     visuals = Visuals(
         map_svg=choropleth(model.districts, shapes, projection, rate, turnout, points),
         scatter_svg=scatter(model.districts, model.regression),
-        rate_legend=legend(rate, rate_label),
+        rate_legend=rate_legend,
         turnout_legend=legend(turnout, turnout_label),
         simplify_m=SIMPLIFY_M,
         pois=len(points),
     )
+    map_html = render_map(
+        model, _map_districts(geojson, model, rate.classes), _places_geojson(pois), rate_legend
+    )
+    write_text(layout.guard_writable(layout.site / MAP_NAME), map_html)
     html = render_report(model, visuals)
     write_text(layout.guard_writable(layout.site_index), html)
-    total = sum(d.bytes for d in downloads) + len(html.encode("utf-8"))
-    return SiteSummary(len(model.districts), len(downloads) + 1, total)
+    total = (
+        sum(d.bytes for d in downloads) + len(html.encode("utf-8")) + len(map_html.encode("utf-8"))
+    )
+    return SiteSummary(len(model.districts), len(downloads) + 2, total)
