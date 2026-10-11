@@ -7,7 +7,7 @@
 data_root = "./data"           # Laufzeitdaten und Zwischenergebnisse, relativ zum Arbeitsverzeichnis; gitignored
 cache_root = ""                # leer = <data_root>/cache: PDFs, Texte, HTTP-Cache; bei Konrad auf xtraspace
 reference_root = "./reference" # eingefrorener Datensatz der Arbeit; wird nur gelesen
-contracts = "on"               # "off" schaltet die deal-Verträge ab (ab Phase 6)
+contracts = "on"               # "off" schaltet die deal-Verträge ab (deal.disable beim Start); zählt nicht zum Fingerprint
 log_level = "INFO"
 
 [period]                       # Wahlperiode zwischen den Kommunalwahlen 2020 und 2025, beide Grenzen einschließlich

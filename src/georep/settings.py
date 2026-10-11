@@ -165,10 +165,21 @@ class Settings(BaseSettings):
         return self.cache_root if self.cache_root is not None else self.data_root / "cache"
 
     def fingerprint(self) -> str:
-        """Kurzer Hash aller Parameter, die ein Ergebnis beeinflussen; Pfade und Log-Level nicht."""
+        """Kurzer Hash aller Parameter, die ein Ergebnis beeinflussen.
+
+        Nicht dabei: Pfade, Log-Level, Cache-Lebensdauern und der Vertragsschalter ``contracts``,
+        denn Verträge prüfen ein Ergebnis, sie ändern es nicht.
+        """
         payload = self.model_dump(
             mode="json",
-            exclude={"data_root", "cache_root", "reference_root", "log_level", "cache"},
+            exclude={
+                "data_root",
+                "cache_root",
+                "reference_root",
+                "log_level",
+                "cache",
+                "contracts",
+            },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
 

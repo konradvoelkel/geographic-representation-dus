@@ -91,3 +91,10 @@ def test_log_level_comes_from_environment_and_is_validated(
     monkeypatch.setenv("GEOREP_LOG_LEVEL", "laut")
     with pytest.raises(ValidationError, match="log_level"):
         load_settings(cwd=tmp_path)
+
+
+def test_fingerprint_ignores_contracts_switch(tmp_path: Path) -> None:
+    base = load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text('contracts = "off"\n', encoding="utf-8")
+    off = load_settings(cwd=tmp_path)
+    assert off.contracts == "off" and base.fingerprint() == off.fingerprint()
