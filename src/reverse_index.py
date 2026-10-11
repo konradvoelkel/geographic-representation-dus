@@ -13,6 +13,7 @@ from flashtext import KeywordProcessor
 from loguru import logger
 
 import src.config as cfg
+from georep.errors import EmptyResultError
 from georep.io import atomic_path
 
 
@@ -67,19 +68,22 @@ def index_documents() -> None:
     df_index = pd.DataFrame(rows)
 
     # Step 4: Saving DataFrame
-    if df_index.empty:
-        logger.warning("Der Index ist leer! Es wurden keine Treffer gefunden.")
-    else:
-        with atomic_path(cfg.INVERTED_INDEX_PATH) as tmp:
-            df_index.to_csv(tmp, index=False)
-        logger.success(f"Invertierter Index als CSV gespeichert unter: {cfg.INVERTED_INDEX_PATH}")
+    total_hits = int(df_index["anzahl_treffer"].sum()) if not df_index.empty else 0
+    if total_hits == 0:
+        raise EmptyResultError(
+            f"Kein einziger der {len(alle_begriffe)} Suchbegriffe kommt in {len(df_paper)} "
+            "Dokumenten vor; Index nicht geschrieben."
+        )
+    with atomic_path(cfg.INVERTED_INDEX_PATH) as tmp:
+        df_index.to_csv(tmp, index=False)
+    logger.success(
+        f"Invertierter Index: {len(df_index)} Begriffe, {total_hits} Treffer, "
+        f"gespeichert unter {cfg.INVERTED_INDEX_PATH}"
+    )
 
 
 def main() -> None:
-    try:
-        index_documents()
-    except Exception as e:
-        logger.exception(f"Kritischer Fehler beim Erstellen des Reverse-Index: {e}")
+    index_documents()
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
+from georep.errors import CorruptPdfError
 from src.prep_papers import get_text_from_pdf
 
 FILES = ["00438685.pdf", "00439409.pdf", "00519825.pdf", "00552781.pdf"]
@@ -30,6 +31,14 @@ def test_text_after_betrifft_snapshot(
     assert {"chars": len(text), "after_betrifft": after} == snapshot
 
 
-def test_missing_file_yields_empty_string(tmp_path: Path) -> None:
-    # Heutiges Verhalten: Warnung und leerer String. Phase 1 macht daraus einen Fehler.
-    assert get_text_from_pdf(tmp_path / "fehlt.pdf") == ""
+def test_missing_file_raises(tmp_path: Path) -> None:
+    # Bis 2026-10-11 kam ein leerer String zurück; ein fehlendes PDF war von einem leeren nicht zu unterscheiden.
+    with pytest.raises(FileNotFoundError):
+        get_text_from_pdf(tmp_path / "fehlt.pdf")
+
+
+def test_corrupt_file_raises_domain_error(tmp_path: Path) -> None:
+    broken = tmp_path / "kaputt.pdf"
+    broken.write_bytes(b"das ist kein pdf")
+    with pytest.raises(CorruptPdfError, match="kaputt.pdf"):
+        get_text_from_pdf(broken)

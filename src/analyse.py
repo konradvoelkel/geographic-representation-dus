@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 
 import src.config as cfg
+from georep.errors import EmptyResultError
 from georep.io import atomic_path
 
 
@@ -18,6 +19,8 @@ def build_hits_per_wahlkreis() -> pd.DataFrame:
 
     # Merge mit invertiertem Index
     df = df_suche_exploded.merge(df_index, on="suchbegriffe", how="inner")
+    if df.empty:
+        raise EmptyResultError("Kein Suchbegriff des Wörterbuchs kommt im invertierten Index vor.")
 
     # Aggregation pro Wahlkreis
     df_hits = (
@@ -59,6 +62,8 @@ def join_with_voter_data(df_hits: pd.DataFrame) -> pd.DataFrame:
     df_votes = pd.read_csv(cfg.AGG_VOTERS_PER_WAHLBEZIRK_PATH)
 
     df = df_hits.merge(df_votes, on="wahlkreis_id", how="inner")
+    if df.empty:
+        raise EmptyResultError("Keine Wahlbezirks-ID der Treffer findet sich in den Wählerdaten.")
 
     # Treffequote (Treffer pro Wahlberechtigtem)
     df["trefferquote"] = df["anzahl_treffer"] / df["Wahlberechtigte_insgesamt"]
