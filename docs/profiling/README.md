@@ -125,6 +125,23 @@ neu gebaute Index ist byteidentisch mit dem vorherigen (31 024 Treffer, `results
   ist der doppelte `lower()` (3 %), lohnt aber auch nicht.
 - **Rust:** kein gemessener Flaschenhals, den Python nicht in Sekunden erledigt. Kein Port.
 
+## Schritt `report` mit der Suche (2026-10-12, Option 08)
+
+`georep run report --force` auf der Referenz, Ausgabe des Laufs, zweimal gemessen.
+
+| Messung | Wert |
+|---|---|
+| Schritt `report` vor der Suche | 1,1 s |
+| Schritt `report` mit Sucheinträgen und Abschnitt | 1,3 s |
+| `search_entries` allein, 4176 Einträge, Verträge an | 65 ms |
+| dasselbe mit `contracts = "off"` | 45 ms |
+| `index.html` | 687 418 → 847 851 Byte (gzip 100 → 141 KB), Budget 1 500 000 |
+
+Die Verträge kosten hier 20 ms, fast alles im `ensure`, das die Zuordnung Begriff → Eintrag ein zweites Mal
+von Hand rechnet. Der erste Entwurf dieses Prädikats suchte die Mitglieder je Eintrag linear (4176 × 5841
+Vergleiche) und machte den Aufruf mit 605 ms zehnmal teurer; die Gruppierung in einem Durchlauf behebt das.
+Die Lehre ist die alte: ein Vertrag an einer Batch-Grenze darf die Batch nicht quadratisch machen.
+
 ## Overhead der Verträge (2026-10-11, Phase 6)
 
 Alle Verträge aus Phase 6 aktiv (`contracts = "on"`, Standard) gegen `GEOREP_CONTRACTS=off`, voller

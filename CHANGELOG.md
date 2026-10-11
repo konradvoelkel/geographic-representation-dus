@@ -4,6 +4,15 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- Suchfeld „Straße oder Ort" auf der Berichtsseite: beim Tippen erscheinen Vorschläge aus dem Wörterbuch
+  (4176 Einträge: Straßen aus OpenStreetMap, Orte aus Wikidata und Wikipedia, die 41 Wahlbezirksnamen). Die
+  Auswahl nennt die Art, die Wahlbezirke mit Namen und die Zahl der Dokumente mit Treffer, zeigt sie auf
+  Wunsch im Dialog, markiert die Bezirke in Karte, Tabelle und Streudiagramm und setzt bei einem Ort eine
+  Marke auf die Karte. „Münchener Str.", „muenchener strasse" und „suedstr" finden dasselbe; eine Suche ist
+  als Adresse teilbar (`index.html#suche=hofgarten`). Die Vorschläge stecken in der Seite und brauchen kein
+  Netz, also auch keinen Webserver; nur die Dokumentliste wird wie bisher nachgeladen. `index.html` wächst
+  dadurch von 687 KB auf 848 KB (gzip 141 KB), Budget 1,5 MB.
+
 - Fundament für den Ausbau in acht Optionen (`docs/plans/00-synergien.md`): die Berichtsseite entsteht aus einem
   Rahmen und Abschnittsdateien (`templates/sections/`), die veröffentlichten Tabellen stehen in einem Register,
   die Ausreißer von Tabelle 5 in den Settings (`analysis.exclude_districts`), ein `profile` legt Daten und

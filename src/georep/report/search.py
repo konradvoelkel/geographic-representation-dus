@@ -307,7 +307,8 @@ def search_entries(
 def _name_entries(results: pl.DataFrame, names: Mapping[int, str]) -> list[SearchEntry]:
     """Je Wahlbezirksname ein Eintrag der Art ``w``: „Benrath" steht in keinem Wörterbuch.
 
-    Tragen zwei Wahlbezirke denselben Namen (in Düsseldorf keiner), fasst der Eintrag sie zusammen;
+    Tragen zwei Wahlbezirke denselben Namen (in den Referenzdaten keiner), fasst der Eintrag sie
+    zusammen;
     ``documents`` ist dann das Maximum, weil die Vereinigung der Dokumente aus ``anzahl_treffer``
     allein nicht zu rechnen ist.
     """

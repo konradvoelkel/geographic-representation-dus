@@ -1,6 +1,6 @@
 # Plan 08: Suche
 
-Stand 2026-10-11, Branch `feat/08-suche`. Status: in Arbeit (seit 2026-10-12).
+Stand 2026-10-11, Branch `feat/08-suche`. Status: im Review (umgesetzt am 2026-10-12, § 11).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.8; Regeln § 2; Vorlage § 8.3; Seite ansehen
 § 8.4. Der Plan ist so geschrieben, dass ein frischer Agent ihn ohne Rückfragen umsetzt. Alle Zahlen sind am
@@ -260,8 +260,10 @@ Aufwand insgesamt: 9 bis 12 Stunden Agentenzeit, 8 bis 9 Commits.
 | 6 | Kommt der Abschnittsmechanismus (§ 6) als Fundament der Synergiephase? | entscheidet, ob die Suche drei neue Dateien oder drei Einfügestellen in der Vorlage ist | ja; sonst der Fallback |
 | 7 | Port der Vorschau je Worktree | acht Agenten, ein Port 8777 | 8777; bei Kollision 8708 |
 | 8 | Wer setzt das Budget `< 1_500_000` in `test_pipeline.py`? | geteilte Zeile in einem Test, den jede Option berührt | diese Option setzt sie; der Supervisor löst den Konflikt zugunsten derselben Zahl |
+| 9 | Soll der Ergebnisblock stehen bleiben, wenn die nächste Eingabe nichts findet? | die Markierung auf der Karte gehört noch zum alten Begriff; ein leerer Block wäre ehrlicher, ein stehender passt zur Karte | stehen lassen; die Statuszeile nennt den gesuchten Text („keine Vorschläge für …"), damit beide nicht verwechselt werden (umgesetzt 2026-10-12) |
+| 10 | Soll die Marke eines Orts auch erscheinen, wenn die Punkt-Ebene der Karte ausgeschaltet ist? | die 1309 Orte sind standardmäßig aus; eine einzelne Marke ohne Ebene ist sichtbar und hilfreich, aber auch ohne Kontext | ja, die Marke steht in einer eigenen Gruppe und ist immer sichtbar (umgesetzt 2026-10-12) |
 
-Keine Frage blockiert; alle Annahmen tragen bis zum Merge.
+Keine Frage blockiert; alle Annahmen tragen bis zum Merge. 8.6, 8.7 und 8.8 hat das Fundament erledigt.
 
 ## 9. Vorbereitung für Option 10
 
@@ -335,3 +337,36 @@ Für Option 8 im Besonderen:
 - **Port** 8708 (00-synergien.md § 5.2).
 - **Reihenfolge**: 08 merged als Erste; keine Abhängigkeit von anderen Optionen.
 - **Fragen**: alle acht vorentschieden (fragen.md); 8.6, 8.7, 8.8 durch das Fundament erledigt.
+
+
+## 11. Umsetzung (2026-10-12)
+
+Sechs Commits auf `feat/08-suche`, `uv run nox` nach jedem grün:
+
+| Commit | Stufe | Inhalt |
+|---|---|---|
+| `f56c50d` | A.1 | `STREET_ABBREVIATIONS` in `search/dictionary.py`, reines Refactoring; Wörterbuch byteidentisch |
+| `b661cee` | A.2 | `report/search.py`: `SearchEntry`, `canonical_term`, `fold`, `fold_ascii`, `search_entries`, `search_payload`, Verträge, Unit- und Property-Tests, `deal.cases`, `VERIFY_TARGETS` |
+| `d455ed8` | A.3 | `ReportModel.search`, Füllung in `build_report_model` |
+| `e1fd65a` | B | Abschnitt `sections/15-suche.html.j2` und `.css`, `search_json` aus `render_report`, Render-Tests |
+| `20cea47` | C | `sections/15-suche.js` (Faltung, Abgleich, Combobox, Ergebnis, Marke, Hash) und der Node-Vergleich |
+| (dieser) | D | slow-Test, Doku, Status |
+
+Abweichungen vom Plan, je mit Grund:
+
+- **`canonical_term` ohne `deal.pure`** (§ 4 hatte es vorgesehen): die Funktion läuft über jeden Begriff des
+  Wörterbuchs, und `deal.pure` patcht prozessweit und ist nicht reentrant (CLAUDE.md, „Nie"). Stattdessen
+  `deal.safe` und eine Vorbedingung auf die Paare; `deal.cases` und `nox -s verify` greifen sie trotzdem an.
+- **`_plain` vor der Abkürzung** statt danach: sonst ist `fold` nicht idempotent (hypothesis fand
+  `"st\u0301r"`, das erst nach dem Entfernen der Marke zu `str` wird). Die Abkürzung wird darum durch die
+  schon gefaltete Langform ersetzt (`str.` → `strasse`, nicht `straße`).
+- **Rahmen um die aktive Option**: die geplante Tönung mit `color-mix` bleibt mit 1,3:1 unter den 3:1, die
+  WCAG 1.4.11 für Zustände von Bedienelementen verlangt; dazu kommt ein Rahmen in `--accent` (4,3:1 hell).
+- **Die Reihenfolge-Prüfung der Abschnitte** in `test_report_render.py` vergleicht jetzt relativ statt als
+  Präfix: `suche` schiebt sich zwischen `kernzahlen` und `karte`, und die nächste Option soll dieselbe Zeile
+  nicht wieder anfassen müssen.
+- **Statuszeile nennt den gesuchten Text**, wenn nichts gefunden wird (Frage 9).
+
+Gemessene Zahlen am 2026-10-12 auf der Referenz: 4176 Einträge (2828 `s`, 1239 `o`, 68 `so`, 41 `w`), 1618
+ohne Dokument; Payload 143 641 Byte (gzip 36 665); `index.html` 847 851 Byte (gzip 140 809), Budget
+1 500 000; Schritt `report` 1,3 s; `search_entries` 65 ms.

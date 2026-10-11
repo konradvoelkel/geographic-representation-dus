@@ -20,6 +20,8 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
 
 - Stufe G (`v0.10.0`): Dokumente je Begriff als nachgeladener Dialog aus `dokumente.json`, Orte mit Namen auf der Karte, `karte.html` mit Leaflet (gepinnt) und OpenStreetMap-Kacheln als zweite Datei.
 
+- Option 08 Suche (Branch `feat/08-suche`, 2026-10-12, im Review): Abschnitt `15-suche` auf der Berichtsseite mit Suchfeld, Vorschlagsliste nach dem APG-Combobox-Muster, Ergebnisblock und Markierung auf der Karte; `report/search.py` baut 4176 Einträge (2828 Straßen, 1239 Orte, 68 beides, 41 Wahlbezirksnamen), die als JSON in der Seite liegen. Plan und Abnahme: `docs/plans/08-suche.md`.
+
 ## Zahlen (2026-10-11)
 
 - Tests: 223, davon einer `slow` und zehn `bench`; schnelle Suite parallel in 9 bis 10 s; Abdeckung 98,5 %.
@@ -45,7 +47,7 @@ Branches. Stand 2026-10-12: Phase 0 und 1 abgeschlossen (acht Worktrees auf xtra
 `docs/plans/` auf den Branches), Phase 2 abgeschlossen: `docs/plans/00-synergien.md` und das Fundament F1 bis F7
 auf `main` (Abschnittsmechanismus der Seite, Register der Tabellen, `regression_pair`, Profil und offene Periode,
 Crosswalk-Kern, Achsen-Helfer, Zähl-Tests), die Fragen der Pläne gebündelt in `docs/plans/fragen.md`; Phase 3
-(Implementierung) läuft. Der Plan der Berichtsseite ist mit Stufe G vollständig umgesetzt. Die Seite wird bei jedem Push auf `main` neu gebaut und veröffentlicht
+(Implementierung) läuft; Option 08 (Suche) ist fertig und im Review (erste in der Merge-Reihenfolge). Der Plan der Berichtsseite ist mit Stufe G vollständig umgesetzt. Die Seite wird bei jedem Push auf `main` neu gebaut und veröffentlicht
 (`.github/workflows/pages.yml`, Pages-Quelle „GitHub Actions" seit 2026-10-11); abgenommen am 2026-10-11: Workflow
 grün, Seite erreichbar, Downloads laden, SHA-256 stimmen. Optional nach Bedarf: Stufe G des Plans (Dokumente je
 Begriff: erledigt) und der Umzug auf Konrads VPS (`rsync` von `data/site`, Stufe F.4).
