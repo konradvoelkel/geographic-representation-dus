@@ -1,6 +1,6 @@
 # Plan 08: Suche
 
-Stand 2026-10-11, Branch `feat/08-suche`. Status: umgeschrieben.
+Stand 2026-10-11, Branch `feat/08-suche`. Status: in Arbeit (seit 2026-10-12).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.8; Regeln § 2; Vorlage § 8.3; Seite ansehen
 § 8.4. Der Plan ist so geschrieben, dass ein frischer Agent ihn ohne Rückfragen umsetzt. Alle Zahlen sind am
