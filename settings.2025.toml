@@ -1,0 +1,17 @@
+# Profil der laufenden Wahlperiode seit der Kommunalwahl 2025 (Option 7, docs/plans/07-monitoring.md):
+# georep --settings settings.2025.toml bootstrap | fetch | run. Daten unter <data_root>/2025/, PDFs und
+# Texte unter <cache_root>/2025/; Pfade kommen aus settings.local.toml und der Umgebung, nie von hier.
+# Alles andere (Quellen, Wörterbuch, Suche, Ausreißer) bleibt wie in defaults.toml: das Wörterbuch der
+# Referenz ist eingefroren, Änderungen der Treffer kommen nur von den Dokumenten.
+profile = "2025"
+
+[period]
+start = 2025-09-15             # der Tag nach der Wahl; Dokumente ab hier zählen
+end = ""                       # offen: laufende Periode (der tiefe Merge ließe 2025-09-14 aus defaults.toml sonst stehen)
+election = 2025-09-14          # Wahltag, dessen Ergebnis Nenner (Wahlberechtigte) und Zuschnitt (Wahlbezirke) liefert
+
+[bootstrap]
+seed_corpus = false            # kein Korpus 2020 bis 2025 im Store dieser Periode; die vier Eingaben werden kopiert
+
+[report]
+regression = false             # zur laufenden Periode gibt es keine Wahlbeteiligung: kein Streudiagramm, keine Tabelle 5
