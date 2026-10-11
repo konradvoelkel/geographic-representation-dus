@@ -2,7 +2,7 @@
 
 Entspricht ``src/combine_searchdicts.py``: nur Wahlbezirke, die in beiden Quellen vorkommen;
 Begriffe kleingeschrieben und getrimmt; zu jedem Begriff mit ``straße`` kommt die Variante mit
-``str.`` dazu; sortiert und eindeutig.
+``str.`` dazu (``STREET_ABBREVIATIONS``); sortiert und eindeutig.
 """
 
 from __future__ import annotations
@@ -14,19 +14,27 @@ from georep.contracts import clean_terms, has_columns, lists_sorted_unique, sort
 
 DISTRICT = "wahlkreis_id"
 TERMS = "suchbegriffe"
+# Langform und Abkürzung: zu jedem Begriff mit der Langform kommt die Variante mit der Abkürzung
+# ins Wörterbuch (Verhalten der Arbeit). Die Suche der Berichtsseite liest dieselben Paare
+# (``georep.report.search``), damit die Regel nur hier steht; Option 10 macht sie konfigurierbar.
+STREET_ABBREVIATIONS: tuple[tuple[str, str], ...] = (("straße", "str."),)
 
 
 def normalise_terms(terms: pl.Expr) -> pl.Expr:
-    """Listen-Ausdruck: trimmen, kleinschreiben, Leeres weg, ``straße``-Varianten, eindeutig, sortiert."""
+    """Listen-Ausdruck: trimmen, kleinschreiben, Leeres weg, Abkürzungs-Varianten, eindeutig, sortiert."""
     cleaned = terms.list.eval(pl.element().str.strip_chars().str.to_lowercase()).list.eval(
         pl.element().filter(pl.element() != "")
     )
-    variants = cleaned.list.eval(
-        pl.element()
-        .filter(pl.element().str.contains("straße", literal=True))
-        .str.replace_all("straße", "str.", literal=True)
-    )
-    return cleaned.list.concat(variants).list.unique().list.sort()
+    with_variants = cleaned
+    for long, short in STREET_ABBREVIATIONS:
+        with_variants = with_variants.list.concat(
+            cleaned.list.eval(
+                pl.element()
+                .filter(pl.element().str.contains(long, literal=True))
+                .str.replace_all(long, short, literal=True)
+            )
+        )
+    return with_variants.list.unique().list.sort()
 
 
 @deal.pre(
