@@ -76,6 +76,7 @@ VERIFY_TARGETS = [
     "georep.report.model.format_de",
     "georep.report.search.canonical_term",
     "georep.report.charts.nice_ticks",
+    "georep.prep.bodies.parse_reference",  # Option 05
     "tests.property.oracle_matcher.oracle_extract",
 ]
 

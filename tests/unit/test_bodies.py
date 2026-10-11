@@ -91,6 +91,23 @@ def test_rules_are_independent_of_the_city(default_settings: Settings) -> None:
     assert parse_reference("BV6/108/2023", rules) == BodyRef(UNKNOWN, None, None)
 
 
+def test_a_pattern_without_the_group_code_is_unknown_not_an_error() -> None:
+    """Die Settings erzwingen die Gruppen; ein von Hand gebautes BodyRules nicht (crosshair, 2026-10-12)."""
+    import re
+
+    broken = BodyRules(
+        pattern=re.compile("(.*)"),
+        district_body="BV",
+        district_body_name="Bezirksvertretung {n}",
+        council=frozenset(),
+        committees=frozenset(),
+        advisory=frozenset(),
+        names={},
+    )
+    assert parse_reference("RAT/1/2020", broken) == BodyRef(UNKNOWN, None, None)
+    assert parse_reference("", broken) == BodyRef(UNKNOWN, None, None)
+
+
 def test_classify_papers_on_the_mini_fixture(mini_run: object, rules: BodyRules) -> None:
     from georep.layout import Layout
 

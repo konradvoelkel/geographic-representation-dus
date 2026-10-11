@@ -6,8 +6,13 @@ Schrägstrich nennt das Gremium, die Nummer dahinter bei Bezirksvertretungen den
 Kürzel und Namen stehen in den Settings (``[bodies]``, docs/plans/05-gremien.md, § 2); ein Kürzel ohne
 Tabelle und eine Nummer ohne Muster sind „unbekannt", sichtbar mit Anteil auf der Seite, nie eine
 stille Fehlklasse. ``parse_reference`` ist eine reine Funktion über einem vorkompilierten
-``BodyRules``-Objekt (hypothesis aus der Grammatik, ``deal.cases``); ``classify_papers`` ist die
-Batch-Grenze mit Verträgen und schreibt eine Zeile je Korpus-ID (00-synergien.md, § 5.6).
+``BodyRules``-Objekt (hypothesis aus der Grammatik, ``deal.cases``, crosshair in ``nox -s verify``);
+``classify_papers`` ist die Batch-Grenze mit Verträgen und schreibt eine Zeile je Korpus-ID
+(00-synergien.md, § 5.6). Der Vertrag des Parsers ist ``deal.safe`` und nicht ``deal.pure``: die
+Batch-Funktion ruft ihn einmal je Dokument, und ``deal.has()`` patcht dabei je Aufruf prozessweit
+``socket`` und ``sys.stdout`` (CLAUDE.md, „Nie"). Gemessen am 2026-10-12 auf der Referenz kostete
+``deal.pure`` 0,076 s gegen 0,053 s, rund 30 %; die Reinheit prüfen stattdessen ``deal.cases`` und
+crosshair.
 """
 
 from __future__ import annotations
@@ -105,7 +110,7 @@ def _consistent(result: BodyRef) -> bool:
     )
 
 
-@deal.pure
+@deal.safe
 @deal.post(_consistent, message="Klasse aus KINDS, Stadtbezirk genau bei Bezirksvertretungen, ab 1")
 def parse_reference(reference: str | None, rules: BodyRules) -> BodyRef:
     """Das Gremium einer Drucksachennummer; alles Unerwartete ist ``unbekannt``."""
@@ -114,7 +119,13 @@ def parse_reference(reference: str | None, rules: BodyRules) -> BodyRef:
     match = rules.pattern.match(reference)
     if match is None:
         return BodyRef(UNKNOWN, None, None)
-    code, number = match.group("code"), match.group("number")
+    # ``groupdict`` statt ``group``: ein Muster ohne die Gruppe ``code`` ist dann „unbekannt" statt
+    # eines KeyError. Die Settings erzwingen beide Gruppen, ein von Hand gebautes BodyRules nicht
+    # (crosshair fand den Fall am 2026-10-12).
+    groups = match.groupdict()
+    code, number = groups.get("code"), groups.get("number")
+    if code is None:
+        return BodyRef(UNKNOWN, None, None)
     if number is not None and not number.isdecimal():
         return BodyRef(UNKNOWN, f"{code}{number}", None)
     if code == rules.district_body:
