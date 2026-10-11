@@ -2,7 +2,9 @@
 Prepares paper data by extracting text from PDFs and adding it to the paper metadata.
 """
 
+from collections.abc import Iterable, Mapping
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
 from pypdf import PdfReader
@@ -30,7 +32,7 @@ def get_text_from_pdf(path: Path) -> str:
     return text.replace("\n", "").lower()
 
 
-def _count_texts(papers: list[dict]) -> int:
+def _count_texts(papers: Iterable[Mapping[str, Any]]) -> int:
     return sum(1 for p in papers if p.get("paper_text"))
 
 

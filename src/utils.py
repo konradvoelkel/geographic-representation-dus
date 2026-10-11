@@ -10,6 +10,7 @@ a specified CRS.
 
 import json
 from pathlib import Path
+from typing import Any
 
 import geopandas as gpd
 import requests
@@ -45,9 +46,9 @@ def setup_data_directories() -> None:
     Path(cfg.PDF_DUMP_PATH).mkdir(parents=True, exist_ok=True)
 
 
-def load_json_from_path(path: Path) -> dict:
+def load_json_from_path(path: Path) -> Any:
     """
-    Loads a JSON object from a file located at the specified path.
+    Loads a JSON value from a file located at the specified path (a list for the paper files).
 
     This function opens the file at the given path, reads its contents,
     and parses it as a JSON object, returning the resulting dictionary.
