@@ -47,7 +47,7 @@ def seed_stores_from_legacy(layout: Layout, items: list[dict[str, Any]]) -> tupl
     """``paper_with_text.json``-Einträge nach PaperStore und TextStore; liefert (Paper, Texte)."""
     records = [PaperRecord.from_legacy(item) for item in items]
     PaperStore(layout.guard_writable(layout.papers)).save(records)
-    texts = TextStore(layout.guard_writable(layout.text_dir))
+    texts = TextStore(layout.guard_writable(layout.texts))
     stored = 0
     for item, record in zip(items, records, strict=True):
         text = item.get("paper_text") or ""
@@ -56,7 +56,7 @@ def seed_stores_from_legacy(layout: Layout, items: list[dict[str, Any]]) -> tupl
                 record.file_name, text, TextMeta(extractor=REFERENCE_EXTRACTOR, source="reference")
             )
             stored += 1
-    texts.save_index()
+    texts.save()
     return len(records), stored
 
 
@@ -84,7 +84,7 @@ def bootstrap(layout: Layout, *, force: bool = False) -> BootstrapReport:
 
     if not reference.corpus_legacy.is_file():
         report.missing.append(reference.corpus_legacy.name)
-    elif force or not (layout.papers.exists() and layout.text_index.exists()):
+    elif force or not (layout.papers.exists() and layout.texts.exists()):
         items = json.loads(reference.corpus_legacy.read_text(encoding="utf-8"))
         report.papers, report.texts = seed_stores_from_legacy(layout, items)
     logger.success(f"Bootstrap aus {layout.reference_root}: {report.summary()}")

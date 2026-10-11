@@ -86,7 +86,7 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
     print(f"cache_root: {layout.cache_root.resolve()}")
     print(f"reference:  {layout.reference_root.resolve()}")
     pdfs = len(list(layout.pdf_dir.glob("*.pdf"))) if layout.pdf_dir.is_dir() else 0
-    texts = len(TextStore(layout.text_dir))
+    texts = len(TextStore(layout.texts))
     papers = len(PaperStore(layout.papers).load())
     corpus = (
         pl.scan_parquet(layout.corpus).select(pl.len()).collect().item()

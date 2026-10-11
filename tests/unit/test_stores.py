@@ -64,15 +64,18 @@ def test_paper_store_roundtrip_sorted_and_upsert(tmp_path: Path) -> None:
     assert "1 neu" in store.upsert([_record(9)]).summary()
 
 
-def test_text_store_put_get_index_and_currency(tmp_path: Path) -> None:
-    store = TextStore(tmp_path / "text")
+def test_text_store_put_get_save_and_currency(tmp_path: Path) -> None:
+    store = TextStore(tmp_path / "text" / "texts.parquet")
     assert len(store) == 0 and store.get("a.pdf") is None
     store.put("a.pdf", "hallo welt", TextMeta(extractor="pypdf-6", pdf_sha256="abc"))
-    store.save_index()
-    again = TextStore(tmp_path / "text")
-    assert again.get("a.pdf") == "hallo welt" and "a.pdf" in again and len(again) == 1
+    store.put("b.pdf", "", TextMeta(extractor="pypdf-6", source="reference"))
+    store.save()
+    again = TextStore(tmp_path / "text" / "texts.parquet")
+    assert again.get("a.pdf") == "hallo welt" and "a.pdf" in again and len(again) == 2
     assert again.meta("a.pdf") == TextMeta(extractor="pypdf-6", pdf_sha256="abc", chars=10)
+    assert again.meta("b.pdf") == TextMeta(extractor="pypdf-6", source="reference", chars=0)
     assert again.is_current("a.pdf", pdf_sha256="abc", extractor="pypdf-6")
     assert not again.is_current("a.pdf", pdf_sha256="abd", extractor="pypdf-6")
     assert not again.is_current("a.pdf", pdf_sha256="abc", extractor="pypdf-7")
-    assert not again.is_current("b.pdf", pdf_sha256="abc", extractor="pypdf-6")
+    assert not again.is_current("b.pdf", pdf_sha256=None, extractor="pypdf-7")
+    assert again.is_current("b.pdf", pdf_sha256=None, extractor="pypdf-6")

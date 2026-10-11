@@ -1,21 +1,21 @@
 """Speicher für Metadaten und Texte, beide wiederaufnehmbar und atomar.
 
 ``PaperStore``: ``raw/papers.jsonl``, eine Zeile je Paper, sortiert nach ID; neuere ``modified``
-gewinnt. ``TextStore``: ``cache/text/<dateiname>.txt`` plus ``index.json`` mit Extraktor,
-PDF-Hash und Herkunft je Text, damit ein Text nur neu entsteht, wenn PDF oder Extraktor sich
-geändert haben (DEVELOPMENT_PLAN.md § 3.3).
+gewinnt. ``TextStore``: ``cache/text/texts.parquet`` mit Text, Extraktor, PDF-Hash und Herkunft je
+Dateiname, damit ein Text nur neu entsteht, wenn PDF oder Extraktor sich geändert haben
+(DEVELOPMENT_PLAN.md § 3.3).
 """
 
 from __future__ import annotations
 
-import json
 from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
+import polars as pl
 from pydantic import BaseModel, ConfigDict
 
-from georep.io import atomic_path, write_json, write_text
+from georep.io import atomic_path, write_parquet
 from georep.records import PaperRecord
 
 
@@ -85,54 +85,75 @@ class TextMeta(BaseModel):
     chars: int = 0
 
 
-class TextStore:
-    """Texte unter ``<dir>/<name>.txt``; der Index kennt je Name Extraktor, PDF-Hash, Herkunft."""
+TEXT_SCHEMA = {
+    "name": pl.String,
+    "text": pl.String,
+    "extractor": pl.String,
+    "pdf_sha256": pl.String,
+    "source": pl.String,
+    "chars": pl.Int64,
+}
+TEXT_SCHEMA_VERSION = 1
 
-    def __init__(self, directory: Path) -> None:
-        self.directory = directory
-        self.index_path = directory / "index.json"
-        self._index: dict[str, TextMeta] | None = None
+
+class TextStore:
+    """Alle Texte in einer Parquet-Datei mit Metadaten je Dateiname.
+
+    19108 einzelne Dateien mit je zwei fsync kosteten am 2026-10-11 zwei Minuten; eine Datei,
+    einmal atomar geschrieben, kostet unter einer Sekunde. Änderungen sammeln sich im Speicher,
+    ``save`` schreibt.
+    """
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self._rows: dict[str, dict[str, object]] | None = None
 
     @property
-    def index(self) -> dict[str, TextMeta]:
-        if self._index is None:
-            if self.index_path.exists():
-                raw = json.loads(self.index_path.read_text(encoding="utf-8"))
-                self._index = {name: TextMeta.model_validate(meta) for name, meta in raw.items()}
+    def rows(self) -> dict[str, dict[str, object]]:
+        if self._rows is None:
+            if self.path.exists():
+                frame = pl.read_parquet(self.path)
+                self._rows = {str(r["name"]): r for r in frame.iter_rows(named=True)}
             else:
-                self._index = {}
-        return self._index
+                self._rows = {}
+        return self._rows
 
     def __len__(self) -> int:
-        return len(self.index)
+        return len(self.rows)
 
     def __contains__(self, name: str) -> bool:
-        return name in self.index
+        return name in self.rows
 
     def meta(self, name: str) -> TextMeta | None:
-        return self.index.get(name)
-
-    def path(self, name: str) -> Path:
-        return self.directory / f"{name}.txt"
+        row = self.rows.get(name)
+        if row is None:
+            return None
+        return TextMeta(
+            extractor=str(row["extractor"]),
+            pdf_sha256=str(row["pdf_sha256"]) if row["pdf_sha256"] is not None else None,
+            source=str(row["source"]),
+            chars=int(row["chars"]),  # type: ignore[call-overload]
+        )
 
     def get(self, name: str) -> str | None:
-        if name not in self.index:
-            return None
-        return self.path(name).read_text(encoding="utf-8")
+        row = self.rows.get(name)
+        return str(row["text"]) if row is not None else None
 
     def put(self, name: str, text: str, meta: TextMeta) -> None:
-        write_text(self.path(name), text)
-        self.index[name] = meta.model_copy(update={"chars": len(text)})
+        self.rows[name] = {
+            "name": name,
+            "text": text,
+            "extractor": meta.extractor,
+            "pdf_sha256": meta.pdf_sha256,
+            "source": meta.source,
+            "chars": len(text),
+        }
 
     def is_current(self, name: str, *, pdf_sha256: str | None, extractor: str) -> bool:
         """Text braucht keine Neuberechnung, wenn Extraktor und PDF-Hash übereinstimmen."""
         meta = self.meta(name)
         return meta is not None and meta.extractor == extractor and meta.pdf_sha256 == pdf_sha256
 
-    def save_index(self) -> None:
-        self.directory.mkdir(parents=True, exist_ok=True)
-        write_json(
-            self.index_path,
-            {name: meta.model_dump(mode="json") for name, meta in sorted(self.index.items())},
-            indent=None,
-        )
+    def save(self) -> None:
+        frame = pl.DataFrame([self.rows[name] for name in sorted(self.rows)], schema=TEXT_SCHEMA)
+        write_parquet(frame, self.path, schema_version=TEXT_SCHEMA_VERSION)

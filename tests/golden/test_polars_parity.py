@@ -105,7 +105,7 @@ def mini_chain(
         layout,
         json.loads((mini_root / "interim" / "paper_with_text.json").read_text(encoding="utf-8")),
     )
-    corpus = build_corpus(PaperStore(layout.papers).load().values(), TextStore(layout.text_dir))
+    corpus = build_corpus(PaperStore(layout.papers).load().values(), TextStore(layout.texts))
     voters = aggregate_voters(
         read_results_csv(
             mini_root / "external" / "Stimmbezirk_Wahlergebnis.csv", settings.columns.results

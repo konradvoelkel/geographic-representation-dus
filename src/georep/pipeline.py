@@ -206,7 +206,7 @@ def build_steps(settings: Settings, layout: Layout) -> list[Step]:
 
     def corpus() -> str:
         records = PaperStore(layout.papers).load().values()
-        frame = build_corpus(records, TextStore(layout.text_dir))
+        frame = build_corpus(records, TextStore(layout.texts))
         write_parquet(frame, layout.corpus, schema_version=CORPUS_SCHEMA_VERSION)
         return f"{frame.height} Dokumente, {documents_with_text(frame)} mit Text"
 
@@ -241,7 +241,7 @@ def build_steps(settings: Settings, layout: Layout) -> list[Step]:
         ),
         Step(
             "corpus",
-            (layout.papers, layout.text_index),
+            (layout.papers, layout.texts),
             (layout.corpus,),
             corpus,
             CORPUS_SCHEMA_VERSION,

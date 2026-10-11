@@ -24,7 +24,7 @@ def test_bootstrap_copies_inputs_and_converts_the_corpus(tmp_path: Path, mini_ro
         layout.results_csv.read_bytes()
         == (mini_root / "external" / "Stimmbezirk_Wahlergebnis.csv").read_bytes()
     )
-    assert layout.papers.exists() and layout.text_index.exists() and not layout.corpus.exists()
+    assert layout.papers.exists() and layout.texts.exists() and not layout.corpus.exists()
     assert "3 Dateien kopiert" in report.summary() and "200 Paper und 200 Texte" in report.summary()
 
 

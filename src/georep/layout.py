@@ -85,8 +85,9 @@ class Layout:
         return self.raw / "papers.jsonl"
 
     @property
-    def text_index(self) -> Path:
-        return self.text_dir / "index.json"
+    def texts(self) -> Path:
+        """Textstore: alle extrahierten Texte mit Metadaten in einer Parquet-Datei."""
+        return self.text_dir / "texts.parquet"
 
     @property
     def paper_objects(self) -> Path:
