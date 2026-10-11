@@ -295,6 +295,8 @@ def test_topics_k_zero_is_allowed_and_bounds_are_checked(tmp_path: Path) -> None
         "min_df = 0",
         "top_words = 0",
         'stop_words = "../x"',
+        "max_iter = 0",
+        "tol = 0",
     ):
         (tmp_path / "settings.toml").write_text(f"[topics]\n{bad}\n", encoding="utf-8")
         with pytest.raises(ValidationError, match="topics"):

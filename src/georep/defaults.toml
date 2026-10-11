@@ -214,4 +214,6 @@ max_df = 0.5                   # ein Wort in mehr als der Hälfte der Dokumente 
 max_features = 20000           # die häufigsten Wörter; mehr ändert die Themen nicht und kostet Zeit
 top_words = 10                 # Wörter je Themenlabel; die Wörter beschreiben das Thema, sie benennen es nicht
 stop_words = "de"              # Funktionswörter aus der Paketdatei analysis/stopwords_de.txt (ohne sie entsteht ein Thema aus "auch, oder, sich"); "" = keine
+max_iter = 200                 # Obergrenze der NMF-Iterationen; mit tol unten konvergiert das Modell nach 120 (2026-10-12)
+tol = 0.001                    # Abbruchschwelle: mit 1e-4 läuft NMF in die Obergrenze (200 Iterationen, 6,9 s; konvergiert erst bei 412 und 13,4 s) und gewinnt dabei 0,03 % Rekonstruktionsfehler; 1e-3 konvergiert nach 120 Iterationen in 4,5 s (gemessen 2026-10-12 auf 19 033 Texten)
 random_state = 0               # Startwert für NMF; nndsvda ist deterministisch, der Wert steht trotzdem hier

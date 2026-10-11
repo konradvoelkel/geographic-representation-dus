@@ -311,6 +311,8 @@ class Topics(_Strict):
     max_features: int = 20_000
     top_words: int = 10
     stop_words: str = "de"  # Kürzel der Paketdatei analysis/stopwords_<kürzel>.txt; leer = keine
+    max_iter: int = 200  # Obergrenze der NMF-Iterationen
+    tol: float = 1e-3  # Abbruchschwelle; mit 1e-4 läuft NMF in die Obergrenze (defaults.toml)
     random_state: int = 0
 
     @model_validator(mode="after")
@@ -321,6 +323,10 @@ class Topics(_Strict):
             raise ValueError("topics.min_df, max_features und top_words müssen mindestens 1 sein")
         if not 0.0 < self.max_df <= 1.0:
             raise ValueError(f"topics.max_df {self.max_df} liegt nicht in (0, 1]")
+        if self.max_iter < 1 or not self.tol > 0.0:
+            raise ValueError(
+                f"topics.max_iter {self.max_iter} mindestens 1, topics.tol {self.tol} positiv"
+            )
         if not re.fullmatch(r"[a-z]{0,8}", self.stop_words):
             raise ValueError(f"topics.stop_words {self.stop_words!r}: ein Sprachkürzel oder leer")
         return self

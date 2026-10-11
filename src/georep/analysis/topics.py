@@ -141,7 +141,12 @@ def fit_topics(corpus: pl.DataFrame, settings: Topics) -> TopicModel:
         max_features=settings.max_features,
         sublinear_tf=True,
         stop_words=stop_words or None,
-        dtype=np.float32,
+        # Float64, nicht Float32: mit Float32 unterläuft das Residuum in sklearns eigener
+        # Fehlerformel bei einer fast exakten Zerlegung unter null, die Wurzel davon ist nan, und
+        # damit fällt die Abbruchprüfung von ``tol`` still aus (gemessen 2026-10-12 auf der
+        # synthetischen Fixture). Auf der Referenz liefern beide dieselben 120 Iterationen und
+        # denselben Fehler; Float64 kostet dort 1,4 s mehr. Das ist die Ruhe wert.
+        dtype=np.float64,
     )
     try:
         counts = vectorizer.fit_transform(texts.get_column(TEXT).to_list())
@@ -155,8 +160,8 @@ def fit_topics(corpus: pl.DataFrame, settings: Topics) -> TopicModel:
         n_components=settings.k,
         init="nndsvda",
         solver="cd",
-        max_iter=200,
-        tol=1e-4,
+        max_iter=settings.max_iter,
+        tol=settings.tol,
         random_state=settings.random_state,
     )
     shares = pl.DataFrame(
