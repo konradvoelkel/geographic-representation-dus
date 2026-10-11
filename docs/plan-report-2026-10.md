@@ -1,5 +1,9 @@
 # Plan: Berichtsseite mit Karte und Download der Ergebnisse
 
+Abgeschlossen am 2026-10-11: Stufen A bis F umgesetzt (`v0.9.0`, Workflow `pages.yml`), Pages auf „GitHub Actions"
+gestellt, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/> abgenommen. Stufe G und der
+VPS-Umzug bleiben optional; dieser Plan wird nicht fortgeschrieben.
+
 Stand 2026-10-11, Auftrag von Konrad am selben Tag, offene Fragen am selben Tag beantwortet (§ 7); der Plan
 ist damit freigegeben. Er ist so geschrieben, dass ein frischer Agent ihn
 ohne weitere Rückfragen übernehmen kann: Ziel, Entscheidungen, Datenlage, Bauplan in Stufen mit

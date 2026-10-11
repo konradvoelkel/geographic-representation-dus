@@ -1,9 +1,9 @@
 # Arbeitsregeln für dieses Repo
 
 Aufbau: `docs/architecture.md`. Gründe und verworfene Alternativen: `docs/decisions.md`. Stand und Bekanntes:
-`STATUS.md` (im selben Commit nachziehen, wenn sich der Stand ändert). Die Berichtsseite ist gebaut
-(`docs/plan-report-2026-10.md`, Stufen A bis F am 2026-10-11); offen ist nur, dass Konrad Pages einschaltet, dann die
-Abnahme aus Stufe F.3. Der Umbau 2026-10 ist abgeschlossen; sein
+`STATUS.md` (im selben Commit nachziehen, wenn sich der Stand ändert). Die Berichtsseite ist gebaut und über
+GitHub Pages veröffentlicht (`docs/plan-report-2026-10.md`, abgeschlossen am 2026-10-11). Der Umbau 2026-10 ist
+abgeschlossen; sein
 Plan liegt historisch unter `docs/development-plan-2026-10.md`, der Befund davor in `docs/baseline-2026-10-10.md`.
 Maßstab für Stil und Vorgehen sind die Kapitel Brownfield, Code-Qualität, Testing, Profiling und Design by
 Contract des eipy-Skripts.

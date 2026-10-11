@@ -41,9 +41,9 @@ zum Weiterverarbeiten: die sechs Ergebnistabellen als Parquet und CSV, `wahlbezi
 `schema.json` mit dem Spaltenschema; Größe und SHA-256 jeder Datei stehen auf der Seite. Der Workflow
 `.github/workflows/pages.yml` baut die Seite bei jedem Push auf `main` aus den Referenzdaten (`bootstrap`, `run`,
 kein Netzabruf) und veröffentlicht sie über GitHub Pages unter
-<https://konradvoelkel.github.io/geographic-representation-dus/>, sobald Pages in den Repo-Einstellungen auf
-„GitHub Actions" steht (Plan und Entscheidungen: [docs/plan-report-2026-10.md](docs/plan-report-2026-10.md);
-Aufbau: [docs/architecture.md](docs/architecture.md), Abschnitt „Berichtsseite").
+<https://konradvoelkel.github.io/geographic-representation-dus/> (Plan und Entscheidungen:
+[docs/plan-report-2026-10.md](docs/plan-report-2026-10.md); Aufbau: [docs/architecture.md](docs/architecture.md),
+Abschnitt „Berichtsseite").
 
 ## Befehle
 
