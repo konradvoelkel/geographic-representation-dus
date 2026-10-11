@@ -1,8 +1,9 @@
 # Status
 
-Stand 2026-10-11, `main` auf `v0.8.0`. Der Umbau in sieben Phasen ist abgeschlossen
-(`docs/development-plan-2026-10.md`); Aufbau in `docs/architecture.md`, Gründe in `docs/decisions.md`. Fakten mit
-Datum, Invarianten ohne.
+Stand 2026-10-11, `main` auf `v0.9.0`. Der Umbau in sieben Phasen ist abgeschlossen
+(`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut (Stufen A bis E von
+`docs/plan-report-2026-10.md`), ihre Veröffentlichung über GitHub Pages ist Stufe F. Aufbau in `docs/architecture.md`,
+Gründe in `docs/decisions.md`. Fakten mit Datum, Invarianten ohne.
 
 ## Abgeschlossen
 
@@ -15,11 +16,13 @@ Datum, Invarianten ohne.
 - Phase 6 (`v0.7.0`): Design by Contract. 80 deal-Decorators an 30 Funktionen in `search`, `analysis`, `prep`, `geo`, `layout`, `stores`, `http`, `settings` und `sources`; Prädikate in `georep.contracts`; `settings.contracts = "off"` schaltet ab, Overhead unter einem Prozent. Fetcher werfen nur `FetchError` oder `NetworkError`, die CLI meldet einen abgebrochenen Abruf als eine Zeile. `deal.cases` greift zehn reine Funktionen an, `nox -s verify` (crosshair) fand und `nox -s mutate` (pytest-gremlins, 79 % getötet) deckte je einen echten Fehler auf: `street_names` bei kaputter Overpass-Antwort und deals nicht reentranter `HasPatcher`, der nach `deep_merge` Socket und stdout gepatcht ließ. Beides behoben, `docs/mutation-2026-10-11.md`.
 - Phase 7 (`v0.8.0`): Abschluss. README aus Sicht eines frischen Klons (geprüft am 2026-10-11 auf xtraspace: `uv sync --locked`, `bootstrap`, `run` in 6 s, `regress`, `nox`, slow-Test), `docs/architecture.md` und `docs/decisions.md` ersetzen den Plan, der archiviert ist; Code-Docstrings verweisen auf die lebenden Beschreibungen. Kein Pull Request an `lubar102` (Konrads Entscheidung, decisions.md Punkt 19).
 
+- Berichtsseite (`v0.9.0`): Schritt `report` als neunter Offline-Schritt; `data/site/index.html` (400 KB, inline SVG und JavaScript, hell und dunkel, Deutsch mit englischer Kurzfassung) und `data/site/data/` mit den sechs Tabellen als Parquet und CSV, `wahlbezirke.geojson`, `schema.json`, je mit SHA-256 auf der Seite. Mini-Fixture mit GeoJSON, `report/` mit `model`, `geometry`, `charts`, `render`, `build`; Lizenzen des Open-Data-Portals am 2026-10-11 auf den Datensatzseiten nachgesehen. Geprüft in Hell und Dunkel mit headless Chrome.
+
 ## Zahlen (2026-10-11)
 
-- Tests: 171, davon einer `slow` und zehn `bench`; schnelle Suite parallel in 9 s; Abdeckung 98 %.
-- Code `src/georep/`: 35 Dateien, rund 3250 Zeilen, mypy strict mit deal-Plugin ohne Befund; Commits seit dem Fork: 78 in sieben Phasen.
-- Laufzeit: voller Offline-Lauf 6,4 bis 6,7 s mit wie ohne Verträge (Index 4,1 bis 4,3 s); `nox -s verify` 2,5 bis 3 min; `nox -s mutate` 100 s.
+- Tests: 218, davon einer `slow` und zehn `bench`; schnelle Suite parallel in 9 bis 10 s; Abdeckung 98,5 %.
+- Code `src/georep/`: 41 Python-Dateien, rund 4550 Zeilen, dazu die Vorlage der Berichtsseite (350 Zeilen); mypy strict mit deal-Plugin ohne Befund; Commits seit dem Fork: 97.
+- Laufzeit: voller Offline-Lauf rund 7 s (Index 4,2 s, Berichtsseite 0,9 s); `nox -s bench` am 2026-10-11 grün gegen die Baseline; `nox -s verify` 2,5 bis 3 min; `nox -s mutate` 100 s.
 
 ## Bekannt
 
@@ -29,16 +32,16 @@ Datum, Invarianten ohne.
 - Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`; `georep status` zeigt `pdfs` als „offen: Settings geändert", weil `--limit 200` im Stamp steht. Das ist richtig so.
 - Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab (`docs/baseline-2026-10-10.md`).
+- Der Stamp des Schritts `report` liegt als `site/index.html.stamp.json` im veröffentlichten Ordner; harmlos, aber mit dabei.
+- Die Ergebnis-CSV der Ratswahl heißt im Open-Data-Portal inzwischen `…_Stimmbezirke_1.csv` (Datensatzseite am 2026-10-11); `defaults.toml` zeigt auf `…_0.csv`, woher die Referenz stammt. Vor einem `fetch opendata` nachsehen.
 
 ## Nächster Schritt
 
-Die Berichtsseite: eine in sich geschlossene HTML-Seite mit Kernzahlen, Karte der Trefferquote je Wahlbezirk,
-Streudiagramm mit Regression, sortierbarer Tabelle, Begriffen, Methode und den Ergebnissen zum Download als
-Parquet, CSV und GeoJSON mit Spaltenschema; gebaut als Pipeline-Schritt `report`, veröffentlicht über GitHub Pages
-aus einem Actions-Workflow, später nach Bedarf auf Konrads VPS, optional unter `georep.konradvoelkel.de`. Plan in
-Stufen mit Abnahmekriterien und Startanleitung: `docs/plan-report-2026-10.md` (Konrad, 2026-10-11; offene Fragen
-beantwortet, Plan freigegeben). Gearbeitet wird direkt auf `main`, keine Branches mehr. Für Konrad bleibt ein
-Handgriff: Pages in den Repo-Einstellungen auf „GitHub Actions" stellen, sobald Stufe F erreicht ist.
+Stufe F des Plans (`docs/plan-report-2026-10.md`): ein Actions-Workflow `pages.yml`, der aus den Referenzdaten
+`bootstrap` und `run` ausführt und `data/site` nach GitHub Pages lädt; Actions per SHA gepinnt, Push per SSH.
+Für Konrad bleibt ein Handgriff: in den Repo-Einstellungen Pages auf „GitHub Actions" stellen; danach kommen die
+URL `https://konradvoelkel.github.io/geographic-representation-dus/` in README und auf die Seite. Später nach
+Bedarf der Umzug auf Konrads VPS (`rsync` der statischen Dateien) und Stufe G (Dokumente je Begriff).
 
 Außerdem offen, wenn jemand es will: ein voller `georep fetch` von Grund
 auf (Stunden; zeigt, ob der OParl-Server `modified_since` beachtet); ein Ersatz für FlashText oder pypdf nur

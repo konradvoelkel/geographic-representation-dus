@@ -1,6 +1,6 @@
 # Architektur
 
-Stand 2026-10-11, `v0.8.0`. Diese Datei beschreibt, was das Programm ist und wie es gebaut ist. Warum es so
+Stand 2026-10-11, `v0.9.0`. Diese Datei beschreibt, was das Programm ist und wie es gebaut ist. Warum es so
 gebaut ist, steht mit den verworfenen Alternativen in [decisions.md](decisions.md); was sich aus Nutzersicht
 geändert hat, in [../CHANGELOG.md](../CHANGELOG.md); der Befund vor dem Umbau in
 [baseline-2026-10-10.md](baseline-2026-10-10.md); Messwerte datiert in [profiling/README.md](profiling/README.md).
@@ -26,7 +26,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 |---|---|
 | `settings` | `defaults.toml` im Paket, darüber `settings.toml`, `settings.local.toml`, `--settings`, Umgebung `GEOREP_*`; pydantic-settings, unbekannte Schlüssel sind ein Fehler; `fingerprint()` der ergebnisrelevanten Parameter |
 | `layout` | wo was liegt: `data_root`, `cache_root`, `reference_root`; `guard_writable` verweigert jeden Pfad unter der Referenz |
-| `io` | atomare Schreibvorgänge (Temporärdatei, fsync, `os.replace`), JSON, Parquet mit `schema_version` in den Metadaten |
+| `io` | atomare Schreibvorgänge (Temporärdatei, fsync, `os.replace`), JSON, Parquet mit `schema_version` in den Metadaten, SHA-256 (`digest`) |
 | `http` | Session mit Timeout, Retry mit Backoff, User-Agent, requests-cache je Quelle; `Transport`-Protokoll als Testnaht; `network_errors` wandelt requests-Fehler in `NetworkError` |
 | `errors` | Domänenfehler: `MissingInputError`, `EmptyResultError`, `SchemaError`, `CorruptPdfError`, `FetchError`, `NetworkError` |
 | `oparl` | OParl 1.1 als pydantic-Vertrag (`OparlPaper`, `OparlFile`, `PaperPage`), echte Antwort als Fixture |
@@ -42,11 +42,12 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `contracts` | `configure()` für `settings.contracts` und die Prädikate der deal-Verträge |
 | `profiling` | `profile_step`: ein echter Schritt unter cProfile, `.prof` datiert nach `docs/profiling/` |
 | `cli` | `georep run, fetch, steps, status, bootstrap, export, regress, profile`; `main(argv) -> int`; Exit 0, 1 (Domänenfehler), 2 (Bedienung) |
-| `export` | Parquet-Ergebnisse als CSV neben die Dateien |
+| `export` | Parquet-Ergebnisse als CSV neben die Dateien; `csv_plan` und `write_csv` nutzt auch der Schritt `report` |
+| `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, `COLUMN_DOCS`), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, Choroplethe und Streudiagramm als SVG), `render` (Jinja2 mit Autoescape, Allowlist der Links), `build` (der Schritt `report`: Downloads, Schema, Seite) |
 
 ## Pipeline
 
-Dreizehn Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzschritte laufen nur mit
+Vierzehn Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzschritte laufen nur mit
 `--online` oder über `georep fetch`.
 
 | Schritt | Netz | liest | schreibt |
@@ -64,13 +65,14 @@ Dreizehn Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzsc
 | `corpus` | nein | Metadaten und Texte | `interim/papers.parquet` |
 | `index` | nein | Wörterbuch, Korpus | `processed/inverted_index.parquet` |
 | `results` | nein | Wörterbuch, Index, Wähler | `processed/wahlbezirke_auswertung.parquet` |
+| `report` | nein | die sechs Ergebnistabellen, Korpus, Stimmbezirks-GeoJSON | `site/index.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`) |
 
 Neben der ersten Ausgabe jedes Schritts liegt `<datei>.stamp.json` mit den SHA-256-Hashes der Eingaben, dem
 Settings-Fingerprint, der Code-Version und der Schema-Version. Stimmt alles, ist der Schritt aktuell und wird
 übersprungen; sonst läuft er und sagt, warum („Eingabe geändert: texts.parquet", „Code-Version 0.6.0 ->
 0.7.0"). `--force` erzwingt, `--dry-run` plant nur. Jeder Lauf druckt je Schritt eine Zeile mit der Anzahl,
-auf die er gewirkt hat, und die Sekunden. Der volle Offline-Lauf auf der Referenz dauert 6 bis 7 s, davon 4 s
-der Index (2026-10-11).
+auf die er gewirkt hat, und die Sekunden. Der volle Offline-Lauf auf der Referenz dauert rund 7 s, davon 4 s
+der Index und 1 s die Berichtsseite (2026-10-11).
 
 ## Datenhaltung
 
@@ -81,6 +83,7 @@ data_root/                 Standard ./data, gitignored
   raw/                     papers.jsonl, streets_per_district.json, wikipedia_dict.json
   interim/                 papers.parquet (Korpus: Metadaten plus Text)
   processed/               die sieben Ergebnistabellen als Parquet (zstd), je mit Stamp
+  site/                    die Berichtsseite: index.html (mit Stamp) und data/ mit den Download-Dateien
 cache_root/                Standard data_root/cache
   pdf/                     <dateiname>.pdf, manifest.jsonl (URL, SHA-256, Größe, Zeit)
   text/texts.parquet       alle Texte mit Extraktorname, PDF-Hash, Herkunft, Zeichenzahl
@@ -149,6 +152,23 @@ Gemessen (2026-10-11): der Matcher kostet 4,1 s für 5841 Begriffe über 19 108 
 Python in FlashText; die Extraktion 38 ms je PDF, 17 ms je Seite. Kein Flaschenhals rechtfertigt derzeit
 einen Ersatz; die Kandidaten stehen in decisions.md.
 
+## Berichtsseite
+
+Der letzte Schritt `report` (`georep.report.build.build_site`) macht aus den Parquet-Ergebnissen eine einzige
+`site/index.html` ohne externe Ressourcen: CSS, JavaScript und beide SVGs inline, nur relative Pfade, Deutsch
+mit einer englischen Kurzfassung, hell und dunkel über `prefers-color-scheme`. Reihenfolge: erst die Dateien
+unter `site/data/` (die sechs Tabellen als Parquet kopiert und als CSV mit den Regeln von `georep export`,
+`wahlbezirke.geojson` in EPSG:4326, `schema.json`), dann das Modell (`report.model`: frozen dataclasses, Polars
+bis zum Schluss, Zeit und Commit sind Eingaben) mit Größe und SHA-256 jeder Datei, dann die Karte
+(`report.geometry`: `unary_union` je Wahlbezirk, um 15 m vereinfacht, Flächensumme bis auf 1 % erhalten, formtreu
+aus EPSG:25832 auf eine `viewBox` abgebildet) und das Streudiagramm (`report.charts`), zuletzt die Seite
+(`report.render`, Jinja2 mit Autoescape; Nachbedingung: jeder Link nach außen steht in `ALLOWED_LINKS`). Die
+Choroplethe hat fünf Quantilklassen (weniger, wenn es weniger verschiedene Werte gibt) in einer Blau-Rampe, die
+je Modus getrennt gewählt und mit dem Validator der Skill `dataviz` geprüft ist; der Umschalter auf die
+Wahlbeteiligung tauscht nur CSS-Klassen über `data-`-Attribute. Entscheidungen und verworfene Alternativen
+stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. Auf der Referenz: 41 Wahlbezirke, 15 Dateien,
+5,5 MB, davon `index.html` 400 KB, 0,9 s (2026-10-11).
+
 ## Verträge
 
 deal-Verträge stehen an den Batch-Grenzen, nicht in heißen Schleifen: Vorbedingungen (Pflichtspalten,
@@ -172,7 +192,7 @@ auf dem rekursiven `deep_merge`).
 | `tests/property/` | hypothesis-Invarianten, das Matcher-Orakel (400 Zufallsfälle), `deal.cases` auf zehn reinen Funktionen |
 | `tests/golden/` | Mini-Fixture (3 Wahlbezirke, 200 Dokumente, Erwartung aus dem Altcode `v0.2.0`) und die volle Referenz (`slow`) gegen die Ergebnisse der Arbeit |
 | `tests/bench/` | pytest-benchmark, nur in `nox -s bench` |
-| `tests/fixtures/` | Mini-Datensatz, vier PDFs mit Herkunft, eine OParl-Seite, aufgezeichnete Antworten von Overpass, Wikidata, Wikipedia |
+| `tests/fixtures/` | Mini-Datensatz (drei Wahlbezirke mit ihren 22 Stimmbezirken), vier PDFs mit Herkunft, eine OParl-Seite, aufgezeichnete Antworten von Overpass, Wikidata, Wikipedia |
 
 Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesis-Profile) und Netz
 (`Transport`, `sleep`) sind Eingaben.
@@ -186,7 +206,7 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `verify` | crosshair über die reinen Funktionen mit Verträgen, rund drei Minuten | lokal |
 | `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung | lokal |
 
-Stand 2026-10-11: 171 Tests, schnelle Suite in 9 s, Abdeckung 98 %; Mutationsquote 79 %
+Stand 2026-10-11: 218 Tests, schnelle Suite in 10 s, Abdeckung 98,5 %; Mutationsquote 79 %
 ([mutation-2026-10-11.md](mutation-2026-10-11.md)).
 
 ## Bekannte Grenzen

@@ -22,13 +22,26 @@ git clone git@github.com:konradvoelkel/geographic-representation-dus.git
 cd geographic-representation-dus
 uv sync --locked                        # Umgebung aus dem Lockfile
 uv run georep bootstrap                 # Datensatz der Arbeit nach ./data übernehmen
-uv run georep run                       # acht Offline-Schritte, rund 6 s; ein zweiter Lauf überspringt alle
+uv run georep run                       # neun Offline-Schritte, rund 7 s; schreibt auch die Berichtsseite data/site/index.html
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 ```
 
 Geprüft am 2026-10-11 aus einem frischen Klon. Wer die Umgebung woanders ablegen will, setzt vor `uv sync`
 `UV_PROJECT_ENVIRONMENT` und `UV_CACHE_DIR`; wer Daten und Cache woanders haben will, schreibt `data_root`
 und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
+
+## Berichtsseite
+
+`georep run` endet mit dem Schritt `report`: `data/site/index.html` ist eine in sich geschlossene Seite (rund
+400 KB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
+der Karte der 41 Wahlbezirke (Trefferquote oder Wahlbeteiligung, Tooltips, Klick-Markierung, die 1309 Orte als
+Punkte), dem Streudiagramm mit beiden Regressionsgeraden und Tabelle 5, einer sortierbaren Tabelle je
+Wahlbezirk, den Begriffen, Methode und Grenzen, Lizenzen. Daneben liegen unter `data/site/data/` die Ergebnisse
+zum Weiterverarbeiten: die sechs Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326) und
+`schema.json` mit dem Spaltenschema; Größe und SHA-256 jeder Datei stehen auf der Seite. Die Seite wird über
+GitHub Pages aus einem Actions-Workflow veröffentlicht, der sie aus den Referenzdaten baut (Plan und
+Entscheidungen: [docs/plan-report-2026-10.md](docs/plan-report-2026-10.md); Aufbau:
+[docs/architecture.md](docs/architecture.md), Abschnitt „Berichtsseite").
 
 ## Befehle
 
@@ -69,15 +82,15 @@ cache_root = "/media/konrad/xtraspace/georep/cache"
 
 | Daten | Quelle | im Repo |
 |---|---|---|
-| Wahlergebnis je Stimmbezirk, Kommunalwahl 14.09.2025 | Open-Data-Portal der Stadt Düsseldorf (CSV) | `reference/external/` |
-| Stimmbezirke 2025 (ETRS89, EPSG:4647) | Open-Data-Portal der Stadt Düsseldorf (GeoJSON) | `reference/external/` |
+| Wahlergebnis je Stimmbezirk, Kommunalwahl 14.09.2025 | Open-Data-Portal der Stadt Düsseldorf (CSV, Datenlizenz Deutschland Namensnennung 2.0) | `reference/external/` |
+| Stimmbezirke 2025 (ETRS89, EPSG:4647) | Open-Data-Portal der Stadt Düsseldorf (GeoJSON, Datenlizenz Deutschland – Zero – Version 2.0) | `reference/external/` |
 | Ratsdokumente 2020 bis 2025, Metadaten und Texte | Ratsinformationssystem Düsseldorf über OParl 1.1 (`ris-oparl.itk-rheinland.de`, Body 0015) | `reference/interim/`, die PDFs nicht |
 | Straßennamen je Stimmbezirk | OpenStreetMap über die Overpass-API (ODbL), Stand der Arbeit November 2025 | `reference/raw/` |
 | Orte je Stimmbezirk | Wikidata (CC0) per SPARQL, Wikipedia-GeoSearch | `reference/raw/` |
 
 `reference/` ist der eingefrorene Datensatz der Arbeit und wird nur gelesen; Läufe schreiben nach `data_root`
 (Standard `./data`), Caches nach `cache_root` (Standard `data_root/cache`). Abgeleitete Daten sind Parquet;
-`georep export` legt CSV daneben.
+`georep export` legt CSV daneben, die Berichtsseite unter `data_root/site/` bietet beides zum Download an.
 
 ## Entwicklung
 

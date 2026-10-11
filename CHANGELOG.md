@@ -2,6 +2,18 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.9.0 (2026-10-11), Berichtsseite
+
+- Neuer Pipeline-Schritt `report` am Ende der Kette: `georep run` schreibt `data/site/index.html`, eine in sich
+  geschlossene Seite mit Kernzahlen, Karte der 41 Wahlbezirke (Trefferquote oder Wahlbeteiligung, Tooltips,
+  Klick-Markierung, Orte als Punkte), Streudiagramm mit beiden Regressionsgeraden und Tabelle 5, sortierbarer
+  Tabelle je Wahlbezirk, Begriffen, Methode und Grenzen, Lizenzen; Deutsch mit englischer Kurzfassung, hell und
+  dunkel, ohne externe Ressourcen.
+- Downloads unter `data/site/data/`: die sechs Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson`
+  (EPSG:4326) und `schema.json`; Größe und SHA-256 jeder Datei stehen auf der Seite, das Spaltenschema daneben.
+- Die Mini-Fixture trägt die Stimmbezirke ihrer drei Wahlbezirke; `bootstrap` findet jetzt alle vier Eingaben.
+- Jinja2 ist Laufzeitabhängigkeit, matplotlib nur noch in der Gruppe `notebook`.
+
 ## 0.8.0 (2026-10-11), Phase 7
 
 - README aus Sicht eines frischen Klons: vier Befehle bis zu Tabelle 5, Herkunft der Daten mit Quellen und

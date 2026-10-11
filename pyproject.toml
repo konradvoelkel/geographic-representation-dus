@@ -1,6 +1,6 @@
 [project]
 name = "georep"
-version = "0.8.0"
+version = "0.9.0"
 description = "Geografische Repräsentation in Ratsdokumenten: Ortsmarker je Wahlbezirk, Treffer in OParl-Dokumenten, Zusammenhang mit der Wahlbeteiligung"
 readme = "README.md"
 license = "CC0-1.0"
