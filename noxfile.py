@@ -11,8 +11,11 @@ nox.options.default_venv_backend = "none"
 nox.options.sessions = ["lint", "typecheck", "deps", "test"]
 
 # Pakete, die nie wieder ins Lockfile dürfen: pandas ist Konrads Vorgabe (Polars), die anderen
-# zogen es transitiv (Phase 3, 2026-10-11).
-FORBIDDEN = {"pandas", "geopandas", "osmnx", "scikit-learn"}
+# zogen es transitiv (Phase 3, 2026-10-11). scikit-learn stand hier bis zum 2026-10-12 und ist seit
+# Option 06 Laufzeitabhängigkeit (Konrad, 2026-10-11; decisions.md, Punkt „scikit-learn für das
+# Themenmodell"): es zieht kein pandas, und der Import bleibt auf ein Modul begrenzt
+# (tests/unit/test_dependency_boundary.py).
+FORBIDDEN = {"pandas", "geopandas", "osmnx"}
 
 
 @nox.session

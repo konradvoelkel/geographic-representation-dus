@@ -259,3 +259,18 @@ kostete gemessen 30 % (CLAUDE.md, „Nie"); Reinheit prüfen `deal.cases` und cr
 für sich profilierbar. Die Zuordnung je Dokument bleibt unveröffentlicht (126 KB Parquet, aber 2,3 MB
 CSV für eine Spalte, die aus der Drucksachennummer in `dokumente.json` und der dokumentierten Regel
 folgt).
+## Punkt: scikit-learn für das Themenmodell (Option 06, 2026-10-12)
+
+`noxfile.py` verbot `scikit-learn` im Lockfile, weil es in der Arbeit nur mittelbar über pandas hing. Für die
+Themen je Dokument (Option 6, [plans/06-gewichtung.md](plans/06-gewichtung.md)) ist es seit dem 2026-10-12
+Laufzeitabhängigkeit (`scikit-learn>=1.9`): Konrad hat es am 2026-10-11 ausdrücklich freigegeben
+([plans/fragen.md](plans/fragen.md), Nr. 3) mit dem Satz, dass TF-IDF von Hand und gensim nicht nötig sind.
+Gemessen am 2026-10-11 auf den 19 033 Texten der Referenz: TF-IDF 2,2 s, NMF mit 20 Themen 3,8 s, zweiter Lauf
+byteidentisch; LDA (online, 10 Iterationen) brauchte 47 s und lieferte Themen aus Funktionswörtern, also bleibt
+es bei NMF. 1.9.1 zieht nur joblib, threadpoolctl, scipy und numpy, kein pandas; `nox -s deps` verbietet pandas,
+geopandas und osmnx weiter. Der Import kostet rund 0,4 s und soll `georep status` nicht verteuern: er steht
+allein in `analysis/topics.py`, die Pipeline lädt das Modul erst im Schritt `topics`, und
+`tests/unit/test_dependency_boundary.py` hält die Grenze per Quelltextsuche. Verworfen: TF-IDF und NMF selbst
+schreiben (mehr Code als Nutzen, Konrad hat es abgelehnt); gensim (dieselbe Abhängigkeitsfrage, schlechtere
+Determinismus-Lage); kein Themenmodell und nur Spezifität je Begriff (dann fehlt der Tabelle die inhaltliche
+Variante, die zeigt, ob der Zusammenhang an einem Thema hängt).
