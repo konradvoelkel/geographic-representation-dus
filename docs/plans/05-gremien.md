@@ -1,6 +1,6 @@
 # Plan 05: Gremien
 
-Stand 2026-10-11, Branch `feat/05-gremien`. Status: umgeschrieben.
+Stand 2026-10-11, Branch `feat/05-gremien`. Status: in Arbeit (seit 2026-10-12).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.5; Regeln § 2; Vorlage § 8.3. Dieser
 Plan ist so geschrieben, dass ein frischer Agent ihn nach der Synergiephase ohne Rückfragen umsetzen kann:
