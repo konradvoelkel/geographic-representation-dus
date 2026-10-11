@@ -98,3 +98,9 @@ def test_fingerprint_ignores_contracts_switch(tmp_path: Path) -> None:
     (tmp_path / "settings.toml").write_text('contracts = "off"\n', encoding="utf-8")
     off = load_settings(cwd=tmp_path)
     assert off.contracts == "off" and base.fingerprint() == off.fingerprint()
+
+
+def test_text_split_marker_must_not_be_empty(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text('[search]\ntext_split_marker = ""\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match="text_split_marker"):
+        load_settings(cwd=tmp_path)

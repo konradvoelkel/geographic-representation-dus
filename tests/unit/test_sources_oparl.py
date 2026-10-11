@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import datetime as dt
-import json
 from typing import Any
 
 import pytest
 import requests
 
+from georep.errors import FetchError
 from georep.settings import Period
 from georep.sources.oparl import fetch_papers
 from tests.fakes import FakeSession, response
@@ -90,5 +90,8 @@ def test_fetch_propagates_network_and_format_errors() -> None:
     with pytest.raises(requests.ConnectionError):
         fetch_papers(FakeSession(routes), PAGE1, PERIOD)
     routes[PAGE2] = response(PAGE2, content=b"{ kaputt")
-    with pytest.raises(json.JSONDecodeError):
+    with pytest.raises(FetchError, match="page=2"):
+        fetch_papers(FakeSession(routes), PAGE1, PERIOD)
+    routes[PAGE2] = response(PAGE2, payload={"data": "keine Liste", "links": {}})
+    with pytest.raises(FetchError, match="page=2"):
         fetch_papers(FakeSession(routes), PAGE1, PERIOD)

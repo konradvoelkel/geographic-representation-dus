@@ -109,8 +109,9 @@ def test_fetch_street_names_rejects_answers_without_elements(settings: Settings)
 
 def test_parse_point_and_sparql_query() -> None:
     assert parse_point("Point(6.77365 51.23054)") == (6.77365, 51.23054)
-    with pytest.raises(FetchError):
-        parse_point("51.2, 6.7")
+    for bad in ("51.2, 6.7", "Point(a b)", "Point(1 2 3)", "Point(500 51)", "Point(6.7 91)"):
+        with pytest.raises(FetchError, match="Koordinate"):
+            parse_point(bad)
     query = sparql_query("Q2066", "fr")
     assert "wd:Q2066." in query and "fr.wikipedia.org" in query and 'language "fr"' in query
     assert sparql_query("Q1718", "de") == (HTTP / "wikidata_sparql.query.txt").read_text(
@@ -171,3 +172,15 @@ def test_recorded_geosearch_keeps_only_points_inside_the_queried_precinct(
     sent = session.calls[0][1]
     assert sent["gsbbox"] == params["gsbbox"] and sent["gslimit"] == 500
     assert geosearch_params((6.7, 51.2, 6.8, 51.3), 10)["gsbbox"] == "51.3|6.7|51.2|6.8"
+
+
+def test_sparql_binding_without_fields_is_a_fetch_error(
+    precincts: list[Precinct], settings: Settings
+) -> None:
+    endpoint = settings.sources.wikidata.sparql_endpoint
+    broken = {"results": {"bindings": [{"itemLabel": {"value": "Ohne Koordinate"}}]}}
+    session = FakeSession({endpoint: response(endpoint, payload=broken)})
+    with pytest.raises(FetchError, match="coord"):
+        fetch_sparql_pois(
+            session, endpoint, "egal", PrecinctIndex(precincts, settings.geo.working_crs)
+        )

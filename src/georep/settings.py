@@ -117,6 +117,15 @@ class Search(_Strict):
     hide_in_display: list[str] = []
     exclude: list[str] = []
 
+    @field_validator("text_split_marker")
+    @classmethod
+    def _marker_not_empty(cls, value: str) -> str:
+        if not value:
+            raise ValueError(
+                "search.text_split_marker darf nicht leer sein (str.split braucht einen Trenner)"
+            )
+        return value
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(

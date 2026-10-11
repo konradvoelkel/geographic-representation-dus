@@ -13,6 +13,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from georep.errors import FetchError
 from georep.http import Transport
 from georep.oparl import PaperPage
 from georep.records import PaperRecord
@@ -51,7 +52,11 @@ def fetch_papers(
         response = http.get(url, params=params)
         params = None  # der Filter steht nur auf der ersten Anfrage; next-Links tragen ihn weiter
         response.raise_for_status()
-        page = PaperPage.model_validate(response.json())
+        try:
+            # pydantics ValidationError ist ein ValueError, wie der JSON-Fehler
+            page = PaperPage.model_validate(response.json())
+        except ValueError as error:
+            raise FetchError(f"OParl {url}: keine gültige Paper-Seite ({error})") from error
         pages += 1
         seen += len(page.data)
         for paper in page.data:

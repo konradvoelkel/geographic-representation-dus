@@ -33,12 +33,17 @@ SELECT ?item ?itemLabel ?coord ?article WHERE {{
 
 
 def parse_point(value: str) -> tuple[float, float]:
-    """``Point(6.77 51.23)`` (WKT, lon lat) -> (lon, lat)."""
+    """``Point(6.77 51.23)`` (WKT, lon lat) -> (lon, lat); alles andere ist ein ``FetchError``."""
     inner = value.strip()
     if not inner.startswith("Point(") or not inner.endswith(")"):
         raise FetchError(f"Keine WKT-Koordinate: {value!r}")
-    lon, lat = inner[6:-1].split()
-    return float(lon), float(lat)
+    try:
+        lon, lat = (float(part) for part in inner[6:-1].split())
+    except ValueError as error:  # nicht zwei Teile oder keine Zahlen
+        raise FetchError(f"Keine WKT-Koordinate: {value!r} ({error})") from error
+    if not (-180.0 <= lon <= 180.0 and -90.0 <= lat <= 90.0):
+        raise FetchError(f"Keine WKT-Koordinate in Grad: {value!r}")
+    return lon, lat
 
 
 def _assign(entry: dict[str, Any], hit: Precinct | None) -> dict[str, Any]:
@@ -62,13 +67,18 @@ def fetch_sparql_pois(
         raise FetchError(f"SPARQL {endpoint}: keine Bindings ({error})") from error
     pois: list[dict[str, Any]] = []
     for binding in bindings:
-        lon, lat = parse_point(binding["coord"]["value"])
-        entry = {
-            "label": binding["itemLabel"]["value"],
-            "lon": lon,
-            "lat": lat,
-            "url": binding["article"]["value"],
-        }
+        try:
+            lon, lat = parse_point(binding["coord"]["value"])
+            entry = {
+                "label": binding["itemLabel"]["value"],
+                "lon": lon,
+                "lat": lat,
+                "url": binding["article"]["value"],
+            }
+        except (KeyError, TypeError) as error:
+            raise FetchError(
+                f"SPARQL {endpoint}: Binding ohne coord, itemLabel oder article ({error!r})"
+            ) from error
         pois.append(_assign(entry, index.locate(lon, lat)))
     return pois
 

@@ -67,6 +67,10 @@ def regress(
         raise EmptyResultError(
             f"Regression braucht mindestens 3 Wahlbezirke, {frame.height} vorhanden."
         )
+    if frame.get_column(x).n_unique() < 2:
+        # scipy 1.18 liefert hier Steigung 0, r 0 und einen Standardfehler von 1e17 mit einer
+        # RuntimeWarning; ältere Versionen warfen ValueError. Beides ist kein Ergebnis.
+        raise EmptyResultError(f"Regression braucht Streuung in {x}: alle Werte gleich.")
     fit = linregress(frame.get_column(x).to_numpy(), (frame.get_column(y) * y_scale).to_numpy())
     return RegressionResult(
         n=frame.height,
