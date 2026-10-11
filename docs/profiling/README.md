@@ -124,3 +124,21 @@ neu gebaute Index ist byteidentisch mit dem vorherigen (31 024 Treffer, `results
   der Index öfter als einmal je Datenänderung läuft oder der Korpus um eine Größenordnung wächst. Billiger
   ist der doppelte `lower()` (3 %), lohnt aber auch nicht.
 - **Rust:** kein gemessener Flaschenhals, den Python nicht in Sekunden erledigt. Kein Port.
+
+## Overhead der Verträge (2026-10-11, Phase 6)
+
+Alle Verträge aus Phase 6 aktiv (`contracts = "on"`, Standard) gegen `GEOREP_CONTRACTS=off`, voller
+Datensatz, derselbe Rechner wie oben.
+
+| Messung | Verträge an | Verträge aus |
+|---|---|---|
+| `georep run --force`, gesamt, drei Läufe | 6,7 / 6,7 / 6,4 s | 6,7 / 6,6 / 6,7 s |
+| Schritt `index` in diesen Läufen | 4,3 / 4,3 / 4,1 s | 4,3 / 4,2 / 4,3 s |
+| `build_index` direkt, Minimum von drei Aufrufen | 4,04 s | 4,09 s |
+| `hits_by_district` + `join_voters` direkt, Minimum von zehn | 16 ms | 9 ms |
+
+Der Overhead liegt unter dem Rauschen des Laufs, also unter einem Prozent. Absolut kosten die Verträge
+rund zehn Millisekunden je Lauf, fast alles in den Mengenvergleichen der Nachbedingungen von
+`hits_by_district` und `join_voters` (Wahlbezirke Teilmenge der Eingaben, Listen sortiert und eindeutig).
+Die Verträge stehen an Batch-Grenzen, nicht in der heißen Schleife des Matchers; darum bleibt `index`
+unverändert. `contracts = "off"` ist eine Option für Messungen, kein Bedürfnis im Betrieb.
