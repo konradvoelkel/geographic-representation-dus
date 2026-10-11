@@ -131,6 +131,7 @@ class ResultsColumns(_Strict):
     eligible: str
     voters: str
     parties: dict[str, str]
+    city_district: str  # Option 05: Stadtbezirk je Stimmbezirk, für die Zuordnung der Wahlbezirke
 
 
 class Columns(_Strict):
@@ -161,6 +162,62 @@ class Analysis(_Strict):
     exclude_districts: list[int] = []  # Tabelle 5 „ohne Ausreißer"; leer = keine zweite Regression
 
 
+# Option 05
+class Bodies(_Strict):
+    """Gremium je Ratsdokument aus der Drucksachennummer; Muster, Kürzel und Namen nur hier.
+
+    ``reference_pattern`` braucht die Gruppen ``code`` (Kürzel) und ``number`` (die Nummer dahinter,
+    bei Bezirksvertretungen der Stadtbezirk). Die drei Tabellen ordnen Kürzel ihrer Klasse zu
+    (Rat, Ausschuss, Beirat) und nennen den Namen (leer = nicht gesichert); ``district_body`` ist
+    das Kürzel der Bezirksvertretungen. Ein Kürzel in zwei Tabellen wäre eine doppelte Wahrheit.
+    """
+
+    reference_pattern: str
+    district_body: str
+    district_body_name: str = "{n}"  # Anzeigename der Bezirksvertretung, {n} ist der Stadtbezirk
+    names_as_of: date | None = None  # Stand der Namen; nur Anzeige, nicht im Fingerprint
+    council: dict[str, str] = {}
+    committees: dict[str, str] = {}
+    advisory: dict[str, str] = {}
+
+    @field_validator("reference_pattern")
+    @classmethod
+    def _pattern_has_code_and_number(cls, value: str) -> str:
+        try:
+            groups = re.compile(value).groupindex
+        except re.error as error:
+            raise ValueError(f"bodies.reference_pattern ist kein Muster: {error}") from error
+        missing = [g for g in ("code", "number") if g not in groups]
+        if missing:
+            raise ValueError(f"bodies.reference_pattern braucht die Gruppen {missing}")
+        return value
+
+    @model_validator(mode="after")
+    def _codes_disjoint(self) -> Bodies:
+        if not self.district_body:
+            raise ValueError("bodies.district_body darf nicht leer sein")
+        tables = {"council": self.council, "committees": self.committees, "advisory": self.advisory}
+        seen: dict[str, str] = {}
+        for table, codes in tables.items():
+            for code in codes:
+                if code in seen:
+                    raise ValueError(
+                        f"Kürzel {code} steht in bodies.{seen[code]} und bodies.{table}"
+                    )
+                seen[code] = table
+        if self.district_body in seen:
+            raise ValueError(
+                f"bodies.district_body {self.district_body!r} steht auch in "
+                f"bodies.{seen[self.district_body]}"
+            )
+        return self
+
+    @property
+    def codes(self) -> frozenset[str]:
+        """Alle Kürzel der drei Tabellen (ohne die Bezirksvertretungen)."""
+        return frozenset(self.council) | frozenset(self.committees) | frozenset(self.advisory)
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_", env_nested_delimiter="__", extra="forbid", frozen=True
@@ -182,6 +239,7 @@ class Settings(BaseSettings):
     columns: Columns
     search: Search = Search()
     analysis: Analysis = Analysis()
+    bodies: Bodies  # Option 05
 
     @field_validator("cache_root", mode="before")
     @classmethod
@@ -225,18 +283,20 @@ class Settings(BaseSettings):
         """Kurzer Hash aller Parameter, die ein Ergebnis beeinflussen.
 
         Nicht dabei: Pfade (auch ``profile``, ein Ordnername), Log-Level, Cache-Lebensdauern und
-        der Vertragsschalter ``contracts``, denn Verträge prüfen ein Ergebnis, sie ändern es nicht.
+        der Vertragsschalter ``contracts``, denn Verträge prüfen ein Ergebnis, sie ändern es nicht;
+        ``bodies.names_as_of`` ist reine Anzeige (die Kürzel und Namen daneben zählen).
         """
         payload = self.model_dump(
             mode="json",
             exclude={
-                "data_root",
-                "cache_root",
-                "reference_root",
-                "profile",
-                "log_level",
-                "cache",
-                "contracts",
+                "data_root": True,
+                "cache_root": True,
+                "reference_root": True,
+                "profile": True,
+                "log_level": True,
+                "cache": True,
+                "contracts": True,
+                "bodies": {"names_as_of"},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
