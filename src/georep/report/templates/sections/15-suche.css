@@ -5,7 +5,8 @@ span.suche-feld { position: relative; display: block; flex: 1 1 18em; max-width:
 #suche-feld:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 #suche-liste { position: absolute; z-index: 9; top: calc(100% + .25rem); left: 0; right: 0; margin: 0; padding: .2rem 0; list-style: none; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 2px 8px rgba(0, 0, 0, .15); max-height: 15em; overflow-y: auto; }
 #suche-liste li { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .25rem .6rem; cursor: pointer; max-width: none; }
-#suche-liste li[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); }
+/* Tönung allein bleibt unter 3:1 gegen die Fläche (WCAG 1.4.11), darum zusätzlich ein Rahmen. */
+#suche-liste li[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); outline: 2px solid var(--accent); outline-offset: -2px; }
 #suche-liste .art { color: var(--ink-2); font-size: .85rem; white-space: nowrap; }
 #suche-status { min-height: 1.5em; margin: .35rem 0 0; }
 #suche-ergebnis { margin: .5rem 0 0; max-width: 48em; }

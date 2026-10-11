@@ -242,7 +242,7 @@ def _search_json(page: str) -> object:
 
 def test_search_data_is_a_readable_json_block(page: str, model: ReportModel) -> None:
     assert _search_json(page) == json.loads(json.dumps(search_payload(model.search)))
-    assert page.count("<script") == 2  # Basis-Skript und der JSON-Block
+    assert page.count("<script") == 3  # Basis-Skript, Abschnitts-Skripte, der JSON-Block
 
 
 def test_a_term_that_would_end_the_script_is_escaped(model: ReportModel, visuals: Visuals) -> None:
