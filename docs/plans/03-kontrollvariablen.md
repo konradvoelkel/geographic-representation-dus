@@ -1,6 +1,6 @@
 # Plan 03: Kontrollvariablen
 
-Stand 2026-10-11, Branch `feat/03-kontrollvariablen`. Status: umgeschrieben.
+Stand 2026-10-11, Branch `feat/03-kontrollvariablen`. Status: in Arbeit (seit 2026-10-12).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.3 mit Konrads Antworten vom 2026-10-11
 (Quartiersatlas ausdrücklich erlaubt, andere Daten mit Lizenz und einem Abschnitt „Abgeleitete Daten" auf der
