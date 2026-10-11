@@ -21,6 +21,7 @@ from jinja2 import Environment, PackageLoader, StrictUndefined, select_autoescap
 from georep.errors import SchemaError
 from georep.report.charts import LegendEntry
 from georep.report.model import ReportModel, format_de, percent_de
+from georep.report.search import search_payload
 
 REPOSITORY = "https://github.com/konradvoelkel/geographic-representation-dus"
 THESIS = "https://github.com/lubar102/geographic-representation-dus"
@@ -172,6 +173,16 @@ def sections(folder: Traversable | None = None) -> tuple[Section, ...]:
     return tuple(found)
 
 
+def _json_for_script(data: object) -> str:
+    """JSON für ein ``<script type="application/json">``: kein ``<`` im Text, als ``\\u003c`` kodiert.
+
+    ``</`` allein zu maskieren reicht nicht: ``<!--`` gefolgt von ``<script`` versetzt den
+    HTML-Tokenizer in „script data double escaped", und das echte ``</script>`` wird verschluckt
+    (Review 2026-10-12). ``\\u003c`` ist gültiges JSON und für den Tokenizer unsichtbar.
+    """
+    return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
+
+
 @deal.post(lambda result: result.startswith("<!doctype html>") and 'lang="de"' in result)
 @deal.post(
     lambda result: set(external_links(result)) <= ALLOWED_LINKS,
@@ -187,6 +198,7 @@ def render_report(model: ReportModel, visuals: Visuals) -> str:
         section_css="".join(s.css for s in parts if s.css),
         section_js="\n".join(s.js for s in parts if s.js),
         tables=list(dict.fromkeys(column.table for column in model.columns)),
+        search_json=_json_for_script(search_payload(model.search)),
         links={
             "repository": REPOSITORY,
             "thesis": THESIS,
@@ -202,16 +214,6 @@ def render_report(model: ReportModel, visuals: Visuals) -> str:
             "dl_de_zero": DL_DE_ZERO,
         },
     )
-
-
-def _json_for_script(data: object) -> str:
-    """JSON für ein ``<script type="application/json">``: kein ``<`` im Text, als ``\\u003c`` kodiert.
-
-    ``</`` allein zu maskieren reicht nicht: ``<!--`` gefolgt von ``<script`` versetzt den
-    HTML-Tokenizer in „script data double escaped", und das echte ``</script>`` wird verschluckt
-    (Review 2026-10-12). ``\\u003c`` ist gültiges JSON und für den Tokenizer unsichtbar.
-    """
-    return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
 
 
 @deal.post(lambda result: result.startswith("<!doctype html>") and 'lang="de"' in result)

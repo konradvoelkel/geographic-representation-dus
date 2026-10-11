@@ -1,0 +1,17 @@
+{% if model.search %}
+<section id="suche">
+<h2>Straße oder Ort suchen</h2>
+<p class="note">Durchsucht {{ model.search|length|num }} Straßen, Orte und Wahlbezirke. Die Vorschläge stecken in dieser Seite und brauchen kein Netz; nur die Dokumentliste wird nachgeladen und braucht einen Webserver.</p>
+<form role="search" autocomplete="off">
+<label for="suche-feld">Straße oder Ort</label>
+<span class="suche-feld">
+<input type="text" id="suche-feld" name="suche" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="suche-liste" aria-describedby="suche-status" placeholder="z. B. münchener straße" spellcheck="false" enterkeyhint="search">
+<ul id="suche-liste" role="listbox" aria-label="Vorschläge" hidden></ul>
+</span>
+</form>
+<p id="suche-status" class="note" aria-live="polite"></p>
+<div id="suche-ergebnis" class="tile" aria-live="polite" hidden></div>
+<noscript><p class="note">Die Suche braucht JavaScript. Ohne JavaScript führen die Abschnitte <a href="#karte">Karte</a> und <a href="#begriffe">Begriffe</a> zu denselben Angaben.</p></noscript>
+<script id="suche-daten" type="application/json">{{ search_json|safe }}</script>
+</section>
+{% endif %}
