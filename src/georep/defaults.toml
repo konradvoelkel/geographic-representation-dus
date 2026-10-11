@@ -1,0 +1,125 @@
+# Standardkonfiguration: Düsseldorf, Kommunalwahl 2025, Ratsdokumente der Wahlperiode 2020–2025.
+# Jede Zahl trägt ihre Begründung. Überschreiben in ./settings.toml oder ./settings.local.toml
+# (gitignored, rechnerspezifisch; tiefer Merge, es reicht der geänderte Schlüssel) oder per
+# Umgebungsvariable GEOREP_<FELD>, verschachtelt mit __, z. B. GEOREP_SOURCES__OPARL__DELAY_S=2.
+# Reihenfolge: Umgebung > settings.local.toml > settings.toml > diese Datei.
+
+data_root = "./data"           # Laufzeitdaten und Zwischenergebnisse, relativ zum Arbeitsverzeichnis; gitignored
+cache_root = ""                # leer = <data_root>/cache: PDFs, Texte, HTTP-Cache; bei Konrad auf xtraspace
+reference_root = "./reference" # eingefrorener Datensatz der Arbeit; wird nur gelesen
+contracts = "on"               # "off" schaltet die deal-Verträge ab (ab Phase 6)
+log_level = "INFO"
+
+[period]                       # Wahlperiode zwischen den Kommunalwahlen 2020 und 2025, beide Grenzen einschließlich
+start = 2020-09-13
+end = 2025-09-14
+
+[http]
+timeout_s = 180                # der OParl-Server brauchte am 2026-10-09 85 s pro Seite
+retries = 5                    # 429 und 5xx mit exponentiellem Backoff
+user_agent = "georep/0.2 (+https://github.com/konradvoelkel/geographic-representation-dus)"
+
+[sources.oparl]
+endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers"  # body 0015 = Düsseldorf; 0009 Neuss, 0011 Mönchengladbach, 0013 Grevenbroich, 0019 Rhein-Kreis Neuss
+delay_s = 1.0                  # Pause zwischen Seiten und Dateien; der Server ist langsam, nicht wir
+
+[sources.opendata]
+results_url = "https://opendata.duesseldorf.de/sites/default/files/KW_Rat_2025_09_14_Endgültiges_Ergebnis_Stimmbezirke_0.csv"
+districts_url = "https://opendata.duesseldorf.de/sites/default/files/Stimmbezirke%202025_ETRS89_EPSG4647.geojson"
+
+[sources.wikidata]
+sparql_endpoint = "https://query.wikidata.org/sparql"
+wikipedia_api = "https://de.wikipedia.org/w/api.php"
+entity = "Q1718"               # Düsseldorf; Objekte mit P131* (liegt in) auf diese Verwaltungseinheit
+language = "de"
+geosearch_limit = 500          # Maximum der Wikipedia-GeoSearch je Bounding Box
+
+[sources.osm]
+overpass_endpoint = "https://overpass-api.de/api/interpreter"
+delay_s = 1.0
+
+[geo]
+working_crs = "EPSG:25832"     # metrisch rechnen (ETRS89 / UTM 32N); die Stimmbezirke kommen in EPSG:4647, dasselbe Datum mit Zonenpräfix
+output_crs = "EPSG:4326"       # Overpass und Wikidata sprechen lon/lat; genau eine Reprojektionsstelle
+
+[columns]                      # Feldnamen der Quellen; bis Phase 2 in drei Modulen hart kodiert
+district_id = "Kommunalwahlbezirk Nr."
+district_name = "Kommunalwahlbezirk Name"
+precinct_id = "Stimm-/ Wahlbezirk"
+
+[columns.results]              # Wahlergebnis-CSV des Open-Data-Portals
+sep = ";"
+encoding = "latin-1"
+district = "Kommunalwahlbezirk"
+eligible = "Wahlberechtigte_insgesamt"
+voters = "Waehler"
+parties = { CDU = "CDU_Stimmen", GRUENE = "GRUENE_Stimmen", SPD = "SPD_Stimmen", FDP = "FDP_Stimmen", Die_Linke = "Die_Linke_Stimmen", AfD = "AfD_Stimmen" }
+
+[search]
+text_split_marker = "betrifft" # der Vorlagenkopf vor dem ersten Vorkommen wird verworfen (Düsseldorfer Vorlagenformat)
+hide_in_display = ["schulweg"] # wird aus der Begriffsliste der Auswertung entfernt, zählt aber in den Treffern (Verhalten der Arbeit, Kap. 4.3.5)
+exclude = [                    # Stadtteil- und Stadtbezirksnamen: zu grob für einen Wahlbezirk
+    "Düsseldorf",
+    "Düssel",
+    "Stadtbezirk 1",
+    "Altstadt",
+    "Carlstadt",
+    "Stadtmitte",
+    "Pempelfort",
+    "Derendorf",
+    "Golzheim",
+    "Stadtbezirk 2",
+    "Flingern-Nord",
+    "Flingern-Süd",
+    "Düsseltal",
+    "Flingern",
+    "Stadtbezirk 3",
+    "Oberbilk",
+    "Unterbilk",
+    "Bilk",
+    "Friedrichstadt",
+    "Hafen",
+    "Hamm",
+    "Flehe",
+    "Volmerswerth",
+    "Stadtbezirk 4",
+    "Oberkassel",
+    "Heerdt",
+    "Lörick",
+    "Niederkassel",
+    "Stadtbezirk 5",
+    "Stockum",
+    "Lohausen",
+    "Kaiserswerth",
+    "Wittlaer",
+    "Kalkum",
+    "Angermund",
+    "Stadtbezirk 6",
+    "Lichtenbroich",
+    "Unterrath",
+    "Rath",
+    "Mörsenbroich",
+    "Stadtbezirk 7",
+    "Gerresheim",
+    "Grafenberg",
+    "Ludenberg",
+    "Hubbelrath",
+    "Knittkuhl",
+    "Stadtbezirk 8",
+    "Eller",
+    "Lierenfeld",
+    "Vennhausen",
+    "Unterbach",
+    "Stadtbezirk 9",
+    "Wersten",
+    "Holthausen",
+    "Reisholz",
+    "Benrath",
+    "Urdenbach",
+    "Hassels",
+    "Itter",
+    "Himmelgeist",
+    "Stadtbezirk 10",
+    "Garath",
+    "Hellerhof"
+]
