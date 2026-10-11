@@ -96,3 +96,61 @@ def test_online_run_fetches_everything_then_skips(tmp_path: Path, settings: Sett
     forced = run_pipeline(steps, settings, ["papers"], online=True, force=True)
     assert forced[0].status == "ausgeführt" and "seit 2024-04-30" in forced[0].reason
     assert session.calls[-1][1] == {"modified_since": "2024-04-30T11:00:00+02:00"}
+
+
+def test_streets_and_pois_steps_use_recorded_answers(
+    tmp_path: Path, settings: Settings, reference_root: Path
+) -> None:
+    import json
+
+    from tests.conftest import REPO
+
+    http = REPO / "tests" / "fixtures" / "http"
+    src = settings.sources
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    layout.ensure_dirs()
+    collection = json.loads(
+        (reference_root / "external" / "Stimmbezirke_2025.geojson").read_text(encoding="utf-8")
+    )
+    one = {
+        **collection,
+        "features": [
+            f for f in collection["features"] if f["properties"]["Stimm-/ Wahlbezirk"] == "1302"
+        ],
+    }
+    layout.districts_geojson.write_text(json.dumps(one), encoding="utf-8")
+    routes: dict[str, Any] = {
+        src.osm.overpass_endpoint: response(
+            src.osm.overpass_endpoint,
+            payload=json.loads((http / "overpass_1302.json").read_text(encoding="utf-8")),
+        ),
+        src.wikidata.sparql_endpoint: response(
+            src.wikidata.sparql_endpoint,
+            payload=json.loads((http / "wikidata_sparql.json").read_text(encoding="utf-8")),
+        ),
+        src.wikidata.wikipedia_api: response(
+            src.wikidata.wikipedia_api,
+            payload=json.loads(
+                (http / "wikipedia_geosearch_1302.json").read_text(encoding="utf-8")
+            ),
+        ),
+    }
+    steps = build_steps(settings, layout, FakeSession(routes), sleep=lambda _: None)
+    outcomes = run_pipeline(
+        steps, settings, ["streets_osm", "pois_wiki", "streets", "pois"], online=True
+    )
+    assert [o.status for o in outcomes] == ["ausgeführt"] * 4
+    streets = json.loads(layout.streets.read_text(encoding="utf-8"))
+    reference = next(
+        e
+        for e in json.loads(
+            (reference_root / "raw" / "streets_per_district.json").read_text(encoding="utf-8")
+        )
+        if e["stimmbezirks_id"] == "1302"
+    )
+    assert streets == [reference]
+    pois = json.loads(layout.pois.read_text(encoding="utf-8"))
+    assert len(pois) == 25 + 2 and all("wahlkreis_id" in p for p in pois)
+    assert "1 Stimmbezirke, 11 Straßennamen" in outcomes[0].reason
+    assert "25 per SPARQL, 2 per GeoSearch" in outcomes[1].reason
+    assert layout.streets_by_district.exists() and layout.pois_by_district.exists()

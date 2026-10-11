@@ -19,3 +19,5 @@ jobs:
       - run: uv python install
       - run: uv sync --locked
       - run: uv run nox -s lint typecheck deps test golden
+        env:
+          HYPOTHESIS_PROFILE: ci

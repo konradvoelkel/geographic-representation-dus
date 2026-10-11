@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from syrupy.assertion import SnapshotAssertion
 
 from georep.cli import main
 
@@ -75,3 +76,45 @@ def test_fetch_plans_network_steps_and_texts(
     assert main(["run", "--dry-run", "--online", "opendata", "papers"]) == 0
     out = capsys.readouterr().out
     assert out.rstrip().endswith("2 geplant") and "Netz aus" not in out
+
+
+def test_steps_output_is_stable(
+    project: Path, capsys: pytest.CaptureFixture[str], snapshot: SnapshotAssertion
+) -> None:
+    assert main(["steps"]) == 0
+    assert capsys.readouterr().out == snapshot
+
+
+def test_fetch_with_limit_runs_only_the_named_step(
+    project: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import requests
+
+    from georep.settings import Settings, load_settings
+    from tests.fakes import FakeSession, response
+
+    src = load_settings(cwd=project).sources
+    routes: dict[str, requests.Response | Exception] = {
+        src.opendata.results_url: response(src.opendata.results_url, content=b"a;b\n1;2\n"),
+        src.opendata.districts_url: response(
+            src.opendata.districts_url, payload={"type": "FeatureCollection", "features": [{}]}
+        ),
+    }
+    seen: list[int] = []
+
+    def fake_session(settings: Settings, path: Path) -> FakeSession:
+        seen.append(settings.sources.oparl.pdf_limit)
+        return FakeSession(routes)
+
+    monkeypatch.setattr("georep.pipeline.cached_session", fake_session)
+    assert main(["fetch", "opendata", "--limit", "7"]) == 0
+    out = capsys.readouterr().out
+    assert "opendata     ausgeführt" in out and "1 ausgeführt" in out
+    assert seen == [7]
+
+
+def test_regress_without_results_is_a_domain_error(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["regress"]) == 1
+    assert "wahlbezirke_auswertung.parquet" in capsys.readouterr().err

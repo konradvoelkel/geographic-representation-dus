@@ -39,7 +39,12 @@ def deps(session: nox.Session) -> None:
 
 @nox.session
 def test(session: nox.Session) -> None:
-    session.run("uv", "run", "pytest", "-m", "not slow and not network", *session.posargs)
+    """Schnelle Suite parallel; Abdeckung ist eine Untergrenze, kein Ziel (Skript, Kapitel Testing)."""
+    session.run(
+        "uv", "run", "pytest", "-n", "auto", "-m", "not slow and not network",
+        "--cov=georep", "--cov-report=term-missing:skip-covered", "--cov-fail-under=90",
+        *session.posargs,
+    )
 
 
 @nox.session

@@ -1,0 +1,32 @@
+# serializer version: 1
+# name: test_steps_output_is_stable
+  '''
+  opendata     <- (nichts) [Netz]
+               -> Stimmbezirk_Wahlergebnis.csv, Stimmbezirke_2025.geojson
+  papers       <- (nichts) [Netz]
+               -> papers.jsonl
+  pdfs         <- papers.jsonl [Netz]
+               -> manifest.jsonl
+  streets_osm  <- Stimmbezirke_2025.geojson [Netz]
+               -> streets_per_district.json
+  pois_wiki    <- Stimmbezirke_2025.geojson [Netz]
+               -> wikipedia_dict.json
+  texts        <- papers.jsonl, manifest.jsonl
+               -> texts.parquet
+  voters       <- Stimmbezirk_Wahlergebnis.csv
+               -> wahlbezirke_waehler.parquet
+  streets      <- streets_per_district.json
+               -> wahlbezirke_strassen.parquet
+  pois         <- wikipedia_dict.json
+               -> wikidata_vis.parquet, wikidata_agg.parquet
+  dictionary   <- wikidata_agg.parquet, wahlbezirke_strassen.parquet
+               -> combined_searchdict.parquet
+  corpus       <- papers.jsonl, texts.parquet
+               -> papers.parquet
+  index        <- combined_searchdict.parquet, papers.parquet
+               -> inverted_index.parquet
+  results      <- combined_searchdict.parquet, inverted_index.parquet, wahlbezirke_waehler.parquet
+               -> wahlbezirke_auswertung.parquet
+  
+  '''
+# ---

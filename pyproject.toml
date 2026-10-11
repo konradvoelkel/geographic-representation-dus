@@ -96,3 +96,10 @@ markers = [
     "slow: laeuft ueber den vollen Referenzkorpus (Sekunden bis Minuten)",
     "network: braucht echte Endpunkte; nie in CI",
 ]
+
+[tool.coverage.run]
+source = ["georep"]
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true
