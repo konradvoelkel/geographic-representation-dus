@@ -1,0 +1,420 @@
+{
+ "data": [
+  {
+   "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114093",
+   "type": "https://schema.oparl.org/1.1/Paper",
+   "body": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015",
+   "name": "Verkehrssicherheit für alle auf der Wiesenstraße",
+   "reference": "BV4/175/2026",
+   "date": "2026-10-07",
+   "paperType": "Bezirksvertretung Informationsvorlage",
+   "mainFile": {
+    "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599777",
+    "type": "https://schema.oparl.org/1.1/File",
+    "name": "Informationsvorlage BV",
+    "fileName": "00599777.pdf",
+    "mimeType": "application/pdf",
+    "date": "2026-10-07",
+    "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599777.pdf",
+    "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599777.pdf",
+    "created": "2026-10-07T12:18:34+02:00",
+    "modified": "2026-10-07T12:22:58+02:00"
+   },
+   "consultation": [
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/consultations/141791",
+     "type": "https://schema.oparl.org/1.1/Consultation",
+     "paper": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114093",
+     "agendaItem": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/agendaitems/399178",
+     "meeting": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/meetings/29513",
+     "organization": [
+      "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations/gr/35"
+     ],
+     "authoritative": true,
+     "role": "Kenntnisnahme",
+     "created": "2026-10-08T08:37:25+02:00",
+     "modified": "2026-10-08T08:55:52+02:00"
+    }
+   ],
+   "created": "2026-10-07T12:18:20+02:00",
+   "modified": "2026-10-07T12:22:58+02:00"
+  },
+  {
+   "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114087",
+   "type": "https://schema.oparl.org/1.1/Paper",
+   "body": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015",
+   "name": "Gedenken an die \"Judenhäuser\" im Bezirk 2 - Haushaltsbegleitantrag der Fraktion DIE LINKE",
+   "reference": "BV2/292/2026",
+   "date": "2026-10-06",
+   "paperType": "Antrag",
+   "mainFile": {
+    "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599649",
+    "type": "https://schema.oparl.org/1.1/File",
+    "name": "Antrag",
+    "fileName": "00599649.pdf",
+    "mimeType": "application/pdf",
+    "date": "2026-10-06",
+    "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599649.pdf",
+    "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599649.pdf",
+    "created": "2026-10-06T13:57:10+02:00",
+    "modified": "2026-10-06T14:02:21+02:00"
+   },
+   "consultation": [
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/consultations/141786",
+     "type": "https://schema.oparl.org/1.1/Consultation",
+     "paper": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114087",
+     "agendaItem": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/agendaitems/399148",
+     "meeting": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/meetings/29639",
+     "organization": [
+      "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations/gr/33"
+     ],
+     "authoritative": true,
+     "role": "Entscheidung",
+     "created": "2026-10-06T14:03:30+02:00",
+     "modified": "2026-10-07T08:07:37+02:00"
+    }
+   ],
+   "created": "2026-10-06T13:56:43+02:00",
+   "modified": "2026-10-06T14:02:21+02:00"
+  },
+  {
+   "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114086",
+   "type": "https://schema.oparl.org/1.1/Paper",
+   "body": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015",
+   "name": "Ergänzungsantrag der FDP-Ratsfraktion zur Vorlage OVA/102/2026",
+   "reference": "OVA/119/2026",
+   "date": "2026-10-06",
+   "paperType": "Antrag FDP",
+   "mainFile": {
+    "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599643",
+    "type": "https://schema.oparl.org/1.1/File",
+    "name": "Antrag",
+    "fileName": "00599643.pdf",
+    "mimeType": "application/pdf",
+    "date": "2026-10-06",
+    "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599643.pdf",
+    "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599643.pdf",
+    "created": "2026-10-06T13:24:08+02:00",
+    "modified": "2026-10-06T13:42:27+02:00"
+   },
+   "consultation": [
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/consultations/141785",
+     "type": "https://schema.oparl.org/1.1/Consultation",
+     "paper": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114086",
+     "agendaItem": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/agendaitems/399151",
+     "meeting": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/meetings/29539",
+     "organization": [
+      "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations/gr/25"
+     ],
+     "authoritative": true,
+     "role": "Entscheidung",
+     "created": "2026-10-06T16:11:40+02:00",
+     "modified": "2026-10-08T08:37:29+02:00"
+    }
+   ],
+   "created": "2026-10-06T13:13:32+02:00",
+   "modified": "2026-10-06T13:42:23+02:00"
+  },
+  {
+   "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114038",
+   "type": "https://schema.oparl.org/1.1/Paper",
+   "body": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015",
+   "name": "Bauantrag Kronenstraße 29 – Umbau von Wohnungen, Erstellung von zwei rückwärtigen Wohnungen, nachträgliche Genehmigung der Wohnnutzung im DG sowie Dachaufstockung und Ausbau des SB",
+   "reference": "BV3/214/2026",
+   "date": "2026-10-01",
+   "paperType": "Beschlussvorlage",
+   "auxiliaryFile": [
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599228",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Lageplan",
+     "fileName": "00599228.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-01",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599228.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599228.pdf",
+     "created": "2026-10-01T10:29:17+02:00",
+     "modified": "2026-10-06T09:57:58+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599229",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Grundriss Erdgeschoss",
+     "fileName": "00599229.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-01",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599229.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599229.pdf",
+     "created": "2026-10-01T10:29:37+02:00",
+     "modified": "2026-10-06T09:57:58+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599230",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Schnitt",
+     "fileName": "00599230.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-01",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599230.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599230.pdf",
+     "created": "2026-10-01T10:29:59+02:00",
+     "modified": "2026-10-06T09:57:58+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599231",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Ansicht Straße",
+     "fileName": "00599231.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-01",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599231.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599231.pdf",
+     "created": "2026-10-01T10:30:18+02:00",
+     "modified": "2026-10-06T09:57:58+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599232",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Beteiligung BV Kronenstraße 29",
+     "fileName": "00599232.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-01",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599232.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599232.pdf",
+     "created": "2026-10-01T10:30:52+02:00",
+     "modified": "2026-10-06T09:57:58+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599247",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Kataster",
+     "fileName": "00599247.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-01",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599247.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599247.pdf",
+     "created": "2026-10-01T11:41:19+02:00",
+     "modified": "2026-10-06T09:57:58+02:00"
+    }
+   ],
+   "consultation": [
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/consultations/141737",
+     "type": "https://schema.oparl.org/1.1/Consultation",
+     "paper": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114038",
+     "agendaItem": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/agendaitems/399144",
+     "meeting": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/meetings/29475",
+     "organization": [
+      "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations/gr/34"
+     ],
+     "role": "Entscheidung",
+     "created": "2026-10-06T11:51:47+02:00",
+     "modified": "2026-10-06T11:52:12+02:00"
+    }
+   ],
+   "created": "2026-10-01T10:21:41+02:00",
+   "modified": "2026-10-06T10:35:45+02:00"
+  },
+  {
+   "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114089",
+   "type": "https://schema.oparl.org/1.1/Paper",
+   "body": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015",
+   "name": "Bauvoranfrage (planungsrechtlich), Burgunderstraße 49, 51 - Erweiterung des bestehenden Fertigwarenlagers",
+   "reference": "BV4/174/2026",
+   "date": "2026-10-07",
+   "paperType": "Beschlussvorlage",
+   "mainFile": {
+    "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599721",
+    "type": "https://schema.oparl.org/1.1/File",
+    "name": "Beschlussvorlage",
+    "fileName": "00599721.pdf",
+    "mimeType": "application/pdf",
+    "date": "2026-10-07",
+    "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599721.pdf",
+    "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599721.pdf",
+    "created": "2026-10-07T10:49:19+02:00",
+    "modified": "2026-10-07T10:57:29+02:00"
+   },
+   "auxiliaryFile": [
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599708",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Beteiligung BV",
+     "fileName": "00599708.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-07",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599708.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599708.pdf",
+     "created": "2026-10-07T10:34:21+02:00",
+     "modified": "2026-10-07T10:57:29+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599709",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Katasterauszug",
+     "fileName": "00599709.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-07",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599709.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599709.pdf",
+     "created": "2026-10-07T10:34:40+02:00",
+     "modified": "2026-10-07T10:57:29+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599710",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Luftbild",
+     "fileName": "00599710.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-07",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599710.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599710.pdf",
+     "created": "2026-10-07T10:34:50+02:00",
+     "modified": "2026-10-07T10:57:29+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599711",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Bebauungsplan",
+     "fileName": "00599711.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-07",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599711.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599711.pdf",
+     "created": "2026-10-07T10:34:57+02:00",
+     "modified": "2026-10-07T10:57:29+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599712",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Lageplan",
+     "fileName": "00599712.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-07",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599712.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599712.pdf",
+     "created": "2026-10-07T10:35:06+02:00",
+     "modified": "2026-10-07T10:57:29+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599713",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Übersichtsplan",
+     "fileName": "00599713.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-07",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599713.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599713.pdf",
+     "created": "2026-10-07T10:35:16+02:00",
+     "modified": "2026-10-07T10:57:29+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599714",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Ansicht",
+     "fileName": "00599714.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-07",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599714.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599714.pdf",
+     "created": "2026-10-07T10:35:30+02:00",
+     "modified": "2026-10-07T10:57:29+02:00"
+    },
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599715",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Nachweis Höhen",
+     "fileName": "00599715.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-07",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599715.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599715.pdf",
+     "created": "2026-10-07T10:35:37+02:00",
+     "modified": "2026-10-07T10:57:29+02:00"
+    }
+   ],
+   "consultation": [
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/consultations/141787",
+     "type": "https://schema.oparl.org/1.1/Consultation",
+     "paper": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114089",
+     "agendaItem": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/agendaitems/399177",
+     "meeting": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/meetings/29513",
+     "organization": [
+      "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations/gr/35"
+     ],
+     "authoritative": true,
+     "role": "Entscheidung",
+     "created": "2026-10-08T08:37:01+02:00",
+     "modified": "2026-10-08T08:55:44+02:00"
+    }
+   ],
+   "created": "2026-10-07T10:27:59+02:00",
+   "modified": "2026-10-07T10:57:29+02:00"
+  },
+  {
+   "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114075",
+   "type": "https://schema.oparl.org/1.1/Paper",
+   "body": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015",
+   "name": "Nachpflanzung der Begrünung der Lärmschutzmauer auf der Lütticher Straße",
+   "reference": "BV4/172/2026",
+   "date": "2026-10-05",
+   "paperType": "Bezirksvertretung Informationsvorlage",
+   "mainFile": {
+    "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599487",
+    "type": "https://schema.oparl.org/1.1/File",
+    "name": "Informationsvorlage BV",
+    "fileName": "00599487.pdf",
+    "mimeType": "application/pdf",
+    "date": "2026-10-05",
+    "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599487.pdf",
+    "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599487.pdf",
+    "created": "2026-10-05T14:10:36+02:00",
+    "modified": "2026-10-05T14:46:33+02:00"
+   },
+   "auxiliaryFile": [
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/files/599489",
+     "type": "https://schema.oparl.org/1.1/File",
+     "name": "Anlage 1: Lärmschutzwand \"Südwestlich Lotharstraße\"",
+     "fileName": "00599489.pdf",
+     "mimeType": "application/pdf",
+     "date": "2026-10-05",
+     "accessUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/a/00599489.pdf",
+     "downloadUrl": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/downloadfiles/00599489.pdf",
+     "created": "2026-10-05T14:14:11+02:00",
+     "modified": "2026-10-05T14:46:33+02:00"
+    }
+   ],
+   "consultation": [
+    {
+     "id": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/consultations/141773",
+     "type": "https://schema.oparl.org/1.1/Consultation",
+     "paper": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/114075",
+     "agendaItem": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/agendaitems/399176",
+     "meeting": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/meetings/29513",
+     "organization": [
+      "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations/gr/35"
+     ],
+     "authoritative": true,
+     "role": "Kenntnisnahme",
+     "created": "2026-10-08T08:36:34+02:00",
+     "modified": "2026-10-08T08:54:54+02:00"
+    }
+   ],
+   "created": "2026-10-05T14:10:21+02:00",
+   "modified": "2026-10-05T14:46:33+02:00"
+  }
+ ],
+ "pagination": {
+  "elementsPerPage": 200,
+  "currentPage": 1
+ },
+ "links": {
+  "first": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers",
+  "self": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers",
+  "next": "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers?page=2"
+ }
+}

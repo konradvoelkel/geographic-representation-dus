@@ -1,3 +1,4 @@
+import datetime as dt
 import json
 import time
 from collections.abc import Iterable
@@ -14,19 +15,20 @@ import src.config as cfg
 from georep.errors import CorruptPdfError, SchemaError
 from georep.http import Transport
 from georep.io import write_bytes, write_json
+from georep.oparl import PaperPage
 from src.utils import http_session
 
 
 @dataclass
 class Paper:
     # Fields from OParl-Metadata scheme
-    id: str = field()
-    name: str = field()
-    reference: str = field()
-    date: str = field()
-    paperType: str = field()
-    mainFile: str = field()
-    download_url: str = field()
+    id: str | None = field()
+    name: str | None = field()
+    reference: str | None = field()
+    date: str | None = field()
+    paperType: str | None = field()
+    mainFile: str | None = field()
+    download_url: str | None = field()
     # Additional fields for analysis
     paper_text: str = field(default="")
 
@@ -157,6 +159,7 @@ def download_paper_metadata(endpoint: str, session: Transport | None = None) -> 
 
     papers = PaperList()
     url_liste: list[str] = []
+    start, end = dt.date.fromisoformat(cfg.START), dt.date.fromisoformat(cfg.ENDE)
 
     with ExitStack() as stack:
         http: Transport = session if session is not None else stack.enter_context(http_session())
@@ -164,40 +167,24 @@ def download_paper_metadata(endpoint: str, session: Transport | None = None) -> 
             while True:
                 response = http.get(endpoint)
                 response.raise_for_status()
-                page = response.json()
+                page = PaperPage.model_validate(response.json())
 
-                for p in page["data"]:
-                    paper_id = p.get("id")
-                    if paper_id in known_ids:
+                for item in page.data:
+                    if item.id in known_ids or not item.in_period(start, end):
                         continue
-
-                    mainfile_id = None
-                    download_url = None
-                    paper_date = p.get("date")
-
-                    if cfg.START <= paper_date <= cfg.ENDE:
-                        if p.get("mainFile") is not None:
-                            mainfile = p.get("mainFile")
-                            mainfile_id = mainfile.get("id", None)
-                            download_url = mainfile.get("downloadUrl", None)
-                        elif p.get("auxiliaryFile") is not None and len(p.get("auxiliaryFile")) > 0:
-                            mainfile = p.get("auxiliaryFile")[0]
-                            mainfile_id = mainfile.get("id", None)
-                            download_url = mainfile.get("downloadUrl", None)
-
-                        papers.add_paper(
-                            Paper(
-                                p.get("id", None),
-                                p.get("name", None),
-                                p.get("reference", None),
-                                p.get("date", None),
-                                p.get("paperType", None),
-                                mainfile_id,
-                                download_url,
-                            )
+                    primary = item.primary_file
+                    papers.add_paper(
+                        Paper(
+                            item.id,
+                            item.name,
+                            item.reference,
+                            item.date.isoformat() if item.date else None,
+                            item.paper_type,
+                            primary.id if primary else None,
+                            primary.download_url if primary else None,
                         )
-                        if paper_id:
-                            known_ids.add(paper_id)
+                    )
+                    known_ids.add(item.id)
 
                 write_json(
                     cfg.PAPER_OBJECT_LISTE,
@@ -207,11 +194,11 @@ def download_paper_metadata(endpoint: str, session: Transport | None = None) -> 
                 url_liste.append(endpoint)
                 write_json(cfg.PAPER_URL_LISTE, url_liste, indent=4)
 
-                if "next" not in page["links"]:
+                if page.links.next is None:
                     logger.info("Letzte Seite erreicht.")
                     break
 
-                endpoint = page["links"]["next"]
+                endpoint = page.links.next
                 time.sleep(cfg.DELAY)
                 pages_progress_bar.update(1)
         except (requests.RequestException, ValueError, KeyError) as e:
