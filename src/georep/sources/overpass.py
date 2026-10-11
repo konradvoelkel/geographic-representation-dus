@@ -12,9 +12,11 @@ import time
 from collections.abc import Callable, Iterable
 from typing import Any
 
-from georep.errors import FetchError
+import deal
+
+from georep.errors import FetchError, NetworkError
 from georep.geo import Precinct, overpass_polygon
-from georep.http import Transport
+from georep.http import Transport, network_errors
 
 OSM_FILTER = (
     '["highway"]["name"]["area"!~"yes"]'
@@ -23,10 +25,14 @@ OSM_FILTER = (
 )
 
 
+@deal.pure
 def overpass_query(polygon_latlon: str, *, timeout_s: int = 90) -> str:
     return f'[out:json][timeout:{timeout_s}];way{OSM_FILTER}(poly:"{polygon_latlon}");out tags;'
 
 
+@deal.post(
+    lambda result: result == sorted(set(result)) and all(n and n == n.strip() for n in result)
+)
 def street_names(data: dict[str, Any]) -> list[str]:
     """Eindeutige, sortierte Namen aller Ways; ``a, b`` wird zu ``a`` und ``b`` wie in der Arbeit."""
     names: set[str] = set()
@@ -37,9 +43,11 @@ def street_names(data: dict[str, Any]) -> list[str]:
     return sorted(names)
 
 
+@deal.raises(FetchError, NetworkError)
 def fetch_street_names(http: Transport, endpoint: str, polygon_latlon: str) -> list[str]:
-    response = http.post(endpoint, data={"data": overpass_query(polygon_latlon)})
-    response.raise_for_status()
+    with network_errors(endpoint):
+        response = http.post(endpoint, data={"data": overpass_query(polygon_latlon)})
+        response.raise_for_status()
     try:
         data = response.json()
     except ValueError as error:

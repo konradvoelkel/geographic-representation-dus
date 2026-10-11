@@ -11,6 +11,7 @@ from pathlib import Path
 import deal
 import polars as pl
 import pytest
+import requests
 
 from georep.analysis.hits import hits_by_district, join_voters
 from georep.analysis.regression import regress
@@ -146,3 +147,23 @@ def test_cache_pattern_passes_value_errors_through() -> None:
     assert cache_pattern("https://host/path?x=1") == "host/path*"
     with pytest.raises(ValueError):
         cache_pattern("http://[::1")
+
+
+def test_fetchers_declare_their_exceptions() -> None:
+    """Eine fremde Ausnahme aus einem Fetcher ist eine Vertragsverletzung, keine Netzstörung."""
+    from georep.sources.opendata import fetch_results_csv
+
+    class Exploding:
+        def get(
+            self, url: str, *, params: object = None, headers: object = None
+        ) -> requests.Response:
+            raise RuntimeError("kein Netz, sondern ein Programmierfehler")
+
+        def post(
+            self, url: str, *, data: object = None, headers: object = None
+        ) -> requests.Response:
+            raise RuntimeError("nie")
+
+    with pytest.raises(deal.RaisesContractError) as caught:
+        fetch_results_csv(Exploding(), "https://x.invalid/a.csv")
+    assert isinstance(caught.value.__cause__, RuntimeError)

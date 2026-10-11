@@ -184,3 +184,16 @@ def test_sparql_binding_without_fields_is_a_fetch_error(
         fetch_sparql_pois(
             session, endpoint, "egal", PrecinctIndex(precincts, settings.geo.working_crs)
         )
+
+
+def test_geosearch_hit_without_coordinates_is_a_fetch_error(
+    precincts: list[Precinct], settings: Settings
+) -> None:
+    api = settings.sources.wikidata.wikipedia_api
+    broken = {"query": {"geosearch": [{"title": "Ohne Ort", "pageid": 1}]}}
+    session = FakeSession({api: response(api, payload=broken)})
+    index = PrecinctIndex(precincts, settings.geo.working_crs)
+    with pytest.raises(FetchError, match="lon"):
+        fetch_geosearch_pois(
+            session, api, precincts[:1], index, settings.geo.working_crs, delay_s=0
+        )

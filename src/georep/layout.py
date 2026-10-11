@@ -158,7 +158,7 @@ class Layout:
             self.guard_writable(directory).mkdir(parents=True, exist_ok=True)
 
     @deal.ensure(lambda self, path, result: result is path)
-    @deal.raises(ReferenceWriteError, OSError)
+    @deal.raises(ReferenceWriteError)  # exakter Typ; deal kennt keine Unterklassen
     def guard_writable(self, path: Path) -> Path:
         """Gibt ``path`` zurück, wenn er nicht unter ``reference_root`` liegt; sonst Fehler."""
         reference = self.reference_root.resolve()

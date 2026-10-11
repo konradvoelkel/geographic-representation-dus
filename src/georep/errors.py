@@ -1,7 +1,8 @@
 """Domänenfehler: erwartbare Zustände, die ein Schritt meldet, statt still weiterzumachen.
 
-Vertragsverletzungen (deal, ab Phase 6) sind keine Domänenfehler; sie sind Programmierfehler
-und laufen durch. Diese Klassen hier werden an genau einer Stelle behandelt: am Rand, wo der
+Vertragsverletzungen (deal, seit Phase 6) sind keine Domänenfehler; sie sind Programmierfehler
+und laufen durch. deal.raises vergleicht exakte Typen, keine Unterklassen: darum wandeln die
+Fetcher jede requests-Ausnahme in ``NetworkError`` um, statt die Unterklassen aufzuzählen. Diese Klassen hier werden an genau einer Stelle behandelt: am Rand, wo der
 Lauf gestartet wurde (``run.py``, später die CLI), mit Exit-Code ungleich null.
 """
 
@@ -30,3 +31,7 @@ class CorruptPdfError(GeorepError):
 
 class FetchError(GeorepError):
     """Eine Quelle hat geantwortet, aber nicht mit dem, was wir brauchen (leer, falsches Format)."""
+
+
+class NetworkError(GeorepError):
+    """Eine Quelle war nicht erreichbar oder antwortete nach allen Wiederholungen mit einem Fehlerstatus."""

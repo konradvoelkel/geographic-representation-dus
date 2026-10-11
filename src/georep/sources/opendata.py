@@ -8,14 +8,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from georep.errors import FetchError
-from georep.http import Transport
+import deal
+
+from georep.errors import FetchError, NetworkError
+from georep.http import Transport, network_errors
 
 
+@deal.raises(FetchError, NetworkError)
 def fetch_results_csv(http: Transport, url: str, *, sep: str = ";") -> bytes:
-    response = http.get(url)
-    response.raise_for_status()
-    content = response.content
+    with network_errors(url):
+        response = http.get(url)
+        response.raise_for_status()
+        content = response.content
     header = content.split(b"\n", 1)[0]
     if not content.strip() or sep.encode() not in header:
         raise FetchError(
@@ -24,9 +28,11 @@ def fetch_results_csv(http: Transport, url: str, *, sep: str = ";") -> bytes:
     return content
 
 
+@deal.raises(FetchError, NetworkError)
 def fetch_districts_geojson(http: Transport, url: str) -> dict[str, Any]:
-    response = http.get(url)
-    response.raise_for_status()
+    with network_errors(url):
+        response = http.get(url)
+        response.raise_for_status()
     try:
         data = response.json()
     except ValueError as error:

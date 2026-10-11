@@ -9,7 +9,8 @@ kommen aber per Redirect von https.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlsplit
@@ -20,6 +21,8 @@ from requests.adapters import HTTPAdapter
 from requests_cache import DO_NOT_CACHE, CachedSession
 from requests_cache.models.response import CachedResponse, OriginalResponse
 from urllib3.util.retry import Retry
+
+from georep.errors import NetworkError
 
 DEFAULT_TIMEOUT_S = 180.0  # der OParl-Server brauchte am 2026-10-09 85 s pro Seite
 DEFAULT_RETRIES = 5
@@ -71,6 +74,19 @@ def cache_pattern(endpoint: str) -> str:
     """requests-cache vergleicht Muster ohne Schema: ``host/pfad*``."""
     parts = urlsplit(endpoint)
     return f"{parts.netloc}{parts.path}*"
+
+
+@contextmanager
+def network_errors(url: str) -> Iterator[None]:
+    """Jede requests-Ausnahme im Block wird ``NetworkError`` mit der Ursache als ``__cause__``.
+
+    Fetcher nennen so genau zwei Ausnahmen (``FetchError``, ``NetworkError``), und die CLI meldet
+    einen abgebrochenen Abruf als eine Zeile statt als Traceback.
+    """
+    try:
+        yield
+    except requests.RequestException as error:
+        raise NetworkError(f"{url}: {error}") from error
 
 
 def make_session(

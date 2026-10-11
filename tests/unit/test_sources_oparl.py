@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 import requests
 
-from georep.errors import FetchError
+from georep.errors import FetchError, NetworkError
 from georep.settings import Period
 from georep.sources.oparl import fetch_papers
 from tests.fakes import FakeSession, response
@@ -87,7 +87,7 @@ def test_modified_since_goes_only_on_the_first_request() -> None:
 def test_fetch_propagates_network_and_format_errors() -> None:
     routes = _routes()
     routes[PAGE2] = requests.ConnectionError("Seite 2 weg")
-    with pytest.raises(requests.ConnectionError):
+    with pytest.raises(NetworkError, match="Seite 2 weg"):
         fetch_papers(FakeSession(routes), PAGE1, PERIOD)
     routes[PAGE2] = response(PAGE2, content=b"{ kaputt")
     with pytest.raises(FetchError, match="page=2"):

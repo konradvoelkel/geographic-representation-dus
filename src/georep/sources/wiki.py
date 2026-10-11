@@ -12,11 +12,14 @@ import time
 from collections.abc import Callable, Iterable
 from typing import Any
 
-from georep.errors import FetchError
+import deal
+
+from georep.errors import FetchError, NetworkError
 from georep.geo import Precinct, PrecinctIndex, lonlat_bounds
-from georep.http import Transport
+from georep.http import Transport, network_errors
 
 
+@deal.pure
 def sparql_query(entity: str, language: str) -> str:
     """Alle Wikidata-Objekte mit Koordinaten in der Verwaltungseinheit ``entity`` (P131*)
     samt Wikipedia-Artikel in ``language``."""
@@ -32,6 +35,9 @@ SELECT ?item ?itemLabel ?coord ?article WHERE {{
 """
 
 
+@deal.has()
+@deal.raises(FetchError)
+@deal.post(lambda result: -180.0 <= result[0] <= 180.0 and -90.0 <= result[1] <= 90.0)
 def parse_point(value: str) -> tuple[float, float]:
     """``Point(6.77 51.23)`` (WKT, lon lat) -> (lon, lat); alles andere ist ein ``FetchError``."""
     inner = value.strip()
@@ -52,15 +58,17 @@ def _assign(entry: dict[str, Any], hit: Precinct | None) -> dict[str, Any]:
     return entry
 
 
+@deal.raises(FetchError, NetworkError)
 def fetch_sparql_pois(
     http: Transport, endpoint: str, query: str, index: PrecinctIndex
 ) -> list[dict[str, Any]]:
-    response = http.get(
-        endpoint,
-        params={"query": query, "format": "json"},
-        headers={"Accept": "application/json; charset=utf-8"},
-    )
-    response.raise_for_status()
+    with network_errors(endpoint):
+        response = http.get(
+            endpoint,
+            params={"query": query, "format": "json"},
+            headers={"Accept": "application/json; charset=utf-8"},
+        )
+        response.raise_for_status()
     try:
         bindings = response.json()["results"]["bindings"]
     except (ValueError, KeyError, TypeError) as error:
@@ -83,6 +91,7 @@ def fetch_sparql_pois(
     return pois
 
 
+@deal.pure
 def geosearch_params(bbox: tuple[float, float, float, float], limit: int) -> dict[str, Any]:
     """Wikipedia-API: ``gsbbox`` ist top|left|bottom|right, also max_lat|min_lon|min_lat|max_lon."""
     min_lon, min_lat, max_lon, max_lat = bbox
@@ -95,6 +104,7 @@ def geosearch_params(bbox: tuple[float, float, float, float], limit: int) -> dic
     }
 
 
+@deal.raises(FetchError, NetworkError)
 def fetch_geosearch_pois(
     http: Transport,
     api: str,
@@ -109,11 +119,19 @@ def fetch_geosearch_pois(
     pois: list[dict[str, Any]] = []
     for precinct in precincts:
         params = geosearch_params(lonlat_bounds(precinct.geometry, working_crs), limit)
-        response = http.get(api, params=params)
-        response.raise_for_status()
-        hits = response.json().get("query", {}).get("geosearch", [])
-        for hit in hits:
-            located = index.locate(float(hit["lon"]), float(hit["lat"]))
+        with network_errors(api):
+            response = http.get(api, params=params)
+            response.raise_for_status()
+        try:
+            hits = response.json().get("query", {}).get("geosearch", [])
+            located_hits = [
+                (hit, index.locate(float(hit["lon"]), float(hit["lat"]))) for hit in hits
+            ]
+        except (ValueError, KeyError, TypeError, AttributeError) as error:
+            raise FetchError(
+                f"GeoSearch {api}: Treffer ohne lon, lat oder title ({error!r})"
+            ) from error
+        for hit, located in located_hits:
             if located is None or located.precinct_id != precinct.precinct_id:
                 continue  # zählt nur für den abgefragten Bezirk, wie in der Arbeit
             entry = {

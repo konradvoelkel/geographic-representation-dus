@@ -13,8 +13,10 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from georep.errors import FetchError
-from georep.http import Transport
+import deal
+
+from georep.errors import FetchError, NetworkError
+from georep.http import Transport, network_errors
 from georep.oparl import PaperPage
 from georep.records import PaperRecord
 from georep.settings import Period
@@ -32,6 +34,8 @@ class FetchReport:
         return f"{self.pages} Seiten, {self.seen} Paper gesehen, {self.kept} im Zeitraum{tail}"
 
 
+@deal.raises(FetchError, NetworkError)
+@deal.post(lambda result: result[1].kept == len(result[0]) and result[1].kept <= result[1].seen)
 def fetch_papers(
     http: Transport,
     endpoint: str,
@@ -49,9 +53,10 @@ def fetch_papers(
     url: str | None = endpoint
     params = {"modified_since": modified_since.isoformat()} if modified_since else None
     while url is not None and (max_pages is None or pages < max_pages):
-        response = http.get(url, params=params)
+        with network_errors(url):
+            response = http.get(url, params=params)
+            response.raise_for_status()
         params = None  # der Filter steht nur auf der ersten Anfrage; next-Links tragen ihn weiter
-        response.raise_for_status()
         try:
             # pydantics ValidationError ist ein ValueError, wie der JSON-Fehler
             page = PaperPage.model_validate(response.json())
