@@ -3,6 +3,8 @@
   '''
   opendata     <- (nichts) [Netz]
                -> Stimmbezirk_Wahlergebnis.csv, Stimmbezirke_2025.geojson
+  context_data <- (nichts) [Netz]
+               -> quartiersatlas_2024.csv, sozialraeume_2021.geojson, quartiersatlas_2024_indikatoren.csv
   papers       <- (nichts) [Netz]
                -> papers.jsonl
   pdfs         <- papers.jsonl [Netz]

@@ -98,6 +98,52 @@ def test_online_run_fetches_everything_then_skips(tmp_path: Path, settings: Sett
     assert session.calls[-1][1] == {"modified_since": "2024-04-30T11:00:00+02:00"}
 
 
+def test_context_data_fetches_the_three_portal_files(tmp_path: Path, settings: Settings) -> None:
+    """Option 03: der Netzschritt holt Tabelle, Flächen und Erläuterungen nach ``external/``.
+
+    Die Fake-Session antwortet mit den Kopfzeilen der Mini-Fixture, nicht mit den ganzen Dateien:
+    geprüft wird der Schritt, nicht der Inhalt des Portals.
+    """
+    files = settings.context.files
+    layout = Layout(
+        tmp_path / "data", tmp_path / "cache", tmp_path / "reference", context_root=MINI / "context"
+    )
+    table = (MINI / "context" / files.table.file).read_bytes().split(b"\r\n")[0] + b"\r\n"
+    units = {
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {settings.context.units.key: "011001"},
+                "geometry": None,
+            }
+        ],
+    }
+    routes: dict[str, Any] = {
+        files.table.url: response(files.table.url, content=table),
+        files.units.url: response(files.units.url, payload=units),
+        files.indicators.url: response(files.indicators.url, content=b"Indikator;Berechnung\r\n"),
+    }
+    steps = build_steps(settings, layout, FakeSession(routes))
+    step = next(s for s in steps if s.name == "context_data")
+    assert step.network and [p.name for p in step.outputs] == list(files.names())
+
+    first = run_pipeline(steps, settings, ["context_data"], online=True)
+    assert first[0].status == "ausgeführt" and "1 Sozialräume" in first[0].reason
+    for name in files.names():
+        assert (layout.external / name).exists()
+    assert (layout.external / files.table.file).read_bytes() == table
+    assert run_pipeline(steps, settings, ["context_data"], online=True)[0].status == "übersprungen"
+
+
+def test_without_context_root_the_three_steps_are_absent(
+    tmp_path: Path, settings: Settings
+) -> None:
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    names = [s.name for s in build_steps(settings, layout)]
+    assert "context_data" not in names and layout.context_root is None
+
+
 def test_streets_and_pois_steps_use_recorded_answers(
     tmp_path: Path, settings: Settings, reference_root: Path
 ) -> None:

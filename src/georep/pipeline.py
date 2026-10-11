@@ -206,6 +206,10 @@ def build_steps(
     """
     columns = settings.columns.results
     oparl = settings.sources.oparl
+    context = settings.context
+    # Option 03: ohne context_root im Layout (settings ``context.root = ""``) gibt es die drei
+    # Schritte nicht; die Dateinamen und alles Inhaltliche stehen in den Settings.
+    with_context = layout.context_root is not None
     session: Transport | None = http
 
     def transport() -> Transport:
@@ -220,6 +224,21 @@ def build_steps(
         geo = fetch_geojson(transport(), settings.sources.opendata.districts_url)
         write_json(layout.districts_geojson, geo, indent=None)
         return f"{len(csv)} Bytes Wahlergebnis, {len(geo['features'])} Stimmbezirke"
+
+    # --- Option 03: die Fremddaten je Raumeinheit frisch vom Portal (``bootstrap`` nimmt die
+    # Kopie im Repo, die beim Bauen ohne Netz reicht)
+    def context_data() -> str:
+        files = context.files
+        table = fetch_csv(transport(), files.table.url, sep=context.table.sep)
+        write_bytes(layout.external / files.table.file, table)
+        units = fetch_geojson(transport(), files.units.url)
+        write_json(layout.external / files.units.file, units, indent=None)
+        indicators = fetch_csv(transport(), files.indicators.url, sep=context.table.sep)
+        write_bytes(layout.external / files.indicators.file, indicators)
+        return (
+            f"{len(table)} Bytes Tabelle, {len(units['features'])} {context.units.label}, "
+            f"{len(indicators)} Bytes Erläuterungen"
+        )
 
     def papers() -> str:
         store = PaperStore(layout.papers)
@@ -432,9 +451,16 @@ def build_steps(
     # Ausgaben als Eingabe; die zwei Tabellen der Themen sind im Register ``optional``.
     with_topics = settings.topics.k > 0
     topic_outputs = (layout.topics, layout.topic_documents, layout.topic_shares)
+    context_files = tuple(layout.external / name for name in context.files.names())
     return [
         Step(
             "opendata", (), (layout.results_csv, layout.districts_geojson), opendata, network=True
+        ),
+        # --- Option 03
+        *(
+            [Step("context_data", (), context_files, context_data, network=True)]
+            if with_context
+            else []
         ),
         Step("papers", (), (layout.papers,), papers, network=True),
         Step("pdfs", (layout.papers,), (layout.pdf_manifest,), pdfs, network=True),

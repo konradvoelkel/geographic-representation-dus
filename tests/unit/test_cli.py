@@ -16,7 +16,11 @@ from georep.settings import load_settings
 @pytest.fixture
 def project(tmp_path: Path, mini_root: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     (tmp_path / "settings.toml").write_text(
-        f'data_root = "{tmp_path / "data"}"\nreference_root = "{mini_root}"\n', encoding="utf-8"
+        # Punktschlüssel statt einer [context]-Tabelle: Tests hängen weitere Schlüssel an, und die
+        # landeten nach einer Tabellenkopfzeile in ihr.
+        f'data_root = "{tmp_path / "data"}"\nreference_root = "{mini_root}"\n'
+        f'context.root = "{mini_root / "context"}"\n',
+        encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
     return tmp_path
