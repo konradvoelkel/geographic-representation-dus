@@ -181,6 +181,25 @@ class Layout:
     def site_data(self) -> Path:
         return self.site / "data"
 
+    # Option 05: Gremien je Dokument, Kennzahlen je Wahlbezirk und je Gremium, Stadtbezirke
+    @property
+    def papers_bodies(self) -> Path:
+        """Ein Gremium je Dokument; nicht veröffentlicht (aus der Drucksachennummer ableitbar)."""
+        return self.processed / "papers_gremien.parquet"
+
+    @property
+    def district_bodies(self) -> Path:
+        return self.processed / "wahlbezirke_gremien.parquet"
+
+    @property
+    def bodies_table(self) -> Path:
+        return self.processed / "gremien.parquet"
+
+    @property
+    def district_units(self) -> Path:
+        """Wahlbezirk zu Stadtbezirk mit Gewicht; zweite Ausgabe des Schritts ``voters``."""
+        return self.processed / "wahlbezirke_stadtbezirke.parquet"
+
     def runtime_dirs(self) -> tuple[Path, ...]:
         return (
             self.external,

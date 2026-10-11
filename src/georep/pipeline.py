@@ -19,17 +19,21 @@ from typing import Literal
 import polars as pl
 
 from georep import __version__
+from georep.analysis.bodies import documents_by_body, hits_by_body
+from georep.analysis.bodies import summary as bodies_summary
 from georep.analysis.hits import hits_by_district, join_voters
 from georep.errors import GeorepError, MissingInputError
 from georep.geo import PrecinctIndex, read_precincts
 from georep.http import Transport
 from georep.io import digest, write_bytes, write_json, write_parquet
 from georep.layout import Layout
+from georep.prep.bodies import BODIES_SCHEMA_VERSION, BodyRules, classify_papers
+from georep.prep.bodies import summary as papers_bodies_summary
 from georep.prep.extract import extract_missing
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus, documents_with_text
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
 from georep.prep.streets import read_streets_json, streets_by_district
-from georep.prep.voters import aggregate_voters, read_results_csv
+from georep.prep.voters import aggregate_voters, district_units, read_results_csv
 from georep.report.build import MAP_NAME, SCHEMA_NAME, build_site, current_commit
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
@@ -293,9 +297,13 @@ def build_steps(
         return report.summary()
 
     def voters() -> str:
-        frame = aggregate_voters(read_results_csv(layout.results_csv, columns), columns)
+        raw = read_results_csv(layout.results_csv, columns)
+        frame = aggregate_voters(raw, columns)
         write_parquet(frame, layout.voters, schema_version=1)
-        return f"{frame.height} Wahlbezirke"
+        # --- Option 05: die Zuordnung zu den Stadtbezirken steht in derselben CSV
+        units = district_units(raw, columns)
+        write_parquet(units, layout.district_units, schema_version=1)
+        return f"{frame.height} Wahlbezirke, {units.height} Paare mit Stadtbezirk"
 
     def streets() -> str:
         frame = streets_by_district(read_streets_json(layout.streets))
@@ -341,6 +349,24 @@ def build_steps(
             f"{frame.height} Wahlbezirke, {int(frame.get_column('anzahl_treffer').sum())} Treffer"
         )
 
+    # --- Option 05: Gremium je Dokument aus der Drucksachennummer, dann die Kennzahlen
+    def bodies() -> str:
+        corpus = pl.read_parquet(layout.corpus, columns=["id", "reference"])
+        frame = classify_papers(corpus, BodyRules.from_settings(settings.bodies))
+        write_parquet(frame, layout.papers_bodies, schema_version=BODIES_SCHEMA_VERSION)
+        return papers_bodies_summary(frame)
+
+    # --- Option 05
+    def body_hits() -> str:
+        results_frame = pl.read_parquet(layout.results)
+        papers_frame = pl.read_parquet(layout.papers_bodies)
+        units = pl.read_parquet(layout.district_units)
+        districts = hits_by_body(results_frame, papers_frame, units, columns.eligible)
+        bodies_frame = documents_by_body(papers_frame, results_frame, units)
+        write_parquet(districts, layout.district_bodies, schema_version=1)
+        write_parquet(bodies_frame, layout.bodies_table, schema_version=1)
+        return bodies_summary(districts, bodies_frame)
+
     def report() -> str:
         return build_site(
             layout, settings, now=dt.datetime.now(dt.UTC), commit=current_commit()
@@ -357,7 +383,12 @@ def build_steps(
         ),
         Step("pois_wiki", (layout.districts_geojson,), (layout.pois,), pois_wiki, network=True),
         Step("texts", (layout.papers, layout.pdf_manifest), (layout.texts,), texts),
-        Step("voters", (layout.results_csv,), (layout.voters,), voters),
+        Step(
+            "voters",
+            (layout.results_csv,),
+            (layout.voters, layout.district_units),  # Option 05: zweite Ausgabe
+            voters,
+        ),
         Step("streets", (layout.streets,), (layout.streets_by_district,), streets),
         Step("pois", (layout.pois,), (layout.pois_table, layout.pois_by_district), pois),
         Step(
@@ -377,6 +408,21 @@ def build_steps(
         Step(
             "results", (layout.dictionary, layout.index, layout.voters), (layout.results,), results
         ),
+        # --- Option 05
+        Step(
+            "bodies",
+            (layout.corpus,),
+            (layout.papers_bodies,),
+            bodies,
+            BODIES_SCHEMA_VERSION,
+        ),
+        # --- Option 05
+        Step(
+            "body_hits",
+            (layout.results, layout.papers_bodies, layout.district_units),
+            (layout.district_bodies, layout.bodies_table),
+            body_hits,
+        ),
         Step(
             "report",
             (
@@ -388,6 +434,10 @@ def build_steps(
                 layout.streets_by_district,
                 layout.corpus,
                 layout.districts_geojson,
+                # Option 05
+                layout.district_bodies,
+                layout.bodies_table,
+                layout.district_units,
             ),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,

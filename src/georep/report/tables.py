@@ -127,6 +127,81 @@ TABLES: list[PublishedTable] = [
         },
         joins={"suchbegriffe": "; "},
     ),
+    # Option 05: Gremien (docs/plans/05-gremien.md, Entscheidung 8)
+    PublishedTable(
+        "wahlbezirke_gremien",
+        lambda layout: layout.district_bodies,
+        "Treffer je Wahlbezirk nach Gremium: eigene Bezirksvertretung, andere, Rat, Ausschüsse, Beiräte",
+        {
+            "wahlkreis_id": DISTRICT_COLUMN,
+            "stadtbezirke": (
+                "Stadtbezirke mit Wahlberechtigten dieses Wahlbezirks, nach Gewicht absteigend",
+                "Liste",
+            ),
+            "anzahl_treffer": ("Dokumente mit mindestens einem Treffer", "Dokumente"),
+            "treffer_eigene_bv": (
+                "Treffer aus der Bezirksvertretung eines eigenen Stadtbezirks",
+                "Dokumente",
+            ),
+            "treffer_andere_bv": ("Treffer aus einer anderen Bezirksvertretung", "Dokumente"),
+            "treffer_rat": ("Treffer aus Vorlagen des Rates", "Dokumente"),
+            "treffer_ausschuss": ("Treffer aus Vorlagen eines Ausschusses", "Dokumente"),
+            "treffer_beirat": ("Treffer aus Vorlagen eines Beirats", "Dokumente"),
+            "treffer_unbekannt": (
+                "Treffer aus Dokumenten, deren Drucksachennummer kein bekanntes Gremium nennt",
+                "Dokumente",
+            ),
+            "anteil_eigene_bv": (
+                "treffer_eigene_bv geteilt durch anzahl_treffer",
+                "Anteil 0 bis 1",
+            ),
+            "anteil_rat": ("treffer_rat geteilt durch anzahl_treffer", "Anteil 0 bis 1"),
+            "quote_eigene_bv": (
+                "treffer_eigene_bv geteilt durch Wahlberechtigte_insgesamt",
+                "Dokumente je Person",
+            ),
+        },
+        joins={"stadtbezirke": ";"},
+    ),
+    PublishedTable(
+        "gremien",
+        lambda layout: layout.bodies_table,
+        "Gremien der Wahlperiode: Dokumente, Dokumente mit Treffer, Lokalität der Bezirksvertretungen",
+        {
+            "gremium": (
+                "Kürzel der Drucksachennummer samt Nummer (BV6, RAT, OVA); leer, wenn die Nummer kein Muster trifft",
+                "",
+            ),
+            "gremium_art": ("bezirksvertretung, rat, ausschuss, beirat oder unbekannt", ""),
+            "stadtbezirk": ("Stadtbezirk einer Bezirksvertretung, sonst leer", ""),
+            "dokumente": ("Dokumente der Wahlperiode mit dieser Drucksachennummer", "Dokumente"),
+            "mit_treffer": (
+                "davon Dokumente mit mindestens einem Treffer in mindestens einem Wahlbezirk",
+                "Dokumente",
+            ),
+            "anteil_eigener_stadtbezirk": (
+                "nur Bezirksvertretungen: Anteil ihrer Treffer in Wahlbezirken ihres Stadtbezirks",
+                "Anteil 0 bis 1",
+            ),
+        },
+    ),
+    PublishedTable(
+        "wahlbezirke_stadtbezirke",
+        lambda layout: layout.district_units,
+        "Zuordnung Wahlbezirk zu Stadtbezirk, gewichtet über die Wahlberechtigten",
+        {
+            "wahlkreis_id": DISTRICT_COLUMN,
+            "stadtbezirk": ("Nummer des Stadtbezirks (1 bis 10)", ""),
+            "wahlberechtigte": (
+                "Wahlberechtigte des Wahlbezirks in diesem Stadtbezirk",
+                "Personen",
+            ),
+            "gewicht": (
+                "Anteil dieses Stadtbezirks an den Wahlberechtigten des Wahlbezirks",
+                "Anteil 0 bis 1",
+            ),
+        },
+    ),
 ]
 
 # Nur für ``georep export`` (CSV neben der Parquet-Datei), nicht auf der Seite.
