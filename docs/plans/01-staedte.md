@@ -1,6 +1,6 @@
 # Plan 01: Städte
 
-Stand 2026-10-11, Branch `feat/01-staedte`. Status: umgeschrieben.
+Stand 2026-10-12, Branch `feat/01-staedte`. Status: in Arbeit.
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.1. Alle Zahlen in § 3 sind am 2026-10-11
 nachgesehen (Dateien im Scratchpad geladen, Spalten mit Python gezählt, Geometrie mit shapely und `ogrinfo` geprüft);
