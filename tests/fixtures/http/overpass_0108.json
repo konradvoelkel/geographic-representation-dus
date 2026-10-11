@@ -1,0 +1,456 @@
+{
+"version": 0.6,
+"generator": "Overpass API 0.7.62.11 87bfad18",
+"osm3s": {
+"timestamp_osm_base": "2026-10-11T11:08:37Z",
+"copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+},
+"elements": [
+{
+"type": "way",
+"id": 23064502,
+"tags": {
+"highway": "residential",
+"name": "Josef-Kleesattel-Straße"
+}
+},
+{
+"type": "way",
+"id": 23064503,
+"tags": {
+"highway": "residential",
+"name": "An der Kämpe"
+}
+},
+{
+"type": "way",
+"id": 23064504,
+"tags": {
+"highway": "residential",
+"name": "An der Kämpe"
+}
+},
+{
+"type": "way",
+"id": 23064505,
+"tags": {
+"highway": "residential",
+"name": "Am Rittersberg"
+}
+},
+{
+"type": "way",
+"id": 23064506,
+"tags": {
+"highway": "residential",
+"name": "Finschstraße"
+}
+},
+{
+"type": "way",
+"id": 23064508,
+"tags": {
+"highway": "residential",
+"name": "Eisvogelweg"
+}
+},
+{
+"type": "way",
+"id": 23064513,
+"tags": {
+"highway": "residential",
+"name": "Hermann-vom-Endt-Straße"
+}
+},
+{
+"type": "way",
+"id": 23064514,
+"tags": {
+"highway": "residential",
+"name": "Walter-Kyllmann-Straße"
+}
+},
+{
+"type": "way",
+"id": 23065630,
+"tags": {
+"highway": "residential",
+"name": "Urdenbacher Acker"
+}
+},
+{
+"type": "way",
+"id": 23067122,
+"tags": {
+"highway": "residential",
+"name": "Josef-Maria-Olbrich-Straße"
+}
+},
+{
+"type": "way",
+"id": 30954747,
+"tags": {
+"highway": "secondary",
+"name": "Koblenzer Straße"
+}
+},
+{
+"type": "way",
+"id": 42029329,
+"tags": {
+"highway": "path",
+"name": "Stümpeweg"
+}
+},
+{
+"type": "way",
+"id": 44509213,
+"tags": {
+"highway": "residential",
+"name": "Am Rittersberg"
+}
+},
+{
+"type": "way",
+"id": 55937382,
+"tags": {
+"highway": "service",
+"name": "Peter-Behrens-Straße"
+}
+},
+{
+"type": "way",
+"id": 55937390,
+"tags": {
+"highway": "path",
+"name": "Peter-Behrens-Straße"
+}
+},
+{
+"type": "way",
+"id": 87705930,
+"tags": {
+"highway": "secondary",
+"name": "Koblenzer Straße"
+}
+},
+{
+"type": "way",
+"id": 146348886,
+"tags": {
+"highway": "path",
+"name": "Peter-Behrens-Straße"
+}
+},
+{
+"type": "way",
+"id": 146348887,
+"tags": {
+"highway": "service",
+"name": "Peter-Behrens-Straße"
+}
+},
+{
+"type": "way",
+"id": 146349475,
+"tags": {
+"highway": "service",
+"name": "Peter-Behrens-Straße",
+"service": "driveway"
+}
+},
+{
+"type": "way",
+"id": 146349476,
+"tags": {
+"highway": "path",
+"name": "Peter-Behrens-Straße"
+}
+},
+{
+"type": "way",
+"id": 146357894,
+"tags": {
+"highway": "path",
+"name": "Walter-Kyllmann-Straße"
+}
+},
+{
+"type": "way",
+"id": 146358225,
+"tags": {
+"highway": "path",
+"name": "An der Kämpe"
+}
+},
+{
+"type": "way",
+"id": 147151815,
+"tags": {
+"highway": "path",
+"name": "Wilhelm-Kreis-Straße"
+}
+},
+{
+"type": "way",
+"id": 147188596,
+"tags": {
+"highway": "residential",
+"name": "Peter-Behrens-Straße"
+}
+},
+{
+"type": "way",
+"id": 147532350,
+"tags": {
+"highway": "path",
+"name": "Peter-Behrens-Straße"
+}
+},
+{
+"type": "way",
+"id": 147532383,
+"tags": {
+"highway": "service",
+"name": "Peter-Behrens-Straße",
+"service": "driveway"
+}
+},
+{
+"type": "way",
+"id": 147577119,
+"tags": {
+"highway": "service",
+"name": "Hermann-vom-Endt-Straße",
+"service": "driveway"
+}
+},
+{
+"type": "way",
+"id": 147577120,
+"tags": {
+"highway": "path",
+"name": "Hermann-vom-Endt-Straße"
+}
+},
+{
+"type": "way",
+"id": 147577122,
+"tags": {
+"highway": "path",
+"name": "Hermann-vom-Endt-Straße"
+}
+},
+{
+"type": "way",
+"id": 147577124,
+"tags": {
+"highway": "service",
+"name": "Hermann-vom-Endt-Straße",
+"service": "driveway"
+}
+},
+{
+"type": "way",
+"id": 147577126,
+"tags": {
+"highway": "path",
+"name": "Hermann-vom-Endt-Straße"
+}
+},
+{
+"type": "way",
+"id": 147577127,
+"tags": {
+"highway": "service",
+"name": "Hermann-vom-Endt-Straße",
+"service": "driveway"
+}
+},
+{
+"type": "way",
+"id": 147577128,
+"tags": {
+"highway": "path",
+"name": "Hermann-vom-Endt-Straße"
+}
+},
+{
+"type": "way",
+"id": 147577129,
+"tags": {
+"highway": "service",
+"name": "Hermann-vom-Endt-Straße",
+"service": "driveway"
+}
+},
+{
+"type": "way",
+"id": 147577134,
+"tags": {
+"highway": "path",
+"name": "Hermann-vom-Endt-Straße"
+}
+},
+{
+"type": "way",
+"id": 147607561,
+"tags": {
+"highway": "residential",
+"name": "Walter-Kyllmann-Straße"
+}
+},
+{
+"type": "way",
+"id": 147607562,
+"tags": {
+"highway": "residential",
+"name": "Walter-Kyllmann-Straße"
+}
+},
+{
+"type": "way",
+"id": 147607605,
+"tags": {
+"highway": "residential",
+"name": "Walter-Kyllmann-Straße"
+}
+},
+{
+"type": "way",
+"id": 147607606,
+"tags": {
+"highway": "residential",
+"name": "Walter-Kyllmann-Straße"
+}
+},
+{
+"type": "way",
+"id": 147607672,
+"tags": {
+"highway": "path",
+"name": "Walter-Kyllmann-Straße"
+}
+},
+{
+"type": "way",
+"id": 147607673,
+"tags": {
+"highway": "path",
+"name": "Walter-Kyllmann-Straße"
+}
+},
+{
+"type": "way",
+"id": 147607674,
+"tags": {
+"highway": "path",
+"name": "Walter-Kyllmann-Straße"
+}
+},
+{
+"type": "way",
+"id": 147699212,
+"tags": {
+"highway": "residential",
+"name": "Hermann-vom-Endt-Straße"
+}
+},
+{
+"type": "way",
+"id": 147699214,
+"tags": {
+"highway": "residential",
+"name": "Hermann-vom-Endt-Straße"
+}
+},
+{
+"type": "way",
+"id": 147699992,
+"tags": {
+"highway": "residential",
+"name": "An der Kämpe"
+}
+},
+{
+"type": "way",
+"id": 147700007,
+"tags": {
+"highway": "path",
+"name": "Hermann-vom-Endt-Straße"
+}
+},
+{
+"type": "way",
+"id": 259782391,
+"tags": {
+"highway": "secondary",
+"name": "Koblenzer Straße"
+}
+},
+{
+"type": "way",
+"id": 267582547,
+"tags": {
+"highway": "residential",
+"name": "Josef-Maria-Olbrich-Straße"
+}
+},
+{
+"type": "way",
+"id": 305864445,
+"tags": {
+"highway": "residential",
+"name": "Josef-Maria-Olbrich-Straße"
+}
+},
+{
+"type": "way",
+"id": 305864446,
+"tags": {
+"highway": "secondary",
+"name": "Koblenzer Straße"
+}
+},
+{
+"type": "way",
+"id": 496530315,
+"tags": {
+"highway": "footway",
+"name": "Rittersbergstraße"
+}
+},
+{
+"type": "way",
+"id": 1192841448,
+"tags": {
+"highway": "residential",
+"name": "An der Kämpe"
+}
+},
+{
+"type": "way",
+"id": 1193781437,
+"tags": {
+"highway": "residential",
+"name": "Josef-Maria-Olbrich-Straße"
+}
+},
+{
+"type": "way",
+"id": 1193781438,
+"tags": {
+"highway": "residential",
+"name": "Josef-Maria-Olbrich-Straße"
+}
+},
+{
+"type": "way",
+"id": 1193781981,
+"tags": {
+"highway": "residential",
+"name": "Josef-Maria-Olbrich-Straße"
+}
+}
+]
+}

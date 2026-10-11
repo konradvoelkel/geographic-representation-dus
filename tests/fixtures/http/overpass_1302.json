@@ -1,0 +1,586 @@
+{
+"version": 0.6,
+"generator": "Overpass API 0.7.62.11 87bfad18",
+"osm3s": {
+"timestamp_osm_base": "2026-10-11T11:06:35Z",
+"copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+},
+"elements": [
+{
+"type": "way",
+"id": 14035759,
+"tags": {
+"highway": "residential",
+"name": "Alexanderstraße"
+}
+},
+{
+"type": "way",
+"id": 14035763,
+"tags": {
+"highway": "residential",
+"name": "Stresemannstraße"
+}
+},
+{
+"type": "way",
+"id": 14035767,
+"tags": {
+"highway": "residential",
+"name": "Charlottenstraße"
+}
+},
+{
+"type": "way",
+"id": 14393072,
+"tags": {
+"highway": "residential",
+"name": "Charlottenstraße"
+}
+},
+{
+"type": "way",
+"id": 17915799,
+"tags": {
+"highway": "residential",
+"name": "Konrad-Adenauer-Platz"
+}
+},
+{
+"type": "way",
+"id": 17916305,
+"tags": {
+"highway": "service",
+"name": "Konrad-Adenauer-Platz"
+}
+},
+{
+"type": "way",
+"id": 17929819,
+"tags": {
+"highway": "secondary",
+"name": "Karlstraße"
+}
+},
+{
+"type": "way",
+"id": 22338090,
+"tags": {
+"highway": "living_street",
+"name": "Grupellostraße"
+}
+},
+{
+"type": "way",
+"id": 30479380,
+"tags": {
+"highway": "secondary",
+"name": "Oststraße"
+}
+},
+{
+"type": "way",
+"id": 40558155,
+"tags": {
+"highway": "residential",
+"name": "Bismarckstraße"
+}
+},
+{
+"type": "way",
+"id": 40558158,
+"tags": {
+"highway": "secondary",
+"name": "Karlstraße"
+}
+},
+{
+"type": "way",
+"id": 40559156,
+"tags": {
+"highway": "service",
+"name": "Bismarckstraße"
+}
+},
+{
+"type": "way",
+"id": 40580373,
+"tags": {
+"highway": "residential",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 41081038,
+"tags": {
+"highway": "secondary",
+"name": "Karlstraße"
+}
+},
+{
+"type": "way",
+"id": 51776165,
+"tags": {
+"highway": "secondary",
+"name": "Oststraße"
+}
+},
+{
+"type": "way",
+"id": 51884763,
+"tags": {
+"highway": "secondary",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 51884764,
+"tags": {
+"highway": "residential",
+"name": "Stresemannstraße"
+}
+},
+{
+"type": "way",
+"id": 51884769,
+"tags": {
+"highway": "secondary",
+"name": "Stresemannplatz"
+}
+},
+{
+"type": "way",
+"id": 56456301,
+"tags": {
+"highway": "secondary",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 145419298,
+"tags": {
+"highway": "secondary",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 145419301,
+"tags": {
+"highway": "secondary",
+"name": "Karlstraße"
+}
+},
+{
+"type": "way",
+"id": 145419302,
+"tags": {
+"highway": "secondary",
+"name": "Stresemannplatz"
+}
+},
+{
+"type": "way",
+"id": 145419303,
+"tags": {
+"highway": "secondary",
+"name": "Stresemannplatz"
+}
+},
+{
+"type": "way",
+"id": 145424746,
+"tags": {
+"highway": "residential",
+"name": "Konrad-Adenauer-Platz"
+}
+},
+{
+"type": "way",
+"id": 145591839,
+"tags": {
+"highway": "residential",
+"name": "Grupellostraße"
+}
+},
+{
+"type": "way",
+"id": 293318325,
+"tags": {
+"highway": "residential",
+"name": "Bahnstraße"
+}
+},
+{
+"type": "way",
+"id": 293318326,
+"tags": {
+"highway": "residential",
+"name": "Bahnstraße"
+}
+},
+{
+"type": "way",
+"id": 323139723,
+"tags": {
+"highway": "residential",
+"name": "Bismarckstraße"
+}
+},
+{
+"type": "way",
+"id": 340384279,
+"tags": {
+"highway": "residential",
+"name": "Grupellostraße"
+}
+},
+{
+"type": "way",
+"id": 352037295,
+"tags": {
+"highway": "residential",
+"name": "Bismarckstraße"
+}
+},
+{
+"type": "way",
+"id": 352037302,
+"tags": {
+"highway": "secondary",
+"name": "Karlstraße"
+}
+},
+{
+"type": "way",
+"id": 376025126,
+"tags": {
+"highway": "residential",
+"name": "Bahnstraße"
+}
+},
+{
+"type": "way",
+"id": 420401681,
+"tags": {
+"highway": "secondary",
+"name": "Oststraße"
+}
+},
+{
+"type": "way",
+"id": 420401682,
+"tags": {
+"highway": "secondary",
+"name": "Oststraße"
+}
+},
+{
+"type": "way",
+"id": 540501204,
+"tags": {
+"highway": "secondary",
+"name": "Oststraße"
+}
+},
+{
+"type": "way",
+"id": 653543880,
+"tags": {
+"highway": "residential",
+"name": "Charlottenstraße"
+}
+},
+{
+"type": "way",
+"id": 653543881,
+"tags": {
+"highway": "secondary",
+"name": "Karlstraße"
+}
+},
+{
+"type": "way",
+"id": 772721903,
+"tags": {
+"highway": "service",
+"name": "Konrad-Adenauer-Platz"
+}
+},
+{
+"type": "way",
+"id": 827840789,
+"tags": {
+"highway": "path",
+"name": "Karlstraße"
+}
+},
+{
+"type": "way",
+"id": 846762623,
+"tags": {
+"highway": "secondary",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1046455986,
+"tags": {
+"highway": "secondary",
+"name": "Oststraße"
+}
+},
+{
+"type": "way",
+"id": 1092662302,
+"tags": {
+"highway": "secondary",
+"name": "Karlstraße"
+}
+},
+{
+"type": "way",
+"id": 1092662303,
+"tags": {
+"highway": "secondary",
+"name": "Karlstraße"
+}
+},
+{
+"type": "way",
+"id": 1092812414,
+"tags": {
+"highway": "residential",
+"name": "Bismarckstraße"
+}
+},
+{
+"type": "way",
+"id": 1180425474,
+"tags": {
+"highway": "residential",
+"name": "Bahnstraße"
+}
+},
+{
+"type": "way",
+"id": 1180425476,
+"tags": {
+"highway": "residential",
+"name": "Bahnstraße"
+}
+},
+{
+"type": "way",
+"id": 1180425553,
+"tags": {
+"highway": "residential",
+"name": "Bahnstraße"
+}
+},
+{
+"type": "way",
+"id": 1198579819,
+"tags": {
+"highway": "residential",
+"name": "Bismarckstraße"
+}
+},
+{
+"type": "way",
+"id": 1256012320,
+"tags": {
+"highway": "secondary",
+"name": "Stresemannplatz"
+}
+},
+{
+"type": "way",
+"id": 1256012322,
+"tags": {
+"highway": "path",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322132966,
+"tags": {
+"highway": "residential",
+"name": "Bismarckstraße"
+}
+},
+{
+"type": "way",
+"id": 1322132970,
+"tags": {
+"highway": "path",
+"name": "Konrad-Adenauer-Platz"
+}
+},
+{
+"type": "way",
+"id": 1322132971,
+"tags": {
+"highway": "path",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322132972,
+"tags": {
+"highway": "service",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322132973,
+"tags": {
+"highway": "service",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322132974,
+"tags": {
+"highway": "service",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322132975,
+"tags": {
+"highway": "cycleway",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322132976,
+"tags": {
+"highway": "service",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322132979,
+"tags": {
+"highway": "path",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322132981,
+"tags": {
+"highway": "path",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322133007,
+"tags": {
+"highway": "cycleway",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322133008,
+"tags": {
+"highway": "cycleway",
+"name": "Karlstraße"
+}
+},
+{
+"type": "way",
+"id": 1322133009,
+"tags": {
+"highway": "path",
+"name": "Stresemannstraße"
+}
+},
+{
+"type": "way",
+"id": 1322133010,
+"tags": {
+"highway": "residential",
+"name": "Stresemannstraße"
+}
+},
+{
+"type": "way",
+"id": 1322133013,
+"tags": {
+"highway": "cycleway",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322135762,
+"tags": {
+"highway": "cycleway",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322135763,
+"tags": {
+"highway": "cycleway",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322135764,
+"tags": {
+"highway": "cycleway",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1322135765,
+"tags": {
+"highway": "service",
+"name": "Graf-Adolf-Straße"
+}
+},
+{
+"type": "way",
+"id": 1504713627,
+"tags": {
+"highway": "footway",
+"name": "Stresemannstraße"
+}
+},
+{
+"type": "way",
+"id": 1504713628,
+"tags": {
+"highway": "footway",
+"name": "Stresemannstraße"
+}
+},
+{
+"type": "way",
+"id": 1504713629,
+"tags": {
+"highway": "footway",
+"name": "Stresemannstraße"
+}
+}
+]
+}

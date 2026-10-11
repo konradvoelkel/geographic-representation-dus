@@ -1,0 +1,514 @@
+{
+"head": {
+"vars": [
+"item",
+"itemLabel",
+"coord",
+"article"
+]
+},
+"results": {
+"bindings": [
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q1718"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.776666666 51.225555555)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/D%C3%BCsseldorf"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Düsseldorf"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q139206"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.77278 51.2319)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Tonhalle_D%C3%BCsseldorf"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Tonhalle Düsseldorf"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q148345"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.7841 51.22)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Zatra-Haus"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Zatra-Haus"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q151651"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.86 51.2108)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Vennhausen"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Vennhausen"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q151685"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.83694444 51.20361111)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Fiftyfifty"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "fiftyfifty"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q5122"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.859944444 51.155083333)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Itter_(Rhein)"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Itter"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q5122"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(7.076027777 51.215527777)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Itter_(Rhein)"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Itter"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q679491"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.761666666 51.217777777)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Rheinturm"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Rheinturm"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q701645"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.795833333 51.181111111)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/D%C3%BCssel"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Düssel"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q701645"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(7.076944444 51.296944444)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/D%C3%BCssel"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Düssel"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q724257"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.80708 51.1661)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Schloss_Mickeln"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Schloss Mickeln"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q728078"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.771994444 51.226083333)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Rathaus_D%C3%BCsseldorf"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Rathaus Düsseldorf"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q754073"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.77252 51.2309)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Ateliergeb%C3%A4ude_der_Kunstakademie_D%C3%BCsseldorf"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Ateliergebäude der Kunstakademie Düsseldorf"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q754083"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.75636 51.253)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Atelierhaus_f%C3%BCr_%E2%80%9Ejunge_noch_unverheiratete_Maler_und_Bildhauer%E2%80%9C"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Atelierhaus für „junge noch unverheiratete Maler und Bildhauer“"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q754077"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.7918 51.225)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Atelierhaus_Pfau"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Atelierhaus Pfau"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q787453"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.81983 51.2206)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Automeile_H%C3%B6herweg"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Automeile Höherweg"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q800290"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.82333 51.195)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Bahnbetriebswerk_D%C3%BCsseldorf_Abstellbahnhof"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Bahnbetriebswerk Düsseldorf Abstellbahnhof"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q800701"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.786333333 51.291638888)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Bahnhof_D%C3%BCsseldorf_Flughafen"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Bahnhof Düsseldorf Flughafen"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q800698"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.79343 51.2481)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Bahnhof_D%C3%BCsseldorf-Derendorf"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Bahnhof Düsseldorf-Derendorf"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q815152"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.739166666 51.3)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Belagerung_von_Kaiserswerth_(1247)"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Belagerung von Kaiserswerth (1247)"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q815153"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.739166666 51.3)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Belagerung_von_Kaiserswerth_(1702)"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Belagerung von Kaiserswerth (1702)"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q815153"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.741 51.299)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Belagerung_von_Kaiserswerth_(1702)"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Belagerung von Kaiserswerth (1702)"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q816771"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.77443 51.2269)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Benders_Marie"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Benders Marie"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q819283"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.82792 51.25013)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/World_Team_Cup_2012"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "World Team Cup 2012"
+}
+},
+{
+"item": {
+"type": "uri",
+"value": "http://www.wikidata.org/entity/Q819573"
+},
+"coord": {
+"datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+"type": "literal",
+"value": "Point(6.77328 51.2244)"
+},
+"article": {
+"type": "uri",
+"value": "https://de.wikipedia.org/wiki/Berger_Kirche_(D%C3%BCsseldorf)"
+},
+"itemLabel": {
+"xml:lang": "de",
+"type": "literal",
+"value": "Berger Kirche"
+}
+}
+]
+}
+}

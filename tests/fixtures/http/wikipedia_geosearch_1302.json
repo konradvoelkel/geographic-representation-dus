@@ -1,0 +1,79 @@
+{
+"batchcomplete": "",
+"query": {
+"geosearch": [
+{
+"pageid": 5920116,
+"ns": 0,
+"title": "Gerhart-Hauptmann-Haus (Düsseldorf)",
+"lat": 51.221009,
+"lon": 6.789287,
+"dist": 129.7,
+"primary": ""
+},
+{
+"pageid": 25199,
+"ns": 0,
+"title": "Bundesvereinigung gegen Fluglärm",
+"lat": 51.22103,
+"lon": 6.78572,
+"dist": 146.5,
+"primary": ""
+},
+{
+"pageid": 6382618,
+"ns": 0,
+"title": "Hotel „Römischer Kaiser“",
+"lat": 51.22058,
+"lon": 6.7852,
+"dist": 169.6,
+"primary": ""
+},
+{
+"pageid": 5871437,
+"ns": 0,
+"title": "Graf-Adolf-Straße 83–87",
+"lat": 51.219196,
+"lon": 6.789422,
+"dist": 189.4,
+"primary": ""
+},
+{
+"pageid": 4429951,
+"ns": 0,
+"title": "PSD Bank Rhein-Ruhr",
+"lat": 51.220542,
+"lon": 6.790587,
+"dist": 206.1,
+"primary": ""
+},
+{
+"pageid": 5785645,
+"ns": 0,
+"title": "Hansahaus (Düsseldorf)",
+"lat": 51.219519,
+"lon": 6.790559,
+"dist": 230.1,
+"primary": ""
+},
+{
+"pageid": 3914454,
+"ns": 0,
+"title": "Brauerei Ferd. Schumacher",
+"lat": 51.221521111111,
+"lon": 6.784744,
+"dist": 232.1,
+"primary": ""
+},
+{
+"pageid": 6597979,
+"ns": 0,
+"title": "Zatra-Haus",
+"lat": 51.22004,
+"lon": 6.784101,
+"dist": 250.5,
+"primary": ""
+}
+]
+}
+}

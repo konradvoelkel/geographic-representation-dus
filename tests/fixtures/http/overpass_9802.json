@@ -1,0 +1,242 @@
+{
+"version": 0.6,
+"generator": "Overpass API 0.7.62.11 87bfad18",
+"osm3s": {
+"timestamp_osm_base": "2026-10-11T11:06:35Z",
+"copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+},
+"elements": [
+{
+"type": "way",
+"id": 20175769,
+"tags": {
+"highway": "tertiary",
+"name": "Altenbrückstraße"
+}
+},
+{
+"type": "way",
+"id": 20176081,
+"tags": {
+"highway": "unclassified",
+"name": "Spangerstraße"
+}
+},
+{
+"type": "way",
+"id": 23817021,
+"tags": {
+"highway": "residential",
+"name": "Fürstenberger Straße"
+}
+},
+{
+"type": "way",
+"id": 23817022,
+"tags": {
+"highway": "residential",
+"name": "Fürstenberger Straße"
+}
+},
+{
+"type": "way",
+"id": 23817023,
+"tags": {
+"highway": "residential",
+"name": "Fürstenberger Straße"
+}
+},
+{
+"type": "way",
+"id": 23817024,
+"tags": {
+"highway": "residential",
+"name": "Fürstenberger Straße"
+}
+},
+{
+"type": "way",
+"id": 23817026,
+"tags": {
+"highway": "residential",
+"name": "Potsdamer Straße"
+}
+},
+{
+"type": "way",
+"id": 26991869,
+"tags": {
+"highway": "tertiary",
+"name": "Henkelstraße"
+}
+},
+{
+"type": "way",
+"id": 71389664,
+"tags": {
+"highway": "residential",
+"name": "Am Köhnen"
+}
+},
+{
+"type": "way",
+"id": 85639924,
+"tags": {
+"highway": "residential",
+"name": "Potsdamer Straße"
+}
+},
+{
+"type": "way",
+"id": 120132614,
+"tags": {
+"highway": "residential",
+"name": "Fürstenberger Straße"
+}
+},
+{
+"type": "way",
+"id": 122110577,
+"tags": {
+"highway": "tertiary",
+"name": "Altenbrückstraße"
+}
+},
+{
+"type": "way",
+"id": 122110578,
+"tags": {
+"highway": "tertiary",
+"name": "Further Straße"
+}
+},
+{
+"type": "way",
+"id": 131677109,
+"tags": {
+"highway": "tertiary",
+"name": "Altenbrückstraße"
+}
+},
+{
+"type": "way",
+"id": 144399423,
+"tags": {
+"highway": "tertiary",
+"name": "Further Straße"
+}
+},
+{
+"type": "way",
+"id": 166977163,
+"tags": {
+"highway": "tertiary",
+"name": "Altenbrückstraße"
+}
+},
+{
+"type": "way",
+"id": 349903674,
+"tags": {
+"highway": "tertiary",
+"name": "Altenbrückstraße"
+}
+},
+{
+"type": "way",
+"id": 851998473,
+"tags": {
+"highway": "tertiary",
+"name": "Further Straße"
+}
+},
+{
+"type": "way",
+"id": 851998474,
+"tags": {
+"highway": "tertiary",
+"name": "Further Straße"
+}
+},
+{
+"type": "way",
+"id": 959759643,
+"tags": {
+"highway": "tertiary",
+"name": "Altenbrückstraße"
+}
+},
+{
+"type": "way",
+"id": 959759646,
+"tags": {
+"highway": "tertiary",
+"name": "Altenbrückstraße"
+}
+},
+{
+"type": "way",
+"id": 959759648,
+"tags": {
+"highway": "tertiary",
+"name": "Further Straße"
+}
+},
+{
+"type": "way",
+"id": 959759649,
+"tags": {
+"highway": "tertiary",
+"name": "Further Straße"
+}
+},
+{
+"type": "way",
+"id": 959759650,
+"tags": {
+"highway": "unclassified",
+"name": "Spangerstraße"
+}
+},
+{
+"type": "way",
+"id": 1087169098,
+"tags": {
+"highway": "tertiary",
+"name": "Altenbrückstraße"
+}
+},
+{
+"type": "way",
+"id": 1286620822,
+"tags": {
+"highway": "tertiary",
+"name": "Henkelstraße"
+}
+},
+{
+"type": "way",
+"id": 1286632312,
+"tags": {
+"highway": "tertiary",
+"name": "Altenbrückstraße"
+}
+},
+{
+"type": "way",
+"id": 1448222899,
+"tags": {
+"highway": "tertiary",
+"name": "Further Straße"
+}
+},
+{
+"type": "way",
+"id": 1460251636,
+"tags": {
+"highway": "tertiary",
+"name": "Further Straße"
+}
+}
+]
+}
