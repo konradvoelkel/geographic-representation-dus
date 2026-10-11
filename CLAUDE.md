@@ -1,8 +1,9 @@
 # Arbeitsregeln für dieses Repo
 
 Aufbau: `docs/architecture.md`. Gründe und verworfene Alternativen: `docs/decisions.md`. Stand und Bekanntes:
-`STATUS.md` (im selben Commit nachziehen, wenn sich der Stand ändert). Offenes Vorhaben: die Berichtsseite,
-`docs/plan-report-2026-10.md`. Der Umbau 2026-10 ist abgeschlossen; sein
+`STATUS.md` (im selben Commit nachziehen, wenn sich der Stand ändert). Die Berichtsseite ist gebaut
+(`docs/plan-report-2026-10.md`, Stufen A bis F am 2026-10-11); offen ist nur, dass Konrad Pages einschaltet, dann die
+Abnahme aus Stufe F.3. Der Umbau 2026-10 ist abgeschlossen; sein
 Plan liegt historisch unter `docs/development-plan-2026-10.md`, der Befund davor in `docs/baseline-2026-10-10.md`.
 Maßstab für Stil und Vorgehen sind die Kapitel Brownfield, Code-Qualität, Testing, Profiling und Design by
 Contract des eipy-Skripts.
@@ -10,7 +11,7 @@ Contract des eipy-Skripts.
 ## Einstieg in eine neue Sitzung
 
 1. `git switch main && git pull`. Gearbeitet wird direkt auf `main`, keine Branches mehr (Konrad, 2026-10-11);
-   `main` trägt den letzten Tag (`v0.8.0` am 2026-10-11).
+   `main` trägt den letzten Tag (`v0.9.0` am 2026-10-11).
 2. Auf Konrads Rechner vor allem anderen, weil die Primärplatte voll ist:
    `export UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep UV_CACHE_DIR=/media/konrad/xtraspace/uv-cache`;
    `settings.local.toml` (gitignored, vorhanden) zeigt `data_root` und `cache_root` auf `/media/konrad/xtraspace/georep/`.
@@ -27,7 +28,7 @@ Contract des eipy-Skripts.
 uv sync                      # Umgebung aus uv.lock
 uv run nox                   # lint, typecheck, deps, test
 uv run pytest -m slow        # Kette über die volle Referenz, Vergleich mit der Arbeit
-uv run georep bootstrap && uv run georep run && uv run georep status
+uv run georep bootstrap && uv run georep run && uv run georep status   # run endet mit der Berichtsseite data/site/index.html
 uv run georep fetch opendata # der einzige schnelle Netzschritt; alles andere dauert Stunden
 uv run ruff check . && uv run ruff format --check .
 uv run mypy                  # strict für alles
