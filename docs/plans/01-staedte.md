@@ -1,6 +1,6 @@
 # Plan 01: Städte
 
-Stand 2026-10-11, Branch `feat/01-staedte`. Status: geplant.
+Stand 2026-10-11, Branch `feat/01-staedte`. Status: umgeschrieben.
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.1. Alle Zahlen in § 3 sind am 2026-10-11
 nachgesehen (Dateien im Scratchpad geladen, Spalten mit Python gezählt, Geometrie mit shapely und `ogrinfo` geprüft);
@@ -434,4 +434,61 @@ die Daten dafür sind in § 3.3 benannt.
 
 ## 10. Änderungen durch die Synergiephase
 
-Füllt der Supervisor.
+Stand 2026-10-12, geschrieben vom Supervisor nach [00-synergien.md](00-synergien.md). Das Fundament liegt auf
+`main` (Commits `d7df0ed` bis `b8e44b1`, Branch rebased); was unten steht, gilt vor den Stufen in § 5. Für alle
+Optionen (00-synergien.md, § 2 und § 5):
+
+- **Vorlage**: `report.html.j2` ist Rahmen; ein neuer Abschnitt ist eine neue Datei
+  `src/georep/report/templates/sections/NN-name.html.j2` (Nummern in 00-synergien.md § 5.1), optional mit
+  `NN-name.css` und `NN-name.js` daneben; `render.sections()` bindet sie in Nummernfolge ein. Das Makro
+  `term` kommt aus `templates/macros.html.j2` (`{% from "macros.html.j2" import term %}`). Ein Abschnitt, der
+  nur mit einem Modellteil existiert, steht in `{% if model.<teil> %} … {% endif %}`, das Feld in `ReportModel`
+  hat Default `None` und steht am Ende der Klasse.
+- **JavaScript**: Abschnitts-Skripte sprechen mit `window.georep` (`select(ids, scroll)` für Zahl, Array
+  oder `null`; `showDocuments(terms, title)` mit mehreren Begriffen; `rows`). Der Kartenumschalter ist
+  generisch: Radio `input[name="metric"]` mit `value`, Attribut `data-class-<value>` je Fläche
+  (`charts.choropleth(..., extra_classes={"<value>": classification})`), Legende `.legend#legend-<value>`.
+- **Tabellen**: jede neue veröffentlichte Tabelle ist ein `PublishedTable`-Eintrag am Ende von `TABLES` in
+  `src/georep/report/tables.py` (Name, Pfad-Lambda, Beschreibung, Spaltendoku, CSV-Regeln, `optional`);
+  `published_tables`, `COLUMN_DOCS`, `DESCRIPTIONS` und `export.csv_plan` gibt es nicht mehr.
+- **Regression**: `analysis.regression.regression_pair(frame, exclude, *, x, y, y_scale)` rechnet beide
+  Spalten von Tabelle 5 für jede Kennzahlspalte; die Ausreißer kommen aus `settings.analysis.exclude_districts`
+  (`defaults.toml`, `[analysis]`), `OUTLIERS` gibt es nicht mehr.
+- **Settings**: neue Tabellen am Ende von `defaults.toml` in einem Block `# --- Option NN`, neue Modelle vor
+  `class Settings`, neue Felder am Ende von `Settings`; Pfade und reine Anzeigewerte aus `fingerprint()`
+  ausschließen (Kommentar dort). Neue Layout-Properties am Ende der Klasse vor `runtime_dirs`.
+- **Pipeline**: neue Schritte mit Kommentar `# --- Option NN` an der Stelle ihrer Abhängigkeit; neue Eingaben
+  von `report` am Ende seines Tupels.
+- **Tests**: `test_cli.py`, `test_pipeline.py`, `test_report_build.py` zählen Schritte und Dateien aus
+  `build_steps` und dem Register; eigene Erwartungen in eigene Tests. Den Snapshot `test_cli.ambr`
+  (`georep steps`) bewusst erneuern, Diff im Commit.
+- **Doku**: `decisions.md` neuer Punkt ohne feste Nummer („## Punkt: <Titel> (Option NN, Datum)"; Punkt 21
+  ist das Fundament, der Supervisor nummeriert beim Merge); CHANGELOG unter „Unreleased" als eigener Absatz.
+- **Vorschau**: lokaler Server auf Port `8700 + NN`; `.claude/launch.json` je Worktree anlegen. Browser-Prüfung
+  nach § 8.4 des Meta-Plans.
+- **Cache**: `cache_root` ist geteilt; nichts außer `bootstrap` schreibt den Textstore der Hauptperiode.
+- **Fragen**: die Antworten und Vorentscheidungen stehen in [fragen.md](fragen.md); neue Fragen in § 8 dieses
+  Plans eintragen, der Supervisor sammelt sie.
+
+Für Option 1 im Besonderen:
+
+- **Profil (Fundament F4)**: `Settings.profile` (Ordnername, nicht im Fingerprint) legt Daten unter
+  `data_root/<profil>/` und PDFs sowie Texte unter `cache_root/<profil>/` ab; `Layout.for_profile(name)`,
+  `Layout.root`, `Layout.cache`. Stufe A baut darauf nur noch die Paketprofile (`src/georep/profiles/<slug>.toml`),
+  `--profile`, `GEOREP_PROFILE`, die Tabelle `[city]`, `[report.sources]`, `[publish]` und die stadtneutrale
+  `defaults.toml`. Ein Paketprofil setzt `profile = "<slug>"` selbst.
+- **Düsseldorf bleibt in Phase 3 flach** (`profile = ""`, Frage 1.7 offen): kein Umzug nach `data/duesseldorf/`,
+  `pages.yml` und Konrads Ordner bleiben; der Cache-Konflikt der PDF-Namen ist durch das Profil der zweiten Stadt
+  gelöst (`cache_root/moenchengladbach/pdf`). `georep status` zeigt das Profil schon.
+- **Ausreißer**: `exclude_districts` je Profil in `[analysis]` (Fundament F3), keine eigene Konstante mehr.
+- **Vorlage**: Kopf, Fuß und Methode parametrisiert 01 im Rahmen `report.html.j2` und in `sections/60-methode.html.j2`
+  (am Ende, Kommentar `{# Option 01 #}`); `vergleich.html.j2` bleibt eigene Vorlage mit eigener Allowlist.
+  `summary.json` ist kein `PublishedTable` (kein Parquet), sondern ein eigener Download wie `schema.json`.
+- **Reihenfolge**: 01 merged als Siebte (nach 08, 05, 06, 03, 04, 02): rebase vor dem Merge über alle
+  Settings-Blöcke der anderen; 01 verschiebt dann `settings.2014.toml` (02) in `profiles/` als eigenen Commit,
+  07 zieht sein Profil nach dem Merge von 01 selbst nach.
+- **Kanonische Spaltennamen**: 02 baut die Umbenennung in `prep/voters.py` (2020-Format), 01 erweitert sie um
+  die Legende `D1…Dn`; nach dem Merge von 02 rebasen und die Funktion wiederverwenden.
+- **Kleine Karten**: `party_maps` (04, `<defs>` und `<use>`) als Muster für den Städtevergleich, sobald 04
+  gemerged ist.
+- **Fragen**: 1.1, 1.2, 1.3, 1.4, 1.9 offen (fragen.md); 1.5, 1.6, 1.8 wie angenommen; 1.7 siehe oben.
