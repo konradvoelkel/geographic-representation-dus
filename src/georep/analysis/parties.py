@@ -80,6 +80,7 @@ class Patterns:
     joint: re.Pattern[str] | None
     person: re.Pattern[str] | None
     text: re.Pattern[str] | None
+    name_party: re.Pattern[str] | None  # schwaches Tor, erst nach den Personenmarkern
     parties: tuple[
         tuple[str, re.Pattern[str]], ...
     ]  # Schlüssel -> Muster, Reihenfolge der Settings
@@ -104,6 +105,7 @@ class Patterns:
             joint=_any_of(originators.joint_markers),
             person=_any_of(originators.person_markers),
             text=_any_of(originators.text_markers),
+            name_party=_any_of(originators.name_party_markers),
             parties=tuple(
                 (p.key, _alternation(p.patterns))
                 for p in (*originators.parties, *originators.groups)
@@ -259,6 +261,15 @@ def classify_document(
     person = patterns.person.search(title) if patterns.person is not None else None
     if person is not None:
         return Classification("Person", (), "name", _excerpt(title, *person.span()))
+
+    # Zuletzt das schwache Tor: eine Antragsklammer im Titel, die eine Partei ohne das Wort
+    # „Fraktion" nennt („(Antrag BÜNDNIS 90/DIE GRÜNEN)"). Es steht hinter den Personenmarkern,
+    # damit „(Antrag Herr Lemmer-Freie Wähler)" Person bleibt wie „Herrn Salinger; AfD".
+    bracket = patterns.name_party.search(title) if patterns.name_party is not None else None
+    if bracket is not None:
+        keys, hit = _parties_in(bracket.group(0), patterns)
+        if keys:
+            return Classification("Fraktion", keys, "name", hit)
     return Classification("unbekannt", (), "", "")
 
 

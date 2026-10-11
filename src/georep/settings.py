@@ -553,12 +553,19 @@ class Originators(_Strict):
     joint_markers: list[str] = []  # „interfraktionell": Fraktion ohne nennbare Partei
     person_markers: list[str] = []  # „Bezirksvertreterin": Klasse Person
     text_markers: list[str] = []  # Fenster im Textkopf: Antrag/Anfrage … Fraktion
+    name_party_markers: list[str] = []  # schwaches Tor: Antragsklammer ohne das Wort „Fraktion"
     text_head_chars: int = 600  # so viele Zeichen des Texts nach „betrifft" werden gelesen
     text_window_chars: int = 80  # Fenster links und rechts um den Treffer im Textkopf
     parties: list[Party] = []
     groups: list[Party] = []
 
-    @field_validator("fraction_markers", "joint_markers", "person_markers", "text_markers")
+    @field_validator(
+        "fraction_markers",
+        "joint_markers",
+        "person_markers",
+        "text_markers",
+        "name_party_markers",
+    )
     @classmethod
     def _markers_compile(cls, value: list[str]) -> list[str]:
         return _compiles(value, "originators markers")

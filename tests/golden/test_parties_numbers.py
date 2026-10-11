@@ -1,7 +1,8 @@
 """Die Urheber-Zuordnung über die volle Referenz: Deckung, Klassen, Parteien, Vollständigkeit.
 
 Diese Zahlen sind keine Werte der Arbeit (sie kennt die Urheber nicht), sondern die Deckung der
-Muster aus ``defaults.toml`` über alle 19 108 Dokumente, am 2026-10-12 gemessen. Sie sind Schranken,
+Muster aus ``defaults.toml`` über alle 19 108 Dokumente, am 2026-10-12 gemessen (nach der
+Stichprobe von 50 Dokumenten, die drei Lücken in den Mustern gezeigt hat). Sie sind Schranken,
 keine Gleichheiten: ein neuer ``paperType`` oder eine neue Schreibvariante soll auffallen, ohne dass
 jede Verschiebung um ein Dokument den Test rot macht. Der Test, der wirklich eng ist, ist der
 letzte: jeder ``paperType``-Wert des Korpus muss den Settings bekannt sein.
@@ -59,11 +60,11 @@ def test_the_patterns_cover_almost_every_document(attribution: pl.DataFrame) -> 
     figures = originator_figures(attribution)
     total = attribution.height
     assert sum(figures.values()) == total == 19_108  # die Partition deckt alles ab
-    assert figures["unbekannt"] / total <= 0.05  # gemessen 3,2 % (616 Dokumente)
-    assert figures["Fraktion"] / total >= 0.35  # gemessen 40,2 % (7 689)
+    assert figures["unbekannt"] / total <= 0.05  # gemessen 1,7 % (327 Dokumente)
+    assert figures["Fraktion"] / total >= 0.35  # gemessen 41,1 % (7 859)
     assert figures["Verwaltung"] / total >= 0.45  # gemessen 52,0 % (9 933)
     assert figures["Eingabe"] == 124  # die beiden Eingabe-paperTypes, 73 + 51
-    assert 700 <= figures["Person"] <= 800  # gemessen 746
+    assert 800 <= figures["Person"] <= 950  # gemessen 865
 
 
 def test_the_sources_are_used_in_the_planned_proportions(attribution: pl.DataFrame) -> None:
@@ -72,9 +73,9 @@ def test_the_sources_are_used_in_the_planned_proportions(attribution: pl.DataFra
     found = dict(attribution.group_by(QUELLE).len().iter_rows())
     assert found.get("oparl", 0) == 0
     assert found["paper_type"] >= 13_000  # gemessen 13 432 (Verwaltung, Eingabe und Typ-Suffix)
-    assert found["name"] >= 4_000  # gemessen 4 419
-    assert found["text"] >= 500  # gemessen 641: Titel ohne Fraktion, Kopf mit
-    assert found[""] <= 1_000  # gemessen 616, dieselben wie „unbekannt"
+    assert found["name"] >= 4_000  # gemessen 4 617
+    assert found["text"] >= 500  # gemessen 732: Titel ohne Fraktion, Kopf mit
+    assert found[""] <= 1_000  # gemessen 327, dieselben wie „unbekannt"
 
 
 def test_every_party_has_documents_and_cooperations_are_visible(
@@ -83,15 +84,15 @@ def test_every_party_has_documents_and_cooperations_are_visible(
     per_party = documents_per_party(
         attribution, (*settings.originators.parties, *settings.originators.groups)
     )
-    # Gemessen: GRUENE 2237, CDU 2089, SPD 2059, FDP 808, Die_Linke 791, AfD 182, T_FW 452,
+    # Gemessen: GRUENE 2307, CDU 2139, SPD 2106, FDP 879, Die_Linke 792, AfD 183, T_FW 452,
     # PARTEI 281, VOLT 14. Jede Partei und Gruppe stellt Dokumente, die AfD am wenigsten.
     assert all(count > 0 for count in per_party.values())
     assert per_party["GRUENE"] >= per_party["CDU"] >= per_party["AfD"]
     assert 100 <= per_party["AfD"] <= 300
     multiple = attribution.filter(pl.col(PARTEIEN).list.len() >= 2)
-    assert 1_000 <= multiple.height <= 1_300  # gemessen 1 119 Kooperationspapiere
+    assert 1_000 <= multiple.height <= 1_400  # gemessen 1 168 Kooperationspapiere
     pairs = dict(multiple.group_by(pl.col(PARTEIEN).list.join("+")).len().iter_rows())
-    assert pairs["CDU+GRUENE"] >= 700  # gemessen 826: die Kooperation der Periode
+    assert pairs["CDU+GRUENE"] >= 700  # gemessen 844: die Kooperation der Periode
 
 
 def test_every_paper_type_of_the_corpus_is_known_to_the_settings(

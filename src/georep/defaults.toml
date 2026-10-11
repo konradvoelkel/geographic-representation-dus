@@ -409,12 +409,25 @@ admin_types = [
 ]
 citizen_types = ["Eingabe nach 24GO", "Eingabe nach 24 GO"]  # 73 + 51 Bürgeranträge nach § 24 GO NRW; weder Verwaltung noch Mandatsträger
 motion_prefixes = ["Haushaltsantrag", "Antrag", "Anfrage", "zAnfrage"]  # längste zuerst, sonst bleibt bei „Haushaltsantrag CDU/Grüne" ein „haushalts" stehen
-fraction_markers = ["fraktion", "interfraktionell", "überfraktionell", "ratsgruppe"]  # erst damit wird der Titel befragt; „die cdu beantragt" in einer Verwaltungsvorlage soll nicht zählen
+fraction_markers = ["frak\\w{0,2}ion", "interfraktionell", "überfraktionell", "ratsgruppe"]  # erst damit wird der Titel befragt; „die cdu beantragt" in einer Verwaltungsvorlage soll nicht zählen. frak\w{0,2}ion deckt den Tippfehler der Quelle „Antrag der CDU-Frakion" (BV7/018/2025, Stichprobe vom 2026-10-12)
 joint_markers = ["interfraktionell", "überfraktionell", "fraktionen"]  # Fraktion ohne nennbare Partei: 220 Dokumente („Interfraktioneller Antrag der Ratsfraktionen von …" nennt sie, andere nicht)
 person_markers = [
-    "bezirksvertreter", "ratsherr", "ratsfrau", "bürgermitglied", "herrn ", "frau ",
+    "bezirksvertreter", "ratsherr", "ratsfrau", "bürgermitglied", "bezirksbürgermeister",
+    "herrn? ", "frau ",        # „herrn? " deckt „Antrag von Herrn Butzke" und „(Antrag Herr Wolf …)"; das Leerzeichen hält „Herren" und „Frauenberatung" draußen
 ]                              # 746 Dokumente: „Anfrage der Bezirksvertreterin Claudia Drossel"
-text_markers = ["(antrag|anfrage)[^.]{0,80}?(fraktion|ratsfraktion|interfraktionell|überfraktionell)"]  # „(anfrage cdu-fraktion vom 28. juli 2023)": fängt die 641 Fälle, in denen der Titel die Fraktion verschweigt
+# Zwei Leserichtungen im Textkopf: „(anfrage cdu-fraktion vom 28. juli 2023)" und
+# „(interfraktioneller antrag)". Im ersten Muster steht .{0,80} und nicht [^.]{0,80}, weil die
+# Abkürzungen der Namen Punkte tragen („(anfrage frau dr.dr.hagen, fdp-fraktion, …)", Stichprobe
+# vom 2026-10-12); die Schranke von 80 Zeichen hält den Treffer trotzdem lokal.
+text_markers = [
+    "(antrag|anfrage).{0,80}?(fraktion|ratsfraktion|interfraktionell|überfraktionell)",
+    "(interfraktionell|überfraktionell)\\w*.{0,20}?(antrag|anfrage)",
+]
+# Schwaches Tor für den Titel, erst nach den Personenmarkern befragt: eine Antragsklammer, die
+# eine Partei ohne das Wort „Fraktion" nennt („(Antrag BÜNDNIS 90/DIE GRÜNEN)", BV3/065/2021).
+# Steht ein Mandatsträger in der Klammer („(Antrag Herr Lemmer-Freie Wähler)"), gewinnt die Klasse
+# Person, damit es gleich bleibt, ob der Titel „Herrn Salinger; AfD" oder die Klammer sagt.
+name_party_markers = ["\\((antrag|anfrage)[^)]{0,60}\\)"]
 text_head_chars = 600          # so viele Zeichen des Texts nach „betrifft"; der Volltext würde Zitate treffen („die cdu-fraktion beantragt" in einer Verwaltungsvorlage)
 text_window_chars = 80         # Fenster links und rechts um den Treffer; „(anfrage frau irmer, spd-fraktion, vom 2. august 2023)" braucht beide Seiten
 

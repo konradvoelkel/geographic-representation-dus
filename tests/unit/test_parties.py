@@ -272,3 +272,66 @@ def test_corpus_without_the_originator_column_still_classifies(
     found = classify_originators(corpus, default_settings.originators)
     assert found.get_column("id").to_list() == ["a", "b"]
     assert found.get_column(ART).to_list() == ["Verwaltung", "Fraktion"]
+
+
+# --- aus der Stichprobe von 50 Dokumenten (2026-10-12): sieben Fälle, die „unbekannt" hießen ------
+
+
+def test_abbreviations_in_the_text_head_do_not_stop_the_marker(patterns: Patterns) -> None:
+    """``(anfrage frau dr.dr.hagen, fdp-fraktion, …)``: die Punkte in Abkürzungen standen vorher
+    zwischen Antragswort und Fraktion (BV5/031/2022, BV5/158/2024)."""
+    assert _classify(
+        patterns,
+        paper_type="Anfrage",
+        name="Hochwasserschaden Alte Landstraße",
+        text="hochwasserschaden alte landstraße(anfrage frau dr.dr.hagen, fdp-fraktion, vom 8. februar 2022)",
+    ) == ("Fraktion", ("FDP",), "text")
+
+
+def test_an_interfractional_motion_in_the_text_head_counts(patterns: Patterns) -> None:
+    """``(interfraktioneller antrag …)`` nennt die Fraktion vor dem Antragswort (BV5/109/2023)."""
+    assert _classify(
+        patterns,
+        paper_type="Antrag",
+        name="Dringlichkeitsantrag: Situation rund um den Anker verträglich gestalten",
+        text="dringlichkeitsantrag: situation rund um den anker auch in zukunft verträglich gestalten "
+        "- gemeinsamer austausch mit anliegern, verwaltung, schulen und politik (interfraktioneller "
+        "antrag) die bezirksvertretung bittet",
+    ) == ("Fraktion", (), "text")
+
+
+def test_a_party_in_brackets_without_the_word_fraction(patterns: Patterns) -> None:
+    """``(Antrag BÜNDNIS 90/DIE GRÜNEN)``: eine Partei ohne das Wort „Fraktion" (BV3/065/2021)."""
+    assert _classify(
+        patterns,
+        paper_type="Antrag",
+        name="Modellversuch Tempo 30 auf der Corneliusstraße (Antrag BÜNDNIS 90/DIE GRÜNEN)",
+    ) == ("Fraktion", ("GRUENE",), "name")
+    # Ohne Antragsklammer bleibt der Titel unbefragt: „CDU-nahe Stiftung" ist kein CDU-Antrag
+    assert _classify(patterns, paper_type="Antrag", name="Spende an eine CDU-nahe Stiftung") == (
+        "unbekannt",
+        (),
+        "",
+    )
+
+
+def test_a_single_representative_in_brackets_is_a_person(patterns: Patterns) -> None:
+    """Person schlägt die Antragsklammer: „(Anfrage Herr Driesch - DIE LINKE)" ist eine Anfrage
+    eines Bezirksvertreters, keine Fraktionsanfrage (BV3/141/2025, BV3/040/2024, BV8/243/2022).
+    So bleibt es gleich, ob der Titel „Herrn Salinger; AfD" oder „(Antrag Herr X - Partei)" sagt."""
+    for title in (
+        "Sozialer Wohnungsbau im Bezirk 3 (Anfrage Herr Driesch - DIE LINKE)",
+        "Begrünung Stadtteilzentrum Bilk (Antrag Herr Wolf - Bezirksbürgermeister)",
+        "Beauftragte/r gegen Rechtsextremismus (Antrag Herr Lemmer-Freie Wähler)",
+    ):
+        assert _classify(patterns, paper_type="Antrag", name=title) == ("Person", (), "name")
+
+
+def test_a_typo_in_the_source_still_names_the_fraction(patterns: Patterns) -> None:
+    """„Antrag der CDU-Frakion" (BV7/018/2025) ist ein Tippfehler des Ratsinformationssystems;
+    ``frak\\w{0,2}ion`` fängt ihn, ohne die Klasse zu raten."""
+    assert _classify(
+        patterns,
+        paper_type="Antrag",
+        name="Situation in Gerresheim an Silvester 2024/2025 - Antrag der CDU-Frakion -",
+    ) == ("Fraktion", ("CDU",), "name")
