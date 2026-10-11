@@ -181,3 +181,23 @@ def test_legend_of_the_mini_fixture_is_stable(
     rate = legend(classify({d.id: d.rate for d in model.districts}), rate_label)
     turnout = legend(classify({d.id: d.turnout for d in model.districts}), turnout_label)
     assert [(e.klass, e.label) for e in rate + turnout] == snapshot
+
+
+def test_axes_map_tick_ends_onto_the_plot_frame() -> None:
+    from georep.report.charts import MARGIN, Axes
+
+    axes = Axes.fit([0.03, 0.16], [36.0, 67.0], width=640.0, height=420.0)
+    top, right, bottom, left = MARGIN
+    assert axes.sx(axes.x0) == pytest.approx(left)
+    assert axes.sx(axes.x1) == pytest.approx(640.0 - right)
+    assert axes.sy(axes.y1) == pytest.approx(top)
+    assert axes.sy(axes.y0) == pytest.approx(420.0 - bottom)
+    grid = ET.fromstring(axes.grid())
+    assert len(grid.findall("line")) == len(axes.x_ticks) + len(axes.y_ticks)
+    ticks = ET.fromstring(axes.tick_labels())
+    assert len(ticks.findall("text")) == len(axes.x_ticks) + len(axes.y_ticks)
+    assert "&lt;" in axes.axis_titles("<x>", "y") and "Wahlbeteiligung" in axes.axis_titles(
+        "x", "Wahlbeteiligung"
+    )
+    flat = Axes.fit([0.1, 0.1], [50.0, 50.0])
+    assert flat.x1 > flat.x0 and flat.y1 > flat.y0

@@ -234,6 +234,142 @@ def project_pois(
     return [Poi(*projection.point(x, y), label, district) for x, y, label, district in points]
 
 
+@dataclass(frozen=True)
+class Axes:
+    """Achsen eines Diagramms: Ränder, Wertebereich aus ``nice_ticks``, Skalen und die SVG-Teile,
+    die jedes Punkt- oder Balkendiagramm gleich zeichnet (Gitter, Achsenlinien, Ticks, Titel).
+
+    Herausgezogen aus ``scatter`` (Fundament F7), damit weitere Diagramme (Added-Variable-Plots,
+    Differenzen zweier Perioden, Balken je Monat) dieselben Achsen bekommen; die Ausgabe von
+    ``scatter`` ist dabei byteidentisch geblieben.
+    """
+
+    width: float
+    height: float
+    x_ticks: tuple[float, ...]
+    y_ticks: tuple[float, ...]
+    margin: tuple[float, float, float, float] = MARGIN  # oben, rechts, unten, links
+
+    @classmethod
+    def fit(
+        cls,
+        xs: Sequence[float],
+        ys: Sequence[float],
+        *,
+        width: float = SCATTER_WIDTH,
+        height: float = SCATTER_HEIGHT,
+        x_span: float = 0.01,
+        y_span: float = 1.0,
+        margin: tuple[float, float, float, float] = MARGIN,
+    ) -> Axes:
+        """Ticks aus den Daten; ohne Streuung wird eine kleine Spanne (``x_span``, ``y_span``) angenommen."""
+        x_ticks = nice_ticks(min(xs), max(xs) if max(xs) > min(xs) else min(xs) + x_span)
+        y_ticks = nice_ticks(min(ys), max(ys) if max(ys) > min(ys) else min(ys) + y_span)
+        return cls(width, height, x_ticks, y_ticks, margin)
+
+    @property
+    def top(self) -> float:
+        return self.margin[0]
+
+    @property
+    def right(self) -> float:
+        return self.margin[1]
+
+    @property
+    def bottom(self) -> float:
+        return self.margin[2]
+
+    @property
+    def left(self) -> float:
+        return self.margin[3]
+
+    @property
+    def plot_w(self) -> float:
+        return self.width - self.left - self.right
+
+    @property
+    def plot_h(self) -> float:
+        return self.height - self.top - self.bottom
+
+    @property
+    def x0(self) -> float:
+        return self.x_ticks[0]
+
+    @property
+    def x1(self) -> float:
+        return self.x_ticks[-1]
+
+    @property
+    def y0(self) -> float:
+        return self.y_ticks[0]
+
+    @property
+    def y1(self) -> float:
+        return self.y_ticks[-1]
+
+    def sx(self, x: float) -> float:
+        return self.left + (x - self.x0) / (self.x1 - self.x0) * self.plot_w
+
+    def sy(self, y: float) -> float:
+        return self.top + (self.y1 - y) / (self.y1 - self.y0) * self.plot_h
+
+    def clip_path(self, clip_id: str = "plot") -> str:
+        return (
+            f'<clipPath id="{clip_id}"><rect x="{_num(self.left)}" y="{_num(self.top)}" '
+            f'width="{_num(self.plot_w)}" height="{_num(self.plot_h)}"/></clipPath>'
+        )
+
+    def grid(self) -> str:
+        parts = ['<g class="grid">']
+        parts.extend(
+            f'<line x1="{_num(self.left)}" x2="{_num(self.left + self.plot_w)}" '
+            f'y1="{_num(self.sy(t))}" y2="{_num(self.sy(t))}"/>'
+            for t in self.y_ticks
+        )
+        parts.extend(
+            f'<line y1="{_num(self.top)}" y2="{_num(self.top + self.plot_h)}" '
+            f'x1="{_num(self.sx(t))}" x2="{_num(self.sx(t))}"/>'
+            for t in self.x_ticks
+        )
+        parts.append("</g>")
+        return "".join(parts)
+
+    def axis_lines(self) -> str:
+        return (
+            '<g class="axis">'
+            f'<line x1="{_num(self.left)}" x2="{_num(self.left + self.plot_w)}" '
+            f'y1="{_num(self.top + self.plot_h)}" y2="{_num(self.top + self.plot_h)}"/>'
+            f'<line x1="{_num(self.left)}" x2="{_num(self.left)}" '
+            f'y1="{_num(self.top)}" y2="{_num(self.top + self.plot_h)}"/>'
+            "</g>"
+        )
+
+    def tick_labels(self) -> str:
+        x_dec = _decimals(self.x_ticks[1] - self.x_ticks[0])
+        y_dec = _decimals(self.y_ticks[1] - self.y_ticks[0])
+        parts = ['<g class="ticks">']
+        parts.extend(
+            f'<text x="{_num(self.sx(t))}" y="{_num(self.top + self.plot_h + 18)}" '
+            f'text-anchor="middle">{format_de(t, x_dec)}</text>'
+            for t in self.x_ticks
+        )
+        parts.extend(
+            f'<text x="{_num(self.left - 8)}" y="{_num(self.sy(t))}" text-anchor="end" '
+            f'dominant-baseline="middle">{format_de(t, y_dec)}</text>'
+            for t in self.y_ticks
+        )
+        parts.append("</g>")
+        return "".join(parts)
+
+    def axis_titles(self, x_title: str, y_title: str) -> str:
+        return (
+            f'<text class="axis-label" x="{_num(self.left + self.plot_w / 2)}" '
+            f'y="{_num(self.height - 8)}" text-anchor="middle">{html.escape(x_title)}</text>'
+            f'<text class="axis-label" transform="translate(14 {_num(self.top + self.plot_h / 2)}) '
+            f'rotate(-90)" text-anchor="middle">{html.escape(y_title)}</text>'
+        )
+
+
 def scatter(
     rows: Sequence[DistrictRow],
     regression: RegressionPair,
@@ -242,83 +378,39 @@ def scatter(
     height: float = SCATTER_HEIGHT,
 ) -> str:
     """Trefferquote (x) gegen Wahlbeteiligung in Prozent (y), Punkte mit Nummer, beide Geraden."""
-    top, right, bottom, left = MARGIN
-    plot_w, plot_h = width - left - right, height - top - bottom
     xs = [row.rate for row in rows]
     ys = [row.turnout * 100.0 for row in rows]
-    x_ticks = nice_ticks(min(xs), max(xs) if max(xs) > min(xs) else min(xs) + 0.01)
-    y_ticks = nice_ticks(min(ys), max(ys) if max(ys) > min(ys) else min(ys) + 1.0)
-    x0, x1, y0, y1 = x_ticks[0], x_ticks[-1], y_ticks[0], y_ticks[-1]
-    x_dec, y_dec = _decimals(x_ticks[1] - x_ticks[0]), _decimals(y_ticks[1] - y_ticks[0])
-
-    def sx(x: float) -> float:
-        return left + (x - x0) / (x1 - x0) * plot_w
-
-    def sy(y: float) -> float:
-        return top + (y1 - y) / (y1 - y0) * plot_h
-
+    axes = Axes.fit(xs, ys, width=width, height=height)
     parts = [
         f'<svg class="scatter" viewBox="0 0 {_num(width)} {_num(height)}" role="img" '
         'aria-labelledby="scatter-title" xmlns="http://www.w3.org/2000/svg">',
         '<title id="scatter-title">Trefferquote gegen Wahlbeteiligung je Wahlbezirk</title>',
-        f'<clipPath id="plot"><rect x="{_num(left)}" y="{_num(top)}" '
-        f'width="{_num(plot_w)}" height="{_num(plot_h)}"/></clipPath>',
-        '<g class="grid">',
+        axes.clip_path(),
+        axes.grid(),
+        axes.axis_lines(),
+        axes.tick_labels(),
+        axes.axis_titles("Trefferquote (Dokumente je Wahlberechtigtem)", "Wahlbeteiligung in %"),
+        '<g class="fits" clip-path="url(#plot)">',
     ]
-    parts.extend(
-        f'<line x1="{_num(left)}" x2="{_num(left + plot_w)}" y1="{_num(sy(t))}" y2="{_num(sy(t))}"/>'
-        for t in y_ticks
-    )
-    parts.extend(
-        f'<line y1="{_num(top)}" y2="{_num(top + plot_h)}" x1="{_num(sx(t))}" x2="{_num(sx(t))}"/>'
-        for t in x_ticks
-    )
-    parts.append('</g><g class="axis">')
-    parts.append(
-        f'<line x1="{_num(left)}" x2="{_num(left + plot_w)}" '
-        f'y1="{_num(top + plot_h)}" y2="{_num(top + plot_h)}"/>'
-    )
-    parts.append(
-        f'<line x1="{_num(left)}" x2="{_num(left)}" y1="{_num(top)}" y2="{_num(top + plot_h)}"/>'
-    )
-    parts.append('</g><g class="ticks">')
-    parts.extend(
-        f'<text x="{_num(sx(t))}" y="{_num(top + plot_h + 18)}" text-anchor="middle">'
-        f"{format_de(t, x_dec)}</text>"
-        for t in x_ticks
-    )
-    parts.extend(
-        f'<text x="{_num(left - 8)}" y="{_num(sy(t))}" text-anchor="end" dominant-baseline="middle">'
-        f"{format_de(t, y_dec)}</text>"
-        for t in y_ticks
-    )
-    parts.append("</g>")
-    parts.append(
-        f'<text class="axis-label" x="{_num(left + plot_w / 2)}" y="{_num(height - 8)}" '
-        'text-anchor="middle">Trefferquote (Dokumente je Wahlberechtigtem)</text>'
-    )
-    parts.append(
-        f'<text class="axis-label" transform="translate(14 {_num(top + plot_h / 2)}) rotate(-90)" '
-        'text-anchor="middle">Wahlbeteiligung in %</text>'
-    )
-    parts.append('<g class="fits" clip-path="url(#plot)">')
     fits = [("fit-all", regression.all)]
     if regression.without is not None:
         fits.append(("fit-without", regression.without))
+    x0, x1 = axes.x0, axes.x1
     for cls, fit in fits:
         parts.append(
-            f'<line class="fit {cls}" x1="{_num(sx(x0))}" y1="{_num(sy(fit.slope * x0 + fit.intercept))}" '
-            f'x2="{_num(sx(x1))}" y2="{_num(sy(fit.slope * x1 + fit.intercept))}"/>'
+            f'<line class="fit {cls}" x1="{_num(axes.sx(x0))}" '
+            f'y1="{_num(axes.sy(fit.slope * x0 + fit.intercept))}" '
+            f'x2="{_num(axes.sx(x1))}" y2="{_num(axes.sy(fit.slope * x1 + fit.intercept))}"/>'
         )
     parts.append('</g><g class="dots">')
     for row, x, y in zip(rows, xs, ys, strict=True):
-        cx, cy = _num(sx(x)), _num(sy(y))
+        cx, cy = _num(axes.sx(x)), _num(axes.sy(y))
         parts.append(
             f'<g class="point" {district_attributes(row)} tabindex="0">'
             f"<title>{html.escape(_title(row))}</title>"
             f'<circle class="hit" cx="{cx}" cy="{cy}" r="{_num(HIT_RADIUS)}"/>'
             f'<circle class="dot" cx="{cx}" cy="{cy}" r="{_num(DOT_RADIUS)}"/>'
-            f'<text class="dot-label" x="{_num(sx(x) + 6)}" y="{_num(sy(y) - 6)}">{row.id}</text>'
+            f'<text class="dot-label" x="{_num(axes.sx(x) + 6)}" y="{_num(axes.sy(y) - 6)}">{row.id}</text>'
             "</g>"
         )
     parts.append("</g></svg>")
