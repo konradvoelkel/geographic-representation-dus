@@ -22,8 +22,10 @@ import polars as pl
 from georep import __version__
 from georep.analysis.hits import hits_by_district, join_voters
 from georep.errors import GeorepError, MissingInputError
-from georep.io import write_json, write_parquet
+from georep.http import Transport
+from georep.io import write_bytes, write_json, write_parquet
 from georep.layout import Layout
+from georep.prep.extract import extract_missing
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus, documents_with_text
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
 from georep.prep.streets import read_streets_json, streets_by_district
@@ -31,6 +33,10 @@ from georep.prep.voters import aggregate_voters, read_results_csv
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
 from georep.settings import Settings
+from georep.sources import cached_session
+from georep.sources.oparl import fetch_papers
+from georep.sources.opendata import fetch_districts_geojson, fetch_results_csv
+from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextStore
 
 Status = Literal["ausgeführt", "übersprungen", "geplant"]
@@ -125,8 +131,15 @@ def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -
 
 
 def run_step(
-    step: Step, settings: Settings, *, force: bool = False, dry_run: bool = False
+    step: Step,
+    settings: Settings,
+    *,
+    force: bool = False,
+    dry_run: bool = False,
+    online: bool = False,
 ) -> Outcome:
+    if step.network and not online:
+        return Outcome(step.name, "übersprungen", "Netz aus; `--online` oder `georep fetch`")
     fresh, reason = freshness(step, settings)
     if fresh and not force:
         return Outcome(step.name, "übersprungen", reason)
@@ -169,16 +182,83 @@ def run_pipeline(
     *,
     force: bool = False,
     dry_run: bool = False,
+    online: bool = False,
 ) -> list[Outcome]:
-    return [run_step(s, settings, force=force, dry_run=dry_run) for s in select_steps(steps, names)]
+    return [
+        run_step(s, settings, force=force, dry_run=dry_run, online=online)
+        for s in select_steps(steps, names)
+    ]
 
 
-# --- die Offline-Schritte -------------------------------------------------------------------
+# --- die Schritte ---------------------------------------------------------------------------
 
 
-def build_steps(settings: Settings, layout: Layout) -> list[Step]:
-    """Die Offline-Kette; die Netzschritte und die PDF-Extraktion kommen in Phase 3 dazu."""
+def build_steps(
+    settings: Settings,
+    layout: Layout,
+    http: Transport | None = None,
+    *,
+    sleep: Callable[[float], None] = time.sleep,
+) -> list[Step]:
+    """Alle Schritte in Reihenfolge; Netzschritte laufen nur mit ``online``.
+
+    ``http`` ist die Testnaht: ohne Angabe entsteht die gecachte Session erst, wenn ein Netzschritt
+    sie braucht.
+    """
     columns = settings.columns.results
+    oparl = settings.sources.oparl
+    session: Transport | None = http
+
+    def transport() -> Transport:
+        nonlocal session
+        if session is None:
+            session = cached_session(settings, layout.http_cache)
+        return session
+
+    def opendata() -> str:
+        csv = fetch_results_csv(transport(), settings.sources.opendata.results_url, sep=columns.sep)
+        write_bytes(layout.results_csv, csv)
+        geo = fetch_districts_geojson(transport(), settings.sources.opendata.districts_url)
+        write_json(layout.districts_geojson, geo, indent=None)
+        return f"{len(csv)} Bytes Wahlergebnis, {len(geo['features'])} Stimmbezirke"
+
+    def papers() -> str:
+        store = PaperStore(layout.papers)
+        known = store.load()
+        since: dt.datetime | None = None
+        if known and oparl.incremental:
+            newest = max((r.modified for r in known.values() if r.modified), default=None)
+            if newest is not None:
+                since = newest - dt.timedelta(days=1)
+        records, fetched = fetch_papers(
+            transport(),
+            oparl.endpoint,
+            settings.period,
+            delay_s=oparl.delay_s,
+            modified_since=since,
+            stop_when_older=oparl.stop_when_older,
+            sleep=sleep,
+        )
+        report = store.upsert(records)
+        mode = f"seit {since.date()}" if since else "vollständig"
+        return f"{mode}: {fetched.summary()}; Store {report.summary()}"
+
+    def pdfs() -> str:
+        records = PaperStore(layout.papers).load().values()
+        report = PdfStore(layout.pdf_dir).download(
+            transport(), records, delay_s=oparl.delay_s, limit=oparl.pdf_limit or None, sleep=sleep
+        )
+        return report.summary()
+
+    def texts() -> str:
+        store = TextStore(layout.texts)
+        names = [r.file_name for r in PaperStore(layout.papers).load().values() if r.file_name]
+        report = extract_missing(
+            PdfStore(layout.pdf_dir), store, names, settings.search.text_split_marker
+        )
+        if not layout.texts.exists():
+            store.save()
+        return report.summary()
 
     def voters() -> str:
         frame = aggregate_voters(read_results_csv(layout.results_csv, columns), columns)
@@ -230,6 +310,12 @@ def build_steps(settings: Settings, layout: Layout) -> list[Step]:
         )
 
     return [
+        Step(
+            "opendata", (), (layout.results_csv, layout.districts_geojson), opendata, network=True
+        ),
+        Step("papers", (), (layout.papers,), papers, network=True),
+        Step("pdfs", (layout.papers,), (layout.pdf_manifest,), pdfs, network=True),
+        Step("texts", (layout.papers, layout.pdf_manifest), (layout.texts,), texts),
         Step("voters", (layout.results_csv,), (layout.voters,), voters),
         Step("streets", (layout.streets,), (layout.streets_by_district,), streets),
         Step("pois", (layout.pois,), (layout.pois_table, layout.pois_by_district), pois),

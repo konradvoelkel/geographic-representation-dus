@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|steps|status|bootstrap|export|regress``.
+"""Kommandozeile: ``georep run|fetch|steps|status|bootstrap|export|regress``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
@@ -22,6 +22,7 @@ from georep.export import export_csv
 from georep.layout import Layout
 from georep.pipeline import build_steps, freshness, run_pipeline
 from georep.settings import Settings, load_settings, settings_files
+from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextStore
 
 
@@ -42,6 +43,14 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("steps", nargs="*", help="Namen (Standard: alle)")
     run.add_argument("--force", action="store_true", help="auch aktuelle Schritte ausführen")
     run.add_argument("--dry-run", action="store_true", help="nur zeigen, was liefe")
+    run.add_argument("--online", action="store_true", help="Netzschritte mitlaufen lassen")
+
+    fetch = sub.add_parser(
+        "fetch", help="Netzschritte ausführen (opendata, papers, pdfs), dann texts"
+    )
+    fetch.add_argument("steps", nargs="*", help="Namen (Standard: alle Netzschritte und texts)")
+    fetch.add_argument("--force", action="store_true", help="auch aktuelle Schritte ausführen")
+    fetch.add_argument("--limit", type=int, help="höchstens so viele neue PDFs in diesem Lauf")
 
     sub.add_parser("steps", help="Schritte mit Eingaben und Ausgaben")
     sub.add_parser("status", help="Settings, Pfade, Frische jedes Schritts")
@@ -56,10 +65,29 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _with_pdf_limit(settings: Settings, limit: int | None) -> Settings:
+    if limit is None:
+        return settings
+    oparl = settings.sources.oparl.model_copy(update={"pdf_limit": limit})
+    sources = settings.sources.model_copy(update={"oparl": oparl})
+    return settings.model_copy(update={"sources": sources})
+
+
 def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
     layout.ensure_dirs()
+    PdfStore(layout.pdf_dir).ensure()
+    fetching = args.command == "fetch"
+    if fetching:
+        settings = _with_pdf_limit(settings, args.limit)
+    steps = build_steps(settings, layout)
+    default_names = [s.name for s in steps if s.network or s.name == "texts"] if fetching else None
     outcomes = run_pipeline(
-        build_steps(settings, layout), settings, args.steps, force=args.force, dry_run=args.dry_run
+        steps,
+        settings,
+        args.steps or default_names,
+        force=args.force,
+        dry_run=getattr(args, "dry_run", False),
+        online=fetching or args.online,
     )
     for outcome in outcomes:
         print(outcome.line())
@@ -73,7 +101,8 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
 
 def _cmd_steps(settings: Settings, layout: Layout) -> int:
     for step in build_steps(settings, layout):
-        print(f"{step.name:<12} <- {', '.join(p.name for p in step.inputs)}")
+        tag = " [Netz]" if step.network else ""
+        print(f"{step.name:<12} <- {', '.join(p.name for p in step.inputs) or '(nichts)'}{tag}")
         print(f"{'':<12} -> {', '.join(p.name for p in step.outputs)}")
     return 0
 
@@ -96,7 +125,8 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
     print(f"Stores:     {papers} Paper, {pdfs} PDFs, {texts} Texte; Korpus: {corpus} Dokumente")
     for step in build_steps(settings, layout):
         fresh, reason = freshness(step, settings)
-        print(f"{step.name:<12} {'aktuell' if fresh else 'offen':<8} {reason}")
+        tag = " [Netz]" if step.network else ""
+        print(f"{step.name:<12} {'aktuell' if fresh else 'offen':<8} {reason}{tag}")
     return 0
 
 
@@ -128,7 +158,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         settings = load_settings(explicit=args.settings)
         _setup_logging(settings.log_level)
         layout = Layout.from_settings(settings)
-        if args.command == "run":
+        if args.command in ("run", "fetch"):
             return _cmd_run(args, settings, layout)
         if args.command == "steps":
             return _cmd_steps(settings, layout)

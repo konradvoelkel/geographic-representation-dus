@@ -48,6 +48,9 @@ class HttpSettings(_Strict):
 class OparlSource(_Strict):
     endpoint: str
     delay_s: float = 1.0
+    stop_when_older: bool = True
+    incremental: bool = True
+    pdf_limit: int = 0
 
 
 class OpendataSource(_Strict):

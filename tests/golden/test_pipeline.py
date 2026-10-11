@@ -11,9 +11,10 @@ from polars.testing import assert_frame_equal
 from georep.bootstrap import bootstrap
 from georep.errors import MissingInputError
 from georep.layout import Layout
-from georep.pipeline import UnknownStepError, build_steps, run_pipeline
+from georep.pipeline import Outcome, UnknownStepError, build_steps, run_pipeline
 from georep.settings import Settings, load_settings
 
+NETWORK = {"opendata", "papers", "pdfs"}
 EXACT = ["wahlkreis_id", "anzahl_treffer", "Wahlberechtigte_insgesamt", "Waehler", "suchbegriffe"]
 FLOATS = ["wahlkreis_id", "trefferquote", "wahlbeteiligung"]
 
@@ -48,20 +49,26 @@ def test_pipeline_runs_skips_and_reruns(
     bootstrap(layout)
     steps = build_steps(settings, layout)
 
+    def offline(outcomes: list[Outcome]) -> dict[str, str]:
+        return {o.step: o.status for o in outcomes if o.step not in NETWORK}
+
     planned = run_pipeline(steps, settings, dry_run=True)
-    assert [o.status for o in planned] == ["geplant"] * 7
+    assert set(offline(planned).values()) == {"geplant"} and len(offline(planned)) == 8
+    assert all(
+        o.status == "übersprungen" and "Netz aus" in o.reason for o in planned if o.step in NETWORK
+    )
     assert not layout.results.exists()
 
     first = run_pipeline(steps, settings)
-    assert [o.status for o in first] == ["ausgeführt"] * 7
-    assert all(s.stamp_path.exists() for s in steps)
+    assert set(offline(first).values()) == {"ausgeführt"}
+    assert all(s.stamp_path.exists() for s in steps if s.name not in NETWORK)
     _compare_results(
         _results_as_legacy(layout.results), mini_root / "expected" / "wahlbezirke_auswertung.csv"
     )
 
     second = run_pipeline(steps, settings)
-    assert [o.status for o in second] == ["übersprungen"] * 7
-    assert all(o.reason == "aktuell" for o in second)
+    assert set(offline(second).values()) == {"übersprungen"}
+    assert all(o.reason == "aktuell" for o in second if o.step not in NETWORK)
 
     forced = run_pipeline(steps, settings, ["results"], force=True)
     assert [(o.step, o.status) for o in forced] == [("results", "ausgeführt")]
@@ -72,7 +79,8 @@ def test_pipeline_runs_skips_and_reruns(
         encoding="utf-8",
     )
     third = run_pipeline(steps, settings)
-    assert {o.step: o.status for o in third} == {
+    assert offline(third) == {
+        "texts": "übersprungen",
         "voters": "übersprungen",
         "streets": "übersprungen",
         "pois": "ausgeführt",
@@ -81,7 +89,8 @@ def test_pipeline_runs_skips_and_reruns(
         "index": "ausgeführt",
         "results": "ausgeführt",
     }
-    assert third[2].reason.startswith("Eingabe geändert")
+    changed = next(o for o in third if o.step == "pois")
+    assert changed.reason.startswith("Eingabe geändert")
 
 
 def test_missing_corpus_names_bootstrap(
@@ -116,7 +125,7 @@ def test_pipeline_reproduces_the_thesis_results(
     layout = _layout(tmp_path, reference_root)
     bootstrap(layout)
     outcomes = run_pipeline(build_steps(settings, layout), settings)
-    assert all(o.status == "ausgeführt" for o in outcomes)
+    assert all(o.status == "ausgeführt" for o in outcomes if o.step not in NETWORK)
     _compare_results(
         _results_as_legacy(layout.results),
         reference_root / "processed" / "wahlbezirke_auswertung.csv",

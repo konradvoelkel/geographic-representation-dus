@@ -19,7 +19,7 @@ def project(tmp_path: Path, mini_root: Path, monkeypatch: pytest.MonkeyPatch) ->
 def test_steps_lists_the_chain(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["steps"]) == 0
     out = capsys.readouterr().out
-    assert out.startswith("voters")
+    assert out.startswith("opendata") and "[Netz]" in out
     assert "results" in out and "inverted_index.parquet" in out
 
 
@@ -29,12 +29,12 @@ def test_bootstrap_run_status_export_regress(
     assert main(["bootstrap"]) == 0
     assert "200 Paper und 200 Texte" in capsys.readouterr().out
     assert main(["run", "--dry-run"]) == 0
-    assert "7 geplant" in capsys.readouterr().out
+    assert "3 übersprungen, 8 geplant" in capsys.readouterr().out
     assert main(["run"]) == 0
-    assert "7 ausgeführt" in capsys.readouterr().out
+    assert "8 ausgeführt, 3 übersprungen" in capsys.readouterr().out
     assert main(["status"]) == 0
     status = capsys.readouterr().out
-    assert "aktuell" in status and "offen" not in status and "200 Dokumente" in status
+    assert status.count("aktuell") >= 7 and "200 Dokumente" in status and "[Netz]" in status
     assert main(["export"]) == 0
     assert "7 CSV-Dateien" in capsys.readouterr().out
     assert (project / "data" / "processed" / "wahlbezirke_auswertung.csv").exists()
@@ -65,3 +65,13 @@ def test_usage_errors_exit_with_two(project: Path) -> None:
     with pytest.raises(SystemExit) as exit_info:
         main(["--nope"])
     assert exit_info.value.code == 2
+
+
+def test_fetch_plans_network_steps_and_texts(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    main(["bootstrap"])
+    capsys.readouterr()
+    assert main(["run", "--dry-run", "--online", "opendata", "papers"]) == 0
+    out = capsys.readouterr().out
+    assert out.rstrip().endswith("2 geplant") and "Netz aus" not in out

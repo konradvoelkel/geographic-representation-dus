@@ -85,6 +85,10 @@ class Layout:
         return self.raw / "papers.jsonl"
 
     @property
+    def pdf_manifest(self) -> Path:
+        return self.pdf_dir / "manifest.jsonl"
+
+    @property
     def texts(self) -> Path:
         """Textstore: alle extrahierten Texte mit Metadaten in einer Parquet-Datei."""
         return self.text_dir / "texts.parquet"

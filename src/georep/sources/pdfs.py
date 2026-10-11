@@ -49,6 +49,11 @@ class PdfStore:
         self.directory = directory
         self.manifest = directory / "manifest.jsonl"
 
+    def ensure(self) -> None:
+        """Verzeichnis und (leeres) Manifest anlegen: das Manifest ist die Eingabe des Textschritts."""
+        self.directory.mkdir(parents=True, exist_ok=True)
+        self.manifest.touch()
+
     def path(self, name: str) -> Path:
         return self.directory / name
 
@@ -84,7 +89,7 @@ class PdfStore:
         limit: int | None = None,
         sleep: Callable[[float], None] = time.sleep,
     ) -> DownloadReport:
-        self.directory.mkdir(parents=True, exist_ok=True)
+        self.ensure()
         existing = self.names()
         report = DownloadReport()
         for record in records:

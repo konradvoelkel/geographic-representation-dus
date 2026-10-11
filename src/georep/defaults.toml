@@ -29,6 +29,9 @@ overpass_s = 2592000           # Straßennamen ändern sich langsam; die Referen
 [sources.oparl]
 endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers"  # body 0015 = Düsseldorf; 0009 Neuss, 0011 Mönchengladbach, 0013 Grevenbroich, 0019 Rhein-Kreis Neuss
 delay_s = 1.0                  # Pause zwischen Seiten und Dateien; der Server ist langsam, nicht wir
+stop_when_older = true         # Liste ist neueste zuerst: abbrechen, sobald eine Seite nur noch Paper vor period.start hat (spart 270 von 365 Seiten)
+incremental = true             # bei vorhandenem Store nur Paper mit modified_since (letztes modified minus ein Tag) holen
+pdf_limit = 0                  # neue PDF-Downloads je Lauf; 0 = alle (`georep fetch pdfs --limit N` setzt es für einen Lauf)
 
 [sources.opendata]
 results_url = "https://opendata.duesseldorf.de/sites/default/files/KW_Rat_2025_09_14_Endgültiges_Ergebnis_Stimmbezirke_0.csv"

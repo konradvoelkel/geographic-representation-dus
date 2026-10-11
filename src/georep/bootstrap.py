@@ -18,6 +18,7 @@ from loguru import logger
 from georep.io import atomic_path
 from georep.layout import Layout
 from georep.records import PaperRecord
+from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextMeta, TextStore
 
 REFERENCE_EXTRACTOR = "pypdf (Arbeit, Januar 2026)"
@@ -63,6 +64,7 @@ def seed_stores_from_legacy(layout: Layout, items: list[dict[str, Any]]) -> tupl
 def bootstrap(layout: Layout, *, force: bool = False) -> BootstrapReport:
     reference = layout.reference_view()
     layout.ensure_dirs()
+    PdfStore(layout.pdf_dir).ensure()
     report = BootstrapReport()
     pairs = [
         (reference.results_csv, layout.results_csv),
