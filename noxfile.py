@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 import nox
 
 nox.options.default_venv_backend = "none"
 nox.options.sessions = ["lint", "typecheck", "baseline", "test"]
 
-LEGACY = ["src", "run.py"]
+# Nur die flachen Altcode-Module: src/ als Verzeichnis liesse mypy src/georep/ zugleich als
+# src.georep.* und georep.* sehen und abbrechen.
+LEGACY = [*sorted(str(p) for p in Path("src").glob("*.py")), "run.py"]
 # Altcode-Baseline (docs/baseline-2026-10-10.md): 18 Fehler unter Python 3.12 und den alten Pins,
 # 14 unter dem Lockfile mit Python 3.14 vom 2026-10-10. Gilt der strengere Wert.
 LEGACY_MYPY_ERRORS = 14

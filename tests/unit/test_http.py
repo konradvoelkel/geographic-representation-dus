@@ -4,6 +4,7 @@ from typing import Any
 
 import pytest
 import requests
+from requests.adapters import HTTPAdapter
 
 from georep.http import RETRY_STATUSES, make_session
 
@@ -38,6 +39,7 @@ def test_explicit_timeout_wins(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.parametrize("scheme", ["http", "https"])
 def test_retry_is_mounted_for_both_schemes(scheme: str) -> None:
     adapter = make_session(retries=3).get_adapter(f"{scheme}://example.invalid/")
+    assert isinstance(adapter, HTTPAdapter)
     retry = adapter.max_retries
     assert retry.total == 3
     assert set(RETRY_STATUSES) <= set(retry.status_forcelist)
