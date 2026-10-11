@@ -22,6 +22,7 @@ from georep import __version__
 from georep.analysis.bodies import documents_by_body, hits_by_body
 from georep.analysis.bodies import summary as bodies_summary
 from georep.analysis.hits import hits_by_district, join_voters
+from georep.analysis.ols import model_frame, model_terms, models_table
 from georep.crosswalk import area_shares, district_weights
 from georep.errors import GeorepError, MissingInputError
 from georep.geo import Area, PrecinctIndex, read_areas, read_precincts
@@ -475,6 +476,18 @@ def build_steps(
             f"Einheit = {int(unit.sum())} Treffer"
         )
 
+    # --- Option 03: die Modelle von Tabelle 6 über die Kontrollvariablen
+    def controls() -> str:
+        frame = model_frame(pl.read_parquet(layout.results), pl.read_parquet(layout.context_table))
+        table = models_table(frame, settings)
+        write_parquet(table, layout.controls, schema_version=1)
+        samples = 2 if settings.analysis.exclude_districts else 1
+        fitted = table.select("modell", "stichprobe").unique().height
+        return (
+            f"{fitted} von {len(model_terms(context)) * samples} Modellen geschätzt "
+            f"(n = {frame.height})"
+        )
+
     def report() -> str:
         return build_site(
             layout, settings, now=dt.datetime.now(dt.UTC), commit=current_commit()
@@ -570,6 +583,19 @@ def build_steps(
             + ((layout.topic_shares,) if with_topics else ()),
             (layout.weighted, layout.term_weights),
             weights,
+        ),
+        # --- Option 03
+        *(
+            [
+                Step(
+                    "controls",
+                    (layout.results, layout.context_table),
+                    (layout.controls,),
+                    controls,
+                )
+            ]
+            if with_context
+            else []
         ),
         Step(
             "report",

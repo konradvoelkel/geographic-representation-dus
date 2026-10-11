@@ -39,6 +39,8 @@
                -> wahlbezirke_gremien.parquet, gremien.parquet
   weights      <- combined_searchdict.parquet, inverted_index.parquet, papers.parquet, wahlbezirke_waehler.parquet, themen_anteile.parquet
                -> wahlbezirke_gewichtet.parquet, gewichte_begriffe.parquet
+  controls     <- wahlbezirke_auswertung.parquet, wahlbezirke_kontext.parquet
+               -> regression_kontrollen.parquet
   report       <- wahlbezirke_auswertung.parquet, combined_searchdict.parquet, inverted_index.parquet, wahlbezirke_waehler.parquet, wikidata_vis.parquet, wahlbezirke_strassen.parquet, papers.parquet, Stimmbezirke_2025.geojson, wahlbezirke_gremien.parquet, gremien.parquet, wahlbezirke_stadtbezirke.parquet, wahlbezirke_gewichtet.parquet, gewichte_begriffe.parquet, themen.parquet, themen_dokumente.parquet
                -> index.html, schema.json, karte.html
   

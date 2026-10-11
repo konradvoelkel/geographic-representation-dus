@@ -199,3 +199,20 @@ def test_regress_prints_a_line_per_weighting_variant(
         assert f"{name} " in out
     assert out.count("Summe") == variants.n_unique()
     assert "rho=1.000" in out  # die Einheitsvariante ordnet wie die ungewichtete Quote
+
+
+# --- Option 03 ------------------------------------------------------------------------------------
+
+
+def test_regress_controls_prints_table_six_after_the_run(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["regress", "--controls"]) == 1
+    assert "regression_kontrollen.parquet" in capsys.readouterr().err
+    assert main(["bootstrap"]) == 0 and main(["run"]) == 0
+    capsys.readouterr()
+    assert main(["regress", "--controls"]) == 0
+    out = capsys.readouterr().out
+    # Auf der Mini-Fixture (n = 3) bleibt Modell A; die Zeilen nennen Konstante und Trefferquote
+    assert "A (alle): n=3, k=1" in out and "trefferquote" in out and "(Konstante)" in out
+    assert "VIF=1.00" in out

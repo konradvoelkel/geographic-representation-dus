@@ -236,11 +236,12 @@ def aggregate_context(
     ``EmptyResultError`` mit Variable und Wahlbezirk.
     """
     names = [v.name for v in context.unit_variables()]
-    joined = weights.join(values.select(UNIT, *names), on=UNIT, how="left")
-    frame = (
-        joined.group_by(DISTRICT)
-        .agg(*(expr for name in names for expr in _weighted_mean(name)))
-        .sort(DISTRICT)
+    # Sortieren und maintain_order: ein Join liefert die Zeilen in keiner festgelegten Reihenfolge,
+    # und eine Fließkommasumme hängt von ihr im letzten Bit ab. Zwei Läufe sollen dieselbe
+    # Parquet-Datei schreiben (2026-10-12).
+    joined = weights.join(values.select(UNIT, *names), on=UNIT, how="left").sort([DISTRICT, UNIT])
+    frame = joined.group_by(DISTRICT, maintain_order=True).agg(
+        *(expr for name in names for expr in _weighted_mean(name))
     )
     for name in names:
         too_much = frame.filter(pl.col(f"{name}{MISSING_SUFFIX}") > context.max_missing_weight)

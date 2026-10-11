@@ -192,13 +192,20 @@ def district_weights(table: pl.DataFrame, shares: pl.DataFrame) -> pl.DataFrame:
     Zielfläche würde die Summe sonst unter 1 drücken (``area_shares`` lässt ihn aber ohnehin nicht
     durch).
     """
-    joined = table.join(shares.select(SOURCE, TARGET, SHARE), left_on=PRECINCT, right_on=SOURCE)
+    # Sortieren und maintain_order: ein Join legt die Zeilenfolge nicht fest, und eine
+    # Fließkommasumme hängt von ihr im letzten Bit ab; zwei Läufe sollen dieselbe Parquet-Datei
+    # schreiben (2026-10-12).
+    joined = table.join(
+        shares.select(SOURCE, TARGET, SHARE), left_on=PRECINCT, right_on=SOURCE
+    ).sort([DISTRICT, TARGET, PRECINCT])
     weighted = (
         joined.with_columns((pl.col(ELIGIBLE) * pl.col(SHARE)).alias("_w"))
-        .group_by(DISTRICT, TARGET)
+        .group_by(DISTRICT, TARGET, maintain_order=True)
         .agg(pl.col("_w").sum())
     )
-    totals = weighted.group_by(DISTRICT).agg(pl.col("_w").sum().alias("_total"))
+    totals = weighted.group_by(DISTRICT, maintain_order=True).agg(
+        pl.col("_w").sum().alias("_total")
+    )
     return (
         weighted.join(totals, on=DISTRICT)
         .with_columns((pl.col("_w") / pl.col("_total")).alias(WEIGHT))

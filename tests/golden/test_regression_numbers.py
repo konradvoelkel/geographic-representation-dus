@@ -12,8 +12,25 @@ import polars as pl
 import pytest
 from scipy.stats import linregress
 
+from georep.analysis.ols import (
+    fit_ols,
+    model_frame,
+    model_terms,
+    models_table,
+    partial_residuals,
+)
 from georep.analysis.regression import regress
+from georep.crosswalk import area_shares, district_weights
+from georep.geo import Area, read_areas, read_precincts
 from georep.layout import Layout
+from georep.prep.context import (
+    aggregate_context,
+    district_variables,
+    precinct_table,
+    read_context_table,
+)
+from georep.prep.voters import TURNOUT, read_results_csv
+from georep.settings import RATE_TERM, Settings, load_settings
 
 
 def _xy(path: Path, exclude: frozenset[int] = frozenset()) -> tuple[list[float], list[float]]:
@@ -81,3 +98,119 @@ def test_unit_variant_regresses_like_the_unweighted_rate(mini_run: Layout) -> No
         plain.r,
         plain.p,
     )
+
+
+# --- Tabelle 6: Kontrollvariablen (Option 03) ---------------------------------------------------
+#
+# Am 2026-10-12 einmalig gegen statsmodels geprüft, in einer Wegwerf-Umgebung ohne Lockfile
+# (``uv run --isolated --no-project --with statsmodels --with pandas python
+# compare_statsmodels.py``; Skript im Scratchpad, Vorgehen in docs/decisions.md): statsmodels
+# 0.15.0 stimmt mit ``georep.analysis.ols`` in Koeffizienten, Standardfehlern, t, p, VIF, R²,
+# adjustiertem R², F und F-p aller drei Modelle bis auf eine relative Abweichung von 4,0e-14
+# überein. statsmodels kommt nie ins Lockfile: es zieht pandas, und ``nox -s deps`` verbietet das.
+
+# Modell -> (Koeffizient der Trefferquote, Standardfehler, p, R², adjustiertes R², größtes VIF)
+TABLE_SIX = {
+    "A": (62.13367, 60.89404, 0.313847, 0.0260015, 0.0010272, 1.0),
+    "B": (41.32798, 26.88048, 0.132922, 0.8872203, 0.8746893, 4.521962),
+    "C": (36.69988, 22.46108, 0.111500, 0.9278276, 0.9150913, 6.731920),
+}
+VIF_LIMIT = 10.0  # darüber ist ein Modell nicht mehr zu deuten (Plan 03, § 7)
+
+
+@pytest.fixture(scope="module")
+def controls(reference_root: Path, context_root: Path) -> tuple[pl.DataFrame, Settings]:
+    """Die Modelltabelle der Referenz: Ergebnisse der Arbeit plus Kontrollvariablen."""
+    settings = load_settings(cwd=Path("/nonexistent"))
+    working = settings.geo.working_crs
+    context = settings.context
+    precincts = read_precincts(
+        reference_root / "external" / "Stimmbezirke_2025.geojson", settings.columns, working
+    )
+    table = precinct_table(
+        precincts,
+        read_results_csv(
+            reference_root / "external" / "Stimmbezirk_Wahlergebnis.csv", settings.columns.results
+        ),
+        settings.columns.results,
+    )
+    units = read_areas(context_root / context.files.units.file, context.units.key, working)
+    weights = district_weights(
+        table,
+        area_shares([Area.of(p) for p in precincts], units, min_coverage=context.min_coverage),
+    )
+    values = read_context_table(context_root / context.files.table.file, context)
+    results = pl.read_csv(
+        reference_root / "processed" / "wahlbezirke_auswertung.csv", infer_schema_length=None
+    )
+    variables = aggregate_context(weights, values, context).join(
+        district_variables(
+            pl.read_csv(
+                reference_root / "processed" / "wahlbezirke_waehler.csv", infer_schema_length=None
+            ),
+            context,
+        ),
+        on="wahlkreis_id",
+    )
+    return model_frame(results, variables), settings
+
+
+@pytest.mark.slow
+def test_table_six_matches_the_numbers_checked_against_statsmodels(
+    controls: tuple[pl.DataFrame, Settings],
+) -> None:
+    frame, settings = controls
+    assert frame.height == 41
+    for model, terms in model_terms(settings.context).items():
+        if model not in TABLE_SIX:
+            continue
+        fit = fit_ols(frame, TURNOUT, list(terms), y_scale=settings.context.models.y_scale)
+        rate = fit.term(RATE_TERM)
+        coefficient, stderr, p, r2, r2_adj, vif = TABLE_SIX[model]
+        assert rate.coefficient == pytest.approx(coefficient, abs=5e-5)
+        assert rate.stderr == pytest.approx(stderr, abs=5e-5)
+        assert rate.p == pytest.approx(p, abs=5e-6)
+        assert fit.r2 == pytest.approx(r2, abs=5e-7)
+        assert fit.r2_adj == pytest.approx(r2_adj, abs=5e-7)
+        assert max(t.vif or 0.0 for t in fit.terms) == pytest.approx(vif, abs=5e-6)
+
+
+@pytest.mark.slow
+def test_model_a_is_the_regression_of_table_five(controls: tuple[pl.DataFrame, Settings]) -> None:
+    """Modell A ist Tabelle 5: ein Term, und ``fit_ols`` muss ``regress`` auf alle Stellen treffen."""
+    frame, settings = controls
+    fit = fit_ols(frame, TURNOUT, [RATE_TERM], y_scale=settings.context.models.y_scale)
+    rate = fit.term(RATE_TERM)
+    assert rate.coefficient == pytest.approx(62.1337, abs=5e-4)
+    assert fit.intercept.coefficient == pytest.approx(49.1993, abs=5e-4)
+    assert rate.stderr == pytest.approx(60.894, abs=5e-4)
+    assert rate.p == pytest.approx(0.31385, abs=5e-5)
+    assert fit.n == 41 and fit.k == 1
+
+
+@pytest.mark.slow
+def test_no_model_of_the_settings_is_collinear_beyond_use(
+    controls: tuple[pl.DataFrame, Settings],
+) -> None:
+    frame, settings = controls
+    table = models_table(frame, settings)
+    assert set(table.get_column("stichprobe")) == {"alle", "ohne_1_10"}
+    worst = (
+        table.filter(pl.col("vif").is_not_null()).sort("vif", descending=True).row(0, named=True)
+    )
+    assert worst["vif"] < VIF_LIMIT, f"{worst['modell']} / {worst['term']}: VIF {worst['vif']:.2f}"
+
+
+@pytest.mark.slow
+def test_the_added_variable_plots_have_the_slope_of_their_coefficient(
+    controls: tuple[pl.DataFrame, Settings],
+) -> None:
+    """Frisch-Waugh-Lovell: die Steigung durch die Residuen ist genau der Koeffizient."""
+    frame, settings = controls
+    terms = list(settings.context.models.main)
+    scale = settings.context.models.y_scale
+    fit = fit_ols(frame, TURNOUT, terms, y_scale=scale)
+    for term in terms:
+        xs, ys = partial_residuals(frame, TURNOUT, terms, term, y_scale=scale)
+        slope = sum(x * y for x, y in zip(xs, ys, strict=True)) / sum(x * x for x in xs)
+        assert slope == pytest.approx(fit.term(term).coefficient, rel=1e-9)
