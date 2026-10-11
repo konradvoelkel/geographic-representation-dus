@@ -74,6 +74,7 @@ VERIFY_TARGETS = [
     "georep.sources.overpass.overpass_query",
     "georep.sources.overpass.street_names",
     "georep.report.model.format_de",
+    "georep.report.charts.nice_ticks",
     "tests.property.oracle_matcher.oracle_extract",
 ]
 

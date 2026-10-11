@@ -1,0 +1,29 @@
+# serializer version: 1
+# name: test_legend_of_the_mini_fixture_is_stable
+  list([
+    tuple(
+      0,
+      'unter 0,004',
+    ),
+    tuple(
+      1,
+      '0,004 bis unter 0,006',
+    ),
+    tuple(
+      2,
+      'ab 0,006',
+    ),
+    tuple(
+      0,
+      'unter 43,6\u202f%',
+    ),
+    tuple(
+      1,
+      '43,6\u202f% bis unter 47,8\u202f%',
+    ),
+    tuple(
+      2,
+      'ab 47,8\u202f%',
+    ),
+  ])
+# ---

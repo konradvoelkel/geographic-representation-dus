@@ -15,6 +15,7 @@ from hypothesis import strategies as st
 
 from georep.http import cache_pattern
 from georep.prep.extract import after_marker, normalise_text
+from georep.report.charts import nice_ticks
 from georep.report.model import format_de
 from georep.settings import deep_merge
 from georep.sources.overpass import overpass_query, street_names
@@ -121,4 +122,18 @@ def test_oracle_extract(case: deal.TestCase) -> None:
     },
 )
 def test_format_de(case: deal.TestCase) -> None:
+    case()
+
+
+@deal.cases(
+    nice_ticks,
+    count=COUNT,
+    check_types=False,
+    kwargs={
+        "lo": st.floats(-1e9, 1e9, allow_nan=False),
+        "hi": st.floats(-1e9, 1e9, allow_nan=False),
+        "n": st.integers(1, 25),
+    },
+)
+def test_nice_ticks(case: deal.TestCase) -> None:
     case()

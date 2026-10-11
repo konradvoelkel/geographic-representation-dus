@@ -50,3 +50,22 @@ def test_percent_scales_by_hundred(share: float, decimals: int) -> None:
     assert parse_de(text[: -len(f"{NARROW_NBSP}%")]) == pytest.approx(
         round(share * 100, decimals), abs=10.0**-decimals
     )
+
+
+finite = st.floats(min_value=-1e6, max_value=1e6, allow_nan=False, allow_infinity=False)
+
+
+@given(lo=finite, hi=finite, n=st.integers(2, 12))
+def test_nice_ticks_cover_the_range_with_a_round_step(lo: float, hi: float, n: int) -> None:
+    from hypothesis import assume
+
+    from georep.report.charts import classify, nice_ticks
+
+    assume(hi - lo > 1e-6 * max(1.0, abs(lo), abs(hi)))
+    ticks = nice_ticks(lo, hi, n)
+    assert ticks[0] <= lo and ticks[-1] >= hi
+    assert 2 <= len(ticks) <= 2 * n + 2
+    steps = {round(b - a, 12) for a, b in zip(ticks, ticks[1:], strict=False)}
+    assert len(steps) == 1
+    classification = classify({i: t for i, t in enumerate(ticks)})
+    assert classification.count == min(5, len(ticks))
