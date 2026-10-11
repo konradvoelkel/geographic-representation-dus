@@ -6,8 +6,16 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from georep.errors import SchemaError
 from georep.layout import Layout
-from georep.settings import Period, deep_merge, load_settings, settings_files
+from georep.settings import (
+    Period,
+    UnknownProfileError,
+    available_profiles,
+    deep_merge,
+    load_settings,
+    settings_files,
+)
 
 
 def test_defaults_load_without_any_file(tmp_path: Path) -> None:
@@ -667,3 +675,106 @@ def test_period_profile_puts_everything_under_its_own_root(tmp_path: Path) -> No
     assert layout.texts == tmp_path / "cache" / "2014-2020" / "text" / "texts.parquet"
     target = layout.for_profile("", settings.crosswalk.target_file)
     assert target.districts_geojson == tmp_path / "data" / "external" / "Stimmbezirke_2025.geojson"
+# --- Option 01: Paketprofile ------------------------------------------------------------------
+
+
+def _package_profile(folder: Path, slug: str, body: str = "") -> Path:
+    path = folder / f"{slug}.toml"
+    path.write_text(
+        f'profile = "{slug}"\n[city]\nslug = "{slug}"\nname = "Teststadt"\ngenitive = "Teststadts"\n'
+        f'adjective = "Teststädter"\nags = "05000000"\npublisher = "Stadt Teststadt"\n{body}',
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_default_profile_is_duesseldorf_and_stays_flat(tmp_path: Path) -> None:
+    s = load_settings(cwd=tmp_path)
+    assert s.default_profile == "duesseldorf" and s.city.slug == "duesseldorf"
+    assert s.profile == "" and s.city.name == "Düsseldorf" and s.city.ags == "05111000"
+    assert [source.name for source in s.report.sources] and all(
+        source.url.startswith("https://") for source in s.report.sources
+    )
+    assert s.publish.cities == ["duesseldorf"]
+
+
+def test_profile_argument_selects_a_package_profile_between_defaults_and_files(
+    tmp_path: Path,
+) -> None:
+    profiles = tmp_path / "profiles"
+    profiles.mkdir()
+    _package_profile(profiles, "test-stadt", '[search]\ntext_split_marker = "aus-profil"\n')
+    (tmp_path / "settings.toml").write_text("[sources.oparl]\ndelay_s = 9\n", encoding="utf-8")
+    s = load_settings(cwd=tmp_path, profile="test-stadt", profiles_dir=profiles)
+    assert s.profile == "test-stadt" and s.city.slug == "test-stadt"
+    assert s.search.text_split_marker == "aus-profil"  # Profil über defaults.toml
+    assert s.sources.oparl.delay_s == 9  # settings.toml über dem Profil
+    assert s.sources.oparl.endpoint  # alles andere kommt aus defaults.toml
+    (tmp_path / "settings.toml").write_text(
+        '[search]\ntext_split_marker = "aus-datei"\n', encoding="utf-8"
+    )
+    assert (
+        load_settings(
+            cwd=tmp_path, profile="test-stadt", profiles_dir=profiles
+        ).search.text_split_marker
+        == "aus-datei"
+    )
+
+
+def test_default_profile_key_in_a_file_selects_the_profile(tmp_path: Path) -> None:
+    profiles = tmp_path / "profiles"
+    profiles.mkdir()
+    _package_profile(profiles, "test-stadt")
+    (tmp_path / "settings.local.toml").write_text(
+        'default_profile = "test-stadt"\n', encoding="utf-8"
+    )
+    assert load_settings(cwd=tmp_path, profiles_dir=profiles).city.slug == "test-stadt"
+
+
+def test_unknown_profile_names_the_available_ones(tmp_path: Path) -> None:
+    with pytest.raises(UnknownProfileError, match="duesseldorf"):
+        load_settings(cwd=tmp_path, profile="gibtsnicht")
+    assert "duesseldorf" in available_profiles()
+
+
+def test_profile_slug_must_match_the_file_name(tmp_path: Path) -> None:
+    profiles = tmp_path / "profiles"
+    profiles.mkdir()
+    (profiles / "a.toml").write_text(
+        _package_profile(tmp_path, "b").read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    with pytest.raises(SchemaError, match="city.slug"):
+        load_settings(cwd=tmp_path, profile="a", profiles_dir=profiles)
+
+
+def test_environment_selects_the_profile_but_never_sets_the_folder(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GEOREP_PROFILE", "duesseldorf")
+    s = load_settings(cwd=tmp_path)
+    assert s.city.slug == "duesseldorf" and s.profile == ""  # flach, wie --profile duesseldorf
+    monkeypatch.setenv("GEOREP_PROFILE", "gibtsnicht")
+    with pytest.raises(UnknownProfileError):
+        load_settings(cwd=tmp_path)
+    assert load_settings(cwd=tmp_path, profile="duesseldorf").city.slug == "duesseldorf"
+
+
+def test_fingerprint_sees_city_sources_and_publish_but_not_the_selector(tmp_path: Path) -> None:
+    base = load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text('default_profile = "duesseldorf"\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() == base.fingerprint()
+    (tmp_path / "settings.toml").write_text('[city]\nname = "Anders"\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
+    (tmp_path / "settings.toml").write_text("[publish]\ncities = []\n", encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
+
+
+def test_publish_cities_are_plain_unique_slugs(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[publish]\ncities = ["duesseldorf", "duesseldorf"]\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="publish.cities"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text('[publish]\ncities = ["../x"]\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match="publish.cities"):
+        load_settings(cwd=tmp_path)

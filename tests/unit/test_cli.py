@@ -275,3 +275,26 @@ def test_max_pages_changes_the_fingerprint(project: Path) -> None:
     assert _with_fetch_limits(base, 5, None).sources.oparl.pdf_limit == 5
     both = _with_fetch_limits(base, 5, 2).sources.oparl
     assert (both.pdf_limit, both.max_pages) == (5, 2)
+# --- Option 01: Profile -------------------------------------------------------------------------
+
+
+def test_unknown_profile_exits_with_one_and_lists_the_profiles(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["--profile", "gibtsnicht", "status"]) == 1
+    err = capsys.readouterr().err
+    assert "gibtsnicht" in err and "duesseldorf" in err
+
+
+def test_profiles_command_lists_the_package_profiles(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["profiles"]) == 0
+    out = capsys.readouterr().out
+    assert out.startswith("duesseldorf") and "Düsseldorf" in out and "Standard" in out
+
+
+def test_status_names_profile_and_city(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["--profile", "duesseldorf", "status"]) == 0
+    out = capsys.readouterr().out
+    assert "Profil:     duesseldorf (Düsseldorf)" in out and "flach" in out
