@@ -21,11 +21,10 @@ dependencies = [
     "scipy>=1.16.2",
     "shapely>=2.1.2",
     "tqdm>=4.67.1",
-    # Altlast: nur von den Netzschritten in src/*.py (geopandas, osmnx; beide ziehen pandas)
-    # und bis zur Notebook-Umstellung von scikit-learn gebraucht. Verschwindet mit Phase 3.
+    # Altlast: nur von den Netzschritten in src/*.py gebraucht; beide ziehen pandas.
+    # Verschwindet mit Phase 3 (DEVELOPMENT_PLAN.md § 4).
     "geopandas>=1.1.1",
     "osmnx>=2.0.7",
-    "scikit-learn>=1.7.2",
 ]
 
 [project.scripts]
@@ -92,7 +91,7 @@ files = ["src/georep", "tests"]
 [[tool.mypy.overrides]]
 # Ohne Stubs und ohne py.typed, Stand 2026-10-10. flashtext (letzte Version 2018) bleibt bis zum
 # Matcher-Protokoll aus Phase 5; osmnx/geopandas/pandas gehen mit Phase 3.
-module = ["flashtext.*", "osmnx.*", "geopandas.*", "pandas.*", "sklearn.*", "scipy.*", "tqdm.*"]
+module = ["flashtext.*", "osmnx.*", "geopandas.*", "pandas.*", "scipy.*", "tqdm.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
