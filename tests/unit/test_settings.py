@@ -679,10 +679,24 @@ def test_period_profile_puts_everything_under_its_own_root(tmp_path: Path) -> No
 
 
 def _package_profile(folder: Path, slug: str, body: str = "") -> Path:
+    """Ein vollständiges Minimalprofil: alles, was ``defaults.toml`` stadtneutral offen lässt.
+
+    Seit die Düsseldorfer Werte im Profil stehen, muss ein Profil die Quellen und Spalten seiner
+    Stadt nennen; ohne sie ist es kein Profil, sondern ein halbes.
+    """
     path = folder / f"{slug}.toml"
     path.write_text(
-        f'profile = "{slug}"\n[city]\nslug = "{slug}"\nname = "Teststadt"\ngenitive = "Teststadts"\n'
-        f'adjective = "Teststädter"\nags = "05000000"\npublisher = "Stadt Teststadt"\n{body}',
+        f'profile = "{slug}"\n'
+        f'[city]\nslug = "{slug}"\nname = "Teststadt"\ngenitive = "Teststadts"\n'
+        f'adjective = "Teststädter"\nags = "05000000"\npublisher = "Stadt Teststadt"\n'
+        '[sources.oparl]\nendpoint = "https://ris.invalid/Oparl/bodies/0001/papers"\n'
+        '[sources.opendata]\nresults_url = "https://portal.invalid/ergebnis.csv"\n'
+        'results_file = "ergebnis.csv"\ndistricts_url = "https://portal.invalid/flaechen.geojson"\n'
+        'districts_file = "flaechen.geojson"\n'
+        '[sources.wikidata]\nentity = "Q1"\n'
+        '[columns]\ndistrict_id = "Nr"\ndistrict_name = "Name"\nprecinct_id = "Stimmbezirk"\n'
+        '[columns.results]\ndistrict = "Wahlbezirk"\neligible = "Wahlberechtigte_insgesamt"\n'
+        'voters = "Waehler"\nparties = { CDU = "CDU_Stimmen" }\n' + body,
         encoding="utf-8",
     )
     return path
@@ -696,6 +710,44 @@ def test_default_profile_is_duesseldorf_and_stays_flat(tmp_path: Path) -> None:
         source.url.startswith("https://") for source in s.report.sources
     )
     assert s.publish.cities == ["duesseldorf"]
+
+
+def test_the_default_profile_keeps_every_value_of_the_thesis(tmp_path: Path) -> None:
+    """Die Werte, die aus defaults.toml ins Profil gezogen sind, kommen unverändert wieder heraus.
+
+    Der Golden Master der Kette hängt an jedem einzelnen davon; am 2026-10-12 war der Vergleich
+    der gemischten TOML-Schichten vor und nach dem Umzug leer (kein Schlüssel verloren, keiner
+    geändert), dieser Test hält das Ergebnis fest.
+    """
+    dumped = load_settings(cwd=tmp_path).model_dump(mode="json")
+    assert dumped["period"] == {"start": "2020-09-13", "end": "2025-09-14", "election": None}
+    assert dumped["sources"]["oparl"]["endpoint"].endswith("/bodies/0015/papers")
+    assert dumped["sources"]["wikidata"]["entity"] == "Q1718"
+    assert dumped["columns"] == {
+        "district_id": "Kommunalwahlbezirk Nr.",
+        "district_name": "Kommunalwahlbezirk Name",
+        "precinct_id": "Stimm-/ Wahlbezirk",
+        "results": {
+            "sep": ";",
+            "encoding": "latin-1",
+            "district": "Kommunalwahlbezirk",
+            "eligible": "Wahlberechtigte_insgesamt",
+            "voters": "Waehler",
+            "parties": {
+                "CDU": "CDU_Stimmen",
+                "GRUENE": "GRUENE_Stimmen",
+                "SPD": "SPD_Stimmen",
+                "FDP": "FDP_Stimmen",
+                "Die_Linke": "Die_Linke_Stimmen",
+                "AfD": "AfD_Stimmen",
+            },
+        },
+    }
+    assert dumped["search"]["text_split_marker"] == "betrifft"
+    assert dumped["search"]["hide_in_display"] == ["schulweg"]
+    assert dumped["analysis"]["exclude_districts"] == [1, 10]
+    assert dumped["sources"]["opendata"]["results_file"] == "Stimmbezirk_Wahlergebnis.csv"
+    assert dumped["sources"]["opendata"]["districts_file"] == "Stimmbezirke_2025.geojson"
 
 
 def test_profile_argument_selects_a_package_profile_between_defaults_and_files(
