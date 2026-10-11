@@ -2,16 +2,19 @@
 
 ``scipy.stats.linregress`` auf ``trefferquote`` (x) und ``wahlbeteiligung`` in Prozent (y);
 Tabelle 5 der Arbeit entsteht aus ``regress(results)`` und ``regress(results, exclude=(1, 10))``.
+``spearman`` vergleicht daneben zwei Kennzahlen im Rang: wie ähnlich ordnet eine gewichtete Quote
+die Wahlbezirke der ungewichteten?
 """
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable
 from dataclasses import dataclass
 
 import deal
 import polars as pl
-from scipy.stats import linregress
+from scipy.stats import linregress, spearmanr
 
 from georep.analysis.hits import DISTRICT, RATE
 from georep.contracts import has_columns
@@ -123,3 +126,27 @@ def regression_pair(
     return RegressionPair(
         all=regress(results, x=x, y=y, y_scale=y_scale), excluded=excluded, without=without
     )
+
+
+@deal.pre(lambda frame, x, reference: has_columns(frame, x, reference))
+@deal.post(
+    lambda result: result is None or -1.0 <= result <= 1.0,
+    message="eine Rangkorrelation liegt in [-1, 1]; None heißt: nicht definiert",
+)
+def spearman(frame: pl.DataFrame, x: str, reference: str) -> float | None:
+    """Rangkorrelation zweier Kennzahlspalten; ``None``, wenn eine Spalte keine Streuung hat.
+
+    Für die Sensitivitätstabelle: ``spearman(frame, "trefferquote_gewichtet", "trefferquote")``
+    sagt, ob eine Gewichtung die Reihenfolge der Wahlbezirke ändert oder nur deren Abstände. Eine
+    Variante ohne Streuung (alle Quoten gleich) hat keinen Rang und darum kein Ergebnis -- das ist
+    kein Fehler, die Tabelle zeigt dort „—".
+    """
+    if frame.height < 3:
+        return None
+    if frame.get_column(x).n_unique() < 2 or frame.get_column(reference).n_unique() < 2:
+        return None
+    rho = float(
+        spearmanr(frame.get_column(x).to_numpy(), frame.get_column(reference).to_numpy()).statistic
+    )
+    # Bindungen in beiden Spalten können scipy zu nan führen; das ist kein Ergebnis.
+    return None if math.isnan(rho) else max(-1.0, min(1.0, rho))
