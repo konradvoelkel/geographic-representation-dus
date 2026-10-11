@@ -68,9 +68,11 @@ class OparlPaper(_Oparl):
         primary = self.primary_file
         return primary.download_url if primary is not None else None
 
-    def in_period(self, start: dt.date, end: dt.date) -> bool:
-        """Beide Grenzen einschließlich; ohne Datum nie."""
-        return self.date is not None and start <= self.date <= end
+    def in_period(self, start: dt.date, end: dt.date | None) -> bool:
+        """Beide Grenzen einschließlich; ohne Ende (laufende Periode) ab ``start``; ohne Datum nie."""
+        if self.date is None:
+            return False
+        return start <= self.date and (end is None or self.date <= end)
 
 
 class Pagination(_Oparl):

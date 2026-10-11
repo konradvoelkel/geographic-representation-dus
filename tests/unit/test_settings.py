@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from georep.settings import deep_merge, load_settings, settings_files
+from georep.settings import Period, deep_merge, load_settings, settings_files
 
 
 def test_defaults_load_without_any_file(tmp_path: Path) -> None:
@@ -104,3 +104,43 @@ def test_text_split_marker_must_not_be_empty(tmp_path: Path) -> None:
     (tmp_path / "settings.toml").write_text('[search]\ntext_split_marker = ""\n', encoding="utf-8")
     with pytest.raises(ValidationError, match="text_split_marker"):
         load_settings(cwd=tmp_path)
+
+
+def test_profile_must_be_a_plain_folder_name(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text('profile = "../x"\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match="profile"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text('profile = "2014-2020"\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).profile == "2014-2020"
+
+
+def test_profile_does_not_change_the_fingerprint(tmp_path: Path) -> None:
+    base = load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text('profile = "x"\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() == base.fingerprint()
+
+
+def test_open_period_needs_an_election_day(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[period]\nstart = 2025-09-15\nend = ""\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="period"):
+        load_settings(cwd=tmp_path)
+    # end aus defaults.toml bleibt beim tiefen Merge stehen; end = "" macht die Periode offen
+    (tmp_path / "settings.toml").write_text(
+        '[period]\nstart = 2025-09-15\nend = ""\nelection = 2025-09-14\n', encoding="utf-8"
+    )
+    merged = load_settings(cwd=tmp_path)
+    assert merged.period.end is None and merged.period.election_day == date(2025, 9, 14)
+    closed = load_settings(cwd=Path("/nonexistent"))
+    assert closed.period.election is None and closed.period.election_day == closed.period.end
+
+
+def test_open_period_model_requires_election_but_no_order_to_start() -> None:
+    with pytest.raises(ValidationError, match="election ist Pflicht"):
+        Period(start=date(2025, 9, 15))
+    # Die laufende Periode beginnt am Tag nach der Wahl, deren Ergebnis sie misst (Option 7)
+    open_period = Period(start=date(2025, 9, 15), election=date(2025, 9, 14), end=None)
+    assert open_period.end is None and open_period.election_day == date(2025, 9, 14)
+    with pytest.raises(ValidationError, match="period.end"):
+        Period(start=date(2025, 9, 15), end=date(2025, 1, 1))

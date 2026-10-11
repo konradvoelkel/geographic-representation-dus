@@ -94,7 +94,7 @@ class ColumnDoc:
 class DataStand:
     election: dt.date
     period_start: dt.date
-    period_end: dt.date
+    period_end: dt.date | None  # None: laufende Periode ohne Ende
     streets_fetched: (
         dt.date | None
     )  # aus dem Stamp des Netzschritts; None = Referenzdaten der Arbeit
@@ -392,7 +392,7 @@ def stamp_written(output: Path) -> dt.date | None:
 
 def data_stand(layout: Layout, settings: Settings) -> DataStand:
     return DataStand(
-        election=settings.period.end,  # die Wahlperiode endet mit dem Wahltag
+        election=settings.period.election_day,
         period_start=settings.period.start,
         period_end=settings.period.end,
         streets_fetched=stamp_written(layout.streets),

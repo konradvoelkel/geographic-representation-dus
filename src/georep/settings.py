@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import tomllib
 from datetime import date
 from importlib import resources
@@ -30,14 +31,41 @@ class _Strict(BaseModel):
 
 
 class Period(_Strict):
+    """Wahlperiode; ``end`` fehlt bei einer laufenden Periode, dann ist ``election`` Pflicht."""
+
     start: date
-    end: date
+    end: date | None = None
+    election: date | None = (
+        None  # Wahltag, dessen Ergebnis Nenner und Zuschnitt liefert; Standard: end
+    )
+
+    @field_validator("end", "election", mode="before")
+    @classmethod
+    def _empty_is_open(cls, value: object) -> object:
+        # Der tiefe Merge laesst end aus defaults.toml stehen; ein Profil mit laufender Periode
+        # schreibt end = "" und macht sie damit ausdruecklich offen.
+        return None if value == "" else value
 
     @model_validator(mode="after")
     def _ordered(self) -> Period:
-        if self.end < self.start:
+        if self.end is not None and self.end < self.start:
             raise ValueError(f"period.end {self.end} liegt vor period.start {self.start}")
+        if self.end is None and self.election is None:
+            raise ValueError("period.election ist Pflicht, wenn period.end offen ist")
         return self
+
+    @property
+    def election_day(self) -> date:
+        """Der Wahltag, dessen Ergebnis Nenner und Zuschnitt liefert: ``election``, sonst ``end``.
+
+        Bei einer geschlossenen Periode ist es die Wahl an ihrem Ende; bei einer laufenden die Wahl
+        vor ihrem Beginn (Option 7: ``start = 2025-09-15``, ``election = 2025-09-14``), darum gibt
+        es keine Ordnung zwischen ``election`` und ``start``.
+        """
+        if self.election is not None:
+            return self.election
+        assert self.end is not None  # der Validator verlangt eines von beiden
+        return self.end
 
 
 class HttpSettings(_Strict):
@@ -141,6 +169,9 @@ class Settings(BaseSettings):
     data_root: Path = Path("data")
     cache_root: Path | None = None
     reference_root: Path = Path("reference")
+    profile: str = (
+        ""  # Unterordner je Stadt oder Periode unter data_root und cache_root; leer = flach
+    )
     contracts: Literal["on", "off"] = "on"
     log_level: str = "INFO"
     period: Period
@@ -156,6 +187,15 @@ class Settings(BaseSettings):
     @classmethod
     def _empty_is_none(cls, value: object) -> object:
         return None if value in ("", None) else value
+
+    @field_validator("profile")
+    @classmethod
+    def _profile_is_a_plain_name(cls, value: str) -> str:
+        if value and not re.fullmatch(r"[a-z0-9][a-z0-9-]*", value):
+            raise ValueError(
+                f"profile {value!r}: nur Kleinbuchstaben, Ziffern und Bindestriche (ein Ordnername)"
+            )
+        return value
 
     @field_validator("log_level")
     @classmethod
@@ -184,8 +224,8 @@ class Settings(BaseSettings):
     def fingerprint(self) -> str:
         """Kurzer Hash aller Parameter, die ein Ergebnis beeinflussen.
 
-        Nicht dabei: Pfade, Log-Level, Cache-Lebensdauern und der Vertragsschalter ``contracts``,
-        denn Verträge prüfen ein Ergebnis, sie ändern es nicht.
+        Nicht dabei: Pfade (auch ``profile``, ein Ordnername), Log-Level, Cache-Lebensdauern und
+        der Vertragsschalter ``contracts``, denn Verträge prüfen ein Ergebnis, sie ändern es nicht.
         """
         payload = self.model_dump(
             mode="json",
@@ -193,6 +233,7 @@ class Settings(BaseSettings):
                 "data_root",
                 "cache_root",
                 "reference_root",
+                "profile",
                 "log_level",
                 "cache",
                 "contracts",

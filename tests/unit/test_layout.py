@@ -52,3 +52,29 @@ def test_data_root_inside_reference_is_refused(tmp_path: Path) -> None:
     layout = Layout(tmp_path / "reference" / "data", tmp_path / "cache", tmp_path / "reference")
     with pytest.raises(ReferenceWriteError):
         layout.ensure_dirs()
+
+
+def test_profile_puts_data_and_cache_in_a_subfolder_but_shares_the_http_cache(
+    tmp_path: Path,
+) -> None:
+    flat = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    period = flat.for_profile("2014-2020")
+    assert (
+        flat.profile == "" and flat.root == tmp_path / "data" and flat.cache == tmp_path / "cache"
+    )
+    assert period.root == tmp_path / "data" / "2014-2020"
+    assert period.processed == tmp_path / "data" / "2014-2020" / "processed"
+    assert period.site_index == tmp_path / "data" / "2014-2020" / "site" / "index.html"
+    assert period.pdf_dir == tmp_path / "cache" / "2014-2020" / "pdf"
+    assert period.texts == tmp_path / "cache" / "2014-2020" / "text" / "texts.parquet"
+    assert period.http_cache == flat.http_cache == tmp_path / "cache" / "http.sqlite"
+    assert period.for_profile("") == flat
+    assert period.reference_view() == flat.reference_view()
+    shared = set(flat.runtime_dirs()) & set(period.runtime_dirs())
+    assert not shared
+
+
+def test_layout_from_settings_takes_the_profile(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text('profile = "2025"\n', encoding="utf-8")
+    layout = Layout.from_settings(load_settings(cwd=tmp_path))
+    assert layout.profile == "2025" and layout.corpus == Path("data/2025/interim/papers.parquet")

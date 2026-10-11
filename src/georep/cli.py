@@ -130,6 +130,9 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
     files = settings_files(args.settings)
     print("Settings:   defaults.toml" + "".join(f" < {p}" for p in files))
     print(f"data_root:  {layout.data_root.resolve()}")
+    print(
+        f"Profil:     {layout.profile or '(keines, Hauptperiode)'}; Daten unter {layout.root.resolve()}"
+    )
     print(f"cache_root: {layout.cache_root.resolve()}")
     print(f"reference:  {layout.reference_root.resolve()}")
     pdfs = len(list(layout.pdf_dir.glob("*.pdf"))) if layout.pdf_dir.is_dir() else 0

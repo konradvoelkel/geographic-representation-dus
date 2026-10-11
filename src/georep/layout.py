@@ -26,6 +26,10 @@ class Layout:
     data_root: Path
     cache_root: Path
     reference_root: Path
+    # Eine Stadt oder Periode neben der Hauptperiode: Unterordner unter data_root und cache_root
+    # (PDF-Namen sind je OParl-Body vergeben, Stamps und Textstore je Periode eigen); leer = flach.
+    # Der HTTP-Cache bleibt geteilt, sein Schlüssel ist die URL.
+    profile: str = ""
 
     @classmethod
     def from_settings(cls, settings: Settings) -> Layout:
@@ -33,6 +37,7 @@ class Layout:
             data_root=settings.data_root,
             cache_root=settings.cache_dir,
             reference_root=settings.reference_root,
+            profile=settings.profile,
         )
 
     def reference_view(self) -> Layout:
@@ -43,30 +48,43 @@ class Layout:
             reference_root=self.reference_root,
         )
 
+    def for_profile(self, profile: str) -> Layout:
+        """Dasselbe Layout für ein anderes Profil, etwa die Hauptperiode (``""``) derselben Stadt."""
+        return Layout(self.data_root, self.cache_root, self.reference_root, profile)
+
     # Verzeichnisse
     @property
+    def root(self) -> Path:
+        """Die Datenwurzel des Profils: ``data_root`` oder ``data_root/<profil>``."""
+        return self.data_root / self.profile if self.profile else self.data_root
+
+    @property
+    def cache(self) -> Path:
+        return self.cache_root / self.profile if self.profile else self.cache_root
+
+    @property
     def external(self) -> Path:
-        return self.data_root / "external"
+        return self.root / "external"
 
     @property
     def raw(self) -> Path:
-        return self.data_root / "raw"
+        return self.root / "raw"
 
     @property
     def interim(self) -> Path:
-        return self.data_root / "interim"
+        return self.root / "interim"
 
     @property
     def processed(self) -> Path:
-        return self.data_root / "processed"
+        return self.root / "processed"
 
     @property
     def pdf_dir(self) -> Path:
-        return self.cache_root / "pdf"
+        return self.cache / "pdf"
 
     @property
     def text_dir(self) -> Path:
-        return self.cache_root / "text"
+        return self.cache / "text"
 
     @property
     def http_cache(self) -> Path:
@@ -153,7 +171,7 @@ class Layout:
     # Die Berichtsseite: eine in sich geschlossene index.html, daneben die Download-Dateien
     @property
     def site(self) -> Path:
-        return self.data_root / "site"
+        return self.root / "site"
 
     @property
     def site_index(self) -> Path:

@@ -7,12 +7,14 @@
 data_root = "./data"           # Laufzeitdaten und Zwischenergebnisse, relativ zum Arbeitsverzeichnis; gitignored
 cache_root = ""                # leer = <data_root>/cache: PDFs, Texte, HTTP-Cache; bei Konrad auf xtraspace
 reference_root = "./reference" # eingefrorener Datensatz der Arbeit; wird nur gelesen
+profile = ""                   # Unterordner je Stadt oder Periode unter data_root und cache_root (settings.<profil>.toml setzt ihn); leer = die Hauptperiode, flach
 contracts = "on"               # "off" schaltet die deal-Verträge ab (deal.disable beim Start); zählt nicht zum Fingerprint
 log_level = "INFO"
 
 [period]                       # Wahlperiode zwischen den Kommunalwahlen 2020 und 2025, beide Grenzen einschließlich
 start = 2020-09-13
-end = 2025-09-14
+end = 2025-09-14               # end = "" für eine laufende Periode (der tiefe Merge ließe das Datum sonst stehen); dann ist election Pflicht
+# election = 2025-09-14        # Wahltag, dessen Ergebnis Nenner und Zuschnitt liefert; Standard: end
 
 [http]
 timeout_s = 180                # der OParl-Server brauchte am 2026-10-09 85 s pro Seite

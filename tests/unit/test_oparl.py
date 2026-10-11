@@ -55,6 +55,10 @@ def test_in_period_is_inclusive_and_false_without_date() -> None:
     assert paper.in_period(dt.date(2020, 9, 13), dt.date(2025, 9, 14))
     assert not paper.in_period(dt.date(2020, 9, 13), dt.date(2025, 9, 13))
     assert not OparlPaper(id="x").in_period(dt.date(2000, 1, 1), dt.date(2100, 1, 1))
+    # Laufende Periode ohne Ende: alles ab dem Beginn zaehlt, davor nichts, ohne Datum nie
+    assert paper.in_period(dt.date(2025, 9, 14), None)
+    assert not paper.in_period(dt.date(2025, 9, 15), None)
+    assert not OparlPaper(id="x").in_period(dt.date(2000, 1, 1), None)
 
 
 def test_model_knows_every_key_the_server_sends() -> None:

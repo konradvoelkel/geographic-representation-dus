@@ -92,3 +92,21 @@ def test_deep_merge_laws(a: dict[str, object], b: dict[str, object]) -> None:
         if not (isinstance(value, dict) and isinstance(a.get(key), dict)):
             assert merged[key] == value
     assert deep_merge(a, b) == deep_merge(deep_merge(a, b), b)  # idempotent in b
+
+
+@given(
+    paper=papers,
+    start=st.dates(dt.date(2000, 1, 1), dt.date(2030, 1, 1)),
+    end=st.one_of(st.none(), st.dates(dt.date(2000, 1, 1), dt.date(2030, 1, 1))),
+)
+def test_in_period_without_end_means_from_start_on(
+    paper: OparlPaper, start: dt.date, end: dt.date | None
+) -> None:
+    """Ohne Ende zählt alles ab start; mit Ende genau das Intervall; ohne Datum nie (Fundament F4)."""
+    inside = paper.in_period(start, end)
+    if paper.date is None:
+        assert not inside
+    elif end is None:
+        assert inside == (paper.date >= start)
+    else:
+        assert inside == (start <= paper.date <= end)
