@@ -1,6 +1,6 @@
 # Plan 02: Zeitreihe
 
-Stand 2026-10-11, Branch `feat/02-zeitreihe`. Status: geplant.
+Stand 2026-10-11, Branch `feat/02-zeitreihe`. Status: umgeschrieben.
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.2; Regeln: § 2 dort und [../../CLAUDE.md](../../CLAUDE.md);
 Aufbau des Programms: [../architecture.md](../architecture.md). Dieser Plan ist so geschrieben, dass ein frischer Agent ihn
@@ -439,4 +439,65 @@ dasselbe Muster (Modellteil `None`, Abschnitt in der Vorlage mit `{% if %}`) tau
 Optionen. Docstrings der neuen Module verweisen auf `docs/architecture.md`, jede Entscheidung aus § 2 bekommt einen Punkt
 in `decisions.md`, keine neue Abhängigkeit.
 
-## 10. Änderungen durch die Synergiephase (füllt der Supervisor)
+## 10. Änderungen durch die Synergiephase
+
+Stand 2026-10-12, geschrieben vom Supervisor nach [00-synergien.md](00-synergien.md). Das Fundament liegt auf
+`main` (Commits `d7df0ed` bis `b8e44b1`, Branch rebased); was unten steht, gilt vor den Stufen in § 5. Für alle
+Optionen (00-synergien.md, § 2 und § 5):
+
+- **Vorlage**: `report.html.j2` ist Rahmen; ein neuer Abschnitt ist eine neue Datei
+  `src/georep/report/templates/sections/NN-name.html.j2` (Nummern in 00-synergien.md § 5.1), optional mit
+  `NN-name.css` und `NN-name.js` daneben; `render.sections()` bindet sie in Nummernfolge ein. Das Makro
+  `term` kommt aus `templates/macros.html.j2` (`{% from "macros.html.j2" import term %}`). Ein Abschnitt, der
+  nur mit einem Modellteil existiert, steht in `{% if model.<teil> %} … {% endif %}`, das Feld in `ReportModel`
+  hat Default `None` und steht am Ende der Klasse.
+- **JavaScript**: Abschnitts-Skripte sprechen mit `window.georep` (`select(ids, scroll)` für Zahl, Array
+  oder `null`; `showDocuments(terms, title)` mit mehreren Begriffen; `rows`). Der Kartenumschalter ist
+  generisch: Radio `input[name="metric"]` mit `value`, Attribut `data-class-<value>` je Fläche
+  (`charts.choropleth(..., extra_classes={"<value>": classification})`), Legende `.legend#legend-<value>`.
+- **Tabellen**: jede neue veröffentlichte Tabelle ist ein `PublishedTable`-Eintrag am Ende von `TABLES` in
+  `src/georep/report/tables.py` (Name, Pfad-Lambda, Beschreibung, Spaltendoku, CSV-Regeln, `optional`);
+  `published_tables`, `COLUMN_DOCS`, `DESCRIPTIONS` und `export.csv_plan` gibt es nicht mehr.
+- **Regression**: `analysis.regression.regression_pair(frame, exclude, *, x, y, y_scale)` rechnet beide
+  Spalten von Tabelle 5 für jede Kennzahlspalte; die Ausreißer kommen aus `settings.analysis.exclude_districts`
+  (`defaults.toml`, `[analysis]`), `OUTLIERS` gibt es nicht mehr.
+- **Settings**: neue Tabellen am Ende von `defaults.toml` in einem Block `# --- Option NN`, neue Modelle vor
+  `class Settings`, neue Felder am Ende von `Settings`; Pfade und reine Anzeigewerte aus `fingerprint()`
+  ausschließen (Kommentar dort). Neue Layout-Properties am Ende der Klasse vor `runtime_dirs`.
+- **Pipeline**: neue Schritte mit Kommentar `# --- Option NN` an der Stelle ihrer Abhängigkeit; neue Eingaben
+  von `report` am Ende seines Tupels.
+- **Tests**: `test_cli.py`, `test_pipeline.py`, `test_report_build.py` zählen Schritte und Dateien aus
+  `build_steps` und dem Register; eigene Erwartungen in eigene Tests. Den Snapshot `test_cli.ambr`
+  (`georep steps`) bewusst erneuern, Diff im Commit.
+- **Doku**: `decisions.md` neuer Punkt ohne feste Nummer („## Punkt: <Titel> (Option NN, Datum)"; Punkt 21
+  ist das Fundament, der Supervisor nummeriert beim Merge); CHANGELOG unter „Unreleased" als eigener Absatz.
+- **Vorschau**: lokaler Server auf Port `8700 + NN`; `.claude/launch.json` je Worktree anlegen. Browser-Prüfung
+  nach § 8.4 des Meta-Plans.
+- **Cache**: `cache_root` ist geteilt; nichts außer `bootstrap` schreibt den Textstore der Hauptperiode.
+- **Fragen**: die Antworten und Vorentscheidungen stehen in [fragen.md](fragen.md); neue Fragen in § 8 dieses
+  Plans eintragen, der Supervisor sammelt sie.
+
+Für Option 2 im Besonderen:
+
+- **`period.name` heißt `profile`** (Fundament F4): `settings.2014.toml` setzt `profile = "2014-2020"`;
+  `Layout` legt dann Daten unter `data_root/2014-2020/` und PDFs sowie Texte unter `cache_root/2014-2020/` ab
+  (statt des geplanten `cache_root/text/<name>/`; die PDFs der alten Periode sind andere Dateien, der HTTP-Cache
+  bleibt geteilt). `Layout.base()` heißt `Layout.for_profile("")`; `for_period(name)` ist `for_profile(name)`.
+  Stufe A entfällt zu zwei Dritteln: nur `period.label`, `period.dictionary` und die neuen Quellen- und
+  Spaltenschlüssel bleiben zu bauen.
+- **`Period.election`** liegt im Fundament: `period.end` bleibt gesetzt (geschlossene Periode), `election`
+  optional; `settings.period.election_day` ist der Wahltag für Datenstand und Seite. Im Profil 2014 bis 2020:
+  `start = 2014-05-25`, `end = 2020-09-12`, `election = 2020-09-13`.
+- **Crosswalk**: `georep/crosswalk.py` existiert mit `unit_weights` und `contracts.sums_to_one`; `area_shares`
+  baut Option 3 (merged vor 02) in der in 00-synergien.md § 2 Punkt 4 festgelegten Form (`source_id` String,
+  `target_id` Int64, `share`, `coverage`; `SchemaError` unter `min_coverage`). 02 baut `assign_by_point`,
+  `target_weights`, `transfer_counts`, `largest_remainder` daneben; vor Stufe B auf `main` rebasen, sobald 03
+  gemerged ist, sonst `area_shares` vorläufig selbst anlegen und beim Rebase gegen die Version von 03 tauschen.
+- **Diagramm**: `delta_scatter` nutzt `charts.Axes` (Fundament F7) statt eines eigenen Achsen-Refactorings.
+- **Tabellen**: `wahlbezirke_vergleich` und `stimmbezirke_zuordnung` als Einträge in `TABLES` mit
+  `optional=True` (sie existieren nur mit Vergleichs- beziehungsweise Crosswalk-Profil).
+- **Abschnitt**: `sections/36-perioden.html.j2`, nur mit `model.comparison`; Periodentexte im Rahmen
+  (Kopf, Fuß) sind Textkonflikte mit 01 und 07, der Supervisor löst sie beim Merge.
+- **Reihenfolge**: 02 merged als Sechste (nach 04): Record und Korpus tragen dann Urheberfelder (Schema 3);
+  `first_page` und `progress` kommen zu `fetch_papers` dazu, `max_pages` ist von 04 da.
+- **Fragen**: 2.1 und 2.5 offen (fragen.md); 2.2, 2.3, 2.4, 2.6, 2.7, 2.8 wie angenommen.
