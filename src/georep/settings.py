@@ -356,6 +356,14 @@ class ContextFiles(_Strict):
     units: ContextFile  # Flächen der Raumeinheiten als GeoJSON
     indicators: ContextFile  # Definitionen der Indikatoren
 
+    def all(self) -> tuple[ContextFile, ...]:
+        """Die Dateien in fester Reihenfolge: Tabelle, Flächen, Erläuterung."""
+        return (self.table, self.units, self.indicators)
+
+    def names(self) -> tuple[str, ...]:
+        """Die lokalen Dateinamen; ``bootstrap`` kopiert sie, die Schritte lesen sie aus ``external/``."""
+        return tuple(f.file for f in self.all())
+
 
 class ContextDataset(_Strict):
     """Namensnennung und Stand, nur für die Seite; zählt nicht zum Fingerprint."""

@@ -157,8 +157,8 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
     return 0
 
 
-def _cmd_bootstrap(args: argparse.Namespace, layout: Layout) -> int:
-    report = bootstrap(layout, force=args.force)
+def _cmd_bootstrap(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
+    report = bootstrap(layout, force=args.force, context_files=settings.context.files.names())
     print(report.summary())
     return 0
 
@@ -231,7 +231,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "status":
             return _cmd_status(args, settings, layout)
         if args.command == "bootstrap":
-            return _cmd_bootstrap(args, layout)
+            return _cmd_bootstrap(args, settings, layout)
         if args.command == "export":
             return _cmd_export(layout)
         if args.command == "regress":

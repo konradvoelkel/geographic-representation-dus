@@ -55,6 +55,12 @@ def mini_root() -> Path:
 
 
 @pytest.fixture(scope="session")
+def context_root() -> Path:
+    """Die Fremddaten des Repos (Option 03); die Mini-Fixture hat ihre eigenen unter ``mini/context``."""
+    return REPO / "context"
+
+
+@pytest.fixture(scope="session")
 def pdf_fixtures() -> Path:
     return PDF_FIXTURES
 
@@ -68,7 +74,7 @@ def default_settings() -> Settings:
 def mini_run(tmp_path_factory: pytest.TempPathFactory, default_settings: Settings) -> Layout:
     """Die Offline-Kette einmal je Sitzung auf der Mini-Fixture: Tests lesen daraus, schreiben nie hinein."""
     root = tmp_path_factory.mktemp("mini_run")
-    layout = Layout(root / "data", root / "cache", MINI)
-    bootstrap(layout)
+    layout = Layout(root / "data", root / "cache", MINI, context_root=MINI / "context")
+    bootstrap(layout, context_files=default_settings.context.files.names())
     run_pipeline(build_steps(default_settings, layout), default_settings)
     return layout
