@@ -1,9 +1,10 @@
 """Wo was liegt.
 
 Laufzeitdaten unter ``data_root``, Caches unter ``cache_root``, der eingefrorene Datensatz der
-Arbeit unter ``reference_root``, und der wird nur gelesen: ``guard_writable`` verweigert jeden
-Pfad darunter (docs/architecture.md, „Sicherheit", Regel 1). Eingaben behalten die Dateinamen und Formate
-der Quellen; alles Abgeleitete ist Parquet.
+Arbeit unter ``reference_root`` und die Fremddaten unter ``context_root``; die beiden letzten
+werden nur gelesen: ``guard_writable`` verweigert jeden Pfad darunter (docs/architecture.md,
+„Sicherheit", Regel 1). Eingaben behalten die Dateinamen und Formate der Quellen; alles
+Abgeleitete ist Parquet.
 """
 
 from __future__ import annotations
@@ -18,7 +19,8 @@ from georep.settings import Settings
 
 
 class ReferenceWriteError(GeorepError):
-    """Ein Schritt wollte unter reference_root schreiben."""
+    """Ein Schritt wollte unter einer nur lesbaren Wurzel schreiben: ``reference_root``
+    (eingefrorener Datensatz der Arbeit) oder ``context_root`` (Fremddaten im Repo)."""
 
 
 @dataclass(frozen=True)
@@ -30,6 +32,9 @@ class Layout:
     # (PDF-Namen sind je OParl-Body vergeben, Stamps und Textstore je Periode eigen); leer = flach.
     # Der HTTP-Cache bleibt geteilt, sein Schlüssel ist die URL.
     profile: str = ""
+    # Option 03: Fremddaten je Raumeinheit, im Repo unter context/; wird nur gelesen.
+    # None = keine Kontextdaten, dann fehlen die Schritte context_data, context und controls.
+    context_root: Path | None = None
 
     @classmethod
     def from_settings(cls, settings: Settings) -> Layout:
@@ -38,6 +43,7 @@ class Layout:
             cache_root=settings.cache_dir,
             reference_root=settings.reference_root,
             profile=settings.profile,
+            context_root=settings.context.root,
         )
 
     def reference_view(self) -> Layout:
@@ -46,11 +52,14 @@ class Layout:
             data_root=self.reference_root,
             cache_root=self.reference_root / "cache",
             reference_root=self.reference_root,
+            context_root=self.context_root,
         )
 
     def for_profile(self, profile: str) -> Layout:
         """Dasselbe Layout für ein anderes Profil, etwa die Hauptperiode (``""``) derselben Stadt."""
-        return Layout(self.data_root, self.cache_root, self.reference_root, profile)
+        return Layout(
+            self.data_root, self.cache_root, self.reference_root, profile, self.context_root
+        )
 
     # Verzeichnisse
     @property
@@ -226,6 +235,35 @@ class Layout:
         """Lange Tabelle: eine Zeile je Wahlbezirk und Gewichtungsvariante."""
         return self.processed / "wahlbezirke_gewichtet.parquet"
 
+    # Option 03: Fremddaten je Raumeinheit, Umrechnung auf Wahlbezirke, Kontrollvariablen
+    @deal.pre(
+        lambda self, file_name: self.context_root is not None,
+        message="context_source braucht context_root; ohne Kontextdaten gibt es die Schritte nicht",
+    )
+    def context_source(self, file_name: str) -> Path:
+        """Eine Datei des Kontextdatensatzes unter ``context_root``; die Namen stehen in den Settings.
+
+        ``bootstrap`` kopiert sie nach ``external/``, der Netzschritt ``context_data`` holt sie
+        frisch; gelesen wird immer die Kopie unter ``external/``, nie diese hier.
+        """
+        assert self.context_root is not None  # Vorbedingung; mypy sieht den Vertrag nicht
+        return self.context_root / file_name
+
+    @property
+    def crosswalk(self) -> Path:
+        """Gewichte je (Wahlbezirk, Raumeinheit) aus Stimmbezirksflächen und Wahlberechtigten."""
+        return self.processed / "wahlbezirke_crosswalk.parquet"
+
+    @property
+    def context_table(self) -> Path:
+        """Die Kontrollvariablen je Wahlbezirk, aus den Fremddaten umgerechnet."""
+        return self.processed / "wahlbezirke_kontext.parquet"
+
+    @property
+    def controls(self) -> Path:
+        """Tabelle 6: je Modell, Stichprobe und Term ein Koeffizient mit Standardfehler, p und VIF."""
+        return self.processed / "regression_kontrollen.parquet"
+
     def runtime_dirs(self) -> tuple[Path, ...]:
         return (
             self.external,
@@ -245,9 +283,13 @@ class Layout:
     @deal.ensure(lambda self, path, result: result is path)
     @deal.raises(ReferenceWriteError)  # exakter Typ; deal kennt keine Unterklassen
     def guard_writable(self, path: Path) -> Path:
-        """Gibt ``path`` zurück, wenn er nicht unter ``reference_root`` liegt; sonst Fehler."""
-        reference = self.reference_root.resolve()
+        """Gibt ``path`` zurück, wenn er unter keiner nur lesbaren Wurzel liegt; sonst Fehler."""
         resolved = path.resolve()
-        if resolved == reference or reference in resolved.parents:
-            raise ReferenceWriteError(f"{path} liegt unter reference_root {self.reference_root}")
+        roots = {"reference_root": self.reference_root} | (
+            {"context_root": self.context_root} if self.context_root is not None else {}
+        )
+        for name, root in roots.items():
+            readonly = root.resolve()
+            if resolved == readonly or readonly in resolved.parents:
+                raise ReferenceWriteError(f"{path} liegt unter {name} {root}")
         return path
