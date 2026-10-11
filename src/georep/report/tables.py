@@ -204,8 +204,10 @@ TABLES: list[PublishedTable] = [
     ),
 ]
 
-# Option 06: Gewichtung (docs/plans/06-gewichtung.md). ``themen`` und ``themen_dokumente`` sind
-# optional, weil ``topics.k = 0`` den Schritt ``topics`` abschaltet; die Anteilsmatrix selbst bleibt
+# Option 06: Gewichtung (docs/plans/06-gewichtung.md). Alle vier sind ``optional``: ``topics.k = 0``
+# schaltet den Schritt ``topics`` ab, und eine Datenwurzel ohne den Schritt ``weights`` soll eine
+# Seite ohne den Abschnitt bauen statt mit einem Schemafehler abzubrechen (der Schritt ``report``
+# nennt beide Dateien als Eingabe, meldet also vorher, was fehlt). Die Anteilsmatrix selbst bleibt
 # ein Zwischenstand unter ``interim/`` und wird nicht veröffentlicht.
 TABLES.append(
     PublishedTable(
@@ -228,6 +230,7 @@ TABLES.append(
                 "Dokumente je Person",
             ),
         },
+        optional=True,
     )
 )
 TABLES.append(
@@ -249,6 +252,7 @@ TABLES.append(
                 "Anteil 0 bis 1",
             ),
         },
+        optional=True,
     )
 )
 TABLES.append(

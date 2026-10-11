@@ -1,0 +1,7 @@
+#gewichtung th.group { text-align: center; border-bottom: 0; color: var(--muted); font-weight: 600; }
+#gewichtung-tabelle th[scope="row"] { font-weight: 600; min-width: 14em; }
+#gewichtung-tabelle .formula { display: block; font-weight: 400; font-size: .8em; color: var(--muted); }
+#gewichtung-tabelle tr.baseline th[scope="row"], #gewichtung-tabelle tr.baseline td { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+#gewichtung-tabelle td.significant { font-weight: 600; color: var(--ink); }
+#gewichtung-tabelle td.significant::after { content: " *"; color: var(--accent); }
+#themen-tabelle td:nth-child(2) { min-width: 20em; }
