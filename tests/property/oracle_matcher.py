@@ -15,10 +15,20 @@ from __future__ import annotations
 import string
 from collections.abc import Iterable
 
+import deal
+
 WORD_CHARS = frozenset(string.ascii_letters + string.digits + "_")
 
 
+@deal.ensure(
+    lambda text, terms, result: (
+        result <= {t.lower() for t in terms if t} and all(t in text.lower() for t in result)
+    ),
+    message="nur kleingeschriebene Eingabebegriffe, und jeder kommt im Text vor",
+)
+@deal.pure
 def oracle_extract(text: str, terms: Iterable[str]) -> set[str]:
+    """``terms`` muss mehrfach durchlaufbar sein (Liste, Menge): der Vertrag liest es noch einmal."""
     lowered = text.lower()
     ordered = sorted({t.lower() for t in terms if t}, key=len, reverse=True)
     found: set[str] = set()
