@@ -169,7 +169,7 @@ Die Erwartung wird gemessen, nicht geglaubt. cargo 1.98 ist installiert, maturin
 
 Jede Phase läuft auf einem Branch `refactor/phase-<n>`, endet mit der Definition of Done aus § 2 und nach dem Merge nach `main` mit einem Tag `v0.<n+1>.0` (Phase 0 → `v0.1.0`).
 
-### Phase 0: Netz spannen (keine Verhaltensänderung)
+### Phase 0: Netz spannen (keine Verhaltensänderung) — abgeschlossen 2026-10-11, `v0.1.0`
 
 1. `pyproject.toml` ohne Umzug: `[tool.uv] package = false`, Abhängigkeiten aus den Pins, `dependency-groups.dev` (ruff, mypy, pandas-stubs, types-requests, pytest, pytest-cov, syrupy, hypothesis, deal, nox), `[tool.ruff]` (E F I UP B, line-length 100, target py314), `[tool.mypy]` (strict, Overrides mit Begründung für geopandas, osmnx, shapely, flashtext, loguru, pandas im Altcode), `[tool.pytest.ini_options]` (`testpaths`, `--strict-markers`, Marker `slow`, `network`). `.python-version` 3.14, `uv.lock`, `requirements.txt` entfällt. Polars, pydantic, pydantic-settings kommen dazu; pandas, geopandas, osmnx, scikit-learn bleiben als markierte Altlast, bis Phase 3 sie entfernt.
 2. venv-Ort: `UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep` dokumentiert in README und `.envrc`; der heutige Symlink `.venv` entfällt.
@@ -179,7 +179,9 @@ Jede Phase läuft auf einem Branch `refactor/phase-<n>`, endet mit der Definitio
 6. Mechanik, je ein Commit, in `.git-blame-ignore-revs`: `ruff check --select UP --fix` (4), `ruff check --fix` nur sichere Fixes (23), `ruff format` (14 Dateien).
 7. `STATUS.md` und `CLAUDE.md` (Arbeitsregeln für Agenten: Befehle, was nie laufen darf, wo Daten liegen).
 
-### Phase 1: Risiken schließen (kleine, einzeln begründete Verhaltensänderungen, je mit rotem Test zuerst)
+### Phase 1: Risiken schließen (kleine, einzeln begründete Verhaltensänderungen, je mit rotem Test zuerst) — Code fertig 2026-10-11
+
+Vorgezogen aus Phase 2: das Paket `src/georep/` mit `uv_build`, weil die neuen Helfer (`io`, `http`, `errors`) einen strict-typisierten Ort brauchten. Dazugekommen gegenüber der Liste: Nicht-PDF-Antworten abweisen, unlesbarer lokaler Metadatenstand ist ein Fehler, Metadaten-Download wirft statt still zu verkürzen.
 
 1. Timeouts, Session mit Retry/Backoff, User-Agent (schließt B113 ×4).
 2. `atomic_write` und Einsatz in allen Schreibstellen.
@@ -192,7 +194,7 @@ Jede Phase läuft auf einem Branch `refactor/phase-<n>`, endet mit der Definitio
 
 ### Phase 2: Struktur (Strangler Fig, eine Refactoring-Sorte pro Commit)
 
-1. `src/georep/` anlegen, Paketierung mit `uv_build`, `[project.scripts]`; alte Module importieren aus `georep` (Shims).
+1. `[project.scripts]` und Shims; `src/georep/` mit `uv_build` existiert seit Phase 1.
 2. `settings.py` + `settings.toml` + `settings.local.toml`; `config.py` wird Shim und stirbt zuletzt.
 3. `layout.py`; `data/` → `reference/` (git mv); `data_root` gitignored; `georep bootstrap` kopiert Rohdaten und Korpus aus `reference/` nach `data_root`, damit die Offline-Kette ohne Netz läuft.
 4. Modelle (`models.py`), Spaltennamen aus den Settings, drei Module ohne hart kodierte Schlüssel. Jedes nach `georep` gezogene Modul ist Polars-nativ; der Golden Master belegt die Gleichheit mit dem pandas-Altcode.

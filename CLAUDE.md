@@ -23,7 +23,7 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - In `data/` schreiben lassen. Tests führen den Altcode über `tests/legacy_runner.py` mit umgebogenen Pfaden aus.
 - `pre-commit run --all-files` über `data/` oder `tests/fixtures/`.
 - pandas in neuem Code. Neuer Code nutzt Polars und schreibt Parquet; er ist vollständig typisiert und besteht `mypy --strict`.
-- Netztests in CI. Der OParl-Server braucht 85 s pro Seite; Netztests tragen den Marker `network` und laufen nur von Hand.
+- Netztests in CI. Der OParl-Server braucht 85 s pro Seite; Netztests tragen den Marker `network` und laufen nur von Hand. Netz in Unit-Tests kommt über das `Transport`-Protokoll aus `georep.http` und die Fake-Session in `tests/unit/test_dataset_oparl.py`.
 
 ## Commits
 
@@ -31,4 +31,5 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - Betreff im Imperativ, rund 50 Zeichen, kein Punkt; der Body sagt, warum, mit Datum und Fehlertext, wenn es einen gab.
 - Nach jedem Commit `uv run nox`. Wird der Golden Master rot, war es kein Refactoring: zurücknehmen und bewusst entscheiden.
 - Verhaltensänderungen zuerst mit rotem Test, dann die Änderung, je ein Commit.
-- Phasen laufen auf `refactor/phase-<n>`; Merge nach `main` und Tag `v0.<n+1>.0` entscheidet Konrad.
+- Phasen laufen auf `refactor/phase-<n>`. Am Phasenende: Push, grüne CI abwarten, Merge nach `main` (fast-forward), Tag `v0.<n+1>.0`, Push. So hat Konrad es am 2026-10-11 für Phase 0 angewiesen.
+- Prüfschritte in Skripten nie hinter eine Pipe stellen (`uv run pytest | tail`): die Pipe frisst den Exit-Code, und am 2026-10-11 landeten so zwei rote Commits. Erst der Befehl allein, dann die Ausgabe ansehen.
