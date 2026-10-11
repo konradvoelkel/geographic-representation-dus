@@ -308,9 +308,8 @@ def _name_entries(results: pl.DataFrame, names: Mapping[int, str]) -> list[Searc
     """Je Wahlbezirksname ein Eintrag der Art ``w``: „Benrath" steht in keinem Wörterbuch.
 
     Tragen zwei Wahlbezirke denselben Namen (in den Referenzdaten keiner), fasst der Eintrag sie
-    zusammen;
-    ``documents`` ist dann das Maximum, weil die Vereinigung der Dokumente aus ``anzahl_treffer``
-    allein nicht zu rechnen ist.
+    zusammen; ``documents`` ist dann das Maximum, weil sich die Vereinigung der Dokumente aus
+    ``anzahl_treffer`` allein nicht rechnen lässt.
     """
     merged: dict[str, tuple[list[int], int]] = {}
     for district, hits in results.select(DISTRICT, HITS).sort(DISTRICT).iter_rows():
