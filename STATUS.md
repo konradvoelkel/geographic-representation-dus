@@ -1,6 +1,6 @@
 # Status
 
-Stand 2026-10-11, `main` auf `v0.6.0`, nächster Branch `refactor/phase-6`. Fakten mit Datum, Invarianten ohne.
+Stand 2026-10-11, `main` auf `v0.7.0`, nächster Branch `refactor/phase-7`. Fakten mit Datum, Invarianten ohne.
 
 ## Abgeschlossen
 
@@ -8,27 +8,28 @@ Stand 2026-10-11, `main` auf `v0.6.0`, nächster Branch `refactor/phase-6`. Fakt
 - Phase 1 (`v0.2.0`): atomare Schreibvorgänge, Session mit Timeout und Retry, Fehlerisolation im Download, Guards, deterministische Ausgaben, Domänenfehler.
 - Phase 2 (`v0.3.0`): Settings in TOML, OParl 1.1 als Vertrag, Layout mit Schreibschutz auf `reference/`, Polars-Kette mit Parquet, Schrittregister mit Stamps, CLI `georep`.
 - Phase 3 (`v0.4.0`): Fetch- und Cache-Schicht ohne geopandas und osmnx; der Code der Arbeit ist vollständig ersetzt.
-- Phase 4 (`v0.5.0`): Tests ausgebaut. `tests/property/` mit hypothesis: ein lesbares Orakel des Matcher-Vertrags (FlashText stimmt in 400 Zufallsfällen überein), Invarianten für Wörterbuch, Aggregation, POI-Bereinigung, Straßen, Treffer, Index, STRtree, OParl-Roundtrip, Stores und `deep_merge`. Abdeckungslücken geschlossen, Snapshot für `georep steps`, nox `test` parallel mit Abdeckung als Untergrenze (90 %), hypothesis-Profile `dev` und `ci`.
-- Phase 5 (`v0.6.0`): Profiling-Infrastruktur. `georep profile` (echter Schritt unter cProfile, `.prof` für snakeviz), `nox -s bench` mit pytest-benchmark gegen die gespeicherte Baseline (rot ab 20 % langsamer im Minimum, über dem gemessenen Rauschen von 13 %), Protokoll `PdfTextExtractor`. Erste Messung in `docs/profiling/README.md`: Offline-Lauf 6,3 s, davon 4,1 s FlashText (reines Python); Extraktion 38 ms je PDF über 200 PDFs; pypdf 6.20.0 reproduziert 197 von 200 Texten der Arbeit zeichengleich. Empfehlung: pypdf und FlashText bleiben, kein Rust-Port.
+- Phase 4 (`v0.5.0`): Tests ausgebaut. `tests/property/` mit hypothesis: ein lesbares Orakel des Matcher-Vertrags, Invarianten für Wörterbuch, Aggregation, POI-Bereinigung, Straßen, Treffer, Index, STRtree, OParl-Roundtrip, Stores und `deep_merge`. Snapshot für `georep steps`, nox `test` parallel mit Abdeckung als Untergrenze (90 %).
+- Phase 5 (`v0.6.0`): Profiling-Infrastruktur. `georep profile`, `nox -s bench` (pytest-benchmark, rot ab 20 % langsamer im Minimum), Protokoll `PdfTextExtractor`. Messung in `docs/profiling/README.md`: Offline-Lauf 6,3 s, davon 4,1 s FlashText; Extraktion 38 ms je PDF; pypdf 6.20.0 reproduziert 197 von 200 Texten der Arbeit zeichengleich. Empfehlung: pypdf und FlashText bleiben, kein Rust-Port.
+- Phase 6 (`v0.7.0`): Design by Contract. 80 deal-Decorators an 30 Funktionen in `search`, `analysis`, `prep`, `geo`, `layout`, `stores`, `http`, `settings` und `sources`; Prädikate in `georep.contracts`; `settings.contracts = "off"` schaltet ab, Overhead unter einem Prozent. Fetcher werfen nur `FetchError` oder `NetworkError`, die CLI meldet einen abgebrochenen Abruf als eine Zeile. `deal.cases` greift zehn reine Funktionen an, `nox -s verify` (crosshair) fand und `nox -s mutate` (pytest-gremlins, 79 % getötet) deckte je einen echten Fehler auf: `street_names` bei kaputter Overpass-Antwort und deals nicht reentranter `HasPatcher`, der nach `deep_merge` Socket und stdout gepatcht ließ. Beides behoben, `docs/mutation-2026-10-11.md`.
 
 ## Zahlen (2026-10-11)
 
-- Tests: 137, davon einer `slow` und zehn `bench`; schnelle Suite parallel in 8 s; Abdeckung 98 %.
-- Code `src/georep/`: 34 Dateien, rund 2860 Zeilen, mypy strict ohne Befund.
-- Laufzeit: voller Offline-Lauf 6,3 s (Index 4,1 s); 200 PDFs abgerufen in 218 s, extrahiert in 8,3 s.
+- Tests: 171, davon einer `slow` und zehn `bench`; schnelle Suite parallel in 9 s; Abdeckung 98 %.
+- Code `src/georep/`: 35 Dateien, rund 3250 Zeilen, mypy strict mit deal-Plugin ohne Befund.
+- Laufzeit: voller Offline-Lauf 6,4 bis 6,7 s mit wie ohne Verträge (Index 4,1 bis 4,3 s); `nox -s verify` 2,5 bis 3 min; `nox -s mutate` 100 s.
 
 ## Bekannt
 
-- Mutationstests stehen aus: mutmut 3 forkt, Polars blockiert im Kind (`docs/mutation-2026-10-11.md`); Kandidaten pytest-gremlins oder fest in Phase 6.
-- Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Ob der OParl-Server `modified_since` beachtet, zeigt erst dieser Lauf. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.
-- Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`; `georep status` zeigt `pdfs` als „offen: Settings geändert", weil `--limit 200` im Settings-Fingerprint des Stamps steht. Das ist richtig so: mit Limit 0 fehlen noch 18 892 PDFs.
+- deal 4.24.6: `deal.raises` vergleicht exakte Typen, keine Unterklassen; `deal.has()`/`deal.pure` sind nicht reentrant (Patch bleibt nach Rekursion stehen). Beides umschifft (NetworkError, `deal.safe` für `deep_merge`), nicht upstream gemeldet.
+- Zwölf überlebende Mutanten liegen in Vertrags-Lambdas (Grenzen von r und p); kein Test verletzt sie genau an der Grenze. Bewusst nicht nachgezogen.
+- Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.
+- Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`; `georep status` zeigt `pdfs` als „offen: Settings geändert", weil `--limit 200` im Stamp steht. Das ist richtig so.
 - Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab (`docs/baseline-2026-10-10.md`).
 
 ## Nächster Schritt
 
-Phase 6 auf `refactor/phase-6` (siehe `DEVELOPMENT_PLAN.md` § 4, Phase 6): `deal`-Verträge auf den reinen
-Funktionen, `settings.contracts = "off"` verdrahten und den Overhead messen (`nox -s bench` ist dafür da),
-`deal.cases` und `crosshair check` als `nox -s verify`, Mutationstests erneut mit pytest-gremlins oder fest.
-Die Empfehlung aus Phase 5 (kein Ersatz für pypdf und FlashText) steht in `docs/profiling/README.md` zur
-Entscheidung; Phase 6 hängt nicht davon ab.
+Phase 7 auf `refactor/phase-7` (siehe `DEVELOPMENT_PLAN.md` § 4, Phase 7): README aus Sicht eines frischen
+Klons, `docs/architecture.md` und `docs/decisions.md` mit den verworfenen Alternativen und ihren Kosten (die
+datierten Einzeldokumente unter `docs/` sind die Quelle), Plan durch Beschreibungen ersetzen, optional ein
+Pull Request an `lubar102` mit den risikoschließenden Änderungen aus Phase 1.

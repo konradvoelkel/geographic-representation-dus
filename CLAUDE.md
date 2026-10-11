@@ -29,6 +29,8 @@ uv run ruff check . && uv run ruff format --check .
 uv run mypy                  # strict für alles
 uv run nox -s bench          # heiße Pfade gegen die gespeicherte Baseline; der erste Lauf legt sie nur an
 uv run georep profile index  # echter Schritt unter cProfile; .prof nach docs/profiling/, Zahlen ins README dort
+uv run nox -s verify         # crosshair über die reinen Funktionen mit Verträgen, rund drei Minuten
+uv run nox -s mutate         # pytest-gremlins über search/ und analysis/, einmal pro Phase, kein Gate
 ```
 
 Settings: `src/georep/defaults.toml` ist die Quelle; rechnerspezifisches (Pfade auf xtraspace) gehört in
@@ -45,6 +47,7 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - pandas, geopandas, osmnx: die nox-Session `deps` verbietet sie im Lockfile. Tabellen sind Polars, Dateien Parquet, Geometrie shapely und pyproj; alles ist typisiert und besteht `mypy --strict`.
 - Netztests in CI. Der OParl-Server braucht 85 s pro Seite; Netztests tragen den Marker `network` und laufen nur von Hand. Netz in Unit-Tests kommt über das `Transport`-Protokoll aus `georep.http` und die Fake-Session in `tests/fakes.py` mit den aufgezeichneten Antworten in `tests/fixtures/http/`; OParl-JSON wird mit `georep.oparl` geparst, nie mit `.get()`-Ketten.
 - Die Dateien unter `tests/fixtures/mini/expected/` neu erzeugen: sie sind der Golden Master aus dem Altcode (Tag `v0.2.0`), siehe `tests/fixtures/mini/README.md`.
+- `deal.pure` oder `deal.has()` auf rekursive Funktionen oder in heiße Schleifen: der Patcher ist nicht reentrant und patcht prozessweit. `deal.inv` auf Stores, deren Methoden je Dokument laufen.
 
 ## Commits
 
@@ -69,3 +72,6 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - pytest-benchmark: `--benchmark-compare-fail` ohne gespeicherten Lauf ist ein Bedienfehler (Exit 4); die nox-Session `bench` prüft `.benchmarks/` vorher. Die CPU-Taktfrequenz schwankt zwischen Läufen, darum ist die `machine_info`-Warnung gefiltert. Eine Schwelle erst nach gemessenem Rauschen setzen: 10 % im Minimum schlugen bei 1-ms-Polars-Stufen ohne Codeänderung an (12,7 %), 20 % liegen über allem Gemessenen.
 - Messungen stehen datiert in `docs/profiling/README.md`, `.prof`-Dateien und `.benchmarks/` bleiben lokal. Ein Profil des echten Schritts (`georep profile`) vor jedem Nachbau; cProfile verdreifacht die Zeit reiner Python-Bibliotheken (pypdf), die Verteilung stimmt trotzdem.
 - `georep fetch pdfs --limit N` schreibt `pdf_limit` in den Settings-Fingerprint des Stamps; `status` zeigt `pdfs` danach als „offen: Settings geändert". Das ist richtig, nicht kaputt.
+- deal (Phase 6): `deal.raises` vergleicht exakte Typen, keine Unterklassen (`requests.RequestException` deckt `HTTPError` nicht ab); darum wandeln Fetcher Netzfehler in `NetworkError`. `deal.has()`/`deal.pure` patchen `socket.socket` und `sys.stdout` prozessweit und sind nicht reentrant: rekursive Funktionen bekommen `deal.safe`, sonst bleibt der Patch stehen (2026-10-11, `deep_merge`). Das mypy-Plugin `deal.mypy` modelliert `result` in `ensure` als positionalen Parameter; Validatoren mit optionalen Argumenten werden benannte Funktionen und stehen vor dem ganzen Decorator-Stapel, nie dazwischen. Prädikate für Verträge liegen in `georep.contracts`.
+- `deal.cases` läuft ohne Beispiel-Datenbank: ein Gegenbeispiel kann im nächsten Lauf fehlen, hypothesis druckt den Reproduktions-Blob. `check_types=False`, weil typeguard nicht installiert ist. `nox -s verify` (crosshair) braucht rund drei Minuten; „Not confirmed" ist kein Befund.
+- Commit-Messages in der zsh nicht mit deutschen Anführungszeichen „…" schreiben: das schließende Zeichen ist ein ASCII-`"` und beendet den String (2026-10-11, nichts wurde ausgeführt).

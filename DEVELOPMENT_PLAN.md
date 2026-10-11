@@ -273,7 +273,22 @@ Kapitel Profiling). PDF-Stichprobe ohne stundenlangen Abruf: `uv run georep fetc
    Ersatz-Matcher muss das Orakel bestehen, ein Ersatz-Extraktor den Golden Master der vier Fixture-PDFs
    (`tests/unit/__snapshots__/test_extract.ambr`) oder seine Abweichung dokumentieren.
 
-### Phase 6: Design by Contract
+### Phase 6: Design by Contract — abgeschlossen 2026-10-11
+
+Ergebnis (2026-10-11): 80 deal-Decorators an 30 Funktionen (31 `post`, 16 `pre`, 14 `raises`, 10 `ensure`,
+6 `pure`, 2 `has`, 1 `safe`), Prädikate in `georep.contracts`, Schalter `settings.contracts` verdrahtet,
+Overhead unter einem Prozent (`docs/profiling/README.md`), `deal.cases` für zehn reine Funktionen,
+`nox -s verify` (crosshair, drei Minuten) und `nox -s mutate` (pytest-gremlins, 79 % getötet,
+`docs/mutation-2026-10-11.md`). Abweichungen: kein `deal.inv` auf den Stores, eine Invariante über alle
+Zeilen liefe je `put` in der heißen Schleife; stattdessen Nachbedingungen an `load` und `upsert`.
+`deal.raises` vergleicht exakte Typen, darum wandeln die Fetcher requests-Fehler in `NetworkError`, statt
+Unterklassen aufzuzählen. `deal.pure` nur auf nicht rekursiven Funktionen: deals `HasPatcher` ist nicht
+reentrant und ließ nach `deep_merge` den Socket- und stdout-Patch stehen (gefunden durch die
+Mutationskampagne, behoben mit `deal.safe`). crosshair fand `street_names({"elements": 0})` als
+Gegenbeispiel; die Verträge machten fünf Verhaltensänderungen nötig, je mit rotem Test zuerst
+(FetchError statt JSON-, Key- und ValueError, NetworkError, EmptyResultError ohne Streuung, leerer Marker
+als Settings-Fehler). `deal.cases` läuft ohne typeguard (`check_types=False`). Der Benchmark-Gate wurde
+durch die Verträge einmal rot (+51 % auf einer 1-ms-Stufe) und ist mit Begründung neu gesetzt.
 
 Voraussetzungen sind da: `deal` und `crosshair-tool` stehen in der Dev-Gruppe, `settings.contracts` („on"/„off")
 existiert, wird aber noch nirgends gelesen. `deal test` ist mit typeguard 4 kaputt (Skript, Stand 2026-09-25);

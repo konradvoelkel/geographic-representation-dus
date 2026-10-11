@@ -2,6 +2,20 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.7.0 (2026-10-11), Phase 6
+
+- Verträge mit deal auf Suche, Auswertung, Aufbereitung, Geometrie, Layout, Stores, HTTP, Settings und
+  Quellen: Pflichtspalten, sortierte eindeutige Schlüssel und Listen, Begriffe kleingeschrieben und ohne
+  Komma, Koordinaten in Grad, r in [-1, 1]; eine Verletzung ist ein Programmierfehler und läuft durch.
+  `contracts = "off"` in den Settings schaltet ab; der Overhead liegt unter einem Prozent.
+- Kaputte Quellantworten und Netzfehler sind Domänenfehler (`FetchError`, `NetworkError`): `georep fetch`
+  meldet einen abgebrochenen Abruf als eine Zeile statt als Traceback. Ein leerer `text_split_marker` ist ein
+  Settings-Fehler, eine Regression ohne Streuung ein `EmptyResultError`.
+- `nox -s verify` sucht mit crosshair Gegenbeispiele zu den Verträgen der reinen Funktionen, `nox -s mutate`
+  misst mit pytest-gremlins die Mutationsquote (79 %); `deal.cases` lässt hypothesis die Verträge angreifen.
+- Behoben: `street_names` warf `TypeError` bei einer Overpass-Antwort ohne Liste; deals `has()`-Patch blieb
+  nach rekursivem `deep_merge` stehen und hätte jeden späteren `print` und Netzzugriff blockiert.
+
 ## 0.6.0 (2026-10-11), Phase 5
 
 - `georep profile [SCHRITT …]` führt echte Schritte unter cProfile aus und schreibt `.prof`-Dateien für snakeviz;

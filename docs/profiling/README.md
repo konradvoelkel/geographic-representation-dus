@@ -142,3 +142,12 @@ rund zehn Millisekunden je Lauf, fast alles in den Mengenvergleichen der Nachbed
 `hits_by_district` und `join_voters` (Wahlbezirke Teilmenge der Eingaben, Listen sortiert und eindeutig).
 Die Verträge stehen an Batch-Grenzen, nicht in der heißen Schleife des Matchers; darum bleibt `index`
 unverändert. `contracts = "off"` ist eine Option für Messungen, kein Bedürfnis im Betrieb.
+
+### Kosten der Verträge in den Benchmarks (2026-10-11)
+
+Nach Phase 6 war `nox -s bench` einmal rot, wie vorgesehen: `build_dictionary` 0,96 zu 1,46 ms (+51 %),
+`hits_and_voter_join` 1,43 zu 1,91 ms (+33 %), `index_step` 51 zu 54 ms (+5 %); alle anderen unverändert.
+Das sind die Nachbedingungen (Listen sortiert und eindeutig, Mengenvergleiche der Wahlbezirke) auf
+Millisekunden-Stufen, absolut eine halbe Millisekunde je Schritt. Angenommen; der gespeicherte Lauf ist die
+neue Baseline. So soll der Gate arbeiten: rot bei einer Änderung, die man erklären und entweder zurücknehmen
+oder hier aufschreiben muss.

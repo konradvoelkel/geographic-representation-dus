@@ -37,7 +37,8 @@ Settings, Pfade, Stores und die Frische jedes Schritts mit Grund, `georep bootst
 Referenz, `georep export` schreibt CSV, `georep regress [--exclude …]` rechnet die Regression.
 `georep profile [SCHRITT …] [--top N] [--sort tottime] [--online]` führt Schritte erzwungen unter cProfile
 aus und schreibt `docs/profiling/<datum>-<schritt>.prof` für `snakeviz` (`docs/profiling/README.md`).
-`--settings DATEI` legt eine weitere TOML-Schicht darüber. Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile
+`contracts = "off"` in den Settings schaltet die deal-Verträge ab (Programmierfehler-Prüfungen an den
+Batch-Grenzen; Overhead unter einem Prozent). `--settings DATEI` legt eine weitere TOML-Schicht darüber. Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile
 auf stderr), 2 Bedienfehler.
 
 Ein voller Abruf von Grund auf (`georep fetch` auf leerem `data_root`) dauert Stunden: der OParl-Server
@@ -95,11 +96,11 @@ legt CSV daneben.
 
 ## Entwicklung
 
-- Prüfungen: `uv run nox` (lint, typecheck, deps, test) lokal und in CI rufen dieselben Sessions; `deps` verbietet pandas, geopandas, osmnx und scikit-learn im Lockfile; `test` läuft parallel mit Abdeckung als Untergrenze (90 %); `uv run pytest -m slow` läuft die Kette über die volle Referenz und vergleicht mit den Ergebnissen der Arbeit. `uv run nox -s bench` misst die heißen Pfade mit pytest-benchmark gegen den letzten gespeicherten Lauf (rot ab 20 % langsamer im Minimum), `uv run nox -s profile -- SCHRITT` profiliert einen echten Schritt; Zahlen und Befunde datiert in `docs/profiling/README.md`.
-- Tests in drei Schichten: `tests/unit/` (eine Funktion, ein Verhalten), `tests/property/` (hypothesis-Invarianten; `tests/property/oracle_matcher.py` ist die lesbare Referenz des Matcher-Vertrags, die jeder Ersatz bestehen muss), `tests/golden/` (Mini-Fixture und Referenz gegen die eingefrorenen Ergebnisse der Arbeit); dazu `tests/bench/` (Laufzeit, nur in `nox -s bench`). `HYPOTHESIS_PROFILE=ci` erhöht die Beispielzahl. Mutationstests stehen noch aus: mutmut 3 forkt, Polars blockiert im Kind (`docs/mutation-2026-10-11.md`).
+- Prüfungen: `uv run nox` (lint, typecheck, deps, test) lokal und in CI rufen dieselben Sessions; `deps` verbietet pandas, geopandas, osmnx und scikit-learn im Lockfile; `test` läuft parallel mit Abdeckung als Untergrenze (90 %); `uv run pytest -m slow` läuft die Kette über die volle Referenz und vergleicht mit den Ergebnissen der Arbeit. `uv run nox -s bench` misst die heißen Pfade mit pytest-benchmark gegen den letzten gespeicherten Lauf (rot ab 20 % langsamer im Minimum), `uv run nox -s profile -- SCHRITT` profiliert einen echten Schritt; Zahlen und Befunde datiert in `docs/profiling/README.md`. `uv run nox -s verify` sucht mit crosshair Gegenbeispiele zu den deal-Verträgen der reinen Funktionen (drei Minuten), `uv run nox -s mutate` misst die Mutationsquote mit pytest-gremlins (`docs/mutation-2026-10-11.md`).
+- Tests in drei Schichten: `tests/unit/` (eine Funktion, ein Verhalten), `tests/property/` (hypothesis-Invarianten; `tests/property/oracle_matcher.py` ist die lesbare Referenz des Matcher-Vertrags, die jeder Ersatz bestehen muss; `deal.cases` greift die Verträge der reinen Funktionen an), `tests/golden/` (Mini-Fixture und Referenz gegen die eingefrorenen Ergebnisse der Arbeit); dazu `tests/bench/` (Laufzeit, nur in `nox -s bench`). `HYPOTHESIS_PROFILE=ci` erhöht die Beispielzahl. Verträge (deal) stehen an den Batch-Grenzen, ihre Prädikate in `georep.contracts`; Pydantic validiert an der Systemgrenze (OParl, Records, Settings).
 - Vor dem Commit: `uvx pre-commit install` einmalig; die Hooks formatieren und linten mit Ruff.
 - Regeln für Commits und für Agenten: [CLAUDE.md](CLAUDE.md). Befund vor dem Umbau: [docs/baseline-2026-10-10.md](docs/baseline-2026-10-10.md).
-- Struktur: `src/georep/` ist das ganze Programm (`settings`, `layout`, `io`, `http`, `geo`, `oparl`, `records`, `stores`, `errors`, `bootstrap`, `pipeline`, `profiling`, `cli`, `export`, `sources/`, `prep/`, `search/`, `analysis/`); vom Code der Arbeit ist nichts mehr übrig, ihr Datensatz liegt unter `reference/`. `tests/` mit `unit/`, `property/`, `golden/`, `bench/` und `fixtures/` (Mini-Datensatz, PDFs, OParl-Seite, aufgezeichnete HTTP-Antworten).
+- Struktur: `src/georep/` ist das ganze Programm (`settings`, `layout`, `io`, `http`, `geo`, `oparl`, `records`, `stores`, `errors`, `bootstrap`, `contracts`, `pipeline`, `profiling`, `cli`, `export`, `sources/`, `prep/`, `search/`, `analysis/`); vom Code der Arbeit ist nichts mehr übrig, ihr Datensatz liegt unter `reference/`. `tests/` mit `unit/`, `property/`, `golden/`, `bench/` und `fixtures/` (Mini-Datensatz, PDFs, OParl-Seite, aufgezeichnete HTTP-Antworten).
 - Netz in Tests: nie echte Endpunkte; das `Transport`-Protokoll und die Fake-Session in `tests/fakes.py` liefern aufgezeichnete Antworten.
 
 ## Lizenz
