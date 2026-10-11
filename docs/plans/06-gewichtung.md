@@ -1,6 +1,6 @@
 # Plan 06: Gewichtung
 
-Stand 2026-10-11, Branch `feat/06-gewichtung`. Status: geplant.
+Stand 2026-10-11, Branch `feat/06-gewichtung`. Status: umgeschrieben.
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.6; Regeln in [../../CLAUDE.md](../../CLAUDE.md)
 und § 2 des Meta-Plans; Aufbau in [../architecture.md](../architecture.md). Alle Zahlen hier sind am 2026-10-11 auf
@@ -379,4 +379,56 @@ Variante `gremium` liefern).
 
 ## 10. Änderungen durch die Synergiephase
 
-Füllt der Supervisor.
+Stand 2026-10-12, geschrieben vom Supervisor nach [00-synergien.md](00-synergien.md). Das Fundament liegt auf
+`main` (Commits `d7df0ed` bis `b8e44b1`, Branch rebased); was unten steht, gilt vor den Stufen in § 5. Für alle
+Optionen (00-synergien.md, § 2 und § 5):
+
+- **Vorlage**: `report.html.j2` ist Rahmen; ein neuer Abschnitt ist eine neue Datei
+  `src/georep/report/templates/sections/NN-name.html.j2` (Nummern in 00-synergien.md § 5.1), optional mit
+  `NN-name.css` und `NN-name.js` daneben; `render.sections()` bindet sie in Nummernfolge ein. Das Makro
+  `term` kommt aus `templates/macros.html.j2` (`{% from "macros.html.j2" import term %}`). Ein Abschnitt, der
+  nur mit einem Modellteil existiert, steht in `{% if model.<teil> %} … {% endif %}`, das Feld in `ReportModel`
+  hat Default `None` und steht am Ende der Klasse.
+- **JavaScript**: Abschnitts-Skripte sprechen mit `window.georep` (`select(ids, scroll)` für Zahl, Array
+  oder `null`; `showDocuments(terms, title)` mit mehreren Begriffen; `rows`). Der Kartenumschalter ist
+  generisch: Radio `input[name="metric"]` mit `value`, Attribut `data-class-<value>` je Fläche
+  (`charts.choropleth(..., extra_classes={"<value>": classification})`), Legende `.legend#legend-<value>`.
+- **Tabellen**: jede neue veröffentlichte Tabelle ist ein `PublishedTable`-Eintrag am Ende von `TABLES` in
+  `src/georep/report/tables.py` (Name, Pfad-Lambda, Beschreibung, Spaltendoku, CSV-Regeln, `optional`);
+  `published_tables`, `COLUMN_DOCS`, `DESCRIPTIONS` und `export.csv_plan` gibt es nicht mehr.
+- **Regression**: `analysis.regression.regression_pair(frame, exclude, *, x, y, y_scale)` rechnet beide
+  Spalten von Tabelle 5 für jede Kennzahlspalte; die Ausreißer kommen aus `settings.analysis.exclude_districts`
+  (`defaults.toml`, `[analysis]`), `OUTLIERS` gibt es nicht mehr.
+- **Settings**: neue Tabellen am Ende von `defaults.toml` in einem Block `# --- Option NN`, neue Modelle vor
+  `class Settings`, neue Felder am Ende von `Settings`; Pfade und reine Anzeigewerte aus `fingerprint()`
+  ausschließen (Kommentar dort). Neue Layout-Properties am Ende der Klasse vor `runtime_dirs`.
+- **Pipeline**: neue Schritte mit Kommentar `# --- Option NN` an der Stelle ihrer Abhängigkeit; neue Eingaben
+  von `report` am Ende seines Tupels.
+- **Tests**: `test_cli.py`, `test_pipeline.py`, `test_report_build.py` zählen Schritte und Dateien aus
+  `build_steps` und dem Register; eigene Erwartungen in eigene Tests. Den Snapshot `test_cli.ambr`
+  (`georep steps`) bewusst erneuern, Diff im Commit.
+- **Doku**: `decisions.md` neuer Punkt ohne feste Nummer („## Punkt: <Titel> (Option NN, Datum)"; Punkt 21
+  ist das Fundament, der Supervisor nummeriert beim Merge); CHANGELOG unter „Unreleased" als eigener Absatz.
+- **Vorschau**: lokaler Server auf Port `8700 + NN`; `.claude/launch.json` je Worktree anlegen. Browser-Prüfung
+  nach § 8.4 des Meta-Plans.
+- **Cache**: `cache_root` ist geteilt; nichts außer `bootstrap` schreibt den Textstore der Hauptperiode.
+- **Fragen**: die Antworten und Vorentscheidungen stehen in [fragen.md](fragen.md); neue Fragen in § 8 dieses
+  Plans eintragen, der Supervisor sammelt sie.
+
+Für Option 6 im Besonderen:
+
+- **Stufe A ist kleiner**: `[analysis] exclude_districts = [1, 10]` und `regression_pair(frame, exclude, *, x,
+  y, y_scale)` in `analysis/regression.py` liegen im Fundament F3 (`OUTLIERS` ist weg, `RegressionPair` wohnt
+  dort); 06 ergänzt nur `[weights]`, `[[weights.paper_type]]`, `[topics]`, die Abhängigkeit scikit-learn und die
+  Layout-Pfade. `spearman` kommt wie geplant zu `analysis/regression.py`.
+- **Sensitivitätstabelle**: jede Variante rechnet `regression_pair(frame, settings.analysis.exclude_districts,
+  x="trefferquote_gewichtet")` auf der langen Tabelle, gefiltert je `variante`.
+- **Tabellen**: `themen`, `themen_dokumente`, `gewichte_begriffe`, `wahlbezirke_gewichtet` als Einträge in
+  `TABLES` (`themen` und `themen_dokumente` mit `optional=True`, weil `topics.k = 0` den Schritt abschaltet).
+  Für `themen_dokumente` (eine Zeile je Dokument mit Text) das Prädikat `one_row_per_document` von 04 nutzen,
+  sobald gemerged; bis dahin dieselbe Bedingung inline.
+- **Abschnitt**: `sections/34-gewichtung.html.j2`, sortierbare Tabelle über die vorhandenen `data-sort`-Köpfe.
+- **Dokumentart**: die Regex-Regeln auf `paper_type` bleiben bei 06 (Gewichte, keine Klassen); Option 5 parst
+  die Drucksachennummer, Option 4 den Urheber. Keine gemeinsame Datei.
+- **Reihenfolge**: 06 merged als Dritte (nach 08, 05), damit das Lockfile mit scikit-learn früh auf `main` ist.
+- **Fragen**: alle sieben vorentschieden (fragen.md); 6.7 ist durch das Fundament erledigt.
