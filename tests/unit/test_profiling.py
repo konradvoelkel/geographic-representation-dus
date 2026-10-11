@@ -30,12 +30,14 @@ def test_profile_runs_the_real_step_and_writes_a_dated_file(
 ) -> None:
     steps = _steps(tmp_path, mini_root, settings)
     out = tmp_path / "prof"
-    result = profile_step(
-        steps["voters"], settings, out, top=5, today=dt.date(2026, 10, 11), sort="tottime"
-    )
+    result = profile_step(steps["voters"], settings, out, top=5, today=dt.date(2026, 10, 11))
     assert result.outcome.status == "ausgeführt" and result.outcome.reason.startswith("erzwungen")
     assert result.path == out / "2026-10-11-voters.prof" and result.path.is_file()
-    assert "function calls" in result.table and "aggregate_voters" in result.table
+    # run_step ist der äußerste profilierte Frame und steht nach kumulierter Zeit immer oben.
+    assert "function calls" in result.table and "run_step" in result.table
+    assert "Ordered by: cumulative time" in result.table
+    by_own_time = profile_step(steps["voters"], settings, out, top=5, sort="tottime")
+    assert "Ordered by: internal time" in by_own_time.table
     reloaded = io.StringIO()
     pstats.Stats(str(result.path), stream=reloaded).print_stats(5)
     assert "function calls" in reloaded.getvalue()
