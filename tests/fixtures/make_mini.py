@@ -94,19 +94,27 @@ def write_inputs() -> None:
     dst.write_bytes("".join([lines[0], *body]).encode("latin-1"))
 
 
+EXPECTED_FILES = [
+    "wahlbezirke_waehler.csv",
+    "wahlbezirke_strassen.csv",
+    "wikidata_vis.csv",
+    "wikidata_agg.csv",
+    "combined_searchdict.csv",
+    "inverted_index.csv",
+    "wahlbezirke_auswertung.csv",
+]
+
+
 def write_expected() -> None:
+    """Alle Ausgaben des Altcodes auf der Mini-Fixture: der Golden Master je Stufe."""
     expected = MINI / "expected"
     if expected.exists():
         shutil.rmtree(expected)
     with tempfile.TemporaryDirectory() as tmp:
         run_offline_chain(MINI, Path(tmp))
         expected.mkdir(parents=True)
-        shutil.copy(Path(tmp) / "wahlbezirke_auswertung.csv", expected)
-        shutil.copy(Path(tmp) / "combined_searchdict.csv", expected)
-        # Zeilenreihenfolge des Altcodes ist Set-Iteration; sortiert ist der Diff lesbar.
-        pl.read_csv(Path(tmp) / "inverted_index.csv").sort("suchbegriffe").write_csv(
-            expected / "inverted_index.csv"
-        )
+        for name in EXPECTED_FILES:
+            shutil.copy(Path(tmp) / name, expected)
 
 
 def main() -> None:
