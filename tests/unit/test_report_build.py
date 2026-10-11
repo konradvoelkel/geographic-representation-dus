@@ -144,3 +144,21 @@ def test_topics_switched_off_leave_no_trace_on_the_page(
     assert "wahlbezirke_gewichtet.parquet" in names
     schema = json.loads((layout.site_data / SCHEMA_NAME).read_text(encoding="utf-8"))
     assert "themen" not in schema["tables"] and "themen_dokumente" not in schema["tables"]
+
+
+# --- Option 07: Monitoring der laufenden Wahlperiode ------------------------------------------
+
+
+def test_the_month_section_and_its_two_tables_are_on_the_page(mini_run: Layout) -> None:
+    page = mini_run.site_index.read_text(encoding="utf-8")
+    assert '<section id="monate">' in page and 'class="bars"' in page
+    assert page.count('class="bars"') == 1 and page.count('class="scatter"') == 1
+    names = {p.name for p in mini_run.site_data.iterdir()}
+    for stem in ("monatsreihe", "wahlbezirke_monate"):
+        assert {f"{stem}.parquet", f"{stem}.csv"} <= names
+        assert f'href="data/{stem}.parquet"' in page
+    schema = json.loads((mini_run.site_data / SCHEMA_NAME).read_text(encoding="utf-8"))
+    assert {"monatsreihe", "wahlbezirke_monate"} <= set(schema["tables"])
+    # Die Monatsreihe der Seite summiert zum Korpus
+    rows = pl.read_parquet(mini_run.site_data / "monatsreihe.parquet")
+    assert int(rows["dokumente"].sum()) == pl.read_parquet(mini_run.corpus).height

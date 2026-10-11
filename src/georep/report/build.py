@@ -26,6 +26,7 @@ from georep.prep.voters import TURNOUT
 from georep.report.charts import (
     MAP_WIDTH,
     added_variable_plot,
+    bars,
     choropleth,
     classify,
     delta_scatter,
@@ -342,6 +343,7 @@ def build_site(
     rate_legend = legend(rate, rate_label)
     # Option 05: dritte Kennzahl der Karte, der Anteil der eigenen Bezirksvertretung
     own = classify({d.id: d.bodies.own_share for d in model.districts if d.bodies})
+    dated_months = [row for row in model.timeline if row.month is not None]  # Option 07
     visuals = Visuals(
         map_svg=choropleth(
             model.districts,
@@ -352,7 +354,8 @@ def build_site(
             points,
             extra_classes={"bodies": own},
         ),
-        scatter_svg=scatter(model.districts, model.regression),
+        # Option 07: ohne Wahlbeteiligung zur Periode gibt es kein Streudiagramm, dafür Balken
+        scatter_svg=scatter(model.districts, model.regression) if model.regression else None,
         delta_svg=(
             delta_scatter(model.comparison.rows, model.comparison.regression)
             if model.comparison is not None
@@ -366,6 +369,7 @@ def build_site(
         partial_svgs=partial_plots(layout, settings, model),
         # Option 04: eine kleine Karte je Partei, die 41 Pfade einmal in <defs>
         party_maps_svg=party_maps(model.party_cells, shapes, projection, model.parties),
+        bars_svg=bars(model.timeline) if dated_months else "",
     )
     map_html = render_map(
         model, _map_districts(geojson, model, rate.classes), _places_geojson(pois), rate_legend

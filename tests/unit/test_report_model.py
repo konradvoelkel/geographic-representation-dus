@@ -106,6 +106,7 @@ def test_hidden_terms_stay_hidden_but_counted(
 
 
 def test_regression_on_three_districts_has_no_outlier_variant(model: ReportModel) -> None:
+    assert model.regression is not None  # Standardprofil: Regression vorhanden (Option 07)
     assert model.regression.all.n == 3
     assert model.regression.excluded == (1, 10)
     assert model.regression.without is None
@@ -705,3 +706,50 @@ def test_a_missing_assignment_names_the_run_that_is_missing(tmp_path: Path) -> N
     layout.for_profile(settings.compare.period).precinct_assignment.unlink()
     with pytest.raises(MissingInputError, match="2014-2020"):
         period_comparison(layout, settings, {1: "Eins", 2: "Zwei", 3: "Drei"}, 3, "alt/")
+
+
+# --- Option 07: Monitoring der laufenden Wahlperiode ------------------------------------------
+
+
+def test_key_figures_know_the_documents_without_text(model: ReportModel) -> None:
+    figures = model.figures
+    assert figures.documents_without_text == figures.documents - figures.documents_with_text
+    assert figures.documents_without_text == 0  # die Mini-Fixture hat zu jedem Paper einen Text
+
+
+def test_data_stand_reads_the_stamps_of_the_network_steps(mini_run: Layout) -> None:
+    from georep.report.model import data_stand, newest_document
+
+    settings = load_settings(cwd=Path("/nonexistent"))
+    stand = data_stand(mini_run, settings)
+    # bootstrap kopiert die Referenz: papers und pdfs liefen nie, also kein Abrufdatum
+    assert stand.papers_fetched is None and stand.pdfs_fetched is None
+    assert stand.newest_document == pl.read_parquet(mini_run.corpus)["date"].max()
+    assert newest_document(mini_run.corpus) == dt.date(2025, 9, 4)
+
+
+def test_the_timeline_of_the_model_is_the_parquet_table(
+    model: ReportModel, mini_run: Layout
+) -> None:
+    frame = pl.read_parquet(mini_run.timeline)
+    assert len(model.timeline) == frame.height
+    assert [row.month for row in model.timeline] == frame["monat"].to_list()
+    assert sum(row.documents for row in model.timeline) == model.figures.documents
+    assert all(row.with_hits <= row.with_text <= row.documents for row in model.timeline)
+    assert model.monitoring_url == ""  # Standard: kein Abschnitt auf der Hauptseite
+
+
+def test_the_report_switches_turn_off_regression_and_name_the_monitoring_page(
+    mini_run: Layout,
+) -> None:
+    settings = load_settings(cwd=Path("/nonexistent"))
+    switched = settings.model_copy(
+        update={
+            "report": settings.report.model_copy(
+                update={"regression": False, "monitoring_url": "2025/"}
+            )
+        }
+    )
+    model = build_report_model(mini_run, switched, now=NOW)
+    assert model.regression is None and model.monitoring_url == "2025/"
+    assert model.timeline  # die Monatsreihe bleibt

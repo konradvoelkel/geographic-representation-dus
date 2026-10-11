@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import xml.etree.ElementTree as ET
 
 import deal
@@ -10,11 +11,13 @@ from shapely.geometry import box
 from syrupy.assertion import SnapshotAssertion
 
 from georep.analysis.regression import RegressionPair, RegressionResult
+from georep.contracts import next_month
 from georep.geo import read_canonical_precincts
 from georep.layout import Layout
 from georep.report.charts import (
     Classification,
     added_variable_plot,
+    bars,
     choropleth,
     classify,
     delta_label,
@@ -31,6 +34,7 @@ from georep.report.geometry import bounds_of, district_shapes, fit
 from georep.report.model import (
     NARROW_NBSP,
     DistrictRow,
+    MonthRow,
     PartyCell,
     PartyRow,
     PeriodRow,
@@ -171,6 +175,7 @@ def test_scatter_has_a_point_per_district_and_both_lines(model: ReportModel) -> 
         f".//{NS}line[@class='fit fit-without']"
     )
     assert len(fits) == 2
+    assert model.regression is not None
     only_all = ET.fromstring(scatter(model.districts, model.regression))
     assert len(only_all.findall(f".//{NS}g[@class='fits']/{NS}line")) == 1
     assert root.findall(f".//{NS}g[@class='ticks']/{NS}text")
@@ -356,3 +361,54 @@ def test_delta_scatter_survives_a_single_value_on_both_axes() -> None:
     fit = RegressionResult(n=3, slope=0.0, intercept=0.0, r=0.0, p=1.0, stderr=0.0)
     svg = delta_scatter(rows, fit)
     assert svg.count('class="dpoint"') == 3 and "NaN" not in svg
+
+
+# --- Option 07: Balken je Monat ----------------------------------------------------------------
+
+THREE = [
+    MonthRow(dt.date(2025, 10, 1), 12, 10, 5),
+    MonthRow(dt.date(2025, 11, 1), 8, 8, 3),
+    MonthRow(dt.date(2025, 12, 1), 0, 0, 0),
+]
+
+
+def test_bars_draw_two_rectangles_per_dated_month() -> None:
+    svg = bars([*THREE, MonthRow(None, 4, 0, 0)])
+    root = ET.fromstring(svg)
+    rects = root.findall(f".//{NS}rect")
+    assert len(rects) == 2 * len(THREE)  # der Monat ohne Datum bekommt keinen Balken
+    groups = root.findall(f".//{NS}g[@class='months']/*")
+    assert [g.get("data-month") for g in groups] == ["10.2025", "11.2025", "12.2025"]
+    titles = [g.find(f"{NS}title") for g in groups]
+    assert titles[0] is not None and titles[0].text is not None
+    assert titles[0].text.startswith("Oktober 2025: 12 Dokumente, 10 mit Text, 5 mit Treffer")
+    # Ein Monat ohne Dokument hat einen Balken der Höhe 0, keine Lücke
+    assert rects[-1].get("height") == "0.00"
+
+
+def _labels_of(svg: str) -> list[str]:
+    root = ET.fromstring(svg)
+    group = root.find(f".//{NS}g[@class='month-labels']")
+    assert group is not None
+    return [text.text or "" for text in group]
+
+
+def test_bars_axes_cover_the_highest_month_and_label_the_years() -> None:
+    svg = bars(THREE)
+    assert f">{int(nice_ticks(0.0, 12.0)[-1])}<" in svg  # oberster y-Tick aus nice_ticks
+    assert _labels_of(svg) == ["10.2025", "11.2025", "12.2025"]  # kurze Reihe: jeder Monat
+    month = dt.date(2024, 11, 1)
+    long_series = []
+    for _ in range(26):
+        long_series.append(MonthRow(month, 1, 1, 0))
+        month = next_month(month)
+    assert _labels_of(bars(long_series)) == ["2025", "2026"]  # lange Reihe: nur die Januare
+
+
+def test_bars_need_at_least_one_dated_month() -> None:
+    with pytest.raises(deal.PreContractError):
+        bars([MonthRow(None, 3, 0, 0)])
+
+
+def test_bars_of_three_months_are_stable(snapshot: SnapshotAssertion) -> None:
+    assert bars(THREE) == snapshot

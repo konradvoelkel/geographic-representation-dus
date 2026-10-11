@@ -8,6 +8,7 @@ Daten läuft durch ``html.escape``; die Vorlage fügt die Zeichenkette mit ``|sa
 from __future__ import annotations
 
 import bisect
+import datetime as dt
 import html
 import math
 import statistics
@@ -21,6 +22,7 @@ from georep.analysis.regression import RegressionPair, RegressionResult
 from georep.report.geometry import Projection, label_point, svg_path
 from georep.report.model import (
     DistrictRow,
+    MonthRow,  # Option 07
     PartyCell,
     PartyRow,
     PeriodRow,
@@ -370,14 +372,15 @@ class Axes:
             "</g>"
         )
 
-    def tick_labels(self) -> str:
+    def tick_labels(self, *, x: bool = True) -> str:
+        """Beschriftete Ticks; ``x=False`` lässt die Zahlen der x-Achse weg (Balken je Monat)."""
         x_dec = _decimals(self.x_ticks[1] - self.x_ticks[0])
         y_dec = _decimals(self.y_ticks[1] - self.y_ticks[0])
         parts = ['<g class="ticks">']
         parts.extend(
             f'<text x="{_num(self.sx(t))}" y="{_num(self.top + self.plot_h + 18)}" '
             f'text-anchor="middle">{format_de(t, x_dec)}</text>'
-            for t in self.x_ticks
+            for t in (self.x_ticks if x else ())
         )
         parts.extend(
             f'<text x="{_num(self.left - 8)}" y="{_num(self.sy(t))}" text-anchor="end" '
@@ -388,12 +391,20 @@ class Axes:
         return "".join(parts)
 
     def axis_titles(self, x_title: str, y_title: str) -> str:
-        return (
-            f'<text class="axis-label" x="{_num(self.left + self.plot_w / 2)}" '
-            f'y="{_num(self.height - 8)}" text-anchor="middle">{html.escape(x_title)}</text>'
-            f'<text class="axis-label" transform="translate(14 {_num(self.top + self.plot_h / 2)}) '
-            f'rotate(-90)" text-anchor="middle">{html.escape(y_title)}</text>'
-        )
+        """Achsentitel; ein leerer Titel entfällt (Balken beschriften ihre x-Achse selbst)."""
+        parts = []
+        if x_title:
+            parts.append(
+                f'<text class="axis-label" x="{_num(self.left + self.plot_w / 2)}" '
+                f'y="{_num(self.height - 8)}" text-anchor="middle">{html.escape(x_title)}</text>'
+            )
+        if y_title:
+            parts.append(
+                f'<text class="axis-label" transform="translate(14 '
+                f'{_num(self.top + self.plot_h / 2)}) rotate(-90)" '
+                f'text-anchor="middle">{html.escape(y_title)}</text>'
+            )
+        return "".join(parts)
 
 
 def scatter(
@@ -650,6 +661,112 @@ def delta_scatter(
             f'<text class="dot-label" x="{_num(axes.sx(x) + 6)}" y="{_num(axes.sy(y) - 6)}">'
             f"{row.id}</text>"
             "</g>"
+        )
+    parts.append("</g></svg>")
+    return "".join(parts)
+
+
+# --- Option 07: Balken je Monat ----------------------------------------------------------------
+
+BARS_WIDTH = 640.0
+BARS_HEIGHT = 300.0
+BARS_MARGIN = (16.0, 16.0, 40.0, 56.0)
+MONTHS_DE = (
+    "Januar",
+    "Februar",
+    "März",
+    "April",
+    "Mai",
+    "Juni",
+    "Juli",
+    "August",
+    "September",
+    "Oktober",
+    "November",
+    "Dezember",
+)
+
+
+def month_de(month: dt.date) -> str:
+    return f"{MONTHS_DE[month.month - 1]} {month.year}"
+
+
+def month_short(month: dt.date) -> str:
+    return f"{month.month:02d}.{month.year}"
+
+
+def _labelled(months: Sequence[dt.date]) -> list[tuple[int, str]]:
+    """Welche Balken eine Beschriftung tragen: die Januare, sonst (kurze Reihe) jeder Monat."""
+    januaries = [(i, str(m.year)) for i, m in enumerate(months) if m.month == 1]
+    if len(januaries) >= 2:
+        return januaries
+    return [(i, month_short(m)) for i, m in enumerate(months)]
+
+
+def _bar_title(row: MonthRow) -> str:
+    assert row.month is not None
+    return (
+        f"{month_de(row.month)}: {format_de(row.documents)} Dokumente, "
+        f"{format_de(row.with_text)} mit Text, {format_de(row.with_hits)} mit Treffer"
+    )
+
+
+def _has_a_dated_month(
+    months: Sequence[MonthRow], width: float = BARS_WIDTH, height: float = BARS_HEIGHT
+) -> bool:
+    return any(row.month is not None for row in months)
+
+
+# Benannte Funktion, kein Lambda: das deal-mypy-Plugin kann einen Validator mit Standardwerten
+# nicht ableiten (CLAUDE.md, Phase 6).
+@deal.pre(_has_a_dated_month, message="ohne datierten Monat gibt es keine Balken")
+@deal.post(lambda result: result.startswith("<svg") and result.endswith("</svg>"))
+def bars(
+    months: Sequence[MonthRow], *, width: float = BARS_WIDTH, height: float = BARS_HEIGHT
+) -> str:
+    """Zwei Balken je Monat: alle Dokumente und die mit Treffer; Dokumente ohne Datum fehlen hier.
+
+    Die Achsen kommen aus ``Axes`` (Fundament F7); die x-Achse trägt statt Zahlen die Jahre
+    beziehungsweise bei kurzen Reihen die Monate, darum ``tick_labels(x=False)``.
+    """
+    rows = [row for row in months if row.month is not None]
+    labels = [row.month for row in rows if row.month is not None]
+    highest = max(row.documents for row in rows)
+    axes = Axes(
+        width,
+        height,
+        x_ticks=(0.0, float(len(rows))),
+        y_ticks=nice_ticks(0.0, float(highest) if highest > 0 else 1.0),
+        margin=BARS_MARGIN,
+    )
+    slot = axes.plot_w / len(rows)
+    bar = max(1.0, min(slot / 2 - 1.0, 14.0))
+    base = axes.sy(0.0)
+    parts = [
+        f'<svg class="bars" viewBox="0 0 {_num(width)} {_num(height)}" role="img" '
+        'aria-labelledby="bars-title" xmlns="http://www.w3.org/2000/svg">',
+        '<title id="bars-title">Ratsdokumente je Monat, alle und die mit Treffer</title>',
+        axes.grid(),
+        axes.axis_lines(),
+        axes.tick_labels(x=False),
+        axes.axis_titles("", "Dokumente"),
+        '<g class="month-labels">',
+    ]
+    parts.extend(
+        f'<text x="{_num(axes.left + (i + 0.5) * slot)}" '
+        f'y="{_num(axes.top + axes.plot_h + 18)}" text-anchor="middle">{label}</text>'
+        for i, label in _labelled(labels)
+    )
+    parts.append('</g><g class="months">')
+    for i, row in enumerate(rows):
+        centre = axes.left + (i + 0.5) * slot
+        title = html.escape(_bar_title(row))
+        parts.append(
+            f'<g class="month" data-month="{_attr(month_short(labels[i]))}"><title>{title}</title>'
+            f'<rect class="bar bar-documents" x="{_num(centre - bar)}" y="{_num(axes.sy(row.documents))}" '
+            f'width="{_num(bar)}" height="{_num(base - axes.sy(row.documents))}"/>'
+            f'<rect class="bar bar-hits" x="{_num(centre)}" y="{_num(axes.sy(row.with_hits))}" '
+            f'width="{_num(bar)}" height="{_num(base - axes.sy(row.with_hits))}"/></g>'
         )
     parts.append("</g></svg>")
     return "".join(parts)

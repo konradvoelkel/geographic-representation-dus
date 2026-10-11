@@ -25,7 +25,7 @@ from georep.report.charts import (
     turnout_label,
 )
 from georep.report.geometry import SIMPLIFY_M, bounds_of, district_shapes, fit
-from georep.report.model import Download, ReportModel, build_report_model
+from georep.report.model import Download, MonthRow, ReportModel, build_report_model
 from georep.report.render import Visuals, external_links, kib, render_map, render_report
 from georep.report.search import SearchEntry, search_payload
 from georep.settings import Settings
@@ -69,6 +69,7 @@ def visuals(model: ReportModel, mini_run: Layout, default_settings: Settings) ->
     projection = fit(bounds_of(shapes), 600.0)
     rate = classify({d.id: d.rate for d in model.districts})
     turnout = classify({d.id: d.turnout for d in model.districts})
+    assert model.regression is not None  # Standardprofil (Option 07)
     return Visuals(
         map_svg=choropleth(model.districts, shapes, projection, rate, turnout),
         scatter_svg=scatter(model.districts, model.regression),
@@ -461,3 +462,65 @@ def test_the_section_disappears_without_the_parties_step(
     assert '<section id="parteien">' not in page and "Urheber und Parteien" not in page
     assert '<section id="wahlbezirke">' in page  # der Rest der Seite bleibt
     assert "Zum Urheber:" not in page
+
+
+# --- Option 07: Monitoring der laufenden Wahlperiode ------------------------------------------
+
+MONTHS = (
+    MonthRow(dt.date(2025, 10, 1), 12, 10, 5),
+    MonthRow(dt.date(2025, 11, 1), 8, 8, 3),
+    MonthRow(None, 1, 0, 0),
+)
+
+
+@pytest.fixture(scope="module")
+def open_page(model: ReportModel, visuals: Visuals) -> str:
+    """Die Seite eines Profils mit laufender Periode: ohne Regression, mit Monatsreihe und Link."""
+    from georep.report.charts import bars
+
+    stand = replace(
+        model.stand,
+        period_end=None,
+        papers_fetched=dt.date(2026, 10, 11),
+        pdfs_fetched=dt.date(2026, 10, 12),
+        newest_document=dt.date(2025, 11, 2),
+    )
+    open_model = replace(
+        model, stand=stand, regression=None, timeline=MONTHS, monitoring_url="2025/"
+    )
+    return render_report(open_model, replace(visuals, scatter_svg=None, bars_svg=bars(MONTHS)))
+
+
+def test_the_month_section_has_a_row_per_month_and_two_bars(open_page: str) -> None:
+    parser = Counter()
+    parser.feed(open_page)
+    # Die Zahl der SVGs auf der Seite wächst mit jeder Option; geprüft wird, dass genau ein
+    # Balkendiagramm da ist und kein Streudiagramm (Option 07).
+    assert parser.tags["h1"] == 1
+    assert open_page.count('class="bars"') == 1 and 'class="scatter"' not in open_page
+    assert '<section id="monate">' in open_page
+    assert open_page.count("<tr>\n<td>") >= len(MONTHS)
+    assert "Oktober 2025" in open_page and "November 2025" in open_page
+    assert "ohne Datum" in open_page  # die Zeile ohne Monat
+    assert open_page.count('class="bar bar-documents"') == 2  # nur die datierten Monate
+    assert "Dezember" not in open_page
+
+
+def test_without_regression_the_page_drops_scatter_and_the_turnout_switch(open_page: str) -> None:
+    assert '<section id="zusammenhang">' not in open_page
+    assert "Tabelle 5 der Arbeit" not in open_page
+    assert 'class="scatter"' not in open_page
+    assert 'value="turnout"' not in open_page and 'id="legend-turnout"' not in open_page
+    assert 'id="legend-rate"' in open_page  # die Trefferquote färbt die Karte weiter
+    assert "no regression" in open_page  # englische Kurzfassung sagt, warum
+    # Kopf: offenes Ende, Abrufdaten, neuestes Dokument, Dokumente ohne Text
+    assert "heute (laufende Wahlperiode)" in open_page
+    assert "Metadaten abgerufen am 11.10.2026, PDFs am 12.10.2026" in open_page
+    assert "neuestes Dokument vom 02.11.2025" in open_page
+    assert "laufende Wahlperiode: die Trefferquote misst die Dokumente seit dem" in open_page
+
+
+def test_the_monitoring_link_is_relative_and_only_there_when_set(open_page: str, page: str) -> None:
+    assert '<section id="laufend">' in open_page and 'href="2025/"' in open_page
+    assert '<section id="laufend">' not in page and 'href="2025/"' not in page
+    assert "2025/" not in external_links(open_page)

@@ -1,0 +1,9 @@
+/* Option 07: Balken je Monat. Farben wie die Karte (--q2 für alle Dokumente, --selected für die
+   mit Treffer), damit Hell und Dunkel über dieselben Variablen schalten. */
+svg.bars { width: 100%; max-width: 44em; height: auto; background: var(--surface); border-radius: 6px; }
+.bar-documents { fill: var(--q2); }
+.bar-hits { fill: var(--selected); }
+.month:hover .bar, .month:focus .bar { filter: brightness(1.15); }
+.month-labels text { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.swatch.bar-documents { background: var(--q2); }
+.swatch.bar-hits { background: var(--selected); }
