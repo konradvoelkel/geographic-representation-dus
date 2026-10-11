@@ -12,6 +12,7 @@ import pandas as pd
 from loguru import logger
 
 import src.config as cfg
+from georep.io import atomic_path
 
 
 def main() -> None:
@@ -37,7 +38,8 @@ def main() -> None:
     df_combined["suchbegriffe"] = df_combined["suchbegriffe"].apply(expand_street_names)
 
     df_combined = df_combined.drop(columns=["suchbegriffe_x", "suchbegriffe_y"])
-    df_combined.to_csv(cfg.COMBINED_SEARCHDICT_PATH, index=False, sep=";")
+    with atomic_path(cfg.COMBINED_SEARCHDICT_PATH) as tmp:
+        df_combined.to_csv(tmp, index=False, sep=";")
     logger.success(f"Suchbegriffe kombiniert. Gespeichert unter: {cfg.COMBINED_SEARCHDICT_PATH}")
 
 

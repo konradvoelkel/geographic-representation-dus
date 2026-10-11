@@ -10,6 +10,7 @@ from loguru import logger
 from tqdm import tqdm
 
 import src.config as cfg
+from georep.io import write_bytes, write_json
 
 
 @dataclass
@@ -31,10 +32,7 @@ class PaperList(list[Paper]):
         self.append(paper)
 
     def save_as_json(self, path: Path) -> None:
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        papers_dict = [asdict(paper) for paper in self]
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(papers_dict, f, ensure_ascii=False, indent=2)
+        write_json(Path(path), [asdict(paper) for paper in self], indent=2)
 
     def __str__(self):
         return "\n".join(str(paper) for paper in self)
@@ -194,13 +192,10 @@ def download_paper_metadata(endpoint: str) -> PaperList:
             papers.save_as_json(cfg.PAPER_OBJECT_LISTE)
 
             combined = [asdict(p) for p in papers] + existing_papers_raw
-            Path(cfg.PAPER_OBJECT_LISTE).parent.mkdir(parents=True, exist_ok=True)
-            with open(cfg.PAPER_OBJECT_LISTE, "w", encoding="utf-8") as f:
-                json.dump(combined, f, ensure_ascii=False, indent=2)
+            write_json(cfg.PAPER_OBJECT_LISTE, combined, indent=2)
 
             url_liste.append(endpoint)
-            with open(cfg.PAPER_URL_LISTE, "w", encoding="utf-8") as f:
-                json.dump(url_liste, f, indent=4, ensure_ascii=False)
+            write_json(cfg.PAPER_URL_LISTE, url_liste, indent=4)
 
             if "next" not in response["links"]:
                 logger.info("Letzte Seite erreicht.")
@@ -215,9 +210,7 @@ def download_paper_metadata(endpoint: str) -> PaperList:
 
     finally:
         combined = [asdict(p) for p in papers] + existing_papers_raw
-        Path(cfg.PAPER_OBJECT_LISTE).parent.mkdir(parents=True, exist_ok=True)
-        with open(cfg.PAPER_OBJECT_LISTE, "w", encoding="utf-8") as f:
-            json.dump(combined, f, ensure_ascii=False, indent=2)
+        write_json(cfg.PAPER_OBJECT_LISTE, combined, indent=2)
 
         pages_progress_bar.close()
         session.close()
@@ -264,8 +257,7 @@ def download_paper_pdf(paperList: PaperList) -> None:
             response = session.get(url)
             response.raise_for_status()
 
-            with open(Path(cfg.PDF_DUMP_PATH / f"{url.split('/')[-1]}"), "wb") as f:
-                f.write(response.content)
+            write_bytes(Path(cfg.PDF_DUMP_PATH) / url.split("/")[-1], response.content)
 
             progress_bar.update(1)
     except Exception as e:

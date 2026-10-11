@@ -17,6 +17,7 @@ from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.point import Point
 
 import src.config as cfg
+from georep.io import write_json
 
 
 def setup_data_directories() -> None:
@@ -66,8 +67,7 @@ def save_json_to_path(data: dict | list, path: Path) -> None:
     :type path: Path
     :return: None
     """
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+    write_json(path, data, indent=4)
 
 
 def load_shapefile(path: Path) -> gpd.GeoDataFrame:

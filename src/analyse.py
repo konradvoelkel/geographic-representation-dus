@@ -3,6 +3,7 @@ from __future__ import annotations
 import pandas as pd
 
 import src.config as cfg
+from georep.io import atomic_path
 
 
 def build_hits_per_wahlkreis() -> pd.DataFrame:
@@ -69,7 +70,8 @@ def main() -> None:
     df_hits = build_hits_per_wahlkreis()
     df_final = join_with_voter_data(df_hits)
 
-    df_final.to_csv(cfg.AUSWERTUNG_PATH, index=False)
+    with atomic_path(cfg.AUSWERTUNG_PATH) as tmp:
+        df_final.to_csv(tmp, index=False)
 
     print(f"Ergebnis gespeichert unter: {cfg.AUSWERTUNG_PATH}")
 

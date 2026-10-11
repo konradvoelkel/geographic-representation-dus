@@ -13,6 +13,7 @@ from flashtext import KeywordProcessor
 from loguru import logger
 
 import src.config as cfg
+from georep.io import atomic_path
 
 
 def load_data() -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -69,7 +70,8 @@ def index_documents() -> None:
     if df_index.empty:
         logger.warning("Der Index ist leer! Es wurden keine Treffer gefunden.")
     else:
-        df_index.to_csv(cfg.INVERTED_INDEX_PATH, index=False)
+        with atomic_path(cfg.INVERTED_INDEX_PATH) as tmp:
+            df_index.to_csv(tmp, index=False)
         logger.success(f"Invertierter Index als CSV gespeichert unter: {cfg.INVERTED_INDEX_PATH}")
 
 

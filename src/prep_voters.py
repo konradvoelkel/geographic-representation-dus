@@ -16,6 +16,7 @@ import pandas as pd
 from loguru import logger
 
 import src.config as cfg
+from georep.io import atomic_path
 
 
 def group_data_by_district(path: Path) -> pd.DataFrame | None:
@@ -65,7 +66,8 @@ def group_data_by_district(path: Path) -> pd.DataFrame | None:
 def main() -> None:
     data = group_data_by_district(cfg.WAHLERGEBNIS_PATH)
     if data is not None:
-        data.to_csv(cfg.AGG_VOTERS_PER_WAHLBEZIRK_PATH, index=False)
+        with atomic_path(cfg.AGG_VOTERS_PER_WAHLBEZIRK_PATH) as tmp:
+            data.to_csv(tmp, index=False)
         logger.success(f"Daten gespeichert unter {cfg.AGG_VOTERS_PER_WAHLBEZIRK_PATH}")
 
 

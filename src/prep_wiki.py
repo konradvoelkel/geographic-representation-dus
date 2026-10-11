@@ -17,6 +17,7 @@ import pandas as pd
 from loguru import logger
 
 import src.config as cfg
+from georep.io import atomic_path
 
 
 def clean_wikidata(path: Path) -> pd.DataFrame:
@@ -41,9 +42,11 @@ def group_data_by_district(df: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> None:
     data = clean_wikidata(cfg.WIKI_DICT)
-    data.to_csv(cfg.WIKIDATA_VIS_PATH, index=False)
+    with atomic_path(cfg.WIKIDATA_VIS_PATH) as tmp:
+        data.to_csv(tmp, index=False)
     data = group_data_by_district(data)
-    data.to_csv(cfg.AGG_WIKIDATA_PATH, index=False)
+    with atomic_path(cfg.AGG_WIKIDATA_PATH) as tmp:
+        data.to_csv(tmp, index=False)
     logger.success(f"Datei gespeichert unter  {cfg.AGG_WIKIDATA_PATH}")
 
 
