@@ -32,13 +32,19 @@ KIND_LABELS = {
     UNKNOWN: "unbekannt",
 }
 BODIES_SCHEMA_VERSION = 1  # erhöhen, wenn sich Spalten oder Typen von papers_gremien.parquet ändern
-BODIES_COLUMNS = ["id", "reference", "gremium", "gremium_art", "stadtbezirk"]
+# Spaltennamen der Ausgabe; wer sie liest, nennt sie so (georep.analysis.bodies, der Report)
+ID = "id"
+REFERENCE = "reference"
+BODY = "gremium"
+KIND = "gremium_art"
+CITY_DISTRICT = "stadtbezirk"
+BODIES_COLUMNS = [ID, REFERENCE, BODY, KIND, CITY_DISTRICT]
 BODIES_SCHEMA = {
-    "id": pl.String,
-    "reference": pl.String,
-    "gremium": pl.String,  # Kürzel samt Nummer (BV6, RAT, OVA); null, wenn das Muster nicht trifft
-    "gremium_art": pl.String,  # eines aus KINDS
-    "stadtbezirk": pl.Int64,  # nur bei Bezirksvertretungen
+    ID: pl.String,
+    REFERENCE: pl.String,
+    BODY: pl.String,  # Kürzel samt Nummer (BV6, RAT, OVA); null, wenn das Muster nicht trifft
+    KIND: pl.String,  # eines aus KINDS
+    CITY_DISTRICT: pl.Int64,  # nur bei Bezirksvertretungen
 }
 
 
@@ -121,23 +127,23 @@ def parse_reference(reference: str | None, rules: BodyRules) -> BodyRef:
 
 
 def _district_only_for_district_bodies(frame: pl.DataFrame) -> bool:
-    is_body = frame.get_column("gremium_art") == DISTRICT_BODY
-    return bool((frame.get_column("stadtbezirk").is_null() != is_body).all())
+    is_body = frame.get_column(KIND) == DISTRICT_BODY
+    return bool((frame.get_column(CITY_DISTRICT).is_null() != is_body).all())
 
 
 def _same_ids(corpus: pl.DataFrame, rules: BodyRules, result: pl.DataFrame) -> bool:
-    return result.height == corpus.height and set(result.get_column("id")) == set(
-        corpus.get_column("id")
+    return result.height == corpus.height and set(result.get_column(ID)) == set(
+        corpus.get_column(ID)
     )
 
 
 @deal.pre(
-    lambda corpus, rules: has_columns(corpus, "id", "reference"),
+    lambda corpus, rules: has_columns(corpus, ID, REFERENCE),
     message="Korpus mit id und reference",
 )
 @deal.post(lambda result: result.columns == BODIES_COLUMNS)
-@deal.post(lambda result: sorted_unique(result, "id"), message="eine Zeile je Korpus-ID, sortiert")
-@deal.post(lambda result: set(result.get_column("gremium_art")) <= set(KINDS))
+@deal.post(lambda result: sorted_unique(result, ID), message="eine Zeile je Korpus-ID, sortiert")
+@deal.post(lambda result: set(result.get_column(KIND)) <= set(KINDS))
 @deal.post(
     _district_only_for_district_bodies,
     message="stadtbezirk genau bei Bezirksvertretungen gesetzt",
@@ -145,23 +151,23 @@ def _same_ids(corpus: pl.DataFrame, rules: BodyRules, result: pl.DataFrame) -> b
 @deal.ensure(_same_ids, message="genau die IDs des Korpus")
 def classify_papers(corpus: pl.DataFrame, rules: BodyRules) -> pl.DataFrame:
     """Eine Zeile je Dokument: Kürzel, Klasse und Stadtbezirk aus der Drucksachennummer."""
-    refs = [parse_reference(r, rules) for r in corpus.get_column("reference").to_list()]
+    refs = [parse_reference(r, rules) for r in corpus.get_column(REFERENCE).to_list()]
     return pl.DataFrame(
         {
-            "id": corpus.get_column("id"),
-            "reference": corpus.get_column("reference"),
-            "gremium": [r.code for r in refs],
-            "gremium_art": [r.kind for r in refs],
-            "stadtbezirk": [r.district for r in refs],
+            ID: corpus.get_column(ID),
+            REFERENCE: corpus.get_column(REFERENCE),
+            BODY: [r.code for r in refs],
+            KIND: [r.kind for r in refs],
+            CITY_DISTRICT: [r.district for r in refs],
         },
         schema=BODIES_SCHEMA,
-    ).sort("id")
+    ).sort(ID)
 
 
-@deal.pre(lambda frame: has_columns(frame, "gremium_art"))
+@deal.pre(lambda frame: has_columns(frame, KIND))
 @deal.post(lambda result: tuple(result) == KINDS, message="jede Klasse kommt vor, auch mit 0")
 def counts_by_kind(frame: pl.DataFrame) -> dict[str, int]:
-    counted = dict(frame.group_by("gremium_art").len().iter_rows())
+    counted = dict(frame.group_by(KIND).len().iter_rows())
     return {kind: int(counted.get(kind, 0)) for kind in KINDS}
 
 
