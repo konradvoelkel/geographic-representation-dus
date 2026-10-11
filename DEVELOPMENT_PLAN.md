@@ -192,7 +192,14 @@ Vorgezogen aus Phase 2: das Paket `src/georep/` mit `uv_build`, weil die neuen H
 7. `TARGET_ENTITY` in die SPARQL-Query verdrahten (für Q1718 verhaltensneutral).
 8. Logging konfigurierbar statt beim Import auf DEBUG.
 
-### Phase 2: Struktur (Strangler Fig, eine Refactoring-Sorte pro Commit)
+### Phase 2: Struktur (Strangler Fig, eine Refactoring-Sorte pro Commit) — abgeschlossen 2026-10-11
+
+Abweichungen: Settings in TOML (§ 3.2). Bootstrap kopiert nur; der Schritt `corpus` wandelt das Altformat.
+OParl 1.1 ist als pydantic-Modell mit echter Fixture vertraglich festgehalten (`georep.oparl`), auf Konrads
+Frage hin vorgezogen. Extract Function auf den drei C-Funktionen des Altcodes entfiel: `index_documents`
+ist durch `georep.search.index` ersetzt, `download_paper_metadata` und `get_streets_per_district` werden in
+Phase 3 neu geschrieben. Die Altmodule der Offline-Kette sind gelöscht, nicht nur verhüllt; der Golden
+Master sind die eingefrorenen Ausgaben in `tests/fixtures/mini/expected` und `reference/processed`.
 
 1. `[project.scripts]` und Shims; `src/georep/` mit `uv_build` existiert seit Phase 1.
 2. `settings.py` + `settings.toml` + `settings.local.toml`; `config.py` wird Shim und stirbt zuletzt.
