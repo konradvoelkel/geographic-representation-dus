@@ -99,6 +99,32 @@ def test_paper_store_roundtrip_and_idempotent_upsert(
         assert store.load() == dict(sorted(by_id.items()))
 
 
+ids = st.text(alphabet="abc0123456789", min_size=1, max_size=4)
+records_st = st.lists(
+    st.builds(PaperRecord, id=ids, name=opt_text, modified=st.one_of(st.none(), aware)), max_size=8
+)
+
+
+@given(before=records_st, incoming=records_st, deleted=st.lists(ids, max_size=6))
+def test_upsert_keys_are_old_and_new_minus_deleted(
+    before: list[PaperRecord], incoming: list[PaperRecord], deleted: list[str]
+) -> None:
+    """Option 07: nach ``upsert(records, deleted)`` ist der Schlüsselsatz ``(alt ∪ neu) \\ gelöscht``."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        store = PaperStore(Path(tmp) / "papers.jsonl")
+        store.save(before)
+        old_keys = {r.id for r in before}
+        report = store.upsert(incoming, deleted=deleted)
+        expected = (old_keys | {r.id for r in incoming}) - set(deleted)
+        assert set(store.load()) == expected
+        assert report.total == len(expected)
+        assert report.removed == len((old_keys | {r.id for r in incoming}) & set(deleted))
+        assert report.added + report.updated + report.unchanged == len(incoming)
+        assert report.added <= report.total + report.removed
+
+
 json_scalars = st.one_of(st.integers(), st.text(max_size=5), st.booleans())
 json_dicts = st.recursive(
     st.dictionaries(st.text(alphabet="abc", min_size=1, max_size=2), json_scalars, max_size=3),

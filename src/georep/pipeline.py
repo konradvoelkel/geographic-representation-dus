@@ -386,7 +386,8 @@ def build_steps(
             on_page=page_done,
             sleep=sleep,
         )
-        report = store.upsert(records)
+        # Option 07: Gelöschte liefert der Server nur zu modified_since; sie fliegen aus dem Store.
+        report = store.upsert(records, deleted=fetched.deleted_ids)
         # Der Fortschritt existiert nur, solange ein Abruf unvollständig ist.
         layout.papers_progress.unlink(missing_ok=True)
         mode = f"seit {since.date()}" if since else "vollständig"

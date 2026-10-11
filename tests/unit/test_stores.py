@@ -121,6 +121,31 @@ def test_upsert_replaces_a_legacy_record_with_the_server_record(tmp_path: Path) 
     assert store.upsert([with_originator]).unchanged == 1  # idempotent nach dem Roundtrip
 
 
+# --- Option 07: Monitoring der laufenden Wahlperiode ------------------------------------------
+
+
+def test_upsert_removes_deleted_papers_and_counts_only_the_known_ones(tmp_path: Path) -> None:
+    store = PaperStore(tmp_path / "raw" / "papers.jsonl")
+    store.save([_record(1), _record(2), _record(3)])
+    report = store.upsert([_record(4)], deleted=["p002", "p999", "p002"])
+    assert (report.added, report.removed, report.total) == (1, 1, 3)  # p999 kannte der Store nicht
+    assert list(store.load()) == ["p001", "p003", "p004"]
+    assert "1 entfernt" in report.summary()
+    # Ohne Löschung nennt die Zusammenfassung keine Entfernung
+    assert "entfernt" not in store.upsert([_record(5)]).summary()
+    # Eine Löschung gewinnt über ein Update derselben ID im gleichen Aufruf
+    both = store.upsert([_record(5, name="neu")], deleted=["p005"])
+    assert both.removed == 1 and "p005" not in store.load()
+
+
+def test_two_upserts_without_change_write_identical_bytes(tmp_path: Path) -> None:
+    store = PaperStore(tmp_path / "raw" / "papers.jsonl")
+    store.upsert([_record(2), _record(1)], deleted=["p009"])
+    first = store.path.read_bytes()
+    store.upsert([_record(1), _record(2)], deleted=["p009"])
+    assert store.path.read_bytes() == first
+
+
 def test_text_store_put_get_save_and_currency(tmp_path: Path) -> None:
     store = TextStore(tmp_path / "text" / "texts.parquet")
     assert len(store) == 0 and store.get("a.pdf") is None
