@@ -18,7 +18,6 @@ from pathlib import Path
 from typing import Literal
 
 import polars as pl
-from loguru import logger
 
 from georep import __version__
 from georep.analysis.hits import hits_by_district, join_voters
@@ -143,7 +142,6 @@ def run_step(
     outcome = Outcome(
         step.name, "ausgeführt", f"{reason}; {summary}", time.perf_counter() - started
     )
-    logger.success(outcome.line())
     return outcome
 
 
