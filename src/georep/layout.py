@@ -200,6 +200,32 @@ class Layout:
         """Wahlbezirk zu Stadtbezirk mit Gewicht; zweite Ausgabe des Schritts ``voters``."""
         return self.processed / "wahlbezirke_stadtbezirke.parquet"
 
+    # Option 06: Gewichtung und Themenmodell (docs/plans/06-gewichtung.md)
+    @property
+    def topics(self) -> Path:
+        """Ein Thema je Zeile: Nummer, stärkste Wörter, dominierte Dokumente."""
+        return self.processed / "themen.parquet"
+
+    @property
+    def topic_documents(self) -> Path:
+        """Je Dokument mit Text das dominante Thema und sein Anteil."""
+        return self.processed / "themen_dokumente.parquet"
+
+    @property
+    def topic_shares(self) -> Path:
+        """Die volle Anteilsmatrix (K Zahlen je Dokument): Eingabe von ``weights``, nicht veröffentlicht."""
+        return self.interim / "themen_anteile.parquet"
+
+    @property
+    def term_weights(self) -> Path:
+        """Gewicht je Suchbegriff: Wahlbezirke, die ihn führen, und Dokumenthäufigkeit."""
+        return self.processed / "gewichte_begriffe.parquet"
+
+    @property
+    def weighted(self) -> Path:
+        """Lange Tabelle: eine Zeile je Wahlbezirk und Gewichtungsvariante."""
+        return self.processed / "wahlbezirke_gewichtet.parquet"
+
     def runtime_dirs(self) -> tuple[Path, ...]:
         return (
             self.external,
