@@ -26,6 +26,7 @@ from georep.errors import SchemaError
 from georep.geo import Precinct, read_precincts
 from georep.layout import Layout
 from georep.prep.voters import TURNOUT
+from georep.report.search import SearchEntry, search_entries
 from georep.report.tables import GEOJSON_COLUMNS, GEOJSON_TABLE, PublishedTable, published
 from georep.search.dictionary import all_terms
 from georep.search.index import HITS, PAPER_IDS, TERM
@@ -116,6 +117,8 @@ class ReportModel:
     downloads: tuple[Download, ...]
     columns: tuple[ColumnDoc, ...]
     working_crs: str
+    # Option 08: die Vorschläge der Suche; leer heißt „kein Abschnitt suche" in der Vorlage.
+    search: tuple[SearchEntry, ...] = ()
 
 
 # --- Zahlenformat -----------------------------------------------------------------------------
@@ -335,19 +338,27 @@ def build_report_model(
     precincts = read_precincts(layout.districts_geojson, settings.columns, settings.geo.working_crs)
     hidden = tuple(settings.search.hide_in_display)
     counts = term_counts(dictionary, index)
+    names = district_names(precincts)
     return ReportModel(
         generated_at=now,
         version=__version__,
         commit=commit,
         stand=data_stand(layout, settings),
         figures=key_figures(results, dictionary, layout.corpus, len(precincts)),
-        districts=district_rows(
-            results, counts, district_names(precincts), settings.columns.results, hidden
-        ),
+        districts=district_rows(results, counts, names, settings.columns.results, hidden),
         top_terms=top_terms_city(counts, hidden),
         hidden_terms=hidden,
         regression=regression_pair(results, settings.analysis.exclude_districts),
         downloads=tuple(downloads),
         columns=column_docs(layout),
         working_crs=settings.geo.working_crs,
+        search=search_entries(
+            dictionary,
+            index,
+            pl.read_parquet(layout.streets_by_district),
+            pl.read_parquet(layout.pois_table),
+            results,
+            names,
+            hidden,
+        ),
     )
