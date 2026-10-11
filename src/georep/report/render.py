@@ -12,10 +12,13 @@ import json
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from importlib import resources
+from importlib.resources.abc import Traversable
 
 import deal
 from jinja2 import Environment, PackageLoader, StrictUndefined, select_autoescape
 
+from georep.errors import SchemaError
 from georep.report.charts import LegendEntry
 from georep.report.model import ReportModel, format_de, percent_de
 
@@ -110,6 +113,65 @@ def external_links(html: str) -> list[str]:
     return _EXTERNAL.findall(html)
 
 
+@dataclass(frozen=True)
+class Section:
+    """Ein Abschnitt der Seite: ``templates/sections/NN-name.html.j2`` mit optionalem CSS und JS."""
+
+    number: int
+    name: str
+    template: str  # Pfad relativ zum Vorlagenordner, für ``{% include %}``
+    css: str
+    js: str
+
+
+_SECTION_FILE = re.compile(r"^(\d{2})-([a-z][a-z0-9-]*)\.html\.j2$")
+
+
+def _numbered_in_order(result: tuple[Section, ...]) -> bool:
+    numbers = [s.number for s in result]
+    return len(result) > 0 and numbers == sorted(numbers) and len(set(numbers)) == len(numbers)
+
+
+@deal.post(_numbered_in_order, message="Abschnitte in Nummernfolge, jede Nummer einmal")
+@deal.raises(SchemaError)
+def sections(folder: Traversable | None = None) -> tuple[Section, ...]:
+    """Die Abschnitte der Seite aus ``templates/sections/`` in Nummernfolge.
+
+    Eine Option fügt einen Abschnitt als neue Datei ein; die Nummer bestimmt die Stelle
+    (docs/plans/00-synergien.md, § 5.1). Ein ``.css`` oder ``.js`` ohne Vorlage gleichen Namens ist
+    ein Fehler, damit kein Stil ins Leere zeigt. ``folder`` ist die Testnaht.
+    """
+    if folder is None:
+        folder = resources.files("georep.report") / "templates" / "sections"
+    names = sorted(entry.name for entry in folder.iterdir())
+    found: list[Section] = []
+    for name in names:
+        match = _SECTION_FILE.match(name)
+        if match is None:
+            continue
+        stem = name.removesuffix(".html.j2")
+        css = folder / f"{stem}.css"
+        js = folder / f"{stem}.js"
+        found.append(
+            Section(
+                int(match.group(1)),
+                match.group(2),
+                f"sections/{name}",
+                css.read_text(encoding="utf-8") if css.is_file() else "",
+                js.read_text(encoding="utf-8") if js.is_file() else "",
+            )
+        )
+    stems = {s.template.removeprefix("sections/").removesuffix(".html.j2") for s in found}
+    orphans = [
+        n
+        for n in names
+        if (n.endswith(".css") or n.endswith(".js")) and n.rsplit(".", 1)[0] not in stems
+    ]
+    if orphans:
+        raise SchemaError(f"Abschnittsdateien ohne Vorlage: {orphans}")
+    return tuple(found)
+
+
 @deal.post(lambda result: result.startswith("<!doctype html>") and 'lang="de"' in result)
 @deal.post(
     lambda result: set(external_links(result)) <= ALLOWED_LINKS,
@@ -117,9 +179,13 @@ def external_links(html: str) -> list[str]:
 )
 def render_report(model: ReportModel, visuals: Visuals) -> str:
     template = environment().get_template("report.html.j2")
+    parts = sections()
     return template.render(
         model=model,
         visuals=visuals,
+        sections=[s.template for s in parts],
+        section_css="".join(s.css for s in parts if s.css),
+        section_js="\n".join(s.js for s in parts if s.js),
         tables=list(dict.fromkeys(column.table for column in model.columns)),
         links={
             "repository": REPOSITORY,

@@ -182,11 +182,19 @@ def choropleth(
     rate: Classification,
     turnout: Classification,
     pois: Sequence[Poi] = (),
+    extra_classes: Mapping[str, Classification] = {},
 ) -> str:
     """Eine ``<path>`` je Wahlbezirk mit Klasse nach der Trefferquote; die Wahlbeteiligungsklasse
-    steht daneben als ``data-class-turnout``, der Umschalter tauscht nur die Klasse. Die Orte
-    tragen Name und Wahlbezirk als ``data-``-Attribute für den Tooltip."""
+    steht daneben als ``data-class-turnout``, der Umschalter tauscht nur die Klasse. Weitere
+    Kennzahlen (``extra_classes``, Option 5: Gremien) bekommen je ein ``data-class-<name>``; das
+    JavaScript schaltet sie über ein Radio mit demselben ``value`` und eine Legende
+    ``#legend-<name>``. Die Orte tragen Name und Wahlbezirk als ``data``-Attribute für den Tooltip."""
     by_id = {row.id: row for row in rows}
+    extra = {
+        key: classification
+        for key, classification in extra_classes.items()
+        if key not in ("rate", "turnout")
+    }
     parts = [
         f'<svg class="map" viewBox="{projection.view_box}" role="img" '
         'aria-labelledby="map-title" xmlns="http://www.w3.org/2000/svg">',
@@ -199,7 +207,11 @@ def choropleth(
             f'<path class="district q{rate.classes[district]}" '
             f'data-class-rate="{rate.classes[district]}" '
             f'data-class-turnout="{turnout.classes[district]}" '
-            f'{district_attributes(row)} tabindex="0" d="{svg_path(geometry, projection)}">'
+            + "".join(
+                f'data-class-{key}="{classification.classes[district]}" '
+                for key, classification in extra.items()
+            )
+            + f'{district_attributes(row)} tabindex="0" d="{svg_path(geometry, projection)}">'
             f"<title>{html.escape(_title(row))}</title></path>"
         )
     parts.append("</g>")

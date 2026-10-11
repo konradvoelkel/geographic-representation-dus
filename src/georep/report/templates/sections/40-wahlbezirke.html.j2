@@ -1,0 +1,32 @@
+{% from "macros.html.j2" import term %}
+<section id="wahlbezirke">
+<h2>Je Wahlbezirk</h2>
+<p class="note">Spaltenköpfe sortieren. Die fünf häufigsten Begriffe zählen Dokumente, in denen der Begriff vorkommt.</p>
+<div class="scroll"><table id="districts">
+<thead><tr>
+<th scope="col" class="num" data-sort="num">Nr.</th>
+<th scope="col" data-sort="text">Name</th>
+<th scope="col" class="num" data-sort="num">Treffer</th>
+<th scope="col" class="num" data-sort="num">Wahlberechtigte</th>
+<th scope="col" class="num" data-sort="num">Wähler</th>
+<th scope="col" class="num" data-sort="num">Wahlbeteiligung</th>
+<th scope="col" class="num" data-sort="num">Trefferquote</th>
+<th scope="col" class="num" data-sort="num">Begriffe</th>
+<th scope="col">häufigste Begriffe</th>
+</tr></thead>
+<tbody>
+{% for d in model.districts %}
+<tr id="bezirk-{{ d.id }}" data-id="{{ d.id }}">
+<td class="num" data-value="{{ d.id }}">{{ d.id }}</td>
+<td>{{ d.name }}</td>
+<td class="num" data-value="{{ d.hits }}">{{ d.hits|num }}</td>
+<td class="num" data-value="{{ d.eligible }}">{{ d.eligible|num }}</td>
+<td class="num" data-value="{{ d.voters }}">{{ d.voters|num }}</td>
+<td class="num" data-value="{{ d.turnout }}">{{ d.turnout|pct(1) }}</td>
+<td class="num" data-value="{{ d.rate }}">{{ d.rate|num(3) }}</td>
+<td class="num" data-value="{{ d.terms_total }}">{{ d.terms_total|num }}</td>
+<td>{% for t in d.top_terms %}{{ term(t) }} ({{ t.hits|num }}){% if not loop.last %}, {% endif %}{% endfor %}</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+</section>

@@ -6,6 +6,7 @@ import datetime as dt
 import re
 from dataclasses import replace
 from html.parser import HTMLParser
+from pathlib import Path
 
 import deal
 import pytest
@@ -158,3 +159,59 @@ def test_map_page_escapes_script_end_and_allows_only_leaflet_and_osm(
         "https://www.openstreetmap.org/copyright",
     }
     assert page.count("<script") == 4 and "tile.openstreetmap.org" in page
+
+
+def test_sections_render_in_numeric_order(page: str) -> None:
+    from georep.report.render import sections
+
+    parts = sections()
+    numbers = [s.number for s in parts]
+    assert numbers == sorted(numbers) and len(set(numbers)) == len(numbers)
+    assert [s.name for s in parts][:3] == ["kernzahlen", "karte", "zusammenhang"]
+    positions = [page.index(f'<section id="{s.name}">') for s in parts]
+    assert positions == sorted(positions)
+    assert page.count("<section ") == len(parts)
+    assert "window.georep = { select: select, showDocuments: showDocuments" in page
+
+
+def test_section_css_and_js_need_a_template_sibling(tmp_path: Path) -> None:
+    from georep.errors import SchemaError
+    from georep.report.render import sections
+
+    (tmp_path / "15-suche.html.j2").write_text('<section id="suche"></section>\n', encoding="utf-8")
+    (tmp_path / "15-suche.css").write_text(".suche {}\n", encoding="utf-8")
+    (tmp_path / "15-suche.js").write_text("void 0;\n", encoding="utf-8")
+    (tmp_path / "10-kernzahlen.html.j2").write_text("<section></section>\n", encoding="utf-8")
+    (tmp_path / "README.md").write_text("ignoriert\n", encoding="utf-8")
+    parts = sections(tmp_path)
+    assert [(s.number, s.name) for s in parts] == [(10, "kernzahlen"), (15, "suche")]
+    assert parts[1].css.startswith(".suche") and parts[1].js.startswith("void")
+    assert parts[0].css == "" and parts[0].template == "sections/10-kernzahlen.html.j2"
+    (tmp_path / "99-fehlt.js").write_text("", encoding="utf-8")
+    with pytest.raises(SchemaError, match="ohne Vorlage"):
+        sections(tmp_path)
+    (tmp_path / "99-fehlt.js").unlink()
+    (tmp_path / "15-doppelt.html.j2").write_text("<section></section>\n", encoding="utf-8")
+    with pytest.raises(deal.PostContractError):
+        sections(tmp_path)
+
+
+def test_extra_classes_become_data_attributes_for_the_switch(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    import re as _re
+
+    assert 'data-class-rate="' in visuals.map_svg and "data-class-bodies" not in visuals.map_svg
+    from shapely.geometry import box
+
+    from georep.report.charts import Classification, choropleth
+    from georep.report.geometry import bounds_of, fit
+
+    shapes = {d.id: box(0, 0, 10, 10) for d in model.districts}
+    projection = fit(bounds_of(shapes), 100.0)
+    one = Classification((), {d.id: 0 for d in model.districts}, 1)
+    svg = choropleth(
+        model.districts, shapes, projection, one, one, extra_classes={"bodies": one, "rate": one}
+    )
+    assert len(_re.findall(r'data-class-bodies="0"', svg)) == len(model.districts)
+    assert svg.count('data-class-rate="') == len(model.districts)

@@ -1,0 +1,23 @@
+<section id="karte">
+<h2>Karte der Wahlbezirke</h2>
+<div class="controls">
+<fieldset><legend>Einfärbung</legend>
+<label><input type="radio" name="metric" value="rate" checked> Trefferquote</label>
+<label><input type="radio" name="metric" value="turnout"> Wahlbeteiligung</label>
+</fieldset>
+{% if visuals.pois %}
+<label><input type="checkbox" id="show-pois"> {{ visuals.pois|num }} Orte als Punkte zeigen</label>
+{% endif %}
+</div>
+<div class="map-wrap">
+{{ visuals.map_svg|safe }}
+<div>
+<div class="legend" id="legend-rate"><strong>Trefferquote</strong> (Dokumente je Wahlberechtigtem)
+<ul>{% for entry in visuals.rate_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
+<div class="legend" id="legend-turnout" hidden><strong>Wahlbeteiligung</strong>
+<ul>{% for entry in visuals.turnout_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
+<p class="note">Klassen nach Quantilen. Zeigen oder Tippen nennt die Kennzahlen, ein Klick markiert den Bezirk auch in der Tabelle.</p>
+</div>
+</div>
+<p class="note">Projektion {{ model.working_crs }}, Grenzen vereinfacht auf {{ visuals.simplify_m|num }} m. Dieselben Flächen auf OpenStreetMap-Kacheln: <a href="karte.html">karte.html</a> (braucht Netz).</p>
+</section>

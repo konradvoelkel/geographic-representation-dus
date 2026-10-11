@@ -1,0 +1,26 @@
+{% from "macros.html.j2" import term %}
+<section id="begriffe">
+<h2>Begriffe</h2>
+<p class="note">Ein Klick auf einen Begriff zeigt die Dokumente, in denen er vorkommt, mit Datum, Drucksache und Link auf das PDF im Ratsinformationssystem; die Liste wird beim ersten Klick aus <code>data/dokumente.json</code> nachgeladen.</p>
+<h3>Die {{ model.top_terms|length }} trefferstärksten Begriffe stadtweit</h3>
+<div class="scroll"><table>
+<thead><tr><th scope="col">Begriff</th><th scope="col" class="num">Dokumente</th><th scope="col">Wahlbezirk</th></tr></thead>
+<tbody>
+{% for t in model.top_terms %}
+<tr><td>{{ term(t) }}</td><td class="num">{{ t.hits|num }}</td><td>{{ t.districts|join(', ') }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<h3>Begriffe je Wahlbezirk</h3>
+{% for d in model.districts %}
+<details>
+<summary>{{ d.id }} {{ d.name }}: {{ d.terms|length|num }} Begriffe mit Treffer, {{ d.terms_without_hits|num }} ohne</summary>
+<ol class="terms">
+{% for t in d.terms %}<li>{{ term(t) }} <span class="count">{{ t.hits|num }}</span></li>
+{% endfor %}
+</ol>
+</details>
+{% endfor %}
+{% if model.hidden_terms %}
+<p class="footnote">Nicht aufgeführt, aber in den Treffern mitgezählt (Verhalten der Arbeit): {{ model.hidden_terms|join(', ') }}.</p>
+{% endif %}
+</section>

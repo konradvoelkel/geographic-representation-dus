@@ -1,0 +1,21 @@
+<section id="zusammenhang">
+<h2>Trefferquote und Wahlbeteiligung</h2>
+{{ visuals.scatter_svg|safe }}
+<div class="line-legend"><ul>
+<li><span class="key"></span>Regressionsgerade, alle {{ model.regression.all.n }} Wahlbezirke</li>
+{% if model.regression.without %}<li><span class="key dashed"></span>ohne die Wahlbezirke {{ model.regression.excluded|join(' und ') }}</li>{% endif %}
+</ul></div>
+<h3>Lineare Regression (Tabelle 5 der Arbeit)</h3>
+<div class="scroll"><table>
+<thead><tr><th scope="col"></th><th scope="col" class="num">alle Wahlbezirke</th>{% if model.regression.without %}<th scope="col" class="num">ohne {{ model.regression.excluded|join(' und ') }}</th>{% endif %}</tr></thead>
+<tbody>
+{% set r = model.regression %}
+<tr><th scope="row">n</th><td class="num">{{ r.all.n }}</td>{% if r.without %}<td class="num">{{ r.without.n }}</td>{% endif %}</tr>
+<tr><th scope="row">Steigung</th><td class="num">{{ r.all.slope|num(2) }}</td>{% if r.without %}<td class="num">{{ r.without.slope|num(2) }}</td>{% endif %}</tr>
+<tr><th scope="row">Achsenabschnitt</th><td class="num">{{ r.all.intercept|num(2) }}</td>{% if r.without %}<td class="num">{{ r.without.intercept|num(2) }}</td>{% endif %}</tr>
+<tr><th scope="row">r</th><td class="num">{{ r.all.r|num(3) }}</td>{% if r.without %}<td class="num">{{ r.without.r|num(3) }}</td>{% endif %}</tr>
+<tr><th scope="row">R²</th><td class="num">{{ r.all.r2|num(3) }}</td>{% if r.without %}<td class="num">{{ r.without.r2|num(3) }}</td>{% endif %}</tr>
+<tr><th scope="row">p</th><td class="num">{{ r.all.p|num(3) }}</td>{% if r.without %}<td class="num">{{ r.without.p|num(3) }}</td>{% endif %}</tr>
+</tbody></table></div>
+<p>Die Wahlbeteiligung in Prozent wird auf die Trefferquote regressiert. {% if r.all.p >= 0.05 %}Über alle Wahlbezirke belegt p = {{ r.all.p|num(2) }} keinen Zusammenhang{% else %}Über alle Wahlbezirke ist der Zusammenhang mit p = {{ r.all.p|num(3) }} auf dem 5-%-Niveau signifikant{% endif %}{% if r.without %}; ohne die Wahlbezirke {{ r.excluded|join(' und ') }} (die beiden höchsten Trefferquoten) {% if r.without.p < 0.05 %}wird er mit p = {{ r.without.p|num(3) }} signifikant, erklärt aber nur R² = {{ r.without.r2|num(2) }} der Streuung{% else %}bleibt p = {{ r.without.p|num(3) }}{% endif %}{% endif %}.</p>
+</section>
