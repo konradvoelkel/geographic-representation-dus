@@ -182,7 +182,13 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
 
 
 def _cmd_bootstrap(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
-    report = bootstrap(layout, force=args.force, context_files=settings.context.files.names())
+    report = bootstrap(
+        layout,
+        force=args.force,
+        context_files=settings.context.files.names(),
+        # Option 02: mit dem Wörterbuch der Hauptperiode gehören Straßen und Orte nicht hierher
+        needs_dictionary=settings.period.dictionary == "own",
+    )
     print(report.summary())
     return 0
 

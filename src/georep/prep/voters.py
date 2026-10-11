@@ -149,7 +149,7 @@ def aggregate_voters(results: pl.DataFrame, columns: ResultsColumns) -> pl.DataF
 
 @deal.pre(
     lambda results, columns: has_columns(
-        results, columns.district, columns.city_district, columns.eligible
+        results, columns.district, columns.city_district, ELIGIBLE_TOTAL
     ),
     message="Wahlergebnis braucht Wahlbezirk, Stadtbezirk und Wahlberechtigte",
 )
@@ -168,7 +168,7 @@ def district_units(results: pl.DataFrame, columns: ResultsColumns) -> pl.DataFra
     typed = results.select(
         _to_int(columns.district).alias(DISTRICT),
         _to_int(columns.city_district).alias(UNIT),
-        _to_int(columns.eligible).alias(ELIGIBLE),
+        _to_int(ELIGIBLE_TOTAL).alias(ELIGIBLE),
     )
     return unit_weights(typed, UNIT, ELIGIBLE)
 

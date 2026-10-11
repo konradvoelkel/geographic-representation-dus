@@ -579,7 +579,7 @@ def build_steps(
         results_frame = pl.read_parquet(layout.results)
         papers_frame = pl.read_parquet(layout.papers_bodies)
         units = pl.read_parquet(layout.district_units)
-        districts = hits_by_body(results_frame, papers_frame, units, columns.eligible)
+        districts = hits_by_body(results_frame, papers_frame, units, ELIGIBLE_TOTAL)
         bodies_frame = documents_by_body(papers_frame, results_frame, units)
         write_parquet(districts, layout.district_bodies, schema_version=1)
         write_parquet(bodies_frame, layout.bodies_table, schema_version=1)
@@ -615,7 +615,7 @@ def build_steps(
             index_frame,
             pl.read_parquet(layout.corpus, columns=["id", "paper_type"]),
             pl.read_parquet(layout.voters),
-            columns.eligible,
+            ELIGIBLE_TOTAL,
             with_text,
             [
                 TypeRules(
@@ -689,7 +689,7 @@ def build_steps(
             attribution,
             pl.read_parquet(layout.voters),
             settings.originators.parties,
-            columns.eligible,
+            ELIGIBLE_TOTAL,
         )
         write_parquet(party_frame, layout.party_results, schema_version=PARTIES_SCHEMA)
         figures = originator_figures(attribution)

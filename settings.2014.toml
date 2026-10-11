@@ -38,6 +38,7 @@ districts_file = "Stimmbezirke_2020.geojson"  # Dateiname unter external/; das J
 sep = ";"
 encoding = "utf-8"             # die 2020-Dateien sind UTF-8 ohne BOM (die 2025-Datei ist latin-1 mit BOM)
 district = ""                  # die 2020-CSV trägt keinen Wahlbezirk; er kommt aus der geometrischen Zuordnung (Schritt precincts)
+city_district = ""             # und keinen Stadtbezirk; die Zuordnung der Zielbezirke zu Stadtbezirken (Option 05) gilt für beide Perioden und kommt aus der Hauptperiode
 precinct = "gebiet-nr"         # vierstellig mit führender Null (0101), identisch mit Stimmbezchar im GeoJSON
 precinct_name = "gebiet-name"  # darin steht der postal_marker der Briefwahlbezirke
 eligible = "A"                 # Wahlberechtigte insgesamt (A1 ohne, A2 mit Sperrvermerk W, A3 nicht im Verzeichnis)
@@ -45,6 +46,9 @@ voters = "B"                   # Wähler; bei den Briefwahlbezirken gleich B2
 eligible_postal = "A2"         # Wahlberechtigte mit Sperrvermerk W, also mit Wahlschein: Verteilschlüssel der Briefwähler (Plan § 2, Frage 2.4)
 postal_marker = "Briefwahlbezirk"  # 138 Zeilen ohne Geometrie und ohne Wahlbezirk, A = 0
 parties = { CDU = "D1", GRUENE = "D3", SPD = "D2", FDP = "D4", Die_Linke = "D5", AfD = "D6" }  # Stimmzettelreihenfolge 2020, gegen das Ergebnis-GeoJSON mit benannten Spalten geprüft; D7 bis D16 bleiben Option 4
+
+[context]                      # Option 03: Kontrollvariablen gibt es für diese Periode nicht
+root = ""                      # der Quartiersatlas beschreibt den Stand 2021 auf den Raumeinheiten von heute; für eine Periode, die 2020 endet, wäre er keine Kontrollvariable, sondern eine Zeitreise. Leer heißt: die Schritte context_data, context und controls fehlen im Profil
 
 [crosswalk]                    # Stimmbezirke 2020 über Flächenanteile auf die Wahlbezirke 2025
 enabled = true
