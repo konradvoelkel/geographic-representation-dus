@@ -1,6 +1,6 @@
 # Plan 02: Zeitreihe
 
-Stand 2026-10-11, Branch `feat/02-zeitreihe`. Status: umgeschrieben.
+Stand 2026-10-12, Branch `feat/02-zeitreihe`. Status: in Arbeit.
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.2; Regeln: § 2 dort und [../../CLAUDE.md](../../CLAUDE.md);
 Aufbau des Programms: [../architecture.md](../architecture.md). Dieser Plan ist so geschrieben, dass ein frischer Agent ihn
