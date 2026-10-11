@@ -65,7 +65,9 @@ def index_documents() -> None:
             }
         )
 
-    df_index = pd.DataFrame(rows)
+    # Sortiert, damit zwei Läufe byteweise dieselbe Datei schreiben; die Dict-Reihenfolge
+    # stammt aus einem Set und wechselte von Lauf zu Lauf.
+    df_index = pd.DataFrame(rows).sort_values("suchbegriffe", kind="stable").reset_index(drop=True)
 
     # Step 4: Saving DataFrame
     total_hits = int(df_index["anzahl_treffer"].sum()) if not df_index.empty else 0
