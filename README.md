@@ -68,7 +68,7 @@ Abschnitt „Berichtsseite").
 | `georep fetch [SCHRITT …] [--force] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `pdfs`, `streets_osm`, `pois_wiki`, danach `texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Metadatenseiten |
 | `georep steps` | Schritte mit Eingaben und Ausgaben |
 | `georep status` | Settings, Pfade, Stores, Frische jedes Schritts mit Grund |
-| `georep bootstrap [--force]` | den Datensatz der Arbeit nach `data_root` übernehmen |
+| `georep bootstrap [--force]` | den eingefrorenen Datensatz (`reference_root`) nach `data_root` übernehmen |
 | `georep export` | die Parquet-Ergebnisse als CSV daneben schreiben |
 | `georep regress [--exclude …] [--varianten]` | lineare Regression Trefferquote gegen Wahlbeteiligung; `--varianten` dieselbe Rechnung je Gewichtungsvariante aus `wahlbezirke_gewichtet.parquet` |
 | `georep regress --controls` | Tabelle 6: dieselbe Regression mit Kontrollvariablen, je Modell und Stichprobe |
@@ -107,6 +107,66 @@ uv run georep status                      # pdfs steht danach auf "Settings geä
                                           # steht: das ist richtig, nicht kaputt
 ```
 
+## Zwei Wahlperioden
+
+Eine Wahlperiode ist ein **Profil**: eine TOML-Datei, die `profile` setzt. Ihre Daten liegen getrennt unter
+`data_root/<profil>/`, ihre PDFs und Texte unter `cache_root/<profil>/`; der HTTP-Cache bleibt geteilt. Im
+Repo liegt [`settings.2014.toml`](settings.2014.toml) für die Wahlperiode 2014 bis 2020 (Ratswahl 13.09.2020)
+und [`settings.vergleich.toml`](settings.vergleich.toml), das auf der Hauptperiode den Vergleich beider
+Perioden einschaltet.
+
+```bash
+uv run georep --settings settings.2014.toml status      # Periode, Pfade, Frische jedes Schritts
+uv run georep --settings settings.2014.toml bootstrap   # Eingaben aus snapshots/2014-2020/
+uv run georep --settings settings.2014.toml run         # Kette der alten Periode, Seite unter data/2014-2020/site/
+uv run georep --settings settings.vergleich.toml run    # Hauptperiode mit dem Abschnitt „Zwei Wahlperioden"
+```
+
+Beide Perioden werden mit **demselben Wörterbuch** durchsucht (Straßen und Orte je Wahlbezirk 2025, Stand
+November 2025): `period.dictionary = "base"` liest die Rohdaten der Hauptperiode, die Netzschritte
+`streets_osm` und `pois_wiki` gibt es im Profil darum nicht. So unterscheiden sich die Perioden nur in den
+Dokumenten, und keine Trefferquote muss zwischen zwei Zuschnitten umgerechnet werden.
+
+Die Wahlbeteiligung der Ratswahl 2020 liegt dagegen auf den **316 Stimmbezirken von 2020**, die Auswertung auf
+den **41 Wahlbezirken von 2025**. Der Schritt `precincts` rechnet um: Flächenanteile der Stimmbezirke an den
+Zielbezirken, Zählgrößen (Wahlberechtigte, Wähler, Stimmen) proportional übertragen und je Zielbezirk nach
+größtem Rest ganzzahlig gerundet, sodass die Stadtsumme exakt erhalten bleibt. Die 44,6 % Briefwähler von 2020
+haben keine Geometrie; sie werden je Wahlbezirk aus der Differenz zur Wahlbezirks-CSV erschlossen und
+proportional zu den Wahlberechtigten mit Wahlschein auf die Stimmbezirke verteilt. Die Zuordnung steht als
+`stimmbezirke_zuordnung.parquet` zum Download und macht beides nachrechenbar.
+
+### Zweite Periode abrufen
+
+Der Abruf der alten Periode ist ein eigener, von Hand zu startender Lauf (geschätzt 25 000 bis 30 000
+Dokumente, 3,7 bis 4,4 GB PDFs, zehn bis vierzehn Stunden); kein Agent und keine CI startet ihn.
+
+```bash
+export UV_PROJECT_ENVIRONMENT=… UV_CACHE_DIR=…               # wie in FORK-NOTES.md
+P="--settings settings.2014.toml"
+uv run georep $P fetch opendata        # vier Portaldateien, Sekunden
+uv run georep $P fetch papers          # rund 3 h; speichert jede Seite, wiederaufnehmbar
+uv run georep $P fetch pdfs --limit 50 # Stichprobe zuerst, dann ohne --limit: 8 bis 11 h
+uv run georep $P run                   # Extraktion rund 17 min, der Rest Sekunden
+uv run georep $P status                # alles aktuell?
+```
+
+- **Wiederaufnahme.** `fetch papers` speichert nach jeder Seite in den Store und schreibt die nächste URL nach
+  `data_root/2014-2020/raw/papers.progress.json`. Bricht der Lauf ab, macht der nächste dort weiter, nicht bei
+  `sources.oparl.first_page`. Die Datei verschwindet, sobald ein Abruf durchgelaufen ist; wer von vorn
+  beginnen will, löscht sie. `fetch pdfs` ist je Datei wiederaufnehmbar.
+- **`first_page = 90`** überspringt die Seiten der Hauptperiode (die Liste ist neueste zuerst, Stand 2026-10
+  tragen die Seiten 1 bis 95 die Periode 2020 bis 2025). Jedes neue Paper schiebt die alten Seiten nach
+  hinten; der Netztest
+  [`tests/golden/test_network_period.py`](tests/golden/test_network_period.py) (`uv run pytest -m network`)
+  prüft, dass Seite 90 noch vor dem Wahltag liegt.
+- **`incremental = false`** ist Absicht: `modified` ist bei alten Papern das Migrationsdatum 2024-12-30, ein
+  `modified_since` holte nach dem ersten Lauf nichts mehr.
+- **Platz.** Die PDFs liegen unter `cache_root/2014-2020/pdf/`; xtraspace hatte am 2026-10-11 322 GB frei.
+- **Danach** entsteht aus `raw/papers.jsonl`, `cache/text/<profil>/texts.parquet` und `external/` der
+  eingefrorene Schnappschuss `snapshots/2014-2020/` (geschätzt 35 bis 40 MB), auf den `reference_root` des
+  Profils zeigt; `bootstrap` erkennt dieses Format und kopiert nur. Erst damit baut GitHub Pages beide
+  Perioden ohne Netz.
+
 ## Konfiguration
 
 Alle Parameter stehen mit Begründung in [`src/georep/defaults.toml`](src/georep/defaults.toml). Darüber
@@ -133,6 +193,9 @@ cache_root = "/media/konrad/xtraspace/georep/cache"
 | Kürzel und Namen der Gremien (Rat, Bezirksvertretungen, Ausschüsse, Beiräte) | Organisationsliste des Ratsinformationssystems (Stand 11.10.2026) und Dokumenttitel; das Gremium je Dokument liest der Parser aus der Drucksachennummer | `src/georep/defaults.toml`, Block `[bodies]` |
 | Sozialdaten je Sozialraum, Stand 31.12.2021 (Kontrollvariablen) | Quartiersatlas Düsseldorf 2024, Open-Data-Portal der Stadt Düsseldorf (CSV und GeoJSON, Datenlizenz Deutschland Namensnennung 2.0) | `context/` |
 | Fraktionen, Ausschüsse und Bezirksvertretungen | Ratsinformationssystem Düsseldorf über OParl 1.1, Endpunkt `organizations` | nein, `georep fetch organizations` holt sie |
+| Wahlergebnis je Stimmbezirk und je Wahlbezirk, Ratswahl 13.09.2020 | Open-Data-Portal der Stadt Düsseldorf (CSV, Datenlizenz Deutschland Namensnennung 2.0) | nein, Abruf über `settings.2014.toml` |
+| Stimmbezirke und Kommunalwahlbezirke 2020 (ETRS89, EPSG:4647) | Open-Data-Portal der Stadt Düsseldorf (GeoJSON, Datenlizenz Deutschland – Zero – Version 2.0) | nein, Abruf über `settings.2014.toml` |
+| Ratsdokumente 2014 bis 2020 | Ratsinformationssystem Düsseldorf über OParl 1.1, Body 0015, ab Seite 90 | noch nicht; nach Konrads Lauf als `snapshots/2014-2020/` |
 
 `context/` trägt die Fremddaten, aus denen die Kontrollvariablen entstehen, mit Herkunft, Lizenz, Datenstand,
 Abrufdatum und Prüfsummen in [context/README.md](context/README.md); die Seite nennt unter „Abgeleitete Daten"

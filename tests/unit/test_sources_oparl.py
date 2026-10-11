@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -8,7 +10,13 @@ import requests
 
 from georep.errors import FetchError, NetworkError
 from georep.settings import Period
-from georep.sources.oparl import fetch_organizations, fetch_papers
+from georep.sources.oparl import (
+    fetch_organizations,
+    fetch_papers,
+    read_progress,
+    start_url,
+    write_progress,
+)
 from tests.fakes import FakeSession, response
 
 PAGE1 = "https://ris.invalid/papers"
@@ -173,3 +181,88 @@ def test_fetch_organizations_propagates_network_and_format_errors() -> None:
     routes[ORGANIZATIONS] = response(ORGANIZATIONS, payload={"data": {"keine": "Liste"}})
     with pytest.raises(FetchError, match="Organisationsseite"):
         fetch_organizations(FakeSession(routes), ORGANIZATIONS)
+
+
+# --- Option 02: Startseite und Wiederaufnahme --------------------------------------------------
+
+PAGE4 = "https://ris.invalid/papers?page=4"
+OLD = Period(start=dt.date(2014, 5, 25), end=dt.date(2020, 9, 12))
+
+
+def test_start_url_is_the_endpoint_for_page_one() -> None:
+    assert start_url(PAGE1, 1) == PAGE1
+    assert start_url(PAGE1, 0) == PAGE1  # der Validator verhindert 0, die Funktion knickt nicht ein
+    assert start_url(PAGE1, 90) == f"{PAGE1}?page=90"
+
+
+def _old_routes() -> dict[str, Any]:
+    """Vier Seiten ab Seite 2, alle in der alten Periode; Seite 4 ist die letzte."""
+    return {
+        PAGE2: _page(PAGE2, [_paper(1, "2019-01-01"), _paper(2, "2018-06-01")], PAGE3),
+        PAGE3: _page(PAGE3, [_paper(3, "2017-01-01"), _paper(4, "2016-06-01")], PAGE4),
+        PAGE4: _page(PAGE4, [_paper(5, "2015-01-01"), _paper(6, "2014-06-01")], None),
+    }
+
+
+def test_fetch_starts_at_the_given_page_and_names_both_ends() -> None:
+    session = FakeSession(_old_routes())
+    records, report = fetch_papers(session, PAGE1, OLD, first_page=2)
+    assert session.urls == [PAGE2, PAGE3, PAGE4]
+    assert len(records) == 6 and report.pages == 3
+    assert report.first_url == PAGE2 and report.next_url is None
+    assert "ab https://ris.invalid/papers?page=2" in report.summary()
+
+
+def test_on_page_sees_every_page_and_the_next_url() -> None:
+    session = FakeSession(_old_routes())
+    seen: list[tuple[int, str | None]] = []
+    fetch_papers(
+        session,
+        PAGE1,
+        OLD,
+        first_page=2,
+        on_page=lambda kept, next_url: seen.append((len(kept), next_url)),
+    )
+    assert seen == [(2, PAGE3), (2, PAGE4), (2, None)]
+
+
+def test_a_broken_page_leaves_the_progress_of_the_pages_before_it(tmp_path: Path) -> None:
+    """Der Abbruch mitten im Abruf: die Seiten davor sind gespeichert, der Rest wird fortgesetzt."""
+    progress = tmp_path / "papers.progress.json"
+    routes = _old_routes()
+    routes[PAGE3] = requests.ConnectionError("Verbindung weg")
+    session = FakeSession(routes)
+    pages = 0
+    kept_ids: list[str] = []
+
+    def done(kept: list[Any], next_url: str | None) -> None:
+        nonlocal pages
+        pages += 1
+        kept_ids.extend(r.id for r in kept)
+        write_progress(progress, next_url, pages)
+
+    with pytest.raises(NetworkError):
+        fetch_papers(session, PAGE1, OLD, first_page=2, on_page=done)
+    assert read_progress(progress) == PAGE3
+    assert len(kept_ids) == 2
+
+    routes[PAGE3] = _old_routes()[PAGE3]
+    records, report = fetch_papers(
+        FakeSession(routes), PAGE1, OLD, resume_from=read_progress(progress), on_page=done
+    )
+    assert report.first_url == PAGE3 and report.next_url is None
+    assert sorted(kept_ids + [r.id for r in records])[:2] == sorted(kept_ids)[:2]
+    assert len({*kept_ids, *(r.id for r in records)}) == 6  # jedes Paper genau einmal
+    assert read_progress(progress) is None
+
+
+def test_unreadable_or_finished_progress_starts_from_the_front(tmp_path: Path) -> None:
+    missing = tmp_path / "fehlt.json"
+    assert read_progress(missing) is None
+    broken = tmp_path / "kaputt.json"
+    broken.write_text("{nicht json", encoding="utf-8")
+    assert read_progress(broken) is None
+    finished = tmp_path / "fertig.json"
+    write_progress(finished, None, 7)
+    assert read_progress(finished) is None
+    assert json.loads(finished.read_text(encoding="utf-8"))["pages"] == 7

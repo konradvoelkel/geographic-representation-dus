@@ -73,13 +73,19 @@ from georep.prep.voters import (
     spread_postal,
     with_shares,
 )
+from georep.records import PaperRecord
 from georep.report.build import MAP_NAME, SCHEMA_NAME, build_site, current_commit
 from georep.report.geometry import district_shapes
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
 from georep.settings import Settings
 from georep.sources import cached_session
-from georep.sources.oparl import fetch_organizations, fetch_papers
+from georep.sources.oparl import (
+    fetch_organizations,
+    fetch_papers,
+    read_progress,
+    write_progress,
+)
 from georep.sources.opendata import fetch_csv, fetch_geojson
 from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
@@ -311,6 +317,17 @@ def build_steps(
             newest = max((r.modified for r in known.values() if r.modified), default=None)
             if newest is not None:
                 since = newest - dt.timedelta(days=1)
+        # --- Option 02: seitenweise speichern und wiederaufnehmen. Der Abruf einer alten Periode
+        # dauert Stunden; bricht er ab, darf der nächste Lauf nicht bei first_page beginnen.
+        resume = read_progress(layout.papers_progress)
+        pages_done = 0
+
+        def page_done(kept: list[PaperRecord], next_url: str | None) -> None:
+            nonlocal pages_done
+            pages_done += 1
+            store.upsert(kept)
+            write_progress(layout.papers_progress, next_url, pages_done)
+
         records, fetched = fetch_papers(
             transport(),
             oparl.endpoint,
@@ -319,11 +336,17 @@ def build_steps(
             modified_since=since,
             stop_when_older=oparl.stop_when_older,
             max_pages=oparl.max_pages or None,  # Option 04: 0 = alle Seiten
+            first_page=oparl.first_page,
+            resume_from=resume,
+            on_page=page_done,
             sleep=sleep,
         )
         report = store.upsert(records)
+        # Der Fortschritt existiert nur, solange ein Abruf unvollständig ist.
+        layout.papers_progress.unlink(missing_ok=True)
         mode = f"seit {since.date()}" if since else "vollständig"
-        return f"{mode}: {fetched.summary()}; Store {report.summary()}"
+        resumed = " (fortgesetzt)" if resume else ""
+        return f"{mode}{resumed}: {fetched.summary()}; Store {report.summary()}"
 
     def pdfs() -> str:
         records = PaperStore(layout.papers).load().values()
