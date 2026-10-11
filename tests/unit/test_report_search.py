@@ -7,7 +7,9 @@ import polars as pl
 import pytest
 
 from georep.errors import SchemaError
+from georep.geo import read_precincts
 from georep.layout import Layout
+from georep.report.model import district_names
 from georep.report.search import (
     KIND_LABELS,
     SearchEntry,
@@ -18,6 +20,7 @@ from georep.report.search import (
     search_payload,
 )
 from georep.search.dictionary import STREET_ABBREVIATIONS
+from georep.settings import Settings
 
 LIST_OF_STR = pl.List(pl.String)
 
@@ -189,12 +192,10 @@ def test_fold_ascii_writes_umlauts_as_two_letters() -> None:
     assert fold_ascii("hofgarten") == fold("hofgarten") == "hofgarten"
 
 
-def test_mini_fixture_entries_cover_every_canonical_term(mini_run: Layout) -> None:
-    from georep.geo import read_precincts
-    from georep.report.model import district_names
-    from georep.settings import load_settings
-
-    settings = load_settings(cwd=mini_run.root)
+def test_mini_fixture_entries_cover_every_canonical_term(
+    mini_run: Layout, default_settings: Settings
+) -> None:
+    settings = default_settings
     dictionary = pl.read_parquet(mini_run.dictionary)
     precincts = read_precincts(
         mini_run.districts_geojson, settings.columns, settings.geo.working_crs
