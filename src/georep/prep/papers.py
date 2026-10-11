@@ -1,7 +1,7 @@
 """Korpus: ein Text je Ratsdokument, aus ``PaperStore`` und ``TextStore``.
 
-Metadaten kommen aus ``raw/papers.jsonl``, Texte aus dem Textstore; Paper ohne Text bekommen
-einen leeren String, wie in der Arbeit. Phase 3 bringt die Extraktion aus den PDFs hierher.
+Metadaten kommen aus ``raw/papers.jsonl``, Texte aus dem Textstore (``georep.prep.extract``);
+Paper ohne Text bekommen einen leeren String, wie in der Arbeit.
 """
 
 from __future__ import annotations

@@ -20,11 +20,6 @@ dependencies = [
     "requests>=2.32.4",
     "scipy>=1.16.2",
     "shapely>=2.1.2",
-    "tqdm>=4.67.1",
-    # Altlast: nur von den Netzschritten in src/*.py gebraucht; beide ziehen pandas.
-    # Verschwindet mit Phase 3 (DEVELOPMENT_PLAN.md § 4).
-    "geopandas>=1.1.1",
-    "osmnx>=2.0.7",
     "pyproj>=3.7",
     "requests-cache>=1.2",
 ]
@@ -50,8 +45,6 @@ dev = [
 notebook = ["jupyterlab"]
 
 [build-system]
-# uv_build packt nur src/georep/; der Altcode in src/*.py bleibt als `src.*` importierbar
-# (Repo-Wurzel auf dem Pfad), bis die Strangler Fig ihn ersetzt hat.
 requires = ["uv_build>=0.12,<0.13"]
 build-backend = "uv_build"
 
@@ -81,26 +74,18 @@ quote-style = "double"
 [tool.mypy]
 python_version = "3.14"
 strict = true
-# src/__init__.py macht src zum Paket; ohne explizite Basen hiesse src/georep/io.py zugleich
-# src.georep.io und georep.io. Basis src -> georep.*, Basis . -> tests.* und src.* (Altcode).
+# Basis src -> georep.*, Basis . -> tests.*; so heisst src/georep/io.py nur georep.io.
 explicit_package_bases = true
 mypy_path = ["src", "."]
 warn_redundant_casts = true
 warn_unused_ignores = true
-# Strict gilt fuer neuen Code (src/georep/, tests/). Der Altcode src/*.py wird in der
-# nox-Session `baseline` gegen die Zahl aus docs/baseline-2026-10-10.md geprueft: nicht schlechter.
 files = ["src/georep", "tests"]
 
 [[tool.mypy.overrides]]
-# Ohne Stubs und ohne py.typed, Stand 2026-10-10. flashtext (letzte Version 2018) bleibt bis zum
-# Matcher-Protokoll aus Phase 5; osmnx/geopandas/pandas gehen mit Phase 3.
-module = ["flashtext.*", "osmnx.*", "geopandas.*", "pandas.*", "scipy.*", "tqdm.*"]
+# Ohne Stubs und ohne py.typed, Stand 2026-10-11: flashtext (letzte Version 2018, hinter dem
+# Matcher-Protokoll) und scipy (nur linregress).
+module = ["flashtext.*", "scipy.*"]
 ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-# Altcode: wird von den Tests importiert, aber nicht hier gemeldet (nox -s baseline zaehlt ihn).
-module = ["src.*", "run"]
-follow_imports = "silent"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

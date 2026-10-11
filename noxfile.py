@@ -2,21 +2,17 @@
 
 from __future__ import annotations
 
-import re
+import tomllib
 from pathlib import Path
 
 import nox
 
 nox.options.default_venv_backend = "none"
-nox.options.sessions = ["lint", "typecheck", "baseline", "test"]
+nox.options.sessions = ["lint", "typecheck", "deps", "test"]
 
-# Nur die flachen Altcode-Module: src/ als Verzeichnis liesse mypy src/georep/ zugleich als
-# src.georep.* und georep.* sehen und abbrechen.
-LEGACY = [*sorted(str(p) for p in Path("src").glob("*.py")), "run.py"]
-# Altcode-Baseline (docs/baseline-2026-10-10.md): 18 Fehler unter Python 3.12 und den alten Pins,
-# 14 unter dem Lockfile mit Python 3.14 vom 2026-10-10, 5 seit die Dataclass Paper None erlaubt
-# (2026-10-11). Gilt der strengere Wert.
-LEGACY_MYPY_ERRORS = 4
+# Pakete, die nie wieder ins Lockfile dürfen: pandas ist Konrads Vorgabe (Polars), die anderen
+# zogen es transitiv (Phase 3, 2026-10-11).
+FORBIDDEN = {"pandas", "geopandas", "osmnx", "scikit-learn"}
 
 
 @nox.session
@@ -27,31 +23,18 @@ def lint(session: nox.Session) -> None:
 
 @nox.session
 def typecheck(session: nox.Session) -> None:
-    """Strict für neuen Code (tests/, ab Phase 2 src/georep/)."""
     session.run("uv", "run", "mypy")
 
 
 @nox.session
-def baseline(session: nox.Session) -> None:
-    """Altcode: nicht schlechter als die Baseline, nicht sauber."""
-    out = session.run(
-        "uv",
-        "run",
-        "mypy",
-        "--config-file=",
-        "--ignore-missing-imports",
-        "--python-version",
-        "3.14",
-        *LEGACY,
-        success_codes=[0, 1],
-        silent=True,
-    )
-    text = out if isinstance(out, str) else ""
-    match = re.search(r"Found (\d+) error", text)
-    errors = int(match.group(1)) if match else 0
-    session.log(f"Altcode mypy: {errors} Fehler (Baseline {LEGACY_MYPY_ERRORS})")
-    if errors > LEGACY_MYPY_ERRORS:
-        session.error(f"Altcode ist schlechter geworden: {errors} > {LEGACY_MYPY_ERRORS}\n{text}")
+def deps(session: nox.Session) -> None:
+    """Das Lockfile enthält keines der verbotenen Pakete, auch nicht transitiv."""
+    lock = tomllib.loads(Path("uv.lock").read_text(encoding="utf-8"))
+    names = {pkg["name"] for pkg in lock.get("package", [])}
+    found = sorted(FORBIDDEN & names)
+    if found:
+        session.error(f"Verbotene Pakete im Lockfile: {found}")
+    session.log(f"Lockfile: {len(names)} Pakete, keines von {sorted(FORBIDDEN)}")
 
 
 @nox.session
@@ -61,5 +44,5 @@ def test(session: nox.Session) -> None:
 
 @nox.session
 def golden(session: nox.Session) -> None:
-    """Volles Referenzkorpus, Sekunden."""
+    """Volle Referenz, Sekunden."""
     session.run("uv", "run", "pytest", "-m", "slow", *session.posargs)

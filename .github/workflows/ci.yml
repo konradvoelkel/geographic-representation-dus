@@ -18,4 +18,4 @@ jobs:
           enable-cache: true
       - run: uv python install
       - run: uv sync --locked
-      - run: uv run nox -s lint typecheck baseline test golden
+      - run: uv run nox -s lint typecheck deps test golden
