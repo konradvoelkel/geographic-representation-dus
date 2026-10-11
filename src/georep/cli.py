@@ -22,6 +22,7 @@ from georep.export import export_csv
 from georep.layout import Layout
 from georep.pipeline import build_steps, freshness, run_pipeline
 from georep.settings import Settings, load_settings, settings_files
+from georep.stores import PaperStore, TextStore
 
 
 def _setup_logging(level: str) -> None:
@@ -85,12 +86,14 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
     print(f"cache_root: {layout.cache_root.resolve()}")
     print(f"reference:  {layout.reference_root.resolve()}")
     pdfs = len(list(layout.pdf_dir.glob("*.pdf"))) if layout.pdf_dir.is_dir() else 0
+    texts = len(TextStore(layout.text_dir))
+    papers = len(PaperStore(layout.papers).load())
     corpus = (
         pl.scan_parquet(layout.corpus).select(pl.len()).collect().item()
         if layout.corpus.exists()
         else 0
     )
-    print(f"Cache:      {pdfs} PDFs; Korpus: {corpus} Dokumente")
+    print(f"Stores:     {papers} Paper, {pdfs} PDFs, {texts} Texte; Korpus: {corpus} Dokumente")
     for step in build_steps(settings, layout):
         fresh, reason = freshness(step, settings)
         print(f"{step.name:<12} {'aktuell' if fresh else 'offen':<8} {reason}")

@@ -1,16 +1,19 @@
-"""Korpus: ein Text je Ratsdokument.
+"""Korpus: ein Text je Ratsdokument, aus ``PaperStore`` und ``TextStore``.
 
-Phase 2: Umwandlung des Altformats ``paper_with_text.json`` nach ``papers.parquet``. Phase 3
-bringt die Extraktion aus den PDFs mit Textcache hierher.
+Metadaten kommen aus ``raw/papers.jsonl``, Texte aus dem Textstore; Paper ohne Text bekommen
+einen leeren String, wie in der Arbeit. Phase 3 bringt die Extraktion aus den PDFs hierher.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
+from collections.abc import Iterable
 
 import polars as pl
 
-CORPUS_SCHEMA_VERSION = 1  # erhöhen, wenn sich Spalten oder Typen von papers.parquet ändern
+from georep.records import PaperRecord
+from georep.stores import TextStore
+
+CORPUS_SCHEMA_VERSION = 2  # erhöhen, wenn sich Spalten oder Typen von papers.parquet ändern
 CORPUS_COLUMNS = [
     "id",
     "name",
@@ -18,27 +21,41 @@ CORPUS_COLUMNS = [
     "date",
     "paper_type",
     "main_file",
+    "file_name",
     "download_url",
     "text",
 ]
+CORPUS_SCHEMA = {
+    "id": pl.String,
+    "name": pl.String,
+    "reference": pl.String,
+    "date": pl.Date,
+    "paper_type": pl.String,
+    "main_file": pl.String,
+    "file_name": pl.String,
+    "download_url": pl.String,
+    "text": pl.String,
+}
 
 
-def corpus_from_legacy_json(json_path: Path) -> pl.DataFrame:
-    """``paper_with_text.json`` (Liste von Objekten mit paperType, mainFile, paper_text) als Korpus."""
-    return (
-        pl.read_json(json_path)
-        .select(
-            pl.col("id").cast(pl.String),
-            pl.col("name").cast(pl.String),
-            pl.col("reference").cast(pl.String),
-            pl.col("date").cast(pl.String).str.to_date("%Y-%m-%d", strict=False),
-            pl.col("paperType").cast(pl.String).alias("paper_type"),
-            pl.col("mainFile").cast(pl.String).alias("main_file"),
-            pl.col("download_url").cast(pl.String),
-            pl.col("paper_text").cast(pl.String).fill_null("").alias("text"),
+def build_corpus(records: Iterable[PaperRecord], texts: TextStore) -> pl.DataFrame:
+    rows = []
+    for record in sorted(records, key=lambda r: r.id):
+        text = texts.get(record.file_name) if record.file_name else None
+        rows.append(
+            {
+                "id": record.id,
+                "name": record.name,
+                "reference": record.reference,
+                "date": record.date,
+                "paper_type": record.paper_type,
+                "main_file": record.main_file,
+                "file_name": record.file_name,
+                "download_url": record.download_url,
+                "text": text or "",
+            }
         )
-        .sort("id")
-    )
+    return pl.DataFrame(rows, schema=CORPUS_SCHEMA)
 
 
 def documents_with_text(corpus: pl.DataFrame) -> int:

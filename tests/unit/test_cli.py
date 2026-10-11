@@ -27,7 +27,7 @@ def test_bootstrap_run_status_export_regress(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     assert main(["bootstrap"]) == 0
-    assert "4 Dateien kopiert" in capsys.readouterr().out
+    assert "200 Paper und 200 Texte" in capsys.readouterr().out
     assert main(["run", "--dry-run"]) == 0
     assert "7 geplant" in capsys.readouterr().out
     assert main(["run"]) == 0

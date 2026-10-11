@@ -5,6 +5,7 @@ Listen werden mit dem Trennzeichen des Altcodes verbunden, bevor verglichen wird
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import polars as pl
@@ -92,10 +93,19 @@ def mini_chain(
     mini_root: Path, settings: Settings, tmp_path_factory: pytest.TempPathFactory
 ) -> dict[str, pl.DataFrame]:
     from georep.analysis.hits import hits_by_district, join_voters
-    from georep.prep.papers import corpus_from_legacy_json
+    from georep.bootstrap import seed_stores_from_legacy
+    from georep.layout import Layout
+    from georep.prep.papers import build_corpus
     from georep.search.index import build_index
+    from georep.stores import PaperStore, TextStore
 
-    corpus = corpus_from_legacy_json(mini_root / "interim" / "paper_with_text.json")
+    tmp = tmp_path_factory.mktemp("chain")
+    layout = Layout(tmp / "data", tmp / "cache", mini_root)
+    seed_stores_from_legacy(
+        layout,
+        json.loads((mini_root / "interim" / "paper_with_text.json").read_text(encoding="utf-8")),
+    )
+    corpus = build_corpus(PaperStore(layout.papers).load().values(), TextStore(layout.text_dir))
     voters = aggregate_voters(
         read_results_csv(
             mini_root / "external" / "Stimmbezirk_Wahlergebnis.csv", settings.columns.results

@@ -80,7 +80,17 @@ class Layout:
         return self.external / "Stimmbezirke_2025.geojson"
 
     @property
+    def papers(self) -> Path:
+        """Metadaten je Paper, eine JSON-Zeile je Paper (``PaperRecord``)."""
+        return self.raw / "papers.jsonl"
+
+    @property
+    def text_index(self) -> Path:
+        return self.text_dir / "index.json"
+
+    @property
     def paper_objects(self) -> Path:
+        """Altformat der Arbeit; nur noch unter ``reference_root`` gelesen."""
         return self.raw / "paper_objects.json"
 
     @property
@@ -98,7 +108,7 @@ class Layout:
     # Zwischen- und Endergebnisse
     @property
     def corpus_legacy(self) -> Path:
-        """Korpus im JSON-Format des Altcodes; bleibt, bis der letzte Altcode-Leser weg ist."""
+        """Korpus im JSON-Format der Arbeit; nur noch unter ``reference_root`` gelesen."""
         return self.interim / "paper_with_text.json"
 
     @property
