@@ -99,7 +99,12 @@ def idf_weight(df: int, n: int) -> float:
 
 
 def idf_expression(n_documents: int) -> pl.Expr:
-    """``idf_weight`` als Ausdruck über ``anzahl_treffer``; ein Eigenschaftstest hält beide gleich."""
+    """``idf_weight`` als Ausdruck über ``anzahl_treffer``, spaltenweise statt je Zeile.
+
+    Ein Eigenschaftstest hält Ausdruck und Funktion auf eine letzte Stelle zusammen: Polars teilt
+    durch ein skalares Literal, indem es mit dem Kehrwert multipliziert, und das kostet ein ulp
+    (gemessen 2026-10-12, tests/unit/test_weights.py). Die Schranke [0, 1] hält trotzdem.
+    """
     if n_documents <= 1:
         return pl.when(pl.col(HITS) <= 0).then(pl.lit(1.0)).otherwise(pl.lit(0.0)).alias(W_IDF)
     log_n = math.log(n_documents)

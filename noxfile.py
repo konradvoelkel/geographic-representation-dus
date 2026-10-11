@@ -76,6 +76,8 @@ VERIFY_TARGETS = [
     "georep.sources.wiki.sparql_query",
     "georep.sources.overpass.overpass_query",
     "georep.sources.overpass.street_names",
+    "georep.analysis.weights.district_weight",
+    "georep.analysis.weights.idf_weight",
     "georep.report.model.format_de",
     "georep.report.search.canonical_term",
     "georep.report.charts.nice_ticks",

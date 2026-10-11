@@ -90,12 +90,18 @@ def test_idf_weight_is_one_in_a_single_document_and_zero_in_all() -> None:
 
 
 def test_idf_expression_is_the_scalar_function() -> None:
-    frame = pl.DataFrame(
-        {"anzahl_treffer": [0, 1, 5, 205, 19_033]}, schema={"anzahl_treffer": pl.Int64}
-    )
+    """Der Ausdruck rechnet dasselbe wie die Funktion, bis auf die letzte Stelle.
+
+    Polars teilt durch ein skalares Literal, indem es mit dem Kehrwert multipliziert
+    (``log(6) * (1/log(6)) == 0.9999999999999999``, gemessen am 2026-10-12 mit Polars 2); die
+    Abweichung ist ein ulp und die Schranke [0, 1] hält. Darum eine Toleranz statt Gleichheit.
+    """
+    frequencies = (0, 1, 5, 205, 19_033)
+    frame = pl.DataFrame({"anzahl_treffer": list(frequencies)}, schema={"anzahl_treffer": pl.Int64})
     found = frame.select(idf_expression(19_033)).get_column("gewicht_idf").to_list()
-    assert found == [idf_weight(df, 19_033) for df in (0, 1, 5, 205, 19_033)]
-    assert found[1] == 1.0 and found[-1] == 0.0
+    expected = [idf_weight(df, 19_033) for df in frequencies]
+    assert found == [pytest.approx(value, abs=1e-15) for value in expected]
+    assert found[0] == 1.0 and found[-1] == 0.0
 
 
 def test_term_weights_count_districts_and_documents() -> None:
