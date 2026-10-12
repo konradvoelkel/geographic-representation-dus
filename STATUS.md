@@ -85,7 +85,7 @@ rechnet die Kette wie die Arbeit, und genau so messen die Golden-Master-Tests
 
 ## Zahlen (2026-10-12, `v0.11.0`)
 
-- Tests: 846 schnelle (nox-Gate, parallel in rund 42 s, Abdeckung 98 %), 20 `slow` (rund 2 min über die volle
+- Tests: 855 schnelle (nox-Gate, parallel in rund 40 s, Abdeckung 98 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 28 Schritte; `georep steps` zeigt 25 für Düsseldorf, 26 mit Vergleich, 20 im Periodenprofil
   2014 bis 2020, 19 in der laufenden Periode, 21 für Mönchengladbach. Voller Offline-Lauf auf der Referenz

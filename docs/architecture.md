@@ -332,7 +332,7 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `verify` | crosshair über die reinen Funktionen mit Verträgen, rund sechs Minuten; ein Ziel ist mit Begründung ausgenommen (crosshair baut für `re.Pattern | None` einen symbolischen Regex und bricht ab) | lokal |
 | `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung; mit `analysis/topics.py` im Ziel dauert die Session sehr lange (jeder Mutant rechnet NMF), darum besser gezielt je Modul | lokal |
 
-Stand 2026-10-12: 846 schnelle Tests in rund 42 s, Abdeckung 98,2 %; Mutationsquote 79 % über
+Stand 2026-10-12: 855 schnelle Tests in rund 40 s, Abdeckung 98,2 %; Mutationsquote 79 % über
 `search/` und `analysis/` ([mutation-2026-10-11.md](mutation-2026-10-11.md)), 83 % über das neue
 `analysis/weights.py` ([mutation-2026-10-12.md](mutation-2026-10-12.md)).
 
