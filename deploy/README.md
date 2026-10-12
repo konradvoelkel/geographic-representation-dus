@@ -33,12 +33,15 @@ ohne Anmeldung. Ein Lauf ohne Timer, mit derselben Umgebung und eigenem Journal:
 
 ```bash
 systemd-run --user --collect --unit=georep-monitor-hand \
-  -p EnvironmentFile=%h/.config/georep/monitor.env \
-  /usr/bin/bash <Repo>/deploy/bin/georep-monitor.sh
+  -p EnvironmentFile="$HOME/.config/georep/monitor.env" \
+  /usr/bin/bash "$PWD/deploy/bin/georep-monitor.sh"
 journalctl --user -u georep-monitor-hand -f
 ```
 
-In einer transienten Einheit löst `systemd-run -p Environment=…` kein `%d` auf; wer dort
+Der Pfad muss ausgeschrieben sein: `systemd-run` löst in `-p` keine Spezifizierer auf, `%h` endet
+mit „Path %h/… is not absolute" und die Einheit startet nicht (geprüft am 2026-10-12 mit einer
+transienten Einheit, die nur `true` ausführt). In den Unit-Dateien selbst gilt `%E` dagegen. Aus
+demselben Grund steht auch `%d` dort nicht zur Verfügung: wer in einer transienten Einheit
 Zugangsdaten braucht, schreibt `$CREDENTIALS_DIRECTORY/rclone.conf` ins Kommando (Playbook § 3.10).
 
 ## Was der Lauf tut
@@ -62,6 +65,12 @@ Zugangsdaten braucht, schreibt `$CREDENTIALS_DIRECTORY/rclone.conf` ins Kommando
 10. `out/2025/stand.json` mit Beginn, Ende, Ergebnis, Zahlen und den Zusammenfassungszeilen; zum
     Schluss eine Zeile im Journal: „n neue Paper, n PDFs, n Texte, Seite n KB, Schnappschuss …".
 
+Die Ausgabe eines Schritts erscheint im Journal erst, wenn der Schritt fertig ist: das Skript
+sammelt sie in einer Datei, prüft den Exit-Code und druckt sie dann (eine Prüfung hinter einer Pipe
+verlöre ihn). Bei langen Schritten — `fetch pdfs` kann Stunden laufen — steht im Journal also erst
+die Zeile „Schritt pdfs: …" und lange nichts; `ps` oder die wachsende Datenwurzel zeigen den
+Fortschritt.
+
 Mehrere Läufe stören sich nicht: eine Sperre (`flock` auf `$GEOREP_DATA_ROOT/.monitor.lock`) lässt
 nur einen zu, der zweite endet sofort mit „läuft bereits" und Exit 0. Ein Fehler bricht den Lauf
 mit Exit 1 ab und nennt den Schritt („FEHLER: papers (Exit 1)"); systemd meldet die Einheit als
@@ -80,6 +89,8 @@ entsteht wirklich, sie braucht kein Netz.
   als Einstellung; ein `GEOREP_PROFILE=settings.2025.toml` würde jeden Aufruf mit einem
   Validierungsfehler beenden. Einstellungen gehören bewusst gesetzt: `GEOREP_DATA_ROOT`,
   `GEOREP_CACHE_ROOT`, `GEOREP_LOG_LEVEL`.
+- Den Profilnamen und alle Pfade fragt das Skript mit `georep paths` beim Paket ab; sie stehen
+  nur in `settings.2025.toml`. In `monitor.env` gehört kein Profil und kein abgeleiteter Pfad.
 - `PATH`: systemd kennt keinen Login-PATH (Playbook § 3.2). `uv` und `rclone` liegen in
   `~/.local/bin`; `MONITOR_UV` und `MONITOR_RCLONE` zeigen zusätzlich direkt darauf.
 
@@ -91,9 +102,9 @@ Der erste Lauf holt die ganze Periode seit dem 15.09.2025: rund 21 Seiten Metada
 
 ```bash
 systemd-run --user --collect --unit=georep-monitor-probe \
-  -p EnvironmentFile=%h/.config/georep/monitor.env \
+  -p EnvironmentFile="$HOME/.config/georep/monitor.env" \
   -p Environment=GEOREP_SOURCES__OPARL__PDF_LIMIT=50 \
-  /usr/bin/bash <Repo>/deploy/bin/georep-monitor.sh
+  /usr/bin/bash "$HOME/files/work/georep/deploy/bin/georep-monitor.sh"
 ```
 
 Dateinamen, Textextraktion und Trefferzahl ansehen (`georep --settings settings.2025.toml status`),
