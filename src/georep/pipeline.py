@@ -91,6 +91,10 @@ from georep.prep.voters import (
 from georep.records import PaperRecord
 from georep.report.build import MAP_NAME, SCHEMA_NAME, build_site, current_commit
 from georep.report.geometry import district_shapes
+
+# Punkt 45: nur die zwei Zahlen, nicht die Modelle -- ``analysis.topics`` und
+# ``analysis.committees`` bringen sklearn mit und werden erst im Schritt importiert.
+from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
 from georep.settings import Settings
@@ -715,12 +719,7 @@ def build_steps(
     def topics() -> str:
         # Erst hier importieren, nicht oben: sklearn kostet rund 0,4 s Importzeit, und nur wer
         # rechnet, soll sie zahlen (``georep status`` lädt build_steps).
-        from georep.analysis.topics import (
-            TOPICS_SCHEMA_VERSION,
-            TopicRules,
-            dominant_topics,
-            fit_topics,
-        )
+        from georep.analysis.topics import TopicRules, dominant_topics, fit_topics
 
         rules = TopicRules.from_settings(settings)
         model = fit_topics(
@@ -742,10 +741,7 @@ def build_steps(
     # --- Punkt 45: der passende Ausschuss je Dokument (docs/themenmodell-2026-10.md)
     def committees() -> str:
         # Wie bei ``topics``: sklearn erst im Schritt importieren.
-        from georep.analysis.committees import (
-            ASSIGNMENT_SCHEMA_VERSION,
-            assign_committees,
-        )
+        from georep.analysis.committees import assign_committees
         from georep.analysis.committees import summary as assignment_summary
         from georep.analysis.topics import TopicRules
 
@@ -1056,7 +1052,15 @@ def build_steps(
         ),
         # --- Option 06, mit der Saat aus Punkt 45
         *(
-            [Step("topics", (layout.corpus, *seed_inputs), topic_outputs, topics)]
+            [
+                Step(
+                    "topics",
+                    (layout.corpus, *seed_inputs),
+                    topic_outputs,
+                    topics,
+                    TOPICS_SCHEMA_VERSION,
+                )
+            ]
             if with_topics
             else []
         ),
@@ -1068,6 +1072,7 @@ def build_steps(
                     (layout.corpus, layout.papers_bodies),
                     (layout.papers_committee, layout.committee_table),
                     committees,
+                    ASSIGNMENT_SCHEMA_VERSION,
                 )
             ]
             if with_committees

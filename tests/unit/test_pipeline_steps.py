@@ -1,7 +1,8 @@
 """Jeder Schritt trägt die Schema-Version seiner Ausgabe (Review-Befund 3, 2026-10-13).
 
-Die Version steht im Modul, das die Datei schreibt (``BODIES_SCHEMA_VERSION`` und so weiter), und
-sie landet über ``write_parquet`` in den Parquet-Metadaten. Sie muss aber auch am ``Step`` stehen:
+Die Version steht im Modul, das die Datei schreibt (``BODIES_SCHEMA_VERSION`` und so weiter) oder
+für die zwei Modelle in ``georep.schema``, damit das Register sie ohne sklearn kennt; sie landet
+über ``write_parquet`` in den Parquet-Metadaten. Sie muss aber auch am ``Step`` stehen:
 nur dann schreibt ``write_stamp`` sie in den Stamp, und nur dann kann ``stamp_mismatch`` je
 „Schema geändert" melden. Fehlt sie dort, bleibt der Stamp nach einer Schemaänderung gültig und
 die Kette rechnet mit einer Datei weiter, deren Spalten sich geändert haben.
@@ -13,12 +14,11 @@ from pathlib import Path
 
 import pytest
 
-from georep.analysis.committees import ASSIGNMENT_SCHEMA_VERSION
-from georep.analysis.topics import TOPICS_SCHEMA_VERSION
 from georep.layout import Layout
 from georep.pipeline import build_steps, stamp_mismatch
 from georep.prep.bodies import BODIES_SCHEMA_VERSION
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
+from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION
 from georep.settings import Settings
 
 VERSIONS = {

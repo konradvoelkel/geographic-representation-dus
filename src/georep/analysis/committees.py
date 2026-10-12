@@ -44,7 +44,6 @@ REST = ""  # die Restklasse trägt kein Kürzel, damit die Spalte ein Kürzel bl
 CONSULTED = "beraten"  # das Kürzel, in dem das Dokument wirklich beraten wurde; null sonst
 ASSIGNMENT_COLUMNS = [DOC, COMMITTEE, PROBABILITY]
 TABLE_COLUMNS = [COMMITTEE, DOCUMENTS, SHARE, WITHOUT, MEDIAN]
-ASSIGNMENT_SCHEMA_VERSION = 1
 
 
 @dataclass(frozen=True)

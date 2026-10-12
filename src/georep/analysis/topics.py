@@ -62,7 +62,6 @@ TOPIC_SCHEMA: dict[str, pl.DataType | DataTypeClass] = {
     DOCUMENTS: pl.Int64,
     WEIGHT_SUM: pl.Float64,
 }
-TOPICS_SCHEMA_VERSION = 2  # Punkt 45: die Spalte ``gremium`` kam dazu
 # Wörter aus Buchstaben, mindestens drei; Zahlen und Drucksachennummern sind keine Themen.
 TOKEN_PATTERN = r"[a-zäöüß]{3,}"
 _WORD = re.compile(TOKEN_PATTERN)
