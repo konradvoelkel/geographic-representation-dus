@@ -78,8 +78,13 @@ def test_district_from_id_cuts_the_number(
     assert district_from_id(precinct_id, *cut) == expected
 
 
-@pytest.mark.parametrize("precinct_id", ["10001", "B0097", "1", ""])
+@pytest.mark.parametrize("precinct_id", ["10001", "B0097", "1", "", "1²3", "1٣4"])
 def test_district_from_id_refuses_a_cut_that_is_no_number(precinct_id: str) -> None:
+    """Auch Ziffern, die keine sind: crosshair fand am 2026-10-12 ``district_from_id('²', 0, 1)``.
+
+    ``'²'.isdigit()`` ist wahr, ``int('²')`` wirft; und arabisch-indische Ziffern würde ``int``
+    zwar lesen, eine Stimmbezirksnummer besteht aber aus ASCII-Ziffern.
+    """
     with pytest.raises(SchemaError, match="Wahlbezirksnummer"):
         district_from_id(precinct_id, 1, 3)
 
