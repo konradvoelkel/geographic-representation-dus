@@ -19,7 +19,7 @@ import deal
 from jinja2 import Environment, PackageLoader, StrictUndefined, select_autoescape
 
 from georep.errors import SchemaError
-from georep.report.charts import LegendEntry, delta_label
+from georep.report.charts import LegendEntry, delta_label, month_de
 from georep.report.model import ReportModel, format_de, percent_de
 from georep.report.search import search_payload
 
@@ -73,7 +73,7 @@ class Visuals:
     """Die fertigen SVGs und Legenden, getrennt vom Modell, weil sie Geometrie brauchen."""
 
     map_svg: str
-    scatter_svg: str
+    scatter_svg: str | None  # None: keine Regression zur Periode (Option 07)
     rate_legend: Sequence[LegendEntry]
     turnout_legend: Sequence[LegendEntry]
     simplify_m: float
@@ -85,6 +85,7 @@ class Visuals:
     party_maps_svg: str = ""  # Option 04: leer, solange der Schritt ``parties`` nicht lief
     # Option 02: das Streudiagramm der Änderungen; leer, wenn die Seite nur eine Periode zeigt
     delta_svg: str = ""
+    bars_svg: str = ""  # Option 07: Balken je Monat; leer = kein Abschnitt „Je Monat"
 
 
 def date_de(value: dt.date) -> str:
@@ -114,6 +115,7 @@ def environment() -> Environment:
     env.filters["datetime_de"] = datetime_de
     env.filters["kib"] = kib
     env.filters["delta"] = delta_label  # Option 02: Änderung mit Vorzeichen
+    env.filters["month_de"] = month_de  # Option 07: „Oktober 2025" in der Monatstabelle
     return env
 
 

@@ -365,3 +365,89 @@ def test_force_repeats_the_step_but_keeps_the_resume_point(
     assert outcome.status == "ausgeführt" and "erzwungen" in outcome.reason
     assert session.urls[0] == broken  # nicht wieder bei first_page
     assert not layout.papers_progress.exists()
+
+
+# --- Option 07: Monitoring der laufenden Wahlperiode ------------------------------------------
+
+ALL_PDFS = ["00438685.pdf", "00439409.pdf", "00519825.pdf", "00552781.pdf"]
+
+
+@pytest.fixture(scope="module")
+def open_settings() -> Settings:
+    """Das Profil der laufenden Periode: offenes Ende, kein Korpus der Arbeit, keine Regression."""
+    return load_settings(profile="duesseldorf-2025", cwd=Path("/nonexistent"))
+
+
+def _dated(i: int, name: str, date: str, modified: str) -> dict[str, Any]:
+    paper = _paper(i, name, date)
+    paper["modified"] = modified
+    return paper
+
+
+def _one_page(url: str, papers: list[dict[str, Any]]) -> Any:
+    return response(url, payload={"data": papers, "links": {"self": url}})
+
+
+def test_incremental_runs_add_pages_keep_old_and_drop_deleted(
+    tmp_path: Path, open_settings: Settings
+) -> None:
+    """Vier Läufe gegen dieselbe Fake-Session mit wechselnder Antwort: neu, geändert, gelöscht."""
+    layout = Layout(tmp_path / "data", tmp_path / "cache", MINI, profile="2025")
+    bootstrap(layout, seed_corpus=False)
+    endpoint = open_settings.sources.oparl.endpoint
+    a = _dated(1, ALL_PDFS[0], "2025-10-01", "2025-10-01T11:00:00+02:00")
+    b = _dated(2, ALL_PDFS[1], "2025-11-02", "2025-11-02T11:00:00+02:00")
+    before = _dated(3, "vorher.pdf", "2025-09-01", "2025-09-01T11:00:00+02:00")
+    routes: dict[str, Any] = {endpoint: _one_page(endpoint, [a, b, before])}
+    for name in ALL_PDFS:
+        url = f"https://ris.invalid/downloadfiles/{name}"
+        routes[url] = response(url, content=(PDF_FIXTURES / name).read_bytes())
+    session = FakeSession(routes)
+    steps = build_steps(open_settings, layout, session, sleep=lambda _: None)
+    names = ["papers", "pdfs", "texts", "corpus"]
+
+    first = run_pipeline(steps, open_settings, names, online=True)
+    assert [o.status for o in first] == ["ausgeführt"] * 4
+    assert "vollständig" in first[0].reason and "2 im Zeitraum" in first[0].reason
+    store = PaperStore(layout.papers)
+    assert sorted(store.load()) == [f"https://ris.invalid/papers/{i}" for i in (1, 2)]
+    assert layout.papers == tmp_path / "data" / "2025" / "raw" / "papers.jsonl"
+    assert layout.texts == tmp_path / "cache" / "2025" / "text" / "texts.parquet"
+    assert pl.read_parquet(layout.corpus).height == 2
+
+    # Lauf 2: C ist neu, A' geändert (neuer Dateiname), D gelöscht (nie gesehen)
+    changed = _dated(1, ALL_PDFS[2], "2025-10-01", "2026-01-06T11:00:00+02:00")
+    c = _dated(4, ALL_PDFS[3], "2026-01-05", "2026-01-05T11:00:00+02:00")
+    gone = {"id": "https://ris.invalid/papers/9", "deleted": True}
+    routes[endpoint] = _one_page(endpoint, [changed, c, gone])
+    second = run_pipeline(steps, open_settings, names, online=True, force=True)
+    assert [o.status for o in second] == ["ausgeführt"] * 4
+    assert "seit 2025-11-01" in second[0].reason and "1 gelöscht" in second[0].reason
+    # Die Zahlen summieren über die Seiten: C ist neu, A geändert, D war nie im Store
+    assert "1 neu, 1 aktualisiert" in second[0].reason and "3 gesamt" in second[0].reason
+    asked = [params for url, params in session.calls if url == endpoint]
+    assert asked == [None, {"modified_since": "2025-11-01T11:00:00+02:00"}]  # Lauf 1 ohne Filter
+    assert sorted(store.load()) == [f"https://ris.invalid/papers/{i}" for i in (1, 2, 4)]
+    assert store.load()["https://ris.invalid/papers/1"].file_name == ALL_PDFS[2]
+    assert "2 geladen" in second[1].reason and "2 extrahiert, 1 aktuell" in second[2].reason
+    assert pl.read_parquet(layout.corpus).height == 3
+
+    # Lauf 3: dieselbe Antwort, nichts ändert sich; nur papers läuft (erzwungen)
+    third = run_pipeline(steps, open_settings, names, online=True)
+    assert [o.status for o in third] == ["übersprungen"] * 4
+    forced = run_pipeline(steps, open_settings, ["papers"], online=True, force=True)
+    assert "0 neu, 0 aktualisiert" in forced[0].reason and "3 gesamt" in forced[0].reason
+    assert "0 gelöscht" not in forced[0].reason  # ohne Löschung steht die Zahl nicht da
+
+    # Lauf 4: B wird gelöscht und verschwindet aus Store und Korpus
+    routes[endpoint] = _one_page(
+        endpoint, [changed, c, {"id": "https://ris.invalid/papers/2", "deleted": True}]
+    )
+    fourth = run_pipeline(steps, open_settings, names, online=True, force=True)
+    assert "1 entfernt" in fourth[0].reason and "0 neu, 0 aktualisiert" in fourth[0].reason
+    assert sorted(store.load()) == [f"https://ris.invalid/papers/{i}" for i in (1, 4)]
+    assert pl.read_parquet(layout.corpus).height == 2
+    # Texte des gelöschten und des alten Dateinamens bleiben im Cache liegen (Plan § 7); der
+    # Korpus kennt nur die zwei aktuellen, der Textstore zählt alle vier je Dateiname.
+    assert len(TextStore(layout.texts)) == 4
+    assert sorted(pl.read_parquet(layout.corpus)["file_name"].to_list()) == ALL_PDFS[2:]

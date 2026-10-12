@@ -1,13 +1,19 @@
 <section id="karte">
 <h2>Karte der Wahlbezirke</h2>
 <div class="controls">
+{# Option 07: der Umschalter erscheint erst, wenn es mehr als eine Einfärbung gibt; einer
+   laufenden Periode fehlt die Wahlbeteiligung. Eine weitere Kennzahl hängt ihr Radio hier an. #}
+{% if model.regression or visuals.bodies_legend %}
 <fieldset><legend>Einfärbung</legend>
 <label><input type="radio" name="metric" value="rate" checked> Trefferquote</label>
+{% if model.regression %}
 <label><input type="radio" name="metric" value="turnout"> Wahlbeteiligung</label>
+{% endif %}
 {% if visuals.bodies_legend %}{# Option 05 #}
 <label><input type="radio" name="metric" value="bodies"> Anteil eigene Bezirksvertretung</label>
 {% endif %}
 </fieldset>
+{% endif %}
 {% if visuals.pois %}
 <label><input type="checkbox" id="show-pois"> {{ visuals.pois|num }} Orte als Punkte zeigen</label>
 {% endif %}
@@ -17,8 +23,10 @@
 <div>
 <div class="legend" id="legend-rate"><strong>Trefferquote</strong> (Dokumente je Wahlberechtigtem)
 <ul>{% for entry in visuals.rate_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
+{% if model.regression %}
 <div class="legend" id="legend-turnout" hidden><strong>Wahlbeteiligung</strong>
 <ul>{% for entry in visuals.turnout_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
+{% endif %}
 {% if visuals.bodies_legend %}{# Option 05 #}
 <div class="legend" id="legend-bodies" hidden><strong>Anteil eigene Bezirksvertretung</strong> (an allen Treffern des Bezirks)
 <ul>{% for entry in visuals.bodies_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul>

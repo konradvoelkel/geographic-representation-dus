@@ -1,4 +1,4 @@
-"""Vertrag mit dem OParl-Server: echte Antwort vom 2026-10-09, typisiert gelesen."""
+"""Vertrag mit dem OParl-Server: echte Antworten vom 2026-10-09 und 2026-10-11, typisiert gelesen."""
 
 from __future__ import annotations
 
@@ -20,8 +20,11 @@ from georep.oparl import (
 )
 from tests.conftest import REPO
 
-FIXTURE = REPO / "tests" / "fixtures" / "oparl" / "papers_page.json"
-ORGANIZATIONS = REPO / "tests" / "fixtures" / "oparl" / "organizations_page.json"
+OPARL = REPO / "tests" / "fixtures" / "oparl"
+FIXTURE = OPARL / "papers_page.json"
+ORGANIZATIONS = OPARL / "organizations_page.json"
+# Option 07: dieselbe Liste mit ?modified_since=…; nur dabei liefert der Server Geloeschte.
+MODIFIED_SINCE = OPARL / "papers_modified_since.json"
 
 
 @pytest.fixture(scope="module")
@@ -71,8 +74,9 @@ def test_in_period_is_inclusive_and_false_without_date() -> None:
     assert not OparlPaper(id="x").in_period(dt.date(2000, 1, 1), None)
 
 
-def test_model_knows_every_key_the_server_sends() -> None:
-    raw = json.loads(FIXTURE.read_text(encoding="utf-8"))
+@pytest.mark.parametrize("fixture", [FIXTURE, MODIFIED_SINCE], ids=["page", "modified_since"])
+def test_model_knows_every_key_the_server_sends(fixture: Path) -> None:
+    raw = json.loads(fixture.read_text(encoding="utf-8"))
     assert set(raw) == {"data", "pagination", "links"}
     assert set(raw["pagination"]) <= known_aliases(Pagination)
     assert set(raw["links"]) <= known_aliases(Links)
@@ -96,6 +100,7 @@ def test_unknown_keys_are_ignored_not_fatal() -> None:
 def test_fixture_file_is_small_enough_to_read_in_a_review() -> None:
     assert Path(FIXTURE).stat().st_size < 40_000
     assert Path(ORGANIZATIONS).stat().st_size < 40_000
+    assert Path(MODIFIED_SINCE).stat().st_size < 40_000  # Option 07
 
 
 # --- Option 04: Urheberfelder und Organisationen -------------------------------------------------
@@ -234,3 +239,41 @@ def test_the_second_body_has_a_paper_without_a_main_file(mg_page: PaperPage) -> 
     assert without_main and all(
         p.primary_file is None or p.primary_file.download_url for p in without_main
     )
+
+
+# --- Option 07: Monitoring der laufenden Wahlperiode ------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def modified_page() -> PaperPage:
+    return PaperPage.model_validate_json(MODIFIED_SINCE.read_text(encoding="utf-8"))
+
+
+def test_modified_since_page_is_the_last_one_and_carries_the_filter(
+    modified_page: PaperPage,
+) -> None:
+    assert modified_page.links.next is None  # eine Seite, 141 Paper unter 200 je Seite
+    for link in (modified_page.links.first, modified_page.links.self_):
+        assert link is not None and "modified_since=2026-10-01T00:00:00+00:00" in link
+    assert modified_page.pagination is not None
+    assert modified_page.pagination.elements_per_page == 200
+    assert modified_page.pagination.total_elements is None  # der Server zaehlt nicht mit
+
+
+def test_deleted_papers_are_read_and_have_no_date(modified_page: PaperPage) -> None:
+    deleted = [p for p in modified_page.data if p.deleted]
+    assert [p.id.rsplit("/", 1)[-1] for p in deleted] == ["114106", "114088"]
+    for paper in deleted:
+        assert paper.date is None and paper.primary_file is None and paper.download_url is None
+        assert paper.modified is not None and paper.modified.tzinfo is not None
+        assert not paper.in_period(dt.date(2025, 9, 15), None)  # ohne Datum nie im Zeitraum
+
+
+def test_the_living_papers_of_the_page_belong_to_the_open_period(modified_page: PaperPage) -> None:
+    living = [p for p in modified_page.data if not p.deleted]
+    assert len(living) == 4 and all(p.in_period(dt.date(2025, 9, 15), None) for p in living)
+    assert all(p.modified is not None for p in living)
+    # Eines der vier hat kein mainFile, aber auxiliaryFile: die Ersatzregel greift auch hier
+    without_main = [p for p in living if p.main_file is None]
+    assert len(without_main) == 1 and without_main[0].primary_file is not None
+    assert all(p.download_url is not None and p.download_url.endswith(".pdf") for p in living)

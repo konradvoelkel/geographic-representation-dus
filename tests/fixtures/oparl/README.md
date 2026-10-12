@@ -25,3 +25,17 @@ auf die Auswahl: die fünf Paper, deren PDF unter `tests/fixtures/pdf/mg/` liegt
 `mainFile`. `pagination` und `links` sind die der echten Seite. `tests/unit/test_oparl.py` prüft
 auch an dieser Datei, dass das Modell jeden Schlüssel kennt; sie ist zugleich die Quelle der
 Metadaten in `tests/fixtures/mg/raw/papers.jsonl`.
+
+`papers_modified_since.json`: sechs Einträge der einen Seite von
+<https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers?modified_since=2026-10-01T00:00:00+00:00>,
+abgerufen am 2026-10-11, 22:43 UTC (HTTP 200 nach 28,6 s, 266 355 Bytes, 141 Paper, davon fünf mit
+`deleted: true`; derselbe Inhalt wie bei der Prüfung am 2026-10-11, 21:42 UTC in `docs/plans/07-monitoring.md`,
+§ 3). Auswahl: zwei Gelöschte (`vo/114106`, `vo/114088`; ohne `date`, `modified` ist der Löschzeitpunkt), das
+neueste Paper (`vo/114057`, 2026-10-08), eines mit `mainFile` und `auxiliaryFile` (`vo/112413`), eines ohne
+`mainFile` (`vo/114038`, sechs `auxiliaryFile`), das älteste (`vo/112372`, 2026-05-15). Die Reihenfolge ist die
+der Seite; sie ist weder streng nach `date` noch nach `modified` sortiert, und die Gelöschten stehen zwischen
+den datierten Papern. Der Abruf verlässt sich darum nicht auf die Sortierung: `stop_when_older` vergleicht das
+größte Datum einer ganzen Seite mit dem Periodenbeginn (`georep.sources.oparl`). `pagination` und `links` sind
+die der echten Seite: kein `next` (eine Seite), `first` und `self` tragen den Parameter. Die Datei ist die
+Fixture für den inkrementellen Abruf (Option 7): `test_oparl.py` prüft, dass das Modell jeden Schlüssel kennt
+und `deleted` liest.

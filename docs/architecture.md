@@ -36,7 +36,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `geo` | GeoJSON lesen, nach EPSG:25832 projizieren, `make_valid`, `PrecinctIndex` (STRtree), eine Rückprojektion nach lon/lat; `read_canonical_precincts` für den kanonischen Stand (drei feste Eigenschaften), `read_precincts` für eine Quellgeometrie mit Wahlbezirksattributen, `read_areas` für Flächen, die nur eine Kennung tragen |
 | `prep/` | `extract` (PDF-Text hinter `PdfTextExtractor`), `papers` (Korpus), `precincts` (jede Quellgeometrie zu `interim/stimmbezirke.geojson`, GeoJSON oder Shapefile-Zip über pyshp), `voters` (auch `district_units`: Wahlbezirk zu Stadtbezirk über den Crosswalk), `streets` (dazu die Übereinstimmung mit dem Straßenverzeichnis der Wahl), `pois`, `bodies` (Gremium je Dokument aus der Drucksachennummer: `parse_reference` als reine Funktion über `BodyRules`, `classify_papers` als Batch-Grenze), `context` (Fremddaten je Raumeinheit: Stimmbezirkstabelle, Tabelle der Quelle lesen, gewichtetes Mittel je Wahlbezirk): Polars-Funktionen Frame zu Frame. `voters` benennt die Zählspalten beim Lesen auf die kanonischen Namen um (`Wahlberechtigte_insgesamt`, `Waehler`, `<Partei>_Stimmen`), damit jede Wahl dasselbe Schema liefert, liest Wahlbezirk und Stadtbezirk aus einer Spalte oder aus der Stimmbezirksnummer und kennt für einen älteren Zuschnitt zusätzlich `precinct_counts`, `district_results` und `spread_postal` (Briefwahl ohne Geometrie) |
 | `search/` | `dictionary` (Wörterbuch je Wahlbezirk), `matcher` (`KeywordMatcher`-Protokoll, FlashText), `index` (invertierter Index) |
-| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings; ohne Streuung in x oder y gibt es kein Ergebnis, sondern einen `EmptyResultError`), `periods` (zwei Perioden je Wahlbezirk nebeneinander und die Regression ihrer Änderungen) |
+| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings; ohne Streuung in x oder y gibt es kein Ergebnis, sondern einen `EmptyResultError`), `periods` (zwei Perioden je Wahlbezirk nebeneinander und die Regression ihrer Änderungen), `timeline` (Dokumente je Monat, stadtweit und je Wahlbezirk; die Nachbedingung prüft gegen `hits_by_district`, Option 07) |
 | `crosswalk` | Umrechnung von Gebietseinheiten auf Wahlbezirke: `unit_weights` wiegt je Wahlbezirk die Einheiten (Stadtbezirk, Stadtteil) mit einer Zählgröße je Stimmbezirk; der Flächen-Crosswalk auf einen anderen Zuschnitt kommt mit `assign_by_point` (Zuordnung innerhalb eines Zuschnitts über den repräsentativen Punkt), `area_shares` (Flächenanteile, auf die Schnittsumme normiert, mit Abdeckung und Mindestschwelle), `target_weights` und `transfer_counts` (additive Zählgrößen übertragen, `largest_remainder` macht sie ganzzahlig ohne die Summe zu ändern). Verträge: Anteile je Quelle und Gewichte je Ziel summieren zu 1, Spaltensummen bleiben exakt erhalten |
 | `pipeline` | Schrittregister: Name, Eingaben, Ausgaben, `run()`, Schema-Version; Stamps; `run_step`, `run_pipeline`, `build_steps` |
 | `bootstrap` | kopiert die Referenz nach `data_root` und baut daraus `papers.jsonl` und den Textstore |
@@ -45,13 +45,15 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `cli` | `georep run, fetch, steps, status, profiles, publish, bootstrap, export, regress, profile`; global `--profile`; `main(argv) -> int`; Exit 0, 1 (Domänenfehler), 2 (Bedienung) |
 | `export` | Parquet-Ergebnisse als CSV neben die Dateien; `csv_plan` und `write_csv` nutzt auch der Schritt `report` |
 | `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, Spaltendoku; mit Fremddaten `controls` und `derived` für die beiden neuen Abschnitte), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, `Axes`, Choroplethe, Streudiagramm und Added-Variable-Plots als SVG), `documents` (Dokumente mit Treffer ohne Texte, Begriffe als Indizes, für `dokumente.json`), `render` (Jinja2 mit Autoescape, Allowlist der Links; `sections` liest die Abschnitte aus `templates/sections/`; `render_map` für die Leaflet-Datei), `search` (Sucheinträge je kanonischem Begriff mit Wahlbezirken, Dokumenten und Art, dazu die Faltung als Spiegel des Abschnitts-Skripts), `tables` (Register der veröffentlichten Tabellen: Datei, Beschreibung, Spaltendoku, CSV-Regeln), `build` (der Schritt `report`: Downloads, Schema, `summary.json`, Seiten), `comparison` und `publish` (`georep publish`: die Stadtseiten zusammentragen und `vergleich.html` bauen) |
+| `deploy/` (kein Modul) | außerhalb des Pakets: `bin/georep-monitor.sh` und die systemd-Einheiten des wiederkehrenden Laufs; sie sprechen mit `georep` nur über CLI, Settings und Umgebung (Abschnitt Betrieb, Option 07) |
 
 ## Pipeline
 
-Sechsundzwanzig Schritte stehen im Register, jeder mit Eingaben, Ausgaben und einer
+Achtundzwanzig Schritte stehen im Register, jeder mit Eingaben, Ausgaben und einer
 Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps` zeigt es
-(nachgezählt am 2026-10-12: vierundzwanzig für Düsseldorf, fünfundzwanzig mit Vergleich, neunzehn
-im Periodenprofil, zwanzig für Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
+(nachgezählt am 2026-10-12: fünfundzwanzig für Düsseldorf, sechsundzwanzig mit Vergleich, zwanzig
+im Periodenprofil 2014 bis 2020, neunzehn in der laufenden Periode, einundzwanzig für
+Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
 `georep fetch`; `georep fetch` führt `shapes` und `texts` mit, weil die Netzschritte die Flächen
 brauchen und die Texte sonst im Cache liegen blieben. Mit
 `topics.k = 0` fehlt der Schritt `topics`, und `weights` rechnet ohne Themenvarianten. Die drei
@@ -82,6 +84,7 @@ Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`).
 | `corpus` | nein | Metadaten und Texte | `interim/papers.parquet` |
 | `topics` | nein | Korpus (Texte) | `processed/themen.parquet`, `processed/themen_dokumente.parquet`, `interim/themen_anteile.parquet` |
 | `index` | nein | Wörterbuch, Korpus | `processed/inverted_index.parquet` |
+| `timeline` | nein | Korpus, Index, Wörterbuch | `processed/monatsreihe.parquet`, `processed/wahlbezirke_monate.parquet` |
 | `results` | nein | Wörterbuch, Index, Wähler | `processed/wahlbezirke_auswertung.parquet` |
 | `bodies` | nein | Korpus (`id`, `reference`) | `processed/papers_gremien.parquet` |
 | `body_hits` | nein | Auswertung, Gremien je Dokument, Stadtbezirke | `processed/wahlbezirke_gremien.parquet`, `processed/gremien.parquet` |
@@ -144,8 +147,10 @@ PDF-Store. Jeder Fetcher wirft nur `FetchError` (Antwort nicht brauchbar) oder `
 erreichbar, Fehlerstatus nach allen Wiederholungen), gesichert durch `deal.raises`.
 
 - OParl: Paper-Seiten neueste zuerst, Abbruch, sobald eine Seite nur noch Paper vor dem Periodenbeginn trägt
-  (spart 270 von 365 Seiten); beim zweiten Lauf `modified_since` (letztes `modified` minus ein Tag). Jede
-  Seite wird gegen das pydantic-Modell geprüft. Der Server brauchte am 2026-10-09 85 s je Seite.
+  (spart 270 von 365 Seiten); beim zweiten Lauf `modified_since` (letztes `modified` minus ein Tag). Nur mit
+  diesem Filter liefert der Server gelöschte Paper (`deleted: true`, ohne Datum); sie kommen als
+  `FetchReport.deleted_ids` zurück, und `PaperStore.upsert(deleted=…)` nimmt sie aus dem Store
+  (Option 07). Jede Seite wird gegen das pydantic-Modell geprüft. Der Server brauchte am 2026-10-09 85 s je Seite.
   `--max-pages N` liest nur die ersten Seiten; der Abrufbericht zählt, wie viele der gesehenen Paper ein
   Urheberfeld tragen, und ist damit die Probe, ob sich am Befund unten etwas geändert hat.
 - OParl `organizations`: die Fraktionen, Ausschüsse und Bezirksvertretungen, eine Seite mit 58 Objekten in
@@ -243,10 +248,10 @@ Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. D
 Sensitivitätstabelle mit beiden Spalten von Tabelle 5 je Gewichtungsvariante und der Rangkorrelation zur
 ungewichteten Quote, darunter die Themen mit ihren stärksten Wörtern. Die Einheitszeile trägt dieselben
 Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeigt „—", und fehlt der ganzen
-Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 44 Dateien
-(mit `summary.json`, Option 01), 13,4 MB, davon `index.html` 1,08 MB (144 KB Suchdaten, 63 KB die
-Parteikarten, 33 KB die Gewichtung), `karte.html` 252 KB, `dokumente.json` 2,3 MB; 1,5 s (2026-10-12, nach
-dem Rebase auf 02).
+Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 48 Dateien
+(mit `summary.json`, Option 01), 13,5 MB, davon `index.html` 1,17 MB (144 KB Suchdaten, 63 KB die
+Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html` 252 KB, `dokumente.json` 2,3 MB;
+1,6 s (2026-10-12, nach dem Rebase von Option 07).
 
 Die Stadtseite kennt ihre Nachbarn nicht: wo die Zeile „Weitere Städte" steht, hinterlässt der Rahmen nur die
 Marke `<!--georep:weitere-staedte-->`. Erst `georep publish` (`report.publish`) weiß, welche Stadtseiten es
@@ -257,6 +262,29 @@ Markenform je Stadt, eigene Allowlist). Gelesen wird je Stadt nur ihr veröffent
 (`summary.json`, `wahlbezirke.geojson`, `wahlbezirke_auswertung.parquet`). Weil `publish` beim Kopieren löscht,
 nimmt es nur seinen eigenen Zielordner an: die Standardwurzel, ein leeres Verzeichnis oder eines mit seiner
 Markerdatei `.georep-publish`.
+
+Teile der Seite hängen am Profil. Ohne Wahlbeteiligung zur Periode (`report.regression = false`) ist
+`model.regression` leer: Streudiagramm, Tabelle 5 und der Umschalter der Karte entfallen, und Kopf wie
+englische Kurzfassung sagen, warum. Der Abschnitt „Je Monat" (`sections/55-monate`) zeichnet aus der
+Monatsreihe zwei Balken je Monat über dieselbe `Axes`-Klasse wie das Streudiagramm; der Abschnitt
+„Laufende Wahlperiode" (`sections/75-laufend`) erscheint nur, wenn `report.monitoring_url` gesetzt ist, und
+verweist relativ auf die Unterseite. Der Datenstand im Kopf nennt die Abrufdaten aus den Stamps von
+`papers.jsonl` und `manifest.jsonl`, das neueste Dokument und die Zahl der Dokumente ohne Text — alles aus
+dem Modell, nichts fest kodiert.
+
+## Betrieb
+
+Die Hauptperiode entsteht in GitHub Actions aus der Referenz. Die laufende Wahlperiode (Paketprofil `duesseldorf-2025`,
+Datenordner `2025`) braucht dagegen einen Rechner mit Speicher: sie ruft je Lauf nur Geändertes ab
+(`modified_since`), lädt neue PDFs, extrahiert deren Texte und baut ihre eigene Seite unter
+`<data_root>/2025/site/`. Das Skript `deploy/bin/georep-monitor.sh` führt einen solchen Lauf, die beiden
+systemd-Einheiten daneben machen daraus einen Timer; beide tragen keinen Pfad, alles kommt aus
+`%E/georep/monitor.env`. Dieselben Dateien laufen als Nutzereinheit auf kookaburra und als Systemeinheit auf
+dem VPS. PDFs und Textstore gehen optional in ein privates R2-Bucket (`cache/2025/…`), die fertigen Seiten
+und Tabellen per `rsync` auf den VPS; ohne die Variablen passiert nichts von beidem. Eine `flock`-Sperre
+lässt nur einen Lauf zu, ein Fehler bricht mit Exit 1 ab und nennt den Schritt. Installation, Trockenlauf,
+Erstabruf und die Handgriffe für R2 und VPS stehen in [../deploy/README.md](../deploy/README.md), die
+Entscheidungen in [decisions.md](decisions.md).
 
 ## Verträge
 

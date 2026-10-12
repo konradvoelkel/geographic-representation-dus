@@ -870,3 +870,47 @@ def test_publish_cities_are_plain_unique_slugs(tmp_path: Path) -> None:
     (tmp_path / "settings.toml").write_text('[publish]\ncities = ["../x"]\n', encoding="utf-8")
     with pytest.raises(ValidationError, match="publish.cities"):
         load_settings(cwd=tmp_path)
+
+
+# --- Option 07: Monitoring -------------------------------------------------------------------
+
+
+def test_report_and_bootstrap_switches_stay_out_of_the_fingerprint(tmp_path: Path) -> None:
+    base = load_settings(cwd=tmp_path)
+    assert (
+        base.bootstrap.seed_corpus and base.report.regression and base.report.monitoring_url == ""
+    )
+    (tmp_path / "settings.toml").write_text(
+        '[bootstrap]\nseed_corpus = false\n[report]\nregression = false\nmonitoring_url = "2025/"\n',
+        encoding="utf-8",
+    )
+    switched = load_settings(cwd=tmp_path)
+    assert not switched.bootstrap.seed_corpus and not switched.report.regression
+    assert switched.report.monitoring_url == "2025/"
+    assert switched.fingerprint() == base.fingerprint()  # Anzeige, kein Parquet-Ergebnis
+
+
+def test_monitoring_url_must_be_a_relative_link(tmp_path: Path) -> None:
+    for bad in ("https://example.invalid/2025/", "//example.invalid/2025/"):
+        (tmp_path / "settings.toml").write_text(
+            f'[report]\nmonitoring_url = "{bad}"\n', encoding="utf-8"
+        )
+        with pytest.raises(ValidationError, match="nur ein relativer Link"):
+            load_settings(cwd=tmp_path)
+
+
+def test_profile_2025_is_an_open_period_without_corpus_seed(tmp_path: Path) -> None:
+    s = load_settings(profile="duesseldorf-2025", cwd=tmp_path)
+    assert s.profile == "2025" and s.default_profile == "duesseldorf-2025"
+    assert s.city.name == "Düsseldorf"  # base = "duesseldorf": dieselbe Stadt, andere Periode
+    assert s.period.dictionary == "base"  # Straßen und Orte der Hauptperiode, eingefroren
+    assert s.context.root is None and s.topics.k == 0  # was die Regression braucht, entfällt
+    assert s.period.start == date(2025, 9, 15) and s.period.end is None
+    assert s.period.election_day == date(2025, 9, 14)
+    assert not s.bootstrap.seed_corpus and not s.report.regression
+    assert s.report.monitoring_url == ""
+    # Alles andere bleibt wie im Stadtprofil: Quellen, Suche
+    assert s.sources.oparl.endpoint.endswith("/bodies/0015/papers")
+    assert s.sources.oparl.stop_when_older and s.sources.oparl.incremental
+    assert len(s.search.exclude) == 63
+    assert s.fingerprint() != load_settings(cwd=tmp_path).fingerprint()  # andere Periode

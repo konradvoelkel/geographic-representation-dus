@@ -100,3 +100,11 @@ min_coverage = 0.95            # kleinste zulässige Abdeckung einer Quellfläch
 [compare]                      # Vergleich zweier Perioden, Schritt compare auf der Hauptperiode
 period = ""                    # Profil der älteren Periode (Ordner unter data_root); leer = kein Vergleich; profiles/duesseldorf-vergleich.toml setzt "2014-2020"
 label = ""                     # Anzeigename der älteren Periode in der Vergleichstabelle und auf der Seite; leer = der Profilname
+
+# --- Option 07: Monitoring der laufenden Wahlperiode (profiles/duesseldorf-2025.toml setzt sie)
+[bootstrap]
+seed_corpus = true             # false in einem Profil mit laufender Periode: bootstrap kopiert nur die Eingaben, papers.jsonl und Textstore bleiben leer; sonst stünden die Paper der Hauptperiode im Monitoring-Store und pdfs lüde deren PDFs
+
+[report]                       # Anzeigeschalter der Seite; Option 01 setzt Quellen und Hinweise je Profil
+regression = true              # Option 07: false, wenn es zur Periode keine Wahlbeteiligung gibt (laufende Periode): kein Streudiagramm, keine Tabelle 5, kein Umschalter auf der Karte
+monitoring_url = ""            # Option 07: relativer Link auf die Seite der laufenden Periode, auf dem VPS "2025/"; leer = kein Abschnitt, Pages bleibt ohne toten Link

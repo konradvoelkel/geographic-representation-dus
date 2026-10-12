@@ -37,13 +37,17 @@ class BootstrapReport:
     missing: list[str] = field(default_factory=list)
     papers: int | None = None  # None = Stores nicht neu geschrieben
     texts: int | None = None
+    seed_corpus: bool = (
+        True  # False: Stores absichtlich leer gelassen (Option 07, laufende Periode)
+    )
 
     def summary(self) -> str:
-        stores = (
-            f"{self.papers} Paper und {self.texts} Texte aus der Referenz"
-            if self.papers is not None
-            else "Stores vorhanden"
-        )
+        if not self.seed_corpus:
+            stores = "Stores nicht aus der Referenz gefüllt (bootstrap.seed_corpus = false)"
+        elif self.papers is not None:
+            stores = f"{self.papers} Paper und {self.texts} Texte aus der Referenz"
+        else:
+            stores = "Stores vorhanden"
         return (
             f"{len(self.copied)} Dateien kopiert, {len(self.skipped)} übersprungen, "
             f"{len(self.missing)} in Referenz oder Kontext nicht gefunden; {stores}"
@@ -101,6 +105,7 @@ def bootstrap(
     force: bool = False,
     context_files: Sequence[str] = (),
     needs_dictionary: bool = True,
+    seed_corpus: bool = True,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
 
@@ -108,12 +113,14 @@ def bootstrap(
     leer (Option 03). ``needs_dictionary`` ist die Naht von Option 02: ein Periodenprofil mit
     ``period.dictionary = "base"`` braucht keine Straßen und Orte in seiner Referenz, es liest
     das Wörterbuch der Hauptperiode. Dann sind die beiden Dateien nicht fehlend, sondern nicht
-    zuständig.
+    zuständig. ``seed_corpus`` ist die Naht von Option 07: ein Profil mit laufender Periode
+    bekommt die Eingaben der Referenz, aber keine Paper und Texte der Hauptperiode; die holt
+    sein Netzschritt ``papers`` selbst.
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
     PdfStore(layout.pdf_dir).ensure()
-    report = BootstrapReport()
+    report = BootstrapReport(seed_corpus=seed_corpus)
     pairs = [
         (reference.results_csv, layout.results_csv),
         (reference.districts_geojson, layout.districts_geojson),
@@ -140,14 +147,15 @@ def bootstrap(
         if source.is_file():
             _copy_input(layout, source, target, report, force=force)
 
-    fresh = force or not (layout.papers.exists() and layout.texts.exists())
-    if reference.papers.is_file() and reference.texts.is_file():
-        if fresh:
-            report.papers, report.texts = seed_stores_from_native(layout, reference)
-    elif not reference.corpus_legacy.is_file():
-        report.missing.append(reference.corpus_legacy.name)
-    elif fresh:
-        items = json.loads(reference.corpus_legacy.read_text(encoding="utf-8"))
-        report.papers, report.texts = seed_stores_from_legacy(layout, items)
+    if seed_corpus:  # Option 07: ein Profil mit laufender Periode füllt keine Stores
+        fresh = force or not (layout.papers.exists() and layout.texts.exists())
+        if reference.papers.is_file() and reference.texts.is_file():
+            if fresh:
+                report.papers, report.texts = seed_stores_from_native(layout, reference)
+        elif not reference.corpus_legacy.is_file():
+            report.missing.append(reference.corpus_legacy.name)
+        elif fresh:
+            items = json.loads(reference.corpus_legacy.read_text(encoding="utf-8"))
+            report.papers, report.texts = seed_stores_from_legacy(layout, items)
     logger.success(f"Bootstrap aus {layout.reference_root}: {report.summary()}")
     return report

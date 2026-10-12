@@ -924,6 +924,24 @@ class Report(_Strict):
     ris_url: str = ""  # Ratsinformationssystem, für den Satz über die Dokumente
     notes: list[str] = []  # Sätze, die nur für diese Stadt in „Methode und Grenzen" gehören
     data_note: str = ""  # woher Straßen und Orte stammen, wenn kein Netzschritt gelaufen ist
+    # Option 07: Teile der Seite, die eine laufende Periode nicht hat oder zusätzlich trägt.
+    regression: bool = (
+        True  # False: kein Streudiagramm, keine Tabelle 5, kein Umschalter Wahlbeteiligung
+    )
+    monitoring_url: str = (
+        ""  # relativer Link auf die Seite der laufenden Periode; leer = kein Abschnitt
+    )
+
+    @field_validator("monitoring_url")
+    @classmethod
+    def _relative_link(cls, value: str) -> str:
+        # Die Seite erlaubt nach außen nur die Links der Allowlist (report.render); der Link auf die
+        # laufende Periode ist ein Unterordner derselben Dokumentwurzel, nie ein fremder Host.
+        if "://" in value or value.startswith("//"):
+            raise ValueError(
+                f"report.monitoring_url {value!r}: nur ein relativer Link (kein ://, kein //)"
+            )
+        return value
 
 
 class Publish(_Strict):
@@ -940,6 +958,15 @@ class Publish(_Strict):
         if len(set(value)) != len(value):
             raise ValueError(f"publish.cities {value}: jede Stadt höchstens einmal")
         return value
+
+
+# Option 07: Monitoring der laufenden Wahlperiode
+class Bootstrap(_Strict):
+    """Was ``georep bootstrap`` aus der Referenz übernimmt; ein Profil mit laufender Periode füllt keine Stores."""
+
+    seed_corpus: bool = (
+        True  # False: nur die Eingaben kopieren, papers.jsonl und Textstore bleiben leer
+    )
 
 
 class Settings(BaseSettings):
@@ -985,6 +1012,7 @@ class Settings(BaseSettings):
     default_profile: str = ""
     city: City
     report: Report = Report()
+    bootstrap: Bootstrap = Bootstrap()  # Option 07
     publish: Publish = Publish()
 
     @model_validator(mode="after")
@@ -1104,6 +1132,8 @@ class Settings(BaseSettings):
         Option 02: ``period.label`` und Dateinamen (``sources.opendata.districts_file``,
         ``crosswalk.target_file``) sind Anzeige beziehungsweise Pfad; ``compare.period`` zählt,
         denn es entscheidet, ob die Seite den Vergleich trägt.
+        Option 07: ``bootstrap`` sagt, was kopiert wird, und ``report`` ist Anzeige; kein
+        Parquet-Ergebnis hängt an einem der beiden.
         """
         payload = self.model_dump(
             mode="json",
@@ -1116,6 +1146,7 @@ class Settings(BaseSettings):
                 # die Stadt und die Liste der veröffentlichten Städte zählen.
                 "default_profile": True,
                 "report": True,
+                "bootstrap": True,  # Option 07: was bootstrap kopiert, ändert kein Ergebnis
                 "log_level": True,
                 "cache": True,
                 "contracts": True,

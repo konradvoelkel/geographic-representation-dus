@@ -1,0 +1,6 @@
+{% if model.monitoring_url %}
+<section id="laufend">
+<h2>Laufende Wahlperiode</h2>
+<p>Dieselbe Auswertung für die Wahlperiode seit der Kommunalwahl {{ model.stand.election|date_de }} wird laufend fortgeschrieben: <a href="{{ model.monitoring_url }}">Dokumente seit der Wahl</a>, mit Karte, Monatsreihe, Datenstand und denselben Downloads. Dort gibt es keine Regression, weil zu einer laufenden Periode keine Wahlbeteiligung gehört.</p>
+</section>
+{% endif %}

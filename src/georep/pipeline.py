@@ -31,6 +31,7 @@ from georep.analysis.parties import (
     read_organizations,
 )
 from georep.analysis.periods import compare_periods, delta_regression
+from georep.analysis.timeline import WITH_TEXT, district_months, monthly_series
 from georep.crosswalk import (
     COVERAGE,
     SHARE,
@@ -99,7 +100,7 @@ from georep.sources.opendata import fetch_csv, fetch_districts_file, fetch_geojs
 from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
 from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_query
-from georep.stores import PaperStore, TextStore
+from georep.stores import PaperStore, TextStore, UpsertReport
 
 Status = Literal["ausgeführt", "übersprungen", "geplant"]
 PARTIES_SCHEMA = 1  # Option 04: Schema-Version der drei Ausgaben des Schritts ``parties``
@@ -366,11 +367,17 @@ def build_steps(
         # dauert Stunden; bricht er ab, darf der nächste Lauf nicht bei first_page beginnen.
         resume = read_progress(layout.papers_progress)
         pages_done = 0
+        # Option 07: die Zahlen der Seiten summieren. Seit Option 02 speichert jede Seite selbst,
+        # und ein Upsert am Ende sah darum alles als unverändert: der Lauf meldete immer „0 neu".
+        counted = [0, 0, 0]  # neu, aktualisiert, unverändert
 
         def page_done(kept: list[PaperRecord], next_url: str | None) -> None:
             nonlocal pages_done
             pages_done += 1
-            store.upsert(kept)
+            page_report = store.upsert(kept)
+            counted[0] += page_report.added
+            counted[1] += page_report.updated
+            counted[2] += page_report.unchanged
             write_progress(layout.papers_progress, next_url, pages_done)
 
         records, fetched = fetch_papers(
@@ -386,7 +393,11 @@ def build_steps(
             on_page=page_done,
             sleep=sleep,
         )
-        report = store.upsert(records)
+        # Option 07: Gelöschte liefert der Server nur zu modified_since; sie fliegen aus dem Store.
+        # Die Paper selbst liegen schon drin (jede Seite hat sich gespeichert), darum nur sie.
+        removal = store.upsert((), deleted=fetched.deleted_ids)
+        added, updated, unchanged = counted
+        report = UpsertReport(added, updated, unchanged, removal.total, removal.removed)
         # Der Fortschritt existiert nur, solange ein Abruf unvollständig ist.
         layout.papers_progress.unlink(missing_ok=True)
         mode = f"seit {since.date()}" if since else "vollständig"
@@ -632,6 +643,21 @@ def build_steps(
         frame = build_index(corpus, terms)
         write_parquet(frame, layout.index, schema_version=1)
         return f"{frame.height} Begriffe, {int(frame.get_column('anzahl_treffer').sum())} Treffer in {corpus.height} Dokumenten"
+
+    # --- Option 07: Monitoring der laufenden Wahlperiode
+    def timeline() -> str:
+        meta = (
+            pl.scan_parquet(layout.corpus)
+            .select("id", "date", (pl.col("text") != "").alias(WITH_TEXT))
+            .collect()
+        )
+        index_frame = pl.read_parquet(layout.index)
+        monthly = monthly_series(meta, index_frame)
+        write_parquet(monthly, layout.timeline, schema_version=1)
+        per_district = district_months(pl.read_parquet(layout.dictionary), index_frame, meta)
+        write_parquet(per_district, layout.district_timeline, schema_version=1)
+        months = monthly.filter(pl.col("monat").is_not_null()).height
+        return f"{months} Monate, {per_district.height} Zeilen je Wahlbezirk und Monat"
 
     def results() -> str:
         hits = hits_by_district(
@@ -961,6 +987,13 @@ def build_steps(
         # --- Option 06
         *([Step("topics", (layout.corpus,), topic_outputs, topics)] if with_topics else []),
         Step("index", (layout.dictionary, layout.corpus), (layout.index,), index),
+        # --- Option 07: Monitoring der laufenden Wahlperiode
+        Step(
+            "timeline",
+            (layout.corpus, layout.index, layout.dictionary),
+            (layout.timeline, layout.district_timeline),
+            timeline,
+        ),
         Step(
             "results", (layout.dictionary, layout.index, layout.voters), (layout.results,), results
         ),
@@ -1087,6 +1120,9 @@ def build_steps(
                     if with_parties
                     else ()
                 ),
+                # Option 07: die Monatsreihe und ihre Zerlegung je Wahlbezirk
+                layout.timeline,
+                layout.district_timeline,
             )
             + ((layout.topics, layout.topic_documents) if with_topics else ())
             # --- Option 02: der Vergleich und die Zuordnung der älteren Periode

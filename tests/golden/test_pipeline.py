@@ -96,6 +96,7 @@ def test_pipeline_runs_skips_and_reruns(
         # Option 06: topics liest nur den Korpus und der ist unverändert; weights hängt am Index
         "topics": "übersprungen",
         "index": "ausgeführt",
+        "timeline": "ausgeführt",  # Option 07: haengt an Index und Woerterbuch
         "results": "ausgeführt",
         # Option 05: bodies hängt nur am Korpus, body_hits an der geänderten Auswertung
         "bodies": "übersprungen",
@@ -148,6 +149,9 @@ def test_two_runs_write_identical_parquet(
         "document_originators",
         "district_originators",
         "party_results",
+        # Option 07
+        "timeline",
+        "district_timeline",
     ):
         assert getattr(a, name).read_bytes() == getattr(b, name).read_bytes(), name
 

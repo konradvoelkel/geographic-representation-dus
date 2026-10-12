@@ -3,7 +3,9 @@
 Der Server listet neueste zuerst. Mit ``stop_when_older`` endet der Abruf, sobald eine Seite nur
 noch Paper vor dem Periodenbeginn enthält; die Arbeit hat alle 365 Seiten gelesen, davon 270 für
 Paper vor 2020. ``modified_since`` (OParl 1.1, ISO-8601) holt nur Geändertes; ob der Server es
-beachtet, zeigt ``georep status`` nach einem Lauf, nicht diese Funktion.
+beachtet, zeigt ``georep status`` nach einem Lauf, nicht diese Funktion. Zu ``modified_since``
+liefert der Server auch gelöschte Paper (``deleted: true``, ohne ``date``); sie landen nicht in den
+Records, sondern als IDs im Bericht, und der ``PaperStore`` nimmt sie dann aus dem Store.
 """
 
 from __future__ import annotations
@@ -39,12 +41,16 @@ class FetchReport:
     # Stunden, und der Log soll beides nennen, nicht nur die Zahl der Seiten.
     first_url: str = ""
     next_url: str | None = None
+    # Option 07: IDs mit ``deleted: true``. Der Server liefert sie nur zu ``modified_since``
+    # (OParl 1.1); ohne Datum fallen sie durch ``in_period`` und stehen in keinem Record.
+    deleted_ids: tuple[str, ...] = ()
 
     def summary(self) -> str:
         tail = "; Rest älter als der Periodenbeginn" if self.stopped_early else ""
         where = f"; ab {self.first_url}" if self.first_url else ""
+        deleted = f", {len(self.deleted_ids)} gelöscht" if self.deleted_ids else ""
         return (
-            f"{self.pages} Seiten, {self.seen} Paper gesehen, {self.kept} im Zeitraum, "
+            f"{self.pages} Seiten, {self.seen} Paper gesehen, {self.kept} im Zeitraum{deleted}, "
             f"davon {self.originators} mit Urheberfeld{tail}{where}"
         )
 
@@ -65,6 +71,13 @@ PageDone = Callable[[list[PaperRecord], str | None], None]
 
 @deal.raises(FetchError, NetworkError)
 @deal.post(lambda result: result[1].kept == len(result[0]) and result[1].kept <= result[1].seen)
+@deal.post(
+    lambda result: (
+        len(set(result[1].deleted_ids)) == len(result[1].deleted_ids)
+        and not set(result[1].deleted_ids) & {r.id for r in result[0]}
+    ),
+    message="jede gelöschte ID einmal, keine davon in den Records",
+)
 def fetch_papers(
     http: Transport,
     endpoint: str,
@@ -80,6 +93,7 @@ def fetch_papers(
     sleep: Callable[[float], None] = time.sleep,
 ) -> tuple[list[PaperRecord], FetchReport]:
     records: list[PaperRecord] = []
+    deleted: dict[str, None] = {}  # Menge mit Reihenfolge, damit der Bericht lesbar bleibt
     pages = seen = with_originator = 0
     stopped = False
     first = resume_from or start_url(endpoint, first_page)
@@ -100,6 +114,8 @@ def fetch_papers(
         for paper in page.data:
             if paper.has_originator:
                 with_originator += 1
+            if paper.deleted:  # Option 07: nur zu modified_since; ohne Datum nie im Zeitraum
+                deleted[paper.id] = None
         kept = [
             PaperRecord.from_oparl(paper)
             for paper in page.data
@@ -117,7 +133,9 @@ def fetch_papers(
             on_page(kept, url)
         if url is not None and delay_s > 0:
             sleep(delay_s)
-    return records, FetchReport(pages, seen, len(records), stopped, with_originator, first, url)
+    return records, FetchReport(
+        pages, seen, len(records), stopped, with_originator, first, url, tuple(deleted)
+    )
 
 
 def _ids_are_unique(result: tuple[list[OparlOrganization], int]) -> bool:

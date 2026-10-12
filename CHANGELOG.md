@@ -100,6 +100,14 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   als Adresse teilbar (`index.html#suche=hofgarten`). Die Vorschläge stecken in der Seite und brauchen kein
   Netz, also auch keinen Webserver; nur die Dokumentliste wird wie bisher nachgeladen. `index.html` wächst
   dadurch von 687 KB auf 848 KB (gzip 141 KB), Budget 1,5 MB.
+
+- Die laufende Wahlperiode seit der Kommunalwahl 14.09.2025 lässt sich fortschreiben: das Profil
+  Paketprofil `duesseldorf-2025` legt Daten unter `data/2025/` und Cache unter `<cache_root>/2025/`, holt je Lauf nur
+  Geändertes (`modified_since`), entfernt im Ratsinformationssystem gelöschte Paper aus dem Store und baut
+  eine eigene Seite ohne Regression, dafür mit der Monatsreihe. Neuer Schritt `timeline` mit zwei Tabellen
+  (`monatsreihe`, `wahlbezirke_monate`) und ein Abschnitt „Je Monat" auf beiden Seiten; die Hauptseite
+  verweist auf die laufende Periode, sobald `report.monitoring_url` gesetzt ist. Für den Betrieb liegen ein
+  idempotentes Lauf-Skript, zwei systemd-Einheiten und eine Anleitung unter `deploy/`.
 - Fundament für den Ausbau in acht Optionen (`docs/plans/00-synergien.md`): die Berichtsseite entsteht aus einem
   Rahmen und Abschnittsdateien (`templates/sections/`), die veröffentlichten Tabellen stehen in einem Register,
   die Ausreißer von Tabelle 5 in den Settings (`analysis.exclude_districts`), ein `profile` legt Daten und

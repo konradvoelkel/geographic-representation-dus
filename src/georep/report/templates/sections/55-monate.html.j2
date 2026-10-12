@@ -1,0 +1,29 @@
+{% if model.timeline and visuals.bars_svg %}
+<section id="monate">
+<h2>Je Monat</h2>
+<p class="note">Ratsdokumente nach dem Datum der Vorlage, je Monat gezählt: alle und die mit mindestens einem Treffer im Wörterbuch eines Wahlbezirks. Ein Zeigen auf eine Balkengruppe nennt die Zahlen.</p>
+{{ visuals.bars_svg|safe }}
+<div class="line-legend"><ul>
+<li><span class="swatch bar-documents"></span>alle Dokumente</li>
+<li><span class="swatch bar-hits"></span>mit Treffer</li>
+</ul></div>
+<div class="scroll"><table id="monate-tabelle">
+<thead><tr>
+<th scope="col" data-sort="num">Monat</th>
+<th scope="col" class="num" data-sort="num">Dokumente</th>
+<th scope="col" class="num" data-sort="num">mit Text</th>
+<th scope="col" class="num" data-sort="num">mit Treffer</th>
+</tr></thead>
+<tbody>
+{% for m in model.timeline %}
+<tr>
+<td data-value="{% if m.month %}{{ m.month.year * 12 + m.month.month }}{% else %}999999{% endif %}">{% if m.month %}{{ m.month|month_de }}{% else %}ohne Datum{% endif %}</td>
+<td class="num" data-value="{{ m.documents }}">{{ m.documents|num }}</td>
+<td class="num" data-value="{{ m.with_text }}">{{ m.with_text|num }}</td>
+<td class="num" data-value="{{ m.with_hits }}">{{ m.with_hits|num }}</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+<p class="footnote">Summe über alle Zeilen: {{ model.figures.documents|num }} Dokumente, so viele wie im Korpus. Ein Dokument ohne Datum (im Ratsinformationssystem selten) zählt zur Summe, aber zu keinem Monat.</p>
+</section>
+{% endif %}

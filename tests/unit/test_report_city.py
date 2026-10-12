@@ -173,6 +173,7 @@ def test_summary_payload_matches_the_model(mini_run: Layout, default_settings: S
     assert isinstance(figures, dict) and isinstance(regression, dict)
     assert figures["rate_median"] == pytest.approx(model.figures.rate_median)
     assert figures["documents"] == model.figures.documents
+    assert model.regression is not None  # Option 07: im Modell optional
     assert regression["all"]["r"] == pytest.approx(model.regression.all.r)
     assert json.loads(json.dumps(payload)) == payload  # JSON-tauglich, ohne Umwege
 

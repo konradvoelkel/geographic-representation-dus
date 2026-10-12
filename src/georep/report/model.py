@@ -145,6 +145,11 @@ class KeyFigures:
     rate_max: float
     turnout_median: float
 
+    @property
+    def documents_without_text(self) -> int:
+        """Dokumente ohne extrahierten Text; in der laufenden Periode wächst das zwischen zwei Läufen."""
+        return self.documents - self.documents_with_text
+
 
 @dataclass(frozen=True)
 class Download:
@@ -174,6 +179,21 @@ class DataStand:
         dt.date | None
     )  # aus dem Stamp des Netzschritts; None = Referenzdaten der Arbeit
     pois_fetched: dt.date | None
+    # Option 07: wann die Metadaten und die PDFs zuletzt abgerufen wurden (Stamps der Netzschritte)
+    # und das Datum des neuesten Dokuments im Korpus; None, wenn der Schritt nie lief.
+    papers_fetched: dt.date | None = None
+    pdfs_fetched: dt.date | None = None
+    newest_document: dt.date | None = None
+
+
+@dataclass(frozen=True)
+class MonthRow:
+    """Eine Zeile der Monatsreihe; ``month`` ist leer für Dokumente ohne Datum (Option 07)."""
+
+    month: dt.date | None
+    documents: int
+    with_text: int
+    with_hits: int
 
 
 # --- Option 05: Gremien ---------------------------------------------------------------------------
@@ -482,7 +502,7 @@ class ReportModel:
     districts: tuple[DistrictRow, ...]
     top_terms: tuple[TermRow, ...]
     hidden_terms: tuple[str, ...]
-    regression: RegressionPair
+    regression: RegressionPair | None  # None: keine Wahlbeteiligung zur Periode (Option 07)
     downloads: tuple[Download, ...]
     columns: tuple[ColumnDoc, ...]
     working_crs: str
@@ -527,6 +547,9 @@ class ReportModel:
     notes: tuple[str, ...] = ()  # stadtspezifische Sätze für „Methode und Grenzen"
     agreement: Agreement | None = None  # Flächen gegen das Straßenverzeichnis der Wahl
     data_note: str = ""  # Herkunft von Straßen und Orten ohne eigenen Abruf
+    # Option 07
+    timeline: tuple[MonthRow, ...] = ()
+    monitoring_url: str = ""  # relativer Link auf die Seite der laufenden Periode; leer = keiner
 
 
 # --- Zahlenformat -----------------------------------------------------------------------------
@@ -867,6 +890,21 @@ def stamp_written(output: Path) -> dt.date | None:
     return dt.datetime.fromisoformat(written).date() if isinstance(written, str) else None
 
 
+def newest_document(corpus: Path) -> dt.date | None:
+    """Das größte Dokumentdatum im Korpus; None, wenn keines ein Datum hat (Option 07)."""
+    value = pl.scan_parquet(corpus).select(pl.col("date").max()).collect().item()
+    return value if isinstance(value, dt.date) else None
+
+
+def month_rows(timeline: Path) -> tuple[MonthRow, ...]:
+    """Die Monatsreihe aus ``processed/monatsreihe.parquet`` in Reihenfolge (Option 07)."""
+    frame = pl.read_parquet(timeline)
+    return tuple(
+        MonthRow(row["monat"], int(row["dokumente"]), int(row["mit_text"]), int(row["mit_treffer"]))
+        for row in frame.iter_rows(named=True)
+    )
+
+
 def data_stand(layout: Layout, settings: Settings) -> DataStand:
     return DataStand(
         election=settings.period.election_day,
@@ -874,6 +912,9 @@ def data_stand(layout: Layout, settings: Settings) -> DataStand:
         period_end=settings.period.end,
         streets_fetched=stamp_written(layout.streets),
         pois_fetched=stamp_written(layout.pois),
+        papers_fetched=stamp_written(layout.papers),
+        pdfs_fetched=stamp_written(layout.pdf_manifest),
+        newest_document=newest_document(layout.corpus),
     )
 
 
@@ -1340,7 +1381,11 @@ def build_report_model(
         districts=rows,
         top_terms=top_terms_city(counts, hidden),
         hidden_terms=hidden,
-        regression=regression_pair(results, settings.analysis.exclude_districts),
+        regression=(
+            regression_pair(results, settings.analysis.exclude_districts)
+            if settings.report.regression
+            else None  # Option 07: zur laufenden Periode gibt es keine Wahlbeteiligung
+        ),
         downloads=tuple(downloads),
         columns=column_docs(layout, settings),
         working_crs=settings.geo.working_crs,
@@ -1357,8 +1402,12 @@ def build_report_model(
         body_figures=body_figures(table, rows, settings.bodies),
         body_regression=_body_regression(district_bodies, results, settings),
         # Option 06: ohne die lange Tabelle gibt es den Abschnitt nicht
+        # Option 07: die Sensitivitätstabelle ist Tabelle 5 je Gewichtungsvariante; ohne
+        # Wahlbeteiligung zur Periode gibt es sie nicht, so wie es das Streudiagramm nicht gibt.
         sensitivity=(
-            build_sensitivity(layout, settings, results) if layout.weighted.exists() else None
+            build_sensitivity(layout, settings, results)
+            if layout.weighted.exists() and settings.report.regression
+            else None
         ),
         controls=controls_section(layout, settings, units),
         derived=derived_data(layout, settings, units),
@@ -1380,6 +1429,8 @@ def build_report_model(
         notes=tuple(settings.report.notes),
         agreement=street_agreement(layout, settings),
         data_note=settings.report.data_note,
+        timeline=month_rows(layout.timeline),  # Option 07
+        monitoring_url=settings.report.monitoring_url,
     )
 
 
@@ -1788,11 +1839,17 @@ def summary_payload(model: ReportModel) -> dict[str, object]:
             "rate_max": figures.rate_max,
             "turnout_median": figures.turnout_median,
         },
-        "regression": {
-            "all": _regression_json(model.regression.all),
-            "without": _regression_json(model.regression.without),
-            "excluded": list(model.regression.excluded),
-        },
+        # Option 07: eine laufende Periode hat keine Wahlbeteiligung und damit keine Regression;
+        # der Städtevergleich liest das Feld tolerant (``report.comparison.Site.fit``).
+        "regression": (
+            {
+                "all": _regression_json(model.regression.all),
+                "without": _regression_json(model.regression.without),
+                "excluded": list(model.regression.excluded),
+            }
+            if model.regression is not None
+            else None
+        ),
         "version": model.version,
         "generated_at": model.generated_at.isoformat(),
     }

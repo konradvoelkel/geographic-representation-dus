@@ -1,7 +1,8 @@
 """Speicher für Metadaten und Texte, beide wiederaufnehmbar und atomar.
 
 ``PaperStore``: ``raw/papers.jsonl``, eine Zeile je Paper, sortiert nach ID; neuere ``modified``
-gewinnt. ``TextStore``: ``cache/text/texts.parquet`` mit Text, Extraktor, PDF-Hash und Herkunft je
+gewinnt, vom Server gelöschte Paper fallen heraus (``upsert(deleted=…)``, OParl 1.1 liefert sie zu
+``modified_since``). ``TextStore``: ``cache/text/texts.parquet`` mit Text, Extraktor, PDF-Hash und Herkunft je
 Dateiname, damit ein Text nur neu entsteht, wenn PDF oder Extraktor sich geändert haben
 (docs/architecture.md, „Datenhaltung").
 """
@@ -26,9 +27,14 @@ class UpsertReport:
     updated: int
     unchanged: int
     total: int
+    removed: int = 0  # Option 07: gelöschte Paper, die im Store standen
 
     def summary(self) -> str:
-        return f"{self.added} neu, {self.updated} aktualisiert, {self.unchanged} unverändert, {self.total} gesamt"
+        gone = f", {self.removed} entfernt" if self.removed else ""
+        return (
+            f"{self.added} neu, {self.updated} aktualisiert, "
+            f"{self.unchanged} unverändert{gone}, {self.total} gesamt"
+        )
 
 
 class PaperStore:
@@ -58,8 +64,21 @@ class PaperStore:
                 f.write("\n")
         return len(ordered)
 
-    @deal.post(lambda result: result.added + result.updated <= result.total)
-    def upsert(self, incoming: Iterable[PaperRecord]) -> UpsertReport:
+    # Jedes neu aufgenommene Paper steht danach im Store, außer es wurde gelöscht. Vorher stand
+    # hier ``added + updated <= total``; das gilt nicht, wenn eine Charge dieselbe ID zweimal
+    # enthält (die zweite zählt als Update) oder eine Löschung sie wieder entfernt — gefunden von
+    # der hypothesis-Eigenschaft in tests/property/test_models_props.py (Option 07).
+    @deal.post(lambda result: result.added <= result.total + result.removed)
+    @deal.post(lambda result: result.removed >= 0)
+    def upsert(
+        self, incoming: Iterable[PaperRecord], *, deleted: Iterable[str] = ()
+    ) -> UpsertReport:
+        """Neue und geänderte Paper aufnehmen, gelöschte entfernen; der Schlüsselsatz ist danach
+        ``(alt ∪ neu) \\ gelöscht``.
+
+        Gelöschte zuletzt: eine Löschung ist die jüngere Aussage des Servers. Beides zugleich
+        kommt nicht vor, ``fetch_papers`` hält die Mengen getrennt (Option 07).
+        """
         existing = self.load()
         added = updated = unchanged = 0
         for record in incoming:
@@ -78,8 +97,9 @@ class PaperStore:
                 updated += 1
             else:
                 unchanged += 1
+        removed = sum(1 for key in dict.fromkeys(deleted) if existing.pop(key, None) is not None)
         self.save(existing.values())
-        return UpsertReport(added, updated, unchanged, len(existing))
+        return UpsertReport(added, updated, unchanged, len(existing), removed)
 
 
 class TextMeta(BaseModel):

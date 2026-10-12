@@ -13,6 +13,7 @@ bleibt (``sorted_unique(result, DISTRICT)``) und dieselbe Eigenschaft überall d
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
+from datetime import date
 from typing import Literal
 
 import deal
@@ -105,3 +106,32 @@ def columns_preserved(before: pl.DataFrame, after: pl.DataFrame, columns: Sequen
     return all(
         int(after.get_column(c).sum()) == round(float(before.get_column(c).sum())) for c in columns
     )
+
+
+# Option 07: Monitoring. Eine Monatsreihe hat zwei Eigenheiten, die ``sorted_unique`` nicht deckt:
+# der Schlüssel ist ein Paar, und eine Zeile darf einen leeren Monat tragen (Dokumente ohne Datum).
+def next_month(month: date) -> date:
+    """Der Erste des folgenden Monats."""
+    return date(month.year + month.month // 12, month.month % 12 + 1, 1)
+
+
+def months_in_order(frame: pl.DataFrame, column: str) -> bool:
+    """Monatserste, lückenlos aufsteigend, jeder einmal; höchstens ein leerer, und der am Ende."""
+    months = frame.get_column(column).to_list()
+    dated = [m for m in months if m is not None]
+    if months[: len(dated)] != dated or len(months) - len(dated) > 1:
+        return False  # leere Monate nur am Ende, und höchstens einer
+    return all(m.day == 1 for m in dated) and all(
+        next_month(a) == b for a, b in zip(dated, dated[1:], strict=False)
+    )
+
+
+def keys_sorted_unique(frame: pl.DataFrame, *columns: str) -> bool:
+    """Die Spalten bilden einen aufsteigend sortierten Schlüssel, jeder einmal; leere zuletzt.
+
+    Ein leerer Wert wird zu ``(1,)`` und steht damit in seiner Spalte hinter jedem ``(0, Wert)``;
+    so vergleicht Python nie ``None`` mit einem Datum.
+    """
+    rows = frame.select(*columns).rows()
+    keys = [tuple((1,) if value is None else (0, value) for value in row) for row in rows]
+    return keys == sorted(keys) and len(set(rows)) == len(rows)

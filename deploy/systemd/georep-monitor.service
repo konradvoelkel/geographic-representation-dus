@@ -1,0 +1,21 @@
+# Ein Lauf des Monitorings. Dieselbe Datei läuft als Nutzereinheit auf kookaburra
+# (~/.config/systemd/user/) und als Systemeinheit auf dem VPS (/etc/systemd/system/, dort über
+# die Ansible-Rolle). %E ist $XDG_CONFIG_HOME beziehungsweise /etc; kein Pfad steht hier fest.
+[Unit]
+Description=georep: laufende Wahlperiode abrufen, rechnen und veröffentlichen
+Documentation=https://github.com/konradvoelkel/geographic-representation-dus/blob/main/deploy/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=%E/georep/monitor.env
+# Variablen ersetzt systemd nur in ExecStart= und Verwandten, nicht in WorkingDirectory=: dort
+# wäre ${MONITOR_REPO} ein nicht absoluter Pfad, und die Einheit startete nie („path is not
+# absolute", Review 2026-10-12). Das Arbeitsverzeichnis wechselt darum das Skript selbst.
+ExecStart=/usr/bin/bash ${MONITOR_REPO}/deploy/bin/georep-monitor.sh
+TimeoutStartSec=6h
+Nice=10
+IOSchedulingClass=idle
+# Härtung (ProtectSystem=strict, ReadWritePaths, SystemCallFilter) steht im Drop-in der
+# Infra-Rolle: in einer Nutzereinheit fehlen dafür die Rechte.

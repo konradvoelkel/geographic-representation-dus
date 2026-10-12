@@ -22,7 +22,7 @@ git clone git@github.com:konradvoelkel/geographic-representation-dus.git
 cd geographic-representation-dus
 uv sync --locked                        # Umgebung aus dem Lockfile
 uv run georep bootstrap                 # Datensatz der Arbeit nach ./data übernehmen
-uv run georep run                       # fünfzehn Offline-Schritte, rund 16 s; schreibt auch die Berichtsseite data/site/index.html
+uv run georep run                       # siebzehn Offline-Schritte, rund 17 s; schreibt auch die Berichtsseite data/site/index.html
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 uv run georep regress --controls        # Tabelle 6 mit den Kontrollvariablen
 ```
@@ -34,12 +34,13 @@ und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
 ## Berichtsseite
 
 `georep run` endet mit dem Schritt `report`: `data/site/index.html` ist eine in sich geschlossene Seite (rund
-990 KB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
+1,17 MB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
 einem Suchfeld für Straßen und Orte (4176 Einträge in der Seite, darum ohne Netz: die Auswahl nennt Art,
 Wahlbezirke und Dokumente und markiert sie auf der Karte; `index.html#suche=hofgarten` ist teilbar),
 der Karte der 41 Wahlbezirke (Trefferquote oder Wahlbeteiligung, Tooltips, Klick-Markierung, die 1309 Orte als
 Punkte), dem Streudiagramm mit beiden Regressionsgeraden und Tabelle 5, einer sortierbaren Tabelle je
-Wahlbezirk, den Begriffen (ein Klick zeigt die Dokumente mit Datum, Drucksache und PDF-Link), Methode und
+Wahlbezirk, den Begriffen (ein Klick zeigt die Dokumente mit Datum, Drucksache und PDF-Link), den
+Dokumenten je Monat, Methode und
 Grenzen, Lizenzen. Der Abschnitt „Was ändert die Gewichtung?" stellt der binären Trefferquote 26 gewichtete
 Varianten zur Seite (Spezifität je Begriff, Gewicht je Dokumentart, ein Thema je Zeile) und zeigt Tabelle 5
 unter jeder davon; mit Einheitsgewichten steht dort dieselbe Zeile wie oben. `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
@@ -174,6 +175,29 @@ uv run georep $P status                # alles aktuell?
   eingefrorene Schnappschuss `snapshots/2014-2020/` (geschätzt 35 bis 40 MB), auf den `reference_root` des
   Profils zeigt; `bootstrap` erkennt dieses Format und kopiert nur. Erst damit baut GitHub Pages beide
   Perioden ohne Netz.
+
+## Laufende Wahlperiode
+
+Neben der Periode der Arbeit (2020 bis 2025) gibt es ein zweites Profil für die Wahlperiode seit der
+Kommunalwahl am 14.09.2025: das Paketprofil
+[`duesseldorf-2025`](src/georep/profiles/duesseldorf-2025.toml). Es legt Daten unter `data/2025/`,
+PDFs und Texte unter `<cache_root>/2025/`, holt je Lauf nur Geändertes und baut eine eigene Seite ohne
+Regression (zu einer laufenden Periode gibt es keine Wahlbeteiligung), dafür mit der Monatsreihe.
+Straßen und Orte liest es bei der Hauptperiode (`period.dictionary = "base"`), damit sich nur die
+Dokumente unterscheiden; darum will es die Hauptperiode zuerst gebootstrappt haben.
+
+```bash
+uv run georep bootstrap                                      # die Hauptperiode: Straßen und Orte
+uv run georep --profile duesseldorf-2025 bootstrap           # die Eingaben, kein Korpus der Arbeit
+uv run georep --profile duesseldorf-2025 fetch papers --force  # eine OParl-Seite, rund 45 s
+uv run georep --profile duesseldorf-2025 run                 # Kette und Seite unter data/2025/site/
+```
+
+Im Betrieb macht das ein Skript hinter einem systemd-Timer: `deploy/bin/georep-monitor.sh` holt, rechnet,
+stellt beide Seiten zusammen (Hauptseite und darunter `2025/`), sichert PDFs und Texte optional in ein
+privates R2-Bucket und überträgt das Ergebnis per `rsync` auf einen Server. Alles Rechnerspezifische steht
+in einer Umgebungsdatei, nichts im Code; Installation, Trockenlauf und der einmalige Erstabruf stehen in
+[deploy/README.md](deploy/README.md).
 
 ## Konfiguration
 
