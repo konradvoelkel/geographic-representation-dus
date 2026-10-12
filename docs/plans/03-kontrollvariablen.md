@@ -505,6 +505,13 @@ Umgesetzt sind alle Stufen; diese Punkte weichen vom Plan ab, je mit Grund.
 - **`PublishedTable.describe`** ist neu im Register (F2): die Spalten von `wahlbezirke_kontext` stehen in den
   Settings, eine statische Spaltendoku könnte sie nicht nennen. `column_docs` nimmt dafür die Settings entgegen.
 - **VIF im Parteimodell** erreicht 6,7 statt der erhofften unter 5 (§ 8, Frage 3.8); die Grenze 10 hält ein Test.
+- **Kein Alias `fetch_results_csv`.** Der Plan sah ihn beim Umbenennen vor; es gibt drei Aufrufstellen, alle
+  im Repo, und ein Alias ohne Nutzer ist Ballast.
+- **Der Vertrag „Anteile in [0, 100], Scores in [1, 5]"** aus Stufe C.3 ist durch die Arten der Variablen
+  ersetzt: `aggregate_context` prüft ordinale Mittel gegen ihre eigene Skala (aus den Settings, nicht gegen
+  feste 1 bis 5), und eine Obergrenze 100 gilt nicht für alle Variablen -- Fluktuationsrate (je 1 000) und
+  Wohndauer (Monate) liegen darüber. Dass ein gewichtetes Mittel zwischen Minimum und Maximum der Einheiten
+  liegt, prüft stattdessen ein hypothesis-Test.
 - **Zwei Funde nebenbei**: ein Polars-Join legt die Zeilenfolge nicht fest, und eine Fließkommasumme hängt von
   ihr im letzten Bit ab -- `aggregate_context` und `district_weights` sortieren jetzt vor dem `group_by`, sonst
   schrieben zwei Läufe verschiedene Parquet-Dateien. Und `erhöht` als nackter TOML-Schlüssel ist ein

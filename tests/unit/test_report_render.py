@@ -375,3 +375,11 @@ def test_the_dataset_link_of_the_settings_is_allowed(page: str, model: ReportMod
     assert model.derived.url not in ALLOWED_LINKS
     assert model.derived.url in model_links(model)
     assert set(external_links(page)) <= ALLOWED_LINKS | model_links(model)
+
+
+def test_the_method_section_mentions_the_control_variables(page: str, model: ReportModel) -> None:
+    """00-synergien.md § 5.1: jede Option hängt ihren Absatz ans Ende von `60-methode`."""
+    assert model.derived is not None
+    method = page[page.index('<section id="methode">') : page.index('<section id="abgeleitete')]
+    assert "Die Kontrollvariablen sind Fremddaten" in method
+    assert model.derived.units_label in method and "Datenstand" in method
