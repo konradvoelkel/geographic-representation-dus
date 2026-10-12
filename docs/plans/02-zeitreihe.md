@@ -1,6 +1,6 @@
 # Plan 02: Zeitreihe
 
-Stand 2026-10-12, Branch `feat/02-zeitreihe`. Status: **im Review** (Stufen A bis G umgesetzt; Stufe H ist Konrads Lauf).
+Stand 2026-10-12, Branch `feat/02-zeitreihe`. Status: **gemerged am 2026-10-12** (Stufen A bis G umgesetzt; Stufe H ist Konrads Lauf).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.2; Regeln: § 2 dort und [../../CLAUDE.md](../../CLAUDE.md);
 Aufbau des Programms: [../architecture.md](../architecture.md). Dieser Plan ist so geschrieben, dass ein frischer Agent ihn

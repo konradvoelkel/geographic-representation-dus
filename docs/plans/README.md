@@ -8,7 +8,7 @@ geschrieben vom jeweiligen Unteragenten auf seinem Branch; `00-synergien.md` sch
 |---|---|---|---|
 | 00 | `00-synergien.md` | `main` | geschrieben 2026-10-12 |
 | 01 | `01-staedte.md` | `feat/01-staedte` | umgeschrieben (Synergiephase 2026-10-12, § 10 im Plan) |
-| 02 | `02-zeitreihe.md` | `feat/02-zeitreihe` | im Review (Stufen A bis G umgesetzt 2026-10-12; H ist Konrads Lauf) |
+| 02 | `02-zeitreihe.md` | `feat/02-zeitreihe` | gemerged 2026-10-12 |
 | 03 | `03-kontrollvariablen.md` | `feat/03-kontrollvariablen` | gemerged 2026-10-12 |
 | 04 | `04-parteien.md` | `feat/04-parteien` | gemerged 2026-10-12 |
 | 05 | `05-gremien.md` | `feat/05-gremien` | gemerged 2026-10-12 |
