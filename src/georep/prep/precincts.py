@@ -28,6 +28,7 @@ from pyproj import CRS
 
 from georep.errors import SchemaError
 from georep.geo import DISTRICT_NAME_PROPERTY, DISTRICT_PROPERTY, PRECINCT_PROPERTY
+from georep.io import read_text_without_bom
 from georep.settings import Precincts, ResultsColumns
 
 
@@ -153,7 +154,7 @@ def district_names_from_csv(
     path: Path, rules: Precincts, columns: ResultsColumns
 ) -> dict[int, str]:
     """Wahlbezirk → Name aus der Wahlbezirks-CSV der Quelle (votemanager: ``gebiet-nr;gebiet-name``)."""
-    text = path.read_bytes().decode(columns.encoding)
+    text = read_text_without_bom(path, columns.encoding)
     frame = pl.read_csv(io.BytesIO(text.encode("utf-8")), separator=columns.sep, infer_schema=False)
     missing = [
         c for c in (rules.names_id_column, rules.names_name_column) if c not in frame.columns

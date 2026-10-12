@@ -10,9 +10,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
-
 from deal import ContractError
+from pydantic import ValidationError
 
 from georep.errors import SchemaError
 from georep.prep.voters import (
@@ -103,7 +102,9 @@ def test_a_byte_order_mark_does_not_become_part_of_the_first_column(tmp_path: Pa
     assert frame.columns[0] == "datum"
 
 
-def test_the_bom_goes_before_the_decoding_not_after(mini_root: Path, default_settings: Settings) -> None:
+def test_the_bom_goes_before_the_decoding_not_after(
+    mini_root: Path, default_settings: Settings
+) -> None:
     """Die Düsseldorfer CSV ist latin-1 mit UTF-8-BOM: dekodiert wird daraus „ï»¿", kein \ufeff.
 
     Nach der Dekodierung ist das Zeichen nicht mehr zu erkennen; der Name der ersten Spalte hieße
@@ -125,7 +126,7 @@ def test_canonical_columns_refuse_two_parties_on_one_source_column() -> None:
         parties={"CDU": "D1", "SPD": "D1"},
     )
     with pytest.raises(ContractError):
-        canonical_columns(columns)
+        canonical_names(columns)
 
 
 def test_results_columns_demand_exactly_one_way_to_the_district() -> None:

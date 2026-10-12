@@ -71,8 +71,10 @@ def party_share(party: str) -> str:
     return f"{party}_anteil"
 
 
+@deal.pure
 @deal.ensure(
-    _is_bijection, message="jede Quellspalte auf genau einen kanonischen Namen und umgekehrt"
+    _is_bijection,
+    message="jede Quellspalte auf genau einen kanonischen Namen und umgekehrt",
 )
 def canonical_names(columns: ResultsColumns) -> dict[str, str]:
     """Quellspalte -> kanonischer Name. Für die Hauptperiode ist jede Zuordnung die Identität."""
