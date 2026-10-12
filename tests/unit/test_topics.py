@@ -219,12 +219,26 @@ CODES = ("AAA", "BBB", "CCC")
 
 
 def _seed_corpus(per_committee: tuple[int, ...] = (6, 5, 4)) -> tuple[pl.DataFrame, pl.DataFrame]:
-    """Je Ausschuss eine Wortfamilie, dazu ein Dokument ohne Gremium."""
+    """Je Ausschuss eine Wortfamilie, dazu ein Dokument ohne Gremium.
+
+    Die Füllwörter sind kein Zierrat: ohne sie hat die TF-IDF-Matrix genau den Rang 4, und mit
+    ``k = 4`` findet NMF eine exakte Zerlegung. Dann wird das Residuum in sklearns eigener
+    Fehlerformel minimal negativ, ``np.sqrt`` davon ist ``nan`` und die Abbruchprüfung von ``tol``
+    fällt still aus (``_nmf.py:125``, dieselbe Stelle, die der Kommentar in ``analysis/topics.py``
+    zu Float32 nennt). Mit den Füllwörtern ist der Rang 6, und die Suite läuft ohne Warnung
+    (gemessen 2026-10-13: Rang 4 → eine Warnung, Rang 6 → keine).
+    """
     rows, refs = [], []
     for family, (code, count) in enumerate(zip(CODES, per_committee, strict=True)):
         for i in range(count):
             paper = f"{code}-{i:02d}"
-            rows.append({"id": paper, "text": " ".join(FAMILIES[family] * 3) + f" wort{family}{i}"})
+            text = (
+                " ".join(FAMILIES[family] * 3)
+                + f" wort{family}{i}"
+                + " anlage" * (i % 3)
+                + " beschluss" * ((i + 1) % 2)
+            )
+            rows.append({"id": paper, "text": text})
             refs.append({"id": paper, "gremium": code, "gremium_art": "ausschuss"})
     rows.append({"id": "RAT-01", "text": "haushalt personal stellenplan haushalt personal"})
     refs.append({"id": "RAT-01", "gremium": "RAT", "gremium_art": "rat"})
@@ -261,6 +275,25 @@ def test_a_committee_below_the_threshold_gets_no_topic() -> None:
     corpus, bodies = _seed_corpus((6, 5, 4))
     model = fit_topics(corpus, _settings(k=4), _seed_rules(seed_min_documents=5), bodies)
     assert model.topics.get_column("gremium").to_list() == ["AAA", "BBB", None, None]
+
+
+def test_a_seed_word_occurs_in_the_documents_of_its_committee() -> None:
+    """Sonst sät das Modell ein Wort, das der Ausschuss nie benutzt.
+
+    Die Log-Odds vergleichen einen Ausschuss mit den anderen Ausschüssen. Ein Wort, das in
+    **keinem** Ausschuss steht (hier „haushalt" und „personal", nur im Ratsdokument), hat in
+    beiden Gruppen die Zahl 0 — und bekommt trotzdem ein positives z, weil der kleinere Ausschuss
+    im Nenner weniger Token hat. Sein Zentroid ist dann 0, und die Saat trug dafür ersatzweise
+    das Gewicht 1: das stärkste Wort des Themas wäre eines, das sein Ausschuss nicht kennt.
+    """
+    corpus, bodies = _seed_corpus()
+    model = fit_topics(corpus, _settings(k=4), _seed_rules(), bodies)
+    texts = dict(corpus.select("id", "text").iter_rows())
+    for row in model.topics.iter_rows(named=True):
+        if not row["gremium"]:
+            continue
+        own = " ".join(texts[p] for p in texts if p.startswith(row["gremium"]))
+        assert all(word in own for word in row["woerter"]), (row["gremium"], row["woerter"])
 
 
 def test_the_seeded_topics_are_the_strongest_for_their_own_documents() -> None:
