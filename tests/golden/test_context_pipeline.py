@@ -8,8 +8,10 @@ import polars as pl
 import pytest
 
 from georep.bootstrap import bootstrap
+from georep.io import digest
 from georep.layout import Layout
 from georep.pipeline import build_steps, freshness, run_pipeline
+from georep.report.tables import published
 from georep.settings import Settings, load_settings
 
 OFFLINE = {"context", "controls"}
@@ -91,3 +93,35 @@ def test_without_context_data_the_chain_is_the_old_one(
     assert all(o.status in ("ausgeführt", "übersprungen") for o in outcomes)
     assert not layout.context_table.exists() and not layout.controls.exists()
     assert layout.site_index.exists()
+
+
+@pytest.mark.slow
+def test_the_whole_chain_on_the_reference_publishes_both_sections(
+    tmp_path: Path, reference_root: Path, context_root: Path, settings: Settings
+) -> None:
+    """Die volle Kette mit Fremddaten: elf Offline-Schritte, beide Abschnitte, Budget gehalten."""
+    layout = Layout(
+        tmp_path / "data", tmp_path / "cache", reference_root, context_root=context_root
+    )
+    bootstrap(layout, context_files=settings.context.files.names())
+    steps = build_steps(settings, layout)
+    outcomes = run_pipeline(steps, settings)
+    offline = [o for o in outcomes if o.step not in {s.name for s in steps if s.network}]
+    assert len(offline) == 11 and all(o.status == "ausgeführt" for o in offline)
+    assert "171 Sozialräume, 13 Variablen" in next(o for o in offline if o.step == "context").reason
+    assert "32 von 32 Modellen" in next(o for o in offline if o.step == "controls").reason
+
+    page = layout.site_index.read_text(encoding="utf-8")
+    assert layout.site_index.stat().st_size < 800_000  # Ziel des Plans; Budget sind 1,5 MB
+    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 3 == 21
+    assert '<section id="kontrollvariablen">' in page and "Modell C" in page
+    assert '<section id="abgeleitete-daten">' in page and "dl-de/by-2-0" in page
+    assert page.count('<svg class="avp"') == 4  # ein Plot je Term des Hauptmodells
+    for name in ("wahlbezirke_kontext", "wahlbezirke_crosswalk", "regression_kontrollen"):
+        assert f'href="data/{name}.parquet"' in page and f'href="data/{name}.csv"' in page
+        assert digest(layout.site_data / f"{name}.parquet") in page
+
+    controls = pl.read_parquet(layout.controls)
+    assert controls.get_column("modell").n_unique() == 16
+    # sonst ist ein Modell der Settings nicht mehr zu deuten
+    assert bool((controls.get_column("vif").drop_nulls() < 10.0).all())
