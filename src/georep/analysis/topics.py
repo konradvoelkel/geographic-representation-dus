@@ -456,6 +456,49 @@ def _fit_seeded(
     )
 
 
+def stop_words_for(documents: Sequence[str], settings: Topics, rules: TopicRules) -> frozenset[str]:
+    """Die Stoppwörter eines Laufs: Paketliste, Profil, Namen aus dem Korpus, minus ``stop_keep``."""
+    return (
+        frozenset(load_stop_words(settings.stop_words))
+        | rules.stop_words
+        | name_stop_words(documents, rules)
+    ) - rules.keep
+
+
+@deal.raises(EmptyResultError)
+def vectorize(
+    documents: Sequence[str], settings: Topics, rules: TopicRules
+) -> tuple[csr_matrix, list[str]]:
+    """TF-IDF über die Texte: die eine Wahrheit darüber, was hier ein Wort ist.
+
+    Das Themenmodell und der Klassifikator des passenden Ausschusses (``analysis.committees``,
+    Punkt 45) lesen beide hier; ``[classify]`` hat darum keine eigenen Textparameter.
+    """
+    vectorizer = TfidfVectorizer(
+        token_pattern=TOKEN_PATTERN,
+        min_df=settings.min_df,
+        max_df=settings.max_df,
+        max_features=settings.max_features,
+        sublinear_tf=True,
+        stop_words=sorted(stop_words_for(documents, settings, rules)) or None,
+        # Float64, nicht Float32: mit Float32 unterläuft das Residuum in sklearns eigener
+        # Fehlerformel bei einer fast exakten Zerlegung unter null, die Wurzel davon ist nan, und
+        # damit fällt die Abbruchprüfung von ``tol`` still aus (gemessen 2026-10-12 auf der
+        # synthetischen Fixture). Auf der Referenz liefern beide dieselben 120 Iterationen und
+        # denselben Fehler; Float64 kostet dort 1,4 s mehr. Das ist die Ruhe wert.
+        dtype=np.float64,
+    )
+    try:
+        matrix = vectorizer.fit_transform(documents).tocsr()
+    except ValueError as error:
+        # „after pruning, no terms remain": min_df und max_df haben das Vokabular geleert.
+        raise EmptyResultError(
+            f"Kein Wort überlebt min_df={settings.min_df} und max_df={settings.max_df} "
+            f"auf {len(documents)} Dokumenten: {error}"
+        ) from error
+    return matrix, [str(word) for word in vectorizer.get_feature_names_out()]
+
+
 @deal.pre(lambda corpus, settings, rules=None, bodies=None: has_columns(corpus, DOC, TEXT))
 @deal.pre(
     lambda corpus, settings, rules=None, bodies=None: settings.k >= 1,
@@ -486,36 +529,7 @@ def fit_topics(
             f"{texts.height} vorhanden."
         )
     documents = texts.get_column(TEXT).to_list()
-    stop_words = sorted(
-        (
-            frozenset(load_stop_words(settings.stop_words))
-            | rules.stop_words
-            | name_stop_words(documents, rules)
-        )
-        - rules.keep
-    )
-    vectorizer = TfidfVectorizer(
-        token_pattern=TOKEN_PATTERN,
-        min_df=settings.min_df,
-        max_df=settings.max_df,
-        max_features=settings.max_features,
-        sublinear_tf=True,
-        stop_words=stop_words or None,
-        # Float64, nicht Float32: mit Float32 unterläuft das Residuum in sklearns eigener
-        # Fehlerformel bei einer fast exakten Zerlegung unter null, die Wurzel davon ist nan, und
-        # damit fällt die Abbruchprüfung von ``tol`` still aus (gemessen 2026-10-12 auf der
-        # synthetischen Fixture). Auf der Referenz liefern beide dieselben 120 Iterationen und
-        # denselben Fehler; Float64 kostet dort 1,4 s mehr. Das ist die Ruhe wert.
-        dtype=np.float64,
-    )
-    try:
-        matrix = vectorizer.fit_transform(documents).tocsr()
-    except ValueError as error:
-        # „after pruning, no terms remain": min_df und max_df haben das Vokabular geleert.
-        raise EmptyResultError(
-            f"Kein Wort überlebt min_df={settings.min_df} und max_df={settings.max_df} "
-            f"auf {texts.height} Dokumenten: {error}"
-        ) from error
+    matrix, vocabulary = vectorize(documents, settings, rules)
     if matrix.shape[1] < settings.k:
         # nndsvda zerlegt in k Faktoren und braucht dafür k <= min(Dokumente, Wörter); sonst wirft
         # sklearn ein ValueError. Zu wenige Wörter sind eine Eigenschaft der Daten, kein
@@ -525,7 +539,6 @@ def fit_topics(
             f"{matrix.shape[1]} überleben min_df={settings.min_df} und max_df={settings.max_df} "
             f"auf {texts.height} Dokumenten."
         )
-    vocabulary = [str(word) for word in vectorizer.get_feature_names_out()]
     groups = _committee_rows(texts, bodies, settings, rules)
     if groups:
         counts = CountVectorizer(token_pattern=TOKEN_PATTERN, vocabulary=vocabulary).fit_transform(

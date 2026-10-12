@@ -78,6 +78,32 @@
 {% set r = model.body_regression %}
 <p>Eine lineare Regression der Wahlbeteiligung in Prozent auf die Quote der eigenen Bezirksvertretung je Wahlberechtigtem ergibt über alle {{ r.all.n }} Wahlbezirke r = {{ r.all.r|num(2) }} und p = {{ r.all.p|num(2) }}{% if r.all.p >= 0.05 %}, belegt also keinen Zusammenhang{% else %}, ist also auf dem 5-%-Niveau signifikant{% endif %}{% if r.without %}; ohne die Wahlbezirke {{ r.excluded|join(' und ') }} bleibt p = {{ r.without.p|num(2) }}{% endif %}.</p>
 {% endif %}
+{% if model.assignment %}
+{% set rest = model.assignment|rejectattr('code')|list %}
+{% set named = model.assignment|selectattr('code')|list %}
+<h3>Dokumente je passendem Ausschuss</h3>
+<p>Die Tabelle oben zählt, wo ein Dokument <em>beraten wurde</em>. Viele Dokumente waren nie in einem Ausschuss: sie gingen in den Rat oder in eine Bezirksvertretung. Welcher Ausschuss <em>sachlich</em> zu ihnen passt, schätzt ein Klassifikator (TF-IDF und logistische Regression), der auf den {{ named|length }} Ausschüssen mit genug beratenen Dokumenten gelernt hat. Liegt seine Wahrscheinlichkeit unter {{ model.assignment_threshold|pct(0) }}, zählt das Dokument als querschnittlich (Haushalt, Stellenplan, Jahresabschluss) und bleibt in der Restklasse.</p>
+<div class="scroll"><table id="ausschuss-tabelle">
+<thead><tr>
+<th scope="col" data-sort="text">Ausschuss</th>
+<th scope="col" class="num" data-sort="num">Dokumente</th>
+<th scope="col" class="num" data-sort="num">Anteil</th>
+<th scope="col" class="num" data-sort="num">davon ohne Ausschussberatung</th>
+<th scope="col" class="num" data-sort="num">Wahrscheinlichkeit (Median)</th>
+</tr></thead>
+<tbody>
+{% for a in model.assignment %}
+<tr{% if not a.code %} class="baseline"{% endif %}>
+<td>{% if a.code %}{{ a.label }}{% if a.name %} ({{ a.code }}){% endif %}{% else %}keine Zuordnung (Restklasse){% endif %}</td>
+<td class="num" data-value="{{ a.documents }}">{{ a.documents|num }}</td>
+<td class="num" data-value="{{ a.share }}">{{ a.share|pct(1) }}</td>
+<td class="num" data-value="{{ a.without }}">{{ a.without|num }}</td>
+<td class="num" data-value="{{ a.median if a.median is not none else -1 }}">{% if a.median is not none %}{{ a.median|pct(0) }}{% else %}&mdash;{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+<p class="note">{% if rest %}{{ rest[0].documents|num }} Dokumente ({{ rest[0].share|pct(1) }}) bleiben in der Restklasse. {% endif %}„Davon ohne Ausschussberatung" sind die Dokumente der Zeile, deren Drucksachennummer kein Ausschusskürzel trägt &ndash; für sie ist die Zuordnung eine Schätzung und keine Wiederholung dessen, was ohnehin in der Nummer steht. Eine Zuordnung sagt nichts darüber, ob ein Dokument dort hätte beraten werden müssen; sie sagt, dass seine Wörter denen dieses Ausschusses gleichen. Güte und Kreuzvalidierung stehen in <code>docs/themenmodell-2026-10.md</code>.</p>
+{% endif %}
 <p class="note">Die Zuordnung Kürzel zu Name steht in den Einstellungen des Programms{% if f.names_as_of %}, Stand {{ f.names_as_of|date_de }}{% endif %}; Quelle sind die Organisationen des Ratsinformationssystems und Dokumenttitel. {% if f.without_name %}{{ f.without_name|num }} Kürzel haben dort keinen gesicherten Namen und stehen nur mit dem Kürzel.{% endif %} Die Namen der Ausschüsse haben sich innerhalb der Wahlperiode teils geändert; das Kürzel bleibt der Schlüssel. Die Zuordnung je Dokument ist nicht als Datei veröffentlicht &ndash; sie folgt aus der Drucksachennummer in <code>dokumente.json</code> und der Regel oben.</p>
 </section>
 {% endif %}

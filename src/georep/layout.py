@@ -381,6 +381,17 @@ class Layout:
         """Treffer je Wahlbezirk und Monat (Schritt ``timeline``)."""
         return self.processed / "wahlbezirke_monate.parquet"
 
+    # Punkt 45: der passende Ausschuss je Dokument
+    @property
+    def papers_committee(self) -> Path:
+        """Passender Ausschuss je Dokument; nicht veröffentlicht (19 033 Zeilen, 1,5 MB als CSV)."""
+        return self.processed / "papers_ausschuss.parquet"
+
+    @property
+    def committee_table(self) -> Path:
+        """Dokumente je passendem Ausschuss: die veröffentlichte Zusammenfassung."""
+        return self.processed / "ausschuss_zuordnung.parquet"
+
     def runtime_dirs(self) -> tuple[Path, ...]:
         return (
             self.external,

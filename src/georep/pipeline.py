@@ -739,6 +739,29 @@ def build_steps(
             f"{model.shares.height} Dokumente, {words} Wörter in den Beschriftungen"
         )
 
+    # --- Punkt 45: der passende Ausschuss je Dokument (docs/themenmodell-2026-10.md)
+    def committees() -> str:
+        # Wie bei ``topics``: sklearn erst im Schritt importieren.
+        from georep.analysis.committees import (
+            ASSIGNMENT_SCHEMA_VERSION,
+            assign_committees,
+        )
+        from georep.analysis.committees import summary as assignment_summary
+        from georep.analysis.topics import TopicRules
+
+        found = assign_committees(
+            pl.read_parquet(layout.corpus, columns=["id", "text"]),
+            pl.read_parquet(layout.papers_bodies),
+            settings.topics,
+            settings.classify,
+            TopicRules.from_settings(settings),
+        )
+        write_parquet(
+            found.papers, layout.papers_committee, schema_version=ASSIGNMENT_SCHEMA_VERSION
+        )
+        write_parquet(found.table, layout.committee_table, schema_version=1)
+        return assignment_summary(found)
+
     # --- Option 06: Gewichtete Trefferquoten
     def weights() -> str:
         from georep.analysis.weights import TypeRules, term_weights, variants
@@ -888,6 +911,8 @@ def build_steps(
     with_topics = settings.topics.k > 0
     # Punkt 45: mit Saat liest ``topics`` auch die Gremien je Dokument (``papers_gremien.parquet``)
     seed_inputs = (layout.papers_bodies,) if settings.topics.seed != "none" else ()
+    # Punkt 45: ohne Ausschüsse im Profil gibt es keine Klasse zu lernen (Option 01: Mönchengladbach)
+    with_committees = settings.classify.enabled and bool(settings.bodies.committees)
     # Option 01: die Urheber (Option 04) brauchen die Fraktionsnamen der Stadt
     with_parties = bool(settings.originators.parties)
     topic_outputs = (layout.topics, layout.topic_documents, layout.topic_shares)
@@ -1035,6 +1060,19 @@ def build_steps(
             if with_topics
             else []
         ),
+        # --- Punkt 45
+        *(
+            [
+                Step(
+                    "committees",
+                    (layout.corpus, layout.papers_bodies),
+                    (layout.papers_committee, layout.committee_table),
+                    committees,
+                )
+            ]
+            if with_committees
+            else []
+        ),
         Step("index", (layout.dictionary, layout.corpus), (layout.index,), index),
         # --- Option 07: Monitoring der laufenden Wahlperiode
         Step(
@@ -1166,6 +1204,8 @@ def build_steps(
                 layout.district_timeline,
             )
             + ((layout.topics, layout.topic_documents) if with_topics else ())
+            # --- Punkt 45: die Tabelle der passenden Ausschüsse
+            + ((layout.committee_table,) if with_committees else ())
             # --- Option 02: der Vergleich und die Zuordnung der älteren Periode
             + (
                 (

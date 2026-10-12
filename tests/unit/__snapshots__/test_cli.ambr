@@ -35,6 +35,8 @@
                -> papers_gremien.parquet
   topics       <- papers.parquet, papers_gremien.parquet
                -> themen.parquet, themen_dokumente.parquet, themen_anteile.parquet
+  committees   <- papers.parquet, papers_gremien.parquet
+               -> papers_ausschuss.parquet, ausschuss_zuordnung.parquet
   index        <- combined_searchdict.parquet, papers.parquet
                -> inverted_index.parquet
   timeline     <- papers.parquet, inverted_index.parquet, combined_searchdict.parquet
@@ -49,7 +51,7 @@
                -> regression_kontrollen.parquet
   parties      <- papers.parquet, wahlbezirke_auswertung.parquet, wahlbezirke_waehler.parquet
                -> dokumente_urheber.parquet, wahlbezirke_urheber.parquet, wahlbezirke_parteien.parquet
-  report       <- wahlbezirke_auswertung.parquet, combined_searchdict.parquet, inverted_index.parquet, wahlbezirke_waehler.parquet, wikidata_vis.parquet, wahlbezirke_strassen.parquet, papers.parquet, stimmbezirke.geojson, wahlbezirke_gremien.parquet, gremien.parquet, wahlbezirke_stadtbezirke.parquet, wahlbezirke_gewichtet.parquet, gewichte_begriffe.parquet, wahlbezirke_kontext.parquet, wahlbezirke_crosswalk.parquet, regression_kontrollen.parquet, quartiersatlas_2024_indikatoren.csv, dokumente_urheber.parquet, wahlbezirke_urheber.parquet, wahlbezirke_parteien.parquet, monatsreihe.parquet, wahlbezirke_monate.parquet, themen.parquet, themen_dokumente.parquet
+  report       <- wahlbezirke_auswertung.parquet, combined_searchdict.parquet, inverted_index.parquet, wahlbezirke_waehler.parquet, wikidata_vis.parquet, wahlbezirke_strassen.parquet, papers.parquet, stimmbezirke.geojson, wahlbezirke_gremien.parquet, gremien.parquet, wahlbezirke_stadtbezirke.parquet, wahlbezirke_gewichtet.parquet, gewichte_begriffe.parquet, wahlbezirke_kontext.parquet, wahlbezirke_crosswalk.parquet, regression_kontrollen.parquet, quartiersatlas_2024_indikatoren.csv, dokumente_urheber.parquet, wahlbezirke_urheber.parquet, wahlbezirke_parteien.parquet, monatsreihe.parquet, wahlbezirke_monate.parquet, themen.parquet, themen_dokumente.parquet, ausschuss_zuordnung.parquet
                -> index.html, schema.json, karte.html
   
   '''

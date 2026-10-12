@@ -266,6 +266,23 @@ class TopicRow:
 
 
 @dataclass(frozen=True)
+class AssignmentRow:
+    """Punkt 45: eine Zeile der Tabelle „Dokumente je passendem Ausschuss"."""
+
+    code: str  # Kürzel; leer ist die Restklasse
+    name: str  # Name aus ``[bodies]``; leer, wenn er nicht gesichert ist
+    documents: int
+    share: float  # Anteil an allen Dokumenten mit Text
+    without: int  # davon solche ohne Ausschussberatung (nur Rat, Bezirksvertretung, Beirat)
+    median: float | None  # Median der Wahrscheinlichkeit; None in der Restklasse
+
+    @property
+    def label(self) -> str:
+        """Der Name, sonst das Kürzel; die Restklasse trägt beides nicht (die Vorlage benennt sie)."""
+        return self.name or self.code
+
+
+@dataclass(frozen=True)
 class TermExample:
     """Ein Begriff als Beispiel im Text des Abschnitts; aus ``gewichte_begriffe.parquet``."""
 
@@ -541,6 +558,9 @@ class ReportModel:
     # Regel 1 (ebenda): ob Einrichtungen mit Stadtnamen aus dem Wörterbuch gefallen sind. Die
     # Vorlage nennt die Regel nur dann in „Methode und Grenzen".
     city_facilities: bool = False
+    # Punkt 45: Dokumente je passendem Ausschuss; leer heißt „kein Klassifikator, keine Tabelle"
+    assignment: tuple[AssignmentRow, ...] = ()
+    assignment_threshold: float = 0.0  # ``classify.min_probability``: darunter die Restklasse
     sensitivity: Sensitivity | None = None  # Option 06; None = ohne Abschnitt
     controls: ControlsSection | None = None  # Option 03; None ohne Kontextdaten
     derived: DerivedData | None = None  # Option 03
@@ -1149,6 +1169,41 @@ def _example(frame: pl.DataFrame, by: str, then: str) -> TermExample | None:
     return TermExample(str(row[TERM]), int(row[HITS]), int(row[N_DISTRICTS]))
 
 
+# --- Punkt 45: Dokumente je passendem Ausschuss -------------------------------------------------
+
+# Die Spalten von ``ausschuss_zuordnung.parquet``, als Literale wie bei den Themen: die Seite soll
+# ``analysis/committees.py`` und damit sklearn nicht laden (ein Test hält beide Seiten gleich).
+ASSIGNED = "ausschuss"
+ASSIGNED_DOCUMENTS = "dokumente"
+ASSIGNED_SHARE = "anteil"
+ASSIGNED_WITHOUT = "ohne_ausschussberatung"
+ASSIGNED_MEDIAN = "wahrscheinlichkeit_median"
+
+
+def assignment_rows(layout: Layout, settings: Settings) -> tuple[AssignmentRow, ...]:
+    """Die Tabelle der passenden Ausschüsse, Namen aus dem Profil; leer ohne den Schritt.
+
+    Sortiert nach Dokumenten absteigend, bei Gleichstand nach Kürzel; die Restklasse steht zuletzt,
+    weil sie keine Zuordnung ist, sondern ihr Fehlen.
+    """
+    if not settings.classify.enabled or not layout.committee_table.exists():
+        return ()
+    frame = pl.read_parquet(layout.committee_table)
+    names = BodyRules.from_settings(settings.bodies).names
+    rows = [
+        AssignmentRow(
+            code=str(r[ASSIGNED] or ""),
+            name=names.get(str(r[ASSIGNED] or ""), ""),
+            documents=int(r[ASSIGNED_DOCUMENTS]),
+            share=float(r[ASSIGNED_SHARE]),
+            without=int(r[ASSIGNED_WITHOUT]),
+            median=None if r[ASSIGNED_MEDIAN] is None else float(r[ASSIGNED_MEDIAN]),
+        )
+        for r in frame.iter_rows(named=True)
+    ]
+    return tuple(sorted(rows, key=lambda row: (row.code == "", -row.documents, row.code)))
+
+
 def build_sensitivity(layout: Layout, settings: Settings, results: pl.DataFrame) -> Sensitivity:
     """Der ganze Abschnitt aus ``wahlbezirke_gewichtet.parquet`` und (wenn da) ``themen.parquet``."""
     weighted = pl.read_parquet(layout.weighted)
@@ -1483,6 +1538,8 @@ def build_report_model(
             hidden,
         ),
         bodies=table,
+        assignment=assignment_rows(layout, settings),
+        assignment_threshold=settings.classify.min_probability,
         body_figures=body_figures(table, rows, settings.bodies),
         body_regression=_body_regression(district_bodies, results, settings),
         # Option 06: ohne die lange Tabelle gibt es den Abschnitt nicht

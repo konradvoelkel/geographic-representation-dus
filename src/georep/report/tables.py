@@ -584,6 +584,39 @@ TABLES.extend(
     ]
 )
 
+# --- Punkt 45: Dokumente je passendem Ausschuss (docs/themenmodell-2026-10.md). ``optional``,
+# weil der Schritt ``committees`` am Schalter ``classify.enabled`` und an den Ausschüssen des
+# Profils hängt. Die Zuordnung je Dokument bleibt unter ``processed/``: 19 033 Zeilen wären als CSV
+# 1,5 MB, und sie folgt aus dieser Tabelle und der dokumentierten Regel nicht, ist also der eine
+# Fall, in dem wir die Zeilen nicht mitliefern.
+TABLES.append(
+    PublishedTable(
+        "ausschuss_zuordnung",
+        lambda layout: layout.committee_table,
+        "Dokumente je passendem Ausschuss: überwacht zugeordnet, mit Restklasse",
+        {
+            "ausschuss": (
+                "Kürzel des passenden Ausschusses; leer ist die Restklasse (querschnittliche "
+                "Vorlagen unter der Wahrscheinlichkeitsschwelle)",
+                "",
+            ),
+            "dokumente": ("diesem Ausschuss zugeordnete Dokumente des Korpus", "Dokumente"),
+            "anteil": ("Anteil an allen Dokumenten des Korpus mit Volltext", "Anteil 0 bis 1"),
+            "ohne_ausschussberatung": (
+                "davon solche, deren Drucksachennummer kein Ausschusskürzel trägt: sie waren nur "
+                "im Rat, in einer Bezirksvertretung oder in einem Beirat",
+                "Dokumente",
+            ),
+            "wahrscheinlichkeit_median": (
+                "Median der Wahrscheinlichkeit der zugeordneten Klasse; leer in der Restklasse",
+                "Anteil 0 bis 1",
+            ),
+        },
+        optional=True,
+        enabled=lambda settings: settings.classify.enabled,
+    )
+)
+
 # Nur für ``georep export`` (CSV neben der Parquet-Datei), nicht auf der Seite.
 EXPORT_ONLY: list[PublishedTable] = [
     PublishedTable(

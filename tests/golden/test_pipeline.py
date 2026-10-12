@@ -96,13 +96,15 @@ def test_pipeline_runs_skips_and_reruns(
         "pois": "ausgeführt",
         "dictionary": "ausgeführt",
         "corpus": "übersprungen",
+        # Option 05: bodies hängt nur am Korpus, body_hits an der geänderten Auswertung
+        "bodies": "übersprungen",
         # Option 06: topics liest nur den Korpus und der ist unverändert; weights hängt am Index
         "topics": "übersprungen",
+        # Punkt 45: der Klassifikator liest Korpus und Gremien, beide unverändert
+        "committees": "übersprungen",
         "index": "ausgeführt",
         "timeline": "ausgeführt",  # Option 07: haengt an Index und Woerterbuch
         "results": "ausgeführt",
-        # Option 05: bodies hängt nur am Korpus, body_hits an der geänderten Auswertung
-        "bodies": "übersprungen",
         "body_hits": "ausgeführt",
         "weights": "ausgeführt",
         "parties": "ausgeführt",  # Option 04: haengt an results
@@ -133,6 +135,31 @@ def test_the_seeded_topics_keep_their_invariants_on_the_mini_fixture(
     sums = shares.get_column("anteile").list.sum().to_list()
     assert all(abs(value - 1.0) <= 1e-9 for value in sums)
     assert shares.height == pl.read_parquet(mini_run.topic_documents).height
+
+
+def test_the_committee_assignment_keeps_its_invariants_on_the_mini_fixture(
+    mini_run: Layout, default_settings: Settings
+) -> None:
+    """Punkt 45: Zeilenzahlen, Zerlegung und Schwelle, keine Zahlen des Modells."""
+    papers = pl.read_parquet(mini_run.papers_committee)
+    table = pl.read_parquet(mini_run.committee_table)
+    corpus = pl.read_parquet(mini_run.corpus, columns=["id", "text"])
+    with_text = corpus.filter(pl.col("text") != "").height
+    assert papers.height == with_text
+    assert papers.get_column("id").to_list() == sorted(papers.get_column("id").to_list())
+    assert int(table.get_column("dokumente").sum()) == with_text
+    assert float(table.get_column("anteil").sum()) == pytest.approx(1.0, abs=1e-9)
+    codes = {c for c in table.get_column("ausschuss").to_list() if c}
+    assert codes <= set(default_settings.bodies.committees)
+    assigned = papers.filter(pl.col("ausschuss") != "")
+    assert (
+        assigned.get_column("wahrscheinlichkeit") >= default_settings.classify.min_probability
+    ).all()
+    assert assigned.get_column("wahrscheinlichkeit").null_count() == 0
+    # Die Restklasse trägt keine Wahrscheinlichkeit, die anderen Zeilen eine.
+    rest = table.filter(pl.col("ausschuss") == "")
+    assert rest.height <= 1
+    assert all(value is None for value in rest.get_column("wahrscheinlichkeit_median").to_list())
 
 
 def test_missing_corpus_names_bootstrap(
@@ -178,6 +205,9 @@ def test_two_runs_write_identical_parquet(
         # Option 07
         "timeline",
         "district_timeline",
+        # Punkt 45
+        "papers_committee",
+        "committee_table",
     ):
         assert getattr(a, name).read_bytes() == getattr(b, name).read_bytes(), name
 
