@@ -8,7 +8,6 @@ Golden Master dieser Stufe) und dass die Seite die Stadt nennt, deren Profil gil
 
 from __future__ import annotations
 
-import datetime as dt
 from dataclasses import replace
 from pathlib import Path
 
@@ -19,17 +18,21 @@ from georep.bootstrap import bootstrap
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
 from georep.prep.streets import directory_agreement
-from georep.prep.voters import DISTRICT, ELIGIBLE, VOTERS
+from georep.prep.voters import DISTRICT, ELIGIBLE_TOTAL, VOTERS
 from georep.settings import Settings, load_settings
 from tests.conftest import REPO
 
 MG = REPO / "tests" / "fixtures" / "mg"
-NETWORK = {"opendata", "papers", "pdfs", "streets_osm", "pois_wiki"}
+NETWORK = {"opendata", "papers", "organizations", "pdfs", "streets_osm", "pois_wiki"}
 
 
 @pytest.fixture(scope="module")
 def settings() -> Settings:
-    return load_settings(profile="moenchengladbach", cwd=Path("/nonexistent"))
+    base = load_settings(profile="moenchengladbach", cwd=Path("/nonexistent"))
+    # Die Netzstichprobe hat acht Ratsdokumente. Das Themenmodell (Option 06) braucht mindestens
+    # so viele Texte wie Themen und zählt ein Wort erst ab ``min_df`` Dokumenten; das ist eine
+    # Grenze der Probe, nicht des Profils, und wird darum hier gesetzt, nicht dort.
+    return base.model_copy(update={"topics": base.topics.model_copy(update={"k": 3, "min_df": 1})})
 
 
 @pytest.fixture(scope="module")
@@ -58,7 +61,7 @@ def test_the_profile_puts_the_second_city_in_its_own_folder(run: Layout) -> None
 def test_bootstrap_takes_the_package_format(run: Layout) -> None:
     """Das Paket der zweiten Stadt bringt Stores mit; es gibt kein ``paper_with_text.json``."""
     assert run.papers.is_file() and run.texts.is_file()
-    assert run.results_csv.is_file() and run.districts_source.suffix == ".zip"
+    assert run.results_csv.is_file() and run.districts_geojson.suffix == ".zip"
     assert run.streets_directory is not None and run.streets_directory.is_file()
     assert run.district_names_csv is not None and run.district_names_csv.is_file()
 
@@ -69,25 +72,29 @@ def test_the_precincts_step_reads_the_shapefile_zip(run: Layout, settings: Setti
     canonical = json.loads(run.precincts_geojson.read_text(encoding="utf-8"))
     assert canonical["crs"]["properties"]["name"] == "EPSG:25832"
     districts = {f["properties"]["wahlbezirk"] for f in canonical["features"]}
-    assert districts == {2, 10, 22}
+    assert districts == {4, 9, 23}
     names = {f["properties"]["wahlbezirk_name"] for f in canonical["features"]}
-    assert names == {"Rheindahlen-Land", "Alter Markt/Gründerzeitviertel", "Amtsgericht/Innenstadt"}
+    assert names == {"Hardt", "Hermges/Dahl/Ohler", "Dorfbroich/Hövel"}
 
 
 def test_the_sums_per_district_match_the_source(run: Layout, settings: Settings) -> None:
     """Golden Master der Stufe: die Aggregation der Stimmbezirke gleicht der Wahlbezirks-CSV."""
     columns = settings.columns.results
     assert run.district_names_csv is not None
-    expected = pl.read_csv(
-        run.district_names_csv, separator=columns.sep, infer_schema=False, encoding="utf8"
-    ).select(
-        pl.col("gebiet-nr").cast(pl.Int64).alias(DISTRICT),
-        pl.col("A").cast(pl.Int64).alias(ELIGIBLE),
-        pl.col("B").cast(pl.Int64).alias(VOTERS),
-        pl.col("D1").cast(pl.Int64).alias("CDU_Stimmen"),
-        pl.col("D2").cast(pl.Int64).alias("SPD_Stimmen"),
-        pl.col("D3").cast(pl.Int64).alias("GRUENE_Stimmen"),
-    ).sort(DISTRICT)
+    expected = (
+        pl.read_csv(
+            run.district_names_csv, separator=columns.sep, infer_schema=False, encoding="utf8"
+        )
+        .select(
+            pl.col("gebiet-nr").cast(pl.Int64).alias(DISTRICT),
+            pl.col("A").cast(pl.Int64).alias(ELIGIBLE_TOTAL),
+            pl.col("B").cast(pl.Int64).alias(VOTERS),
+            pl.col("D1").cast(pl.Int64).alias("CDU_Stimmen"),
+            pl.col("D2").cast(pl.Int64).alias("SPD_Stimmen"),
+            pl.col("D3").cast(pl.Int64).alias("GRUENE_Stimmen"),
+        )
+        .sort(DISTRICT)
+    )
     got = pl.read_parquet(run.voters).select(expected.columns).sort(DISTRICT)
     assert got.to_dicts() == expected.to_dicts()
 
@@ -95,9 +102,11 @@ def test_the_sums_per_district_match_the_source(run: Layout, settings: Settings)
 def test_the_page_names_the_city_of_the_profile(run: Layout) -> None:
     page = run.site_index.read_text(encoding="utf-8")
     assert "Mönchengladbacher Ratsdokumenten" in page
-    assert "Stadt Mönchengladbach" in page and "Düsseldorf" not in page
+    assert "Stadt Mönchengladbach" in page
     assert page.count('id="bezirk-') == 3
-    assert "Weitere Städte" in page and "Düsseldorf</a>" in page.replace("Düsseldorf", "Düsseldorf")
+    # Die Zeile „Weitere Städte" setzt erst ``georep publish``: eine Seite aus ``georep run``
+    # steht für sich und nennt keine andere Stadt (Review 2026-10-12).
+    assert "Düsseldorf" not in page and "vergleich.html" not in page
 
 
 def test_the_summary_is_the_interface_of_the_second_city(run: Layout) -> None:
@@ -112,6 +121,18 @@ def test_the_summary_is_the_interface_of_the_second_city(run: Layout) -> None:
 def test_running_again_changes_nothing(run: Layout, settings: Settings) -> None:
     again = run_pipeline(build_steps(settings, run), settings)
     assert all(o.status == "übersprungen" for o in again)
+
+
+def test_the_steps_of_a_city_without_party_names_and_context(settings: Settings) -> None:
+    """Welche Schritte eine zweite Stadt laufen lässt: die Urheber (Option 04) brauchen Namen.
+
+    Mönchengladbach bringt weder Fraktionsnamen (``[originators]``) noch Kontextdaten mit; die
+    Schritte entfallen, statt mit einem leeren Regelsatz zu laufen. Die Flächen (``shapes``) und
+    die Gremien laufen, letztere mit „unbekannt" als einziger Klasse.
+    """
+    names = [step.name for step in build_steps(settings, Layout.from_settings(settings))]
+    assert "parties" not in names and "context" not in names and "controls" not in names
+    assert "shapes" in names and "bodies" in names and "topics" in names
 
 
 # --- Übereinstimmung mit dem Straßenverzeichnis der Wahl ---------------------------------------
@@ -133,7 +154,9 @@ def test_directory_agreement_measures_the_geometry_against_the_directory(
 
 def test_the_page_names_the_agreement_and_the_date_of_the_geometry(run: Layout) -> None:
     page = run.site_index.read_text(encoding="utf-8")
-    assert "Straßenverzeichnis" in page and "08.06.2022" in page
+    assert "amtliche Straßenverzeichnis der Wahl kennt" in page
+    assert "demselben Stimmbezirk" in page and "demselben Wahlbezirk" in page
+    assert "08.06.2022" in page  # der Stand der Flächen, aus den Notizen des Profils
 
 
 def test_the_marker_share_of_the_sample_is_recorded(run: Layout) -> None:

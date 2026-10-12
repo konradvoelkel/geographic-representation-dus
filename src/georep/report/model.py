@@ -1598,12 +1598,24 @@ def controls_section(layout: Layout, settings: Settings, units: int) -> Controls
         rate_label=RATE_LABEL,
         units_label=context.units.label,
         units=units,
-        stand=context.dataset.stand,
+        stand=_dataset_date(context.dataset.stand, "stand"),
         excluded=excluded,
         rate_without=rate_without,
         verdict=_verdict(models, main, excluded, rate_without),
         missing=tuple(f"{m} ({s})" for m, s in possible if (m, s) not in estimated),
     )
+
+
+def _dataset_date(value: dt.date | None, field: str) -> dt.date:
+    """Stand und Abrufdatum des Kontextdatensatzes; ohne sie ist die Namensnennung unvollständig.
+
+    Der Validator der Settings verlangt beide, sobald ``context.root`` auf einen Datensatz zeigt
+    (Option 01: eine Stadt ohne Kontextdaten lässt den Block weg); hier steht die Zusicherung
+    noch einmal, weil ein von Hand gebautes ``ContextSettings`` sie umgehen kann.
+    """
+    if value is None:
+        raise SchemaError(f"context.dataset.{field} fehlt, der Datensatz ist nicht zitierbar")
+    return value
 
 
 DEFINITION_LIMIT = 220  # Zeichen; die Quelle erklaert manche Indizes über tausend Zeichen lang
@@ -1670,8 +1682,8 @@ def derived_data(layout: Layout, settings: Settings, units: int) -> DerivedData 
         publisher=context.dataset.publisher,
         license=context.dataset.license,
         license_url=context.dataset.license_url,
-        stand=context.dataset.stand,
-        fetched=fetched or context.dataset.fetched,
+        stand=_dataset_date(context.dataset.stand, "stand"),
+        fetched=fetched or _dataset_date(context.dataset.fetched, "fetched"),
         attribution=_attribution(context.dataset),
         units_label=context.units.label,
         units=units,

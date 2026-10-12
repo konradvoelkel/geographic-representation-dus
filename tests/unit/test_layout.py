@@ -186,7 +186,6 @@ def test_layout_takes_the_source_file_names_from_the_settings(tmp_path: Path) ->
     assert layout.district_names_csv == Path("data/external/wahlbezirke.csv")
     assert layout.precincts_geojson == Path("data/interim/stimmbezirke.geojson")
     assert layout.site_summary == Path("data/site/data/summary.json")
-    assert layout.package_texts == Path("data/text/texts.parquet")
     assert layout.reference_view().results_csv == Path("reference/external/ergebnis.csv")
     assert layout.for_profile("x").districts_geojson == Path("data/x/external/flaechen.zip")
 

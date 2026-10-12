@@ -225,7 +225,9 @@ class ResultsColumns(_Strict):
     eligible: str
     voters: str
     parties: dict[str, str]
-    city_district: str  # Option 05: Stadtbezirk je Stimmbezirk, für die Zuordnung der Wahlbezirke
+    # Option 05: Stadtbezirk je Stimmbezirk, für die Zuordnung der Wahlbezirke. Leer heißt: die
+    # Nummer trägt ihn (``city_district_from_precinct``, Option 01) oder die Stadt führt keinen.
+    city_district: str = ""
     precinct: str = ""  # Option 03: Stimmbezirk in der CSV; "" = kein Crosswalk über Stimmbezirke
     # Option 02: Gebietsname je Zeile (darin steht der postal_marker der Briefwahlbezirke),
     # Wahlberechtigte mit Wahlschein (Verteilschlüssel der Briefwahl) und der Marker selbst;
@@ -236,6 +238,9 @@ class ResultsColumns(_Strict):
     # Option 01: der Wahlbezirk steckt bei votemanager in den Zeichen [start, stop) der
     # Stimmbezirksnummer; ``party_names`` nennt den Anzeigenamen, wo er vom Schlüssel abweicht.
     district_from_precinct: tuple[int, int] | None = None
+    # Option 01: ebenso der Stadtbezirk. Mönchengladbach führt Stadtbezirk, Wahlbezirk und
+    # Stimmbezirk in einer Nummer (``10401`` → Stadtbezirk 1, Wahlbezirk 4, Stimmbezirk 1).
+    city_district_from_precinct: tuple[int, int] | None = None
     party_names: dict[str, str] = {}
 
     def display_name(self, party: str) -> str:
@@ -248,14 +253,19 @@ class ResultsColumns(_Strict):
             raise ValueError(
                 "columns.results: district und district_from_precinct schließen sich aus"
             )
-        if self.district_from_precinct is not None:
-            start, stop = self.district_from_precinct
+        if self.city_district and self.city_district_from_precinct is not None:
+            raise ValueError(
+                "columns.results: city_district und city_district_from_precinct schließen sich aus"
+            )
+        for name in ("district_from_precinct", "city_district_from_precinct"):
+            span: tuple[int, int] | None = getattr(self, name)
+            if span is None:
+                continue
+            start, stop = span
             if not self.precinct:
-                raise ValueError("columns.results.district_from_precinct braucht precinct")
+                raise ValueError(f"columns.results.{name} braucht precinct")
             if not 0 <= start < stop:
-                raise ValueError(
-                    f"columns.results.district_from_precinct {(start, stop)}: [start, stop)"
-                )
+                raise ValueError(f"columns.results.{name} {(start, stop)}: [start, stop)")
         unknown = sorted(set(self.party_names) - set(self.parties))
         if unknown:
             raise ValueError(f"columns.results.party_names ohne Partei: {unknown}")
@@ -264,11 +274,12 @@ class ResultsColumns(_Strict):
 
 class Columns(_Strict):
     # Die Eigenschaften der Quellgeometrie; ``read_precincts`` liest damit eine Quelldatei (der
-    # Crosswalk einer anderen Periode, Option 02). Der kanonische Stand (Option 01) hat feste
-    # Namen und braucht sie nicht.
-    district_id: str
-    district_name: str
-    precinct_id: str
+    # Crosswalk einer anderen Periode, Option 02, die Raumeinheiten, Option 03). Der kanonische
+    # Stand (Option 01) hat feste Namen und braucht sie nicht: eine Stadt ohne Crosswalk und ohne
+    # Fremddaten lässt sie leer, der Validator von ``Settings`` verlangt sie, wo sie nötig sind.
+    district_id: str = ""
+    district_name: str = ""
+    precinct_id: str = ""
     results: ResultsColumns
 
 
@@ -343,8 +354,10 @@ class Bodies(_Strict):
     das Kürzel der Bezirksvertretungen. Ein Kürzel in zwei Tabellen wäre eine doppelte Wahrheit.
     """
 
-    reference_pattern: str
-    district_body: str
+    # Option 01: leer heißt „die Nummern dieser Stadt tragen kein Kürzel" (Mönchengladbach:
+    # 0682/XI); dann ist jedes Dokument „unbekannt", und die Tabellen bleiben leer.
+    reference_pattern: str = ""
+    district_body: str = ""
     district_body_name: str = "{n}"  # Anzeigename der Bezirksvertretung, {n} ist der Stadtbezirk
     names_as_of: date | None = None  # Stand der Namen; nur Anzeige, nicht im Fingerprint
     council: dict[str, str] = {}
@@ -354,6 +367,8 @@ class Bodies(_Strict):
     @field_validator("reference_pattern")
     @classmethod
     def _pattern_has_code_and_number(cls, value: str) -> str:
+        if not value:
+            return value
         try:
             groups = re.compile(value).groupindex
         except re.error as error:
@@ -365,6 +380,17 @@ class Bodies(_Strict):
 
     @model_validator(mode="after")
     def _codes_disjoint(self) -> Bodies:
+        if not self.reference_pattern:
+            named = [
+                name
+                for name in ("district_body", "council", "committees", "advisory")
+                if getattr(self, name)
+            ]
+            if named:
+                raise ValueError(
+                    f"bodies ohne reference_pattern kennt keine Kürzel: bodies.{', '.join(named)}"
+                )
+            return self
         if not self.district_body:
             raise ValueError("bodies.district_body darf nicht leer sein")
         tables = {"council": self.council, "committees": self.committees, "advisory": self.advisory}
@@ -518,14 +544,14 @@ RATE_TERM = "trefferquote"  # der eine Term, der keine Kontextvariable ist: die 
 class ContextFile(_Strict):
     """Eine Datei des Kontextdatensatzes: Portal-URL und lokaler Name (unter ``root`` und ``external/``)."""
 
-    url: str
-    file: str
+    url: str = ""
+    file: str = ""
 
 
 class ContextFiles(_Strict):
-    table: ContextFile  # Tabelle je Raumeinheit
-    units: ContextFile  # Flächen der Raumeinheiten als GeoJSON
-    indicators: ContextFile  # Definitionen der Indikatoren
+    table: ContextFile = ContextFile()  # Tabelle je Raumeinheit
+    units: ContextFile = ContextFile()  # Flächen der Raumeinheiten als GeoJSON
+    indicators: ContextFile = ContextFile()  # Definitionen der Indikatoren
 
     def all(self) -> tuple[ContextFile, ...]:
         """Die Dateien in fester Reihenfolge: Tabelle, Flächen, Erläuterung."""
@@ -539,13 +565,16 @@ class ContextFiles(_Strict):
 class ContextDataset(_Strict):
     """Namensnennung und Stand, nur für die Seite; zählt nicht zum Fingerprint."""
 
-    title: str
-    url: str
-    publisher: str
-    license: str
-    license_url: str
-    stand: date
-    fetched: date  # Abrufdatum der Dateien unter root; gilt, solange der Netzschritt nie lief
+    title: str = ""
+    url: str = ""
+    publisher: str = ""
+    license: str = ""
+    license_url: str = ""
+    # Option 01: ohne Kontextdaten gibt es keinen Stand; der Validator unten verlangt beide
+    # Daten, sobald ``context.root`` auf einen Datensatz zeigt.
+    stand: date | None = None
+    # Abrufdatum der Dateien unter root; gilt, solange der Netzschritt nie lief
+    fetched: date | None = None
 
 
 class ContextTable(_Strict):
@@ -553,15 +582,15 @@ class ContextTable(_Strict):
     encoding: str = "utf-8"
     decimal: str = ","
     missing: list[str] = ["."]  # Marker für fehlende oder anonymisierte Werte
-    key: str
-    name: str
-    indicator: str  # Spalten der Erläuterungsdatei
-    definition: str
+    key: str = ""
+    name: str = ""
+    indicator: str = ""  # Spalten der Erläuterungsdatei
+    definition: str = ""
 
 
 class ContextUnits(_Strict):
-    label: str  # Name der Raumeinheit auf der Seite
-    key: str  # GeoJSON-Eigenschaft mit dem Schlüssel der Einheit
+    label: str = ""  # Name der Raumeinheit auf der Seite
+    key: str = ""  # GeoJSON-Eigenschaft mit dem Schlüssel der Einheit
 
 
 VariableKind = Literal["value", "sum", "ordinal", "district"]
@@ -598,9 +627,9 @@ class ContextModels(_Strict):
     """Termlisten der Modelle; ``single`` nennt je Zeile von Tabelle 6b eine Variable neben der Trefferquote."""
 
     y_scale: float = 100.0
-    main: list[str]
-    parties: list[str]
-    single: list[str]
+    main: list[str] = []
+    parties: list[str] = []
+    single: list[str] = []
 
     @field_validator("y_scale")
     @classmethod
@@ -612,16 +641,16 @@ class ContextModels(_Strict):
 
 class ContextSettings(_Strict):
     # None = keine Kontextdaten: die Schritte context_data, context und controls fehlen dann
-    root: Path | None
-    max_missing_weight: float
-    min_coverage: float
-    dataset: ContextDataset
-    files: ContextFiles
-    table: ContextTable
-    units: ContextUnits
-    scales: dict[str, dict[str, int]]
-    variables: list[ContextVariable]
-    models: ContextModels
+    root: Path | None = None
+    max_missing_weight: float = 0.1
+    min_coverage: float = 0.9
+    dataset: ContextDataset = ContextDataset()
+    files: ContextFiles = ContextFiles()
+    table: ContextTable = ContextTable()
+    units: ContextUnits = ContextUnits()
+    scales: dict[str, dict[str, int]] = {}
+    variables: list[ContextVariable] = []
+    models: ContextModels = ContextModels()
 
     @field_validator("root", mode="before")
     @classmethod
@@ -637,6 +666,27 @@ class ContextSettings(_Strict):
 
     @model_validator(mode="after")
     def _consistent(self) -> ContextSettings:
+        # Option 01: eine Stadt ohne Kontextdatensatz lässt den ganzen Block weg; wer ihn hat,
+        # muss ihn vollständig beschreiben, denn die Namensnennung der Lizenz hängt daran.
+        if self.root is not None:
+            missing = [
+                f"context.{name}"
+                for name, value in (
+                    ("dataset.title", self.dataset.title),
+                    ("dataset.url", self.dataset.url),
+                    ("dataset.publisher", self.dataset.publisher),
+                    ("dataset.stand", self.dataset.stand),
+                    ("dataset.fetched", self.dataset.fetched),
+                    ("files.table.file", self.files.table.file),
+                    ("files.units.file", self.files.units.file),
+                    ("table.key", self.table.key),
+                    ("units.key", self.units.key),
+                    ("variables", self.variables),
+                )
+                if not value
+            ]
+            if missing:
+                raise ValueError(f"context.root ist gesetzt, es fehlen: {', '.join(missing)}")
         for name, scale in self.scales.items():
             if not scale or len(set(scale.values())) != len(scale):
                 raise ValueError(f"context.scales.{name}: Stufen ohne Dubletten in den Werten")
@@ -921,10 +971,10 @@ class Settings(BaseSettings):
     columns: Columns
     search: Search
     analysis: Analysis = Analysis()
-    bodies: Bodies  # Option 05
+    bodies: Bodies = Bodies()  # Option 05; leer: die Nummern tragen kein Kürzel (Option 01)
     weights: Weights = Weights()  # Option 06
     topics: Topics = Topics()  # Option 06
-    context: ContextSettings  # Option 03
+    context: ContextSettings = ContextSettings()  # Option 03; leer: keine Kontextdaten (Option 01)
 
     originators: Originators = Originators()  # Option 04
     crosswalk: Crosswalk = Crosswalk()  # Option 02
@@ -936,6 +986,16 @@ class Settings(BaseSettings):
     city: City
     report: Report = Report()
     publish: Publish = Publish()
+
+    @model_validator(mode="after")
+    def _context_needs_the_geometry_columns(self) -> Settings:
+        """Option 03 liest die Stimmbezirke als Quelldatei; dann müssen ihre Spalten dastehen."""
+        if self.context.root is not None and not self.columns.precinct_id:
+            raise ValueError(
+                "context.root ist gesetzt: columns.precinct_id, district_id und district_name "
+                "nennen die Eigenschaften der Quellgeometrie und sind dann Pflicht"
+            )
+        return self
 
     @model_validator(mode="after")
     def _party_keys_have_a_vote_column(self) -> Settings:
@@ -990,6 +1050,14 @@ class Settings(BaseSettings):
             ]
             if blank:
                 raise ValueError(f"crosswalk.enabled braucht crosswalk.{', '.join(blank)}")
+            # Option 01: der Crosswalk liest den Zielzuschnitt als Quelldatei, mit diesen Namen
+            unnamed = [
+                key
+                for key in ("district_id", "district_name", "precinct_id")
+                if not getattr(self.columns, key)
+            ]
+            if unnamed:
+                raise ValueError(f"crosswalk.enabled braucht columns.{', '.join(unnamed)}")
         elif not columns.district and columns.district_from_precinct is None:
             raise ValueError(
                 "columns.results.district ist leer: der Wahlbezirk kommt dann aus der Zuordnung "

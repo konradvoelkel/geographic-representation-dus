@@ -120,6 +120,13 @@ def bootstrap(
     ]
     if needs_dictionary:
         pairs += [(reference.streets, layout.streets), (reference.pois, layout.pois)]
+    # Option 01: zwei Quellen, die nur manche Städte veröffentlichen (votemanager)
+    for source, target in (
+        (reference.streets_directory, layout.streets_directory),
+        (reference.district_names_csv, layout.district_names_csv),
+    ):
+        if source is not None and target is not None and source.is_file():
+            _copy_input(layout, source, target, report, force=force)
     if layout.context_root is not None:
         # Option 03: dieselbe Mechanik für die Fremddaten; der Netzschritt context_data holt sie frisch.
         pairs += [(layout.context_source(name), layout.external / name) for name in context_files]

@@ -1,0 +1,635 @@
+{
+ "version": 0.6,
+ "generator": "Overpass API 0.7.62.11 87bfad18",
+ "osm3s": {
+  "timestamp_osm_base": "2026-10-11T23:59:36Z",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+ },
+ "elements": [
+  {
+   "type": "way",
+   "id": 19730557,
+   "tags": {
+    "highway": "unclassified",
+    "maxspeed": "30",
+    "name": "Birkmannsweg",
+    "postal_code": "41169",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19735047,
+   "tags": {
+    "created_by": "JOSM",
+    "highway": "residential",
+    "lanes": "1",
+    "name": "Karrenweg",
+    "oneway": "yes",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19735324,
+   "tags": {
+    "highway": "residential",
+    "lanes": "1",
+    "name": "Karrenweg",
+    "oneway": "yes",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19735650,
+   "tags": {
+    "created_by": "JOSM",
+    "highway": "residential",
+    "lanes": "1",
+    "name": "Karrenweg",
+    "oneway": "yes",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19742148,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "motor_vehicle": "destination",
+    "name": "Karrenweg",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19742710,
+   "tags": {
+    "bicycle": "designated",
+    "foot": "designated",
+    "highway": "path",
+    "name": "Heilstättenweg",
+    "segregated": "no",
+    "surface": "paved"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19742746,
+   "tags": {
+    "highway": "residential",
+    "lane_markings": "no",
+    "name": "Vorster Landwehr",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19743144,
+   "tags": {
+    "check_date:smoothness": "2024-10",
+    "highway": "residential",
+    "maxspeed": "30",
+    "motor_vehicle": "destination",
+    "name": "Heilstättenweg",
+    "smoothness": "excellent",
+    "source:maxspeed": "DE:zone30",
+    "source:smoothness": "survey",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19754992,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Döhmenkamp",
+    "postal_code": "41169",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19754993,
+   "tags": {
+    "highway": "footway",
+    "name": "Döhmenkamp",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19755537,
+   "tags": {
+    "bicycle": "yes",
+    "foot": "designated",
+    "highway": "path",
+    "name": "Elsenkamp",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19755967,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Elsenkamp",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19765017,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Elsenkamp",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19765644,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Vorster Straße",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19765645,
+   "tags": {
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Elsenkamp",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19765646,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Elsenkamp",
+    "source:maxspeed": "DE:zone30",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19765647,
+   "tags": {
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Elsenkamp",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19765820,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Pfarrer-Orth-Weg",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19780132,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Kreuelskamp",
+    "source:maxspeed": "DE:zone30"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19780270,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Kreuelskamp",
+    "source:maxspeed": "DE:zone30"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19780519,
+   "tags": {
+    "created_by": "JOSM",
+    "highway": "residential",
+    "name": "Vorster Landwehr"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19780522,
+   "tags": {
+    "highway": "residential",
+    "name": "Vorster Straße"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19780537,
+   "tags": {
+    "highway": "residential",
+    "name": "Vorster Straße"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19780556,
+   "tags": {
+    "highway": "residential",
+    "name": "Vorster Straße",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19780566,
+   "tags": {
+    "highway": "residential",
+    "name": "Vorster Straße"
+   }
+  },
+  {
+   "type": "way",
+   "id": 19852412,
+   "tags": {
+    "destination:colour:forward": ";white;white",
+    "destination:forward": "MG-Hehn;Reha-Klinik Herzpark;Bezirkssportanlage Hardt",
+    "highway": "tertiary",
+    "lanes": "2",
+    "maxspeed": "30",
+    "name": "Louise-Gueury-Straße",
+    "name:etymology:wikidata": "Q1872155",
+    "postal_code": "41169",
+    "ref": "K 15",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 29311756,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Pfarrer-Orth-Weg",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 129654230,
+   "tags": {
+    "bicycle": "yes",
+    "foot": "designated",
+    "highway": "path",
+    "name": "Elsenkamp",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 129654251,
+   "tags": {
+    "highway": "footway",
+    "name": "Pfarrer-Orth-Weg",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 148344868,
+   "tags": {
+    "highway": "secondary",
+    "lanes": "3",
+    "lanes:backward": "1",
+    "lanes:forward": "2",
+    "lit": "yes",
+    "maxspeed": "50",
+    "name": "Waldnieler Straße",
+    "name:etymology:wikidata": "Q1313496",
+    "ref": "L 371",
+    "source:maxspeed": "sign",
+    "surface": "asphalt",
+    "turn:lanes:forward": "left|through"
+   }
+  },
+  {
+   "type": "way",
+   "id": 148727445,
+   "tags": {
+    "highway": "unclassified",
+    "motor_vehicle": "agricultural",
+    "name": "Vorster Straße",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 148727484,
+   "tags": {
+    "highway": "unclassified",
+    "motor_vehicle": "agricultural",
+    "name": "Vorster Straße",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 148886401,
+   "tags": {
+    "highway": "service",
+    "motor_vehicle": "destination",
+    "name": "Birkmannsweg",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 151542120,
+   "tags": {
+    "highway": "secondary",
+    "lanes": "3",
+    "lanes:backward": "1",
+    "maxspeed": "50",
+    "name": "Vorster Straße",
+    "ref": "L 371",
+    "source:maxspeed": "sign",
+    "surface": "asphalt",
+    "turn:lanes:forward": "left|through"
+   }
+  },
+  {
+   "type": "way",
+   "id": 190293515,
+   "tags": {
+    "cycleway": "track",
+    "highway": "secondary",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Vorster Straße",
+    "ref": "L 371",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 190293521,
+   "tags": {
+    "highway": "secondary",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Vorster Straße",
+    "ref": "L 371",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 190293525,
+   "tags": {
+    "cycleway": "track",
+    "highway": "secondary",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Vorster Straße",
+    "ref": "L 371",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 207445681,
+   "tags": {
+    "highway": "secondary",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Vorster Straße",
+    "ref": "L 371",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 284675201,
+   "tags": {
+    "highway": "residential",
+    "name": "Vorster Straße"
+   }
+  },
+  {
+   "type": "way",
+   "id": 284689155,
+   "tags": {
+    "highway": "footway",
+    "name": "Elsenkamp",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 284689156,
+   "tags": {
+    "highway": "service",
+    "maxspeed": "30",
+    "name": "Pfarrer-Orth-Weg",
+    "source:maxspeed": "DE:zone30",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 462852366,
+   "tags": {
+    "highway": "residential",
+    "name": "Vorster Landwehr"
+   }
+  },
+  {
+   "type": "way",
+   "id": 473417929,
+   "tags": {
+    "highway": "residential",
+    "lanes": "1",
+    "name": "Karrenweg",
+    "oneway": "yes",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 473417930,
+   "tags": {
+    "highway": "tertiary",
+    "lanes": "2",
+    "maxspeed": "30",
+    "name": "Louise-Gueury-Straße",
+    "name:etymology:wikidata": "Q1872155",
+    "postal_code": "41169",
+    "ref": "K 15",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 584347668,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "motor_vehicle": "destination",
+    "name": "Pfarrer-Orth-Weg",
+    "source:maxspeed": "DE:zone30",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 851786231,
+   "tags": {
+    "destination": "Schwalmtal;MG-Hardt",
+    "highway": "secondary_link",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "name": "Roermonder Straße",
+    "name:etymology:wikidata": "Q9783",
+    "oneway": "yes",
+    "postal_code": "41068",
+    "source:maxspeed": "sign",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 967038169,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Karrenweg",
+    "postal_code": "41169",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1330127291,
+   "tags": {
+    "highway": "secondary",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Vorster Straße",
+    "ref": "L 371",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1443219378,
+   "tags": {
+    "highway": "tertiary",
+    "lane_markings": "yes",
+    "lanes": "2",
+    "maxspeed": "30",
+    "name": "Louise-Gueury-Straße",
+    "name:etymology:wikidata": "Q1872155",
+    "postal_code": "41169",
+    "ref": "K 15",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1463668414,
+   "tags": {
+    "bench": "no",
+    "bin": "yes",
+    "highway": "bus_stop",
+    "lit": "yes",
+    "name": "Louise-Gueury-Straße",
+    "public_transport": "platform",
+    "shelter": "no",
+    "source": "NRW Orthe 2025 License Dt. Zero V.2.0",
+    "tactile_paving": "no",
+    "wheelchair": "no"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1463668415,
+   "tags": {
+    "bench": "no",
+    "bin": "no",
+    "highway": "bus_stop",
+    "lit": "no",
+    "name": "Louise-Gueury-Straße",
+    "public_transport": "platform",
+    "shelter": "no",
+    "source": "NRW Orthe 2025 License Dt. Zero V.2.0",
+    "tactile_paving": "no",
+    "wheelchair": "no"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1463668416,
+   "tags": {
+    "bench": "no",
+    "bin": "yes",
+    "highway": "bus_stop",
+    "lit": "no",
+    "name": "Louise-Gueury-Straße",
+    "public_transport": "platform",
+    "shelter": "no",
+    "source": "NRW Orthe 2025 License Dt. Zero V.2.0",
+    "tactile_paving": "yes",
+    "wheelchair": "yes"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1463668427,
+   "tags": {
+    "bench": "yes",
+    "bin": "yes",
+    "highway": "bus_stop",
+    "lit": "yes",
+    "name": "Heilstättenweg",
+    "public_transport": "platform",
+    "shelter": "yes",
+    "source": "NRW Orthe 2025 License Dt. Zero V.2.0",
+    "tactile_paving": "no",
+    "wheelchair": "no"
+   }
+  }
+ ]
+}

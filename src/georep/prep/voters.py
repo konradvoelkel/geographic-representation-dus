@@ -102,8 +102,12 @@ def read_results_csv(path: Path, columns: ResultsColumns) -> pl.DataFrame:
     # der Wahlbezirk kommt dort aus der Zuordnung (Option 02) und der Stadtbezirk aus der
     # Hauptperiode (Option 05 rechnet auf dem Zielzuschnitt).
     required += [c for c in (columns.district, columns.city_district) if c]
-    # Option 01: votemanager führt den Wahlbezirk nicht als Spalte; dann ist die Nummer Pflicht
-    if columns.district_from_precinct is not None:
+    # Option 01: votemanager führt Wahlbezirk und Stadtbezirk nicht als Spalte, sondern in der
+    # Stimmbezirksnummer; dann ist sie Pflicht.
+    if (
+        columns.district_from_precinct is not None
+        or columns.city_district_from_precinct is not None
+    ):
         required.append(columns.precinct)
     missing = [c for c in required if c not in frame.columns]
     if missing:
@@ -122,6 +126,17 @@ def district_source(columns: ResultsColumns) -> str:
     return columns.district or columns.precinct
 
 
+def _slice_of_precinct(precinct: str, span: tuple[int, int]) -> pl.Expr:
+    start, stop = span
+    return (
+        pl.col(precinct)
+        .str.strip_chars()
+        .str.slice(start, stop - start)
+        .cast(pl.Int64, strict=False)
+        .fill_null(0)
+    )
+
+
 def district_expression(columns: ResultsColumns) -> pl.Expr:
     """Der Wahlbezirk: eigene Spalte, oder Zeichenausschnitt der Stimmbezirksnummer (Option 01).
 
@@ -131,15 +146,19 @@ def district_expression(columns: ResultsColumns) -> pl.Expr:
     """
     if columns.district_from_precinct is None:
         return _to_int(columns.district).alias(DISTRICT)
-    start, stop = columns.district_from_precinct
-    return (
-        pl.col(columns.precinct)
-        .str.strip_chars()
-        .str.slice(start, stop - start)
-        .cast(pl.Int64, strict=False)
-        .fill_null(0)
-        .alias(DISTRICT)
-    )
+    return _slice_of_precinct(columns.precinct, columns.district_from_precinct).alias(DISTRICT)
+
+
+def city_district_source(columns: ResultsColumns) -> str:
+    """Die Spalte, aus der der Stadtbezirk kommt: er selbst oder die Stimmbezirksnummer."""
+    return columns.city_district or columns.precinct
+
+
+def city_district_expression(columns: ResultsColumns) -> pl.Expr:
+    """Der Stadtbezirk, auf demselben Weg wie der Wahlbezirk (Option 05 auf Option 01)."""
+    if columns.city_district_from_precinct is None:
+        return _to_int(columns.city_district).alias(UNIT)
+    return _slice_of_precinct(columns.precinct, columns.city_district_from_precinct).alias(UNIT)
 
 
 @deal.pre(
@@ -199,8 +218,9 @@ def aggregate_voters(results: pl.DataFrame, columns: ResultsColumns) -> pl.DataF
 
 
 @deal.pre(
+    # Option 01: beide Bezirke stehen in ihrer Spalte oder in der Stimmbezirksnummer
     lambda results, columns: has_columns(
-        results, columns.district, columns.city_district, ELIGIBLE_TOTAL
+        results, district_source(columns), city_district_source(columns), ELIGIBLE_TOTAL
     ),
     message="Wahlergebnis braucht Wahlbezirk, Stadtbezirk und Wahlberechtigte",
 )
@@ -217,8 +237,8 @@ def district_units(results: pl.DataFrame, columns: ResultsColumns) -> pl.DataFra
     sichern Gewichte in (0, 1] und Summe 1 je Wahlbezirk zu.
     """
     typed = results.select(
-        _to_int(columns.district).alias(DISTRICT),
-        _to_int(columns.city_district).alias(UNIT),
+        district_expression(columns),
+        city_district_expression(columns),
         _to_int(ELIGIBLE_TOTAL).alias(ELIGIBLE),
     )
     return unit_weights(typed, UNIT, ELIGIBLE)

@@ -1,0 +1,358 @@
+{
+ "batchcomplete": "",
+ "query": {
+  "geosearch": [
+   {
+    "pageid": 8564887,
+    "ns": 0,
+    "title": "Blücherstraße 25 (Mönchengladbach)",
+    "lat": 51.167057,
+    "lon": 6.454961,
+    "dist": 34.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8913096,
+    "ns": 0,
+    "title": "Sonderschule Rheydt",
+    "lat": 51.167863,
+    "lon": 6.453338,
+    "dist": 110.8,
+    "primary": ""
+   },
+   {
+    "pageid": 42763,
+    "ns": 0,
+    "title": "Rheydt",
+    "lat": 51.1675,
+    "lon": 6.45291,
+    "dist": 117.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8564858,
+    "ns": 0,
+    "title": "Bendhecker Straße 64 (Mönchengladbach)",
+    "lat": 51.167174,
+    "lon": 6.456274,
+    "dist": 121.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8564434,
+    "ns": 0,
+    "title": "Blücherstraße 29 (Mönchengladbach)",
+    "lat": 51.168402,
+    "lon": 6.454542,
+    "dist": 133.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8563529,
+    "ns": 0,
+    "title": "Bylandtstraße 28 (Mönchengladbach)",
+    "lat": 51.168486,
+    "lon": 6.454281,
+    "dist": 143.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8563836,
+    "ns": 0,
+    "title": "Bylandtstraße 31 (Mönchengladbach)",
+    "lat": 51.168533,
+    "lon": 6.454297,
+    "dist": 148.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8915769,
+    "ns": 0,
+    "title": "Wilhelm-Strauß-Straße 97 (Mönchengladbach)",
+    "lat": 51.168144,
+    "lon": 6.452975,
+    "dist": 150.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8563818,
+    "ns": 0,
+    "title": "Bylandtstraße 30 (Mönchengladbach)",
+    "lat": 51.1686,
+    "lon": 6.454364,
+    "dist": 155.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8563664,
+    "ns": 0,
+    "title": "Totenhalle Mönchengladbach",
+    "lat": 51.168665,
+    "lon": 6.454252,
+    "dist": 163.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8563756,
+    "ns": 0,
+    "title": "Bylandtstraße 29 (Mönchengladbach)",
+    "lat": 51.168729,
+    "lon": 6.454427,
+    "dist": 169.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8540077,
+    "ns": 0,
+    "title": "Bylandtstraße 24 (Mönchengladbach)",
+    "lat": 51.168756,
+    "lon": 6.455495,
+    "dist": 185.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8563412,
+    "ns": 0,
+    "title": "Bylandtstraße 26 (Mönchengladbach)",
+    "lat": 51.16887,
+    "lon": 6.454385,
+    "dist": 185.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8557725,
+    "ns": 0,
+    "title": "Burgturm (Mönchengladbach)",
+    "lat": 51.168922,
+    "lon": 6.454369,
+    "dist": 191.4,
+    "primary": ""
+   },
+   {
+    "pageid": 8540006,
+    "ns": 0,
+    "title": "Bylandtstraße 22 (Mönchengladbach)",
+    "lat": 51.16884,
+    "lon": 6.455483,
+    "dist": 193.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8550357,
+    "ns": 0,
+    "title": "Bylandtstraße 21 (Mönchengladbach)",
+    "lat": 51.169061,
+    "lon": 6.454386,
+    "dist": 206.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8557690,
+    "ns": 0,
+    "title": "Bylandtstraße 19 (Mönchengladbach)",
+    "lat": 51.169191,
+    "lon": 6.454575,
+    "dist": 221,
+    "primary": ""
+   },
+   {
+    "pageid": 8562703,
+    "ns": 0,
+    "title": "Bylandtstraße 15 (Mönchengladbach)",
+    "lat": 51.169108,
+    "lon": 6.455706,
+    "dist": 227.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8773544,
+    "ns": 0,
+    "title": "Hauptstraße 238 (Mönchengladbach)",
+    "lat": 51.16901,
+    "lon": 6.45293,
+    "dist": 229.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8774592,
+    "ns": 0,
+    "title": "Hauptstraße 266 (Mönchengladbach)",
+    "lat": 51.169323,
+    "lon": 6.454699,
+    "dist": 235.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8773957,
+    "ns": 0,
+    "title": "Hauptstraße 235 (Mönchengladbach)",
+    "lat": 51.169359,
+    "lon": 6.453111,
+    "dist": 259.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8773946,
+    "ns": 0,
+    "title": "Hauptstraße 240 (Mönchengladbach)",
+    "lat": 51.169442,
+    "lon": 6.45313,
+    "dist": 267.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8774047,
+    "ns": 0,
+    "title": "Hauptstraße 247 (Mönchengladbach)",
+    "lat": 51.169661,
+    "lon": 6.453715,
+    "dist": 279.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8773964,
+    "ns": 0,
+    "title": "Hauptstraße 241 (Mönchengladbach)",
+    "lat": 51.169708,
+    "lon": 6.453412,
+    "dist": 289.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8629721,
+    "ns": 0,
+    "title": "Hauptstraße 264 (Mönchengladbach)",
+    "lat": 51.169908,
+    "lon": 6.454639,
+    "dist": 300.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8773993,
+    "ns": 0,
+    "title": "Hauptstraße 245 (Mönchengladbach)",
+    "lat": 51.169856,
+    "lon": 6.453632,
+    "dist": 301.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8628286,
+    "ns": 0,
+    "title": "Hauptstraße 262 (Mönchengladbach)",
+    "lat": 51.169964,
+    "lon": 6.454377,
+    "dist": 307.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8846509,
+    "ns": 0,
+    "title": "Mühlenstraße 218/220 (Mönchengladbach)",
+    "lat": 51.1702,
+    "lon": 6.45361,
+    "dist": 339.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8836875,
+    "ns": 0,
+    "title": "Mühlenstraße 206 (Mönchengladbach)",
+    "lat": 51.170127,
+    "lon": 6.452982,
+    "dist": 342.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8845394,
+    "ns": 0,
+    "title": "Mühlenstraße 192 (Mönchengladbach)",
+    "lat": 51.16988,
+    "lon": 6.45209,
+    "dist": 342.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8845531,
+    "ns": 0,
+    "title": "Mühlenstraße 200 (Mönchengladbach)",
+    "lat": 51.170078,
+    "lon": 6.452732,
+    "dist": 343.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8847696,
+    "ns": 0,
+    "title": "Mühlenstraße 208 (Mönchengladbach)",
+    "lat": 51.170165,
+    "lon": 6.453072,
+    "dist": 344.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8845383,
+    "ns": 0,
+    "title": "Mühlenstraße 190 (Mönchengladbach)",
+    "lat": 51.169919,
+    "lon": 6.45206,
+    "dist": 347.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8845524,
+    "ns": 0,
+    "title": "Mühlenstraße 194 (Mönchengladbach)",
+    "lat": 51.17,
+    "lon": 6.45219,
+    "dist": 351.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8474645,
+    "ns": 0,
+    "title": "Friedenskirche (Rheydt)",
+    "lat": 51.170354,
+    "lon": 6.455607,
+    "dist": 358.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8846934,
+    "ns": 0,
+    "title": "Mühlenstraße 197 (Mönchengladbach)",
+    "lat": 51.17031,
+    "lon": 6.45314,
+    "dist": 358.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8844287,
+    "ns": 0,
+    "title": "Mühlenstraße 177–179 (Mönchengladbach)",
+    "lat": 51.17,
+    "lon": 6.45172,
+    "dist": 367.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8836861,
+    "ns": 0,
+    "title": "Mühlenstraße 219 (Mönchengladbach)",
+    "lat": 51.17054,
+    "lon": 6.45433,
+    "dist": 371.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8512011,
+    "ns": 0,
+    "title": "Bahnhof Rheydt-Geneicken",
+    "lat": 51.170659,
+    "lon": 6.45654,
+    "dist": 409,
+    "primary": ""
+   }
+  ]
+ }
+}

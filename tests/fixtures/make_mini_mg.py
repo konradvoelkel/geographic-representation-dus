@@ -4,7 +4,9 @@ Aufruf aus dem Repo-Wurzelverzeichnis::
 
     uv run python -m tests.fixtures.make_mini_mg
 
-Auswahl: die drei Wahlbezirke 02, 10 und 22 Mönchengladbachs. Die Eingaben kommen aus den
+Auswahl: die drei Wahlbezirke 04, 09 und 23 Mönchengladbachs. Sie sind die, deren Straßennamen
+in der PDF-Stichprobe überhaupt vorkommen (Vorster Straße, Winkeln, Brandenberger Straße,
+Hauptstraße); mit drei beliebigen Bezirken fände die Kette keinen einzigen Treffer. Die Eingaben kommen aus den
 aufgezeichneten Antworten (``tests/fixtures/http/``, ``tests/fixtures/oparl/``,
 ``tests/fixtures/pdf/mg/``) und aus den vier öffentlichen votemanager-Dateien samt Shapefile-Zip,
 die am 2026-10-12 einmal geladen wurden; das Skript schneidet sie auf die drei Wahlbezirke zu.
@@ -24,7 +26,7 @@ from typing import Any
 import polars as pl
 import shapefile
 
-from georep.geo import PrecinctIndex, read_precincts
+from georep.geo import PrecinctIndex, read_canonical_precincts
 from georep.layout import Layout
 from georep.prep.precincts import canonical_precincts, read_source
 from georep.records import PaperRecord
@@ -38,17 +40,19 @@ FIXTURES = Path(__file__).resolve().parent
 MG = FIXTURES / "mg"
 HTTP = FIXTURES / "http"
 PDFS = FIXTURES / "pdf" / "mg"
-DISTRICTS = (2, 10, 22)  # Wahlbezirke; die Stimmbezirksnummer trägt sie an Stelle 1 und 2
-SAMPLE_PRECINCTS = ("11001", "32201", "40201")  # die drei mit aufgezeichneter Overpass-Antwort
+DISTRICTS = (4, 9, 23)  # Wahlbezirke; die Stimmbezirksnummer trägt sie an Stelle 1 und 2
+SAMPLE_PRECINCTS = ("10404", "10906", "32301")  # die drei mit aufgezeichneter Overpass-Antwort
 EXTRACTOR = "pypdf (Stichprobe, Oktober 2026)"
 
 
 def _rows_of(path: Path, column: str, sep: str = ";") -> pl.DataFrame:
     frame = pl.read_csv(path, separator=sep, infer_schema=False, encoding="utf8")
     return frame.filter(
-        pl.col(column).str.strip_chars().str.slice(1, 2).cast(pl.Int64, strict=False).is_in(
-            list(DISTRICTS)
-        )
+        pl.col(column)
+        .str.strip_chars()
+        .str.slice(1, 2)
+        .cast(pl.Int64, strict=False)
+        .is_in(list(DISTRICTS))
     )
 
 
@@ -181,7 +185,7 @@ def write_pois_json(precincts: list[Any], settings: Any) -> None:
 
 
 def write_corpus(settings: Any) -> None:
-    """``raw/papers.jsonl`` und ``text/texts.parquet`` aus der OParl-Seite und den PDFs."""
+    """``raw/papers.jsonl`` und ``cache/text/texts.parquet`` aus der OParl-Seite und den PDFs."""
     from georep.oparl import PaperPage
     from georep.prep.extract import extract_text, normalise_text
 
@@ -189,10 +193,14 @@ def write_corpus(settings: Any) -> None:
     records = [PaperRecord.from_oparl(p) for p in PaperPage.model_validate(raw).data]
     store = PaperStore(MG / "raw" / "papers.jsonl")
     store.save(records)
-    texts = TextStore(MG / "text" / "texts.parquet")
+    texts = TextStore(MG / "cache" / "text" / "texts.parquet")
     stored = 0
     for pdf in sorted(PDFS.glob("*.pdf")):
-        texts.put(pdf.name, normalise_text(extract_text(pdf)), TextMeta(extractor=EXTRACTOR, source="stichprobe"))
+        texts.put(
+            pdf.name,
+            normalise_text(extract_text(pdf)),
+            TextMeta(extractor=EXTRACTOR, source="stichprobe"),
+        )
         stored += 1
     texts.save()
     print(f"  papers.jsonl: {len(records)} Paper; texts.parquet: {stored} Texte")
@@ -201,7 +209,7 @@ def write_corpus(settings: Any) -> None:
 def main() -> None:
     settings = load_settings(profile="moenchengladbach")
     layout = Layout.from_settings(settings)
-    for folder in ("external", "raw", "text"):
+    for folder in ("external", "raw", "cache/text"):
         (MG / folder).mkdir(parents=True, exist_ok=True)
     external = layout.external
     print("Eingaben aus", external)
@@ -209,7 +217,7 @@ def main() -> None:
     write_district_names(external / settings.sources.opendata.district_names_file)
     write_streets_directory(external / settings.sources.opendata.streets_file)
 
-    source = read_source(layout.districts_source, settings.precincts)
+    source = read_source(layout.districts_geojson, settings.precincts)
     keep = {
         str(f["properties"][settings.precincts.id_property]).strip()
         for f in source.features
@@ -217,7 +225,7 @@ def main() -> None:
         and int(str(f["properties"][settings.precincts.id_property]).strip()[1:3]) in DISTRICTS
     }
     write_shapefile_zip(
-        layout.districts_source,
+        layout.districts_geojson,
         MG / "external" / settings.sources.opendata.districts_file,
         keep,
     )
@@ -236,9 +244,11 @@ def main() -> None:
     canonical = canonical_precincts(mini_source, settings.precincts, names)
     tmp = MG / "raw" / "_stimmbezirke.geojson"
     tmp.write_text(json.dumps(canonical, ensure_ascii=False), encoding="utf-8")
-    precincts = read_precincts(tmp, settings.geo.working_crs)
+    precincts = read_canonical_precincts(tmp, settings.geo.working_crs)
     tmp.unlink()
-    print(f"  Stimmbezirke der Fixture: {len(precincts)} in {len({p.district_id for p in precincts})} Wahlbezirken")
+    print(
+        f"  Stimmbezirke der Fixture: {len(precincts)} in {len({p.district_id for p in precincts})} Wahlbezirken"
+    )
 
     write_streets_json(precincts)
     write_pois_json(precincts, settings)

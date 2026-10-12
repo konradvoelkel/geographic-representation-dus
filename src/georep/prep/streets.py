@@ -2,6 +2,10 @@
 
 Entspricht ``src/prep_streets.py``: je Wahlbezirk die sortierte Menge der Straßennamen aller
 seiner Stimmbezirke. Listen statt ``"; "``-Strings.
+
+Dazu (Option 01) die Übereinstimmung mit dem amtlichen Straßenverzeichnis der Wahl, wo die Stadt
+eines veröffentlicht: sie misst, wie gut die Flächen, aus denen die Straßennamen kommen, zum
+Zuschnitt der Wahl passen. Mönchengladbachs Flächen sind von 2022, die Wahl ist von 2025.
 """
 
 from __future__ import annotations

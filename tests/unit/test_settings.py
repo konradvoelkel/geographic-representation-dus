@@ -633,6 +633,21 @@ def test_labels_and_file_names_stay_out_of_the_fingerprint(tmp_path: Path) -> No
     assert renamed.period.label == "Anders" and renamed.fingerprint() == base.fingerprint()
 
 
+# --- Option 01: was eine zweite Stadt nicht hat -----------------------------------------------
+
+
+def test_a_second_city_needs_neither_context_data_nor_body_codes() -> None:
+    """Nicht jede Stadt hat einen Quartiersatlas, und nicht jedes RIS nennt das Gremium.
+
+    Mönchengladbach veröffentlicht keinen Datensatz je Raumeinheit (Option 03), und seine
+    Drucksachennummern tragen kein Kürzel (``0682/XI``, Stichprobe 2026-10-12, Option 05).
+    Beide Blöcke fehlen im Profil; die Schritte entfallen, die Gremien sind „unbekannt".
+    """
+    settings = load_settings(profile="moenchengladbach", cwd=Path("/nonexistent"))
+    assert settings.context.root is None and not settings.context.variables
+    assert settings.bodies.reference_pattern == "" and settings.bodies.district_body == ""
+
+
 # --- Option 02: die beiden Profildateien im Repo ----------------------------------------------
 
 REPO = Path(__file__).resolve().parents[2]

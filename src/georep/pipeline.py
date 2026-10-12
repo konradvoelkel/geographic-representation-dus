@@ -66,7 +66,7 @@ from georep.prep.extract import extract_missing
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus, documents_with_text
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
 from georep.prep.precincts import canonical_precincts, district_names_from_csv, read_source
-from georep.prep.streets import read_streets_json, streets_by_district
+from georep.prep.streets import directory_agreement, read_streets_json, streets_by_district
 from georep.prep.voters import (
     ELIGIBLE_TOTAL,
     PRECINCT,
@@ -594,7 +594,17 @@ def build_steps(
     def streets() -> str:
         frame = streets_by_district(read_streets_json(dictionary_source.streets))
         write_parquet(frame, layout.streets_by_district, schema_version=1)
-        return f"{frame.height} Wahlbezirke, {frame.get_column('suchbegriffe').list.len().sum()} Straßennamen"
+        line = (
+            f"{frame.height} Wahlbezirke, "
+            f"{frame.get_column('suchbegriffe').list.len().sum()} Straßennamen"
+        )
+        # Option 01: wo die Stadt ein Straßenverzeichnis veröffentlicht, misst der Schritt, wie
+        # gut die Flächen zum Zuschnitt der Wahl passen; die Seite nennt die Zahl.
+        directory = layout.streets_directory
+        if directory is not None and directory.is_file():
+            agreement = directory_agreement(layout.streets, directory, columns, settings.precincts)
+            line += f"; Verzeichnis: {agreement.line()}"
+        return line
 
     def pois() -> str:
         clean = clean_pois(read_pois_json(dictionary_source.pois), settings.search.exclude)
@@ -816,6 +826,8 @@ def build_steps(
     # Option 06: ohne Themenmodell (``topics.k = 0``) fehlt der Schritt und niemand nennt seine
     # Ausgaben als Eingabe; die zwei Tabellen der Themen sind im Register ``optional``.
     with_topics = settings.topics.k > 0
+    # Option 01: die Urheber (Option 04) brauchen die Fraktionsnamen der Stadt
+    with_parties = bool(settings.originators.parties)
     topic_outputs = (layout.topics, layout.topic_documents, layout.topic_shares)
     context_files = tuple(layout.external / name for name in context.files.names())
     return [
@@ -989,18 +1001,29 @@ def build_steps(
             else []
         ),
         # --- Option 04: nach results, weil es dessen paper_ids schneidet; organizations.json ist
-        # eine Eingabe nur, wenn der Netzschritt lief (dann wandert ihr Hash in den Stamp)
-        Step(
-            "parties",
-            (
-                layout.corpus,
-                layout.results,
-                layout.voters,
-                *((layout.organizations,) if layout.organizations.exists() else ()),
-            ),
-            (layout.document_originators, layout.district_originators, layout.party_results),
-            parties,
-            PARTIES_SCHEMA,
+        # eine Eingabe nur, wenn der Netzschritt lief (dann wandert ihr Hash in den Stamp).
+        # Option 01: ohne Fraktionsnamen im Profil gibt es keine Urheber zu erkennen.
+        *(
+            [
+                Step(
+                    "parties",
+                    (
+                        layout.corpus,
+                        layout.results,
+                        layout.voters,
+                        *((layout.organizations,) if layout.organizations.exists() else ()),
+                    ),
+                    (
+                        layout.document_originators,
+                        layout.district_originators,
+                        layout.party_results,
+                    ),
+                    parties,
+                    PARTIES_SCHEMA,
+                )
+            ]
+            if with_parties
+            else []
         ),
         # --- Option 02: der Vergleich steht vor dem Bericht und wird seine letzte Eingabe
         *(
@@ -1054,10 +1077,16 @@ def build_steps(
                     if with_context
                     else ()
                 ),
-                # Option 04
-                layout.document_originators,
-                layout.district_originators,
-                layout.party_results,
+                # Option 04; Option 01: nur, wo das Profil Fraktionsnamen mitbringt
+                *(
+                    (
+                        layout.document_originators,
+                        layout.district_originators,
+                        layout.party_results,
+                    )
+                    if with_parties
+                    else ()
+                ),
             )
             + ((layout.topics, layout.topic_documents) if with_topics else ())
             # --- Option 02: der Vergleich und die Zuordnung der älteren Periode

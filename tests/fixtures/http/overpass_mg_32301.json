@@ -1,0 +1,1105 @@
+{
+ "version": 0.6,
+ "generator": "Overpass API 0.7.62.11 87bfad18",
+ "osm3s": {
+  "timestamp_osm_base": "2026-10-12T00:01:35Z",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+ },
+ "elements": [
+  {
+   "type": "way",
+   "id": 8026591,
+   "tags": {
+    "cycleway": "no",
+    "destination": "Mönchengladbach-Zentrum;Rheydt-Zentrum",
+    "destination:colour": "white",
+    "highway": "secondary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Otto-Saffran-Straße",
+    "oneway": "yes",
+    "postal_code": "41238",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 8101509,
+   "tags": {
+    "cycleway": "no",
+    "highway": "secondary",
+    "junction": "roundabout",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "parking:both": "no",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 8101763,
+   "tags": {
+    "cycleway:both": "no",
+    "highway": "residential",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Bendhecker Straße",
+    "postal_code": "41236",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 8101765,
+   "tags": {
+    "highway": "residential",
+    "lanes": "1",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "oneway": "yes",
+    "postal_code": "41236",
+    "sidewalk": "right",
+    "surface": "asphalt",
+    "turn:lanes": "left"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15813536,
+   "tags": {
+    "highway": "residential",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Mühlenstraße",
+    "sidewalk": "both",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15815237,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Pötterstraße",
+    "postal_code": "41236",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15821020,
+   "tags": {
+    "highway": "residential",
+    "lanes": "2",
+    "maxspeed": "30",
+    "name": "Eschenbrüchergasse",
+    "parking:left": "no",
+    "parking:left:restriction": "none",
+    "parking:right": "street_side",
+    "parking:right:fee": "no",
+    "parking:right:orientation": "parallel",
+    "postal_code": "41236",
+    "sidewalk": "right",
+    "source:maxspeed": "DE:zone30"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15821022,
+   "tags": {
+    "cycleway:both": "no",
+    "highway": "living_street",
+    "lanes": "1",
+    "name": "Dorfbroicher Straße",
+    "oneway": "yes",
+    "oneway:bicycle": "no",
+    "parking:left": "no",
+    "parking:left:restriction": "none",
+    "parking:right": "street_side",
+    "parking:right:fee": "no",
+    "parking:right:orientation": "perpendicular",
+    "postal_code": "41236",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15822545,
+   "tags": {
+    "cycleway:both": "no",
+    "highway": "residential",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Bylandtstraße",
+    "postal_code": "41236",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15822546,
+   "tags": {
+    "highway": "tertiary",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Bylandtstraße",
+    "oneway": "yes",
+    "postal_code": "41236",
+    "sidewalk": "both",
+    "source:maxspeed": "sign",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15873833,
+   "tags": {
+    "access": "private",
+    "highway": "residential",
+    "name": "Am Rheydter Bach",
+    "postal_code": "41236"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15898228,
+   "tags": {
+    "created_by": "JOSM",
+    "highway": "service",
+    "name": "Am Rheydter Bach"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15898230,
+   "tags": {
+    "created_by": "JOSM",
+    "highway": "service",
+    "name": "Am Rheydter Bach",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15898240,
+   "tags": {
+    "access": "private",
+    "highway": "residential",
+    "lit": "yes",
+    "name": "Am Rheydter Bach",
+    "postal_code": "41236",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 16598968,
+   "tags": {
+    "cycleway:both": "lane",
+    "cycleway:both:lane": "advisory",
+    "highway": "secondary",
+    "lit": "yes",
+    "maxspeed": "50",
+    "name": "Friedensstraße",
+    "postal_code": "41236"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17504343,
+   "tags": {
+    "cycleway:both": "no",
+    "highway": "residential",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Dorfbroicher Straße",
+    "postal_code": "41236",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17504344,
+   "tags": {
+    "cycleway:both": "no",
+    "highway": "residential",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Dorfbroicher Straße",
+    "oneway": "yes",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17504345,
+   "tags": {
+    "check_date:smoothness": "2024-10",
+    "cycleway:both": "lane",
+    "cycleway:both:lane": "advisory",
+    "highway": "residential",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Dorfbroicher Straße",
+    "smoothness": "good",
+    "source:maxspeed": "DE:zone30",
+    "source:smoothness": "survey",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17504346,
+   "tags": {
+    "check_date:smoothness": "2024-10",
+    "highway": "residential",
+    "lanes": "1",
+    "maxspeed": "30",
+    "name": "Königstraße",
+    "oneway": "yes",
+    "sidewalk": "both",
+    "smoothness": "excellent",
+    "source:maxspeed": "DE:zone30",
+    "source:smoothness": "survey",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 17504471,
+   "tags": {
+    "highway": "residential",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Lehwaldstraße",
+    "oneway": "yes",
+    "source:maxspeed": "DE:zone30"
+   }
+  },
+  {
+   "type": "way",
+   "id": 24447044,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Herzogstraße",
+    "oneway": "yes",
+    "source:maxspeed": "DE:zone30"
+   }
+  },
+  {
+   "type": "way",
+   "id": 24447061,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Kurfürstenstraße",
+    "postal_code": "41236",
+    "source:maxspeed": "DE:zone30"
+   }
+  },
+  {
+   "type": "way",
+   "id": 25653696,
+   "tags": {
+    "check_date:smoothness": "2024-10",
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Königstraße",
+    "postal_code": "41236",
+    "smoothness": "good",
+    "source:maxspeed": "DE:zone30",
+    "source:smoothness": "survey",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 30617746,
+   "tags": {
+    "cycleway": "no",
+    "destination": "Giesenkirchen;Schloss Rheydt",
+    "destination:colour": "white",
+    "highway": "secondary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Düsseldorfer Straße",
+    "oneway": "yes",
+    "parking:both": "no",
+    "postal_code": "41238",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 30618391,
+   "tags": {
+    "cycleway:right": "no",
+    "highway": "tertiary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Bylandtstraße",
+    "oneway": "yes",
+    "sidewalk": "left",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 30618397,
+   "tags": {
+    "cycleway": "no",
+    "highway": "tertiary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "oneway": "yes",
+    "postal_code": "41236",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 30618697,
+   "tags": {
+    "highway": "secondary",
+    "name": "Otto-Saffran-Straße",
+    "oneway": "yes",
+    "postal_code": "41238",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 30618698,
+   "tags": {
+    "destination": "Grenzlandstadion;Mitte",
+    "destination:colour": "white",
+    "destination:symbol": ";industrial",
+    "highway": "secondary",
+    "lit": "yes",
+    "name": "Otto-Saffran-Straße",
+    "oneway": "yes",
+    "postal_code": "41238",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 30811215,
+   "tags": {
+    "highway": "service",
+    "name": "Königstraße",
+    "postal_code": "41236"
+   }
+  },
+  {
+   "type": "way",
+   "id": 30811216,
+   "tags": {
+    "highway": "service",
+    "name": "Königstraße",
+    "postal_code": "41236"
+   }
+  },
+  {
+   "type": "way",
+   "id": 30811217,
+   "tags": {
+    "highway": "service",
+    "name": "Königstraße",
+    "postal_code": "41236"
+   }
+  },
+  {
+   "type": "way",
+   "id": 37564075,
+   "tags": {
+    "cycleway": "no",
+    "highway": "secondary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Düsseldorfer Straße",
+    "oneway": "yes",
+    "parking:both": "no",
+    "postal_code": "41238",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 37876443,
+   "tags": {
+    "check_date:smoothness": "2024-10",
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Königstraße",
+    "postal_code": "41236",
+    "smoothness": "good",
+    "source:maxspeed": "DE:zone30",
+    "source:smoothness": "survey"
+   }
+  },
+  {
+   "type": "way",
+   "id": 296083693,
+   "tags": {
+    "highway": "service",
+    "name": "Königstraße"
+   }
+  },
+  {
+   "type": "way",
+   "id": 471225446,
+   "tags": {
+    "cycleway": "no",
+    "highway": "secondary",
+    "junction": "roundabout",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "parking:both": "no",
+    "ref": "L 370",
+    "sidewalk": "no",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 471225449,
+   "tags": {
+    "cycleway": "no",
+    "highway": "secondary",
+    "junction": "roundabout",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "parking:both": "no",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 471225451,
+   "tags": {
+    "cycleway": "no",
+    "highway": "secondary",
+    "junction": "roundabout",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "parking:both": "no",
+    "ref": "L 370",
+    "sidewalk": "no",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 472402912,
+   "tags": {
+    "cycleway": "no",
+    "highway": "secondary",
+    "junction": "roundabout",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "parking:both": "no",
+    "ref": "L 370",
+    "sidewalk": "no",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 472402913,
+   "tags": {
+    "cycleway": "no",
+    "highway": "secondary",
+    "junction": "roundabout",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "parking:both": "no",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 491798538,
+   "tags": {
+    "highway": "service",
+    "name": "Königstraße",
+    "tunnel": "building_passage"
+   }
+  },
+  {
+   "type": "way",
+   "id": 491798539,
+   "tags": {
+    "highway": "service",
+    "name": "Königstraße"
+   }
+  },
+  {
+   "type": "way",
+   "id": 800562182,
+   "tags": {
+    "bus": "yes",
+    "highway": "bus_stop",
+    "name": "Kronenstraße",
+    "passenger_information_display": "no",
+    "public_transport": "platform",
+    "shelter": "no",
+    "source": "NRW Orthe 2025 License Dt. Zero V.2.0",
+    "tactile_paving": "yes",
+    "wheelchair": "yes"
+   }
+  },
+  {
+   "type": "way",
+   "id": 915599100,
+   "tags": {
+    "bicycle:lanes": "yes|designated",
+    "cycleway:right": "lane",
+    "cycleway:right:lane": "advisory",
+    "highway": "secondary",
+    "lanes": "1",
+    "lit": "yes",
+    "name": "Düsseldorfer Straße",
+    "oneway": "yes",
+    "parking:both": "no",
+    "placement": "middle_of:1",
+    "postal_code": "41238",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt",
+    "width:lanes": "|1.5"
+   }
+  },
+  {
+   "type": "way",
+   "id": 933894837,
+   "tags": {
+    "highway": "living_street",
+    "name": "Bendhecker Straße",
+    "postal_code": "41236"
+   }
+  },
+  {
+   "type": "way",
+   "id": 948447127,
+   "tags": {
+    "highway": "tertiary",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Wilhelm-Strauß-Straße",
+    "oneway": "yes",
+    "postal_code": "41236",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 948447128,
+   "tags": {
+    "cycleway:right": "no",
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Wilhelm-Strauß-Straße",
+    "oneway": "yes",
+    "postal_code": "41236",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 955241666,
+   "tags": {
+    "bicycle:lanes": "yes|designated",
+    "cycleway:right": "lane",
+    "cycleway:right:lane": "advisory",
+    "highway": "secondary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Düsseldorfer Straße",
+    "oneway": "yes",
+    "parking:both": "no",
+    "placement": "middle_of:1",
+    "postal_code": "41238",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt",
+    "width:lanes": "|1.5"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1094117535,
+   "tags": {
+    "highway": "residential",
+    "lanes": "1",
+    "maxspeed": "30",
+    "name": "Dorfbroicher Straße",
+    "oneway": "yes",
+    "postal_code": "41236",
+    "sidewalk": "right",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1094117660,
+   "tags": {
+    "bus_bay": "right",
+    "cycleway:right": "shoulder",
+    "highway": "tertiary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "oneway": "yes",
+    "postal_code": "41236",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1094117661,
+   "tags": {
+    "bus:lanes": "yes|designated",
+    "cycleway:right": "separate",
+    "highway": "tertiary",
+    "lanes": "2",
+    "lanes:bus": "1",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "oneway": "yes",
+    "parking:left": "street_side",
+    "parking:left:fee": "no",
+    "parking:left:orientation": "parallel",
+    "parking:right": "no",
+    "parking:right:restriction": "none",
+    "postal_code": "41236",
+    "ref": "L 370",
+    "sidewalk:left": "yes",
+    "sidewalk:right": "separate",
+    "surface": "asphalt",
+    "vehicle:lanes": "yes|no"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1094117663,
+   "tags": {
+    "cycleway:both": "no",
+    "highway": "residential",
+    "lane_markings": "no",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Dorfbroicher Straße",
+    "oneway": "yes",
+    "sidewalk": "no",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1094117665,
+   "tags": {
+    "bus:lanes": "yes|designated",
+    "cycleway:right": "separate",
+    "highway": "tertiary",
+    "lanes": "2",
+    "lanes:bus": "1",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "oneway": "yes",
+    "postal_code": "41236",
+    "ref": "L 370",
+    "sidewalk:left": "no",
+    "sidewalk:right": "separate",
+    "surface": "asphalt",
+    "turn:lanes": "left;through|through",
+    "vehicle:lanes": "yes|no"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1094117666,
+   "tags": {
+    "bicycle:lanes": "yes|yes",
+    "bus:lanes": "yes|designated",
+    "cycleway:right": "share_busway",
+    "highway": "tertiary",
+    "lanes": "2",
+    "lanes:bus": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "oneway": "yes",
+    "parking:both": "street_side",
+    "parking:both:fee": "no",
+    "parking:both:orientation": "parallel",
+    "postal_code": "41236",
+    "ref": "L 370",
+    "sidewalk": "both",
+    "surface": "asphalt",
+    "vehicle:lanes": "yes|no"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1094117667,
+   "tags": {
+    "bicycle:lanes": "yes|designated",
+    "cycleway:right": "lane",
+    "cycleway:right:lane": "advisory",
+    "highway": "tertiary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "oneway": "yes",
+    "placement": "middle_of:1",
+    "postal_code": "41236",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt",
+    "vehicle:lanes": "yes|no",
+    "width:lanes": "|1.5"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1094117668,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Mühlenstraße",
+    "postal_code": "41236",
+    "sidewalk": "right",
+    "source:maxspeed": "DE:zone30"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1094117669,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Mühlenstraße",
+    "postal_code": "41236",
+    "sidewalk": "both",
+    "source:maxspeed": "DE:zone30"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1095516819,
+   "tags": {
+    "bicycle:lanes": "yes|no|designated",
+    "bus:lanes": "yes|designated|no",
+    "cycleway:right": "lane",
+    "highway": "tertiary",
+    "lanes": "2",
+    "lanes:bus": "1",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "oneway": "yes",
+    "parking:both": "street_side",
+    "parking:both:fee": "no",
+    "parking:both:orientation": "parallel",
+    "placement": "right_of:1",
+    "postal_code": "41236",
+    "ref": "L 370",
+    "sidewalk": "both",
+    "surface": "asphalt",
+    "vehicle:lanes": "yes|no|no",
+    "width:lanes": "||1.5"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1095516821,
+   "tags": {
+    "highway": "residential",
+    "lanes": "1",
+    "maxspeed": "30",
+    "maxspeed:type": "DE:zone30",
+    "name": "Dorfbroicher Straße",
+    "oneway": "yes",
+    "postal_code": "41236",
+    "sidewalk": "no",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1095516822,
+   "tags": {
+    "highway": "residential",
+    "lanes": "2",
+    "maxspeed": "30",
+    "name": "Eschenbrüchergasse",
+    "postal_code": "41236",
+    "sidewalk": "no",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1095516860,
+   "tags": {
+    "bicycle:lanes": "yes|designated",
+    "bus_bay": "right",
+    "cycleway:right": "lane",
+    "cycleway:right:lane": "advisory",
+    "highway": "tertiary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "oneway": "yes",
+    "placement": "middle_of:1",
+    "postal_code": "41236",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt",
+    "vehicle:lanes": "yes|no",
+    "width:lanes": "|1.5"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1095624816,
+   "tags": {
+    "cycleway": "no",
+    "highway": "tertiary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "oneway": "yes",
+    "parking:left": "no",
+    "parking:right": "street_side",
+    "parking:right:orientation": "parallel",
+    "postal_code": "41236",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1095624817,
+   "tags": {
+    "cycleway": "no",
+    "destination": "Schloss Rheydt",
+    "destination:colour": "white",
+    "highway": "tertiary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Hauptstraße",
+    "oneway": "yes",
+    "postal_code": "41236",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1095680611,
+   "tags": {
+    "bicycle:lanes": "yes|designated",
+    "cycleway:right": "lane",
+    "cycleway:right:lane": "advisory",
+    "highway": "secondary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Düsseldorfer Straße",
+    "oneway": "yes",
+    "parking:both": "no",
+    "placement": "transition",
+    "postal_code": "41238",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt",
+    "width:lanes": "|1.5"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1095680616,
+   "tags": {
+    "cycleway": "no",
+    "highway": "secondary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Düsseldorfer Straße",
+    "oneway": "yes",
+    "parking:both": "no",
+    "postal_code": "41238",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1095680617,
+   "tags": {
+    "cycleway": "no",
+    "highway": "secondary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Düsseldorfer Straße",
+    "oneway": "yes",
+    "parking:left": "no",
+    "parking:right": "lane",
+    "parking:right:orientation": "parallel",
+    "postal_code": "41238",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1095680618,
+   "tags": {
+    "bicycle:lanes": "yes|designated",
+    "cycleway:right": "lane",
+    "cycleway:right:lane": "advisory",
+    "highway": "secondary",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "DE:urban",
+    "name": "Düsseldorfer Straße",
+    "oneway": "yes",
+    "parking:both": "no",
+    "placement": "middle_of:1",
+    "postal_code": "41238",
+    "ref": "L 370",
+    "sidewalk": "right",
+    "surface": "asphalt",
+    "width:lanes": "|1.5"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1111501623,
+   "tags": {
+    "destination": "Schloss Rheydt",
+    "destination:colour": "white",
+    "highway": "tertiary",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Wilhelm-Strauß-Straße",
+    "oneway": "yes",
+    "postal_code": "41236",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1113322131,
+   "tags": {
+    "highway": "residential",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Bendhecker Straße",
+    "postal_code": "41236",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1268462547,
+   "tags": {
+    "cycleway:both": "no",
+    "highway": "residential",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Bendhecker Straße",
+    "postal_code": "41236",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  }
+ ]
+}

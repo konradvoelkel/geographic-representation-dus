@@ -39,7 +39,7 @@ class Layout:
     # sein Jahr (``Stimmbezirke_2020.geojson``), damit der Ordner nicht lügt.
     districts_file: str = "Stimmbezirke_2025.geojson"
     # Option 01: die übrigen Dateinamen der Quellen, auch sie aus dem Profil. Leer heißt „gibt es
-    # für diese Stadt nicht" (Straßenverzeichnis, Wahlbezirksnamen).
+    # für diese Stadt nicht" (Straßenverzeichnis, Wahlbezirksnamen der votemanager-Präsentation).
     results_file: str = "Stimmbezirk_Wahlergebnis.csv"
     streets_file: str = ""
     district_names_file: str = ""
@@ -349,7 +349,7 @@ class Layout:
         return self.for_profile("", settings.crosswalk.target_file)
 
     # Option 01: Quellen, die es nur in manchen Städten gibt, der kanonische Stand der
-    # Stimmbezirke, der Textstore eines Stadtpakets und die Schnittstelle des Städtevergleichs
+    # Stimmbezirke und die Schnittstelle des Städtevergleichs
     @property
     def streets_directory(self) -> Path | None:
         """Das Straßenverzeichnis der Wahl (votemanager), wenn die Stadt eines veröffentlicht."""
@@ -362,17 +362,8 @@ class Layout:
 
     @property
     def precincts_geojson(self) -> Path:
-        """Die kanonischen Stimmbezirke: feste Eigenschaften, CRS der Quelle (Schritt ``precincts``)."""
+        """Die kanonischen Stimmbezirke: feste Eigenschaften, CRS der Quelle (Schritt ``shapes``)."""
         return self.interim / "stimmbezirke.geojson"
-
-    @property
-    def package_texts(self) -> Path:
-        """Der Textstore, wie ein Stadtpaket ihn mitbringt: ``<root>/text/texts.parquet``.
-
-        Im Lauf liegt er im Cache (``cache/<profil>/text/``), im Paket neben ``raw/`` (Option 01);
-        ``bootstrap`` kopiert von hier dorthin.
-        """
-        return self.root / "text" / "texts.parquet"
 
     @property
     def site_summary(self) -> Path:

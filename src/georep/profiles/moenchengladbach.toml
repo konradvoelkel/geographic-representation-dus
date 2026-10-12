@@ -80,6 +80,7 @@ sep = ";"
 encoding = "utf-8"             # ohne BOM, anders als das Düsseldorfer Portal
 precinct = "gebiet-nr"
 district_from_precinct = [1, 3]  # votemanager führt den Wahlbezirk nicht als Spalte
+city_district_from_precinct = [0, 1]  # Zeichen 0 ist der Stadtbezirk (10401: Stadtbezirk 1, Wahlbezirk 4, Stimmbezirk 1); Mönchengladbach hat vier, Option 05 braucht die Zuordnung
 eligible = "A"
 voters = "B"
 # Legende aus daten/api/wahl_89/ergebnis_ebene_3_id_2_0.json, durch Spaltensummen bestätigt
