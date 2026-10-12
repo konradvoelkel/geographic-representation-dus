@@ -33,7 +33,13 @@ from polars._typing import PolarsDataType
 from scipy.stats import pearsonr, spearmanr
 
 from georep.analysis.hits import DISTRICT, RATE
-from georep.contracts import has_columns, one_row_per_document, sorted_unique
+from georep.contracts import (
+    has_columns,
+    one_row_per_document,
+    parts_sum_to,
+    shares_in_unit_interval,
+    sorted_unique,
+)
 from georep.errors import SchemaError
 from georep.oparl import OparlOrganization
 from georep.search.index import HITS, PAPER_IDS
@@ -454,18 +460,6 @@ def documents_per_party(attribution: pl.DataFrame, parties: Iterable[Party]) -> 
 # --- Kennzahlen je Wahlbezirk und Partei ----------------------------------------------------------
 
 
-def _partition_adds_up(
-    results: pl.DataFrame,
-    documents: pl.DataFrame,
-    result: pl.DataFrame | None = None,
-) -> bool:
-    assert result is not None
-    total = sum(
-        (pl.col(column) for column in KLASSEN_SPALTEN[1:]), start=pl.col(KLASSEN_SPALTEN[0])
-    )
-    return bool(result.select(total == pl.col(HITS)).to_series().all())
-
-
 @deal.pre(
     lambda results, documents: (
         has_columns(results, DISTRICT, PAPER_IDS, HITS) and has_columns(documents, "id", ART)
@@ -474,7 +468,7 @@ def _partition_adds_up(
 @deal.post(lambda result: result.columns == [DISTRICT, HITS, *KLASSEN_SPALTEN])
 @deal.post(lambda result: sorted_unique(result, DISTRICT))
 @deal.ensure(
-    _partition_adds_up,
+    lambda results, documents, result: parts_sum_to(result, KLASSEN_SPALTEN, HITS),
     message="die fünf Urheberklassen summieren je Wahlbezirk zu anzahl_treffer",
 )
 @deal.ensure(
@@ -563,12 +557,11 @@ def _party_bounds_hold(
     checks = result.select(
         ((pl.col("treffer_allein") >= 0) & (pl.col("treffer_allein") <= pl.col(HITS))).all(),
         (pl.col(HITS) <= pl.col("dokumente_partei")).all(),
-        ((pl.col("anteil_dokumente") >= 0.0) & (pl.col("anteil_dokumente") <= 1.0)).all(),
-        ((pl.col("stimmenanteil") >= 0.0) & (pl.col("stimmenanteil") <= 1.0)).all(),
         (pl.col("angetreten") == (pl.col("stimmen") > 0)).all(),
         (pl.col(RATE) >= 0.0).all(),
     )
-    return within_district and all(checks.row(0))
+    shares = shares_in_unit_interval(result, "anteil_dokumente", "stimmenanteil")
+    return within_district and shares and all(checks.row(0))
 
 
 def _documents_per_party_is_constant(
