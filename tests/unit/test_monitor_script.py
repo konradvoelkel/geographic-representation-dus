@@ -9,6 +9,7 @@ weder rclone noch rsync nach außen laufen.
 
 from __future__ import annotations
 
+import datetime as dt
 import json
 import os
 import re
@@ -72,13 +73,28 @@ fi
 exec /usr/bin/rsync "$@"
 """
 
+# Bricht den Schnappschuss mitten im Bauen ab (Strom weg, Platte voll, Lauf abgewuergt).
+SHA256SUM_STUB = """#!/usr/bin/env bash
+if [ -n "${STUB_FAIL_SHA:-}" ]; then
+  echo "sha256sum abgebrochen" >&2
+  exit 1
+fi
+exec /usr/bin/sha256sum "$@"
+"""
+
 
 @pytest.fixture
 def sandbox(tmp_path: Path) -> dict[str, str]:
     """Eine Umgebung für das Skript: Stubs in PATH, Datenwurzel und Ziel in ``tmp_path``."""
     binaries = tmp_path / "bin"
     binaries.mkdir()
-    for name, body in (("uv", UV_STUB), ("rclone", RCLONE_STUB), ("rsync", RSYNC_STUB)):
+    stubs = (
+        ("uv", UV_STUB),
+        ("rclone", RCLONE_STUB),
+        ("rsync", RSYNC_STUB),
+        ("sha256sum", SHA256SUM_STUB),
+    )
+    for name, body in stubs:
         path = binaries / name
         path.write_text(body, encoding="utf-8")
         path.chmod(0o755)
@@ -102,6 +118,7 @@ def sandbox(tmp_path: Path) -> dict[str, str]:
         STUB_PROFILE_SITE=str(data / "2025" / "site"),
     )
     env.pop("STUB_FAIL", None)
+    env.pop("STUB_FAIL_SHA", None)
     return env
 
 
@@ -266,3 +283,22 @@ def test_the_transferred_tree_carries_the_current_stand(sandbox: dict[str, str])
     again = _run(sandbox)
     assert again.returncode == 0
     assert "./2025/stand.json" in Path(sandbox["STUB_TRANSFER"]).read_text(encoding="utf-8").split()
+
+
+def test_an_aborted_snapshot_does_not_block_the_next_run(sandbox: dict[str, str]) -> None:
+    """Ein halber Schnappschuss darf nicht stehen bleiben: der Monatsordner ist die Sperre, und
+    jeder spätere Lauf hätte ihn übersprungen (Review 2026-10-12)."""
+    sandbox["STUB_FAIL_SHA"] = "1"
+    broken = _run(sandbox)
+    assert broken.returncode == 1 and "FEHLER: SHA256SUMS" in broken.stdout
+    snapshots = Path(sandbox["MONITOR_PUBLISH_DIR"]) / "out" / "2025" / "snapshots"
+    month = dt.date.today().strftime("%Y-%m")
+    assert not (snapshots / month).exists()  # nichts Halbes unter dem Monatsnamen
+
+    del sandbox["STUB_FAIL_SHA"]
+    good = _run(sandbox)
+    assert good.returncode == 0 and f"Schnappschuss {month}" in good.stdout
+    assert (snapshots / month / "SHA256SUMS").is_file()
+    assert (snapshots / month / "monatsreihe.csv").is_file()
+    # Der Arbeitsordner bleibt nicht liegen und zählt nicht als Schnappschuss
+    assert [p.name for p in snapshots.iterdir()] == [month]

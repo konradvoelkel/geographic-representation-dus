@@ -137,9 +137,15 @@ if [ -f "$PROFILE_SITE/index.html" ]; then
   SNAPSHOTS=$OUT/$PROFILE/snapshots
   MONTH=$(date +%Y-%m)
   if [ -n "$(ls -A "$OUT/$PROFILE/data" 2>/dev/null)" ] && [ ! -d "$SNAPSHOTS/$MONTH" ]; then
-    mkdir -p "$SNAPSHOTS/$MONTH" || fail "Schnappschuss $MONTH anlegen"
-    cp -r "$OUT/$PROFILE/data/." "$SNAPSHOTS/$MONTH/" || fail "Schnappschuss $MONTH kopieren"
-    (cd "$SNAPSHOTS/$MONTH" && sha256sum -- * >SHA256SUMS) || fail "SHA256SUMS $MONTH"
+    # Erst daneben bauen, dann hineinschieben: der Monatsordner ist die Sperre fuer alle spaeteren
+    # Laeufe, und ein abgebrochener cp haette sie mit einem halben Schnappschuss gesetzt (Review
+    # 2026-10-12). Der Arbeitsordner liegt im selben Dateisystem, mv ist dort ein rename.
+    STAGING=$SNAPSHOTS/.$MONTH.neu
+    rm -rf "$STAGING" || fail "Arbeitsordner $STAGING entfernen"
+    mkdir -p "$STAGING" || fail "Schnappschuss $MONTH anlegen"
+    cp -r "$OUT/$PROFILE/data/." "$STAGING/" || fail "Schnappschuss $MONTH kopieren"
+    (cd "$STAGING" && sha256sum -- * >SHA256SUMS) || fail "SHA256SUMS $MONTH"
+    mv "$STAGING" "$SNAPSHOTS/$MONTH" || fail "Schnappschuss $MONTH einhaengen"
     SNAPSHOT=$MONTH
   fi
   if [ -d "$SNAPSHOTS" ]; then
