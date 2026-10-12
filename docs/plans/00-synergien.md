@@ -65,8 +65,10 @@ Inhaltliche Konflikte, entschieden:
    `unit_weights` für Stadtbezirke. 03 baut `area_shares(sources, targets, *, min_coverage)` und
    `district_weights`; 02 (merged nach 03) nutzt `area_shares` und ergänzt `assign_by_point`, `target_weights`,
    `transfer_counts`, `largest_remainder`. 03 legt `area_shares` so an, wie 02 es braucht: Rückgabe
-   `source_id` String, `target_id` Int64, `share` Float64, `coverage` Float64, Anteile auf die Schnittsumme
-   normiert, `SchemaError` unter `min_coverage`.
+   `source_id` String, `target_id` String, `share` Float64, `coverage` Float64, Anteile auf die Schnittsumme
+   normiert, `SchemaError` unter `min_coverage`. (Nachtrag 2026-10-12: 03 liefert beide Schlüssel als Text,
+   weil Sozialraumnummern führende Nullen tragen; 02 castet `target_id` nach Int64 und sortiert numerisch,
+   bevor `largest_remainder` Gleichstände auflöst.)
 5. **Kanonische Spaltennamen der Wählertabelle** (02, 01): `Wahlberechtigte_insgesamt`, `Waehler`,
    `<Partei>_Stimmen` bleiben die Namen der Arbeit; Quellspalten werden beim Lesen umbenannt (02 für 2020, 01
    für votemanager). 02 merged vor 01 und baut die Umbenennung in `prep/voters.py`; 01 erweitert sie um die
