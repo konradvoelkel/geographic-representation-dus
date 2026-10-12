@@ -841,3 +841,79 @@ geschönt); keine Restklasse (dann hätte jede Haushaltsvorlage einen „passend
 Dokument veröffentlichen (1,5 MB CSV für eine Schätzung); Einbettungen (`docs/themenmodell-2026-10.md`, § 5:
 1 bis 3 Stunden je Durchgang, 800 MB Abhängigkeiten, keine nachlesbaren Wörter — und die billigen Wege
 reichen).
+
+## 46. Jede Kennzahl mit Nenner bekommt einen Umschalter, die Mitte ist ungewichtet (2026-10-13)
+
+`docs/todo.md`, Punkt 3, und die stärkste offene Empfehlung des Methodik-Reviews
+([methodik-review-2026-10.md](methodik-review-2026-10.md), § 2.6 und § 6). Konrad will auf den Parteikarten
+nicht sehen, wo eine Partei viel über Wahlbezirke redet, sondern wie viel mehr oder weniger als der
+Durchschnitt aller Parteien. Das Inventar aller Kennzahlen der Seite mit Zähler, Nenner und den möglichen
+Normierungen steht in [skalierung-2026-10.md](skalierung-2026-10.md); hier stehen die Entscheidungen.
+
+**Umschalter nur dort, wo eine Normierung etwas ändert.** Von den 35 Kennzahlen der Seite tragen 16 schon
+einen Nenner (Anteile der Gremien, Lokalität, Ausschuss-Zuordnung, ρ der Gewichtungstabelle, die
+standardisierten Koeffizienten der Kontrollvariablen), sechs sind Modell- oder Güteangaben. Offen waren genau
+die zwei Stellen, über die Konrad gestolpert ist: die Treffer je Wahlbezirk (Karte, Tabelle, Kernzahlen) und
+die Parteianteile (sechs Karten, zwei Tabellen). Gremien, Monate, Gewichtung, Kontrollvariablen und Begriffe
+bekommen **keinen** Umschalter, je mit Grund in § 5 des Konzepts — ein Monat hat keine Wahlberechtigten, ein
+Begriff keinen Nenner, und die Gewichtungstabelle *ist* die Sensitivitätsanalyse.
+
+**Die Varianten.** Wahlbezirke: Trefferquote (Standard, unverändert), Treffer absolut, Treffer je Begriff im
+Wörterbuch, Abweichung vom Stadtmittel in Prozent. Parteien: Anteil (Standard, unverändert), Abweichung vom
+Mittel aller Parteien in Prozentpunkten, Verhältnis zum Mittel. **Die Standardansicht ändert sich nicht**, und
+Tabelle 5, die Treffer (29 010) und das Wörterbuch (5727) bleiben unberührt.
+
+**Das Mittel ist das ungewichtete Mittel der Einheiten** — der 41 Bezirksquoten beziehungsweise der sechs
+Parteianteile im selben Bezirk. Bei den Bezirken ist die Wahl für die Zahlen gleichgültig (ungewichtet
+0,061808 gegen gepoolt 0,061759, Faktor 1,0008) und folgt darum der Regel: ein Wahlbezirk ist eine Einheit,
+nicht eine Menge Personen. Bei den Parteien ist sie es nicht: das nach Dokumentzahl gewichtete Mittel wird von
+GRÜNEN (2308 Dokumente), CDU (2140) und SPD (2107) fast allein gesetzt, die AfD (183) trägt nichts dazu bei —
+wer das Mittel setzt, weicht von ihm kaum ab, und 18 der 29 Vorzeichenwechsel zwischen beiden Mitteln treffen
+genau SPD und CDU. **Verworfen:** das gewichtete Mittel als Settings-Schalter (ρ = 0,976 zum ungewichteten,
+also fast dieselbe Ordnung, aber ein neuer Settings-Schlüssel, ein neuer Fingerprint und eine zweite Legende
+für eine schwerer erklärbare Größe; wer es will, rechnet es aus der veröffentlichten Tabelle).
+
+**Divergierend heißt feste, symmetrische Grenzen, keine Quantile.** Die Abweichung vom Stadtmittel ist eine
+streng monotone Umrechnung der Trefferquote; Quantilklassen darüber wären dieselben Klassen, nur anders
+gefärbt. Darum stehen die Grenzen fest in `defaults.toml` (`report.diverging`): ±10 % und ±25 % vom
+Stadtmittel (Klassen mit 6, 12, 11, 8, 4 Bezirken), ±0,5 und ±2 Prozentpunkte für die Parteien (23, 67, 64,
+72, 20 Zellen) und 0,5 / 0,8 / 1,25 / 2,0 für das Verhältnis (61, 32, 60, 78, 15 Zellen; log-symmetrisch um
+1). Die mittlere Klasse heißt „etwa im Mittel". **Verworfen:** das Log-Verhältnis, das `docs/todo.md` als
+Möglichkeit nennt — 20 der 246 Parteizellen sind exakt 0 (die AfD bedient 41 Bezirke mit 183 Dokumenten), und
+`log(x + ε)` macht die Grenzen von ε abhängig.
+
+**Die Klassen der neuen Parteivarianten sind gemeinsam, die der Standardvariante bleiben je Partei.** Der
+Anteil ist zwischen einer Fraktion mit 2308 und einer mit 183 Dokumenten nicht vergleichbar (darum rechnet die
+Seite dort Quantile je Partei, Punkt 27); Abweichung und Verhältnis sind in derselben Einheit gegen dieselbe
+Bezugsgröße gemessen, und die Vergleichbarkeit über die sechs Karten ist der Zweck der Variante.
+
+**Ein Muster, nicht drei.** Der Umschalter ist ein `fieldset` mit Radios, das Makro `metric_switcher` in
+`templates/macros.html.j2` baut es; die Varianten hängen als `data-class-<variante>`,
+`data-text-<variante>` und `data-value-<variante>` an Flächen, Zellen und Zeilen, und ein generisches Stück
+JavaScript im Rahmen tauscht sie je Radiogruppe **innerhalb ihres `<section>`** samt Legende
+(`#legend-<variante>`). Der Kartenumschalter aus dem Fundament F1 (Punkt 21) ist darauf umgestellt, ohne sein
+Verhalten zu ändern. Keine zweite Kopie der Karten-SVGs: die 41 Flächen stehen weiter einmal in `<defs>`, die
+Varianten sind Attribute (rund 52 KB für alle Umschalter zusammen, Budget 1,5 MB). Ohne JavaScript zeigt die
+Seite die Standardvariante.
+
+**Wo die Zahlen herkommen.** Der neue Offline-Schritt `metrics` schreibt
+`processed/wahlbezirke_kennzahlen.parquet` (Treffer, Begriffe, Treffer je Begriff, Treffer je 1000
+Wahlberechtigte, Stadtmittel, Abweichung); `wahlbezirke_parteien` bekommt drei Spalten (`mittel_anteil`,
+`abweichung_mittel`, `verhaeltnis_mittel`). **Verworfen:** die Spalten in `wahlbezirke_auswertung` — die Datei
+ist Golden Master (`tests/fixtures/mini/expected/`, Punkt 11), und eine Kennzahl, die nicht von der Arbeit
+stammt, gehört nicht hinein.
+
+**Nicht gebaut, mit Grund** (ausführlich in § 5 des Konzepts): „je 1000 Wahlberechtigte" als eigenes Radio
+(es *ist* der Standard mit einem positiven Faktor — jede Fläche behielte ihre Klasse und ihre Farbe; die
+Lesart steht als Satz an der Legende, während „Treffer absolut" eine eigene Variante ist, weil sich dort 17
+von 41 Klassen ändern); das Verhältnis zum Stadtmittel (1 + Abweichung, dieselbe Information zweimal — bei
+den Parteien sind beide nötig, weil dort jeder Bezirk ein anderes Mittel hat); „je Einwohner" (keine
+Bevölkerungszahl je Wahlbezirk in den Daten, `wahlbezirke_kontext` trägt nur Anteile und Punktwerte) und „je
+Fläche" (misst Dichte, nicht Repräsentation).
+
+**Der zweite Zusammenhang gehört dazu.** Mit x = Treffer je Begriff im Wörterbuch bleibt vom Befund der
+Arbeit nichts, nicht einmal das Vorzeichen: über alle 41 Bezirke r = −0,1118 und p = 0,48644 (Trefferquote:
+0,1891 und 0,23641), ohne die Ausreißer 1 und 10 r = −0,0419 und p = 0,80000 (Trefferquote: 0,3351 und
+0,03705). Die einzige „signifikante" Spalte der Arbeit verschwindet, sobald die Wörterbuchgröße
+herausgerechnet ist — das stützt ihren Befund und entkräftet ihre zweite Spalte, und es ist nach Tabelle 6
+(Punkt 26) die dritte unabhängige Prüfung mit demselben Ergebnis. Tabelle 5 selbst bleibt unverändert.
