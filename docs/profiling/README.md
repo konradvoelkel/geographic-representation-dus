@@ -286,3 +286,33 @@ Aggregationsfunktionen bleiben draußen. Ihr Minimum sprang ohne jede Codeänder
 Submillisekunden-Stufen weiter oben: ein Gate braucht eine Stufe, deren Rauschen unter der Schwelle
 liegt, sonst misst es die Maschine und nicht den Code.
 
+
+## Themenmodell und passender Ausschuss (2026-10-12, Punkt 45)
+
+`uv run georep profile topics` und `… committees` auf der Referenz (19 033 Texte, 51,2 Millionen
+Zeichen), `POLARS_MAX_THREADS=4`, `OMP_NUM_THREADS=2`. cProfile verdreifacht reine Python-Zeit; die
+Verteilung stimmt trotzdem (Punkt 14 der Entscheidungen). Die Zeiten ohne Profiler stehen in der
+ersten Spalte, sie kommen aus `georep run --force`.
+
+| Schritt | ohne Profiler | unter cProfile | wohin die Zeit geht |
+|---|---|---|---|
+| `topics` | 7,4 s | 7,8 s | `vectorize` 4,5 s (davon `name_stop_words` 2,3 s und `_count_vocab` der zwei Zähldurchgänge), `_fit_seeded` 1,0 s (NMF mit festem H), `_residual` 0,46 s, `_fit_free` 0,42 s für die drei freien Themen |
+| `committees` | 6,5 s | 16,1 s | `name_stop_words` 2,4 s, TF-IDF 2,1 s, `LogisticRegression.fit` 1,9 s (115 L-BFGS-Schritte, 0,9 s davon in `setulb`), die Vorhersage über alle 19 033 Dokumente unter 0,1 s |
+
+Beide Schritte zusammen bringen den vollen Offline-Lauf von rund 17 s auf **23,4 s**. Damit liegt
+`committees` weit unter der Grenze von 30 s, die der Auftrag setzte.
+
+**Was auffällt und bewusst so bleibt:** `name_stop_words` läuft zweimal je Lauf, einmal in `topics`
+und einmal in `committees`, und kostet jedes Mal 2,3 s — das sind 20 % des Laufs für dasselbe
+Ergebnis. Die 2,3 s sind fast vollständig `re.findall` über 51 Millionen Zeichen (zwei
+`CountVectorizer`-Durchgänge: einmal über die Namensfenster, einmal über die ganzen Texte für die
+Vergleichshäufigkeit). Ein gemeinsamer Zwischenstand (eine Datei `interim/stoppwoerter.json` mit
+eigenem Stamp, oder ein Schritt davor) würde die Hälfte sparen; dafür käme ein Schritt ins Register
+und eine Datei in die Kette, deren Inhalt nur ein Modellparameter ist. Bei 2,3 s auf 23 s ist das
+nicht nötig; die Zahl steht hier für den Fall, dass der Korpus um eine Größenordnung wächst oder
+der Monitoring-Lauf (Option 07) öfter als stündlich läuft.
+
+Kein neuer Benchmark in `tests/bench/`: auf der Mini-Fixture (200 Dokumente, 22 Wörter Vokabular
+nach dem Beschneiden) rechnen beide Schritte in Millisekunden, und beide hängen an sklearn, dessen
+Iterationszahl mit den Daten schwankt. Nach den Erfahrungen aus Option 04 und 06 braucht ein
+20-%-Gate eine Stufe, deren Rauschen deutlich darunter liegt; hier wird gemessen, nicht gegatet.
