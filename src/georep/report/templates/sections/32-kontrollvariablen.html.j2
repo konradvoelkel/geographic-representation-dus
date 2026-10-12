@@ -69,9 +69,7 @@ Wahlbezirk; ein Klick markiert ihn überall auf der Seite.</p>
 {{ model.stand.election|date_de }}; Gebiete mit viel Neubau sind seither anders. Die Stimmenanteile sind
 Ergebnisse derselben Wahl wie die Wahlbeteiligung und erklären sie nicht von außen; sie stehen nur im
 Modell C und einzeln in Tabelle 6b. Die Spalte VIF zeigt, wie stark sich die Terme gegenseitig erklären
-(ab 10 wäre ein Modell nicht mehr zu deuten).{% if c.rate_without %} Ohne die Wahlbezirke
-{{ c.excluded|join(' und ') }} liegt der Koeffizient der {{ c.rate_label }} im Modell {{ c.main }} bei
-{{ c.rate_without.coefficient|num(2) }} mit p = {{ c.rate_without.p|num(3) }}; alle Modelle beider
-Stichproben stehen in <code>regression_kontrollen.csv</code>.{% endif %}</p>
+(ab 10 wäre ein Modell nicht mehr zu deuten).{% if c.rate_without %} Alle Modelle beider Stichproben
+stehen in <code>regression_kontrollen.csv</code>.{% endif %}</p>
 </section>
 {% endif %}
