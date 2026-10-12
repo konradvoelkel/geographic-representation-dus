@@ -317,9 +317,11 @@ def test_the_english_paragraph_counts_the_weightings(page: str, model: ReportMod
     assert model.sensitivity is not None
     expected = (
         f"Under {model.sensitivity.significant_all} of {len(model.sensitivity.rows)} "
-        "alternative weightings"
+        "weightings of the same documents, the unweighted count included,"
     )
     assert expected in page
+    # Der Nenner zählt die Einheitszeile mit, darum heißt sie nicht „alternative".
+    assert "alternative weightings" not in page
 
 
 def test_the_weighting_section_adds_no_external_link(page: str) -> None:
