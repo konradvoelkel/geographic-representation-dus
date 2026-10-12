@@ -175,9 +175,7 @@ def test_a_city_that_lost_its_run_leaves_the_published_folder(
     moved = tmp_path / "beiseite"
     (root / "data" / "moenchengladbach" / "site").rename(moved)
     try:
-        summary = publish_sites(
-            settings, _layout_of(root, settings), now=NOW, commit=None, out=out
-        )
+        summary = publish_sites(settings, _layout_of(root, settings), now=NOW, commit=None, out=out)
     finally:
         moved.rename(root / "data" / "moenchengladbach" / "site")
     assert summary.missing == ("moenchengladbach",)
