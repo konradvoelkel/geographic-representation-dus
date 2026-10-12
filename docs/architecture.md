@@ -48,11 +48,11 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 ## Pipeline
 
-ANZAHL_SCHRITTE Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzschritte laufen nur mit
+Einundzwanzig Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzschritte laufen nur mit
 `--online` oder über `georep fetch`. Mit `topics.k = 0` fehlt der Schritt `topics` im Register; dann ist es
 einer weniger, und `weights` rechnet ohne Themenvarianten. Die drei Schritte der Kontrollvariablen
 (`context_data`, `context`, `controls`) gibt es nur mit Fremddaten, also wenn `context.root` gesetzt ist;
-sonst bleiben es OHNE_KONTEXT.
+sonst bleiben es achtzehn.
 
 | Schritt | Netz | liest | schreibt |
 |---|---|---|---|
@@ -83,7 +83,8 @@ Settings-Fingerprint, der Code-Version und der Schema-Version. Stimmt alles, ist
 übersprungen; sonst läuft er und sagt, warum („Eingabe geändert: texts.parquet", „Code-Version 0.6.0 ->
 0.7.0"). `--force` erzwingt, `--dry-run` plant nur. Jeder Lauf druckt je Schritt eine Zeile mit der Anzahl,
 auf die er gewirkt hat, und die Sekunden. Der volle Offline-Lauf auf der Referenz dauert rund 16 s, davon 7 s
-das Themenmodell, 4 s der Index, unter 1 s die Gewichtung und 1 s die Berichtsseite (2026-10-12; ohne
+das Themenmodell, 4 s der Index, je unter 1 s die Gewichtung, die Kontrollvariablen (`context` 0,4 s,
+`controls` unter 0,1 s) und 1,4 s die Berichtsseite (2026-10-12, nach dem Rebase auf 08, 05 und 06; ohne
 Themenmodell rund 9 s).
 
 ## Datenhaltung
@@ -181,7 +182,7 @@ Vorlage ist ein Fehler). Das Basis-JavaScript bietet `window.georep` (`select(id
 Attribut (`choropleth(extra_classes=...)`) und eine Legende. Die veröffentlichten Tabellen stehen im Register
 `report/tables.py` (Datei, Beschreibung, Spaltendoku, CSV-Regeln, `optional` für profilabhängige Tabellen);
 daraus entstehen Downloads, `schema.json`, CSV-Dateien und die Spaltentabelle. Die Seite bleibt unter 1,5 MB
-(slow-Test); mit allen Abschnitten sind es SEITENGROESSE. Die beiden Abschnitte der Kontrollvariablen
+(slow-Test); mit allen Abschnitten sind es 986 KB (gzip 168 KB). Die beiden Abschnitte der Kontrollvariablen
 (`32-kontrollvariablen`, `65-abgeleitete-daten`) stehen in `{% if model.controls %}` beziehungsweise
 `{% if model.derived %}` und fehlen ohne sie ganz; ihre Zahlen kommen aus
 `processed/regression_kontrollen.parquet`, der Satz zur Deutung entsteht aus p, Vorzeichen, R²-Zuwachs und dem

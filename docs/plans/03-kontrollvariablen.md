@@ -516,3 +516,26 @@ Umgesetzt sind alle Stufen; diese Punkte weichen vom Plan ab, je mit Grund.
   ihr im letzten Bit ab -- `aggregate_context` und `district_weights` sortieren jetzt vor dem `group_by`, sonst
   schrieben zwei Läufe verschiedene Parquet-Dateien. Und `erhöht` als nackter TOML-Schlüssel ist ein
   Syntaxfehler (TOML erlaubt nur `[A-Za-z0-9_-]`), was `tomllib` als „Expected '=' after a key" meldet.
+
+## 12. Rebase auf `main` mit 08, 05 und 06 (2026-10-12)
+
+27 Commits ohne Nachbesserung übernommen; die Konflikte lagen an den verabredeten Anhängestellen
+(`defaults.toml`, `settings.py`, `layout.py`, `pipeline.py`, `cli.py`, `report/model.py`, `report/tables.py`,
+`sections/60-methode.html.j2`, die Tests, der Snapshot und die fünf Doku-Dateien) und waren bis auf drei
+Punkte mechanisch:
+
+- **`UNIT` war zweimal da.** `crosswalk.UNIT` (Spalte der Raumeinheit, Option 03) und `weights.UNIT` (Name der
+  Einheitsvariante, Option 06) sind beide der String `"einheit"` und kollidierten im Import von
+  `report/model.py`. Der Crosswalk-Name heißt dort jetzt `CROSSWALK_UNIT`; beide Bedeutungen bleiben getrennt
+  lesbar, am Verhalten ändert sich nichts.
+- **`column_docs` brauchte beide Argumente.** Option 06 hatte `published(layout, settings)` eingeführt
+  (Tabellen abgeschalteter Stufen), Option 03 `_table_docs(table, path, settings)` (Spalten aus den Settings).
+  Die vereinte Fassung nimmt `settings` verpflichtend und reicht es an beide weiter.
+- **Ein zählender Test im slow-Lauf.** `test_context_pipeline.py` verlangte elf Offline-Schritte und eine
+  Seite unter 800 KB; beides war vor dem Rebase richtig. Die Zahl kommt jetzt aus `build_steps` (F6), das
+  Budget ist das der Seite (1,5 MB), und die Dateizahl steht nicht mehr als Literal daneben.
+
+Gemessen nach dem Rebase: `nox` grün (492 schnelle Tests, Abdeckung 98,5 %), `pytest -m slow` grün (elf
+Tests, 49 s), `nox -s bench` zweimal grün, `index.html` 986 KB (gzip 168 KB), zwölf Abschnitte in der
+Reihenfolge aus 00-synergien.md § 5.1, Tabelle 6 und die vier Added-Variable-Plots in Hell und Dunkel
+gelesen.

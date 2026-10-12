@@ -31,19 +31,19 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
   Abschnitte „Kontrollvariablen" und „Abgeleitete Daten" auf der Seite. Befund: mit den Kontrollvariablen
   erklärt das Hauptmodell R² = 0,89 statt 0,03, der Koeffizient der Trefferquote sinkt auf 41,33 mit p 0,133.
 
-## Zahlen (2026-10-12, Branch `feat/06-gewichtung`)
+## Zahlen (2026-10-12, Branch `feat/03-kontrollvariablen` nach dem Rebase auf 08, 05 und 06)
 
-- Tests: 412 nach dem Rebase, davon drei `slow` und sechzehn `bench`; schnelle Suite parallel in 20 bis 25 s; Abdeckung 98,6 %; Mutationsquote über `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`).
-- Laufzeit: voller Offline-Lauf rund 19 s (Themenmodell 9 s, Index 4 s, Gewichtung 1 s, Berichtsseite 1,6 s); `pytest -m slow` 43 s; `nox -s bench` grün gegen die frische Baseline; `nox -s verify` rund 4 min.
-- Berichtsseite nach dem Rebase auf 08 und 05: `index.html` 933 KB (Budget 1,5 MB), 29 Download-Dateien, 31 Dateien zusammen 10,4 MB; voller Lauf 16 s.
+- Tests: 517 gesammelt, davon 492 schnelle, elf `slow` und vierzehn `bench`; schnelle Suite parallel in rund 22 s; Abdeckung 98,5 %; `nox -s verify` rund 4 min (mit `ordinal_score`).
+- Laufzeit: voller Offline-Lauf rund 16 s über fünfzehn Schritte (Themenmodell 7,4 s, Index 4,1 s, Gewichtung 0,5 s, `context` 0,4 s, `controls` unter 0,1 s, Berichtsseite 1,4 s); `pytest -m slow` 49 s; `nox -s bench` grün gegen die frische Baseline.
+- Berichtsseite: `index.html` 986 KB (gzip 168 KB, Budget 1,5 MB), sechzehn veröffentlichte Tabellen, 37 Dateien zusammen 10,6 MB; alle zwölf Abschnitte in Nummernfolge, in Hell und Dunkel mit headless Chrome angesehen.
+- Quelltext: 51 Python-Dateien unter `src/`, rund 9800 Zeilen.
 
-Auf dem Branch `feat/03-kontrollvariablen` (2026-10-12, noch nicht gemerged): 329 Tests, davon sieben `slow`
-und zehn `bench`, schnelle Suite parallel in 17 bis 22 s, Abdeckung 98,2 %; 46 Python-Dateien, rund 6900
-Zeilen; voller Offline-Lauf 10 s mit elf Schritten (`context` 0,5 s, `controls` 0,1 s, Berichtsseite 1,4 s);
-`index.html` 764 KB; `nox -s verify` 4 min mit `ordinal_score`; `nox -s mutate` über `analysis/` tötet 133 von
-175 Mutanten (76 %), die Überlebenden sind Vertrags-Lambdas an ihren Grenzen und `frozen=True` an dataclasses.
-Mit sechs Arbeitern wurde die Sitzung unter der Last der acht parallelen Agenten abgeschossen (SIGTERM bei
-190 von 208); drei Arbeiter und nur `analysis/` laufen in sieben Minuten durch.
+Davor, je vor dem Rebase gemessen: Option 06 rund 19 s Lauf und `index.html` 933 KB; Option 03 allein 10 s
+Lauf und 764 KB. Mutation: `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`), `analysis/` auf dem
+Branch 03 tötet 133 von 175 Mutanten (76 %); die Überlebenden sind Vertrags-Lambdas an ihren Grenzen und
+`frozen=True` an dataclasses. Mit sechs Arbeitern wurde die Sitzung unter der Last der acht parallelen
+Agenten abgeschossen (SIGTERM bei 190 von 208); drei Arbeiter und nur `analysis/` laufen in sieben Minuten
+durch.
 
 ## Bekannt
 
