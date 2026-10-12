@@ -25,14 +25,19 @@ from georep.layout import Layout
 from georep.prep.voters import TURNOUT
 from georep.report.charts import (
     MAP_WIDTH,
+    Classification,
     added_variable_plot,
     bars,
     choropleth,
     classify,
+    classify_fixed,
     delta_scatter,
+    hits_label,
     legend,
     own_share_label,
     party_maps,
+    per_term_label,
+    percent_signed_label,
     project_pois,
     rate_label,
     scatter,
@@ -343,6 +348,24 @@ def build_site(
     rate_legend = legend(rate, rate_label)
     # Option 05: dritte Kennzahl der Karte, der Anteil der eigenen Bezirksvertretung
     own = classify({d.id: d.bodies.own_share for d in model.districts if d.bodies})
+    # Punkt 46: drei Normierungen derselben Treffer. Die beiden Zählungen bekommen Quantile wie
+    # die Quote, die Abweichung feste Grenzen aus den Settings -- Quantile wären dort genau die
+    # Klassen der Quote, nur divergierend gefärbt (docs/skalierung-2026-10.md, § 2.4).
+    with_scaling = [d for d in model.districts if d.metrics is not None]
+    extra: dict[str, Classification] = {"bodies": own}
+    hits_classes = per_term_classes = deviation_classes = None
+    if with_scaling:
+        hits_classes = classify({d.id: float(d.hits) for d in with_scaling})
+        per_term_classes = classify({d.id: d.metrics.per_term for d in with_scaling if d.metrics})
+        deviation_classes = classify_fixed(
+            {d.id: d.metrics.deviation for d in with_scaling if d.metrics},
+            settings.report.diverging.district_percent,
+        )
+        extra |= {
+            "treffer": hits_classes,
+            "jebegriff": per_term_classes,
+            "abweichung": deviation_classes,
+        }
     dated_months = [row for row in model.timeline if row.month is not None]  # Option 07
     visuals = Visuals(
         map_svg=choropleth(
@@ -352,7 +375,7 @@ def build_site(
             rate,
             turnout,
             points,
-            extra_classes={"bodies": own},
+            extra_classes=extra,
         ),
         # Option 07: ohne Wahlbeteiligung zur Periode gibt es kein Streudiagramm, dafür Balken
         scatter_svg=scatter(model.districts, model.regression) if model.regression else None,
@@ -370,6 +393,12 @@ def build_site(
         # Option 04: eine kleine Karte je Partei, die 41 Pfade einmal in <defs>
         party_maps_svg=party_maps(model.party_cells, shapes, projection, model.parties),
         bars_svg=bars(model.timeline) if dated_months else "",
+        # Punkt 46: je Normierung eine Legende; leere Listen blenden Radio und Legende aus
+        hits_legend=legend(hits_classes, hits_label) if hits_classes else (),
+        per_term_legend=legend(per_term_classes, per_term_label) if per_term_classes else (),
+        deviation_legend=(
+            legend(deviation_classes, percent_signed_label) if deviation_classes else ()
+        ),
     )
     map_html = render_map(
         model, _map_districts(geojson, model, rate.classes), _places_geojson(pois), rate_legend

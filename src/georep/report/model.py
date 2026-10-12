@@ -19,7 +19,7 @@ import deal
 import polars as pl
 
 from georep import __version__
-from georep.analysis import bodies
+from georep.analysis import bodies, scaling
 from georep.analysis.hits import DISTRICT, RATE, TERMS, Citywide, citywide_terms
 from georep.analysis.ols import ALL, CONSTANT, MAIN_MODEL, model_terms, sample_label
 from georep.analysis.parties import (
@@ -116,6 +116,16 @@ class DistrictBodies:
 
 
 @dataclass(frozen=True)
+class DistrictMetrics:
+    """Dieselben Treffer in drei weiteren Lesarten (Punkt 46, ``analysis.scaling``)."""
+
+    per_term: float  # Treffer je Begriff im Wörterbuch
+    per_1000: float  # Treffer je 1000 Wahlberechtigte: die Trefferquote mit einem Faktor
+    city_mean: float  # ungewichtetes Mittel der Trefferquoten aller Wahlbezirke
+    deviation: float  # Quote geteilt durch Stadtmittel, minus 1; 0 heißt genau im Mittel
+
+
+@dataclass(frozen=True)
 class DistrictRow:
     id: int
     name: str
@@ -130,6 +140,7 @@ class DistrictRow:
     terms: tuple[TermRow, ...]  # alle Begriffe mit Treffer, absteigend, versteckte nicht
     # Neue Felder mit Default am Ende: Tests bauen DistrictRow positional (Option 05)
     bodies: DistrictBodies | None = None
+    metrics: DistrictMetrics | None = None  # Punkt 46; None heißt: Schritt ``metrics`` lief nicht
 
 
 @dataclass(frozen=True)
@@ -144,6 +155,10 @@ class KeyFigures:
     rate_min: float
     rate_max: float
     turnout_median: float
+    # Punkt 46: die zweite Kennzahl des Methodik-Reviews; 0,0 heißt „Schritt ``metrics`` lief nicht"
+    per_term_median: float = 0.0
+    per_term_min: float = 0.0
+    per_term_max: float = 0.0
 
     @property
     def documents_without_text(self) -> int:
@@ -803,6 +818,40 @@ def with_bodies(rows: Sequence[DistrictRow], frame: pl.DataFrame) -> tuple[Distr
     return tuple(filled)
 
 
+def _every_row_has_metrics(
+    rows: Sequence[DistrictRow], frame: pl.DataFrame, result: tuple[DistrictRow, ...] = ()
+) -> bool:
+    return all(r.metrics is not None and r.metrics.per_term >= 0.0 for r in result)
+
+
+@deal.pre(
+    lambda rows, frame: has_columns(
+        frame, DISTRICT, scaling.PER_TERM, scaling.PER_1000, scaling.CITY_MEAN, scaling.DEVIATION
+    ),
+    message="Kennzahlen je Wahlbezirk aus wahlbezirke_kennzahlen.parquet",
+)
+@deal.ensure(_every_row_has_metrics, message="jede Zeile mit Kennzahlen")
+@deal.raises(SchemaError)
+def with_metrics(rows: Sequence[DistrictRow], frame: pl.DataFrame) -> tuple[DistrictRow, ...]:
+    """Dieselben Zeilen mit gefülltem ``metrics``; ein fehlender Wahlbezirk ist ein ``SchemaError``."""
+    by_district = {int(r[DISTRICT]): r for r in frame.iter_rows(named=True)}
+    missing = sorted(r.id for r in rows if r.id not in by_district)
+    if missing:
+        raise SchemaError(f"Wahlbezirke ohne normierte Kennzahlen: {missing}")
+    return tuple(
+        replace(
+            row,
+            metrics=DistrictMetrics(
+                per_term=float(by_district[row.id][scaling.PER_TERM]),
+                per_1000=float(by_district[row.id][scaling.PER_1000]),
+                city_mean=float(by_district[row.id][scaling.CITY_MEAN]),
+                deviation=float(by_district[row.id][scaling.DEVIATION]),
+            ),
+        )
+        for row in rows
+    )
+
+
 @deal.pre(
     lambda frame, settings: has_columns(
         frame, prep_bodies.BODY, prep_bodies.KIND, bodies.DOCUMENTS, bodies.WITH_HITS
@@ -924,7 +973,11 @@ def citywide_section(counts: pl.DataFrame, found: Citywide) -> CitywideSection |
 
 
 def key_figures(
-    results: pl.DataFrame, dictionary: pl.DataFrame, corpus: Path, precincts: int
+    results: pl.DataFrame,
+    dictionary: pl.DataFrame,
+    corpus: Path,
+    precincts: int,
+    per_term: Sequence[float] = (),
 ) -> KeyFigures:
     documents, with_text = (
         pl.scan_parquet(corpus)
@@ -945,6 +998,10 @@ def key_figures(
         rate_min=min(rates),
         rate_max=max(rates),
         turnout_median=statistics.median(turnouts),
+        # Punkt 46: leer, solange der Schritt ``metrics`` nicht gelaufen ist
+        per_term_median=statistics.median(per_term) if per_term else 0.0,
+        per_term_min=min(per_term, default=0.0),
+        per_term_max=max(per_term, default=0.0),
     )
 
 
@@ -1488,6 +1545,10 @@ def build_report_model(
         district_rows(results, counts, names, hidden),
         district_bodies,
     )
+    # Punkt 46: die normierten Lesarten; ohne den Schritt ``metrics`` bleibt ``metrics`` leer und
+    # die Vorlage zeigt nur die Trefferquote.
+    if layout.district_metrics.exists():
+        rows = with_metrics(rows, pl.read_parquet(layout.district_metrics))
     table = body_rows(pl.read_parquet(layout.bodies_table), settings.bodies)
     units = crosswalk_units(layout)  # Option 03: 0 ohne Kontextdaten
     # Option 04: der Abschnitt entsteht nur, wenn der Schritt ``parties`` gelaufen ist
@@ -1512,7 +1573,12 @@ def build_report_model(
         commit=commit,
         stand=data_stand(layout, settings),
         figures=key_figures(
-            results, dictionary, layout.corpus, source_precincts(layout, settings, len(precincts))
+            results,
+            dictionary,
+            layout.corpus,
+            source_precincts(layout, settings, len(precincts)),
+            # Punkt 46: die Spannweite der zweiten Kennzahl für die Kernzahlen
+            [r.metrics.per_term for r in rows if r.metrics is not None],
         ),
         districts=rows,
         top_terms=top_terms_city(counts, hidden),

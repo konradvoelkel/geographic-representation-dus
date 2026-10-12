@@ -248,7 +248,8 @@ def test_the_map_offers_the_third_metric(built: str) -> None:
     # Genau eine Legende ist beim Laden sichtbar: die der Trefferquote.
     legends = re.findall(r'<div class="legend" id="legend-(\w+)"( hidden)?>', built)
     assert [name for name, hidden in legends if not hidden] == ["rate"]
-    assert {name for name, _ in legends} == {"rate", "turnout", "bodies"}
+    # Punkt 46 hat drei Normierungen dazugestellt; die drei Einfaerbungen von vorher bleiben
+    assert {"rate", "turnout", "bodies"} <= {name for name, _ in legends}
 
 
 def test_the_methods_section_explains_the_rule(built: str) -> None:

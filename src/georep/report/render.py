@@ -19,7 +19,14 @@ import deal
 from jinja2 import Environment, PackageLoader, StrictUndefined, select_autoescape
 
 from georep.errors import SchemaError
-from georep.report.charts import LegendEntry, delta_label, month_de
+from georep.report.charts import (
+    LegendEntry,
+    delta_label,
+    month_de,
+    percent_signed_label,
+    points_label,
+    ratio_label,
+)
 from georep.report.model import ReportModel, format_de, percent_de
 from georep.report.search import search_payload
 
@@ -99,6 +106,10 @@ class Visuals:
     # Option 02: das Streudiagramm der Änderungen; leer, wenn die Seite nur eine Periode zeigt
     delta_svg: str = ""
     bars_svg: str = ""  # Option 07: Balken je Monat; leer = kein Abschnitt „Je Monat"
+    # Punkt 46: die drei Normierungen der Karte; leer, solange der Schritt ``metrics`` fehlt
+    hits_legend: Sequence[LegendEntry] = ()
+    per_term_legend: Sequence[LegendEntry] = ()
+    deviation_legend: Sequence[LegendEntry] = ()
 
 
 def date_de(value: dt.date) -> str:
@@ -129,6 +140,10 @@ def environment() -> Environment:
     env.filters["kib"] = kib
     env.filters["delta"] = delta_label  # Option 02: Änderung mit Vorzeichen
     env.filters["month_de"] = month_de  # Option 07: „Oktober 2025" in der Monatstabelle
+    # Punkt 46: die Beschriftungen der Varianten „relativ zum Mittel"
+    env.filters["signed_pct"] = percent_signed_label
+    env.filters["points"] = points_label
+    env.filters["ratio"] = ratio_label
     return env
 
 

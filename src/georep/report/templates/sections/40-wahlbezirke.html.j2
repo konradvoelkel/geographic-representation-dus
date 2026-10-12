@@ -1,7 +1,7 @@
 {% from "macros.html.j2" import term %}
 <section id="wahlbezirke">
 <h2>Je Wahlbezirk</h2>
-<p class="note">Spaltenköpfe sortieren. Die fünf häufigsten Begriffe zählen Dokumente, in denen der Begriff vorkommt.</p>
+<p class="note">Spaltenköpfe sortieren. Die fünf häufigsten Begriffe zählen Dokumente, in denen der Begriff vorkommt. Die Spalte der Trefferquote folgt der Einfärbung der <a href="#karte">Karte</a>: sie zeigt immer die Kennzahl, nach der die Flächen gerade gefärbt sind (Punkt 46 der Entscheidungen).</p>
 <div class="scroll"><table id="districts">
 <thead><tr>
 <th scope="col" class="num" data-sort="num">Nr.</th>
@@ -10,7 +10,9 @@
 <th scope="col" class="num" data-sort="num">Wahlberechtigte</th>
 <th scope="col" class="num" data-sort="num">Wähler</th>
 <th scope="col" class="num" data-sort="num">Wahlbeteiligung</th>
-<th scope="col" class="num" data-sort="num">Trefferquote</th>
+{# Punkt 46: dieselbe Spalte zeigt jede Variante des Kartenumschalters; Kopf und Zelle tragen
+   die Varianten als data-text-<value> und data-value-<value>, das Basis-JavaScript tauscht sie. #}
+<th scope="col" class="num" data-sort="num" title="die Kennzahl, nach der die Karte eingefärbt ist" data-text-rate="Trefferquote"{% if visuals.hits_legend %} data-text-treffer="Treffer"{% endif %}{% if visuals.per_term_legend %} data-text-jebegriff="Treffer je Begriff"{% endif %}{% if visuals.deviation_legend %} data-text-abweichung="vom Stadtmittel"{% endif %}{% if model.regression %} data-text-turnout="Wahlbeteiligung"{% endif %}{% if visuals.bodies_legend %} data-text-bodies="eigene BV"{% endif %}>Trefferquote</th>
 <th scope="col" class="num" data-sort="num">Begriffe</th>
 <th scope="col">häufigste Begriffe</th>
 </tr></thead>
@@ -23,7 +25,7 @@
 <td class="num" data-value="{{ d.eligible }}">{{ d.eligible|num }}</td>
 <td class="num" data-value="{{ d.voters }}">{{ d.voters|num }}</td>
 <td class="num" data-value="{{ d.turnout }}">{{ d.turnout|pct(1) }}</td>
-<td class="num" data-value="{{ d.rate }}">{{ d.rate|num(3) }}</td>
+<td class="num" data-value="{{ d.rate }}" data-text-rate="{{ d.rate|num(3) }}" data-value-rate="{{ d.rate }}"{% if visuals.hits_legend %} data-text-treffer="{{ d.hits|num }}" data-value-treffer="{{ d.hits }}"{% endif %}{% if visuals.per_term_legend and d.metrics %} data-text-jebegriff="{{ d.metrics.per_term|num(2) }}" data-value-jebegriff="{{ d.metrics.per_term }}"{% endif %}{% if visuals.deviation_legend and d.metrics %} data-text-abweichung="{{ d.metrics.deviation|signed_pct }}" data-value-abweichung="{{ d.metrics.deviation }}"{% endif %}{% if model.regression %} data-text-turnout="{{ d.turnout|pct(1) }}" data-value-turnout="{{ d.turnout }}"{% endif %}{% if visuals.bodies_legend and d.bodies %} data-text-bodies="{{ d.bodies.own_share|pct(1) }}" data-value-bodies="{{ d.bodies.own_share }}"{% endif %}>{{ d.rate|num(3) }}</td>
 <td class="num" data-value="{{ d.terms_total }}">{{ d.terms_total|num }}</td>
 <td>{% for t in d.top_terms %}{{ term(t) }} ({{ t.hits|num }}){% if not loop.last %}, {% endif %}{% endfor %}</td>
 </tr>

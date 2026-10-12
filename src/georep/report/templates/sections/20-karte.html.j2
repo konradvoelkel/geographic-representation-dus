@@ -6,6 +6,15 @@
    laufenden Periode fehlt die Wahlbeteiligung. Eine weitere Kennzahl ist ein Eintrag in dieser
    Liste, ein data-class-<value> je Fläche und eine Legende unten (Punkt 46). #}
 {% set variants = [{"value": "rate", "label": "Trefferquote"}] %}
+{% if visuals.hits_legend %}{# Punkt 46 #}
+{% set variants = variants + [{"value": "treffer", "label": "Treffer absolut"}] %}
+{% endif %}
+{% if visuals.per_term_legend %}{# Punkt 46 #}
+{% set variants = variants + [{"value": "jebegriff", "label": "Treffer je Begriff"}] %}
+{% endif %}
+{% if visuals.deviation_legend %}{# Punkt 46: divergierend um 0, darum die zweite Rampe #}
+{% set variants = variants + [{"value": "abweichung", "label": "Abweichung vom Stadtmittel", "scale": "d"}] %}
+{% endif %}
 {% if model.regression %}
 {% set variants = variants + [{"value": "turnout", "label": "Wahlbeteiligung"}] %}
 {% endif %}
@@ -22,8 +31,22 @@
 <div class="map-wrap">
 {{ visuals.map_svg|safe }}
 <div>
-<div class="legend" id="legend-rate"><strong>Trefferquote</strong> (Dokumente je Wahlberechtigtem)
+<div class="legend" id="legend-rate"><strong>Trefferquote</strong> (Dokumente je Wahlberechtigtem; mal 1000 sind es Dokumente je 1000 Wahlberechtigte)
 <ul>{% for entry in visuals.rate_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
+{% if visuals.hits_legend %}{# Punkt 46 #}
+<div class="legend" id="legend-treffer" hidden><strong>Treffer</strong> (Dokumente mit mindestens einem Treffer, ohne Nenner)
+<ul>{% for entry in visuals.hits_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
+{% endif %}
+{% if visuals.per_term_legend %}{# Punkt 46 #}
+<div class="legend" id="legend-jebegriff" hidden><strong>Treffer je Begriff</strong> (Dokumente je Begriff im Wörterbuch des Bezirks)
+<ul>{% for entry in visuals.per_term_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul>
+<p class="note">Nimmt die stärkste Verzerrung der Methode heraus: ein Bezirk mit großem Wörterbuch wird häufiger getroffen (siehe <a href="#methode">Methode und Grenzen</a>).</p></div>
+{% endif %}
+{% if visuals.deviation_legend %}{# Punkt 46 #}
+<div class="legend" id="legend-abweichung" hidden><strong>Abweichung vom Stadtmittel</strong> (Trefferquote gegen das ungewichtete Mittel aller {{ model.figures.districts }} Wahlbezirke)
+<ul>{% for entry in visuals.deviation_legend %}<li><span class="swatch d{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul>
+<p class="note">Feste Grenzen, keine Quantile: die mittlere Klasse heißt „etwa im Stadtmittel". Orange liegt darunter, blau darüber.</p></div>
+{% endif %}
 {% if model.regression %}
 <div class="legend" id="legend-turnout" hidden><strong>Wahlbeteiligung</strong>
 <ul>{% for entry in visuals.turnout_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
@@ -33,7 +56,7 @@
 <ul>{% for entry in visuals.bodies_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul>
 <p class="note">Treffer aus der Bezirksvertretung des eigenen Stadtbezirks, siehe <a href="#gremien">Gremien</a>.</p></div>
 {% endif %}
-<p class="note">Klassen nach Quantilen. Zeigen oder Tippen nennt die Kennzahlen, ein Klick markiert den Bezirk auch in der Tabelle.</p>
+<p class="note">Klassen nach Quantilen, nur die Abweichung hat feste Grenzen. Zeigen oder Tippen nennt die Kennzahlen, ein Klick markiert den Bezirk auch in der Tabelle; die letzte Zahlenspalte der <a href="#wahlbezirke">Tabelle je Wahlbezirk</a> zeigt die gewählte Einfärbung.</p>
 </div>
 </div>
 <p class="note">Projektion {{ model.working_crs }}, Grenzen vereinfacht auf {{ visuals.simplify_m|num }} m. Dieselben Flächen auf OpenStreetMap-Kacheln: <a href="karte.html">karte.html</a> (braucht Netz).</p>
