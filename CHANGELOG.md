@@ -28,6 +28,11 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   Wurzel, jede weitere unter ihrem Slug) und baut `vergleich.html` — Tabelle, zwei kleine Karten mit
   gemeinsamen Klassengrenzen, ein Streudiagramm mit beiden Städten, Hinweise zur Vergleichbarkeit. Fehlt der
   Lauf einer Stadt, sagt der Befehl das und lässt den Vergleich weg.
+- Eine Stadt bringt mit, was sie hat: ohne Kontextdatensatz fehlt der ganze Block `[context]` und mit ihm die
+  Schritte `context_data`, `context` und `controls`; ohne Fraktionsnamen (`[originators]`) entfällt der Schritt
+  `parties`; tragen die Drucksachennummern kein Kürzel des Gremiums, bleibt `bodies.reference_pattern` leer und
+  jedes Dokument zählt als „unbekannt". Den Stadtbezirk je Stimmbezirk liest das Profil aus einer Spalte oder
+  aus der Stimmbezirksnummer (`city_district_from_precinct`).
 - Düsseldorf rechnet unverändert: der Golden Master, die Zahlen der Seite und ihre Adresse bleiben, wie sie
   waren (`profile = ""`, Daten weiter flach unter `data/`).
 

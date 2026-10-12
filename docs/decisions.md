@@ -540,6 +540,25 @@ veröffentlichte Adresse); der Vergleich aus `processed/*.parquet` beider Läufe
 Zwischentabelle wäre ein Bruch). Kosten: `publish` muss wissen, welche Stadt flach liegt, und kopiert sie
 dann nicht; fehlt eine Stadt, löscht es einen alten Vergleich, der sonst eine Lüge wäre.
 
+## Punkt: was eine zweite Stadt nicht hat, fehlt als Block (Option 01, 2026-10-12)
+
+Beim Rebase auf `main` mit sechs gemergten Optionen zeigte Mönchengladbach vier Stellen, an denen die Kette
+Düsseldorfer Daten voraussetzte. Die Regel dagegen ist überall dieselbe: der Block fehlt im Profil, und der
+Schritt, der ihn braucht, entfällt. `[context]` (Option 03) darf ganz fehlen — `context.root = None` schaltete
+die drei Schritte schon ab, nur verlangte das Modell die Beschreibung des Datensatzes; sie ist jetzt erst
+Pflicht, sobald `root` gesetzt ist. `[originators]` ohne Parteien heißt: kein Schritt `parties`, und der
+Bericht lässt den Abschnitt weg (das tat er schon, er prüft die Dateien). `bodies.reference_pattern` darf leer
+sein — Mönchengladbachs Drucksachennummern tragen kein Kürzel (`0682/XI`), und dann ist jedes Dokument
+„unbekannt", sichtbar mit Anteil auf der Seite, wie Option 05 es für unbekannte Nummern ohnehin vorsieht. Den
+Stadtbezirk je Stimmbezirk (Option 05) liest das Profil aus einer Spalte oder, wie bei votemanager, aus der
+Stimmbezirksnummer (`city_district_from_precinct`, dieselbe Form wie `district_from_precinct`).
+
+Verworfen: je Option ein eigenes `enabled`-Feld (vier Schalter für denselben Sachverhalt „es gibt diese Daten
+nicht"); Pflichtblöcke mit erfundenen Werten im Profil der zweiten Stadt (ein Muster, das nie trifft, oder ein
+Datum, das nichts bedeutet, wären eine stille Lüge in der Namensnennung); Option 05 für eine Stadt ohne
+Gremiumskürzel abzuschalten (der Abschnitt zeigt dann ehrlich 100 % „unbekannt", und der volle Lauf kann die
+Frage beantworten, siehe `docs/plans/01-staedte.md`, § 8, Fragen 1.12 und 1.13).
+
 ## Punkt: Gebietsnummern sind ASCII-Ziffern (Option 01, 2026-10-12)
 
 `str.isdigit()` ist für `²` wahr, `int('²')` wirft; arabisch-indische Ziffern läse `int` zwar, aber eine

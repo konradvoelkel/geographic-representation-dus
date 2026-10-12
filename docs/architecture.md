@@ -50,7 +50,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 Sechsundzwanzig Schritte stehen im Register, jeder mit Eingaben, Ausgaben und einer
 Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps` zeigt es
-(nachgezählt am 2026-10-12: vierundzwanzig für Düsseldorf, fünfundzwanzig mit Vergleich, zwanzig
+(nachgezählt am 2026-10-12: vierundzwanzig für Düsseldorf, fünfundzwanzig mit Vergleich, neunzehn
 im Periodenprofil, zwanzig für Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
 `georep fetch`; `georep fetch` führt `shapes` und `texts` mit, weil die Netzschritte die Flächen
 brauchen und die Texte sonst im Cache liegen blieben. Mit
@@ -238,15 +238,15 @@ der Payload lesen; `tests/unit/test_report_js_fold.py` prüft mit `node`, dass J
 falten. `karte.html` ist die zweite Datei und die einzige mit
 Fremdressourcen: Leaflet 1.9.4 per Subresource Integrity gepinnt, OpenStreetMap-Kacheln mit Namensnennung,
 Flächen und Orte inline als JSON (`</` escaped), eigene Allowlist in `render_map`. Entscheidungen und verworfene
-Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. Auf der Referenz: 41 Wahlbezirke,
 Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. Der Abschnitt
 `34-gewichtung` („Was ändert die Gewichtung?", Option 06) steht direkt hinter der Regression: eine
 Sensitivitätstabelle mit beiden Spalten von Tabelle 5 je Gewichtungsvariante und der Rangkorrelation zur
 ungewichteten Quote, darunter die Themen mit ihren stärksten Wörtern. Die Einheitszeile trägt dieselben
 Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeigt „—", und fehlt der ganzen
-Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 43 Dateien,
-13,4 MB, davon `index.html` 1,13 MB (144 KB Suchdaten, 63 KB die Parteikarten, 33 KB die Gewichtung),
-`karte.html` 255 KB, `dokumente.json` 2,3 MB; 1,5 s (2026-10-12).
+Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 44 Dateien
+(mit `summary.json`, Option 01), 13,4 MB, davon `index.html` 1,08 MB (144 KB Suchdaten, 63 KB die
+Parteikarten, 33 KB die Gewichtung), `karte.html` 252 KB, `dokumente.json` 2,3 MB; 1,5 s (2026-10-12, nach
+dem Rebase auf 02).
 
 Die Stadtseite kennt ihre Nachbarn nicht: wo die Zeile „Weitere Städte" steht, hinterlässt der Rahmen nur die
 Marke `<!--georep:weitere-staedte-->`. Erst `georep publish` (`report.publish`) weiß, welche Stadtseiten es
