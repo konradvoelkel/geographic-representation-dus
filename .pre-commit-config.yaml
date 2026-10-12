@@ -3,12 +3,17 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
+      # context/ bleibt aussen vor: die Portaldateien sind unveraendert gespeichert, ihre
+      # SHA-256 stehen in context/README.md, und die CSV endet ohne Zeilenumbruch.
       - id: trailing-whitespace
-        exclude: ^(reference/|tests/fixtures/)
+        exclude: ^(reference/|context/|tests/fixtures/)
       - id: end-of-file-fixer
-        exclude: ^(reference/|tests/fixtures/)
+        exclude: ^(reference/|context/|tests/fixtures/)
       - id: check-added-large-files
+        # sozialraeume_2021.geojson sind 2 130 KB, bewusst im Repo (docs/decisions.md);
+        # ausgenommen statt die Schwelle anzuheben, damit sie fuer alles andere greift.
         args: [--maxkb=1024]
+        exclude: ^context/
       - id: check-yaml
       - id: check-toml
   - repo: https://github.com/astral-sh/ruff-pre-commit
