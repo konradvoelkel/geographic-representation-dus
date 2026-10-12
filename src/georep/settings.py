@@ -1,10 +1,16 @@
 """Konfiguration: gepackte ``defaults.toml``, darüber TOML-Dateien im Arbeitsverzeichnis, darüber Umgebung.
 
-Reihenfolge (spätere gewinnen): ``defaults.toml`` im Paket < ``./settings.toml`` < ``./settings.local.toml``
-< ``$GEOREP_SETTINGS`` bzw. ``--settings`` < Umgebungsvariablen ``GEOREP_<FELD>`` (verschachtelt mit
-``__``). Die TOML-Schichten werden tief gemischt, es reicht also der geänderte Schlüssel. Unbekannte
+Reihenfolge (spätere gewinnen): ``defaults.toml`` im Paket < ``profiles/<profil>.toml`` im Paket <
+``./settings.toml`` < ``./settings.local.toml`` < ``$GEOREP_SETTINGS`` bzw. ``--settings`` <
+Umgebungsvariablen ``GEOREP_<FELD>`` (verschachtelt mit ``__``). Die TOML-Schichten werden tief gemischt, es reicht also der geänderte Schlüssel. Unbekannte
 Schlüssel sind ein Fehler (Tippfehler sollen auffallen). Muster wie in Konrads bubatzblick:
 ``tomllib`` plus pydantic, Begründungen als Kommentar neben der Zahl.
+
+``defaults.toml`` ist stadtneutral; alles Stadtspezifische (Endpunkte, Spaltennamen, Lizenztexte,
+Ausschlussliste) steht in genau einer Datei je Stadt unter ``profiles/``. Welches Profil gilt, sagt
+``--profile``, sonst ``GEOREP_PROFILE``, sonst ``default_profile`` aus den TOML-Schichten; ein
+Profil darf mit ``base`` auf einem anderen aufsetzen (eine Periode derselben Stadt, Option 02)
+(docs/plans/01-staedte.md, § 2).
 """
 
 from __future__ import annotations
@@ -16,15 +22,22 @@ import re
 import tomllib
 from datetime import date
 from importlib import resources
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Any, Literal
 
 import deal
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
+
+from georep.errors import GeorepError, SchemaError
 
 LOG_LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
 PROFILE_NAME = re.compile(r"[a-z0-9][a-z0-9-]*")  # ein Ordnername unter data_root, kein Pfad
+
+
+class UnknownProfileError(GeorepError):
+    """``--profile`` oder ``GEOREP_PROFILE`` nennt ein Profil, das es im Paket nicht gibt."""
 
 
 def _plain_name(value: str, key: str) -> str:
@@ -125,13 +138,39 @@ class OpendataSource(_Strict):
     district_shapes_url: str = ""
     district_results_url: str = ""
     districts_file: str = "Stimmbezirke_2025.geojson"
+    # Option 01: auch die übrigen Dateinamen nennt das Profil; leer heißt „gibt es für diese Stadt
+    # nicht" (Straßenverzeichnis und Wahlbezirksnamen der votemanager-Präsentation).
+    results_file: str = "Stimmbezirk_Wahlergebnis.csv"
+    streets_url: str = ""
+    streets_file: str = ""
+    district_names_url: str = ""
+    district_names_file: str = ""
 
-    @field_validator("districts_file")
+    @field_validator("districts_file", "results_file")
     @classmethod
     def _plain_file_name(cls, value: str) -> str:
         if not value or "/" in value or value != Path(value).name:
-            raise ValueError(f"sources.opendata.districts_file {value!r}: ein Dateiname, kein Pfad")
+            raise ValueError(f"sources.opendata: {value!r} ist ein Dateiname, kein Pfad")
         return value
+
+    @field_validator("streets_file", "district_names_file")
+    @classmethod
+    def _plain_file_name_or_empty(cls, value: str) -> str:
+        if value and ("/" in value or value != Path(value).name):
+            raise ValueError(f"sources.opendata: {value!r} ist ein Dateiname, kein Pfad")
+        return value
+
+    @model_validator(mode="after")
+    def _url_needs_a_file_name(self) -> OpendataSource:
+        # Umgekehrt nicht: ein Dateiname ohne URL ist eine Datei, die im Paket der Stadt liegt
+        # (reference/<slug>/external/) und nicht abgerufen wird.
+        for key, url, file in (
+            ("streets", self.streets_url, self.streets_file),
+            ("district_names", self.district_names_url, self.district_names_file),
+        ):
+            if url and not file:
+                raise ValueError(f"sources.opendata.{key}_url ohne {key}_file: wohin damit?")
+        return self
 
 
 class WikidataSource(_Strict):
@@ -172,13 +211,23 @@ class Geo(_Strict):
 
 
 class ResultsColumns(_Strict):
+    """Die Spalten der Wahlergebnis-CSV dieser Stadt und ihre Abbildung auf die Namen der Arbeit.
+
+    ``parties`` bildet den Schlüssel der Auswertung (``CDU``, ``GRUENE``, …) auf die Quellspalte ab
+    (Düsseldorf ``CDU_Stimmen``, votemanager ``D1``); ``party_names`` nennt den Anzeigenamen, wo er
+    vom Schlüssel abweicht. Den Wahlbezirk führt entweder eine Spalte (``district``) oder er steckt
+    in der Stimmbezirksnummer (``district_from_precinct``), Option 01.
+    """
+
     sep: str = ";"
     encoding: str = "latin-1"
     district: str = ""  # leer: der Wahlbezirk kommt aus der Zuordnung des Crosswalks (Option 02)
     eligible: str
     voters: str
     parties: dict[str, str]
-    city_district: str  # Option 05: Stadtbezirk je Stimmbezirk, für die Zuordnung der Wahlbezirke
+    # Option 05: Stadtbezirk je Stimmbezirk, für die Zuordnung der Wahlbezirke. Leer heißt: die
+    # Nummer trägt ihn (``city_district_from_precinct``, Option 01) oder die Stadt führt keinen.
+    city_district: str = ""
     precinct: str = ""  # Option 03: Stimmbezirk in der CSV; "" = kein Crosswalk über Stimmbezirke
     # Option 02: Gebietsname je Zeile (darin steht der postal_marker der Briefwahlbezirke),
     # Wahlberechtigte mit Wahlschein (Verteilschlüssel der Briefwahl) und der Marker selbst;
@@ -186,17 +235,96 @@ class ResultsColumns(_Strict):
     precinct_name: str = ""
     eligible_postal: str = ""
     postal_marker: str = ""
+    # Option 01: der Wahlbezirk steckt bei votemanager in den Zeichen [start, stop) der
+    # Stimmbezirksnummer; ``party_names`` nennt den Anzeigenamen, wo er vom Schlüssel abweicht.
+    district_from_precinct: tuple[int, int] | None = None
+    # Option 01: ebenso der Stadtbezirk. Mönchengladbach führt Stadtbezirk, Wahlbezirk und
+    # Stimmbezirk in einer Nummer (``10401`` → Stadtbezirk 1, Wahlbezirk 4, Stimmbezirk 1).
+    city_district_from_precinct: tuple[int, int] | None = None
+    party_names: dict[str, str] = {}
+
+    def display_name(self, party: str) -> str:
+        """Der Name, wie die Seite ihn schreibt; ohne Eintrag der Schlüssel selbst."""
+        return self.party_names.get(party, party)
+
+    @model_validator(mode="after")
+    def _one_way_to_the_district(self) -> ResultsColumns:
+        if self.district and self.district_from_precinct is not None:
+            raise ValueError(
+                "columns.results: district und district_from_precinct schließen sich aus"
+            )
+        if self.city_district and self.city_district_from_precinct is not None:
+            raise ValueError(
+                "columns.results: city_district und city_district_from_precinct schließen sich aus"
+            )
+        for name in ("district_from_precinct", "city_district_from_precinct"):
+            span: tuple[int, int] | None = getattr(self, name)
+            if span is None:
+                continue
+            start, stop = span
+            if not self.precinct:
+                raise ValueError(f"columns.results.{name} braucht precinct")
+            if not 0 <= start < stop:
+                raise ValueError(f"columns.results.{name} {(start, stop)}: [start, stop)")
+        unknown = sorted(set(self.party_names) - set(self.parties))
+        if unknown:
+            raise ValueError(f"columns.results.party_names ohne Partei: {unknown}")
+        return self
 
 
 class Columns(_Strict):
-    district_id: str
-    district_name: str
-    precinct_id: str
+    # Die Eigenschaften der Quellgeometrie; ``read_precincts`` liest damit eine Quelldatei (der
+    # Crosswalk einer anderen Periode, Option 02, die Raumeinheiten, Option 03). Der kanonische
+    # Stand (Option 01) hat feste Namen und braucht sie nicht: eine Stadt ohne Crosswalk und ohne
+    # Fremddaten lässt sie leer, der Validator von ``Settings`` verlangt sie, wo sie nötig sind.
+    district_id: str = ""
+    district_name: str = ""
+    precinct_id: str = ""
     results: ResultsColumns
 
 
+class Precincts(_Strict):
+    """Wie aus der Quellgeometrie die kanonischen Stimmbezirke werden (Option 01, Schritt ``precincts``).
+
+    Die Eigenschaftsnamen und die Regel für den Wahlbezirk sind je Quelle verschieden und stehen
+    darum im Profil; ``prep/precincts.py`` ist die einzige Stelle, die sie liest.
+    """
+
+    # Option 02: eine Periode mit fremdem Zuschnitt hat keine eigenen Wahlbezirke in der
+    # Quellgeometrie; dann entfällt der Schritt ``shapes`` und der Crosswalk ordnet zu.
+    enabled: bool = True
+    format: Literal["geojson", "shapefile-zip"] = "geojson"
+    member: str = ""  # Pfad des .shp im Zip; leer = das einzige im Archiv
+    source_crs: str = ""  # nur für GeoJSON ohne crs-Mitglied; Shapefiles bringen ihr .prj mit
+    id_property: str = ""  # trägt die Stimmbezirksnummer
+    district_property: str = ""  # trägt die Wahlbezirksnummer
+    district_from_id: tuple[int, int] | None = None  # sonst: Zeichenausschnitt [start, stop)
+    name_property: str = ""  # trägt den Namen des Wahlbezirks
+    names_from_results: bool = False  # sonst: Namen aus der Wahlbezirks-CSV der Quelle
+    names_id_column: str = "gebiet-nr"  # Spalten dieser CSV (votemanager)
+    names_name_column: str = "gebiet-name"
+    dbf_encoding: str = "utf-8"  # pyshp liest .dbf oft als latin-1; Fehler werden ersetzt
+
+    @model_validator(mode="after")
+    def _exactly_one_rule_each(self) -> Precincts:
+        if not self.enabled:
+            return self
+        if not self.id_property:
+            raise ValueError("precincts.id_property fehlt: welche Eigenschaft trägt die Nummer?")
+        if bool(self.district_property) == (self.district_from_id is not None):
+            raise ValueError("precincts: genau eines von district_property und district_from_id")
+        if bool(self.name_property) == self.names_from_results:
+            raise ValueError("precincts: genau eines von name_property und names_from_results")
+        if (
+            self.district_from_id is not None
+            and not 0 <= self.district_from_id[0] < (self.district_from_id[1])
+        ):
+            raise ValueError(f"precincts.district_from_id {self.district_from_id}: [start, stop)")
+        return self
+
+
 class Search(_Strict):
-    text_split_marker: str = "betrifft"
+    text_split_marker: str  # Option 01: das Profil nennt ihn, er ist je Stadt verschieden
     hide_in_display: list[str] = []
     exclude: list[str] = []
 
@@ -226,8 +354,10 @@ class Bodies(_Strict):
     das Kürzel der Bezirksvertretungen. Ein Kürzel in zwei Tabellen wäre eine doppelte Wahrheit.
     """
 
-    reference_pattern: str
-    district_body: str
+    # Option 01: leer heißt „die Nummern dieser Stadt tragen kein Kürzel" (Mönchengladbach:
+    # 0682/XI); dann ist jedes Dokument „unbekannt", und die Tabellen bleiben leer.
+    reference_pattern: str = ""
+    district_body: str = ""
     district_body_name: str = "{n}"  # Anzeigename der Bezirksvertretung, {n} ist der Stadtbezirk
     names_as_of: date | None = None  # Stand der Namen; nur Anzeige, nicht im Fingerprint
     council: dict[str, str] = {}
@@ -237,6 +367,8 @@ class Bodies(_Strict):
     @field_validator("reference_pattern")
     @classmethod
     def _pattern_has_code_and_number(cls, value: str) -> str:
+        if not value:
+            return value
         try:
             groups = re.compile(value).groupindex
         except re.error as error:
@@ -248,6 +380,17 @@ class Bodies(_Strict):
 
     @model_validator(mode="after")
     def _codes_disjoint(self) -> Bodies:
+        if not self.reference_pattern:
+            named = [
+                name
+                for name in ("district_body", "council", "committees", "advisory")
+                if getattr(self, name)
+            ]
+            if named:
+                raise ValueError(
+                    f"bodies ohne reference_pattern kennt keine Kürzel: bodies.{', '.join(named)}"
+                )
+            return self
         if not self.district_body:
             raise ValueError("bodies.district_body darf nicht leer sein")
         tables = {"council": self.council, "committees": self.committees, "advisory": self.advisory}
@@ -401,14 +544,14 @@ RATE_TERM = "trefferquote"  # der eine Term, der keine Kontextvariable ist: die 
 class ContextFile(_Strict):
     """Eine Datei des Kontextdatensatzes: Portal-URL und lokaler Name (unter ``root`` und ``external/``)."""
 
-    url: str
-    file: str
+    url: str = ""
+    file: str = ""
 
 
 class ContextFiles(_Strict):
-    table: ContextFile  # Tabelle je Raumeinheit
-    units: ContextFile  # Flächen der Raumeinheiten als GeoJSON
-    indicators: ContextFile  # Definitionen der Indikatoren
+    table: ContextFile = ContextFile()  # Tabelle je Raumeinheit
+    units: ContextFile = ContextFile()  # Flächen der Raumeinheiten als GeoJSON
+    indicators: ContextFile = ContextFile()  # Definitionen der Indikatoren
 
     def all(self) -> tuple[ContextFile, ...]:
         """Die Dateien in fester Reihenfolge: Tabelle, Flächen, Erläuterung."""
@@ -422,13 +565,16 @@ class ContextFiles(_Strict):
 class ContextDataset(_Strict):
     """Namensnennung und Stand, nur für die Seite; zählt nicht zum Fingerprint."""
 
-    title: str
-    url: str
-    publisher: str
-    license: str
-    license_url: str
-    stand: date
-    fetched: date  # Abrufdatum der Dateien unter root; gilt, solange der Netzschritt nie lief
+    title: str = ""
+    url: str = ""
+    publisher: str = ""
+    license: str = ""
+    license_url: str = ""
+    # Option 01: ohne Kontextdaten gibt es keinen Stand; der Validator unten verlangt beide
+    # Daten, sobald ``context.root`` auf einen Datensatz zeigt.
+    stand: date | None = None
+    # Abrufdatum der Dateien unter root; gilt, solange der Netzschritt nie lief
+    fetched: date | None = None
 
 
 class ContextTable(_Strict):
@@ -436,15 +582,15 @@ class ContextTable(_Strict):
     encoding: str = "utf-8"
     decimal: str = ","
     missing: list[str] = ["."]  # Marker für fehlende oder anonymisierte Werte
-    key: str
-    name: str
-    indicator: str  # Spalten der Erläuterungsdatei
-    definition: str
+    key: str = ""
+    name: str = ""
+    indicator: str = ""  # Spalten der Erläuterungsdatei
+    definition: str = ""
 
 
 class ContextUnits(_Strict):
-    label: str  # Name der Raumeinheit auf der Seite
-    key: str  # GeoJSON-Eigenschaft mit dem Schlüssel der Einheit
+    label: str = ""  # Name der Raumeinheit auf der Seite
+    key: str = ""  # GeoJSON-Eigenschaft mit dem Schlüssel der Einheit
 
 
 VariableKind = Literal["value", "sum", "ordinal", "district"]
@@ -481,9 +627,9 @@ class ContextModels(_Strict):
     """Termlisten der Modelle; ``single`` nennt je Zeile von Tabelle 6b eine Variable neben der Trefferquote."""
 
     y_scale: float = 100.0
-    main: list[str]
-    parties: list[str]
-    single: list[str]
+    main: list[str] = []
+    parties: list[str] = []
+    single: list[str] = []
 
     @field_validator("y_scale")
     @classmethod
@@ -495,16 +641,16 @@ class ContextModels(_Strict):
 
 class ContextSettings(_Strict):
     # None = keine Kontextdaten: die Schritte context_data, context und controls fehlen dann
-    root: Path | None
-    max_missing_weight: float
-    min_coverage: float
-    dataset: ContextDataset
-    files: ContextFiles
-    table: ContextTable
-    units: ContextUnits
-    scales: dict[str, dict[str, int]]
-    variables: list[ContextVariable]
-    models: ContextModels
+    root: Path | None = None
+    max_missing_weight: float = 0.1
+    min_coverage: float = 0.9
+    dataset: ContextDataset = ContextDataset()
+    files: ContextFiles = ContextFiles()
+    table: ContextTable = ContextTable()
+    units: ContextUnits = ContextUnits()
+    scales: dict[str, dict[str, int]] = {}
+    variables: list[ContextVariable] = []
+    models: ContextModels = ContextModels()
 
     @field_validator("root", mode="before")
     @classmethod
@@ -520,6 +666,27 @@ class ContextSettings(_Strict):
 
     @model_validator(mode="after")
     def _consistent(self) -> ContextSettings:
+        # Option 01: eine Stadt ohne Kontextdatensatz lässt den ganzen Block weg; wer ihn hat,
+        # muss ihn vollständig beschreiben, denn die Namensnennung der Lizenz hängt daran.
+        if self.root is not None:
+            missing = [
+                f"context.{name}"
+                for name, value in (
+                    ("dataset.title", self.dataset.title),
+                    ("dataset.url", self.dataset.url),
+                    ("dataset.publisher", self.dataset.publisher),
+                    ("dataset.stand", self.dataset.stand),
+                    ("dataset.fetched", self.dataset.fetched),
+                    ("files.table.file", self.files.table.file),
+                    ("files.units.file", self.files.units.file),
+                    ("table.key", self.table.key),
+                    ("units.key", self.units.key),
+                    ("variables", self.variables),
+                )
+                if not value
+            ]
+            if missing:
+                raise ValueError(f"context.root ist gesetzt, es fehlen: {', '.join(missing)}")
         for name, scale in self.scales.items():
             if not scale or len(set(scale.values())) != len(scale):
                 raise ValueError(f"context.scales.{name}: Stufen ohne Dubletten in den Werten")
@@ -688,17 +855,112 @@ class Compare(_Strict):
         return _plain_name(value, "compare.period")
 
 
+# --- Option 01: Stadt, Quellen der Seite, Veröffentlichung ---------------------------------------
+
+
+class City(_Strict):
+    """Die Stadt in Worten: alles, was auf der Seite steht, statt eines Literals im Code.
+
+    ``slug`` ist der Ordnername im veröffentlichten Ordner und der Schlüssel in ``publish.cities``;
+    er muss dem Dateinamen des Profils gleichen (``profiles/<slug>.toml``).
+    """
+
+    slug: str
+    name: str  # „Düsseldorf"
+    genitive: str  # „Düsseldorfs"
+    adjective: str  # „Düsseldorfer"
+    ags: str  # Amtlicher Gemeindeschlüssel, achtstellig; Schlüssel der votemanager-Dateien
+    publisher: str  # Herausgeber der amtlichen Daten, wörtlich für den Fuß der Seite
+    council: str = "Stadtrat"
+    election: str = "Ratswahl"  # Name der Wahl, deren Ergebnis die Nenner liefert
+
+    @field_validator("slug")
+    @classmethod
+    def _slug_is_a_plain_name(cls, value: str) -> str:
+        if not PROFILE_NAME.fullmatch(value):
+            raise ValueError(f"city.slug {value!r}: nur Kleinbuchstaben, Ziffern und Bindestriche")
+        return value
+
+    @field_validator("ags")
+    @classmethod
+    def _ags_has_eight_digits(cls, value: str) -> str:
+        if not re.fullmatch(r"\d{8}", value):
+            raise ValueError(f"city.ags {value!r}: achtstelliger amtlicher Gemeindeschlüssel")
+        return value
+
+
+class ReportSource(_Strict):
+    """Eine Quelle, wie sie im Fuß der Seite steht: Name, Herausgeber, Link, Lizenz, Prüfdatum.
+
+    Die Links sind per Konstruktion erlaubt (``render.allowed_links``); ein leeres ``license``
+    heißt „vom Anbieter nicht angegeben" und wird auch so gedruckt (Frage 1.4).
+    """
+
+    name: str
+    publisher: str
+    url: str
+    license: str = ""
+    license_url: str = ""
+    checked: date | None = None
+
+    @field_validator("url", "license_url")
+    @classmethod
+    def _https(cls, value: str) -> str:
+        if value and not value.startswith("https://"):
+            raise ValueError(f"report.sources: {value!r} ist keine https-URL")
+        return value
+
+    @model_validator(mode="after")
+    def _license_link_needs_a_license(self) -> ReportSource:
+        if self.license_url and not self.license:
+            raise ValueError(f"report.sources {self.name!r}: Lizenz-Link ohne Lizenzname")
+        return self
+
+
+class Report(_Strict):
+    """Was im Kopf und Fuß der Seite steht und nicht aus den Daten kommt."""
+
+    sources: list[ReportSource] = []
+    ris_url: str = ""  # Ratsinformationssystem, für den Satz über die Dokumente
+    notes: list[str] = []  # Sätze, die nur für diese Stadt in „Methode und Grenzen" gehören
+    data_note: str = ""  # woher Straßen und Orte stammen, wenn kein Netzschritt gelaufen ist
+
+
+class Publish(_Strict):
+    """Welche Städte ``georep publish`` zusammenträgt; die erste liegt an der Wurzel."""
+
+    cities: list[str] = []
+
+    @field_validator("cities")
+    @classmethod
+    def _plain_unique_slugs(cls, value: list[str]) -> list[str]:
+        wrong = [c for c in value if not PROFILE_NAME.fullmatch(c)]
+        if wrong:
+            raise ValueError(f"publish.cities {wrong}: keine Ordnernamen")
+        if len(set(value)) != len(value):
+            raise ValueError(f"publish.cities {value}: jede Stadt höchstens einmal")
+        return value
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_prefix="GEOREP_", env_nested_delimiter="__", extra="forbid", frozen=True
+        env_prefix="GEOREP_",
+        env_nested_delimiter="__",
+        extra="forbid",
+        frozen=True,
+        populate_by_name=True,
     )
 
     data_root: Path = Path("data")
     cache_root: Path | None = None
     reference_root: Path = Path("reference")
-    profile: str = (
-        ""  # Unterordner je Stadt oder Periode unter data_root und cache_root; leer = flach
-    )
+    # Unterordner je Stadt oder Periode unter data_root und cache_root; leer = flach. Der Wert
+    # kommt aus dem Profil, nie aus GEOREP_PROFILE: das wählt nur das Profil (siehe
+    # load_settings), und ein Profil darf flach bleiben (die Hauptstadt der Arbeit, Frage 1.7).
+    # Darum der Alias: GEOREP_PROFILE landet nicht hier. Der Alias trägt das Präfix selbst, weil
+    # pydantic-settings es auf Aliase nicht anwendet — ohne es setzte eine nackte Variable
+    # PROFILE_FOLDER den Ordner (Review 2026-10-12). Die TOML-Schichten schreiben weiter `profile`.
+    profile: str = Field("", validation_alias=AliasChoices("georep_profile_folder"))
     contracts: Literal["on", "off"] = "on"
     log_level: str = "INFO"
     period: Period
@@ -707,16 +969,33 @@ class Settings(BaseSettings):
     sources: Sources
     geo: Geo = Geo()
     columns: Columns
-    search: Search = Search()
+    search: Search
     analysis: Analysis = Analysis()
-    bodies: Bodies  # Option 05
+    bodies: Bodies = Bodies()  # Option 05; leer: die Nummern tragen kein Kürzel (Option 01)
     weights: Weights = Weights()  # Option 06
     topics: Topics = Topics()  # Option 06
-    context: ContextSettings  # Option 03
+    context: ContextSettings = ContextSettings()  # Option 03; leer: keine Kontextdaten (Option 01)
 
     originators: Originators = Originators()  # Option 04
     crosswalk: Crosswalk = Crosswalk()  # Option 02
     compare: Compare = Compare()  # Option 02
+    precincts: Precincts  # Option 01: Regeln der Quellgeometrie, je Stadt im Profil
+    # Option 01: der gewählte Profilname (``load_settings`` schreibt ihn hierher), die Stadt in
+    # Worten, die Quellen für Kopf und Fuß der Seite und die Städte der Veröffentlichung.
+    default_profile: str = ""
+    city: City
+    report: Report = Report()
+    publish: Publish = Publish()
+
+    @model_validator(mode="after")
+    def _context_needs_the_geometry_columns(self) -> Settings:
+        """Option 03 liest die Stimmbezirke als Quelldatei; dann müssen ihre Spalten dastehen."""
+        if self.context.root is not None and not self.columns.precinct_id:
+            raise ValueError(
+                "context.root ist gesetzt: columns.precinct_id, district_id und district_name "
+                "nennen die Eigenschaften der Quellgeometrie und sind dann Pflicht"
+            )
+        return self
 
     @model_validator(mode="after")
     def _party_keys_have_a_vote_column(self) -> Settings:
@@ -771,10 +1050,18 @@ class Settings(BaseSettings):
             ]
             if blank:
                 raise ValueError(f"crosswalk.enabled braucht crosswalk.{', '.join(blank)}")
-        elif not columns.district:
+            # Option 01: der Crosswalk liest den Zielzuschnitt als Quelldatei, mit diesen Namen
+            unnamed = [
+                key
+                for key in ("district_id", "district_name", "precinct_id")
+                if not getattr(self.columns, key)
+            ]
+            if unnamed:
+                raise ValueError(f"crosswalk.enabled braucht columns.{', '.join(unnamed)}")
+        elif not columns.district and columns.district_from_precinct is None:
             raise ValueError(
-                "columns.results.district ist leer: der Wahlbezirk kommt dann aus der Zuordnung, "
-                "dafür muss crosswalk.enabled gesetzt sein"
+                "columns.results.district ist leer: der Wahlbezirk kommt dann aus der Zuordnung "
+                "(crosswalk.enabled) oder aus der Stimmbezirksnummer (district_from_precinct)"
             )
         if self.compare.period and self.compare.period == self.profile:
             raise ValueError(f"compare.period {self.compare.period!r} ist das eigene Profil")
@@ -825,6 +1112,10 @@ class Settings(BaseSettings):
                 "cache_root": True,
                 "reference_root": True,
                 "profile": True,
+                # Option 01: die Auswahl der Schicht und die Anzeigetexte der Seite zählen nicht,
+                # die Stadt und die Liste der veröffentlichten Städte zählen.
+                "default_profile": True,
+                "report": True,
                 "log_level": True,
                 "cache": True,
                 "contracts": True,
@@ -885,9 +1176,113 @@ def _read_toml(path: Path) -> dict[str, Any]:
         return tomllib.load(f)
 
 
-def load_settings(explicit: Path | None = None, cwd: Path | None = None) -> Settings:
+# --- Option 01: Paketprofile ---------------------------------------------------------------------
+
+PROFILE_ENV = "GEOREP_PROFILE"
+MAX_PROFILE_DEPTH = 4  # Stadt, Periode, Variante; tiefer wird niemand lesen
+
+
+def profiles_folder() -> Traversable:
+    return resources.files("georep") / "profiles"
+
+
+# Benannter Validator, weil das Argument optional ist: ein Lambda bekäme es nicht (CLAUDE.md, deal).
+def _profiles_sorted(folder: Traversable | None = None, result: list[str] | None = None) -> bool:
+    return result is not None and result == sorted(result)
+
+
+@deal.ensure(
+    _profiles_sorted, message="Profile alphabetisch, damit Listen und Fehlermeldungen stabil sind"
+)
+def available_profiles(folder: Traversable | None = None) -> list[str]:
+    """Die Namen der Paketprofile (``profiles/<name>.toml``), alphabetisch."""
+    return sorted(
+        entry.name.removesuffix(".toml")
+        for entry in (folder or profiles_folder()).iterdir()
+        if entry.name.endswith(".toml")
+    )
+
+
+def _read_profile(name: str, folder: Traversable | None = None) -> dict[str, Any]:
+    known = available_profiles(folder)
+    if name not in known:
+        raise UnknownProfileError(f"Profil {name!r} gibt es nicht; vorhanden: {', '.join(known)}")
+    return tomllib.loads(((folder or profiles_folder()) / f"{name}.toml").read_text("utf-8"))
+
+
+def profile_chain(name: str, folder: Traversable | None = None) -> list[str]:
+    """Das Profil und die Profile, auf denen es aufsetzt, von der Wurzel an.
+
+    Eine Periode oder Variante derselben Stadt setzt mit ``base = "<stadt>"`` auf deren Profil auf
+    und überschreibt nur, was anders ist (Option 02 als Periode von Option 01); die Stadt selbst
+    hat kein ``base``. So steht ``[city]`` genau einmal im Paket.
+    """
+    chain: list[str] = []
+    current = name
+    while current:
+        if current in chain:
+            raise SchemaError(f"Profile verweisen im Kreis: {[*chain, current]}")
+        chain.insert(0, current)
+        if len(chain) > MAX_PROFILE_DEPTH:
+            raise SchemaError(f"Profilkette zu tief: {chain}")
+        current = str(_read_profile(current, folder).get("base", ""))
+    return chain
+
+
+def _profile_layer(name: str, folder: Traversable | None = None) -> dict[str, Any]:
+    """Die TOML-Schicht eines Paketprofils samt seiner Grundlagen; ``base`` selbst bleibt draußen."""
+    merged: dict[str, Any] = {}
+    for step in profile_chain(name, folder):
+        layer = _read_profile(step, folder)
+        layer.pop("base", None)
+        merged = deep_merge(merged, layer)
+    return merged
+
+
+def load_settings(
+    explicit: Path | None = None,
+    cwd: Path | None = None,
+    *,
+    profile: str | None = None,
+    profiles_dir: Traversable | None = None,
+) -> Settings:
+    """Alle Schichten in Leserichtung; ``profile`` gewinnt über ``GEOREP_PROFILE`` und die Dateien.
+
+    Das Profil liegt zwischen ``defaults.toml`` und den Dateien im Arbeitsverzeichnis: Konrads
+    ``settings.local.toml`` mit ``data_root`` auf xtraspace gewinnt also auch über ein Stadtprofil
+    (docs/plans/01-staedte.md, § 2). ``profiles_dir`` ist die Testnaht.
+    """
     defaults_text = (resources.files("georep") / "defaults.toml").read_text(encoding="utf-8")
-    merged: dict[str, Any] = tomllib.loads(defaults_text)
-    for path in settings_files(explicit, cwd):
-        merged = deep_merge(merged, _read_toml(path))
+    base: dict[str, Any] = tomllib.loads(defaults_text)
+    files = [(path, _read_toml(path)) for path in settings_files(explicit, cwd)]
+    chosen = profile or os.environ.get(PROFILE_ENV) or _selected_profile(base, files)
+    merged = deep_merge(base, _profile_layer(chosen, profiles_dir))
+    for _path, layer in files:
+        merged = deep_merge(merged, layer)
+    merged["default_profile"] = chosen
+    _slugs_match_their_file(chosen, profiles_dir)
     return Settings(**merged)
+
+
+def _slugs_match_their_file(name: str, folder: Traversable | None = None) -> None:
+    """Wer ``city.slug`` setzt, muss so heißen wie seine Datei; wer erbt, schweigt dazu.
+
+    So kann ein Profil eine Periode derselben Stadt sein (``duesseldorf-2014`` erbt den Slug) oder
+    eine eigene Stadt (``moenchengladbach`` setzt ihn), und niemand verwechselt beides.
+    """
+    for step in profile_chain(name, folder):
+        city = _read_profile(step, folder).get("city")
+        slug = city.get("slug") if isinstance(city, dict) else None
+        if slug is not None and slug != step:
+            raise SchemaError(
+                f"Profil {step!r}: city.slug ist {slug!r}; der Slug muss dem Dateinamen gleichen"
+            )
+
+
+def _selected_profile(base: dict[str, Any], files: list[tuple[Path, dict[str, Any]]]) -> str:
+    """``default_profile`` aus den TOML-Schichten; die spätere Datei gewinnt."""
+    name = str(base.get("default_profile", ""))
+    for _path, layer in files:
+        if "default_profile" in layer:
+            name = str(layer["default_profile"])
+    return name

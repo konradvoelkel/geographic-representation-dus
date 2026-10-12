@@ -86,6 +86,7 @@ def test_pipeline_runs_skips_and_reruns(
     )
     third = run_pipeline(steps, settings)
     assert offline(third) == {
+        "shapes": "übersprungen",
         "texts": "übersprungen",
         "voters": "übersprungen",
         "streets": "übersprungen",
@@ -163,7 +164,8 @@ def test_pipeline_reproduces_the_thesis_results(
     assert "41 Kommunalwahlbezirke" in page and page.count('id="bezirk-') == 41
     assert layout.site_index.stat().st_size < 1_500_000  # Budget der Seite, Meta-Plan 2026-10 § 2
     _check_search_section(page)
-    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 3
+    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
+    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 4
     assert (layout.site / "karte.html").stat().st_size < 1_000_000
     _compare_results(
         _results_as_legacy(layout.results),

@@ -1,13 +1,15 @@
-# Die Wahlperiode 2014 bis 2020 als Profil: dieselbe Kette, eigene Datenwurzel
-# <data_root>/2014-2020/, eigene Stamps, eigene PDFs und Texte unter <cache_root>/2014-2020/.
+# Profil „Wahlperiode 2014 bis 2020" (Option 02), als Paketprofil derselben Stadt:
 #
-#   uv run georep --settings settings.2014.toml bootstrap
-#   uv run georep --settings settings.2014.toml run
+#   uv run georep --profile duesseldorf-2014 bootstrap
+#   uv run georep --profile duesseldorf-2014 run
 #
-# Gründe je Zeile stehen daneben, die ausführlichen in docs/plans/02-zeitreihe.md, § 2.
-# Rechnerspezifische Pfade gehören nie hierher, sondern in settings.local.toml (gitignored);
-# diese Datei ist committet und muss in der CI genauso gelten wie auf Konrads Rechner.
-# Lesereihenfolge: defaults.toml < settings.toml < settings.local.toml < diese Datei.
+# ``base`` setzt auf dem Stadtprofil auf; hier steht nur, was für diese Periode anders ist
+# (Option 01, § 9 des Plans: die Profilschicht trägt genauso eine Periode). Gründe je Zeile stehen
+# daneben, die ausführlichen in docs/plans/02-zeitreihe.md, § 2. Rechnerspezifische Pfade gehören
+# nie hierher, sondern in settings.local.toml (gitignored).
+# Lesereihenfolge: defaults.toml < profiles/duesseldorf.toml < diese Datei < settings*.toml.
+
+base = "duesseldorf"
 
 profile = "2014-2020"          # Ordnername unter data_root und cache_root; trennt Daten, Stamps, PDFs und Texte von der Hauptperiode
 reference_root = "snapshots/2014-2020"  # eingefrorener Datensatz dieser Periode (Konrads Lauf, Stufe H des Plans); fehlt er, nennt bootstrap die Dateien und bricht nicht ab
@@ -18,6 +20,37 @@ end = 2020-09-12               # Tag vor der Ratswahl 2020
 election = 2020-09-13          # Ratswahl, deren Ergebnis Nenner (Wahlberechtigte) und Zuschnitt liefert
 label = "Wahlperiode 2014 bis 2020"  # Anzeigename im Kopf, im Datenstand und auf der Unterseite
 dictionary = "base"            # Straßen und Orte der Hauptperiode (Stand November 2025) für beide Perioden: so unterscheiden sich nur die Dokumente, und keine Trefferquote muss zwischen Zuschnitten umgerechnet werden (Plan § 2, Frage 2.2)
+
+[city]                         # dieselbe Stadt, eine andere Wahl: der Slug bleibt der des Stadtprofils
+election = "Ratswahl 2020"     # ihr Ergebnis liefert Nenner und Zuschnitt dieser Periode
+
+# Option 01: die Quellen dieser Periode stehen hier, nicht die der Hauptperiode; der tiefe Merge
+# ersetzt Listen, die Fußzeile nennt damit genau die Dateien, aus denen diese Seite gerechnet ist.
+[report]
+data_note = "aus dem Datensatz der Arbeit (Stand November 2025)"
+
+[[report.sources]]
+name = "Ratswahl 2020, Ergebnis je Stimmbezirk und je Wahlbezirk"
+publisher = "Landeshauptstadt Düsseldorf, Open-Data-Portal"
+url = "https://opendata.duesseldorf.de/"
+license = "Datenlizenz Deutschland Namensnennung 2.0"
+license_url = "https://www.govdata.de/dl-de/by-2-0"
+checked = 2026-10-11
+
+[[report.sources]]
+name = "Stimmbezirks- und Kommunalwahlbezirkseinteilung 2020"
+publisher = "Landeshauptstadt Düsseldorf, Open-Data-Portal"
+url = "https://opendata.duesseldorf.de/"
+license = "Datenlizenz Deutschland – Zero – Version 2.0"
+license_url = "https://www.govdata.de/dl-de/zero-2-0"
+checked = 2026-10-11
+
+[[report.sources]]
+name = "Ratsdokumente der Wahlperiode 2014 bis 2020"
+publisher = "Ratsinformationssystem der Landeshauptstadt Düsseldorf (OParl)"
+url = "https://ris-oparl.itk-rheinland.de/"
+license = ""                   # kein Lizenzhinweis am Endpunkt; die Seite nennt nur die Kennungen
+checked = 2026-10-11
 
 [sources.oparl]
 first_page = 90                # die Liste ist neueste zuerst, die Periode liegt also auf hohen Seitenzahlen; Seite 90 trug am 2026-10-12 den Bereich 10.01.2022 bis 01.03.2022, liegt damit rund 28 Seiten vor der Grenze (40 min Vorlauf von drei Stunden) und verliert nichts: zu spaet zu beginnen wuerde Dokumente verlieren, zu frueh kostet nur Zeit, weil in_period filtert
@@ -49,6 +82,9 @@ parties = { CDU = "D1", GRUENE = "D3", SPD = "D2", FDP = "D4", Die_Linke = "D5",
 
 [context]                      # Option 03: Kontrollvariablen gibt es für diese Periode nicht
 root = ""                      # der Quartiersatlas beschreibt den Stand 2021 auf den Raumeinheiten von heute; für eine Periode, die 2020 endet, wäre er keine Kontrollvariable, sondern eine Zeitreise. Leer heißt: die Schritte context_data, context und controls fehlen im Profil
+
+[precincts]                    # Option 01: diese Periode hat keine eigenen Wahlbezirke
+enabled = false                # das Stimmbezirks-GeoJSON von 2020 kennt nur die Nummer (Stimmbezchar); den Wahlbezirk liefert der Crosswalk, darum entfällt der Schritt shapes und die Seite liest die kanonischen Flächen der Hauptperiode
 
 [crosswalk]                    # Stimmbezirke 2020 über Flächenanteile auf die Wahlbezirke 2025
 enabled = true

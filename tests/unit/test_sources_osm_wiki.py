@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from georep.errors import FetchError
-from georep.geo import Precinct, PrecinctIndex, read_precincts
+from georep.geo import Precinct, PrecinctIndex, read_canonical_precincts
 from georep.settings import Settings, load_settings
 from georep.sources.overpass import (
     OSM_FILTER,
@@ -37,12 +37,8 @@ def settings() -> Settings:
 
 
 @pytest.fixture(scope="module")
-def precincts(reference_root: Path, settings: Settings) -> list[Precinct]:
-    return read_precincts(
-        reference_root / "external" / "Stimmbezirke_2025.geojson",
-        settings.columns,
-        settings.geo.working_crs,
-    )
+def precincts(reference_precincts: Path, settings: Settings) -> list[Precinct]:
+    return read_canonical_precincts(reference_precincts, settings.geo.working_crs)
 
 
 def _reference_streets(reference_root: Path) -> dict[str, list[str]]:

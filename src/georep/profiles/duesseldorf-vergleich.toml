@@ -1,0 +1,14 @@
+# Profil „Hauptperiode mit Periodenvergleich" (Option 02), als Paketprofil derselben Stadt:
+#
+#   uv run georep --profile duesseldorf-2014 run        # erst die alte Periode rechnen
+#   uv run georep --profile duesseldorf-vergleich run
+#
+# ``base`` setzt auf dem Stadtprofil auf; hier steht nur der Vergleich. Ohne dieses Profil ist die
+# Kette der Hauptperiode unverändert und die Seite trägt den Abschnitt nicht (fehlende Eingaben
+# sind ein Fehler, kein stilles Überspringen: docs/architecture.md, Regel 3).
+
+base = "duesseldorf"
+
+[compare]
+period = "2014-2020"           # Profil der älteren Periode; ihre Ergebnisse liegen unter data_root/2014-2020/processed/
+label = "Wahlperiode 2014 bis 2020"  # wie period.label in profiles/duesseldorf-2014.toml; der Vergleich kennt die Settings des anderen Profils nicht

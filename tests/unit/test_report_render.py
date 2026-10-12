@@ -13,7 +13,7 @@ import deal
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
-from georep.geo import read_precincts
+from georep.geo import read_canonical_precincts
 from georep.layout import Layout
 from georep.report.charts import (
     choropleth,
@@ -62,8 +62,8 @@ def model(mini_run: Layout, default_settings: Settings) -> ReportModel:
 
 @pytest.fixture(scope="module")
 def visuals(model: ReportModel, mini_run: Layout, default_settings: Settings) -> Visuals:
-    precincts = read_precincts(
-        mini_run.districts_geojson, default_settings.columns, default_settings.geo.working_crs
+    precincts = read_canonical_precincts(
+        mini_run.precincts_geojson, default_settings.geo.working_crs
     )
     shapes = district_shapes(precincts)
     projection = fit(bounds_of(shapes), 600.0)

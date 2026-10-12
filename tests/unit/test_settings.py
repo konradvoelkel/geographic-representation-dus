@@ -6,8 +6,17 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from georep.errors import SchemaError
 from georep.layout import Layout
-from georep.settings import Period, deep_merge, load_settings, settings_files
+from georep.settings import (
+    Period,
+    UnknownProfileError,
+    available_profiles,
+    deep_merge,
+    load_settings,
+    profiles_folder,
+    settings_files,
+)
 
 
 def test_defaults_load_without_any_file(tmp_path: Path) -> None:
@@ -624,6 +633,21 @@ def test_labels_and_file_names_stay_out_of_the_fingerprint(tmp_path: Path) -> No
     assert renamed.period.label == "Anders" and renamed.fingerprint() == base.fingerprint()
 
 
+# --- Option 01: was eine zweite Stadt nicht hat -----------------------------------------------
+
+
+def test_a_second_city_needs_neither_context_data_nor_body_codes() -> None:
+    """Nicht jede Stadt hat einen Quartiersatlas, und nicht jedes RIS nennt das Gremium.
+
+    Mönchengladbach veröffentlicht keinen Datensatz je Raumeinheit (Option 03), und seine
+    Drucksachennummern tragen kein Kürzel (``0682/XI``, Stichprobe 2026-10-12, Option 05).
+    Beide Blöcke fehlen im Profil; die Schritte entfallen, die Gremien sind „unbekannt".
+    """
+    settings = load_settings(profile="moenchengladbach", cwd=Path("/nonexistent"))
+    assert settings.context.root is None and not settings.context.variables
+    assert settings.bodies.reference_pattern == "" and settings.bodies.district_body == ""
+
+
 # --- Option 02: die beiden Profildateien im Repo ----------------------------------------------
 
 REPO = Path(__file__).resolve().parents[2]
@@ -631,7 +655,7 @@ NOWHERE = Path("/nonexistent")  # kein settings.local.toml dazwischen, die Datei
 
 
 def test_period_profile_describes_the_old_cut_and_its_own_data_root() -> None:
-    settings = load_settings(explicit=REPO / "settings.2014.toml", cwd=NOWHERE)
+    settings = load_settings(profile="duesseldorf-2014", cwd=NOWHERE)
     assert settings.profile == "2014-2020"
     assert settings.reference_root == Path("snapshots/2014-2020")
     assert (settings.period.start, settings.period.end) == (date(2014, 5, 25), date(2020, 9, 12))
@@ -650,15 +674,15 @@ def test_period_profile_describes_the_old_cut_and_its_own_data_root() -> None:
 
 def test_the_two_profiles_differ_from_the_main_period_in_the_fingerprint() -> None:
     base = load_settings(cwd=NOWHERE)
-    period = load_settings(explicit=REPO / "settings.2014.toml", cwd=NOWHERE)
-    compared = load_settings(explicit=REPO / "settings.vergleich.toml", cwd=NOWHERE)
+    period = load_settings(profile="duesseldorf-2014", cwd=NOWHERE)
+    compared = load_settings(profile="duesseldorf-vergleich", cwd=NOWHERE)
     assert compared.profile == "" and compared.compare.period == period.profile
     prints = {base.fingerprint(), period.fingerprint(), compared.fingerprint()}
     assert len(prints) == 3
 
 
 def test_period_profile_puts_everything_under_its_own_root(tmp_path: Path) -> None:
-    settings = load_settings(explicit=REPO / "settings.2014.toml", cwd=NOWHERE).model_copy(
+    settings = load_settings(profile="duesseldorf-2014", cwd=NOWHERE).model_copy(
         update={"data_root": tmp_path / "data", "cache_root": tmp_path / "cache"}
     )
     layout = Layout.from_settings(settings)
@@ -667,3 +691,182 @@ def test_period_profile_puts_everything_under_its_own_root(tmp_path: Path) -> No
     assert layout.texts == tmp_path / "cache" / "2014-2020" / "text" / "texts.parquet"
     target = layout.for_profile("", settings.crosswalk.target_file)
     assert target.districts_geojson == tmp_path / "data" / "external" / "Stimmbezirke_2025.geojson"
+
+
+# --- Option 01: Paketprofile ------------------------------------------------------------------
+
+
+def _package_profile(folder: Path, slug: str, body: str = "") -> Path:
+    """Ein Profil im Testordner, das auf dem echten Stadtprofil aufsetzt.
+
+    Seit die Düsseldorfer Werte im Profil stehen, nennt ein vollständiges Profil Quellen, Spalten,
+    Gremien, Fremddaten und Urheber; ein Testprofil erbt sie mit ``base`` und überschreibt nur, was
+    es zeigen will (Option 01, ``profile_chain``).
+    """
+    package = Path(str(profiles_folder() / "duesseldorf.toml"))
+    (folder / "duesseldorf.toml").write_text(package.read_text(encoding="utf-8"), encoding="utf-8")
+    path = folder / f"{slug}.toml"
+    path.write_text(
+        f'base = "duesseldorf"\nprofile = "{slug}"\n'
+        f'[city]\nslug = "{slug}"\nname = "Teststadt"\ngenitive = "Teststadts"\n'
+        f'adjective = "Teststädter"\nags = "05000000"\npublisher = "Stadt Teststadt"\n' + body,
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_default_profile_is_duesseldorf_and_stays_flat(tmp_path: Path) -> None:
+    s = load_settings(cwd=tmp_path)
+    assert s.default_profile == "duesseldorf" and s.city.slug == "duesseldorf"
+    assert s.profile == "" and s.city.name == "Düsseldorf" and s.city.ags == "05111000"
+    assert [source.name for source in s.report.sources] and all(
+        source.url.startswith("https://") for source in s.report.sources
+    )
+    assert s.publish.cities == ["duesseldorf", "moenchengladbach"]
+
+
+def test_the_default_profile_keeps_every_value_of_the_thesis(tmp_path: Path) -> None:
+    """Die Werte, die aus defaults.toml ins Profil gezogen sind, kommen unverändert wieder heraus.
+
+    Der Golden Master der Kette hängt an jedem einzelnen davon; am 2026-10-12 war der Vergleich
+    der gemischten TOML-Schichten vor und nach dem Umzug leer (kein Schlüssel verloren, keiner
+    geändert). Geprüft werden die Werte, nicht die Menge der Schlüssel: jede weitere Option legt
+    hier welche dazu.
+    """
+    settings = load_settings(cwd=tmp_path)
+    assert (settings.period.start, settings.period.end) == (date(2020, 9, 13), date(2025, 9, 14))
+    assert settings.sources.oparl.endpoint.endswith("/bodies/0015/papers")
+    assert settings.sources.wikidata.entity == "Q1718"
+    assert settings.sources.opendata.results_file == "Stimmbezirk_Wahlergebnis.csv"
+    assert settings.sources.opendata.districts_file == "Stimmbezirke_2025.geojson"
+    columns = settings.columns
+    assert (columns.district_id, columns.district_name, columns.precinct_id) == (
+        "Kommunalwahlbezirk Nr.",
+        "Kommunalwahlbezirk Name",
+        "Stimm-/ Wahlbezirk",
+    )
+    assert (columns.results.sep, columns.results.encoding) == (";", "latin-1")
+    assert columns.results.district == "Kommunalwahlbezirk"
+    assert columns.results.eligible == "Wahlberechtigte_insgesamt"
+    assert columns.results.voters == "Waehler"
+    assert columns.results.parties == {
+        "CDU": "CDU_Stimmen",
+        "GRUENE": "GRUENE_Stimmen",
+        "SPD": "SPD_Stimmen",
+        "FDP": "FDP_Stimmen",
+        "Die_Linke": "Die_Linke_Stimmen",
+        "AfD": "AfD_Stimmen",
+    }
+    precincts = settings.precincts
+    assert (precincts.enabled, precincts.format) == (True, "geojson")
+    assert precincts.id_property == "Stimm-/ Wahlbezirk"
+    assert precincts.district_property == "Kommunalwahlbezirk Nr."
+    assert precincts.name_property == "Kommunalwahlbezirk Name"
+    assert columns.results.party_names == {
+        "GRUENE": "Bündnis 90/Die Grünen",
+        "Die_Linke": "Die Linke",
+    }
+    assert columns.results.precinct == "gebietnr"
+    assert settings.search.text_split_marker == "betrifft"
+    assert settings.search.hide_in_display == ["schulweg"]
+    assert len(settings.search.exclude) == 63 and "Düsseldorf" in settings.search.exclude
+    assert settings.analysis.exclude_districts == [1, 10]
+    # Option 03 bis 06 haben ihre Tabellen mitgebracht; auch sie stehen jetzt im Profil
+    assert settings.bodies.district_body and settings.context.variables
+    assert settings.originators.parties
+
+
+def test_profile_argument_selects_a_package_profile_between_defaults_and_files(
+    tmp_path: Path,
+) -> None:
+    profiles = tmp_path / "profiles"
+    profiles.mkdir()
+    _package_profile(profiles, "test-stadt")
+    (tmp_path / "settings.toml").write_text("[sources.oparl]\ndelay_s = 9\n", encoding="utf-8")
+    s = load_settings(cwd=tmp_path, profile="test-stadt", profiles_dir=profiles)
+    assert s.profile == "test-stadt" and s.city.slug == "test-stadt"
+    assert s.search.text_split_marker == "betrifft"  # aus dem Stadtprofil geerbt (base)
+    assert s.sources.oparl.delay_s == 9  # settings.toml über dem Profil
+    assert s.sources.oparl.endpoint  # alles andere kommt aus defaults.toml
+    (tmp_path / "settings.toml").write_text(
+        '[search]\ntext_split_marker = "aus-datei"\n', encoding="utf-8"
+    )
+    assert (
+        load_settings(
+            cwd=tmp_path, profile="test-stadt", profiles_dir=profiles
+        ).search.text_split_marker
+        == "aus-datei"
+    )
+
+
+def test_default_profile_key_in_a_file_selects_the_profile(tmp_path: Path) -> None:
+    profiles = tmp_path / "profiles"
+    profiles.mkdir()
+    _package_profile(profiles, "test-stadt")
+    (tmp_path / "settings.local.toml").write_text(
+        'default_profile = "test-stadt"\n', encoding="utf-8"
+    )
+    assert load_settings(cwd=tmp_path, profiles_dir=profiles).city.slug == "test-stadt"
+
+
+def test_unknown_profile_names_the_available_ones(tmp_path: Path) -> None:
+    with pytest.raises(UnknownProfileError, match="duesseldorf"):
+        load_settings(cwd=tmp_path, profile="gibtsnicht")
+    assert "duesseldorf" in available_profiles()
+
+
+def test_profile_slug_must_match_the_file_name(tmp_path: Path) -> None:
+    profiles = tmp_path / "profiles"
+    profiles.mkdir()
+    content = _package_profile(profiles, "b").read_text(encoding="utf-8")
+    (profiles / "b.toml").unlink()
+    (profiles / "a.toml").write_text(content, encoding="utf-8")
+    with pytest.raises(SchemaError, match="city.slug"):
+        load_settings(cwd=tmp_path, profile="a", profiles_dir=profiles)
+
+
+def test_environment_selects_the_profile_but_never_sets_the_folder(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GEOREP_PROFILE", "duesseldorf")
+    s = load_settings(cwd=tmp_path)
+    assert s.city.slug == "duesseldorf" and s.profile == ""  # flach, wie --profile duesseldorf
+    monkeypatch.setenv("GEOREP_PROFILE", "gibtsnicht")
+    with pytest.raises(UnknownProfileError):
+        load_settings(cwd=tmp_path)
+    assert load_settings(cwd=tmp_path, profile="duesseldorf").city.slug == "duesseldorf"
+
+
+def test_only_prefixed_variables_reach_the_settings(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Jede Umgebungsvariable von georep traegt GEOREP_; eine nackte setzt nichts.
+
+    Der Alias am Feld ``profile`` haelt GEOREP_PROFILE davon ab, den Unterordner zu setzen (das
+    waehlt nur das Profil). Er darf dabei nicht das Praefix umgehen (Review 2026-10-12).
+    """
+    monkeypatch.setenv("PROFILE_FOLDER", "fremd")
+    assert load_settings(cwd=tmp_path).profile == ""
+    monkeypatch.setenv("GEOREP_PROFILE_FOLDER", "eigen")
+    assert load_settings(cwd=tmp_path).profile == "eigen"
+
+
+def test_fingerprint_sees_city_sources_and_publish_but_not_the_selector(tmp_path: Path) -> None:
+    base = load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text('default_profile = "duesseldorf"\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() == base.fingerprint()
+    (tmp_path / "settings.toml").write_text('[city]\nname = "Anders"\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
+    (tmp_path / "settings.toml").write_text("[publish]\ncities = []\n", encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
+
+
+def test_publish_cities_are_plain_unique_slugs(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[publish]\ncities = ["duesseldorf", "duesseldorf"]\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="publish.cities"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text('[publish]\ncities = ["../x"]\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match="publish.cities"):
+        load_settings(cwd=tmp_path)

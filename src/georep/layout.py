@@ -38,6 +38,11 @@ class Layout:
     # Option 02: Dateiname des Stimmbezirks-GeoJSON unter external/; ein Periodenprofil nennt
     # sein Jahr (``Stimmbezirke_2020.geojson``), damit der Ordner nicht lügt.
     districts_file: str = "Stimmbezirke_2025.geojson"
+    # Option 01: die übrigen Dateinamen der Quellen, auch sie aus dem Profil. Leer heißt „gibt es
+    # für diese Stadt nicht" (Straßenverzeichnis, Wahlbezirksnamen der votemanager-Präsentation).
+    results_file: str = "Stimmbezirk_Wahlergebnis.csv"
+    streets_file: str = ""
+    district_names_file: str = ""
 
     @classmethod
     def from_settings(cls, settings: Settings) -> Layout:
@@ -48,6 +53,9 @@ class Layout:
             profile=settings.profile,
             context_root=settings.context.root,
             districts_file=settings.sources.opendata.districts_file,
+            results_file=settings.sources.opendata.results_file,
+            streets_file=settings.sources.opendata.streets_file,
+            district_names_file=settings.sources.opendata.district_names_file,
         )
 
     def reference_view(self) -> Layout:
@@ -58,6 +66,9 @@ class Layout:
             reference_root=self.reference_root,
             context_root=self.context_root,
             districts_file=self.districts_file,
+            results_file=self.results_file,
+            streets_file=self.streets_file,
+            district_names_file=self.district_names_file,
         )
 
     def for_profile(self, profile: str, districts_file: str | None = None) -> Layout:
@@ -73,6 +84,9 @@ class Layout:
             profile=profile,
             context_root=self.context_root,
             districts_file=self.districts_file if districts_file is None else districts_file,
+            results_file=self.results_file,
+            streets_file=self.streets_file,
+            district_names_file=self.district_names_file,
         )
 
     # Verzeichnisse
@@ -116,7 +130,7 @@ class Layout:
     # Eingaben, wie die Quellen sie liefern
     @property
     def results_csv(self) -> Path:
-        return self.external / "Stimmbezirk_Wahlergebnis.csv"
+        return self.external / self.results_file
 
     @property
     def districts_geojson(self) -> Path:
@@ -333,6 +347,28 @@ class Layout:
         if not settings.crosswalk.enabled:
             return self
         return self.for_profile("", settings.crosswalk.target_file)
+
+    # Option 01: Quellen, die es nur in manchen Städten gibt, der kanonische Stand der
+    # Stimmbezirke und die Schnittstelle des Städtevergleichs
+    @property
+    def streets_directory(self) -> Path | None:
+        """Das Straßenverzeichnis der Wahl (votemanager), wenn die Stadt eines veröffentlicht."""
+        return self.external / self.streets_file if self.streets_file else None
+
+    @property
+    def district_names_csv(self) -> Path | None:
+        """Wahlbezirksnamen, wenn die Geometrie keine trägt (votemanager-Wahlbezirks-CSV)."""
+        return self.external / self.district_names_file if self.district_names_file else None
+
+    @property
+    def precincts_geojson(self) -> Path:
+        """Die kanonischen Stimmbezirke: feste Eigenschaften, CRS der Quelle (Schritt ``shapes``)."""
+        return self.interim / "stimmbezirke.geojson"
+
+    @property
+    def site_summary(self) -> Path:
+        """Option 01: Kernzahlen und Regression als JSON; die Schnittstelle des Städtevergleichs."""
+        return self.site_data / "summary.json"
 
     def runtime_dirs(self) -> tuple[Path, ...]:
         return (

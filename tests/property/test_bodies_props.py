@@ -100,7 +100,7 @@ def test_any_text_yields_a_consistent_reference(text: str) -> None:
     assert ref.district is None or ref.district >= 1
     assert ref.code is not None or ref.kind == UNKNOWN
     if ref.kind != UNKNOWN:
-        assert RULES.pattern.match(text) is not None
+        assert RULES.pattern is not None and RULES.pattern.match(text) is not None
 
 
 @given(cases=st.lists(references(), min_size=0, max_size=30), ids=st.permutations(range(30)))

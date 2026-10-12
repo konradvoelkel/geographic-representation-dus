@@ -85,6 +85,7 @@ VERIFY_TARGETS = [
     "georep.prep.context.ordinal_score",  # Option 03
     "georep.analysis.parties.classify_document",  # Option 04
     "georep.crosswalk.largest_remainder",  # Option 02
+    "georep.prep.precincts.district_from_id",  # Option 01
     "tests.property.oracle_matcher.oracle_extract",
 ]
 

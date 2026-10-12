@@ -30,6 +30,7 @@ from georep.contracts import (
 )
 from georep.crosswalk import WEIGHT, largest_remainder, unit_weights
 from georep.errors import SchemaError
+from georep.io import read_text_without_bom
 from georep.settings import ResultsColumns
 
 DISTRICT = "wahlkreis_id"
@@ -53,6 +54,28 @@ def party_column(party: str) -> str:
     return f"{party}_Stimmen"
 
 
+def _is_bijection(columns: ResultsColumns, result: dict[str, str] | None = None) -> bool:
+    """Jede Quellspalte auf genau einen kanonischen Namen und umgekehrt.
+
+    Die Zahl zählt mit: ein Dict verliert einen Eintrag, wenn zwei Parteien dieselbe Quellspalte
+    nennen (``CDU = "D1"``, ``SPD = "D1"``), und die Werte blieben trotzdem verschieden.
+    """
+    if result is None:
+        return False
+    expected = 2 + len(columns.parties) + bool(columns.eligible_postal)
+    return len(result) == expected and len(set(result.values())) == expected
+
+
+def party_share(party: str) -> str:
+    """``CDU`` wird ``CDU_anteil``: der Stimmenanteil einer Partei an den Wählern."""
+    return f"{party}_anteil"
+
+
+@deal.pure
+@deal.ensure(
+    _is_bijection,
+    message="jede Quellspalte auf genau einen kanonischen Namen und umgekehrt",
+)
 def canonical_names(columns: ResultsColumns) -> dict[str, str]:
     """Quellspalte -> kanonischer Name. Für die Hauptperiode ist jede Zuordnung die Identität."""
     names = {columns.eligible: ELIGIBLE_TOTAL, columns.voters: VOTERS}
@@ -74,13 +97,20 @@ def read_results_csv(path: Path, columns: ResultsColumns) -> pl.DataFrame:
     Die Zählspalten tragen danach die kanonischen Namen; alle übrigen Spalten bleiben, wie die
     Quelle sie nennt (der Wahlbezirk, die Stimmbezirksnummer, der Gebietsname).
     """
-    text = path.read_bytes().decode(columns.encoding)
+    text = read_text_without_bom(path, columns.encoding)
     frame = pl.read_csv(io.BytesIO(text.encode("utf-8")), separator=columns.sep, infer_schema=False)
     required = [columns.eligible, columns.voters, *columns.parties.values()]
     # Wahlbezirk und Stadtbezirk nennt nicht jede Wahl: die Ratswahl 2020 trägt beides nicht,
     # der Wahlbezirk kommt dort aus der Zuordnung (Option 02) und der Stadtbezirk aus der
     # Hauptperiode (Option 05 rechnet auf dem Zielzuschnitt).
     required += [c for c in (columns.district, columns.city_district) if c]
+    # Option 01: votemanager führt Wahlbezirk und Stadtbezirk nicht als Spalte, sondern in der
+    # Stimmbezirksnummer; dann ist sie Pflicht.
+    if (
+        columns.district_from_precinct is not None
+        or columns.city_district_from_precinct is not None
+    ):
+        required.append(columns.precinct)
     missing = [c for c in required if c not in frame.columns]
     if missing:
         raise SchemaError(f"{path.name}: Pflichtspalten fehlen: {missing}")
@@ -91,6 +121,46 @@ def read_results_csv(path: Path, columns: ResultsColumns) -> pl.DataFrame:
 def _to_int(column: str) -> pl.Expr:
     # pandas: to_numeric(errors="coerce").fillna(0).astype(int); " " und Müll werden 0
     return pl.col(column).str.strip_chars().cast(pl.Int64, strict=False).fill_null(0)
+
+
+def district_source(columns: ResultsColumns) -> str:
+    """Die Spalte, aus der der Wahlbezirk kommt: er selbst oder die Stimmbezirksnummer."""
+    return columns.district or columns.precinct
+
+
+def _slice_of_precinct(precinct: str, span: tuple[int, int]) -> pl.Expr:
+    start, stop = span
+    return (
+        pl.col(precinct)
+        .str.strip_chars()
+        .str.slice(start, stop - start)
+        .cast(pl.Int64, strict=False)
+        .fill_null(0)
+    )
+
+
+def district_expression(columns: ResultsColumns) -> pl.Expr:
+    """Der Wahlbezirk: eigene Spalte, oder Zeichenausschnitt der Stimmbezirksnummer (Option 01).
+
+    votemanager führt den Wahlbezirk nicht als Spalte; die Zuordnung steckt in der Nummer
+    (Mönchengladbach ``10401`` → 4) und ist je Stadt durch Summenvergleich bestätigt
+    (docs/plans/01-staedte.md, § 3.2).
+    """
+    if columns.district_from_precinct is None:
+        return _to_int(columns.district).alias(DISTRICT)
+    return _slice_of_precinct(columns.precinct, columns.district_from_precinct).alias(DISTRICT)
+
+
+def city_district_source(columns: ResultsColumns) -> str:
+    """Die Spalte, aus der der Stadtbezirk kommt: er selbst oder die Stimmbezirksnummer."""
+    return columns.city_district or columns.precinct
+
+
+def city_district_expression(columns: ResultsColumns) -> pl.Expr:
+    """Der Stadtbezirk, auf demselben Weg wie der Wahlbezirk (Option 05 auf Option 01)."""
+    if columns.city_district_from_precinct is None:
+        return _to_int(columns.city_district).alias(UNIT)
+    return _slice_of_precinct(columns.precinct, columns.city_district_from_precinct).alias(UNIT)
 
 
 @deal.pre(
@@ -113,7 +183,8 @@ def with_shares(aggregated: pl.DataFrame, parties: Iterable[str]) -> pl.DataFram
     Übertrag eines Anteils (Option 02, Plan § 2).
     """
     shares = [
-        (pl.col(party_column(party)) / pl.col(VOTERS)).alias(f"{party}_anteil") for party in parties
+        (pl.col(party_column(party)) / pl.col(VOTERS)).alias(party_share(party))
+        for party in parties
     ]
     return aggregated.with_columns(
         (pl.col(VOTERS) / pl.col(ELIGIBLE_TOTAL)).alias(TURNOUT), *shares
@@ -121,10 +192,11 @@ def with_shares(aggregated: pl.DataFrame, parties: Iterable[str]) -> pl.DataFram
 
 
 @deal.pre(
-    lambda results, columns: (
-        bool(columns.district) and has_columns(results, columns.district, *count_columns(columns))
+    # Option 01: der Wahlbezirk steht in seiner Spalte oder in der Stimmbezirksnummer
+    lambda results, columns: has_columns(
+        results, district_source(columns), *count_columns(columns)
     ),
-    message="Wahlergebnis braucht Wahlbezirk, Berechtigte, Wähler und alle Parteispalten",
+    message="Wahlergebnis braucht Wahlbezirk oder Stimmbezirksnummer, Berechtigte, Wähler, Parteien",
 )
 @deal.post(lambda result: sorted_unique(result, DISTRICT))
 @deal.ensure(
@@ -139,7 +211,7 @@ def aggregate_voters(results: pl.DataFrame, columns: ResultsColumns) -> pl.DataF
     Der Weg der Hauptperiode: die CSV trägt den Wahlbezirk je Stimmbezirk, es wird nur summiert.
     """
     counts = count_columns(columns)
-    frame = results.select(_to_int(columns.district).alias(DISTRICT), *[_to_int(c) for c in counts])
+    frame = results.select(district_expression(columns), *[_to_int(c) for c in counts])
     aggregated = frame.group_by(DISTRICT).agg([pl.col(c).sum() for c in counts]).sort(DISTRICT)
     return with_shares(aggregated, columns.parties)
 
@@ -148,8 +220,9 @@ def aggregate_voters(results: pl.DataFrame, columns: ResultsColumns) -> pl.DataF
 
 
 @deal.pre(
+    # Option 01: beide Bezirke stehen in ihrer Spalte oder in der Stimmbezirksnummer
     lambda results, columns: has_columns(
-        results, columns.district, columns.city_district, ELIGIBLE_TOTAL
+        results, district_source(columns), city_district_source(columns), ELIGIBLE_TOTAL
     ),
     message="Wahlergebnis braucht Wahlbezirk, Stadtbezirk und Wahlberechtigte",
 )
@@ -166,8 +239,8 @@ def district_units(results: pl.DataFrame, columns: ResultsColumns) -> pl.DataFra
     sichern Gewichte in (0, 1] und Summe 1 je Wahlbezirk zu.
     """
     typed = results.select(
-        _to_int(columns.district).alias(DISTRICT),
-        _to_int(columns.city_district).alias(UNIT),
+        district_expression(columns),
+        city_district_expression(columns),
         _to_int(ELIGIBLE_TOTAL).alias(ELIGIBLE),
     )
     return unit_weights(typed, UNIT, ELIGIBLE)

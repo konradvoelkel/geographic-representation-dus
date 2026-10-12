@@ -21,7 +21,7 @@ from georep.prep.bodies import (
     parse_reference,
     summary,
 )
-from georep.settings import Settings
+from georep.settings import Bodies, Settings
 
 
 @pytest.fixture(scope="module")
@@ -150,3 +150,20 @@ def test_classify_papers_keeps_every_id_and_marks_unknowns(rules: BodyRules) -> 
     assert counts_by_kind(frame)[COMMITTEE] == 0  # jede Klasse kommt vor, auch leer
     with pytest.raises(deal.PreContractError):
         classify_papers(corpus.drop("reference"), rules)
+
+
+# --- Option 01: eine Stadt, deren Nummern kein Kürzel tragen ----------------------------------
+
+
+def test_numbers_without_a_body_code_are_all_unknown() -> None:
+    """Ohne ``reference_pattern`` gibt es kein Kürzel: jedes Dokument ist „unbekannt".
+
+    Mönchengladbachs Drucksachennummern sind laufende Nummer und Wahlperiode (``0682/XI``,
+    Stichprobe 2026-10-12); aus ihnen ist das Gremium nicht zu erschließen.
+    """
+    rules = BodyRules.from_settings(Bodies())
+    assert parse_reference("0682/XI", rules) == BodyRef(UNKNOWN, None, None)
+    assert parse_reference("RAT/270/2023", rules) == BodyRef(UNKNOWN, None, None)
+    corpus = pl.DataFrame({"id": ["a", "b"], "reference": ["0682/XI", None]})
+    frame = classify_papers(corpus, rules)
+    assert frame.get_column("gremium_art").to_list() == [UNKNOWN, UNKNOWN]

@@ -6,6 +6,7 @@ die neue, nie eine halbe. Das ist Regel 2 in docs/architecture.md, „Sicherheit
 
 from __future__ import annotations
 
+import codecs
 import hashlib
 import json
 import os
@@ -69,6 +70,15 @@ def write_parquet(frame: pl.DataFrame, target: Path, *, schema_version: int) -> 
         frame.write_parquet(
             tmp, compression="zstd", metadata={"georep.schema_version": str(schema_version)}
         )
+
+
+def read_text_without_bom(path: Path, encoding: str) -> str:
+    """Dateiinhalt als Text; ein UTF-8-BOM fällt vor dem Dekodieren weg.
+
+    Erst danach wäre er nicht mehr zu erkennen: latin-1 macht aus den drei Bytes „ï»¿", und der
+    Name der ersten Spalte einer CSV hieße so (Option 01, Review 2026-10-12).
+    """
+    return path.read_bytes().removeprefix(codecs.BOM_UTF8).decode(encoding)
 
 
 def digest(path: Path) -> str:

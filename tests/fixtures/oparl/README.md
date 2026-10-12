@@ -18,3 +18,10 @@ Abbildung prüft ein Test mit synthetischen Objekten), die Gruppen Tierschutz/FR
 `gr/400239`, ab 2025-11-01) und je ein Objekt der übrigen `classification`-Werte: Integrationsrat `gr/144`
 (Gremium), Bezirksvertretung 1 `gr/32` (Bezirk), Ordnungs- und Verkehrsausschuss `gr/25` (Ausschuss). Der Server
 kennt kein `organizationType`, nur `classification` (Ausschuss, Fraktion, Bezirk, Gremium oder keine).
+
+`papers_page_0011.json` (2026-10-12, Option 01): sechs Einträge der ersten Seite von
+<https://ris-oparl.itk-rheinland.de/Oparl/bodies/0011/papers> (Mönchengladbach), unverändert bis
+auf die Auswahl: die fünf Paper, deren PDF unter `tests/fixtures/pdf/mg/` liegt, und eines ohne
+`mainFile`. `pagination` und `links` sind die der echten Seite. `tests/unit/test_oparl.py` prüft
+auch an dieser Datei, dass das Modell jeden Schlüssel kennt; sie ist zugleich die Quelle der
+Metadaten in `tests/fixtures/mg/raw/papers.jsonl`.

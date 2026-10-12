@@ -38,11 +38,21 @@ jobs:
             echo "snapshots/2014-2020 fehlt: nur die Hauptperiode"
             exit 0
           fi
-          uv run georep --settings settings.2014.toml bootstrap || exit 1
-          uv run georep --settings settings.2014.toml run || exit 1
-          uv run georep --settings settings.vergleich.toml run || exit 1
+          uv run georep --profile duesseldorf-2014 bootstrap || exit 1
+          uv run georep --profile duesseldorf-2014 run || exit 1
+          uv run georep --profile duesseldorf-vergleich run || exit 1
           rm -rf data/site/2014-2020 || exit 1
           cp -r data/2014-2020/site data/site/2014-2020 || exit 1
+      # Option 01: die zweite Stadt baut nur mit, wenn ihr Paket unter reference/<slug>/ liegt;
+      # sonst meldet publish sie als "kein Lauf" und die Vergleichsseite entfällt (Exit 0).
+      - name: Zweite Stadt, wenn ihr Paket da ist
+        run: |
+          if [ -d reference/moenchengladbach ]; then
+            uv run georep --profile moenchengladbach bootstrap || exit 1
+            uv run georep --profile moenchengladbach run || exit 1
+          fi
+      - name: Stadtseiten und Vergleich veroeffentlichen
+        run: uv run georep publish
       - run: ls -la data/site data/site/data && uv run georep status
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

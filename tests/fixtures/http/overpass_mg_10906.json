@@ -1,0 +1,394 @@
+{
+ "version": 0.6,
+ "generator": "Overpass API 0.7.62.11 87bfad18",
+ "osm3s": {
+  "timestamp_osm_base": "2026-10-12T00:00:35Z",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+ },
+ "elements": [
+  {
+   "type": "way",
+   "id": 12785347,
+   "tags": {
+    "cycleway:right": "separate",
+    "highway": "primary",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "50",
+    "name": "Theodor-Heuss-Straße",
+    "name:etymology:wikidata": "Q2594",
+    "oneway": "yes",
+    "postal_code": "41065",
+    "ref": "L 116",
+    "sidewalk:right": "separate",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 13833890,
+   "tags": {
+    "highway": "secondary",
+    "maxspeed": "50",
+    "name": "Hofstraße",
+    "postal_code": "41065",
+    "ref": "K 11",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 13865905,
+   "tags": {
+    "highway": "residential",
+    "name": "Südstraße",
+    "parking:both": "shoulder",
+    "parking:both:orientation": "parallel",
+    "postal_code": "41065",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 13865923,
+   "tags": {
+    "bicycle": "designated",
+    "bicycle_road": "yes",
+    "highway": "residential",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "name": "Richard-Wagner-Straße",
+    "old_name": "Adolf-Hitler-Allee",
+    "oneway": "yes",
+    "postal_code": "41065",
+    "source:maxspeed": "DE:bicycle_road",
+    "surface": "asphalt",
+    "traffic_sign": "DE:244.1",
+    "vehicle": "destination"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15273975,
+   "tags": {
+    "cycleway:both": "lane",
+    "cycleway:both:lane": "advisory",
+    "highway": "tertiary",
+    "lane_markings": "no",
+    "maxheight": "3.8",
+    "maxspeed": "30",
+    "name": "Brunnenstraße",
+    "postal_code": "41069",
+    "source:maxspeed": "sign",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15799885,
+   "tags": {
+    "highway": "residential",
+    "lit": "yes",
+    "maxspeed": "30",
+    "name": "Dessauer Straße",
+    "postal_code": "41065",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15802663,
+   "tags": {
+    "check_date:smoothness": "2024-10",
+    "cycleway": "opposite",
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Brandenberger Straße",
+    "oneway": "yes",
+    "oneway:bicycle": "no",
+    "smoothness": "excellent",
+    "source:maxspeed": "DE:zone30",
+    "source:smoothness": "survey",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15802664,
+   "tags": {
+    "bicycle": "designated",
+    "check_date:smoothness": "2024-10",
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Brandenberger Straße",
+    "oneway": "yes",
+    "oneway:bicycle": "no",
+    "smoothness": "excellent",
+    "source:maxspeed": "DE:zone30",
+    "source:smoothness": "survey",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15802859,
+   "tags": {
+    "highway": "residential",
+    "lit": "yes",
+    "name": "Theodor-Heuss-Straße",
+    "name:etymology:wikidata": "Q2594",
+    "oneway": "yes"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15803300,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Brandenberger Straße",
+    "oneway:bicycle": "no"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15806035,
+   "tags": {
+    "highway": "living_street",
+    "name": "Siepensteg",
+    "postal_code": "41065",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 15806036,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Richard-Wagner-Straße",
+    "oneway": "yes",
+    "oneway:bicycle": "no",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 24637904,
+   "tags": {
+    "check_date:smoothness": "2024-10",
+    "highway": "unclassified",
+    "name": "Viktoriastraße",
+    "postal_code": "41061",
+    "smoothness": "excellent",
+    "source:smoothness": "survey",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 24638225,
+   "tags": {
+    "destination": "Neuss;Jüchen;Rheydt",
+    "destination:colour": ";;white",
+    "highway": "residential",
+    "name": "Brunnenstraße",
+    "oneway": "yes",
+    "postal_code": "41069",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 24638226,
+   "tags": {
+    "highway": "secondary",
+    "name": "Hofstraße",
+    "postal_code": "41065",
+    "ref": "K 11",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 30412035,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Richard-Wagner-Straße",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 37412149,
+   "tags": {
+    "cycleway:right": "separate",
+    "highway": "primary",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "50",
+    "name": "Theodor-Heuss-Straße",
+    "name:etymology:wikidata": "Q2594",
+    "oneway": "yes",
+    "postal_code": "41065",
+    "ref": "L 116",
+    "sidewalk:right": "separate",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 37575917,
+   "tags": {
+    "cycleway:left": "lane",
+    "cycleway:left:lane": "advisory",
+    "destination:forward": "Neuss",
+    "highway": "secondary",
+    "lanes": "2",
+    "maxspeed": "30",
+    "name": "Rheydter Straße",
+    "postal_code": "41065",
+    "ref": "B 59;B 230",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 37613797,
+   "tags": {
+    "highway": "secondary",
+    "maxspeed": "30",
+    "name": "Rheydter Straße",
+    "postal_code": "41065",
+    "ref": "B 59;B 230",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 47577984,
+   "tags": {
+    "highway": "service",
+    "name": "Brunnenstraße",
+    "service": "alley",
+    "surface": "cobblestone",
+    "width": "5"
+   }
+  },
+  {
+   "type": "way",
+   "id": 128979218,
+   "tags": {
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Richard-Wagner-Straße",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 128979221,
+   "tags": {
+    "bicycle": "designated",
+    "bicycle_road": "yes",
+    "check_date:smoothness": "2024-10",
+    "highway": "residential",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "name": "Richard-Wagner-Straße",
+    "old_name": "Adolf-Hitler-Allee",
+    "oneway": "yes",
+    "postal_code": "41065",
+    "smoothness": "excellent",
+    "source:maxspeed": "DE:bicycle_road",
+    "source:smoothness": "survey",
+    "surface": "asphalt",
+    "traffic_sign": "DE:244.1",
+    "vehicle": "destination"
+   }
+  },
+  {
+   "type": "way",
+   "id": 151225914,
+   "tags": {
+    "cycleway": "opposite",
+    "highway": "residential",
+    "maxspeed": "30",
+    "name": "Siepensteg",
+    "oneway": "yes",
+    "oneway:bicycle": "no",
+    "postal_code": "41065",
+    "source:maxspeed": "DE:zone30",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 151225917,
+   "tags": {
+    "highway": "living_street",
+    "name": "Siepensteg",
+    "postal_code": "41065",
+    "surface": "paving_stones"
+   }
+  },
+  {
+   "type": "way",
+   "id": 297971901,
+   "tags": {
+    "bicycle": "designated",
+    "bicycle_road": "yes",
+    "check_date:smoothness": "2024-10",
+    "highway": "residential",
+    "lane_markings": "no",
+    "maxspeed": "30",
+    "name": "Richard-Wagner-Straße",
+    "old_name:-1933": "Richard-Wagner-Straße",
+    "old_name:1933-1945": "Adolf-Hitler-Allee",
+    "oneway": "yes",
+    "postal_code": "41065",
+    "smoothness": "excellent",
+    "source:maxspeed": "DE:bicycle_road",
+    "source:smoothness": "survey",
+    "surface": "asphalt",
+    "traffic_sign": "DE:244.1",
+    "vehicle": "destination"
+   }
+  },
+  {
+   "type": "way",
+   "id": 854900570,
+   "tags": {
+    "cycleway:both": "lane",
+    "highway": "secondary",
+    "maxheight": "3.3",
+    "maxspeed": "30",
+    "name": "Rheydter Straße",
+    "postal_code": "41065",
+    "ref": "B 59;B 230",
+    "surface": "asphalt"
+   }
+  },
+  {
+   "type": "way",
+   "id": 1197830981,
+   "tags": {
+    "highway": "secondary",
+    "lane_markings": "yes",
+    "lanes": "3",
+    "lanes:backward": "2",
+    "lanes:forward": "1",
+    "maxspeed": "30",
+    "name": "Rheydter Straße",
+    "postal_code": "41065",
+    "ref": "B 59;B 230",
+    "surface": "asphalt"
+   }
+  }
+ ]
+}

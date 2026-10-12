@@ -11,7 +11,7 @@ import pytest
 import shapely
 from shapely.geometry import MultiPolygon, Polygon, box
 
-from georep.geo import Precinct, read_precincts
+from georep.geo import Precinct, read_canonical_precincts
 from georep.report.geometry import (
     Projection,
     bounds_of,
@@ -26,12 +26,8 @@ from georep.settings import Settings
 
 
 @pytest.fixture(scope="module")
-def precincts(mini_root: Path, default_settings: Settings) -> list[Precinct]:
-    return read_precincts(
-        mini_root / "external" / "Stimmbezirke_2025.geojson",
-        default_settings.columns,
-        default_settings.geo.working_crs,
-    )
+def precincts(mini_precincts: Path, default_settings: Settings) -> list[Precinct]:
+    return read_canonical_precincts(mini_precincts, default_settings.geo.working_crs)
 
 
 def _row(district: int, name: str = "Bezirk") -> DistrictRow:
@@ -51,13 +47,9 @@ def test_district_shapes_unite_the_precincts(precincts: list[Precinct]) -> None:
 
 
 def test_district_shapes_on_the_full_reference(
-    reference_root: Path, default_settings: Settings
+    reference_precincts: Path, default_settings: Settings
 ) -> None:
-    precincts = read_precincts(
-        reference_root / "external" / "Stimmbezirke_2025.geojson",
-        default_settings.columns,
-        default_settings.geo.working_crs,
-    )
+    precincts = read_canonical_precincts(reference_precincts, default_settings.geo.working_crs)
     shapes = district_shapes(precincts)
     assert len(shapes) == 41
     assert sum(shapely.get_num_coordinates(g) for g in shapes.values()) < 3000

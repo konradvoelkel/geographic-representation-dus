@@ -22,13 +22,22 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
 
 - Option 08 Suche (Branch `feat/08-suche`, 2026-10-12, im Review): Abschnitt `15-suche` auf der Berichtsseite mit Suchfeld, Vorschlagsliste nach dem APG-Combobox-Muster, Ergebnisblock und Markierung auf der Karte; `report/search.py` baut 4176 Einträge (2828 Straßen, 1239 Orte, 68 beides, 41 Wahlbezirksnamen), die als JSON in der Seite liegen. Plan und Abnahme: `docs/plans/08-suche.md`.
 - Option 02, Zeitreihe (Branch `feat/02-zeitreihe`, auf `main` rebased 2026-10-12, im Review): eine Wahlperiode ist ein
-  Profil (`settings.2014.toml`, Daten unter `data_root/2014-2020/`), der Flächen-Crosswalk rechnet die
+  Profil (`profiles/duesseldorf-2014.toml`, Daten unter `data_root/2014-2020/`), der Flächen-Crosswalk rechnet die
   Wahlzahlen eines älteren Stimmbezirkszuschnitts summentreu auf die Wahlbezirke der Auswertung um, der
   Schritt `compare` und der Abschnitt „Zwei Wahlperioden" stellen beide Perioden nebeneinander
-  (`settings.vergleich.toml`). Geprüft offline auf der erfundenen Mini-Periode
+  (`profiles/duesseldorf-vergleich.toml`). Geprüft offline auf der erfundenen Mini-Periode
   `tests/fixtures/mini-2014/`; der echte Abruf der Periode 2014 bis 2020 (rund 3 h Metadaten, 8 bis 11 h
   PDFs) ist vorbereitet und wartet auf Konrads Lauf (README, „Zweite Periode abrufen"). Bis dahin fehlt der
   Abschnitt auf der veröffentlichten Seite.
+- Option 01, Städte (Branch `feat/01-staedte`, auf `main` rebased 2026-10-12, im Review): jede Kommune ist ein
+  Profil im Paket (`src/georep/profiles/<slug>.toml`, gewählt mit `--profile`, `GEOREP_PROFILE` oder
+  `default_profile`, mit `base` auf einem anderen aufbauend); `defaults.toml` ist stadtneutral, im Code steht
+  kein Stadtwort. Neu sind der Schritt `shapes` (jede Quellgeometrie wird `interim/stimmbezirke.geojson`,
+  GeoJSON oder Shapefile-Zip über pyshp), `data/summary.json` je Stadt und `georep publish` mit der
+  Vergleichsseite `vergleich.html`. Mitgeliefert ist neben Düsseldorf das Profil Mönchengladbach (AGS
+  05116000, OParl-Body 0011, votemanager der ITK Rheinland); Düsseldorf rechnet unverändert (Golden Master,
+  gleiche Zahlen, gleiche Adresse). Plan und Abnahme: `docs/plans/01-staedte.md`, Runbook für den vollen
+  Abruf einer neuen Stadt: `docs/runbook-stadt.md`.
 
 ## Zahlen (2026-10-11)
 
@@ -70,7 +79,11 @@ durch.
 - Der Stamp des Schritts `report` liegt als `site/index.html.stamp.json` im veröffentlichten Ordner; harmlos, aber mit dabei.
 - Der OParl-Server liefert für Düsseldorf keine Urheberfelder: 0 von 19 108 Rohobjekten und keines der sechs Paper der Seite vom 2026-10-09, auch der „Antrag FDP" nicht. Option 04 leitet den Urheber darum aus `paperType`, Titel und Textkopf ab (Deckung 98,3 %); `georep fetch papers --max-pages 1` ist die Probe, ob sich das geändert hat, und die Quelle `oparl` greift dann ohne Codeänderung.
 - Im Wahlbezirk 11 ist Die Linke nicht angetreten (0 Stimmen; die Stimmbezirks-CSV führt dort die 0, anderswo Dutzende). Der Abgleich Dokumentanteil gegen Stimmenanteil lässt solche Bezirke je Partei aus, Die Linke hat also n = 40 statt 41.
-- Die Ergebnis-CSV der Ratswahl heißt im Open-Data-Portal inzwischen `…_Stimmbezirke_1.csv` (Datensatzseite am 2026-10-11); `defaults.toml` zeigt auf `…_0.csv`, woher die Referenz stammt. Vor einem `fetch opendata` nachsehen.
+- Die Ergebnis-CSV der Ratswahl heißt im Open-Data-Portal inzwischen `…_Stimmbezirke_1.csv` (Datensatzseite am 2026-10-11); `profiles/duesseldorf.toml` zeigt auf `…_0.csv`, woher die Referenz stammt. Vor einem `fetch opendata` nachsehen.
+- Mönchengladbach (Option 01, 2026-10-12): Profil, Kette und Vergleichsseite stehen, der volle Abruf steht aus (`docs/runbook-stadt.md`, 3 bis 5 h). Bis sein Paket unter `reference/moenchengladbach/` liegt, meldet `georep publish` die Stadt als „kein Lauf“ und baut keine Vergleichsseite; CI überspringt sie. Der Marker `betrifft` kam in der PDF-Stichprobe in 0 von 5 Dokumenten vor (alles Fraktionsanträge der laufenden Periode) — ohne Marker durchsucht die Kette den ganzen Text; das Runbook misst am echten Korpus nach (Frage 1.5).
+- Die votemanager-CSVs der ITK Rheinland tragen keine Lizenzangabe; die Seite nennt Quelle und Herausgeber und schreibt „Lizenz laut Anbieter nicht angegeben“ (Frage 1.4).
+- Mönchengladbachs Drucksachennummern tragen kein Kürzel des Gremiums (`0682/XI`, Stichprobe vom 2026-10-12, Body 0011). Das Profil lässt `bodies.reference_pattern` darum leer; der Abschnitt „Gremien" zeigt für diese Stadt 100 % „unbekannt". Woher das Gremium käme (OParl-Feld `organization` der Vorlage oder die Sitzungszuordnung), misst der volle Lauf nach (`docs/plans/01-staedte.md`, § 8, Frage 1.12).
+- Der Stadtbezirk Mönchengladbachs steckt im ersten Zeichen der Stimmbezirksnummer (`10401`: Stadtbezirk 1, Wahlbezirk 04, Stimmbezirk 01); das Profil liest ihn mit `columns.results.city_district_from_precinct`. Bestätigt ist die Regel bisher nur an der Fixture (Wahlbezirke 04, 09, 23) und an der Zahl der Stadtbezirke (vier); der volle Lauf prüft sie gegen die Wahlbezirks-CSV (`docs/plans/01-staedte.md`, § 8, Frage 1.13).
 
 ## Nächster Schritt
 

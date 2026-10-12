@@ -3,7 +3,7 @@
     uv run pytest -m network tests/golden/test_network_period.py
 
 Sie prüfen, dass die vier Portaldateien der Ratswahl 2020 und die erste Seite des Abrufs noch so
-aussehen, wie ``settings.2014.toml`` es annimmt — Format, nicht Inhalt. In CI laufen sie nie
+aussehen, wie das Profil ``duesseldorf-2014`` es annimmt — Format, nicht Inhalt. In CI laufen sie nie
 (der OParl-Server braucht rund 85 s je Seite, und das Portal soll nicht bei jedem Commit geladen
 werden); die Zahlen hier wurden am 2026-10-12 nachgesehen. Werden sie rot, hat das Portal eine
 Datei umbenannt oder umgebaut, und das Profil braucht eine Zeile Pflege.
@@ -24,13 +24,13 @@ from georep.sources.opendata import fetch_csv, fetch_geojson
 pytestmark = pytest.mark.network
 
 REPO = Path(__file__).resolve().parents[2]
-PROFILE = REPO / "settings.2014.toml"
+PROFILE = "duesseldorf-2014"
 
 
 @pytest.fixture(scope="module")
 def period(tmp_path_factory: pytest.TempPathFactory) -> Settings:
     root = tmp_path_factory.mktemp("netz")
-    return load_settings(explicit=PROFILE, cwd=Path("/nonexistent")).model_copy(
+    return load_settings(profile=PROFILE, cwd=Path("/nonexistent")).model_copy(
         update={"data_root": root, "cache_root": root / "cache"}
     )
 

@@ -633,7 +633,7 @@ def test_without_the_parties_step_the_section_stays_empty(
 # --- Option 02: der Vergleich im Modell, auch wenn eine Rechnung kein Ergebnis hat -------------
 
 REPO = Path(__file__).resolve().parents[2]
-COMPARE_PROFILE = REPO / "settings.vergleich.toml"
+COMPARE_PROFILE = "duesseldorf-vergleich"
 LABELS = ("Wahlperiode 2014 bis 2020", "Wahlperiode 2020 bis 2025")
 
 
@@ -652,7 +652,7 @@ def _results(rates: list[float], turnouts: list[float]) -> pl.DataFrame:
 
 def _compared(tmp_path: Path, old: pl.DataFrame, new: pl.DataFrame) -> tuple[Layout, Settings]:
     """Eine Datenwurzel mit gerechnetem Vergleich und der Zuordnung der älteren Periode."""
-    settings = load_settings(explicit=COMPARE_PROFILE, cwd=Path("/nonexistent")).model_copy(
+    settings = load_settings(profile=COMPARE_PROFILE, cwd=Path("/nonexistent")).model_copy(
         update={"data_root": tmp_path / "data", "cache_root": tmp_path / "cache"}
     )
     layout = Layout.from_settings(settings)

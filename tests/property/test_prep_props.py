@@ -57,7 +57,7 @@ def test_voters_aggregate_sums_per_district(
         mine = [r for r in rows if r[0] == row["wahlkreis_id"]]
         eligible = sum(_as_int(r[1]) for r in mine)
         voters = sum(_as_int(r[2]) for r in mine)
-        assert row[columns.eligible] == eligible and row[columns.voters] == voters
+        assert row[ELIGIBLE_TOTAL] == eligible and row[VOTERS] == voters
         if eligible:
             assert row["wahlbeteiligung"] == pytest.approx(voters / eligible)
         for i, (party, column) in enumerate(columns.parties.items()):

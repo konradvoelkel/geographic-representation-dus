@@ -42,7 +42,14 @@ from georep.crosswalk import (
     transfer_counts,
 )
 from georep.errors import GeorepError, MissingInputError, SchemaError
-from georep.geo import Area, PrecinctIndex, read_area_names, read_areas, read_precincts
+from georep.geo import (
+    Area,
+    PrecinctIndex,
+    read_area_names,
+    read_areas,
+    read_canonical_precincts,
+    read_precincts,
+)
 from georep.http import Transport
 from georep.io import digest, write_bytes, write_json, write_parquet
 from georep.layout import Layout
@@ -58,7 +65,8 @@ from georep.prep.context import (
 from georep.prep.extract import extract_missing
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus, documents_with_text
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
-from georep.prep.streets import read_streets_json, streets_by_district
+from georep.prep.precincts import canonical_precincts, district_names_from_csv, read_source
+from georep.prep.streets import directory_agreement, read_streets_json, streets_by_district
 from georep.prep.voters import (
     ELIGIBLE_TOTAL,
     PRECINCT,
@@ -87,7 +95,7 @@ from georep.sources.oparl import (
     read_progress,
     write_progress,
 )
-from georep.sources.opendata import fetch_csv, fetch_geojson
+from georep.sources.opendata import fetch_csv, fetch_districts_file, fetch_geojson
 from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
 from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_query
@@ -246,6 +254,12 @@ def run_pipeline(
 # --- die Schritte ---------------------------------------------------------------------------
 
 
+# Option 01: die Eingaben plus das Straßenverzeichnis, wo das Profil eines kennt.
+def with_directory(layout: Layout, *inputs: Path) -> tuple[Path, ...]:
+    directory = layout.streets_directory
+    return (*inputs, *(() if directory is None else (directory,)))
+
+
 def build_steps(
     settings: Settings,
     layout: Layout,
@@ -280,9 +294,21 @@ def build_steps(
         portal = settings.sources.opendata
         csv = fetch_csv(transport(), portal.results_url, sep=columns.sep)
         write_bytes(layout.results_csv, csv)
-        geo = fetch_geojson(transport(), portal.districts_url)
-        write_json(layout.districts_geojson, geo, indent=None)
-        done = f"{len(csv)} Bytes Wahlergebnis, {len(geo['features'])} Stimmbezirke"
+        # Option 01: byteweise, wie die Quelle liefert — ein Shapefile-Zip überlebt kein
+        # Umschreiben; was daraus wird, entscheidet der Schritt ``shapes``.
+        flaechen = fetch_districts_file(
+            transport(), portal.districts_url, fmt=settings.precincts.format
+        )
+        write_bytes(layout.districts_geojson, flaechen)
+        done = f"{len(csv)} Bytes Wahlergebnis, {len(flaechen)} Bytes Flächen"
+        # --- Option 01: zwei Dateien, die nur manche Städte veröffentlichen
+        for url, target, what in (
+            (portal.streets_url, layout.streets_directory, "Straßenverzeichnis"),
+            (portal.district_names_url, layout.district_names_csv, "Wahlbezirksnamen"),
+        ):
+            if url and target is not None:
+                write_bytes(target, fetch_csv(transport(), url, sep=columns.sep))
+                done += f", {what}"
         # --- Option 02: ein Periodenprofil braucht zusätzlich den Zuschnitt seiner Wahlbezirke
         # und ihr Ergebnis (dort stehen die Briefwähler, die kein Stimmbezirk ausweist)
         if portal.district_shapes_url:
@@ -308,6 +334,24 @@ def build_steps(
         return (
             f"{len(table)} Bytes Tabelle, {len(units['features'])} {context.units.label}, "
             f"{len(indicators)} Bytes Erläuterungen"
+        )
+
+    # --- Option 01: aus der Quellgeometrie die kanonischen Stimmbezirke; alles, was danach
+    # Flächen liest, kennt nur noch diese Datei
+    def shapes() -> str:
+        rules = settings.precincts
+        source = read_source(layout.districts_geojson, rules)
+        names = (
+            district_names_from_csv(layout.district_names_csv, rules, columns)
+            if rules.names_from_results and layout.district_names_csv is not None
+            else None
+        )
+        canonical = canonical_precincts(source, rules, names)
+        write_json(layout.precincts_geojson, canonical, indent=None)
+        districts = {f["properties"]["wahlbezirk"] for f in canonical["features"]}
+        return (
+            f"{len(canonical['features'])} Stimmbezirke in {len(districts)} Wahlbezirken, "
+            f"CRS {source.crs}"
         )
 
     def papers() -> str:
@@ -357,7 +401,7 @@ def build_steps(
         return report.summary()
 
     def streets_osm() -> str:
-        found = read_precincts(layout.districts_geojson, settings.columns, settings.geo.working_crs)
+        found = read_canonical_precincts(layout.precincts_geojson, settings.geo.working_crs)
         entries = fetch_streets_per_precinct(
             transport(),
             settings.sources.osm.overpass_endpoint,
@@ -373,7 +417,7 @@ def build_steps(
 
     def pois_wiki() -> str:
         wiki = settings.sources.wikidata
-        found = read_precincts(layout.districts_geojson, settings.columns, settings.geo.working_crs)
+        found = read_canonical_precincts(layout.precincts_geojson, settings.geo.working_crs)
         index = PrecinctIndex(found, settings.geo.working_crs)
         sparql = fetch_sparql_pois(
             transport(), wiki.sparql_endpoint, sparql_query(wiki.entity, wiki.language), index
@@ -550,7 +594,17 @@ def build_steps(
     def streets() -> str:
         frame = streets_by_district(read_streets_json(dictionary_source.streets))
         write_parquet(frame, layout.streets_by_district, schema_version=1)
-        return f"{frame.height} Wahlbezirke, {frame.get_column('suchbegriffe').list.len().sum()} Straßennamen"
+        line = (
+            f"{frame.height} Wahlbezirke, "
+            f"{frame.get_column('suchbegriffe').list.len().sum()} Straßennamen"
+        )
+        # Option 01: wo die Stadt ein Straßenverzeichnis veröffentlicht, misst der Schritt, wie
+        # gut die Flächen zum Zuschnitt der Wahl passen; die Seite nennt die Zahl.
+        directory = layout.streets_directory
+        if directory is not None and directory.is_file():
+            agreement = directory_agreement(layout.streets, directory, columns, settings.precincts)
+            line += f"; Verzeichnis: {agreement.line()}"
+        return line
 
     def pois() -> str:
         clean = clean_pois(read_pois_json(dictionary_source.pois), settings.search.exclude)
@@ -755,13 +809,42 @@ def build_steps(
         opendata_outputs.append(layout.district_shapes_geojson)
     if settings.sources.opendata.district_results_url:
         opendata_outputs.append(layout.district_results_csv)
+    # --- Option 01: zwei Dateien, die nur manche Städte veröffentlichen
+    if settings.sources.opendata.streets_url and layout.streets_directory is not None:
+        opendata_outputs.append(layout.streets_directory)
+    if settings.sources.opendata.district_names_url and layout.district_names_csv is not None:
+        opendata_outputs.append(layout.district_names_csv)
+    # Option 01: ohne eigene Wahlbezirke in der Quellgeometrie (ein Periodenprofil mit Crosswalk)
+    # gibt es die kanonischen Stimmbezirke nicht; dann fehlt der Schritt und die Kette liest die
+    # Datei der Hauptperiode (``target_view``).
+    with_shapes = settings.precincts.enabled
+    names_input = (
+        (layout.district_names_csv,)
+        if settings.precincts.names_from_results and layout.district_names_csv is not None
+        else ()
+    )
     # Option 06: ohne Themenmodell (``topics.k = 0``) fehlt der Schritt und niemand nennt seine
     # Ausgaben als Eingabe; die zwei Tabellen der Themen sind im Register ``optional``.
     with_topics = settings.topics.k > 0
+    # Option 01: die Urheber (Option 04) brauchen die Fraktionsnamen der Stadt
+    with_parties = bool(settings.originators.parties)
     topic_outputs = (layout.topics, layout.topic_documents, layout.topic_shares)
     context_files = tuple(layout.external / name for name in context.files.names())
     return [
         Step("opendata", (), tuple(opendata_outputs), opendata, network=True),
+        # --- Option 01: aus der Quellgeometrie der kanonische Stand der Stimmbezirke
+        *(
+            [
+                Step(
+                    "shapes",
+                    (layout.districts_geojson, *names_input),
+                    (layout.precincts_geojson,),
+                    shapes,
+                )
+            ]
+            if with_shapes
+            else []
+        ),
         # --- Option 03
         *(
             [Step("context_data", (), context_files, context_data, network=True)]
@@ -775,16 +858,17 @@ def build_steps(
         # --- Option 02: mit dem Wörterbuch der Hauptperiode gibt es die beiden Netzschritte nicht
         *(
             [
+                # Option 01: beide lesen den kanonischen Stand, nicht die Quelldatei
                 Step(
                     "streets_osm",
-                    (layout.districts_geojson,),
+                    (layout.precincts_geojson,),
                     (layout.streets,),
                     streets_osm,
                     network=True,
                 ),
                 Step(
                     "pois_wiki",
-                    (layout.districts_geojson,),
+                    (layout.precincts_geojson,),
                     (layout.pois,),
                     pois_wiki,
                     network=True,
@@ -848,7 +932,13 @@ def build_steps(
             if with_context
             else []
         ),
-        Step("streets", (dictionary_source.streets,), (layout.streets_by_district,), streets),
+        # Option 01: ``streets`` misst zusätzlich gegen das Straßenverzeichnis, wo es eines gibt
+        Step(
+            "streets",
+            with_directory(layout, dictionary_source.streets),
+            (layout.streets_by_district,),
+            streets,
+        ),
         Step(
             "pois",
             (dictionary_source.pois,),
@@ -911,18 +1001,29 @@ def build_steps(
             else []
         ),
         # --- Option 04: nach results, weil es dessen paper_ids schneidet; organizations.json ist
-        # eine Eingabe nur, wenn der Netzschritt lief (dann wandert ihr Hash in den Stamp)
-        Step(
-            "parties",
-            (
-                layout.corpus,
-                layout.results,
-                layout.voters,
-                *((layout.organizations,) if layout.organizations.exists() else ()),
-            ),
-            (layout.document_originators, layout.district_originators, layout.party_results),
-            parties,
-            PARTIES_SCHEMA,
+        # eine Eingabe nur, wenn der Netzschritt lief (dann wandert ihr Hash in den Stamp).
+        # Option 01: ohne Fraktionsnamen im Profil gibt es keine Urheber zu erkennen.
+        *(
+            [
+                Step(
+                    "parties",
+                    (
+                        layout.corpus,
+                        layout.results,
+                        layout.voters,
+                        *((layout.organizations,) if layout.organizations.exists() else ()),
+                    ),
+                    (
+                        layout.document_originators,
+                        layout.district_originators,
+                        layout.party_results,
+                    ),
+                    parties,
+                    PARTIES_SCHEMA,
+                )
+            ]
+            if with_parties
+            else []
         ),
         # --- Option 02: der Vergleich steht vor dem Bericht und wird seine letzte Eingabe
         *(
@@ -953,8 +1054,11 @@ def build_steps(
                 layout.streets_by_district,
                 layout.corpus,
                 # Option 02: der gerechnete Zuschnitt, bei einem Crosswalk-Profil der der
-                # Hauptperiode (dort liegen Flächen und Namen der Wahlbezirke)
-                layout.target_view(settings).districts_geojson,
+                # Hauptperiode (dort liegen Flächen und Namen der Wahlbezirke); Option 01: als
+                # kanonischer Stand aus dem Schritt ``shapes``
+                layout.target_view(settings).precincts_geojson,
+                # Option 01: die Seite nennt die Übereinstimmung mit dem Straßenverzeichnis
+                *((layout.streets_directory,) if layout.streets_directory is not None else ()),
                 # Option 05
                 layout.district_bodies,
                 layout.bodies_table,
@@ -973,10 +1077,16 @@ def build_steps(
                     if with_context
                     else ()
                 ),
-                # Option 04
-                layout.document_originators,
-                layout.district_originators,
-                layout.party_results,
+                # Option 04; Option 01: nur, wo das Profil Fraktionsnamen mitbringt
+                *(
+                    (
+                        layout.document_originators,
+                        layout.district_originators,
+                        layout.party_results,
+                    )
+                    if with_parties
+                    else ()
+                ),
             )
             + ((layout.topics, layout.topic_documents) if with_topics else ())
             # --- Option 02: der Vergleich und die Zuordnung der älteren Periode

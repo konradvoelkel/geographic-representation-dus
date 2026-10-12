@@ -64,7 +64,7 @@ class BodyRef:
 class BodyRules:
     """Die Regeln aus ``[bodies]``, einmal kompiliert; ``from_settings`` ist die einzige Brücke."""
 
-    pattern: re.Pattern[str]
+    pattern: re.Pattern[str] | None  # None: die Nummern tragen kein Kürzel (Option 01)
     district_body: str
     district_body_name: str  # mit {n} für den Stadtbezirk
     council: frozenset[str]
@@ -75,7 +75,7 @@ class BodyRules:
     @classmethod
     def from_settings(cls, bodies: Bodies) -> BodyRules:
         return cls(
-            pattern=re.compile(bodies.reference_pattern),
+            pattern=re.compile(bodies.reference_pattern) if bodies.reference_pattern else None,
             district_body=bodies.district_body,
             district_body_name=bodies.district_body_name,
             council=frozenset(bodies.council),
@@ -114,7 +114,8 @@ def _consistent(result: BodyRef) -> bool:
 @deal.post(_consistent, message="Klasse aus KINDS, Stadtbezirk genau bei Bezirksvertretungen, ab 1")
 def parse_reference(reference: str | None, rules: BodyRules) -> BodyRef:
     """Das Gremium einer Drucksachennummer; alles Unerwartete ist ``unbekannt``."""
-    if reference is None:
+    # Option 01: ohne Muster trägt die Nummer kein Kürzel, und alles ist „unbekannt"
+    if reference is None or rules.pattern is None:
         return BodyRef(UNKNOWN, None, None)
     match = rules.pattern.match(reference)
     if match is None:

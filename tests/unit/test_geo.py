@@ -13,7 +13,7 @@ from georep.geo import (
     PrecinctIndex,
     lonlat_bounds,
     overpass_polygon,
-    read_precincts,
+    read_canonical_precincts,
     to_lonlat,
 )
 from georep.settings import Settings, load_settings
@@ -25,12 +25,8 @@ def settings() -> Settings:
 
 
 @pytest.fixture(scope="module")
-def precincts(reference_root: Path, settings: Settings) -> list[Precinct]:
-    return read_precincts(
-        reference_root / "external" / "Stimmbezirke_2025.geojson",
-        settings.columns,
-        settings.geo.working_crs,
-    )
+def precincts(reference_precincts: Path, settings: Settings) -> list[Precinct]:
+    return read_canonical_precincts(reference_precincts, settings.geo.working_crs)
 
 
 def test_reference_geojson_reads_306_valid_precincts_in_41_districts(

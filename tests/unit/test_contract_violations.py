@@ -96,7 +96,7 @@ def test_prep_functions_require_their_columns() -> None:
     from georep.settings import load_settings
 
     columns = load_settings(cwd=Path("/nonexistent")).columns.results
-    with pytest.raises(deal.PreContractError, match="Parteispalten"):
+    with pytest.raises(deal.PreContractError, match="Parteien"):
         aggregate_voters(pl.DataFrame({columns.district: ["1"]}), columns)
     with pytest.raises(deal.PreContractError):
         clean_pois(pl.DataFrame({"label": ["a"], "wahlkreis_id": [1]}), [])

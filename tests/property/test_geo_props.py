@@ -8,7 +8,7 @@ from hypothesis import given
 from hypothesis import settings as hsettings
 from hypothesis import strategies as st
 
-from georep.geo import Precinct, PrecinctIndex, read_precincts, transformer
+from georep.geo import Precinct, PrecinctIndex, read_canonical_precincts, transformer
 from georep.settings import Settings, load_settings
 
 
@@ -18,12 +18,8 @@ def settings() -> Settings:
 
 
 @pytest.fixture(scope="module")
-def index(reference_root: Path, settings: Settings) -> PrecinctIndex:
-    precincts = read_precincts(
-        reference_root / "external" / "Stimmbezirke_2025.geojson",
-        settings.columns,
-        settings.geo.working_crs,
-    )
+def index(reference_precincts: Path, settings: Settings) -> PrecinctIndex:
+    precincts = read_canonical_precincts(reference_precincts, settings.geo.working_crs)
     return PrecinctIndex(precincts, settings.geo.working_crs)
 
 

@@ -77,3 +77,33 @@ def test_district_units_needs_the_source_columns(default_settings: Settings) -> 
     frame = pl.DataFrame({columns.district: ["1"], columns.eligible: ["5"]})
     with pytest.raises(deal.PreContractError):
         district_units(frame, columns)
+
+
+# --- Option 01: votemanager führt keinen Stadtbezirk als Spalte --------------------------------
+
+
+VOTEMANAGER = ResultsColumns(
+    sep=";",
+    encoding="utf-8",
+    precinct="gebiet-nr",
+    district_from_precinct=(1, 3),
+    city_district_from_precinct=(0, 1),
+    eligible="A",
+    voters="B",
+    parties={"CDU": "D1"},
+)
+VOTEMANAGER_CSV = (
+    "datum;ags;gebiet-nr;gebiet-name;A;B;D1",
+    "14.09.2025;05116000;10401;Venn I;1000;500;200",
+    "14.09.2025;05116000;10402;Venn II;1200;600;250",
+    "14.09.2025;05116000;32201;Wickrath I;800;400;100",
+)
+
+
+def test_city_district_comes_from_the_precinct_number(tmp_path: Path) -> None:
+    """Mönchengladbach führt Stadtbezirk, Wahlbezirk und Stimmbezirk in einer Nummer (10401)."""
+    path = tmp_path / "Open-Data-05116000-Ratswahl-Stimmbezirk.csv"
+    path.write_text("\n".join(VOTEMANAGER_CSV) + "\n", encoding="utf-8")
+    frame = district_units(read_results_csv(path, VOTEMANAGER), VOTEMANAGER)
+    assert frame.columns == [DISTRICT, UNIT, ELIGIBLE, WEIGHT]
+    assert frame.rows() == [(4, 1, 2200, 1.0), (22, 3, 800, 1.0)]

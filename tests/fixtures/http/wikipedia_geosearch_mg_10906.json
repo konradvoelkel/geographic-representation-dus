@@ -1,0 +1,214 @@
+{
+ "batchcomplete": "",
+ "query": {
+  "geosearch": [
+   {
+    "pageid": 8870394,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 35 (Mönchengladbach)",
+    "lat": 51.183053,
+    "lon": 6.442726,
+    "dist": 78.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8870365,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 29 (Mönchengladbach)",
+    "lat": 51.183389,
+    "lon": 6.442997,
+    "dist": 94.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8870269,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 27 (Mönchengladbach)",
+    "lat": 51.183479,
+    "lon": 6.443004,
+    "dist": 103.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8870198,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 25 (Mönchengladbach)",
+    "lat": 51.183572,
+    "lon": 6.443016,
+    "dist": 112.3,
+    "primary": ""
+   },
+   {
+    "pageid": 8865295,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 54 (Mönchengladbach)",
+    "lat": 51.182284,
+    "lon": 6.442044,
+    "dist": 117.4,
+    "primary": ""
+   },
+   {
+    "pageid": 8870113,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 23 (Mönchengladbach)",
+    "lat": 51.183653,
+    "lon": 6.443035,
+    "dist": 120.2,
+    "primary": ""
+   },
+   {
+    "pageid": 8796752,
+    "ns": 0,
+    "title": "St. Josef (Mönchengladbach)",
+    "lat": 51.183535,
+    "lon": 6.442488,
+    "dist": 127.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8877557,
+    "ns": 0,
+    "title": "Siepensteg 32 (Mönchengladbach)",
+    "lat": 51.183327,
+    "lon": 6.441552,
+    "dist": 163.9,
+    "primary": ""
+   },
+   {
+    "pageid": 8876880,
+    "ns": 0,
+    "title": "Siepensteg 28 (Mönchengladbach)",
+    "lat": 51.183489,
+    "lon": 6.441581,
+    "dist": 171.4,
+    "primary": ""
+   },
+   {
+    "pageid": 8877529,
+    "ns": 0,
+    "title": "Siepensteg 26 (Mönchengladbach)",
+    "lat": 51.18359,
+    "lon": 6.441604,
+    "dist": 176.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8874967,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 76 (Mönchengladbach)",
+    "lat": 51.181353,
+    "lon": 6.442086,
+    "dist": 179,
+    "primary": ""
+   },
+   {
+    "pageid": 8863738,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 18 (Mönchengladbach)",
+    "lat": 51.184014,
+    "lon": 6.442266,
+    "dist": 180.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8558154,
+    "ns": 0,
+    "title": "Bromberger Straße 16 (Mönchengladbach)",
+    "lat": 51.181384,
+    "lon": 6.441973,
+    "dist": 181.1,
+    "primary": ""
+   },
+   {
+    "pageid": 8866742,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 22 (Mönchengladbach)",
+    "lat": 51.183995,
+    "lon": 6.442003,
+    "dist": 188.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8874592,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 78 (Mönchengladbach)",
+    "lat": 51.181245,
+    "lon": 6.44206,
+    "dist": 189.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8557786,
+    "ns": 0,
+    "title": "Bromberger Straße 14 (Mönchengladbach)",
+    "lat": 51.181387,
+    "lon": 6.441743,
+    "dist": 191.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8870715,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 81 (Mönchengladbach)",
+    "lat": 51.180999,
+    "lon": 6.442607,
+    "dist": 195.8,
+    "primary": ""
+   },
+   {
+    "pageid": 8870093,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 14 (Mönchengladbach)",
+    "lat": 51.184229,
+    "lon": 6.442243,
+    "dist": 201.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8869940,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 12 (Mönchengladbach)",
+    "lat": 51.184293,
+    "lon": 6.442256,
+    "dist": 207.5,
+    "primary": ""
+   },
+   {
+    "pageid": 8866021,
+    "ns": 0,
+    "title": "Rheydter Straße 177a (Mönchengladbach)",
+    "lat": 51.183903,
+    "lon": 6.441027,
+    "dist": 229.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8870420,
+    "ns": 0,
+    "title": "Richard-Wagner-Straße 86 (Mönchengladbach)",
+    "lat": 51.180842,
+    "lon": 6.442004,
+    "dist": 229.7,
+    "primary": ""
+   },
+   {
+    "pageid": 8906847,
+    "ns": 0,
+    "title": "Theodor-Heuss-Straße 149a (Mönchengladbach)",
+    "lat": 51.181438,
+    "lon": 6.446623,
+    "dist": 247.6,
+    "primary": ""
+   },
+   {
+    "pageid": 8906793,
+    "ns": 0,
+    "title": "Theodor-Heuss-Straße 149 (Mönchengladbach)",
+    "lat": 51.180479,
+    "lon": 6.444706,
+    "dist": 251.5,
+    "primary": ""
+   }
+  ]
+ }
+}

@@ -1,0 +1,514 @@
+{
+ "head": {
+  "vars": [
+   "item",
+   "itemLabel",
+   "coord",
+   "article"
+  ]
+ },
+ "results": {
+  "bindings": [
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q2758"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.433333333 51.2)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/M%C3%B6nchengladbach"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Mönchengladbach"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258260"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.4430489 51.195865)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Aachener_Stra%C3%9Fe_12_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Aachener Straße 12"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258262"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.4224 51.19101)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Aachener_Stra%C3%9Fe_160_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Aachener Straße 160"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258264"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.4199433 51.1893254)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Aachener_Stra%C3%9Fe_218_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Aachener Straße 218"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258266"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.425732 51.194619)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Aachener_Stra%C3%9Fe_77_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Aachener Straße 77"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258327"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.430899 51.1932)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Abteiberg_7_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Abteiberg 7"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258328"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.430809 51.19329)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Abteiberg_8_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Abteiberg 8"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258331"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.432846 51.191935)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Abteigarten_und_Stadtbefestigung_M%C3%B6nchengladbach"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Abteigarten und Stadtbefestigung Mönchengladbach"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258399"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.41839 51.18866)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Adenauerplatz_2_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Adenauerplatz 2"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258400"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.438608 51.196662)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Adenauerplatz_3_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Adenauerplatz 3"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258403"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.41839 51.18866)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Adenauerplatz_7_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Adenauerplatz 7"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258563"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.48116 51.152546)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Ahren_47/49_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Ahren 47/49"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258760"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.438493 51.197199)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Albertusstra%C3%9Fe_42_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Albertusstraße 42"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258763"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.437159 51.19802)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Albertusstra%C3%9Fe_53_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Albertusstraße 53"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258997"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.447247 51.190416)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Alleestra%C3%9Fe_21_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Alleestraße 21"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19258999"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.447116 51.190315)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Alleestra%C3%9Fe_23_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Alleestraße 23"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19259143"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.444918 51.21904)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Am_Haus_L%C3%BCtz_49_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Am Haus Lütz 49"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19259147"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.364343 51.133955)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Am_Kapellchen_19"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Am Kapellchen 19"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19259149"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.35515 51.18552)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Am_Kuhbaum_50_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Am Kuhbaum 50"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19259159"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.426556 51.201324)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Am_Neuen_Wasserturm_1_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Am Neuen Wasserturm 1"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19259161"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.425953 51.201261)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Am_Neuen_Wasserturm_2_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Am Neuen Wasserturm 2"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19259164"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.4259991 51.2010965)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Am_Neuen_Wasserturm_3_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Am Neuen Wasserturm 3"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19259165"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.41711 51.112377)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Am_Pastorat_8_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Am Pastorat 8"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19259166"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.45491 51.13792)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Am_Pixbusch_4_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Am Pixbusch 4"
+    }
+   },
+   {
+    "item": {
+     "type": "uri",
+     "value": "http://www.wikidata.org/entity/Q19259173"
+    },
+    "coord": {
+     "datatype": "http://www.opengis.net/ont/geosparql#wktLiteral",
+     "type": "literal",
+     "value": "Point(6.46819 51.18227)"
+    },
+    "article": {
+     "type": "uri",
+     "value": "https://de.wikipedia.org/wiki/Am_Wefershof_9_e_(M%C3%B6nchengladbach)"
+    },
+    "itemLabel": {
+     "xml:lang": "de",
+     "type": "literal",
+     "value": "Am Wefershof 9 e"
+    }
+   }
+  ]
+ }
+}

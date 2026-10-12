@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|fetch|steps|status|bootstrap|export|regress|profile``.
+"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|export|regress|profile``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
@@ -7,6 +7,7 @@ stderr), 2 Bedienfehler (argparse).
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -23,8 +24,10 @@ from georep.export import export_csv
 from georep.layout import Layout
 from georep.pipeline import build_steps, freshness, run_pipeline, select_steps
 from georep.profiling import profile_step
+from georep.report.build import current_commit
 from georep.report.model import sensitivity_rows
-from georep.settings import Settings, load_settings, settings_files
+from georep.report.publish import publish_sites
+from georep.settings import Settings, available_profiles, load_settings, settings_files
 from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextStore
 
@@ -39,6 +42,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--settings", type=Path, help="zusätzliche TOML-Datei, gewinnt über ./settings*.toml"
     )
+    parser.add_argument(
+        "--profile",
+        help="Stadtprofil aus dem Paket (`georep profiles` listet sie); sonst GEOREP_PROFILE",
+    )
     parser.add_argument("--version", action="version", version=f"georep {__version__}")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -49,9 +56,13 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--online", action="store_true", help="Netzschritte mitlaufen lassen")
 
     fetch = sub.add_parser(
-        "fetch", help="Netzschritte ausführen (opendata, papers, pdfs), dann texts"
+        "fetch",
+        help="Netzschritte ausführen (opendata, papers, pdfs, streets_osm, pois_wiki), "
+        "dazu shapes und texts",
     )
-    fetch.add_argument("steps", nargs="*", help="Namen (Standard: alle Netzschritte und texts)")
+    fetch.add_argument(
+        "steps", nargs="*", help="Namen (Standard: alle Netzschritte, shapes und texts)"
+    )
     fetch.add_argument("--force", action="store_true", help="auch aktuelle Schritte ausführen")
     fetch.add_argument("--limit", type=int, help="höchstens so viele neue PDFs in diesem Lauf")
     fetch.add_argument(
@@ -63,6 +74,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("steps", help="Schritte mit Eingaben und Ausgaben")
     sub.add_parser("status", help="Settings, Pfade, Frische jedes Schritts")
+    sub.add_parser("profiles", help="Stadtprofile im Paket")
+
+    pub = sub.add_parser("publish", help="Stadtseiten zusammentragen und den Städtevergleich bauen")
+    pub.add_argument("--out", type=Path, help="Zielordner (Standard: <data_root>/site)")
 
     boot = sub.add_parser("bootstrap", help="Referenzdatensatz nach data_root übernehmen")
     boot.add_argument("--force", action="store_true", help="vorhandene Dateien überschreiben")
@@ -120,7 +135,12 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
     if fetching:
         settings = _with_fetch_limits(settings, args.limit, args.max_pages)
     steps = build_steps(settings, layout)
-    default_names = [s.name for s in steps if s.network or s.name == "texts"] if fetching else None
+    # `fetch` ohne Namen heißt: alle Netzschritte, dazu die beiden Offline-Schritte, ohne die sie
+    # nicht laufen (`shapes` liefert die Flächen für streets_osm und pois_wiki) oder deren
+    # Ergebnis niemand ohne Netz nachholen kann (`texts` braucht die PDFs im Cache).
+    default_names = (
+        [s.name for s in steps if s.network or s.name in ("shapes", "texts")] if fetching else None
+    )
     outcomes = run_pipeline(
         steps,
         settings,
@@ -153,16 +173,21 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
         f"Verträge {settings.contracts}"
     )
     files = settings_files(args.settings)
-    print("Settings:   defaults.toml" + "".join(f" < {p}" for p in files))
-    print(f"data_root:  {layout.data_root.resolve()}")
+    profile = settings.default_profile
     print(
-        f"Profil:     {layout.profile or '(keines, Hauptperiode)'}; Daten unter {layout.root.resolve()}"
+        f"Settings:   defaults.toml < profiles/{profile}.toml" + "".join(f" < {p}" for p in files)
     )
     period = settings.period
     print(
         f"Periode:    {period.title}, {period.start} bis {period.end or 'offen'}; "
         f"Wahltag {period.election_day}"
     )
+    where = (
+        f"flach unter {layout.root.resolve()}"
+        if not layout.profile
+        else f"unter {layout.root.resolve()}"
+    )
+    print(f"Profil:     {profile} ({settings.city.name}); Daten {where}")
     print(f"cache_root: {layout.cache_root.resolve()}")
     print(f"reference:  {layout.reference_root.resolve()}")
     pdfs = len(list(layout.pdf_dir.glob("*.pdf"))) if layout.pdf_dir.is_dir() else 0
@@ -178,6 +203,27 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
         fresh, reason = freshness(step, settings)
         tag = " [Netz]" if step.network else ""
         print(f"{step.name:<12} {'aktuell' if fresh else 'offen':<8} {reason}{tag}")
+    return 0
+
+
+def _cmd_profiles(settings: Settings) -> int:
+    """Die Paketprofile mit der Stadt, die sie beschreiben; das Standardprofil ist markiert."""
+    for name in available_profiles():
+        city = load_settings(profile=name, cwd=Path("/nonexistent")).city
+        mark = " (Standard)" if name == settings.default_profile else ""
+        print(f"{name:<20} {city.name}, AGS {city.ags}{mark}")
+    return 0
+
+
+def _cmd_publish(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
+    summary = publish_sites(
+        settings,
+        layout,
+        now=dt.datetime.now(dt.UTC),
+        commit=current_commit(),
+        out=args.out,
+    )
+    print(summary.line())
     return 0
 
 
@@ -274,7 +320,7 @@ def _cmd_regress(args: argparse.Namespace, settings: Settings, layout: Layout) -
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        settings = load_settings(explicit=args.settings)
+        settings = load_settings(explicit=args.settings, profile=args.profile)
         _setup_logging(settings.log_level)
         configure_contracts(settings.contracts)
         layout = Layout.from_settings(settings)
@@ -284,6 +330,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cmd_steps(settings, layout)
         if args.command == "status":
             return _cmd_status(args, settings, layout)
+        if args.command == "profiles":
+            return _cmd_profiles(settings)
+        if args.command == "publish":
+            return _cmd_publish(args, settings, layout)
         if args.command == "bootstrap":
             return _cmd_bootstrap(args, settings, layout)
         if args.command == "export":

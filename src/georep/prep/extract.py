@@ -1,7 +1,8 @@
 """Text aus PDFs, mit Cache je Dateiname und Extraktor-Version.
 
 Wie in der Arbeit: alle Seiten, Zeilenumbrüche weg, kleingeschrieben, und alles vor dem ersten
-Vorkommen des Markers (``betrifft``, Düsseldorfer Vorlagenkopf) verworfen. Ein Text wird nur neu
+Vorkommen des Markers (``search.text_split_marker`` aus dem Profil) verworfen, also der
+Vorlagenkopf. Ein Text wird nur neu
 berechnet, wenn PDF-Hash oder Extraktor sich geändert haben.
 
 Die Bibliothek steht hinter ``PdfTextExtractor``: ``name`` ist der Cache-Schlüssel im Textstore,
