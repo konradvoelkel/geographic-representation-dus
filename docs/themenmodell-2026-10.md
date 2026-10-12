@@ -350,9 +350,9 @@ ordnet die Kette 7180 von 19 033 Dokumenten zu (37,7 %), 11 853 bleiben in der R
 
 | Gremienart | Dokumente | Restklasse | Anteil |
 |---|---|---|---|
-| Ausschuss | 5351 | 584 | 10,9 % |
+| Ausschuss | 5351 | 582 | 10,9 % |
 | Bezirksvertretung | 10 997 | 8929 | 81,2 % |
-| Rat | 2243 | 1960 | 87,4 % |
+| Rat | 2243 | 1961 | 87,4 % |
 | Beirat | 442 | 381 | 86,2 % |
 
 Von den 5351 Ausschussdokumenten treffen 4756 (88,9 %) ihr eigenes Gremium — die Zuordnung ist
@@ -366,8 +366,8 @@ das Achtfache davon; wer die Schwelle auf 0,3 senkt, bekommt mehr Zuordnungen un
 Verlass. `classify.min_probability` steht in den Settings, damit diese Wahl sichtbar bleibt.
 
 Die Tabelle „Dokumente je passendem Ausschuss" steht im Abschnitt „Gremien" der Berichtsseite,
-mit der Spalte „davon ohne Ausschussberatung": für OVA sind das 1087 von 1831, für APS 709 von
-1249. Genau diese Dokumente sind der Gewinn der Übung — bei ihnen sagt die Zuordnung etwas, das
+mit der Spalte „davon ohne Ausschussberatung": für OVA sind das 1092 von 1835, für APS 710 von
+1250. Genau diese Dokumente sind der Gewinn der Übung — bei ihnen sagt die Zuordnung etwas, das
 nicht schon in der Drucksachennummer steht.
 
 ### 4.5 Laufzeit
