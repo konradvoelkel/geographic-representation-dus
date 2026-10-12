@@ -1,0 +1,81 @@
+{% if model.parties and model.originator_figures %}
+{% set f = model.originator_figures %}
+<section id="parteien">
+<h2>Urheber und Parteien</h2>
+<p>Wer schreibt die Ratsdokumente? Die OParl-Schnittstelle hat dafür drei Felder (<code>originatorPerson</code>, <code>originatorOrganization</code>, <code>underDirectionOf</code>), doch der Server des Ratsinformationssystems füllt sie für Düsseldorf nicht: {{ f.from_oparl|num }} der {{ f.documents|num }} Dokumente tragen einen Urheber aus OParl. Der Urheber steht stattdessen in der Dokumentart, im Titel oder im Textkopf („Anfrage SPD", „Antrag der CDU-Fraktion", „(anfrage cdu-fraktion vom 28. Juli 2023)"), und genau daraus ist er hier abgeleitet. Das deckt {{ f.coverage|pct(1) }} der Dokumente ab: {{ f.verwaltung|num }} Vorlagen der Verwaltung, {{ f.fraktion|num }} Anträge und Anfragen von Fraktionen, {{ f.person|num }} von einzelnen Mandatsträgern, {{ f.eingabe|num }} Eingaben nach § 24 GO NRW und {{ f.unbekannt|num }} ohne erkennbaren Urheber. Jede Zuordnung steht mit ihrer Quelle und der getroffenen Zeichenkette in <code>dokumente_urheber</code> zum Download, also nachprüfbar.</p>
+<p>Die {{ model.parties|length }} Karten zeigen je Partei, welcher Anteil ihrer eigenen Dokumente einen Wahlbezirk erwähnt. Die Klassen sind je Partei gerechnet, nicht über alle: die größte Fraktion stellt {{ model.parties|map(attribute='documents')|max|num }} Dokumente, die kleinste {{ model.parties|map(attribute='documents')|min|num }}, und eine gemeinsame Skala hätte die kleine überall in der untersten Klasse gezeigt. Die Karten sagen also, wohin eine Partei blickt, nicht wie viel sie schreibt.</p>
+{{ visuals.party_maps_svg|safe }}
+<div class="legend party-legend"><ul>
+<li>kleiner Anteil</li>
+<li><span class="swatch q0"></span></li>
+<li><span class="swatch q1"></span></li>
+<li><span class="swatch q2"></span></li>
+<li><span class="swatch q3"></span></li>
+<li><span class="swatch q4"></span></li>
+<li>großer Anteil</li>
+</ul>
+<p class="note">Fünf Quantilklassen, je Partei eigen gerechnet: dieselbe Farbe bedeutet bei zwei Parteien nicht denselben Anteil. Die Zahlen stehen im Tooltip jeder Fläche und in der Tabelle unten.</p></div>
+
+<h3>Je Partei</h3>
+<div class="scroll"><table id="parteien-tabelle">
+<thead><tr>
+<th scope="col" data-sort="text">Partei</th>
+<th scope="col" class="num" data-sort="num">Dokumente</th>
+<th scope="col" class="num" data-sort="num">davon allein</th>
+<th scope="col" class="num" data-sort="num">Treffer</th>
+<th scope="col" class="num" data-sort="num">Bezirke mit Treffer</th>
+<th scope="col" class="num" data-sort="num">n</th>
+<th scope="col" class="num" data-sort="num">r</th>
+<th scope="col" class="num" data-sort="num">p</th>
+</tr></thead>
+<tbody>
+{% for party in model.parties %}
+<tr>
+<th scope="row">{{ party.label }}</th>
+<td class="num" data-value="{{ party.documents }}">{{ party.documents|num }}</td>
+<td class="num" data-value="{{ party.alone }}">{{ party.alone|num }}</td>
+<td class="num" data-value="{{ party.hits }}">{{ party.hits|num }}</td>
+<td class="num" data-value="{{ party.districts_hit }}">{{ party.districts_hit }}</td>
+<td class="num" data-value="{{ party.n }}">{{ party.n }}</td>
+<td class="num" data-value="{{ party.r if party.r is not none else '' }}">{% if party.r is not none %}{{ party.r|num(3) }}{% else %}–{% endif %}</td>
+<td class="num" data-value="{{ party.p if party.p is not none else '' }}">{% if party.p is not none %}{{ party.p|num(3) }}{% else %}–{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+<p class="footnote">„Treffer" summiert über die Wahlbezirke: ein Dokument, das drei Bezirke erwähnt, zählt dreimal. „davon allein" sind die Dokumente, deren einziger Urheber diese Partei ist; {{ f.with_two_parties|num }} Dokumente haben zwei oder mehr Urheber und zählen für jede Partei voll. <em>r</em> und <em>p</em> sind Pearson-Korrelation und Signifikanz zwischen dem Anteil der Parteidokumente je Bezirk und dem Stimmenanteil der Partei dort, gerechnet über die <em>n</em> Bezirke, in denen die Partei angetreten ist. Bei {{ model.parties|length }} Tests ist unter der Nullhypothese ein „signifikanter" Wert zu erwarten; die Bonferroni-Grenze liegt bei 0,05 geteilt durch {{ model.parties|length }}, also {{ (0.05 / model.parties|length)|num(3) }}. Nur Werte darunter sind ein Befund.</p>
+
+<h3>Je Wahlbezirk</h3>
+<p class="note">Spaltenköpfe sortieren. Links die Treffer nach Urheberklasse, deren Summe die Treffer des Bezirks ergibt; rechts je Partei der Anteil ihrer Dokumente, der diesen Bezirk erwähnt, schattiert nach derselben Quantilklasse wie die Karten. Die Tönung der Zellen ist heller als die der Karten, damit die Zahl darin in Hell und Dunkel lesbar bleibt; die Reihenfolge der fünf Stufen ist dieselbe.</p>
+<div class="scroll"><table id="urheber-tabelle">
+<thead><tr>
+<th scope="col" class="num" data-sort="num">Nr.</th>
+<th scope="col" data-sort="text">Name</th>
+<th scope="col" class="num" data-sort="num">Treffer</th>
+<th scope="col" class="num" data-sort="num">Verwaltung</th>
+<th scope="col" class="num" data-sort="num">Fraktion</th>
+<th scope="col" class="num" data-sort="num">Person</th>
+<th scope="col" class="num" data-sort="num">Eingabe</th>
+<th scope="col" class="num" data-sort="num">unbekannt</th>
+{% for party in model.parties %}
+<th scope="col" class="num" data-sort="num" title="{{ party.label }}">{{ party.short }}</th>
+{% endfor %}
+</tr></thead>
+<tbody>
+{% for row in model.originators %}
+<tr data-id="{{ row.district }}">
+<td class="num" data-value="{{ row.district }}">{{ row.district }}</td>
+<td>{{ row.name }}</td>
+<td class="num" data-value="{{ row.hits }}">{{ row.hits|num }}</td>
+<td class="num" data-value="{{ row.verwaltung }}">{{ row.verwaltung|num }}</td>
+<td class="num" data-value="{{ row.fraktion }}">{{ row.fraktion|num }}</td>
+<td class="num" data-value="{{ row.person }}">{{ row.person|num }}</td>
+<td class="num" data-value="{{ row.eingabe }}">{{ row.eingabe|num }}</td>
+<td class="num" data-value="{{ row.unbekannt }}">{{ row.unbekannt|num }}</td>
+{% for cell in model.cells_for(row.district) %}
+<td class="num p{{ cell.klass }}" data-value="{{ cell.share }}" title="{{ cell.hits|num }} Dokumente{% if not cell.ran %}; nicht angetreten{% else %}; Stimmenanteil {{ cell.vote_share|pct(1) }}{% endif %}">{{ cell.share|pct(1) }}</td>
+{% endfor %}
+</tr>
+{% endfor %}
+</tbody></table></div>
+</section>
+{% endif %}

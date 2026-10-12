@@ -408,6 +408,7 @@ TABLES.extend(
                 ),
             },
             joins={"parteien": "; "},
+            optional=True,  # nur nach dem Schritt parties
         ),
         PublishedTable(
             "wahlbezirke_urheber",
@@ -425,6 +426,7 @@ TABLES.extend(
                 "eingabe": ("davon Eingaben nach § 24 GO NRW", "Dokumente"),
                 "unbekannt": ("davon ohne erkennbaren Urheber", "Dokumente"),
             },
+            optional=True,  # nur nach dem Schritt parties
         ),
         PublishedTable(
             "wahlbezirke_parteien",
@@ -460,6 +462,7 @@ TABLES.extend(
                     "",
                 ),
             },
+            optional=True,  # nur nach dem Schritt parties
         ),
     ]
 )

@@ -202,3 +202,31 @@ def test_two_runs_write_the_same_party_tables(
     for attribute in ("document_originators", "district_originators", "party_results"):
         a, b = (getattr(layout, attribute) for layout in roots)
         assert a.read_bytes() == b.read_bytes(), attribute
+
+
+def test_the_page_carries_the_section_within_the_budget(
+    reference_root: Path, settings: Settings, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    """Auf der vollen Referenz: der Abschnitt steht auf der Seite, und sie bleibt unter dem Budget."""
+    from georep.bootstrap import bootstrap
+    from georep.pipeline import build_steps, run_pipeline
+    from georep.report.tables import published
+
+    root = tmp_path_factory.mktemp("parties_site")
+    layout = Layout(root / "data", root / "cache", reference_root)
+    bootstrap(layout)
+    steps = build_steps(settings, layout)
+    run_pipeline(steps, settings, [s.name for s in steps if not s.network])
+    page = layout.site_index.read_text(encoding="utf-8")
+    assert '<section id="parteien">' in page
+    assert page.count('<path id="pm-') == 41  # die Flächen einmal in <defs>
+    assert page.count('<use href="#pm-') == 41 * len(settings.originators.parties)
+    assert sum(page.count(f'class="num p{k}"') for k in range(5)) == 41 * len(
+        settings.originators.parties
+    )
+    assert layout.site_index.stat().st_size < 1_500_000  # Budget, Meta-Plan § 2
+    # Die drei neuen Tabellen stehen als Parquet und CSV zum Download
+    names = {p.name for p in layout.site_data.iterdir()}
+    for table in ("dokumente_urheber", "wahlbezirke_urheber", "wahlbezirke_parteien"):
+        assert {f"{table}.parquet", f"{table}.csv"} <= names
+    assert len(names) == 2 * len(published(layout)) + 3

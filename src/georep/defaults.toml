@@ -437,31 +437,37 @@ text_window_chars = 80         # Fenster links und rechts um den Treffer; „(an
 [[originators.parties]]
 key = "CDU"
 label = "CDU"
+short = "CDU"
 patterns = ['\bcdu\b']
 organizations = ["/organizations/gr/44"]  # CDU-Ratsfraktion
 [[originators.parties]]
 key = "GRUENE"
 label = "Bündnis 90/Die Grünen"
+short = "Grüne"
 patterns = ['grüne', 'gruene', 'bündnis ?90', 'bü ?90']  # Schreibvarianten im Titel, auch „BÜNDNINS 90"
 organizations = ["/organizations/gr/42"]  # Ratsfraktion BÜNDNIS 90/DIE GRÜNEN
 [[originators.parties]]
 key = "SPD"
 label = "SPD"
+short = "SPD"
 patterns = ['\bspd\b']
 organizations = ["/organizations/gr/400204"]  # Ratsfraktion SPD/Volt (ab 2020-11-01)
 [[originators.parties]]
 key = "FDP"
 label = "FDP"
+short = "FDP"
 patterns = ['\bfdp\b']
 organizations = ["/organizations/gr/49"]  # FDP-Ratsfraktion
 [[originators.parties]]
 key = "Die_Linke"
 label = "Die Linke"
+short = "Linke"
 patterns = ['\blinke\b']
 organizations = ["/organizations/gr/66"]  # Ratsfraktion Die Linke
 [[originators.parties]]
 key = "AfD"
 label = "AfD"
+short = "AfD"
 patterns = ['\bafd\b']                    # trifft auch die Schreibvariante „AFD" („Haushaltsantrag AFD", 2 Dokumente), weil kleingeschrieben verglichen wird
 organizations = ["/organizations/gr/400198", "/organizations/gr/162"]  # AfD-Ratsfraktion; gr/162 ist das Einzelmandat bis 2020-10-31
 
@@ -470,15 +476,18 @@ organizations = ["/organizations/gr/400198", "/organizations/gr/162"]  # AfD-Rat
 [[originators.groups]]
 key = "T_FW"
 label = "Tierschutz/Freie Wähler"
+short = "T/FW"
 patterns = ['tierschutz', 'freie wähler', 'freie waehler']
 organizations = ["/organizations/gr/400202", "/organizations/gr/400238"]  # Gruppe bis 2025-10-31, danach Ratsgruppe Freie Wähler Tierschutz PARTEI
 [[originators.groups]]
 key = "PARTEI"
 label = "Die PARTEI"
+short = "PARTEI"
 patterns = ['die partei', 'partei-klima', 'klima-fraktion', 'klimafraktion']  # „DIE PARTEI-Klima-Fraktion", „Die Partei-KlimaFraktion"
 organizations = ["/organizations/gr/400205"]
 [[originators.groups]]
 key = "VOLT"
 label = "Volt"
+short = "Volt"
 patterns = ['\bvolt\b']
 organizations = []             # Volt sitzt in der Ratsfraktion SPD/Volt, hat also keine eigene Organisation

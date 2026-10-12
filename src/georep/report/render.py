@@ -95,6 +95,7 @@ class Visuals:
     bodies_legend: Sequence[LegendEntry] = ()
     # Option 03: je Term des Hauptmodells (Beschriftung, SVG); leer ohne Kontextdaten
     partial_svgs: Sequence[tuple[str, str]] = ()
+    party_maps_svg: str = ""  # Option 04: leer, solange der Schritt ``parties`` nicht lief
 
 
 def date_de(value: dt.date) -> str:

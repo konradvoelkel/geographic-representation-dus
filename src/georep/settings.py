@@ -528,8 +528,13 @@ class Party(_Strict):
 
     key: str
     label: str
+    short: str = ""  # Kürzel für enge Spaltenköpfe; leer = ``label``
     patterns: list[str]
     organizations: list[str] = []
+
+    @property
+    def column_label(self) -> str:
+        return self.short or self.label
 
     @field_validator("patterns")
     @classmethod
