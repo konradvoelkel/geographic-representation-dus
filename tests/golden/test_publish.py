@@ -15,9 +15,8 @@ from pathlib import Path
 import pytest
 
 from georep.bootstrap import bootstrap
-from georep.layout import Layout
+from georep.layout import Layout, ReferenceWriteError
 from georep.pipeline import build_steps, run_pipeline
-from georep.layout import ReferenceWriteError
 from georep.report.publish import (
     MARKER_NAME,
     NEIGHBOURS_MARKER,
@@ -219,6 +218,4 @@ def test_publish_refuses_a_target_under_the_reference(
         reference_root=root / "reference",
     )
     with pytest.raises(ReferenceWriteError):
-        publish_sites(
-            settings, layout, now=NOW, commit=None, out=root / "reference" / "site"
-        )
+        publish_sites(settings, layout, now=NOW, commit=None, out=root / "reference" / "site")

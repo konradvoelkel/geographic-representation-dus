@@ -8,7 +8,10 @@ Seite schon die Wurzel und wird nicht kopiert (Frage 1.7). Aus ``summary.json``,
 einer Stadt, sagt die Zusammenfassung das und der Vergleich entfällt.
 
 Der Befehl ist wiederholbar: Zeit und Commit sind Eingaben, kopiert wird atomar über ein
-temporäres Verzeichnis, und nichts außerhalb von ``data/site/`` wird angefasst.
+temporäres Verzeichnis, und nichts außerhalb des Zielordners wird angefasst. Weil er beim Kopieren
+löscht, nimmt er nur einen Ordner an, der ihm gehört: die Standardwurzel ``<data_root>/site``, ein
+leeres Verzeichnis oder eines mit seiner Markerdatei. Alles andere ist ein ``PublishTargetError``,
+und `guard_writable` hält ihn von der Referenz fern.
 """
 
 from __future__ import annotations
@@ -23,8 +26,9 @@ from pathlib import Path
 import deal
 
 from georep import __version__
+from georep.errors import GeorepError
 from georep.io import write_text
-from georep.layout import Layout
+from georep.layout import Layout, ReferenceWriteError
 from georep.report.comparison import (
     CitySite,
     ComparisonModel,
@@ -37,6 +41,9 @@ from georep.report.render import CC0, REPOSITORY, environment, external_links
 from georep.settings import Settings, load_settings
 
 COMPARISON_NAME = "vergleich.html"
+# Legt publish in seinen Zielordner, damit der nächste Lauf ihn als seinen erkennt und darin
+# löschen darf (Review 2026-10-12: --out zeigt leicht auf einen Ordner, in dem anderes liegt).
+MARKER_NAME = ".georep-publish"
 # Die Stadtseite lässt die Stelle frei, an der die Nachbarstädte stehen; erst ``publish`` weiß,
 # welche Seiten wirklich daneben liegen, und setzt die Zeile (Review 2026-10-12: sonst trüge die
 # veröffentlichte Seite Links auf Städte, deren Lauf noch fehlt).
@@ -44,6 +51,10 @@ NEIGHBOURS_MARKER = "<!--georep:weitere-staedte-->"
 # Die Vergleichsseite verlinkt nach außen nur das Repository und die Lizenz; die Städte liegen
 # relativ daneben, die Quellen und Lizenzen der Daten nennt jede Stadtseite in ihrem Fuß.
 COMPARISON_LINKS = frozenset({REPOSITORY, CC0})
+
+
+class PublishTargetError(GeorepError):
+    """Der Zielordner gehört nicht ``georep publish``; es löscht dort nichts."""
 
 
 @dataclass(frozen=True)
@@ -79,6 +90,29 @@ def city_layout(settings: Settings, root: Layout, slug: str) -> Layout:
         cache_root=root.cache_root,
         reference_root=root.reference_root,
     )
+
+
+# guard_writable wirft ReferenceWriteError; deal vergleicht exakte Typen, darum beide.
+@deal.raises(PublishTargetError, ReferenceWriteError)
+def claim_target(layout: Layout, out: Path | None) -> Path:
+    """Der Zielordner, in dem publish löschen darf; legt ihn an und setzt die Markerdatei.
+
+    Erlaubt sind die Standardwurzel ``<data_root>/site`` (dort liegt die Seite der ersten Stadt
+    ohnehin), ein leeres Verzeichnis und jedes, das die Markerdatei trägt.
+    """
+    default = layout.data_root / "site"
+    root = default if out is None else out
+    layout.guard_writable(root)
+    if root.exists() and root.resolve() != default.resolve():
+        known = (root / MARKER_NAME).is_file()
+        if not known and any(root.iterdir()):
+            raise PublishTargetError(
+                f"{root} ist nicht leer und nicht von georep publish angelegt; "
+                f"ein eigener Ordner oder einer mit {MARKER_NAME} darf es sein"
+            )
+    root.mkdir(parents=True, exist_ok=True)
+    write_text(root / MARKER_NAME, f"georep publish {__version__}\n")
+    return root
 
 
 def _copy_tree(source: Path, target: Path) -> None:
@@ -118,7 +152,7 @@ def write_neighbours(cities: Sequence[CitySite], root: Path) -> None:
 
 
 def _tree_size(folder: Path) -> tuple[int, int]:
-    files = [p for p in folder.rglob("*") if p.is_file()]
+    files = [p for p in folder.rglob("*") if p.is_file() and p.name != MARKER_NAME]
     return len(files), sum(p.stat().st_size for p in files)
 
 
@@ -143,8 +177,7 @@ def publish_sites(
 ) -> PublishSummary:
     """Kopiert die Stadtseiten in den Veröffentlichungsordner und baut den Vergleich."""
     slugs = list(settings.publish.cities) or [settings.city.slug]
-    root = out if out is not None else layout.data_root / "site"
-    root.mkdir(parents=True, exist_ok=True)
+    root = claim_target(layout, out)
     found: list[CitySite] = []
     missing: list[str] = []
     for index, slug in enumerate(slugs):
