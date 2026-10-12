@@ -297,6 +297,7 @@ def test_topics_k_zero_is_allowed_and_bounds_are_checked(tmp_path: Path) -> None
         'stop_words = "../x"',
         "max_iter = 0",
         "tol = 0",
+        "k = 100",
     ):
         (tmp_path / "settings.toml").write_text(f"[topics]\n{bad}\n", encoding="utf-8")
         with pytest.raises(ValidationError, match="topics"):
@@ -309,3 +310,12 @@ def test_fingerprint_sees_weights_and_topics(tmp_path: Path) -> None:
     assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
     (tmp_path / "settings.toml").write_text('[weights]\ncombined = ["idf"]\n', encoding="utf-8")
     assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
+
+
+def test_topics_k_stops_at_99_so_the_variant_names_sort(tmp_path: Path) -> None:
+    """``thema_100`` stünde zwischen ``thema_10`` und ``thema_11``; zwei Stellen sind die Grenze."""
+    (tmp_path / "settings.toml").write_text("[topics]\nk = 99\n", encoding="utf-8")
+    assert load_settings(cwd=tmp_path).topics.k == 99
+    (tmp_path / "settings.toml").write_text("[topics]\nk = 100\n", encoding="utf-8")
+    with pytest.raises(ValidationError, match="99"):
+        load_settings(cwd=tmp_path)

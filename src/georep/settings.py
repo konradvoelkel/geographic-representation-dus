@@ -302,6 +302,9 @@ class Weights(_Strict):
         return self
 
 
+MAX_TOPICS = 99  # ``thema_NN``: zwei Stellen, damit die Variantennamen numerisch sortieren
+
+
 class Topics(_Strict):
     """Themenmodell (TF-IDF und NMF); ``k = 0`` schaltet den Schritt ``topics`` ab."""
 
@@ -319,6 +322,10 @@ class Topics(_Strict):
     def _bounds(self) -> Topics:
         if self.k < 0:
             raise ValueError(f"topics.k {self.k} darf nicht negativ sein (0 schaltet ab)")
+        if self.k > MAX_TOPICS:
+            # Die Varianten heißen thema_NN mit zwei Stellen; thema_100 stünde beim Sortieren
+            # zwischen thema_10 und thema_11, und die Tabelle der Seite käme durcheinander.
+            raise ValueError(f"topics.k {self.k} ist größer als {MAX_TOPICS} (zweistellige Namen)")
         if self.min_df < 1 or self.max_features < 1 or self.top_words < 1:
             raise ValueError("topics.min_df, max_features und top_words müssen mindestens 1 sein")
         if not 0.0 < self.max_df <= 1.0:

@@ -208,7 +208,7 @@ default = 1.0
 rules = [{ pattern = "^z?(antrag|anfrage|haushaltsantrag|eingabe)", weight = 0.0 }]  # dieselbe Grenze mit Gewicht null
 
 [topics]                       # Themenmodell: TF-IDF und NMF (scikit-learn) über die Texte; je Thema eine Variante thema_NN
-k = 20                         # Zahl der Themen; lesbar auf der Seite, 3,8 s auf 19 033 Texten (2026-10-11); 0 schaltet den Schritt topics ab
+k = 20                         # Zahl der Themen; lesbar auf der Seite, 3,8 s auf 19 033 Texten (2026-10-11); 0 schaltet den Schritt topics ab, 99 ist die Obergrenze (die Varianten heißen thema_NN)
 min_df = 5                     # ein Wort zählt erst ab 5 Dokumenten (Tippfehler, seltene Namen fallen weg)
 max_df = 0.5                   # ein Wort in mehr als der Hälfte der Dokumente ist ein Formularwort
 max_features = 20000           # die häufigsten Wörter; mehr ändert die Themen nicht und kostet Zeit
