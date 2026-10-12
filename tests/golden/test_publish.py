@@ -55,10 +55,14 @@ def both_cities(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Setting
     return root, duesseldorf
 
 
-def _publish(root: Path, settings: Settings) -> tuple[Path, PublishSummary]:
-    layout = replace(
+def _layout_of(root: Path, settings: Settings) -> Layout:
+    return replace(
         Layout.from_settings(settings), data_root=root / "data", cache_root=root / "cache"
     )
+
+
+def _publish(root: Path, settings: Settings) -> tuple[Path, PublishSummary]:
+    layout = _layout_of(root, settings)
     summary = publish_sites(settings, layout, now=NOW, commit="abc1234")
     return layout.data_root / "site", summary
 
@@ -158,6 +162,28 @@ def test_a_city_without_a_run_is_named_and_leaves_no_comparison(tmp_path: Path) 
     assert not summary.comparison and not (site / "vergleich.html").exists()
     assert "kein Lauf" in summary.line() and "moenchengladbach" in summary.line()
     assert (site / "index.html").is_file()  # die vorhandene Stadt bleibt erreichbar
+
+
+def test_a_city_that_lost_its_run_leaves_the_published_folder(
+    both_cities: tuple[Path, Settings], tmp_path: Path
+) -> None:
+    """Ein Stadtordner ohne Lauf und ohne Link wäre tote Last; publish räumt ihn weg."""
+    root, settings = both_cities
+    out = tmp_path / "zwei-dann-eine"
+    publish_sites(settings, _layout_of(root, settings), now=NOW, commit=None, out=out)
+    assert (out / "moenchengladbach" / "index.html").is_file()
+    moved = tmp_path / "beiseite"
+    (root / "data" / "moenchengladbach" / "site").rename(moved)
+    try:
+        summary = publish_sites(
+            settings, _layout_of(root, settings), now=NOW, commit=None, out=out
+        )
+    finally:
+        moved.rename(root / "data" / "moenchengladbach" / "site")
+    assert summary.missing == ("moenchengladbach",)
+    assert not (out / "moenchengladbach").exists()
+    assert not (out / "vergleich.html").exists()
+    assert (out / "index.html").is_file()
 
 
 def test_the_comparison_names_the_numbers_of_both_cities(
