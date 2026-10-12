@@ -4,8 +4,10 @@ Der Rückstand nennt den Auftrag (`docs/todo.md`, Punkt 4): die Entscheidungen d
 so wie `georep` sie heute umsetzt, jede mit ihrer Wirkung auf die Zahlen, ihren Alternativen und einer
 Empfehlung. Grundlage ist `v0.11.0`, der Stand, der die Arbeit exakt reproduziert (Tag `bartzsch-exakt`,
 `docs/decisions.md`, Punkt 43). Alle Zahlen sind am 2026-10-12 auf der Referenz unter `reference/` gemessen,
-41 Wahlbezirke, 306 Stimmbezirke, 19 108 Dokumente, 5841 Begriffe; die Messskripte sind Wegwerfkode, die
-Zahlen stehen hier und in `STATUS.md`.
+41 Wahlbezirke, 306 Stimmbezirke, 19 108 Dokumente, 5841 Begriffe. Die Kennzahlen aus § 1 und die Wirkung
+aus § 4 rechnet `docs/methodik-review-2026-10-messung.py` nach (`uv run python
+docs/methodik-review-2026-10-messung.py`, rund 20 s auf der Referenz); Tabelle 5 und die Wirkung der Regeln
+frieren zusätzlich die slow-Tests in `tests/golden/test_pipeline.py` ein.
 
 Dies ist ein Review, keine Neubewertung der Arbeit. Die Arbeit hat aus einem Datensatz, den vorher niemand
 zusammengetragen hatte, eine prüfbare Zahl gemacht; die Kritik unten gilt dem Verfahren, nicht dem Befund.
@@ -19,7 +21,7 @@ Repository seither gerechnet hat, und wird von den Kontrollvariablen (Option 03)
 | Begriffe im Wörterbuch | 5841: 2897 Straßennamen aus OSM, 1307 Ortslabels aus Wikidata/Wikipedia (68 kommen in beiden vor), dazu 1705 `str.`-Varianten |
 | Begriffe je Wahlbezirk | Median 147, Minimum 81 (Bezirk 3), Maximum 812 (Bezirk 1) |
 | Dokumenthäufigkeit je Begriff | Median 1, Mittel 5,3, 75-%-Quantil 4, 90-%-Quantil 15, 95-%-Quantil 27, 99-%-Quantil 64, Maximum 205 |
-| Summe der Treffer | 29 573 Dokument-Bezirk-Paare (51 887 Begriff-Dokument-Paare) |
+| Summe der Treffer | 29 573 Dokument-Bezirk-Paare, aus 31 024 Begriff-Dokument-Paaren und 51 887 Bezirk-Begriff-Dokument-Tripeln |
 | Tabelle 5, alle 41 | Steigung 62,1337, Achsenabschnitt 49,1993, r = 0,1612, R² = 0,0260, p = 0,31385 |
 | Tabelle 5, ohne 1 und 10 | Steigung 215,3341, Achsenabschnitt 40,5046, r = 0,3385, R² = 0,1146, p = 0,03507, n = 39 |
 
@@ -50,8 +52,10 @@ Behörden, Vereine, Zeitungen, Ausstellungen und Ereignisse („Amoklauf von Dü
 Düsseldorf"). 460 der 1309 Rohlabels tragen
 den Stadtnamen. Das Gefälle der Wörterbuchgrößen (81 bis 812) folgt daraus: die Innenstadt hat nicht
 zehnmal so viele Straßen wie der Bezirk 3, aber zehnmal so viele Wikipedia-Artikel mit Koordinate.
-Außerdem sind 277 Labels Wikipedia-Lemmata mit Klammerzusatz („Neue Synagoge (Düsseldorf)"); als Suchbegriff
-sind sie tot, weil die Klammer im Dokumenttext nicht vorkommt — **alle 277 haben Dokumenthäufigkeit 0.**
+Außerdem tragen 315 Labels eine Klammer, und in 277 davon steht der Stadtname darin („Neue Synagoge
+(Düsseldorf)"); als Suchbegriff sind diese 277 tot, weil die Klammer im Dokumenttext nicht vorkommt —
+**alle 277 haben Dokumenthäufigkeit 0.** Von den übrigen 38 Klammerlabels trifft genau eines, nämlich
+„Kom(m)ödchen" mit 2 Dokumenten; dort gehört die Klammer zum Namen.
 
 **Alternativen.** (a) Nach Wikidata-Typ filtern (`P31` auf Straße, Platz, Park, Gebäude, Gewässer …): genauer,
 kostet eine SPARQL-Änderung und einen neuen Abruf, und die Typhierarchie ist für Kommunalobjekte lückenhaft.
@@ -141,7 +145,8 @@ Kleinschreibung zählt nicht. Zu jedem Begriff mit „straße" kommt die Variant
 3. **Straßen über Bezirksgrenzen zählen für jeden Bezirk.** „Grafenberger Allee" (205 Dokumente, die höchste
    Häufigkeit überhaupt) steht in den Wörterbüchern von 7, 8, 9, 10 und 28; „Münchener Straße" (135) in
    sieben Bezirken. Jedes dieser Dokumente zählt für jeden dieser Bezirke einmal. Von den 51 887
-   Begriff-Dokument-Paaren bleiben nach der Vereinigung je Bezirk 29 573 — der Rest sind Mehrfachzählungen
+   Bezirk-Begriff-Dokument-Tripeln bleiben nach der Vereinigung je Bezirk 29 573 — der Rest sind
+   Mehrfachzählungen
    innerhalb eines Bezirks; die Mehrfachzählung *zwischen* Bezirken bleibt vollständig erhalten und ist
    gewollt (eine Straße liegt wirklich in beiden).
 
@@ -163,7 +168,8 @@ darin vorkommen und auch wenn ein Begriff zehnmal vorkommt: `hits_by_district` v
 über die Begriffe des Bezirks (`analysis/hits.py`). Mehrfachnennungen innerhalb eines Dokuments sind im Index
 gar nicht gespeichert, der Matcher liefert eine Menge.
 
-**Was es mit den Zahlen macht.** 51 887 Begriff-Dokument-Paare werden zu 29 573 Treffern, Faktor 1,75 im
+**Was es mit den Zahlen macht.** 51 887 Bezirk-Begriff-Dokument-Tripel werden zu 29 573 Treffern, Faktor
+1,75 im
 Mittel. Der Faktor ist nicht gleichverteilt: Bezirk 1 2,10, Bezirk 33 2,05, Bezirk 20 1,98 gegen Bezirk 3
 1,48, Bezirk 27 1,49, Bezirk 10 1,53. Die Vereinigung dämpft also gerade die Bezirke mit großem Wörterbuch —
 sie wirkt gegen den Effekt aus § 1 und ist damit die vorsichtigere Wahl.
@@ -171,7 +177,7 @@ sie wirkt gegen den Effekt aus § 1 und ist damit die vorsichtigere Wahl.
 **Alternativen.** (a) Erwähnungen zählen: ein Dokument, das eine Straße fünfzehnmal nennt, handelt
 wahrscheinlich von ihr — aber ein Bebauungsplan nennt jede Anliegerstraße einmal pro Absatz, und der Matcher
 müsste Zähler statt Mengen liefern (Vertrag und Index ändern sich, der Golden Master bricht).
-(b) Begriff-Dokument-Paare zählen (die 51 887): belohnt große Wörterbücher doppelt. (c) Nach Dokumentlänge
+(b) Die Tripel zählen (die 51 887): belohnt große Wörterbücher doppelt. (c) Nach Dokumentlänge
 normieren: möglich, Option 06 hätte den Platz, misst dann aber eher Textsorten.
 
 **Empfehlung.** Bleibt. Die Entscheidung der Arbeit ist hier die beste der drei, und sie ist mit den

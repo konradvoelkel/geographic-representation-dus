@@ -626,7 +626,7 @@ def build_steps(
         clean = clean_pois(read_pois_json(dictionary_source.pois), settings.search.exclude)
         # Regel 1 (docs/decisions.md, Punkt 44): Einrichtungen mit Stadtnamen sind keine Orte. Die
         # Regel wirkt auf beide Ausgaben, damit die Karte keine Orte zeigt, die nicht zählen.
-        line = f"{clean.height} Orte"
+        dropped = 0
         if settings.search.city_facilities:
             before = clean.height
             clean = drop_city_facilities(
@@ -636,11 +636,12 @@ def build_steps(
                 settings.search.place_words,
                 settings.search.city_facilities_keep,
             )
-            line = f"{clean.height} Orte, {before - clean.height} Einrichtungen mit Stadtnamen weg"
+            dropped = before - clean.height
         grouped = pois_by_district(clean)
         write_parquet(clean, layout.pois_table, schema_version=1)
         write_parquet(grouped, layout.pois_by_district, schema_version=1)
-        return f"{line} in {grouped.height} Wahlbezirken"
+        line = f"{clean.height} Orte in {grouped.height} Wahlbezirken"
+        return f"{line}, {dropped} Einrichtungen mit Stadtnamen weg" if dropped else line
 
     def dictionary() -> str:
         frame = build_dictionary(

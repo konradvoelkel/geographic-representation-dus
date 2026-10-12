@@ -80,7 +80,9 @@ name_property = "Kommunalwahlbezirk Name"
 text_split_marker = "betrifft" # der Vorlagenkopf vor dem ersten Vorkommen wird verworfen (Düsseldorfer Vorlagenformat)
 # Regel 1 (defaults.toml, search.city_facilities) trifft auf der Referenz 114 der 1309 Ortslabels.
 # Die Liste nimmt die Fälle heraus, in denen sie das Falsche trifft; geprüft am 2026-10-12 an allen
-# 41 getroffenen Labels mit Treffern (docs/methodik-review-2026-10.md, § 4).
+# 41 getroffenen Labels mit Treffern (docs/methodik-review-2026-10.md, § 4). Verglichen wird das
+# Label, wie die POI-Bereinigung es hinterlässt: getrimmt, ohne Rücksicht auf Groß- und
+# Kleinschreibung und ohne Kommas (clean_pois tilgt sie vorher, Reihenfolge der Arbeit).
 city_facilities_keep = [
     "Castello Düsseldorf",     # Veranstaltungshalle an einer Adresse in Reisholz, 6 Dokumente
 ]

@@ -698,7 +698,8 @@ die Treffer trotzdem.
 **Die Regel** (`georep.analysis.hits.citywide_terms`): Begriffe, deren Dokumenthäufigkeit über einer Schwelle
 liegt, stehen auf der Seite im Abschnitt „Begriffe" als eigene Liste mit Dokumentzahl und Wahlbezirk. Die
 Schwelle ist **entweder** ein Quantil der Dokumenthäufigkeit (`search.citywide_quantile = 0.99`, auf der
-Referenz 64 Dokumente und 58 der 5841 Begriffe) **oder** ein Vielfaches des Medians
+Referenz 64 Dokumente und 55 der 5727 Begriffe mit Regel 1, 58 der 5841 ohne sie) **oder** ein Vielfaches
+des Medians
 (`search.citywide_median_factor`), nie beides — zwei Schwellen wären zwei Wahrheiten, und die Settings weisen
 die Kombination beim Laden zurück. Das Quantil ist die Vorgabe, weil es sich dem Datensatz anpasst; auf der
 Referenz ist der Median 1 Dokument, ein Vielfaches davon wäre willkürlich. 0,95 statt 0,99 wären 276

@@ -234,8 +234,10 @@ def test_mini_fixture_matches_the_frozen_numbers(
         for row in frame.iter_rows(named=True)
     }
     # Eigene Zahlen dieses Repos, nicht die der Arbeit: sie sind am 2026-10-12 mit Regel 1
-    # („Einrichtung mit Stadtnamen", decisions.md Punkt 44) gesunken, weil der Mini-Fixture 37
-    # Labels wie „Kunstakademie Düsseldorf" aus dem Wörterbuch fallen (1: 96 -> 89, 10: 63 -> 59).
+    # („Einrichtung mit Stadtnamen", decisions.md Punkt 44a) gesunken. Die Regel trifft in der
+    # Mini-Fixture 62 der 493 Ortslabels, 9 davon mit Dokumenten („stadtwerke düsseldorf" 5,
+    # „stadtsparkasse düsseldorf" 3, „kunstakademie düsseldorf" 1 und sechs weitere);
+    # Wahlbezirk 1 ist die Altstadt (96 -> 89 Treffer, 10: 63 -> 59).
     assert got == {1: (89, 26, 13, 9), 10: (59, 22, 10, 4), 38: (14, 9, 0, 0)}
     assert frame.get_column(UNITS).to_list() == [[1], [2], [9]]
     # Der Bezirk 38 hat keine Rats-Treffer: die Spalte bleibt, der Wert ist 0.
