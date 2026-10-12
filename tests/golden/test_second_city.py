@@ -9,6 +9,8 @@ Golden Master dieser Stufe) und dass die Seite die Stadt nennt, deren Profil gil
 from __future__ import annotations
 
 from dataclasses import replace
+from pathlib import Path
+from typing import Any
 
 import polars as pl
 import pytest
@@ -19,7 +21,7 @@ from georep.pipeline import build_steps, run_pipeline
 from georep.prep.streets import directory_agreement
 from georep.prep.voters import DISTRICT, ELIGIBLE_TOTAL, VOTERS
 from georep.settings import Settings
-from tests.conftest import MG, mg_settings
+from tests.conftest import MG, REPO, mg_settings
 
 NETWORK = {"opendata", "papers", "organizations", "pdfs", "streets_osm", "pois_wiki"}
 
@@ -162,3 +164,65 @@ def test_the_marker_share_of_the_sample_is_recorded(run: Layout) -> None:
     texts = pl.read_parquet(run.texts)
     with_marker = sum("betrifft" in t.lower() for t in texts.get_column("text").to_list())
     assert (with_marker, texts.height) == (0, 5)
+
+
+# --- Netzschritte gegen die Aufzeichnungen vom 2026-10-12 --------------------------------------
+
+
+def test_the_network_steps_of_the_second_city_use_the_recorded_answers(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """Dieselben Schritte, dieselben Aufzeichnungen wie bei Düsseldorf, nur ein anderes Profil.
+
+    Ein Stimmbezirk (10404, Wahlbezirk 04) genügt: die Fake-Session antwortet je URL einmal, und
+    geprüft wird, dass Overpass-, SPARQL- und GeoSearch-Antwort durch die Kette kommen.
+    """
+    import json
+
+    from tests.fakes import FakeSession, response
+
+    http = REPO / "tests" / "fixtures" / "http"
+    source = settings.sources
+    layout = replace(
+        Layout.from_settings(settings),
+        data_root=tmp_path / "data",
+        cache_root=tmp_path / "cache",
+        reference_root=MG,
+    )
+    bootstrap(layout)
+    run_pipeline(build_steps(settings, layout), settings, ["shapes"])
+    canonical = json.loads(layout.precincts_geojson.read_text(encoding="utf-8"))
+    one = {
+        **canonical,
+        "features": [f for f in canonical["features"] if f["properties"]["stimmbezirk"] == "10404"],
+    }
+    assert one["features"], "Stimmbezirk 10404 fehlt in der Fixture"
+    layout.precincts_geojson.write_text(json.dumps(one), encoding="utf-8")
+    routes: dict[str, Any] = {
+        source.osm.overpass_endpoint: response(
+            source.osm.overpass_endpoint,
+            payload=json.loads((http / "overpass_mg_10404.json").read_text(encoding="utf-8")),
+        ),
+        source.wikidata.sparql_endpoint: response(
+            source.wikidata.sparql_endpoint,
+            payload=json.loads((http / "wikidata_sparql_mg.json").read_text(encoding="utf-8")),
+        ),
+        source.wikidata.wikipedia_api: response(
+            source.wikidata.wikipedia_api,
+            payload=json.loads(
+                (http / "wikipedia_geosearch_mg_10404.json").read_text(encoding="utf-8")
+            ),
+        ),
+    }
+    steps = build_steps(settings, layout, FakeSession(routes), sleep=lambda _: None)
+    outcomes = run_pipeline(steps, settings, ["streets_osm", "pois_wiki"], online=True, force=True)
+    assert [o.status for o in outcomes] == ["ausgeführt", "ausgeführt"]
+
+    streets = json.loads(layout.streets.read_text(encoding="utf-8"))
+    assert [e["stimmbezirks_id"] for e in streets] == ["10404"]
+    assert streets[0]["wahlbezirk_id"] == 4
+    assert "Vorster Straße" in streets[0]["straßen"]  # der Name, den das Verzeichnis dort führt
+
+    pois = json.loads(layout.pois.read_text(encoding="utf-8"))
+    assert pois and all("label" in entry for entry in pois)
+    assert any(entry.get("url") for entry in pois)  # SPARQL-Treffer tragen die Artikel-URL

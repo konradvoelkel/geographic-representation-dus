@@ -184,3 +184,53 @@ def test_model_knows_every_key_the_server_sends_for_organizations() -> None:
 def test_organization_without_dates_is_always_active() -> None:
     org = OparlOrganization(id="x")
     assert org.active_on(dt.date(1900, 1, 1)) and org.membership == ()
+
+
+# --- Option 01: dieselbe Prüfung für den Body einer zweiten Stadt ------------------------------
+
+MG_FIXTURE = REPO / "tests" / "fixtures" / "oparl" / "papers_page_0011.json"
+
+
+@pytest.fixture(scope="module")
+def mg_page() -> PaperPage:
+    return PaperPage.model_validate_json(MG_FIXTURE.read_text(encoding="utf-8"))
+
+
+def test_the_second_body_answers_with_the_same_contract(mg_page: PaperPage) -> None:
+    """Body 0011 (Mönchengladbach), abgerufen am 2026-10-12; eine andere Stadt, dasselbe Schema."""
+    assert len(mg_page.data) == 6
+    assert mg_page.pagination is not None and mg_page.pagination.elements_per_page == 200
+    assert mg_page.links.next is not None and mg_page.links.next.endswith("?page=2")
+    for paper in mg_page.data:
+        assert paper.id.startswith("http://ris-oparl.itk-rheinland.de/Oparl/bodies/0011/")
+        assert paper.body is not None and paper.body.endswith("/bodies/0011")
+        assert isinstance(paper.date, dt.date)
+    # Dokumentarten heißen hier anders als in Düsseldorf; der Vertrag kennt nur den String
+    assert {p.paper_type for p in mg_page.data} >= {"3 - Fraktionsantrag"}
+
+
+def test_the_model_knows_every_key_of_the_second_body() -> None:
+    raw = json.loads(MG_FIXTURE.read_text(encoding="utf-8"))
+    assert set(raw) <= known_aliases(PaperPage)
+    assert set(raw["pagination"]) <= known_aliases(Pagination)
+    assert set(raw["links"]) <= known_aliases(Links)
+    paper_keys = {k for item in raw["data"] for k in item}
+    file_keys = {
+        k
+        for item in raw["data"]
+        for f in [item.get("mainFile"), *item.get("auxiliaryFile", [])]
+        if f
+        for k in f
+    }
+    assert paper_keys <= known_aliases(OparlPaper), paper_keys - known_aliases(OparlPaper)
+    assert file_keys <= known_aliases(OparlFile), file_keys - known_aliases(OparlFile)
+
+
+def test_the_second_body_has_a_paper_without_a_main_file(mg_page: PaperPage) -> None:
+    """Der Fall, an dem ``primary_file`` greifen muss; die Fixture hält ihn fest."""
+    raw = json.loads(MG_FIXTURE.read_text(encoding="utf-8"))
+    assert any("mainFile" not in item for item in raw["data"])
+    without_main = [p for p in mg_page.data if p.main_file is None]
+    assert without_main and all(
+        p.primary_file is None or p.primary_file.download_url for p in without_main
+    )
