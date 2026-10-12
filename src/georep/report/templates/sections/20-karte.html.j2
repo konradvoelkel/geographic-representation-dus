@@ -1,18 +1,19 @@
+{% from "macros.html.j2" import switcher %}
 <section id="karte">
 <h2>Karte der Wahlbezirke</h2>
 <div class="controls">
 {# Option 07: der Umschalter erscheint erst, wenn es mehr als eine Einfärbung gibt; einer
-   laufenden Periode fehlt die Wahlbeteiligung. Eine weitere Kennzahl hängt ihr Radio hier an. #}
-{% if model.regression or visuals.bodies_legend %}
-<fieldset><legend>Einfärbung</legend>
-<label><input type="radio" name="metric" value="rate" checked> Trefferquote</label>
+   laufenden Periode fehlt die Wahlbeteiligung. Eine weitere Kennzahl ist ein Eintrag in dieser
+   Liste, ein data-class-<value> je Fläche und eine Legende unten (Punkt 46). #}
+{% set variants = [{"value": "rate", "label": "Trefferquote"}] %}
 {% if model.regression %}
-<label><input type="radio" name="metric" value="turnout"> Wahlbeteiligung</label>
+{% set variants = variants + [{"value": "turnout", "label": "Wahlbeteiligung"}] %}
 {% endif %}
 {% if visuals.bodies_legend %}{# Option 05 #}
-<label><input type="radio" name="metric" value="bodies"> Anteil eigene Bezirksvertretung</label>
+{% set variants = variants + [{"value": "bodies", "label": "Anteil eigene Bezirksvertretung"}] %}
 {% endif %}
-</fieldset>
+{% if variants|length > 1 %}
+{{ switcher("metric", "Einfärbung", variants) }}
 {% endif %}
 {% if visuals.pois %}
 <label><input type="checkbox" id="show-pois"> {{ visuals.pois|num }} Orte als Punkte zeigen</label>

@@ -1,1 +1,17 @@
 {% macro term(t) %}<button class="term">{{ t.term }}</button>{% endmacro %}
+{#
+  Punkt 46: der Umschalter einer Kennzahl. ``variants`` ist eine Liste von Abbildungen mit
+  ``value`` (der Name der Variante, eindeutig auf der ganzen Seite), ``label`` (der Text am Radio)
+  und optional ``scale`` (die Farbrampe: ohne Angabe die sequenzielle ``q``, ``d`` ist die
+  divergierende um das Mittel). Die erste Variante ist die Standardansicht und steht auch ohne
+  JavaScript da. Die Elemente der Seite tragen die Varianten als ``data-class-<value>``,
+  ``data-text-<value>`` und ``data-value-<value>``, die Legenden heißen ``#legend-<value>``; das
+  Basis-JavaScript im Rahmen tauscht sie. Ein Muster für alle Abschnitte.
+#}
+{% macro switcher(group, label, variants) %}
+<fieldset class="switcher"><legend>{{ label }}</legend>
+{% for variant in variants %}
+<label><input type="radio" name="{{ group }}" value="{{ variant.value }}"{% if variant.get("scale") %} data-scale="{{ variant.get("scale") }}"{% endif %}{% if loop.first %} checked{% endif %}> {{ variant.label }}</label>
+{% endfor %}
+</fieldset>
+{% endmacro %}

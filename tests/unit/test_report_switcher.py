@@ -40,23 +40,29 @@ def test_the_variants_of_one_group_do_not_clash_with_another(mini_page: str) -> 
     assert len(values) == len(set(values)), values
 
 
-def test_the_diverging_variants_name_their_scale(mini_page: str) -> None:
-    """Ohne ``data-scale`` nimmt das JavaScript die sequenzielle Rampe ``q``."""
-    scales = dict(
-        re.findall(r'value="([\w-]+)"(?:[^>]*?)data-scale="(\w+)"', mini_page),
-    )
-    assert scales, "keine Variante nennt eine Skala"
-    assert set(scales.values()) == {"d"}  # heute gibt es genau eine zweite Rampe
+def test_a_variant_names_a_scale_only_if_the_page_defines_it(mini_page: str) -> None:
+    """Ohne ``data-scale`` nimmt das JavaScript die sequenzielle Rampe ``q``.
+
+    Jede andere Rampe muss als CSS-Variablen und als Klassen da sein, sonst färbt der Umschalter
+    die Flächen mit einer Klasse ohne Regel und die Karte wird weiß.
+    """
+    scales = set(re.findall(r'data-scale="(\w+)"', mini_page))
+    assert scales <= {"d"}  # heute gibt es genau eine zweite Rampe
+    for ramp in scales | {"d"}:
+        for step in range(5):
+            assert f"--{ramp}{step}:" in mini_page
+            assert f".{ramp}{step} {{ fill: var(--{ramp}{step}); }}" in mini_page
 
 
 def test_the_base_script_switches_classes_texts_values_and_legends(mini_page: str) -> None:
     script = mini_page.split("window.georep", 1)[0]
     for needle in (
-        'fieldset.switcher input[type="radio"]',
+        "fieldset.switcher",
+        'input[type="radio"]',
         '"[data-class-" + value + "]"',
         '"[data-text-" + value + "]"',
         '"[data-value-" + value + "]"',
-        '"legend-" + value',
+        'getElementById("legend-" + ',
         'radio.dataset.scale || "q"',
     ):
         assert needle in script, needle
