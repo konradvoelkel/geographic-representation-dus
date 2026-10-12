@@ -1,9 +1,9 @@
 """Regel 2 „stadtweite Begriffe": die Schwelle und wer über ihr liegt.
 
 Begriffe mit auffällig hoher Dokumenthäufigkeit stehen in vielen Dokumenten, die nicht von ihrem
-Wahlbezirk handeln („hofgarten" 172, „schulweg" 144 auf der Referenz). Die Regel benennt sie, statt
-sie zu verstecken; ob sie zusätzlich aus der Zählung fallen, ist ein eigener Schalter
-(``search.citywide_exclude``, standardmäßig aus). Siehe docs/decisions.md, Punkt 44.
+Wahlbezirk handeln („hofgarten" 172, „schulweg" 144 auf der Referenz). Die Regel benennt sie und
+ändert keine Zahl: ein Schalter, der sie aus der Zählung nimmt, gibt es nicht
+(docs/decisions.md, Punkt 44b).
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ import polars as pl
 import pytest
 from pydantic import ValidationError
 
-from georep.analysis.hits import citywide_terms, without_terms
+from georep.analysis.hits import citywide_terms
 from georep.search.index import HITS, PAPER_IDS, TERM
 from georep.settings import Search, Settings, load_settings
 
@@ -64,20 +64,23 @@ def test_the_strongest_terms_come_first() -> None:
     assert found.terms == ("b", "d", "a", "f")
 
 
-def test_terms_can_be_taken_out_of_a_dictionary() -> None:
-    dictionary = pl.DataFrame(
-        {"wahlkreis_id": [1, 2], "suchbegriffe": [["a", "b"], ["b", "c"]]},
-        schema={"wahlkreis_id": pl.Int64, "suchbegriffe": pl.List(pl.String)},
-    )
-    out = without_terms(dictionary, ("b",))
-    assert out.get_column("suchbegriffe").to_list() == [["a"], ["c"]]
-    assert without_terms(dictionary, ()).equals(dictionary)
-
-
 def test_the_defaults_show_the_list_and_count_everything(settings: Settings) -> None:
-    assert settings.search.citywide_quantile == 0.99  # 58 der 5841 Begriffe auf der Referenz
+    assert settings.search.citywide_quantile == 0.99  # 55 von 5727 Begriffen auf der Referenz
     assert settings.search.citywide_median_factor == 0.0
-    assert settings.search.citywide_exclude is False  # nur Anzeige, keine Korrektur
+
+
+def test_there_is_no_switch_that_takes_the_terms_out_of_the_count(settings: Settings) -> None:
+    """Regel 2 ist Anzeige, nichts weiter (decisions.md, Punkt 44b).
+
+    Ein Schalter, der die stadtweiten Begriffe aus der Zählung nimmt, hat es am 2026-10-12 kurz
+    gegeben; er wirkte nur im Schritt ``results``, während ``timeline``, ``weights`` und die
+    Berichtsseite weiter das ganze Wörterbuch lasen. Statt ihn an fünf Stellen durchzuziehen, ist
+    er weg: die Schwelle trifft auch echte Ortsnamen, und niemand könnte ihren Ausschluss
+    begründen.
+    """
+    assert not hasattr(settings.search, "citywide_exclude")
+    with pytest.raises(ValidationError):
+        Search(text_split_marker="betrifft", citywide_exclude=True)  # type: ignore[call-arg]
 
 
 @pytest.mark.parametrize(
@@ -87,7 +90,6 @@ def test_the_defaults_show_the_list_and_count_everything(settings: Settings) -> 
         {"citywide_quantile": 1.0},
         {"citywide_quantile": -0.5},
         {"citywide_median_factor": -1.0},
-        {"citywide_quantile": 0.0, "citywide_exclude": True},  # Ausschluss ohne Schwelle
     ],
 )
 def test_a_contradictory_threshold_is_an_error(overrides: dict[str, object]) -> None:
