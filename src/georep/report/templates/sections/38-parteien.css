@@ -23,10 +23,9 @@
 #urheber-tabelle td.p2 { background: var(--p2); }
 #urheber-tabelle td.p3 { background: var(--p3); }
 #urheber-tabelle td.p4 { background: var(--p4); }
-#urheber-tabelle td[class*="p"] { cursor: help; }
-.swatch.p0 { background: var(--p0); } .swatch.p1 { background: var(--p1); }
-.swatch.p2 { background: var(--p2); } .swatch.p3 { background: var(--p3); }
-.swatch.p4 { background: var(--p4); }
+/* Nur die schattierten Parteispalten tragen den Tooltip, nicht jede Zelle mit einem p im Klassennamen. */
+#urheber-tabelle td.p0, #urheber-tabelle td.p1, #urheber-tabelle td.p2,
+#urheber-tabelle td.p3, #urheber-tabelle td.p4 { cursor: help; }
 /* Die Legende der Tönung steht in einer Zeile, nicht untereinander wie die der großen Karte. */
 .party-legend ul { display: flex; flex-wrap: wrap; gap: .35rem 1rem; align-items: center; }
 .party-legend li { margin: 0; }

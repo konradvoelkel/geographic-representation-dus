@@ -252,3 +252,37 @@ Zwischen 13 und 2 BLAS-Threads unterscheiden sich `themen.parquet` und `themen_a
 Bytes (gemessen 2026-10-12): die Reduktionsreihenfolge in NMF ändert die letzten Stellen. Labels, dominierte
 Dokumente und alle Kennzahlen der Seite blieben dabei gleich. Darum prüfen die Golden-Master-Tests auf der
 Referenz nur Invarianten (20 Themen, Zerlegung der Zählung, Labels ohne Stoppwörter), keine einzelnen Zahlen.
+
+## Schritt `parties` (2026-10-12, Option 04)
+
+Gemessen auf der vollen Referenz (19 108 Dokumente, 41 Wahlbezirke, sechs Parteien), bestes von fünf
+Läufen, Verträge an:
+
+| Teil | Zeit | was dort passiert |
+|---|---|---|
+| `classify_originators` | 0,30 s | die Zuordnung je Dokument: 19 108 Aufrufe von `classify_document` |
+| `originators_by_district` | 0,004 s | Explodieren der `paper_ids`, Join, Pivot über 41 Zeilen |
+| `party_hits` | 0,008 s | Gitter 41 × 6, zwei Joins, die Anteile |
+| `party_correlations` | 0,005 s | sechs Mal `pearsonr` und `spearmanr` über 40 bis 41 Punkte |
+| **Schritt gesamt** | **0,6 s** | dazu das Lesen des Korpus und drei Parquet-Schreibvorgänge |
+
+Der Schritt liegt damit weit unter dem Ziel von 5 s aus dem Plan; der volle Offline-Lauf wächst von
+rund 7 s auf rund 13 s (der größere Teil davon ist der Index, nicht `parties`).
+
+`georep profile parties` (cProfile, verdreifacht reine Python-Zeit) zeigt die Verteilung innerhalb der
+Zuordnung: 19 108 Aufrufe `classify_document` (0,35 s kumulativ), davon 45 843 Aufrufe
+`Patterns.in_settings_order` (0,20 s) und 64 951 Aufrufe der Property `Patterns.keys` (0,17 s), die bei
+jedem Aufruf das Schlüsseltupel neu baut. Das ist der Preis der Sortierung in Settings-Reihenfolge, die
+der crosshair-Befund vom 2026-10-12 nötig gemacht hat. Ein Zwischenspeicher auf `keys` und der
+Ordnungsabbildung würde rund 0,2 s sparen; bei 0,6 s für den ganzen Schritt und 13 s für die Kette ist
+das nicht nötig, steht hier aber für den Fall, dass der Korpus einmal um eine Größenordnung wächst.
+
+### Warum nur ein neuer Benchmark (2026-10-12)
+
+In `tests/bench/` steht aus Option 04 nur `test_classify_originators`: das ist die eine neue Schleife
+über jedes Dokument, und ihr Minimum streute über drei Läufe gleichen Codes um 6 %. Die
+Aggregationsfunktionen bleiben draußen. Ihr Minimum sprang ohne jede Codeänderung von 6,5 auf 10,3 ms
+(58 %) und hätte das 20-%-Gate zum Daueralarm gemacht — dieselbe Lehre wie bei den
+Submillisekunden-Stufen weiter oben: ein Gate braucht eine Stufe, deren Rauschen unter der Schwelle
+liegt, sonst misst es die Maschine und nicht den Code.
+

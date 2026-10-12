@@ -93,8 +93,8 @@ files = ["src/georep", "tests"]
 
 [[tool.mypy.overrides]]
 # Ohne Stubs und ohne py.typed, Stand 2026-10-12: flashtext (letzte Version 2018, hinter dem
-# Matcher-Protokoll), scipy (nur linregress) und sklearn (nur TfidfVectorizer und NMF in
-# analysis/topics.py; scikit-learn 1.9.1 liefert kein py.typed).
+# Matcher-Protokoll), scipy (linregress, pearsonr, spearmanr) und sklearn (nur TfidfVectorizer
+# und NMF in analysis/topics.py; scikit-learn 1.9.1 liefert kein py.typed).
 module = ["flashtext.*", "scipy.*", "sklearn.*"]
 ignore_missing_imports = true
 
