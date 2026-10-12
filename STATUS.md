@@ -27,14 +27,15 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
 
 ## Zahlen (2026-10-12, Branch `feat/06-gewichtung`)
 
-- Tests: 308, davon zwei `slow` und zwölf `bench`; schnelle Suite parallel in 25 s; Abdeckung 98,6 %.
+- Tests: 310, davon zwei `slow` und zwölf `bench`; schnelle Suite parallel in 20 bis 25 s; Abdeckung 98,6 %; Mutationsquote über `analysis/weights.py` 82 % (`docs/mutation-2026-10-12.md`).
 - Laufzeit: voller Offline-Lauf rund 19 s (Themenmodell 9 s, Index 4 s, Gewichtung 1 s, Berichtsseite 1,6 s); `pytest -m slow` 43 s; `nox -s bench` grün gegen die frische Baseline; `nox -s verify` rund 4 min.
 - Berichtsseite: `index.html` 726 KB (Budget 1,5 MB), 23 Download-Dateien, 25 Dateien zusammen 10,2 MB.
 
 ## Bekannt
 
 - deal 4.24.6: `deal.raises` vergleicht exakte Typen, keine Unterklassen; `deal.has()`/`deal.pure` sind nicht reentrant (Patch bleibt nach Rekursion stehen). Beides umschifft (NetworkError, `deal.safe` für `deep_merge`), nicht upstream gemeldet.
-- Zwölf überlebende Mutanten liegen in Vertrags-Lambdas (Grenzen von r und p); kein Test verletzt sie genau an der Grenze. Bewusst nicht nachgezogen.
+- Zwölf überlebende Mutanten liegen in Vertrags-Lambdas (Grenzen von r und p); kein Test verletzt sie genau an der Grenze. Bewusst nicht nachgezogen; in `analysis/weights.py` sind es 25 derselben Sorte plus zwei äquivalente (`docs/mutation-2026-10-12.md`).
+- `nox -s mutate` über `search/` und `analysis/` dauert seit dem Themenmodell sehr lange: jeder Mutant lässt die schnelle Suite laufen, und die rechnet mehrfach NMF. Der Lauf vom 2026-10-12 wurde nach 35 Minuten abgebrochen; gezielt je Modul sind es vier Minuten.
 - Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.
 - Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`; `georep status` zeigt `pdfs` als „offen: Settings geändert", weil `--limit 200` im Stamp steht. Das ist richtig so.
 - Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).

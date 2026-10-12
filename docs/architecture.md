@@ -256,10 +256,11 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `bench` | heiße Pfade gegen den letzten gespeicherten Lauf, rot ab 20 % langsamer im Minimum | lokal |
 | `profile -- SCHRITT` | ein echter Schritt unter cProfile | lokal |
 | `verify` | crosshair über die reinen Funktionen mit Verträgen, rund drei Minuten | lokal |
-| `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung | lokal |
+| `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung; mit `analysis/topics.py` im Ziel dauert die Session sehr lange (jeder Mutant rechnet NMF), darum besser gezielt je Modul | lokal |
 
-Stand 2026-10-12: 308 Tests, schnelle Suite in 25 s, Abdeckung 98,6 %; Mutationsquote zuletzt 79 %
-([mutation-2026-10-11.md](mutation-2026-10-11.md)).
+Stand 2026-10-12: 310 Tests, schnelle Suite in 20 bis 25 s, Abdeckung 98,6 %; Mutationsquote 79 % über
+`search/` und `analysis/` ([mutation-2026-10-11.md](mutation-2026-10-11.md)), 82 % über das neue
+`analysis/weights.py` ([mutation-2026-10-12.md](mutation-2026-10-12.md)).
 
 ## Bekannte Grenzen
 

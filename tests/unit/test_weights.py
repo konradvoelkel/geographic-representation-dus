@@ -273,3 +273,36 @@ def test_variants_without_topics_and_without_rules_has_only_the_fixed_rows() -> 
         dictionary, index, _types({"p1": "Antrag"}), _voters([1]), ELIGIBLE, 2, [], [], None
     )
     assert frame.get_column("variante").to_list() == [BY_DISTRICTS, UNIT, BY_IDF]
+
+
+def test_idf_is_degenerate_only_for_a_single_document() -> None:
+    """Die Grenze liegt bei einem Dokument, nicht bei zweien (ein Mutant lebte hier)."""
+    assert idf_weight(1, 2) == 1.0 and idf_weight(2, 2) == 0.0
+    single = pl.DataFrame({"anzahl_treffer": [0, 1]}, schema={"anzahl_treffer": pl.Int64})
+    assert single.select(idf_expression(1)).get_column("gewicht_idf").to_list() == [1.0, 0.0]
+
+
+def test_combined_multiplies_its_factors() -> None:
+    """``kombiniert`` ist das Produkt der genannten Faktoren, auch zweier derselben Sorte."""
+    dictionary = _dictionary({1: ["a", "b"], 2: ["b"]})
+    index = _index({"a": ["p1"], "b": ["p1", "p2"]})
+    types = _types({"p1": "Antrag SPD", "p2": "Beschlussvorlage"})
+    rules = [TypeRules("antraege_halb", 1.0, (("^z?(antrag|anfrage)", 0.5),))]
+
+    # Begriffsgewichte bei vier Dokumenten: a in einem Bezirk und einem Dokument (1,0 und 1,0),
+    # b in zwei Bezirken und zwei Dokumenten (0,5 und (ln4 − ln2)/ln4 = 0,5).
+    def totals(combined: list[str]) -> dict[int, float]:
+        frame = variants(
+            dictionary, index, types, _voters([1, 2]), ELIGIBLE, 4, rules, combined, None
+        )
+        return dict(
+            frame.filter(pl.col("variante") == COMBINED)
+            .select("wahlkreis_id", "anzahl_treffer_gewichtet")
+            .iter_rows()
+        )
+
+    # idf × Dokumentart: Bezirk 1 nimmt je Dokument das Maximum über die Begriffe (1,0 und 0,5),
+    # mal 0,5 für den Antrag p1 und 1,0 für die Vorlage p2.
+    assert totals([BY_IDF, "antraege_halb"]) == {1: 1.0 * 0.5 + 0.5 * 1.0, 2: 0.25 + 0.5}
+    # Zwei Begriffsfaktoren: a bleibt 1,0, b wird 0,5 · 0,5 = 0,25.
+    assert totals([BY_DISTRICTS, BY_IDF]) == {1: 1.0 + 0.25, 2: 0.25 + 0.25}
