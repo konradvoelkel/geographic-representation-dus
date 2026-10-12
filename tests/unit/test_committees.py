@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import deal
 import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
@@ -135,3 +136,55 @@ def test_the_rest_class_counts_the_documents_without_a_committee() -> None:
 def test_the_profile_default_keeps_the_classifier_on() -> None:
     settings = load_settings(cwd=Path("/nonexistent"))
     assert settings.classify.enabled and settings.bodies.committees
+
+
+# --- Die Zeilenfolge eines Joins ist nicht festgelegt (crosswalk.py, prep/context.py) ----------
+
+
+def test_two_rows_for_one_document_are_a_contract_violation() -> None:
+    """Ein zweites Gremium je Dokument würde den Join verlängern und alles verschieben.
+
+    ``papers_gremien.parquet`` hat eine Zeile je Dokument (Vertrag in ``prep.bodies``); ein von
+    Hand gebauter Frame muss das auch halten, sonst stünde die Wahrscheinlichkeit des einen
+    Dokuments beim anderen.
+    """
+    corpus, bodies = _corpus()
+    doubled = pl.concat([bodies, bodies.head(1)])
+    with pytest.raises(deal.PreContractError):
+        assign_committees(corpus, doubled, _topics(), _classify(), _rules())
+
+
+def test_the_order_of_the_inputs_does_not_change_the_result() -> None:
+    """Dieselben Daten in anderer Zeilenfolge: dieselbe Zuordnung, Zeile für Zeile."""
+    corpus, bodies = _corpus()
+    straight = assign_committees(corpus, bodies, _topics(), _classify(), _rules())
+    shuffled = assign_committees(
+        corpus.sample(fraction=1.0, shuffle=True, seed=7),
+        bodies.sample(fraction=1.0, shuffle=True, seed=11),
+        _topics(),
+        _classify(),
+        _rules(),
+    )
+    assert_frame_equal(straight.papers, shuffled.papers)
+    assert_frame_equal(straight.table, shuffled.table)
+
+
+def test_the_result_carries_exactly_the_documents_with_text_in_order() -> None:
+    corpus, bodies = _corpus()
+    corpus = pl.concat(
+        [corpus, pl.DataFrame({"id": ["ZZZ-99"], "text": [""]}, schema=corpus.schema)]
+    )
+    found = assign_committees(corpus, bodies, _topics(), _classify(), _rules())
+    expected = sorted(corpus.filter(pl.col("text") != "").get_column("id").to_list())
+    assert found.papers.get_column("id").to_list() == expected
+
+
+def test_a_document_without_a_gremium_counts_as_without_consultation() -> None:
+    """Ein Dokument, das in ``bodies`` fehlt, ist „ohne Ausschussberatung" und kein Fehler."""
+    corpus, bodies = _corpus()
+    without = bodies.filter(pl.col("id") != "AAA-00")
+    found = assign_committees(corpus, without, _topics(), _classify(), _rules())
+    assert found.papers.height == corpus.height
+    assert "AAA-00" in found.papers.get_column("id").to_list()
+    # Die drei Ratsdokumente und das fehlende Ausschussdokument.
+    assert int(found.table.get_column("ohne_ausschussberatung").sum()) == 4
