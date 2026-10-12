@@ -118,8 +118,13 @@ def claim_target(layout: Layout, out: Path | None) -> Path:
                 f"ein eigener Ordner oder einer mit {MARKER_NAME} darf es sein"
             )
     root.mkdir(parents=True, exist_ok=True)
-    write_text(root / MARKER_NAME, f"georep publish {__version__}\n")
+    _mark(root)
     return root
+
+
+def _mark(root: Path) -> None:
+    """Die Markerdatei, an der ``claim_target`` einen eigenen Zielordner erkennt."""
+    write_text(root / MARKER_NAME, f"georep publish {__version__}\n")
 
 
 def _copy_tree(source: Path, target: Path) -> None:
@@ -206,6 +211,9 @@ def publish_sites(
         if source.resolve() != target.resolve():
             _copy_tree(source, target)
         found.append(read_city_site(target, href, settings.geo.working_crs))
+    # Die Kopie der ersten Stadt ersetzt den ganzen Zielordner, mit ihm den Marker aus claim_target;
+    # ohne ihn verweigerte der zweite Lauf in denselben Ordner (2026-10-12)
+    _mark(root)
     write_neighbours(found, root)
     comparison = len(found) >= 2
     if comparison:
