@@ -1,6 +1,6 @@
 # Plan 03: Kontrollvariablen
 
-Stand 2026-10-11, Branch `feat/03-kontrollvariablen`. Status: in Arbeit (seit 2026-10-12).
+Stand 2026-10-12, Branch `feat/03-kontrollvariablen`. Status: im Review (Stufen A bis F umgesetzt am 2026-10-12).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.3 mit Konrads Antworten vom 2026-10-11
 (Quartiersatlas ausdrücklich erlaubt, andere Daten mit Lizenz und einem Abschnitt „Abgeleitete Daten" auf der
@@ -394,6 +394,9 @@ Aufwand in Agentenstunden, geschätzt am 2026-10-11; zusammen rund 22 h.
 | 3.6 | Sollen Terme in Prozent (Anteile × 100) und die Trefferquote unskaliert bleiben, wie in Tabelle 5? | Lesbarkeit der Koeffizienten gegen Vergleichbarkeit mit Tabelle 5 | Prozent für Anteile, Trefferquote unskaliert, dazu standardisierte Koeffizienten als Spalte |
 | 3.7 | Welcher der beiden Datensätze entscheidet bei Stimmbezirk 3301 (GeoJSON Hafen, CSV Unterbilk)? | Nur 297 Wahlberechtigte; betrifft den Attribut-Crosswalk, nicht die Sozialräume | das GeoJSON, wie im Briefing; Test dokumentiert die Abweichung |
 
+| 3.8 | Das Parteimodell C erreicht VIF 6,7 (Handlungsbedarf-Score), ohne die Ausreißer 7,5 -- mehr als die in Stufe D.6 erhofften 5. Reicht die Grenze 10, oder soll C ohne die Parteianteile auskommen? | Deutbarkeit des Parteimodells | Grenze 10, umgesetzt und getestet; die Spalte VIF steht auf der Seite, der Hinweis dazu auch | offen, blockiert nicht (2026-10-12) |
+| 3.9 | Tabelle 6 steht als eine Tabelle je Modell auf der Seite (Term × Koeffizient, Standardfehler, p, standardisiert, VIF) statt als eine breite Tabelle mit einer Spalte je Modell. Ist das recht? | vier Zahlen je Term und Modell wären zwölf Spalten geworden | je Modell eine Tabelle; der Vergleich steht im Satz zur Deutung und in Tabelle 6b | offen, blockiert nicht (2026-10-12) |
+
 Keine Frage blockiert; alles läuft unter den Annahmen weiter.
 
 ## 9. Vorbereitung für Option 10 (was wird konfigurierbar, welche Modulgrenze entsteht)
@@ -476,3 +479,33 @@ Für Option 3 im Besonderen:
 - **Reihenfolge**: 03 merged als Vierte (nach 08, 05, 06); 05 hat dann `columns.results.city_district` und
   nutzt `unit_weights` für Stadtbezirke; 03 ergänzt den Stadtteil daneben.
 - **Fragen**: 3.1 und 3.3 offen (fragen.md); 3.2, 3.4, 3.5, 3.6, 3.7 wie angenommen.
+
+## 11. Was beim Bauen anders kam (2026-10-12)
+
+Umgesetzt sind alle Stufen; diese Punkte weichen vom Plan ab, je mit Grund.
+
+- **`area_shares` liefert beide Schlüssel als Text**, nicht `target_id` als Int64 (00-synergien.md § 2 Punkt 4):
+  die Schlüssel der Raumeinheiten tragen eine führende Null (`011001`), ein Int64 könnte sie nicht führen. Die
+  Spaltennamen bleiben, wie verabredet; Option 02 castet beim Join, wenn sie Int64 braucht.
+- **Die Probe gegen den Attribut-Crosswalk** (Stufe B.4) nutzt die zu Stadtteilen verschmolzenen Raumeinheiten
+  statt der Stadtteilgrenzen 2025: so prüft sie die Methode und nicht zwei Portaldateien verschiedener
+  Jahrgänge, und ein Datensatz weniger wandert in die Fixture. Die erwarteten 0,02 Abweichung waren zu
+  optimistisch; gemessen sind im Mittel 0,001 und höchstens 0,067, weil die Stadt einen Stimmbezirk ganz einem
+  Stadtteil zuordnet und die Fläche ihn teilt. Der dominante Stadtteil stimmt in 40 von 41 Wahlbezirken.
+- **Keine Stadtteilnummer in den Settings.** Produktiv wird sie nicht gebraucht (die Variablen kommen aus den
+  Raumeinheiten), nur in der Probe; der Test liest die Eigenschaft des Mini-GeoJSON selbst. Wenn Option 05
+  `columns.results.city_district` bringt, steht der Stadtteil daneben, ohne dass hier etwas wartet.
+- **Tabelle 6 ist je Modell eine Tabelle** (§ 8, Frage 3.9), und **Modell A kommt aus `fit_ols`** statt aus
+  `regression_pair`: ein Test hält beide auf allen Stellen gleich, und so stehen in Tabelle 6 überall dieselben
+  Größen (t, standardisiert, VIF, adjustiertes R²), die `regression_pair` nicht liefert. Tabelle 5 rechnet
+  unverändert `regression_pair`.
+- **Die Plots tragen nur `data-id`** statt der vollen Tooltip-Attribute: vier Plots mit je 41 Punkten kosteten
+  sonst 95 KB statt 37 KB. Ein Abschnitts-Skript bindet den Klick an `window.georep.select`; der Tooltip bleibt
+  Karte und Streudiagramm.
+- **`PublishedTable.describe`** ist neu im Register (F2): die Spalten von `wahlbezirke_kontext` stehen in den
+  Settings, eine statische Spaltendoku könnte sie nicht nennen. `column_docs` nimmt dafür die Settings entgegen.
+- **VIF im Parteimodell** erreicht 6,7 statt der erhofften unter 5 (§ 8, Frage 3.8); die Grenze 10 hält ein Test.
+- **Zwei Funde nebenbei**: ein Polars-Join legt die Zeilenfolge nicht fest, und eine Fließkommasumme hängt von
+  ihr im letzten Bit ab -- `aggregate_context` und `district_weights` sortieren jetzt vor dem `group_by`, sonst
+  schrieben zwei Läufe verschiedene Parquet-Dateien. Und `erhöht` als nackter TOML-Schlüssel ist ein
+  Syntaxfehler (TOML erlaubt nur `[A-Za-z0-9_-]`), was `tomllib` als „Expected '=' after a key" meldet.

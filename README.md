@@ -24,6 +24,7 @@ uv sync --locked                        # Umgebung aus dem Lockfile
 uv run georep bootstrap                 # Datensatz der Arbeit nach ./data übernehmen
 uv run georep run                       # dreizehn Offline-Schritte, rund 16 s; schreibt auch die Berichtsseite data/site/index.html
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
+uv run georep regress --controls        # Tabelle 6 mit den Kontrollvariablen
 ```
 
 Geprüft am 2026-10-11 aus einem frischen Klon. Wer die Umgebung woanders ablegen will, setzt vor `uv sync`
@@ -62,6 +63,7 @@ Abschnitt „Berichtsseite").
 | `georep bootstrap [--force]` | den Datensatz der Arbeit nach `data_root` übernehmen |
 | `georep export` | die Parquet-Ergebnisse als CSV daneben schreiben |
 | `georep regress [--exclude …] [--varianten]` | lineare Regression Trefferquote gegen Wahlbeteiligung; `--varianten` dieselbe Rechnung je Gewichtungsvariante aus `wahlbezirke_gewichtet.parquet` |
+| `georep regress --controls` | Tabelle 6: dieselbe Regression mit Kontrollvariablen, je Modell und Stichprobe |
 | `georep profile [SCHRITT …] [--top N] [--sort tottime]` | einen echten Schritt unter cProfile, `.prof` für snakeviz |
 
 `--settings DATEI` legt eine weitere TOML-Schicht über die Konfiguration. Exit-Codes: 0 gut, 1 Domänenfehler
@@ -96,8 +98,14 @@ cache_root = "/media/konrad/xtraspace/georep/cache"
 | Straßennamen je Stimmbezirk | OpenStreetMap über die Overpass-API (ODbL), Stand der Arbeit November 2025 | `reference/raw/` |
 | Orte je Stimmbezirk | Wikidata (CC0) per SPARQL, Wikipedia-GeoSearch | `reference/raw/` |
 | Kürzel und Namen der Gremien (Rat, Bezirksvertretungen, Ausschüsse, Beiräte) | Organisationsliste des Ratsinformationssystems (Stand 11.10.2026) und Dokumenttitel; das Gremium je Dokument liest der Parser aus der Drucksachennummer | `src/georep/defaults.toml`, Block `[bodies]` |
+| Sozialdaten je Sozialraum, Stand 31.12.2021 (Kontrollvariablen) | Quartiersatlas Düsseldorf 2024, Open-Data-Portal der Stadt Düsseldorf (CSV und GeoJSON, Datenlizenz Deutschland Namensnennung 2.0) | `context/` |
 
-`reference/` ist der eingefrorene Datensatz der Arbeit und wird nur gelesen; Läufe schreiben nach `data_root`
+`context/` trägt die Fremddaten, aus denen die Kontrollvariablen entstehen, mit Herkunft, Lizenz, Datenstand,
+Abrufdatum und Prüfsummen in [context/README.md](context/README.md); die Seite nennt unter „Abgeleitete Daten"
+je Variable, was daraus wurde. Namensnennung nach Lizenz: Landeshauptstadt Düsseldorf, Amt für Statistik und
+Wahlen: Quartiersatlas Düsseldorf 2024 (Open-Data-Portal), dl-de/by-2-0.
+
+`reference/` und `context/` werden nur gelesen; Läufe schreiben nach `data_root`
 (Standard `./data`), Caches nach `cache_root` (Standard `data_root/cache`). Abgeleitete Daten sind Parquet;
 `georep export` legt CSV daneben, die Berichtsseite unter `data_root/site/` bietet beides zum Download an.
 

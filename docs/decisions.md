@@ -305,3 +305,59 @@ Die Berichtsseite kürt keine „richtige" Gewichtung; sie zeigt, unter wie viel
 5-%-Niveau erreicht (auf der Referenz: 2 von 26 über alle Wahlbezirke, 8 von 26 ohne die Wahlbezirke 1 und
 10). Nicht übernommen: die Karte oder die Bezirkstabelle auf gewichtete Quoten umschalten (die lange Tabelle
 macht das später möglich), und eine Deutung der Themen.
+
+
+## Punkt: Kontrollvariablen aus Fremddaten (Option 03, 2026-10-12)
+
+Die Regression der Arbeit (Tabelle 5) stellt die Wahlbeteiligung allein der Trefferquote gegenüber. Tabelle 6
+nimmt Sozialdaten der Stadt dazu, damit sichtbar wird, ob die Trefferquote mehr ist als ein Spiegel der
+Sozialstruktur. Die Entscheidungen dazu, mit dem, was verworfen wurde:
+
+**OLS ohne statsmodels.** `analysis/ols.py` rechnet die kleinsten Quadrate mit `numpy.linalg.lstsq` und
+`scipy.stats` (rund 230 Zeilen für Koeffizienten, Standardfehler, t, p, R², adjustiertes R², F-Test, VIF,
+standardisierte Koeffizienten und partielle Residuen). statsmodels zieht pandas, und `nox -s deps` verbietet
+es (Konrads Vorgabe, Punkt 4). Einmalig verglichen am 2026-10-12 in einer Wegwerf-Umgebung ohne Lockfile
+(`uv run --isolated --no-project --with statsmodels --with pandas`): statsmodels 0.15.0 stimmt in allen
+genannten Größen der Modelle A, B und C bis auf eine relative Abweichung von 4,0e-14 überein; die Zahlen
+stehen seither als Konstanten in `tests/golden/test_regression_numbers.py`. Verworfen: scikit-learn (liefert
+weder Standardfehler noch p-Werte); die Formeln je Aufrufstelle wiederholen.
+
+**Raumeinheiten statt Stadtteilen, Flächen statt Attributen.** Die Fremddaten liegen je Sozialraum vor (171,
+feiner als die 50 Stadtteile; 31 von 41 Wahlbezirken umfassen mehrere Stadtteile). `crosswalk.area_shares`
+schneidet die 306 Stimmbezirksflächen mit ihnen und `district_weights` wiegt mit den Wahlberechtigten je
+Stimmbezirk: Wahlberechtigte sind die Bezugsgröße von Trefferquote und Wahlbeteiligung, reine Flächenanteile
+zählten Parks wie Wohngebiete. Normiert wird auf die Schnittsumme, nicht auf die Quellfläche, weil die Grenzen
+zweier Portaldateien um Meter abweichen; wie weit, sagt die Spalte `coverage` (auf der Referenz mindestens
+0,99988, Grenze `min_coverage = 0,9`). Beide Schlüssel der Anteile sind Text und nicht `target_id` als Int64
+wie in `plans/00-synergien.md` § 2 Punkt 4 vorgesehen: die Schlüssel der Einheiten tragen eine führende Null.
+Geprüft gegen die Stadt (`tests/golden/test_crosswalk_methods.py`): verschmilzt man die Einheiten zu
+Stadtteilen und vergleicht mit der Zuordnung ganzer Stimmbezirke aus dem GeoJSON, weichen 227 Paare im Mittel
+um 0,001 ab, höchstens um 0,067 (Wahlbezirk 22, Stadtteile 053 und 054), und der dominante Stadtteil stimmt in
+40 von 41 Wahlbezirken; das ist der Unterschied der Methoden (ganzer Stimmbezirk gegen Fläche), kein Fehler.
+Verworfen: die Stadtteilgrenzen 2025 als zweite Datei für diesen Vergleich (verschmolzene Einheiten prüfen nur
+die Methode und sparen einen Datensatz); die Zuordnung über den Präfix der Einheitennummer (ersetzt die
+Flächenanteile nicht).
+
+**Fremddaten im Repo.** `context/` trägt die drei Portaldateien (2,3 MB) mit README (Quelle, Lizenz,
+Datenstand, Abrufdatum, SHA-256); `Layout.context_root` ist die zweite nur lesbare Wurzel, `bootstrap` kopiert
+nach `external/`, der Netzschritt `context_data` holt frisch. So baut der Pages-Workflow ohne Netz, und das
+Portal darf seine Dateien umbenennen. Verworfen: Ablage unter `reference/` (vermischt Arbeit und Ausbau);
+Abruf im Workflow (Netz in CI); nur Prüfsummen und URLs (Frage 3.3, Konrads Entscheidung steht aus).
+
+**Modelle sparsam bei n = 41.** Drei Modelle (A: nur die Trefferquote, B: plus Handlungsbedarf-Score, Anteil
+65 und älter, Fluktuationsrate, C: plus CDU- und AfD-Anteil) und je eine Variable einzeln (Tabelle 6b), beides
+für beide Stichproben der Arbeit. Alles steht in `defaults.toml`; der Code kennt weder die Variablen noch die
+Stadt. Ordinale Stufen werden gleichabständig zu einem Score 1 bis 5 (Frage 3.2); als stetige Gegenprobe steht
+die Mindestsicherungsquote in Tabelle 6b. Fehlende Werte (die Quelle anonymisiert Zahlen unter 3, eine Einheit
+war 2021 unbebaut) fallen aus dem Mittel, die übrigen Gewichte werden renormiert, und je Variable steht das
+Fehlgewicht in der Tabelle; über `max_missing_weight` bricht der Schritt ab (auf der Referenz höchstens 0,057).
+Verworfen: stilles Auffüllen mit 0; schrittweise Modellwahl (bei n = 41 ein Zufallsgenerator); alle sechs
+Parteianteile in einem Modell (VIF bis 76). Das Parteimodell C erreicht VIF 6,7 (Handlungsbedarf), mehr als
+die im Plan erhofften 5, aber unter der Grenze 10, ab der ein Modell nicht mehr zu deuten ist; ein Test hält
+sie, und die Spalte VIF steht auf der Seite.
+
+**Ergebnis, das die Seite zeigt.** Modell A reproduziert Tabelle 5 auf alle Stellen (62,13, p 0,314). Mit den
+Kontrollvariablen erklärt Modell B R² = 0,887 statt 0,026, und der Koeffizient der Trefferquote sinkt auf
+41,33 mit p 0,133: was Tabelle 5 als schwachen Zusammenhang zeigt, erklärt vor allem der soziale
+Handlungsbedarf (standardisiert −0,96). Das steht so auf der Seite, erzeugt aus den Zahlen, mit dem Hinweis
+auf n = 41, den Datenstand 31.12.2021 und die Endogenität der Stimmenanteile.

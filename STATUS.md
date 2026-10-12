@@ -22,14 +22,25 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
 
 - Option 08 Suche (Branch `feat/08-suche`, 2026-10-12, im Review): Abschnitt `15-suche` auf der Berichtsseite mit Suchfeld, Vorschlagsliste nach dem APG-Combobox-Muster, Ergebnisblock und Markierung auf der Karte; `report/search.py` baut 4176 Einträge (2828 Straßen, 1239 Orte, 68 beides, 41 Wahlbezirksnamen), die als JSON in der Seite liegen. Plan und Abnahme: `docs/plans/08-suche.md`.
 
-## Zahlen (2026-10-11)
 - Option 06 Gewichtung (Branch `feat/06-gewichtung`, 2026-10-12, im Review): `analysis/weights.py` rechnet gewichtete Trefferquoten (Maximum über die Begriffe mal Dokumentart mal Thema, jeder Faktor in [0, 1]), `analysis/topics.py` ein Themenmodell mit TF-IDF und NMF (scikit-learn, der einzige Ort mit diesem Import). Zwei Schritte (`topics` 9 s, `weights` 1 s), vier Tabellen, der Seitenabschnitt `34-gewichtung` mit der Sensitivitätstabelle. Einheitsgewichte reproduzieren `anzahl_treffer` (29 573) und Tabelle 5 exakt; `wahlbezirke_auswertung.parquet` und `inverted_index.parquet` bleiben byteidentisch.
+
+- Option 03, Kontrollvariablen (Branch `feat/03-kontrollvariablen`, 2026-10-12, im Review): Fremddaten je
+  Raumeinheit unter `context/` (Quartiersatlas 2024, 2,3 MB, dl-de/by-2-0, README mit Prüfsummen), die drei
+  Schritte `context_data`, `context` und `controls`, `georep.crosswalk.area_shares`/`district_weights`,
+  `georep.analysis.ols` (einmal gegen statsmodels geprüft, Abweichung 4,0e-14), drei Download-Tabellen und die
+  Abschnitte „Kontrollvariablen" und „Abgeleitete Daten" auf der Seite. Befund: mit den Kontrollvariablen
+  erklärt das Hauptmodell R² = 0,89 statt 0,03, der Koeffizient der Trefferquote sinkt auf 41,33 mit p 0,133.
 
 ## Zahlen (2026-10-12, Branch `feat/06-gewichtung`)
 
 - Tests: 412 nach dem Rebase, davon drei `slow` und sechzehn `bench`; schnelle Suite parallel in 20 bis 25 s; Abdeckung 98,6 %; Mutationsquote über `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`).
 - Laufzeit: voller Offline-Lauf rund 19 s (Themenmodell 9 s, Index 4 s, Gewichtung 1 s, Berichtsseite 1,6 s); `pytest -m slow` 43 s; `nox -s bench` grün gegen die frische Baseline; `nox -s verify` rund 4 min.
 - Berichtsseite nach dem Rebase auf 08 und 05: `index.html` 933 KB (Budget 1,5 MB), 29 Download-Dateien, 31 Dateien zusammen 10,4 MB; voller Lauf 16 s.
+
+Auf dem Branch `feat/03-kontrollvariablen` (2026-10-12, noch nicht gemerged): 329 Tests, davon sieben `slow`
+und zehn `bench`, schnelle Suite parallel in 17 bis 22 s, Abdeckung 98,2 %; 46 Python-Dateien, rund 6900
+Zeilen; voller Offline-Lauf 10 s mit elf Schritten (`context` 0,5 s, `controls` 0,1 s, Berichtsseite 1,4 s);
+`index.html` 765 KB; `nox -s verify` 4 min mit `ordinal_score`.
 
 ## Bekannt
 
