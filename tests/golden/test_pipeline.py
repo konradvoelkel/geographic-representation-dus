@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import re
 from pathlib import Path
 
 import polars as pl
@@ -12,6 +14,7 @@ from georep.bootstrap import bootstrap
 from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.pipeline import Outcome, UnknownStepError, build_steps, run_pipeline
+from georep.report.search import fold, fold_ascii
 from georep.report.tables import published
 from georep.settings import Settings, load_settings
 
@@ -132,6 +135,7 @@ def test_pipeline_reproduces_the_thesis_results(
     page = layout.site_index.read_text(encoding="utf-8")
     assert "41 Kommunalwahlbezirke" in page and page.count('id="bezirk-') == 41
     assert layout.site_index.stat().st_size < 1_500_000  # Budget der Seite, Meta-Plan 2026-10 § 2
+    _check_search_section(page)
     assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 3
     assert (layout.site / "karte.html").stat().st_size < 1_000_000
     _compare_results(
@@ -152,3 +156,22 @@ def test_pipeline_reproduces_the_thesis_results(
         for r in exp.iter_rows(named=True)
     }
     assert got_sets == exp_sets
+
+
+def _check_search_section(page: str) -> None:
+    """Option 08: die Suchdaten stehen in der Seite, und keine zwei Einträge fallen zusammen."""
+    match = re.search(
+        r'<script id="suche-daten" type="application/json">(.*?)</script>', page, re.S
+    )
+    assert match is not None
+    payload = json.loads(match.group(1))  # json.loads löst jede Maskierung des < auf
+    entries = payload["entries"]
+    # 4135 kanonische Begriffe (2828 Straßen, 1239 Orte, 68 beides) plus 41 Wahlbezirksnamen.
+    assert len(entries) == 4176
+    assert sum(1 for e in entries if e[3] == "w") == 41
+    assert ["münchener straße", [15, 16, 18, 35, 36, 37, 39], 141, "s"] in entries
+    folded = [(fold(term), kind) for term, _, _, kind in entries]
+    assert len(set(folded)) == len(folded)
+    ascii_folded = [(fold_ascii(term), kind) for term, _, _, kind in entries]
+    assert len(set(ascii_folded)) == len(ascii_folded)
+    assert 'role="option"' not in page  # die Liste füllt erst das JavaScript

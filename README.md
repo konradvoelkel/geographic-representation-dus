@@ -33,7 +33,9 @@ und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
 ## Berichtsseite
 
 `georep run` endet mit dem Schritt `report`: `data/site/index.html` ist eine in sich geschlossene Seite (rund
-400 KB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
+850 KB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
+einem Suchfeld für Straßen und Orte (4176 Einträge in der Seite, darum ohne Netz: die Auswahl nennt Art,
+Wahlbezirke und Dokumente und markiert sie auf der Karte; `index.html#suche=hofgarten` ist teilbar),
 der Karte der 41 Wahlbezirke (Trefferquote oder Wahlbeteiligung, Tooltips, Klick-Markierung, die 1309 Orte als
 Punkte), dem Streudiagramm mit beiden Regressionsgeraden und Tabelle 5, einer sortierbaren Tabelle je
 Wahlbezirk, den Begriffen (ein Klick zeigt die Dokumente mit Datum, Drucksache und PDF-Link), Methode und

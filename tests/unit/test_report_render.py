@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import json
 import re
 from dataclasses import replace
 from html.parser import HTMLParser
@@ -25,6 +26,7 @@ from georep.report.charts import (
 from georep.report.geometry import SIMPLIFY_M, bounds_of, district_shapes, fit
 from georep.report.model import Download, ReportModel, build_report_model
 from georep.report.render import Visuals, external_links, kib, render_map, render_report
+from georep.report.search import SearchEntry, search_payload
 from georep.settings import Settings
 
 DOWNLOADS = (
@@ -168,7 +170,19 @@ def test_sections_render_in_numeric_order(page: str) -> None:
     parts = sections()
     numbers = [s.number for s in parts]
     assert numbers == sorted(numbers) and len(set(numbers)) == len(numbers)
-    assert [s.name for s in parts][:3] == ["kernzahlen", "karte", "zusammenhang"]
+    order = [s.name for s in parts]
+    # Die vorhandenen Abschnitte in ihrer Reihenfolge; neue Optionen schieben sich dazwischen
+    # (docs/plans/00-synergien.md, Paragraf 5.1), darum relativ geprueft, nicht als Praefix.
+    fixed = [
+        "kernzahlen",
+        "karte",
+        "zusammenhang",
+        "wahlbezirke",
+        "begriffe",
+        "methode",
+        "downloads",
+    ]
+    assert [name for name in order if name in fixed] == fixed
     positions = [page.index(f'<section id="{s.name}">') for s in parts]
     assert positions == sorted(positions)
     assert page.count("<section ") == len(parts)
@@ -216,3 +230,53 @@ def test_extra_classes_become_data_attributes_for_the_switch(
     )
     assert len(_re.findall(r'data-class-bodies="0"', svg)) == len(model.districts)
     assert svg.count('data-class-rate="') == len(model.districts)
+
+
+def _search_block(page: str) -> str:
+    match = re.search(
+        r'<script id="suche-daten" type="application/json">(.*?)</script>', page, re.S
+    )
+    assert match is not None
+    return match.group(1)
+
+
+def _search_json(page: str) -> object:
+    """Der Block ist gültiges JSON, wie ``_json_for_script`` das ``<`` auch maskiert.
+
+    ``json.loads`` löst beide Schreibweisen auf, das alte ``<\\/`` ebenso wie ``\\u003c``; der Test
+    kennt die Maskierung darum nicht und bleibt richtig, wenn sie sich ändert.
+    """
+    return json.loads(_search_block(page))
+
+
+def test_search_data_is_a_readable_json_block(page: str, model: ReportModel) -> None:
+    assert _search_json(page) == json.loads(json.dumps(search_payload(model.search)))
+    assert page.count("<script") == 3  # Basis-Skript, Abschnitts-Skripte, der JSON-Block
+
+
+def test_a_term_that_would_end_the_script_is_escaped(model: ReportModel, visuals: Visuals) -> None:
+    tainted = replace(model, search=(SearchEntry("x</script><b>", (1,), 0, "s"),))
+    page = render_report(tainted, visuals)
+    # Was zählt, ist nicht die Schreibweise der Maskierung, sondern dass im Block nichts steht,
+    # was der HTML-Tokenizer für das Ende des Skripts halten kann; der Begriff kommt heil zurück.
+    assert "</script" not in _search_block(page).lower()
+    assert "</script><b>" not in page
+    assert _search_json(page) == json.loads(json.dumps(search_payload(tainted.search)))
+
+
+def test_the_search_field_is_a_combobox_with_a_label(page: str, model: ReportModel) -> None:
+    assert '<section id="suche">' in page and "Straße oder Ort" in page
+    assert 'role="combobox"' in page and 'aria-autocomplete="list"' in page
+    assert 'aria-expanded="false"' in page and 'role="listbox"' in page
+    for match in re.finditer(r'aria-controls="([^"]+)"', page):
+        assert f'id="{match.group(1)}"' in page
+    assert '<label for="suche-feld">' in page and 'id="suche-feld"' in page
+    assert f"{len(model.search)}" in page  # „Durchsucht n Straßen, Orte und Wahlbezirke"
+    assert 'role="option"' not in page  # die Liste füllt erst das JavaScript
+
+
+def test_a_model_without_search_entries_has_no_search_section(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    page = render_report(replace(model, search=()), visuals)
+    assert '<section id="suche">' not in page and 'id="suche-daten"' not in page

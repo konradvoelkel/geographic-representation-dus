@@ -28,6 +28,7 @@ from georep.report.model import (
     term_counts,
     top_terms_city,
 )
+from georep.report.search import canonical_term
 from georep.report.tables import GEOJSON_COLUMNS, TABLES, PublishedTable, published
 from georep.settings import Settings
 
@@ -232,3 +233,19 @@ def test_format_de_examples(value: float, decimals: int, expected: str) -> None:
 def test_percent_de_uses_a_narrow_space_before_the_sign() -> None:
     assert percent_de(0.531127) == f"53,1{NARROW_NBSP}%"
     assert percent_de(1.0, 0) == f"100{NARROW_NBSP}%"
+
+
+def test_search_entries_are_part_of_the_model(model: ReportModel, mini_run: Layout) -> None:
+    dictionary = pl.read_parquet(mini_run.dictionary)
+    terms = set(dictionary["suchbegriffe"].explode().to_list()) - {"schulweg"}
+    canonical = {t if canonical_term(t) not in terms else canonical_term(t) for t in terms}
+    assert len(model.search) == len(canonical) + 3  # drei Wahlbezirksnamen dazu
+    names = [e.term for e in model.search if e.kind == "w"]
+    assert names == [d.name for d in sorted(model.districts, key=lambda d: d.name)]
+    adler = next(e for e in model.search if e.term == "adlerstraße")
+    assert "adlerstr." in terms and adler.kind == "s" and adler.districts == (1,)
+    index = pl.read_parquet(mini_run.index).filter(
+        pl.col("suchbegriffe").is_in(pl.Series(["adlerstraße", "adlerstr."]).implode())
+    )
+    both = set(index["paper_ids"].explode().drop_nulls().to_list())
+    assert adler.documents == len(both)

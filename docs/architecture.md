@@ -44,7 +44,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `profiling` | `profile_step`: ein echter Schritt unter cProfile, `.prof` datiert nach `docs/profiling/` |
 | `cli` | `georep run, fetch, steps, status, bootstrap, export, regress, profile`; `main(argv) -> int`; Exit 0, 1 (Domänenfehler), 2 (Bedienung) |
 | `export` | Parquet-Ergebnisse als CSV neben die Dateien; `csv_plan` und `write_csv` nutzt auch der Schritt `report` |
-| `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, `COLUMN_DOCS`), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, Choroplethe und Streudiagramm als SVG), `documents` (Dokumente mit Treffer ohne Texte, Begriffe als Indizes, für `dokumente.json`), `render` (Jinja2 mit Autoescape, Allowlist der Links; `sections` liest die Abschnitte aus `templates/sections/`; `render_map` für die Leaflet-Datei), `tables` (Register der veröffentlichten Tabellen: Datei, Beschreibung, Spaltendoku, CSV-Regeln), `build` (der Schritt `report`: Downloads, Schema, Seiten) |
+| `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, `COLUMN_DOCS`), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, Choroplethe und Streudiagramm als SVG), `documents` (Dokumente mit Treffer ohne Texte, Begriffe als Indizes, für `dokumente.json`), `render` (Jinja2 mit Autoescape, Allowlist der Links; `sections` liest die Abschnitte aus `templates/sections/`; `render_map` für die Leaflet-Datei), `search` (Sucheinträge je kanonischem Begriff mit Wahlbezirken, Dokumenten und Art, dazu die Faltung als Spiegel des Abschnitts-Skripts), `tables` (Register der veröffentlichten Tabellen: Datei, Beschreibung, Spaltendoku, CSV-Regeln), `build` (der Schritt `report`: Downloads, Schema, Seiten) |
 
 ## Pipeline
 
@@ -179,12 +179,21 @@ je Modus getrennt gewählt und mit dem Validator der Skill `dataviz` geprüft is
 Wahlbeteiligung tauscht nur CSS-Klassen über `data-`-Attribute. Begriffe sind Schaltflächen: ein Klick lädt
 `data/dokumente.json` nach (`report.documents`: die Dokumente mit Treffer ohne Texte, neueste zuerst, je Begriff
 Indizes; der PDF-Link entsteht aus einem gemeinsamen Präfix) und zeigt die Dokumente in einem `<dialog>`; die
-Orte der Karte tragen Namen und Wahlbezirk. `karte.html` ist die zweite Datei und die einzige mit
+Orte der Karte tragen Namen und Wahlbezirk. Der Abschnitt `15-suche` ist ein Suchfeld nach dem
+Combobox-Muster der WAI-ARIA Authoring Practices: `report/search.py` baut je kanonischem Begriff einen Eintrag
+(Abkürzung und Langform zusammengezogen, Dokumente beider Schreibweisen vereinigt) und je Wahlbezirksname
+einen weiteren, `render_report` legt sie als `<script id="suche-daten" type="application/json">` in die Seite
+(rund 144 KB), und `sections/15-suche.js` gleicht Teilstrings auf zwei gefalteten Schlüsseln ab (einmal ohne
+Akzente, einmal mit `ä` als `ae`). Die Vorschläge brauchen kein Netz und funktionieren aus `file://`; die
+Auswahl markiert über `georep.select` und zeigt die Dokumente über `georep.showDocuments`. Die
+Abkürzungsregel steht einmal als `STREET_ABBREVIATIONS` in `search/dictionary.py`, aus der das Wörterbuch und
+der Payload lesen; `tests/unit/test_report_js_fold.py` prüft mit `node`, dass JavaScript und Python gleich
+falten. `karte.html` ist die zweite Datei und die einzige mit
 Fremdressourcen: Leaflet 1.9.4 per Subresource Integrity gepinnt, OpenStreetMap-Kacheln mit Namensnennung,
 Flächen und Orte inline als JSON (`</` escaped), eigene Allowlist in `render_map`. Entscheidungen und verworfene
 Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. Auf der Referenz: 41 Wahlbezirke,
-17 Dateien, 8,4 MB, davon `index.html` rund 690 KB, `karte.html` 255 KB, `dokumente.json` 2,1 MB; 1,0 s
-(2026-10-11).
+17 Dateien, 8,4 MB, davon `index.html` rund 848 KB (gzip 141 KB, davon 144 KB Suchdaten), `karte.html`
+255 KB, `dokumente.json` 2,1 MB; 1,3 s (2026-10-12).
 
 ## Verträge
 

@@ -17,6 +17,7 @@ from georep.http import cache_pattern
 from georep.prep.extract import after_marker, normalise_text
 from georep.report.charts import nice_ticks
 from georep.report.model import format_de
+from georep.report.search import canonical_term
 from georep.settings import deep_merge
 from georep.sources.overpass import overpass_query, street_names
 from georep.sources.wiki import geosearch_params, parse_point, sparql_query
@@ -136,4 +137,21 @@ def test_format_de(case: deal.TestCase) -> None:
     },
 )
 def test_nice_ticks(case: deal.TestCase) -> None:
+    case()
+
+
+@deal.cases(
+    canonical_term,
+    count=COUNT,
+    check_types=False,
+    kwargs={
+        "term": words,
+        "abbreviations": st.lists(
+            st.sampled_from([("straße", "str."), ("platz", "pl."), ("weg", "w.")]),
+            max_size=2,
+            unique=True,
+        ).map(tuple),
+    },
+)
+def test_canonical_term(case: deal.TestCase) -> None:
     case()
