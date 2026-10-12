@@ -4,15 +4,15 @@ Entspricht ``src/analyse.py``: Wörterbuch auf Begriffe auflösen, mit dem Index
 Wahlbezirk die Vereinigung der Dokument-IDs zählen; ``hide_in_display`` nimmt Begriffe nur aus
 der Anzeigeliste, nicht aus der Zählung (Verhalten der Arbeit, Kapitel 4.3.5).
 
-Dazu Regel 2 „stadtweite Begriffe" (``docs/decisions.md``, Punkt 44): welche Begriffe über der
-Schwelle der Dokumenthäufigkeit liegen, sagt ``citywide_terms``; die Seite nennt sie, und nur mit
-``search.citywide_exclude`` nimmt ``without_terms`` sie vor der Zählung aus dem Wörterbuch.
+Dazu Regel 2 „stadtweite Begriffe" (``docs/decisions.md``, Punkt 44b): welche Begriffe über der
+Schwelle der Dokumenthäufigkeit liegen, sagt ``citywide_terms``. Die Seite nennt sie, gezählt
+werden sie weiter — die Regel ändert keine Zahl.
 """
 
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 import deal
@@ -150,18 +150,3 @@ def citywide_terms(index: pl.DataFrame, *, quantile: float, median_factor: float
         .sort([HITS, TERM], descending=[True, False])
     )
     return Citywide(threshold, f"{basis} ({threshold} Dokumente)", tuple(above.get_column(TERM)))
-
-
-@deal.pre(lambda dictionary, terms: has_columns(dictionary, TERMS))
-@deal.ensure(
-    lambda dictionary, terms, result: result.height == dictionary.height,
-    message="die Wahlbezirke bleiben, nur ihre Begriffslisten werden kürzer",
-)
-def without_terms(dictionary: pl.DataFrame, terms: Sequence[str]) -> pl.DataFrame:
-    """Dasselbe Wörterbuch ohne die genannten Begriffe; ohne Begriffe unverändert."""
-    if not terms:
-        return dictionary
-    drop = list(terms)
-    return dictionary.with_columns(
-        pl.col(TERMS).list.eval(pl.element().filter(~pl.element().is_in(drop))).alias(TERMS)
-    )

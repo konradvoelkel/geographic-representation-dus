@@ -85,7 +85,7 @@ Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`).
 | `topics` | nein | Korpus (Texte) | `processed/themen.parquet`, `processed/themen_dokumente.parquet`, `interim/themen_anteile.parquet` |
 | `index` | nein | Wörterbuch, Korpus | `processed/inverted_index.parquet` |
 | `timeline` | nein | Korpus, Index, Wörterbuch | `processed/monatsreihe.parquet`, `processed/wahlbezirke_monate.parquet` |
-| `results` | nein | Wörterbuch, Index, Wähler; mit `search.citywide_exclude` zählen die stadtweiten Begriffe nicht mit (decisions.md, Punkt 44b) | `processed/wahlbezirke_auswertung.parquet` |
+| `results` | nein | Wörterbuch, Index, Wähler | `processed/wahlbezirke_auswertung.parquet` |
 | `bodies` | nein | Korpus (`id`, `reference`) | `processed/papers_gremien.parquet` |
 | `body_hits` | nein | Auswertung, Gremien je Dokument, Stadtbezirke | `processed/wahlbezirke_gremien.parquet`, `processed/gremien.parquet` |
 | `weights` | nein | Wörterbuch, Index, Korpus (`id`, `paper_type`), Wähler, Themenanteile | `processed/wahlbezirke_gewichtet.parquet`, `processed/gewichte_begriffe.parquet` |

@@ -8,9 +8,9 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   Dokumentzahl über dem 99-%-Quantil liegt (auf der Referenz 58 von 5841 Begriffen über 64 Dokumenten,
   darunter „grafenberger allee" 205, „hofgarten" 172, „schulweg" 144), bekommen im Abschnitt „Begriffe" eine
   eigene Liste mit Dokumentzahl und Wahlbezirk: sie stehen in weit mehr Dokumenten, als ihr Wahlbezirk
-  hergibt, und das soll sichtbar sein. Gezählt werden sie weiter; `search.citywide_exclude` nimmt sie auch aus
-  der Zählung, ist aber standardmäßig aus. Alternativ zum Quantil eine Schwelle als Vielfaches des Medians
-  (`search.citywide_median_factor`); genau eine der beiden gilt. „Methode und Grenzen" nennt beide neuen
+  hergibt, und das soll sichtbar sein. **Gezählt werden sie weiter**: die Regel zeigt an und rechnet nicht,
+  denn die Schwelle trifft auch echte Ortsnamen. Alternativ zum Quantil eine Schwelle als Vielfaches des
+  Medians (`search.citywide_median_factor`); genau eine der beiden gilt. „Methode und Grenzen" nennt beide neuen
   Regeln in einem Absatz (`docs/decisions.md`, Punkt 44b).
 - **Einrichtungen mit Stadtnamen sind keine Orte** (`search.city_facilities`, standardmäßig an): ein Ort aus
   Wikidata oder Wikipedia, dessen Label den Stadtnamen des Profils als letztes Wort trägt („Stadtwerke

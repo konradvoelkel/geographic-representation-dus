@@ -114,9 +114,10 @@ sicher über jeder sinnvollen Schwelle.
 **Empfehlung.** **Die pragmatische Lösung der Arbeit ist nicht richtig, aber die Richtung ihrer Korrektur ist
 offen, und darum bleibt sie** — mit zwei Ergänzungen: der Begriff erscheint in der Liste der stadtweiten
 Begriffe (Regel 2) mit seinen 144 Dokumenten und seinem Wahlbezirk, und die Fußnote der Seite sagt weiter,
-dass er mitgezählt wird. Wer ihn ausschließen will, schaltet `search.citywide_exclude` ein; dann fällt er
-zusammen mit 57 weiteren Begriffen, deren Häufigkeit dasselbe Problem anzeigt. Eine Einzelregel für ein
-Wort ist in keiner Richtung übertragbar, eine Schwelle ist es.
+dass er mitgezählt wird. Einen Schalter, der ihn und die 54 weiteren Begriffe über der Schwelle aus der
+Zählung nimmt, gibt es bewusst nicht (`docs/decisions.md`, Punkt 44b): die Schwelle trifft auch echte
+Ortsnamen. Eine Einzelregel für ein Wort ist in keiner Richtung übertragbar, eine Schwelle ist es — als
+Offenlegung, nicht als Korrektur.
 
 ### 2.4 Die Matching-Regeln
 

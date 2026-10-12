@@ -21,13 +21,7 @@ import polars as pl
 from georep import __version__
 from georep.analysis.bodies import documents_by_body, hits_by_body
 from georep.analysis.bodies import summary as bodies_summary
-from georep.analysis.hits import (
-    DISTRICT,
-    citywide_terms,
-    hits_by_district,
-    join_voters,
-    without_terms,
-)
+from georep.analysis.hits import DISTRICT, hits_by_district, join_voters
 from georep.analysis.ols import model_frame, model_terms, models_table
 from georep.analysis.parties import (
     classify_originators,
@@ -684,25 +678,17 @@ def build_steps(
         return f"{months} Monate, {per_district.height} Zeilen je Wahlbezirk und Monat"
 
     def results() -> str:
-        dictionary = pl.read_parquet(layout.dictionary)
-        index = pl.read_parquet(layout.index)
-        # Regel 2 (docs/decisions.md, Punkt 44): die Liste der stadtweiten Begriffe baut die
-        # Seite aus demselben Index; nur mit dem zweiten Schalter fallen sie aus der Zählung.
-        extra = ""
-        if settings.search.citywide_exclude:
-            citywide = citywide_terms(
-                index,
-                quantile=settings.search.citywide_quantile,
-                median_factor=settings.search.citywide_median_factor,
-            )
-            dictionary = without_terms(dictionary, citywide.terms)
-            extra = f", {len(citywide.terms)} stadtweite Begriffe ausgeschlossen"
-        hits = hits_by_district(dictionary, index, settings.search.hide_in_display)
+        # Regel 2 ändert hier nichts: die Liste der stadtweiten Begriffe baut die Berichtsseite
+        # aus demselben Index, gezählt wird weiter alles (docs/decisions.md, Punkt 44b).
+        hits = hits_by_district(
+            pl.read_parquet(layout.dictionary),
+            pl.read_parquet(layout.index),
+            settings.search.hide_in_display,
+        )
         frame = join_voters(hits, pl.read_parquet(layout.voters), ELIGIBLE_TOTAL)
         write_parquet(frame, layout.results, schema_version=1)
         return (
-            f"{frame.height} Wahlbezirke, "
-            f"{int(frame.get_column('anzahl_treffer').sum())} Treffer{extra}"
+            f"{frame.height} Wahlbezirke, {int(frame.get_column('anzahl_treffer').sum())} Treffer"
         )
 
     # --- Option 05: Gremium je Dokument aus der Drucksachennummer, dann die Kennzahlen

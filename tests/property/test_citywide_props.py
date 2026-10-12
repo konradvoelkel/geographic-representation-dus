@@ -6,7 +6,7 @@ import polars as pl
 from hypothesis import given
 from hypothesis import strategies as st
 
-from georep.analysis.hits import Citywide, citywide_terms, without_terms
+from georep.analysis.hits import Citywide, citywide_terms
 from georep.search.index import HITS, PAPER_IDS, TERM
 
 terms = st.text(alphabet="abcde", min_size=1, max_size=3)
@@ -55,20 +55,3 @@ def test_a_higher_quantile_names_at_most_as_many_terms(
     many = citywide_terms(index, quantile=low, median_factor=0.0)
     assert few.threshold >= many.threshold
     assert set(few.terms) <= set(many.terms)
-
-
-@given(pairs=frequencies, drop=st.lists(terms, max_size=5))
-def test_dropping_terms_never_adds_one(pairs: list[tuple[str, int]], drop: list[str]) -> None:
-    dictionary = pl.DataFrame(
-        {
-            "wahlkreis_id": list(range(1, len(pairs) + 1)),
-            "suchbegriffe": [[p[0]] for p in pairs],
-        },
-        schema={"wahlkreis_id": pl.Int64, "suchbegriffe": pl.List(pl.String)},
-    )
-    out = without_terms(dictionary, drop)
-    assert out.height == dictionary.height
-    before = dictionary.get_column("suchbegriffe").to_list()
-    after = out.get_column("suchbegriffe").to_list()
-    for a, b in zip(before, after, strict=True):
-        assert set(b) == set(a) - set(drop)

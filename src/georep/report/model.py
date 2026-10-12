@@ -269,13 +269,12 @@ class TermExample:
 class CitywideSection:
     """Regel 2: die Begriffe über der Schwelle der Dokumenthäufigkeit (decisions.md, Punkt 44).
 
-    ``basis`` nennt die Schwelle in Worten, ``excluded`` sagt, ob sie außerdem aus der Zählung
-    gefallen sind (``search.citywide_exclude``). Ohne Schwelle gibt es den Abschnitt nicht, dann
-    steht im Modell ``None``.
+    ``basis`` nennt die Schwelle in Worten. Die Begriffe zählen weiter mit; die Liste macht nur
+    sichtbar, dass es sie gibt. Ohne Schwelle oder ohne einen Begriff darüber gibt es den
+    Abschnitt nicht, dann steht im Modell ``None``.
     """
 
     basis: str
-    excluded: bool
     rows: tuple[TermRow, ...]
 
 
@@ -872,16 +871,15 @@ def top_terms_city(counts: pl.DataFrame, hidden: Sequence[str]) -> tuple[TermRow
     )
 
 
-@deal.pre(lambda counts, found, excluded=False: has_columns(counts, TERM, HITS, "districts"))
-@deal.post(lambda result: result is None or bool(result.basis))
-def citywide_section(
-    counts: pl.DataFrame, found: Citywide, excluded: bool = False
-) -> CitywideSection | None:
+@deal.pre(lambda counts, found: has_columns(counts, TERM, HITS, "districts"))
+@deal.post(lambda result: result is None or (bool(result.basis) and bool(result.rows)))
+def citywide_section(counts: pl.DataFrame, found: Citywide) -> CitywideSection | None:
     """Die Zeilen der Liste „stadtweite Begriffe": Begriff, Dokumente, Wahlbezirke.
 
     ``found`` kommt aus ``citywide_terms`` über den Index; die Wahlbezirke je Begriff stehen in
     ``counts`` (ein Begriff kann in mehreren Wörterbüchern stehen). Ohne Schwelle gibt es keinen
-    Abschnitt, mit Schwelle und ohne Treffer darüber eine leere Liste mit ihrem Satz.
+    Abschnitt — und auch keinen, wenn kein Begriff über der Schwelle liegt: „Diese 0 Begriffe …"
+    über einer leeren Tabelle wäre eine Behauptung ohne Inhalt.
     """
     if not found.basis:
         return None
@@ -890,14 +888,10 @@ def citywide_section(
         .unique(subset=[TERM], keep="first")
         .sort([HITS, TERM], descending=[True, False])
     )
-    return CitywideSection(
-        basis=found.basis,
-        excluded=excluded,
-        rows=tuple(
-            TermRow(r[TERM], int(r[HITS]), tuple(r["districts"]))
-            for r in rows.iter_rows(named=True)
-        ),
+    found_rows = tuple(
+        TermRow(r[TERM], int(r[HITS]), tuple(r["districts"])) for r in rows.iter_rows(named=True)
     )
+    return CitywideSection(basis=found.basis, rows=found_rows) if found_rows else None
 
 
 def key_figures(
@@ -1428,8 +1422,7 @@ def build_report_model(
         districts=rows,
         top_terms=top_terms_city(counts, hidden),
         hidden_terms=hidden,
-        # Regel 2: dieselbe Schwelle wie im Schritt ``results``; ``excluded`` sagt dem Leser, ob
-        # die Begriffe nur benannt oder auch aus der Zählung genommen wurden.
+        # Regel 2: die Begriffe über der Schwelle, nur zur Anzeige (decisions.md, Punkt 44b)
         citywide=citywide_section(
             counts,
             citywide_terms(
@@ -1437,7 +1430,6 @@ def build_report_model(
                 quantile=settings.search.citywide_quantile,
                 median_factor=settings.search.citywide_median_factor,
             ),
-            settings.search.citywide_exclude,
         ),
         city_facilities=settings.search.city_facilities,
         regression=(

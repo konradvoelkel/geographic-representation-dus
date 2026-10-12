@@ -782,7 +782,6 @@ def test_the_citywide_section_names_the_threshold_and_its_terms(
     section = model.citywide
     assert section is not None
     assert "99" in section.basis and "Quantil" in section.basis
-    assert section.excluded is False  # Standard: nur Anzeige
     assert section.rows and [r.hits for r in section.rows] == sorted(
         (r.hits for r in section.rows), reverse=True
     )

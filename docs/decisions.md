@@ -697,15 +697,23 @@ die Kombination beim Laden zurück. Das Quantil ist die Vorgabe, weil es sich de
 Referenz ist der Median 1 Dokument, ein Vielfaches davon wäre willkürlich. 0,95 statt 0,99 wären 283 Begriffe
 und damit keine Liste mehr, die jemand liest.
 
-**Nur Anzeige.** Ob die Begriffe auch aus der Zählung fallen, ist ein eigener Schalter
-(`search.citywide_exclude`), **standardmäßig aus**: die Schwelle trifft auch echte Ortsnamen („hofgarten",
-„königsallee"), und sie zu entfernen wäre eine Korrektur, die niemand begründen kann. Die Liste ist eine
-Offenlegung — sie zeigt dem Leser genau die Fälle, über die das Review streitet, „schulweg" eingeschlossen
-(`methodik-review-2026-10.md`, § 2.3). Mit dem Schalter an nimmt der Schritt `results` die Begriffe vor der
-Zählung aus dem Wörterbuch (`without_terms`) und sagt in seiner Zeile, wie viele es waren.
+**Nur Anzeige, und zwar ausschließlich.** Die Regel ändert keine Zahl. Die Schwelle trifft auch echte
+Ortsnamen („hofgarten", „königsallee"), und sie zu entfernen wäre eine Korrektur, die niemand begründen
+kann; die Liste ist eine Offenlegung und zeigt dem Leser genau die Fälle, über die das Review streitet,
+„schulweg" eingeschlossen (`methodik-review-2026-10.md`, § 2.3).
 
-Verworfen: die Begriffe stumm ausschließen (dann wäre die Zahl eine andere und niemand wüsste, warum); eine
-feste Schwelle in Dokumenten (hängt an der Korpusgröße und gilt für keine zweite Stadt); `hide_in_display` zu
-erweitern (das versteckt sie in der Anzeige und zählt sie weiter, also genau die Lösung, die das Review der
-Arbeit vorhält); die Liste in einen eigenen Seitenabschnitt (sie gehört zu den Begriffen, und ein Abschnitt
-mehr kostet eine Nummer in der festen Reihenfolge).
+Einen Schalter `search.citywide_exclude`, der die Begriffe aus der Zählung nahm, gab es am 2026-10-12 für
+drei Commits. Er ist wieder weg, weil er nur halb wirkte: er filterte das Wörterbuch im Schritt `results`
+im Speicher, während `timeline`, `weights` und das Berichtsmodell weiter das ungefilterte Wörterbuch von
+der Platte lasen. Auf der Mini-Fixture mit Schalter an: `results` zählte 65, 49 und 14 Treffer, die Zeile
+„Einheit" der Gewichtungstabelle aber 89, 59 und 14 — und die Seite behauptet an dieser Stelle, die Zeile
+„Einheit" trage dieselben Zahlen wie Tabelle 5. Der saubere Weg wäre ein gefiltertes Wörterbuch als eigene
+Ausgabe mit Stamp, das alle Verbraucher lesen (plus eine Antwort auf die Frage, was mit einem Wahlbezirk
+geschieht, dessen Wörterbuch dadurch leer wird). Das ist ein Umbau der Kette für eine Rechnung, die nach
+der Begründung oben niemand haben soll — also kein Schalter.
+
+Verworfen: die Begriffe stumm ausschließen (dann wäre die Zahl eine andere und niemand wüsste, warum); ein
+Schalter dafür (siehe oben); eine feste Schwelle in Dokumenten (hängt an der Korpusgröße und gilt für keine
+zweite Stadt); `hide_in_display` zu erweitern (das versteckt sie in der Anzeige und zählt sie weiter, also
+genau die Lösung, die das Review der Arbeit vorhält); die Liste in einen eigenen Seitenabschnitt (sie
+gehört zu den Begriffen, und ein Abschnitt mehr kostet eine Nummer in der festen Reihenfolge).
