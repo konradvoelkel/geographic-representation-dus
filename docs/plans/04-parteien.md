@@ -1,6 +1,6 @@
 # Plan 04: Parteien
 
-Stand 2026-10-12, Branch `feat/04-parteien`. Status: im Review.
+Stand 2026-10-12, Branch `feat/04-parteien`. Status: gemerged am 2026-10-12.
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.4; Vorlage § 8.3; Regeln § 2.
 Dieser Plan ist so geschrieben, dass ein frischer Agent ihn in Phase 3 ohne Rückfragen umsetzen kann. Alle
