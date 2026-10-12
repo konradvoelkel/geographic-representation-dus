@@ -11,6 +11,7 @@ bleiben, dass die Wählertabelle das Schema der Hauptperiode trägt und dass die
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -283,6 +284,12 @@ def test_without_the_compare_profile_the_main_page_has_no_comparison(mini_run: L
 # „2025" darf auf der Seite einer anderen Periode nur dort stehen, wo es hingehört: das Wörterbuch
 # stammt aus dem Datensatz der Arbeit und trägt dessen Stand (Plan § 7, „Vorlage").
 ALLOWED_OTHER_YEAR = ("Stand November 2025",)
+# Gesucht wird die Jahreszahl im **Text**, nicht in einer Zahl: ein ``data-value`` wie
+# „0.040124486620252926" enthält „2025" zufällig, und dann schlägt der Test an, sobald sich eine
+# Kennzahl in der zwölften Stelle ändert (2026-10-13 passiert, als die Stoppwörter des
+# Themenmodells wuchsen). Dieselbe Lehre wie bei der Profiltabelle: ein Test darf nicht an einer
+# Stelle hängen, die der Lauf bestimmt (CLAUDE.md, „Arbeitsweise").
+YEAR_IN_TEXT = re.compile(r">[^<]*\b2025\b[^<]*<")
 
 
 def test_the_period_page_names_no_foreign_election_year(period_run: PeriodRun) -> None:
@@ -290,5 +297,5 @@ def test_the_period_page_names_no_foreign_election_year(period_run: PeriodRun) -
     for allowed in ALLOWED_OTHER_YEAR:
         assert allowed in page, allowed
         page = page.replace(allowed, "")
-    assert "2025" not in page
+    assert not YEAR_IN_TEXT.findall(page), YEAR_IN_TEXT.findall(page)[:3]
     assert "Kommunalwahl 2020" in page  # die Methode nennt die Wahl dieser Periode
