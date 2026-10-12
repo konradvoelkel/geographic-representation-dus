@@ -8,13 +8,22 @@ selben Prozess gleich.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
-from georep.analysis.topics import dominant_topics, fit_topics, load_stop_words
+from georep.analysis.topics import (
+    TopicRules,
+    dominant_topics,
+    fit_topics,
+    load_stop_words,
+    name_stop_words,
+    profile_stop_words,
+)
 from georep.errors import EmptyResultError
-from georep.settings import Topics
+from georep.settings import Topics, load_settings
 
 FAMILIES = (
     ("strasse", "verkehr", "parken", "radweg"),
@@ -131,6 +140,176 @@ def test_dominant_topic_rounds_the_share() -> None:
         schema={"id": pl.String, "anteile": pl.List(pl.Float64)},
     )
     assert dominant_topics(shares).get_column("anteil").to_list() == [0.8765]
+
+
+# --- Punkt 45: Stoppwörter aus dem Profil und aus dem Korpus -----------------------------------
+
+
+def test_the_profile_supplies_the_stop_words_of_parties_and_bodies() -> None:
+    """Die Namen stehen schon im Profil (Option 04 und 05); eine zweite Liste gibt es nicht."""
+    settings = load_settings(cwd=Path("/nonexistent"))
+    words = profile_stop_words(settings.originators, settings.bodies, ("fraktionen", "gremien"))
+    assert {"cdu", "spd", "fdp", "afd", "linke", "grüne", "gruene"} <= words
+    assert {"fraktionen", "interfraktionell", "ratsherr", "bezirksvertreter"} <= words
+    assert {"ova", "kua", "rat", "jurat"} <= words
+    assert "verkehrsausschuss" not in words  # nur Kürzel, keine Namen: die sind Themenwörter
+    assert "bv" not in words  # zwei Buchstaben bilden kein Token, also auch kein Stoppwort
+    assert profile_stop_words(settings.originators, settings.bodies, ()) == frozenset()
+    only_bodies = profile_stop_words(settings.originators, settings.bodies, ("gremien",))
+    assert "ova" in only_bodies and "cdu" not in only_bodies
+
+
+def test_a_word_that_stands_almost_only_behind_a_name_marker_is_a_name() -> None:
+    rules = TopicRules(
+        name_markers=("gez.",),
+        name_window=40,
+        name_min_documents=3,
+        name_share=0.8,
+        with_names=True,
+    )
+    texts = [f"beschluss über die strasse {i} gez. mustermann strasse" for i in range(10)]
+    texts += [f"strasse und verkehr in bezirk {i}" for i in range(10)]
+    words = name_stop_words(texts, rules)
+    assert "mustermann" in words
+    assert "strasse" not in words and "verkehr" not in words
+
+
+def test_without_the_source_namen_no_name_is_derived() -> None:
+    rules = TopicRules(name_markers=("gez.",), with_names=False)
+    assert name_stop_words(["gez. mustermann x"] * 10, rules) == frozenset()
+
+
+def test_a_kept_word_survives_a_derived_stop_word() -> None:
+    """Sachwörter, die zufällig in einem Gruppennamen stehen, nennt das Profil (``stop_keep``)."""
+    settings = load_settings(cwd=Path("/nonexistent"))
+    rules = TopicRules.from_settings(settings)
+    assert "klima" not in rules.stop_words  # vom Profil zurückgeholt
+    assert "cdu" in rules.stop_words
+    assert settings.topics.stop_keep  # das Profil nennt die Ausnahmen
+
+
+def test_the_derived_words_do_not_reach_the_labels() -> None:
+    """Ein Korpus voller Fraktionsnamen: ohne sie prägen die Sachwörter die Themen."""
+    rows = [
+        {
+            "id": f"p{i:02d}",
+            # Der Namensmarker steht hinten, wie in den echten Dokumenten: alles hinter ihm ist
+            # Unterschrift, alles davor Sache.
+            "text": " ".join(FAMILIES[i % len(FAMILIES)] * 2)
+            + " antrag der cdu fraktion gez. mustermann fraktionssprecher",
+        }
+        for i in range(12)
+    ]
+    corpus = pl.DataFrame(rows, schema={"id": pl.String, "text": pl.String})
+    rules = TopicRules(
+        stop_words=frozenset({"cdu", "fraktion", "antrag"}),
+        name_markers=("gez.",),
+        name_min_documents=3,
+        with_names=True,
+    )
+    model = fit_topics(corpus, _settings(), rules)
+    labels = {word for words in model.topics.get_column("woerter").to_list() for word in words}
+    assert not labels & {"cdu", "fraktion", "antrag", "mustermann"}
+    assert labels & set(FAMILIES[0])
+
+
+# --- Punkt 45: gesäte Themen je Ausschuss ------------------------------------------------------
+
+CODES = ("AAA", "BBB", "CCC")
+
+
+def _seed_corpus(per_committee: tuple[int, ...] = (6, 5, 4)) -> tuple[pl.DataFrame, pl.DataFrame]:
+    """Je Ausschuss eine Wortfamilie, dazu ein Dokument ohne Gremium."""
+    rows, refs = [], []
+    for family, (code, count) in enumerate(zip(CODES, per_committee, strict=True)):
+        for i in range(count):
+            paper = f"{code}-{i:02d}"
+            rows.append(
+                {"id": paper, "text": " ".join(FAMILIES[family] * 3) + f" wort{family}{i}"}
+            )
+            refs.append({"id": paper, "gremium": code, "gremium_art": "ausschuss"})
+    rows.append({"id": "RAT-01", "text": "haushalt personal stellenplan haushalt personal"})
+    refs.append({"id": "RAT-01", "gremium": "RAT", "gremium_art": "rat"})
+    corpus = pl.DataFrame(rows, schema={"id": pl.String, "text": pl.String})
+    bodies = pl.DataFrame(
+        refs, schema={"id": pl.String, "gremium": pl.String, "gremium_art": pl.String}
+    )
+    return corpus, bodies
+
+
+def _seed_rules(**overrides: object) -> TopicRules:
+    base: dict[str, object] = {
+        "seed": "committees",
+        "free": 1,
+        "seed_words": 6,
+        "seed_min_documents": 4,
+        "committees": frozenset(CODES),
+    }
+    return TopicRules(**(base | overrides))  # type: ignore[arg-type]
+
+
+def test_each_committee_with_enough_documents_gets_its_own_topic() -> None:
+    corpus, bodies = _seed_corpus()
+    model = fit_topics(corpus, _settings(k=4), _seed_rules(), bodies)
+    assert model.topics.get_column("gremium").to_list() == [*CODES, None]
+    labels = dict(model.topics.select("gremium", "woerter").iter_rows())
+    for family, code in enumerate(CODES):
+        assert set(labels[code]) & set(FAMILIES[family]), (code, labels[code])
+    # Das freie Thema rechnet auf dem Rest und trägt darum Wörter, aber kein Gremium.
+    assert labels[None]
+
+
+def test_a_committee_below_the_threshold_gets_no_topic() -> None:
+    corpus, bodies = _seed_corpus((6, 5, 4))
+    model = fit_topics(corpus, _settings(k=4), _seed_rules(seed_min_documents=5), bodies)
+    assert model.topics.get_column("gremium").to_list() == ["AAA", "BBB", None, None]
+
+
+def test_the_seeded_topics_are_the_strongest_for_their_own_documents() -> None:
+    corpus, bodies = _seed_corpus()
+    model = fit_topics(corpus, _settings(k=4), _seed_rules(), bodies)
+    dominant = dict(dominant_topics(model.shares).select("id", "thema").iter_rows())
+    for topic, code in enumerate(CODES):
+        own = [p for p in dominant if p.startswith(code)]
+        assert all(dominant[paper] == topic for paper in own), (code, dominant)
+
+
+def test_the_shares_of_a_seeded_model_also_sum_to_one() -> None:
+    corpus, bodies = _seed_corpus()
+    model = fit_topics(corpus, _settings(k=4), _seed_rules(), bodies)
+    sums = model.shares.get_column("anteile").list.sum().to_list()
+    assert all(value == pytest.approx(1.0, abs=1e-9) for value in sums)
+    assert model.shares.height == corpus.height
+
+
+def test_two_seeded_runs_give_the_same_frames() -> None:
+    corpus, bodies = _seed_corpus()
+    first = fit_topics(corpus, _settings(k=4), _seed_rules(), bodies)
+    second = fit_topics(corpus, _settings(k=4), _seed_rules(), bodies)
+    assert_frame_equal(first.shares, second.shares)
+    assert_frame_equal(first.topics, second.topics)
+
+
+def test_without_a_seed_or_without_gremien_no_topic_carries_a_name() -> None:
+    """Vier Themen auf 19 synthetischen Texten zerlegen fast exakt; sklearns eigene Fehlerformel
+    zieht dann die Wurzel aus einer negativen Zahl und warnt (dieselbe Stelle, die der Kommentar
+    in ``analysis/topics.py`` zu Float32 nennt). Harmlos: ``max_iter`` begrenzt den Lauf."""
+    corpus, bodies = _seed_corpus()
+    for rules, frame in (
+        (_seed_rules(seed="none"), bodies),
+        (_seed_rules(), None),
+        (_seed_rules(committees=frozenset()), bodies),
+        (_seed_rules(free=4), bodies),  # kein Platz für ein gesätes Thema
+    ):
+        model = fit_topics(corpus, _settings(k=4), rules, frame)
+        assert model.topics.get_column("gremium").to_list() == [None] * 4
+
+
+def test_only_committees_are_seeded_not_the_council() -> None:
+    corpus, bodies = _seed_corpus()
+    rules = _seed_rules(committees=frozenset({*CODES, "RAT"}), seed_min_documents=1)
+    model = fit_topics(corpus, _settings(k=4), rules, bodies)
+    assert "RAT" not in model.topics.get_column("gremium").to_list()
 
 
 def test_a_vocabulary_smaller_than_k_is_a_domain_error() -> None:

@@ -112,6 +112,29 @@ def test_pipeline_runs_skips_and_reruns(
     assert changed.reason.startswith("Eingabe geändert")
 
 
+def test_the_seeded_topics_keep_their_invariants_on_the_mini_fixture(
+    mini_run: Layout, default_settings: Settings
+) -> None:
+    """Punkt 45: keine Zahlen, nur die Eigenschaften — die Zahlen hängen am Rechner.
+
+    Das Themenmodell ist je Rechner und je Thread-Zahl reproduzierbar, nicht darüber hinaus
+    (STATUS.md, „Bekannt"); geprüft werden darum Zeilenzahlen, die Zerlegung und die Saat.
+    """
+    topics = pl.read_parquet(mini_run.topics)
+    shares = pl.read_parquet(mini_run.topic_shares)
+    assert topics.height == default_settings.topics.k
+    assert topics.get_column("thema").to_list() == list(range(default_settings.topics.k))
+    codes = [c for c in topics.get_column("gremium").to_list() if c is not None]
+    # Die Mini-Fixture hat zwei Ausschüsse über der Schwelle; die Zahl folgt aus den Settings,
+    # nicht aus einer Konstante: höchstens ``k - free``, jedes Kürzel höchstens einmal.
+    assert 0 < len(codes) <= default_settings.topics.k - default_settings.topics.free
+    assert len(codes) == len(set(codes)) <= len(default_settings.bodies.committees)
+    assert set(codes) <= set(default_settings.bodies.committees)
+    sums = shares.get_column("anteile").list.sum().to_list()
+    assert all(abs(value - 1.0) <= 1e-9 for value in sums)
+    assert shares.height == pl.read_parquet(mini_run.topic_documents).height
+
+
 def test_missing_corpus_names_bootstrap(
     tmp_path: Path, mini_root: Path, settings: Settings
 ) -> None:

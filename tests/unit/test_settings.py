@@ -308,9 +308,47 @@ def test_topics_k_zero_is_allowed_and_bounds_are_checked(tmp_path: Path) -> None
         "max_iter = 0",
         "tol = 0",
         "k = 100",
+        'stop_sources = ["parteien"]',
+        'stop_sources = ["gremien", "gremien"]',
+        "name_window = 0",
+        "name_share = 0",
+        "name_share = 1.5",
+        "name_min_documents = 0",
+        'seed = "ausschuesse"',
+        "free = -1",
+        "free = 21",
+        "seed_words = 0",
+        "seed_min_documents = 0",
+        "seed_prior = 0",
     ):
         (tmp_path / "settings.toml").write_text(f"[topics]\n{bad}\n", encoding="utf-8")
         with pytest.raises(ValidationError, match="topics"):
+            load_settings(cwd=tmp_path)
+
+
+def test_the_topic_stop_word_sources_and_the_seed_are_loaded(tmp_path: Path) -> None:
+    """Punkt 45: die Stoppwortquellen und die Saat stehen in den Settings, nicht im Code."""
+    topics = load_settings(cwd=tmp_path).topics
+    assert set(topics.stop_sources) == {"fraktionen", "gremien", "namen"}
+    assert topics.seed == "committees" and 0 < topics.free < topics.k
+    assert "gez." in topics.name_markers and topics.name_window > 0
+    assert 0.0 < topics.name_share <= 1.0 and topics.seed_prior > 0.0
+
+
+def test_classify_defaults_and_bounds(tmp_path: Path) -> None:
+    """Punkt 45: der Klassifikator des passenden Ausschusses."""
+    classify = load_settings(cwd=tmp_path).classify
+    assert classify.enabled and classify.min_documents >= 5
+    assert 0.0 < classify.min_probability < 1.0 and classify.regularisation > 0.0
+    for bad in (
+        "min_documents = 1",
+        "min_probability = 0",
+        "min_probability = 1",
+        "regularisation = 0",
+        "max_iterations = 0",
+    ):
+        (tmp_path / "settings.toml").write_text(f"[classify]\n{bad}\n", encoding="utf-8")
+        with pytest.raises(ValidationError, match="classify"):
             load_settings(cwd=tmp_path)
 
 
@@ -319,6 +357,10 @@ def test_fingerprint_sees_weights_and_topics(tmp_path: Path) -> None:
     (tmp_path / "settings.toml").write_text("[topics]\nk = 5\n", encoding="utf-8")
     assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
     (tmp_path / "settings.toml").write_text('[weights]\ncombined = ["idf"]\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
+    (tmp_path / "settings.toml").write_text('[topics]\nstop_sources = []\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
+    (tmp_path / "settings.toml").write_text("[classify]\nmin_probability = 0.5\n", encoding="utf-8")
     assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
 
 
