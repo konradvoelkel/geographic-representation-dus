@@ -87,7 +87,10 @@ def test_publish_writes_the_neighbour_line_into_both_pages(
     assert '<a href="vergleich.html">Städtevergleich</a>' in first
     assert 'Weitere Städte: <a href="../">Düsseldorf</a>' in second
     assert '<a href="../vergleich.html">Städtevergleich</a>' in second
-    assert NEIGHBOURS_MARKER not in first and NEIGHBOURS_MARKER not in second
+    # Die Marke bleibt als Kommentar stehen: die Seite der ersten Stadt wird nicht neu kopiert,
+    # und der nächste publish-Lauf muss die Zeile wieder ersetzen können.
+    assert first.count(NEIGHBOURS_MARKER) == 1 and second.count(NEIGHBOURS_MARKER) == 1
+    assert first.count("Weitere Städte") == 1 and second.count("Weitere Städte") == 1
 
 
 def test_without_a_second_city_no_page_links_anywhere(tmp_path: Path) -> None:
@@ -98,7 +101,7 @@ def test_without_a_second_city_no_page_links_anywhere(tmp_path: Path) -> None:
     page = (site / "index.html").read_text(encoding="utf-8")
     assert not summary.comparison
     assert "Weitere Städte" not in page and "vergleich.html" not in page
-    assert "moenchengladbach/" not in page and NEIGHBOURS_MARKER not in page
+    assert "moenchengladbach/" not in page and page.count(NEIGHBOURS_MARKER) == 1
 
 
 def test_the_comparison_page_shows_both_cities(both_cities: tuple[Path, Settings]) -> None:
@@ -122,6 +125,18 @@ def test_the_comparison_page_links_only_where_it_may(both_cities: tuple[Path, Se
     page = (site / "vergleich.html").read_text(encoding="utf-8")
     assert set(external_links(page)) <= COMPARISON_LINKS
     assert "<script src=" not in page and "<link " not in page
+
+
+def test_the_neighbour_line_survives_a_second_publish(both_cities: tuple[Path, Settings]) -> None:
+    """Die Seite der ersten Stadt wird nicht kopiert; ihre Zeile muss publish neu setzen können."""
+    root, settings = both_cities
+    site, _ = _publish(root, settings)
+    once = (site / "index.html").read_text(encoding="utf-8")
+    site, _ = _publish(root, settings)
+    twice = (site / "index.html").read_text(encoding="utf-8")
+    assert once == twice
+    assert twice.count("Weitere Städte") == 1
+    assert 'Weitere Städte: <a href="moenchengladbach/">Mönchengladbach</a>' in twice
 
 
 def test_publishing_twice_changes_nothing_but_the_time(
