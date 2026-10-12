@@ -110,6 +110,9 @@ class Visuals:
     hits_legend: Sequence[LegendEntry] = ()
     per_term_legend: Sequence[LegendEntry] = ()
     deviation_legend: Sequence[LegendEntry] = ()
+    # Punkt 46: die beiden divergierenden Legenden des Parteiabschnitts
+    party_points_legend: Sequence[LegendEntry] = ()
+    party_ratio_legend: Sequence[LegendEntry] = ()
 
 
 def date_de(value: dt.date) -> str:

@@ -1,11 +1,20 @@
+{% from "macros.html.j2" import switcher %}
 {% if model.parties and model.originator_figures %}
 {% set f = model.originator_figures %}
 <section id="parteien">
 <h2>Urheber und Parteien</h2>
 <p>Wer schreibt die Ratsdokumente? Die OParl-Schnittstelle hat dafür drei Felder (<code>originatorPerson</code>, <code>originatorOrganization</code>, <code>underDirectionOf</code>), doch der Server des Ratsinformationssystems füllt sie nicht: {{ f.from_oparl|num }} der {{ f.documents|num }} Dokumente tragen einen Urheber aus OParl. Der Urheber steht stattdessen in der Dokumentart, im Titel oder im Textkopf („Anfrage SPD", „Antrag der CDU-Fraktion", „(anfrage cdu-fraktion vom 28. Juli 2023)"), und genau daraus ist er hier abgeleitet. Das deckt {{ f.coverage|pct(1) }} der Dokumente ab: {{ f.verwaltung|num }} Vorlagen der Verwaltung, {{ f.fraktion|num }} Anträge und Anfragen von Fraktionen, {{ f.person|num }} von einzelnen Mandatsträgern, {{ f.eingabe|num }} Eingaben nach § 24 GO NRW und {{ f.unbekannt|num }} ohne erkennbaren Urheber. Jede Zuordnung steht mit ihrer Quelle und der getroffenen Zeichenkette in <code>dokumente_urheber</code> zum Download, also nachprüfbar.</p>
 <p>Die {{ model.parties|length }} Karten zeigen je Partei, welcher Anteil ihrer eigenen Dokumente einen Wahlbezirk erwähnt. Die Klassen sind je Partei gerechnet, nicht über alle: die größte Fraktion stellt {{ model.parties|map(attribute='documents')|max|num }} Dokumente, die kleinste {{ model.parties|map(attribute='documents')|min|num }}, und eine gemeinsame Skala hätte die kleine überall in der untersten Klasse gezeigt. Die Karten sagen also, wohin eine Partei blickt, nicht wie viel sie schreibt.</p>
+<p>Wie viel <em>mehr oder weniger</em> als der Durchschnitt aller {{ model.parties|length }} Parteien das ist, sagen die beiden anderen Ansichten: der Umschalter rechnet jede Zelle gegen das ungewichtete Mittel der Parteianteile <em>in diesem Wahlbezirk</em>, als Differenz in Prozentpunkten und als Verhältnis. Diese beiden Varianten haben feste, über alle Karten gemeinsame Klassengrenzen — erst das macht die {{ model.parties|length }} Karten vergleichbar, und genau darum geht es bei ihnen. Der Umschalter gilt auch für die Spalte „im Mittel" und für die Parteispalten der Tabelle je Wahlbezirk; die Zahlen aller drei Varianten liegen in <code>wahlbezirke_parteien</code> zum Download.</p>
+<div class="controls">
+{{ switcher("parteiwert", "Parteikarten und Parteispalten", [
+  {"value": "anteil", "label": "Anteil"},
+  {"value": "abwpartei", "label": "Abweichung vom Mittel (Prozentpunkte)", "scale": "d"},
+  {"value": "verhpartei", "label": "Verhältnis zum Mittel", "scale": "d"},
+]) }}
+</div>
 {{ visuals.party_maps_svg|safe }}
-<div class="legend party-legend"><ul>
+<div class="legend party-legend" id="legend-anteil"><ul>
 <li>kleiner Anteil</li>
 <li><span class="swatch q0"></span></li>
 <li><span class="swatch q1"></span></li>
@@ -15,6 +24,19 @@
 <li>großer Anteil</li>
 </ul>
 <p class="note">Fünf Quantilklassen, je Partei eigen gerechnet: dieselbe Farbe bedeutet bei zwei Parteien nicht denselben Anteil. Die Zahlen stehen im Tooltip jeder Fläche und in der Tabelle unten.</p></div>
+{# Punkt 46: die beiden divergierenden Legenden; ihre Grenzen stehen in [report.diverging] #}
+<div class="legend party-legend" id="legend-abwpartei" hidden><ul>
+{% for entry in visuals.party_points_legend %}
+<li><span class="swatch d{{ entry.klass }}"></span>{{ entry.label }}</li>
+{% endfor %}
+</ul>
+<p class="note">Abstand zum Mittel aller Parteien im selben Wahlbezirk, in Prozentpunkten. Feste Grenzen für alle Karten: orange liegt unter dem Mittel, blau darüber, die Mitte heißt „etwa im Mittel". Je Wahlbezirk summieren sich die {{ model.parties|length }} Werte auf 0.</p></div>
+<div class="legend party-legend" id="legend-verhpartei" hidden><ul>
+{% for entry in visuals.party_ratio_legend %}
+<li><span class="swatch d{{ entry.klass }}"></span>{{ entry.label }}</li>
+{% endfor %}
+</ul>
+<p class="note">Dasselbe als Verhältnis: 1 heißt genau im Mittel, 2 doppelt so oft, 0 kein einziges Dokument. Die Grenzen sind um 1 log-symmetrisch gewählt (ein Logarithmus selbst geht nicht, weil Zellen mit 0 vorkommen).</p></div>
 
 <h3>Je Partei</h3>
 <div class="scroll"><table id="parteien-tabelle">
@@ -24,6 +46,8 @@
 <th scope="col" class="num" data-sort="num">davon allein</th>
 <th scope="col" class="num" data-sort="num">Treffer</th>
 <th scope="col" class="num" data-sort="num">Bezirke mit Treffer</th>
+{# Punkt 46: dieselbe Spalte zeigt das Mittel der Variante ueber die Wahlbezirke #}
+<th scope="col" class="num" data-sort="num" title="Mittel über die Wahlbezirke in der gewählten Ansicht" data-text-anteil="Anteil im Mittel" data-text-abwpartei="Abweichung" data-text-verhpartei="Verhältnis">Anteil im Mittel</th>
 <th scope="col" class="num" data-sort="num">n</th>
 <th scope="col" class="num" data-sort="num">r</th>
 <th scope="col" class="num" data-sort="num">p</th>
@@ -36,6 +60,7 @@
 <td class="num" data-value="{{ party.alone }}">{{ party.alone|num }}</td>
 <td class="num" data-value="{{ party.hits }}">{{ party.hits|num }}</td>
 <td class="num" data-value="{{ party.districts_hit }}">{{ party.districts_hit }}</td>
+<td class="num" data-value="{{ party.mean_share }}" data-text-anteil="{{ party.mean_share|pct(2) }}" data-value-anteil="{{ party.mean_share }}" data-text-abwpartei="{{ party.mean_deviation|points }}" data-value-abwpartei="{{ party.mean_deviation }}" data-text-verhpartei="{{ party.mean_ratio|ratio }}" data-value-verhpartei="{{ party.mean_ratio }}">{{ party.mean_share|pct(2) }}</td>
 <td class="num" data-value="{{ party.n }}">{{ party.n }}</td>
 <td class="num" data-value="{{ party.r if party.r is not none else '' }}">{% if party.r is not none %}{{ party.r|num(3) }}{% else %}–{% endif %}</td>
 <td class="num" data-value="{{ party.p if party.p is not none else '' }}">{% if party.p is not none %}{{ party.p|num(3) }}{% else %}–{% endif %}</td>
@@ -45,7 +70,7 @@
 <p class="footnote">„Treffer" summiert über die Wahlbezirke: ein Dokument, das drei Bezirke erwähnt, zählt dreimal. „davon allein" sind die Dokumente, deren einziger Urheber diese Partei ist; {{ f.with_two_parties|num }} Dokumente haben zwei oder mehr Urheber und zählen für jede Partei voll. <em>r</em> und <em>p</em> sind Pearson-Korrelation und Signifikanz zwischen dem Anteil der Parteidokumente je Bezirk und dem Stimmenanteil der Partei dort, gerechnet über die <em>n</em> Bezirke, in denen die Partei angetreten ist. Bei {{ model.parties|length }} Tests ist unter der Nullhypothese ein „signifikanter" Wert zu erwarten; die Bonferroni-Grenze liegt bei 0,05 geteilt durch {{ model.parties|length }}, also {{ (0.05 / model.parties|length)|num(3) }}. Nur Werte darunter sind ein Befund.</p>
 
 <h3>Je Wahlbezirk</h3>
-<p class="note">Spaltenköpfe sortieren. Links die Treffer nach Urheberklasse, deren Summe die Treffer des Bezirks ergibt; rechts je Partei der Anteil ihrer Dokumente, der diesen Bezirk erwähnt, schattiert nach derselben Quantilklasse wie die Karten. Die Tönung der Zellen ist heller als die der Karten, damit die Zahl darin in Hell und Dunkel lesbar bleibt; die Reihenfolge der fünf Stufen ist dieselbe.</p>
+<p class="note">Spaltenköpfe sortieren. Links die Treffer nach Urheberklasse, deren Summe die Treffer des Bezirks ergibt; rechts je Partei der Anteil ihrer Dokumente, der diesen Bezirk erwähnt, schattiert nach derselben Quantilklasse wie die Karten — und mit demselben Umschalter wie sie. Die Tönung der Zellen ist heller als die der Karten, damit die Zahl darin in Hell und Dunkel lesbar bleibt; die Reihenfolge der fünf Stufen ist dieselbe.</p>
 <div class="scroll"><table id="urheber-tabelle">
 <thead><tr>
 <th scope="col" class="num" data-sort="num">Nr.</th>
@@ -72,7 +97,7 @@
 <td class="num" data-value="{{ row.eingabe }}">{{ row.eingabe|num }}</td>
 <td class="num" data-value="{{ row.unbekannt }}">{{ row.unbekannt|num }}</td>
 {% for cell in model.cells_for(row.district) %}
-<td class="num p{{ cell.klass }}" data-value="{{ cell.share }}" title="{{ cell.hits|num }} Dokumente{% if not cell.ran %}; nicht angetreten{% else %}; Stimmenanteil {{ cell.vote_share|pct(1) }}{% endif %}">{{ cell.share|pct(1) }}</td>
+<td class="num p{{ cell.klass }}" data-value="{{ cell.share }}" data-class-anteil="{{ cell.klass }}" data-text-anteil="{{ cell.share|pct(1) }}" data-value-anteil="{{ cell.share }}" data-class-abwpartei="{{ cell.klass_deviation }}" data-text-abwpartei="{{ cell.deviation|points }}" data-value-abwpartei="{{ cell.deviation }}" data-class-verhpartei="{{ cell.klass_ratio }}" data-text-verhpartei="{{ cell.ratio|ratio }}" data-value-verhpartei="{{ cell.ratio }}" title="{{ cell.hits|num }} Dokumente, {{ cell.deviation|points }} gegen das Mittel aller Parteien ({{ cell.ratio|ratio }}){% if not cell.ran %}; nicht angetreten{% else %}; Stimmenanteil {{ cell.vote_share|pct(1) }}{% endif %}">{{ cell.share|pct(1) }}</td>
 {% endfor %}
 </tr>
 {% endfor %}

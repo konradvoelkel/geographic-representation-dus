@@ -38,8 +38,10 @@ from georep.report.charts import (
     party_maps,
     per_term_label,
     percent_signed_label,
+    points_label,
     project_pois,
     rate_label,
+    ratio_label,
     scatter,
     turnout_label,
 )
@@ -367,6 +369,30 @@ def build_site(
             "abweichung": deviation_classes,
         }
     dated_months = [row for row in model.timeline if row.month is not None]  # Option 07
+    # Punkt 46: die beiden divergierenden Legenden der Parteikarten. Ihre Klassen stecken schon in
+    # den Zellen (``party_section``); hier entstehen nur die Beschriftungen der festen Grenzen.
+    party_points_legend = (
+        legend(
+            classify_fixed(
+                {c.district: c.deviation for c in model.party_cells},
+                settings.report.diverging.party_points,
+            ),
+            points_label,
+        )
+        if model.party_cells
+        else ()
+    )
+    party_ratio_legend = (
+        legend(
+            classify_fixed(
+                {c.district: c.ratio for c in model.party_cells},
+                settings.report.diverging.party_ratio,
+            ),
+            ratio_label,
+        )
+        if model.party_cells
+        else ()
+    )
     visuals = Visuals(
         map_svg=choropleth(
             model.districts,
@@ -394,6 +420,8 @@ def build_site(
         party_maps_svg=party_maps(model.party_cells, shapes, projection, model.parties),
         bars_svg=bars(model.timeline) if dated_months else "",
         # Punkt 46: je Normierung eine Legende; leere Listen blenden Radio und Legende aus
+        party_points_legend=party_points_legend,
+        party_ratio_legend=party_ratio_legend,
         hits_legend=legend(hits_classes, hits_label) if hits_classes else (),
         per_term_legend=legend(per_term_classes, per_term_label) if per_term_classes else (),
         deviation_legend=(

@@ -588,14 +588,16 @@ def _share_label(value: float) -> str:
 
 
 def _panel_title(party: PartyRow, district: int, cell: PartyCell | None) -> str:
-    """Der ``<title>`` einer Fläche: Treffer, Anteil und Stimmenanteil im Klartext."""
+    """Der ``<title>`` einer Fläche: Treffer, Anteil, Abstand zum Mittel und Stimmenanteil."""
     if cell is None:
         return f"{party.label}, Wahlbezirk {district}: keine Daten"
     votes = percent_de(cell.vote_share, 1) if cell.ran else "nicht angetreten"
     return (
         f"{party.label}, Wahlbezirk {district}: {format_de(cell.hits)} von "
         f"{format_de(party.documents)} Dokumenten ({_share_label(cell.share)}), "
-        f"Stimmenanteil {votes}"
+        # Punkt 46: der Tooltip nennt alle drei Lesarten, damit ein Umschalten sie nicht verbirgt
+        f"{points_label(cell.deviation)} gegen das Mittel aller Parteien "
+        f"({ratio_label(cell.ratio)}), Stimmenanteil {votes}"
     )
 
 
@@ -649,8 +651,17 @@ def party_maps(
         for district in sorted(shapes):
             found = mine.get(district)
             klass = found.klass if found is not None else 0
+            # Punkt 46: die beiden Varianten „relativ zum Mittel" hängen als Attribute an
+            # demselben <use>; eine zweite Kopie der Pfade würde die Seite verdoppeln.
+            variants = (
+                f'data-class-anteil="{klass}" '
+                f'data-class-abwpartei="{found.klass_deviation}" '
+                f'data-class-verhpartei="{found.klass_ratio}" '
+                if found is not None
+                else ""
+            )
             parts.append(
-                f'<use href="#pm-{district}" class="district q{klass}">'
+                f'<use href="#pm-{district}" class="district q{klass}" {variants}>'
                 f"<title>{html.escape(_panel_title(party, district, found))}</title></use>"
             )
         parts.append("</g></g>")

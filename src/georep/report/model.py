@@ -11,7 +11,7 @@ import datetime as dt
 import json
 import math
 import statistics
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -20,6 +20,7 @@ import polars as pl
 
 from georep import __version__
 from georep.analysis import bodies, scaling
+from georep.analysis import parties as parties_mod
 from georep.analysis.hits import DISTRICT, RATE, TERMS, Citywide, citywide_terms
 from georep.analysis.ols import ALL, CONSTANT, MAIN_MODEL, model_terms, sample_label
 from georep.analysis.parties import (
@@ -76,6 +77,7 @@ from georep.settings import (
     City,
     ContextDataset,
     ContextSettings,
+    Diverging,
     Party,
     ReportSource,
     Settings,
@@ -441,6 +443,12 @@ class PartyRow:
     r: float | None  # Pearson zwischen anteil_dokumente und stimmenanteil
     p: float | None
     rho: float | None  # Spearman, nicht auf der Seite, aber in der Tabelle zum Download
+    # Punkt 46: die drei Varianten als Mittel über die Wahlbezirke. Das Mittel der 41 Zahlen, die
+    # die Karte zeigt, nicht das Verhältnis der Mittelwerte: die Spalte soll die Karte
+    # zusammenfassen (docs/skalierung-2026-10.md, § 8, Annahme 3).
+    mean_share: float = 0.0
+    mean_deviation: float = 0.0
+    mean_ratio: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -454,6 +462,13 @@ class PartyCell:
     vote_share: float
     ran: bool
     klass: int  # Quantilklasse je Partei, 0 bis 4
+    # Punkt 46: dieselbe Zelle relativ zum Mittel aller Parteien dieses Wahlbezirks. Anders als
+    # ``klass`` sind die beiden Klassen gemeinsam gerechnet: Abweichung und Verhältnis sind über
+    # die Parteien vergleichbar, der Anteil ist es nicht.
+    deviation: float = 0.0  # Anteil minus Mittel; mal 100 sind es Prozentpunkte
+    ratio: float = 0.0  # Anteil geteilt durch Mittel; 1 heißt genau im Mittel
+    klass_deviation: int = 0
+    klass_ratio: int = 0
 
 
 @dataclass(frozen=True)
@@ -1313,6 +1328,12 @@ def build_sensitivity(layout: Layout, settings: Settings, results: pl.DataFrame)
 # --- Option 04: Urheber und Parteien ---------------------------------------------------------------
 
 
+def _mean(values: Iterable[float]) -> float:
+    """Das ungewichtete Mittel, 0,0 ohne Werte (Punkt 46, dieselbe Regel wie ``scaling``)."""
+    found = list(values)
+    return statistics.fmean(found) if found else 0.0
+
+
 def _party_classification(cells: Sequence[PartyCell], party: str) -> dict[int, int]:
     """Quantilklassen je Partei, nicht gemeinsam: die AfD läge sonst überall in der untersten.
 
@@ -1326,13 +1347,24 @@ def _party_classification(cells: Sequence[PartyCell], party: str) -> dict[int, i
 
 
 @deal.pre(
-    lambda party_table, correlations, originators, parties, names: has_columns(
-        party_table, DISTRICT, PARTEI, HITS, "anteil_dokumente", "stimmenanteil", "angetreten"
+    lambda party_table, correlations, originators, parties, names, diverging: has_columns(
+        party_table,
+        DISTRICT,
+        PARTEI,
+        HITS,
+        parties_mod.SHARE,
+        "stimmenanteil",
+        "angetreten",
+        parties_mod.PARTY_DEVIATION,
+        parties_mod.PARTY_RATIO,
     )
 )
 @deal.post(
-    lambda result: all(0 <= c.klass <= 4 for c in result[1]),
-    message="Quantilklassen q0 bis q4",
+    lambda result: all(
+        0 <= c.klass <= 4 and 0 <= c.klass_deviation <= 4 and 0 <= c.klass_ratio <= 4
+        for c in result[1]
+    ),
+    message="Quantilklassen q0 bis q4, auch die beiden divergierenden",
 )
 def party_section(
     party_table: pl.DataFrame,
@@ -1340,34 +1372,45 @@ def party_section(
     originators: pl.DataFrame,
     parties: Sequence[Party],
     names: Mapping[int, str],
+    diverging: Diverging,
 ) -> tuple[tuple[PartyRow, ...], tuple[PartyCell, ...], tuple[OriginatorRow, ...]]:
     """Die drei Listen des Abschnitts aus den drei Parquet-Tabellen des Schritts ``parties``."""
+    from georep.report.charts import classify_fixed
+
     raw = [
         PartyCell(
             district=int(row[DISTRICT]),
             party=str(row[PARTEI]),
             hits=int(row[HITS]),
-            share=float(row["anteil_dokumente"]),
+            share=float(row[parties_mod.SHARE]),
             vote_share=float(row["stimmenanteil"]),
             ran=bool(row["angetreten"]),
             klass=0,
+            deviation=float(row[parties_mod.PARTY_DEVIATION]),
+            ratio=float(row[parties_mod.PARTY_RATIO]),
         )
         for row in party_table.sort([PARTEI, DISTRICT]).iter_rows(named=True)
     ]
     classes = {
         party: _party_classification(raw, party) for party in dict.fromkeys(c.party for c in raw)
     }
+    # Punkt 46: die beiden neuen Varianten klassieren über alle Parteien gemeinsam und an festen
+    # Grenzen -- erst das macht die sechs Karten vergleichbar, und darum geht es bei ihnen.
+    keyed = {i: c for i, c in enumerate(raw)}
+    deviation_classes = classify_fixed(
+        {i: c.deviation for i, c in keyed.items()}, diverging.party_points
+    ).classes
+    ratio_classes = classify_fixed(
+        {i: c.ratio for i, c in keyed.items()}, diverging.party_ratio
+    ).classes
     cells = tuple(
-        PartyCell(
-            c.district,
-            c.party,
-            c.hits,
-            c.share,
-            c.vote_share,
-            c.ran,
-            classes[c.party].get(c.district, 0),
+        replace(
+            cell,
+            klass=classes[cell.party].get(cell.district, 0),
+            klass_deviation=deviation_classes[i],
+            klass_ratio=ratio_classes[i],
         )
-        for c in raw
+        for i, cell in keyed.items()
     )
     alone = dict(
         party_table.group_by(PARTEI).agg(pl.col("treffer_allein").sum()).iter_rows()
@@ -1375,6 +1418,8 @@ def party_section(
         else []
     )
     by_key = {c.key: c for c in correlations}
+    # Punkt 46: die drei Mittel über die Wahlbezirke, also über genau die Zahlen der Karten
+    mine = {key: [c for c in cells if c.party == key] for key in by_key}
     # Reihenfolge und Label kommen aus den Settings, nicht aus der Tabelle
     rows = tuple(
         PartyRow(
@@ -1389,6 +1434,9 @@ def party_section(
             r=by_key[party.key].r,
             p=by_key[party.key].p,
             rho=by_key[party.key].rho,
+            mean_share=_mean(c.share for c in mine[party.key]),
+            mean_deviation=_mean(c.deviation for c in mine[party.key]),
+            mean_ratio=_mean(c.ratio for c in mine[party.key]),
         )
         for party in parties
         if party.key in by_key
@@ -1565,6 +1613,7 @@ def build_report_model(
             pl.read_parquet(layout.district_originators),
             settings.originators.parties,
             names,
+            settings.report.diverging,
         )
         figures = originator_overview(attribution)
     return ReportModel(
