@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Städtevergleich: geografische Repräsentation in Ratsdokumenten</title>
+<meta name="description" content="{{ model.cities|length }} Städte nebeneinander: Trefferquote je Wahlbezirk, Wahlbeteiligung, Zusammenhang. Die Zahlen stammen aus den veröffentlichten Seiten der Städte.">
+<style>
+:root {
+  color-scheme: light dark;
+  --bg: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11, 11, 11, 0.10); --accent: #2a78d6;
+  --selected: #eb6834;
+  --q0: #86b6ef; --q1: #5598e7; --q2: #2a78d6; --q3: #1c5cab; --q4: #0d366b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10); --accent: #3987e5;
+    --selected: #d95926;
+    --q0: #184f95; --q1: #256abf; --q2: #3987e5; --q3: #6da7ec; --q4: #b7d3f6;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+body { margin: 0 auto; padding: 1.5rem 1rem 3rem; max-width: 72em; }
+h1 { font-size: 1.75rem; line-height: 1.25; margin: 0 0 .5rem; }
+h2 { font-size: 1.3rem; margin: 2.5rem 0 .75rem; }
+p, li { max-width: 48em; }
+a { color: var(--accent); }
+.meta, footer, .note { color: var(--ink-2); font-size: .9rem; }
+.maps { display: grid; grid-template-columns: repeat(auto-fit, minmax(16em, 1fr)); gap: 1.5rem; align-items: start; margin: 1rem 0; }
+.maps figure { margin: 0; }
+.maps figcaption { color: var(--ink-2); font-size: .9rem; margin-bottom: .35rem; }
+svg.small-map { width: 100%; height: auto; background: var(--surface); border-radius: 6px; }
+svg.scatter { width: 100%; max-width: 40em; height: auto; background: var(--surface); border-radius: 6px; }
+.district { stroke: var(--surface); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.q0 { fill: var(--q0); } .q1 { fill: var(--q1); } .q2 { fill: var(--q2); } .q3 { fill: var(--q3); } .q4 { fill: var(--q4); }
+.legend { font-size: .85rem; color: var(--ink-2); }
+.legend ul { list-style: none; padding: 0; margin: .25rem 0 0; display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
+.legend li { display: flex; align-items: center; gap: .4rem; }
+.swatch { display: inline-block; width: 1.1em; height: 1.1em; border-radius: 3px; flex: none; }
+.swatch.q0 { background: var(--q0); } .swatch.q1 { background: var(--q1); } .swatch.q2 { background: var(--q2); } .swatch.q3 { background: var(--q3); } .swatch.q4 { background: var(--q4); }
+.grid line { stroke: var(--grid); stroke-width: 1; }
+.axis line { stroke: var(--axis); stroke-width: 1; }
+.ticks text, .axis-label { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.fit { stroke-width: 2; fill: none; stroke-linecap: round; }
+.dots .dot { stroke: var(--surface); stroke-width: 2; }
+.s0 .dot { fill: var(--accent); } .s0 .fit { stroke: var(--accent); }
+.s1 .dot { fill: var(--selected); } .s1 .fit { stroke: var(--selected); }
+.series-legend { display: flex; flex-wrap: wrap; gap: 1.5rem; font-size: .9rem; margin: .5rem 0; }
+.series-legend span.key { display: inline-block; width: .9em; height: .9em; margin-right: .4em; vertical-align: -.05em; }
+.series-legend .s0 span.key { background: var(--accent); border-radius: 50%; }
+.series-legend .s1 span.key { background: var(--selected); }
+table { border-collapse: collapse; width: 100%; font-size: .8rem; background: var(--surface); }
+thead th { white-space: normal; }
+th, td { text-align: left; padding: .35rem .35rem; border-bottom: 1px solid var(--grid); vertical-align: bottom; }
+th { color: var(--ink-2); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.scroll { overflow-x: auto; }
+footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem; }
+</style>
+</head>
+<body>
+<header>
+<h1>Städtevergleich</h1>
+<p class="lead">Wie sichtbar sind die Wahlbezirke in den Ratsdokumenten ihrer Stadt, und hängt das mit der Wahlbeteiligung zusammen? Die Zahlen auf dieser Seite stammen aus den veröffentlichten Seiten der Städte, nicht aus einer eigenen Rechnung: {% for city in model.cities %}<a href="{{ city.href or './' }}">{{ city.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.</p>
+<p class="meta">Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}; Quelltext im <a href="{{ links.repository }}">Repository</a>.</p>
+</header>
+<main>
+<section id="tabelle">
+<h2>Die Städte nebeneinander</h2>
+<div class="scroll"><table>
+<thead><tr>
+<th scope="col">Stadt</th>
+<th scope="col" class="num">Wahl&shy;bezirke</th>
+<th scope="col" class="num">Stimm&shy;bezirke</th>
+<th scope="col" class="num">Doku&shy;mente</th>
+<th scope="col" class="num">Begriffe</th>
+<th scope="col" class="num">mit Treffer</th>
+<th scope="col" class="num">Treffer&shy;quote, Median</th>
+<th scope="col" class="num">Wahl&shy;beteiligung, Median</th>
+<th scope="col" class="num">Wahl&shy;berech&shy;tigte je Bezirk</th>
+<th scope="col" class="num">r</th>
+<th scope="col" class="num">p</th>
+</tr></thead>
+<tbody>
+{% for row in rows %}
+<tr>
+<td><a href="{{ row.href }}">{{ row.name }}</a></td>
+<td class="num">{{ row.districts }}</td>
+<td class="num">{{ row.precincts }}</td>
+<td class="num">{{ row.documents }}</td>
+<td class="num">{{ row.terms }}</td>
+<td class="num">{{ row.documents_hit }}</td>
+<td class="num">{{ row.rate_median }}</td>
+<td class="num">{{ row.turnout_median }}</td>
+<td class="num">{{ row.eligible_per_district }}</td>
+<td class="num">{{ row.r }}</td>
+<td class="num">{{ row.p }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table></div>
+</section>
+
+<section id="karten">
+<h2>Trefferquote je Wahlbezirk</h2>
+<p class="note">Beide Karten teilen sich die Klassengrenzen: dieselbe Farbe heißt in jeder Stadt dieselbe Trefferquote. Die Karten sind nicht maßstabsgleich.</p>
+<div class="maps">
+{% for name, svg in model.maps %}
+<figure>
+<figcaption>{{ name }}</figcaption>
+{{ svg|safe }}
+</figure>
+{% endfor %}
+</div>
+<div class="legend"><strong>Trefferquote</strong> (Dokumente je Wahlberechtigtem)
+<ul>
+{% for klass, label in model.rate_legend %}
+<li><span class="swatch q{{ klass }}"></span>{{ label }}</li>
+{% endfor %}
+</ul>
+</div>
+</section>
+
+<section id="zusammenhang">
+<h2>Trefferquote und Wahlbeteiligung</h2>
+<div class="series-legend">
+{% for city in model.cities %}
+<span class="s{{ loop.index0 }}"><span class="key"></span>{{ city.name }}</span>
+{% endfor %}
+</div>
+{{ model.scatter_svg|safe }}
+<p class="note">Ein Punkt je Wahlbezirk, eine Gerade je Stadt (lineare Regression über alle Wahlbezirke dieser Stadt). Die Form der Marke unterscheidet die Städte zusätzlich zur Farbe.</p>
+</section>
+
+<section id="vergleichbarkeit">
+<h2>Vergleichbarkeit</h2>
+<p>Die Städte sind verschieden groß zugeschnitten: {% for row in rows %}{{ row.name }} hat {{ row.districts }} Wahlbezirke mit im Mittel {{ row.eligible_per_district }} Wahlberechtigte je Wahlbezirk{% if not loop.last %}, {% else %}. {% endif %}{% endfor %}Ein Wahlbezirk mit mehr Wahlberechtigten braucht mehr Dokumente für dieselbe Trefferquote, denn die Quote teilt durch die Wahlberechtigten.</p>
+<p>Auch die Dokumente sind nicht dieselben: Zahl, Art und Aufbau der Vorlagen unterscheiden sich je Ratsinformationssystem, und wo der Vorlagenkopf nicht abgeschnitten werden kann, zählen Treffer in Briefköpfen mit. Die Flächen der Stimmbezirke stammen je Stadt aus einem anderen Jahr; jede Stadtseite nennt ihren Stand und, wo es ein amtliches Straßenverzeichnis gibt, die gemessene Übereinstimmung. Verglichen werden darum Verteilungen, nicht Absolutwerte.</p>
+<p class="note">Jede Stadtseite trägt ihre Daten als Parquet, CSV und GeoJSON, dazu <code>summary.json</code> mit genau den Zahlen dieser Seite.</p>
+</section>
+</main>
+<footer>
+<p>Ergebnisse und Quelltext: <a href="{{ links.cc0 }}">CC0 1.0</a>. Die Quellen und Lizenzen der Daten nennt jede Stadtseite in ihrem Fuß.</p>
+</footer>
+</body>
+</html>

@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|fetch|steps|status|profiles|bootstrap|export|regress|profile``.
+"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|export|regress|profile``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
@@ -7,6 +7,7 @@ stderr), 2 Bedienfehler (argparse).
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -23,7 +24,9 @@ from georep.export import export_csv
 from georep.layout import Layout
 from georep.pipeline import build_steps, freshness, run_pipeline, select_steps
 from georep.profiling import profile_step
+from georep.report.build import current_commit
 from georep.report.model import sensitivity_rows
+from georep.report.publish import publish_sites
 from georep.settings import Settings, available_profiles, load_settings, settings_files
 from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextStore
@@ -68,6 +71,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("steps", help="Schritte mit Eingaben und Ausgaben")
     sub.add_parser("status", help="Settings, Pfade, Frische jedes Schritts")
     sub.add_parser("profiles", help="Stadtprofile im Paket")
+
+    pub = sub.add_parser("publish", help="Stadtseiten zusammentragen und den Städtevergleich bauen")
+    pub.add_argument("--out", type=Path, help="Zielordner (Standard: <data_root>/site)")
 
     boot = sub.add_parser("bootstrap", help="Referenzdatensatz nach data_root übernehmen")
     boot.add_argument("--force", action="store_true", help="vorhandene Dateien überschreiben")
@@ -207,6 +213,18 @@ def _cmd_profiles(settings: Settings) -> int:
     return 0
 
 
+def _cmd_publish(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
+    summary = publish_sites(
+        settings,
+        layout,
+        now=dt.datetime.now(dt.UTC),
+        commit=current_commit(),
+        out=args.out,
+    )
+    print(summary.line())
+    return 0
+
+
 def _cmd_bootstrap(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
     report = bootstrap(
         layout,
@@ -312,6 +330,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cmd_status(args, settings, layout)
         if args.command == "profiles":
             return _cmd_profiles(settings)
+        if args.command == "publish":
+            return _cmd_publish(args, settings, layout)
         if args.command == "bootstrap":
             return _cmd_bootstrap(args, settings, layout)
         if args.command == "export":

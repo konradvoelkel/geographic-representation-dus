@@ -722,7 +722,7 @@ def test_default_profile_is_duesseldorf_and_stays_flat(tmp_path: Path) -> None:
     assert [source.name for source in s.report.sources] and all(
         source.url.startswith("https://") for source in s.report.sources
     )
-    assert s.publish.cities == ["duesseldorf"]
+    assert s.publish.cities == ["duesseldorf", "moenchengladbach"]
 
 
 def test_the_default_profile_keeps_every_value_of_the_thesis(tmp_path: Path) -> None:

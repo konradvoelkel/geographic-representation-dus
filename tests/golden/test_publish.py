@@ -17,11 +17,10 @@ import pytest
 from georep.bootstrap import bootstrap
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
-from georep.report.publish import publish_sites
+from georep.report.publish import PublishSummary, publish_sites
 from georep.settings import Settings, load_settings
-from tests.conftest import MINI, REPO
+from tests.conftest import MG, MINI, mg_settings
 
-MG = REPO / "tests" / "fixtures" / "mg"
 NOW = dt.datetime(2026, 10, 12, 12, 0, tzinfo=dt.UTC)
 
 
@@ -31,8 +30,10 @@ def _run(root: Path, settings: Settings, reference: Path) -> Layout:
         data_root=root / "data",
         cache_root=root / "cache",
         reference_root=reference,
+        # Option 03: die Fremddaten liegen bei der Fixture; die zweite Stadt hat keine
+        context_root=reference / "context" if settings.context.root is not None else None,
     )
-    bootstrap(layout)
+    bootstrap(layout, context_files=settings.context.files.names())
     run_pipeline(build_steps(settings, layout), settings)
     return layout
 
@@ -42,13 +43,13 @@ def both_cities(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Setting
     """Beide Städte in einem ``data_root``, wie nach zwei Läufen auf demselben Rechner."""
     root = tmp_path_factory.mktemp("publish")
     duesseldorf = load_settings(cwd=Path("/nonexistent"))
-    moenchengladbach = load_settings(profile="moenchengladbach", cwd=Path("/nonexistent"))
+    moenchengladbach = mg_settings()
     _run(root, duesseldorf, MINI)
     _run(root, moenchengladbach, MG)
     return root, duesseldorf
 
 
-def _publish(root: Path, settings: Settings) -> tuple[Path, object]:
+def _publish(root: Path, settings: Settings) -> tuple[Path, PublishSummary]:
     layout = replace(
         Layout.from_settings(settings), data_root=root / "data", cache_root=root / "cache"
     )
@@ -82,8 +83,8 @@ def test_the_comparison_page_shows_both_cities(both_cities: tuple[Path, Settings
 
 
 def test_the_comparison_page_links_only_where_it_may(both_cities: tuple[Path, Settings]) -> None:
-    from georep.report.render import external_links
     from georep.report.publish import COMPARISON_LINKS
+    from georep.report.render import external_links
 
     root, settings = both_cities
     site, _ = _publish(root, settings)

@@ -9,7 +9,6 @@ Golden Master dieser Stufe) und dass die Seite die Stadt nennt, deren Profil gil
 from __future__ import annotations
 
 from dataclasses import replace
-from pathlib import Path
 
 import polars as pl
 import pytest
@@ -19,20 +18,15 @@ from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
 from georep.prep.streets import directory_agreement
 from georep.prep.voters import DISTRICT, ELIGIBLE_TOTAL, VOTERS
-from georep.settings import Settings, load_settings
-from tests.conftest import REPO
+from georep.settings import Settings
+from tests.conftest import MG, mg_settings
 
-MG = REPO / "tests" / "fixtures" / "mg"
 NETWORK = {"opendata", "papers", "organizations", "pdfs", "streets_osm", "pois_wiki"}
 
 
 @pytest.fixture(scope="module")
 def settings() -> Settings:
-    base = load_settings(profile="moenchengladbach", cwd=Path("/nonexistent"))
-    # Die Netzstichprobe hat acht Ratsdokumente. Das Themenmodell (Option 06) braucht mindestens
-    # so viele Texte wie Themen und zählt ein Wort erst ab ``min_df`` Dokumenten; das ist eine
-    # Grenze der Probe, nicht des Profils, und wird darum hier gesetzt, nicht dort.
-    return base.model_copy(update={"topics": base.topics.model_copy(update={"k": 3, "min_df": 1})})
+    return mg_settings()
 
 
 @pytest.fixture(scope="module")

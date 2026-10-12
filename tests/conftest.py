@@ -42,6 +42,7 @@ REPO = Path(__file__).resolve().parents[1]
 # Der eingefrorene Datensatz der Arbeit; wird nur gelesen.
 REFERENCE = REPO / "reference"
 MINI = REPO / "tests" / "fixtures" / "mini"
+MG = REPO / "tests" / "fixtures" / "mg"  # Option 01: die Netzstichprobe der zweiten Stadt
 PDF_FIXTURES = REPO / "tests" / "fixtures" / "pdf"
 
 
@@ -110,6 +111,17 @@ def mini_precincts(tmp_path_factory: pytest.TempPathFactory, default_settings: S
 @pytest.fixture(scope="session")
 def default_settings() -> Settings:
     return load_settings(cwd=Path("/nonexistent"))
+
+
+def mg_settings() -> Settings:
+    """Das Profil der zweiten Stadt, auf die Größe der Netzstichprobe gebracht (Option 01).
+
+    Die Probe hat acht Ratsdokumente. Das Themenmodell (Option 06) braucht mindestens so viele
+    Texte wie Themen und zählt ein Wort erst ab ``min_df`` Dokumenten; das ist eine Grenze der
+    Probe, nicht des Profils, und steht darum hier und nicht in ``profiles/``.
+    """
+    base = load_settings(profile="moenchengladbach", cwd=Path("/nonexistent"))
+    return base.model_copy(update={"topics": base.topics.model_copy(update={"k": 3, "min_df": 1})})
 
 
 @pytest.fixture(scope="session")

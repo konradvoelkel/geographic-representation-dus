@@ -52,7 +52,7 @@ license = ""                   # kein Lizenzhinweis am Endpunkt; die Seite nennt
 checked = 2026-10-11
 
 [publish]
-cities = ["duesseldorf"]       # Reihenfolge der Veröffentlichung; die erste liegt an der Wurzel
+cities = ["duesseldorf", "moenchengladbach"]  # Reihenfolge der Veröffentlichung; die erste liegt an der Wurzel, jede weitere unter ihrem Slug. Mönchengladbach steht hier, seit sein Profil existiert; `georep publish` meldet es als „kein Lauf", bis sein Paket im Repo liegt (Stufe G).
 
 # --- Aus defaults.toml hierher gezogen: alles, was nur für diese Stadt gilt --------------------
 
