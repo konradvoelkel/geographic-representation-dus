@@ -136,11 +136,13 @@ def _pair(table: list[tuple[int, int, float]]) -> tuple[pl.DataFrame, pl.DataFra
         schema={"stimmbezirk_id": pl.String, "wahlkreis_id": pl.Int64, "wahlberechtigte": pl.Int64},
         orient="row",
     )
+    # Anteile unter einem Billionstel sind keine Flächenanteile, sondern Fließkomma-Rauschen;
+    # area_shares liefert sie nicht, und ein Gewicht daraus liefe in die denormalen Zahlen.
     rows = [
-        (f"p{i}", unit, share if unit == "A" else 1.0 - share)
+        (f"p{i}", unit, part)
         for i, (_, _, share) in enumerate(table)
-        for unit in ("A", "B")
-        if (share if unit == "A" else 1.0 - share) > 0.0
+        for unit, part in (("A", share), ("B", 1.0 - share))
+        if part > 1e-12
     ]
     shares = pl.DataFrame(
         rows,

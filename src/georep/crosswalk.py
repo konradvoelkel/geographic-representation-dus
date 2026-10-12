@@ -209,6 +209,11 @@ def district_weights(table: pl.DataFrame, shares: pl.DataFrame) -> pl.DataFrame:
     return (
         weighted.join(totals, on=DISTRICT)
         .with_columns((pl.col("_w") / pl.col("_total")).alias(WEIGHT))
+        # Gewicht 0 fällt weg, wie in unit_weights: eine Einheit ohne Gewicht trägt zu keinem
+        # Mittel bei, stünde aber als Zeile in der veröffentlichten Tabelle. Null wird ein Gewicht
+        # nur, wenn ein Flächenanteil schon an der Grenze der Fließkommazahlen liegt
+        # (hypothesis, 2026-10-12).
+        .filter(pl.col(WEIGHT) > 0)
         .select(pl.col(DISTRICT), pl.col(TARGET).alias(UNIT), pl.col(WEIGHT))
         .sort([DISTRICT, WEIGHT, UNIT], descending=[False, True, False])
     )

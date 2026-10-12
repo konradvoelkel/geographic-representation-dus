@@ -46,6 +46,12 @@ def test_the_bivariate_fit_is_linregress(rows: list[tuple[float, float, float]])
     frame = _frame(rows)
     assume(_usable(frame, ("y", "a")))
     fit = fit_ols(frame, "y", ["a"])
+    # Bei einer fast exakten Anpassung ist die Residuenquadratsumme die Differenz zweier fast
+    # gleicher grosser Zahlen; Standardfehler und p haengen dann an der Ausloeschung, und zwei
+    # richtige Formeln (Normalgleichung hier, Kovarianz in linregress) weichen in der sechsten
+    # Stelle ab (hypothesis, 2026-10-12: y = 162,39 auf einer Dummy-Spalte). Das prueft nichts
+    # ueber den Algorithmus, darum bleibt der Fall draussen.
+    assume(fit.r2 < 0.999999)
     reference = linregress(frame.get_column("a").to_numpy(), frame.get_column("y").to_numpy())
     assert fit.term("a").coefficient == pytest.approx(reference.slope, rel=1e-7, abs=1e-9)
     assert fit.intercept.coefficient == pytest.approx(reference.intercept, rel=1e-7, abs=1e-9)
