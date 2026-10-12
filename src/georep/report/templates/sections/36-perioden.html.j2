@@ -1,0 +1,73 @@
+{% if model.comparison %}
+{% set c = model.comparison %}
+<section id="perioden">
+<h2>Zwei Wahlperioden</h2>
+<p>Dieselbe Suche über die Dokumente der {{ c.previous }} und der {{ c.current }}, beide mit demselben Wörterbuch (Straßen und Orte je Wahlbezirk, Stand der Erhebung) und beide auf den {{ c.districts }} Wahlbezirken dieser Auswertung. Die Wahlbeteiligung der älteren Wahl lag auf {{ c.precincts }} Stimmbezirken eines anderen Zuschnitts; sie ist über Flächenanteile umgerechnet: Wahlberechtigte, Wähler und Stimmen werden anteilig übertragen und je Zielbezirk nach größtem Rest ganzzahlig gerundet, sodass die Stadtsumme exakt erhalten bleibt. Anteile wie die Wahlbeteiligung entstehen erst danach aus den übertragenen Zahlen.</p>
+<p class="note">Wie belastbar ist das? {{ c.split }} der {{ c.precincts }} Stimmbezirke ({{ c.split_share|pct(0) }}) liegen in mehr als einem Zielbezirk, werden also geteilt; die kleinste Flächenabdeckung eines Stimmbezirks durch die Zielbezirke beträgt {{ c.min_coverage|pct(1) }} (Stadtgrenze und Fluss lassen Rand unbedeckt, die Anteile sind darauf normiert). Die Briefwähler der älteren Wahl haben keine Geometrie; sie sind je Wahlbezirk aus der Differenz zur Wahlbezirkstabelle erschlossen und proportional zu den Wahlberechtigten mit Wahlschein verteilt — ein Modell, keine Messung. Beides ist in <code>stimmbezirke_zuordnung.parquet</code> nachrechenbar.{% if c.rows|length != c.districts %} Verglichen werden {{ c.rows|length }} Wahlbezirke: die übrigen kommen in einer der beiden Perioden nicht vor.{% endif %}</p>
+{{ visuals.delta_svg|safe }}
+<div class="line-legend"><ul>
+<li><span class="key"></span>Regressionsgerade über {{ c.regression.n }} Wahlbezirke</li>
+<li><span class="key zero"></span>keine Änderung</li>
+</ul></div>
+<div class="perioden-tabellen">
+<div>
+<h3>Regression der Änderungen</h3>
+<div class="scroll"><table>
+<thead><tr><th scope="col"></th><th scope="col" class="num">Δ Beteiligung gegen Δ Trefferquote</th></tr></thead>
+<tbody>
+<tr><th scope="row">n</th><td class="num">{{ c.regression.n }}</td></tr>
+<tr><th scope="row">Steigung</th><td class="num">{{ c.regression.slope|num(1) }}</td></tr>
+<tr><th scope="row">r</th><td class="num">{{ c.regression.r|num(3) }}</td></tr>
+<tr><th scope="row">R²</th><td class="num">{{ c.regression.r2|num(3) }}</td></tr>
+<tr><th scope="row">p</th><td class="num">{{ c.regression.p|num(3) }}</td></tr>
+</tbody></table></div>
+<p class="footnote">{% if c.regression.p >= 0.05 %}Mit p = {{ c.regression.p|num(2) }} ist kein Zusammenhang zwischen den beiden Änderungen belegt{% else %}Mit p = {{ c.regression.p|num(3) }} ist der Zusammenhang der beiden Änderungen auf dem 5-%-Niveau signifikant; R² = {{ c.regression.r2|num(2) }}{% endif %}. Zwei Zeitpunkte und {{ c.regression.n }} Bezirke erlauben keine kausale Deutung.</p>
+</div>
+<div>
+<h3>Regression der {{ c.previous }}</h3>
+<div class="scroll"><table>
+<thead><tr><th scope="col"></th><th scope="col" class="num">alle</th>{% if c.previous_pair.without %}<th scope="col" class="num">ohne {{ c.previous_pair.excluded|join(' und ') }}</th>{% endif %}</tr></thead>
+<tbody>
+{% set p = c.previous_pair %}
+<tr><th scope="row">n</th><td class="num">{{ p.all.n }}</td>{% if p.without %}<td class="num">{{ p.without.n }}</td>{% endif %}</tr>
+<tr><th scope="row">Steigung</th><td class="num">{{ p.all.slope|num(2) }}</td>{% if p.without %}<td class="num">{{ p.without.slope|num(2) }}</td>{% endif %}</tr>
+<tr><th scope="row">r</th><td class="num">{{ p.all.r|num(3) }}</td>{% if p.without %}<td class="num">{{ p.without.r|num(3) }}</td>{% endif %}</tr>
+<tr><th scope="row">R²</th><td class="num">{{ p.all.r2|num(3) }}</td>{% if p.without %}<td class="num">{{ p.without.r2|num(3) }}</td>{% endif %}</tr>
+<tr><th scope="row">p</th><td class="num">{{ p.all.p|num(3) }}</td>{% if p.without %}<td class="num">{{ p.without.p|num(3) }}</td>{% endif %}</tr>
+</tbody></table></div>
+<p class="footnote">Dieselbe Rechnung wie für die {{ c.current }} im Abschnitt „Trefferquote und Wahlbeteiligung", nur mit den Zahlen der älteren Periode. Die ganze Seite für diese Periode steht unter <a href="{{ c.subpage }}">{{ c.previous }}</a>.</p>
+</div>
+</div>
+<h3>Je Wahlbezirk</h3>
+<p class="note">Spaltenköpfe sortieren; eine Zeile anklicken markiert den Bezirk auch in Karte und Streudiagrammen.</p>
+<div class="scroll"><table id="perioden-tabelle">
+<thead><tr>
+<th scope="col" class="num" data-sort="num">Nr.</th>
+<th scope="col" data-sort="text">Name</th>
+<th scope="col" class="num" data-sort="num">Treffer alt</th>
+<th scope="col" class="num" data-sort="num">Treffer neu</th>
+<th scope="col" class="num" data-sort="num">Quote alt</th>
+<th scope="col" class="num" data-sort="num">Quote neu</th>
+<th scope="col" class="num" data-sort="num">Beteiligung alt</th>
+<th scope="col" class="num" data-sort="num">Beteiligung neu</th>
+<th scope="col" class="num" data-sort="num">Δ Quote</th>
+<th scope="col" class="num" data-sort="num">Δ Beteiligung</th>
+</tr></thead>
+<tbody>
+{% for r in c.rows %}
+<tr data-id="{{ r.id }}">
+<td class="num" data-value="{{ r.id }}">{{ r.id }}</td>
+<td>{{ r.name }}</td>
+<td class="num" data-value="{{ r.hits_old }}">{{ r.hits_old|num }}</td>
+<td class="num" data-value="{{ r.hits_new }}">{{ r.hits_new|num }}</td>
+<td class="num" data-value="{{ r.rate_old }}">{{ r.rate_old|num(3) }}</td>
+<td class="num" data-value="{{ r.rate_new }}">{{ r.rate_new|num(3) }}</td>
+<td class="num" data-value="{{ r.turnout_old }}">{{ r.turnout_old|pct(1) }}</td>
+<td class="num" data-value="{{ r.turnout_new }}">{{ r.turnout_new|pct(1) }}</td>
+<td class="num {{ 'up' if r.d_rate > 0 else 'down' if r.d_rate < 0 else '' }}" data-value="{{ r.d_rate }}">{{ r.d_rate|delta(3) }}</td>
+<td class="num {{ 'up' if r.d_turnout > 0 else 'down' if r.d_turnout < 0 else '' }}" data-value="{{ r.d_turnout }}">{{ (r.d_turnout * 100)|delta(1) }}</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+</section>
+{% endif %}

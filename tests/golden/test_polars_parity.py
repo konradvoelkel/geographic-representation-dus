@@ -14,7 +14,7 @@ from polars.testing import assert_frame_equal
 
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
 from georep.prep.streets import read_streets_json, streets_by_district
-from georep.prep.voters import aggregate_voters, read_results_csv
+from georep.prep.voters import ELIGIBLE_TOTAL, aggregate_voters, read_results_csv
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.settings import Settings, load_settings
 
@@ -121,7 +121,7 @@ def mini_chain(
     dictionary = build_dictionary(pois_by_district(clean), streets)
     index = build_index(corpus, all_terms(dictionary))
     hits = hits_by_district(dictionary, index, settings.search.hide_in_display)
-    results = join_voters(hits, voters, settings.columns.results.eligible)
+    results = join_voters(hits, voters, ELIGIBLE_TOTAL)
     return {"index": index, "results": results}
 
 

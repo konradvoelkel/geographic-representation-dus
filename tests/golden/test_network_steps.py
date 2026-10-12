@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
+import datetime as dt
 from pathlib import Path
 from typing import Any
 
 import polars as pl
 import pytest
+import requests
 
 from georep.bootstrap import bootstrap
+from georep.errors import NetworkError
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
 from georep.settings import Settings, load_settings
+from georep.sources.oparl import read_progress
 from georep.stores import PaperStore, TextStore
 from tests.conftest import MINI, PDF_FIXTURES
 from tests.fakes import FakeSession, response
@@ -262,3 +266,100 @@ def test_the_parties_step_runs_without_the_organizations_file(
     assert all(o.status == "ausgeführt" for o in outcomes)
     assert "Organisationen" not in next(o for o in outcomes if o.step == "parties").reason
     assert pl.read_parquet(layout.document_originators).height == 200
+
+
+# --- Option 02: Wiederaufnahme des Abrufs im Schritt papers -----------------------------------
+
+
+def _period_session(settings: Settings, broken_page: str | None = None) -> FakeSession:
+    """Drei Metadatenseiten ab Seite 2; ``broken_page`` lässt eine davon scheitern."""
+    endpoint = settings.sources.oparl.endpoint
+    pages = {
+        f"{endpoint}?page={n}": {
+            "data": [_paper(n * 10 + i, f"{n}{i}.pdf", f"201{n}-0{i + 1}-01") for i in range(2)],
+            "links": {
+                "self": f"{endpoint}?page={n}",
+                **({"next": f"{endpoint}?page={n + 1}"} if n < 4 else {}),
+            },
+        }
+        for n in (2, 3, 4)
+    }
+    routes: dict[str, Any] = {url: response(url, payload=page) for url, page in pages.items()}
+    if broken_page is not None:
+        routes[broken_page] = requests.ConnectionError("Verbindung weg")
+    return FakeSession(routes)
+
+
+def _period_settings(settings: Settings, tmp_path: Path) -> Settings:
+    oparl = settings.sources.oparl.model_copy(update={"first_page": 2, "incremental": False})
+    sources = settings.sources.model_copy(update={"oparl": oparl})
+    period = settings.period.model_copy(
+        update={"start": dt.date(2010, 1, 1), "end": dt.date(2019, 12, 31)}
+    )
+    return settings.model_copy(
+        update={
+            "sources": sources,
+            "period": period,
+            "data_root": tmp_path / "data",
+            "cache_root": tmp_path / "cache",
+        }
+    )
+
+
+def test_an_interrupted_metadata_fetch_resumes_at_the_next_page(
+    tmp_path: Path, settings: Settings
+) -> None:
+    period = _period_settings(settings, tmp_path)
+    layout = Layout.from_settings(period)
+    endpoint = period.sources.oparl.endpoint
+    broken = f"{endpoint}?page=3"
+
+    steps = build_steps(period, layout, _period_session(period, broken), sleep=lambda _: None)
+    with pytest.raises(NetworkError):
+        run_pipeline(steps, period, ["papers"], online=True)
+    assert read_progress(layout.papers_progress) == broken
+    assert len(PaperStore(layout.papers).load()) == 2  # nur Seite 2 ist gespeichert
+
+    session = _period_session(period)
+    outcome = run_pipeline(
+        build_steps(period, layout, session, sleep=lambda _: None),
+        period,
+        ["papers"],
+        online=True,
+    )[0]
+    assert outcome.status == "ausgeführt" and "fortgesetzt" in outcome.reason
+    assert session.urls == [broken, f"{endpoint}?page=4"]  # Seite 2 wird nicht erneut geladen
+    assert len(PaperStore(layout.papers).load()) == 6
+    assert not layout.papers_progress.exists()
+
+
+def test_force_repeats_the_step_but_keeps_the_resume_point(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """``--force`` umgeht den Stamp, nicht den Netz-Cursor.
+
+    Der Fortschritt existiert nur nach einem abgebrochenen Abruf. Ihn bei ``--force`` zu löschen
+    hieße, drei Stunden noch einmal zu laden, ohne dass eine einzige Zeile anders würde: der
+    Store schreibt dieselben Paper noch einmal. Wer wirklich von vorn will, löscht die Datei;
+    README und Plan sagen das.
+    """
+    period = _period_settings(settings, tmp_path)
+    layout = Layout.from_settings(period)
+    endpoint = period.sources.oparl.endpoint
+    broken = f"{endpoint}?page=3"
+    steps = build_steps(period, layout, _period_session(period, broken), sleep=lambda _: None)
+    with pytest.raises(NetworkError):
+        run_pipeline(steps, period, ["papers"], online=True)
+    assert read_progress(layout.papers_progress) == broken
+
+    session = _period_session(period)
+    outcome = run_pipeline(
+        build_steps(period, layout, session, sleep=lambda _: None),
+        period,
+        ["papers"],
+        online=True,
+        force=True,
+    )[0]
+    assert outcome.status == "ausgeführt" and "erzwungen" in outcome.reason
+    assert session.urls[0] == broken  # nicht wieder bei first_page
+    assert not layout.papers_progress.exists()

@@ -158,6 +158,11 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
     print(
         f"Profil:     {layout.profile or '(keines, Hauptperiode)'}; Daten unter {layout.root.resolve()}"
     )
+    period = settings.period
+    print(
+        f"Periode:    {period.title}, {period.start} bis {period.end or 'offen'}; "
+        f"Wahltag {period.election_day}"
+    )
     print(f"cache_root: {layout.cache_root.resolve()}")
     print(f"reference:  {layout.reference_root.resolve()}")
     pdfs = len(list(layout.pdf_dir.glob("*.pdf"))) if layout.pdf_dir.is_dir() else 0
@@ -177,7 +182,13 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
 
 
 def _cmd_bootstrap(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
-    report = bootstrap(layout, force=args.force, context_files=settings.context.files.names())
+    report = bootstrap(
+        layout,
+        force=args.force,
+        context_files=settings.context.files.names(),
+        # Option 02: mit dem Wörterbuch der Hauptperiode gehören Straßen und Orte nicht hierher
+        needs_dictionary=settings.period.dictionary == "own",
+    )
     print(report.summary())
     return 0
 

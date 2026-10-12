@@ -396,4 +396,81 @@ Abgleich mit den Hochburgen bleibt bei Pearson *r* und *p* je Partei mit dem Bon
 Tests und n = 41 ist ein „signifikanter" Wert zu erwarten; nur die FDP bleibt unter 0,05/6); ein Modell
 gehört zu Option 3. Bezirke ohne Wahlvorschlag einer Partei bleiben im Abgleich außen vor, sonst läse sich
 „nicht angetreten" wie „keine Zustimmung" (Wahlbezirk 11, Die Linke).
+## Punkt: Eine Wahlperiode ist ein Profil, keine zweite Installation (Option 02, 2026-10-12)
 
+Die Wahlperiode 2014 bis 2020 läuft durch dieselbe Kette wie die Hauptperiode, nur mit einer zweiten
+TOML-Datei (`settings.2014.toml`): `profile = "2014-2020"` legt Daten unter `data_root/2014-2020/` und
+PDFs und Texte unter `cache_root/2014-2020/`, der HTTP-Cache bleibt geteilt. Verworfen: ein zweites
+`data_root` in `settings.local.toml` (nicht committbar, die CI kennt es nicht) und ein geteilter Textstore
+(die Perioden hätten sich gegenseitig den Stamp von `texts` entwertet).
+
+**Dasselbe Wörterbuch für beide Perioden** (`period.dictionary = "base"`): Straßen und Orte je Wahlbezirk
+2025, Stand November 2025. So unterscheiden sich die Perioden nur in den Dokumenten, und keine Trefferquote
+muss zwischen zwei Zuschnitten umgerechnet werden — Treffer sind Dokumentmengen, keine Summen, und ließen
+sich gar nicht anteilig verteilen. Der Preis steht auf der Seite: Dokumente von 2016 werden mit den
+Straßennamen von heute gesucht. Verworfen: ein Wörterbuch je Stimmbezirk 2020 (zwei weitere Netzläufe über
+316 Polygone, und 87 der 306 Stimmbezirke 2025 liegen nicht zu 99 % in einem Wahlbezirk 2020).
+
+## Punkt: Wahlzahlen über Flächenanteile umrechnen, Anteile erst danach (Option 02, 2026-10-12)
+
+Kein Wahlbezirk von 2020 blieb unter 1 % Flächenänderung gegenüber 2025; ein Vergleich über die Nummer wäre
+sinnlos. Umgerechnet wird darum von den 316 Stimmbezirken 2020 auf die 41 Wahlbezirke 2025, mit dem
+Flächenanteil der Schnittfläche als Gewicht, normiert auf die Schnittsumme (Stadtgrenze und Rhein lassen bis
+zu 2,2 % Rand unbedeckt; `crosswalk.min_coverage` fängt echte Lücken wie ein falsches CRS). Übertragen
+werden nur additive Zählgrößen — Wahlberechtigte, Wähler, Stimmen —, je Zielbezirk nach dem Verfahren des
+größten Restes ganzzahlig gerundet, sodass die Stadtsumme exakt erhalten bleibt; Wahlbeteiligung und
+Parteianteile entstehen **danach** aus den übertragenen Zahlen. Verworfen: Ganzzuordnung jedes Stimmbezirks
+zum Mehrheitsbezirk (83 von 316 sind geteilt, bis 2,6 Prozentpunkte Beteiligung und 4 262 Wahlberechtigte
+Abweichung je Bezirk) und Bevölkerungsgewichte aus dem Zensusraster (genauer, aber eine weitere Quelle;
+Kandidat für später). Die Annahme bleibt, dass sich die Wahlberechtigten innerhalb eines Stimmbezirks
+gleichmäßig über die Fläche verteilen; die Seite sagt das.
+
+**Briefwahl**: 110 265 der 247 356 Wähler von 2020 (44,6 %) wählten per Brief, und die 138 Briefwahlbezirke
+haben weder Geometrie noch Wahlbezirk. Ihre Zahl je Wahlbezirk ist die Differenz zwischen der
+Wahlbezirkszeile und der Summe ihrer Urnenstimmbezirke; verteilt wird proportional zu den Wahlberechtigten
+mit Sperrvermerk W, also mit Wahlschein (gegen proportional zu allen Wahlberechtigten: bis 5,1
+Prozentpunkte je Bezirk, Median 0,6). Verteilt werden auch die Parteistimmen, sonst wären die Anteile
+urnenlastig. Drei Proben sichern das ab: die Wahlberechtigten je Wahlbezirk müssen exakt stimmen (das prüft
+zugleich die geometrische Zuordnung), keine Lücke darf negativ sein, und die Summe der Briefwahlzeilen muss
+die Lücke genau füllen. Verworfen: die Briefwahl weglassen (die Beteiligung wäre fast halbiert).
+
+## Punkt: Der Vergleich ist ein eigener Schritt, kein stiller Seitenteil (Option 02, 2026-10-12)
+
+`compare` läuft nur mit `compare.period` und schreibt `wahlbezirke_vergleich.parquet`; der Schritt `report`
+nimmt die Datei als Eingabe, und der Abschnitt „Zwei Wahlperioden" existiert nur mit ihr. Fehlende Eingaben
+sind nach Regel 3 der Architektur ein Fehler, kein stilles Überspringen — also muss der Vergleich
+ausdrücklich eingeschaltet werden (`settings.vergleich.toml`), und die Kette von `main` bleibt unverändert.
+Verworfen: der Vergleich als „optionale Eingabe" von `report` (das Schrittregister kennt keine). Verglichen
+wird die Schnittmenge der Wahlbezirke beider Perioden: ein Bezirk, den nur eine Periode kennt, fällt weg,
+statt mit einer erfundenen Null zu erscheinen; die Seite nennt die Zahl.
+
+## Punkt: Kanonische Spaltennamen statt Quellnamen (Option 02, 2026-10-12)
+
+Die Wahlergebnis-CSV von 2020 nennt die Wahlberechtigten `A`, die Wähler `B` und die Parteien `D1` bis
+`D16`; die von 2025 nennt sie wie die Arbeit. `read_results_csv` benennt beim Lesen um, sodass
+`wahlbezirke_waehler.parquet` in jeder Periode dasselbe Schema trägt und die Auswertung die Namen als
+Konstanten liest statt aus den Settings. Für die Hauptperiode ist die Umbenennung die Identität, der Golden
+Master bleibt unberührt. Verworfen: die Quellnamen durchreichen (dann hieße eine veröffentlichte Spalte
+`A`), und eine Namenstabelle in den Settings (eine Abbildung, die nur eine Richtung kennt, gehört in den
+Code).
+
+## Punkt: `[columns]` beschreibt den Zielzuschnitt, `[crosswalk]` den alten (Option 02, 2026-10-12)
+
+Ein Periodenprofil liest zwei Zuschnitte: seinen eigenen (die Stimmbezirke von 2020, deren GeoJSON nur
+`Stimmbezchar` trägt) und den der Auswertung (die Stimmbezirke der Hauptperiode mit Wahlbezirksnummer und
+-namen). Beide haben andere Eigenschaftsnamen. `[columns]` beschreibt weiter den Zielzuschnitt — so lesen
+Karte, Bezirkstabelle und Namen der Berichtsseite unverändert —, und die drei Eigenschaften des alten
+Zuschnitts stehen in `[crosswalk]`. `Layout.target_view` ist die eine Stelle, die den Unterschied kennt.
+Verworfen: `read_precincts` mit leeren Wahlbezirksspalten (dann hätte die Seite des Profils keine
+Bezirksnamen mehr) und ein zweiter kompletter `[columns]`-Block (vier Schlüssel doppelt).
+
+## Punkt: Der Abruf der alten Periode ist je Seite wiederaufnehmbar (Option 02, 2026-10-12)
+
+Rund 235 Seiten à 85 s sind drei Stunden; ein Abbruch darf nicht drei Stunden kosten. `fetch_papers` meldet
+nach jeder Seite ihre Paper und die URL der nächsten, der Schritt speichert beides (`raw/papers.jsonl` und
+`raw/papers.progress.json`), und der nächste Lauf beginnt dort. Die Fortschrittsdatei existiert nur,
+solange ein Abruf unvollständig ist. `sources.oparl.first_page` überspringt die Seiten der jüngeren
+Perioden; die Liste ist neueste zuerst, also ist eine zu kleine Startseite nur langsam, eine zu große
+verlöre Dokumente. Seite 90 trug am 2026-10-12 den Bereich Januar bis März 2022 und liegt damit rund 28
+Seiten (40 Minuten) vor der Grenze — bewusst mit Vorlauf, weil jedes neue Paper die alten Seiten nach
+hinten schiebt. `incremental = false`, weil `modified` bei alten Papern das Migrationsdatum 2024-12-30 ist.

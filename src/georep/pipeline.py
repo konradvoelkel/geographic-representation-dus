@@ -21,7 +21,7 @@ import polars as pl
 from georep import __version__
 from georep.analysis.bodies import documents_by_body, hits_by_body
 from georep.analysis.bodies import summary as bodies_summary
-from georep.analysis.hits import hits_by_district, join_voters
+from georep.analysis.hits import DISTRICT, hits_by_district, join_voters
 from georep.analysis.ols import model_frame, model_terms, models_table
 from georep.analysis.parties import (
     classify_originators,
@@ -30,9 +30,19 @@ from georep.analysis.parties import (
     party_hits,
     read_organizations,
 )
-from georep.crosswalk import area_shares, district_weights
-from georep.errors import GeorepError, MissingInputError
-from georep.geo import Area, PrecinctIndex, read_areas, read_precincts
+from georep.analysis.periods import compare_periods, delta_regression
+from georep.crosswalk import (
+    COVERAGE,
+    SHARE,
+    SOURCE,
+    TARGET,
+    area_shares,
+    assign_by_point,
+    district_weights,
+    transfer_counts,
+)
+from georep.errors import GeorepError, MissingInputError, SchemaError
+from georep.geo import Area, PrecinctIndex, read_area_names, read_areas, read_precincts
 from georep.http import Transport
 from georep.io import digest, write_bytes, write_json, write_parquet
 from georep.layout import Layout
@@ -49,13 +59,34 @@ from georep.prep.extract import extract_missing
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus, documents_with_text
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
 from georep.prep.streets import read_streets_json, streets_by_district
-from georep.prep.voters import aggregate_voters, district_units, read_results_csv
+from georep.prep.voters import (
+    ELIGIBLE_TOTAL,
+    PRECINCT,
+    SOURCE_DISTRICT,
+    VOTERS,
+    aggregate_voters,
+    check_postal_total,
+    count_columns,
+    district_results,
+    district_units,
+    precinct_counts,
+    read_results_csv,
+    spread_postal,
+    with_shares,
+)
+from georep.records import PaperRecord
 from georep.report.build import MAP_NAME, SCHEMA_NAME, build_site, current_commit
+from georep.report.geometry import district_shapes
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
 from georep.settings import Settings
 from georep.sources import cached_session
-from georep.sources.oparl import fetch_organizations, fetch_papers
+from georep.sources.oparl import (
+    fetch_organizations,
+    fetch_papers,
+    read_progress,
+    write_progress,
+)
 from georep.sources.opendata import fetch_csv, fetch_geojson
 from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
@@ -234,6 +265,10 @@ def build_steps(
     # Schritte nicht; die Dateinamen und alles Inhaltliche stehen in den Settings.
     with_context = layout.context_root is not None
     session: Transport | None = http
+    # Option 02: ein Periodenprofil darf das Wörterbuch der Hauptperiode benutzen; dann liest es
+    # deren Rohdaten (Straßen, Orte) und holt selbst nichts aus dem Netz.
+    own_dictionary = settings.period.dictionary == "own"
+    dictionary_source = layout if own_dictionary else layout.for_profile("")
 
     def transport() -> Transport:
         nonlocal session
@@ -242,11 +277,23 @@ def build_steps(
         return session
 
     def opendata() -> str:
-        csv = fetch_csv(transport(), settings.sources.opendata.results_url, sep=columns.sep)
+        portal = settings.sources.opendata
+        csv = fetch_csv(transport(), portal.results_url, sep=columns.sep)
         write_bytes(layout.results_csv, csv)
-        geo = fetch_geojson(transport(), settings.sources.opendata.districts_url)
+        geo = fetch_geojson(transport(), portal.districts_url)
         write_json(layout.districts_geojson, geo, indent=None)
-        return f"{len(csv)} Bytes Wahlergebnis, {len(geo['features'])} Stimmbezirke"
+        done = f"{len(csv)} Bytes Wahlergebnis, {len(geo['features'])} Stimmbezirke"
+        # --- Option 02: ein Periodenprofil braucht zusätzlich den Zuschnitt seiner Wahlbezirke
+        # und ihr Ergebnis (dort stehen die Briefwähler, die kein Stimmbezirk ausweist)
+        if portal.district_shapes_url:
+            shapes = fetch_geojson(transport(), portal.district_shapes_url)
+            write_json(layout.district_shapes_geojson, shapes, indent=None)
+            done += f", {len(shapes['features'])} Wahlbezirke"
+        if portal.district_results_url:
+            per_district = fetch_csv(transport(), portal.district_results_url, sep=columns.sep)
+            write_bytes(layout.district_results_csv, per_district)
+            done += f", {len(per_district)} Bytes Wahlbezirksergebnis"
+        return done
 
     # --- Option 03: die Fremddaten je Raumeinheit frisch vom Portal (``bootstrap`` nimmt die
     # Kopie im Repo, die beim Bauen ohne Netz reicht)
@@ -271,6 +318,17 @@ def build_steps(
             newest = max((r.modified for r in known.values() if r.modified), default=None)
             if newest is not None:
                 since = newest - dt.timedelta(days=1)
+        # --- Option 02: seitenweise speichern und wiederaufnehmen. Der Abruf einer alten Periode
+        # dauert Stunden; bricht er ab, darf der nächste Lauf nicht bei first_page beginnen.
+        resume = read_progress(layout.papers_progress)
+        pages_done = 0
+
+        def page_done(kept: list[PaperRecord], next_url: str | None) -> None:
+            nonlocal pages_done
+            pages_done += 1
+            store.upsert(kept)
+            write_progress(layout.papers_progress, next_url, pages_done)
+
         records, fetched = fetch_papers(
             transport(),
             oparl.endpoint,
@@ -279,11 +337,17 @@ def build_steps(
             modified_since=since,
             stop_when_older=oparl.stop_when_older,
             max_pages=oparl.max_pages or None,  # Option 04: 0 = alle Seiten
+            first_page=oparl.first_page,
+            resume_from=resume,
+            on_page=page_done,
             sleep=sleep,
         )
         report = store.upsert(records)
+        # Der Fortschritt existiert nur, solange ein Abruf unvollständig ist.
+        layout.papers_progress.unlink(missing_ok=True)
         mode = f"seit {since.date()}" if since else "vollständig"
-        return f"{mode}: {fetched.summary()}; Store {report.summary()}"
+        resumed = " (fortgesetzt)" if resume else ""
+        return f"{mode}{resumed}: {fetched.summary()}; Store {report.summary()}"
 
     def pdfs() -> str:
         records = PaperStore(layout.papers).load().values()
@@ -381,13 +445,115 @@ def build_steps(
             f"{len(context.variables)} Variablen"
         )
 
+    # --- Option 02: Zuordnung der Stimmbezirke eines alten Zuschnitts auf die Wahlbezirke heute
+    def precincts() -> str:
+        cross = settings.crosswalk
+        working = settings.geo.working_crs
+        sources = read_areas(layout.districts_geojson, cross.precinct_id, working)
+        old = read_areas(layout.district_shapes_geojson, cross.district_id, working)
+        names = read_area_names(
+            layout.district_shapes_geojson, cross.district_id, cross.district_name
+        )
+        targets = [
+            Area(str(district), shape)
+            for district, shape in district_shapes(
+                read_precincts(
+                    layout.target_view(settings).districts_geojson, settings.columns, working
+                ),
+                tolerance_m=0.0,
+            ).items()
+        ]
+        home = assign_by_point(sources, old)
+        shares = area_shares(sources, targets, min_coverage=cross.min_coverage)
+        frame = (
+            shares.rename({SOURCE: PRECINCT, SHARE: "anteil", COVERAGE: "abdeckung"})
+            # Die Schlüssel des Crosswalks sind Text; die Wahlbezirke sind im ganzen Projekt
+            # Int64, und die Reste beim Runden sollen an die numerisch sortierten Bezirke gehen.
+            .with_columns(pl.col(TARGET).cast(pl.Int64).alias(DISTRICT))
+            .with_columns(
+                pl.col(PRECINCT).replace_strict(home, return_dtype=pl.String).alias("_quelle")
+            )
+            .with_columns(
+                pl.col("_quelle").cast(pl.Int64).alias(SOURCE_DISTRICT),
+                pl.col("_quelle")
+                .replace_strict(names, return_dtype=pl.String)
+                .alias("wahlbezirk_quelle_name"),
+            )
+            .select(
+                PRECINCT,
+                SOURCE_DISTRICT,
+                "wahlbezirk_quelle_name",
+                DISTRICT,
+                "anteil",
+                "abdeckung",
+            )
+            .sort([PRECINCT, DISTRICT])
+        )
+        write_parquet(frame, layout.precinct_assignment, schema_version=1)
+        split = frame.group_by(PRECINCT).len().filter(pl.col("len") > 1).height
+        least = frame.get_column("abdeckung").to_list()
+        return (
+            f"{len(sources)} Stimmbezirke auf {frame.get_column(DISTRICT).n_unique()} Wahlbezirke, "
+            f"{frame.height} Paare, {split} geteilt, Abdeckung ab {min(least):.4f}"
+        )
+
+    # --- Option 02: Wähler des alten Zuschnitts über die Zuordnung auf die Wahlbezirke heute
+    def voters_transferred() -> str:
+        assignment = pl.read_parquet(layout.precinct_assignment)
+        found = precinct_counts(read_results_csv(layout.results_csv, columns), columns)
+        per_district = district_results(
+            read_results_csv(layout.district_results_csv, columns), columns
+        )
+        counts = count_columns(columns)
+        complete = spread_postal(
+            found.urn,
+            dict(
+                zip(
+                    assignment.get_column(PRECINCT).to_list(),
+                    assignment.get_column(SOURCE_DISTRICT).to_list(),
+                    strict=True,
+                )
+            ),
+            per_district,
+            counts,
+        )
+        postal = check_postal_total(
+            found.postal,
+            VOTERS,
+            int(per_district.get_column(VOTERS).sum()) - int(found.urn.get_column(VOTERS).sum()),
+        )
+        moved = transfer_counts(
+            complete.rename({PRECINCT: SOURCE}),
+            assignment.select(
+                pl.col(PRECINCT).alias(SOURCE),
+                pl.col(DISTRICT).alias(TARGET),
+                pl.col("anteil").alias(SHARE),
+            ),
+            counts,
+        )
+        frame = with_shares(moved.rename({TARGET: DISTRICT}), columns.parties)
+        write_parquet(frame, layout.voters, schema_version=1)
+        # Option 05 rechnet auf dem Zielzuschnitt: die Zuordnung Wahlbezirk zu Stadtbezirk gilt
+        # für beide Perioden und kommt darum aus der Hauptperiode, nicht aus der alten CSV (die
+        # Ratswahl 2020 nennt keinen Stadtbezirk).
+        write_parquet(
+            pl.read_parquet(layout.target_view(settings).district_units),
+            layout.district_units,
+            schema_version=1,
+        )
+        return (
+            f"{frame.height} Wahlbezirke aus {complete.height} Stimmbezirken, "
+            f"{postal} Briefwähler verteilt, "
+            f"{int(frame.get_column(ELIGIBLE_TOTAL).sum())} Wahlberechtigte"
+        )
+
     def streets() -> str:
-        frame = streets_by_district(read_streets_json(layout.streets))
+        frame = streets_by_district(read_streets_json(dictionary_source.streets))
         write_parquet(frame, layout.streets_by_district, schema_version=1)
         return f"{frame.height} Wahlbezirke, {frame.get_column('suchbegriffe').list.len().sum()} Straßennamen"
 
     def pois() -> str:
-        clean = clean_pois(read_pois_json(layout.pois), settings.search.exclude)
+        clean = clean_pois(read_pois_json(dictionary_source.pois), settings.search.exclude)
         grouped = pois_by_district(clean)
         write_parquet(clean, layout.pois_table, schema_version=1)
         write_parquet(grouped, layout.pois_by_district, schema_version=1)
@@ -419,7 +585,7 @@ def build_steps(
             pl.read_parquet(layout.index),
             settings.search.hide_in_display,
         )
-        frame = join_voters(hits, pl.read_parquet(layout.voters), columns.eligible)
+        frame = join_voters(hits, pl.read_parquet(layout.voters), ELIGIBLE_TOTAL)
         write_parquet(frame, layout.results, schema_version=1)
         return (
             f"{frame.height} Wahlbezirke, {int(frame.get_column('anzahl_treffer').sum())} Treffer"
@@ -437,7 +603,7 @@ def build_steps(
         results_frame = pl.read_parquet(layout.results)
         papers_frame = pl.read_parquet(layout.papers_bodies)
         units = pl.read_parquet(layout.district_units)
-        districts = hits_by_body(results_frame, papers_frame, units, columns.eligible)
+        districts = hits_by_body(results_frame, papers_frame, units, ELIGIBLE_TOTAL)
         bodies_frame = documents_by_body(papers_frame, results_frame, units)
         write_parquet(districts, layout.district_bodies, schema_version=1)
         write_parquet(bodies_frame, layout.bodies_table, schema_version=1)
@@ -473,7 +639,7 @@ def build_steps(
             index_frame,
             pl.read_parquet(layout.corpus, columns=["id", "paper_type"]),
             pl.read_parquet(layout.voters),
-            columns.eligible,
+            ELIGIBLE_TOTAL,
             with_text,
             [
                 TypeRules(
@@ -547,7 +713,7 @@ def build_steps(
             attribution,
             pl.read_parquet(layout.voters),
             settings.originators.parties,
-            columns.eligible,
+            ELIGIBLE_TOTAL,
         )
         write_parquet(party_frame, layout.party_results, schema_version=PARTIES_SCHEMA)
         figures = originator_figures(attribution)
@@ -560,20 +726,42 @@ def build_steps(
             + (f"; {len(found)} Organisationen" if found else "")
         )
 
+    # --- Option 02: beide Perioden nebeneinander; nur mit compare.period
+    def compare() -> str:
+        other = layout.for_profile(settings.compare.period)
+        if digest(layout.dictionary) != digest(other.dictionary):
+            raise SchemaError(
+                "Vergleich setzt dasselbe Wörterbuch voraus: "
+                f"{layout.dictionary} und {other.dictionary} unterscheiden sich. "
+                'Das Profil der älteren Periode braucht period.dictionary = "base".'
+            )
+        frame = compare_periods(
+            pl.read_parquet(layout.results),
+            pl.read_parquet(other.results),
+            labels=(settings.compare.label or settings.compare.period, settings.period.title),
+        )
+        write_parquet(frame, layout.comparison, schema_version=1)
+        fit = delta_regression(frame)
+        return f"{frame.height} Wahlbezirke in beiden Perioden; Differenzen {fit.summary()}"
+
     def report() -> str:
         return build_site(
             layout, settings, now=dt.datetime.now(dt.UTC), commit=current_commit()
         ).line()
 
+    # --- Option 02: ein Periodenprofil holt zusätzlich den Zuschnitt seiner Wahlbezirke
+    opendata_outputs = [layout.results_csv, layout.districts_geojson]
+    if settings.sources.opendata.district_shapes_url:
+        opendata_outputs.append(layout.district_shapes_geojson)
+    if settings.sources.opendata.district_results_url:
+        opendata_outputs.append(layout.district_results_csv)
     # Option 06: ohne Themenmodell (``topics.k = 0``) fehlt der Schritt und niemand nennt seine
     # Ausgaben als Eingabe; die zwei Tabellen der Themen sind im Register ``optional``.
     with_topics = settings.topics.k > 0
     topic_outputs = (layout.topics, layout.topic_documents, layout.topic_shares)
     context_files = tuple(layout.external / name for name in context.files.names())
     return [
-        Step(
-            "opendata", (), (layout.results_csv, layout.districts_geojson), opendata, network=True
-        ),
+        Step("opendata", (), tuple(opendata_outputs), opendata, network=True),
         # --- Option 03
         *(
             [Step("context_data", (), context_files, context_data, network=True)]
@@ -584,16 +772,62 @@ def build_steps(
         # --- Option 04: eine Seite, rund eine halbe Sekunde; liefert die Abbildung URL zu Partei
         Step("organizations", (), (layout.organizations,), organizations, network=True),
         Step("pdfs", (layout.papers,), (layout.pdf_manifest,), pdfs, network=True),
-        Step(
-            "streets_osm", (layout.districts_geojson,), (layout.streets,), streets_osm, network=True
+        # --- Option 02: mit dem Wörterbuch der Hauptperiode gibt es die beiden Netzschritte nicht
+        *(
+            [
+                Step(
+                    "streets_osm",
+                    (layout.districts_geojson,),
+                    (layout.streets,),
+                    streets_osm,
+                    network=True,
+                ),
+                Step(
+                    "pois_wiki",
+                    (layout.districts_geojson,),
+                    (layout.pois,),
+                    pois_wiki,
+                    network=True,
+                ),
+            ]
+            if own_dictionary
+            else []
         ),
-        Step("pois_wiki", (layout.districts_geojson,), (layout.pois,), pois_wiki, network=True),
         Step("texts", (layout.papers, layout.pdf_manifest), (layout.texts,), texts),
-        Step(
-            "voters",
-            (layout.results_csv,),
-            (layout.voters, layout.district_units),  # Option 05: zweite Ausgabe
-            voters,
+        # --- Option 02: der Crosswalk braucht beide Zuschnitte, dann rechnet voters über ihn
+        *(
+            [
+                Step(
+                    "precincts",
+                    (
+                        layout.districts_geojson,
+                        layout.district_shapes_geojson,
+                        layout.target_view(settings).districts_geojson,
+                    ),
+                    (layout.precinct_assignment,),
+                    precincts,
+                ),
+                Step(
+                    "voters",
+                    (
+                        layout.results_csv,
+                        layout.district_results_csv,
+                        layout.precinct_assignment,
+                        layout.target_view(settings).district_units,
+                    ),
+                    (layout.voters, layout.district_units),
+                    voters_transferred,
+                ),
+            ]
+            if settings.crosswalk.enabled
+            else [
+                Step(
+                    "voters",
+                    (layout.results_csv,),
+                    (layout.voters, layout.district_units),  # Option 05: zweite Ausgabe
+                    voters,
+                )
+            ]
         ),
         # --- Option 03
         *(
@@ -614,8 +848,13 @@ def build_steps(
             if with_context
             else []
         ),
-        Step("streets", (layout.streets,), (layout.streets_by_district,), streets),
-        Step("pois", (layout.pois,), (layout.pois_table, layout.pois_by_district), pois),
+        Step("streets", (dictionary_source.streets,), (layout.streets_by_district,), streets),
+        Step(
+            "pois",
+            (dictionary_source.pois,),
+            (layout.pois_table, layout.pois_by_district),
+            pois,
+        ),
         Step(
             "dictionary",
             (layout.pois_by_district, layout.streets_by_district),
@@ -685,6 +924,24 @@ def build_steps(
             parties,
             PARTIES_SCHEMA,
         ),
+        # --- Option 02: der Vergleich steht vor dem Bericht und wird seine letzte Eingabe
+        *(
+            [
+                Step(
+                    "compare",
+                    (
+                        layout.results,
+                        layout.for_profile(settings.compare.period).results,
+                        layout.dictionary,
+                        layout.for_profile(settings.compare.period).dictionary,
+                    ),
+                    (layout.comparison,),
+                    compare,
+                )
+            ]
+            if settings.compare.period
+            else []
+        ),
         Step(
             "report",
             (
@@ -695,7 +952,9 @@ def build_steps(
                 layout.pois_table,
                 layout.streets_by_district,
                 layout.corpus,
-                layout.districts_geojson,
+                # Option 02: der gerechnete Zuschnitt, bei einem Crosswalk-Profil der der
+                # Hauptperiode (dort liegen Flächen und Namen der Wahlbezirke)
+                layout.target_view(settings).districts_geojson,
                 # Option 05
                 layout.district_bodies,
                 layout.bodies_table,
@@ -719,7 +978,16 @@ def build_steps(
                 layout.district_originators,
                 layout.party_results,
             )
-            + ((layout.topics, layout.topic_documents) if with_topics else ()),
+            + ((layout.topics, layout.topic_documents) if with_topics else ())
+            # --- Option 02: der Vergleich und die Zuordnung der älteren Periode
+            + (
+                (
+                    layout.comparison,
+                    layout.for_profile(settings.compare.period).precinct_assignment,
+                )
+                if settings.compare.period
+                else ()
+            ),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
         ),

@@ -24,6 +24,15 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
 LOG_LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
+PROFILE_NAME = re.compile(r"[a-z0-9][a-z0-9-]*")  # ein Ordnername unter data_root, kein Pfad
+
+
+def _plain_name(value: str, key: str) -> str:
+    if value and not PROFILE_NAME.fullmatch(value):
+        raise ValueError(
+            f"{key} {value!r}: nur Kleinbuchstaben, Ziffern und Bindestriche (ein Ordnername)"
+        )
+    return value
 
 
 class _Strict(BaseModel):
@@ -38,6 +47,10 @@ class Period(_Strict):
     election: date | None = (
         None  # Wahltag, dessen Ergebnis Nenner und Zuschnitt liefert; Standard: end
     )
+    # Option 02: Anzeigename der Periode auf der Seite (leer = aus den Jahren abgeleitet, ``title``)
+    # und Herkunft des Wörterbuchs: "base" liest Straßen und Orte der Hauptperiode (Profil "").
+    label: str = ""
+    dictionary: Literal["own", "base"] = "own"
 
     @field_validator("end", "election", mode="before")
     @classmethod
@@ -67,6 +80,15 @@ class Period(_Strict):
         assert self.end is not None  # der Validator verlangt eines von beiden
         return self.end
 
+    @property
+    def title(self) -> str:
+        """``label``, sonst „Wahlperiode 2014 bis 2020" beziehungsweise „Wahlperiode seit 2025"."""
+        if self.label:
+            return self.label
+        if self.end is None:
+            return f"Wahlperiode seit {self.start.year}"
+        return f"Wahlperiode {self.start.year} bis {self.end.year}"
+
 
 class HttpSettings(_Strict):
     timeout_s: float = 180.0
@@ -83,10 +105,33 @@ class OparlSource(_Strict):
     pdf_limit: int = 0
     max_pages: int = 0  # Option 04: 0 = alle; `fetch papers --max-pages N` setzt es für einen Lauf
 
+    first_page: int = (
+        1  # Option 02: Seite, bei der der Abruf beginnt (die Liste ist neueste zuerst)
+    )
+
+    @field_validator("first_page")
+    @classmethod
+    def _first_page_positive(cls, value: int) -> int:
+        if value < 1:
+            raise ValueError(f"sources.oparl.first_page {value}: OParl zählt Seiten ab 1")
+        return value
+
 
 class OpendataSource(_Strict):
     results_url: str
     districts_url: str
+    # Option 02: Wahlbezirksflächen und -ergebnis eines älteren Zuschnitts (leer = nicht abrufen)
+    # und der Dateiname, unter dem das Stimmbezirks-GeoJSON in external/ liegt.
+    district_shapes_url: str = ""
+    district_results_url: str = ""
+    districts_file: str = "Stimmbezirke_2025.geojson"
+
+    @field_validator("districts_file")
+    @classmethod
+    def _plain_file_name(cls, value: str) -> str:
+        if not value or "/" in value or value != Path(value).name:
+            raise ValueError(f"sources.opendata.districts_file {value!r}: ein Dateiname, kein Pfad")
+        return value
 
 
 class WikidataSource(_Strict):
@@ -129,12 +174,18 @@ class Geo(_Strict):
 class ResultsColumns(_Strict):
     sep: str = ";"
     encoding: str = "latin-1"
-    district: str
+    district: str = ""  # leer: der Wahlbezirk kommt aus der Zuordnung des Crosswalks (Option 02)
     eligible: str
     voters: str
     parties: dict[str, str]
     city_district: str  # Option 05: Stadtbezirk je Stimmbezirk, für die Zuordnung der Wahlbezirke
     precinct: str = ""  # Option 03: Stimmbezirk in der CSV; "" = kein Crosswalk über Stimmbezirke
+    # Option 02: Gebietsname je Zeile (darin steht der postal_marker der Briefwahlbezirke),
+    # Wahlberechtigte mit Wahlschein (Verteilschlüssel der Briefwahl) und der Marker selbst;
+    # die Stimmbezirksnummer steht oben (Option 03).
+    precinct_name: str = ""
+    eligible_postal: str = ""
+    postal_marker: str = ""
 
 
 class Columns(_Strict):
@@ -596,6 +647,47 @@ class Originators(_Strict):
         return tuple(p.key for p in (*self.parties, *self.groups))
 
 
+# Option 02: Umrechnung eines älteren Zuschnitts auf die Wahlbezirke der Hauptperiode (Profil "")
+class Crosswalk(_Strict):
+    enabled: bool = False
+    target_file: str = (
+        "Stimmbezirke_2025.geojson"  # Stimmbezirksdatei der Hauptperiode (Zielzuschnitt)
+    )
+    # Eigenschaften der beiden GeoJSON-Dateien des alten Zuschnitts; ``[columns]`` beschreibt
+    # weiter den Zielzuschnitt, damit die Berichtsseite des Profils ihn unverändert liest.
+    precinct_id: str = ""  # Stimmbezirksnummer im Stimmbezirks-GeoJSON der Periode
+    district_id: str = ""  # Wahlbezirksnummer in Kommunalwahlbezirke.geojson
+    district_name: str = ""  # Wahlbezirksname dort
+    min_coverage: float = 0.95  # kleinste zulässige Abdeckung einer Quellfläche durch die Ziele
+
+    @field_validator("min_coverage")
+    @classmethod
+    def _coverage_is_a_share(cls, value: float) -> float:
+        if not 0.0 < value <= 1.0:
+            raise ValueError(f"crosswalk.min_coverage {value}: ein Anteil in (0, 1]")
+        return value
+
+    @field_validator("target_file")
+    @classmethod
+    def _plain_file_name(cls, value: str) -> str:
+        if not value or value != Path(value).name:
+            raise ValueError(f"crosswalk.target_file {value!r}: ein Dateiname, kein Pfad")
+        return value
+
+
+# Option 02: Vergleich zweier Perioden; läuft auf der Hauptperiode gegen ein Periodenprofil
+class Compare(_Strict):
+    period: str = ""  # Profil der älteren Periode; leer = kein Schritt compare
+    # Anzeigename der älteren Periode in der Vergleichstabelle; leer = der Profilname. Er steht in
+    # der Parquet-Datei und zählt darum zum Fingerprint, anders als period.label.
+    label: str = ""
+
+    @field_validator("period")
+    @classmethod
+    def _profile_name(cls, value: str) -> str:
+        return _plain_name(value, "compare.period")
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_", env_nested_delimiter="__", extra="forbid", frozen=True
@@ -623,6 +715,8 @@ class Settings(BaseSettings):
     context: ContextSettings  # Option 03
 
     originators: Originators = Originators()  # Option 04
+    crosswalk: Crosswalk = Crosswalk()  # Option 02
+    compare: Compare = Compare()  # Option 02
 
     @model_validator(mode="after")
     def _party_keys_have_a_vote_column(self) -> Settings:
@@ -647,11 +741,44 @@ class Settings(BaseSettings):
     @field_validator("profile")
     @classmethod
     def _profile_is_a_plain_name(cls, value: str) -> str:
-        if value and not re.fullmatch(r"[a-z0-9][a-z0-9-]*", value):
+        return _plain_name(value, "profile")
+
+    @model_validator(mode="after")
+    def _period_profile_is_consistent(self) -> Settings:
+        """Option 02: Basiswörterbuch, Crosswalk und Vergleich brauchen einander und ein Profil."""
+        columns = self.columns.results
+        if self.period.dictionary == "base" and not self.profile:
             raise ValueError(
-                f"profile {value!r}: nur Kleinbuchstaben, Ziffern und Bindestriche (ein Ordnername)"
+                'period.dictionary = "base" liest die Hauptperiode und braucht darum ein profile'
             )
-        return value
+        if self.crosswalk.enabled:
+            if self.period.dictionary != "base":
+                raise ValueError(
+                    "crosswalk.enabled rechnet auf den Zuschnitt der Hauptperiode um und braucht "
+                    'period.dictionary = "base"'
+                )
+            empty = [
+                key
+                for key in ("precinct", "precinct_name", "eligible_postal", "postal_marker")
+                if not getattr(columns, key)
+            ]
+            if empty:
+                raise ValueError(f"crosswalk.enabled braucht columns.results.{', '.join(empty)}")
+            blank = [
+                key
+                for key in ("precinct_id", "district_id", "district_name")
+                if not getattr(self.crosswalk, key)
+            ]
+            if blank:
+                raise ValueError(f"crosswalk.enabled braucht crosswalk.{', '.join(blank)}")
+        elif not columns.district:
+            raise ValueError(
+                "columns.results.district ist leer: der Wahlbezirk kommt dann aus der Zuordnung, "
+                "dafür muss crosswalk.enabled gesetzt sein"
+            )
+        if self.compare.period and self.compare.period == self.profile:
+            raise ValueError(f"compare.period {self.compare.period!r} ist das eigene Profil")
+        return self
 
     @field_validator("log_level")
     @classmethod
@@ -687,6 +814,9 @@ class Settings(BaseSettings):
         Überschrift soll nicht die ganze Kette neu rechnen lassen. Option 03: ``context.root`` und
         die lokalen Dateinamen sind Pfade, ``context.dataset`` ist reine Anzeige (Namensnennung,
         Stand, Abrufdatum); URLs, Spalten, Skalen und Modelle zählen.
+        Option 02: ``period.label`` und Dateinamen (``sources.opendata.districts_file``,
+        ``crosswalk.target_file``) sind Anzeige beziehungsweise Pfad; ``compare.period`` zählt,
+        denn es entscheidet, ob die Seite den Vergleich trägt.
         """
         payload = self.model_dump(
             mode="json",
@@ -710,6 +840,9 @@ class Settings(BaseSettings):
                         "indicators": {"file"},
                     },
                 },
+                "period": {"label"},
+                "sources": {"opendata": {"districts_file"}},
+                "crosswalk": {"target_file"},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

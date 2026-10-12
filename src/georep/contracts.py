@@ -93,3 +93,15 @@ def parts_sum_to(frame: pl.DataFrame, parts: Sequence[str], total: str) -> bool:
         return False
     checked = frame.select(pl.sum_horizontal(parts).alias("_parts"), pl.col(total))
     return bool((checked.get_column("_parts") == checked.get_column(total)).all())
+
+
+def columns_preserved(before: pl.DataFrame, after: pl.DataFrame, columns: Sequence[str]) -> bool:
+    """Jede Zählspalte hat nach der Umrechnung dieselbe Summe wie vorher, ganzzahlig genau.
+
+    Die Nachbedingung des Übertrags auf einen anderen Gebietszuschnitt: Wahlberechtigte, Wähler
+    und Stimmen sind additiv, also darf die Stadtsumme sich nicht um eine Person verschieben.
+    Vorher darf gerundet werden (Anteile sind Fließkomma), nachher muss es ganzzahlig stimmen.
+    """
+    return all(
+        int(after.get_column(c).sum()) == round(float(before.get_column(c).sum())) for c in columns
+    )

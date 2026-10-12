@@ -11,6 +11,7 @@ import json
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import deal
 import numpy as np
@@ -78,6 +79,37 @@ def geojson_crs(collection: dict[str, object], default: str) -> str:
     return default
 
 
+def _features(
+    path: Path, working_crs: str, source_crs: str
+) -> tuple[list[dict[str, Any]], Transformer]:
+    """Die Features einer FeatureCollection und der Transformer von ihrem CRS ins Arbeits-CRS."""
+    collection = json.loads(path.read_text(encoding="utf-8"))
+    features = collection.get("features")
+    if not isinstance(features, list) or not features:
+        raise SchemaError(f"{path.name}: keine Features")
+    return features, transformer(geojson_crs(collection, source_crs), working_crs)
+
+
+# Option 02: Der alte Wahlbezirkszuschnitt trägt neben der Nummer einen Namen; ``Area`` hält
+# bewusst nur den Schlüssel (Option 03), darum liest diese Funktion die Namen als eigene
+# Abbildung. Ein Name ist Anzeige, keine Geometrie -- er gehört nicht in den Crosswalk.
+@deal.raises(SchemaError)
+def read_area_names(path: Path, key_property: str, name_property: str) -> dict[str, str]:
+    """Kennung -> Name aus den Eigenschaften eines GeoJSON, ohne Geometrie und ohne Projektion."""
+    collection = json.loads(path.read_text(encoding="utf-8"))
+    features = collection.get("features")
+    if not isinstance(features, list) or not features:
+        raise SchemaError(f"{path.name}: keine Features")
+    names: dict[str, str] = {}
+    for feature in features:
+        props = feature.get("properties") or {}
+        missing = [c for c in (key_property, name_property) if c not in props]
+        if missing:
+            raise SchemaError(f"{path.name}: Felder fehlen: {missing}")
+        names[str(props[key_property])] = str(props[name_property])
+    return names
+
+
 @deal.post(
     lambda result: (
         len(result) > 0 and all(p.geometry.is_valid and not p.geometry.is_empty for p in result)
@@ -88,11 +120,7 @@ def read_precincts(
     path: Path, columns: Columns, working_crs: str, *, source_crs: str = LONLAT
 ) -> list[Precinct]:
     """Liest das Stimmbezirks-GeoJSON, repariert ungültige Geometrien, projiziert ins Arbeits-CRS."""
-    collection = json.loads(path.read_text(encoding="utf-8"))
-    features = collection.get("features")
-    if not isinstance(features, list) or not features:
-        raise SchemaError(f"{path.name}: keine Features")
-    trans = transformer(geojson_crs(collection, source_crs), working_crs)
+    features, trans = _features(path, working_crs, source_crs)
     precincts: list[Precinct] = []
     for feature in features:
         props = feature.get("properties", {})

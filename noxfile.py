@@ -84,6 +84,7 @@ VERIFY_TARGETS = [
     "georep.prep.bodies.parse_reference",  # Option 05
     "georep.prep.context.ordinal_score",  # Option 03
     "georep.analysis.parties.classify_document",  # Option 04
+    "georep.crosswalk.largest_remainder",  # Option 02
     "tests.property.oracle_matcher.oracle_extract",
 ]
 

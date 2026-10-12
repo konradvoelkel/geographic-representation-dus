@@ -23,6 +23,7 @@ from georep.contracts import has_columns, sorted_unique
 from georep.crosswalk import DISTRICT, ELIGIBLE, PRECINCT, UNIT, UNIT_NAME, WEIGHT
 from georep.errors import EmptyResultError, SchemaError
 from georep.geo import Precinct
+from georep.prep.voters import ELIGIBLE_TOTAL
 from georep.settings import ContextSettings, ContextTable, ContextVariable, ResultsColumns
 
 
@@ -34,7 +35,7 @@ def _one_row_per_precinct(result: pl.DataFrame) -> bool:
     lambda precincts, results, columns: (
         len(precincts) > 0
         and bool(columns.precinct)
-        and has_columns(results, columns.precinct, columns.district, columns.eligible)
+        and has_columns(results, columns.precinct, columns.district, ELIGIBLE_TOTAL)
     ),
     message="Stimmbezirke, die CSV-Spalten des Wahlergebnisses und ein Spaltenname für den Stimmbezirk",
 )
@@ -63,7 +64,7 @@ def precinct_table(
     )
     counts = results.select(
         pl.col(columns.precinct).str.strip_chars().alias(PRECINCT),
-        pl.col(columns.eligible)
+        pl.col(ELIGIBLE_TOTAL)
         .str.strip_chars()
         .cast(pl.Int64, strict=False)
         .fill_null(0)

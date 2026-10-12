@@ -131,19 +131,44 @@ def _rounded(value: object, decimals: int) -> object:
     return value
 
 
+def _rows_for_every_shape(
+    shapes: Mapping[int, BaseGeometry],
+    rows: Sequence[DistrictRow],
+    working_crs: str,
+    name: str = "Kommunalwahlbezirke",
+) -> bool:
+    return set(shapes) <= {r.id for r in rows} and bool(name)
+
+
+def _one_feature_per_shape(
+    shapes: Mapping[int, BaseGeometry],
+    rows: Sequence[DistrictRow],
+    working_crs: str,
+    name: str = "Kommunalwahlbezirke",
+    result: dict[str, object] | None = None,
+) -> bool:
+    assert result is not None
+    return isinstance(result["features"], list) and len(result["features"]) == len(shapes)
+
+
+# Benannte Validatoren statt Lambdas: deal reicht ``result`` positional nach allen Argumenten
+# durch, und ein Lambda mit Vorgabewert bekäme es doppelt (CLAUDE.md, „deal (Phase 6)").
 @deal.pre(
-    lambda shapes, rows, working_crs: set(shapes) <= {r.id for r in rows},
-    message="jede Fläche hat eine Zeile der Auswertung",
+    _rows_for_every_shape,
+    message="jede Fläche hat eine Zeile der Auswertung, die Sammlung einen Namen",
 )
-@deal.ensure(
-    lambda shapes, rows, working_crs, result: (
-        isinstance(result["features"], list) and len(result["features"]) == len(shapes)
-    )
-)
+@deal.ensure(_one_feature_per_shape, message="ein Feature je Fläche")
 def wahlbezirke_geojson(
-    shapes: Mapping[int, BaseGeometry], rows: Sequence[DistrictRow], working_crs: str
+    shapes: Mapping[int, BaseGeometry],
+    rows: Sequence[DistrictRow],
+    working_crs: str,
+    name: str = "Kommunalwahlbezirke",
 ) -> dict[str, object]:
-    """FeatureCollection in EPSG:4326 (RFC 7946, darum ohne ``crs``-Mitglied), sechs Nachkommastellen."""
+    """FeatureCollection in EPSG:4326 (RFC 7946, darum ohne ``crs``-Mitglied), sechs Nachkommastellen.
+
+    ``name`` benennt die Sammlung; der Aufrufer setzt die Periode ein, damit zwei Perioden zwei
+    unterscheidbare Dateien liefern (Option 02).
+    """
     by_id = {row.id: row for row in rows}
     features: list[dict[str, object]] = []
     for district, geometry in sorted(shapes.items()):
@@ -165,6 +190,6 @@ def wahlbezirke_geojson(
         )
     return {
         "type": "FeatureCollection",
-        "name": "Kommunalwahlbezirke Düsseldorf 2025",
+        "name": name,
         "features": features,
     }

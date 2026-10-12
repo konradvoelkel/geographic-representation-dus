@@ -19,7 +19,7 @@ import deal
 from jinja2 import Environment, PackageLoader, StrictUndefined, select_autoescape
 
 from georep.errors import SchemaError
-from georep.report.charts import LegendEntry
+from georep.report.charts import LegendEntry, delta_label
 from georep.report.model import ReportModel, format_de, percent_de
 from georep.report.search import search_payload
 
@@ -96,6 +96,8 @@ class Visuals:
     # Option 03: je Term des Hauptmodells (Beschriftung, SVG); leer ohne Kontextdaten
     partial_svgs: Sequence[tuple[str, str]] = ()
     party_maps_svg: str = ""  # Option 04: leer, solange der Schritt ``parties`` nicht lief
+    # Option 02: das Streudiagramm der Änderungen; leer, wenn die Seite nur eine Periode zeigt
+    delta_svg: str = ""
 
 
 def date_de(value: dt.date) -> str:
@@ -124,6 +126,7 @@ def environment() -> Environment:
     env.filters["date_de"] = date_de
     env.filters["datetime_de"] = datetime_de
     env.filters["kib"] = kib
+    env.filters["delta"] = delta_label  # Option 02: Änderung mit Vorzeichen
     return env
 
 

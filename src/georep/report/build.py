@@ -28,6 +28,7 @@ from georep.report.charts import (
     added_variable_plot,
     choropleth,
     classify,
+    delta_scatter,
     legend,
     own_share_label,
     party_maps,
@@ -265,12 +266,16 @@ def build_site(
     layout.guard_writable(layout.site_data).mkdir(parents=True, exist_ok=True)
     working_crs = settings.geo.working_crs
     downloads = write_tables(layout, settings)
-    precincts = read_precincts(layout.districts_geojson, settings.columns, working_crs)
+    precincts = read_precincts(
+        layout.target_view(settings).districts_geojson, settings.columns, working_crs
+    )
     shapes = district_shapes(precincts, SIMPLIFY_M)
     model = build_report_model(layout, settings, now=now, commit=commit)
     downloads.append(write_documents(layout, model, settings))
 
-    geojson = wahlbezirke_geojson(shapes, model.districts, working_crs)
+    geojson = wahlbezirke_geojson(
+        shapes, model.districts, working_crs, f"Kommunalwahlbezirke, {model.period.title}"
+    )
     geojson_target = layout.site_data / GEOJSON_NAME
     write_json(geojson_target, geojson, indent=None)
     downloads.append(
@@ -318,6 +323,11 @@ def build_site(
             extra_classes={"bodies": own},
         ),
         scatter_svg=scatter(model.districts, model.regression),
+        delta_svg=(
+            delta_scatter(model.comparison.rows, model.comparison.regression)
+            if model.comparison is not None
+            else ""
+        ),
         rate_legend=rate_legend,
         turnout_legend=legend(turnout, turnout_label),
         simplify_m=SIMPLIFY_M,

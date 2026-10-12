@@ -131,3 +131,38 @@ def test_layout_from_settings_takes_the_context_root(tmp_path: Path) -> None:
     assert Layout.from_settings(load_settings(cwd=tmp_path)).context_root == Path("context")
     (tmp_path / "settings.toml").write_text('[context]\nroot = ""\n', encoding="utf-8")
     assert Layout.from_settings(load_settings(cwd=tmp_path)).context_root is None
+
+
+# --- Option 02: Periode als Profil -----------------------------------------------------------
+
+
+def test_option02_paths_hang_on_the_profile_root(tmp_path: Path) -> None:
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference", "2014-2020")
+    root = tmp_path / "data" / "2014-2020"
+    assert layout.district_shapes_geojson == root / "external" / "Kommunalwahlbezirke.geojson"
+    assert layout.district_results_csv == root / "external" / "Wahlbezirk_Wahlergebnis.csv"
+    assert layout.precinct_assignment == root / "processed" / "stimmbezirke_zuordnung.parquet"
+    assert layout.comparison == root / "processed" / "wahlbezirke_vergleich.parquet"
+    assert layout.papers_progress == root / "raw" / "papers.progress.json"
+
+
+def test_districts_file_names_the_precinct_geojson_per_profile(tmp_path: Path) -> None:
+    flat = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    assert flat.districts_file == "Stimmbezirke_2025.geojson"
+    old = Layout(
+        tmp_path / "data",
+        tmp_path / "cache",
+        tmp_path / "reference",
+        "2014-2020",
+        districts_file="Stimmbezirke_2020.geojson",
+    )
+    name_2020 = "Stimmbezirke_2020.geojson"
+    assert old.districts_geojson == tmp_path / "data" / "2014-2020" / "external" / name_2020
+    assert old.reference_view().districts_geojson == tmp_path / "reference" / "external" / name_2020
+    assert old.for_profile("").districts_file == name_2020
+    target = old.for_profile("", districts_file="Stimmbezirke_2025.geojson")
+    assert target == flat and target.districts_geojson == flat.districts_geojson
+    (tmp_path / "settings.toml").write_text(
+        f'[sources.opendata]\ndistricts_file = "{name_2020}"\n', encoding="utf-8"
+    )
+    assert Layout.from_settings(load_settings(cwd=tmp_path)).districts_file == name_2020

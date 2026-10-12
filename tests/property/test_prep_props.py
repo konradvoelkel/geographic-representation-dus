@@ -9,8 +9,17 @@ from hypothesis import strategies as st
 
 from georep.prep.pois import clean_pois, pois_by_district
 from georep.prep.streets import streets_by_district
-from georep.prep.voters import aggregate_voters
-from georep.settings import Settings, load_settings
+from georep.prep.voters import (
+    ELIGIBLE_POSTAL,
+    ELIGIBLE_TOTAL,
+    PRECINCT,
+    SOURCE_DISTRICT,
+    VOTERS,
+    aggregate_voters,
+    count_columns,
+    spread_postal,
+)
+from georep.settings import ResultsColumns, Settings, load_settings
 
 
 @pytest.fixture(scope="module")
@@ -140,3 +149,114 @@ def test_streets_by_district_sorted_unique(entries: list[tuple[int, list[str]]])
         out["wahlkreis_id"].to_list(), out["suchbegriffe"].to_list(), strict=True
     ):
         assert terms == sorted({s for e in entries if e[0] == district for s in e[1]})
+
+
+# --- Option 02: Verteilung der Briefwahl auf die Stimmbezirke eines Wahlbezirks ----------------
+
+PERIOD_COLUMNS = ResultsColumns(
+    sep=";",
+    encoding="utf-8",
+    district="",
+    city_district="",
+    precinct="gebiet-nr",
+    precinct_name="gebiet-name",
+    eligible="A",
+    voters="B",
+    eligible_postal="A2",
+    postal_marker="Briefwahlbezirk",
+    parties={"CDU": "D1"},
+)
+PERIOD_COUNTS = count_columns(PERIOD_COLUMNS)
+
+
+@st.composite
+def postal_case(draw: st.DrawFn) -> tuple[pl.DataFrame, dict[str, int], pl.DataFrame]:
+    """Urnenstimmbezirke in bis zu drei Wahlbezirken und eine dazu passende Wahlbezirkszeile."""
+    size = draw(st.integers(min_value=1, max_value=8))
+    districts = draw(st.lists(st.integers(1, 3), min_size=size, max_size=size))
+    eligible = draw(st.lists(st.integers(1, 5000), min_size=size, max_size=size))
+    postal_key = [draw(st.integers(0, e)) for e in eligible]
+    voters = [draw(st.integers(0, e)) for e in eligible]
+    votes = [draw(st.integers(0, v)) for v in voters]
+    keys = [f"{i:04d}" for i in range(size)]
+    urn = pl.DataFrame(
+        {
+            PRECINCT: keys,
+            ELIGIBLE_POSTAL: postal_key,
+            ELIGIBLE_TOTAL: eligible,
+            VOTERS: voters,
+            "CDU_Stimmen": votes,
+        },
+        schema={
+            PRECINCT: pl.String,
+            ELIGIBLE_POSTAL: pl.Int64,
+            ELIGIBLE_TOTAL: pl.Int64,
+            VOTERS: pl.Int64,
+            "CDU_Stimmen": pl.Int64,
+        },
+    ).sort(PRECINCT)
+    assignment = dict(zip(keys, districts, strict=True))
+    sums = urn.with_columns(
+        pl.col(PRECINCT).replace_strict(assignment, return_dtype=pl.Int64).alias(SOURCE_DISTRICT)
+    ).group_by(SOURCE_DISTRICT)
+    rows = []
+    for row in (
+        sums.agg([pl.col(c).sum() for c in PERIOD_COUNTS])
+        .sort(SOURCE_DISTRICT)
+        .iter_rows(named=True)
+    ):
+        extra_voters = draw(st.integers(0, 2000))
+        rows.append(
+            {
+                SOURCE_DISTRICT: row[SOURCE_DISTRICT],
+                ELIGIBLE_TOTAL: row[ELIGIBLE_TOTAL],
+                VOTERS: row[VOTERS] + extra_voters,
+                "CDU_Stimmen": row["CDU_Stimmen"] + draw(st.integers(0, extra_voters)),
+            }
+        )
+    return (
+        urn,
+        assignment,
+        pl.DataFrame(
+            rows,
+            schema={SOURCE_DISTRICT: pl.Int64, **dict.fromkeys(PERIOD_COUNTS, pl.Int64)},
+        ).sort(SOURCE_DISTRICT),
+    )
+
+
+@given(case=postal_case())
+def test_spread_postal_is_sum_preserving_and_monotone(
+    case: tuple[pl.DataFrame, dict[str, int], pl.DataFrame],
+) -> None:
+    urn, assignment, districts = case
+    complete = spread_postal(urn, assignment, districts, PERIOD_COUNTS)
+    for column in PERIOD_COUNTS:
+        assert int(complete.get_column(column).sum()) == int(districts.get_column(column).sum())
+        assert bool((complete.get_column(column) >= 0).all())
+    assert complete.get_column(ELIGIBLE_TOTAL).to_list() == urn.get_column(ELIGIBLE_TOTAL).to_list()
+    added = dict(
+        zip(
+            complete.get_column(PRECINCT).to_list(),
+            [
+                int(after) - int(before)
+                for after, before in zip(
+                    complete.get_column(VOTERS).to_list(),
+                    urn.get_column(VOTERS).to_list(),
+                    strict=True,
+                )
+            ],
+            strict=True,
+        )
+    )
+    weights = dict(
+        zip(
+            urn.get_column(PRECINCT).to_list(),
+            urn.get_column(ELIGIBLE_POSTAL).to_list(),
+            strict=True,
+        )
+    )
+    # Mehr Wahlscheine, nicht weniger Briefwähler, innerhalb desselben Wahlbezirks
+    for a in added:
+        for b in added:
+            if assignment[a] == assignment[b] and weights[a] > weights[b]:
+                assert added[a] >= added[b]

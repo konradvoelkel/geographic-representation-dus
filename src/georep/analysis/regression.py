@@ -87,6 +87,11 @@ def regress(
         # scipy 1.18 liefert hier Steigung 0, r 0 und einen Standardfehler von 1e17 mit einer
         # RuntimeWarning; ältere Versionen warfen ValueError. Beides ist kein Ergebnis.
         raise EmptyResultError(f"Regression braucht Streuung in {x}: alle Werte gleich.")
+    if frame.get_column(y).n_unique() < 2:
+        # Dieselbe Luecke auf der anderen Achse: scipy liefert dann r und p als NaN und die
+        # Nachbedingung schlaegt an (Option 02, 2026-10-12; mit den Differenzen zweier Perioden
+        # auf kleinen Daten kommt der Fall vor, mit echten Wahlbeteiligungen nie).
+        raise EmptyResultError(f"Regression braucht Streuung in {y}: alle Werte gleich.")
     fit = linregress(frame.get_column(x).to_numpy(), (frame.get_column(y) * y_scale).to_numpy())
     return RegressionResult(
         n=frame.height,

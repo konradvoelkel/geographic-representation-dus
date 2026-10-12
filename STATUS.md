@@ -21,6 +21,16 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
 - Stufe G (`v0.10.0`): Dokumente je Begriff als nachgeladener Dialog aus `dokumente.json`, Orte mit Namen auf der Karte, `karte.html` mit Leaflet (gepinnt) und OpenStreetMap-Kacheln als zweite Datei.
 
 - Option 08 Suche (Branch `feat/08-suche`, 2026-10-12, im Review): Abschnitt `15-suche` auf der Berichtsseite mit Suchfeld, Vorschlagsliste nach dem APG-Combobox-Muster, Ergebnisblock und Markierung auf der Karte; `report/search.py` baut 4176 Einträge (2828 Straßen, 1239 Orte, 68 beides, 41 Wahlbezirksnamen), die als JSON in der Seite liegen. Plan und Abnahme: `docs/plans/08-suche.md`.
+- Option 02, Zeitreihe (Branch `feat/02-zeitreihe`, auf `main` rebased 2026-10-12, im Review): eine Wahlperiode ist ein
+  Profil (`settings.2014.toml`, Daten unter `data_root/2014-2020/`), der Flächen-Crosswalk rechnet die
+  Wahlzahlen eines älteren Stimmbezirkszuschnitts summentreu auf die Wahlbezirke der Auswertung um, der
+  Schritt `compare` und der Abschnitt „Zwei Wahlperioden" stellen beide Perioden nebeneinander
+  (`settings.vergleich.toml`). Geprüft offline auf der erfundenen Mini-Periode
+  `tests/fixtures/mini-2014/`; der echte Abruf der Periode 2014 bis 2020 (rund 3 h Metadaten, 8 bis 11 h
+  PDFs) ist vorbereitet und wartet auf Konrads Lauf (README, „Zweite Periode abrufen"). Bis dahin fehlt der
+  Abschnitt auf der veröffentlichten Seite.
+
+## Zahlen (2026-10-11)
 
 - Option 06 Gewichtung (Branch `feat/06-gewichtung`, 2026-10-12, im Review): `analysis/weights.py` rechnet gewichtete Trefferquoten (Maximum über die Begriffe mal Dokumentart mal Thema, jeder Faktor in [0, 1]), `analysis/topics.py` ein Themenmodell mit TF-IDF und NMF (scikit-learn, der einzige Ort mit diesem Import). Zwei Schritte (`topics` 9 s, `weights` 1 s), vier Tabellen, der Seitenabschnitt `34-gewichtung` mit der Sensitivitätstabelle. Einheitsgewichte reproduzieren `anzahl_treffer` (29 573) und Tabelle 5 exakt; `wahlbezirke_auswertung.parquet` und `inverted_index.parquet` bleiben byteidentisch.
 

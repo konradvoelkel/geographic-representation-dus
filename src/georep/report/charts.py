@@ -17,9 +17,16 @@ from dataclasses import dataclass
 import deal
 from shapely.geometry.base import BaseGeometry
 
-from georep.analysis.regression import RegressionPair
+from georep.analysis.regression import RegressionPair, RegressionResult
 from georep.report.geometry import Projection, label_point, svg_path
-from georep.report.model import DistrictRow, PartyCell, PartyRow, format_de, percent_de
+from georep.report.model import (
+    DistrictRow,
+    PartyCell,
+    PartyRow,
+    PeriodRow,
+    format_de,
+    percent_de,
+)
 
 CLASSES = 5  # Quantilklassen der Choroplethe; weniger, wenn es weniger verschiedene Werte gibt
 MAP_WIDTH = 600.0
@@ -205,7 +212,7 @@ def choropleth(
     parts = [
         f'<svg class="map" viewBox="{projection.view_box}" role="img" '
         'aria-labelledby="map-title" xmlns="http://www.w3.org/2000/svg">',
-        '<title id="map-title">Karte der 41 Kommunalwahlbezirke</title>',
+        f'<title id="map-title">Karte der {len(rows)} Kommunalwahlbezirke</title>',
         '<g class="districts" fill-rule="evenodd">',
     ]
     for district, geometry in sorted(shapes.items()):
@@ -573,4 +580,76 @@ def party_maps(
             )
         parts.append("</g></g>")
     parts.append("</svg>")
+    return "".join(parts)
+
+
+# --- Option 02: Streudiagramm der Änderungen zwischen zwei Wahlperioden ------------------------
+
+
+def delta_label(value: float, decimals: int = 3) -> str:
+    """Eine Änderung mit Vorzeichen: ``+0,004``, ``-1,2``; eine gerundete Null bleibt ohne."""
+    text = format_de(value, decimals)
+    if text.startswith("-") or set(text) <= {"0", ","}:
+        return text
+    return f"+{text}"
+
+
+def delta_scatter(
+    rows: Sequence[PeriodRow],
+    regression: RegressionResult,
+    *,
+    width: float = SCATTER_WIDTH,
+    height: float = SCATTER_HEIGHT,
+) -> str:
+    """Änderung der Trefferquote (x) gegen Änderung der Wahlbeteiligung in Prozentpunkten (y).
+
+    Dieselben Achsen wie ``scatter`` (Fundament F7), eine Gerade statt zwei, und die Punkte
+    tragen nur ``data-id`` und einen eigenen ``<title>``: das Basis-JavaScript des Rahmens
+    bedient ``.point``, dieser Abschnitt bedient ``.dpoint`` selbst (templates/sections).
+    """
+    xs = [row.d_rate for row in rows]
+    ys = [row.d_turnout * 100.0 for row in rows]
+    # Die Null gehört in ein Diagramm von Änderungen: sie trennt Zunahme von Abnahme, auch wenn
+    # alle Punkte auf einer Seite liegen. Darum spannen die Achsen sie immer mit auf.
+    axes = Axes.fit([*xs, 0.0], [*ys, 0.0], width=width, height=height, x_span=0.002, y_span=1.0)
+    parts = [
+        f'<svg class="scatter deltas" viewBox="0 0 {_num(width)} {_num(height)}" role="img" '
+        'aria-labelledby="deltas-title" xmlns="http://www.w3.org/2000/svg">',
+        '<title id="deltas-title">Änderung der Trefferquote gegen Änderung der Wahlbeteiligung '
+        "je Wahlbezirk</title>",
+        axes.clip_path("deltas-plot"),
+        axes.grid(),
+        axes.axis_lines(),
+        axes.tick_labels(),
+        axes.axis_titles("Änderung der Trefferquote", "Änderung der Wahlbeteiligung in Punkten"),
+        '<g class="fits" clip-path="url(#deltas-plot)">',
+        f'<line class="fit fit-all" x1="{_num(axes.sx(axes.x0))}" '
+        f'y1="{_num(axes.sy(regression.slope * axes.x0 + regression.intercept))}" '
+        f'x2="{_num(axes.sx(axes.x1))}" '
+        f'y2="{_num(axes.sy(regression.slope * axes.x1 + regression.intercept))}"/>',
+    ]
+    # Die Nulllinien: links von x = 0 ist die Sichtbarkeit gefallen, unter y = 0 die Beteiligung
+    parts.append(
+        f'<line class="zero" x1="{_num(axes.sx(0.0))}" x2="{_num(axes.sx(0.0))}" '
+        f'y1="{_num(axes.top)}" y2="{_num(axes.top + axes.plot_h)}"/>'
+        f'<line class="zero" y1="{_num(axes.sy(0.0))}" y2="{_num(axes.sy(0.0))}" '
+        f'x1="{_num(axes.left)}" x2="{_num(axes.left + axes.plot_w)}"/>'
+    )
+    parts.append('</g><g class="dots">')
+    for row, x, y in zip(rows, xs, ys, strict=True):
+        cx, cy = _num(axes.sx(x)), _num(axes.sy(y))
+        title = (
+            f"{row.id} {row.name}: Trefferquote {delta_label(row.d_rate)}, "
+            f"Wahlbeteiligung {delta_label(row.d_turnout * 100.0, 1)} Punkte"
+        )
+        parts.append(
+            f'<g class="dpoint" data-id="{row.id}" tabindex="0">'
+            f"<title>{html.escape(title)}</title>"
+            f'<circle class="hit" cx="{cx}" cy="{cy}" r="{_num(HIT_RADIUS)}"/>'
+            f'<circle class="dot" cx="{cx}" cy="{cy}" r="{_num(DOT_RADIUS)}"/>'
+            f'<text class="dot-label" x="{_num(axes.sx(x) + 6)}" y="{_num(axes.sy(y) - 6)}">'
+            f"{row.id}</text>"
+            "</g>"
+        )
+    parts.append("</g></svg>")
     return "".join(parts)
