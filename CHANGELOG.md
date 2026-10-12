@@ -2,6 +2,14 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## Unreleased
+
+- Der Quelltext steht unter GPL-3.0-or-later (`LICENSE`); bis zum Tag `v0.11.0` war es CC0 1.0 wie das
+  Original. Ergebnisse, Tabellen und die Berichtsseite bleiben CC0 1.0, die Daten behalten die Lizenz ihrer
+  Quelle; der Fuß der Seite nennt beides.
+- Der Tag `bartzsch-exakt` markiert `v0.11.0` als letzten Stand, der die Zahlen der Arbeit exakt reproduziert;
+  ab jetzt genügt eine ungefähre Reproduktion (Konrad, 2026-10-12, `docs/decisions.md`, Punkt 43).
+
 ## 0.11.0 (2026-10-12), Ausbau in acht Optionen
 
 - Sammelversion des Ausbaus nach `docs/plan-ausbau-2026-10.md`: acht Optionen auf eigenen Branches, je mit Plan

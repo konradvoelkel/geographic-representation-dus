@@ -38,7 +38,7 @@ from georep.report.comparison import (
     table_rows,
 )
 from georep.report.model import format_de
-from georep.report.render import CC0, REPOSITORY, environment, external_links
+from georep.report.render import CC0, GPL, REPOSITORY, environment, external_links
 from georep.settings import Settings, load_settings
 
 COMPARISON_NAME = "vergleich.html"
@@ -57,7 +57,7 @@ _NEIGHBOURS = re.compile(
 )
 # Die Vergleichsseite verlinkt nach außen nur das Repository und die Lizenz; die Städte liegen
 # relativ daneben, die Quellen und Lizenzen der Daten nennt jede Stadtseite in ihrem Fuß.
-COMPARISON_LINKS = frozenset({REPOSITORY, CC0})
+COMPARISON_LINKS = frozenset({REPOSITORY, CC0, GPL})
 
 
 class PublishTargetError(GeorepError):
@@ -181,7 +181,9 @@ def _tree_size(folder: Path) -> tuple[int, int]:
 def render_comparison(model: ComparisonModel) -> str:
     template = environment().get_template("vergleich.html.j2")
     return template.render(
-        model=model, rows=table_rows(model), links={"repository": REPOSITORY, "cc0": CC0}
+        model=model,
+        rows=table_rows(model),
+        links={"repository": REPOSITORY, "cc0": CC0, "gpl": GPL},
     )
 
 

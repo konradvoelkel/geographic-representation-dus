@@ -270,4 +270,6 @@ Regeln für Commits und für Agenten stehen in [CLAUDE.md](CLAUDE.md). Vor dem C
 
 ## Lizenz
 
-CC0 1.0, wie das Original.
+Quelltext: GPL-3.0-or-later (`LICENSE`), seit dem 2026-10-12 nach dem Tag `v0.11.0`; bis dahin CC0 1.0 wie das
+Original von Lukas Bartzsch, dessen CC0 die Weiterlizenzierung erlaubt. Ergebnisse, Tabellen und die
+Berichtsseite: CC0 1.0. Daten je Quelle, siehe „Daten und Herkunft".

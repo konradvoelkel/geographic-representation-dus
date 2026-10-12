@@ -30,12 +30,13 @@ OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
 WIKIDATA = "https://www.wikidata.org/"
 WIKIPEDIA = "https://de.wikipedia.org/"
 CC0 = "https://creativecommons.org/publicdomain/zero/1.0/deed.de"
+GPL = "https://www.gnu.org/licenses/gpl-3.0.de.html"
 ODBL = "https://opendatacommons.org/licenses/odbl/1-0/"
 # Option 01: die Links, die auf jeder Stadtseite stehen. Portal, Ratsinformationssystem und die
 # Lizenzen der Daten sind je Stadt verschieden; sie stehen im Profil und kommen über
 # ``model_links`` hinzu, sind also per Konstruktion erlaubt — Links aus Daten weiterhin nicht.
 ALLOWED_LINKS = frozenset(
-    {REPOSITORY, THESIS, ARCHITECTURE, OSM_COPYRIGHT, WIKIDATA, WIKIPEDIA, CC0, ODBL}
+    {REPOSITORY, THESIS, ARCHITECTURE, OSM_COPYRIGHT, WIKIDATA, WIKIPEDIA, CC0, GPL, ODBL}
 )
 _EXTERNAL = re.compile(r'(?:href|src)="(https?://[^"]*)"')
 
@@ -220,6 +221,7 @@ def render_report(model: ReportModel, visuals: Visuals) -> str:
             "wikidata": WIKIDATA,
             "wikipedia": WIKIPEDIA,
             "cc0": CC0,
+            "gpl": GPL,
             "odbl": ODBL,
         },
     )

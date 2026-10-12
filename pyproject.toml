@@ -3,7 +3,7 @@ name = "georep"
 version = "0.11.0"
 description = "Geografische Repräsentation in Ratsdokumenten: Ortsmarker je Wahlbezirk, Treffer in OParl-Dokumenten, Zusammenhang mit der Wahlbeteiligung"
 readme = "README.md"
-license = "CC0-1.0"
+license = "GPL-3.0-or-later"
 authors = [{ name = "Lukas Bartzsch" }, { name = "Konrad Völkel" }]
 requires-python = ">=3.14"
 dependencies = [

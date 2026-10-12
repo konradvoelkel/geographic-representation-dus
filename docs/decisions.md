@@ -589,3 +589,28 @@ Unterseite (Pages kann keine zweite Datenwurzel lesen); cron statt systemd (kein
 keine Credentials); feste Pfade im Skript. Kosten: ein Schritt und zwei Tabellen mehr in jedem Profil, rund
 34 KB mehr auf der Hauptseite, und ein Rechner, der täglich zwei Minuten arbeitet. Offene Fragen (Hostname,
 R2-Bucket, Freigabe des Erstabrufs) stehen in [plans/fragen.md](plans/fragen.md).
+
+## 42. Quelltext unter GPL-3.0-or-later, Ergebnisse bleiben CC0 (Konrad, 2026-10-12)
+
+Der Code wechselt nach dem Tag `v0.11.0` von CC0 1.0 auf GPL-3.0-or-later: Ableitungen des Programms sollen
+unter derselben Lizenz offen bleiben. Das Original von Lukas Bartzsch steht unter CC0, das die
+Weiterlizenzierung erlaubt; sein Name bleibt in `pyproject.toml` und im README als Ursprung. Die Ergebnisse
+(Tabellen, `summary.json`, die Berichtsseite) bleiben CC0 1.0, damit sie ohne Bedingungen weiterverwendet
+werden können; die Daten behalten die Lizenz ihrer Quelle. Der Fuß der Seite nennt beides getrennt.
+
+Verworfen: MIT oder Apache-2.0 (kein Copyleft); AGPL (die Seite ist statisch, es gibt keinen Dienst, dessen
+Nutzung die Quelle erzwingen müsste); die Ergebnisse ebenfalls unter GPL (Daten sind keine Software, und CC0
+ist für sie die üblichere Lizenz).
+
+## 43. Die Zahlen der Arbeit müssen nur noch ungefähr reproduziert werden (Konrad, 2026-10-12)
+
+Bis `v0.11.0` galt: jede Änderung muss Tabelle 5 und die Treffer der Arbeit exakt reproduzieren (Golden
+Master, Punkt 11). Der Tag `bartzsch-exakt` zeigt auf `v0.11.0` und friert diesen Stand ein. Ab jetzt darf
+die Methodik von der Arbeit abweichen, wenn die Abweichung begründet, dokumentiert und in ihrer Wirkung auf
+die Zahlen gemessen ist (`docs/todo.md`, Punkt 4); eine ungefähre Reproduktion genügt. Die exakte
+Reproduktion bleibt als Test erhalten, solange sie mit abgeschalteten neuen Regeln gilt; die Golden-Master-
+Dateien unter `tests/fixtures/mini/expected/` werden dann nicht mehr blind, sondern mit einem Eintrag hier
+und im Commit erneuert.
+
+Verworfen: die exakte Reproduktion ganz aufgeben (dann wüsste niemand mehr, wo die Arbeit endet und das
+Programm beginnt); eine Toleranz ohne Messung (jede Abweichung muss benannt sein).
