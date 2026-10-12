@@ -92,3 +92,22 @@ def test_both_crosswalks_agree_when_each_precinct_lies_in_one_unit() -> None:
     assert geometric.rows() == pytest.approx(
         attributes.select("wahlkreis_id", "einheit", "gewicht").rows()
     )
+
+
+def test_a_district_without_eligible_voters_falls_away_instead_of_dividing_by_zero() -> None:
+    """Wie ``unit_weights``: Zeilen ohne Zählgröße zählen nicht, ein Wahlbezirk ganz ohne fehlt.
+
+    Das Modul dient auch den Optionen 02 und 05, die andere Zählgrößen mitbringen (Review
+    2026-10-12); 0/0 wäre dort ein Vertragsbruch statt einer Aussage.
+    """
+    table = _table([("p1", 1, 0), ("p2", 1, 0), ("p3", 2, 500)])
+    shares = pl.DataFrame(
+        [("p1", "A", 1.0), ("p2", "B", 1.0), ("p3", "B", 1.0)],
+        schema={"source_id": pl.String, "target_id": pl.String, "share": pl.Float64},
+        orient="row",
+    )
+    weights = district_weights(table, shares)
+    assert weights.rows() == [(2, "B", 1.0)]
+    # Teils ohne Wahlberechtigte: nur die Stimmbezirke mit zählen
+    mixed = _table([("p1", 1, 0), ("p2", 1, 300), ("p3", 2, 500)])
+    assert district_weights(mixed, shares).rows() == [(1, "B", 1.0), (2, "B", 1.0)]

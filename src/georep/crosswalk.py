@@ -164,8 +164,8 @@ def _districts_of_the_table(
 ) -> bool:
     assert result is not None
     known = set(shares.get_column(SOURCE))
-    expected = set(table.filter(pl.col(PRECINCT).is_in(known)).get_column(DISTRICT))
-    return set(result.get_column(DISTRICT)) == expected
+    counted = table.filter(pl.col(PRECINCT).is_in(known) & (pl.col(ELIGIBLE) > 0))
+    return set(result.get_column(DISTRICT)) == set(counted.get_column(DISTRICT))
 
 
 @deal.pre(
@@ -186,7 +186,8 @@ def district_weights(table: pl.DataFrame, shares: pl.DataFrame) -> pl.DataFrame:
     """Gewicht einer Einheit im Wahlbezirk: Wahlberechtigte × Flächenanteil, je Wahlbezirk normiert.
 
     Eingaben: eine Zeile je Stimmbezirk (``precinct_table``) und die Flächenanteile aus
-    ``area_shares``. Ausgabe ``wahlkreis_id``, ``einheit``, ``gewicht``, sortiert nach Wahlbezirk
+    ``area_shares``. Stimmbezirke ohne Zählgröße fallen weg wie in ``unit_weights``, darum kann
+    ein Wahlbezirk fehlen, in dem niemand wahlberechtigt ist -- sonst stünde dort 0/0. Ausgabe ``wahlkreis_id``, ``einheit``, ``gewicht``, sortiert nach Wahlbezirk
     und Gewicht absteigend -- dieselbe Form wie ``unit_weights``, damit beide Wege vergleichbar
     sind. Normiert wird über die Stimmbezirke mit Anteilen, nicht über alle: ein Stimmbezirk ohne
     Zielfläche würde die Summe sonst unter 1 drücken (``area_shares`` lässt ihn aber ohnehin nicht
@@ -195,9 +196,11 @@ def district_weights(table: pl.DataFrame, shares: pl.DataFrame) -> pl.DataFrame:
     # Sortieren und maintain_order: ein Join legt die Zeilenfolge nicht fest, und eine
     # Fließkommasumme hängt von ihr im letzten Bit ab; zwei Läufe sollen dieselbe Parquet-Datei
     # schreiben (2026-10-12).
-    joined = table.join(
-        shares.select(SOURCE, TARGET, SHARE), left_on=PRECINCT, right_on=SOURCE
-    ).sort([DISTRICT, TARGET, PRECINCT])
+    joined = (
+        table.filter(pl.col(ELIGIBLE) > 0)  # wie unit_weights: ohne Zählgröße kein Gewicht
+        .join(shares.select(SOURCE, TARGET, SHARE), left_on=PRECINCT, right_on=SOURCE)
+        .sort([DISTRICT, TARGET, PRECINCT])
+    )
     weighted = (
         joined.with_columns((pl.col(ELIGIBLE) * pl.col(SHARE)).alias("_w"))
         .group_by(DISTRICT, TARGET, maintain_order=True)
