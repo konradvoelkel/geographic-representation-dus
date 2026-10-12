@@ -33,7 +33,7 @@ fail() {
 }
 
 # --- Umgebung ---------------------------------------------------------------------------------
-for name in MONITOR_REPO MONITOR_SETTINGS MONITOR_PROFILE MONITOR_PUBLISH_DIR GEOREP_DATA_ROOT; do
+for name in MONITOR_REPO MONITOR_SETTINGS MONITOR_PUBLISH_DIR GEOREP_DATA_ROOT; do
   [ -n "${!name:-}" ] || fail "$name ist nicht gesetzt (Vorlage: deploy/monitor.env.example)"
 done
 UV=${MONITOR_UV:-uv}
@@ -44,15 +44,12 @@ VPS_WWW=${MONITOR_VPS_WWW:-}
 SNAPSHOT_KEEP=${MONITOR_SNAPSHOT_KEEP:-24}
 HEALTHCHECK_URL=${MONITOR_HEALTHCHECK_URL:-}
 DRY_RUN=${DRY_RUN:-}
-CACHE_ROOT=${GEOREP_CACHE_ROOT:-$GEOREP_DATA_ROOT/cache}
-PROFILE=$MONITOR_PROFILE
 OUT=$MONITOR_PUBLISH_DIR/out
-MAIN_SITE=$GEOREP_DATA_ROOT/site
-PROFILE_SITE=$GEOREP_DATA_ROOT/$PROFILE/site
 DRY=()
 [ -n "$DRY_RUN" ] && DRY=(--dry-run)
 
 command -v rsync >/dev/null || fail "rsync fehlt"
+command -v flock >/dev/null || fail "flock fehlt (sonst liefe jeder Lauf ungesperrt)"
 cd "$MONITOR_REPO" || fail "MONITOR_REPO $MONITOR_REPO ist kein Verzeichnis"
 mkdir -p "$GEOREP_DATA_ROOT" "$OUT" || fail "Verzeichnisse anlegen"
 WORK=$(mktemp -d) || fail "Arbeitsverzeichnis anlegen"
@@ -78,6 +75,24 @@ step() { # step <name> <befehl...>: ausführen, Ausgabe zeigen, Exit-Code prüfe
 "
 }
 
+query() { # query <name> <befehl...>: wie step, aber ohne Zeile im Journal und ohne Stand
+  local name=$1
+  shift
+  "$@" >"$WORK/$name.out" 2>&1
+  local code=$?
+  if [ "$code" -ne 0 ]; then
+    cat "$WORK/$name.out"
+    fail "$name (Exit $code)"
+  fi
+}
+
+value_of() { # value_of <datei> <schlüssel>: der Wert aus key=wert (die Prüfung ist erfolgt)
+  local found
+  found=$(grep -m1 "^$2=" "$1" | cut -d= -f2-)
+  [ -n "$found" ] || fail "$2 fehlt in der Ausgabe von georep paths"
+  printf '%s' "$found"
+}
+
 number() { # number <datei> <wort>: die erste Zahl vor <wort>, sonst 0 (die Prüfung ist erfolgt)
   local found
   found=$(grep -o "[0-9][0-9]* $2" "$1" 2>/dev/null | head -1 | cut -d' ' -f1)
@@ -87,10 +102,24 @@ number() { # number <datei> <wort>: die erste Zahl vor <wort>, sonst 0 (die Prü
 georep() { "$UV" run georep "$@"; }
 
 health /start
-log "georep-monitor: Start, Profil $PROFILE, Datenwurzel $GEOREP_DATA_ROOT${DRY_RUN:+, Trockenlauf}"
+log "georep-monitor: Start, Datenwurzel $GEOREP_DATA_ROOT${DRY_RUN:+, Trockenlauf}"
 
 # (1) Umgebung aus dem Lockfile; beim ersten Lauf braucht das Netz zu PyPI
 step sync "$UV" sync --locked
+
+# Profilname und Pfade kommen aus dem Paket: sonst stünden sie hier ein zweites Mal, und ein
+# Tippfehler in der Umgebungsdatei ließe den Lauf am falschen Ort suchen (Review 2026-10-12).
+query paths georep --settings "$MONITOR_SETTINGS" paths
+PROFILE=$(value_of "$WORK/paths.out" profile)
+PROFILE_SITE=$(value_of "$WORK/paths.out" site)
+PDF_DIR=$(value_of "$WORK/paths.out" pdf_dir)
+PDF_MANIFEST=$(value_of "$WORK/paths.out" pdf_manifest)
+TEXT_STORE=$(value_of "$WORK/paths.out" text_store)
+PAPERS_JSONL=$(value_of "$WORK/paths.out" papers)
+PROCESSED=$(value_of "$WORK/paths.out" processed)
+query mainpaths georep paths
+MAIN_SITE=$(value_of "$WORK/mainpaths.out" site)
+log "Profil $PROFILE, Seite unter $PROFILE_SITE, Hauptseite unter $MAIN_SITE"
 
 # (2) Eingaben der Referenz in die Datenwurzel des Profils (ohne Korpus der Arbeit)
 step bootstrap georep --settings "$MONITOR_SETTINGS" bootstrap
@@ -127,8 +156,10 @@ unset GEOREP_REPORT__MONITORING_URL
 # Trockenlauf bleibt es leer (2026-10-12 in der Simulation aufgefallen).
 if [ -f "$MAIN_SITE/index.html" ]; then
   rsync -a --delete --exclude="/$PROFILE/" "$MAIN_SITE/" "$OUT/" || fail "Hauptseite nach out/"
+elif [ -n "$DRY_RUN" ]; then
+  log "Trockenlauf: ohne Hauptseite unter $MAIN_SITE nichts zu kopieren"
 else
-  log "ohne Hauptseite unter $MAIN_SITE: nichts zu kopieren"
+  fail "Hauptseite fehlt unter $MAIN_SITE, obwohl der Lauf durchlief"
 fi
 if [ -f "$PROFILE_SITE/index.html" ]; then
   mkdir -p "$OUT/$PROFILE" || fail "Profilordner anlegen"
@@ -156,8 +187,10 @@ if [ -f "$PROFILE_SITE/index.html" ]; then
     done
     log "Schnappschüsse: $(ls -1 "$SNAPSHOTS" | wc -l) behalten, $REMOVED entfernt"
   fi
+elif [ -n "$DRY_RUN" ]; then
+  log "Trockenlauf: ohne Profilseite unter $PROFILE_SITE kein Schnappschuss"
 else
-  log "ohne Profilseite unter $PROFILE_SITE: kein Schnappschuss"
+  fail "Profilseite fehlt unter $PROFILE_SITE, obwohl der Lauf durchlief"
 fi
 
 PAPERS=$(number "$WORK/papers.out" neu)
@@ -171,15 +204,15 @@ fi
 # (8) R2: PDFs und Textstore des Profils sichern, dazu Metadaten und fertige Tabellen
 if [ -n "$R2_REMOTE" ]; then
   step r2pdf "$RCLONE" sync "${DRY[@]}" --stats-one-line --exclude manifest.jsonl \
-    "$CACHE_ROOT/$PROFILE/pdf" "$R2_REMOTE/cache/$PROFILE/pdf"
+    "$PDF_DIR" "$R2_REMOTE/cache/$PROFILE/pdf"
   step r2manifest "$RCLONE" copyto "${DRY[@]}" --stats-one-line \
-    "$CACHE_ROOT/$PROFILE/pdf/manifest.jsonl" "$R2_REMOTE/cache/$PROFILE/pdf/manifest.jsonl"
+    "$PDF_MANIFEST" "$R2_REMOTE/cache/$PROFILE/pdf/manifest.jsonl"
   step r2text "$RCLONE" copyto "${DRY[@]}" --stats-one-line \
-    "$CACHE_ROOT/$PROFILE/text/texts.parquet" "$R2_REMOTE/cache/$PROFILE/text/texts.parquet"
+    "$TEXT_STORE" "$R2_REMOTE/cache/$PROFILE/text/texts.parquet"
   step r2raw "$RCLONE" copyto "${DRY[@]}" --stats-one-line \
-    "$GEOREP_DATA_ROOT/$PROFILE/raw/papers.jsonl" "$R2_REMOTE/$PROFILE/raw/papers.jsonl"
+    "$PAPERS_JSONL" "$R2_REMOTE/$PROFILE/raw/papers.jsonl"
   step r2processed "$RCLONE" copy "${DRY[@]}" --stats-one-line --include "*.parquet" \
-    "$GEOREP_DATA_ROOT/$PROFILE/processed" "$R2_REMOTE/$PROFILE/processed"
+    "$PROCESSED" "$R2_REMOTE/$PROFILE/processed"
 else
   log "ohne MONITOR_R2_REMOTE: keine Sicherung in R2"
 fi

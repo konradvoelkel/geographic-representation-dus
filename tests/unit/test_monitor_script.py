@@ -36,6 +36,24 @@ if [ "${1:-}" = "sync" ]; then
   exit 0
 fi
 shift 2   # "run georep"
+if [[ "$*" == *paths* ]]; then
+  if [[ "$*" == *--settings* ]]; then
+    echo "profile=2025"; root="$GEOREP_DATA_ROOT/2025"; cache="$GEOREP_CACHE_ROOT/2025"
+  else
+    echo "profile="; root="$GEOREP_DATA_ROOT"; cache="$GEOREP_CACHE_ROOT"
+  fi
+  echo "data_root=$GEOREP_DATA_ROOT"
+  echo "root=$root"
+  echo "site=$root/site"
+  echo "site_index=$root/site/index.html"
+  echo "cache=$cache"
+  echo "pdf_dir=$cache/pdf"
+  echo "pdf_manifest=$cache/pdf/manifest.jsonl"
+  echo "text_store=$cache/text/texts.parquet"
+  echo "papers=$root/raw/papers.jsonl"
+  echo "processed=$root/processed"
+  exit 0
+fi
 case "$*" in
   *"--settings "*bootstrap*) echo "4 Dateien kopiert, 0 übersprungen; Stores nicht gefüllt" ;;
   *bootstrap*) echo "4 Dateien kopiert; 200 Paper und 200 Texte aus der Referenz" ;;
@@ -104,7 +122,6 @@ def sandbox(tmp_path: Path) -> dict[str, str]:
         PATH=f"{binaries}:{env['PATH']}",
         MONITOR_REPO=str(tmp_path),
         MONITOR_SETTINGS="settings.2025.toml",
-        MONITOR_PROFILE="2025",
         MONITOR_PUBLISH_DIR=str(tmp_path / "publish"),
         MONITOR_R2_REMOTE="",
         MONITOR_VPS_HOST="",
@@ -137,15 +154,17 @@ def test_a_dry_run_walks_the_steps_in_order_and_writes_the_stand(sandbox: dict[s
     assert result.returncode == 0, result.stdout + result.stderr
     logged = Path(sandbox["STUB_LOG"]).read_text(encoding="utf-8").splitlines()
     calls = [line for line in logged if line.startswith("uv ")]
-    assert calls[0] == "uv sync --locked"
-    assert calls[1] == "uv run georep --settings settings.2025.toml bootstrap"
-    assert calls[2] == "uv run georep --settings settings.2025.toml run --dry-run --online papers"
-    assert (
-        calls[3] == "uv run georep --settings settings.2025.toml run --dry-run --online pdfs texts"
-    )
-    assert calls[4] == "uv run georep --settings settings.2025.toml run --dry-run"
-    assert calls[5] == "uv run georep bootstrap" and calls[6] == "uv run georep run"
-    assert len(calls) == 7  # kein weiterer georep-Aufruf
+    assert calls == [
+        "uv sync --locked",
+        "uv run georep --settings settings.2025.toml paths",  # Profil und Pfade aus dem Paket
+        "uv run georep paths",
+        "uv run georep --settings settings.2025.toml bootstrap",
+        "uv run georep --settings settings.2025.toml run --dry-run --online papers",
+        "uv run georep --settings settings.2025.toml run --dry-run --online pdfs texts",
+        "uv run georep --settings settings.2025.toml run --dry-run",
+        "uv run georep bootstrap",
+        "uv run georep run",
+    ]
     assert not [line for line in logged if line.startswith("rclone ")]  # ohne Remote kein Upload
 
     out = Path(sandbox["MONITOR_PUBLISH_DIR"]) / "out"
@@ -156,7 +175,7 @@ def test_a_dry_run_walks_the_steps_in_order_and_writes_the_stand(sandbox: dict[s
     assert (stand["neue_paper"], stand["pdfs"], stand["texte"]) == (3, 2, 2)
     assert re.fullmatch(r"\d{4}-\d{2}", stand["schnappschuss"])  # der Monat dieses Laufs
     assert stand["seite_kb"] >= 0 and stand["dauer_s"] >= 0
-    assert len(stand["schritte"]) == 7 and all(stand["schritte"])
+    assert len(stand["schritte"]) == 7 and all(stand["schritte"])  # paths steht nicht im Stand
     assert "ohne MONITOR_R2_REMOTE" in result.stdout and "ohne MONITOR_VPS_HOST" in result.stdout
     assert "georep-monitor: 3 neue Paper, 2 PDFs, 2 Texte" in result.stdout
 
@@ -195,6 +214,8 @@ def test_a_failing_step_stops_the_run_with_exit_one(sandbox: dict[str, str]) -> 
     calls = Path(sandbox["STUB_LOG"]).read_text(encoding="utf-8").splitlines()
     assert calls == [
         "uv sync --locked",
+        "uv run georep --settings settings.2025.toml paths",
+        "uv run georep paths",
         "uv run georep --settings settings.2025.toml bootstrap",
         "uv run georep --settings settings.2025.toml run --dry-run --online papers",
     ]  # danach nichts mehr
@@ -202,9 +223,10 @@ def test_a_failing_step_stops_the_run_with_exit_one(sandbox: dict[str, str]) -> 
 
 
 def test_missing_configuration_is_named(sandbox: dict[str, str]) -> None:
-    del sandbox["MONITOR_PROFILE"]
+    del sandbox["MONITOR_SETTINGS"]
     result = _run(sandbox)
-    assert result.returncode == 1 and "MONITOR_PROFILE ist nicht gesetzt" in result.stdout
+    assert result.returncode == 1 and "MONITOR_SETTINGS ist nicht gesetzt" in result.stdout
+    assert not Path(sandbox["STUB_LOG"]).exists()  # kein Aufruf vor der Prüfung
 
 
 def test_with_a_remote_the_five_rclone_calls_run_in_order(sandbox: dict[str, str]) -> None:
@@ -302,3 +324,22 @@ def test_an_aborted_snapshot_does_not_block_the_next_run(sandbox: dict[str, str]
     assert (snapshots / month / "monatsreihe.csv").is_file()
     # Der Arbeitsordner bleibt nicht liegen und zählt nicht als Schnappschuss
     assert [p.name for p in snapshots.iterdir()] == [month]
+
+
+def test_the_profile_name_comes_from_the_package(sandbox: dict[str, str]) -> None:
+    """Das Skript fragt Profil und Pfade bei georep ab, statt sie in monitor.env zu wiederholen."""
+    assert "MONITOR_PROFILE" not in sandbox
+    result = _run(sandbox)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Profil 2025, Seite unter" in result.stdout
+    assert (Path(sandbox["MONITOR_PUBLISH_DIR"]) / "out" / "2025" / "index.html").is_file()
+
+
+def test_a_real_run_without_a_profile_page_fails(sandbox: dict[str, str]) -> None:
+    """Im echten Lauf ist eine fehlende Profilseite ein Fehler, kein stilles Exit 0."""
+    sandbox["DRY_RUN"] = ""
+    del sandbox["STUB_PROFILE_SITE"]  # der Stub legt keine Profilseite an
+    result = _run(sandbox)
+    assert result.returncode == 1
+    assert "FEHLER: Profilseite fehlt unter" in result.stdout
+    assert "/2025/site" in result.stdout
