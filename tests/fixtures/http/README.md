@@ -27,16 +27,27 @@ Abweichungen sind OSM- und Wikidata-Pflege seit November 2025, keine Fehler der 
 
 ## Mönchengladbach (2026-10-12, Option 01)
 
-Dieselben drei Quellen für die zweite Stadt, je Stimmbezirk einer der drei Wahlbezirke der
-Mini-Fixture (`tests/fixtures/mg/`). Die Antworten liegen wieder neben ihrer Anfrage.
+Dieselben drei Quellen für die zweite Stadt, je ein Stimmbezirk der drei Wahlbezirke der
+Mini-Fixture (`tests/fixtures/mg/`). Die Antworten liegen wieder neben ihrer Anfrage. Gelesen
+werden sie von `tests/golden/test_second_city.py` (Netzschritte gegen die Fake-Session) und von
+`tests/fixtures/make_mini_mg.py`.
 
 | Datei | Quelle | Anfrage | Inhalt |
 |---|---|---|---|
-| `overpass_mg_11001.json` | overpass-api.de | Stimmbezirk 11001 (Wahlbezirk 10, Alter Markt) | 48 Ways, 18 Namen |
-| `overpass_mg_32201.json` | overpass-api.de | Stimmbezirk 32201 (Wahlbezirk 22, Rheindahlen-Land) | 51 Ways, 16 Namen |
-| `overpass_mg_40201.json` | overpass-api.de | Stimmbezirk 40201 (Wahlbezirk 02, Amtsgericht/Innenstadt) | 219 Ways, 126 Namen |
+| `overpass_mg_10404.json` | overpass-api.de | Stimmbezirk 10404 (Wahlbezirk 04, Hardt) | 53 Ways, 12 Namen |
+| `overpass_mg_10906.json` | overpass-api.de | Stimmbezirk 10906 (Wahlbezirk 09, Hermges/Dahl/Ohler) | 27 Ways, 10 Namen |
+| `overpass_mg_32301.json` | overpass-api.de | Stimmbezirk 32301 (Wahlbezirk 23, Dorfbroich/Hövel) | 69 Ways, 17 Namen |
 | `wikidata_sparql_mg.json` | query.wikidata.org | dieselbe Query mit Q2758 | erste 25 von 1 190 Bindings |
-| `wikipedia_geosearch_mg_*.json` | de.wikipedia.org | GeoSearch in der Bounding Box der drei Stimmbezirke | 76, 39 und 35 Treffer |
+| `wikipedia_geosearch_mg_10404.json` | de.wikipedia.org | GeoSearch in der Bounding Box von 10404 | 0 Treffer (ein Fall ohne Treffer, auch der gehört geprüft) |
+| `wikipedia_geosearch_mg_10906.json` | de.wikipedia.org | ebenso für 10906 | 23 Treffer |
+| `wikipedia_geosearch_mg_32301.json` | de.wikipedia.org | ebenso für 32301 | 39 Treffer |
 
-Overpass antwortete beim ersten Versuch mit 504 (Gateway Timeout) und beim zweiten sofort; die
-Session wiederholt POST nicht (`allowed_methods` der Retry-Regel), das Aufzeichnungsskript tut es.
+Aufgezeichnet wurde in zwei Runden: am 2026-10-12 gegen 01:45 Uhr zuerst für die Stimmbezirke
+11001, 32201 und 40201 (Wahlbezirke 10, 22, 02), rund eine Minute; diese Antworten sind gelöscht,
+weil in jenen Bezirken kein Straßenname der PDF-Stichprobe vorkommt und die Kette dort keinen
+Treffer fände. Die zweite Runde gegen 02:05 Uhr holte die drei Bezirke oben (knapp zwei Minuten,
+Overpass antwortete dreimal mit 504, das Aufzeichnungsskript wiederholt nach 15 s). Die SPARQL-
+Antwort stammt aus der ersten Runde und ist stadtweit, also unverändert gültig.
+
+Overpass wiederholt die Session nicht von selbst: ihre Retry-Regel erlaubt GET und HEAD, die
+Abfrage ist ein POST.
