@@ -14,4 +14,4 @@ geschrieben vom jeweiligen Unteragenten auf seinem Branch; `00-synergien.md` sch
 | 05 | `05-gremien.md` | `feat/05-gremien` | umgeschrieben (Synergiephase 2026-10-12, § 10 im Plan) |
 | 06 | `06-gewichtung.md` | `feat/06-gewichtung` | umgeschrieben (Synergiephase 2026-10-12, § 10 im Plan) |
 | 07 | `07-monitoring.md` | `feat/07-monitoring` | umgeschrieben (Synergiephase 2026-10-12, § 10 im Plan) |
-| 08 | `08-suche.md` | `feat/08-suche` | umgeschrieben (Synergiephase 2026-10-12, § 10 im Plan) |
+| 08 | `08-suche.md` | `feat/08-suche` | gemerged 2026-10-12 |
