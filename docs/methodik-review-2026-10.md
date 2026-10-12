@@ -293,8 +293,9 @@ ihre Grenze (ein Kurzname ohne Stadtnamen bleibt) steht in § 4.
 
 Ein Ort aus Wikidata/Wikipedia ist eine **Einrichtung** und fällt aus dem Wörterbuch, wenn beides gilt:
 
-1. **Benennung.** Nach dem Entfernen aller Klammerzusätze steht im Label der Stadtname als letztes Wort
-   („Stadtwerke Düsseldorf", „Messe Düsseldorf") oder das Städteadjektiv irgendwo („Düsseldorfer
+1. **Benennung.** Nach dem Entfernen aller Klammerzusätze steht im Label der Stadtname am Ende — die
+   letzten Wörter, so viele wie der Stadtname hat, damit „Stadtwerke Frankfurt am Main" auch greift
+   („Stadtwerke Düsseldorf", „Messe Düsseldorf") — oder das Städteadjektiv irgendwo („Düsseldorfer
    Schauspielhaus"). Beides sind die deutschen Formen, einer Einrichtung den Namen ihrer Stadt zu geben. Ein
    Ort *innerhalb* der Stadt trägt den Stadtnamen dagegen vorangestellt, mit dem Ortsteil dahinter („Bahnhof
    Düsseldorf-Rath", „Düsseldorf Hauptbahnhof", „Düsseldorf Arcaden") — dort folgt dem Stadtnamen noch ein
@@ -323,7 +324,8 @@ blieben Tonhalle, Kunsthalle und Hochschule Orte.
 Begriffe, deren Dokumenthäufigkeit über dem 99-%-Quantil liegt (auf der Referenz: über 64 Dokumenten, das
 sind 55 der 5727 Begriffe mit Regel 1 und 58 der 5841 ohne sie), stehen im Abschnitt „Begriffe" der Seite
 als eigene, aufklappbare Tabelle mit Dokumentzahl und Wahlbezirk. Die Schwelle ist ein Quantil oder ein
-Vielfaches des Medians (`search.citywide_median_factor`), genau eines von beiden. Ob diese Begriffe
+Vielfaches des Medians (`search.citywide_median_factor`), genau eines von beiden, und immer mindestens 1:
+sonst gilt in einem dünnen Index jeder Begriff mit einem einzigen Dokument als stadtweit. Ob diese Begriffe
 zusätzlich aus der Zählung fallen, ist ein eigener Schalter
 (`search.citywide_exclude`), **standardmäßig aus**: die Liste ist eine Offenlegung, keine Korrektur. Sie
 beginnt auf der Referenz mit „grafenberger allee" (205), „vennhauser allee" (176), „hofgarten" (172),

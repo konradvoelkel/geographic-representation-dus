@@ -633,11 +633,18 @@ Einrichtung, nicht von ihrem Wahlbezirk.
 **Die Regel** (`search.city_facilities`, standardmäßig an, weil sie für jede Stadt gilt;
 `georep.prep.pois.is_city_facility`): nach dem Entfernen der Klammerzusätze ist ein Ortslabel eine
 Einrichtung, wenn (1) kein Wort darin auf ein Gattungswort aus `search.place_words` endet **und** (2) das
-Städteadjektiv darin steht oder der Stadtname das letzte Wort ist. Stadtname und Adjektiv kommen aus `[city]`
+Städteadjektiv darin steht oder der Stadtname am Ende steht. Verglichen werden die letzten Wörter, so viele
+wie der Stadtname hat: „Stadtwerke Frankfurt am Main" ist eine Einrichtung, „Bahnhof Frankfurt am Main Süd"
+ein Ort (ein mehrwortiger Stadtname kann nie „das letzte Wort" sein). Eine leere `place_words`-Liste bei
+eingeschalteter Regel weist der Settings-Validator zurück: die Regel wäre sonst still „Stadtname zuletzt
+genügt" und träfe jeden Bahnhof mit. Stadtname und Adjektiv kommen aus `[city]`
 des Profils, die Gattungswörter stadtneutral aus `defaults.toml`, die Ausnahmen aus
 `search.city_facilities_keep` des Profils (Düsseldorf: ein Eintrag, „Castello Düsseldorf"). Die Regel wirkt im
 Schritt `pois` auf beide Ausgaben, also auch auf die Karte; **Straßen laufen nie durch sie**, weil sie am
-Ortsteil der Kette hängt und nicht am Wörterbuch.
+Ortsteil der Kette hängt und nicht am Wörterbuch. Das Prädikat trägt `deal.safe`, nicht `deal.pure`: es
+läuft über jedes Label, und der Patcher von `deal.pure` ist prozessweit, nicht reentrant und kostet das
+Achtfache je Aufruf (1,80 µs gegen 0,23 µs, gemessen am 2026-10-12; CLAUDE.md, „Nie"). Dass die Funktion
+rein ist, sichern `deal.cases` und das crosshair-Ziel, wie bei `parse_reference`.
 
 **Warum zwei Bedingungen.** Drei Varianten wurden am 2026-10-12 an allen 1309 Rohlabels der Referenz
 gemessen:
@@ -694,8 +701,16 @@ Schwelle ist **entweder** ein Quantil der Dokumenthäufigkeit (`search.citywide_
 Referenz 64 Dokumente und 58 der 5841 Begriffe) **oder** ein Vielfaches des Medians
 (`search.citywide_median_factor`), nie beides — zwei Schwellen wären zwei Wahrheiten, und die Settings weisen
 die Kombination beim Laden zurück. Das Quantil ist die Vorgabe, weil es sich dem Datensatz anpasst; auf der
-Referenz ist der Median 1 Dokument, ein Vielfaches davon wäre willkürlich. 0,95 statt 0,99 wären 283 Begriffe
-und damit keine Liste mehr, die jemand liest.
+Referenz ist der Median 1 Dokument, ein Vielfaches davon wäre willkürlich. 0,95 statt 0,99 wären 276
+Begriffe und damit keine Liste mehr, die jemand liest.
+
+**Die Schwelle ist mindestens 1**, ein stadtweiter Begriff steht also in mindestens zwei Dokumenten. Ohne
+diese Untergrenze wäre in einem dünnen Index — eine neue Stadt mit kleinem Korpus hat Tausende Begriffe ohne
+Treffer — das Quantil 0 und jeder Begriff mit einem einzigen Dokument stadtweit; über den Median mit Wert 0
+dasselbe. Das Quantil zählt dabei **alle** Begriffe des Index, auch die ohne Treffer: ein Begriff ohne
+Dokument ist eine Tatsache über das Wörterbuch, kein fehlender Wert. Verworfen, aber gemessen: nur die
+Begriffe mit mindestens einem Dokument als Grundgesamtheit (auf der Referenz 3000 von 5727) ergäbe die
+Schwelle 84 statt 64 und 29 statt 55 Begriffe — eine andere Regel, nicht eine schärfere Fassung derselben.
 
 **Nur Anzeige, und zwar ausschließlich.** Die Regel ändert keine Zahl. Die Schwelle trifft auch echte
 Ortsnamen („hofgarten", „königsallee"), und sie zu entfernen wäre eine Korrektur, die niemand begründen

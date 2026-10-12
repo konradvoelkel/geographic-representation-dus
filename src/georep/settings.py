@@ -30,6 +30,7 @@ import deal
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
+from georep.contracts import one_threshold
 from georep.errors import GeorepError, SchemaError
 
 LOG_LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
@@ -347,19 +348,22 @@ class Search(_Strict):
         return value
 
     @model_validator(mode="after")
-    def _one_citywide_threshold(self) -> Search:
-        if not 0.0 <= self.citywide_quantile < 1.0:
+    def _rules_are_usable(self) -> Search:
+        # Die Regel „genau eine Schwelle" steht als Prädikat in georep.contracts und prüft
+        # damit auch den Vertrag von ``analysis.hits.citywide_terms``.
+        if not one_threshold(self.citywide_quantile, self.citywide_median_factor):
             raise ValueError(
-                f"search.citywide_quantile {self.citywide_quantile}: ein Quantil liegt in [0, 1)"
+                "search: ein Quantil liegt in [0, 1), ein Vielfaches des Medians ist nicht "
+                "negativ, und genau eines von citywide_quantile und citywide_median_factor "
+                f"gilt; hier {self.citywide_quantile} und {self.citywide_median_factor}"
             )
-        if self.citywide_median_factor < 0.0:
+        # Ohne Gattungswörter wäre Regel 1 still eine andere: „Stadtname zuletzt" allein erklärt
+        # jeden Bahnhof und jeden Park mit Stadtnamen zur Einrichtung (decisions.md, Punkt 44a).
+        if self.city_facilities and not [word for word in self.place_words if word.strip()]:
             raise ValueError(
-                f"search.citywide_median_factor {self.citywide_median_factor}: nicht negativ"
-            )
-        if self.citywide_quantile and self.citywide_median_factor:
-            raise ValueError(
-                "search: genau eines von citywide_quantile und citywide_median_factor; "
-                "zwei Schwellen wären zwei Wahrheiten"
+                "search.place_words ist leer, obwohl city_facilities an ist: die Regel wäre "
+                "dann „Stadtname zuletzt genügt“ und träfe Bahnhöfe und Parks mit. Entweder "
+                "Gattungswörter nennen oder city_facilities = false setzen"
             )
         return self
 

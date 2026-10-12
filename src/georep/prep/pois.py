@@ -63,8 +63,11 @@ def clean_pois(pois: pl.DataFrame, exclude: Iterable[str]) -> pl.DataFrame:
     )
 
 
-@deal.pure
-@deal.post(lambda result: result in (True, False))
+# Kein ``deal.pure``: die Funktion läuft über jedes Label (1309 je Lauf auf der Referenz), und der
+# Patcher von ``deal.pure`` ist prozessweit, nicht reentrant und kostet das Achtfache je Aufruf
+# (1,80 µs gegen 0,23 µs, gemessen 2026-10-12; CLAUDE.md, „Nie"). Dass die Funktion rein ist,
+# sichern ``deal.cases`` und das crosshair-Ziel in ``noxfile.py``, wie bei ``parse_reference``.
+@deal.safe
 def is_city_facility(
     label: str, city_name: str, city_adjectives: Sequence[str], place_words: Sequence[str]
 ) -> bool:
@@ -79,10 +82,12 @@ def is_city_facility(
        („Stadtwald", „Nordpark", „Hauptbahnhof").
     2. Das Städteadjektiv: steht es im Label, ist es eine Einrichtung („Düsseldorfer
        Schauspielhaus"). Ein Ort heißt nicht nach dem Adjektiv seiner Stadt.
-    3. Der Stadtname: er macht das Label nur dann zur Einrichtung, wenn er das **letzte** Wort ist
+    3. Der Stadtname: er macht das Label nur dann zur Einrichtung, wenn er **zuletzt** steht
        („Stadtwerke Düsseldorf", „Messe Düsseldorf"). Ein Ort innerhalb der Stadt trägt ihn
        vorangestellt, mit dem Ortsteil dahinter („Bahnhof Düsseldorf-Rath", „Düsseldorf
-       Arcaden"), und bleibt ein Ort.
+       Arcaden"), und bleibt ein Ort. Verglichen werden die **letzten Wörter**, so viele wie der
+       Stadtname hat: „Stadtwerke Frankfurt am Main" ist eine Einrichtung, „Bahnhof Frankfurt am
+       Main Süd" ein Ort.
 
     Klammerzusätze fallen vorher weg: „Elbsee (Düsseldorf)" ist ein Wikipedia-Lemma, kein Name.
     Stadtname und Adjektiv kommen aus ``city`` des Profils; ohne beide gibt es keine Regel.
@@ -95,10 +100,13 @@ def is_city_facility(
         return False
     if any(adjective.lower() in tokens for adjective in city_adjectives if adjective):
         return True
-    return bool(city_name) and tokens[-1] == city_name.lower()
+    city = [word.lower() for word in WORD.findall(city_name)]
+    return bool(city) and tokens[-len(city) :] == city
 
 
-@deal.pre(lambda pois, city_name, city_adjectives, place_words, keep: has_columns(pois, "label"))
+@deal.pre(
+    lambda pois, city_name, city_adjectives, place_words, keep: has_columns(pois, *POI_COLUMNS)
+)
 @deal.post(lambda result: result.columns == POI_COLUMNS)
 @deal.ensure(
     lambda pois, city_name, city_adjectives, place_words, keep, result: result.height <= pois.height

@@ -61,11 +61,13 @@ output_crs = "EPSG:4326"       # Overpass und Wikidata sprechen lon/lat; genau e
 [search]
 hide_in_display = ["schulweg"] # wird aus der Begriffsliste der Auswertung entfernt, zählt aber in den Treffern (Verhalten der Arbeit, Kap. 4.3.5)
 
-# Regel 1 „Einrichtung mit Stadtnamen" (docs/decisions.md Punkt 44, gemessen in
+# Regel 1 „Einrichtung mit Stadtnamen" (docs/decisions.md Punkt 44a, gemessen in
 # docs/methodik-review-2026-10.md): ein Ort aus Wikidata/Wikipedia, dessen Label den Stadtnamen
-# des Profils als letztes Wort trägt oder das Städteadjektiv irgendwo, ist eine Einrichtung mit
-# stadtweiter Bedeutung und fällt aus dem Wörterbuch. Standard an, weil die Benennung in jeder
-# Stadt dieselbe ist; false reproduziert die Arbeit exakt (Golden Master).
+# des Profils am Ende trägt (die letzten Wörter, so viele wie der Stadtname hat) oder das
+# Städteadjektiv irgendwo, ist eine Einrichtung mit stadtweiter Bedeutung und fällt aus dem
+# Wörterbuch. Standard an, weil die Benennung in jeder Stadt dieselbe ist; false reproduziert die
+# Arbeit exakt (Golden Master). place_words darf dann nicht leer sein, sonst wäre die Regel still
+# „Stadtname zuletzt genügt" und träfe jeden Bahnhof mit.
 city_facilities = true
 # Gattungswörter, die einen Ort an einer Adresse anzeigen: endet ein Wort des Labels auf eines
 # von ihnen, bleibt der Ort ein Ort, auch mit Stadtnamen („Düsseldorfer Stadtwald", „Bahnhof
@@ -89,8 +91,8 @@ place_words = [
 # damit Leser die Grenze der Methode sehen; gezählt werden sie weiter, die Regel ändert keine
 # Zahl (decisions.md, Punkt 44b). Schwelle ist entweder ein Quantil der Dokumenthäufigkeit oder
 # ein Vielfaches des Medians, nie beides; 0 schaltet ab.
-citywide_quantile = 0.99       # 1 % der Begriffe; auf der Referenz 58 von 5841 über 64 Dokumenten. 0,95 wären 283 Begriffe und damit keine Liste zum Lesen mehr
-citywide_median_factor = 0.0   # Alternative zum Quantil: Vielfaches des Medians. Auf der Referenz ist der Median 1 Dokument, ein Vielfaches davon wäre willkürlich; in einem kleineren Korpus kann es die robustere Schwelle sein
+citywide_quantile = 0.99       # 1 % der Begriffe; auf der Referenz 55 von 5727 über 64 Dokumenten (ohne Regel 1: 58 von 5841). 0,95 wären 276 Begriffe und damit keine Liste zum Lesen mehr. Die Schwelle ist immer mindestens 1: sonst gilt in einem dünnen Index jeder Begriff mit einem Dokument als stadtweit
+citywide_median_factor = 0.0   # Alternative zum Quantil, genau eine der beiden gilt: Vielfaches des Medians. Auf der Referenz ist der Median 1 Dokument, ein Vielfaches davon wäre willkürlich; in einem kleineren Korpus kann es die robustere Schwelle sein
 
 # zählt je Wahlbezirk höchstens einmal (Maximum über seine Begriffe mal Dokumentart mal Thema).
 [weights]

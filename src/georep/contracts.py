@@ -135,3 +135,13 @@ def keys_sorted_unique(frame: pl.DataFrame, *columns: str) -> bool:
     rows = frame.select(*columns).rows()
     keys = [tuple((1,) if value is None else (0, value) for value in row) for row in rows]
     return keys == sorted(keys) and len(set(rows)) == len(rows)
+
+
+def one_threshold(quantile: float, median_factor: float) -> bool:
+    """Genau eine Schwelle für die stadtweiten Begriffe, oder keine (decisions.md, Punkt 44b).
+
+    Ein Quantil liegt in [0, 1), ein Vielfaches des Medians ist nicht negativ, und beide zugleich
+    wären zwei Wahrheiten. Dasselbe Prädikat prüft den Vertrag von ``citywide_terms`` und der
+    Validator von ``settings.Search``, damit die Regel nur an einer Stelle steht.
+    """
+    return 0.0 <= quantile < 1.0 and median_factor >= 0.0 and not (quantile and median_factor)

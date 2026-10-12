@@ -18,7 +18,13 @@ from dataclasses import dataclass
 import deal
 import polars as pl
 
-from georep.contracts import all_nonnegative, has_columns, lists_sorted_unique, sorted_unique
+from georep.contracts import (
+    all_nonnegative,
+    has_columns,
+    lists_sorted_unique,
+    one_threshold,
+    sorted_unique,
+)
 from georep.errors import EmptyResultError
 from georep.search.index import HITS, PAPER_IDS, TERM
 
@@ -113,14 +119,40 @@ class Citywide:
     terms: tuple[str, ...]
 
 
+def _exactly_the_terms_above(
+    index: pl.DataFrame,
+    *,
+    quantile: float = 0.0,
+    median_factor: float = 0.0,
+    result: Citywide | None = None,
+) -> bool:
+    """Nachbedingung: mit Schwelle genau die Begriffe darüber, ohne Schwelle keine.
+
+    Benannt und nicht als Lambda, weil das mypy-Plugin von deal ``result`` in ``ensure`` als
+    positionalen Parameter modelliert und die Funktion schlüsselwortartige Parameter hat
+    (CLAUDE.md, „Arbeitsweise").
+    """
+    assert result is not None
+    if not result.basis:
+        return result.terms == () and result.threshold == 0
+    above = index.filter(pl.col(HITS) > result.threshold).get_column(TERM)
+    return set(result.terms) == set(above)
+
+
 @deal.pre(lambda index, *, quantile, median_factor: has_columns(index, TERM, HITS))
 @deal.pre(
-    lambda index, *, quantile, median_factor: (
-        0.0 <= quantile < 1.0 and median_factor >= 0.0 and not (quantile and median_factor)
-    ),
+    lambda index, *, quantile, median_factor: one_threshold(quantile, median_factor),
     message="Quantil in [0, 1) oder Vielfaches des Medians, nie beides",
 )
-@deal.post(lambda result: result.threshold >= 0 and len(set(result.terms)) == len(result.terms))
+@deal.post(
+    lambda result: len(set(result.terms)) == len(result.terms),
+    message="jeder stadtweite Begriff steht einmal in der Liste",
+)
+@deal.post(
+    lambda result: result.threshold >= (1 if result.basis else 0),
+    message="mit Schwelle ist sie mindestens 1, ohne Schwelle 0",
+)
+@deal.ensure(_exactly_the_terms_above, message="genau die Begriffe über der Schwelle")
 def citywide_terms(index: pl.DataFrame, *, quantile: float, median_factor: float) -> Citywide:
     """Begriffe mit auffällig hoher Dokumenthäufigkeit; welche, sagt eine der beiden Schwellen.
 
@@ -128,6 +160,11 @@ def citywide_terms(index: pl.DataFrame, *, quantile: float, median_factor: float
     64 Dokumenten), das Vielfache des Medians ist die robustere Alternative, wenn der Median
     aussagekräftig ist. Beide zugleich wäre eine doppelte Wahrheit, darum verbietet es der
     Vertrag und die Settings prüfen es beim Laden.
+
+    Die Schwelle ist mindestens 1, ein stadtweiter Begriff steht also in mindestens zwei
+    Dokumenten. Ohne diese Untergrenze wäre in einem dünnen Index — eine neue Stadt mit kleinem
+    Korpus hat Tausende Begriffe ohne Treffer — das Quantil 0 und jeder Begriff mit einem
+    einzigen Dokument stadtweit (Review des Supervisors, Befund 3, 2026-10-12).
     """
     counts = index.get_column(HITS)
     if counts.is_empty() or (not quantile and not median_factor):
@@ -143,7 +180,7 @@ def citywide_terms(index: pl.DataFrame, *, quantile: float, median_factor: float
         raw = (float(median) if isinstance(median, int | float) else 0.0) * median_factor
         factor = f"{median_factor:g}".replace(".", ",")
         basis = f"über dem {factor}-fachen des Medians der Dokumenthäufigkeit"
-    threshold = int(math.floor(raw))
+    threshold = max(1, int(math.floor(raw)))
     above = (
         index.filter(pl.col(HITS) > threshold)
         .unique(subset=[TERM], keep="first")
