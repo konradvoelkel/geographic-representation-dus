@@ -1,6 +1,7 @@
 # Status
 
-Stand 2026-10-12, `main` auf `v0.11.0`. Der Umbau in sieben Phasen ist abgeschlossen
+Stand 2026-10-12, `main` auf `v0.11.0` plus die beiden Methodikregeln aus `docs/todo.md`, Punkt 4
+(nicht getaggt; `bartzsch-exakt` zeigt auf den letzten exakt reproduzierenden Stand). Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
 Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>), und der Ausbau in
 acht Optionen ist gemerged (`docs/plan-ausbau-2026-10.md`, Pläne und Abnahmen unter `docs/plans/`). Aufbau in
@@ -57,14 +58,39 @@ acht Optionen ist gemerged (`docs/plan-ausbau-2026-10.md`, Pläne und Abnahmen u
     `georep paths`, Betrieb unter `deploy/` (Lauf-Skript, systemd-Service und -Timer, Schnappschuss mit
     `SHA256SUMS`), Trockenlauf in einer transienten Nutzereinheit geprüft.
 
+## Methodikregeln (2026-10-12, `docs/methodik-review-2026-10.md`)
+
+Das Review zu `docs/todo.md`, Punkt 4, geht die Entscheidungen der Arbeit durch und setzt zwei Regeln um
+(`docs/decisions.md`, Punkt 44). Beide stehen als Schalter in `defaults.toml`; mit `city_facilities = false`
+rechnet die Kette wie die Arbeit, und genau so messen die Golden-Master-Tests
+(`as_in_the_thesis(...)` in `tests/conftest.py`).
+
+- **Regel 1, Einrichtung mit Stadtnamen** (an): 113 der 1309 Ortslabels fallen aus dem Wörterbuch und von der
+  Karte, davon 40 mit Treffern (Stadtwerke Düsseldorf 190 Dokumente, Hochschule 80, Flughafen 80, Messe 61,
+  Stadtsparkasse 45, Feuerwehr 43). Begriffe 5841 → 5727, Treffer 29 573 → 29 010 (−1,9 %), 12 der 41
+  Wahlbezirke ändern sich: Bezirk 10 −177 (−14,9 %), Bezirk 1 −133, Bezirk 23 −91, Bezirk 6 −64, Bezirk 13
+  −42. Tabelle 5 über alle 41: 79,9539 · x + 48,1709, r = 0,1891, R² = 0,0358, p = 0,23641 (vorher 62,1337 /
+  49,1993 / 0,1612 / 0,0260 / 0,31385); ohne 1 und 10: 216,2416 · x + 40,5715, r = 0,3351, R² = 0,1123,
+  p = 0,03705 (vorher 215,3341 / 40,5046 / 0,3385 / 0,1146 / 0,03507). Der Befund der Arbeit bleibt.
+- **Ausreißer**: robust gemessen (Median 0,0604, MAD 0,0094) fällt Bezirk 10 von z = 4,04 auf 2,69 und ist
+  kein Ausreißer mehr (zweithöchster: Bezirk 2 mit 2,58); Bezirk 1 bleibt bei z = 9,71, weil seine Quote von
+  der Größe seines Wörterbuchs kommt (812 Begriffe gegen 147 im Median).
+- **Regel 2, stadtweite Begriffe** (nur Anzeige): 55 Begriffe liegen über dem 99-%-Quantil der
+  Dokumenthäufigkeit (64 Dokumente) und stehen im Abschnitt „Begriffe" mit Dokumentzahl und Wahlbezirk.
+  `search.citywide_exclude` würde sie auch aus der Zählung nehmen und ist aus.
+- **Die stärkste Verzerrung bleibt unbehandelt**: die Trefferzahl eines Wahlbezirks korreliert mit der Größe
+  seines Wörterbuchs mit r = 0,767, mit seinen Wahlberechtigten nur mit r = 0,176. Empfehlung des Reviews
+  (§ 2.6, offen): „Treffer je Begriff im Wörterbuch" als zweite Kennzahl, zusammen mit `docs/todo.md`,
+  Punkt 3.
+
 ## Zahlen (2026-10-12, `v0.11.0`)
 
-- Tests: 798 schnelle (nox-Gate, parallel in rund 40 s, Abdeckung 98 %), 19 `slow` (rund 2 min über die volle
+- Tests: 846 schnelle (nox-Gate, parallel in rund 42 s, Abdeckung 98 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 28 Schritte; `georep steps` zeigt 25 für Düsseldorf, 26 mit Vergleich, 20 im Periodenprofil
   2014 bis 2020, 19 in der laufenden Periode, 21 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 17 s (Themenmodell 7 s, Index 4 s, Berichtsseite unter 2 s).
-- Berichtsseite: `index.html` 1,17 MB (gzip 205 KB, Budget 1,5 MB), 49 Dateien zusammen 13 MB, vierzehn
+- Berichtsseite: `index.html` 1,15 MB (gzip 201 KB, Budget 1,5 MB), 48 Dateien zusammen 13,2 MB, vierzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
@@ -82,6 +108,12 @@ acht Optionen ist gemerged (`docs/plan-ausbau-2026-10.md`, Pläne und Abnahmen u
 - Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.
 - Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`; `georep status` zeigt `pdfs` als „offen: Settings geändert", weil `--limit 200` im Stamp steht. Das ist richtig so.
 - Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
+- Regel 1 sieht nur Namen: zwei der 113 entfernten Einrichtungen haben einen Kurznamen, der als eigenes
+  Wikipedia-Lemma im Wörterbuch bleibt („tonhalle" 72 Dokumente, „nrw-forum" 11). Beide stehen damit in der
+  Liste der stadtweiten Begriffe. Dass „tonhalle" nach dem Entfernen von „tonhalle düsseldorf" von 67 auf 72
+  Dokumente steigt, ist der Matcher: der längste Begriff gewinnt, und der längere fehlt jetzt.
+- Die Abkürzungsregel der Arbeit ersetzt „straße" überall im Begriff, nicht nur am Wortende; aus
+  „Straßenbahn Düsseldorf" entstand der Begriff „str.nbahn düsseldorf" (trifft nichts, 2026-10-12 bemerkt).
 - Das Themenmodell ist je Rechner und je Thread-Zahl reproduzierbar, nicht darüber hinaus: zwischen 13 und 2 BLAS-Threads unterscheiden sich `themen.parquet` und `themen_anteile.parquet` in den letzten Stellen (gemessen 2026-10-12), Labels und Kennzahlen bleiben gleich. Die Golden-Master-Tests prüfen darum Invarianten, nicht Zahlen.
 - Die Themen tragen Wörter, keine Deutung: die Nummern gelten nur für diesen Datenstand, ein Lauf über andere Dokumente vergibt sie neu. Thema 19 ist das breite Stadtthema („düsseldorf, innen, …"), der Stadtname steht bewusst nicht in der Stoppwortliste.
 - Der Settings-Fingerprint ist global: ein neuer Schlüssel lässt alle Schritte einmal neu laufen. Hinnehmbar; ein Fingerprint je Schritt ist zurückgestellt (`docs/plans/00-synergien.md`, § 8).
@@ -114,7 +146,8 @@ Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „
    und ob die Urheberfelder inzwischen gefüllt sind).
 
 Rückstand für danach: `docs/todo.md` (Konrads Beobachtungen vom 2026-10-12: Themenmodell, Seitengröße, Skalierung
-der Kennzahlen, Bartzschs Methodik, Literatur, Lizenz). Offene Entscheidungen stehen in `docs/plans/fragen.md`
+der Kennzahlen, Literatur; Punkt 4, Bartzschs Methodik, ist am 2026-10-12 erledigt,
+`docs/methodik-review-2026-10.md`, offene Empfehlungen in dessen § 6). Offene Entscheidungen stehen in `docs/plans/fragen.md`
 (die acht wichtigsten oben): Datenpakete im Repo oder im
 R2-Bucket, Düsseldorf unter `data/duesseldorf/`, VPS und Domain, Lizenz der votemanager-CSV, Modellwahl der
 Kontrollvariablen. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,

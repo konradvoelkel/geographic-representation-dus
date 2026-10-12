@@ -10,6 +10,7 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
+from georep.analysis.hits import citywide_terms
 from georep.analysis.regression import regression_pair
 from georep.bootstrap import bootstrap
 from georep.errors import MissingInputError
@@ -291,3 +292,78 @@ def test_excluding_citywide_terms_lowers_the_hits(tmp_path: Path, mini_root: Pat
         line = next(o for o in outcomes if o.step == "results").reason
         assert ("stadtweite Begriffe ausgeschlossen" in line) == (name == "ausschliessen")
     assert hits["ausschliessen"] < hits["anzeigen"]
+
+
+# Regeln an (die Vorgaben): die Zahlen, die der Lauf über die volle Referenz am 2026-10-12 ergab.
+# Sie sind bewusst gespeicherte Erwartungswerte dieses Repos, nicht die der Arbeit (decisions.md,
+# Punkte 43 und 44); wer sie ändert, ändert die Methodik und schreibt es dort und im Review auf.
+WITH_RULES = {
+    "pois": 1196,  # von 1309; 113 Einrichtungen mit Stadtnamen
+    "terms": 5727,  # von 5841
+    "hits": 29_010,  # von 29 573
+    "citywide": 55,  # Begriffe über dem 99-%-Quantil (64 Dokumente)
+    "districts_changed": 12,
+}
+WITH_RULES_TABLE_FIVE = (79.9539, 48.1709, 0.1891, 0.23641)  # Steigung, Achse, r, p
+WITH_RULES_WITHOUT_OUTLIERS = (216.2416, 40.5715, 0.3351, 0.03705)
+
+
+@pytest.mark.slow
+def test_the_rules_change_the_reference_as_measured(
+    tmp_path: Path, reference_root: Path, default_settings: Settings
+) -> None:
+    """Derselbe Lauf mit den Vorgaben, also mit den Regeln an (docs/methodik-review-2026-10.md, § 4).
+
+    Der Test daneben (``test_pipeline_reproduces_the_thesis_results``) hält die exakte
+    Reproduktion mit abgeschalteten Regeln; dieser hält, was die Regeln daran ändern. Beide
+    zusammen sind die Golden-Master-Politik aus decisions.md, Punkt 43.
+    """
+    layout = _layout(tmp_path, reference_root)
+    bootstrap(layout)
+    run_pipeline(build_steps(default_settings, layout), default_settings)
+    assert pl.read_parquet(layout.pois_table).height == WITH_RULES["pois"]
+    index = pl.read_parquet(layout.index)
+    assert index.height == WITH_RULES["terms"]
+    results = pl.read_parquet(layout.results)
+    assert int(results.get_column("anzahl_treffer").sum()) == WITH_RULES["hits"]
+    found = citywide_terms(
+        index,
+        quantile=default_settings.search.citywide_quantile,
+        median_factor=default_settings.search.citywide_median_factor,
+    )
+    assert found.threshold == 64 and len(found.terms) == WITH_RULES["citywide"]
+    assert "stadtwerke düsseldorf" not in index.get_column("suchbegriffe").to_list()
+    # Straßen sind nie betroffen: der stärkste Begriff der Arbeit steht unverändert im Index
+    assert "grafenberger allee" in index.get_column("suchbegriffe").to_list()
+
+    pair = regression_pair(results, default_settings.analysis.exclude_districts)
+    assert pair.without is not None
+    for got, (slope, intercept, r, p) in (
+        (pair.all, WITH_RULES_TABLE_FIVE),
+        (pair.without, WITH_RULES_WITHOUT_OUTLIERS),
+    ):
+        assert got.slope == pytest.approx(slope, abs=5e-4)
+        assert got.intercept == pytest.approx(intercept, abs=5e-4)
+        assert got.r == pytest.approx(r, abs=5e-5)
+        assert got.p == pytest.approx(p, abs=5e-5)
+    # Der Befund der Arbeit bleibt: über alle 41 Bezirke ist der Zusammenhang nicht signifikant
+    assert pair.all.n == 41 and pair.all.p > 0.05
+
+    # Genau zwölf Wahlbezirke tragen andere Trefferzahlen als die Arbeit, keiner mehr als vorher
+    thesis = pl.read_csv(
+        reference_root / "processed" / "wahlbezirke_auswertung.csv", infer_schema_length=None
+    ).select("wahlkreis_id", "anzahl_treffer")
+    changed = (
+        thesis.join(
+            results.select("wahlkreis_id", "anzahl_treffer"), on="wahlkreis_id", suffix="_neu"
+        )
+        .with_columns((pl.col("anzahl_treffer_neu") - pl.col("anzahl_treffer")).alias("differenz"))
+        .filter(pl.col("differenz") != 0)
+    )
+    assert changed.height == WITH_RULES["districts_changed"]
+    assert bool((changed.get_column("differenz") < 0).all())
+    assert changed.filter(pl.col("wahlkreis_id") == 10).get_column("differenz").item() == -177
+
+    page = layout.site_index.read_text(encoding="utf-8")
+    assert layout.site_index.stat().st_size < 1_500_000
+    assert "Stadtweite Begriffe" in page and "Zwei Regeln weichen bewusst" in page

@@ -45,6 +45,10 @@ und Legende; der Kartenumschalter über `data-class-<metric>` ist der vorhandene
 
 ## 4. Bartzschs Methodik kritisch prüfen
 
+**Erledigt am 2026-10-12, siehe `docs/methodik-review-2026-10.md`** (Regeln und Wirkung in
+`docs/decisions.md`, Punkt 44; offene Empfehlungen in § 6 des Reviews, die stärkste: „Treffer je Begriff im
+Wörterbuch" als zweite Kennzahl, siehe Punkt 3 hier). Der Auftrag stand so:
+
 Heute reproduziert `v0.11.0` die Zahlen der Arbeit exakt (Tabelle 5 mit Einheitsgewichten, Golden Master
 `tests/fixtures/mini/expected/`, slow-Test über die volle Referenz); pragmatische Regeln aus der Arbeit sind
 übernommen, etwa `hide_in_display = ["schulweg"]` (zählt, wird nicht angezeigt). Konrad will die Vorgabe

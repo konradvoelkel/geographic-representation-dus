@@ -644,7 +644,7 @@ gemessen:
 
 | Variante | Labels | davon mit Treffern | Fehlurteile |
 |---|---|---|---|
-| Stadtname irgendwo außerhalb der Klammer | 183 | 59 | erklärt 17 Bahnhöfe und Haltepunkte, „Düsseldorf Arcaden", „Düsseldorf Hauptbahnhof" und zwei Stadtteilnamen zur Einrichtung |
+| Stadtname irgendwo außerhalb der Klammer | 183 | 59 | erklärt 19 Orte mit Treffern zur Einrichtung: neun Bahnhöfe und Haltepunkte, „Düsseldorf Arcaden", den Stadtwald, zwei Gymnasien, zwei Stadtteilnamen |
 | nur Stadtname zuletzt (Struktur) | 140 | 45 | lässt „Düsseldorfer Stadtwald" und zwei Gymnasien fallen |
 | nur Gattungswörter | 131 | 46 | erklärt die Bahnhöfe mit Ortsteil („Bahnhof Düsseldorf-Rath") zur Einrichtung |
 | **beide Bedingungen (gewählt)** | **114** | **41** | ein Fall, „Castello Düsseldorf" (6 Dokumente), über die Ausnahmeliste des Profils: dann 113 Labels und 40 mit Treffern |
@@ -654,19 +654,23 @@ sonst bliebe „Stadtsparkasse Düsseldorf" (45 Dokumente) ein Ort, weil „park
 „halle" und „schule" stehen **nicht** in der Liste, weil sonst die Tonhalle, die Kunsthalle und die
 Hochschule einer Stadt Orte blieben, genau die Einrichtungen, um die es geht.
 
-**Wirkung** (Referenz, 2026-10-12; alle Zahlen in `methodik-review-2026-10.md`, § 4): Orte 1309 → 1196,
-Wörterbuch 5841 → 5727 Begriffe, Treffer 29 573 → 29 005 (−1,9 %), 12 der 41 Wahlbezirke ändern sich.
-Tabelle 5 über alle 41 geht von r = 0,1612, p = 0,31385 auf r = 0,1895, p = 0,23532 — der Befund der Arbeit
-bleibt, der Zusammenhang bleibt nicht signifikant. Die Spalte „ohne Ausreißer" ändert sich in der dritten
-Stelle (r = 0,3385 → 0,3351, p = 0,03507 → 0,03705). Der Wahlbezirk 10 fällt von robustem z = 4,04 auf 2,69
-und ist damit kein Ausreißer mehr; der Wahlbezirk 1 bleibt bei z = 9,67, denn seine hohe Quote kommt von der
-Größe seines Wörterbuchs (812 Begriffe gegen 147 im Median), nicht von einer Benennung.
+**Wirkung** (Referenz, 2026-10-12, aus einem Lauf `uv run georep run`; alle Zahlen in
+`methodik-review-2026-10.md`, § 4): Orte 1309 → 1196, Wörterbuch 5841 → 5727 Begriffe, Treffer
+29 573 → 29 010 (−1,9 %), 12 der 41 Wahlbezirke ändern sich. Tabelle 5 über alle 41 geht von r = 0,1612,
+p = 0,31385 auf r = 0,1891, p = 0,23641 — der Befund der Arbeit bleibt, der Zusammenhang bleibt nicht
+signifikant. Die Spalte „ohne Ausreißer" ändert sich in der dritten Stelle (r = 0,3385 → 0,3351,
+p = 0,03507 → 0,03705). Der Wahlbezirk 10 fällt von robustem z = 4,04 auf 2,69 und ist damit kein Ausreißer
+mehr; der Wahlbezirk 1 bleibt bei z = 9,71, denn seine hohe Quote kommt von der Größe seines Wörterbuchs
+(812 Begriffe gegen 147 im Median), nicht von einer Benennung. Zwei Nebenwirkungen stehen im Review, § 4:
+weil der längste Begriff gewinnt, treffen „tonhalle" (72 statt 67) und „nrw-forum" (11 statt 10) nach dem
+Entfernen der längeren Labels mehr Dokumente, und genau darin liegt die Grenze der Regel — ein Kurzname
+ohne Stadtnamen bleibt ein Ort.
 
 **Golden Master.** `tests/golden/test_pipeline.py` rechnet mit `as_in_the_thesis(...)` (conftest), also mit
 abgeschalteter Regel, und vergleicht unverändert gegen `reference/` und `tests/fixtures/mini/expected/`; die
 Erwartungsdateien der Mini-Fixture bleiben damit die der Arbeit, obwohl die Regel dort 62 ihrer 493 Labels
-trifft
-(`tests/fixtures/mini/README.md`). Geändert haben sich nur zwei eigene Zahlen dieses Repos: die eingefrorenen
+trifft (`tests/fixtures/mini/README.md`). Der zweite slow-Test
+`test_the_rules_change_the_reference_as_measured` friert die Zahlen mit den Regeln an ein. Geändert haben sich nur zwei eigene Zahlen dieses Repos: die eingefrorenen
 Gremienzahlen der Mini-Fixture (Option 05) sinken von (96, 63, 14) auf (89, 59, 14) Treffern.
 
 Verworfen: einzelne Labels je Stadt in `search.exclude` (Handarbeit, nicht übertragbar — genau was

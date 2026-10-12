@@ -8,7 +8,13 @@ mit der Wahlbeteiligung der Kommunalwahl 2025 in Beziehung gesetzt.
 
 Ursprung: Bachelorarbeit von Lukas Bartzsch, Heinrich-Heine-Universität Düsseldorf, Januar 2026
 (<https://github.com/lubar102/geographic-representation-dus>). Dieser Fork hat den Code in sieben Phasen
-umgebaut und reproduziert die Ergebnisse der Arbeit auf alle Stellen. Aufbau: [docs/architecture.md](docs/architecture.md);
+umgebaut und reproduziert die Ergebnisse der Arbeit auf alle Stellen, solange die eigenen Methodikregeln
+abgeschaltet sind. Seit dem 2026-10-12 sind zwei davon an: Orte, deren Name den Stadtnamen trägt
+(„Stadtwerke Düsseldorf"), gelten als Einrichtung mit stadtweiter Bedeutung und fallen aus dem Wörterbuch,
+und Begriffe mit auffällig hoher Dokumentzahl stehen auf der Seite als eigene Liste. Was das an den Zahlen
+ändert, steht gemessen in [docs/methodik-review-2026-10.md](docs/methodik-review-2026-10.md); der Tag
+`bartzsch-exakt` (`v0.11.0`) markiert den letzten Stand ohne Abweichung, und `search.city_facilities = false`
+stellt ihn jederzeit wieder her. Aufbau: [docs/architecture.md](docs/architecture.md);
 Gründe und verworfene Alternativen: [docs/decisions.md](docs/decisions.md); Stand und Bekanntes:
 [STATUS.md](STATUS.md); Änderungen aus Nutzersicht: [CHANGELOG.md](CHANGELOG.md).
 
