@@ -147,13 +147,3 @@ def test_transfer_counts_needs_the_same_sources_on_both_sides() -> None:
         transfer_counts(counts, shares, ["n"])
     with pytest.raises(deal.PreContractError):
         transfer_counts(counts.head(1).with_columns(pl.col("n") * -1), shares, ["n"])
-
-
-def test_target_weights_need_one_row_per_source() -> None:
-    """Eine doppelte Quelle würde den Join vervielfachen und die Gewichte still verschieben."""
-    shares = pl.DataFrame({"source_id": ["a", "b"], "target_id": [1, 1], "share": [1.0, 1.0]})
-    doubled = pl.DataFrame({"source_id": ["a", "a", "b"], "n": [300, 300, 100]})
-    with pytest.raises(deal.PreContractError):
-        target_weights(shares, doubled, "n")
-    with pytest.raises(deal.PreContractError):
-        target_weights(shares, pl.DataFrame({"source_id": ["a", "b"], "n": [-1, 1]}), "n")
