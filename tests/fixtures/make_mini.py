@@ -206,7 +206,8 @@ SPLIT_EVERY = 4  # jeder vierte Stimmbezirk wird an der Senkrechten durch seinen
 YEARS_BACK = 6  # 2020-09-14 bis 2025-09-12 wird 2014-09-14 bis 2019-09-12, ganz in der Periode
 POSTAL_SHARE = 0.8  # so viele der Wahlberechtigten mit Wahlschein wählen auch per Brief
 POSTAL_ROWS = 2  # Briefwahlbezirke je Wahlbezirk
-TURNOUT = 0.45  # Wahlbeteiligung der erfundenen Wahl
+TURNOUT = 0.45  # Grundwert der erfundenen Wahlbeteiligung
+TURNOUT_SPREAD = 0.04  # je Stimmbezirk ein fester Zuschlag, damit nicht alle Bezirke gleich sind
 WITH_CERTIFICATE = 0.30  # Anteil der Wahlberechtigten mit Sperrvermerk W
 OLD_DISTRICTS = (101, 110, 138)  # Wahlbezirke des alten Zuschnitts, absichtlich anders geschnitten
 PARTIES = ("CDU", "GRUENE", "SPD", "FDP", "Die_Linke", "AfD")
@@ -349,16 +350,25 @@ def _result_row(key: str, name: str, eligible: int, voters: int, votes: Sequence
     return ";".join(fields)
 
 
+def _turnout(index: int) -> float:
+    """Eine Wahlbeteiligung je Stimmbezirk, deterministisch gestreut (0,45 bis 0,49)."""
+    return TURNOUT + TURNOUT_SPREAD * (index % 5) / 4
+
+
+def _voters(index: int, piece: Piece) -> int:
+    return round(_turnout(index) * piece.eligible)
+
+
 def _urn_rows(precincts: Sequence[Piece]) -> list[str]:
     return [
         _result_row(
             p.key,
             f"{p.key} Stimmbezirk",
             p.eligible,
-            round(TURNOUT * p.eligible),
-            _scaled_votes(p, round(TURNOUT * p.eligible)),
+            _voters(i, p),
+            _scaled_votes(p, _voters(i, p)),
         )
-        for p in precincts
+        for i, p in enumerate(precincts)
     ]
 
 
@@ -377,7 +387,7 @@ def _postal_rows(district: int, precincts: Sequence[Piece]) -> list[str]:
     certificates = sum(round(WITH_CERTIFICATE * p.eligible) for p in precincts)
     total = round(POSTAL_SHARE * certificates)
     urn_votes = [
-        sum(_scaled_votes(p, round(TURNOUT * p.eligible))[i] for p in precincts)
+        sum(_scaled_votes(p, _voters(j, p))[i] for j, p in enumerate(precincts))
         for i in range(len(PARTIES))
     ]
     urn_total = sum(urn_votes)

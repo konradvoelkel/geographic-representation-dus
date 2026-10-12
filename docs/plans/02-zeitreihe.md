@@ -1,6 +1,6 @@
 # Plan 02: Zeitreihe
 
-Stand 2026-10-12, Branch `feat/02-zeitreihe`. Status: in Arbeit.
+Stand 2026-10-12, Branch `feat/02-zeitreihe`. Status: **im Review** (Stufen A bis G umgesetzt; Stufe H ist Konrads Lauf).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.2; Regeln: § 2 dort und [../../CLAUDE.md](../../CLAUDE.md);
 Aufbau des Programms: [../architecture.md](../architecture.md). Dieser Plan ist so geschrieben, dass ein frischer Agent ihn
@@ -418,6 +418,12 @@ vierzehn Stunden Netz bei Konrad.
 | 6 | Soll Pages beide Perioden bauen (plus rund eine Minute Laufzeit), sobald der Schnappschuss da ist? | Sonst bleibt die Unterseite lokal | ja, `pages.yml` wie in § 4 |
 | 7 | Sollen die zehn weiteren Parteispalten 2020 (`D7` bis `D16`) in die Wählertabelle, für Option 4? | Ändert das Schema von `wahlbezirke_waehler.parquet` der alten Periode gegenüber der neuen | nein; dieselben sechs Parteien wie 2025, der Rest bleibt Option 4 über `columns.results.parties` |
 | 8 | Reicht der eine Abschnitt auf der Hauptseite plus Unterseite, oder soll der Vergleich eine eigene Unterseite werden (Budget)? | 45 KB Zuwachs bleiben weit unter 1,5 MB; mit mehreren Optionen entscheidet die Synergiephase | Abschnitt auf der Hauptseite |
+
+| 9 | `first_page = 90` liegt rund 28 Seiten (40 min) vor der Grenze; auf etwa 115 erhöhen? | spart 40 min von drei Stunden, riskiert aber verlorene Dokumente, wenn die Hochrechnung danebenliegt | bleibt 90: zu früh zu beginnen kostet nur Zeit, zu spät verliert Dokumente. Der Netztest prüft die Richtung (Seite 90 trug am 2026-10-12 Januar bis März 2022) |
+| 10 | Verglichen wird die Schnittmenge der Wahlbezirke beider Perioden statt einer verlangten Gleichheit | auf echten Daten identisch (beide rechnen auf dem Zuschnitt der Hauptperiode); auf kleinen Fixturen und bei einem Bezirk ohne Treffer nicht | Schnittmenge; die Seite nennt die Zahl der verglichenen Bezirke, wenn sie kleiner ist |
+| 11 | Auch die Parteistimmen der Briefwahlbezirke werden verteilt, nicht nur die Wähler | sonst wären `<Partei>_anteil` der alten Periode urnenlastig, während die Beteiligung die Briefwahl enthält | verteilen, mit demselben Schlüssel (Wahlscheine) |
+| 12 | Die Eigenschaftsnamen des alten Zuschnitts stehen in `[crosswalk]`, `[columns]` beschreibt weiter den Zielzuschnitt | die Alternative (`read_precincts` mit leeren Wahlbezirksspalten, wie in § 4 geplant) nähme der Seite des Profils die Bezirksnamen | wie gebaut; `Layout.target_view` ist die eine Stelle, die den Unterschied kennt |
+| 13 | Die Seite der alten Periode zeigt die Flächen des Zielzuschnitts (2025), nicht ihre eigenen von 2020 | ihre Zahlen liegen auf den Wahlbezirken 2025, eine Karte der Bezirke von 2020 wäre eine andere Aussage | Zielzuschnitt; die Kernzahl „Stimmbezirke" nennt dafür die eigenen (26 beziehungsweise 316) |
 
 ## 9. Vorbereitung für Option 10 (was wird konfigurierbar, welche Modulgrenze entsteht)
 

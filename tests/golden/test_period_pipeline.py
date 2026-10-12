@@ -10,6 +10,7 @@ bleiben, dass die Wählertabelle das Schema der Hauptperiode trägt und dass die
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -228,3 +229,52 @@ def test_the_comparison_needs_the_same_dictionary(compared: ComparedRun) -> None
             )
     finally:
         other.dictionary.write_bytes(saved)
+
+
+# --- Stufe G: die Seite beider Perioden --------------------------------------------------------
+
+
+def test_the_period_page_names_its_period_and_publishes_the_assignment(
+    period_run: PeriodRun,
+) -> None:
+    page = period_run.layout.site_index.read_text(encoding="utf-8")
+    assert "Wahlperiode 2014 bis 2020" in page
+    assert "umgerechnet" in page  # der Datenstand sagt, dass die Wahlzahlen umgerechnet sind
+    assert '<section id="perioden">' not in page  # der Vergleich steht auf der Hauptseite
+    published = {p.name for p in period_run.layout.site_data.iterdir()}
+    assert {"stimmbezirke_zuordnung.parquet", "stimmbezirke_zuordnung.csv"} <= published
+    assert "wahlbezirke_vergleich.parquet" not in published
+    schema = json.loads((period_run.layout.site_data / "schema.json").read_text(encoding="utf-8"))
+    assert "stimmbezirke_zuordnung" in schema["tables"]
+
+
+def test_the_main_page_carries_the_comparison_section(compared: ComparedRun) -> None:
+    page = compared.layout.site_index.read_text(encoding="utf-8")
+    assert '<section id="perioden">' in page
+    assert "Wahlperiode 2014 bis 2020" in page and "Wahlperiode 2020 bis 2025" in page
+    start = page.index('<section id="perioden">')
+    section = page[start : page.index("</section>", start)]
+    assert 'id="perioden-tabelle"' in section
+    assert section.count('<tr data-id="') == len(TARGET_DISTRICTS)
+    assert 'class="scatter deltas"' in section
+    assert section.count('class="dpoint"') == len(TARGET_DISTRICTS)
+    assert 'href="2014-2020/"' in page  # Link auf die Unterseite der alten Periode
+    published = {p.name for p in compared.layout.site_data.iterdir()}
+    assert {"wahlbezirke_vergleich.parquet", "wahlbezirke_vergleich.csv"} <= published
+    assert "stimmbezirke_zuordnung.parquet" not in published  # die trägt die alte Periode
+
+
+def test_without_the_compare_profile_the_main_page_has_no_comparison(mini_run: Layout) -> None:
+    """Die Seite von ``main`` bleibt, wie sie war: kein Abschnitt, keine der zwei neuen Tabellen.
+
+    ``mini_run`` ist der Lauf der Hauptperiode ohne jedes Profil, wie ihn ``main`` und die CI
+    machen. Dass die beiden optionalen Tabellen dort fehlen, heißt: der Abschnitt und die
+    Downloads entstehen nur mit ``settings.vergleich.toml``.
+    """
+    page = mini_run.site_index.read_text(encoding="utf-8")
+    assert '<section id="perioden">' not in page
+    assert "Wahlperiode 2020 bis 2025" in page  # die Periodentexte stehen trotzdem im Kopf
+    published = {p.name for p in mini_run.site_data.iterdir()}
+    assert "wahlbezirke_vergleich.parquet" not in published
+    assert "stimmbezirke_zuordnung.parquet" not in published
+    assert not mini_run.comparison.exists() and not mini_run.precinct_assignment.exists()

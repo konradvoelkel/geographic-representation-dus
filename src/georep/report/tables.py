@@ -120,7 +120,7 @@ TABLES: list[PublishedTable] = [
     PublishedTable(
         "wahlbezirke_waehler",
         lambda layout: layout.voters,
-        "Wahlergebnis der Ratswahl 2025 je Wahlbezirk",
+        "Wahlergebnis der Ratswahl dieser Wahlperiode je Wahlbezirk; der Wahltag steht im Datenstand",
         dict(_VOTER_COLUMNS),
     ),
     PublishedTable(

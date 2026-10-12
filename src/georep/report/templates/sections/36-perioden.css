@@ -1,0 +1,11 @@
+/* Option 02: Abschnitt „Zwei Wahlperioden" */
+.perioden-tabellen { display: grid; grid-template-columns: repeat(auto-fit, minmax(18em, 1fr)); gap: 1rem 2rem; align-items: start; }
+.perioden-tabellen h3 { margin-top: 1rem; }
+svg.deltas .zero { stroke: var(--axis); stroke-width: 1; stroke-dasharray: 2 3; }
+.key.zero { border-top-style: dashed; border-top-color: var(--axis); }
+.dpoint:focus { outline: none; }
+.dpoint .dot { cursor: pointer; }
+.dpoint:hover .dot, .dpoint:focus .dot, .dpoint.selected .dot { fill: var(--selected); }
+#perioden-tabelle td.up { color: var(--accent); }
+#perioden-tabelle td.down { color: var(--ink-2); }
+#perioden-tabelle tbody tr { cursor: pointer; }

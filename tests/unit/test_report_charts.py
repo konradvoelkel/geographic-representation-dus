@@ -17,6 +17,8 @@ from georep.report.charts import (
     added_variable_plot,
     choropleth,
     classify,
+    delta_label,
+    delta_scatter,
     legend,
     nice_ticks,
     party_maps,
@@ -31,6 +33,7 @@ from georep.report.model import (
     DistrictRow,
     PartyCell,
     PartyRow,
+    PeriodRow,
     ReportModel,
     TermRow,
     build_report_model,
@@ -305,3 +308,51 @@ def test_party_maps_title_names_the_numbers_and_the_missing_ballot() -> None:
 
 def test_party_maps_are_empty_without_parties() -> None:
     assert party_maps([], {1: box(0, 0, 1, 1)}, fit((0.0, 0.0, 1.0, 1.0), 10.0), []) == ""
+
+
+# --- Option 02: Streudiagramm der Änderungen ---------------------------------------------------
+
+
+def _period_row(district: int, d_rate: float, d_turnout: float) -> PeriodRow:
+    return PeriodRow(
+        id=district,
+        name=f"Bezirk {district}",
+        hits_old=100,
+        hits_new=120,
+        rate_old=0.01,
+        rate_new=0.01 + d_rate,
+        turnout_old=0.50,
+        turnout_new=0.50 + d_turnout,
+        d_rate=d_rate,
+        d_turnout=d_turnout,
+    )
+
+
+def test_delta_label_carries_the_sign_but_not_for_zero() -> None:
+    assert delta_label(0.0042) == "+0,004"
+    assert delta_label(-0.0042) == "-0,004"
+    assert delta_label(0.0) == "0,000"
+    assert delta_label(-0.0001) == "0,000"  # gerundete Null trägt kein Minus
+    assert delta_label(1.26, 1) == "+1,3"  # format_de rundet kaufmännisch wie round()
+
+
+def test_delta_scatter_draws_one_line_and_a_point_per_district() -> None:
+    rows = [_period_row(1, 0.004, 0.05), _period_row(10, -0.002, -0.01), _period_row(38, 0.0, 0.02)]
+    fit = RegressionResult(n=3, slope=500.0, intercept=0.5, r=0.9, p=0.2, stderr=0.1)
+    svg = delta_scatter(rows, fit)
+    assert svg.startswith('<svg class="scatter deltas"') and svg.endswith("</svg>")
+    assert svg.count('class="dpoint"') == 3
+    assert svg.count('class="fit fit-all"') == 1
+    assert svg.count('class="zero"') == 2  # beide Nulllinien liegen im Bild
+    assert 'data-id="10"' in svg
+    assert "Trefferquote +0,004" in svg and "Wahlbeteiligung +5,0 Punkte" in svg
+    assert "Änderung der Trefferquote" in svg
+    # Kein Attribut des Basis-Tooltips: der Abschnitt bedient seine Punkte selbst
+    assert "data-terms" not in svg
+
+
+def test_delta_scatter_survives_a_single_value_on_both_axes() -> None:
+    rows = [_period_row(d, 0.0, 0.0) for d in (1, 2, 3)]
+    fit = RegressionResult(n=3, slope=0.0, intercept=0.0, r=0.0, p=1.0, stderr=0.0)
+    svg = delta_scatter(rows, fit)
+    assert svg.count('class="dpoint"') == 3 and "NaN" not in svg

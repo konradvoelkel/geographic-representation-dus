@@ -33,11 +33,11 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `records` | `PaperRecord`: die Zeile in `raw/papers.jsonl`, aus OParl oder dem Altformat der Arbeit; die vier URL-Listen sind Tupel, weil der Record `frozen` und damit hashbar ist |
 | `stores` | `PaperStore` (JSONL, Upsert nach `modified`), `TextStore` (eine Parquet-Datei, Schlüssel Dateiname, Frische über Extraktorname und PDF-Hash) |
 | `sources/` | reine Fetch-Funktionen über `Transport`: `opendata` (CSV, GeoJSON), `oparl` (Paper-Seiten), `pdfs` (`PdfStore` mit Manifest), `overpass` (Straßen je Polygon), `wiki` (SPARQL, GeoSearch) |
-| `geo` | GeoJSON lesen, nach EPSG:25832 projizieren, `make_valid`, `PrecinctIndex` (STRtree), eine Rückprojektion nach lon/lat |
-| `prep/` | `extract` (PDF-Text hinter `PdfTextExtractor`), `papers` (Korpus), `voters` (auch `district_units`: Wahlbezirk zu Stadtbezirk über den Crosswalk), `streets`, `pois`, `bodies` (Gremium je Dokument aus der Drucksachennummer: `parse_reference` als reine Funktion über `BodyRules`, `classify_papers` als Batch-Grenze), `context` (Fremddaten je Raumeinheit: Stimmbezirkstabelle, Tabelle der Quelle lesen, gewichtetes Mittel je Wahlbezirk): Polars-Funktionen Frame zu Frame |
+| `geo` | GeoJSON lesen, nach EPSG:25832 projizieren, `make_valid`, `PrecinctIndex` (STRtree), eine Rückprojektion nach lon/lat; `read_precincts` für Stimmbezirke mit Wahlbezirksattributen, `read_areas` für Flächen, die nur eine Kennung tragen |
+| `prep/` | `extract` (PDF-Text hinter `PdfTextExtractor`), `papers` (Korpus), `voters` (auch `district_units`: Wahlbezirk zu Stadtbezirk über den Crosswalk), `streets`, `pois`, `bodies` (Gremium je Dokument aus der Drucksachennummer: `parse_reference` als reine Funktion über `BodyRules`, `classify_papers` als Batch-Grenze), `context` (Fremddaten je Raumeinheit: Stimmbezirkstabelle, Tabelle der Quelle lesen, gewichtetes Mittel je Wahlbezirk): Polars-Funktionen Frame zu Frame. `voters` benennt die Zählspalten beim Lesen auf die kanonischen Namen um (`Wahlberechtigte_insgesamt`, `Waehler`, `<Partei>_Stimmen`), damit jede Wahl dasselbe Schema liefert, und kennt für einen älteren Zuschnitt zusätzlich `precinct_counts`, `district_results` und `spread_postal` (Briefwahl ohne Geometrie) |
 | `search/` | `dictionary` (Wörterbuch je Wahlbezirk), `matcher` (`KeywordMatcher`-Protokoll, FlashText), `index` (invertierter Index) |
-| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings; `spearman` für die Rangkorrelation zweier Kennzahlen), `ols` (multiple Regression mit numpy und scipy: Koeffizienten, Standardfehler, t, p, R², F-Test, VIF, standardisierte Koeffizienten, Added-Variable-Plots nach Frisch-Waugh-Lovell; `models_table` rechnet die Modelle der Settings je Stichprobe), `bodies` (Treffer je Wahlbezirk nach Gremium, Lokalität je Gremium), `weights` (gewichtete Trefferquoten: Gewicht je Begriff, Dokumentart und Thema, Maximum je Paar, lange Tabelle aller Varianten; reines Polars, kennt weder Dateien noch Settings-Objekte), `topics` (TF-IDF und NMF über die Texte; der einzige Ort mit `sklearn`-Import, mit der Stoppwortliste `stopwords_de.txt` als Paketdatei), `parties` (Urheber je Dokument aus `paperType`, Titel und Textkopf; Urheberklassen je Wahlbezirk; Kennzahlen und Korrelationen je Partei) |
-| `crosswalk` | Umrechnung von Gebietseinheiten auf Wahlbezirke: `unit_weights` wiegt je Wahlbezirk die Einheiten (Stadtbezirk, Stadtteil) mit einer Zählgröße je Stimmbezirk, `area_shares` und `district_weights` gehen über Flächenanteile der Stimmbezirke, wenn die Einheiten eine eigene Gliederung sind; Vertrag: Gewichte in (0, 1], Summe je Wahlbezirk 1 |
+| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings; ohne Streuung in x oder y gibt es kein Ergebnis, sondern einen `EmptyResultError`), `periods` (zwei Perioden je Wahlbezirk nebeneinander und die Regression ihrer Änderungen) |
+| `crosswalk` | Umrechnung von Gebietseinheiten auf Wahlbezirke: `unit_weights` wiegt je Wahlbezirk die Einheiten (Stadtbezirk, Stadtteil) mit einer Zählgröße je Stimmbezirk; der Flächen-Crosswalk auf einen anderen Zuschnitt kommt mit `assign_by_point` (Zuordnung innerhalb eines Zuschnitts über den repräsentativen Punkt), `area_shares` (Flächenanteile, auf die Schnittsumme normiert, mit Abdeckung und Mindestschwelle), `target_weights` und `transfer_counts` (additive Zählgrößen übertragen, `largest_remainder` macht sie ganzzahlig ohne die Summe zu ändern). Verträge: Anteile je Quelle und Gewichte je Ziel summieren zu 1, Spaltensummen bleiben exakt erhalten |
 | `pipeline` | Schrittregister: Name, Eingaben, Ausgaben, `run()`, Schema-Version; Stamps; `run_step`, `run_pipeline`, `build_steps` |
 | `bootstrap` | kopiert die Referenz nach `data_root` und baut daraus `papers.jsonl` und den Textstore |
 | `contracts` | `configure()` für `settings.contracts` und die Prädikate der deal-Verträge |
@@ -48,11 +48,14 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 ## Pipeline
 
-Dreiundzwanzig Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzschritte laufen nur mit
-`--online` oder über `georep fetch`. Mit `topics.k = 0` fehlt der Schritt `topics` im Register; dann ist es
-einer weniger, und `weights` rechnet ohne Themenvarianten. Die drei Schritte der Kontrollvariablen
-(`context_data`, `context`, `controls`) gibt es nur mit Fremddaten, also wenn `context.root` gesetzt ist;
-sonst bleiben es achtzehn.
+Fünfundzwanzig Schritte stehen im Register, jeder mit Eingaben, Ausgaben und einer
+Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps` zeigt es.
+Netzschritte laufen nur mit `--online` oder über `georep fetch`. Mit `topics.k = 0` fehlt der
+Schritt `topics`, und `weights` rechnet ohne Themenvarianten. Die drei Schritte der
+Kontrollvariablen (`context_data`, `context`, `controls`) gibt es nur mit Fremddaten, also wenn
+`context.root` gesetzt ist. Option 02 bringt zwei weitere Profilschritte: `precincts` mit
+`crosswalk.enabled` und `compare` mit `compare.period`; mit `period.dictionary = "base"`
+entfallen dafür `streets_osm` und `pois_wiki`.
 
 | Schritt | Netz | liest | schreibt |
 |---|---|---|---|
@@ -64,7 +67,8 @@ sonst bleiben es achtzehn.
 | `streets_osm` | ja | Overpass je Stimmbezirkspolygon | `raw/streets_per_district.json` |
 | `pois_wiki` | ja | Wikidata-SPARQL, Wikipedia-GeoSearch je Stimmbezirk | `raw/wikipedia_dict.json` |
 | `texts` | nein | PDFs ohne aktuellen Text | `cache/text/texts.parquet` |
-| `voters` | nein | Wahlergebnis-CSV | `processed/wahlbezirke_waehler.parquet`, `processed/wahlbezirke_stadtbezirke.parquet` |
+| `precincts` | nein | nur mit `crosswalk.enabled`: eigenes Stimmbezirks-GeoJSON, eigene Wahlbezirksflächen, Stimmbezirke der Hauptperiode als Zielzuschnitt | `processed/stimmbezirke_zuordnung.parquet` |
+| `voters` | nein | Wahlergebnis-CSV; mit `crosswalk.enabled` zusätzlich die Wahlbezirks-CSV, die Zuordnung und die Stadtbezirke der Hauptperiode | `processed/wahlbezirke_waehler.parquet`, `processed/wahlbezirke_stadtbezirke.parquet` |
 | `context` | nein | Stimmbezirke (Fläche und Wahlberechtigte), Raumeinheiten, Tabelle der Quelle, Wähler | `processed/wahlbezirke_kontext.parquet`, `processed/wahlbezirke_crosswalk.parquet` |
 | `streets` | nein | Straßen je Stimmbezirk | `processed/wahlbezirke_strassen.parquet` |
 | `pois` | nein | Orte | `processed/wikidata_vis.parquet`, `processed/wikidata_agg.parquet` |
@@ -78,7 +82,8 @@ sonst bleiben es achtzehn.
 | `weights` | nein | Wörterbuch, Index, Korpus (`id`, `paper_type`), Wähler, Themenanteile | `processed/wahlbezirke_gewichtet.parquet`, `processed/gewichte_begriffe.parquet` |
 | `controls` | nein | Auswertung, Kontrollvariablen | `processed/regression_kontrollen.parquet` |
 | `parties` | nein | Korpus, Auswertung, Wähler, dazu `raw/organizations.json`, wenn vorhanden | `processed/dokumente_urheber.parquet`, `processed/wahlbezirke_urheber.parquet`, `processed/wahlbezirke_parteien.parquet` |
-| `report` | nein | die Ergebnistabellen, Korpus, Stimmbezirks-GeoJSON, mit Fremddaten auch die drei Tabellen der Kontrollvariablen und die Erläuterung der Indikatoren | `site/index.html`, `site/karte.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`, `dokumente.json`) |
+| `compare` | nein | nur mit `compare.period`: die Auswertung und das Wörterbuch beider Perioden | `processed/wahlbezirke_vergleich.parquet` |
+| `report` | nein | die Ergebnistabellen, Korpus, Stimmbezirks-GeoJSON des gerechneten Zuschnitts (mit Vergleich auch dessen Tabelle), mit Fremddaten auch die drei Tabellen der Kontrollvariablen und die Erläuterung der Indikatoren | `site/index.html`, `site/karte.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`, `dokumente.json`) |
 
 Neben der ersten Ausgabe jedes Schritts liegt `<datei>.stamp.json` mit den SHA-256-Hashes der Eingaben, dem
 Settings-Fingerprint, der Code-Version und der Schema-Version. Stimmt alles, ist der Schritt aktuell und wird
@@ -99,7 +104,7 @@ data_root/                 Standard ./data, gitignored; mit profile = "x" liegt 
   raw/                     papers.jsonl, organizations.json, streets_per_district.json, wikipedia_dict.json
   interim/                 papers.parquet (Korpus: Metadaten plus Text)
   interim/                 papers.parquet (Korpus: Metadaten plus Text), themen_anteile.parquet (Themenanteile je Dokument, nicht veröffentlicht)
-  processed/               die Ergebnistabellen als Parquet (zstd), je mit Stamp; mit Fremddaten drei mehr
+  processed/               die Ergebnistabellen als Parquet (zstd), je mit Stamp; mit Fremddaten drei mehr; dazu stimmbezirke_zuordnung (Profil mit Crosswalk)
                            (nicht veröffentlicht: papers_gremien und wikidata_agg)
   site/                    die Berichtsseite: index.html (mit Stamp), karte.html (Leaflet) und data/ mit den Download-Dateien
 cache_root/                Standard data_root/cache; mit Profil liegen pdf/ und text/ unter cache_root/x/

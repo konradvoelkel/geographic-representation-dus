@@ -31,7 +31,16 @@ from georep.analysis.parties import (
     originator_figures,
     party_correlations,
 )
-from georep.analysis.regression import RegressionPair, regression_pair, spearman
+from georep.analysis.periods import (
+    D_RATE,
+    D_TURNOUT,
+    NEW,
+    OLD,
+    PERIOD_NEW,
+    PERIOD_OLD,
+    delta_regression,
+)
+from georep.analysis.regression import RegressionPair, RegressionResult, regression_pair, spearman
 from georep.analysis.weights import (
     BY_DISTRICTS,
     BY_IDF,
@@ -55,7 +64,7 @@ from georep.layout import Layout
 from georep.prep import bodies as prep_bodies
 from georep.prep.bodies import BodyRules
 from georep.prep.context import read_indicators
-from georep.prep.voters import ELIGIBLE_TOTAL, TURNOUT, VOTERS
+from georep.prep.voters import ELIGIBLE_TOTAL, PRECINCT, TURNOUT, VOTERS
 from georep.report.search import SearchEntry, search_entries
 from georep.report.tables import GEOJSON_COLUMNS, GEOJSON_TABLE, PublishedTable, published
 from georep.search.dictionary import all_terms
@@ -404,6 +413,62 @@ class OriginatorFigures:
         return self.classified / self.documents if self.documents else 0.0
 
 
+# --- Option 02: die Periode und, wenn eingeschaltet, der Vergleich mit einer zweiten -----------
+
+
+@dataclass(frozen=True)
+class PeriodInfo:
+    """Welche Wahlperiode die Seite zeigt; alle Periodentexte der Vorlage kommen hieraus."""
+
+    profile: str  # Ordnername des Profils; "" ist die Hauptperiode
+    title: str  # „Wahlperiode 2020 bis 2025", aus ``period.title``
+    start: dt.date
+    end: dt.date | None
+    election: dt.date  # Wahltag, dessen Ergebnis Nenner und Zuschnitt liefert
+    converted: bool  # die Wahlzahlen sind auf den Zuschnitt dieser Auswertung umgerechnet
+
+    @property
+    def years(self) -> str:
+        """``2020 to 2025`` beziehungsweise ``2025 onwards``: für die englische Kurzfassung."""
+        return f"{self.start.year} to {self.end.year}" if self.end else f"{self.start.year} onwards"
+
+
+@dataclass(frozen=True)
+class PeriodRow:
+    """Ein Wahlbezirk in beiden Perioden, mit den beiden Änderungen."""
+
+    id: int
+    name: str
+    hits_old: int
+    hits_new: int
+    rate_old: float
+    rate_new: float
+    turnout_old: float
+    turnout_new: float
+    d_rate: float
+    d_turnout: float
+
+
+@dataclass(frozen=True)
+class PeriodComparison:
+    """Der Abschnitt „Zwei Wahlperioden": Zeilen, Regressionen und die beiden Sensitivitätszahlen."""
+
+    previous: str  # Name der älteren Periode
+    current: str
+    rows: tuple[PeriodRow, ...]
+    districts: int  # Wahlbezirke der Auswertung; weniger Zeilen heißt, einer fehlt in einer Periode
+    regression: RegressionResult  # der Änderungen gegeneinander
+    previous_pair: RegressionPair  # Tabelle 5 der älteren Periode
+    precincts: int  # Stimmbezirke des alten Zuschnitts
+    split: int  # davon auf mehr als einen Zielbezirk verteilt
+    min_coverage: float  # kleinste Abdeckung einer Quellfläche durch die Zielbezirke
+    subpage: str  # Pfad der Unterseite der älteren Periode, relativ zur Hauptseite
+
+    @property
+    def split_share(self) -> float:
+        return self.split / self.precincts if self.precincts else 0.0
+
+
 @dataclass(frozen=True)
 class ReportModel:
     generated_at: dt.datetime
@@ -418,6 +483,8 @@ class ReportModel:
     downloads: tuple[Download, ...]
     columns: tuple[ColumnDoc, ...]
     working_crs: str
+    # Option 02: die Periode dieser Seite; Pflichtfeld, darum vor den Feldern mit Default
+    period: PeriodInfo
     # Option 08: die Vorschläge der Suche; leer heißt „kein Abschnitt suche" in der Vorlage.
     search: tuple[SearchEntry, ...] = ()
     # Option 05: ohne die Tabellen der Gremien bleibt der Abschnitt weg ({% if model.bodies %})
@@ -444,6 +511,9 @@ class ReportModel:
         """
         found = {c.party: c for c in self.party_cells if c.district == district}
         return tuple(found[p.key] for p in self.parties if p.key in found)
+
+    # Option 02: der optionale Vergleich mit einer zweiten Periode
+    comparison: PeriodComparison | None = None
 
 
 # --- Zahlenformat -----------------------------------------------------------------------------
@@ -1104,6 +1174,91 @@ def originator_overview(attribution: pl.DataFrame) -> OriginatorFigures:
     )
 
 
+def source_precincts(layout: Layout, settings: Settings, fallback: int) -> int:
+    """Die Stimmbezirke, aus denen die Zahlen dieser Seite stammen.
+
+    Ohne Umrechnung sind das die des gezeigten Zuschnitts. Ein Periodenprofil mit Crosswalk zeigt
+    die Flächen der Hauptperiode, seine Zahlen kommen aber aus dem eigenen, älteren Zuschnitt;
+    die Kernzahl soll die Herkunft nennen, nicht die Zeichnung (Option 02).
+    """
+    if not settings.crosswalk.enabled or not layout.precinct_assignment.is_file():
+        return fallback
+    assignment = pl.read_parquet(layout.precinct_assignment, columns=[PRECINCT])
+    return int(assignment.get_column(PRECINCT).n_unique())
+
+
+def period_info(settings: Settings) -> PeriodInfo:
+    """Option 02: die Periode der Seite aus den Settings; nichts davon steht in der Vorlage."""
+    return PeriodInfo(
+        profile=settings.profile,
+        title=settings.period.title,
+        start=settings.period.start,
+        end=settings.period.end,
+        election=settings.period.election_day,
+        converted=settings.crosswalk.enabled,
+    )
+
+
+def _period_rows(comparison: pl.DataFrame, names: Mapping[int, str]) -> tuple[PeriodRow, ...]:
+    return tuple(
+        PeriodRow(
+            id=int(row[DISTRICT]),
+            name=names[int(row[DISTRICT])],
+            hits_old=int(row[f"{HITS}{OLD}"]),
+            hits_new=int(row[f"{HITS}{NEW}"]),
+            rate_old=float(row[f"{RATE}{OLD}"]),
+            rate_new=float(row[f"{RATE}{NEW}"]),
+            turnout_old=float(row[f"{TURNOUT}{OLD}"]),
+            turnout_new=float(row[f"{TURNOUT}{NEW}"]),
+            d_rate=float(row[D_RATE]),
+            d_turnout=float(row[D_TURNOUT]),
+        )
+        for row in comparison.sort(DISTRICT).iter_rows(named=True)
+    )
+
+
+@deal.ensure(
+    lambda layout, settings, names, districts, subpage, result: (
+        result is None or len(result.rows) == districts or len(result.rows) < districts
+    ),
+    message="höchstens eine Zeile je Wahlbezirk der Auswertung",
+)
+@deal.raises(SchemaError)
+def period_comparison(
+    layout: Layout,
+    settings: Settings,
+    names: Mapping[int, str],
+    districts: int,
+    subpage: str,
+) -> PeriodComparison | None:
+    """Option 02: der Vergleich, wenn ``compare.period`` gesetzt und die Tabelle gerechnet ist.
+
+    Fehlt die Datei, fehlt der Abschnitt: der Schritt ``compare`` läuft nur mit dem Profil
+    ``settings.vergleich.toml``, und ohne ihn ist die Seite die von ``main``.
+    """
+    if not settings.compare.period or not layout.comparison.is_file():
+        return None
+    other = layout.for_profile(settings.compare.period)
+    comparison = pl.read_parquet(layout.comparison)
+    rows = _period_rows(comparison, names)
+    assignment = pl.read_parquet(other.precinct_assignment)
+    per_precinct = assignment.group_by(PRECINCT).agg(pl.len(), pl.col("abdeckung").min())
+    return PeriodComparison(
+        previous=str(comparison.get_column(PERIOD_OLD).item(0)),
+        current=str(comparison.get_column(PERIOD_NEW).item(0)),
+        rows=rows,
+        districts=districts,
+        regression=delta_regression(comparison),
+        previous_pair=regression_pair(
+            pl.read_parquet(other.results), settings.analysis.exclude_districts
+        ),
+        precincts=per_precinct.height,
+        split=per_precinct.filter(pl.col("len") > 1).height,
+        min_coverage=min(per_precinct.get_column("abdeckung").to_list()),
+        subpage=subpage,
+    )
+
+
 def build_report_model(
     layout: Layout,
     settings: Settings,
@@ -1152,7 +1307,9 @@ def build_report_model(
         version=__version__,
         commit=commit,
         stand=data_stand(layout, settings),
-        figures=key_figures(results, dictionary, layout.corpus, len(precincts)),
+        figures=key_figures(
+            results, dictionary, layout.corpus, source_precincts(layout, settings, len(precincts))
+        ),
         districts=rows,
         top_terms=top_terms_city(counts, hidden),
         hidden_terms=hidden,
@@ -1183,6 +1340,11 @@ def build_report_model(
         party_cells=cells,
         originators=districts,
         originator_figures=figures,
+        # Option 02
+        period=period_info(settings),
+        comparison=period_comparison(
+            layout, settings, names, results.height, f"{settings.compare.period}/"
+        ),
     )
 
 

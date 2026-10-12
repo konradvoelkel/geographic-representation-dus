@@ -28,6 +28,7 @@ from georep.report.charts import (
     added_variable_plot,
     choropleth,
     classify,
+    delta_scatter,
     legend,
     own_share_label,
     party_maps,
@@ -272,7 +273,9 @@ def build_site(
     model = build_report_model(layout, settings, now=now, commit=commit)
     downloads.append(write_documents(layout, model, settings))
 
-    geojson = wahlbezirke_geojson(shapes, model.districts, working_crs)
+    geojson = wahlbezirke_geojson(
+        shapes, model.districts, working_crs, f"Kommunalwahlbezirke, {model.period.title}"
+    )
     geojson_target = layout.site_data / GEOJSON_NAME
     write_json(geojson_target, geojson, indent=None)
     downloads.append(
@@ -320,6 +323,11 @@ def build_site(
             extra_classes={"bodies": own},
         ),
         scatter_svg=scatter(model.districts, model.regression),
+        delta_svg=(
+            delta_scatter(model.comparison.rows, model.comparison.regression)
+            if model.comparison is not None
+            else ""
+        ),
         rate_legend=rate_legend,
         turnout_legend=legend(turnout, turnout_label),
         simplify_m=SIMPLIFY_M,

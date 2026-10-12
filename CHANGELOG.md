@@ -51,6 +51,19 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   als Adresse teilbar (`index.html#suche=hofgarten`). Die Vorschläge stecken in der Seite und brauchen kein
   Netz, also auch keinen Webserver; nur die Dokumentliste wird wie bisher nachgeladen. `index.html` wächst
   dadurch von 687 KB auf 848 KB (gzip 141 KB), Budget 1,5 MB.
+- **Zweite Wahlperiode (Option 02).** Eine Wahlperiode ist jetzt ein Profil: `settings.2014.toml` rechnet
+  dieselbe Kette für 2014 bis 2020 in `data/2014-2020/`, mit dem Wörterbuch der Hauptperiode und dem
+  Wahlergebnis der Ratswahl 2020, das über Flächenanteile der Stimmbezirke auf die Wahlbezirke von 2025
+  umgerechnet wird (Zählgrößen anteilig und ganzzahlig summentreu, Briefwahl proportional zu den
+  Wahlscheinen, Zuordnung als `stimmbezirke_zuordnung.parquet` zum Download). `settings.vergleich.toml`
+  schaltet auf der Hauptperiode den Schritt `compare` und den Seitenabschnitt „Zwei Wahlperioden" ein:
+  Streudiagramm der Änderungen, Regression der Differenzen, Tabelle je Wahlbezirk, Link auf die eigene
+  Seite der alten Periode. Ohne die beiden Profile ist die Kette unverändert. Der Abruf der alten Periode
+  ist vorbereitet und wiederaufnehmbar (`sources.oparl.first_page`, `raw/papers.progress.json`), aber noch
+  nicht gelaufen; bis dahin fehlt der Abschnitt auf der veröffentlichten Seite. Der README beschreibt den
+  Lauf unter „Zwei Wahlperioden".
+- `wahlbezirke_waehler.parquet` trägt in jeder Periode dieselben Spaltennamen; Quellspalten werden beim
+  Lesen umbenannt (für die Hauptperiode ein No-op, die Zahlen sind unverändert).
 
 - Fundament für den Ausbau in acht Optionen (`docs/plans/00-synergien.md`): die Berichtsseite entsteht aus einem
   Rahmen und Abschnittsdateien (`templates/sections/`), die veröffentlichten Tabellen stehen in einem Register,

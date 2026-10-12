@@ -186,9 +186,13 @@ def test_sections_render_in_numeric_order(page: str) -> None:
         "downloads",
     ]
     assert [name for name in order if name in fixed] == fixed
-    positions = [page.index(f'<section id="{s.name}">') for s in parts]
+    # Die gezeigten Abschnitte stehen in Nummernfolge, es gibt keinen weiteren, und fehlen darf
+    # nur, wer sich ausdrücklich an einen Modellteil hängt (Option 02: „perioden").
+    shown = [s.name for s in parts if f'<section id="{s.name}">' in page]
+    positions = [page.index(f'<section id="{name}">') for name in shown]
     assert positions == sorted(positions)
-    assert page.count("<section ") == len(parts)
+    assert {s.name for s in parts} - set(shown) <= {"perioden"}
+    assert page.count("<section ") == len(shown)
     assert "window.georep = { select: select, showDocuments: showDocuments" in page
 
 

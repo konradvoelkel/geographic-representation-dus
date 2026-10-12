@@ -29,6 +29,20 @@ jobs:
       - run: uv sync --locked
       - run: uv run georep bootstrap
       - run: uv run georep run
+      # Option 02: die zweite Wahlperiode und der Vergleich, sobald ihr Schnappschuss im Repo
+      # liegt (docs/plans/02-zeitreihe.md, Stufe H). Ohne ihn baut der Workflow wie bisher nur
+      # die Hauptperiode; der Abschnitt „Zwei Wahlperioden" fehlt dann einfach.
+      - name: Zweite Periode und Vergleich, wenn der Schnappschuss da ist
+        run: |
+          if [ ! -d snapshots/2014-2020 ]; then
+            echo "snapshots/2014-2020 fehlt: nur die Hauptperiode"
+            exit 0
+          fi
+          uv run georep --settings settings.2014.toml bootstrap || exit 1
+          uv run georep --settings settings.2014.toml run || exit 1
+          uv run georep --settings settings.vergleich.toml run || exit 1
+          rm -rf data/site/2014-2020 || exit 1
+          cp -r data/2014-2020/site data/site/2014-2020 || exit 1
       - run: ls -la data/site data/site/data && uv run georep status
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
