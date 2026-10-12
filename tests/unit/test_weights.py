@@ -280,6 +280,10 @@ def test_idf_is_degenerate_only_for_a_single_document() -> None:
     assert idf_weight(1, 2) == 1.0 and idf_weight(2, 2) == 0.0
     single = pl.DataFrame({"anzahl_treffer": [0, 1]}, schema={"anzahl_treffer": pl.Int64})
     assert single.select(idf_expression(1)).get_column("gewicht_idf").to_list() == [1.0, 0.0]
+    # Bei zwei Dokumenten gilt wieder die Formel: ein Begriff in einem von beiden zählt voll.
+    two = pl.DataFrame({"anzahl_treffer": [0, 1, 2]}, schema={"anzahl_treffer": pl.Int64})
+    found = two.select(idf_expression(2)).get_column("gewicht_idf").to_list()
+    assert found == [pytest.approx(v, abs=1e-15) for v in (1.0, 1.0, 0.0)]
 
 
 def test_combined_multiplies_its_factors() -> None:

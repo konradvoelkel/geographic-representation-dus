@@ -259,7 +259,7 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung; mit `analysis/topics.py` im Ziel dauert die Session sehr lange (jeder Mutant rechnet NMF), darum besser gezielt je Modul | lokal |
 
 Stand 2026-10-12: 310 Tests, schnelle Suite in 20 bis 25 s, Abdeckung 98,6 %; Mutationsquote 79 % über
-`search/` und `analysis/` ([mutation-2026-10-11.md](mutation-2026-10-11.md)), 82 % über das neue
+`search/` und `analysis/` ([mutation-2026-10-11.md](mutation-2026-10-11.md)), 83 % über das neue
 `analysis/weights.py` ([mutation-2026-10-12.md](mutation-2026-10-12.md)).
 
 ## Bekannte Grenzen
