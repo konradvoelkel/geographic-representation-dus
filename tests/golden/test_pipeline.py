@@ -10,12 +10,14 @@ import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
 
-from georep.analysis.hits import citywide_terms
+from georep.analysis import scaling
+from georep.analysis.hits import DISTRICT, citywide_terms
 from georep.analysis.regression import regression_pair
 from georep.bootstrap import bootstrap
 from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.pipeline import Outcome, UnknownStepError, build_steps, run_pipeline
+from georep.prep.voters import TURNOUT
 from georep.report.search import fold, fold_ascii
 from georep.report.tables import published
 from georep.settings import Settings, load_settings
@@ -339,6 +341,13 @@ WITH_RULES = {
 }
 WITH_RULES_TABLE_FIVE = (79.9539, 48.1709, 0.1891, 0.23641)  # Steigung, Achse, r, p
 WITH_RULES_WITHOUT_OUTLIERS = (216.2416, 40.5715, 0.3351, 0.03705)
+# Punkt 46: die zweite Kennzahl des Methodik-Reviews, am 2026-10-13 auf der Referenz gemessen
+# (docs/skalierung-2026-10.md, § 2.3 und § 3.3). Mit ihr bleibt vom Zusammenhang nichts, nicht
+# einmal das Vorzeichen -- und die einzige Spalte, in der Tabelle 5 ein signifikantes p zeigt,
+# verschwindet.
+PER_TERM = {"terms": 6877, "min": 2.2485, "median": 4.5656, "max": 9.5472, "city_mean": 0.061808}
+PER_TERM_TABLE = (-0.5570, 55.7576, -0.1118, 0.48644)  # Steigung, Achse, r, p
+PER_TERM_WITHOUT_OUTLIERS = (-0.2400, 54.4333, -0.0419, 0.80000)
 
 
 @pytest.mark.slow
@@ -396,6 +405,37 @@ def test_the_rules_change_the_reference_as_measured(
     assert changed.height == WITH_RULES["districts_changed"]
     assert bool((changed.get_column("differenz") < 0).all())
     assert changed.filter(pl.col("wahlkreis_id") == 10).get_column("differenz").item() == -177
+
+    # Punkt 46: die normierten Kennzahlen und die zweite Regression, am 2026-10-13 gemessen
+    # (docs/skalierung-2026-10.md, § 2.3 und § 3.3)
+    metrics = pl.read_parquet(layout.district_metrics)
+    assert metrics.height == 41
+    assert int(metrics.get_column(scaling.TERM_COUNT).sum()) == PER_TERM["terms"]
+    per_term = metrics.get_column(scaling.PER_TERM)
+    assert float(per_term.min()) == pytest.approx(PER_TERM["min"], abs=5e-5)  # type: ignore[arg-type]
+    assert float(per_term.median()) == pytest.approx(PER_TERM["median"], abs=5e-5)  # type: ignore[arg-type]
+    assert float(per_term.max()) == pytest.approx(PER_TERM["max"], abs=5e-5)  # type: ignore[arg-type]
+    assert float(metrics.get_column(scaling.CITY_MEAN)[0]) == pytest.approx(
+        PER_TERM["city_mean"], abs=5e-7
+    )
+    second = regression_pair(
+        metrics.join(results.select(DISTRICT, TURNOUT), on=DISTRICT, how="inner"),
+        default_settings.analysis.exclude_districts,
+        x=scaling.PER_TERM,
+        y=TURNOUT,
+    )
+    assert second.without is not None
+    for got, (slope, intercept, r, p_value) in (
+        (second.all, PER_TERM_TABLE),
+        (second.without, PER_TERM_WITHOUT_OUTLIERS),
+    ):
+        assert got.slope == pytest.approx(slope, abs=5e-4)
+        assert got.intercept == pytest.approx(intercept, abs=5e-4)
+        assert got.r == pytest.approx(r, abs=5e-5)
+        assert got.p == pytest.approx(p_value, abs=5e-5)
+    # Der Befund haelt auch mit der normierten Kennzahl, und die Spalte, die in Tabelle 5 ein
+    # signifikantes p zeigt, verschwindet: sie haengt an der Groesse der Woerterbuecher.
+    assert second.all.p > 0.05 and second.without.p > 0.05
 
     page = layout.site_index.read_text(encoding="utf-8")
     assert layout.site_index.stat().st_size < 1_500_000

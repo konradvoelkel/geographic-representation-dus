@@ -434,7 +434,9 @@ def test_the_party_section_has_the_maps_both_tables_and_every_cell(
     assert page.count('<use href="#pm-') == len(model.parties) * len(model.districts)
     assert page.count('<path id="pm-') == len(model.districts)  # die Pfade nur einmal
     # Je Wahlbezirk eine Zeile mit einer Zelle je Partei
-    cells = sum(page.count(f'class="num p{k}"') for k in range(5))
+    # Punkt 46: die Zellen tragen die q-Klasse ihrer Stufe (im Rahmen als Tönung definiert), weil
+    # dieselbe Radiogruppe Karten und Zellen umschaltet und eine Skala trägt, nicht zwei.
+    cells = sum(page.count(f'class="num q{k}"') for k in range(5))
     assert cells == len(model.districts) * len(model.parties) == len(model.party_cells)
     for party in model.parties:
         assert f">{party.label}</th>" in page  # Parteitabelle nennt den vollen Namen

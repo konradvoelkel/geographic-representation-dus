@@ -221,7 +221,8 @@ def test_the_page_carries_the_section_within_the_budget(
     assert '<section id="parteien">' in page
     assert page.count('<path id="pm-') == 41  # die Flächen einmal in <defs>
     assert page.count('<use href="#pm-') == 41 * len(settings.originators.parties)
-    assert sum(page.count(f'class="num p{k}"') for k in range(5)) == 41 * len(
+    # Punkt 46: die Zellen tragen die q-Klasse ihrer Stufe (im Rahmen als Tönung definiert)
+    assert sum(page.count(f'class="num q{k}"') for k in range(5)) == 41 * len(
         settings.originators.parties
     )
     assert layout.site_index.stat().st_size < 1_500_000  # Budget, Meta-Plan § 2

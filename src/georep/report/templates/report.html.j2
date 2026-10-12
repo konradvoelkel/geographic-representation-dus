@@ -50,9 +50,9 @@ svg.scatter { width: 100%; max-width: 40em; height: auto; background: var(--surf
 /* Punkt 46: die divergierende Rampe für die Varianten „Abweichung vom Mittel" und „Verhältnis zum
    Mittel". Orange heißt unter dem Mittel, blau darüber, die Mitte ist ein neutrales Grau. Beide
    Enden entstehen mit color-mix aus Variablen, die je Modus definiert sind, also folgt die Rampe
-   Hell und Dunkel ohne zweiten @media-Block -- dasselbe Verfahren wie die Tönung der
-   Parteizellen (sections/38-parteien.css). Eine Rampe für Flächen und für Tabellenzellen: die
-   Zellen tragen Zahlen, darum sind die Stufen gemischt und nicht voll gesättigt.
+   Hell und Dunkel ohne zweiten @media-Block -- dasselbe Verfahren wie die Tönung darunter.
+   Eine Rampe für Flächen und für Tabellenzellen: die Zellen tragen Zahlen, darum sind die Stufen
+   gemischt und nicht voll gesättigt.
    Nachgerechnet am 2026-10-13 (WCAG-Kontrast der normalen Schriftfarbe auf jeder Stufe):
      hell   #ef8960 7,89 | #f6cab7 13,17 | #d0d0cd 12,73 | #b5cfee 12,30 | #5895de 6,34
      dunkel #af4b23 5,45 | #5b2f1d 11,23 | #444341  9,88 | #253f5e 10,76 | #326fb8 5,12
@@ -67,6 +67,24 @@ svg.scatter { width: 100%; max-width: 40em; height: auto; background: var(--surf
   --d4: color-mix(in srgb, var(--q2) 78%, var(--surface));
 }
 .d0 { fill: var(--d0); } .d1 { fill: var(--d1); } .d2 { fill: var(--d2); } .d3 { fill: var(--d3); } .d4 { fill: var(--d4); }
+/* Dieselbe Klasse, zwei Flächen: auf einer SVG-Fläche liegt kein Text, in einer Tabellenzelle
+   steht eine Zahl. Darum ist die sequenzielle Rampe als Zellenhintergrund nicht --q0 bis --q4,
+   sondern eine Tönung aus einer einzigen Farbe (fünf Stufen von --q2 in --surface, Option 04,
+   Punkt 46). So trägt ein Umschalter eine Skala und nicht zwei.
+   Nachgerechnet am 2026-10-12 (WCAG-Kontrast der normalen Schriftfarbe auf jeder Stufe):
+     hell   --ink  #0b0b0b: 16,95 / 14,09 / 11,29 / 8,65 / 6,34  (Minimum 6,34)
+     dunkel --ink  #ffffff: 15,50 / 12,69 /  9,67 / 7,16 / 5,12  (Minimum 5,12)
+   Beide Reihen sind monoton und überall über 4,5. Die volle Rampe hätte das nicht geschafft:
+   --q2 hell trägt nur 4,46 mit dunkler und 4,30 mit heller Schrift, also in keiner Richtung AA. */
+:root {
+  --p0: color-mix(in srgb, var(--q2) 10%, var(--surface));
+  --p1: color-mix(in srgb, var(--q2) 24%, var(--surface));
+  --p2: color-mix(in srgb, var(--q2) 40%, var(--surface));
+  --p3: color-mix(in srgb, var(--q2) 58%, var(--surface));
+  --p4: color-mix(in srgb, var(--q2) 78%, var(--surface));
+}
+td.q0 { background: var(--p0); } td.q1 { background: var(--p1); } td.q2 { background: var(--p2); }
+td.q3 { background: var(--p3); } td.q4 { background: var(--p4); }
 .swatch.d0 { background: var(--d0); } .swatch.d1 { background: var(--d1); } .swatch.d2 { background: var(--d2); }
 .swatch.d3 { background: var(--d3); } .swatch.d4 { background: var(--d4); }
 td.d0 { background: var(--d0); } td.d1 { background: var(--d1); } td.d2 { background: var(--d2); }
