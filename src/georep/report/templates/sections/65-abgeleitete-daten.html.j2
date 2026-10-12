@@ -1,0 +1,29 @@
+{% if model.derived %}
+{% set d = model.derived %}
+<section id="abgeleitete-daten">
+<h2>Abgeleitete Daten</h2>
+<p>Die Kontrollvariablen stammen aus Fremddaten: <a href="{{ d.url }}">{{ d.title }}</a> von
+{{ d.publisher }}, Stand {{ d.stand|date_de }}, abgerufen am {{ d.fetched|date_de }}, unter der
+<a href="{{ d.license_url }}">{{ d.license }}</a>. Die Daten liegen für {{ d.units }} {{ d.units_label }}
+vor und werden auf die {{ d.districts }} Wahlbezirke umgerechnet. Nichts davon ist
+Teil des Datensatzes der Arbeit; die Tabelle unten nennt je Variable, was aus welcher Größe wurde.</p>
+<div class="scroll"><table>
+<thead><tr><th scope="col">Variable</th><th scope="col">Einheit</th><th scope="col">Definition der Quelle (Anfang)</th>
+<th scope="col">Umrechnung</th><th scope="col">Quelle</th></tr></thead>
+<tbody>
+{% for v in d.variables %}
+<tr><th scope="row"><code>{{ v.name }}</code> {{ v.label }}</th>
+<td>{{ v.unit or '—' }}</td>
+<td>{{ v.definition or '—' }}</td>
+<td>{{ v.transform }}</td>
+<td>{{ v.source }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<p class="note">Die umgerechneten Werte stehen als <code>wahlbezirke_kontext.csv</code> zum Download, die
+Gewichte je {{ d.units_label }} und Wahlbezirk als <code>wahlbezirke_crosswalk.csv</code>; dort ist auch
+zu sehen, welcher Anteil des Gewichts auf Einheiten ohne Wert liegt (Spalten
+<code>…_fehlgewicht</code>; die Quelle anonymisiert kleine Zahlen, und eine Einheit war zum Datenstand
+unbebaut). Die vollständigen Definitionen der Indikatoren stehen in der Erläuterungsdatei des Datensatzes.
+Namensnennung nach Lizenz: {{ d.attribution }}.</p>
+</section>
+{% endif %}

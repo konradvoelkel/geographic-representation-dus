@@ -173,6 +173,31 @@ def read_context_table(path: Path, context: ContextSettings) -> pl.DataFrame:
     ).sort(UNIT)
 
 
+@deal.raises(SchemaError)
+def read_indicators(path: Path, context: ContextSettings) -> dict[str, str]:
+    """Indikator -> Definition aus der Erläuterungsdatei der Quelle, Leerraum normalisiert.
+
+    Die Definitionen stehen auf der Seite im Abschnitt „Abgeleitete Daten"; nennt eine Variable in
+    den Settings einen Indikator, den die Datei nicht führt, ist das ein ``SchemaError`` -- so
+    fällt ein Tippfehler auf und eine neue Fassung der Datei ebenso.
+    """
+    table = context.table
+    text = path.read_bytes().decode(table.encoding)
+    frame = pl.read_csv(io.BytesIO(text.encode("utf-8")), separator=table.sep, infer_schema=False)
+    missing = [c for c in (table.indicator, table.definition) if c not in frame.columns]
+    if missing:
+        raise SchemaError(f"{path.name}: Spalten fehlen: {missing}")
+    found = {
+        str(row[table.indicator]).strip(): " ".join(str(row[table.definition] or "").split())
+        for row in frame.iter_rows(named=True)
+    }
+    wanted = {v.indicator.strip() for v in context.variables if v.indicator}
+    absent = sorted(wanted - set(found))
+    if absent:
+        raise SchemaError(f"{path.name}: Indikatoren der Settings fehlen in der Datei: {absent}")
+    return found
+
+
 def _weighted_mean(name: str) -> list[pl.Expr]:
     """Mittel über die Einheiten mit Wert und das Gewicht der Einheiten ohne.
 

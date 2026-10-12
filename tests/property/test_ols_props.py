@@ -27,8 +27,18 @@ def _frame(rows: list[tuple[float, float, float]]) -> pl.DataFrame:
 
 
 def _usable(frame: pl.DataFrame, columns: tuple[str, ...] = ("y", "a", "b")) -> bool:
-    """Streuung in jeder Spalte, damit die Designmatrix nicht entartet."""
-    return all(frame.get_column(c).n_unique() > 2 for c in columns)
+    """Streuung in jeder Spalte über dem Fließkomma-Rauschen, sonst ist die Designmatrix entartet.
+
+    Drei verschiedene Werte reichen nicht: hypothesis fand Spalten, die sich erst in der 16.
+    Stelle unterscheiden, und ``fit_ols`` lehnt sie zu Recht als praktisch singulär ab
+    (Konditionszahl 1e113, 2026-10-12). Eine Steigung auf solchen Daten wäre Rauschen.
+    """
+    for column in columns:
+        series = frame.get_column(column)
+        low, high = float(series.min() or 0.0), float(series.max() or 0.0)  # type: ignore[arg-type]
+        if series.n_unique() <= 2 or high - low < 1e-6 * max(1.0, abs(low), abs(high)):
+            return False
+    return True
 
 
 @given(rows=triples)

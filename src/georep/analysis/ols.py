@@ -246,6 +246,7 @@ MODELS_SCHEMA = {
     "f_p": pl.Float64,
 }
 ALL = "alle"
+MAIN_MODEL = "B"  # das Hauptmodell: Trefferquote plus die Kontrollvariablen aus context.models.main
 
 
 def sample_label(excluded: Iterable[int]) -> str:

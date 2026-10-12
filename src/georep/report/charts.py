@@ -434,3 +434,61 @@ def scatter(
         )
     parts.append("</g></svg>")
     return "".join(parts)
+
+
+# --- Option 03: Added-Variable-Plots zum Hauptmodell ---------------------------------------------
+
+AVP_WIDTH = 330.0
+AVP_HEIGHT = 250.0
+AVP_MARGIN = (22.0, 12.0, 44.0, 48.0)  # oben, rechts, unten, links; schmaler als das Streudiagramm
+
+
+def added_variable_plot(
+    districts: Sequence[tuple[int, str]],
+    xs: Sequence[float],
+    ys: Sequence[float],
+    slope: float,
+    *,
+    key: str,
+    title: str,
+    x_title: str,
+    y_title: str,
+) -> str:
+    """Ein partielles Streudiagramm: Residuen eines Terms gegen Residuen der Wahlbeteiligung.
+
+    Beide Größen sind um die übrigen Terme bereinigt (Frisch-Waugh-Lovell), darum geht die Gerade
+    durch den Ursprung und ihre Steigung ist genau der Koeffizient des Terms. ``districts`` sind
+    (Nummer, Name) in der Reihenfolge der Punkte; sie tragen nur ``data-id`` und einen kurzen
+    ``<title>``, nicht die ganzen Tooltip-Attribute des Streudiagramms: vier Plots mit je 41
+    Punkten kosteten so 95 KB statt 37 KB, und Tooltip gibt es auf Karte und Streudiagramm.
+    ``key`` macht die IDs im Dokument eindeutig.
+    """
+    axes = Axes.fit(xs, ys, width=AVP_WIDTH, height=AVP_HEIGHT, x_span=1.0, margin=AVP_MARGIN)
+    clip = f"avp-{key}"
+    parts = [
+        f'<svg class="avp" viewBox="0 0 {_num(AVP_WIDTH)} {_num(AVP_HEIGHT)}" role="img" '
+        f'aria-labelledby="{clip}-title" xmlns="http://www.w3.org/2000/svg">',
+        f'<title id="{clip}-title">{html.escape(title)}</title>',
+        axes.clip_path(clip),
+        axes.grid(),
+        axes.axis_lines(),
+        axes.tick_labels(),
+        axes.axis_titles(x_title, y_title),
+        f'<g class="fits" clip-path="url(#{clip})">'
+        f'<line class="fit fit-all" x1="{_num(axes.sx(axes.x0))}" '
+        f'y1="{_num(axes.sy(slope * axes.x0))}" x2="{_num(axes.sx(axes.x1))}" '
+        f'y2="{_num(axes.sy(slope * axes.x1))}"/></g>',
+        '<g class="dots">',
+    ]
+    for (district, name), x, y in zip(districts, xs, ys, strict=True):
+        cx, cy = _num(axes.sx(x)), _num(axes.sy(y))
+        parts.append(
+            f'<g class="avp-point" data-id="{district}" tabindex="0">'
+            f"<title>{html.escape(f'{district} {name}')}</title>"
+            f'<circle class="hit" cx="{cx}" cy="{cy}" r="{_num(HIT_RADIUS)}"/>'
+            f'<circle class="dot" cx="{cx}" cy="{cy}" r="{_num(DOT_RADIUS)}"/>'
+            f'<text class="dot-label" x="{_num(axes.sx(x) + 5)}" '
+            f'y="{_num(axes.sy(y) - 5)}">{district}</text></g>'
+        )
+    parts.append("</g></svg>")
+    return "".join(parts)

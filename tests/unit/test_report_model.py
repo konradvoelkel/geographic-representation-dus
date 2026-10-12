@@ -30,7 +30,7 @@ from georep.report.model import (
 )
 from georep.report.search import canonical_term
 from georep.report.tables import GEOJSON_COLUMNS, TABLES, PublishedTable, published
-from georep.settings import Settings
+from georep.settings import ContextVariable, Settings, load_settings
 
 NOW = dt.datetime(2026, 10, 11, 20, 0, tzinfo=dt.UTC)
 
@@ -128,17 +128,19 @@ def test_column_docs_cover_every_published_column(model: ReportModel, mini_run: 
     assert len({t.name for t in TABLES}) == len(TABLES)
 
 
-def test_column_docs_refuse_mismatches(mini_run: Layout, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_column_docs_refuse_mismatches(
+    mini_run: Layout, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
     voters = next(t for t in TABLES if t.name == "wahlbezirke_waehler")
     results = next(t for t in TABLES if t.name == "wahlbezirke_auswertung")
     wrong_path = PublishedTable(voters.name, lambda layout: layout.results, "", voters.columns)
     monkeypatch.setattr("georep.report.model.published", lambda layout, settings=None: [wrong_path])
     with pytest.raises(SchemaError, match="ohne Beschreibung"):
-        column_docs(mini_run)
+        column_docs(mini_run, default_settings)
     too_many = PublishedTable(results.name, lambda layout: layout.voters, "", results.columns)
     monkeypatch.setattr("georep.report.model.published", lambda layout, settings=None: [too_many])
     with pytest.raises(SchemaError, match="Beschreibung ohne Spalte"):
-        column_docs(mini_run)
+        column_docs(mini_run, default_settings)
 
 
 def test_optional_tables_are_published_only_when_their_file_exists(mini_run: Layout) -> None:
@@ -378,3 +380,83 @@ def test_an_empty_long_table_gives_no_rows_instead_of_an_error(mini_run: Layout)
 
     empty = pl.read_parquet(mini_run.weighted).head(0)
     assert sensitivity_rows(empty, pl.read_parquet(mini_run.results), Weights()) == ()
+
+
+# --- Option 03: Kontrollvariablen und abgeleitete Daten ------------------------------------------
+
+
+def test_controls_section_on_the_mini_fixture_keeps_only_what_fits(model: ReportModel) -> None:
+    """n = 3: nur Modell A passt, der Rest steht als „nicht geschätzt" da."""
+    controls = model.controls
+    assert controls is not None
+    assert [m.name for m in controls.models] == ["A"]
+    assert controls.main == "A" and controls.singles == ()
+    assert controls.units == 24 and controls.units_label == "Sozialräume"
+    assert controls.stand == dt.date(2021, 12, 31)
+    assert controls.excluded == (1, 10) and controls.rate_without is None
+    assert any("B (alle)" in m for m in controls.missing)
+    assert "reichen die Wahlbezirke" in controls.verdict
+    rate = next(t for t in controls.models[0].terms if t.term == "trefferquote")
+    assert rate.label == "Trefferquote" and rate.vif == pytest.approx(1.0)
+    assert controls.models[0].terms[0].term == "(Konstante)"
+    assert controls.models[0].terms[0].beta is None
+
+
+def test_controls_and_derived_are_none_without_context_data(
+    tmp_path: Path, mini_root: Path, default_settings: Settings
+) -> None:
+    from georep.bootstrap import bootstrap
+    from georep.pipeline import build_steps, run_pipeline
+
+    layout = Layout(tmp_path / "data", tmp_path / "cache", mini_root)
+    bootstrap(layout)
+    run_pipeline(build_steps(default_settings, layout), default_settings)
+    plain = build_report_model(layout, default_settings, now=NOW)
+    assert plain.controls is None and plain.derived is None
+    assert {d.table for d in plain.columns} == {t.name for t in published(layout)} | {"wahlbezirke"}
+
+
+def test_derived_data_names_source_licence_and_transform(model: ReportModel) -> None:
+    derived = model.derived
+    assert derived is not None
+    assert derived.title and derived.publisher and derived.url.startswith("https://")
+    assert derived.license_url == "https://www.govdata.de/dl-de/by-2-0"
+    assert derived.stand == dt.date(2021, 12, 31) and derived.fetched == dt.date(2026, 10, 12)
+    assert derived.districts == 3 and derived.units == 24
+    assert "dl-de/by-2-0" in derived.attribution and derived.publisher in derived.attribution
+    by_name = {v.name: v for v in derived.variables}
+    assert set(by_name) == {v.name for v in model_settings_variables()}
+    assert "Score" in by_name["hb_score"].transform
+    assert by_name["hb_score"].definition  # Definition aus der Erläuterungsdatei
+    assert by_name["cdu"].transform == "Stimmenanteil mal 100"
+    assert by_name["cdu"].definition == "" and "Wahlergebnis" in by_name["cdu"].source
+    assert "Summe der Spalten" in by_name["anteil_65plus"].transform
+
+
+def model_settings_variables() -> list[ContextVariable]:
+    return list(load_settings(cwd=Path("/nonexistent")).context.variables)
+
+
+def test_the_verdict_follows_the_numbers(tmp_path: Path) -> None:
+    """Der Satz zur Deutung entsteht aus p, Vorzeichen und R², nicht aus festem Text."""
+    from georep.report.model import ControlModel, ControlTerm, _verdict
+
+    def model(name: str, coefficient: float, p: float, r2: float) -> ControlModel:
+        terms = (
+            ControlTerm("(Konstante)", "Achsenabschnitt", "", 50.0, 1.0, 0.0, None, None),
+            ControlTerm("trefferquote", "Trefferquote", "", coefficient, 1.0, p, 0.3, 1.2),
+            ControlTerm("hb_score", "Sozialer Handlungsbedarf", "", -9.0, 0.5, 0.0, -0.9, 1.4),
+        )
+        return ControlModel(name, terms, 41, 2, r2, r2 - 0.01, 0.0001)
+
+    simple = model("A", 62.0, 0.31, 0.03)
+    significant = _verdict([simple, model("B", 40.0, 0.01, 0.89)], "B", (1, 10))
+    assert "signifikant" in significant and "höher" in significant
+    assert "0,89" in significant and "Sozialer Handlungsbedarf" in significant
+    assert "ohne die Wahlbezirke 1 und 10" in significant
+    negative = _verdict([simple, model("B", -40.0, 0.01, 0.89)], "B", ())
+    assert "niedriger" in negative and "ohne die Wahlbezirke" not in negative
+    insignificant = _verdict([simple, model("B", 40.0, 0.13, 0.89)], "B", ())
+    assert "nicht von Null zu unterscheiden" in insignificant
+    assert "keine Ursache" in insignificant
+    assert _verdict([simple], "B", ()).startswith("Für Modelle mit Kontrollvariablen")

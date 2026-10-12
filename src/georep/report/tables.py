@@ -18,7 +18,10 @@ from pathlib import Path
 
 import deal
 
+from georep.analysis.ols import MODELS_SCHEMA
+from georep.crosswalk import UNIT, UNIT_NAME, WEIGHT
 from georep.layout import Layout
+from georep.prep.context import MISSING_SUFFIX
 from georep.settings import Settings
 
 
@@ -34,6 +37,14 @@ class PublishedTable:
     # Nur veröffentlichen, wenn die Settings die Stufe eingeschaltet lassen; ohne Settings
     # (Aufrufer ohne Konfiguration, etwa ``georep export``) zählt der Schalter nicht.
     enabled: Callable[[Settings], bool] | None = None
+
+    # Tabellen, deren Spalten in den Settings stehen (Option 03: eine Spalte je Kontrollvariable),
+    # beschreiben sich erst zur Laufzeit; ``columns`` bleibt dann leer.
+    describe: Callable[[Settings], Mapping[str, tuple[str, str]]] | None = None
+
+    def column_docs(self, settings: Settings) -> Mapping[str, tuple[str, str]]:
+        """Die Spaltendoku dieser Tabelle, statisch oder aus den Settings abgeleitet."""
+        return self.describe(settings) if self.describe is not None else self.columns
 
 
 DISTRICT_COLUMN = ("Nummer des Kommunalwahlbezirks (1 bis 41)", "")
@@ -295,6 +306,80 @@ TABLES.append(
         enabled=lambda settings: settings.topics.k > 0,
     )
 )
+
+# --- Option 03: Kontrollvariablen, ihre Umrechnung und die Modelle -------------------------------
+
+
+def context_columns(settings: Settings) -> dict[str, tuple[str, str]]:
+    """Spaltendoku von ``wahlbezirke_kontext``: je Variable der Settings eine Spalte."""
+    context = settings.context
+    units = context.units.label
+    docs: dict[str, tuple[str, str]] = {"wahlkreis_id": DISTRICT_COLUMN}
+    for variable in context.variables:
+        origin = (
+            "Spalte des Wahlergebnisses je Wahlbezirk"
+            if variable.kind == "district"
+            else f"gewichtetes Mittel über die {units} des Wahlbezirks"
+        )
+        docs[variable.name] = (f"{variable.label}, {origin}", variable.unit)
+    for variable in context.unit_variables():
+        docs[f"{variable.name}{MISSING_SUFFIX}"] = (
+            f"Anteil des Gewichts, der bei {variable.label} auf {units} ohne Wert liegt",
+            "Anteil 0 bis 1",
+        )
+    return docs
+
+
+def _model_column(column: str) -> tuple[str, str]:
+    texts: dict[str, tuple[str, str]] = {
+        "modell": ("Modell: A (nur Trefferquote), B, C oder single:<Variable>", ""),
+        "stichprobe": ("alle Wahlbezirke oder ohne die Ausreißer der Arbeit", ""),
+        "term": ("Term des Modells; (Konstante) ist der Achsenabschnitt", ""),
+        "koeffizient": ("geschätzter Koeffizient; y ist die Wahlbeteiligung in Prozent", ""),
+        "standardfehler": ("Standardfehler des Koeffizienten", ""),
+        "t": ("Koeffizient geteilt durch seinen Standardfehler", ""),
+        "p": ("zweiseitiger p-Wert zur t-Verteilung mit n − k − 1 Freiheitsgraden", "0 bis 1"),
+        "beta_std": ("standardisierter Koeffizient b · sd(x)/sd(y); leer für die Konstante", ""),
+        "vif": ("Varianzinflation aus einer Hilfsregression; leer für die Konstante", ""),
+        "n": ("Wahlbezirke im Modell", ""),
+        "k": ("Terme ohne die Konstante", ""),
+        "r2": ("Bestimmtheitsmaß des Modells", "0 bis 1"),
+        "r2_adj": ("um k korrigiertes Bestimmtheitsmaß", ""),
+        "f_p": ("p-Wert des F-Tests gegen das Modell nur mit Konstante", "0 bis 1"),
+    }
+    return texts[column]
+
+
+TABLES += [
+    # Option 03
+    PublishedTable(
+        "wahlbezirke_kontext",
+        lambda layout: layout.context_table,
+        "Kontrollvariablen je Wahlbezirk, aus den Fremddaten umgerechnet",
+        {},
+        optional=True,
+        describe=context_columns,
+    ),
+    PublishedTable(
+        "wahlbezirke_crosswalk",
+        lambda layout: layout.crosswalk,
+        "Gewicht jeder Raumeinheit im Wahlbezirk (Wahlberechtigte je Stimmbezirk mal Flächenanteil)",
+        {
+            "wahlkreis_id": DISTRICT_COLUMN,
+            UNIT: ("Schlüssel der Raumeinheit in den Fremddaten", ""),
+            UNIT_NAME: ("Name der Raumeinheit", ""),
+            WEIGHT: ("Gewicht der Einheit im Wahlbezirk; je Wahlbezirk Summe 1", "Anteil 0 bis 1"),
+        },
+        optional=True,
+    ),
+    PublishedTable(
+        "regression_kontrollen",
+        lambda layout: layout.controls,
+        "Tabelle 6: je Modell, Stichprobe und Term ein Koeffizient mit Standardfehler, p und VIF",
+        {column: _model_column(column) for column in MODELS_SCHEMA},
+        optional=True,
+    ),
+]
 
 # Nur für ``georep export`` (CSV neben der Parquet-Datei), nicht auf der Seite.
 EXPORT_ONLY: list[PublishedTable] = [

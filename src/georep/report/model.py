@@ -21,6 +21,7 @@ import polars as pl
 from georep import __version__
 from georep.analysis import bodies
 from georep.analysis.hits import DISTRICT, RATE, TERMS
+from georep.analysis.ols import ALL, CONSTANT, MAIN_MODEL, model_terms, sample_label
 from georep.analysis.regression import RegressionPair, regression_pair, spearman
 from georep.analysis.weights import (
     BY_DISTRICTS,
@@ -35,17 +36,29 @@ from georep.analysis.weights import (
     topic_variant,
 )
 from georep.contracts import has_columns
+
+# ``crosswalk.UNIT`` ist die Spalte der Raumeinheit (Option 03), ``weights.UNIT`` der Name der
+# Einheitsvariante (Option 06); beide heißen „einheit", meinen aber Verschiedenes.
+from georep.crosswalk import UNIT as CROSSWALK_UNIT
 from georep.errors import EmptyResultError, SchemaError
 from georep.geo import Precinct, read_precincts
 from georep.layout import Layout
 from georep.prep import bodies as prep_bodies
 from georep.prep.bodies import BodyRules
+from georep.prep.context import read_indicators
 from georep.prep.voters import TURNOUT
 from georep.report.search import SearchEntry, search_entries
 from georep.report.tables import GEOJSON_COLUMNS, GEOJSON_TABLE, PublishedTable, published
 from georep.search.dictionary import all_terms
 from georep.search.index import HITS, PAPER_IDS, TERM
-from georep.settings import Bodies, ResultsColumns, Settings, Weights
+from georep.settings import (
+    RATE_TERM,
+    Bodies,
+    ContextSettings,
+    ResultsColumns,
+    Settings,
+    Weights,
+)
 
 NARROW_NBSP = "\u202f"  # schmales geschütztes Leerzeichen: Tausender und vor dem Prozentzeichen
 TOP_TERMS = 5  # Begriffe je Wahlbezirk in Karte und Tabelle
@@ -233,6 +246,90 @@ class Sensitivity:
         return any(row.pair is not None and row.pair.without is not None for row in self.rows)
 
 
+# --- Option 03: Kontrollvariablen und abgeleitete Daten -----------------------------------------
+
+
+@dataclass(frozen=True)
+class ControlTerm:
+    """Eine Zeile von Tabelle 6: ein Term eines Modells."""
+
+    term: str  # Variablenname, ``(Konstante)`` für den Achsenabschnitt
+    label: str  # Anzeigename aus den Settings
+    unit: str
+    coefficient: float
+    stderr: float
+    p: float
+    beta: float | None
+    vif: float | None
+
+
+@dataclass(frozen=True)
+class ControlModel:
+    name: str  # A, B, C
+    terms: tuple[ControlTerm, ...]
+    n: int
+    k: int
+    r2: float
+    r2_adj: float
+    f_p: float
+
+
+@dataclass(frozen=True)
+class SingleAddition:
+    """Eine Zeile von Tabelle 6b: die Trefferquote, wenn genau eine Variable dazukommt."""
+
+    variable: str
+    label: str
+    unit: str
+    coefficient: float
+    stderr: float
+    p: float
+    r2_adj: float
+
+
+@dataclass(frozen=True)
+class ControlsSection:
+    models: tuple[ControlModel, ...]  # nur die geschätzten; auf einer kleinen Stichprobe nur A
+    singles: tuple[SingleAddition, ...]
+    main: str  # Name des Hauptmodells, aus dem die Plots kommen
+    rate_label: str
+    units_label: str  # Name der Raumeinheit, aus den Settings
+    units: int  # Einheiten im Crosswalk
+    stand: dt.date  # Datenstand der Fremddaten
+    excluded: tuple[int, ...]  # Ausreißer der zweiten Stichprobe
+    rate_without: ControlTerm | None  # die Trefferquote im Hauptmodell ohne die Ausreißer
+    verdict: str  # ein Satz, der aus den Zahlen folgt
+    missing: tuple[str, ...]  # Modelle, die zu wenige Wahlbezirke hatten
+
+
+@dataclass(frozen=True)
+class DerivedVariable:
+    name: str
+    label: str
+    unit: str
+    definition: str  # aus der Erläuterungsdatei der Quelle
+    source: str
+    transform: str
+
+
+@dataclass(frozen=True)
+class DerivedData:
+    """Abschnitt „Abgeleitete Daten": was aus den Fremddaten wurde, mit Lizenz und Stand."""
+
+    title: str
+    url: str
+    publisher: str
+    license: str
+    license_url: str
+    stand: dt.date
+    fetched: dt.date
+    attribution: str
+    units_label: str
+    units: int
+    districts: int
+    variables: tuple[DerivedVariable, ...]
+
+
 @dataclass(frozen=True)
 class ReportModel:
     generated_at: dt.datetime
@@ -254,6 +351,8 @@ class ReportModel:
     body_figures: BodyFigures | None = None
     body_regression: RegressionPair | None = None
     sensitivity: Sensitivity | None = None  # Option 06; None = ohne Abschnitt
+    controls: ControlsSection | None = None  # Option 03; None ohne Kontextdaten
+    derived: DerivedData | None = None  # Option 03
 
 
 # --- Zahlenformat -----------------------------------------------------------------------------
@@ -279,10 +378,10 @@ def percent_de(share: float, decimals: int = 1) -> str:
 # --- Spaltenschema ------------------------------------------------------------------------------
 
 
-def _table_docs(table: PublishedTable, path: Path) -> list[ColumnDoc]:
+def _table_docs(table: PublishedTable, path: Path, settings: Settings) -> list[ColumnDoc]:
     """Spalten einer Parquet-Datei mit ihrer Bedeutung aus dem Register; beide Richtungen müssen passen."""
     schema = pl.read_parquet_schema(path)
-    known = table.columns
+    known = table.column_docs(settings)
     undocumented = [c for c in schema if c not in known]
     stale = [c for c in known if c not in schema]
     if undocumented or stale:
@@ -295,11 +394,16 @@ def _table_docs(table: PublishedTable, path: Path) -> list[ColumnDoc]:
     ]
 
 
-def column_docs(layout: Layout, settings: Settings | None = None) -> tuple[ColumnDoc, ...]:
-    """Spaltenschema aller veröffentlichten Tabellen und des GeoJSON (``report.tables``)."""
+def column_docs(layout: Layout, settings: Settings) -> tuple[ColumnDoc, ...]:
+    """Spaltenschema aller veröffentlichten Tabellen und des GeoJSON (``report.tables``).
+
+    ``settings`` braucht zweierlei: wer seine Spalten daraus ableitet (Option 03: eine Spalte
+    je Kontrollvariable), und das Register, um Tabellen abgeschalteter Stufen auszulassen
+    (Option 06).
+    """
     docs: list[ColumnDoc] = []
     for table in published(layout, settings):
-        docs.extend(_table_docs(table, table.path(layout)))
+        docs.extend(_table_docs(table, table.path(layout), settings))
     docs.extend(
         ColumnDoc(GEOJSON_TABLE, column, "GeoJSON-Eigenschaft", *text)
         for column, text in GEOJSON_COLUMNS.items()
@@ -822,6 +926,7 @@ def build_report_model(
         district_bodies,
     )
     table = body_rows(pl.read_parquet(layout.bodies_table), settings.bodies)
+    units = crosswalk_units(layout)  # Option 03: 0 ohne Kontextdaten
     return ReportModel(
         generated_at=now,
         version=__version__,
@@ -851,6 +956,8 @@ def build_report_model(
         sensitivity=(
             build_sensitivity(layout, settings, results) if layout.weighted.exists() else None
         ),
+        controls=controls_section(layout, settings, units),
+        derived=derived_data(layout, settings, units),
     )
 
 
@@ -863,3 +970,225 @@ def _body_regression(
         return regression_pair(frame, settings.analysis.exclude_districts, x=bodies.OWN_RATE)
     except EmptyResultError:
         return None
+
+
+# --- Option 03: die beiden Abschnitte aus den Parquet-Dateien ------------------------------------
+
+RATE_LABEL = "Trefferquote"  # dieselbe Kennzahl wie im Streudiagramm
+SINGLE = "single:"
+
+
+def _term_row(row: Mapping[str, object], context: ContextSettings) -> ControlTerm:
+    name = str(row["term"])
+    label, unit = (
+        ("Achsenabschnitt", "")
+        if name == CONSTANT
+        else (RATE_LABEL, "Dokumente je Person")
+        if name == RATE_TERM
+        else (context.variable(name).label, context.variable(name).unit)
+    )
+    beta, vif = row["beta_std"], row["vif"]
+    return ControlTerm(
+        term=name,
+        label=label,
+        unit=unit,
+        coefficient=float(row["koeffizient"]),  # type: ignore[arg-type]
+        stderr=float(row["standardfehler"]),  # type: ignore[arg-type]
+        p=float(row["p"]),  # type: ignore[arg-type]
+        beta=None if beta is None else float(beta),  # type: ignore[arg-type]
+        vif=None if vif is None else float(vif),  # type: ignore[arg-type]
+    )
+
+
+def _verdict(models: Sequence[ControlModel], main: str, excluded: Sequence[int]) -> str:
+    """Ein Satz zur Deutung, der aus den Zahlen folgt: Vorzeichen, p, Zuwachs an R², stärkster Term."""
+    # Ohne ein Modell neben A gibt es nichts zu deuten: die Stichprobe war zu klein.
+    best = next((m for m in models if m.name == main and m.k > 1), None)
+    simple = next((m for m in models if m.name == "A"), None)
+    if best is None or simple is None:
+        return (
+            "Für Modelle mit Kontrollvariablen reichen die Wahlbezirke dieser Stichprobe nicht aus."
+        )
+    rate = next(t for t in best.terms if t.term == RATE_TERM)
+    direction = "höher" if rate.coefficient > 0 else "niedriger"
+    strongest = max(
+        (t for t in best.terms if t.term not in (CONSTANT, RATE_TERM)),
+        key=lambda t: abs(t.beta or 0.0),
+        default=None,
+    )
+    if rate.p < 0.05:
+        lead = (
+            f"Auch mit den Kontrollvariablen bleibt der Zusammenhang der {RATE_LABEL} mit der "
+            f"Wahlbeteiligung auf dem 5-%-Niveau signifikant (p = {format_de(rate.p, 3)}): "
+            f"je Dokument und Wahlberechtigtem liegt die Beteiligung {format_de(abs(rate.coefficient), 1)} "
+            f"Prozentpunkte {direction}"
+        )
+    else:
+        lead = (
+            f"Mit den Kontrollvariablen ist der Koeffizient der {RATE_LABEL} nicht von Null zu "
+            f"unterscheiden (p = {format_de(rate.p, 2)}); was Modell A als Zusammenhang zeigt, "
+            "erklären die Kontrollvariablen"
+        )
+    gain = (
+        f". Modell {best.name} erklärt R² = {format_de(best.r2, 2)} der Streuung gegenüber "
+        f"{format_de(simple.r2, 2)} in Modell A"
+    )
+    strong = (
+        f"; den größten Beitrag leistet {strongest.label} "
+        f"(standardisiert {format_de(strongest.beta or 0.0, 2)})"
+        if strongest is not None
+        else ""
+    )
+    note = (
+        f". Bei n = {best.n} Wahlbezirken und {best.k} Termen ist das eine Beschreibung, "
+        "keine Ursache"
+        + (f"; ohne die Wahlbezirke {_join(excluded)} sieht es ähnlich aus" if excluded else "")
+    )
+    return lead + gain + strong + note + "."
+
+
+def _join(numbers: Sequence[int]) -> str:
+    return " und ".join(str(n) for n in numbers)
+
+
+def controls_section(layout: Layout, settings: Settings, units: int) -> ControlsSection | None:
+    """Tabelle 6, Tabelle 6b und der Satz zur Deutung aus ``regression_kontrollen.parquet``."""
+    if not layout.controls.exists():
+        return None
+    table = pl.read_parquet(layout.controls)
+    context = settings.context
+    excluded = tuple(settings.analysis.exclude_districts)
+    sample = table.filter(pl.col("stichprobe") == ALL)
+    models: list[ControlModel] = []
+    singles: list[SingleAddition] = []
+    for name in model_terms(context):
+        rows = sample.filter(pl.col("modell") == name)
+        if rows.is_empty():
+            continue
+        head = rows.row(0, named=True)
+        terms = tuple(_term_row(r, context) for r in rows.iter_rows(named=True))
+        if name.startswith(SINGLE):
+            variable = context.variable(name.removeprefix(SINGLE))
+            rate = next(t for t in terms if t.term == RATE_TERM)
+            singles.append(
+                SingleAddition(
+                    variable=variable.name,
+                    label=variable.label,
+                    unit=variable.unit,
+                    coefficient=rate.coefficient,
+                    stderr=rate.stderr,
+                    p=rate.p,
+                    r2_adj=float(head["r2_adj"]),
+                )
+            )
+            continue
+        models.append(
+            ControlModel(
+                name=name,
+                terms=terms,
+                n=int(head["n"]),
+                k=int(head["k"]),
+                r2=float(head["r2"]),
+                r2_adj=float(head["r2_adj"]),
+                f_p=float(head["f_p"]),
+            )
+        )
+    main = MAIN_MODEL if any(m.name == MAIN_MODEL for m in models) else "A"
+    without = table.filter(
+        (pl.col("stichprobe") != ALL) & (pl.col("modell") == main) & (pl.col("term") == RATE_TERM)
+    )
+    estimated = {(r["modell"], r["stichprobe"]) for r in table.iter_rows(named=True)}
+    possible = [
+        (name, s)
+        for name in model_terms(context)
+        for s in ([ALL, sample_label(excluded)] if excluded else [ALL])
+    ]
+    return ControlsSection(
+        models=tuple(models),
+        singles=tuple(singles),
+        main=main,
+        rate_label=RATE_LABEL,
+        units_label=context.units.label,
+        units=units,
+        stand=context.dataset.stand,
+        excluded=excluded,
+        rate_without=None if without.is_empty() else _term_row(without.row(0, named=True), context),
+        verdict=_verdict(models, main, excluded),
+        missing=tuple(f"{m} ({s})" for m, s in possible if (m, s) not in estimated),
+    )
+
+
+DEFINITION_LIMIT = 220  # Zeichen; die Quelle erklaert manche Indizes über tausend Zeichen lang
+
+
+def first_sentence(text: str, limit: int = DEFINITION_LIMIT) -> str:
+    """Der erste Satz, wenn der Text zu lang für eine Tabellenzelle ist; sonst der ganze Text.
+
+    Die Quelle beschreibt ihre Indizes ausführlich; die Tabelle „Abgeleitete Daten" zeigt den
+    Anfang und verweist auf die Datensatzseite, sonst füllt eine Zelle den halben Bildschirm.
+    """
+    if len(text) <= limit:
+        return text
+    cut = text.find(". ")
+    shortened = text[: cut + 1] if 0 < cut <= limit else text[:limit].rsplit(" ", 1)[0]
+    return shortened.rstrip(".") + " …"
+
+
+def derived_data(layout: Layout, settings: Settings, units: int) -> DerivedData | None:
+    """Abschnitt „Abgeleitete Daten": je Variable Definition, Quelle, Umrechnung; Lizenz und Stand."""
+    context = settings.context
+    if not layout.context_table.exists():
+        return None
+    indicators = read_indicators(layout.external / context.files.indicators.file, context)
+    districts = int(pl.scan_parquet(layout.context_table).select(pl.len()).collect().item())
+    weighted = (
+        f"{context.units.label} auf Wahlbezirke, gewichtet mit den Wahlberechtigten je "
+        "Stimmbezirk und dem Flächenanteil"
+    )
+    variables = tuple(
+        DerivedVariable(
+            name=variable.name,
+            label=variable.label,
+            unit=variable.unit,
+            definition=first_sentence(indicators.get(variable.indicator.strip(), "")),
+            source=(
+                "Wahlergebnis der Ratswahl je Wahlbezirk"
+                if variable.kind == "district"
+                else context.dataset.title
+            ),
+            transform=(
+                "Stimmenanteil mal 100"
+                if variable.kind == "district"
+                else "Stufen gering bis hoch als Score 1 bis 5, dann " + weighted
+                if variable.kind == "ordinal"
+                else ("Summe der Spalten, dann " if variable.kind == "sum" else "") + weighted
+            ),
+        )
+        for variable in context.variables
+    )
+    fetched = stamp_written(layout.external / context.files.table.file)
+    return DerivedData(
+        title=context.dataset.title,
+        url=context.dataset.url,
+        publisher=context.dataset.publisher,
+        license=context.dataset.license,
+        license_url=context.dataset.license_url,
+        stand=context.dataset.stand,
+        fetched=fetched or context.dataset.fetched,
+        attribution=(
+            f"{context.dataset.publisher}: {context.dataset.title} (Open-Data-Portal), dl-de/by-2-0"
+        ),
+        units_label=context.units.label,
+        units=units,
+        districts=districts,
+        variables=variables,
+    )
+
+
+def crosswalk_units(layout: Layout) -> int:
+    """Wie viele Raumeinheiten im Crosswalk vorkommen; 0 ohne Kontextdaten."""
+    if not layout.crosswalk.exists():
+        return 0
+    return int(
+        pl.scan_parquet(layout.crosswalk).select(pl.col(CROSSWALK_UNIT).n_unique()).collect().item()
+    )

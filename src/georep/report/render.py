@@ -56,6 +56,18 @@ ALLOWED_LINKS = frozenset(
 )
 _EXTERNAL = re.compile(r'(?:href|src)="(https?://[^"]*)"')
 
+
+def model_links(model: ReportModel) -> frozenset[str]:
+    """Links, die aus den Settings kommen und darum nicht als Konstante in ``ALLOWED_LINKS`` stehen.
+
+    Option 03: Datensatzseite und Lizenz der Fremddaten; eine andere Stadt nennt andere, und die
+    Nachbedingung von ``render_report`` soll trotzdem greifen.
+    """
+    if model.derived is None:
+        return frozenset()
+    return frozenset({model.derived.url, model.derived.license_url})
+
+
 # Die Leaflet-Variante (karte.html) ist die eine Ausnahme von „keine Fremdressourcen": Leaflet 1.9.4
 # per SHA-256 gepinnt (Subresource Integrity, Hashes am 2026-10-11 aus den Dateien berechnet und
 # gleich den offiziellen), Kacheln von OpenStreetMap mit Namensnennung.
@@ -81,6 +93,8 @@ class Visuals:
     pois: int  # gezeichnete Orte; 0 blendet den Schalter aus
     # Neue Kennzahlen stehen mit Default am Ende: leer blendet Radio und Legende aus (Option 05)
     bodies_legend: Sequence[LegendEntry] = ()
+    # Option 03: je Term des Hauptmodells (Beschriftung, SVG); leer ohne Kontextdaten
+    partial_svgs: Sequence[tuple[str, str]] = ()
 
 
 def date_de(value: dt.date) -> str:
@@ -186,8 +200,10 @@ def _json_for_script(data: object) -> str:
 
 
 @deal.post(lambda result: result.startswith("<!doctype html>") and 'lang="de"' in result)
-@deal.post(
-    lambda result: set(external_links(result)) <= ALLOWED_LINKS,
+@deal.ensure(
+    lambda model, visuals, result: (
+        set(external_links(result)) <= ALLOWED_LINKS | model_links(model)
+    ),
     message="nur die erlaubten Links nach außen, keine externen Ressourcen",
 )
 def render_report(model: ReportModel, visuals: Visuals) -> str:

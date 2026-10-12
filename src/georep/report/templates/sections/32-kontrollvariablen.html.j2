@@ -1,0 +1,77 @@
+{% if model.controls %}
+{% set c = model.controls %}
+<section id="kontrollvariablen">
+<h2>Kontrollvariablen</h2>
+<p>Hängt die Wahlbeteiligung an der {{ c.rate_label }}, oder an dem, was beide erklärt? Tabelle 6 nimmt
+neben der {{ c.rate_label }} Sozialdaten der Stadt in dieselbe Regression: sie liegen für
+{{ c.units }} {{ c.units_label }} vor (Stand {{ c.stand|date_de }}) und werden über die Stimmbezirke
+auf die Wahlbezirke umgerechnet, gewichtet mit den Wahlberechtigten und dem Flächenanteil. Woraus jede
+Variable entsteht, steht unter <a href="#abgeleitete-daten">Abgeleitete Daten</a>.</p>
+
+{% for m in c.models %}
+<h3>Modell {{ m.name }}{% if m.name == c.main %} (Hauptmodell){% endif %}</h3>
+<div class="scroll"><table class="model">
+<caption>Wahlbeteiligung in Prozent, {{ m.n }} Wahlbezirke, {{ m.k }} Term{{ "e" if m.k != 1 }} neben der Konstante</caption>
+<thead><tr>
+<th scope="col">Term</th><th scope="col" class="num">Koeffizient</th><th scope="col" class="num">Standardfehler</th>
+<th scope="col" class="num">p</th><th scope="col" class="num">standardisiert</th><th scope="col" class="num">VIF</th>
+</tr></thead>
+<tbody>
+{% for t in m.terms %}
+<tr{% if t.term == 'trefferquote' %} class="rate"{% endif %}>
+<th scope="row">{{ t.label }}{% if t.unit %} <span class="unit">({{ t.unit }})</span>{% endif %}</th>
+<td class="num">{{ t.coefficient|num(3) }}</td>
+<td class="num">{{ t.stderr|num(3) }}</td>
+<td class="num">{% if t.p < 0.001 %}&lt; 0,001{% else %}{{ t.p|num(3) }}{% endif %}</td>
+<td class="num">{% if t.beta is not none %}{{ t.beta|num(2) }}{% else %}—{% endif %}</td>
+<td class="num">{% if t.vif is not none %}{{ t.vif|num(2) }}{% else %}—{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+<tfoot><tr><td colspan="6">R² = {{ m.r2|num(3) }}, korrigiert {{ m.r2_adj|num(3) }}, F-Test
+p {% if m.f_p < 0.001 %}&lt; 0,001{% else %}= {{ m.f_p|num(3) }}{% endif %}</td></tr></tfoot>
+</table></div>
+{% endfor %}
+{% if c.missing %}<p class="note">Nicht geschätzt, weil zu wenige Wahlbezirke bleiben: {{ c.missing|join(', ') }}.</p>{% endif %}
+
+{% if visuals.partial_svgs %}
+<h3>Beitrag jedes Terms im Modell {{ c.main }}</h3>
+<p>Partielle Streudiagramme: beide Achsen sind um die übrigen Terme bereinigt, darum geht die Gerade
+durch den Ursprung und ihre Steigung ist genau der Koeffizient aus der Tabelle. Ein Punkt ist ein
+Wahlbezirk; ein Klick markiert ihn überall auf der Seite.</p>
+<div class="avp-grid">
+{% for label, svg in visuals.partial_svgs %}
+<figure><figcaption>{{ label }}</figcaption>{{ svg|safe }}</figure>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if c.singles %}
+<h3>Tabelle 6b: je eine Kontrollvariable</h3>
+<p>Was aus dem Koeffizienten der {{ c.rate_label }} wird, wenn genau eine Variable neben ihr steht.</p>
+<div class="scroll"><table>
+<thead><tr><th scope="col">Kontrollvariable</th>
+<th scope="col" class="num">Koeffizient der {{ c.rate_label }}</th>
+<th scope="col" class="num">Standardfehler</th><th scope="col" class="num">p</th>
+<th scope="col" class="num">korrigiertes R²</th></tr></thead>
+<tbody>
+{% for s in c.singles %}
+<tr><th scope="row">{{ s.label }}{% if s.unit %} <span class="unit">({{ s.unit }})</span>{% endif %}</th>
+<td class="num">{{ s.coefficient|num(2) }}</td><td class="num">{{ s.stderr|num(2) }}</td>
+<td class="num">{% if s.p < 0.001 %}&lt; 0,001{% else %}{{ s.p|num(3) }}{% endif %}</td>
+<td class="num">{{ s.r2_adj|num(3) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+
+<p>{{ c.verdict }}</p>
+<p class="note">Grenzen: die Sozialdaten tragen den Stand {{ c.stand|date_de }}, die Wahl ist vom
+{{ model.stand.election|date_de }}; Gebiete mit viel Neubau sind seither anders. Die Stimmenanteile sind
+Ergebnisse derselben Wahl wie die Wahlbeteiligung und erklären sie nicht von außen; sie stehen nur im
+Modell C und einzeln in Tabelle 6b. Die Spalte VIF zeigt, wie stark sich die Terme gegenseitig erklären
+(ab 10 wäre ein Modell nicht mehr zu deuten).{% if c.rate_without %} Ohne die Wahlbezirke
+{{ c.excluded|join(' und ') }} liegt der Koeffizient der {{ c.rate_label }} im Modell {{ c.main }} bei
+{{ c.rate_without.coefficient|num(2) }} mit p = {{ c.rate_without.p|num(3) }}; alle Modelle beider
+Stichproben stehen in <code>regression_kontrollen.csv</code>.{% endif %}</p>
+</section>
+{% endif %}

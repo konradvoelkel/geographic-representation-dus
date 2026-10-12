@@ -58,9 +58,14 @@ def test_bootstrap_run_status_export_regress(
     status = capsys.readouterr().out
     assert status.count("aktuell") >= 7 and "200 Dokumente" in status and "[Netz]" in status
     assert main(["export"]) == 0
-    # Zahl aus dem Register, damit eine neue Tabelle keine Literale bricht (F6-Konvention)
-    written = len(csv_plan(Layout.from_settings(load_settings(cwd=project))))
-    assert f"{written} CSV-Dateien" in capsys.readouterr().out
+    # Eine CSV je vorhandener Tabelle des Registers (F6-Konvention: kein Literal), denn
+    # optionale Tabellen ohne Datei schreibt `georep export` nicht.
+    expected = sum(
+        1
+        for path, _, _ in csv_plan(Layout.from_settings(load_settings(cwd=project)))
+        if path.exists()
+    )
+    assert f"{expected} CSV-Dateien" in capsys.readouterr().out
     assert (project / "data" / "processed" / "wahlbezirke_auswertung.csv").exists()
     assert main(["regress"]) == 0
     assert capsys.readouterr().out.startswith("alle: n=3")

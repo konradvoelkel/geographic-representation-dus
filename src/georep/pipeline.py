@@ -32,6 +32,7 @@ from georep.layout import Layout
 from georep.prep.bodies import BODIES_SCHEMA_VERSION, BodyRules, classify_papers
 from georep.prep.bodies import summary as papers_bodies_summary
 from georep.prep.context import (
+    MISSING_SUFFIX,
     aggregate_context,
     district_variables,
     precinct_table,
@@ -343,8 +344,15 @@ def build_steps(
         )
         weights = district_weights(table, shares)
         values = read_context_table(layout.external / context.files.table.file, context)
-        frame = aggregate_context(weights, values, context).join(
+        joined = aggregate_context(weights, values, context).join(
             district_variables(pl.read_parquet(layout.voters), context), on="wahlkreis_id"
+        )
+        # Erst alle Variablen in der Reihenfolge der Settings, dann die Fehlgewichte: so liest sich
+        # die Tabelle, und die Spaltendoku entsteht aus derselben Liste (report.tables).
+        frame = joined.select(
+            "wahlkreis_id",
+            *(v.name for v in context.variables),
+            *(f"{v.name}{MISSING_SUFFIX}" for v in context.unit_variables()),
         )
         write_parquet(frame, layout.context_table, schema_version=1)
         named = weights.join(values.select("einheit", "einheit_name"), on="einheit", how="left")
@@ -615,6 +623,17 @@ def build_steps(
                 # Option 06
                 layout.weighted,
                 layout.term_weights,
+                # Option 03: die drei Tabellen und die Definitionen der Indikatoren
+                *(
+                    (
+                        layout.context_table,
+                        layout.crosswalk,
+                        layout.controls,
+                        layout.external / context.files.indicators.file,
+                    )
+                    if with_context
+                    else ()
+                ),
             )
             + ((layout.topics, layout.topic_documents) if with_topics else ()),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),

@@ -1,0 +1,14 @@
+table.model caption { caption-side: top; text-align: left; color: var(--ink-2); font-size: .85rem; padding-bottom: .35rem; }
+table.model tfoot td { color: var(--ink-2); font-size: .85rem; border-top: 1px solid var(--grid); }
+table.model tr.rate th, table.model tr.rate td { font-weight: 600; }
+.unit { color: var(--muted); font-weight: 400; white-space: nowrap; }
+.avp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.5rem; margin: 1rem 0; }
+@media (max-width: 40em) { .avp-grid { grid-template-columns: 1fr; } }
+.avp-grid figure { margin: 0; }
+.avp-grid figcaption { color: var(--ink-2); font-size: .85rem; margin-bottom: .25rem; }
+svg.avp { width: 100%; height: auto; background: var(--surface); border-radius: 6px; }
+.avp-point { cursor: pointer; }
+.avp-point:focus { outline: none; }
+.avp-point:focus .dot, .avp-point:hover .dot { r: 6; }
+.avp-point.selected .dot { fill: var(--selected); }
+.avp-point.selected .dot-label { fill: var(--selected); font-weight: 600; }

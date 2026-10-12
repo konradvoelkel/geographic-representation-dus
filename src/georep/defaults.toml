@@ -278,7 +278,7 @@ hoch = 5
 [[context.variables]]
 name = "hb_score"
 label = "Sozialer Handlungsbedarf"
-unit = "Score 1 (gering) bis 5 (hoch)"
+unit = "Score 1 bis 5"
 kind = "ordinal"
 columns = ["Sozialer_HB"]
 scale = "handlungsbedarf"
@@ -287,7 +287,7 @@ indicator = "Sozialer Handlungsbedarf"
 [[context.variables]]
 name = "fluktuation_score"
 label = "Handlungsbedarf Fluktuation"
-unit = "Score 1 (gering) bis 5 (hoch)"
+unit = "Score 1 bis 5"
 kind = "ordinal"
 columns = ["HB_Fluktuation"]
 scale = "handlungsbedarf"
@@ -315,7 +315,7 @@ label = "Fluktuationsrate"
 unit = "je 1 000 Einwohner"
 kind = "value"
 columns = ["Fluktuationsrate"]
-indicator = "Fluktuationsrate "
+indicator = "Fluktuationsrate"
 
 [[context.variables]]
 name = "wohndauer"

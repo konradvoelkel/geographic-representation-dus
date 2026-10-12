@@ -13,6 +13,7 @@ from georep.geo import read_precincts
 from georep.layout import Layout
 from georep.report.charts import (
     Classification,
+    added_variable_plot,
     choropleth,
     classify,
     legend,
@@ -201,3 +202,52 @@ def test_axes_map_tick_ends_onto_the_plot_frame() -> None:
     )
     flat = Axes.fit([0.1, 0.1], [50.0, 50.0])
     assert flat.x1 > flat.x0 and flat.y1 > flat.y0
+
+
+# --- Option 03: Added-Variable-Plots -------------------------------------------------------------
+
+
+def test_added_variable_plot_parses_and_draws_the_slope_through_the_origin() -> None:
+    districts = [(1, "Altstadt"), (10, "Flingern"), (38, "Hassels"), (7, "Rath")]
+    xs = [-2.0, -1.0, 1.0, 2.0]
+    ys = [-4.0, -2.0, 2.0, 4.0]
+    svg = added_variable_plot(
+        districts,
+        xs,
+        ys,
+        2.0,
+        key="hb_score",
+        title="Titel des Plots",
+        x_title="x bereinigt",
+        y_title="y bereinigt",
+    )
+    root = ET.fromstring(svg)
+    assert root.tag == f"{NS}svg" and root.get("class") == "avp"
+    points = root.findall(f".//{NS}g[@class='avp-point']")
+    assert len(points) == 4
+    assert [p.get("data-id") for p in points] == ["1", "10", "38", "7"]
+    assert points[0].find(f"{NS}title").text == "1 Altstadt"  # type: ignore[union-attr]
+    # Die Gerade geht durch den Ursprung: beide Enden liegen symmetrisch um die Mitte der Achsen
+    line = root.find(f".//{NS}line[@class='fit fit-all']")
+    assert line is not None
+    x1, y1, x2, y2 = (float(line.get(a) or 0.0) for a in ("x1", "y1", "x2", "y2"))
+    assert x1 < x2 and y1 > y2  # positive Steigung: SVG zählt y nach unten
+    assert root.find(f"{NS}clipPath").get("id") == "avp-hb_score"  # type: ignore[union-attr]
+    assert "Titel des Plots" in svg and "x bereinigt" in svg
+
+
+def test_a_flat_added_variable_plot_still_draws_axes() -> None:
+    """Ohne Streuung im Term greift die Mindestspanne von ``Axes.fit`` und das SVG bleibt gültig."""
+    svg = added_variable_plot(
+        [(1, "A"), (2, "B"), (3, "C")],
+        [0.0, 0.0, 0.0],
+        [-1.0, 0.0, 1.0],
+        0.0,
+        key="x",
+        title="t",
+        x_title="x",
+        y_title="y",
+    )
+    root = ET.fromstring(svg)
+    assert len(root.findall(f".//{NS}g[@class='avp-point']")) == 3
+    assert root.findall(f".//{NS}g[@class='grid']")
