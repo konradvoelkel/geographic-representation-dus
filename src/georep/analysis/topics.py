@@ -45,7 +45,7 @@ from georep.errors import EmptyResultError
 from georep.prep.bodies import BODY as BODY_CODE
 from georep.prep.bodies import COMMITTEE
 from georep.prep.bodies import KIND as BODY_KIND
-from georep.settings import Bodies, Originators, Settings, Topics
+from georep.settings import STOP_SOURCES, Bodies, Originators, Settings, Topics
 
 TOPIC = "thema"
 WORDS = "woerter"
@@ -136,6 +136,17 @@ def _letters(*values: str) -> set[str]:
     return {word for value in values for word in _WORD.findall(value.lower())}
 
 
+def _only_tokens(result: frozenset[str]) -> bool:
+    """Jedes Wort bildet allein ein Token des Modells und ist kleingeschrieben."""
+    return all(_WORD.fullmatch(word) for word in result)
+
+
+@deal.pure
+@deal.pre(
+    lambda originators, bodies, sources: all(s in STOP_SOURCES for s in sources),
+    message=f"jede Quelle ist eine aus {list(STOP_SOURCES)}",
+)
+@deal.post(_only_tokens, message="nur Wörter, die das Tokenmuster des Modells bildet")
 def profile_stop_words(
     originators: Originators, bodies: Bodies, sources: Sequence[str]
 ) -> frozenset[str]:
@@ -176,6 +187,12 @@ def _name_windows(text: str, rules: TopicRules, person: re.Pattern[str] | None) 
     return " ".join(piece.rsplit(None, 1)[0] for piece in pieces if " " in piece.strip())
 
 
+@deal.safe
+@deal.pre(
+    lambda texts, rules: 0.0 < rules.name_share <= 1.0 and rules.name_min_documents >= 1,
+    message="name_share in (0, 1], name_min_documents mindestens 1",
+)
+@deal.post(_only_tokens, message="nur Wörter, die das Tokenmuster des Modells bildet")
 def name_stop_words(texts: Sequence[str], rules: TopicRules) -> frozenset[str]:
     """Wörter, die fast nur in einem Namensfenster stehen: Personennamen und Grußformeln.
 
@@ -184,7 +201,10 @@ def name_stop_words(texts: Sequence[str], rules: TopicRules) -> frozenset[str]:
     hinter einer Unterschrift oder einem Amt und ist damit ein Name. Ein Sachwort („straße") steht
     überall und bleibt. Gemessen am 2026-10-12: 254 Wörter, 1,8 s über 19 033 Texte.
     """
-    if not rules.with_names or not rules.name_markers:
+    # Beide Quellen von Fenstern sind unabhängig: die Amtsbezeichnungen stehen stadtneutral in
+    # ``defaults.toml``, die Personenmarker im Profil (Option 04). Eine Stadt, die die deutsche
+    # Liste leert, behält ihre eigenen Marker.
+    if not rules.with_names or not (rules.name_markers or rules.person_patterns):
         return frozenset()
     person = re.compile("|".join(rules.person_patterns)) if rules.person_patterns else None
     windows = [_name_windows(text, rules, person) for text in texts]
@@ -205,7 +225,12 @@ def name_stop_words(texts: Sequence[str], rules: TopicRules) -> frozenset[str]:
         .fit_transform(texts)
         .sum(axis=0)
     ).ravel()
-    shares = window_documents / np.maximum(everywhere, 1)
+    # Nenner mindestens die Fensterzahl: ein Marker kann mitten in einem Wort treffen
+    # („stadtkämmer" in „stadtkämmerin"), dann beginnt das Fenster mit einem Rest, und ein
+    # längerer Rest ist ein Token, das im ganzen Text nicht vorkommt. Ohne die Klammer wäre der
+    # Quotient größer als 1 und kein Anteil mehr (2026-10-13). Im Vokabular steht so ein Rest
+    # ohnehin nicht, das Stoppwort ist also wirkungslos -- aber die Zahl bleibt eine Zahl.
+    shares = window_documents / np.maximum(everywhere, window_documents)
     return frozenset(
         word for word, share in zip(vocabulary, shares, strict=True) if share >= rules.name_share
     )
@@ -263,8 +288,12 @@ def _l1_rows(matrix: np.ndarray, k: int) -> np.ndarray:
     return np.where(sums > 0.0, dense / np.where(sums > 0.0, sums, 1.0), 1.0 / k)
 
 
-def _codes_are_unique_and_first(frame: pl.DataFrame) -> bool:
-    """Jeder Ausschuss hat höchstens ein Thema, und die gesäten Themen stehen vorn."""
+def codes_are_unique_and_first(frame: pl.DataFrame) -> bool:
+    """Jeder Ausschuss hat höchstens ein Thema, und die gesäten Themen stehen vorn.
+
+    Öffentlich, damit ein Test das Gegenbeispiel direkt zeigen kann, ohne ein ganzes Modell zu
+    rechnen (``tests/unit/test_contract_violations.py``).
+    """
     codes = frame.sort(TOPIC).get_column(BODY).to_list()
     named = [code for code in codes if code is not None]
     return len(named) == len(set(named)) and codes[: len(named)] == named
@@ -291,7 +320,7 @@ def _model_is_whole(
         and bool((result.topics.get_column(WORDS).list.len() <= settings.top_words).all())
         and lists_sorted_unique(result.topics.select(pl.col(WORDS).list.sort()), WORDS)
         and int(result.topics.get_column(DOCUMENTS).sum()) == documents
-        and _codes_are_unique_and_first(result.topics)
+        and codes_are_unique_and_first(result.topics)
     )
 
 
@@ -323,6 +352,10 @@ def _committee_rows(
     ][:seats]
 
 
+@deal.pre(
+    lambda counts, vocabulary, groups, rules: len(vocabulary) == counts.shape[1],
+    message="die Zählmatrix trägt genau die Wörter des Vokabulars",
+)
 def _seed_words(
     counts: csr_matrix,
     vocabulary: Sequence[str],
@@ -357,7 +390,6 @@ def _seed_words(
         score = np.where(inside > 0.0, delta / sigma, -np.inf)
         order = np.argsort(-score, kind="stable")[: rules.seed_words]
         seeds[code] = [int(position) for position in order if np.isfinite(score[position])]
-    assert len(vocabulary) == counts.shape[1]
     return seeds
 
 
