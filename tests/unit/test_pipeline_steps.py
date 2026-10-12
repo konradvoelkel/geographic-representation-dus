@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 from georep.layout import Layout
-from georep.pipeline import build_steps, stamp_mismatch
+from georep.pipeline import METRICS_SCHEMA, PARTIES_SCHEMA, build_steps, stamp_mismatch
 from georep.prep.bodies import BODIES_SCHEMA_VERSION
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION
@@ -26,6 +26,9 @@ VERSIONS = {
     "bodies": BODIES_SCHEMA_VERSION,
     "topics": TOPICS_SCHEMA_VERSION,
     "committees": ASSIGNMENT_SCHEMA_VERSION,
+    # Punkt 46: der neue Schritt und die drei Spalten mehr in wahlbezirke_parteien
+    "metrics": METRICS_SCHEMA,
+    "parties": PARTIES_SCHEMA,
 }
 
 

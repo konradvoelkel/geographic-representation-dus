@@ -114,7 +114,8 @@ from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_
 from georep.stores import PaperStore, TextStore, UpsertReport
 
 Status = Literal["ausgeführt", "übersprungen", "geplant"]
-PARTIES_SCHEMA = 1  # Option 04: Schema-Version der drei Ausgaben des Schritts ``parties``
+PARTIES_SCHEMA = 2  # Option 04, Punkt 46: drei Spalten relativ zum Mittel aller Parteien
+METRICS_SCHEMA = 1  # Punkt 46: Schema-Version von wahlbezirke_kennzahlen.parquet
 
 
 def _class_shares(figures: dict[str, int], total: int) -> list[tuple[str, float]]:
@@ -703,7 +704,7 @@ def build_steps(
         frame = district_metrics(
             pl.read_parquet(layout.results), pl.read_parquet(layout.dictionary)
         )
-        write_parquet(frame, layout.district_metrics, schema_version=1)
+        write_parquet(frame, layout.district_metrics, schema_version=METRICS_SCHEMA)
         return metrics_summary(frame)
 
     # --- Option 05: Gremium je Dokument aus der Drucksachennummer, dann die Kennzahlen
@@ -1105,6 +1106,7 @@ def build_steps(
             (layout.results, layout.dictionary),
             (layout.district_metrics,),
             metrics,
+            METRICS_SCHEMA,
         ),
         # --- Option 05
         Step(
