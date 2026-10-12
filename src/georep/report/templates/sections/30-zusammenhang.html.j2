@@ -19,5 +19,22 @@
 <tr><th scope="row">p</th><td class="num">{{ r.all.p|num(3) }}</td>{% if r.without %}<td class="num">{{ r.without.p|num(3) }}</td>{% endif %}</tr>
 </tbody></table></div>
 <p>Die Wahlbeteiligung in Prozent wird auf die Trefferquote regressiert. {% if r.all.p >= 0.05 %}Über alle Wahlbezirke belegt p = {{ r.all.p|num(2) }} keinen Zusammenhang{% else %}Über alle Wahlbezirke ist der Zusammenhang mit p = {{ r.all.p|num(3) }} auf dem 5-%-Niveau signifikant{% endif %}{% if r.without %}; ohne die Wahlbezirke {{ r.excluded|join(' und ') }} (die beiden höchsten Trefferquoten) {% if r.without.p < 0.05 %}wird er mit p = {{ r.without.p|num(3) }} signifikant, erklärt aber nur R² = {{ r.without.r2|num(2) }} der Streuung{% else %}bleibt p = {{ r.without.p|num(3) }}{% endif %}{% endif %}.</p>
+{% if model.per_term_regression %}
+{# Punkt 46: die zweite Kennzahl des Methodik-Reviews. Tabelle 5 darüber bleibt unberührt. #}
+{% set s = model.per_term_regression %}
+<h3>Dieselbe Rechnung je Begriff im Wörterbuch</h3>
+<p>Die Trefferzahl eines Wahlbezirks hängt vor allem an der Größe seines Wörterbuchs, nicht an seiner Einwohnerzahl: wer mehr Straßen und mehr Wikipedia-Orte in seinem Gebiet hat, wird häufiger erwähnt. Die Tabelle rechnet darum dasselbe noch einmal mit <em>Treffer je Begriff im Wörterbuch</em> als Kennzahl — der Normierung, die diese Verzerrung herausnimmt (siehe <a href="#methode">Methode und Grenzen</a>; die Karte zeigt sie als eigene Einfärbung).</p>
+<div class="scroll"><table>
+<thead><tr><th scope="col"></th><th scope="col" class="num">alle Wahlbezirke</th>{% if s.without %}<th scope="col" class="num">ohne {{ s.excluded|join(' und ') }}</th>{% endif %}</tr></thead>
+<tbody>
+<tr><th scope="row">n</th><td class="num">{{ s.all.n }}</td>{% if s.without %}<td class="num">{{ s.without.n }}</td>{% endif %}</tr>
+<tr><th scope="row">Steigung</th><td class="num">{{ s.all.slope|num(2) }}</td>{% if s.without %}<td class="num">{{ s.without.slope|num(2) }}</td>{% endif %}</tr>
+<tr><th scope="row">Achsenabschnitt</th><td class="num">{{ s.all.intercept|num(2) }}</td>{% if s.without %}<td class="num">{{ s.without.intercept|num(2) }}</td>{% endif %}</tr>
+<tr><th scope="row">r</th><td class="num">{{ s.all.r|num(3) }}</td>{% if s.without %}<td class="num">{{ s.without.r|num(3) }}</td>{% endif %}</tr>
+<tr><th scope="row">R²</th><td class="num">{{ s.all.r2|num(3) }}</td>{% if s.without %}<td class="num">{{ s.without.r2|num(3) }}</td>{% endif %}</tr>
+<tr><th scope="row">p</th><td class="num">{{ s.all.p|num(3) }}</td>{% if s.without %}<td class="num">{{ s.without.p|num(3) }}</td>{% endif %}</tr>
+</tbody></table></div>
+<p>{% if s.all.p >= 0.05 %}Mit dieser Kennzahl belegt p = {{ s.all.p|num(2) }} über alle {{ s.all.n }} Wahlbezirke keinen Zusammenhang{% else %}Mit dieser Kennzahl ist der Zusammenhang über alle {{ s.all.n }} Wahlbezirke mit p = {{ s.all.p|num(3) }} auf dem 5-%-Niveau signifikant{% endif %}{% if s.without %}, und ohne die Wahlbezirke {{ s.excluded|join(' und ') }} {% if s.without.p < 0.05 %}bleibt er mit p = {{ s.without.p|num(3) }} signifikant{% else %}ist p = {{ s.without.p|num(2) }}{% endif %}{% endif %}.{% if model.regression and s.all.r * model.regression.all.r < 0 %} Das Vorzeichen kippt gegenüber Tabelle 5: was dort als schwacher positiver Zusammenhang erscheint, ist mit der normierten Kennzahl ein noch schwächerer negativer.{% endif %}{% if model.regression and model.regression.without and s.without and model.regression.without.p < 0.05 and s.without.p >= 0.05 %} Vor allem verschwindet damit die einzige Spalte, die in Tabelle 5 ein signifikantes p zeigt: sie hängt an der Größe der Wörterbücher, nicht an der Aufmerksamkeit des Rates.{% endif %}</p>
+{% endif %}
 </section>
 {% endif %}

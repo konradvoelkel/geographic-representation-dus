@@ -624,6 +624,9 @@ class ReportModel:
     notes: tuple[str, ...] = ()  # stadtspezifische Sätze für „Methode und Grenzen"
     agreement: Agreement | None = None  # Flächen gegen das Straßenverzeichnis der Wahl
     data_note: str = ""  # Herkunft von Straßen und Orten ohne eigenen Abruf
+    # Punkt 46: dieselbe Regression mit x = Treffer je Begriff im Wörterbuch; None ohne den
+    # Schritt ``metrics``. Tabelle 5 (``regression``) bleibt unberührt.
+    per_term_regression: RegressionPair | None = None
     # Option 07
     timeline: tuple[MonthRow, ...] = ()
     monitoring_url: str = ""  # relativer Link auf die Seite der laufenden Periode; leer = keiner
@@ -1664,6 +1667,8 @@ def build_report_model(
         assignment_threshold=settings.classify.min_probability,
         body_figures=body_figures(table, rows, settings.bodies),
         body_regression=_body_regression(district_bodies, results, settings),
+        # Punkt 46: die zweite Kennzahl des Methodik-Reviews mit eigener Regression (§ 2.6)
+        per_term_regression=_per_term_regression(layout, results, settings),
         # Option 06: ohne die lange Tabelle gibt es den Abschnitt nicht
         # Option 07: die Sensitivitätstabelle ist Tabelle 5 je Gewichtungsvariante; ohne
         # Wahlbeteiligung zur Periode gibt es sie nicht, so wie es das Streudiagramm nicht gibt.
@@ -1695,6 +1700,30 @@ def build_report_model(
         timeline=month_rows(layout.timeline),  # Option 07
         monitoring_url=settings.report.monitoring_url,
     )
+
+
+def _per_term_regression(
+    layout: Layout, results: pl.DataFrame, settings: Settings
+) -> RegressionPair | None:
+    """Tabelle 5, aber mit x = Treffer je Begriff im Wörterbuch (Punkt 46).
+
+    Die stärkste Verzerrung der Methode ist, dass ein Bezirk mit großem Wörterbuch häufiger
+    getroffen wird (r = 0,7595 auf der Referenz); diese Kennzahl nimmt sie heraus. ``None`` ohne
+    den Schritt ``metrics`` und ohne Wahlbeteiligung zur Periode (Option 07).
+    """
+    if not settings.report.regression or not layout.district_metrics.exists():
+        return None
+    frame = pl.read_parquet(layout.district_metrics).join(
+        results.select(DISTRICT, TURNOUT), on=DISTRICT, how="inner"
+    )
+    try:
+        return regression_pair(
+            frame, settings.analysis.exclude_districts, x=scaling.PER_TERM, y=TURNOUT
+        )
+    except EmptyResultError:
+        # Zu wenige Bezirke oder keine Streuung: die Seite lässt den Block dann weg, statt zu
+        # scheitern (derselbe Umgang wie bei der Regression der Gremien).
+        return None
 
 
 def _body_regression(
