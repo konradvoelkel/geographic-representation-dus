@@ -7,7 +7,7 @@ geschrieben vom jeweiligen Unteragenten auf seinem Branch; `00-synergien.md` sch
 | Nr. | Plan | Branch | Status |
 |---|---|---|---|
 | 00 | `00-synergien.md` | `main` | geschrieben 2026-10-12 |
-| 01 | `01-staedte.md` | `feat/01-staedte` | umgeschrieben (Synergiephase 2026-10-12, § 10 im Plan) |
+| 01 | `01-staedte.md` | `feat/01-staedte` | gemerged 2026-10-12 |
 | 02 | `02-zeitreihe.md` | `feat/02-zeitreihe` | gemerged 2026-10-12 |
 | 03 | `03-kontrollvariablen.md` | `feat/03-kontrollvariablen` | gemerged 2026-10-12 |
 | 04 | `04-parteien.md` | `feat/04-parteien` | gemerged 2026-10-12 |
