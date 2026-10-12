@@ -22,7 +22,6 @@ from georep import __version__
 from georep.analysis.bodies import documents_by_body, hits_by_body
 from georep.analysis.bodies import summary as bodies_summary
 from georep.analysis.hits import DISTRICT, hits_by_district, join_voters
-from georep.analysis.timeline import WITH_TEXT, district_months, monthly_series
 from georep.analysis.ols import model_frame, model_terms, models_table
 from georep.analysis.parties import (
     classify_originators,
@@ -32,6 +31,7 @@ from georep.analysis.parties import (
     read_organizations,
 )
 from georep.analysis.periods import compare_periods, delta_regression
+from georep.analysis.timeline import WITH_TEXT, district_months, monthly_series
 from georep.crosswalk import (
     COVERAGE,
     SHARE,

@@ -227,6 +227,7 @@ def _cmd_publish(args: argparse.Namespace, settings: Settings, layout: Layout) -
         out=args.out,
     )
     print(summary.line())
+    return 0
 
 
 def _cmd_paths(layout: Layout) -> int:

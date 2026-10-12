@@ -317,6 +317,7 @@ def test_the_unweighted_row_carries_the_numbers_of_table_five(model: ReportModel
     assert model.sensitivity is not None
     unit = model.sensitivity.rows[0]
     assert unit.name == "einheit" and unit.pair is not None
+    assert model.regression is not None  # Option 07: im Modell optional
     assert unit.pair.all == model.regression.all  # dieselbe Regression wie Tabelle 5
     assert unit.rho == 1.0  # dieselbe Reihenfolge der Wahlbezirke
 

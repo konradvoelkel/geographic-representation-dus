@@ -1835,11 +1835,17 @@ def summary_payload(model: ReportModel) -> dict[str, object]:
             "rate_max": figures.rate_max,
             "turnout_median": figures.turnout_median,
         },
-        "regression": {
-            "all": _regression_json(model.regression.all),
-            "without": _regression_json(model.regression.without),
-            "excluded": list(model.regression.excluded),
-        },
+        # Option 07: eine laufende Periode hat keine Wahlbeteiligung und damit keine Regression;
+        # der Städtevergleich liest das Feld tolerant (``report.comparison.Site.fit``).
+        "regression": (
+            {
+                "all": _regression_json(model.regression.all),
+                "without": _regression_json(model.regression.without),
+                "excluded": list(model.regression.excluded),
+            }
+            if model.regression is not None
+            else None
+        ),
         "version": model.version,
         "generated_at": model.generated_at.isoformat(),
     }

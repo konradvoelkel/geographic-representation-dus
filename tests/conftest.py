@@ -154,6 +154,7 @@ def mini_visuals(mini_model: ReportModel, mini_run: Layout, default_settings: Se
     projection = fit(bounds_of(shapes), 600.0)
     rate = classify({d.id: d.rate for d in mini_model.districts})
     turnout = classify({d.id: d.turnout for d in mini_model.districts})
+    assert mini_model.regression is not None  # Option 07: im Modell optional
     return Visuals(
         map_svg=choropleth(mini_model.districts, shapes, projection, rate, turnout),
         scatter_svg=scatter(mini_model.districts, mini_model.regression),
