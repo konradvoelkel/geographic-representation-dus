@@ -40,6 +40,17 @@ def sorted_unique(frame: pl.DataFrame, column: str) -> bool:
     return bool(series.is_sorted()) and series.n_unique() == frame.height
 
 
+def unique_keys(frame: pl.DataFrame, column: str) -> bool:
+    """Eine Zeile je Schlüssel, ohne Anspruch an die Folge.
+
+    ``sorted_unique`` verlangt beides und ist die Nachbedingung einer Ausgabe. Hier geht es um
+    eine **Eingabe**, über die gejoint wird: sie darf keine Zeile verdoppeln, sonst verlängert
+    der Join den Korpus und alles Positionelle danach verschiebt sich (Punkt 45c, 2026-10-13).
+    Sortiert muss eine Eingabe dafür nicht sein.
+    """
+    return frame.get_column(column).n_unique() == frame.height
+
+
 def lists_sorted_unique(frame: pl.DataFrame, column: str) -> bool:
     """Jede Liste der Spalte ist sortiert und ohne Dubletten (eine Begriffs- oder ID-Liste)."""
     return all(items == sorted(set(items)) for items in frame.get_column(column).to_list())

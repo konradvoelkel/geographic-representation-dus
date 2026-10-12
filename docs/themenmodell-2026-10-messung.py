@@ -136,7 +136,11 @@ def seeded(corpus: pl.DataFrame, bodies: pl.DataFrame, settings: Settings) -> No
         )
     # Treue: wie viele Dokumente eines Ausschusses haben sein Thema als stärkstes, und wie rein
     # ist das Thema (Anteil der Dokumente dieses Ausschusses an allen mit diesem Thema).
-    joined = dominant.join(bodies.select("id", "gremium", "gremium_art"), on="id", how="left")
+    # Nach dem Join sortieren: die Zeilenfolge eines Joins ist nicht festgelegt (crosswalk.py).
+    # Hier wird nur gefiltert und gezählt, aber die Regel gilt auch für eine Messung.
+    joined = dominant.join(bodies.select("id", "gremium", "gremium_art"), on="id", how="left").sort(
+        "id"
+    )
     print("\nTreue und Reinheit je gesätem Thema:")
     for number, code in enumerate(codes):
         if not code:
@@ -154,11 +158,13 @@ def seeded(corpus: pl.DataFrame, bodies: pl.DataFrame, settings: Settings) -> No
 def classifier(corpus: pl.DataFrame, bodies: pl.DataFrame, settings: Settings) -> None:
     """Die Güte des passenden Ausschusses: Kreuzvalidierung und Sicherheit je Gremienart."""
     rules = TopicRules.from_settings(settings)
-    texts = corpus.filter(pl.col("text") != "").select("id", "text").sort("id")
-    start = time.perf_counter()
-    matrix, _ = vectorize(texts.get_column("text").to_list(), settings.topics, rules)
-    labels = (
-        texts.join(bodies.select("id", "gremium", "gremium_art"), on="id", how="left")
+    # Erst den Join, dann sortieren, dann daraus die Texte **und** die Klassen nehmen: die
+    # Zeilenfolge eines Joins ist nicht festgelegt, und Zeile i der Matrix muss zu Klasse i
+    # gehören (dieselbe Lehre wie in analysis/committees.py, Review vom 2026-10-13).
+    labelled = (
+        corpus.filter(pl.col("text") != "")
+        .select("id", "text")
+        .join(bodies.select("id", "gremium", "gremium_art"), on="id", how="left")
         .with_columns(
             pl.when(
                 (pl.col("gremium_art") == "ausschuss")
@@ -168,8 +174,12 @@ def classifier(corpus: pl.DataFrame, bodies: pl.DataFrame, settings: Settings) -
             .otherwise(None)
             .alias("klasse")
         )
-        .get_column("klasse")
+        .select("id", "text", "klasse")
+        .sort("id")
     )
+    start = time.perf_counter()
+    matrix, _ = vectorize(labelled.get_column("text").to_list(), settings.topics, rules)
+    labels = labelled.get_column("klasse")
     counted = {
         str(code): int(n)
         for code, n in labels.drop_nulls().value_counts().iter_rows()
@@ -219,7 +229,9 @@ def classifier(corpus: pl.DataFrame, bodies: pl.DataFrame, settings: Settings) -
     # Die Zuordnung der Kette: wie sicher ist sie je Gremienart, und wie viele fallen unter die
     # Schwelle? Das ist Konrads Frage, ob sich jedes Schriftstück zuordnen lässt.
     found = assign_committees(corpus, bodies, settings.topics, settings.classify, rules)
-    joined = found.papers.join(bodies.select("id", "gremium", "gremium_art"), on="id", how="left")
+    joined = found.papers.join(
+        bodies.select("id", "gremium", "gremium_art"), on="id", how="left"
+    ).sort("id")
     print(f"\nZuordnung der Kette (Schwelle {settings.classify.min_probability:.2f}):")
     for kind in ("ausschuss", "bezirksvertretung", "rat", "beirat"):
         mine = joined.filter(pl.col("gremium_art") == kind)
