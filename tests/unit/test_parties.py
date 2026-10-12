@@ -522,3 +522,22 @@ def test_an_interfractional_text_hit_without_a_title_bracket_stays_a_fraction(
         name="Dringlichkeitsantrag: Situation rund um den Anker",
         text="dringlichkeitsantrag (interfraktioneller antrag) die bezirksvertretung bittet",
     ) == ("Fraktion", (), "text")
+
+
+def test_a_structurally_wrong_organization_is_a_schema_error(tmp_path: Path) -> None:
+    """Review-Befund 2: pydantic wirft ValidationError, der Rest der Kette kennt nur SchemaError.
+    Ein kaputtes raw/organizations.json soll eine Zeile auf stderr geben, keinen Traceback."""
+    from georep.analysis.parties import read_organizations
+
+    path = tmp_path / "organizations.json"
+    path.write_text('[{"name": "ohne id"}]', encoding="utf-8")
+    with pytest.raises(SchemaError, match="organizations.json"):
+        read_organizations(path)
+
+    path.write_text("{ kaputt", encoding="utf-8")
+    with pytest.raises(SchemaError, match="kein gültiges JSON"):
+        read_organizations(path)
+    path.write_text('{"data": []}', encoding="utf-8")
+    with pytest.raises(SchemaError, match="Liste von Organisationen"):
+        read_organizations(path)
+    assert read_organizations(tmp_path / "fehlt.json") == ()

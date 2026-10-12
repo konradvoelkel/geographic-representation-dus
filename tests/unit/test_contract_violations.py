@@ -271,3 +271,44 @@ def test_term_weights_refuse_a_term_the_dictionary_does_not_have() -> None:
 
     with pytest.raises(deal.PostContractError, match="Wörterbuch"):
         term_weights(_dictionary({1: ["kö"]}), _weights_index({"kö": ["p1"], "fremd": ["p2"]}), 4)
+
+
+# --- Option 04: die Schranken je Partei und Bezirk -------------------------------------------------
+
+
+def test_party_hits_above_the_district_total_breaks_the_contract() -> None:
+    """Review-Befund 3: die zweite Schranke aus § 5 C des Plans. Ein Bezirk, dessen
+    ``anzahl_treffer`` kleiner ist als seine ``paper_ids``, ergäbe für eine Partei mehr Treffer
+    als der Bezirk überhaupt hat; das lief vorher still durch."""
+    from georep.analysis.parties import ART, PARTEIEN, party_hits
+    from georep.settings import load_settings
+
+    documents = pl.DataFrame(
+        {"id": ["a", "b"], ART: ["Fraktion", "Fraktion"], PARTEIEN: [["CDU"], ["CDU"]]},
+        schema={"id": pl.String, ART: pl.String, PARTEIEN: pl.List(pl.String)},
+    )
+    voters = pl.DataFrame(
+        {"wahlkreis_id": [1], "Wahlberechtigte_insgesamt": [100], "CDU_Stimmen": [40]},
+        schema={
+            "wahlkreis_id": pl.Int64,
+            "Wahlberechtigte_insgesamt": pl.Int64,
+            "CDU_Stimmen": pl.Int64,
+        },
+    ).with_columns(CDU_anteil=pl.lit(0.4))
+    parties = [
+        p for p in load_settings(cwd=Path("/nonexistent")).originators.parties if p.key == "CDU"
+    ]
+
+    def results(hits: int) -> pl.DataFrame:
+        return pl.DataFrame(
+            {"wahlkreis_id": [1], "paper_ids": [["a", "b"]], "anzahl_treffer": [hits]},
+            schema={
+                "wahlkreis_id": pl.Int64,
+                "paper_ids": pl.List(pl.String),
+                "anzahl_treffer": pl.Int64,
+            },
+        )
+
+    assert party_hits(results(2), documents, voters, parties).height == 1  # stimmig
+    with pytest.raises(deal.PostContractError, match="Schranken"):
+        party_hits(results(1), documents, voters, parties)

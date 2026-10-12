@@ -184,7 +184,12 @@ def read_organizations(path: Path) -> tuple[OparlOrganization, ...]:
         raise SchemaError(f"{path.name}: kein gültiges JSON ({error})") from error
     if not isinstance(items, list):
         raise SchemaError(f"{path.name}: erwartet eine Liste von Organisationen")
-    return tuple(OparlOrganization.model_validate(item) for item in items)
+    try:
+        # pydantics ValidationError ist ein ValueError; der Rest der Kette kennt nur SchemaError,
+        # und eine kaputte Datei soll eine Zeile auf stderr geben, keinen Traceback.
+        return tuple(OparlOrganization.model_validate(item) for item in items)
+    except ValueError as error:
+        raise SchemaError(f"{path.name}: keine gültige Organisation ({error})") from error
 
 
 def _any_of(patterns: Sequence[str]) -> re.Pattern[str] | None:
@@ -377,7 +382,7 @@ def _only_fractions_name_parties(
         corpus, "id", "paper_type", "name", "text"
     )
 )
-@deal.ensure(_one_row_per_corpus_id, message="eine Zeile je Korpus-ID, in Korpus-Reihenfolge")
+@deal.ensure(_one_row_per_corpus_id, message="eine Zeile je Korpus-ID, nach id sortiert")
 @deal.ensure(
     _classes_and_parties_are_from_the_settings, message="Klassen und Parteien aus den Settings"
 )
@@ -549,6 +554,12 @@ def _party_bounds_hold(
     result: pl.DataFrame | None = None,
 ) -> bool:
     assert result is not None
+    # Zweite Schranke aus § 5 C des Plans: die Treffer einer Partei im Bezirk können nie mehr sein
+    # als die Treffer des Bezirks (ein Dokument zählt je Bezirk einmal, auch mit mehreren Parteien).
+    per_district = dict(results.select(DISTRICT, HITS).iter_rows())
+    within_district = all(
+        row[HITS] <= per_district.get(row[DISTRICT], 0) for row in result.iter_rows(named=True)
+    )
     checks = result.select(
         ((pl.col("treffer_allein") >= 0) & (pl.col("treffer_allein") <= pl.col(HITS))).all(),
         (pl.col(HITS) <= pl.col("dokumente_partei")).all(),
@@ -557,7 +568,7 @@ def _party_bounds_hold(
         (pl.col("angetreten") == (pl.col("stimmen") > 0)).all(),
         (pl.col(RATE) >= 0.0).all(),
     )
-    return all(checks.row(0))
+    return within_district and all(checks.row(0))
 
 
 def _documents_per_party_is_constant(
