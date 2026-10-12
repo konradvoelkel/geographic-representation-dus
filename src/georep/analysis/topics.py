@@ -350,8 +350,13 @@ def _seed_words(
             (outside + alpha) / np.maximum(n_out + prior - outside - alpha, 1e-9)
         )
         sigma = np.sqrt(1.0 / (inside + alpha) + 1.0 / (outside + alpha))
-        order = np.argsort(-(delta / sigma), kind="stable")[: rules.seed_words]
-        seeds[code] = [int(position) for position in order]
+        # Ein Wort, das dieser Ausschuss nie benutzt, ist kein Saatwort -- auch wenn sein z
+        # positiv ausfällt: steht es in keinem Ausschuss, sind beide Zahlen 0, und allein der
+        # kleinere Nenner des kleineren Ausschusses hebt es nach oben (gemessen 2026-10-13 an der
+        # synthetischen Fixture: „haushalt" aus dem einen Ratsdokument wurde Saat aller drei).
+        score = np.where(inside > 0.0, delta / sigma, -np.inf)
+        order = np.argsort(-score, kind="stable")[: rules.seed_words]
+        seeds[code] = [int(position) for position in order if np.isfinite(score[position])]
     assert len(vocabulary) == counts.shape[1]
     return seeds
 
@@ -375,12 +380,17 @@ def _seed_profile(
     for row, (code, rows) in enumerate(groups):
         centroid = np.asarray(matrix[rows].mean(axis=0)).ravel()
         for position in seeds[code]:
-            # Ein Saatwort ohne Masse im Ausschuss kann es nicht geben (Log-Odds verlangt
-            # Vorkommen), aber eine leere Zeile wäre ein Thema ohne Wörter: dann zählt es 1.
-            profile[row, position] = centroid[position] or 1.0
+            # Jedes Saatwort steht in den Dokumenten seines Ausschusses (``_seed_words`` lässt
+            # nur solche durch), also ist sein Zentroid positiv und es gibt keinen Ersatzwert.
+            profile[row, position] = centroid[position]
         length = float(np.linalg.norm(profile[row]))
         if length > 0.0:
             profile[row] /= length
+        else:
+            # Ein Ausschuss ohne ein einziges eigenes Wort hätte ein Thema ohne Wörter; das kann
+            # erst ab ``seed_min_documents`` Dokumenten passieren, wenn alle dasselbe sagen wie
+            # die anderen. Gleichverteilt über seine Dokumente ist dann die ehrlichste Zeile.
+            profile[row] = centroid / max(float(np.linalg.norm(centroid)), 1e-12)
     return profile
 
 
