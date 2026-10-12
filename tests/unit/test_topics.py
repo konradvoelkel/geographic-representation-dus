@@ -224,9 +224,7 @@ def _seed_corpus(per_committee: tuple[int, ...] = (6, 5, 4)) -> tuple[pl.DataFra
     for family, (code, count) in enumerate(zip(CODES, per_committee, strict=True)):
         for i in range(count):
             paper = f"{code}-{i:02d}"
-            rows.append(
-                {"id": paper, "text": " ".join(FAMILIES[family] * 3) + f" wort{family}{i}"}
-            )
+            rows.append({"id": paper, "text": " ".join(FAMILIES[family] * 3) + f" wort{family}{i}"})
             refs.append({"id": paper, "gremium": code, "gremium_art": "ausschuss"})
     rows.append({"id": "RAT-01", "text": "haushalt personal stellenplan haushalt personal"})
     refs.append({"id": "RAT-01", "gremium": "RAT", "gremium_art": "rat"})

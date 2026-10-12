@@ -358,7 +358,7 @@ def test_fingerprint_sees_weights_and_topics(tmp_path: Path) -> None:
     assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
     (tmp_path / "settings.toml").write_text('[weights]\ncombined = ["idf"]\n', encoding="utf-8")
     assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
-    (tmp_path / "settings.toml").write_text('[topics]\nstop_sources = []\n', encoding="utf-8")
+    (tmp_path / "settings.toml").write_text("[topics]\nstop_sources = []\n", encoding="utf-8")
     assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
     (tmp_path / "settings.toml").write_text("[classify]\nmin_probability = 0.5\n", encoding="utf-8")
     assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
