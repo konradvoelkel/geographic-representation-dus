@@ -153,7 +153,9 @@ uv run georep $P status                # alles aktuell?
 - **Wiederaufnahme.** `fetch papers` speichert nach jeder Seite in den Store und schreibt die nächste URL nach
   `data_root/2014-2020/raw/papers.progress.json`. Bricht der Lauf ab, macht der nächste dort weiter, nicht bei
   `sources.oparl.first_page`. Die Datei verschwindet, sobald ein Abruf durchgelaufen ist; wer von vorn
-  beginnen will, löscht sie. `fetch pdfs` ist je Datei wiederaufnehmbar.
+  beginnen will, löscht sie — auch `--force` tut das nicht, denn es umgeht den Stamp, nicht den Netz-Cursor,
+  und ein zweiter Durchlauf derselben Seiten schreibt dieselben Paper. `fetch pdfs` ist je Datei
+  wiederaufnehmbar.
 - **`first_page = 90`** überspringt die Seiten der Hauptperiode (die Liste ist neueste zuerst, Stand 2026-10
   tragen die Seiten 1 bis 95 die Periode 2020 bis 2025). Jedes neue Paper schiebt die alten Seiten nach
   hinten; der Netztest

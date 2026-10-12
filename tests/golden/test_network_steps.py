@@ -331,3 +331,35 @@ def test_an_interrupted_metadata_fetch_resumes_at_the_next_page(
     assert session.urls == [broken, f"{endpoint}?page=4"]  # Seite 2 wird nicht erneut geladen
     assert len(PaperStore(layout.papers).load()) == 6
     assert not layout.papers_progress.exists()
+
+
+def test_force_repeats_the_step_but_keeps_the_resume_point(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """``--force`` umgeht den Stamp, nicht den Netz-Cursor.
+
+    Der Fortschritt existiert nur nach einem abgebrochenen Abruf. Ihn bei ``--force`` zu löschen
+    hieße, drei Stunden noch einmal zu laden, ohne dass eine einzige Zeile anders würde: der
+    Store schreibt dieselben Paper noch einmal. Wer wirklich von vorn will, löscht die Datei;
+    README und Plan sagen das.
+    """
+    period = _period_settings(settings, tmp_path)
+    layout = Layout.from_settings(period)
+    endpoint = period.sources.oparl.endpoint
+    broken = f"{endpoint}?page=3"
+    steps = build_steps(period, layout, _period_session(period, broken), sleep=lambda _: None)
+    with pytest.raises(NetworkError):
+        run_pipeline(steps, period, ["papers"], online=True)
+    assert read_progress(layout.papers_progress) == broken
+
+    session = _period_session(period)
+    outcome = run_pipeline(
+        build_steps(period, layout, session, sleep=lambda _: None),
+        period,
+        ["papers"],
+        online=True,
+        force=True,
+    )[0]
+    assert outcome.status == "ausgeführt" and "erzwungen" in outcome.reason
+    assert session.urls[0] == broken  # nicht wieder bei first_page
+    assert not layout.papers_progress.exists()

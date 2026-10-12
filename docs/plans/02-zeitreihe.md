@@ -255,9 +255,15 @@ vierzehn Stunden Netz bei Konrad.
 1. `fetch_papers(..., first_page=1, progress=None)`: Start bei `endpoint?page=N` (N > 1), `progress(page_url, pages)`
    nach jeder Seite; `FetchReport` nennt erste und letzte Seite. Schritt `papers` schreibt `raw/papers.progress.json`
    (letzte vollständig gespeicherte Seite, Datum) nach jeder Seite und startet beim nächsten Lauf dort, wenn der Store
-   schon Paper hat und `incremental = false`; `--force` setzt den Fortschritt zurück. Test mit `FakeSession` über vier
-   Seiten: Abbruch nach Seite 2 (Exception der Fake-Session), zweiter Lauf beginnt bei Seite 3, am Ende alle Paper im
-   Store genau einmal. Vertrag post von `fetch_papers` bleibt (`kept == len(records)`). 3 h.
+   schon Paper hat und `incremental = false`. **Geändert gegenüber dem Plan** (2026-10-12): `--force` setzt den
+   Fortschritt *nicht* zurück. `--force` umgeht den Stamp, nicht den Netz-Cursor; die Fortschrittsdatei entsteht nur
+   nach einem Abbruch und verschwindet nach jedem vollständigen Abruf. Sie bei `--force` zu löschen hieße, drei Stunden
+   noch einmal zu laden, ohne dass eine Zeile anders würde (der Store schreibt dieselben Paper). Wer von vorn will,
+   löscht die Datei; README und ein Test halten das fest. Die Alternative (``force`` bis in die Closure von
+   `build_steps` durchreichen) hätte das Schrittregister um einen Parameter erweitert, den nur dieser eine Schritt
+   liest. Test mit `FakeSession` über vier Seiten: Abbruch nach Seite 2 (Exception der Fake-Session), zweiter Lauf
+   beginnt bei Seite 3, am Ende alle Paper im Store genau einmal. Vertrag post von `fetch_papers` bleibt
+   (`kept == len(records)`). 3 h.
 2. `fetch_district_shapes`, `fetch_district_results` in `sources/opendata.py`; Schritt `opendata` schreibt sie nur,
    wenn die URLs gesetzt sind. Tests wie `test_sources_opendata.py`. 1 h.
 3. `settings.2014.toml`: `first_page = 90`, `incremental = false`, `cache.oparl_pages_s = 2592000`, die vier Portal-URLs
