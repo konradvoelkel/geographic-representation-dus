@@ -86,6 +86,7 @@ VERIFY_TARGETS = [
     "georep.analysis.parties.classify_document",  # Option 04
     "georep.crosswalk.largest_remainder",  # Option 02
     "georep.prep.precincts.district_from_id",  # Option 01
+    "georep.prep.pois.is_city_facility",  # Regel 1, decisions.md Punkt 44
     "tests.property.oracle_matcher.oracle_extract",
 ]
 

@@ -113,6 +113,19 @@ def default_settings() -> Settings:
     return load_settings(cwd=Path("/nonexistent"))
 
 
+def as_in_the_thesis(settings: Settings) -> Settings:
+    """Dieselben Settings mit abgeschalteten eigenen Regeln: so rechnet die Kette wie die Arbeit.
+
+    Golden-Master-Tests gegen ``reference/`` und ``tests/fixtures/mini/expected/`` nehmen diese
+    Settings; die Regeln, die von der Arbeit abweichen, stehen je als Schalter in
+    ``defaults.toml`` und sind hier aufgezählt (docs/decisions.md, Punkte 43 und 44). Alles
+    andere im Testlauf rechnet mit den Vorgaben, also mit den Regeln an.
+    """
+    return settings.model_copy(
+        update={"search": settings.search.model_copy(update={"city_facilities": False})}
+    )
+
+
 def mg_settings() -> Settings:
     """Das Profil der zweiten Stadt, auf die Größe der Netzstichprobe gebracht (Option 01).
 

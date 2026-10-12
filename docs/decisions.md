@@ -614,3 +614,60 @@ und im Commit erneuert.
 
 Verworfen: die exakte Reproduktion ganz aufgeben (dann wüsste niemand mehr, wo die Arbeit endet und das
 Programm beginnt); eine Toleranz ohne Messung (jede Abweichung muss benannt sein).
+
+## 44. Einrichtungen mit Stadtnamen sind keine Orte (2026-10-12)
+
+Erste bewusste Abweichung von der Arbeit nach Punkt 43. Das Wörterbuch enthält alles, was in einem
+Stimmbezirk eine Koordinate hat, ohne Rücksicht auf den Typ (Punkt 7 und `architecture.md`, „Pipeline"); damit
+steht „Stadtwerke Düsseldorf" als Ort im Wahlbezirk 10. Gemessen am 2026-10-12 auf der Referenz ist das der
+Begriff mit der **zweithöchsten Dokumenthäufigkeit aller 5841 Begriffe** (190 Dokumente; Median 1,
+99-%-Quantil 64, Maximum 205 für „grafenberger allee"), und **177 der 1189 Treffer des Wahlbezirks 10
+(14,9 %) hängen allein daran**. Weiter: „hochschule düsseldorf" 80, „flughafen düsseldorf" 80, „messe
+düsseldorf" 61, „stadtsparkasse düsseldorf" 45, „feuerwehr düsseldorf" 43. Diese Dokumente handeln von der
+Einrichtung, nicht von ihrem Wahlbezirk.
+
+**Die Regel** (`search.city_facilities`, standardmäßig an, weil sie für jede Stadt gilt;
+`georep.prep.pois.is_city_facility`): nach dem Entfernen der Klammerzusätze ist ein Ortslabel eine
+Einrichtung, wenn (1) kein Wort darin auf ein Gattungswort aus `search.place_words` endet **und** (2) das
+Städteadjektiv darin steht oder der Stadtname das letzte Wort ist. Stadtname und Adjektiv kommen aus `[city]`
+des Profils, die Gattungswörter stadtneutral aus `defaults.toml`, die Ausnahmen aus
+`search.city_facilities_keep` des Profils (Düsseldorf: ein Eintrag, „Castello Düsseldorf"). Die Regel wirkt im
+Schritt `pois` auf beide Ausgaben, also auch auf die Karte; **Straßen laufen nie durch sie**, weil sie am
+Ortsteil der Kette hängt und nicht am Wörterbuch.
+
+**Warum zwei Bedingungen.** Drei Varianten wurden am 2026-10-12 an allen 1309 Rohlabels der Referenz
+gemessen:
+
+| Variante | Labels | davon mit Treffern | Fehlurteile |
+|---|---|---|---|
+| Stadtname irgendwo außerhalb der Klammer | 183 | 59 | erklärt 17 Bahnhöfe und Haltepunkte, „Düsseldorf Arcaden", „Düsseldorf Hauptbahnhof" und zwei Stadtteilnamen zur Einrichtung |
+| nur Stadtname zuletzt (Struktur) | 140 | 45 | lässt „Düsseldorfer Stadtwald" und zwei Gymnasien fallen |
+| nur Gattungswörter | 131 | 46 | erklärt die Bahnhöfe mit Ortsteil („Bahnhof Düsseldorf-Rath") zur Einrichtung |
+| **beide Bedingungen (gewählt)** | **114** | **41** | ein Fall, „Castello Düsseldorf" (6 Dokumente), über die Ausnahmeliste des Profils: dann 113 Labels und 40 mit Treffern |
+
+Daraus folgen zwei Einzelheiten: Gattungswörter werden am **Wortende** verglichen, nicht als Vorkommen —
+sonst bliebe „Stadtsparkasse Düsseldorf" (45 Dokumente) ein Ort, weil „park" in „Sparkasse" steckt —, und
+„halle" und „schule" stehen **nicht** in der Liste, weil sonst die Tonhalle, die Kunsthalle und die
+Hochschule einer Stadt Orte blieben, genau die Einrichtungen, um die es geht.
+
+**Wirkung** (Referenz, 2026-10-12; alle Zahlen in `methodik-review-2026-10.md`, § 4): Orte 1309 → 1196,
+Wörterbuch 5841 → 5727 Begriffe, Treffer 29 573 → 29 005 (−1,9 %), 12 der 41 Wahlbezirke ändern sich.
+Tabelle 5 über alle 41 geht von r = 0,1612, p = 0,31385 auf r = 0,1895, p = 0,23532 — der Befund der Arbeit
+bleibt, der Zusammenhang bleibt nicht signifikant. Die Spalte „ohne Ausreißer" ändert sich in der dritten
+Stelle (r = 0,3385 → 0,3351, p = 0,03507 → 0,03705). Der Wahlbezirk 10 fällt von robustem z = 4,04 auf 2,69
+und ist damit kein Ausreißer mehr; der Wahlbezirk 1 bleibt bei z = 9,67, denn seine hohe Quote kommt von der
+Größe seines Wörterbuchs (812 Begriffe gegen 147 im Median), nicht von einer Benennung.
+
+**Golden Master.** `tests/golden/test_pipeline.py` rechnet mit `as_in_the_thesis(...)` (conftest), also mit
+abgeschalteter Regel, und vergleicht unverändert gegen `reference/` und `tests/fixtures/mini/expected/`; die
+Erwartungsdateien der Mini-Fixture bleiben damit die der Arbeit, obwohl die Regel dort 62 ihrer 493 Labels
+trifft
+(`tests/fixtures/mini/README.md`). Geändert haben sich nur zwei eigene Zahlen dieses Repos: die eingefrorenen
+Gremienzahlen der Mini-Fixture (Option 05) sinken von (96, 63, 14) auf (89, 59, 14) Treffern.
+
+Verworfen: einzelne Labels je Stadt in `search.exclude` (Handarbeit, nicht übertragbar — genau was
+`docs/todo.md`, Punkt 4 nicht will); eine Typfilterung über Wikidata `P31` (richtig, aber ein neuer Abruf von
+Stunden und je Stadt neu zu prüfen, Review § 2.1); die Dokumenthäufigkeit als einziges Kriterium (trifft auch
+„hofgarten" und „schulweg", also echte Orte — das ist Regel 2 und eine andere Frage); die Regel nur auf das
+Wörterbuch wirken zu lassen und die Karte unverändert zu lassen (dann zeigte die Karte Orte, die nicht
+zählen).

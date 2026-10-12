@@ -20,6 +20,7 @@ from georep.crosswalk import largest_remainder
 from georep.http import cache_pattern
 from georep.prep.bodies import BodyRules, parse_reference
 from georep.prep.extract import after_marker, normalise_text
+from georep.prep.pois import is_city_facility
 from georep.report.charts import nice_ticks
 from georep.report.model import format_de
 from georep.report.search import canonical_term
@@ -206,4 +207,19 @@ def test_idf_weight(case: deal.TestCase) -> None:
     },
 )
 def test_largest_remainder(case: deal.TestCase) -> None:
+    case()
+
+
+@deal.cases(
+    is_city_facility,
+    count=COUNT,
+    check_types=False,
+    kwargs={
+        "label": words,
+        "city_name": st.sampled_from(["", "Düsseldorf", "a"]),
+        "city_adjectives": st.lists(st.sampled_from(["Düsseldorfer", "a"]), max_size=2),
+        "place_words": st.lists(st.sampled_from(["", "park", "bahnhof"]), max_size=3),
+    },
+)
+def test_is_city_facility(case: deal.TestCase) -> None:
     case()

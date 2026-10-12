@@ -4,6 +4,16 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Einrichtungen mit Stadtnamen sind keine Orte** (`search.city_facilities`, standardmäßig an): ein Ort aus
+  Wikidata oder Wikipedia, dessen Label den Stadtnamen des Profils als letztes Wort trägt („Stadtwerke
+  Düsseldorf", „Messe Düsseldorf") oder das Städteadjektiv irgendwo („Düsseldorfer Schauspielhaus"), fällt aus
+  dem Wörterbuch und von der Karte: solche Dokumente handeln von der Einrichtung, nicht von ihrem Wahlbezirk.
+  Orte, deren Label ein Gattungswort aus `search.place_words` enthält (Bahnhof, Park, Wald, Gymnasium,
+  Klinik …) oder dem Stadtnamen noch ein Wort nachstellt („Bahnhof Düsseldorf-Rath"), bleiben Orte; Straßen
+  sind nie betroffen. Auf der Referenz trifft die Regel 113 von 1309 Labels, die Treffer sinken um 1,9 %, der
+  Wahlbezirk 10 verliert 14,9 % seiner Treffer und ist kein Ausreißer mehr. `search.city_facilities_keep` im
+  Profil nimmt einzelne Labels wieder heraus. Mit `city_facilities = false` rechnet die Kette wie die Arbeit
+  (`docs/decisions.md`, Punkt 44, gemessen in `docs/methodik-review-2026-10.md`).
 - Der Quelltext steht unter GPL-3.0-or-later (`LICENSE`); bis zum Tag `v0.11.0` war es CC0 1.0 wie das
   Original. Ergebnisse, Tabellen und die Berichtsseite bleiben CC0 1.0, die Daten behalten die Lizenz ihrer
   Quelle; der Fuß der Seite nennt beides.

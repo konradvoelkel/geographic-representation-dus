@@ -79,7 +79,7 @@ Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`).
 | `voters` | nein | Wahlergebnis-CSV; mit `crosswalk.enabled` zusätzlich die Wahlbezirks-CSV, die Zuordnung und die Stadtbezirke der Hauptperiode | `processed/wahlbezirke_waehler.parquet`, `processed/wahlbezirke_stadtbezirke.parquet` |
 | `context` | nein | Stimmbezirke (Fläche und Wahlberechtigte), Raumeinheiten, Tabelle der Quelle, Wähler | `processed/wahlbezirke_kontext.parquet`, `processed/wahlbezirke_crosswalk.parquet` |
 | `streets` | nein | Straßen je Stimmbezirk | `processed/wahlbezirke_strassen.parquet` |
-| `pois` | nein | Orte | `processed/wikidata_vis.parquet`, `processed/wikidata_agg.parquet` |
+| `pois` | nein | Orte; mit `search.city_facilities` fallen Einrichtungen mit Stadtnamen aus beiden Ausgaben (decisions.md, Punkt 44) | `processed/wikidata_vis.parquet`, `processed/wikidata_agg.parquet` |
 | `dictionary` | nein | Orte und Straßen je Wahlbezirk | `processed/combined_searchdict.parquet` |
 | `corpus` | nein | Metadaten und Texte | `interim/papers.parquet` |
 | `topics` | nein | Korpus (Texte) | `processed/themen.parquet`, `processed/themen_dokumente.parquet`, `interim/themen_anteile.parquet` |
@@ -316,7 +316,7 @@ auf dem rekursiven `deep_merge`).
 |---|---|
 | `tests/unit/` | eine Funktion, ein Verhalten; Vertragsverletzungen je mit Gegenbeispiel |
 | `tests/property/` | hypothesis-Invarianten (darunter: Einheitsgewichte reproduzieren die Zählung exakt, Gewichte in [0, 1], Monotonie, Themenzerlegung), das Matcher-Orakel (400 Zufallsfälle), `deal.cases` auf zwölf reinen Funktionen |
-| `tests/golden/` | Mini-Fixture (3 Wahlbezirke, 200 Dokumente, Erwartung aus dem Altcode `v0.2.0`) und die volle Referenz (`slow`) gegen die Ergebnisse der Arbeit |
+| `tests/golden/` | Mini-Fixture (3 Wahlbezirke, 200 Dokumente, Erwartung aus dem Altcode `v0.2.0`) und die volle Referenz (`slow`) gegen die Ergebnisse der Arbeit; beide mit `as_in_the_thesis(...)`, also mit abgeschalteten eigenen Regeln (decisions.md, Punkte 43 und 44) |
 | `tests/bench/` | pytest-benchmark, nur in `nox -s bench` |
 | `tests/fixtures/` | Mini-Datensatz (drei Wahlbezirke mit ihren 22 Stimmbezirken), vier PDFs mit Herkunft, eine OParl-Seite, aufgezeichnete Antworten von Overpass, Wikidata, Wikipedia |
 
@@ -340,6 +340,10 @@ Stand 2026-10-12: 310 Tests, schnelle Suite in 20 bis 25 s, Abdeckung 98,6 %; Mu
 
 - Ein voller `georep fetch` von Grund auf lief noch nie; ob der OParl-Server `modified_since` beachtet, zeigt erst er.
 - Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
+- Die Regel „Einrichtung mit Stadtnamen" urteilt über den Namen, nicht über die Sache: sie trifft auch, was
+  eine Stadt im Namen trägt und kein Ort ist (eine Zeitung, eine Ausstellung), und sie trifft nicht, was ohne
+  Stadtnamen stadtweit vorkommt („Hofgarten", „Schulweg") — dafür steht die Liste der stadtweiten Begriffe.
+  Die Gattungswortliste ist deutschsprachig; eine Stadt in einem anderen Sprachraum ersetzt sie im Profil.
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab; die Tests frieren die Neuberechnung ein (baseline-2026-10-10.md).
 - crosshair prüft nur rein-pythonische Funktionen; Polars-Funktionen haben Laufzeitverträge und hypothesis.
 - Der OParl-Server liefert für Düsseldorf keine Urheberfelder (`originatorPerson`, `originatorOrganization`,

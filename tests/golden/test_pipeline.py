@@ -18,6 +18,7 @@ from georep.pipeline import Outcome, UnknownStepError, build_steps, run_pipeline
 from georep.report.search import fold, fold_ascii
 from georep.report.tables import published
 from georep.settings import Settings, load_settings
+from tests.conftest import as_in_the_thesis
 
 NETWORK = {"opendata", "papers", "organizations", "pdfs", "streets_osm", "pois_wiki"}
 EXACT = ["wahlkreis_id", "anzahl_treffer", "Wahlberechtigte_insgesamt", "Waehler", "suchbegriffe"]
@@ -26,7 +27,8 @@ FLOATS = ["wahlkreis_id", "trefferquote", "wahlbeteiligung"]
 
 @pytest.fixture(scope="module")
 def settings() -> Settings:
-    return load_settings(cwd=Path("/nonexistent"))
+    """Die Settings dieses Moduls sind die der Arbeit: eigene Regeln aus (conftest, Punkt 43)."""
+    return as_in_the_thesis(load_settings(cwd=Path("/nonexistent")))
 
 
 def _layout(tmp_path: Path, reference: Path) -> Layout:

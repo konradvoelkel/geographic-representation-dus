@@ -233,7 +233,10 @@ def test_mini_fixture_matches_the_frozen_numbers(
         row["wahlkreis_id"]: (row["anzahl_treffer"], row[OWN], row[OTHER], row[COUNCIL_HITS])
         for row in frame.iter_rows(named=True)
     }
-    assert got == {1: (96, 26, 14, 11), 10: (63, 22, 11, 5), 38: (14, 9, 0, 0)}
+    # Eigene Zahlen dieses Repos, nicht die der Arbeit: sie sind am 2026-10-12 mit Regel 1
+    # („Einrichtung mit Stadtnamen", decisions.md Punkt 44) gesunken, weil der Mini-Fixture 37
+    # Labels wie „Kunstakademie Düsseldorf" aus dem Wörterbuch fallen (1: 96 -> 89, 10: 63 -> 59).
+    assert got == {1: (89, 26, 13, 9), 10: (59, 22, 10, 4), 38: (14, 9, 0, 0)}
     assert frame.get_column(UNITS).to_list() == [[1], [2], [9]]
     # Der Bezirk 38 hat keine Rats-Treffer: die Spalte bleibt, der Wert ist 0.
     assert frame.filter(pl.col("wahlkreis_id") == 38).row(0, named=True)[COUNCIL_SHARE] == 0.0
@@ -263,4 +266,4 @@ def test_summary_names_districts_bodies_and_own_hits(
     bodies = documents_by_body(mini_bodies, results, mini_units)
     line = summary(districts, bodies)
     assert line.startswith("3 Wahlbezirke, ")
-    assert f"{26 + 22 + 9} von {96 + 63 + 14} Treffern" in line
+    assert f"{26 + 22 + 9} von {89 + 59 + 14} Treffern" in line

@@ -12,7 +12,8 @@ from hypothesis import strategies as st
 
 from georep.prep.pois import POI_COLUMNS, drop_city_facilities, is_city_facility
 
-CITY = ("Düsseldorf", "Düsseldorfer")
+NAME = "Düsseldorf"
+ADJECTIVES = ("Düsseldorfer",)
 PLACE_WORDS = ("bahnhof", "park", "wald", "garten", "gymnasium")
 
 word = st.text(alphabet="abcdeäöüß-. ", min_size=0, max_size=12)
@@ -24,52 +25,65 @@ labels = st.one_of(
     st.builds(lambda a: f"{a} (Düsseldorf)".strip(), word),
     st.builds(lambda a: f"Bahnhof Düsseldorf-{a}".strip(), word),
 )
-city_words = st.lists(st.sampled_from(["Düsseldorf", "Düsseldorfer"]), max_size=2).map(tuple)
+other_names = st.one_of(
+    word, st.builds(lambda a, b: f"{a} Mönchengladbach {b}".strip(), word, word)
+)
+names = st.sampled_from(["", "Düsseldorf"])
+adjectives = st.lists(st.just("Düsseldorfer"), max_size=1).map(tuple)
 place_words = st.lists(st.sampled_from(PLACE_WORDS), max_size=3).map(tuple)
 
 
 @given(label=labels, places=place_words)
 def test_without_a_city_word_nothing_is_a_facility(label: str, places: tuple[str, ...]) -> None:
     """Ohne Stadtwort im Profil greift die Regel nie: eine Stadt ohne Namen schließt nichts aus."""
-    assert not is_city_facility(label, (), places)
+    assert not is_city_facility(label, "", (), places)
 
 
-@given(label=labels, cities=city_words, places=place_words)
+@given(label=other_names, adjs=adjectives, places=place_words)
 def test_a_label_without_the_city_word_is_never_a_facility(
-    label: str, cities: tuple[str, ...], places: tuple[str, ...]
+    label: str, adjs: tuple[str, ...], places: tuple[str, ...]
 ) -> None:
-    assume(not any(c.lower() in label.lower() for c in cities))
-    assert not is_city_facility(label, cities, places)
+    """Ein Label, in dem die Stadt nicht vorkommt, bleibt ein Ort — auch mit Regel."""
+    assume(NAME.lower() not in label.lower())
+    assert not is_city_facility(label, NAME, adjs, places)
 
 
-@given(label=labels, cities=city_words, places=place_words)
+@given(label=labels, name=names, adjs=adjectives, places=place_words)
 def test_the_rule_ignores_case(
-    label: str, cities: tuple[str, ...], places: tuple[str, ...]
+    label: str, name: str, adjs: tuple[str, ...], places: tuple[str, ...]
 ) -> None:
-    assert is_city_facility(label, cities, places) == is_city_facility(
-        label.upper(), cities, places
+    assert is_city_facility(label, name, adjs, places) == is_city_facility(
+        label.upper(), name, adjs, places
     )
 
 
-@given(label=labels, cities=city_words, places=place_words, extra=st.sampled_from(PLACE_WORDS))
+@given(
+    label=labels,
+    name=names,
+    adjs=adjectives,
+    places=place_words,
+    extra=st.sampled_from(PLACE_WORDS),
+)
 def test_one_more_place_word_never_turns_a_place_into_a_facility(
-    label: str, cities: tuple[str, ...], places: tuple[str, ...], extra: str
+    label: str, name: str, adjs: tuple[str, ...], places: tuple[str, ...], extra: str
 ) -> None:
     """Die Gattungswortliste wirkt nur in eine Richtung: mehr Wörter heißt höchstens weniger Treffer."""
-    before = is_city_facility(label, cities, places)
-    after = is_city_facility(label, cities, (*places, extra))
+    before = is_city_facility(label, name, adjs, places)
+    after = is_city_facility(label, name, adjs, (*places, extra))
     assert after <= before
 
 
 @given(
     rows=st.lists(st.tuples(labels, st.integers(1, 41)), min_size=0, max_size=20),
-    cities=city_words,
+    name=names,
+    adjs=adjectives,
     places=place_words,
     keep=st.lists(labels, max_size=3),
 )
 def test_dropping_facilities_only_removes_rows(
     rows: list[tuple[str, int]],
-    cities: tuple[str, ...],
+    name: str,
+    adjs: tuple[str, ...],
     places: tuple[str, ...],
     keep: list[str],
 ) -> None:
@@ -82,12 +96,12 @@ def test_dropping_facilities_only_removes_rows(
         },
         schema={"label": pl.String, "wahlkreis_id": pl.Int64, "lon": pl.Float64, "lat": pl.Float64},
     ).select(POI_COLUMNS)
-    out = drop_city_facilities(frame, cities, places, keep)
+    out = drop_city_facilities(frame, name, adjs, places, keep)
     assert out.columns == POI_COLUMNS
     assert out.height <= frame.height
     kept = out.get_column("label").to_list()
     assert kept == [label for label in frame.get_column("label").to_list() if label in set(kept)]
     # Jede entfernte Zeile ist eine Einrichtung, die nicht in der Ausnahmeliste steht
     removed = [label for label in frame.get_column("label").to_list() if label not in set(kept)]
-    assert all(is_city_facility(label, cities, places) for label in removed)
+    assert all(is_city_facility(label, name, adjs, places) for label in removed)
     assert not set(removed) & set(keep)

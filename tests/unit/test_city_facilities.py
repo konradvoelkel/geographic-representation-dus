@@ -18,7 +18,8 @@ from polars.testing import assert_frame_equal
 from georep.prep.pois import POI_COLUMNS, drop_city_facilities, is_city_facility
 from georep.settings import Settings, load_settings
 
-CITY = ("Düsseldorf", "Düsseldorfer")
+NAME = "Düsseldorf"
+ADJECTIVES = ("Düsseldorfer",)
 PLACE_WORDS = ("bahnhof", "haltepunkt", "park", "wald", "garten", "gymnasium", "see")
 
 
@@ -41,7 +42,7 @@ def settings() -> Settings:
     ],
 )
 def test_a_label_that_ends_with_the_city_name_is_a_facility(label: str) -> None:
-    assert is_city_facility(label, CITY, PLACE_WORDS)
+    assert is_city_facility(label, NAME, ADJECTIVES, PLACE_WORDS)
 
 
 @pytest.mark.parametrize(
@@ -61,15 +62,15 @@ def test_a_label_that_ends_with_the_city_name_is_a_facility(label: str) -> None:
     ],
 )
 def test_a_place_stays_a_place(label: str) -> None:
-    assert not is_city_facility(label, CITY, PLACE_WORDS)
+    assert not is_city_facility(label, NAME, ADJECTIVES, PLACE_WORDS)
 
 
 def test_the_rule_reads_the_city_words_from_the_profile(settings: Settings) -> None:
     """Kein Stadtwort im Code: eine andere Stadt trifft andere Labels."""
-    assert is_city_facility("Stadtwerke Mönchengladbach", ("Mönchengladbach",), PLACE_WORDS)
-    assert not is_city_facility("Stadtwerke Mönchengladbach", CITY, PLACE_WORDS)
+    assert is_city_facility("Stadtwerke Mönchengladbach", "Mönchengladbach", (), PLACE_WORDS)
+    assert not is_city_facility("Stadtwerke Mönchengladbach", NAME, ADJECTIVES, PLACE_WORDS)
     city = settings.city
-    assert (city.name, city.adjective) == CITY
+    assert (city.name, city.adjective) == (NAME, ADJECTIVES[0])
 
 
 def _pois(*labels: str) -> pl.DataFrame:
@@ -85,20 +86,20 @@ def _pois(*labels: str) -> pl.DataFrame:
 
 def test_dropping_facilities_keeps_the_other_rows_and_their_order() -> None:
     frame = _pois("Hofgarten", "Stadtwerke Düsseldorf", "Bahnhof Düsseldorf-Rath")
-    out = drop_city_facilities(frame, CITY, PLACE_WORDS, ())
+    out = drop_city_facilities(frame, NAME, ADJECTIVES, PLACE_WORDS, ())
     assert out.get_column("label").to_list() == ["Hofgarten", "Bahnhof Düsseldorf-Rath"]
     assert out.columns == POI_COLUMNS
 
 
 def test_the_profile_can_keep_a_single_label() -> None:
     frame = _pois("Castello Düsseldorf", "Stadtwerke Düsseldorf")
-    out = drop_city_facilities(frame, CITY, PLACE_WORDS, ("Castello Düsseldorf",))
+    out = drop_city_facilities(frame, NAME, ADJECTIVES, PLACE_WORDS, ("Castello Düsseldorf",))
     assert out.get_column("label").to_list() == ["Castello Düsseldorf"]
 
 
-def test_an_empty_city_word_list_changes_nothing() -> None:
+def test_without_city_words_nothing_is_dropped() -> None:
     frame = _pois("Stadtwerke Düsseldorf", "Hofgarten")
-    assert_frame_equal(drop_city_facilities(frame, (), PLACE_WORDS, ()), frame)
+    assert_frame_equal(drop_city_facilities(frame, "", (), PLACE_WORDS, ()), frame)
 
 
 def test_the_switch_and_the_word_lists_come_from_the_settings(settings: Settings) -> None:

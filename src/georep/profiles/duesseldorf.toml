@@ -78,6 +78,12 @@ name_property = "Kommunalwahlbezirk Name"
 
 [search]
 text_split_marker = "betrifft" # der Vorlagenkopf vor dem ersten Vorkommen wird verworfen (Düsseldorfer Vorlagenformat)
+# Regel 1 (defaults.toml, search.city_facilities) trifft auf der Referenz 114 der 1309 Ortslabels.
+# Die Liste nimmt die Fälle heraus, in denen sie das Falsche trifft; geprüft am 2026-10-12 an allen
+# 41 getroffenen Labels mit Treffern (docs/methodik-review-2026-10.md, § 4).
+city_facilities_keep = [
+    "Castello Düsseldorf",     # Veranstaltungshalle an einer Adresse in Reisholz, 6 Dokumente
+]
 exclude = [                    # Stadtteil- und Stadtbezirksnamen: zu grob für einen Wahlbezirk
     "Düsseldorf",
     "Düssel",

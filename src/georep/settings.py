@@ -327,6 +327,11 @@ class Search(_Strict):
     text_split_marker: str  # Option 01: das Profil nennt ihn, er ist je Stadt verschieden
     hide_in_display: list[str] = []
     exclude: list[str] = []
+    # Regel 1 „Einrichtung mit Stadtnamen" (docs/decisions.md, Punkt 44); Begründung je Schlüssel
+    # in defaults.toml. ``city_facilities = false`` reproduziert die Arbeit exakt.
+    city_facilities: bool = True
+    place_words: list[str] = []
+    city_facilities_keep: list[str] = []
 
     @field_validator("text_split_marker")
     @classmethod

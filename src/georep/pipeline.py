@@ -65,7 +65,12 @@ from georep.prep.context import (
 )
 from georep.prep.extract import extract_missing
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus, documents_with_text
-from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
+from georep.prep.pois import (
+    clean_pois,
+    drop_city_facilities,
+    pois_by_district,
+    read_pois_json,
+)
 from georep.prep.precincts import canonical_precincts, district_names_from_csv, read_source
 from georep.prep.streets import directory_agreement, read_streets_json, streets_by_district
 from georep.prep.voters import (
@@ -619,10 +624,23 @@ def build_steps(
 
     def pois() -> str:
         clean = clean_pois(read_pois_json(dictionary_source.pois), settings.search.exclude)
+        # Regel 1 (docs/decisions.md, Punkt 44): Einrichtungen mit Stadtnamen sind keine Orte. Die
+        # Regel wirkt auf beide Ausgaben, damit die Karte keine Orte zeigt, die nicht zählen.
+        line = f"{clean.height} Orte"
+        if settings.search.city_facilities:
+            before = clean.height
+            clean = drop_city_facilities(
+                clean,
+                settings.city.name,
+                (settings.city.adjective,),
+                settings.search.place_words,
+                settings.search.city_facilities_keep,
+            )
+            line = f"{clean.height} Orte, {before - clean.height} Einrichtungen mit Stadtnamen weg"
         grouped = pois_by_district(clean)
         write_parquet(clean, layout.pois_table, schema_version=1)
         write_parquet(grouped, layout.pois_by_district, schema_version=1)
-        return f"{clean.height} Orte in {grouped.height} Wahlbezirken"
+        return f"{line} in {grouped.height} Wahlbezirken"
 
     def dictionary() -> str:
         frame = build_dictionary(
