@@ -26,11 +26,13 @@ from georep.analysis.weights import (
     BY_DISTRICTS,
     BY_IDF,
     COMBINED,
+    N_DISTRICTS,
     TOPIC_PREFIX,
     UNIT,
     VARIANT,
     WEIGHTED_HITS,
     WEIGHTED_RATE,
+    topic_variant,
 )
 from georep.contracts import has_columns
 from georep.errors import EmptyResultError, SchemaError
@@ -738,9 +740,7 @@ def topic_rows(topics: pl.DataFrame, weighted: pl.DataFrame) -> tuple[TopicRow, 
             words=tuple(row[WORDS]),
             documents=int(row[DOCUMENTS]),
             hits_share=(
-                totals.get(f"{TOPIC_PREFIX}{int(row[TOPIC]):02d}", 0.0) / counted
-                if counted > 0
-                else 0.0
+                totals.get(topic_variant(int(row[TOPIC])), 0.0) / counted if counted > 0 else 0.0
             ),
         )
         for row in topics.sort(TOPIC).iter_rows(named=True)
@@ -752,7 +752,7 @@ def _example(frame: pl.DataFrame, by: str, then: str) -> TermExample | None:
     if frame.is_empty():
         return None
     row = frame.sort([by, then, TERM], descending=[True, True, False]).row(0, named=True)
-    return TermExample(str(row[TERM]), int(row[HITS]), int(row["n_bezirke"]))
+    return TermExample(str(row[TERM]), int(row[HITS]), int(row[N_DISTRICTS]))
 
 
 def build_sensitivity(layout: Layout, settings: Settings, results: pl.DataFrame) -> Sensitivity:
@@ -763,9 +763,9 @@ def build_sensitivity(layout: Layout, settings: Settings, results: pl.DataFrame)
     )
     topics = topic_rows(pl.read_parquet(layout.topics), weighted) if layout.topics.exists() else ()
     terms = (
-        pl.read_parquet(layout.term_weights, columns=[TERM, "n_bezirke", HITS])
+        pl.read_parquet(layout.term_weights, columns=[TERM, N_DISTRICTS, HITS])
         if layout.term_weights.exists()
-        else pl.DataFrame(schema={TERM: pl.String, "n_bezirke": pl.Int64, HITS: pl.Int64})
+        else pl.DataFrame(schema={TERM: pl.String, N_DISTRICTS: pl.Int64, HITS: pl.Int64})
     )
     return Sensitivity(
         rows=rows,
@@ -775,8 +775,8 @@ def build_sensitivity(layout: Layout, settings: Settings, results: pl.DataFrame)
         significant_without=sum(
             1 for r in rows if r.pair and r.pair.without and r.pair.without.p < LEVEL
         ),
-        strongest=_example(terms, HITS, "n_bezirke"),
-        widest=_example(terms, "n_bezirke", HITS),
+        strongest=_example(terms, HITS, N_DISTRICTS),
+        widest=_example(terms, N_DISTRICTS, HITS),
         level=LEVEL,
     )
 
