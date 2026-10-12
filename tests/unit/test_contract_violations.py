@@ -13,10 +13,18 @@ import polars as pl
 import pytest
 import requests
 
+from georep.analysis.committees import assign_committees
 from georep.analysis.hits import hits_by_district, join_voters
 from georep.analysis.regression import regress
+from georep.analysis.topics import (
+    TopicRules,
+    codes_are_unique_and_first,
+    name_stop_words,
+    profile_stop_words,
+)
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
+from georep.settings import Classify, Topics, load_settings
 
 DICT_SCHEMA = {"wahlkreis_id": pl.Int64(), "suchbegriffe": pl.List(pl.String)}
 
@@ -312,3 +320,71 @@ def test_party_hits_above_the_district_total_breaks_the_contract() -> None:
     assert party_hits(results(2), documents, voters, parties).height == 1  # stimmig
     with pytest.raises(deal.PostContractError, match="Schranken"):
         party_hits(results(1), documents, voters, parties)
+
+
+# --- Punkt 45: Themenmodell und passender Ausschuss (Review-Befunde 6 und 8) --------------------
+
+
+def _bodies(rows: list[tuple[str, str, str]]) -> pl.DataFrame:
+    return pl.DataFrame(
+        {
+            "id": [r[0] for r in rows],
+            "gremium": [r[1] for r in rows],
+            "gremium_art": [r[2] for r in rows],
+        },
+        schema={"id": pl.String, "gremium": pl.String, "gremium_art": pl.String},
+    )
+
+
+def _corpus(rows: list[tuple[str, str]]) -> pl.DataFrame:
+    return pl.DataFrame(
+        {"id": [r[0] for r in rows], "text": [r[1] for r in rows]},
+        schema={"id": pl.String, "text": pl.String},
+    )
+
+
+def test_profile_stop_words_refuse_an_unknown_source() -> None:
+    settings = load_settings(cwd=Path("/nonexistent"))
+    with pytest.raises(deal.PreContractError):
+        profile_stop_words(settings.originators, settings.bodies, ("parteien",))
+
+
+def test_name_stop_words_refuse_a_share_outside_the_unit_interval() -> None:
+    with pytest.raises(deal.PreContractError):
+        name_stop_words(["gez. mustermann meier"], TopicRules(with_names=True, name_share=1.5))
+
+
+def test_assign_committees_requires_the_gremium_columns() -> None:
+    corpus = _corpus([("a", "strasse verkehr")])
+    with pytest.raises(deal.PreContractError):
+        assign_committees(
+            corpus, corpus, Topics(k=1, min_df=1), Classify(), TopicRules(committees=frozenset())
+        )
+
+
+def test_assign_committees_refuses_two_rows_for_one_document() -> None:
+    corpus = _corpus([("a", "strasse verkehr"), ("b", "schule kita")])
+    bodies = _bodies([("a", "OVA", "ausschuss"), ("a", "KUA", "ausschuss")])
+    with pytest.raises(deal.PreContractError):
+        assign_committees(
+            corpus, bodies, Topics(k=1, min_df=1), Classify(), TopicRules(committees=frozenset())
+        )
+
+
+def test_a_topic_frame_with_two_topics_for_one_committee_breaks_the_contract() -> None:
+    """``_codes_are_unique_and_first``: ein Ausschuss hat höchstens ein Thema, gesäte stehen vorn."""
+    twice = pl.DataFrame(
+        {"thema": [0, 1], "gremium": ["OVA", "OVA"]},
+        schema={"thema": pl.Int64, "gremium": pl.String},
+    )
+    assert not codes_are_unique_and_first(twice)
+    later = pl.DataFrame(
+        {"thema": [0, 1], "gremium": [None, "OVA"]},
+        schema={"thema": pl.Int64, "gremium": pl.String},
+    )
+    assert not codes_are_unique_and_first(later)
+    good = pl.DataFrame(
+        {"thema": [0, 1], "gremium": ["OVA", None]},
+        schema={"thema": pl.Int64, "gremium": pl.String},
+    )
+    assert codes_are_unique_and_first(good)

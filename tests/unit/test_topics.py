@@ -174,6 +174,44 @@ def test_a_word_that_stands_almost_only_behind_a_name_marker_is_a_name() -> None
     assert "strasse" not in words and "verkehr" not in words
 
 
+def test_the_person_markers_alone_find_names_without_any_signature_marker() -> None:
+    """``name_markers = []`` darf die Marker aus ``[originators]`` nicht mit abschalten.
+
+    Die beiden Quellen von Namensfenstern sind unabhängig: die Amtsbezeichnungen stehen
+    stadtneutral in ``defaults.toml``, die Personenmarker im Profil (Option 04). Eine Stadt, die
+    die deutsche Liste leert, soll die eigenen Marker behalten.
+    """
+    rules = TopicRules(
+        name_markers=(),
+        person_patterns=("ratsherr ",),
+        name_window=40,
+        name_min_documents=3,
+        with_names=True,
+    )
+    texts = [f"antrag des ratsherr mustermann meier zur strasse {i}" for i in range(6)]
+    texts += [f"die strasse und der verkehr in bezirk {i}" for i in range(6)]
+    assert "mustermann" in name_stop_words(texts, rules)
+    assert "strasse" not in name_stop_words(texts, rules)
+
+
+def test_a_window_fragment_never_pushes_the_share_above_one() -> None:
+    """Ein Marker kann mitten in einem Wort treffen; dann beginnt das Fenster mit einem Rest.
+
+    „stadtkämmer" trifft in „stadtkämmerin", das Fenster fängt mit „in …" an. Ein längerer Rest
+    wäre ein Token, das im ganzen Text nicht vorkommt -- der Quotient läge über 1 und der Anteil
+    wäre kein Anteil mehr.
+    """
+    rules = TopicRules(
+        name_markers=("vorsitzende",),
+        name_window=40,
+        name_min_documents=2,
+        name_share=1.0,
+        with_names=True,
+    )
+    texts = [f"beschluss vorsitzenderausschuss tagte heute {i}" for i in range(4)]
+    assert all(word.isalpha() for word in name_stop_words(texts, rules))
+
+
 def test_without_the_source_namen_no_name_is_derived() -> None:
     rules = TopicRules(name_markers=("gez.",), with_names=False)
     assert name_stop_words(["gez. mustermann x"] * 10, rules) == frozenset()
