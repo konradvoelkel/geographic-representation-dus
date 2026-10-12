@@ -45,6 +45,14 @@ Varianten zur Seite (Spezifität je Begriff, Gewicht je Dokumentart, ein Thema j
 unter jeder davon; mit Einheitsgewichten steht dort dieselbe Zeile wie oben. `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
 braucht Netz). Daneben liegen unter `data/site/data/` die Ergebnisse zum Weiterverarbeiten: die
 sechzehn Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema
+810 KB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
+der Karte der 41 Wahlbezirke (Trefferquote oder Wahlbeteiligung, Tooltips, Klick-Markierung, die 1309 Orte als
+Punkte), dem Streudiagramm mit beiden Regressionsgeraden und Tabelle 5, einer sortierbaren Tabelle je
+Wahlbezirk, dem Abschnitt „Urheber und Parteien" (sechs kleine Karten je Partei, Tabelle je Partei mit dem
+Abgleich zum Stimmenanteil, Tabelle je Wahlbezirk mit den Urheberklassen), den Begriffen (ein Klick zeigt die
+Dokumente mit Datum, Drucksache, Urheber und PDF-Link), Methode und Grenzen, Lizenzen. `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
+braucht Netz). Daneben liegen unter `data/site/data/` die Ergebnisse zum Weiterverarbeiten: die neun
+Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema
 und `dokumente.json` (Dokumente mit Treffer ohne Texte); Größe und SHA-256 jeder Datei stehen auf der Seite. Der Workflow
 `.github/workflows/pages.yml` baut die Seite bei jedem Push auf `main` aus den Referenzdaten (`bootstrap`, `run`,
 kein Netzabruf) und veröffentlicht sie über GitHub Pages unter

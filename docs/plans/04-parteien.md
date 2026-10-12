@@ -1,6 +1,6 @@
 # Plan 04: Parteien
 
-Stand 2026-10-12, Branch `feat/04-parteien`. Status: in Arbeit.
+Stand 2026-10-12, Branch `feat/04-parteien`. Status: im Review.
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.4; Vorlage § 8.3; Regeln § 2.
 Dieser Plan ist so geschrieben, dass ein frischer Agent ihn in Phase 3 ohne Rückfragen umsetzen kann. Alle
@@ -462,6 +462,9 @@ Gesamt: rund 12,5 Agentenstunden in etwa 17 Commits, dazu 2 bis 3 h Wartezeit f�
 | 8 | Reicht je Partei Pearson r mit p und der Bonferroni-Hinweis, oder soll ein Modell her (Option 3)? | Umfang der Statistik auf der Seite, Abgrenzung zu Option 3 | r, p, rho je Partei; das Modell bleibt bei Option 3 |
 | 9 | `dokumente_urheber.csv` wird rund 1,7 MB (19 108 URLs). Als Download anbieten oder nur Parquet? | Seitengröße 8,4 -> 10,3 MB | anbieten, wie `wahlbezirke_auswertung.csv` (2,1 MB) |
 | 10 | Eingaben nach § 24 GO als eigene Klasse „Eingabe" (124 Dokumente) oder unter „Person"? | fünf statt vier Klassen in Tabelle und Vertrag | eigene Klasse; Bürgeranträge sind weder Verwaltung noch Mandatsträger |
+| 11 | Soll ein Dokument, das nur im Textkopf einen Mandatsträger nennt (BV3/023/2021: „- antrag von herrn feldmann (fdp)", der Titel schweigt), als „Person" zählen? Die Personenmarker lesen heute nur den Titel; auf den Textkopf angewandt machten die Anreden der Vorlagen („sehr geehrter Herr Oberbürgermeister") halbe Anträge zu Personen. | der eine verbliebene Fehler der Stichprobe (1 von 50); eine Lösung bräuchte ein engeres Muster „antrag/anfrage von Herrn/Frau X" im Kopf | bleibt „unbekannt", in der Doku als Grenze benannt |
+| 12 | Die Zellen der Bezirkstabelle tragen eine hellere Tönung als die Karten, weil die volle Rampe `--q0` bis `--q4` in der Mitte in keiner Schriftfarbe Kontrast 4,5 erreicht (hell: 4,46 dunkel, 4,30 hell). Ist die zweite, erklärte Skala in Ordnung, oder sollen die Zellen lieber ohne Schattierung bleiben? | Lesbarkeit gegen Einheitlichkeit der Farbsprache | zwei Skalen, beide ordinal, der Tabellentext erklärt den Unterschied |
+| 13 | `classify_document` hat `deal.safe` statt `deal.pure` bekommen: `deal.pure` enthält `deal.has()`, dessen Patcher prozessweit wirkt und nicht reentrant ist, und die Funktion läuft je Dokument (19 108 Aufrufe; CLAUDE.md verbietet das in heißen Schleifen). Vor- und Nachbedingungen bleiben, crosshair kann sie prüfen. | Abweichung von § 2 und § 7 des Plans | `deal.safe`, so umgesetzt |
 
 ## 9. Vorbereitung für Option 10
 
