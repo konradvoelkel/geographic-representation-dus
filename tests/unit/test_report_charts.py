@@ -20,13 +20,18 @@ from georep.report.charts import (
     bars,
     choropleth,
     classify,
+    classify_fixed,
     delta_label,
     delta_scatter,
     legend,
     nice_ticks,
     party_maps,
+    per_term_label,
+    percent_signed_label,
+    points_label,
     project_pois,
     rate_label,
+    ratio_label,
     scatter,
     turnout_label,
 )
@@ -84,6 +89,31 @@ def test_classify_uses_at_most_as_many_classes_as_distinct_values() -> None:
     assert all(a <= b for a, b in zip(many.boundaries, many.boundaries[1:], strict=False))
     with pytest.raises(deal.PreContractError):
         classify({})
+
+
+def test_fixed_classes_divide_at_the_given_boundaries() -> None:
+    """Punkt 46: eine divergierende Variante bekommt feste Grenzen, keine Quantile."""
+    bounds = (-0.25, -0.10, 0.10, 0.25)
+    found = classify_fixed({1: -0.578, 2: -0.2, 3: 0.0, 4: 0.10, 5: 1.448}, bounds)
+    assert found.count == 5 and found.boundaries == bounds
+    # Die Grenze selbst gehört zur oberen Klasse (wie bei classify: [b_{i-1}, b_i))
+    assert found.classes == {1: 0, 2: 1, 3: 2, 4: 3, 5: 4}
+    # Dieselben Werte mit Quantilen: eine andere, hier gleichverteilte Einteilung
+    assert classify({1: -0.578, 2: -0.2, 3: 0.0, 4: 0.10, 5: 1.448}).classes != found.classes
+    with pytest.raises(deal.PreContractError):
+        classify_fixed({1: 0.0}, ())
+    with pytest.raises(deal.PreContractError):
+        classify_fixed({1: 0.0}, (0.2, 0.1))  # nicht aufsteigend
+
+
+def test_the_signed_labels_carry_their_unit() -> None:
+    assert percent_signed_label(-0.25) == f"-25{NARROW_NBSP}%"
+    assert percent_signed_label(0.1) == f"+10{NARROW_NBSP}%"
+    assert percent_signed_label(0.0) == f"0{NARROW_NBSP}%"
+    assert points_label(-0.02) == "-2,0 pp"
+    assert points_label(0.005) == "+0,5 pp"
+    assert ratio_label(1.25) == "1,25×"
+    assert per_term_label(4.5656) == "4,57"
 
 
 def test_legend_names_the_class_bounds() -> None:
