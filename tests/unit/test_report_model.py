@@ -10,8 +10,10 @@ import polars as pl
 import pytest
 from shapely.geometry import box
 
-from georep.errors import SchemaError
+from georep.analysis.periods import compare_periods
+from georep.errors import EmptyResultError, MissingInputError, SchemaError
 from georep.geo import Precinct
+from georep.io import write_parquet
 from georep.layout import Layout
 from georep.report.model import (
     NARROW_NBSP,
@@ -27,6 +29,7 @@ from georep.report.model import (
     district_rows,
     format_de,
     percent_de,
+    period_comparison,
     stamp_written,
     term_counts,
     top_terms_city,
@@ -625,3 +628,80 @@ def test_without_the_parties_step_the_section_stays_empty(
     assert model.parties == () and model.party_cells == ()
     assert model.originators == () and model.originator_figures is None
     assert model.cells_for(1) == ()
+
+
+# --- Option 02: der Vergleich im Modell, auch wenn eine Rechnung kein Ergebnis hat -------------
+
+REPO = Path(__file__).resolve().parents[2]
+COMPARE_PROFILE = REPO / "settings.vergleich.toml"
+LABELS = ("Wahlperiode 2014 bis 2020", "Wahlperiode 2020 bis 2025")
+
+
+def _results(rates: list[float], turnouts: list[float]) -> pl.DataFrame:
+    districts = list(range(1, len(rates) + 1))
+    return pl.DataFrame(
+        {
+            "wahlkreis_id": districts,
+            "anzahl_treffer": [round(r * 10_000) for r in rates],
+            "Wahlberechtigte_insgesamt": [10_000] * len(rates),
+            "trefferquote": rates,
+            "wahlbeteiligung": turnouts,
+        }
+    ).sort("wahlkreis_id")
+
+
+def _compared(tmp_path: Path, old: pl.DataFrame, new: pl.DataFrame) -> tuple[Layout, Settings]:
+    """Eine Datenwurzel mit gerechnetem Vergleich und der Zuordnung der älteren Periode."""
+    settings = load_settings(explicit=COMPARE_PROFILE, cwd=Path("/nonexistent")).model_copy(
+        update={"data_root": tmp_path / "data", "cache_root": tmp_path / "cache"}
+    )
+    layout = Layout.from_settings(settings)
+    other = layout.for_profile(settings.compare.period)
+    for target in (layout, other):
+        target.ensure_dirs()
+    write_parquet(compare_periods(new, old, labels=LABELS), layout.comparison, schema_version=1)
+    write_parquet(old, other.results, schema_version=1)
+    write_parquet(
+        pl.DataFrame({"stimmbezirk_id": ["0101", "0102"], "abdeckung": [1.0, 0.99]}),
+        other.precinct_assignment,
+        schema_version=1,
+    )
+    return layout, settings
+
+
+def test_period_comparison_reads_both_periods_and_the_assignment(tmp_path: Path) -> None:
+    old = _results([0.001, 0.002, 0.003], [0.40, 0.50, 0.60])
+    new = _results([0.002, 0.002, 0.005], [0.45, 0.48, 0.70])
+    layout, settings = _compared(tmp_path, old, new)
+    comparison = period_comparison(layout, settings, {1: "Eins", 2: "Zwei", 3: "Drei"}, 3, "alt/")
+    assert comparison is not None
+    assert [r.name for r in comparison.rows] == ["Eins", "Zwei", "Drei"]
+    assert comparison.previous == LABELS[0] and comparison.current == LABELS[1]
+    assert comparison.precincts == 2 and comparison.split == 0
+    assert comparison.min_coverage == pytest.approx(0.99)
+    assert comparison.regression.n == 3 and comparison.previous_pair.all.n == 3
+
+
+def test_a_comparison_without_spread_is_a_domain_error_not_a_contract_error(
+    tmp_path: Path,
+) -> None:
+    """Eine Regression ohne Streuung ist ein Domänenfehler; er muss lesbar nach außen kommen.
+
+    Mit konstanter Trefferquote der älteren Periode rechnet ``regression_pair`` nichts; früher
+    wurde daraus ein ``deal.RaisesContractError`` ohne Meldung, weil ``deal.raises`` den
+    ``EmptyResultError`` nicht nannte.
+    """
+    old = _results([0.002, 0.002, 0.002], [0.40, 0.50, 0.60])
+    new = _results([0.001, 0.003, 0.006], [0.45, 0.48, 0.70])
+    layout, settings = _compared(tmp_path, old, new)
+    with pytest.raises(EmptyResultError, match="Streuung in trefferquote"):
+        period_comparison(layout, settings, {1: "Eins", 2: "Zwei", 3: "Drei"}, 3, "alt/")
+
+
+def test_a_missing_assignment_names_the_run_that_is_missing(tmp_path: Path) -> None:
+    old = _results([0.001, 0.002, 0.003], [0.40, 0.50, 0.60])
+    new = _results([0.002, 0.002, 0.005], [0.45, 0.48, 0.70])
+    layout, settings = _compared(tmp_path, old, new)
+    layout.for_profile(settings.compare.period).precinct_assignment.unlink()
+    with pytest.raises(MissingInputError, match="2014-2020"):
+        period_comparison(layout, settings, {1: "Eins", 2: "Zwei", 3: "Drei"}, 3, "alt/")

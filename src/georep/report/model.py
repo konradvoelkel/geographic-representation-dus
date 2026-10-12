@@ -58,7 +58,7 @@ from georep.contracts import has_columns
 # ``crosswalk.UNIT`` ist die Spalte der Raumeinheit (Option 03), ``weights.UNIT`` der Name der
 # Einheitsvariante (Option 06); beide heißen „einheit", meinen aber Verschiedenes.
 from georep.crosswalk import UNIT as CROSSWALK_UNIT
-from georep.errors import EmptyResultError, SchemaError
+from georep.errors import EmptyResultError, MissingInputError, SchemaError
 from georep.geo import Precinct, read_precincts
 from georep.layout import Layout
 from georep.prep import bodies as prep_bodies
@@ -1223,7 +1223,9 @@ def _period_rows(comparison: pl.DataFrame, names: Mapping[int, str]) -> tuple[Pe
     ),
     message="mindestens ein und höchstens ein Wahlbezirk je Zeile der Auswertung",
 )
-@deal.raises(SchemaError)
+# deal vergleicht exakte Typen: beide Domänenfehler müssen hier stehen, sonst wird aus einem
+# lesbaren Fehler ein RaisesContractError ohne Meldung (CLAUDE.md, „deal (Phase 6)").
+@deal.raises(EmptyResultError, MissingInputError)
 def period_comparison(
     layout: Layout,
     settings: Settings,
@@ -1233,12 +1235,24 @@ def period_comparison(
 ) -> PeriodComparison | None:
     """Option 02: der Vergleich, wenn ``compare.period`` gesetzt und die Tabelle gerechnet ist.
 
-    Fehlt die Datei, fehlt der Abschnitt: der Schritt ``compare`` läuft nur mit dem Profil
-    ``settings.vergleich.toml``, und ohne ihn ist die Seite die von ``main``.
+    Fehlt die Vergleichstabelle, fehlt der Abschnitt: der Schritt ``compare`` läuft nur mit dem
+    Profil ``settings.vergleich.toml``, und ohne ihn ist die Seite die von ``main``. Fehlt
+    dagegen die Zuordnung der älteren Periode, ist das kein fehlender Abschnitt, sondern ein
+    unvollständiger Lauf — und ein ``MissingInputError``, der sagt, welcher.
+
+    Eine Regression ohne Streuung (alle Trefferquoten der älteren Periode gleich) ist ein
+    ``EmptyResultError``; beide Fehler stehen in ``deal.raises`` und kommen als Domänenfehler am
+    Rand an, nicht als Vertragsverletzung.
     """
     if not settings.compare.period or not layout.comparison.is_file():
         return None
     other = layout.for_profile(settings.compare.period)
+    if not other.precinct_assignment.is_file():
+        raise MissingInputError(
+            f"Vergleich mit dem Profil {settings.compare.period!r}: "
+            f"{other.precinct_assignment} fehlt. Erst dieses Profil vollständig rechnen "
+            "(`georep --settings <profil>.toml run`), dann den Vergleich."
+        )
     comparison = pl.read_parquet(layout.comparison)
     rows = _period_rows(comparison, names)
     assignment = pl.read_parquet(other.precinct_assignment)
