@@ -99,7 +99,7 @@ def test_without_context_data_the_chain_is_the_old_one(
 def test_the_whole_chain_on_the_reference_publishes_both_sections(
     tmp_path: Path, reference_root: Path, context_root: Path, settings: Settings
 ) -> None:
-    """Die volle Kette mit Fremddaten: elf Offline-Schritte, beide Abschnitte, Budget gehalten."""
+    """Die volle Kette mit Fremddaten: jeder Offline-Schritt, beide Abschnitte, Budget gehalten."""
     layout = Layout(
         tmp_path / "data", tmp_path / "cache", reference_root, context_root=context_root
     )
@@ -107,13 +107,16 @@ def test_the_whole_chain_on_the_reference_publishes_both_sections(
     steps = build_steps(settings, layout)
     outcomes = run_pipeline(steps, settings)
     offline = [o for o in outcomes if o.step not in {s.name for s in steps if s.network}]
-    assert len(offline) == 11 and all(o.status == "ausgeführt" for o in offline)
+    # Zahl aus dem Register, nicht als Literal (00-synergien.md, F6): die Schritte der anderen
+    # Optionen zählen mit, sobald dieser Branch über sie rebased ist.
+    assert len(offline) == sum(1 for s in steps if not s.network)
+    assert all(o.status == "ausgeführt" for o in offline)
     assert "171 Sozialräume, 13 Variablen" in next(o for o in offline if o.step == "context").reason
     assert "32 von 32 Modellen" in next(o for o in offline if o.step == "controls").reason
 
     page = layout.site_index.read_text(encoding="utf-8")
-    assert layout.site_index.stat().st_size < 800_000  # Ziel des Plans; Budget sind 1,5 MB
-    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 3 == 21
+    assert layout.site_index.stat().st_size < 1_500_000  # Budget der Seite, Meta-Plan 2026-10 § 2
+    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 3
     assert '<section id="kontrollvariablen">' in page and "Modell C" in page
     assert '<section id="abgeleitete-daten">' in page
     assert settings.context.dataset.license in page  # Namensnennung aus den Settings
