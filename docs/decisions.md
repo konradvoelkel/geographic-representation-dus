@@ -615,7 +615,11 @@ und im Commit erneuert.
 Verworfen: die exakte Reproduktion ganz aufgeben (dann wüsste niemand mehr, wo die Arbeit endet und das
 Programm beginnt); eine Toleranz ohne Messung (jede Abweichung muss benannt sein).
 
-## 44. Einrichtungen mit Stadtnamen sind keine Orte (2026-10-12)
+## 44. Einrichtungen mit Stadtnamen und stadtweite Begriffe (2026-10-12)
+
+Zwei Regeln aus `docs/todo.md`, Punkt 4; die erste wirkt auf die Zahlen, die zweite auf die Seite.
+
+### 44a. Einrichtungen mit Stadtnamen sind keine Orte
 
 Erste bewusste Abweichung von der Arbeit nach Punkt 43. Das Wörterbuch enthält alles, was in einem
 Stimmbezirk eine Koordinate hat, ohne Rücksicht auf den Typ (Punkt 7 und `architecture.md`, „Pipeline"); damit
@@ -671,3 +675,33 @@ Stunden und je Stadt neu zu prüfen, Review § 2.1); die Dokumenthäufigkeit als
 „hofgarten" und „schulweg", also echte Orte — das ist Regel 2 und eine andere Frage); die Regel nur auf das
 Wörterbuch wirken zu lassen und die Karte unverändert zu lassen (dann zeigte die Karte Orte, die nicht
 zählen).
+
+### 44b. Stadtweite Begriffe werden benannt, nicht stillschweigend gezählt
+
+Regel 1 urteilt über Namen und findet darum nicht, was ohne Stadtnamen stadtweit vorkommt. Gemessen am
+2026-10-12 auf der Referenz: „grafenberger allee" steht in 205 Dokumenten, „hofgarten" in 172, „königsallee"
+in 146, „schulweg" in 144 — bei einem Median von 1 Dokument je Begriff. Ein Park, eine Prachtstraße oder ein
+Gattungswort wird in der ganzen Stadt besprochen; der Wahlbezirk, dessen Wörterbuch den Begriff führt, bekommt
+die Treffer trotzdem.
+
+**Die Regel** (`georep.analysis.hits.citywide_terms`): Begriffe, deren Dokumenthäufigkeit über einer Schwelle
+liegt, stehen auf der Seite im Abschnitt „Begriffe" als eigene Liste mit Dokumentzahl und Wahlbezirk. Die
+Schwelle ist **entweder** ein Quantil der Dokumenthäufigkeit (`search.citywide_quantile = 0.99`, auf der
+Referenz 64 Dokumente und 58 der 5841 Begriffe) **oder** ein Vielfaches des Medians
+(`search.citywide_median_factor`), nie beides — zwei Schwellen wären zwei Wahrheiten, und die Settings weisen
+die Kombination beim Laden zurück. Das Quantil ist die Vorgabe, weil es sich dem Datensatz anpasst; auf der
+Referenz ist der Median 1 Dokument, ein Vielfaches davon wäre willkürlich. 0,95 statt 0,99 wären 283 Begriffe
+und damit keine Liste mehr, die jemand liest.
+
+**Nur Anzeige.** Ob die Begriffe auch aus der Zählung fallen, ist ein eigener Schalter
+(`search.citywide_exclude`), **standardmäßig aus**: die Schwelle trifft auch echte Ortsnamen („hofgarten",
+„königsallee"), und sie zu entfernen wäre eine Korrektur, die niemand begründen kann. Die Liste ist eine
+Offenlegung — sie zeigt dem Leser genau die Fälle, über die das Review streitet, „schulweg" eingeschlossen
+(`methodik-review-2026-10.md`, § 2.3). Mit dem Schalter an nimmt der Schritt `results` die Begriffe vor der
+Zählung aus dem Wörterbuch (`without_terms`) und sagt in seiner Zeile, wie viele es waren.
+
+Verworfen: die Begriffe stumm ausschließen (dann wäre die Zahl eine andere und niemand wüsste, warum); eine
+feste Schwelle in Dokumenten (hängt an der Korpusgröße und gilt für keine zweite Stadt); `hide_in_display` zu
+erweitern (das versteckt sie in der Anzeige und zählt sie weiter, also genau die Lösung, die das Review der
+Arbeit vorhält); die Liste in einen eigenen Seitenabschnitt (sie gehört zu den Begriffen, und ein Abschnitt
+mehr kostet eine Nummer in der festen Reihenfolge).

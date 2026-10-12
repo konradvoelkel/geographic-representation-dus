@@ -83,6 +83,15 @@ place_words = [
     "krankenhaus", "hospital", "klinik", "klinikum",
 ]
 
+# Regel 2 „stadtweite Begriffe" (decisions.md Punkt 44): Begriffe, die in auffällig vielen
+# Dokumenten stehen, handeln meist nicht von ihrem Wahlbezirk („hofgarten" 172, „schulweg" 144 auf
+# der Referenz). Die Seite nennt sie im Abschnitt „Begriffe" mit Dokumentzahl und Wahlbezirk,
+# damit Leser die Grenze der Methode sehen. Schwelle ist entweder ein Quantil der
+# Dokumenthäufigkeit oder ein Vielfaches des Medians, nie beides; 0 schaltet ab.
+citywide_quantile = 0.99       # 1 % der Begriffe; auf der Referenz 58 von 5841 über 64 Dokumenten. 0,95 wären 283 Begriffe und damit keine Liste zum Lesen mehr
+citywide_median_factor = 0.0   # Alternative zum Quantil: Vielfaches des Medians. Auf der Referenz ist der Median 1 Dokument, ein Vielfaches davon wäre willkürlich; in einem kleineren Korpus kann es die robustere Schwelle sein
+citywide_exclude = false       # true nimmt diese Begriffe auch aus der Zählung. Standard aus: die Liste ist eine Offenlegung, keine Korrektur, und die Schwelle trifft auch echte Ortsnamen (Hofgarten, Königsallee)
+
 # zählt je Wahlbezirk höchstens einmal (Maximum über seine Begriffe mal Dokumentart mal Thema).
 [weights]
 combined = ["idf", "antraege_halb"]  # Faktoren der Variante "kombiniert" als Produkt: feste Faktoren "idf", "bezirke" oder ein Regelsatz von unten; leer = keine Zeile

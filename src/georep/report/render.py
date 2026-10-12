@@ -26,6 +26,7 @@ from georep.report.search import search_payload
 REPOSITORY = "https://github.com/konradvoelkel/geographic-representation-dus"
 THESIS = "https://github.com/lubar102/geographic-representation-dus"
 ARCHITECTURE = f"{REPOSITORY}/blob/main/docs/architecture.md"
+DECISIONS = f"{REPOSITORY}/blob/main/docs/decisions.md"
 OSM_COPYRIGHT = "https://www.openstreetmap.org/copyright"
 WIKIDATA = "https://www.wikidata.org/"
 WIKIPEDIA = "https://de.wikipedia.org/"
@@ -36,7 +37,18 @@ ODBL = "https://opendatacommons.org/licenses/odbl/1-0/"
 # Lizenzen der Daten sind je Stadt verschieden; sie stehen im Profil und kommen über
 # ``model_links`` hinzu, sind also per Konstruktion erlaubt — Links aus Daten weiterhin nicht.
 ALLOWED_LINKS = frozenset(
-    {REPOSITORY, THESIS, ARCHITECTURE, OSM_COPYRIGHT, WIKIDATA, WIKIPEDIA, CC0, GPL, ODBL}
+    {
+        REPOSITORY,
+        THESIS,
+        ARCHITECTURE,
+        DECISIONS,
+        OSM_COPYRIGHT,
+        WIKIDATA,
+        WIKIPEDIA,
+        CC0,
+        GPL,
+        ODBL,
+    }
 )
 _EXTERNAL = re.compile(r'(?:href|src)="(https?://[^"]*)"')
 
@@ -215,6 +227,7 @@ def render_report(model: ReportModel, visuals: Visuals) -> str:
             "repository": REPOSITORY,
             "thesis": THESIS,
             "architecture": ARCHITECTURE,
+            "decisions": DECISIONS,
             # Option 01: das Ratsinformationssystem nennt das Profil, nicht der Code
             "ris": model.ris_url,
             "osm": OSM_COPYRIGHT,

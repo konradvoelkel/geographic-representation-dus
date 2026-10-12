@@ -57,9 +57,11 @@ def test_without_a_threshold_there_is_no_list() -> None:
 
 
 def test_the_strongest_terms_come_first() -> None:
-    index = _index(("a", 50), ("b", 80), ("c", 1), ("d", 80))
-    found = citywide_terms(index, quantile=0.5, median_factor=0.0)
-    assert found.terms == ("b", "d", "a")
+    index = _index(("a", 50), ("b", 80), ("c", 1), ("d", 80), ("e", 2), ("f", 3))
+    found = citywide_terms(index, quantile=0.25, median_factor=0.0)
+    assert found.threshold == 2  # 25-%-Quantil von 1, 2, 3, 50, 80, 80
+    # absteigend nach Dokumenten, bei Gleichstand alphabetisch
+    assert found.terms == ("b", "d", "a", "f")
 
 
 def test_terms_can_be_taken_out_of_a_dictionary() -> None:

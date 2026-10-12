@@ -10,6 +10,20 @@
 <tr><td>{{ term(t) }}</td><td class="num">{{ t.hits|num }}</td><td>{{ t.districts|join(', ') }}</td></tr>
 {% endfor %}
 </tbody></table></div>
+{% if model.citywide %}{# Regel 2, decisions.md Punkt 44 #}
+<h3>Stadtweite Begriffe</h3>
+<p class="note">Diese {{ model.citywide.rows|length|num }} Begriffe stehen {{ model.citywide.basis }} und damit in weit mehr Dokumenten als der Rest. Viele dieser Dokumente handeln nicht von dem Wahlbezirk, dessen Wörterbuch den Begriff führt: eine große Straße, ein Park oder ein Platz wird in der ganzen Stadt besprochen. {% if model.citywide.excluded %}Sie sind in dieser Auswertung <strong>nicht mitgezählt</strong>.{% else %}Sie sind mitgezählt — die Liste steht hier, damit die Grenze der Methode sichtbar ist.{% endif %}</p>
+<details>
+<summary>{{ model.citywide.rows|length|num }} Begriffe {{ model.citywide.basis }}</summary>
+<div class="scroll"><table>
+<thead><tr><th scope="col">Begriff</th><th scope="col" class="num">Dokumente</th><th scope="col">Wahlbezirk</th></tr></thead>
+<tbody>
+{% for t in model.citywide.rows %}
+<tr><td>{{ term(t) }}</td><td class="num">{{ t.hits|num }}</td><td>{{ t.districts|join(', ') }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+</details>
+{% endif %}
 <h3>Begriffe je Wahlbezirk</h3>
 {% for d in model.districts %}
 <details>

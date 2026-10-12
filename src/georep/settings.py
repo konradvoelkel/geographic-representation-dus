@@ -332,6 +332,10 @@ class Search(_Strict):
     city_facilities: bool = True
     place_words: list[str] = []
     city_facilities_keep: list[str] = []
+    # Regel 2 „stadtweite Begriffe": genau eine der beiden Schwellen, beide 0 = keine Liste.
+    citywide_quantile: float = 0.0
+    citywide_median_factor: float = 0.0
+    citywide_exclude: bool = False
 
     @field_validator("text_split_marker")
     @classmethod
@@ -341,6 +345,28 @@ class Search(_Strict):
                 "search.text_split_marker darf nicht leer sein (str.split braucht einen Trenner)"
             )
         return value
+
+    @model_validator(mode="after")
+    def _one_citywide_threshold(self) -> Search:
+        if not 0.0 <= self.citywide_quantile < 1.0:
+            raise ValueError(
+                f"search.citywide_quantile {self.citywide_quantile}: ein Quantil liegt in [0, 1)"
+            )
+        if self.citywide_median_factor < 0.0:
+            raise ValueError(
+                f"search.citywide_median_factor {self.citywide_median_factor}: nicht negativ"
+            )
+        if self.citywide_quantile and self.citywide_median_factor:
+            raise ValueError(
+                "search: genau eines von citywide_quantile und citywide_median_factor; "
+                "zwei Schwellen wären zwei Wahrheiten"
+            )
+        if self.citywide_exclude and not (self.citywide_quantile or self.citywide_median_factor):
+            raise ValueError(
+                "search.citywide_exclude braucht eine Schwelle "
+                "(citywide_quantile oder citywide_median_factor)"
+            )
+        return self
 
 
 class Analysis(_Strict):

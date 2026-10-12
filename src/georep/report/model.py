@@ -20,7 +20,7 @@ import polars as pl
 
 from georep import __version__
 from georep.analysis import bodies
-from georep.analysis.hits import DISTRICT, RATE, TERMS
+from georep.analysis.hits import DISTRICT, RATE, TERMS, Citywide, citywide_terms
 from georep.analysis.ols import ALL, CONSTANT, MAIN_MODEL, model_terms, sample_label
 from georep.analysis.parties import (
     KLASSEN_SPALTEN,
@@ -263,6 +263,20 @@ class TermExample:
     term: str
     hits: int
     districts: int
+
+
+@dataclass(frozen=True)
+class CitywideSection:
+    """Regel 2: die Begriffe über der Schwelle der Dokumenthäufigkeit (decisions.md, Punkt 44).
+
+    ``basis`` nennt die Schwelle in Worten, ``excluded`` sagt, ob sie außerdem aus der Zählung
+    gefallen sind (``search.citywide_exclude``). Ohne Schwelle gibt es den Abschnitt nicht, dann
+    steht im Modell ``None``.
+    """
+
+    basis: str
+    excluded: bool
+    rows: tuple[TermRow, ...]
 
 
 @dataclass(frozen=True)
@@ -514,6 +528,11 @@ class ReportModel:
     bodies: tuple[BodyRow, ...] = ()
     body_figures: BodyFigures | None = None
     body_regression: RegressionPair | None = None
+    # Regel 2 (decisions.md, Punkt 44): die stadtweiten Begriffe; None heißt „keine Schwelle".
+    citywide: CitywideSection | None = None
+    # Regel 1 (ebenda): ob Einrichtungen mit Stadtnamen aus dem Wörterbuch gefallen sind. Die
+    # Vorlage nennt die Regel nur dann in „Methode und Grenzen".
+    city_facilities: bool = False
     sensitivity: Sensitivity | None = None  # Option 06; None = ohne Abschnitt
     controls: ControlsSection | None = None  # Option 03; None ohne Kontextdaten
     derived: DerivedData | None = None  # Option 03
@@ -850,6 +869,34 @@ def top_terms_city(counts: pl.DataFrame, hidden: Sequence[str]) -> tuple[TermRow
     )
     return tuple(
         TermRow(r[TERM], int(r[HITS]), tuple(r["districts"])) for r in best.iter_rows(named=True)
+    )
+
+
+@deal.pre(lambda counts, found, excluded=False: has_columns(counts, TERM, HITS, "districts"))
+@deal.post(lambda result: result is None or bool(result.basis))
+def citywide_section(
+    counts: pl.DataFrame, found: Citywide, excluded: bool = False
+) -> CitywideSection | None:
+    """Die Zeilen der Liste „stadtweite Begriffe": Begriff, Dokumente, Wahlbezirke.
+
+    ``found`` kommt aus ``citywide_terms`` über den Index; die Wahlbezirke je Begriff stehen in
+    ``counts`` (ein Begriff kann in mehreren Wörterbüchern stehen). Ohne Schwelle gibt es keinen
+    Abschnitt, mit Schwelle und ohne Treffer darüber eine leere Liste mit ihrem Satz.
+    """
+    if not found.basis:
+        return None
+    rows = (
+        counts.filter(pl.col(TERM).is_in(list(found.terms)))
+        .unique(subset=[TERM], keep="first")
+        .sort([HITS, TERM], descending=[True, False])
+    )
+    return CitywideSection(
+        basis=found.basis,
+        excluded=excluded,
+        rows=tuple(
+            TermRow(r[TERM], int(r[HITS]), tuple(r["districts"]))
+            for r in rows.iter_rows(named=True)
+        ),
     )
 
 
@@ -1381,6 +1428,18 @@ def build_report_model(
         districts=rows,
         top_terms=top_terms_city(counts, hidden),
         hidden_terms=hidden,
+        # Regel 2: dieselbe Schwelle wie im Schritt ``results``; ``excluded`` sagt dem Leser, ob
+        # die Begriffe nur benannt oder auch aus der Zählung genommen wurden.
+        citywide=citywide_section(
+            counts,
+            citywide_terms(
+                index,
+                quantile=settings.search.citywide_quantile,
+                median_factor=settings.search.citywide_median_factor,
+            ),
+            settings.search.citywide_exclude,
+        ),
+        city_facilities=settings.search.city_facilities,
         regression=(
             regression_pair(results, settings.analysis.exclude_districts)
             if settings.report.regression

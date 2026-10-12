@@ -10,6 +10,7 @@ import polars as pl
 import pytest
 from shapely.geometry import box
 
+from georep.analysis.hits import citywide_terms
 from georep.analysis.periods import compare_periods
 from georep.errors import EmptyResultError, MissingInputError, SchemaError
 from georep.geo import Precinct
@@ -772,3 +773,43 @@ def test_key_figures_count_documents_without_text(mini_run: Layout, tmp_path: Pa
     assert figures.documents == corpus.height
     assert figures.documents_with_text == corpus.height - 3
     assert figures.documents_without_text == 3
+
+
+def test_the_citywide_section_names_the_threshold_and_its_terms(
+    model: ReportModel, mini_run: Layout
+) -> None:
+    """Regel 2 (decisions.md, Punkt 44): die Liste steht im Modell, gezählt wird weiter."""
+    section = model.citywide
+    assert section is not None
+    assert "99" in section.basis and "Quantil" in section.basis
+    assert section.excluded is False  # Standard: nur Anzeige
+    assert section.rows and [r.hits for r in section.rows] == sorted(
+        (r.hits for r in section.rows), reverse=True
+    )
+    index = pl.read_parquet(mini_run.index)
+    threshold = citywide_terms(index, quantile=0.99, median_factor=0.0).threshold
+    assert all(r.hits > threshold for r in section.rows)
+    assert all(r.districts for r in section.rows)
+    # Der stärkste Begriff der Stadt steht auch hier, mit derselben Zahl
+    assert section.rows[0].term == model.top_terms[0].term
+    assert section.rows[0].hits == model.top_terms[0].hits
+
+
+def test_without_a_threshold_there_is_no_citywide_section(
+    mini_run: Layout, default_settings: Settings
+) -> None:
+    search = default_settings.search.model_copy(update={"citywide_quantile": 0.0})
+    without = build_report_model(
+        mini_run,
+        default_settings.model_copy(update={"search": search}),
+        now=dt.datetime(2026, 10, 12, 9, 0, tzinfo=dt.UTC),
+    )
+    assert without.citywide is None
+    assert without.city_facilities is True  # Regel 1 ist davon unabhängig
+
+
+def test_the_page_names_both_rules(mini_page: str) -> None:
+    assert "Stadtweite Begriffe" in mini_page
+    assert "Zwei Regeln weichen bewusst von der Arbeit ab" in mini_page
+    assert "Einrichtung mit stadtweiter Bedeutung" in mini_page
+    assert "Straßen sind nie betroffen" in mini_page

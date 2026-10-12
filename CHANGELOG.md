@@ -4,6 +4,14 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Stadtweite Begriffe stehen auf der Seite** (`search.citywide_quantile`, Vorgabe 0,99): Begriffe, deren
+  Dokumentzahl über dem 99-%-Quantil liegt (auf der Referenz 58 von 5841 Begriffen über 64 Dokumenten,
+  darunter „grafenberger allee" 205, „hofgarten" 172, „schulweg" 144), bekommen im Abschnitt „Begriffe" eine
+  eigene Liste mit Dokumentzahl und Wahlbezirk: sie stehen in weit mehr Dokumenten, als ihr Wahlbezirk
+  hergibt, und das soll sichtbar sein. Gezählt werden sie weiter; `search.citywide_exclude` nimmt sie auch aus
+  der Zählung, ist aber standardmäßig aus. Alternativ zum Quantil eine Schwelle als Vielfaches des Medians
+  (`search.citywide_median_factor`); genau eine der beiden gilt. „Methode und Grenzen" nennt beide neuen
+  Regeln in einem Absatz (`docs/decisions.md`, Punkt 44b).
 - **Einrichtungen mit Stadtnamen sind keine Orte** (`search.city_facilities`, standardmäßig an): ein Ort aus
   Wikidata oder Wikipedia, dessen Label den Stadtnamen des Profils als letztes Wort trägt („Stadtwerke
   Düsseldorf", „Messe Düsseldorf") oder das Städteadjektiv irgendwo („Düsseldorfer Schauspielhaus"), fällt aus
@@ -13,7 +21,7 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   sind nie betroffen. Auf der Referenz trifft die Regel 113 von 1309 Labels, die Treffer sinken um 1,9 %, der
   Wahlbezirk 10 verliert 14,9 % seiner Treffer und ist kein Ausreißer mehr. `search.city_facilities_keep` im
   Profil nimmt einzelne Labels wieder heraus. Mit `city_facilities = false` rechnet die Kette wie die Arbeit
-  (`docs/decisions.md`, Punkt 44, gemessen in `docs/methodik-review-2026-10.md`).
+  (`docs/decisions.md`, Punkt 44a, gemessen in `docs/methodik-review-2026-10.md`).
 - Der Quelltext steht unter GPL-3.0-or-later (`LICENSE`); bis zum Tag `v0.11.0` war es CC0 1.0 wie das
   Original. Ergebnisse, Tabellen und die Berichtsseite bleiben CC0 1.0, die Daten behalten die Lizenz ihrer
   Quelle; der Fuß der Seite nennt beides.

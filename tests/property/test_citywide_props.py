@@ -6,7 +6,7 @@ import polars as pl
 from hypothesis import given
 from hypothesis import strategies as st
 
-from georep.analysis.hits import citywide_terms, without_terms
+from georep.analysis.hits import Citywide, citywide_terms, without_terms
 from georep.search.index import HITS, PAPER_IDS, TERM
 
 terms = st.text(alphabet="abcde", min_size=1, max_size=3)
@@ -41,7 +41,9 @@ def test_every_citywide_term_lies_above_the_threshold(
         assert all(
             counts[term] <= found.threshold for term in counts if term not in set(found.terms)
         )
-        assert bool(found.basis) == bool(found.threshold or found.terms)
+        # Mit Schwelle gibt es immer einen Satz für die Seite, auch wenn niemand darüber liegt
+        assert found.basis
+    assert citywide_terms(index, quantile=0.0, median_factor=0.0) == Citywide(0, "", ())
 
 
 @given(pairs=frequencies, low=st.floats(0.5, 0.9), high=st.floats(0.9, 0.999))

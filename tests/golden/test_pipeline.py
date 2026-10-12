@@ -270,3 +270,24 @@ def test_weighted_variants_reproduce_table_five_and_decompose_the_count(
     stop = load_stop_words(settings.topics.stop_words)
     words = pl.read_parquet(layout.topics).get_column("woerter").to_list()
     assert all(not (set(label) & stop) for label in words)
+
+
+def test_excluding_citywide_terms_lowers_the_hits(tmp_path: Path, mini_root: Path) -> None:
+    """Regel 2 mit dem zweiten Schalter (decisions.md, Punkt 44): die Begriffe zählen nicht mehr.
+
+    Standard ist „nur anzeigen"; dieser Test ist der Beleg, dass der Schalter wirkt und dass die
+    Zeile des Schritts sagt, wie viele Begriffe gefallen sind.
+    """
+    shown = load_settings(cwd=Path("/nonexistent"))
+    dropped = shown.model_copy(
+        update={"search": shown.search.model_copy(update={"citywide_exclude": True})}
+    )
+    hits: dict[str, int] = {}
+    for name, settings in (("anzeigen", shown), ("ausschliessen", dropped)):
+        layout = _layout(tmp_path / name, mini_root)
+        bootstrap(layout)
+        outcomes = run_pipeline(build_steps(settings, layout), settings)
+        hits[name] = int(pl.read_parquet(layout.results).get_column("anzahl_treffer").sum())
+        line = next(o for o in outcomes if o.step == "results").reason
+        assert ("stadtweite Begriffe ausgeschlossen" in line) == (name == "ausschliessen")
+    assert hits["ausschliessen"] < hits["anzeigen"]
