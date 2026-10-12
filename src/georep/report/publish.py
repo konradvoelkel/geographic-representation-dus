@@ -20,7 +20,7 @@ import datetime as dt
 import html
 import re
 import shutil
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 
@@ -150,13 +150,18 @@ def neighbour_line(cities: Sequence[CitySite], index: int) -> str:
     )
 
 
+def _replacement(text: str) -> Callable[[re.Match[str]], str]:
+    return lambda _: text
+
+
 def write_neighbours(cities: Sequence[CitySite], root: Path) -> None:
     """Setzt die Zeile in jede veröffentlichte Stadtseite und räumt die Marke weg."""
     for index, city in enumerate(cities):
         page = root / city.href / "index.html"
         text = page.read_text(encoding="utf-8")
+        # Ersatz als Funktion, damit Backslashes und Gruppenzeichen im Text nichts bedeuten
         filled = neighbour_line(cities, index) + NEIGHBOURS_MARKER
-        write_text(page, _NEIGHBOURS.sub(lambda _: filled, text, count=1))
+        write_text(page, _NEIGHBOURS.sub(_replacement(filled), text, count=1))
 
 
 def _tree_size(folder: Path) -> tuple[int, int]:
