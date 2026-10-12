@@ -13,8 +13,12 @@ from syrupy.assertion import SnapshotAssertion
 from georep.analysis.parties import (
     ART,
     KLASSEN_SPALTEN,
+    PARTEI,
     PARTEIEN,
     PARTY_COLUMNS,
+    PARTY_DEVIATION,
+    PARTY_MEAN,
+    PARTY_RATIO,
     QUELLE,
     TREFFER,
     URHEBER_ARTEN,
@@ -440,6 +444,32 @@ def test_party_hits_counts_cooperations_for_both_and_marks_who_ran(
     # Bezirk 2 ohne CDU-Wahlvorschlag: angetreten falsch, der Anteil 0 bedeutet dort nichts
     assert rows[("CDU", 2)]["stimmen"] == 0 and rows[("CDU", 2)]["angetreten"] is False
     assert rows[("CDU", 1)]["angetreten"] is True and rows[("SPD", 2)]["angetreten"] is True
+
+
+def test_the_party_mean_is_unweighted_and_the_deviations_cancel(
+    default_settings: Settings,
+) -> None:
+    """Punkt 46: Mittel, Abweichung und Verhältnis je Wahlbezirk, von Hand nachgerechnet."""
+    results, documents, voters = _toy()
+    parties = [p for p in default_settings.originators.parties if p.key in ("CDU", "SPD")]
+    found = party_hits(results, documents, voters, parties)
+    rows = {(r[PARTEI], r["wahlkreis_id"]): r for r in found.iter_rows(named=True)}
+    # Bezirk 1: CDU 2 von 2, SPD 1 von 3; das Mittel der beiden Anteile ist 2/3
+    assert rows[("CDU", 1)][PARTY_MEAN] == pytest.approx(2 / 3)
+    assert rows[("SPD", 1)][PARTY_MEAN] == pytest.approx(2 / 3)
+    assert rows[("CDU", 1)][PARTY_DEVIATION] == pytest.approx(1 / 3)
+    assert rows[("SPD", 1)][PARTY_DEVIATION] == pytest.approx(-1 / 3)
+    assert rows[("CDU", 1)][PARTY_RATIO] == pytest.approx(1.5)
+    assert rows[("SPD", 1)][PARTY_RATIO] == pytest.approx(0.5)
+    # Bezirk 2: CDU 1 von 2, SPD 1 von 3; Mittel 5/12, die Verhältnisse 1,2 und 0,8
+    assert rows[("CDU", 2)][PARTY_RATIO] == pytest.approx(1.2)
+    assert rows[("SPD", 2)][PARTY_RATIO] == pytest.approx(0.8)
+    # Bezirk 3: die CDU hat kein Dokument, das Verhältnis ist 0 und keine Division durch 0
+    assert rows[("CDU", 3)][PARTY_RATIO] == 0.0
+    assert rows[("CDU", 3)][PARTY_DEVIATION] == pytest.approx(-1 / 3)
+    # Der Vertrag der Variante: je Wahlbezirk summieren sich die Abweichungen auf 0
+    per_district = found.group_by("wahlkreis_id").agg(pl.col(PARTY_DEVIATION).sum())
+    assert per_district.get_column(PARTY_DEVIATION).abs().max() == pytest.approx(0.0, abs=1e-12)
 
 
 def test_party_correlations_skip_districts_where_the_party_did_not_run(
