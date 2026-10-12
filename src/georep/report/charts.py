@@ -108,10 +108,16 @@ def _covers_range(lo: float, hi: float, n: int = 5, result: tuple[float, ...] = 
 
 def _spread(lo: float, hi: float, n: int = 5) -> bool:
     """Endlich, ``n`` sinnvoll, und die Spanne liegt über dem Fließkomma-Rauschen der Grenzen
-    (sonst läuft die Zehnerpotenz des Schritts auf 0 oder die Ticks fallen zusammen)."""
+    (sonst läuft die Zehnerpotenz des Schritts auf 0 oder die Ticks fallen zusammen).
+
+    Auch die Spanne selbst muss endlich sein: zwei endliche Grenzen am Rand des Zahlenbereichs
+    (−7,6e307 und 1,5e308) ergeben ein unendliches ``hi - lo``, und ``math.log10`` davon wirft
+    einen ``OverflowError`` mitten aus ``nice_ticks`` (crosshair, 2026-10-12).
+    """
     return (
         math.isfinite(lo)
         and math.isfinite(hi)
+        and math.isfinite(hi - lo)
         and 2 <= n <= 20
         and hi - lo >= 1e-9 * max(1.0, abs(lo), abs(hi))
     )

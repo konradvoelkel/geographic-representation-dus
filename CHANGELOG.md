@@ -4,6 +4,9 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- Behoben: `nice_ticks` (Achsenticks der Diagramme) warf einen `OverflowError`, wenn beide Grenzen endlich
+  waren, ihre Differenz aber nicht; die Vorbedingung verlangt jetzt eine endliche Spanne. Mit echten
+  Achsen kam der Fall nicht vor; gefunden hat ihn crosshair.
 - Behoben: `canonical_term` (die Rückübersetzung „münchener str." → „münchener straße", Option 08) ließ eine
   Abkürzung stehen, wenn die eingesetzte Langform mit dem nächsten Zeichen des Begriffs eine neue bildete.
   Ersetzt wird jetzt bis zum Festpunkt. Mit den ausgelieferten Paaren konnte der Fall nicht vorkommen; gefunden
