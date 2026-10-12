@@ -695,12 +695,24 @@ def month_short(month: dt.date) -> str:
     return f"{month.month:02d}.{month.year}"
 
 
-def _labelled(months: Sequence[dt.date]) -> list[tuple[int, str]]:
-    """Welche Balken eine Beschriftung tragen: die Januare, sonst (kurze Reihe) jeder Monat."""
-    januaries = [(i, str(m.year)) for i, m in enumerate(months) if m.month == 1]
-    if len(januaries) >= 2:
-        return januaries
-    return [(i, month_short(m)) for i, m in enumerate(months)]
+# Breite einer Beschriftung bei 11 px Schrift, mit Luft: „10.2025" sind sieben Zeichen, „2026" vier.
+LABEL_MONTH_W = 44.0
+LABEL_YEAR_W = 28.0
+
+
+def _labelled(months: Sequence[dt.date], slot: float) -> list[tuple[int, str]]:
+    """Welche Balken eine Beschriftung tragen: Januare, sonst jeder k-te Monat.
+
+    ``k`` kommt aus der Breite eines Balkenplatzes, damit zwei Beschriftungen nie enger stehen als
+    eine breit ist: bei 14 bis 23 Monaten mit nur einem Januar überlappten sie sonst (Review
+    2026-10-12, Abstand 37,9 bei Breite 41,8).
+    """
+    januaries = [i for i, m in enumerate(months) if m.month == 1]
+    if len(januaries) >= 2 and 12 * slot >= LABEL_YEAR_W:
+        every = max(1, math.ceil(LABEL_YEAR_W / (12 * slot)))
+        return [(i, str(months[i].year)) for i in januaries[::every]]
+    every = max(1, math.ceil(LABEL_MONTH_W / slot))
+    return [(i, month_short(months[i])) for i in range(0, len(months), every)]
 
 
 def _bar_title(row: MonthRow) -> str:
@@ -759,7 +771,7 @@ def bars(
     parts.extend(
         f'<text x="{_num(axes.left + (i + 0.5) * slot)}" '
         f'y="{_num(axes.top + axes.plot_h + 18)}" text-anchor="middle">{label}</text>'
-        for i, label in _labelled(labels)
+        for i, label in _labelled(labels, slot)
     )
     parts.append('</g><g class="months">')
     for i, row in enumerate(rows):

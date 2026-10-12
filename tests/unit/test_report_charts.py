@@ -421,3 +421,22 @@ def test_bars_use_whole_numbers_on_the_y_axis() -> None:
     group = root.find(f".//{NS}g[@class='ticks']")
     assert group is not None
     assert [text.text for text in group] == ["0", "1", "2"]
+
+
+@pytest.mark.parametrize("count", [3, 13, 14, 18, 23, 25, 61, 300])
+def test_bar_labels_never_overlap(count: int) -> None:
+    """Bei 14 bis 23 Monaten mit nur einem Januar stießen die Beschriftungen aneinander
+    (Abstand 37,9 bei Breite 41,8; Review 2026-10-12). Der Abstand kommt jetzt aus der Breite."""
+    month = dt.date(2025, 2, 1)  # Februar: die kurzen Reihen haben nur einen Januar
+    rows = []
+    for _ in range(count):
+        rows.append(MonthRow(month, 3, 3, 1))
+        month = next_month(month)
+    root = ET.fromstring(bars(rows))
+    group = root.find(f".//{NS}g[@class='month-labels']")
+    assert group is not None
+    labels = [(float(text.get("x") or 0), text.text or "") for text in group]
+    assert labels, count
+    widest = max(len(text) for _, text in labels) * 6.0  # 11 px Schrift, rund 6 px je Zeichen
+    gaps = [b - a for (a, _), (b, _) in zip(labels, labels[1:], strict=False)]
+    assert all(gap >= widest for gap in gaps), (count, widest, gaps)
