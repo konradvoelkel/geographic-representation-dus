@@ -196,7 +196,7 @@ falten. `karte.html` ist die zweite Datei und die einzige mit
 Fremdressourcen: Leaflet 1.9.4 per Subresource Integrity gepinnt, OpenStreetMap-Kacheln mit Namensnennung,
 Flächen und Orte inline als JSON (`</` escaped), eigene Allowlist in `render_map`. Entscheidungen und verworfene
 Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. Auf der Referenz: 41 Wahlbezirke,
-23 Dateien, 8,3 MB, davon `index.html` rund 880 KB (davon 144 KB Suchdaten), `karte.html` 255 KB,
+23 Dateien, 8,3 MB, davon `index.html` rund 890 KB (davon 144 KB Suchdaten), `karte.html` 255 KB,
 `dokumente.json` 2,1 MB; 1,3 s (2026-10-12).
 
 ## Verträge
