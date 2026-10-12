@@ -539,3 +539,19 @@ def test_the_month_column_sorts_by_number_not_by_name(open_page: str) -> None:
         r'<td data-value="(\d+)">(?:[A-ZÄÖÜ][a-zä-ü]+ \d{4}|ohne Datum)</td>', open_page
     )
     assert [int(v) for v in values] == [2025 * 12 + 10, 2025 * 12 + 11, 999999]
+
+
+@pytest.mark.parametrize(
+    ("missing", "expected"), [(1, "ein Dokument ohne Text"), (7, "7 Dokumente ohne Text")]
+)
+def test_documents_without_text_appear_in_the_head_and_the_tile(
+    model: ReportModel, visuals: Visuals, missing: int, expected: str
+) -> None:
+    """Zwischen Abruf und Extraktion hat die laufende Periode Dokumente ohne Text."""
+    figures = replace(model.figures, documents_with_text=model.figures.documents - missing)
+    page = render_report(replace(model, figures=figures), visuals)
+    assert expected in page  # Datenstand im Kopf
+    assert f"mit Text, {missing} ohne</div>" in page  # Kachel Ratsdokumente
+    # Ohne fehlende Texte sagt die Seite nichts dazu (Mini-Fixture: jedes Paper hat Text)
+    whole = render_report(model, visuals)
+    assert "ohne Text" not in whole and "mit Text, " not in whole

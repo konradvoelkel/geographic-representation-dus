@@ -753,3 +753,21 @@ def test_the_report_switches_turn_off_regression_and_name_the_monitoring_page(
     model = build_report_model(mini_run, switched, now=NOW)
     assert model.regression is None and model.monitoring_url == "2025/"
     assert model.timeline  # die Monatsreihe bleibt
+
+
+def test_key_figures_count_documents_without_text(mini_run: Layout, tmp_path: Path) -> None:
+    """Die laufende Periode hat zwischen Abruf und Extraktion Dokumente ohne Text."""
+    from georep.report.model import key_figures
+
+    corpus = pl.read_parquet(mini_run.corpus)
+    blanked = corpus.with_columns(
+        pl.when(pl.int_range(pl.len()) < 3).then(pl.lit("")).otherwise(pl.col("text")).alias("text")
+    )
+    path = tmp_path / "papers.parquet"
+    blanked.write_parquet(path)
+    figures = key_figures(
+        pl.read_parquet(mini_run.results), pl.read_parquet(mini_run.dictionary), path, 22
+    )
+    assert figures.documents == corpus.height
+    assert figures.documents_with_text == corpus.height - 3
+    assert figures.documents_without_text == 3
