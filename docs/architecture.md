@@ -24,19 +24,19 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 | Modul | Aufgabe |
 |---|---|
-| `settings` | `defaults.toml` im Paket, darüber `settings.toml`, `settings.local.toml`, `--settings`, Umgebung `GEOREP_*`; pydantic-settings, unbekannte Schlüssel sind ein Fehler; `fingerprint()` der ergebnisrelevanten Parameter; `profile` (Ordnername je Stadt oder Periode, nicht im Fingerprint), `period.end` optional mit `election` als Wahltag, `analysis.exclude_districts` (Ausreißer von Tabelle 5), `context` (Fremddaten: Quelle, Lizenz, Dateien, Spaltenform, Ordinalskalen, Variablen, Modelle, Schwellen) |
+| `settings` | `defaults.toml` im Paket, darüber `settings.toml`, `settings.local.toml`, `--settings`, Umgebung `GEOREP_*`; pydantic-settings, unbekannte Schlüssel sind ein Fehler; `fingerprint()` der ergebnisrelevanten Parameter; `profile` (Ordnername je Stadt oder Periode, nicht im Fingerprint), `period.end` optional mit `election` als Wahltag, `analysis.exclude_districts` (Ausreißer von Tabelle 5), `originators` (Muster und Parteien für den Urheber, Option 04), `context` (Fremddaten: Quelle, Lizenz, Dateien, Spaltenform, Ordinalskalen, Variablen, Modelle, Schwellen) |
 | `layout` | wo was liegt: `data_root`, `cache_root`, `reference_root`, `profile` (Unterordner `data_root/<profil>/` und `cache_root/<profil>/` für PDFs und Texte, HTTP-Cache geteilt; leer = flach), `context_root` (Fremddaten im Repo, Default `None`); `for_profile` wechselt; `guard_writable` verweigert jeden Pfad unter den beiden nur lesbaren Wurzeln |
 | `io` | atomare Schreibvorgänge (Temporärdatei, fsync, `os.replace`), JSON, Parquet mit `schema_version` in den Metadaten, SHA-256 (`digest`) |
 | `http` | Session mit Timeout, Retry mit Backoff, User-Agent, requests-cache je Quelle; `Transport`-Protokoll als Testnaht; `network_errors` wandelt requests-Fehler in `NetworkError` |
 | `errors` | Domänenfehler: `MissingInputError`, `EmptyResultError`, `SchemaError`, `CorruptPdfError`, `FetchError`, `NetworkError` |
-| `oparl` | OParl 1.1 als pydantic-Vertrag (`OparlPaper`, `OparlFile`, `PaperPage`), echte Antwort als Fixture |
-| `records` | `PaperRecord`: die Zeile in `raw/papers.jsonl`, aus OParl oder dem Altformat der Arbeit |
+| `oparl` | OParl 1.1 als pydantic-Vertrag (`OparlPaper` mit den drei Urheberfeldern und `consultation_organizations`, `OparlFile`, `OparlOrganization`, `PaperPage`, `OrganizationPage`), echte Antworten als Fixtures |
+| `records` | `PaperRecord`: die Zeile in `raw/papers.jsonl`, aus OParl oder dem Altformat der Arbeit; die vier URL-Listen sind Tupel, weil der Record `frozen` und damit hashbar ist |
 | `stores` | `PaperStore` (JSONL, Upsert nach `modified`), `TextStore` (eine Parquet-Datei, Schlüssel Dateiname, Frische über Extraktorname und PDF-Hash) |
 | `sources/` | reine Fetch-Funktionen über `Transport`: `opendata` (CSV, GeoJSON), `oparl` (Paper-Seiten), `pdfs` (`PdfStore` mit Manifest), `overpass` (Straßen je Polygon), `wiki` (SPARQL, GeoSearch) |
 | `geo` | GeoJSON lesen, nach EPSG:25832 projizieren, `make_valid`, `PrecinctIndex` (STRtree), eine Rückprojektion nach lon/lat |
 | `prep/` | `extract` (PDF-Text hinter `PdfTextExtractor`), `papers` (Korpus), `voters` (auch `district_units`: Wahlbezirk zu Stadtbezirk über den Crosswalk), `streets`, `pois`, `bodies` (Gremium je Dokument aus der Drucksachennummer: `parse_reference` als reine Funktion über `BodyRules`, `classify_papers` als Batch-Grenze), `context` (Fremddaten je Raumeinheit: Stimmbezirkstabelle, Tabelle der Quelle lesen, gewichtetes Mittel je Wahlbezirk): Polars-Funktionen Frame zu Frame |
 | `search/` | `dictionary` (Wörterbuch je Wahlbezirk), `matcher` (`KeywordMatcher`-Protokoll, FlashText), `index` (invertierter Index) |
-| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings; `spearman` für die Rangkorrelation zweier Kennzahlen), `ols` (multiple Regression mit numpy und scipy: Koeffizienten, Standardfehler, t, p, R², F-Test, VIF, standardisierte Koeffizienten, Added-Variable-Plots nach Frisch-Waugh-Lovell; `models_table` rechnet die Modelle der Settings je Stichprobe), `bodies` (Treffer je Wahlbezirk nach Gremium, Lokalität je Gremium), `weights` (gewichtete Trefferquoten: Gewicht je Begriff, Dokumentart und Thema, Maximum je Paar, lange Tabelle aller Varianten; reines Polars, kennt weder Dateien noch Settings-Objekte), `topics` (TF-IDF und NMF über die Texte; der einzige Ort mit `sklearn`-Import, mit der Stoppwortliste `stopwords_de.txt` als Paketdatei) |
+| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings; `spearman` für die Rangkorrelation zweier Kennzahlen), `ols` (multiple Regression mit numpy und scipy: Koeffizienten, Standardfehler, t, p, R², F-Test, VIF, standardisierte Koeffizienten, Added-Variable-Plots nach Frisch-Waugh-Lovell; `models_table` rechnet die Modelle der Settings je Stichprobe), `bodies` (Treffer je Wahlbezirk nach Gremium, Lokalität je Gremium), `weights` (gewichtete Trefferquoten: Gewicht je Begriff, Dokumentart und Thema, Maximum je Paar, lange Tabelle aller Varianten; reines Polars, kennt weder Dateien noch Settings-Objekte), `topics` (TF-IDF und NMF über die Texte; der einzige Ort mit `sklearn`-Import, mit der Stoppwortliste `stopwords_de.txt` als Paketdatei), `parties` (Urheber je Dokument aus `paperType`, Titel und Textkopf; Urheberklassen je Wahlbezirk; Kennzahlen und Korrelationen je Partei) |
 | `crosswalk` | Umrechnung von Gebietseinheiten auf Wahlbezirke: `unit_weights` wiegt je Wahlbezirk die Einheiten (Stadtbezirk, Stadtteil) mit einer Zählgröße je Stimmbezirk, `area_shares` und `district_weights` gehen über Flächenanteile der Stimmbezirke, wenn die Einheiten eine eigene Gliederung sind; Vertrag: Gewichte in (0, 1], Summe je Wahlbezirk 1 |
 | `pipeline` | Schrittregister: Name, Eingaben, Ausgaben, `run()`, Schema-Version; Stamps; `run_step`, `run_pipeline`, `build_steps` |
 | `bootstrap` | kopiert die Referenz nach `data_root` und baut daraus `papers.jsonl` und den Textstore |
@@ -48,7 +48,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 ## Pipeline
 
-Einundzwanzig Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzschritte laufen nur mit
+Dreiundzwanzig Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzschritte laufen nur mit
 `--online` oder über `georep fetch`. Mit `topics.k = 0` fehlt der Schritt `topics` im Register; dann ist es
 einer weniger, und `weights` rechnet ohne Themenvarianten. Die drei Schritte der Kontrollvariablen
 (`context_data`, `context`, `controls`) gibt es nur mit Fremddaten, also wenn `context.root` gesetzt ist;
@@ -58,7 +58,8 @@ sonst bleiben es achtzehn.
 |---|---|---|---|
 | `opendata` | ja | Open-Data-Portal | `external/Stimmbezirk_Wahlergebnis.csv`, `external/Stimmbezirke_2025.geojson` |
 | `context_data` | ja | Open-Data-Portal: Tabelle je Raumeinheit, ihre Flächen, die Erläuterung der Indikatoren | `external/` unter den Namen aus `context.files` |
-| `papers` | ja | OParl-Liste, neueste zuerst, Abbruch unter dem Periodenbeginn; beim zweiten Mal `modified_since` | `raw/papers.jsonl` |
+| `papers` | ja | OParl-Liste, neueste zuerst, Abbruch unter dem Periodenbeginn; beim zweiten Mal `modified_since`, `--max-pages` als Probe | `raw/papers.jsonl` |
+| `organizations` | ja | OParl-Endpunkt `organizations`: Fraktionen, Ausschüsse, Bezirksvertretungen (Düsseldorf: eine Seite, 58 Objekte, 0,47 s) | `raw/organizations.json` |
 | `pdfs` | ja | Download-URLs der Paper, seriell mit Pause, `--limit` | `cache/pdf/*.pdf`, `cache/pdf/manifest.jsonl` |
 | `streets_osm` | ja | Overpass je Stimmbezirkspolygon | `raw/streets_per_district.json` |
 | `pois_wiki` | ja | Wikidata-SPARQL, Wikipedia-GeoSearch je Stimmbezirk | `raw/wikipedia_dict.json` |
@@ -76,6 +77,7 @@ sonst bleiben es achtzehn.
 | `body_hits` | nein | Auswertung, Gremien je Dokument, Stadtbezirke | `processed/wahlbezirke_gremien.parquet`, `processed/gremien.parquet` |
 | `weights` | nein | Wörterbuch, Index, Korpus (`id`, `paper_type`), Wähler, Themenanteile | `processed/wahlbezirke_gewichtet.parquet`, `processed/gewichte_begriffe.parquet` |
 | `controls` | nein | Auswertung, Kontrollvariablen | `processed/regression_kontrollen.parquet` |
+| `parties` | nein | Korpus, Auswertung, Wähler, dazu `raw/organizations.json`, wenn vorhanden | `processed/dokumente_urheber.parquet`, `processed/wahlbezirke_urheber.parquet`, `processed/wahlbezirke_parteien.parquet` |
 | `report` | nein | die Ergebnistabellen, Korpus, Stimmbezirks-GeoJSON, mit Fremddaten auch die drei Tabellen der Kontrollvariablen und die Erläuterung der Indikatoren | `site/index.html`, `site/karte.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`, `dokumente.json`) |
 
 Neben der ersten Ausgabe jedes Schritts liegt `<datei>.stamp.json` mit den SHA-256-Hashes der Eingaben, dem
@@ -94,7 +96,7 @@ reference/                 der Datensatz der Arbeit; wird nur gelesen (guard_wri
 context/                   Fremddaten je Raumeinheit mit README (Quelle, Lizenz, Stand, SHA-256); wird nur gelesen
 data_root/                 Standard ./data, gitignored; mit profile = "x" liegt alles unter data_root/x/
   external/                Eingaben des Open-Data-Portals, Dateinamen und Formate der Quelle
-  raw/                     papers.jsonl, streets_per_district.json, wikipedia_dict.json
+  raw/                     papers.jsonl, organizations.json, streets_per_district.json, wikipedia_dict.json
   interim/                 papers.parquet (Korpus: Metadaten plus Text)
   interim/                 papers.parquet (Korpus: Metadaten plus Text), themen_anteile.parquet (Themenanteile je Dokument, nicht veröffentlicht)
   processed/               die Ergebnistabellen als Parquet (zstd), je mit Stamp; mit Fremddaten drei mehr
@@ -132,6 +134,12 @@ erreichbar, Fehlerstatus nach allen Wiederholungen), gesichert durch `deal.raise
 - OParl: Paper-Seiten neueste zuerst, Abbruch, sobald eine Seite nur noch Paper vor dem Periodenbeginn trägt
   (spart 270 von 365 Seiten); beim zweiten Lauf `modified_since` (letztes `modified` minus ein Tag). Jede
   Seite wird gegen das pydantic-Modell geprüft. Der Server brauchte am 2026-10-09 85 s je Seite.
+  `--max-pages N` liest nur die ersten Seiten; der Abrufbericht zählt, wie viele der gesehenen Paper ein
+  Urheberfeld tragen, und ist damit die Probe, ob sich am Befund unten etwas geändert hat.
+- OParl `organizations`: die Fraktionen, Ausschüsse und Bezirksvertretungen, eine Seite mit 58 Objekten in
+  0,47 s (2026-10-11). Der Server der ITK Rheinland setzt `classification` („Fraktion“, „Ausschuss“,
+  „Bezirk“, „Gremium“ oder nichts), nie `organizationType`. Der Schritt `parties` bildet daraus
+  Organisations-URLs auf Parteien ab; ohne die Datei greifen nur die URL-Endungen aus den Settings.
 - Overpass: je Stimmbezirk der Außenring des größten Polygons, um 2 m vereinfacht, als `(poly:"…")`; der
   Filter bildet `network_type="all"` von osmnx nach, mit dem die Daten der Arbeit entstanden. Treue gegen
   die Referenz: `tests/fixtures/http/README.md`.
@@ -199,8 +207,14 @@ je Modus getrennt gewählt und mit dem Validator der Skill `dataviz` geprüft is
 Wahlbeteiligung oder auf den Anteil der eigenen Bezirksvertretung tauscht nur CSS-Klassen über
 `data-`-Attribute. Begriffe sind Schaltflächen: ein Klick lädt
 `data/dokumente.json` nach (`report.documents`: die Dokumente mit Treffer ohne Texte, neueste zuerst, je Begriff
-Indizes; der PDF-Link entsteht aus einem gemeinsamen Präfix) und zeigt die Dokumente in einem `<dialog>`; die
-Orte der Karte tragen Namen und Wahlbezirk. Der Abschnitt `15-suche` ist ein Suchfeld nach dem
+Indizes; der PDF-Link entsteht aus einem gemeinsamen Präfix) und zeigt die Dokumente in einem `<dialog>` mit
+Datum, Titel, Drucksache, Art und Urheber; die Orte der Karte tragen Namen und Wahlbezirk. Der Abschnitt
+„Urheber und Parteien“ (`sections/38-parteien`) bringt sechs kleine Karten in einem SVG: die 41 Flächen
+stehen einmal in `<defs>`, jedes Panel ist ein `<g transform>` mit 41 `<use>` (`charts.party_maps`), und die
+Quantilklassen sind je Partei gerechnet. Seine Tabelle je Wahlbezirk schattiert die Parteispalten nicht mit
+der Rampe der Karten, sondern mit fünf Tönungen einer Farbe (`--q2` in `--surface`): die Zellen tragen
+Zahlen, und die volle Rampe erreicht in der Mitte in keiner Schriftfarbe den Kontrast 4,5 (nachgerechnet in
+`sections/38-parteien.css`). Der Abschnitt `15-suche` ist ein Suchfeld nach dem
 Combobox-Muster der WAI-ARIA Authoring Practices: `report/search.py` baut je kanonischem Begriff einen Eintrag
 (Abkürzung und Langform zusammengezogen, Dokumente beider Schreibweisen vereinigt) und je Wahlbezirksname
 einen weiteren, `render_report` legt sie als `<script id="suche-daten" type="application/json">` in die Seite
@@ -218,9 +232,9 @@ Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. D
 Sensitivitätstabelle mit beiden Spalten von Tabelle 5 je Gewichtungsvariante und der Rangkorrelation zur
 ungewichteten Quote, darunter die Themen mit ihren stärksten Wörtern. Die Einheitszeile trägt dieselben
 Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeigt „—", und fehlt der ganzen
-Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 31 Dateien,
-10,4 MB, davon `index.html` 933 KB (144 KB Suchdaten, 33 KB die Gewichtung), `karte.html` 255 KB,
-`dokumente.json` 2,1 MB; 1,2 s (2026-10-12).
+Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 43 Dateien,
+13,4 MB, davon `index.html` 1,13 MB (144 KB Suchdaten, 63 KB die Parteikarten, 33 KB die Gewichtung),
+`karte.html` 255 KB, `dokumente.json` 2,3 MB; 1,5 s (2026-10-12).
 
 ## Verträge
 
@@ -278,3 +292,12 @@ Stand 2026-10-12: 310 Tests, schnelle Suite in 20 bis 25 s, Abdeckung 98,6 %; Mu
 - Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab; die Tests frieren die Neuberechnung ein (baseline-2026-10-10.md).
 - crosshair prüft nur rein-pythonische Funktionen; Polars-Funktionen haben Laufzeitverträge und hypothesis.
+- Der OParl-Server liefert für Düsseldorf keine Urheberfelder (`originatorPerson`, `originatorOrganization`,
+  `underDirectionOf`): 0 von 19 108 Rohobjekten und keines der sechs Paper der Seite vom 2026-10-09, auch
+  der „Antrag FDP“ nicht. Der Urheber ist deshalb aus `paperType`, Titel und Textkopf abgeleitet und deckt
+  98,3 % der Dokumente ab; die Quelle `oparl` greift ohne Codeänderung, sobald der Server die Felder füllt.
+  Einzelne Mandatsträger (865 Dokumente) bleiben ohne Partei, auch wenn der Titel eine nennt; nennt erst der
+  Textkopf den Mandatsträger, zählt das Dokument als unbekannt (die Anreden der Vorlagen würden sonst halbe
+  Anträge zu Personen machen).
+- Im Wahlbezirk 11 ist Die Linke nicht angetreten (0 Stimmen). Der Abgleich mit dem Stimmenanteil lässt
+  solche Bezirke je Partei aus (`angetreten`), sonst läse sich „kein Wahlvorschlag“ wie „keine Zustimmung“.

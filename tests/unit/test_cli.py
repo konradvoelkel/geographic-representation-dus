@@ -221,3 +221,57 @@ def test_regress_controls_prints_table_six_after_the_run(
     # Auf der Mini-Fixture (n = 3) bleibt Modell A; die Zeilen nennen Konstante und Trefferquote
     assert "A (alle): n=3, k=1" in out and "trefferquote" in out and "(Konstante)" in out
     assert "VIF=1.00" in out
+
+
+def test_fetch_max_pages_is_the_originator_probe(
+    project: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Option 04: ``fetch papers --max-pages 1`` liest eine Seite und sagt, wie viele der
+    gesehenen Paper ein Urheberfeld tragen; am 2026-10-09 war das keines."""
+    import requests
+
+    from georep.settings import Settings, load_settings
+    from tests.fakes import FakeSession, response
+
+    src = load_settings(cwd=project).sources
+    page = {
+        "data": [
+            {
+                "id": f"https://ris.invalid/papers/{i}",
+                "name": f"P{i}",
+                "date": "2024-05-01",
+                "paperType": "Antrag",
+            }
+            for i in range(3)
+        ],
+        "links": {"self": src.oparl.endpoint, "next": f"{src.oparl.endpoint}?page=2"},
+    }
+    routes: dict[str, requests.Response | Exception] = {
+        src.oparl.endpoint: response(src.oparl.endpoint, payload=page),
+        f"{src.oparl.endpoint}?page=2": requests.ConnectionError("Seite 2 darf nicht kommen"),
+    }
+    seen: list[int] = []
+
+    def fake_session(settings: Settings, path: Path) -> FakeSession:
+        seen.append(settings.sources.oparl.max_pages)
+        return FakeSession(routes)
+
+    monkeypatch.setattr("georep.pipeline.cached_session", fake_session)
+    assert main(["fetch", "papers", "--max-pages", "1"]) == 0
+    out = capsys.readouterr().out
+    assert "1 Seiten, 3 Paper gesehen, 3 im Zeitraum, davon 0 mit Urheberfeld" in out
+    assert seen == [1]
+    # Die zweite Seite ist eine ConnectionError-Route: --max-pages 1 darf sie nicht anfragen
+
+
+def test_max_pages_changes_the_fingerprint(project: Path) -> None:
+    """Die Grenze zählt zum Fingerprint; ``georep status`` zeigt den Schritt danach als offen."""
+    from georep.cli import _with_fetch_limits
+    from georep.settings import load_settings
+
+    base = load_settings(cwd=project)
+    assert _with_fetch_limits(base, None, None) is base
+    assert _with_fetch_limits(base, None, 1).fingerprint() != base.fingerprint()
+    assert _with_fetch_limits(base, 5, None).sources.oparl.pdf_limit == 5
+    both = _with_fetch_limits(base, 5, 2).sources.oparl
+    assert (both.pdf_limit, both.max_pages) == (5, 2)

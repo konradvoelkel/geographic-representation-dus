@@ -22,6 +22,15 @@ from georep import __version__
 from georep.analysis import bodies
 from georep.analysis.hits import DISTRICT, RATE, TERMS
 from georep.analysis.ols import ALL, CONSTANT, MAIN_MODEL, model_terms, sample_label
+from georep.analysis.parties import (
+    KLASSEN_SPALTEN,
+    PARTEI,
+    PARTEIEN,
+    QUELLE,
+    PartyCorrelation,
+    originator_figures,
+    party_correlations,
+)
 from georep.analysis.regression import RegressionPair, regression_pair, spearman
 from georep.analysis.weights import (
     BY_DISTRICTS,
@@ -56,6 +65,7 @@ from georep.settings import (
     Bodies,
     ContextDataset,
     ContextSettings,
+    Party,
     ResultsColumns,
     Settings,
     Weights,
@@ -332,6 +342,70 @@ class DerivedData:
 
 
 @dataclass(frozen=True)
+class PartyRow:
+    """Eine Zeile der Parteitabelle: Umfang und der Abgleich mit den Hochburgen."""
+
+    key: str
+    label: str
+    short: str  # Kürzel für den engen Spaltenkopf der Bezirkstabelle
+    documents: int  # alle Dokumente der Partei in der Wahlperiode
+    hits: int  # Summe der Treffer über die Wahlbezirke (Mehrfachnennung je Bezirk)
+    alone: int  # davon Dokumente, deren einziger Urheber die Partei ist
+    districts_hit: int  # Wahlbezirke mit mindestens einem Treffer
+    n: int  # Wahlbezirke, in denen die Partei angetreten ist
+    r: float | None  # Pearson zwischen anteil_dokumente und stimmenanteil
+    p: float | None
+    rho: float | None  # Spearman, nicht auf der Seite, aber in der Tabelle zum Download
+
+
+@dataclass(frozen=True)
+class PartyCell:
+    """Eine schattierte Zelle: Anteil der Parteidokumente mit Treffer in diesem Wahlbezirk."""
+
+    district: int
+    party: str
+    hits: int
+    share: float  # anteil_dokumente
+    vote_share: float
+    ran: bool
+    klass: int  # Quantilklasse je Partei, 0 bis 4
+
+
+@dataclass(frozen=True)
+class OriginatorRow:
+    district: int
+    name: str
+    hits: int
+    verwaltung: int
+    fraktion: int
+    person: int
+    eingabe: int
+    unbekannt: int
+
+
+@dataclass(frozen=True)
+class OriginatorFigures:
+    """Die Deckung der Zuordnung über alle Dokumente, für den Text des Abschnitts."""
+
+    documents: int
+    verwaltung: int
+    fraktion: int
+    person: int
+    eingabe: int
+    unbekannt: int
+    with_two_parties: int
+    from_oparl: int  # Dokumente, deren Urheber der Server geliefert hat (Stand 2026-10-09: null)
+
+    @property
+    def classified(self) -> int:
+        return self.documents - self.unbekannt
+
+    @property
+    def coverage(self) -> float:
+        return self.classified / self.documents if self.documents else 0.0
+
+
+@dataclass(frozen=True)
 class ReportModel:
     generated_at: dt.datetime
     version: str
@@ -354,6 +428,23 @@ class ReportModel:
     sensitivity: Sensitivity | None = None  # Option 06; None = ohne Abschnitt
     controls: ControlsSection | None = None  # Option 03; None ohne Kontextdaten
     derived: DerivedData | None = None  # Option 03
+
+    # Option 04: der Abschnitt „Urheber und Parteien"; ohne den Schritt ``parties`` bleibt er leer
+    # und die Vorlage lässt ihn weg (``{% if model.parties %}``).
+    parties: tuple[PartyRow, ...] = ()
+    party_cells: tuple[PartyCell, ...] = ()
+    originators: tuple[OriginatorRow, ...] = ()
+    originator_figures: OriginatorFigures | None = None
+
+    def cells_for(self, district: int) -> tuple[PartyCell, ...]:
+        """Die Zellen eines Wahlbezirks in der Spaltenreihenfolge der Parteitabelle.
+
+        ``party_cells`` ist nach (Partei, Bezirk) sortiert, also alphabetisch nach Schlüssel;
+        die Spalten der Tabelle folgen den Settings. Ohne diese Umsortierung stünden die Zahlen
+        unter den falschen Köpfen.
+        """
+        found = {c.party: c for c in self.party_cells if c.district == district}
+        return tuple(found[p.key] for p in self.parties if p.key in found)
 
 
 # --- Zahlenformat -----------------------------------------------------------------------------
@@ -904,6 +995,117 @@ def build_sensitivity(layout: Layout, settings: Settings, results: pl.DataFrame)
     )
 
 
+# --- Option 04: Urheber und Parteien ---------------------------------------------------------------
+
+
+def _party_classification(cells: Sequence[PartyCell], party: str) -> dict[int, int]:
+    """Quantilklassen je Partei, nicht gemeinsam: die AfD läge sonst überall in der untersten.
+
+    ``classify`` nimmt von sich aus weniger Klassen, wenn es weniger verschiedene Werte gibt (bei
+    der AfD mit 70 Treffern über 41 Bezirke sind das wenige).
+    """
+    from georep.report.charts import classify
+
+    mine = {c.district: c.share for c in cells if c.party == party}
+    return classify(mine).classes if mine else {}
+
+
+@deal.pre(
+    lambda party_table, correlations, originators, parties, names: has_columns(
+        party_table, DISTRICT, PARTEI, HITS, "anteil_dokumente", "stimmenanteil", "angetreten"
+    )
+)
+@deal.post(
+    lambda result: all(0 <= c.klass <= 4 for c in result[1]),
+    message="Quantilklassen q0 bis q4",
+)
+def party_section(
+    party_table: pl.DataFrame,
+    correlations: Sequence[PartyCorrelation],
+    originators: pl.DataFrame,
+    parties: Sequence[Party],
+    names: Mapping[int, str],
+) -> tuple[tuple[PartyRow, ...], tuple[PartyCell, ...], tuple[OriginatorRow, ...]]:
+    """Die drei Listen des Abschnitts aus den drei Parquet-Tabellen des Schritts ``parties``."""
+    raw = [
+        PartyCell(
+            district=int(row[DISTRICT]),
+            party=str(row[PARTEI]),
+            hits=int(row[HITS]),
+            share=float(row["anteil_dokumente"]),
+            vote_share=float(row["stimmenanteil"]),
+            ran=bool(row["angetreten"]),
+            klass=0,
+        )
+        for row in party_table.sort([PARTEI, DISTRICT]).iter_rows(named=True)
+    ]
+    classes = {
+        party: _party_classification(raw, party) for party in dict.fromkeys(c.party for c in raw)
+    }
+    cells = tuple(
+        PartyCell(
+            c.district,
+            c.party,
+            c.hits,
+            c.share,
+            c.vote_share,
+            c.ran,
+            classes[c.party].get(c.district, 0),
+        )
+        for c in raw
+    )
+    alone = dict(
+        party_table.group_by(PARTEI).agg(pl.col("treffer_allein").sum()).iter_rows()
+        if "treffer_allein" in party_table.columns
+        else []
+    )
+    by_key = {c.key: c for c in correlations}
+    # Reihenfolge und Label kommen aus den Settings, nicht aus der Tabelle
+    rows = tuple(
+        PartyRow(
+            key=party.key,
+            label=party.label,
+            short=party.column_label,
+            documents=by_key[party.key].documents,
+            hits=by_key[party.key].hits,
+            alone=int(alone.get(party.key, 0)),
+            districts_hit=by_key[party.key].districts_hit,
+            n=by_key[party.key].n,
+            r=by_key[party.key].r,
+            p=by_key[party.key].p,
+            rho=by_key[party.key].rho,
+        )
+        for party in parties
+        if party.key in by_key
+    )
+    classes_columns = list(KLASSEN_SPALTEN)
+    districts = tuple(
+        OriginatorRow(
+            district=int(row[DISTRICT]),
+            name=names.get(int(row[DISTRICT]), ""),
+            hits=int(row[HITS]),
+            **{column: int(row[column]) for column in classes_columns},
+        )
+        for row in originators.sort(DISTRICT).iter_rows(named=True)
+    )
+    return rows, cells, districts
+
+
+def originator_overview(attribution: pl.DataFrame) -> OriginatorFigures:
+    """Die Zähler für den Text: Klassen, Kooperationspapiere, Zuordnungen aus OParl."""
+    counted = originator_figures(attribution)
+    return OriginatorFigures(
+        documents=attribution.height,
+        verwaltung=counted["Verwaltung"],
+        fraktion=counted["Fraktion"],
+        person=counted["Person"],
+        eingabe=counted["Eingabe"],
+        unbekannt=counted["unbekannt"],
+        with_two_parties=attribution.filter(pl.col(PARTEIEN).list.len() >= 2).height,
+        from_oparl=attribution.filter(pl.col(QUELLE) == "oparl").height,
+    )
+
+
 def build_report_model(
     layout: Layout,
     settings: Settings,
@@ -928,6 +1130,22 @@ def build_report_model(
     )
     table = body_rows(pl.read_parquet(layout.bodies_table), settings.bodies)
     units = crosswalk_units(layout)  # Option 03: 0 ohne Kontextdaten
+    # Option 04: der Abschnitt entsteht nur, wenn der Schritt ``parties`` gelaufen ist
+    parties: tuple[PartyRow, ...] = ()
+    cells: tuple[PartyCell, ...] = ()
+    districts: tuple[OriginatorRow, ...] = ()
+    figures: OriginatorFigures | None = None
+    if layout.party_results.exists() and layout.document_originators.exists():
+        party_table = pl.read_parquet(layout.party_results)
+        attribution = pl.read_parquet(layout.document_originators)
+        parties, cells, districts = party_section(
+            party_table,
+            party_correlations(party_table),
+            pl.read_parquet(layout.district_originators),
+            settings.originators.parties,
+            names,
+        )
+        figures = originator_overview(attribution)
     return ReportModel(
         generated_at=now,
         version=__version__,
@@ -959,6 +1177,11 @@ def build_report_model(
         ),
         controls=controls_section(layout, settings, units),
         derived=derived_data(layout, settings, units),
+        # Option 04
+        parties=parties,
+        party_cells=cells,
+        originators=districts,
+        originator_figures=figures,
     )
 
 

@@ -264,6 +264,24 @@ class Layout:
         """Tabelle 6: je Modell, Stichprobe und Term ein Koeffizient mit Standardfehler, p und VIF."""
         return self.processed / "regression_kontrollen.parquet"
 
+    # Option 04: Urheber und Parteien
+    @property
+    def organizations(self) -> Path:
+        """Fraktionen und Gremien, wie der OParl-Endpunkt sie liefert (eine Seite, Netzschritt)."""
+        return self.raw / "organizations.json"
+
+    @property
+    def document_originators(self) -> Path:
+        return self.processed / "dokumente_urheber.parquet"
+
+    @property
+    def district_originators(self) -> Path:
+        return self.processed / "wahlbezirke_urheber.parquet"
+
+    @property
+    def party_results(self) -> Path:
+        return self.processed / "wahlbezirke_parteien.parquet"
+
     def runtime_dirs(self) -> tuple[Path, ...]:
         return (
             self.external,

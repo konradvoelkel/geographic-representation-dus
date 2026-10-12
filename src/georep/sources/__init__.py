@@ -15,6 +15,12 @@ def cached_session(settings: Settings, cache_path: Path) -> requests.Session:
     src, ttl = settings.sources, settings.cache
     rules = {
         cache_pattern(src.oparl.endpoint): ttl.oparl_pages_s,
+        # Option 04: die Organisationsseite ändert sich so selten wie die Paper-Seiten
+        **(
+            {cache_pattern(src.oparl.organizations_endpoint): ttl.oparl_pages_s}
+            if src.oparl.organizations_endpoint
+            else {}
+        ),
         cache_pattern(src.opendata.results_url): ttl.opendata_s,
         cache_pattern(src.opendata.districts_url): ttl.opendata_s,
         cache_pattern(src.wikidata.sparql_endpoint): ttl.wikidata_s,

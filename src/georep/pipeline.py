@@ -23,6 +23,13 @@ from georep.analysis.bodies import documents_by_body, hits_by_body
 from georep.analysis.bodies import summary as bodies_summary
 from georep.analysis.hits import hits_by_district, join_voters
 from georep.analysis.ols import model_frame, model_terms, models_table
+from georep.analysis.parties import (
+    classify_originators,
+    originator_figures,
+    originators_by_district,
+    party_hits,
+    read_organizations,
+)
 from georep.crosswalk import area_shares, district_weights
 from georep.errors import GeorepError, MissingInputError
 from georep.geo import Area, PrecinctIndex, read_areas, read_precincts
@@ -48,7 +55,7 @@ from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
 from georep.settings import Settings
 from georep.sources import cached_session
-from georep.sources.oparl import fetch_papers
+from georep.sources.oparl import fetch_organizations, fetch_papers
 from georep.sources.opendata import fetch_csv, fetch_geojson
 from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
@@ -56,6 +63,13 @@ from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_
 from georep.stores import PaperStore, TextStore
 
 Status = Literal["ausgeführt", "übersprungen", "geplant"]
+PARTIES_SCHEMA = 1  # Option 04: Schema-Version der drei Ausgaben des Schritts ``parties``
+
+
+def _class_shares(figures: dict[str, int], total: int) -> list[tuple[str, float]]:
+    """Die Urheberklassen mit Anteil, stärkste zuerst; leere Klassen bleiben draußen."""
+    found = [(art, count / total) for art, count in figures.items() if count and total]
+    return sorted(found, key=lambda pair: pair[1], reverse=True)
 
 
 @dataclass(frozen=True)
@@ -264,6 +278,7 @@ def build_steps(
             delay_s=oparl.delay_s,
             modified_since=since,
             stop_when_older=oparl.stop_when_older,
+            max_pages=oparl.max_pages or None,  # Option 04: 0 = alle Seiten
             sleep=sleep,
         )
         report = store.upsert(records)
@@ -496,6 +511,55 @@ def build_steps(
             f"(n = {frame.height})"
         )
 
+    # --- Option 04: Urheber und Parteien
+    def organizations() -> str:
+        found, pages = fetch_organizations(
+            transport(),
+            oparl.organizations_endpoint,
+            delay_s=oparl.delay_s,
+            sleep=sleep,
+        )
+        write_json(
+            layout.organizations,
+            [o.model_dump(mode="json", by_alias=True, exclude_none=True) for o in found],
+            indent=None,
+        )
+        fractions = sum(1 for o in found if o.classification == "Fraktion")
+        return f"{len(found)} Organisationen auf {pages} Seite(n), {fractions} Fraktionen"
+
+    # --- Option 04
+    def parties() -> str:
+        corpus_frame = pl.read_parquet(
+            layout.corpus,
+            columns=["id", "paper_type", "name", "text", "originator_organization"],
+        )
+        found = read_organizations(layout.organizations)
+        attribution = classify_originators(corpus_frame, settings.originators, found)
+        write_parquet(attribution, layout.document_originators, schema_version=PARTIES_SCHEMA)
+        results_frame = pl.read_parquet(layout.results)
+        write_parquet(
+            originators_by_district(results_frame, attribution),
+            layout.district_originators,
+            schema_version=PARTIES_SCHEMA,
+        )
+        party_frame = party_hits(
+            results_frame,
+            attribution,
+            pl.read_parquet(layout.voters),
+            settings.originators.parties,
+            columns.eligible,
+        )
+        write_parquet(party_frame, layout.party_results, schema_version=PARTIES_SCHEMA)
+        figures = originator_figures(attribution)
+        shares = ", ".join(
+            f"{share:.0%} {art}" for art, share in _class_shares(figures, attribution.height)
+        )
+        return (
+            f"{attribution.height} Dokumente: {shares}; "
+            f"{party_frame.height} Kennzahlen je Partei und Bezirk"
+            + (f"; {len(found)} Organisationen" if found else "")
+        )
+
     def report() -> str:
         return build_site(
             layout, settings, now=dt.datetime.now(dt.UTC), commit=current_commit()
@@ -517,6 +581,8 @@ def build_steps(
             else []
         ),
         Step("papers", (), (layout.papers,), papers, network=True),
+        # --- Option 04: eine Seite, rund eine halbe Sekunde; liefert die Abbildung URL zu Partei
+        Step("organizations", (), (layout.organizations,), organizations, network=True),
         Step("pdfs", (layout.papers,), (layout.pdf_manifest,), pdfs, network=True),
         Step(
             "streets_osm", (layout.districts_geojson,), (layout.streets,), streets_osm, network=True
@@ -605,6 +671,20 @@ def build_steps(
             if with_context
             else []
         ),
+        # --- Option 04: nach results, weil es dessen paper_ids schneidet; organizations.json ist
+        # eine Eingabe nur, wenn der Netzschritt lief (dann wandert ihr Hash in den Stamp)
+        Step(
+            "parties",
+            (
+                layout.corpus,
+                layout.results,
+                layout.voters,
+                *((layout.organizations,) if layout.organizations.exists() else ()),
+            ),
+            (layout.document_originators, layout.district_originators, layout.party_results),
+            parties,
+            PARTIES_SCHEMA,
+        ),
         Step(
             "report",
             (
@@ -634,6 +714,10 @@ def build_steps(
                     if with_context
                     else ()
                 ),
+                # Option 04
+                layout.document_originators,
+                layout.district_originators,
+                layout.party_results,
             )
             + ((layout.topics, layout.topic_documents) if with_topics else ()),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),

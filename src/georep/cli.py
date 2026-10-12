@@ -54,6 +54,12 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("steps", nargs="*", help="Namen (Standard: alle Netzschritte und texts)")
     fetch.add_argument("--force", action="store_true", help="auch aktuelle Schritte ausführen")
     fetch.add_argument("--limit", type=int, help="höchstens so viele neue PDFs in diesem Lauf")
+    fetch.add_argument(
+        "--max-pages",
+        type=int,
+        help="höchstens so viele Metadatenseiten; `fetch papers --max-pages 1` ist die Probe, "
+        "ob der Server Urheberfelder liefert (rund 90 s)",
+    )
 
     sub.add_parser("steps", help="Schritte mit Eingaben und Ausgaben")
     sub.add_parser("status", help="Settings, Pfade, Frische jedes Schritts")
@@ -89,10 +95,20 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _with_pdf_limit(settings: Settings, limit: int | None) -> Settings:
-    if limit is None:
+def _with_fetch_limits(settings: Settings, limit: int | None, max_pages: int | None) -> Settings:
+    """``--limit`` und ``--max-pages`` als Settings-Override für einen Lauf.
+
+    Beide zählen zum Fingerprint: ein Lauf mit Grenze hat ein anderes Ergebnis als einer ohne, und
+    ``georep status`` soll den betroffenen Schritt danach als „Settings geändert" zeigen.
+    """
+    update = {
+        key: value
+        for key, value in (("pdf_limit", limit), ("max_pages", max_pages))
+        if value is not None
+    }
+    if not update:
         return settings
-    oparl = settings.sources.oparl.model_copy(update={"pdf_limit": limit})
+    oparl = settings.sources.oparl.model_copy(update=update)
     sources = settings.sources.model_copy(update={"oparl": oparl})
     return settings.model_copy(update={"sources": sources})
 
@@ -102,7 +118,7 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
     PdfStore(layout.pdf_dir).ensure()
     fetching = args.command == "fetch"
     if fetching:
-        settings = _with_pdf_limit(settings, args.limit)
+        settings = _with_fetch_limits(settings, args.limit, args.max_pages)
     steps = build_steps(settings, layout)
     default_names = [s.name for s in steps if s.network or s.name == "texts"] if fetching else None
     outcomes = run_pipeline(

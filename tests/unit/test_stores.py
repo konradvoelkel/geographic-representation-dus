@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime as dt
 from pathlib import Path
 
-from georep.oparl import PaperPage
+from georep.oparl import OparlPaper, PaperPage
 from georep.records import PaperRecord, file_name_from
 from georep.stores import PaperStore, TextMeta, TextStore
 from tests.conftest import REPO
@@ -62,6 +62,63 @@ def test_paper_store_roundtrip_sorted_and_upsert(tmp_path: Path) -> None:
     assert store.upsert([newer]).updated == 1
     assert store.load()["p003"].name == "neuer"
     assert "1 neu" in store.upsert([_record(9)]).summary()
+
+
+# --- Option 04: Urheberfelder im Record ----------------------------------------------------------
+
+
+def test_record_carries_the_originator_tuples_from_oparl() -> None:
+    paper = OparlPaper.model_validate(
+        {
+            "id": "https://ris.invalid/papers/1",
+            "date": "2024-01-02",
+            "originatorPerson": ["https://ris.invalid/persons/7"],
+            "originatorOrganization": ["https://ris.invalid/organizations/gr/49"],
+            "underDirectionOf": ["https://ris.invalid/organizations/amt/66"],
+            "consultation": [
+                {"organization": ["https://ris.invalid/organizations/gr/25"]},
+                {"organization": "https://ris.invalid/organizations/gr/6"},
+            ],
+        }
+    )
+    record = PaperRecord.from_oparl(paper)
+    assert record.originator_person == ("https://ris.invalid/persons/7",)
+    assert record.originator_organization == ("https://ris.invalid/organizations/gr/49",)
+    assert record.under_direction_of == ("https://ris.invalid/organizations/amt/66",)
+    assert record.consultation_organizations == (
+        "https://ris.invalid/organizations/gr/25",
+        "https://ris.invalid/organizations/gr/6",
+    )
+    assert hash(record)  # frozen und hashbar: Tupel, keine Listen
+    assert record.has_originator
+
+
+def test_legacy_lines_without_the_new_keys_still_load(tmp_path: Path) -> None:
+    """Die 19 108 Zeilen aus ``from_legacy`` tragen die Schlüssel nicht; Standard ist leer."""
+    path = tmp_path / "raw" / "papers.jsonl"
+    path.parent.mkdir(parents=True)
+    path.write_text('{"id":"p1","name":"A","date":"2024-01-01"}\n', encoding="utf-8")
+    record = PaperStore(path).load()["p1"]
+    assert record.originator_person == () and record.consultation_organizations == ()
+    assert not record.has_originator
+    legacy = PaperRecord.from_legacy({"id": "u1", "download_url": "https://ris.invalid/dl/1.pdf"})
+    assert legacy.originator_organization == () and not legacy.has_originator
+
+
+def test_upsert_replaces_a_legacy_record_with_the_server_record(tmp_path: Path) -> None:
+    """Ohne ``modified`` auf beiden Seiten gewinnt der eingehende Record: die Urheber kommen an."""
+    store = PaperStore(tmp_path / "raw" / "papers.jsonl")
+    store.save([_record(1)])
+    with_originator = _record(1).model_copy(
+        update={"originator_organization": ("https://ris.invalid/organizations/gr/49",)}
+    )
+    assert _record(1) != with_originator  # Gleichheit sieht die neuen Felder
+    report = store.upsert([with_originator])
+    assert (report.added, report.updated, report.unchanged) == (0, 1, 0)
+    assert store.load()["p001"].originator_organization == (
+        "https://ris.invalid/organizations/gr/49",
+    )
+    assert store.upsert([with_originator]).unchanged == 1  # idempotent nach dem Roundtrip
 
 
 def test_text_store_put_get_save_and_currency(tmp_path: Path) -> None:

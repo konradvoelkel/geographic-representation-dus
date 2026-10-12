@@ -6,6 +6,7 @@ import xml.etree.ElementTree as ET
 
 import deal
 import pytest
+from shapely.geometry import box
 from syrupy.assertion import SnapshotAssertion
 
 from georep.analysis.regression import RegressionPair, RegressionResult
@@ -18,6 +19,7 @@ from georep.report.charts import (
     classify,
     legend,
     nice_ticks,
+    party_maps,
     project_pois,
     rate_label,
     scatter,
@@ -27,6 +29,8 @@ from georep.report.geometry import bounds_of, district_shapes, fit
 from georep.report.model import (
     NARROW_NBSP,
     DistrictRow,
+    PartyCell,
+    PartyRow,
     ReportModel,
     TermRow,
     build_report_model,
@@ -133,7 +137,6 @@ def test_map_escapes_names_and_terms() -> None:
         (TermRow("<i>&", 1, (7,)),),
         (TermRow("<i>&", 1, (7,)),),
     )
-    from shapely.geometry import box
 
     shapes = {7: box(0, 0, 10, 10)}
     projection = fit(bounds_of(shapes), 100.0)
@@ -251,3 +254,54 @@ def test_a_flat_added_variable_plot_still_draws_axes() -> None:
     root = ET.fromstring(svg)
     assert len(root.findall(f".//{NS}g[@class='avp-point']")) == 3
     assert root.findall(f".//{NS}g[@class='grid']")
+
+
+# --- Option 04: die kleinen Karten je Partei -------------------------------------------------------
+
+
+def _party_row(key: str, label: str, documents: int) -> PartyRow:
+    return PartyRow(key, label, label, documents, 0, 0, 0, 41, None, None, None)
+
+
+def _cells(parties: list[str], districts: list[int]) -> list[PartyCell]:
+    return [
+        PartyCell(district, party, district, district / 100.0, 0.2, True, district % 5)
+        for party in parties
+        for district in districts
+    ]
+
+
+def test_party_maps_hold_the_paths_once_and_use_them_per_panel() -> None:
+    """Die 41 Pfade stehen einmal in <defs>; jedes Panel ist ein <g> mit 41 <use>."""
+    shapes = {1: box(0, 0, 10, 10), 2: box(10, 0, 20, 10), 3: box(0, 10, 10, 20)}
+    projection = fit((0.0, 0.0, 20.0, 20.0), 600.0)
+    parties = [_party_row("CDU", "CDU", 2139), _party_row("SPD", "SPD", 2106)]
+    svg = party_maps(_cells(["CDU", "SPD"], [1, 2, 3]), shapes, projection, parties)
+    root = ET.fromstring(svg)
+    defs = root.findall(f"{NS}defs")
+    assert len(defs) == 1 and len(defs[0]) == len(shapes)
+    panels = root.findall(f'.//{NS}g[@class="panel"]')
+    assert len(panels) == len(parties)
+    uses = root.findall(f".//{NS}use")
+    assert len(uses) == len(parties) * len(shapes)
+    assert all(u.get("href", "").startswith("#pm-") for u in uses)
+    assert all(u.find(f"{NS}title") is not None for u in uses)
+    assert svg.count('d="M') == len(shapes)  # jeder Pfad genau einmal
+    labels = [t.text for t in root.findall(f'.//{NS}text[@class="panel-label"]')]
+    assert labels == ["CDU", "SPD"]
+
+
+def test_party_maps_title_names_the_numbers_and_the_missing_ballot() -> None:
+    shapes = {1: box(0, 0, 10, 10)}
+    projection = fit((0.0, 0.0, 10.0, 10.0), 600.0)
+    party = _party_row("Die_Linke", "Die Linke", 792)
+    cells = [PartyCell(1, "Die_Linke", 7, 0.0088, 0.0, False, 0)]
+    svg = party_maps(cells, shapes, projection, [party])
+    title = ET.fromstring(svg).find(f".//{NS}use/{NS}title")
+    assert title is not None and title.text is not None
+    assert "Die Linke, Wahlbezirk 1" in title.text and "7 von 792" in title.text
+    assert "nicht angetreten" in title.text
+
+
+def test_party_maps_are_empty_without_parties() -> None:
+    assert party_maps([], {1: box(0, 0, 1, 1)}, fit((0.0, 0.0, 1.0, 1.0), 10.0), []) == ""

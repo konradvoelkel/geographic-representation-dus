@@ -45,6 +45,14 @@ Varianten zur Seite (Spezifität je Begriff, Gewicht je Dokumentart, ein Thema j
 unter jeder davon; mit Einheitsgewichten steht dort dieselbe Zeile wie oben. `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
 braucht Netz). Daneben liegen unter `data/site/data/` die Ergebnisse zum Weiterverarbeiten: die
 sechzehn Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema
+810 KB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
+der Karte der 41 Wahlbezirke (Trefferquote oder Wahlbeteiligung, Tooltips, Klick-Markierung, die 1309 Orte als
+Punkte), dem Streudiagramm mit beiden Regressionsgeraden und Tabelle 5, einer sortierbaren Tabelle je
+Wahlbezirk, dem Abschnitt „Urheber und Parteien" (sechs kleine Karten je Partei, Tabelle je Partei mit dem
+Abgleich zum Stimmenanteil, Tabelle je Wahlbezirk mit den Urheberklassen), den Begriffen (ein Klick zeigt die
+Dokumente mit Datum, Drucksache, Urheber und PDF-Link), Methode und Grenzen, Lizenzen. `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
+braucht Netz). Daneben liegen unter `data/site/data/` die Ergebnisse zum Weiterverarbeiten: die neun
+Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema
 und `dokumente.json` (Dokumente mit Treffer ohne Texte); Größe und SHA-256 jeder Datei stehen auf der Seite. Der Workflow
 `.github/workflows/pages.yml` baut die Seite bei jedem Push auf `main` aus den Referenzdaten (`bootstrap`, `run`,
 kein Netzabruf) und veröffentlicht sie über GitHub Pages unter
@@ -57,7 +65,7 @@ Abschnitt „Berichtsseite").
 | Befehl | Was er tut |
 |---|---|
 | `georep run [SCHRITT …] [--force] [--dry-run] [--online]` | führt die Schritte aus und überspringt, was aktuell ist; Netzschritte nur mit `--online` |
-| `georep fetch [SCHRITT …] [--force] [--limit N]` | die Netzschritte `opendata`, `papers`, `pdfs`, `streets_osm`, `pois_wiki`, danach `texts`; `--limit` begrenzt neue PDF-Downloads |
+| `georep fetch [SCHRITT …] [--force] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `pdfs`, `streets_osm`, `pois_wiki`, danach `texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Metadatenseiten |
 | `georep steps` | Schritte mit Eingaben und Ausgaben |
 | `georep status` | Settings, Pfade, Stores, Frische jedes Schritts mit Grund |
 | `georep bootstrap [--force]` | den Datensatz der Arbeit nach `data_root` übernehmen |
@@ -73,6 +81,31 @@ nicht; ein Lauf ohne Änderung ist ein No-op.
 Ein voller Abruf von Grund auf (`georep fetch` auf leerem `data_root`) dauert Stunden: der OParl-Server
 brauchte am 2026-10-09 85 s pro Seite, die PDFs kommen seriell mit einer Sekunde Pause (Hochrechnung 2026-10-11:
 5,8 h für 19 108 PDFs, 2,8 GB). Alles ist wiederaufnehmbar; ein zweiter `fetch` holt nur Geändertes.
+
+### Der eine schnelle Netzschritt und die Probe auf die Urheberfelder
+
+`organizations` ist der kurze Abruf: eine Seite mit 58 Fraktionen, Ausschüssen und
+Bezirksvertretungen, am 2026-10-11 in 0,47 s. Daraus liest der Schritt `parties` die Abbildung von
+Organisations-URL auf Parteikürzel, falls der Server eines Tages `originatorOrganization` füllt.
+
+```bash
+uv run georep fetch organizations         # eine Seite, Sekunden; schreibt raw/organizations.json
+uv run georep fetch papers --max-pages 1  # Probe, rund 90 s: "1 Seiten, 200 Paper gesehen, …, davon N mit Urheberfeld"
+uv run georep run                         # corpus bis report neu, rund 7 s
+```
+
+Ist `N` null, liefert der Server keine Urheber, und der Urheber kommt weiter aus `paperType`, Titel
+und Textkopf (Stand 2026-10-09: null von 19 108). Nur wenn `N > 0` ist oder die `modified`-Zeitstempel
+gebraucht werden, lohnt der volle Metadatenabruf:
+
+```bash
+uv run georep fetch papers --force        # rund 95 Seiten mit stop_when_older, je 85 s plus 1 s Pause: 2 bis 3 h.
+                                          # Nicht seitenweise wiederaufnehmbar (ein Abbruch beginnt von vorn, der
+                                          # HTTP-Cache hält Seiten eine Stunde; für einen zweiten Versuch
+                                          # cache.oparl_pages_s erhöhen). Danach uv run georep run.
+uv run georep status                      # pdfs steht danach auf "Settings geändert", solange max_pages im Stamp
+                                          # steht: das ist richtig, nicht kaputt
+```
 
 ## Konfiguration
 
@@ -99,6 +132,7 @@ cache_root = "/media/konrad/xtraspace/georep/cache"
 | Orte je Stimmbezirk | Wikidata (CC0) per SPARQL, Wikipedia-GeoSearch | `reference/raw/` |
 | Kürzel und Namen der Gremien (Rat, Bezirksvertretungen, Ausschüsse, Beiräte) | Organisationsliste des Ratsinformationssystems (Stand 11.10.2026) und Dokumenttitel; das Gremium je Dokument liest der Parser aus der Drucksachennummer | `src/georep/defaults.toml`, Block `[bodies]` |
 | Sozialdaten je Sozialraum, Stand 31.12.2021 (Kontrollvariablen) | Quartiersatlas Düsseldorf 2024, Open-Data-Portal der Stadt Düsseldorf (CSV und GeoJSON, Datenlizenz Deutschland Namensnennung 2.0) | `context/` |
+| Fraktionen, Ausschüsse und Bezirksvertretungen | Ratsinformationssystem Düsseldorf über OParl 1.1, Endpunkt `organizations` | nein, `georep fetch organizations` holt sie |
 
 `context/` trägt die Fremddaten, aus denen die Kontrollvariablen entstehen, mit Herkunft, Lizenz, Datenstand,
 Abrufdatum und Prüfsummen in [context/README.md](context/README.md); die Seite nennt unter „Abgeleitete Daten"

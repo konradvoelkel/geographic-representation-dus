@@ -2,6 +2,10 @@
 
 ``PaperRecord`` ist die Zeile in ``raw/papers.jsonl`` und die Metadatenhälfte von ``papers.parquet``;
 sie entsteht aus einem OParl-Paper (``from_oparl``) oder aus dem Altformat der Arbeit (``from_legacy``).
+
+Die vier URL-Listen aus OParl 1.1 sind ``tuple``, nicht ``list``: der Record ist ``frozen`` und bleibt
+damit hashbar und gleichheitsfähig (der Upsert vergleicht ganze Records). Zeilen aus ``from_legacy``
+und alte JSONL-Zeilen ohne diese Schlüssel laden über die Standardwerte weiter (Option 04).
 """
 
 from __future__ import annotations
@@ -26,6 +30,22 @@ class PaperRecord(BaseModel):
     file_name: str | None = None
     download_url: str | None = None
     modified: dt.datetime | None = None
+    # Option 04: Urheber und beratende Gremien aus OParl 1.1. Der Server der ITK Rheinland liefert
+    # die Urheberfelder für Düsseldorf nicht (Stand 2026-10-09); der Record trägt sie trotzdem,
+    # damit die Quelle „oparl" in georep.analysis.parties ohne Codeänderung greift, sobald sie da
+    # sind. consultation_organizations nimmt Option 5 die Gremien ab, ohne das Schema erneut zu
+    # ändern (docs/plans/00-synergien.md, § 1).
+    originator_person: tuple[str, ...] = ()
+    originator_organization: tuple[str, ...] = ()
+    under_direction_of: tuple[str, ...] = ()
+    consultation_organizations: tuple[str, ...] = ()
+
+    @property
+    def has_originator(self) -> bool:
+        """Mindestens eines der drei Urheberfelder ist gefüllt (Zähler im Abrufbericht)."""
+        return bool(
+            self.originator_person or self.originator_organization or self.under_direction_of
+        )
 
     @classmethod
     def from_oparl(cls, paper: OparlPaper) -> PaperRecord:
@@ -42,6 +62,10 @@ class PaperRecord(BaseModel):
             ),
             download_url=primary.download_url if primary else None,
             modified=paper.modified,
+            originator_person=paper.originator_person,
+            originator_organization=paper.originator_organization,
+            under_direction_of=paper.under_direction_of,
+            consultation_organizations=paper.consultation_organizations,
         )
 
     @classmethod

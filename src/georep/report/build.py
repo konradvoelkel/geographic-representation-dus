@@ -30,12 +30,13 @@ from georep.report.charts import (
     classify,
     legend,
     own_share_label,
+    party_maps,
     project_pois,
     rate_label,
     scatter,
     turnout_label,
 )
-from georep.report.documents import DOCUMENT_COLUMNS, documents_payload
+from georep.report.documents import DOCUMENT_COLUMNS, documents_payload, originator_labels
 from georep.report.geometry import (
     SIMPLIFY_M,
     bounds_of,
@@ -148,14 +149,24 @@ def write_schema(layout: Layout, model: ReportModel) -> Download:
     return _download(target, "JSON", None, "Spaltenschema aller Tabellen, maschinenlesbar")
 
 
-def write_documents(layout: Layout, model: ReportModel) -> Download:
+def write_documents(layout: Layout, model: ReportModel, settings: Settings) -> Download:
     """``dokumente.json``: die Dokumente mit Treffer ohne Texte, je Begriff als Indizes."""
+    # Option 04: der Urheber je Dokument, falls der Schritt ``parties`` lief. Die Label kommen aus
+    # den Settings und nicht aus ``model.parties``, damit auch die Gruppen ohne Stimmenspalte
+    # (Tierschutz/Freie Wähler, Die PARTEI, Volt) ihren Namen tragen und nicht ihren Schlüssel.
+    attribution = (
+        pl.read_parquet(layout.document_originators)
+        if layout.document_originators.exists()
+        else None
+    )
+    labels = {p.key: p.label for p in (*settings.originators.parties, *settings.originators.groups)}
     payload = documents_payload(
         pl.read_parquet(layout.corpus, columns=DOCUMENT_COLUMNS),
         pl.read_parquet(layout.index),
         model.hidden_terms,
         version=model.version,
         generated_at=model.generated_at,
+        originators=originator_labels(attribution, labels),
     )
     target = layout.site_data / DOCUMENTS_NAME
     write_json(target, payload, indent=None)
@@ -165,7 +176,8 @@ def write_documents(layout: Layout, model: ReportModel) -> Download:
         target,
         "JSON",
         len(documents),
-        "Dokumente mit Treffer: Link, Datum, Drucksache, Titel, Art; je Begriff die Dokumente als Indizes",
+        "Dokumente mit Treffer: Link, Datum, Drucksache, Titel, Art, Urheber; "
+        "je Begriff die Dokumente als Indizes",
     )
 
 
@@ -256,7 +268,7 @@ def build_site(
     precincts = read_precincts(layout.districts_geojson, settings.columns, working_crs)
     shapes = district_shapes(precincts, SIMPLIFY_M)
     model = build_report_model(layout, settings, now=now, commit=commit)
-    downloads.append(write_documents(layout, model))
+    downloads.append(write_documents(layout, model, settings))
 
     geojson = wahlbezirke_geojson(shapes, model.districts, working_crs)
     geojson_target = layout.site_data / GEOJSON_NAME
@@ -312,6 +324,8 @@ def build_site(
         pois=len(points),
         bodies_legend=legend(own, own_share_label),
         partial_svgs=partial_plots(layout, settings, model),
+        # Option 04: eine kleine Karte je Partei, die 41 Pfade einmal in <defs>
+        party_maps_svg=party_maps(model.party_cells, shapes, projection, model.parties),
     )
     map_html = render_map(
         model, _map_districts(geojson, model, rate.classes), _places_geojson(pois), rate_legend

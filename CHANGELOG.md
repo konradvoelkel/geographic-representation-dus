@@ -4,6 +4,16 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- Neuer Abschnitt „Urheber und Parteien" auf der Berichtsseite: je Ratsdokument der Urheber (Verwaltung,
+  Fraktion, Person, Eingabe nach § 24 GO NRW oder unbekannt) und bei Fraktionen die Parteien, abgeleitet aus
+  Dokumentart, Titel und Textkopf, weil der OParl-Server die Urheberfelder für Düsseldorf nicht füllt. Sechs
+  kleine Karten zeigen je Partei, welcher Anteil ihrer Dokumente einen Wahlbezirk erwähnt; eine Tabelle je
+  Partei stellt das dem Stimmenanteil gegenüber (Pearson *r* und *p*, Bonferroni-Hinweis bei sechs Tests), und
+  die Tabelle je Wahlbezirk zeigt die Urheberklassen und die schattierten Parteispalten. Drei neue
+  Download-Tabellen (`dokumente_urheber`, `wahlbezirke_urheber`, `wahlbezirke_parteien`), der Dokumentdialog
+  nennt den Urheber. Neuer Offline-Schritt `parties` und der schnelle Netzschritt `organizations`;
+  `georep fetch papers --max-pages N` liest nur die ersten Seiten und zählt, wie viele Paper ein Urheberfeld
+  tragen. Alle Muster und Parteien stehen in `defaults.toml` unter `[originators]`.
 - Kontrollvariablen (Option 03): die Berichtsseite stellt der Regression von Tabelle 5 drei Modelle mit
   Sozialdaten der Stadt gegenüber (Tabelle 6), zeigt je Term des Hauptmodells ein partielles Streudiagramm,
   nennt in Tabelle 6b den Koeffizienten der Trefferquote mit je einer Kontrollvariable und sagt unter

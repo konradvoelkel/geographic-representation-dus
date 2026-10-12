@@ -413,3 +413,67 @@ def test_fingerprint_ignores_context_paths_and_display_values_but_sees_models(
         '[context.models]\nmain = ["trefferquote"]\n', encoding="utf-8"
     )
     assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
+
+
+# --- Option 04: Urheber und Parteien -------------------------------------------------------------
+
+
+def test_originators_defaults_describe_duesseldorf(tmp_path: Path) -> None:
+    o = load_settings(cwd=tmp_path).originators
+    assert [p.key for p in o.parties] == ["CDU", "GRUENE", "SPD", "FDP", "Die_Linke", "AfD"]
+    assert [g.key for g in o.groups] == ["T_FW", "PARTEI", "VOLT"]
+    assert o.all_keys == (
+        "CDU",
+        "GRUENE",
+        "SPD",
+        "FDP",
+        "Die_Linke",
+        "AfD",
+        "T_FW",
+        "PARTEI",
+        "VOLT",
+    )
+    assert len(o.admin_types) == 8 and len(o.citizen_types) == 2
+    # Die längsten Antragspräfixe zuerst, sonst bleibt von „Haushaltsantrag CDU/Grüne" ein Rest
+    assert o.motion_prefixes[0] == "Haushaltsantrag"
+    assert o.text_head_chars == 600 and o.text_window_chars == 80
+    assert all(p.organizations for p in o.parties)  # jede Partei kennt ihre OParl-Organisation
+
+
+def test_party_keys_must_have_a_vote_column(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[[originators.parties]]\nkey = "XYZ"\nlabel = "X"\npatterns = ["x"]\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="columns.results.parties"):
+        load_settings(cwd=tmp_path)
+
+
+def test_doubled_party_keys_and_broken_patterns_are_rejected(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[[originators.groups]]\nkey = "T_FW"\nlabel = "A"\npatterns = ["a"]\n'
+        '[[originators.groups]]\nkey = "T_FW"\nlabel = "B"\npatterns = ["b"]\n'
+        '[[originators.groups]]\nkey = "PARTEI"\nlabel = "C"\npatterns = ["c"]\n'
+        '[[originators.groups]]\nkey = "VOLT"\nlabel = "D"\npatterns = ["d"]\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValidationError, match="doppelte Parteischlüssel"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        '[originators]\ntext_markers = ["(unbalanciert"]\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="regulärer Ausdruck"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        "[originators]\ntext_head_chars = 0\n", encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="positiv"):
+        load_settings(cwd=tmp_path)
+
+
+def test_a_changed_pattern_changes_the_fingerprint(tmp_path: Path) -> None:
+    """Die Muster bestimmen das Ergebnis, also zählen sie zum Fingerprint; der Pfad nicht."""
+    base = load_settings(cwd=Path("/nonexistent")).fingerprint()
+    (tmp_path / "settings.toml").write_text(
+        "[originators]\ntext_head_chars = 800\n", encoding="utf-8"
+    )
+    assert load_settings(cwd=tmp_path).fingerprint() != base

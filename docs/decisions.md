@@ -361,3 +361,39 @@ Kontrollvariablen erklärt Modell B R² = 0,887 statt 0,026, und der Koeffizient
 41,33 mit p 0,133: was Tabelle 5 als schwachen Zusammenhang zeigt, erklärt vor allem der soziale
 Handlungsbedarf (standardisiert −0,96). Das steht so auf der Seite, erzeugt aus den Zahlen, mit dem Hinweis
 auf n = 41, den Datenstand 31.12.2021 und die Endogenität der Stimmenanteile.
+
+## Punkt: Urheber aus Metadaten und Textkopf, OParl-Felder vorbereitet (Option 04, 2026-10-12)
+
+OParl 1.1 hat für den Urheber einer Vorlage drei Felder (`originatorPerson`, `originatorOrganization`,
+`underDirectionOf`). Der Server der ITK Rheinland füllt sie für Düsseldorf nicht: keines der sechs Paper der
+echten Seite vom 2026-10-09 trägt eines, auch der „Antrag FDP" nicht, und die 19 108 Rohobjekte der Arbeit
+haben sie nie getragen. Der Urheber steht stattdessen im `paperType` („Anfrage SPD"), im Titel („Antrag der
+SPD-Fraktion") und im Textkopf („(anfrage cdu-fraktion vom 28. juli 2023)"). Gewählt: der Urheber wird aus
+diesen drei Feldern abgeleitet, in dieser Reihenfolge, und `originatorOrganization` steht als erste Quelle
+davor, damit sie ohne Codeänderung greift, sobald der Server sie füllt. Die Muster, die Verwaltungs- und
+Eingabe-`paperType`s und die Parteien stehen vollständig in `defaults.toml` unter `[originators]`, nichts
+davon im Code; eine zweite Kommune bringt andere Werte mit (Option 10). Jede Zuordnung veröffentlicht ihre
+Quelle und die getroffene Zeichenkette, also ist sie nachprüfbar.
+
+Belegt durch eine geschichtete Stichprobe von 50 Dokumenten, von Hand gegen Titel und Textkopf geprüft: der
+erste Durchgang fand sieben Fehler (14 %), alle in der Klasse „unbekannt", und zeigte drei Lücken — Punkte in
+Abkürzungen zwischen Antragswort und „Fraktion", die umgekehrte Leserichtung „(interfraktioneller antrag)",
+und eine Partei in einer Antragsklammer ohne das Wort „Fraktion". Nach dem Nachziehen der Muster bleibt ein
+Fehler in 50 (2 %), und die Klasse „unbekannt" fällt von 616 auf 327 Dokumente (1,7 %).
+
+Verworfen: auf den Vollabruf der Metadaten warten (2 bis 3 h und nach dem Befund ohne Ertrag für den Urheber;
+er bleibt als Lauf dokumentiert, weil er `modified` für Option 7 und `consultation` für Option 5 bringt); ein
+gelernter Klassifikator (es gibt nichts zu lernen, die Zuordnung steht wörtlich im Text); den ganzen Text
+durchsuchen statt nur den Kopf (Verwaltungsvorlagen zitieren Fraktionen); Personen über `memberships` und
+`persons` den Fraktionen zuordnen (Hunderte Anfragen für 865 Dokumente, zurückgestellt); die Personenmarker
+auch auf den Textkopf anwenden (die Anreden der Vorlagen, „sehr geehrter Herr Oberbürgermeister", machten
+halbe Anträge zu Personen — die Folge ist ein dokumentierter Fehler in der Stichprobe). Kosten: eine
+Ableitung, keine Angabe der Quelle; der Methodentext der Seite sagt das, und 1,7 % bleiben ohne Urheber.
+
+Kooperationspapiere (1 168, davon 844 CDU und Grüne) zählen für jede beteiligte Partei voll, mit
+`treffer_allein` als Gegenprobe; Bruchteile 1/k wären schwerer zu prüfen und ergäben halbe Dokumente. Der
+Abgleich mit den Hochburgen bleibt bei Pearson *r* und *p* je Partei mit dem Bonferroni-Hinweis (bei sechs
+Tests und n = 41 ist ein „signifikanter" Wert zu erwarten; nur die FDP bleibt unter 0,05/6); ein Modell
+gehört zu Option 3. Bezirke ohne Wahlvorschlag einer Partei bleiben im Abgleich außen vor, sonst läse sich
+„nicht angetreten" wie „keine Zustimmung" (Wahlbezirk 11, Die Linke).
+

@@ -22,6 +22,10 @@ files = st.builds(
     file_name=opt_text,
     download_url=st.one_of(st.none(), text.map(lambda s: f"https://x/{s}.pdf")),
 )
+urls = st.lists(
+    st.text(alphabet="abc/0123456789", min_size=1, max_size=12).map(lambda s: f"https://x/{s}"),
+    max_size=3,
+).map(tuple)
 papers = st.builds(
     OparlPaper,
     id=st.text(alphabet="abc/0123456789", min_size=1, max_size=15),
@@ -31,6 +35,13 @@ papers = st.builds(
     paper_type=opt_text,
     main_file=st.one_of(st.none(), files),
     auxiliary_file=st.lists(files, max_size=2),
+    consultation=st.lists(
+        st.fixed_dictionaries({}, optional={"organization": urls.map(list), "role": text}),
+        max_size=3,
+    ),
+    originator_person=urls,
+    originator_organization=urls,
+    under_direction_of=urls,
     modified=st.one_of(st.none(), aware),
 )
 
@@ -41,10 +52,20 @@ def test_oparl_paper_survives_a_json_roundtrip(paper: OparlPaper) -> None:
     assert again == paper
     record = PaperRecord.from_oparl(paper)
     assert record.id == paper.id and record.date == paper.date
+    assert record.has_originator == paper.has_originator
+    assert record.consultation_organizations == paper.consultation_organizations
+    assert PaperRecord.model_validate_json(record.model_dump_json()) == record
     primary = paper.main_file or (paper.auxiliary_file[0] if paper.auxiliary_file else None)
     assert record.download_url == (primary.download_url if primary else None)
     if record.download_url:
         assert record.file_name == record.download_url.rsplit("/", 1)[-1]
+    # Option 04: die Urheberfelder bleiben Tupel, consultation wird zur sortierten URL-Menge
+    assert again.originator_organization == paper.originator_organization
+    assert paper.has_originator == bool(
+        paper.originator_person or paper.originator_organization or paper.under_direction_of
+    )
+    expected = sorted({u for c in paper.consultation for u in c.get("organization", [])})
+    assert list(paper.consultation_organizations) == expected
 
 
 @given(
@@ -54,6 +75,11 @@ def test_oparl_paper_survives_a_json_roundtrip(paper: OparlPaper) -> None:
             id=st.text(alphabet="abc0123456789", min_size=1, max_size=8),
             name=opt_text,
             modified=st.one_of(st.none(), aware),
+            # Option 04: die vier URL-Tupel gehen durch JSONL und zurück, ohne Gleichheit zu verlieren
+            originator_person=urls,
+            originator_organization=urls,
+            under_direction_of=urls,
+            consultation_organizations=urls,
         ),
         max_size=12,
     )

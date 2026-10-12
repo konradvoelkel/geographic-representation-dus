@@ -258,7 +258,8 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
         a.textContent = doc[3];
         var ref = document.createElement("div");
         ref.className = "ref";
-        ref.textContent = doc[2] + (doc[4] ? ", " + doc[4] : "");
+        /* Option 04: hinter Drucksache und Art steht der Urheber, wenn dokumente.json ihn traegt. */
+        ref.textContent = doc[2] + (doc[4] ? ", " + doc[4] : "") + (doc[5] ? " \u2014 " + doc[5] : "");
         li.appendChild(when); li.appendChild(a); li.appendChild(ref);
         ol.appendChild(li);
       });

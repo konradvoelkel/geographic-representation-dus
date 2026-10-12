@@ -19,7 +19,7 @@ from shapely.geometry.base import BaseGeometry
 
 from georep.analysis.regression import RegressionPair
 from georep.report.geometry import Projection, label_point, svg_path
-from georep.report.model import DistrictRow, format_de, percent_de
+from georep.report.model import DistrictRow, PartyCell, PartyRow, format_de, percent_de
 
 CLASSES = 5  # Quantilklassen der Choroplethe; weniger, wenn es weniger verschiedene Werte gibt
 MAP_WIDTH = 600.0
@@ -491,4 +491,86 @@ def added_variable_plot(
             f'y="{_num(axes.sy(y) - 5)}">{district}</text></g>'
         )
     parts.append("</g></svg>")
+    return "".join(parts)
+
+
+# --- Option 04: sechs kleine Karten in einem SVG --------------------------------------------------
+
+PANEL_COLUMNS = 3  # 3 x 2 bei sechs Parteien; die Zeilenzahl folgt aus der Zahl der Parteien
+PANEL_GAP = 10.0  # SVG-Einheiten zwischen den Panels
+PANEL_LABEL = 18.0  # Platz über jedem Panel für die Beschriftung
+
+
+def _share_label(value: float) -> str:
+    return percent_de(value, 1)
+
+
+def _panel_title(party: PartyRow, district: int, cell: PartyCell | None) -> str:
+    """Der ``<title>`` einer Fläche: Treffer, Anteil und Stimmenanteil im Klartext."""
+    if cell is None:
+        return f"{party.label}, Wahlbezirk {district}: keine Daten"
+    votes = percent_de(cell.vote_share, 1) if cell.ran else "nicht angetreten"
+    return (
+        f"{party.label}, Wahlbezirk {district}: {format_de(cell.hits)} von "
+        f"{format_de(party.documents)} Dokumenten ({_share_label(cell.share)}), "
+        f"Stimmenanteil {votes}"
+    )
+
+
+def party_maps(
+    cells: Sequence[PartyCell],
+    shapes: Mapping[int, BaseGeometry],
+    projection: Projection,
+    parties: Sequence[PartyRow],
+    *,
+    columns: int = PANEL_COLUMNS,
+) -> str:
+    """Ein SVG mit einer kleinen Karte je Partei; die 41 Flächen stehen einmal in ``<defs>``.
+
+    Die Pfade sind der teuerste Teil der Seite (28 KB für 41 Flächen); sechs eigenständige SVGs
+    wären sechsmal so groß. Hier liegen sie einmal als ``<path id="pm-N">`` in ``<defs>``, und
+    jedes Panel ist ein ``<g transform>`` mit 41 ``<use>``, die nur die Klasse und den ``<title>``
+    tragen. Die Quantilklassen sind je Partei gerechnet (``PartyCell.klass``), nicht gemeinsam:
+    bei einer gemeinsamen Skala läge die AfD mit 71 Treffern überall in der untersten Klasse.
+    """
+    if not parties or not shapes:
+        return ""
+    by_party: dict[str, dict[int, PartyCell]] = {}
+    for cell in cells:
+        by_party.setdefault(cell.party, {})[cell.district] = cell
+    scale = 1.0 / columns
+    panel_w = projection.width * scale
+    panel_h = projection.height * scale
+    rows = (len(parties) + columns - 1) // columns
+    width = columns * panel_w + (columns - 1) * PANEL_GAP
+    height = rows * (panel_h + PANEL_LABEL) + (rows - 1) * PANEL_GAP
+    parts = [
+        f'<svg class="party-maps" viewBox="0 0 {_num(width)} {_num(height)}" role="img" '
+        'aria-labelledby="party-maps-title" xmlns="http://www.w3.org/2000/svg">',
+        '<title id="party-maps-title">Je Partei eine Karte: Anteil der Dokumente der Partei, '
+        "die den Wahlbezirk erwähnen</title>",
+        "<defs>",
+    ]
+    parts.extend(
+        f'<path id="pm-{district}" d="{svg_path(geometry, projection)}"/>'
+        for district, geometry in sorted(shapes.items())
+    )
+    parts.append("</defs>")
+    for index, party in enumerate(parties):
+        column, row = index % columns, index // columns
+        x = column * (panel_w + PANEL_GAP)
+        y = row * (panel_h + PANEL_LABEL + PANEL_GAP)
+        mine = by_party.get(party.key, {})
+        parts.append(f'<g class="panel" transform="translate({_num(x)} {_num(y)})">')
+        parts.append(f'<text class="panel-label" x="0" y="12">{html.escape(party.label)}</text>')
+        parts.append(f'<g transform="translate(0 {_num(PANEL_LABEL)}) scale({scale:.6f})">')
+        for district in sorted(shapes):
+            found = mine.get(district)
+            klass = found.klass if found is not None else 0
+            parts.append(
+                f'<use href="#pm-{district}" class="district q{klass}">'
+                f"<title>{html.escape(_panel_title(party, district, found))}</title></use>"
+            )
+        parts.append("</g></g>")
+    parts.append("</svg>")
     return "".join(parts)

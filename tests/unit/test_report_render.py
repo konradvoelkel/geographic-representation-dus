@@ -19,6 +19,7 @@ from georep.report.charts import (
     choropleth,
     classify,
     legend,
+    party_maps,
     rate_label,
     scatter,
     turnout_label,
@@ -75,6 +76,7 @@ def visuals(model: ReportModel, mini_run: Layout, default_settings: Settings) ->
         turnout_legend=legend(turnout, turnout_label),
         simplify_m=SIMPLIFY_M,
         pois=0,
+        party_maps_svg=party_maps(model.party_cells, shapes, projection, model.parties),
     )
 
 
@@ -86,7 +88,8 @@ def page(model: ReportModel, visuals: Visuals) -> str:
 def test_page_parses_with_one_heading_and_german_language(page: str) -> None:
     parser = Counter()
     parser.feed(page)
-    assert parser.tags["h1"] == 1 and parser.tags["svg"] == 2 and parser.tags["main"] == 1
+    # Karte, Streudiagramm und (Option 04) die Parteikarten
+    assert parser.tags["h1"] == 1 and parser.tags["svg"] == 3 and parser.tags["main"] == 1
     assert page.startswith("<!doctype html>") and '<html lang="de">' in page
     assert page.count('<p lang="en">') == 1
     assert "Erzeugt am 11.10.2026, 18:30 UTC mit georep" in page and "Commit abc1234" in page
@@ -383,3 +386,49 @@ def test_the_method_section_mentions_the_control_variables(page: str, model: Rep
     method = page[page.index('<section id="methode">') : page.index('<section id="abgeleitete')]
     assert "Die Kontrollvariablen sind Fremddaten" in method
     assert model.derived.units_label in method and "Datenstand" in method
+
+
+# --- Option 04: der Abschnitt „Urheber und Parteien" -----------------------------------------------
+
+
+def test_the_party_section_has_the_maps_both_tables_and_every_cell(
+    page: str, model: ReportModel
+) -> None:
+    assert '<section id="parteien">' in page
+    assert (
+        page.index('id="zusammenhang"')
+        < page.index('id="parteien"')
+        < page.index('id="wahlbezirke"')
+    )
+    assert page.count('class="panel"') == len(model.parties)
+    assert page.count('<use href="#pm-') == len(model.parties) * len(model.districts)
+    assert page.count('<path id="pm-') == len(model.districts)  # die Pfade nur einmal
+    # Je Wahlbezirk eine Zeile mit einer Zelle je Partei
+    cells = sum(page.count(f'class="num p{k}"') for k in range(5))
+    assert cells == len(model.districts) * len(model.parties) == len(model.party_cells)
+    for party in model.parties:
+        assert f">{party.label}</th>" in page  # Parteitabelle nennt den vollen Namen
+        assert f'title="{party.label}">{party.short}</th>' in page  # Bezirkstabelle das Kürzel
+    assert "Bonferroni" in page and "nicht angetreten" not in page.split('id="parteien"')[0]
+
+
+def test_the_section_states_the_coverage_and_the_method_names_its_limits(
+    page: str, model: ReportModel
+) -> None:
+    figures = model.originator_figures
+    assert figures is not None
+    assert f"{figures.verwaltung} Vorlagen der Verwaltung" in page.replace("\u202f", "")
+    assert "Zum Urheber:" in page  # der Absatz in „Methode und Grenzen"
+    assert page.index('id="methode"') < page.index("Zum Urheber:")
+    assert "nicht angetreten" in page  # die Grenze steht im Methodentext
+
+
+def test_the_section_disappears_without_the_parties_step(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    """Ohne Modellteil kein Abschnitt: die Vorlage steht in {% if model.parties %}."""
+    empty = replace(model, parties=(), party_cells=(), originators=(), originator_figures=None)
+    page = render_report(empty, replace(visuals, party_maps_svg=""))
+    assert '<section id="parteien">' not in page and "Urheber und Parteien" not in page
+    assert '<section id="wahlbezirke">' in page  # der Rest der Seite bleibt
+    assert "Zum Urheber:" not in page

@@ -550,3 +550,80 @@ def test_the_attribution_comes_from_the_settings(tmp_path: Path) -> None:
     assert "Stadt Beispielstadt, Amt für Zahlen" in text and "Sozialbericht 2030" in text
     assert "Creative Commons Zero 1.0" in text
     assert "dl-de" not in text and "Quartiersatlas" not in text
+
+
+# --- Option 04: der Abschnitt „Urheber und Parteien" -----------------------------------------------
+
+
+def test_the_party_section_matches_polars(mini_run: Layout, default_settings: Settings) -> None:
+    """Die drei Listen des Modells gegen die drei Parquet-Tabellen nachgerechnet."""
+    model = build_report_model(
+        mini_run, default_settings, now=dt.datetime(2026, 10, 12, tzinfo=dt.UTC)
+    )
+    party_table = pl.read_parquet(mini_run.party_results)
+    attribution = pl.read_parquet(mini_run.document_originators)
+    assert len(model.parties) == len(default_settings.originators.parties)
+    assert [p.key for p in model.parties] == [p.key for p in default_settings.originators.parties]
+    assert [p.label for p in model.parties] == [
+        p.label for p in default_settings.originators.parties
+    ]
+    for party in model.parties:
+        mine = party_table.filter(pl.col("partei") == party.key)
+        assert party.hits == int(mine.get_column("anzahl_treffer").sum())
+        assert party.alone == int(mine.get_column("treffer_allein").sum())
+        assert party.documents == int(mine.get_column("dokumente_partei").to_list()[0])
+        assert party.n == mine.filter(pl.col("angetreten")).height
+        assert party.districts_hit == mine.filter(pl.col("anzahl_treffer") > 0).height
+    assert len(model.party_cells) == party_table.height
+    assert all(0 <= c.klass <= 4 for c in model.party_cells)
+
+    figures = model.originator_figures
+    assert figures is not None
+    assert figures.documents == attribution.height
+    assert figures.classified + figures.unbekannt == figures.documents
+    assert 0.0 <= figures.coverage <= 1.0
+    assert figures.from_oparl == 0  # die Mini-Fixture trägt keine Urheberfelder
+
+    districts = pl.read_parquet(mini_run.district_originators)
+    assert len(model.originators) == districts.height
+    for row in model.originators:
+        assert row.verwaltung + row.fraktion + row.person + row.eingabe + row.unbekannt == row.hits
+        assert row.name  # jeder Bezirk trägt den Namen aus dem GeoJSON
+
+
+def test_cells_for_follows_the_column_order_not_the_sort_order(
+    mini_run: Layout, default_settings: Settings
+) -> None:
+    """``party_cells`` ist alphabetisch nach Schlüssel sortiert, die Spalten folgen den Settings."""
+    model = build_report_model(
+        mini_run, default_settings, now=dt.datetime(2026, 10, 12, tzinfo=dt.UTC)
+    )
+    keys = [p.key for p in model.parties]
+    assert keys[0] == "CDU" and keys[-1] == "AfD"  # Settings-Reihenfolge, nicht alphabetisch
+    assert sorted(keys) != keys  # sonst prüfte der Test nichts
+    for row in model.originators:
+        assert [c.party for c in model.cells_for(row.district)] == keys
+        assert all(c.district == row.district for c in model.cells_for(row.district))
+
+
+def test_without_the_parties_step_the_section_stays_empty(
+    tmp_path: Path, mini_root: Path, default_settings: Settings
+) -> None:
+    """Ein Lauf ohne den Schritt ``parties`` lässt die vier Modellfelder leer; die Vorlage
+    blendet den Abschnitt dann aus."""
+    from georep.bootstrap import bootstrap
+    from georep.pipeline import build_steps, run_pipeline
+
+    layout = Layout(tmp_path / "data", tmp_path / "cache", mini_root)
+    bootstrap(layout)
+    steps = [
+        s for s in build_steps(default_settings, layout) if s.name not in ("parties", "report")
+    ]
+    run_pipeline(steps, default_settings, [s.name for s in steps if not s.network])
+    assert not layout.party_results.exists()
+    model = build_report_model(
+        layout, default_settings, now=dt.datetime(2026, 10, 12, tzinfo=dt.UTC)
+    )
+    assert model.parties == () and model.party_cells == ()
+    assert model.originators == () and model.originator_figures is None
+    assert model.cells_for(1) == ()
