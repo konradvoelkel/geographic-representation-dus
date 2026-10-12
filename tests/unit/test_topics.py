@@ -131,3 +131,13 @@ def test_dominant_topic_rounds_the_share() -> None:
         schema={"id": pl.String, "anteile": pl.List(pl.Float64)},
     )
     assert dominant_topics(shares).get_column("anteil").to_list() == [0.8765]
+
+
+def test_a_vocabulary_smaller_than_k_is_a_domain_error() -> None:
+    """nndsvda verlangt ``k <= min(Dokumente, Wörter)``; zu wenige Wörter sind kein Programmfehler."""
+    corpus = pl.DataFrame(
+        {"id": [f"p{i}" for i in range(5)], "text": ["strasse verkehr"] * 5},
+        schema={"id": pl.String, "text": pl.String},
+    )
+    with pytest.raises(EmptyResultError, match="Wörter"):
+        fit_topics(corpus, _settings(k=4, min_df=1))

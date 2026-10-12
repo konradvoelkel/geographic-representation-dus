@@ -156,6 +156,15 @@ def fit_topics(corpus: pl.DataFrame, settings: Topics) -> TopicModel:
             f"Kein Wort überlebt min_df={settings.min_df} und max_df={settings.max_df} "
             f"auf {texts.height} Dokumenten: {error}"
         ) from error
+    if counts.shape[1] < settings.k:
+        # nndsvda zerlegt in k Faktoren und braucht dafür k <= min(Dokumente, Wörter); sonst wirft
+        # sklearn ein ValueError. Zu wenige Wörter sind eine Eigenschaft der Daten, kein
+        # Programmierfehler: ein Domänenfehler mit dem Grund, nicht eine Vertragsverletzung.
+        raise EmptyResultError(
+            f"{settings.k} Themen brauchen mindestens so viele Wörter im Vokabular, "
+            f"{counts.shape[1]} überleben min_df={settings.min_df} und max_df={settings.max_df} "
+            f"auf {texts.height} Dokumenten."
+        )
     model = NMF(
         n_components=settings.k,
         init="nndsvda",
