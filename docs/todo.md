@@ -7,6 +7,14 @@ Beschreibungen ersetzt).
 
 ## 1. Themenmodell: die 20 Themen tragen nicht
 
+**Erledigt am 2026-10-12, siehe `docs/themenmodell-2026-10.md`** (Entscheidungen in
+`docs/decisions.md`, Punkt 45; Messskript `docs/themenmodell-2026-10-messung.py`). Alle vier Wege
+sind abgearbeitet und gemessen: die Stoppwörter kommen aus dem Profil und aus dem Korpus, jeder
+größere Ausschuss hat ein gesätes Thema mit Namen, ein Klassifikator ordnet jedem Dokument einen
+passenden Ausschuss zu (Genauigkeit 0,941, Makro-F1 0,877; vier von fünf BV-Dokumenten bleiben
+aber in der Restklasse), und Einbettungen sind mit Zahlen begründet **nicht** gebaut. Offene
+Annahmen stehen in § 7 des Dokuments. Der Auftrag stand so:
+
 Heute: TF-IDF und NMF mit 20 Themen (`analysis/topics.py`, Option 06), Wörter je Thema als Label. Konrads
 Blick auf die Themen der Referenz: Thema 0 ist „Kosten/Geld", Thema 2 „Bauen", aber Thema 3 ist CDU vermischt
 mit anderem, Thema 16 ein seltsamer Linke-Block; vermutlich prägen die Fraktionsnamen aus Kopf und Betreff der

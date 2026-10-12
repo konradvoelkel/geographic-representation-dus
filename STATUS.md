@@ -1,7 +1,8 @@
 # Status
 
 Stand 2026-10-12, `main` auf `v0.11.0` plus die beiden Methodikregeln aus `docs/todo.md`, Punkt 4
-(nicht getaggt; `bartzsch-exakt` zeigt auf den letzten exakt reproduzierenden Stand). Der Umbau in sieben Phasen ist abgeschlossen
+und das tragfähige Themenmodell aus Punkt 1 (nicht getaggt; `bartzsch-exakt` zeigt auf den letzten
+exakt reproduzierenden Stand). Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
 Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>), und der Ausbau in
 acht Optionen ist gemerged (`docs/plan-ausbau-2026-10.md`, Pläne und Abnahmen unter `docs/plans/`). Aufbau in
@@ -83,18 +84,42 @@ rechnet die Kette wie die Arbeit, und genau so messen die Golden-Master-Tests
   (§ 2.6, offen): „Treffer je Begriff im Wörterbuch" als zweite Kennzahl, zusammen mit `docs/todo.md`,
   Punkt 3.
 
-## Zahlen (2026-10-12, `v0.11.0`)
+## Themenmodell (2026-10-12, `docs/themenmodell-2026-10.md`)
 
-- Tests: 855 schnelle (nox-Gate, parallel in rund 40 s, Abdeckung 98 %), 20 `slow` (rund 2 min über die volle
+`docs/todo.md`, Punkt 1: die 20 Themen trugen nicht, weil Fraktions- und Personennamen sieben von
+ihnen prägten. Alle vier Wege des TODO sind abgearbeitet und gemessen (Entscheidungen in
+`docs/decisions.md`, Punkt 45; Nachrechnen mit `docs/themenmodell-2026-10-messung.py`):
+
+- **Stoppwörter aus dem Profil und aus dem Korpus** (`topics.stop_sources`): Parteien, Fraktionen
+  und Personenmarker aus `[originators]`, Gremienkürzel aus `[bodies]`, Personennamen daraus, dass
+  ein Wort fast nur hinter einer Unterschrift oder einer Amtsbezeichnung steht (254 Wörter,
+  insgesamt 628 statt 313). NPMI der Topwörter +0,4164 → +0,4224; die Partei- und Personenblöcke
+  sind weg, Schule, Aufsichtsratsbesetzungen und Verfügungsmittel sind neue Themen. Ausnahmen im
+  Profil (`topics.stop_keep`: „klima", „tierschutz").
+- **Gesäte Themen je Ausschuss** (`topics.seed = "committees"`, 17 von 20 gesät): Log-Odds mit
+  Dirichlet-Prior liefert die Saatwörter, die Wortmatrix bleibt fest. Treue 0,70 bis 1,00 (Median
+  0,83), Reinheit 0,15 bis 0,57; NPMI fällt auf +0,3351 — bezahlt für Namen statt Nummern.
+- **Passender Ausschuss je Dokument** (Schritt `committees`, 6,5 s): Kreuzvalidierung 0,941
+  Genauigkeit, 0,877 Makro-F1 über 20 Klassen. Konrads Frage ist mit Nein beantwortet: 10,9 % der
+  Ausschussdokumente, aber 81,3 % der BV- und 87,5 % der Ratsdokumente bleiben unter der Schwelle
+  von 0,4.
+- **Einbettungen**: nicht gebaut, mit Zahlen begründet (§ 5 des Dokuments).
+
+Tabelle 5, die Treffer (29 010) und das Wörterbuch (5727) sind unberührt; nur die
+`thema_NN`-Zeilen der Gewichtungstabelle tragen andere Zahlen.
+
+## Zahlen (2026-10-12, `v0.11.0` plus Punkt 44 und 45)
+
+- Tests: 880 schnelle (nox-Gate, parallel in rund 42 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
-- Register: 28 Schritte; `georep steps` zeigt 25 für Düsseldorf, 26 mit Vergleich, 20 im Periodenprofil
-  2014 bis 2020, 19 in der laufenden Periode, 21 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
-  rund 17 s (Themenmodell 7 s, Index 4 s, Berichtsseite unter 2 s).
-- Berichtsseite: `index.html` 1,15 MB (gzip 201 KB, Budget 1,5 MB), 48 Dateien zusammen 13,2 MB, vierzehn
+- Register: 28 Schritte; `georep steps` zeigt 26 für Düsseldorf, 27 mit Vergleich, 21 im Periodenprofil
+  2014 bis 2020, 20 in der laufenden Periode, 21 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
+  rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,5 s).
+- Berichtsseite: `index.html` 1,10 MB (Budget 1,5 MB), 50 Dateien zusammen 13,3 MB, vierzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
-- Quelltext: 57 Python-Dateien unter `src/`, rund 15 300 Zeilen; fünf Profile im Paket.
+- Quelltext: 58 Python-Dateien unter `src/`, rund 16 500 Zeilen; fünf Profile im Paket.
 - Mutation (vor dem Ausbau gemessen): `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`), `analysis/`
   auf dem Branch 03 133 von 175 Mutanten (76 %); die Überlebenden sind Vertrags-Lambdas an ihren Grenzen und
   `frozen=True` an dataclasses. Mit sechs Arbeitern wurde die Sitzung unter der Last der acht parallelen
@@ -125,7 +150,9 @@ rechnet die Kette wie die Arbeit, und genau so messen die Golden-Master-Tests
 - Die Abkürzungsregel der Arbeit ersetzt „straße" überall im Begriff, nicht nur am Wortende; aus
   „Straßenbahn Düsseldorf" entstand der Begriff „str.nbahn düsseldorf" (trifft nichts, 2026-10-12 bemerkt).
 - Das Themenmodell ist je Rechner und je Thread-Zahl reproduzierbar, nicht darüber hinaus: zwischen 13 und 2 BLAS-Threads unterscheiden sich `themen.parquet` und `themen_anteile.parquet` in den letzten Stellen (gemessen 2026-10-12), Labels und Kennzahlen bleiben gleich. Die Golden-Master-Tests prüfen darum Invarianten, nicht Zahlen.
-- Die Themen tragen Wörter, keine Deutung: die Nummern gelten nur für diesen Datenstand, ein Lauf über andere Dokumente vergibt sie neu. Thema 19 ist das breite Stadtthema („düsseldorf, innen, …"), der Stadtname steht bewusst nicht in der Stoppwortliste.
+- Die Nummern der Themen gelten nur für diesen Datenstand; ein Lauf über andere Dokumente vergibt sie neu. Seit Punkt 45 trägt ein gesätes Thema zusätzlich das Kürzel seines Ausschusses, und das ist stabil. Der Stadtname steht bewusst nicht in der Stoppwortliste; er prägt jetzt eines der drei freien Themen.
+- Sechs Personennamen überleben den Namensfilter des Themenmodells („hans", „christian", „stephan", „cardeneo", „kühbacher", „tobias"): sie stehen in ihren Ausschussdokumenten oft, aber nie neben einer Amtsbezeichnung (`docs/themenmodell-2026-10.md`, § 2.2). Eine Mandatsträgerliste aus OParl `memberships` würde das schließen und ist nicht abgerufen.
+- Ein Vorlagenwechsel (`templates/sections/*.j2`) macht den Stamp des Schritts `report` nicht ungültig: er trägt die Code-Version des Pakets, nicht den Hash der Vorlagen. Nach einer Änderung an einer Vorlage ohne Versionssprung braucht die Seite ein `georep run report --force` (bemerkt am 2026-10-12).
 - Der Settings-Fingerprint ist global: ein neuer Schlüssel lässt alle Schritte einmal neu laufen. Hinnehmbar; ein Fingerprint je Schritt ist zurückgestellt (`docs/plans/00-synergien.md`, § 8).
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab (`docs/baseline-2026-10-10.md`).
 - Der Stamp des Schritts `report` liegt als `site/index.html.stamp.json` im veröffentlichten Ordner; harmlos, aber mit dabei.
@@ -155,9 +182,10 @@ Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „
 4. Optional der Vollabruf der Hauptperiode (2 bis 3 h; zeigt, ob der OParl-Server `modified_since` beachtet
    und ob die Urheberfelder inzwischen gefüllt sind).
 
-Rückstand für danach: `docs/todo.md` (Konrads Beobachtungen vom 2026-10-12: Themenmodell, Seitengröße, Skalierung
-der Kennzahlen, Literatur; Punkt 4, Bartzschs Methodik, ist am 2026-10-12 erledigt,
-`docs/methodik-review-2026-10.md`, offene Empfehlungen in dessen § 6). Offene Entscheidungen stehen in `docs/plans/fragen.md`
+Rückstand für danach: `docs/todo.md` (Konrads Beobachtungen vom 2026-10-12: Seitengröße, Skalierung
+der Kennzahlen, Literatur, Lizenz; Punkt 4, Bartzschs Methodik, ist am 2026-10-12 erledigt,
+`docs/methodik-review-2026-10.md`, offene Empfehlungen in dessen § 6; Punkt 1, das Themenmodell,
+ebenfalls am 2026-10-12, `docs/themenmodell-2026-10.md`, offene Annahmen in dessen § 7). Offene Entscheidungen stehen in `docs/plans/fragen.md`
 (die acht wichtigsten oben): Datenpakete im Repo oder im
 R2-Bucket, Düsseldorf unter `data/duesseldorf/`, VPS und Domain, Lizenz der votemanager-CSV, Modellwahl der
 Kontrollvariablen. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,

@@ -4,6 +4,29 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Die Themen tragen Namen statt Nummern** (`docs/themenmodell-2026-10.md`, `docs/decisions.md` Punkt 45).
+  Drei Änderungen am Themenmodell, gemessen auf der Referenz:
+  - Die Stoppwörter kommen jetzt aus dem Profil (`topics.stop_sources`): Namen, Kürzel und Muster der
+    Parteien und Fraktionen aus `[originators]`, die Gremienkürzel aus `[bodies]`, und Personennamen aus dem
+    Korpus — ein Wort, das fast nur hinter einer Unterschrift oder einer Amtsbezeichnung steht, ist ein
+    Name (254 Wörter auf der Referenz). Vorher prägten „cdu", „linke", „sönke" oder „torsten" sieben der 20
+    Themen; jetzt entstehen dort Schule, Aufsichtsratsbesetzungen und Verfügungsmittel der
+    Bezirksvertretungen. Ausnahmen nennt das Profil (`topics.stop_keep`).
+  - Jeder Ausschuss mit genug beratenen Dokumenten bekommt ein eigenes Thema, dessen Wörter aus seinen
+    Dokumenten kommen (`topics.seed = "committees"`, auf der Referenz 17 von 20 Themen; drei bleiben frei).
+    Die Themenzeilen der Sensitivitätstabelle heißen damit „Thema 0: Ordnungs- und Verkehrsausschuss", und
+    die Themen-Tabelle hat eine Spalte „Gremium". `themen.parquet` hat die neue Spalte `gremium`.
+  - Neu: **Dokumente je passendem Ausschuss** im Abschnitt „Gremien". Ein Klassifikator (TF-IDF und
+    logistische Regression, Schritt `committees`) ordnet jedem Dokument den sachlich passenden Ausschuss zu,
+    auch denen, die nur im Rat oder in einer Bezirksvertretung waren; unter `classify.min_probability`
+    bleibt es in der Restklasse. Genauigkeit 0,941 und Makro-F1 0,877 in der Kreuzvalidierung, aber vier von
+    fünf BV-Dokumenten und sieben von acht Ratsdokumenten bleiben in der Restklasse — querschnittliche
+    Vorlagen haben kein Ausschussthema. Neue Download-Tabelle `ausschuss_zuordnung`.
+
+  Tabelle 5, die Treffer und das Wörterbuch ändern sich dadurch nicht; die `thema_NN`-Zeilen der
+  Gewichtungstabelle tragen andere Zahlen, weil die Themen andere sind. Der volle Offline-Lauf dauert 23 s
+  statt 17 s.
+
 - Behoben: `nice_ticks` (Achsenticks der Diagramme) warf einen `OverflowError`, wenn beide Grenzen endlich
   waren, ihre Differenz aber nicht; die Vorbedingung verlangt jetzt eine endliche Spanne. Mit echten
   Achsen kam der Fall nicht vor; gefunden hat ihn crosshair.

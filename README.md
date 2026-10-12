@@ -28,7 +28,7 @@ git clone git@github.com:konradvoelkel/geographic-representation-dus.git
 cd geographic-representation-dus
 uv sync --locked                        # Umgebung aus dem Lockfile
 uv run georep bootstrap                 # Datensatz der Arbeit nach ./data übernehmen
-uv run georep run                       # siebzehn Offline-Schritte, rund 17 s; schreibt auch die Berichtsseite data/site/index.html
+uv run georep run                       # neunzehn Offline-Schritte, rund 23 s; schreibt auch die Berichtsseite data/site/index.html
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 uv run georep regress --controls        # Tabelle 6 mit den Kontrollvariablen
 ```
@@ -49,9 +49,11 @@ Wahlbezirk, den Begriffen (ein Klick zeigt die Dokumente mit Datum, Drucksache u
 Dokumenten je Monat, Methode und
 Grenzen, Lizenzen. Der Abschnitt „Was ändert die Gewichtung?" stellt der binären Trefferquote 26 gewichtete
 Varianten zur Seite (Spezifität je Begriff, Gewicht je Dokumentart, ein Thema je Zeile) und zeigt Tabelle 5
-unter jeder davon; mit Einheitsgewichten steht dort dieselbe Zeile wie oben. `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
+unter jeder davon; mit Einheitsgewichten steht dort dieselbe Zeile wie oben. Die Themen tragen die Namen
+der Ausschüsse, aus deren Dokumenten sie gesät sind, und der Abschnitt „Gremien" nennt daneben, welcher
+Ausschuss sachlich zu einem Dokument passt (`docs/themenmodell-2026-10.md`). `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
 braucht Netz). Daneben liegen unter `data/site/data/` die Ergebnisse zum Weiterverarbeiten: die
-sechzehn Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema
+zweiundzwanzig Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema
 810 KB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
 der Karte der 41 Wahlbezirke (Trefferquote oder Wahlbeteiligung, Tooltips, Klick-Markierung, die 1309 Orte als
 Punkte), dem Streudiagramm mit beiden Regressionsgeraden und Tabelle 5, einer sortierbaren Tabelle je

@@ -733,3 +733,80 @@ Schalter dafür (siehe oben); eine feste Schwelle in Dokumenten (hängt an der K
 zweite Stadt); `hide_in_display` zu erweitern (das versteckt sie in der Anzeige und zählt sie weiter, also
 genau die Lösung, die das Review der Arbeit vorhält); die Liste in einen eigenen Seitenabschnitt (sie
 gehört zu den Begriffen, und ein Abschnitt mehr kostet eine Nummer in der festen Reihenfolge).
+
+## 45. Lesbare Themen: Stoppwörter aus dem Profil, Saat je Ausschuss, ein passender Ausschuss je Dokument (2026-10-12)
+
+`docs/todo.md`, Punkt 1: die 20 Themen aus TF-IDF und NMF trugen nicht. Gemessen am 2026-10-12 auf der
+Referenz prägten Fraktions- und Personennamen sieben der 20 Themen (Thema 3 „antrag, gez, fraktion, cdu,
+grünen", Thema 16 „linke, sönke, voigt, julia"). Die Messung aller vier Wege des TODO steht in
+`docs/themenmodell-2026-10.md`, das Skript daneben rechnet sie nach. Drei Entscheidungen:
+
+### 45a. Die Stoppwörter kommen aus dem Profil und aus dem Korpus, nicht aus einer zweiten Liste
+
+`topics.stop_sources` wählt die Quellen. `fraktionen` liest Namen, Kürzel und Muster der Parteien und
+Gruppen samt der Fraktions-, Gemeinschafts- und Personenmarker aus `[originators]` (Option 04), `gremien`
+die Kürzel aus `[bodies]` (Option 05) — **nur die Kürzel**, denn „Verkehrsausschuss" ist ein Themenwort und
+„OVA" keines. `namen` erkennt Personennamen daran, dass ein Wort fast nur in einem Namensfenster steht:
+`topics.name_window` Zeichen hinter einem Marker aus `topics.name_markers` (Unterschrift und
+Amtsbezeichnungen, deutschsprachig und stadtneutral wie `search.place_words`) oder hinter einem
+Personenmarker im Textkopf, den Option 04 schon kennt. Über `topics.name_share` (0,8) ist es ein Name: 254
+Wörter auf der Referenz, 1,8 s. Wirkung: NPMI der Topwörter +0,4164 → +0,4224 (nach Stufen bis +0,4386),
+und die Partei- und Personenblöcke verschwinden; dafür entstehen Schule, Aufsichtsratsbesetzungen und
+Verfügungsmittel als eigene Themen. Die Ausnahmen nennt das Profil (`topics.stop_keep`, Düsseldorf:
+„klima" und „tierschutz" — Sachwörter, die in einem Gruppennamen stehen).
+
+Verworfen: eine gepflegte Liste von Partei- und Personennamen im Paket (eine zweite Wahrheit neben dem
+Profil, und für jede Stadt eine neue); nur den Textkopf lesen (die Namen der Verwaltung stehen unter der
+Vorlage, nicht im Kopf); ein Namenslexikon oder `memberships` aus OParl (ein neuer Abruf; damit bleiben
+sechs Namen in den Labels, benannt als Grenze); die Gremiennamen mitnehmen (sie sind die Saatwörter von
+45b).
+
+### 45b. Ein Thema je Ausschuss, mit fester Wortmatrix
+
+`topics.seed = "committees"` (Vorgabe) gibt jedem Ausschuss mit mindestens `seed_min_documents` beratenen
+Dokumenten ein Thema, höchstens `k − free` viele (Referenz: 17 von 23). Die Saat sind die
+`seed_words` (30) Wörter mit dem größten Log-Odds-Verhältnis gegen die **anderen Ausschüsse**, mit
+informativem Dirichlet-Prior (`seed_prior` Pseudo-Token, Monroe u. a. 2008); die Zeile der Wortmatrix trägt
+sie mit dem TF-IDF-Mittelwert ihres Ausschusses und wird **nicht mehr verändert**
+(`non_negative_factorization(..., update_H=False)`). Die `free` (3) übrigen Themen rechnen freie NMF auf dem
+Rest `max(X − W·H, 0)`, blockweise auf dem Träger von X gerechnet (die dichte Differenz wären 3 GB). Ein
+Thema trägt damit das Kürzel seines Gremiums (`themen.parquet`, Spalte `gremium`, Schema-Version 2) und auf
+der Seite seinen Namen aus dem Profil. Treue 0,70 bis 1,00 (Median 0,83), Reinheit 0,15 bis 0,57 — ein Thema
+zieht mehr Dokumente an, als in diesem Ausschuss beraten wurden, und ist damit eine Sachkategorie und kein
+Abbild der Beratungsfolge. Die Kohärenz fällt dabei von +0,4224 auf +0,3351: gesäte Topwörter sind die, die
+einen Ausschuss trennen, nicht die, die am häufigsten zusammen stehen. Das ist der Preis für Namen statt
+Nummern, und er ist bewusst bezahlt; `seed = "none"` rechnet weiter freie NMF.
+
+Verworfen: H nur initialisieren (`init="custom"` mit freiem H; NMF wanderte binnen 58 Iterationen von der
+Saat weg, Treue 0,00 bis 0,23, und das „OVA"-Thema war der Formelblock der Bezirksvertretungen); binäre
+Saatgewichte statt des Zentroids (NPMI +0,2170 gegen +0,3640, und die Labels fallen alphabetisch aus, weil
+alle Saatwörter gleich stark sind); anchored CorEx (eine neue Abhängigkeit für dieselbe Idee); die
+Ausschüsse von Hand mit Startwörtern beschreiben (Düsseldorf-Wissen im Code, und für jede Stadt neu).
+
+### 45c. Der passende Ausschuss ist eine überwachte Zuordnung mit Restklasse
+
+Der neue Offline-Schritt `committees` lernt mit TF-IDF (Parameter aus `[topics]`, damit es eine Wahrheit
+darüber gibt, was ein Wort ist) und logistischer Regression auf den Dokumenten, deren Drucksachennummer ein
+Ausschusskürzel trägt, und ordnet jedem Dokument mit Text einen Ausschuss zu — auch denen, die nur im Rat
+oder in einer Bezirksvertretung waren. Klassen sind die Ausschüsse mit mindestens
+`classify.min_documents` (10) beratenen Dokumenten; unter `classify.min_probability` (0,4, das Achtfache des
+Zufalls bei 20 Klassen) bleibt ein Dokument in der **Restklasse**. Güte (fünf Faltungen,
+`docs/themenmodell-2026-10-messung.py`): Genauigkeit 0,941, Makro-F1 0,877. Konrads Frage, ob sich jedes
+Schriftstück zuordnen lässt, ist damit beantwortet: **nein** — 10,9 % der Ausschussdokumente, aber 81,3 %
+der BV- und 87,5 % der Ratsdokumente liegen unter der Schwelle, weil ein BV-Antrag über drei Gegenstände
+kein Ausschussthema hat und eine Haushaltsvorlage alle. Von den Ausschussdokumenten treffen 88,9 % ihr
+eigenes Gremium.
+
+Die Zuordnung je Dokument bleibt unter `processed/` (`papers_ausschuss.parquet`, 19 033 Zeilen, als CSV
+1,5 MB und nicht aus der dokumentierten Regel ableitbar); veröffentlicht wird die Zusammenfassung
+`ausschuss_zuordnung.parquet` (eine Zeile je Ausschuss plus Restklasse, mit „davon ohne
+Ausschussberatung"), und der Abschnitt „Gremien" zeigt sie. Die Kette trainiert einmal (6,5 s auf der
+Referenz, Grenze waren 30 s); kreuzvalidiert wird nur im Messskript, denn eine Messung ist kein Schritt der
+Kette.
+
+Verworfen: die Kreuzvalidierung in den Schritt (verdreifacht seine Zeit für eine Zahl, die niemand je Lauf
+braucht); Titel und Drucksachennummer als Merkmale (der Titel nennt oft den Ausschuss, die Güte wäre
+geschönt); keine Restklasse (dann hätte jede Haushaltsvorlage einen „passenden" Ausschuss); die Zuordnung je
+Dokument veröffentlichen (1,5 MB CSV für eine Schätzung); Einbettungen (`docs/themenmodell-2026-10.md`, § 5:
+1 bis 3 Stunden je Durchgang, 800 MB Abhängigkeiten, keine nachlesbaren Wörter — und die billigen Wege
+reichen).

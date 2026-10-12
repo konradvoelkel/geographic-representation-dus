@@ -24,7 +24,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 | Modul | Aufgabe |
 |---|---|
-| `settings` | `defaults.toml` (stadtneutral) im Paket, darüber das Profil `profiles/<slug>.toml` (gewählt mit `--profile`, `GEOREP_PROFILE` oder `default_profile`, mit `base` auf einem anderen Profil aufbauend), darüber `settings.toml`, `settings.local.toml`, `--settings`, Umgebung `GEOREP_*`; pydantic-settings, unbekannte Schlüssel sind ein Fehler; `fingerprint()` der ergebnisrelevanten Parameter; `profile` (Ordnername je Stadt oder Periode, nicht im Fingerprint), `period.end` optional mit `election` als Wahltag, `analysis.exclude_districts` (Ausreißer von Tabelle 5), `originators` (Muster und Parteien für den Urheber, Option 04), `context` (Fremddaten: Quelle, Lizenz, Dateien, Spaltenform, Ordinalskalen, Variablen, Modelle, Schwellen; der ganze Block fehlt, wo eine Stadt keine hat), `bodies` (Kürzel und Namen der Gremien; ohne `reference_pattern` tragen die Drucksachennummern keines); je Stadt `[city]`, `[precincts]` (Regeln der Quellgeometrie), `[columns.results]` (Spalten und Parteien), `[report]` (Quellen mit Lizenz, Notizen), `[publish]` (welche Städte veröffentlicht werden) |
+| `settings` | `defaults.toml` (stadtneutral) im Paket, darüber das Profil `profiles/<slug>.toml` (gewählt mit `--profile`, `GEOREP_PROFILE` oder `default_profile`, mit `base` auf einem anderen Profil aufbauend), darüber `settings.toml`, `settings.local.toml`, `--settings`, Umgebung `GEOREP_*`; pydantic-settings, unbekannte Schlüssel sind ein Fehler; `fingerprint()` der ergebnisrelevanten Parameter; `profile` (Ordnername je Stadt oder Periode, nicht im Fingerprint), `period.end` optional mit `election` als Wahltag, `analysis.exclude_districts` (Ausreißer von Tabelle 5), `originators` (Muster und Parteien für den Urheber, Option 04), `context` (Fremddaten: Quelle, Lizenz, Dateien, Spaltenform, Ordinalskalen, Variablen, Modelle, Schwellen; der ganze Block fehlt, wo eine Stadt keine hat), `bodies` (Kürzel und Namen der Gremien; ohne `reference_pattern` tragen die Drucksachennummern keines), `topics` (Themenmodell samt Stoppwortquellen `stop_sources`, Namensfenstern und Saat je Ausschuss, Punkt 45), `classify` (der passende Ausschuss: Mindestzahl je Klasse, Schwelle der Restklasse); je Stadt `[city]`, `[precincts]` (Regeln der Quellgeometrie), `[columns.results]` (Spalten und Parteien), `[report]` (Quellen mit Lizenz, Notizen), `[publish]` (welche Städte veröffentlicht werden) |
 | `layout` | wo was liegt: `data_root`, `cache_root`, `reference_root`, `profile` (Unterordner `data_root/<profil>/` und `cache_root/<profil>/` für PDFs und Texte, HTTP-Cache geteilt; leer = flach), `context_root` (Fremddaten im Repo, Default `None`), die Dateinamen der Quellen aus dem Profil (`districts_file`, `results_file`, `streets_file`, `district_names_file`; leer = diese Stadt veröffentlicht die Datei nicht); `for_profile` wechselt; `guard_writable` verweigert jeden Pfad unter den beiden nur lesbaren Wurzeln |
 | `io` | atomare Schreibvorgänge (Temporärdatei, fsync, `os.replace`), JSON, Parquet mit `schema_version` in den Metadaten, SHA-256 (`digest`) |
 | `http` | Session mit Timeout, Retry mit Backoff, User-Agent, requests-cache je Quelle; `Transport`-Protokoll als Testnaht; `network_errors` wandelt requests-Fehler in `NetworkError` |
@@ -36,7 +36,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `geo` | GeoJSON lesen, nach EPSG:25832 projizieren, `make_valid`, `PrecinctIndex` (STRtree), eine Rückprojektion nach lon/lat; `read_canonical_precincts` für den kanonischen Stand (drei feste Eigenschaften), `read_precincts` für eine Quellgeometrie mit Wahlbezirksattributen, `read_areas` für Flächen, die nur eine Kennung tragen |
 | `prep/` | `extract` (PDF-Text hinter `PdfTextExtractor`), `papers` (Korpus), `precincts` (jede Quellgeometrie zu `interim/stimmbezirke.geojson`, GeoJSON oder Shapefile-Zip über pyshp), `voters` (auch `district_units`: Wahlbezirk zu Stadtbezirk über den Crosswalk), `streets` (dazu die Übereinstimmung mit dem Straßenverzeichnis der Wahl), `pois`, `bodies` (Gremium je Dokument aus der Drucksachennummer: `parse_reference` als reine Funktion über `BodyRules`, `classify_papers` als Batch-Grenze), `context` (Fremddaten je Raumeinheit: Stimmbezirkstabelle, Tabelle der Quelle lesen, gewichtetes Mittel je Wahlbezirk): Polars-Funktionen Frame zu Frame. `voters` benennt die Zählspalten beim Lesen auf die kanonischen Namen um (`Wahlberechtigte_insgesamt`, `Waehler`, `<Partei>_Stimmen`), damit jede Wahl dasselbe Schema liefert, liest Wahlbezirk und Stadtbezirk aus einer Spalte oder aus der Stimmbezirksnummer und kennt für einen älteren Zuschnitt zusätzlich `precinct_counts`, `district_results` und `spread_postal` (Briefwahl ohne Geometrie) |
 | `search/` | `dictionary` (Wörterbuch je Wahlbezirk), `matcher` (`KeywordMatcher`-Protokoll, FlashText), `index` (invertierter Index) |
-| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings; ohne Streuung in x oder y gibt es kein Ergebnis, sondern einen `EmptyResultError`), `periods` (zwei Perioden je Wahlbezirk nebeneinander und die Regression ihrer Änderungen), `timeline` (Dokumente je Monat, stadtweit und je Wahlbezirk; die Nachbedingung prüft gegen `hits_by_district`, Option 07) |
+| `analysis/` | `topics` (Themenmodell: TF-IDF und NMF; `TopicRules` trägt die Stoppwörter aus dem Profil und die Saat je Ausschuss, `vectorize` ist die eine Textdarstellung), `committees` (passender Ausschuss je Dokument: logistische Regression mit Restklasse), `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings; ohne Streuung in x oder y gibt es kein Ergebnis, sondern einen `EmptyResultError`), `periods` (zwei Perioden je Wahlbezirk nebeneinander und die Regression ihrer Änderungen), `timeline` (Dokumente je Monat, stadtweit und je Wahlbezirk; die Nachbedingung prüft gegen `hits_by_district`, Option 07) |
 | `crosswalk` | Umrechnung von Gebietseinheiten auf Wahlbezirke: `unit_weights` wiegt je Wahlbezirk die Einheiten (Stadtbezirk, Stadtteil) mit einer Zählgröße je Stimmbezirk; der Flächen-Crosswalk auf einen anderen Zuschnitt kommt mit `assign_by_point` (Zuordnung innerhalb eines Zuschnitts über den repräsentativen Punkt), `area_shares` (Flächenanteile, auf die Schnittsumme normiert, mit Abdeckung und Mindestschwelle), `target_weights` und `transfer_counts` (additive Zählgrößen übertragen, `largest_remainder` macht sie ganzzahlig ohne die Summe zu ändern). Verträge: Anteile je Quelle und Gewichte je Ziel summieren zu 1, Spaltensummen bleiben exakt erhalten |
 | `pipeline` | Schrittregister: Name, Eingaben, Ausgaben, `run()`, Schema-Version; Stamps; `run_step`, `run_pipeline`, `build_steps` |
 | `bootstrap` | kopiert die Referenz nach `data_root` und baut daraus `papers.jsonl` und den Textstore |
@@ -51,12 +51,14 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 Achtundzwanzig Schritte stehen im Register, jeder mit Eingaben, Ausgaben und einer
 Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps` zeigt es
-(nachgezählt am 2026-10-12: fünfundzwanzig für Düsseldorf, sechsundzwanzig mit Vergleich, zwanzig
-im Periodenprofil 2014 bis 2020, neunzehn in der laufenden Periode, einundzwanzig für
-Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
+(nachgezählt am 2026-10-12 aus `build_steps`: sechsundzwanzig für Düsseldorf, siebenundzwanzig mit
+Vergleich, einundzwanzig im Periodenprofil 2014 bis 2020, zwanzig in der laufenden Periode,
+einundzwanzig für Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
 `georep fetch`; `georep fetch` führt `shapes` und `texts` mit, weil die Netzschritte die Flächen
 brauchen und die Texte sonst im Cache liegen blieben. Mit
-`topics.k = 0` fehlt der Schritt `topics`, und `weights` rechnet ohne Themenvarianten. Die drei
+`topics.k = 0` fehlt der Schritt `topics`, und `weights` rechnet ohne Themenvarianten; `bodies` steht
+vor `topics`, weil die Saat der Themen die Gremien je Dokument liest (Punkt 45). Den Schritt
+`committees` gibt es nur mit `classify.enabled` und Ausschüssen im Profil. Die drei
 Schritte der Kontrollvariablen (`context_data`, `context`, `controls`) gibt es nur mit Fremddaten,
 also wenn `context.root` gesetzt ist; `parties` nur, wenn das Profil Fraktionsnamen mitbringt
 (`[originators]`). Option 02 bringt zwei weitere Profilschritte: `precincts`
@@ -82,7 +84,8 @@ Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`).
 | `pois` | nein | Orte; mit `search.city_facilities` fallen Einrichtungen mit Stadtnamen aus beiden Ausgaben (decisions.md, Punkt 44a) | `processed/wikidata_vis.parquet`, `processed/wikidata_agg.parquet` |
 | `dictionary` | nein | Orte und Straßen je Wahlbezirk | `processed/combined_searchdict.parquet` |
 | `corpus` | nein | Metadaten und Texte | `interim/papers.parquet` |
-| `topics` | nein | Korpus (Texte) | `processed/themen.parquet`, `processed/themen_dokumente.parquet`, `interim/themen_anteile.parquet` |
+| `topics` | nein | Korpus (Texte), mit Saat auch die Gremien je Dokument | `processed/themen.parquet`, `processed/themen_dokumente.parquet`, `interim/themen_anteile.parquet` |
+| `committees` | nein | Korpus (Texte), Gremien je Dokument | `processed/papers_ausschuss.parquet`, `processed/ausschuss_zuordnung.parquet` |
 | `index` | nein | Wörterbuch, Korpus | `processed/inverted_index.parquet` |
 | `timeline` | nein | Korpus, Index, Wörterbuch | `processed/monatsreihe.parquet`, `processed/wahlbezirke_monate.parquet` |
 | `results` | nein | Wörterbuch, Index, Wähler | `processed/wahlbezirke_auswertung.parquet` |
@@ -98,10 +101,10 @@ Neben der ersten Ausgabe jedes Schritts liegt `<datei>.stamp.json` mit den SHA-2
 Settings-Fingerprint, der Code-Version und der Schema-Version. Stimmt alles, ist der Schritt aktuell und wird
 übersprungen; sonst läuft er und sagt, warum („Eingabe geändert: texts.parquet", „Code-Version 0.6.0 ->
 0.7.0"). `--force` erzwingt, `--dry-run` plant nur. Jeder Lauf druckt je Schritt eine Zeile mit der Anzahl,
-auf die er gewirkt hat, und die Sekunden. Der volle Offline-Lauf auf der Referenz dauert rund 16 s, davon 7 s
-das Themenmodell, 4 s der Index, je unter 1 s die Gewichtung, die Kontrollvariablen (`context` 0,4 s,
-`controls` unter 0,1 s) und 1,4 s die Berichtsseite (2026-10-12, nach dem Rebase auf 08, 05 und 06; ohne
-Themenmodell rund 9 s).
+auf die er gewirkt hat, und die Sekunden. Der volle Offline-Lauf auf der Referenz dauert rund 23 s, davon
+7,4 s das Themenmodell, 6,5 s der passende Ausschuss, 4,2 s der Index, je unter 1 s die Gewichtung, die
+Kontrollvariablen (`context` 0,4 s, `controls` unter 0,1 s) und 1,5 s die Berichtsseite (2026-10-12, nach
+Punkt 45; ohne Themenmodell und Klassifikator rund 9 s).
 
 ## Datenhaltung
 
@@ -114,7 +117,7 @@ data_root/                 Standard ./data, gitignored; mit profile = "x" liegt 
   interim/                 papers.parquet (Korpus: Metadaten plus Text), stimmbezirke.geojson (kanonisch),
                            themen_anteile.parquet (Themenanteile je Dokument, nicht veröffentlicht)
   processed/               die Ergebnistabellen als Parquet (zstd), je mit Stamp; mit Fremddaten drei mehr; dazu stimmbezirke_zuordnung (Profil mit Crosswalk)
-                           (nicht veröffentlicht: papers_gremien und wikidata_agg)
+                           (nicht veröffentlicht: papers_gremien, papers_ausschuss und wikidata_agg)
   site/                    die Berichtsseite: index.html (mit Stamp), karte.html (Leaflet) und data/ mit den Download-Dateien
                            `georep publish` legt daneben vergleich.html und je weiterer Stadt <slug>/ an
 cache_root/                Standard data_root/cache; mit Profil liegen pdf/ und text/ unter cache_root/x/
@@ -207,7 +210,7 @@ Vorlage ist ein Fehler). Das Basis-JavaScript bietet `window.georep` (`select(id
 Attribut (`choropleth(extra_classes=...)`) und eine Legende. Die veröffentlichten Tabellen stehen im Register
 `report/tables.py` (Datei, Beschreibung, Spaltendoku, CSV-Regeln, `optional` für profilabhängige Tabellen);
 daraus entstehen Downloads, `schema.json`, CSV-Dateien und die Spaltentabelle. Die Seite bleibt unter 1,5 MB
-(slow-Test); mit allen Abschnitten sind es 986 KB (gzip 168 KB). Die beiden Abschnitte der Kontrollvariablen
+(slow-Test); mit allen Abschnitten sind es 1,10 MB. Die beiden Abschnitte der Kontrollvariablen
 (`32-kontrollvariablen`, `65-abgeleitete-daten`) stehen in `{% if model.controls %}` beziehungsweise
 `{% if model.derived %}` und fehlen ohne sie ganz; ihre Zahlen kommen aus
 `processed/regression_kontrollen.parquet`, der Satz zur Deutung entsteht aus p, Vorzeichen, R²-Zuwachs und dem
@@ -248,10 +251,13 @@ Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. D
 Sensitivitätstabelle mit beiden Spalten von Tabelle 5 je Gewichtungsvariante und der Rangkorrelation zur
 ungewichteten Quote, darunter die Themen mit ihren stärksten Wörtern. Die Einheitszeile trägt dieselben
 Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeigt „—", und fehlt der ganzen
-Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 48 Dateien
-(mit `summary.json`, Option 01), 13,5 MB, davon `index.html` 1,17 MB (144 KB Suchdaten, 63 KB die
-Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html` 252 KB, `dokumente.json` 2,3 MB;
-1,6 s (2026-10-12, nach dem Rebase von Option 07).
+Tabelle die zweite Regression, entfällt die Spaltengruppe. Mit gesäten Themen (Punkt 45) trägt eine
+Themenzeile den Namen ihres Ausschusses aus dem Profil, und die Themen-Tabelle eine Spalte „Gremium"; der
+Abschnitt „Gremien" bekommt daneben die Tabelle „Dokumente je passendem Ausschuss" mit der Spalte „davon
+ohne Ausschussberatung". Auf der Referenz: 41 Wahlbezirke, 50 Dateien
+(mit `summary.json`, Option 01, und `ausschuss_zuordnung`, Punkt 45), 13,3 MB, davon `index.html` 1,10 MB
+(144 KB Suchdaten, 63 KB die Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html`
+252 KB, `dokumente.json` 2,3 MB; 1,5 s (2026-10-12, nach Punkt 45).
 
 Die Stadtseite kennt ihre Nachbarn nicht: wo die Zeile „Weitere Städte" steht, hinterlässt der Rahmen nur die
 Marke `<!--georep:weitere-staedte-->`. Erst `georep publish` (`report.publish`) weiß, welche Stadtseiten es
@@ -300,7 +306,9 @@ Gewichtung hat die ihren: jeder Faktor und jedes Dokumentgewicht in [0, 1] (`in_
 je Paar (Wahlbezirk, Dokument), dieselbe Paarmenge wie die Vereinigung in `hits_by_district`, und als
 stärkste Zusage, dass die Variante `einheit` genau `anzahl_treffer` reproduziert und die Themenvarianten
 diese Zählung zerlegen; beim Themenmodell: genau `k` Themen, Zeilensummen 1 ± 1e-9, jedes Dokument mit Text
-einmal. Die
+einmal, jedes Gremienkürzel höchstens einmal und die gesäten Themen zuerst; beim passenden Ausschuss: eine
+Zeile je Dokument mit Text, nur gelernte Kürzel oder die Restklasse, jede Wahrscheinlichkeit über der
+Schwelle, und die Tabelle zerlegt die Dokumente ohne Rest. Die
 Prädikate liegen in `georep.contracts`, damit dieselbe Eigenschaft überall gleich heißt. `settings.contracts
 = "off"` ruft `deal.disable` beim Start; der Overhead liegt unter einem Prozent (2026-10-11). Pydantic
 validiert an der Systemgrenze (OParl, Records, Settings), Verträge sichern das Innere; `icontract` wird
@@ -316,6 +324,7 @@ auf dem rekursiven `deep_merge`).
 |---|---|
 | `tests/unit/` | eine Funktion, ein Verhalten; Vertragsverletzungen je mit Gegenbeispiel |
 | `tests/property/` | hypothesis-Invarianten (darunter: Einheitsgewichte reproduzieren die Zählung exakt, Gewichte in [0, 1], Monotonie, Themenzerlegung), das Matcher-Orakel (400 Zufallsfälle), `deal.cases` auf achtzehn reinen Funktionen |
+| Messskripte unter `docs/` | was kein Test tragen kann, weil es am Rechner hängt: die Methodikkennzahlen (`methodik-review-2026-10-messung.py`) und die Kohärenz, Saattreue und Kreuzvalidierung des Themenmodells (`themenmodell-2026-10-messung.py`) |
 | `tests/golden/` | Mini-Fixture (3 Wahlbezirke, 200 Dokumente, Erwartung aus dem Altcode `v0.2.0`) und die volle Referenz (`slow`) gegen die Ergebnisse der Arbeit; beide mit `as_in_the_thesis(...)`, also mit abgeschalteten eigenen Regeln (decisions.md, Punkte 43 und 44) |
 | `tests/bench/` | pytest-benchmark, nur in `nox -s bench` |
 | `tests/fixtures/` | Mini-Datensatz (drei Wahlbezirke mit ihren 22 Stimmbezirken), vier PDFs mit Herkunft, eine OParl-Seite, aufgezeichnete Antworten von Overpass, Wikidata, Wikipedia |
@@ -332,7 +341,7 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `verify` | crosshair über die reinen Funktionen mit Verträgen, rund sechs Minuten; ein Ziel ist mit Begründung ausgenommen (crosshair baut für `re.Pattern | None` einen symbolischen Regex und bricht ab) | lokal |
 | `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung; mit `analysis/topics.py` im Ziel dauert die Session sehr lange (jeder Mutant rechnet NMF), darum besser gezielt je Modul | lokal |
 
-Stand 2026-10-12: 855 schnelle Tests in rund 40 s, Abdeckung 98,2 %; Mutationsquote 79 % über
+Stand 2026-10-12: 880 schnelle Tests in rund 42 s, Abdeckung 98,3 %; Mutationsquote 79 % über
 `search/` und `analysis/` ([mutation-2026-10-11.md](mutation-2026-10-11.md)), 83 % über das neue
 `analysis/weights.py` ([mutation-2026-10-12.md](mutation-2026-10-12.md)).
 
@@ -347,6 +356,10 @@ Stand 2026-10-12: 855 schnelle Tests in rund 40 s, Abdeckung 98,2 %; Mutationsqu
   deutschsprachig; eine Stadt in einem anderen Sprachraum ersetzt sie im Profil.
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab; die Tests frieren die Neuberechnung ein (baseline-2026-10-10.md).
 - crosshair prüft nur rein-pythonische Funktionen; Polars-Funktionen haben Laufzeitverträge und hypothesis.
+- Der passende Ausschuss ist eine Schätzung aus Wörtern, keine Aussage darüber, wo ein Dokument hätte
+  beraten werden müssen; vier von fünf Dokumenten der Bezirksvertretungen bleiben in der Restklasse
+  (decisions.md, Punkt 45c). Sechs Personennamen überleben den Namensfilter, weil sie nie neben einer
+  Amtsbezeichnung stehen (ebenda, 45a).
 - Der OParl-Server liefert für Düsseldorf keine Urheberfelder (`originatorPerson`, `originatorOrganization`,
   `underDirectionOf`): 0 von 19 108 Rohobjekten und keines der sechs Paper der Seite vom 2026-10-09, auch
   der „Antrag FDP“ nicht. Der Urheber ist deshalb aus `paperType`, Titel und Textkopf abgeleitet und deckt
