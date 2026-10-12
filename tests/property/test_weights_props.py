@@ -54,6 +54,19 @@ def _dictionary(rows: dict[int, list[str]]) -> pl.DataFrame:
     )
 
 
+def _as_built(
+    dictionary: dict[int, list[str]], index: dict[str, list[str]]
+) -> dict[str, list[str]]:
+    """Index wie ``build_index`` ihn liefert: genau die Begriffe des Wörterbuchs, ohne Treffer leer.
+
+    Die Strategien würfeln Wörterbuch und Index unabhängig; in der Kette entsteht der Index aber
+    aus den Begriffen des Wörterbuchs, und ``term_weights`` besteht darauf (sonst bekäme ein
+    Begriff ohne Wahlbezirk stillschweigend ein Gewicht).
+    """
+    terms = {term for terms in dictionary.values() for term in terms}
+    return {term: index.get(term, []) for term in sorted(terms)}
+
+
 def _index(rows: dict[str, list[str]]) -> pl.DataFrame:
     terms = sorted(rows)
     return pl.DataFrame(
@@ -85,6 +98,7 @@ def _overlapping(dictionary: dict[int, list[str]], index: dict[str, list[str]]) 
 def test_unit_weights_reproduce_the_count_of_the_thesis_exactly(
     dictionary: dict[int, list[str]], index: dict[str, list[str]]
 ) -> None:
+    index = _as_built(dictionary, index)
     assume(_overlapping(dictionary, index))
     dict_df, index_df = _dictionary(dictionary), _index(index)
     voters = _voters(list(dictionary))
@@ -102,6 +116,7 @@ def test_every_weight_stays_in_the_unit_interval_and_lowers_no_sum(
     dictionary: dict[int, list[str]], index: dict[str, list[str]], weights: list[float]
 ) -> None:
     """Gewichte in [0, 1], und ein kleineres Begriffsgewicht erhöht keine Bezirkssumme."""
+    index = _as_built(dictionary, index)
     assume(_overlapping(dictionary, index))
     dict_df, index_df = _dictionary(dictionary), _index(index)
     voters = _voters(list(dictionary))
@@ -131,7 +146,7 @@ def test_every_weight_stays_in_the_unit_interval_and_lowers_no_sum(
 def test_the_district_shares_of_a_term_sum_to_one(
     dictionary: dict[int, list[str]], index: dict[str, list[str]]
 ) -> None:
-    frame = term_weights(_dictionary(dictionary), _index(index), len(PAPERS))
+    frame = term_weights(_dictionary(dictionary), _index(_as_built(dictionary, index)), len(PAPERS))
     for row in frame.iter_rows(named=True):
         shares = row["n_bezirke"] * row["gewicht_bezirke"]
         assert math.isclose(shares, 1.0, rel_tol=1e-12)
@@ -172,6 +187,7 @@ def test_the_topic_variants_decompose_the_unit_count(
     shares: list[list[float]],
 ) -> None:
     """Die Anteile summieren je Dokument zu 1, also summieren die Themenvarianten zur Einheit."""
+    index = _as_built(dictionary, index)
     assume(_overlapping(dictionary, index))
     assume(all(sum(row) > 0 for row in shares))
     normalised = [[value / sum(row) for value in row] for row in shares]
@@ -214,6 +230,7 @@ def test_the_topic_variants_decompose_the_unit_count(
 def test_spearman_of_the_unit_variant_against_the_unweighted_rate_is_one(
     dictionary: dict[int, list[str]], index: dict[str, list[str]]
 ) -> None:
+    index = _as_built(dictionary, index)
     assume(_overlapping(dictionary, index))
     dict_df, index_df = _dictionary(dictionary), _index(index)
     voters = _voters(list(dictionary))

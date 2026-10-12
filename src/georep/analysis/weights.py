@@ -140,7 +140,12 @@ def _covers_the_index_terms(
 @deal.post(lambda result: result.columns == [TERM, N_DISTRICTS, HITS, W_DISTRICT, W_IDF])
 @deal.post(lambda result: sorted_unique(result, TERM))
 @deal.post(
-    lambda result: bool((result.get_column(N_DISTRICTS) >= 1).all()),
+    # ``.all()`` übergeht Nullen, darum die Zählung daneben: ein Begriff ohne Wahlbezirk käme sonst
+    # als fehlender Wert durch und bekäme stillschweigend ein Gewicht.
+    lambda result: (
+        result.get_column(N_DISTRICTS).null_count() == 0
+        and bool((result.get_column(N_DISTRICTS) >= 1).all())
+    ),
     message="jeder Begriff des Index steht im Wörterbuch mindestens eines Wahlbezirks",
 )
 @deal.post(lambda result: in_unit_interval(result, W_DISTRICT, W_IDF))
@@ -157,7 +162,6 @@ def term_weights(dictionary: pl.DataFrame, index: pl.DataFrame, n_documents: int
     return (
         index.select(TERM, HITS)
         .join(per_term, on=TERM, how="left")
-        .with_columns(pl.col(N_DISTRICTS).fill_null(1))
         .with_columns((1.0 / pl.col(N_DISTRICTS)).alias(W_DISTRICT), idf_expression(n_documents))
         .select(TERM, N_DISTRICTS, HITS, W_DISTRICT, W_IDF)
         .sort(TERM)

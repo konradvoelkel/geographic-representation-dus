@@ -263,3 +263,11 @@ def test_variants_refuse_an_unknown_factor_in_combined() -> None:
             ["gibtsnicht"],
             None,
         )
+
+
+def test_term_weights_refuse_a_term_the_dictionary_does_not_have() -> None:
+    """Ein Begriff im Index, den kein Wörterbuch führt, bekäme stillschweigend das Gewicht 1."""
+    from georep.analysis.weights import term_weights
+
+    with pytest.raises(deal.PostContractError, match="Wörterbuch"):
+        term_weights(_dictionary({1: ["kö"]}), _weights_index({"kö": ["p1"], "fremd": ["p2"]}), 4)
