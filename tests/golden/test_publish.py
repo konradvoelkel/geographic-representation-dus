@@ -170,8 +170,14 @@ def test_a_city_that_lost_its_run_leaves_the_published_folder(
     """Ein Stadtordner ohne Lauf und ohne Link wäre tote Last; publish räumt ihn weg."""
     root, settings = both_cities
     out = tmp_path / "zwei-dann-eine"
+    # Die Quelle darf keinen Marker tragen: ein Test mit Standardziel hinterlässt dort einen, und die
+    # Kopie brächte ihn mit; so blieb bis 2026-10-12 verborgen, dass die Kopie den Marker im Ziel löscht
+    (root / "data" / "site" / MARKER_NAME).unlink(missing_ok=True)
     publish_sites(settings, _layout_of(root, settings), now=NOW, commit=None, out=out)
     assert (out / "moenchengladbach" / "index.html").is_file()
+    assert (out / MARKER_NAME).is_file(), (
+        "publish muss sein Ziel nach dem Kopieren wieder markieren"
+    )
     moved = tmp_path / "beiseite"
     (root / "data" / "moenchengladbach" / "site").rename(moved)
     try:
