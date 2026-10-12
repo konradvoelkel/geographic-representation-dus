@@ -232,9 +232,9 @@ Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. D
 Sensitivitätstabelle mit beiden Spalten von Tabelle 5 je Gewichtungsvariante und der Rangkorrelation zur
 ungewichteten Quote, darunter die Themen mit ihren stärksten Wörtern. Die Einheitszeile trägt dieselben
 Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeigt „—", und fehlt der ganzen
-Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 31 Dateien,
-10,4 MB, davon `index.html` 933 KB (144 KB Suchdaten, 33 KB die Gewichtung), `karte.html` 255 KB,
-`dokumente.json` 2,1 MB; 1,2 s (2026-10-12).
+Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 43 Dateien,
+13,4 MB, davon `index.html` 1,13 MB (144 KB Suchdaten, 63 KB die Parteikarten, 33 KB die Gewichtung),
+`karte.html` 255 KB, `dokumente.json` 2,3 MB; 1,5 s (2026-10-12).
 
 ## Verträge
 
