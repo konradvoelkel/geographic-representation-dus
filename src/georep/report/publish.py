@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import datetime as dt
 import html
+import re
 import shutil
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
@@ -48,6 +49,12 @@ MARKER_NAME = ".georep-publish"
 # welche Seiten wirklich daneben liegen, und setzt die Zeile (Review 2026-10-12: sonst trüge die
 # veröffentlichte Seite Links auf Städte, deren Lauf noch fehlt).
 NEIGHBOURS_MARKER = "<!--georep:weitere-staedte-->"
+# Die Zeile steht vor der Marke; die Marke bleibt stehen, damit ein zweiter Lauf sie wieder
+# ersetzen kann (die Seite der ersten Stadt wird nicht neu kopiert).
+_NEIGHBOURS = re.compile(
+    r'(?:<p class="meta" data-neighbours="1">.*?</p>\n?)?' + re.escape(NEIGHBOURS_MARKER),
+    re.DOTALL,
+)
 # Die Vergleichsseite verlinkt nach außen nur das Repository und die Lizenz; die Städte liegen
 # relativ daneben, die Quellen und Lizenzen der Daten nennt jede Stadtseite in ihrem Fuß.
 COMPARISON_LINKS = frozenset({REPOSITORY, CC0})
@@ -137,9 +144,9 @@ def neighbour_line(cities: Sequence[CitySite], index: int) -> str:
         if position != index
     ]
     return (
-        '<p class="meta">Weitere Städte: '
+        '<p class="meta" data-neighbours="1">Weitere Städte: '
         + " · ".join(links)
-        + f' · <a href="{up}{COMPARISON_NAME}">Städtevergleich</a></p>'
+        + f' · <a href="{up}{COMPARISON_NAME}">Städtevergleich</a></p>\n'
     )
 
 
@@ -148,7 +155,8 @@ def write_neighbours(cities: Sequence[CitySite], root: Path) -> None:
     for index, city in enumerate(cities):
         page = root / city.href / "index.html"
         text = page.read_text(encoding="utf-8")
-        write_text(page, text.replace(NEIGHBOURS_MARKER, neighbour_line(cities, index), 1))
+        filled = neighbour_line(cities, index) + NEIGHBOURS_MARKER
+        write_text(page, _NEIGHBOURS.sub(lambda _: filled, text, count=1))
 
 
 def _tree_size(folder: Path) -> tuple[int, int]:
