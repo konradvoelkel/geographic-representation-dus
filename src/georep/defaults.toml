@@ -132,7 +132,12 @@ random_state = 0               # Startwert für NMF; nndsvda ist deterministisch
 # Aus einem Muster werden die Buchstabenfolgen genommen; Bruchstücke eines Regex ("frak" aus
 # "frak\w{0,2}ion") sind harmlos, weil sie allein kein Token bilden.
 stop_sources = ["fraktionen", "gremien", "namen"]
-stop_keep = []                 # Wörter, die trotz einer Quelle bleiben; das Profil nennt die Sachwörter, die zufällig in einem Gruppennamen stehen ("Klima" in "Die PARTEI-Klima-Fraktion")
+# Wörter, die trotz einer Quelle bleiben: das Profil nennt die Sachwörter, die zufällig in einem
+# Gruppennamen oder Gremienkürzel stehen ("Klima" in "Die PARTEI-Klima-Fraktion", "BAU" als
+# Kürzel des Bauausschusses). Abgezogen wird am Ende von der ganzen Vereinigung, also auch von
+# der deutschen Paketliste und von den Namen aus dem Korpus -- wer hier ein Funktionswort nennt,
+# holt es zurück ins Vokabular. Genau eine Liste, damit es nicht zwei Wahrheiten gibt.
+stop_keep = []
 # Fenster, in denen ein Personenname steht: hinter einer Unterschrift oder einer Amtsbezeichnung.
 # Deutschsprachig und stadtneutral wie search.place_words; eine Stadt in einem anderen Sprachraum
 # ersetzt die Liste im Profil. Die Personenmarker aus [originators] kommen dazu, damit dieselbe

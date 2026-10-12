@@ -156,10 +156,16 @@ exclude = [                    # Stadtteil- und Stadtbezirksnamen: zu grob für 
 exclude_districts = [1, 10]    # Tabelle 5 der Arbeit rechnet auch ohne die Wahlbezirke 1 und 10 (die zwei höchsten Trefferquoten); leer = keine zweite Regression
 
 [topics]                       # Punkt 45: die Stoppwörter des Themenmodells kommen aus [originators] und [bodies] unten; hier stehen nur die Ausnahmen
-# Die Quelle "fraktionen" nimmt jedes Wort aus den Namen und Mustern der Gruppen mit. Zwei davon
-# sind Sachwörter dieser Stadt und sollen Themenwörter bleiben: "Die PARTEI-Klima-Fraktion" bringt
-# "klima" mit, "Tierschutz/Freie Wähler" den "tierschutz" (geprüft am 2026-10-12 an der Referenz).
-stop_keep = ["klima", "tierschutz"]
+# Die Quellen nehmen jedes Wort aus den Namen, Mustern und Kürzeln mit; drei davon sind
+# Sachwörter dieser Stadt und sollen Themenwörter bleiben (geprüft am 2026-10-12 und 2026-10-13
+# an der Referenz):
+#   klima       aus "Die PARTEI-Klima-Fraktion" ([[originators.groups]])
+#   tierschutz  aus "Tierschutz/Freie Wähler" (dito)
+#   bau         aus dem Kürzel BAU des Bauausschusses ([bodies.committees]); "bau" steht in 1101
+#               von 19 033 Dokumenten (5,8 %) und ist dort das Bauen, nicht der Ausschuss
+# Nicht zurückgeholt, weil sie wirklich das Gremium nennen: "rat" (RAT, 3751 Dokumente, 19,7 %)
+# und "aus" (AUS, 9320 Dokumente -- das Wort steht ohnehin in der deutschen Paketliste).
+stop_keep = ["klima", "tierschutz", "bau"]
 
 [columns]                      # Feldnamen der Quellen; bis Phase 2 in drei Modulen hart kodiert
 district_id = "Kommunalwahlbezirk Nr."
