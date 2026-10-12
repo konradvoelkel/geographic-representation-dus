@@ -151,11 +151,13 @@ export GEOREP_REPORT__MONITORING_URL="$PROFILE/"
 step mainsite georep run
 unset GEOREP_REPORT__MONITORING_URL
 
-# (7) Veröffentlichungsordner zusammenstellen: Hauptseite nach out/, Profil nach out/<profil>/
+# (7) Veröffentlichungsordner zusammenstellen: Hauptseite nach out/, Profil nach out/<profil>/.
+# Die Stamps der Schritte (index.html.stamp.json) bleiben draußen, sie gehören zur Datenwurzel.
 # Geprüft wird index.html, nicht das Verzeichnis: `bootstrap` legt ein leeres site/ an, und im
 # Trockenlauf bleibt es leer (2026-10-12 in der Simulation aufgefallen).
 if [ -f "$MAIN_SITE/index.html" ]; then
-  rsync -a --delete --exclude="/$PROFILE/" "$MAIN_SITE/" "$OUT/" || fail "Hauptseite nach out/"
+  rsync -a --delete --exclude="/$PROFILE/" --exclude="*.stamp.json" \
+    "$MAIN_SITE/" "$OUT/" || fail "Hauptseite nach out/"
 elif [ -n "$DRY_RUN" ]; then
   log "Trockenlauf: ohne Hauptseite unter $MAIN_SITE nichts zu kopieren"
 else
@@ -163,7 +165,7 @@ else
 fi
 if [ -f "$PROFILE_SITE/index.html" ]; then
   mkdir -p "$OUT/$PROFILE" || fail "Profilordner anlegen"
-  rsync -a --delete --exclude=/snapshots/ --exclude=/stand.json \
+  rsync -a --delete --exclude=/snapshots/ --exclude=/stand.json --exclude="*.stamp.json" \
     "$PROFILE_SITE/" "$OUT/$PROFILE/" || fail "Profilseite nach out/"
   SNAPSHOTS=$OUT/$PROFILE/snapshots
   MONTH=$(date +%Y-%m)

@@ -63,10 +63,12 @@ case "$*" in
     if [ -n "${STUB_PROFILE_SITE:-}" ]; then
       mkdir -p "$STUB_PROFILE_SITE/data"
       echo "<html>Profil</html>" > "$STUB_PROFILE_SITE/index.html"
+      echo "{}" > "$STUB_PROFILE_SITE/index.html.stamp.json"
       echo "spalte" > "$STUB_PROFILE_SITE/data/monatsreihe.csv"
     fi
     mkdir -p "$STUB_MAIN_SITE/data"
     echo "<html>Haupt ${GEOREP_REPORT__MONITORING_URL:-}</html>" > "$STUB_MAIN_SITE/index.html"
+    echo "{}" > "$STUB_MAIN_SITE/index.html.stamp.json"
     echo "14 ausgeführt, 1 übersprungen"
     ;;
 esac
@@ -343,3 +345,13 @@ def test_a_real_run_without_a_profile_page_fails(sandbox: dict[str, str]) -> Non
     assert result.returncode == 1
     assert "FEHLER: Profilseite fehlt unter" in result.stdout
     assert "/2025/site" in result.stdout
+
+
+def test_the_published_tree_has_no_step_stamps(sandbox: dict[str, str]) -> None:
+    """Der Stamp des Schritts report liegt neben index.html; veröffentlicht gehört er nicht."""
+    result = _run(sandbox)
+    assert result.returncode == 0, result.stdout + result.stderr
+    out = Path(sandbox["MONITOR_PUBLISH_DIR"]) / "out"
+    stamps = [p.name for p in out.rglob("*.stamp.json")]
+    assert stamps == []
+    assert (out / "index.html").is_file() and (out / "2025" / "index.html").is_file()
