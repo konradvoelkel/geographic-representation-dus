@@ -16,7 +16,7 @@
 <thead><tr>
 <th scope="col" class="num" data-sort="num">Nr.</th>
 <th scope="col" data-sort="text">Name</th>
-<th scope="col" data-sort="text">Stadtbezirk</th>
+<th scope="col" class="num" data-sort="num">Stadtbezirk</th>
 <th scope="col" class="num" data-sort="num">Treffer</th>
 <th scope="col" class="num" data-sort="num">eigene BV</th>
 <th scope="col" class="num" data-sort="num">andere BV</th>
@@ -31,7 +31,7 @@
 <tr data-id="{{ d.id }}">
 <td class="num" data-value="{{ d.id }}">{{ d.id }}</td>
 <td>{{ d.name }}</td>
-<td data-value="{{ b.city_districts|join(' ') }}">{{ b.city_districts|join(' und ') }}{% if b.city_districts|length > 1 %}<a href="#gremien-fussnote" class="fn">*</a>{% endif %}</td>
+<td class="num" data-value="{{ b.city_districts[0] }}">{{ b.city_districts|join(' und ') }}{% if b.city_districts|length > 1 %}<a href="#gremien-fussnote" class="fn">*</a>{% endif %}</td>
 <td class="num" data-value="{{ d.hits }}">{{ d.hits|num }}</td>
 <td class="num" data-value="{{ b.own }}">{{ b.own|num }} <span class="note">({{ b.own_share|pct(1) }})</span></td>
 <td class="num" data-value="{{ b.other }}">{{ b.other|num }}</td>
