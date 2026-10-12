@@ -418,9 +418,14 @@ person_markers = [
 # Zwei Leserichtungen im Textkopf: „(anfrage cdu-fraktion vom 28. juli 2023)" und
 # „(interfraktioneller antrag)". Im ersten Muster steht .{0,80} und nicht [^.]{0,80}, weil die
 # Abkürzungen der Namen Punkte tragen („(anfrage frau dr.dr.hagen, fdp-fraktion, …)", Stichprobe
-# vom 2026-10-12); die Schranke von 80 Zeichen hält den Treffer trotzdem lokal.
+# vom 2026-10-12); die Schranke von 80 Zeichen hält den Treffer trotzdem lokal. Die Lookbehinds
+# halten die Verbform draußen: „der beantragenden fraktionen" ist kein Antrag einer Fraktion
+# (BV3/134/2025, Review 2026-10-12). Eine Wortgrenze täte das auch, verlöre aber die
+# Zusammensetzungen („haushaltsantrag der cdu-fraktion", „antragsstellende liste und fraktion")
+# und die Fälle, in denen die PDF-Extraktion die Leerzeichen gefressen hat
+# („anfragefraktionbündnis90/diegrünen", BV5/054/2022): sechs Dokumente gemessen.
 text_markers = [
-    "(antrag|anfrage).{0,80}?(fraktion|ratsfraktion|interfraktionell|überfraktionell)",
+    "(?<!be)(?<!ge)(antrag|anfrage).{0,80}?(fraktion|ratsfraktion|interfraktionell|überfraktionell)",
     "(interfraktionell|überfraktionell)\\w*.{0,20}?(antrag|anfrage)",
 ]
 # Schwaches Tor für den Titel, erst nach den Personenmarkern befragt: eine Antragsklammer, die

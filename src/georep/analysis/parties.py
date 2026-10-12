@@ -296,6 +296,13 @@ def classify_document(
         keys, hit = _parties_in(window, patterns)
         if keys:
             return Classification("Fraktion", keys, "text", hit)
+        # Der Kopf sagt „eine Fraktion", nennt sie aber nicht. Die Klasse steht damit fest, der
+        # Urheber nicht: das schwache Titel-Tor darf ihn noch nennen (BV3/134/2025: der Kopf
+        # trifft „beantragenden fraktionen", der Titel nennt alle drei Parteien in der Klammer).
+        # Die Personenmarker bleiben außen vor, sie widersprächen der schon gesetzten Klasse.
+        keys, hit = _parties_in_bracket(title, patterns)
+        if keys:
+            return Classification("Fraktion", keys, "name", hit)
         return Classification("Fraktion", (), "text", _excerpt(head, *found.span()))
 
     person = patterns.person.search(title) if patterns.person is not None else None
@@ -305,12 +312,16 @@ def classify_document(
     # Zuletzt das schwache Tor: eine Antragsklammer im Titel, die eine Partei ohne das Wort
     # „Fraktion" nennt („(Antrag BÜNDNIS 90/DIE GRÜNEN)"). Es steht hinter den Personenmarkern,
     # damit „(Antrag Herr Lemmer-Freie Wähler)" Person bleibt wie „Herrn Salinger; AfD".
-    bracket = patterns.name_party.search(title) if patterns.name_party is not None else None
-    if bracket is not None:
-        keys, hit = _parties_in(bracket.group(0), patterns)
-        if keys:
-            return Classification("Fraktion", keys, "name", hit)
+    keys, hit = _parties_in_bracket(title, patterns)
+    if keys:
+        return Classification("Fraktion", keys, "name", hit)
     return Classification("unbekannt", (), "", "")
+
+
+def _parties_in_bracket(title: str, patterns: Patterns) -> tuple[tuple[str, ...], str]:
+    """Die Parteien einer Antragsklammer im Titel („(Antrag BÜNDNIS 90/DIE GRÜNEN, CDU, SPD)")."""
+    bracket = patterns.name_party.search(title) if patterns.name_party is not None else None
+    return _parties_in(bracket.group(0), patterns) if bracket is not None else ((), "")
 
 
 def _without_prefix(value: str, prefixes: Sequence[str]) -> str:

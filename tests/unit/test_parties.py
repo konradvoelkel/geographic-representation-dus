@@ -480,3 +480,45 @@ def test_an_organization_key_outside_the_party_list_is_ignored(patterns: Pattern
     keys, hit = mixed.parties_for_urls(["https://x/gr/99", "https://x/gr/49", "https://x/gr/44"])
     assert keys == ("CDU", "FDP")  # Settings-Reihenfolge, nicht die der URLs
     assert "gr/49" in hit and "gr/44" in hit
+
+
+def test_a_partyless_text_hit_still_lets_the_title_name_the_parties(patterns: Patterns) -> None:
+    """BV3/134/2025 (Review-Befund 1, 2026-10-12): Der Textkopf trifft „beantragenden fraktionen",
+    im Fenster steht keine Partei — vorher endete die Zuordnung dort mit Fraktion ohne Partei und
+    das schwache Titel-Tor lief nicht mehr. Der Titel nennt alle drei Parteien in der Klammer."""
+    title = "Lessingplatz – Gesamtkonzept (Antrag BÜNDNIS 90/DIE GRÜNEN, CDU, SPD)"
+    head = (
+        ": lessingplatz – gesamtkonzept (antrag bündnis 90/die grünen, cdu, spd) sehr geehrter "
+        "herr bezirksbürgermeister, der lessingplatz mit seinen verschiedenen nutzungen bedarf "
+        "aus der sicht der beantragenden fraktionen eine konzeptionellen überarbeitung"
+    )
+    assert _classify(patterns, paper_type="Antrag", name=title, text=head) == (
+        "Fraktion",
+        ("CDU", "GRUENE", "SPD"),
+        "name",
+    )
+
+
+def test_beantragenden_is_not_an_antrag(patterns: Patterns) -> None:
+    """Die Verbform zählt nicht: „der beantragenden fraktionen" ist kein „Antrag … Fraktion".
+    Zusammensetzungen mit dem Antragswort bleiben erlaubt, auch die, in denen die
+    PDF-Extraktion die Leerzeichen gefressen hat — eine Wortgrenze verlöre sechs Dokumente."""
+    assert patterns.text is not None
+    assert patterns.text.search("der beantragenden fraktionen eine überarbeitung") is None
+    assert patterns.text.search("(haushaltsantrag der cdu-fraktion vom 1. mai 2024)") is not None
+    assert patterns.text.search("(anfrage spd-fraktion vom 28. juli 2023)") is not None
+    assert patterns.text.search("die antragsstellende liste und fraktion bitten sie") is not None
+    assert patterns.text.search("(anfragefraktionbündnis90/diegrünenvom14.märz2022)") is not None
+
+
+def test_an_interfractional_text_hit_without_a_title_bracket_stays_a_fraction(
+    patterns: Patterns,
+) -> None:
+    """Ohne Parteien im Titel bleibt es bei Fraktion ohne Partei aus der Quelle text; die
+    Personenmarker dürfen die Klasse nicht mehr umstoßen, nachdem der Kopf sie gesetzt hat."""
+    assert _classify(
+        patterns,
+        paper_type="Antrag",
+        name="Dringlichkeitsantrag: Situation rund um den Anker",
+        text="dringlichkeitsantrag (interfraktioneller antrag) die bezirksvertretung bittet",
+    ) == ("Fraktion", (), "text")
