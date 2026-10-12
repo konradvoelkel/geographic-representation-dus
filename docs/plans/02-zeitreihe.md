@@ -513,3 +513,24 @@ Für Option 2 im Besonderen:
 - **Reihenfolge**: 02 merged als Sechste (nach 04): Record und Korpus tragen dann Urheberfelder (Schema 3);
   `first_page` und `progress` kommen zu `fetch_papers` dazu, `max_pages` ist von 04 da.
 - **Fragen**: 2.1 und 2.5 offen (fragen.md); 2.2, 2.3, 2.4, 2.6, 2.7, 2.8 wie angenommen.
+
+## 11. Was der Rebase gebracht hat (2026-10-12, nach dem Merge von 08, 05, 06, 03 und 04)
+
+Der Branch ist auf `main` (`880541c`) rebased. Was dabei inhaltlich zu ändern war:
+
+| Stelle | vorher in 02 | jetzt |
+|---|---|---|
+| `area_shares` | eigene Fassung mit zwei Mappings und `MIN_SHARE` | die von Option 3: `area_shares(Sequence[Area], Sequence[Area], *, min_coverage=0.9)`, beide Schlüssel Text. Meine Fassung ist gelöscht; `assign_by_point`, `target_weights`, `largest_remainder` und `transfer_counts` stehen daneben und nehmen jetzt ebenfalls `Sequence[Area]` beziehungsweise die Textschlüssel |
+| Zielbezirk | `target_id` Int64 aus `area_shares` | der Schritt `precincts` castet `target_id` nach Int64, **bevor** `transfer_counts` läuft: in dieser Reihenfolge gehen die Reste beim Runden an die numerisch sortierten Bezirke; als Text stünde „10" vor „2" |
+| Name des alten Wahlbezirks | `Area.name` | 03s `Area` trägt nur den Schlüssel, darum liest `geo.read_area_names` die Namen als eigene Abbildung aus denselben Eigenschaften (ohne Geometrie, ohne Projektion) |
+| Identitätsprobe auf echten Daten | ein Paar je Stimmbezirk mit Anteil 1 | 03s `area_shares` verwirft keine Splitter: auf der Referenz entstehen 538 statt 306 Paare, die zusätzlichen mit Anteilen um 10⁻¹³ an gemeinsamen Grenzen. Die Probe prüft darum den **größten** Anteil je Stimmbezirk (≈ 1, richtiger Bezirk) statt die Zahl der Paare |
+| Kanonische Spalte | `prep.voters.ELIGIBLE` | Option 05 hat den Namen für die kleingeschriebene Crosswalk-Spalte belegt; die veröffentlichte heißt jetzt `ELIGIBLE_TOTAL`. Vier Stellen, die eine **abgeleitete** Tabelle lesen (`body_hits`, `variants`, `party_hits`, `prep.context.precinct_table`), lasen bis dahin `columns.eligible`, also den Quellnamen — richtig nur, solange beide gleich heißen. Sie lesen jetzt die Konstante; ohne das wäre jedes Profil mit anderen Quellspalten rot |
+| `[columns.results]` | eigenes `precinct` | Option 3 hatte die Spalte schon; meine Dublette entfällt, `precinct_name`, `eligible_postal` und `postal_marker` bleiben |
+| `settings.2014.toml` | — | zwei neue Zeilen: `city_district = ""` (die Ratswahl 2020 nennt keinen Stadtbezirk; die Zuordnung der Zielbezirke zu Stadtbezirken gilt für beide Perioden und kommt aus der Hauptperiode, der Schritt `voters` kopiert sie) und `[context] root = ""` (der Quartiersatlas beschreibt den Stand 2021; für eine Periode, die 2020 endet, wäre er keine Kontrollvariable) |
+| Schrittregister | eigene Liste mit `steps += [...]` | mains Form mit `*( [...] if bedingung else [] )`; `precincts`, `voters` und `compare` sind so eingehängt, keine fremde Reihenfolge verschoben |
+| Zählende Tests | feste Liste der Offline-Schritte | aus dem Register abgeleitet (F6): geprüft wird, dass `streets_osm` und `pois_wiki` fehlen und `precincts` unmittelbar vor `voters` steht |
+
+Dazu rein mechanisch: `ReportModel.period` steht vor den Feldern mit Default (Pflichtfeld), `Visuals.delta_svg`
+und der Abschnitt `36-perioden` wie geplant, die Periodentexte im Rahmen mit mains englischem Satz zur
+Gewichtung zusammengeführt, `PublishedTable(optional=True)` für beide neuen Tabellen, `nox -s verify` kennt
+`largest_remainder`.
