@@ -162,10 +162,12 @@ def shared_classes(cities: tuple[CitySite, ...]) -> Classification:
 def small_map(city: CitySite, classes: Classification, offset: int) -> str:
     """Eine kleine Choroplethe ohne Bedienung: Flächen, Klassen, Namen im ``<title>``."""
     projection: Projection = fit(bounds_of(city.shapes), SMALL_MAP_WIDTH)
+    # Der Slug kommt aus summary.json, also aus einer Datei: escapen wie jeden anderen Wert
+    ident = html.escape(city.slug, quote=True)
     parts = [
         f'<svg class="small-map" viewBox="{projection.view_box}" role="img" '
-        f'aria-labelledby="map-{city.slug}" xmlns="http://www.w3.org/2000/svg">',
-        f'<title id="map-{city.slug}">Trefferquote je Wahlbezirk in {html.escape(city.name)}</title>',
+        f'aria-labelledby="map-{ident}" xmlns="http://www.w3.org/2000/svg">',
+        f'<title id="map-{ident}">Trefferquote je Wahlbezirk in {html.escape(city.name)}</title>',
         '<g class="districts" fill-rule="evenodd">',
     ]
     for index, district in enumerate(city.districts):

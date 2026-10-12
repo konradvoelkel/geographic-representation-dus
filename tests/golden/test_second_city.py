@@ -54,6 +54,15 @@ def test_the_profile_puts_the_second_city_in_its_own_folder(run: Layout) -> None
     assert run.http_cache == run.cache_root / "http.sqlite"  # geteilt, Schlüssel ist die URL
 
 
+def test_the_steps_declare_the_street_directory_they_read(run: Layout, settings: Settings) -> None:
+    """Was ein Schritt liest, steht in seinen Eingaben; sonst merkt kein Stamp eine Änderung."""
+    steps = {s.name: s for s in build_steps(settings, run)}
+    assert run.streets_directory is not None
+    assert run.streets_directory in steps["streets"].inputs
+    assert run.streets_directory in steps["report"].inputs
+    assert run.streets_directory in steps["opendata"].outputs
+
+
 def test_bootstrap_takes_the_package_format(run: Layout) -> None:
     """Das Paket der zweiten Stadt bringt Stores mit; es gibt kein ``paper_with_text.json``."""
     assert run.papers.is_file() and run.texts.is_file()

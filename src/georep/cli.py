@@ -56,9 +56,13 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--online", action="store_true", help="Netzschritte mitlaufen lassen")
 
     fetch = sub.add_parser(
-        "fetch", help="Netzschritte ausführen (opendata, papers, pdfs), dann texts"
+        "fetch",
+        help="Netzschritte ausführen (opendata, papers, pdfs, streets_osm, pois_wiki), "
+        "dazu shapes und texts",
     )
-    fetch.add_argument("steps", nargs="*", help="Namen (Standard: alle Netzschritte und texts)")
+    fetch.add_argument(
+        "steps", nargs="*", help="Namen (Standard: alle Netzschritte, shapes und texts)"
+    )
     fetch.add_argument("--force", action="store_true", help="auch aktuelle Schritte ausführen")
     fetch.add_argument("--limit", type=int, help="höchstens so viele neue PDFs in diesem Lauf")
     fetch.add_argument(
@@ -132,12 +136,10 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
         settings = _with_fetch_limits(settings, args.limit, args.max_pages)
     steps = build_steps(settings, layout)
     # `fetch` ohne Namen heißt: alle Netzschritte, dazu die beiden Offline-Schritte, ohne die sie
-    # nicht laufen (`precincts` liefert die Flächen für streets_osm und pois_wiki) oder deren
+    # nicht laufen (`shapes` liefert die Flächen für streets_osm und pois_wiki) oder deren
     # Ergebnis niemand ohne Netz nachholen kann (`texts` braucht die PDFs im Cache).
     default_names = (
-        [s.name for s in steps if s.network or s.name in ("precincts", "texts")]
-        if fetching
-        else None
+        [s.name for s in steps if s.network or s.name in ("shapes", "texts")] if fetching else None
     )
     outcomes = run_pipeline(
         steps,

@@ -208,6 +208,8 @@ def canonical_precincts(
                 f"Stimmbezirk ohne {rules.id_property!r}; vorhanden: {sorted(properties)}"
             )
         precinct_id = str(properties[rules.id_property]).strip()
+        if not feature.get("geometry"):
+            raise SchemaError(f"Stimmbezirk {precinct_id}: kein Geometrie-Mitglied im Feature")
         district = _district_of(precinct_id, properties, rules)
         features.append(
             {

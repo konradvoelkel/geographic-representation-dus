@@ -208,7 +208,7 @@ daraus entstehen Downloads, `schema.json`, CSV-Dateien und die Spaltentabelle. D
 `processed/regression_kontrollen.parquet`, der Satz zur Deutung entsteht aus p, Vorzeichen, R²-Zuwachs und dem
 größten standardisierten Koeffizienten, nicht aus festem Text. Reihenfolge: erst die Dateien
 unter `site/data/` (die veröffentlichten Tabellen als Parquet kopiert und als CSV mit den Regeln von `georep export`,
-`wahlbezirke.geojson` in EPSG:4326, `schema.json`), dann das Modell (`report.model`: frozen dataclasses, Polars
+`wahlbezirke.geojson` in EPSG:4326, `summary.json`, `schema.json`), dann das Modell (`report.model`: frozen dataclasses, Polars
 bis zum Schluss, Zeit und Commit sind Eingaben) mit Größe und SHA-256 jeder Datei, dann die Karte
 (`report.geometry`: `unary_union` je Wahlbezirk, um 15 m vereinfacht, Flächensumme bis auf 1 % erhalten, formtreu
 aus EPSG:25832 auf eine `viewBox` abgebildet) und das Streudiagramm (`report.charts`), zuletzt die Seite
@@ -247,6 +247,16 @@ Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeig
 Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 43 Dateien,
 13,4 MB, davon `index.html` 1,13 MB (144 KB Suchdaten, 63 KB die Parteikarten, 33 KB die Gewichtung),
 `karte.html` 255 KB, `dokumente.json` 2,3 MB; 1,5 s (2026-10-12).
+
+Die Stadtseite kennt ihre Nachbarn nicht: wo die Zeile „Weitere Städte" steht, hinterlässt der Rahmen nur die
+Marke `<!--georep:weitere-staedte-->`. Erst `georep publish` (`report.publish`) weiß, welche Stadtseiten es
+wirklich gibt, trägt sie zusammen (die erste Stadt aus `publish.cities` bleibt an der Wurzel, jede weitere
+kommt unter ihren Slug), setzt die Zeile in jede kopierte Seite und baut `vergleich.html` (`report.comparison`:
+Tabelle, zwei kleine Choroplethen mit gemeinsamen Quantilklassen, ein Streudiagramm mit einer Farbe und einer
+Markenform je Stadt, eigene Allowlist). Gelesen wird je Stadt nur ihr veröffentlichter Ordner
+(`summary.json`, `wahlbezirke.geojson`, `wahlbezirke_auswertung.parquet`). Weil `publish` beim Kopieren löscht,
+nimmt es nur seinen eigenen Zielordner an: die Standardwurzel, ein leeres Verzeichnis oder eines mit seiner
+Markerdatei `.georep-publish`.
 
 ## Verträge
 

@@ -181,6 +181,24 @@ def test_canonical_refuses_a_source_without_crs_or_without_the_id(tmp_path: Path
         canonical_precincts(source, wrong, {4: "Venn"})
 
 
+def test_a_feature_without_geometry_is_a_schema_error(tmp_path: Path) -> None:
+    """Sonst stolperte erst der Vertrag mit einem leeren RaisesContractError (Review 2026-10-12)."""
+    path = tmp_path / "flaechen.geojson"
+    path.write_text(
+        json.dumps(
+            {
+                "type": "FeatureCollection",
+                "crs": {"type": "name", "properties": {"name": "EPSG:25832"}},
+                "features": [{"properties": {"Nr": "10401", "Name": "Venn"}, "geometry": None}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    rules = Precincts(id_property="Nr", district_from_id=(1, 3), names_from_results=True)
+    with pytest.raises(SchemaError, match="Geometrie"):
+        canonical_precincts(read_source_geojson(path), rules, {4: "Venn"})
+
+
 def test_the_canonical_file_is_what_read_precincts_wants(tmp_path: Path) -> None:
     source = read_source_shapefile_zip(_shapefile_zip(tmp_path / "w.zip", ("10401", "32201")))
     target = tmp_path / "stimmbezirke.geojson"

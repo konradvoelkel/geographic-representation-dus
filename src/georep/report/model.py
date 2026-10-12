@@ -1717,6 +1717,7 @@ SUMMARY_FIELDS: dict[str, str] = {
     "city.slug": "Ordnername der Stadt im veröffentlichten Ordner",
     "city.name": "Name der Stadt",
     "city.ags": "amtlicher Gemeindeschlüssel",
+    "city.election": "Name der Wahl, deren Ergebnis die Nenner liefert",
     "stand.election": "Wahltag, dessen Ergebnis die Nenner liefert (ISO-Datum)",
     "stand.period_start": "Beginn der Wahlperiode (ISO-Datum)",
     "stand.period_end": "Ende der Wahlperiode (ISO-Datum) oder null bei laufender Periode",
