@@ -508,7 +508,8 @@ Abweichungen vom Bauplan, je mit Grund:
   `GEOREP_REPO` und `GEOREP_PROFILE` vorgesehen). `GEOREP_` ist das Präfix von pydantic-settings:
   `GEOREP_PROFILE=settings.2025.toml` beendet jeden `georep`-Aufruf mit einem Validierungsfehler, weil
   `profile` ein Ordnername ist (nachgestellt am 2026-10-12). Nur `GEOREP_DATA_ROOT`, `GEOREP_CACHE_ROOT`
-  und `GEOREP_LOG_LEVEL` sind weiter echte Einstellungen aus der Umgebung.
+  und `GEOREP_LOG_LEVEL` sind weiter echte Einstellungen aus der Umgebung. Den Profilnamen selbst
+  nennt die Umgebungsdatei nicht: das Skript fragt ihn mit `georep paths` ab (siehe unten).
 - **`DRY_RUN=1` baut die Hauptseite wirklich.** Sonst hätte die Simulation keinen
   Veröffentlichungsordner zu zeigen: ohne Abruf hat das Profil keine Dokumente, seine Kette kann nur
   planen. Netzschritte, rclone und rsync bleiben trocken (Frage 11).
@@ -526,6 +527,40 @@ Abweichungen vom Bauplan, je mit Grund:
   `PaperStore.upsert` galt schon vor dieser Option nicht, wenn eine Charge dieselbe ID zweimal enthält
   (die hypothesis-Eigenschaft hat es gefunden); sie heißt jetzt `added <= total + removed`.
 
+### Nach dem Review (2026-10-12)
+
+Das Review fand zehn Punkte, alle im Betriebsteil; jeder ist behoben, die meisten mit einem roten
+Test zuerst:
+
+1. **Die Einheit wäre nie gestartet**: `WorkingDirectory=${MONITOR_REPO}` — systemd ersetzt
+   Variablen nur in `ExecStart=` und Verwandten, `systemd-analyze --user verify` meldete „path is
+   not absolute". Die Zeile ist weg (das Skript wechselt selbst), und ein Test lässt
+   `systemd-analyze --user verify` über beide Unit-Dateien laufen. Die Simulation lief an dem
+   Fehler vorbei, weil `systemd-run` das Arbeitsverzeichnis selbst setzt.
+2. **`stand.json` fehlte im veröffentlichten Baum**: er entstand nach dem rsync, und der rsync der
+   Profilseite hatte ihn mit `--delete` zuvor entfernt. Jetzt steht er davor und ist vom `--delete`
+   ausgenommen; `dauer_s` zählt bis dahin, die Abschlusszeile nennt die ganze Dauer.
+3. **Ein abgebrochener Schnappschuss blockierte alle späteren Läufe** (der Monatsordner ist die
+   Sperre). Er entsteht jetzt in `.<monat>.neu` daneben und wandert per `mv` hinein.
+4. **Der Profilname stand zweimal da** (`settings.2025.toml` und `monitor.env`). Neu: `georep paths`
+   druckt Profil und alle Layout-Pfade als `key=wert`, das Skript liest sie; `MONITOR_PROFILE` gibt
+   es nicht mehr. Verworfen: das Skript aus `georep status` parsen (Menschentext, den jede weitere
+   Option umformulieren darf) und den Namen weiter spiegeln (die Abweichung fiel erst im Betrieb
+   auf). Fehlt im echten Lauf danach eine Seite, ist das ein Fehler statt eines stillen Exit 0.
+5. Die Monatsspalte sortiert numerisch (`data-value` = Jahr mal zwölf plus Monat).
+6. Die Beschriftungen der Balken überlappten bei 14 bis 23 Monaten mit nur einem Januar; der
+   Abstand kommt jetzt aus der Breite eines Balkenplatzes, geprüft über acht Reihenlängen.
+7. `flock` wird wie `rsync` vorher geprüft (sonst endete jeder Lauf still mit „läuft bereits");
+   `deploy/README.md` sagt, dass die Ausgabe eines Schritts erst nach dem Schritt im Journal steht.
+8. `index.html.stamp.json` wird nicht mehr veröffentlicht.
+9. `monitor.env.example` trägt nur noch Platzhalter; README-Zahlen nachgezogen.
+10. `systemd-run -p EnvironmentFile=%h/…` löst `%h` nicht auf („Path %h/… is not absolute",
+    am 2026-10-12 mit einer transienten Einheit geprüft, die nur `true` ausführt); die Anleitung
+    schreibt `$HOME` aus.
+
+Dazu ein Test für den Kopfzweig „Dokumente ohne Text" (auf einem Korpus mit leeren Texten) und die
+Einzahl in diesem Satz.
+
 Gemessen am 2026-10-12 im Worktree (13 Kerne geteilt, `POLARS_MAX_THREADS=4`):
 
 | Größe | Wert |
@@ -536,7 +571,7 @@ Gemessen am 2026-10-12 im Worktree (13 Kerne geteilt, `POLARS_MAX_THREADS=4`):
 | `uv run georep run --force` (zehn Offline-Schritte) | 11,5 s, davon `timeline` 0,2 s und `report` 1,4 s |
 | `monatsreihe.parquet` | 61 Zeilen (2020-09 bis 2025-09, lückenlos), 2 490 Bytes, Summe 19 108 Dokumente |
 | `wahlbezirke_monate.parquet` | 2 491 Zeilen, 3 740 Bytes, Summe 29 573 Treffer |
-| Hauptseite `index.html` | 719 909 Bytes (vorher 686 088), Budget 1,5 MB |
+| Hauptseite `index.html` | 721 092 Bytes (vorher 686 088), Budget 1,5 MB |
 | Profilseite aus dem Testdatensatz | 126 312 Bytes, vier Dokumente in vier Monaten |
 | Trockenlauf durch die Nutzereinheit | 7 bis 9 s, Exit 0 |
 
