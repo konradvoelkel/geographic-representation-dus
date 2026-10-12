@@ -583,3 +583,35 @@ Korpus braucht. Die Messung gehört bei ruhigem Rechner wiederholt.
 
 Die Seiten sind in Hell und Dunkel mit headless Chrome angesehen (Streifen im Scratchpad); bei 375 px
 Breite ist `scrollWidth` gleich `clientWidth`, es gibt kein waagerechtes Scrollen.
+
+### Nach dem Rebase auf `main` mit allen sieben Optionen (2026-10-12)
+
+Die Option merged als Letzte; beim Rebase kam dazu, was die Nachbarn inzwischen bringen:
+
+- **Das Profil ist ein Paketprofil** (`src/georep/profiles/duesseldorf-2025.toml`, `base =
+  "duesseldorf"`, Auswahl `--profile duesseldorf-2025`), wie § 10 es vorgesehen hat. `settings.2025.toml`
+  an der Wurzel ist weg. `GEOREP_PROFILE` ist seit Option 01 der offizielle Weg, ein Paketprofil über
+  die Umgebung zu wählen (der Ordner heißt jetzt `GEOREP_PROFILE_FOLDER`), also fällt der Grund für das
+  Präfix `MONITOR_` zur Hälfte weg: `MONITOR_PROFILE` trägt weiter den Profilnamen, weil ein Lauf zwei
+  Profile braucht (die laufende Periode und die Hauptperiode für die Hauptseite) und sie je Aufruf mit
+  `--profile` wählt.
+- **Das Wörterbuch kommt aus der Hauptperiode**, nicht aus einer Kopie: `period.dictionary = "base"`
+  (Option 02) liest Straßen und Orte dort, `bootstrap` kopiert sie nicht mehr ins Profil. Dafür muss die
+  Hauptperiode vor dem Profil gebootstrappt sein; das Skript macht das in dieser Reihenfolge (Schritt 2).
+- **Abgeschaltet im Profil**: `context.root` (Kontrollvariablen erklären die Wahlbeteiligung, die es hier
+  nicht gibt) und `topics.k` (speist die Gewichtungsvarianten der Regression). Die Sensitivitätstabelle
+  hängt jetzt ebenso an `report.regression` wie das Streudiagramm — sie ist Tabelle 5 je Gewichtung.
+  Das Profil läuft damit in 19 statt 25 Schritten.
+- **Der Umschalter der Karte** erscheint, wenn es mehr als eine Einfärbung gibt (Regression *oder*
+  Gremien), nicht nur mit Regression: die laufende Periode hat keine Wahlbeteiligung, aber Gremien.
+- **Zwei Fehler der Nachbarn fielen dabei auf**: `summary.json` (Option 01) las die Regression ohne
+  Prüfung, und `_cmd_publish` verlor beim Zusammenführen sein `return 0`; beides behoben. Dazu zwei
+  eigene: der Schritt `papers` meldete seit Option 02 immer „0 neu" (jede Seite speichert selbst, der
+  Upsert am Ende sah alles als unverändert — jetzt summiert er die Seiten), und bei 375 px ragte die
+  Seite 24 px heraus, weil das Fieldset der Einfärbung seit Option 05 drei Radios trägt und nicht umbrach.
+
+Gemessen nach dem Rebase (Last 5 bis 6): `uv run nox` 41 s mit 798 Tests, `pytest -m slow` 19 Tests,
+`nox -s bench` zweimal grün, voller Offline-Lauf 17 s (17 Schritte ausgeführt), `index.html` der
+Hauptseite 1 168 257 Bytes (davon 30 KB der Abschnitt „Je Monat"), Profilseite aus dem Testdatensatz
+216 515 Bytes, beide bei 375 px ohne waagerechtes Scrollen. Der Trockenlauf durch die Nutzereinheit
+endet mit Exit 0 in 8 s.
