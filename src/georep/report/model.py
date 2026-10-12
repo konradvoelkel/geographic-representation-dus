@@ -1219,9 +1219,9 @@ def _period_rows(comparison: pl.DataFrame, names: Mapping[int, str]) -> tuple[Pe
 
 @deal.ensure(
     lambda layout, settings, names, districts, subpage, result: (
-        result is None or len(result.rows) == districts or len(result.rows) < districts
+        result is None or 0 < len(result.rows) <= districts
     ),
-    message="höchstens eine Zeile je Wahlbezirk der Auswertung",
+    message="mindestens ein und höchstens ein Wahlbezirk je Zeile der Auswertung",
 )
 @deal.raises(SchemaError)
 def period_comparison(
