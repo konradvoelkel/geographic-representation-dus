@@ -837,6 +837,20 @@ def test_environment_selects_the_profile_but_never_sets_the_folder(
     assert load_settings(cwd=tmp_path, profile="duesseldorf").city.slug == "duesseldorf"
 
 
+def test_only_prefixed_variables_reach_the_settings(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Jede Umgebungsvariable von georep traegt GEOREP_; eine nackte setzt nichts.
+
+    Der Alias am Feld ``profile`` haelt GEOREP_PROFILE davon ab, den Unterordner zu setzen (das
+    waehlt nur das Profil). Er darf dabei nicht das Praefix umgehen (Review 2026-10-12).
+    """
+    monkeypatch.setenv("PROFILE_FOLDER", "fremd")
+    assert load_settings(cwd=tmp_path).profile == ""
+    monkeypatch.setenv("GEOREP_PROFILE_FOLDER", "eigen")
+    assert load_settings(cwd=tmp_path).profile == "eigen"
+
+
 def test_fingerprint_sees_city_sources_and_publish_but_not_the_selector(tmp_path: Path) -> None:
     base = load_settings(cwd=tmp_path)
     (tmp_path / "settings.toml").write_text('default_profile = "duesseldorf"\n', encoding="utf-8")
