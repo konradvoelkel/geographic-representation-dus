@@ -22,7 +22,7 @@ git clone git@github.com:konradvoelkel/geographic-representation-dus.git
 cd geographic-representation-dus
 uv sync --locked                        # Umgebung aus dem Lockfile
 uv run georep bootstrap                 # Datensatz der Arbeit nach ./data übernehmen
-uv run georep run                       # elf Offline-Schritte, rund 9 s; schreibt auch die Berichtsseite data/site/index.html
+uv run georep run                       # dreizehn Offline-Schritte, rund 16 s; schreibt auch die Berichtsseite data/site/index.html
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 ```
 
@@ -39,9 +39,11 @@ Wahlbezirke und Dokumente und markiert sie auf der Karte; `index.html#suche=hofg
 der Karte der 41 Wahlbezirke (Trefferquote oder Wahlbeteiligung, Tooltips, Klick-Markierung, die 1309 Orte als
 Punkte), dem Streudiagramm mit beiden Regressionsgeraden und Tabelle 5, einer sortierbaren Tabelle je
 Wahlbezirk, den Begriffen (ein Klick zeigt die Dokumente mit Datum, Drucksache und PDF-Link), Methode und
-Grenzen, Lizenzen. `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
-braucht Netz). Daneben liegen unter `data/site/data/` die Ergebnisse zum Weiterverarbeiten: die sechs
-Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema
+Grenzen, Lizenzen. Der Abschnitt „Was ändert die Gewichtung?" stellt der binären Trefferquote 26 gewichtete
+Varianten zur Seite (Spezifität je Begriff, Gewicht je Dokumentart, ein Thema je Zeile) und zeigt Tabelle 5
+unter jeder davon; mit Einheitsgewichten steht dort dieselbe Zeile wie oben. `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
+braucht Netz). Daneben liegen unter `data/site/data/` die Ergebnisse zum Weiterverarbeiten: die
+zehn Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema
 und `dokumente.json` (Dokumente mit Treffer ohne Texte); Größe und SHA-256 jeder Datei stehen auf der Seite. Der Workflow
 `.github/workflows/pages.yml` baut die Seite bei jedem Push auf `main` aus den Referenzdaten (`bootstrap`, `run`,
 kein Netzabruf) und veröffentlicht sie über GitHub Pages unter
@@ -59,7 +61,7 @@ Abschnitt „Berichtsseite").
 | `georep status` | Settings, Pfade, Stores, Frische jedes Schritts mit Grund |
 | `georep bootstrap [--force]` | den Datensatz der Arbeit nach `data_root` übernehmen |
 | `georep export` | die Parquet-Ergebnisse als CSV daneben schreiben |
-| `georep regress [--exclude …]` | lineare Regression Trefferquote gegen Wahlbeteiligung |
+| `georep regress [--exclude …] [--varianten]` | lineare Regression Trefferquote gegen Wahlbeteiligung; `--varianten` dieselbe Rechnung je Gewichtungsvariante aus `wahlbezirke_gewichtet.parquet` |
 | `georep profile [SCHRITT …] [--top N] [--sort tottime]` | einen echten Schritt unter cProfile, `.prof` für snakeviz |
 
 `--settings DATEI` legt eine weitere TOML-Schicht über die Konfiguration. Exit-Codes: 0 gut, 1 Domänenfehler

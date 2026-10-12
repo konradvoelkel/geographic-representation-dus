@@ -23,18 +23,25 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
 - Option 08 Suche (Branch `feat/08-suche`, 2026-10-12, im Review): Abschnitt `15-suche` auf der Berichtsseite mit Suchfeld, Vorschlagsliste nach dem APG-Combobox-Muster, Ergebnisblock und Markierung auf der Karte; `report/search.py` baut 4176 Einträge (2828 Straßen, 1239 Orte, 68 beides, 41 Wahlbezirksnamen), die als JSON in der Seite liegen. Plan und Abnahme: `docs/plans/08-suche.md`.
 
 ## Zahlen (2026-10-11)
+- Option 06 Gewichtung (Branch `feat/06-gewichtung`, 2026-10-12, im Review): `analysis/weights.py` rechnet gewichtete Trefferquoten (Maximum über die Begriffe mal Dokumentart mal Thema, jeder Faktor in [0, 1]), `analysis/topics.py` ein Themenmodell mit TF-IDF und NMF (scikit-learn, der einzige Ort mit diesem Import). Zwei Schritte (`topics` 9 s, `weights` 1 s), vier Tabellen, der Seitenabschnitt `34-gewichtung` mit der Sensitivitätstabelle. Einheitsgewichte reproduzieren `anzahl_treffer` (29 573) und Tabelle 5 exakt; `wahlbezirke_auswertung.parquet` und `inverted_index.parquet` bleiben byteidentisch.
 
-- Tests: 223, davon einer `slow` und zehn `bench`; schnelle Suite parallel in 9 bis 10 s; Abdeckung 98,5 %.
-- Code `src/georep/`: 42 Python-Dateien, rund 4750 Zeilen, dazu zwei Vorlagen der Berichtsseite (rund 500 Zeilen); mypy strict mit deal-Plugin ohne Befund; Commits seit dem Fork: 102.
-- Laufzeit: voller Offline-Lauf rund 7 s (Index 4,2 s, Berichtsseite 1,0 s); `nox -s bench` am 2026-10-11 grün gegen die Baseline; `nox -s verify` 2,5 bis 3 min; `nox -s mutate` 100 s.
+## Zahlen (2026-10-12, Branch `feat/06-gewichtung`)
+
+- Tests: 412 nach dem Rebase, davon drei `slow` und sechzehn `bench`; schnelle Suite parallel in 20 bis 25 s; Abdeckung 98,6 %; Mutationsquote über `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`).
+- Laufzeit: voller Offline-Lauf rund 19 s (Themenmodell 9 s, Index 4 s, Gewichtung 1 s, Berichtsseite 1,6 s); `pytest -m slow` 43 s; `nox -s bench` grün gegen die frische Baseline; `nox -s verify` rund 4 min.
+- Berichtsseite nach dem Rebase auf 08 und 05: `index.html` 933 KB (Budget 1,5 MB), 29 Download-Dateien, 31 Dateien zusammen 10,4 MB; voller Lauf 16 s.
 
 ## Bekannt
 
 - deal 4.24.6: `deal.raises` vergleicht exakte Typen, keine Unterklassen; `deal.has()`/`deal.pure` sind nicht reentrant (Patch bleibt nach Rekursion stehen). Beides umschifft (NetworkError, `deal.safe` für `deep_merge`), nicht upstream gemeldet.
-- Zwölf überlebende Mutanten liegen in Vertrags-Lambdas (Grenzen von r und p); kein Test verletzt sie genau an der Grenze. Bewusst nicht nachgezogen.
+- Zwölf überlebende Mutanten liegen in Vertrags-Lambdas (Grenzen von r und p); kein Test verletzt sie genau an der Grenze. Bewusst nicht nachgezogen; in `analysis/weights.py` sind es 25 derselben Sorte plus ein äquivalenter (`docs/mutation-2026-10-12.md`).
+- `nox -s mutate` lässt `analysis/topics.py` aus: jeder Mutant dort lässt die schnelle Suite laufen, und die rechnet seit dem Themenmodell mehrfach NMF (Lauf am 2026-10-12 nach 35 Minuten abgebrochen, gezielt je Modul vier Minuten). Die schnelle Suite selbst ist dadurch rund 5 s langsamer; hingenommen.
 - Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.
 - Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`; `georep status` zeigt `pdfs` als „offen: Settings geändert", weil `--limit 200` im Stamp steht. Das ist richtig so.
 - Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
+- Das Themenmodell ist je Rechner und je Thread-Zahl reproduzierbar, nicht darüber hinaus: zwischen 13 und 2 BLAS-Threads unterscheiden sich `themen.parquet` und `themen_anteile.parquet` in den letzten Stellen (gemessen 2026-10-12), Labels und Kennzahlen bleiben gleich. Die Golden-Master-Tests prüfen darum Invarianten, nicht Zahlen.
+- Die Themen tragen Wörter, keine Deutung: die Nummern gelten nur für diesen Datenstand, ein Lauf über andere Dokumente vergibt sie neu. Thema 19 ist das breite Stadtthema („düsseldorf, innen, …"), der Stadtname steht bewusst nicht in der Stoppwortliste.
+- Der Settings-Fingerprint ist global: ein neuer Schlüssel unter `[weights]` oder `[topics]` lässt alle Schritte einmal neu laufen (19 s). Hinnehmbar; ein Fingerprint je Schritt ist zurückgestellt (`docs/plans/00-synergien.md`, § 8).
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab (`docs/baseline-2026-10-10.md`).
 - Der Stamp des Schritts `report` liegt als `site/index.html.stamp.json` im veröffentlichten Ordner; harmlos, aber mit dabei.
 - Die Ergebnis-CSV der Ratswahl heißt im Open-Data-Portal inzwischen `…_Stimmbezirke_1.csv` (Datensatzseite am 2026-10-11); `defaults.toml` zeigt auf `…_0.csv`, woher die Referenz stammt. Vor einem `fetch opendata` nachsehen.

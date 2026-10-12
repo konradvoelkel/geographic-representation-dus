@@ -21,7 +21,19 @@ import polars as pl
 from georep import __version__
 from georep.analysis import bodies
 from georep.analysis.hits import DISTRICT, RATE, TERMS
-from georep.analysis.regression import RegressionPair, regression_pair
+from georep.analysis.regression import RegressionPair, regression_pair, spearman
+from georep.analysis.weights import (
+    BY_DISTRICTS,
+    BY_IDF,
+    COMBINED,
+    N_DISTRICTS,
+    TOPIC_PREFIX,
+    UNIT,
+    VARIANT,
+    WEIGHTED_HITS,
+    WEIGHTED_RATE,
+    topic_variant,
+)
 from georep.contracts import has_columns
 from georep.errors import EmptyResultError, SchemaError
 from georep.geo import Precinct, read_precincts
@@ -33,7 +45,7 @@ from georep.report.search import SearchEntry, search_entries
 from georep.report.tables import GEOJSON_COLUMNS, GEOJSON_TABLE, PublishedTable, published
 from georep.search.dictionary import all_terms
 from georep.search.index import HITS, PAPER_IDS, TERM
-from georep.settings import Bodies, ResultsColumns, Settings
+from georep.settings import Bodies, ResultsColumns, Settings, Weights
 
 NARROW_NBSP = "\u202f"  # schmales geschütztes Leerzeichen: Tausender und vor dem Prozentzeichen
 TOP_TERMS = 5  # Begriffe je Wahlbezirk in Karte und Tabelle
@@ -165,6 +177,62 @@ class BodyFigures:
     names_as_of: dt.date | None  # Stand der Namen aus den Settings
 
 
+# --- Option 06: Gewichtung (docs/plans/06-gewichtung.md) ---------------------------------------
+
+
+@dataclass(frozen=True)
+class SensitivityRow:
+    """Eine Zeile der Sensitivitätstabelle: eine Gewichtung mit beiden Regressionen."""
+
+    name: str  # Variantenname der langen Tabelle
+    label: str
+    description: str  # die Formel in einem Halbsatz
+    total: float  # Summe der gewichteten Treffer über alle Wahlbezirke
+    pair: RegressionPair | None  # None: keine Streuung, die Zeile zeigt „—"
+    rho: float | None  # Rangkorrelation zur ungewichteten Quote
+    topic: int | None = None  # Themennummer, wenn die Variante ein Thema ist
+
+
+@dataclass(frozen=True)
+class TopicRow:
+    index: int
+    words: tuple[str, ...]
+    documents: int  # Dokumente, deren stärkstes Thema dieses ist
+    hits_share: float  # Anteil des Themas an den gezählten Treffern
+
+
+@dataclass(frozen=True)
+class TermExample:
+    """Ein Begriff als Beispiel im Text des Abschnitts; aus ``gewichte_begriffe.parquet``."""
+
+    term: str
+    hits: int
+    districts: int
+
+
+@dataclass(frozen=True)
+class Sensitivity:
+    """Der Abschnitt „Was ändert die Gewichtung?": Zeilen, Themen und zwei Zählungen."""
+
+    rows: tuple[SensitivityRow, ...]
+    topics: tuple[TopicRow, ...]
+    excluded: tuple[int, ...]
+    significant_all: int  # Varianten mit p < 0,05 über alle Wahlbezirke
+    significant_without: int  # dasselbe ohne die Ausreißer
+    strongest: TermExample | None = None  # der Begriff in den meisten Dokumenten
+    widest: TermExample | None = None  # der Begriff in den meisten Wörterbüchern
+    level: float = 0.05
+
+    @property
+    def has_without(self) -> bool:
+        """Hat überhaupt eine Variante eine zweite Regression? Sonst bleibt die rechte Hälfte weg.
+
+        Auf der Mini-Fixture (drei Wahlbezirke) bleiben ohne die Ausreißer zu wenige übrig; dann
+        soll die Tabelle keine Spaltengruppe „ohne 1 und 10" voller Gedankenstriche zeigen.
+        """
+        return any(row.pair is not None and row.pair.without is not None for row in self.rows)
+
+
 @dataclass(frozen=True)
 class ReportModel:
     generated_at: dt.datetime
@@ -185,6 +253,7 @@ class ReportModel:
     bodies: tuple[BodyRow, ...] = ()
     body_figures: BodyFigures | None = None
     body_regression: RegressionPair | None = None
+    sensitivity: Sensitivity | None = None  # Option 06; None = ohne Abschnitt
 
 
 # --- Zahlenformat -----------------------------------------------------------------------------
@@ -226,10 +295,10 @@ def _table_docs(table: PublishedTable, path: Path) -> list[ColumnDoc]:
     ]
 
 
-def column_docs(layout: Layout) -> tuple[ColumnDoc, ...]:
+def column_docs(layout: Layout, settings: Settings | None = None) -> tuple[ColumnDoc, ...]:
     """Spaltenschema aller veröffentlichten Tabellen und des GeoJSON (``report.tables``)."""
     docs: list[ColumnDoc] = []
-    for table in published(layout):
+    for table in published(layout, settings):
         docs.extend(_table_docs(table, table.path(layout)))
     docs.extend(
         ColumnDoc(GEOJSON_TABLE, column, "GeoJSON-Eigenschaft", *text)
@@ -531,6 +600,205 @@ def data_stand(layout: Layout, settings: Settings) -> DataStand:
     )
 
 
+# --- Option 06: die Zahlen des Abschnitts „Was ändert die Gewichtung?" -------------------------
+
+LEVEL = 0.05  # Signifikanzniveau, über das der Abschnitt zählt; wie Tabelle 5 der Arbeit
+# Die Spalten von ``themen.parquet``. Sie stehen hier als Literale und nicht als Import, weil
+# ``analysis/topics.py`` sklearn mitbringt und die Berichtsseite es nicht laden soll; ein Test in
+# tests/unit/test_report_model.py hält beide Seiten gleich.
+TOPIC = "thema"
+WORDS = "woerter"
+DOCUMENTS = "dokumente"
+_FIXED_LABELS: dict[str, tuple[str, str]] = {
+    UNIT: (
+        "ohne Gewichtung",
+        "jedes Dokument mit mindestens einem Treffer zählt 1 – die Trefferquote der Arbeit",
+    ),
+    BY_DISTRICTS: (
+        "Spezifität nach Wahlbezirken",
+        "ein Begriff, den n Wörterbücher führen, zählt für jeden davon 1/n",
+    ),
+    BY_IDF: (
+        "Spezifität nach Dokumenthäufigkeit",
+        "ein Begriff in df von N Dokumenten zählt (ln N − ln df) / ln N: je häufiger, je weniger",
+    ),
+}
+
+
+def variant_labels(weights: Weights) -> dict[str, tuple[str, str]]:
+    """Beschriftung und Formel je Variante; die Regelsätze bringen ihre Beschriftung mit.
+
+    Nichts davon steht in den Daten: die festen Varianten sind im Code benannt, die Regelsätze in
+    den Settings (``[[weights.paper_type]] label``), und die Kombination zählt ihre Faktoren auf.
+    """
+    labels = dict(_FIXED_LABELS)
+    for rule_set in weights.paper_type:
+        rules = "; ".join(
+            f"Dokumentarten nach dem Muster {rule.pattern} zählen {format_de(rule.weight, 2)}"
+            for rule in rule_set.rules
+        )
+        default = f"alle anderen {format_de(rule_set.default, 2)}"
+        labels[rule_set.name] = (rule_set.label, f"{rules}, {default}" if rules else default)
+    if weights.combined:
+        named = ", ".join(labels.get(f, (f, ""))[0] for f in weights.combined)
+        labels[COMBINED] = ("kombiniert", f"Produkt der Faktoren: {named}")
+    return labels
+
+
+def _variant_frame(weighted: pl.DataFrame, results: pl.DataFrame, name: str) -> pl.DataFrame:
+    return weighted.filter(pl.col(VARIANT) == name).join(
+        results.select(DISTRICT, TURNOUT, RATE), on=DISTRICT, how="inner"
+    )
+
+
+def _ordered_variants(
+    weighted: pl.DataFrame, weights: Weights, with_topics: bool = True
+) -> list[str]:
+    """Die Reihenfolge der Seite: feste Varianten, Regelsätze, Kombination, dann die Themen.
+
+    Ohne Themenmodell (``topics.k = 0``) bleiben die ``thema_NN``-Zeilen weg, auch wenn eine
+    Datei aus einem früheren Lauf sie noch enthält: die Seite zeigt die Konfiguration, nicht den
+    Rest eines abgeschalteten Schritts.
+    """
+    present = set(weighted.get_column(VARIANT).unique().to_list())
+    wanted = [UNIT, BY_DISTRICTS, BY_IDF, *(r.name for r in weights.paper_type), COMBINED]
+    topics = sorted(name for name in present if name.startswith(TOPIC_PREFIX))
+    return [name for name in wanted if name in present] + (topics if with_topics else [])
+
+
+def _rows_match_the_file(
+    weighted: pl.DataFrame,
+    results: pl.DataFrame,
+    weights: Weights,
+    exclude: Sequence[int] = (),
+    with_topics: bool = True,
+    result: tuple[SensitivityRow, ...] | None = None,
+) -> bool:
+    assert result is not None
+    names = [row.name for row in result]
+    topics = [row.topic for row in result if row.topic is not None]
+    in_file = set(weighted.get_column(VARIANT).unique().to_list())
+    expected = in_file if with_topics else {n for n in in_file if not n.startswith(TOPIC_PREFIX)}
+    return (
+        set(names) == expected
+        and len(names) == len(set(names))
+        # Eine leere Tabelle gibt keine Zeilen; sonst steht die Einheitszeile zuerst.
+        and (not names or (names[0] == UNIT and result[0].rho in (None, 1.0)))
+        and topics == sorted(topics)
+    )
+
+
+@deal.pre(
+    lambda weighted, results, weights, exclude=(), with_topics=True: (
+        has_columns(weighted, DISTRICT, VARIANT, WEIGHTED_HITS, WEIGHTED_RATE)
+        and has_columns(results, DISTRICT, TURNOUT, RATE)
+    )
+)
+@deal.ensure(
+    _rows_match_the_file, message="eine Zeile je Variante, einheit zuerst, Themen in Folge"
+)
+def sensitivity_rows(
+    weighted: pl.DataFrame,
+    results: pl.DataFrame,
+    weights: Weights,
+    exclude: Sequence[int] = (),
+    with_topics: bool = True,
+) -> tuple[SensitivityRow, ...]:
+    """Je Variante beide Regressionen und die Rangkorrelation zur ungewichteten Quote."""
+    labels = variant_labels(weights)
+    rows: list[SensitivityRow] = []
+    for name in _ordered_variants(weighted, weights, with_topics):
+        frame = _variant_frame(weighted, results, name)
+        try:
+            pair: RegressionPair | None = regression_pair(frame, exclude, x=WEIGHTED_RATE)
+        except EmptyResultError:
+            # Eine Variante ohne Streuung (alle Quoten gleich, etwa ein Thema ohne Treffer) hat
+            # keine Regression; die Zeile zeigt „—", das ist kein Fehler.
+            pair = None
+        label, description = labels.get(name, (name, ""))
+        number = int(name.removeprefix(TOPIC_PREFIX)) if name.startswith(TOPIC_PREFIX) else None
+        rows.append(
+            SensitivityRow(
+                name=name,
+                label=label,
+                description=description,
+                total=float(frame.get_column(WEIGHTED_HITS).sum()),
+                pair=pair,
+                rho=spearman(frame, WEIGHTED_RATE, RATE),
+                topic=number,
+            )
+        )
+    return tuple(rows)
+
+
+@deal.pre(lambda topics, weighted: has_columns(topics, TOPIC, WORDS, DOCUMENTS))
+@deal.post(
+    lambda result: [row.index for row in result] == sorted(row.index for row in result),
+    message="Themen in Nummernreihenfolge",
+)
+def topic_rows(topics: pl.DataFrame, weighted: pl.DataFrame) -> tuple[TopicRow, ...]:
+    """Je Thema die stärksten Wörter, die dominierten Dokumente und der Anteil an den Treffern."""
+    counted = float(weighted.filter(pl.col(VARIANT) == UNIT).get_column(WEIGHTED_HITS).sum() or 0.0)
+    totals = dict(
+        weighted.filter(pl.col(VARIANT).str.starts_with(TOPIC_PREFIX))
+        .group_by(VARIANT)
+        .agg(pl.col(WEIGHTED_HITS).sum())
+        .iter_rows()
+    )
+    return tuple(
+        TopicRow(
+            index=int(row[TOPIC]),
+            words=tuple(row[WORDS]),
+            documents=int(row[DOCUMENTS]),
+            hits_share=(
+                totals.get(topic_variant(int(row[TOPIC])), 0.0) / counted if counted > 0 else 0.0
+            ),
+        )
+        for row in topics.sort(TOPIC).iter_rows(named=True)
+    )
+
+
+def _example(frame: pl.DataFrame, by: str, then: str) -> TermExample | None:
+    """Der Begriff mit dem größten Wert in ``by``; bei Gleichstand entscheidet ``then``, dann der Name."""
+    if frame.is_empty():
+        return None
+    row = frame.sort([by, then, TERM], descending=[True, True, False]).row(0, named=True)
+    return TermExample(str(row[TERM]), int(row[HITS]), int(row[N_DISTRICTS]))
+
+
+def build_sensitivity(layout: Layout, settings: Settings, results: pl.DataFrame) -> Sensitivity:
+    """Der ganze Abschnitt aus ``wahlbezirke_gewichtet.parquet`` und (wenn da) ``themen.parquet``."""
+    weighted = pl.read_parquet(layout.weighted)
+    with_topics = settings.topics.k > 0
+    rows = sensitivity_rows(
+        weighted, results, settings.weights, settings.analysis.exclude_districts, with_topics
+    )
+    # Die Themen hängen am Schalter, nicht an der Datei: mit ``topics.k = 0`` bleiben die Dateien
+    # eines früheren Laufs liegen, gehören aber nicht mehr auf die Seite.
+    topics = (
+        topic_rows(pl.read_parquet(layout.topics), weighted)
+        if with_topics and layout.topics.exists()
+        else ()
+    )
+    terms = (
+        pl.read_parquet(layout.term_weights, columns=[TERM, N_DISTRICTS, HITS])
+        if layout.term_weights.exists()
+        else pl.DataFrame(schema={TERM: pl.String, N_DISTRICTS: pl.Int64, HITS: pl.Int64})
+    )
+    return Sensitivity(
+        rows=rows,
+        topics=topics,
+        excluded=tuple(settings.analysis.exclude_districts),
+        significant_all=sum(1 for r in rows if r.pair and r.pair.all.p < LEVEL),
+        significant_without=sum(
+            1 for r in rows if r.pair and r.pair.without and r.pair.without.p < LEVEL
+        ),
+        strongest=_example(terms, HITS, N_DISTRICTS),
+        widest=_example(terms, N_DISTRICTS, HITS),
+        level=LEVEL,
+    )
+
+
 def build_report_model(
     layout: Layout,
     settings: Settings,
@@ -565,7 +833,7 @@ def build_report_model(
         hidden_terms=hidden,
         regression=regression_pair(results, settings.analysis.exclude_districts),
         downloads=tuple(downloads),
-        columns=column_docs(layout),
+        columns=column_docs(layout, settings),
         working_crs=settings.geo.working_crs,
         search=search_entries(
             dictionary,
@@ -579,6 +847,10 @@ def build_report_model(
         bodies=table,
         body_figures=body_figures(table, rows, settings.bodies),
         body_regression=_body_regression(district_bodies, results, settings),
+        # Option 06: ohne die lange Tabelle gibt es den Abschnitt nicht
+        sensitivity=(
+            build_sensitivity(layout, settings, results) if layout.weighted.exists() else None
+        ),
     )
 
 

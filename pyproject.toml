@@ -23,6 +23,7 @@ dependencies = [
     "requests-cache>=1.2",
     "deal>=4.24.6",
     "jinja2>=3.1",
+    "scikit-learn>=1.9",
 ]
 
 [project.scripts]
@@ -91,9 +92,10 @@ warn_unused_ignores = true
 files = ["src/georep", "tests"]
 
 [[tool.mypy.overrides]]
-# Ohne Stubs und ohne py.typed, Stand 2026-10-11: flashtext (letzte Version 2018, hinter dem
-# Matcher-Protokoll) und scipy (nur linregress).
-module = ["flashtext.*", "scipy.*"]
+# Ohne Stubs und ohne py.typed, Stand 2026-10-12: flashtext (letzte Version 2018, hinter dem
+# Matcher-Protokoll), scipy (nur linregress) und sklearn (nur TfidfVectorizer und NMF in
+# analysis/topics.py; scikit-learn 1.9.1 liefert kein py.typed).
+module = ["flashtext.*", "scipy.*", "sklearn.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

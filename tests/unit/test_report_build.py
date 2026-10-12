@@ -20,6 +20,7 @@ from georep.report.build import (
     current_commit,
 )
 from georep.report.tables import GEOJSON_COLUMNS, csv_plan, published
+from georep.settings import Settings
 
 
 def test_site_has_index_map_and_every_download_file(mini_run: Layout) -> None:
@@ -109,3 +110,35 @@ def test_current_commit_prefers_the_ci_variable_and_tolerates_no_repo(
     assert current_commit(tmp_path) is None
     here = current_commit()
     assert here is None or len(here) >= 7
+
+
+def test_topics_switched_off_leave_no_trace_on_the_page(
+    mini_run: Layout, default_settings: Settings, tmp_path: Path
+) -> None:
+    """``topics.k = 0`` in einer gelaufenen Datenwurzel: die alten Themendateien bleiben liegen,
+    aber die Seite zeigt sie nicht mehr. Sonst stünden dort 20 Themen mit 0,0 % Anteil."""
+    import datetime as dt
+    import shutil
+
+    from georep.report.build import build_site
+    from georep.settings import Topics
+
+    layout = Layout(tmp_path / "data", tmp_path / "cache", mini_run.reference_root)
+    shutil.copytree(mini_run.root, layout.root)
+    assert layout.topics.exists() and layout.topic_documents.exists()
+    without = default_settings.model_copy(update={"topics": Topics(k=0)})
+    build_site(layout, without, now=dt.datetime(2026, 10, 12, tzinfo=dt.UTC), commit=None)
+
+    import re
+
+    page = layout.site_index.read_text(encoding="utf-8")
+    assert "Die 20 Themen" not in page and "stärkste Wörter" not in page
+    section = re.search(r'<section id="gewichtung">.*?</section>', page, re.S)
+    assert section is not None  # die Gewichtung selbst bleibt
+    assert "Thema " not in section.group(0)  # aber keine Themenzeile mehr
+    assert "ohne Gewichtung" in section.group(0)
+    names = sorted(p.name for p in layout.site_data.iterdir())
+    assert not [n for n in names if n.startswith("themen")], names
+    assert "wahlbezirke_gewichtet.parquet" in names
+    schema = json.loads((layout.site_data / SCHEMA_NAME).read_text(encoding="utf-8"))
+    assert "themen" not in schema["tables"] and "themen_dokumente" not in schema["tables"]

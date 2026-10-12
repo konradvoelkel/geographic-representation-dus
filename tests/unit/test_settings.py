@@ -203,3 +203,139 @@ def test_fingerprint_sees_body_codes_but_not_the_date_of_the_names(tmp_path: Pat
         "[bodies]\nnames_as_of = 2030-01-01\n", encoding="utf-8"
     )
     assert load_settings(cwd=tmp_path).fingerprint() == base.fingerprint()
+
+
+# --- Option 06: Gewichtung --------------------------------------------------------------------
+
+
+def test_weights_and_topics_defaults_are_loaded(tmp_path: Path) -> None:
+    s = load_settings(cwd=tmp_path)
+    assert [v.name for v in s.weights.paper_type] == ["antraege_halb", "nur_vorlagen"]
+    assert s.weights.paper_type[0].rules[0].weight == 0.5
+    assert s.weights.paper_type[1].rules[0].weight == 0.0
+    assert all(v.label for v in s.weights.paper_type)
+    assert s.weights.combined == ["idf", "antraege_halb"]
+    assert s.topics.k == 20 and s.topics.stop_words == "de" and 0 < s.topics.max_df <= 1
+
+
+def test_paper_type_weight_must_lie_between_zero_and_one(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[[weights.paper_type]]\nname = "x"\nlabel = "x"\n'
+        'rules = [{ pattern = "^antrag", weight = 1.5 }]\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValidationError, match="weight"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        '[[weights.paper_type]]\nname = "x"\nlabel = "x"\ndefault = -0.1\nrules = []\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValidationError, match="default"):
+        load_settings(cwd=tmp_path)
+
+
+def test_paper_type_pattern_must_compile(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[[weights.paper_type]]\nname = "x"\nlabel = "x"\n'
+        'rules = [{ pattern = "(antrag", weight = 0.5 }]\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValidationError, match="pattern"):
+        load_settings(cwd=tmp_path)
+
+
+def test_paper_type_variant_names_are_unique_and_not_reserved(tmp_path: Path) -> None:
+    twice = (
+        '[[weights.paper_type]]\nname = "x"\nlabel = "x"\nrules = []\n'
+        '[[weights.paper_type]]\nname = "x"\nlabel = "x"\nrules = []\n'
+        '[weights]\ncombined = ["idf"]\n'
+    )
+    (tmp_path / "settings.toml").write_text(twice, encoding="utf-8")
+    with pytest.raises(ValidationError, match="eindeutig"):
+        load_settings(cwd=tmp_path)
+    for reserved in ("einheit", "idf", "bezirke", "kombiniert", "thema_03"):
+        (tmp_path / "settings.toml").write_text(
+            f'[[weights.paper_type]]\nname = "{reserved}"\nlabel = "x"\nrules = []\n'
+            '[weights]\ncombined = ["idf"]\n',
+            encoding="utf-8",
+        )
+        with pytest.raises(ValidationError, match="name"):
+            load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        '[[weights.paper_type]]\nname = "Nur Vorlagen"\nlabel = "x"\nrules = []\n'
+        '[weights]\ncombined = ["idf"]\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValidationError, match="name"):
+        load_settings(cwd=tmp_path)
+
+
+def test_combined_names_only_known_factors(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[weights]\ncombined = ["idf", "gibtsnicht"]\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="combined"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        '[weights]\ncombined = ["idf", "idf"]\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="combined"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text("[weights]\ncombined = []\n", encoding="utf-8")
+    assert load_settings(cwd=tmp_path).weights.combined == []
+
+
+def test_topics_k_zero_is_allowed_and_bounds_are_checked(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text("[topics]\nk = 0\n", encoding="utf-8")
+    assert load_settings(cwd=tmp_path).topics.k == 0
+    for bad in (
+        "k = -1",
+        "max_df = 0",
+        "max_df = 1.5",
+        "min_df = 0",
+        "top_words = 0",
+        'stop_words = "../x"',
+        "max_iter = 0",
+        "tol = 0",
+        "k = 100",
+    ):
+        (tmp_path / "settings.toml").write_text(f"[topics]\n{bad}\n", encoding="utf-8")
+        with pytest.raises(ValidationError, match="topics"):
+            load_settings(cwd=tmp_path)
+
+
+def test_fingerprint_sees_weights_and_topics(tmp_path: Path) -> None:
+    base = load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text("[topics]\nk = 5\n", encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
+    (tmp_path / "settings.toml").write_text('[weights]\ncombined = ["idf"]\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
+
+
+def test_topics_k_stops_at_99_so_the_variant_names_sort(tmp_path: Path) -> None:
+    """``thema_100`` stünde zwischen ``thema_10`` und ``thema_11``; zwei Stellen sind die Grenze."""
+    (tmp_path / "settings.toml").write_text("[topics]\nk = 99\n", encoding="utf-8")
+    assert load_settings(cwd=tmp_path).topics.k == 99
+    (tmp_path / "settings.toml").write_text("[topics]\nk = 100\n", encoding="utf-8")
+    with pytest.raises(ValidationError, match="99"):
+        load_settings(cwd=tmp_path)
+
+
+def test_a_label_is_an_display_value_and_stays_out_of_the_fingerprint(tmp_path: Path) -> None:
+    """Die Beschriftung eines Regelsatzes steht nur auf der Seite; sie darf keinen Lauf auslösen."""
+    rules = (
+        '[weights]\ncombined = ["idf", "x"]\n'
+        '[[weights.paper_type]]\nname = "x"\nlabel = "{}"\n'
+        'rules = [{{ pattern = "^antrag", weight = 0.5 }}]\n'
+    )
+    (tmp_path / "settings.toml").write_text(rules.format("Anträge halb"), encoding="utf-8")
+    first = load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(rules.format("Anträge, Anfragen"), encoding="utf-8")
+    second = load_settings(cwd=tmp_path)
+    assert first.weights.paper_type[0].label != second.weights.paper_type[0].label
+    assert first.fingerprint() == second.fingerprint()
+    # Das Gewicht derselben Regel zählt dagegen sehr wohl.
+    (tmp_path / "settings.toml").write_text(
+        rules.format("Anträge halb").replace("0.5", "0.25"), encoding="utf-8"
+    )
+    assert load_settings(cwd=tmp_path).fingerprint() != first.fingerprint()

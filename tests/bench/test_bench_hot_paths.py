@@ -19,6 +19,13 @@ from pytest_benchmark.fixture import BenchmarkFixture
 
 from georep.analysis.bodies import hits_by_body
 from georep.analysis.hits import hits_by_district, join_voters
+from georep.analysis.weights import (
+    TypeRules,
+    document_pairs,
+    document_weights,
+    variants,
+    weighted_hits,
+)
 from georep.bootstrap import bootstrap
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
@@ -50,6 +57,7 @@ class MiniRun:
     voters: pl.DataFrame
     results: pl.DataFrame  # Option 05
     units: pl.DataFrame  # Option 05
+    paper_types: pl.DataFrame  # Option 06
 
 
 @pytest.fixture(scope="module")
@@ -72,6 +80,7 @@ def mini(tmp_path_factory: pytest.TempPathFactory, mini_root: Path) -> MiniRun:
         voters=pl.read_parquet(layout.voters),
         results=pl.read_parquet(layout.results),
         units=pl.read_parquet(layout.district_units),
+        paper_types=pl.read_parquet(layout.corpus, columns=["id", "paper_type"]),
     )
 
 
@@ -137,3 +146,45 @@ def test_hits_by_body(benchmark: BenchmarkFixture, mini: MiniRun) -> None:
     eligible = mini.settings.columns.results.eligible
     frame = benchmark(hits_by_body, mini.results, papers, mini.units, eligible)
     assert frame.height == 3
+
+
+def test_weights_step(benchmark: BenchmarkFixture, mini: MiniRun) -> None:
+    """Option 06: Paare, Gewichte je Paar und Summen je Wahlbezirk, ohne Themenmodell.
+
+    Das Themenmodell selbst ist kein Benchmark: NMF ist gegen die Textmenge empfindlich und
+    schwankt mit der BLAS-Bibliothek, dafür ist ``georep profile topics`` da.
+    """
+    columns = mini.settings.columns.results
+    rules = [
+        TypeRules(
+            rule_set.name,
+            rule_set.default,
+            tuple((rule.pattern, rule.weight) for rule in rule_set.rules),
+        )
+        for rule_set in mini.settings.weights.paper_type
+    ]
+
+    def run() -> pl.DataFrame:
+        return variants(
+            mini.dictionary,
+            mini.index,
+            mini.paper_types,
+            mini.voters,
+            columns.eligible,
+            mini.corpus.height,
+            rules,
+            mini.settings.weights.combined,
+            None,
+        )
+
+    assert benchmark(run).height == (3 + len(rules) + 1) * 3
+
+
+def test_document_weights_over_the_pairs(benchmark: BenchmarkFixture, mini: MiniRun) -> None:
+    pairs = document_pairs(mini.dictionary, mini.index)
+    columns = mini.settings.columns.results
+
+    def run() -> pl.DataFrame:
+        return weighted_hits(document_weights(pairs), mini.voters, columns.eligible)
+
+    assert benchmark(run).height == 3

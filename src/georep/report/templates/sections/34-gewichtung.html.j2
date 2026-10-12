@@ -1,0 +1,80 @@
+{% if model.sensitivity %}
+{% set s = model.sensitivity %}
+<section id="gewichtung">
+<h2>Was ändert die Gewichtung?</h2>
+<p>Die Trefferquote zählt binär: ein Dokument zählt für einen Wahlbezirk, sobald ein einziger Begriff seines Wörterbuchs darin vorkommt{% if s.strongest and s.widest %}. Dabei zählt „{{ s.strongest.term }}", das in {{ s.strongest.hits|num }} Dokumenten steht, so viel wie ein Begriff mit einem einzigen Treffer, und „{{ s.widest.term }}" zählt für jeden der {{ s.widest.districts }} Wahlbezirke, deren Wörterbuch ihn führt, voll mit{% endif %}. Die Tabelle stellt dieser Kennzahl gewichtete Varianten zur Seite und zeigt, ob die Schlussfolgerung von der Wahl der Kennzahl abhängt.</p>
+<p>Ein Dokument bekommt je Wahlbezirk das Gewicht <em>max</em> über seine getroffenen Begriffe von (Gewicht des Begriffs × Gewicht der Dokumentart × Anteil des Themas); jeder Faktor liegt zwischen 0 und 1, also zählt ein Dokument je Bezirk höchstens einmal, wie bisher. Die gewichteten Treffer sind die Summe dieser Gewichte, die gewichtete Quote wieder je Wahlberechtigtem. Mit Einheitsgewichten ist das genau die Trefferquote der Arbeit: die erste Zeile trägt dieselben Zahlen wie Tabelle 5 darüber.</p>
+<h3>Sensitivitätstabelle</h3>
+<p class="note">Spaltenköpfe sortieren. „Summe" ist die Summe der gewichteten Treffer über alle Wahlbezirke, ρ die Rangkorrelation der gewichteten zur ungewichteten Quote (1 = dieselbe Reihenfolge der Wahlbezirke). „—" steht, wo eine Variante keine Streuung hat und es keine Regression gibt.{% if s.topics %} Die Zeilen „Thema <em>n</em>" zählen je Dokument nur seinen Anteil an diesem Thema; welche Wörter ein Thema tragen, steht in der Tabelle darunter.{% endif %}</p>
+<div class="scroll"><table id="gewichtung-tabelle">
+<thead>
+<tr>
+<th scope="col"></th><th scope="col"></th>
+<th scope="col" class="group num" colspan="6">alle Wahlbezirke</th>
+{% if s.has_without %}<th scope="col" class="group num" colspan="6">ohne {{ s.excluded|join(' und ') }}</th>{% endif %}
+<th scope="col"></th>
+</tr>
+<tr>
+<th scope="col" data-sort="text">Gewichtung</th>
+<th scope="col" class="num" data-sort="num">Summe</th>
+{% for group in range(2 if s.has_without else 1) %}
+<th scope="col" class="num" data-sort="num">n</th>
+<th scope="col" class="num" data-sort="num">Steigung</th>
+<th scope="col" class="num" data-sort="num">Achsenabschnitt</th>
+<th scope="col" class="num" data-sort="num">r</th>
+<th scope="col" class="num" data-sort="num">R²</th>
+<th scope="col" class="num" data-sort="num">p</th>
+{% endfor %}
+<th scope="col" class="num" data-sort="num">ρ</th>
+</tr>
+</thead>
+<tbody>
+{# Zellen ohne data-value tragen „—"; der Sortierer liest dort NaN und lässt die Zeile stehen. #}
+{% for row in s.rows %}
+<tr{% if row.name == 'einheit' %} class="baseline"{% endif %}>
+<th scope="row">{% if row.topic is not none %}Thema {{ row.topic }}{% else %}{{ row.label }}<span class="formula">{{ row.description }}</span>{% endif %}</th>
+<td class="num" data-value="{{ row.total }}">{{ row.total|num(1) }}</td>
+{% set parts = [row.pair.all if row.pair else none] %}
+{% if s.has_without %}{% set parts = parts + [row.pair.without if row.pair else none] %}{% endif %}
+{% for part in parts %}
+{% if part %}
+<td class="num" data-value="{{ part.n }}">{{ part.n }}</td>
+<td class="num" data-value="{{ part.slope }}">{{ part.slope|num(2) }}</td>
+<td class="num" data-value="{{ part.intercept }}">{{ part.intercept|num(2) }}</td>
+<td class="num" data-value="{{ part.r }}">{{ part.r|num(3) }}</td>
+<td class="num" data-value="{{ part.r2 }}">{{ part.r2|num(3) }}</td>
+<td class="num{% if part.p < s.level %} significant{% endif %}" data-value="{{ part.p }}">{{ part.p|num(3) }}</td>
+{% else %}
+<td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td>
+{% endif %}
+{% endfor %}
+{% if row.rho is not none %}<td class="num" data-value="{{ row.rho }}">{{ row.rho|num(3) }}</td>{% else %}<td class="num">—</td>{% endif %}
+</tr>
+{% endfor %}
+</tbody></table></div>
+<p>Von den {{ s.rows|length }} Gewichtungen erreicht der Zusammenhang über alle {{ model.figures.districts }} Wahlbezirke in {{ s.significant_all|num }} das {{ s.level|pct(0) }}-Niveau{% if s.has_without %}, ohne die Wahlbezirke {{ s.excluded|join(' und ') }} in {{ s.significant_without|num }}{% endif %}. Welche das sind, steht in der Tabelle; eine „richtige" Gewichtung benennt diese Seite nicht.</p>
+{% if s.has_without %}
+<p class="footnote">Die rechte Hälfte lässt für jede Variante dieselben Wahlbezirke weg ({{ s.excluded|join(' und ') }}, die beiden höchsten ungewichteten Trefferquoten), damit die Zeilen vergleichbar bleiben. Unter einer Gewichtung können andere Wahlbezirke die höchsten Quoten haben.</p>
+{% endif %}
+{% if s.topics %}
+<h3>Die {{ s.topics|length }} Themen</h3>
+<p class="note">Ein Themenmodell (TF-IDF und NMF) verteilt jedes Dokument mit Text auf {{ s.topics|length }} Themen; je Thema steht oben eine Variante, die nur den Anteil des Dokuments an diesem Thema zählt.</p>
+<div class="scroll"><table id="themen-tabelle">
+<thead><tr>
+<th scope="col" class="num" data-sort="num">Nr.</th>
+<th scope="col">stärkste Wörter</th>
+<th scope="col" class="num" data-sort="num">Dokumente</th>
+<th scope="col" class="num" data-sort="num">Anteil an den Treffern</th>
+</tr></thead>
+<tbody>
+{% for t in s.topics %}
+<tr><td class="num" data-value="{{ t.index }}">{{ t.index }}</td>
+<td>{{ t.words|join(', ') }}</td>
+<td class="num" data-value="{{ t.documents }}">{{ t.documents|num }}</td>
+<td class="num" data-value="{{ t.hits_share }}">{{ t.hits_share|pct(1) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<p class="footnote">Die Wörter beschreiben ein Thema, sie benennen es nicht: eine Deutung verspricht diese Seite nicht. „Dokumente" zählt die Dokumente, deren stärkstes Thema dieses ist; „Anteil an den Treffern" den Anteil dieses Themas an den gezählten Treffern aller Wahlbezirke. Die Nummern gelten nur für diesen Datenstand: ein Lauf über andere Dokumente vergibt sie neu.</p>
+{% endif %}
+</section>
+{% endif %}

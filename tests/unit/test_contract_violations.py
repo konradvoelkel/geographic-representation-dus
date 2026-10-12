@@ -171,3 +171,103 @@ def test_fetchers_declare_their_exceptions() -> None:
     with pytest.raises(deal.RaisesContractError) as caught:
         fetch_results_csv(Exploding(), "https://x.invalid/a.csv")
     assert isinstance(caught.value.__cause__, RuntimeError)
+
+
+# --- Option 06: Gewichtung --------------------------------------------------------------------
+
+
+def _weights_index(rows: dict[str, list[str]]) -> pl.DataFrame:
+    terms = sorted(rows)
+    return pl.DataFrame(
+        {"suchbegriffe": terms, "paper_ids": [sorted(rows[t]) for t in terms]},
+        schema={"suchbegriffe": pl.String, "paper_ids": pl.List(pl.String)},
+    ).with_columns(pl.col("paper_ids").list.len().cast(pl.Int64).alias("anzahl_treffer"))
+
+
+def test_district_weight_refuses_zero_districts() -> None:
+    from georep.analysis.weights import district_weight
+
+    with pytest.raises(deal.PreContractError):
+        district_weight(0)
+
+
+def test_idf_weight_refuses_more_documents_than_there_are() -> None:
+    from georep.analysis.weights import idf_weight
+
+    with pytest.raises(deal.PreContractError):
+        idf_weight(11, 10)
+
+
+def test_term_weights_refuse_an_index_with_more_hits_than_documents() -> None:
+    from georep.analysis.weights import term_weights
+
+    with pytest.raises(deal.PreContractError, match="Dokument"):
+        term_weights(_dictionary({1: ["kö"]}), _weights_index({"kö": ["p1", "p2"]}), 1)
+
+
+def test_compile_rules_refuses_a_weight_above_one() -> None:
+    from georep.analysis.weights import compile_rules
+
+    with pytest.raises(deal.PreContractError, match=r"\[0, 1\]"):
+        compile_rules((("^antrag", 1.5),))
+
+
+def test_document_weights_refuse_a_factor_outside_the_unit_interval() -> None:
+    """Ein Gewicht über 1 würde die Schranke g ≤ 1 brechen und mehr Treffer zählen als es gibt."""
+    from georep.analysis.weights import document_pairs, document_weights
+
+    pairs = document_pairs(_dictionary({1: ["kö"]}), _weights_index({"kö": ["p1"]}))
+    too_much = pl.DataFrame(
+        {"suchbegriffe": ["kö"], "gewicht": [1.5]},
+        schema={"suchbegriffe": pl.String, "gewicht": pl.Float64},
+    )
+    with pytest.raises(deal.PreContractError, match=r"\[0, 1\]"):
+        document_weights(pairs, too_much)
+
+
+def test_weighted_hits_refuse_districts_without_voters() -> None:
+    from georep.analysis.weights import weighted_hits
+
+    weights = pl.DataFrame(
+        {"wahlkreis_id": [1], "id": ["p1"], "gewicht": [1.0]},
+        schema={"wahlkreis_id": pl.Int64, "id": pl.String, "gewicht": pl.Float64},
+    )
+    voters = pl.DataFrame(
+        {"wahlkreis_id": [1], "Wahlberechtigte_insgesamt": [0]},
+        schema={"wahlkreis_id": pl.Int64, "Wahlberechtigte_insgesamt": pl.Int64},
+    )
+    with pytest.raises(deal.PreContractError, match="Wahlberechtigte"):
+        weighted_hits(weights, voters, "Wahlberechtigte_insgesamt")
+
+
+def test_variants_refuse_an_unknown_factor_in_combined() -> None:
+    from georep.analysis.weights import variants
+
+    voters = pl.DataFrame(
+        {"wahlkreis_id": [1], "Wahlberechtigte_insgesamt": [100]},
+        schema={"wahlkreis_id": pl.Int64, "Wahlberechtigte_insgesamt": pl.Int64},
+    )
+    types = pl.DataFrame(
+        {"id": ["p1"], "paper_type": ["Antrag"]},
+        schema={"id": pl.String, "paper_type": pl.String},
+    )
+    with pytest.raises(deal.PreContractError, match="kombiniert"):
+        variants(
+            _dictionary({1: ["kö"]}),
+            _weights_index({"kö": ["p1"]}),
+            types,
+            voters,
+            "Wahlberechtigte_insgesamt",
+            2,
+            [],
+            ["gibtsnicht"],
+            None,
+        )
+
+
+def test_term_weights_refuse_a_term_the_dictionary_does_not_have() -> None:
+    """Ein Begriff im Index, den kein Wörterbuch führt, bekäme stillschweigend das Gewicht 1."""
+    from georep.analysis.weights import term_weights
+
+    with pytest.raises(deal.PostContractError, match="Wörterbuch"):
+        term_weights(_dictionary({1: ["kö"]}), _weights_index({"kö": ["p1"], "fremd": ["p2"]}), 4)

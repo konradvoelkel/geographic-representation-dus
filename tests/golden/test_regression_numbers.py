@@ -12,6 +12,9 @@ import polars as pl
 import pytest
 from scipy.stats import linregress
 
+from georep.analysis.regression import regress
+from georep.layout import Layout
+
 
 def _xy(path: Path, exclude: frozenset[int] = frozenset()) -> tuple[list[float], list[float]]:
     df = pl.read_csv(path, infer_schema_length=None).filter(
@@ -45,3 +48,36 @@ def test_without_outliers_1_and_10(reference_root: Path) -> None:
     assert r.rvalue == pytest.approx(0.338461, abs=5e-6)
     assert r.pvalue == pytest.approx(0.035069, abs=5e-6)
     assert r.rvalue**2 == pytest.approx(0.114556, abs=5e-6)
+
+
+# --- Option 06: Die Einheitsvariante der Gewichtung ist Tabelle 5 ------------------------------
+
+
+def test_unit_variant_regresses_like_the_unweighted_rate(mini_run: Layout) -> None:
+    """Dieselbe Regression über ``trefferquote_gewichtet`` der Variante einheit wie über ``trefferquote``.
+
+    Die Zahlen der Referenz prüft der slow-Test in ``test_pipeline.py``; hier geht es darum, dass
+    die lange Tabelle dieselbe Kennzahl trägt, nicht eine ähnliche.
+    """
+    results = pl.read_parquet(mini_run.results)
+    unit = (
+        pl.read_parquet(mini_run.weighted)
+        .filter(pl.col("variante") == "einheit")
+        .join(
+            results.select("wahlkreis_id", "wahlbeteiligung", "anzahl_treffer"), on="wahlkreis_id"
+        )
+    )
+    assert unit.height == results.height
+    assert (
+        unit.get_column("anzahl_treffer_gewichtet")
+        == unit.get_column("anzahl_treffer").cast(pl.Float64)
+    ).all()
+    weighted = regress(unit, x="trefferquote_gewichtet")
+    plain = regress(results)
+    assert (weighted.n, weighted.slope, weighted.intercept, weighted.r, weighted.p) == (
+        plain.n,
+        plain.slope,
+        plain.intercept,
+        plain.r,
+        plain.p,
+    )

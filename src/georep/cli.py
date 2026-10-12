@@ -23,6 +23,7 @@ from georep.export import export_csv
 from georep.layout import Layout
 from georep.pipeline import build_steps, freshness, run_pipeline, select_steps
 from georep.profiling import profile_step
+from georep.report.model import sensitivity_rows
 from georep.settings import Settings, load_settings, settings_files
 from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextStore
@@ -64,6 +65,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     reg = sub.add_parser("regress", help="Regression Trefferquote -> Wahlbeteiligung")
     reg.add_argument("--exclude", type=int, nargs="*", default=[], help="Wahlbezirke auslassen")
+    reg.add_argument(
+        "--varianten",
+        action="store_true",
+        help="dieselbe Regression je Gewichtungsvariante aus wahlbezirke_gewichtet.parquet",
+    )
 
     prof = sub.add_parser(
         "profile", help="Schritte erzwungen unter cProfile ausführen; .prof-Datei für snakeviz"
@@ -181,11 +187,33 @@ def _cmd_profile(args: argparse.Namespace, settings: Settings, layout: Layout) -
     return 0
 
 
-def _cmd_regress(args: argparse.Namespace, layout: Layout) -> int:
+def _cmd_regress(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
     results = pl.read_parquet(layout.results)
     print("alle:", regress(results).summary())
+    exclude = args.exclude or list(settings.analysis.exclude_districts)
     if args.exclude:
         print(f"ohne {args.exclude}:", regress(results, exclude=args.exclude).summary())
+    if args.varianten:
+        # Option 06: die Sensitivitätstabelle der Berichtsseite als Text, ohne die Seite zu bauen.
+        rows = sensitivity_rows(
+            pl.read_parquet(layout.weighted),
+            results,
+            settings.weights,
+            exclude,
+            settings.topics.k > 0,
+        )
+        width = max((len(row.name) for row in rows), default=0)
+        for row in rows:
+            both = [
+                f"{name}: {part.summary()}" if part else f"{name}: ohne Streuung"
+                for name, part in (
+                    ("alle", row.pair.all if row.pair else None),
+                    (f"ohne {exclude}", row.pair.without if row.pair else None),
+                )
+                if part or name == "alle"
+            ]
+            rho = f", rho={row.rho:.3f}" if row.rho is not None else ""
+            print(f"{row.name:<{width}} Summe {row.total:>9.1f}; " + "; ".join(both) + rho)
     return 0
 
 
@@ -207,7 +235,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "export":
             return _cmd_export(layout)
         if args.command == "regress":
-            return _cmd_regress(args, layout)
+            return _cmd_regress(args, settings, layout)
         if args.command == "profile":
             return _cmd_profile(args, settings, layout)
     except (GeorepError, FileNotFoundError) as error:

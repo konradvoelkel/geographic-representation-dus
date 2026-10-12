@@ -78,3 +78,19 @@ def test_layout_from_settings_takes_the_profile(tmp_path: Path) -> None:
     (tmp_path / "settings.toml").write_text('profile = "2025"\n', encoding="utf-8")
     layout = Layout.from_settings(load_settings(cwd=tmp_path))
     assert layout.profile == "2025" and layout.corpus == Path("data/2025/interim/papers.parquet")
+
+
+# --- Option 06: Gewichtung --------------------------------------------------------------------
+
+
+def test_weights_and_topics_files_lie_next_to_their_kind(tmp_path: Path) -> None:
+    """Veröffentlichtes unter processed/, die Anteilsmatrix als Zwischenstand unter interim/."""
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    processed = tmp_path / "data" / "processed"
+    assert layout.topics == processed / "themen.parquet"
+    assert layout.topic_documents == processed / "themen_dokumente.parquet"
+    assert layout.term_weights == processed / "gewichte_begriffe.parquet"
+    assert layout.weighted == processed / "wahlbezirke_gewichtet.parquet"
+    assert layout.topic_shares == tmp_path / "data" / "interim" / "themen_anteile.parquet"
+    assert layout.topics.parent in layout.runtime_dirs()
+    assert layout.topic_shares.parent in layout.runtime_dirs()

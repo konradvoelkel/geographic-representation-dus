@@ -1,0 +1,14 @@
+/* Die Sensitivitätstabelle hat 15 Spalten; damit sie auf einem 1280er Fenster ohne waagerechtes
+   Rollen passt, ist sie etwas kleiner gesetzt, die Zahlenköpfe dürfen umbrechen (sonst macht
+   „Achsenabschnitt" die Spalte doppelt so breit wie ihre Zahlen), und die Formelzeile steht klein
+   unter der Beschriftung. Auf schmalen Fenstern rollt sie wie jede andere Tabelle. */
+#gewichtung-tabelle { font-size: .8rem; }
+#gewichtung-tabelle th, #gewichtung-tabelle td { padding: .3rem .35rem; }
+#gewichtung-tabelle th.num { white-space: normal; }
+#gewichtung th.group { text-align: center; border-bottom: 0; color: var(--muted); font-weight: 600; }
+#gewichtung-tabelle th[scope="row"] { font-weight: 600; min-width: 11em; }
+#gewichtung-tabelle .formula { display: block; font-weight: 400; font-size: .85em; color: var(--muted); }
+#gewichtung-tabelle tr.baseline th[scope="row"], #gewichtung-tabelle tr.baseline td { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+#gewichtung-tabelle td.significant { font-weight: 600; color: var(--ink); }
+#gewichtung-tabelle td.significant::after { content: " *"; color: var(--accent); }
+#themen-tabelle td:nth-child(2) { min-width: 20em; }

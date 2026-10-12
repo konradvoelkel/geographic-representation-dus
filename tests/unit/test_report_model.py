@@ -132,11 +132,11 @@ def test_column_docs_refuse_mismatches(mini_run: Layout, monkeypatch: pytest.Mon
     voters = next(t for t in TABLES if t.name == "wahlbezirke_waehler")
     results = next(t for t in TABLES if t.name == "wahlbezirke_auswertung")
     wrong_path = PublishedTable(voters.name, lambda layout: layout.results, "", voters.columns)
-    monkeypatch.setattr("georep.report.model.published", lambda layout: [wrong_path])
+    monkeypatch.setattr("georep.report.model.published", lambda layout, settings=None: [wrong_path])
     with pytest.raises(SchemaError, match="ohne Beschreibung"):
         column_docs(mini_run)
     too_many = PublishedTable(results.name, lambda layout: layout.voters, "", results.columns)
-    monkeypatch.setattr("georep.report.model.published", lambda layout: [too_many])
+    monkeypatch.setattr("georep.report.model.published", lambda layout, settings=None: [too_many])
     with pytest.raises(SchemaError, match="Beschreibung ohne Spalte"):
         column_docs(mini_run)
 
@@ -249,3 +249,132 @@ def test_search_entries_are_part_of_the_model(model: ReportModel, mini_run: Layo
     )
     both = set(index["paper_ids"].explode().drop_nulls().to_list())
     assert adler.documents == len(both)
+
+
+# --- Option 06: Sensitivitätstabelle und Themen -------------------------------------------------
+
+
+def test_the_column_names_of_the_topic_table_match_the_topics_module() -> None:
+    """``report/model.py`` darf ``analysis/topics.py`` nicht importieren (sklearn), aber muss passen."""
+    from georep.analysis import topics as topics_module
+    from georep.report import model as report_model
+
+    assert (report_model.TOPIC, report_model.WORDS, report_model.DOCUMENTS) == (
+        topics_module.TOPIC,
+        topics_module.WORDS,
+        topics_module.DOCUMENTS,
+    )
+
+
+def test_sensitivity_has_one_row_per_variant_in_the_page_order(
+    model: ReportModel, mini_run: Layout
+) -> None:
+    assert model.sensitivity is not None
+    rows = model.sensitivity.rows
+    names = [row.name for row in rows]
+    weighted = pl.read_parquet(mini_run.weighted)
+    assert set(names) == set(weighted.get_column("variante").unique().to_list())
+    assert names[:3] == ["einheit", "bezirke", "idf"]
+    assert names[3:5] == ["antraege_halb", "nur_vorlagen"]  # Reihenfolge der Settings
+    assert names[5] == "kombiniert"
+    topics = [row.topic for row in rows if row.topic is not None]
+    assert topics == sorted(topics) and names[6:] == [f"thema_{i:02d}" for i in topics]
+    assert all(row.label and row.description for row in rows if row.topic is None)
+
+
+def test_sensitivity_numbers_are_the_regression_of_the_long_table(
+    model: ReportModel, mini_run: Layout
+) -> None:
+    from georep.analysis.regression import regress
+
+    assert model.sensitivity is not None
+    results = pl.read_parquet(mini_run.results)
+    weighted = pl.read_parquet(mini_run.weighted)
+    for row in model.sensitivity.rows:
+        frame = weighted.filter(pl.col("variante") == row.name).join(
+            results.select("wahlkreis_id", "wahlbeteiligung", "trefferquote"), on="wahlkreis_id"
+        )
+        assert row.total == pytest.approx(frame.get_column("anzahl_treffer_gewichtet").sum())
+        if row.pair is None:
+            assert frame.get_column("trefferquote_gewichtet").n_unique() < 2
+            continue
+        expected = regress(frame, x="trefferquote_gewichtet")
+        assert (row.pair.all.n, row.pair.all.slope, row.pair.all.p) == (
+            expected.n,
+            expected.slope,
+            expected.p,
+        )
+
+
+def test_the_unweighted_row_carries_the_numbers_of_table_five(model: ReportModel) -> None:
+    assert model.sensitivity is not None
+    unit = model.sensitivity.rows[0]
+    assert unit.name == "einheit" and unit.pair is not None
+    assert unit.pair.all == model.regression.all  # dieselbe Regression wie Tabelle 5
+    assert unit.rho == 1.0  # dieselbe Reihenfolge der Wahlbezirke
+
+
+def test_three_districts_leave_no_room_for_the_second_regression(model: ReportModel) -> None:
+    assert model.sensitivity is not None
+    assert model.sensitivity.excluded == (1, 10)
+    assert model.sensitivity.has_without is False
+    assert all(row.pair is None or row.pair.without is None for row in model.sensitivity.rows)
+    assert model.sensitivity.significant_without == 0
+
+
+def test_topic_rows_are_numbered_and_their_shares_sum_to_one(
+    model: ReportModel, mini_run: Layout
+) -> None:
+    assert model.sensitivity is not None
+    topics = model.sensitivity.topics
+    stored = pl.read_parquet(mini_run.topics)
+    assert [t.index for t in topics] == stored.get_column("thema").to_list()
+    assert sum(t.documents for t in topics) == pl.read_parquet(mini_run.topic_documents).height
+    assert all(len(t.words) == 10 and len(set(t.words)) == 10 for t in topics)
+    # Die Themen zerlegen die gezählten Treffer, also summieren ihre Anteile zu 1.
+    assert sum(t.hits_share for t in topics) == pytest.approx(1.0, abs=1e-9)
+
+
+def test_variant_labels_come_from_the_settings_and_name_the_factors(
+    default_settings: Settings,
+) -> None:
+    from georep.report.model import variant_labels
+
+    labels = variant_labels(default_settings.weights)
+    assert labels["einheit"][0] == "ohne Gewichtung"
+    for rule_set in default_settings.weights.paper_type:
+        label, description = labels[rule_set.name]
+        assert label == rule_set.label
+        assert rule_set.rules[0].pattern in description and "alle anderen" in description
+    assert labels["kombiniert"][0] == "kombiniert"
+    for factor in default_settings.weights.combined:
+        assert labels[factor][0] in labels["kombiniert"][1]
+
+
+def test_sensitivity_is_absent_without_the_long_table(
+    mini_run: Layout, default_settings: Settings, tmp_path: Path
+) -> None:
+    """Ohne ``wahlbezirke_gewichtet.parquet`` fehlt das Modellfeld, und der Abschnitt entfällt."""
+    import shutil
+
+    from georep.report.model import build_sensitivity
+
+    bare = Layout(tmp_path / "data", tmp_path / "cache", mini_run.reference_root)
+    shutil.copytree(mini_run.root, bare.root)
+    bare.weighted.unlink()
+    built = build_report_model(bare, default_settings, now=NOW)
+    assert built.sensitivity is None
+    # Mit der langen Tabelle, aber ohne Themenmodell gibt es Zeilen und keine Themen.
+    shutil.copyfile(mini_run.weighted, bare.weighted)
+    bare.topics.unlink()
+    without_topics = build_sensitivity(bare, default_settings, pl.read_parquet(bare.results))
+    assert without_topics.topics == () and len(without_topics.rows) > 3
+
+
+def test_an_empty_long_table_gives_no_rows_instead_of_an_error(mini_run: Layout) -> None:
+    """Eine leere Tabelle ist kein Grund für einen IndexError, weder im Vertrag noch in der CLI."""
+    from georep.report.model import sensitivity_rows
+    from georep.settings import Weights
+
+    empty = pl.read_parquet(mini_run.weighted).head(0)
+    assert sensitivity_rows(empty, pl.read_parquet(mini_run.results), Weights()) == ()

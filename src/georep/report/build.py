@@ -41,7 +41,7 @@ from georep.report.geometry import (
 )
 from georep.report.model import Download, ReportModel, build_report_model, format_de
 from georep.report.render import Visuals, render_map, render_report
-from georep.report.tables import GEOJSON_TABLE, published
+from georep.report.tables import GEOJSON_TABLE, TABLES, PublishedTable, published
 from georep.settings import Settings
 
 GEOJSON_NAME = "wahlbezirke.geojson"
@@ -87,11 +87,28 @@ def _rows(parquet: Path) -> int:
     return int(pl.scan_parquet(parquet).select(pl.len()).collect().item())
 
 
-def write_tables(layout: Layout) -> list[Download]:
+def _remove_unpublished(layout: Layout, wanted: list[PublishedTable]) -> None:
+    """Dateien abgeschalteter Tabellen aus ``site/data/`` nehmen, damit nichts Altes mitfährt.
+
+    Nur Namen aus dem Register: eine Tabelle, die jetzt nicht veröffentlicht wird (``topics.k = 0``
+    nach einem Lauf mit Themen), ließe sonst ihr Parquet und ihr CSV im Ordner stehen, ohne Link
+    auf der Seite, aber mit im Pages-Paket. Fremde Dateien bleiben unberührt.
+    """
+    keep = {t.path(layout).name for t in wanted} | {f"{t.name}.csv" for t in wanted}
+    for table in TABLES:
+        for name in (table.path(layout).name, f"{table.name}.csv"):
+            stale = layout.site_data / name
+            if name not in keep and stale.is_file():
+                stale.unlink()
+
+
+def write_tables(layout: Layout, settings: Settings | None = None) -> list[Download]:
     """Die Tabellen des Registers als Parquet (kopiert) und CSV nach ``site/data/``."""
     data_dir = layout.guard_writable(layout.site_data)
     downloads: list[Download] = []
-    for table in published(layout):
+    wanted = published(layout, settings)
+    _remove_unpublished(layout, wanted)
+    for table in wanted:
         parquet = table.path(layout)
         rows = _rows(parquet)
         target = data_dir / parquet.name
@@ -188,7 +205,7 @@ def build_site(
 ) -> SiteSummary:
     layout.guard_writable(layout.site_data).mkdir(parents=True, exist_ok=True)
     working_crs = settings.geo.working_crs
-    downloads = write_tables(layout)
+    downloads = write_tables(layout, settings)
     precincts = read_precincts(layout.districts_geojson, settings.columns, working_crs)
     shapes = district_shapes(precincts, SIMPLIFY_M)
     model = build_report_model(layout, settings, now=now, commit=commit)

@@ -280,3 +280,50 @@ def test_a_model_without_search_entries_has_no_search_section(
 ) -> None:
     page = render_report(replace(model, search=()), visuals)
     assert '<section id="suche">' not in page and 'id="suche-daten"' not in page
+
+
+# --- Option 06: Abschnitt „Was ändert die Gewichtung?" ------------------------------------------
+
+
+def test_the_weighting_section_has_one_row_per_variant(page: str, model: ReportModel) -> None:
+    assert model.sensitivity is not None
+    section = re.search(r'<section id="gewichtung">.*?</section>', page, re.S)
+    assert section is not None
+    body = re.search(r"<tbody>(.*?)</tbody>", section.group(0), re.S)
+    assert body is not None
+    assert body.group(1).count("<tr") == len(model.sensitivity.rows)
+    for row in model.sensitivity.rows:
+        label = f"Thema {row.topic}" if row.topic is not None else row.label
+        assert label in section.group(0)
+    assert "Thema 0" in section.group(0) and "ohne Gewichtung" in section.group(0)
+
+
+def test_the_weighting_section_shows_a_dash_where_there_is_no_regression(
+    page: str, model: ReportModel
+) -> None:
+    """Drei Wahlbezirke: keine zweite Regression, also keine Spaltengruppe „ohne 1 und 10"."""
+    assert model.sensitivity is not None and not model.sensitivity.has_without
+    section = re.search(r'<section id="gewichtung">.*?</section>', page, re.S)
+    assert section is not None and "ohne 1 und 10" not in section.group(0)
+    flat = [row for row in model.sensitivity.rows if row.pair is None or row.rho is None]
+    if flat:
+        assert "—" in section.group(0)
+    # Die Kopfzeile hat so viele sortierbare Spalten wie jede Zeile Zellen.
+    header = re.search(r"<thead>.*?</thead>", section.group(0), re.S)
+    assert header is not None and header.group(0).count('data-sort="num"') == 8  # Summe, 6, rho
+
+
+def test_the_english_paragraph_counts_the_weightings(page: str, model: ReportModel) -> None:
+    assert model.sensitivity is not None
+    expected = (
+        f"Under {model.sensitivity.significant_all} of {len(model.sensitivity.rows)} "
+        "weightings of the same documents, the unweighted count included,"
+    )
+    assert expected in page
+    # Der Nenner zählt die Einheitszeile mit, darum heißt sie nicht „alternative".
+    assert "alternative weightings" not in page
+
+
+def test_the_weighting_section_adds_no_external_link(page: str) -> None:
+    section = re.search(r'<section id="gewichtung">.*?</section>', page, re.S)
+    assert section is not None and external_links(section.group(0)) == []

@@ -11,8 +11,11 @@ nox.options.default_venv_backend = "none"
 nox.options.sessions = ["lint", "typecheck", "deps", "test"]
 
 # Pakete, die nie wieder ins Lockfile dürfen: pandas ist Konrads Vorgabe (Polars), die anderen
-# zogen es transitiv (Phase 3, 2026-10-11).
-FORBIDDEN = {"pandas", "geopandas", "osmnx", "scikit-learn"}
+# zogen es transitiv (Phase 3, 2026-10-11). scikit-learn stand hier bis zum 2026-10-12 und ist seit
+# Option 06 Laufzeitabhängigkeit (Konrad, 2026-10-11; decisions.md, Punkt „scikit-learn für das
+# Themenmodell"): es zieht kein pandas, und der Import bleibt auf ein Modul begrenzt
+# (tests/unit/test_dependency_boundary.py).
+FORBIDDEN = {"pandas", "geopandas", "osmnx"}
 
 
 @nox.session
@@ -73,6 +76,8 @@ VERIFY_TARGETS = [
     "georep.sources.wiki.sparql_query",
     "georep.sources.overpass.overpass_query",
     "georep.sources.overpass.street_names",
+    "georep.analysis.weights.district_weight",
+    "georep.analysis.weights.idf_weight",
     "georep.report.model.format_de",
     "georep.report.search.canonical_term",
     "georep.report.charts.nice_ticks",
@@ -108,6 +113,9 @@ def verify(session: nox.Session) -> None:
 def mutate(session: nox.Session) -> None:
     """Mutationstest mit pytest-gremlins über search/ und analysis/, einmal pro Phase, kein Gate.
 
+    ``analysis/topics.py`` bleibt außen vor (Kommentar unten); seine Zahlen stehen datiert in
+    docs/mutation-2026-10-12.md.
+
     Subprocess-Executor, kein fork (mutmut 3 blockierte so mit Polars, docs/mutation-2026-10-11.md).
     Rund 100 s mit sechs Arbeitern (2026-10-11); der Bericht liegt unter coverage/gremlins/ (gitignored),
     die Zahlen und die Deutung der Überlebenden stehen datiert in docs/mutation-2026-10-11.md.
@@ -124,7 +132,11 @@ def mutate(session: nox.Session) -> None:
         "-p",
         "no:cacheprovider",
         "--gremlins",
-        "--gremlin-targets=src/georep/search,src/georep/analysis",
+        # Ohne analysis/topics.py: jeder Mutant dort laesst die schnelle Suite laufen, und die
+        # rechnet seit Option 06 mehrfach NMF; der Lauf vom 2026-10-12 war nach 35 Minuten noch
+        # nicht durch. Das Modul misst man gezielt (docs/mutation-2026-10-12.md).
+        "--gremlin-targets=src/georep/search,src/georep/analysis/hits.py,"
+        "src/georep/analysis/regression.py,src/georep/analysis/weights.py",
         "--gremlin-report=console,json",
         "--gremlin-workers=6",
         "--gremlin-mutant-timeout=60",

@@ -15,6 +15,7 @@ from pathlib import Path
 import deal
 from hypothesis import strategies as st
 
+from georep.analysis.weights import district_weight, idf_weight
 from georep.http import cache_pattern
 from georep.prep.bodies import BodyRules, parse_reference
 from georep.prep.extract import after_marker, normalise_text
@@ -171,4 +172,22 @@ BODY_RULES = BodyRules.from_settings(load_settings(cwd=Path("/nonexistent")).bod
     kwargs={"reference": st.one_of(st.none(), st.text(max_size=30)), "rules": st.just(BODY_RULES)},
 )
 def test_parse_reference(case: deal.TestCase) -> None:
+    case()
+
+
+# --- Option 06: die beiden reinen Gewichtsfunktionen -------------------------------------------
+
+
+@deal.cases(district_weight, count=COUNT, check_types=False, kwargs={"n": st.integers(-5, 10_000)})
+def test_district_weight(case: deal.TestCase) -> None:
+    case()
+
+
+@deal.cases(
+    idf_weight,
+    count=COUNT,
+    check_types=False,
+    kwargs={"df": st.integers(-5, 20_000), "n": st.integers(-5, 20_000)},
+)
+def test_idf_weight(case: deal.TestCase) -> None:
     case()

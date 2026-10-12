@@ -36,7 +36,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `geo` | GeoJSON lesen, nach EPSG:25832 projizieren, `make_valid`, `PrecinctIndex` (STRtree), eine Rückprojektion nach lon/lat |
 | `prep/` | `extract` (PDF-Text hinter `PdfTextExtractor`), `papers` (Korpus), `voters` (auch `district_units`: Wahlbezirk zu Stadtbezirk über den Crosswalk), `streets`, `pois`, `bodies` (Gremium je Dokument aus der Drucksachennummer: `parse_reference` als reine Funktion über `BodyRules`, `classify_papers` als Batch-Grenze): Polars-Funktionen Frame zu Frame |
 | `search/` | `dictionary` (Wörterbuch je Wahlbezirk), `matcher` (`KeywordMatcher`-Protokoll, FlashText), `index` (invertierter Index) |
-| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings), `bodies` (Treffer je Wahlbezirk nach Gremium, Lokalität je Gremium) |
+| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings; `spearman` für die Rangkorrelation zweier Kennzahlen), `bodies` (Treffer je Wahlbezirk nach Gremium, Lokalität je Gremium), `weights` (gewichtete Trefferquoten: Gewicht je Begriff, Dokumentart und Thema, Maximum je Paar, lange Tabelle aller Varianten; reines Polars, kennt weder Dateien noch Settings-Objekte), `topics` (TF-IDF und NMF über die Texte; der einzige Ort mit `sklearn`-Import, mit der Stoppwortliste `stopwords_de.txt` als Paketdatei) |
 | `crosswalk` | Umrechnung von Gebietseinheiten auf Wahlbezirke: `unit_weights` wiegt je Wahlbezirk die Einheiten (Stadtbezirk, Stadtteil) mit einer Zählgröße je Stimmbezirk; Vertrag: Gewichte in (0, 1], Summe je Wahlbezirk 1 |
 | `pipeline` | Schrittregister: Name, Eingaben, Ausgaben, `run()`, Schema-Version; Stamps; `run_step`, `run_pipeline`, `build_steps` |
 | `bootstrap` | kopiert die Referenz nach `data_root` und baut daraus `papers.jsonl` und den Textstore |
@@ -49,7 +49,8 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 ## Pipeline
 
 Sechzehn Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzschritte laufen nur mit
-`--online` oder über `georep fetch`.
+`--online` oder über `georep fetch`. Mit `topics.k = 0` fehlt der Schritt `topics` im Register; dann ist es
+einer weniger, und `weights` rechnet ohne Themenvarianten.
 
 | Schritt | Netz | liest | schreibt |
 |---|---|---|---|
@@ -64,18 +65,22 @@ Sechzehn Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzsc
 | `pois` | nein | Orte | `processed/wikidata_vis.parquet`, `processed/wikidata_agg.parquet` |
 | `dictionary` | nein | Orte und Straßen je Wahlbezirk | `processed/combined_searchdict.parquet` |
 | `corpus` | nein | Metadaten und Texte | `interim/papers.parquet` |
+| `topics` | nein | Korpus (Texte) | `processed/themen.parquet`, `processed/themen_dokumente.parquet`, `interim/themen_anteile.parquet` |
 | `index` | nein | Wörterbuch, Korpus | `processed/inverted_index.parquet` |
 | `results` | nein | Wörterbuch, Index, Wähler | `processed/wahlbezirke_auswertung.parquet` |
 | `bodies` | nein | Korpus (`id`, `reference`) | `processed/papers_gremien.parquet` |
 | `body_hits` | nein | Auswertung, Gremien je Dokument, Stadtbezirke | `processed/wahlbezirke_gremien.parquet`, `processed/gremien.parquet` |
 | `report` | nein | die neun Ergebnistabellen, Korpus, Stimmbezirks-GeoJSON | `site/index.html`, `site/karte.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`, `dokumente.json`) |
+| `weights` | nein | Wörterbuch, Index, Korpus (`id`, `paper_type`), Wähler, Themenanteile | `processed/wahlbezirke_gewichtet.parquet`, `processed/gewichte_begriffe.parquet` |
+| `report` | nein | die zehn Ergebnistabellen, Korpus, Stimmbezirks-GeoJSON | `site/index.html`, `site/karte.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`, `dokumente.json`) |
 
 Neben der ersten Ausgabe jedes Schritts liegt `<datei>.stamp.json` mit den SHA-256-Hashes der Eingaben, dem
 Settings-Fingerprint, der Code-Version und der Schema-Version. Stimmt alles, ist der Schritt aktuell und wird
 übersprungen; sonst läuft er und sagt, warum („Eingabe geändert: texts.parquet", „Code-Version 0.6.0 ->
 0.7.0"). `--force` erzwingt, `--dry-run` plant nur. Jeder Lauf druckt je Schritt eine Zeile mit der Anzahl,
-auf die er gewirkt hat, und die Sekunden. Der volle Offline-Lauf auf der Referenz dauert rund 7 s, davon 4 s
-der Index und 1 s die Berichtsseite (2026-10-11).
+auf die er gewirkt hat, und die Sekunden. Der volle Offline-Lauf auf der Referenz dauert rund 16 s, davon 7 s
+das Themenmodell, 4 s der Index, unter 1 s die Gewichtung und 1 s die Berichtsseite (2026-10-12; ohne
+Themenmodell rund 9 s).
 
 ## Datenhaltung
 
@@ -87,6 +92,8 @@ data_root/                 Standard ./data, gitignored; mit profile = "x" liegt 
   interim/                 papers.parquet (Korpus: Metadaten plus Text)
   processed/               die elf Ergebnistabellen als Parquet (zstd), je mit Stamp
                            (davon veröffentlicht: neun; papers_gremien und wikidata_agg nicht)
+  interim/                 papers.parquet (Korpus: Metadaten plus Text), themen_anteile.parquet (Themenanteile je Dokument, nicht veröffentlicht)
+  processed/               die elf Ergebnistabellen als Parquet (zstd), je mit Stamp
   site/                    die Berichtsseite: index.html (mit Stamp), karte.html (Leaflet) und data/ mit den Download-Dateien
 cache_root/                Standard data_root/cache; mit Profil liegen pdf/ und text/ unter cache_root/x/
   pdf/                     <dateiname>.pdf, manifest.jsonl (URL, SHA-256, Größe, Zeit)
@@ -196,8 +203,14 @@ falten. `karte.html` ist die zweite Datei und die einzige mit
 Fremdressourcen: Leaflet 1.9.4 per Subresource Integrity gepinnt, OpenStreetMap-Kacheln mit Namensnennung,
 Flächen und Orte inline als JSON (`</` escaped), eigene Allowlist in `render_map`. Entscheidungen und verworfene
 Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. Auf der Referenz: 41 Wahlbezirke,
-23 Dateien, 8,3 MB, davon `index.html` rund 890 KB (davon 144 KB Suchdaten), `karte.html` 255 KB,
-`dokumente.json` 2,1 MB; 1,3 s (2026-10-12).
+Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. Der Abschnitt
+`34-gewichtung` („Was ändert die Gewichtung?", Option 06) steht direkt hinter der Regression: eine
+Sensitivitätstabelle mit beiden Spalten von Tabelle 5 je Gewichtungsvariante und der Rangkorrelation zur
+ungewichteten Quote, darunter die Themen mit ihren stärksten Wörtern. Die Einheitszeile trägt dieselben
+Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeigt „—", und fehlt der ganzen
+Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 31 Dateien,
+10,4 MB, davon `index.html` 933 KB (144 KB Suchdaten, 33 KB die Gewichtung), `karte.html` 255 KB,
+`dokumente.json` 2,1 MB; 1,2 s (2026-10-12).
 
 ## Verträge
 
@@ -208,6 +221,12 @@ nur aus den Eingaben, r in [-1, 1], eine Zerlegung ohne Rest über `parts_sum_to
 Fetchern, `pure` auf kleinen totalen Funktionen (nicht aber auf solchen, die eine Batch-Funktion je
 Zeile ruft: `deal.has()` patcht je Aufruf prozessweit, darum trägt `prep.bodies.parse_reference` nur
 `deal.safe` und wird über `deal.cases` und crosshair auf Reinheit geprüft). Die
+nur aus den Eingaben, r in [-1, 1]), `raises` an den Fetchern, `pure` auf kleinen totalen Funktionen. Die
+Gewichtung hat die ihren: jeder Faktor und jedes Dokumentgewicht in [0, 1] (`in_unit_interval`), eine Zeile
+je Paar (Wahlbezirk, Dokument), dieselbe Paarmenge wie die Vereinigung in `hits_by_district`, und als
+stärkste Zusage, dass die Variante `einheit` genau `anzahl_treffer` reproduziert und die Themenvarianten
+diese Zählung zerlegen; beim Themenmodell: genau `k` Themen, Zeilensummen 1 ± 1e-9, jedes Dokument mit Text
+einmal. Die
 Prädikate liegen in `georep.contracts`, damit dieselbe Eigenschaft überall gleich heißt. `settings.contracts
 = "off"` ruft `deal.disable` beim Start; der Overhead liegt unter einem Prozent (2026-10-11). Pydantic
 validiert an der Systemgrenze (OParl, Records, Settings), Verträge sichern das Innere; `icontract` wird
@@ -222,7 +241,7 @@ auf dem rekursiven `deep_merge`).
 | Schicht | Inhalt |
 |---|---|
 | `tests/unit/` | eine Funktion, ein Verhalten; Vertragsverletzungen je mit Gegenbeispiel |
-| `tests/property/` | hypothesis-Invarianten, das Matcher-Orakel (400 Zufallsfälle), `deal.cases` auf zehn reinen Funktionen |
+| `tests/property/` | hypothesis-Invarianten (darunter: Einheitsgewichte reproduzieren die Zählung exakt, Gewichte in [0, 1], Monotonie, Themenzerlegung), das Matcher-Orakel (400 Zufallsfälle), `deal.cases` auf zwölf reinen Funktionen |
 | `tests/golden/` | Mini-Fixture (3 Wahlbezirke, 200 Dokumente, Erwartung aus dem Altcode `v0.2.0`) und die volle Referenz (`slow`) gegen die Ergebnisse der Arbeit |
 | `tests/bench/` | pytest-benchmark, nur in `nox -s bench` |
 | `tests/fixtures/` | Mini-Datensatz (drei Wahlbezirke mit ihren 22 Stimmbezirken), vier PDFs mit Herkunft, eine OParl-Seite, aufgezeichnete Antworten von Overpass, Wikidata, Wikipedia |
@@ -232,15 +251,16 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 
 | nox-Session | Was | wo |
 |---|---|---|
-| `lint`, `typecheck`, `deps`, `test` | Ruff, mypy strict, Lockfile ohne pandas/geopandas/osmnx/scikit-learn, schnelle Suite parallel mit Abdeckung als Untergrenze (90 %) | lokal (`uv run nox`) und CI |
+| `lint`, `typecheck`, `deps`, `test` | Ruff, mypy strict, Lockfile ohne pandas/geopandas/osmnx, schnelle Suite parallel mit Abdeckung als Untergrenze (90 %) | lokal (`uv run nox`) und CI |
 | `golden` | die volle Referenz | CI, lokal `uv run pytest -m slow` |
 | `bench` | heiße Pfade gegen den letzten gespeicherten Lauf, rot ab 20 % langsamer im Minimum | lokal |
 | `profile -- SCHRITT` | ein echter Schritt unter cProfile | lokal |
 | `verify` | crosshair über die reinen Funktionen mit Verträgen, rund drei Minuten | lokal |
-| `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung | lokal |
+| `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung; mit `analysis/topics.py` im Ziel dauert die Session sehr lange (jeder Mutant rechnet NMF), darum besser gezielt je Modul | lokal |
 
-Stand 2026-10-11: 223 Tests, schnelle Suite in 10 s, Abdeckung 98,5 %; Mutationsquote 79 %
-([mutation-2026-10-11.md](mutation-2026-10-11.md)).
+Stand 2026-10-12: 310 Tests, schnelle Suite in 20 bis 25 s, Abdeckung 98,6 %; Mutationsquote 79 % über
+`search/` und `analysis/` ([mutation-2026-10-11.md](mutation-2026-10-11.md)), 83 % über das neue
+`analysis/weights.py` ([mutation-2026-10-12.md](mutation-2026-10-12.md)).
 
 ## Bekannte Grenzen
 
