@@ -369,3 +369,12 @@ def test_sensitivity_is_absent_without_the_long_table(
     bare.topics.unlink()
     without_topics = build_sensitivity(bare, default_settings, pl.read_parquet(bare.results))
     assert without_topics.topics == () and len(without_topics.rows) > 3
+
+
+def test_an_empty_long_table_gives_no_rows_instead_of_an_error(mini_run: Layout) -> None:
+    """Eine leere Tabelle ist kein Grund für einen IndexError, weder im Vertrag noch in der CLI."""
+    from georep.report.model import sensitivity_rows
+    from georep.settings import Weights
+
+    empty = pl.read_parquet(mini_run.weighted).head(0)
+    assert sensitivity_rows(empty, pl.read_parquet(mini_run.results), Weights()) == ()

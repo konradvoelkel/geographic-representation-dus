@@ -682,8 +682,8 @@ def _rows_match_the_file(
     return (
         set(names) == expected
         and len(names) == len(set(names))
-        and names[0] == UNIT
-        and result[0].rho in (None, 1.0)
+        # Eine leere Tabelle gibt keine Zeilen; sonst steht die Einheitszeile zuerst.
+        and (not names or (names[0] == UNIT and result[0].rho in (None, 1.0)))
         and topics == sorted(topics)
     )
 

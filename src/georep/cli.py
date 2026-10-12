@@ -202,7 +202,7 @@ def _cmd_regress(args: argparse.Namespace, settings: Settings, layout: Layout) -
             exclude,
             settings.topics.k > 0,
         )
-        width = max(len(row.name) for row in rows)
+        width = max((len(row.name) for row in rows), default=0)
         for row in rows:
             both = [
                 f"{name}: {part.summary()}" if part else f"{name}: ohne Streuung"
