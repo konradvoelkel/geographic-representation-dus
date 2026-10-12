@@ -1,3 +1,7 @@
 /* Option 05: der Stern verweist auf die Fußnote zum Wahlbezirk in zwei Stadtbezirken */
 #gremien .fn { text-decoration: none; padding-left: .15em; }
 #gremien-fussnote { scroll-margin-top: 1rem; }
+/* Punkt 45: die Restklasse ist die größte Zeile der Zuordnungstabelle und steht zuletzt; sie wird
+   hervorgehoben wie die Einheitszeile der Gewichtung (dieselbe Mischung, damit die Seite eine
+   Sprache spricht). Der Ton kommt aus den Variablen und gilt darum in Hell und Dunkel. */
+#ausschuss-tabelle tr.baseline td { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }

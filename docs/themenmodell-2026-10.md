@@ -361,7 +361,7 @@ Vektoren, wie das TODO es schon vorsah.
   zur Methode und zur Restklasse. Kein Download extra: `ausschuss_zuordnung` ist eine
   veröffentlichte Tabelle (Parquet und CSV), die Zuordnung je Dokument bleibt unter `processed/`
   (19 033 Zeilen wären als CSV 1,5 MB, und sie folgt nicht aus der dokumentierten Regel).
-- **Größen**: `index.html` 1 157 781 Bytes (1,10 MB) bei einem Budget von 1,5 MB, 50 Dateien
+- **Größen**: `index.html` 1 158 177 Bytes (1,10 MB) bei einem Budget von 1,5 MB, 50 Dateien
   zusammen 13,3 MB. Voller Offline-Lauf 23,4 s.
 - **Unberührt**: `wahlbezirke_auswertung.parquet`, Tabelle 5, der invertierte Index, das
   Wörterbuch. Die `thema_NN`-Zeilen der Gewichtungstabelle ändern ihre Zahlen, weil die Themen
