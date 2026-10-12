@@ -27,9 +27,9 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
 
 ## Zahlen (2026-10-12, Branch `feat/06-gewichtung`)
 
-- Tests: 310, davon zwei `slow` und zwölf `bench`; schnelle Suite parallel in 20 bis 25 s; Abdeckung 98,6 %; Mutationsquote über `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`).
+- Tests: 412 nach dem Rebase, davon drei `slow` und sechzehn `bench`; schnelle Suite parallel in 20 bis 25 s; Abdeckung 98,6 %; Mutationsquote über `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`).
 - Laufzeit: voller Offline-Lauf rund 19 s (Themenmodell 9 s, Index 4 s, Gewichtung 1 s, Berichtsseite 1,6 s); `pytest -m slow` 43 s; `nox -s bench` grün gegen die frische Baseline; `nox -s verify` rund 4 min.
-- Berichtsseite: `index.html` 726 KB (Budget 1,5 MB), 23 Download-Dateien, 25 Dateien zusammen 10,2 MB.
+- Berichtsseite nach dem Rebase auf 08 und 05: `index.html` 933 KB (Budget 1,5 MB), 29 Download-Dateien, 31 Dateien zusammen 10,4 MB; voller Lauf 16 s.
 
 ## Bekannt
 

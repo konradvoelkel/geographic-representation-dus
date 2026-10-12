@@ -22,7 +22,7 @@ git clone git@github.com:konradvoelkel/geographic-representation-dus.git
 cd geographic-representation-dus
 uv sync --locked                        # Umgebung aus dem Lockfile
 uv run georep bootstrap                 # Datensatz der Arbeit nach ./data übernehmen
-uv run georep run                       # dreizehn Offline-Schritte, rund 20 s; schreibt auch die Berichtsseite data/site/index.html
+uv run georep run                       # dreizehn Offline-Schritte, rund 16 s; schreibt auch die Berichtsseite data/site/index.html
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 ```
 

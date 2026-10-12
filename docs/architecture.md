@@ -78,9 +78,9 @@ Neben der ersten Ausgabe jedes Schritts liegt `<datei>.stamp.json` mit den SHA-2
 Settings-Fingerprint, der Code-Version und der Schema-Version. Stimmt alles, ist der Schritt aktuell und wird
 übersprungen; sonst läuft er und sagt, warum („Eingabe geändert: texts.parquet", „Code-Version 0.6.0 ->
 0.7.0"). `--force` erzwingt, `--dry-run` plant nur. Jeder Lauf druckt je Schritt eine Zeile mit der Anzahl,
-auf die er gewirkt hat, und die Sekunden. Der volle Offline-Lauf auf der Referenz dauert rund 19 s, davon 9 s
-das Themenmodell, 4 s der Index, 1 s die Gewichtung und 2 s die Berichtsseite (2026-10-12; ohne Themenmodell
-rund 10 s).
+auf die er gewirkt hat, und die Sekunden. Der volle Offline-Lauf auf der Referenz dauert rund 16 s, davon 7 s
+das Themenmodell, 4 s der Index, unter 1 s die Gewichtung und 1 s die Berichtsseite (2026-10-12; ohne
+Themenmodell rund 9 s).
 
 ## Datenhaltung
 
@@ -209,8 +209,8 @@ Sensitivitätstabelle mit beiden Spalten von Tabelle 5 je Gewichtungsvariante un
 ungewichteten Quote, darunter die Themen mit ihren stärksten Wörtern. Die Einheitszeile trägt dieselben
 Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeigt „—", und fehlt der ganzen
 Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 31 Dateien,
-10,3 MB, davon `index.html` rund 925 KB (144 KB Suchdaten, 33 KB die Gewichtung), `karte.html` 255 KB,
-`dokumente.json` 2,1 MB; 2 s (2026-10-12).
+10,4 MB, davon `index.html` 933 KB (144 KB Suchdaten, 33 KB die Gewichtung), `karte.html` 255 KB,
+`dokumente.json` 2,1 MB; 1,2 s (2026-10-12).
 
 ## Verträge
 

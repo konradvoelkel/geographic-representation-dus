@@ -259,6 +259,7 @@ kostete gemessen 30 % (CLAUDE.md, „Nie"); Reinheit prüfen `deal.cases` und cr
 für sich profilierbar. Die Zuordnung je Dokument bleibt unveröffentlicht (126 KB Parquet, aber 2,3 MB
 CSV für eine Spalte, die aus der Drucksachennummer in `dokumente.json` und der dokumentierten Regel
 folgt).
+
 ## Punkt: scikit-learn für das Themenmodell (Option 06, 2026-10-12)
 
 `noxfile.py` verbot `scikit-learn` im Lockfile, weil es in der Arbeit nur mittelbar über pandas hing. Für die
