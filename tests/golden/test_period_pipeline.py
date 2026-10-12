@@ -278,3 +278,17 @@ def test_without_the_compare_profile_the_main_page_has_no_comparison(mini_run: L
     assert "wahlbezirke_vergleich.parquet" not in published
     assert "stimmbezirke_zuordnung.parquet" not in published
     assert not mini_run.comparison.exists() and not mini_run.precinct_assignment.exists()
+
+
+# „2025" darf auf der Seite einer anderen Periode nur dort stehen, wo es hingehört: das Wörterbuch
+# stammt aus dem Datensatz der Arbeit und trägt dessen Stand (Plan § 7, „Vorlage").
+ALLOWED_OTHER_YEAR = ("Stand November 2025",)
+
+
+def test_the_period_page_names_no_foreign_election_year(period_run: PeriodRun) -> None:
+    page = period_run.layout.site_index.read_text(encoding="utf-8")
+    for allowed in ALLOWED_OTHER_YEAR:
+        assert allowed in page, allowed
+        page = page.replace(allowed, "")
+    assert "2025" not in page
+    assert "Kommunalwahl 2020" in page  # die Methode nennt die Wahl dieser Periode
