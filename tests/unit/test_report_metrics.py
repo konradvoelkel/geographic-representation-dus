@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import replace
 
 import deal
 import polars as pl
@@ -12,6 +13,7 @@ from georep.analysis.hits import DISTRICT, RATE
 from georep.analysis.scaling import CITY_MEAN, DEVIATION, PER_1000, PER_TERM, TERM_COUNT
 from georep.errors import SchemaError
 from georep.report.model import DistrictMetrics, ReportModel, with_metrics
+from georep.report.render import Visuals, render_report
 from georep.search.index import HITS
 
 
@@ -97,3 +99,34 @@ def test_the_legends_explain_the_fixed_boundaries(mini_page: str) -> None:
     block = mini_page.split('id="legend-abweichung"', 1)[1].split("</div>", 1)[0]
     assert "Stadtmittel" in block
     assert "%" in block
+
+
+# --- Punkt 46: die zweite Regression neben Tabelle 5 ----------------------------------------------
+
+
+def test_the_model_carries_a_second_regression(mini_model: ReportModel) -> None:
+    """Dieselbe Rechnung mit x = Treffer je Begriff; Tabelle 5 selbst bleibt unberührt."""
+    second = mini_model.per_term_regression
+    assert second is not None and mini_model.regression is not None
+    assert second.all.n == mini_model.regression.all.n
+    assert -1.0 <= second.all.r <= 1.0 and 0.0 <= second.all.p <= 1.0
+    # Die beiden sind verschiedene Rechnungen: dieselbe Zielgröße, eine andere Kennzahl
+    assert second.all.slope != mini_model.regression.all.slope
+
+
+def test_the_section_shows_both_regressions(mini_page: str) -> None:
+    block = mini_page.split('<section id="zusammenhang">', 1)[1].split("</section>", 1)[0]
+    assert "Tabelle 5 der Arbeit" in block  # unverändert
+    assert "Treffer je Begriff" in block
+    assert "Wörterbuch" in block
+    assert block.count("<table") == 2  # Tabelle 5 und die zweite Regression daneben
+
+
+def test_without_the_metrics_step_the_second_regression_is_absent(
+    mini_model: ReportModel, mini_visuals: Visuals
+) -> None:
+    """Der Block hängt am Modellfeld; ohne den Schritt ``metrics`` steht er nicht da."""
+    page = render_report(replace(mini_model, per_term_regression=None), mini_visuals)
+    block = page.split('<section id="zusammenhang">', 1)[1].split("</section>", 1)[0]
+    assert "Tabelle 5 der Arbeit" in block and block.count("<table") == 1
+    assert "je Begriff im Wörterbuch" not in block
