@@ -1,8 +1,9 @@
 # Status
 
-Stand 2026-10-11, `main` auf `v0.10.0`. Der Umbau in sieben Phasen ist abgeschlossen
+Stand 2026-10-12, `main` auf `v0.11.0`. Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
-Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>). Aufbau in
+Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>), und der Ausbau in
+acht Optionen ist gemerged (`docs/plan-ausbau-2026-10.md`, Pläne und Abnahmen unter `docs/plans/`). Aufbau in
 `docs/architecture.md`, Gründe in `docs/decisions.md`. Fakten mit Datum, Invarianten ohne.
 
 ## Abgeschlossen
@@ -15,99 +16,105 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
 - Phase 5 (`v0.6.0`): Profiling-Infrastruktur. `georep profile`, `nox -s bench` (pytest-benchmark, rot ab 20 % langsamer im Minimum), Protokoll `PdfTextExtractor`. Messung in `docs/profiling/README.md`: Offline-Lauf 6,3 s, davon 4,1 s FlashText; Extraktion 38 ms je PDF; pypdf 6.20.0 reproduziert 197 von 200 Texten der Arbeit zeichengleich. Empfehlung: pypdf und FlashText bleiben, kein Rust-Port.
 - Phase 6 (`v0.7.0`): Design by Contract. 80 deal-Decorators an 30 Funktionen in `search`, `analysis`, `prep`, `geo`, `layout`, `stores`, `http`, `settings` und `sources`; Prädikate in `georep.contracts`; `settings.contracts = "off"` schaltet ab, Overhead unter einem Prozent. Fetcher werfen nur `FetchError` oder `NetworkError`, die CLI meldet einen abgebrochenen Abruf als eine Zeile. `deal.cases` greift zehn reine Funktionen an, `nox -s verify` (crosshair) fand und `nox -s mutate` (pytest-gremlins, 79 % getötet) deckte je einen echten Fehler auf: `street_names` bei kaputter Overpass-Antwort und deals nicht reentranter `HasPatcher`, der nach `deep_merge` Socket und stdout gepatcht ließ. Beides behoben, `docs/mutation-2026-10-11.md`.
 - Phase 7 (`v0.8.0`): Abschluss. README aus Sicht eines frischen Klons (geprüft am 2026-10-11 auf xtraspace: `uv sync --locked`, `bootstrap`, `run` in 6 s, `regress`, `nox`, slow-Test), `docs/architecture.md` und `docs/decisions.md` ersetzen den Plan, der archiviert ist; Code-Docstrings verweisen auf die lebenden Beschreibungen. Kein Pull Request an `lubar102` (Konrads Entscheidung, decisions.md Punkt 19).
-
 - Berichtsseite (`v0.9.0`): Schritt `report` als neunter Offline-Schritt; `data/site/index.html` (400 KB, inline SVG und JavaScript, hell und dunkel, Deutsch mit englischer Kurzfassung) und `data/site/data/` mit den sechs Tabellen als Parquet und CSV, `wahlbezirke.geojson`, `schema.json`, je mit SHA-256 auf der Seite. Mini-Fixture mit GeoJSON, `report/` mit `model`, `geometry`, `charts`, `render`, `build`; Lizenzen des Open-Data-Portals am 2026-10-11 auf den Datensatzseiten nachgesehen. Geprüft in Hell und Dunkel mit headless Chrome.
-
 - Stufe G (`v0.10.0`): Dokumente je Begriff als nachgeladener Dialog aus `dokumente.json`, Orte mit Namen auf der Karte, `karte.html` mit Leaflet (gepinnt) und OpenStreetMap-Kacheln als zweite Datei.
+- Ausbau in acht Optionen (`v0.11.0`, 2026-10-12): ein Supervisor-Agent und je Option ein Unteragent auf
+  `feat/NN-name` in eigenen Worktrees, Synergiephase mit Fundament F1 bis F7 (`docs/plans/00-synergien.md`:
+  Abschnittsmechanismus der Seite, Register der Tabellen, `regression_pair`, Profil und offene Periode,
+  Crosswalk-Kern, Achsen-Helfer, Zähl-Tests), Review je Branch (Opus, Stufe high) und Merge mit `--no-ff` in
+  der Reihenfolge 08, 05, 06, 03, 04, 02, 01, 07. Fragen an Konrad gebündelt in `docs/plans/fragen.md`; die
+  Agenten haben nichts abgerufen, alle Netzläufe sind Konrads (siehe „Nächster Schritt").
+  - Option 08 Suche (`docs/plans/08-suche.md`): Abschnitt „Straße oder Ort suchen" mit Vorschlagsliste nach
+    dem APG-Combobox-Muster aus 4176 Einträgen (Straßen, Orte, Wahlbezirksnamen) in der Seite, Ergebnisblock,
+    Markierung in Karte, Tabelle und Streudiagramm, teilbar als `#suche=…`.
+  - Option 05 Gremien (`docs/plans/05-gremien.md`): Gremium je Dokument aus der Drucksachennummer (auf der
+    Referenz 0 von 19 108 unbekannt), Schritte `bodies` und `body_hits`, Abschnitt „Gremien", dritter
+    Kartenumschalter „Anteil eigene Bezirksvertretung", Stadtbezirk je Wahlbezirk über die Wahlberechtigten.
+  - Option 06 Gewichtung (`docs/plans/06-gewichtung.md`): Themenmodell mit TF-IDF und NMF (scikit-learn, 20
+    Themen), gewichtete Trefferquoten je Begriff, Dokumentart und Thema, Abschnitt „Was ändert die
+    Gewichtung?" mit Tabelle 5 unter 26 Gewichtungen; Einheitsgewichte reproduzieren die Arbeit exakt.
+  - Option 03 Kontrollvariablen (`docs/plans/03-kontrollvariablen.md`): Quartiersatlas 2024 unter `context/`
+    (dl-de/by-2-0, Prüfsummen), Umrechnung über Flächenanteile und Wahlberechtigte, OLS in
+    `analysis/ols.py` (gegen statsmodels geprüft), Tabelle 6 und 6b, Added-Variable-Plots, Abschnitt
+    „Abgeleitete Daten". Befund: R² 0,89 statt 0,03, die Trefferquote erklärt nichts mehr für sich.
+  - Option 04 Parteien (`docs/plans/04-parteien.md`): Urheber je Dokument aus Dokumentart, Titel und
+    Textkopf (der OParl-Server füllt die Felder nicht), Parteien bei Fraktionen, Schritt `parties` und
+    Netzschritt `organizations`, Abschnitt „Urheber und Parteien" mit sechs kleinen Karten und dem Abgleich
+    gegen den Stimmenanteil (Pearson r, Bonferroni-Hinweis).
+  - Option 02 Zeitreihe (`docs/plans/02-zeitreihe.md`): eine Wahlperiode ist ein Profil
+    (`duesseldorf-2014`, Daten unter `data/2014-2020/`), Wahlzahlen von 2020 über Flächenanteile
+    summentreu auf die Wahlbezirke von 2025 umgerechnet (`precincts`, `largest_remainder`), Schritt
+    `compare` und Abschnitt „Zwei Wahlperioden" (`duesseldorf-vergleich`). Offline an der Mini-Periode
+    `tests/fixtures/mini-2014/` geprüft; der Abruf der alten Periode ist Konrads Lauf.
+  - Option 01 Städte (`docs/plans/01-staedte.md`): jede Kommune ist ein Paketprofil
+    (`src/georep/profiles/<slug>.toml`, `--profile`, `GEOREP_PROFILE`, `base`), `defaults.toml` ist
+    stadtneutral und im Code steht kein Stadtwort (grep-Test). Schritt `shapes` (GeoJSON oder Shapefile-Zip
+    über pyshp), `summary.json` je Stadt, `georep publish` mit `vergleich.html`; Profil Mönchengladbach mit
+    Netzstichprobe als Fixture, Runbook `docs/runbook-stadt.md`. Düsseldorf rechnet unverändert.
+  - Option 07 Monitoring (`docs/plans/07-monitoring.md`): Profil `duesseldorf-2025` für die laufende
+    Periode (offenes Ende, Wörterbuch der Hauptperiode, 19 Schritte), inkrementeller Abruf mit
+    `modified_since` und Löschungen, Schritt `timeline`, Abschnitte „Je Monat" und „Laufende Wahlperiode",
+    `georep paths`, Betrieb unter `deploy/` (Lauf-Skript, systemd-Service und -Timer, Schnappschuss mit
+    `SHA256SUMS`), Trockenlauf in einer transienten Nutzereinheit geprüft.
 
-- Option 08 Suche (Branch `feat/08-suche`, 2026-10-12, im Review): Abschnitt `15-suche` auf der Berichtsseite mit Suchfeld, Vorschlagsliste nach dem APG-Combobox-Muster, Ergebnisblock und Markierung auf der Karte; `report/search.py` baut 4176 Einträge (2828 Straßen, 1239 Orte, 68 beides, 41 Wahlbezirksnamen), die als JSON in der Seite liegen. Plan und Abnahme: `docs/plans/08-suche.md`.
-- Option 02, Zeitreihe (Branch `feat/02-zeitreihe`, auf `main` rebased 2026-10-12, im Review): eine Wahlperiode ist ein
-  Profil (`profiles/duesseldorf-2014.toml`, Daten unter `data_root/2014-2020/`), der Flächen-Crosswalk rechnet die
-  Wahlzahlen eines älteren Stimmbezirkszuschnitts summentreu auf die Wahlbezirke der Auswertung um, der
-  Schritt `compare` und der Abschnitt „Zwei Wahlperioden" stellen beide Perioden nebeneinander
-  (`profiles/duesseldorf-vergleich.toml`). Geprüft offline auf der erfundenen Mini-Periode
-  `tests/fixtures/mini-2014/`; der echte Abruf der Periode 2014 bis 2020 (rund 3 h Metadaten, 8 bis 11 h
-  PDFs) ist vorbereitet und wartet auf Konrads Lauf (README, „Zweite Periode abrufen"). Bis dahin fehlt der
-  Abschnitt auf der veröffentlichten Seite.
-- Option 01, Städte (Branch `feat/01-staedte`, auf `main` rebased 2026-10-12, im Review): jede Kommune ist ein
-  Profil im Paket (`src/georep/profiles/<slug>.toml`, gewählt mit `--profile`, `GEOREP_PROFILE` oder
-  `default_profile`, mit `base` auf einem anderen aufbauend); `defaults.toml` ist stadtneutral, im Code steht
-  kein Stadtwort. Neu sind der Schritt `shapes` (jede Quellgeometrie wird `interim/stimmbezirke.geojson`,
-  GeoJSON oder Shapefile-Zip über pyshp), `data/summary.json` je Stadt und `georep publish` mit der
-  Vergleichsseite `vergleich.html`. Mitgeliefert ist neben Düsseldorf das Profil Mönchengladbach (AGS
-  05116000, OParl-Body 0011, votemanager der ITK Rheinland); Düsseldorf rechnet unverändert (Golden Master,
-  gleiche Zahlen, gleiche Adresse). Plan und Abnahme: `docs/plans/01-staedte.md`, Runbook für den vollen
-  Abruf einer neuen Stadt: `docs/runbook-stadt.md`.
+## Zahlen (2026-10-12, `v0.11.0`)
 
-## Zahlen (2026-10-11)
-
-- Option 06 Gewichtung (Branch `feat/06-gewichtung`, 2026-10-12, im Review): `analysis/weights.py` rechnet gewichtete Trefferquoten (Maximum über die Begriffe mal Dokumentart mal Thema, jeder Faktor in [0, 1]), `analysis/topics.py` ein Themenmodell mit TF-IDF und NMF (scikit-learn, der einzige Ort mit diesem Import). Zwei Schritte (`topics` 9 s, `weights` 1 s), vier Tabellen, der Seitenabschnitt `34-gewichtung` mit der Sensitivitätstabelle. Einheitsgewichte reproduzieren `anzahl_treffer` (29 573) und Tabelle 5 exakt; `wahlbezirke_auswertung.parquet` und `inverted_index.parquet` bleiben byteidentisch.
-
-- Option 03, Kontrollvariablen (Branch `feat/03-kontrollvariablen`, 2026-10-12, im Review): Fremddaten je
-  Raumeinheit unter `context/` (Quartiersatlas 2024, 2,3 MB, dl-de/by-2-0, README mit Prüfsummen), die drei
-  Schritte `context_data`, `context` und `controls`, `georep.crosswalk.area_shares`/`district_weights`,
-  `georep.analysis.ols` (einmal gegen statsmodels geprüft, Abweichung 4,0e-14), drei Download-Tabellen und die
-  Abschnitte „Kontrollvariablen" und „Abgeleitete Daten" auf der Seite. Befund: mit den Kontrollvariablen
-  erklärt das Hauptmodell R² = 0,89 statt 0,03, der Koeffizient der Trefferquote sinkt auf 41,33 mit p 0,133.
-
-## Zahlen (2026-10-12, Branch `feat/03-kontrollvariablen` nach dem Rebase auf 08, 05 und 06)
-
-- Tests: 517 gesammelt, davon 492 schnelle, elf `slow` und vierzehn `bench`; schnelle Suite parallel in rund 22 s; Abdeckung 98,5 %; `nox -s verify` rund 4 min (mit `ordinal_score`).
-- Laufzeit: voller Offline-Lauf rund 16 s über fünfzehn Schritte (Themenmodell 7,4 s, Index 4,1 s, Gewichtung 0,5 s, `context` 0,4 s, `controls` unter 0,1 s, Berichtsseite 1,4 s); `pytest -m slow` 49 s; `nox -s bench` grün gegen die frische Baseline.
-- Berichtsseite: `index.html` 986 KB (gzip 168 KB, Budget 1,5 MB), sechzehn veröffentlichte Tabellen, 37 Dateien zusammen 10,6 MB; alle zwölf Abschnitte in Nummernfolge, in Hell und Dunkel mit headless Chrome angesehen.
-- Quelltext: 51 Python-Dateien unter `src/`, rund 9800 Zeilen.
-
-Davor, je vor dem Rebase gemessen: Option 06 rund 19 s Lauf und `index.html` 933 KB; Option 03 allein 10 s
-Lauf und 764 KB. Mutation: `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`), `analysis/` auf dem
-Branch 03 tötet 133 von 175 Mutanten (76 %); die Überlebenden sind Vertrags-Lambdas an ihren Grenzen und
-`frozen=True` an dataclasses. Mit sechs Arbeitern wurde die Sitzung unter der Last der acht parallelen
-Agenten abgeschossen (SIGTERM bei 190 von 208); drei Arbeiter und nur `analysis/` laufen in sieben Minuten
-durch.
+- Tests: 798 schnelle (nox-Gate, parallel in rund 40 s, Abdeckung 98 %), 19 `slow` (rund 2 min über die volle
+  Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
+- Register: 28 Schritte; `georep steps` zeigt 25 für Düsseldorf, 26 mit Vergleich, 20 im Periodenprofil
+  2014 bis 2020, 19 in der laufenden Periode, 21 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
+  rund 17 s (Themenmodell 7 s, Index 4 s, Berichtsseite unter 2 s).
+- Berichtsseite: `index.html` 1,17 MB (gzip 205 KB, Budget 1,5 MB), 49 Dateien zusammen 13 MB, vierzehn
+  Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
+  parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, downloads); „Zwei
+  Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
+- Quelltext: 57 Python-Dateien unter `src/`, rund 15 300 Zeilen; fünf Profile im Paket.
+- Mutation (vor dem Ausbau gemessen): `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`), `analysis/`
+  auf dem Branch 03 133 von 175 Mutanten (76 %); die Überlebenden sind Vertrags-Lambdas an ihren Grenzen und
+  `frozen=True` an dataclasses. Mit sechs Arbeitern wurde die Sitzung unter der Last der acht parallelen
+  Agenten abgeschossen; drei Arbeiter und nur `analysis/` laufen in sieben Minuten durch.
 
 ## Bekannt
 
 - deal 4.24.6: `deal.raises` vergleicht exakte Typen, keine Unterklassen; `deal.has()`/`deal.pure` sind nicht reentrant (Patch bleibt nach Rekursion stehen). Beides umschifft (NetworkError, `deal.safe` für `deep_merge`), nicht upstream gemeldet.
-- Zwölf überlebende Mutanten liegen in Vertrags-Lambdas (Grenzen von r und p); kein Test verletzt sie genau an der Grenze. Bewusst nicht nachgezogen; in `analysis/weights.py` sind es 25 derselben Sorte plus ein äquivalenter (`docs/mutation-2026-10-12.md`).
+- Überlebende Mutanten liegen in Vertrags-Lambdas (Grenzen von r und p); kein Test verletzt sie genau an der Grenze. Bewusst nicht nachgezogen (`docs/mutation-2026-10-12.md`).
 - `nox -s mutate` lässt `analysis/topics.py` aus: jeder Mutant dort lässt die schnelle Suite laufen, und die rechnet seit dem Themenmodell mehrfach NMF (Lauf am 2026-10-12 nach 35 Minuten abgebrochen, gezielt je Modul vier Minuten). Die schnelle Suite selbst ist dadurch rund 5 s langsamer; hingenommen.
 - Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.
 - Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`; `georep status` zeigt `pdfs` als „offen: Settings geändert", weil `--limit 200` im Stamp steht. Das ist richtig so.
 - Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
 - Das Themenmodell ist je Rechner und je Thread-Zahl reproduzierbar, nicht darüber hinaus: zwischen 13 und 2 BLAS-Threads unterscheiden sich `themen.parquet` und `themen_anteile.parquet` in den letzten Stellen (gemessen 2026-10-12), Labels und Kennzahlen bleiben gleich. Die Golden-Master-Tests prüfen darum Invarianten, nicht Zahlen.
 - Die Themen tragen Wörter, keine Deutung: die Nummern gelten nur für diesen Datenstand, ein Lauf über andere Dokumente vergibt sie neu. Thema 19 ist das breite Stadtthema („düsseldorf, innen, …"), der Stadtname steht bewusst nicht in der Stoppwortliste.
-- Der Settings-Fingerprint ist global: ein neuer Schlüssel unter `[weights]` oder `[topics]` lässt alle Schritte einmal neu laufen (19 s). Hinnehmbar; ein Fingerprint je Schritt ist zurückgestellt (`docs/plans/00-synergien.md`, § 8).
+- Der Settings-Fingerprint ist global: ein neuer Schlüssel lässt alle Schritte einmal neu laufen. Hinnehmbar; ein Fingerprint je Schritt ist zurückgestellt (`docs/plans/00-synergien.md`, § 8).
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab (`docs/baseline-2026-10-10.md`).
 - Der Stamp des Schritts `report` liegt als `site/index.html.stamp.json` im veröffentlichten Ordner; harmlos, aber mit dabei.
 - Der OParl-Server liefert für Düsseldorf keine Urheberfelder: 0 von 19 108 Rohobjekten und keines der sechs Paper der Seite vom 2026-10-09, auch der „Antrag FDP" nicht. Option 04 leitet den Urheber darum aus `paperType`, Titel und Textkopf ab (Deckung 98,3 %); `georep fetch papers --max-pages 1` ist die Probe, ob sich das geändert hat, und die Quelle `oparl` greift dann ohne Codeänderung.
 - Im Wahlbezirk 11 ist Die Linke nicht angetreten (0 Stimmen; die Stimmbezirks-CSV führt dort die 0, anderswo Dutzende). Der Abgleich Dokumentanteil gegen Stimmenanteil lässt solche Bezirke je Partei aus, Die Linke hat also n = 40 statt 41.
 - Die Ergebnis-CSV der Ratswahl heißt im Open-Data-Portal inzwischen `…_Stimmbezirke_1.csv` (Datensatzseite am 2026-10-11); `profiles/duesseldorf.toml` zeigt auf `…_0.csv`, woher die Referenz stammt. Vor einem `fetch opendata` nachsehen.
-- Mönchengladbach (Option 01, 2026-10-12): Profil, Kette und Vergleichsseite stehen, der volle Abruf steht aus (`docs/runbook-stadt.md`, 3 bis 5 h). Bis sein Paket unter `reference/moenchengladbach/` liegt, meldet `georep publish` die Stadt als „kein Lauf“ und baut keine Vergleichsseite; CI überspringt sie. Der Marker `betrifft` kam in der PDF-Stichprobe in 0 von 5 Dokumenten vor (alles Fraktionsanträge der laufenden Periode) — ohne Marker durchsucht die Kette den ganzen Text; das Runbook misst am echten Korpus nach (Frage 1.5).
-- Die votemanager-CSVs der ITK Rheinland tragen keine Lizenzangabe; die Seite nennt Quelle und Herausgeber und schreibt „Lizenz laut Anbieter nicht angegeben“ (Frage 1.4).
+- Mönchengladbach (Option 01, 2026-10-12): Profil, Kette und Vergleichsseite stehen, der volle Abruf steht aus (`docs/runbook-stadt.md`, 3 bis 5 h). Bis sein Paket unter `reference/moenchengladbach/` liegt, meldet `georep publish` die Stadt als „kein Lauf" und baut keine Vergleichsseite; CI überspringt sie. Der Marker `betrifft` kam in der PDF-Stichprobe in 0 von 5 Dokumenten vor (alles Fraktionsanträge der laufenden Periode); ohne Marker durchsucht die Kette den ganzen Text, das Runbook misst am echten Korpus nach (Frage 1.5).
+- Die votemanager-CSVs der ITK Rheinland tragen keine Lizenzangabe; die Seite nennt Quelle und Herausgeber und schreibt „Lizenz laut Anbieter nicht angegeben" (Frage 1.4).
 - Mönchengladbachs Drucksachennummern tragen kein Kürzel des Gremiums (`0682/XI`, Stichprobe vom 2026-10-12, Body 0011). Das Profil lässt `bodies.reference_pattern` darum leer; der Abschnitt „Gremien" zeigt für diese Stadt 100 % „unbekannt". Woher das Gremium käme (OParl-Feld `organization` der Vorlage oder die Sitzungszuordnung), misst der volle Lauf nach (`docs/plans/01-staedte.md`, § 8, Frage 1.12).
 - Der Stadtbezirk Mönchengladbachs steckt im ersten Zeichen der Stimmbezirksnummer (`10401`: Stadtbezirk 1, Wahlbezirk 04, Stimmbezirk 01); das Profil liest ihn mit `columns.results.city_district_from_precinct`. Bestätigt ist die Regel bisher nur an der Fixture (Wahlbezirke 04, 09, 23) und an der Zahl der Stadtbezirke (vier); der volle Lauf prüft sie gegen die Wahlbezirks-CSV (`docs/plans/01-staedte.md`, § 8, Frage 1.13).
+- Ein Test darf nicht von der Reihenfolge abhängen: `test_a_city_that_lost_its_run_leaves_the_published_folder` war nur grün, wenn ein Test mit Standardziel vorher den Marker `.georep-publish` in die Quellseite geschrieben hatte; allein gestartet deckte er am 2026-10-12 auf, dass `publish` den Marker beim Kopieren der ersten Stadt löschte (behoben in 3f81995). Einen neuen Test einmal allein starten.
+- Die Merges liefen über Rebase je Branch; an rund zwölf Stellen endeten beide Konfliktseiten mitten in einer Funktion oder einem `{% if %}`, und ein Auto-Merge legte `Area` und `read_areas` doppelt an. mypy, ruff und die Zähl-Tests fingen alles; nach einem Rebase `def`-Zahlen je Datei vergleichen.
 
 ## Nächster Schritt
 
-Der Ausbau in acht Optionen nach `docs/plan-ausbau-2026-10.md` (Städte, Zeitreihe, Kontrollvariablen, Parteien,
-Gremien, Gewichtung, Monitoring, Suche), geführt von einem Supervisor-Agenten mit acht Unteragenten auf eigenen
-Branches. Stand 2026-10-12: Phase 0 und 1 abgeschlossen (acht Worktrees auf xtraspace, acht Pläne unter
-`docs/plans/` auf den Branches), Phase 2 abgeschlossen: `docs/plans/00-synergien.md` und das Fundament F1 bis F7
-auf `main` (Abschnittsmechanismus der Seite, Register der Tabellen, `regression_pair`, Profil und offene Periode,
-Crosswalk-Kern, Achsen-Helfer, Zähl-Tests), die Fragen der Pläne gebündelt in `docs/plans/fragen.md`; Phase 3
-(Implementierung) läuft. Gemerged sind 08 (Suche), 05 (Gremien), 06 (Gewichtung), 03
-(Kontrollvariablen), 04 (Parteien), 02 (Zeitreihe) und 01 (Städte). Als Letzte liegt Option 07
-(Monitoring) auf `feat/07-monitoring`, auf `main` rebased am 2026-10-12 und im Review: Paketprofil
-`duesseldorf-2025` für die laufende Periode (offenes Ende, Wörterbuch der Hauptperiode, 19 Schritte),
-inkrementeller Abruf mit Löschungen, Schritt `timeline` mit zwei Tabellen, die Abschnitte „Je Monat"
-und „Laufende Wahlperiode", dazu `deploy/` mit Lauf-Skript, systemd-Einheiten und Anleitung. 798 Tests
-statt 773, voller Offline-Lauf 17 s, `index.html` 1,17 MB. Der Erstabruf (16 bis 30 min Metadaten,
-rund 2,3 h PDFs) ist dokumentiert, aber nicht gelaufen; er gehört Konrad (`deploy/README.md`).
-Der Plan der Berichtsseite ist mit Stufe G vollständig umgesetzt. Die Seite wird bei jedem Push auf
-`main` neu gebaut und veröffentlicht
-(`.github/workflows/pages.yml`, Pages-Quelle „GitHub Actions" seit 2026-10-11); abgenommen am 2026-10-11: Workflow
-grün, Seite erreichbar, Downloads laden, SHA-256 stimmen. Optional nach Bedarf: Stufe G des Plans (Dokumente je
-Begriff: erledigt) und der Umzug auf Konrads VPS (`rsync` von `data/site`, Stufe F.4).
+Konrads Läufe, je mit Runbook; bis dahin fehlen die betroffenen Teile auf der veröffentlichten Seite und der
+Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „GitHub Actions"):
 
-Außerdem offen, wenn jemand es will: ein voller `georep fetch` von Grund
-auf (Stunden; zeigt, ob der OParl-Server `modified_since` beachtet); ein Ersatz für FlashText oder pypdf nur
-nach neuer Messung (`docs/decisions.md`, Punkt 14); die beiden deal-Eigenheiten upstream melden; die Abweichung
-in Tabelle 5 „ohne Ausreißer" mit Lukas klären, falls es je wieder darauf ankommt.
+1. Periode 2014 bis 2020 (README, „Zweite Periode abrufen": rund 3 h Metadaten, 8 bis 11 h PDFs,
+   wiederaufnehmbar), dann der Schnappschuss unter `snapshots/2014-2020` und die Abschnitte „Zwei
+   Wahlperioden".
+2. Mönchengladbach (`docs/runbook-stadt.md`, 3 bis 5 h), dann das Paket unter `reference/moenchengladbach/`
+   und die Vergleichsseite `vergleich.html` aus `georep publish`.
+3. Erstabruf der laufenden Periode (`deploy/README.md`, 16 bis 30 min Metadaten, rund 2,3 h PDFs), danach
+   Timer auf kookaburra oder dem VPS; Domain, R2-Bucket und Token sind offene Fragen (`docs/plans/fragen.md`,
+   Fragen 7.1 bis 7.4).
+4. Optional der Vollabruf der Hauptperiode (2 bis 3 h; zeigt, ob der OParl-Server `modified_since` beachtet
+   und ob die Urheberfelder inzwischen gefüllt sind).
+
+Offene Entscheidungen stehen in `docs/plans/fragen.md` (die acht wichtigsten oben): Datenpakete im Repo oder im
+R2-Bucket, Düsseldorf unter `data/duesseldorf/`, VPS und Domain, Lizenz der votemanager-CSV, Modellwahl der
+Kontrollvariablen. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,
+wenn jemand es will: ein Ersatz für FlashText oder pypdf nur nach neuer Messung (`docs/decisions.md`, Punkt 14);
+die beiden deal-Eigenheiten upstream melden; die Abweichung in Tabelle 5 „ohne Ausreißer" mit Lukas klären.

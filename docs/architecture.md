@@ -1,6 +1,6 @@
 # Architektur
 
-Stand 2026-10-11, `v0.10.0`. Diese Datei beschreibt, was das Programm ist und wie es gebaut ist. Warum es so
+Stand 2026-10-12, `v0.11.0`. Diese Datei beschreibt, was das Programm ist und wie es gebaut ist. Warum es so
 gebaut ist, steht mit den verworfenen Alternativen in [decisions.md](decisions.md); was sich aus Nutzersicht
 geändert hat, in [../CHANGELOG.md](../CHANGELOG.md); der Befund vor dem Umbau in
 [baseline-2026-10-10.md](baseline-2026-10-10.md); Messwerte datiert in [profiling/README.md](profiling/README.md).

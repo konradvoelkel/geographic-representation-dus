@@ -1,8 +1,9 @@
 # Arbeitsregeln für dieses Repo
 
 Aufbau: `docs/architecture.md`. Gründe und verworfene Alternativen: `docs/decisions.md`. Stand und Bekanntes:
-`STATUS.md` (im selben Commit nachziehen, wenn sich der Stand ändert). Offenes Vorhaben: der Ausbau in acht
-Optionen, `docs/plan-ausbau-2026-10.md` (Supervisor und Unteragenten). Die Berichtsseite ist gebaut und über
+`STATUS.md` (im selben Commit nachziehen, wenn sich der Stand ändert). Der Ausbau in acht Optionen ist
+abgeschlossen (`docs/plan-ausbau-2026-10.md`, Supervisor und Unteragenten, 2026-10-12; Pläne und Abnahmen
+unter `docs/plans/`, Fragen an Konrad in `docs/plans/fragen.md`). Die Berichtsseite ist gebaut und über
 GitHub Pages veröffentlicht (`docs/plan-report-2026-10.md`, abgeschlossen am 2026-10-11). Der Umbau 2026-10 ist
 abgeschlossen; sein
 Plan liegt historisch unter `docs/development-plan-2026-10.md`, der Befund davor in `docs/baseline-2026-10-10.md`.
@@ -12,9 +13,9 @@ Contract des eipy-Skripts.
 ## Einstieg in eine neue Sitzung
 
 1. `git switch main && git pull`. Gearbeitet wird direkt auf `main`, keine Branches (Konrad, 2026-10-11);
-   `main` trägt den letzten Tag (`v0.10.0` am 2026-10-11). Ausnahme, von Konrad am 2026-10-11 gewünscht: die acht
-   Ausbau-Optionen aus `docs/plan-ausbau-2026-10.md` laufen auf Branches `feat/NN-name` in eigenen Worktrees auf
-   xtraspace (dort fehlt `settings.local.toml`, siehe § 4 des Plans); `main` bleibt grün.
+   `main` trägt den letzten Tag (`v0.11.0` am 2026-10-12). Die Ausnahme der acht Ausbau-Branches `feat/NN-name`
+   in Worktrees auf xtraspace (Konrad, 2026-10-11) ist mit dem Merge aller acht am 2026-10-12 beendet; Worktrees,
+   Venvs und Branches sind entfernt.
 2. Auf Konrads Rechner vor allem anderen, weil die Primärplatte voll ist:
    `export UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep UV_CACHE_DIR=/media/konrad/xtraspace/uv-cache`;
    `settings.local.toml` (gitignored, vorhanden) zeigt `data_root` und `cache_root` auf `/media/konrad/xtraspace/georep/`.

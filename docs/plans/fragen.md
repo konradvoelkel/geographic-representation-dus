@@ -6,6 +6,12 @@ acht Pläne aus der Synergiephase (2026-10-12). Wo der Supervisor entscheiden ko
 Status („Supervisor: …"); diese Fragen brauchen keine Antwort mehr, Konrad darf sie aber umstoßen. **Keine
 Frage blockiert die Implementierung**; alle Unteragenten arbeiten unter den Annahmen weiter.
 
+Stand nach dem Merge aller acht Optionen (2026-10-12): keine Frage wurde in Phase 3 bis 5 beantwortet, alle
+Annahmen gelten unverändert. Getroffen ist damit: Mönchengladbach statt Neuss (3), Düsseldorf bleibt flach (4),
+Quartiersatlas im Repo unter `context/` (2, Teil), Hauptmodell ohne Parteianteile (8), Lizenzfeld „nicht
+angegeben" (7). Offen und nur von Konrad zu erledigen: die vier Netzläufe (1), die Pakete Mönchengladbach und
+2014 bis 2020 im Repo oder im R2-Bucket (2), VPS und Domain (5), R2-Bucket und Token (6).
+
 ## Beantwortet (Meta-Plan § 9, 2026-10-11)
 
 | Nr. | Option | Datum | Frage | Warum | Annahme | Status |

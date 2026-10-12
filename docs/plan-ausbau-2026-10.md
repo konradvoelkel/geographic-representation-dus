@@ -1,5 +1,11 @@
 # Meta-Plan: Ausbau in acht Optionen mit Supervisor und Unteragenten
 
+Abgeschlossen am 2026-10-12: alle acht Optionen sind nach Review auf `main` gemerged (Reihenfolge 08, 05, 06,
+03, 04, 02, 01, 07, je `--no-ff`), Version `v0.11.0`. Stand je Option: 08 Suche, 05 Gremien, 06 Gewichtung, 03
+Kontrollvariablen und 04 Parteien sind auf der veröffentlichten Seite; 02 Zeitreihe, 01 Städte und 07 Monitoring
+sind gebaut und offline geprüft, ihre Seitenteile erscheinen nach Konrads Netzläufen (STATUS.md, „Nächster
+Schritt"). Pläne und Abnahmen: `docs/plans/`, Fragen und Annahmen: `docs/plans/fragen.md`.
+
 Stand 2026-10-11, Auftrag von Konrad am selben Tag. Dieser Plan ist für einen frischen Supervisor-Agenten
 geschrieben: er liest diese Datei und führt sie aus. Er beschreibt Ziel, Regeln, Rollen, Phasen mit
 Abnahmekriterien, ein Briefing je Option, die Protokolle für Fragen und Merges, und die Prompts, mit denen der

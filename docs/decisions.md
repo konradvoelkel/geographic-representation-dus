@@ -166,7 +166,7 @@ ein Fingerprint je Schritt (richtig, aber ein Umbau des Stamp-Mechanismus, zurü
 Settings-Schlüssel ändern den Fingerprint einmalig, alle Stamps laufen einmal neu (7 s); die Pläne der Optionen
 bekamen je einen Abschnitt „Änderungen durch die Synergiephase".
 
-## Punkt: Suche inline, kanonische Begriffe, eigene Combobox (Option 08, 2026-10-12)
+## 22. Suche inline, kanonische Begriffe, eigene Combobox (Option 08, 2026-10-12)
 
 Die Berichtsseite bekommt ein Suchfeld „Straße oder Ort". Vier Entscheidungen und ihre Alternativen:
 
@@ -213,7 +213,7 @@ keinem Wörterbuch vorkommt, die Suche danach aber zu Wahlbezirk 39 führen soll
 erst, wenn der Crosswalk Stadtteil zu Wahlbezirk auf `main` liegt (Option 03 beziehungsweise 05); allein
 gebaut gäbe es drei Versionen davon.
 
-## Punkt: Gremien aus der Drucksachennummer (Option 05, 2026-10-12)
+## 23. Gremien aus der Drucksachennummer (Option 05, 2026-10-12)
 
 Jedes Ratsdokument bekommt das Gremium, das es eingebracht hat, aus seiner Drucksachennummer
 (`BV6/108/2023`, `RAT/270/2023`, `OVA/117/2023/1`): das Kürzel vor dem ersten Schrägstrich, bei
@@ -260,7 +260,7 @@ für sich profilierbar. Die Zuordnung je Dokument bleibt unveröffentlicht (126 
 CSV für eine Spalte, die aus der Drucksachennummer in `dokumente.json` und der dokumentierten Regel
 folgt).
 
-## Punkt: scikit-learn für das Themenmodell (Option 06, 2026-10-12)
+## 24. scikit-learn für das Themenmodell (Option 06, 2026-10-12)
 
 `noxfile.py` verbot `scikit-learn` im Lockfile, weil es in der Arbeit nur mittelbar über pandas hing. Für die
 Themen je Dokument (Option 6, [plans/06-gewichtung.md](plans/06-gewichtung.md)) ist es seit dem 2026-10-12
@@ -276,7 +276,7 @@ schreiben (mehr Code als Nutzen, Konrad hat es abgelehnt); gensim (dieselbe Abh�
 Determinismus-Lage); kein Themenmodell und nur Spezifität je Begriff (dann fehlt der Tabelle die inhaltliche
 Variante, die zeigt, ob der Zusammenhang an einem Thema hängt).
 
-## Punkt: Gewichtete Trefferquoten als lange Tabelle (Option 06, 2026-10-12)
+## 25. Gewichtete Trefferquoten als lange Tabelle (Option 06, 2026-10-12)
 
 Die Trefferquote der Arbeit ist binär: ein Dokument zählt für einen Wahlbezirk, sobald ein Begriff seines
 Wörterbuchs darin vorkommt, und „grafenberger allee" (205 Dokumente) zählt wie ein Begriff mit einem
@@ -307,7 +307,7 @@ Die Berichtsseite kürt keine „richtige" Gewichtung; sie zeigt, unter wie viel
 macht das später möglich), und eine Deutung der Themen.
 
 
-## Punkt: Kontrollvariablen aus Fremddaten (Option 03, 2026-10-12)
+## 26. Kontrollvariablen aus Fremddaten (Option 03, 2026-10-12)
 
 Die Regression der Arbeit (Tabelle 5) stellt die Wahlbeteiligung allein der Trefferquote gegenüber. Tabelle 6
 nimmt Sozialdaten der Stadt dazu, damit sichtbar wird, ob die Trefferquote mehr ist als ein Spiegel der
@@ -362,7 +362,7 @@ Kontrollvariablen erklärt Modell B R² = 0,887 statt 0,026, und der Koeffizient
 Handlungsbedarf (standardisiert −0,96). Das steht so auf der Seite, erzeugt aus den Zahlen, mit dem Hinweis
 auf n = 41, den Datenstand 31.12.2021 und die Endogenität der Stimmenanteile.
 
-## Punkt: Urheber aus Metadaten und Textkopf, OParl-Felder vorbereitet (Option 04, 2026-10-12)
+## 27. Urheber aus Metadaten und Textkopf, OParl-Felder vorbereitet (Option 04, 2026-10-12)
 
 OParl 1.1 hat für den Urheber einer Vorlage drei Felder (`originatorPerson`, `originatorOrganization`,
 `underDirectionOf`). Der Server der ITK Rheinland füllt sie für Düsseldorf nicht: keines der sechs Paper der
@@ -396,7 +396,7 @@ Abgleich mit den Hochburgen bleibt bei Pearson *r* und *p* je Partei mit dem Bon
 Tests und n = 41 ist ein „signifikanter" Wert zu erwarten; nur die FDP bleibt unter 0,05/6); ein Modell
 gehört zu Option 3. Bezirke ohne Wahlvorschlag einer Partei bleiben im Abgleich außen vor, sonst läse sich
 „nicht angetreten" wie „keine Zustimmung" (Wahlbezirk 11, Die Linke).
-## Punkt: Eine Wahlperiode ist ein Profil, keine zweite Installation (Option 02, 2026-10-12)
+## 28. Eine Wahlperiode ist ein Profil, keine zweite Installation (Option 02, 2026-10-12)
 
 Die Wahlperiode 2014 bis 2020 läuft durch dieselbe Kette wie die Hauptperiode, nur mit einer zweiten
 Paketprofil (`profiles/duesseldorf-2014.toml`): `profile = "2014-2020"` legt Daten unter `data_root/2014-2020/` und
@@ -411,7 +411,7 @@ sich gar nicht anteilig verteilen. Der Preis steht auf der Seite: Dokumente von 
 Straßennamen von heute gesucht. Verworfen: ein Wörterbuch je Stimmbezirk 2020 (zwei weitere Netzläufe über
 316 Polygone, und 87 der 306 Stimmbezirke 2025 liegen nicht zu 99 % in einem Wahlbezirk 2020).
 
-## Punkt: Wahlzahlen über Flächenanteile umrechnen, Anteile erst danach (Option 02, 2026-10-12)
+## 29. Wahlzahlen über Flächenanteile umrechnen, Anteile erst danach (Option 02, 2026-10-12)
 
 Kein Wahlbezirk von 2020 blieb unter 1 % Flächenänderung gegenüber 2025; ein Vergleich über die Nummer wäre
 sinnlos. Umgerechnet wird darum von den 316 Stimmbezirken 2020 auf die 41 Wahlbezirke 2025, mit dem
@@ -434,7 +434,7 @@ urnenlastig. Drei Proben sichern das ab: die Wahlberechtigten je Wahlbezirk müs
 zugleich die geometrische Zuordnung), keine Lücke darf negativ sein, und die Summe der Briefwahlzeilen muss
 die Lücke genau füllen. Verworfen: die Briefwahl weglassen (die Beteiligung wäre fast halbiert).
 
-## Punkt: Der Vergleich ist ein eigener Schritt, kein stiller Seitenteil (Option 02, 2026-10-12)
+## 30. Der Vergleich ist ein eigener Schritt, kein stiller Seitenteil (Option 02, 2026-10-12)
 
 `compare` läuft nur mit `compare.period` und schreibt `wahlbezirke_vergleich.parquet`; der Schritt `report`
 nimmt die Datei als Eingabe, und der Abschnitt „Zwei Wahlperioden" existiert nur mit ihr. Fehlende Eingaben
@@ -444,7 +444,7 @@ Verworfen: der Vergleich als „optionale Eingabe" von `report` (das Schrittregi
 wird die Schnittmenge der Wahlbezirke beider Perioden: ein Bezirk, den nur eine Periode kennt, fällt weg,
 statt mit einer erfundenen Null zu erscheinen; die Seite nennt die Zahl.
 
-## Punkt: Kanonische Spaltennamen statt Quellnamen (Option 02, 2026-10-12)
+## 31. Kanonische Spaltennamen statt Quellnamen (Option 02, 2026-10-12)
 
 Die Wahlergebnis-CSV von 2020 nennt die Wahlberechtigten `A`, die Wähler `B` und die Parteien `D1` bis
 `D16`; die von 2025 nennt sie wie die Arbeit. `read_results_csv` benennt beim Lesen um, sodass
@@ -454,7 +454,7 @@ Master bleibt unberührt. Verworfen: die Quellnamen durchreichen (dann hieße ei
 `A`), und eine Namenstabelle in den Settings (eine Abbildung, die nur eine Richtung kennt, gehört in den
 Code).
 
-## Punkt: `[columns]` beschreibt den Zielzuschnitt, `[crosswalk]` den alten (Option 02, 2026-10-12)
+## 32. `[columns]` beschreibt den Zielzuschnitt, `[crosswalk]` den alten (Option 02, 2026-10-12)
 
 Ein Periodenprofil liest zwei Zuschnitte: seinen eigenen (die Stimmbezirke von 2020, deren GeoJSON nur
 `Stimmbezchar` trägt) und den der Auswertung (die Stimmbezirke der Hauptperiode mit Wahlbezirksnummer und
@@ -464,7 +464,7 @@ Zuschnitts stehen in `[crosswalk]`. `Layout.target_view` ist die eine Stelle, di
 Verworfen: `read_precincts` mit leeren Wahlbezirksspalten (dann hätte die Seite des Profils keine
 Bezirksnamen mehr) und ein zweiter kompletter `[columns]`-Block (vier Schlüssel doppelt).
 
-## Punkt: Der Abruf der alten Periode ist je Seite wiederaufnehmbar (Option 02, 2026-10-12)
+## 33. Der Abruf der alten Periode ist je Seite wiederaufnehmbar (Option 02, 2026-10-12)
 
 Rund 235 Seiten à 85 s sind drei Stunden; ein Abbruch darf nicht drei Stunden kosten. `fetch_papers` meldet
 nach jeder Seite ihre Paper und die URL der nächsten, der Schritt speichert beides (`raw/papers.jsonl` und
@@ -474,7 +474,7 @@ Perioden; die Liste ist neueste zuerst, also ist eine zu kleine Startseite nur l
 verlöre Dokumente. Seite 90 trug am 2026-10-12 den Bereich Januar bis März 2022 und liegt damit rund 28
 Seiten (40 Minuten) vor der Grenze — bewusst mit Vorlauf, weil jedes neue Paper die alten Seiten nach
 hinten schiebt. `incremental = false`, weil `modified` bei alten Papern das Migrationsdatum 2024-12-30 ist.
-## Punkt: pyshp statt GDAL für Shapefiles (Option 01, 2026-10-12)
+## 34. pyshp statt GDAL für Shapefiles (Option 01, 2026-10-12)
 
 Mönchengladbach veröffentlicht seine Stimmbezirksflächen nur als Shapefile im Zip
 (`Wahlen_EPSG25832_SHAPE.zip`, DL-DE Zero 2.0). `pyshp` 3.1.6 liest `.shp`, `.shx` und `.dbf` direkt aus dem
@@ -485,7 +485,7 @@ Angriffsfläche und ein zweiter Geometrie-Stack neben shapely); Konvertierung vo
 Kosten: ein weiteres Paket im Lockfile und ein mypy-Override, weil pyshp Annotationen, aber keine
 `py.typed`-Marke mitbringt.
 
-## Punkt: ein kanonischer Stand der Stimmbezirke (Option 01, 2026-10-12)
+## 35. ein kanonischer Stand der Stimmbezirke (Option 01, 2026-10-12)
 
 Zwischen der Quelldatei und allem, was Flächen liest, steht jetzt der Schritt `shapes`: aus GeoJSON oder
 Shapefile-Zip entsteht `interim/stimmbezirke.geojson` mit genau drei Eigenschaften (`stimmbezirk`,
@@ -502,7 +502,7 @@ immer mehr Parametern (jeder Leser wüsste von jeder Quelle); Umprojektion auf E
 `precincts` hat (die Umrechnung eines älteren Zuschnitts) und zwei Schritte nicht gleich heißen können; wo
 eine Periode den Zuschnitt einer anderen rechnet, entfällt `shapes` (`precincts.enabled = false`).
 
-## Punkt: Stadt, Quellen und Allowlist der Seite aus dem Profil (Option 01, 2026-10-12)
+## 36. Stadt, Quellen und Allowlist der Seite aus dem Profil (Option 01, 2026-10-12)
 
 Kopf, Fuß und „Methode und Grenzen" der Berichtsseite nennen jetzt die Stadt aus `[city]`
 (Name, Genitiv, Adjektiv, Rat, Wahl), die Quellen mit Lizenz und Prüfdatum aus `[[report.sources]]`
@@ -516,7 +516,7 @@ prüft gegen diese Menge statt gegen eine Konstante. Verworfen: eine Allowlist j
 (`Links`), und die Spaltendoku der Parteien entsteht zur Laufzeit aus `columns.results`
 (`PublishedTable.extra_columns`), weil sie je Stadt verschieden ist.
 
-## Punkt: summary.json als Schnittstelle der Stadtseite (Option 01, 2026-10-12)
+## 37. summary.json als Schnittstelle der Stadtseite (Option 01, 2026-10-12)
 
 Neben `schema.json` schreibt der Schritt `report` jetzt `site/data/summary.json`: Stadt,
 Datenstand, Kernzahlen und beide Regressionen als JSON, beschrieben in `schema.json` unter
@@ -526,7 +526,7 @@ nicht an Parquet-Schemata. Verworfen: der Vergleich liest `processed/*.parquet` 
 wäre jede Änderung an einer Zwischentabelle ein Bruch des Vergleichs) und `summary.json` als
 `PublishedTable` (es ist keine Tabelle, es hat keine Spalten).
 
-## Punkt: Städtevergleich als eigene Seite aus den veröffentlichten Ordnern (Option 01, 2026-10-12)
+## 38. Städtevergleich als eigene Seite aus den veröffentlichten Ordnern (Option 01, 2026-10-12)
 
 `georep publish` trägt die Stadtseiten nach `data/site/` zusammen und baut daraus `vergleich.html`. Gelesen
 wird je Stadt nur, was auf ihrer Seite zum Download steht (`summary.json`, `wahlbezirke.geojson`,
@@ -540,7 +540,7 @@ veröffentlichte Adresse); der Vergleich aus `processed/*.parquet` beider Läufe
 Zwischentabelle wäre ein Bruch). Kosten: `publish` muss wissen, welche Stadt flach liegt, und kopiert sie
 dann nicht; fehlt eine Stadt, löscht es einen alten Vergleich, der sonst eine Lüge wäre.
 
-## Punkt: was eine zweite Stadt nicht hat, fehlt als Block (Option 01, 2026-10-12)
+## 39. was eine zweite Stadt nicht hat, fehlt als Block (Option 01, 2026-10-12)
 
 Beim Rebase auf `main` mit sechs gemergten Optionen zeigte Mönchengladbach vier Stellen, an denen die Kette
 Düsseldorfer Daten voraussetzte. Die Regel dagegen ist überall dieselbe: der Block fehlt im Profil, und der
@@ -559,7 +559,7 @@ Datum, das nichts bedeutet, wären eine stille Lüge in der Namensnennung); Opti
 Gremiumskürzel abzuschalten (der Abschnitt zeigt dann ehrlich 100 % „unbekannt", und der volle Lauf kann die
 Frage beantworten, siehe `docs/plans/01-staedte.md`, § 8, Fragen 1.12 und 1.13).
 
-## Punkt: Gebietsnummern sind ASCII-Ziffern (Option 01, 2026-10-12)
+## 40. Gebietsnummern sind ASCII-Ziffern (Option 01, 2026-10-12)
 
 `str.isdigit()` ist für `²` wahr, `int('²')` wirft; arabisch-indische Ziffern läse `int` zwar, aber eine
 Stimmbezirks- oder Wahlbezirksnummer besteht aus 0 bis 9. `prep.precincts.is_number` prüft darum
@@ -568,7 +568,7 @@ Gefunden hat das crosshair (`nox -s verify`) als Gegenbeispiel zum Vertrag von `
 nennt beide Fälle. Verworfen: `isdecimal()` (es ließe arabisch-indische Ziffern durch) und ein `try: int(...)`
 (dann wäre der Fehler eine Ausnahme von `int`, keine Aussage über die Quelle).
 
-## Punkt: Die laufende Wahlperiode als zweites Profil mit eigenem Lauf (Option 07, 2026-10-12)
+## 41. Die laufende Wahlperiode als zweites Profil mit eigenem Lauf (Option 07, 2026-10-12)
 
 Die Periode seit der Kommunalwahl vom 14.09.2025 wird fortgeschrieben, ohne die Kette der Arbeit anzufassen:
 ein Paketprofil `profiles/duesseldorf-2025.toml` (`base = "duesseldorf"`, `profile = "2025"`, `period.start = 2025-09-15`, `end` leer,
