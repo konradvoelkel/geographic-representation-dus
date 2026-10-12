@@ -1000,8 +1000,57 @@ def _term_row(row: Mapping[str, object], context: ContextSettings) -> ControlTer
     )
 
 
+ALPHA = 0.05  # Signifikanzniveau, auf das sich die Arbeit und Tabelle 5 beziehen
+
+
+def _p(value: float) -> str:
+    """p für den Fließtext; unter einem Promille nennt die Zahl nichts mehr.
+
+    Reiner Text, kein HTML: der Satz geht durch das Autoescape der Vorlage.
+    """
+    return "< 0,001" if value < 0.001 else format_de(value, 3)
+
+
+def _lead(simple: ControlModel, best: ControlModel, rate: ControlTerm) -> str:
+    """Der erste Satzteil: was Modell A und das Hauptmodell zusammen über die Kennzahl sagen.
+
+    Vier Fälle, denn beide p zählen: ein Koeffizient, der ohne Kontrollvariablen nicht von Null zu
+    unterscheiden ist, kann mit ihnen nichts verlieren, und umgekehrt.
+    """
+    plain = next(t for t in simple.terms if t.term == RATE_TERM)
+    direction = "höher" if rate.coefficient > 0 else "niedriger"
+    effect = (
+        f": je Dokument und Wahlberechtigtem liegt die Beteiligung "
+        f"{format_de(abs(rate.coefficient), 1)} Prozentpunkte {direction}"
+    )
+    if plain.p < ALPHA and rate.p < ALPHA:
+        return (
+            f"Der Zusammenhang der {RATE_LABEL} mit der Wahlbeteiligung ist in Modell "
+            f"{simple.name} (p = {_p(plain.p)}) wie mit den Kontrollvariablen "
+            f"(p = {_p(rate.p)}) auf dem {int(ALPHA * 100)}-%-Niveau signifikant{effect}"
+        )
+    if plain.p < ALPHA:
+        return (
+            f"Modell {simple.name} zeigt einen auf dem {int(ALPHA * 100)}-%-Niveau signifikanten "
+            f"Zusammenhang (p = {_p(plain.p)}); mit den Kontrollvariablen ist der Koeffizient der "
+            f"{RATE_LABEL} nicht mehr von Null zu unterscheiden (p = {_p(rate.p)}), was Modell "
+            f"{simple.name} zeigt, erklären die Kontrollvariablen"
+        )
+    if rate.p < ALPHA:
+        return (
+            f"Modell {simple.name} findet mit p = {_p(plain.p)} keinen Zusammenhang; erst mit den "
+            f"Kontrollvariablen wird der Koeffizient der {RATE_LABEL} auf dem "
+            f"{int(ALPHA * 100)}-%-Niveau signifikant (p = {_p(rate.p)}){effect}"
+        )
+    return (
+        f"Modell {simple.name} findet mit p = {_p(plain.p)} keinen Zusammenhang, und auch mit den "
+        f"Kontrollvariablen ist der Koeffizient der {RATE_LABEL} nicht von Null zu unterscheiden "
+        f"(p = {_p(rate.p)})"
+    )
+
+
 def _verdict(models: Sequence[ControlModel], main: str, excluded: Sequence[int]) -> str:
-    """Ein Satz zur Deutung, der aus den Zahlen folgt: Vorzeichen, p, Zuwachs an R², stärkster Term."""
+    """Ein Satz zur Deutung, der aus den Zahlen folgt: p beider Modelle, Vorzeichen, R², stärkster Term."""
     # Ohne ein Modell neben A gibt es nichts zu deuten: die Stichprobe war zu klein.
     best = next((m for m in models if m.name == main and m.k > 1), None)
     simple = next((m for m in models if m.name == "A"), None)
@@ -1010,28 +1059,14 @@ def _verdict(models: Sequence[ControlModel], main: str, excluded: Sequence[int])
             "Für Modelle mit Kontrollvariablen reichen die Wahlbezirke dieser Stichprobe nicht aus."
         )
     rate = next(t for t in best.terms if t.term == RATE_TERM)
-    direction = "höher" if rate.coefficient > 0 else "niedriger"
     strongest = max(
         (t for t in best.terms if t.term not in (CONSTANT, RATE_TERM)),
         key=lambda t: abs(t.beta or 0.0),
         default=None,
     )
-    if rate.p < 0.05:
-        lead = (
-            f"Auch mit den Kontrollvariablen bleibt der Zusammenhang der {RATE_LABEL} mit der "
-            f"Wahlbeteiligung auf dem 5-%-Niveau signifikant (p = {format_de(rate.p, 3)}): "
-            f"je Dokument und Wahlberechtigtem liegt die Beteiligung {format_de(abs(rate.coefficient), 1)} "
-            f"Prozentpunkte {direction}"
-        )
-    else:
-        lead = (
-            f"Mit den Kontrollvariablen ist der Koeffizient der {RATE_LABEL} nicht von Null zu "
-            f"unterscheiden (p = {format_de(rate.p, 2)}); was Modell A als Zusammenhang zeigt, "
-            "erklären die Kontrollvariablen"
-        )
     gain = (
         f". Modell {best.name} erklärt R² = {format_de(best.r2, 2)} der Streuung gegenüber "
-        f"{format_de(simple.r2, 2)} in Modell A"
+        f"{format_de(simple.r2, 2)} in Modell {simple.name}"
     )
     strong = (
         f"; den größten Beitrag leistet {strongest.label} "
@@ -1044,7 +1079,7 @@ def _verdict(models: Sequence[ControlModel], main: str, excluded: Sequence[int])
         "keine Ursache"
         + (f"; ohne die Wahlbezirke {_join(excluded)} sieht es ähnlich aus" if excluded else "")
     )
-    return lead + gain + strong + note + "."
+    return _lead(simple, best, rate) + gain + strong + note + "."
 
 
 def _join(numbers: Sequence[int]) -> str:

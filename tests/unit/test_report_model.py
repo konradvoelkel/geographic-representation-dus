@@ -17,7 +17,10 @@ from georep.report.model import (
     NARROW_NBSP,
     TOP_TERMS,
     ColumnDoc,
+    ControlModel,
+    ControlTerm,
     ReportModel,
+    _verdict,
     build_report_model,
     column_docs,
     district_names,
@@ -437,26 +440,59 @@ def model_settings_variables() -> list[ContextVariable]:
     return list(load_settings(cwd=Path("/nonexistent")).context.variables)
 
 
+def _control_model(name: str, coefficient: float, p: float, r2: float) -> ControlModel:
+    terms = (
+        ControlTerm("(Konstante)", "Achsenabschnitt", "", 50.0, 1.0, 0.0, None, None),
+        ControlTerm("trefferquote", "Trefferquote", "", coefficient, 1.0, p, 0.3, 1.2),
+        ControlTerm("hb_score", "Sozialer Handlungsbedarf", "", -9.0, 0.5, 0.0, -0.9, 1.4),
+    )
+    return ControlModel(name, terms, 41, 2, r2, r2 - 0.01, 0.0001)
+
+
+def test_the_verdict_names_both_p_values_in_all_four_cases() -> None:
+    """Der Satz vergleicht Modell A und das Hauptmodell; beide p entscheiden, was er sagt."""
+    cases = {
+        # (p in A, p im Hauptmodell) -> was der Satz tragen muss
+        (0.01, 0.02): "wie mit den Kontrollvariablen",  # beide signifikant
+        (0.01, 0.13): "nicht mehr von Null zu unterscheiden",  # nur A signifikant
+        (0.31, 0.02): "erst mit den Kontrollvariablen",  # nur das Hauptmodell
+        (0.31, 0.13): "und auch mit den Kontrollvariablen",  # keines von beiden
+    }
+    for (p_a, p_b), marker in cases.items():
+        text = _verdict(
+            [_control_model("A", 62.0, p_a, 0.03), _control_model("B", 40.0, p_b, 0.89)], "B", ()
+        )
+        assert marker in text, (p_a, p_b, text)
+        # Beide p-Werte stehen im Satz, keiner wird unterschlagen
+        assert format_de(p_a, 3) in text and format_de(p_b, 3) in text, (p_a, p_b, text)
+    # Ohne Signifikanz behauptet der Satz keine Richtung
+    neither = _verdict(
+        [_control_model("A", 62.0, 0.31, 0.03), _control_model("B", 40.0, 0.13, 0.89)], "B", ()
+    )
+    assert "höher" not in neither and "niedriger" not in neither
+    assert "erklären die Kontrollvariablen" not in neither  # Modell A zeigt ja nichts
+
+
 def test_the_verdict_follows_the_numbers(tmp_path: Path) -> None:
     """Der Satz zur Deutung entsteht aus p, Vorzeichen und R², nicht aus festem Text."""
-    from georep.report.model import ControlModel, ControlTerm, _verdict
-
-    def model(name: str, coefficient: float, p: float, r2: float) -> ControlModel:
-        terms = (
-            ControlTerm("(Konstante)", "Achsenabschnitt", "", 50.0, 1.0, 0.0, None, None),
-            ControlTerm("trefferquote", "Trefferquote", "", coefficient, 1.0, p, 0.3, 1.2),
-            ControlTerm("hb_score", "Sozialer Handlungsbedarf", "", -9.0, 0.5, 0.0, -0.9, 1.4),
-        )
-        return ControlModel(name, terms, 41, 2, r2, r2 - 0.01, 0.0001)
-
-    simple = model("A", 62.0, 0.31, 0.03)
-    significant = _verdict([simple, model("B", 40.0, 0.01, 0.89)], "B", (1, 10))
+    simple = _control_model("A", 62.0, 0.01, 0.03)
+    significant = _verdict([simple, _control_model("B", 40.0, 0.01, 0.89)], "B", (1, 10))
     assert "signifikant" in significant and "höher" in significant
     assert "0,89" in significant and "Sozialer Handlungsbedarf" in significant
     assert "ohne die Wahlbezirke 1 und 10" in significant
-    negative = _verdict([simple, model("B", -40.0, 0.01, 0.89)], "B", ())
+    negative = _verdict([simple, _control_model("B", -40.0, 0.01, 0.89)], "B", ())
     assert "niedriger" in negative and "ohne die Wahlbezirke" not in negative
-    insignificant = _verdict([simple, model("B", 40.0, 0.13, 0.89)], "B", ())
-    assert "nicht von Null zu unterscheiden" in insignificant
+    insignificant = _verdict([simple, _control_model("B", 40.0, 0.13, 0.89)], "B", ())
+    assert "nicht mehr von Null zu unterscheiden" in insignificant
     assert "keine Ursache" in insignificant
     assert _verdict([simple], "B", ()).startswith("Für Modelle mit Kontrollvariablen")
+
+
+def test_a_tiny_p_is_plain_text_for_the_autoescape() -> None:
+    """Der Satz ist Text, kein HTML: ein `<` darf nicht als Entity hineingeraten."""
+    text = _verdict(
+        [_control_model("A", 62.0, 0.0000001, 0.03), _control_model("B", 40.0, 0.0002, 0.89)],
+        "B",
+        (),
+    )
+    assert "< 0,001" in text and "&lt;" not in text
