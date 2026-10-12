@@ -89,6 +89,22 @@ def test_canonical_term_replaces_every_abbreviation() -> None:
     assert canonical_term("r. x", (("rue", "r."),)) == "rue x"
 
 
+def test_canonical_term_also_removes_an_abbreviation_formed_at_the_seam() -> None:
+    """crosshair fand am 2026-10-12 ein Gegenbeispiel zur Nachbedingung (Befund 20 des Reviews).
+
+    ``canonical_term("\x00\x00\x01\x00\x00", abbreviations=(("\x01", "\x01\x00"),))`` gab
+    ``"\x00\x00\x01\x00"`` zurück: die eingesetzte Langform bildet mit dem nächsten Zeichen des
+    Begriffs eine neue Abkürzung. Ein einzelner Durchlauf von ``str.replace`` sieht das nicht; die
+    Vorbedingung konnte es nicht sehen, weil es am Begriff hängt und nicht am Paar. Die
+    Nachbedingung hat es gefangen, also war die Funktion falsch, nicht der Vertrag.
+    """
+    assert canonical_term("\x00\x00\x01\x00\x00", (("\x01", "\x01\x00"),)) == "\x00\x00\x01"
+    # dasselbe lesbar: die Langform „ab" bildet mit dem folgenden „c" wieder die Abkürzung „bc"
+    assert canonical_term("xbcc", (("ab", "bc"),)) == "xaab"
+    # der echte Fall bleibt, wie er war
+    assert canonical_term("münchener str.") == "münchener straße"
+
+
 def test_canonical_term_refuses_an_abbreviation_inside_its_long_form() -> None:
     with pytest.raises(deal.PreContractError):
         canonical_term("x", (("strasse", "str"),))
