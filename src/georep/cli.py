@@ -78,6 +78,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     pub = sub.add_parser("publish", help="Stadtseiten zusammentragen und den Städtevergleich bauen")
     pub.add_argument("--out", type=Path, help="Zielordner (Standard: <data_root>/site)")
+    # Option 07: maschinenlesbar für Skripte (deploy/), damit kein Pfad und kein Profilname
+    # außerhalb des Pakets ein zweites Mal definiert wird.
+    sub.add_parser("paths", help="Profil und Pfade des Layouts als key=wert, eine Zeile je Wert")
 
     boot = sub.add_parser("bootstrap", help="Referenzdatensatz nach data_root übernehmen")
     boot.add_argument("--force", action="store_true", help="vorhandene Dateien überschreiben")
@@ -224,6 +227,30 @@ def _cmd_publish(args: argparse.Namespace, settings: Settings, layout: Layout) -
         out=args.out,
     )
     print(summary.line())
+
+
+def _cmd_paths(layout: Layout) -> int:
+    """Profil und Pfade als ``key=wert``: die eine Quelle für Skripte außerhalb des Pakets.
+
+    Nur ``profile`` darf leer sein (Hauptperiode); alle Pfade sind absolut, auch wenn es sie noch
+    nicht gibt. ``deploy/bin/georep-monitor.sh`` liest daraus, wohin die Seite gehört und wie das
+    Profil heißt, statt beides in der Umgebungsdatei zu wiederholen (Option 07).
+    """
+    entries: dict[str, object] = {
+        "profile": layout.profile,
+        "data_root": layout.data_root.resolve(),
+        "root": layout.root.resolve(),
+        "site": layout.site.resolve(),
+        "site_index": layout.site_index.resolve(),
+        "cache": layout.cache.resolve(),
+        "pdf_dir": layout.pdf_dir.resolve(),
+        "pdf_manifest": layout.pdf_manifest.resolve(),
+        "text_store": layout.texts.resolve(),
+        "papers": layout.papers.resolve(),
+        "processed": layout.processed.resolve(),
+    }
+    for key, value in entries.items():
+        print(f"{key}={value}")
     return 0
 
 
@@ -336,6 +363,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cmd_profiles(settings)
         if args.command == "publish":
             return _cmd_publish(args, settings, layout)
+        if args.command == "paths":
+            return _cmd_paths(layout)  # Option 07
         if args.command == "bootstrap":
             return _cmd_bootstrap(args, settings, layout)
         if args.command == "export":

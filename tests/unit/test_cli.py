@@ -330,3 +330,29 @@ def test_profile_2025_bootstraps_without_a_corpus_and_shows_its_root(
     # Ohne Store plant der Metadatenschritt einen vollstaendigen Abruf; kein echter Abruf
     assert main(["--settings", profile, "run", "--dry-run", "--online", "papers"]) == 0
     assert "papers       geplant" in capsys.readouterr().out
+
+
+def test_paths_prints_the_layout_for_scripts(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``georep paths`` ist die Quelle für deploy/; nur das Profil darf leer sein."""
+    from tests.conftest import REPO
+
+    assert main(["paths"]) == 0
+    main_profile = dict(line.split("=", 1) for line in capsys.readouterr().out.splitlines() if line)
+    assert main_profile["profile"] == ""
+    assert main_profile["root"] == str(project / "data")
+    assert main_profile["site"] == str(project / "data" / "site")
+    assert all(v.startswith("/") for k, v in main_profile.items() if k != "profile")
+
+    assert main(["--settings", str(REPO / "settings.2025.toml"), "paths"]) == 0
+    profile = dict(line.split("=", 1) for line in capsys.readouterr().out.splitlines() if line)
+    assert profile["profile"] == "2025"
+    assert profile["root"] == str(project / "data" / "2025")
+    assert profile["site_index"] == str(project / "data" / "2025" / "site" / "index.html")
+    assert profile["papers"] == str(project / "data" / "2025" / "raw" / "papers.jsonl")
+    assert profile["pdf_dir"].endswith("/2025/pdf")
+    assert profile["text_store"].endswith("/2025/text/texts.parquet")
+    assert set(profile) == set(main_profile) and len(profile) == 11
+    # Jeder Wert ohne Leerzeichen am Rand: das Skript liest sie als key=wert
+    assert all(v == v.strip() for v in profile.values())
