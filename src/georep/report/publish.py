@@ -195,10 +195,13 @@ def publish_sites(
     missing: list[str] = []
     for index, slug in enumerate(slugs):
         source = city_layout(settings, layout, slug).site
+        target = root if index == 0 else root / slug
         if not (source / "index.html").is_file():
             missing.append(slug)
+            # Ein Stadtordner ohne Lauf wäre tote Last: kein Link zeigt hin, die Zahlen sind alt
+            if index > 0 and target.is_dir():
+                shutil.rmtree(target)
             continue
-        target = root if index == 0 else root / slug
         href = "" if index == 0 else f"{slug}/"
         if source.resolve() != target.resolve():
             _copy_tree(source, target)
