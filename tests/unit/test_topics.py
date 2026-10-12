@@ -180,11 +180,17 @@ def test_without_the_source_namen_no_name_is_derived() -> None:
 
 
 def test_a_kept_word_survives_a_derived_stop_word() -> None:
-    """Sachwörter, die zufällig in einem Gruppennamen stehen, nennt das Profil (``stop_keep``)."""
+    """Sachwörter, die zufällig in einem Gruppen- oder Gremiennamen stehen, nennt das Profil.
+
+    Nicht nur Parteinamen können ein Sachwort mitnehmen: ein **Gremienkürzel** kann mit einem
+    Wort zusammenfallen. „BAU" (Bauausschuss) ist als Wort „bau" und steht auf der Referenz in
+    1101 von 19 033 Dokumenten (5,8 %); es gehört in die Themen. ``topics.stop_keep`` holt es
+    zurück.
+    """
     settings = load_settings(cwd=Path("/nonexistent"))
     rules = TopicRules.from_settings(settings)
-    assert "klima" not in rules.stop_words  # vom Profil zurückgeholt
-    assert "cdu" in rules.stop_words
+    assert not {"klima", "tierschutz", "bau"} & rules.stop_words  # vom Profil zurückgeholt
+    assert {"cdu", "ova", "kua"} <= rules.stop_words
     assert settings.topics.stop_keep  # das Profil nennt die Ausnahmen
 
 
