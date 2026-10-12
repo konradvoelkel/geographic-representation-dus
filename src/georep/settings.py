@@ -405,9 +405,11 @@ class Settings(BaseSettings):
     def fingerprint(self) -> str:
         """Kurzer Hash aller Parameter, die ein Ergebnis beeinflussen.
 
-        Nicht dabei: Pfade (auch ``profile``, ein Ordnername), Log-Level, Cache-Lebensdauern und
-        der Vertragsschalter ``contracts``, denn Verträge prüfen ein Ergebnis, sie ändern es nicht;
-        ``bodies.names_as_of`` ist reine Anzeige (die Kürzel und Namen daneben zählen).
+        Nicht dabei: Pfade (auch ``profile``, ein Ordnername), Log-Level, Cache-Lebensdauern, der
+        Vertragsschalter ``contracts``, denn Verträge prüfen ein Ergebnis, sie ändern es nicht, und
+        reine Anzeigewerte (00-synergien.md, § 5.4): ``bodies.names_as_of`` (die Kürzel und Namen
+        daneben zählen) und die Beschriftung eines Regelsatzes der Gewichtung -- eine umformulierte
+        Überschrift soll nicht die ganze Kette neu rechnen lassen.
         """
         payload = self.model_dump(
             mode="json",
@@ -420,6 +422,8 @@ class Settings(BaseSettings):
                 "cache": True,
                 "contracts": True,
                 "bodies": {"names_as_of"},
+                # Nur Anzeige: die Beschriftung eines Regelsatzes auf der Berichtsseite.
+                "weights": {"paper_type": {"__all__": {"label"}}},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

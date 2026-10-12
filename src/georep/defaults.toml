@@ -197,7 +197,7 @@ combined = ["idf", "antraege_halb"]  # Faktoren der Variante "kombiniert" als Pr
 
 [[weights.paper_type]]         # Regelsatz = eine Variante: geordnete Regex-Regeln auf paper_type (ohne Groß/Klein), die erste passende gewinnt, sonst default
 name = "antraege_halb"
-label = "Anträge, Anfragen, Eingaben halb"
+label = "Anträge, Anfragen, Eingaben halb"  # nur die Beschriftung der Zeile auf der Seite; zählt nicht zum Fingerprint
 default = 1.0
 rules = [{ pattern = "^z?(antrag|anfrage|haushaltsantrag|eingabe)", weight = 0.5 }]  # deckt 30 Fraktionsvarianten ("Antrag SPD", "zAnfrage REP") mit einem Präfix; A+F Beschluss und Bedarfsbeschluss bleiben Vorlagen
 

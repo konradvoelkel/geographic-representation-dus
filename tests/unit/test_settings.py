@@ -319,3 +319,23 @@ def test_topics_k_stops_at_99_so_the_variant_names_sort(tmp_path: Path) -> None:
     (tmp_path / "settings.toml").write_text("[topics]\nk = 100\n", encoding="utf-8")
     with pytest.raises(ValidationError, match="99"):
         load_settings(cwd=tmp_path)
+
+
+def test_a_label_is_an_display_value_and_stays_out_of_the_fingerprint(tmp_path: Path) -> None:
+    """Die Beschriftung eines Regelsatzes steht nur auf der Seite; sie darf keinen Lauf auslösen."""
+    rules = (
+        '[weights]\ncombined = ["idf", "x"]\n'
+        '[[weights.paper_type]]\nname = "x"\nlabel = "{}"\n'
+        'rules = [{{ pattern = "^antrag", weight = 0.5 }}]\n'
+    )
+    (tmp_path / "settings.toml").write_text(rules.format("Anträge halb"), encoding="utf-8")
+    first = load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(rules.format("Anträge, Anfragen"), encoding="utf-8")
+    second = load_settings(cwd=tmp_path)
+    assert first.weights.paper_type[0].label != second.weights.paper_type[0].label
+    assert first.fingerprint() == second.fingerprint()
+    # Das Gewicht derselben Regel zählt dagegen sehr wohl.
+    (tmp_path / "settings.toml").write_text(
+        rules.format("Anträge halb").replace("0.5", "0.25"), encoding="utf-8"
+    )
+    assert load_settings(cwd=tmp_path).fingerprint() != first.fingerprint()
