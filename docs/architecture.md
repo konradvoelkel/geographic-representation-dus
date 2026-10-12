@@ -49,10 +49,11 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 ## Pipeline
 
-Sechsundzwanzig Schritte stehen im Register, jeder mit Eingaben, Ausgaben und einer
+Achtundzwanzig Schritte stehen im Register, jeder mit Eingaben, Ausgaben und einer
 Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps` zeigt es
-(nachgezählt am 2026-10-12: vierundzwanzig für Düsseldorf, fünfundzwanzig mit Vergleich, neunzehn
-im Periodenprofil, zwanzig für Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
+(nachgezählt am 2026-10-12: fünfundzwanzig für Düsseldorf, sechsundzwanzig mit Vergleich, zwanzig
+im Periodenprofil 2014 bis 2020, neunzehn in der laufenden Periode, einundzwanzig für
+Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
 `georep fetch`; `georep fetch` führt `shapes` und `texts` mit, weil die Netzschritte die Flächen
 brauchen und die Texte sonst im Cache liegen blieben. Mit
 `topics.k = 0` fehlt der Schritt `topics`, und `weights` rechnet ohne Themenvarianten. Die drei
@@ -247,10 +248,10 @@ Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. D
 Sensitivitätstabelle mit beiden Spalten von Tabelle 5 je Gewichtungsvariante und der Rangkorrelation zur
 ungewichteten Quote, darunter die Themen mit ihren stärksten Wörtern. Die Einheitszeile trägt dieselben
 Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeigt „—", und fehlt der ganzen
-Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 44 Dateien
-(mit `summary.json`, Option 01), 13,4 MB, davon `index.html` 1,08 MB (144 KB Suchdaten, 63 KB die
-Parteikarten, 33 KB die Gewichtung), `karte.html` 252 KB, `dokumente.json` 2,3 MB; 1,5 s (2026-10-12, nach
-dem Rebase auf 02).
+Tabelle die zweite Regression, entfällt die Spaltengruppe. Auf der Referenz: 41 Wahlbezirke, 48 Dateien
+(mit `summary.json`, Option 01), 13,5 MB, davon `index.html` 1,17 MB (144 KB Suchdaten, 63 KB die
+Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html` 252 KB, `dokumente.json` 2,3 MB;
+1,6 s (2026-10-12, nach dem Rebase von Option 07).
 
 Die Stadtseite kennt ihre Nachbarn nicht: wo die Zeile „Weitere Städte" steht, hinterlässt der Rahmen nur die
 Marke `<!--georep:weitere-staedte-->`. Erst `georep publish` (`report.publish`) weiß, welche Stadtseiten es

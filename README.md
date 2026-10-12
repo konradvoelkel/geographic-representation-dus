@@ -22,7 +22,7 @@ git clone git@github.com:konradvoelkel/geographic-representation-dus.git
 cd geographic-representation-dus
 uv sync --locked                        # Umgebung aus dem Lockfile
 uv run georep bootstrap                 # Datensatz der Arbeit nach ./data übernehmen
-uv run georep run                       # fünfzehn Offline-Schritte, rund 16 s; schreibt auch die Berichtsseite data/site/index.html
+uv run georep run                       # siebzehn Offline-Schritte, rund 17 s; schreibt auch die Berichtsseite data/site/index.html
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 uv run georep regress --controls        # Tabelle 6 mit den Kontrollvariablen
 ```
@@ -34,7 +34,7 @@ und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
 ## Berichtsseite
 
 `georep run` endet mit dem Schritt `report`: `data/site/index.html` ist eine in sich geschlossene Seite (rund
-990 KB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
+1,17 MB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
 einem Suchfeld für Straßen und Orte (4176 Einträge in der Seite, darum ohne Netz: die Auswahl nennt Art,
 Wahlbezirke und Dokumente und markiert sie auf der Karte; `index.html#suche=hofgarten` ist teilbar),
 der Karte der 41 Wahlbezirke (Trefferquote oder Wahlbeteiligung, Tooltips, Klick-Markierung, die 1309 Orte als
