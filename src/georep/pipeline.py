@@ -31,6 +31,8 @@ from georep.analysis.parties import (
     read_organizations,
 )
 from georep.analysis.periods import compare_periods, delta_regression
+from georep.analysis.scaling import district_metrics
+from georep.analysis.scaling import summary as metrics_summary
 from georep.analysis.timeline import WITH_TEXT, district_months, monthly_series
 from georep.crosswalk import (
     COVERAGE,
@@ -696,6 +698,14 @@ def build_steps(
             f"{frame.height} Wahlbezirke, {int(frame.get_column('anzahl_treffer').sum())} Treffer"
         )
 
+    # --- Punkt 46: die normierten Lesarten derselben Treffer (docs/skalierung-2026-10.md)
+    def metrics() -> str:
+        frame = district_metrics(
+            pl.read_parquet(layout.results), pl.read_parquet(layout.dictionary)
+        )
+        write_parquet(frame, layout.district_metrics, schema_version=1)
+        return metrics_summary(frame)
+
     # --- Option 05: Gremium je Dokument aus der Drucksachennummer, dann die Kennzahlen
     def bodies() -> str:
         corpus = pl.read_parquet(layout.corpus, columns=["id", "reference"])
@@ -1089,6 +1099,13 @@ def build_steps(
         Step(
             "results", (layout.dictionary, layout.index, layout.voters), (layout.results,), results
         ),
+        # --- Punkt 46
+        Step(
+            "metrics",
+            (layout.results, layout.dictionary),
+            (layout.district_metrics,),
+            metrics,
+        ),
         # --- Option 05
         Step(
             "body_hits",
@@ -1207,6 +1224,8 @@ def build_steps(
                 # Option 07: die Monatsreihe und ihre Zerlegung je Wahlbezirk
                 layout.timeline,
                 layout.district_timeline,
+                # Punkt 46: die normierten Kennzahlen je Wahlbezirk
+                layout.district_metrics,
             )
             + ((layout.topics, layout.topic_documents) if with_topics else ())
             # --- Punkt 45: die Tabelle der passenden Ausschüsse

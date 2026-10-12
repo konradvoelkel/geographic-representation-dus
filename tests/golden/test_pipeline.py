@@ -105,6 +105,7 @@ def test_pipeline_runs_skips_and_reruns(
         "index": "ausgeführt",
         "timeline": "ausgeführt",  # Option 07: haengt an Index und Woerterbuch
         "results": "ausgeführt",
+        "metrics": "ausgeführt",  # Punkt 46: haengt an results und Woerterbuch
         "body_hits": "ausgeführt",
         "weights": "ausgeführt",
         "parties": "ausgeführt",  # Option 04: haengt an results

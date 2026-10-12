@@ -392,6 +392,12 @@ class Layout:
         """Dokumente je passendem Ausschuss: die veröffentlichte Zusammenfassung."""
         return self.processed / "ausschuss_zuordnung.parquet"
 
+    # Punkt 46: die normierten Lesarten derselben Treffer (Schritt ``metrics``)
+    @property
+    def district_metrics(self) -> Path:
+        """Treffer je Begriff, je 1000 Wahlberechtigte und relativ zum Stadtmittel."""
+        return self.processed / "wahlbezirke_kennzahlen.parquet"
+
     def runtime_dirs(self) -> tuple[Path, ...]:
         return (
             self.external,

@@ -10,7 +10,6 @@ from georep.analysis.hits import DISTRICT, RATE, TERMS
 from georep.analysis.scaling import (
     CITY_MEAN,
     DEVIATION,
-    HITS,
     METRIC_COLUMNS,
     PER_1000,
     PER_TERM,
@@ -23,6 +22,7 @@ from georep.analysis.scaling import (
 from georep.errors import SchemaError
 from georep.layout import Layout
 from georep.prep.voters import ELIGIBLE_TOTAL
+from georep.search.index import HITS
 
 
 def _results(rows: list[tuple[int, int, int]]) -> pl.DataFrame:
@@ -58,8 +58,8 @@ def test_the_metrics_are_counted_by_hand() -> None:
     assert frame.get_column(PER_TERM).to_list() == [2.0, 3.0, 2.0]
     assert frame.get_column(PER_1000).to_list() == [10.0, 6.0, 2.0]
     # Stadtmittel ist das ungewichtete Mittel der drei Quoten, nicht 180/30 000
-    assert frame.get_column(CITY_MEAN).to_list() == [0.006, 0.006, 0.006]
-    assert frame.get_column(DEVIATION).to_list() == [2.0 / 3.0, 0.0, -2.0 / 3.0]
+    assert frame.get_column(CITY_MEAN).to_list() == pytest.approx([0.006, 0.006, 0.006])
+    assert frame.get_column(DEVIATION).to_list() == pytest.approx([2.0 / 3.0, 0.0, -2.0 / 3.0])
 
 
 def test_the_deviations_add_up_to_zero() -> None:
@@ -106,9 +106,7 @@ def test_the_mini_fixture_matches_polars(mini_run: Layout) -> None:
     results = pl.read_parquet(mini_run.results)
     dictionary = pl.read_parquet(mini_run.dictionary)
     assert frame.height == results.height
-    sizes = dict(
-        dictionary.select(DISTRICT, pl.col(TERMS).list.len()).iter_rows()  # type: ignore[arg-type]
-    )
+    sizes = dict(dictionary.select(DISTRICT, pl.col(TERMS).list.len()).iter_rows())
     assert dict(frame.select(DISTRICT, TERM_COUNT).iter_rows()) == sizes
     expected = dict(results.select(DISTRICT, RATE).iter_rows())
     mean = sum(expected.values()) / len(expected)

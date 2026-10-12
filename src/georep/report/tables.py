@@ -617,6 +617,53 @@ TABLES.append(
     )
 )
 
+# Punkt 46: die normierten Lesarten derselben Treffer. Eigene Tabelle und nicht drei Spalten mehr
+# in ``wahlbezirke_auswertung``: die ist Golden Master (tests/fixtures/mini/expected/, Punkt 11),
+# und eine Kennzahl, die nicht von der Arbeit stammt, gehört nicht hinein.
+TABLES.append(
+    PublishedTable(
+        "wahlbezirke_kennzahlen",
+        lambda layout: layout.district_metrics,
+        "Dieselben Treffer in vier Lesarten: roh, je Begriff, je 1000 Wahlberechtigte, "
+        "relativ zum Stadtmittel",
+        {
+            "wahlkreis_id": DISTRICT_COLUMN,
+            "anzahl_treffer": (
+                "Dokumente mit mindestens einem Treffer, wie in wahlbezirke_auswertung",
+                "Dokumente",
+            ),
+            "begriffe": (
+                "Begriffe im Wörterbuch des Wahlbezirks, die versteckten und die ohne Treffer "
+                "eingeschlossen",
+                "Begriffe",
+            ),
+            "treffer_je_begriff": (
+                "anzahl_treffer geteilt durch begriffe: in wie vielen Dokumenten ein Ort des "
+                "Bezirks im Schnitt vorkommt",
+                "Dokumente je Begriff",
+            ),
+            "trefferquote": (
+                "anzahl_treffer geteilt durch Wahlberechtigte_insgesamt",
+                "Dokumente je Person",
+            ),
+            "treffer_je_1000": (
+                "trefferquote mal 1000: Dokumente je 1000 Wahlberechtigte",
+                "Dokumente je 1000 Personen",
+            ),
+            "stadtmittel": (
+                "ungewichtetes Mittel der Trefferquoten aller Wahlbezirke, in jeder Zeile gleich",
+                "Dokumente je Person",
+            ),
+            "abweichung_stadtmittel": (
+                "trefferquote geteilt durch stadtmittel, minus 1: 0 heißt genau im Mittel, "
+                "+0,5 heißt 50 Prozent darüber",
+                "Anteil, -1 und mehr",
+            ),
+        },
+        optional=True,  # nur nach dem Schritt metrics
+    )
+)
+
 # Nur für ``georep export`` (CSV neben der Parquet-Datei), nicht auf der Seite.
 EXPORT_ONLY: list[PublishedTable] = [
     PublishedTable(
