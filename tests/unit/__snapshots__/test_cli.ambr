@@ -31,7 +31,9 @@
                -> combined_searchdict.parquet
   corpus       <- papers.jsonl, texts.parquet
                -> papers.parquet
-  topics       <- papers.parquet
+  bodies       <- papers.parquet
+               -> papers_gremien.parquet
+  topics       <- papers.parquet, papers_gremien.parquet
                -> themen.parquet, themen_dokumente.parquet, themen_anteile.parquet
   index        <- combined_searchdict.parquet, papers.parquet
                -> inverted_index.parquet
@@ -39,8 +41,6 @@
                -> monatsreihe.parquet, wahlbezirke_monate.parquet
   results      <- combined_searchdict.parquet, inverted_index.parquet, wahlbezirke_waehler.parquet
                -> wahlbezirke_auswertung.parquet
-  bodies       <- papers.parquet
-               -> papers_gremien.parquet
   body_hits    <- wahlbezirke_auswertung.parquet, papers_gremien.parquet, wahlbezirke_stadtbezirke.parquet
                -> wahlbezirke_gremien.parquet, gremien.parquet
   weights      <- combined_searchdict.parquet, inverted_index.parquet, papers.parquet, wahlbezirke_waehler.parquet, themen_anteile.parquet

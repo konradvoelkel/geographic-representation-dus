@@ -711,19 +711,32 @@ def build_steps(
         return bodies_summary(districts, bodies_frame)
 
     # --- Option 06: Themen je Dokument (docs/plans/06-gewichtung.md)
+    # Punkt 45: die Gremien je Dokument sind die Saat, darum liest der Schritt sie mit
     def topics() -> str:
         # Erst hier importieren, nicht oben: sklearn kostet rund 0,4 s Importzeit, und nur wer
         # rechnet, soll sie zahlen (``georep status`` lädt build_steps).
-        from georep.analysis.topics import dominant_topics, fit_topics
+        from georep.analysis.topics import (
+            TOPICS_SCHEMA_VERSION,
+            TopicRules,
+            dominant_topics,
+            fit_topics,
+        )
 
-        model = fit_topics(pl.read_parquet(layout.corpus, columns=["id", "text"]), settings.topics)
-        write_parquet(model.topics, layout.topics, schema_version=1)
+        rules = TopicRules.from_settings(settings)
+        model = fit_topics(
+            pl.read_parquet(layout.corpus, columns=["id", "text"]),
+            settings.topics,
+            rules,
+            pl.read_parquet(layout.papers_bodies) if rules.seed != "none" else None,
+        )
+        write_parquet(model.topics, layout.topics, schema_version=TOPICS_SCHEMA_VERSION)
         write_parquet(dominant_topics(model.shares), layout.topic_documents, schema_version=1)
         write_parquet(model.shares, layout.topic_shares, schema_version=1)
         words = int(model.topics.get_column("woerter").list.len().sum())
+        seeded = int(model.topics.get_column("gremium").is_not_null().sum())
         return (
-            f"{model.topics.height} Themen, {model.shares.height} Dokumente, "
-            f"{words} Wörter in den Beschriftungen"
+            f"{model.topics.height} Themen ({seeded} je Ausschuss gesät), "
+            f"{model.shares.height} Dokumente, {words} Wörter in den Beschriftungen"
         )
 
     # --- Option 06: Gewichtete Trefferquoten
@@ -873,6 +886,8 @@ def build_steps(
     # Option 06: ohne Themenmodell (``topics.k = 0``) fehlt der Schritt und niemand nennt seine
     # Ausgaben als Eingabe; die zwei Tabellen der Themen sind im Register ``optional``.
     with_topics = settings.topics.k > 0
+    # Punkt 45: mit Saat liest ``topics`` auch die Gremien je Dokument (``papers_gremien.parquet``)
+    seed_inputs = (layout.papers_bodies,) if settings.topics.seed != "none" else ()
     # Option 01: die Urheber (Option 04) brauchen die Fraktionsnamen der Stadt
     with_parties = bool(settings.originators.parties)
     topic_outputs = (layout.topics, layout.topic_documents, layout.topic_shares)
@@ -1005,8 +1020,21 @@ def build_steps(
             corpus,
             CORPUS_SCHEMA_VERSION,
         ),
-        # --- Option 06
-        *([Step("topics", (layout.corpus,), topic_outputs, topics)] if with_topics else []),
+        # --- Option 05: der Parser der Drucksachennummern steht vor dem Themenmodell, weil
+        # Punkt 45 die Gremien als Saat liest (``topics.seed``); er liest nur den Korpus.
+        Step(
+            "bodies",
+            (layout.corpus,),
+            (layout.papers_bodies,),
+            bodies,
+            BODIES_SCHEMA_VERSION,
+        ),
+        # --- Option 06, mit der Saat aus Punkt 45
+        *(
+            [Step("topics", (layout.corpus, *seed_inputs), topic_outputs, topics)]
+            if with_topics
+            else []
+        ),
         Step("index", (layout.dictionary, layout.corpus), (layout.index,), index),
         # --- Option 07: Monitoring der laufenden Wahlperiode
         Step(
@@ -1017,14 +1045,6 @@ def build_steps(
         ),
         Step(
             "results", (layout.dictionary, layout.index, layout.voters), (layout.results,), results
-        ),
-        # --- Option 05
-        Step(
-            "bodies",
-            (layout.corpus,),
-            (layout.papers_bodies,),
-            bodies,
-            BODIES_SCHEMA_VERSION,
         ),
         # --- Option 05
         Step(

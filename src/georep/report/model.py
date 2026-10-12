@@ -254,6 +254,15 @@ class TopicRow:
     words: tuple[str, ...]
     documents: int  # Dokumente, deren stärkstes Thema dieses ist
     hits_share: float  # Anteil des Themas an den gezählten Treffern
+    # Punkt 45: das Kürzel des Ausschusses, aus dem das Thema gesät ist, und sein Name aus dem
+    # Profil; beide leer bei einem freien Thema, der Name leer, wenn er nicht gesichert ist.
+    body: str = ""
+    name: str = ""
+
+    @property
+    def label(self) -> str:
+        """Was auf der Seite steht: der Name, sonst das Kürzel, sonst nichts (freies Thema)."""
+        return self.name or self.body
 
 
 @dataclass(frozen=True)
@@ -966,6 +975,7 @@ LEVEL = 0.05  # Signifikanzniveau, über das der Abschnitt zählt; wie Tabelle 5
 # ``analysis/topics.py`` sklearn mitbringt und die Berichtsseite es nicht laden soll; ein Test in
 # tests/unit/test_report_model.py hält beide Seiten gleich.
 TOPIC = "thema"
+TOPIC_BODY = "gremium"  # Punkt 45: Kürzel des gesäten Ausschusses, null bei einem freien Thema
 WORDS = "woerter"
 DOCUMENTS = "dokumente"
 _FIXED_LABELS: dict[str, tuple[str, str]] = {
@@ -1031,6 +1041,7 @@ def _rows_match_the_file(
     weights: Weights,
     exclude: Sequence[int] = (),
     with_topics: bool = True,
+    topic_labels: Mapping[int, str] | None = None,
     result: tuple[SensitivityRow, ...] | None = None,
 ) -> bool:
     assert result is not None
@@ -1048,7 +1059,7 @@ def _rows_match_the_file(
 
 
 @deal.pre(
-    lambda weighted, results, weights, exclude=(), with_topics=True: (
+    lambda weighted, results, weights, exclude=(), with_topics=True, topic_labels=None: (
         has_columns(weighted, DISTRICT, VARIANT, WEIGHTED_HITS, WEIGHTED_RATE)
         and has_columns(results, DISTRICT, TURNOUT, RATE)
     )
@@ -1062,6 +1073,7 @@ def sensitivity_rows(
     weights: Weights,
     exclude: Sequence[int] = (),
     with_topics: bool = True,
+    topic_labels: Mapping[int, str] | None = None,
 ) -> tuple[SensitivityRow, ...]:
     """Je Variante beide Regressionen und die Rangkorrelation zur ungewichteten Quote."""
     labels = variant_labels(weights)
@@ -1076,6 +1088,10 @@ def sensitivity_rows(
             pair = None
         label, description = labels.get(name, (name, ""))
         number = int(name.removeprefix(TOPIC_PREFIX)) if name.startswith(TOPIC_PREFIX) else None
+        if number is not None:
+            # Punkt 45: ein gesätes Thema trägt den Namen seines Ausschusses, ein freies keinen;
+            # die Nummer steht in der Vorlage davor, die Formel wiederholt sich nicht je Zeile.
+            label, description = (topic_labels or {}).get(number, ""), ""
         rows.append(
             SensitivityRow(
                 name=name,
@@ -1090,13 +1106,19 @@ def sensitivity_rows(
     return tuple(rows)
 
 
-@deal.pre(lambda topics, weighted: has_columns(topics, TOPIC, WORDS, DOCUMENTS))
+@deal.pre(lambda topics, weighted, names=None: has_columns(topics, TOPIC, WORDS, DOCUMENTS))
 @deal.post(
     lambda result: [row.index for row in result] == sorted(row.index for row in result),
     message="Themen in Nummernreihenfolge",
 )
-def topic_rows(topics: pl.DataFrame, weighted: pl.DataFrame) -> tuple[TopicRow, ...]:
-    """Je Thema die stärksten Wörter, die dominierten Dokumente und der Anteil an den Treffern."""
+def topic_rows(
+    topics: pl.DataFrame, weighted: pl.DataFrame, names: Mapping[str, str] | None = None
+) -> tuple[TopicRow, ...]:
+    """Je Thema die stärksten Wörter, die dominierten Dokumente und der Anteil an den Treffern.
+
+    ``names`` bildet das Gremienkürzel auf seinen Namen ab (``[bodies]``, Punkt 45); ein Kürzel
+    ohne gesicherten Namen steht als Kürzel auf der Seite, ein freies Thema ohne beides.
+    """
     counted = float(weighted.filter(pl.col(VARIANT) == UNIT).get_column(WEIGHTED_HITS).sum() or 0.0)
     totals = dict(
         weighted.filter(pl.col(VARIANT).str.starts_with(TOPIC_PREFIX))
@@ -1112,6 +1134,8 @@ def topic_rows(topics: pl.DataFrame, weighted: pl.DataFrame) -> tuple[TopicRow, 
             hits_share=(
                 totals.get(topic_variant(int(row[TOPIC])), 0.0) / counted if counted > 0 else 0.0
             ),
+            body=str(row.get(TOPIC_BODY) or ""),
+            name=(names or {}).get(str(row.get(TOPIC_BODY) or ""), ""),
         )
         for row in topics.sort(TOPIC).iter_rows(named=True)
     )
@@ -1129,15 +1153,24 @@ def build_sensitivity(layout: Layout, settings: Settings, results: pl.DataFrame)
     """Der ganze Abschnitt aus ``wahlbezirke_gewichtet.parquet`` und (wenn da) ``themen.parquet``."""
     weighted = pl.read_parquet(layout.weighted)
     with_topics = settings.topics.k > 0
-    rows = sensitivity_rows(
-        weighted, results, settings.weights, settings.analysis.exclude_districts, with_topics
-    )
     # Die Themen hängen am Schalter, nicht an der Datei: mit ``topics.k = 0`` bleiben die Dateien
     # eines früheren Laufs liegen, gehören aber nicht mehr auf die Seite.
     topics = (
-        topic_rows(pl.read_parquet(layout.topics), weighted)
+        topic_rows(
+            pl.read_parquet(layout.topics),
+            weighted,
+            BodyRules.from_settings(settings.bodies).names,
+        )
         if with_topics and layout.topics.exists()
         else ()
+    )
+    rows = sensitivity_rows(
+        weighted,
+        results,
+        settings.weights,
+        settings.analysis.exclude_districts,
+        with_topics,
+        {row.index: row.label for row in topics},
     )
     terms = (
         pl.read_parquet(layout.term_weights, columns=[TERM, N_DISTRICTS, HITS])

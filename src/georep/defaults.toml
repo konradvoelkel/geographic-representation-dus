@@ -121,6 +121,48 @@ max_iter = 200                 # Obergrenze der NMF-Iterationen; mit tol unten k
 tol = 0.001                    # Abbruchschwelle: mit 1e-4 läuft NMF in die Obergrenze (200 Iterationen, 6,9 s; konvergiert erst bei 412 und 13,4 s) und gewinnt dabei 0,03 % Rekonstruktionsfehler; 1e-3 konvergiert nach 120 Iterationen in 4,5 s (gemessen 2026-10-12 auf 19 033 Texten)
 random_state = 0               # Startwert für NMF; nndsvda ist deterministisch, der Wert steht trotzdem hier
 
+# Punkt 45 (docs/themenmodell-2026-10.md): woher die Stoppwörter neben der Paketliste kommen.
+# "fraktionen" liest Namen, Kürzel und Muster der Parteien, Gruppen und Fraktions-, Gemeinschafts-
+# und Personenmarker aus [originators] (Option 04), "gremien" die Kürzel aus [bodies] (Option 05) —
+# nur die Kürzel, nicht die Namen: "Verkehrsausschuss" ist ein Themenwort. "namen" nimmt die
+# Wörter, die fast nur in einem Namensfenster stehen (unten). Keine zweite Liste: alles steht schon
+# im Profil. Ohne die Quellen prägen Fraktions- und Personennamen die Themen (gemessen 2026-10-12
+# auf der Referenz: Thema 3 "antrag, gez, fraktion, cdu, grünen", Thema 16 "linke, sönke, voigt,
+# julia"); leer = nur die Paketliste, also der Stand von Option 06.
+# Aus einem Muster werden die Buchstabenfolgen genommen; Bruchstücke eines Regex ("frak" aus
+# "frak\w{0,2}ion") sind harmlos, weil sie allein kein Token bilden.
+stop_sources = ["fraktionen", "gremien", "namen"]
+stop_keep = []                 # Wörter, die trotz einer Quelle bleiben; das Profil nennt die Sachwörter, die zufällig in einem Gruppennamen stehen ("Klima" in "Die PARTEI-Klima-Fraktion")
+# Fenster, in denen ein Personenname steht: hinter einer Unterschrift oder einer Amtsbezeichnung.
+# Deutschsprachig und stadtneutral wie search.place_words; eine Stadt in einem anderen Sprachraum
+# ersetzt die Liste im Profil. Die Personenmarker aus [originators] kommen dazu, damit dieselbe
+# Liste nicht zweimal gepflegt wird. Ohne die Amtsbezeichnungen bleiben die Namen der Dezernenten
+# in den Themen stehen (gemessen 2026-10-12: 196 statt 254 Namen, "jochen", "kral", "doroth").
+name_markers = ["gez.", "mit freundlichen grüßen", "oberbürgermeister", "bürgermeister", "beigeordnete", "stadtdirektor", "stadtkämmer", "dezernent", "amtsleiter", "vorsitzende"]
+name_window = 60               # Zeichen hinter dem Marker; das letzte, abgeschnittene Wort zählt nicht mit
+name_min_documents = 5         # in so vielen Fenstern muss ein Wort stehen; darunter ist es ein Tippfehler der Quelle, kein Name
+name_share = 0.8               # und so viel seiner Dokumente müssen Fenster sein: 0,8 trifft 254 Wörter, 0,5 wären 578 und nähme Sachwörter mit (gemessen 2026-10-12)
+
+# Gesäte Themen: je Ausschuss ein Thema, dessen Wortprofil aus den dort beratenen Dokumenten kommt
+# (Gremium je Dokument aus Option 05). Die Wortmatrix der gesäten Themen ist fest, die freien
+# Themen rechnen auf dem Rest; so tragen die Themen einen Namen statt einer Nummer. Gemessen am
+# 2026-10-12 auf der Referenz: 17 gesäte Themen, 71 bis 99 % der Dokumente eines Ausschusses haben
+# sein Thema als stärkstes. Mit "none" rechnet die Kette freie NMF wie Option 06.
+seed = "committees"
+free = 3                       # Themen ohne Saat; sie nehmen auf, was kein Ausschuss erklärt (Anträge, Anfragen, Bauvorhaben)
+seed_words = 30                # Saatwörter je Ausschuss, nach Log-Odds mit Dirichlet-Prior gegen die anderen Ausschüsse; 10 davon stehen als Label auf der Seite
+seed_min_documents = 10        # ein Ausschuss mit weniger beratenen Dokumenten bekommt kein eigenes Thema (zwei je Faltung im Messskript)
+seed_prior = 1000.0            # Stärke des Dirichlet-Priors in Pseudo-Token; dämpft Wörter, die nur ein paar Mal vorkommen
+
+# --- Punkt 45: der passende Ausschuss je Dokument (docs/themenmodell-2026-10.md) -------------------
+[classify]                     # TF-IDF (Parameter aus [topics]) und logistische Regression auf den Dokumenten, deren Gremium ein Ausschuss ist
+enabled = true                 # false nimmt den Schritt committees aus dem Register; ohne [bodies.committees] fehlt er ohnehin
+min_documents = 10             # eine Klasse braucht so viele beratene Dokumente: zwei je Faltung bei fünf Faltungen
+min_probability = 0.4          # darunter zählt ein Dokument als querschnittlich und landet in der Restklasse; bei 20 Klassen sind 0,4 das Achtfache des Zufalls (1/20)
+regularisation = 1.0           # C der logistischen Regression; kleiner heißt stärker geglättet
+max_iterations = 1000          # lbfgs; damit konvergiert das Modell auf der Referenz (2026-10-12)
+random_state = 0               # fester Startwert, damit zwei Läufe dieselbe Zuordnung schreiben
+
 # --- Option 03: Kontrollvariablen (docs/plans/03-kontrollvariablen.md) -----------------------------
 [crosswalk]                    # Umrechnung eines älteren Zuschnitts auf die Wahlbezirke der Hauptperiode (Profil "")
 enabled = false                # true nur in einem Periodenprofil (profiles/duesseldorf-2014.toml): Schritt precincts, Wähler über Flächenanteile der Stimmbezirke

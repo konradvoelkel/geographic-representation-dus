@@ -301,6 +301,11 @@ TABLES.append(
         "Themen des Modells (TF-IDF und NMF): die stärksten Wörter je Thema",
         {
             "thema": ("Nummer des Themas; sie gilt nur für diesen Datenstand", ""),
+            "gremium": (
+                "Kürzel des Ausschusses, aus dessen Dokumenten das Thema gesät ist; "
+                "leer bei einem freien Thema",
+                "",
+            ),
             "woerter": (
                 "die stärksten Wörter des Themas, absteigend; sie beschreiben das Thema, "
                 "sie benennen es nicht",

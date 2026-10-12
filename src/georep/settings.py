@@ -530,6 +530,10 @@ class Weights(_Strict):
 
 
 MAX_TOPICS = 99  # ``thema_NN``: zwei Stellen, damit die Variantennamen numerisch sortieren
+# Punkt 45: woher die Stoppwörter neben der Paketliste kommen. „fraktionen" und „gremien" lesen das
+# Profil (Option 04 und 05), „namen" den Korpus; der Code kennt keine Partei und kein Gremium.
+STOP_SOURCES = ("fraktionen", "gremien", "namen")
+SEEDS = ("none", "committees")  # Punkt 45: woraus die Saat des Themenmodells kommt
 
 
 class Topics(_Strict):
@@ -544,6 +548,18 @@ class Topics(_Strict):
     max_iter: int = 200  # Obergrenze der NMF-Iterationen
     tol: float = 1e-3  # Abbruchschwelle; mit 1e-4 läuft NMF in die Obergrenze (defaults.toml)
     random_state: int = 0
+    # Punkt 45: Stoppwörter aus dem Profil und aus dem Korpus, Saat je Ausschuss
+    stop_sources: list[str] = []  # Teilmenge von STOP_SOURCES; leer = nur die Paketliste
+    stop_keep: list[str] = []  # Wörter, die trotz einer Quelle bleiben (Sachwort in einem Namen)
+    name_markers: list[str] = []  # Unterschrift und Amtsbezeichnung; dahinter steht ein Name
+    name_window: int = 60  # Zeichen hinter dem Marker
+    name_min_documents: int = 5  # so viele Fenster muss ein Wort haben, sonst ist es ein Tippfehler
+    name_share: float = 0.8  # und so viel seiner Dokumente müssen Fenster sein
+    seed: str = "none"  # eines aus SEEDS
+    free: int = 0  # Themen ohne Saat; die gesäten sind ``k - free`` viele, höchstens die Ausschüsse
+    seed_words: int = 30  # Saatwörter je Ausschuss (Log-Odds mit Dirichlet-Prior)
+    seed_min_documents: int = 10  # weniger beratene Dokumente, kein eigenes Thema
+    seed_prior: float = 1000.0  # Stärke des Dirichlet-Priors in Pseudo-Token
 
     @model_validator(mode="after")
     def _bounds(self) -> Topics:
@@ -563,6 +579,54 @@ class Topics(_Strict):
             )
         if not re.fullmatch(r"[a-z]{0,8}", self.stop_words):
             raise ValueError(f"topics.stop_words {self.stop_words!r}: ein Sprachkürzel oder leer")
+        unknown = [s for s in self.stop_sources if s not in STOP_SOURCES]
+        if unknown or len(self.stop_sources) != len(set(self.stop_sources)):
+            raise ValueError(
+                f"topics.stop_sources {self.stop_sources}: unbekannte oder doppelte Quelle; "
+                f"bekannt sind {list(STOP_SOURCES)}"
+            )
+        if self.name_window < 1 or self.name_min_documents < 1:
+            raise ValueError("topics.name_window und name_min_documents müssen mindestens 1 sein")
+        if not 0.0 < self.name_share <= 1.0:
+            raise ValueError(f"topics.name_share {self.name_share} liegt nicht in (0, 1]")
+        if self.seed not in SEEDS:
+            raise ValueError(f"topics.seed {self.seed!r}: eines aus {list(SEEDS)}")
+        if self.free < 0 or (self.k > 0 and self.free > self.k):
+            # Mit ``k = 0`` ist das Themenmodell aus, und ``free`` sagt nichts mehr.
+            raise ValueError(f"topics.free {self.free} liegt nicht zwischen 0 und k = {self.k}")
+        if self.seed_words < 1 or self.seed_min_documents < 1 or not self.seed_prior > 0.0:
+            raise ValueError(
+                "topics.seed_words, seed_min_documents und seed_prior müssen positiv sein"
+            )
+        return self
+
+
+class Classify(_Strict):
+    """Punkt 45: der passende Ausschuss je Dokument (TF-IDF und logistische Regression).
+
+    Die Textdarstellung kommt aus ``[topics]`` (Tokenmuster, ``min_df``, ``max_df``,
+    ``max_features``, Stoppwörter): es gibt eine Wahrheit darüber, was ein Wort ist, und sie steht
+    dort. Hier stehen nur die Parameter des Klassifikators.
+    """
+
+    enabled: bool = True  # false nimmt den Schritt aus dem Register
+    min_documents: int = 10  # eine Klasse braucht so viele beratene Dokumente
+    min_probability: float = 0.4  # darunter: Restklasse (querschnittliche Vorlage)
+    regularisation: float = 1.0  # C der logistischen Regression
+    max_iterations: int = 1000  # lbfgs
+    random_state: int = 0
+
+    @model_validator(mode="after")
+    def _bounds(self) -> Classify:
+        if self.min_documents < 5:
+            # Fünf Faltungen brauchen fünf Dokumente; darunter ist eine Klasse nicht messbar.
+            raise ValueError(f"classify.min_documents {self.min_documents} ist kleiner als 5")
+        if not 0.0 < self.min_probability < 1.0:
+            raise ValueError(
+                f"classify.min_probability {self.min_probability} liegt nicht in (0, 1)"
+            )
+        if not self.regularisation > 0.0 or self.max_iterations < 1:
+            raise ValueError("classify.regularisation und max_iterations müssen positiv sein")
         return self
 
 
@@ -1044,6 +1108,7 @@ class Settings(BaseSettings):
     report: Report = Report()
     bootstrap: Bootstrap = Bootstrap()  # Option 07
     publish: Publish = Publish()
+    classify: Classify = Classify()  # Punkt 45: passender Ausschuss je Dokument
 
     @model_validator(mode="after")
     def _context_needs_the_geometry_columns(self) -> Settings:

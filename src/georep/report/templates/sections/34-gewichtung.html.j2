@@ -32,7 +32,7 @@
 {# Zellen ohne data-value tragen „—"; der Sortierer liest dort NaN und lässt die Zeile stehen. #}
 {% for row in s.rows %}
 <tr{% if row.name == 'einheit' %} class="baseline"{% endif %}>
-<th scope="row">{% if row.topic is not none %}Thema {{ row.topic }}{% else %}{{ row.label }}<span class="formula">{{ row.description }}</span>{% endif %}</th>
+<th scope="row">{% if row.topic is not none %}Thema {{ row.topic }}{% if row.label %}: {{ row.label }}{% endif %}{% else %}{{ row.label }}<span class="formula">{{ row.description }}</span>{% endif %}</th>
 <td class="num" data-value="{{ row.total }}">{{ row.total|num(1) }}</td>
 {% set parts = [row.pair.all if row.pair else none] %}
 {% if s.has_without %}{% set parts = parts + [row.pair.without if row.pair else none] %}{% endif %}
@@ -57,11 +57,13 @@
 <p class="footnote">Die rechte Hälfte lässt für jede Variante dieselben Wahlbezirke weg ({{ s.excluded|join(' und ') }}, die beiden höchsten ungewichteten Trefferquoten), damit die Zeilen vergleichbar bleiben. Unter einer Gewichtung können andere Wahlbezirke die höchsten Quoten haben.</p>
 {% endif %}
 {% if s.topics %}
+{% set seeded = s.topics|selectattr('body')|list %}
 <h3>Die {{ s.topics|length }} Themen</h3>
-<p class="note">Ein Themenmodell (TF-IDF und NMF) verteilt jedes Dokument mit Text auf {{ s.topics|length }} Themen; je Thema steht oben eine Variante, die nur den Anteil des Dokuments an diesem Thema zählt.</p>
+<p class="note">Ein Themenmodell (TF-IDF und NMF) verteilt jedes Dokument mit Text auf {{ s.topics|length }} Themen; je Thema steht oben eine Variante, die nur den Anteil des Dokuments an diesem Thema zählt.{% if seeded %} {{ seeded|length }} der Themen sind <em>gesät</em>: ihre Wörter kommen aus den Dokumenten, die nachweislich in diesem Ausschuss beraten wurden (Kürzel aus der Drucksachennummer, siehe „Gremien"), und sind die Wörter, die diesen Ausschuss von den anderen trennen. Die übrigen {{ s.topics|length - seeded|length }} rechnen frei auf dem, was dann noch übrig ist.{% endif %}</p>
 <div class="scroll"><table id="themen-tabelle">
 <thead><tr>
 <th scope="col" class="num" data-sort="num">Nr.</th>
+{% if seeded %}<th scope="col" data-sort="text">Gremium</th>{% endif %}
 <th scope="col">stärkste Wörter</th>
 <th scope="col" class="num" data-sort="num">Dokumente</th>
 <th scope="col" class="num" data-sort="num">Anteil an den Treffern</th>
@@ -69,12 +71,13 @@
 <tbody>
 {% for t in s.topics %}
 <tr><td class="num" data-value="{{ t.index }}">{{ t.index }}</td>
+{% if seeded %}<td>{% if t.label %}{{ t.label }}{% if t.name and t.body %} ({{ t.body }}){% endif %}{% else %}frei{% endif %}</td>{% endif %}
 <td>{{ t.words|join(', ') }}</td>
 <td class="num" data-value="{{ t.documents }}">{{ t.documents|num }}</td>
 <td class="num" data-value="{{ t.hits_share }}">{{ t.hits_share|pct(1) }}</td></tr>
 {% endfor %}
 </tbody></table></div>
-<p class="footnote">Die Wörter beschreiben ein Thema, sie benennen es nicht: eine Deutung verspricht diese Seite nicht. „Dokumente" zählt die Dokumente, deren stärkstes Thema dieses ist; „Anteil an den Treffern" den Anteil dieses Themas an den gezählten Treffern aller Wahlbezirke. Die Nummern gelten nur für diesen Datenstand: ein Lauf über andere Dokumente vergibt sie neu.</p>
+<p class="footnote">{% if seeded %}Ein gesätes Thema trägt den Namen seines Ausschusses, weil seine Wörter von dort kommen; dass ein Dokument diesem Thema zufällt, heißt aber nicht, dass es dort beraten wurde. Ein freies Thema{% else %}Ein Thema{% endif %} wird von seinen Wörtern beschrieben, nicht benannt: eine Deutung verspricht diese Seite nicht. „Dokumente" zählt die Dokumente, deren stärkstes Thema dieses ist; „Anteil an den Treffern" den Anteil dieses Themas an den gezählten Treffern aller Wahlbezirke. Die Nummern gelten nur für diesen Datenstand: ein Lauf über andere Dokumente vergibt sie neu.</p>
 {% endif %}
 </section>
 {% endif %}
