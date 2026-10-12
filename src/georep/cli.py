@@ -196,7 +196,11 @@ def _cmd_regress(args: argparse.Namespace, settings: Settings, layout: Layout) -
     if args.varianten:
         # Option 06: die Sensitivitätstabelle der Berichtsseite als Text, ohne die Seite zu bauen.
         rows = sensitivity_rows(
-            pl.read_parquet(layout.weighted), results, settings.weights, exclude
+            pl.read_parquet(layout.weighted),
+            results,
+            settings.weights,
+            exclude,
+            settings.topics.k > 0,
         )
         width = max(len(row.name) for row in rows)
         for row in rows:

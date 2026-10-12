@@ -4,8 +4,10 @@ Jede Tabelle, die auf der Berichtsseite zum Download steht, hat hier genau einen
 entstehen die Download-Liste, ``schema.json``, die CSV-Dateien (dieselben Regeln wie
 ``georep export``) und die Spaltentabelle der Seite. Eine Option, die Tabellen ergänzt, hängt ihre
 Einträge am Ende von ``TABLES`` an (docs/plans/00-synergien.md, F2); ``optional`` kennzeichnet
-Tabellen, die nur in manchen Profilen entstehen. Ein Test prüft beide Richtungen gegen die
-Parquet-Schemata: jede Spalte beschrieben, keine Beschreibung ohne Spalte.
+Tabellen, die nur in manchen Profilen entstehen, ``enabled`` solche, die an einem Schalter in den
+Settings hängen (dann zählt der Schalter, nicht die Datei: eine abgeschaltete Stufe lässt ihre
+Ausgaben liegen, und die gehören nicht mehr auf die Seite). Ein Test prüft beide Richtungen gegen
+die Parquet-Schemata: jede Spalte beschrieben, keine Beschreibung ohne Spalte.
 """
 
 from __future__ import annotations
@@ -17,6 +19,7 @@ from pathlib import Path
 import deal
 
 from georep.layout import Layout
+from georep.settings import Settings
 
 
 @dataclass(frozen=True)
@@ -28,6 +31,9 @@ class PublishedTable:
     joins: Mapping[str, str] = field(default_factory=dict)  # Listen-Spalte -> Trenner in der CSV
     separator: str = ","  # Spaltentrenner der CSV
     optional: bool = False  # nur veröffentlichen, wenn die Datei vorliegt (profilabhängig)
+    # Nur veröffentlichen, wenn die Settings die Stufe eingeschaltet lassen; ohne Settings
+    # (Aufrufer ohne Konfiguration, etwa ``georep export``) zählt der Schalter nicht.
+    enabled: Callable[[Settings], bool] | None = None
 
 
 DISTRICT_COLUMN = ("Nummer des Kommunalwahlbezirks (1 bis 41)", "")
@@ -272,6 +278,7 @@ TABLES.append(
         },
         joins={"woerter": "; "},
         optional=True,
+        enabled=lambda settings: settings.topics.k > 0,
     )
 )
 TABLES.append(
@@ -285,6 +292,7 @@ TABLES.append(
             "anteil": ("Anteil dieses Themas am Dokument, vier Stellen", "Anteil 0 bis 1"),
         },
         optional=True,
+        enabled=lambda settings: settings.topics.k > 0,
     )
 )
 
@@ -318,10 +326,20 @@ def _unique_names(result: list[PublishedTable]) -> bool:
     return len(names) == len(set(names))
 
 
+def _wanted(table: PublishedTable, layout: Layout, settings: Settings | None) -> bool:
+    if table.enabled is not None and settings is not None and not table.enabled(settings):
+        return False
+    return not table.optional or table.path(layout).exists()
+
+
 @deal.post(_unique_names, message="jede Tabelle hat einen eigenen Namen")
-def published(layout: Layout) -> list[PublishedTable]:
-    """Die Tabellen der Seite in Reihenfolge; optionale nur, wenn ihre Datei vorliegt."""
-    return [t for t in TABLES if not t.optional or t.path(layout).exists()]
+def published(layout: Layout, settings: Settings | None = None) -> list[PublishedTable]:
+    """Die Tabellen der Seite in Reihenfolge; optionale nur, wenn ihre Datei vorliegt.
+
+    ``settings`` schaltet Tabellen ab, deren Stufe abgeschaltet ist (``enabled``); ohne Settings
+    entscheidet allein die Datei, wie bisher.
+    """
+    return [t for t in TABLES if _wanted(t, layout, settings)]
 
 
 def csv_plan(layout: Layout) -> list[tuple[Path, dict[str, str], str]]:

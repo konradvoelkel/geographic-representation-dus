@@ -295,10 +295,10 @@ def _table_docs(table: PublishedTable, path: Path) -> list[ColumnDoc]:
     ]
 
 
-def column_docs(layout: Layout) -> tuple[ColumnDoc, ...]:
+def column_docs(layout: Layout, settings: Settings | None = None) -> tuple[ColumnDoc, ...]:
     """Spaltenschema aller veröffentlichten Tabellen und des GeoJSON (``report.tables``)."""
     docs: list[ColumnDoc] = []
-    for table in published(layout):
+    for table in published(layout, settings):
         docs.extend(_table_docs(table, table.path(layout)))
     docs.extend(
         ColumnDoc(GEOJSON_TABLE, column, "GeoJSON-Eigenschaft", *text)
@@ -651,12 +651,19 @@ def _variant_frame(weighted: pl.DataFrame, results: pl.DataFrame, name: str) -> 
     )
 
 
-def _ordered_variants(weighted: pl.DataFrame, weights: Weights) -> list[str]:
-    """Die Reihenfolge der Seite: feste Varianten, Regelsätze, Kombination, dann die Themen."""
+def _ordered_variants(
+    weighted: pl.DataFrame, weights: Weights, with_topics: bool = True
+) -> list[str]:
+    """Die Reihenfolge der Seite: feste Varianten, Regelsätze, Kombination, dann die Themen.
+
+    Ohne Themenmodell (``topics.k = 0``) bleiben die ``thema_NN``-Zeilen weg, auch wenn eine
+    Datei aus einem früheren Lauf sie noch enthält: die Seite zeigt die Konfiguration, nicht den
+    Rest eines abgeschalteten Schritts.
+    """
     present = set(weighted.get_column(VARIANT).unique().to_list())
     wanted = [UNIT, BY_DISTRICTS, BY_IDF, *(r.name for r in weights.paper_type), COMBINED]
     topics = sorted(name for name in present if name.startswith(TOPIC_PREFIX))
-    return [name for name in wanted if name in present] + topics
+    return [name for name in wanted if name in present] + (topics if with_topics else [])
 
 
 def _rows_match_the_file(
@@ -664,13 +671,16 @@ def _rows_match_the_file(
     results: pl.DataFrame,
     weights: Weights,
     exclude: Sequence[int] = (),
+    with_topics: bool = True,
     result: tuple[SensitivityRow, ...] | None = None,
 ) -> bool:
     assert result is not None
     names = [row.name for row in result]
     topics = [row.topic for row in result if row.topic is not None]
+    in_file = set(weighted.get_column(VARIANT).unique().to_list())
+    expected = in_file if with_topics else {n for n in in_file if not n.startswith(TOPIC_PREFIX)}
     return (
-        set(names) == set(weighted.get_column(VARIANT).unique().to_list())
+        set(names) == expected
         and len(names) == len(set(names))
         and names[0] == UNIT
         and result[0].rho in (None, 1.0)
@@ -679,7 +689,7 @@ def _rows_match_the_file(
 
 
 @deal.pre(
-    lambda weighted, results, weights, exclude=(): (
+    lambda weighted, results, weights, exclude=(), with_topics=True: (
         has_columns(weighted, DISTRICT, VARIANT, WEIGHTED_HITS, WEIGHTED_RATE)
         and has_columns(results, DISTRICT, TURNOUT, RATE)
     )
@@ -692,11 +702,12 @@ def sensitivity_rows(
     results: pl.DataFrame,
     weights: Weights,
     exclude: Sequence[int] = (),
+    with_topics: bool = True,
 ) -> tuple[SensitivityRow, ...]:
     """Je Variante beide Regressionen und die Rangkorrelation zur ungewichteten Quote."""
     labels = variant_labels(weights)
     rows: list[SensitivityRow] = []
-    for name in _ordered_variants(weighted, weights):
+    for name in _ordered_variants(weighted, weights, with_topics):
         frame = _variant_frame(weighted, results, name)
         try:
             pair: RegressionPair | None = regression_pair(frame, exclude, x=WEIGHTED_RATE)
@@ -758,10 +769,17 @@ def _example(frame: pl.DataFrame, by: str, then: str) -> TermExample | None:
 def build_sensitivity(layout: Layout, settings: Settings, results: pl.DataFrame) -> Sensitivity:
     """Der ganze Abschnitt aus ``wahlbezirke_gewichtet.parquet`` und (wenn da) ``themen.parquet``."""
     weighted = pl.read_parquet(layout.weighted)
+    with_topics = settings.topics.k > 0
     rows = sensitivity_rows(
-        weighted, results, settings.weights, settings.analysis.exclude_districts
+        weighted, results, settings.weights, settings.analysis.exclude_districts, with_topics
     )
-    topics = topic_rows(pl.read_parquet(layout.topics), weighted) if layout.topics.exists() else ()
+    # Die Themen hängen am Schalter, nicht an der Datei: mit ``topics.k = 0`` bleiben die Dateien
+    # eines früheren Laufs liegen, gehören aber nicht mehr auf die Seite.
+    topics = (
+        topic_rows(pl.read_parquet(layout.topics), weighted)
+        if with_topics and layout.topics.exists()
+        else ()
+    )
     terms = (
         pl.read_parquet(layout.term_weights, columns=[TERM, N_DISTRICTS, HITS])
         if layout.term_weights.exists()
@@ -815,7 +833,7 @@ def build_report_model(
         hidden_terms=hidden,
         regression=regression_pair(results, settings.analysis.exclude_districts),
         downloads=tuple(downloads),
-        columns=column_docs(layout),
+        columns=column_docs(layout, settings),
         working_crs=settings.geo.working_crs,
         search=search_entries(
             dictionary,

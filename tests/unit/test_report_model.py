@@ -132,11 +132,11 @@ def test_column_docs_refuse_mismatches(mini_run: Layout, monkeypatch: pytest.Mon
     voters = next(t for t in TABLES if t.name == "wahlbezirke_waehler")
     results = next(t for t in TABLES if t.name == "wahlbezirke_auswertung")
     wrong_path = PublishedTable(voters.name, lambda layout: layout.results, "", voters.columns)
-    monkeypatch.setattr("georep.report.model.published", lambda layout: [wrong_path])
+    monkeypatch.setattr("georep.report.model.published", lambda layout, settings=None: [wrong_path])
     with pytest.raises(SchemaError, match="ohne Beschreibung"):
         column_docs(mini_run)
     too_many = PublishedTable(results.name, lambda layout: layout.voters, "", results.columns)
-    monkeypatch.setattr("georep.report.model.published", lambda layout: [too_many])
+    monkeypatch.setattr("georep.report.model.published", lambda layout, settings=None: [too_many])
     with pytest.raises(SchemaError, match="Beschreibung ohne Spalte"):
         column_docs(mini_run)
 
