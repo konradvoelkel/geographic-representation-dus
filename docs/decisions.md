@@ -539,3 +539,12 @@ Budget und macht zwei Läufe voneinander abhängig); eine Landing-Page an der Wu
 veröffentlichte Adresse); der Vergleich aus `processed/*.parquet` beider Läufe (jede Änderung an einer
 Zwischentabelle wäre ein Bruch). Kosten: `publish` muss wissen, welche Stadt flach liegt, und kopiert sie
 dann nicht; fehlt eine Stadt, löscht es einen alten Vergleich, der sonst eine Lüge wäre.
+
+## Punkt: Gebietsnummern sind ASCII-Ziffern (Option 01, 2026-10-12)
+
+`str.isdigit()` ist für `²` wahr, `int('²')` wirft; arabisch-indische Ziffern läse `int` zwar, aber eine
+Stimmbezirks- oder Wahlbezirksnummer besteht aus 0 bis 9. `prep.precincts.is_number` prüft darum
+`isascii() and isdigit()`, und alle drei Stellen, die eine Nummer aus einer Quelle lesen, benutzen sie.
+Gefunden hat das crosshair (`nox -s verify`) als Gegenbeispiel zum Vertrag von `district_from_id`; der Test
+nennt beide Fälle. Verworfen: `isdecimal()` (es ließe arabisch-indische Ziffern durch) und ein `try: int(...)`
+(dann wäre der Fehler eine Ausnahme von `int`, keine Aussage über die Quelle).

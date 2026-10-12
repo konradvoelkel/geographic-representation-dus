@@ -122,6 +122,15 @@ def _crs_name(crs: CRS) -> str:
     return f"EPSG:{code}" if code is not None else crs.to_wkt()
 
 
+def is_number(text: str) -> bool:
+    """Eine Folge von ASCII-Ziffern, die ``int`` lesen kann.
+
+    Nicht ``str.isdigit``: das ist für ``²`` wahr, ``int('²')`` wirft (crosshair, 2026-10-12), und
+    arabisch-indische Ziffern läse ``int`` zwar, eine Gebietsnummer besteht aber aus 0 bis 9.
+    """
+    return bool(text) and text.isascii() and text.isdigit()
+
+
 @deal.pre(lambda precinct_id, start, stop: 0 <= start < stop, message="Ausschnitt [start, stop)")
 @deal.post(lambda result: result > 0, message="Wahlbezirke sind positiv numeriert")
 @deal.raises(SchemaError)
@@ -132,7 +141,7 @@ def district_from_id(precinct_id: str, start: int, stop: int) -> int:
     (docs/plans/01-staedte.md, § 3.2). Für jede Stadt ist sie durch Summenvergleich bestätigt.
     """
     cut = precinct_id[start:stop]
-    if not cut.isdigit() or int(cut) <= 0:
+    if not is_number(cut) or int(cut) <= 0:
         raise SchemaError(
             f"Stimmbezirk {precinct_id!r}: Zeichen {start} bis {stop} sind {cut!r}, "
             "keine Wahlbezirksnummer"
@@ -154,7 +163,7 @@ def district_names_from_csv(
     names: dict[int, str] = {}
     for row in frame.iter_rows(named=True):
         number = str(row[rules.names_id_column]).strip()
-        if not number.isdigit():
+        if not is_number(number):
             continue
         names[int(number)] = str(row[rules.names_name_column]).strip()
     if not names:
@@ -227,7 +236,7 @@ def _district_of(precinct_id: str, properties: Mapping[str, Any], rules: Precinc
             "vorhanden: " + str(sorted(properties))
         )
     value = str(properties[rules.district_property]).strip()
-    if not value.isdigit():
+    if not is_number(value):
         raise SchemaError(f"Stimmbezirk {precinct_id}: Wahlbezirk {value!r} ist keine Zahl")
     return int(value)
 
