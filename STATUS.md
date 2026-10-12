@@ -21,7 +21,7 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
 - Stufe G (`v0.10.0`): Dokumente je Begriff als nachgeladener Dialog aus `dokumente.json`, Orte mit Namen auf der Karte, `karte.html` mit Leaflet (gepinnt) und OpenStreetMap-Kacheln als zweite Datei.
 
 - Option 08 Suche (Branch `feat/08-suche`, 2026-10-12, im Review): Abschnitt `15-suche` auf der Berichtsseite mit Suchfeld, Vorschlagsliste nach dem APG-Combobox-Muster, Ergebnisblock und Markierung auf der Karte; `report/search.py` baut 4176 Einträge (2828 Straßen, 1239 Orte, 68 beides, 41 Wahlbezirksnamen), die als JSON in der Seite liegen. Plan und Abnahme: `docs/plans/08-suche.md`.
-- Option 02, Zeitreihe (Branch `feat/02-zeitreihe`, 2026-10-12, Stufen A bis G): eine Wahlperiode ist ein
+- Option 02, Zeitreihe (Branch `feat/02-zeitreihe`, auf `main` rebased 2026-10-12, im Review): eine Wahlperiode ist ein
   Profil (`settings.2014.toml`, Daten unter `data_root/2014-2020/`), der Flächen-Crosswalk rechnet die
   Wahlzahlen eines älteren Stimmbezirkszuschnitts summentreu auf die Wahlbezirke der Auswertung um, der
   Schritt `compare` und der Abschnitt „Zwei Wahlperioden" stellen beide Perioden nebeneinander
