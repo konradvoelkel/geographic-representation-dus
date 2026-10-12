@@ -16,12 +16,16 @@ from pathlib import Path
 
 import polars as pl
 
+from georep.analysis.hits import DISTRICT
+from georep.analysis.ols import CONSTANT, model_frame, partial_residuals
 from georep.export import write_csv
 from georep.geo import LONLAT, read_precincts, transformer
 from georep.io import atomic_path, digest, write_json, write_text
 from georep.layout import Layout
+from georep.prep.voters import TURNOUT
 from georep.report.charts import (
     MAP_WIDTH,
+    added_variable_plot,
     choropleth,
     classify,
     legend,
@@ -200,6 +204,49 @@ def _map_districts(
     return {**geojson, "features": enriched}
 
 
+def partial_plots(layout: Layout, settings: Settings, model: ReportModel) -> list[tuple[str, str]]:
+    """Option 03: ein Added-Variable-Plot je Term des Hauptmodells, leer ohne Kontextdaten.
+
+    Die Residuen entstehen aus derselben Tabelle wie die Modelle; die Punkte tragen die
+    ``DistrictRow`` ihres Wahlbezirks, damit Tooltip und Markierung wie im Streudiagramm wirken.
+    """
+    controls = model.controls
+    if controls is None or not layout.context_table.exists():
+        return []
+    main = next((m for m in controls.models if m.name == controls.main), None)
+    if main is None or main.k < 1:
+        return []
+    frame = model_frame(pl.read_parquet(layout.results), pl.read_parquet(layout.context_table))
+    names = {row.id: row.name for row in model.districts}
+    districts = [(int(i), names[int(i)]) for i in frame.get_column(DISTRICT).to_list()]
+    terms = [t.term for t in main.terms if t.term != CONSTANT]
+    plots: list[tuple[str, str]] = []
+    for stats in main.terms:
+        if stats.term == CONSTANT:
+            continue
+        xs, ys = partial_residuals(
+            frame, TURNOUT, terms, stats.term, y_scale=settings.context.models.y_scale
+        )
+        plots.append(
+            (
+                f"{stats.label} (Steigung {format_de(stats.coefficient, 2)})",
+                added_variable_plot(
+                    districts,
+                    xs,
+                    ys,
+                    stats.coefficient,
+                    key=stats.term,
+                    title=(
+                        f"{stats.label} gegen Wahlbeteiligung, beide um die übrigen Terme bereinigt"
+                    ),
+                    x_title=f"{stats.label}, bereinigt",
+                    y_title="Wahlbeteiligung, bereinigt",
+                ),
+            )
+        )
+    return plots
+
+
 def build_site(
     layout: Layout, settings: Settings, *, now: dt.datetime, commit: str | None
 ) -> SiteSummary:
@@ -264,6 +311,7 @@ def build_site(
         simplify_m=SIMPLIFY_M,
         pois=len(points),
         bodies_legend=legend(own, own_share_label),
+        partial_svgs=partial_plots(layout, settings, model),
     )
     map_html = render_map(
         model, _map_districts(geojson, model, rate.classes), _places_geojson(pois), rate_legend

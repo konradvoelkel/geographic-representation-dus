@@ -37,6 +37,23 @@ class Precinct:
     geometry: BaseGeometry
 
 
+@dataclass(frozen=True)
+class Area:
+    """Eine Fläche mit Schlüssel im Arbeits-CRS: eine Raumeinheit der Stadt, ein Stimmbezirk.
+
+    Der allgemeine Fall von ``Precinct`` für die Umrechnung von Gebietseinheiten
+    (``georep.crosswalk``): ein Schlüssel als Text, weil die Schlüssel der Quellen führende
+    Nullen tragen (``011001``), und eine reparierte Geometrie.
+    """
+
+    key: str
+    geometry: BaseGeometry
+
+    @classmethod
+    def of(cls, precinct: Precinct) -> Area:
+        return cls(precinct.precinct_id, precinct.geometry)
+
+
 def transformer(source: str | CRS, target: str | CRS) -> Transformer:
     return Transformer.from_crs(
         CRS.from_user_input(source), CRS.from_user_input(target), always_xy=True
@@ -95,6 +112,44 @@ def read_precincts(
             )
         )
     return precincts
+
+
+@deal.post(
+    lambda result: (
+        len(result) > 0
+        and all(a.geometry.is_valid and not a.geometry.is_empty for a in result)
+        and len({a.key for a in result}) == len(result)
+    ),
+    message="jede Fläche hat einen eigenen Schlüssel und eine gültige, nicht leere Geometrie",
+)
+@deal.raises(SchemaError)
+def read_areas(
+    path: Path, key_property: str, working_crs: str, *, source_crs: str = LONLAT
+) -> list[Area]:
+    """Flächen mit Schlüssel aus einem GeoJSON, projiziert ins Arbeits-CRS.
+
+    Wie ``read_precincts``, aber ohne Annahmen über weitere Eigenschaften: eine beliebige
+    Gebietsgliederung (Raumeinheiten der Stadt, ein älterer Zuschnitt) wird so zur Eingabe von
+    ``georep.crosswalk``. ``source_crs`` gilt nur, wenn die Datei kein ``crs`` nennt.
+    """
+    collection = json.loads(path.read_text(encoding="utf-8"))
+    features = collection.get("features")
+    if not isinstance(features, list) or not features:
+        raise SchemaError(f"{path.name}: keine Features")
+    trans = transformer(geojson_crs(collection, source_crs), working_crs)
+    areas: list[Area] = []
+    for feature in features:
+        props = feature.get("properties", {})
+        if key_property not in props:
+            raise SchemaError(f"{path.name}: Eigenschaft {key_property!r} fehlt")
+        areas.append(
+            Area(str(props[key_property]), repaired(project(shape(feature["geometry"]), trans)))
+        )
+    keys = [a.key for a in areas]
+    if len(set(keys)) != len(keys):
+        duplicates = sorted({k for k in keys if keys.count(k) > 1})
+        raise SchemaError(f"{path.name}: {key_property} doppelt: {duplicates}")
+    return areas
 
 
 def repaired(geometry: BaseGeometry) -> BaseGeometry:

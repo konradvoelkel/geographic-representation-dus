@@ -2,14 +2,17 @@
 
 Rohdaten und Wahlergebnis werden kopiert; aus dem Korpus der Arbeit (``paper_with_text.json``)
 entstehen ``raw/papers.jsonl`` (Metadaten) und der Textstore (Texte, Herkunft ``reference``, ohne
-PDF-Hash, weil die PDFs nicht Teil der Referenz sind). Vorhandenes bleibt stehen, ``force=True``
-überschreibt. Der Lauf nennt, wie viele Dateien er kopiert, übersprungen und nicht gefunden hat.
+PDF-Hash, weil die PDFs nicht Teil der Referenz sind). Die Fremddaten unter ``context_root``
+(Option 03) kommen auf demselben Weg nach ``external/``; fehlen sie, ist das kein Abbruch, sondern
+eine Zeile im Bericht. Vorhandenes bleibt stehen, ``force=True`` überschreibt. Der Lauf nennt, wie
+viele Dateien er kopiert, übersprungen und nicht gefunden hat.
 """
 
 from __future__ import annotations
 
 import json
 import shutil
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -40,7 +43,7 @@ class BootstrapReport:
         )
         return (
             f"{len(self.copied)} Dateien kopiert, {len(self.skipped)} übersprungen, "
-            f"{len(self.missing)} in der Referenz nicht gefunden; {stores}"
+            f"{len(self.missing)} in Referenz oder Kontext nicht gefunden; {stores}"
         )
 
 
@@ -61,7 +64,10 @@ def seed_stores_from_legacy(layout: Layout, items: list[dict[str, Any]]) -> tupl
     return len(records), stored
 
 
-def bootstrap(layout: Layout, *, force: bool = False) -> BootstrapReport:
+def bootstrap(
+    layout: Layout, *, force: bool = False, context_files: Sequence[str] = ()
+) -> BootstrapReport:
+    """``context_files`` sind die Namen aus ``settings.context.files``; ohne ``context_root`` leer."""
     reference = layout.reference_view()
     layout.ensure_dirs()
     PdfStore(layout.pdf_dir).ensure()
@@ -72,6 +78,9 @@ def bootstrap(layout: Layout, *, force: bool = False) -> BootstrapReport:
         (reference.streets, layout.streets),
         (reference.pois, layout.pois),
     ]
+    if layout.context_root is not None:
+        # Option 03: dieselbe Mechanik für die Fremddaten; der Netzschritt context_data holt sie frisch.
+        pairs += [(layout.context_source(name), layout.external / name) for name in context_files]
     for source, target in pairs:
         layout.guard_writable(target)
         if not source.is_file():

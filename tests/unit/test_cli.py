@@ -16,7 +16,11 @@ from georep.settings import load_settings
 @pytest.fixture
 def project(tmp_path: Path, mini_root: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     (tmp_path / "settings.toml").write_text(
-        f'data_root = "{tmp_path / "data"}"\nreference_root = "{mini_root}"\n', encoding="utf-8"
+        # Punktschlüssel statt einer [context]-Tabelle: Tests hängen weitere Schlüssel an, und die
+        # landeten nach einer Tabellenkopfzeile in ihr.
+        f'data_root = "{tmp_path / "data"}"\nreference_root = "{mini_root}"\n'
+        f'context.root = "{mini_root / "context"}"\n',
+        encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
     return tmp_path
@@ -54,9 +58,14 @@ def test_bootstrap_run_status_export_regress(
     status = capsys.readouterr().out
     assert status.count("aktuell") >= 7 and "200 Dokumente" in status and "[Netz]" in status
     assert main(["export"]) == 0
-    # Zahl aus dem Register, damit eine neue Tabelle keine Literale bricht (F6-Konvention)
-    written = len(csv_plan(Layout.from_settings(load_settings(cwd=project))))
-    assert f"{written} CSV-Dateien" in capsys.readouterr().out
+    # Eine CSV je vorhandener Tabelle des Registers (F6-Konvention: kein Literal), denn
+    # optionale Tabellen ohne Datei schreibt `georep export` nicht.
+    expected = sum(
+        1
+        for path, _, _ in csv_plan(Layout.from_settings(load_settings(cwd=project)))
+        if path.exists()
+    )
+    assert f"{expected} CSV-Dateien" in capsys.readouterr().out
     assert (project / "data" / "processed" / "wahlbezirke_auswertung.csv").exists()
     assert main(["regress"]) == 0
     assert capsys.readouterr().out.startswith("alle: n=3")
@@ -195,3 +204,20 @@ def test_regress_prints_a_line_per_weighting_variant(
         assert f"{name} " in out
     assert out.count("Summe") == variants.n_unique()
     assert "rho=1.000" in out  # die Einheitsvariante ordnet wie die ungewichtete Quote
+
+
+# --- Option 03 ------------------------------------------------------------------------------------
+
+
+def test_regress_controls_prints_table_six_after_the_run(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["regress", "--controls"]) == 1
+    assert "regression_kontrollen.parquet" in capsys.readouterr().err
+    assert main(["bootstrap"]) == 0 and main(["run"]) == 0
+    capsys.readouterr()
+    assert main(["regress", "--controls"]) == 0
+    out = capsys.readouterr().out
+    # Auf der Mini-Fixture (n = 3) bleibt Modell A; die Zeilen nennen Konstante und Trefferquote
+    assert "A (alle): n=3, k=1" in out and "trefferquote" in out and "(Konstante)" in out
+    assert "VIF=1.00" in out

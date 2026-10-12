@@ -132,6 +132,7 @@ class ResultsColumns(_Strict):
     voters: str
     parties: dict[str, str]
     city_district: str  # Option 05: Stadtbezirk je Stimmbezirk, für die Zuordnung der Wahlbezirke
+    precinct: str = ""  # Option 03: Stimmbezirk in der CSV; "" = kein Crosswalk über Stimmbezirke
 
 
 class Columns(_Strict):
@@ -339,6 +340,166 @@ class Topics(_Strict):
         return self
 
 
+# --- Option 03: Kontextdaten und Kontrollvariablen (docs/plans/03-kontrollvariablen.md) ----------
+
+RATE_TERM = "trefferquote"  # der eine Term, der keine Kontextvariable ist: die Kennzahl der Arbeit
+
+
+class ContextFile(_Strict):
+    """Eine Datei des Kontextdatensatzes: Portal-URL und lokaler Name (unter ``root`` und ``external/``)."""
+
+    url: str
+    file: str
+
+
+class ContextFiles(_Strict):
+    table: ContextFile  # Tabelle je Raumeinheit
+    units: ContextFile  # Flächen der Raumeinheiten als GeoJSON
+    indicators: ContextFile  # Definitionen der Indikatoren
+
+    def all(self) -> tuple[ContextFile, ...]:
+        """Die Dateien in fester Reihenfolge: Tabelle, Flächen, Erläuterung."""
+        return (self.table, self.units, self.indicators)
+
+    def names(self) -> tuple[str, ...]:
+        """Die lokalen Dateinamen; ``bootstrap`` kopiert sie, die Schritte lesen sie aus ``external/``."""
+        return tuple(f.file for f in self.all())
+
+
+class ContextDataset(_Strict):
+    """Namensnennung und Stand, nur für die Seite; zählt nicht zum Fingerprint."""
+
+    title: str
+    url: str
+    publisher: str
+    license: str
+    license_url: str
+    stand: date
+    fetched: date  # Abrufdatum der Dateien unter root; gilt, solange der Netzschritt nie lief
+
+
+class ContextTable(_Strict):
+    sep: str = ";"
+    encoding: str = "utf-8"
+    decimal: str = ","
+    missing: list[str] = ["."]  # Marker für fehlende oder anonymisierte Werte
+    key: str
+    name: str
+    indicator: str  # Spalten der Erläuterungsdatei
+    definition: str
+
+
+class ContextUnits(_Strict):
+    label: str  # Name der Raumeinheit auf der Seite
+    key: str  # GeoJSON-Eigenschaft mit dem Schlüssel der Einheit
+
+
+VariableKind = Literal["value", "sum", "ordinal", "district"]
+
+
+class ContextVariable(_Strict):
+    name: str
+    label: str
+    unit: str
+    kind: VariableKind
+    columns: list[str]
+    scale: str | None = None  # nur ordinal
+    factor: float = 1.0  # Skalierung der Quellspalten (district: Anteil 0..1 mal 100)
+    indicator: str = ""  # Zeile der Erläuterungsdatei mit der Definition; leer = keine
+
+    @model_validator(mode="after")
+    def _columns_fit_the_kind(self) -> ContextVariable:
+        if not self.columns:
+            raise ValueError(f"context.variables {self.name!r}: columns darf nicht leer sein")
+        if self.kind != "sum" and len(self.columns) != 1:
+            raise ValueError(
+                f"context.variables {self.name!r}: kind {self.kind!r} braucht genau eine Spalte"
+            )
+        if (self.kind == "ordinal") != (self.scale is not None):
+            raise ValueError(
+                f"context.variables {self.name!r}: scale gehört genau zu kind = 'ordinal'"
+            )
+        if self.name == RATE_TERM:
+            raise ValueError(f"context.variables: {RATE_TERM!r} ist der Term der Trefferquote")
+        return self
+
+
+class ContextModels(_Strict):
+    """Termlisten der Modelle; ``single`` nennt je Zeile von Tabelle 6b eine Variable neben der Trefferquote."""
+
+    y_scale: float = 100.0
+    main: list[str]
+    parties: list[str]
+    single: list[str]
+
+    @field_validator("y_scale")
+    @classmethod
+    def _positive(cls, value: float) -> float:
+        if value <= 0:
+            raise ValueError("context.models.y_scale muss positiv sein")
+        return value
+
+
+class ContextSettings(_Strict):
+    # None = keine Kontextdaten: die Schritte context_data, context und controls fehlen dann
+    root: Path | None
+    max_missing_weight: float
+    min_coverage: float
+    dataset: ContextDataset
+    files: ContextFiles
+    table: ContextTable
+    units: ContextUnits
+    scales: dict[str, dict[str, int]]
+    variables: list[ContextVariable]
+    models: ContextModels
+
+    @field_validator("root", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+    @field_validator("max_missing_weight", "min_coverage")
+    @classmethod
+    def _share(cls, value: float) -> float:
+        if not 0 <= value <= 1:
+            raise ValueError(f"Anteil {value} liegt nicht in [0, 1]")
+        return value
+
+    @model_validator(mode="after")
+    def _consistent(self) -> ContextSettings:
+        for name, scale in self.scales.items():
+            if not scale or len(set(scale.values())) != len(scale):
+                raise ValueError(f"context.scales.{name}: Stufen ohne Dubletten in den Werten")
+        names = [v.name for v in self.variables]
+        if len(names) != len(set(names)):
+            raise ValueError(f"context.variables: Namen doppelt: {names}")
+        for variable in self.variables:
+            if variable.scale is not None and variable.scale not in self.scales:
+                raise ValueError(
+                    f"context.variables {variable.name!r}: Skala {variable.scale!r} fehlt in context.scales"
+                )
+        known = {RATE_TERM, *names}
+        for model_name in ("main", "parties", "single"):
+            terms = getattr(self.models, model_name)
+            unknown = [t for t in terms if t not in known]
+            if unknown or len(terms) != len(set(terms)):
+                raise ValueError(
+                    f"context.models.{model_name}: unbekannte oder doppelte Terme {unknown or terms}"
+                )
+        return self
+
+    def variable(self, name: str) -> ContextVariable:
+        return next(v for v in self.variables if v.name == name)
+
+    def unit_variables(self) -> tuple[ContextVariable, ...]:
+        """Variablen, die aus der Tabelle je Raumeinheit kommen und umgerechnet werden müssen."""
+        return tuple(v for v in self.variables if v.kind != "district")
+
+    def district_variables(self) -> tuple[ContextVariable, ...]:
+        """Variablen, die schon je Wahlbezirk vorliegen (Spalten der Wählertabelle)."""
+        return tuple(v for v in self.variables if v.kind == "district")
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_", env_nested_delimiter="__", extra="forbid", frozen=True
@@ -363,6 +524,7 @@ class Settings(BaseSettings):
     bodies: Bodies  # Option 05
     weights: Weights = Weights()  # Option 06
     topics: Topics = Topics()  # Option 06
+    context: ContextSettings  # Option 03
 
     @field_validator("cache_root", mode="before")
     @classmethod
@@ -409,7 +571,9 @@ class Settings(BaseSettings):
         Vertragsschalter ``contracts``, denn Verträge prüfen ein Ergebnis, sie ändern es nicht, und
         reine Anzeigewerte (00-synergien.md, § 5.4): ``bodies.names_as_of`` (die Kürzel und Namen
         daneben zählen) und die Beschriftung eines Regelsatzes der Gewichtung -- eine umformulierte
-        Überschrift soll nicht die ganze Kette neu rechnen lassen.
+        Überschrift soll nicht die ganze Kette neu rechnen lassen. Option 03: ``context.root`` und
+        die lokalen Dateinamen sind Pfade, ``context.dataset`` ist reine Anzeige (Namensnennung,
+        Stand, Abrufdatum); URLs, Spalten, Skalen und Modelle zählen.
         """
         payload = self.model_dump(
             mode="json",
@@ -424,6 +588,15 @@ class Settings(BaseSettings):
                 "bodies": {"names_as_of"},
                 # Nur Anzeige: die Beschriftung eines Regelsatzes auf der Berichtsseite.
                 "weights": {"paper_type": {"__all__": {"label"}}},
+                "context": {
+                    "root": True,
+                    "dataset": True,
+                    "files": {
+                        "table": {"file"},
+                        "units": {"file"},
+                        "indicators": {"file"},
+                    },
+                },
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

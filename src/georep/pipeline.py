@@ -22,13 +22,22 @@ from georep import __version__
 from georep.analysis.bodies import documents_by_body, hits_by_body
 from georep.analysis.bodies import summary as bodies_summary
 from georep.analysis.hits import hits_by_district, join_voters
+from georep.analysis.ols import model_frame, model_terms, models_table
+from georep.crosswalk import area_shares, district_weights
 from georep.errors import GeorepError, MissingInputError
-from georep.geo import PrecinctIndex, read_precincts
+from georep.geo import Area, PrecinctIndex, read_areas, read_precincts
 from georep.http import Transport
 from georep.io import digest, write_bytes, write_json, write_parquet
 from georep.layout import Layout
 from georep.prep.bodies import BODIES_SCHEMA_VERSION, BodyRules, classify_papers
 from georep.prep.bodies import summary as papers_bodies_summary
+from georep.prep.context import (
+    MISSING_SUFFIX,
+    aggregate_context,
+    district_variables,
+    precinct_table,
+    read_context_table,
+)
 from georep.prep.extract import extract_missing
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus, documents_with_text
 from georep.prep.pois import clean_pois, pois_by_district, read_pois_json
@@ -40,7 +49,7 @@ from georep.search.index import build_index
 from georep.settings import Settings
 from georep.sources import cached_session
 from georep.sources.oparl import fetch_papers
-from georep.sources.opendata import fetch_districts_geojson, fetch_results_csv
+from georep.sources.opendata import fetch_csv, fetch_geojson
 from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
 from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_query
@@ -206,6 +215,10 @@ def build_steps(
     """
     columns = settings.columns.results
     oparl = settings.sources.oparl
+    context = settings.context
+    # Option 03: ohne context_root im Layout (settings ``context.root = ""``) gibt es die drei
+    # Schritte nicht; die Dateinamen und alles Inhaltliche stehen in den Settings.
+    with_context = layout.context_root is not None
     session: Transport | None = http
 
     def transport() -> Transport:
@@ -215,11 +228,26 @@ def build_steps(
         return session
 
     def opendata() -> str:
-        csv = fetch_results_csv(transport(), settings.sources.opendata.results_url, sep=columns.sep)
+        csv = fetch_csv(transport(), settings.sources.opendata.results_url, sep=columns.sep)
         write_bytes(layout.results_csv, csv)
-        geo = fetch_districts_geojson(transport(), settings.sources.opendata.districts_url)
+        geo = fetch_geojson(transport(), settings.sources.opendata.districts_url)
         write_json(layout.districts_geojson, geo, indent=None)
         return f"{len(csv)} Bytes Wahlergebnis, {len(geo['features'])} Stimmbezirke"
+
+    # --- Option 03: die Fremddaten je Raumeinheit frisch vom Portal (``bootstrap`` nimmt die
+    # Kopie im Repo, die beim Bauen ohne Netz reicht)
+    def context_data() -> str:
+        files = context.files
+        table = fetch_csv(transport(), files.table.url, sep=context.table.sep)
+        write_bytes(layout.external / files.table.file, table)
+        units = fetch_geojson(transport(), files.units.url)
+        write_json(layout.external / files.units.file, units, indent=None)
+        indicators = fetch_csv(transport(), files.indicators.url, sep=context.table.sep)
+        write_bytes(layout.external / files.indicators.file, indicators)
+        return (
+            f"{len(table)} Bytes Tabelle, {len(units['features'])} {context.units.label}, "
+            f"{len(indicators)} Bytes Erläuterungen"
+        )
 
     def papers() -> str:
         store = PaperStore(layout.papers)
@@ -304,6 +332,39 @@ def build_steps(
         units = district_units(raw, columns)
         write_parquet(units, layout.district_units, schema_version=1)
         return f"{frame.height} Wahlbezirke, {units.height} Paare mit Stadtbezirk"
+
+    # --- Option 03: Raumeinheiten auf Wahlbezirke umrechnen und die Variablen mitteln
+    def context_step() -> str:
+        working = settings.geo.working_crs
+        precincts = read_precincts(layout.districts_geojson, settings.columns, working)
+        table = precinct_table(precincts, read_results_csv(layout.results_csv, columns), columns)
+        units = read_areas(layout.external / context.files.units.file, context.units.key, working)
+        shares = area_shares(
+            [Area.of(p) for p in precincts], units, min_coverage=context.min_coverage
+        )
+        weights = district_weights(table, shares)
+        values = read_context_table(layout.external / context.files.table.file, context)
+        joined = aggregate_context(weights, values, context).join(
+            district_variables(pl.read_parquet(layout.voters), context), on="wahlkreis_id"
+        )
+        # Erst alle Variablen in der Reihenfolge der Settings, dann die Fehlgewichte: so liest sich
+        # die Tabelle, und die Spaltendoku entsteht aus derselben Liste (report.tables).
+        frame = joined.select(
+            "wahlkreis_id",
+            *(v.name for v in context.variables),
+            *(f"{v.name}{MISSING_SUFFIX}" for v in context.unit_variables()),
+        )
+        write_parquet(frame, layout.context_table, schema_version=1)
+        named = weights.join(values.select("einheit", "einheit_name"), on="einheit", how="left")
+        write_parquet(
+            named.select("wahlkreis_id", "einheit", "einheit_name", "gewicht"),
+            layout.crosswalk,
+            schema_version=1,
+        )
+        return (
+            f"{frame.height} Wahlbezirke, {len(units)} {context.units.label}, "
+            f"{len(context.variables)} Variablen"
+        )
 
     def streets() -> str:
         frame = streets_by_district(read_streets_json(layout.streets))
@@ -423,6 +484,18 @@ def build_steps(
             f"Einheit = {int(unit.sum())} Treffer"
         )
 
+    # --- Option 03: die Modelle von Tabelle 6 über die Kontrollvariablen
+    def controls() -> str:
+        frame = model_frame(pl.read_parquet(layout.results), pl.read_parquet(layout.context_table))
+        table = models_table(frame, settings)
+        write_parquet(table, layout.controls, schema_version=1)
+        samples = 2 if settings.analysis.exclude_districts else 1
+        fitted = table.select("modell", "stichprobe").unique().height
+        return (
+            f"{fitted} von {len(model_terms(context)) * samples} Modellen geschätzt "
+            f"(n = {frame.height})"
+        )
+
     def report() -> str:
         return build_site(
             layout, settings, now=dt.datetime.now(dt.UTC), commit=current_commit()
@@ -432,9 +505,16 @@ def build_steps(
     # Ausgaben als Eingabe; die zwei Tabellen der Themen sind im Register ``optional``.
     with_topics = settings.topics.k > 0
     topic_outputs = (layout.topics, layout.topic_documents, layout.topic_shares)
+    context_files = tuple(layout.external / name for name in context.files.names())
     return [
         Step(
             "opendata", (), (layout.results_csv, layout.districts_geojson), opendata, network=True
+        ),
+        # --- Option 03
+        *(
+            [Step("context_data", (), context_files, context_data, network=True)]
+            if with_context
+            else []
         ),
         Step("papers", (), (layout.papers,), papers, network=True),
         Step("pdfs", (layout.papers,), (layout.pdf_manifest,), pdfs, network=True),
@@ -448,6 +528,25 @@ def build_steps(
             (layout.results_csv,),
             (layout.voters, layout.district_units),  # Option 05: zweite Ausgabe
             voters,
+        ),
+        # --- Option 03
+        *(
+            [
+                Step(
+                    "context",
+                    (
+                        layout.districts_geojson,
+                        layout.results_csv,
+                        layout.external / context.files.units.file,
+                        layout.external / context.files.table.file,
+                        layout.voters,
+                    ),
+                    (layout.context_table, layout.crosswalk),
+                    context_step,
+                )
+            ]
+            if with_context
+            else []
         ),
         Step("streets", (layout.streets,), (layout.streets_by_district,), streets),
         Step("pois", (layout.pois,), (layout.pois_table, layout.pois_by_district), pois),
@@ -493,6 +592,19 @@ def build_steps(
             (layout.weighted, layout.term_weights),
             weights,
         ),
+        # --- Option 03
+        *(
+            [
+                Step(
+                    "controls",
+                    (layout.results, layout.context_table),
+                    (layout.controls,),
+                    controls,
+                )
+            ]
+            if with_context
+            else []
+        ),
         Step(
             "report",
             (
@@ -511,6 +623,17 @@ def build_steps(
                 # Option 06
                 layout.weighted,
                 layout.term_weights,
+                # Option 03: die drei Tabellen und die Definitionen der Indikatoren
+                *(
+                    (
+                        layout.context_table,
+                        layout.crosswalk,
+                        layout.controls,
+                        layout.external / context.files.indicators.file,
+                    )
+                    if with_context
+                    else ()
+                ),
             )
             + ((layout.topics, layout.topic_documents) if with_topics else ()),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),

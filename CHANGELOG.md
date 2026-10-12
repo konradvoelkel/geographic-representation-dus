@@ -4,6 +4,16 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- Kontrollvariablen (Option 03): die Berichtsseite stellt der Regression von Tabelle 5 drei Modelle mit
+  Sozialdaten der Stadt gegenüber (Tabelle 6), zeigt je Term des Hauptmodells ein partielles Streudiagramm,
+  nennt in Tabelle 6b den Koeffizienten der Trefferquote mit je einer Kontrollvariable und sagt unter
+  „Abgeleitete Daten", woraus jede Variable entsteht, mit Quelle, Lizenz, Datenstand und Abrufdatum. Die
+  Fremddaten (Quartiersatlas Düsseldorf 2024, dl-de/by-2-0) liegen unter `context/` im Repo und werden über
+  die Stimmbezirksflächen und die Wahlberechtigten auf die Wahlbezirke umgerechnet. Neu sind die Schritte
+  `context_data` (Netz), `context` und `controls`, drei Download-Tabellen und `georep regress --controls`;
+  ohne Fremddaten (`context.root = ""`) bleibt alles wie bisher. Befund auf der Referenz: mit den
+  Kontrollvariablen erklärt das Hauptmodell R² = 0,89 statt 0,03, und der Zusammenhang der Trefferquote mit
+  der Wahlbeteiligung ist nicht mehr von Null zu unterscheiden.
 - Gewichtete Trefferquoten (Option 06): die Berichtsseite hat einen Abschnitt „Was ändert die Gewichtung?" mit
   einer Sensitivitätstabelle — Tabelle 5 unter 26 Gewichtungen, dazu die Rangkorrelation zur ungewichteten
   Quote. Gewichtet wird je Begriff (in wie vielen Wahlbezirken er geführt wird, in wie vielen Dokumenten er

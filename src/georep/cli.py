@@ -18,7 +18,7 @@ from georep import __version__
 from georep.analysis.regression import regress
 from georep.bootstrap import bootstrap
 from georep.contracts import configure as configure_contracts
-from georep.errors import GeorepError
+from georep.errors import GeorepError, MissingInputError
 from georep.export import export_csv
 from georep.layout import Layout
 from georep.pipeline import build_steps, freshness, run_pipeline, select_steps
@@ -69,6 +69,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--varianten",
         action="store_true",
         help="dieselbe Regression je Gewichtungsvariante aus wahlbezirke_gewichtet.parquet",
+    )
+    reg.add_argument(
+        "--controls", action="store_true", help="Tabelle 6: Modelle mit Kontrollvariablen"
     )
 
     prof = sub.add_parser(
@@ -157,8 +160,8 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
     return 0
 
 
-def _cmd_bootstrap(args: argparse.Namespace, layout: Layout) -> int:
-    report = bootstrap(layout, force=args.force)
+def _cmd_bootstrap(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
+    report = bootstrap(layout, force=args.force, context_files=settings.context.files.names())
     print(report.summary())
     return 0
 
@@ -187,7 +190,31 @@ def _cmd_profile(args: argparse.Namespace, settings: Settings, layout: Layout) -
     return 0
 
 
+def _print_controls(layout: Layout) -> int:
+    """Tabelle 6 aus ``processed/regression_kontrollen.parquet``, je Modell und Stichprobe."""
+    if not layout.controls.exists():
+        raise MissingInputError(
+            f"{layout.controls} fehlt; `georep run context controls` rechnet die Modelle."
+        )
+    table = pl.read_parquet(layout.controls)
+    for (model, sample), rows in table.group_by(["modell", "stichprobe"], maintain_order=True):
+        first = rows.row(0, named=True)
+        print(
+            f"{model} ({sample}): n={first['n']}, k={first['k']}, R²={first['r2']:.4f}, "
+            f"korrigiert {first['r2_adj']:.4f}, F-p={first['f_p']:.5f}"
+        )
+        for row in rows.iter_rows(named=True):
+            vif = "" if row["vif"] is None else f" VIF={row['vif']:.2f}"
+            print(
+                f"  {row['term']:<22} {row['koeffizient']:>12.4f} {row['standardfehler']:>10.4f}"
+                f" p={row['p']:.5f}{vif}"
+            )
+    return 0
+
+
 def _cmd_regress(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
+    if args.controls:
+        return _print_controls(layout)
     results = pl.read_parquet(layout.results)
     print("alle:", regress(results).summary())
     exclude = args.exclude or list(settings.analysis.exclude_districts)
@@ -231,7 +258,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "status":
             return _cmd_status(args, settings, layout)
         if args.command == "bootstrap":
-            return _cmd_bootstrap(args, layout)
+            return _cmd_bootstrap(args, settings, layout)
         if args.command == "export":
             return _cmd_export(layout)
         if args.command == "regress":

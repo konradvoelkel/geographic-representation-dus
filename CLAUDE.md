@@ -51,6 +51,7 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 
 - `georep fetch` ohne Not auf dem vollen Datensatz: Metadaten und 19108 PDFs dauern Stunden. `fetch opendata` ist der einzige schnelle Netzschritt.
 - In `reference/` schreiben. `Layout.guard_writable` verweigert es; Tests arbeiten in `tmp_path` mit `Layout(tmp/data, tmp/cache, mini_root)`.
+- In `context/` schreiben oder die Dateien formatieren: Portaldateien, unverändert gespeichert, mit SHA-256 im README. `Layout.guard_writable` verweigert das Schreiben, die pre-commit-Hooks lassen den Ordner aus.
 - `pre-commit run --all-files` über `reference/` oder `tests/fixtures/`.
 - pandas, geopandas, osmnx: die nox-Session `deps` verbietet sie im Lockfile. Tabellen sind Polars, Dateien Parquet, Geometrie shapely und pyproj; alles ist typisiert und besteht `mypy --strict`.
 - Netztests in CI. Der OParl-Server braucht 85 s pro Seite; Netztests tragen den Marker `network` und laufen nur von Hand. Netz in Unit-Tests kommt über das `Transport`-Protokoll aus `georep.http` und die Fake-Session in `tests/fakes.py` mit den aufgezeichneten Antworten in `tests/fixtures/http/`; OParl-JSON wird mit `georep.oparl` geparst, nie mit `.get()`-Ketten.

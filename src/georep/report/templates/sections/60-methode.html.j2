@@ -5,4 +5,12 @@
 {% if model.bodies %}{# Option 05 #}
 <p>Gremien: das Kürzel vor dem ersten Schrägstrich der Drucksachennummer nennt das Gremium eines Dokuments; die Zuordnung Kürzel zu Gremium und Name steht in den Einstellungen, ein unbekanntes Kürzel bleibt sichtbar „unbekannt". Welche Bezirksvertretung für einen Wahlbezirk die eigene ist, folgt aus den Stadtbezirken seiner Stimmbezirke: jeder Stadtbezirk, in dem der Wahlbezirk Wahlberechtigte hat, zählt, gewichtet mit deren Anteil (Tabelle <code>wahlbezirke_stadtbezirke</code>). Die Gremien kommen damit ohne weiteren Netzabruf aus der Drucksachennummer, nicht aus den Beratungsfolgen der OParl-Schnittstelle; siehe <a href="#gremien">Gremien</a>.</p>
 {% endif %}
+{# Option 03 #}
+{% if model.derived %}
+<p>Die Kontrollvariablen sind Fremddaten: sie liegen für {{ model.derived.units }} {{ model.derived.units_label }} vor und werden über die
+Flächenanteile der Stimmbezirke, gewichtet mit deren Wahlberechtigten, auf die Wahlbezirke umgerechnet; eine
+Einheit ohne Wert fällt aus dem Mittel, und wie viel Gewicht darauf liegt, steht je Variable in der Tabelle zum
+Download. Ihr Datenstand ist der {{ model.derived.stand|date_de }}, die Wahl war am
+{{ model.stand.election|date_de }}: Gebiete, die sich seither stark verändert haben, tragen ältere Zahlen.</p>
+{% endif %}
 </section>

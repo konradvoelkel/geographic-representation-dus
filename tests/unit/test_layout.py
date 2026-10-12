@@ -94,3 +94,40 @@ def test_weights_and_topics_files_lie_next_to_their_kind(tmp_path: Path) -> None
     assert layout.topic_shares == tmp_path / "data" / "interim" / "themen_anteile.parquet"
     assert layout.topics.parent in layout.runtime_dirs()
     assert layout.topic_shares.parent in layout.runtime_dirs()
+
+
+# --- Option 03: Fremddaten unter context_root ----------------------------------------------------
+
+
+def test_context_root_is_read_only_and_names_the_new_tables(tmp_path: Path) -> None:
+    layout = Layout(
+        tmp_path / "data", tmp_path / "cache", tmp_path / "reference", context_root=tmp_path / "ctx"
+    )
+    assert layout.context_source("a.csv") == tmp_path / "ctx" / "a.csv"
+    assert layout.context_table == tmp_path / "data" / "processed" / "wahlbezirke_kontext.parquet"
+    assert layout.crosswalk.name == "wahlbezirke_crosswalk.parquet"
+    assert layout.controls.name == "regression_kontrollen.parquet"
+    with pytest.raises(ReferenceWriteError, match="context_root"):
+        layout.guard_writable(layout.context_source("a.csv"))
+    with pytest.raises(ReferenceWriteError, match="context_root"):
+        layout.guard_writable(tmp_path / "ctx")
+    assert layout.guard_writable(layout.context_table) == layout.context_table
+    assert tmp_path / "ctx" not in layout.runtime_dirs()
+
+
+def test_context_root_is_optional_and_survives_views(tmp_path: Path) -> None:
+    flat = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    assert flat.context_root is None
+    # Ohne Kontextdaten bleibt der Wächter beim reference_root, und drei Argumente genügen weiter.
+    assert flat.guard_writable(tmp_path / "ctx" / "a.csv") == tmp_path / "ctx" / "a.csv"
+    with_context = Layout(
+        tmp_path / "data", tmp_path / "cache", tmp_path / "reference", "", tmp_path / "ctx"
+    )
+    assert with_context.for_profile("2025").context_root == tmp_path / "ctx"
+    assert with_context.reference_view().context_root == tmp_path / "ctx"
+
+
+def test_layout_from_settings_takes_the_context_root(tmp_path: Path) -> None:
+    assert Layout.from_settings(load_settings(cwd=tmp_path)).context_root == Path("context")
+    (tmp_path / "settings.toml").write_text('[context]\nroot = ""\n', encoding="utf-8")
+    assert Layout.from_settings(load_settings(cwd=tmp_path)).context_root is None

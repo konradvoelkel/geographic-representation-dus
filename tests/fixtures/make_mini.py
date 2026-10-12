@@ -19,13 +19,21 @@ from pathlib import Path
 from typing import Any
 
 import polars as pl
+from shapely.geometry import shape
+from shapely.ops import unary_union
+
+from georep.geo import LONLAT, geojson_crs, project, read_precincts, repaired, transformer
+from georep.settings import load_settings
 
 REPO = Path(__file__).resolve().parents[2]
 REFERENCE = REPO / "reference"
+CONTEXT = REPO / "context"
 MINI = Path(__file__).resolve().parent / "mini"
 DISTRICTS = frozenset({1, 10, 38})
 N_HIT = 150
 N_MISS = 50
+# Eine Schnittfläche darunter ist Grenzrauschen zweier Portaldateien, keine gemeinsame Fläche.
+MIN_OVERLAP_M2 = 1.0
 
 
 def _load_json(path: Path) -> list[dict[str, Any]]:
@@ -92,6 +100,7 @@ def write_inputs() -> None:
     dst.write_bytes("".join([lines[0], *body]).encode("latin-1"))
 
     write_geojson()
+    write_context()
 
 
 def write_geojson() -> int:
@@ -116,15 +125,71 @@ def write_geojson() -> int:
     return len(features)
 
 
+def context_units() -> list[str]:
+    """Die Schlüssel der Raumeinheiten, die die 22 Stimmbezirke der Mini-Fixture schneiden.
+
+    Beide GeoJSON-Dateien kommen in verschiedenen CRS aus dem Portal; verglichen wird im
+    Arbeits-CRS der Settings. Berührungen ohne Fläche fallen weg (``MIN_OVERLAP_M2``).
+    """
+    settings = load_settings(cwd=Path("/nonexistent"))
+    working = settings.geo.working_crs
+    precincts = unary_union(
+        [
+            p.geometry
+            for p in read_precincts(
+                MINI / "external" / "Stimmbezirke_2025.geojson", settings.columns, working
+            )
+        ]
+    )
+    units = json.loads((CONTEXT / settings.context.files.units.file).read_text(encoding="utf-8"))
+    trans = transformer(geojson_crs(units, LONLAT), working)
+    key = settings.context.units.key
+    keep: list[str] = []
+    for feature in units["features"]:
+        geometry = repaired(project(shape(feature["geometry"]), trans))
+        if geometry.intersection(precincts).area > MIN_OVERLAP_M2:
+            keep.append(str(feature["properties"][key]))
+    return sorted(keep)
+
+
+def write_context() -> tuple[int, int]:
+    """``mini/context/``: die Raumeinheiten der drei Wahlbezirke und die Tabelle dazu.
+
+    Die Erläuterungsdatei der Indikatoren wird unverändert übernommen (13 KB, keine Daten je
+    Einheit). Liefert (Zeilen der Tabelle, Features).
+    """
+    settings = load_settings(cwd=Path("/nonexistent"))
+    files, table = settings.context.files, settings.context.table
+    keys = set(context_units())
+    target = MINI / "context"
+    target.mkdir(parents=True, exist_ok=True)
+
+    # Byte-treu filtern wie beim Wahlergebnis: UTF-8, ';', CRLF, Dezimalkomma bleiben, wie sie sind.
+    lines = (CONTEXT / files.table.file).read_bytes().decode("utf-8").splitlines(keepends=True)
+    column = lines[0].rstrip("\r\n").split(table.sep).index(table.key)
+    body = [ln for ln in lines[1:] if ln.split(table.sep)[column].strip() in keys]
+    (target / files.table.file).write_bytes("".join([lines[0], *body]).encode("utf-8"))
+
+    units = json.loads((CONTEXT / files.units.file).read_text(encoding="utf-8"))
+    key = settings.context.units.key
+    features = [f for f in units["features"] if str(f["properties"][key]) in keys]
+    subset = {k: (features if k == "features" else v) for k, v in units.items()}
+    with (target / files.units.file).open("w", encoding="utf-8") as f:
+        json.dump(subset, f, ensure_ascii=False)
+    (target / files.indicators.file).write_bytes((CONTEXT / files.indicators.file).read_bytes())
+    return len(body), len(features)
+
+
 def main() -> None:
     write_inputs()
     n_docs = len(_load_json(MINI / "interim" / "paper_with_text.json"))
     n_precincts = len(
         json.loads((MINI / "external" / "Stimmbezirke_2025.geojson").read_text())["features"]
     )
+    n_units = len(context_units())
     print(
         f"mini fixture geschrieben: {n_docs} Dokumente, {n_precincts} Stimmbezirke, "
-        f"Wahlbezirke {sorted(DISTRICTS)}"
+        f"{n_units} Raumeinheiten, Wahlbezirke {sorted(DISTRICTS)}"
     )
 
 

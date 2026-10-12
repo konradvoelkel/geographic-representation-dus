@@ -20,6 +20,8 @@ def cached_session(settings: Settings, cache_path: Path) -> requests.Session:
         cache_pattern(src.wikidata.sparql_endpoint): ttl.wikidata_s,
         cache_pattern(src.wikidata.wikipedia_api): ttl.wikipedia_s,
         cache_pattern(src.osm.overpass_endpoint): ttl.overpass_s,
+        # Option 03: die Fremddaten je Raumeinheit kommen vom selben Portal, also dieselbe Dauer.
+        **{cache_pattern(f.url): ttl.opendata_s for f in settings.context.files.all()},
     }
     return make_session(
         timeout_s=settings.http.timeout_s,

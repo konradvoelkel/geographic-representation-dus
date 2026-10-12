@@ -327,3 +327,59 @@ def test_the_english_paragraph_counts_the_weightings(page: str, model: ReportMod
 def test_the_weighting_section_adds_no_external_link(page: str) -> None:
     section = re.search(r'<section id="gewichtung">.*?</section>', page, re.S)
     assert section is not None and external_links(section.group(0)) == []
+
+
+# --- Option 03: Kontrollvariablen und abgeleitete Daten ------------------------------------------
+
+
+def test_the_two_new_sections_render_with_their_numbers(page: str, model: ReportModel) -> None:
+    controls, derived = model.controls, model.derived
+    assert controls is not None and derived is not None
+    assert '<section id="kontrollvariablen">' in page
+    assert '<section id="abgeleitete-daten">' in page
+    assert "<h2>Kontrollvariablen</h2>" in page and "<h2>Abgeleitete Daten</h2>" in page
+    for m in controls.models:
+        assert f"Modell {m.name}" in page
+    assert controls.verdict in page
+    assert controls.units_label in page and derived.attribution in page
+    assert f'href="{derived.url}"' in page and derived.license in page
+    for variable in derived.variables:
+        assert f"<code>{variable.name}</code>" in page and variable.label in page
+    # Die Mini-Fixture hat n = 3: der Hinweis auf nicht geschätzte Modelle steht da
+    assert "Nicht geschätzt" in page and "B (alle)" in page
+    assert "Datenlizenz" in page and "31.12.2021" in page
+
+
+def test_the_page_without_context_data_has_neither_section(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    plain = render_report(replace(model, controls=None, derived=None), visuals)
+    assert "kontrollvariablen" not in plain and "abgeleitete-daten" not in plain
+    assert "Kontrollvariablen abgeleitet aus" not in plain  # der Satz im Fuß fehlt auch
+    assert plain.startswith("<!doctype html>")
+
+
+def test_the_partial_plots_appear_with_their_captions(model: ReportModel, visuals: Visuals) -> None:
+    plots = [("Sozialer Handlungsbedarf (Steigung -9,91)", '<svg class="avp"></svg>')]
+    page = render_report(model, replace(visuals, partial_svgs=plots))
+    assert "Beitrag jedes Terms" in page
+    assert "Sozialer Handlungsbedarf (Steigung −9,91)".replace("−", "-") in page
+    assert '<svg class="avp"></svg>' in page and "<figcaption>" in page
+
+
+def test_the_dataset_link_of_the_settings_is_allowed(page: str, model: ReportModel) -> None:
+    """Die Datensatzseite steht nicht in ALLOWED_LINKS, sondern kommt aus den Settings."""
+    from georep.report.render import ALLOWED_LINKS, model_links
+
+    assert model.derived is not None
+    assert model.derived.url not in ALLOWED_LINKS
+    assert model.derived.url in model_links(model)
+    assert set(external_links(page)) <= ALLOWED_LINKS | model_links(model)
+
+
+def test_the_method_section_mentions_the_control_variables(page: str, model: ReportModel) -> None:
+    """00-synergien.md § 5.1: jede Option hängt ihren Absatz ans Ende von `60-methode`."""
+    assert model.derived is not None
+    method = page[page.index('<section id="methode">') : page.index('<section id="abgeleitete')]
+    assert "Die Kontrollvariablen sind Fremddaten" in method
+    assert model.derived.units_label in method and "Datenstand" in method

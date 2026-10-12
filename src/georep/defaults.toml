@@ -67,6 +67,7 @@ encoding = "latin-1"
 district = "Kommunalwahlbezirk"
 eligible = "Wahlberechtigte_insgesamt"
 voters = "Waehler"
+precinct = "gebietnr"          # Stimmbezirk, vierstellig; Schlüssel zu „Stimm-/ Wahlbezirk" im GeoJSON (Option 03, Crosswalk über Stimmbezirksflächen)
 parties = { CDU = "CDU_Stimmen", GRUENE = "GRUENE_Stimmen", SPD = "SPD_Stimmen", FDP = "FDP_Stimmen", Die_Linke = "Die_Linke_Stimmen", AfD = "AfD_Stimmen" }
 city_district = "Stadtbezirk" # Option 05: Stadtbezirk je Stimmbezirk, stimmt für alle 306 Stimmbezirke mit "Stadtbezirk Nr." des GeoJSON überein (2026-10-11)
 
@@ -217,3 +218,171 @@ stop_words = "de"              # Funktionswörter aus der Paketdatei analysis/st
 max_iter = 200                 # Obergrenze der NMF-Iterationen; mit tol unten konvergiert das Modell nach 120 (2026-10-12)
 tol = 0.001                    # Abbruchschwelle: mit 1e-4 läuft NMF in die Obergrenze (200 Iterationen, 6,9 s; konvergiert erst bei 412 und 13,4 s) und gewinnt dabei 0,03 % Rekonstruktionsfehler; 1e-3 konvergiert nach 120 Iterationen in 4,5 s (gemessen 2026-10-12 auf 19 033 Texten)
 random_state = 0               # Startwert für NMF; nndsvda ist deterministisch, der Wert steht trotzdem hier
+
+# --- Option 03: Kontrollvariablen (docs/plans/03-kontrollvariablen.md) -----------------------------
+# Fremddaten je Raumeinheit (hier der Quartiersatlas der Stadt je Sozialraum) werden über die
+# Stimmbezirke auf die Wahlbezirke umgerechnet und als Kontrollvariablen in eine multiple Regression
+# der Wahlbeteiligung auf die Trefferquote gesetzt (Tabelle 6 der Berichtsseite). Eine andere Stadt
+# tauscht diesen Block; der Code kennt weder „Sozialraum" noch „Quartiersatlas".
+[context]
+root = "./context"             # im Repo, wird nur gelesen; bootstrap kopiert nach data_root/external/, `georep fetch context_data` holt frisch; "" = keine Kontextdaten
+max_missing_weight = 0.1       # Anteil des Gewichts eines Wahlbezirks, der auf Einheiten ohne Wert liegen darf (Sozialraum 071009 hat 2021 keine Daten); darüber EmptyResultError
+min_coverage = 0.9             # Anteil der Stimmbezirksfläche, den die Einheiten mindestens bedecken müssen; auf der Referenz 0,9999 (2026-10-12); darunter SchemaError
+
+[context.dataset]              # Namensnennung (dl-de/by-2-0 verlangt Quelle und Datensatz) und Stand; nur Anzeige, nicht im Fingerprint
+title = "Quartiersatlas Düsseldorf 2024"
+url = "https://opendata.duesseldorf.de/dataset/quartiersatlas-d%C3%BCsseldorf-2024-sozialer-handlungsbedarf-und-fluktuation"
+publisher = "Landeshauptstadt Düsseldorf, Amt für Statistik und Wahlen"
+license = "Datenlizenz Deutschland – Namensnennung – Version 2.0"
+license_url = "https://www.govdata.de/dl-de/by-2-0"
+stand = 2021-12-31             # Datenstand laut Datensatzseite; die Wahl ist vom 14.09.2025, die Seite sagt das (Frage 3.4)
+fetched = 2026-10-12           # Abrufdatum der Dateien unter root (context/README.md); gilt, solange context_data nie lief
+
+[context.files.table]          # die Tabelle je Raumeinheit
+url = "https://opendata.duesseldorf.de/sites/default/files/Daten_QA_2024.csv"
+file = "quartiersatlas_2024.csv"
+
+[context.files.units]          # die Flächen der Raumeinheiten; das CRS steht in der Datei (CRS84, lon/lat)
+url = "https://opendata.duesseldorf.de/sites/default/files/Sozialr%C3%A4ume_QA_Daten_WGS84_EPSG_4326.geojson"
+file = "sozialraeume_2021.geojson"
+
+[context.files.indicators]     # Definitionen der Indikatoren, eine Zeile je Indikator, für den Abschnitt „Abgeleitete Daten"
+url = "https://opendata.duesseldorf.de/sites/default/files/Erl%C3%A4uterung_Indikatoren_QA_0.csv"
+file = "quartiersatlas_2024_indikatoren.csv"
+
+[context.table]                # Form der Tabelle je Raumeinheit
+sep = ";"
+encoding = "utf-8"             # anders als die Wahlergebnis-CSV des Portals, die latin-1 trägt
+decimal = ","
+missing = [".", "x", "-", "#NV"] # "." anonymisiert Werte unter 3 (Hinweis des Portals); x, - und #NV stehen im Sozialraum ohne Daten
+key = "SRG_2021_Nr"            # Schlüssel der Einheit, als Text (führende Null)
+name = "SRG_2021_Name"
+indicator = "Indikator"        # Spalten der Erläuterungsdatei: Name und Definition
+definition = "Berechnung"
+
+[context.units]
+label = "Sozialräume"          # Name der Raumeinheit auf der Seite
+key = "SOZIALRAUM"             # Eigenschaft im GeoJSON mit dem Schlüssel der Einheit
+
+[context.scales.handlungsbedarf] # Stufen des städtischen Index, gleichabständig als Score (Frage 3.2, Annahme gilt); eine andere Stufe ist ein SchemaError
+gering = 1
+"eher gering" = 2
+mittel = 3
+"erhöht" = 4                   # in Anführungszeichen: ein nackter TOML-Schlüssel kennt nur [A-Za-z0-9_-]
+hoch = 5
+
+# Variablen je Wahlbezirk. kind: value = eine Spalte der Tabelle, sum = Summe mehrerer Spalten, ordinal = Stufe
+# über eine Skala, district = Spalte der Wählertabelle (wahlbezirke_waehler) mal factor. indicator nennt die
+# Zeile der Erläuterungsdatei mit der Definition. Einheiten der Tabelle werden mit den Wahlberechtigten je
+# Stimmbezirk und dem Flächenanteil gewichtet gemittelt.
+[[context.variables]]
+name = "hb_score"
+label = "Sozialer Handlungsbedarf"
+unit = "Score 1 bis 5"
+kind = "ordinal"
+columns = ["Sozialer_HB"]
+scale = "handlungsbedarf"
+indicator = "Sozialer Handlungsbedarf"
+
+[[context.variables]]
+name = "fluktuation_score"
+label = "Handlungsbedarf Fluktuation"
+unit = "Score 1 bis 5"
+kind = "ordinal"
+columns = ["HB_Fluktuation"]
+scale = "handlungsbedarf"
+indicator = "Handlungsbedarf im Themenfeld Fluktuation"
+
+[[context.variables]]
+name = "anteil_65plus"
+label = "Anteil 65 Jahre und älter"
+unit = "% der Einwohner"
+kind = "sum"
+columns = ["65_bis_u80_Ant", "ue80_Ant"]
+indicator = "Bevoelkerung nach Alter und Geschlecht"
+
+[[context.variables]]
+name = "anteil_u18"
+label = "Anteil unter 18 Jahren"
+unit = "% der Einwohner"
+kind = "sum"
+columns = ["u6_Ant", "6_bis_u18_Ant"]
+indicator = "Bevoelkerung nach Alter und Geschlecht"
+
+[[context.variables]]
+name = "fluktuation"
+label = "Fluktuationsrate"
+unit = "je 1 000 Einwohner"
+kind = "value"
+columns = ["Fluktuationsrate"]
+indicator = "Fluktuationsrate"
+
+[[context.variables]]
+name = "wohndauer"
+label = "Durchschnittliche Wohndauer"
+unit = "Monate"
+kind = "value"
+columns = ["Durchschn_Wohndauer_Monate"]
+indicator = "Wohndauer"
+
+[[context.variables]]
+name = "mindestsicherung"
+label = "Mindestsicherungsquote"
+unit = "% der Einwohner"
+kind = "value"
+columns = ["Mindestsicherungsquote"]
+indicator = "Mindestsicherungsquote"
+
+[[context.variables]]
+name = "migrationshintergrund"
+label = "Anteil mit Migrationshintergrund"
+unit = "% der Einwohner"
+kind = "value"
+columns = ["Migrationshintergrund_Ant"]
+indicator = "Personen mit Migrationshintergrund"
+
+[[context.variables]]
+name = "einpersonen_hh"
+label = "Anteil Einpersonenhaushalte"
+unit = "% der Haushalte"
+kind = "value"
+columns = ["EinpersonenHH_Ant"]
+indicator = "Einpersonenhaushalte"
+
+[[context.variables]]
+name = "cdu"
+label = "Stimmenanteil CDU"
+unit = "% der Wähler"
+kind = "district"
+columns = ["CDU_anteil"]
+factor = 100
+
+[[context.variables]]
+name = "gruene"
+label = "Stimmenanteil Grüne"
+unit = "% der Wähler"
+kind = "district"
+columns = ["GRUENE_anteil"]
+factor = 100
+
+[[context.variables]]
+name = "spd"
+label = "Stimmenanteil SPD"
+unit = "% der Wähler"
+kind = "district"
+columns = ["SPD_anteil"]
+factor = 100
+
+[[context.variables]]
+name = "afd"
+label = "Stimmenanteil AfD"
+unit = "% der Wähler"
+kind = "district"
+columns = ["AfD_anteil"]
+factor = 100
+
+[context.models]               # sparsam bei n = 41: ein Hauptmodell, ein Parteimodell, jede Variable einzeln (Frage 3.1, Annahme)
+y_scale = 100                  # Wahlbeteiligung in Prozent, wie Tabelle 5
+main = ["trefferquote", "hb_score", "anteil_65plus", "fluktuation"]                  # B: k = 4
+parties = ["trefferquote", "hb_score", "anteil_65plus", "fluktuation", "cdu", "afd"] # C: die zwei Parteianteile mit der geringsten Korrelation untereinander (r = -0,09); alle sechs ergäben VIF bis 76
+single = ["hb_score", "fluktuation_score", "anteil_65plus", "anteil_u18", "fluktuation", "wohndauer", "mindestsicherung", "migrationshintergrund", "einpersonen_hh", "cdu", "gruene", "spd", "afd"] # Tabelle 6b: Trefferquote plus je eine Variable
