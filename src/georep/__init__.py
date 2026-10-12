@@ -6,4 +6,4 @@ Stadtrats, Zusammenhang mit der Wahlbeteiligung. Aufbau in ``docs/architecture.m
 Schreibvorgänge, deal-Verträge an den Batch-Grenzen.
 """
 
-__version__ = "0.10.0"
+__version__ = "0.11.0"

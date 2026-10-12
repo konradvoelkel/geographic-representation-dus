@@ -2,8 +2,14 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
-## Unreleased
+## 0.11.0 (2026-10-12), Ausbau in acht Optionen
 
+- Sammelversion des Ausbaus nach `docs/plan-ausbau-2026-10.md`: acht Optionen auf eigenen Branches, je mit Plan
+  und Abnahme unter `docs/plans/`, Review und Merge in der Reihenfolge 08, 05, 06, 03, 04, 02, 01, 07. Die
+  Einzelheiten stehen in den Absätzen darunter, neueste zuerst. Was die Seite noch nicht zeigt, wartet auf
+  einen Netzlauf: die zweite Wahlperiode, Mönchengladbach und die laufende Periode (STATUS.md, „Nächster
+  Schritt"). Nebenbei behoben: ein zweiter `georep publish --out` in denselben Ordner scheiterte, weil die
+  Kopie der ersten Stadt die Markerdatei löschte.
 - **Weitere Städte** (Option 01): dieselbe Kette rechnet jede Kommune, deren Profil im Paket liegt. Ein
   Profil ist eine TOML-Datei (`src/georep/profiles/<slug>.toml`) mit allem Stadtspezifischen: Endpunkt,
   Quellen mit Dateinamen, Wikidata-Entität, Spalten und Parteien, Ausschlussliste, Marker, Quellen mit
