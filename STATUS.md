@@ -40,7 +40,10 @@ Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-represen
 Auf dem Branch `feat/03-kontrollvariablen` (2026-10-12, noch nicht gemerged): 329 Tests, davon sieben `slow`
 und zehn `bench`, schnelle Suite parallel in 17 bis 22 s, Abdeckung 98,2 %; 46 Python-Dateien, rund 6900
 Zeilen; voller Offline-Lauf 10 s mit elf Schritten (`context` 0,5 s, `controls` 0,1 s, Berichtsseite 1,4 s);
-`index.html` 765 KB; `nox -s verify` 4 min mit `ordinal_score`.
+`index.html` 764 KB; `nox -s verify` 4 min mit `ordinal_score`; `nox -s mutate` über `analysis/` tötet 133 von
+175 Mutanten (76 %), die Überlebenden sind Vertrags-Lambdas an ihren Grenzen und `frozen=True` an dataclasses.
+Mit sechs Arbeitern wurde die Sitzung unter der Last der acht parallelen Agenten abgeschossen (SIGTERM bei
+190 von 208); drei Arbeiter und nur `analysis/` laufen in sieben Minuten durch.
 
 ## Bekannt
 

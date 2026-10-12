@@ -130,3 +130,29 @@ def test_model_terms_follow_the_settings(tmp_path: Path) -> None:
 
 def test_sample_label_names_the_excluded_districts() -> None:
     assert sample_label([1, 10]) == "ohne_1_10"
+
+
+def test_the_vif_of_two_terms_is_one_over_one_minus_their_squared_correlation() -> None:
+    """Bei zwei Termen ist die Varianzinflation exakt 1/(1 − r²); das prüft die Hilfsregression.
+
+    Die VIF-Zahlen der echten Modelle stehen nur im slow-Test, und `nox -s mutate` lässt den aus;
+    ohne diesen Test überlebten die Mutanten in `_vif` (2026-10-12).
+    """
+    rows = [(1.0, 1.0, 2.0), (2.0, 2.0, 1.0), (3.0, 3.0, 5.0), (4.0, 4.0, 3.0), (5.0, 6.0, 9.0)]
+    frame = _frame(rows)
+    fit = fit_ols(frame, "y", ["a", "b"])
+    correlation = frame.select(pl.corr(pl.col("a"), pl.col("b"))).item()
+    expected = 1.0 / (1.0 - correlation**2)
+    assert fit.term("a").vif == pytest.approx(expected)
+    assert fit.term("b").vif == pytest.approx(expected)  # bei k = 2 teilen sich beide den Wert
+    assert expected > 1.5  # die beiden Terme erklären sich spürbar gegenseitig
+    # Mit nur einem Term gibt es nichts zu erklären
+    assert fit_ols(frame, "y", ["a"]).term("a").vif == 1.0
+
+
+def test_the_summary_names_every_term_with_its_numbers() -> None:
+    rows = [(1.0, 1.0, 2.0), (2.0, 2.0, 1.0), (3.0, 3.0, 5.0), (4.0, 4.0, 3.0), (5.0, 6.0, 9.0)]
+    text = fit_ols(_frame(rows), "y", ["a", "b"]).summary()
+    assert "n=5, k=2" in text and "R²=" in text and "F-p=" in text
+    assert text.count("\n") == 3 and "VIF=" in text  # Kopf plus Konstante und zwei Terme
+    assert "(Konstante)" in text and text.count("VIF=") == 2  # die Konstante hat keines
