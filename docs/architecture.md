@@ -273,8 +273,8 @@ dem Modell, nichts fest kodiert.
 
 ## Betrieb
 
-Die Hauptperiode entsteht in GitHub Actions aus der Referenz. Die laufende Wahlperiode (Profil `2025`,
-`settings.2025.toml`) braucht dagegen einen Rechner mit Speicher: sie ruft je Lauf nur Geändertes ab
+Die Hauptperiode entsteht in GitHub Actions aus der Referenz. Die laufende Wahlperiode (Paketprofil `duesseldorf-2025`,
+Datenordner `2025`) braucht dagegen einen Rechner mit Speicher: sie ruft je Lauf nur Geändertes ab
 (`modified_since`), lädt neue PDFs, extrahiert deren Texte und baut ihre eigene Seite unter
 `<data_root>/2025/site/`. Das Skript `deploy/bin/georep-monitor.sh` führt einen solchen Lauf, die beiden
 systemd-Einheiten daneben machen daraus einen Timer; beide tragen keinen Pfad, alles kommt aus

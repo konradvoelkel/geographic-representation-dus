@@ -1402,8 +1402,12 @@ def build_report_model(
         body_figures=body_figures(table, rows, settings.bodies),
         body_regression=_body_regression(district_bodies, results, settings),
         # Option 06: ohne die lange Tabelle gibt es den Abschnitt nicht
+        # Option 07: die Sensitivitätstabelle ist Tabelle 5 je Gewichtungsvariante; ohne
+        # Wahlbeteiligung zur Periode gibt es sie nicht, so wie es das Streudiagramm nicht gibt.
         sensitivity=(
-            build_sensitivity(layout, settings, results) if layout.weighted.exists() else None
+            build_sensitivity(layout, settings, results)
+            if layout.weighted.exists() and settings.report.regression
+            else None
         ),
         controls=controls_section(layout, settings, units),
         derived=derived_data(layout, settings, units),

@@ -102,7 +102,7 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   dadurch von 687 KB auf 848 KB (gzip 141 KB), Budget 1,5 MB.
 
 - Die laufende Wahlperiode seit der Kommunalwahl 14.09.2025 lässt sich fortschreiben: das Profil
-  `settings.2025.toml` legt Daten unter `data/2025/` und Cache unter `<cache_root>/2025/`, holt je Lauf nur
+  Paketprofil `duesseldorf-2025` legt Daten unter `data/2025/` und Cache unter `<cache_root>/2025/`, holt je Lauf nur
   Geändertes (`modified_since`), entfernt im Ratsinformationssystem gelöschte Paper aus dem Store und baut
   eine eigene Seite ohne Regression, dafür mit der Monatsreihe. Neuer Schritt `timeline` mit zwei Tabellen
   (`monatsreihe`, `wahlbezirke_monate`) und ein Abschnitt „Je Monat" auf beiden Seiten; die Hauptseite

@@ -571,7 +571,7 @@ nennt beide Fälle. Verworfen: `isdecimal()` (es ließe arabisch-indische Ziffer
 ## Punkt: Die laufende Wahlperiode als zweites Profil mit eigenem Lauf (Option 07, 2026-10-12)
 
 Die Periode seit der Kommunalwahl vom 14.09.2025 wird fortgeschrieben, ohne die Kette der Arbeit anzufassen:
-ein Settings-Profil `settings.2025.toml` (`profile = "2025"`, `period.start = 2025-09-15`, `end` leer,
+ein Paketprofil `profiles/duesseldorf-2025.toml` (`base = "duesseldorf"`, `profile = "2025"`, `period.start = 2025-09-15`, `end` leer,
 `election = 2025-09-14`) legt Daten unter `data_root/2025/` und PDFs wie Texte unter `cache_root/2025/`. Der
 Abruf holt je Lauf nur Geändertes (`modified_since`), der Store entfernt gelöschte Paper, der neue Schritt
 `timeline` zählt Dokumente je Monat, und die Seite des Profils entsteht aus derselben Vorlage mit zwei

@@ -1,0 +1,43 @@
+# Profil „Wahlperiode seit der Kommunalwahl 2025" (Option 07), als Paketprofil derselben Stadt:
+#
+#   uv run georep --profile duesseldorf-2025 bootstrap
+#   uv run georep --profile duesseldorf-2025 fetch papers --force
+#   uv run georep --profile duesseldorf-2025 run
+#
+# Es ist die laufende Periode: offenes Ende, je Lauf nur Geändertes (`modified_since`), eigene
+# Seite unter `<data_root>/2025/site/`. `base` setzt auf dem Stadtprofil auf; hier steht nur, was
+# für diese Periode anders ist. Gründe je Zeile stehen daneben, die ausführlichen in
+# docs/plans/07-monitoring.md, § 2. Rechnerspezifische Pfade gehören nie hierher, sondern in
+# settings.local.toml (gitignored). Der Betrieb (systemd-Timer, R2, VPS) steht in deploy/README.md.
+# Lesereihenfolge: defaults.toml < profiles/duesseldorf.toml < diese Datei < settings*.toml.
+
+base = "duesseldorf"
+
+profile = "2025"               # Ordnername unter data_root und cache_root; trennt Daten, Stamps, PDFs und Texte von der Hauptperiode
+
+[period]
+start = 2025-09-15             # der Tag nach der Wahl; Dokumente ab hier zählen
+end = ""                       # offen: laufende Periode (der tiefe Merge ließe das Datum aus dem Stadtprofil sonst stehen)
+election = 2025-09-14          # Wahltag, dessen Ergebnis Nenner (Wahlberechtigte) und Zuschnitt (Wahlbezirke) liefert
+label = "Wahlperiode seit der Kommunalwahl 2025"  # Anzeigename im Kopf, im Datenstand und auf der Unterseite
+dictionary = "base"            # Straßen und Orte der Hauptperiode (Stand November 2025): so unterscheiden sich nur die Dokumente, und die Treffer bleiben über die Jahre vergleichbar (Plan § 2, Frage 8)
+
+[bootstrap]
+seed_corpus = false            # kein Korpus der Hauptperiode im Store dieser Periode: sonst stünden 19 108 Paper von 2020 bis 2025 darin und pdfs lüde deren PDFs (Stunden)
+
+[report]
+regression = false             # zur laufenden Periode gibt es keine Wahlbeteiligung: kein Streudiagramm, keine Tabelle 5, kein Umschalter auf der Karte
+data_note = "aus dem Datensatz der Arbeit (Stand November 2025), eingefroren für die ganze Periode"
+
+[sources.oparl]
+incremental = true             # je Lauf nur Geändertes: modified_since = letztes modified minus ein Tag
+stop_when_older = true         # abbrechen, sobald eine ganze Seite vor dem 15.09.2025 liegt
+
+[cache]
+oparl_pages_s = 0              # die erste Seite ändert sich täglich; eine gecachte Antwort würde neue Dokumente verstecken
+
+[context]                      # Option 03: Kontrollvariablen erklären die Wahlbeteiligung; die gibt es hier nicht
+root = ""                      # leer heißt: die Schritte context_data (Netz), context und controls fehlen im Profil
+
+[topics]                       # Option 06: das Themenmodell speist die Gewichtungsvarianten der Regression
+k = 0                          # ohne Regression zeigt die Seite keine Sensitivitätstabelle; der Schritt topics entfällt damit und spart vier Sekunden je Lauf

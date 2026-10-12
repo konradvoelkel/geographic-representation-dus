@@ -37,7 +37,7 @@ if [ "${1:-}" = "sync" ]; then
 fi
 shift 2   # "run georep"
 if [[ "$*" == *paths* ]]; then
-  if [[ "$*" == *--settings* ]]; then
+  if [[ "$*" == *--profile* ]]; then
     echo "profile=2025"; root="$GEOREP_DATA_ROOT/2025"; cache="$GEOREP_CACHE_ROOT/2025"
   else
     echo "profile="; root="$GEOREP_DATA_ROOT"; cache="$GEOREP_CACHE_ROOT"
@@ -55,7 +55,7 @@ if [[ "$*" == *paths* ]]; then
   exit 0
 fi
 case "$*" in
-  *"--settings "*bootstrap*) echo "4 Dateien kopiert, 0 übersprungen; Stores nicht gefüllt" ;;
+  *"--profile "*bootstrap*) echo "4 Dateien kopiert, 0 übersprungen; Stores nicht gefüllt" ;;
   *bootstrap*) echo "4 Dateien kopiert; 200 Paper und 200 Texte aus der Referenz" ;;
   *papers*) echo "papers       ausgeführt    seit 2026-10-01; Store 3 neu, 1 aktualisiert" ;;
   *pdfs*) echo "pdfs 2 geladen, 0 übersprungen; texts 2 extrahiert, 1 aktuell" ;;
@@ -123,7 +123,7 @@ def sandbox(tmp_path: Path) -> dict[str, str]:
     env.update(
         PATH=f"{binaries}:{env['PATH']}",
         MONITOR_REPO=str(tmp_path),
-        MONITOR_SETTINGS="settings.2025.toml",
+        MONITOR_PROFILE="duesseldorf-2025",
         MONITOR_PUBLISH_DIR=str(tmp_path / "publish"),
         MONITOR_R2_REMOTE="",
         MONITOR_VPS_HOST="",
@@ -158,13 +158,14 @@ def test_a_dry_run_walks_the_steps_in_order_and_writes_the_stand(sandbox: dict[s
     calls = [line for line in logged if line.startswith("uv ")]
     assert calls == [
         "uv sync --locked",
-        "uv run georep --settings settings.2025.toml paths",  # Profil und Pfade aus dem Paket
+        "uv run georep --profile duesseldorf-2025 paths",  # Profil und Pfade aus dem Paket
         "uv run georep paths",
-        "uv run georep --settings settings.2025.toml bootstrap",
-        "uv run georep --settings settings.2025.toml run --dry-run --online papers",
-        "uv run georep --settings settings.2025.toml run --dry-run --online pdfs texts",
-        "uv run georep --settings settings.2025.toml run --dry-run",
+        # Die Hauptperiode zuerst: das Profil liest ihre Straßen und Orte (dictionary = "base")
         "uv run georep bootstrap",
+        "uv run georep --profile duesseldorf-2025 bootstrap",
+        "uv run georep --profile duesseldorf-2025 run --dry-run --online papers",
+        "uv run georep --profile duesseldorf-2025 run --dry-run --online pdfs texts",
+        "uv run georep --profile duesseldorf-2025 run --dry-run",
         "uv run georep run",
     ]
     assert not [line for line in logged if line.startswith("rclone ")]  # ohne Remote kein Upload
@@ -216,18 +217,19 @@ def test_a_failing_step_stops_the_run_with_exit_one(sandbox: dict[str, str]) -> 
     calls = Path(sandbox["STUB_LOG"]).read_text(encoding="utf-8").splitlines()
     assert calls == [
         "uv sync --locked",
-        "uv run georep --settings settings.2025.toml paths",
+        "uv run georep --profile duesseldorf-2025 paths",
         "uv run georep paths",
-        "uv run georep --settings settings.2025.toml bootstrap",
-        "uv run georep --settings settings.2025.toml run --dry-run --online papers",
+        "uv run georep bootstrap",
+        "uv run georep --profile duesseldorf-2025 bootstrap",
+        "uv run georep --profile duesseldorf-2025 run --dry-run --online papers",
     ]  # danach nichts mehr
     assert not (Path(sandbox["MONITOR_PUBLISH_DIR"]) / "out" / "2025" / "stand.json").exists()
 
 
 def test_missing_configuration_is_named(sandbox: dict[str, str]) -> None:
-    del sandbox["MONITOR_SETTINGS"]
+    del sandbox["MONITOR_PROFILE"]
     result = _run(sandbox)
-    assert result.returncode == 1 and "MONITOR_SETTINGS ist nicht gesetzt" in result.stdout
+    assert result.returncode == 1 and "MONITOR_PROFILE ist nicht gesetzt" in result.stdout
     assert not Path(sandbox["STUB_LOG"]).exists()  # kein Aufruf vor der Prüfung
 
 
@@ -330,7 +332,7 @@ def test_an_aborted_snapshot_does_not_block_the_next_run(sandbox: dict[str, str]
 
 def test_the_profile_name_comes_from_the_package(sandbox: dict[str, str]) -> None:
     """Das Skript fragt Profil und Pfade bei georep ab, statt sie in monitor.env zu wiederholen."""
-    assert "MONITOR_PROFILE" not in sandbox
+    assert "MONITOR_SETTINGS" not in sandbox
     result = _run(sandbox)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "Profil 2025, Seite unter" in result.stdout

@@ -375,9 +375,7 @@ ALL_PDFS = ["00438685.pdf", "00439409.pdf", "00519825.pdf", "00552781.pdf"]
 @pytest.fixture(scope="module")
 def open_settings() -> Settings:
     """Das Profil der laufenden Periode: offenes Ende, kein Korpus der Arbeit, keine Regression."""
-    from tests.conftest import REPO
-
-    return load_settings(explicit=REPO / "settings.2025.toml", cwd=Path("/nonexistent"))
+    return load_settings(profile="duesseldorf-2025", cwd=Path("/nonexistent"))
 
 
 def _dated(i: int, name: str, date: str, modified: str) -> dict[str, Any]:

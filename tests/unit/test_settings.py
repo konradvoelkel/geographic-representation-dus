@@ -900,15 +900,16 @@ def test_monitoring_url_must_be_a_relative_link(tmp_path: Path) -> None:
 
 
 def test_profile_2025_is_an_open_period_without_corpus_seed(tmp_path: Path) -> None:
-    from tests.conftest import REPO
-
-    s = load_settings(explicit=REPO / "settings.2025.toml", cwd=tmp_path)
-    assert s.profile == "2025"
+    s = load_settings(profile="duesseldorf-2025", cwd=tmp_path)
+    assert s.profile == "2025" and s.default_profile == "duesseldorf-2025"
+    assert s.city.name == "Düsseldorf"  # base = "duesseldorf": dieselbe Stadt, andere Periode
+    assert s.period.dictionary == "base"  # Straßen und Orte der Hauptperiode, eingefroren
+    assert s.context.root is None and s.topics.k == 0  # was die Regression braucht, entfällt
     assert s.period.start == date(2025, 9, 15) and s.period.end is None
     assert s.period.election_day == date(2025, 9, 14)
     assert not s.bootstrap.seed_corpus and not s.report.regression
     assert s.report.monitoring_url == ""
-    # Alles andere bleibt wie in defaults.toml: Woerterbuch, Quellen, Suche
+    # Alles andere bleibt wie im Stadtprofil: Quellen, Suche
     assert s.sources.oparl.endpoint.endswith("/bodies/0015/papers")
     assert s.sources.oparl.stop_when_older and s.sources.oparl.incremental
     assert len(s.search.exclude) == 63

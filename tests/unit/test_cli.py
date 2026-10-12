@@ -308,27 +308,27 @@ def test_status_names_profile_and_city(project: Path, capsys: pytest.CaptureFixt
 def test_profile_2025_bootstraps_without_a_corpus_and_shows_its_root(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from tests.conftest import REPO
-
-    profile = str(REPO / "settings.2025.toml")
-    assert main(["--settings", profile, "status"]) == 0
+    assert main(["--profile", "duesseldorf-2025", "status"]) == 0
     status = capsys.readouterr().out
     # Option 01 druckt den Namen des Paketprofils; der Ordner kommt aus dem Schlüssel profile
     assert "Daten unter" in status and str(project / "data" / "2025") in status
-    assert "Periode:    Wahlperiode seit 2025, 2025-09-15 bis offen" in status
-    assert main(["--settings", profile, "bootstrap"]) == 0
+    assert "Wahlperiode seit der Kommunalwahl 2025, 2025-09-15 bis offen" in status
+    assert "Profil:     duesseldorf-2025 (Düsseldorf)" in status  # base = duesseldorf
+    assert main(["--profile", "duesseldorf-2025", "bootstrap"]) == 0
     out = capsys.readouterr().out
     assert "Stores nicht aus der Referenz gefüllt" in out and "nicht gefunden" in out
     root = project / "data" / "2025"
     external = {p.name for p in (root / "external").iterdir()}
     assert {"Stimmbezirk_Wahlergebnis.csv", "Stimmbezirke_2025.geojson"} <= external
-    assert {"streets_per_district.json", "wikipedia_dict.json"} <= {
-        p.name for p in (root / "raw").iterdir()
-    }
+    # Straßen und Orte fehlen hier absichtlich: period.dictionary = "base" liest sie bei der
+    # Hauptperiode (Option 02), darum kopiert bootstrap sie nicht in das Profil.
+    assert {"streets_per_district.json", "wikipedia_dict.json"}.isdisjoint(
+        {p.name for p in (root / "raw").iterdir()} if (root / "raw").is_dir() else set()
+    )
     assert not (root / "raw" / "papers.jsonl").exists()  # kein Korpus der Hauptperiode
     assert not (project / "data" / "raw").exists()  # die Hauptperiode bleibt unberuehrt
     # Ohne Store plant der Metadatenschritt einen vollstaendigen Abruf; kein echter Abruf
-    assert main(["--settings", profile, "run", "--dry-run", "--online", "papers"]) == 0
+    assert main(["--profile", "duesseldorf-2025", "run", "--dry-run", "--online", "papers"]) == 0
     assert "papers       geplant" in capsys.readouterr().out
 
 
@@ -336,8 +336,6 @@ def test_paths_prints_the_layout_for_scripts(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """``georep paths`` ist die Quelle für deploy/; nur das Profil darf leer sein."""
-    from tests.conftest import REPO
-
     assert main(["paths"]) == 0
     main_profile = dict(line.split("=", 1) for line in capsys.readouterr().out.splitlines() if line)
     assert main_profile["profile"] == ""
@@ -345,7 +343,7 @@ def test_paths_prints_the_layout_for_scripts(
     assert main_profile["site"] == str(project / "data" / "site")
     assert all(v.startswith("/") for k, v in main_profile.items() if k != "profile")
 
-    assert main(["--settings", str(REPO / "settings.2025.toml"), "paths"]) == 0
+    assert main(["--profile", "duesseldorf-2025", "paths"]) == 0
     profile = dict(line.split("=", 1) for line in capsys.readouterr().out.splitlines() if line)
     assert profile["profile"] == "2025"
     assert profile["root"] == str(project / "data" / "2025")

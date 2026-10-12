@@ -47,9 +47,11 @@ Zugangsdaten braucht, schreibt `$CREDENTIALS_DIRECTORY/rclone.conf` ins Kommando
 ## Was der Lauf tut
 
 1. `uv sync --locked` (beim ersten Mal mit Netz zu PyPI).
-2. `georep --settings settings.2025.toml bootstrap`: Wahlergebnis, Stimmbezirke, Straßen und Orte
-   der Referenz in die Datenwurzel des Profils; **kein** Korpus der Arbeit (`seed_corpus = false`).
-3. `georep … fetch papers --force`: eine Seite OParl mit `modified_since` (rund 45 bis 85 s).
+2. `georep bootstrap`, dann `georep --profile $MONITOR_PROFILE bootstrap`: die Hauptperiode muss
+   zuerst da sein, weil das Profil mit `period.dictionary = "base"` deren Straßen und Orte liest;
+   das Profil selbst bekommt nur Wahlergebnis und Stimmbezirke, **keinen** Korpus der Arbeit
+   (`seed_corpus = false`).
+3. `georep --profile … fetch papers --force`: eine Seite OParl mit `modified_since` (rund 45 bis 85 s).
    Das `--force` muss sein: der Schritt hat keine Eingaben und wäre sonst „aktuell".
 4. `georep … fetch pdfs texts`: nur die neuen PDFs (rund 15 je Tag) und deren Texte.
 5. `georep … run`: die Offline-Kette bis zur Seite des Profils.
@@ -86,11 +88,12 @@ entsteht wirklich, sie braucht kein Netz.
 `monitor.env.example` erklärt jede. Zwei Dinge sind wichtig:
 
 - Das Präfix `MONITOR_` für alles, was nur das Skript braucht. `GEOREP_*` liest pydantic-settings
-  als Einstellung; ein `GEOREP_PROFILE=settings.2025.toml` würde jeden Aufruf mit einem
-  Validierungsfehler beenden. Einstellungen gehören bewusst gesetzt: `GEOREP_DATA_ROOT`,
-  `GEOREP_CACHE_ROOT`, `GEOREP_LOG_LEVEL`.
-- Den Profilnamen und alle Pfade fragt das Skript mit `georep paths` beim Paket ab; sie stehen
-  nur in `settings.2025.toml`. In `monitor.env` gehört kein Profil und kein abgeleiteter Pfad.
+  als Einstellung; `GEOREP_PROFILE` wählt seit Option 01 das Paketprofil **jedes** Aufrufs, und der
+  Lauf braucht zwei davon (die laufende Periode und die Hauptperiode) — darum steht das Profil in
+  `MONITOR_PROFILE` und geht je Aufruf als `--profile` mit. Einstellungen gehören bewusst gesetzt:
+  `GEOREP_DATA_ROOT`, `GEOREP_CACHE_ROOT`, `GEOREP_LOG_LEVEL`.
+- Wohin das Profil schreibt und wie sein Ordner heißt, fragt das Skript mit `georep paths` beim
+  Paket ab; in `monitor.env` gehört kein abgeleiteter Pfad.
 - `PATH`: systemd kennt keinen Login-PATH (Playbook § 3.2). `uv` und `rclone` liegen in
   `~/.local/bin`; `MONITOR_UV` und `MONITOR_RCLONE` zeigen zusätzlich direkt darauf.
 
@@ -107,7 +110,7 @@ systemd-run --user --collect --unit=georep-monitor-probe \
   /usr/bin/bash "$HOME/files/work/georep/deploy/bin/georep-monitor.sh"
 ```
 
-Dateinamen, Textextraktion und Trefferzahl ansehen (`georep --settings settings.2025.toml status`),
+Dateinamen, Textextraktion und Trefferzahl ansehen (`georep --profile $MONITOR_PROFILE status`),
 dann denselben Befehl ohne `PDF_LIMIT` als `georep-monitor-erstlauf`. `georep status` zeigt `pdfs`
 nach der Stichprobe als „offen: Settings geändert", weil `pdf_limit` im Stamp steht; das ist richtig.
 
@@ -119,7 +122,7 @@ Gelegentlich (etwa monatlich) lohnt ein Lauf ohne `modified_since`, falls die Se
 springt und ein Paper zwischen zwei Filtern durchfällt — 21 Seiten, 16 bis 30 min:
 
 ```bash
-GEOREP_SOURCES__OPARL__INCREMENTAL=false georep --settings settings.2025.toml fetch papers --force
+GEOREP_SOURCES__OPARL__INCREMENTAL=false georep --profile duesseldorf-2025 fetch papers --force
 ```
 
 ## Konrads Handgriffe, bevor R2 und VPS laufen

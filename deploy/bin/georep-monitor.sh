@@ -33,7 +33,7 @@ fail() {
 }
 
 # --- Umgebung ---------------------------------------------------------------------------------
-for name in MONITOR_REPO MONITOR_SETTINGS MONITOR_PUBLISH_DIR GEOREP_DATA_ROOT; do
+for name in MONITOR_REPO MONITOR_PROFILE MONITOR_PUBLISH_DIR GEOREP_DATA_ROOT; do
   [ -n "${!name:-}" ] || fail "$name ist nicht gesetzt (Vorlage: deploy/monitor.env.example)"
 done
 UV=${MONITOR_UV:-uv}
@@ -109,7 +109,7 @@ step sync "$UV" sync --locked
 
 # Profilname und Pfade kommen aus dem Paket: sonst stünden sie hier ein zweites Mal, und ein
 # Tippfehler in der Umgebungsdatei ließe den Lauf am falschen Ort suchen (Review 2026-10-12).
-query paths georep --settings "$MONITOR_SETTINGS" paths
+query paths georep --profile "$MONITOR_PROFILE" paths
 PROFILE=$(value_of "$WORK/paths.out" profile)
 PROFILE_SITE=$(value_of "$WORK/paths.out" site)
 PDF_DIR=$(value_of "$WORK/paths.out" pdf_dir)
@@ -121,32 +121,33 @@ query mainpaths georep paths
 MAIN_SITE=$(value_of "$WORK/mainpaths.out" site)
 log "Profil $PROFILE, Seite unter $PROFILE_SITE, Hauptseite unter $MAIN_SITE"
 
-# (2) Eingaben der Referenz in die Datenwurzel des Profils (ohne Korpus der Arbeit)
-step bootstrap georep --settings "$MONITOR_SETTINGS" bootstrap
+# (2) Eingaben der Referenz: erst die Hauptperiode (das Profil liest mit
+# `period.dictionary = "base"` deren Straßen und Orte), dann das Profil selbst ohne Korpus
+step mainboot georep bootstrap
+step bootstrap georep --profile "$MONITOR_PROFILE" bootstrap
 
 # (3) Metadaten: immer erzwungen, der Schritt hat keine Eingaben und wäre sonst „aktuell"
 if [ -n "$DRY_RUN" ]; then
-  step papers georep --settings "$MONITOR_SETTINGS" run --dry-run --online papers
+  step papers georep --profile "$MONITOR_PROFILE" run --dry-run --online papers
 else
-  step papers georep --settings "$MONITOR_SETTINGS" fetch papers --force
+  step papers georep --profile "$MONITOR_PROFILE" fetch papers --force
 fi
 
 # (4) Neue PDFs und deren Texte
 if [ -n "$DRY_RUN" ]; then
-  step pdfs georep --settings "$MONITOR_SETTINGS" run --dry-run --online pdfs texts
+  step pdfs georep --profile "$MONITOR_PROFILE" run --dry-run --online pdfs texts
 else
-  step pdfs georep --settings "$MONITOR_SETTINGS" fetch pdfs texts
+  step pdfs georep --profile "$MONITOR_PROFILE" fetch pdfs texts
 fi
 
 # (5) Die Offline-Kette des Profils bis zur Seite
 if [ -n "$DRY_RUN" ]; then
-  step run georep --settings "$MONITOR_SETTINGS" run --dry-run
+  step run georep --profile "$MONITOR_PROFILE" run --dry-run
 else
-  step run georep --settings "$MONITOR_SETTINGS" run
+  step run georep --profile "$MONITOR_PROFILE" run
 fi
 
-# (6) Die Hauptseite aus der Referenz, mit dem Link auf die laufende Periode
-step mainboot georep bootstrap
+# (6) Die Hauptseite aus der Referenz, mit dem Link auf die laufende Periode (bootstrap lief in (2))
 export GEOREP_REPORT__MONITORING_URL="$PROFILE/"
 step mainsite georep run
 unset GEOREP_REPORT__MONITORING_URL

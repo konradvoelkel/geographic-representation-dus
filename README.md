@@ -179,14 +179,18 @@ uv run georep $P status                # alles aktuell?
 ## Laufende Wahlperiode
 
 Neben der Periode der Arbeit (2020 bis 2025) gibt es ein zweites Profil für die Wahlperiode seit der
-Kommunalwahl am 14.09.2025: [`settings.2025.toml`](settings.2025.toml). Es legt Daten unter `data/2025/`,
+Kommunalwahl am 14.09.2025: das Paketprofil
+[`duesseldorf-2025`](src/georep/profiles/duesseldorf-2025.toml). Es legt Daten unter `data/2025/`,
 PDFs und Texte unter `<cache_root>/2025/`, holt je Lauf nur Geändertes und baut eine eigene Seite ohne
 Regression (zu einer laufenden Periode gibt es keine Wahlbeteiligung), dafür mit der Monatsreihe.
+Straßen und Orte liest es bei der Hauptperiode (`period.dictionary = "base"`), damit sich nur die
+Dokumente unterscheiden; darum will es die Hauptperiode zuerst gebootstrappt haben.
 
 ```bash
-uv run georep --settings settings.2025.toml bootstrap   # nur die vier Eingaben, kein Korpus der Arbeit
-uv run georep --settings settings.2025.toml fetch papers --force   # eine OParl-Seite, rund 45 s
-uv run georep --settings settings.2025.toml run         # Kette und Seite unter data/2025/site/
+uv run georep bootstrap                                      # die Hauptperiode: Straßen und Orte
+uv run georep --profile duesseldorf-2025 bootstrap           # die Eingaben, kein Korpus der Arbeit
+uv run georep --profile duesseldorf-2025 fetch papers --force  # eine OParl-Seite, rund 45 s
+uv run georep --profile duesseldorf-2025 run                 # Kette und Seite unter data/2025/site/
 ```
 
 Im Betrieb macht das ein Skript hinter einem systemd-Timer: `deploy/bin/georep-monitor.sh` holt, rechnet,
