@@ -956,8 +956,8 @@ class Settings(BaseSettings):
     reference_root: Path = Path("reference")
     # Unterordner je Stadt oder Periode unter data_root und cache_root; leer = flach. Der Wert
     # kommt aus dem Profil, nie aus GEOREP_PROFILE: das wählt nur das Profil (siehe
-    # load_settings), und ein Profil darf flach bleiben (Düsseldorf, Frage 1.7). Darum der Alias:
-    # GEOREP_PROFILE landet nicht hier. Der Alias trägt das Präfix selbst, weil
+    # load_settings), und ein Profil darf flach bleiben (die Hauptstadt der Arbeit, Frage 1.7).
+    # Darum der Alias: GEOREP_PROFILE landet nicht hier. Der Alias trägt das Präfix selbst, weil
     # pydantic-settings es auf Aliase nicht anwendet — ohne es setzte eine nackte Variable
     # PROFILE_FOLDER den Ordner (Review 2026-10-12). Die TOML-Schichten schreiben weiter `profile`.
     profile: str = Field("", validation_alias=AliasChoices("georep_profile_folder"))
