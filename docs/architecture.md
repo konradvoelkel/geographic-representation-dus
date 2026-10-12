@@ -315,7 +315,7 @@ auf dem rekursiven `deep_merge`).
 | Schicht | Inhalt |
 |---|---|
 | `tests/unit/` | eine Funktion, ein Verhalten; Vertragsverletzungen je mit Gegenbeispiel |
-| `tests/property/` | hypothesis-Invarianten (darunter: Einheitsgewichte reproduzieren die Zählung exakt, Gewichte in [0, 1], Monotonie, Themenzerlegung), das Matcher-Orakel (400 Zufallsfälle), `deal.cases` auf zwölf reinen Funktionen |
+| `tests/property/` | hypothesis-Invarianten (darunter: Einheitsgewichte reproduzieren die Zählung exakt, Gewichte in [0, 1], Monotonie, Themenzerlegung), das Matcher-Orakel (400 Zufallsfälle), `deal.cases` auf achtzehn reinen Funktionen |
 | `tests/golden/` | Mini-Fixture (3 Wahlbezirke, 200 Dokumente, Erwartung aus dem Altcode `v0.2.0`) und die volle Referenz (`slow`) gegen die Ergebnisse der Arbeit; beide mit `as_in_the_thesis(...)`, also mit abgeschalteten eigenen Regeln (decisions.md, Punkte 43 und 44) |
 | `tests/bench/` | pytest-benchmark, nur in `nox -s bench` |
 | `tests/fixtures/` | Mini-Datensatz (drei Wahlbezirke mit ihren 22 Stimmbezirken), vier PDFs mit Herkunft, eine OParl-Seite, aufgezeichnete Antworten von Overpass, Wikidata, Wikipedia |
@@ -329,7 +329,7 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `golden` | die volle Referenz | CI, lokal `uv run pytest -m slow` |
 | `bench` | heiße Pfade gegen den letzten gespeicherten Lauf, rot ab 20 % langsamer im Minimum | lokal |
 | `profile -- SCHRITT` | ein echter Schritt unter cProfile | lokal |
-| `verify` | crosshair über die reinen Funktionen mit Verträgen, rund drei Minuten | lokal |
+| `verify` | crosshair über die reinen Funktionen mit Verträgen, rund sechs Minuten; ein Ziel ist mit Begründung ausgenommen (crosshair baut für `re.Pattern | None` einen symbolischen Regex und bricht ab) | lokal |
 | `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung; mit `analysis/topics.py` im Ziel dauert die Session sehr lange (jeder Mutant rechnet NMF), darum besser gezielt je Modul | lokal |
 
 Stand 2026-10-12: 846 schnelle Tests in rund 42 s, Abdeckung 98,2 %; Mutationsquote 79 % über

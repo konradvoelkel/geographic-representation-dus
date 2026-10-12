@@ -103,14 +103,16 @@ rechnet die Kette wie die Arbeit, und genau so messen die Golden-Master-Tests
 ## Bekannt
 
 - deal 4.24.6: `deal.raises` vergleicht exakte Typen, keine Unterklassen; `deal.has()`/`deal.pure` sind nicht reentrant (Patch bleibt nach Rekursion stehen). Beides umschifft (NetworkError, `deal.safe` für `deep_merge`), nicht upstream gemeldet.
-- `nox -s verify` ist auf Konrads Rechner rot, unabhängig von den Methodikregeln (am 2026-10-12 nachgeprüft,
-  auch mit der Zielliste von vor ihnen): crosshair findet in `report.search.canonical_term` (Option 08) ein
-  Gegenbeispiel mit einem pathologischen Abkürzungspaar — `canonical_term("\x00\x00\x01\x00\x00",
-  abbreviations=(("\x01", "\x01\x00"),))` lässt eine Abkürzung im Ergebnis stehen, weil `str.replace` nur
-  einmal läuft und die Langform kürzer ist als die Abkürzung. Mit `STREET_ABBREVIATIONS` kommt der Fall nicht
-  vor; entweder verschärft `_pairs_usable` die Vorbedingung oder die Ersetzung läuft bis zum Fixpunkt.
-  Außerdem bricht die ganze Sitzung mit `re.PatternError` ab, bevor sie berichtet, wenn alle Ziele zusammen
-  laufen; einzeln geprüft sind alle Ziele grün (`georep.prep.pois.is_city_facility` eingeschlossen).
+- `nox -s verify` (crosshair) läuft wieder durch und ist grün (Exit 0, 16 Ziele „Not confirmed", 6 Minuten
+  am 2026-10-12). Davor brach die Sitzung mit `re.PatternError` ab, bevor sie berichtete: `parse_reference`
+  bekommt ein `BodyRules`, dessen Feld `pattern` den Typ `re.Pattern[str] | None` hat, und crosshair ruft
+  für den Union-Zweig `re.compile` auf einem symbolischen String. Ein Artefakt des Werkzeugs (crosshair
+  0.0.111, Python 3.14), kein Befund — der Code kompiliert keinen Regex aus Daten; das Ziel ist in
+  `noxfile.py` mit Begründung ausgenommen und wird weiter von `deal.cases` angegriffen. Die zwei echten
+  Gegenbeispiele, die danach sichtbar wurden, sind behoben: `canonical_term` ließ eine Abkürzung stehen,
+  wenn die eingesetzte Langform mit dem nächsten Zeichen eine neue bildete (ersetzt jetzt bis zum
+  Festpunkt), und `nice_ticks` warf einen `OverflowError` bei zwei endlichen Grenzen mit unendlicher
+  Differenz (Vorbedingung verlangt eine endliche Spanne).
 - Überlebende Mutanten liegen in Vertrags-Lambdas (Grenzen von r und p); kein Test verletzt sie genau an der Grenze. Bewusst nicht nachgezogen (`docs/mutation-2026-10-12.md`).
 - `nox -s mutate` lässt `analysis/topics.py` aus: jeder Mutant dort lässt die schnelle Suite laufen, und die rechnet seit dem Themenmodell mehrfach NMF (Lauf am 2026-10-12 nach 35 Minuten abgebrochen, gezielt je Modul vier Minuten). Die schnelle Suite selbst ist dadurch rund 5 s langsamer; hingenommen.
 - Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.

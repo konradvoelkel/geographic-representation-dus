@@ -81,7 +81,14 @@ VERIFY_TARGETS = [
     "georep.report.model.format_de",
     "georep.report.search.canonical_term",
     "georep.report.charts.nice_ticks",
-    "georep.prep.bodies.parse_reference",  # Option 05
+    # Nicht dabei: georep.prep.bodies.parse_reference (Option 05). Sein Parameter ist ein
+    # BodyRules, dessen Feld ``pattern`` den Typ ``re.Pattern[str] | None`` hat; crosshair baut für
+    # den Union-Zweig einen symbolischen String und ruft ``re.compile`` darauf, was mit
+    # ``re.PatternError: missing ), unterminated subpattern`` aus dem eigenen Proxy fliegt und die
+    # ganze Sitzung abbricht, bevor sie berichtet (crosshair 0.0.111, Python 3.14, geprüft am
+    # 2026-10-12). Ein Artefakt des Werkzeugs, kein Befund: die Funktion kompiliert keinen Regex
+    # aus Daten, nur ``bodies.reference_pattern`` aus den Settings. Angegriffen wird sie weiter von
+    # ``deal.cases`` in tests/property/test_contract_cases.py.
     "georep.prep.context.ordinal_score",  # Option 03
     "georep.analysis.parties.classify_document",  # Option 04
     "georep.crosswalk.largest_remainder",  # Option 02
