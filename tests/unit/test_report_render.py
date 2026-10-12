@@ -152,7 +152,8 @@ def test_map_page_escapes_script_end_and_allows_only_leaflet_and_osm(
     }
     places = {"type": "FeatureCollection", "features": []}
     page = render_map(model, districts, places, visuals.rate_legend)
-    assert "</script><b>" not in page and "<\\/script><b>" in page
+    assert "</script><b>" not in page and "\\u003c/script>\\u003cb>" in page
+    assert "<!--" not in page.split('type="application/json"', 1)[1].split("</script>", 1)[0]
     assert set(external_links(page)) == {
         "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
         "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",

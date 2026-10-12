@@ -205,8 +205,13 @@ def render_report(model: ReportModel, visuals: Visuals) -> str:
 
 
 def _json_for_script(data: object) -> str:
-    """JSON für ein ``<script type="application/json">``: ``</`` darf das Element nicht beenden."""
-    return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    """JSON für ein ``<script type="application/json">``: kein ``<`` im Text, als ``\\u003c`` kodiert.
+
+    ``</`` allein zu maskieren reicht nicht: ``<!--`` gefolgt von ``<script`` versetzt den
+    HTML-Tokenizer in „script data double escaped", und das echte ``</script>`` wird verschluckt
+    (Review 2026-10-12). ``\\u003c`` ist gültiges JSON und für den Tokenizer unsichtbar.
+    """
+    return json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
 
 
 @deal.post(lambda result: result.startswith("<!doctype html>") and 'lang="de"' in result)
