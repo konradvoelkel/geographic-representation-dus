@@ -113,7 +113,9 @@ Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „
 4. Optional der Vollabruf der Hauptperiode (2 bis 3 h; zeigt, ob der OParl-Server `modified_since` beachtet
    und ob die Urheberfelder inzwischen gefüllt sind).
 
-Offene Entscheidungen stehen in `docs/plans/fragen.md` (die acht wichtigsten oben): Datenpakete im Repo oder im
+Rückstand für danach: `docs/todo.md` (Konrads Beobachtungen vom 2026-10-12: Themenmodell, Seitengröße, Skalierung
+der Kennzahlen, Bartzschs Methodik, Literatur, Lizenz). Offene Entscheidungen stehen in `docs/plans/fragen.md`
+(die acht wichtigsten oben): Datenpakete im Repo oder im
 R2-Bucket, Düsseldorf unter `data/duesseldorf/`, VPS und Domain, Lizenz der votemanager-CSV, Modellwahl der
 Kontrollvariablen. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,
 wenn jemand es will: ein Ersatz für FlashText oder pypdf nur nach neuer Messung (`docs/decisions.md`, Punkt 14);
