@@ -167,6 +167,26 @@ def test_map_page_escapes_script_end_and_allows_only_leaflet_and_osm(
     assert page.count("<script") == 4 and "tile.openstreetmap.org" in page
 
 
+def _optional_sections() -> set[str]:
+    """Abschnitte, die an einem Modellteil hängen und ohne ihn fehlen dürfen.
+
+    Die Vorlage sagt es selbst: wer mit ``{% if model.`` beginnt, zeigt sich nur mit seinem Teil
+    des Modells (Konvention aus docs/plans/00-synergien.md, § 5.1). So muss diese Zeile nicht je
+    Option angefasst werden.
+    """
+    from importlib import resources
+
+    from georep.report.render import sections
+
+    folder = resources.files("georep.report") / "templates" / "sections"
+    optional = set()
+    for part in sections():
+        source = (folder / part.template.removeprefix("sections/")).read_text(encoding="utf-8")
+        if source.lstrip().startswith("{% if model."):
+            optional.add(part.name)
+    return optional
+
+
 def test_sections_render_in_numeric_order(page: str) -> None:
     from georep.report.render import sections
 
@@ -191,9 +211,14 @@ def test_sections_render_in_numeric_order(page: str) -> None:
     shown = [s.name for s in parts if f'<section id="{s.name}">' in page]
     positions = [page.index(f'<section id="{name}">') for name in shown]
     assert positions == sorted(positions)
-    assert {s.name for s in parts} - set(shown) <= {"perioden"}
+    assert {s.name for s in parts} - set(shown) <= _optional_sections()
     assert page.count("<section ") == len(shown)
     assert "window.georep = { select: select, showDocuments: showDocuments" in page
+
+
+def test_every_optional_section_hangs_on_a_model_part() -> None:
+    """Ohne Vergleich fehlt „perioden"; das Modell hat den Teil, und die Vorlage nennt ihn."""
+    assert "perioden" in _optional_sections()
 
 
 def test_section_css_and_js_need_a_template_sibling(tmp_path: Path) -> None:

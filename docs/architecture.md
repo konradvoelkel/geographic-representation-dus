@@ -49,12 +49,13 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 ## Pipeline
 
 Fünfundzwanzig Schritte stehen im Register, jeder mit Eingaben, Ausgaben und einer
-Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps` zeigt es.
-Netzschritte laufen nur mit `--online` oder über `georep fetch`. Mit `topics.k = 0` fehlt der
-Schritt `topics`, und `weights` rechnet ohne Themenvarianten. Die drei Schritte der
-Kontrollvariablen (`context_data`, `context`, `controls`) gibt es nur mit Fremddaten, also wenn
-`context.root` gesetzt ist. Option 02 bringt zwei weitere Profilschritte: `precincts` mit
-`crosswalk.enabled` und `compare` mit `compare.period`; mit `period.dictionary = "base"`
+Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps` zeigt es
+(nachgezählt am 2026-10-12: dreiundzwanzig ohne Profil, vierundzwanzig mit Vergleich, neunzehn im
+Periodenprofil). Netzschritte laufen nur mit `--online` oder über `georep fetch`. Mit
+`topics.k = 0` fehlt der Schritt `topics`, und `weights` rechnet ohne Themenvarianten. Die drei
+Schritte der Kontrollvariablen (`context_data`, `context`, `controls`) gibt es nur mit Fremddaten,
+also wenn `context.root` gesetzt ist. Option 02 bringt zwei weitere Profilschritte: `precincts`
+mit `crosswalk.enabled` und `compare` mit `compare.period`; mit `period.dictionary = "base"`
 entfallen dafür `streets_osm` und `pois_wiki`.
 
 | Schritt | Netz | liest | schreibt |
