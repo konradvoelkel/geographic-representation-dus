@@ -17,7 +17,14 @@ import pytest
 from georep.bootstrap import bootstrap
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
-from georep.report.publish import NEIGHBOURS_MARKER, PublishSummary, publish_sites
+from georep.layout import ReferenceWriteError
+from georep.report.publish import (
+    MARKER_NAME,
+    NEIGHBOURS_MARKER,
+    PublishSummary,
+    PublishTargetError,
+    publish_sites,
+)
 from georep.settings import Settings, load_settings
 from tests.conftest import MG, MINI, mg_settings
 
@@ -163,3 +170,55 @@ def test_the_comparison_is_a_table_with_one_row_per_city(
     page = (site / "vergleich.html").read_text(encoding="utf-8")
     body = re.search(r"<tbody>(.*?)</tbody>", page, re.S)
     assert body is not None and body.group(1).count("<tr") == 2
+
+
+# --- Das Ziel von --out ------------------------------------------------------------------------
+
+
+def test_publish_refuses_a_target_it_did_not_make(
+    both_cities: tuple[Path, Settings], tmp_path: Path
+) -> None:
+    """``--out`` zeigt leicht auf den falschen Ordner; gelöscht wird nur, was publish gehört."""
+    root, settings = both_cities
+    layout = replace(
+        Layout.from_settings(settings), data_root=root / "data", cache_root=root / "cache"
+    )
+    foreign = tmp_path / "wichtig"
+    foreign.mkdir()
+    (foreign / "diplomarbeit.txt").write_text("bitte nicht löschen", encoding="utf-8")
+    with pytest.raises(PublishTargetError, match="nicht von georep publish"):
+        publish_sites(settings, layout, now=NOW, commit=None, out=foreign)
+    assert (foreign / "diplomarbeit.txt").read_text(encoding="utf-8") == "bitte nicht löschen"
+    assert list(foreign.iterdir()) == [foreign / "diplomarbeit.txt"]
+
+
+def test_publish_takes_an_empty_target_and_its_own_from_then_on(
+    both_cities: tuple[Path, Settings], tmp_path: Path
+) -> None:
+    root, settings = both_cities
+    layout = replace(
+        Layout.from_settings(settings), data_root=root / "data", cache_root=root / "cache"
+    )
+    out = tmp_path / "veroeffentlicht"
+    first = publish_sites(settings, layout, now=NOW, commit=None, out=out)
+    assert first.comparison and (out / "index.html").is_file()
+    assert (out / MARKER_NAME).is_file()  # daran erkennt der nächste Lauf seinen eigenen Ordner
+    second = publish_sites(settings, layout, now=NOW, commit=None, out=out)
+    assert second.cities == first.cities
+    assert (out / "vergleich.html").read_text(encoding="utf-8")
+
+
+def test_publish_refuses_a_target_under_the_reference(
+    both_cities: tuple[Path, Settings],
+) -> None:
+    root, settings = both_cities
+    layout = replace(
+        Layout.from_settings(settings),
+        data_root=root / "data",
+        cache_root=root / "cache",
+        reference_root=root / "reference",
+    )
+    with pytest.raises(ReferenceWriteError):
+        publish_sites(
+            settings, layout, now=NOW, commit=None, out=root / "reference" / "site"
+        )
