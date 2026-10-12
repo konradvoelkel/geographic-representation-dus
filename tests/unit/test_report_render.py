@@ -499,7 +499,10 @@ def test_the_month_section_has_a_row_per_month_and_two_bars(open_page: str) -> N
     assert parser.tags["h1"] == 1
     assert open_page.count('class="bars"') == 1 and 'class="scatter"' not in open_page
     assert '<section id="monate">' in open_page
-    assert open_page.count("<tr>\n<td>") >= len(MONTHS)
+    import re as _re
+
+    body = _re.search(r'<table id="monate-tabelle">.*?<tbody>(.*?)</tbody>', open_page, _re.S)
+    assert body is not None and body.group(1).count("<tr>") == len(MONTHS)
     assert "Oktober 2025" in open_page and "November 2025" in open_page
     assert "ohne Datum" in open_page  # die Zeile ohne Monat
     assert open_page.count('class="bar bar-documents"') == 2  # nur die datierten Monate
@@ -524,3 +527,15 @@ def test_the_monitoring_link_is_relative_and_only_there_when_set(open_page: str,
     assert '<section id="laufend">' in open_page and 'href="2025/"' in open_page
     assert '<section id="laufend">' not in page and 'href="2025/"' not in page
     assert "2025/" not in external_links(open_page)
+
+
+def test_the_month_column_sorts_by_number_not_by_name(open_page: str) -> None:
+    """Nach Text sortiert stünde April vor Oktober; der Wert ist Jahr mal zwölf plus Monat."""
+    import re as _re
+
+    head = _re.search(r'<table id="monate-tabelle">.*?</thead>', open_page, _re.S)
+    assert head is not None and '<th scope="col" data-sort="num">Monat</th>' in head.group(0)
+    values = _re.findall(
+        r'<td data-value="(\d+)">(?:[A-ZÄÖÜ][a-zä-ü]+ \d{4}|ohne Datum)</td>', open_page
+    )
+    assert [int(v) for v in values] == [2025 * 12 + 10, 2025 * 12 + 11, 999999]

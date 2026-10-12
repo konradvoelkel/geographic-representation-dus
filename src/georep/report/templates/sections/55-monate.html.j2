@@ -9,7 +9,7 @@
 </ul></div>
 <div class="scroll"><table id="monate-tabelle">
 <thead><tr>
-<th scope="col" data-sort="text">Monat</th>
+<th scope="col" data-sort="num">Monat</th>
 <th scope="col" class="num" data-sort="num">Dokumente</th>
 <th scope="col" class="num" data-sort="num">mit Text</th>
 <th scope="col" class="num" data-sort="num">mit Treffer</th>
@@ -17,7 +17,7 @@
 <tbody>
 {% for m in model.timeline %}
 <tr>
-<td>{% if m.month %}{{ m.month|month_de }}{% else %}ohne Datum{% endif %}</td>
+<td data-value="{% if m.month %}{{ m.month.year * 12 + m.month.month }}{% else %}999999{% endif %}">{% if m.month %}{{ m.month|month_de }}{% else %}ohne Datum{% endif %}</td>
 <td class="num" data-value="{{ m.documents }}">{{ m.documents|num }}</td>
 <td class="num" data-value="{{ m.with_text }}">{{ m.with_text|num }}</td>
 <td class="num" data-value="{{ m.with_hits }}">{{ m.with_hits|num }}</td>
