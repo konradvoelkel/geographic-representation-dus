@@ -33,6 +33,7 @@ from polars._typing import PolarsDataType
 from scipy.stats import pearsonr, spearmanr
 
 from georep.analysis.hits import DISTRICT, RATE
+from georep.analysis.scaling import relative_to, unweighted_mean
 from georep.contracts import (
     has_columns,
     one_row_per_document,
@@ -513,17 +514,27 @@ def originators_by_district(results: pl.DataFrame, documents: pl.DataFrame) -> p
     )
 
 
+# Punkt 46: die drei Spalten der Varianten „Abweichung vom Mittel aller Parteien" und
+# „Verhältnis zum Mittel"; das Mittel ist das ungewichtete der Parteianteile im Wahlbezirk.
+SHARE = "anteil_dokumente"
+PARTY_MEAN = "mittel_anteil"
+PARTY_DEVIATION = "abweichung_mittel"
+PARTY_RATIO = "verhaeltnis_mittel"
+
 PARTY_COLUMNS = (
     DISTRICT,
     PARTEI,
     HITS,
     "treffer_allein",
     "dokumente_partei",
-    "anteil_dokumente",
+    SHARE,
     RATE,
     "stimmen",
     "stimmenanteil",
     "angetreten",
+    PARTY_MEAN,
+    PARTY_DEVIATION,
+    PARTY_RATIO,
 )
 
 
@@ -559,9 +570,15 @@ def _party_bounds_hold(
         (pl.col(HITS) <= pl.col("dokumente_partei")).all(),
         (pl.col("angetreten") == (pl.col("stimmen") > 0)).all(),
         (pl.col(RATE) >= 0.0).all(),
+        (pl.col(PARTY_RATIO) >= 0.0).all(),
+        (pl.col(PARTY_DEVIATION) == pl.col(SHARE) - pl.col(PARTY_MEAN)).all(),
     )
-    shares = shares_in_unit_interval(result, "anteil_dokumente", "stimmenanteil")
-    return within_district and shares and all(checks.row(0))
+    shares = shares_in_unit_interval(result, SHARE, "stimmenanteil", PARTY_MEAN)
+    # Punkt 46: das Mittel ist wirklich das Mittel dieser Anteile -- die Abweichungen heben sich
+    # je Wahlbezirk auf; und ein Verhältnis ist nie negativ.
+    cancel = result.group_by(DISTRICT).agg(pl.col(PARTY_DEVIATION).sum().abs().alias("rest"))
+    balanced = bool((cancel.get_column("rest") < 1e-12).all())
+    return within_district and shares and balanced and all(checks.row(0))
 
 
 def _documents_per_party_is_constant(
@@ -637,12 +654,22 @@ def party_hits(
             pl.when(pl.col("dokumente_partei") > 0)
             .then(pl.col(HITS) / pl.col("dokumente_partei"))
             .otherwise(0.0)
-            .alias("anteil_dokumente"),
+            .alias(SHARE),
             (pl.col(HITS) / pl.col(eligible_column)).alias(RATE),
             pl.col("stimmen").fill_null(0).cast(pl.Int64),
             pl.col("stimmenanteil").fill_null(0.0),
         )
         .with_columns(angetreten=pl.col("stimmen") > 0)
+        # Punkt 46: das Mittel aller Parteien im selben Wahlbezirk, ungewichtet, und die zwei
+        # Lesarten daneben. Ungewichtet, weil jede Partei eine Stimme ist und nicht ein Stapel
+        # Dokumente: das nach Dokumentzahl gewichtete Mittel setzen die großen Fraktionen fast
+        # allein, und wer das Mittel setzt, weicht von ihm kaum ab (docs/skalierung-2026-10.md,
+        # § 4.1).
+        .with_columns(unweighted_mean(SHARE, [DISTRICT]).alias(PARTY_MEAN))
+        .with_columns(
+            (pl.col(SHARE) - pl.col(PARTY_MEAN)).alias(PARTY_DEVIATION),
+            relative_to(SHARE, PARTY_MEAN).alias(PARTY_RATIO),
+        )
         .select(*PARTY_COLUMNS)
         .sort([PARTEI, DISTRICT])
     )

@@ -488,6 +488,22 @@ TABLES.extend(
                     "hatte die Partei im Wahlbezirk einen Wahlvorschlag (Stimmen über 0)",
                     "",
                 ),
+                # Punkt 46: die beiden Varianten „relativ zum Durchschnitt aller Parteien"
+                "mittel_anteil": (
+                    "ungewichtetes Mittel von anteil_dokumente über alle Parteien dieses "
+                    "Wahlbezirks; in allen Zeilen eines Bezirks gleich",
+                    "Anteil 0 bis 1",
+                ),
+                "abweichung_mittel": (
+                    "anteil_dokumente minus mittel_anteil; mal 100 sind es Prozentpunkte, und je "
+                    "Wahlbezirk summieren sich die Werte auf 0",
+                    "Anteil, -1 bis 1",
+                ),
+                "verhaeltnis_mittel": (
+                    "anteil_dokumente geteilt durch mittel_anteil; 1 heißt genau im Mittel, 2 "
+                    "heißt doppelt so oft, 0 heißt kein Dokument oder kein Mittel",
+                    "Verhältnis, 0 und mehr",
+                ),
             },
             optional=True,  # nur nach dem Schritt parties
         ),
