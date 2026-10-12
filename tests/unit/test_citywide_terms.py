@@ -50,6 +50,23 @@ def test_the_median_factor_names_the_threshold_and_the_terms() -> None:
     assert "Median" in found.basis
 
 
+def test_a_thin_index_gets_no_list_instead_of_every_term() -> None:
+    """Befund 3 des Reviews: in einem Korpus, in dem fast nichts gefunden wird, war die Schwelle 0.
+
+    Eine neue Stadt mit kleinem Korpus hat Tausende Begriffe ohne Treffer; das Quantil liegt dann
+    bei 0, und jeder Begriff mit einem einzigen Dokument galt als stadtweit. Die Schwelle ist
+    darum mindestens 1, und damit braucht ein stadtweiter Begriff mindestens zwei Dokumente.
+    """
+    thin = _index(*[(f"t{i}", 0) for i in range(99)], ("selten", 1))
+    found = citywide_terms(thin, quantile=0.99, median_factor=0.0)
+    assert found.threshold == 1 and found.terms == ()
+    # dasselbe über den Median, der hier ebenfalls 0 ist
+    assert citywide_terms(thin, quantile=0.0, median_factor=20.0).threshold == 1
+    # ein Begriff in zwei Dokumenten liegt über der Schwelle
+    with_two = _index(*[(f"t{i}", 0) for i in range(99)], ("oft", 2))
+    assert citywide_terms(with_two, quantile=0.99, median_factor=0.0).terms == ("oft",)
+
+
 def test_without_a_threshold_there_is_no_list() -> None:
     index = _index(("a", 1), ("e", 100))
     found = citywide_terms(index, quantile=0.0, median_factor=0.0)

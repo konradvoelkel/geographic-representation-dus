@@ -46,6 +46,24 @@ def test_every_citywide_term_lies_above_the_threshold(
     assert citywide_terms(index, quantile=0.0, median_factor=0.0) == Citywide(0, "", ())
 
 
+@given(pairs=frequencies, quantile=st.floats(0.5, 0.999), factor=st.floats(1.0, 50.0))
+def test_the_threshold_is_at_least_one_and_the_list_stays_a_minority(
+    pairs: list[tuple[str, int]], quantile: float, factor: float
+) -> None:
+    """Befund 3: ohne Untergrenze wird in einem dünnen Index jeder Begriff mit einem Dokument
+    stadtweit. Mit ihr braucht ein stadtweiter Begriff mindestens zwei Dokumente, und die Liste
+    bleibt eine Minderheit der Begriffe."""
+    index = _index(pairs)
+    counts = dict(pairs)
+    for found in (
+        citywide_terms(index, quantile=quantile, median_factor=0.0),
+        citywide_terms(index, quantile=0.0, median_factor=factor),
+    ):
+        assert found.threshold >= 1
+        assert all(counts[term] >= 2 for term in found.terms)
+        assert 2 * len(found.terms) <= len(pairs)
+
+
 @given(pairs=frequencies, low=st.floats(0.5, 0.9), high=st.floats(0.9, 0.999))
 def test_a_higher_quantile_names_at_most_as_many_terms(
     pairs: list[tuple[str, int]], low: float, high: float

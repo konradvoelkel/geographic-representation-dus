@@ -11,12 +11,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import deal
 import polars as pl
 import pytest
 from polars.testing import assert_frame_equal
+from pydantic import ValidationError
 
 from georep.prep.pois import POI_COLUMNS, drop_city_facilities, is_city_facility
-from georep.settings import Settings, load_settings
+from georep.settings import Search, Settings, load_settings
 
 NAME = "Düsseldorf"
 ADJECTIVES = ("Düsseldorfer",)
@@ -100,6 +102,37 @@ def test_the_profile_can_keep_a_single_label() -> None:
 def test_without_city_words_nothing_is_dropped() -> None:
     frame = _pois("Stadtwerke Düsseldorf", "Hofgarten")
     assert_frame_equal(drop_city_facilities(frame, "", (), PLACE_WORDS, ()), frame)
+
+
+@pytest.mark.parametrize(
+    ("label", "facility"),
+    [
+        ("Stadtwerke Frankfurt am Main", True),  # der Stadtname ist drei Wörter lang
+        ("Messe Frankfurt am Main", True),
+        ("Bahnhof Frankfurt am Main Süd", False),  # dem Stadtnamen folgt der Ortsteil
+        ("Frankfurt am Main Hauptbahnhof", False),
+        ("Frankfurt", False),  # „am Main" fehlt: eine andere Stadt
+        ("Stadtwerke Frankfurt", False),
+    ],
+)
+def test_a_city_name_of_several_words_is_compared_as_a_whole(label: str, facility: bool) -> None:
+    """Befund 13 des Reviews: „Frankfurt am Main" kann nie ein einzelnes letztes Wort sein."""
+    assert is_city_facility(label, "Frankfurt am Main", (), PLACE_WORDS) is facility
+
+
+def test_the_place_words_may_not_be_empty_while_the_rule_is_on() -> None:
+    """Sonst wird die Regel still zu „Stadtname zuletzt genügt" (Befund 15)."""
+    with pytest.raises(ValidationError):
+        Search(text_split_marker="betrifft", city_facilities=True, place_words=[])
+    assert Search(text_split_marker="betrifft", city_facilities=False, place_words=[])
+
+
+def test_dropping_facilities_needs_the_whole_poi_table() -> None:
+    """Befund 6: der Körper endet mit ``.select(POI_COLUMNS)``, also müssen alle Spalten da sein."""
+    with pytest.raises(deal.PreContractError):
+        drop_city_facilities(
+            pl.DataFrame({"label": ["Stadtwerke Düsseldorf"]}), NAME, ADJECTIVES, PLACE_WORDS, ()
+        )
 
 
 def test_the_switch_and_the_word_lists_come_from_the_settings(settings: Settings) -> None:
