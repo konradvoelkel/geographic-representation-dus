@@ -21,6 +21,7 @@ election = "Ratswahl 2025"
 
 [report]
 ris_url = "https://ris-oparl.itk-rheinland.de/"
+data_note = "aus dem Paket dieser Stadt"
 notes = [
     "Die Stimmbezirksflächen stammen aus dem Datensatz „Wahlen“ vom 08.06.2022 (Landtagswahl 2022); 175 der 179 Urnen-Stimmbezirke der Kommunalwahl 2025 kommen darin vor, alle 33 Wahlbezirkspräfixe. Gerechnet wird je Wahlbezirk, kleine Neuzuschnitte innerhalb eines Wahlbezirks fallen damit heraus.",
     "Wahlbezirke heißen hier wie Stadtteile („Venn“, „Hardt“); die Ausschlussliste nimmt die Stadtteilnamen trotzdem heraus, weil ein Stadtteil mehr umfasst als der gleichnamige Wahlbezirk.",
