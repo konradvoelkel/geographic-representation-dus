@@ -95,6 +95,18 @@ def test_canonical_term_refuses_an_abbreviation_inside_its_long_form() -> None:
     with pytest.raises(deal.PreContractError):
         canonical_term("x", (("straße", ""),))
 
+    # Paare einzeln brauchbar, im Zusammenspiel nicht: die Langform des zweiten Paares trägt die
+    # Abkürzung des ersten, canonical_term("y") liefert "cxd" und beim nächsten Lauf "cabd".
+    with pytest.raises(deal.PreContractError):
+        canonical_term("y", (("ab", "x"), ("cxd", "y")))
+
+
+def test_a_pair_that_rebuilds_an_abbreviation_breaks_the_postcondition() -> None:
+    """Was die Vorbedingung nicht sehen kann, fängt die Nachbedingung: eine Ersetzung kann an der
+    Nahtstelle zum Nachbartext eine neue Abkürzung bilden (``bx`` → ``ba``, und ``ba`` ist eine)."""
+    with pytest.raises(deal.PostContractError):
+        canonical_term("bx", (("q", "ba"), ("a", "x")))
+
 
 def test_variants_collapse_into_the_long_form_with_the_union_of_documents(
     entries: tuple[SearchEntry, ...],

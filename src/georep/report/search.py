@@ -62,13 +62,22 @@ class SearchEntry:
 
 
 def _usable_pairs(abbreviations: Abbreviations) -> bool:
-    """Beide Formen nicht leer, und die Abkürzung steckt nicht in ihrer Langform.
+    """Beide Formen nicht leer, und keine Langform trägt eine Abkürzung — auch keine fremde.
 
     ``("strasse", "str")`` wäre unbrauchbar: das Ersetzen der Abkürzung durch die Langform träfe
     die Langform selbst und liefe bei jedem Durchlauf weiter (``strasse`` → ``strassease``).
+    Dasselbe über Paargrenzen hinweg, und darum zählen *alle* Abkürzungen: mit
+    ``(("ab", "x"), ("cxd", "y"))`` liefert ``canonical_term("y")`` die Langform ``cxd``, die
+    wieder ein ``x`` trägt, und der nächste Lauf macht daraus ``cabd``.
+
+    Was auch das nicht sieht: eine Ersetzung kann an der Nahtstelle zum Nachbartext eine neue
+    Abkürzung bilden (mit ``(("q", "ba"), ("a", "x"))`` wird ``bx`` zu ``ba``). Das hinge an jedem
+    möglichen Begriff und ist hier nicht zu entscheiden; dafür steht die Nachbedingung.
     """
+    shorts = [short for _, short in abbreviations]
     return all(
-        long and short and short not in long and long not in short for long, short in abbreviations
+        long and short and not any(other in long for other in shorts)
+        for long, short in abbreviations
     )
 
 
@@ -76,10 +85,18 @@ def _pairs_usable(term: str, abbreviations: Abbreviations = STREET_ABBREVIATIONS
     return _usable_pairs(abbreviations)
 
 
+def _free_of_abbreviations(
+    term: str, abbreviations: Abbreviations = STREET_ABBREVIATIONS, result: str = ""
+) -> bool:
+    """Im Ergebnis steckt keine Abkürzung mehr; daraus folgt, dass ein zweiter Lauf nichts ändert."""
+    return all(short not in result for _, short in abbreviations)
+
+
 @deal.pre(
     _pairs_usable,
-    message="Abkürzung und Langform nicht leer, und keine steckt in der anderen",
+    message="Abkürzung und Langform nicht leer, und keine Langform trägt eine Abkürzung",
 )
+@deal.ensure(_free_of_abbreviations, message="im Ergebnis steckt keine Abkürzung mehr")
 @deal.safe
 def canonical_term(term: str, abbreviations: Abbreviations = STREET_ABBREVIATIONS) -> str:
     """Der Begriff mit jeder Abkürzung zurück in der Langform (``münchener str.`` → ``…straße``).
