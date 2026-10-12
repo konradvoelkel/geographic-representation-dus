@@ -1185,8 +1185,15 @@ def assignment_rows(layout: Layout, settings: Settings) -> tuple[AssignmentRow, 
 
     Sortiert nach Dokumenten absteigend, bei Gleichstand nach Kürzel; die Restklasse steht zuletzt,
     weil sie keine Zuordnung ist, sondern ihr Fehlen.
+
+    Die Tabelle hängt am Schalter und an den Ausschüssen des Profils, nicht an der Datei: genau
+    die beiden Bedingungen, unter denen ``build_steps`` den Schritt ``committees`` ins Register
+    nimmt. Die Datei eines früheren Laufs bleibt sonst liegen und käme auf die Seite, obwohl die
+    Kette sie nicht mehr rechnet -- dieselbe Überlegung wie beim Themenblock (``topics.k = 0``).
     """
-    if not settings.classify.enabled or not layout.committee_table.exists():
+    if not settings.classify.enabled or not settings.bodies.committees:
+        return ()
+    if not layout.committee_table.exists():
         return ()
     frame = pl.read_parquet(layout.committee_table)
     names = BodyRules.from_settings(settings.bodies).names
