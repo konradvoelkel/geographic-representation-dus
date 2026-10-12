@@ -15,6 +15,7 @@ from pathlib import Path
 import deal
 from hypothesis import strategies as st
 
+from georep.analysis.topics import profile_stop_words
 from georep.analysis.weights import district_weight, idf_weight
 from georep.crosswalk import largest_remainder
 from georep.http import cache_pattern
@@ -24,7 +25,7 @@ from georep.prep.pois import is_city_facility
 from georep.report.charts import nice_ticks
 from georep.report.model import format_de
 from georep.report.search import canonical_term
-from georep.settings import deep_merge, load_settings
+from georep.settings import STOP_SOURCES, deep_merge, load_settings
 from georep.sources.overpass import overpass_query, street_names
 from georep.sources.wiki import geosearch_params, parse_point, sparql_query
 from tests.property.oracle_matcher import oracle_extract
@@ -174,6 +175,26 @@ BODY_RULES = BodyRules.from_settings(load_settings(cwd=Path("/nonexistent")).bod
     kwargs={"reference": st.one_of(st.none(), st.text(max_size=30)), "rules": st.just(BODY_RULES)},
 )
 def test_parse_reference(case: deal.TestCase) -> None:
+    case()
+
+
+# --- Punkt 45: die Ableitung der Stoppwörter aus dem Profil ------------------------------------
+# Die beiden Settings-Modelle kommen als feste Werte (wie ``rules`` oben): hypothesis baut aus
+# einem pydantic-Modell keine Instanz, und die Eigenschaft hängt an den Quellen, nicht am Profil.
+_PROFILE = load_settings(cwd=Path("/nonexistent"))
+
+
+@deal.cases(
+    profile_stop_words,
+    count=COUNT,
+    check_types=False,
+    kwargs={
+        "originators": st.just(_PROFILE.originators),
+        "bodies": st.just(_PROFILE.bodies),
+        "sources": st.lists(st.sampled_from(STOP_SOURCES), unique=True).map(tuple),
+    },
+)
+def test_profile_stop_words(case: deal.TestCase) -> None:
     case()
 
 

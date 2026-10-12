@@ -138,6 +138,9 @@ def test_the_steps_of_a_city_without_party_names_and_context(settings: Settings)
     names = [step.name for step in build_steps(settings, Layout.from_settings(settings))]
     assert "parties" not in names and "context" not in names and "controls" not in names
     assert "shapes" in names and "bodies" in names and "topics" in names
+    # Punkt 45: ohne Ausschüsse im Profil gibt es keine Klasse zu lernen; der Schritt entfällt,
+    # statt mit einer einzigen Restklasse zu laufen.
+    assert not settings.bodies.committees and "committees" not in names
 
 
 # --- Übereinstimmung mit dem Straßenverzeichnis der Wahl ---------------------------------------

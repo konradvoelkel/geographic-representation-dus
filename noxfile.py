@@ -81,7 +81,12 @@ VERIFY_TARGETS = [
     "georep.report.model.format_de",
     "georep.report.search.canonical_term",
     "georep.report.charts.nice_ticks",
-    # Nicht dabei: georep.prep.bodies.parse_reference (Option 05). Sein Parameter ist ein
+    # Punkt 45: die Ableitung der Stoppwörter aus dem Profil ist rein und total.
+    "georep.analysis.topics.profile_stop_words",
+    # Nicht dabei: georep.analysis.topics.name_stop_words (Punkt 45). Es rechnet zwei
+    # CountVectorizer-Durchgänge über die Texte; crosshair müsste sklearn symbolisch verfolgen.
+    # Seine Eigenschaften prüfen tests/property/test_topics_props.py und die Verträge zur
+    # Laufzeit. Ebenso nicht dabei: georep.prep.bodies.parse_reference (Option 05). Sein Parameter ist ein
     # BodyRules, dessen Feld ``pattern`` den Typ ``re.Pattern[str] | None`` hat; crosshair baut für
     # den Union-Zweig einen symbolischen String und ruft ``re.compile`` darauf, was mit
     # ``re.PatternError: missing ), unterminated subpattern`` aus dem eigenen Proxy fliegt und die
@@ -150,7 +155,10 @@ def mutate(session: nox.Session) -> None:
         # rechnet seit Option 06 mehrfach NMF; der Lauf vom 2026-10-12 war nach 35 Minuten noch
         # nicht durch. Das Modul misst man gezielt (docs/mutation-2026-10-12.md).
         "--gremlin-targets=src/georep/search,src/georep/analysis/hits.py,"
-        "src/georep/analysis/regression.py,src/georep/analysis/weights.py",
+        "src/georep/analysis/regression.py,src/georep/analysis/weights.py,"
+        # Punkt 45: der Klassifikator gehört dazu, sein Modell rechnet in der schnellen Suite
+        # nur auf 39 synthetischen Dokumenten (anders als das Themenmodell oben).
+        "src/georep/analysis/committees.py",
         "--gremlin-report=console,json",
         "--gremlin-workers=6",
         "--gremlin-mutant-timeout=60",

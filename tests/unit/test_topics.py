@@ -349,6 +349,15 @@ def test_the_seeded_topics_are_the_strongest_for_their_own_documents() -> None:
         assert all(dominant[paper] == topic for paper in own), (code, dominant)
 
 
+def test_without_a_free_topic_every_topic_is_seeded() -> None:
+    """``free = 0``: so viele Themen wie gesäte Ausschüsse, kein Rest wird gerechnet."""
+    corpus, bodies = _seed_corpus()
+    model = fit_topics(corpus, _settings(k=3), _seed_rules(free=0), bodies)
+    assert model.topics.get_column("gremium").to_list() == list(CODES)
+    sums = model.shares.get_column("anteile").list.sum().to_list()
+    assert all(value == pytest.approx(1.0, abs=1e-9) for value in sums)
+
+
 def test_the_shares_of_a_seeded_model_also_sum_to_one() -> None:
     corpus, bodies = _seed_corpus()
     model = fit_topics(corpus, _settings(k=4), _seed_rules(), bodies)

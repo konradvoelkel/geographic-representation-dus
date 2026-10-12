@@ -19,6 +19,7 @@ from georep.report.charts import district_attributes, own_share_label
 from georep.report.model import (
     BodyRow,
     ReportModel,
+    assignment_rows,
     body_figures,
     body_rows,
     build_report_model,
@@ -259,3 +260,22 @@ def test_the_new_tables_are_downloads_with_a_schema(built: str) -> None:
     for name in ("wahlbezirke_gremien", "gremien", "wahlbezirke_stadtbezirke"):
         assert f"{name}.parquet" in built and f"{name}.csv" in built
     assert "treffer_eigene_bv" in built and "anteil_eigener_stadtbezirk" in built
+
+
+# --- Punkt 45: die Tabelle der passenden Ausschüsse hängt am Schalter, nicht nur an der Datei --
+
+
+def test_the_assignment_table_follows_the_switch_and_the_committees(
+    mini_run: Layout, default_settings: Settings
+) -> None:
+    """Wie der Themenblock: die Datei eines früheren Laufs bleibt liegen, gehört aber nicht auf
+    die Seite, wenn der Schalter aus ist oder das Profil keine Ausschüsse kennt."""
+    assert assignment_rows(mini_run, default_settings)  # Vorgabe: Schalter an, Ausschüsse da
+    off = default_settings.model_copy(
+        update={"classify": default_settings.classify.model_copy(update={"enabled": False})}
+    )
+    assert assignment_rows(mini_run, off) == ()
+    without = default_settings.model_copy(
+        update={"bodies": default_settings.bodies.model_copy(update={"committees": {}})}
+    )
+    assert assignment_rows(mini_run, without) == ()
