@@ -12,6 +12,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from deal import ContractError
+
 from georep.errors import SchemaError
 from georep.prep.voters import (
     DISTRICT,
@@ -99,6 +101,31 @@ def test_a_byte_order_mark_does_not_become_part_of_the_first_column(tmp_path: Pa
     path.write_bytes(b"\xef\xbb\xbf" + path.read_bytes())
     frame = read_results_csv(path, VOTEMANAGER)
     assert frame.columns[0] == "datum"
+
+
+def test_the_bom_goes_before_the_decoding_not_after(mini_root: Path, default_settings: Settings) -> None:
+    """Die Düsseldorfer CSV ist latin-1 mit UTF-8-BOM: dekodiert wird daraus „ï»¿", kein \ufeff.
+
+    Nach der Dekodierung ist das Zeichen nicht mehr zu erkennen; der Name der ersten Spalte hieße
+    dann „ï»¿datum" (Review 2026-10-12).
+    """
+    path = mini_root / "external" / "Stimmbezirk_Wahlergebnis.csv"
+    assert path.read_bytes()[:3] == b"\xef\xbb\xbf"
+    frame = read_results_csv(path, default_settings.columns.results)
+    assert frame.columns[0] == "datum"
+
+
+def test_canonical_columns_refuse_two_parties_on_one_source_column() -> None:
+    """Zwei Parteien auf dieselbe Quellspalte ist ein Settings-Fehler, keine stille Zeile weniger."""
+    columns = ResultsColumns(
+        precinct="gebiet-nr",
+        district_from_precinct=(1, 3),
+        eligible="A",
+        voters="B",
+        parties={"CDU": "D1", "SPD": "D1"},
+    )
+    with pytest.raises(ContractError):
+        canonical_columns(columns)
 
 
 def test_results_columns_demand_exactly_one_way_to_the_district() -> None:
