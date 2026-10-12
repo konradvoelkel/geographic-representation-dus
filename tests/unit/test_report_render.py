@@ -509,7 +509,9 @@ def test_the_month_section_has_a_row_per_month_and_two_bars(open_page: str) -> N
     assert "Dezember" not in open_page
 
 
-def test_without_regression_the_page_drops_scatter_and_the_turnout_switch(open_page: str) -> None:
+def test_without_regression_the_page_drops_scatter_and_the_turnout_switch(
+    open_page: str, page: str
+) -> None:
     assert '<section id="zusammenhang">' not in open_page
     assert "Tabelle 5 der Arbeit" not in open_page
     assert 'class="scatter"' not in open_page
@@ -521,6 +523,9 @@ def test_without_regression_the_page_drops_scatter_and_the_turnout_switch(open_p
     assert "Metadaten abgerufen am 11.10.2026, PDFs am 12.10.2026" in open_page
     assert "neuestes Dokument vom 02.11.2025" in open_page
     assert "laufende Wahlperiode: die Trefferquote misst die Dokumente seit dem" in open_page
+    # Der Methodenabsatz verspricht keine Regression, die es auf dieser Seite nicht gibt
+    assert "lineare Regression setzt sie zur Wahlbeteiligung" not in open_page
+    assert "lineare Regression setzt sie zur Wahlbeteiligung" in page
 
 
 def test_the_monitoring_link_is_relative_and_only_there_when_set(open_page: str, page: str) -> None:
