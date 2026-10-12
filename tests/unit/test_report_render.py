@@ -232,12 +232,21 @@ def test_extra_classes_become_data_attributes_for_the_switch(
     assert svg.count('data-class-rate="') == len(model.districts)
 
 
-def _search_json(page: str) -> object:
+def _search_block(page: str) -> str:
     match = re.search(
         r'<script id="suche-daten" type="application/json">(.*?)</script>', page, re.S
     )
     assert match is not None
-    return json.loads(match.group(1).replace("<\\/", "</"))
+    return match.group(1)
+
+
+def _search_json(page: str) -> object:
+    """Der Block ist gültiges JSON, wie ``_json_for_script`` das ``<`` auch maskiert.
+
+    ``json.loads`` löst beide Schreibweisen auf, das alte ``<\\/`` ebenso wie ``\\u003c``; der Test
+    kennt die Maskierung darum nicht und bleibt richtig, wenn sie sich ändert.
+    """
+    return json.loads(_search_block(page))
 
 
 def test_search_data_is_a_readable_json_block(page: str, model: ReportModel) -> None:
@@ -248,7 +257,10 @@ def test_search_data_is_a_readable_json_block(page: str, model: ReportModel) -> 
 def test_a_term_that_would_end_the_script_is_escaped(model: ReportModel, visuals: Visuals) -> None:
     tainted = replace(model, search=(SearchEntry("x</script><b>", (1,), 0, "s"),))
     page = render_report(tainted, visuals)
-    assert "</script><b>" not in page and "<\\/script><b>" in page
+    # Was zählt, ist nicht die Schreibweise der Maskierung, sondern dass im Block nichts steht,
+    # was der HTML-Tokenizer für das Ende des Skripts halten kann; der Begriff kommt heil zurück.
+    assert "</script" not in _search_block(page).lower()
+    assert "</script><b>" not in page
     assert _search_json(page) == json.loads(json.dumps(search_payload(tainted.search)))
 
 

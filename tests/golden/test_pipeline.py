@@ -164,7 +164,7 @@ def _check_search_section(page: str) -> None:
         r'<script id="suche-daten" type="application/json">(.*?)</script>', page, re.S
     )
     assert match is not None
-    payload = json.loads(match.group(1).replace("<\\/", "</"))
+    payload = json.loads(match.group(1))  # json.loads löst jede Maskierung des < auf
     entries = payload["entries"]
     # 4135 kanonische Begriffe (2828 Straßen, 1239 Orte, 68 beides) plus 41 Wahlbezirksnamen.
     assert len(entries) == 4176

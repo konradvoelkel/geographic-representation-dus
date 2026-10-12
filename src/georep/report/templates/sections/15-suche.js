@@ -223,10 +223,12 @@
     out.appendChild(where);
 
     var many = spellings(item.term).length > 1;
+    /* Der Satz endet mit Doppelpunkt, wenn ein Knopf folgt, und sonst mit Punkt; ein Wahlbezirk
+       bekommt keinen Knopf, sondern einen zweiten Satz, und der braucht Punkt und Leerzeichen. */
+    var ending = item.kind === "w" ? ". " : item.documents ? ": " : ".";
     var count = line(
       (item.documents === 1 ? "ein Dokument" : item.documents + " Dokumente") +
-      " mit Treffer" + (many ? " (beide Schreibweisen zusammen)" : "") +
-      (item.documents ? ": " : ".")
+      " mit Treffer" + (many ? " (beide Schreibweisen zusammen)" : "") + ending
     );
     if (item.kind === "w") {
       count.appendChild(document.createTextNode(

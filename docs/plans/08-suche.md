@@ -341,7 +341,7 @@ Für Option 8 im Besonderen:
 
 ## 11. Umsetzung (2026-10-12)
 
-Sechs Commits auf `feat/08-suche`, `uv run nox` nach jedem grün:
+Elf Commits auf `feat/08-suche`, `uv run nox` nach jedem grün; die letzten beiden kamen aus dem Review:
 
 | Commit | Stufe | Inhalt |
 |---|---|---|
@@ -350,7 +350,12 @@ Sechs Commits auf `feat/08-suche`, `uv run nox` nach jedem grün:
 | `d455ed8` | A.3 | `ReportModel.search`, Füllung in `build_report_model` |
 | `e1fd65a` | B | Abschnitt `sections/15-suche.html.j2` und `.css`, `search_json` aus `render_report`, Render-Tests |
 | `20cea47` | C | `sections/15-suche.js` (Faltung, Abgleich, Combobox, Ergebnis, Marke, Hash) und der Node-Vergleich |
-| (dieser) | D | slow-Test, Doku, Status |
+| `793e103` | D | slow-Test, Doku, Status, Zahlen im Profiling-README |
+| `0fe4709` | D | die Statuszeile schweigt nach der Auswahl: zwei `aria-live`-Bereiche lasen denselben Inhalt |
+| `9218c9c` | D | der Mini-Fixture-Test nimmt die Settings aus der Fixture statt aus einem leeren Verzeichnis |
+| `fe7489f` | D | redaktionell: Umbruch im Docstring von `_name_entries` |
+| `47d62e5` | Review | `_usable_pairs` prüft die Abkürzungspaare auch im Zusammenspiel, dazu die Nachbedingung „keine Abkürzung im Ergebnis" |
+| (dieser) | Review | Leerzeichen im Ergebnisblock eines Wahlbezirks ohne Dokumente; die Tests erwarten keine bestimmte Maskierung des `<` mehr |
 
 Abweichungen vom Plan, je mit Grund:
 
@@ -368,5 +373,5 @@ Abweichungen vom Plan, je mit Grund:
 - **Statuszeile nennt den gesuchten Text**, wenn nichts gefunden wird (Frage 9).
 
 Gemessene Zahlen am 2026-10-12 auf der Referenz: 4176 Einträge (2828 `s`, 1239 `o`, 68 `so`, 41 `w`), 1618
-ohne Dokument; Payload 143 641 Byte (gzip 36 665); `index.html` 847 904 Byte (gzip 140 867), Budget
+ohne Dokument; Payload 143 641 Byte (gzip 36 665); `index.html` 848 144 Byte (gzip 140 967), Budget
 1 500 000; Schritt `report` 1,3 s; `search_entries` 65 ms.
