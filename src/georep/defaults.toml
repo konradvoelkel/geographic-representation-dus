@@ -68,6 +68,7 @@ district = "Kommunalwahlbezirk"
 eligible = "Wahlberechtigte_insgesamt"
 voters = "Waehler"
 parties = { CDU = "CDU_Stimmen", GRUENE = "GRUENE_Stimmen", SPD = "SPD_Stimmen", FDP = "FDP_Stimmen", Die_Linke = "Die_Linke_Stimmen", AfD = "AfD_Stimmen" }
+city_district = "Stadtbezirk" # Option 05: Stadtbezirk je Stimmbezirk, stimmt für alle 306 Stimmbezirke mit "Stadtbezirk Nr." des GeoJSON überein (2026-10-11)
 
 [search]
 text_split_marker = "betrifft" # der Vorlagenkopf vor dem ersten Vorkommen wird verworfen (Düsseldorfer Vorlagenformat)
@@ -140,3 +141,51 @@ exclude = [                    # Stadtteil- und Stadtbezirksnamen: zu grob für 
 
 [analysis]                     # Parameter, die mehr als ein Modul liest
 exclude_districts = [1, 10]    # Tabelle 5 der Arbeit rechnet auch ohne die Wahlbezirke 1 und 10 (die zwei höchsten Trefferquoten); leer = keine zweite Regression
+
+# --- Option 05: Gremien aus der Drucksachennummer (docs/plans/05-gremien.md) ---------------------
+[bodies]                       # Gremium je Ratsdokument; alle Kürzel und Namen dieser Option stehen hier, keines im Code
+# Drucksachennummer KÜRZEL[NR]/laufende Nummer/Jahr[/Nachtrag], etwa BV6/108/2023, RAT/270/2023, OVA/117/2023/1;
+# das Muster trifft alle 19 108 Nummern der Referenz (2026-10-11). Die Gruppe code ist das Kürzel, number die
+# Nummer dahinter (bei Bezirksvertretungen der Stadtbezirk). Was nicht trifft oder in keiner Tabelle steht, ist
+# "unbekannt" und erscheint so mit Anteil auf der Seite, nie als stille Fehlklasse.
+reference_pattern = '^(?P<code>[A-ZÄÖÜ]+?)(?P<number>\d{1,2})?/\d+/\d{4}(?:[/-].*)?$'
+district_body = "BV"           # Kürzel der Bezirksvertretungen; die Nummer dahinter ist der Stadtbezirk (GO NRW: eine Bezirksvertretung je Stadtbezirk)
+district_body_name = "Bezirksvertretung {n}"  # Anzeigename, {n} ist der Stadtbezirk
+names_as_of = 2026-10-11       # Stand der Namen unten (OParl-organizations-Seite des Bodys und Sitzungstitel); nur Anzeige, nicht im Fingerprint
+
+[bodies.council]               # der Rat der Stadt, Kürzel -> Name
+RAT = "Rat"
+
+[bodies.committees]            # Ausschüsse des Rates, Kürzel -> Name; "" = Name nicht gesichert, die Seite zeigt dann das Kürzel
+# aus der OParl-organizations-Seite vom 2026-10-11 (shortName ist genau das Kürzel):
+GLA = "Ausschuss für Gleichstellung und Antidiskriminierung"
+ADIG = "Ausschuss für Digitalisierung und allgemeine Verwaltungsorganisation"  # bis 2024-09-19, danach "…, Personal und Organisation"
+AUS = "Ausschuss für Umwelt-, Klima- und Verbraucherschutz"
+"AÖE" = "Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz"
+AWIR = "Ausschuss für Wirtschaftsförderung, internationale und regionale Zusammenarbeit"
+AWIZ = "Ausschuss für Wirtschaftsförderung und internationale Zusammenarbeit"  # 2020-11-01 bis 2021-03-18, dann AWIR
+# aus Dokumenttiteln ("Sitzungstermine des …"):
+OVA = "Ordnungs- und Verkehrsausschuss"
+APS = "Ausschuss für Planung und Stadtentwicklung"
+BAU = "Bauausschuss"
+SPOA = "Sportausschuss"
+ABA = "Anregungs- und Beschwerdeausschuss"
+RPAU = "Rechnungsprüfungsausschuss"
+# Kürzel ohne gesicherten Namen (nur plausibel; nach dem Merge von Option 4 aus raw/organizations.json, fragen.md 5.2):
+KUA = ""
+JHA = ""
+SCHUA = ""
+AGS = ""
+AWM = ""
+SEBD = ""
+HFA = ""
+WALTW = ""
+WABTW = ""
+WPA = ""
+AWTL = ""
+
+[bodies.advisory]              # Beiräte: keine Ausschüsse des Rates; eigene Klasse in der Tabelle, nicht auf der Karte
+JURAT = "Jugendrat"            # aus Dokumenttiteln
+INTR = "Integrationsrat"       # OParl-organizations-Seite 2026-10-11
+BR = "Behindertenrat"          # aus Dokumenttiteln
+SENR = "Seniorenrat"           # OParl-organizations-Seite 2026-10-11

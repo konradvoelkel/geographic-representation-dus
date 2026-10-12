@@ -17,10 +17,12 @@ import polars as pl
 import pytest
 from pytest_benchmark.fixture import BenchmarkFixture
 
+from georep.analysis.bodies import hits_by_body
 from georep.analysis.hits import hits_by_district, join_voters
 from georep.bootstrap import bootstrap
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
+from georep.prep.bodies import ID, REFERENCE, BodyRules, classify_papers
 from georep.prep.extract import extract_text
 from georep.prep.voters import aggregate_voters, read_results_csv
 from georep.search.dictionary import all_terms, build_dictionary
@@ -46,6 +48,8 @@ class MiniRun:
     corpus: pl.DataFrame
     index: pl.DataFrame
     voters: pl.DataFrame
+    results: pl.DataFrame  # Option 05
+    units: pl.DataFrame  # Option 05
 
 
 @pytest.fixture(scope="module")
@@ -66,6 +70,8 @@ def mini(tmp_path_factory: pytest.TempPathFactory, mini_root: Path) -> MiniRun:
         corpus=pl.read_parquet(layout.corpus, columns=["id", "text"]),
         index=pl.read_parquet(layout.index),
         voters=pl.read_parquet(layout.voters),
+        results=pl.read_parquet(layout.results),
+        units=pl.read_parquet(layout.district_units),
     )
 
 
@@ -113,3 +119,21 @@ def test_hits_and_voter_join(benchmark: BenchmarkFixture, mini: MiniRun) -> None
         return join_voters(hits, mini.voters, columns.eligible)
 
     assert benchmark(run).height == 3
+
+
+# --- Option 05: Parser über dem Korpus und die Aggregation je Wahlbezirk
+
+
+def test_classify_papers(benchmark: BenchmarkFixture, mini: MiniRun) -> None:
+    rules = BodyRules.from_settings(mini.settings.bodies)
+    corpus = mini.corpus.select(ID, pl.lit("BV6/108/2023").alias(REFERENCE))
+    frame = benchmark(classify_papers, corpus, rules)
+    assert frame.height == 200
+
+
+def test_hits_by_body(benchmark: BenchmarkFixture, mini: MiniRun) -> None:
+    rules = BodyRules.from_settings(mini.settings.bodies)
+    papers = classify_papers(mini.corpus.select(ID, pl.lit("RAT/1/2023").alias(REFERENCE)), rules)
+    eligible = mini.settings.columns.results.eligible
+    frame = benchmark(hits_by_body, mini.results, papers, mini.units, eligible)
+    assert frame.height == 3

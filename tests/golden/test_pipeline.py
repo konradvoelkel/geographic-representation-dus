@@ -93,6 +93,9 @@ def test_pipeline_runs_skips_and_reruns(
         "corpus": "übersprungen",
         "index": "ausgeführt",
         "results": "ausgeführt",
+        # Option 05: bodies hängt nur am Korpus, body_hits an der geänderten Auswertung
+        "bodies": "übersprungen",
+        "body_hits": "ausgeführt",
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")
@@ -120,7 +123,16 @@ def test_two_runs_write_identical_parquet(
     for layout in (a, b):
         bootstrap(layout)
         run_pipeline(build_steps(settings, layout), settings)
-    for name in ("dictionary", "index", "results"):
+    for name in (
+        "dictionary",
+        "index",
+        "results",
+        # Option 05
+        "papers_bodies",
+        "district_bodies",
+        "bodies_table",
+        "district_units",
+    ):
         assert getattr(a, name).read_bytes() == getattr(b, name).read_bytes(), name
 
 

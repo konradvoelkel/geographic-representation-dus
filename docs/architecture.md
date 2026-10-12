@@ -34,9 +34,9 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `stores` | `PaperStore` (JSONL, Upsert nach `modified`), `TextStore` (eine Parquet-Datei, Schlüssel Dateiname, Frische über Extraktorname und PDF-Hash) |
 | `sources/` | reine Fetch-Funktionen über `Transport`: `opendata` (CSV, GeoJSON), `oparl` (Paper-Seiten), `pdfs` (`PdfStore` mit Manifest), `overpass` (Straßen je Polygon), `wiki` (SPARQL, GeoSearch) |
 | `geo` | GeoJSON lesen, nach EPSG:25832 projizieren, `make_valid`, `PrecinctIndex` (STRtree), eine Rückprojektion nach lon/lat |
-| `prep/` | `extract` (PDF-Text hinter `PdfTextExtractor`), `papers` (Korpus), `voters`, `streets`, `pois`: Polars-Funktionen Frame zu Frame |
+| `prep/` | `extract` (PDF-Text hinter `PdfTextExtractor`), `papers` (Korpus), `voters` (auch `district_units`: Wahlbezirk zu Stadtbezirk über den Crosswalk), `streets`, `pois`, `bodies` (Gremium je Dokument aus der Drucksachennummer: `parse_reference` als reine Funktion über `BodyRules`, `classify_papers` als Batch-Grenze): Polars-Funktionen Frame zu Frame |
 | `search/` | `dictionary` (Wörterbuch je Wahlbezirk), `matcher` (`KeywordMatcher`-Protokoll, FlashText), `index` (invertierter Index) |
-| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings) |
+| `analysis/` | `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings), `bodies` (Treffer je Wahlbezirk nach Gremium, Lokalität je Gremium) |
 | `crosswalk` | Umrechnung von Gebietseinheiten auf Wahlbezirke: `unit_weights` wiegt je Wahlbezirk die Einheiten (Stadtbezirk, Stadtteil) mit einer Zählgröße je Stimmbezirk; Vertrag: Gewichte in (0, 1], Summe je Wahlbezirk 1 |
 | `pipeline` | Schrittregister: Name, Eingaben, Ausgaben, `run()`, Schema-Version; Stamps; `run_step`, `run_pipeline`, `build_steps` |
 | `bootstrap` | kopiert die Referenz nach `data_root` und baut daraus `papers.jsonl` und den Textstore |
@@ -48,7 +48,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 ## Pipeline
 
-Vierzehn Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzschritte laufen nur mit
+Sechzehn Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzschritte laufen nur mit
 `--online` oder über `georep fetch`.
 
 | Schritt | Netz | liest | schreibt |
@@ -59,14 +59,16 @@ Vierzehn Schritte, jeder mit Eingaben, Ausgaben und einer Schema-Version. Netzsc
 | `streets_osm` | ja | Overpass je Stimmbezirkspolygon | `raw/streets_per_district.json` |
 | `pois_wiki` | ja | Wikidata-SPARQL, Wikipedia-GeoSearch je Stimmbezirk | `raw/wikipedia_dict.json` |
 | `texts` | nein | PDFs ohne aktuellen Text | `cache/text/texts.parquet` |
-| `voters` | nein | Wahlergebnis-CSV | `processed/wahlbezirke_waehler.parquet` |
+| `voters` | nein | Wahlergebnis-CSV | `processed/wahlbezirke_waehler.parquet`, `processed/wahlbezirke_stadtbezirke.parquet` |
 | `streets` | nein | Straßen je Stimmbezirk | `processed/wahlbezirke_strassen.parquet` |
 | `pois` | nein | Orte | `processed/wikidata_vis.parquet`, `processed/wikidata_agg.parquet` |
 | `dictionary` | nein | Orte und Straßen je Wahlbezirk | `processed/combined_searchdict.parquet` |
 | `corpus` | nein | Metadaten und Texte | `interim/papers.parquet` |
 | `index` | nein | Wörterbuch, Korpus | `processed/inverted_index.parquet` |
 | `results` | nein | Wörterbuch, Index, Wähler | `processed/wahlbezirke_auswertung.parquet` |
-| `report` | nein | die sechs Ergebnistabellen, Korpus, Stimmbezirks-GeoJSON | `site/index.html`, `site/karte.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`, `dokumente.json`) |
+| `bodies` | nein | Korpus (`id`, `reference`) | `processed/papers_gremien.parquet` |
+| `body_hits` | nein | Auswertung, Gremien je Dokument, Stadtbezirke | `processed/wahlbezirke_gremien.parquet`, `processed/gremien.parquet` |
+| `report` | nein | die neun Ergebnistabellen, Korpus, Stimmbezirks-GeoJSON | `site/index.html`, `site/karte.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`, `dokumente.json`) |
 
 Neben der ersten Ausgabe jedes Schritts liegt `<datei>.stamp.json` mit den SHA-256-Hashes der Eingaben, dem
 Settings-Fingerprint, der Code-Version und der Schema-Version. Stimmt alles, ist der Schritt aktuell und wird
@@ -83,7 +85,8 @@ data_root/                 Standard ./data, gitignored; mit profile = "x" liegt 
   external/                Eingaben des Open-Data-Portals, Dateinamen und Formate der Quelle
   raw/                     papers.jsonl, streets_per_district.json, wikipedia_dict.json
   interim/                 papers.parquet (Korpus: Metadaten plus Text)
-  processed/               die sieben Ergebnistabellen als Parquet (zstd), je mit Stamp
+  processed/               die elf Ergebnistabellen als Parquet (zstd), je mit Stamp
+                           (davon veröffentlicht: neun; papers_gremien und wikidata_agg nicht)
   site/                    die Berichtsseite: index.html (mit Stamp), karte.html (Leaflet) und data/ mit den Download-Dateien
 cache_root/                Standard data_root/cache; mit Profil liegen pdf/ und text/ unter cache_root/x/
   pdf/                     <dateiname>.pdf, manifest.jsonl (URL, SHA-256, Größe, Zeit)
@@ -168,7 +171,7 @@ Attribut (`choropleth(extra_classes=...)`) und eine Legende. Die veröffentlicht
 `report/tables.py` (Datei, Beschreibung, Spaltendoku, CSV-Regeln, `optional` für profilabhängige Tabellen);
 daraus entstehen Downloads, `schema.json`, CSV-Dateien und die Spaltentabelle. Die Seite bleibt unter 1,5 MB
 (slow-Test). Reihenfolge: erst die Dateien
-unter `site/data/` (die sechs Tabellen als Parquet kopiert und als CSV mit den Regeln von `georep export`,
+unter `site/data/` (die neun Tabellen als Parquet kopiert und als CSV mit den Regeln von `georep export`,
 `wahlbezirke.geojson` in EPSG:4326, `schema.json`), dann das Modell (`report.model`: frozen dataclasses, Polars
 bis zum Schluss, Zeit und Commit sind Eingaben) mit Größe und SHA-256 jeder Datei, dann die Karte
 (`report.geometry`: `unary_union` je Wahlbezirk, um 15 m vereinfacht, Flächensumme bis auf 1 % erhalten, formtreu
@@ -176,7 +179,8 @@ aus EPSG:25832 auf eine `viewBox` abgebildet) und das Streudiagramm (`report.cha
 (`report.render`, Jinja2 mit Autoescape; Nachbedingung: jeder Link nach außen steht in `ALLOWED_LINKS`). Die
 Choroplethe hat fünf Quantilklassen (weniger, wenn es weniger verschiedene Werte gibt) in einer Blau-Rampe, die
 je Modus getrennt gewählt und mit dem Validator der Skill `dataviz` geprüft ist; der Umschalter auf die
-Wahlbeteiligung tauscht nur CSS-Klassen über `data-`-Attribute. Begriffe sind Schaltflächen: ein Klick lädt
+Wahlbeteiligung oder auf den Anteil der eigenen Bezirksvertretung tauscht nur CSS-Klassen über
+`data-`-Attribute. Begriffe sind Schaltflächen: ein Klick lädt
 `data/dokumente.json` nach (`report.documents`: die Dokumente mit Treffer ohne Texte, neueste zuerst, je Begriff
 Indizes; der PDF-Link entsteht aus einem gemeinsamen Präfix) und zeigt die Dokumente in einem `<dialog>`; die
 Orte der Karte tragen Namen und Wahlbezirk. Der Abschnitt `15-suche` ist ein Suchfeld nach dem
@@ -192,15 +196,18 @@ falten. `karte.html` ist die zweite Datei und die einzige mit
 Fremdressourcen: Leaflet 1.9.4 per Subresource Integrity gepinnt, OpenStreetMap-Kacheln mit Namensnennung,
 Flächen und Orte inline als JSON (`</` escaped), eigene Allowlist in `render_map`. Entscheidungen und verworfene
 Alternativen stehen in [plan-report-2026-10.md](plan-report-2026-10.md), § 2. Auf der Referenz: 41 Wahlbezirke,
-17 Dateien, 8,4 MB, davon `index.html` rund 848 KB (gzip 141 KB, davon 144 KB Suchdaten), `karte.html`
-255 KB, `dokumente.json` 2,1 MB; 1,3 s (2026-10-12).
+23 Dateien, 8,3 MB, davon `index.html` rund 880 KB (davon 144 KB Suchdaten), `karte.html` 255 KB,
+`dokumente.json` 2,1 MB; 1,3 s (2026-10-12).
 
 ## Verträge
 
 deal-Verträge stehen an den Batch-Grenzen, nicht in heißen Schleifen: Vorbedingungen (Pflichtspalten,
 Begriffe kleingeschrieben und ohne Komma, Koordinaten in Grad, Wahlberechtigte positiv), Nachbedingungen
 (eine Zeile je Schlüssel, Listen sortiert und eindeutig, `anzahl_treffer` gleich Mächtigkeit, Wahlbezirke
-nur aus den Eingaben, r in [-1, 1]), `raises` an den Fetchern, `pure` auf kleinen totalen Funktionen. Die
+nur aus den Eingaben, r in [-1, 1], eine Zerlegung ohne Rest über `parts_sum_to`), `raises` an den
+Fetchern, `pure` auf kleinen totalen Funktionen (nicht aber auf solchen, die eine Batch-Funktion je
+Zeile ruft: `deal.has()` patcht je Aufruf prozessweit, darum trägt `prep.bodies.parse_reference` nur
+`deal.safe` und wird über `deal.cases` und crosshair auf Reinheit geprüft). Die
 Prädikate liegen in `georep.contracts`, damit dieselbe Eigenschaft überall gleich heißt. `settings.contracts
 = "off"` ruft `deal.disable` beim Start; der Overhead liegt unter einem Prozent (2026-10-11). Pydantic
 validiert an der Systemgrenze (OParl, Records, Settings), Verträge sichern das Innere; `icontract` wird

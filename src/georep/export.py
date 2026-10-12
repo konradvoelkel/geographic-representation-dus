@@ -17,8 +17,14 @@ from georep.report.tables import csv_plan
 
 
 def _joined(frame: pl.DataFrame, joins: Mapping[str, str]) -> pl.DataFrame:
+    # Der Cast auf Text ist für Zahlenlisten nötig (Option 05: stadtbezirke ist List(Int64));
+    # bei Textlisten ändert er nichts, die Ausgabe der vorhandenen Tabellen bleibt gleich.
     return frame.with_columns(
-        [pl.col(c).list.join(sep) for c, sep in joins.items() if c in frame.columns]
+        [
+            pl.col(c).cast(pl.List(pl.String)).list.join(sep)
+            for c, sep in joins.items()
+            if c in frame.columns
+        ]
     )
 
 

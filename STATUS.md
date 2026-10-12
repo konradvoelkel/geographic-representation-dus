@@ -47,7 +47,10 @@ Branches. Stand 2026-10-12: Phase 0 und 1 abgeschlossen (acht Worktrees auf xtra
 `docs/plans/` auf den Branches), Phase 2 abgeschlossen: `docs/plans/00-synergien.md` und das Fundament F1 bis F7
 auf `main` (Abschnittsmechanismus der Seite, Register der Tabellen, `regression_pair`, Profil und offene Periode,
 Crosswalk-Kern, Achsen-Helfer, Zähl-Tests), die Fragen der Pläne gebündelt in `docs/plans/fragen.md`; Phase 3
-(Implementierung) läuft; Option 08 (Suche) ist fertig und im Review (erste in der Merge-Reihenfolge). Der Plan der Berichtsseite ist mit Stufe G vollständig umgesetzt. Die Seite wird bei jedem Push auf `main` neu gebaut und veröffentlicht
+(Implementierung) läuft; Option 08 (Suche) ist gemerged (2026-10-12), Option 05 (Gremien) ist auf `feat/05-gremien` fertig und im Review: zwei neue
+Offline-Schritte (`bodies`, `body_hits`, zusammen 0,2 s), drei neue veröffentlichte Tabellen, ein dritter
+Kartenumschalter und der Abschnitt „Gremien"; 304 Tests statt 272, voller Offline-Lauf rund 9 s,
+`index.html` 732 KB, `wahlbezirke_auswertung.parquet` byteidentisch. Der Plan der Berichtsseite ist mit Stufe G vollständig umgesetzt. Die Seite wird bei jedem Push auf `main` neu gebaut und veröffentlicht
 (`.github/workflows/pages.yml`, Pages-Quelle „GitHub Actions" seit 2026-10-11); abgenommen am 2026-10-11: Workflow
 grün, Seite erreichbar, Downloads laden, SHA-256 stimmen. Optional nach Bedarf: Stufe G des Plans (Dokumente je
 Begriff: erledigt) und der Umzug auf Konrads VPS (`rsync` von `data/site`, Stufe F.4).

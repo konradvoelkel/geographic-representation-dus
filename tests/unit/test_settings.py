@@ -144,3 +144,62 @@ def test_open_period_model_requires_election_but_no_order_to_start() -> None:
     assert open_period.end is None and open_period.election_day == date(2025, 9, 14)
     with pytest.raises(ValidationError, match="period.end"):
         Period(start=date(2025, 9, 15), end=date(2025, 1, 1))
+
+
+# --- Option 05: Gremien -----------------------------------------------------------------------
+
+
+def test_bodies_tables_load_with_disjoint_codes(tmp_path: Path) -> None:
+    import re
+
+    s = load_settings(cwd=tmp_path)
+    pattern = re.compile(s.bodies.reference_pattern)
+    assert {"code", "number"} <= set(pattern.groupindex)
+    assert s.bodies.district_body and s.bodies.district_body not in s.bodies.committees
+    assert "{n}" in s.bodies.district_body_name
+    assert s.bodies.council and s.bodies.committees and s.bodies.advisory
+    assert set(s.bodies.council).isdisjoint(s.bodies.committees)
+    assert set(s.bodies.committees).isdisjoint(s.bodies.advisory)
+    assert set(s.bodies.council).isdisjoint(s.bodies.advisory)
+    assert s.bodies.names_as_of is not None
+    assert s.columns.results.city_district
+
+
+def test_bodies_code_in_two_tables_is_an_error(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[bodies.advisory]\nRAT = "noch einmal"\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="RAT"):
+        load_settings(cwd=tmp_path)
+
+
+def test_bodies_district_body_may_not_be_a_table_code(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text('[bodies]\ndistrict_body = "RAT"\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match="district_body"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text('[bodies]\ndistrict_body = ""\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match="district_body"):
+        load_settings(cwd=tmp_path)
+
+
+def test_bodies_pattern_needs_the_groups_code_and_number(tmp_path: Path) -> None:
+    (tmp_path / "settings.toml").write_text(
+        '[bodies]\nreference_pattern = "^(?P<kuerzel>[A-Z]+)/"\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="code"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        '[bodies]\nreference_pattern = "^(?P<code>[A-Z]+"\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="reference_pattern"):
+        load_settings(cwd=tmp_path)
+
+
+def test_fingerprint_sees_body_codes_but_not_the_date_of_the_names(tmp_path: Path) -> None:
+    base = load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text('[bodies.committees]\nNEU = ""\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).fingerprint() != base.fingerprint()
+    (tmp_path / "settings.toml").write_text(
+        "[bodies]\nnames_as_of = 2030-01-01\n", encoding="utf-8"
+    )
+    assert load_settings(cwd=tmp_path).fingerprint() == base.fingerprint()

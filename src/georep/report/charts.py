@@ -153,6 +153,11 @@ def turnout_label(value: float) -> str:
     return percent_de(value, 1)
 
 
+def own_share_label(value: float) -> str:
+    """Option 05: der Anteil der eigenen Bezirksvertretung, ganze Prozent (Legende und Tooltip)."""
+    return percent_de(value, 0)
+
+
 def _title(row: DistrictRow) -> str:
     return (
         f"{row.id} {row.name}: {format_de(row.hits)} Dokumente, Trefferquote {rate_label(row.rate)}, "
@@ -172,6 +177,8 @@ def district_attributes(row: DistrictRow) -> str:
         "data-turnout": turnout_label(row.turnout),
         "data-terms": terms,
     }
+    if row.bodies is not None:  # Option 05: eine Zeile mehr im Tooltip
+        pairs["data-own"] = f"{format_de(row.bodies.own)} ({own_share_label(row.bodies.own_share)})"
     return " ".join(f'{key}="{_attr(value)}"' for key, value in pairs.items())
 
 

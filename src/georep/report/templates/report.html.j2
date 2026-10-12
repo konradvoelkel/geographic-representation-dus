@@ -145,6 +145,7 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
       line(tooltip, d.id + " " + d.name, "strong");
       line(tooltip, d.hits + " Dokumente, " + d.eligible + " Wahlberechtigte");
       line(tooltip, "Trefferquote " + d.rate + ", Wahlbeteiligung " + d.turnout);
+      if (d.own) line(tooltip, "eigene Bezirksvertretung: " + d.own);  /* Option 05 */
       if (d.terms) line(tooltip, d.terms, "terms");
     }
     tooltip.hidden = false;

@@ -79,6 +79,8 @@ class Visuals:
     turnout_legend: Sequence[LegendEntry]
     simplify_m: float
     pois: int  # gezeichnete Orte; 0 blendet den Schalter aus
+    # Neue Kennzahlen stehen mit Default am Ende: leer blendet Radio und Legende aus (Option 05)
+    bodies_legend: Sequence[LegendEntry] = ()
 
 
 def date_de(value: dt.date) -> str:

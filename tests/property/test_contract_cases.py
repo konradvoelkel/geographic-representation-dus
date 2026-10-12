@@ -10,15 +10,18 @@ und ``deal test`` ist mit typeguard 4 kaputt (docs/decisions.md, Punkt 15).
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import deal
 from hypothesis import strategies as st
 
 from georep.http import cache_pattern
+from georep.prep.bodies import BodyRules, parse_reference
 from georep.prep.extract import after_marker, normalise_text
 from georep.report.charts import nice_ticks
 from georep.report.model import format_de
 from georep.report.search import canonical_term
-from georep.settings import deep_merge
+from georep.settings import deep_merge, load_settings
 from georep.sources.overpass import overpass_query, street_names
 from georep.sources.wiki import geosearch_params, parse_point, sparql_query
 from tests.property.oracle_matcher import oracle_extract
@@ -154,4 +157,18 @@ def test_nice_ticks(case: deal.TestCase) -> None:
     },
 )
 def test_canonical_term(case: deal.TestCase) -> None:
+    case()
+
+
+# Option 05: der Parser der Drucksachennummer über den festen Regeln der Default-Settings
+BODY_RULES = BodyRules.from_settings(load_settings(cwd=Path("/nonexistent")).bodies)
+
+
+@deal.cases(
+    parse_reference,
+    count=COUNT,
+    check_types=False,
+    kwargs={"reference": st.one_of(st.none(), st.text(max_size=30)), "rules": st.just(BODY_RULES)},
+)
+def test_parse_reference(case: deal.TestCase) -> None:
     case()

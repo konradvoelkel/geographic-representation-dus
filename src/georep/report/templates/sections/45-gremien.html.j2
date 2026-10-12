@@ -1,0 +1,83 @@
+{% if model.bodies and model.body_figures %}
+{% set f = model.body_figures %}
+<section id="gremien">
+<h2>Gremien</h2>
+<p>Jedes Ratsdokument trägt eine Drucksachennummer, und die nennt das Gremium: <code>BV6/108/2023</code> ist eine Vorlage der Bezirksvertretung 6, <code>RAT/270/2023</code> eine des Rates, <code>OVA/117/2023/1</code> ein Nachtrag im Ordnungs- und Verkehrsausschuss. Das Kürzel vor dem ersten Schrägstrich wird in einer Tabelle nachgesehen; bei den Bezirksvertretungen ist die Zahl dahinter die Nummer des Stadtbezirks. Ein Kürzel, das in keiner Tabelle steht, zählt als <em>unbekannt</em> und erscheint hier mit seinem Anteil &ndash; es wird nicht stillschweigend zu einem Ausschuss.</p>
+<div class="tiles">
+{% for kind, label, count, share in f.by_kind %}
+<div class="tile"><div class="label">{{ label }}</div><div class="value">{{ count|num }}</div><div class="sub">{{ share|pct(1) }} der Dokumente</div></div>
+{% endfor %}
+</div>
+<p>Von den {{ f.documents|num }} Dokumenten der Wahlperiode entfallen {{ f.unknown_share|pct(1) }} auf unbekannte Gremien; es gibt {{ f.bodies|num }} verschiedene Kürzel. Von den {{ f.hits|num }} Dokument-Bezirk-Paaren der Auswertung kommen {{ f.own_hits|num }} aus der Bezirksvertretung des eigenen Stadtbezirks. Ein Dokument zählt je Wahlbezirk einmal, auch wenn es mehrere Begriffe des Bezirks nennt; ein Dokument kann in mehreren Wahlbezirken Treffer haben.</p>
+
+<h3>Je Wahlbezirk</h3>
+<p class="note">Spaltenköpfe sortieren. „Eigene BV" ist die Bezirksvertretung eines Stadtbezirks, in dem der Wahlbezirk Wahlberechtigte hat; in Klammern ihr Anteil an allen Treffern des Bezirks. „Quote" sind diese Treffer je Wahlberechtigtem.</p>
+<div class="scroll"><table id="gremien-bezirke">
+<thead><tr>
+<th scope="col" class="num" data-sort="num">Nr.</th>
+<th scope="col" data-sort="text">Name</th>
+<th scope="col" class="num" data-sort="num">Stadtbezirk</th>
+<th scope="col" class="num" data-sort="num">Treffer</th>
+<th scope="col" class="num" data-sort="num">eigene BV</th>
+<th scope="col" class="num" data-sort="num">andere BV</th>
+<th scope="col" class="num" data-sort="num">Rat</th>
+<th scope="col" class="num" data-sort="num">Ausschüsse</th>
+<th scope="col" class="num" data-sort="num">Beiräte</th>
+<th scope="col" class="num" data-sort="num">unbekannt</th>
+<th scope="col" class="num" data-sort="num">Quote</th>
+</tr></thead>
+<tbody>
+{% for d in model.districts %}{% if d.bodies %}{% set b = d.bodies %}
+<tr data-id="{{ d.id }}">
+<td class="num" data-value="{{ d.id }}">{{ d.id }}</td>
+<td>{{ d.name }}</td>
+<td class="num" data-value="{{ b.city_districts[0] }}">{{ b.city_districts|join(' und ') }}{% if b.city_districts|length > 1 %}<a href="#gremien-fussnote" class="fn">*</a>{% endif %}</td>
+<td class="num" data-value="{{ d.hits }}">{{ d.hits|num }}</td>
+<td class="num" data-value="{{ b.own }}">{{ b.own|num }} <span class="note">({{ b.own_share|pct(1) }})</span></td>
+<td class="num" data-value="{{ b.other }}">{{ b.other|num }}</td>
+<td class="num" data-value="{{ b.council }}">{{ b.council|num }}</td>
+<td class="num" data-value="{{ b.committee }}">{{ b.committee|num }}</td>
+<td class="num" data-value="{{ b.advisory }}">{{ b.advisory|num }}</td>
+<td class="num" data-value="{{ b.unknown }}">{{ b.unknown|num }}</td>
+<td class="num" data-value="{{ b.own_rate }}">{{ b.own_rate|num(3) }}</td>
+</tr>
+{% endif %}{% endfor %}
+</tbody></table></div>
+
+<h3>Je Gremium</h3>
+<p class="note">Nach Art sortiert, darin nach Dokumenten. Die Lokalität einer Bezirksvertretung ist der Anteil ihrer Treffer, der in Wahlbezirken ihres eigenen Stadtbezirks liegt.</p>
+<div class="scroll"><table id="gremien-liste">
+<thead><tr>
+<th scope="col" data-sort="text">Kürzel</th>
+<th scope="col" data-sort="text">Name</th>
+<th scope="col" data-sort="text">Art</th>
+<th scope="col" class="num" data-sort="num">Stadtbezirk</th>
+<th scope="col" class="num" data-sort="num">Dokumente</th>
+<th scope="col" class="num" data-sort="num">mit Treffer</th>
+<th scope="col" class="num" data-sort="num">Lokalität</th>
+</tr></thead>
+<tbody>
+{% for b in model.bodies %}
+<tr>
+<td>{{ b.code or "—" }}</td>
+<td>{{ b.label }}</td>
+<td>{{ b.kind_label }}</td>
+<td class="num" data-value="{{ b.city_district if b.city_district is not none else -1 }}">{{ b.city_district if b.city_district is not none else "" }}</td>
+<td class="num" data-value="{{ b.documents }}">{{ b.documents|num }}</td>
+<td class="num" data-value="{{ b.with_hits }}">{{ b.with_hits|num }}</td>
+<td class="num" data-value="{{ b.local_share if b.local_share is not none else -1 }}">{% if b.local_share is not none %}{{ b.local_share|pct(1) }}{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+
+{% set shared = model.districts|selectattr("bodies")|selectattr("bodies.shared")|list %}
+{% if shared %}
+<p class="note" id="gremien-fussnote">* {% for d in shared %}Der Wahlbezirk {{ d.id }} ({{ d.name }}) liegt in den Stadtbezirken {{ d.bodies.city_districts|join(' und ') }}, mit {{ d.bodies.city_districts[0] }} als größerem Anteil; beide Bezirksvertretungen zählen als eigene. {% endfor %}Die Gewichte stehen in der Tabelle <code>wahlbezirke_stadtbezirke</code> zum Download.</p>
+{% endif %}
+{% if model.body_regression %}
+{% set r = model.body_regression %}
+<p>Eine lineare Regression der Wahlbeteiligung in Prozent auf die Quote der eigenen Bezirksvertretung je Wahlberechtigtem ergibt über alle {{ r.all.n }} Wahlbezirke r = {{ r.all.r|num(2) }} und p = {{ r.all.p|num(2) }}{% if r.all.p >= 0.05 %}, belegt also keinen Zusammenhang{% else %}, ist also auf dem 5-%-Niveau signifikant{% endif %}{% if r.without %}; ohne die Wahlbezirke {{ r.excluded|join(' und ') }} bleibt p = {{ r.without.p|num(2) }}{% endif %}.</p>
+{% endif %}
+<p class="note">Die Zuordnung Kürzel zu Name steht in den Einstellungen des Programms{% if f.names_as_of %}, Stand {{ f.names_as_of|date_de }}{% endif %}; Quelle sind die Organisationen des Ratsinformationssystems und Dokumenttitel. {% if f.without_name %}{{ f.without_name|num }} Kürzel haben dort keinen gesicherten Namen und stehen nur mit dem Kürzel.{% endif %} Die Namen der Ausschüsse haben sich innerhalb der Wahlperiode teils geändert; das Kürzel bleibt der Schlüssel. Die Zuordnung je Dokument ist nicht als Datei veröffentlicht &ndash; sie folgt aus der Drucksachennummer in <code>dokumente.json</code> und der Regel oben.</p>
+</section>
+{% endif %}

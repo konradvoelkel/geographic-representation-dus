@@ -4,6 +4,16 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- Gremien (`docs/plans/05-gremien.md`): jedes Ratsdokument bekommt aus seiner Drucksachennummer das Gremium
+  (Rat, eine der zehn Bezirksvertretungen, Ausschuss, Beirat oder „unbekannt"); auf der Referenz trifft das
+  Muster alle 19 108 Nummern, 0 bleiben unbekannt. Die Berichtsseite bekommt den Abschnitt „Gremien" mit einer
+  Tabelle je Wahlbezirk und einer je Gremium, die Karte einen dritten Umschalter „Anteil eigene
+  Bezirksvertretung", und es gibt drei neue Tabellen zum Download (`wahlbezirke_gremien`, `gremien`,
+  `wahlbezirke_stadtbezirke`). Welche Bezirksvertretung für einen Wahlbezirk die eigene ist, folgt aus den
+  Stadtbezirken seiner Stimmbezirke, gewichtet über die Wahlberechtigten; der Wahlbezirk 40 liegt in zwei und
+  bekommt eine Fußnote. Zwei neue Offline-Schritte (`bodies`, `body_hits`), elf statt neun;
+  `wahlbezirke_auswertung.parquet` bleibt byteidentisch. Alle Kürzel und Namen stehen in den Settings
+  (`[bodies]`); die neuen Schlüssel lassen alle Schritte einmal neu laufen.
 - Suchfeld „Straße oder Ort" auf der Berichtsseite: beim Tippen erscheinen Vorschläge aus dem Wörterbuch
   (4176 Einträge: Straßen aus OpenStreetMap, Orte aus Wikidata und Wikipedia, die 41 Wahlbezirksnamen). Die
   Auswahl nennt die Art, die Wahlbezirke mit Namen und die Zahl der Dokumente mit Treffer, zeigt sie auf

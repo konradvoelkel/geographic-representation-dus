@@ -8,6 +8,7 @@ from syrupy.assertion import SnapshotAssertion
 from georep.cli import main
 from georep.layout import Layout
 from georep.pipeline import build_steps
+from georep.report.tables import csv_plan
 from georep.settings import load_settings
 
 
@@ -52,7 +53,9 @@ def test_bootstrap_run_status_export_regress(
     status = capsys.readouterr().out
     assert status.count("aktuell") >= 7 and "200 Dokumente" in status and "[Netz]" in status
     assert main(["export"]) == 0
-    assert "7 CSV-Dateien" in capsys.readouterr().out
+    # Zahl aus dem Register, damit eine neue Tabelle keine Literale bricht (F6-Konvention)
+    written = len(csv_plan(Layout.from_settings(load_settings(cwd=project))))
+    assert f"{written} CSV-Dateien" in capsys.readouterr().out
     assert (project / "data" / "processed" / "wahlbezirke_auswertung.csv").exists()
     assert main(["regress"]) == 0
     assert capsys.readouterr().out.startswith("alle: n=3")
@@ -142,7 +145,7 @@ def test_profile_writes_one_file_per_offline_step(
     capsys.readouterr()
     assert main(["profile", "--out", "prof", "--top", "3"]) == 0
     out = capsys.readouterr().out
-    assert "voters       ausgeführt    erzwungen; 3 Wahlbezirke" in out
+    assert "voters       ausgeführt    erzwungen; 3 Wahlbezirke, 3 Paare mit Stadtbezirk" in out
     offline, _ = _step_counts(project)
     assert out.count("function calls") == offline
     assert out.count("Anzeige: uv run snakeviz") == offline

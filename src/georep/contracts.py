@@ -12,6 +12,7 @@ bleibt (``sorted_unique(result, DISTRICT)``) und dieselbe Eigenschaft überall d
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Literal
 
 import deal
@@ -56,3 +57,20 @@ def sums_to_one(frame: pl.DataFrame, group: str, column: str, tol: float = 1e-9)
     """Die Spalte summiert je Gruppe zu 1: Gewichte einer Umrechnung je Zielbezirk."""
     sums = frame.group_by(group).agg(pl.col(column).sum())
     return bool(((sums.get_column(column) - 1.0).abs() <= tol).all())
+
+
+def shares_in_unit_interval(frame: pl.DataFrame, *columns: str) -> bool:
+    """Jede Spalte ist ein Anteil: Wert in [0, 1] und nie null."""
+    return all(
+        frame.get_column(c).null_count() == 0
+        and bool(((frame.get_column(c) >= 0.0) & (frame.get_column(c) <= 1.0)).all())
+        for c in columns
+    )
+
+
+def parts_sum_to(frame: pl.DataFrame, parts: Sequence[str], total: str) -> bool:
+    """Die Teile ergeben je Zeile die Gesamtzahl: eine Zerlegung ohne Rest und ohne Doppelzählung."""
+    if not has_columns(frame, total, *parts):
+        return False
+    checked = frame.select(pl.sum_horizontal(parts).alias("_parts"), pl.col(total))
+    return bool((checked.get_column("_parts") == checked.get_column(total)).all())
