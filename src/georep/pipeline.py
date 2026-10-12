@@ -100,7 +100,7 @@ from georep.sources.opendata import fetch_csv, fetch_districts_file, fetch_geojs
 from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
 from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_query
-from georep.stores import PaperStore, TextStore
+from georep.stores import PaperStore, TextStore, UpsertReport
 
 Status = Literal["ausgeführt", "übersprungen", "geplant"]
 PARTIES_SCHEMA = 1  # Option 04: Schema-Version der drei Ausgaben des Schritts ``parties``
@@ -367,11 +367,17 @@ def build_steps(
         # dauert Stunden; bricht er ab, darf der nächste Lauf nicht bei first_page beginnen.
         resume = read_progress(layout.papers_progress)
         pages_done = 0
+        # Option 07: die Zahlen der Seiten summieren. Seit Option 02 speichert jede Seite selbst,
+        # und ein Upsert am Ende sah darum alles als unverändert: der Lauf meldete immer „0 neu".
+        counted = [0, 0, 0]  # neu, aktualisiert, unverändert
 
         def page_done(kept: list[PaperRecord], next_url: str | None) -> None:
             nonlocal pages_done
             pages_done += 1
-            store.upsert(kept)
+            page_report = store.upsert(kept)
+            counted[0] += page_report.added
+            counted[1] += page_report.updated
+            counted[2] += page_report.unchanged
             write_progress(layout.papers_progress, next_url, pages_done)
 
         records, fetched = fetch_papers(
@@ -388,7 +394,10 @@ def build_steps(
             sleep=sleep,
         )
         # Option 07: Gelöschte liefert der Server nur zu modified_since; sie fliegen aus dem Store.
-        report = store.upsert(records, deleted=fetched.deleted_ids)
+        # Die Paper selbst liegen schon drin (jede Seite hat sich gespeichert), darum nur sie.
+        removal = store.upsert((), deleted=fetched.deleted_ids)
+        added, updated, unchanged = counted
+        report = UpsertReport(added, updated, unchanged, removal.total, removal.removed)
         # Der Fortschritt existiert nur, solange ein Abruf unvollständig ist.
         layout.papers_progress.unlink(missing_ok=True)
         mode = f"seit {since.date()}" if since else "vollständig"

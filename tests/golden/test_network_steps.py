@@ -423,7 +423,8 @@ def test_incremental_runs_add_pages_keep_old_and_drop_deleted(
     second = run_pipeline(steps, open_settings, names, online=True, force=True)
     assert [o.status for o in second] == ["ausgeführt"] * 4
     assert "seit 2025-11-01" in second[0].reason and "1 gelöscht" in second[0].reason
-    assert "3 gesamt" in second[0].reason  # der Store trägt A', B und C
+    # Die Zahlen summieren über die Seiten: C ist neu, A geändert, D war nie im Store
+    assert "1 neu, 1 aktualisiert" in second[0].reason and "3 gesamt" in second[0].reason
     asked = [params for url, params in session.calls if url == endpoint]
     assert asked == [None, {"modified_since": "2025-11-01T11:00:00+02:00"}]  # Lauf 1 ohne Filter
     assert sorted(store.load()) == [f"https://ris.invalid/papers/{i}" for i in (1, 2, 4)]
@@ -443,7 +444,7 @@ def test_incremental_runs_add_pages_keep_old_and_drop_deleted(
         endpoint, [changed, c, {"id": "https://ris.invalid/papers/2", "deleted": True}]
     )
     fourth = run_pipeline(steps, open_settings, names, online=True, force=True)
-    assert "1 entfernt" in fourth[0].reason
+    assert "1 entfernt" in fourth[0].reason and "0 neu, 0 aktualisiert" in fourth[0].reason
     assert sorted(store.load()) == [f"https://ris.invalid/papers/{i}" for i in (1, 4)]
     assert pl.read_parquet(layout.corpus).height == 2
     # Texte des gelöschten und des alten Dateinamens bleiben im Cache liegen (Plan § 7); der
