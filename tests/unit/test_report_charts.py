@@ -98,8 +98,11 @@ def test_fixed_classes_divide_at_the_given_boundaries() -> None:
     assert found.count == 5 and found.boundaries == bounds
     # Die Grenze selbst gehört zur oberen Klasse (wie bei classify: [b_{i-1}, b_i))
     assert found.classes == {1: 0, 2: 1, 3: 2, 4: 3, 5: 4}
-    # Dieselben Werte mit Quantilen: eine andere, hier gleichverteilte Einteilung
-    assert classify({1: -0.578, 2: -0.2, 3: 0.0, 4: 0.10, 5: 1.448}).classes != found.classes
+    # Vier Bezirke unter dem Mittel und einer weit darüber: feste Grenzen sagen das, Quantile
+    # verteilen dieselben Werte gleichmäßig auf fünf Klassen und verschweigen es
+    skewed = {1: -0.5, 2: -0.4, 3: -0.3, 4: -0.2, 5: 1.4}
+    assert classify_fixed(skewed, bounds).classes == {1: 0, 2: 0, 3: 0, 4: 1, 5: 4}
+    assert classify(skewed).classes == {1: 0, 2: 1, 3: 2, 4: 3, 5: 4}
     with pytest.raises(deal.PreContractError):
         classify_fixed({1: 0.0}, ())
     with pytest.raises(deal.PreContractError):

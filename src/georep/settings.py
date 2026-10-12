@@ -1011,6 +1011,31 @@ class ReportSource(_Strict):
         return self
 
 
+# Punkt 46: die festen Klassengrenzen der divergierenden Varianten. Sie stehen unter ``[report]``
+# und zählen damit nicht zum Fingerprint: eine andere Grenze färbt die Karte um, sie rechnet keine
+# Zahl neu.
+class Diverging(_Strict):
+    """Klassengrenzen der Varianten „relativ zum Mittel" (``docs/skalierung-2026-10.md``, § 3, § 4).
+
+    Vier Grenzen ergeben fünf Klassen, die mittlere heißt „etwa im Mittel". Quantile wären hier
+    falsch: die Abweichung vom Stadtmittel ist eine streng monotone Umrechnung der Trefferquote,
+    und Quantilklassen darüber wären genau die Klassen der Quote, nur anders gefärbt.
+    """
+
+    district_percent: list[float] = [-0.25, -0.10, 0.10, 0.25]
+    party_points: list[float] = [-0.02, -0.005, 0.005, 0.02]
+    party_ratio: list[float] = [0.5, 0.8, 1.25, 2.0]
+
+    @field_validator("district_percent", "party_points", "party_ratio")
+    @classmethod
+    def _four_ascending_boundaries(cls, value: list[float]) -> list[float]:
+        if len(value) != 4:
+            raise ValueError(f"report.diverging: vier Grenzen ergeben fünf Klassen, {value} nicht")
+        if any(a >= b for a, b in zip(value, value[1:], strict=False)):
+            raise ValueError(f"report.diverging {value}: die Grenzen müssen aufsteigen")
+        return value
+
+
 class Report(_Strict):
     """Was im Kopf und Fuß der Seite steht und nicht aus den Daten kommt."""
 
@@ -1025,6 +1050,8 @@ class Report(_Strict):
     monitoring_url: str = (
         ""  # relativer Link auf die Seite der laufenden Periode; leer = kein Abschnitt
     )
+    # Punkt 46: die Grenzen der divergierenden Varianten; je Stadt änderbar, siehe Diverging
+    diverging: Diverging = Diverging()
 
     @field_validator("monitoring_url")
     @classmethod

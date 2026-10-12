@@ -88,6 +88,34 @@ def classify(values: Mapping[int, float], n: int = CLASSES) -> Classification:
     return Classification(boundaries, classes, count)
 
 
+def _ascending(values: Mapping[int, float], boundaries: Sequence[float]) -> bool:
+    return len(boundaries) > 0 and all(
+        a < b for a, b in zip(boundaries, boundaries[1:], strict=False)
+    )
+
+
+@deal.pre(_ascending, message="mindestens eine Grenze, aufsteigend")
+@deal.post(
+    lambda result: (
+        result.count == len(result.boundaries) + 1
+        and all(0 <= k < result.count for k in result.classes.values())
+    )
+)
+def classify_fixed(values: Mapping[int, float], boundaries: Sequence[float]) -> Classification:
+    """Klassen an festen Grenzen statt an Quantilen (``docs/decisions.md``, Punkt 46).
+
+    Die divergierenden Varianten brauchen das: die Abweichung vom Stadtmittel ist eine streng
+    monotone Umrechnung der Trefferquote, und Quantile darüber ergäben genau die Klassen der Quote,
+    nur anders gefärbt. Feste Grenzen um 0 (oder um 1 beim Verhältnis) machen aus der Einfärbung
+    eine Aussage: diese Fläche liegt über, jene unter dem Mittel. Anders als ``classify`` nimmt die
+    Funktion die Klassenzahl nicht zurück, wenn weniger Werte vorkommen -- die Legende soll
+    zwischen zwei Läufen gleich bleiben.
+    """
+    bounds = tuple(boundaries)
+    classes = {key: bisect.bisect_right(bounds, value) for key, value in values.items()}
+    return Classification(bounds, classes, len(bounds) + 1)
+
+
 def legend(classification: Classification, fmt: Callable[[float], str]) -> tuple[LegendEntry, ...]:
     """Eine Zeile je Klasse: „unter a", „a bis unter b", „ab b"; eine einzige Klasse heißt „alle"."""
     bounds = classification.boundaries
@@ -171,6 +199,36 @@ def turnout_label(value: float) -> str:
 def own_share_label(value: float) -> str:
     """Option 05: der Anteil der eigenen Bezirksvertretung, ganze Prozent (Legende und Tooltip)."""
     return percent_de(value, 0)
+
+
+# Punkt 46: die Beschriftungen der neuen Varianten. Eine Abweichung trägt ihr Vorzeichen, ein
+# Verhältnis das Malzeichen; ohne beides liest niemand, ob 0,8 wenig oder viel heißt.
+def hits_label(value: float) -> str:
+    return format_de(value, 0)
+
+
+def per_term_label(value: float) -> str:
+    return format_de(value, 2)
+
+
+def _signed(value: float, text: str) -> str:
+    """Ein Pluszeichen vor einer positiven Zahl; die Null und das Minus bleiben, wie sie sind."""
+    return f"+{text}" if value > 0 else text
+
+
+def percent_signed_label(value: float) -> str:
+    """Eine relative Abweichung in Prozent, mit Vorzeichen: ``-25 %``, ``+10 %``."""
+    return _signed(value, percent_de(value, 0))
+
+
+def points_label(value: float) -> str:
+    """Eine Differenz zweier Anteile in Prozentpunkten: ``-2,0 pp``, ``+0,5 pp``."""
+    return _signed(value, f"{format_de(value * 100, 1)} pp")
+
+
+def ratio_label(value: float) -> str:
+    """Ein Verhältnis zum Mittel: ``1,25×``; 1 heißt genau im Mittel."""
+    return f"{format_de(value, 2)}\u00d7"
 
 
 def _title(row: DistrictRow) -> str:
