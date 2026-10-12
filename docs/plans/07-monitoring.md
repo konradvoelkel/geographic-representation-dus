@@ -1,6 +1,6 @@
 # Plan 07: Monitoring
 
-Stand 2026-10-12, Branch `feat/07-monitoring`. Status: im Review.
+Stand 2026-10-12, Branch `feat/07-monitoring`. Status: gemerged am 2026-10-12.
 
 Auftrag: Briefing § 7.7 des Meta-Plans ([../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md)) und Konrads
 Antwort zu Frage 4 ([fragen.md](fragen.md)): die laufende Wahlperiode ab dem 15.09.2025 inkrementell abrufen
