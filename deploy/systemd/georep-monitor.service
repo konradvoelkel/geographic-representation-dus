@@ -10,8 +10,10 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 EnvironmentFile=%E/georep/monitor.env
+# Variablen ersetzt systemd nur in ExecStart= und Verwandten, nicht in WorkingDirectory=: dort
+# wäre ${MONITOR_REPO} ein nicht absoluter Pfad, und die Einheit startete nie („path is not
+# absolute", Review 2026-10-12). Das Arbeitsverzeichnis wechselt darum das Skript selbst.
 ExecStart=/usr/bin/bash ${MONITOR_REPO}/deploy/bin/georep-monitor.sh
-WorkingDirectory=${MONITOR_REPO}
 TimeoutStartSec=6h
 Nice=10
 IOSchedulingClass=idle

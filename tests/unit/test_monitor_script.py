@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -181,3 +182,39 @@ def test_with_a_remote_the_five_rclone_calls_run_in_order(sandbox: dict[str, str
     assert "manifest.jsonl" in rclone[1] and "texts.parquet" in rclone[2]
     assert "2025/raw/papers.jsonl" in rclone[3]
     assert rclone[4].startswith("rclone copy ") and "2025/processed" in rclone[4]
+
+
+UNITS = REPO / "deploy" / "systemd"
+
+
+def _systemd_analyze(paths: list[Path]) -> subprocess.CompletedProcess[str]:
+    """``systemd-analyze --user verify`` braucht ein Laufzeitverzeichnis, sonst bricht es früh ab."""
+    env = dict(os.environ)
+    runtime = env.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+    env["XDG_RUNTIME_DIR"] = runtime
+    return subprocess.run(
+        ["systemd-analyze", "--user", "verify", *[str(p) for p in paths]],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+
+
+def test_systemd_accepts_the_units() -> None:
+    """Die Einheiten müssen startbar sein; ein Fehler darin fällt sonst erst im Betrieb auf.
+
+    ``WorkingDirectory=${MONITOR_REPO}`` war so ein Fall: systemd ersetzt Variablen nur in
+    ``ExecStart=`` und Verwandten, sonst ist der Pfad einfach nicht absolut und die Einheit
+    startet nie (gefunden im Review am 2026-10-12).
+    """
+    if shutil.which("systemd-analyze") is None:
+        pytest.skip("systemd-analyze nicht vorhanden")
+    units = [UNITS / "georep-monitor.service", UNITS / "georep-monitor.timer"]
+    result = _systemd_analyze(units)
+    if "Failed to initialize manager" in result.stderr:
+        pytest.skip(f"kein Nutzer-systemd in dieser Umgebung: {result.stderr.strip()}")
+    output = result.stdout + result.stderr
+    assert "not absolute" not in output, output
+    assert "fatal error" not in output, output
+    assert result.returncode == 0, output
