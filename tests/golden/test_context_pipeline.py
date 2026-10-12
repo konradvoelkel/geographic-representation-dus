@@ -115,7 +115,8 @@ def test_the_whole_chain_on_the_reference_publishes_both_sections(
     assert layout.site_index.stat().st_size < 800_000  # Ziel des Plans; Budget sind 1,5 MB
     assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 3 == 21
     assert '<section id="kontrollvariablen">' in page and "Modell C" in page
-    assert '<section id="abgeleitete-daten">' in page and "dl-de/by-2-0" in page
+    assert '<section id="abgeleitete-daten">' in page
+    assert settings.context.dataset.license in page  # Namensnennung aus den Settings
     assert page.count('<svg class="avp"') == 4  # ein Plot je Term des Hauptmodells
     for name in ("wahlbezirke_kontext", "wahlbezirke_crosswalk", "regression_kontrollen"):
         assert f'href="data/{name}.parquet"' in page and f'href="data/{name}.csv"' in page

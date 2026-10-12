@@ -54,6 +54,7 @@ from georep.search.index import HITS, PAPER_IDS, TERM
 from georep.settings import (
     RATE_TERM,
     Bodies,
+    ContextDataset,
     ContextSettings,
     ResultsColumns,
     Settings,
@@ -1200,6 +1201,15 @@ def first_sentence(text: str, limit: int = DEFINITION_LIMIT) -> str:
     return shortened.rstrip(".") + " …"
 
 
+def _attribution(dataset: ContextDataset) -> str:
+    """Namensnennung, wie die Lizenz sie verlangt: wer, was, unter welcher Lizenz.
+
+    Alle drei Teile kommen aus den Settings; eine andere Stadt nennt eine andere Lizenz, und ein
+    fester Kurzname (``dl-de/by-2-0``) wäre dann schlicht falsch.
+    """
+    return f"{dataset.publisher}: {dataset.title}, {dataset.license}"
+
+
 def derived_data(layout: Layout, settings: Settings, units: int) -> DerivedData | None:
     """Abschnitt „Abgeleitete Daten": je Variable Definition, Quelle, Umrechnung; Lizenz und Stand."""
     context = settings.context
@@ -1241,9 +1251,7 @@ def derived_data(layout: Layout, settings: Settings, units: int) -> DerivedData 
         license_url=context.dataset.license_url,
         stand=context.dataset.stand,
         fetched=fetched or context.dataset.fetched,
-        attribution=(
-            f"{context.dataset.publisher}: {context.dataset.title} (Open-Data-Portal), dl-de/by-2-0"
-        ),
+        attribution=_attribution(context.dataset),
         units_label=context.units.label,
         units=units,
         districts=districts,

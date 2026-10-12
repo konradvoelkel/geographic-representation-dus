@@ -22,12 +22,12 @@ git clone git@github.com:konradvoelkel/geographic-representation-dus.git
 cd geographic-representation-dus
 uv sync --locked                        # Umgebung aus dem Lockfile
 uv run georep bootstrap                 # Datensatz der Arbeit nach ./data übernehmen
-uv run georep run                       # dreizehn Offline-Schritte, rund 16 s; schreibt auch die Berichtsseite data/site/index.html
+uv run georep run                       # ANZAHL_OFFLINE Offline-Schritte, rund LAUFZEIT; schreibt auch die Berichtsseite data/site/index.html
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 uv run georep regress --controls        # Tabelle 6 mit den Kontrollvariablen
 ```
 
-Geprüft am 2026-10-11 aus einem frischen Klon. Wer die Umgebung woanders ablegen will, setzt vor `uv sync`
+Geprüft am 2026-10-11 aus einem frischen Klon, die Kontrollvariablen am 2026-10-12. Wer die Umgebung woanders ablegen will, setzt vor `uv sync`
 `UV_PROJECT_ENVIRONMENT` und `UV_CACHE_DIR`; wer Daten und Cache woanders haben will, schreibt `data_root`
 und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
 

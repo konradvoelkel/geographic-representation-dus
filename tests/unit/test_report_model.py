@@ -426,7 +426,8 @@ def test_derived_data_names_source_licence_and_transform(model: ReportModel) -> 
     assert derived.license_url == "https://www.govdata.de/dl-de/by-2-0"
     assert derived.stand == dt.date(2021, 12, 31) and derived.fetched == dt.date(2026, 10, 12)
     assert derived.districts == 3 and derived.units == 24
-    assert "dl-de/by-2-0" in derived.attribution and derived.publisher in derived.attribution
+    assert derived.license in derived.attribution and derived.publisher in derived.attribution
+    assert derived.title in derived.attribution
     by_name = {v.name: v for v in derived.variables}
     assert set(by_name) == {v.name for v in model_settings_variables()}
     assert "Score" in by_name["hb_score"].transform
@@ -523,3 +524,29 @@ def test_the_outlier_clause_compares_the_coefficients() -> None:
 
     # Ohne zweite Stichprobe sagt der Satz dazu nichts
     assert "Wahlbezirke 1 und 10" not in _verdict(models, "B", (), None)
+
+
+def test_the_attribution_comes_from_the_settings(tmp_path: Path) -> None:
+    """Namensnennung ist Herausgeber, Datensatz und Lizenz aus den Settings -- kein fester Text.
+
+    Eine andere Stadt nennt eine andere Lizenz; stünde „dl-de/by-2-0" fest im Code, wäre die
+    Namensnennung dann falsch (Review 2026-10-12).
+    """
+    from georep.report.model import _attribution
+
+    dataset = load_settings(cwd=Path("/nonexistent")).context.dataset
+    here = _attribution(dataset)
+    assert dataset.publisher in here and dataset.title in here and dataset.license in here
+
+    other = dataset.model_copy(
+        update={
+            "publisher": "Stadt Beispielstadt, Amt für Zahlen",
+            "title": "Sozialbericht 2030",
+            "license": "Creative Commons Zero 1.0",
+            "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.de",
+        }
+    )
+    text = _attribution(other)
+    assert "Stadt Beispielstadt, Amt für Zahlen" in text and "Sozialbericht 2030" in text
+    assert "Creative Commons Zero 1.0" in text
+    assert "dl-de" not in text and "Quartiersatlas" not in text
