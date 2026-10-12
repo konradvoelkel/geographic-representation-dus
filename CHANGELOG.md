@@ -4,6 +4,11 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- Behoben: `canonical_term` (die Rückübersetzung „münchener str." → „münchener straße", Option 08) ließ eine
+  Abkürzung stehen, wenn die eingesetzte Langform mit dem nächsten Zeichen des Begriffs eine neue bildete.
+  Ersetzt wird jetzt bis zum Festpunkt. Mit den ausgelieferten Paaren konnte der Fall nicht vorkommen; gefunden
+  hat ihn crosshair (`nox -s verify`).
+
 - **Stadtweite Begriffe stehen auf der Seite** (`search.citywide_quantile`, Vorgabe 0,99): Begriffe, deren
   Dokumentzahl über dem 99-%-Quantil liegt (auf der Referenz 58 von 5841 Begriffen über 64 Dokumenten,
   darunter „grafenberger allee" 205, „hofgarten" 172, „schulweg" 144), bekommen im Abschnitt „Begriffe" eine

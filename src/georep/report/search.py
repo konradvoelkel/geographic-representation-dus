@@ -92,6 +92,13 @@ def _free_of_abbreviations(
     return all(short not in result for _, short in abbreviations)
 
 
+def _replace_once(term: str, abbreviations: Abbreviations) -> str:
+    """Ein Durchlauf: jede Abkürzung durch ihre Langform."""
+    for long, short in abbreviations:
+        term = term.replace(short, long)
+    return term
+
+
 @deal.pre(
     _pairs_usable,
     message="Abkürzung und Langform nicht leer, und keine Langform trägt eine Abkürzung",
@@ -101,11 +108,24 @@ def _free_of_abbreviations(
 def canonical_term(term: str, abbreviations: Abbreviations = STREET_ABBREVIATIONS) -> str:
     """Der Begriff mit jeder Abkürzung zurück in der Langform (``münchener str.`` → ``…straße``).
 
+    Ersetzt wird bis zum Festpunkt, nicht ein einziges Mal: eine eingesetzte Langform kann mit dem
+    nächsten Zeichen des Begriffs eine neue Abkürzung bilden (``"xbcc"`` wird mit dem Paar
+    ``("ab", "bc")`` erst ``"xabc"``, darin steckt wieder ``"bc"``). Das hängt am Begriff und
+    nicht am Paar, die Vorbedingung kann es also nicht sehen; crosshair hat es am 2026-10-12
+    gefunden. Mit ``STREET_ABBREVIATIONS`` ist der erste Durchlauf immer der letzte.
+
+    Die Schleife endet, sobald ein Durchlauf nichts mehr ändert, und spätestens nach einem
+    Durchlauf je Zeichen des Begriffs: so kann kein Paar sie unendlich laufen lassen, auch keines,
+    das die Vorbedingung nicht erwischt.
+
     Kein ``deal.pure``: die Funktion läuft über jeden Begriff des Wörterbuchs, und der Patcher von
     ``deal.pure`` ist prozessweit und nicht reentrant (CLAUDE.md, „Nie").
     """
-    for long, short in abbreviations:
-        term = term.replace(short, long)
+    for _ in range(len(term) + 1):
+        once = _replace_once(term, abbreviations)
+        if once == term:
+            return term
+        term = once
     return term
 
 

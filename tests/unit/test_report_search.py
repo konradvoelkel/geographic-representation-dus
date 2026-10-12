@@ -117,11 +117,14 @@ def test_canonical_term_refuses_an_abbreviation_inside_its_long_form() -> None:
         canonical_term("y", (("ab", "x"), ("cxd", "y")))
 
 
-def test_a_pair_that_rebuilds_an_abbreviation_breaks_the_postcondition() -> None:
-    """Was die Vorbedingung nicht sehen kann, fängt die Nachbedingung: eine Ersetzung kann an der
-    Nahtstelle zum Nachbartext eine neue Abkürzung bilden (``bx`` → ``ba``, und ``ba`` ist eine)."""
-    with pytest.raises(deal.PostContractError):
-        canonical_term("bx", (("q", "ba"), ("a", "x")))
+def test_a_pair_that_rebuilds_an_abbreviation_runs_to_the_fixed_point() -> None:
+    """Was die Vorbedingung nicht sehen kann, löst die Schleife: eine Ersetzung kann an der
+    Nahtstelle zum Nachbartext eine neue Abkürzung bilden (``bx`` → ``ba``, und ``ba`` ist eine).
+
+    Bis zum 2026-10-12 schlug hier die Nachbedingung an — ein Programmierfehler, den crosshair
+    gefunden hat. Jetzt läuft die Ersetzung bis zum Festpunkt: ``bx`` → ``ba`` → ``q``.
+    """
+    assert canonical_term("bx", (("q", "ba"), ("a", "x"))) == "q"
 
 
 def test_variants_collapse_into_the_long_form_with_the_union_of_documents(
