@@ -93,16 +93,20 @@ ihnen prägten. Alle vier Wege des TODO sind abgearbeitet und gemessen (Entschei
 - **Stoppwörter aus dem Profil und aus dem Korpus** (`topics.stop_sources`): Parteien, Fraktionen
   und Personenmarker aus `[originators]`, Gremienkürzel aus `[bodies]`, Personennamen daraus, dass
   ein Wort fast nur hinter einer Unterschrift oder einer Amtsbezeichnung steht (254 Wörter,
-  insgesamt 628 statt 313). NPMI der Topwörter +0,4164 → +0,4224; die Partei- und Personenblöcke
+  insgesamt 627 statt 313). NPMI der Topwörter +0,4164 → +0,4208; die Partei- und Personenblöcke
   sind weg, Schule, Aufsichtsratsbesetzungen und Verfügungsmittel sind neue Themen. Ausnahmen im
-  Profil (`topics.stop_keep`: „klima", „tierschutz").
+  Profil (`topics.stop_keep`: „klima", „tierschutz", „bau" — auch ein Gremienkürzel kann mit einem
+  Sachwort zusammenfallen, 2026-10-13).
 - **Gesäte Themen je Ausschuss** (`topics.seed = "committees"`, 17 von 20 gesät): Log-Odds mit
-  Dirichlet-Prior liefert die Saatwörter, die Wortmatrix bleibt fest. Treue 0,70 bis 1,00 (Median
-  0,83), Reinheit 0,15 bis 0,57; NPMI fällt auf +0,3351 — bezahlt für Namen statt Nummern.
+  Dirichlet-Prior liefert die Saatwörter (nur solche, die der Ausschuss benutzt), die Wortmatrix
+  bleibt fest. Treue 0,72 bis 1,00 (Median 0,83), Reinheit 0,15 bis 0,57; NPMI fällt auf +0,3349 —
+  bezahlt für Namen statt Nummern.
 - **Passender Ausschuss je Dokument** (Schritt `committees`, 6,5 s): Kreuzvalidierung 0,941
-  Genauigkeit, 0,877 Makro-F1 über 20 Klassen. Konrads Frage ist mit Nein beantwortet: 10,9 % der
-  Ausschussdokumente, aber 81,3 % der BV- und 87,5 % der Ratsdokumente bleiben unter der Schwelle
-  von 0,4.
+  Genauigkeit, 0,878 Makro-F1 über 20 Klassen. Konrads Frage ist mit Nein beantwortet: 10,9 % der
+  Ausschussdokumente, aber 81,2 % der BV- und 87,4 % der Ratsdokumente bleiben unter der Schwelle
+  von 0,4. Ein Teil der Güte hängt daran, dass der Volltext die Beratungsfolge und darin den Namen
+  des Ausschusses trägt (ABA 100 %, OVA 91,7 %): ohne die 44 Wörter mit „ausschuss" sind es
+  0,929 / 0,864, die Zahlen sind also eine Untergrenze (§ 4.3 des Dokuments).
 - **Einbettungen**: nicht gebaut, mit Zahlen begründet (§ 5 des Dokuments).
 
 Tabelle 5, die Treffer (29 010) und das Wörterbuch (5727) sind unberührt; nur die
@@ -110,16 +114,16 @@ Tabelle 5, die Treffer (29 010) und das Wörterbuch (5727) sind unberührt; nur 
 
 ## Zahlen (2026-10-12, `v0.11.0` plus Punkt 44 und 45)
 
-- Tests: 884 schnelle (nox-Gate, parallel in rund 42 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 901 schnelle (nox-Gate, parallel in rund 43 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 28 Schritte; `georep steps` zeigt 26 für Düsseldorf, 27 mit Vergleich, 21 im Periodenprofil
   2014 bis 2020, 20 in der laufenden Periode, 21 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,5 s).
-- Berichtsseite: `index.html` 1,10 MB (Budget 1,5 MB), 50 Dateien zusammen 13,3 MB, vierzehn
+- Berichtsseite: `index.html` 1,10 MB (1 158 408 Bytes, Budget 1,5 MB), 50 Dateien zusammen 13,3 MB, vierzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
-- Quelltext: 58 Python-Dateien unter `src/`, rund 16 500 Zeilen; fünf Profile im Paket.
+- Quelltext: 59 Python-Dateien unter `src/`, rund 16 600 Zeilen; fünf Profile im Paket.
 - Mutation (vor dem Ausbau gemessen): `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`), `analysis/`
   auf dem Branch 03 133 von 175 Mutanten (76 %); die Überlebenden sind Vertrags-Lambdas an ihren Grenzen und
   `frozen=True` an dataclasses. Mit sechs Arbeitern wurde die Sitzung unter der Last der acht parallelen
@@ -152,6 +156,15 @@ Tabelle 5, die Treffer (29 010) und das Wörterbuch (5727) sind unberührt; nur 
 - Das Themenmodell ist je Rechner und je Thread-Zahl reproduzierbar, nicht darüber hinaus: zwischen 13 und 2 BLAS-Threads unterscheiden sich `themen.parquet` und `themen_anteile.parquet` in den letzten Stellen (gemessen 2026-10-12), Labels und Kennzahlen bleiben gleich. Die Golden-Master-Tests prüfen darum Invarianten, nicht Zahlen.
 - Die Nummern der Themen gelten nur für diesen Datenstand; ein Lauf über andere Dokumente vergibt sie neu. Seit Punkt 45 trägt ein gesätes Thema zusätzlich das Kürzel seines Ausschusses, und das ist stabil. Der Stadtname steht bewusst nicht in der Stoppwortliste; er prägt jetzt eines der drei freien Themen.
 - Sechs Personennamen überleben den Namensfilter des Themenmodells („hans", „christian", „stephan", „cardeneo", „kühbacher", „tobias"): sie stehen in ihren Ausschussdokumenten oft, aber nie neben einer Amtsbezeichnung (`docs/themenmodell-2026-10.md`, § 2.2). Eine Mandatsträgerliste aus OParl `memberships` würde das schließen und ist nicht abgerufen.
+- Ein Join legt die Zeilenfolge nicht fest, auch ein linker nicht: wer eine Spalte daraus positionell
+  gegen einen anderen Frame verwendet, hat einen stillen Versagensmodus (Review vom 2026-10-13 fand das
+  im Klassifikator; dieselbe Lehre stand schon in `crosswalk.py` und `prep/context.py`). Nach dem Join
+  sortieren und alles aus demselben Frame lesen.
+- Ein Schritt, dessen `Step` keine Schema-Version bekommt, bleibt bei 1, und `stamp_mismatch` meldet
+  „Schema geändert" nie — die Version in den Parquet-Metadaten allein genügt nicht
+  (`tests/unit/test_pipeline_steps.py` hält beides zusammen, seit 2026-10-13).
+- Ein Test darf die Jahreszahl einer anderen Periode nicht im ganzen HTML suchen: ein `data-value`
+  wie „0.040124486620252926" enthält „2025" zufällig. Seit 2026-10-13 sucht er zwischen den Tags.
 - Ein Vorlagenwechsel (`templates/sections/*.j2`) macht den Stamp des Schritts `report` nicht ungültig: er trägt die Code-Version des Pakets, nicht den Hash der Vorlagen. Nach einer Änderung an einer Vorlage ohne Versionssprung braucht die Seite ein `georep run report --force` (bemerkt am 2026-10-12).
 - Der Settings-Fingerprint ist global: ein neuer Schlüssel lässt alle Schritte einmal neu laufen. Hinnehmbar; ein Fingerprint je Schritt ist zurückgestellt (`docs/plans/00-synergien.md`, § 8).
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab (`docs/baseline-2026-10-10.md`).

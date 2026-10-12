@@ -11,7 +11,7 @@ Beschreibungen ersetzt).
 `docs/decisions.md`, Punkt 45; Messskript `docs/themenmodell-2026-10-messung.py`). Alle vier Wege
 sind abgearbeitet und gemessen: die Stoppwörter kommen aus dem Profil und aus dem Korpus, jeder
 größere Ausschuss hat ein gesätes Thema mit Namen, ein Klassifikator ordnet jedem Dokument einen
-passenden Ausschuss zu (Genauigkeit 0,941, Makro-F1 0,877; vier von fünf BV-Dokumenten bleiben
+passenden Ausschuss zu (Genauigkeit 0,941, Makro-F1 0,878; vier von fünf BV-Dokumenten bleiben
 aber in der Restklasse), und Einbettungen sind mit Zahlen begründet **nicht** gebaut. Offene
 Annahmen stehen in § 7 des Dokuments. Der Auftrag stand so:
 

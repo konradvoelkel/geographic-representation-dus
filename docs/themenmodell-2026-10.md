@@ -1,6 +1,7 @@
 # Das Themenmodell tragfähig machen
 
-Stand 2026-10-12. Punkt 1 aus [todo.md](todo.md): Konrads Blick auf die 20 Themen der Referenz —
+Stand 2026-10-13 (die Zahlen des ersten Durchgangs vom 2026-10-12 sind nach dem Review neu
+gemessen; was sich geändert hat, steht in § 8). Punkt 1 aus [todo.md](todo.md): Konrads Blick auf die 20 Themen der Referenz —
 Thema 0 „Kosten/Geld" und Thema 2 „Bauen" brauchbar, Thema 3 „CDU vermischt mit anderem", Thema 16
 „ein seltsamer Linke-Block"; Vermutung: die Fraktionsnamen aus Kopf und Betreff prägen die Themen.
 Die Vermutung trifft zu, und sie trifft auch auf Personennamen zu. Dieses Dokument geht die vier
@@ -59,6 +60,15 @@ Buchstaben nach `topics`-Tokenmuster (`[a-zäöüß]{3,}`) gar kein Token bilden
 kommen Bruchstücke mit (`frak` und `ion` aus `frak\w{0,2}ion`); sie sind harmlos, weil ein
 Bruchstück allein nie ein Token ist.
 
+**Ein Kürzel kann mit einem Sachwort zusammenfallen.** Das ist der Preis dafür, die Kürzel
+mechanisch aus dem Profil zu nehmen, und er ist messbar: `BAU` (Bauausschuss) ist als Wort „bau"
+und steht in 1101 von 19 033 Dokumenten (5,8 %), wo es das Bauen meint. Ohne Ausnahme fiel die
+Kohärenz der Stufe `gremien` deswegen von +0,4386 auf +0,4282; mit `bau` in `topics.stop_keep`
+liegt sie bei **+0,4364** (gemessen 2026-10-13). Zwei weitere Kürzel sind Wörter, bleiben aber
+Stoppwörter, weil sie wirklich das Gremium nennen: „rat" (`RAT`, 3751 Dokumente, 19,7 %) und
+„aus" (`AUS`, Umweltausschuss, 9320 Dokumente -- das Wort steht ohnehin in der deutschen
+Paketliste). Beide Entscheidungen stehen mit ihrer Zahl im Profil.
+
 **Das Profil nennt die Ausnahmen.** Die Quelle `fraktionen` nähme „klima" (aus
 „Die PARTEI-Klima-Fraktion") und „tierschutz" (aus „Tierschutz/Freie Wähler") mit; beide sind
 Sachwörter dieser Stadt. `profiles/duesseldorf.toml` holt sie mit `topics.stop_keep` zurück — eine
@@ -97,12 +107,12 @@ Vier Stufen, jede mit derselben freien NMF (k = 20, `tol = 1e-3`):
 
 | Stufe | Stoppwörter | NPMI | UMass | Laufzeit |
 |---|---|---|---|---|
-| heute (nur die Paketliste `stopwords_de.txt`) | 313 | **+0,4164** | −1,045 | 8,6 s |
-| + `fraktionen` | 348 | **+0,4386** | −1,162 | 8,8 s |
-| + `gremien` | 374 | **+0,4282** | −1,106 | 11,8 s |
-| + `namen` (die Vorgabe) | 628 | **+0,4224** | −1,197 | 10,1 s |
+| heute (nur die Paketliste `stopwords_de.txt`) | 313 | **+0,4164** | −1,045 | 8,9 s |
+| + `fraktionen` | 348 | **+0,4386** | −1,162 | 8,9 s |
+| + `gremien` | 373 | **+0,4364** | −1,182 | 10,0 s |
+| + `namen` (die Vorgabe) | 627 | **+0,4208** | −1,159 | 10,4 s |
 
-NPMI steigt gegenüber heute um 1,4 % (Stufe 4) bis 5,3 % (Stufe 2) und ist nicht monoton: jede
+NPMI steigt gegenüber heute um 1,1 % (Stufe 4) bis 5,3 % (Stufe 2) und ist nicht monoton: jede
 Stufe nimmt Wörter weg, die in *irgendeinem* Thema zusammen auftraten, und ersetzt sie durch
 seltenere. UMass fällt durchweg — das ist die erwartete Richtung (§ 1) und kein Gegenbefund. Die
 Zahl, die zählt, steht in den Wortlisten:
@@ -125,26 +135,26 @@ vorher nicht gab — Schule (18), Aufsichtsratsbesetzungen (16), Verfügungsmitt
 Bezirksvertretungen (1 und 8), Gemeindeordnung und Dringlichkeitsentscheidungen (10):
 
 ```
- 0 [ 1482] düsseldorf, innen, stadt, düsseldorfer, landeshauptstadt, menschen, entwicklung, rahmen, ziel, jahr
- 1 [  642] verfügungsmittel, bezirksvertretung, zuschuss, bezirksverwaltungsstelle, vergabe, zuschusses, höhe, beschließt, institut, beschlussdarstellung
- 2 [  985] grundstück, bauvorhaben, erteilung, stellplätze, vorhaben, geltungsbereich, nachrichtlich, befreiungen, gebäude, erforderlichen
- 3 [ 2515] bezirksvertretung, beschluss, amt, bezirksverwaltungsstelle, institut, kenntnisnahme, teilt, beratungsfolge, straße, beratungsqualität
- 4 [ 3192] ratsfraktion, anfrage, freundlichen, geehrter, herr, tagesordnung, grüßen, sitzung, bitten, düsseldorf
- 5 [  276] träger, jugendhilfeplanung, abzüglich, euro, kinder, jugendhilfeausschuss, plätze, tageseinrichtungen, landesmittel, städt
- 6 [  182] anregungs, beschwerdeausschuss, ratsangelegenheiten, stadtverfassung, eingabe, einsender, regt, kurzdarstellung, stellungnahme, fachbereich
+ 0 [ 1454] düsseldorf, innen, stadt, düsseldorfer, menschen, landeshauptstadt, entwicklung, rahmen, ziel, jahr
+ 1 [  641] verfügungsmittel, bezirksvertretung, zuschuss, bezirksverwaltungsstelle, vergabe, zuschusses, höhe, beschließt, institut, beschlussdarstellung
+ 2 [  983] grundstück, bauvorhaben, erteilung, stellplätze, vorhaben, geltungsbereich, nachrichtlich, befreiungen, gebäude, erforderlichen
+ 3 [ 2514] bezirksvertretung, beschluss, amt, bezirksverwaltungsstelle, institut, kenntnisnahme, teilt, beratungsfolge, straße, beratungsqualität
+ 4 [ 3184] ratsfraktion, anfrage, freundlichen, geehrter, herr, tagesordnung, grüßen, sitzung, bitten, düsseldorf
+ 5 [  272] träger, jugendhilfeplanung, abzüglich, euro, kinder, jugendhilfeausschuss, plätze, tageseinrichtungen, landesmittel, städt
+ 6 [  175] anregungs, beschwerdeausschuss, ratsangelegenheiten, stadtverfassung, eingabe, einsender, regt, kurzdarstellung, stellungnahme, fachbereich
  7 [  424] liste, eur, restmittel, beschlusssumme, unterhaltung, grundstücken, stadtbezirk, ansatz, maßnahme, instandhaltung
  8 [  340] festbetrag, bezirklichen, gewährt, verfügungsmitteln, zweckgebunden, zuschuss, euro, bezirksvertretung, durchführung, höhe
- 9 [  435] stadtentwicklung, vorlagegemäße, ausschuss, planung, baugb, gem, empfiehlt, abs, bebauungsplan, entwurf
-10 [  507] satz, abs, nrw, gemeindeordnung, dringlichkeitsentscheidung, entscheidung, schriftführung, beschlussdarstellung, verbindung, bestellt
-11 [  516] uhr, festsetzung, sitzungstermine, sonntag, halbjahr, donnerstag, gewerbeordnung, ordnungsamt, dienstag, ablehnungsgründe
-12 [ 3429] gez, antrag, begründung, straße, gebeten, bittet, bezirksvertretung, stadtbezirk, prüfen, fraktionssprecherin
+ 9 [  436] stadtentwicklung, vorlagegemäße, ausschuss, planung, baugb, gem, empfiehlt, abs, bebauungsplan, entwurf
+10 [  509] satz, abs, nrw, gemeindeordnung, dringlichkeitsentscheidung, entscheidung, schriftführung, beschlussdarstellung, verbindung, bestellt
+11 [  457] uhr, festsetzung, sitzungstermine, sonntag, halbjahr, gewerbeordnung, donnerstag, ordnungsamt, ablehnungsgründe, beantragt
+12 [ 3413] gez, antrag, begründung, straße, gebeten, bittet, bezirksvertretung, stadtbezirk, prüfen, fraktionssprecherin
 13 [  219] bäume, nachpflanzungen, abgestorben, baumart, fällung, stadtbezirk, absterbend, gefällt, baumfällungen, kalenderwoche
-14 [  162] beschlusskontrolle, beschlüsse, bearbeitung, abgeschlossen, anlage, tabellarische, beschlüssen, sachstandsbericht, anliegende, aufgeteilt
-15 [ 1333] kosten, brutto, eur, maßnahme, finanzierung, gesamtkosten, anlage, planung, höhe, sanierung
-16 [  337] aufsichtsrat, mitglieder, abberufung, aufsichtsrates, wahlperiode, landeshauptstadt, gmbh, abs, düsseldorf, entsendung
+14 [  159] beschlusskontrolle, beschlüsse, bearbeitung, abgeschlossen, anlage, tabellarische, beschlüssen, sachstandsbericht, anliegende, aufgeteilt
+15 [ 1356] kosten, brutto, eur, maßnahme, finanzierung, gesamtkosten, anlage, planung, höhe, sanierung
+16 [  330] aufsichtsrat, abberufung, mitglieder, aufsichtsrates, wahlperiode, landeshauptstadt, gmbh, abs, düsseldorf, entsendung
 17 [  370] eur, verein, weiblich, männlich, zuschuss, zuschüsse, gewährung, sportausschuss, gesamtkosten, mitgliederstatistik
-18 [  978] schule, schulen, schüler, ggs, bildung, kgs, grundschule, budget, kinder, gymnasium
-19 [  709] anlage, vvz, veränderungsverzeichnis, entwurf, beigefügt, ausschuss, beratungsunterlagen, haushaltsplan, teil, haushaltsplanentwurf
+18 [  975] schule, schulen, schüler, ggs, bildung, kgs, grundschule, budget, kinder, gymnasium
+19 [  822] anlage, vvz, veränderungsverzeichnis, ausschuss, beigefügt, entwurf, beratungsunterlagen, haushaltsplan, teil, dezernentin
 ```
 
 **Befund zu Weg 1:** Konrads Vermutung war richtig, und der billige Weg wirkt. Was bleibt, sind die
@@ -165,7 +175,11 @@ Jedes Dokument trägt sein Gremium aus der Drucksachennummer (Option 05, auf der
    ist, was *diesen* Ausschuss trennt, nicht was eine Ausschussvorlage von einem Antrag trennt.
    Der Prior kommt aus den Wortzahlen des ganzen Korpus, auf `seed_prior` (1000) Pseudo-Token
    gebracht; er dämpft Wörter, die nur ein paar Mal vorkommen. Die 30 Wörter mit dem größten
-   z-Wert sind die Saat.
+   z-Wert sind die Saat — aber nur solche, die der Ausschuss auch benutzt: ein Wort, das in
+   **keinem** Ausschuss steht, hat in beiden Gruppen die Zahl 0 und bekommt trotzdem ein
+   positives z, weil der kleinere Ausschuss weniger Token im Nenner hat (aufgedeckt am
+   2026-10-13 an der synthetischen Fixture; auf der Referenz war kein solches Wort unter den
+   ersten 30, der Fehler war latent).
 2. **Feste Wortmatrix**: die Zeile eines gesäten Themas trägt genau diese 30 Wörter mit dem
    TF-IDF-Mittelwert ihres Ausschusses, auf Länge 1 gebracht, und wird **nicht mehr verändert**
    (`non_negative_factorization(..., update_H=False)`). Gelernt werden nur die Anteile der
@@ -190,8 +204,8 @@ Amtsmarker).
 
 ### 3.2 Gemessen: die Themen haben Namen
 
-Die Vorgabe (`seed = "committees"`, `free = 3`, `seed_words = 30`): NPMI **+0,3351**,
-UMass −1,583, 8,5 s. Die Kohärenz liegt **unter** der freien NMF (+0,4224) — erwartbar, denn die
+Die Vorgabe (`seed = "committees"`, `free = 3`, `seed_words = 30`): NPMI **+0,3349**,
+UMass −1,577, 8,7 s. Die Kohärenz liegt **unter** der freien NMF (+0,4208) — erwartbar, denn die
 Topwörter eines gesäten Themas sind nicht die, die am häufigsten zusammen stehen, sondern die, die
 diesen Ausschuss von den anderen trennen. Was man dafür bekommt, steht in der Spalte „Gremium":
 
@@ -220,7 +234,7 @@ diesen Ausschuss von den anderen trennen. Was man dafür bekommt, steht in der S
 
 Die drei freien Themen nehmen genau das auf, was Weg 1 nicht wegbekam: den Antrags- und
 Anfrageblock (17), den Formelblock der Bezirksvertretungen (18) und die Baugenehmigungen (19).
-Fünf Namen haben die Saat überlebt („hans", „christian", „stephan", „cardeneo", „kühbacher",
+Sechs Namen haben die Saat überlebt („hans", „christian", „stephan", „cardeneo", „kühbacher",
 „tobias") — sie stehen in den Dokumenten ihres Ausschusses so oft, dass der Log-Odds-Wert sie
 nach vorn trägt, und keiner von ihnen steht regelmäßig neben einem Amt (§ 2.2).
 
@@ -232,14 +246,14 @@ seines ist; Reinheit: Anteil der Dokumente dieses Ausschusses an allen mit diese
 | ABA | 1,00 | 0,29 | | AÖE | 0,83 | 0,30 |
 | AWM | 0,98 | 0,15 | | SCHUA | 0,83 | 0,31 |
 | AGS | 0,93 | 0,48 | | KUA | 0,81 | 0,57 |
-| GLA | 0,91 | 0,36 | | SPOA | 0,81 | 0,36 |
-| APS | 0,87 | 0,33 | | SEBD | 0,81 | 0,16 |
+| GLA | 0,91 | 0,36 | | SEBD | 0,81 | 0,16 |
+| APS | 0,87 | 0,33 | | SPOA | 0,80 | 0,36 |
 | AWIR | 0,87 | 0,26 | | AUS | 0,80 | 0,35 |
 | ADIG | 0,86 | 0,48 | | OVA | 0,77 | 0,24 |
-| JHA | 0,85 | 0,40 | | HFA | 0,72 | 0,38 |
-| | | | | BAU | 0,70 | 0,21 |
+| JHA | 0,84 | 0,40 | | BAU | 0,73 | 0,19 |
+| | | | | HFA | 0,72 | 0,38 |
 
-Die Treue ist durchweg hoch (0,70 bis 1,00, Median 0,83): ein gesätes Thema ist tatsächlich das
+Die Treue ist durchweg hoch (0,72 bis 1,00, Median 0,83): ein gesätes Thema ist tatsächlich das
 Thema seines Ausschusses. Die Reinheit ist niedrig (0,15 bis 0,57) — und das ist der Punkt der
 ganzen Übung: ein Thema zieht viel mehr Dokumente an, als in diesem Ausschuss beraten wurden. Dem
 Thema des Wohnungsausschusses (AWM, 196 beratene Dokumente) fallen 1320 Dokumente zu; es ist
@@ -267,7 +281,7 @@ Messskript.
 
 ### 4.2 Güte (Kreuzvalidierung, fünf Faltungen, stratifiziert)
 
-**Genauigkeit 0,941, Makro-F1 0,877** (8,7 s). Je Klasse:
+**Genauigkeit 0,941, Makro-F1 0,878** (8,7 s). Je Klasse:
 
 | Klasse | n | richtig | | Klasse | n | richtig |
 |---|---|---|---|---|---|---|
@@ -290,20 +304,58 @@ Jugendhilfe und Schule dieselben Kinder. AWIZ (10 Dokumente, 2020-11 bis 2021-03
 wird nie erkannt und zieht Makro-F1 um rund vier Punkte: die Klasse ist der Vorläufer ihres
 Nachfolgers, mit denselben Wörtern.
 
-### 4.3 Konrads Frage: lässt sich jedes Schriftstück einem Ausschuss zuordnen?
+### 4.3 Woran die Güte hängt: der Text nennt sein Gremium selbst
+
+Die 0,941 sind zu einem Teil geschenkt. Eine Ausschussvorlage trägt im Volltext die
+Beratungsfolge, und darin steht der Name des Ausschusses — gemessen am 2026-10-13 auf der
+Referenz:
+
+| Ausschuss | das Wort im Text | Anteil seiner Dokumente |
+|---|---|---|
+| ABA | „beschwerdeausschuss" | 138/138 = 100 % |
+| RPAU | „rechnungsprüfungsausschuss" | 31/31 = 100 % |
+| SPOA | „sportausschuss" | 300/310 = 96,8 % |
+| JHA | „jugendhilfeausschuss" | 489/510 = 95,9 % |
+| KUA | „kulturausschuss" | 579/616 = 94,0 % |
+| SCHUA | „schulausschuss" | 409/439 = 93,2 % |
+| OVA | „verkehrsausschuss" | 689/751 = 91,7 % |
+| BAU | „bauausschuss" | 84/94 = 89,4 % |
+
+Das **Kürzel** ist dabei unschädlich, aber nur, weil § 2.1 es zum Stoppwort macht (`gremien`);
+diese Kopplung ist hier ausgesprochen, nicht stillschweigend: wer `topics.stop_sources` ohne
+`gremien` setzt, lernt dem Klassifikator die Drucksachennummer bei. Der **Name** steht weiter im
+Vokabular. Was er wert ist, zeigt der Gegenversuch: sperrt man alle 44 Vokabularwörter, die
+„ausschuss" enthalten, fällt die Kreuzvalidierung auf **0,929 Genauigkeit und 0,864 Makro-F1**,
+und die Zuordnung wird breiter statt enger — die Restklasse geht bei den
+Bezirksvertretungen von 81,2 % auf 79,1 % zurück, beim Rat von 87,4 % auf 86,9 %, bei den
+Ausschüssen dagegen von 10,9 % auf 12,8 % hoch, und von den Ausschussdokumenten treffen 4654
+statt 4756 ihr eigenes Gremium.
+
+Das ist der eigentliche Einwand gegen § 4.4, und er ist berechtigt: **die Restklasse ist zum Teil
+ein Artefakt der Beratungsfolge.** Ein Dokument, das seinen Ausschuss nennt, bekommt eine hohe
+Wahrscheinlichkeit, und eines ohne diese Zeile — jedes BV- und Ratsdokument — eine niedrigere,
+unabhängig davon, wie klar sein Thema ist. Die Antwort darauf ist nicht, die Wörter zu sperren:
+der Gegenversuch verschiebt die Restklasse um zwei Punkte und kostet eineinhalb Punkte Güte,
+ändert also an der Aussage nichts. Sie lautet: die Zahlen in § 4.4 sind eine **Untergrenze** für
+die Zuordenbarkeit der BV- und Ratsdokumente, keine Schätzung. Wer die Frage genauer stellen
+will, trainiert auf dem Text **ohne** Beratungsfolge (der Marker `betrifft` schneidet den Kopf
+ab, nicht den Fuß) — das ist ein eigener Punkt und braucht einen Blick in die PDFs, nicht nur
+eine Stoppwortliste.
+
+### 4.4 Konrads Frage: lässt sich jedes Schriftstück einem Ausschuss zuordnen?
 
 **Nein — für ein knappes Drittel sicher, für den Rest nicht.** Mit der Vorgabe (Schwelle 0,4)
-ordnet die Kette 7171 von 19 033 Dokumenten zu (37,7 %), 11 862 bleiben in der Restklasse
+ordnet die Kette 7180 von 19 033 Dokumenten zu (37,7 %), 11 853 bleiben in der Restklasse
 (62,3 %). Nach Herkunft:
 
 | Gremienart | Dokumente | Restklasse | Anteil |
 |---|---|---|---|
-| Ausschuss | 5351 | 581 | 10,9 % |
-| Bezirksvertretung | 10 997 | 8937 | 81,3 % |
-| Rat | 2243 | 1963 | 87,5 % |
+| Ausschuss | 5351 | 584 | 10,9 % |
+| Bezirksvertretung | 10 997 | 8929 | 81,2 % |
+| Rat | 2243 | 1960 | 87,4 % |
 | Beirat | 442 | 381 | 86,2 % |
 
-Von den 5351 Ausschussdokumenten treffen 4758 (88,9 %) ihr eigenes Gremium — die Zuordnung ist
+Von den 5351 Ausschussdokumenten treffen 4756 (88,9 %) ihr eigenes Gremium — die Zuordnung ist
 also dort verlässlich, wo sie prüfbar ist. Für die Dokumente, um die es Konrad geht (Rat,
 Bezirksvertretung), ist sie es nicht: vier von fünf BV-Dokumenten und sieben von acht
 Ratsdokumenten erreichen keine Wahrscheinlichkeit von 0,4. Der Grund ist nicht
@@ -318,7 +370,7 @@ mit der Spalte „davon ohne Ausschussberatung": für OVA sind das 1087 von 1831
 1249. Genau diese Dokumente sind der Gewinn der Übung — bei ihnen sagt die Zuordnung etwas, das
 nicht schon in der Drucksachennummer steht.
 
-### 4.4 Laufzeit
+### 4.5 Laufzeit
 
 Der Schritt `committees` braucht **6,5 s** auf der Referenz (TF-IDF 4,1 s, Training 1,4 s,
 Vorhersage unter 0,1 s), die Abnahmegrenze waren rund 30 s. Der volle Offline-Lauf (`georep run
@@ -331,7 +383,7 @@ Die Kreuzvalidierung (8,7 s) läuft nur im Messskript.
 
 Die drei billigen Wege reichen. Was Einbettungen leisten würden, leisten sie hier schon: die
 Themen sind lesbar (§ 3.2, Treue 0,70 bis 1,00), die Begriffe der Dokumente sind durch TF-IDF über
-20 000 Wörter hinreichend fein getrennt (Kreuzvalidierung 0,941 bei 20 Klassen, § 4.2), und die
+20 000 Wörter hinreichend fein getrennt (Kreuzvalidierung 0,941 bei 20 Klassen, § 4.2; ohne die Gremiennamen 0,929, § 4.3), und die
 Fehler, die bleiben, sind keine Darstellungsfehler, sondern Mehrdeutigkeiten der Sache: ein
 BV-Antrag über drei Gegenstände hat kein Thema, und eine Haushaltsvorlage hat alle. Ein
 Satzvektor würde daran nichts ändern — er würde dasselbe Dokument in denselben Mischbereich legen,
@@ -345,7 +397,10 @@ Float32, also 29 MB — tragbar, aber nur der kleinste Teil der Rechnung. Der Pr
 Erklärbarkeit: die Berichtsseite kann heute neben jedem Thema die Wörter nennen, aus denen es
 besteht. **Empfehlung: nicht bauen.** Wenn, dann erst, wenn eine konkrete Frage es verlangt
 (etwa Ähnlichkeit zwischen Dokumenten für die Suche), und dann einmal offline mit gespeicherten
-Vektoren, wie das TODO es schon vorsah.
+Vektoren, wie das TODO es schon vorsah. Die eine Frage, für die Einbettungen etwas brächten,
+ist die aus § 4.3: ob ein BV-Antrag ohne Beratungsfolge sachlich zu einem Ausschuss passt. Auch
+dort wäre der erste Schritt aber nicht ein Satzmodell, sondern derselbe Klassifikator auf dem
+Text ohne Fuß — billiger, erklärbar und mit der vorhandenen Messung vergleichbar.
 
 ## 6. Was sich auf der Seite und in den Daten geändert hat
 
@@ -361,7 +416,7 @@ Vektoren, wie das TODO es schon vorsah.
   zur Methode und zur Restklasse. Kein Download extra: `ausschuss_zuordnung` ist eine
   veröffentlichte Tabelle (Parquet und CSV), die Zuordnung je Dokument bleibt unter `processed/`
   (19 033 Zeilen wären als CSV 1,5 MB, und sie folgt nicht aus der dokumentierten Regel).
-- **Größen**: `index.html` 1 158 177 Bytes (1,10 MB) bei einem Budget von 1,5 MB, 50 Dateien
+- **Größen**: `index.html` 1 158 408 Bytes (1,10 MB) bei einem Budget von 1,5 MB, 50 Dateien
   zusammen 13,3 MB. Voller Offline-Lauf 23,4 s.
 - **Unberührt**: `wahlbezirke_auswertung.parquet`, Tabelle 5, der invertierte Index, das
   Wörterbuch. Die `thema_NN`-Zeilen der Gewichtungstabelle ändern ihre Zahlen, weil die Themen
@@ -377,7 +432,26 @@ Vektoren, wie das TODO es schon vorsah.
 | 4 | `classify.min_documents = 10` lässt AWIZ (10 Dokumente) als Klasse zu, die nie erkannt wird und Makro-F1 um vier Punkte drückt. 25 wäre die ehrlichere Grenze für die Güte, 10 die freundlichere für die Mini-Fixture (zwei Klassen). | Eine Grenze von 25 nähme der Mini-Fixture alle Klassen und damit den Golden-Master-Tests den echten Pfad. |
 | 5 | Die Ausnahmeliste `topics.stop_keep` im Profil hat zwei Wörter („klima", „tierschutz"). Weitere Sachwörter in Gruppennamen würden dort nachgetragen. | Wer sie leert, verliert „klima" aus dem Thema des Umweltausschusses. |
 | 6 | Personennamen, die nie neben einem Amt stehen, bleiben Themenwörter (sechs in den 20 Labels). Eine Mandatsträgerliste aus OParl `memberships` würde das schließen. | Das wäre ein neuer Netzabruf und ein eigener Punkt. |
-| 7 | Die Namen der Ausschüsse kommen weiter aus `[bodies.committees]`; elf Kürzel haben dort keinen gesicherten Namen (KUA, JHA, SCHUA, AGS, AWM, SEBD, HFA, WALTW, WABTW, WPA, AWTL) und stehen als Kürzel auf der Seite. | `fragen.md` 5.2: nach einem Abruf von `organizations` ließen sie sich füllen. |
+| 7 | Die Güte des Klassifikators hängt zum Teil daran, dass der Volltext die Beratungsfolge und damit den Ausschussnamen trägt (§ 4.3); die Zahlen in § 4.4 sind darum eine Untergrenze für die Zuordenbarkeit der BV- und Ratsdokumente. | Ein Lauf auf dem Text ohne Fuß wäre die genauere Antwort und ein eigener Punkt. |
+| 8 | Die Kürzel der Gremien werden mechanisch Stoppwörter; „bau" ist die eine Ausnahme im Profil, „rat" und „aus" sind bewusst keine (§ 2.1). | Eine Stadt mit anderen Kürzeln braucht ihre eigene Ausnahmeliste; der Code kann die Mehrdeutigkeit nicht sehen. |
+| 9 | Die Namen der Ausschüsse kommen weiter aus `[bodies.committees]`; elf Kürzel haben dort keinen gesicherten Namen (KUA, JHA, SCHUA, AGS, AWM, SEBD, HFA, WALTW, WABTW, WPA, AWTL) und stehen als Kürzel auf der Seite. | `fragen.md` 5.2: nach einem Abruf von `organizations` ließen sie sich füllen. |
+
+## 8. Was das Review geändert hat (2026-10-13)
+
+Der erste Durchgang stand am 2026-10-12; das Review danach hat drei Dinge an den Zahlen und zwei
+am Code geändert. Festgehalten, damit niemand die alten Zahlen gegen die neuen hält:
+
+- **`bau` ist eine Ausnahme geworden** (§ 2.1). Dadurch steigt die Kohärenz der Stufe `gremien`
+  von +0,4282 auf +0,4364; die Vorgabe (Stufe 4) liegt bei +0,4208 statt +0,4224, das gesäte
+  Modell bei +0,3349 statt +0,3351. Beide Unterschiede liegen im Rauschen eines anderen
+  Vokabulars, der Befund der Stufe `gremien` nicht.
+- **Die Saat nimmt nur Wörter, die ihr Ausschuss benutzt** (§ 3.1). Auf der Referenz ändert das
+  keine Beschriftung; der Fehler war latent und wurde an einer synthetischen Fixture sichtbar.
+- **Die Leckage ist gemessen und benannt** (§ 4.3, neu). Die Kreuzvalidierung bleibt bei 0,941,
+  ohne die Gremiennamen sind es 0,929.
+- Am Code: die Zuordnung rechnet an einem Frame statt an zwei (ein Join legt die Zeilenfolge
+  nicht fest), und die Schritte `topics` und `committees` tragen ihre Schema-Version. Beides
+  ändert keine Zahl, beides war ein stiller Versagensmodus.
 
 Erledigt damit: `todo.md`, Punkt 1. Offen bleiben Punkt 2 (Seitengröße), Punkt 3 (Skalierung der
 Kennzahlen), Punkt 5 (Literatur) und Punkt 6 (Lizenz).

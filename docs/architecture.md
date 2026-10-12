@@ -26,6 +26,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 |---|---|
 | `settings` | `defaults.toml` (stadtneutral) im Paket, darüber das Profil `profiles/<slug>.toml` (gewählt mit `--profile`, `GEOREP_PROFILE` oder `default_profile`, mit `base` auf einem anderen Profil aufbauend), darüber `settings.toml`, `settings.local.toml`, `--settings`, Umgebung `GEOREP_*`; pydantic-settings, unbekannte Schlüssel sind ein Fehler; `fingerprint()` der ergebnisrelevanten Parameter; `profile` (Ordnername je Stadt oder Periode, nicht im Fingerprint), `period.end` optional mit `election` als Wahltag, `analysis.exclude_districts` (Ausreißer von Tabelle 5), `originators` (Muster und Parteien für den Urheber, Option 04), `context` (Fremddaten: Quelle, Lizenz, Dateien, Spaltenform, Ordinalskalen, Variablen, Modelle, Schwellen; der ganze Block fehlt, wo eine Stadt keine hat), `bodies` (Kürzel und Namen der Gremien; ohne `reference_pattern` tragen die Drucksachennummern keines), `topics` (Themenmodell samt Stoppwortquellen `stop_sources`, Namensfenstern und Saat je Ausschuss, Punkt 45), `classify` (der passende Ausschuss: Mindestzahl je Klasse, Schwelle der Restklasse); je Stadt `[city]`, `[precincts]` (Regeln der Quellgeometrie), `[columns.results]` (Spalten und Parteien), `[report]` (Quellen mit Lizenz, Notizen), `[publish]` (welche Städte veröffentlicht werden) |
 | `layout` | wo was liegt: `data_root`, `cache_root`, `reference_root`, `profile` (Unterordner `data_root/<profil>/` und `cache_root/<profil>/` für PDFs und Texte, HTTP-Cache geteilt; leer = flach), `context_root` (Fremddaten im Repo, Default `None`), die Dateinamen der Quellen aus dem Profil (`districts_file`, `results_file`, `streets_file`, `district_names_file`; leer = diese Stadt veröffentlicht die Datei nicht); `for_profile` wechselt; `guard_writable` verweigert jeden Pfad unter den beiden nur lesbaren Wurzeln |
+| `schema` | die Schema-Versionen der zwei Modellausgaben (Themen, passender Ausschuss) -- importfrei, damit `build_steps` sie ohne scikit-learn kennt (Punkt 45) |
 | `io` | atomare Schreibvorgänge (Temporärdatei, fsync, `os.replace`), JSON, Parquet mit `schema_version` in den Metadaten, SHA-256 (`digest`) |
 | `http` | Session mit Timeout, Retry mit Backoff, User-Agent, requests-cache je Quelle; `Transport`-Protokoll als Testnaht; `network_errors` wandelt requests-Fehler in `NetworkError` |
 | `errors` | Domänenfehler: `MissingInputError`, `EmptyResultError`, `SchemaError`, `CorruptPdfError`, `FetchError`, `NetworkError` |
@@ -84,12 +85,12 @@ Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`).
 | `pois` | nein | Orte; mit `search.city_facilities` fallen Einrichtungen mit Stadtnamen aus beiden Ausgaben (decisions.md, Punkt 44a) | `processed/wikidata_vis.parquet`, `processed/wikidata_agg.parquet` |
 | `dictionary` | nein | Orte und Straßen je Wahlbezirk | `processed/combined_searchdict.parquet` |
 | `corpus` | nein | Metadaten und Texte | `interim/papers.parquet` |
+| `bodies` | nein | Korpus (`id`, `reference`) | `processed/papers_gremien.parquet` |
 | `topics` | nein | Korpus (Texte), mit Saat auch die Gremien je Dokument | `processed/themen.parquet`, `processed/themen_dokumente.parquet`, `interim/themen_anteile.parquet` |
 | `committees` | nein | Korpus (Texte), Gremien je Dokument | `processed/papers_ausschuss.parquet`, `processed/ausschuss_zuordnung.parquet` |
 | `index` | nein | Wörterbuch, Korpus | `processed/inverted_index.parquet` |
 | `timeline` | nein | Korpus, Index, Wörterbuch | `processed/monatsreihe.parquet`, `processed/wahlbezirke_monate.parquet` |
 | `results` | nein | Wörterbuch, Index, Wähler | `processed/wahlbezirke_auswertung.parquet` |
-| `bodies` | nein | Korpus (`id`, `reference`) | `processed/papers_gremien.parquet` |
 | `body_hits` | nein | Auswertung, Gremien je Dokument, Stadtbezirke | `processed/wahlbezirke_gremien.parquet`, `processed/gremien.parquet` |
 | `weights` | nein | Wörterbuch, Index, Korpus (`id`, `paper_type`), Wähler, Themenanteile | `processed/wahlbezirke_gewichtet.parquet`, `processed/gewichte_begriffe.parquet` |
 | `controls` | nein | Auswertung, Kontrollvariablen | `processed/regression_kontrollen.parquet` |
@@ -97,7 +98,9 @@ Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`).
 | `compare` | nein | nur mit `compare.period`: die Auswertung und das Wörterbuch beider Perioden | `processed/wahlbezirke_vergleich.parquet` |
 | `report` | nein | die Ergebnistabellen, Korpus, die kanonischen Stimmbezirke des gerechneten Zuschnitts (mit Vergleich auch dessen Tabelle), mit Fremddaten auch die drei Tabellen der Kontrollvariablen und die Erläuterung der Indikatoren, mit Straßenverzeichnis auch dieses | `site/index.html`, `site/karte.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`, `summary.json`, `dokumente.json`) |
 
-Neben der ersten Ausgabe jedes Schritts liegt `<datei>.stamp.json` mit den SHA-256-Hashes der Eingaben, dem
+Die Tabelle steht in der Reihenfolge des Registers, also in der Reihenfolge, in der `georep run`
+die Schritte plant (`georep steps` zeigt sie für ein Profil). Neben der ersten Ausgabe jedes
+Schritts liegt `<datei>.stamp.json` mit den SHA-256-Hashes der Eingaben, dem
 Settings-Fingerprint, der Code-Version und der Schema-Version. Stimmt alles, ist der Schritt aktuell und wird
 übersprungen; sonst läuft er und sagt, warum („Eingabe geändert: texts.parquet", „Code-Version 0.6.0 ->
 0.7.0"). `--force` erzwingt, `--dry-run` plant nur. Jeder Lauf druckt je Schritt eine Zeile mit der Anzahl,
@@ -341,7 +344,7 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `verify` | crosshair über die reinen Funktionen mit Verträgen, rund sechs Minuten; ein Ziel ist mit Begründung ausgenommen (crosshair baut für `re.Pattern | None` einen symbolischen Regex und bricht ab) | lokal |
 | `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung; mit `analysis/topics.py` im Ziel dauert die Session sehr lange (jeder Mutant rechnet NMF), darum besser gezielt je Modul | lokal |
 
-Stand 2026-10-12: 884 schnelle Tests in rund 42 s, Abdeckung 98,3 %; Mutationsquote 79 % über
+Stand 2026-10-13: 901 schnelle Tests in rund 43 s, Abdeckung 98,3 %; Mutationsquote 79 % über
 `search/` und `analysis/` ([mutation-2026-10-11.md](mutation-2026-10-11.md)), 83 % über das neue
 `analysis/weights.py` ([mutation-2026-10-12.md](mutation-2026-10-12.md)).
 

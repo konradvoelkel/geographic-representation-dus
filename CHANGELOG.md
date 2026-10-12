@@ -19,9 +19,10 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   - Neu: **Dokumente je passendem Ausschuss** im Abschnitt „Gremien". Ein Klassifikator (TF-IDF und
     logistische Regression, Schritt `committees`) ordnet jedem Dokument den sachlich passenden Ausschuss zu,
     auch denen, die nur im Rat oder in einer Bezirksvertretung waren; unter `classify.min_probability`
-    bleibt es in der Restklasse. Genauigkeit 0,941 und Makro-F1 0,877 in der Kreuzvalidierung, aber vier von
+    bleibt es in der Restklasse. Genauigkeit 0,941 und Makro-F1 0,878 in der Kreuzvalidierung, aber vier von
     fünf BV-Dokumenten und sieben von acht Ratsdokumenten bleiben in der Restklasse — querschnittliche
-    Vorlagen haben kein Ausschussthema. Neue Download-Tabelle `ausschuss_zuordnung`.
+    Vorlagen haben kein Ausschussthema, und ein Teil der Güte hängt daran, dass eine Ausschussvorlage ihren
+    Ausschuss im Text nennt (ohne diese Wörter 0,929 / 0,864). Neue Download-Tabelle `ausschuss_zuordnung`.
 
   Tabelle 5, die Treffer und das Wörterbuch ändern sich dadurch nicht; die `thema_NN`-Zeilen der
   Gewichtungstabelle tragen andere Zahlen, weil die Themen andere sind. Der volle Offline-Lauf dauert 23 s

@@ -271,7 +271,12 @@ byteidentisch; LDA (online, 10 Iterationen) brauchte 47 s und lieferte Themen au
 es bei NMF. 1.9.1 zieht nur joblib, threadpoolctl, scipy und numpy, kein pandas; `nox -s deps` verbietet pandas,
 geopandas und osmnx weiter. Der Import kostet rund 0,4 s und soll `georep status` nicht verteuern: er steht
 allein in `analysis/topics.py`, die Pipeline lädt das Modul erst im Schritt `topics`, und
-`tests/unit/test_dependency_boundary.py` hält die Grenze per Quelltextsuche. Verworfen: TF-IDF und NMF selbst
+`tests/unit/test_dependency_boundary.py` hält die Grenze per Quelltextsuche.
+**Nachtrag 2026-10-13 (Punkt 45c):** mit dem Klassifikator des passenden Ausschusses gibt es eine
+zweite solche Stelle, `analysis/committees.py`; der Test nennt beide und keine dritte. Die
+Schema-Versionen der zwei Ausgaben liegen darum in `georep/schema.py` und nicht in den
+Modellmodulen -- `build_steps` braucht sie bei jedem `georep status`, und eine Zahl soll den
+Import nicht auslösen. Verworfen: TF-IDF und NMF selbst
 schreiben (mehr Code als Nutzen, Konrad hat es abgelehnt); gensim (dieselbe Abhängigkeitsfrage, schlechtere
 Determinismus-Lage); kein Themenmodell und nur Spezifität je Begriff (dann fehlt der Tabelle die inhaltliche
 Variante, die zeigt, ob der Zusammenhang an einem Thema hängt).
@@ -750,10 +755,15 @@ die Kürzel aus `[bodies]` (Option 05) — **nur die Kürzel**, denn „Verkehrs
 `topics.name_window` Zeichen hinter einem Marker aus `topics.name_markers` (Unterschrift und
 Amtsbezeichnungen, deutschsprachig und stadtneutral wie `search.place_words`) oder hinter einem
 Personenmarker im Textkopf, den Option 04 schon kennt. Über `topics.name_share` (0,8) ist es ein Name: 254
-Wörter auf der Referenz, 1,8 s. Wirkung: NPMI der Topwörter +0,4164 → +0,4224 (nach Stufen bis +0,4386),
+Wörter auf der Referenz, 1,8 s. Wirkung: NPMI der Topwörter +0,4164 → +0,4208 (nach Stufen bis +0,4386),
 und die Partei- und Personenblöcke verschwinden; dafür entstehen Schule, Aufsichtsratsbesetzungen und
 Verfügungsmittel als eigene Themen. Die Ausnahmen nennt das Profil (`topics.stop_keep`, Düsseldorf:
-„klima" und „tierschutz" — Sachwörter, die in einem Gruppennamen stehen).
+„klima", „tierschutz" und „bau"). Die ersten zwei sind Sachwörter in einem Gruppennamen; „bau" ist der
+Fall, den das Review am 2026-10-13 aufgedeckt hat: **auch ein Gremienkürzel kann mit einem Sachwort
+zusammenfallen.** „BAU" ist als Wort „bau" und steht in 1101 von 19 033 Dokumenten (5,8 %); ohne die
+Ausnahme fiel die Kohärenz der Stufe `gremien` von +0,4386 auf +0,4282, mit ihr liegt sie bei +0,4364.
+„rat" (3751 Dokumente) und „aus" (9320) bleiben Stoppwörter, weil sie wirklich das Gremium nennen; alle
+drei Entscheidungen stehen mit ihrer Zahl im Profil.
 
 Verworfen: eine gepflegte Liste von Partei- und Personennamen im Paket (eine zweite Wahrheit neben dem
 Profil, und für jede Stadt eine neue); nur den Textkopf lesen (die Namen der Verwaltung stehen unter der
@@ -766,14 +776,17 @@ sechs Namen in den Labels, benannt als Grenze); die Gremiennamen mitnehmen (sie 
 `topics.seed = "committees"` (Vorgabe) gibt jedem Ausschuss mit mindestens `seed_min_documents` beratenen
 Dokumenten ein Thema, höchstens `k − free` viele (Referenz: 17 von 23). Die Saat sind die
 `seed_words` (30) Wörter mit dem größten Log-Odds-Verhältnis gegen die **anderen Ausschüsse**, mit
-informativem Dirichlet-Prior (`seed_prior` Pseudo-Token, Monroe u. a. 2008); die Zeile der Wortmatrix trägt
+informativem Dirichlet-Prior (`seed_prior` Pseudo-Token, Monroe u. a. 2008), beschränkt auf Wörter, die
+der Ausschuss auch benutzt (ein Wort, das in keinem Ausschuss steht, bekommt sonst ein positives z, weil
+der kleinere Ausschuss weniger Token im Nenner hat; aufgedeckt am 2026-10-13, auf der Referenz ohne
+Wirkung); die Zeile der Wortmatrix trägt
 sie mit dem TF-IDF-Mittelwert ihres Ausschusses und wird **nicht mehr verändert**
 (`non_negative_factorization(..., update_H=False)`). Die `free` (3) übrigen Themen rechnen freie NMF auf dem
 Rest `max(X − W·H, 0)`, blockweise auf dem Träger von X gerechnet (die dichte Differenz wären 3 GB). Ein
 Thema trägt damit das Kürzel seines Gremiums (`themen.parquet`, Spalte `gremium`, Schema-Version 2) und auf
-der Seite seinen Namen aus dem Profil. Treue 0,70 bis 1,00 (Median 0,83), Reinheit 0,15 bis 0,57 — ein Thema
+der Seite seinen Namen aus dem Profil. Treue 0,72 bis 1,00 (Median 0,83), Reinheit 0,15 bis 0,57 — ein Thema
 zieht mehr Dokumente an, als in diesem Ausschuss beraten wurden, und ist damit eine Sachkategorie und kein
-Abbild der Beratungsfolge. Die Kohärenz fällt dabei von +0,4224 auf +0,3351: gesäte Topwörter sind die, die
+Abbild der Beratungsfolge. Die Kohärenz fällt dabei von +0,4208 auf +0,3349: gesäte Topwörter sind die, die
 einen Ausschuss trennen, nicht die, die am häufigsten zusammen stehen. Das ist der Preis für Namen statt
 Nummern, und er ist bewusst bezahlt; `seed = "none"` rechnet weiter freie NMF.
 
@@ -791,11 +804,21 @@ Ausschusskürzel trägt, und ordnet jedem Dokument mit Text einen Ausschuss zu �
 oder in einer Bezirksvertretung waren. Klassen sind die Ausschüsse mit mindestens
 `classify.min_documents` (10) beratenen Dokumenten; unter `classify.min_probability` (0,4, das Achtfache des
 Zufalls bei 20 Klassen) bleibt ein Dokument in der **Restklasse**. Güte (fünf Faltungen,
-`docs/themenmodell-2026-10-messung.py`): Genauigkeit 0,941, Makro-F1 0,877. Konrads Frage, ob sich jedes
-Schriftstück zuordnen lässt, ist damit beantwortet: **nein** — 10,9 % der Ausschussdokumente, aber 81,3 %
-der BV- und 87,5 % der Ratsdokumente liegen unter der Schwelle, weil ein BV-Antrag über drei Gegenstände
+`docs/themenmodell-2026-10-messung.py`): Genauigkeit 0,941, Makro-F1 0,878. Konrads Frage, ob sich jedes
+Schriftstück zuordnen lässt, ist damit beantwortet: **nein** — 10,9 % der Ausschussdokumente, aber 81,2 %
+der BV- und 87,4 % der Ratsdokumente liegen unter der Schwelle, weil ein BV-Antrag über drei Gegenstände
 kein Ausschussthema hat und eine Haushaltsvorlage alle. Von den Ausschussdokumenten treffen 88,9 % ihr
 eigenes Gremium.
+
+Ein Teil dieser Güte ist geschenkt (`docs/themenmodell-2026-10.md`, § 4.3): der Volltext trägt die
+Beratungsfolge und darin den Namen des Ausschusses (ABA 100 %, SPOA 96,8 %, OVA 91,7 % seiner
+Dokumente). Das **Kürzel** ist unschädlich, aber nur, weil Punkt 45a es zum Stoppwort macht — diese
+Kopplung ist Absicht und hier ausgesprochen. Sperrt man zusätzlich alle 44 Vokabularwörter mit
+„ausschuss", fällt die Kreuzvalidierung auf 0,929 / 0,864 und die Restklasse der BV-Dokumente von
+81,2 % auf 79,1 %; die Zahlen oben sind damit eine **Untergrenze** für die Zuordenbarkeit, keine
+Schätzung. Gesperrt wird trotzdem nicht: der Gegenversuch kostet eineinhalb Punkte Güte und verschiebt
+die Aussage um zwei Punkte. Die genauere Antwort wäre ein Lauf auf dem Text ohne Beratungsfolge und ist
+ein eigener Punkt.
 
 Die Zuordnung je Dokument bleibt unter `processed/` (`papers_ausschuss.parquet`, 19 033 Zeilen, als CSV
 1,5 MB und nicht aus der dokumentierten Regel ableitbar); veröffentlicht wird die Zusammenfassung
@@ -803,6 +826,14 @@ Die Zuordnung je Dokument bleibt unter `processed/` (`papers_ausschuss.parquet`,
 Ausschussberatung"), und der Abschnitt „Gremien" zeigt sie. Die Kette trainiert einmal (6,5 s auf der
 Referenz, Grenze waren 30 s); kreuzvalidiert wird nur im Messskript, denn eine Messung ist kein Schritt der
 Kette.
+
+Gelernt am 2026-10-13 (Review): die Zuordnung rechnet an **einem** Frame. Vorher kam die Spalte mit dem
+beratenen Ausschuss aus einem linken Join und wurde positionell gegen den Korpus und gegen die
+Ausgabe verwendet; ein Join legt die Zeilenfolge nicht fest (`crosswalk.py`, `prep/context.py`), und das
+ging nur zufällig auf. Jetzt baut `_labelled` einen Frame mit Text und Ausschuss, sortiert nach
+Dokument-ID, und Matrix, Klassen und beide Ausgaben entstehen daraus; eine Vorbedingung verlangt eine
+Zeile je Dokument in den Gremien (`contracts.unique_keys`), die Nachbedingung ist das gemeinsame
+`one_row_per_document`.
 
 Verworfen: die Kreuzvalidierung in den Schritt (verdreifacht seine Zeit für eine Zahl, die niemand je Lauf
 braucht); Titel und Drucksachennummer als Merkmale (der Titel nennt oft den Ausschuss, die Güte wäre
