@@ -104,6 +104,18 @@ def test_nice_ticks_examples() -> None:
         nice_ticks(1.0, 1.0)
 
 
+def test_nice_ticks_refuses_a_span_that_overflows() -> None:
+    """crosshair fand das am 2026-10-12, nachdem die Sitzung wieder durchlief (Befund 20).
+
+    Beide Grenzen sind endlich, ihre Differenz ist es nicht: ``hi - lo`` läuft über, und
+    ``math.floor(math.log10(inf))`` wirft einen ``OverflowError`` mitten aus der Funktion. Achsen
+    dieser Größe sind ein Programmierfehler des Aufrufers, also gehört der Fall in die
+    Vorbedingung und nicht in eine Fallunterscheidung im Körper.
+    """
+    with pytest.raises(deal.PreContractError):
+        nice_ticks(-7.584017912700396e307, 1.4887146273078554e308, n=2)
+
+
 def test_map_has_one_path_per_district_and_parses(map_svg: str, model: ReportModel) -> None:
     root = ET.fromstring(map_svg)
     paths = root.findall(f".//{NS}path")
