@@ -83,6 +83,7 @@ VERIFY_TARGETS = [
     "georep.report.charts.nice_ticks",
     "georep.prep.bodies.parse_reference",  # Option 05
     "georep.prep.context.ordinal_score",  # Option 03
+    "georep.analysis.parties.classify_document",  # Option 04
     "tests.property.oracle_matcher.oracle_extract",
 ]
 
@@ -93,7 +94,9 @@ def verify(session: nox.Session) -> None:
 
     Rot nur bei einem Gegenbeispiel (Exit 1); „Not confirmed" ist eine Zeitangabe, kein Befund,
     darum --report_all. Rund drei Minuten bei 20 s CPU je Bedingung (2026-10-11). Der erste Lauf
-    fand street_names({"elements": 0}) -> TypeError.
+    fand street_names({"elements": 0}) -> TypeError; der Lauf am 2026-10-12 fand zwei
+    Gegenbeispiele in classify_document (eine Organisation, die auf einen Schlüssel außerhalb der
+    Parteiliste zeigt, und ein doppelter Schlüssel in der Liste; beide behoben).
     """
     session.run(
         "uv",

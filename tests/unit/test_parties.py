@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as dt
+from dataclasses import replace
 from pathlib import Path
 
 import polars as pl
@@ -459,3 +460,23 @@ def test_party_correlations_skip_districts_where_the_party_did_not_run(
     assert by_key["SPD"].p is not None and by_key["SPD"].rho is not None
     # Eine höhere Schranke nimmt auch der SPD das r, ohne dass die Funktion stolpert
     assert all(c.r is None and c.p is None for c in party_correlations(table, min_n=4))
+
+
+def test_an_organization_key_outside_the_party_list_is_ignored(patterns: Patterns) -> None:
+    """Von crosshair gefunden (2026-10-12): ``parties_for_urls`` sortierte mit ``keys.index`` und
+    warf ValueError, wenn eine Organisation auf einen Schlüssel zeigte, den die Parteiliste nicht
+    kennt. ``from_settings`` baut beides aus derselben Liste, aber ein Vertrag soll nicht an einer
+    Sortierung zerschellen, sondern den unbekannten Schlüssel weglassen."""
+    broken = replace(
+        patterns, parties=(), org_suffixes=(("/organizations/gr/49", "FDP"),), org_exact={}
+    )
+    assert broken.parties_for_urls(["https://ris.invalid/organizations/gr/49"]) == ((), "")
+    # Ein bekannter und ein unbekannter Schlüssel: der bekannte bleibt, in Settings-Reihenfolge
+    mixed = replace(
+        patterns,
+        org_suffixes=(("/gr/49", "FDP"), ("/gr/99", "GIBTSNICHT"), ("/gr/44", "CDU")),
+        org_exact={},
+    )
+    keys, hit = mixed.parties_for_urls(["https://x/gr/99", "https://x/gr/49", "https://x/gr/44"])
+    assert keys == ("CDU", "FDP")  # Settings-Reihenfolge, nicht die der URLs
+    assert "gr/49" in hit and "gr/44" in hit

@@ -144,18 +144,30 @@ class Patterns:
                 exact[organization.id] = found
         return replace(self, org_exact=exact)
 
+    def in_settings_order(self, keys: Iterable[str]) -> tuple[str, ...]:
+        """Die bekannten Schlüssel in der Reihenfolge der Settings, eindeutig; Unbekanntes fällt weg.
+
+        ``from_settings`` baut Parteien und Organisationsabbildung aus derselben Liste, ein
+        unbekannter Schlüssel kann also nur aus einem von Hand gebauten ``Patterns`` kommen. Er
+        wird weggelassen statt die Sortierung zum Absturz zu bringen (crosshair, 2026-10-12): der
+        Vertrag von ``classify_document`` verlangt ``parteien`` als Teilmenge der Settings.
+        """
+        order = {key: index for index, key in enumerate(self.keys)}
+        return tuple(sorted({k for k in keys if k in order}, key=lambda k: order[k]))
+
     def parties_for_urls(self, urls: Sequence[str]) -> tuple[tuple[str, ...], str]:
-        """(Parteischlüssel, getroffene URL) für OParl-Urheber-URLs; leer, wenn keine zuordbar ist."""
+        """(Parteischlüssel, getroffene URLs) für OParl-Urheber-URLs; leer, wenn keine zuordbar ist."""
         found: set[str] = set()
         matched: list[str] = []
         for url in urls:
             keys = self.org_exact.get(url, ())
             if not keys:
                 keys = tuple(key for suffix, key in self.org_suffixes if url.endswith(suffix))
-            if keys:
-                found.update(keys)
+            known = self.in_settings_order(keys)
+            if known:
+                found.update(known)
                 matched.append(url)
-        return tuple(sorted(found, key=self.keys.index)), " ".join(matched)
+        return self.in_settings_order(found), " ".join(matched)
 
 
 def read_organizations(path: Path) -> tuple[OparlOrganization, ...]:
@@ -202,7 +214,10 @@ def _parties_in(haystack: str, patterns: Patterns) -> tuple[tuple[str, ...], str
             first = (match.start(), match.end())
     if first is None:
         return (), ""
-    return tuple(found), _excerpt(haystack, *first)
+    # Dedupliziert und in Settings-Reihenfolge: stünde ein Schlüssel zweimal in der Parteiliste,
+    # käme er sonst zweimal in ``parteien`` (crosshair, 2026-10-12). Der Settings-Validator
+    # verbietet doppelte Schlüssel, der Vertrag hängt aber nicht daran.
+    return patterns.in_settings_order(found), _excerpt(haystack, *first)
 
 
 def _attribution_is_consistent(
@@ -215,11 +230,13 @@ def _attribution_is_consistent(
 ) -> bool:
     assert result is not None
     parteien = result.parteien
+    # Die Teilmenge wird vor der Sortierung geprüft: ein unbekannter Schlüssel ist eine verletzte
+    # Bedingung, kein ValueError in der Sortierfunktion (crosshair, 2026-10-12).
     return (
         result.art in URHEBER_ARTEN
         and result.quelle in QUELLEN
-        and list(parteien) == sorted(set(parteien), key=patterns.keys.index)
         and set(parteien) <= set(patterns.keys)
+        and parteien == patterns.in_settings_order(parteien)
         and (result.art == "Fraktion" or not parteien)
         and (result.quelle != "" or result.art == "unbekannt")
     )
