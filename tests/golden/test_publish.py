@@ -17,7 +17,7 @@ import pytest
 from georep.bootstrap import bootstrap
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
-from georep.report.publish import PublishSummary, publish_sites
+from georep.report.publish import NEIGHBOURS_MARKER, PublishSummary, publish_sites
 from georep.settings import Settings, load_settings
 from tests.conftest import MG, MINI, mg_settings
 
@@ -68,6 +68,31 @@ def test_publish_keeps_the_first_city_at_the_root_and_nests_the_others(
     assert (site / "moenchengladbach" / "data" / "summary.json").is_file()
     assert summary.cities == ("duesseldorf", "moenchengladbach") and not summary.missing
     assert summary.comparison and "2 Städte" in summary.line()
+
+
+def test_publish_writes_the_neighbour_line_into_both_pages(
+    both_cities: tuple[Path, Settings],
+) -> None:
+    root, settings = both_cities
+    site, _ = _publish(root, settings)
+    first = (site / "index.html").read_text(encoding="utf-8")
+    second = (site / "moenchengladbach" / "index.html").read_text(encoding="utf-8")
+    assert 'Weitere Städte: <a href="moenchengladbach/">Mönchengladbach</a>' in first
+    assert '<a href="vergleich.html">Städtevergleich</a>' in first
+    assert 'Weitere Städte: <a href="../">Düsseldorf</a>' in second
+    assert '<a href="../vergleich.html">Städtevergleich</a>' in second
+    assert NEIGHBOURS_MARKER not in first and NEIGHBOURS_MARKER not in second
+
+
+def test_without_a_second_city_no_page_links_anywhere(tmp_path: Path) -> None:
+    """Die tote Zeile ist schlimmer als keine: ohne Lauf der zweiten Stadt gibt es keine Links."""
+    duesseldorf = load_settings(cwd=Path("/nonexistent"))
+    _run(tmp_path, duesseldorf, MINI)
+    site, summary = _publish(tmp_path, duesseldorf)
+    page = (site / "index.html").read_text(encoding="utf-8")
+    assert not summary.comparison
+    assert "Weitere Städte" not in page and "vergleich.html" not in page
+    assert "moenchengladbach/" not in page and NEIGHBOURS_MARKER not in page
 
 
 def test_the_comparison_page_shows_both_cities(both_cities: tuple[Path, Settings]) -> None:

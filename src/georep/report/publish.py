@@ -14,13 +14,16 @@ temporäres Verzeichnis, und nichts außerhalb von ``data/site/`` wird angefasst
 from __future__ import annotations
 
 import datetime as dt
+import html
 import shutil
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
 
 import deal
 
 from georep import __version__
+from georep.io import write_text
 from georep.layout import Layout
 from georep.report.comparison import (
     CitySite,
@@ -34,6 +37,10 @@ from georep.report.render import CC0, REPOSITORY, environment, external_links
 from georep.settings import Settings, load_settings
 
 COMPARISON_NAME = "vergleich.html"
+# Die Stadtseite lässt die Stelle frei, an der die Nachbarstädte stehen; erst ``publish`` weiß,
+# welche Seiten wirklich daneben liegen, und setzt die Zeile (Review 2026-10-12: sonst trüge die
+# veröffentlichte Seite Links auf Städte, deren Lauf noch fehlt).
+NEIGHBOURS_MARKER = "<!--georep:weitere-staedte-->"
 # Die Vergleichsseite verlinkt nach außen nur das Repository und die Lizenz; die Städte liegen
 # relativ daneben, die Quellen und Lizenzen der Daten nennt jede Stadtseite in ihrem Fuß.
 COMPARISON_LINKS = frozenset({REPOSITORY, CC0})
@@ -85,6 +92,31 @@ def _copy_tree(source: Path, target: Path) -> None:
     staging.rename(target)
 
 
+def neighbour_line(cities: Sequence[CitySite], index: int) -> str:
+    """Die Zeile „Weitere Städte" für die Seite der Stadt ``index``; leer bei nur einer Stadt."""
+    if len(cities) < 2:
+        return ""
+    up = "" if index == 0 else "../"
+    links = [
+        f'<a href="{html.escape(up + other.href, quote=True)}">{html.escape(other.name)}</a>'
+        for position, other in enumerate(cities)
+        if position != index
+    ]
+    return (
+        '<p class="meta">Weitere Städte: '
+        + " · ".join(links)
+        + f' · <a href="{up}{COMPARISON_NAME}">Städtevergleich</a></p>'
+    )
+
+
+def write_neighbours(cities: Sequence[CitySite], root: Path) -> None:
+    """Setzt die Zeile in jede veröffentlichte Stadtseite und räumt die Marke weg."""
+    for index, city in enumerate(cities):
+        page = root / city.href / "index.html"
+        text = page.read_text(encoding="utf-8")
+        write_text(page, text.replace(NEIGHBOURS_MARKER, neighbour_line(cities, index), 1))
+
+
 def _tree_size(folder: Path) -> tuple[int, int]:
     files = [p for p in folder.rglob("*") if p.is_file()]
     return len(files), sum(p.stat().st_size for p in files)
@@ -125,10 +157,11 @@ def publish_sites(
         if source.resolve() != target.resolve():
             _copy_tree(source, target)
         found.append(read_city_site(target, href, settings.geo.working_crs))
+    write_neighbours(found, root)
     comparison = len(found) >= 2
     if comparison:
         model = build_comparison(tuple(found), now=now, version=__version__, commit=commit)
-        (root / COMPARISON_NAME).write_text(render_comparison(model), encoding="utf-8")
+        write_text(root / COMPARISON_NAME, render_comparison(model))
     elif (root / COMPARISON_NAME).exists():
         # Eine Stadt weniger als beim letzten Mal: der alte Vergleich wäre eine Lüge
         (root / COMPARISON_NAME).unlink()
