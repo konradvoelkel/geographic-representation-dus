@@ -59,13 +59,26 @@ echo "rclone $*" >> "$STUB_LOG"
 echo "Transferred: 3 / 3, 100%"
 """
 
+# Der rsync-Stub kopiert lokal wirklich (das Skript stellt damit out/ zusammen) und schreibt nur
+# für die Übertragung zum VPS (Ziel mit Doppelpunkt) auf, was im Quellbaum liegt.
+RSYNC_STUB = """#!/usr/bin/env bash
+echo "rsync $*" >> "$STUB_LOG"
+target=${@: -1}
+source=${@: -2:1}
+if [[ "$target" == *:* ]]; then
+  (cd "$source" && find . -type f) > "$STUB_TRANSFER"
+  exit 0
+fi
+exec /usr/bin/rsync "$@"
+"""
+
 
 @pytest.fixture
 def sandbox(tmp_path: Path) -> dict[str, str]:
     """Eine Umgebung für das Skript: Stubs in PATH, Datenwurzel und Ziel in ``tmp_path``."""
     binaries = tmp_path / "bin"
     binaries.mkdir()
-    for name, body in (("uv", UV_STUB), ("rclone", RCLONE_STUB)):
+    for name, body in (("uv", UV_STUB), ("rclone", RCLONE_STUB), ("rsync", RSYNC_STUB)):
         path = binaries / name
         path.write_text(body, encoding="utf-8")
         path.chmod(0o755)
@@ -84,6 +97,7 @@ def sandbox(tmp_path: Path) -> dict[str, str]:
         GEOREP_CACHE_ROOT=str(tmp_path / "cache"),
         DRY_RUN="1",
         STUB_LOG=str(tmp_path / "calls.log"),
+        STUB_TRANSFER=str(tmp_path / "transfer.list"),
         STUB_MAIN_SITE=str(data / "site"),
         STUB_PROFILE_SITE=str(data / "2025" / "site"),
     )
@@ -104,7 +118,8 @@ def test_bash_accepts_the_script() -> None:
 def test_a_dry_run_walks_the_steps_in_order_and_writes_the_stand(sandbox: dict[str, str]) -> None:
     result = _run(sandbox)
     assert result.returncode == 0, result.stdout + result.stderr
-    calls = Path(sandbox["STUB_LOG"]).read_text(encoding="utf-8").splitlines()
+    logged = Path(sandbox["STUB_LOG"]).read_text(encoding="utf-8").splitlines()
+    calls = [line for line in logged if line.startswith("uv ")]
     assert calls[0] == "uv sync --locked"
     assert calls[1] == "uv run georep --settings settings.2025.toml bootstrap"
     assert calls[2] == "uv run georep --settings settings.2025.toml run --dry-run --online papers"
@@ -113,7 +128,8 @@ def test_a_dry_run_walks_the_steps_in_order_and_writes_the_stand(sandbox: dict[s
     )
     assert calls[4] == "uv run georep --settings settings.2025.toml run --dry-run"
     assert calls[5] == "uv run georep bootstrap" and calls[6] == "uv run georep run"
-    assert len(calls) == 7  # kein rclone, kein weiterer Aufruf
+    assert len(calls) == 7  # kein weiterer georep-Aufruf
+    assert not [line for line in logged if line.startswith("rclone ")]  # ohne Remote kein Upload
 
     out = Path(sandbox["MONITOR_PUBLISH_DIR"]) / "out"
     assert (out / "index.html").read_text(encoding="utf-8").strip() == "<html>Haupt 2025/</html>"
@@ -160,7 +176,11 @@ def test_a_failing_step_stops_the_run_with_exit_one(sandbox: dict[str, str]) -> 
     assert "FEHLER: papers (Exit 1)" in result.stdout
     assert "Abruf gescheitert" in result.stdout  # die Ausgabe des Schritts steht im Journal
     calls = Path(sandbox["STUB_LOG"]).read_text(encoding="utf-8").splitlines()
-    assert len(calls) == 3  # sync, bootstrap, papers; danach nichts mehr
+    assert calls == [
+        "uv sync --locked",
+        "uv run georep --settings settings.2025.toml bootstrap",
+        "uv run georep --settings settings.2025.toml run --dry-run --online papers",
+    ]  # danach nichts mehr
     assert not (Path(sandbox["MONITOR_PUBLISH_DIR"]) / "out" / "2025" / "stand.json").exists()
 
 
@@ -218,3 +238,31 @@ def test_systemd_accepts_the_units() -> None:
     assert "not absolute" not in output, output
     assert "fatal error" not in output, output
     assert result.returncode == 0, output
+
+
+def test_the_transferred_tree_carries_the_current_stand(sandbox: dict[str, str]) -> None:
+    """stand.json entstand früher erst nach der Übertragung und fehlte deshalb auf dem Server;
+    der rsync davor hatte ihn mit --delete auch noch entfernt (Review 2026-10-12)."""
+    sandbox["MONITOR_VPS_HOST"] = "server.invalid"
+    sandbox["MONITOR_VPS_WWW"] = "/var/www/georep"
+    result = _run(sandbox)
+    assert result.returncode == 0, result.stdout + result.stderr
+    transferred = Path(sandbox["STUB_TRANSFER"]).read_text(encoding="utf-8").split()
+    assert "./2025/stand.json" in transferred
+    assert "./index.html" in transferred and "./2025/index.html" in transferred
+    assert any(name.startswith("./2025/snapshots/") for name in transferred)
+    # Der übertragene Stand ist der dieses Laufs, nicht der des vorigen
+    stand = json.loads(
+        (Path(sandbox["MONITOR_PUBLISH_DIR"]) / "out" / "2025" / "stand.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert stand["beginn"] and stand["ende"] >= stand["beginn"]
+    calls = Path(sandbox["STUB_LOG"]).read_text(encoding="utf-8").splitlines()
+    assert calls[-1].startswith("rsync ") and "server.invalid:/var/www/georep/" in calls[-1]
+    assert "--dry-run" in calls[-1]  # Trockenlauf überträgt nichts
+
+    # Ein zweiter Lauf findet den Stand des ersten vor und ersetzt ihn, statt ihn zu verlieren
+    again = _run(sandbox)
+    assert again.returncode == 0
+    assert "./2025/stand.json" in Path(sandbox["STUB_TRANSFER"]).read_text(encoding="utf-8").split()

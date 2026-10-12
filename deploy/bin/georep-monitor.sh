@@ -132,8 +132,8 @@ else
 fi
 if [ -f "$PROFILE_SITE/index.html" ]; then
   mkdir -p "$OUT/$PROFILE" || fail "Profilordner anlegen"
-  rsync -a --delete --exclude=/snapshots/ "$PROFILE_SITE/" "$OUT/$PROFILE/" ||
-    fail "Profilseite nach out/"
+  rsync -a --delete --exclude=/snapshots/ --exclude=/stand.json \
+    "$PROFILE_SITE/" "$OUT/$PROFILE/" || fail "Profilseite nach out/"
   SNAPSHOTS=$OUT/$PROFILE/snapshots
   MONTH=$(date +%Y-%m)
   if [ -n "$(ls -A "$OUT/$PROFILE/data" 2>/dev/null)" ] && [ ! -d "$SNAPSHOTS/$MONTH" ]; then
@@ -178,17 +178,8 @@ else
   log "ohne MONITOR_R2_REMOTE: keine Sicherung in R2"
 fi
 
-# (9) VPS: die kanonische rsync-Zeile (Playbook § 3.10)
-if [ -n "$VPS_HOST" ]; then
-  [ -n "$VPS_WWW" ] || fail "MONITOR_VPS_HOST ohne MONITOR_VPS_WWW"
-  log "Schritt vps: rsync nach $VPS_HOST:$VPS_WWW"
-  rsync -a --chmod=D755,F644 --delete --itemize-changes "${DRY[@]}" \
-    "$OUT/" "$VPS_HOST:$VPS_WWW/" || fail "rsync zum VPS"
-else
-  log "ohne MONITOR_VPS_HOST: die Seite bleibt in $OUT"
-fi
-
-# (10) Stand schreiben und Abschlusszeile drucken
+# (9) Stand schreiben, bevor übertragen wird: sonst fehlt er im veröffentlichten Baum. `dauer_s`
+# zählt darum bis hierher, ohne die Übertragung; die Abschlusszeile nennt die ganze Dauer.
 ENDED=$(date -Is)
 TOOK=$(($(date +%s) - START))
 RESULT=ok
@@ -203,5 +194,15 @@ mkdir -p "$OUT/$PROFILE" || fail "Standdatei anlegen"
   printf '  ]\n}\n'
 } >"$OUT/$PROFILE/stand.json" || fail "stand.json schreiben"
 
+# (10) VPS: die kanonische rsync-Zeile (Playbook § 3.10)
+if [ -n "$VPS_HOST" ]; then
+  [ -n "$VPS_WWW" ] || fail "MONITOR_VPS_HOST ohne MONITOR_VPS_WWW"
+  log "Schritt vps: rsync nach $VPS_HOST:$VPS_WWW"
+  rsync -a --chmod=D755,F644 --delete --itemize-changes "${DRY[@]}" \
+    "$OUT/" "$VPS_HOST:$VPS_WWW/" || fail "rsync zum VPS"
+else
+  log "ohne MONITOR_VPS_HOST: die Seite bleibt in $OUT"
+fi
+
 health ""
-log "georep-monitor: $PAPERS neue Paper, $PDFS PDFs, $TEXTS Texte, Seite $PAGE_KB KB, Schnappschuss $SNAPSHOT, Dauer ${TOOK}s"
+log "georep-monitor: $PAPERS neue Paper, $PDFS PDFs, $TEXTS Texte, Seite $PAGE_KB KB, Schnappschuss $SNAPSHOT, Dauer $(($(date +%s) - START))s"
