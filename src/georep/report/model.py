@@ -1001,6 +1001,10 @@ def _term_row(row: Mapping[str, object], context: ContextSettings) -> ControlTer
 
 
 ALPHA = 0.05  # Signifikanzniveau, auf das sich die Arbeit und Tabelle 5 beziehen
+# „Ähnlich" heißt: gleiches Vorzeichen, beide p auf derselben Seite von ALPHA und der Koeffizient
+# höchstens um diesen Anteil verschoben. Eine Anzeigeschwelle, kein Test: sie entscheidet nur, ob
+# der Satz die zweite Stichprobe zusammenfasst oder ihre Zahlen nennt.
+SIMILAR_WITHIN = 0.25
 
 
 def _p(value: float) -> str:
@@ -1049,7 +1053,34 @@ def _lead(simple: ControlModel, best: ControlModel, rate: ControlTerm) -> str:
     )
 
 
-def _verdict(models: Sequence[ControlModel], main: str, excluded: Sequence[int]) -> str:
+def _similar(rate: ControlTerm, without: ControlTerm) -> bool:
+    """Ob die zweite Stichprobe dasselbe erzählt: Vorzeichen, Seite von ALPHA, Höhe."""
+    same_side = (rate.p < ALPHA) == (without.p < ALPHA)
+    same_sign = (rate.coefficient >= 0) == (without.coefficient >= 0)
+    if not (same_side and same_sign) or rate.coefficient == 0:
+        return False
+    return abs(without.coefficient - rate.coefficient) / abs(rate.coefficient) <= SIMILAR_WITHIN
+
+
+def _without_clause(rate: ControlTerm, without: ControlTerm | None, excluded: Sequence[int]) -> str:
+    """Was die Stichprobe ohne die Ausreißer ändert -- zusammengefasst oder mit den Zahlen."""
+    if without is None or not excluded:
+        return ""
+    districts = f"; ohne die Wahlbezirke {_join(excluded)}"
+    if _similar(rate, without):
+        return f"{districts} sieht es ähnlich aus"
+    return (
+        f"{districts} liegt der Koeffizient bei {format_de(without.coefficient, 2)} "
+        f"(p = {_p(without.p)})"
+    )
+
+
+def _verdict(
+    models: Sequence[ControlModel],
+    main: str,
+    excluded: Sequence[int],
+    without: ControlTerm | None = None,
+) -> str:
     """Ein Satz zur Deutung, der aus den Zahlen folgt: p beider Modelle, Vorzeichen, R², stärkster Term."""
     # Ohne ein Modell neben A gibt es nichts zu deuten: die Stichprobe war zu klein.
     best = next((m for m in models if m.name == main and m.k > 1), None)
@@ -1076,8 +1107,7 @@ def _verdict(models: Sequence[ControlModel], main: str, excluded: Sequence[int])
     )
     note = (
         f". Bei n = {best.n} Wahlbezirken und {best.k} Termen ist das eine Beschreibung, "
-        "keine Ursache"
-        + (f"; ohne die Wahlbezirke {_join(excluded)} sieht es ähnlich aus" if excluded else "")
+        "keine Ursache" + _without_clause(rate, without, excluded)
     )
     return _lead(simple, best, rate) + gain + strong + note + "."
 
@@ -1132,6 +1162,7 @@ def controls_section(layout: Layout, settings: Settings, units: int) -> Controls
     without = table.filter(
         (pl.col("stichprobe") != ALL) & (pl.col("modell") == main) & (pl.col("term") == RATE_TERM)
     )
+    rate_without = None if without.is_empty() else _term_row(without.row(0, named=True), context)
     estimated = {(r["modell"], r["stichprobe"]) for r in table.iter_rows(named=True)}
     possible = [
         (name, s)
@@ -1147,8 +1178,8 @@ def controls_section(layout: Layout, settings: Settings, units: int) -> Controls
         units=units,
         stand=context.dataset.stand,
         excluded=excluded,
-        rate_without=None if without.is_empty() else _term_row(without.row(0, named=True), context),
-        verdict=_verdict(models, main, excluded),
+        rate_without=rate_without,
+        verdict=_verdict(models, main, excluded, rate_without),
         missing=tuple(f"{m} ({s})" for m, s in possible if (m, s) not in estimated),
     )
 

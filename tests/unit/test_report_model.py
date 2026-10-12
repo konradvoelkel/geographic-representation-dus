@@ -476,7 +476,8 @@ def test_the_verdict_names_both_p_values_in_all_four_cases() -> None:
 def test_the_verdict_follows_the_numbers(tmp_path: Path) -> None:
     """Der Satz zur Deutung entsteht aus p, Vorzeichen und R², nicht aus festem Text."""
     simple = _control_model("A", 62.0, 0.01, 0.03)
-    significant = _verdict([simple, _control_model("B", 40.0, 0.01, 0.89)], "B", (1, 10))
+    nearby = ControlTerm("trefferquote", "Trefferquote", "", 41.0, 1.0, 0.02, 0.3, 1.2)
+    significant = _verdict([simple, _control_model("B", 40.0, 0.01, 0.89)], "B", (1, 10), nearby)
     assert "signifikant" in significant and "höher" in significant
     assert "0,89" in significant and "Sozialer Handlungsbedarf" in significant
     assert "ohne die Wahlbezirke 1 und 10" in significant
@@ -496,3 +497,29 @@ def test_a_tiny_p_is_plain_text_for_the_autoescape() -> None:
         (),
     )
     assert "< 0,001" in text and "&lt;" not in text
+
+
+def test_the_outlier_clause_compares_the_coefficients() -> None:
+    """„Ähnlich" muss gemessen sein: gleiches Vorzeichen, beide p auf derselben Seite von 0,05
+    und die relative Abweichung unter der Grenze; sonst nennt der Satz die Zahlen."""
+    models = [_control_model("A", 62.0, 0.31, 0.03), _control_model("B", 40.0, 0.13, 0.89)]
+
+    def without(coefficient: float, p: float) -> ControlTerm:
+        return ControlTerm("trefferquote", "Trefferquote", "", coefficient, 1.0, p, 0.3, 1.2)
+
+    near = _verdict(models, "B", (1, 10), without(42.0, 0.15))
+    assert "ohne die Wahlbezirke 1 und 10 sieht es ähnlich aus" in near
+
+    # Der Fall der Referenz: 68,03 statt 41,33 ist keine Ähnlichkeit mehr
+    far = _verdict(models, "B", (1, 10), without(68.03, 0.099))
+    assert "sieht es ähnlich aus" not in far
+    assert "68,03" in far and "0,099" in far and "ohne die Wahlbezirke 1 und 10" in far
+
+    # Anderes Vorzeichen oder andere Seite von 0,05: ebenfalls nicht ähnlich
+    flipped = _verdict(models, "B", (1, 10), without(-42.0, 0.15))
+    assert "sieht es ähnlich aus" not in flipped and "-42,00" in flipped
+    crossed = _verdict(models, "B", (1, 10), without(42.0, 0.01))
+    assert "sieht es ähnlich aus" not in crossed and "0,010" in crossed
+
+    # Ohne zweite Stichprobe sagt der Satz dazu nichts
+    assert "Wahlbezirke 1 und 10" not in _verdict(models, "B", (), None)
