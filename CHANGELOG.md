@@ -4,12 +4,40 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
-- **Zweite Wahlperiode (Option 02).** Eine Wahlperiode ist jetzt ein Profil: `settings.2014.toml` rechnet
+- **Weitere Städte** (Option 01): dieselbe Kette rechnet jede Kommune, deren Profil im Paket liegt. Ein
+  Profil ist eine TOML-Datei (`src/georep/profiles/<slug>.toml`) mit allem Stadtspezifischen: Endpunkt,
+  Quellen mit Dateinamen, Wikidata-Entität, Spalten und Parteien, Ausschlussliste, Marker, Quellen mit
+  Lizenz für den Fuß der Seite, Ausreißer der zweiten Regression. Gewählt wird es mit `--profile`, sonst
+  `GEOREP_PROFILE`, sonst `default_profile`; `georep profiles` listet die Profile, `georep status` nennt
+  Profil und Stadt. Ein Profil kann mit `base = "<profil>"` auf einem anderen aufbauen: so sind die beiden
+  Wahlperioden-Profile (Option 02) jetzt `duesseldorf-2014` und `duesseldorf-vergleich` im Paket und erben
+  alles Düsseldorfer. `defaults.toml` ist damit stadtneutral, und im Code steht kein Stadtwort mehr.
+- Mitgeliefert ist neben Düsseldorf das Profil **Mönchengladbach** (AGS 05116000, OParl-Body 0011): sein
+  Wahlergebnis kommt aus dem votemanager der ITK Rheinland (Spalten `A`, `B`, `D1` bis `Dn`, Wahlbezirk in
+  den Zeichen 1 und 2 der Stimmbezirksnummer), seine Flächen aus einem Shapefile-Zip. Der volle Abruf ist
+  ein Handgriff mit Prüfpunkten: `docs/runbook-stadt.md`.
+- Neuer Schritt `shapes`: aus GeoJSON oder Shapefile-Zip entsteht `interim/stimmbezirke.geojson` mit drei
+  festen Eigenschaften und dem CRS der Quelle; alles dahinter kennt nur noch dieses Format. Neue
+  Abhängigkeit `pyshp` (reines Python, MIT) statt GDAL.
+- Die Berichtsseite liest die Stadt: Kopf, Fuß und „Methode und Grenzen“ nennen Name, Rat, Wahl, Marker und
+  die Quellen mit Lizenz und Prüfdatum aus dem Profil; wo es ein amtliches Straßenverzeichnis gibt, steht
+  die gemessene Übereinstimmung der Flächen mit dem Zuschnitt der Wahl dort.
+- Neuer Download `data/summary.json` je Stadt: Kernzahlen, beide Regressionen und Datenstand, beschrieben in
+  `schema.json`. Er ist die Schnittstelle des Städtevergleichs.
+- Neuer Befehl `georep publish`: trägt die Stadtseiten nach `data/site/` zusammen (die erste Stadt an der
+  Wurzel, jede weitere unter ihrem Slug) und baut `vergleich.html` — Tabelle, zwei kleine Karten mit
+  gemeinsamen Klassengrenzen, ein Streudiagramm mit beiden Städten, Hinweise zur Vergleichbarkeit. Fehlt der
+  Lauf einer Stadt, sagt der Befehl das und lässt den Vergleich weg.
+- Düsseldorf rechnet unverändert: der Golden Master, die Zahlen der Seite und ihre Adresse bleiben, wie sie
+  waren (`profile = ""`, Daten weiter flach unter `data/`).
+
+- **Zweite Wahlperiode (Option 02).** Eine Wahlperiode ist jetzt ein Profil:
+  `--profile duesseldorf-2014` rechnet
   dieselbe Kette für 2014 bis 2020 in `data/2014-2020/`, mit dem Wörterbuch der Hauptperiode und dem
   Wahlergebnis der Ratswahl 2020, das über Flächenanteile der Stimmbezirke auf die Wahlbezirke von 2025
   umgerechnet wird (Zählgrößen anteilig und ganzzahlig summentreu, Briefwahl proportional zu den
-  Wahlscheinen, Zuordnung als `stimmbezirke_zuordnung.parquet` zum Download). `settings.vergleich.toml`
-  schaltet auf der Hauptperiode den Schritt `compare` und den Seitenabschnitt „Zwei Wahlperioden" ein:
+  Wahlscheinen, Zuordnung als `stimmbezirke_zuordnung.parquet` zum Download).
+  `--profile duesseldorf-vergleich` schaltet auf der Hauptperiode den Schritt `compare` und den Seitenabschnitt „Zwei Wahlperioden" ein:
   Streudiagramm der Änderungen, Regression der Differenzen, Tabelle je Wahlbezirk, Link auf die eigene
   Seite der alten Periode. Ohne die beiden Profile ist die Kette unverändert. Der Abruf der alten Periode
   ist vorbereitet und wiederaufnehmbar (`sources.oparl.first_page`, `raw/papers.progress.json`), aber noch

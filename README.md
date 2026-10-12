@@ -65,16 +65,20 @@ Abschnitt „Berichtsseite").
 | Befehl | Was er tut |
 |---|---|
 | `georep run [SCHRITT …] [--force] [--dry-run] [--online]` | führt die Schritte aus und überspringt, was aktuell ist; Netzschritte nur mit `--online` |
-| `georep fetch [SCHRITT …] [--force] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `pdfs`, `streets_osm`, `pois_wiki`, danach `texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Metadatenseiten |
+| `georep fetch [SCHRITT …] [--force] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `pdfs`, `streets_osm`, `pois_wiki`, danach `shapes` und `texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Metadatenseiten |
 | `georep steps` | Schritte mit Eingaben und Ausgaben |
 | `georep status` | Settings, Pfade, Stores, Frische jedes Schritts mit Grund |
+| `georep profiles` | die Profile im Paket mit Stadt und amtlichem Gemeindeschlüssel |
+| `georep publish [--out DIR]` | die Stadtseiten nach `data/site/` zusammentragen und `vergleich.html` bauen |
 | `georep bootstrap [--force]` | den eingefrorenen Datensatz (`reference_root`) nach `data_root` übernehmen |
 | `georep export` | die Parquet-Ergebnisse als CSV daneben schreiben |
 | `georep regress [--exclude …] [--varianten]` | lineare Regression Trefferquote gegen Wahlbeteiligung; `--varianten` dieselbe Rechnung je Gewichtungsvariante aus `wahlbezirke_gewichtet.parquet` |
 | `georep regress --controls` | Tabelle 6: dieselbe Regression mit Kontrollvariablen, je Modell und Stichprobe |
 | `georep profile [SCHRITT …] [--top N] [--sort tottime]` | einen echten Schritt unter cProfile, `.prof` für snakeviz |
 
-`--settings DATEI` legt eine weitere TOML-Schicht über die Konfiguration. Exit-Codes: 0 gut, 1 Domänenfehler
+`--profile SLUG` wählt die Stadt (`georep profiles` listet sie; sonst gilt `GEOREP_PROFILE`, sonst
+`default_profile` aus den Settings). `--settings DATEI` legt eine weitere TOML-Schicht über die
+Konfiguration. Exit-Codes: 0 gut, 1 Domänenfehler
 (eine Zeile auf stderr), 2 Bedienfehler. Jeder Schritt druckt, worauf er gewirkt hat, und warum er lief oder
 nicht; ein Lauf ohne Änderung ist ein No-op.
 
@@ -109,17 +113,19 @@ uv run georep status                      # pdfs steht danach auf "Settings geä
 
 ## Zwei Wahlperioden
 
-Eine Wahlperiode ist ein **Profil**: eine TOML-Datei, die `profile` setzt. Ihre Daten liegen getrennt unter
-`data_root/<profil>/`, ihre PDFs und Texte unter `cache_root/<profil>/`; der HTTP-Cache bleibt geteilt. Im
-Repo liegt [`settings.2014.toml`](settings.2014.toml) für die Wahlperiode 2014 bis 2020 (Ratswahl 13.09.2020)
-und [`settings.vergleich.toml`](settings.vergleich.toml), das auf der Hauptperiode den Vergleich beider
-Perioden einschaltet.
+Eine Wahlperiode ist ein **Profil** im Paket, das mit `base` auf dem Profil seiner Stadt aufbaut. Ihre Daten
+liegen getrennt unter `data_root/<profil>/`, ihre PDFs und Texte unter `cache_root/<profil>/`; der HTTP-Cache
+bleibt geteilt. Im Paket liegen
+[`profiles/duesseldorf-2014.toml`](src/georep/profiles/duesseldorf-2014.toml) für die Wahlperiode 2014 bis
+2020 (Ratswahl 13.09.2020) und
+[`profiles/duesseldorf-vergleich.toml`](src/georep/profiles/duesseldorf-vergleich.toml), das auf der
+Hauptperiode den Vergleich beider Perioden einschaltet.
 
 ```bash
-uv run georep --settings settings.2014.toml status      # Periode, Pfade, Frische jedes Schritts
-uv run georep --settings settings.2014.toml bootstrap   # Eingaben aus snapshots/2014-2020/
-uv run georep --settings settings.2014.toml run         # Kette der alten Periode, Seite unter data/2014-2020/site/
-uv run georep --settings settings.vergleich.toml run    # Hauptperiode mit dem Abschnitt „Zwei Wahlperioden"
+uv run georep --profile duesseldorf-2014 status      # Periode, Pfade, Frische jedes Schritts
+uv run georep --profile duesseldorf-2014 bootstrap   # Eingaben aus snapshots/2014-2020/
+uv run georep --profile duesseldorf-2014 run         # Kette der alten Periode, Seite unter data/2014-2020/site/
+uv run georep --profile duesseldorf-vergleich run    # Hauptperiode mit dem Abschnitt „Zwei Wahlperioden"
 ```
 
 Beide Perioden werden mit **demselben Wörterbuch** durchsucht (Straßen und Orte je Wahlbezirk 2025, Stand
@@ -142,7 +148,7 @@ Dokumente, 3,7 bis 4,4 GB PDFs, zehn bis vierzehn Stunden); kein Agent und keine
 
 ```bash
 export UV_PROJECT_ENVIRONMENT=… UV_CACHE_DIR=…               # wie in FORK-NOTES.md
-P="--settings settings.2014.toml"
+P="--profile duesseldorf-2014"
 uv run georep $P fetch opendata        # vier Portaldateien, Sekunden
 uv run georep $P fetch papers          # rund 3 h; speichert jede Seite, wiederaufnehmbar
 uv run georep $P fetch pdfs --limit 50 # Stichprobe zuerst, dann ohne --limit: 8 bis 11 h
@@ -171,9 +177,12 @@ uv run georep $P status                # alles aktuell?
 
 ## Konfiguration
 
-Alle Parameter stehen mit Begründung in [`src/georep/defaults.toml`](src/georep/defaults.toml). Darüber
-mischen sich tief `./settings.toml` und `./settings.local.toml` (gitignored, rechnerspezifisch), darüber
-`--settings`, darüber Umgebungsvariablen `GEOREP_<FELD>`, verschachtelt mit `__`. Unbekannte Schlüssel sind
+Die stadtneutralen Parameter stehen mit Begründung in
+[`src/georep/defaults.toml`](src/georep/defaults.toml), alles Stadtspezifische (Endpunkte, Spaltennamen,
+Ausschlussliste, Quellen mit Lizenz) in genau einer Datei je Stadt unter
+[`src/georep/profiles/`](src/georep/profiles/). Darüber mischen sich tief `./settings.toml` und
+`./settings.local.toml` (gitignored, rechnerspezifisch), darüber `--settings`, darüber Umgebungsvariablen
+`GEOREP_<FELD>`, verschachtelt mit `__`. Unbekannte Schlüssel sind
 ein Fehler. `contracts = "off"` schaltet die deal-Verträge ab (Programmierfehler-Prüfungen an den
 Batch-Grenzen, Overhead unter einem Prozent).
 
@@ -182,6 +191,22 @@ Batch-Grenzen, Overhead unter einem Prozent).
 data_root = "/media/konrad/xtraspace/georep/data"
 cache_root = "/media/konrad/xtraspace/georep/cache"
 ```
+
+## Mehrere Städte
+
+Dieselbe Kette rechnet jede Kommune, deren Profil im Paket liegt; der Code kennt keine Stadt. Heute sind
+das Düsseldorf (Standard, flach unter `data/`) und Mönchengladbach (`data/moenchengladbach/`).
+
+```bash
+uv run georep profiles                                   # welche Städte es gibt
+uv run georep --profile moenchengladbach status          # Pfade und Frische dieser Stadt
+uv run georep --profile moenchengladbach fetch opendata  # Sekunden; der Rest dauert Stunden
+uv run georep publish                                    # data/site/ mit allen Städten und vergleich.html
+```
+
+Der volle Abruf einer weiteren Stadt ist ein Handgriff mit Prüfpunkten:
+[`docs/runbook-stadt.md`](docs/runbook-stadt.md). Bis er gelaufen ist, meldet `georep publish` die Stadt als
+„kein Lauf“ und baut die Vergleichsseite nicht.
 
 ## Daten und Herkunft
 
@@ -192,12 +217,14 @@ cache_root = "/media/konrad/xtraspace/georep/cache"
 | Ratsdokumente 2020 bis 2025, Metadaten und Texte | Ratsinformationssystem Düsseldorf über OParl 1.1 (`ris-oparl.itk-rheinland.de`, Body 0015) | `reference/interim/`, die PDFs nicht |
 | Straßennamen je Stimmbezirk | OpenStreetMap über die Overpass-API (ODbL), Stand der Arbeit November 2025 | `reference/raw/` |
 | Orte je Stimmbezirk | Wikidata (CC0) per SPARQL, Wikipedia-GeoSearch | `reference/raw/` |
-| Kürzel und Namen der Gremien (Rat, Bezirksvertretungen, Ausschüsse, Beiräte) | Organisationsliste des Ratsinformationssystems (Stand 11.10.2026) und Dokumenttitel; das Gremium je Dokument liest der Parser aus der Drucksachennummer | `src/georep/defaults.toml`, Block `[bodies]` |
+| Kürzel und Namen der Gremien (Rat, Bezirksvertretungen, Ausschüsse, Beiräte) | Organisationsliste des Ratsinformationssystems (Stand 11.10.2026) und Dokumenttitel; das Gremium je Dokument liest der Parser aus der Drucksachennummer | `src/georep/profiles/duesseldorf.toml`, Block `[bodies]` |
 | Sozialdaten je Sozialraum, Stand 31.12.2021 (Kontrollvariablen) | Quartiersatlas Düsseldorf 2024, Open-Data-Portal der Stadt Düsseldorf (CSV und GeoJSON, Datenlizenz Deutschland Namensnennung 2.0) | `context/` |
 | Fraktionen, Ausschüsse und Bezirksvertretungen | Ratsinformationssystem Düsseldorf über OParl 1.1, Endpunkt `organizations` | nein, `georep fetch organizations` holt sie |
-| Wahlergebnis je Stimmbezirk und je Wahlbezirk, Ratswahl 13.09.2020 | Open-Data-Portal der Stadt Düsseldorf (CSV, Datenlizenz Deutschland Namensnennung 2.0) | nein, Abruf über `settings.2014.toml` |
-| Stimmbezirke und Kommunalwahlbezirke 2020 (ETRS89, EPSG:4647) | Open-Data-Portal der Stadt Düsseldorf (GeoJSON, Datenlizenz Deutschland – Zero – Version 2.0) | nein, Abruf über `settings.2014.toml` |
+| Wahlergebnis je Stimmbezirk und je Wahlbezirk, Ratswahl 13.09.2020 | Open-Data-Portal der Stadt Düsseldorf (CSV, Datenlizenz Deutschland Namensnennung 2.0) | nein, Abruf über `--profile duesseldorf-2014` |
+| Stimmbezirke und Kommunalwahlbezirke 2020 (ETRS89, EPSG:4647) | Open-Data-Portal der Stadt Düsseldorf (GeoJSON, Datenlizenz Deutschland – Zero – Version 2.0) | nein, Abruf über `--profile duesseldorf-2014` |
 | Ratsdokumente 2014 bis 2020 | Ratsinformationssystem Düsseldorf über OParl 1.1, Body 0015, ab Seite 90 | noch nicht; nach Konrads Lauf als `snapshots/2014-2020/` |
+| Mönchengladbach: Wahlergebnis, Wahlbezirke, Straßenverzeichnis | votemanager der ITK Rheinland (`wep.itk-rheinland.de`, Lizenz laut Anbieter nicht angegeben) | Stichprobe in `tests/fixtures/mg/` |
+| Mönchengladbach: Stimmbezirksflächen (Stand 08.06.2022) | Geoportal der Stadt Mönchengladbach (Shapefile, Datenlizenz Deutschland – Zero – Version 2.0) | Stichprobe in `tests/fixtures/mg/` |
 
 `context/` trägt die Fremddaten, aus denen die Kontrollvariablen entstehen, mit Herkunft, Lizenz, Datenstand,
 Abrufdatum und Prüfsummen in [context/README.md](context/README.md); die Seite nennt unter „Abgeleitete Daten"

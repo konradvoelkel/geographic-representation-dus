@@ -399,7 +399,7 @@ gehört zu Option 3. Bezirke ohne Wahlvorschlag einer Partei bleiben im Abgleich
 ## Punkt: Eine Wahlperiode ist ein Profil, keine zweite Installation (Option 02, 2026-10-12)
 
 Die Wahlperiode 2014 bis 2020 läuft durch dieselbe Kette wie die Hauptperiode, nur mit einer zweiten
-TOML-Datei (`settings.2014.toml`): `profile = "2014-2020"` legt Daten unter `data_root/2014-2020/` und
+Paketprofil (`profiles/duesseldorf-2014.toml`): `profile = "2014-2020"` legt Daten unter `data_root/2014-2020/` und
 PDFs und Texte unter `cache_root/2014-2020/`, der HTTP-Cache bleibt geteilt. Verworfen: ein zweites
 `data_root` in `settings.local.toml` (nicht committbar, die CI kennt es nicht) und ein geteilter Textstore
 (die Perioden hätten sich gegenseitig den Stamp von `texts` entwertet).
@@ -439,7 +439,7 @@ die Lücke genau füllen. Verworfen: die Briefwahl weglassen (die Beteiligung w�
 `compare` läuft nur mit `compare.period` und schreibt `wahlbezirke_vergleich.parquet`; der Schritt `report`
 nimmt die Datei als Eingabe, und der Abschnitt „Zwei Wahlperioden" existiert nur mit ihr. Fehlende Eingaben
 sind nach Regel 3 der Architektur ein Fehler, kein stilles Überspringen — also muss der Vergleich
-ausdrücklich eingeschaltet werden (`settings.vergleich.toml`), und die Kette von `main` bleibt unverändert.
+ausdrücklich eingeschaltet werden (`profiles/duesseldorf-vergleich.toml`), und die Kette von `main` bleibt unverändert.
 Verworfen: der Vergleich als „optionale Eingabe" von `report` (das Schrittregister kennt keine). Verglichen
 wird die Schnittmenge der Wahlbezirke beider Perioden: ein Bezirk, den nur eine Periode kennt, fällt weg,
 statt mit einer erfundenen Null zu erscheinen; die Seite nennt die Zahl.
@@ -487,17 +487,20 @@ Kosten: ein weiteres Paket im Lockfile und ein mypy-Override, weil pyshp Annotat
 
 ## Punkt: ein kanonischer Stand der Stimmbezirke (Option 01, 2026-10-12)
 
-Zwischen der Quelldatei und allem, was Flächen liest, steht jetzt der Schritt `precincts`: aus GeoJSON oder
+Zwischen der Quelldatei und allem, was Flächen liest, steht jetzt der Schritt `shapes`: aus GeoJSON oder
 Shapefile-Zip entsteht `interim/stimmbezirke.geojson` mit genau drei Eigenschaften (`stimmbezirk`,
 `wahlbezirk`, `wahlbezirk_name`) und dem CRS der Quelle. Die Regeln (welche Eigenschaft die Nummer trägt, ob
 der Wahlbezirk eine eigene Spalte ist oder als Zeichenausschnitt in der Nummer steckt, woher die Namen kommen)
-stehen in `[precincts]` im Profil; `geo.read_precincts` kennt nur noch die kanonische Datei und hat seinen
-`Columns`-Parameter verloren. Die Koordinaten bleiben die der Quelle: Düsseldorf rechnet weiter in einem Schritt
+stehen in `[precincts]` im Profil; `geo.read_canonical_precincts` liest nur diese Datei, neben dem Leser der
+Quellgeometrie `geo.read_precincts`, den der Crosswalk (Option 02) und die Raumeinheiten (Option 03)
+brauchen. Die Koordinaten bleiben die der Quelle: Düsseldorf rechnet weiter in einem Schritt
 von EPSG:4647 ins Arbeits-CRS, der Golden Master der 1 996 Orte bleibt grün. Verworfen: `read_precincts` mit
 immer mehr Parametern (jeder Leser wüsste von jeder Quelle); Umprojektion auf EPSG:4326 im kanonischen GeoJSON
 (zwei Transformationen statt einer, Rauschen an Bezirksgrenzen). Kosten: ein Schritt mehr in `georep steps`
 (Snapshot bewusst erneuert) und eine Zwischendatei; `georep fetch` führt ihn mit, weil die Netzschritte
-`streets_osm` und `pois_wiki` ihn brauchen.
+`streets_osm` und `pois_wiki` ihn brauchen. Der Name `shapes` statt `precincts`, weil Option 02 einen Schritt
+`precincts` hat (die Umrechnung eines älteren Zuschnitts) und zwei Schritte nicht gleich heißen können; wo
+eine Periode den Zuschnitt einer anderen rechnet, entfällt `shapes` (`precincts.enabled = false`).
 
 ## Punkt: Stadt, Quellen und Allowlist der Seite aus dem Profil (Option 01, 2026-10-12)
 
@@ -522,3 +525,17 @@ Ordner einer Stadt, nie ihre Zwischenergebnisse; der Vergleich hängt nicht an z
 nicht an Parquet-Schemata. Verworfen: der Vergleich liest `processed/*.parquet` beider Läufe (dann
 wäre jede Änderung an einer Zwischentabelle ein Bruch des Vergleichs) und `summary.json` als
 `PublishedTable` (es ist keine Tabelle, es hat keine Spalten).
+
+## Punkt: Städtevergleich als eigene Seite aus den veröffentlichten Ordnern (Option 01, 2026-10-12)
+
+`georep publish` trägt die Stadtseiten nach `data/site/` zusammen und baut daraus `vergleich.html`. Gelesen
+wird je Stadt nur, was auf ihrer Seite zum Download steht (`summary.json`, `wahlbezirke.geojson`,
+`wahlbezirke_auswertung.parquet`): die Stadtseite ist die Schnittstelle, nicht ihr Zwischenstand, und der
+Vergleich hängt an keinem Parquet-Schema der Pipeline. Die erste Stadt aus `publish.cities` bleibt an der
+Wurzel (Düsseldorfs veröffentlichte Adresse und das Repository heißen `…-dus`), jede weitere liegt unter
+ihrem Slug. Die beiden kleinen Karten teilen sich die Quantilklassen; sonst verglichen sie Farben, die
+nichts miteinander zu tun haben. Verworfen: ein Vergleichsabschnitt in jeder Stadtseite (doppelt, kostet
+Budget und macht zwei Läufe voneinander abhängig); eine Landing-Page an der Wurzel (bricht die
+veröffentlichte Adresse); der Vergleich aus `processed/*.parquet` beider Läufe (jede Änderung an einer
+Zwischentabelle wäre ein Bruch). Kosten: `publish` muss wissen, welche Stadt flach liegt, und kopiert sie
+dann nicht; fehlt eine Stadt, löscht es einen alten Vergleich, der sonst eine Lüge wäre.

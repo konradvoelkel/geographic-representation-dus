@@ -1,6 +1,6 @@
 # Plan 01: Städte
 
-Stand 2026-10-12, Branch `feat/01-staedte`. Status: in Arbeit.
+Stand 2026-10-12, Branch `feat/01-staedte`. Status: im Review.
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.1. Alle Zahlen in § 3 sind am 2026-10-11
 nachgesehen (Dateien im Scratchpad geladen, Spalten mit Python gezählt, Geometrie mit shapely und `ogrinfo` geprüft);
@@ -199,6 +199,15 @@ Straßenverzeichnis (§ 9) ist ein eigenes Vorhaben und lohnt erst, wenn der Pro
 
 ## 5. Bauplan in Stufen
 
+**Stand 2026-10-12 (Umsetzung).** Stufen A bis F sind gebaut und grün, Stufe G ist als Runbook geschrieben
+(`docs/runbook-stadt.md`), der Lauf selbst ist Konrads. Abweichungen vom Plan, je mit Grund:
+`districts_source` heißt die Quelldatei (das kanonische GeoJSON heißt `precincts_geojson`), die Dateinamen
+der Quellen stehen in `[sources.opendata]` statt in `[precincts]`, die Spaltennamen der Geometrie sind von
+`[columns]` nach `[precincts]` gezogen (nur `prep/precincts.py` liest sie), die Spaltendoku der Parteien
+entsteht über `PublishedTable.extra_columns` aus dem Profil, und die Mini-Fixture nimmt die Wahlbezirke 04,
+09 und 23 statt 02, 10 und 22 (nur deren Straßennamen kommen in der PDF-Stichprobe vor; sonst fände die
+Kette keinen Treffer und `index` bräche ab).
+
 Jede Stufe ein bis drei Commits, Verhaltensänderung zuerst mit rotem Test, nach jedem Commit `uv run nox`; Tests in
 `tmp_path` mit `Layout(...)` direkt oder über `load_settings(profile=…)`. Aufwand in Arbeitstagen eines Agenten.
 
@@ -393,11 +402,13 @@ Konrads.
 | 2 | Darf das Paket des vollen Laufs (`raw/papers.jsonl`, `text/texts.parquet`, geschätzt 10 bis 20 MB, Texte fremder Dokumente wie bei der Referenz) nach `reference/moenchengladbach/` ins Repo? | CI baut die Seite nur aus dem Repo; die Alternative (R2-Bucket, Antwort zu Option 7) braucht ein Secret in Actions und einen Download-Schritt | ja, ins Repo, wie die Referenz der Arbeit (82 MB) |
 | 3 | Soll Konrad die Stadt Mönchengladbach (Fachbereich Geoinformation, `gdi@moenchengladbach.de` laut Open.NRW) nach den Stimmbezirksflächen der Kommunalwahl 2025 fragen? | 4 beziehungsweise 5 Stimmbezirke weichen zwischen 2022 und 2025 ab; mit Flächen von 2025 entfällt die Unschärfe | Flächen von 2022 mit gemessener Übereinstimmung; die Anfrage ist ein Satz, den der Plan nicht selbst stellen darf |
 | 4 | Unter welcher Lizenz stehen die votemanager-Open-Data-CSVs der ITK Rheinland? (`config.json` sagt `lizenz: true`, eine Lizenzseite gibt es nicht; Düsseldorfs Portal stellt dieselben Daten unter DL-DE BY 2.0) | die Seite muss die Lizenz wörtlich nennen (Regel der Berichtsseite) | Quelle und Herausgeber werden genannt, Lizenzfeld „nicht angegeben"; Konrad kann die ITK Rheinland oder die Stadt fragen |
-| 5 | Welcher Marker trennt den Vorlagenkopf in Mönchengladbacher Vorlagen? | ohne Marker zählen Treffer im Kopf (Adressen, Gremienlisten) | `betrifft` wie Düsseldorf (gleiches Ratsinformationssystem, gleicher Betreiber); die PDF-Stichprobe in Stufe E misst, der Test nennt die Zahl, das Profil wird angepasst, wenn sie unter 90 % liegt |
+| 5 | Welcher Marker trennt den Vorlagenkopf in Mönchengladbacher Vorlagen? | ohne Marker zählen Treffer im Kopf (Adressen, Gremienlisten) | **gemessen am 2026-10-12: `betrifft` kommt in 0 von 5 Dokumenten der Stichprobe vor**, `gegenstand` in 2 von 5. Die Stichprobe stammt aber von Seite 1 des Servers, also aus der laufenden Periode (Fraktionsanträge), nicht aus den Verwaltungsvorlagen 2020 bis 2025. Das Profil behält `betrifft`: ohne Vorkommen schneidet `after_marker` nichts ab, die Kette durchsucht den ganzen Text. Das Runbook (§ 5 G) misst den Anteil am echten Korpus und entscheidet dann |
 | 6 | Welche Wahlbezirke schließt die zweite Regression („ohne Ausreißer") für Mönchengladbach aus? | Tabelle 5 der Arbeit nennt 1 und 10 für Düsseldorf (die beiden höchsten Trefferquoten) | leer bis zum echten Lauf; danach die beiden höchsten Trefferquoten nach derselben Regel, als Liste im Profil (Stufe G) |
 | 7 | Soll Düsseldorfs `data_root` auf `data/duesseldorf/` wandern (README, `pages.yml`, Konrads Ordner auf xtraspace betroffen), oder soll Düsseldorf die Ausnahme ohne Slug bleiben? | ohne Slug müsste jede zweite Stadt ihren Pfad explizit setzen, und `settings.local.toml` könnte ihn überschreiben (§ 2) | Slug für alle Städte, Umzug dokumentiert; `georep status` erkennt alte Ordner und sagt, wohin |
 | 8 | Vergleich als Unterseite `vergleich.html` an der Wurzel, oder lieber als Abschnitt in beiden Stadtseiten? | Unterseite hält das Budget und trennt die Läufe; Abschnitt wäre sichtbarer | Unterseite mit Teaser-Zeile im Kopf jeder Stadtseite |
 | 9 | Wie lange darf der volle Abruf für Mönchengladbach laufen, und auf welchem Rechner (kookaburra, VPS)? | 3 bis 5 h geschätzt; über fünf Minuten braucht alles Konrads Freigabe | Konrad startet ihn nach dem Merge nach dem Runbook auf kookaburra; bis dahin baut `publish` die Seite ohne Mönchengladbach |
+| 10 | Nur die sechs Parteien der Arbeit (CDU, SPD, GRÜNE, AfD, FDP, Die Linke) für Mönchengladbach, obwohl votemanager dreizehn Listen führt? | die Wählertabelle und ihre Spaltendoku wachsen sonst je Stadt verschieden, und Option 04 rechnet auf diesen sechs | die sechs; D7 bis D13 (Die PARTEI, dieBasis, BSW, FREIE WÄHLER, Einzelbewerber, Volt, WerteUnion) bleiben draußen. Eine Zeile im Profil holt sie herein, wenn sie gebraucht werden |
+| 11 | Soll `publish.cities` Mönchengladbach schon führen, bevor sein Paket im Repo liegt? | `georep publish` meldet die Stadt bis dahin bei jedem Lauf als „kein Lauf“ (Exit 0, kein Vergleich) | ja, es steht schon drin: so sieht man im Lauf, was fehlt, und nach Konrads Abruf ist keine Codeänderung mehr nötig |
 
 ## 9. Vorbereitung für Option 10 (was wird konfigurierbar, welche Modulgrenze entsteht)
 

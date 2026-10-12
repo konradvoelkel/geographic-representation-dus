@@ -32,6 +32,8 @@ uv sync                      # Umgebung aus uv.lock
 uv run nox                   # lint, typecheck, deps, test
 uv run pytest -m slow        # Kette über die volle Referenz, Vergleich mit der Arbeit
 uv run georep bootstrap && uv run georep run && uv run georep status   # run endet mit der Berichtsseite data/site/index.html
+uv run georep profiles       # Stadtprofile im Paket; --profile <slug> waehlt eines (sonst GEOREP_PROFILE, sonst default_profile)
+uv run georep publish        # Stadtseiten nach data/site/ zusammentragen, vergleich.html bauen
 uv run georep fetch opendata # der einzige schnelle Netzschritt; alles andere dauert Stunden
 uv run ruff check . && uv run ruff format --check .
 uv run mypy                  # strict für alles
@@ -41,8 +43,10 @@ uv run nox -s verify         # crosshair über die reinen Funktionen mit Verträ
 uv run nox -s mutate         # pytest-gremlins über search/ und analysis/, einmal pro Phase, kein Gate
 ```
 
-Settings: `src/georep/defaults.toml` ist die Quelle; rechnerspezifisches (Pfade auf xtraspace) gehört in
-`settings.local.toml`, nie in die Defaults. Neue Parameter bekommen dort einen Kommentar mit dem Warum.
+Settings: `src/georep/defaults.toml` ist die stadtneutrale Quelle, `src/georep/profiles/<slug>.toml` die
+Stadt (Endpunkte, Spalten, Ausschlussliste, Quellen mit Lizenz); rechnerspezifisches (Pfade auf xtraspace)
+gehört in `settings.local.toml`, nie in die Defaults. Neue Parameter bekommen dort einen Kommentar mit dem
+Warum. Kein Stadtwort im Code: `tests/unit/test_report_city.py` prüft das mit einem grep-Test.
 
 Bei Konrad liegen Umgebung und Cache auf xtraspace: `UV_PROJECT_ENVIRONMENT` und `UV_CACHE_DIR`
 setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
