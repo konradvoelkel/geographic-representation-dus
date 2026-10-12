@@ -128,10 +128,12 @@ def _variable_expression(
         assert variable.scale is not None  # der Settings-Validator verlangt sie
         scale = context.scales[variable.scale]
         column = variable.columns[0]
-        seen = [v for v in frame.get_column(column).unique().to_list() if v is not None]
-        levels: dict[str, int | None] = {v: ordinal_score(v, scale) for v in seen}
+        # Getrimmt schlüsseln: ``_ordinal`` trimmt vor dem Nachschlagen, und eine Stufe mit
+        # Leerzeichen fiele sonst still auf null statt auf ihren Wert (Review 2026-10-12).
+        seen = {v.strip() for v in frame.get_column(column).unique().to_list() if v is not None}
+        levels: dict[str, int | None] = {v: ordinal_score(v, scale) for v in sorted(seen)}
         unknown = sorted(
-            v for v, score in levels.items() if score is None and v.strip() not in table.missing
+            v for v, score in levels.items() if score is None and v not in table.missing
         )
         if unknown:
             raise SchemaError(

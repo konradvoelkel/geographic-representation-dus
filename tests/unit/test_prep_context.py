@@ -163,6 +163,19 @@ def test_read_context_table_converts_numbers_signs_and_levels(tmp_path: Path) ->
     assert frame.get_column("hb_score").to_list() == [3.0, 1.0, 5.0]
 
 
+def test_a_level_with_spaces_around_it_is_still_a_level(tmp_path: Path) -> None:
+    """``_ordinal`` trimmt vor dem Nachschlagen; die Schlüssel der Zuordnung müssen es auch sein,
+    sonst wird " hoch " still zu null statt zu 5 (Review 2026-10-12)."""
+    settings = _settings_for(tmp_path)
+    # „eher gering" kommt sonst nicht vor: so entscheidet allein die gepolsterte Schreibweise
+    frame = read_context_table(
+        _csv(tmp_path, [*MINIMAL, "014001;Mit Leerzeichen;5,0;1,0;20,0; eher gering "]),
+        settings.context,
+    )
+    assert frame.get_column("hb_score").to_list() == [3.0, 1.0, 5.0, 2.0]
+    assert frame.get_column("hb_score").null_count() == 0
+
+
 def test_an_unknown_level_and_a_missing_column_are_schema_errors(tmp_path: Path) -> None:
     settings = _settings_for(tmp_path)
     with pytest.raises(SchemaError, match="sehr hoch"):
