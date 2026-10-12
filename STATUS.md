@@ -110,7 +110,7 @@ Tabelle 5, die Treffer (29 010) und das Wörterbuch (5727) sind unberührt; nur 
 
 ## Zahlen (2026-10-12, `v0.11.0` plus Punkt 44 und 45)
 
-- Tests: 880 schnelle (nox-Gate, parallel in rund 42 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 884 schnelle (nox-Gate, parallel in rund 42 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 28 Schritte; `georep steps` zeigt 26 für Düsseldorf, 27 mit Vergleich, 21 im Periodenprofil
   2014 bis 2020, 20 in der laufenden Periode, 21 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
