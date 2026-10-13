@@ -379,8 +379,8 @@ Treffer; sie ist das Mittel über 41 Bezirke, und ein Dokument zählt in jedem B
 
 ## 7. Kosten (gemessen nach dem Bau)
 
-- **Seitengröße.** Vorher 1 158 408 Byte, nachher **1 267 956 Byte** (1,27 MB von 1,5 MB Budget), also
-  **109 548 Byte für beide Umschalter zusammen**, rund 55 KB je Umschalter und damit unter der Grenze von
+- **Seitengröße.** Vorher 1 158 408 Byte, nachher **1 268 298 Byte** (1,27 MB von 1,5 MB Budget), also
+  **109 890 Byte für beide Umschalter zusammen**, rund 55 KB je Umschalter und damit unter der Grenze von
   rund 100 KB je Umschalter. Keine zweite Kopie der Karten-SVGs: die 41 Flächen stehen weiter einmal in
   `<defs>`, die Varianten sind Attribute an denselben `<use>`. Zwei Sparmaßnahmen nach dem Review:
   die Sortierwerte sind auf sechs Stellen gerundet, und **die Standardvariante trägt keine Attribute** —
