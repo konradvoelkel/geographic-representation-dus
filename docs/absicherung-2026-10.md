@@ -100,7 +100,7 @@ Zusatz gültig, der globale Fingerprint ist unberührt, und die Datenschritte la
 
 Der Test zu Punkt 45 kannte eine Liste von sechs Namen und hätte ein siebtes Modell nicht bemerkt.
 Statt der Liste jetzt zwei Tests: die Version im Stamp ist die der Datei, neben der er liegt (für
-jeden Offline-Schritt der Mini-Kette, 17 Schritte), und jede Schema-Konstante des Pakets gehört zu
+jeden Offline-Schritt der Mini-Kette, 18 Schritte), und jede Schema-Konstante des Pakets gehört zu
 einem Schritt — reflexiv gesammelt aus `pipeline`, `schema`, `prep.bodies` und `prep.papers`. Keine
 Codeänderung: das Register war an jeder geprüften Stelle schon richtig.
 
@@ -128,10 +128,13 @@ einmal allein (drei parallel), dann die ganze schnelle Suite rückwärts. `-p no
 hier nicht; die Reihenfolge kommt aus `--co` und wird umgedreht, und `xargs -d '\n'` statt
 Wort-Trennung, weil ein parametrierter Testname ein Leerzeichen enthält (`-auf'm`).
 
-Gemessen: **97 Testdateien, 94 allein grün, drei ohne schnelle Tests** (jeder Test darin trägt
-`slow` oder `network`, Exit 5 = nichts gesammelt). Rückwärts **1061 Tests in 103 s, Exit 0**.
-**Keine Abhängigkeit gefunden** — das ist der Befund, nicht eine fehlende Prüfung. Die Lehre stand
-seit dem 2026-10-12 in STATUS; jetzt kann man sie nachrechnen.
+Gemessen am 2026-10-13: **97 Testdateien, 94 allein grün, drei ohne schnelle Tests**
+(`test_bodies_reference.py`, `test_network_period.py`, `test_parties_numbers.py` — jeder Test darin
+trägt `slow` oder `network`, Exit 5 = nichts gesammelt); rückwärts **1063 Tests**, die Session
+zusammen **244 s, Exit 0**. **Keine Abhängigkeit gefunden** — das ist der Befund, nicht eine
+fehlende Prüfung. Gegenprobe: mit einer absichtlich roten Datei bricht die Session mit Exit 1 ab
+und nennt sie; die erste Fassung hatte den Exit-Code hinter einem `|| echo` verloren (Review-Befund
+7). Die Lehre stand seit dem 2026-10-12 in STATUS; jetzt kann man sie nachrechnen.
 
 ### e) Die Gegenbeispiele als `@example`
 
@@ -181,7 +184,7 @@ Zahl im Kommentar und bleiben dem Lauf von Hand.
 | `uv run pytest -m slow` | Exit 0; 20 Tests über die volle Referenz, 191 s |
 | `uv run nox -s bench` | Exit 0; 17 Messungen gegen die gespeicherte Baseline |
 | `uv run nox -s verify` | Exit 0; 31 Ziele, 27 „Not confirmed", 580 s |
-| `uv run nox -s alone` | Exit 0; 97 Dateien allein, Suite rückwärts 1061 Tests |
+| `uv run nox -s alone` | Exit 0; 244 s, 97 Dateien allein, Suite rückwärts 1063 Tests |
 | `uv run nox -s mutate` | Exit 0; 882 Mutanten, 717 getötet (81,3 %); `-- fast --gremlin-workers=2` in 539 s |
 
 Die schnelle Suite ist von 1021 auf 1062 Tests gewachsen (41 neue), fünf Vorbedingungen sind

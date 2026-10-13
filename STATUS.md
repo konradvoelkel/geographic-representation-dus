@@ -273,7 +273,7 @@ Entscheidungen als Punkt 53 in `docs/decisions.md`.
   veröffentlichten Tabellen der Kontrollvariablen); die veröffentlichte Tabelle bekam dafür eine eigene
   Funktion mit Vertrag (`prep.context.named_weights`).
 - **`nox -s alone`** prüft die Reihenfolgeunabhängigkeit: 97 Dateien allein (94 grün, drei ohne schnelle
-  Tests), die Suite rückwärts 1061 Tests in 103 s, Exit 0 — keine Abhängigkeit gefunden.
+  Tests), die Suite rückwärts 1063 Tests, zusammen 244 s, Exit 0 — keine Abhängigkeit gefunden.
 - **Wöchentlicher Qualitätslauf** in `.github/workflows/quality.yml` (montags und von Hand, verify plus
   die gezielte Mutationssitzung, geschätzt unter 30 min, `timeout-minutes: 45`). Noch nicht erprobt.
 - Ungemessen bleiben `report/model.py`, `report/charts.py` und `report/build.py` (rund 3 500 Zeilen);

@@ -417,9 +417,9 @@ def alone(session: nox.Session) -> None:
         session.error(f"Dateien, die allein nicht grün sind: {broken}")
 
     session.log("und einmal rückwärts")
-    collected = subprocess.run(
-        [*base[:-1], "--co", "-q"], capture_output=True, text=True, check=False
-    )
+    # Kein zusaetzliches ``-q``: ``addopts`` traegt schon eines, und ``-qq`` druckt statt der
+    # Test-IDs nur eine Zeile je Datei (2026-10-13 genau darauf gelaufen).
+    collected = subprocess.run([*base[:-1], "--co"], capture_output=True, text=True, check=False)
     if collected.returncode != 0:
         session.error(f"Sammeln misslang (Exit {collected.returncode}): {collected.stderr[-500:]}")
     nodes = [line for line in collected.stdout.splitlines() if "::" in line]
