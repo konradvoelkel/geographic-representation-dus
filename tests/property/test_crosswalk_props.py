@@ -106,22 +106,23 @@ def boxes(draw: st.DrawFn) -> list[Area]:
 
 # Die Lagen, aus denen die beiden Befunde vom 2026-10-12 und 2026-10-13 kamen, als ``@example``:
 # ohne sie hängt es an der lokalen Beispiel-Datenbank, ob hypothesis sie wieder zieht, und CI hat
-# keine (CLAUDE.md, „deal.cases läuft ohne Beispiel-Datenbank").
-#   SHARED   eine Quellfläche, die genau eine Gitterzelle ist und ihre Grenze mit vier Zellen
-#            teilt: daraus kam Punkt 51 (zwei Flächen mit gemeinsamer Grenze schneiden sich in
-#            Fließkomma in etwa 4,44e-16 statt in 0).
-#   HALVES   eine Quellfläche, die genau zwei Zellen zur Hälfte deckt: zwei **gleich große**
-#            Anteile, und damit die Lage, in der das letzte Bit über die Zeilenfolge entschied,
-#            bevor ``area_shares`` nach den Schlüsseln sortierte.
-#   SPAN     eine Quellfläche über zwei ganze Zellen, also vier geteilte Grenzen auf einmal.
-SHARED = [Area("p0", box(0.0, 0.0, 1.0, 1.0))]
+# keine (CLAUDE.md, "deal.cases läuft ohne Beispiel-Datenbank").
+#   SLIVER   eine Quellfläche, deren rechte Kante ein Bit über der Gitterlinie liegt
+#            (``math.nextafter(1.0, 2.0)``). Genau daraus kam Punkt 51: der Schnitt mit der
+#            Nachbarzelle "10" ist nicht 0, sondern 2,22e-16 der Quellfläche, also ohne Schwelle
+#            eine Zeile mehr; mit ``MIN_SHARE`` bleibt eine Zeile und die Bedeckung sinkt auf
+#            0,9999999999999998. **Eine Kante genau auf der Linie erzeugt keinen Splitter** -- bei
+#            achsenparallelen Kästen schneidet GEOS dort exakt 0 (nachgemessen 2026-10-13, der
+#            Review hat eine früher hier stehende Behauptung widerlegt).
+#   HALVES   eine Quellfläche, die zwei Zellen zur Hälfte deckt: zwei **gleich große** Anteile,
+#            und damit die Lage, in der das letzte Bit über die Zeilenfolge entschied, bevor
+#            ``area_shares`` nach den Schlüsseln sortierte (hypothesis, 2026-10-12).
+SLIVER = [Area("p0", box(0.0, 0.0, math.nextafter(1.0, 2.0), 1.0))]
 HALVES = [Area("p0", box(0.5, 0.0, 1.5, 1.0))]
-SPAN = [Area("p0", box(0.0, 0.0, 2.0, 1.0))]
 
 
-@example(sources=SHARED)
+@example(sources=SLIVER)
 @example(sources=HALVES)
-@example(sources=SPAN)
 @given(sources=boxes())
 def test_area_shares_partition_each_source_and_match_the_intersection(sources: list[Area]) -> None:
     shares = area_shares(sources, CELLS)
@@ -138,9 +139,8 @@ def test_area_shares_partition_each_source_and_match_the_intersection(sources: l
 
 # 1,4603 ist der Faktor, mit dem hypothesis den Befund vom 2026-10-13 gefunden hat: dasselbe
 # Rechteck ergab im gestreckten Gitter eine Zeile mehr (commit afcea53).
-@example(sources=SHARED, factor=1.4603)
+@example(sources=SLIVER, factor=1.4603)
 @example(sources=HALVES, factor=1.4603)
-@example(sources=SPAN, factor=1.4603)
 @given(sources=boxes(), factor=st.floats(min_value=0.2, max_value=5.0))
 def test_scaling_the_grid_does_not_change_the_shares(sources: list[Area], factor: float) -> None:
     """Anteile sind dimensionslos: dieselbe Lage in einem gestreckten Gitter ergibt dieselben Zahlen."""
@@ -155,8 +155,8 @@ def test_scaling_the_grid_does_not_change_the_shares(sources: list[Area], factor
     assert a.select("source_id", "target_id").equals(b.select("source_id", "target_id"))
 
 
-@example(sources=SHARED)
-@example(sources=SPAN)
+@example(sources=SLIVER)
+@example(sources=HALVES)
 @given(sources=boxes())
 def test_no_share_below_the_threshold_survives(sources: list[Area]) -> None:
     """Punkt 51: unter ``min_share`` ist ein Schnittstück ein Splitter und keine Zeile.
