@@ -1,0 +1,227 @@
+"""Die Literaturübersicht: Daten im Paket, Stadt im Profil, ein Abschnitt auf der Seite (Punkt 47).
+
+``docs/todo.md``, Punkt 5. Geprüft wird, dass die Einträge zitierfähig sind (Autor, Titel, Jahr,
+Ort oder Institution, URL mit Abrufdatum oder DOI), dass die stadtneutrale Datei stadtneutral
+bleibt, dass das Profil ergänzt statt zu ersetzen, und dass README und Seite dieselbe Liste tragen.
+"""
+
+from __future__ import annotations
+
+import re
+import tomllib
+from pathlib import Path
+
+import deal
+import pytest
+from pydantic import ValidationError
+
+from georep.errors import SchemaError
+from georep.report.literature import FILE, literature, package_literature
+from georep.report.render import sections
+from georep.settings import LiteratureEntry, Settings
+from tests.conftest import REPO, mg_settings
+from tests.unit.test_report_city import CITY_WORDS
+
+SOURCE_FILE = REPO / "src" / "georep" / "report" / FILE
+THESIS_KEY = "bartzsch-2026"
+GOOD: dict[str, object] = {
+    "key": "beispiel",
+    "authors": "A. Autorin",
+    "title": "Ein Titel",
+    "year": 2020,
+    "venue": "Irgendeine Hochschule",
+}
+
+
+def entry(**overrides: object) -> LiteratureEntry:
+    """Ein Eintrag mit den Pflichtfeldern; ``overrides`` setzt einzelne Felder, auch auf ``None``.
+
+    ``model_validate`` statt des Konstruktors, weil ein ``**dict[str, object]`` unter
+    ``mypy --strict`` je Feld einen Typfehler gäbe -- die Validierung ist hier der Prüfgegenstand.
+    """
+    return LiteratureEntry.model_validate(GOOD | overrides)
+
+
+# --- Die Daten ---------------------------------------------------------------------------------
+
+
+def test_the_package_file_holds_citable_entries() -> None:
+    found = package_literature()
+    assert len(found) >= 5, "lieber fünf belegte Einträge als zwölf vage"
+    assert len({entry.key for entry in found}) == len(found)
+    for entry in found:
+        assert entry.url or entry.doi
+        assert not entry.url or entry.accessed is not None
+        assert entry.note, f"{entry.key}: ohne Satz zum Beitrag ist der Eintrag eine Linksammlung"
+
+
+def test_no_city_word_in_the_package_file() -> None:
+    """Dieselbe Regel wie für Code und Vorlage: die allgemeinen Einträge kennen keine Stadt."""
+    text = SOURCE_FILE.read_text(encoding="utf-8")
+    assert [word for word in CITY_WORDS if word in text] == []
+
+
+def test_the_profile_adds_the_thesis_in_front_of_the_general_entries(
+    default_settings: Settings,
+) -> None:
+    found = literature(default_settings)
+    assert found[0].key == THESIS_KEY and found[0].pending
+    assert "Heinrich-Heine-Universität" in found[0].venue
+    # Die zweite Quelle der Arbeit ist die Lücke: ohne Jahr und ohne Link, darum nur mit ``pending``
+    assert found[1].pending and found[1].year is None and found[1].links == ()
+    assert found[2:] == package_literature()
+
+
+def test_a_second_city_inherits_the_general_entries() -> None:
+    """Option 01: ohne eigenen Eintrag erbt eine zweite Stadt die Paketliste, unverändert."""
+    assert literature(mg_settings()) == package_literature()
+
+
+def test_a_doubled_key_is_an_error(default_settings: Settings) -> None:
+    clash = entry(key=package_literature()[0].key, url="https://a.invalid/", accessed="2026-10-13")
+    settings = default_settings.model_copy(
+        update={"report": default_settings.report.model_copy(update={"literature": [clash]})}
+    )
+    with pytest.raises(SchemaError, match="doppelt"):
+        literature(settings)
+
+
+def test_a_broken_package_file_is_a_schema_error(tmp_path: Path) -> None:
+    (tmp_path / FILE).write_text("literature = 3\n", encoding="utf-8")
+    with pytest.raises(SchemaError, match="Liste von Tabellen"):
+        package_literature(tmp_path)
+    (tmp_path / FILE).write_text("[[literature]]\nkey = 1\n", encoding="utf-8")
+    with pytest.raises(SchemaError, match=FILE):
+        package_literature(tmp_path)
+    with pytest.raises(SchemaError, match="nicht lesbar"):
+        package_literature(tmp_path / "leer")
+
+
+def test_the_same_key_twice_in_the_package_file_breaks_the_contract(tmp_path: Path) -> None:
+    (tmp_path / FILE).write_text(
+        '[[literature]]\nkey = "a"\nauthors = "A"\ntitle = "T"\nyear = 2020\n'
+        'venue = "V"\ndoi = "10.1234/a"\n\n'
+        '[[literature]]\nkey = "a"\nauthors = "B"\ntitle = "U"\nyear = 2021\n'
+        'venue = "W"\ndoi = "10.1234/b"\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(deal.PostContractError):
+        package_literature(tmp_path)
+
+
+# --- Das Modell --------------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("update", "message"),
+    [
+        ({}, "url oder doi"),
+        ({"pending": True, "year": None, "url": "https://a.invalid/"}, "Abrufdatum"),
+        ({"year": None, "doi": "10.1234/a"}, "gehört ein Jahr dazu"),
+        ({"url": "https://a.invalid/"}, "Abrufdatum"),
+        ({"url": "http://a.invalid/"}, "keine https-URL"),
+        ({"doi": "nicht-doi"}, "beginnt mit 10."),
+        ({"doi": "10.1234/a", "year": 1800}, "Jahreszahl"),
+        ({"doi": "10.1234/a", "key": "Gross"}, "Kleinbuchstaben"),
+        ({"doi": "10.1234/a", "authors": "  "}, "Pflicht"),
+    ],
+)
+def test_an_entry_that_cannot_be_checked_is_refused(
+    update: dict[str, object], message: str
+) -> None:
+    with pytest.raises(ValidationError, match=message):
+        entry(**update)
+
+
+def test_a_pending_entry_may_lack_year_and_link() -> None:
+    """Was aus dem Verzeichnis einer nicht öffentlichen Arbeit nachzutragen ist, hat noch keinen Link."""
+    found = entry(pending=True, year=None)
+    assert found.links == () and found.year is None and found.pending
+
+
+def test_a_doi_becomes_a_link_and_both_links_count() -> None:
+    both = entry(doi="10.1234/abc", url="https://a.invalid/x", accessed="2026-10-13")
+    assert both.doi_url == "https://doi.org/10.1234/abc"
+    assert both.links == ("https://doi.org/10.1234/abc", "https://a.invalid/x")
+    assert entry(doi="10.1234/abc").links == ("https://doi.org/10.1234/abc",)
+
+
+# --- Der Abschnitt der Seite -------------------------------------------------------------------
+
+
+def test_the_section_stands_between_derived_data_and_downloads() -> None:
+    numbers = {part.name: part.number for part in sections()}
+    assert numbers["abgeleitete-daten"] < numbers["literatur"] < numbers["downloads"]
+
+
+def test_the_page_carries_every_entry_with_a_cite_and_noopener(
+    mini_page: str, default_settings: Settings
+) -> None:
+    found = literature(default_settings)
+    assert "<h2>Literatur und verwandte Arbeiten</h2>" in mini_page
+    block = mini_page[mini_page.index('<section id="literatur">') :]
+    block = block[: block.index("</section>")]
+    assert block.count("<cite>") == len(found)
+    for entry in found:
+        assert block.count(f'<li id="lit-{entry.key}"') == 1
+        for link in entry.links:
+            assert f'<a href="{link}" rel="noopener">' in block
+    assert block.count('rel="noopener"') == sum(len(entry.links) for entry in found)
+    # Ein Link ohne rel bliebe unbemerkt: die Zählung oben hält beides zusammen.
+    assert block.count("<a href=") == block.count('rel="noopener"')
+
+
+def test_the_pending_entry_says_so_on_the_page(mini_page: str) -> None:
+    """Die Arbeit ist nicht öffentlich; die Seite behauptet keinen geprüften Titel."""
+    assert '<span class="pending">Angaben nachzutragen</span>' in mini_page
+
+
+def test_the_method_paragraph_points_at_the_section(mini_page: str) -> None:
+    assert 'href="#literatur">Literatur und verwandte Arbeiten</a>' in mini_page
+
+
+# --- README und Quelle tragen dieselbe Liste ---------------------------------------------------
+
+BULLET = re.compile(r"^- ", re.MULTILINE)
+
+
+def readme_bullets() -> list[str]:
+    """Die Einträge des README-Abschnitts „Literatur", je als ein Block (Fortsetzungszeilen dabei)."""
+    text = (REPO / "README.md").read_text(encoding="utf-8")
+    start = text.index("\n## Literatur\n")
+    rest = text[start + 1 :]
+    section = rest[: rest.index("\n## ", 1)]
+    parts = BULLET.split(section)
+    return [" ".join(part.split()) for part in parts[1:]]
+
+
+def test_the_readme_list_is_the_same_list_in_the_same_order(default_settings: Settings) -> None:
+    """Von Hand gepflegt, aber nicht frei: dieser Test hält README und Quelle zusammen.
+
+    Erzeugt wird der Abschnitt nicht — das README ist die Datei, die ein frischer Klon zuerst
+    liest, und ein Generator bräuchte einen Build-Schritt, den das Repo nicht hat. Was gelten
+    muss, steht hier: dieselben Einträge, dieselbe Reihenfolge, derselbe Satz zum Beitrag.
+    """
+    bullets = readme_bullets()
+    found = literature(default_settings)
+    assert len(bullets) == len(found)
+    for entry, bullet in zip(found, bullets, strict=True):
+        assert entry.authors in bullet, entry.key
+        assert entry.title in bullet, entry.key
+        assert entry.venue in bullet, entry.key
+        if entry.year is not None:
+            assert str(entry.year) in bullet, entry.key
+        assert " ".join(entry.note.split()) in bullet, entry.key
+        for link in entry.links:
+            assert link in bullet, entry.key
+        if entry.accessed is not None:
+            assert entry.accessed.strftime("%d.%m.%Y") in bullet, entry.key
+
+
+def test_the_source_file_documents_its_own_rules() -> None:
+    """Jede Zahl trägt ihre Begründung (CLAUDE.md): die Datei sagt, was ein Eintrag braucht."""
+    head = SOURCE_FILE.read_text(encoding="utf-8").split("[[literature]]", 1)[0]
+    assert "docs/todo.md" in head and "docs/decisions.md" in head
+    assert all(field in head for field in ("key", "url", "note", "pending"))
+    payload = tomllib.loads(SOURCE_FILE.read_text(encoding="utf-8"))
+    assert [row["key"] for row in payload["literature"]] == [e.key for e in package_literature()]

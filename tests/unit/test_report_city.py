@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 from georep.layout import Layout
+from georep.report.literature import package_literature
 from georep.report.model import ReportModel, build_report_model, summary_payload
 from georep.report.render import ALLOWED_LINKS, Visuals, model_links, render_report
 from georep.report.tables import party_columns
@@ -127,8 +128,16 @@ def test_the_duesseldorf_page_still_speaks_of_duesseldorf(mini_page: str) -> Non
 def test_another_city_renders_without_a_duesseldorf_word(
     mini_model: ReportModel, mini_visuals: Visuals
 ) -> None:
+    # Punkt 47: ``literature`` ist Profildaten wie ``sources``; der stadtspezifische Eintrag (die
+    # Arbeit zu dieser Stadt) fällt mit dem Profil weg, die stadtneutralen stehen im Paket.
     other = replace(
-        mini_model, city=OTHERLAND, sources=(SOURCE,), marker="gegenstand", notes=(), derived=None
+        mini_model,
+        city=OTHERLAND,
+        sources=(SOURCE,),
+        marker="gegenstand",
+        notes=(),
+        derived=None,
+        literature=package_literature(),
     )
     page = render_report(other, mini_visuals)
     assert "Anderstädter Ratsdokumenten" in page and "Stadt Anderstadt" in page
