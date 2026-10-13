@@ -168,7 +168,7 @@ def test_the_section_stands_between_derived_data_and_downloads() -> None:
     assert numbers["abgeleitete-daten"] < numbers["literatur"] < numbers["downloads"]
 
 
-def test_the_page_carries_every_entry_with_a_cite_and_noopener(
+def test_the_page_carries_every_entry_with_a_cite_and_its_links(
     mini_page: str, default_settings: Settings
 ) -> None:
     found = literature(default_settings)
@@ -179,10 +179,21 @@ def test_the_page_carries_every_entry_with_a_cite_and_noopener(
     for entry in found:
         assert block.count(f'<li id="lit-{entry.key}"') == 1
         for link in entry.links:
-            assert f'<a href="{link}" rel="noopener">' in block
-    assert block.count('rel="noopener"') == sum(len(entry.links) for entry in found)
-    # Ein Link ohne rel bliebe unbemerkt: die Zählung oben hält beides zusammen.
-    assert block.count("<a href=") == block.count('rel="noopener"')
+            assert f'<a href="{link}">' in block
+    assert block.count("<a href=") == sum(len(entry.links) for entry in found)
+
+
+def test_no_link_on_the_page_claims_a_new_window(mini_page: str) -> None:
+    """``rel="noopener"`` wirkt nur mit ``target="_blank"``, und die Seite öffnet nichts neu.
+
+    Es stand im Literaturabschnitt an jedem Link und im Dialog der Dokumente an den PDF-Links; an
+    beiden Stellen tat es nichts, und an den zwanzig Links der übrigen Abschnitte stand es nicht.
+    Ein Attribut, das an zwei Stellen steht und an zwanzig nicht, liest sich wie eine Regel, die es
+    nicht gibt (Review 2026-10-13). Jetzt steht es nirgends, und die eine Regel ist: diese Seite
+    öffnet keinen Link in einem neuen Fenster.
+    """
+    assert "noopener" not in mini_page
+    assert 'target="_blank"' not in mini_page
 
 
 def test_a_pending_entry_without_a_title_is_allowed_and_says_so() -> None:

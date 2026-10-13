@@ -352,7 +352,6 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
         when.textContent = germanDate(doc[1]);
         var a = document.createElement("a");
         a.href = doc[0].indexOf("http") === 0 ? doc[0] : data.base + doc[0];
-        a.rel = "noopener";
         a.textContent = doc[3];
         var ref = document.createElement("div");
         ref.className = "ref";

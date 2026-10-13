@@ -985,8 +985,11 @@ keine).
 **Die URLs kommen über die Daten in die Allowlist.** `render.model_links` liest sie aus `model.literature`,
 so wie es die Quellen aus `[[report.sources]]` liest (Punkt 36); die Nachbedingung von `render_report` bleibt
 unverändert, und kein Link einer Zitation zwingt eine Konstante mit einem Orts- oder Projektnamen in den Code.
-Jeder Link trägt `rel="noopener"`, und ein Test zählt Links und `rel` gegeneinander, damit kein neuer Eintrag
-es vergisst.
+Die Links sehen aus wie jeder andere auf der Seite: kein `target="_blank"`, also auch kein
+`rel="noopener"` — das wirkt nur mit `target`. Der Abschnitt hatte es an jedem Link, der Dialog der Dokumente
+an den PDF-Links, die übrigen zwanzig Links der Seite nicht; jetzt steht es nirgends, und die eine Regel ist,
+dass diese Seite keinen Link in einem neuen Fenster öffnet (Review 2026-10-13). Ein Test zählt stattdessen
+die Links der Einträge gegen die Links im Abschnitt, damit keiner fehlt.
 
 **Das README pflegt dieselbe Liste von Hand, ein Test hält beide zusammen.** Der Abschnitt „Literatur" im
 README trägt Autor, Titel, Ort, Jahr, Link, Abrufdatum und denselben Satz je Eintrag, in derselben

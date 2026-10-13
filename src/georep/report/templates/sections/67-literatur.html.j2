@@ -13,8 +13,8 @@ dazu verhält; jeder Link war am genannten Abrufdatum erreichbar.</p>
    die niemand geprüft hat (Review 2026-10-13). Marker und Zitation trennt ein Gedankenstrich; das
    README schreibt dieselbe Form. #}
 <cite>{{ item.authors }}{% if item.title %}: {{ item.title }}{% endif %}</cite>{% if not item.title %} — <span class="pending">[Titel nachzutragen]</span>{% elif item.pending %} — <span class="pending">[Angaben nachzutragen]</span>{% endif %}{% if not item.title or item.title[-1] not in "?!" %}.{% endif %} {{ item.venue }}{% if item.year %}, {{ item.year }}{% endif %}.
-{% if item.doi_url %} DOI: <a href="{{ item.doi_url }}" rel="noopener">{{ item.doi }}</a>{% if not item.url and item.accessed %}, abgerufen am {{ item.accessed|date_de }}{% endif %}.{% endif %}
-{% if item.url %} <a href="{{ item.url }}" rel="noopener">{{ item.url }}</a>, abgerufen am {{ item.accessed|date_de }}.{% endif %}
+{% if item.doi_url %} DOI: <a href="{{ item.doi_url }}">{{ item.doi }}</a>{% if not item.url and item.accessed %}, abgerufen am {{ item.accessed|date_de }}{% endif %}.{% endif %}
+{% if item.url %} <a href="{{ item.url }}">{{ item.url }}</a>, abgerufen am {{ item.accessed|date_de }}.{% endif %}
 {% if item.note %}
 <p class="note">{{ item.note }}</p>
 {% endif %}
