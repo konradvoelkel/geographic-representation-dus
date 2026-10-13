@@ -9,7 +9,10 @@
 # Regeln für einen Eintrag (das Modell LiteratureEntry in georep.settings prüft sie):
 #   * key      Kleinbuchstaben, Ziffern, Bindestriche; wird zur Anker-ID lit-<key> auf der Seite
 #   * url      https, mit accessed (Abrufdatum, an dem der Link erreichbar war); oder doi
-#   * note     ein bis zwei Sätze: was die Arbeit beiträgt und wie dieses Vorhaben sich dazu verhält
+#   * title    wörtlich wie auf der Titelseite oder in der Repositoriumsbeschreibung; nicht umformulieren,
+#              auch nicht gekürzt oder übersetzt (Review 2026-10-13: dreimal passiert)
+#   * note     ein bis zwei Sätze: was die Arbeit beiträgt und wie dieses Vorhaben sich dazu verhält;
+#              jede Jahres- oder Datumsangabe darin muss aus einer der genannten Quellen stammen
 #   * pending  true, solange Angaben nachzutragen sind; die Seite schreibt es sichtbar dazu
 # Kein Stadtwort in dieser Datei (tests/unit/test_report_literature.py prüft das).
 # Typografische Anführungszeichen „…“ im Text: ein ASCII-Zollzeichen würde den String beenden.
@@ -49,24 +52,24 @@ note = "Der Ursprung dieses Ansatzes für Deutschland: Ortsbezüge in parlamenta
 [[literature]]
 key = "cherif-2026-korpus"
 authors = "Khaled Cherif"
-title = "Ratsvorlagen-Korpus deutscher Kommunen: 43.127 Dokumente Long-Context-Verwaltungstext"
+title = "Ratsvorlagen-Korpus deutscher Kommunen: 43.127 Dokumente Long-Context-Verwaltungstext (Leipzig, Osnabrück, Dresden, Freiburg im Breisgau)"
 year = 2026
 venue = "Zenodo, CC BY 4.0"
 doi = "10.5281/zenodo.21767760"
 accessed = 2026-10-13
-note = "Ein offenes Volltextkorpus kommunaler Ratsvorlagen aus vier Städten (43 127 Dokumente, 303 Millionen Token), über OParl aus den öffentlichen Teilen der Ratsinformationssysteme gezogen, Stand 03.08.2026. Zeigt, dass ein zitierbarer Datensatz machbar ist; dieses Vorhaben veröffentlicht aus Lizenz- und Datenschutzgründen keine Texte, sondern nur abgeleitete Tabellen und Kennungen."
+note = "Ein offenes Volltextkorpus kommunaler Ratsvorlagen aus vier Städten (43 127 Dokumente, 303 Millionen Token), über OParl aus den öffentlichen Teilen der Ratsinformationssysteme gezogen, Stand 29.07.2026, veröffentlicht am 03.08.2026. Zeigt, dass ein zitierbarer Datensatz machbar ist; dieses Vorhaben veröffentlicht aus Lizenz- und Datenschutzgründen keine Texte, sondern nur abgeleitete Tabellen und Kennungen."
 
 # --- Der Standard und seine Verbreitung -------------------------------------------------------
 
 [[literature]]
 key = "oparl-spec-11"
 authors = "OParl (Kernteam: Stefan Graupner, Ernesto Ruge, Konstantin Schütze)"
-title = "OParl 1.1. Spezifikation für eine offene Schnittstelle für Ratsinformationssysteme"
+title = "OParl 1.1 — Spezifikation einer einheitlichen Schnittstelle zum Abruf von maschinenlesbaren Informationen aus Ratsinformationssystemen"
 year = 2018
 venue = "OParl, Spezifikationsprojekt der Open Knowledge Foundation Deutschland e. V. und der Vitako e. V."
 url = "https://dev.oparl.org/spezifikation"
 accessed = 2026-10-13
-note = "Der Standard, über den diese Seite ihre Dokumente bekommt: eine einheitliche Schnittstelle auf die öffentlichen Teile kommunaler Ratsinformationssysteme, veröffentlicht am 25.06.2018, zwei Jahre nach OParl 1.0. Dieses Vorhaben liest ausschließlich darüber und prüft jede Antwort gegen das Datenmodell der Spezifikation, statt das Ratsinformationssystem zu scrapen."
+note = "Der Standard, über den diese Seite ihre Dokumente bekommt: eine einheitliche Schnittstelle auf die öffentlichen Teile kommunaler Ratsinformationssysteme, veröffentlicht zwei Jahre nach OParl 1.0. Dieses Vorhaben liest ausschließlich darüber und prüft jede Antwort gegen das Datenmodell der Spezifikation, statt das Ratsinformationssystem zu scrapen."
 
 [[literature]]
 key = "oparl-nrw-start"
@@ -83,7 +86,7 @@ key = "interkommunales-gremiendaten"
 authors = "Stadt Frechen, kommunale Datenverarbeitungszentrale Rhein-Erft-Rur"
 title = "Transparenzportal für Gremiendaten"
 year = 2017
-venue = "interkommunales.nrw, Pilotprojekt „Kommunales Open Government“ des Landes Nordrhein-Westfalen"
+venue = "interkommunales.nrw, Pilotprojekt „Kommunales Open Government in NRW“ des Landes Nordrhein-Westfalen"
 url = "https://interkommunales.nrw/projekt/transparenzportal-fuer-gremiendaten/"
 accessed = 2026-10-13
 note = "Das interkommunale Transparenzportal für Gremiendaten, federführend die Stadt Frechen mit 24 Verwaltungen, nennt als Ausgabekanal das Portal „Politik bei uns“. Diese Seite geht den anderen Weg: sie liest einen OParl-Endpunkt selbst und liefert eine statische Auswertung aus, kein Portal."
@@ -93,7 +96,7 @@ note = "Das interkommunale Transparenzportal für Gremiendaten, federführend di
 [[literature]]
 key = "offenes-koeln"
 authors = "Marian Steinbach"
-title = "Offenes Köln. Software-Backend des Portals offeneskoeln.de"
+title = "offeneskoeln. Software backend of offeneskoeln.de"
 year = 2012
 venue = "Eigenprojekt, Quelltext auf GitHub"
 url = "https://github.com/marians/offeneskoeln"
@@ -108,7 +111,7 @@ year = 2015
 venue = "Berlin"
 url = "https://politik-bei-uns.de/"
 accessed = 2026-10-13
-note = "Die bundesweite Fortsetzung von Offenes Köln und OpenRuhr:RIS, Anfang 2015 unter diesem Namen zusammengelegt: eine Oberfläche über die öffentlichen Teile kommunaler Ratsinformationssysteme, durchsuchbar nach Stichwort und nach Ort auf einer Karte. Der Blickwinkel ist derselbe wie hier; seit 2020 steht auf jeder Seite, dass das Portal nicht mehr betreut wird und die Daten eingefroren sind."
+note = "Die bundesweite Fortsetzung von Offenes Köln und OpenRuhr:RIS, laut der Projektseite des Portals Anfang 2015 unter diesem Namen zusammengelegt: eine Oberfläche über die öffentlichen Teile kommunaler Ratsinformationssysteme, durchsuchbar nach Stichwort und nach Ort auf einer Karte. Der Blickwinkel ist derselbe wie hier; am Abrufdatum stand auf jeder Seite, dass das Portal nicht mehr betreut wird und die Daten eingefroren sind."
 
 [[literature]]
 key = "politik-bei-uns-2"

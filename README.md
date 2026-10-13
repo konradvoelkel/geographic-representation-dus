@@ -273,16 +273,16 @@ Abschnitt „Literatur und verwandte Arbeiten“. Quelle der Einträge sind `src
 diese Liste und die Seite zusammen.
 
 - **Lukas Bartzsch: Die Sichtbarkeit der Kommunalwahlbezirke in den Ratsdokumenten und ihr Zusammenhang mit
-  der Wahlbeteiligung**. (Angaben nachzutragen) Heinrich-Heine-Universität Düsseldorf, Bachelorarbeit, 2026.
-  <https://github.com/lubar102/geographic-representation-dus>, abgerufen am 13.10.2026.
+  der Wahlbeteiligung** — [Angaben nachzutragen]. Heinrich-Heine-Universität Düsseldorf, Bachelorarbeit,
+  2026. <https://github.com/lubar102/geographic-representation-dus>, abgerufen am 13.10.2026.
   Der Ursprung dieser Seite, eingereicht im Januar 2026: Fragestellung, Wörterbuch je Wahlbezirk, Suche über
   die Ratsdokumente und die Regression gegen die Wahlbeteiligung stammen aus dieser Arbeit, und dieses
   Programm ist ein Umbau ihres Quelltextes. Es reproduziert ihre Zahlen, solange die eigenen Methodikregeln
   abgeschaltet sind; der Titel hier ist die Beschreibung aus dem Repository, nicht der Titel der Arbeit, und
   genauer Titel wie Betreuung sind nachzutragen, denn die Arbeit selbst ist nicht öffentlich — öffentlich
   ist nur ihr Quelltext.
-- **Autor nachzutragen: Untersuchung zu Parteien und Stadtteilbezügen in den Ratsdokumenten der Stadt Köln**.
-  (Angaben nachzutragen) Herausgeber und Jahr nachzutragen aus dem Literaturverzeichnis der Arbeit.
+- **Autor nachzutragen: Untersuchung zu Parteien und Stadtteilbezügen in den Ratsdokumenten der Stadt Köln**
+  — [Angaben nachzutragen]. Herausgeber und Jahr nachzutragen aus dem Literaturverzeichnis der Arbeit.
   Die Arbeit zitiert eine Kölner Untersuchung zu Parteien und Ratsdokumenten; sie ist am 2026-10-13 nicht
   auffindbar. Gesucht wurde in OpenAlex und Crossref (Ratsinformationssystem, Ratsdokumente, Köln, Text
   Mining, geografische Repräsentation), auf arXiv, in Hochschulrepositorien und auf GitHub, und im
@@ -316,21 +316,22 @@ diese Liste und die Seite zusammen.
   zählen und als Maß für geografische Repräsentation lesen, trotz starker Fraktionsdisziplin. Dieses
   Vorhaben überträgt die Idee auf die kommunale Ebene, wo der Wahlbezirk kleiner und die Dokumentart
   vielfältiger ist.
-- **Khaled Cherif: Ratsvorlagen-Korpus deutscher Kommunen: 43.127 Dokumente Long-Context-Verwaltungstext**.
-  Zenodo, CC BY 4.0, 2026. DOI [10.5281/zenodo.21767760](https://doi.org/10.5281/zenodo.21767760), abgerufen
-  am 13.10.2026.
+- **Khaled Cherif: Ratsvorlagen-Korpus deutscher Kommunen: 43.127 Dokumente Long-Context-Verwaltungstext
+  (Leipzig, Osnabrück, Dresden, Freiburg im Breisgau)**. Zenodo, CC BY 4.0, 2026. DOI
+  [10.5281/zenodo.21767760](https://doi.org/10.5281/zenodo.21767760), abgerufen am 13.10.2026.
   Ein offenes Volltextkorpus kommunaler Ratsvorlagen aus vier Städten (43 127 Dokumente, 303 Millionen
-  Token), über OParl aus den öffentlichen Teilen der Ratsinformationssysteme gezogen, Stand 03.08.2026.
-  Zeigt, dass ein zitierbarer Datensatz machbar ist; dieses Vorhaben veröffentlicht aus Lizenz- und
-  Datenschutzgründen keine Texte, sondern nur abgeleitete Tabellen und Kennungen.
-- **OParl (Kernteam: Stefan Graupner, Ernesto Ruge, Konstantin Schütze): OParl 1.1. Spezifikation für eine
-  offene Schnittstelle für Ratsinformationssysteme**. OParl, Spezifikationsprojekt der Open Knowledge
-  Foundation Deutschland e. V. und der Vitako e. V., 2018. <https://dev.oparl.org/spezifikation>, abgerufen
-  am 13.10.2026.
+  Token), über OParl aus den öffentlichen Teilen der Ratsinformationssysteme gezogen, Stand 29.07.2026,
+  veröffentlicht am 03.08.2026. Zeigt, dass ein zitierbarer Datensatz machbar ist; dieses Vorhaben
+  veröffentlicht aus Lizenz- und Datenschutzgründen keine Texte, sondern nur abgeleitete Tabellen und
+  Kennungen.
+- **OParl (Kernteam: Stefan Graupner, Ernesto Ruge, Konstantin Schütze): OParl 1.1 — Spezifikation einer
+  einheitlichen Schnittstelle zum Abruf von maschinenlesbaren Informationen aus Ratsinformationssystemen**.
+  OParl, Spezifikationsprojekt der Open Knowledge Foundation Deutschland e. V. und der Vitako e. V., 2018.
+  <https://dev.oparl.org/spezifikation>, abgerufen am 13.10.2026.
   Der Standard, über den diese Seite ihre Dokumente bekommt: eine einheitliche Schnittstelle auf die
-  öffentlichen Teile kommunaler Ratsinformationssysteme, veröffentlicht am 25.06.2018, zwei Jahre nach OParl
-  1.0. Dieses Vorhaben liest ausschließlich darüber und prüft jede Antwort gegen das Datenmodell der
-  Spezifikation, statt das Ratsinformationssystem zu scrapen.
+  öffentlichen Teile kommunaler Ratsinformationssysteme, veröffentlicht zwei Jahre nach OParl 1.0. Dieses
+  Vorhaben liest ausschließlich darüber und prüft jede Antwort gegen das Datenmodell der Spezifikation,
+  statt das Ratsinformationssystem zu scrapen.
 - **Open.NRW: 22 Kommunen sind mit OParl gestartet**. Open.NRW, Ministerium für Heimat, Kommunales, Bau und
   Digitalisierung des Landes Nordrhein-Westfalen, 2017. <https://open.nrw/Kommunen-OParl>, abgerufen am
   13.10.2026.
@@ -339,14 +340,14 @@ diese Liste und die Seite zusammen.
   macht die Kette dieses Vorhabens auf eine andere Kommune übertragbar, ohne je Stadt einen eigenen Scraper
   zu schreiben.
 - **Stadt Frechen, kommunale Datenverarbeitungszentrale Rhein-Erft-Rur: Transparenzportal für
-  Gremiendaten**. interkommunales.nrw, Pilotprojekt „Kommunales Open Government“ des Landes
+  Gremiendaten**. interkommunales.nrw, Pilotprojekt „Kommunales Open Government in NRW“ des Landes
   Nordrhein-Westfalen, 2017. <https://interkommunales.nrw/projekt/transparenzportal-fuer-gremiendaten/>,
   abgerufen am 13.10.2026.
   Das interkommunale Transparenzportal für Gremiendaten, federführend die Stadt Frechen mit 24 Verwaltungen,
   nennt als Ausgabekanal das Portal „Politik bei uns“. Diese Seite geht den anderen Weg: sie liest einen
   OParl-Endpunkt selbst und liefert eine statische Auswertung aus, kein Portal.
-- **Marian Steinbach: Offenes Köln. Software-Backend des Portals offeneskoeln.de**. Eigenprojekt, Quelltext
-  auf GitHub, 2012. <https://github.com/marians/offeneskoeln>, abgerufen am 13.10.2026.
+- **Marian Steinbach: offeneskoeln. Software backend of offeneskoeln.de**. Eigenprojekt, Quelltext auf
+  GitHub, 2012. <https://github.com/marians/offeneskoeln>, abgerufen am 13.10.2026.
   Der erste Nachweis, dass sich kommunale Ratsdokumente anders ansehen lassen als im Ratsinformationssystem:
   ein Portal, das Vorlagen nach Stichwort und nach Ort durchsuchbar machte. Dieses Vorhaben greift denselben
   Gedanken auf — Orte statt Gremien — und wertet ihn für eine Frage aus, nämlich welche Wahlbezirke in den
@@ -354,10 +355,11 @@ diese Liste und die Seite zusammen.
   archiviert ist.
 - **Open Knowledge Foundation Deutschland e. V. (maßgeblich Ernesto Ruge): Politik bei uns**. Berlin, 2015.
   <https://politik-bei-uns.de/>, abgerufen am 13.10.2026.
-  Die bundesweite Fortsetzung von Offenes Köln und OpenRuhr:RIS, Anfang 2015 unter diesem Namen
-  zusammengelegt: eine Oberfläche über die öffentlichen Teile kommunaler Ratsinformationssysteme,
-  durchsuchbar nach Stichwort und nach Ort auf einer Karte. Der Blickwinkel ist derselbe wie hier; seit 2020
-  steht auf jeder Seite, dass das Portal nicht mehr betreut wird und die Daten eingefroren sind.
+  Die bundesweite Fortsetzung von Offenes Köln und OpenRuhr:RIS, laut der Projektseite des Portals Anfang
+  2015 unter diesem Namen zusammengelegt: eine Oberfläche über die öffentlichen Teile kommunaler
+  Ratsinformationssysteme, durchsuchbar nach Stichwort und nach Ort auf einer Karte. Der Blickwinkel ist
+  derselbe wie hier; am Abrufdatum stand auf jeder Seite, dass das Portal nicht mehr betreut wird und die
+  Daten eingefroren sind.
 - **Ernesto Ruge u. a.: Politik bei uns 2. Quelltexte: Abruf-Daemon, Web-Frontend und OParl-Ausgabe**. Open
   Knowledge Foundation Deutschland e. V., Quelltexte auf GitHub, 2017. <https://github.com/politik-bei-uns>,
   abgerufen am 13.10.2026.
