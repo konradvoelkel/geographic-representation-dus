@@ -170,7 +170,7 @@ vollständiger Zitation und einem oder zwei Sätzen zum Beitrag. Dieselbe Liste 
 
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46 und 47)
 
-- Tests: 950 schnelle (nox-Gate, parallel in rund 43 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 976 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
@@ -223,6 +223,11 @@ vollständiger Zitation und einem oder zwei Sätzen zum Beitrag. Dieselbe Liste 
   (`tests/unit/test_pipeline_steps.py` hält beides zusammen, seit 2026-10-13).
 - Ein Test darf die Jahreszahl einer anderen Periode nicht im ganzen HTML suchen: ein `data-value`
   wie „0.040124486620252926" enthält „2025" zufällig. Seit 2026-10-13 sucht er zwischen den Tags.
+  Dieselbe Falle ein zweites Mal, am selben Tag: der Literaturabschnitt (Punkt 47) zitiert fremde
+  Veröffentlichungen und nennt darum Jahre und Monate, die nichts mit der Periode oder den Daten
+  dieser Seite zu tun haben — zwei Tests wurden rot („Dezember" aus einem Eintrag zu Open.NRW, 2025
+  aus zwei Aufsätzen). `without_literature(page)` in `tests/conftest.py` schneidet den Abschnitt
+  heraus; wer ein Wort im ganzen HTML sucht, nimmt sie.
 - Eine CSS-Klasse, die ein Umschalter tauscht, muss auf jeder Fläche dasselbe bedeuten: die Parteizellen
   trugen `p<n>` aus dem Abschnitts-CSS, der Umschalter schrieb `q<n>`, und `.q0` bis `.q4` setzen nur `fill`
   — nach einem Klick auf „Anteil" war die Tönung weg (gefunden am 2026-10-13 mit headless Chrome, nicht von
