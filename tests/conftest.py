@@ -126,6 +126,16 @@ def as_in_the_thesis(settings: Settings) -> Settings:
     )
 
 
+def within_budget(size: int, budget: int) -> bool:
+    """Punkt 50: ``report.page_budget_bytes`` von 0 heißt „keine Prüfung" -- auch im Test.
+
+    Die vier Zusicherungen über die Größe von ``index.html`` lesen die Zahl aus den Settings und
+    wurden mit 0 rot, obwohl 0 sie abschalten soll (Review 2026-10-13). Sie gehen darum über
+    diesen Helfer, so wie ``SiteSummary.over_budget`` es im Programm tut.
+    """
+    return not budget or size < budget
+
+
 LITERATURE_SECTION = '<section id="literatur">'
 
 

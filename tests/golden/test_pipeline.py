@@ -21,7 +21,7 @@ from georep.prep.voters import TURNOUT
 from georep.report.search import fold, fold_ascii
 from georep.report.tables import published
 from georep.settings import Settings, load_settings
-from tests.conftest import as_in_the_thesis
+from tests.conftest import as_in_the_thesis, within_budget
 
 NETWORK = {"opendata", "papers", "organizations", "pdfs", "streets_osm", "pois_wiki"}
 EXACT = ["wahlkreis_id", "anzahl_treffer", "Wahlberechtigte_insgesamt", "Waehler", "suchbegriffe"]
@@ -226,7 +226,7 @@ def test_pipeline_reproduces_the_thesis_results(
     page = layout.site_index.read_text(encoding="utf-8")
     assert "41 Kommunalwahlbezirke" in page and page.count('id="bezirk-') == 41
     # Budget der Seite: eine Zahl, in den Settings (Punkt 50, docs/seitengroesse-2026-10.md, § 7)
-    assert layout.site_index.stat().st_size < settings.report.page_budget_bytes
+    assert within_budget(layout.site_index.stat().st_size, settings.report.page_budget_bytes)
     _check_search_section(page)
     # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
     # und die Begriffe je Wahlbezirk (Punkt 49)
@@ -440,5 +440,7 @@ def test_the_rules_change_the_reference_as_measured(
     assert second.all.p > 0.05 and second.without.p > 0.05
 
     page = layout.site_index.read_text(encoding="utf-8")
-    assert layout.site_index.stat().st_size < default_settings.report.page_budget_bytes
+    assert within_budget(
+        layout.site_index.stat().st_size, default_settings.report.page_budget_bytes
+    )
     assert "Stadtweite Begriffe" in page and "Zwei Regeln weichen bewusst" in page

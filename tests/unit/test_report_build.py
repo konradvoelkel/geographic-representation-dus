@@ -23,6 +23,7 @@ from georep.report.build import (
 )
 from georep.report.tables import GEOJSON_COLUMNS, csv_plan, published
 from georep.settings import Settings
+from tests.conftest import within_budget
 
 
 def test_site_has_index_map_and_every_download_file(mini_run: Layout) -> None:
@@ -85,6 +86,14 @@ def test_geojson_and_schema_are_consistent_with_the_tables(mini_run: Layout) -> 
 
 def test_summary_line_counts_files_and_megabytes() -> None:
     assert SiteSummary(41, 17, 1_234_567).line() == "41 Wahlbezirke, 17 Dateien, 1,2 MB"
+
+
+def test_a_budget_of_zero_switches_the_check_off_in_the_tests_too() -> None:
+    """Punkt 50 sagt „0 schaltet die Prüfung ab"; die vier Zusicherungen über die Seitengröße
+    wurden mit 0 trotzdem rot (Review 2026-10-13, Befund 4). Sie gehen jetzt über diesen Helfer."""
+    assert within_budget(10, 20) and not within_budget(30, 20)
+    assert not within_budget(20, 20)  # die Grenze selbst ist schon zu groß
+    assert within_budget(10**9, 0)
 
 
 def test_the_summary_line_says_when_the_page_is_over_its_budget() -> None:

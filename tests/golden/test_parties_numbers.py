@@ -30,6 +30,7 @@ from georep.layout import Layout
 from georep.prep.papers import build_corpus
 from georep.settings import Settings, load_settings
 from georep.stores import PaperStore, TextStore
+from tests.conftest import within_budget
 
 pytestmark = pytest.mark.slow
 
@@ -225,7 +226,8 @@ def test_the_page_carries_the_section_within_the_budget(
     assert sum(page.count(f'class="num q{k}"') for k in range(5)) == 41 * len(
         settings.originators.parties
     )
-    assert layout.site_index.stat().st_size < settings.report.page_budget_bytes  # Punkt 50
+    # Punkt 50: 0 schaltet die Prüfung ab, darum über den Helfer
+    assert within_budget(layout.site_index.stat().st_size, settings.report.page_budget_bytes)
     # Die drei neuen Tabellen stehen als Parquet und CSV zum Download
     names = {p.name for p in layout.site_data.iterdir()}
     for table in ("dokumente_urheber", "wahlbezirke_urheber", "wahlbezirke_parteien"):
