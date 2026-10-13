@@ -63,9 +63,23 @@ def relative_to(value: str, mean: str) -> pl.Expr:
 
     Ohne den Zweig wäre das Verhältnis dort, wo keine Partei des Wahlbezirks ein Dokument hat,
     eine Division durch 0 und damit unendlich oder NaN; Klassengrenzen und Legende könnten damit
-    nichts anfangen.
+    nichts anfangen. **Achtung bei der Abweichung:** ``relative_to(...) - 1`` ist ohne Mittel
+    nicht 0, sondern -1 -- „kein Mittel" hieße dann „ganz unten statt genau in der Mitte". Wer
+    eine Abweichung will, nimmt ``deviation_from``.
     """
     return pl.when(pl.col(mean) > 0).then(pl.col(value) / pl.col(mean)).otherwise(0.0)
+
+
+def deviation_from(value: str, mean: str) -> pl.Expr:
+    """Relative Abweichung vom Mittel: 0 heißt „genau im Mittel", +0,5 „50 Prozent darüber".
+
+    Ohne Mittel (keine Einheit der Gruppe hat einen Wert) ist die Abweichung 0 und nicht -1: es
+    gibt dann nichts, wovon etwas abweichen könnte, und jede andere Zahl wäre eine Behauptung.
+    Der Fall ist nicht theoretisch -- eine Stichprobe ohne extrahierte Texte hat ihn (``fetch
+    pdfs --limit N``, ein frisches Profil), und mit -1,0 je Bezirk bräche die Nachbedingung
+    „die Abweichungen summieren sich auf 0" und mit ihr der ganze Lauf.
+    """
+    return pl.when(pl.col(mean) > 0).then(pl.col(value) / pl.col(mean) - 1.0).otherwise(0.0)
 
 
 def _every_district_has_a_dictionary(
@@ -103,6 +117,10 @@ def district_metrics(results: pl.DataFrame, dictionary: pl.DataFrame) -> pl.Data
     ``treffer_je_begriff`` ordnet die Bezirke neu (auf der Referenz 28 von 41 Quantilklassen
     anders), ``abweichung_stadtmittel`` ist eine streng monotone Umrechnung der Quote und bekommt
     auf der Seite darum feste Klassengrenzen statt Quantile.
+
+    Sonderfälle, beide mit 0 beantwortet statt mit einem Fehler: ein Wörterbuch ohne Begriffe hat
+    keine Treffer je Begriff, und eine Stadt ohne einen einzigen Treffer hat kein Stadtmittel und
+    damit keine Abweichung davon (``deviation_from``). Beides kommt in einer Stichprobe vor.
     """
     sizes = dictionary.select(DISTRICT, pl.col(TERMS).list.len().cast(pl.Int64).alias(TERM_COUNT))
     missing = sorted(set(results.get_column(DISTRICT)) - set(sizes.get_column(DISTRICT)))
@@ -119,7 +137,7 @@ def district_metrics(results: pl.DataFrame, dictionary: pl.DataFrame) -> pl.Data
             (pl.col(RATE) * PER_1000_FACTOR).alias(PER_1000),
             unweighted_mean(RATE).alias(CITY_MEAN),
         )
-        .with_columns((relative_to(RATE, CITY_MEAN) - 1.0).alias(DEVIATION))
+        .with_columns(deviation_from(RATE, CITY_MEAN).alias(DEVIATION))
         .select(*METRIC_COLUMNS)
         .sort(DISTRICT)
     )
