@@ -27,6 +27,7 @@ from georep.pipeline import (
     stamp_mismatch,
 )
 from georep.prep.bodies import BODIES_SCHEMA_VERSION
+from georep.prep.context import CONTEXT_SCHEMA_VERSION
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION
@@ -40,12 +41,20 @@ VERSIONS = {
     # Punkt 46: der neue Schritt und die drei Spalten mehr in wahlbezirke_parteien
     "metrics": METRICS_SCHEMA,
     "parties": PARTIES_SCHEMA,
+    # Punkt 53: beide Ausgaben sind seit dem 2026-10-13 sortiert
+    "context": CONTEXT_SCHEMA_VERSION,
 }
 
 
 @pytest.fixture
 def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
-    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    layout = Layout(
+        tmp_path / "data",
+        tmp_path / "cache",
+        tmp_path / "reference",
+        # Mit Fremddaten, damit die drei Kontextschritte im Register stehen (Punkt 53).
+        context_root=tmp_path / "context",
+    )
     return {s.name: s.schema_version for s in build_steps(default_settings, layout)}
 
 
@@ -58,7 +67,13 @@ def test_a_bumped_schema_version_makes_the_stamp_stale(
     default_settings: Settings, tmp_path: Path
 ) -> None:
     """Der Grund für den Test oben: sonst meldet ``stamp_mismatch`` die Änderung nie."""
-    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    layout = Layout(
+        tmp_path / "data",
+        tmp_path / "cache",
+        tmp_path / "reference",
+        # Mit Fremddaten, damit die drei Kontextschritte im Register stehen (Punkt 53).
+        context_root=tmp_path / "context",
+    )
     step = next(s for s in build_steps(default_settings, layout) if s.name == "topics")
     stamped: dict[str, object] = {
         "schema_version": step.schema_version,
@@ -76,7 +91,13 @@ def test_a_bumped_schema_version_makes_the_stamp_stale(
 
 def test_only_the_report_step_carries_an_extra(default_settings: Settings, tmp_path: Path) -> None:
     """Der Zusatz ist die Ausnahme, nicht die Regel: ein alter Stamp bleibt sonst gültig."""
-    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    layout = Layout(
+        tmp_path / "data",
+        tmp_path / "cache",
+        tmp_path / "reference",
+        # Mit Fremddaten, damit die drei Kontextschritte im Register stehen (Punkt 53).
+        context_root=tmp_path / "context",
+    )
     found = {s.name: s.extra for s in build_steps(default_settings, layout)}
     assert found["report"] == report_fingerprint(default_settings)
     assert len(found["report"]) == 16

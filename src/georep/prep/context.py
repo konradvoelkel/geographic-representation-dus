@@ -82,6 +82,12 @@ def precinct_table(
     return joined.sort(PRECINCT)
 
 
+# Erhoehen, wenn sich Spalten, Typen oder die **Zeilenfolge** von wahlbezirke_kontext.parquet
+# oder wahlbezirke_crosswalk.parquet aendern. 2: beide Dateien sind seit dem 2026-10-13 nach
+# ihrem Schluessel sortiert (Punkt 53) -- ein Lauf von vorher liegt unsortiert da, und nur
+# ueber die Version merkt der Stamp das (CLAUDE.md, "Jeder Step bekommt seine Schema-Version
+# aus der Konstante des Moduls").
+CONTEXT_SCHEMA_VERSION = 2
 MISSING_SUFFIX = "_fehlgewicht"  # Anteil des Gewichts eines Wahlbezirks auf Einheiten ohne Wert
 
 

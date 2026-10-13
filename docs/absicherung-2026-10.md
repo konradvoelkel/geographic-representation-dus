@@ -121,6 +121,14 @@ Für die veröffentlichte Tabelle wurde der Join eine eigene Funktion mit Vertra
 (`prep.context.named_weights`): so steht die Zusage, wo sie gilt, und nicht in einem Kommentar im
 Register. Gedruckt ändert sich nichts — `uv run pytest -m slow` über die volle Referenz bleibt grün.
 
+Die Sortierung ändert aber die **Zeilenfolge zweier veröffentlichter Dateien**, und ein alter Lauf
+liegt unsortiert da. Nach der eigenen Regel bekommt der Schritt darum eine neue Schema-Version
+(`prep.context.CONTEXT_SCHEMA_VERSION = 2`, im schreibenden Modul): `georep status` meldet `context`
+seitdem als „Schema geändert" und rechnet die beiden Dateien einmal neu. Der Byteidentitäts-Test
+(`test_two_runs_write_identical_parquet`) kannte sie beide nicht — er lief ohne Fremddaten und damit
+ohne die drei Kontextschritte; jetzt stehen `context_table`, `crosswalk` und `controls` in seiner
+Liste (Review-Befunde 4 und 5).
+
 ### d) Reihenfolgeunabhängigkeit der Tests
 
 Neue Session `nox -s alone`: jede Testdatei unter `tests/unit`, `tests/golden` und `tests/property`

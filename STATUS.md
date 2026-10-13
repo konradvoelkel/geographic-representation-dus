@@ -271,7 +271,8 @@ Entscheidungen als Punkt 53 in `docs/decisions.md`.
   `georep run report --force` brauchte.
 - **Fünf Stellen sortieren nach einem Join** (`dictionary_bias`, drei Regressionsframes, die beiden
   veröffentlichten Tabellen der Kontrollvariablen); die veröffentlichte Tabelle bekam dafür eine eigene
-  Funktion mit Vertrag (`prep.context.named_weights`).
+  Funktion mit Vertrag (`prep.context.named_weights`), und der Schritt `context` die Schema-Version 2,
+  damit ein alter, unsortierter Lauf einmal neu rechnet.
 - **`nox -s alone`** prüft die Reihenfolgeunabhängigkeit: 97 Dateien allein (94 grün, drei ohne schnelle
   Tests), die Suite rückwärts 1063 Tests, zusammen 244 s, Exit 0 — keine Abhängigkeit gefunden.
 - **Wöchentlicher Qualitätslauf** in `.github/workflows/quality.yml` (montags und von Hand, verify plus

@@ -59,6 +59,7 @@ from georep.layout import Layout
 from georep.prep.bodies import BODIES_SCHEMA_VERSION, BodyRules, classify_papers
 from georep.prep.bodies import summary as papers_bodies_summary
 from georep.prep.context import (
+    CONTEXT_SCHEMA_VERSION,
     MISSING_SUFFIX,
     aggregate_context,
     district_variables,
@@ -526,8 +527,12 @@ def build_steps(
             *(v.name for v in context.variables),
             *(f"{v.name}{MISSING_SUFFIX}" for v in context.unit_variables()),
         ).sort("wahlkreis_id")
-        write_parquet(frame, layout.context_table, schema_version=1)
-        write_parquet(named_weights(weights, values), layout.crosswalk, schema_version=1)
+        write_parquet(frame, layout.context_table, schema_version=CONTEXT_SCHEMA_VERSION)
+        write_parquet(
+            named_weights(weights, values),
+            layout.crosswalk,
+            schema_version=CONTEXT_SCHEMA_VERSION,
+        )
         return (
             f"{frame.height} Wahlbezirke, {len(units)} {context.units.label}, "
             f"{len(context.variables)} Variablen"
@@ -1044,6 +1049,7 @@ def build_steps(
                     ),
                     (layout.context_table, layout.crosswalk),
                     context_step,
+                    CONTEXT_SCHEMA_VERSION,
                 )
             ]
             if with_context

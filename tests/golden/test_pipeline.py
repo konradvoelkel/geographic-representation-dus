@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import replace
 from pathlib import Path
 
 import polars as pl
@@ -187,10 +188,22 @@ def test_unknown_step_is_an_error(tmp_path: Path, mini_root: Path, settings: Set
 def test_two_runs_write_identical_parquet(
     tmp_path: Path, mini_root: Path, settings: Settings
 ) -> None:
-    a = _layout(tmp_path / "a", mini_root, settings.profile)
-    b = _layout(tmp_path / "b", mini_root, settings.profile)
+    """Zwei Läufe auf denselben Eingaben schreiben dieselben Bytes (architecture, Datenhaltung).
+
+    Mit Fremddaten, damit die beiden veröffentlichten Tabellen der Kontrollvariablen mitgeprüft
+    werden: ``context_table`` und ``crosswalk`` entstehen aus Joins, und bis zum 2026-10-13 stand
+    dort keine Sortierung -- die Zusage galt für sie nur zufällig, und dieser Test sah sie nicht
+    (Review-Befund 5).
+    """
+
+    def with_context(root: Path) -> Layout:
+        return replace(
+            _layout(root, mini_root, settings.profile), context_root=mini_root / "context"
+        )
+
+    a, b = with_context(tmp_path / "a"), with_context(tmp_path / "b")
     for layout in (a, b):
-        bootstrap(layout)
+        bootstrap(layout, context_files=settings.context.files.names())
         run_pipeline(build_steps(settings, layout), settings)
     for name in (
         "dictionary",
@@ -217,6 +230,10 @@ def test_two_runs_write_identical_parquet(
         # Punkt 45
         "papers_committee",
         "committee_table",
+        # Punkt 53: die beiden veröffentlichten Tabellen der Kontrollvariablen
+        "context_table",
+        "crosswalk",
+        "controls",
     ):
         assert getattr(a, name).read_bytes() == getattr(b, name).read_bytes(), name
 
