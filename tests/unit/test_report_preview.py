@@ -77,11 +77,19 @@ def test_every_button_controls_a_preview_table_and_every_long_table_has_one(narr
         assert rows is not None and rows.group(0).count("<tr") > 1
 
 
-def test_a_collapsed_row_opens_when_it_is_selected_or_the_table_is_open(narrow: str) -> None:
-    """Die zweite Regel ist die Naht zu ``georep.select``: markiert heißt sichtbar."""
+def test_a_collapsed_row_opens_when_it_is_selected_targeted_or_the_table_is_open(
+    narrow: str,
+) -> None:
+    """Drei Nähte: ``georep.select`` setzt ``selected``, die Adresse setzt ``:target``, die
+    Schaltfläche ``open``.
+
+    ``:target`` ist der Sprung aus einer geteilten Adresse: ``index.html#bezirk-17`` zielt auf eine
+    Zeile, die die Vorschau verbirgt, und ohne diese Regel scrollte der Browser ins Leere -- für 38
+    der 41 Wahlbezirke (Review 2026-10-13). Niemand liest dafür ``location.hash``; das kann CSS.
+    """
     assert (
-        "table.preview.open tbody tr, table.preview tbody tr.selected { display: table-row; }"
-        in narrow
+        "table.preview.open tbody tr, table.preview tbody tr.selected,"
+        " table.preview tbody tr:target { display: table-row; }" in narrow
     )
     assert 'table.classList.toggle("open", open)' in narrow
     assert 'button.setAttribute("aria-expanded", open ? "true" : "false")' in narrow

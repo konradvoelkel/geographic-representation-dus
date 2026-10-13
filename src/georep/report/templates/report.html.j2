@@ -122,11 +122,13 @@ tr.selected td { background: color-mix(in srgb, var(--selected) 18%, var(--surfa
 /* Punkt 48: lange Tabellen zeigen Kopf und die ersten Zeilen, die Schaltfläche darunter klappt den
    Rest auf. Die Vorschau ist eine Regel und kein Attribut je Zeile, damit drei Dinge ohne eine
    Zeile JavaScript stimmen: nach dem Sortieren zählt nth-child die neue Folge, eine markierte
-   Zeile klappt von allein auf (georep.select setzt .selected), und die Druckansicht ist
-   vollständig. docs/seitengroesse-2026-10.md, § 3.2. */
+   Zeile klappt von allein auf (georep.select setzt .selected), eine Zeile, auf die die Adresse
+   zielt, ebenso (:target, also index.html#bezirk-17 aus einer geteilten Adresse -- niemand muss
+   dafür location.hash lesen), und die Druckansicht ist vollständig.
+   docs/seitengroesse-2026-10.md, § 3.2. */
 {% if model.preview_rows %}
 table.preview tbody tr:nth-child(n+{{ model.preview_rows + 1 }}) { display: none; }
-table.preview.open tbody tr, table.preview tbody tr.selected { display: table-row; }
+table.preview.open tbody tr, table.preview tbody tr.selected, table.preview tbody tr:target { display: table-row; }
 {% endif %}
 p.more { margin: .3rem 0 0; }
 p.more button { font: inherit; font-size: .9rem; color: var(--accent); background: none; border: 0; padding: .2rem 0; cursor: pointer; }

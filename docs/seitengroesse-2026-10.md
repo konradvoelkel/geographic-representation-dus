@@ -122,6 +122,9 @@ Größe, sondern dass drei Dinge dadurch ohne eine Zeile JavaScript richtig sind
   zweite Regel zeigt genau sie. Eine eingeklappte Zeile klappt damit beim Auswählen auf — aus der
   Karte, aus dem Streudiagramm und aus der Suche —, und `scrollIntoView` findet sie. Beim nächsten
   `select` räumt dieselbe Mechanik wieder auf, weil `select` die Klasse überall entfernt.
+- **Springen.** Dieselbe Regel nennt `tr:target`: `index.html#bezirk-17` aus einer geteilten
+  Adresse zeigt die Zeile, auf die die Adresse zielt, und der Browser scrollt sie selbst ins Bild.
+  Dafür liest niemand `location.hash`.
 - **Drucken.** `@media print` setzt dieselbe Regel auf `table-row` und blendet die Schaltflächen aus;
   die Druckansicht ist vollständig, ohne dass jemand vorher klickt.
 
@@ -240,8 +243,10 @@ eine Verabredung, keine Grenze der Technik.
    für alle Tabellen gleich; eine Zahl je Tabelle wäre ein Argument am Makro, ist aber nicht gebaut.
 2. **Die Vorschau ist der Ausgangszustand, nicht die Erinnerung.** Wer aufklappt und die Seite neu
    lädt, sieht wieder drei Zeilen; die Seite merkt sich nichts (kein `localStorage`, keine Adresse
-   mit Zustand). Ein `#bezirk-17` in der Adresse springt trotzdem richtig, weil die Zeile über
-   `select` markiert und damit aufgeklappt wird.
+   mit Zustand). Ein `#bezirk-17` in der Adresse springt trotzdem richtig — aber nicht über
+   `select`, das niemand aufruft, sondern weil die Vorschauregel neben `tr.selected` auch
+   `tr:target` zeigt. Ohne diese Regel scrollte der Browser für 38 der 41 Wahlbezirke ins Leere
+   (gefunden im Review vom 2026-10-13, in Chrome nachgeprüft).
 3. **Tabelle 5, Tabelle 6, 6b und die Kernzahlen bleiben offen** (§ 3.3). Wenn Konrad auch dort die
    Vorschau will, ist das je Tabelle ein Wort in der Vorlage.
 4. **Die Begriffslisten brauchen jetzt einen Webserver.** Aus `file://` steht dort der Hinweis statt

@@ -4,6 +4,11 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **`index.html#bezirk-17` springt wieder** (Review 2026-10-13, Befund 1): die Vorschau langer
+  Tabellen verbarg die Zeile, auf die eine geteilte Adresse zielt — für 38 der 41 Wahlbezirke lief
+  der Sprung ins Leere. Die Vorschauregel zeigt jetzt neben einer markierten auch die Zeile unter
+  `:target`.
+
 - **Die Gebietsumrechnung zählt keine Splitter mehr** (`docs/decisions.md` Punkt 51). Zwei Flächen,
   die nur eine Grenze teilen, schneiden sich in Fließkomma nicht in 0, sondern in etwa 4,44e-16;
   solche Scheinschnitte wurden zu eigenen Zeilen mit Gewichten wie 2,9e-17. Neu fällt ein
