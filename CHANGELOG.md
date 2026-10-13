@@ -2,7 +2,15 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
-## Unreleased
+## 0.12.0 (2026-10-13), Rueckstand nach dem Ausbau
+
+- Die sechs Punkte aus `docs/todo.md` sind abgearbeitet, je mit Dokument unter `docs/`: Methodik-Review mit
+  der Regel für Einrichtungen mit Stadtnamen und der Lockerung der exakten Reproduktion (Tag
+  `bartzsch-exakt` auf `v0.11.0`), Themenmodell mit gesäten Themen je Ausschuss und der Zuordnung eines
+  passenden Ausschusses je Dokument, Skalierung der Kennzahlen mit Umschaltern, Literaturübersicht, kompakte
+  Seite mit eingeklappten Tabellen und nachgeladenen Begriffslisten, Quelltext unter GPL-3.0-or-later.
+  Dabei behoben: Splitterflächen aus Fließkomma-Schnitten im Crosswalk, ein Fehler in `canonical_term`, ein
+  Überlauf in `nice_ticks`, der verlorene Marker von `georep publish`. Einzelheiten in den Absätzen darunter.
 
 - **Der Hinweis auf eine nicht geladene Datei nennt den richtigen Grund** (Review 2026-10-13,
   Befund 11): aus dem Dateisystem geöffnet verbietet der Browser das Nachladen, über einen Webserver

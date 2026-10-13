@@ -1,6 +1,6 @@
 # Status
 
-Stand 2026-10-13, `main` auf `v0.11.0` plus die beiden Methodikregeln aus `docs/todo.md`, Punkt 4,
+Stand 2026-10-13, `main` auf `v0.12.0` plus die beiden Methodikregeln aus `docs/todo.md`, Punkt 4,
 das tragfähige Themenmodell aus Punkt 1, die Skalierung der Kennzahlen aus Punkt 3, die
 Literaturübersicht aus Punkt 5 und die kompaktere Seite aus Punkt 2 (nicht
 getaggt; `bartzsch-exakt` zeigt auf den letzten exakt reproduzierenden Stand). Der Umbau in sieben Phasen ist abgeschlossen
