@@ -50,11 +50,11 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 ## Pipeline
 
-Achtundzwanzig Schritte stehen im Register, jeder mit Eingaben, Ausgaben und einer
+Neunundzwanzig Schritte stehen im Register, jeder mit Eingaben, Ausgaben und einer
 Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps` zeigt es
-(nachgezählt am 2026-10-12 aus `build_steps`: sechsundzwanzig für Düsseldorf, siebenundzwanzig mit
-Vergleich, einundzwanzig im Periodenprofil 2014 bis 2020, zwanzig in der laufenden Periode,
-einundzwanzig für Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
+(nachgezählt am 2026-10-13 aus `build_steps`: siebenundzwanzig für Düsseldorf, achtundzwanzig mit
+Vergleich, zweiundzwanzig im Periodenprofil 2014 bis 2020, einundzwanzig in der laufenden Periode,
+zweiundzwanzig für Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
 `georep fetch`; `georep fetch` führt `shapes` und `texts` mit, weil die Netzschritte die Flächen
 brauchen und die Texte sonst im Cache liegen blieben. Mit
 `topics.k = 0` fehlt der Schritt `topics`, und `weights` rechnet ohne Themenvarianten; `bodies` steht
@@ -91,6 +91,7 @@ Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`).
 | `index` | nein | Wörterbuch, Korpus | `processed/inverted_index.parquet` |
 | `timeline` | nein | Korpus, Index, Wörterbuch | `processed/monatsreihe.parquet`, `processed/wahlbezirke_monate.parquet` |
 | `results` | nein | Wörterbuch, Index, Wähler | `processed/wahlbezirke_auswertung.parquet` |
+| `metrics` | nein | Auswertung, Wörterbuch | `processed/wahlbezirke_kennzahlen.parquet` |
 | `body_hits` | nein | Auswertung, Gremien je Dokument, Stadtbezirke | `processed/wahlbezirke_gremien.parquet`, `processed/gremien.parquet` |
 | `weights` | nein | Wörterbuch, Index, Korpus (`id`, `paper_type`), Wähler, Themenanteile | `processed/wahlbezirke_gewichtet.parquet`, `processed/gewichte_begriffe.parquet` |
 | `controls` | nein | Auswertung, Kontrollvariablen | `processed/regression_kontrollen.parquet` |
@@ -208,12 +209,31 @@ mit einer englischen Kurzfassung, hell und dunkel über `prefers-color-scheme`. 
 als `templates/sections/NN-name.html.j2` in Nummernfolge, je mit optionalem `NN-name.css` und `NN-name.js`, die
 der Rahmen in den Stil- und einen eigenen Skriptblock einfügt (`render.sections`; ein `.css` oder `.js` ohne
 Vorlage ist ein Fehler). Das Basis-JavaScript bietet `window.georep` (`select(ids, scroll)`,
-`showDocuments(terms, title)`, `rows`) für die Skripte der Abschnitte; der Umschalter der Karte liest
-`data-class-<kennzahl>` je Fläche und blendet `#legend-<kennzahl>` ein, eine neue Kennzahl ist ein Radio, ein
-Attribut (`choropleth(extra_classes=...)`) und eine Legende. Die veröffentlichten Tabellen stehen im Register
+`showDocuments(terms, title)`, `rows`) für die Skripte der Abschnitte. **Umschalter einer Kennzahl** sind ein
+gemeinsames Muster (Punkt 46): das Makro `switcher(group, label, variants)` aus `templates/macros.html.j2`
+baut ein `fieldset.switcher` mit einem Radio je Variante (das erste ist die Standardansicht und steht auch
+ohne JavaScript da), und das Basis-JavaScript tauscht alles, was eine Variante kennt —
+`data-class-<variante>` (Stufe der Farbskala, `choropleth(extra_classes=...)` setzt sie je Fläche),
+`data-text-<variante>` (angezeigte Zahl oder Spaltenkopf), `data-value-<variante>` (Sortierwert) und die
+Legende `#legend-<variante>`. Gesucht wird im ganzen Dokument, nicht im Abschnitt, denn der Umschalter der
+Karte färbt auch die Kennzahlspalte der Tabelle je Wahlbezirk; getrennt halten sich die Gruppen dadurch, dass
+kein `value` zweimal vorkommt (ein Test hält das fest). Die Skala steht als `data-scale` am Radio: ohne
+Angabe die sequenzielle Blau-Rampe `q`, `d` ist die divergierende um das Mittel (orange darunter, neutrales
+Grau in der Mitte, blau darüber; aus `color-mix` von `--selected`, `--muted` und `--q2` in `--surface`, also
+ohne zweiten Dunkel-Block, mit nachgerechneten Kontrasten im Rahmen). Dieselbe Klasse bedeutet auf beiden
+Flächen dasselbe: auf einer SVG-Fläche färbt `q<n>` den `fill` mit der vollen Rampe, in einer Tabellenzelle
+denselben Rang als Tönung (`td.q<n>` auf `--p0` bis `--p4`) — die Zellen tragen Zahlen, und die volle Rampe
+erreicht in der Mitte keinen Kontrast 4,5. Die Karte bietet damit neben der Trefferquote auch Treffer
+absolut, Treffer je Begriff im Wörterbuch und die Abweichung vom Stadtmittel (feste Grenzen aus
+`[report.diverging]`, keine Quantile: die Abweichung ist eine streng monotone Umrechnung der Quote, und
+Quantile ergäben genau deren Klassen); der Abschnitt „Urheber und Parteien" schaltet seine sechs Karten und
+seine Parteispalten zwischen Anteil, Abweichung vom Mittel aller Parteien und Verhältnis zum Mittel um. Woher
+die Zahlen kommen, steht in `docs/skalierung-2026-10.md`; die Entscheidungen in `docs/decisions.md`,
+Punkt 46. Neben Tabelle 5 steht dieselbe Regression mit `x = Treffer je Begriff` (`model.per_term_regression`),
+und ihre Deutungssätze entstehen aus den Zahlen, nicht aus festem Text. Die veröffentlichten Tabellen stehen im Register
 `report/tables.py` (Datei, Beschreibung, Spaltendoku, CSV-Regeln, `optional` für profilabhängige Tabellen);
 daraus entstehen Downloads, `schema.json`, CSV-Dateien und die Spaltentabelle. Die Seite bleibt unter 1,5 MB
-(slow-Test); mit allen Abschnitten sind es 1,10 MB. Die beiden Abschnitte der Kontrollvariablen
+(slow-Test); mit allen Abschnitten sind es 1,30 MB. Die beiden Abschnitte der Kontrollvariablen
 (`32-kontrollvariablen`, `65-abgeleitete-daten`) stehen in `{% if model.controls %}` beziehungsweise
 `{% if model.derived %}` und fehlen ohne sie ganz; ihre Zahlen kommen aus
 `processed/regression_kontrollen.parquet`, der Satz zur Deutung entsteht aus p, Vorzeichen, R²-Zuwachs und dem
@@ -236,8 +256,8 @@ Datum, Titel, Drucksache, Art und Urheber; die Orte der Karte tragen Namen und W
 stehen einmal in `<defs>`, jedes Panel ist ein `<g transform>` mit 41 `<use>` (`charts.party_maps`), und die
 Quantilklassen sind je Partei gerechnet. Seine Tabelle je Wahlbezirk schattiert die Parteispalten nicht mit
 der Rampe der Karten, sondern mit fünf Tönungen einer Farbe (`--q2` in `--surface`): die Zellen tragen
-Zahlen, und die volle Rampe erreicht in der Mitte in keiner Schriftfarbe den Kontrast 4,5 (nachgerechnet in
-`sections/38-parteien.css`). Der Abschnitt `15-suche` ist ein Suchfeld nach dem
+Zahlen, und die volle Rampe erreicht in der Mitte in keiner Schriftfarbe den Kontrast 4,5 (nachgerechnet im
+Rahmen, wo die Tönung seit Punkt 46 steht). Der Abschnitt `15-suche` ist ein Suchfeld nach dem
 Combobox-Muster der WAI-ARIA Authoring Practices: `report/search.py` baut je kanonischem Begriff einen Eintrag
 (Abkürzung und Langform zusammengezogen, Dokumente beider Schreibweisen vereinigt) und je Wahlbezirksname
 einen weiteren, `render_report` legt sie als `<script id="suche-daten" type="application/json">` in die Seite
@@ -257,10 +277,11 @@ Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeig
 Tabelle die zweite Regression, entfällt die Spaltengruppe. Mit gesäten Themen (Punkt 45) trägt eine
 Themenzeile den Namen ihres Ausschusses aus dem Profil, und die Themen-Tabelle eine Spalte „Gremium"; der
 Abschnitt „Gremien" bekommt daneben die Tabelle „Dokumente je passendem Ausschuss" mit der Spalte „davon
-ohne Ausschussberatung". Auf der Referenz: 41 Wahlbezirke, 50 Dateien
-(mit `summary.json`, Option 01, und `ausschuss_zuordnung`, Punkt 45), 13,3 MB, davon `index.html` 1,10 MB
-(144 KB Suchdaten, 63 KB die Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html`
-252 KB, `dokumente.json` 2,3 MB; 1,5 s (2026-10-12, nach Punkt 45).
+ohne Ausschussberatung". Auf der Referenz: 41 Wahlbezirke, 52 Dateien
+(mit `summary.json`, Option 01, `ausschuss_zuordnung`, Punkt 45, und `wahlbezirke_kennzahlen`, Punkt 46),
+13,4 MB, davon `index.html` 1,30 MB (144 KB Suchdaten, 134 KB die beiden Umschalter, 63 KB die
+Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html` 252 KB, `dokumente.json` 2,3 MB;
+1,7 s (2026-10-13, nach Punkt 46).
 
 Die Stadtseite kennt ihre Nachbarn nicht: wo die Zeile „Weitere Städte" steht, hinterlässt der Rahmen nur die
 Marke `<!--georep:weitere-staedte-->`. Erst `georep publish` (`report.publish`) weiß, welche Stadtseiten es

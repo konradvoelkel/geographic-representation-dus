@@ -4,6 +4,33 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Jede Kennzahl mit Nenner hat jetzt einen Umschalter** (`docs/skalierung-2026-10.md`,
+  `docs/decisions.md` Punkt 46). Konrads Frage war: nicht sehen, wo eine Partei viel über
+  Wahlbezirke redet, sondern wie viel mehr oder weniger als der Durchschnitt aller Parteien.
+  - Der Abschnitt „Urheber und Parteien" schaltet die sechs kleinen Karten, die Spalte „im Mittel"
+    der Parteitabelle und die sechs Parteispalten der Bezirkstabelle zwischen **Anteil**,
+    **Abweichung vom Mittel aller Parteien** (in Prozentpunkten) und **Verhältnis zum Mittel** um.
+    Das Mittel ist das ungewichtete der Parteianteile im selben Wahlbezirk. Die Antwort in einer
+    Zeile: die AfD nennt einen Wahlbezirk in weniger als einem Drittel so vielen ihrer Dokumente
+    wie der Durchschnitt der sechs Parteien (Verhältnis 0,32), die GRÜNEN in rund der Hälfte mehr
+    (1,59).
+  - Die Karte der Wahlbezirke bietet neben der Trefferquote **Treffer absolut**, **Treffer je
+    Begriff im Wörterbuch** und die **Abweichung vom Stadtmittel**; die Kennzahlspalte der Tabelle
+    je Wahlbezirk zeigt dieselbe Einfärbung als Zahl, und die Kernzahlen nennen den Median der
+    Treffer je Begriff (4,57, Spannweite 2,25 bis 9,55).
+  - Neben Tabelle 5 steht **dieselbe Regression mit Treffer je Begriff im Wörterbuch** — die
+    stärkste offene Empfehlung des Methodik-Reviews. Mit ihr bleibt vom Zusammenhang nichts, nicht
+    einmal das Vorzeichen: r = −0,112 und p = 0,486 über alle 41 Wahlbezirke, ohne die Ausreißer 1
+    und 10 r = −0,042 und p = 0,800 (Tabelle 5: 0,189 / 0,236 und 0,335 / 0,037). Die einzige
+    Spalte, in der die Arbeit ein signifikantes p berichtet, hängt an der Größe der Wörterbücher.
+  - Die Standardansicht ändert sich nicht, und Tabelle 5, die Treffer (29 010) und das Wörterbuch
+    (5727) sind unberührt. Neue Download-Tabelle `wahlbezirke_kennzahlen` (neuer Schritt
+    `metrics`); `wahlbezirke_parteien` hat drei Spalten mehr. `index.html` wächst von 1,10 auf
+    1,30 MB (Budget 1,5 MB), die Seite auf 52 Dateien.
+  - Divergierende Varianten haben feste, symmetrische Klassengrenzen statt Quantile
+    (`[report.diverging]`): eine Abweichung vom Stadtmittel ist eine streng monotone Umrechnung der
+    Quote, Quantile darüber wären genau deren Klassen in anderer Farbe.
+
 - **Die Themen tragen Namen statt Nummern** (`docs/themenmodell-2026-10.md`, `docs/decisions.md` Punkt 45).
   Drei Änderungen am Themenmodell, gemessen auf der Referenz:
   - Die Stoppwörter kommen jetzt aus dem Profil (`topics.stop_sources`): Namen, Kürzel und Muster der

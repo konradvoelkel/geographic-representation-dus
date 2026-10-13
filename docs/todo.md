@@ -44,6 +44,15 @@ setzen. Die Reihenfolge der Abschnitte (`docs/plans/00-synergien.md`, § 5.1) bl
 
 ## 3. Skalierung der Kennzahlen
 
+**Erledigt am 2026-10-13, siehe `docs/skalierung-2026-10.md`** (Entscheidungen in
+`docs/decisions.md`, Punkt 46; offene Annahmen in § 8 des Konzepts). Das Konzept nimmt alle 35
+Kennzahlen der Seite mit Zähler und Nenner auf und entscheidet je Kennzahl, welche Normierung
+etwas ändert: gebaut sind der Umschalter der Parteikarten (Anteil / Abweichung vom Mittel aller
+Parteien / Verhältnis zum Mittel), drei neue Einfärbungen der Karte (Treffer absolut, Treffer je
+Begriff im Wörterbuch, Abweichung vom Stadtmittel) mit der Kennzahlspalte der Bezirkstabelle, und
+die zweite Regression neben Tabelle 5; Gremien, Monate, Gewichtung, Kontrollvariablen und Begriffe
+bekommen keinen, je mit Grund. Der Auftrag stand so:
+
 Heute: Parteikarten und Tabellen zeigen je Partei den Anteil ihrer Dokumente mit Bezug auf einen Wahlbezirk,
 andere Kennzahlen absolute Treffer oder Quoten je Wahlberechtigte (Bartzsch normiert auf Wahlberechtigte).
 Konrad will nicht sehen, wo SPD oder AfD viel reden, sondern wie viel mehr oder weniger als der Durchschnitt

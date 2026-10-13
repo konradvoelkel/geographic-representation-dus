@@ -375,19 +375,21 @@ Treffer; sie ist das Mittel über 41 Bezirke, und ein Dokument zählt in jedem B
   Trefferquote auf der Karte, Anteil auf den Parteikarten, dieselben Zahlen in den Tabellen. Tabelle 5, die
   Treffer (29 010) und das Wörterbuch (5727) bleiben unberührt.
 
-## 7. Kosten
+## 7. Kosten (gemessen nach dem Bau)
 
-- **Seitengröße.** Heute 1,10 MB von 1,5 MB Budget. Geschätzt: Datenattribute der sechs Parteikarten
-  (246 Flächen × zwei Varianten) rund 12 KB, Parteispalten der Bezirkstabelle (246 Zellen × zwei Varianten
-  mit Text und Sortierwert) rund 20 KB, Bezirkstabelle und große Karte (41 Zeilen und Flächen × drei
-  Varianten) rund 12 KB, Legenden rund 3 KB, JavaScript rund 2 KB, Texte rund 3 KB: **zusammen rund 52 KB**,
-  also unter der Grenze von 100 KB je Umschalter und weit unter dem Budget. Keine zweite Kopie der
-  Karten-SVGs: die Flächen stehen weiter einmal in `<defs>`, die Varianten sind Attribute.
-- **Laufzeit.** Der neue Schritt `metrics` ist ein Join über 41 Zeilen; die Parteispalten sind drei
-  Ausdrücke über 246 Zeilen. Beides unter 50 ms.
-- **Ein neuer Settings-Schlüssel** (die festen Klassengrenzen) macht den Fingerprint einmal ungültig: alle
-  Schritte laufen einmal neu (rund 23 s auf der Referenz). Bekannt und hingenommen
-  (`docs/plans/00-synergien.md`, § 2, Punkt 9).
+- **Seitengröße.** Vorher 1 158 408 Byte, nachher **1 295 185 Byte** (1,30 MB von 1,5 MB Budget), also
+  **136 777 Byte für beide Umschalter zusammen**, rund 67 KB je Umschalter und damit unter der Grenze von
+  rund 100 KB je Umschalter. Davon messbar (2026-10-13): die Datenattribute der sechs Parteikarten und der
+  Parteispalten 86 KB, die der großen Karte und der Bezirkstabelle 18 KB, der Rest Legenden, Texte,
+  JavaScript und die längeren Tooltips. Keine zweite Kopie der Karten-SVGs: die 41 Flächen stehen weiter
+  einmal in `<defs>`, die Varianten sind Attribute an denselben `<use>`; die Sortierwerte sind auf sechs
+  Stellen gerundet (das allein sparte 10 KB).
+- **Laufzeit.** Der neue Schritt `metrics` braucht auf der Referenz 0,1 s, der Schritt `parties` mit den
+  drei Spalten weiter 0,5 s, der Schritt `report` 1,7 s statt 1,5 s. `nox -s bench` bleibt grün.
+- **Kein neuer Fingerprint.** Die Klassengrenzen stehen unter `[report]` und sind damit aus dem
+  Settings-Fingerprint ausgenommen (`docs/plans/00-synergien.md`, § 5.4): eine andere Grenze färbt die Karte
+  um, sie rechnet keine Zahl neu. Neu laufen mussten nur `metrics` (neue Ausgabe), `parties`
+  (Schema 1 → 2) und `report`.
 
 ## 8. Annahmen, die Konrad umstoßen kann
 
@@ -404,3 +406,19 @@ Treffer; sie ist das Mittel über 41 Bezirke, und ein Dokument zählt in jedem B
 5. **Die Standardvariante bleibt überall die heutige.** Wenn Konrad die Abweichung als Standardansicht will,
    ist das ein Einzeiler je Abschnitt (`checked` am anderen Radio) — aber dann sieht ein Leser ohne
    JavaScript die divergierende Karte ohne Umschalter.
+
+## 9. Nachtrag: was der Bau noch gezeigt hat (2026-10-13)
+
+- **Eine CSS-Klasse muss auf jeder Fläche dasselbe bedeuten.** Die Parteizellen trugen `p<n>` aus
+  `sections/38-parteien.css`, der Umschalter schrieb aber `q<n>`, und `.q0` bis `.q4` setzen nur `fill` —
+  nach einem Klick auf „Anteil" war die Tönung weg. Gefunden hat das die Prüfung mit headless Chrome, kein
+  Test. Seitdem gilt `q<n>` auf einer SVG-Fläche als `fill` mit der vollen Rampe und in einer Tabellenzelle
+  als Tönung desselben Rangs (`td.q<n>` auf `--p0` bis `--p4`), beides im Rahmen definiert. So trägt ein
+  Umschalter eine Skala und nicht zwei.
+- **Der Umschalter kann nicht am Abschnitt hängen.** Die Karte steht in `#karte`, ihre Kennzahlspalte in
+  `#wahlbezirke`; ein auf `closest("section")` beschränkter Umschalter hätte die Spalte nie erreicht. Darum
+  sucht das JavaScript im ganzen Dokument, und die Gruppen trennen sich über eindeutige `value`-Namen (ein
+  Test hält das fest).
+- **„Treffer absolut" ist keine Wiederholung der Quote.** r = 0,977 und ρ = 0,935 klingen nach derselben
+  Karte, aber 17 der 41 Quantilklassen sind andere. Nur „je 1000 Wahlberechtigte" ist wirklich dieselbe
+  Karte — ein positiver Faktor ändert keine Klasse.

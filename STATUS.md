@@ -1,8 +1,8 @@
 # Status
 
-Stand 2026-10-12, `main` auf `v0.11.0` plus die beiden Methodikregeln aus `docs/todo.md`, Punkt 4
-und das tragfähige Themenmodell aus Punkt 1 (nicht getaggt; `bartzsch-exakt` zeigt auf den letzten
-exakt reproduzierenden Stand). Der Umbau in sieben Phasen ist abgeschlossen
+Stand 2026-10-13, `main` auf `v0.11.0` plus die beiden Methodikregeln aus `docs/todo.md`, Punkt 4,
+das tragfähige Themenmodell aus Punkt 1 und die Skalierung der Kennzahlen aus Punkt 3 (nicht
+getaggt; `bartzsch-exakt` zeigt auf den letzten exakt reproduzierenden Stand). Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
 Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>), und der Ausbau in
 acht Optionen ist gemerged (`docs/plan-ausbau-2026-10.md`, Pläne und Abnahmen unter `docs/plans/`). Aufbau in
@@ -112,14 +112,48 @@ ihnen prägten. Alle vier Wege des TODO sind abgearbeitet und gemessen (Entschei
 Tabelle 5, die Treffer (29 010) und das Wörterbuch (5727) sind unberührt; nur die
 `thema_NN`-Zeilen der Gewichtungstabelle tragen andere Zahlen.
 
-## Zahlen (2026-10-12, `v0.11.0` plus Punkt 44 und 45)
+## Skalierung der Kennzahlen (2026-10-13, `docs/skalierung-2026-10.md`)
 
-- Tests: 901 schnelle (nox-Gate, parallel in rund 43 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+`docs/todo.md`, Punkt 3: Konrad will nicht sehen, wo eine Partei viel über Wahlbezirke redet, sondern wie
+viel mehr oder weniger als der Durchschnitt aller Parteien. Das Konzept nimmt alle 35 Kennzahlen der Seite
+mit Zähler und Nenner auf; von ihnen tragen 16 schon einen Nenner und sechs sind Modellangaben, offen waren
+genau die Treffer je Wahlbezirk und die Parteianteile (Entscheidungen in `docs/decisions.md`, Punkt 46).
+
+- **Umschalter als ein Muster**: ein `fieldset.switcher` mit Radios (Makro `switcher`), die Varianten als
+  `data-class-/data-text-/data-value-<variante>` an Flächen, Zellen und Köpfen, ein generisches Stück
+  JavaScript im Rahmen, Legende `#legend-<variante>`; ohne JavaScript steht die Standardvariante da.
+- **Parteien**: Anteil (Standard) / Abweichung vom Mittel aller Parteien in Prozentpunkten / Verhältnis zum
+  Mittel, für die sechs Karten, die Spalte „im Mittel" und die Parteispalten. Konrads Frage in einer Zeile:
+  AfD 0,89 % Anteil im Mittel, −1,49 pp, Verhältnis **0,32**; GRÜNE 3,57 %, +1,19 pp, **1,59**; CDU 1,33,
+  SPD 1,21, FDP 0,97, Die Linke 0,57. Das Mittel ist ungewichtet; das gewichtete setzen GRÜNE, CDU und SPD
+  fast allein (18 der 29 Vorzeichenwechsel treffen SPD und CDU), es ist gemessen und verworfen.
+- **Wahlbezirke**: die Karte bietet zusätzlich Treffer absolut (17 der 41 Quantilklassen anders als bei der
+  Quote), Treffer je Begriff im Wörterbuch (28 anders; Median 4,5656, Spannweite 2,2485 bis 9,5472) und die
+  Abweichung vom Stadtmittel (ungewichtetes Mittel 0,061808; −57,8 % bis +144,8 %). Die Kennzahlspalte der
+  Bezirkstabelle zeigt dieselbe Einfärbung als Zahl.
+- **Zweite Regression** (die stärkste offene Empfehlung des Methodik-Reviews): mit x = Treffer je Begriff
+  bleibt nichts, nicht einmal das Vorzeichen — alle 41 Bezirke −0,5570 · x + 55,7576, r = −0,1118,
+  R² = 0,0125, p = 0,48644; ohne 1 und 10 −0,2400 · x + 54,4333, r = −0,0419, R² = 0,0018, p = 0,80000. Die
+  einzige Spalte, in der die Arbeit ein signifikantes p berichtet, hängt an der Größe der Wörterbücher.
+- **Divergierend heißt feste Grenzen**, keine Quantile (`[report.diverging]`): ±10 % und ±25 % vom
+  Stadtmittel, ±0,5 und ±2 Prozentpunkte, 0,5 / 0,8 / 1,25 / 2,0 beim Verhältnis.
+- Nicht gebaut, je mit Grund in § 5 des Konzepts: „je 1000 Wahlberechtigte" als eigenes Radio (es *ist* der
+  Standard mit einem Faktor), das Verhältnis zum Stadtmittel, je Einwohner, je Fläche, das Log-Verhältnis
+  (20 Parteizellen sind exakt 0) und Umschalter in den Abschnitten Gremien, Monate, Gewichtung,
+  Kontrollvariablen und Begriffe.
+- Tabelle 5, die Treffer (29 010) und das Wörterbuch (5727) sind unberührt, und die Standardansicht der
+  Seite ist dieselbe wie vorher.
+
+## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45 und 46)
+
+- Tests: 937 schnelle (nox-Gate, parallel in rund 43 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
-- Register: 28 Schritte; `georep steps` zeigt 26 für Düsseldorf, 27 mit Vergleich, 21 im Periodenprofil
-  2014 bis 2020, 20 in der laufenden Periode, 21 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
-  rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,5 s).
-- Berichtsseite: `index.html` 1,10 MB (1 158 408 Bytes, Budget 1,5 MB), 50 Dateien zusammen 13,3 MB, vierzehn
+- Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
+  2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
+  rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
+  0,1 s).
+- Berichtsseite: `index.html` 1,30 MB (1 295 185 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
+  134 KB), 52 Dateien zusammen 13,4 MB, vierzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
@@ -165,6 +199,11 @@ Tabelle 5, die Treffer (29 010) und das Wörterbuch (5727) sind unberührt; nur 
   (`tests/unit/test_pipeline_steps.py` hält beides zusammen, seit 2026-10-13).
 - Ein Test darf die Jahreszahl einer anderen Periode nicht im ganzen HTML suchen: ein `data-value`
   wie „0.040124486620252926" enthält „2025" zufällig. Seit 2026-10-13 sucht er zwischen den Tags.
+- Eine CSS-Klasse, die ein Umschalter tauscht, muss auf jeder Fläche dasselbe bedeuten: die Parteizellen
+  trugen `p<n>` aus dem Abschnitts-CSS, der Umschalter schrieb `q<n>`, und `.q0` bis `.q4` setzen nur `fill`
+  — nach einem Klick auf „Anteil" war die Tönung weg (gefunden am 2026-10-13 mit headless Chrome, nicht von
+  einem Test). Seitdem gilt `q<n>` auf einer SVG-Fläche als `fill` und in einer Tabellenzelle als Tönung
+  desselben Rangs, beides im Rahmen definiert.
 - Ein Vorlagenwechsel (`templates/sections/*.j2`) macht den Stamp des Schritts `report` nicht ungültig: er trägt die Code-Version des Pakets, nicht den Hash der Vorlagen. Nach einer Änderung an einer Vorlage ohne Versionssprung braucht die Seite ein `georep run report --force` (bemerkt am 2026-10-12).
 - Der Settings-Fingerprint ist global: ein neuer Schlüssel lässt alle Schritte einmal neu laufen. Hinnehmbar; ein Fingerprint je Schritt ist zurückgestellt (`docs/plans/00-synergien.md`, § 8).
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab (`docs/baseline-2026-10-10.md`).
@@ -195,10 +234,12 @@ Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „
 4. Optional der Vollabruf der Hauptperiode (2 bis 3 h; zeigt, ob der OParl-Server `modified_since` beachtet
    und ob die Urheberfelder inzwischen gefüllt sind).
 
-Rückstand für danach: `docs/todo.md` (Konrads Beobachtungen vom 2026-10-12: Seitengröße, Skalierung
-der Kennzahlen, Literatur, Lizenz; Punkt 4, Bartzschs Methodik, ist am 2026-10-12 erledigt,
-`docs/methodik-review-2026-10.md`, offene Empfehlungen in dessen § 6; Punkt 1, das Themenmodell,
-ebenfalls am 2026-10-12, `docs/themenmodell-2026-10.md`, offene Annahmen in dessen § 7). Offene Entscheidungen stehen in `docs/plans/fragen.md`
+Rückstand für danach: `docs/todo.md` (Konrads Beobachtungen vom 2026-10-12: Seitengröße, Literatur,
+Lizenz; Punkt 4, Bartzschs Methodik, ist am 2026-10-12 erledigt,
+`docs/methodik-review-2026-10.md`, dessen stärkste offene Empfehlung Punkt 3 eingelöst hat; Punkt 1, das
+Themenmodell, ebenfalls am 2026-10-12, `docs/themenmodell-2026-10.md`, offene Annahmen in dessen § 7;
+Punkt 3, die Skalierung der Kennzahlen, am 2026-10-13, `docs/skalierung-2026-10.md`, offene Annahmen in
+dessen § 8). Offene Entscheidungen stehen in `docs/plans/fragen.md`
 (die acht wichtigsten oben): Datenpakete im Repo oder im
 R2-Bucket, Düsseldorf unter `data/duesseldorf/`, VPS und Domain, Lizenz der votemanager-CSV, Modellwahl der
 Kontrollvariablen. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,
