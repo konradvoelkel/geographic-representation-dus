@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shlex
 import tomllib
 from pathlib import Path
 
@@ -225,6 +226,52 @@ def mutate(session: nox.Session) -> None:
         "--gremlin-workers=3",
         "--gremlin-mutant-timeout=60",
         *session.posargs,
+    )
+
+
+@nox.session
+def alone(session: nox.Session) -> None:
+    """Reihenfolgeunabhängigkeit: jede Testdatei einmal allein, dann die Suite rückwärts.
+
+    Zwei Prüfungen, beide ohne Gate-Anspruch und beide von Hand (Punkt 53):
+
+    1. **Jede Datei allein.** Ein Test, der nur grün ist, weil ein anderer vorher eine Datei
+       geschrieben hat, fällt sonst nie auf -- genau das war
+       ``test_a_city_that_lost_its_run_leaves_the_published_folder`` am 2026-10-12. Drei Dateien
+       parallel; „keine Tests gesammelt" (Exit 5) ist kein Fehler, sondern eine Datei, in der
+       jeder Test ``slow`` oder ``network`` trägt.
+    2. **Die ganze schnelle Suite rückwärts.** ``-p no:randomly`` gibt es hier nicht; die
+       Reihenfolge kommt aus ``--co`` und wird umgedreht. ``xargs -d '\\n'`` statt
+       Wort-Trennung, denn ein parametrierter Testname enthält Leerzeichen (``-auf'm``).
+
+    Gemessen am 2026-10-13: 97 Dateien, 94 grün und 3 ohne schnelle Tests; rückwärts 1061 Tests
+    in 103 s, Exit 0. Keine Abhängigkeit gefunden.
+    """
+    marker = "not slow and not network and not bench"
+    files = sorted(
+        str(path)
+        for folder in ("tests/unit", "tests/golden", "tests/property")
+        for path in Path(folder).glob("test_*.py")
+    )
+    session.log(f"{len(files)} Testdateien je allein, drei parallel")
+    quoted = " ".join(shlex.quote(f) for f in files)
+    session.run(
+        "bash",
+        "-c",
+        f"printf '%s\\n' {quoted} | xargs -P 3 -d '\\n' -I{{}} "
+        f"uv run pytest {{}} -m {shlex.quote(marker)} -p no:cacheprovider --no-cov "
+        "|| echo 'mindestens eine Datei allein nicht gruen (Exit 5 = nur slow/network)'",
+        external=True,
+    )
+    session.log("und einmal rückwärts")
+    session.run(
+        "bash",
+        "-c",
+        f"uv run pytest -m {shlex.quote(marker)} --co -p no:cacheprovider 2>/dev/null "
+        "| grep '::' | tac > \"${TMPDIR:-/tmp}/georep-nodes-rev.txt\" && "
+        "xargs -a \"${TMPDIR:-/tmp}/georep-nodes-rev.txt\" -d '\\n' --max-args=100000 "
+        "uv run pytest -p no:cacheprovider --no-cov",
+        external=True,
     )
 
 
