@@ -140,6 +140,23 @@ def legend(classification: Classification, fmt: Callable[[float], str]) -> tuple
     return tuple(entries)
 
 
+@deal.pre(lambda boundaries, fmt: len(boundaries) > 0 and all_finite(boundaries))
+@deal.post(
+    lambda result: len(result) >= 2 and [e.klass for e in result] == list(range(len(result)))
+)
+def legend_for(boundaries: Sequence[float], fmt: Callable[[float], str]) -> tuple[LegendEntry, ...]:
+    """Die Legende fester Klassengrenzen (Punkt 46), ohne die Werte zu kennen.
+
+    Eine feste Einteilung beschreibt ihre Grenzen und nicht die Daten: dieselbe Legende gilt für
+    jede Stichprobe, und sie ändert sich zwischen zwei Läufen nicht. Wer sie aus einer
+    ``Classification`` bauen will, braucht dafür keine Werte — und darf sie nicht erfinden: ein
+    Aufruf wie ``classify_fixed({c.district: c.wert for c in zellen}, …)`` über Zellen mehrerer
+    Parteien faltet sechs Werte je Wahlbezirk auf einen zusammen und klassiert still falsch
+    (Review vom 2026-10-13).
+    """
+    return legend(Classification(tuple(boundaries), {}, len(boundaries) + 1), fmt)
+
+
 def _covers_range(lo: float, hi: float, n: int = 5, result: tuple[float, ...] = ()) -> bool:
     return result[0] <= lo and result[-1] >= hi
 

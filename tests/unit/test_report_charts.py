@@ -25,6 +25,7 @@ from georep.report.charts import (
     delta_label,
     delta_scatter,
     legend,
+    legend_for,
     nice_ticks,
     party_maps,
     per_term_label,
@@ -120,6 +121,25 @@ def test_fixed_classes_divide_at_the_given_boundaries() -> None:
     for values, bad_bounds in broken:
         with pytest.raises(deal.PreContractError):
             classify_fixed(values, bad_bounds)
+
+
+def test_a_fixed_legend_describes_its_boundaries_without_values() -> None:
+    """``legend_for`` braucht keine Daten: eine feste Einteilung beschreibt ihre Grenzen.
+
+    Vorher baute ``build_site`` dieselbe Legende aus ``classify_fixed`` über die 246 Parteizellen
+    mit dem Wahlbezirk als Schlüssel — sechs Werte je Bezirk fielen auf einen zusammen, und die
+    Klassen darin waren still falsch (die Legende las nur die Grenzen, darum fiel es nicht auf).
+    """
+    entries = legend_for((-0.02, -0.005, 0.005, 0.02), points_label)
+    assert [e.klass for e in entries] == [0, 1, 2, 3, 4]
+    assert entries[0].label == "unter -2,0 pp"
+    assert entries[2].label == "-0,5 pp bis unter +0,5 pp"
+    assert entries[-1].label == "ab +2,0 pp"
+    assert legend_for((0.5, 0.8, 1.25, 2.0), ratio_label)[-1].label == "ab 2,00×"
+    with pytest.raises(deal.PreContractError):
+        legend_for((), points_label)
+    with pytest.raises(deal.PreContractError):
+        legend_for((math.inf,), points_label)
 
 
 def test_the_signed_labels_carry_their_unit() -> None:

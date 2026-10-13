@@ -34,6 +34,7 @@ from georep.report.charts import (
     delta_scatter,
     hits_label,
     legend,
+    legend_for,
     own_share_label,
     party_maps,
     per_term_label,
@@ -359,6 +360,8 @@ def build_site(
     if with_scaling:
         hits_classes = classify({d.id: float(d.hits) for d in with_scaling})
         per_term_classes = classify({d.id: d.metrics.per_term for d in with_scaling if d.metrics})
+        # Hier ist der Schlüssel der Wahlbezirk und jeder kommt einmal vor: die Klassen der
+        # Flächen entstehen wirklich aus diesen Werten.
         deviation_classes = classify_fixed(
             {d.id: d.metrics.deviation for d in with_scaling if d.metrics},
             settings.report.diverging.district_percent,
@@ -370,29 +373,13 @@ def build_site(
         }
     dated_months = [row for row in model.timeline if row.month is not None]  # Option 07
     # Punkt 46: die beiden divergierenden Legenden der Parteikarten. Ihre Klassen stecken schon in
-    # den Zellen (``party_section``); hier entstehen nur die Beschriftungen der festen Grenzen.
+    # den Zellen (``party_section``); hier entstehen nur die Beschriftungen der festen Grenzen,
+    # und die kennen die Werte nicht (``legend_for``).
+    diverging = settings.report.diverging
     party_points_legend = (
-        legend(
-            classify_fixed(
-                {c.district: c.deviation for c in model.party_cells},
-                settings.report.diverging.party_points,
-            ),
-            points_label,
-        )
-        if model.party_cells
-        else ()
+        legend_for(diverging.party_points, points_label) if model.party_cells else ()
     )
-    party_ratio_legend = (
-        legend(
-            classify_fixed(
-                {c.district: c.ratio for c in model.party_cells},
-                settings.report.diverging.party_ratio,
-            ),
-            ratio_label,
-        )
-        if model.party_cells
-        else ()
-    )
+    party_ratio_legend = legend_for(diverging.party_ratio, ratio_label) if model.party_cells else ()
     visuals = Visuals(
         map_svg=choropleth(
             model.districts,
