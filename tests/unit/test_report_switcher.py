@@ -43,15 +43,36 @@ def test_the_variants_of_one_group_do_not_clash_with_another(mini_page: str) -> 
 def test_a_variant_names_a_scale_only_if_the_page_defines_it(mini_page: str) -> None:
     """Ohne ``data-scale`` nimmt das JavaScript die sequenzielle Rampe ``q``.
 
-    Jede andere Rampe muss als CSS-Variablen und als Klassen da sein, sonst färbt der Umschalter
-    die Flächen mit einer Klasse ohne Regel und die Karte wird weiß.
+    Jede Rampe muss **beide** Flächen bedienen, auf denen der Umschalter Klassen tauscht: eine
+    SVG-Fläche (``fill``) und eine Tabellenzelle (``background``). Genau das fehlte der Tönung
+    der Parteizellen, und nach einem Klick auf „Anteil" war sie weg (1c6875e, gefunden mit
+    headless Chrome und nicht von einem Test).
     """
     scales = set(re.findall(r'data-scale="(\w+)"', mini_page))
     assert scales <= {"d"}  # heute gibt es genau eine zweite Rampe
-    for ramp in scales | {"d"}:
+    for ramp in scales | {"d", "q"}:
         for step in range(5):
-            assert f"--{ramp}{step}:" in mini_page
+            assert f"--{ramp}{step}:" in mini_page or f"--{ramp}{step}: " in mini_page
             assert f".{ramp}{step} {{ fill: var(--{ramp}{step}); }}" in mini_page
+            # Der Hintergrund darf aus einer anderen Variablen kommen (die sequenzielle Rampe
+            # nimmt in der Zelle die Tönung --p<n>), eine Regel braucht es aber.
+            assert f"td.{ramp}{step} {{ background: var(--" in mini_page
+
+
+def test_every_element_the_switcher_touches_has_a_rule_for_every_variant(mini_page: str) -> None:
+    """Keine Fläche darf nach einem Klick ohne Regel dastehen.
+
+    Je Variante werden alle Klassen gesammelt, die das JavaScript setzen würde, und gegen die
+    CSS-Regeln der Seite geprüft — einmal als ``fill`` für die SVG-Flächen und einmal als
+    ``background`` für die Zellen.
+    """
+    for fieldset in (f for f in _fieldsets(mini_page) if MACRO_CALL in f):
+        for value, scale in re.findall(r'value="([\w-]+)"(?:\s+data-scale="(\w+)")?', fieldset):
+            steps = set(re.findall(rf'data-class-{value}="(\d)"', mini_page))
+            for step in steps:
+                token = f"{scale or 'q'}{step}"
+                assert f".{token} {{ fill: var(--" in mini_page, (value, token)
+                assert f"td.{token} {{ background: var(--" in mini_page, (value, token)
 
 
 def test_the_base_script_switches_classes_texts_values_and_legends(mini_page: str) -> None:
