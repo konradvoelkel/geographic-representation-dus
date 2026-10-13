@@ -12,6 +12,16 @@ Quartiersatlas im Repo unter `context/` (2, Teil), Hauptmodell ohne Parteianteil
 angegeben" (7). Offen und nur von Konrad zu erledigen: die vier Netzläufe (1), die Pakete Mönchengladbach und
 2014 bis 2020 im Repo oder im R2-Bucket (2), VPS und Domain (5), R2-Bucket und Token (6).
 
+Konrads Antworten vom 2026-10-13 auf die acht wichtigsten Fragen: (1) alle vier Netzläufe freigegeben, der
+Supervisor startet sie auf kookaburra (Reihenfolge: laufende Periode 2025, Mönchengladbach, Periode 2014 bis
+2020, Vollabruf der Metadaten der Hauptperiode in eine eigene Datenwurzel); (2) die Datenpakete kommen ins
+Repo, sie sind klein; (3) Mönchengladbach; (4) der Umzug Düsseldorfs nach `data/duesseldorf/` ist gewünscht;
+(5) VPS später, jetzt nicht; (6) kein R2-Bucket, kaum Traffic und kleine Dateien; (7) Rückfrage, woher die
+votemanager-CSV stammt (Antwort: `wep.itk-rheinland.de/vm/prod/kw_2025/05116000/daten/opendata/`, die
+Open-Data-Seite der Wahlpräsentation der ITK Rheinland, siehe Profil Mönchengladbach); (8) die Frage 3.1 war
+unklar formuliert, die Annahme bleibt (Hauptmodell mit Sozialdaten, Parteianteile nur im Parteimodell). Kein
+Kontakt mit Lukas Bartzsch zu diesem Zeitpunkt; die nachzutragenden Angaben der Literatur bleiben offen.
+
 ## Beantwortet (Meta-Plan § 9, 2026-10-11)
 
 | Nr. | Option | Datum | Frage | Warum | Annahme | Status |
@@ -56,15 +66,14 @@ Nummern verweisen auf die Tabellen unten.
 | Nr. | Datum | Frage | Warum | Annahme | Status |
 |---|---|---|---|---|---|
 | 1.1 | 2026-10-11 | Mönchengladbach als erste zweite Stadt statt Neuss? | nur Mönchengladbach hat Stimmbezirksflächen als Open Data | Mönchengladbach | offen |
-| 1.2 | 2026-10-11 | Paket des vollen Laufs (10 bis 20 MB) nach `reference/moenchengladbach/` ins Repo? | CI baut nur aus dem Repo | ja | offen |
+| 1.2 | 2026-10-11 | Paket des vollen Laufs (10 bis 20 MB) nach `reference/moenchengladbach/` ins Repo? | CI baut nur aus dem Repo | ja | beantwortet 2026-10-13: ins Repo |
 | 1.3 | 2026-10-11 | Die Stadt nach den Flächen der Kommunalwahl 2025 fragen? | 4 bzw. 5 Stimmbezirke weichen zwischen 2022 und 2025 ab | Flächen von 2022 mit gemessener Übereinstimmung | offen (Konrads Satz an `gdi@moenchengladbach.de`) |
-| 1.4 | 2026-10-11 | Lizenz der votemanager-CSVs der ITK Rheinland? | die Seite nennt Lizenzen wörtlich | Quelle nennen, Lizenz „nicht angegeben" | offen |
+| 1.4 | 2026-10-11 | Lizenz der votemanager-CSVs der ITK Rheinland? | die Seite nennt Lizenzen wörtlich | Quelle nennen, Lizenz „nicht angegeben" | beantwortet 2026-10-13: Quelle ist die Open-Data-Seite der votemanager-Wahlpräsentation; Lizenzfeld bleibt wie es ist, keine Anfrage jetzt |
 | 1.5 | 2026-10-11 | Marker des Vorlagenkopfs in Mönchengladbach? | ohne Marker zählen Treffer im Kopf | `betrifft`, Stichprobe misst | Supervisor: Annahme gilt, der Plan misst |
 | 1.6 | 2026-10-11 | Ausreißer der zweiten Regression für Mönchengladbach? | Tabelle 5 nennt 1 und 10 für Düsseldorf | leer bis zum Lauf, dann die zwei höchsten | Supervisor: Annahme gilt (`analysis.exclude_districts` je Profil, F3) |
-| 1.7 | 2026-10-11 | Düsseldorfs `data_root` auf `data/duesseldorf/`? | sonst Ausnahme ohne Slug | Slug für alle, Umzug dokumentiert | Supervisor für Phase 3: Düsseldorf bleibt flach; Umzug nach Konrads Antwort |
+| 1.7 | 2026-10-11 | Düsseldorfs `data_root` auf `data/duesseldorf/`? | sonst Ausnahme ohne Slug | Slug für alle, Umzug dokumentiert | beantwortet 2026-10-13: Umzug gewünscht |
 | 1.8 | 2026-10-11 | Vergleich als `vergleich.html` an der Wurzel oder Abschnitt je Stadtseite? | Budget, Trennung der Läufe | Unterseite mit Teaser | Supervisor: Unterseite |
-| 1.9 | 2026-10-11 | Dauer und Rechner des vollen Abrufs (3 bis 5 h)? | über fünf Minuten braucht Freigabe | Konrad startet nach dem Merge auf kookaburra | offen (gebündelt, oben 1) |
-
+| 1.9 | 2026-10-11 | Dauer und Rechner des vollen Abrufs (3 bis 5 h)? | über fünf Minuten braucht Freigabe | Konrad startet nach dem Merge auf kookaburra | freigegeben 2026-10-13, Supervisor startet den Lauf |
 ## Option 2: Zeitreihe
 
 | Nr. | Datum | Frage | Warum | Annahme | Status |
@@ -73,7 +82,7 @@ Nummern verweisen auf die Tabellen unten.
 | 2.2 | 2026-10-11 | Dasselbe Wörterbuch (Stand November 2025) für beide Perioden? | Alternative macht Trefferquoten nicht additiv | ja | Supervisor: ja, wie der Meta-Plan vorschlägt |
 | 2.3 | 2026-10-11 | Zeitgrenzen 2014-05-25 bis 2020-09-12, Wahltag 13.09.2020? | wenige Dokumente am Rand | ja | Supervisor: ja |
 | 2.4 | 2026-10-11 | Briefwahl proportional zu A2 (Sperrvermerk W) verteilen? | bis 5,1 Prozentpunkte je Bezirk | A2, Alternative als Satz und Settings-Zeile | Supervisor: Annahme gilt |
-| 2.5 | 2026-10-11 | Freigabe des Abrufs (3 h Metadaten, 8 bis 11 h PDFs, 3,7 bis 4,4 GB)? | ohne ihn kein echter Vergleich | Konrad startet nach Stufe G | offen (gebündelt, oben 1) |
+| 2.5 | 2026-10-11 | Freigabe des Abrufs (3 h Metadaten, 8 bis 11 h PDFs, 3,7 bis 4,4 GB)? | ohne ihn kein echter Vergleich | Konrad startet nach Stufe G | freigegeben 2026-10-13, Supervisor startet den Lauf |
 | 2.6 | 2026-10-11 | Pages baut beide Perioden (plus rund eine Minute)? | sonst Unterseite nur lokal | ja | Supervisor: ja, sobald der Schnappschuss da ist |
 | 2.7 | 2026-10-11 | Weitere Parteispalten 2020 (`D7` bis `D16`) in die Wählertabelle? | Schemaunterschied zwischen Perioden | nein | Supervisor: nein |
 | 2.8 | 2026-10-11 | Vergleich als Abschnitt der Hauptseite oder eigene Unterseite? | 45 KB Zuwachs | Abschnitt | Supervisor: Abschnitt `36-perioden`, Budget hält |
@@ -82,7 +91,7 @@ Nummern verweisen auf die Tabellen unten.
 
 | Nr. | Datum | Frage | Warum | Annahme | Status |
 |---|---|---|---|---|---|
-| 3.1 | 2026-10-11 | Variablen des Hauptmodells; Parteianteile als Kontrollen? | bestimmt Tabelle 6 und die Plots; Endogenität | Handlungsbedarf-Score, Anteil 65+, Fluktuation; Parteien nur im Parteimodell und einzeln | offen (oben 8) |
+| 3.1 | 2026-10-11 | Variablen des Hauptmodells; Parteianteile als Kontrollen? | bestimmt Tabelle 6 und die Plots; Endogenität | Handlungsbedarf-Score, Anteil 65+, Fluktuation; Parteien nur im Parteimodell und einzeln | Annahme bestätigt 2026-10-13 (Frage war unklar formuliert) |
 | 3.2 | 2026-10-11 | Ordinalskala gering = 1 bis hoch = 5 für `Sozialer_HB`? | ordinal als metrisch ist eine Annahme | ja, `Mindestsicherungsquote` als Gegenprobe | Supervisor: Annahme gilt |
 | 3.3 | 2026-10-11 | 2,3 MB Fremddaten unter `context/` ins Repo? | Reproduzierbarkeit ohne Netz | ja, mit README und SHA-256 | offen (gebündelt, oben 2) |
 | 3.4 | 2026-10-11 | Datenstand 31.12.2021 für eine Wahl 2025 akzeptabel? | Deutung der Koeffizienten | ja, mit Hinweis | Supervisor: ja, mit Hinweis auf der Seite |
@@ -97,7 +106,7 @@ Nummern verweisen auf die Tabellen unten.
 | 4.1 | 2026-10-11 | Nur die sechs Parteien aus `columns.results.parties` mit Hochburg-Kennzahl? | Zahl der Karten, Settings | die sechs; Gruppen als Zeile ohne r und p | Supervisor: Annahme gilt |
 | 4.2 | 2026-10-11 | Kooperationspapiere (CDU+GRÜNE 825) für jede Partei voll zählen? | verändert Karten und Korrelationen | voll, `treffer_allein` daneben | Supervisor: Annahme gilt |
 | 4.3 | 2026-10-11 | Personen (746 Dokumente) über `memberships`/`persons` den Fraktionen zuordnen? | Hunderte Anfragen | Klasse „Person" ohne Partei | Supervisor: nein in Phase 3 |
-| 4.4 | 2026-10-11 | Vollabruf der Metadaten (2 bis 3 h) starten, obwohl er keine Urheber bringt? | `modified` für 7, `consultation` für 5 | nur vorbereitet | offen (gebündelt, oben 1; Supervisor rät: nach 07 zusammen mit dessen Erstabruf) |
+| 4.4 | 2026-10-11 | Vollabruf der Metadaten (2 bis 3 h) starten, obwohl er keine Urheber bringt? | `modified` für 7, `consultation` für 5 | nur vorbereitet | freigegeben 2026-10-13, Supervisor startet den Lauf |
 | 4.5 | 2026-10-11 | Netzschritt `organizations` bei jedem `georep fetch` mitlaufen lassen? | eine Seite, 0,5 s | ja | Supervisor: ja |
 | 4.6 | 2026-10-11 | Sechs kleine Karten plus Tabelle oder Matrix-Heatmap? | Budget rund 75 KB | Karten plus Tabelle | Supervisor: Karten plus Tabelle, Budget hält |
 | 4.7 | 2026-10-11 | `dokumente.json` mit Urheber je Dokument (+130 KB)? | Größe beim ersten Klick | ja | Supervisor: ja |
@@ -133,12 +142,12 @@ Nummern verweisen auf die Tabellen unten.
 
 | Nr. | Datum | Frage | Warum | Annahme | Status |
 |---|---|---|---|---|---|
-| 7.1 | 2026-10-11 | Hostname und Pfad auf dem VPS? | DNS vor Caddy; relative Links | `georep.konradvoelkel.de`, Profil unter `/2025/` | offen (oben 5) |
+| 7.1 | 2026-10-11 | Hostname und Pfad auf dem VPS? | DNS vor Caddy; relative Links | `georep.konradvoelkel.de`, Profil unter `/2025/` | beantwortet 2026-10-13: VPS später, jetzt nicht |
 | 7.2 | 2026-10-11 | Bleibt Pages die Hauptseite? | `monitoring_url` absolut oder relativ | Pages bleibt, VPS spiegelt | offen (oben 5) |
 | 7.3 | 2026-10-11 | PDFs und Texte der laufenden Periode veröffentlichen? | urheberrechtlich nicht geklärt | nein, privates Bucket | Supervisor: nein, wie die Berichtsseite entschieden hat |
-| 7.4 | 2026-10-11 | R2-Bucket, Region, Token? | Konrads Konto | `georep`, WEUR, privat, zwei Token | offen (oben 6) |
+| 7.4 | 2026-10-11 | R2-Bucket, Region, Token? | Konrads Konto | `georep`, WEUR, privat, zwei Token | beantwortet 2026-10-13: kein Bucket, nicht nötig |
 | 7.5 | 2026-10-11 | Takt täglich 04:17 Uhr plus bis 30 min? | Last und Aktualität | täglich | Supervisor: täglich |
-| 7.6 | 2026-10-11 | Freigabe des Erstabrufs und der 50-PDF-Stichprobe? | ohne ihn keine echte Profilseite | Konrad startet die Einheit | offen (gebündelt, oben 1) |
+| 7.6 | 2026-10-11 | Freigabe des Erstabrufs und der 50-PDF-Stichprobe? | ohne ihn keine echte Profilseite | Konrad startet die Einheit | freigegeben 2026-10-13, Supervisor startet den Lauf |
 | 7.7 | 2026-10-11 | Datenplattform: Zenodo plus Hugging Face vorbereiten, GovData nicht? | Datensatzkarte, Lizenz, `CITATION.cff` | beides vorbereiten, nichts hochladen | Supervisor: vorbereiten, nichts hochladen |
 | 7.8 | 2026-10-11 | Wörterbuch für die laufende Periode eingefroren? | Vergleichbarkeit | ja | Supervisor: ja (wie 2.2) |
 | 7.9 | 2026-10-11 | Monatsreihe 2020 bis 2025 auch auf der Hauptseite (rund 20 KB)? | Budget | ja | Supervisor: ja, Abschnitt `55-monate` |
