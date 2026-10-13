@@ -1258,3 +1258,52 @@ Settings, nicht flach; der Golden Master selbst (`tests/fixtures/mini/expected/`
 und `cache/{pdf,text}` löschen oder nach `duesseldorf/` verschieben, STATUS.md unter „Nächster Schritt") und
 ein `bootstrap` plus `run` in jedem Klon, der schon Daten hat. Der PDF-Cache ist der einzige Grund, zu
 verschieben statt neu zu rechnen: 19 108 Dateien lädt niemand ein zweites Mal.
+
+## 53. Absicherung statt Ausbau: was gemessen wird, was ein Vertrag sagt, wo eine Lehre steht (Konrad, 2026-10-13)
+
+Ein Tag ohne neue Funktion: das Vorhandene härten, messen und die Lehren an den Ort bringen, an dem sie
+wirken. Die Übersicht mit allen Zahlen steht in [absicherung-2026-10.md](absicherung-2026-10.md), der
+Mutationslauf in [mutation-2026-10-13.md](mutation-2026-10-13.md). Vier Entscheidungen hält dieser Punkt
+fest.
+
+**Mutationstests werden je Modul gemessen, nicht als eine Sitzung.** Die dreizehn Module des Ausbaus
+brauchen zusammen rund 20 Minuten, wenn jede Sitzung nur die Testdateien ihres Moduls bekommt; über die
+ganze schnelle Suite dauert dasselbe ein Vielfaches, denn die abdeckungsgeführte Testauswahl von
+pytest-gremlins ist hier **aus** — `--cov` in `addopts` lässt ihren Vorlauf leer ausgehen („Coverage
+collection returned no data", mit `--gremlin-explain` bestätigt: „Covering set (0 tests)"). Für die Quote
+ist das richtig, kein Mutant überlebt wegen eines fehlenden Tests; für die Laufzeit ist es der Grund für
+den Zuschnitt. **Drei Arbeiter, nicht sechs**: mit sechs wurde die Sitzung am 2026-10-12 unter Last
+abgeschossen. Die Liste der Ziele steht als `GREMLIN_TARGETS` im `noxfile.py`, damit der nächste Lauf
+dieselbe hat; ausgenommen wird nur mit Grund und gemessener Zahl. Verworfen: die Sitzung zum Gate machen
+(Punkt 12 gilt weiter — 99 der 164 Überlebenden sind Vertragsgrenzen, und ein Gate zwänge dazu, sie
+nachzuziehen); `--no-cov` in der Sitzung, weil ungemessen.
+
+**Eine Annahme über die Eingabe gehört in die Vorbedingung, nicht in die Nachbedingung.** Alle vier
+crosshair-Gegenbeispiele dieses Tages waren von dieser Sorte: `terms_payload` nahm an, dass die Begriffe
+Treffer tragen und absteigend stehen; `fit`, dass die Bounding Box endlich ist; `body_figures`, dass die
+Gremienklasse bekannt und die Dokumentzahl nicht negativ ist; `bars`, dass die Leinwand endliche positive
+Maße hat. Jedes Mal brach eine Nachbedingung an einer gültigen Eingabe, und die Meldung zeigte auf die
+Funktion statt auf ihren Aufrufer. Die Nachbedingung bleibt trotzdem stehen, wo sie beschreibt, was die
+Ausgabe zusagt — sie wird nur nicht mehr als Eingabeprüfung missbraucht. Dieselbe Lehre wie bei
+`nice_ticks` am 2026-10-12, dreimal am selben Tag: **eine Vorbedingung über Zahlen sagt, dass sie endlich
+sind.** Verworfen: die Gegenbeispiele als „Artefakt des Werkzeugs" abtun (sie sind gültige Eingaben des
+Typs, den die Signatur zusagt); ein Ziel aus `VERIFY_TARGETS` nehmen, weil es rot ist — ausgenommen wird
+nur, wo das Gegenbeispiel über crosshair und nicht über das Programm redet (`bars`, `parse_reference`).
+
+**Ein Schritt darf einen eigenen Zusatz im Stamp haben.** Der Settings-Fingerprint ist global und lässt
+`[report]` aus, weil der Block nur die Anzeige betrifft; für die Parquet-Dateien ist das richtig, für
+`index.html` war es falsch. Dazu stand keine Datei des Pakets im Stamp, und ein Vorlagenwechsel machte ihn
+nicht ungültig. `Step.extra` schließt beides mit einem Hash, den nur `report` füllt. **Mit Vorgabe
+gelesen** (`stamped.get("extra", "")`), damit ein Stamp von vor diesem Feld für jeden Schritt ohne Zusatz
+gültig bleibt und genau ein Schritt einmal neu läuft. Verworfen: `[report]` in den globalen Fingerprint
+nehmen (dann rechnete die ganze Kette nach einer geänderten Klassengrenze neu — 23 s für eine Farbe);
+einen Fingerprint je Schritt einführen (bleibt zurückgestellt, `docs/plans/00-synergien.md`, § 8); die
+Code-Version des Pakets bei jeder Vorlagenänderung hochzählen (eine Version ist eine Aussage über das
+Programm, nicht über eine Zeile CSS).
+
+**STATUS sagt, was ist; CLAUDE.md sagt, wie man arbeitet.** „Bekannt" war auf 34 Punkte gewachsen und
+trug beides. Elf Arbeitsregeln sind nach `CLAUDE.md` „Arbeitsweise" umgezogen, je als ein Satz mit Datum;
+die Fakten, Zahlen und Messungen bleiben in STATUS und in den datierten Dokumenten unter `docs/`. Der
+Unterschied ist der Lesezeitpunkt: STATUS liest man, um den Stand zu erfahren, CLAUDE.md, bevor man etwas
+anfasst. Verworfen: die Regeln in beiden Dateien führen (eine Dopplung veraltet an einer der beiden
+Stellen); eine dritte Datei nur für Lehren (CLAUDE.md ist die Datei, die jede Sitzung ohnehin liest).

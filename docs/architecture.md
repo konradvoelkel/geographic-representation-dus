@@ -412,7 +412,7 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `alone` | Reihenfolgeunabhängigkeit: jede Testdatei einmal allein (drei parallel), dann die ganze schnelle Suite rückwärts | lokal |
 | `mutate` | pytest-gremlins über die gemessenen Module (`GREMLIN_TARGETS` im `noxfile.py`), drei Arbeiter, einmal pro größerer Änderung; `analysis/topics.py` ist ausgenommen (jeder Mutant rechnet NMF). Wer ein einzelnes Modul messen will, übergibt auch nur dessen Testdateien | lokal, und wöchentlich in Actions (`quality.yml`) mit den acht Modulen unter 90 s |
 
-Stand 2026-10-13: 1050 schnelle Tests in rund 55 s, Abdeckung 98,3 %; Mutationsquote 81 % über die
+Stand 2026-10-13: 1062 schnelle Tests in rund 55 s, Abdeckung 98,3 %; Mutationsquote 81 % über die
 dreizehn Module des Ausbaus ([mutation-2026-10-13.md](mutation-2026-10-13.md): 876 Mutanten, 712
 getötet, 164 Überlebende, davon 99 in Vertragsgrenzen), 79 % über `search/` und `analysis/`
 ([mutation-2026-10-11.md](mutation-2026-10-11.md)), 83 % über `analysis/weights.py`

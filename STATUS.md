@@ -231,7 +231,7 @@ Datensatz, kein Lauf).
 
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46, 47 und 52)
 
-- Tests: 1050 schnelle (nox-Gate, parallel in rund 55 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 1062 schnelle (nox-Gate, parallel in rund 55 s, Abdeckung 98,3 %), 20 `slow` (rund 3 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
@@ -250,6 +250,33 @@ Datensatz, kein Lauf).
   Rund 20 Minuten für alle dreizehn Module mit **drei** Arbeitern im Zuschnitt je Modul; mit sechs
   wurde die Sitzung am 2026-10-12 unter Last abgeschossen. Älter: `analysis/weights.py` 83 %
   (`docs/mutation-2026-10-12.md`), `search/` und `analysis/` 79 % (`-11.md`).
+
+## Absicherung (2026-10-13, `docs/absicherung-2026-10.md`)
+
+Konrads Auftrag „Absicherung statt Ausbau": keine neuen Funktionen, das Vorhandene härten und messen.
+Entscheidungen als Punkt 53 in `docs/decisions.md`.
+
+- **Mutationstest über die dreizehn Module des Ausbaus** (`docs/mutation-2026-10-13.md`): 876 Mutanten,
+  652 getötet (74,4 %), nach den neuen Tests **712 (81,3 %)** und 164 Überlebende. Die größten Löcher
+  waren `analysis/scaling.dictionary_bias` (kein einziger Test), die Vergleichsseite (nur auf
+  Anwesenheit geprüft, 46 % → 84 %), die Zahlen des OLS-Modells (nur im slow-Test) und die Spalte
+  `treffer` der Urheberzuordnung.
+- **crosshair über 31 statt 22 Ziele**; vier Gegenbeispiele, alle echt und alle dieselbe Sorte: eine
+  Annahme über die Eingabe, die nur in der Nachbedingung stand (`terms_payload`, `fit`, `body_figures`,
+  `bars`). `nox -s verify` Exit 0, 27 „Not confirmed".
+- **Der Schritt `report` hat einen eigenen Zusatz im Stamp** (`Step.extra`): ein Hash über die
+  Vorlagendateien des Pakets, `literatur.toml` und `settings.report`. Damit sind die zwei Einträge aus
+  „Bekannt" weg, nach denen ein Vorlagenwechsel oder eine geänderte Klassengrenze ein
+  `georep run report --force` brauchte.
+- **Fünf Stellen sortieren nach einem Join** (`dictionary_bias`, drei Regressionsframes, die beiden
+  veröffentlichten Tabellen der Kontrollvariablen); die veröffentlichte Tabelle bekam dafür eine eigene
+  Funktion mit Vertrag (`prep.context.named_weights`).
+- **`nox -s alone`** prüft die Reihenfolgeunabhängigkeit: 97 Dateien allein (94 grün, drei ohne schnelle
+  Tests), die Suite rückwärts 1061 Tests in 103 s, Exit 0 — keine Abhängigkeit gefunden.
+- **Wöchentlicher Qualitätslauf** in `.github/workflows/quality.yml` (montags und von Hand, verify plus
+  die gezielte Mutationssitzung, geschätzt unter 30 min, `timeout-minutes: 45`). Noch nicht erprobt.
+- Ungemessen bleiben `report/model.py`, `report/charts.py` und `report/build.py` (rund 3 500 Zeilen);
+  das ist der nächste offene Posten dieser Art.
 
 ## Bekannt
 

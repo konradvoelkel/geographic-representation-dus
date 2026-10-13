@@ -4,6 +4,15 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Fünf Vorbedingungen sind strenger** (`docs/decisions.md`, Punkt 53): `report.terms.terms_payload`,
+  `report.geometry.fit`, `report.model.body_figures` und `report.charts.bars` sagen jetzt, was sie von
+  ihrer Eingabe annehmen, statt es in der Nachbedingung festzustellen. Für einen Lauf ändert sich
+  nichts; eine fremde Eingabe nennt seitdem den Aufrufer statt einer Zählschleife.
+- **Fünf Stellen sortieren nach einem Join** (ebenda, § 3c): die Kennzahlen des Methodenabsatzes, drei
+  Regressionsframes und die beiden veröffentlichten Tabellen der Kontrollvariablen. Gedruckt ändert sich
+  nichts, aber zwei Läufe schreiben wieder byteidentische Parquet-Dateien.
+- **`nox -s alone`**: jede Testdatei einmal allein, dann die ganze schnelle Suite rückwärts.
+
 - **Ein wöchentlicher Qualitätslauf in Actions** (`.github/workflows/quality.yml`): montags und von
   Hand, `nox -s verify` (crosshair über 31 Verträge) und die gezielte Mutationssitzung über die acht
   Module, die lokal unter 90 s brauchen. Kein Netz, kein Pages-Schritt, kein Gate für einen Push:
