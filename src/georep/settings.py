@@ -1194,6 +1194,10 @@ class Report(_Strict):
     # „nichts einklappen"; mehr als 50 wäre keine Vorschau mehr (die längste Tabelle der Seite
     # ist die Monatsreihe mit 61 Zeilen).
     table_preview_rows: int = Field(default=3, ge=0, le=50)
+    # Punkt 50: das Budget der Seite. Der Schritt ``report`` meldet eine Überschreitung in seiner
+    # Zeile, der slow-Test prüft dieselbe Zahl; 0 schaltet beides ab. Eine Verabredung, keine
+    # Grenze der Technik (docs/seitengroesse-2026-10.md, § 7).
+    page_budget_bytes: int = Field(default=1_000_000, ge=0)
     notes: list[str] = []  # Sätze, die nur für diese Stadt in „Methode und Grenzen" gehören
     data_note: str = ""  # woher Straßen und Orte stammen, wenn kein Netzschritt gelaufen ist
     # Option 07: Teile der Seite, die eine laufende Periode nicht hat oder zusätzlich trägt.

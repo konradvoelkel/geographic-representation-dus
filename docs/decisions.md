@@ -1088,3 +1088,33 @@ Seite legt rund viertausend Zuhörer weniger an.
 Kosten und Wirkung: `index.html` 1 285 594 → 958 527 Byte (−327 067, −25 %); `site/data/` wächst um
 96 413 Byte auf 53 Dateien. Ohne JavaScript bleiben die Listen leer — der Abschnitt sagt das in einem
 `<noscript>` und nennt die Datei.
+
+## 50. Das Budget der Seite steht in den Settings und ist 1,0 MB (2026-10-13)
+
+`docs/todo.md`, Punkt 2, dritter Teil. Das Budget war `1_500_000` als Zahl in vier Tests (Fundament F1,
+Punkt 21) und hat nie gezuckt, während die Seite zwischen dem 2026-10-11 und dem 2026-10-13 um 594 KB
+wuchs (Suche 142 KB, Umschalter 110 KB, Parteikarten 63 KB, Gewichtung 33 KB, Monate 30 KB, Literatur
+13 KB). Jetzt steht es als `report.page_budget_bytes = 1000000` in `defaults.toml`, die slow-Tests
+lesen es von dort, und der Schritt `report` meldet eine Überschreitung in seiner Zeile („Seite über
+dem Budget (1,05 von 1,00 MB)") — damit es nicht erst der slow-Test oder niemand merkt. `0` schaltet
+die Prüfung ab.
+
+**1,0 MB bei 958 527 Byte sind 41 473 Byte Luft, 4,1 %, und das ist Absicht.** Ein Budget mit 15 %
+Luft hätte dasselbe Wachstum wieder nicht gemerkt; ein knappes erzwingt beim nächsten Abschnitt eine
+Entscheidung. Damit die dann nicht im Nebel fällt, listet `docs/seitengroesse-2026-10.md`, § 5, vier
+Hebel mit gemessenen Bytes (die `<title>` der 1196 Orts-Kreise 64 KB, die doppelten SVG-Pfade der
+Parteikarten 28 KB, Leerraum zwischen Tags 12 KB, eine spaltenweise Kodierung des Suchindex 8 KB) —
+rund 112 KB Reserve mit bekannten Kosten. **Verworfen:** 1,1 MB (dieselbe Blindheit, nur später); das
+Budget im Code (es ist eine Verabredung über die Anzeige, keine Grenze der Technik, und `[report]`
+zählt nicht zum Settings-Fingerprint); den Schritt bei Überschreitung scheitern lassen (eine Seite,
+die 20 KB zu groß ist, soll trotzdem entstehen — die Zeile sagt es, der Test hält es).
+
+**Was nicht gemacht wurde, steht gemessen daneben.** Die beiden größten Hebel bleiben liegen, je mit
+Grund: die `<title>` der Orte sind der Name für einen Screenreader, wenn jemand die Ebene einschaltet;
+ein gemeinsames `<defs>` für die 41 Flächen verlangt, dass auch die Hauptkarte ihre Flächen als
+`<use>` zeichnet, und dort hängen Klick, Hover, `tabindex="0"`, Tooltip und der Klassentausch des
+Umschalters — ob Selektoren den geklonten Inhalt treffen und ob ein `<use>` überall fokussierbar ist,
+unterscheidet sich zwischen SVG 1.1 und SVG 2 und ist hier nur in Chrome prüfbar. 2,2 % sind das
+Risiko am Herzstück der Seite nicht wert, solange das Budget ohne sie hält. Der Minify-Schritt für
+Leerraum fällt mit 0,96 % unter die Grenze von 5 %, die der Auftrag gesetzt hat; die Vorlagen schreiben
+mit `trim_blocks` und `lstrip_blocks`, es steht also schon fast kein Leerraum in der Datei.

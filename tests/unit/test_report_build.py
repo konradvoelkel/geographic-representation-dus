@@ -87,6 +87,16 @@ def test_summary_line_counts_files_and_megabytes() -> None:
     assert SiteSummary(41, 17, 1_234_567).line() == "41 Wahlbezirke, 17 Dateien, 1,2 MB"
 
 
+def test_the_summary_line_says_when_the_page_is_over_its_budget() -> None:
+    """Punkt 50: sonst merkt eine wachsende Seite erst der slow-Test -- oder niemand."""
+    inside = SiteSummary(41, 53, 13_200_000, 958_527, 1_000_000)
+    assert not inside.over_budget() and "Budget" not in inside.line()
+    over = SiteSummary(41, 53, 13_300_000, 1_050_000, 1_000_000)
+    assert over.over_budget()
+    assert over.line().endswith("; Seite über dem Budget (1,05 von 1,00 MB)")
+    assert not SiteSummary(41, 53, 1, 9_999_999, 0).over_budget()  # 0 schaltet die Prüfung ab
+
+
 def test_map_page_embeds_districts_and_places(mini_run: Layout) -> None:
     page = (mini_run.site / MAP_NAME).read_text(encoding="utf-8")
     assert page.startswith("<!doctype html>") and 'href="index.html"' in page

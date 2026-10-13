@@ -4,6 +4,12 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Das Budget der Seite ist 1,0 MB und steht in den Settings** (`report.page_budget_bytes`,
+  `docs/decisions.md` Punkt 50). `georep run` sagt es jetzt selbst, wenn `index.html` darüber liegt;
+  vorher stand die alte Grenze von 1,5 MB als Zahl in vier Tests und hat nie gezuckt, während die
+  Seite in zwei Tagen um 594 KB wuchs. 958 527 Byte lassen 41 473 Byte Luft — knapp mit Absicht;
+  vier gemessene Hebel über zusammen rund 112 KB stehen in `docs/seitengroesse-2026-10.md`, § 5.
+
 - **Die Begriffe je Wahlbezirk stehen nicht mehr in der Seite**, sondern in `data/begriffe.json`
   (`docs/decisions.md` Punkt 49). Der Abschnitt „Begriffe" holt die Liste beim ersten Aufklappen
   eines Wahlbezirks nach, wie der Dialog die Dokumente beim ersten Klick auf einen Begriff holt;

@@ -186,6 +186,7 @@ label = ""                     # Anzeigename der älteren Periode in der Verglei
 seed_corpus = true             # false in einem Profil mit laufender Periode: bootstrap kopiert nur die Eingaben, papers.jsonl und Textstore bleiben leer; sonst stünden die Paper der Hauptperiode im Monitoring-Store und pdfs lüde deren PDFs
 
 [report]                       # Anzeigeschalter der Seite; Option 01 setzt Quellen und Hinweise je Profil
+page_budget_bytes = 1000000    # Punkt 50: so viele Byte darf index.html haben. Der Schritt report sagt es, wenn die Seite darueber liegt, und der slow-Test liest dieselbe Zahl; 0 schaltet die Pruefung ab. 1,0 MB nach dem Nachladen der Begriffslisten (vorher 1,5 MB bei 1,28 MB Seite): die Luft ist knapp gewaehlt, weil die Seite in zwei Tagen um 594 KB gewachsen ist, ohne dass ein Test gezuckt haette (docs/seitengroesse-2026-10.md, § 7)
 table_preview_rows = 3         # Punkt 48: so viele Zeilen zeigt eine lange Tabelle, dann kommt die Schaltflaeche "alle n Zeilen zeigen". Zwei wirken mit Kopfzeile gedraengt, fuenf sind schon eine halbe Seite; 0 oder eine Zahl ueber der Zeilenzahl heisst "nichts einklappen" (docs/seitengroesse-2026-10.md, § 3)
 regression = true              # Option 07: false, wenn es zur Periode keine Wahlbeteiligung gibt (laufende Periode): kein Streudiagramm, keine Tabelle 5, kein Umschalter auf der Karte
 monitoring_url = ""            # Option 07: relativer Link auf die Seite der laufenden Periode, auf dem VPS "2025/"; leer = kein Abschnitt, Pages bleibt ohne toten Link

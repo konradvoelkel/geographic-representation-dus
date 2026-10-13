@@ -2,7 +2,7 @@
 
 Stand 2026-10-13, `main` auf `v0.11.0` plus die beiden Methodikregeln aus `docs/todo.md`, Punkt 4,
 das tragfähige Themenmodell aus Punkt 1, die Skalierung der Kennzahlen aus Punkt 3, die
-Literaturübersicht aus Punkt 5 und die Vorschau langer Tabellen aus Punkt 2 (nicht
+Literaturübersicht aus Punkt 5 und die kompaktere Seite aus Punkt 2 (nicht
 getaggt; `bartzsch-exakt` zeigt auf den letzten exakt reproduzierenden Stand). Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
 Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>), und der Ausbau in
@@ -186,6 +186,13 @@ und sagt je, warum sie liegen bleiben.
   Suche markierte Zeile klappt von allein auf, `@media print` zeigt alles, und ein
   `<noscript><style>` hebt die Vorschau ohne JavaScript auf. Offen bleiben die Kernzahlen und die
   Tabellen 5, 6 und 6b. Kosten: 4130 Byte.
+- **Das Budget ist 1,0 MB und steht in den Settings** (`report.page_budget_bytes`,
+  `docs/decisions.md`, Punkt 50): die slow-Tests lesen es, und der Schritt `report` meldet eine
+  Überschreitung in seiner Zeile. 958 527 von 1 000 000 Byte, also 41 473 Byte Luft (4,1 %) —
+  knapp mit Absicht, denn die alte Grenze von 1,5 MB hat 594 KB Wachstum in zwei Tagen nicht
+  gemerkt. Vier gemessene Hebel über zusammen 112 KB liegen als Reserve in § 5 des Dokuments
+  (Orts-`<title>` 64 KB, doppelte SVG-Pfade der Parteikarten 28 KB, Leerraum 12 KB, Suchindex
+  8 KB); der Minify-Schritt für Leerraum fällt mit 0,96 % unter die Grenze von 5 %.
 - **Die Begriffslisten je Wahlbezirk werden nachgeladen** (`docs/decisions.md`, Punkt 49): sie
   stehen als `data/begriffe.json` (96 KB, 6877 Paare aus Wahlbezirk und Begriff) neben der Seite
   und kommen beim ersten Aufklappen über `georep.loadJson`, wie die Dokumente beim ersten Klick auf
@@ -196,13 +203,13 @@ und sagt je, warum sie liegen bleiben.
 
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46 und 47)
 
-- Tests: 997 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 998 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` 0,96 MB (958 527 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
+- Berichtsseite: `index.html` 0,96 MB (958 527 Bytes, Budget 1,0 MB; die beiden Umschalter kosten
   110 KB, die Literaturübersicht 13,2 KB, die Vorschau langer Tabellen 4,1 KB), 53 Dateien zusammen
   13,2 MB (neu `begriffe.json`, 96 KB), fünfzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
@@ -255,6 +262,20 @@ und sagt je, warum sie liegen bleiben.
   dieser Seite zu tun haben — zwei Tests wurden rot („Dezember" aus einem Eintrag zu Open.NRW, 2025
   aus zwei Aufsätzen). `without_literature(page)` in `tests/conftest.py` schneidet den Abschnitt
   heraus; wer ein Wort im ganzen HTML sucht, nimmt sie.
+- **Rot auf `main` seit dem 2026-10-13**: `tests/property/test_crosswalk_props.py::test_scaling_the_grid_does_not_change_the_shares`.
+  hypothesis hat ein Gegenbeispiel gefunden (Faktor 1,4603, zwei Rechtecke mit gemeinsamer Grenze)
+  und in der lokalen `.hypothesis`-Datenbank abgelegt, also schlägt der Test hier reproduzierbar
+  fehl; in CI gibt es die Datenbank nicht, dort ist er grün, bis die Suche dasselbe findet.
+  Befund: `crosswalk.area_shares` zählt ein Schnittstück ab `area > 0.0`, und zwei Flächen, die nur
+  eine Grenze teilen, schneiden sich in Fließkomma in etwa 4,44e-16 statt in 0 — ob dieses Nichts
+  über 0 liegt, hängt am Gitter und nicht an der Geografie. Über die Referenz liefert `area_shares`
+  1244 Zeilen, die kleinsten Schnittflächen sind 2,4e-13 m², 1,2e-12 m² und 5,5e-11 m² bei
+  Stimmbezirken von im Median 3,1e+05 m²; `wahlbezirke_crosswalk.parquet` trägt darum heute Zeilen
+  mit Gewicht 2,9e-17. **Jede** Schwelle ändert diese veröffentlichte Datei (relativ 1e-12 lässt
+  1195 Zeilen übrig, absolut 1e-9 m² rund 1236) und damit möglicherweise die letzten Stellen von
+  `wahlbezirke_kontext` und Tabelle 6. Darum nicht nebenbei behoben, sondern eine eigene
+  Entscheidung mit eigener Messung (gemessen am 2026-10-13 beim Einklappen der Tabellen; der
+  Befund ist älter als diese Änderung und unabhängig von ihr).
 - Ein Test, der ein Element über sein Markup sucht, darf das schließende `>` nicht mitnehmen:
   `<table id="districts">` fand nichts mehr, als die Tabelle `class="preview"` bekam (sechs Tests
   und ein Snapshot wurden am 2026-10-13 rot). Seitdem steht in den Tests `<table id="districts"`
@@ -302,14 +323,15 @@ Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „
 4. Optional der Vollabruf der Hauptperiode (2 bis 3 h; zeigt, ob der OParl-Server `modified_since` beachtet
    und ob die Urheberfelder inzwischen gefüllt sind).
 
-Rückstand für danach: `docs/todo.md` (offen ist dort nur noch Punkt 2, die Seitengröße;
+Rückstand für danach: `docs/todo.md` ist abgearbeitet; alle sechs Punkte sind erledigt. Punkt 2,
+die Seitengröße, am 2026-10-13 (`docs/seitengroesse-2026-10.md`, offene Annahmen in dessen § 8);
 Punkt 6, die Lizenz, ist am 2026-10-12 mit dem Wechsel auf GPL-3.0-or-later erledigt,
 `docs/decisions.md`, Punkt 42. Punkt 5, die Literaturübersicht, ist am 2026-10-13 erledigt,
 `docs/decisions.md`, Punkt 47; Punkt 4, Bartzschs Methodik, ist am 2026-10-12 erledigt,
 `docs/methodik-review-2026-10.md`, dessen stärkste offene Empfehlung Punkt 3 eingelöst hat; Punkt 1, das
 Themenmodell, ebenfalls am 2026-10-12, `docs/themenmodell-2026-10.md`, offene Annahmen in dessen § 7;
 Punkt 3, die Skalierung der Kennzahlen, am 2026-10-13, `docs/skalierung-2026-10.md`, offene Annahmen in
-dessen § 8). Offene Entscheidungen stehen in `docs/plans/fragen.md`
+dessen § 8. Offene Entscheidungen stehen in `docs/plans/fragen.md`
 (die acht wichtigsten oben): Datenpakete im Repo oder im
 R2-Bucket, Düsseldorf unter `data/duesseldorf/`, VPS und Domain, Lizenz der votemanager-CSV, Modellwahl der
 Kontrollvariablen. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,

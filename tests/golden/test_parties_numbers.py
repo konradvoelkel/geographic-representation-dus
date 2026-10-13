@@ -225,7 +225,7 @@ def test_the_page_carries_the_section_within_the_budget(
     assert sum(page.count(f'class="num q{k}"') for k in range(5)) == 41 * len(
         settings.originators.parties
     )
-    assert layout.site_index.stat().st_size < 1_500_000  # Budget, Meta-Plan § 2
+    assert layout.site_index.stat().st_size < settings.report.page_budget_bytes  # Punkt 50
     # Die drei neuen Tabellen stehen als Parquet und CSV zum Download
     names = {p.name for p in layout.site_data.iterdir()}
     for table in ("dokumente_urheber", "wahlbezirke_urheber", "wahlbezirke_parteien"):

@@ -115,7 +115,7 @@ def test_the_whole_chain_on_the_reference_publishes_both_sections(
     assert "32 von 32 Modellen" in next(o for o in offline if o.step == "controls").reason
 
     page = layout.site_index.read_text(encoding="utf-8")
-    assert layout.site_index.stat().st_size < 1_500_000  # Budget der Seite, Meta-Plan 2026-10 § 2
+    assert layout.site_index.stat().st_size < settings.report.page_budget_bytes  # Punkt 50
     # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
     assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 5
     assert '<section id="kontrollvariablen">' in page and "Modell C" in page

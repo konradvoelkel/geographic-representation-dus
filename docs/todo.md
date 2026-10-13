@@ -36,6 +36,15 @@ Anträge die Themen. Zu prüfen, in dieser Reihenfolge, weil die Kosten steigen:
 
 ## 2. Die Seite ist zu groß
 
+**Erledigt am 2026-10-13, siehe `docs/seitengroesse-2026-10.md`** (Messskript daneben,
+Entscheidungen in `docs/decisions.md`, Punkte 48, 49 und 50; offene Annahmen in § 8 des
+Dokuments). Gemessen wurde zuerst je Abschnitt, je Tabelle, je SVG und je Skript; daraus zwei
+Änderungen und acht Posten, die mit gemessenen Bytes liegen bleiben. Elf lange Tabellen zeigen
+Kopf und drei Zeilen und klappen über „alle *n* Zeilen zeigen" auf (die Kernzahlen und die
+Tabellen 5, 6 und 6b bleiben offen, sie sind der Befund); die 41 Begriffslisten je Wahlbezirk
+stehen als `data/begriffe.json` daneben und kommen beim Aufklappen. `index.html` 1 281 464 →
+958 527 Byte (−25,2 %), Budget jetzt 1,0 MB in den Settings. Der Auftrag stand so:
+
 Heute: `index.html` 1,17 MB bei einem Budget von 1,5 MB, 38 Tabellen und alle Abschnitte ausgeklappt. Konrad
 wünscht eine kompaktere Darstellung: Tabellen zu, nur zwei bis drei Zeilen sichtbar, der Rest auf Bedarf.
 Wege: `<details>` je Tabelle mit sichtbarem Kopf und Vorschauzeilen, lange Tabellen wie `dokumente.json`

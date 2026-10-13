@@ -80,9 +80,31 @@ class SiteSummary:
     districts: int
     files: int  # Downloads plus index.html und karte.html
     bytes: int
+    # Punkt 50: die Seite selbst gegen ihr Budget. Beide 0 heißt „nicht geprüft"; die Felder
+    # stehen mit Vorgabe am Ende, damit Tests die Zeile weiter positional bauen können.
+    page_bytes: int = 0
+    budget: int = 0
+
+    def over_budget(self) -> bool:
+        return self.budget > 0 and self.page_bytes > self.budget
 
     def line(self) -> str:
-        return f"{self.districts} Wahlbezirke, {self.files} Dateien, {format_de(self.bytes / 1e6, 1)} MB"
+        """Die Zeile, die ``georep run`` zeigt; über dem Budget sagt sie das selbst.
+
+        Sonst merkt es erst der slow-Test oder niemand: die Seite ist zwischen dem 2026-10-11 und
+        dem 2026-10-13 um 594 KB gewachsen, ohne dass ein Test gezuckt hat
+        (docs/seitengroesse-2026-10.md, § 7).
+        """
+        line = (
+            f"{self.districts} Wahlbezirke, {self.files} Dateien, "
+            f"{format_de(self.bytes / 1e6, 1)} MB"
+        )
+        if self.over_budget():
+            line += (
+                f"; Seite über dem Budget ({format_de(self.page_bytes / 1e6, 2)} von "
+                f"{format_de(self.budget / 1e6, 2)} MB)"
+            )
+        return line
 
 
 def current_commit(cwd: Path | None = None) -> str | None:
@@ -446,7 +468,12 @@ def build_site(
     write_text(layout.guard_writable(layout.site / MAP_NAME), map_html)
     html = render_report(model, visuals)
     write_text(layout.guard_writable(layout.site_index), html)
-    total = (
-        sum(d.bytes for d in downloads) + len(html.encode("utf-8")) + len(map_html.encode("utf-8"))
+    page_bytes = len(html.encode("utf-8"))
+    total = sum(d.bytes for d in downloads) + page_bytes + len(map_html.encode("utf-8"))
+    return SiteSummary(
+        len(model.districts),
+        len(downloads) + 2,
+        total,
+        page_bytes,
+        settings.report.page_budget_bytes,
     )
-    return SiteSummary(len(model.districts), len(downloads) + 2, total)

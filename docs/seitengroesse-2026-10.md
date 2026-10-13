@@ -6,8 +6,11 @@ kompaktere Darstellung: Tabellen zu, nur zwei bis drei Zeilen sichtbar, der Rest
 
 Dieses Dokument misst zuerst (§ 1), benennt dann, was groß ist (§ 2), und entscheidet daraus zwei
 Änderungen (§ 3 und § 4). § 5 geht die übrigen Posten durch, je mit gemessenen Bytes und einer
-Entscheidung, § 6 nennt die Annahmen. Die Messung nach dem Bau und das neue Budget kommen dazu,
-sobald gebaut ist. Nachrechnen: `uv run python docs/seitengroesse-2026-10-messung.py`.
+Entscheidung, § 6 stellt vorher und nachher gegenüber, § 7 setzt das neue Budget, § 8 nennt die
+Annahmen. Nachrechnen: `uv run python docs/seitengroesse-2026-10-messung.py`.
+
+Ergebnis: `index.html` 958 527 Byte statt 1 281 464 (−25,2 %), elf Tabellen zeigen drei Zeilen und
+klappen auf Bedarf auf, das Budget ist 1,0 MB statt 1,5 MB.
 
 ## 1. Messung vom 2026-10-13 (vorher)
 
@@ -176,7 +179,61 @@ Abschnitte soll bleiben, `docs/plans/00-synergien.md`, § 5.1).
 | Leerraum zwischen Tags (ein Minify-Schritt) | 12 350 B in 12 335 Stellen, **0,96 %** | **nicht gemacht.** Der Auftrag setzt die Grenze bei 5 %; 0,96 % lohnt keinen Schritt in der Kette. Der Grund für die kleine Zahl: die Vorlagen schreiben mit `trim_blocks` und `lstrip_blocks`, es steht also schon fast kein Leerraum in der Datei |
 | Vorschlagsindex der Suche spaltenweise kodieren | rund 8000 B | **nicht gemacht.** Stand schon in Punkt 22 als Reserve; vier Indexzugriffe je Eintrag im JavaScript für 0,6 % |
 
-## 6. Annahmen, die Konrad umstoßen kann
+## 6. Nachher: die Messung vom 2026-10-13
+
+Dieselbe Messung nach beiden Änderungen, über dieselbe Referenz, mit demselben Skript:
+
+| Posten | vorher | nachher | Änderung |
+|---|---:|---:|---:|
+| **`index.html` gesamt** | **1 281 464** | **958 527** | **−322 937 (−25,2 %)** |
+| davon gzip | 218 230 | 193 162 | −25 068 |
+| Abschnitt `begriffe` | 347 050 | 16 506 | −330 544 |
+| Abschnitt `karte` | 242 584 | 242 584 | 0 |
+| Abschnitt `parteien` | 193 826 | 194 000 | +174 |
+| Abschnitt `suche` | 139 615 | 139 615 | 0 |
+| Abschnitt `kontrollvariablen` | 60 178 | 60 178 | 0 |
+| Abschnitt `downloads` | 48 455 | 49 008 | +553 |
+| Abschnitt `gremien` | 41 935 | 42 457 | +522 |
+| Abschnitt `wahlbezirke` | 40 673 | 40 841 | +168 |
+| Abschnitt `gewichtung` | 34 396 | 34 746 | +350 |
+| Abschnitt `monate` | 29 980 | 30 153 | +173 |
+| Abschnitt `abgeleitete-daten` | 5818 | 6017 | +199 |
+| Rahmen (CSS, JavaScript, `<noscript>`) | 48 754 | 54 222 | +5468 |
+| neu: `data/begriffe.json` | — | 96 413 | liegt daneben, nicht in der Seite |
+
+Die Vorschau kostet 2139 Byte in den Abschnitten (elf Schaltflächen und elf Klassen) und steht im
+Rahmen mit ihren Regeln, dem Druckblock, dem `<noscript>` und der Logik der Schaltfläche; dazu kommt
+dort das Skript des Abschnitts „Begriffe" und der gemeinsame Lader (`loadJson`, `forget`,
+`offlineNote`), zusammen die 5468 Byte. Gespart haben die Begriffslisten 330 544. Die Zeile
+„downloads" wächst am stärksten, weil dort eine Datei mehr steht (`begriffe.json` mit Größe und
+Prüfsumme).
+
+Geprüft am 2026-10-13 mit headless Chrome und über den lokalen Server auf Port 8777, hell und
+dunkel, 375 px und 1200 px breit: kein waagerechtes Scrollen, Konsole leer, drei von 41 Zeilen
+sichtbar, die Schaltfläche klappt auf (41) und wieder zu (3), eine Auswahl über
+`georep.select(17)` klappt genau ihre Zeile auf und `select(null)` wieder zu, nach einem Klick auf
+„Treffer" zeigt die Vorschau die drei trefferstärksten Wahlbezirke (1, 30, 10), der Umschalter der
+Karte tauscht die Zahl auch in einer verborgenen Zeile (Bezirk 23: 0,067 → 2,41 → 0,067), die
+Begriffsliste eines Wahlbezirks kommt beim Aufklappen (72 Einträge, oben „grafenberger allee" mit
+205 Dokumenten), ein Klick darauf öffnet den Dialog mit 205 Dokumenten, und aus `file://` steht im
+Abschnitt „Begriffe" der Hinweis statt einer Liste.
+
+## 7. Das neue Budget: 1 000 000 Byte
+
+Die Zahl steht jetzt in den Settings (`report.page_budget_bytes`, 0 schaltet ab) und nicht als
+Literal in vier Tests; die slow-Tests lesen sie, und der Schritt `report` sagt es selbst, wenn die
+Seite darüber liegt („Seite über dem Budget (1,05 von 1,00 MB)"). Vorher waren es 1 500 000 bei
+einer Seite von 1 281 464 Byte.
+
+958 527 Byte lassen 41 473 Byte Luft, 4,1 %. Das ist knapp und soll knapp sein: die Seite ist
+zwischen dem 2026-10-11 und dem 2026-10-13 um 594 KB gewachsen (Suche 142 KB, Umschalter 110 KB,
+Parteikarten 63 KB, Gewichtung 33 KB, Monate 30 KB, Literatur 13 KB), ohne dass ein Test je gezuckt
+hätte — ein Budget mit 15 % Luft hätte das wieder nicht gemerkt. Wer das nächste Mal anstößt, liest
+§ 5: dort stehen vier Hebel mit gemessenen Bytes (Orts-`<title>` 64 KB, doppelte Pfade 28 KB,
+Leerraum 12 KB, Suchindex 8 KB), zusammen rund 112 KB Reserve mit bekannten Kosten. Das Budget ist
+eine Verabredung, keine Grenze der Technik.
+
+## 8. Annahmen, die Konrad umstoßen kann
 
 1. **Drei Vorschauzeilen** (`report.table_preview_rows = 3`). Zwei wirken bei einer Tabelle mit
    Kopfzeile gedrängt, fünf zeigen schon eine halbe Seite. Die Zahl steht in `defaults.toml` und gilt
@@ -190,10 +247,18 @@ Abschnitte soll bleiben, `docs/plans/00-synergien.md`, § 5.1).
 4. **Die Begriffslisten brauchen jetzt einen Webserver.** Aus `file://` steht dort der Hinweis statt
    der Liste — dieselbe Einschränkung wie beim Dokumentdialog seit Stufe G. Die veröffentlichte Seite
    und jeder lokale Server (`python -m http.server` im Ordner `site/`) zeigen sie.
-5. **`begriffe.json` ist eine veröffentlichte Datei**, also mit Prüfsumme und Spaltenbeschreibung im
-   Abschnitt „Downloads" und im Schema. Sie ist damit auch ein Download, den niemand bestellt hat;
-   die Alternative wäre eine Datei neben den Downloads, die auf der Seite nicht steht, und das
-   widerspräche der Regel, dass jede Datei unter `site/data/` auf der Seite genannt wird (ein Test
-   hält das fest).
+5. **`begriffe.json` ist eine veröffentlichte Datei**, also mit Zeilenzahl, Größe und Prüfsumme im
+   Abschnitt „Downloads". Sie ist damit auch ein Download, den niemand bestellt hat; die Alternative
+   wäre eine Datei neben den Downloads, die auf der Seite nicht steht, und das widerspräche der
+   Regel, dass jede Datei unter `site/data/` auf der Seite genannt wird (ein Test hält das fest).
+   Ins `schema.json` kommt sie nicht: das beschreibt Tabellenspalten, und die beiden JSON-Dateien
+   tragen ihre Felder selbst (`fields`).
 6. **Die Reserve bleibt liegen** (§ 5): 112 KB sind gemessen und nicht geholt, weil das Budget ohne
    sie hält. Wer sie will, bekommt sie zu den dort genannten Kosten.
+7. **Das Budget ist 1 000 000 Byte und damit knapp** (§ 7): 41 473 Byte Luft reichen für einen
+   Absatz, nicht für einen Abschnitt. Wer mehr Luft will, nimmt 1 100 000 — dann merkt die Prüfung
+   das nächste Wachstum aber erst, wenn es schon da ist. Die Zahl steht in `defaults.toml` und
+   lässt sich je Stadt ändern.
+8. **Die Druckansicht öffnet Tabellen, aber keine `<details>`**: die Begriffslisten je Wahlbezirk
+   werden nachgeladen, ein aufgeklapptes `<details>` im Druck wäre also leer. CSS kann ein
+   geschlossenes `<details>` ohnehin nicht zuverlässig öffnen; was offen ist, wird gedruckt.
