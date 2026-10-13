@@ -265,7 +265,11 @@ Datensatz, kein Lauf).
 - Überlebende Mutanten liegen in Vertrags-Lambdas (Grenzen von r und p); kein Test verletzt sie genau an der Grenze. Bewusst nicht nachgezogen (`docs/mutation-2026-10-12.md`).
 - `nox -s mutate` lässt `analysis/topics.py` aus: jeder Mutant dort lässt die schnelle Suite laufen, und die rechnet seit dem Themenmodell mehrfach NMF (Lauf am 2026-10-12 nach 35 Minuten abgebrochen, gezielt je Modul vier Minuten). Die schnelle Suite selbst ist dadurch rund 5 s langsamer; hingenommen.
 - Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.
-- Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`; `georep status` zeigt `pdfs` als „offen: Settings geändert", weil `--limit 200` im Stamp steht. Das ist richtig so.
+- Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`,
+  also im **flachen** Ordner der alten Hauptperiode. Das Hauptprofil rechnet seit dem Umzug (Punkt 52) unter
+  `cache_root/duesseldorf/` und zeigt dort `0 PDFs` und für `pdfs` „kein Stamp"; das ist der Zustand vor dem
+  Handgriff unten, nicht ein Fehler. Erst nach dem Verschieben zeigt `georep status` wieder „offen: Settings
+  geändert", weil dann `--limit 200` im mitgezogenen Stamp steht — und auch das ist richtig so.
 - Dieselben 200 PDFs sind der Grund, dass der flache Lauf drei Texte anders hat als die Referenz: pypdf 6.20.0
   reproduziert 197 von 200 zeichengleich (`docs/profiling/README.md`). Auf `index.html` und alle
   Ergebnistabellen wirkt sich keiner der drei aus.
@@ -347,24 +351,32 @@ Datensatz, kein Lauf).
 
 ## Nächster Schritt
 
-**Ein Handgriff auf Konrads Rechner, nach den Netzläufen** (Punkt 52): die flachen Ordner der alten
-Hauptperiode wegräumen. `data/duesseldorf/` und `data/site/` sind am 2026-10-13 gebaut, es ist also nichts
-nachzurechnen — nur der PDF-Cache ist es wert, verschoben statt gelöscht zu werden (200 von 19 108 Dateien,
-und ein Abruf kostet eine Sekunde pro Datei).
+**Ein Handgriff auf Konrads Rechner** (Punkt 52): die flachen Ordner der alten Hauptperiode wegräumen.
+**Erst, wenn die Netzläufe unten durch sind** — der Lauf im Worktree auf `v0.12.0` liest und schreibt sie
+noch. `data/duesseldorf/` und `data/site/` sind am 2026-10-13 gebaut, es ist also nichts nachzurechnen; PDFs
+und Texte sind es wert, verschoben statt gelöscht zu werden (200 PDFs, ein Abruf kostet eine Sekunde pro
+Datei, und die 200 Texte daraus hat die Referenz nicht).
 
 ```bash
 # Die Pfade stehen in settings.local.toml; `uv run georep paths` zeigt sie.
 DATA=/media/konrad/xtraspace/georep/data
 CACHE=/media/konrad/xtraspace/georep/cache
 rm -rf "$DATA"/{external,raw,interim,processed}                  # gerechnet wird unter duesseldorf/
-rm -rf "$CACHE/duesseldorf/pdf" && mv "$CACHE/pdf" "$CACHE/duesseldorf/pdf"   # die 200 PDFs behalten
-rm -rf "$CACHE/text"                    # der Textstore steht aus der Referenz schon im neuen Ordner
+rm -rf "$CACHE/duesseldorf/pdf"  && mv "$CACHE/pdf"  "$CACHE/duesseldorf/pdf"
+rm -rf "$CACHE/duesseldorf/text" && mv "$CACHE/text" "$CACHE/duesseldorf/text"
 uv run georep status                    # zeigt, was danach noch zu laufen hat
 ```
 
-Erst, wenn die Läufe unten durch sind: der Lauf im Worktree auf `v0.12.0` liest und schreibt die flachen
-Ordner noch. Wer von vorn anfängt (frischer Klon, anderer Rechner), hat keinen Handgriff — `bootstrap` und
-`run` legen den Ordner selbst an.
+Beide Ordner tragen ihre Stamps (`pdf/manifest.jsonl.stamp.json`, `text/texts.parquet.stamp.json`), sie
+ziehen also mit um. Was der nächste Lauf danach tut: `pdfs` steht auf „offen: Settings geändert" (`--limit
+200` steht in diesem Stamp), `texts` auf „aktuell", solange die PDFs daneben liegen — und weil der
+verschobene Store drei Texte aus eigener Extraktion trägt, rechnet die Kette `corpus` und alles dahinter
+einmal neu (23 s): dieselben Zahlen, drei andere Texte (siehe „Bekannt"). Wer das nicht will, löscht
+`$CACHE/text` statt es zu verschieben; dann steht der Store der Referenz schon im neuen Ordner, und nur
+`$CACHE/pdf` zieht um. `data/site/` bleibt in beiden Fällen, wie `georep publish` es gelegt hat.
+
+Wer von vorn anfängt (frischer Klon, anderer Rechner), hat keinen Handgriff — `bootstrap` und `run` legen den
+Ordner selbst an.
 
 Dann Konrads Läufe, je mit Runbook; bis dahin fehlen die betroffenen Teile auf der veröffentlichten Seite und
 der Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „GitHub Actions"):

@@ -74,10 +74,10 @@ Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`).
 | `context_data` | ja | Open-Data-Portal: Tabelle je Raumeinheit, ihre Flächen, die Erläuterung der Indikatoren | `external/` unter den Namen aus `context.files` |
 | `papers` | ja | OParl-Liste, neueste zuerst, Abbruch unter dem Periodenbeginn; beim zweiten Mal `modified_since`, `--max-pages` als Probe | `raw/papers.jsonl` |
 | `organizations` | ja | OParl-Endpunkt `organizations`: Fraktionen, Ausschüsse, Bezirksvertretungen (Düsseldorf: eine Seite, 58 Objekte, 0,47 s) | `raw/organizations.json` |
-| `pdfs` | ja | Download-URLs der Paper, seriell mit Pause, `--limit` | `cache/pdf/*.pdf`, `cache/pdf/manifest.jsonl` |
+| `pdfs` | ja | Download-URLs der Paper, seriell mit Pause, `--limit` | `cache_root/<profil>/pdf/*.pdf`, `…/pdf/manifest.jsonl` |
 | `streets_osm` | ja | Overpass je Stimmbezirkspolygon (aus `interim/stimmbezirke.geojson`) | `raw/streets_per_district.json` |
 | `pois_wiki` | ja | Wikidata-SPARQL, Wikipedia-GeoSearch je Stimmbezirk (ebenda) | `raw/wikipedia_dict.json` |
-| `texts` | nein | PDFs ohne aktuellen Text | `cache/text/texts.parquet` |
+| `texts` | nein | PDFs ohne aktuellen Text | `cache_root/<profil>/text/texts.parquet` |
 | `precincts` | nein | nur mit `crosswalk.enabled`: eigenes Stimmbezirks-GeoJSON, eigene Wahlbezirksflächen, Stimmbezirke der Hauptperiode als Zielzuschnitt | `processed/stimmbezirke_zuordnung.parquet` |
 | `voters` | nein | Wahlergebnis-CSV; mit `crosswalk.enabled` zusätzlich die Wahlbezirks-CSV, die Zuordnung und die Stadtbezirke der Hauptperiode | `processed/wahlbezirke_waehler.parquet`, `processed/wahlbezirke_stadtbezirke.parquet` |
 | `context` | nein | Stimmbezirke (Fläche und Wahlberechtigte), Raumeinheiten, Tabelle der Quelle, Wähler | `processed/wahlbezirke_kontext.parquet`, `processed/wahlbezirke_crosswalk.parquet` |
@@ -125,6 +125,8 @@ data_root/                 Standard ./data, gitignored
     processed/             die Ergebnistabellen als Parquet (zstd), je mit Stamp; mit Fremddaten drei mehr; dazu stimmbezirke_zuordnung (Profil mit Crosswalk)
                            (nicht veröffentlicht: papers_gremien, papers_ausschuss und wikidata_agg)
     site/                  die Berichtsseite: index.html (mit Stamp), karte.html (Leaflet) und data/ mit den Download-Dateien
+    site/<periode>/        eine Unterseite, wenn eine zweite Wahlperiode gerechnet ist: der Pages-Workflow
+                           legt sie hierher, weil der Abschnitt „Zwei Wahlperioden" sie relativ verlinkt
   site/                    was veröffentlicht wird und was GitHub Pages hochlädt: `georep publish` kopiert
                            die erste Stadt aus publish.cities hierher, jede weitere nach site/<slug>/, und
                            legt vergleich.html daneben

@@ -12,15 +12,16 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 - **Düsseldorfs Hauptperiode liegt unter ihrem Slug** (`docs/decisions.md`, Punkt 52; Frage 1.7, Konrads
   Antwort vom 2026-10-13): `georep bootstrap` und `georep run` schreiben nach `data/duesseldorf/` und
-  `data/cache/duesseldorf/`, nicht mehr flach nach `data/`. Die veröffentlichte Adresse bleibt dieselbe,
+  `data/cache/duesseldorf/`, nicht mehr flach nach `data/`; `data/site/` bleibt der veröffentlichte Ordner. Die veröffentlichte Adresse bleibt dieselbe,
   weil `georep publish` die erste Stadt an die Wurzel von `data/site/` legt — neu ist nur, dass auch sie
   kopiert wird. Die Seite der zweiten Periode baut der Pages-Workflow in den Ordner der Stadt, damit die
   Kopie sie mitnimmt; die Pfade kommen dort aus `georep paths`. Die Ergebnisse ändern sich nicht: 27 der 28
   Parquet-Dateien sind byteidentisch zum flachen Lauf (die 28. an drei Texten, die aus lokal extrahierten
   PDFs stammen), und `index.html` bleibt 886 328 Byte.
-  **Wer schon Daten hat**, löscht die flachen Ordner `data/{external,raw,interim,processed,site}` und
-  `cache/{pdf,text}` und lässt `bootstrap` plus `run` neu laufen (23 s) — oder verschiebt sie nach
-  `duesseldorf/` beziehungsweise `cache/duesseldorf/`, wenn er die PDFs behalten will.
+  **Wer schon Daten hat**, löscht die flachen Ordner `data/{external,raw,interim,processed}` und lässt
+  `bootstrap`, `run` und `publish` neu laufen (23 s); wer den PDF-Cache behalten will, verschiebt
+  `data/cache/{pdf,text}` statt dessen nach `data/cache/duesseldorf/`. Der Handgriff für Konrads Rechner
+  steht in `STATUS.md` unter „Nächster Schritt" und wartet dort auf das Ende der Netzläufe.
 
 ## 0.12.0 (2026-10-13), Rueckstand nach dem Ausbau
 
