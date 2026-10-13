@@ -155,8 +155,8 @@ Wort-Trennung, weil ein parametrierter Testname ein Leerzeichen enthält (`-auf'
 
 Gemessen am 2026-10-13: **97 Testdateien, 94 allein grün, drei ohne schnelle Tests**
 (`test_bodies_reference.py`, `test_network_period.py`, `test_parties_numbers.py` — jeder Test darin
-trägt `slow` oder `network`, Exit 5 = nichts gesammelt); rückwärts **1063 Tests**, die Session
-zusammen **244 s, Exit 0**. **Keine Abhängigkeit gefunden** — das ist der Befund, nicht eine
+trägt `slow` oder `network`, Exit 5 = nichts gesammelt); rückwärts **1065 Tests**, die Session
+zusammen **228 s, Exit 0**. **Keine Abhängigkeit gefunden** — das ist der Befund, nicht eine
 fehlende Prüfung. Gegenprobe: mit einer absichtlich roten Datei bricht die Session mit Exit 1 ab
 und nennt sie; die erste Fassung hatte den Exit-Code hinter einem `|| echo` verloren (Review-Befund
 7). Die Lehre stand seit dem 2026-10-12 in STATUS; jetzt kann man sie nachrechnen.
@@ -205,16 +205,16 @@ Zahl im Kommentar und bleiben dem Lauf von Hand.
 
 | Prüfung | Ergebnis |
 |---|---|
-| `uv run nox` | Exit 0; 1062 schnelle Tests in 55 s, Abdeckung 98,33 % |
-| `uv run pytest -m slow` | Exit 0; 20 Tests über die volle Referenz, 191 s |
+| `uv run nox` | Exit 0; 1065 schnelle Tests in 56 s, Abdeckung 98,35 % |
+| `uv run pytest -m slow` | Exit 0; 20 Tests über die volle Referenz, 190 s |
 | `uv run nox -s bench` | Exit 0; 17 Messungen gegen die gespeicherte Baseline |
-| `uv run nox -s verify` | Exit 0; 31 Ziele, 27 „Not confirmed", 580 s |
-| `uv run nox -s alone` | Exit 0; 244 s, 97 Dateien allein, Suite rückwärts 1063 Tests |
+| `uv run nox -s verify` | Exit 0; 31 Ziele, 27 „Not confirmed", 581 s |
+| `uv run nox -s alone` | Exit 0; 228 s, 97 Dateien allein, Suite rückwärts 1065 Tests |
 | `uv run nox -s mutate` | Exit 0; 882 Mutanten, 717 getötet (81,3 %); `-- fast --gremlin-workers=2` in 539 s |
 
-Die schnelle Suite ist von 1021 auf 1062 Tests gewachsen (41 neue), fünf Vorbedingungen sind
-strenger, fünf Stellen sortieren nach einem Join, und `nox` hat zwei Sessions mehr zu bieten
-(`alone`, und `mutate` mit allen gemessenen Zielen).
+Die schnelle Suite ist von 1021 auf 1065 Tests gewachsen (44 neue), vier Vorbedingungen sind
+strenger, fünf Stellen sortieren nach einem Join, zwei Schritte tragen einen Zusatz im Stamp, und
+`nox` hat eine Session mehr (`alone`) sowie ein `mutate`, das je Modul läuft.
 
 ## 7 Was bleibt
 

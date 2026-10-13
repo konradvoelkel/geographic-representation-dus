@@ -388,7 +388,8 @@ def alone(session: nox.Session) -> None:
        Pipe einen Exit-Code verschluckt und kein parametrierter Testname mit Leerzeichen
        (``-auf'm``) in Wörter zerfällt.
 
-    Gemessen am 2026-10-13: 97 Dateien, 94 grün und 3 ohne schnelle Tests; rückwärts 1062 Tests.
+    Gemessen am 2026-10-13: 97 Dateien, 94 grün und 3 ohne schnelle Tests; rückwärts 1065 Tests
+    in 228 s.
     Keine Abhängigkeit gefunden.
     """
     marker = "not slow and not network and not bench"

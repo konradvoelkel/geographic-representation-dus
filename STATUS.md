@@ -231,7 +231,7 @@ Datensatz, kein Lauf).
 
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46, 47 und 52)
 
-- Tests: 1062 schnelle (nox-Gate, parallel in rund 55 s, Abdeckung 98,3 %), 20 `slow` (rund 3 min über die volle
+- Tests: 1065 schnelle (nox-Gate, parallel in rund 56 s, Abdeckung 98,4 %), 20 `slow` (rund 3 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
@@ -277,7 +277,7 @@ Entscheidungen als Punkt 53 in `docs/decisions.md`.
   Funktion mit Vertrag (`prep.context.named_weights`), und der Schritt `context` die Schema-Version 2,
   damit ein alter, unsortierter Lauf einmal neu rechnet.
 - **`nox -s alone`** prüft die Reihenfolgeunabhängigkeit: 97 Dateien allein (94 grün, drei ohne schnelle
-  Tests), die Suite rückwärts 1063 Tests, zusammen 244 s, Exit 0 — keine Abhängigkeit gefunden.
+  Tests), die Suite rückwärts 1065 Tests, zusammen 228 s, Exit 0 — keine Abhängigkeit gefunden.
 - **Wöchentlicher Qualitätslauf** in `.github/workflows/quality.yml` (montags und von Hand, verify plus
   die gezielte Mutationssitzung, geschätzt unter 30 min, `timeout-minutes: 45`). Noch nicht erprobt.
 - Ungemessen bleiben `report/model.py`, `report/charts.py` und `report/build.py` (rund 3 500 Zeilen);

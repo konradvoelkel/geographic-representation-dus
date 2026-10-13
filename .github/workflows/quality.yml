@@ -9,7 +9,7 @@
 #           der Kerne aendert daran wenig. Auf dem Runner sind rund 12 min zu erwarten.
 #   mutate  539 s fuer `nox -s mutate -- fast --gremlin-workers=2`, also genau den Aufruf unten.
 #           Mit zwei Arbeitern auf zwei Kernen ist etwa das Doppelte zu erwarten, rund 18 min.
-#   alone   240 s (97 Dateien einzeln plus die Suite rueckwaerts), auf dem Runner rund 8 min.
+#   alone   228 s (97 Dateien einzeln plus die Suite rueckwaerts), auf dem Runner rund 8 min.
 # Zusammen mit Checkout und `uv sync` rund 40 min; `timeout-minutes: 45` ist die Grenze aus dem
 # Auftrag. Reisst der Lauf sie, faellt der Mutationsschritt weg und verify plus alone bleiben --
 # die Mutationssitzung ist ohnehin kein Gate.
