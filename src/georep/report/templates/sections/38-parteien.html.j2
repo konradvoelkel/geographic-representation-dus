@@ -14,6 +14,8 @@
 ]) }}
 </div>
 {{ visuals.party_maps_svg|safe }}
+{# Punkt 46: eine Region um die drei Legenden, damit ein Screenreader den Wechsel mitbekommt #}
+<div aria-live="polite">
 <div class="legend party-legend" id="legend-anteil"><ul>
 <li>kleiner Anteil</li>
 <li><span class="swatch q0"></span></li>
@@ -37,6 +39,7 @@
 {% endfor %}
 </ul>
 <p class="note">Dasselbe als Verhältnis: 1 heißt genau im Mittel, 2 doppelt so oft, 0 kein einziges Dokument. Die Grenzen sind um 1 log-symmetrisch gewählt (ein Logarithmus selbst geht nicht, weil Zellen mit 0 vorkommen).</p></div>
+</div>
 
 <h3>Je Partei</h3>
 <div class="scroll"><table id="parteien-tabelle">

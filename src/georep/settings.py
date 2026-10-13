@@ -1035,6 +1035,27 @@ class Diverging(_Strict):
             raise ValueError(f"report.diverging {value}: die Grenzen müssen aufsteigen")
         return value
 
+    @model_validator(mode="after")
+    def _the_middle_class_holds_the_middle(self) -> Diverging:
+        """Die mittlere Klasse muss das Mittel einschließen, sonst divergiert nichts.
+
+        Eine Abweichung ist um 0 neutral, ein Verhältnis um 1; liegen beide Innengrenzen auf
+        derselben Seite davon, heißt „die Mitte" eine Klasse, in der niemand im Mittel liegt, und
+        orange gegen blau bedeutet nicht mehr „darunter gegen darüber".
+        """
+        for name, neutral in (
+            ("district_percent", 0.0),
+            ("party_points", 0.0),
+            ("party_ratio", 1.0),
+        ):
+            inner = getattr(self, name)[1:3]
+            if not inner[0] < neutral < inner[1]:
+                raise ValueError(
+                    f"report.diverging.{name} {getattr(self, name)}: die mittlere Klasse muss "
+                    f"{neutral:g} einschließen"
+                )
+        return self
+
 
 class Report(_Strict):
     """Was im Kopf und Fuß der Seite steht und nicht aus den Daten kommt."""

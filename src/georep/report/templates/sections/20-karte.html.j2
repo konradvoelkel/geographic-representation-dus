@@ -30,7 +30,9 @@
 </div>
 <div class="map-wrap">
 {{ visuals.map_svg|safe }}
-<div>
+{# Punkt 46: der Umschalter blendet hier genau eine Legende ein; ein Screenreader soll den
+   Wechsel mitbekommen, wie beim Suchergebnis in 15-suche. #}
+<div aria-live="polite">
 <div class="legend" id="legend-rate"><strong>Trefferquote</strong> (Dokumente je Wahlberechtigtem; mal 1000 sind es Dokumente je 1000 Wahlberechtigte)
 <ul>{% for entry in visuals.rate_legend %}<li><span class="swatch q{{ entry.klass }}"></span>{{ entry.label }}</li>{% endfor %}</ul></div>
 {% if visuals.hits_legend %}{# Punkt 46 #}

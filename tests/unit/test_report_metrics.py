@@ -72,10 +72,12 @@ def test_the_map_offers_the_three_new_normalisations(mini_page: str) -> None:
     assert 'value="jebegriff" data-scale' not in mini_page
 
 
-def test_every_district_shape_carries_the_new_classes(mini_page: str) -> None:
+def test_every_district_shape_carries_the_new_classes(
+    mini_page: str, mini_model: ReportModel
+) -> None:
     for value in ("treffer", "jebegriff", "abweichung"):
         found = re.findall(rf'data-class-{value}="(\d)"', mini_page)
-        assert len(found) == 3, value  # drei Wahlbezirke in der Mini-Fixture
+        assert len(found) == len(mini_model.districts), value
         assert all(digit in "01234" for digit in found)
 
 

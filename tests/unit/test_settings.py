@@ -956,3 +956,26 @@ def test_profile_2025_is_an_open_period_without_corpus_seed(tmp_path: Path) -> N
     assert s.sources.oparl.stop_when_older and s.sources.oparl.incremental
     assert len(s.search.exclude) == 63
     assert s.fingerprint() != load_settings(cwd=tmp_path).fingerprint()  # andere Periode
+
+
+# --- Punkt 46: die Klassengrenzen der divergierenden Varianten -------------------------------------
+
+
+def test_diverging_boundaries_must_be_four_ascending_and_hold_the_middle() -> None:
+    """Review-Befund 21: vier aufsteigende Grenzen, und die mittlere Klasse enthält das Mittel."""
+    from pydantic import ValidationError
+
+    from georep.settings import Diverging
+
+    assert Diverging().district_percent == [-0.25, -0.10, 0.10, 0.25]
+    for field, broken in (
+        ("district_percent", [-0.25, -0.10, 0.10]),  # nur drei Grenzen
+        ("party_points", [-0.02, 0.005, -0.005, 0.02]),  # nicht aufsteigend
+        ("district_percent", [0.10, 0.20, 0.30, 0.40]),  # 0 liegt nicht in der Mitte
+        ("party_points", [-0.04, -0.03, -0.02, -0.01]),  # alles unter 0
+        ("party_ratio", [0.1, 0.2, 0.3, 0.4]),  # 1 liegt nicht in der Mitte
+    ):
+        with pytest.raises(ValidationError):
+            Diverging(**{field: broken})
+    # Das Verhältnis darf die Mitte um 1 legen, nicht um 0
+    assert Diverging(party_ratio=[0.25, 0.75, 1.5, 3.0]).party_ratio[1] == 0.75

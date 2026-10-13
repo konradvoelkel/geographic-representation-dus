@@ -1380,6 +1380,8 @@ def party_section(
     diverging: Diverging,
 ) -> tuple[tuple[PartyRow, ...], tuple[PartyCell, ...], tuple[OriginatorRow, ...]]:
     """Die drei Listen des Abschnitts aus den drei Parquet-Tabellen des Schritts ``parties``."""
+    # Lokal, weil ``report.charts`` dieses Modul importiert (DistrictRow, PartyCell, format_de):
+    # ein Import oben wäre ein Zyklus. Dasselbe tut ``_party_classification`` mit ``classify``.
     from georep.report.charts import classify_fixed
 
     raw = [
@@ -1401,7 +1403,7 @@ def party_section(
     }
     # Punkt 46: die beiden neuen Varianten klassieren über alle Parteien gemeinsam und an festen
     # Grenzen -- erst das macht die sechs Karten vergleichbar, und darum geht es bei ihnen.
-    keyed = {i: c for i, c in enumerate(raw)}
+    keyed = dict(enumerate(raw))
     deviation_classes = classify_fixed(
         {i: c.deviation for i, c in keyed.items()}, diverging.party_points
     ).classes

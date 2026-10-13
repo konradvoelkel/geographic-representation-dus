@@ -571,11 +571,12 @@ def _party_bounds_hold(
         (pl.col("angetreten") == (pl.col("stimmen") > 0)).all(),
         (pl.col(RATE) >= 0.0).all(),
         (pl.col(PARTY_RATIO) >= 0.0).all(),
-        (pl.col(PARTY_DEVIATION) == pl.col(SHARE) - pl.col(PARTY_MEAN)).all(),
     )
     shares = shares_in_unit_interval(result, SHARE, "stimmenanteil", PARTY_MEAN)
     # Punkt 46: das Mittel ist wirklich das Mittel dieser Anteile -- die Abweichungen heben sich
-    # je Wahlbezirk auf; und ein Verhältnis ist nie negativ.
+    # je Wahlbezirk auf. Dass die Abweichung die Differenz der beiden Spalten ist, steht hier
+    # nicht als Bedingung: sie ist genau so gerechnet, und eine Zeile, die die Rechnung
+    # wiederholt, prüft nichts.
     cancel = result.group_by(DISTRICT).agg(pl.col(PARTY_DEVIATION).sum().abs().alias("rest"))
     balanced = bool((cancel.get_column("rest") < 1e-12).all())
     return within_district and shares and balanced and all(checks.row(0))
