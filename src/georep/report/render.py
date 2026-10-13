@@ -12,6 +12,7 @@ import json
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from html import unescape
 from importlib import resources
 from importlib.resources.abc import Traversable
 
@@ -154,8 +155,14 @@ def environment() -> Environment:
     return env
 
 
-def external_links(html: str) -> list[str]:
-    return _EXTERNAL.findall(html)
+def external_links(page: str) -> list[str]:
+    """Jeder Link nach außen, entschlüsselt, damit der Vergleich mit der Allowlist zählt.
+
+    Jinja escapt ein ``&`` in einem Attribut zu ``&amp;``; ohne ``unescape`` stünde hier die
+    escapte Form und in ``model_links`` die rohe, und eine vollkommen gültige URL mit
+    Abfrageparametern hätte die Nachbedingung von ``render_report`` gebrochen (Review 2026-10-13).
+    """
+    return [unescape(link) for link in _EXTERNAL.findall(page)]
 
 
 @dataclass(frozen=True)

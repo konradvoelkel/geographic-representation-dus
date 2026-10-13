@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 import tomllib
+from dataclasses import replace
 from pathlib import Path
 
 import deal
@@ -17,7 +18,15 @@ from pydantic import ValidationError
 
 from georep.errors import SchemaError
 from georep.report.literature import FILE, literature, package_literature
-from georep.report.render import sections
+from georep.report.model import ReportModel
+from georep.report.render import (
+    ALLOWED_LINKS,
+    Visuals,
+    external_links,
+    model_links,
+    render_report,
+    sections,
+)
 from georep.settings import LiteratureEntry, Settings
 from tests.conftest import REPO, mg_settings
 from tests.unit.test_report_city import CITY_WORDS
@@ -196,6 +205,24 @@ def test_the_pending_entries_say_so_on_the_page(mini_page: str, default_settings
 
 def test_the_method_paragraph_points_at_the_section(mini_page: str) -> None:
     assert 'href="#literatur">Literatur und verwandte Arbeiten</a>' in mini_page
+
+
+def test_an_url_with_an_ampersand_still_renders(
+    mini_model: ReportModel, mini_visuals: Visuals
+) -> None:
+    """Eine Quelle mit Abfrageparametern bricht die Allowlist, wenn niemand entschlüsselt.
+
+    Die Vorlage escapt ``&`` zu ``&amp;``; ``external_links`` fand bis zum 2026-10-13 die escapte
+    Form, ``model_links`` liefert die rohe, und die Nachbedingung von ``render_report`` schlug fehl
+    -- also an einer vollkommen gültigen DOI- oder Portal-URL (Review 2026-10-13).
+    """
+    url = "https://beispiel.invalid/suche?a=1&b=2"
+    found = make(key="mit-und", url=url, accessed="2026-10-13", note="Mit Abfrageparametern.")
+    model = replace(mini_model, literature=(found,))
+    page = render_report(model, mini_visuals)
+    assert "&amp;b=2" in page  # escaped im HTML
+    assert url in external_links(page)  # entschlüsselt beim Vergleich
+    assert set(external_links(page)) <= ALLOWED_LINKS | model_links(model)
 
 
 # --- README und Quelle tragen dieselbe Liste ---------------------------------------------------

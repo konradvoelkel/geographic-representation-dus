@@ -31,7 +31,10 @@ keys = st.text(alphabet="abcdefghijklmnopqrstuvwxyz0123456789-", min_size=1, max
 def entries(draw: st.DrawFn, key: str) -> LiteratureEntry:
     """Ein gültiger Eintrag zu einem gegebenen Schlüssel: mit URL, mit DOI oder mit beidem."""
     kind = draw(st.sampled_from(("url", "doi", "both")))
-    path = draw(st.text(alphabet="abcdefghijklmnopqrstuvwxyz0123456789-/", min_size=1, max_size=20))
+    # "&" gehoert ins Alphabet: es ist in einer URL gueltig und wird im HTML escaped (Befund 7)
+    path = draw(
+        st.text(alphabet="abcdefghijklmnopqrstuvwxyz0123456789-/?=&", min_size=1, max_size=20)
+    )
     suffix = draw(
         st.text(alphabet="abcdefghijklmnopqrstuvwxyz0123456789.-", min_size=1, max_size=12)
     )
@@ -72,9 +75,7 @@ def test_every_link_of_an_entry_is_allowed_and_rendered(
 ) -> None:
     model = replace(mini_model, literature=found)
     page = render_report(model, mini_visuals)
-    allowed = ALLOWED_LINKS | model_links(model)
     expected = {link for entry in found for link in entry.links}
-    assert expected <= allowed
     assert expected <= set(external_links(page))
     # Die Nachbedingung von ``render_report`` hat schon gegriffen; hier steht, warum sie hält.
-    assert set(external_links(page)) <= allowed
+    assert set(external_links(page)) <= ALLOWED_LINKS | model_links(model)
