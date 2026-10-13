@@ -878,7 +878,9 @@ streng monotone Umrechnung der Trefferquote; Quantilklassen darüber wären dies
 gefärbt. Darum stehen die Grenzen fest in `defaults.toml` (`report.diverging`): ±10 % und ±25 % vom
 Stadtmittel (Klassen mit 6, 12, 11, 8, 4 Bezirken), ±0,5 und ±2 Prozentpunkte für die Parteien (23, 67, 64,
 72, 20 Zellen) und 0,5 / 0,8 / 1,25 / 2,0 für das Verhältnis (61, 32, 60, 78, 15 Zellen; log-symmetrisch um
-1). Die mittlere Klasse heißt „etwa im Mittel". **Verworfen:** das Log-Verhältnis, das `docs/todo.md` als
+1). Die mittlere Klasse ist die um das Mittel; sie trägt wie jede andere ihren Bereich als Beschriftung
+(„−10 % bis unter +10 %"), und der Begleitsatz der Legende sagt „etwa im Mittel". **Verworfen:** das
+Log-Verhältnis, das `docs/todo.md` als
 Möglichkeit nennt — 20 der 246 Parteizellen sind exakt 0 (die AfD bedient 41 Bezirke mit 183 Dokumenten), und
 `log(x + ε)` macht die Grenzen von ε abhängig.
 
@@ -895,6 +897,19 @@ JavaScript im Rahmen tauscht sie je Radiogruppe **innerhalb ihres `<section>`** 
 Verhalten zu ändern. Keine zweite Kopie der Karten-SVGs: die 41 Flächen stehen weiter einmal in `<defs>`, die
 Varianten sind Attribute (rund 52 KB für alle Umschalter zusammen, Budget 1,5 MB). Ohne JavaScript zeigt die
 Seite die Standardvariante.
+
+**Eine nicht angetretene Partei zählt im Mittel mit.** Wo eine Partei keinen Wahlvorschlag hatte
+(Düsseldorf: Die Linke im Wahlbezirk 11), bleibt ihr Dokumentanteil eine echte Zahl — sie hat dort
+Dokumente geschrieben oder nicht, unabhängig vom Wahlzettel —, und das Mittel aller Parteien ist das Mittel
+aller sechs Anteile. Ausgelassen wird dieser Bezirk nur beim Abgleich mit dem Stimmenanteil (`r` und `p`,
+Punkt 27): dort ist ein Anteil von 0 keine Zustimmung von 0. Beide Regeln stehen jetzt in der Spaltendoku
+von `wahlbezirke_parteien` und in „Methode und Grenzen".
+
+**Was die Grenzen nicht auslösen.** `[report.diverging]` steht unter `[report]` und ist damit aus dem
+Settings-Fingerprint ausgenommen (`docs/plans/00-synergien.md`, § 5.4): eine andere Grenze färbt die Karte
+um, rechnet aber keine Zahl neu. Der Preis ist, dass `georep status` den Schritt `report` nach einer
+geänderten Grenze als „aktuell" meldet — wie nach einer geänderten Vorlage; beides braucht ein
+`georep run report --force` und steht in `STATUS.md` unter „Bekannt".
 
 **Wo die Zahlen herkommen.** Der neue Offline-Schritt `metrics` schreibt
 `processed/wahlbezirke_kennzahlen.parquet` (Treffer, Begriffe, Treffer je Begriff, Treffer je 1000

@@ -26,10 +26,15 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   - Die Standardansicht ändert sich nicht, und Tabelle 5, die Treffer (29 010) und das Wörterbuch
     (5727) sind unberührt. Neue Download-Tabelle `wahlbezirke_kennzahlen` (neuer Schritt
     `metrics`); `wahlbezirke_parteien` hat drei Spalten mehr. `index.html` wächst von 1,10 auf
-    1,30 MB (Budget 1,5 MB), die Seite auf 52 Dateien.
+    1,27 MB (Budget 1,5 MB), die Seite auf 52 Dateien.
   - Divergierende Varianten haben feste, symmetrische Klassengrenzen statt Quantile
     (`[report.diverging]`): eine Abweichung vom Stadtmittel ist eine streng monotone Umrechnung der
-    Quote, Quantile darüber wären genau deren Klassen in anderer Farbe.
+    Quote, Quantile darüber wären genau deren Klassen in anderer Farbe. Weil die Grenzen unter
+    `[report]` stehen, zählen sie nicht zum Settings-Fingerprint: nach einer Änderung braucht die
+    Seite ein `georep run report --force`.
+  - „Methode und Grenzen" nennt jetzt die Verzerrung, die dahinter steht: wie stark die Trefferzahl
+    an der Größe des Wörterbuchs hängt, was die Normierung herausnimmt und dass sie dafür in die
+    andere Richtung verzerrt. Die Zahlen sind gemessen, nicht geschrieben.
 
 - **Die Themen tragen Namen statt Nummern** (`docs/themenmodell-2026-10.md`, `docs/decisions.md` Punkt 45).
   Drei Änderungen am Themenmodell, gemessen auf der Referenz:

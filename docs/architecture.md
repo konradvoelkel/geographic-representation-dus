@@ -215,7 +215,9 @@ baut ein `fieldset.switcher` mit einem Radio je Variante (das erste ist die Stan
 ohne JavaScript da), und das Basis-JavaScript tauscht alles, was eine Variante kennt —
 `data-class-<variante>` (Stufe der Farbskala, `choropleth(extra_classes=...)` setzt sie je Fläche),
 `data-text-<variante>` (angezeigte Zahl oder Spaltenkopf), `data-value-<variante>` (Sortierwert) und die
-Legende `#legend-<variante>`. Gesucht wird im ganzen Dokument, nicht im Abschnitt, denn der Umschalter der
+Legende `#legend-<variante>`. Die **Standardvariante trägt keine Attribute**: sie ist der Zustand, in dem
+die Seite ausgeliefert wird, und das JavaScript merkt sich beim Aufbau je beteiligtem Element Klasse, Text
+und Sortierwert und stellt sie wieder her. Gesucht wird im ganzen Dokument, nicht im Abschnitt, denn der Umschalter der
 Karte färbt auch die Kennzahlspalte der Tabelle je Wahlbezirk; getrennt halten sich die Gruppen dadurch, dass
 kein `value` zweimal vorkommt (ein Test hält das fest). Die Skala steht als `data-scale` am Radio: ohne
 Angabe die sequenzielle Blau-Rampe `q`, `d` ist die divergierende um das Mittel (orange darunter, neutrales
@@ -223,17 +225,20 @@ Grau in der Mitte, blau darüber; aus `color-mix` von `--selected`, `--muted` un
 ohne zweiten Dunkel-Block, mit nachgerechneten Kontrasten im Rahmen). Dieselbe Klasse bedeutet auf beiden
 Flächen dasselbe: auf einer SVG-Fläche färbt `q<n>` den `fill` mit der vollen Rampe, in einer Tabellenzelle
 denselben Rang als Tönung (`td.q<n>` auf `--p0` bis `--p4`) — die Zellen tragen Zahlen, und die volle Rampe
-erreicht in der Mitte keinen Kontrast 4,5. Die Karte bietet damit neben der Trefferquote auch Treffer
+erreicht in der Mitte keinen Kontrast 4,5; ein Test verlangt darum je Rampe und Stufe beide Regeln.
+Die Legenden stehen in einer `aria-live`-Region, und die Legende fester Grenzen entsteht aus den Grenzen
+allein (`charts.legend_for`), nicht aus den Daten. Die Karte bietet damit neben der Trefferquote auch Treffer
 absolut, Treffer je Begriff im Wörterbuch und die Abweichung vom Stadtmittel (feste Grenzen aus
 `[report.diverging]`, keine Quantile: die Abweichung ist eine streng monotone Umrechnung der Quote, und
 Quantile ergäben genau deren Klassen); der Abschnitt „Urheber und Parteien" schaltet seine sechs Karten und
 seine Parteispalten zwischen Anteil, Abweichung vom Mittel aller Parteien und Verhältnis zum Mittel um. Woher
 die Zahlen kommen, steht in `docs/skalierung-2026-10.md`; die Entscheidungen in `docs/decisions.md`,
-Punkt 46. Neben Tabelle 5 steht dieselbe Regression mit `x = Treffer je Begriff` (`model.per_term_regression`),
+Punkt 46. „Methode und Grenzen" schließt mit dem Absatz zur Wörterbuchgröße, dessen Korrelationen
+`analysis.scaling.dictionary_bias` messen — ohne Streuung entfällt er. Neben Tabelle 5 steht dieselbe Regression mit `x = Treffer je Begriff` (`model.per_term_regression`),
 und ihre Deutungssätze entstehen aus den Zahlen, nicht aus festem Text. Die veröffentlichten Tabellen stehen im Register
 `report/tables.py` (Datei, Beschreibung, Spaltendoku, CSV-Regeln, `optional` für profilabhängige Tabellen);
 daraus entstehen Downloads, `schema.json`, CSV-Dateien und die Spaltentabelle. Die Seite bleibt unter 1,5 MB
-(slow-Test); mit allen Abschnitten sind es 1,30 MB. Die beiden Abschnitte der Kontrollvariablen
+(slow-Test); mit allen Abschnitten sind es 1,27 MB. Die beiden Abschnitte der Kontrollvariablen
 (`32-kontrollvariablen`, `65-abgeleitete-daten`) stehen in `{% if model.controls %}` beziehungsweise
 `{% if model.derived %}` und fehlen ohne sie ganz; ihre Zahlen kommen aus
 `processed/regression_kontrollen.parquet`, der Satz zur Deutung entsteht aus p, Vorzeichen, R²-Zuwachs und dem
@@ -279,7 +284,7 @@ Themenzeile den Namen ihres Ausschusses aus dem Profil, und die Themen-Tabelle e
 Abschnitt „Gremien" bekommt daneben die Tabelle „Dokumente je passendem Ausschuss" mit der Spalte „davon
 ohne Ausschussberatung". Auf der Referenz: 41 Wahlbezirke, 52 Dateien
 (mit `summary.json`, Option 01, `ausschuss_zuordnung`, Punkt 45, und `wahlbezirke_kennzahlen`, Punkt 46),
-13,4 MB, davon `index.html` 1,30 MB (144 KB Suchdaten, 134 KB die beiden Umschalter, 63 KB die
+13,4 MB, davon `index.html` 1,27 MB (144 KB Suchdaten, 110 KB die beiden Umschalter, 63 KB die
 Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html` 252 KB, `dokumente.json` 2,3 MB;
 1,7 s (2026-10-13, nach Punkt 46).
 

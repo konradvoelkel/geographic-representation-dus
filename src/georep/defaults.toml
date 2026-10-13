@@ -190,7 +190,7 @@ regression = true              # Option 07: false, wenn es zur Periode keine Wah
 monitoring_url = ""            # Option 07: relativer Link auf die Seite der laufenden Periode, auf dem VPS "2025/"; leer = kein Abschnitt, Pages bleibt ohne toten Link
 
 # --- Punkt 46: Klassengrenzen der Varianten "relativ zum Mittel" (docs/skalierung-2026-10.md) -----
-[report.diverging]             # vier feste Grenzen je Variante ergeben fuenf Klassen, die mittlere heisst "etwa im Mittel"; Quantile waeren hier dieselbe Einteilung wie bei der Quote, nur anders gefaerbt
+[report.diverging]             # vier feste Grenzen je Variante ergeben fuenf Klassen, die mittlere umschliesst das Mittel (der Validator prueft das); Quantile waeren hier dieselbe Einteilung wie bei der Quote, nur anders gefaerbt. Achtung: [report] zaehlt nicht zum Settings-Fingerprint, darum meldet georep status den Schritt report nach einer geaenderten Grenze als "aktuell" -- die Seite braucht dann ein georep run report --force (STATUS.md, "Bekannt")
 district_percent = [-0.25, -0.10, 0.10, 0.25]  # Abweichung der Trefferquote vom Stadtmittel; auf der Referenz 2026-10-13 fuellen sich die Klassen mit 6, 12, 11, 8, 4 Wahlbezirken (Spannweite -57,8 % bis +144,8 %), mit +-20 % oder +-15 % draengt zu viel in die Randklassen
 party_points = [-0.02, -0.005, 0.005, 0.02]    # Abweichung eines Parteianteils vom Mittel aller Parteien im Bezirk, als Anteil (mal 100 sind es Prozentpunkte): 23, 67, 64, 72, 20 der 246 Zellen
 party_ratio = [0.5, 0.8, 1.25, 2.0]            # Verhaeltnis zum Mittel, log-symmetrisch um 1 (1/2, 1/1,25, 1,25, 2): 61, 32, 60, 78, 15 Zellen; ein Logarithmus geht nicht, 20 Zellen sind exakt 0

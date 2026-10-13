@@ -146,14 +146,14 @@ genau die Treffer je Wahlbezirk und die Parteianteile (Entscheidungen in `docs/d
 
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45 und 46)
 
-- Tests: 937 schnelle (nox-Gate, parallel in rund 43 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 950 schnelle (nox-Gate, parallel in rund 43 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` 1,30 MB (1 295 184 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
-  134 KB), 52 Dateien zusammen 13,4 MB, vierzehn
+- Berichtsseite: `index.html` 1,27 MB (1 267 956 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
+  110 KB), 52 Dateien zusammen 13,4 MB, vierzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
@@ -204,6 +204,11 @@ genau die Treffer je Wahlbezirk und die Parteianteile (Entscheidungen in `docs/d
   — nach einem Klick auf „Anteil" war die Tönung weg (gefunden am 2026-10-13 mit headless Chrome, nicht von
   einem Test). Seitdem gilt `q<n>` auf einer SVG-Fläche als `fill` und in einer Tabellenzelle als Tönung
   desselben Rangs, beides im Rahmen definiert.
+- Dasselbe gilt für die Klassengrenzen unter `[report.diverging]` (Punkt 46) und für alles unter
+  `[report]`: der Block ist aus dem Settings-Fingerprint ausgenommen, weil er nur die Anzeige betrifft, und
+  darum meldet `georep status` den Schritt `report` nach einer geänderten Grenze als „aktuell". Richtig ist
+  das für die Parquet-Dateien, nicht für `index.html`; wer eine Grenze ändert, braucht
+  `georep run report --force`.
 - Ein Vorlagenwechsel (`templates/sections/*.j2`) macht den Stamp des Schritts `report` nicht ungültig: er trägt die Code-Version des Pakets, nicht den Hash der Vorlagen. Nach einer Änderung an einer Vorlage ohne Versionssprung braucht die Seite ein `georep run report --force` (bemerkt am 2026-10-12).
 - Der Settings-Fingerprint ist global: ein neuer Schlüssel lässt alle Schritte einmal neu laufen. Hinnehmbar; ein Fingerprint je Schritt ist zurückgestellt (`docs/plans/00-synergien.md`, § 8).
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab (`docs/baseline-2026-10-10.md`).

@@ -165,13 +165,15 @@ Begründung je Fall in § 3.1 und § 4.1.
 **Divergierend heißt auch: feste Grenzen, keine Quantile.** Eine Abweichung vom Mittel ist bei den
 Wahlbezirken eine streng monotone Umrechnung der Quote — Quantilklassen darüber wären *dieselben* Klassen wie
 die der Quote, nur anders gefärbt, und die Variante zeigte nichts Neues. Darum bekommen die divergierenden
-Varianten **feste, um die Mitte symmetrische Grenzen**, und die mittlere Klasse heißt „etwa im Mittel".
+Varianten **feste, um die Mitte symmetrische Grenzen**. Die mittlere Klasse ist die um das Mittel; ihre
+Beschriftung nennt wie jede andere ihren Bereich („−10 % bis unter +10 %"), und der Begleitsatz der Legende
+sagt dazu „etwa im Mittel" — eine Klasse, deren Label die Zahlen verschweigt, wäre schlechter lesbar.
 **Skala:** divergierend, in beide Richtungen vom neutralen Mittelton weg (§ 6).
 
 ### 2.5 Was nicht geht
 
 - **Log-Verhältnis** (`docs/todo.md` nennt es als Möglichkeit): fällt weg. 20 der 246 Parteizellen sind
-  exakt 0 (vor allem die AfD, die 41 Bezirke mit 182 Dokumenten bedient), und der Logarithmus von 0 ist
+  exakt 0 (vor allem die AfD, die 41 Bezirke mit 183 Dokumenten bedient), und der Logarithmus von 0 ist
   keine Zahl. Ein Ersatz (`log(x + ε)`) macht die Klassengrenzen von ε abhängig. Das Verhältnis selbst
   bleibt, mit log-symmetrischen Grenzen (0,5 / 0,8 / 1,25 / 2,0): das ist die Lesbarkeit des Logarithmus
   ohne seinen Definitionslücken.
@@ -286,7 +288,7 @@ Verteilungen (246 Zellen, 2026-10-13):
   an den Rändern), ±0,75 pp (96 in der Mitte, zu stumpf).
 - **Verhältnis:** Minimum 0,000 (20 Zellen), Median 1,048, Maximum 2,354. Mit 0,5 / 0,8 / 1,25 / 2,0 füllen
   sich die Klassen mit **61 / 32 / 60 / 78 / 15**. Die Grenzen sind log-symmetrisch (1/2, 1/1,25, 1,25, 2),
-  die Mitte heißt „zwischen 0,8- und 1,25-fach — etwa im Mittel".
+  die Mitte („0,80× bis unter 1,25×") heißt im Begleitsatz der Legende „etwa im Mittel".
 - **Vertrag:** die Abweichungen summieren sich je Wahlbezirk auf 0 (gemessen: größter Betrag der Summe
   2,8 · 10⁻¹⁵). Das ist die Prüfung, dass das Mittel wirklich das Mittel dieser sechs Zahlen ist.
 
@@ -377,13 +379,16 @@ Treffer; sie ist das Mittel über 41 Bezirke, und ein Dokument zählt in jedem B
 
 ## 7. Kosten (gemessen nach dem Bau)
 
-- **Seitengröße.** Vorher 1 158 408 Byte, nachher **1 295 184 Byte** (1,30 MB von 1,5 MB Budget), also
-  **136 776 Byte für beide Umschalter zusammen**, rund 67 KB je Umschalter und damit unter der Grenze von
-  rund 100 KB je Umschalter. Davon messbar (2026-10-13): die Datenattribute der sechs Parteikarten und der
-  Parteispalten 86 KB, die der großen Karte und der Bezirkstabelle 18 KB, der Rest Legenden, Texte,
-  JavaScript und die längeren Tooltips. Keine zweite Kopie der Karten-SVGs: die 41 Flächen stehen weiter
-  einmal in `<defs>`, die Varianten sind Attribute an denselben `<use>`; die Sortierwerte sind auf sechs
-  Stellen gerundet (das allein sparte 10 KB).
+- **Seitengröße.** Vorher 1 158 408 Byte, nachher **1 267 956 Byte** (1,27 MB von 1,5 MB Budget), also
+  **109 548 Byte für beide Umschalter zusammen**, rund 55 KB je Umschalter und damit unter der Grenze von
+  rund 100 KB je Umschalter. Keine zweite Kopie der Karten-SVGs: die 41 Flächen stehen weiter einmal in
+  `<defs>`, die Varianten sind Attribute an denselben `<use>`. Zwei Sparmaßnahmen nach dem Review:
+  die Sortierwerte sind auf sechs Stellen gerundet, und **die Standardvariante trägt keine Attribute** —
+  sie ist der Zustand, in dem die Seite ausgeliefert wird, und das JavaScript merkt sich beim Aufbau je
+  Element Klasse, Text und Sortierwert und stellt sie wieder her (1080 Attribute weniger, 29 KB).
+  Nicht gemacht: kürzere Attributnamen. `data-class-<variante>` ist die Schnittstelle aus Fundament F1
+  (Punkt 21), dokumentiert und getestet, und die Variantennamen stehen auch in den Radios und in den
+  Legenden-IDs.
 - **Laufzeit.** Der neue Schritt `metrics` braucht auf der Referenz 0,1 s, der Schritt `parties` mit den
   drei Spalten weiter 0,5 s, der Schritt `report` 1,7 s statt 1,5 s. `nox -s bench` bleibt grün.
 - **Kein neuer Fingerprint.** Die Klassengrenzen stehen unter `[report]` und sind damit aus dem
@@ -422,3 +427,20 @@ Treffer; sie ist das Mittel über 41 Bezirke, und ein Dokument zählt in jedem B
 - **„Treffer absolut" ist keine Wiederholung der Quote.** r = 0,977 und ρ = 0,935 klingen nach derselben
   Karte, aber 17 der 41 Quantilklassen sind andere. Nur „je 1000 Wahlberechtigte" ist wirklich dieselbe
   Karte — ein positiver Faktor ändert keine Klasse.
+
+## 10. Nachtrag: die Befunde des Reviews (2026-10-13)
+
+- **Eine Stadt ohne Treffer hat kein Stadtmittel.** `relative_to(...) − 1` war dort −1 je Bezirk, die
+  Nachbedingung „die Abweichungen summieren sich auf 0" brach, und der Schritt `metrics` hätte die Kette
+  abgebrochen — in jeder Stichprobe ohne extrahierte Texte. `deviation_from` hat dafür einen eigenen Zweig,
+  und die Eigenschaften stehen jetzt als hypothesis-Tests in `tests/property/test_scaling_props.py`
+  (dort wäre der Fall der erste Shrink gewesen), `classify_fixed` zusätzlich in `nox -s verify`.
+- **Eine Legende fester Grenzen braucht keine Werte.** `legend_for` baut sie aus den Grenzen; vorher
+  entstand sie aus `classify_fixed` über die 246 Parteizellen mit dem Wahlbezirk als Schlüssel, und die
+  Klassen darin waren still falsch (aufgefallen wäre es erst beim nächsten Gebrauch).
+- **Der Deutungssatz war zu stark.** Bei r = −0,11 und p = 0,49 ist das Vorzeichen nicht bestimmbar; die
+  Seite sagt das jetzt, statt einen Richtungswechsel zu behaupten, und nennt „Treffer je Begriff" eine
+  Gegenprobe und keine Erklärung. Die Zahlen des Methodenabsatzes rechnet
+  `analysis.scaling.dictionary_bias`, damit eine zweite Stadt ihre eigenen bekommt.
+- **Die mittlere Klasse muss das Mittel einschließen**, sonst divergiert nichts; der Settings-Validator
+  prüft es seit dem Review.

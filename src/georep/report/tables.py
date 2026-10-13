@@ -491,7 +491,10 @@ TABLES.extend(
                 # Punkt 46: die beiden Varianten „relativ zum Durchschnitt aller Parteien"
                 "mittel_anteil": (
                     "ungewichtetes Mittel von anteil_dokumente über alle Parteien dieses "
-                    "Wahlbezirks; in allen Zeilen eines Bezirks gleich",
+                    "Wahlbezirks; in allen Zeilen eines Bezirks gleich. Eine Partei ohne "
+                    "Wahlvorschlag (angetreten = false) zählt hier mit, denn ihr Dokumentanteil "
+                    "ist eine echte Zahl; ausgelassen wird sie nur beim Abgleich mit dem "
+                    "Stimmenanteil",
                     "Anteil 0 bis 1",
                 ),
                 "abweichung_mittel": (
