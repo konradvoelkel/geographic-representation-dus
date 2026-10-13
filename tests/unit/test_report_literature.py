@@ -29,7 +29,6 @@ from georep.report.render import (
 )
 from georep.settings import LiteratureEntry, Settings
 from tests.conftest import REPO, mg_settings
-from tests.unit.test_report_city import CITY_WORDS
 
 SOURCE_FILE = REPO / "src" / "georep" / "report" / FILE
 THESIS_KEY = "bartzsch-2026"
@@ -64,12 +63,6 @@ def test_the_package_file_holds_citable_entries() -> None:
         assert not entry.url or entry.accessed is not None
         assert entry.note.strip(), f"{entry.key}: ohne Satz zum Beitrag wäre es eine Linksammlung"
         assert entry.accessed is None or 1990 <= entry.accessed.year <= 2100
-
-
-def test_no_city_word_in_the_package_file() -> None:
-    """Dieselbe Regel wie für Code und Vorlage: die allgemeinen Einträge kennen keine Stadt."""
-    text = SOURCE_FILE.read_text(encoding="utf-8")
-    assert [word for word in CITY_WORDS if word in text] == []
 
 
 def test_the_profile_adds_the_thesis_in_front_of_the_general_entries(

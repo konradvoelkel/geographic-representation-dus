@@ -77,6 +77,30 @@ def test_no_city_word_in_the_templates() -> None:
     assert found == {}, f"Stadtwörter in der Vorlage: {found}"
 
 
+def test_no_city_word_in_the_packaged_data() -> None:
+    """Dieselbe Regel wie für Code und Vorlagen, auch für Daten im Paket (Punkt 47).
+
+    ``defaults.toml`` darf das Standardprofil nennen (eigener Test unten) und ``profiles/`` ist
+    gerade der Ort für Stadtwörter; jede andere TOML-Datei im Paket -- heute
+    ``report/literatur.toml`` -- gilt für jede Kommune und darf keine nennen.
+    """
+    found: dict[str, list[str]] = {}
+    for path in sorted(PACKAGE.rglob("*.toml")):
+        if path == DEFAULTS or path.parent == PROFILES:
+            continue
+        text = path.read_text(encoding="utf-8")
+        hits = sorted({word for word in CITY_WORDS if word in text})
+        if hits:
+            found[str(path.relative_to(REPO))] = hits
+    assert found == {}, f"Stadtwörter in Paketdaten: {found}"
+
+
+def test_the_packaged_data_check_sees_more_than_the_two_exceptions() -> None:
+    """Sonst wäre der Test oben leer, sobald jemand die Ausnahmen weiter fasst."""
+    checked = [p for p in PACKAGE.rglob("*.toml") if p != DEFAULTS and p.parent != PROFILES]
+    assert [p.name for p in checked] == ["literatur.toml"]
+
+
 def test_only_the_selector_names_a_city_in_the_defaults() -> None:
     lines = [
         line
