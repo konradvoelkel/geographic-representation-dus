@@ -69,6 +69,26 @@ def test_fit_keeps_the_aspect_ratio_and_flips_y() -> None:
         fit((0.0, 0.0, 0.0, 1.0), width=10.0)
 
 
+def test_an_infinite_bound_is_no_bounding_box() -> None:
+    """crosshair, 2026-10-13: ``fit((-1.0, 0.0, inf, 1.0), 1.0)`` lieferte Skala und Höhe 0.
+
+    ``width / (max_x - min_x)`` ist bei einer unendlichen Grenze 0, und die Nachbedingung „Höhe und
+    Skala positiv" brach daran. Dieselbe Lehre wie bei ``nice_ticks`` am 2026-10-12: eine
+    Vorbedingung über Grenzen muss sagen, dass sie endlich sind.
+    """
+    for bounds in (
+        (-1.0, 0.0, math.inf, 1.0),
+        (-math.inf, 0.0, 1.0, 1.0),
+        (0.0, -math.inf, 1.0, 1.0),
+        (0.0, 0.0, 1.0, math.inf),
+        (0.0, 0.0, math.nan, 1.0),
+    ):
+        with pytest.raises(deal.PreContractError):
+            fit(bounds, width=10.0)
+    with pytest.raises(deal.PreContractError):
+        fit((0.0, 0.0, 1.0, 1.0), width=math.inf)
+
+
 def test_svg_path_writes_rings_with_two_decimals() -> None:
     projection = Projection(0.0, 10.0, 1.0, 10.0, 10.0)
     outer = Polygon([(0, 0), (10, 0), (10, 10), (0, 10)], holes=[[(4, 4), (6, 4), (6, 6), (4, 6)]])

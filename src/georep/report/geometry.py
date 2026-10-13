@@ -6,6 +6,7 @@ Reprojektion; nur das GeoJSON für GIS geht über ``georep.geo.to_lonlat`` nach 
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
@@ -80,10 +81,25 @@ class Projection:
         return ((x - self.min_x) * self.scale, (self.max_y - y) * self.scale)
 
 
-@deal.pre(
-    lambda bounds, width: width > 0 and bounds[2] > bounds[0] and bounds[3] > bounds[1],
-    message="Breite positiv, Bounding Box mit Ausdehnung in beiden Richtungen",
-)
+def _finite_box(bounds: tuple[float, float, float, float], width: float) -> bool:
+    """Endliche Breite und endliche Bounding Box mit Ausdehnung in beiden Richtungen.
+
+    ``isfinite`` stand bis zum 2026-10-13 nicht da, und crosshair fand das Gegenbeispiel
+    ``fit((-1.0, 0.0, inf, 1.0), 1.0)``: ``width / (max_x - min_x)`` ist dann 0, und die
+    Nachbedingung „Höhe und Skala positiv" bricht. Dieselbe Lehre wie bei ``nice_ticks`` am
+    2026-10-12 — eine unendliche Grenze ist keine Bounding Box, und eine Vorbedingung, die das
+    nicht sagt, lässt sie durch.
+    """
+    return (
+        math.isfinite(width)
+        and width > 0
+        and all(math.isfinite(value) for value in bounds)
+        and bounds[2] > bounds[0]
+        and bounds[3] > bounds[1]
+    )
+
+
+@deal.pre(_finite_box, message="Breite positiv und endlich, Bounding Box endlich und ausgedehnt")
 @deal.post(lambda result: result.height > 0 and result.scale > 0)
 def fit(bounds: tuple[float, float, float, float], width: float) -> Projection:
     """Seitenverhältnis bleibt: die Höhe folgt aus der Bounding Box."""

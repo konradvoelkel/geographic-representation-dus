@@ -8,6 +8,7 @@ from dataclasses import replace
 from html.parser import HTMLParser
 from pathlib import Path
 
+import deal
 import polars as pl
 import pytest
 
@@ -156,6 +157,20 @@ def test_figures_without_documents_stay_at_zero(default_settings: Settings) -> N
     rows = body_rows(empty, default_settings.bodies)
     figures = body_figures(rows, (), default_settings.bodies)
     assert rows == () and figures.documents == 0 and figures.unknown_share == 0.0
+
+
+def test_an_unknown_kind_is_a_violated_precondition(default_settings: Settings) -> None:
+    """crosshair, 2026-10-13: eine fremde Klasse flog als ``KeyError`` ohne Fehlertext.
+
+    ``BodyRow.kind`` ist „eines aus prep.bodies.KINDS"; das stand nur im Typkommentar. Jetzt sagt
+    die Vorbedingung es, und die Meldung nennt den Aufrufer statt die Zählschleife.
+    """
+    wrong = BodyRow("XX", "", "gremium", "Gremium", None, 3, 1, None)
+    with pytest.raises(deal.PreContractError):
+        body_figures((wrong,), (), default_settings.bodies)
+    # Mit einer bekannten Klasse geht dieselbe Zeile durch
+    right = BodyRow("XX", "", prep_bodies.UNKNOWN, "unbekannt", None, 3, 1, None)
+    assert body_figures((right,), (), default_settings.bodies).documents == 3
 
 
 # --- Karte und Tooltip ----------------------------------------------------------------------------

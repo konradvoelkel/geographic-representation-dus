@@ -17,7 +17,7 @@ import pytest
 
 from georep.layout import Layout
 from georep.report.build import TERMS_NAME
-from georep.report.model import ReportModel
+from georep.report.model import ReportModel, TermRow
 from georep.report.terms import pairs, terms_payload
 
 NOW = dt.datetime(2026, 10, 13, 8, 0, tzinfo=dt.UTC)
@@ -45,10 +45,29 @@ def test_a_district_twice_breaks_the_contract(mini_model: ReportModel) -> None:
 
 
 def test_an_unsorted_list_breaks_the_contract(mini_model: ReportModel) -> None:
+    """Seit dem 2026-10-13 ist das die **Vor**bedingung: die Folge entscheidet das Modell.
+
+    Vorher stand die Zusage nur als Nachbedingung da, und `nox -s verify` fand dazu das
+    Gegenbeispiel ``[1, 2]`` -- eine gültige Eingabe, an der die Nachbedingung brach. Die Meldung
+    nennt jetzt den Aufrufer.
+    """
     first = mini_model.districts[0]
     assert len(first.terms) > 1
     wrong = replace(first, terms=tuple(reversed(first.terms)))
-    with pytest.raises(deal.PostContractError):
+    with pytest.raises(deal.PreContractError):
+        terms_payload((wrong,), version="1", generated_at=NOW)
+
+
+def test_a_term_without_hits_is_a_violated_precondition(mini_model: ReportModel) -> None:
+    """crosshair, 2026-10-13: ein Begriff ohne Treffer war eine gültige Eingabe.
+
+    Die Datei trägt je Wahlbezirk nur Begriffe **mit** Treffer; das stand bis dahin allein in der
+    Nachbedingung, und die brach an einer Eingabe, für die der Aufrufer verantwortlich ist. Seit
+    der Vorbedingung nennt die Meldung ihn.
+    """
+    first = mini_model.districts[0]
+    wrong = replace(first, terms=(*first.terms, TermRow("ohne treffer", 0, (first.id,))))
+    with pytest.raises(deal.PreContractError):
         terms_payload((wrong,), version="1", generated_at=NOW)
 
 

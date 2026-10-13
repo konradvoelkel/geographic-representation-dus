@@ -25,7 +25,28 @@ FIELDS = ("begriff", "dokumente")
 def _one_row_per_district(
     districts: Sequence[DistrictRow], *, version: str, generated_at: dt.datetime
 ) -> bool:
-    return all(d.id >= 0 for d in districts) and len({d.id for d in districts}) == len(districts)
+    """Je Wahlbezirk eine Zeile, und jeder Begriff trägt Treffer.
+
+    Die zweite Hälfte stand bis zum 2026-10-13 nur in der Nachbedingung, und crosshair hat die
+    Lücke gefunden: ein ``DistrictRow`` mit einem Begriff ohne Treffer ist eine gültige Eingabe,
+    und die Nachbedingung („je Begriff Name und Trefferzahl, absteigend sortiert") brach daran.
+    Eine Annahme über die Eingabe gehört in die Vorbedingung -- dort nennt die Meldung den
+    Aufrufer, nicht diese Funktion (`docs/decisions.md`, Punkt 53).
+
+    Dasselbe gilt für die **Reihenfolge**: dass die Liste absteigend steht, entscheidet allein das
+    Modell, und die Nachbedingung konnte es nur hinterher feststellen (`nox -s verify` fand
+    ``[1, 2]`` am 2026-10-13). Die Nachbedingung bleibt trotzdem stehen -- sie beschreibt, was die
+    Datei zusagt.
+    """
+    return (
+        all(d.id >= 0 for d in districts)
+        and len({d.id for d in districts}) == len(districts)
+        and all(t.hits > 0 for d in districts for t in d.terms)
+        and all(
+            [t.hits for t in d.terms] == sorted((t.hits for t in d.terms), reverse=True)
+            for d in districts
+        )
+    )
 
 
 def _complete_and_ordered(result: dict[str, object]) -> bool:

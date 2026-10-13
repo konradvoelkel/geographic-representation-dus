@@ -833,12 +833,26 @@ def _bar_title(row: MonthRow) -> str:
 def _has_a_dated_month(
     months: Sequence[MonthRow], width: float = BARS_WIDTH, height: float = BARS_HEIGHT
 ) -> bool:
-    return any(row.month is not None for row in months)
+    """Mindestens ein datierter Monat, und eine Leinwand mit endlichen, positiven Maßen.
+
+    Die zweite Hälfte kam am 2026-10-13 dazu: crosshair fand ``bars(..., width=nan, height=0.0)``,
+    und das endete in ``ValueError: cannot convert float NaN to integer`` aus ``nice_ticks``
+    beziehungsweise in einer Division durch 0. Die Maße kommen im Programm aus zwei Konstanten,
+    aber eine Vorbedingung, die das nicht sagt, lässt jede Zahl durch (dieselbe Lehre wie bei
+    ``fit`` und ``nice_ticks``).
+    """
+    return (
+        any(row.month is not None for row in months)
+        and math.isfinite(width)
+        and math.isfinite(height)
+        and width > 0
+        and height > 0
+    )
 
 
 # Benannte Funktion, kein Lambda: das deal-mypy-Plugin kann einen Validator mit Standardwerten
 # nicht ableiten (CLAUDE.md, Phase 6).
-@deal.pre(_has_a_dated_month, message="ohne datierten Monat gibt es keine Balken")
+@deal.pre(_has_a_dated_month, message="ein datierter Monat, endliche positive Maße")
 @deal.post(lambda result: result.startswith("<svg") and result.endswith("</svg>"))
 def bars(
     months: Sequence[MonthRow], *, width: float = BARS_WIDTH, height: float = BARS_HEIGHT

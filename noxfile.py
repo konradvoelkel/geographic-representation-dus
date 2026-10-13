@@ -101,6 +101,30 @@ VERIFY_TARGETS = [
     "georep.crosswalk.largest_remainder",  # Option 02
     "georep.prep.precincts.district_from_id",  # Option 01
     "georep.prep.pois.is_city_facility",  # Regel 1, decisions.md Punkt 44
+    # --- Punkt 53 (2026-10-13): acht Kandidaten aus den Modulen des Ausbaus, je einzeln mit
+    # ``uv run crosshair check <ziel> --analysis_kind deal --per_condition_timeout 20`` geprüft.
+    # Drei fanden ein Gegenbeispiel, und alle drei waren echt -- eine Annahme über die Eingabe,
+    # die nur in der Nachbedingung stand: ``report.terms.terms_payload`` (ein Begriff ohne
+    # Treffer), ``report.geometry.fit`` (eine unendliche Grenze) und ``report.model.body_figures``
+    # (eine fremde Gremienklasse als ``KeyError``). Alle drei haben jetzt eine Vorbedingung, und
+    # danach ist die Sitzung grün.
+    "georep.prep.precincts.canonical_precincts",  # Option 01, 21 s
+    "georep.prep.voters.canonical_names",  # Option 02, 21 s
+    "georep.report.terms.terms_payload",  # Punkt 49
+    "georep.report.search.search_payload",  # Option 08, 20 s
+    "georep.report.charts.classify",  # Quantilklassen, 22 s
+    "georep.report.charts.legend_for",  # Punkt 46, 21 s
+    "georep.report.geometry.fit",
+    "georep.report.model.body_figures",  # Option 05
+    "georep.report.publish.render_comparison",  # Option 01, 25 s
+    # Nicht dabei, mit gemessenem Grund: ``report.charts.bars`` (am 2026-10-13 probiert, Exit 1
+    # nach 18 s). Sein Gegenbeispiel ist eine Dokumentzahl mit 300 Stellen neben einer denormalen
+    # Leinwand, an der die Vorbedingung von ``nice_ticks`` scheitert; die Vorbedingung, die das
+    # abfinge („die Dokumentzahl passt in eine Fließkommazahl"), wäre eine Aussage über crosshair
+    # und nicht über dieses Programm. Die endlichen, positiven Maße stehen trotzdem jetzt in
+    # seiner Vorbedingung -- das war der erste, echte Teil desselben Befunds.
+    # Nicht probiert, weil der Typ es ausschließt: alles mit ``pl.DataFrame``, ``Path``,
+    # ``Traversable`` oder shapely-Geometrie in der Signatur (docs/architecture.md, „Verträge").
     "tests.property.oracle_matcher.oracle_extract",
 ]
 

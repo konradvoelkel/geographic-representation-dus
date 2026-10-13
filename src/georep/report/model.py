@@ -935,6 +935,25 @@ def _kind_shares_add_up(result: BodyFigures) -> bool:
     )
 
 
+def _kinds_are_known(
+    rows: Sequence[BodyRow], districts: Sequence[DistrictRow], settings: Bodies
+) -> bool:
+    """Jede Zeile trägt eine bekannte Klasse und nicht negative, geordnete Zahlen.
+
+    Die Annahme stand bis zum 2026-10-13 nur im Typkommentar von ``BodyRow.kind``, und crosshair
+    hat sie als ``KeyError`` gefunden: ``per_kind[row.kind] += …`` fliegt bei jeder anderen Klasse
+    mit einem leeren Fehlertext, statt zu sagen, wer sie geliefert hat. Als Vorbedingung nennt die
+    Meldung den Aufrufer (`docs/decisions.md`, Punkt 53). Dasselbe gilt für
+    ``0 <= with_hits <= documents``: mit einer negativen Dokumentzahl lieferte die Funktion einen
+    Anteil von 2,0 und einen „unbekannt"-Anteil von -1,0, und die Nachbedingung brach -- auch das
+    ein crosshair-Gegenbeispiel vom 2026-10-13.
+    """
+    return all(
+        row.kind in prep_bodies.KINDS and 0 <= row.with_hits <= row.documents for row in rows
+    )
+
+
+@deal.pre(_kinds_are_known, message="jede Gremienzeile trägt eine Klasse aus prep.bodies.KINDS")
 @deal.post(
     _kind_shares_add_up, message="die Klassen zerlegen die Dokumente, Anteile summieren zu 1"
 )
