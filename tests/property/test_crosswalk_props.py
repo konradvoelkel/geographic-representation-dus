@@ -7,8 +7,9 @@ import math
 import polars as pl
 import pytest
 import shapely
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
+from polars.testing import assert_frame_equal
 from shapely.geometry import box
 from shapely.geometry.base import BaseGeometry
 
@@ -103,6 +104,24 @@ def boxes(draw: st.DrawFn) -> list[Area]:
     return made
 
 
+# Die Lagen, aus denen die beiden Befunde vom 2026-10-12 und 2026-10-13 kamen, als ``@example``:
+# ohne sie hängt es an der lokalen Beispiel-Datenbank, ob hypothesis sie wieder zieht, und CI hat
+# keine (CLAUDE.md, „deal.cases läuft ohne Beispiel-Datenbank").
+#   SHARED   eine Quellfläche, die genau eine Gitterzelle ist und ihre Grenze mit vier Zellen
+#            teilt: daraus kam Punkt 51 (zwei Flächen mit gemeinsamer Grenze schneiden sich in
+#            Fließkomma in etwa 4,44e-16 statt in 0).
+#   HALVES   eine Quellfläche, die genau zwei Zellen zur Hälfte deckt: zwei **gleich große**
+#            Anteile, und damit die Lage, in der das letzte Bit über die Zeilenfolge entschied,
+#            bevor ``area_shares`` nach den Schlüsseln sortierte.
+#   SPAN     eine Quellfläche über zwei ganze Zellen, also vier geteilte Grenzen auf einmal.
+SHARED = [Area("p0", box(0.0, 0.0, 1.0, 1.0))]
+HALVES = [Area("p0", box(0.5, 0.0, 1.5, 1.0))]
+SPAN = [Area("p0", box(0.0, 0.0, 2.0, 1.0))]
+
+
+@example(sources=SHARED)
+@example(sources=HALVES)
+@example(sources=SPAN)
 @given(sources=boxes())
 def test_area_shares_partition_each_source_and_match_the_intersection(sources: list[Area]) -> None:
     shares = area_shares(sources, CELLS)
@@ -117,6 +136,11 @@ def test_area_shares_partition_each_source_and_match_the_intersection(sources: l
         assert row["share"] == pytest.approx(expected)
 
 
+# 1,4603 ist der Faktor, mit dem hypothesis den Befund vom 2026-10-13 gefunden hat: dasselbe
+# Rechteck ergab im gestreckten Gitter eine Zeile mehr (commit afcea53).
+@example(sources=SHARED, factor=1.4603)
+@example(sources=HALVES, factor=1.4603)
+@example(sources=SPAN, factor=1.4603)
 @given(sources=boxes(), factor=st.floats(min_value=0.2, max_value=5.0))
 def test_scaling_the_grid_does_not_change_the_shares(sources: list[Area], factor: float) -> None:
     """Anteile sind dimensionslos: dieselbe Lage in einem gestreckten Gitter ergibt dieselben Zahlen."""
@@ -131,6 +155,8 @@ def test_scaling_the_grid_does_not_change_the_shares(sources: list[Area], factor
     assert a.select("source_id", "target_id").equals(b.select("source_id", "target_id"))
 
 
+@example(sources=SHARED)
+@example(sources=SPAN)
 @given(sources=boxes())
 def test_no_share_below_the_threshold_survives(sources: list[Area]) -> None:
     """Punkt 51: unter ``min_share`` ist ein Schnittstück ein Splitter und keine Zeile.
@@ -181,6 +207,13 @@ def _pair(table: list[tuple[int, int, float]]) -> tuple[pl.DataFrame, pl.DataFra
     return counts, shares
 
 
+# Zwei Stimmbezirke desselben Wahlbezirks, je zur Hälfte auf „A" und „B": zwei **gleich große**
+# Gewichte, und damit die Lage, in der die Zeilenfolge am letzten Bit hing (hypothesis, 2026-10-12;
+# die Aggregation sortiert seitdem selbst, siehe docs/mutation-2026-10-12.md).
+EQUAL_WEIGHTS = [(1, 1000, 0.5), (1, 1000, 0.5)]
+
+
+@example(table=EQUAL_WEIGHTS)
 @given(table=precincts)
 def test_district_weights_partition_each_district(table: list[tuple[int, int, float]]) -> None:
     counts, shares = _pair(table)
@@ -190,6 +223,26 @@ def test_district_weights_partition_each_district(table: list[tuple[int, int, fl
     assert set(weights.get_column("wahlkreis_id")) == set(counts.get_column("wahlkreis_id"))
 
 
+@example(table=EQUAL_WEIGHTS)
+@given(table=precincts)
+def test_the_weights_do_not_depend_on_the_order_of_the_rows(
+    table: list[tuple[int, int, float]],
+) -> None:
+    """Dieselben Zeilen in anderer Folge geben dieselbe Datei -- Zeile für Zeile, nicht ungefähr.
+
+    Ein Join legt die Zeilenfolge nicht fest, und eine Fließkommasumme hängt von ihr im letzten
+    Bit ab; die Zusage „zwei Läufe auf denselben Eingaben schreiben byteidentische
+    Parquet-Dateien" (docs/architecture.md) gilt nur, wenn die Funktion selbst sortiert. Mit
+    ``EQUAL_WEIGHTS`` ist auch der Stichentscheid im Spiel: bei gleich großen Gewichten
+    entscheidet die Einheit, nicht der Zufall.
+    """
+    counts, shares = _pair(table)
+    assert_frame_equal(
+        district_weights(counts, shares), district_weights(counts.reverse(), shares.reverse())
+    )
+
+
+@example(table=EQUAL_WEIGHTS, factor=2)
 @given(table=precincts, factor=st.integers(min_value=2, max_value=7))
 def test_scaling_the_eligible_voters_keeps_the_weights(
     table: list[tuple[int, int, float]], factor: int
