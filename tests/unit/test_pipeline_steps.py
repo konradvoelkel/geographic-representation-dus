@@ -10,16 +10,13 @@ die Kette rechnet mit einer Datei weiter, deren Spalten sich geändert haben.
 
 from __future__ import annotations
 
+import ast
 from dataclasses import replace
 from pathlib import Path
 
 import polars as pl
 import pytest
 
-import georep.pipeline
-import georep.prep.bodies
-import georep.prep.papers
-import georep.schema
 from georep import __version__
 from georep.layout import Layout
 from georep.pipeline import (
@@ -174,25 +171,77 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
         stored = pl.read_parquet_metadata(first)["georep.schema_version"]
         assert stored == str(step.schema_version), (step.name, first.name, stored)
         checked += 1
-    assert checked >= 15  # die Mini-Fixture rechnet alle Offline-Schritte
+    # Heute 18: texts, voters, context, streets, pois, dictionary, corpus, bodies, topics,
+    # committees, index, timeline, results, metrics, body_hits, weights, controls, parties.
+    assert checked == 18, checked
 
 
-def test_every_schema_constant_of_the_package_belongs_to_a_step(
-    default_settings: Settings, tmp_path: Path
-) -> None:
+def _step_versions_in_source() -> dict[str, str]:
+    """Schrittname -> Ausdruck, den ``pipeline.py`` als ``schema_version`` übergibt.
+
+    Gelesen wird der **Quelltext**, nicht der Laufzeitwert: nur so fällt auf, wenn jemand eine Zahl
+    hinschreibt statt die Konstante seines Moduls zu nennen. Ein Wertvergleich sähe das nie, denn
+    die meisten Versionen sind 1 (Review-Befund 3, 2026-10-13).
+    """
+    tree = ast.parse(Path("src/georep/pipeline.py").read_text(encoding="utf-8"))
+    found: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)):
+            continue
+        if node.func.id != "Step" or not node.args:
+            continue
+        name = node.args[0]
+        if not isinstance(name, ast.Constant) or not isinstance(name.value, str):
+            continue
+        version: ast.expr | None = node.args[4] if len(node.args) >= 5 else None
+        for keyword in node.keywords:
+            if keyword.arg == "schema_version":
+                version = keyword.value
+        if version is not None:
+            found[name.value] = ast.unparse(version)
+    return found
+
+
+# ``stores.TEXT_SCHEMA_VERSION`` gehört zu keinem Schritt: der Textstore schreibt seine Datei
+# selbst (``cache_root/<profil>/text/texts.parquet``), sie ist keine Ausgabe des Registers und
+# trägt darum auch keinen Stamp. Jede andere Konstante muss im Register ankommen.
+SCHEMA_CONSTANTS_WITHOUT_A_STEP = {"georep.stores.TEXT_SCHEMA_VERSION"}
+
+
+def test_a_step_names_its_constant_instead_of_a_number() -> None:
+    """Jeder Schritt mit eigener Schema-Version nennt die Konstante seines Moduls."""
+    versions = _step_versions_in_source()
+    assert set(versions) == set(VERSIONS), (sorted(versions), sorted(VERSIONS))
+    for step, expression in versions.items():
+        assert expression.isidentifier(), (step, expression)
+        assert "SCHEMA" in expression, (step, expression)
+
+
+def test_every_schema_constant_of_the_package_belongs_to_a_step() -> None:
     """Eine neue Schema-Konstante ohne Schritt wäre eine Version, die nirgends ankommt.
 
     Genau das war der Befund hinter Punkt 45: die Zahl stand im Modul und in den
-    Parquet-Metadaten, aber nicht am ``Step``, und ``stamp_mismatch`` konnte sie nie melden. Der
-    Test findet die Konstanten reflexiv, damit das nächste Modell nicht vergessen wird.
+    Parquet-Metadaten, aber nicht am ``Step``, und ``stamp_mismatch`` konnte sie nie melden.
+    Gescannt wird **das ganze Paket**, nicht eine Handvoll Module, und geprüft wird die
+    **Zuordnung** über den Namen, nicht die Gleichheit der Zahl.
     """
-    found: dict[str, int] = {}
-    for module in (georep.pipeline, georep.schema, georep.prep.bodies, georep.prep.papers):
-        for name, value in vars(module).items():
-            if "SCHEMA" in name and isinstance(value, int) and not isinstance(value, bool):
-                found[f"{module.__name__}.{name}"] = value
-    assert len(found) >= 6, found
-    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
-    versions = {s.schema_version for s in build_steps(default_settings, layout)}
-    unused = {name: value for name, value in found.items() if value not in versions}
-    assert not unused, f"Schema-Konstanten, die kein Schritt trägt: {unused}"
+    constants: dict[str, str] = {}
+    for file in sorted(Path("src/georep").rglob("*.py")):
+        module = ".".join(file.with_suffix("").parts[1:])
+        for node in ast.walk(ast.parse(file.read_text(encoding="utf-8"))):
+            if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+                continue
+            target = node.targets[0]
+            value = node.value
+            if not (isinstance(target, ast.Name) and "SCHEMA" in target.id):
+                continue
+            if isinstance(value, ast.Constant) and isinstance(value.value, int):
+                constants[f"{module}.{target.id}"] = target.id
+    assert len(constants) >= 7, constants  # heute sieben, mit TEXT_SCHEMA_VERSION
+    used = set(_step_versions_in_source().values())
+    missing = {
+        name
+        for name, short in constants.items()
+        if short not in used and name not in SCHEMA_CONSTANTS_WITHOUT_A_STEP
+    }
+    assert not missing, f"Schema-Konstanten, die kein Schritt nennt: {sorted(missing)}"
