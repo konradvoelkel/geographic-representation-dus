@@ -603,7 +603,10 @@ def test_the_excerpt_shows_thirty_characters_around_the_first_match() -> None:
     title = f"{left} fraktion spd {right}"
     found = classify_document(None, title, "", Patterns.from_settings(SMALL))
     assert found.quelle == "name" and found.parteien == ("SPD",)
-    # 30 Zeichen links („x" bis zum Rand des Fensters), der Treffer, 29 Zeichen rechts
+    # Das Fenster ist 30 Zeichen links und 30 rechts um „spd"; links fallen zehn „x" weg, weil
+    # dort „ fraktion " steht, rechts endet der Titel nach 29 „y" -- gezeichnet:
+    #   …xxxxxxxxxxxxxxxxxxxx fraktion spd yyyyyyyyy…
+    #   |<-- 30 Zeichen links -->|      |<- 30 rechts, davon 29 vorhanden
     assert found.treffer == "x" * 20 + " fraktion spd " + "y" * 29
 
 
