@@ -70,6 +70,27 @@ def test_the_deviations_add_up_to_zero() -> None:
     assert frame.get_column(DEVIATION).sum() == pytest.approx(0.0, abs=1e-12)
 
 
+def test_a_city_without_a_single_hit_has_no_deviation() -> None:
+    """Ohne Treffer ist das Stadtmittel 0, und dann gibt es keine Abweichung davon.
+
+    Der Fall kommt vor, sobald jemand mit einer kleinen Stichprobe rechnet (``fetch pdfs
+    --limit N``) oder ein neues Profil anlegt, dessen Dokumente noch nicht extrahiert sind. Ohne
+    den Zweig wäre die Abweichung -1,0 je Bezirk, die Nachbedingung „die Abweichungen summieren
+    sich auf 0" bräche, und der Schritt ``metrics`` risse die ganze Kette mit.
+    """
+    frame = district_metrics(
+        _results([(1, 0, 10_000), (2, 0, 11_000)]), _dictionary({1: 5, 2: 7})
+    )
+    assert frame.get_column(CITY_MEAN).to_list() == [0.0, 0.0]
+    assert frame.get_column(DEVIATION).to_list() == [0.0, 0.0]
+    assert frame.get_column(PER_TERM).to_list() == [0.0, 0.0]
+
+
+def test_a_single_district_deviates_from_itself_by_nothing() -> None:
+    frame = district_metrics(_results([(7, 12, 10_000)]), _dictionary({7: 4}))
+    assert frame.get_column(DEVIATION).to_list() == [0.0]
+
+
 def test_a_district_without_a_dictionary_is_an_error() -> None:
     with pytest.raises(SchemaError, match="4"):
         district_metrics(_results([(4, 10, 10_000)]), _dictionary({1: 5}))
