@@ -56,13 +56,16 @@ checked = 2026-10-11
 [[report.literature]]
 key = "bartzsch-2026"
 authors = "Lukas Bartzsch"
-title = "Die Sichtbarkeit der Kommunalwahlbezirke in den Ratsdokumenten und ihr Zusammenhang mit der Wahlbeteiligung"
+# Kein Titel: er steht nirgends. Das Repositorium der Arbeit hat keine Beschreibung, sein README sagt
+# nur, dass das Projekt der Analyse und Darstellung geografischer Daten dient (am 2026-10-13
+# gelesen). Ein formulierter Titel in einem <cite> waere eine Behauptung; die Seite schreibt
+# stattdessen "[Titel nachzutragen]" (Review 2026-10-13).
 year = 2026
 venue = "Heinrich-Heine-Universität Düsseldorf, Bachelorarbeit"
 url = "https://github.com/lubar102/geographic-representation-dus"  # der Quelltext der Arbeit; die Arbeit selbst ist nicht öffentlich
 accessed = 2026-10-13
-pending = true                 # Titel und Betreuung stehen nirgends: der Titel hier ist die Beschreibung aus dem README, nicht der Titel der Arbeit
-note = "Der Ursprung dieser Seite, eingereicht im Januar 2026: Fragestellung, Wörterbuch je Wahlbezirk, Suche über die Ratsdokumente und die Regression gegen die Wahlbeteiligung stammen aus dieser Arbeit, und dieses Programm ist ein Umbau ihres Quelltextes. Es reproduziert ihre Zahlen, solange die eigenen Methodikregeln abgeschaltet sind; der Titel hier ist die Beschreibung aus dem Repository, nicht der Titel der Arbeit, und genauer Titel wie Betreuung sind nachzutragen, denn die Arbeit selbst ist nicht öffentlich — öffentlich ist nur ihr Quelltext."
+pending = true                 # Titel und Betreuung stehen nirgends und sind bei Lukas zu erfragen
+note = "Der Ursprung dieser Seite: Fragestellung, Wörterbuch je Wahlbezirk, Suche über die Ratsdokumente und die Regression gegen die Wahlbeteiligung stammen aus dieser Arbeit, und dieses Programm ist ein Umbau ihres Quelltextes, der als Repositorium geographic-representation-dus öffentlich ist. Es reproduziert ihre Zahlen, solange die eigenen Methodikregeln abgeschaltet sind; Titel, Monat der Einreichung und Betreuung sind nachzutragen, denn die Arbeit selbst ist nicht öffentlich und ihr Repositorium nennt sie nicht."
 
 # Die zweite Quelle, die die Arbeit nennt, und die einzige Lücke der Liste. Sie steht hier und nicht
 # in report/literatur.toml, weil sie nur über das Literaturverzeichnis dieser Arbeit existiert; ohne

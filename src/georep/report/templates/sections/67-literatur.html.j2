@@ -8,8 +8,11 @@ dazu verhält; jeder Link war am genannten Abrufdatum erreichbar.</p>
 <ol class="literatur">
 {% for item in model.literature %}
 <li id="lit-{{ item.key }}">
-{# Ein Titel, der mit ? oder ! endet, bekommt keinen Punkt dahinter #}
-<cite>{{ item.authors }}: {{ item.title }}</cite>{% if item.title[-1] not in "?!" %}.{% endif %}{% if item.pending %} <span class="pending">Angaben nachzutragen</span>{% endif %} {{ item.venue }}{% if item.year %}, {{ item.year }}{% endif %}.
+{# Ein Titel, der mit ? oder ! endet, bekommt keinen Punkt dahinter. Ein leerer Titel ist nur mit
+   pending erlaubt und wird zum Marker: ein formulierter Titel in <cite> behauptet eine Zitation,
+   die niemand geprüft hat (Review 2026-10-13). Marker und Zitation trennt ein Gedankenstrich; das
+   README schreibt dieselbe Form. #}
+<cite>{{ item.authors }}{% if item.title %}: {{ item.title }}{% endif %}</cite>{% if not item.title %} — <span class="pending">[Titel nachzutragen]</span>{% elif item.pending %} — <span class="pending">[Angaben nachzutragen]</span>{% endif %}{% if not item.title or item.title[-1] not in "?!" %}.{% endif %} {{ item.venue }}{% if item.year %}, {{ item.year }}{% endif %}.
 {% if item.doi_url %} DOI: <a href="{{ item.doi_url }}" rel="noopener">{{ item.doi }}</a>{% if not item.url and item.accessed %}, abgerufen am {{ item.accessed|date_de }}{% endif %}.{% endif %}
 {% if item.url %} <a href="{{ item.url }}" rel="noopener">{{ item.url }}</a>, abgerufen am {{ item.accessed|date_de }}.{% endif %}
 {% if item.note %}

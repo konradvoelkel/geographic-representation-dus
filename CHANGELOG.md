@@ -18,9 +18,10 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
     Nordrhein-Westfalen, die Linie „Offenes Köln" → „Politik bei uns" → „Politik bei uns 2" samt dem
     Beitrag, der erklärt, warum sie einschlief, `meine-stadt-transparent` und der OParl-Validator.
   - **Zwei Lücken stehen sichtbar als „Angaben nachzutragen" da**, statt eine Zitation zu behaupten:
-    der Titel der Arbeit selbst (er steht nirgends im Repo; auf der Seite steht die Beschreibung aus
-    ihrem Repository) und die Kölner Untersuchung, die die Arbeit zitiert — am 2026-10-13 in
-    OpenAlex, Crossref, arXiv, Hochschulrepositorien und auf GitHub nicht auffindbar.
+    der Titel der Arbeit, der nirgends steht — ihr Repositorium hat keine Beschreibung, sein README
+    nennt nur den Zweck des Programms —, und die Kölner Untersuchung, die die Arbeit zitiert, die am
+    2026-10-13 in OpenAlex, Crossref, arXiv, Hochschulrepositorien und auf GitHub nicht auffindbar
+    war. Beim Titel steht „[Titel nachzutragen]" da, nicht eine eigene Formulierung.
   - Die Einträge sind **Daten, nicht Vorlage**: `src/georep/report/literatur.toml` im Paket
     (stadtneutral) und `[[report.literature]]` im Profil der Stadt, damit eine zweite Stadt die
     allgemeinen Einträge erbt und nur ihre eigene Arbeit dazulegt. Jeder Link war am 2026-10-13

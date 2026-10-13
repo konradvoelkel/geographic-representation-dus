@@ -33,7 +33,7 @@ GOOD: dict[str, object] = {
 }
 
 
-def entry(**overrides: object) -> LiteratureEntry:
+def make(**overrides: object) -> LiteratureEntry:
     """Ein Eintrag mit den Pflichtfeldern; ``overrides`` setzt einzelne Felder, auch auf ``None``.
 
     ``model_validate`` statt des Konstruktors, weil ein ``**dict[str, object]`` unter
@@ -78,7 +78,7 @@ def test_a_second_city_inherits_the_general_entries() -> None:
 
 
 def test_a_doubled_key_is_an_error(default_settings: Settings) -> None:
-    clash = entry(key=package_literature()[0].key, url="https://a.invalid/", accessed="2026-10-13")
+    clash = make(key=package_literature()[0].key, url="https://a.invalid/", accessed="2026-10-13")
     settings = default_settings.model_copy(
         update={"report": default_settings.report.model_copy(update={"literature": [clash]})}
     )
@@ -130,20 +130,20 @@ def test_an_entry_that_cannot_be_checked_is_refused(
     update: dict[str, object], message: str
 ) -> None:
     with pytest.raises(ValidationError, match=message):
-        entry(**update)
+        make(**update)
 
 
 def test_a_pending_entry_may_lack_year_and_link() -> None:
     """Was aus dem Verzeichnis einer nicht öffentlichen Arbeit nachzutragen ist, hat noch keinen Link."""
-    found = entry(pending=True, year=None)
+    found = make(pending=True, year=None)
     assert found.links == () and found.year is None and found.pending
 
 
 def test_a_doi_becomes_a_link_and_both_links_count() -> None:
-    both = entry(doi="10.1234/abc", url="https://a.invalid/x", accessed="2026-10-13")
+    both = make(doi="10.1234/abc", url="https://a.invalid/x", accessed="2026-10-13")
     assert both.doi_url == "https://doi.org/10.1234/abc"
     assert both.links == ("https://doi.org/10.1234/abc", "https://a.invalid/x")
-    assert entry(doi="10.1234/abc").links == ("https://doi.org/10.1234/abc",)
+    assert make(doi="10.1234/abc").links == ("https://doi.org/10.1234/abc",)
 
 
 # --- Der Abschnitt der Seite -------------------------------------------------------------------
@@ -171,9 +171,27 @@ def test_the_page_carries_every_entry_with_a_cite_and_noopener(
     assert block.count("<a href=") == block.count('rel="noopener"')
 
 
-def test_the_pending_entry_says_so_on_the_page(mini_page: str) -> None:
-    """Die Arbeit ist nicht öffentlich; die Seite behauptet keinen geprüften Titel."""
-    assert '<span class="pending">Angaben nachzutragen</span>' in mini_page
+def test_a_pending_entry_without_a_title_is_allowed_and_says_so() -> None:
+    """Ein formulierter Titel in ``<cite>`` behauptet eine Zitation, die niemand geprüft hat.
+
+    Der Titel der Arbeit steht nirgends -- nicht in ihrem Repositorium, nicht in seiner
+    Beschreibung, nicht in seinem README. Dann bleibt das Feld leer, und die Seite sagt es
+    (Review 2026-10-13).
+    """
+    assert make(pending=True, title="", year=None).title == ""
+    with pytest.raises(ValidationError, match="Titel"):
+        make(title="")  # ohne pending bleibt der Titel Pflicht
+
+
+def test_the_pending_entries_say_so_on_the_page(mini_page: str, default_settings: Settings) -> None:
+    """Ein fehlender Titel und fehlende Angaben haben je einen Marker, mit Trennzeichen davor."""
+    found = literature(default_settings)
+    thesis = next(e for e in found if not e.title)
+    assert thesis.pending
+    assert f"<cite>{thesis.authors}</cite> \u2014 " in mini_page
+    assert mini_page.count('<span class="pending">[Titel nachzutragen]</span>') == 1
+    assert mini_page.count('<span class="pending">[Angaben nachzutragen]</span>') == 1
+    assert "Sichtbarkeit der Kommunalwahlbezirke in den Ratsdokumenten" not in mini_page
 
 
 def test_the_method_paragraph_points_at_the_section(mini_page: str) -> None:

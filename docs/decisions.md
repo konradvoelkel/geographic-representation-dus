@@ -445,7 +445,13 @@ die Lücke genau füllen. Verworfen: die Briefwahl weglassen (die Beteiligung w�
 nimmt die Datei als Eingabe, und der Abschnitt „Zwei Wahlperioden" existiert nur mit ihr. Fehlende Eingaben
 sind nach Regel 3 der Architektur ein Fehler, kein stilles Überspringen — also muss der Vergleich
 ausdrücklich eingeschaltet werden (`profiles/duesseldorf-vergleich.toml`), und die Kette von `main` bleibt unverändert.
-Verworfen: der Vergleich als „optionale Eingabe" von `report` (das Schrittregister kennt keine). Verglichen
+Verworfen: der Vergleich als „optionale Eingabe" von `report` (das Schrittregister kennt keine). **Bei `pending` darf auch `title` leer bleiben**, und dann schreibt die Vorlage
+„[Titel nachzutragen]": der Titel der Arbeit steht nirgends — ihr Repositorium hat keine Beschreibung, sein
+README nennt nur den Zweck des Programms (am 2026-10-13 gelesen) —, und ein selbst formulierter Titel in
+einem `<cite>` wäre eine Behauptung, die niemand geprüft hat, auf einer veröffentlichten Seite (Review
+2026-10-13). Verifizierbar ist allein der Name des Repositoriums, und der steht als solcher im Begleitsatz.
+Marker und Zitation trennt ein Gedankenstrich, in der Vorlage und im README gleich; es gibt genau zwei
+Marker, „[Titel nachzutragen]" für den fehlenden Titel und „[Angaben nachzutragen]" sonst. Verglichen
 wird die Schnittmenge der Wahlbezirke beider Perioden: ein Bezirk, den nur eine Periode kennt, fällt weg,
 statt mit einer erfundenen Null zu erscheinen; die Seite nennt die Zahl.
 
@@ -960,14 +966,13 @@ und Grenzen" weiter das Original-Repository, führt die Arbeit aber nicht in ihr
 Ursprung des Programms, nicht der Untersuchung dieser Stadt.
 
 **Ein Eintrag muss nachprüfbar sein.** `LiteratureEntry` (in `georep.settings`, neben `ReportSource`) verlangt
-Autor, Titel, Ort oder Institution, ein Jahr zwischen 1900 und 2100 und entweder eine `https`-URL mit
+Autor, Titel wörtlich wie in der Quelle, Ort oder Institution, ein Jahr zwischen 1900 und 2100 und entweder eine `https`-URL mit
 Abrufdatum oder einen DOI der Form `10.xxxx/…`; der Schlüssel ist die Anker-ID `lit-<key>` und darf nur
 einmal vorkommen, auch nicht einmal im Profil und einmal im Paket. Alle Links waren am 2026-10-13 erreichbar
 (Statuscode geprüft), alle DOI über Crossref aufgelöst. **Die eine Ausnahme ist `pending = true`:** ein
 Eintrag, der aus dem Literaturverzeichnis einer nicht öffentlichen Arbeit nachzutragen ist, darf Jahr und Link
 vermissen, und die Seite schreibt „Angaben nachzutragen" sichtbar daneben, statt eine Zitation zu behaupten.
-Zwei Einträge sind so markiert: die Arbeit selbst (ihr Titel steht nirgends im Repo, auch nicht im
-öffentlichen Quelltext; der Titel auf der Seite ist die Beschreibung aus dem Repository) und die Kölner
+Zwei Einträge sind so markiert: die Arbeit selbst und die Kölner
 Untersuchung, die die Arbeit zitiert — am 2026-10-13 in OpenAlex, Crossref, arXiv, Hochschulrepositorien und
 auf GitHub nicht auffindbar. **Verworfen:** die Kölner Untersuchung weglassen (dann wäre die Lücke
 unsichtbar) und einen Platzhalter mit erfundenem Jahr (eine Zahl, die niemand geprüft hat, ist schlimmer als

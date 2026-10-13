@@ -1024,13 +1024,18 @@ class LiteratureEntry(_Strict):
     beiträgt und wie dieses Vorhaben sich dazu verhält — ohne sie wäre die Liste eine Linksammlung.
     ``pending`` markiert einen Eintrag, dessen Angaben nachzutragen sind (die Arbeit, auf der dieses
     Programm aufsetzt, ist nicht öffentlich, und ihr Titel steht nirgends im Repo); die Seite sagt
-    das sichtbar, statt eine Zitation zu behaupten, die nicht geprüft ist.
+    das sichtbar, statt eine Zitation zu behaupten, die nicht geprüft ist. Bei ``pending`` darf
+    neben Jahr und Link auch ``title`` leer bleiben -- ein formulierter Titel in einem ``<cite>``
+    wäre eine Behauptung, und die Vorlage schreibt stattdessen „[Titel nachzutragen]".
     """
 
     key: str
     authors: str
-    title: str
     venue: str  # Ort oder Institution: Hochschule, Verlag, Herausgeber, Plattform
+    # Wörtlich wie auf der Titelseite oder in der Beschreibung der Quelle. Leer ist nur mit
+    # ``pending`` erlaubt und heißt „der Titel ist nicht bekannt": die Seite schreibt dann
+    # „[Titel nachzutragen]", statt eine Formulierung in ein ``<cite>`` zu setzen.
+    title: str = ""
     year: int | None = None  # Pflicht, außer bei ``pending``
     url: str = ""
     doi: str = ""
@@ -1045,11 +1050,11 @@ class LiteratureEntry(_Strict):
             raise ValueError(f"literature.key {value!r}: Kleinbuchstaben, Ziffern und Bindestriche")
         return value
 
-    @field_validator("authors", "title", "venue")
+    @field_validator("authors", "venue")
     @classmethod
     def _not_blank(cls, value: str) -> str:
         if not value.strip():
-            raise ValueError("literature: Autor, Titel und Ort oder Institution sind Pflicht")
+            raise ValueError("literature: Autor und Ort oder Institution sind Pflicht")
         return value
 
     @field_validator("year")
@@ -1078,10 +1083,13 @@ class LiteratureEntry(_Strict):
         """Ohne URL oder DOI ist ein Eintrag nicht nachprüfbar, und eine URL braucht ein Datum.
 
         Die eine Ausnahme ist ``pending``: ein Eintrag, der aus dem Literaturverzeichnis einer
-        nicht öffentlichen Arbeit nachzutragen ist, hat noch keinen Link und kein Jahr. Er steht
-        trotzdem auf der Seite, damit die Lücke benannt ist und nicht vergessen wird; Autor, Titel
-        und Ort oder Institution bleiben auch dann Pflicht, und sei es als „nachzutragen".
+        nicht öffentlichen Arbeit nachzutragen ist, hat noch keinen Link, kein Jahr und
+        womöglich keinen bekannten Titel. Er steht trotzdem auf der Seite, damit die Lücke
+        benannt ist und nicht vergessen wird; Autor und Ort oder Institution bleiben auch dann
+        Pflicht, und sei es als „nachzutragen".
         """
+        if not self.pending and not self.title.strip():
+            raise ValueError(f"literature {self.key!r}: ohne pending ist der Titel Pflicht")
         if not self.pending and not self.url and not self.doi:
             raise ValueError(f"literature {self.key!r}: entweder url oder doi muss dastehen")
         if not self.pending and self.year is None:

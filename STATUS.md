@@ -160,12 +160,13 @@ vollständiger Zitation und einem oder zwei Sätzen zum Beitrag. Dieselbe Liste 
   vorher nicht genannt ist die methodisch nächste Forschung: Harmening u. a. 2025 (EJPR, zwölf deutsche
   Großstädte, dasselbe Wörterbuchverfahren), Nyhuis u. a. 2025 (die Wörterbuchfrage selbst), Zittel u. a.
   2019 (der Ursprung des Ansatzes), Cherif 2026 (offenes OParl-Volltextkorpus).
-- **Zwei Lücken stehen sichtbar da** (`pending = true`, die Seite schreibt „Angaben nachzutragen"): der Titel
-  der Arbeit, der nirgends im Repo steht — auf der Seite steht die Beschreibung aus ihrem Repository, Titel
-  und Betreuung sind bei Lukas zu erfragen — und die Kölner Untersuchung, die die Arbeit zitiert. Sie war am
-  2026-10-13 in OpenAlex, Crossref, arXiv, Hochschulrepositorien und auf GitHub nicht auffindbar, und das
-  öffentliche Repository der Arbeit enthält kein Literaturverzeichnis; die Zitation ist nur aus der Arbeit
-  selbst zu holen.
+- **Zwei Lücken stehen sichtbar da** (`pending = true`): der **Titel der Arbeit** ist unbekannt und das Feld
+  darum leer — ihr Repositorium hat keine Beschreibung, sein README nennt nur den Zweck des Programms (am
+  2026-10-13 gelesen); die Seite schreibt „[Titel nachzutragen]" statt einer eigenen Formulierung, und Titel,
+  Monat der Einreichung und Betreuung sind bei Lukas zu erfragen. Die zweite ist die **Kölner Untersuchung**,
+  die die Arbeit zitiert: am 2026-10-13 in OpenAlex, Crossref, arXiv, Hochschulrepositorien und auf GitHub
+  nicht auffindbar, und das öffentliche Repositorium der Arbeit enthält kein Literaturverzeichnis; die
+  Zitation ist nur aus der Arbeit selbst zu holen.
 - `index.html` wächst um 4322 Bytes auf 1 281 679 Bytes (Budget 1,5 MB), die Seite hat fünfzehn Abschnitte.
 
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46 und 47)

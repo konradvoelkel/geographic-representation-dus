@@ -272,15 +272,13 @@ Abschnitt „Literatur und verwandte Arbeiten“. Quelle der Einträge sind `src
 (stadtneutral) und `[[report.literature]]` im Profil der Stadt; `tests/unit/test_report_literature.py` hält
 diese Liste und die Seite zusammen.
 
-- **Lukas Bartzsch: Die Sichtbarkeit der Kommunalwahlbezirke in den Ratsdokumenten und ihr Zusammenhang mit
-  der Wahlbeteiligung** — [Angaben nachzutragen]. Heinrich-Heine-Universität Düsseldorf, Bachelorarbeit,
-  2026. <https://github.com/lubar102/geographic-representation-dus>, abgerufen am 13.10.2026.
-  Der Ursprung dieser Seite, eingereicht im Januar 2026: Fragestellung, Wörterbuch je Wahlbezirk, Suche über
-  die Ratsdokumente und die Regression gegen die Wahlbeteiligung stammen aus dieser Arbeit, und dieses
-  Programm ist ein Umbau ihres Quelltextes. Es reproduziert ihre Zahlen, solange die eigenen Methodikregeln
-  abgeschaltet sind; der Titel hier ist die Beschreibung aus dem Repository, nicht der Titel der Arbeit, und
-  genauer Titel wie Betreuung sind nachzutragen, denn die Arbeit selbst ist nicht öffentlich — öffentlich
-  ist nur ihr Quelltext.
+- **Lukas Bartzsch** — [Titel nachzutragen]. Heinrich-Heine-Universität Düsseldorf, Bachelorarbeit, 2026.
+  <https://github.com/lubar102/geographic-representation-dus>, abgerufen am 13.10.2026.
+  Der Ursprung dieser Seite: Fragestellung, Wörterbuch je Wahlbezirk, Suche über die Ratsdokumente und die
+  Regression gegen die Wahlbeteiligung stammen aus dieser Arbeit, und dieses Programm ist ein Umbau ihres
+  Quelltextes, der als Repositorium geographic-representation-dus öffentlich ist. Es reproduziert ihre
+  Zahlen, solange die eigenen Methodikregeln abgeschaltet sind; Titel, Monat der Einreichung und Betreuung
+  sind nachzutragen, denn die Arbeit selbst ist nicht öffentlich und ihr Repositorium nennt sie nicht.
 - **Autor nachzutragen: Untersuchung zu Parteien und Stadtteilbezügen in den Ratsdokumenten der Stadt Köln**
   — [Angaben nachzutragen]. Herausgeber und Jahr nachzutragen aus dem Literaturverzeichnis der Arbeit.
   Die Arbeit zitiert eine Kölner Untersuchung zu Parteien und Ratsdokumenten; sie ist am 2026-10-13 nicht
