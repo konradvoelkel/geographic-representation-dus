@@ -22,6 +22,7 @@ import datetime as dt
 import html
 import re
 import shutil
+import tempfile
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -47,6 +48,9 @@ COMPARISON_NAME = "vergleich.html"
 # Legt publish in seinen Zielordner, damit der nächste Lauf ihn als seinen erkennt und darin
 # löschen darf (Review 2026-10-12: --out zeigt leicht auf einen Ordner, in dem anderes liegt).
 MARKER_NAME = ".georep-publish"
+# Präfix des Arbeitsordners, in den kopiert wird, bevor er an die Stelle des Ziels rutscht; den
+# Namen dahinter vergibt mkdtemp, damit nie ein fremder Ordner im Weg steht (Review 2026-10-13).
+STAGING_PREFIX = ".georep-publish-neu-"
 # Die Stadtseite lässt die Stelle frei, an der die Nachbarstädte stehen; erst ``publish`` weiß,
 # welche Seiten wirklich daneben liegen, und setzt die Zeile (Review 2026-10-12: sonst trüge die
 # veröffentlichte Seite Links auf Städte, deren Lauf noch fehlt).
@@ -136,15 +140,30 @@ def _mark(root: Path) -> None:
     write_text(root / MARKER_NAME, f"georep publish {__version__}\n")
 
 
-def _copy_tree(source: Path, target: Path) -> None:
-    """Atomar genug: erst neben das Ziel schreiben, dann tauschen."""
-    staging = target.with_name(target.name + ".neu")
-    if staging.exists():
-        shutil.rmtree(staging)
-    shutil.copytree(source, staging)
-    if target.exists():
-        shutil.rmtree(target)
-    staging.rename(target)
+def _copy_tree(layout: Layout, source: Path, target: Path) -> None:
+    """Atomar genug: erst neben das Ziel schreiben, dann tauschen.
+
+    Der Arbeitsordner entsteht mit ``mkdtemp`` neben dem Ziel: dasselbe Dateisystem (``rename``
+    ist dort ein Rename) und ein Name, den es noch nicht gibt. Vorher hieß er ``<ziel>.neu`` und
+    wurde vor dem Kopieren weggeräumt -- das war harmlos, solange das Ziel ein Unterordner der
+    beanspruchten Wurzel war. Seit Punkt 52 wird auch die erste Stadt kopiert, das Ziel ist dann
+    die Wurzel selbst, und ihr Nachbar gehört publish nicht (Review 2026-10-13: ein fremder
+    ``out.neu`` war weg). ``guard_writable`` hält beide aus der Referenz heraus; scheitert das
+    Kopieren, bleibt das Ziel, wie es war, und der Arbeitsordner wird abgeräumt.
+    """
+    parent = layout.guard_writable(target.parent)
+    staging = Path(tempfile.mkdtemp(dir=parent, prefix=STAGING_PREFIX))
+    try:
+        layout.guard_writable(staging)
+        # dirs_exist_ok: mkdtemp hat den Ordner schon angelegt. copytree setzt danach die Rechte
+        # der Quelle auf ihn, sonst trüge der veröffentlichte Ordner die 0700 von mkdtemp.
+        shutil.copytree(source, staging, dirs_exist_ok=True)
+        if target.exists():
+            shutil.rmtree(layout.guard_writable(target))
+        staging.rename(target)
+    finally:
+        if staging.is_dir():
+            shutil.rmtree(staging)
 
 
 def neighbour_line(cities: Sequence[CitySite], index: int) -> str:
@@ -234,7 +253,7 @@ def publish_sites(
             continue
         href = "" if index == 0 else f"{slug}/"
         if source.resolve() != target.resolve():
-            _copy_tree(source, target)
+            _copy_tree(layout, source, target)
         found.append(read_city_site(target, href, settings.geo.working_crs))
     # Die Kopie der ersten Stadt ersetzt den ganzen Zielordner, mit ihm den Marker aus claim_target;
     # ohne ihn verweigerte der zweite Lauf in denselben Ordner (2026-10-12)

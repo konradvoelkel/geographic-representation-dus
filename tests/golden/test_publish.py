@@ -247,6 +247,27 @@ def test_publish_refuses_a_target_it_did_not_make(
     assert list(foreign.iterdir()) == [foreign / "diplomarbeit.txt"]
 
 
+def test_publish_never_touches_what_lies_next_to_its_target(
+    both_cities: tuple[Path, Settings], tmp_path: Path
+) -> None:
+    """Ersetzt wird der Zielordner; der Nachbar gehoert publish nicht (Review 2026-10-13).
+
+    Der Arbeitsordner hiess ``<ziel>.neu`` und wurde vor dem Kopieren weggeraeumt. Seit die erste
+    Stadt kopiert wird, ist das Ziel der beanspruchte Ordner selbst -- und sein Nachbar damit ein
+    fremder Ordner, den niemand geprueft hat.
+    """
+    root, settings = both_cities
+    out = tmp_path / "out"
+    neighbour = tmp_path / "out.neu"
+    (neighbour / "fremd").mkdir(parents=True)
+    (neighbour / "fremd" / "datei.txt").write_text("bitte nicht loeschen", encoding="utf-8")
+    publish_sites(settings, _layout_of(root, settings), now=NOW, commit=None, out=out)
+    assert (neighbour / "fremd" / "datei.txt").read_text(encoding="utf-8") == "bitte nicht loeschen"
+    # Und danach liegt kein Arbeitsordner mehr daneben, auch kein neu benannter
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["out", "out.neu"]
+    assert (out / "index.html").is_file()
+
+
 def test_publish_takes_an_empty_target_and_its_own_from_then_on(
     both_cities: tuple[Path, Settings], tmp_path: Path
 ) -> None:
