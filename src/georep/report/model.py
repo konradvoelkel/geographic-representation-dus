@@ -1139,8 +1139,15 @@ def variant_labels(weights: Weights) -> dict[str, tuple[str, str]]:
 
 
 def _variant_frame(weighted: pl.DataFrame, results: pl.DataFrame, name: str) -> pl.DataFrame:
-    return weighted.filter(pl.col(VARIANT) == name).join(
-        results.select(DISTRICT, TURNOUT, RATE), on=DISTRICT, how="inner"
+    """Eine Gewichtungsvariante neben der Wahlbeteiligung, nach Wahlbezirk sortiert.
+
+    Sortiert, weil die Regression darüber läuft: ein Join legt die Zeilenfolge nicht fest, und
+    eine Fließkommasumme in anderer Folge gibt ein anderes letztes Bit (2026-10-13).
+    """
+    return (
+        weighted.filter(pl.col(VARIANT) == name)
+        .join(results.select(DISTRICT, TURNOUT, RATE), on=DISTRICT, how="inner")
+        .sort(DISTRICT)
     )
 
 
@@ -1751,8 +1758,11 @@ def _per_term_regression(
     """
     if not settings.report.regression or not layout.district_metrics.exists():
         return None
-    frame = pl.read_parquet(layout.district_metrics).join(
-        results.select(DISTRICT, TURNOUT), on=DISTRICT, how="inner"
+    # Sortiert wie jeder Frame, über den eine Regression läuft (2026-10-13).
+    frame = (
+        pl.read_parquet(layout.district_metrics)
+        .join(results.select(DISTRICT, TURNOUT), on=DISTRICT, how="inner")
+        .sort(DISTRICT)
     )
     try:
         return regression_pair(

@@ -190,7 +190,13 @@ def dictionary_bias(
     Ohne Streuung gibt es keine Korrelation, und ein Absatz, der „r = nan" sagt, ist schlechter
     als keiner: die Seite lässt ihn dann weg (eine Mini-Fixture oder eine Stichprobe hat den Fall).
     """
-    frame = metrics.join(results.select(DISTRICT, eligible_column), on=DISTRICT, how="inner")
+    # Nach dem Join sortieren: er legt die Zeilenfolge nicht fest, und alles Weitere liest
+    # positionell aus diesem Frame -- die drei Korrelationen und die beiden Listen unten. Ohne die
+    # Sortierung unterschieden sich zwei Läufe mit denselben Zeilen in anderer Folge im letzten
+    # Bit (test_the_bias_does_not_depend_on_the_order_of_the_rows, rot am 2026-10-13).
+    frame = metrics.join(results.select(DISTRICT, eligible_column), on=DISTRICT, how="inner").sort(
+        DISTRICT
+    )
     pairs = (
         _pearson(frame, HITS, TERM_COUNT),
         _pearson(frame, HITS, eligible_column),

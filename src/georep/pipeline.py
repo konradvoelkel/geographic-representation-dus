@@ -62,6 +62,7 @@ from georep.prep.context import (
     MISSING_SUFFIX,
     aggregate_context,
     district_variables,
+    named_weights,
     precinct_table,
     read_context_table,
 )
@@ -519,18 +520,14 @@ def build_steps(
         )
         # Erst alle Variablen in der Reihenfolge der Settings, dann die Fehlgewichte: so liest sich
         # die Tabelle, und die Spaltendoku entsteht aus derselben Liste (report.tables).
+        # Sortiert, weil ein Join die Zeilenfolge nicht festlegt und die Datei veröffentlicht wird.
         frame = joined.select(
             "wahlkreis_id",
             *(v.name for v in context.variables),
             *(f"{v.name}{MISSING_SUFFIX}" for v in context.unit_variables()),
-        )
+        ).sort("wahlkreis_id")
         write_parquet(frame, layout.context_table, schema_version=1)
-        named = weights.join(values.select("einheit", "einheit_name"), on="einheit", how="left")
-        write_parquet(
-            named.select("wahlkreis_id", "einheit", "einheit_name", "gewicht"),
-            layout.crosswalk,
-            schema_version=1,
-        )
+        write_parquet(named_weights(weights, values), layout.crosswalk, schema_version=1)
         return (
             f"{frame.height} Wahlbezirke, {len(units)} {context.units.label}, "
             f"{len(context.variables)} Variablen"

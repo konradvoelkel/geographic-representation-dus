@@ -284,6 +284,34 @@ def aggregate_context(
     return frame.select(DISTRICT, *names, *(f"{n}{MISSING_SUFFIX}" for n in names))
 
 
+def _named_weights_are_ordered(result: pl.DataFrame) -> bool:
+    keys = list(result.select(DISTRICT, UNIT).iter_rows())
+    return result.columns == [DISTRICT, UNIT, UNIT_NAME, WEIGHT] and keys == sorted(keys)
+
+
+@deal.pre(
+    lambda weights, values: (
+        has_columns(weights, DISTRICT, UNIT, WEIGHT) and has_columns(values, UNIT, UNIT_NAME)
+    ),
+    message="Gewichte je Wahlbezirk und Einheit, Namen je Einheit",
+)
+@deal.post(_named_weights_are_ordered, message="Spalten und Folge der veröffentlichten Tabelle")
+def named_weights(weights: pl.DataFrame, values: pl.DataFrame) -> pl.DataFrame:
+    """Die Gewichte mit dem Namen der Einheit: ``wahlbezirke_crosswalk.parquet``.
+
+    Die Tabelle wird veröffentlicht, und zwei Läufe auf denselben Eingaben sollen sie
+    byteidentisch schreiben (docs/architecture.md, „Datenhaltung"). Der Join auf ``einheit`` legt
+    die Zeilenfolge aber nicht fest -- bis zum 2026-10-13 stand hier keine Sortierung, und die
+    Zusage galt nur zufällig. Sortiert wird nach Wahlbezirk und Einheit, nicht nach Gewicht: die
+    Datei ist zum Nachschlagen da, nicht zum Ranking.
+    """
+    return (
+        weights.join(values.select(UNIT, UNIT_NAME), on=UNIT, how="left")
+        .select(DISTRICT, UNIT, UNIT_NAME, WEIGHT)
+        .sort([DISTRICT, UNIT])
+    )
+
+
 @deal.pre(
     lambda voters, context: has_columns(voters, DISTRICT),
     message="die Wählertabelle mit dem Wahlbezirk",

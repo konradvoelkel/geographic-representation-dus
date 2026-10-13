@@ -255,11 +255,20 @@ def summary(districts: pl.DataFrame, bodies: pl.DataFrame) -> str:
     )
 )
 @deal.post(lambda result: result.columns == [DISTRICT, OWN_SHARE, OWN_RATE, TURNOUT])
+@deal.post(
+    lambda result: sorted_unique(result, DISTRICT), message="eine Zeile je Wahlbezirk, sortiert"
+)
 def regression_frame(districts: pl.DataFrame, results: pl.DataFrame) -> pl.DataFrame:
     """Der Join für den Regressionssatz: die Kennzahlen der Gremien neben der Wahlbeteiligung.
 
     ``regression_pair(frame, exclude, x=OWN_RATE)`` rechnet daraus beide Spalten von Tabelle 5.
+
+    Sortiert, und die Nachbedingung sagt es: ein Join legt die Zeilenfolge nicht fest, und
+    ``linregress`` summiert über die Spalten -- in anderer Folge stehen in den gedruckten Zahlen
+    andere letzte Bits. Zwei Läufe sollen dieselbe Seite schreiben (2026-10-13).
     """
-    return districts.select(DISTRICT, OWN_SHARE, OWN_RATE).join(
-        results.select(DISTRICT, TURNOUT), on=DISTRICT, how="inner"
+    return (
+        districts.select(DISTRICT, OWN_SHARE, OWN_RATE)
+        .join(results.select(DISTRICT, TURNOUT), on=DISTRICT, how="inner")
+        .sort(DISTRICT)
     )
