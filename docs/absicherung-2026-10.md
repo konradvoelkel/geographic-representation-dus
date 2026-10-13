@@ -111,7 +111,7 @@ nächste Vorlage zu vergessen (im Docstring begründet).
 
 `stamp_mismatch` liest `extra` mit Vorgabe: ein Stamp von vor diesem Feld bleibt für jeden Schritt
 ohne Zusatz gültig, der globale Fingerprint ist unberührt, und die Datenschritte laufen nicht mit
-neu. `georep status` sagt jetzt „Vorlagen oder Anzeige geändert".
+neu. `georep status` sagt jetzt „Paketdateien oder Anzeige geändert".
 
 ### b) Das Register gegen die Schema-Konstanten
 

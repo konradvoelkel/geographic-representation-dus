@@ -217,7 +217,10 @@ def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -
     # Punkt 53: ``get`` mit Vorgabe, nicht ohne -- ein Stamp von vor diesem Feld ist für jeden
     # Schritt ohne Zusatz weiter gültig, und nur der Schritt ``report`` läuft einmal neu.
     if stamped.get("extra", "") != step.extra:
-        return "Vorlagen oder Anzeige geändert"
+        # Der Text deckt beide Zusätze: die Vorlagen und Anzeigewerte der Seite (``report``) und
+        # die Stoppwortliste des Pakets (``topics``). „Vorlagen oder Anzeige" allein beschrieb die
+        # zweite nicht (2026-10-13).
+        return "Paketdateien oder Anzeige geändert"
     if stamped.get("code") != __version__:
         return f"Code-Version {stamped.get('code')} -> {__version__}"
     stamped_inputs = stamped.get("inputs")

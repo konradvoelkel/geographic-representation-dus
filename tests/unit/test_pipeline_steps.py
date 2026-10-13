@@ -190,12 +190,12 @@ def test_a_changed_extra_makes_the_stamp_stale(default_settings: Settings, tmp_p
     assert stamp_mismatch(old_style, bare, default_settings) is None
     with_extra = replace(bare, extra="642286a2a9c672c6")
     assert stamp_mismatch(old_style, with_extra, default_settings) == (
-        "Vorlagen oder Anzeige geändert"
+        "Paketdateien oder Anzeige geändert"
     )
     stamped = dict(old_style) | {"extra": with_extra.extra}
     assert stamp_mismatch(stamped, with_extra, default_settings) is None
     assert stamp_mismatch(stamped, replace(with_extra, extra="0" * 16), default_settings) == (
-        "Vorlagen oder Anzeige geändert"
+        "Paketdateien oder Anzeige geändert"
     )
 
 
