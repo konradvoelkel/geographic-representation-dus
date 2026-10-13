@@ -13,8 +13,13 @@ from __future__ import annotations
 from dataclasses import replace
 from pathlib import Path
 
+import polars as pl
 import pytest
 
+import georep.pipeline
+import georep.prep.bodies
+import georep.prep.papers
+import georep.schema
 from georep import __version__
 from georep.layout import Layout
 from georep.pipeline import (
@@ -146,3 +151,48 @@ def test_a_changed_package_file_changes_the_fingerprint(
     assert len({before, after_js, after_toml}) == 3
     # Und der Hash des Pakets ist ein anderer als der dieses Gerüsts
     assert before != report_fingerprint(default_settings)
+
+
+# --- Punkt 53: das Register gegen die Konstanten und gegen die Dateien --------------------------
+
+
+def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
+    mini_run: Layout, default_settings: Settings
+) -> None:
+    """Der Stamp liegt neben der ersten Ausgabe; beide müssen dieselbe Schema-Version nennen.
+
+    Die Version steht zweimal: in den Parquet-Metadaten (``write_parquet``) und am ``Step``, von
+    wo sie in den Stamp wandert. Nur über den Stamp kann ``stamp_mismatch`` je „Schema geändert"
+    melden — und nur wenn beide Zahlen dieselbe sind, heißt die Meldung, was sie sagt (Lehre aus
+    Punkt 45, geprüft seit 2026-10-13 auch gegen die Datei).
+    """
+    checked = 0
+    for step in build_steps(default_settings, mini_run):
+        first = step.outputs[0]
+        if step.network or first.suffix != ".parquet" or not first.is_file():
+            continue
+        stored = pl.read_parquet_metadata(first)["georep.schema_version"]
+        assert stored == str(step.schema_version), (step.name, first.name, stored)
+        checked += 1
+    assert checked >= 15  # die Mini-Fixture rechnet alle Offline-Schritte
+
+
+def test_every_schema_constant_of_the_package_belongs_to_a_step(
+    default_settings: Settings, tmp_path: Path
+) -> None:
+    """Eine neue Schema-Konstante ohne Schritt wäre eine Version, die nirgends ankommt.
+
+    Genau das war der Befund hinter Punkt 45: die Zahl stand im Modul und in den
+    Parquet-Metadaten, aber nicht am ``Step``, und ``stamp_mismatch`` konnte sie nie melden. Der
+    Test findet die Konstanten reflexiv, damit das nächste Modell nicht vergessen wird.
+    """
+    found: dict[str, int] = {}
+    for module in (georep.pipeline, georep.schema, georep.prep.bodies, georep.prep.papers):
+        for name, value in vars(module).items():
+            if "SCHEMA" in name and isinstance(value, int) and not isinstance(value, bool):
+                found[f"{module.__name__}.{name}"] = value
+    assert len(found) >= 6, found
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    versions = {s.schema_version for s in build_steps(default_settings, layout)}
+    unused = {name: value for name, value in found.items() if value not in versions}
+    assert not unused, f"Schema-Konstanten, die kein Schritt trägt: {unused}"
