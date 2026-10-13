@@ -81,6 +81,8 @@ VERIFY_TARGETS = [
     "georep.report.model.format_de",
     "georep.report.search.canonical_term",
     "georep.report.charts.nice_ticks",
+    # Punkt 46: feste Klassengrenzen; rein, total und ohne Polars
+    "georep.report.charts.classify_fixed",
     # Punkt 45: die Ableitung der Stoppwörter aus dem Profil ist rein und total.
     "georep.analysis.topics.profile_stop_words",
     # Nicht dabei: georep.analysis.topics.name_stop_words (Punkt 45). Es rechnet zwei

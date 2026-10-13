@@ -112,7 +112,10 @@ def classify_fixed(values: Mapping[int, float], boundaries: Sequence[float]) -> 
     zwischen zwei Läufen gleich bleiben.
     """
     bounds = tuple(boundaries)
-    classes = {key: bisect.bisect_right(bounds, value) for key, value in values.items()}
+    # Zählen statt ``bisect.bisect_right``: dieselbe Zuordnung (die Klasse ist die Zahl der
+    # Grenzen, die den Wert nicht überschreiten), aber ohne die C-Beschleunigung, über die
+    # crosshair in ``nox -s verify`` stolpert.
+    classes = {key: sum(1 for bound in bounds if bound <= value) for key, value in values.items()}
     return Classification(bounds, classes, len(bounds) + 1)
 
 
