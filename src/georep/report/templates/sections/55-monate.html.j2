@@ -1,4 +1,5 @@
 {% if model.timeline and visuals.bars_svg %}
+{% from "macros.html.j2" import more %}
 <section id="monate">
 <h2>Je Monat</h2>
 <p class="note">Ratsdokumente nach dem Datum der Vorlage, je Monat gezählt: alle und die mit mindestens einem Treffer im Wörterbuch eines Wahlbezirks. Ein Zeigen auf eine Balkengruppe nennt die Zahlen.</p>
@@ -7,7 +8,7 @@
 <li><span class="swatch bar-documents"></span>alle Dokumente</li>
 <li><span class="swatch bar-hits"></span>mit Treffer</li>
 </ul></div>
-<div class="scroll"><table id="monate-tabelle">
+<div class="scroll"><table id="monate-tabelle" class="preview">
 <thead><tr>
 <th scope="col" data-sort="num">Monat</th>
 <th scope="col" class="num" data-sort="num">Dokumente</th>
@@ -24,6 +25,7 @@
 </tr>
 {% endfor %}
 </tbody></table></div>
+{{ more("monate-tabelle", model.timeline|length, model.preview_rows) }}
 <p class="footnote">Summe über alle Zeilen: {{ model.figures.documents|num }} Dokumente, so viele wie im Korpus. Ein Dokument ohne Datum (im Ratsinformationssystem selten) zählt zur Summe, aber zu keinem Monat.</p>
 </section>
 {% endif %}

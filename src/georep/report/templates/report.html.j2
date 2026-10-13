@@ -119,6 +119,24 @@ th[aria-sort="descending"]::after { content: " ↓"; color: var(--ink); }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 tr.selected td { background: color-mix(in srgb, var(--selected) 18%, var(--surface)); }
 .scroll { overflow-x: auto; }
+/* Punkt 48: lange Tabellen zeigen Kopf und die ersten Zeilen, die Schaltfläche darunter klappt den
+   Rest auf. Die Vorschau ist eine Regel und kein Attribut je Zeile, damit drei Dinge ohne eine
+   Zeile JavaScript stimmen: nach dem Sortieren zählt nth-child die neue Folge, eine markierte
+   Zeile klappt von allein auf (georep.select setzt .selected), und die Druckansicht ist
+   vollständig. docs/seitengroesse-2026-10.md, § 3.2. */
+{% if model.preview_rows %}
+table.preview tbody tr:nth-child(n+{{ model.preview_rows + 1 }}) { display: none; }
+table.preview.open tbody tr, table.preview tbody tr.selected { display: table-row; }
+{% endif %}
+p.more { margin: .3rem 0 0; }
+p.more button { font: inherit; font-size: .9rem; color: var(--accent); background: none; border: 0; padding: .2rem 0; cursor: pointer; }
+p.more button:hover, p.more button:focus { text-decoration: underline; }
+@media print {
+  /* Alles offen, nichts zum Klicken: !important, weil die Vorschauregel über :nth-child
+     spezifischer ist als diese hier. */
+  table.preview tbody tr { display: table-row !important; }
+  p.more, #tooltip { display: none !important; }
+}
 .small { font-size: .85rem; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8em; overflow-wrap: anywhere; }
 details { margin: .4rem 0; }
@@ -144,6 +162,12 @@ dialog#docs .ref { color: var(--ink-2); font-size: .85em; }
 #tooltip .terms { color: var(--ink-2); }
 footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem; }
 {{ section_css|safe }}</style>
+{% if model.preview_rows %}
+{# Punkt 48: ohne JavaScript steht alles offen. Die Vorschau braucht eine Schaltfläche, und die
+   kann nur ein Skript bedienen; also hebt dieser Block beides auf. Die eine Stelle der Seite, an
+   der zwei Zustände stehen -- !important, weil die Vorschauregel über :nth-child spezifischer ist. #}
+<noscript><style>table.preview tbody tr { display: table-row !important; } p.more { display: none !important; }</style></noscript>
+{% endif %}
 </head>
 <body>
 <header>
@@ -383,6 +407,23 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
       list.forEach(function (tr) { tbody.appendChild(tr); });
       table.querySelectorAll("th[data-sort]").forEach(function (other) { other.removeAttribute("aria-sort"); });
       th.setAttribute("aria-sort", ascending ? "ascending" : "descending");
+    });
+  });
+
+  /* Punkt 48: die Vorschau langer Tabellen. Welche Zeilen sichtbar sind, entscheidet die Regel im
+     Rahmen (table.preview tbody tr:nth-child(n+N)); hier haengt nur die Schaltflaeche daran, die
+     die Klasse "open" setzt. Darum stimmt die Vorschau nach dem Sortieren, und eine markierte
+     Zeile klappt ohne Zutun auf -- select setzt und raeumt die Klasse "selected" auf.
+     Die Beschriftungen stehen in der Vorlage (Makro "more"), nicht hier. */
+  document.querySelectorAll("p.more button").forEach(function (button) {
+    var table = document.getElementById(button.getAttribute("aria-controls"));
+    if (!table) return;
+    var collapsed = button.textContent;
+    button.addEventListener("click", function () {
+      var open = !table.classList.contains("open");
+      table.classList.toggle("open", open);
+      button.setAttribute("aria-expanded", open ? "true" : "false");
+      button.textContent = open ? button.dataset.less : collapsed;
     });
   });
 

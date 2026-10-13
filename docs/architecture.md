@@ -209,7 +209,16 @@ mit einer englischen Kurzfassung, hell und dunkel über `prefers-color-scheme`. 
 als `templates/sections/NN-name.html.j2` in Nummernfolge, je mit optionalem `NN-name.css` und `NN-name.js`, die
 der Rahmen in den Stil- und einen eigenen Skriptblock einfügt (`render.sections`; ein `.css` oder `.js` ohne
 Vorlage ist ein Fehler). Das Basis-JavaScript bietet `window.georep` (`select(ids, scroll)`,
-`showDocuments(terms, title)`, `rows`) für die Skripte der Abschnitte. **Umschalter einer Kennzahl** sind ein
+`showDocuments(terms, title)`, `rows`) für die Skripte der Abschnitte. **Lange Tabellen zeigen eine
+Vorschau** (Punkt 48): eine Tabelle mit `class="preview"` zeigt Kopf und die ersten
+`report.table_preview_rows` Zeilen, und das Makro `more(id, rows, preview)` aus
+`templates/macros.html.j2` setzt darunter die Schaltfläche „alle *n* Zeilen zeigen"
+(`aria-expanded`, `aria-controls`), die der Tabelle die Klasse `open` gibt. Welche Zeilen sichtbar
+sind, entscheidet eine CSS-Regel im Rahmen (`tbody tr:nth-child(n+N)`, dazu `.open` und
+`tr.selected`): darum zählt die Vorschau nach dem Sortieren die neue Folge, eine markierte Zeile
+klappt von allein auf (`select` setzt `selected`), `@media print` zeigt alles, und ein
+`<noscript><style>` im Kopf hebt die Vorschau ohne JavaScript auf. Die Umschalter bedienen
+verborgene Zeilen weiter, weil sie im ganzen Dokument suchen. **Umschalter einer Kennzahl** sind ein
 gemeinsames Muster (Punkt 46): das Makro `switcher(group, label, variants)` aus `templates/macros.html.j2`
 baut ein `fieldset.switcher` mit einem Radio je Variante (das erste ist die Standardansicht und steht auch
 ohne JavaScript da), und das Basis-JavaScript tauscht alles, was eine Variante kennt —

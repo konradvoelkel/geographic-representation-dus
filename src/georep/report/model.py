@@ -637,6 +637,9 @@ class ReportModel:
     # Option 07
     timeline: tuple[MonthRow, ...] = ()
     monitoring_url: str = ""  # relativer Link auf die Seite der laufenden Periode; leer = keiner
+    # Punkt 48: so viele Zeilen zeigt eine lange Tabelle; 0 klappt nichts ein. Die Vorlage baut
+    # daraus die CSS-Regel der Vorschau und die Schaltfläche (docs/seitengroesse-2026-10.md, § 3).
+    preview_rows: int = 3
 
 
 # --- Zahlenformat -----------------------------------------------------------------------------
@@ -1714,6 +1717,7 @@ def build_report_model(
         data_note=settings.report.data_note,
         timeline=month_rows(layout.timeline),  # Option 07
         monitoring_url=settings.report.monitoring_url,
+        preview_rows=settings.report.table_preview_rows,  # Punkt 48
     )
 
 

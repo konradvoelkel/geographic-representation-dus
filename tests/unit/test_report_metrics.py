@@ -83,7 +83,7 @@ def test_every_district_shape_carries_the_new_classes(
 
 def test_the_district_table_mirrors_the_chosen_metric(mini_page: str) -> None:
     """Die Spalte der Trefferquote zeigt, wonach die Karte gerade eingefärbt ist."""
-    table = mini_page.split('<table id="districts">', 1)[1].split("</table>", 1)[0]
+    table = mini_page.split('<table id="districts"', 1)[1].split("</table>", 1)[0]
     head = table.split("</thead>", 1)[0]
     assert 'data-text-jebegriff="Treffer je Begriff"' in head
     assert 'data-text-abweichung="vom Stadtmittel"' in head

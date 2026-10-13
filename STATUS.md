@@ -1,8 +1,8 @@
 # Status
 
 Stand 2026-10-13, `main` auf `v0.11.0` plus die beiden Methodikregeln aus `docs/todo.md`, Punkt 4,
-das tragfähige Themenmodell aus Punkt 1, die Skalierung der Kennzahlen aus Punkt 3 und die
-Literaturübersicht aus Punkt 5 (nicht
+das tragfähige Themenmodell aus Punkt 1, die Skalierung der Kennzahlen aus Punkt 3, die
+Literaturübersicht aus Punkt 5 und die Vorschau langer Tabellen aus Punkt 2 (nicht
 getaggt; `bartzsch-exakt` zeigt auf den letzten exakt reproduzierenden Stand). Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
 Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>), und der Ausbau in
@@ -171,16 +171,33 @@ vollständiger Zitation und einem oder zwei Sätzen zum Beitrag. Dieselbe Liste 
   Abschnitte. Gemessen am 2026-10-13 nach dem Review: 12 429 der Abschnitt samt Zeilenumbruch, 663 sein
   CSS, 102 der Satz in „Methode und Grenzen", minus 28 für das entfernte `rel="noopener"` im Rahmen.
 
+## Kompaktere Seite (2026-10-13, `docs/seitengroesse-2026-10.md`)
+
+`docs/todo.md`, Punkt 2: die Seite stand mit 1 281 464 Byte und 43 Tabellen ganz ausgeklappt da.
+Die Messung je Abschnitt, je Tabelle und je Element steht im Dokument, das Skript daneben
+(`docs/seitengroesse-2026-10-messung.py`); § 5 geht acht weitere Posten mit gemessenen Bytes durch
+und sagt je, warum sie liegen bleiben.
+
+- **Vorschau langer Tabellen** (`docs/decisions.md`, Punkt 48): elf Aufzählungen zeigen Kopf und
+  die ersten `report.table_preview_rows` Zeilen (Vorgabe 3), darunter „alle *n* Zeilen zeigen"
+  (`<button>` mit `aria-expanded` und `aria-controls`; `<details>` geht in einer Tabelle nicht, das
+  Inhaltsmodell von `<tbody>` erlaubt nur `<tr>`). Welche Zeilen sichtbar sind, entscheidet eine
+  CSS-Regel: darum stimmt die Vorschau nach dem Sortieren, eine aus Karte, Streudiagramm oder
+  Suche markierte Zeile klappt von allein auf, `@media print` zeigt alles, und ein
+  `<noscript><style>` hebt die Vorschau ohne JavaScript auf. Offen bleiben die Kernzahlen und die
+  Tabellen 5, 6 und 6b. Kosten: 4130 Byte.
+
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46 und 47)
 
-- Tests: 983 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 991 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` 1,28 MB (1 281 464 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
-  110 KB, die Literaturübersicht 13,2 KB), 52 Dateien zusammen 13,4 MB, fünfzehn
+- Berichtsseite: `index.html` 1,29 MB (1 285 594 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
+  110 KB, die Literaturübersicht 13,2 KB, die Vorschau langer Tabellen 4,1 KB), 52 Dateien zusammen
+  13,4 MB, fünfzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
@@ -231,6 +248,13 @@ vollständiger Zitation und einem oder zwei Sätzen zum Beitrag. Dieselbe Liste 
   dieser Seite zu tun haben — zwei Tests wurden rot („Dezember" aus einem Eintrag zu Open.NRW, 2025
   aus zwei Aufsätzen). `without_literature(page)` in `tests/conftest.py` schneidet den Abschnitt
   heraus; wer ein Wort im ganzen HTML sucht, nimmt sie.
+- Ein Test, der ein Element über sein Markup sucht, darf das schließende `>` nicht mitnehmen:
+  `<table id="districts">` fand nichts mehr, als die Tabelle `class="preview"` bekam (sechs Tests
+  und ein Snapshot wurden am 2026-10-13 rot). Seitdem steht in den Tests `<table id="districts"`
+  ohne Klammer. Dieselbe Lehre für die Konvention der Abschnitte: eine Vorlage, die an einem
+  Modellteil hängt, muss mit `{% if model.… %}` **beginnen** (`tests/unit/test_report_render.py`
+  liest das aus der Datei); ein `{% from "macros.html.j2" import … %}` davor machte „monate" und
+  „perioden" für den Test zu Pflichtabschnitten. Der Import steht darum dahinter.
 - Eine CSS-Klasse, die ein Umschalter tauscht, muss auf jeder Fläche dasselbe bedeuten: die Parteizellen
   trugen `p<n>` aus dem Abschnitts-CSS, der Umschalter schrieb `q<n>`, und `.q0` bis `.q4` setzen nur `fill`
   — nach einem Klick auf „Anteil" war die Tönung weg (gefunden am 2026-10-13 mit headless Chrome, nicht von

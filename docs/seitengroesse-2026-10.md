@@ -132,10 +132,13 @@ gehört zur Prüfung mit headless Chrome.
 
 ### 3.3 Welche Tabellen
 
-Vorschau bekommen die Aufzählungen: `districts`, `urheber-tabelle`, `gremien-bezirke`,
-`gremien-liste`, `ausschuss-tabelle`, `monate-tabelle`, `gewichtung-tabelle`, `themen-tabelle`,
-`downloads-table`, die sechs Spaltendoku-Tabellen, die Spalten der Kontextdaten und die
-trefferstärksten Begriffe. **Offen bleiben der Befund und alles unter zehn Zeilen:** die Kernzahlen,
+Vorschau bekommen die elf Aufzählungen der heutigen Seite: `districts`, `urheber-tabelle`,
+`gremien-bezirke`, `gremien-liste`, `ausschuss-tabelle`, `monate-tabelle`, `gewichtung-tabelle`,
+`themen-tabelle`, `downloads-table`, `top-begriffe` (die trefferstärksten Begriffe) und
+`kontext-variablen` (die Spalten der Kontextdaten); dazu `perioden-tabelle`, sobald der Vergleich
+zweier Wahlperioden Daten hat. Die letzten drei bekommen dafür eine ID, denn `aria-controls`
+braucht eine. Die sechs Tabellen der Spaltendoku brauchen keine: sie stehen schon je in einem
+`<details>`. **Offen bleiben der Befund und alles unter zehn Zeilen:** die Kernzahlen,
 Tabelle 5 (`zusammenhang`), Tabelle 6 und 6b (`kontrollvariablen`), die Kacheln der Gremien und die
 Vergleichstabelle der Perioden. Wer die Zahl sucht, um die es geht, soll sie sehen, ohne zu klicken.
 

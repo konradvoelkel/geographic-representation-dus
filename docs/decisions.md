@@ -1009,3 +1009,43 @@ mit diesem Abschnitt aus dem Rahmen verschwand (gemessen am 2026-10-13). Der Set
 sich **nicht**, denn `[report]` ist aus ihm ausgenommen (Punkt 46, STATUS.md unter „Bekannt“) — nach einer neuen Quelle meldet
 `georep status` den Schritt `report` als „aktuell", und die Seite braucht wie nach jeder Vorlagenänderung ein
 `georep run report --force`.
+
+## 48. Lange Tabellen zeigen drei Zeilen, und die Vorschau ist eine CSS-Regel (2026-10-13)
+
+`docs/todo.md`, Punkt 2, erster Teil: die Seite steht ganz ausgeklappt da, 43 Tabellen, vier davon mit
+41 Zeilen. Konrad wünscht „Tabellen zu, nur zwei bis drei Zeilen sichtbar, der Rest auf Bedarf". Die
+Messung je Abschnitt, je Tabelle und je Element steht in [seitengroesse-2026-10.md](seitengroesse-2026-10.md).
+
+**Ein `<button>`, kein `<details>`.** Das Inhaltsmodell von `<tbody>` erlaubt nur `<tr>` und
+skript-tragende Elemente; ein `<details>` um die hinteren Zeilen trägt der HTML-Parser aus der Tabelle
+heraus (foster parenting), die Zeilen landen davor und sind keine Tabellenzeilen mehr. Also ein
+`<button type="button">` mit `aria-expanded` und `aria-controls` auf die Tabelle, gebaut vom Makro
+`more(id, rows, preview)` in `templates/macros.html.j2`. **Verworfen:** die Tabelle in zwei Tabellen
+zerlegen und die zweite in ein `<details>` stecken (zwei Spaltenbreiten, zwei Sortierungen, der Kopf
+gilt nur noch für die Vorschau); ein `<details>` je Zeile (41 Aufklapper sind keine Tabelle mehr).
+
+**Die Vorschau ist eine Regel, kein Attribut je Zeile.** `table.preview tbody tr:nth-child(n+N)`
+verbirgt, was über die Vorschau hinausgeht, und `table.preview.open tbody tr, table.preview tbody
+tr.selected` zeigt es wieder. Das ist nicht nur kleiner (240 Byte für elf Tabellen statt rund 3 KB
+`hidden` an 428 Zeilen), sondern macht drei Dinge ohne eine Zeile JavaScript richtig: nach dem
+Sortieren zählt `nth-child` die **neue** Folge, also stimmt die Vorschau weiter; eine Zeile, die
+`georep.select(ids, scroll)` markiert, klappt von allein auf und wird gescrollt, und beim nächsten
+`select` räumt dieselbe Mechanik auf, weil `select` die Klasse überall entfernt; `@media print` zeigt
+alles. Die Umschalter der Normierung (Punkt 46) suchen im ganzen Dokument und bedienen verborgene
+Zeilen unverändert — geprüft mit headless Chrome, nicht nur im Test.
+
+**Ohne JavaScript steht alles offen.** Ein `<noscript><style>` im Kopf hebt die Vorschau auf und
+blendet die Schaltfläche aus, die ohne Skript nichts tun könnte; beides mit `!important`, weil die
+Vorschauregel über `:nth-child` spezifischer ist. **Verworfen:** die Vorschau erst im JavaScript
+aufbauen (dann sieht jeder Leser die Tabelle einmal lang und dann kurz, ein Sprung im Layout);
+`hidden` im Markup ohne `<noscript>` (dann wäre die Seite ohne Skript unvollständig).
+
+**Welche Tabellen.** Vorschau bekommen die Aufzählungen (elf heute, dazu die Vergleichstabelle der
+Perioden, sobald sie Daten hat). Offen bleiben die Kernzahlen, Tabelle 5, Tabelle 6 und 6b: das ist
+der Befund, und wer die Zahl sucht, um die es geht, soll sie ohne Klick sehen. Die sechs Tabellen der
+Spaltendoku stehen schon je in einem `<details>` und brauchen nichts.
+
+**Drei Zeilen stehen in den Settings** (`report.table_preview_rows`, 0 heißt „nichts einklappen"), weil
+die Zahl Geschmack ist und nicht Technik; sie gilt für alle Tabellen gleich. `[report]` zählt nicht zum
+Settings-Fingerprint, eine andere Zahl braucht also `georep run report --force` (wie jede
+Vorlagenänderung, STATUS.md unter „Bekannt"). Kosten: die Seite wächst um 4130 Byte.

@@ -79,7 +79,7 @@ def test_the_small_maps_carry_the_variants_as_attributes(
 
 
 def test_the_party_table_column_follows_the_switcher(mini_page: str) -> None:
-    table = mini_page.split('<table id="parteien-tabelle">', 1)[1].split("</table>", 1)[0]
+    table = mini_page.split('<table id="parteien-tabelle"', 1)[1].split("</table>", 1)[0]
     assert ">Anteil im Mittel</th>" in table  # die Standardvariante steht als Text da
     assert 'data-text-abwpartei="Abweichung"' in table
     assert 'data-text-verhpartei="Verhältnis"' in table
@@ -90,7 +90,7 @@ def test_the_party_table_column_follows_the_switcher(mini_page: str) -> None:
 
 
 def test_the_district_cells_follow_the_switcher(mini_page: str, mini_model: ReportModel) -> None:
-    table = mini_page.split('<table id="urheber-tabelle">', 1)[1].split("</table>", 1)[0]
+    table = mini_page.split('<table id="urheber-tabelle"', 1)[1].split("</table>", 1)[0]
     cells = len(mini_model.party_cells)
     for value in ("abwpartei", "verhpartei"):
         assert len(re.findall(rf'data-class-{value}="\d"', table)) == cells

@@ -1190,6 +1190,10 @@ class Report(_Strict):
     # Listen, ein Profil könnte die Paketliste also nur überschreiben, nicht ergänzen.
     literature: list[LiteratureEntry] = []
     ris_url: str = ""  # Ratsinformationssystem, für den Satz über die Dokumente
+    # Punkt 48: so viele Zeilen zeigt eine lange Tabelle, bevor die Schaltfläche kommt. 0 heißt
+    # „nichts einklappen"; mehr als 50 wäre keine Vorschau mehr (die längste Tabelle der Seite
+    # ist die Monatsreihe mit 61 Zeilen).
+    table_preview_rows: int = Field(default=3, ge=0, le=50)
     notes: list[str] = []  # Sätze, die nur für diese Stadt in „Methode und Grenzen" gehören
     data_note: str = ""  # woher Straßen und Orte stammen, wenn kein Netzschritt gelaufen ist
     # Option 07: Teile der Seite, die eine laufende Periode nicht hat oder zusätzlich trägt.

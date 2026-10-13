@@ -1,4 +1,4 @@
-{% from "macros.html.j2" import switcher %}
+{% from "macros.html.j2" import more, switcher %}
 {% if model.parties and model.originator_figures %}
 {% set f = model.originator_figures %}
 <section id="parteien">
@@ -74,7 +74,7 @@
 
 <h3>Je Wahlbezirk</h3>
 <p class="note">Spaltenköpfe sortieren. Links die Treffer nach Urheberklasse, deren Summe die Treffer des Bezirks ergibt; rechts je Partei der Anteil ihrer Dokumente, der diesen Bezirk erwähnt, schattiert nach derselben Quantilklasse wie die Karten — und mit demselben Umschalter wie sie. Die Tönung der Zellen ist heller als die der Karten, damit die Zahl darin in Hell und Dunkel lesbar bleibt; die Reihenfolge der fünf Stufen ist dieselbe.</p>
-<div class="scroll"><table id="urheber-tabelle">
+<div class="scroll"><table id="urheber-tabelle" class="preview">
 <thead><tr>
 <th scope="col" class="num" data-sort="num">Nr.</th>
 <th scope="col" data-sort="text">Name</th>
@@ -105,5 +105,6 @@
 </tr>
 {% endfor %}
 </tbody></table></div>
+{{ more("urheber-tabelle", model.originators|length, model.preview_rows) }}
 </section>
 {% endif %}

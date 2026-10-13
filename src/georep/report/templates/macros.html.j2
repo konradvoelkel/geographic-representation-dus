@@ -10,6 +10,21 @@
   der Zustand, in dem die Seite ausgeliefert wird, und das JavaScript merkt sich beim Aufbau je
   Element Klasse, Text und Sortierwert und stellt sie wieder her. Ein Muster für alle Abschnitte.
 #}
+{#
+  Punkt 48: die Vorschau einer langen Tabelle. Die Tabelle trägt ``class="preview"``, und dieses
+  Makro setzt die Schaltfläche darunter -- aber nur, wenn es etwas zu klappen gibt (``rows`` ist
+  die Zahl der Zeilen im ``<tbody>``, ``preview`` die Zahl der Vorschauzeilen aus
+  ``model.preview_rows``). Welche Zeilen sichtbar sind, entscheidet CSS im Rahmen
+  (``table.preview tbody tr:nth-child(n+N)``): darum stimmt die Vorschau auch nach dem Sortieren,
+  eine markierte Zeile klappt von allein auf (``georep.select`` setzt ``selected``), die
+  Druckansicht ist vollständig, und ohne JavaScript steht alles offen (``<noscript>`` im Rahmen).
+  ``id`` ist die Tabelle, auf die ``aria-controls`` zeigt; sie braucht also eine.
+#}
+{% macro more(id, rows, preview) %}
+{% if preview and rows > preview %}
+<p class="more"><button type="button" aria-expanded="false" aria-controls="{{ id }}" data-less="wieder einklappen">alle {{ rows|num }} Zeilen zeigen</button></p>
+{% endif %}
+{% endmacro %}
 {% macro switcher(group, label, variants) %}
 <fieldset class="switcher"><legend>{{ label }}</legend>
 {% for variant in variants %}

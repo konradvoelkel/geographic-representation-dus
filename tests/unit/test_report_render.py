@@ -132,7 +132,7 @@ def test_a_foreign_link_in_the_svg_breaks_the_contract(
 
 
 def test_download_table_is_stable(page: str, snapshot: SnapshotAssertion) -> None:
-    match = re.search(r'<table id="downloads-table">.*?</table>', page, re.S)
+    match = re.search(r'<table id="downloads-table".*?</table>', page, re.S)
     assert match is not None
     assert match.group(0) == snapshot
 
@@ -504,7 +504,7 @@ def test_the_month_section_has_a_row_per_month_and_two_bars(open_page: str) -> N
     assert '<section id="monate">' in open_page
     import re as _re
 
-    body = _re.search(r'<table id="monate-tabelle">.*?<tbody>(.*?)</tbody>', open_page, _re.S)
+    body = _re.search(r'<table id="monate-tabelle".*?<tbody>(.*?)</tbody>', open_page, _re.S)
     assert body is not None and body.group(1).count("<tr>") == len(MONTHS)
     assert "Oktober 2025" in open_page and "November 2025" in open_page
     assert "ohne Datum" in open_page  # die Zeile ohne Monat
@@ -542,7 +542,7 @@ def test_the_month_column_sorts_by_number_not_by_name(open_page: str) -> None:
     """Nach Text sortiert stünde April vor Oktober; der Wert ist Jahr mal zwölf plus Monat."""
     import re as _re
 
-    head = _re.search(r'<table id="monate-tabelle">.*?</thead>', open_page, _re.S)
+    head = _re.search(r'<table id="monate-tabelle".*?</thead>', open_page, _re.S)
     assert head is not None and '<th scope="col" data-sort="num">Monat</th>' in head.group(0)
     values = _re.findall(
         r'<td data-value="(\d+)">(?:[A-ZÄÖÜ][a-zä-ü]+ \d{4}|ohne Datum)</td>', open_page

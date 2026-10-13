@@ -1,7 +1,7 @@
 # serializer version: 1
 # name: test_download_table_is_stable
   '''
-  <table id="downloads-table">
+  <table id="downloads-table" class="preview">
   <thead><tr><th scope="col">Datei</th><th scope="col">Format</th><th scope="col" class="num">Zeilen</th><th scope="col" class="num">Größe</th><th scope="col">Beschreibung</th><th scope="col">SHA-256</th></tr></thead>
   <tbody>
   <tr><td><a href="data/wahlbezirke_auswertung.parquet">wahlbezirke_auswertung.parquet</a></td><td>Parquet</td><td class="num">3</td><td class="num">12,3 KB</td><td>Auswertung je Bezirk</td><td><code>aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa</code></td></tr>

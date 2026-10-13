@@ -4,6 +4,17 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Lange Tabellen zeigen drei Zeilen, der Rest klappt auf Bedarf auf** (`docs/todo.md` Punkt 2,
+  `docs/decisions.md` Punkt 48, Messung in `docs/seitengroesse-2026-10.md`). Elf Aufzählungen der
+  Seite (Wahlbezirke, Urheber je Wahlbezirk, Gremien, Monate, Gewichtungen, Themen, Downloads,
+  Begriffe, Kontextvariablen) haben darunter eine Schaltfläche „alle *n* Zeilen zeigen"; die Zahl
+  der Vorschauzeilen steht in den Settings (`report.table_preview_rows = 3`, 0 klappt nichts ein).
+  Offen bleiben die Kernzahlen und die Tabellen 5, 6 und 6b — das ist der Befund.
+  - Welche Zeilen sichtbar sind, entscheidet eine CSS-Regel. Darum stimmt die Vorschau auch nach
+    dem Sortieren einer Spalte, eine Zeile, die aus Karte, Streudiagramm oder Suche heraus markiert
+    wird, klappt von allein auf, und die Druckansicht zeigt jede Zeile. Ohne JavaScript steht alles
+    offen.
+
 - **Die Seite hat einen Abschnitt „Literatur und verwandte Arbeiten"** (`docs/todo.md` Punkt 5,
   `docs/decisions.md` Punkt 47). Fünfzehn Einträge zwischen „Abgeleitete Daten" und „Downloads", je
   mit vollständiger Zitation (Autor, Titel, Jahr, Ort oder Institution, URL mit Abrufdatum oder DOI)
