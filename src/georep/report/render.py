@@ -67,9 +67,12 @@ def model_links(model: ReportModel) -> frozenset[str]:
     Option 01: das Ratsinformationssystem und die Quellen der Stadt mit ihren Lizenzen.
     Option 03: Datensatzseite und Lizenz der Fremddaten; eine andere Stadt nennt andere, und die
     Nachbedingung von ``render_report`` soll trotzdem greifen.
-    Punkt 47: die Links der Literaturübersicht. Sie stehen in ``report/literatur.toml`` und im
-    Profil, also in Dateien des Pakets -- per Konstruktion erlaubt wie die Quellen, und keine
-    Zitation zwingt eine Konstante mit einem Ortsnamen in den Code.
+    Punkt 47: die Links der Literaturübersicht. Sie stehen in ``report/literatur.toml`` im Paket
+    und in ``[[report.literature]]``, also -- wie die Quellen, Punkt 36 -- in den Settings: im
+    Profil, aber auch in ``settings.toml``, ``settings.local.toml``, einer Datei hinter
+    ``--settings`` oder in ``GEOREP_REPORT__LITERATURE``. Erlaubt ist damit, was die
+    Lesereihenfolge der Settings hergibt, nicht nur das Paket; der Unterschied zu einem Link aus
+    den **Daten** bleibt: wer die Settings schreibt, bestimmt die Seite ohnehin.
     """
     found = {model.ris_url} | {
         url for source in model.sources for url in (source.url, source.license_url)

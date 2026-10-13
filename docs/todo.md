@@ -92,6 +92,13 @@ erklärt, warum das zweite Projekt eingeschlafen ist; weitere verwandte Arbeiten
 
 ## 6. Lizenz des Codes
 
+**Erledigt am 2026-10-12, siehe `docs/decisions.md`, Punkt 42** (Commit 079725e). Der Quelltext steht seit
+dem Tag `v0.11.0` unter GPL-3.0-or-later: `LICENSE` trägt den GPL-Text, `pyproject.toml` das Feld
+`license = "GPL-3.0-or-later"`, der README-Abschnitt „Lizenz" nennt beides mit Datum, und der Fuß der
+Berichtsseite trennt Quelltext (GPL) von Ergebnissen (CC0). Verworfen sind MIT, Apache-2.0 und AGPL, je mit
+Grund in Punkt 42. Daten, Fremddaten und Fixtures behalten die Lizenz ihrer Quelle (DL-DE BY 2.0,
+DL-DE Zero 2.0, ODbL, CC BY-SA, CC BY 4.0); die Seite nennt sie je Quelle. Der Auftrag stand so:
+
 Heute CC0 1.0 wie das Original (README, „Lizenz"). Konrad möchte den Code nach einem Tag auf GPL-3.0-or-later
 stellen (2026-10-12). CC0 des Ursprungs lässt das zu; Daten, Fremddaten und Fixtures behalten ihre eigenen
 Lizenzen (DL-DE BY 2.0, ODbL, CC BY-SA), die Seite nennt sie weiter je Quelle.

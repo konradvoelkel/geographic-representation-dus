@@ -982,9 +982,14 @@ auf GitHub nicht auffindbar. **Verworfen:** die Kölner Untersuchung weglassen (
 unsichtbar) und einen Platzhalter mit erfundenem Jahr (eine Zahl, die niemand geprüft hat, ist schlimmer als
 keine).
 
-**Die URLs kommen über die Daten in die Allowlist.** `render.model_links` liest sie aus `model.literature`,
-so wie es die Quellen aus `[[report.sources]]` liest (Punkt 36); die Nachbedingung von `render_report` bleibt
-unverändert, und kein Link einer Zitation zwingt eine Konstante mit einem Orts- oder Projektnamen in den Code.
+**Die URLs kommen über die Settings in die Allowlist.** `render.model_links` liest sie aus
+`model.literature`, so wie es die Quellen aus `[[report.sources]]` liest (Punkt 36); die Nachbedingung von
+`render_report` bleibt unverändert, und kein Link einer Zitation zwingt eine Konstante mit einem Orts- oder
+Projektnamen in den Code. Erlaubt ist damit nicht „was im Paket steht", sondern was die Lesereihenfolge der
+Settings hergibt — neben `literatur.toml` und dem Profil auch `settings.toml`, `settings.local.toml`, eine
+Datei hinter `--settings` und `GEOREP_REPORT__LITERATURE`. Das ist dieselbe Grenze wie bei Punkt 36 und
+derselbe Grund: wer die Settings schreibt, bestimmt die Seite ohnehin; ein Link aus den **Daten** (einem
+Dokumenttitel etwa) bleibt verboten.
 Die Links sehen aus wie jeder andere auf der Seite: kein `target="_blank"`, also auch kein
 `rel="noopener"` — das wirkt nur mit `target`. Der Abschnitt hatte es an jedem Link, der Dialog der Dokumente
 an den PDF-Links, die übrigen zwanzig Links der Seite nicht; jetzt steht es nirgends, und die eine Regel ist,

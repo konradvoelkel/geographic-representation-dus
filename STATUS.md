@@ -269,10 +269,10 @@ Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „
 4. Optional der Vollabruf der Hauptperiode (2 bis 3 h; zeigt, ob der OParl-Server `modified_since` beachtet
    und ob die Urheberfelder inzwischen gefüllt sind).
 
-Rückstand für danach: `docs/todo.md` (offen ist dort nur noch Punkt 2, die Seitengröße; Punkt 6, die
-Lizenz, ist mit dem Wechsel auf GPL-3.0-or-later am 2026-10-12 beantwortet, im TODO aber nicht nachgezogen.
-Punkt 5, die Literaturübersicht, ist am 2026-10-13 erledigt, `docs/decisions.md`, Punkt 47;
-Punkt 4, Bartzschs Methodik, ist am 2026-10-12 erledigt,
+Rückstand für danach: `docs/todo.md` (offen ist dort nur noch Punkt 2, die Seitengröße;
+Punkt 6, die Lizenz, ist am 2026-10-12 mit dem Wechsel auf GPL-3.0-or-later erledigt,
+`docs/decisions.md`, Punkt 42. Punkt 5, die Literaturübersicht, ist am 2026-10-13 erledigt,
+`docs/decisions.md`, Punkt 47; Punkt 4, Bartzschs Methodik, ist am 2026-10-12 erledigt,
 `docs/methodik-review-2026-10.md`, dessen stärkste offene Empfehlung Punkt 3 eingelöst hat; Punkt 1, das
 Themenmodell, ebenfalls am 2026-10-12, `docs/themenmodell-2026-10.md`, offene Annahmen in dessen § 7;
 Punkt 3, die Skalierung der Kennzahlen, am 2026-10-13, `docs/skalierung-2026-10.md`, offene Annahmen in
