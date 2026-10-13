@@ -127,6 +127,36 @@ def test_printing_shows_every_row(narrow: str) -> None:
     assert "p.more, #tooltip { display: none !important; }" in block.group(1)
 
 
+def test_the_label_counts_the_rows_that_are_really_there(
+    mini_model: ReportModel, mini_visuals: Visuals, narrow: str
+) -> None:
+    """Die Zahl im Text kommt aus dem Modell, die Zeilen aus der Schleife (Review, Befund 6).
+
+    Steht in der Schleife ein ``{% if %}`` -- ``gremien-bezirke`` überspringt Wahlbezirke ohne
+    Gremiendaten --, dann zählt das Makro etwas anderes als die Tabelle zeigt, und niemand merkt
+    es. Darum zählt dieser Test die ``<tr>`` im ``<tbody>`` der Tabelle, die ``aria-controls``
+    nennt, und vergleicht sie mit der Zahl in der Beschriftung. Der zweite Teil nimmt einem
+    Wahlbezirk seine Gremiendaten, damit der Fall mit dem ``{% if %}`` wirklich vorkommt.
+    """
+
+    def labels_match(page: str) -> int:
+        found = BUTTON.findall(page)
+        assert found, "keine Schaltfläche auf der Seite"
+        for name, _, label in found:
+            said = int(re.sub(r"[^0-9]", "", label))
+            table = re.search(rf'<table id="{name}".*?<tbody>(.*?)</tbody>', page, re.S)
+            assert table is not None, name
+            assert said == table.group(1).count("<tr"), (name, label)
+        return len(found)
+
+    assert labels_match(narrow) >= 4
+    without = replace(mini_model.districts[0], bodies=None)
+    thinner = replace(mini_model, districts=(without, *mini_model.districts[1:]), preview_rows=1)
+    page = render_report(thinner, mini_visuals)
+    assert 'aria-controls="gremien-bezirke"' in page  # der Fall mit dem {% if %} kommt vor
+    labels_match(page)
+
+
 def test_the_number_of_preview_rows_stays_in_its_bounds() -> None:
     assert Report().table_preview_rows == 3
     for wrong in (-1, 51):
