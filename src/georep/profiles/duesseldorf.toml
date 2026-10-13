@@ -51,6 +51,30 @@ url = "https://ris-oparl.itk-rheinland.de/"
 license = ""                   # kein Lizenzhinweis am Endpunkt; die Seite nennt nur die Kennungen
 checked = 2026-10-11
 
+# Punkt 47: die Arbeit, auf der diese Stadtseite aufsetzt. Stadtspezifisch und darum hier, nicht in
+# report/literatur.toml: dort stehen nur Einträge, die für jede Kommune gelten.
+[[report.literature]]
+key = "bartzsch-2026"
+authors = "Lukas Bartzsch"
+title = "Die Sichtbarkeit der Kommunalwahlbezirke in den Ratsdokumenten und ihr Zusammenhang mit der Wahlbeteiligung"
+year = 2026
+venue = "Heinrich-Heine-Universität Düsseldorf, Bachelorarbeit"
+url = "https://github.com/lubar102/geographic-representation-dus"  # der Quelltext der Arbeit; die Arbeit selbst ist nicht öffentlich
+accessed = 2026-10-13
+pending = true                 # Titel und Betreuung stehen nirgends: der Titel hier ist die Beschreibung aus dem README, nicht der Titel der Arbeit
+note = "Der Ursprung dieser Seite, eingereicht im Januar 2026: Fragestellung, Wörterbuch je Wahlbezirk, Suche über die Ratsdokumente und die Regression gegen die Wahlbeteiligung stammen aus dieser Arbeit, und dieses Programm ist ein Umbau ihres Quelltextes. Es reproduziert ihre Zahlen, solange die eigenen Methodikregeln abgeschaltet sind; der Titel hier ist die Beschreibung aus dem Repository, nicht der Titel der Arbeit, und genauer Titel wie Betreuung sind nachzutragen, denn die Arbeit selbst ist nicht öffentlich — öffentlich ist nur ihr Quelltext."
+
+# Die zweite Quelle, die die Arbeit nennt, und die einzige Lücke der Liste. Sie steht hier und nicht
+# in report/literatur.toml, weil sie nur über das Literaturverzeichnis dieser Arbeit existiert; ohne
+# Jahr und ohne Link ist sie nur mit pending = true gültig (LiteratureEntry in georep.settings).
+[[report.literature]]
+key = "koeln-ratsdokumente"
+authors = "Autor nachzutragen"
+title = "Untersuchung zu Parteien und Stadtteilbezügen in den Ratsdokumenten der Stadt Köln"
+venue = "Herausgeber und Jahr nachzutragen aus dem Literaturverzeichnis der Arbeit"
+pending = true
+note = "Die Arbeit zitiert eine Kölner Untersuchung zu Parteien und Ratsdokumenten; sie ist am 2026-10-13 nicht auffindbar. Gesucht wurde in OpenAlex und Crossref (Ratsinformationssystem, Ratsdokumente, Köln, Text Mining, geografische Repräsentation), auf arXiv, in Hochschulrepositorien und auf GitHub, und im öffentlichen Quelltext der Arbeit steht kein Literaturverzeichnis — die Zitation ist nur aus der Arbeit selbst zu holen. Die nächste belegte Verwandte ist Harmening u. a. 2025 weiter unten, die zwölf deutsche Großstädte mit demselben Verfahren untersucht."
+
 [publish]
 cities = ["duesseldorf", "moenchengladbach"]  # Reihenfolge der Veröffentlichung; die erste liegt an der Wurzel, jede weitere unter ihrem Slug. Mönchengladbach steht hier, seit sein Profil existiert; `georep publish` meldet es als „kein Lauf", bis sein Paket im Repo liegt (Stufe G).
 

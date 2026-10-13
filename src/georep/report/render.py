@@ -66,10 +66,14 @@ def model_links(model: ReportModel) -> frozenset[str]:
     Option 01: das Ratsinformationssystem und die Quellen der Stadt mit ihren Lizenzen.
     Option 03: Datensatzseite und Lizenz der Fremddaten; eine andere Stadt nennt andere, und die
     Nachbedingung von ``render_report`` soll trotzdem greifen.
+    Punkt 47: die Links der Literaturübersicht. Sie stehen in ``report/literatur.toml`` und im
+    Profil, also in Dateien des Pakets -- per Konstruktion erlaubt wie die Quellen, und keine
+    Zitation zwingt eine Konstante mit einem Ortsnamen in den Code.
     """
     found = {model.ris_url} | {
         url for source in model.sources for url in (source.url, source.license_url)
     }
+    found |= {link for entry in model.literature for link in entry.links}
     if model.derived is not None:
         found |= {model.derived.url, model.derived.license_url}
     return frozenset(u for u in found if u)

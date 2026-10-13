@@ -1,0 +1,8 @@
+#literatur ol.literatur { margin: 1rem 0 0; padding-left: 1.6rem; }
+#literatur ol.literatur > li { margin-bottom: 1.1rem; max-width: 48em; }
+#literatur cite { font-style: normal; font-weight: 600; }
+/* Die vollen URLs stehen sichtbar da, damit die Seite auch ausgedruckt zitierbar bleibt; ohne den
+   Umbruch an jeder Stelle schiebt eine lange URL den Fließtext über den Rand. */
+#literatur ol.literatur a { overflow-wrap: anywhere; }
+#literatur ol.literatur .note { margin: .35rem 0 0; }
+#literatur .pending { border: 1px solid var(--grid); border-radius: 4px; padding: 0 .35rem; color: var(--ink-2); font-size: .8rem; font-weight: 400; white-space: nowrap; }

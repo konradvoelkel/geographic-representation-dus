@@ -932,3 +932,61 @@ Arbeit nichts, nicht einmal das Vorzeichen: über alle 41 Bezirke r = −0,1118 
 0,03705). Die einzige „signifikante" Spalte der Arbeit verschwindet, sobald die Wörterbuchgröße
 herausgerechnet ist — das stützt ihren Befund und entkräftet ihre zweite Spalte, und es ist nach Tabelle 6
 (Punkt 26) die dritte unabhängige Prüfung mit demselben Ergebnis. Tabelle 5 selbst bleibt unverändert.
+
+## 47. Die Literaturübersicht ist Daten, nicht Vorlage; die Stadt ergänzt, sie ersetzt nicht (2026-10-13)
+
+`docs/todo.md`, Punkt 5. Die Seite nannte die Arbeit nur im Nebensatz von „Methode und Grenzen"; jetzt steht
+zwischen „Abgeleitete Daten" und „Downloads" der Abschnitt „Literatur und verwandte Arbeiten" (`#literatur`,
+Abschnittsnummer 67) mit fünfzehn Einträgen, je mit vollständiger Zitation und einem oder zwei Sätzen, was die
+Arbeit beiträgt und wie dieses Vorhaben sich dazu verhält.
+
+**Die Einträge stehen in einer eigenen Paketdatei, nicht in `defaults.toml`.** `src/georep/report/literatur.toml`
+trägt die stadtneutralen Einträge, `[[report.literature]]` im Profil die stadtspezifischen;
+`report/literature.py` stellt die des Profils vor die der Paketdatei. Grund ist `deep_merge`: es mischt
+Tabellen rekursiv und **ersetzt** Listen, ein Profil könnte eine Liste in `defaults.toml` also nur
+überschreiben, nicht ergänzen — und genau das Erben ist der Zweck, damit eine zweite Stadt die allgemeinen
+Einträge bekommt, ohne sie zu kopieren (Mönchengladbach erbt heute alle dreizehn). Dazu passt, dass `defaults.toml`
+Parameter mit Begründung sammelt, keine Bibliografie: ein Literaturverzeichnis ist Inhalt, kein Schalter, und
+es würde die Datei verdoppeln. **Verworfen:** `[[literature]]` in `defaults.toml` plus ein zweiter Schlüssel
+`extra_literature` im Profil (zwei Listen für eine Liste); die Einträge in der Vorlage (dann wäre jede neue
+Quelle eine Vorlagenänderung, und `georep run report --force` nötig, ohne dass es jemand sieht); eine
+Markdown-Datei unter `docs/` als Quelle (sie müsste geparst werden, und die Validierung fiele weg).
+
+**Die Arbeit zur Stadt ist ein Profileintrag und steht oben.** Sie ist der Ursprung der Seite, aber sie
+handelt von einer Stadt; im stadtneutralen Teil hätte sie nichts zu suchen (`tests/unit/test_report_literature.py`
+prüft die Datei mit derselben Stadtwortliste wie Code und Vorlagen). Darum stehen die Profileinträge vorn und
+die allgemeinen dahinter. Folge, bewusst in Kauf genommen: die Seite einer zweiten Stadt verlinkt in „Methode
+und Grenzen" weiter das Original-Repository, führt die Arbeit aber nicht in ihrer Literatur — sie ist der
+Ursprung des Programms, nicht der Untersuchung dieser Stadt.
+
+**Ein Eintrag muss nachprüfbar sein.** `LiteratureEntry` (in `georep.settings`, neben `ReportSource`) verlangt
+Autor, Titel, Ort oder Institution, ein Jahr zwischen 1900 und 2100 und entweder eine `https`-URL mit
+Abrufdatum oder einen DOI der Form `10.xxxx/…`; der Schlüssel ist die Anker-ID `lit-<key>` und darf nur
+einmal vorkommen, auch nicht einmal im Profil und einmal im Paket. Alle Links waren am 2026-10-13 erreichbar
+(Statuscode geprüft), alle DOI über Crossref aufgelöst. **Die eine Ausnahme ist `pending = true`:** ein
+Eintrag, der aus dem Literaturverzeichnis einer nicht öffentlichen Arbeit nachzutragen ist, darf Jahr und Link
+vermissen, und die Seite schreibt „Angaben nachzutragen" sichtbar daneben, statt eine Zitation zu behaupten.
+Zwei Einträge sind so markiert: die Arbeit selbst (ihr Titel steht nirgends im Repo, auch nicht im
+öffentlichen Quelltext; der Titel auf der Seite ist die Beschreibung aus dem Repository) und die Kölner
+Untersuchung, die die Arbeit zitiert — am 2026-10-13 in OpenAlex, Crossref, arXiv, Hochschulrepositorien und
+auf GitHub nicht auffindbar. **Verworfen:** die Kölner Untersuchung weglassen (dann wäre die Lücke
+unsichtbar) und einen Platzhalter mit erfundenem Jahr (eine Zahl, die niemand geprüft hat, ist schlimmer als
+keine).
+
+**Die URLs kommen über die Daten in die Allowlist.** `render.model_links` liest sie aus `model.literature`,
+so wie es die Quellen aus `[[report.sources]]` liest (Punkt 36); die Nachbedingung von `render_report` bleibt
+unverändert, und kein Link einer Zitation zwingt eine Konstante mit einem Orts- oder Projektnamen in den Code.
+Jeder Link trägt `rel="noopener"`, und ein Test zählt Links und `rel` gegeneinander, damit kein neuer Eintrag
+es vergisst.
+
+**Das README pflegt dieselbe Liste von Hand, ein Test hält beide zusammen.** Der Abschnitt „Literatur" im
+README trägt Autor, Titel, Ort, Jahr, Link, Abrufdatum und denselben Satz je Eintrag, in derselben
+Reihenfolge; `tests/unit/test_report_literature.py` vergleicht Feld für Feld.
+**Verworfen:** das README zur Bauzeit erzeugen (das Repo hat keinen Generator-Schritt für versionierte
+Dateien, und eine erzeugte Datei im Repo braucht eine Prüfung in CI — also denselben Test, nur mit einem
+Werkzeug mehr).
+
+Kosten: `index.html` wächst um 4,3 KB auf 1 281 679 Bytes (Budget 1,5 MB). Der Settings-Fingerprint ändert
+sich **nicht**, denn `[report]` ist aus ihm ausgenommen (Punkt 46, STATUS.md unter „Bekannt“) — nach einer neuen Quelle meldet
+`georep status` den Schritt `report` als „aktuell", und die Seite braucht wie nach jeder Vorlagenänderung ein
+`georep run report --force`.

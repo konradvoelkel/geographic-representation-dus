@@ -1,0 +1,22 @@
+{% if model.literature %}
+<section id="literatur">
+<h2>Literatur und verwandte Arbeiten</h2>
+<p>Woran diese Seite anschließt: die Arbeit, aus der sie hervorgegangen ist, der Standard, über den
+die Dokumente kommen, und die Projekte, die kommunale Ratsdokumente vor ihr durchsuchbar gemacht
+haben. Jeder Eintrag sagt in einem oder zwei Sätzen, was er beiträgt und wie dieses Vorhaben sich
+dazu verhält; jeder Link war am genannten Abrufdatum erreichbar.</p>
+<ol class="literatur">
+{% for item in model.literature %}
+<li id="lit-{{ item.key }}">
+{# Ein Titel, der mit ? oder ! endet, bekommt keinen Punkt dahinter #}
+<cite>{{ item.authors }}: {{ item.title }}</cite>{% if item.title[-1] not in "?!" %}.{% endif %}{% if item.pending %} <span class="pending">Angaben nachzutragen</span>{% endif %} {{ item.venue }}{% if item.year %}, {{ item.year }}{% endif %}.
+{% if item.doi_url %} DOI: <a href="{{ item.doi_url }}" rel="noopener">{{ item.doi }}</a>{% if not item.url and item.accessed %}, abgerufen am {{ item.accessed|date_de }}{% endif %}.{% endif %}
+{% if item.url %} <a href="{{ item.url }}" rel="noopener">{{ item.url }}</a>, abgerufen am {{ item.accessed|date_de }}.{% endif %}
+{% if item.note %}
+<p class="note">{{ item.note }}</p>
+{% endif %}
+</li>
+{% endfor %}
+</ol>
+</section>
+{% endif %}

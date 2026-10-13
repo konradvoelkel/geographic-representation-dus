@@ -67,6 +67,7 @@ from georep.prep.bodies import BodyRules
 from georep.prep.context import read_indicators
 from georep.prep.streets import Agreement, directory_agreement
 from georep.prep.voters import ELIGIBLE_TOTAL, PRECINCT, TURNOUT, VOTERS
+from georep.report.literature import literature
 from georep.report.search import SearchEntry, search_entries
 from georep.report.tables import GEOJSON_COLUMNS, GEOJSON_TABLE, PublishedTable, published
 from georep.search.dictionary import all_terms
@@ -78,6 +79,7 @@ from georep.settings import (
     ContextDataset,
     ContextSettings,
     Diverging,
+    LiteratureEntry,
     Party,
     ReportSource,
     Settings,
@@ -619,6 +621,9 @@ class ReportModel:
     # (docs/plans/00-synergien.md, § 2); ``build_report_model`` füllt sie immer.
     city: City | None = None
     sources: tuple[ReportSource, ...] = ()
+    # Punkt 47: die Literaturübersicht; leer heißt „kein Abschnitt Literatur" in der Vorlage. Die
+    # Einträge kommen aus ``report/literatur.toml`` und aus ``[[report.literature]]`` des Profils.
+    literature: tuple[LiteratureEntry, ...] = ()
     ris_url: str = ""  # Ratsinformationssystem; die Methode verlinkt es
     marker: str = ""  # search.text_split_marker; die Methode nennt ihn
     notes: tuple[str, ...] = ()  # stadtspezifische Sätze für „Methode und Grenzen"
@@ -1701,6 +1706,7 @@ def build_report_model(
         # Option 01: die Stadt, ihre Quellen und die Messung gegen das Straßenverzeichnis
         city=settings.city,
         sources=tuple(settings.report.sources),
+        literature=literature(settings),  # Punkt 47
         ris_url=settings.report.ris_url,
         marker=settings.search.text_split_marker,
         notes=tuple(settings.report.notes),

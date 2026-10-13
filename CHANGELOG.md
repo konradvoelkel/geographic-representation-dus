@@ -4,6 +4,29 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Die Seite hat einen Abschnitt „Literatur und verwandte Arbeiten"** (`docs/todo.md` Punkt 5,
+  `docs/decisions.md` Punkt 47). Fünfzehn Einträge zwischen „Abgeleitete Daten" und „Downloads", je
+  mit vollständiger Zitation (Autor, Titel, Jahr, Ort oder Institution, URL mit Abrufdatum oder DOI)
+  und einem oder zwei Sätzen, was die Arbeit beiträgt und wie dieses Vorhaben sich dazu verhält.
+  Dieselbe Liste steht im README unter „Literatur"; ein Test hält beide zusammen.
+  - Darunter die methodisch nächste verwandte Forschung, die wir bis jetzt nicht genannt hatten:
+    Harmening u. a. 2025 untersuchen 10 189 Anfragen aus zwölf deutschen Großstädten mit demselben
+    Werkzeugkasten (Stadtteil-Wörterbuch aus Verwaltungsgrenzen, Wikipedia-Markern und
+    OpenStreetMap-Straßen), Nyhuis u. a. 2025 prüfen genau die Wörterbuchfrage, Zittel u. a. 2019
+    sind der Ursprung des Ansatzes für Deutschland, und Cherif 2026 ist ein offenes
+    OParl-Volltextkorpus. Dazu OParl 1.1 mit seinen Trägern und seiner Verbreitung in
+    Nordrhein-Westfalen, die Linie „Offenes Köln" → „Politik bei uns" → „Politik bei uns 2" samt dem
+    Beitrag, der erklärt, warum sie einschlief, `meine-stadt-transparent` und der OParl-Validator.
+  - **Zwei Lücken stehen sichtbar als „Angaben nachzutragen" da**, statt eine Zitation zu behaupten:
+    der Titel der Arbeit selbst (er steht nirgends im Repo; auf der Seite steht die Beschreibung aus
+    ihrem Repository) und die Kölner Untersuchung, die die Arbeit zitiert — am 2026-10-13 in
+    OpenAlex, Crossref, arXiv, Hochschulrepositorien und auf GitHub nicht auffindbar.
+  - Die Einträge sind **Daten, nicht Vorlage**: `src/georep/report/literatur.toml` im Paket
+    (stadtneutral) und `[[report.literature]]` im Profil der Stadt, damit eine zweite Stadt die
+    allgemeinen Einträge erbt und nur ihre eigene Arbeit dazulegt. Jeder Link war am 2026-10-13
+    erreichbar, jeder DOI über Crossref aufgelöst; die URLs kommen über die Daten in die Allowlist
+    der Seite. `index.html` wächst um 4,3 KB auf 1,28 MB (Budget 1,5 MB).
+
 - **Jede Kennzahl mit Nenner hat jetzt einen Umschalter** (`docs/skalierung-2026-10.md`,
   `docs/decisions.md` Punkt 46). Konrads Frage war: nicht sehen, wo eine Partei viel über
   Wahlbezirke redet, sondern wie viel mehr oder weniger als der Durchschnitt aller Parteien.

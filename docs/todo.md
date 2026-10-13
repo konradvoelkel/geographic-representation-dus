@@ -79,6 +79,11 @@ Ausreißer 1 und 10.
 
 ## 5. Literaturübersicht auf der Seite
 
+**Erledigt am 2026-10-13, siehe Abschnitt Literatur** auf der Berichtsseite („Literatur und verwandte
+Arbeiten", `#literatur`) und im README; die Einträge stehen als Daten in
+`src/georep/report/literatur.toml` (stadtneutral) und als `[[report.literature]]` im Profil der Stadt
+(Entscheidungen in `docs/decisions.md`, Punkt 47). Der Auftrag stand so:
+
 Heute nennt die Seite nur die Arbeit als Ursprung. Gewünscht ist ein kurzer Abschnitt mit sauberer Zitation:
 Bartzsch (Bachelorarbeit, HHU Düsseldorf, Januar 2026); die Kölner Untersuchung zu Parteien in
 Ratsdokumenten, die Bartzsch zitiert (im Literaturverzeichnis der Arbeit nachschlagen); OParl als Standard

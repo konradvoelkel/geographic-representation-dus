@@ -1011,6 +1011,96 @@ class ReportSource(_Strict):
         return self
 
 
+DOI = re.compile(r"10\.\d{4,9}/\S+")  # Präfix „10.", Registrant, Schrägstrich, Suffix
+LITERATURE_KEY = re.compile(r"[a-z][a-z0-9-]*")  # wird zur Anker-ID ``lit-<key>`` auf der Seite
+
+
+class LiteratureEntry(_Strict):
+    """Ein Eintrag der Literaturübersicht (``docs/todo.md``, Punkt 5).
+
+    Die stadtneutralen Einträge stehen in ``report/literatur.toml``, stadtspezifische als
+    ``[[report.literature]]`` im Profil; beide werden mit diesem Modell gelesen
+    (``georep.report.literature``). ``note`` trägt den einen oder zwei Sätzen, was die Arbeit
+    beiträgt und wie dieses Vorhaben sich dazu verhält — ohne sie wäre die Liste eine Linksammlung.
+    ``pending`` markiert einen Eintrag, dessen Angaben nachzutragen sind (die Arbeit, auf der dieses
+    Programm aufsetzt, ist nicht öffentlich, und ihr Titel steht nirgends im Repo); die Seite sagt
+    das sichtbar, statt eine Zitation zu behaupten, die nicht geprüft ist.
+    """
+
+    key: str
+    authors: str
+    title: str
+    venue: str  # Ort oder Institution: Hochschule, Verlag, Herausgeber, Plattform
+    year: int | None = None  # Pflicht, außer bei ``pending``
+    url: str = ""
+    doi: str = ""
+    accessed: date | None = None  # Abrufdatum; bei einer URL Pflicht, bei einem DOI nicht
+    note: str = ""
+    pending: bool = False  # Angaben nachzutragen; die Seite schreibt es dazu
+
+    @field_validator("key")
+    @classmethod
+    def _key_is_an_anchor(cls, value: str) -> str:
+        if not LITERATURE_KEY.fullmatch(value):
+            raise ValueError(f"literature.key {value!r}: Kleinbuchstaben, Ziffern und Bindestriche")
+        return value
+
+    @field_validator("authors", "title", "venue")
+    @classmethod
+    def _not_blank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("literature: Autor, Titel und Ort oder Institution sind Pflicht")
+        return value
+
+    @field_validator("year")
+    @classmethod
+    def _plausible_year(cls, value: int | None) -> int | None:
+        if value is not None and not 1900 <= value <= 2100:
+            raise ValueError(f"literature.year {value}: eine Jahreszahl zwischen 1900 und 2100")
+        return value
+
+    @field_validator("url")
+    @classmethod
+    def _https(cls, value: str) -> str:
+        if value and not value.startswith("https://"):
+            raise ValueError(f"literature.url: {value!r} ist keine https-URL")
+        return value
+
+    @field_validator("doi")
+    @classmethod
+    def _looks_like_a_doi(cls, value: str) -> str:
+        if value and not DOI.fullmatch(value):
+            raise ValueError(f"literature.doi {value!r}: ein DOI beginnt mit 10. und trägt ein /")
+        return value
+
+    @model_validator(mode="after")
+    def _findable_and_dated(self) -> LiteratureEntry:
+        """Ohne URL oder DOI ist ein Eintrag nicht nachprüfbar, und eine URL braucht ein Datum.
+
+        Die eine Ausnahme ist ``pending``: ein Eintrag, der aus dem Literaturverzeichnis einer
+        nicht öffentlichen Arbeit nachzutragen ist, hat noch keinen Link und kein Jahr. Er steht
+        trotzdem auf der Seite, damit die Lücke benannt ist und nicht vergessen wird; Autor, Titel
+        und Ort oder Institution bleiben auch dann Pflicht, und sei es als „nachzutragen".
+        """
+        if not self.pending and not self.url and not self.doi:
+            raise ValueError(f"literature {self.key!r}: entweder url oder doi muss dastehen")
+        if not self.pending and self.year is None:
+            raise ValueError(f"literature {self.key!r}: ohne pending gehört ein Jahr dazu")
+        if self.url and self.accessed is None:
+            raise ValueError(f"literature {self.key!r}: eine URL braucht ein Abrufdatum")
+        return self
+
+    @property
+    def doi_url(self) -> str:
+        """Der DOI als Link; leer ohne DOI. Steht in der Allowlist der Seite (``model_links``)."""
+        return f"https://doi.org/{self.doi}" if self.doi else ""
+
+    @property
+    def links(self) -> tuple[str, ...]:
+        """Alle Links, die dieser Eintrag auf die Seite bringt; ``render.model_links`` liest sie."""
+        return tuple(link for link in (self.doi_url, self.url) if link)
+
+
 # Punkt 46: die festen Klassengrenzen der divergierenden Varianten. Sie stehen unter ``[report]``
 # und zählen damit nicht zum Fingerprint: eine andere Grenze färbt die Karte um, sie rechnet keine
 # Zahl neu.
@@ -1061,6 +1151,10 @@ class Report(_Strict):
     """Was im Kopf und Fuß der Seite steht und nicht aus den Daten kommt."""
 
     sources: list[ReportSource] = []
+    # Punkt 47: stadtspezifische Literatur (die Arbeit zu dieser Stadt). Die stadtneutralen
+    # Einträge stehen nicht hier, sondern in ``report/literatur.toml``: ``deep_merge`` ersetzt
+    # Listen, ein Profil könnte die Paketliste also nur überschreiben, nicht ergänzen.
+    literature: list[LiteratureEntry] = []
     ris_url: str = ""  # Ratsinformationssystem, für den Satz über die Dokumente
     notes: list[str] = []  # Sätze, die nur für diese Stadt in „Methode und Grenzen" gehören
     data_note: str = ""  # woher Straßen und Orte stammen, wenn kein Netzschritt gelaufen ist

@@ -45,7 +45,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `profiling` | `profile_step`: ein echter Schritt unter cProfile, `.prof` datiert nach `docs/profiling/` |
 | `cli` | `georep run, fetch, steps, status, profiles, publish, bootstrap, export, regress, profile`; global `--profile`; `main(argv) -> int`; Exit 0, 1 (Domänenfehler), 2 (Bedienung) |
 | `export` | Parquet-Ergebnisse als CSV neben die Dateien; `csv_plan` und `write_csv` nutzt auch der Schritt `report` |
-| `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, Spaltendoku; mit Fremddaten `controls` und `derived` für die beiden neuen Abschnitte), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, `Axes`, Choroplethe, Streudiagramm und Added-Variable-Plots als SVG), `documents` (Dokumente mit Treffer ohne Texte, Begriffe als Indizes, für `dokumente.json`), `render` (Jinja2 mit Autoescape, Allowlist der Links; `sections` liest die Abschnitte aus `templates/sections/`; `render_map` für die Leaflet-Datei), `search` (Sucheinträge je kanonischem Begriff mit Wahlbezirken, Dokumenten und Art, dazu die Faltung als Spiegel des Abschnitts-Skripts), `tables` (Register der veröffentlichten Tabellen: Datei, Beschreibung, Spaltendoku, CSV-Regeln), `build` (der Schritt `report`: Downloads, Schema, `summary.json`, Seiten), `comparison` und `publish` (`georep publish`: die Stadtseiten zusammentragen und `vergleich.html` bauen) |
+| `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, Spaltendoku; mit Fremddaten `controls` und `derived` für die beiden neuen Abschnitte), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, `Axes`, Choroplethe, Streudiagramm und Added-Variable-Plots als SVG), `documents` (Dokumente mit Treffer ohne Texte, Begriffe als Indizes, für `dokumente.json`), `render` (Jinja2 mit Autoescape, Allowlist der Links; `sections` liest die Abschnitte aus `templates/sections/`; `render_map` für die Leaflet-Datei), `search` (Sucheinträge je kanonischem Begriff mit Wahlbezirken, Dokumenten und Art, dazu die Faltung als Spiegel des Abschnitts-Skripts), `literature` (die Einträge der Literaturübersicht: stadtneutral aus `literatur.toml` im Paket, stadtspezifisch aus dem Profil), `tables` (Register der veröffentlichten Tabellen: Datei, Beschreibung, Spaltendoku, CSV-Regeln), `build` (der Schritt `report`: Downloads, Schema, `summary.json`, Seiten), `comparison` und `publish` (`georep publish`: die Stadtseiten zusammentragen und `vergleich.html` bauen) |
 | `deploy/` (kein Modul) | außerhalb des Pakets: `bin/georep-monitor.sh` und die systemd-Einheiten des wiederkehrenden Laufs; sie sprechen mit `georep` nur über CLI, Settings und Umgebung (Abschnitt Betrieb, Option 07) |
 
 ## Pipeline
@@ -242,7 +242,17 @@ daraus entstehen Downloads, `schema.json`, CSV-Dateien und die Spaltentabelle. D
 (`32-kontrollvariablen`, `65-abgeleitete-daten`) stehen in `{% if model.controls %}` beziehungsweise
 `{% if model.derived %}` und fehlen ohne sie ganz; ihre Zahlen kommen aus
 `processed/regression_kontrollen.parquet`, der Satz zur Deutung entsteht aus p, Vorzeichen, R²-Zuwachs und dem
-größten standardisierten Koeffizienten, nicht aus festem Text. Reihenfolge: erst die Dateien
+größten standardisierten Koeffizienten, nicht aus festem Text. Der Abschnitt
+`67-literatur` („Literatur und verwandte Arbeiten", zwischen „Abgeleitete Daten" und „Downloads") ist eine
+geordnete Liste aus Daten: `report/literature.py` liest die stadtneutralen Einträge aus
+`report/literatur.toml` im Paket und stellt die stadtspezifischen aus `[[report.literature]]` des Profils
+davor (die Arbeit, auf der die Stadtseite aufsetzt, ist ihr Ursprung und steht oben); jeder Eintrag ist ein
+`LiteratureEntry` aus `georep.settings` (Autor, Titel, Jahr, Ort oder Institution, URL mit Abrufdatum oder
+DOI, ein Satz zum Beitrag, `pending` für Angaben, die nachzutragen sind). Die URLs kommen über die Daten in
+die Allowlist (`render.model_links`), damit keine Zitation eine Konstante mit einem Ortsnamen in den Code
+zwingt; `tests/unit/test_report_literature.py` hält die Liste mit dem Abschnitt „Literatur" des README
+zusammen, `tests/property/test_literature_props.py` die Rendering-Invariante (jeder Eintrag genau einmal, in
+der Reihenfolge der Datei). Reihenfolge: erst die Dateien
 unter `site/data/` (die veröffentlichten Tabellen als Parquet kopiert und als CSV mit den Regeln von `georep export`,
 `wahlbezirke.geojson` in EPSG:4326, `summary.json`, `schema.json`), dann das Modell (`report.model`: frozen dataclasses, Polars
 bis zum Schluss, Zeit und Commit sind Eingaben) mit Größe und SHA-256 jeder Datei, dann die Karte

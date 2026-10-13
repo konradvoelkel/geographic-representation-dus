@@ -1,7 +1,8 @@
 # Status
 
 Stand 2026-10-13, `main` auf `v0.11.0` plus die beiden Methodikregeln aus `docs/todo.md`, Punkt 4,
-das tragfähige Themenmodell aus Punkt 1 und die Skalierung der Kennzahlen aus Punkt 3 (nicht
+das tragfähige Themenmodell aus Punkt 1, die Skalierung der Kennzahlen aus Punkt 3 und die
+Literaturübersicht aus Punkt 5 (nicht
 getaggt; `bartzsch-exakt` zeigt auf den letzten exakt reproduzierenden Stand). Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
 Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>), und der Ausbau in
@@ -144,7 +145,30 @@ genau die Treffer je Wahlbezirk und die Parteianteile (Entscheidungen in `docs/d
 - Tabelle 5, die Treffer (29 010) und das Wörterbuch (5727) sind unberührt, und die Standardansicht der
   Seite ist dieselbe wie vorher.
 
-## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45 und 46)
+## Literaturübersicht (2026-10-13, `docs/decisions.md`, Punkt 47)
+
+`docs/todo.md`, Punkt 5: die Seite trägt zwischen „Abgeleitete Daten" und „Downloads" den Abschnitt
+„Literatur und verwandte Arbeiten" (`#literatur`, Abschnittsnummer 67) mit fünfzehn Einträgen, je mit
+vollständiger Zitation und einem oder zwei Sätzen zum Beitrag. Dieselbe Liste steht im README unter
+„Literatur"; `tests/unit/test_report_literature.py` vergleicht beide Feld für Feld.
+
+- **Daten, nicht Vorlage**: `src/georep/report/literatur.toml` im Paket trägt die dreizehn stadtneutralen
+  Einträge, `[[report.literature]]` im Profil die zwei stadtspezifischen; `report/literature.py` stellt die
+  des Profils voran. `deep_merge` ersetzt Listen, darum steht die allgemeine Liste nicht in `defaults.toml` —
+  sonst könnte ein Profil sie nur überschreiben. Mönchengladbach erbt heute alle dreizehn.
+- **Belegt**: alle Links am 2026-10-13 mit Statuscode geprüft, alle DOI über Crossref aufgelöst. Neu und
+  vorher nicht genannt ist die methodisch nächste Forschung: Harmening u. a. 2025 (EJPR, zwölf deutsche
+  Großstädte, dasselbe Wörterbuchverfahren), Nyhuis u. a. 2025 (die Wörterbuchfrage selbst), Zittel u. a.
+  2019 (der Ursprung des Ansatzes), Cherif 2026 (offenes OParl-Volltextkorpus).
+- **Zwei Lücken stehen sichtbar da** (`pending = true`, die Seite schreibt „Angaben nachzutragen"): der Titel
+  der Arbeit, der nirgends im Repo steht — auf der Seite steht die Beschreibung aus ihrem Repository, Titel
+  und Betreuung sind bei Lukas zu erfragen — und die Kölner Untersuchung, die die Arbeit zitiert. Sie war am
+  2026-10-13 in OpenAlex, Crossref, arXiv, Hochschulrepositorien und auf GitHub nicht auffindbar, und das
+  öffentliche Repository der Arbeit enthält kein Literaturverzeichnis; die Zitation ist nur aus der Arbeit
+  selbst zu holen.
+- `index.html` wächst um 4322 Bytes auf 1 281 679 Bytes (Budget 1,5 MB), die Seite hat fünfzehn Abschnitte.
+
+## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46 und 47)
 
 - Tests: 950 schnelle (nox-Gate, parallel in rund 43 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
@@ -152,10 +176,10 @@ genau die Treffer je Wahlbezirk und die Parteianteile (Entscheidungen in `docs/d
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` 1,27 MB (1 268 298 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
-  110 KB), 52 Dateien zusammen 13,4 MB, vierzehn
+- Berichtsseite: `index.html` 1,28 MB (1 281 679 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
+  110 KB, die Literaturübersicht 4,3 KB), 52 Dateien zusammen 13,4 MB, fünfzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
-  parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, downloads); „Zwei
+  parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
 - Quelltext: 59 Python-Dateien unter `src/`, rund 16 600 Zeilen; fünf Profile im Paket.
 - Mutation (vor dem Ausbau gemessen): `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`), `analysis/`
@@ -239,8 +263,10 @@ Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „
 4. Optional der Vollabruf der Hauptperiode (2 bis 3 h; zeigt, ob der OParl-Server `modified_since` beachtet
    und ob die Urheberfelder inzwischen gefüllt sind).
 
-Rückstand für danach: `docs/todo.md` (Konrads Beobachtungen vom 2026-10-12: Seitengröße, Literatur,
-Lizenz; Punkt 4, Bartzschs Methodik, ist am 2026-10-12 erledigt,
+Rückstand für danach: `docs/todo.md` (offen ist dort nur noch Punkt 2, die Seitengröße; Punkt 6, die
+Lizenz, ist mit dem Wechsel auf GPL-3.0-or-later am 2026-10-12 beantwortet, im TODO aber nicht nachgezogen.
+Punkt 5, die Literaturübersicht, ist am 2026-10-13 erledigt, `docs/decisions.md`, Punkt 47;
+Punkt 4, Bartzschs Methodik, ist am 2026-10-12 erledigt,
 `docs/methodik-review-2026-10.md`, dessen stärkste offene Empfehlung Punkt 3 eingelöst hat; Punkt 1, das
 Themenmodell, ebenfalls am 2026-10-12, `docs/themenmodell-2026-10.md`, offene Annahmen in dessen § 7;
 Punkt 3, die Skalierung der Kennzahlen, am 2026-10-13, `docs/skalierung-2026-10.md`, offene Annahmen in

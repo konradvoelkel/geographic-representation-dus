@@ -1,0 +1,153 @@
+# Literaturübersicht der Berichtsseite: die stadtneutralen Einträge (docs/todo.md, Punkt 5).
+#
+# Diese Datei ist Daten, nicht Vorlage, und sie ist kein Settings-Schlüssel: der Abschnitt
+# „Literatur und verwandte Arbeiten“ entsteht aus ihr und aus [[report.literature]] des Profils
+# (georep.report.literature; Gründe in docs/decisions.md, Punkt 47). Hier steht, was für jede
+# Kommune gilt; was nur für eine Stadt zählt — die Arbeit, auf der ihre Seite aufsetzt — steht in
+# ihrem Profil, damit eine zweite Stadt die allgemeinen Einträge erbt.
+#
+# Regeln für einen Eintrag (das Modell LiteratureEntry in georep.settings prüft sie):
+#   * key      Kleinbuchstaben, Ziffern, Bindestriche; wird zur Anker-ID lit-<key> auf der Seite
+#   * url      https, mit accessed (Abrufdatum, an dem der Link erreichbar war); oder doi
+#   * note     ein bis zwei Sätze: was die Arbeit beiträgt und wie dieses Vorhaben sich dazu verhält
+#   * pending  true, solange Angaben nachzutragen sind; die Seite schreibt es sichtbar dazu
+# Kein Stadtwort in dieser Datei (tests/unit/test_report_literature.py prüft das).
+# Typografische Anführungszeichen „…“ im Text: ein ASCII-Zollzeichen würde den String beenden.
+
+# --- Forschung zur geografischen Repräsentation in Ratsdokumenten ------------------------------
+
+[[literature]]
+key = "harmening-2025-local"
+authors = "Morten Harmening, Jona-Frederik Baumert, Sebastian Block, Martin Gross, Dominic Nyhuis, Jan Velimsky"
+title = "Geographic representation in local politics: Evidence from parliamentary questions in German city councils"
+year = 2025
+venue = "European Journal of Political Research 64 (4), S. 1999–2017, Cambridge University Press"
+doi = "10.1111/1475-6765.70019"
+accessed = 2026-10-13
+note = "Die methodisch nächste verwandte Arbeit: 10 189 Anfragen aus zwölf deutschen Großstädten, je eine Wahlperiode, mit einem Stadtteil-Wörterbuch aus Verwaltungsgrenzen, geolokalisierten Wikipedia-Markern und Straßennamen aus OpenStreetMap — derselbe Werkzeugkasten wie hier. Befund: Parteien bedienen in ihren Anfragen ihre Hochburgen, verstärkt bei räumlich konzentrierter Wählerschaft und bezirksbezogenem Wahlsystem; diese Seite prüft denselben Zusammenhang in einer Stadt über alle Dokumentarten statt über Anfragen in vielen Städten."
+
+[[literature]]
+key = "nyhuis-2025-wikipedia"
+authors = "Dominic Nyhuis, Sebastian Block, Morten Harmening, Matthias Henneke"
+title = "Geographic representation in parliamentary questions: the benefits of Wikipedia for automated analyses of legislative text"
+year = 2025
+venue = "The Journal of Legislative Studies 32 (3), S. 548–560, Taylor & Francis"
+doi = "10.1080/13572334.2025.2518633"
+accessed = 2026-10-13
+note = "Genau die Frage, an der hier das Wörterbuch hängt: taugen geolokalisierte Wikipedia-Einträge als Ortsmarker, oder braucht es fallspezifische Stichwortlisten? Validiert für Deutschland, Frankreich und das Vereinigte Königreich; dieses Vorhaben benutzt denselben Weg (Wikidata und Wikipedia-GeoSearch plus Straßennamen) und misst in „Methode und Grenzen“, wie stark die Größe des Wörterbuchs die Trefferzahl treibt."
+
+[[literature]]
+key = "zittel-2019-bundestag"
+authors = "Thomas Zittel, Dominic Nyhuis, Markus Baumann"
+title = "Geographic Representation in Party-Dominated Legislatures: A Quantitative Text Analysis of Parliamentary Questions in the German Bundestag"
+year = 2019
+venue = "Legislative Studies Quarterly 44 (4), S. 681–711, Wiley"
+doi = "10.1111/lsq.12238"
+accessed = 2026-10-13
+note = "Der Ursprung dieses Ansatzes für Deutschland: Ortsbezüge in parlamentarischen Anfragen automatisiert zählen und als Maß für geografische Repräsentation lesen, trotz starker Fraktionsdisziplin. Dieses Vorhaben überträgt die Idee auf die kommunale Ebene, wo der Wahlbezirk kleiner und die Dokumentart vielfältiger ist."
+
+[[literature]]
+key = "cherif-2026-korpus"
+authors = "Khaled Cherif"
+title = "Ratsvorlagen-Korpus deutscher Kommunen: 43.127 Dokumente Long-Context-Verwaltungstext"
+year = 2026
+venue = "Zenodo, CC BY 4.0"
+doi = "10.5281/zenodo.21767760"
+accessed = 2026-10-13
+note = "Ein offenes Volltextkorpus kommunaler Ratsvorlagen aus vier Städten (43 127 Dokumente, 303 Millionen Token), über OParl aus den öffentlichen Teilen der Ratsinformationssysteme gezogen, Stand 03.08.2026. Zeigt, dass ein zitierbarer Datensatz machbar ist; dieses Vorhaben veröffentlicht aus Lizenz- und Datenschutzgründen keine Texte, sondern nur abgeleitete Tabellen und Kennungen."
+
+# --- Der Standard und seine Verbreitung -------------------------------------------------------
+
+[[literature]]
+key = "oparl-spec-11"
+authors = "OParl (Kernteam: Stefan Graupner, Ernesto Ruge, Konstantin Schütze)"
+title = "OParl 1.1. Spezifikation für eine offene Schnittstelle für Ratsinformationssysteme"
+year = 2018
+venue = "OParl, Spezifikationsprojekt der Open Knowledge Foundation Deutschland e. V. und der Vitako e. V."
+url = "https://dev.oparl.org/spezifikation"
+accessed = 2026-10-13
+note = "Der Standard, über den diese Seite ihre Dokumente bekommt: eine einheitliche Schnittstelle auf die öffentlichen Teile kommunaler Ratsinformationssysteme, veröffentlicht am 25.06.2018, zwei Jahre nach OParl 1.0. Dieses Vorhaben liest ausschließlich darüber und prüft jede Antwort gegen das Datenmodell der Spezifikation, statt das Ratsinformationssystem zu scrapen."
+
+[[literature]]
+key = "oparl-nrw-start"
+authors = "Open.NRW"
+title = "22 Kommunen sind mit OParl gestartet"
+year = 2017
+venue = "Open.NRW, Ministerium für Heimat, Kommunales, Bau und Digitalisierung des Landes Nordrhein-Westfalen"
+url = "https://open.nrw/Kommunen-OParl"
+accessed = 2026-10-13
+note = "Hält fest, wie der Standard in die Breite kam: Anfang Dezember 2017 starteten 22 von 27 beteiligten nordrhein-westfälischen Kommunen eine OParl-Schnittstelle, gefördert vom Land. Erst diese Verbreitung macht die Kette dieses Vorhabens auf eine andere Kommune übertragbar, ohne je Stadt einen eigenen Scraper zu schreiben."
+
+[[literature]]
+key = "interkommunales-gremiendaten"
+authors = "Stadt Frechen, kommunale Datenverarbeitungszentrale Rhein-Erft-Rur"
+title = "Transparenzportal für Gremiendaten"
+year = 2017
+venue = "interkommunales.nrw, Pilotprojekt „Kommunales Open Government“ des Landes Nordrhein-Westfalen"
+url = "https://interkommunales.nrw/projekt/transparenzportal-fuer-gremiendaten/"
+accessed = 2026-10-13
+note = "Das interkommunale Transparenzportal für Gremiendaten, federführend die Stadt Frechen mit 24 Verwaltungen, nennt als Ausgabekanal das Portal „Politik bei uns“. Diese Seite geht den anderen Weg: sie liest einen OParl-Endpunkt selbst und liefert eine statische Auswertung aus, kein Portal."
+
+# --- Die Portale, die kommunale Ratsdokumente vor diesem Vorhaben durchsuchbar machten --------
+
+[[literature]]
+key = "offenes-koeln"
+authors = "Marian Steinbach"
+title = "Offenes Köln. Software-Backend des Portals offeneskoeln.de"
+year = 2012
+venue = "Eigenprojekt, Quelltext auf GitHub"
+url = "https://github.com/marians/offeneskoeln"
+accessed = 2026-10-13
+note = "Der erste Nachweis, dass sich kommunale Ratsdokumente anders ansehen lassen als im Ratsinformationssystem: ein Portal, das Vorlagen nach Stichwort und nach Ort durchsuchbar machte. Dieses Vorhaben greift denselben Gedanken auf — Orte statt Gremien — und wertet ihn für eine Frage aus, nämlich welche Wahlbezirke in den Dokumenten vorkommen; das Portal selbst ist offline, zitiert ist sein Quelltext, der seit dem 07.01.2019 archiviert ist."
+
+[[literature]]
+key = "politik-bei-uns"
+authors = "Open Knowledge Foundation Deutschland e. V. (maßgeblich Ernesto Ruge)"
+title = "Politik bei uns"
+year = 2015
+venue = "Berlin"
+url = "https://politik-bei-uns.de/"
+accessed = 2026-10-13
+note = "Die bundesweite Fortsetzung von Offenes Köln und OpenRuhr:RIS, Anfang 2015 unter diesem Namen zusammengelegt: eine Oberfläche über die öffentlichen Teile kommunaler Ratsinformationssysteme, durchsuchbar nach Stichwort und nach Ort auf einer Karte. Der Blickwinkel ist derselbe wie hier; seit 2020 steht auf jeder Seite, dass das Portal nicht mehr betreut wird und die Daten eingefroren sind."
+
+[[literature]]
+key = "politik-bei-uns-2"
+authors = "Ernesto Ruge u. a."
+title = "Politik bei uns 2. Quelltexte: Abruf-Daemon, Web-Frontend und OParl-Ausgabe"
+year = 2017
+venue = "Open Knowledge Foundation Deutschland e. V., Quelltexte auf GitHub"
+url = "https://github.com/politik-bei-uns"
+accessed = 2026-10-13
+note = "Die Neuentwicklung des Portals, ab Ende 2017 über Open.NRW gefördert; die Repositories zeigen dieselben Schritte wie diese Kette — Abruf über OParl, Textextraktion, Georeferenzierung über OpenStreetMap — nur hinter Datenbank, Suchindex und Objektspeicher statt in Dateien. Der Daemon wurde zuletzt im März 2020 angefasst, das Frontend im Januar 2023."
+
+[[literature]]
+key = "ruge-2020-prototyp"
+authors = "Ernesto Ruge"
+title = "OpenData: bisschen Prototyp, und das war's dann?"
+year = 2020
+venue = "binary butterfly (Blog)"
+url = "https://binary-butterfly.de/artikel/opendata-bisschen-prototyp-und-das-wars-dann/"
+accessed = 2026-10-13
+note = "Der Beitrag vom 09.03.2020, auf den „Politik bei uns“ selbst verweist: er erklärt, warum das Projekt einschlief — ein erfolgreiches Portal weckt professionelle Erwartungen an Reaktionszeiten, die ehrenamtlich nicht einzuhalten sind, und Förderprogramme finanzieren Neues, nicht den Betrieb. Daran misst sich der Zuschnitt dieser Seite: sie ist statisch, entsteht in einem Lauf aus dem Repository und braucht keinen Dienst, der betreut werden muss."
+
+[[literature]]
+key = "meine-stadt-transparent"
+authors = "meine-stadt-transparent (Projekt)"
+title = "meine-stadt-transparent. A website to bring municipal politics to citizens"
+year = 2017
+venue = "gefördert vom Prototype Fund, Quelltext auf GitHub"
+url = "https://github.com/meine-stadt-transparent/meine-stadt-transparent"
+accessed = 2026-10-13
+note = "Die nächste Verwandte dieser Kette: ein freies Ratsinformationssystem für die Öffentlichkeit einer Kommune mit Import über OParl, Volltextsuche, Orten auf einer Karte und Abo-Mails je Suchbegriff. Der Unterschied liegt in der Betriebsform — eine Instanz je Stadt mit Datenbank und Suchindex gegen eine Auswertung je Stadt als eine Datei; das Projekt ist seit dem 25.11.2023 archiviert."
+
+# --- Werkzeuge am Standard ---------------------------------------------------------------------
+
+[[literature]]
+key = "oparl-validator"
+authors = "OParl"
+title = "OParl-Validator. A validating OParl API client"
+year = 2014
+venue = "OParl, Quelltext auf GitHub (MIT)"
+url = "https://github.com/OParl/validator"
+accessed = 2026-10-13
+note = "Prüft einen OParl-Server gegen die Spezifikation und macht damit sichtbar, wie verschieden die Server sie auslegen. Dieses Vorhaben validiert stattdessen beim Lesen: jede Antwort geht durch ein Datenmodell, und ein fehlendes oder falsch getyptes Feld ist ein Fehler an der Grenze, nicht später in der Rechnung. Der Quelltext wurde zuletzt im Dezember 2020 angefasst."

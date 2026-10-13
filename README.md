@@ -265,6 +265,128 @@ Wahlen: Quartiersatlas Düsseldorf 2024 (Open-Data-Portal), dl-de/by-2-0.
 (Standard `./data`), Caches nach `cache_root` (Standard `data_root/cache`). Abgeleitete Daten sind Parquet;
 `georep export` legt CSV daneben, die Berichtsseite unter `data_root/site/` bietet beides zum Download an.
 
+## Literatur
+
+Woran dieses Vorhaben anschließt, mit vollständiger Zitation; dieselbe Liste steht auf der Berichtsseite im
+Abschnitt „Literatur und verwandte Arbeiten“. Quelle der Einträge sind `src/georep/report/literatur.toml`
+(stadtneutral) und `[[report.literature]]` im Profil der Stadt; `tests/unit/test_report_literature.py` hält
+diese Liste und die Seite zusammen.
+
+- **Lukas Bartzsch: Die Sichtbarkeit der Kommunalwahlbezirke in den Ratsdokumenten und ihr Zusammenhang mit
+  der Wahlbeteiligung**. (Angaben nachzutragen) Heinrich-Heine-Universität Düsseldorf, Bachelorarbeit, 2026.
+  <https://github.com/lubar102/geographic-representation-dus>, abgerufen am 13.10.2026.
+  Der Ursprung dieser Seite, eingereicht im Januar 2026: Fragestellung, Wörterbuch je Wahlbezirk, Suche über
+  die Ratsdokumente und die Regression gegen die Wahlbeteiligung stammen aus dieser Arbeit, und dieses
+  Programm ist ein Umbau ihres Quelltextes. Es reproduziert ihre Zahlen, solange die eigenen Methodikregeln
+  abgeschaltet sind; der Titel hier ist die Beschreibung aus dem Repository, nicht der Titel der Arbeit, und
+  genauer Titel wie Betreuung sind nachzutragen, denn die Arbeit selbst ist nicht öffentlich — öffentlich
+  ist nur ihr Quelltext.
+- **Autor nachzutragen: Untersuchung zu Parteien und Stadtteilbezügen in den Ratsdokumenten der Stadt Köln**.
+  (Angaben nachzutragen) Herausgeber und Jahr nachzutragen aus dem Literaturverzeichnis der Arbeit.
+  Die Arbeit zitiert eine Kölner Untersuchung zu Parteien und Ratsdokumenten; sie ist am 2026-10-13 nicht
+  auffindbar. Gesucht wurde in OpenAlex und Crossref (Ratsinformationssystem, Ratsdokumente, Köln, Text
+  Mining, geografische Repräsentation), auf arXiv, in Hochschulrepositorien und auf GitHub, und im
+  öffentlichen Quelltext der Arbeit steht kein Literaturverzeichnis — die Zitation ist nur aus der Arbeit
+  selbst zu holen. Die nächste belegte Verwandte ist Harmening u. a. 2025 weiter unten, die zwölf deutsche
+  Großstädte mit demselben Verfahren untersucht.
+- **Morten Harmening, Jona-Frederik Baumert, Sebastian Block, Martin Gross, Dominic Nyhuis, Jan Velimsky:
+  Geographic representation in local politics: Evidence from parliamentary questions in German city
+  councils**. European Journal of Political Research 64 (4), S. 1999–2017, Cambridge University Press, 2025.
+  DOI [10.1111/1475-6765.70019](https://doi.org/10.1111/1475-6765.70019), abgerufen am 13.10.2026.
+  Die methodisch nächste verwandte Arbeit: 10 189 Anfragen aus zwölf deutschen Großstädten, je eine
+  Wahlperiode, mit einem Stadtteil-Wörterbuch aus Verwaltungsgrenzen, geolokalisierten Wikipedia-Markern und
+  Straßennamen aus OpenStreetMap — derselbe Werkzeugkasten wie hier. Befund: Parteien bedienen in ihren
+  Anfragen ihre Hochburgen, verstärkt bei räumlich konzentrierter Wählerschaft und bezirksbezogenem
+  Wahlsystem; diese Seite prüft denselben Zusammenhang in einer Stadt über alle Dokumentarten statt über
+  Anfragen in vielen Städten.
+- **Dominic Nyhuis, Sebastian Block, Morten Harmening, Matthias Henneke: Geographic representation in
+  parliamentary questions: the benefits of Wikipedia for automated analyses of legislative text**. The
+  Journal of Legislative Studies 32 (3), S. 548–560, Taylor & Francis, 2025. DOI
+  [10.1080/13572334.2025.2518633](https://doi.org/10.1080/13572334.2025.2518633), abgerufen am 13.10.2026.
+  Genau die Frage, an der hier das Wörterbuch hängt: taugen geolokalisierte Wikipedia-Einträge als
+  Ortsmarker, oder braucht es fallspezifische Stichwortlisten? Validiert für Deutschland, Frankreich und das
+  Vereinigte Königreich; dieses Vorhaben benutzt denselben Weg (Wikidata und Wikipedia-GeoSearch plus
+  Straßennamen) und misst in „Methode und Grenzen“, wie stark die Größe des Wörterbuchs die Trefferzahl
+  treibt.
+- **Thomas Zittel, Dominic Nyhuis, Markus Baumann: Geographic Representation in Party-Dominated
+  Legislatures: A Quantitative Text Analysis of Parliamentary Questions in the German Bundestag**.
+  Legislative Studies Quarterly 44 (4), S. 681–711, Wiley, 2019. DOI
+  [10.1111/lsq.12238](https://doi.org/10.1111/lsq.12238), abgerufen am 13.10.2026.
+  Der Ursprung dieses Ansatzes für Deutschland: Ortsbezüge in parlamentarischen Anfragen automatisiert
+  zählen und als Maß für geografische Repräsentation lesen, trotz starker Fraktionsdisziplin. Dieses
+  Vorhaben überträgt die Idee auf die kommunale Ebene, wo der Wahlbezirk kleiner und die Dokumentart
+  vielfältiger ist.
+- **Khaled Cherif: Ratsvorlagen-Korpus deutscher Kommunen: 43.127 Dokumente Long-Context-Verwaltungstext**.
+  Zenodo, CC BY 4.0, 2026. DOI [10.5281/zenodo.21767760](https://doi.org/10.5281/zenodo.21767760), abgerufen
+  am 13.10.2026.
+  Ein offenes Volltextkorpus kommunaler Ratsvorlagen aus vier Städten (43 127 Dokumente, 303 Millionen
+  Token), über OParl aus den öffentlichen Teilen der Ratsinformationssysteme gezogen, Stand 03.08.2026.
+  Zeigt, dass ein zitierbarer Datensatz machbar ist; dieses Vorhaben veröffentlicht aus Lizenz- und
+  Datenschutzgründen keine Texte, sondern nur abgeleitete Tabellen und Kennungen.
+- **OParl (Kernteam: Stefan Graupner, Ernesto Ruge, Konstantin Schütze): OParl 1.1. Spezifikation für eine
+  offene Schnittstelle für Ratsinformationssysteme**. OParl, Spezifikationsprojekt der Open Knowledge
+  Foundation Deutschland e. V. und der Vitako e. V., 2018. <https://dev.oparl.org/spezifikation>, abgerufen
+  am 13.10.2026.
+  Der Standard, über den diese Seite ihre Dokumente bekommt: eine einheitliche Schnittstelle auf die
+  öffentlichen Teile kommunaler Ratsinformationssysteme, veröffentlicht am 25.06.2018, zwei Jahre nach OParl
+  1.0. Dieses Vorhaben liest ausschließlich darüber und prüft jede Antwort gegen das Datenmodell der
+  Spezifikation, statt das Ratsinformationssystem zu scrapen.
+- **Open.NRW: 22 Kommunen sind mit OParl gestartet**. Open.NRW, Ministerium für Heimat, Kommunales, Bau und
+  Digitalisierung des Landes Nordrhein-Westfalen, 2017. <https://open.nrw/Kommunen-OParl>, abgerufen am
+  13.10.2026.
+  Hält fest, wie der Standard in die Breite kam: Anfang Dezember 2017 starteten 22 von 27 beteiligten
+  nordrhein-westfälischen Kommunen eine OParl-Schnittstelle, gefördert vom Land. Erst diese Verbreitung
+  macht die Kette dieses Vorhabens auf eine andere Kommune übertragbar, ohne je Stadt einen eigenen Scraper
+  zu schreiben.
+- **Stadt Frechen, kommunale Datenverarbeitungszentrale Rhein-Erft-Rur: Transparenzportal für
+  Gremiendaten**. interkommunales.nrw, Pilotprojekt „Kommunales Open Government“ des Landes
+  Nordrhein-Westfalen, 2017. <https://interkommunales.nrw/projekt/transparenzportal-fuer-gremiendaten/>,
+  abgerufen am 13.10.2026.
+  Das interkommunale Transparenzportal für Gremiendaten, federführend die Stadt Frechen mit 24 Verwaltungen,
+  nennt als Ausgabekanal das Portal „Politik bei uns“. Diese Seite geht den anderen Weg: sie liest einen
+  OParl-Endpunkt selbst und liefert eine statische Auswertung aus, kein Portal.
+- **Marian Steinbach: Offenes Köln. Software-Backend des Portals offeneskoeln.de**. Eigenprojekt, Quelltext
+  auf GitHub, 2012. <https://github.com/marians/offeneskoeln>, abgerufen am 13.10.2026.
+  Der erste Nachweis, dass sich kommunale Ratsdokumente anders ansehen lassen als im Ratsinformationssystem:
+  ein Portal, das Vorlagen nach Stichwort und nach Ort durchsuchbar machte. Dieses Vorhaben greift denselben
+  Gedanken auf — Orte statt Gremien — und wertet ihn für eine Frage aus, nämlich welche Wahlbezirke in den
+  Dokumenten vorkommen; das Portal selbst ist offline, zitiert ist sein Quelltext, der seit dem 07.01.2019
+  archiviert ist.
+- **Open Knowledge Foundation Deutschland e. V. (maßgeblich Ernesto Ruge): Politik bei uns**. Berlin, 2015.
+  <https://politik-bei-uns.de/>, abgerufen am 13.10.2026.
+  Die bundesweite Fortsetzung von Offenes Köln und OpenRuhr:RIS, Anfang 2015 unter diesem Namen
+  zusammengelegt: eine Oberfläche über die öffentlichen Teile kommunaler Ratsinformationssysteme,
+  durchsuchbar nach Stichwort und nach Ort auf einer Karte. Der Blickwinkel ist derselbe wie hier; seit 2020
+  steht auf jeder Seite, dass das Portal nicht mehr betreut wird und die Daten eingefroren sind.
+- **Ernesto Ruge u. a.: Politik bei uns 2. Quelltexte: Abruf-Daemon, Web-Frontend und OParl-Ausgabe**. Open
+  Knowledge Foundation Deutschland e. V., Quelltexte auf GitHub, 2017. <https://github.com/politik-bei-uns>,
+  abgerufen am 13.10.2026.
+  Die Neuentwicklung des Portals, ab Ende 2017 über Open.NRW gefördert; die Repositories zeigen dieselben
+  Schritte wie diese Kette — Abruf über OParl, Textextraktion, Georeferenzierung über OpenStreetMap — nur
+  hinter Datenbank, Suchindex und Objektspeicher statt in Dateien. Der Daemon wurde zuletzt im März 2020
+  angefasst, das Frontend im Januar 2023.
+- **Ernesto Ruge: OpenData: bisschen Prototyp, und das war's dann?** binary butterfly (Blog), 2020.
+  <https://binary-butterfly.de/artikel/opendata-bisschen-prototyp-und-das-wars-dann/>, abgerufen am
+  13.10.2026.
+  Der Beitrag vom 09.03.2020, auf den „Politik bei uns“ selbst verweist: er erklärt, warum das Projekt
+  einschlief — ein erfolgreiches Portal weckt professionelle Erwartungen an Reaktionszeiten, die
+  ehrenamtlich nicht einzuhalten sind, und Förderprogramme finanzieren Neues, nicht den Betrieb. Daran misst
+  sich der Zuschnitt dieser Seite: sie ist statisch, entsteht in einem Lauf aus dem Repository und braucht
+  keinen Dienst, der betreut werden muss.
+- **meine-stadt-transparent (Projekt): meine-stadt-transparent. A website to bring municipal politics to
+  citizens**. gefördert vom Prototype Fund, Quelltext auf GitHub, 2017.
+  <https://github.com/meine-stadt-transparent/meine-stadt-transparent>, abgerufen am 13.10.2026.
+  Die nächste Verwandte dieser Kette: ein freies Ratsinformationssystem für die Öffentlichkeit einer Kommune
+  mit Import über OParl, Volltextsuche, Orten auf einer Karte und Abo-Mails je Suchbegriff. Der Unterschied
+  liegt in der Betriebsform — eine Instanz je Stadt mit Datenbank und Suchindex gegen eine Auswertung je
+  Stadt als eine Datei; das Projekt ist seit dem 25.11.2023 archiviert.
+- **OParl: OParl-Validator. A validating OParl API client**. OParl, Quelltext auf GitHub (MIT), 2014.
+  <https://github.com/OParl/validator>, abgerufen am 13.10.2026.
+  Prüft einen OParl-Server gegen die Spezifikation und macht damit sichtbar, wie verschieden die Server sie
+  auslegen. Dieses Vorhaben validiert stattdessen beim Lesen: jede Antwort geht durch ein Datenmodell, und
+  ein fehlendes oder falsch getyptes Feld ist ein Fehler an der Grenze, nicht später in der Rechnung. Der
+  Quelltext wurde zuletzt im Dezember 2020 angefasst.
+
 ## Entwicklung
 
 `uv run nox` (Ruff, mypy strict, Lockfile-Prüfung, Tests mit Abdeckung) lokal und in CI rufen dieselben
