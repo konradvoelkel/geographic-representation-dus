@@ -167,18 +167,20 @@ vollständiger Zitation und einem oder zwei Sätzen zum Beitrag. Dieselbe Liste 
   die die Arbeit zitiert: am 2026-10-13 in OpenAlex, Crossref, arXiv, Hochschulrepositorien und auf GitHub
   nicht auffindbar, und das öffentliche Repositorium der Arbeit enthält kein Literaturverzeichnis; die
   Zitation ist nur aus der Arbeit selbst zu holen.
-- `index.html` wächst um 4322 Bytes auf 1 281 679 Bytes (Budget 1,5 MB), die Seite hat fünfzehn Abschnitte.
+- `index.html` wächst um 13 166 Bytes auf 1 281 464 Bytes (Budget 1,5 MB), die Seite hat fünfzehn
+  Abschnitte. Gemessen am 2026-10-13 nach dem Review: 12 429 der Abschnitt samt Zeilenumbruch, 663 sein
+  CSS, 102 der Satz in „Methode und Grenzen", minus 28 für das entfernte `rel="noopener"` im Rahmen.
 
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46 und 47)
 
-- Tests: 976 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 983 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` 1,28 MB (1 281 679 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
-  110 KB, die Literaturübersicht 4,3 KB), 52 Dateien zusammen 13,4 MB, fünfzehn
+- Berichtsseite: `index.html` 1,28 MB (1 281 464 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
+  110 KB, die Literaturübersicht 13,2 KB), 52 Dateien zusammen 13,4 MB, fünfzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.

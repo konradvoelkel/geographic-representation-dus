@@ -26,7 +26,7 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
     (stadtneutral) und `[[report.literature]]` im Profil der Stadt, damit eine zweite Stadt die
     allgemeinen Einträge erbt und nur ihre eigene Arbeit dazulegt. Jeder Link war am 2026-10-13
     erreichbar, jeder DOI über Crossref aufgelöst; die URLs kommen über die Daten in die Allowlist
-    der Seite. `index.html` wächst um 4,3 KB auf 1,28 MB (Budget 1,5 MB).
+    der Seite. `index.html` wächst um 13 166 Bytes auf 1,28 MB (Budget 1,5 MB).
 
 - **Jede Kennzahl mit Nenner hat jetzt einen Umschalter** (`docs/skalierung-2026-10.md`,
   `docs/decisions.md` Punkt 46). Konrads Frage war: nicht sehen, wo eine Partei viel über

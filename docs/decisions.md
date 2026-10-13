@@ -1003,7 +1003,9 @@ Reihenfolge; `tests/unit/test_report_literature.py` vergleicht Feld für Feld.
 Dateien, und eine erzeugte Datei im Repo braucht eine Prüfung in CI — also denselben Test, nur mit einem
 Werkzeug mehr).
 
-Kosten: `index.html` wächst um 4,3 KB auf 1 281 679 Bytes (Budget 1,5 MB). Der Settings-Fingerprint ändert
+Kosten: `index.html` wächst um 13 166 Bytes auf 1 281 464 Bytes (Budget 1,5 MB): 12 429 der Abschnitt samt
+Zeilenumbruch, 663 sein CSS, 102 der Satz in „Methode und Grenzen", minus 28 für das `rel="noopener"`, das
+mit diesem Abschnitt aus dem Rahmen verschwand (gemessen am 2026-10-13). Der Settings-Fingerprint ändert
 sich **nicht**, denn `[report]` ist aus ihm ausgenommen (Punkt 46, STATUS.md unter „Bekannt“) — nach einer neuen Quelle meldet
 `georep status` den Schritt `report` als „aktuell", und die Seite braucht wie nach jeder Vorlagenänderung ein
 `georep run report --force`.
