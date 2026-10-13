@@ -124,6 +124,25 @@ def test_the_subpage_of_a_period_comes_along_and_counts_against_the_budget(
     assert f"{SUBPAGE}/index.html" in narrow.over_budget and "über dem Budget" in narrow.line()
 
 
+def test_the_published_copy_leaves_the_stamps_in_the_data_root(
+    both_cities: tuple[Path, Settings],
+) -> None:
+    """Ein Stamp gehoert zur Datenwurzel, nicht ins Pages-Artefakt (Review 2026-10-13, Befund 13).
+
+    Der Schritt ``report`` legt ihn neben seine Ausgabe, also in die Stadtseite; die rsync-Zeilen
+    im Monitor-Skript lassen ihn seit Option 07 aus, die Kopie von publish tat es nicht.
+    """
+    root, settings = both_cities
+    source = _layout_of(root, settings).site
+    assert (source / "index.html.stamp.json").is_file()  # dort gehoert er hin und bleibt er
+    site, summary = _publish(root, settings)
+    assert not list(site.rglob("*.stamp.json"))
+    assert (site / "index.html").is_file() and (site / "moenchengladbach" / "index.html").is_file()
+    assert summary.files == len(
+        [p for p in site.rglob("*") if p.is_file() and p.name != MARKER_NAME]
+    )
+
+
 def test_publish_writes_the_neighbour_line_into_both_pages(
     both_cities: tuple[Path, Settings],
 ) -> None:

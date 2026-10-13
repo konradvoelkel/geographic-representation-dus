@@ -4,6 +4,12 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **`georep publish` fasst nur noch an, was ihm gehört** (Review zum Umzug, 2026-10-13): der
+  Arbeitsordner der Kopie heißt nicht mehr `<ziel>.neu` (ein fremder Ordner dieses Namens wurde
+  gelöscht), sondern trägt einen Namen von `mkdtemp`, den es noch nicht gibt. Die Stamps der
+  Schritte (`*.stamp.json`) bleiben beim Kopieren in der Datenwurzel und liegen damit nicht mehr im
+  veröffentlichten Ordner.
+
 - **Düsseldorfs Hauptperiode liegt unter ihrem Slug** (`docs/decisions.md`, Punkt 52; Frage 1.7, Konrads
   Antwort vom 2026-10-13): `georep bootstrap` und `georep run` schreiben nach `data/duesseldorf/` und
   `data/cache/duesseldorf/`, nicht mehr flach nach `data/`. Die veröffentlichte Adresse bleibt dieselbe,

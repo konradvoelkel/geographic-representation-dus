@@ -10,7 +10,8 @@ geleert), wird nicht kopiert. Aus ``summary.json``, ``wahlbezirke.geojson`` und
 einer Stadt, sagt die Zusammenfassung das und der Vergleich entfällt.
 
 Der Befehl ist wiederholbar: Zeit und Commit sind Eingaben, kopiert wird atomar über ein
-temporäres Verzeichnis, und nichts außerhalb des Zielordners wird angefasst. Weil er beim Kopieren
+temporäres Verzeichnis (mit einem Namen, den es noch nicht gibt), die Stamps der Schritte bleiben
+dabei in der Datenwurzel, und nichts außerhalb des Zielordners wird angefasst. Weil er beim Kopieren
 löscht, nimmt er nur einen Ordner an, der ihm gehört: die Standardwurzel ``<data_root>/site``, ein
 leeres Verzeichnis oder eines mit seiner Markerdatei. Alles andere ist ein ``PublishTargetError``,
 und `guard_writable` hält ihn von der Referenz fern.
@@ -51,6 +52,10 @@ MARKER_NAME = ".georep-publish"
 # Präfix des Arbeitsordners, in den kopiert wird, bevor er an die Stelle des Ziels rutscht; den
 # Namen dahinter vergibt mkdtemp, damit nie ein fremder Ordner im Weg steht (Review 2026-10-13).
 STAGING_PREFIX = ".georep-publish-neu-"
+# Der Schritt ``report`` legt seinen Stamp neben seine Ausgabe, also in die Stadtseite. Dort gehört
+# er hin (er beschreibt den Lauf), im veröffentlichten Ordner ist er Ballast -- die rsync-Zeilen in
+# deploy/bin/georep-monitor.sh lassen ihn seit Option 07 aus, die Kopie tat es nicht.
+STAMPS = "*.stamp.json"
 # Die Stadtseite lässt die Stelle frei, an der die Nachbarstädte stehen; erst ``publish`` weiß,
 # welche Seiten wirklich daneben liegen, und setzt die Zeile (Review 2026-10-12: sonst trüge die
 # veröffentlichte Seite Links auf Städte, deren Lauf noch fehlt).
@@ -149,7 +154,8 @@ def _copy_tree(layout: Layout, source: Path, target: Path) -> None:
     beanspruchten Wurzel war. Seit Punkt 52 wird auch die erste Stadt kopiert, das Ziel ist dann
     die Wurzel selbst, und ihr Nachbar gehört publish nicht (Review 2026-10-13: ein fremder
     ``out.neu`` war weg). ``guard_writable`` hält beide aus der Referenz heraus; scheitert das
-    Kopieren, bleibt das Ziel, wie es war, und der Arbeitsordner wird abgeräumt.
+    Kopieren, bleibt das Ziel, wie es war, und der Arbeitsordner wird abgeräumt. Die Stamps der
+    Schritte bleiben in der Datenwurzel (``STAMPS``).
     """
     parent = layout.guard_writable(target.parent)
     staging = Path(tempfile.mkdtemp(dir=parent, prefix=STAGING_PREFIX))
@@ -157,7 +163,7 @@ def _copy_tree(layout: Layout, source: Path, target: Path) -> None:
         layout.guard_writable(staging)
         # dirs_exist_ok: mkdtemp hat den Ordner schon angelegt. copytree setzt danach die Rechte
         # der Quelle auf ihn, sonst trüge der veröffentlichte Ordner die 0700 von mkdtemp.
-        shutil.copytree(source, staging, dirs_exist_ok=True)
+        shutil.copytree(source, staging, dirs_exist_ok=True, ignore=shutil.ignore_patterns(STAMPS))
         if target.exists():
             shutil.rmtree(layout.guard_writable(target))
         staging.rename(target)
