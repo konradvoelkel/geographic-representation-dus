@@ -12,6 +12,7 @@ bleibt (``sorted_unique(result, DISTRICT)``) und dieselbe Eigenschaft überall d
 
 from __future__ import annotations
 
+import math
 from collections.abc import Iterable, Sequence
 from datetime import date
 from typing import Literal
@@ -65,6 +66,17 @@ def in_unit_interval(frame: pl.DataFrame, *columns: str) -> bool:
     return all(
         bool(((frame.get_column(c) >= 0.0) & (frame.get_column(c) <= 1.0)).all()) for c in columns
     )
+
+
+def all_finite(*groups: Iterable[float]) -> bool:
+    """Jede Zahl ist endlich: kein NaN, kein Unendlich.
+
+    Für die Klassifizierung der Karte (``report.charts``): NaN landet in jedem Vergleich auf
+    „falsch" und damit still in einer Klasse, die nichts bedeutet, und eine unendliche
+    Klassengrenze steht als „inf" in der Legende. Beides ist ein Programmierfehler, kein
+    Datenfall — eine Kennzahl der Kette ist immer endlich (die Verträge der Schritte halten das).
+    """
+    return all(math.isfinite(value) for group in groups for value in group)
 
 
 def clean_terms(terms: list[str]) -> bool:

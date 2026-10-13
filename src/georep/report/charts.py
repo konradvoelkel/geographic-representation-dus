@@ -19,6 +19,7 @@ import deal
 from shapely.geometry.base import BaseGeometry
 
 from georep.analysis.regression import RegressionPair, RegressionResult
+from georep.contracts import all_finite
 from georep.report.geometry import Projection, label_point, svg_path
 from georep.report.model import (
     DistrictRow,
@@ -88,13 +89,19 @@ def classify(values: Mapping[int, float], n: int = CLASSES) -> Classification:
     return Classification(boundaries, classes, count)
 
 
-def _ascending(values: Mapping[int, float], boundaries: Sequence[float]) -> bool:
-    return len(boundaries) > 0 and all(
-        a < b for a, b in zip(boundaries, boundaries[1:], strict=False)
+def _ascending_and_finite(values: Mapping[int, float], boundaries: Sequence[float]) -> bool:
+    """Mindestens eine Grenze, aufsteigend, und alles endlich — Werte wie Grenzen."""
+    return (
+        len(values) > 0
+        and len(boundaries) > 0
+        and all(a < b for a, b in zip(boundaries, boundaries[1:], strict=False))
+        and all_finite(values.values(), boundaries)
     )
 
 
-@deal.pre(_ascending, message="mindestens eine Grenze, aufsteigend")
+@deal.pre(
+    _ascending_and_finite, message="mindestens ein Wert und eine Grenze, aufsteigend, alles endlich"
+)
 @deal.post(
     lambda result: (
         result.count == len(result.boundaries) + 1

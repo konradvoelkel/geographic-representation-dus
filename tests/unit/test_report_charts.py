@@ -110,15 +110,16 @@ def test_fixed_classes_divide_at_the_given_boundaries() -> None:
         classify_fixed({1: 0.0}, (0.2, 0.1))  # nicht aufsteigend
     # Dieselbe Endlichkeitsbedingung wie bei ``classify``: NaN landete sonst still in der
     # obersten Klasse, und eine unendliche Grenze machte die Legende unlesbar.
-    for values, bounds in (
+    broken: tuple[tuple[dict[int, float], tuple[float, ...]], ...] = (
         ({1: math.nan}, (0.0,)),
         ({1: math.inf}, (0.0,)),
         ({1: 0.0}, (math.nan,)),
         ({1: 0.0}, (0.0, math.inf)),
         ({}, (0.0,)),
-    ):
+    )
+    for values, bad_bounds in broken:
         with pytest.raises(deal.PreContractError):
-            classify_fixed(values, bounds)
+            classify_fixed(values, bad_bounds)
 
 
 def test_the_signed_labels_carry_their_unit() -> None:
