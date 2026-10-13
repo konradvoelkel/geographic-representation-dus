@@ -40,7 +40,8 @@ und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
 ## Berichtsseite
 
 `georep run` endet mit dem Schritt `report`: `data/site/index.html` ist eine in sich geschlossene Seite (rund
-1,27 MB, kein externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit Kernzahlen,
+0,96 MB bei einem Budget von 1,0 MB, kein externes JavaScript, keine Kartenkacheln, offline aus dem
+Dateisystem zu öffnen) mit Kernzahlen,
 einem Suchfeld für Straßen und Orte (4176 Einträge in der Seite, darum ohne Netz: die Auswahl nennt Art,
 Wahlbezirke und Dokumente und markiert sie auf der Karte; `index.html#suche=hofgarten` ist teilbar),
 der Karte der 41 Wahlbezirke (sechs Einfärbungen zur Wahl: Trefferquote, Treffer absolut, Treffer je Begriff
@@ -53,14 +54,21 @@ Abweichung vom Mittel aller Parteien, Tabelle je Partei mit dem Abgleich zum Sti
 Wahlbezirk mit den Urheberklassen), dem Abschnitt „Kontrollvariablen" (Tabelle 6 mit dem Quartiersatlas),
 den Begriffen (ein Klick zeigt die Dokumente mit Datum, Drucksache, Urheber und PDF-Link), den
 Dokumenten je Monat, Methode und
-Grenzen, Lizenzen. Der Abschnitt „Was ändert die Gewichtung?" stellt der binären Trefferquote 26 gewichtete
+Grenzen, Lizenzen. Lange Tabellen zeigen Kopf und drei Zeilen und klappen über „alle *n* Zeilen zeigen"
+auf (`report.table_preview_rows`; ohne JavaScript und im Druck steht alles offen, und eine Zeile, die
+aus Karte, Diagramm oder Suche markiert wird, klappt von allein auf). Die Begriffslisten je Wahlbezirk
+kommen beim Aufklappen aus `data/begriffe.json`, wie die Dokumente beim ersten Klick aus
+`data/dokumente.json`; aus dem Dateisystem geöffnet sagt die Seite, dass der Browser das Nachladen
+dort nicht erlaubt. Was die Seite wie groß macht und welche Posten bewusst liegen bleiben, steht
+gemessen in [docs/seitengroesse-2026-10.md](docs/seitengroesse-2026-10.md). Der Abschnitt „Was ändert die Gewichtung?" stellt der binären Trefferquote 26 gewichtete
 Varianten zur Seite (Spezifität je Begriff, Gewicht je Dokumentart, ein Thema je Zeile) und zeigt Tabelle 5
 unter jeder davon; mit Einheitsgewichten steht dort dieselbe Zeile wie oben. Die Themen tragen die Namen
 der Ausschüsse, aus deren Dokumenten sie gesät sind, und der Abschnitt „Gremien" nennt daneben, welcher
 Ausschuss sachlich zu einem Dokument passt (`docs/themenmodell-2026-10.md`). `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
 braucht Netz). Daneben liegen unter `data/site/data/` die Ergebnisse zum Weiterverarbeiten: die
-dreiundzwanzig Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema
-und `dokumente.json` (Dokumente mit Treffer ohne Texte); Größe und SHA-256 jeder Datei stehen auf der Seite. Der Workflow
+dreiundzwanzig Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema,
+`dokumente.json` (Dokumente mit Treffer ohne Texte) und `begriffe.json` (Begriffe mit Treffer je
+Wahlbezirk); Größe und SHA-256 jeder Datei stehen auf der Seite. Der Workflow
 `.github/workflows/pages.yml` baut die Seite bei jedem Push auf `main` aus den Referenzdaten (`bootstrap`, `run`,
 kein Netzabruf) und veröffentlicht sie über GitHub Pages unter
 <https://konradvoelkel.github.io/geographic-representation-dus/> (Plan und Entscheidungen:
