@@ -81,7 +81,9 @@ def test_the_script_asks_the_frame_for_the_file_and_for_the_offline_note(mini_pa
     assert "window.georep.loadJson(FILE)" in mini_page
     assert 'window.georep.offlineNote("Die Begriffsliste", FILE)' in mini_page
     assert 'offlineNote("Die Dokumentliste", DOCUMENTS)' in mini_page  # derselbe Satz im Dialog
-    note = re.search(r"function offlineNote\(what, path\) \{\s*return ([^;]+);", mini_page)
+    # Der Satz hängt seit dem Review vom 2026-10-13 am Protokoll; seine beiden Zweige prüft
+    # tests/unit/test_report_js_offline.py mit node. Hier zählt nur, dass es einen gibt.
+    note = re.search(r"function offlineNote\(what, path\) \{(.*?)\n  \}", mini_page, re.S)
     assert note is not None and "Dateisystem" in note.group(1)
     # Ein Zuhörer am Dokument, damit nachgeladene Begriffe ohne weitere Verdrahtung wirken
     assert 'closest("button.term")' in mini_page

@@ -369,8 +369,15 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
     return pending[path];
   }
   function forget(path) { delete pending[path]; }
+  /* Der Grund haengt am Protokoll: aus dem Dateisystem verbietet der Browser fetch, ueber http ist
+     es ein 404 oder eine halbe Datei. Beides mit demselben Satz zu erklaeren schickte den Leser auf
+     eine falsche Faehrte (Review 2026-10-13). */
   function offlineNote(what, path) {
-    return what + " (" + path + ") ließ sich nicht nachladen. Aus dem Dateisystem geöffnet erlaubt der Browser das nicht; über einen Webserver oder unter der veröffentlichten Adresse funktioniert es.";
+    var note = what + " (" + path + ") ließ sich nicht nachladen.";
+    if (location.protocol === "file:") {
+      return note + " Aus dem Dateisystem geöffnet erlaubt der Browser das nicht; über einen Webserver oder unter der veröffentlichten Adresse funktioniert es.";
+    }
+    return note + " Die Datei fehlt neben der Seite oder ist unvollständig; ein neuer Lauf von georep legt sie dorthin.";
   }
   function germanDate(iso) {
     var p = iso.split("-");
