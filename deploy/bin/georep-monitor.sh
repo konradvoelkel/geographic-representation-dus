@@ -117,15 +117,18 @@ PDF_MANIFEST=$(value_of "$WORK/paths.out" pdf_manifest)
 TEXT_STORE=$(value_of "$WORK/paths.out" text_store)
 PAPERS_JSONL=$(value_of "$WORK/paths.out" papers)
 PROCESSED=$(value_of "$WORK/paths.out" processed)
-# Dasselbe für die Hauptperiode: ihre Seite liegt im Ordner ihrer Stadt (dem Slug, decisions.md
-# Punkt 52), nicht flach unter der Datenwurzel -- gefragt wird auch sie beim Paket.
-query mainpaths georep paths
+# Dasselbe für die Hauptperiode: ihr Profil heißt wie der Slug ihrer Stadt und ihre Seite liegt in
+# deren Ordner (decisions.md Punkt 52). Der Name kommt aus base_profile und nicht aus
+# default_profile: mit dem Periodenprofil einer anderen Stadt wäre das sonst die falsche
+# Hauptseite (Review 2026-10-13).
+BASE_PROFILE=$(value_of "$WORK/paths.out" base_profile)
+query mainpaths georep --profile "$BASE_PROFILE" paths
 MAIN_SITE=$(value_of "$WORK/mainpaths.out" site)
-log "Profil $PROFILE, Seite unter $PROFILE_SITE, Hauptseite unter $MAIN_SITE"
+log "Profil $PROFILE, Seite unter $PROFILE_SITE; Hauptperiode $BASE_PROFILE unter $MAIN_SITE"
 
 # (2) Eingaben der Referenz: erst die Hauptperiode (das Profil liest mit
 # `period.dictionary = "base"` deren Straßen und Orte), dann das Profil selbst ohne Korpus
-step mainboot georep bootstrap
+step mainboot georep --profile "$BASE_PROFILE" bootstrap
 step bootstrap georep --profile "$MONITOR_PROFILE" bootstrap
 
 # (3) Metadaten: immer erzwungen, der Schritt hat keine Eingaben und wäre sonst „aktuell"
@@ -151,7 +154,7 @@ fi
 
 # (6) Die Hauptseite aus der Referenz, mit dem Link auf die laufende Periode (bootstrap lief in (2))
 export GEOREP_REPORT__MONITORING_URL="$PROFILE/"
-step mainsite georep run
+step mainsite georep --profile "$BASE_PROFILE" run
 unset GEOREP_REPORT__MONITORING_URL
 
 # (7) Veröffentlichungsordner zusammenstellen: Hauptseite nach out/, Profil nach out/<profil>/.

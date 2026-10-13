@@ -230,16 +230,19 @@ def _cmd_publish(args: argparse.Namespace, settings: Settings, layout: Layout) -
     return 0
 
 
-def _cmd_paths(layout: Layout) -> int:
+def _cmd_paths(settings: Settings, layout: Layout) -> int:
     """Profil und Pfade als ``key=wert``: die eine Quelle für Skripte außerhalb des Pakets.
 
     Nur ``profile`` darf leer sein (ein von Hand geleerter Ordner, Punkt 52); alle Pfade sind
     absolut, auch wenn es sie noch nicht gibt. ``deploy/bin/georep-monitor.sh`` liest daraus,
     wohin die Seite gehört und wie das Profil heißt, statt beides in der Umgebungsdatei zu
-    wiederholen (Option 07).
+    wiederholen (Option 07). ``base_profile`` ist der Ordner der Hauptperiode derselben Stadt und
+    zugleich der Name ihres Profils: damit findet ein Skript, das mit einem Periodenprofil läuft,
+    die Hauptseite **dieser** Stadt und nicht die des Standardprofils (Review 2026-10-13).
     """
     entries: dict[str, object] = {
         "profile": layout.profile,
+        "base_profile": settings.base_profile,
         "data_root": layout.data_root.resolve(),
         "root": layout.root.resolve(),
         "site": layout.site.resolve(),
@@ -366,7 +369,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "publish":
             return _cmd_publish(args, settings, layout)
         if args.command == "paths":
-            return _cmd_paths(layout)  # Option 07
+            return _cmd_paths(settings, layout)  # Option 07
         if args.command == "bootstrap":
             return _cmd_bootstrap(args, settings, layout)
         if args.command == "export":

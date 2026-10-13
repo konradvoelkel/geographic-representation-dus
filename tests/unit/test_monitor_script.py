@@ -37,13 +37,14 @@ if [ "${1:-}" = "sync" ]; then
 fi
 shift 2   # "run georep"
 if [[ "$*" == *paths* ]]; then
-  if [[ "$*" == *--profile* ]]; then
+  if [[ "$*" == *duesseldorf-2025* ]]; then
     echo "profile=2025"; root="$GEOREP_DATA_ROOT/2025"; cache="$GEOREP_CACHE_ROOT/2025"
   else
     # Punkt 52: die Hauptperiode liegt unter dem Slug ihrer Stadt, nicht flach
     echo "profile=duesseldorf"
     root="$GEOREP_DATA_ROOT/duesseldorf"; cache="$GEOREP_CACHE_ROOT/duesseldorf"
   fi
+  echo "base_profile=duesseldorf"
   echo "data_root=$GEOREP_DATA_ROOT"
   echo "root=$root"
   echo "site=$root/site"
@@ -57,17 +58,20 @@ if [[ "$*" == *paths* ]]; then
   exit 0
 fi
 case "$*" in
-  *"--profile "*bootstrap*) echo "4 Dateien kopiert, 0 übersprungen; Stores nicht gefüllt" ;;
+  *duesseldorf-2025*bootstrap*) echo "4 Dateien kopiert, 0 übersprungen; Stores nicht gefüllt" ;;
   *bootstrap*) echo "4 Dateien kopiert; 200 Paper und 200 Texte aus der Referenz" ;;
   *papers*) echo "papers       ausgeführt    seit 2026-10-01; Store 3 neu, 1 aktualisiert" ;;
   *pdfs*) echo "pdfs 2 geladen, 0 übersprungen; texts 2 extrahiert, 1 aktuell" ;;
-  *)
+  *duesseldorf-2025*)   # die Kette des Profils schreibt nur seine Seite
     if [ -n "${STUB_PROFILE_SITE:-}" ]; then
       mkdir -p "$STUB_PROFILE_SITE/data"
       echo "<html>Profil</html>" > "$STUB_PROFILE_SITE/index.html"
       echo "{}" > "$STUB_PROFILE_SITE/index.html.stamp.json"
       echo "spalte" > "$STUB_PROFILE_SITE/data/monatsreihe.csv"
     fi
+    echo "14 ausgeführt, 1 übersprungen"
+    ;;
+  *)                    # der Lauf der Hauptperiode schreibt nur ihre Seite
     mkdir -p "$STUB_MAIN_SITE/data"
     echo "<html>Haupt ${GEOREP_REPORT__MONITORING_URL:-}</html>" > "$STUB_MAIN_SITE/index.html"
     echo "{}" > "$STUB_MAIN_SITE/index.html.stamp.json"
@@ -161,14 +165,16 @@ def test_a_dry_run_walks_the_steps_in_order_and_writes_the_stand(sandbox: dict[s
     assert calls == [
         "uv sync --locked",
         "uv run georep --profile duesseldorf-2025 paths",  # Profil und Pfade aus dem Paket
-        "uv run georep paths",
-        # Die Hauptperiode zuerst: das Profil liest ihre Straßen und Orte (dictionary = "base")
-        "uv run georep bootstrap",
+        # Die Hauptperiode ist das Profil aus base_profile, nicht default_profile: mit einer
+        # anderen Stadt in MONITOR_PROFILE wäre das sonst die falsche Hauptseite (Befund 9)
+        "uv run georep --profile duesseldorf paths",
+        # Und sie zuerst: das Profil liest ihre Straßen und Orte (dictionary = "base")
+        "uv run georep --profile duesseldorf bootstrap",
         "uv run georep --profile duesseldorf-2025 bootstrap",
         "uv run georep --profile duesseldorf-2025 run --dry-run --online papers",
         "uv run georep --profile duesseldorf-2025 run --dry-run --online pdfs texts",
         "uv run georep --profile duesseldorf-2025 run --dry-run",
-        "uv run georep run",
+        "uv run georep --profile duesseldorf run",
     ]
     assert not [line for line in logged if line.startswith("rclone ")]  # ohne Remote kein Upload
 
@@ -220,8 +226,8 @@ def test_a_failing_step_stops_the_run_with_exit_one(sandbox: dict[str, str]) -> 
     assert calls == [
         "uv sync --locked",
         "uv run georep --profile duesseldorf-2025 paths",
-        "uv run georep paths",
-        "uv run georep bootstrap",
+        "uv run georep --profile duesseldorf paths",
+        "uv run georep --profile duesseldorf bootstrap",
         "uv run georep --profile duesseldorf-2025 bootstrap",
         "uv run georep --profile duesseldorf-2025 run --dry-run --online papers",
     ]  # danach nichts mehr

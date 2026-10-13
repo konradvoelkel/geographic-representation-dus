@@ -350,19 +350,24 @@ def test_paths_prints_the_layout_for_scripts(
     assert main(["paths"]) == 0
     main_profile = dict(line.split("=", 1) for line in capsys.readouterr().out.splitlines() if line)
     layout = _layout(project)
+    settings = load_settings(cwd=project)
     assert main_profile["profile"] == layout.profile == "duesseldorf"
     assert main_profile["root"] == str(layout.root)
     assert main_profile["site"] == str(layout.site)
-    assert all(v.startswith("/") for k, v in main_profile.items() if k != "profile")
+    # Befund 9 des Reviews: der Ordner der Hauptperiode steht dabei, damit ein Skript mit einem
+    # Periodenprofil die Hauptseite derselben Stadt findet und nicht die des Standardprofils.
+    assert main_profile["base_profile"] == settings.base_profile
+    names = {"profile", "base_profile"}  # Namen, keine Pfade
+    assert all(v.startswith("/") for k, v in main_profile.items() if k not in names)
 
     assert main(["--profile", "duesseldorf-2025", "paths"]) == 0
     profile = dict(line.split("=", 1) for line in capsys.readouterr().out.splitlines() if line)
-    assert profile["profile"] == "2025"
+    assert profile["profile"] == "2025" and profile["base_profile"] == "duesseldorf"
     assert profile["root"] == str(project / "data" / "2025")
     assert profile["site_index"] == str(project / "data" / "2025" / "site" / "index.html")
     assert profile["papers"] == str(project / "data" / "2025" / "raw" / "papers.jsonl")
     assert profile["pdf_dir"].endswith("/2025/pdf")
     assert profile["text_store"].endswith("/2025/text/texts.parquet")
-    assert set(profile) == set(main_profile) and len(profile) == 11
+    assert set(profile) == set(main_profile) and len(profile) == 12
     # Jeder Wert ohne Leerzeichen am Rand: das Skript liest sie als key=wert
     assert all(v == v.strip() for v in profile.values())

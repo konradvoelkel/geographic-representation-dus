@@ -49,7 +49,7 @@ Zugangsdaten braucht, schreibt `$CREDENTIALS_DIRECTORY/rclone.conf` ins Kommando
 ## Was der Lauf tut
 
 1. `uv sync --locked` (beim ersten Mal mit Netz zu PyPI).
-2. `georep bootstrap`, dann `georep --profile $MONITOR_PROFILE bootstrap`: die Hauptperiode muss
+2. `georep --profile $BASE bootstrap`, dann `georep --profile $MONITOR_PROFILE bootstrap`: die Hauptperiode muss
    zuerst da sein, weil das Profil mit `period.dictionary = "base"` deren Straßen und Orte liest;
    das Profil selbst bekommt nur Wahlergebnis und Stimmbezirke, **keinen** Korpus der Arbeit
    (`seed_corpus = false`).
@@ -57,10 +57,9 @@ Zugangsdaten braucht, schreibt `$CREDENTIALS_DIRECTORY/rclone.conf` ins Kommando
    Das `--force` muss sein: der Schritt hat keine Eingaben und wäre sonst „aktuell".
 4. `georep … fetch pdfs texts`: nur die neuen PDFs (rund 15 je Tag) und deren Texte.
 5. `georep … run`: die Offline-Kette bis zur Seite des Profils.
-6. `georep bootstrap && GEOREP_REPORT__MONITORING_URL=2025/ georep run`: die Hauptseite aus der
+6. `GEOREP_REPORT__MONITORING_URL=2025/ georep --profile $BASE run`: die Hauptseite aus der
    Referenz, diesmal mit dem Link auf die laufende Periode (GitHub Pages baut sie ohne diesen Link).
-   Sie entsteht im Ordner der Stadt, nicht flach unter `data_root`; das Skript liest ihn mit
-   `georep paths` (Punkt 52).
+   Sie entsteht im Ordner der Stadt, nicht flach unter `data_root` (Punkt 52).
 7. `out/` zusammenstellen: Hauptseite nach `out/`, Profil nach `out/2025/`, beim ersten Lauf eines
    Monats `out/2025/snapshots/<JJJJ-MM>/` als Kopie der Downloads mit `SHA256SUMS`; ältere über
    `MONITOR_SNAPSHOT_KEEP` hinaus werden entfernt, der Lauf druckt beide Zahlen.
@@ -96,8 +95,10 @@ entsteht wirklich, sie braucht kein Netz.
   Lauf braucht zwei davon (die laufende Periode und die Hauptperiode) — darum steht das Profil in
   `MONITOR_PROFILE` und geht je Aufruf als `--profile` mit. Einstellungen gehören bewusst gesetzt:
   `GEOREP_DATA_ROOT`, `GEOREP_CACHE_ROOT`, `GEOREP_LOG_LEVEL`.
-- Wohin das Profil schreibt und wie sein Ordner heißt, fragt das Skript mit `georep paths` beim
-  Paket ab; in `monitor.env` gehört kein abgeleiteter Pfad.
+- Wohin das Profil schreibt, wie sein Ordner heißt und wie das Profil seiner Hauptperiode (`$BASE`
+  oben, aus `base_profile`), fragt das Skript mit `georep paths` beim Paket ab; in `monitor.env`
+  gehört kein abgeleiteter Pfad und kein zweiter Profilname. Mit dem Periodenprofil einer anderen
+  Stadt baut derselbe Lauf dadurch von sich aus deren Hauptseite.
 - `PATH`: systemd kennt keinen Login-PATH (Playbook § 3.2). `uv` und `rclone` liegen in
   `~/.local/bin`; `MONITOR_UV` und `MONITOR_RCLONE` zeigen zusätzlich direkt darauf.
 
