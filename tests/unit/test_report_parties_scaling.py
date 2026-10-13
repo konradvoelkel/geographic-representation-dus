@@ -71,26 +71,32 @@ def test_the_small_maps_carry_the_variants_as_attributes(
     """Keine zweite Kopie der SVG-Karten: die Varianten sind Attribute an denselben <use>."""
     cells = len(mini_model.party_cells)
     assert mini_page.count('<path id="pm-') == len(mini_model.districts)
-    for value in ("anteil", "abwpartei", "verhpartei"):
+    for value in ("abwpartei", "verhpartei"):
         assert len(re.findall(rf'data-class-{value}="\d"', mini_page)) >= cells
+    # Die Standardvariante steht in der Klasse der Flaeche und traegt kein Attribut
+    assert "data-class-anteil=" not in mini_page
+    assert len(re.findall(r'<use href="#pm-\d+" class="district q\d"', mini_page)) == cells
 
 
 def test_the_party_table_column_follows_the_switcher(mini_page: str) -> None:
     table = mini_page.split('<table id="parteien-tabelle">', 1)[1].split("</table>", 1)[0]
-    assert 'data-text-anteil="Anteil im Mittel"' in table
+    assert ">Anteil im Mittel</th>" in table  # die Standardvariante steht als Text da
     assert 'data-text-abwpartei="Abweichung"' in table
     assert 'data-text-verhpartei="Verhältnis"' in table
     rows = table.split("<tbody>", 1)[1].count("<tr>")
-    for value in ("anteil", "abwpartei", "verhpartei"):
+    for value in ("abwpartei", "verhpartei"):
         assert len(re.findall(rf"data-value-{value}=", table)) == rows
+    assert "data-value-anteil=" not in table and "data-text-anteil=" not in table
 
 
 def test_the_district_cells_follow_the_switcher(mini_page: str, mini_model: ReportModel) -> None:
     table = mini_page.split('<table id="urheber-tabelle">', 1)[1].split("</table>", 1)[0]
     cells = len(mini_model.party_cells)
-    for value in ("anteil", "abwpartei", "verhpartei"):
+    for value in ("abwpartei", "verhpartei"):
         assert len(re.findall(rf'data-class-{value}="\d"', table)) == cells
         assert len(re.findall(rf"data-text-{value}=", table)) == cells
+    # Die Standardvariante steht in Klasse, Text und Sortierwert der Zelle selbst
+    assert len(re.findall(r'class="num q\d" data-value=', table)) == cells
     assert "pp" in table and "×" in table  # Prozentpunkte und Malzeichen
 
 

@@ -85,10 +85,14 @@ def test_the_district_table_mirrors_the_chosen_metric(mini_page: str) -> None:
     head = table.split("</thead>", 1)[0]
     assert 'data-text-jebegriff="Treffer je Begriff"' in head
     assert 'data-text-abweichung="vom Stadtmittel"' in head
-    assert 'data-text-rate="Trefferquote"' in head
-    for value in ("rate", "treffer", "jebegriff", "abweichung"):
-        assert len(re.findall(rf"data-text-{value}=", table)) == 4  # Kopf und drei Zeilen
-        assert len(re.findall(rf"data-value-{value}=", table)) == 3
+    rows = len(re.findall(r"<tr id=\"bezirk-", table))
+    for value in ("treffer", "jebegriff", "abweichung"):
+        assert len(re.findall(rf"data-text-{value}=", table)) == rows + 1  # Kopf und je Zeile
+        assert len(re.findall(rf"data-value-{value}=", table)) == rows
+    # Die Standardvariante traegt keine Attribute: sie steht als Text und Sortierwert in der
+    # Zelle, und das JavaScript stellt sie wieder her (Review-Befund 22).
+    assert "data-text-rate=" not in table and "data-value-rate=" not in table
+    assert ">Trefferquote</th>" in head
 
 
 def test_the_key_figures_name_the_hits_per_term(mini_page: str) -> None:

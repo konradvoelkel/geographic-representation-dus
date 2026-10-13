@@ -68,6 +68,8 @@ def test_every_element_the_switcher_touches_has_a_rule_for_every_variant(mini_pa
     """
     for fieldset in (f for f in _fieldsets(mini_page) if MACRO_CALL in f):
         for value, scale in re.findall(r'value="([\w-]+)"(?:\s+data-scale="(\w+)")?', fieldset):
+            # Die Standardvariante traegt keine Attribute (ihr Zustand steht in der Klasse), die
+            # uebrigen je Element ein data-class-<value>.
             steps = set(re.findall(rf'data-class-{value}="(\d)"', mini_page))
             for step in steps:
                 token = f"{scale or 'q'}{step}"

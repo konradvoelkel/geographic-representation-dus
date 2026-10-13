@@ -249,22 +249,45 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
      Gesucht wird im ganzen Dokument, nicht im Abschnitt: der Umschalter der Karte faerbt auch die
      Spalte der Tabelle je Wahlbezirk, die in einem anderen <section> steht. Getrennt halten die
      Gruppen sich dadurch, dass kein value zweimal vorkommt (ein Test haelt das fest). */
-  var STEP = /^[qpd][0-9]$/;
+  var STEP = /^[qd][0-9]$/;  /* die beiden Farbrampen; nur diese Klasse tauscht ein Umschalter */
   function setStep(el, token) {
     Array.prototype.slice.call(el.classList).forEach(function (name) {
       if (STEP.test(name)) el.classList.remove(name);
     });
     el.classList.add(token);
   }
-  function showVariant(value, scale, values) {
-    document.querySelectorAll("[data-class-" + value + "]").forEach(function (el) {
-      setStep(el, scale + el.getAttribute("data-class-" + value));
+  /* Die Standardvariante braucht keine Attribute: sie ist der Zustand, in dem die Seite
+     ausgeliefert wird. Beim Aufbau merkt sich der Umschalter je Element Klasse, Text und
+     Sortierwert, und wer auf eine Variante schaltet, die ein Element nicht kennt, bekommt genau
+     diesen Zustand zurueck. Das spart die Haelfte der Attribute und macht die Vorlagen kuerzer. */
+  function membersOf(values) {
+    var parts = [];
+    values.forEach(function (value) {
+      parts.push("[data-class-" + value + "]", "[data-text-" + value + "]", "[data-value-" + value + "]");
     });
-    document.querySelectorAll("[data-text-" + value + "]").forEach(function (el) {
-      el.textContent = el.getAttribute("data-text-" + value);
+    var found = [];
+    document.querySelectorAll(parts.join(",")).forEach(function (el) {
+      found.push({
+        el: el,
+        klass: el.getAttribute("class"),
+        text: el.textContent,
+        value: el.getAttribute("data-value"),
+      });
     });
-    document.querySelectorAll("[data-value-" + value + "]").forEach(function (el) {
-      el.setAttribute("data-value", el.getAttribute("data-value-" + value));
+    return found;
+  }
+  function showVariant(value, scale, values, members) {
+    members.forEach(function (member) {
+      var el = member.el;
+      var klass = el.getAttribute("data-class-" + value);
+      var text = el.getAttribute("data-text-" + value);
+      var sort = el.getAttribute("data-value-" + value);
+      if (klass !== null) setStep(el, scale + klass);
+      else if (member.klass !== null) el.setAttribute("class", member.klass);
+      if (text !== null) el.textContent = text;
+      else el.textContent = member.text;
+      if (sort !== null) el.setAttribute("data-value", sort);
+      else if (member.value !== null) el.setAttribute("data-value", member.value);
     });
     values.forEach(function (other) {
       var legend = document.getElementById("legend-" + other);
@@ -274,9 +297,10 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
   document.querySelectorAll("fieldset.switcher").forEach(function (fieldset) {
     var radios = Array.prototype.slice.call(fieldset.querySelectorAll('input[type="radio"]'));
     var values = radios.map(function (radio) { return radio.value; });
+    var members = membersOf(values);
     radios.forEach(function (radio) {
       radio.addEventListener("change", function () {
-        showVariant(radio.value, radio.dataset.scale || "q", values);
+        showVariant(radio.value, radio.dataset.scale || "q", values, members);
       });
     });
   });

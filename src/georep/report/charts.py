@@ -679,9 +679,10 @@ def party_maps(
             found = mine.get(district)
             klass = found.klass if found is not None else 0
             # Punkt 46: die beiden Varianten „relativ zum Mittel" hängen als Attribute an
-            # demselben <use>; eine zweite Kopie der Pfade würde die Seite verdoppeln.
+            # demselben <use>; eine zweite Kopie der Pfade würde die Seite verdoppeln. Die
+            # Standardvariante (``anteil``) steht in der Klasse und braucht kein Attribut: das
+            # JavaScript merkt sich den Zustand beim Aufbau und stellt ihn wieder her.
             variants = (
-                f'data-class-anteil="{klass}" '
                 f'data-class-abwpartei="{found.klass_deviation}" '
                 f'data-class-verhpartei="{found.klass_ratio}" '
                 if found is not None
