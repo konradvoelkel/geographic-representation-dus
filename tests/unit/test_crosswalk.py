@@ -37,6 +37,42 @@ def test_district_in_two_city_districts_is_weighted_by_eligible_voters() -> None
     assert weights.get_column("gewicht").to_list() == pytest.approx([0.6475, 0.3525, 1.0], abs=1e-4)
 
 
+def test_equal_weights_are_ordered_by_the_unit_and_not_by_chance() -> None:
+    """Die zugesagte Folge ist „Wahlbezirk, dann Gewicht absteigend, dann Einheit".
+
+    Zwei Einheiten mit **demselben** Gewicht zeigen, dass die Einheit der Stichentscheid ist und
+    aufsteigend sortiert. Ohne diesen Fall entscheidet das Gewicht allein, und die Richtung des
+    letzten Schlüssels ist unbelegt: der Mutant ``descending=[False, True, False]`` zu
+    ``[…, True]`` überlebte am 2026-10-13 (docs/mutation-2026-10-13.md). Dieselbe Sorte Befund
+    wie der ``maintain_order``-Mutant vom 2026-10-12.
+    """
+    precincts = pl.DataFrame(
+        {
+            "wahlkreis_id": [1, 1, 2, 2],
+            "stadtbezirk": [7, 3, 4, 9],
+            "wahlberechtigte": [1000, 1000, 1500, 500],
+        }
+    )
+    weights = unit_weights(precincts, "stadtbezirk", "wahlberechtigte")
+    assert weights.get_column("stadtbezirk").to_list() == [3, 7, 4, 9]
+    assert weights.get_column("gewicht").to_list() == pytest.approx([0.5, 0.5, 0.75, 0.25])
+
+
+def test_target_weights_order_equal_weights_by_the_source() -> None:
+    """Wie oben für den Weg je Zielfläche: Ziel, Gewicht absteigend, dann Quelle."""
+    shares = pl.DataFrame(
+        {
+            "source_id": ["b", "a", "c"],
+            "target_id": ["1", "1", "1"],
+            "share": [1.0, 1.0, 1.0],
+        }
+    )
+    counts = pl.DataFrame({"source_id": ["b", "a", "c"], "n": [100, 100, 300]})
+    weights = target_weights(shares, counts, "n")
+    assert weights.get_column("source_id").to_list() == ["c", "a", "b"]
+    assert weights.get_column("gewicht").to_list() == pytest.approx([0.6, 0.2, 0.2])
+
+
 def test_negative_counts_violate_the_precondition() -> None:
     frame = pl.DataFrame({"wahlkreis_id": [1], "einheit": [1], "n": [-1]})
     with pytest.raises(deal.PreContractError):

@@ -571,3 +571,74 @@ def test_a_structurally_wrong_organization_is_a_schema_error(tmp_path: Path) -> 
     with pytest.raises(SchemaError, match="Liste von Organisationen"):
         read_organizations(path)
     assert read_organizations(tmp_path / "fehlt.json") == ()
+
+
+# --- Die Fundstelle: was in der Spalte ``treffer`` steht (Mutationslauf 2026-10-13) -------------
+#
+# ``_classify`` oben gibt die Fundstelle nicht zurück, und kein Test prüfte sie: in ``_excerpt``,
+# in „der erste Treffer gewinnt" und in der Reihenfolge der Antragspräfixe überlebten darum
+# Mutanten (docs/mutation-2026-10-13.md). Die Fundstelle ist die Spalte, mit der ein Mensch eine
+# Zuordnung von Hand prüft -- sie ist kein Beiwerk.
+
+SMALL = Originators(
+    motion_prefixes=["antrag", "antrag der fraktion"],
+    parties=[
+        {"key": "CDU", "label": "CDU", "patterns": ["cdu"]},  # type: ignore[list-item]
+        {"key": "SPD", "label": "SPD", "patterns": ["spd"]},  # type: ignore[list-item]
+    ],
+    fraction_markers=["fraktion"],
+)
+
+
+def test_the_longest_motion_prefix_is_stripped_first() -> None:
+    """``antrag der fraktion`` muss vor ``antrag`` greifen, sonst bleibt die Hälfte stehen."""
+    found = classify_document("Antrag der Fraktion CDU", "", "", Patterns.from_settings(SMALL))
+    assert (found.art, found.parteien, found.quelle) == ("Fraktion", ("CDU",), "paper_type")
+    assert found.treffer == "cdu"  # genau der Rest, nicht „der fraktion cdu"
+
+
+def test_the_excerpt_shows_thirty_characters_around_the_first_match() -> None:
+    """Der Auszug ist der Treffer mit 30 Zeichen links und rechts, an den Rändern beschnitten."""
+    left, right = "x" * 40, "y" * 40
+    title = f"{left} fraktion spd {right}"
+    found = classify_document(None, title, "", Patterns.from_settings(SMALL))
+    assert found.quelle == "name" and found.parteien == ("SPD",)
+    # 30 Zeichen links („x" bis zum Rand des Fensters), der Treffer, 29 Zeichen rechts
+    assert found.treffer == "x" * 20 + " fraktion spd " + "y" * 29
+
+
+def test_the_first_party_in_the_text_wins_the_excerpt() -> None:
+    """Zwei Parteien: der Auszug steht um den **frühesten** Treffer, nicht um den letzten.
+
+    Die Reihenfolge in ``parteien`` bleibt die der Settings (CDU vor SPD); welche Stelle zitiert
+    wird, entscheidet die Position im Text.
+    """
+    title = "fraktion spd " + "z" * 80 + " cdu"
+    found = classify_document(None, title, "", Patterns.from_settings(SMALL))
+    assert found.parteien == ("CDU", "SPD")  # Reihenfolge der Settings
+    assert found.treffer.startswith("fraktion spd")  # Position im Titel
+    assert "cdu" not in found.treffer
+
+
+def test_a_document_without_a_head_or_an_organisation_still_classifies() -> None:
+    """Im Korpus sind ``text`` und ``originator_organization`` nullbar; null heißt leer."""
+    corpus = pl.DataFrame(
+        {
+            "id": ["b", "a"],
+            "paper_type": ["Antrag CDU", None],
+            "name": [None, "Fraktion SPD beantragt"],
+            "text": [None, None],
+            "originator_organization": [None, None],
+        },
+        schema={
+            "id": pl.String,
+            "paper_type": pl.String,
+            "name": pl.String,
+            "text": pl.String,
+            "originator_organization": pl.List(pl.String),
+        },
+    )
+    found = classify_originators(corpus, SMALL, ())
+    assert found.get_column("id").to_list() == ["a", "b"]  # nach id sortiert
+    assert found.get_column(ART).to_list() == ["Fraktion", "Fraktion"]
+    assert found.get_column(PARTEIEN).to_list() == [["SPD"], ["CDU"]]

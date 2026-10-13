@@ -350,3 +350,45 @@ def test_publish_refuses_a_target_under_the_reference(
     )
     with pytest.raises(ReferenceWriteError):
         publish_sites(settings, layout, now=NOW, commit=None, out=root / "reference" / "site")
+
+
+# --- Die Zusammenfassungszeile und das Budget (Mutationslauf 2026-10-13) ------------------------
+#
+# Die Zeile entsteht aus einem ``PublishSummary`` und sonst nichts: ein Beispiel je Form ist
+# billiger als ein Lauf und trifft die Mutanten, die im Singular und in der MB-Rechnung
+# überlebten (docs/mutation-2026-10-13.md).
+
+
+def _summary(**overrides: object) -> PublishSummary:
+    base: dict[str, object] = {
+        "cities": ("duesseldorf",),
+        "missing": (),
+        "files": 53,
+        "bytes": 13_100_000,
+        "comparison": False,
+    }
+    return PublishSummary(**(base | overrides))  # type: ignore[arg-type]
+
+
+def test_the_summary_line_counts_cities_megabytes_and_names_what_is_missing() -> None:
+    assert _summary().line() == "1 Stadt, kein Vergleich, 53 Dateien, 13,1 MB"
+    assert _summary(cities=()).line().startswith("0 Städte")
+    two = _summary(cities=("a", "b"), comparison=True, files=100, bytes=2_000_000)
+    assert two.line() == "2 Städte, 1 Vergleich, 100 Dateien, 2,0 MB"
+    assert "; kein Lauf: c" in _summary(missing=("c",)).line()
+    assert "; über dem Budget: b/index.html" in _summary(over_budget=("b/index.html",)).line()
+
+
+def test_a_budget_of_zero_leaves_no_page_over_it(both_cities: tuple[Path, Settings]) -> None:
+    """``report.page_budget_bytes = 0`` schaltet die Prüfung ab, auch in ``publish`` (Punkt 50)."""
+    root, settings = both_cities
+    off = settings.model_copy(
+        update={"report": settings.report.model_copy(update={"page_budget_bytes": 0})}
+    )
+    _, summary = _publish(root, off)
+    assert summary.over_budget == ()
+    tiny = settings.model_copy(
+        update={"report": settings.report.model_copy(update={"page_budget_bytes": 1})}
+    )
+    _, strict = _publish(root, tiny)
+    assert "index.html" in " ".join(strict.over_budget) and len(strict.over_budget) >= 2

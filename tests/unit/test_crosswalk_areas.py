@@ -76,6 +76,22 @@ def test_district_weights_combine_eligible_voters_and_area_shares() -> None:
     ]
 
 
+def test_district_weights_order_equal_weights_by_the_unit() -> None:
+    """Gleiche Gewichte entscheidet die Einheit, aufsteigend -- dieselbe Folge wie ``unit_weights``.
+
+    Ohne zwei gleich große Gewichte ist die Richtung des letzten Sortierschlüssels unbelegt (Mutant
+    an ``descending=[False, True, False]``, 2026-10-13).
+    """
+    table = _table([("p1", 1, 1000), ("p2", 1, 1000)])
+    shares = pl.DataFrame(
+        [("p1", "B", 1.0), ("p2", "A", 1.0)],
+        schema={"source_id": pl.String, "target_id": pl.String, "share": pl.Float64},
+        orient="row",
+    )
+    weights = district_weights(table, shares)
+    assert weights.rows() == [(1, "A", pytest.approx(0.5)), (1, "B", pytest.approx(0.5))]
+
+
 def test_both_crosswalks_agree_when_each_precinct_lies_in_one_unit() -> None:
     """Deckt sich jede Quellfläche mit genau einer Einheit, muss der geometrische Weg dasselbe
     liefern wie der Attribut-Crosswalk: dieselbe Zuordnung, dieselben Gewichte."""

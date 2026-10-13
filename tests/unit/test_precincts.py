@@ -110,6 +110,31 @@ def test_geojson_without_crs_member_falls_back_to_the_profile(tmp_path: Path) ->
         read_source_geojson(path)
 
 
+@pytest.mark.parametrize(
+    "crs",
+    [
+        {"type": "name", "properties": {"name": 25832}},  # Zahl statt Text
+        {"type": "name", "properties": "EPSG:25832"},  # kein Objekt
+        {"type": "name"},  # ohne properties
+        "EPSG:25832",  # crs selbst kein Objekt
+    ],
+)
+def test_a_crs_member_in_an_unexpected_shape_falls_back_instead_of_breaking(
+    tmp_path: Path, crs: object
+) -> None:
+    """Beide Prüfungen am ``crs``-Mitglied sind nötig, nicht eine von beiden.
+
+    Ein Portal, das ``crs`` anders schreibt als erwartet, darf keinen ``AttributeError`` oder
+    ``TypeError`` auslösen: dann gilt das CRS des Profils (Mutant ``and`` zu ``or``, 2026-10-13).
+    """
+    path = tmp_path / "flaechen.geojson"
+    path.write_text(
+        json.dumps({"type": "FeatureCollection", "features": [{"properties": {}}], "crs": crs}),
+        encoding="utf-8",
+    )
+    assert read_source_geojson(path, "EPSG:25832").crs == "EPSG:25832"
+
+
 def test_shapefile_zip_is_read_without_unpacking_and_brings_its_crs(tmp_path: Path) -> None:
     path = _shapefile_zip(tmp_path / "Wahlen.zip", ("10401", "10402", "32201"))
     source = read_source_shapefile_zip(path)
@@ -247,6 +272,27 @@ def test_district_names_come_from_the_votemanager_csv(tmp_path: Path) -> None:
     path.write_text("datum;wahl\n14.09.2025;Ratswahl\n", encoding="utf-8")
     with pytest.raises(SchemaError, match="Spalten fehlen"):
         district_names_from_csv(path, VOTEMANAGER, columns)
+
+
+def test_a_district_name_stays_text_even_when_it_looks_like_a_number(tmp_path: Path) -> None:
+    """Die CSV wird ohne Schema-Erkennung gelesen: ``0815`` ist ein Name, keine 815.
+
+    Polars würde die Spalte sonst als Zahl lesen und die führende Null verlieren; die Namen der
+    Wahlbezirke sind Text (Mutant ``infer_schema=False`` zu ``True``, 2026-10-13).
+    """
+    path = tmp_path / "wahlbezirke.csv"
+    path.write_text(
+        "datum;wahl;gebiet-nr;gebiet-name\n14.09.2025;Ratswahl;07;0815\n", encoding="utf-8"
+    )
+    columns = ResultsColumns(
+        encoding="utf-8",
+        district="x",
+        city_district="",
+        eligible="A",
+        voters="B",
+        parties={"CDU": "D1"},
+    )
+    assert district_names_from_csv(path, VOTEMANAGER, columns) == {7: "0815"}
 
 
 # --- Settings-Validatoren -------------------------------------------------------------------

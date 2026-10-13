@@ -7,6 +7,7 @@ from pathlib import Path
 import deal
 import polars as pl
 import pytest
+from scipy.stats import t as t_distribution
 
 from georep.analysis.ols import (
     ALL,
@@ -148,6 +149,63 @@ def test_the_vif_of_two_terms_is_one_over_one_minus_their_squared_correlation() 
     assert expected > 1.5  # die beiden Terme erklären sich spürbar gegenseitig
     # Mit nur einem Term gibt es nichts zu erklären
     assert fit_ols(frame, "y", ["a"]).term("a").vif == 1.0
+
+
+def test_an_orthogonal_design_gives_the_numbers_of_the_closed_form() -> None:
+    """Alle Zahlen eines Zwei-Term-Modells gegen die geschlossene Form (2026-10-13).
+
+    Bei einem zentrierten, orthogonalen Design (``Σa = Σb = 0``, ``a·b = 0``) steht jede Zahl in
+    einer Formel: ``b_j = (x_j·y)/(x_j·x_j)``, ``σ² = RSS/(n−k−1)``,
+    ``se_j = sqrt(σ²/(x_j·x_j))``, ``F = ((TSS−RSS)/k)/σ²``,
+    ``R²_korr = 1 − (1−R²)(n−1)/(n−k−1)``, ``β_j = b_j · sd(x_j)/sd(y)``. Das ist ein Orakel und
+    keine zweite Fassung der Rechnung: der Code löst ein Normalgleichungssystem mit ``lstsq``.
+
+    Vorher prüfte kein schneller Test F, R²_korr, ``beta`` oder die Zuordnung von
+    Standardfehler, t und p **je Term**; die Zahlen der echten Modelle stehen nur im slow-Test
+    gegen statsmodels, und der Mutationslauf lässt ihn aus. Elf Mutanten überlebten deshalb
+    (docs/mutation-2026-10-13.md): die Indexverschiebung ``i + 1`` zu ``i - 1`` fällt bei einem
+    einzigen Term nicht auf, denn dann ist ``matrix[:, -1]`` dieselbe Spalte.
+    """
+    a = [-1.0, -1.0, 0.0, 0.0, 1.0, 1.0]
+    b = [-1.0, 1.0, -1.0, 1.0, -1.0, 1.0]
+    y = [1.0, 4.0, 2.0, 5.0, 6.0, 8.0]
+    frame = _frame([(y[i], a[i], b[i]) for i in range(len(y))])
+    fit = fit_ols(frame, "y", ["a", "b"])
+
+    n, k = len(y), 2
+    mean_y = sum(y) / n
+    aa, bb = sum(v * v for v in a), sum(v * v for v in b)
+    coefficient = {
+        "a": sum(a[i] * y[i] for i in range(n)) / aa,
+        "b": sum(b[i] * y[i] for i in range(n)) / bb,
+    }
+    fitted = [mean_y + coefficient["a"] * a[i] + coefficient["b"] * b[i] for i in range(n)]
+    rss = sum((y[i] - fitted[i]) ** 2 for i in range(n))
+    tss = sum((value - mean_y) ** 2 for value in y)
+    sigma2 = rss / (n - k - 1)
+    r2 = 1.0 - rss / tss
+    sd_y = (tss / (n - 1)) ** 0.5
+
+    assert fit.n == n and fit.k == k
+    assert fit.intercept.coefficient == pytest.approx(mean_y)
+    assert fit.r2 == pytest.approx(r2)
+    assert fit.r2_adj == pytest.approx(1.0 - (1.0 - r2) * (n - 1) / (n - k - 1))
+    assert fit.f == pytest.approx(((tss - rss) / k) / sigma2)
+    for name, squares in (("a", aa), ("b", bb)):
+        stats = fit.term(name)
+        stderr = (sigma2 / squares) ** 0.5
+        sd_x = (squares / (n - 1)) ** 0.5  # die Spalte ist zentriert
+        assert stats.coefficient == pytest.approx(coefficient[name]), name
+        assert stats.stderr == pytest.approx(stderr), name
+        assert stats.t == pytest.approx(coefficient[name] / stderr), name
+        # p zweiseitig aus der t-Verteilung mit n - k - 1 Freiheitsgraden; scipy ist das Orakel
+        assert stats.p == pytest.approx(
+            2.0 * t_distribution.sf(abs(coefficient[name] / stderr), n - k - 1)
+        ), name
+        assert stats.beta == pytest.approx(coefficient[name] * sd_x / sd_y), name
+        assert stats.vif == pytest.approx(1.0), name  # orthogonal: keine Varianzinflation
+    # Die Terme stehen in verschiedenen Spalten: derselbe Standardfehler wäre ein Indexfehler.
+    assert fit.term("a").stderr != pytest.approx(fit.term("b").stderr)
 
 
 def test_the_summary_names_every_term_with_its_numbers() -> None:

@@ -14,6 +14,7 @@ from georep.analysis.scaling import (
     PER_1000,
     PER_TERM,
     TERM_COUNT,
+    dictionary_bias,
     district_metrics,
     relative_to,
     summary,
@@ -118,6 +119,76 @@ def test_the_summary_names_the_spread() -> None:
 def test_missing_columns_violate_the_contract() -> None:
     with pytest.raises(deal.PreContractError):
         district_metrics(pl.DataFrame({DISTRICT: [1]}), _dictionary({1: 5}))
+
+
+# --- Die Verzerrung durch die Wörterbuchgröße (Mutationslauf 2026-10-13) -----------------------
+#
+# ``dictionary_bias`` hatte keinen eigenen Test: elf der 25 Überlebenden lagen in ihm und in
+# ``_pearson`` (docs/mutation-2026-10-13.md). Die Zahlen des Methodenabsatzes der Seite hingen
+# damit allein am slow-Test.
+
+
+def _bias_inputs(
+    rows: list[tuple[int, int, int]], sizes: dict[int, int]
+) -> tuple[pl.DataFrame, pl.DataFrame]:
+    results = _results(rows)
+    return district_metrics(results, _dictionary(sizes)), results
+
+
+# Treffer = 2 · Begriffe + 10 und Wahlberechtigte linear in den Treffern: beide Korrelationen sind
+# damit genau 1, und „Treffer je Begriff" (3,0 / 2,5 / 2,3333) fällt mit der Größe — die
+# Überkorrektur, von der der Methodenabsatz spricht.
+LINEAR = [(1, 30, 10_000), (2, 50, 11_000), (3, 70, 12_000)]
+SIZES = {1: 10, 2: 20, 3: 30}
+
+
+def test_the_bias_is_the_correlation_counted_by_hand() -> None:
+    found = dictionary_bias(*_bias_inputs(LINEAR, SIZES))
+    assert found is not None
+    assert found.districts == 3
+    assert found.hits_terms == pytest.approx(1.0)
+    assert found.hits_eligible == pytest.approx(1.0)
+    assert -1.0 <= found.per_term_terms < 0.0  # die Quote je Begriff fällt mit der Größe
+    assert (found.terms_min, found.terms_max) == (10, 30)
+    assert found.eligible_spread == pytest.approx(1.2)
+
+
+def test_a_negative_correlation_keeps_its_sign() -> None:
+    """Die Zahl ist Pearson und kein Betrag: ein fallender Zusammenhang ist negativ."""
+    found = dictionary_bias(
+        *_bias_inputs([(1, 70, 10_000), (2, 50, 11_000), (3, 30, 12_000)], SIZES)
+    )
+    assert found is not None
+    assert found.hits_terms == pytest.approx(-1.0)
+    assert found.hits_eligible == pytest.approx(-1.0)
+    assert found.eligible_spread == pytest.approx(1.2)
+
+
+def test_two_districts_are_too_few_for_a_correlation() -> None:
+    """Die Grenze ist drei: mit zwei Punkten ist r immer ±1 und sagt nichts (``frame.height < 3``)."""
+    assert dictionary_bias(*_bias_inputs(LINEAR[:2], {1: 10, 2: 20})) is None
+    # Genau drei reichen: die Grenze liegt zwischen diesen beiden Fällen.
+    assert dictionary_bias(*_bias_inputs(LINEAR, SIZES)) is not None
+
+
+def test_without_spread_in_one_column_there_is_no_bias() -> None:
+    """Zwei verschiedene Werte reichen, einer nicht (``n_unique() < 2``)."""
+    assert dictionary_bias(*_bias_inputs(LINEAR, {1: 20, 2: 20, 3: 20})) is None
+    same_hits = [(1, 50, 10_000), (2, 50, 11_000), (3, 50, 12_000)]
+    assert dictionary_bias(*_bias_inputs(same_hits, SIZES)) is None
+    # Zwei verschiedene Größen über drei Bezirke genügen.
+    assert dictionary_bias(*_bias_inputs(LINEAR, {1: 10, 2: 10, 3: 30})) is not None
+
+
+def test_a_district_without_voters_has_no_spread_of_voters() -> None:
+    """``eligible_spread`` ist 0, wo die kleinste Wahlberechtigtenzahl 0 ist (keine Division)."""
+    metrics = district_metrics(_results(LINEAR), _dictionary(SIZES))
+    results = pl.DataFrame(
+        {DISTRICT: [1, 2, 3], ELIGIBLE_TOTAL: [10_000, 11_000, 0]},
+        schema={DISTRICT: pl.Int64, ELIGIBLE_TOTAL: pl.Int64},
+    )
+    found = dictionary_bias(metrics, results)
+    assert found is not None and found.eligible_spread == 0.0
 
 
 def test_the_mini_fixture_matches_polars(mini_run: Layout) -> None:

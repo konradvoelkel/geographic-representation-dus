@@ -27,9 +27,12 @@ FAMILIES = {
 CROSS = "haushalt personal stellenplan jahresabschluss"
 
 
-def _corpus(per_committee: int = 12, cross: int = 3) -> tuple[pl.DataFrame, pl.DataFrame]:
+def _corpus(
+    per_committee: int = 12, cross: int = 3, codes: tuple[str, ...] = ()
+) -> tuple[pl.DataFrame, pl.DataFrame]:
     rows, refs = [], []
-    for code, family in FAMILIES.items():
+    families = {c: FAMILIES[c] for c in codes} if codes else FAMILIES
+    for code, family in families.items():
         for i in range(per_committee):
             paper = f"{code}-{i:02d}"
             rows.append({"id": paper, "text": " ".join(family * 3) + f" wort{i}"})
@@ -122,6 +125,33 @@ def test_the_summary_names_the_classes_and_the_rest() -> None:
     found = assign_committees(corpus, bodies, _topics(), _classify(), _rules())
     line = summary(found)
     assert "3 Ausschüsse" in line and "Restklasse" in line
+    # Die Zahlen, nicht nur die Wörter: ohne sie überlebten die Mutanten in ``summary``
+    # (``== REST`` zu ``!=``, ``-`` zu ``+``; docs/mutation-2026-10-13.md).
+    rest = int(found.table.filter(pl.col("ausschuss") == "").get_column("dokumente").sum())
+    assert line == (
+        f"{found.papers.height} Dokumente: {found.papers.height - rest} einem von 3 Ausschüssen "
+        f"zugeordnet, {rest} in der Restklasse"
+    )
+    assert f"{found.papers.height} Dokumente" in line and found.papers.height == 39
+
+
+def test_exactly_two_classes_at_the_minimum_are_still_a_decision() -> None:
+    """Die zwei Grenzen des Klassifikators: ``>= min_documents`` und ``len(classes) < 2``.
+
+    Zwei Klassen mit **genau** ``min_documents`` Dokumenten müssen gelernt werden; mit einem
+    Dokument weniger je Klasse bleibt alles in der Restklasse. Ohne diesen Fall überlebten die
+    Mutanten ``>=`` zu ``>`` und ``< 2`` zu ``<= 2`` (docs/mutation-2026-10-13.md).
+    """
+    two = ("AAA", "BBB")
+    corpus, bodies = _corpus(per_committee=5, cross=2, codes=two)
+    found = assign_committees(corpus, bodies, _topics(k=2), _classify(min_documents=5), _rules())
+    assert found.classes == two
+    assigned = found.papers.filter(pl.col("ausschuss") != "")
+    assert assigned.height > 0 and set(assigned.get_column("ausschuss").to_list()) <= set(two)
+
+    corpus, bodies = _corpus(per_committee=4, cross=2, codes=two)
+    thin = assign_committees(corpus, bodies, _topics(k=2), _classify(min_documents=5), _rules())
+    assert thin.classes == () and set(thin.papers.get_column("ausschuss").to_list()) == {""}
 
 
 def test_the_rest_class_counts_the_documents_without_a_committee() -> None:
