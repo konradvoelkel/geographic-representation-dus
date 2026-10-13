@@ -1,9 +1,8 @@
 # Status
 
-Stand 2026-10-13, `main` auf `v0.12.0` plus die beiden Methodikregeln aus `docs/todo.md`, Punkt 4,
-das tragfähige Themenmodell aus Punkt 1, die Skalierung der Kennzahlen aus Punkt 3, die
-Literaturübersicht aus Punkt 5 und die kompaktere Seite aus Punkt 2 (nicht
-getaggt; `bartzsch-exakt` zeigt auf den letzten exakt reproduzierenden Stand). Der Umbau in sieben Phasen ist abgeschlossen
+Stand 2026-10-13, `main` auf `v0.12.0`: der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
+abgearbeitet; `bartzsch-exakt` zeigt auf `v0.11.0`, den letzten Stand, der die Zahlen der Arbeit exakt
+reproduziert. Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
 Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>), und der Ausbau in
 acht Optionen ist gemerged (`docs/plan-ausbau-2026-10.md`, Pläne und Abnahmen unter `docs/plans/`). Aufbau in
@@ -326,15 +325,13 @@ Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „
 4. Optional der Vollabruf der Hauptperiode (2 bis 3 h; zeigt, ob der OParl-Server `modified_since` beachtet
    und ob die Urheberfelder inzwischen gefüllt sind).
 
-Rückstand für danach: `docs/todo.md` ist abgearbeitet; alle sechs Punkte sind erledigt. Punkt 2,
-die Seitengröße, am 2026-10-13 (`docs/seitengroesse-2026-10.md`, offene Annahmen in dessen § 8);
-Punkt 6, die Lizenz, ist am 2026-10-12 mit dem Wechsel auf GPL-3.0-or-later erledigt,
-`docs/decisions.md`, Punkt 42. Punkt 5, die Literaturübersicht, ist am 2026-10-13 erledigt,
-`docs/decisions.md`, Punkt 47; Punkt 4, Bartzschs Methodik, ist am 2026-10-12 erledigt,
-`docs/methodik-review-2026-10.md`, dessen stärkste offene Empfehlung Punkt 3 eingelöst hat; Punkt 1, das
-Themenmodell, ebenfalls am 2026-10-12, `docs/themenmodell-2026-10.md`, offene Annahmen in dessen § 7;
-Punkt 3, die Skalierung der Kennzahlen, am 2026-10-13, `docs/skalierung-2026-10.md`, offene Annahmen in
-dessen § 8. Offene Entscheidungen stehen in `docs/plans/fragen.md`
+Der Rückstand `docs/todo.md` ist abgearbeitet (`v0.12.0`): Punkt 4, Bartzschs Methodik, am 2026-10-12
+(`docs/methodik-review-2026-10.md`, Regeln in `docs/decisions.md`, Punkte 43 und 44); Punkt 1, das Themenmodell,
+am 2026-10-12 (`docs/themenmodell-2026-10.md`, offene Annahmen in dessen § 7); Punkt 3, die Skalierung der
+Kennzahlen, am 2026-10-13 (`docs/skalierung-2026-10.md`, § 8); Punkt 5, die Literaturübersicht, am 2026-10-13
+(Punkt 47; Titel der Arbeit und die Kölner Untersuchung sind nachzutragen); Punkt 2, die Seitengröße, am
+2026-10-13 (`docs/seitengroesse-2026-10.md`, § 8); Punkt 6, die Lizenz, am 2026-10-12 (Punkt 42).
+Offene Entscheidungen stehen in `docs/plans/fragen.md`
 (die acht wichtigsten oben): Datenpakete im Repo oder im
 R2-Bucket, Düsseldorf unter `data/duesseldorf/`, VPS und Domain, Lizenz der votemanager-CSV, Modellwahl der
 Kontrollvariablen. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,
