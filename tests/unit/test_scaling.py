@@ -78,9 +78,7 @@ def test_a_city_without_a_single_hit_has_no_deviation() -> None:
     den Zweig wäre die Abweichung -1,0 je Bezirk, die Nachbedingung „die Abweichungen summieren
     sich auf 0" bräche, und der Schritt ``metrics`` risse die ganze Kette mit.
     """
-    frame = district_metrics(
-        _results([(1, 0, 10_000), (2, 0, 11_000)]), _dictionary({1: 5, 2: 7})
-    )
+    frame = district_metrics(_results([(1, 0, 10_000), (2, 0, 11_000)]), _dictionary({1: 5, 2: 7}))
     assert frame.get_column(CITY_MEAN).to_list() == [0.0, 0.0]
     assert frame.get_column(DEVIATION).to_list() == [0.0, 0.0]
     assert frame.get_column(PER_TERM).to_list() == [0.0, 0.0]
