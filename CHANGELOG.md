@@ -4,6 +4,10 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Der Hinweis auf eine nicht geladene Datei nennt den richtigen Grund** (Review 2026-10-13,
+  Befund 11): aus dem Dateisystem geöffnet verbietet der Browser das Nachladen, über einen Webserver
+  fehlt die Datei oder ist unvollständig — vorher stand überall die Erklärung für `file://`.
+
 - **Die 1196 Orte der Karte tragen keinen `<title>` mehr** (Review 2026-10-13, Befund 2;
   `docs/decisions.md` Punkt 50): ihre Ebene ist `aria-hidden` und ohne JavaScript nie sichtbar, der
   Titel erreichte also keinen Screenreader und wiederholte nur, was der Tooltip zeigt. Das sind

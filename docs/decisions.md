@@ -1044,10 +1044,13 @@ Vorschauregel über `:nth-child` spezifischer ist. **Verworfen:** die Vorschau e
 aufbauen (dann sieht jeder Leser die Tabelle einmal lang und dann kurz, ein Sprung im Layout);
 `hidden` im Markup ohne `<noscript>` (dann wäre die Seite ohne Skript unvollständig).
 
-**Welche Tabellen.** Vorschau bekommen die Aufzählungen (elf heute, dazu die Vergleichstabelle der
-Perioden, sobald sie Daten hat). Offen bleiben die Kernzahlen, Tabelle 5, Tabelle 6 und 6b: das ist
-der Befund, und wer die Zahl sucht, um die es geht, soll sie ohne Klick sehen. Die sechs Tabellen der
-Spaltendoku stehen schon je in einem `<details>` und brauchen nichts.
+**Welche Tabellen.** Vorschau bekommen die zwölf Aufzählungen, elf davon auf der heutigen Seite und
+`perioden-tabelle`, sobald die zweite Periode Daten hat. Offen bleiben die Kernzahlen, Tabelle 5,
+Tabelle 6 und 6b: das ist der Befund, und wer die Zahl sucht, um die es geht, soll sie ohne Klick
+sehen — das Kriterium ist die Rolle und nicht die Zeilenzahl (Tabelle 6b hat 13 Zeilen und bleibt
+offen). Dass eine kurze Aufzählung keine Schaltfläche bekommt, erledigt das Makro von selbst: es
+setzt sie erst über der Vorschauzahl. Die sechs Tabellen der Spaltendoku stehen schon je in einem
+`<details>` und brauchen nichts.
 
 **Der Kontrast war zu klein.** `--accent` trug in Hell 4,19:1 auf `--bg` — unter den 4,5:1, die
 WCAG AA für 14,4-px-Text verlangt, und das betraf jeden Link der Seite, nicht nur die neue
@@ -1078,14 +1081,18 @@ nur liest, braucht nichts nachzuladen.
 bewusst in der Seite, weil Vorschläge ohne Webserver funktionieren müssen und `fetch` unter `file://`
 verboten ist (Punkt 22). Eine Begriffsliste je Wahlbezirk ist kein Einstieg, sondern ein Stöbern im
 Ergebnis: aus `file://` steht dort derselbe Satz, den der Dokumentdialog seit Stufe G zeigt —
-`georep.offlineNote(was, datei)` im Rahmen formuliert ihn einmal für beide. **Verworfen:** die Listen
+`georep.offlineNote(was, datei)` im Rahmen formuliert ihn einmal für beide. Welcher Satz, entscheidet
+`location.protocol`: aus dem Dateisystem verbietet der Browser `fetch`, über http ist es ein 404 oder
+eine halbe Datei, und beides mit derselben Erklärung zu bedienen schickte den Leser auf eine falsche
+Fährte (Review 2026-10-13, Befund 11). Die beiden Zweige prüft ein Test mit `node`. **Verworfen:** die Listen
 in `dokumente.json` mitführen (2,3 MB laden, um 72 Begriffe zu zeigen); sie im Browser aus
 `combined_searchdict.parquet` lesen (eine Bibliothek für Parquet, und die Trefferzahlen fehlen dort);
 eine Unterseite je Wahlbezirk (41 Dateien, und die Reihenfolge der Abschnitte bleibt,
 `docs/plans/00-synergien.md`, § 5.1).
 
-**Eine veröffentlichte Datei, kein Nebenprodukt.** `begriffe.json` steht mit Zeilenzahl (6877 Paare
-aus Wahlbezirk und Begriff), Größe und SHA-256 unter „Downloads" wie `dokumente.json`; die Regel, dass
+**Eine veröffentlichte Datei, kein Nebenprodukt.** `begriffe.json` steht mit Zeilenzahl (3946 Paare
+aus Wahlbezirk und Begriff **mit Treffer**; die 6877 Paare des Schritts `metrics` zählen auch die
+Begriffe ohne Treffer, Review 2026-10-13), Größe und SHA-256 unter „Downloads" wie `dokumente.json`; die Regel, dass
 jede Datei unter `site/data/` auf der Seite genannt wird, hält ein Test. Ins `schema.json` kommt sie
 nicht — das beschreibt die Spalten der Tabellen, und die beiden JSON-Dateien tragen ihre Felder selbst
 (`fields`).

@@ -143,15 +143,21 @@ gehört zur Prüfung mit headless Chrome.
 
 ### 3.3 Welche Tabellen
 
-Vorschau bekommen die elf Aufzählungen der heutigen Seite: `districts`, `urheber-tabelle`,
-`gremien-bezirke`, `gremien-liste`, `ausschuss-tabelle`, `monate-tabelle`, `gewichtung-tabelle`,
-`themen-tabelle`, `downloads-table`, `top-begriffe` (die trefferstärksten Begriffe) und
-`kontext-variablen` (die Spalten der Kontextdaten); dazu `perioden-tabelle`, sobald der Vergleich
-zweier Wahlperioden Daten hat. Die letzten drei bekommen dafür eine ID, denn `aria-controls`
-braucht eine. Die sechs Tabellen der Spaltendoku brauchen keine: sie stehen schon je in einem
-`<details>`. **Offen bleiben der Befund und alles unter zehn Zeilen:** die Kernzahlen,
-Tabelle 5 (`zusammenhang`), Tabelle 6 und 6b (`kontrollvariablen`), die Kacheln der Gremien und die
-Vergleichstabelle der Perioden. Wer die Zahl sucht, um die es geht, soll sie sehen, ohne zu klicken.
+Vorschau bekommen die zwölf Aufzählungen: `districts`, `urheber-tabelle`, `gremien-bezirke`,
+`gremien-liste`, `ausschuss-tabelle`, `monate-tabelle`, `gewichtung-tabelle`, `themen-tabelle`,
+`downloads-table`, `top-begriffe` (die trefferstärksten Begriffe), `kontext-variablen` (die Spalten
+der Kontextdaten) und `perioden-tabelle` — die Tabelle je Wahlbezirk des Abschnitts „Zwei
+Wahlperioden", die erst mit den Daten der zweiten Periode erscheint; auf der heutigen Seite sind es
+also elf. `top-begriffe` und `kontext-variablen` bekommen dafür eine ID, denn `aria-controls`
+braucht eine (die übrigen hatten schon eine). Die sechs Tabellen der Spaltendoku brauchen keine: sie
+stehen schon je in einem `<details>`.
+
+**Offen bleibt der Befund**, unabhängig von seiner Länge: die Kernzahlen, Tabelle 5
+(`zusammenhang`), Tabelle 6 und 6b (`kontrollvariablen`, 13 Zeilen) und die Kacheln der Gremien. Wer
+die Zahl sucht, um die es geht, soll sie sehen, ohne zu klicken. Das Kriterium ist also nicht die
+Zeilenzahl, sondern die Rolle: eine Aufzählung klappt ein, ein Ergebnis nicht. Dass die Vorschau
+ohnehin nur greift, wo mehr Zeilen als Vorschauzeilen stehen, erledigt die kurzen Tabellen von
+selbst (Review 2026-10-13, Befund 10).
 
 ## 4. Entscheidung 2: die Begriffslisten werden nachgeladen
 

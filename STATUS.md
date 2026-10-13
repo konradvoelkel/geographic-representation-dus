@@ -197,7 +197,7 @@ und sagt je, warum sie liegen bleiben.
   der Parteikarten 28 KB, Suchindex 8 KB, Leerraum 4,4 KB); der Minify-Schritt für Leerraum fällt
   mit 0,50 % unter die Grenze von 5 %.
 - **Die Begriffslisten je Wahlbezirk werden nachgeladen** (`docs/decisions.md`, Punkt 49): sie
-  stehen als `data/begriffe.json` (96 KB, 6877 Paare aus Wahlbezirk und Begriff) neben der Seite
+  stehen als `data/begriffe.json` (96 KB, 3946 Paare aus Wahlbezirk und Begriff mit Treffer) neben der Seite
   und kommen beim ersten Aufklappen über `georep.loadJson`, wie die Dokumente beim ersten Klick auf
   einen Begriff. Das war mit 333 750 Byte (26 %) der größte Posten; `index.html` 1 285 594 →
   958 527 Byte. Aus `file://` steht dort derselbe Hinweis wie im Dokumentdialog
