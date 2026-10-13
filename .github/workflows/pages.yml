@@ -48,15 +48,16 @@ jobs:
           uv run georep --profile duesseldorf-vergleich run || exit 1
           # Der Abschnitt „Zwei Wahlperioden" verlinkt <profil>/ relativ zur Stadtseite, also
           # gehört die Unterseite in deren Ordner; publish nimmt sie mit.
-          uv run georep paths >main.paths || exit 1
-          uv run georep --profile duesseldorf-2014 paths >period.paths || exit 1
-          MAIN=$(sed -n 's/^site=//p' main.paths)
-          PERIOD=$(sed -n 's/^site=//p' period.paths)
-          PROFILE=$(sed -n 's/^profile=//p' period.paths)
+          # Die Ausgabe von `paths` geht in RUNNER_TEMP, nicht in den Klon: dort raeumt der
+          # Runner selbst auf, und kein Lauf legt Dateien neben die Quellen.
+          uv run georep paths >"$RUNNER_TEMP/main.paths" || exit 1
+          uv run georep --profile duesseldorf-2014 paths >"$RUNNER_TEMP/period.paths" || exit 1
+          MAIN=$(sed -n 's/^site=//p' "$RUNNER_TEMP/main.paths")
+          PERIOD=$(sed -n 's/^site=//p' "$RUNNER_TEMP/period.paths")
+          PROFILE=$(sed -n 's/^profile=//p' "$RUNNER_TEMP/period.paths")
           [ -n "$MAIN" ] && [ -n "$PERIOD" ] && [ -n "$PROFILE" ] || exit 1
           rm -rf "$MAIN/$PROFILE" || exit 1
           cp -r "$PERIOD" "$MAIN/$PROFILE" || exit 1
-          rm -f main.paths period.paths || exit 1
       # Option 01: die zweite Stadt baut nur mit, wenn ihr Paket unter reference/<slug>/ liegt;
       # sonst meldet publish sie als "kein Lauf" und die Vergleichsseite entfällt (Exit 0).
       - name: Zweite Stadt, wenn ihr Paket da ist
