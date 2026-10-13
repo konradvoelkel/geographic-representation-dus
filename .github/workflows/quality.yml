@@ -6,17 +6,20 @@
 #
 # Laufzeit, geschaetzt aus den Messungen vom 2026-10-13 auf dreizehn Kernen
 # (docs/mutation-2026-10-13.md, docs/absicherung-2026-10.md):
-#   verify  rund 6 min lokal; crosshair begrenzt jede Bedingung auf 20 s Rechenzeit, die Zahl der
-#           Kerne aendert daran wenig. Auf dem Runner sind rund 10 min zu erwarten.
+#   verify  580 s lokal mit 31 Zielen (gemessen 2026-10-13); crosshair begrenzt jede Bedingung auf
+#           20 s Rechenzeit, die Zahl der Kerne aendert daran wenig. Auf dem Runner sind rund
+#           12 min zu erwarten.
 #   mutate  403 s lokal fuer die acht Module unten mit drei Arbeitern; mit zwei Arbeitern auf zwei
 #           Kernen rund das Doppelte, also rund 14 min.
 # Zusammen mit Checkout und `uv sync` bleibt der Lauf unter 30 min; `timeout-minutes: 45` ist die
-# Grenze aus dem Auftrag und bricht ab, bevor eine Sitzung haengt.
+# Grenze aus dem Auftrag und bricht ab, bevor eine Sitzung haengt. Reicht es nicht, faellt die
+# Mutationssitzung weg und nur verify bleibt (so steht es im Auftrag).
 #
-# Die acht Module sind die, die lokal unter 90 s brauchen. Nicht dabei, mit gemessener Zahl:
-# analysis/ols.py (166 s), crosswalk.py (141 s), report/publish.py (197 s),
-# report/comparison.py (116 s), analysis/parties.py (rund 40 min) und analysis/topics.py (jeder
-# Mutant rechnet NMF). Sie bleiben in `nox -s mutate` fuer den Lauf von Hand.
+# Die acht Module sind die, die im Lauf vom 2026-10-13 unter 90 s brauchten. Nicht dabei, mit
+# gemessener Zahl: report/publish.py (197 s), analysis/ols.py (166 s), analysis/parties.py (168 s),
+# crosswalk.py (141 s), report/comparison.py (116 s) und analysis/topics.py (jeder Mutant rechnet
+# NMF, der Lauf vom 2026-10-12 war nach 35 min nicht durch). Sie bleiben in `nox -s mutate` fuer
+# den Lauf von Hand.
 # Actions per SHA gepinnt wie in ci.yml; Workflow-Dateien gehen nur per SSH ins Repo, das
 # gh-Token hat keinen workflow-Scope.
 name: quality

@@ -408,7 +408,7 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `golden` | die volle Referenz | CI, lokal `uv run pytest -m slow` |
 | `bench` | heiße Pfade gegen den letzten gespeicherten Lauf, rot ab 20 % langsamer im Minimum | lokal |
 | `profile -- SCHRITT` | ein echter Schritt unter cProfile | lokal |
-| `verify` | crosshair über die reinen Funktionen mit Verträgen (31 Ziele), rund sechs Minuten; zwei Ziele sind mit Begründung ausgenommen (`parse_reference`: crosshair baut für `re.Pattern \| None` einen symbolischen Regex und bricht ab; `bars`: sein Gegenbeispiel ist eine Zahl mit 300 Stellen) | lokal, und wöchentlich in Actions (`quality.yml`) |
+| `verify` | crosshair über die reinen Funktionen mit Verträgen (31 Ziele), rund zehn Minuten (580 s am 2026-10-13); zwei Ziele sind mit Begründung ausgenommen (`parse_reference`: crosshair baut für `re.Pattern \| None` einen symbolischen Regex und bricht ab; `bars`: sein Gegenbeispiel ist eine Zahl mit 300 Stellen) | lokal, und wöchentlich in Actions (`quality.yml`) |
 | `alone` | Reihenfolgeunabhängigkeit: jede Testdatei einmal allein (drei parallel), dann die ganze schnelle Suite rückwärts | lokal |
 | `mutate` | pytest-gremlins über die gemessenen Module (`GREMLIN_TARGETS` im `noxfile.py`), drei Arbeiter, einmal pro größerer Änderung; `analysis/topics.py` ist ausgenommen (jeder Mutant rechnet NMF). Wer ein einzelnes Modul messen will, übergibt auch nur dessen Testdateien | lokal, und wöchentlich in Actions (`quality.yml`) mit den acht Modulen unter 90 s |
 

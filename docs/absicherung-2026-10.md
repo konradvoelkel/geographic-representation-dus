@@ -162,10 +162,10 @@ Kein Netz, kein Pages-Schritt, kein Gate für einen Push — rot wird der Lauf n
 Befund (crosshair findet ein Gegenbeispiel, oder eine Sitzung bricht ab); überlebende Mutanten sind
 keiner (decisions.md, Punkt 12).
 
-Geschätzt: verify rund 10 min auf dem Runner (crosshair begrenzt jede Bedingung auf 20 s
-Rechenzeit, die Zahl der Kerne ändert daran wenig), mutate rund 14 min (403 s lokal mit drei
-Arbeitern, auf zwei Kernen etwa das Doppelte), zusammen mit Checkout und `uv sync` **unter 30
-Minuten**. `timeout-minutes: 45` ist die Grenze aus dem Auftrag. Die fünf teuren Module stehen mit
+Gemessen und geschätzt: verify **580 s lokal** mit 31 Zielen, auf dem Runner rund 12 min (crosshair
+begrenzt jede Bedingung auf 20 s Rechenzeit, die Zahl der Kerne ändert daran wenig); mutate rund
+14 min (403 s lokal mit drei Arbeitern, auf zwei Kernen etwa das Doppelte); zusammen mit Checkout
+und `uv sync` **unter 30 Minuten**. `timeout-minutes: 45` ist die Grenze aus dem Auftrag. Die fünf teuren Module stehen mit
 Zahl im Kommentar und bleiben dem Lauf von Hand.
 
 ## 6 Zahlen am Ende des Tages
@@ -173,9 +173,9 @@ Zahl im Kommentar und bleiben dem Lauf von Hand.
 | Prüfung | Ergebnis |
 |---|---|
 | `uv run nox` | Exit 0; 1062 schnelle Tests in 55 s, Abdeckung 98,33 % |
-| `uv run pytest -m slow` | Exit 0; 20 Tests über die volle Referenz, 190 s |
+| `uv run pytest -m slow` | Exit 0; 20 Tests über die volle Referenz, 191 s |
 | `uv run nox -s bench` | Exit 0; 17 Messungen gegen die gespeicherte Baseline |
-| `uv run nox -s verify` | Exit 0; 31 Ziele, 27 „Not confirmed" |
+| `uv run nox -s verify` | Exit 0; 31 Ziele, 27 „Not confirmed", 580 s |
 | `uv run nox -s alone` | Exit 0; 97 Dateien allein, Suite rückwärts 1061 Tests |
 | `uv run nox -s mutate` (je Modul) | 876 Mutanten, 712 getötet (81,3 %) |
 
