@@ -72,7 +72,11 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - Eine Refactoring-Sorte pro Commit. Formatierung und Modernisierung sind je ein eigener Commit und stehen in `.git-blame-ignore-revs`. Keine inhaltliche Änderung fährt mit.
 - Betreff im Imperativ, rund 50 Zeichen, kein Punkt; der Body sagt, warum, mit Datum und Fehlertext, wenn es einen gab.
 - Nach jedem Commit `uv run nox`. Wird der Golden Master rot, war es kein Refactoring: zurücknehmen und bewusst entscheiden.
-- Verhaltensänderungen zuerst mit rotem Test, dann die Änderung, je ein Commit.
+- Verhaltensänderungen zuerst mit rotem Test, dann die Änderung. **Test und Änderung gehen in einen
+  Commit, wenn der Body den roten Lauf mit Exit-Code und Testnamen belegt** (Entscheidung vom
+  2026-10-13; so gilt beides zugleich: der rote Test zuerst und jeder Commit auf `main` allein grün —
+  ein eigener Commit nur für den roten Test wäre ein roter Commit auf `main`). Das ist die Praxis seit
+  dem 2026-10-12, und ein Review darf sie nicht als Verstoß werten.
 - Eine Eigenschaft, die für alle Eingaben gilt, wird ein hypothesis-Test in `tests/property/`, kein Beispieltest; wer den Matcher ersetzt, misst sich an `tests/property/oracle_matcher.py`. Snapshots (`syrupy`) nur für kleine, stabile Ausgaben und nie blind mit `--snapshot-update` erneuern.
 - Direkt auf `main`: nach jedem Commit `uv run nox`, dann Push; CI über die Actions-REST-API prüfen (`gh run list` liefert für dieses Repo leer). Tag bei Versionssprung; Versionen stehen in `pyproject.toml`, `src/georep/__init__.py` und `uv.lock` (`uv lock`), jede mit einer Zeile im `CHANGELOG.md`. So hat Konrad es am 2026-10-11 angewiesen.
 - Prüfschritte in Skripten nie hinter eine Pipe stellen (`uv run pytest | tail`): die Pipe frisst den Exit-Code, und am 2026-10-11 landeten so zwei rote Commits. Erst der Befehl allein, dann die Ausgabe ansehen.
