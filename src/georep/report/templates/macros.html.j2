@@ -12,7 +12,9 @@
 #}
 {#
   Punkt 48: die Vorschau einer langen Tabelle. Die Tabelle trägt ``class="preview"``, und dieses
-  Makro setzt die Schaltfläche darunter -- aber nur, wenn es etwas zu klappen gibt (``rows`` ist
+  Makro setzt die Schaltfläche **vor** sie (das Aufklappmuster der WAI-ARIA Authoring Practices
+  setzt das Bedienelement vor den Inhalt; hinter 41 Zeilen rutschte es beim Aufklappen mit dem
+  Fokus aus dem Bild) -- aber nur, wenn es etwas zu klappen gibt (``rows`` ist
   die Zahl der Zeilen im ``<tbody>``, ``preview`` die Zahl der Vorschauzeilen aus
   ``model.preview_rows``). Welche Zeilen sichtbar sind, entscheidet CSS im Rahmen
   (``table.preview tbody tr:nth-child(n+N)``): darum stimmt die Vorschau auch nach dem Sortieren,

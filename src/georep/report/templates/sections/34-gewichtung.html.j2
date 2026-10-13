@@ -7,6 +7,7 @@
 <p>Ein Dokument bekommt je Wahlbezirk das Gewicht <em>max</em> über seine getroffenen Begriffe von (Gewicht des Begriffs × Gewicht der Dokumentart × Anteil des Themas); jeder Faktor liegt zwischen 0 und 1, also zählt ein Dokument je Bezirk höchstens einmal, wie bisher. Die gewichteten Treffer sind die Summe dieser Gewichte, die gewichtete Quote wieder je Wahlberechtigtem. Mit Einheitsgewichten ist das genau die Trefferquote der Arbeit: die erste Zeile trägt dieselben Zahlen wie Tabelle 5 darüber.</p>
 <h3>Sensitivitätstabelle</h3>
 <p class="note">Spaltenköpfe sortieren. „Summe" ist die Summe der gewichteten Treffer über alle Wahlbezirke, ρ die Rangkorrelation der gewichteten zur ungewichteten Quote (1 = dieselbe Reihenfolge der Wahlbezirke). „—" steht, wo eine Variante keine Streuung hat und es keine Regression gibt.{% if s.topics %} Die Zeilen „Thema <em>n</em>" zählen je Dokument nur seinen Anteil an diesem Thema; welche Wörter ein Thema tragen, steht in der Tabelle darunter.{% endif %}</p>
+{{ more("gewichtung-tabelle", s.rows|length, model.preview_rows) }}
 <div class="scroll"><table id="gewichtung-tabelle" class="preview">
 <thead>
 <tr>
@@ -53,7 +54,6 @@
 </tr>
 {% endfor %}
 </tbody></table></div>
-{{ more("gewichtung-tabelle", s.rows|length, model.preview_rows) }}
 <p>Von den {{ s.rows|length }} Gewichtungen erreicht der Zusammenhang über alle {{ model.figures.districts }} Wahlbezirke in {{ s.significant_all|num }} das {{ s.level|pct(0) }}-Niveau{% if s.has_without %}, ohne die Wahlbezirke {{ s.excluded|join(' und ') }} in {{ s.significant_without|num }}{% endif %}. Welche das sind, steht in der Tabelle; eine „richtige" Gewichtung benennt diese Seite nicht.</p>
 {% if s.has_without %}
 <p class="footnote">Die rechte Hälfte lässt für jede Variante dieselben Wahlbezirke weg ({{ s.excluded|join(' und ') }}, die beiden höchsten ungewichteten Trefferquoten), damit die Zeilen vergleichbar bleiben. Unter einer Gewichtung können andere Wahlbezirke die höchsten Quoten haben.</p>
@@ -62,6 +62,7 @@
 {% set seeded = s.topics|selectattr('body')|list %}
 <h3>Die {{ s.topics|length }} Themen</h3>
 <p class="note">Ein Themenmodell (TF-IDF und NMF) verteilt jedes Dokument mit Text auf {{ s.topics|length }} Themen; je Thema steht oben eine Variante, die nur den Anteil des Dokuments an diesem Thema zählt.{% if seeded %} {{ seeded|length }} der Themen sind <em>gesät</em>: ihre Wörter kommen aus den Dokumenten, die nachweislich in diesem Ausschuss beraten wurden (Kürzel aus der Drucksachennummer, siehe „Gremien"), und sind die Wörter, die diesen Ausschuss von den anderen trennen. Die übrigen {{ s.topics|length - seeded|length }} rechnen frei auf dem, was dann noch übrig ist.{% endif %}</p>
+{{ more("themen-tabelle", s.topics|length, model.preview_rows) }}
 <div class="scroll"><table id="themen-tabelle" class="preview">
 <thead><tr>
 <th scope="col" class="num" data-sort="num">Nr.</th>
@@ -79,7 +80,6 @@
 <td class="num" data-value="{{ t.hits_share }}">{{ t.hits_share|pct(1) }}</td></tr>
 {% endfor %}
 </tbody></table></div>
-{{ more("themen-tabelle", s.topics|length, model.preview_rows) }}
 <p class="footnote">{% if seeded %}Ein gesätes Thema trägt den Namen seines Ausschusses, weil seine Wörter von dort kommen; dass ein Dokument diesem Thema zufällt, heißt aber nicht, dass es dort beraten wurde. Ein freies Thema{% else %}Ein Thema{% endif %} wird von seinen Wörtern beschrieben, nicht benannt: eine Deutung verspricht diese Seite nicht. „Dokumente" zählt die Dokumente, deren stärkstes Thema dieses ist; „Anteil an den Treffern" den Anteil dieses Themas an den gezählten Treffern aller Wahlbezirke. Die Nummern gelten nur für diesen Datenstand: ein Lauf über andere Dokumente vergibt sie neu.</p>
 {% endif %}
 </section>

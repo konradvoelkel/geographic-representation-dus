@@ -2,6 +2,7 @@
 <section id="downloads">
 <h2>Downloads</h2>
 <p>Parquet trägt Typen und Listen und ist das primäre Format; CSV daneben für Tabellenkalkulationen (Listen mit „; " verbunden); GeoJSON in EPSG:4326 für GIS; <code>schema.json</code> beschreibt die Spalten maschinenlesbar. Prüfsummen sind SHA-256.</p>
+{{ more("downloads-table", model.downloads|length, model.preview_rows) }}
 <div class="scroll"><table id="downloads-table" class="preview">
 <thead><tr><th scope="col">Datei</th><th scope="col">Format</th><th scope="col" class="num">Zeilen</th><th scope="col" class="num">Größe</th><th scope="col">Beschreibung</th><th scope="col">SHA-256</th></tr></thead>
 <tbody>
@@ -9,7 +10,6 @@
 <tr><td><a href="data/{{ d.name }}">{{ d.name }}</a></td><td>{{ d.format }}</td><td class="num">{% if d.rows is not none %}{{ d.rows|num }}{% endif %}</td><td class="num">{{ d.bytes|kib }}</td><td>{{ d.description }}</td><td><code>{{ d.sha256 }}</code></td></tr>
 {% endfor %}
 </tbody></table></div>
-{{ more("downloads-table", model.downloads|length, model.preview_rows) }}
 <h3>Spaltenschema</h3>
 {% for table in tables %}
 <details>

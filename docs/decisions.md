@@ -1020,7 +1020,11 @@ Messung je Abschnitt, je Tabelle und je Element steht in [seitengroesse-2026-10.
 skript-tragende Elemente; ein `<details>` um die hinteren Zeilen trägt der HTML-Parser aus der Tabelle
 heraus (foster parenting), die Zeilen landen davor und sind keine Tabellenzeilen mehr. Also ein
 `<button type="button">` mit `aria-expanded` und `aria-controls` auf die Tabelle, gebaut vom Makro
-`more(id, rows, preview)` in `templates/macros.html.j2`. **Verworfen:** die Tabelle in zwei Tabellen
+`more(id, rows, preview)` in `templates/macros.html.j2`. Er steht **vor** seiner Tabelle, wie das
+Aufklappmuster der WAI-ARIA Authoring Practices es vorsieht: hinter 41 Zeilen rutschte er beim
+Aufklappen mit dem Fokus aus dem Bild (von y = 436 auf y = 3924, Review 2026-10-13). Ein Dreieck
+aus `::before` zeigt den Zustand (`▸` zu, `▾` offen) und kommt aus `aria-expanded`, nicht aus
+JavaScript — es kann also nicht lügen, und die Zeile sieht nach Bedienelement aus statt nach Link. **Verworfen:** die Tabelle in zwei Tabellen
 zerlegen und die zweite in ein `<details>` stecken (zwei Spaltenbreiten, zwei Sortierungen, der Kopf
 gilt nur noch für die Vorschau); ein `<details>` je Zeile (41 Aufklapper sind keine Tabelle mehr).
 
@@ -1044,6 +1048,13 @@ aufbauen (dann sieht jeder Leser die Tabelle einmal lang und dann kurz, ein Spru
 Perioden, sobald sie Daten hat). Offen bleiben die Kernzahlen, Tabelle 5, Tabelle 6 und 6b: das ist
 der Befund, und wer die Zahl sucht, um die es geht, soll sie ohne Klick sehen. Die sechs Tabellen der
 Spaltendoku stehen schon je in einem `<details>` und brauchen nichts.
+
+**Der Kontrast war zu klein.** `--accent` trug in Hell 4,19:1 auf `--bg` — unter den 4,5:1, die
+WCAG AA für 14,4-px-Text verlangt, und das betraf jeden Link der Seite, nicht nur die neue
+Schaltfläche (Review 2026-10-13). Hell ist `--accent` jetzt `#1f68c0` (5,24:1 auf `--bg`, 5,38:1
+auf `--surface`), Dunkel bleibt `#3987e5` (5,34:1 und 4,79:1); `--q2` bleibt `#2a78d6`, denn die
+Farbskala der Karte trägt keinen Text. Die vier Zahlen stehen als Kommentar an der Palette, und ein
+Test rechnet sie aus der gerenderten Seite nach, damit sie nicht allein im Kommentar stehen.
 
 **Drei Zeilen stehen in den Settings** (`report.table_preview_rows`, 0 heißt „nichts einklappen"), weil
 die Zahl Geschmack ist und nicht Technik; sie gilt für alle Tabellen gleich. `[report]` zählt nicht zum

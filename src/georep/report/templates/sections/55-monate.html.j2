@@ -8,6 +8,7 @@
 <li><span class="swatch bar-documents"></span>alle Dokumente</li>
 <li><span class="swatch bar-hits"></span>mit Treffer</li>
 </ul></div>
+{{ more("monate-tabelle", model.timeline|length, model.preview_rows) }}
 <div class="scroll"><table id="monate-tabelle" class="preview">
 <thead><tr>
 <th scope="col" data-sort="num">Monat</th>
@@ -25,7 +26,6 @@
 </tr>
 {% endfor %}
 </tbody></table></div>
-{{ more("monate-tabelle", model.timeline|length, model.preview_rows) }}
 <p class="footnote">Summe über alle Zeilen: {{ model.figures.documents|num }} Dokumente, so viele wie im Korpus. Ein Dokument ohne Datum (im Ratsinformationssystem selten) zählt zur Summe, aber zu keinem Monat.</p>
 </section>
 {% endif %}

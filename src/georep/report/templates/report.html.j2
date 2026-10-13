@@ -6,10 +6,17 @@
 <title>Geografische Repräsentation in {{ model.city.adjective }} Ratsdokumenten, {{ model.period.title }}</title>
 <meta name="description" content="Wie sichtbar sind die {{ model.figures.districts }} Kommunalwahlbezirke {{ model.city.genitive }} in den Ratsdokumenten der {{ model.period.title }}, und hängt das mit der Wahlbeteiligung zusammen? Karte, Tabellen, Downloads.">
 <style>
+/* Punkt 48, Review 2026-10-13: --accent trägt Links und die Schaltfläche der Vorschau, beides
+   0,9rem = 14,4 px, also normaler Text mit 4,5:1 nach WCAG AA. Nachgerechnet gegen die beiden
+   Flächen der Seite (--bg und --surface):
+     hell   #1f68c0: 5,24 und 5,38   (vorher #2a78d6: 4,19 und 4,30, beides unter AA)
+     dunkel #3987e5: 5,34 und 4,79
+   Ein Test rechnet es nach (tests/unit/test_report_render.py), damit die Zahlen nicht allein im
+   Kommentar stehen. --q2 bleibt #2a78d6: die Farbskala der Karte trägt keinen Text. */
 :root {
   color-scheme: light dark;
   --bg: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
-  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11, 11, 11, 0.10); --accent: #2a78d6;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11, 11, 11, 0.10); --accent: #1f68c0;
   --selected: #eb6834;
   --q0: #86b6ef; --q1: #5598e7; --q2: #2a78d6; --q3: #1c5cab; --q4: #0d366b;
 }
@@ -130,8 +137,14 @@ tr.selected td { background: color-mix(in srgb, var(--selected) 18%, var(--surfa
 table.preview tbody tr:nth-child(n+{{ model.preview_rows + 1 }}) { display: none; }
 table.preview.open tbody tr, table.preview tbody tr.selected, table.preview tbody tr:target { display: table-row; }
 {% endif %}
-p.more { margin: .3rem 0 0; }
+/* Der Aufklapper steht vor seiner Tabelle (WAI-ARIA Authoring Practices: das Bedienelement vor
+   dem Inhalt) -- hinter 41 Zeilen rutschte er beim Aufklappen mit dem Fokus aus dem Bild. Das
+   Dreieck kommt aus aria-expanded und nicht aus JavaScript: so kann es nicht lügen, und die Zeile
+   sieht nach Bedienelement aus und nicht nach Link. */
+p.more { margin: .3rem 0 .2rem; }
 p.more button { font: inherit; font-size: .9rem; color: var(--accent); background: none; border: 0; padding: .2rem 0; cursor: pointer; }
+p.more button::before { content: "▸ "; }
+p.more button[aria-expanded="true"]::before { content: "▾ "; }
 p.more button:hover, p.more button:focus { text-decoration: underline; }
 @media print {
   /* Alles offen, nichts zum Klicken: !important, weil die Vorschauregel über :nth-child

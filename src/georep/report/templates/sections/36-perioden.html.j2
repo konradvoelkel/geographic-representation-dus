@@ -41,6 +41,7 @@
 </div>
 <h3>Je Wahlbezirk</h3>
 <p class="note">Spaltenköpfe sortieren; eine Zeile anklicken markiert den Bezirk auch in Karte und Streudiagrammen.</p>
+{{ more("perioden-tabelle", c.rows|length, model.preview_rows) }}
 <div class="scroll"><table id="perioden-tabelle" class="preview">
 <thead><tr>
 <th scope="col" class="num" data-sort="num">Nr.</th>
@@ -70,6 +71,5 @@
 </tr>
 {% endfor %}
 </tbody></table></div>
-{{ more("perioden-tabelle", c.rows|length, model.preview_rows) }}
 </section>
 {% endif %}

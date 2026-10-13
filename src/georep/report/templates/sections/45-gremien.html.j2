@@ -13,6 +13,7 @@
 
 <h3>Je Wahlbezirk</h3>
 <p class="note">Spaltenköpfe sortieren. „Eigene BV" ist die Bezirksvertretung eines Stadtbezirks, in dem der Wahlbezirk Wahlberechtigte hat; in Klammern ihr Anteil an allen Treffern des Bezirks. „Quote" sind diese Treffer je Wahlberechtigtem.</p>
+{{ more("gremien-bezirke", model.districts|selectattr("bodies")|list|length, model.preview_rows) }}
 <div class="scroll"><table id="gremien-bezirke" class="preview">
 <thead><tr>
 <th scope="col" class="num" data-sort="num">Nr.</th>
@@ -44,10 +45,10 @@
 </tr>
 {% endif %}{% endfor %}
 </tbody></table></div>
-{{ more("gremien-bezirke", model.districts|selectattr("bodies")|list|length, model.preview_rows) }}
 
 <h3>Je Gremium</h3>
 <p class="note">Nach Art sortiert, darin nach Dokumenten. Die Lokalität einer Bezirksvertretung ist der Anteil ihrer Treffer, der in Wahlbezirken ihres eigenen Stadtbezirks liegt.</p>
+{{ more("gremien-liste", model.bodies|length, model.preview_rows) }}
 <div class="scroll"><table id="gremien-liste" class="preview">
 <thead><tr>
 <th scope="col" data-sort="text">Kürzel</th>
@@ -71,7 +72,6 @@
 </tr>
 {% endfor %}
 </tbody></table></div>
-{{ more("gremien-liste", model.bodies|length, model.preview_rows) }}
 
 {% set shared = model.districts|selectattr("bodies")|selectattr("bodies.shared")|list %}
 {% if shared %}
@@ -86,6 +86,7 @@
 {% set named = model.assignment|selectattr('code')|list %}
 <h3>Dokumente je passendem Ausschuss</h3>
 <p>Die Tabelle oben zählt, wo ein Dokument <em>beraten wurde</em>. Viele Dokumente waren nie in einem Ausschuss: sie gingen in den Rat oder in eine Bezirksvertretung. Welcher Ausschuss <em>sachlich</em> zu ihnen passt, schätzt ein Klassifikator (TF-IDF und logistische Regression), der auf den Dokumenten gelernt hat, deren Drucksachennummer ein Ausschusskürzel trägt; {{ named|length }} Ausschüsse haben am Ende Dokumente bekommen. Liegt seine Wahrscheinlichkeit unter {{ model.assignment_threshold|pct(0) }}, zählt das Dokument als querschnittlich (Haushalt, Stellenplan, Jahresabschluss) und bleibt in der Restklasse.</p>
+{{ more("ausschuss-tabelle", model.assignment|length, model.preview_rows) }}
 <div class="scroll"><table id="ausschuss-tabelle" class="preview">
 <thead><tr>
 <th scope="col" data-sort="text">Ausschuss</th>
@@ -105,7 +106,6 @@
 </tr>
 {% endfor %}
 </tbody></table></div>
-{{ more("ausschuss-tabelle", model.assignment|length, model.preview_rows) }}
 <p class="note">{% if rest %}{{ rest[0].documents|num }} Dokumente ({{ rest[0].share|pct(1) }}) bleiben in der Restklasse. {% endif %}„Davon ohne Ausschussberatung" sind die Dokumente der Zeile, deren Drucksachennummer kein Ausschusskürzel trägt &ndash; für sie ist die Zuordnung eine Schätzung und keine Wiederholung dessen, was ohnehin in der Nummer steht. Eine Zuordnung sagt nichts darüber, ob ein Dokument dort hätte beraten werden müssen; sie sagt, dass seine Wörter denen dieses Ausschusses gleichen. Güte und Kreuzvalidierung stehen in <code>docs/themenmodell-2026-10.md</code>.</p>
 {% endif %}
 <p class="note">Die Zuordnung Kürzel zu Name steht in den Einstellungen des Programms{% if f.names_as_of %}, Stand {{ f.names_as_of|date_de }}{% endif %}; Quelle sind die Organisationen des Ratsinformationssystems und Dokumenttitel. {% if f.without_name %}{{ f.without_name|num }} Kürzel haben dort keinen gesicherten Namen und stehen nur mit dem Kürzel.{% endif %} Die Namen der Ausschüsse haben sich innerhalb der Wahlperiode teils geändert; das Kürzel bleibt der Schlüssel. Welches Gremium ein Dokument <em>beraten</em> hat, ist nicht als eigene Datei veröffentlicht: es folgt aus der Drucksachennummer in <code>dokumente.json</code> und der Regel am Anfang dieses Abschnitts. Der <em>passende</em> Ausschuss aus der Tabelle darüber ist dagegen eine Schätzung; veröffentlicht ist sie je Ausschuss zusammengefasst (<code>ausschuss_zuordnung</code>), nicht je Dokument.</p>

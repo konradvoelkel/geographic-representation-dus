@@ -4,6 +4,13 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Der Aufklapper langer Tabellen steht jetzt vor der Tabelle** und zeigt mit ▸ und ▾, ob sie zu
+  oder offen ist (Review 2026-10-13, Befunde 5 und 7); hinter 41 Zeilen rutschte er beim Aufklappen
+  mit dem Fokus aus dem Bild. Dazu ist die Akzentfarbe in Hell abgedunkelt (`#1f68c0` statt
+  `#2a78d6`): mit 14,4 px lag sie bei 4,19:1 unter den 4,5:1 von WCAG AA — das betraf jeden Link
+  der Seite. Jetzt 5,24:1 auf dem Seitengrund und 5,38:1 auf den Flächen, nachgerechnet von einem
+  Test.
+
 - **`index.html#bezirk-17` springt wieder** (Review 2026-10-13, Befund 1): die Vorschau langer
   Tabellen verbarg die Zeile, auf die eine geteilte Adresse zielt — für 38 der 41 Wahlbezirke lief
   der Sprung ins Leere. Die Vorschauregel zeigt jetzt neben einer markierten auch die Zeile unter

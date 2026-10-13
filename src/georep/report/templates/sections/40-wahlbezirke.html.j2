@@ -2,6 +2,7 @@
 <section id="wahlbezirke">
 <h2>Je Wahlbezirk</h2>
 <p class="note">Spaltenköpfe sortieren. Die fünf häufigsten Begriffe zählen Dokumente, in denen der Begriff vorkommt. Die Trefferquote ist die Zahl der Arbeit: Dokumente je Wahlberechtigtem, mal 1000 also Dokumente je 1000 Wahlberechtigte. Diese Spalte folgt der Einfärbung der <a href="#karte">Karte</a> und zeigt immer die Kennzahl, nach der die Flächen gerade gefärbt sind; bei „Treffer absolut" und „Wahlbeteiligung" wiederholt sie darum die Spalte daneben.</p>
+{{ more("districts", model.districts|length, model.preview_rows) }}
 <div class="scroll"><table id="districts" class="preview">
 <thead><tr>
 <th scope="col" class="num" data-sort="num">Nr.</th>
@@ -31,5 +32,4 @@
 </tr>
 {% endfor %}
 </tbody></table></div>
-{{ more("districts", model.districts|length, model.preview_rows) }}
 </section>

@@ -3,6 +3,7 @@
 <h2>Begriffe</h2>
 <p class="note">Ein Klick auf einen Begriff zeigt die Dokumente, in denen er vorkommt, mit Datum, Drucksache und Link auf das PDF im Ratsinformationssystem; die Liste wird beim ersten Klick aus <code>data/dokumente.json</code> nachgeladen. Die Begriffe je Wahlbezirk kommen ebenso beim Aufklappen aus <code>data/begriffe.json</code> &ndash; beides braucht einen Webserver, aus dem Dateisystem geöffnet erlaubt der Browser das Nachladen nicht.</p>
 <h3>Die {{ model.top_terms|length }} trefferstärksten Begriffe stadtweit</h3>
+{{ more("top-begriffe", model.top_terms|length, model.preview_rows) }}
 <div class="scroll"><table id="top-begriffe" class="preview">
 <thead><tr><th scope="col">Begriff</th><th scope="col" class="num">Dokumente</th><th scope="col">Wahlbezirk</th></tr></thead>
 <tbody>
@@ -10,7 +11,6 @@
 <tr><td>{{ term(t) }}</td><td class="num">{{ t.hits|num }}</td><td>{{ t.districts|join(', ') }}</td></tr>
 {% endfor %}
 </tbody></table></div>
-{{ more("top-begriffe", model.top_terms|length, model.preview_rows) }}
 {% if model.citywide %}{# Regel 2, decisions.md Punkt 44 #}
 <h3>Stadtweite Begriffe</h3>
 <p class="note">Diese {{ model.citywide.rows|length|num }} Begriffe stehen {{ model.citywide.basis }} und damit in weit mehr Dokumenten als der Rest. Viele dieser Dokumente handeln nicht von dem Wahlbezirk, dessen Wörterbuch den Begriff führt: eine große Straße, ein Park oder ein Platz wird in der ganzen Stadt besprochen. Sie sind mitgezählt — die Liste steht hier, damit die Grenze der Methode sichtbar ist.</p>

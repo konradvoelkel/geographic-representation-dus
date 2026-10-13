@@ -131,10 +131,54 @@ def test_a_foreign_link_in_the_svg_breaks_the_contract(
         render_report(model, bad)
 
 
-def test_download_table_is_stable(page: str, snapshot: SnapshotAssertion) -> None:
-    match = re.search(r'<table id="downloads-table".*?</table>', page, re.S)
+def test_download_table_is_stable(
+    model: ReportModel, visuals: Visuals, snapshot: SnapshotAssertion
+) -> None:
+    """Der Schnappschuss nimmt das Bedienelement mit (Review 2026-10-13, Befund 13).
+
+    Die Schaltfläche der Vorschau steht vor der Tabelle und gehört zu ihr; endete der Ausschnitt
+    am ``<table>``, blieben Beschriftung, ``aria-controls`` und ``aria-expanded`` ungeprüft. Die
+    Fixture hat drei Download-Dateien, darum rendert dieser Test mit zwei Vorschauzeilen -- sonst
+    gäbe es nichts zu klappen und keine Schaltfläche.
+    """
+    page = render_report(replace(model, preview_rows=2), visuals)
+    cut = r'<p class="more"><button[^>]*aria-controls="downloads-table".*?</table>'
+    match = re.search(cut, page, re.S)
     assert match is not None
     assert match.group(0) == snapshot
+
+
+def _relative_luminance(colour: str) -> float:
+    channels = (int(colour[i : i + 2], 16) / 255 for i in (1, 3, 5))
+    linear = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def _contrast(a: str, b: str) -> float:
+    first, second = _relative_luminance(a), _relative_luminance(b)
+    return (max(first, second) + 0.05) / (min(first, second) + 0.05)
+
+
+def test_the_accent_colour_reaches_wcag_aa_on_both_grounds_and_modes(page: str) -> None:
+    """Punkt 48, Review 2026-10-13: die Links und die Schaltfläche der Vorschau sind 14,4 px groß.
+
+    Normaler Text braucht 4,5:1. Hell lag ``--accent`` bei 4,19:1 auf ``--bg`` -- unter AA, und
+    das betraf jeden Link der Seite, nicht nur die Schaltfläche. Der Test rechnet die Farben aus
+    dem Rahmen nach, damit die Zahl im Kommentar nicht allein steht.
+    """
+    blocks = page.split("@media (prefers-color-scheme: dark)")
+    assert len(blocks) == 2
+    for mode, css in (("hell", blocks[0]), ("dunkel", blocks[1])):
+        found = {
+            name: re.search(rf"--{name}: (#[0-9a-f]{{6}})", css)
+            for name in ("accent", "bg", "surface")
+        }
+        assert all(found.values()), (mode, found)
+        accent = found["accent"].group(1)  # type: ignore[union-attr]
+        for ground in ("bg", "surface"):
+            colour = found[ground].group(1)  # type: ignore[union-attr]
+            ratio = _contrast(accent, colour)
+            assert ratio >= 4.5, f"{mode}: --accent {accent} auf --{ground} {colour} = {ratio:.2f}"
 
 
 def test_kib_formats_kilobytes() -> None:

@@ -95,6 +95,24 @@ def test_a_collapsed_row_opens_when_it_is_selected_targeted_or_the_table_is_open
     assert 'button.setAttribute("aria-expanded", open ? "true" : "false")' in narrow
 
 
+def test_the_button_stands_before_its_table(narrow: str) -> None:
+    """Das Aufklappmuster der WAI-ARIA Authoring Practices: der Aufklapper vor dem Inhalt.
+
+    Stand die Schaltfläche hinter der Tabelle, rutschte sie beim Aufklappen mit dem Fokus aus dem
+    Bild -- bei 41 Zeilen von y = 436 auf y = 3924 (Review 2026-10-13).
+    """
+    for name, _, _ in BUTTON.findall(narrow):
+        button = narrow.index(f'aria-controls="{name}"')
+        table = narrow.index(f'<table id="{name}"')
+        assert button < table, name
+
+
+def test_the_button_shows_whether_it_is_open(narrow: str) -> None:
+    """Ein Dreieck macht aus dem Text ein Bedienelement; es kommt aus dem Zustand, nicht aus JS."""
+    assert 'p.more button::before { content: "▸ "; }' in narrow
+    assert 'p.more button[aria-expanded="true"]::before { content: "▾ "; }' in narrow
+
+
 def test_without_javascript_every_row_and_no_button_is_there(narrow: str) -> None:
     block = re.search(r"<noscript><style>(.*?)</style></noscript>", narrow, re.S)
     assert block is not None

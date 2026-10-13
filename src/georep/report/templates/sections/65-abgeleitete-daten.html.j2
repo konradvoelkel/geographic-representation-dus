@@ -8,6 +8,7 @@
 <a href="{{ d.license_url }}">{{ d.license }}</a>. Die Daten liegen für {{ d.units }} {{ d.units_label }}
 vor und werden auf die {{ d.districts }} Wahlbezirke umgerechnet. Nichts davon ist
 Teil des Datensatzes der Arbeit; die Tabelle unten nennt je Variable, was aus welcher Größe wurde.</p>
+{{ more("kontext-variablen", d.variables|length, model.preview_rows) }}
 <div class="scroll"><table id="kontext-variablen" class="preview">
 <thead><tr><th scope="col">Variable</th><th scope="col">Einheit</th><th scope="col">Definition der Quelle (Anfang)</th>
 <th scope="col">Umrechnung</th><th scope="col">Quelle</th></tr></thead>
@@ -20,7 +21,6 @@ Teil des Datensatzes der Arbeit; die Tabelle unten nennt je Variable, was aus we
 <td>{{ v.source }}</td></tr>
 {% endfor %}
 </tbody></table></div>
-{{ more("kontext-variablen", d.variables|length, model.preview_rows) }}
 <p class="note">Die umgerechneten Werte stehen als <code>wahlbezirke_kontext.csv</code> zum Download, die
 Gewichte je {{ d.units_label }} und Wahlbezirk als <code>wahlbezirke_crosswalk.csv</code>; dort ist auch
 zu sehen, welcher Anteil des Gewichts auf Einheiten ohne Wert liegt (Spalten

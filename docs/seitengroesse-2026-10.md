@@ -86,9 +86,13 @@ nicht zu dick — es sind viele Zeilen, und sie stehen alle offen da. Genau das 
 
 ## 3. Entscheidung 1: lange Tabellen zeigen drei Zeilen
 
-Jede lange Tabelle zeigt Kopf und die ersten `report.table_preview_rows` Zeilen (Vorgabe: 3); darunter
-steht eine Schaltfläche „alle *n* Zeilen zeigen", die alle Zeilen aufklappt und wieder einklappt. Das
-Muster ist ein Makro in `templates/macros.html.j2` und gilt für alle Abschnitte.
+Jede lange Tabelle zeigt Kopf und die ersten `report.table_preview_rows` Zeilen (Vorgabe: 3); **vor**
+der Tabelle steht eine Schaltfläche „▸ alle *n* Zeilen zeigen", die alle Zeilen aufklappt und wieder
+einklappt. Das Muster ist ein Makro in `templates/macros.html.j2` und gilt für alle Abschnitte. Vor
+und nicht hinter der Tabelle, weil das Aufklappmuster der WAI-ARIA Authoring Practices das
+Bedienelement vor den Inhalt setzt — und weil die Schaltfläche hinter 41 Zeilen beim Aufklappen mit
+dem Fokus aus dem Bild rutschte (Review 2026-10-13). Das Dreieck kommt aus `aria-expanded` über
+`::before` und nicht aus JavaScript.
 
 ### 3.1 Warum ein `<button>` und kein `<details>`
 
