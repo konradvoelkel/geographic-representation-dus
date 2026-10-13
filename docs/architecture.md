@@ -407,11 +407,13 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `bench` | heiße Pfade gegen den letzten gespeicherten Lauf, rot ab 20 % langsamer im Minimum | lokal |
 | `profile -- SCHRITT` | ein echter Schritt unter cProfile | lokal |
 | `verify` | crosshair über die reinen Funktionen mit Verträgen, rund sechs Minuten; ein Ziel ist mit Begründung ausgenommen (crosshair baut für `re.Pattern | None` einen symbolischen Regex und bricht ab) | lokal |
-| `mutate` | pytest-gremlins über `search/` und `analysis/`, einmal pro größerer Änderung; mit `analysis/topics.py` im Ziel dauert die Session sehr lange (jeder Mutant rechnet NMF), darum besser gezielt je Modul | lokal |
+| `mutate` | pytest-gremlins über die gemessenen Module (`GREMLIN_TARGETS` im `noxfile.py`), drei Arbeiter, einmal pro größerer Änderung; `analysis/topics.py` ist ausgenommen (jeder Mutant rechnet NMF). Wer ein einzelnes Modul messen will, übergibt auch nur dessen Testdateien | lokal, und wöchentlich in Actions (`quality.yml`) mit den acht Modulen unter 90 s |
 
-Stand 2026-10-13: 901 schnelle Tests in rund 43 s, Abdeckung 98,3 %; Mutationsquote 79 % über
-`search/` und `analysis/` ([mutation-2026-10-11.md](mutation-2026-10-11.md)), 83 % über das neue
-`analysis/weights.py` ([mutation-2026-10-12.md](mutation-2026-10-12.md)).
+Stand 2026-10-13: 1050 schnelle Tests in rund 55 s, Abdeckung 98,3 %; Mutationsquote 81 % über die
+dreizehn Module des Ausbaus ([mutation-2026-10-13.md](mutation-2026-10-13.md): 876 Mutanten, 712
+getötet, 164 Überlebende, davon 99 in Vertragsgrenzen), 79 % über `search/` und `analysis/`
+([mutation-2026-10-11.md](mutation-2026-10-11.md)), 83 % über `analysis/weights.py`
+([mutation-2026-10-12.md](mutation-2026-10-12.md)).
 
 ## Bekannte Grenzen
 

@@ -4,6 +4,13 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Mutationstest über die dreizehn Module des Ausbaus** (`docs/mutation-2026-10-13.md`): 876
+  Mutanten, 652 getötet (74,4 %); mit den Tests, die die echten Lücken schließen, 712 (81,3 %). Die
+  Quote ist kein Gate, aber sie hat echte Löcher gezeigt: `analysis/scaling.dictionary_bias` hatte
+  keinen Test, die Zahlen der Vergleichsseite waren nur auf Anwesenheit geprüft, und die Spalte
+  `treffer` der Urheberzuordnung (mit der ein Mensch eine Zuordnung nachprüft) war nie verglichen.
+  Die Session `nox -s mutate` trägt jetzt alle gemessenen Module und läuft mit drei Arbeitern.
+
 - **`georep publish` fasst nur noch an, was ihm gehört** (Review zum Umzug, 2026-10-13): der
   Arbeitsordner der Kopie heißt nicht mehr `<ziel>.neu` (ein fremder Ordner dieses Namens wurde
   gelöscht), sondern trägt einen Namen von `mkdtemp`, den es noch nicht gibt. Die Stamps der

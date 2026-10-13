@@ -130,16 +130,59 @@ def verify(session: nox.Session) -> None:
     )
 
 
+# Die Ziele der Mutationssitzung: alles, was gemessen ist, damit der nächste Lauf dieselbe Liste
+# hat (docs/mutation-2026-10-11.md, -12.md, -13.md). Nicht dabei, mit Grund und Zahl:
+#
+#   src/georep/analysis/topics.py   jeder Mutant rechnet NMF; der Lauf vom 2026-10-12 war nach
+#                                   35 Minuten nicht durch (docs/mutation-2026-10-12.md).
+#   src/georep/report/model.py      noch nicht gemessen: 1 900 Zeilen, und das Modell entsteht in
+#   src/georep/report/charts.py     jedem Test der Seite neu. Ein eigener Lauf, wenn jemand ihn
+#   src/georep/report/build.py      misst; Stand 2026-10-13 ungemessen und darum nicht behauptet.
+#
+# Die Zeiten der dreizehn Module von 2026-10-13 stehen in docs/mutation-2026-10-13.md, § Zahlen;
+# zusammen rund 20 Minuten im Zuschnitt je Modul. Wer nur einen Teil will, gibt
+# ``--gremlin-targets=…`` als Posargs mit -- die letzte Angabe gewinnt. Genau das tut der
+# wöchentliche Qualitätslauf (.github/workflows/quality.yml) mit den acht Modulen unter 90 s.
+GREMLIN_TARGETS = ",".join(
+    [
+        # 2026-10-11 und -12
+        "src/georep/search",
+        "src/georep/analysis/hits.py",
+        "src/georep/analysis/regression.py",
+        "src/georep/analysis/weights.py",
+        # 2026-10-13: die dreizehn Module, die seit v0.11.0 dazukamen oder sich stark änderten
+        "src/georep/analysis/committees.py",
+        "src/georep/analysis/scaling.py",
+        "src/georep/analysis/parties.py",
+        "src/georep/analysis/timeline.py",
+        "src/georep/analysis/periods.py",
+        "src/georep/analysis/ols.py",
+        "src/georep/prep/pois.py",
+        "src/georep/prep/precincts.py",
+        "src/georep/crosswalk.py",
+        "src/georep/report/publish.py",
+        "src/georep/report/terms.py",
+        "src/georep/report/comparison.py",
+        "src/georep/report/search.py",
+    ]
+)
+
+
 @nox.session
 def mutate(session: nox.Session) -> None:
-    """Mutationstest mit pytest-gremlins über search/ und analysis/, einmal pro Phase, kein Gate.
-
-    ``analysis/topics.py`` bleibt außen vor (Kommentar unten); seine Zahlen stehen datiert in
-    docs/mutation-2026-10-12.md.
+    """Mutationstest mit pytest-gremlins über die gemessenen Module, kein Gate.
 
     Subprocess-Executor, kein fork (mutmut 3 blockierte so mit Polars, docs/mutation-2026-10-11.md).
-    Rund 100 s mit sechs Arbeitern (2026-10-11); der Bericht liegt unter coverage/gremlins/ (gitignored),
-    die Zahlen und die Deutung der Überlebenden stehen datiert in docs/mutation-2026-10-11.md.
+    **Drei Arbeiter, nicht sechs**: mit sechs wurde die Sitzung am 2026-10-12 unter der Last von
+    acht parallelen Agenten abgeschossen, und der Rechner hat dreizehn Kerne, von denen Polars und
+    BLAS schon welche nehmen. Der Bericht liegt unter coverage/gremlins/ (gitignored), die Zahlen
+    und die Deutung der Überlebenden stehen datiert in docs/mutation-2026-10-1{1,2,3}.md.
+
+    Die Testauswahl je Mutant ist **aus**: ``--cov`` in ``addopts`` lässt den Abdeckungsvorlauf
+    von gremlins leer ausgehen (zwei Warnungen im Lauf, mit ``--gremlin-explain`` bestätigt), und
+    ohne Daten fällt es auf alle übergebenen Tests zurück. Für die Quote ist das richtig -- kein
+    Mutant überlebt, weil ein Test fehlte --, für die Laufzeit teuer: wer ein einzelnes Modul
+    messen will, übergibt auch nur dessen Testdateien (docs/mutation-2026-10-13.md).
     """
     session.run(
         "uv",
@@ -153,16 +196,9 @@ def mutate(session: nox.Session) -> None:
         "-p",
         "no:cacheprovider",
         "--gremlins",
-        # Ohne analysis/topics.py: jeder Mutant dort laesst die schnelle Suite laufen, und die
-        # rechnet seit Option 06 mehrfach NMF; der Lauf vom 2026-10-12 war nach 35 Minuten noch
-        # nicht durch. Das Modul misst man gezielt (docs/mutation-2026-10-12.md).
-        "--gremlin-targets=src/georep/search,src/georep/analysis/hits.py,"
-        "src/georep/analysis/regression.py,src/georep/analysis/weights.py,"
-        # Punkt 45: der Klassifikator gehört dazu, sein Modell rechnet in der schnellen Suite
-        # nur auf 39 synthetischen Dokumenten (anders als das Themenmodell oben).
-        "src/georep/analysis/committees.py",
+        f"--gremlin-targets={GREMLIN_TARGETS}",
         "--gremlin-report=console,json",
-        "--gremlin-workers=6",
+        "--gremlin-workers=3",
         "--gremlin-mutant-timeout=60",
         *session.posargs,
     )

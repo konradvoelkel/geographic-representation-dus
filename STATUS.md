@@ -231,7 +231,7 @@ Datensatz, kein Lauf).
 
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46, 47 und 52)
 
-- Tests: 1016 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 1050 schnelle (nox-Gate, parallel in rund 55 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
@@ -244,10 +244,12 @@ Datensatz, kein Lauf).
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
 - Quelltext: 59 Python-Dateien unter `src/`, rund 16 600 Zeilen; fünf Profile im Paket.
-- Mutation (vor dem Ausbau gemessen): `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`), `analysis/`
-  auf dem Branch 03 133 von 175 Mutanten (76 %); die Überlebenden sind Vertrags-Lambdas an ihren Grenzen und
-  `frozen=True` an dataclasses. Mit sechs Arbeitern wurde die Sitzung unter der Last der acht parallelen
-  Agenten abgeschossen; drei Arbeiter und nur `analysis/` laufen in sieben Minuten durch.
+- Mutation (2026-10-13, `docs/mutation-2026-10-13.md`): 876 Mutanten über die dreizehn Module des
+  Ausbaus, 652 getötet (74,4 %), nach den neuen Tests 712 (81,3 %) und 164 Überlebende — davon 99 in
+  Vertragsgrenzen, 27 nachgerechnet äquivalent, 38 Grenzen, die nur ein genauer Wert unterscheidet.
+  Rund 20 Minuten für alle dreizehn Module mit **drei** Arbeitern im Zuschnitt je Modul; mit sechs
+  wurde die Sitzung am 2026-10-12 unter Last abgeschossen. Älter: `analysis/weights.py` 83 %
+  (`docs/mutation-2026-10-12.md`), `search/` und `analysis/` 79 % (`-11.md`).
 
 ## Bekannt
 
