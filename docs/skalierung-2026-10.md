@@ -377,8 +377,8 @@ Treffer; sie ist das Mittel über 41 Bezirke, und ein Dokument zählt in jedem B
 
 ## 7. Kosten (gemessen nach dem Bau)
 
-- **Seitengröße.** Vorher 1 158 408 Byte, nachher **1 295 185 Byte** (1,30 MB von 1,5 MB Budget), also
-  **136 777 Byte für beide Umschalter zusammen**, rund 67 KB je Umschalter und damit unter der Grenze von
+- **Seitengröße.** Vorher 1 158 408 Byte, nachher **1 295 184 Byte** (1,30 MB von 1,5 MB Budget), also
+  **136 776 Byte für beide Umschalter zusammen**, rund 67 KB je Umschalter und damit unter der Grenze von
   rund 100 KB je Umschalter. Davon messbar (2026-10-13): die Datenattribute der sechs Parteikarten und der
   Parteispalten 86 KB, die der großen Karte und der Bezirkstabelle 18 KB, der Rest Legenden, Texte,
   JavaScript und die längeren Tooltips. Keine zweite Kopie der Karten-SVGs: die 41 Flächen stehen weiter

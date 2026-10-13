@@ -152,7 +152,7 @@ genau die Treffer je Wahlbezirk und die Parteianteile (Entscheidungen in `docs/d
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` 1,30 MB (1 295 185 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
+- Berichtsseite: `index.html` 1,30 MB (1 295 184 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
   134 KB), 52 Dateien zusammen 13,4 MB, vierzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, downloads); „Zwei
