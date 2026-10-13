@@ -546,6 +546,22 @@ def test_period_label_and_dictionary_have_defaults_and_a_derived_title() -> None
     )
 
 
+def test_base_dictionary_names_the_case_it_collides_with(tmp_path: Path) -> None:
+    """Zwei Faelle, zwei Saetze (Review 2026-10-13, Befund 10).
+
+    Mit dem Ordner der Hauptperiode waere es derselbe Lauf; mit ``""`` waere es die Datenwurzel
+    selbst, in der die Ordner der Profile und ``site/`` liegen -- kein eigener Ordner.
+    """
+    (tmp_path / "settings.toml").write_text('[period]\ndictionary = "base"\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match="derselbe Lauf"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        'profile = ""\n[period]\ndictionary = "base"\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="Datenwurzel selbst"):
+        load_settings(cwd=tmp_path)
+
+
 def test_base_dictionary_needs_a_profile_of_its_own(tmp_path: Path) -> None:
     """Punkt 52: die Hauptperiode liegt unter dem Slug; wer sie liest, braucht einen anderen Ordner."""
     (tmp_path / "settings.toml").write_text('[period]\ndictionary = "base"\n', encoding="utf-8")
@@ -876,7 +892,7 @@ def test_every_package_profile_has_its_own_folder_and_the_city_keeps_its_slug() 
     das Wörterbuch in einem Ordner, in dem niemand rechnet. Zwei Profile dürfen sich einen Ordner
     teilen, wenn eines das andere nur um einen Schritt erweitert (der Vergleich die Hauptperiode).
     """
-    folders: dict[str, str] = {}
+    cities: dict[str, str] = {}  # Ordner -> Stadt, die darin rechnet
     for name in available_profiles():
         settings = load_settings(profile=name, cwd=NOWHERE)
         assert settings.base_profile == settings.city.slug
@@ -884,9 +900,15 @@ def test_every_package_profile_has_its_own_folder_and_the_city_keeps_its_slug() 
             assert settings.profile not in ("", settings.base_profile), name
         else:
             assert settings.profile == settings.base_profile, name
-        folders.setdefault(settings.profile, name)
-    # Jeder Ordner kommt einmal vor oder trägt denselben Lauf: 2014-2020, 2025 und zwei Städte
-    assert sorted(folders) == ["2014-2020", "2025", "duesseldorf", "moenchengladbach"]
+        # Zwei Profile in einem Ordner sind nur dieselbe Stadt (Hauptperiode und ihr Vergleich);
+        # zwei Städte darin überschrieben sich gegenseitig (Review 2026-10-13, Befund 5).
+        assert cities.setdefault(settings.profile, settings.city.slug) == settings.city.slug, name
+    assert cities == {
+        "duesseldorf": "duesseldorf",
+        "2014-2020": "duesseldorf",
+        "2025": "duesseldorf",
+        "moenchengladbach": "moenchengladbach",
+    }
 
 
 def test_profile_slug_must_match_the_file_name(tmp_path: Path) -> None:
@@ -897,6 +919,24 @@ def test_profile_slug_must_match_the_file_name(tmp_path: Path) -> None:
     (profiles / "a.toml").write_text(content, encoding="utf-8")
     with pytest.raises(SchemaError, match="city.slug"):
         load_settings(cwd=tmp_path, profile="a", profiles_dir=profiles)
+
+
+def test_a_city_profile_must_use_its_slug_as_its_folder(tmp_path: Path) -> None:
+    """Punkt 52 zur Ladezeit: ``Settings.base_profile`` ist der Slug, also muss er der Ordner sein.
+
+    Der Slug steht in einem Stadtprofil zweimal -- als ``profile`` (der Ordner) und als
+    ``city.slug`` (der Name). Dass beide zusammenpassen, prüft das Laden und nicht erst ein Test
+    über das Paket (Review 2026-10-13, Befund 11).
+    """
+    profiles = tmp_path / "profiles"
+    profiles.mkdir()
+    path = _package_profile(profiles, "test-stadt")
+    path.write_text(
+        path.read_text(encoding="utf-8").replace('profile = "test-stadt"', 'profile = "anders"'),
+        encoding="utf-8",
+    )
+    with pytest.raises(SchemaError, match="unter ihrem Slug"):
+        load_settings(cwd=tmp_path, profile="test-stadt", profiles_dir=profiles)
 
 
 def test_environment_selects_the_profile_but_never_sets_the_folder(

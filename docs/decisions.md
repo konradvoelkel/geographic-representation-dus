@@ -1219,10 +1219,15 @@ legt die Unterseite der zweiten Periode in den Ordner der **Stadt**, nicht nach 
 **Wo die Hauptperiode liegt, sagt `Settings.base_profile`, und das ist `city.slug`.** Zwei Stellen lasen sie
 vorher als `for_profile("")`: das Wörterbuch eines Periodenprofils (`period.dictionary = "base"`) und der
 Zielzuschnitt eines Crosswalk-Profils (`Layout.target_view`). Der Slug ist der Dateiname des Stadtprofils
-(`_slugs_match_their_file`), und eine Periode erbt ihn über `base`, also steht er genau einmal im Paket. Ein
-Test über alle Paketprofile hält die Zusage fest: wer das Wörterbuch der Hauptperiode liest, hat einen
-anderen Ordner als sie, und jedes andere Profil liegt unter seinem Slug. `_period_profile_is_consistent`
-verlangt dasselbe zur Ladezeit, jetzt auch für `profile = ""`.
+(`_slugs_match_their_file`), und eine Periode erbt ihn über `base`; im Stadtprofil selbst steht er zweimal,
+als `city.slug` (der Name) und als `profile` (der Ordner), weil `profile` je Profil setzbar sein muss — eine
+Periode hat einen anderen. Dass beide zusammenpassen, prüft seit dem Review vom 2026-10-13 das Laden:
+`_slugs_match_their_file` verlangt von jedem Profil, das `city.slug` setzt, denselben Wert als `profile`
+(geerbt käme dort der leere Ordner aus `defaults.toml` heraus, und `base_profile` wäre eine Lüge).
+`_period_profile_is_consistent` verlangt umgekehrt für ein Profil mit dem Wörterbuch der Hauptperiode einen
+anderen Ordner als sie, mit je einem Satz für die zwei Fälle (derselbe Ordner; `profile = ""`, das gar keiner
+ist, sondern die Wurzel darüber). Ein Test über alle Paketprofile hält dazu fest, dass in einem Ordner nie
+zwei Städte rechnen.
 
 **Verworfen:** `base_profile` als eigener Settings-Schlüssel (er stünde neben `profile` ein zweites Mal im
 Stadtprofil und wäre ein Tippfehler von einem Lauf im falschen Ordner entfernt); den Ordner der Wurzel des

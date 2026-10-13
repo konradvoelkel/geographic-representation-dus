@@ -1362,12 +1362,20 @@ class Settings(BaseSettings):
     def _period_profile_is_consistent(self) -> Settings:
         """Option 02: Basiswörterbuch, Crosswalk und Vergleich brauchen einander und ein Profil."""
         columns = self.columns.results
-        if self.period.dictionary == "base" and self.profile in ("", self.base_profile):
-            raise ValueError(
-                'period.dictionary = "base" liest die Hauptperiode unter profile '
-                f"{self.base_profile!r} und braucht darum einen eigenen Ordner: "
-                f"profile {self.profile!r} wäre derselbe Lauf"
-            )
+        if self.period.dictionary == "base":
+            # Zwei Faelle, zwei Saetze: derselbe Ordner ist derselbe Lauf, und die leere Angabe
+            # ist gar kein Ordner, sondern die Wurzel darueber (Review 2026-10-13).
+            if self.profile == self.base_profile:
+                raise ValueError(
+                    'period.dictionary = "base" liest die Hauptperiode unter profile '
+                    f"{self.base_profile!r}; mit demselben profile wäre das derselbe Lauf"
+                )
+            if not self.profile:
+                raise ValueError(
+                    'period.dictionary = "base" liest die Hauptperiode unter profile '
+                    f'{self.base_profile!r} und braucht einen eigenen Ordner; profile = "" '
+                    "ist die Datenwurzel selbst, in der die Ordner der Profile und site/ liegen"
+                )
         if self.crosswalk.enabled:
             if self.period.dictionary != "base":
                 raise ValueError(
@@ -1606,17 +1614,29 @@ def load_settings(
 
 
 def _slugs_match_their_file(name: str, folder: Traversable | None = None) -> None:
-    """Wer ``city.slug`` setzt, muss so heißen wie seine Datei; wer erbt, schweigt dazu.
+    """Wer ``city.slug`` setzt, muss so heißen wie seine Datei und darunter rechnen.
 
     So kann ein Profil eine Periode derselben Stadt sein (``duesseldorf-2014`` erbt den Slug) oder
-    eine eigene Stadt (``moenchengladbach`` setzt ihn), und niemand verwechselt beides.
+    eine eigene Stadt (``moenchengladbach`` setzt ihn), und niemand verwechselt beides. Wer den
+    Slug setzt, ist die Stadt, und die Hauptperiode einer Stadt rechnet unter ihrem Slug (Punkt
+    52): darum muss dasselbe Profil ``profile`` auf denselben Wert setzen -- ``Settings.base_profile``
+    verlässt sich darauf, und geerbt käme dort der leere Ordner aus ``defaults.toml`` heraus.
     """
     for step in profile_chain(name, folder):
-        city = _read_profile(step, folder).get("city")
+        layer = _read_profile(step, folder)
+        city = layer.get("city")
         slug = city.get("slug") if isinstance(city, dict) else None
-        if slug is not None and slug != step:
+        if slug is None:
+            continue
+        if slug != step:
             raise SchemaError(
                 f"Profil {step!r}: city.slug ist {slug!r}; der Slug muss dem Dateinamen gleichen"
+            )
+        if layer.get("profile") != slug:
+            raise SchemaError(
+                f"Profil {step!r}: city.slug ist {slug!r}, profile ist {layer.get('profile')!r}; "
+                "die Hauptperiode einer Stadt rechnet unter ihrem Slug, das Profil muss ihn "
+                "also auch als profile setzen"
             )
 
 
