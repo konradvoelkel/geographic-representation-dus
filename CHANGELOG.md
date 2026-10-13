@@ -24,8 +24,11 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 - **Die Berichtsseite baut neu, wenn sich eine Vorlage oder eine Anzeigeeinstellung ändert**
   (`docs/decisions.md`, Punkt 53): der Stamp des Schritts `report` trägt zusätzlich einen Hash über
-  die Vorlagendateien des Pakets (samt Abschnitts-CSS und -JavaScript), über `report/literatur.toml`
-  und über den Block `[report]` der Settings. `georep status` sagt dann „Vorlagen oder Anzeige
+  die Vorlagendateien des Pakets (samt Abschnitts-CSS und -JavaScript), über `report/literatur.toml`,
+  über den Block `[report]` der Settings und über die vier Anzeigewerte, die sonst in keinem
+  Fingerprint stehen (Stand der Gremiennamen, Periodenüberschrift, Namensnennung der Fremddaten,
+  Beschriftung der Gewichtungsregeln). Dasselbe gilt für das **Themenmodell**: `topics` merkt jetzt,
+  wenn sich die Stoppwortliste des Pakets ändert. `georep status` sagt dann „Vorlagen oder Anzeige
   geändert"; vorher blieb der Schritt „aktuell", und die Seite brauchte ein
   `georep run report --force`. Die Datenschritte laufen nicht mit neu.
 

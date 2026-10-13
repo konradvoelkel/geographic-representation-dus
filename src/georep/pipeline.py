@@ -104,7 +104,11 @@ from georep.report.geometry import district_shapes
 
 # Punkt 45: nur die zwei Zahlen, nicht die Modelle -- ``analysis.topics`` und
 # ``analysis.committees`` bringen sklearn mit und werden erst im Schritt importiert.
-from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION
+from georep.schema import (
+    ASSIGNMENT_SCHEMA_VERSION,
+    TOPICS_SCHEMA_VERSION,
+    stop_words_digest,
+)
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index
 from georep.settings import Settings
@@ -1099,6 +1103,9 @@ def build_steps(
                     topic_outputs,
                     topics,
                     TOPICS_SCHEMA_VERSION,
+                    # Punkt 53: die Stoppwortliste des Pakets prägt das Modell, steht aber in
+                    # keinem Eingabe-Hash -- im Fingerprint steht nur ihr Name.
+                    extra=stop_words_digest(settings.topics.stop_words),
                 )
             ]
             if with_topics

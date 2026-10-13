@@ -379,6 +379,19 @@ def report_fingerprint(settings: Settings, folder: Traversable | None = None) ->
        das richtig; für ``index.html`` war es falsch, und ``georep status`` meldete den Schritt
        nach einer geänderten Klassengrenze als „aktuell".
 
+    Nicht nur ``settings.report``: der globale Fingerprint lässt noch vier weitere **Anzeigewerte**
+    aus, weil kein Parquet-Ergebnis an ihnen hängt -- und alle vier stehen auf der Seite
+    (Review-Befund 8, 2026-10-13). ``bodies.names_as_of`` ist der Stand der Gremiennamen im
+    Abschnitt „Gremien", ``period.label`` die Überschrift der Periode, ``context.dataset`` die
+    Namensnennung der Fremddaten im Fuß und unter „Abgeleitete Daten", und die ``label`` der
+    Gewichtungsregeln sind die Zeilenköpfe von Tabelle 5b. Eine geänderte Namensnennung soll die
+    Kette nicht neu rechnen lassen -- die Seite aber schon.
+
+    ``templates/vergleich.html.j2`` zählt mit, obwohl es zu ``georep publish`` gehört und nicht zum
+    Schritt ``report``: der Preis dafür ist ein Seitenbau von 1,7 s, wenn jemand nur die
+    Vergleichsvorlage anfasst, und das ist billiger als die Regel „alles unter ``templates/``" zu
+    durchlöchern und die nächste Vorlage zu vergessen.
+
     ``folder`` ist die Testnaht und zeigt auf das Paket ``georep.report``, nicht auf den
     Vorlagenordner: ``literatur.toml`` liegt daneben, nicht darin.
     """
@@ -390,8 +403,15 @@ def report_fingerprint(settings: Settings, folder: Traversable | None = None) ->
         digest.update(b"\0")
         digest.update(data)
         digest.update(b"\0")
-    payload = json.dumps(settings.report.model_dump(mode="json"), sort_keys=True, default=str)
-    digest.update(payload.encode("utf-8"))
+    shown: dict[str, object] = {
+        "report": settings.report.model_dump(mode="json"),
+        # Die vier Anzeigewerte, die ``Settings.fingerprint`` ausnimmt (siehe Docstring)
+        "bodies.names_as_of": settings.bodies.names_as_of,
+        "period.label": settings.period.label,
+        "context.dataset": settings.context.dataset.model_dump(mode="json"),
+        "weights.labels": [rule_set.label for rule_set in settings.weights.paper_type],
+    }
+    digest.update(json.dumps(shown, sort_keys=True, default=str).encode("utf-8"))
     return digest.hexdigest()[:16]
 
 

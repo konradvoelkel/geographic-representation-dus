@@ -90,11 +90,28 @@ Pakets. Und `[report]` ist aus dem Settings-Fingerprint ausgenommen, weil der Bl
 betrifft: für die Parquet-Dateien richtig, für `index.html` falsch, so dass `georep status` den
 Schritt nach einer geänderten Klassengrenze als „aktuell" meldete.
 
-`Step` hat dafür ein Feld `extra`, einen kurzen Hash, den **nur** `report` füllt
-(`report.build.report_fingerprint` über `templates/**`, `literatur.toml` und `settings.report`).
-`stamp_mismatch` liest es mit Vorgabe: ein Stamp von vor diesem Feld bleibt für jeden Schritt ohne
-Zusatz gültig, der globale Fingerprint ist unberührt, und die Datenschritte laufen nicht mit neu.
-`georep status` sagt jetzt „Vorlagen oder Anzeige geändert".
+`Step` hat dafür ein Feld `extra`, einen kurzen Hash. `report` füllt ihn mit
+`report.build.report_fingerprint` über `templates/**`, `literatur.toml`, `settings.report` **und die
+vier Anzeigewerte, die der globale Fingerprint auslässt** und die trotzdem auf der Seite stehen:
+`bodies.names_as_of` (Stand der Gremiennamen), `period.label` (Überschrift der Periode),
+`context.dataset` (Namensnennung der Fremddaten) und die `label` der Gewichtungsregeln (Zeilenköpfe
+von Tabelle 5b). Der Review hat diese Lücke gefunden — die erste Fassung schloss nur die Hälfte
+(Befund 8).
+
+Einen zweiten Zusatz bekam `topics`: die Stoppwortliste `analysis/stopwords_de.txt` entscheidet,
+welche Wörter das Modell überhaupt sieht, und prägt damit `themen.parquet` — im Fingerprint stand
+aber nur ihr **Name** (`topics.stop_words = "de"`). Eine gestrichene Zeile änderte das Modell und
+liess den Stamp gültig. `schema.stop_words_digest` hasht die Datei, und der Hash sitzt importfrei in
+`georep.schema`, weil `build_steps` ihn bei jedem `georep status` braucht.
+
+Was bewusst **mitzählt**, obwohl es nicht zum Schritt gehört: `templates/vergleich.html.j2`. Es
+gehört zu `georep publish`; der Preis ist ein Seitenbau von 1,7 s, wenn jemand nur diese Vorlage
+anfasst, und das ist billiger, als die Regel „alles unter `templates/`" zu durchlöchern und die
+nächste Vorlage zu vergessen (im Docstring begründet).
+
+`stamp_mismatch` liest `extra` mit Vorgabe: ein Stamp von vor diesem Feld bleibt für jeden Schritt
+ohne Zusatz gültig, der globale Fingerprint ist unberührt, und die Datenschritte laufen nicht mit
+neu. `georep status` sagt jetzt „Vorlagen oder Anzeige geändert".
 
 ### b) Das Register gegen die Schema-Konstanten
 

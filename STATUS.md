@@ -265,10 +265,13 @@ Entscheidungen als Punkt 53 in `docs/decisions.md`.
 - **crosshair über 31 statt 22 Ziele**; vier Gegenbeispiele, alle echt und alle dieselbe Sorte: eine
   Annahme über die Eingabe, die nur in der Nachbedingung stand (`terms_payload`, `fit`, `body_figures`,
   `bars`). `nox -s verify` Exit 0, 27 „Not confirmed".
-- **Der Schritt `report` hat einen eigenen Zusatz im Stamp** (`Step.extra`): ein Hash über die
-  Vorlagendateien des Pakets, `literatur.toml` und `settings.report`. Damit sind die zwei Einträge aus
-  „Bekannt" weg, nach denen ein Vorlagenwechsel oder eine geänderte Klassengrenze ein
-  `georep run report --force` brauchte.
+- **Zwei Schritte haben einen eigenen Zusatz im Stamp** (`Step.extra`): `report` einen Hash über die
+  Vorlagendateien des Pakets, `literatur.toml`, `settings.report` und die vier Anzeigewerte, die der
+  globale Fingerprint auslässt (`bodies.names_as_of`, `period.label`, `context.dataset`, die `label`
+  der Gewichtungsregeln); `topics` einen über die Stoppwortliste des Pakets, die das Modell prägt,
+  während im Fingerprint nur ihr Name steht. Damit sind die zwei Einträge aus „Bekannt" weg, nach
+  denen ein Vorlagenwechsel oder eine geänderte Klassengrenze ein `georep run report --force`
+  brauchte.
 - **Fünf Stellen sortieren nach einem Join** (`dictionary_bias`, drei Regressionsframes, die beiden
   veröffentlichten Tabellen der Kontrollvariablen); die veröffentlichte Tabelle bekam dafür eine eigene
   Funktion mit Vertrag (`prep.context.named_weights`), und der Schritt `context` die Schema-Version 2,

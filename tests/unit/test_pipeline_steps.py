@@ -30,8 +30,19 @@ from georep.prep.bodies import BODIES_SCHEMA_VERSION
 from georep.prep.context import CONTEXT_SCHEMA_VERSION
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
-from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION
+from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION, stop_words_digest
 from georep.settings import Settings
+
+
+def _layout(tmp_path: Path) -> Layout:
+    """Ein Layout mit Fremddaten, damit die drei Kontextschritte im Register stehen (Punkt 53)."""
+    return Layout(
+        tmp_path / "data",
+        tmp_path / "cache",
+        tmp_path / "reference",
+        context_root=tmp_path / "context",
+    )
+
 
 VERSIONS = {
     "corpus": CORPUS_SCHEMA_VERSION,
@@ -48,13 +59,7 @@ VERSIONS = {
 
 @pytest.fixture
 def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
-    layout = Layout(
-        tmp_path / "data",
-        tmp_path / "cache",
-        tmp_path / "reference",
-        # Mit Fremddaten, damit die drei Kontextschritte im Register stehen (Punkt 53).
-        context_root=tmp_path / "context",
-    )
+    layout = _layout(tmp_path)
     return {s.name: s.schema_version for s in build_steps(default_settings, layout)}
 
 
@@ -67,13 +72,7 @@ def test_a_bumped_schema_version_makes_the_stamp_stale(
     default_settings: Settings, tmp_path: Path
 ) -> None:
     """Der Grund für den Test oben: sonst meldet ``stamp_mismatch`` die Änderung nie."""
-    layout = Layout(
-        tmp_path / "data",
-        tmp_path / "cache",
-        tmp_path / "reference",
-        # Mit Fremddaten, damit die drei Kontextschritte im Register stehen (Punkt 53).
-        context_root=tmp_path / "context",
-    )
+    layout = _layout(tmp_path)
     step = next(s for s in build_steps(default_settings, layout) if s.name == "topics")
     stamped: dict[str, object] = {
         "schema_version": step.schema_version,
@@ -89,19 +88,88 @@ def test_a_bumped_schema_version_makes_the_stamp_stale(
 # --- Punkt 53: der Zusatz im Stamp des Schritts ``report`` --------------------------------------
 
 
-def test_only_the_report_step_carries_an_extra(default_settings: Settings, tmp_path: Path) -> None:
+def test_the_display_values_outside_the_fingerprint_are_in_the_report_hash(
+    default_settings: Settings,
+) -> None:
+    """Vier Anzeigewerte lässt ``Settings.fingerprint`` aus -- und alle vier stehen auf der Seite.
+
+    ``bodies.names_as_of``, ``period.label``, ``context.dataset`` und die ``label`` der
+    Gewichtungsregeln. Ohne sie im Zusatz meldete ``georep status`` den Schritt ``report`` nach
+    einer geänderten Namensnennung als „aktuell" (Review-Befund 8, 2026-10-13).
+    """
+    base = report_fingerprint(default_settings)
+    changed: list[Settings] = [
+        default_settings.model_copy(
+            update={"bodies": default_settings.bodies.model_copy(update={"names_as_of": None})}
+        ),
+        default_settings.model_copy(
+            update={"period": default_settings.period.model_copy(update={"label": "anders"})}
+        ),
+        default_settings.model_copy(
+            update={
+                "context": default_settings.context.model_copy(
+                    update={
+                        "dataset": default_settings.context.dataset.model_copy(
+                            update={"publisher": "jemand anders"}
+                        )
+                    }
+                )
+            }
+        ),
+        default_settings.model_copy(
+            update={
+                "weights": default_settings.weights.model_copy(
+                    update={
+                        "paper_type": [
+                            default_settings.weights.paper_type[0].model_copy(
+                                update={"label": "anders beschriftet"}
+                            ),
+                            *default_settings.weights.paper_type[1:],
+                        ]
+                    }
+                )
+            }
+        ),
+    ]
+    for settings in changed:
+        # Der globale Fingerprint bleibt gleich -- genau darum braucht es den Zusatz.
+        assert settings.fingerprint() == default_settings.fingerprint()
+        assert report_fingerprint(settings) != base
+
+
+def test_the_topics_step_carries_the_hash_of_its_stop_word_list(
+    default_settings: Settings, tmp_path: Path
+) -> None:
+    """Die Stoppwortliste des Pakets prägt ``themen.parquet``, steht aber in keinem Eingabe-Hash.
+
+    Im Fingerprint steht nur ihr **Name** (``topics.stop_words = "de"``); eine gestrichene Zeile in
+    der Datei änderte das Modell und liess den Stamp gültig (Review-Befund 8, 2026-10-13).
+    """
+    layout = _layout(tmp_path)
+    topics = next(s for s in build_steps(default_settings, layout) if s.name == "topics")
+    assert topics.extra == stop_words_digest(default_settings.topics.stop_words)
+    assert len(topics.extra) == 16
+
+    folder = tmp_path / "paket"
+    folder.mkdir()
+    (folder / "stopwords_de.txt").write_text("und\noder\n", encoding="utf-8")
+    before = stop_words_digest("de", folder)
+    (folder / "stopwords_de.txt").write_text("und\n", encoding="utf-8")
+    assert stop_words_digest("de", folder) != before
+    # Ohne Liste gibt es keinen Zusatz, und der Schritt verhält sich wie jeder andere
+    assert stop_words_digest("", folder) == ""
+    assert stop_words_digest("gibtsnicht", folder) == ""
+
+
+def test_only_the_report_and_topics_steps_carry_an_extra(
+    default_settings: Settings, tmp_path: Path
+) -> None:
     """Der Zusatz ist die Ausnahme, nicht die Regel: ein alter Stamp bleibt sonst gültig."""
-    layout = Layout(
-        tmp_path / "data",
-        tmp_path / "cache",
-        tmp_path / "reference",
-        # Mit Fremddaten, damit die drei Kontextschritte im Register stehen (Punkt 53).
-        context_root=tmp_path / "context",
-    )
+    layout = _layout(tmp_path)
     found = {s.name: s.extra for s in build_steps(default_settings, layout)}
     assert found["report"] == report_fingerprint(default_settings)
     assert len(found["report"]) == 16
-    assert [name for name, extra in found.items() if extra] == ["report"]
+    assert sorted(name for name, extra in found.items() if extra) == ["report", "topics"]
 
 
 def test_a_changed_extra_makes_the_stamp_stale(default_settings: Settings, tmp_path: Path) -> None:
