@@ -15,7 +15,6 @@ from georep.layout import Layout
 from georep.prep.context import (
     aggregate_context,
     district_variables,
-    named_weights,
     ordinal_score,
     precinct_table,
     read_context_table,
@@ -249,34 +248,3 @@ def test_district_variables_scale_the_voter_columns(tmp_path: Path) -> None:
     assert frame.get_column("wahlkreis_id").to_list() == [1, 2]
     assert frame.get_column("cdu").to_list() == pytest.approx([50.0, 25.0])
     assert frame.get_column("afd").to_list() == pytest.approx([20.0, 10.0])
-
-
-def test_the_published_crosswalk_is_sorted_whatever_the_join_gives(
-    mini_root: Path, default_settings: Settings
-) -> None:
-    """``wahlbezirke_crosswalk.parquet`` wird veröffentlicht und muss byteidentisch entstehen.
-
-    Der Join auf ``einheit`` legt die Zeilenfolge nicht fest; bis zum 2026-10-13 stand hier keine
-    Sortierung, und die Zusage „zwei Läufe schreiben dieselbe Datei" galt nur zufällig
-    (docs/architecture.md, „Datenhaltung"). Die Namen kommen hier in umgekehrter Folge herein.
-    """
-    weights = pl.DataFrame(
-        [(2, "B", 0.4), (1, "B", 0.25), (2, "A", 0.6), (1, "A", 0.75)],
-        schema={"wahlkreis_id": pl.Int64, "einheit": pl.String, "gewicht": pl.Float64},
-        orient="row",
-    )
-    values = pl.DataFrame(
-        [("B", "Bezirk B"), ("A", "Bezirk A")],
-        schema={"einheit": pl.String, "einheit_name": pl.String},
-        orient="row",
-    )
-    found = named_weights(weights, values)
-    assert found.columns == ["wahlkreis_id", "einheit", "einheit_name", "gewicht"]
-    assert found.rows() == [
-        (1, "A", "Bezirk A", 0.75),
-        (1, "B", "Bezirk B", 0.25),
-        (2, "A", "Bezirk A", 0.6),
-        (2, "B", "Bezirk B", 0.4),
-    ]
-    # Dieselben Zeilen in anderer Folge geben dieselbe Datei
-    assert named_weights(weights.reverse(), values.reverse()).equals(found)

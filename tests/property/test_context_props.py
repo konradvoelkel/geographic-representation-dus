@@ -9,7 +9,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from georep.prep.context import aggregate_context
+from georep.prep.context import aggregate_context, named_weights
 from georep.settings import ContextSettings, load_settings
 
 # Zwei Variablen auf denselben Einheiten: eine mit Werten, eine teils ohne.
@@ -93,3 +93,47 @@ def test_a_unit_without_a_value_only_renormalises(
 def test_the_fixture_settings_describe_one_variable(context: ContextSettings) -> None:
     assert [v.name for v in context.unit_variables()] == ["x"]
     assert context.root == Path("context")
+
+
+# Gewichte je (Wahlbezirk, Einheit) und ein Name je Einheit; die Folge der Eingabe ist beliebig.
+unit_weights_rows = st.lists(
+    st.tuples(
+        st.integers(1, 9),  # Wahlbezirk
+        st.sampled_from("ABCDE"),  # Einheit
+        st.floats(0.01, 1.0, allow_nan=False, allow_infinity=False),  # Gewicht
+    ),
+    min_size=1,
+    max_size=14,
+    unique_by=lambda row: (row[0], row[1]),
+)
+
+
+@given(rows=unit_weights_rows)
+def test_the_published_crosswalk_is_sorted_whatever_the_join_gives(
+    rows: list[tuple[int, str, float]],
+) -> None:
+    """``wahlbezirke_crosswalk.parquet`` wird veröffentlicht und muss byteidentisch entstehen.
+
+    Der Join auf ``einheit`` legt die Zeilenfolge nicht fest; bis zum 2026-10-13 stand in
+    ``context_step`` keine Sortierung, und die Zusage "zwei Läufe schreiben dieselbe Datei"
+    (docs/architecture.md, "Datenhaltung") galt nur zufällig. Als Eigenschaft statt als Beispiel,
+    weil sie für jede Eingabe gilt (Review-Befund 9, 2026-10-13).
+    """
+    weights = pl.DataFrame(
+        rows,
+        schema={"wahlkreis_id": pl.Int64, "einheit": pl.String, "gewicht": pl.Float64},
+        orient="row",
+    )
+    units = sorted({row[1] for row in rows})
+    values = pl.DataFrame(
+        [(unit, f"Bezirk {unit}") for unit in reversed(units)],
+        schema={"einheit": pl.String, "einheit_name": pl.String},
+        orient="row",
+    )
+    found = named_weights(weights, values)
+    assert found.columns == ["wahlkreis_id", "einheit", "einheit_name", "gewicht"]
+    keys = list(found.select("wahlkreis_id", "einheit").iter_rows())
+    assert keys == sorted(keys)
+    assert found.get_column("einheit_name").null_count() == 0
+    # Dieselben Zeilen in anderer Folge geben dieselbe Datei, Zeile für Zeile
+    assert named_weights(weights.reverse(), values.reverse()).equals(found)

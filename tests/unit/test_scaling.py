@@ -205,18 +205,3 @@ def test_the_mini_fixture_matches_polars(mini_run: Layout) -> None:
         assert row[PER_1000] == pytest.approx(expected[row[DISTRICT]] * 1000.0)
         assert row[CITY_MEAN] == pytest.approx(mean)
         assert row[DEVIATION] == pytest.approx(expected[row[DISTRICT]] / mean - 1.0)
-
-
-def test_the_bias_does_not_depend_on_the_order_of_the_rows() -> None:
-    """Ein Join legt die Zeilenfolge nicht fest, und die Kennzahlen lesen positionell aus ihm.
-
-    Vor der Sortierung in ``dictionary_bias`` unterschieden sich zwei Aufrufe mit denselben
-    Zeilen in anderer Folge im letzten Bit (0,5372474566602047 gegen …46); gedruckt sieht man das
-    nicht, byteidentisch wird die Datei damit aber nie.
-    """
-    rows = [(1, 7, 9_000), (2, 913, 11_500), (3, 40, 10_000), (4, 311, 13_000)]
-    sizes = {1: 3, 2: 400, 3: 17, 4: 120}
-    first = dictionary_bias(*_bias_inputs(rows, sizes))
-    second = dictionary_bias(*_bias_inputs(rows[::-1], dict(reversed(sizes.items()))))
-    assert first is not None and second is not None
-    assert first == second

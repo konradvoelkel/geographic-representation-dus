@@ -23,6 +23,7 @@ from georep.analysis.scaling import (
     PER_TERM,
     TERM_COUNT,
     deviation_from,
+    dictionary_bias,
     district_metrics,
     relative_to,
     unweighted_mean,
@@ -167,3 +168,23 @@ def test_a_group_without_a_mean_is_neither_below_nor_above_it(value: float, mean
         assert frame.get_column("q")[0] == 0.0 and frame.get_column("d")[0] == 0.0
     else:
         assert frame.get_column("d")[0] == pytest.approx(frame.get_column("q")[0] - 1.0)
+
+
+@given(rows=districts)
+@settings(max_examples=120, deadline=None)
+def test_the_bias_does_not_depend_on_the_order_of_the_rows(
+    rows: list[tuple[int, int, int, int]],
+) -> None:
+    """Ein Join legt die Zeilenfolge nicht fest, und die Kennzahlen lesen positionell aus ihm.
+
+    Vor der Sortierung in ``dictionary_bias`` unterschieden sich zwei Aufrufe mit denselben Zeilen
+    in anderer Folge im letzten Bit (0,5372474566602047 gegen …46); gedruckt sieht man das nicht,
+    byteidentisch wird die Datei damit aber nie. Als Eigenschaft statt als Beispiel, weil die
+    Aussage für jede Stadt gilt (Review-Befund 9, 2026-10-13).
+    """
+    results, dictionary = _frames(rows)
+    forward = dictionary_bias(district_metrics(results, dictionary), results)
+    turned = dictionary_bias(
+        district_metrics(results.reverse(), dictionary.reverse()), results.reverse()
+    )
+    assert forward == turned
