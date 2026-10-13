@@ -28,6 +28,9 @@ from georep.settings import Settings, load_settings
 from tests.conftest import MG, MINI, mg_settings
 
 NOW = dt.datetime(2026, 10, 12, 12, 0, tzinfo=dt.UTC)
+# Option 02: so heißt der Ordner, in den der Pages-Workflow die Seite der zweiten Periode legt
+# -- in den der Stadt, nicht nach data/site/ (Punkt 52).
+SUBPAGE = "2014-2020"
 
 
 def _run(root: Path, settings: Settings, reference: Path) -> Layout:
@@ -52,6 +55,15 @@ def both_cities(tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, Setting
     moenchengladbach = mg_settings()
     _run(root, duesseldorf, MINI)
     _run(root, moenchengladbach, MG)
+    # Die Unterseite der zweiten Periode, wie `cp -r` im Pages-Workflow sie ablegt: publish muss
+    # sie mitnehmen, sonst zeigte der Link des Abschnitts „Zwei Wahlperioden" ins Leere.
+    subpage = _layout_of(root, duesseldorf).site / SUBPAGE
+    subpage.mkdir(parents=True, exist_ok=True)
+    # Gut 1 KB, damit ein kleines Budget im Test wirklich ueberschritten wird
+    (subpage / "index.html").write_text(
+        "<!doctype html><title>Alte Periode</title>\n<p>" + "Zeile. " * 160 + "</p>\n",
+        encoding="utf-8",
+    )
     return root, duesseldorf
 
 
@@ -87,6 +99,29 @@ def test_publish_keeps_the_first_city_at_the_root_and_nests_the_others(
     # Punkt 50, Review 2026-10-13: publish prüft jede kopierte Seite gegen das Budget. Hier
     # passen beide, also sagt die Zeile nichts darüber.
     assert summary.over_budget == () and "Budget" not in summary.line()
+
+
+def test_the_subpage_of_a_period_comes_along_and_counts_against_the_budget(
+    both_cities: tuple[Path, Settings],
+) -> None:
+    """Punkt 52: die Periodenseite liegt im Ordner der Stadt, also traegt die Kopie sie mit.
+
+    Und sie ist eine veroeffentlichte Seite wie jede andere: ueber dem Budget nennt publish sie
+    (Punkt 50). Beides hielt bis zum Review vom 2026-10-13 kein Test.
+    """
+    root, settings = both_cities
+    site, summary = _publish(root, settings)
+    page = site / SUBPAGE / "index.html"
+    assert page.is_file() and "Alte Periode" in page.read_text(encoding="utf-8")
+    assert summary.over_budget == ()
+    # Ein zweiter Lauf ersetzt den ganzen Zielordner; die Unterseite muss wieder da sein
+    site, _ = _publish(root, settings)
+    assert (site / SUBPAGE / "index.html").is_file()
+    tight = settings.model_copy(
+        update={"report": settings.report.model_copy(update={"page_budget_bytes": 1000})}
+    )
+    narrow = publish_sites(tight, _layout_of(root, tight), now=NOW, commit=None)
+    assert f"{SUBPAGE}/index.html" in narrow.over_budget and "über dem Budget" in narrow.line()
 
 
 def test_publish_writes_the_neighbour_line_into_both_pages(
