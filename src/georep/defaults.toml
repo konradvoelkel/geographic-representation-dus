@@ -60,6 +60,11 @@ simplify_m = 2.0               # Polygon vorher um 2 m vereinfachen (Douglas-Peu
 # schätzt die Kosten vorab und lehnt ab, was sein Slot-Budget überschreitet; ein kleines Budget
 # ist für eine Abfrage, die 2 s braucht, also kein Risiko, sondern die Eintrittskarte.
 query_timeout_s = 25
+# Wiederholungen je Stimmbezirk bei 504 und 429, mit wachsender Pause (delay_s, dann 2x, 4x).
+# Nicht http.retries: die Retry-Regel der Session erlaubt GET und HEAD, die Abfrage ist ein POST,
+# sie wird dort also nicht wiederholt. Am 2026-10-13 kamen je Versuch rund 27 Abfragen durch,
+# bevor der naechste 504 kam; ohne Wiederholung endete damit der ganze Schritt.
+retries = 3
 
 [geo]
 working_crs = "EPSG:25832"     # metrisch rechnen (ETRS89 / UTM 32N); die Quellgeometrie kommt je Stadt in EPSG:4647 oder EPSG:25832, dasselbe Datum, 4647 mit Zonenpräfix

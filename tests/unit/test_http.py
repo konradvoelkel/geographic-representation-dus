@@ -47,6 +47,11 @@ def test_retry_is_mounted_for_both_schemes(scheme: str) -> None:
     assert retry.total == 3
     assert set(RETRY_STATUSES) <= set(retry.status_forcelist)
     assert retry.backoff_factor > 0
+    # Punkt 55: 504 und 429 stehen in der Liste, POST aber nicht in den Methoden -- die
+    # Overpass-Abfrage ist ein POST und wird darum hier nicht wiederholt, sondern in
+    # georep.sources.overpass mit injizierbarer Pause. Wer POST hier aufnimmt, wiederholt doppelt.
+    assert retry.allowed_methods is not None
+    assert "POST" not in retry.allowed_methods and {"GET", "HEAD"} <= set(retry.allowed_methods)
 
 
 def test_user_agent_names_the_project() -> None:

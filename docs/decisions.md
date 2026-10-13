@@ -1343,3 +1343,39 @@ rechtfertigt); die aufgezeichneten Abfragen in `tests/fixtures/http/*.query.txt`
 sie sind **Aufzeichnungen** dessen, was wirklich gesendet wurde (zwei tragen 60, vier tragen 90), und
 der Schlüssel der Fake-Session ist die URL, nicht der Abfragetext. Eine Aufzeichnung wird nicht
 rückdatiert, damit ein Test hübscher aussieht.
+
+## 55. Ein 504 kostet einen Stimmbezirk, nicht den ganzen Schritt (2026-10-13)
+
+Der Schritt `streets_osm` brach beim ersten `504 Gateway Timeout` ab. Gemessen am 2026-10-13: je
+Versuch kamen rund 27 der 306 Abfragen durch, bevor der nächste 504 kam — der Schritt brauchte also
+ein Dutzend Anläufe, und nur der HTTP-Cache (Punkt 9) machte das überhaupt erträglich, weil ein
+erneuter Lauf dort weiterging, wo er aufhörte. Das ist der Cache als Krücke für fehlende
+Wiederholung, nicht als Cache.
+
+**Die Wiederholung liegt in `fetch_street_names`, nicht in der Session.** `make_session` wiederholt
+429 und 5xx schon (504 steht in `RETRY_STATUSES`), aber nur für `GET` und `HEAD` — die
+Overpass-Abfrage ist ein `POST` und fällt darum durch. Drei Gründe, das nicht durch ein `POST` in
+`allowed_methods` zu lösen, sondern in der Quelle: die Regel gälte für **jeden** POST der Session
+und damit für jede künftige nicht-idempotente Abfrage; urllib3 schläft echt, ein Test müsste also
+warten statt ein `sleep` einzusetzen; und 500 soll gerade **nicht** wiederholt werden (er
+wiederholt sich auch beim vierten Versuch), während die Session ihn in der Liste hat. Dass hier
+nicht doppelt wiederholt wird, hängt an genau einer Zeile in `make_session`, und
+`tests/unit/test_http.py` schreibt sie fest: `POST not in retry.allowed_methods`. Wer POST dort
+aufnimmt, bekommt das Produkt beider Budgets.
+
+Bis zu `sources.osm.retries` (Standard 3) Wiederholungen **je Stimmbezirk** bei 504 und 429, mit
+wachsender Pause (`delay_s`, dann 2×, 4×) und injizierbarem `sleep`. Nach dem letzten Versuch gilt
+der Status, wie er ist: `raise_for_status` wird über `network_errors` ein `NetworkError` — nicht
+`FetchError`, denn die Antwort ist nicht kaputt, der Dienst war nach allen Wiederholungen nicht
+erreichbar (Punkt 16, und so sagt es `docs/architecture.md` unter „Netz" schon). Der letzte Versuch
+steht hinter der Schleife, nicht darin: so hat die Funktion keinen unerreichbaren Zweig und keine
+Abbruchbedingung, die man zweimal lesen muss.
+
+Verworfen: unbegrenzt wiederholen, bis es klappt (ein Dienst, der dauerhaft 504 sagt, hinge den
+Lauf auf, und der Unterschied zwischen Überlast und Ausfall ist genau die Zahl der Versuche); den
+Schritt bei Abbruch wieder aufnehmbar machen wie `papers` (Punkt 33) — der HTTP-Cache leistet das
+bereits, und ein zweiter Fortschrittszeiger für dieselbe Sache wäre eine zweite Wahrheit;
+Instanzen durchprobieren (am 2026-10-13 wiesen alle vier dieselbe Abfrage ab, es ist kein Problem
+einer Instanz, sondern der Abfrage — die löst Punkt 54); den Fehler je Stimmbezirk überspringen und
+den Schritt mit Lücke grün melden (eine fehlende Straßenliste verschiebt die Treffer eines Bezirks
+still nach unten, und das ist das Ergebnis der Arbeit).

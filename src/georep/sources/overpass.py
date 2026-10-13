@@ -13,6 +13,7 @@ from collections.abc import Callable, Iterable
 from typing import Any
 
 import deal
+import requests
 
 from georep.errors import FetchError, NetworkError
 from georep.geo import Precinct, overpass_polygon
@@ -26,6 +27,11 @@ OSM_FILTER = (
 # Der Standard steht in ``defaults.toml`` unter ``sources.osm.query_timeout_s`` samt Messung; hier
 # liegt er, damit die Funktion allein aufrufbar bleibt (Tests, ``deal.cases``, crosshair).
 DEFAULT_QUERY_TIMEOUT_S = 25
+# Ebenso ``sources.osm.retries``; nicht ``http.retries``, das ist die Retry-Regel der Session.
+DEFAULT_QUERY_RETRIES = 3
+# Überlast, nicht Fehler: dieselbe Abfrage läuft Sekunden später durch (Punkt 55). Alles andere --
+# 500 eingeschlossen -- kommt sofort heraus, denn es wiederholt sich auch beim vierten Versuch.
+OVERPASS_RETRY_STATUSES = (429, 504)
 
 
 @deal.pure
@@ -59,18 +65,14 @@ def street_names(data: dict[str, Any]) -> list[str]:
     return sorted(names)
 
 
-@deal.raises(FetchError, NetworkError)
-def fetch_street_names(
-    http: Transport,
-    endpoint: str,
-    polygon_latlon: str,
-    *,
-    timeout_s: int = DEFAULT_QUERY_TIMEOUT_S,
-) -> list[str]:
+def _post_query(http: Transport, endpoint: str, query: str) -> requests.Response:
     with network_errors(endpoint):
-        response = http.post(
-            endpoint, data={"data": overpass_query(polygon_latlon, timeout_s=timeout_s)}
-        )
+        return http.post(endpoint, data={"data": query})
+
+
+def _names_from(response: requests.Response, endpoint: str) -> list[str]:
+    """Die Antwort auswerten: Fehlerstatus wird ``NetworkError``, kaputter Inhalt ``FetchError``."""
+    with network_errors(endpoint):
         response.raise_for_status()
     try:
         data = response.json()
@@ -82,6 +84,36 @@ def fetch_street_names(
     return street_names(data)
 
 
+@deal.raises(FetchError, NetworkError)
+def fetch_street_names(
+    http: Transport,
+    endpoint: str,
+    polygon_latlon: str,
+    *,
+    timeout_s: int = DEFAULT_QUERY_TIMEOUT_S,
+    retries: int = DEFAULT_QUERY_RETRIES,
+    delay_s: float = 1.0,
+    sleep: Callable[[float], None] = time.sleep,
+) -> list[str]:
+    """Die Straßennamen eines Polygons, mit bis zu ``retries`` Wiederholungen bei 504 und 429.
+
+    Overpass weist unter Last ab, nicht dauerhaft: dieselbe Abfrage läuft Sekunden später durch
+    (Punkt 55). Die Session wiederholt das nicht selbst -- ihre Retry-Regel erlaubt GET und HEAD,
+    und die Abfrage ist ein POST (``georep.http.make_session``). Darum hier, mit wachsender Pause
+    (``delay_s``, dann 2x, 4x) und injizierbarem ``sleep``.
+
+    Der letzte Versuch steht hinter der Schleife: sein Ergebnis gilt, wie es ist, und so gibt es
+    keinen unerreichbaren Zweig. Jeder andere Fehler kommt sofort heraus (Punkt 16).
+    """
+    query = overpass_query(polygon_latlon, timeout_s=timeout_s)
+    for pause in [delay_s * 2**n for n in range(retries)]:
+        response = _post_query(http, endpoint, query)
+        if response.status_code not in OVERPASS_RETRY_STATUSES:
+            return _names_from(response, endpoint)
+        sleep(pause)
+    return _names_from(_post_query(http, endpoint, query), endpoint)
+
+
 def fetch_streets_per_precinct(
     http: Transport,
     endpoint: str,
@@ -90,14 +122,28 @@ def fetch_streets_per_precinct(
     *,
     tolerance_m: float = 2.0,
     query_timeout_s: int = DEFAULT_QUERY_TIMEOUT_S,
+    retries: int = DEFAULT_QUERY_RETRIES,
     delay_s: float = 1.0,
     sleep: Callable[[float], None] = time.sleep,
 ) -> list[dict[str, Any]]:
-    """Das Rohformat der Arbeit: je Stimmbezirk ID, Name, Wahlbezirk und die Straßenliste."""
+    """Das Rohformat der Arbeit: je Stimmbezirk ID, Name, Wahlbezirk und die Straßenliste.
+
+    ``retries`` gilt **je Stimmbezirk** (Punkt 55): ein 504 bei Nummer 28 kostet drei Versuche,
+    nicht die 278 Bezirke danach. ``delay_s`` ist beides, die Pause zwischen zwei Bezirken und die
+    erste Pause nach einer Abweisung.
+    """
     entries: list[dict[str, Any]] = []
     for precinct in precincts:
         polygon = overpass_polygon(precinct.geometry, working_crs, tolerance_m=tolerance_m)
-        names = fetch_street_names(http, endpoint, polygon, timeout_s=query_timeout_s)
+        names = fetch_street_names(
+            http,
+            endpoint,
+            polygon,
+            timeout_s=query_timeout_s,
+            retries=retries,
+            delay_s=delay_s,
+            sleep=sleep,
+        )
         entries.append(
             {
                 "stimmbezirks_id": precinct.precinct_id,

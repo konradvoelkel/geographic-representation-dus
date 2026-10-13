@@ -190,6 +190,9 @@ class OsmSource(_Strict):
     # Punkt 54: das ``[timeout:…]`` der Abfrage selbst, nicht der Netz-Timeout (``http.timeout_s``).
     # Unter 5 s rechnet keine Instanz die Polygonabfrage durch, über 180 s weist jede sie ab.
     query_timeout_s: int = Field(default=25, ge=5, le=180)
+    # Punkt 55: Wiederholungen je Stimmbezirk bei 504 und 429. Nicht ``http.retries``: die Regel
+    # der Session erlaubt GET und HEAD, die Overpass-Abfrage ist ein POST.
+    retries: int = Field(default=3, ge=0, le=10)
 
 
 class Sources(_Strict):

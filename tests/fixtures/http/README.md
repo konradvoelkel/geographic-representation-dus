@@ -50,7 +50,9 @@ Overpass antwortete dreimal mit 504, das Aufzeichnungsskript wiederholt nach 15 
 Antwort stammt aus der ersten Runde und ist stadtweit, also unverändert gültig.
 
 Overpass wiederholt die Session nicht von selbst: ihre Retry-Regel erlaubt GET und HEAD, die
-Abfrage ist ein POST.
+Abfrage ist ein POST. Seit dem 2026-10-13 wiederholt darum `fetch_street_names` selbst, bis zu
+`sources.osm.retries` mal je Stimmbezirk (`docs/decisions.md`, Punkt 55) -- genau das, was das
+Aufzeichnungsskript damals von Hand tat.
 
 ## Der Abfragetext ist eine Aufzeichnung, kein Schlüssel (2026-10-13)
 

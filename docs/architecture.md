@@ -178,7 +178,11 @@ erreichbar, Fehlerstatus nach allen Wiederholungen), gesichert durch `deal.raise
   die Referenz: `tests/fixtures/http/README.md`. Das Rechenbudget im Kopf der Abfrage (`[timeout:N]`)
   steht als `sources.osm.query_timeout_s` in den Settings und ist 25 s: mit 90 s wiesen am 2026-10-13
   alle vier öffentlichen Instanzen dieselbe Abfrage unter Last mit `504` ab, mit 25 s antwortete sie in
-  2 s (Punkt 54). Es ist nicht der Netz-Timeout, der bleibt bei 180 s.
+  2 s (Punkt 54). Es ist nicht der Netz-Timeout, der bleibt bei 180 s. Bei `504` und `429` fragt
+  `fetch_street_names` bis zu `sources.osm.retries` mal nach (Standard 3, Pause `delay_s`, dann 2×, 4×,
+  `sleep` injizierbar), **je Stimmbezirk**: die Retry-Regel der Session erlaubt nur GET und HEAD, die
+  Abfrage ist ein POST, und ein einzelner 504 soll nicht die 278 Bezirke danach kosten (Punkt 55).
+  Jeder andere Status kommt sofort heraus.
 - Wikidata: ein SPARQL für alle Objekte mit Koordinate in der Verwaltungseinheit (P131*) und Artikel in der
   Sprache; Wikipedia-GeoSearch je Stimmbezirks-Bounding-Box, ein Treffer zählt nur für den Bezirk, dessen
   Box abgefragt wurde und der den Punkt enthält (Verhalten der Arbeit).

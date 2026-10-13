@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from georep.errors import FetchError
+from georep.errors import FetchError, NetworkError
 from georep.geo import Precinct, PrecinctIndex, read_canonical_precincts
 from georep.settings import Settings, load_settings
 from georep.sources.overpass import (
@@ -26,7 +26,7 @@ from georep.sources.wiki import (
     sparql_query,
 )
 from tests.conftest import REPO
-from tests.fakes import FakeSession, response
+from tests.fakes import FakeSession, SequenceSession, response
 
 HTTP = REPO / "tests" / "fixtures" / "http"
 
@@ -120,6 +120,88 @@ def test_fetch_streets_per_precinct_writes_the_legacy_shape(
     assert slept == [1.0]
     body = session.calls[0][1]["data"]
     assert body.startswith("[out:json]") and "(poly:" in body
+
+
+@pytest.mark.parametrize("status", [429, 504])
+def test_a_precinct_is_asked_again_after_504_or_429(
+    settings: Settings, reference_root: Path, status: int
+) -> None:
+    """Punkt 55: ein einzelner 504 beendet nicht den ganzen Schritt.
+
+    Zwei Abweisungen, dann die Antwort; die Pausen wachsen (delay_s, dann 2x). Die Session
+    wiederholt nicht selbst: ihre Retry-Regel erlaubt GET und HEAD, die Abfrage ist ein POST
+    (``tests/unit/test_http.py``).
+    """
+    endpoint = settings.sources.osm.overpass_endpoint
+    data = json.loads((HTTP / "overpass_1302.json").read_text(encoding="utf-8"))
+    session = SequenceSession(
+        endpoint,
+        [
+            response(endpoint, status=status),
+            response(endpoint, status=status),
+            response(endpoint, payload=data),
+        ],
+    )
+    slept: list[float] = []
+    names = fetch_street_names(
+        session, endpoint, "51 6 51 7", retries=3, delay_s=1.0, sleep=slept.append
+    )
+    assert names == _reference_streets(reference_root)["1302"]
+    assert len(session.calls) == 3 and slept == [1.0, 2.0]
+
+
+def test_after_the_last_retry_the_gateway_timeout_is_a_network_error(settings: Settings) -> None:
+    """Punkt 55: das Budget ist endlich. Drei Versuche bei ``retries=2``, dann der Fehlerstatus.
+
+    ``NetworkError``, nicht ``FetchError``: die Antwort ist nicht kaputt, der Dienst ist nach
+    allen Wiederholungen nicht erreichbar (``docs/architecture.md``, Netz; Punkt 16).
+    """
+    endpoint = settings.sources.osm.overpass_endpoint
+    session = SequenceSession(endpoint, [response(endpoint, status=504) for _ in range(3)])
+    slept: list[float] = []
+    with pytest.raises(NetworkError, match="504"):
+        fetch_street_names(
+            session, endpoint, "51 6 51 7", retries=2, delay_s=1.0, sleep=slept.append
+        )
+    assert len(session.calls) == 3 and slept == [1.0, 2.0]
+
+
+def test_another_error_status_is_not_retried(settings: Settings) -> None:
+    """Nur 504 und 429 sind Überlastung; ein 500 ist ein Fehler und kommt sofort heraus."""
+    endpoint = settings.sources.osm.overpass_endpoint
+    session = SequenceSession(endpoint, [response(endpoint, status=500)])
+    slept: list[float] = []
+    with pytest.raises(NetworkError, match="500"):
+        fetch_street_names(
+            session, endpoint, "51 6 51 7", retries=3, delay_s=1.0, sleep=slept.append
+        )
+    assert len(session.calls) == 1 and slept == []
+
+
+def test_the_retry_budget_comes_from_the_settings_and_counts_per_precinct(
+    precincts: list[Precinct], settings: Settings, reference_root: Path
+) -> None:
+    """Jeder Stimmbezirk hat sein eigenes Budget; die Pause danach bleibt die Pause des Schritts."""
+    assert settings.sources.osm.retries == 3
+    endpoint = settings.sources.osm.overpass_endpoint
+    data = json.loads((HTTP / "overpass_1302.json").read_text(encoding="utf-8"))
+    session = SequenceSession(
+        endpoint, [response(endpoint, status=504), response(endpoint, payload=data)]
+    )
+    slept: list[float] = []
+    first = next(p for p in precincts if p.precinct_id == "1302")
+    entries = fetch_streets_per_precinct(
+        session,
+        endpoint,
+        [first],
+        settings.geo.working_crs,
+        retries=1,
+        delay_s=2.0,
+        sleep=slept.append,
+    )
+    assert entries[0]["straßen"] == _reference_streets(reference_root)["1302"]
+    assert len(session.calls) == 2
+    assert slept == [2.0, 2.0]  # eine Pause nach der Abweisung, eine nach dem Stimmbezirk
 
 
 def test_fetch_street_names_rejects_answers_without_elements(settings: Settings) -> None:

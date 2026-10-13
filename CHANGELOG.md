@@ -4,6 +4,13 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Ein einzelner 504 von Overpass beendet nicht mehr den Schritt `streets_osm`**
+  (`sources.osm.retries`, Standard 3, `docs/decisions.md`, Punkt 55): bei `504` und `429` fragt
+  `fetch_street_names` je Stimmbezirk bis zu dreimal nach, mit wachsender Pause (`delay_s`, dann 2×,
+  4×). Vorher kamen je Versuch rund 27 der 306 Abfragen durch, und nur der HTTP-Cache machte den
+  Schritt überhaupt fertig. Die Session wiederholt das nicht selbst: ihre Retry-Regel erlaubt GET und
+  HEAD, die Abfrage ist ein POST. Jeder andere Status kommt unverändert sofort heraus.
+
 - **Der Abfrage-Timeout von Overpass ist ein Setting und steht auf 25 s**
   (`sources.osm.query_timeout_s`, `docs/decisions.md`, Punkt 54): `[timeout:90]` stand fest im Code,
   und mit dieser Zahl weisen alle vier öffentlichen Instanzen dieselbe Stimmbezirksabfrage unter Last

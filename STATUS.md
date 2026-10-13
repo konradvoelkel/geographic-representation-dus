@@ -328,6 +328,13 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   vor dem Wechsel mit 90 s gecachten Antworten liegen unter ihrem alten POST-Body und werden nicht
   mehr getroffen (Punkt 9), und ein neuer Schlüssel in `sources` macht jeden Stamp ungültig —
   `georep status` sagt für jeden gerechneten Schritt einmal „offen: Settings geändert".
+- **Je Versuch kamen rund 27 der 306 Overpass-Abfragen durch**, dann kam der nächste 504 und der
+  Schritt `streets_osm` endete (gemessen 2026-10-13). Dass ein erneuter Lauf dort weiterging, wo er
+  aufhörte, lag allein am HTTP-Cache. Seit dem 2026-10-13 wiederholt `fetch_street_names` bei 504
+  und 429 selbst, bis zu `sources.osm.retries` mal je Stimmbezirk mit wachsender Pause
+  (`docs/decisions.md`, Punkt 55); die Session tut es nicht, ihre Retry-Regel erlaubt GET und HEAD,
+  und die Abfrage ist ein POST. Ein Lauf über alle 306 Bezirke mit der neuen Fassung steht noch
+  aus — gemessen ist die Ursache, nicht die Heilung.
 - Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
 - Regel 1 sieht nur Namen: zwei der 113 entfernten Einrichtungen haben einen Kurznamen, der als eigenes
   Wikipedia-Lemma im Wörterbuch bleibt („tonhalle" 72 Dokumente, „nrw-forum" 11). Beide stehen damit in der
