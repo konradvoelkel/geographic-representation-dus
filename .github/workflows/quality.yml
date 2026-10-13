@@ -4,22 +4,26 @@
 # echten Befund hat -- crosshair bei einem Gegenbeispiel, gremlins bei einem Abbruch.
 # Kein Netz (alle Tests arbeiten gegen die Fixtures), kein Pages-Schritt.
 #
-# Laufzeit, geschaetzt aus den Messungen vom 2026-10-13 auf dreizehn Kernen
-# (docs/mutation-2026-10-13.md, docs/absicherung-2026-10.md):
-#   verify  580 s lokal mit 31 Zielen (gemessen 2026-10-13); crosshair begrenzt jede Bedingung auf
-#           20 s Rechenzeit, die Zahl der Kerne aendert daran wenig. Auf dem Runner sind rund
-#           12 min zu erwarten.
-#   mutate  403 s lokal fuer die acht Module unten mit drei Arbeitern; mit zwei Arbeitern auf zwei
-#           Kernen rund das Doppelte, also rund 14 min.
-# Zusammen mit Checkout und `uv sync` bleibt der Lauf unter 30 min; `timeout-minutes: 45` ist die
-# Grenze aus dem Auftrag und bricht ab, bevor eine Sitzung haengt. Reicht es nicht, faellt die
-# Mutationssitzung weg und nur verify bleibt (so steht es im Auftrag).
+# Laufzeit, gemessen am 2026-10-13 auf dreizehn Kernen mit genau diesen Aufrufen:
+#   verify  580 s mit 31 Zielen; crosshair begrenzt jede Bedingung auf 20 s Rechenzeit, die Zahl
+#           der Kerne aendert daran wenig. Auf dem Runner sind rund 12 min zu erwarten.
+#   mutate  539 s fuer `nox -s mutate -- fast --gremlin-workers=2`, also genau den Aufruf unten.
+#           Mit zwei Arbeitern auf zwei Kernen ist etwa das Doppelte zu erwarten, rund 18 min.
+#   alone   240 s (97 Dateien einzeln plus die Suite rueckwaerts), auf dem Runner rund 8 min.
+# Zusammen mit Checkout und `uv sync` rund 40 min; `timeout-minutes: 45` ist die Grenze aus dem
+# Auftrag. Reisst der Lauf sie, faellt der Mutationsschritt weg und verify plus alone bleiben --
+# die Mutationssitzung ist ohnehin kein Gate.
 #
-# Die acht Module sind die, die im Lauf vom 2026-10-13 unter 90 s brauchten. Nicht dabei, mit
-# gemessener Zahl: report/publish.py (197 s), analysis/ols.py (166 s), analysis/parties.py (168 s),
-# crosswalk.py (141 s), report/comparison.py (116 s) und analysis/topics.py (jeder Mutant rechnet
-# NMF, der Lauf vom 2026-10-12 war nach 35 min nicht durch). Sie bleiben in `nox -s mutate` fuer
-# den Lauf von Hand.
+# WICHTIG: die Session mutate laeuft **je Modul eine eigene Sitzung** mit genau den Testdateien
+# des Moduls (noxfile.py, MUTATION_SCOPE). Das ist keine Bequemlichkeit: die abdeckungsgefuehrte
+# Testauswahl von gremlins liefert hier keine Daten, und ohne sie laeuft jeder Mutant gegen alle
+# uebergebenen Tests. Eine Sitzung mit `tests/unit tests/property tests/golden` als Auswahl war
+# deshalb nach 240 s noch nicht beim ersten Mutanten (Review 2026-10-13).
+#
+# `fast` ist die Abkuerzung fuer die acht Module, die unter 90 s brauchten. Nicht dabei, mit
+# gemessener Zahl: report/publish.py (197 s), analysis/parties.py (168 s), analysis/ols.py
+# (166 s), crosswalk.py (141 s), report/comparison.py (116 s) und analysis/topics.py (jeder
+# Mutant rechnet NMF). Sie bleiben dem Lauf von Hand.
 # Actions per SHA gepinnt wie in ci.yml; Workflow-Dateien gehen nur per SSH ins Repo, das
 # gh-Token hat keinen workflow-Scope.
 name: quality
@@ -51,12 +55,11 @@ jobs:
       - run: uv sync --locked
       - name: Vertraege mit crosshair pruefen
         run: uv run nox -s verify
+      - name: Reihenfolgeunabhaengigkeit der Tests
+        run: uv run nox -s alone
       - name: Gezielte Mutationssitzung
-        # Letzte Angabe gewinnt: die beiden Schalter ueberschreiben die der Session.
-        run: >
-          uv run nox -s mutate --
-          --gremlin-workers=2
-          --gremlin-targets=src/georep/report/terms.py,src/georep/analysis/scaling.py,src/georep/analysis/timeline.py,src/georep/analysis/periods.py,src/georep/prep/precincts.py,src/georep/prep/pois.py,src/georep/analysis/committees.py,src/georep/report/search.py
+        # `fast` waehlt die acht Module unter 90 s; der Schalter geht an pytest weiter.
+        run: uv run nox -s mutate -- fast --gremlin-workers=2
       # Kein Artefakt-Upload: der Konsolenbericht steht im Log, und eine weitere Action waere eine
       # weitere Lieferkette (PLAYBOOK, Supply-Chain-Pinning). Wer die JSON-Datei will, laesst die
       # Sitzung lokal laufen; `coverage/gremlins/` ist gitignored.

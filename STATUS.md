@@ -244,20 +244,21 @@ Datensatz, kein Lauf).
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
 - Quelltext: 59 Python-Dateien unter `src/`, rund 16 600 Zeilen; fünf Profile im Paket.
-- Mutation (2026-10-13, `docs/mutation-2026-10-13.md`): 876 Mutanten über die dreizehn Module des
-  Ausbaus, 652 getötet (74,4 %), nach den neuen Tests 712 (81,3 %) und 164 Überlebende — davon 99 in
-  Vertragsgrenzen, 27 nachgerechnet äquivalent, 38 Grenzen, die nur ein genauer Wert unterscheidet.
-  Rund 20 Minuten für alle dreizehn Module mit **drei** Arbeitern im Zuschnitt je Modul; mit sechs
-  wurde die Sitzung am 2026-10-12 unter Last abgeschossen. Älter: `analysis/weights.py` 83 %
-  (`docs/mutation-2026-10-12.md`), `search/` und `analysis/` 79 % (`-11.md`).
+- Mutation (2026-10-13, `docs/mutation-2026-10-13.md`): 882 Mutanten über die dreizehn Module des
+  Ausbaus, 717 getötet (81,3 %), 165 Überlebende — davon 100 in Vertragsgrenzen, 27 nachgerechnet
+  äquivalent, 38 Grenzen, die nur ein genauer Wert unterscheidet. Auf `v0.12.0` waren es 652 von 876
+  (74,4 %). Rund 20 Minuten für alle dreizehn Module mit **drei** Arbeitern, **je Modul eine eigene
+  Sitzung mit nur seinen Testdateien** (`nox -s mutate -- fast` sind die acht schnellen in 539 s).
+  Älter: `analysis/weights.py` 83 % (`docs/mutation-2026-10-12.md`), `search/` und `analysis/` 79 %
+  (`-11.md`).
 
 ## Absicherung (2026-10-13, `docs/absicherung-2026-10.md`)
 
 Konrads Auftrag „Absicherung statt Ausbau": keine neuen Funktionen, das Vorhandene härten und messen.
 Entscheidungen als Punkt 53 in `docs/decisions.md`.
 
-- **Mutationstest über die dreizehn Module des Ausbaus** (`docs/mutation-2026-10-13.md`): 876 Mutanten,
-  652 getötet (74,4 %), nach den neuen Tests **712 (81,3 %)** und 164 Überlebende. Die größten Löcher
+- **Mutationstest über die dreizehn Module des Ausbaus** (`docs/mutation-2026-10-13.md`): 882 Mutanten
+  an HEAD, **717 getötet (81,3 %)**, 165 Überlebende; auf `v0.12.0` waren es 652 von 876 (74,4 %). Die größten Löcher
   waren `analysis/scaling.dictionary_bias` (kein einziger Test), die Vergleichsseite (nur auf
   Anwesenheit geprüft, 46 % → 84 %), die Zahlen des OLS-Modells (nur im slow-Test) und die Spalte
   `treffer` der Urheberzuordnung.
@@ -297,7 +298,8 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   wenn die eingesetzte Langform mit dem nächsten Zeichen eine neue bildete (ersetzt jetzt bis zum
   Festpunkt), und `nice_ticks` warf einen `OverflowError` bei zwei endlichen Grenzen mit unendlicher
   Differenz (Vorbedingung verlangt eine endliche Spanne).
-- `nox -s mutate` lässt `analysis/topics.py` aus: jeder Mutant dort lässt die schnelle Suite laufen, und die rechnet seit dem Themenmodell mehrfach NMF (Lauf am 2026-10-12 nach 35 Minuten abgebrochen). Die schnelle Suite selbst ist dadurch rund 5 s langsamer; hingenommen.
+- `nox -s mutate` lässt `analysis/topics.py` aus: jeder Mutant dort lässt die schnelle Suite laufen, und die rechnet seit dem Themenmodell mehrfach NMF (Lauf am 2026-10-12 nach 35 Minuten abgebrochen; gezielt je Modul mit nur seinen Testdateien sind es vier Minuten). Die schnelle Suite selbst ist dadurch rund 5 s langsamer; hingenommen.
+- `georep publish` löschte die Markerdatei `.georep-publish` beim Kopieren der ersten Stadt; aufgefallen ist das erst, als der Test einmal allein lief (2026-10-12, behoben in 3f81995). Die Arbeitsregel daraus steht in `CLAUDE.md`, die Prüfung in `nox -s alone`.
 - Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.
 - Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`,
   also im **flachen** Ordner der alten Hauptperiode. Das Hauptprofil rechnet seit dem Umzug (Punkt 52) unter

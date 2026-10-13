@@ -12,17 +12,19 @@ Entscheidungen stehen als Punkt 53 in [decisions.md](decisions.md), die Zahlen d
 
 ## 1 Mutationstest über die dreizehn Module des Ausbaus
 
-| | vorher | nachher |
+| | vorher (`v0.12.0`) | nachher (HEAD) |
 |---|---|---|
-| Mutanten | 876 | 876 |
-| getötet | 652 (74,4 %) | **712 (81,3 %)** |
-| überlebt | 224 | 164 |
+| Mutanten | 876 | 882 |
+| getötet | 652 (74,4 %) | **717 (81,3 %)** |
+| überlebt | 224 | 165 |
 
-Je Modul eine Sitzung mit den Testdateien, die es benutzen, und **drei Arbeitern** (mit sechs wurde
-die Sitzung am 2026-10-12 unter Last abgeschossen). Zusammen 1 191 s, also rund 20 Minuten für alle
-dreizehn Module — gemessen, während Konrads Netzläufe liefen. Die Tabelle je Modul, die Deutung der
-164 Überlebenden in drei Sorten und die acht offenen Posten stehen in
-[mutation-2026-10-13.md](mutation-2026-10-13.md).
+Je Modul eine **eigene Sitzung** mit genau den Testdateien, die es benutzen, und **drei Arbeitern**
+(mit sechs wurde die Sitzung am 2026-10-12 unter Last abgeschossen). Zusammen 1 191 s, also rund
+20 Minuten für alle dreizehn Module — gemessen, während Konrads Netzläufe liefen. Die sechs
+Mutanten Unterschied in der Gesamtzahl stehen in `report/terms.py`, dessen Vorbedingung aus dem
+crosshair-Befund sechs Zeilen Prädikat dazugelegt hat; seine Zeile ist darum kein
+Vorher-Nachher-Paar. Die Tabelle je Modul, die Deutung der 165 Überlebenden in drei Sorten und die
+offenen Posten stehen in [mutation-2026-10-13.md](mutation-2026-10-13.md).
 
 Die größten Löcher, alle mit Tests geschlossen und ohne eine Zeile Produktionscode:
 
@@ -43,8 +45,11 @@ Die größten Löcher, alle mit Tests geschlossen und ohne eine Zeile Produktion
   waren die Gewichte schon verschieden, der Stichentscheid also unbelegt. Dieselbe Sorte Befund wie
   der `maintain_order`-Mutant vom 2026-10-12 — eine Zusicherung, die nur zufällig gilt.
 
-Nebenbefund, der die Zahlen erklärt: die abdeckungsgeführte Testauswahl von pytest-gremlins war
-**nie aktiv**, weil `--cov` in `addopts` steht. Für die Quote ist das gut (kein Mutant überlebt,
+Nebenbefund, der die Zahlen erklärt: die abdeckungsgeführte Testauswahl von pytest-gremlins
+**liefert hier keine Daten** („Coverage collection returned no data", mit `--gremlin-explain`
+bestätigt: „Covering set (0 tests)"). Die Ursache ist nicht belegt — nachgemessen ist, dass dem
+Vorlauf die **benannten Kontexte je Test** fehlen, nicht die Zeilendaten
+([mutation-2026-10-13.md](mutation-2026-10-13.md)). Für die Quote ist das gut (kein Mutant überlebt,
 weil ein Test fehlte), für die Laufzeit teuer — und es ist der Grund, warum der Zuschnitt je Modul
 keine Bequemlichkeit ist, sondern die Voraussetzung dafür, dass eine Sitzung in Minuten durchläuft.
 
@@ -177,7 +182,7 @@ Zahl im Kommentar und bleiben dem Lauf von Hand.
 | `uv run nox -s bench` | Exit 0; 17 Messungen gegen die gespeicherte Baseline |
 | `uv run nox -s verify` | Exit 0; 31 Ziele, 27 „Not confirmed", 580 s |
 | `uv run nox -s alone` | Exit 0; 97 Dateien allein, Suite rückwärts 1061 Tests |
-| `uv run nox -s mutate` (je Modul) | 876 Mutanten, 712 getötet (81,3 %) |
+| `uv run nox -s mutate` | Exit 0; 882 Mutanten, 717 getötet (81,3 %); `-- fast --gremlin-workers=2` in 539 s |
 
 Die schnelle Suite ist von 1021 auf 1062 Tests gewachsen (41 neue), fünf Vorbedingungen sind
 strenger, fünf Stellen sortieren nach einem Join, und `nox` hat zwei Sessions mehr zu bieten
@@ -185,7 +190,7 @@ strenger, fünf Stellen sortieren nach einem Join, und `nox` hat zwei Sessions m
 
 ## 7 Was bleibt
 
-- **Die 164 überlebenden Mutanten.** 99 liegen in Vertragsgrenzen und bleiben dort bewusst liegen
+- **Die 165 überlebenden Mutanten.** 100 liegen in Vertragsgrenzen und bleiben dort bewusst liegen
   (decisions.md, Punkt 12), 27 sind nachgerechnet äquivalent. Die 38 anderen sind Grenzen, die nur
   ein genauer Wert unterscheidet, zwei im Standardfall tote Zweige in `report/publish.py` und eine
   unerreichbare Notbremse in `canonical_term`; je mit Grund in
@@ -193,8 +198,10 @@ strenger, fünf Stellen sortieren nach einem Join, und `nox` hat zwei Sessions m
 - **`report/model.py`, `report/charts.py` und `report/build.py` sind ungemessen.** Zusammen rund
   3 500 Zeilen; ein Mutationslauf darüber ist noch nicht gelaufen, und deshalb behauptet der
   `noxfile`-Kommentar auch nichts über sie. Das ist der nächste offene Posten dieser Art.
-- **Die Testauswahl von gremlins bleibt aus**, solange `--cov` in `addopts` steht. Eine Sitzung mit
-  `--no-cov` wäre schneller; gemessen ist das nicht.
+- **Die Testauswahl von gremlins bleibt aus**, und warum, ist nicht belegt: nachgemessen fehlen dem
+  Vorlauf die benannten Kontexte je Test. Solange das so ist, läuft jeder Mutant gegen alle
+  übergebenen Tests, und der Zuschnitt je Modul ist Pflicht. Ein Versuch mit einem anderen
+  coverage-Kern (`COVERAGE_CORE=ctrace`) wäre der nächste Schritt; gemessen ist er nicht.
 - **`analysis/topics.py`** bleibt aus der Sitzung draußen, weil jeder Mutant NMF rechnet
   (unverändert seit 2026-10-12).
 - **Der Qualitätslauf ist nicht erprobt.** Die Laufzeit auf einem Zwei-Kern-Runner ist geschätzt,

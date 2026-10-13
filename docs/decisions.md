@@ -1266,15 +1266,16 @@ wirken. Die Übersicht mit allen Zahlen steht in [absicherung-2026-10.md](absich
 Mutationslauf in [mutation-2026-10-13.md](mutation-2026-10-13.md). Vier Entscheidungen hält dieser Punkt
 fest.
 
-**Mutationstests werden je Modul gemessen, nicht als eine Sitzung.** Die dreizehn Module des Ausbaus
-brauchen zusammen rund 20 Minuten, wenn jede Sitzung nur die Testdateien ihres Moduls bekommt; über die
-ganze schnelle Suite dauert dasselbe ein Vielfaches, denn die abdeckungsgeführte Testauswahl von
-pytest-gremlins ist hier **aus** — `--cov` in `addopts` lässt ihren Vorlauf leer ausgehen („Coverage
-collection returned no data", mit `--gremlin-explain` bestätigt: „Covering set (0 tests)"). Für die Quote
-ist das richtig, kein Mutant überlebt wegen eines fehlenden Tests; für die Laufzeit ist es der Grund für
-den Zuschnitt. **Drei Arbeiter, nicht sechs**: mit sechs wurde die Sitzung am 2026-10-12 unter Last
-abgeschossen. Die Liste der Ziele steht als `GREMLIN_TARGETS` im `noxfile.py`, damit der nächste Lauf
-dieselbe hat; ausgenommen wird nur mit Grund und gemessener Zahl. Verworfen: die Sitzung zum Gate machen
+**Mutationstests laufen je Modul als eigene Sitzung, mit genau den Testdateien des Moduls.** Nicht aus
+Bequemlichkeit: die abdeckungsgeführte Testauswahl von pytest-gremlins liefert in diesem Repo **keine
+Daten** („Coverage collection returned no data", mit `--gremlin-explain` bestätigt: „Covering set
+(0 tests)"), und ohne sie läuft **jeder** Mutant gegen **alle** übergebenen Tests. Mit `tests/unit
+tests/property tests/golden` als Auswahl war deshalb nach vier Minuten noch kein einziger Mutant durch
+(Review 2026-10-13); je Modul sind es 539 s für die acht schnellen und rund 20 Minuten für alle
+dreizehn. Für die Quote ist der leere Vorlauf übrigens gut: kein Mutant überlebt wegen eines fehlenden
+Tests. Die Zuordnung Modul → Ziele und Testdateien steht als `MUTATION_SCOPE` im `noxfile.py`, damit der
+nächste Lauf dieselbe hat; ausgenommen wird nur mit Grund. **Drei Arbeiter, nicht sechs**: mit sechs
+wurde die Sitzung am 2026-10-12 unter Last abgeschossen. Verworfen: die Sitzung zum Gate machen
 (Punkt 12 gilt weiter — 99 der 164 Überlebenden sind Vertragsgrenzen, und ein Gate zwänge dazu, sie
 nachzuziehen); `--no-cov` in der Sitzung, weil ungemessen.
 

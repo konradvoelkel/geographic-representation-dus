@@ -410,11 +410,11 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `profile -- SCHRITT` | ein echter Schritt unter cProfile | lokal |
 | `verify` | crosshair über die reinen Funktionen mit Verträgen (31 Ziele), rund zehn Minuten (580 s am 2026-10-13); zwei Ziele sind mit Begründung ausgenommen (`parse_reference`: crosshair baut für `re.Pattern \| None` einen symbolischen Regex und bricht ab; `bars`: sein Gegenbeispiel ist eine Zahl mit 300 Stellen) | lokal, und wöchentlich in Actions (`quality.yml`) |
 | `alone` | Reihenfolgeunabhängigkeit: jede Testdatei einmal allein (drei parallel), dann die ganze schnelle Suite rückwärts | lokal |
-| `mutate` | pytest-gremlins über die gemessenen Module (`GREMLIN_TARGETS` im `noxfile.py`), drei Arbeiter, einmal pro größerer Änderung; `analysis/topics.py` ist ausgenommen (jeder Mutant rechnet NMF). Wer ein einzelnes Modul messen will, übergibt auch nur dessen Testdateien | lokal, und wöchentlich in Actions (`quality.yml`) mit den acht Modulen unter 90 s |
+| `mutate` | pytest-gremlins, **eine Sitzung je Modul** mit genau seinen Testdateien (`MUTATION_SCOPE` im `noxfile.py`), drei Arbeiter, einmal pro größerer Änderung; `analysis/topics.py` ist ausgenommen (jeder Mutant rechnet NMF). Der Zuschnitt ist Pflicht, nicht Bequemlichkeit: ohne Abdeckungsdaten läuft jeder Mutant gegen alle übergebenen Tests | lokal, und wöchentlich in Actions (`quality.yml`) mit `-- fast` |
 
 Stand 2026-10-13: 1062 schnelle Tests in rund 55 s, Abdeckung 98,3 %; Mutationsquote 81 % über die
-dreizehn Module des Ausbaus ([mutation-2026-10-13.md](mutation-2026-10-13.md): 876 Mutanten, 712
-getötet, 164 Überlebende, davon 99 in Vertragsgrenzen), 79 % über `search/` und `analysis/`
+dreizehn Module des Ausbaus ([mutation-2026-10-13.md](mutation-2026-10-13.md): 882 Mutanten, 717
+getötet, 165 Überlebende, davon 100 in Vertragsgrenzen), 79 % über `search/` und `analysis/`
 ([mutation-2026-10-11.md](mutation-2026-10-11.md)), 83 % über `analysis/weights.py`
 ([mutation-2026-10-12.md](mutation-2026-10-12.md)).
 

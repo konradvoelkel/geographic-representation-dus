@@ -45,7 +45,7 @@ uv run mypy                  # strict für alles
 uv run nox -s bench          # heiße Pfade gegen die gespeicherte Baseline; der erste Lauf legt sie nur an
 uv run georep profile index  # echter Schritt unter cProfile; .prof nach docs/profiling/, Zahlen ins README dort
 uv run nox -s verify         # crosshair über die reinen Funktionen mit Verträgen, rund drei Minuten
-uv run nox -s mutate         # pytest-gremlins über search/ und analysis/, einmal pro Phase, kein Gate
+uv run nox -s mutate         # pytest-gremlins je Modul (MUTATION_SCOPE); `-- fast` sind die acht schnellen, kein Gate
 ```
 
 Settings: `src/georep/defaults.toml` ist die stadtneutrale Quelle, `src/georep/profiles/<slug>.toml` die
@@ -105,14 +105,14 @@ Arbeitsregeln, die bis zum 2026-10-13 in `STATUS.md` unter „Bekannt" standen u
 über das System gelesen wurden (`docs/absicherung-2026-10.md`, § 4). Die Zahlen und Befunde dazu
 bleiben in `STATUS.md` und in den datierten Dokumenten unter `docs/`.
 
-- **Ein Join legt die Zeilenfolge nicht fest, auch ein linker nicht.** Wer eine Spalte daraus positionell gegen einen anderen Frame, ein Array oder eine Liste verwendet, hat einen stillen Versagensmodus; wer eine Fließkommasumme darüber bildet, ein letztes Bit, das von Lauf zu Lauf wechselt. Nach dem Join sortieren (oder `maintain_order=True`), alles aus demselben Frame lesen und die Folge als Nachbedingung festschreiben (2026-10-13).
-- **Jeder `Step` bekommt seine Schema-Version aus der Konstante des Moduls, das die Datei schreibt.** Ohne sie bleibt der Schritt bei 1, und `stamp_mismatch` meldet „Schema geändert" nie — die Version in den Parquet-Metadaten allein genügt nicht (`tests/unit/test_pipeline_steps.py` hält Register und Konstanten zusammen, 2026-10-13).
-- **Ein Test prüft die Stelle, die er meint, nicht das ganze Dokument.** Eine Jahreszahl im ganzen HTML zu suchen geht schief, weil ein `data-value` wie „0.040124486620252926" zufällig „2025" enthält und weil der Literaturabschnitt fremde Jahre und Monate zitiert (`without_literature(page)` in `tests/conftest.py`); ein Element über sein Markup zu suchen geht schief, wenn das schließende `>` mitgenommen wird (`<table id="districts"` ohne Klammer, 2026-10-13).
-- **Eine Abschnittsvorlage, die an einem Modellteil hängt, muss mit `{% if model.… %}` beginnen**; ein `{% from "macros.html.j2" import … %}` davor macht den Abschnitt für `tests/unit/test_report_render.py` zu einem Pflichtabschnitt. Der Import steht dahinter (2026-10-13).
-- **Eine CSS-Klasse, die ein Umschalter tauscht, muss auf jeder Fläche dasselbe bedeuten.** `q<n>` färbt auf einer SVG-Fläche den `fill` und tönt in einer Tabellenzelle denselben Rang; beides steht im Rahmen, nicht im Abschnitts-CSS. Gefunden mit headless Chrome, nicht von einem Test (2026-10-13).
-- **Einen neuen Test einmal allein starten.** `test_a_city_that_lost_its_run_leaves_the_published_folder` war nur grün, weil ein anderer Test vorher eine Datei geschrieben hatte (2026-10-12). Das Skript dafür steht in `docs/absicherung-2026-10.md`, § 3d.
-- **Nach einem Rebase die `def`-Zahlen je Datei vergleichen**: an rund zwölf Stellen endeten beim Merge der acht Optionen beide Konfliktseiten mitten in einer Funktion, und ein Auto-Merge legte `Area` und `read_areas` doppelt an (2026-10-12).
-- **Überlebende Mutanten in Vertrags-Lambdas werden nicht nachgezogen** (`docs/decisions.md`, Punkt 12): Verträge prüfen ein Ergebnis, sie berechnen es nicht. „Äquivalent" ist dagegen eine Behauptung, die nachgerechnet werden will — eine falsche stand am 2026-10-12 schon in einer Notiz.
-- **Mutationsziele je Modul messen, nicht die ganze Sitzung auf einmal** (`--gremlin-targets`, drei Arbeiter, die Testdateien des Moduls): `analysis/topics.py` rechnet je Mutant NMF, und `--cov` in `addopts` schaltet die Testauswahl von gremlins ab, so dass jeder Mutant die ganze übergebene Auswahl laufen lässt (2026-10-13).
-- **Das Themenmodell ist je Rechner und je Thread-Zahl reproduzierbar, nicht darüber hinaus**: Golden-Master-Tests darüber prüfen Invarianten, nicht Zahlen (2026-10-12).
-- **Eine Zahl in einem Test rundet wie die Seite, nicht wie Python**: `format_de` setzt ein schmales geschütztes Leerzeichen (U+202F) als Tausendertrenner und ein Komma als Dezimaltrenner; eine Erwartung mit `"2.000"` ist rot, eine mit `"2 000"` grün (2026-10-13).
+- **Ein Join legt die Zeilenfolge nicht fest, auch ein linker nicht**: nach dem Join sortieren (oder `maintain_order=True`), alles aus demselben Frame lesen, die Folge als Nachbedingung festschreiben -- sonst wechselt ein letztes Bit von Lauf zu Lauf (2026-10-13).
+- **Jeder `Step` bekommt seine Schema-Version aus der Konstante des Moduls, das die Datei schreibt**: ohne sie bleibt er bei 1, und `stamp_mismatch` meldet „Schema geändert" nie (`tests/unit/test_pipeline_steps.py`, 2026-10-13).
+- **Ein Test prüft die Stelle, die er meint, nicht das ganze Dokument**: ein `data-value` enthält „2025" zufällig, der Literaturabschnitt zitiert fremde Jahre (`without_literature` in `tests/conftest.py`), und ein Markup-Anker darf das schließende `>` nicht mitnehmen (2026-10-13).
+- **Eine Abschnittsvorlage, die an einem Modellteil hängt, beginnt mit `{% if model.… %}`**; ein `{% from … import %}` davor macht den Abschnitt für `test_report_render.py` zur Pflicht (2026-10-13).
+- **Eine CSS-Klasse, die ein Umschalter tauscht, bedeutet auf jeder Fläche dasselbe** und steht darum im Rahmen, nicht im Abschnitts-CSS (2026-10-13, mit headless Chrome gefunden, nicht von einem Test).
+- **Einen neuen Test einmal allein starten**, oder `uv run nox -s alone` für die ganze Suite (2026-10-12).
+- **Nach einem Rebase die `def`-Zahlen je Datei vergleichen**: beim Merge der acht Optionen endeten an rund zwölf Stellen beide Konfliktseiten mitten in einer Funktion (2026-10-12).
+- **Überlebende Mutanten in Vertrags-Lambdas werden nicht nachgezogen** (`docs/decisions.md`, Punkt 12); „äquivalent" dagegen will nachgerechnet werden — eine falsche Behauptung stand am 2026-10-12 schon in einer Notiz.
+- **Mutationsziele je Modul messen**, nie alles in einer Sitzung: `nox -s mutate -- <schlüssel>` nimmt die Testdateien des Moduls aus `MUTATION_SCOPE`, denn ohne Abdeckungsdaten läuft jeder Mutant gegen **alle** übergebenen Tests (`docs/mutation-2026-10-13.md`). `analysis/topics.py` bleibt draußen: NMF je Mutant.
+- **Golden-Master-Tests über das Themenmodell prüfen Invarianten, nicht Zahlen**: es ist nur je Rechner und je Thread-Zahl reproduzierbar (2026-10-12).
+- **Eine Zahl in einem Test rundet wie die Seite**: `format_de` setzt U+202F als Tausendertrenner und ein Komma als Dezimaltrenner, eine Erwartung mit `"2.000"` ist also rot (2026-10-13).
