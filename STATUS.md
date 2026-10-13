@@ -218,6 +218,11 @@ Datensatz, kein Lauf).
 - **Wo die Hauptperiode liegt, sagt `Settings.base_profile` (= `city.slug`)**; vorher stand an den zwei
   Stellen `for_profile("")`: das Wörterbuch eines Periodenprofils und der Zielzuschnitt eines
   Crosswalk-Profils. Ein Test über alle Paketprofile hält fest, dass die Zusage stimmt.
+- **Der Trockenlauf des Lauf-Skripts ist durchgelaufen** (2026-10-13, Exit 0, 32 s, eigene Datenwurzel auf
+  xtraspace, danach gelöscht): `deploy/bin/georep-monitor.sh` findet die Hauptseite über `georep paths` unter
+  `data/duesseldorf/site/` und legt sie samt `out/2025/` und `stand.json` richtig ab (`index.html` 886 702
+  Byte, 374 mehr als ohne den Link auf die laufende Periode). Der Stub-Test daneben
+  (`tests/unit/test_monitor_script.py`) prüft dieselbe Reihenfolge ohne `georep`.
 - **Gerechnet ändert sich nichts** (gemessen am 2026-10-13): 27 der 28 Parquet-Dateien sind byteidentisch zum
   flachen Lauf, `index.html` ist 886 328 Byte, der Settings-Fingerprint unverändert (`profile` ist ein Pfad
   und darum ausgenommen). Die 28. Datei, `interim/papers.parquet`, unterscheidet sich an drei von 19 108

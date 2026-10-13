@@ -22,9 +22,9 @@ uv run georep --profile moenchengladbach status
 
 `status` muss `Profil: moenchengladbach (Mönchengladbach)` zeigen und `Daten unter
 …/data/moenchengladbach`. Die Daten der zweiten Stadt liegen durchweg unter diesem Unterordner,
-die PDFs und Texte unter `cache_root/moenchengladbach/`; Düsseldorf bleibt flach, es kann also
-nichts überschrieben werden. Der HTTP-Cache (`cache_root/http.sqlite`) ist geteilt, sein Schlüssel
-ist die URL.
+die PDFs und Texte unter `cache_root/moenchengladbach/`; Düsseldorf liegt seit dem 2026-10-13
+genauso unter seinem Slug (`data/duesseldorf/`, Punkt 52), es kann also nichts überschrieben
+werden. Der HTTP-Cache (`cache_root/http.sqlite`) ist geteilt, sein Schlüssel ist die URL.
 
 ## 2. Die kleinen Quellen (Sekunden)
 
