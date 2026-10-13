@@ -1,0 +1,59 @@
+# Der wiederkehrende Qualitaetslauf: crosshair ueber die Vertraege und eine gezielte
+# Mutationssitzung. Beides ist kein Gate (docs/decisions.md, Punkt 12): es laeuft nicht bei jedem
+# Push, sondern einmal die Woche und von Hand, und es faellt nur rot, wenn ein Werkzeug einen
+# echten Befund hat -- crosshair bei einem Gegenbeispiel, gremlins bei einem Abbruch.
+# Kein Netz (alle Tests arbeiten gegen die Fixtures), kein Pages-Schritt.
+#
+# Laufzeit, geschaetzt aus den Messungen vom 2026-10-13 auf dreizehn Kernen
+# (docs/mutation-2026-10-13.md, docs/absicherung-2026-10.md):
+#   verify  rund 6 min lokal; crosshair begrenzt jede Bedingung auf 20 s Rechenzeit, die Zahl der
+#           Kerne aendert daran wenig. Auf dem Runner sind rund 10 min zu erwarten.
+#   mutate  403 s lokal fuer die acht Module unten mit drei Arbeitern; mit zwei Arbeitern auf zwei
+#           Kernen rund das Doppelte, also rund 14 min.
+# Zusammen mit Checkout und `uv sync` bleibt der Lauf unter 30 min; `timeout-minutes: 45` ist die
+# Grenze aus dem Auftrag und bricht ab, bevor eine Sitzung haengt.
+#
+# Die acht Module sind die, die lokal unter 90 s brauchen. Nicht dabei, mit gemessener Zahl:
+# analysis/ols.py (166 s), crosswalk.py (141 s), report/publish.py (197 s),
+# report/comparison.py (116 s), analysis/parties.py (rund 40 min) und analysis/topics.py (jeder
+# Mutant rechnet NMF). Sie bleiben in `nox -s mutate` fuer den Lauf von Hand.
+# Actions per SHA gepinnt wie in ci.yml; Workflow-Dateien gehen nur per SSH ins Repo, das
+# gh-Token hat keinen workflow-Scope.
+name: quality
+
+on:
+  schedule:
+    # Montags um 04:17 UTC: ausserhalb der Stosszeiten der Runner, und die Minute ist krumm,
+    # damit der Lauf nicht mit jedem anderen Cron zusammenfaellt.
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+      - run: uv python install
+      - run: uv sync --locked
+      - name: Vertraege mit crosshair pruefen
+        run: uv run nox -s verify
+      - name: Gezielte Mutationssitzung
+        # Letzte Angabe gewinnt: die beiden Schalter ueberschreiben die der Session.
+        run: >
+          uv run nox -s mutate --
+          --gremlin-workers=2
+          --gremlin-targets=src/georep/report/terms.py,src/georep/analysis/scaling.py,src/georep/analysis/timeline.py,src/georep/analysis/periods.py,src/georep/prep/precincts.py,src/georep/prep/pois.py,src/georep/analysis/committees.py,src/georep/report/search.py
+      # Kein Artefakt-Upload: der Konsolenbericht steht im Log, und eine weitere Action waere eine
+      # weitere Lieferkette (PLAYBOOK, Supply-Chain-Pinning). Wer die JSON-Datei will, laesst die
+      # Sitzung lokal laufen; `coverage/gremlins/` ist gitignored.

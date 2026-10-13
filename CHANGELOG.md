@@ -4,6 +4,12 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Ein wöchentlicher Qualitätslauf in Actions** (`.github/workflows/quality.yml`): montags und von
+  Hand, `nox -s verify` (crosshair über 31 Verträge) und die gezielte Mutationssitzung über die acht
+  Module, die lokal unter 90 s brauchen. Kein Netz, kein Pages-Schritt, kein Gate für einen Push:
+  rot wird der Lauf nur, wenn crosshair ein Gegenbeispiel findet oder eine Sitzung abbricht.
+  Geschätzte Laufzeit rund 25 Minuten, `timeout-minutes: 45`.
+
 - **Die Berichtsseite baut neu, wenn sich eine Vorlage oder eine Anzeigeeinstellung ändert**
   (`docs/decisions.md`, Punkt 53): der Stamp des Schritts `report` trägt zusätzlich einen Hash über
   die Vorlagendateien des Pakets (samt Abschnitts-CSS und -JavaScript), über `report/literatur.toml`
