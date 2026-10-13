@@ -115,11 +115,24 @@ def _valid_areas(areas: Sequence[Area]) -> bool:
     return len(areas) > 0 and all(a.geometry.area > 0 and a.geometry.is_valid for a in areas)
 
 
+# Punkt 51: Zwei Flächen, die nur eine Grenze teilen, schneiden sich in Fließkomma nicht in 0,
+# sondern in etwas wie 4,44e-16. Ob dieses Nichts über 0 liegt, hängt an den Koordinaten und nicht
+# an der Geografie: dasselbe Rechteck ergab in einem gestreckten Gitter eine Zeile mehr
+# (hypothesis, 2026-10-13, ``test_scaling_the_grid_does_not_change_the_shares``). Ein Schnittstück
+# unter diesem Anteil der **Quellfläche** ist darum ein Splitter und fällt vor der Normierung weg.
+# Die Schwelle ist ein Anteil und damit dimensionslos, also unabhängig von der Einheit der Karte;
+# ``crosswalk.min_share`` in den Settings setzt sie, 0 schaltet sie ab.
+MIN_SHARE = 1e-9
+
+
 @deal.pre(
-    lambda sources, targets, *, min_coverage=0.9: (
-        _valid_areas(sources) and _valid_areas(targets) and 0.0 < min_coverage <= 1.0
+    lambda sources, targets, *, min_coverage=0.9, min_share=MIN_SHARE: (
+        _valid_areas(sources)
+        and _valid_areas(targets)
+        and 0.0 < min_coverage <= 1.0
+        and 0.0 <= min_share < 1.0
     ),
-    message="Quell- und Zielflächen mit Fläche, min_coverage in (0, 1]",
+    message="Quell- und Zielflächen mit Fläche, min_coverage in (0, 1], min_share in [0, 1)",
 )
 @deal.post(
     lambda result: (
@@ -132,7 +145,11 @@ def _valid_areas(areas: Sequence[Area]) -> bool:
 @deal.post(_shares_sum_to_one, message="die Anteile je Quellfläche summieren zu 1")
 @deal.raises(SchemaError)
 def area_shares(
-    sources: Sequence[Area], targets: Sequence[Area], *, min_coverage: float = 0.9
+    sources: Sequence[Area],
+    targets: Sequence[Area],
+    *,
+    min_coverage: float = 0.9,
+    min_share: float = MIN_SHARE,
 ) -> pl.DataFrame:
     """Je Quellfläche die Zielflächen mit ihrem Anteil an der bedeckten Fläche.
 
@@ -143,15 +160,20 @@ def area_shares(
     ist, sagt ``coverage``. Liegt sie unter ``min_coverage``, ist das ein ``SchemaError``: dann
     gehören die beiden Gliederungen nicht zum selben Gebiet.
 
+    Ein Schnittstück unter ``min_share`` der Quellfläche ist ein Splitter aus der
+    Fließkomma-Arithmetik (``MIN_SHARE``, Punkt 51) und fällt **vor** der Normierung weg: es zählt
+    weder als Zeile noch zur Bedeckung, und die übrigen Anteile summieren trotzdem zu 1.
+
     Ein STRtree über die Zielflächen spart die 306 × 171 Schnitte; ohne ihn dauerte es Minuten.
     """
     tree = shapely.STRtree([t.geometry for t in targets])
     rows: list[tuple[str, str, float, float]] = []
     for source in sources:
+        sliver = min_share * source.geometry.area
         pieces = [
             (targets[int(i)].key, area)
             for i in tree.query(source.geometry)
-            if (area := source.geometry.intersection(targets[int(i)].geometry).area) > 0.0
+            if (area := source.geometry.intersection(targets[int(i)].geometry).area) > sliver
         ]
         covered = sum(area for _, area in pieces)
         coverage = covered / source.geometry.area

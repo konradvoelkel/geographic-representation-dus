@@ -13,6 +13,7 @@ from shapely.geometry import box
 from shapely.geometry.base import BaseGeometry
 
 from georep.crosswalk import (
+    MIN_SHARE,
     area_shares,
     assign_by_point,
     district_weights,
@@ -128,6 +129,21 @@ def test_scaling_the_grid_does_not_change_the_shares(sources: list[Area], factor
     b = area_shares([stretch(s) for s in sources], [stretch(c) for c in CELLS])
     assert a.get_column("share").to_list() == pytest.approx(b.get_column("share").to_list())
     assert a.select("source_id", "target_id").equals(b.select("source_id", "target_id"))
+
+
+@given(sources=boxes())
+def test_no_share_below_the_threshold_survives(sources: list[Area]) -> None:
+    """Punkt 51: unter ``min_share`` ist ein Schnittstück ein Splitter und keine Zeile.
+
+    Die Eigenschaft ist der Grund der Schwelle: ob ein Stück aus der Fließkomma-Arithmetik über
+    0 liegt, hängt am Gitter und nicht an der Geografie (siehe den Test darüber). Geprüft wird
+    mit einer groben Schwelle, damit die Aussage auch bei kleinen Kästen etwas bedeutet.
+    """
+    for threshold in (MIN_SHARE, 0.05):
+        # Die grobe Schwelle nimmt einem Kasten über mehreren Zellen so viel Bedeckung, dass der
+        # Wächter ``min_coverage`` sonst zuschlägt; hier geht es nur um die Anteile.
+        shares = area_shares(sources, CELLS, min_coverage=0.01, min_share=threshold)
+        assert bool((shares.get_column("share") >= threshold).all()), threshold
 
 
 # --- Gewichte je Wahlbezirk aus Anteilen ---------------------------------------------------------

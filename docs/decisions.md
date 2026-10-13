@@ -1118,3 +1118,52 @@ unterscheidet sich zwischen SVG 1.1 und SVG 2 und ist hier nur in Chrome prüfba
 Risiko am Herzstück der Seite nicht wert, solange das Budget ohne sie hält. Der Minify-Schritt für
 Leerraum fällt mit 0,96 % unter die Grenze von 5 %, die der Auftrag gesetzt hat; die Vorlagen schreiben
 mit `trim_blocks` und `lstrip_blocks`, es steht also schon fast kein Leerraum in der Datei.
+
+## 51. Ein Schnittstück unter `crosswalk.min_share` ist ein Splitter (2026-10-13)
+
+Zwei Flächen, die nur eine Grenze teilen, schneiden sich in Fließkomma nicht in 0, sondern in etwas
+wie 4,44e-16. `area_shares` nahm jedes Stück mit `area > 0.0` und machte daraus eigene Zeilen: die
+veröffentlichte `wahlbezirke_crosswalk.parquet` trug 20 Zeilen mit Gewichten bis 1,3e-10, die
+kleinste 2,9e-17. Das ist kein kleines Gewicht, sondern keines — und es ist nicht einmal stabil: ob
+so ein Nichts über 0 liegt, hängt an den Koordinaten und nicht an der Geografie. hypothesis hat
+genau das gefunden (`test_scaling_the_grid_does_not_change_the_shares`, 2026-10-13): dasselbe
+Rechteck ergab in einem um 1,4603 gestreckten Gitter eine Zeile mehr, und die Eigenschaft „Anteile
+sind dimensionslos" brach.
+
+**Die Schwelle ist ein Anteil der Quellfläche, kein Maß in m².** `crosswalk.min_share = 1e-9`
+(0 schaltet ab) heißt: ein Schnittstück unter einem Milliardstel der Quellfläche fällt **vor** der
+Normierung weg, zählt also weder als Zeile noch zur Bedeckung, und die übrigen Anteile summieren
+weiter zu 1 (`sums_to_one` bleibt, `min_coverage` bleibt der Wächter dafür, dass die beiden
+Gliederungen überhaupt zusammengehören). Ein Anteil ist dimensionslos und skaliert mit der Karte;
+genau das verlangt die Eigenschaft, an der der Fehler aufgefallen ist. **Verworfen:** eine absolute
+Schwelle in m² (sie hängt an der Einheit des CRS — in Grad gerechnet wäre 1e-9 m² eine andere
+Größe — und sie bricht dieselbe Eigenschaft wieder, sobald eine Karte skaliert wird); die Schwelle
+nur im Test (dann stünde das Rauschen weiter in der veröffentlichten Tabelle, und der Test prüfte
+nicht mehr, was das Programm tut); `shapely.set_precision` auf den Eingabegeometrien (ein Gitter
+über alle Koordinaten ändert echte Flächen, um ein Rechenartefakt zu treffen).
+
+**Gemessen auf der Referenz** (2026-10-13, Stimmbezirke gegen die 171 Sozialräume des
+Quartiersatlas): `area_shares` liefert 1134 statt 1244 Zeilen, der kleinste Anteil steigt von
+6,8e-19 auf 1,1e-09, die kleinste Bedeckung bleibt 0,99987530. Die veröffentlichte
+`wahlbezirke_crosswalk` hat 465 statt 485 Zeilen (das größte entfallene Gewicht ist 1,3e-10, die
+größte Änderung an einem bleibenden Gewicht 1,7e-10). Weiter: `wahlbezirke_kontext` ändert sich um
+höchstens 8,9e-09 (relativ 6,4e-11), Tabelle 6 um höchstens 3,9e-08 an einem Koeffizienten, 3,2e-11
+an einem R², 5,6e-10 an einem p. **Auf der Seite ändert sich keine gedruckte Stelle:** die
+Abschnitte Kernzahlen, Zusammenhang (Tabelle 5), Kontrollvariablen (Tabelle 6 und 6b),
+Abgeleitete Daten, Wahlbezirke, Gewichtung, Parteien, Gremien, Monate, Begriffe und Methode sind
+byteidentisch, `wahlbezirke_auswertung.parquet` ist byteidentisch, die Treffer bleiben 29 010 und das
+Wörterbuch 5727. Verschoben haben sich nur die Zeilenzahl und die Prüfsumme der beiden
+Crosswalk-Dateien im Abschnitt „Downloads".
+
+**Zuerst der rote Test.** Die Eigenschaft „kein Anteil unter der Schwelle in der Ausgabe"
+(`tests/property/test_crosswalk_props.py`) und zwei Beispiele mit zwei Flächen an einer gemeinsamen
+Grenze (`tests/unit/test_crosswalk.py`: die Berührung wird keine Zeile; ein Zipfel von 1e-7 bleibt
+mit der Vorgabe und fällt mit einer groben Schwelle weg, und der Rest ist dann genau 1) waren vor
+der Änderung rot (Exit 1, `TypeError: <lambda>() got an unexpected keyword argument 'min_share'`
+im Vertrag und ein Importfehler für `MIN_SHARE`), danach grün — samt dem gespeicherten
+Gegenbeispiel in `.hypothesis`. Die Vorgabe steht zweimal, als `crosswalk.MIN_SHARE` (Vorgabe der
+Funktion) und in `settings.py`: `georep.geo` liest die Settings und `crosswalk` liest `geo`, ein
+Import wäre ein Zyklus. Ein Test hält beide Zahlen zusammen.
+
+Kosten: ein neuer Settings-Schlüssel, also ein neuer Fingerprint und ein einmaliger Lauf aller
+Offline-Schritte (23 s, STATUS.md unter „Bekannt").

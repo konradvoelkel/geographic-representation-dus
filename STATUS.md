@@ -203,7 +203,7 @@ und sagt je, warum sie liegen bleiben.
 
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46 und 47)
 
-- Tests: 998 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 1003 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
@@ -262,20 +262,20 @@ und sagt je, warum sie liegen bleiben.
   dieser Seite zu tun haben — zwei Tests wurden rot („Dezember" aus einem Eintrag zu Open.NRW, 2025
   aus zwei Aufsätzen). `without_literature(page)` in `tests/conftest.py` schneidet den Abschnitt
   heraus; wer ein Wort im ganzen HTML sucht, nimmt sie.
-- **Rot auf `main` seit dem 2026-10-13**: `tests/property/test_crosswalk_props.py::test_scaling_the_grid_does_not_change_the_shares`.
-  hypothesis hat ein Gegenbeispiel gefunden (Faktor 1,4603, zwei Rechtecke mit gemeinsamer Grenze)
-  und in der lokalen `.hypothesis`-Datenbank abgelegt, also schlägt der Test hier reproduzierbar
-  fehl; in CI gibt es die Datenbank nicht, dort ist er grün, bis die Suche dasselbe findet.
-  Befund: `crosswalk.area_shares` zählt ein Schnittstück ab `area > 0.0`, und zwei Flächen, die nur
-  eine Grenze teilen, schneiden sich in Fließkomma in etwa 4,44e-16 statt in 0 — ob dieses Nichts
-  über 0 liegt, hängt am Gitter und nicht an der Geografie. Über die Referenz liefert `area_shares`
-  1244 Zeilen, die kleinsten Schnittflächen sind 2,4e-13 m², 1,2e-12 m² und 5,5e-11 m² bei
-  Stimmbezirken von im Median 3,1e+05 m²; `wahlbezirke_crosswalk.parquet` trägt darum heute Zeilen
-  mit Gewicht 2,9e-17. **Jede** Schwelle ändert diese veröffentlichte Datei (relativ 1e-12 lässt
-  1195 Zeilen übrig, absolut 1e-9 m² rund 1236) und damit möglicherweise die letzten Stellen von
-  `wahlbezirke_kontext` und Tabelle 6. Darum nicht nebenbei behoben, sondern eine eigene
-  Entscheidung mit eigener Messung (gemessen am 2026-10-13 beim Einklappen der Tabellen; der
-  Befund ist älter als diese Änderung und unabhängig von ihr).
+- Schnittstücke aus der Fließkomma-Arithmetik sind keine Gewichte mehr (`docs/decisions.md`,
+  Punkt 51, 2026-10-13): `crosswalk.area_shares` nahm jedes Stück mit `area > 0.0`, und zwei
+  Flächen mit gemeinsamer Grenze schneiden sich in etwa 4,44e-16 statt in 0 — ob dieses Nichts
+  über 0 liegt, hängt an den Koordinaten und nicht an der Geografie. hypothesis hat es gefunden
+  (`test_scaling_the_grid_does_not_change_the_shares` wurde rot: dasselbe Rechteck ergab in einem
+  um 1,4603 gestreckten Gitter eine Zeile mehr). Jetzt fällt ein Stück unter
+  `crosswalk.min_share` (1e-9 der Quellfläche, 0 schaltet ab) vor der Normierung weg. Auf der
+  Referenz: `area_shares` 1134 statt 1244 Zeilen, `wahlbezirke_crosswalk` 465 statt 485, kleinster
+  Anteil 1,1e-09 statt 6,8e-19, kleinstes veröffentlichtes Gewicht 1,3e-10 statt 2,9e-17.
+  `wahlbezirke_kontext` ändert sich um höchstens 8,9e-09, Tabelle 6 um 3,9e-08 an einem
+  Koeffizienten und 3,2e-11 an einem R²; **keine gedruckte Stelle der Seite ändert sich** (alle
+  Abschnitte außer „Downloads" byteidentisch, `wahlbezirke_auswertung.parquet` byteidentisch,
+  Treffer 29 010, Wörterbuch 5727). Der neue Schlüssel ändert den globalen Fingerprint, also
+  liefen alle Offline-Schritte einmal neu (23 s).
 - Ein Test, der ein Element über sein Markup sucht, darf das schließende `>` nicht mitnehmen:
   `<table id="districts">` fand nichts mehr, als die Tabelle `class="preview"` bekam (sechs Tests
   und ein Snapshot wurden am 2026-10-13 rot). Seitdem steht in den Tests `<table id="districts"`

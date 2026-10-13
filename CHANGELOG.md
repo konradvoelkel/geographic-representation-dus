@@ -4,6 +4,14 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Die Gebietsumrechnung zählt keine Splitter mehr** (`docs/decisions.md` Punkt 51). Zwei Flächen,
+  die nur eine Grenze teilen, schneiden sich in Fließkomma nicht in 0, sondern in etwa 4,44e-16;
+  solche Scheinschnitte wurden zu eigenen Zeilen mit Gewichten wie 2,9e-17. Neu fällt ein
+  Schnittstück unter `crosswalk.min_share` (Vorgabe 1e-9 der Quellfläche, 0 schaltet ab) vor der
+  Normierung weg. `wahlbezirke_crosswalk` hat auf der Referenz 465 statt 485 Zeilen; jede gedruckte
+  Zahl der Seite bleibt gleich (Tabelle 5, Tabelle 6, 6b und die Kennzahlen byteidentisch, größte
+  Änderung an einem Koeffizienten 3,9e-08).
+
 - **Das Budget der Seite ist 1,0 MB und steht in den Settings** (`report.page_budget_bytes`,
   `docs/decisions.md` Punkt 50). `georep run` sagt es jetzt selbst, wenn `index.html` darüber liegt;
   vorher stand die alte Grenze von 1,5 MB als Zahl in vier Tests und hat nie gezuckt, während die

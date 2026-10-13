@@ -8,6 +8,7 @@ import pytest
 from shapely.geometry import MultiPolygon, Polygon
 
 from georep.crosswalk import (
+    area_shares,
     assign_by_point,
     largest_remainder,
     target_weights,
@@ -147,3 +148,63 @@ def test_transfer_counts_needs_the_same_sources_on_both_sides() -> None:
         transfer_counts(counts, shares, ["n"])
     with pytest.raises(deal.PreContractError):
         transfer_counts(counts.head(1).with_columns(pl.col("n") * -1), shares, ["n"])
+
+
+# --- Punkt 51: Splitter aus der Fließkomma-Arithmetik ------------------------------------------
+
+
+def test_a_shared_border_does_not_become_a_share() -> None:
+    """Zwei Zielflächen, die nur eine Grenze mit der Quelle teilen: das ist kein Schnittstück.
+
+    Der Schnitt zweier Flächen entlang einer gemeinsamen Grenze ist in Fließkomma nicht 0,
+    sondern etwas wie 4,44e-16 -- und ob er über 0 liegt, hängt an den Koordinaten und nicht an
+    der Geografie (hypothesis, 2026-10-13). Hier liegt die Quelle genau in der linken Zelle; die
+    rechte berührt sie nur, und ihre Zeile darf nicht entstehen.
+    """
+    source = [Area("p", Polygon([(0.1, 0.1), (3.0, 0.1), (3.0, 0.9), (0.1, 0.9)]))]
+    targets = [
+        Area("links", Polygon([(0.0, 0.0), (3.0, 0.0), (3.0, 1.0), (0.0, 1.0)])),
+        Area("rechts", Polygon([(3.0, 0.0), (6.0, 0.0), (6.0, 1.0), (3.0, 1.0)])),
+    ]
+    shares = area_shares(source, targets)
+    assert shares.get_column("target_id").to_list() == ["links"]
+    assert shares.get_column("share").to_list() == [1.0]
+    # Ohne Schwelle hinge es am Zufall der Koordinaten, ob die Berührung eine Zeile wird
+    assert area_shares(source, targets, min_share=0.0).height >= 1
+
+
+def test_a_sliver_falls_out_before_the_shares_are_normalised() -> None:
+    """Die Schwelle wirkt vor der Normierung: der Rest summiert trotzdem zu 1.
+
+    Die Quelle liegt zu 99,99999 % in der linken Zelle und ragt um 1e-7 ihrer Fläche in die
+    rechte. Mit der Vorgabe (1e-9) bleibt dieser Zipfel; mit einer groben Schwelle fällt er weg,
+    und der verbleibende Anteil ist genau 1, nicht 0,9999999.
+    """
+    source = [Area("p", Polygon([(0.0, 0.0), (1.0 + 1e-7, 0.0), (1.0 + 1e-7, 1.0), (0.0, 1.0)]))]
+    targets = [
+        Area("links", Polygon([(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)])),
+        Area("rechts", Polygon([(1.0, 0.0), (2.0, 0.0), (2.0, 1.0), (1.0, 1.0)])),
+    ]
+    fine = area_shares(source, targets)
+    assert fine.get_column("target_id").to_list() == ["links", "rechts"]
+    assert fine.get_column("share").to_list()[1] == pytest.approx(1e-7, rel=1e-3)
+    coarse = area_shares(source, targets, min_share=1e-6)
+    assert coarse.get_column("target_id").to_list() == ["links"]
+    assert coarse.get_column("share").to_list() == [1.0]
+    # Die Bedeckung zählt den Splitter dann auch nicht mit: sie bleibt knapp unter 1
+    assert coarse.get_column("coverage").to_list()[0] == pytest.approx(1 - 1e-7, rel=1e-3)
+
+
+def test_the_threshold_has_to_be_a_share() -> None:
+    source = [Area("p", Polygon([(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]))]
+    with pytest.raises(deal.PreContractError):
+        area_shares(source, source, min_share=1.5)
+
+
+def test_the_default_of_the_setting_is_the_default_of_the_function() -> None:
+    """Zwei Stellen, eine Zahl: ``settings.py`` kann ``MIN_SHARE`` nicht importieren (Zyklus über
+    ``geo``), darum hält dieser Test sie zusammen."""
+    from georep.crosswalk import MIN_SHARE
+    from georep.settings import Crosswalk
+
+    assert Crosswalk().min_share == MIN_SHARE

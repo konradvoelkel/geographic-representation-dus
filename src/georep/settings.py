@@ -920,12 +920,26 @@ class Crosswalk(_Strict):
     district_id: str = ""  # Wahlbezirksnummer in Kommunalwahlbezirke.geojson
     district_name: str = ""  # Wahlbezirksname dort
     min_coverage: float = 0.95  # kleinste zulässige Abdeckung einer Quellfläche durch die Ziele
+    # Punkt 51: kleinster Anteil der Quellfläche, der als Schnittstück zählt. Darunter ist es ein
+    # Splitter aus der Fließkomma-Arithmetik (eine geteilte Grenze schneidet sich in ~4,44e-16)
+    # und fällt vor der Normierung weg; 0 schaltet die Schwelle ab. Die Zahl steht hier als
+    # Literal und nicht als Import von ``crosswalk.MIN_SHARE``: ``georep.geo`` liest die Settings,
+    # und ``crosswalk`` liest ``geo`` -- der Import wäre ein Zyklus. Ein Test hält beide zusammen
+    # (``tests/unit/test_crosswalk.py``).
+    min_share: float = 1e-9
 
     @field_validator("min_coverage")
     @classmethod
     def _coverage_is_a_share(cls, value: float) -> float:
         if not 0.0 < value <= 1.0:
             raise ValueError(f"crosswalk.min_coverage {value}: ein Anteil in (0, 1]")
+        return value
+
+    @field_validator("min_share")
+    @classmethod
+    def _threshold_is_a_small_share(cls, value: float) -> float:
+        if not 0.0 <= value < 1.0:
+            raise ValueError(f"crosswalk.min_share {value}: ein Anteil in [0, 1)")
         return value
 
     @field_validator("target_file")

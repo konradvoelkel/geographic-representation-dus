@@ -486,7 +486,12 @@ def build_steps(
         table = precinct_table(precincts, read_results_csv(layout.results_csv, columns), columns)
         units = read_areas(layout.external / context.files.units.file, context.units.key, working)
         shares = area_shares(
-            [Area.of(p) for p in precincts], units, min_coverage=context.min_coverage
+            [Area.of(p) for p in precincts],
+            units,
+            min_coverage=context.min_coverage,
+            # Punkt 51: die Schwelle gegen Splitter steht unter [crosswalk] und gilt für beide
+            # geometrischen Crosswalks; [context] beschreibt nur die Fremddaten.
+            min_share=settings.crosswalk.min_share,
         )
         weights = district_weights(table, shares)
         values = read_context_table(layout.external / context.files.table.file, context)
@@ -531,7 +536,9 @@ def build_steps(
             ).items()
         ]
         home = assign_by_point(sources, old)
-        shares = area_shares(sources, targets, min_coverage=cross.min_coverage)
+        shares = area_shares(
+            sources, targets, min_coverage=cross.min_coverage, min_share=cross.min_share
+        )
         frame = (
             shares.rename({SOURCE: PRECINCT, SHARE: "anteil", COVERAGE: "abdeckung"})
             # Die Schlüssel des Crosswalks sind Text; die Wahlbezirke sind im ganzen Projekt

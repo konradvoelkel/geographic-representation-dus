@@ -176,6 +176,7 @@ precinct_id = ""               # Eigenschaft der Stimmbezirksnummer im Stimmbezi
 district_id = ""               # Eigenschaft der Wahlbezirksnummer in Kommunalwahlbezirke.geojson (2020: "Kommunalwahlbezirk")
 district_name = ""             # Eigenschaft des Wahlbezirksnamens dort (2020: "Name")
 min_coverage = 0.95            # kleinste zulässige Abdeckung einer Quellfläche durch die Zielbezirke; 2020 auf 2025 liegt sie bei 97,8 % bis 100 % (Stadtgrenze, Rhein), weniger heißt falsches CRS
+min_share = 1e-9               # Punkt 51: kleinster Anteil der Quellfläche, der als Schnittstück zählt; darunter gilt ein Schnittstück als Splitter aus der Fließkomma-Arithmetik (zwei Flächen mit gemeinsamer Grenze schneiden sich nicht in 0, sondern in etwa 4,44e-16) und fällt vor der Normierung weg. Ein Anteil, also dimensionslos und unabhängig von der Einheit der Karte; 1e-9 eines Stimmbezirks sind auf der Referenz rund 3 cm². 0 schaltet die Schwelle ab
 
 [compare]                      # Vergleich zweier Perioden, Schritt compare auf der Hauptperiode
 period = ""                    # Profil der älteren Periode (Ordner unter data_root); leer = kein Vergleich; profiles/duesseldorf-vergleich.toml setzt "2014-2020"
