@@ -91,7 +91,13 @@ from georep.prep.voters import (
     with_shares,
 )
 from georep.records import PaperRecord
-from georep.report.build import MAP_NAME, SCHEMA_NAME, build_site, current_commit
+from georep.report.build import (
+    MAP_NAME,
+    SCHEMA_NAME,
+    build_site,
+    current_commit,
+    report_fingerprint,
+)
 from georep.report.geometry import district_shapes
 
 # Punkt 45: nur die zwei Zahlen, nicht die Modelle -- ``analysis.topics`` und
@@ -132,6 +138,13 @@ class Step:
     run: Callable[[], str]
     schema_version: int = 1
     network: bool = False
+    # Punkt 53: ein Zusatz, der nur diesen Schritt betrifft, als kurzer Hash. Der
+    # Settings-Fingerprint ist global und lässt ``[report]`` aus, weil der Block nur die Anzeige
+    # betrifft -- für die Parquet-Dateien ist das richtig, für ``index.html`` nicht. Und keine
+    # Datei des Pakets steht im Stamp: eine geänderte Vorlage machte ihn nicht ungültig. Der
+    # Schritt ``report`` füllt das Feld (``report.build.report_fingerprint``); für jeden anderen
+    # bleibt es leer, und ein alter Stamp ohne das Feld bleibt damit gültig.
+    extra: str = ""
 
     @property
     def stamp_path(self) -> Path:
@@ -164,6 +177,7 @@ def expected_stamp(step: Step, settings: Settings) -> dict[str, object]:
         "step": step.name,
         "schema_version": step.schema_version,
         "settings": settings.fingerprint(),
+        "extra": step.extra,
         "code": __version__,
         "inputs": input_digests(step),
         "outputs": [p.name for p in step.outputs],
@@ -194,6 +208,10 @@ def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -
         return "Schema geändert"
     if stamped.get("settings") != settings.fingerprint():
         return "Settings geändert"
+    # Punkt 53: ``get`` mit Vorgabe, nicht ohne -- ein Stamp von vor diesem Feld ist für jeden
+    # Schritt ohne Zusatz weiter gültig, und nur der Schritt ``report`` läuft einmal neu.
+    if stamped.get("extra", "") != step.extra:
+        return "Vorlagen oder Anzeige geändert"
     if stamped.get("code") != __version__:
         return f"Code-Version {stamped.get('code')} -> {__version__}"
     stamped_inputs = stamped.get("inputs")
@@ -1251,5 +1269,10 @@ def build_steps(
             ),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
+            # Punkt 53: der eine Schritt mit einem Zusatz im Stamp. Die Vorlagen des Pakets und
+            # ``[report]`` entscheiden über die Seite, stehen aber in keinem Eingabe-Hash und in
+            # keinem Settings-Fingerprint; ohne diesen Hash blieb der Stamp nach einer geänderten
+            # Vorlage oder Klassengrenze gültig.
+            extra=report_fingerprint(settings),
         ),
     ]

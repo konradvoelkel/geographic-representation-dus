@@ -4,6 +4,13 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Die Berichtsseite baut neu, wenn sich eine Vorlage oder eine Anzeigeeinstellung ändert**
+  (`docs/decisions.md`, Punkt 53): der Stamp des Schritts `report` trägt zusätzlich einen Hash über
+  die Vorlagendateien des Pakets (samt Abschnitts-CSS und -JavaScript), über `report/literatur.toml`
+  und über den Block `[report]` der Settings. `georep status` sagt dann „Vorlagen oder Anzeige
+  geändert"; vorher blieb der Schritt „aktuell", und die Seite brauchte ein
+  `georep run report --force`. Die Datenschritte laufen nicht mit neu.
+
 - **Mutationstest über die dreizehn Module des Ausbaus** (`docs/mutation-2026-10-13.md`): 876
   Mutanten, 652 getötet (74,4 %); mit den Tests, die die echten Lücken schließen, 712 (81,3 %). Die
   Quote ist kein Gate, aber sie hat echte Löcher gezeigt: `analysis/scaling.dictionary_bias` hatte

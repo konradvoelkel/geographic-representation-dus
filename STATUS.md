@@ -330,12 +330,13 @@ Datensatz, kein Lauf).
   — nach einem Klick auf „Anteil" war die Tönung weg (gefunden am 2026-10-13 mit headless Chrome, nicht von
   einem Test). Seitdem gilt `q<n>` auf einer SVG-Fläche als `fill` und in einer Tabellenzelle als Tönung
   desselben Rangs, beides im Rahmen definiert.
-- Dasselbe gilt für die Klassengrenzen unter `[report.diverging]` (Punkt 46) und für alles unter
-  `[report]`: der Block ist aus dem Settings-Fingerprint ausgenommen, weil er nur die Anzeige betrifft, und
-  darum meldet `georep status` den Schritt `report` nach einer geänderten Grenze als „aktuell". Richtig ist
-  das für die Parquet-Dateien, nicht für `index.html`; wer eine Grenze ändert, braucht
-  `georep run report --force`.
-- Ein Vorlagenwechsel (`templates/sections/*.j2`) macht den Stamp des Schritts `report` nicht ungültig: er trägt die Code-Version des Pakets, nicht den Hash der Vorlagen. Nach einer Änderung an einer Vorlage ohne Versionssprung braucht die Seite ein `georep run report --force` (bemerkt am 2026-10-12).
+- **Behoben am 2026-10-13** (Punkt 53): der Schritt `report` trägt einen eigenen Zusatz im Stamp, einen
+  Hash über die Vorlagendateien des Pakets samt ihrem CSS und JavaScript, über `literatur.toml` und über
+  `settings.report`. Davor machte weder ein Vorlagenwechsel noch eine geänderte Klassengrenze unter
+  `[report.diverging]` den Stamp ungültig — der Block `[report]` ist aus dem Settings-Fingerprint
+  ausgenommen, weil er nur die Anzeige betrifft, und das ist für die Parquet-Dateien richtig, für
+  `index.html` war es falsch. `georep run report --force` braucht seitdem niemand mehr dafür, und die
+  Datenschritte laufen nicht mit neu (der globale Fingerprint ist unberührt).
 - Der Settings-Fingerprint ist global: ein neuer Schlüssel lässt alle Schritte einmal neu laufen. Hinnehmbar; ein Fingerprint je Schritt ist zurückgestellt (`docs/plans/00-synergien.md`, § 8).
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab (`docs/baseline-2026-10-10.md`).
 - Der Stamp des Schritts `report` liegt als `site/index.html.stamp.json` in der Datenwurzel, also in der

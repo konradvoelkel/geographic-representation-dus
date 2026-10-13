@@ -39,7 +39,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `search/` | `dictionary` (Wörterbuch je Wahlbezirk), `matcher` (`KeywordMatcher`-Protokoll, FlashText), `index` (invertierter Index) |
 | `analysis/` | `topics` (Themenmodell: TF-IDF und NMF; `TopicRules` trägt die Stoppwörter aus dem Profil und die Saat je Ausschuss, `vectorize` ist die eine Textdarstellung), `committees` (passender Ausschuss je Dokument: logistische Regression mit Restklasse), `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings; ohne Streuung in x oder y gibt es kein Ergebnis, sondern einen `EmptyResultError`), `periods` (zwei Perioden je Wahlbezirk nebeneinander und die Regression ihrer Änderungen), `timeline` (Dokumente je Monat, stadtweit und je Wahlbezirk; die Nachbedingung prüft gegen `hits_by_district`, Option 07) |
 | `crosswalk` | Umrechnung von Gebietseinheiten auf Wahlbezirke: `unit_weights` wiegt je Wahlbezirk die Einheiten (Stadtbezirk, Stadtteil) mit einer Zählgröße je Stimmbezirk; der Flächen-Crosswalk auf einen anderen Zuschnitt kommt mit `assign_by_point` (Zuordnung innerhalb eines Zuschnitts über den repräsentativen Punkt), `area_shares` (Flächenanteile, auf die Schnittsumme normiert, mit Abdeckung `min_coverage` als Wächter und `min_share` gegen Splitter: ein Schnittstück unter diesem Anteil der Quellfläche stammt aus der Fließkomma-Arithmetik einer geteilten Grenze und fällt vor der Normierung weg, Punkt 51), `target_weights` und `transfer_counts` (additive Zählgrößen übertragen, `largest_remainder` macht sie ganzzahlig ohne die Summe zu ändern). Verträge: Anteile je Quelle und Gewichte je Ziel summieren zu 1, Spaltensummen bleiben exakt erhalten |
-| `pipeline` | Schrittregister: Name, Eingaben, Ausgaben, `run()`, Schema-Version; Stamps; `run_step`, `run_pipeline`, `build_steps` |
+| `pipeline` | Schrittregister: Name, Eingaben, Ausgaben, `run()`, Schema-Version, optionaler Zusatz im Stamp (`extra`, heute nur `report`); Stamps; `run_step`, `run_pipeline`, `build_steps` |
 | `bootstrap` | kopiert die Referenz nach `data_root` und baut daraus `papers.jsonl` und den Textstore |
 | `contracts` | `configure()` für `settings.contracts` und die Prädikate der deal-Verträge |
 | `profiling` | `profile_step`: ein echter Schritt unter cProfile, `.prof` datiert nach `docs/profiling/` |
@@ -102,7 +102,9 @@ Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`).
 Die Tabelle steht in der Reihenfolge des Registers, also in der Reihenfolge, in der `georep run`
 die Schritte plant (`georep steps` zeigt sie für ein Profil). Neben der ersten Ausgabe jedes
 Schritts liegt `<datei>.stamp.json` mit den SHA-256-Hashes der Eingaben, dem
-Settings-Fingerprint, der Code-Version und der Schema-Version. Stimmt alles, ist der Schritt aktuell und wird
+Settings-Fingerprint, der Code-Version, der Schema-Version und einem Zusatz, den nur der Schritt
+`report` füllt (Punkt 53: ein Hash über die Vorlagendateien des Pakets, `literatur.toml` und
+`settings.report` — beides steht in keinem Eingabe-Hash und nicht im globalen Fingerprint). Stimmt alles, ist der Schritt aktuell und wird
 übersprungen; sonst läuft er und sagt, warum („Eingabe geändert: texts.parquet", „Code-Version 0.6.0 ->
 0.7.0"). `--force` erzwingt, `--dry-run` plant nur. Jeder Lauf druckt je Schritt eine Zeile mit der Anzahl,
 auf die er gewirkt hat, und die Sekunden. Der volle Offline-Lauf auf der Referenz dauert rund 23 s, davon

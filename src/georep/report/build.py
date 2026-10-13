@@ -8,12 +8,18 @@ SVGs, zuletzt ``index.html``; die trägt den Stamp. Zeit und Commit sind Eingabe
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
+import json
 import os
 import shutil
 import subprocess
+from collections.abc import Iterator
 from dataclasses import dataclass, replace
+from importlib import resources
+from importlib.resources.abc import Traversable
 from pathlib import Path
 
+import deal
 import polars as pl
 
 from georep.analysis.hits import DISTRICT
@@ -54,6 +60,7 @@ from georep.report.geometry import (
     fit,
     wahlbezirke_geojson,
 )
+from georep.report.literature import FILE as LITERATURE_FILE
 from georep.report.model import (
     SUMMARY_FIELDS,
     Download,
@@ -336,6 +343,56 @@ def partial_plots(layout: Layout, settings: Settings, model: ReportModel) -> lis
             )
         )
     return plots
+
+
+def _page_files(folder: Traversable) -> Iterator[tuple[str, bytes]]:
+    """Die Dateien des Pakets, aus denen die Seite entsteht: Vorlagen und ``literatur.toml``.
+
+    Name und Inhalt, in fester Folge. Alles unter ``templates/`` zählt, auch das CSS und das
+    JavaScript der Abschnitte: eine geänderte Zeile dort ändert die Seite genauso wie eine
+    geänderte Vorlage.
+    """
+    stack = [(folder / "templates", "templates/")]
+    while stack:
+        here, prefix = stack.pop()
+        for entry in sorted(here.iterdir(), key=lambda e: e.name):
+            if entry.is_dir():
+                stack.append((entry, f"{prefix}{entry.name}/"))
+            else:
+                yield f"{prefix}{entry.name}", entry.read_bytes()
+    literature = folder / LITERATURE_FILE
+    if literature.is_file():
+        yield LITERATURE_FILE, literature.read_bytes()
+
+
+@deal.post(lambda result: len(result) == 16)
+def report_fingerprint(settings: Settings, folder: Traversable | None = None) -> str:
+    """Der Zusatz im Stamp des Schritts ``report`` (Punkt 53): Paketdateien plus ``[report]``.
+
+    Zwei Lücken schließt er, beide bis zum 2026-10-13 in ``STATUS.md`` unter „Bekannt":
+
+    1. Ein Wechsel an einer Vorlage (``templates/sections/*.j2``, ihr CSS, ihr JavaScript) oder an
+       ``literatur.toml`` machte den Stamp nicht ungültig — er trug nur die Code-Version des
+       Pakets. Ohne Versionssprung brauchte die Seite danach ein ``georep run report --force``.
+    2. ``[report]`` ist aus dem Settings-Fingerprint ausgenommen, weil der Block nur die Anzeige
+       betrifft (Klassengrenzen, Budget, Literatur, Vorschauzeilen). Für die Parquet-Dateien ist
+       das richtig; für ``index.html`` war es falsch, und ``georep status`` meldete den Schritt
+       nach einer geänderten Klassengrenze als „aktuell".
+
+    ``folder`` ist die Testnaht und zeigt auf das Paket ``georep.report``, nicht auf den
+    Vorlagenordner: ``literatur.toml`` liegt daneben, nicht darin.
+    """
+    if folder is None:
+        folder = resources.files("georep.report")
+    digest = hashlib.sha256()
+    for name, data in _page_files(folder):
+        digest.update(name.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(data)
+        digest.update(b"\0")
+    payload = json.dumps(settings.report.model_dump(mode="json"), sort_keys=True, default=str)
+    digest.update(payload.encode("utf-8"))
+    return digest.hexdigest()[:16]
 
 
 def build_site(
