@@ -4,6 +4,16 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Die Begriffe je Wahlbezirk stehen nicht mehr in der Seite**, sondern in `data/begriffe.json`
+  (`docs/decisions.md` Punkt 49). Der Abschnitt „Begriffe" holt die Liste beim ersten Aufklappen
+  eines Wahlbezirks nach, wie der Dialog die Dokumente beim ersten Klick auf einen Begriff holt;
+  inline bleiben die trefferstärksten Begriffe stadtweit, die stadtweiten Begriffe, die fünf
+  häufigsten je Wahlbezirk und je Wahlbezirk seine Zahl. Das war mit 334 KB der größte Posten der
+  Seite: `index.html` schrumpft von 1,29 MB auf 0,96 MB.
+  - Die Datei steht mit Zeilenzahl, Größe und SHA-256 unter „Downloads" wie `dokumente.json`.
+    Aus dem Dateisystem geöffnet (`file://`) zeigt der Abschnitt denselben Hinweis wie der Dialog:
+    der Browser erlaubt das Nachladen dort nicht, über einen Webserver geht es.
+
 - **Lange Tabellen zeigen drei Zeilen, der Rest klappt auf Bedarf auf** (`docs/todo.md` Punkt 2,
   `docs/decisions.md` Punkt 48, Messung in `docs/seitengroesse-2026-10.md`). Elf Aufzählungen der
   Seite (Wahlbezirke, Urheber je Wahlbezirk, Gremien, Monate, Gewichtungen, Themen, Downloads,

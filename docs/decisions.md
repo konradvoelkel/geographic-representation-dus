@@ -1049,3 +1049,42 @@ Spaltendoku stehen schon je in einem `<details>` und brauchen nichts.
 die Zahl Geschmack ist und nicht Technik; sie gilt für alle Tabellen gleich. `[report]` zählt nicht zum
 Settings-Fingerprint, eine andere Zahl braucht also `georep run report --force` (wie jede
 Vorlagenänderung, STATUS.md unter „Bekannt"). Kosten: die Seite wächst um 4130 Byte.
+
+## 49. Die Begriffslisten je Wahlbezirk werden nachgeladen (2026-10-13)
+
+`docs/todo.md`, Punkt 2, zweiter Teil. Die 41 Listen (3946 `<li>` mit je einer Schaltfläche) waren mit
+333 750 Byte der größte Posten der Seite — 26 % — und standen dort in zugeklappten `<details>`: Daten,
+die niemand sieht, der sie nicht aufklappt. Sie liegen jetzt als `data/begriffe.json` (96 KB) neben der
+Seite, und `sections/50-begriffe.js` holt sie beim ersten Aufklappen, wie der Dialog `dokumente.json`
+beim ersten Klick auf einen Begriff holt.
+
+**Was inline bleibt**, weil es den Abschnitt trägt: die zwanzig trefferstärksten Begriffe stadtweit,
+die 55 stadtweiten Begriffe (Punkt 44), die fünf häufigsten Begriffe je Wahlbezirk in der
+Bezirkstabelle und je Wahlbezirk seine Zahl in der Zusammenfassung des `<details>`. Wer den Abschnitt
+nur liest, braucht nichts nachzuladen.
+
+**Der Unterschied zur Suche ist der Zweck, nicht die Größe.** Der Vorschlagsindex (139 KB) liegt
+bewusst in der Seite, weil Vorschläge ohne Webserver funktionieren müssen und `fetch` unter `file://`
+verboten ist (Punkt 22). Eine Begriffsliste je Wahlbezirk ist kein Einstieg, sondern ein Stöbern im
+Ergebnis: aus `file://` steht dort derselbe Satz, den der Dokumentdialog seit Stufe G zeigt —
+`georep.offlineNote(was, datei)` im Rahmen formuliert ihn einmal für beide. **Verworfen:** die Listen
+in `dokumente.json` mitführen (2,3 MB laden, um 72 Begriffe zu zeigen); sie im Browser aus
+`combined_searchdict.parquet` lesen (eine Bibliothek für Parquet, und die Trefferzahlen fehlen dort);
+eine Unterseite je Wahlbezirk (41 Dateien, und die Reihenfolge der Abschnitte bleibt,
+`docs/plans/00-synergien.md`, § 5.1).
+
+**Eine veröffentlichte Datei, kein Nebenprodukt.** `begriffe.json` steht mit Zeilenzahl (6877 Paare
+aus Wahlbezirk und Begriff), Größe und SHA-256 unter „Downloads" wie `dokumente.json`; die Regel, dass
+jede Datei unter `site/data/` auf der Seite genannt wird, hält ein Test. Ins `schema.json` kommt sie
+nicht — das beschreibt die Spalten der Tabellen, und die beiden JSON-Dateien tragen ihre Felder selbst
+(`fields`).
+
+**Eine Datei wird einmal geholt.** `georep.loadJson(pfad)` im Rahmen hält je Pfad ein Versprechen;
+`georep.forget(pfad)` wirft es weg, damit ein zweiter Versuch nach einem Fehler erlaubt bleibt. Dazu
+hängt der Klick auf einen Begriff jetzt als **ein** Zuhörer am Dokument (`closest("button.term")`)
+statt an jeder Schaltfläche: eine nachgeladene Liste wirkt damit ohne weitere Verdrahtung, und die
+Seite legt rund viertausend Zuhörer weniger an.
+
+Kosten und Wirkung: `index.html` 1 285 594 → 958 527 Byte (−327 067, −25 %); `site/data/` wächst um
+96 413 Byte auf 53 Dateien. Ohne JavaScript bleiben die Listen leer — der Abschnitt sagt das in einem
+`<noscript>` und nennt die Datei.

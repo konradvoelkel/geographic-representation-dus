@@ -215,7 +215,10 @@ def test_sections_render_in_numeric_order(page: str) -> None:
     assert positions == sorted(positions)
     assert {s.name for s in parts} - set(shown) <= _optional_sections()
     assert page.count("<section ") == len(shown)
-    assert "window.georep = { select: select, showDocuments: showDocuments" in page
+    # Die Schnittstelle der Abschnitts-Skripte (Punkt 49: loadJson, forget, offlineNote dazu)
+    interface = page.split("window.georep = {", 1)[1].split("};", 1)[0]
+    for member in ("select", "showDocuments", "rows", "loadJson", "forget", "offlineNote"):
+        assert f"{member}: {member}" in interface, member
 
 
 def test_every_optional_section_hangs_on_a_model_part() -> None:

@@ -1,7 +1,7 @@
 {% from "macros.html.j2" import more, term %}
 <section id="begriffe">
 <h2>Begriffe</h2>
-<p class="note">Ein Klick auf einen Begriff zeigt die Dokumente, in denen er vorkommt, mit Datum, Drucksache und Link auf das PDF im Ratsinformationssystem; die Liste wird beim ersten Klick aus <code>data/dokumente.json</code> nachgeladen.</p>
+<p class="note">Ein Klick auf einen Begriff zeigt die Dokumente, in denen er vorkommt, mit Datum, Drucksache und Link auf das PDF im Ratsinformationssystem; die Liste wird beim ersten Klick aus <code>data/dokumente.json</code> nachgeladen. Die Begriffe je Wahlbezirk kommen ebenso beim Aufklappen aus <code>data/begriffe.json</code> &ndash; beides braucht einen Webserver, aus dem Dateisystem geöffnet erlaubt der Browser das Nachladen nicht.</p>
 <h3>Die {{ model.top_terms|length }} trefferstärksten Begriffe stadtweit</h3>
 <div class="scroll"><table id="top-begriffe" class="preview">
 <thead><tr><th scope="col">Begriff</th><th scope="col" class="num">Dokumente</th><th scope="col">Wahlbezirk</th></tr></thead>
@@ -26,13 +26,14 @@
 </details>
 {% endif %}
 <h3>Begriffe je Wahlbezirk</h3>
+{# Punkt 49: die Listen stehen nicht in der Seite, sondern in data/begriffe.json; sections/50-begriffe.js
+   holt sie beim ersten Aufklappen. Inline bleibt je Wahlbezirk die Zahl, und die Datei steht mit
+   Prüfsumme unter „Downloads". #}
+<noscript><p class="note">Ohne JavaScript bleiben die Listen je Wahlbezirk leer; sie stehen als <code>data/begriffe.json</code> zum Download.</p></noscript>
 {% for d in model.districts %}
-<details>
+<details data-terms="{{ d.id }}">
 <summary>{{ d.id }} {{ d.name }}: {{ d.terms|length|num }} Begriffe mit Treffer, {{ d.terms_without_hits|num }} ohne</summary>
-<ol class="terms">
-{% for t in d.terms %}<li>{{ term(t) }} <span class="count">{{ t.hits|num }}</span></li>
-{% endfor %}
-</ol>
+<p class="note">Wird beim Aufklappen geladen.</p>
 </details>
 {% endfor %}
 {% if model.hidden_terms %}

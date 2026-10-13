@@ -45,7 +45,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `profiling` | `profile_step`: ein echter Schritt unter cProfile, `.prof` datiert nach `docs/profiling/` |
 | `cli` | `georep run, fetch, steps, status, profiles, publish, bootstrap, export, regress, profile`; global `--profile`; `main(argv) -> int`; Exit 0, 1 (Domänenfehler), 2 (Bedienung) |
 | `export` | Parquet-Ergebnisse als CSV neben die Dateien; `csv_plan` und `write_csv` nutzt auch der Schritt `report` |
-| `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, Spaltendoku; mit Fremddaten `controls` und `derived` für die beiden neuen Abschnitte), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, `Axes`, Choroplethe, Streudiagramm und Added-Variable-Plots als SVG), `documents` (Dokumente mit Treffer ohne Texte, Begriffe als Indizes, für `dokumente.json`), `render` (Jinja2 mit Autoescape, Allowlist der Links; `sections` liest die Abschnitte aus `templates/sections/`; `render_map` für die Leaflet-Datei), `search` (Sucheinträge je kanonischem Begriff mit Wahlbezirken, Dokumenten und Art, dazu die Faltung als Spiegel des Abschnitts-Skripts), `literature` (die Einträge der Literaturübersicht: stadtneutral aus `literatur.toml` im Paket, stadtspezifisch aus dem Profil), `tables` (Register der veröffentlichten Tabellen: Datei, Beschreibung, Spaltendoku, CSV-Regeln), `build` (der Schritt `report`: Downloads, Schema, `summary.json`, Seiten), `comparison` und `publish` (`georep publish`: die Stadtseiten zusammentragen und `vergleich.html` bauen) |
+| `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, Spaltendoku; mit Fremddaten `controls` und `derived` für die beiden neuen Abschnitte), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, `Axes`, Choroplethe, Streudiagramm und Added-Variable-Plots als SVG), `documents` (Dokumente mit Treffer ohne Texte, Begriffe als Indizes, für `dokumente.json`), `terms` (Begriffe mit Treffer je Wahlbezirk, für `begriffe.json`, Punkt 49), `render` (Jinja2 mit Autoescape, Allowlist der Links; `sections` liest die Abschnitte aus `templates/sections/`; `render_map` für die Leaflet-Datei), `search` (Sucheinträge je kanonischem Begriff mit Wahlbezirken, Dokumenten und Art, dazu die Faltung als Spiegel des Abschnitts-Skripts), `literature` (die Einträge der Literaturübersicht: stadtneutral aus `literatur.toml` im Paket, stadtspezifisch aus dem Profil), `tables` (Register der veröffentlichten Tabellen: Datei, Beschreibung, Spaltendoku, CSV-Regeln), `build` (der Schritt `report`: Downloads, Schema, `summary.json`, Seiten), `comparison` und `publish` (`georep publish`: die Stadtseiten zusammentragen und `vergleich.html` bauen) |
 | `deploy/` (kein Modul) | außerhalb des Pakets: `bin/georep-monitor.sh` und die systemd-Einheiten des wiederkehrenden Laufs; sie sprechen mit `georep` nur über CLI, Settings und Umgebung (Abschnitt Betrieb, Option 07) |
 
 ## Pipeline
@@ -275,7 +275,16 @@ Wahlbeteiligung oder auf den Anteil der eigenen Bezirksvertretung tauscht nur CS
 `data-`-Attribute. Begriffe sind Schaltflächen: ein Klick lädt
 `data/dokumente.json` nach (`report.documents`: die Dokumente mit Treffer ohne Texte, neueste zuerst, je Begriff
 Indizes; der PDF-Link entsteht aus einem gemeinsamen Präfix) und zeigt die Dokumente in einem `<dialog>` mit
-Datum, Titel, Drucksache, Art und Urheber; die Orte der Karte tragen Namen und Wahlbezirk. Der Abschnitt
+Datum, Titel, Drucksache, Art und Urheber; die Orte der Karte tragen Namen und Wahlbezirk. **Die
+Begriffslisten je Wahlbezirk kommen genauso nach** (Punkt 49): sie stehen in
+`data/begriffe.json` (`report.terms`, je Wahlbezirk `[Begriff, Dokumente]` absteigend), und
+`sections/50-begriffe.js` holt sie beim ersten Aufklappen eines `<details data-terms>`; inline
+bleiben die trefferstärksten Begriffe stadtweit, die stadtweiten Begriffe, die fünf häufigsten je
+Wahlbezirk und je Wahlbezirk seine Zahl. Beides geht über `georep.loadJson(pfad)`, das je Pfad ein
+Versprechen hält (`forget(pfad)` erlaubt einen zweiten Versuch), und scheitert es — aus `file://`
+verbietet der Browser `fetch` —, formuliert `georep.offlineNote(was, pfad)` denselben Satz für
+beide. Der Klick auf einen Begriff hängt als ein Zuhörer am Dokument, damit auch nachgeladene
+Schaltflächen wirken. Der Abschnitt
 „Urheber und Parteien“ (`sections/38-parteien`) bringt sechs kleine Karten in einem SVG: die 41 Flächen
 stehen einmal in `<defs>`, jedes Panel ist ein `<g transform>` mit 41 `<use>` (`charts.party_maps`), und die
 Quantilklassen sind je Partei gerechnet. Seine Tabelle je Wahlbezirk schattiert die Parteispalten nicht mit
@@ -301,11 +310,13 @@ Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeig
 Tabelle die zweite Regression, entfällt die Spaltengruppe. Mit gesäten Themen (Punkt 45) trägt eine
 Themenzeile den Namen ihres Ausschusses aus dem Profil, und die Themen-Tabelle eine Spalte „Gremium"; der
 Abschnitt „Gremien" bekommt daneben die Tabelle „Dokumente je passendem Ausschuss" mit der Spalte „davon
-ohne Ausschussberatung". Auf der Referenz: 41 Wahlbezirke, 52 Dateien
-(mit `summary.json`, Option 01, `ausschuss_zuordnung`, Punkt 45, und `wahlbezirke_kennzahlen`, Punkt 46),
-13,4 MB, davon `index.html` 1,27 MB (144 KB Suchdaten, 110 KB die beiden Umschalter, 63 KB die
-Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html` 252 KB, `dokumente.json` 2,3 MB;
-1,7 s (2026-10-13, nach Punkt 46).
+ohne Ausschussberatung". Auf der Referenz: 41 Wahlbezirke, 53 Dateien
+(mit `summary.json`, Option 01, `ausschuss_zuordnung`, Punkt 45, `wahlbezirke_kennzahlen`, Punkt 46,
+und `begriffe.json`, Punkt 49),
+13,2 MB, davon `index.html` 0,96 MB (144 KB Suchdaten, 110 KB die beiden Umschalter, 63 KB die
+Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html` 252 KB, `dokumente.json` 2,3 MB,
+`begriffe.json` 96 KB; 1,6 s (2026-10-13, nach Punkt 49). Die Zerlegung der Seite in ihre Posten steht
+in `docs/seitengroesse-2026-10.md`.
 
 Die Stadtseite kennt ihre Nachbarn nicht: wo die Zeile „Weitere Städte" steht, hinterlässt der Rahmen nur die
 Marke `<!--georep:weitere-staedte-->`. Erst `georep publish` (`report.publish`) weiß, welche Stadtseiten es

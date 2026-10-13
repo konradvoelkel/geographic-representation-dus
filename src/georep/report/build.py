@@ -64,12 +64,14 @@ from georep.report.model import (
 )
 from georep.report.render import Visuals, render_map, render_report
 from georep.report.tables import GEOJSON_TABLE, TABLES, PublishedTable, published
+from georep.report.terms import pairs, terms_payload
 from georep.settings import Settings
 
 GEOJSON_NAME = "wahlbezirke.geojson"
 SCHEMA_NAME = "schema.json"
 SUMMARY_NAME = "summary.json"
 DOCUMENTS_NAME = "dokumente.json"
+TERMS_NAME = "begriffe.json"  # Punkt 49
 MAP_NAME = "karte.html"
 
 
@@ -214,6 +216,28 @@ def write_documents(layout: Layout, model: ReportModel, settings: Settings) -> D
     )
 
 
+def write_terms(layout: Layout, model: ReportModel) -> Download:
+    """``begriffe.json``: je Wahlbezirk seine Begriffe mit Treffer (Punkt 49).
+
+    Die Listen standen bis zum 2026-10-13 in der Seite und waren mit 334 KB ihr größter Posten,
+    obwohl sie zugeklappt dastanden; der Abschnitt „Begriffe" lädt sie jetzt beim Aufklappen nach
+    (docs/seitengroesse-2026-10.md, § 4).
+    """
+    target = layout.site_data / TERMS_NAME
+    write_json(
+        target,
+        terms_payload(model.districts, version=model.version, generated_at=model.generated_at),
+        indent=None,
+    )
+    return _download(
+        target,
+        "JSON",
+        pairs(model.districts),
+        "Begriffe mit Treffer je Wahlbezirk mit der Zahl ihrer Dokumente, absteigend; "
+        "der Abschnitt Begriffe lädt sie beim Aufklappen eines Wahlbezirks nach",
+    )
+
+
 def _places_geojson(pois: pl.DataFrame) -> dict[str, object]:
     return {
         "type": "FeatureCollection",
@@ -304,6 +328,7 @@ def build_site(
     shapes = district_shapes(precincts, SIMPLIFY_M)
     model = build_report_model(layout, settings, now=now, commit=commit)
     downloads.append(write_documents(layout, model, settings))
+    downloads.append(write_terms(layout, model))  # Punkt 49
 
     geojson = wahlbezirke_geojson(
         shapes,

@@ -186,18 +186,25 @@ und sagt je, warum sie liegen bleiben.
   Suche markierte Zeile klappt von allein auf, `@media print` zeigt alles, und ein
   `<noscript><style>` hebt die Vorschau ohne JavaScript auf. Offen bleiben die Kernzahlen und die
   Tabellen 5, 6 und 6b. Kosten: 4130 Byte.
+- **Die Begriffslisten je Wahlbezirk werden nachgeladen** (`docs/decisions.md`, Punkt 49): sie
+  stehen als `data/begriffe.json` (96 KB, 6877 Paare aus Wahlbezirk und Begriff) neben der Seite
+  und kommen beim ersten Aufklappen über `georep.loadJson`, wie die Dokumente beim ersten Klick auf
+  einen Begriff. Das war mit 333 750 Byte (26 %) der größte Posten; `index.html` 1 285 594 →
+  958 527 Byte. Aus `file://` steht dort derselbe Hinweis wie im Dokumentdialog
+  (`georep.offlineNote` formuliert ihn einmal für beide), ohne JavaScript ein `<noscript>` mit dem
+  Dateinamen. Der Klick auf einen Begriff hängt seitdem als ein Zuhörer am Dokument.
 
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46 und 47)
 
-- Tests: 991 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 997 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` 1,29 MB (1 285 594 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
-  110 KB, die Literaturübersicht 13,2 KB, die Vorschau langer Tabellen 4,1 KB), 52 Dateien zusammen
-  13,4 MB, fünfzehn
+- Berichtsseite: `index.html` 0,96 MB (958 527 Bytes, Budget 1,5 MB; die beiden Umschalter kosten
+  110 KB, die Literaturübersicht 13,2 KB, die Vorschau langer Tabellen 4,1 KB), 53 Dateien zusammen
+  13,2 MB (neu `begriffe.json`, 96 KB), fünfzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.

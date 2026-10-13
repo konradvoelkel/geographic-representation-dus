@@ -197,6 +197,7 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
 <script>
 (function () {
   "use strict";
+  var DOCUMENTS = "data/dokumente.json";
   var tooltip = document.getElementById("tooltip");
   var rows = {};
   document.querySelectorAll("#districts tbody tr").forEach(function (tr) { rows[tr.dataset.id] = tr; });
@@ -338,15 +339,23 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
   });
 
   var dialog = document.getElementById("docs");
-  var docsPromise = null;
-  function loadDocs() {
-    if (!docsPromise) {
-      docsPromise = fetch("data/dokumente.json").then(function (r) {
+  /* Punkt 49: eine Datei wird einmal geholt und dann aus dem Versprechen gelesen -- fuer
+     dokumente.json (der Dialog) und begriffe.json (der Abschnitt "Begriffe", sections/50-begriffe.js).
+     Scheitert es, sagt offlineNote denselben Satz fuer jede Datei: aus dem Dateisystem geoeffnet
+     verbietet der Browser fetch, ueber einen Webserver geht es. */
+  var pending = {};
+  function loadJson(path) {
+    if (!pending[path]) {
+      pending[path] = fetch(path).then(function (r) {
         if (!r.ok) throw new Error(String(r.status));
         return r.json();
       });
     }
-    return docsPromise;
+    return pending[path];
+  }
+  function forget(path) { delete pending[path]; }
+  function offlineNote(what, path) {
+    return what + " (" + path + ") ließ sich nicht nachladen. Aus dem Dateisystem geöffnet erlaubt der Browser das nicht; über einen Webserver oder unter der veröffentlichten Adresse funktioniert es.";
   }
   function germanDate(iso) {
     var p = iso.split("-");
@@ -361,7 +370,7 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
     note.textContent = "Lade data/dokumente.json …";
     ol.textContent = "";
     if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "");
-    loadDocs().then(function (data) {
+    loadJson(DOCUMENTS).then(function (data) {
       var seen = {}, ids = [];
       list.forEach(function (term) {
         (data.terms[term] || []).forEach(function (i) { if (!seen[i]) { seen[i] = true; ids.push(i); } });
@@ -385,11 +394,16 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
         ol.appendChild(li);
       });
     }).catch(function () {
-      note.textContent = "Die Dokumentliste (data/dokumente.json) ließ sich nicht nachladen. Aus dem Dateisystem geöffnet erlaubt der Browser das nicht; über einen Webserver oder unter der veröffentlichten Adresse funktioniert es.";
+      forget(DOCUMENTS);  /* ein zweiter Klick darf es noch einmal versuchen */
+      note.textContent = offlineNote("Die Dokumentliste", DOCUMENTS);
     });
   }
-  document.querySelectorAll("button.term").forEach(function (button) {
-    button.addEventListener("click", function () { showDocuments([button.textContent], button.textContent); });
+  /* Ein Zuhoerer am Dokument statt einer je Schaltflaeche: die Begriffe eines Wahlbezirks entstehen
+     erst beim Aufklappen (Punkt 49), und ihre Schaltflaechen sollen ohne weitere Verdrahtung
+     wirken. Nebenbei sind das rund viertausend Zuhoerer weniger. */
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest ? event.target.closest("button.term") : null;
+    if (button) showDocuments([button.textContent], button.textContent);
   });
 
   document.querySelectorAll("th[data-sort]").forEach(function (th) {
@@ -428,7 +442,14 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
   });
 
   /* Schnittstelle fuer die Skripte der Abschnitte (templates/sections/NN-name.js). */
-  window.georep = { select: select, showDocuments: showDocuments, rows: rows };
+  window.georep = {
+    select: select,
+    showDocuments: showDocuments,
+    rows: rows,
+    loadJson: loadJson,  /* Punkt 49 */
+    forget: forget,
+    offlineNote: offlineNote,
+  };
 })();
 </script>
 {% if section_js %}

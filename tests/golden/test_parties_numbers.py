@@ -231,4 +231,4 @@ def test_the_page_carries_the_section_within_the_budget(
     for table in ("dokumente_urheber", "wahlbezirke_urheber", "wahlbezirke_parteien"):
         assert {f"{table}.parquet", f"{table}.csv"} <= names
     # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
-    assert len(names) == 2 * len(published(layout)) + 4
+    assert len(names) == 2 * len(published(layout)) + 5

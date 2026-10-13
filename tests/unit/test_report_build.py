@@ -17,6 +17,7 @@ from georep.report.build import (
     MAP_NAME,
     SCHEMA_NAME,
     SUMMARY_NAME,
+    TERMS_NAME,
     SiteSummary,
     current_commit,
 )
@@ -31,10 +32,11 @@ def test_site_has_index_map_and_every_download_file(mini_run: Layout) -> None:
     expected = sorted(
         [t.path(mini_run).name for t in tables]
         + [f"{t.name}.csv" for t in tables]
-        + [GEOJSON_NAME, SCHEMA_NAME, DOCUMENTS_NAME, SUMMARY_NAME]
+        + [GEOJSON_NAME, SCHEMA_NAME, DOCUMENTS_NAME, SUMMARY_NAME, TERMS_NAME]
     )
-    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste und summary.json (Option 01)
-    assert names == expected and len(names) == 2 * len(tables) + 4
+    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
+    # und die Begriffe je Wahlbezirk (Punkt 49)
+    assert names == expected and len(names) == 2 * len(tables) + 5
     assert mini_run.site_index.with_name("index.html.stamp.json").is_file()
 
 
