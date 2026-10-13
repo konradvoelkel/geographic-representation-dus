@@ -1110,25 +1110,35 @@ lesen es von dort, und der Schritt `report` meldet eine Überschreitung in seine
 dem Budget (1,05 von 1,00 MB)") — damit es nicht erst der slow-Test oder niemand merkt. `0` schaltet
 die Prüfung ab.
 
-**1,0 MB bei 958 527 Byte sind 41 473 Byte Luft, 4,1 %, und das ist Absicht.** Ein Budget mit 15 %
-Luft hätte dasselbe Wachstum wieder nicht gemerkt; ein knappes erzwingt beim nächsten Abschnitt eine
-Entscheidung. Damit die dann nicht im Nebel fällt, listet `docs/seitengroesse-2026-10.md`, § 5, vier
-Hebel mit gemessenen Bytes (die `<title>` der 1196 Orts-Kreise 64 KB, die doppelten SVG-Pfade der
-Parteikarten 28 KB, Leerraum zwischen Tags 12 KB, eine spaltenweise Kodierung des Suchindex 8 KB) —
-rund 112 KB Reserve mit bekannten Kosten. **Verworfen:** 1,1 MB (dieselbe Blindheit, nur später); das
-Budget im Code (es ist eine Verabredung über die Anzeige, keine Grenze der Technik, und `[report]`
-zählt nicht zum Settings-Fingerprint); den Schritt bei Überschreitung scheitern lassen (eine Seite,
-die 20 KB zu groß ist, soll trotzdem entstehen — die Zeile sagt es, der Test hält es).
+**Das Budget muss den Abschnitt „Zwei Wahlperioden" tragen.** Er kommt nach Konrads Lauf dazu und
+kostet gemessen rund 35 KB (6859 Byte fest und 551 je Wahlbezirk an der Mini-Periode, dazu 41 statt
+drei Punkte im Änderungsdiagramm); „Laufende Wahlperiode" und die Städtezeile aus `georep publish`
+kommen obendrauf. Mit 958 527 Byte blieben 41 473 Byte Luft — zu wenig (Review 2026-10-13, Befund 2).
+Darum ist **ein Hebel aus § 5 gezogen**: die `<title>` der 1196 Orts-Kreise, 73 842 Byte. Sie waren
+kein Verlust, denn ihre Ebene ist `aria-hidden="true"` und ohne JavaScript nie sichtbar — der Titel
+erreichte keinen Screenreader und wiederholte nur, was der Tooltip aus `data-name` und
+`data-district` zeigt. Die Seite trägt jetzt 885 879 Byte, also **114 121 Byte Luft (11,4 %)**, und
+der Abschnitt passt mit rund 79 KB Rest. **Verworfen:** das Budget auf die Zahl zu heben, die der
+Vergleich braucht (dieselbe Blindheit, nur später); 1,1 MB; das Budget im Code (es ist eine
+Verabredung über die Anzeige, keine Grenze der Technik, und `[report]` zählt nicht zum
+Settings-Fingerprint); den Schritt bei Überschreitung scheitern lassen (eine Seite, die 20 KB zu groß
+ist, soll trotzdem entstehen — die Zeile sagt es, der Test hält es).
 
-**Was nicht gemacht wurde, steht gemessen daneben.** Die beiden größten Hebel bleiben liegen, je mit
-Grund: die `<title>` der Orte sind der Name für einen Screenreader, wenn jemand die Ebene einschaltet;
-ein gemeinsames `<defs>` für die 41 Flächen verlangt, dass auch die Hauptkarte ihre Flächen als
-`<use>` zeichnet, und dort hängen Klick, Hover, `tabindex="0"`, Tooltip und der Klassentausch des
-Umschalters — ob Selektoren den geklonten Inhalt treffen und ob ein `<use>` überall fokussierbar ist,
-unterscheidet sich zwischen SVG 1.1 und SVG 2 und ist hier nur in Chrome prüfbar. 2,2 % sind das
-Risiko am Herzstück der Seite nicht wert, solange das Budget ohne sie hält. Der Minify-Schritt für
-Leerraum fällt mit 0,96 % unter die Grenze von 5 %, die der Auftrag gesetzt hat; die Vorlagen schreiben
-mit `trim_blocks` und `lstrip_blocks`, es steht also schon fast kein Leerraum in der Datei.
+**Geprüft wird an drei Stellen.** Der Schritt `report` nennt eine zu große Seite in seiner Zeile; die
+slow-Tests prüfen sie über `within_budget` aus `tests/conftest.py` (0 heißt dort wirklich „keine
+Prüfung", vorher wurden die vier Zusicherungen mit 0 rot); und `georep publish` prüft **jede**
+kopierte Seite (`PublishSummary.over_budget`), denn erst dort kommen die Zeile „Weitere Städte" und
+die Vergleichsseite dazu. Die Seite mit dem Abschnitt „Zwei Wahlperioden" hat ihre eigene Zusicherung
+in `tests/golden/test_period_pipeline.py` — sie ist die einzige, die den Abschnitt überhaupt zeigt.
+
+**Was nicht gemacht wurde, steht gemessen daneben** (§ 5, rund 40 KB Reserve): ein gemeinsames
+`<defs>` für die 41 Flächen (28 KB) verlangt, dass auch die Hauptkarte ihre Flächen als `<use>`
+zeichnet, und dort hängen Klick, Hover, `tabindex="0"`, Tooltip und der Klassentausch des Umschalters
+— ob Selektoren den geklonten Inhalt treffen und ob ein `<use>` überall fokussierbar ist,
+unterscheidet sich zwischen SVG 1.1 und SVG 2 und ist hier nur in Chrome prüfbar; 3,2 % sind das
+Risiko am Herzstück der Seite nicht wert. Der Minify-Schritt für Leerraum fällt mit 0,50 % unter die
+Grenze von 5 %, die der Auftrag gesetzt hat; die Vorlagen schreiben mit `trim_blocks` und
+`lstrip_blocks`, es steht also schon fast kein Leerraum in der Datei.
 
 ## 51. Ein Schnittstück unter `crosswalk.min_share` ist ein Splitter (2026-10-13)
 

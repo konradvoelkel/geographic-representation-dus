@@ -31,7 +31,7 @@ from georep.prep.voters import (
     read_results_csv,
 )
 from georep.settings import Settings, load_settings
-from tests.conftest import without_literature
+from tests.conftest import within_budget, without_literature
 
 REPO = Path(__file__).resolve().parents[2]
 MINI_2014 = REPO / "tests" / "fixtures" / "mini-2014"
@@ -252,6 +252,11 @@ def test_the_period_page_names_its_period_and_publishes_the_assignment(
 
 def test_the_main_page_carries_the_comparison_section(compared: ComparedRun) -> None:
     page = compared.layout.site_index.read_text(encoding="utf-8")
+    # Punkt 50, Review 2026-10-13: die einzige Seite mit dem Abschnitt „Zwei Wahlperioden" -- und
+    # damit die einzige Stelle, an der das Budget diesen Abschnitt mitprüft.
+    assert within_budget(
+        compared.layout.site_index.stat().st_size, compared.settings.report.page_budget_bytes
+    )
     assert '<section id="perioden">' in page
     assert "Wahlperiode 2014 bis 2020" in page and "Wahlperiode 2020 bis 2025" in page
     start = page.index('<section id="perioden">')

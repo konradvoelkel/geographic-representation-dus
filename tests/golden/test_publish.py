@@ -78,6 +78,9 @@ def test_publish_keeps_the_first_city_at_the_root_and_nests_the_others(
     assert (site / "moenchengladbach" / "data" / "summary.json").is_file()
     assert summary.cities == ("duesseldorf", "moenchengladbach") and not summary.missing
     assert summary.comparison and "2 Städte" in summary.line()
+    # Punkt 50, Review 2026-10-13: publish prüft jede kopierte Seite gegen das Budget. Hier
+    # passen beide, also sagt die Zeile nichts darüber.
+    assert summary.over_budget == () and "Budget" not in summary.line()
 
 
 def test_publish_writes_the_neighbour_line_into_both_pages(

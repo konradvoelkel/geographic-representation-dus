@@ -198,8 +198,12 @@ def test_map_has_one_path_per_district_and_parses(map_svg: str, model: ReportMod
     circles = root.findall(f".//{NS}g[@class='pois']/{NS}circle")
     assert len(circles) == 1 and circles[0].get("data-name") == "Rheinturm <&>"
     assert circles[0].get("data-district") == "1"
-    title = circles[0].find(f"{NS}title")
-    assert title is not None and title.text == "Rheinturm <&> (Wahlbezirk 1)"
+    # Punkt 50, Review 2026-10-13: kein <title> an den Orten. Die Ebene ist aria-hidden, der
+    # <title> erreichte also keinen Screenreader, und der Tooltip zeigt dieselbe Angabe aus
+    # data-name und data-district. Auf der Referenz sind das 64 274 Byte für nichts.
+    assert circles[0].find(f"{NS}title") is None
+    group = root.find(f".//{NS}g[@class='pois']")
+    assert group is not None and group.get("aria-hidden") == "true"
     assert isinstance(pois_of(map_svg), int)
     assert [t.text for t in root.findall(f".//{NS}g[@class='map-labels']/{NS}text")] == [
         "1",

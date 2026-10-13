@@ -20,6 +20,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from georep.layout import Layout
 from georep.settings import load_settings
 
 
@@ -106,8 +107,12 @@ def report_levers(text: str) -> None:
         f"  {len(values)} data-value, {sum(size(v) for v in values)} Byte; "
         f"{len(long)} länger als zehn Zeichen, zusammen {cut} Byte darüber"
     )
-    circles = re.findall(r"<circle\b[^>]*>(?:<title>[^<]*</title></circle>)?", text)
-    titles = re.findall(r"<circle\b[^>]*><title>([^<]*)</title></circle>", text)
+    # Nur die Ebene der Orte: die Punkte der Diagramme sind auch <circle> und gehören nicht dazu
+    # (der Zähler nannte 1606 statt 1196, Review 2026-10-13).
+    layer = re.search(r'<g class="pois"[^>]*>(.*?)</g>', text, re.S)
+    inner = layer.group(1) if layer else ""
+    circles = re.findall(r"<circle\b[^>]*?/?>", inner)
+    titles = re.findall(r"<title>([^<]*)</title>", inner)
     print(
         f"  {len(circles)} <circle> der Orte: {sum(size(c) for c in circles)} Byte, "
         f"davon {sum(size(t) + len('<title></title>') for t in titles)} die <title>"
@@ -140,5 +145,6 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         main(Path(sys.argv[1]))
     else:
-        settings = load_settings()
-        main(settings.data_root / settings.profile / "site" / "index.html")
+        # Den Pfad kennt das Layout; von Hand zusammengesetzt wäre er in einem Profil falsch
+        # (Review 2026-10-13).
+        main(Layout.from_settings(load_settings()).site_index)

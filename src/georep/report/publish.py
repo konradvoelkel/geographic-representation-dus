@@ -71,6 +71,11 @@ class PublishSummary:
     files: int
     bytes: int
     comparison: bool
+    # Punkt 50: die veröffentlichten Seiten über dem Budget, als Pfad unter der Wurzel. Hier und
+    # nicht nur im Schritt ``report``, weil erst ``publish`` die Zeile „Weitere Städte" in jede
+    # Seite setzt und die Vergleichsseite dazulegt -- und weil die Seite mit dem Abschnitt „Zwei
+    # Wahlperioden" durch diese Hand geht (Review 2026-10-13). Leer heißt: alle passen.
+    over_budget: tuple[str, ...] = ()
 
     def line(self) -> str:
         parts = [f"{len(self.cities)} Städte" if len(self.cities) != 1 else "1 Stadt"]
@@ -79,6 +84,8 @@ class PublishSummary:
         line = ", ".join(parts)
         if self.missing:
             line += "; kein Lauf: " + ", ".join(self.missing)
+        if self.over_budget:
+            line += "; über dem Budget: " + ", ".join(self.over_budget)
         return line
 
 
@@ -187,6 +194,20 @@ def render_comparison(model: ComparisonModel) -> str:
     )
 
 
+def _over_budget(root: Path, budget: int) -> tuple[str, ...]:
+    """Die veröffentlichten HTML-Seiten über dem Budget, als Pfad unter der Wurzel (Punkt 50).
+
+    ``budget`` von 0 schaltet die Prüfung ab, wie überall. Geprüft werden die Seiten und nicht die
+    Downloads: das Budget ist eine Verabredung über die Seite, die ein Leser lädt.
+    """
+    if not budget:
+        return ()
+    found = sorted(
+        str(path.relative_to(root)) for path in root.rglob("*.html") if path.stat().st_size > budget
+    )
+    return tuple(found)
+
+
 def publish_sites(
     settings: Settings,
     layout: Layout,
@@ -231,4 +252,5 @@ def publish_sites(
         files=files,
         bytes=size,
         comparison=comparison,
+        over_budget=_over_budget(root, settings.report.page_budget_bytes),
     )

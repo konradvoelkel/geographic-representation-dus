@@ -275,7 +275,7 @@ Wahlbeteiligung oder auf den Anteil der eigenen Bezirksvertretung tauscht nur CS
 `data-`-Attribute. Begriffe sind Schaltflächen: ein Klick lädt
 `data/dokumente.json` nach (`report.documents`: die Dokumente mit Treffer ohne Texte, neueste zuerst, je Begriff
 Indizes; der PDF-Link entsteht aus einem gemeinsamen Präfix) und zeigt die Dokumente in einem `<dialog>` mit
-Datum, Titel, Drucksache, Art und Urheber; die Orte der Karte tragen Namen und Wahlbezirk. **Die
+Datum, Titel, Drucksache, Art und Urheber; die Orte der Karte tragen Namen und Wahlbezirk als Datenattribute für den Tooltip und keinen `<title>` — ihre Ebene ist `aria-hidden` und ohne JavaScript nie sichtbar, der Titel erreichte also niemanden (Punkt 50, 73 842 Byte). **Die
 Begriffslisten je Wahlbezirk kommen genauso nach** (Punkt 49): sie stehen in
 `data/begriffe.json` (`report.terms`, je Wahlbezirk `[Begriff, Dokumente]` absteigend), und
 `sections/50-begriffe.js` holt sie beim ersten Aufklappen eines `<details data-terms>`; inline
@@ -313,9 +313,9 @@ Abschnitt „Gremien" bekommt daneben die Tabelle „Dokumente je passendem Auss
 ohne Ausschussberatung". Auf der Referenz: 41 Wahlbezirke, 53 Dateien
 (mit `summary.json`, Option 01, `ausschuss_zuordnung`, Punkt 45, `wahlbezirke_kennzahlen`, Punkt 46,
 und `begriffe.json`, Punkt 49),
-13,2 MB, davon `index.html` 0,96 MB (144 KB Suchdaten, 110 KB die beiden Umschalter, 63 KB die
-Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html` 252 KB, `dokumente.json` 2,3 MB,
-`begriffe.json` 96 KB; 1,6 s (2026-10-13, nach Punkt 49). Die Zerlegung der Seite in ihre Posten steht
+13,1 MB, davon `index.html` 0,89 MB (135 KB Suchdaten, 110 KB die beiden Umschalter, 63 KB die
+Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html` 232 KB, `dokumente.json` 2,3 MB,
+`begriffe.json` 96 KB; 1,6 s (2026-10-13, nach Punkt 50). Die Zerlegung der Seite in ihre Posten steht
 in `docs/seitengroesse-2026-10.md`.
 
 Die Stadtseite kennt ihre Nachbarn nicht: wo die Zeile „Weitere Städte" steht, hinterlässt der Rahmen nur die

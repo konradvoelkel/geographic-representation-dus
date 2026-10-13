@@ -323,11 +323,15 @@ def choropleth(
         )
     parts.append("</g>")
     if pois:
+        # Die Ebene ist aria-hidden: sie ist ohne JavaScript nie sichtbar (``.pois.on`` setzt erst
+        # das Skript), und ein Screenreader soll nicht durch 1196 Punkte laufen. Genau darum
+        # tragen die Kreise auch keinen ``<title>`` mehr (Punkt 50, Review 2026-10-13): er
+        # erreichte niemanden und wiederholte nur, was der Tooltip aus ``data-name`` und
+        # ``data-district`` ohnehin zeigt -- auf der Referenz 64 274 Byte für nichts.
         parts.append('<g class="pois" aria-hidden="true">')
         parts.extend(
             f'<circle cx="{_num(p.x)}" cy="{_num(p.y)}" r="2" data-name="{_attr(p.label)}" '
-            f'data-district="{p.district}"><title>{html.escape(p.label)} '
-            f"(Wahlbezirk {p.district})</title></circle>"
+            f'data-district="{p.district}"/>'
             for p in pois
         )
         parts.append("</g>")

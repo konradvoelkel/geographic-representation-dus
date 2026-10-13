@@ -106,6 +106,24 @@ def test_the_summary_line_says_when_the_page_is_over_its_budget() -> None:
     assert not SiteSummary(41, 53, 1, 9_999_999, 0).over_budget()  # 0 schaltet die Prüfung ab
 
 
+def test_the_publish_line_names_a_page_over_the_budget() -> None:
+    """Punkt 50: ``georep publish`` kopiert Seiten, die ``georep run`` einzeln gebaut hat -- die
+    Vergleichsseite und die Städtezeile kommen erst hier dazu, also prüft auch publish."""
+    from georep.report.publish import PublishSummary
+
+    fine = PublishSummary(("duesseldorf",), (), 53, 13_100_000, False, ())
+    assert "Budget" not in fine.line()
+    over = PublishSummary(
+        ("duesseldorf", "moenchengladbach"),
+        (),
+        106,
+        26_000_000,
+        True,
+        ("moenchengladbach/index.html",),
+    )
+    assert over.line().endswith("; über dem Budget: moenchengladbach/index.html")
+
+
 def test_map_page_embeds_districts_and_places(mini_run: Layout) -> None:
     page = (mini_run.site / MAP_NAME).read_text(encoding="utf-8")
     assert page.startswith("<!doctype html>") and 'href="index.html"' in page

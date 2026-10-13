@@ -4,6 +4,15 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Die 1196 Orte der Karte tragen keinen `<title>` mehr** (Review 2026-10-13, Befund 2;
+  `docs/decisions.md` Punkt 50): ihre Ebene ist `aria-hidden` und ohne JavaScript nie sichtbar, der
+  Titel erreichte also keinen Screenreader und wiederholte nur, was der Tooltip zeigt. Das sind
+  73 842 Byte — `index.html` ist jetzt 885 879 Byte groß, und das Budget von 1,0 MB trägt damit auch
+  den Abschnitt „Zwei Wahlperioden" (gemessen rund 35 KB), der nach dem Abruf der zweiten Periode
+  dazukommt.
+- **`georep publish` prüft das Budget jeder veröffentlichten Seite** und nennt sie in seiner Zeile;
+  erst dort kommen die Zeile „Weitere Städte" und die Vergleichsseite dazu.
+
 - **Der Aufklapper langer Tabellen steht jetzt vor der Tabelle** und zeigt mit ▸ und ▾, ob sie zu
   oder offen ist (Review 2026-10-13, Befunde 5 und 7); hinter 41 Zeilen rutschte er beim Aufklappen
   mit dem Fokus aus dem Bild. Dazu ist die Akzentfarbe in Hell abgedunkelt (`#1f68c0` statt

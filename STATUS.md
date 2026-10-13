@@ -187,12 +187,15 @@ und sagt je, warum sie liegen bleiben.
   `<noscript><style>` hebt die Vorschau ohne JavaScript auf. Offen bleiben die Kernzahlen und die
   Tabellen 5, 6 und 6b. Kosten: 4130 Byte.
 - **Das Budget ist 1,0 MB und steht in den Settings** (`report.page_budget_bytes`,
-  `docs/decisions.md`, Punkt 50): die slow-Tests lesen es, und der Schritt `report` meldet eine
-  Überschreitung in seiner Zeile. 958 527 von 1 000 000 Byte, also 41 473 Byte Luft (4,1 %) —
-  knapp mit Absicht, denn die alte Grenze von 1,5 MB hat 594 KB Wachstum in zwei Tagen nicht
-  gemerkt. Vier gemessene Hebel über zusammen 112 KB liegen als Reserve in § 5 des Dokuments
-  (Orts-`<title>` 64 KB, doppelte SVG-Pfade der Parteikarten 28 KB, Leerraum 12 KB, Suchindex
-  8 KB); der Minify-Schritt für Leerraum fällt mit 0,96 % unter die Grenze von 5 %.
+  `docs/decisions.md`, Punkt 50): die slow-Tests lesen es über `within_budget` (0 schaltet die
+  Prüfung wirklich ab), der Schritt `report` meldet eine Überschreitung in seiner Zeile, und
+  `georep publish` nennt jede veröffentlichte Seite darüber. 885 879 von 1 000 000 Byte, also
+  114 121 Byte Luft (11,4 %) — sie trägt den Abschnitt „Zwei Wahlperioden" (gemessen rund 35 KB),
+  der nach Konrads Lauf dazukommt. Dafür sind die `<title>` der 1196 Orte gefallen (73 842 Byte;
+  ihre Ebene ist `aria-hidden` und ohne JavaScript nie sichtbar, der Tooltip zeigt dasselbe aus
+  Datenattributen). Rund 40 KB Reserve liegen gemessen in § 5 des Dokuments (doppelte SVG-Pfade
+  der Parteikarten 28 KB, Suchindex 8 KB, Leerraum 4,4 KB); der Minify-Schritt für Leerraum fällt
+  mit 0,50 % unter die Grenze von 5 %.
 - **Die Begriffslisten je Wahlbezirk werden nachgeladen** (`docs/decisions.md`, Punkt 49): sie
   stehen als `data/begriffe.json` (96 KB, 6877 Paare aus Wahlbezirk und Begriff) neben der Seite
   und kommen beim ersten Aufklappen über `georep.loadJson`, wie die Dokumente beim ersten Klick auf
@@ -209,9 +212,9 @@ und sagt je, warum sie liegen bleiben.
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` 0,96 MB (958 527 Bytes, Budget 1,0 MB; die beiden Umschalter kosten
+- Berichtsseite: `index.html` 0,89 MB (885 879 Bytes, Budget 1,0 MB; die beiden Umschalter kosten
   110 KB, die Literaturübersicht 13,2 KB, die Vorschau langer Tabellen 4,1 KB), 53 Dateien zusammen
-  13,2 MB (neu `begriffe.json`, 96 KB), fünfzehn
+  13,1 MB (neu `begriffe.json`, 96 KB), fünfzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads); „Zwei
   Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
