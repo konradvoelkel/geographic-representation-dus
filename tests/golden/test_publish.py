@@ -1,8 +1,8 @@
 """``georep publish``: die Stadtseiten zusammentragen und den Städtevergleich bauen (Stufe F).
 
-Zwei Mini-Läufe in einem ``data_root``: Düsseldorf flach (wie heute) und Mönchengladbach unter
-seinem Profil. ``publish`` kopiert die zweite Stadt in einen Unterordner, lässt die erste an der
-Wurzel liegen und schreibt ``vergleich.html`` aus den veröffentlichten Dateien beider Städte.
+Zwei Mini-Läufe in einem ``data_root``, jede Stadt unter ihrem Slug (Punkt 52). ``publish``
+kopiert die erste Stadt an die Wurzel von ``data_root/site/``, jede weitere nach
+``site/<slug>/``, und schreibt ``vergleich.html`` aus den veröffentlichten Dateien beider Städte.
 """
 
 from __future__ import annotations
@@ -78,6 +78,12 @@ def test_publish_keeps_the_first_city_at_the_root_and_nests_the_others(
     assert (site / "moenchengladbach" / "data" / "summary.json").is_file()
     assert summary.cities == ("duesseldorf", "moenchengladbach") and not summary.missing
     assert summary.comparison and "2 Städte" in summary.line()
+    # Punkt 52: auch die erste Stadt wird kopiert, denn sie liegt unter ihrem Slug. Ihre
+    # Quellseite bleibt dabei ohne die Zeile „Weitere Städte" -- die gehört in die Kopie.
+    layout = _layout_of(root, settings)
+    source = layout.site
+    assert source != site and source == layout.data_root / settings.city.slug / "site"
+    assert "Weitere Städte" not in (source / "index.html").read_text(encoding="utf-8")
     # Punkt 50, Review 2026-10-13: publish prüft jede kopierte Seite gegen das Budget. Hier
     # passen beide, also sagt die Zeile nichts darüber.
     assert summary.over_budget == () and "Budget" not in summary.line()
@@ -135,7 +141,7 @@ def test_the_comparison_page_links_only_where_it_may(both_cities: tuple[Path, Se
 
 
 def test_the_neighbour_line_survives_a_second_publish(both_cities: tuple[Path, Settings]) -> None:
-    """Die Seite der ersten Stadt wird nicht kopiert; ihre Zeile muss publish neu setzen können."""
+    """Die Zeile steht in der Kopie; publish muss sie bei jedem Lauf wieder setzen können."""
     root, settings = both_cities
     site, _ = _publish(root, settings)
     once = (site / "index.html").read_text(encoding="utf-8")
@@ -173,8 +179,10 @@ def test_a_city_that_lost_its_run_leaves_the_published_folder(
     """Ein Stadtordner ohne Lauf und ohne Link wäre tote Last; publish räumt ihn weg."""
     root, settings = both_cities
     out = tmp_path / "zwei-dann-eine"
-    # Die Quelle darf keinen Marker tragen: ein Test mit Standardziel hinterlässt dort einen, und die
-    # Kopie brächte ihn mit; so blieb bis 2026-10-12 verborgen, dass die Kopie den Marker im Ziel löscht
+    # Die Quelle darf keinen Marker tragen, sonst brächte die Kopie ihn mit; so blieb bis
+    # 2026-10-12 verborgen, dass die Kopie den Marker im Ziel löscht. Seit Punkt 52 liegt die
+    # Quelle unter dem Slug der Stadt, der Standardordner von publish daneben.
+    (_layout_of(root, settings).site / MARKER_NAME).unlink(missing_ok=True)
     (root / "data" / "site" / MARKER_NAME).unlink(missing_ok=True)
     publish_sites(settings, _layout_of(root, settings), now=NOW, commit=None, out=out)
     assert (out / "moenchengladbach" / "index.html").is_file()

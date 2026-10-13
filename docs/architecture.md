@@ -115,19 +115,24 @@ Punkt 45; ohne Themenmodell und Klassifikator rund 9 s).
 ```
 reference/                 der Datensatz der Arbeit; wird nur gelesen (guard_writable)
 context/                   Fremddaten je Raumeinheit mit README (Quelle, Lizenz, Stand, SHA-256); wird nur gelesen
-data_root/                 Standard ./data, gitignored; mit profile = "x" liegt alles unter data_root/x/
-  external/                Eingaben der Quellen, Dateinamen und Formate der Quelle (CSV, GeoJSON, Shapefile-Zip)
-  raw/                     papers.jsonl, organizations.json, streets_per_district.json, wikipedia_dict.json
-  interim/                 papers.parquet (Korpus: Metadaten plus Text), stimmbezirke.geojson (kanonisch),
+data_root/                 Standard ./data, gitignored
+  <profil>/                ein Ordner je Lauf: jede Stadt unter ihrem Slug, jede Periode unter ihrem
+                           Namen (Punkt 52); Standard ohne --profile ist der Slug der Stadt der Arbeit
+    external/              Eingaben der Quellen, Dateinamen und Formate der Quelle (CSV, GeoJSON, Shapefile-Zip)
+    raw/                   papers.jsonl, organizations.json, streets_per_district.json, wikipedia_dict.json
+    interim/               papers.parquet (Korpus: Metadaten plus Text), stimmbezirke.geojson (kanonisch),
                            themen_anteile.parquet (Themenanteile je Dokument, nicht veröffentlicht)
-  processed/               die Ergebnistabellen als Parquet (zstd), je mit Stamp; mit Fremddaten drei mehr; dazu stimmbezirke_zuordnung (Profil mit Crosswalk)
+    processed/             die Ergebnistabellen als Parquet (zstd), je mit Stamp; mit Fremddaten drei mehr; dazu stimmbezirke_zuordnung (Profil mit Crosswalk)
                            (nicht veröffentlicht: papers_gremien, papers_ausschuss und wikidata_agg)
-  site/                    die Berichtsseite: index.html (mit Stamp), karte.html (Leaflet) und data/ mit den Download-Dateien
-                           `georep publish` legt daneben vergleich.html und je weiterer Stadt <slug>/ an
-cache_root/                Standard data_root/cache; mit Profil liegen pdf/ und text/ unter cache_root/x/
-  pdf/                     <dateiname>.pdf, manifest.jsonl (URL, SHA-256, Größe, Zeit)
-  text/texts.parquet       alle Texte mit Extraktorname, PDF-Hash, Herkunft, Zeichenzahl
-  http.sqlite              requests-cache; Lebensdauer je Quelle, PDFs nie
+    site/                  die Berichtsseite: index.html (mit Stamp), karte.html (Leaflet) und data/ mit den Download-Dateien
+  site/                    was veröffentlicht wird und was GitHub Pages hochlädt: `georep publish` kopiert
+                           die erste Stadt aus publish.cities hierher, jede weitere nach site/<slug>/, und
+                           legt vergleich.html daneben
+cache_root/                Standard data_root/cache
+  <profil>/pdf/            <dateiname>.pdf, manifest.jsonl (URL, SHA-256, Größe, Zeit)
+  <profil>/text/texts.parquet   alle Texte mit Extraktorname, PDF-Hash, Herkunft, Zeichenzahl
+  http.sqlite              requests-cache, von allen Profilen geteilt (der Schlüssel ist die URL);
+                           Lebensdauer je Quelle, PDFs nie
 ```
 
 Eingaben behalten die Formate der Quellen, weil sie Rohdaten sind; alles Abgeleitete ist Parquet und trägt
@@ -339,13 +344,15 @@ dem Modell, nichts fest kodiert.
 
 ## Betrieb
 
-Die Hauptperiode entsteht in GitHub Actions aus der Referenz. Die laufende Wahlperiode (Paketprofil `duesseldorf-2025`,
-Datenordner `2025`) braucht dagegen einen Rechner mit Speicher: sie ruft je Lauf nur Geändertes ab
+Die Hauptperiode entsteht in GitHub Actions aus der Referenz (`bootstrap`, `run`, `publish`; der Workflow
+liest die Pfade mit `georep paths`, damit kein Ordnername zweimal dasteht). Die laufende Wahlperiode
+(Paketprofil `duesseldorf-2025`, Datenordner `2025`) braucht dagegen einen Rechner mit Speicher: sie ruft je Lauf nur Geändertes ab
 (`modified_since`), lädt neue PDFs, extrahiert deren Texte und baut ihre eigene Seite unter
 `<data_root>/2025/site/`. Das Skript `deploy/bin/georep-monitor.sh` führt einen solchen Lauf, die beiden
 systemd-Einheiten daneben machen daraus einen Timer; beide tragen keinen Pfad, alles kommt aus
 `%E/georep/monitor.env`. Dieselben Dateien laufen als Nutzereinheit auf kookaburra und als Systemeinheit auf
-dem VPS. PDFs und Textstore gehen optional in ein privates R2-Bucket (`cache/2025/…`), die fertigen Seiten
+dem VPS; die Hauptseite kommt aus dem Ordner der Stadt (`<data_root>/<slug>/site/`, Punkt 52), beide Pfade
+aus `georep paths`. PDFs und Textstore gehen optional in ein privates R2-Bucket (`cache/2025/…`), die fertigen Seiten
 und Tabellen per `rsync` auf den VPS; ohne die Variablen passiert nichts von beidem. Eine `flock`-Sperre
 lässt nur einen Lauf zu, ein Fehler bricht mit Exit 1 ab und nennt den Schritt. Installation, Trockenlauf,
 Erstabruf und die Handgriffe für R2 und VPS stehen in [../deploy/README.md](../deploy/README.md), die

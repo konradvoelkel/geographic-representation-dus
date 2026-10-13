@@ -2,8 +2,10 @@
 
 Ein Lauf holt die seit dem letzten Mal geänderten Ratsdokumente, lädt deren PDFs, extrahiert die
 Texte, rechnet die Kette und stellt zwei Seiten zusammen: die Hauptseite (Periode 2020 bis 2025,
-aus der Referenz) und darunter `2025/` die laufende Periode. Alles Rechnerspezifische steht in
-`monitor.env`, nichts im Skript. Hintergrund und Entscheidungen: `docs/plans/07-monitoring.md`,
+aus der Referenz) und darunter `2025/` die laufende Periode. Beide Seiten kommen aus dem Ordner
+ihres Profils (`<data_root>/<slug>/site/` und `<data_root>/2025/site/`, decisions.md Punkt 52);
+welcher das ist, fragt das Skript mit `georep paths` und nicht die Umgebungsdatei. Alles
+Rechnerspezifische steht in `monitor.env`, nichts im Skript. Hintergrund und Entscheidungen: `docs/plans/07-monitoring.md`,
 Architektur: `docs/architecture.md` (Abschnitt „Betrieb").
 
 | Datei | Zweck |
@@ -57,6 +59,8 @@ Zugangsdaten braucht, schreibt `$CREDENTIALS_DIRECTORY/rclone.conf` ins Kommando
 5. `georep … run`: die Offline-Kette bis zur Seite des Profils.
 6. `georep bootstrap && GEOREP_REPORT__MONITORING_URL=2025/ georep run`: die Hauptseite aus der
    Referenz, diesmal mit dem Link auf die laufende Periode (GitHub Pages baut sie ohne diesen Link).
+   Sie entsteht im Ordner der Stadt, nicht flach unter `data_root`; das Skript liest ihn mit
+   `georep paths` (Punkt 52).
 7. `out/` zusammenstellen: Hauptseite nach `out/`, Profil nach `out/2025/`, beim ersten Lauf eines
    Monats `out/2025/snapshots/<JJJJ-MM>/` als Kopie der Downloads mit `SHA256SUMS`; ältere über
    `MONITOR_SNAPSHOT_KEEP` hinaus werden entfernt, der Lauf druckt beide Zahlen.

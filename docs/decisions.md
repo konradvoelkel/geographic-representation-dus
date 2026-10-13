@@ -551,6 +551,9 @@ veröffentlichte Adresse); der Vergleich aus `processed/*.parquet` beider Läufe
 Zwischentabelle wäre ein Bruch). Kosten: `publish` muss wissen, welche Stadt flach liegt, und kopiert sie
 dann nicht; fehlt eine Stadt, löscht es einen alten Vergleich, der sonst eine Lüge wäre.
 
+Nachtrag (Punkt 52, 2026-10-13): keine Stadt liegt mehr flach, auch die erste wird also kopiert. Die Wurzel
+bleibt ihre Adresse, nur gehört ihr der Ordner nicht mehr selbst.
+
 ## 39. was eine zweite Stadt nicht hat, fehlt als Block (Option 01, 2026-10-12)
 
 Beim Rebase auf `main` mit sechs gemergten Optionen zeigte Mönchengladbach vier Stellen, an denen die Kette
@@ -1195,3 +1198,58 @@ Import wäre ein Zyklus. Ein Test hält beide Zahlen zusammen.
 
 Kosten: ein neuer Settings-Schlüssel, also ein neuer Fingerprint und ein einmaliger Lauf aller
 Offline-Schritte (23 s, STATUS.md unter „Bekannt").
+
+## 52. Auch die Stadt der Arbeit rechnet unter ihrem Slug (Konrad, 2026-10-13)
+
+Jede Kommune bekam mit Option 01 einen Unterordner unter `data_root` und `cache_root` (ihren Slug), nur
+Düsseldorf blieb flach: `profile = ""`. Das war die Annahme der Phase 3 zu Frage 1.7 und eine Ausnahme ohne
+Grund im Code — sie lebte davon, dass genau eine Stadt die veröffentlichte Adresse besitzt. Konrad hat die
+Frage am 2026-10-13 mit „Umzug gewünscht" beantwortet. Seitdem steht `profile = "duesseldorf"` im Profil,
+und die Hauptperiode liegt unter `data_root/duesseldorf/` und `cache_root/duesseldorf/`; `http.sqlite`
+bleibt geteilt, sein Schlüssel ist die URL.
+
+**Die veröffentlichte Adresse bleibt, weil sie `georep publish` setzt, nicht der Lauf.** Die erste Stadt aus
+`publish.cities` kommt an die Wurzel von `data_root/site/`, jede weitere nach `site/<slug>/` (Punkt 38); neu
+ist nur, dass auch die erste Stadt kopiert wird, weil ihr Ordner nicht mehr die Wurzel ist. Das ist die
+bessere Ordnung: die Quellseite trägt die Zeile „Weitere Städte" nie, erst die Kopie bekommt sie, und ein
+zweiter Lauf ist dadurch von sich aus wiederholbar. `pages.yml` ruft darum `publish` (das tat es schon) und
+legt die Unterseite der zweiten Periode in den Ordner der **Stadt**, nicht nach `data/site/`: der Abschnitt
+„Zwei Wahlperioden" verlinkt `<profil>/` relativ zur Stadtseite, und nur so nimmt die Kopie sie mit.
+
+**Wo die Hauptperiode liegt, sagt `Settings.base_profile`, und das ist `city.slug`.** Zwei Stellen lasen sie
+vorher als `for_profile("")`: das Wörterbuch eines Periodenprofils (`period.dictionary = "base"`) und der
+Zielzuschnitt eines Crosswalk-Profils (`Layout.target_view`). Der Slug ist der Dateiname des Stadtprofils
+(`_slugs_match_their_file`), und eine Periode erbt ihn über `base`, also steht er genau einmal im Paket. Ein
+Test über alle Paketprofile hält die Zusage fest: wer das Wörterbuch der Hauptperiode liest, hat einen
+anderen Ordner als sie, und jedes andere Profil liegt unter seinem Slug. `_period_profile_is_consistent`
+verlangt dasselbe zur Ladezeit, jetzt auch für `profile = ""`.
+
+**Verworfen:** `base_profile` als eigener Settings-Schlüssel (er stünde neben `profile` ein zweites Mal im
+Stadtprofil und wäre ein Tippfehler von einem Lauf im falschen Ordner entfernt); den Ordner der Wurzel des
+Profilbaums beim Laden merken (dasselbe Ergebnis, aber ein Feld, das nur `load_settings` füllt, und
+`Settings(**merged)` aus einem Test hätte es nicht); Düsseldorf flach lassen und jeder zweiten Stadt ihren
+Pfad explizit setzen (`settings.local.toml` gewinnt über das Profil, zwei Städte überschrieben sich); eine
+Landing-Page an der Wurzel statt der ersten Stadt (bricht die veröffentlichte Adresse, Punkt 38).
+
+**Gemessen am 2026-10-13** auf Konrads Rechner (`bootstrap`, dann `run`, 23 s): 27 der 28 Parquet-Dateien
+unter `processed/` und `interim/` sind byteidentisch zu denen des flachen Laufs, `index.html` ist 886 328 Byte
+wie vorher. Die 28., `interim/papers.parquet`, unterscheidet sich an genau drei von 19 108 Texten — und das
+ist nicht der Umzug: der flache Lauf nahm diese drei aus den 200 lokal extrahierten PDFs, wo pypdf 6.20.0
+drei Texte der Arbeit nicht zeichengleich reproduziert (STATUS.md, „Bekannt"). Keine Tabelle danach merkt es. Die Seite nennt keinen Datenpfad, und so unterscheiden sich die beiden Dateien nur an den Stellen,
+die Zeit und Version ohnehin tragen: Erzeugungszeit, Commit, dreimal die Versionsnummer in einer
+nachgeladenen JSON-Datei und deren Prüfsummen (0.11.0 gegen 0.12.0, der flache Lauf ist vom 2026-10-13,
+05:58 UTC). Der Settings-Fingerprint ändert sich nicht, denn `profile` ist ein Pfad und darum ausgenommen —
+ein Lauf im neuen Ordner rechnet also nicht wegen des Umzugs neu, sondern weil dort noch keine Ausgabe liegt.
+
+**Zuerst der rote Test** (Exit 1, 13 Tests): `test_layout.py` mit dem neuen Fall „Hauptprofil mit Slug",
+`test_settings.py` mit dem Ordner je Paketprofil und `base_profile`, `test_cli.py` mit den Pfaden aus dem
+`Layout` statt von Hand, `test_publish.py` mit der kopierten ersten Stadt und
+`test_period_pipeline.py::test_the_profile_writes_into_its_own_subfolder` — der hielt den Umzug am
+deutlichsten fest, weil die Basis der Mini-Periode mitziehen musste, sonst fände das Periodenprofil ihr
+Wörterbuch nicht. Die Mini-Fixture und die Golden-Master-Läufe rechnen seitdem unter dem Profil der
+Settings, nicht flach; der Golden Master selbst (`tests/fixtures/mini/expected/`) ist unberührt.
+
+**Kosten:** ein Handgriff auf Konrads Rechner (die flachen Ordner `data/{external,raw,interim,processed,site}`
+und `cache/{pdf,text}` löschen oder nach `duesseldorf/` verschieben, STATUS.md unter „Nächster Schritt") und
+ein `bootstrap` plus `run` in jedem Klon, der schon Daten hat. Der PDF-Cache ist der einzige Grund, zu
+verschieben statt neu zu rechnen: 19 108 Dateien lädt niemand ein zweites Mal.

@@ -9,11 +9,35 @@ from georep.settings import load_settings
 
 
 def test_layout_from_settings_uses_cache_dir_default(tmp_path: Path) -> None:
-    layout = Layout.from_settings(load_settings(cwd=tmp_path))
+    settings = load_settings(cwd=tmp_path)
+    layout = Layout.from_settings(settings)
+    slug = settings.city.slug
     assert layout.cache_root == Path("data") / "cache"
-    assert layout.pdf_dir == Path("data") / "cache" / "pdf"
-    assert layout.corpus == Path("data") / "interim" / "papers.parquet"
+    assert layout.pdf_dir == Path("data") / "cache" / slug / "pdf"
+    assert layout.corpus == Path("data") / slug / "interim" / "papers.parquet"
     assert layout.reference_root == Path("reference")
+
+
+def test_the_main_period_of_a_city_lies_under_its_slug(tmp_path: Path) -> None:
+    """Punkt 52: auch die Stadt der Arbeit hat einen Unterordner, und es ist ihr Slug.
+
+    ``base_profile`` ist derselbe Ordner: dort findet eine Periode derselben Stadt das Wörterbuch
+    (``period.dictionary = "base"``) und den Zuschnitt (``crosswalk.enabled``) der Hauptperiode.
+    Flach bleibt nur, was ``profile`` von Hand leert (``Layout`` kennt den Fall weiter).
+    """
+    settings = load_settings(cwd=tmp_path).model_copy(
+        update={"data_root": tmp_path / "data", "cache_root": tmp_path / "cache"}
+    )
+    layout = Layout.from_settings(settings)
+    slug = settings.city.slug
+    assert layout.profile == slug == settings.base_profile
+    assert layout.root == tmp_path / "data" / slug
+    assert layout.site_index == tmp_path / "data" / slug / "site" / "index.html"
+    assert layout.pdf_dir == tmp_path / "cache" / slug / "pdf"
+    # Der HTTP-Cache bleibt geteilt, und die Referenz der Arbeit bleibt flach: sie ist der
+    # eingefrorene Datensatz, kein Lauf unter einem Profil.
+    assert layout.http_cache == tmp_path / "cache" / "http.sqlite"
+    assert layout.reference_view().processed == settings.reference_root / "processed"
 
 
 def test_reference_view_reads_the_same_names_under_reference_root(tmp_path: Path) -> None:
@@ -78,6 +102,13 @@ def test_layout_from_settings_takes_the_profile(tmp_path: Path) -> None:
     (tmp_path / "settings.toml").write_text('profile = "2025"\n', encoding="utf-8")
     layout = Layout.from_settings(load_settings(cwd=tmp_path))
     assert layout.profile == "2025" and layout.corpus == Path("data/2025/interim/papers.parquet")
+
+
+def test_a_hand_emptied_profile_stays_flat(tmp_path: Path) -> None:
+    """``profile = ""`` im Arbeitsverzeichnis legt alles flach unter ``data_root`` (Punkt 52)."""
+    (tmp_path / "settings.toml").write_text('profile = ""\n', encoding="utf-8")
+    layout = Layout.from_settings(load_settings(cwd=tmp_path))
+    assert layout.profile == "" and layout.corpus == Path("data/interim/papers.parquet")
 
 
 # --- Option 06: Gewichtung --------------------------------------------------------------------
@@ -179,13 +210,15 @@ def test_layout_takes_the_source_file_names_from_the_settings(tmp_path: Path) ->
         'district_names_file = "wahlbezirke.csv"\n',
         encoding="utf-8",
     )
-    layout = Layout.from_settings(load_settings(cwd=tmp_path))
-    assert layout.results_csv == Path("data/external/ergebnis.csv")
-    assert layout.districts_geojson == Path("data/external/flaechen.zip")
-    assert layout.streets_directory == Path("data/external/strassen.csv")
-    assert layout.district_names_csv == Path("data/external/wahlbezirke.csv")
-    assert layout.precincts_geojson == Path("data/interim/stimmbezirke.geojson")
-    assert layout.site_summary == Path("data/site/data/summary.json")
+    settings = load_settings(cwd=tmp_path)
+    layout = Layout.from_settings(settings)
+    own = Path("data") / settings.city.slug  # die Hauptperiode unter ihrem Slug (Punkt 52)
+    assert layout.results_csv == own / "external/ergebnis.csv"
+    assert layout.districts_geojson == own / "external/flaechen.zip"
+    assert layout.streets_directory == own / "external/strassen.csv"
+    assert layout.district_names_csv == own / "external/wahlbezirke.csv"
+    assert layout.precincts_geojson == own / "interim/stimmbezirke.geojson"
+    assert layout.site_summary == own / "site/data/summary.json"
     assert layout.reference_view().results_csv == Path("reference/external/ergebnis.csv")
     assert layout.for_profile("x").districts_geojson == Path("data/x/external/flaechen.zip")
 

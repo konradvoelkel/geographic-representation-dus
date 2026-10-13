@@ -203,9 +203,30 @@ und sagt je, warum sie liegen bleiben.
   (`georep.offlineNote` formuliert ihn einmal für beide), ohne JavaScript ein `<noscript>` mit dem
   Dateinamen. Der Klick auf einen Begriff hängt seitdem als ein Zuhörer am Dokument.
 
-## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46 und 47)
+## Umzug der Hauptperiode (2026-10-13, `docs/decisions.md`, Punkt 52)
 
-- Tests: 1013 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+Frage 1.7 ist beantwortet: Düsseldorf rechnet wie jede andere Stadt unter seinem Slug. `profile =
+"duesseldorf"` steht im Profil, `bootstrap` und `run` schreiben nach `data_root/duesseldorf/` und
+`cache_root/duesseldorf/`; `http.sqlite` bleibt geteilt, `reference/` bleibt flach (es ist der eingefrorene
+Datensatz, kein Lauf).
+
+- **Die veröffentlichte Adresse bleibt**, weil `georep publish` die erste Stadt aus `publish.cities` an die
+  Wurzel von `data_root/site/` legt. Neu ist, dass auch sie kopiert wird; die Quellseite trägt die Zeile
+  „Weitere Städte" seitdem nie, erst die Kopie. Der Pages-Workflow legt die Unterseite der zweiten Periode in
+  den Ordner der **Stadt** (`<stadt>/site/<periode>/`), nicht nach `data/site/`, und liest beide Pfade mit
+  `georep paths`.
+- **Wo die Hauptperiode liegt, sagt `Settings.base_profile` (= `city.slug`)**; vorher stand an den zwei
+  Stellen `for_profile("")`: das Wörterbuch eines Periodenprofils und der Zielzuschnitt eines
+  Crosswalk-Profils. Ein Test über alle Paketprofile hält fest, dass die Zusage stimmt.
+- **Gerechnet ändert sich nichts** (gemessen am 2026-10-13): 27 der 28 Parquet-Dateien sind byteidentisch zum
+  flachen Lauf, `index.html` ist 886 328 Byte, der Settings-Fingerprint unverändert (`profile` ist ein Pfad
+  und darum ausgenommen). Die 28. Datei, `interim/papers.parquet`, unterscheidet sich an drei von 19 108
+  Texten, die der flache Lauf aus lokal extrahierten PDFs nahm (pypdf, siehe „Bekannt"); keine Tabelle danach
+  merkt es.
+
+## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46, 47 und 52)
+
+- Tests: 1016 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
@@ -240,6 +261,14 @@ und sagt je, warum sie liegen bleiben.
 - `nox -s mutate` lässt `analysis/topics.py` aus: jeder Mutant dort lässt die schnelle Suite laufen, und die rechnet seit dem Themenmodell mehrfach NMF (Lauf am 2026-10-12 nach 35 Minuten abgebrochen, gezielt je Modul vier Minuten). Die schnelle Suite selbst ist dadurch rund 5 s langsamer; hingenommen.
 - Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.
 - Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`; `georep status` zeigt `pdfs` als „offen: Settings geändert", weil `--limit 200` im Stamp steht. Das ist richtig so.
+- Dieselben 200 PDFs sind der Grund, dass der flache Lauf drei Texte anders hat als die Referenz: pypdf 6.20.0
+  reproduziert 197 von 200 zeichengleich (`docs/profiling/README.md`). Auf `index.html` und alle
+  Ergebnistabellen wirkt sich keiner der drei aus.
+- Auf Konrads Rechner liegen die flachen Ordner `data/{external,raw,interim,processed,site}` und
+  `cache/{pdf,text}` nach dem Umzug (Punkt 52) weiter da und sind bis zum Ende seiner Netzläufe auch in
+  Benutzung: der Lauf im Worktree auf dem Tag `v0.12.0` liest und schreibt sie noch. Der Handgriff dafür steht
+  unten unter „Nächster Schritt"; `data/site/` ist seit dem 2026-10-13 die Kopie aus `georep publish` und
+  gehört damit ohnehin wieder dem neuen Stand.
 - Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
 - Regel 1 sieht nur Namen: zwei der 113 entfernten Einrichtungen haben einen Kurznamen, der als eigenes
   Wikipedia-Lemma im Wörterbuch bleibt („tonhalle" 72 Dokumente, „nrw-forum" 11). Beide stehen damit in der
@@ -311,8 +340,27 @@ und sagt je, warum sie liegen bleiben.
 
 ## Nächster Schritt
 
-Konrads Läufe, je mit Runbook; bis dahin fehlen die betroffenen Teile auf der veröffentlichten Seite und der
-Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „GitHub Actions"):
+**Ein Handgriff auf Konrads Rechner, nach den Netzläufen** (Punkt 52): die flachen Ordner der alten
+Hauptperiode wegräumen. `data/duesseldorf/` und `data/site/` sind am 2026-10-13 gebaut, es ist also nichts
+nachzurechnen — nur der PDF-Cache ist es wert, verschoben statt gelöscht zu werden (200 von 19 108 Dateien,
+und ein Abruf kostet eine Sekunde pro Datei).
+
+```bash
+# Die Pfade stehen in settings.local.toml; `uv run georep paths` zeigt sie.
+DATA=/media/konrad/xtraspace/georep/data
+CACHE=/media/konrad/xtraspace/georep/cache
+rm -rf "$DATA"/{external,raw,interim,processed}                  # gerechnet wird unter duesseldorf/
+rm -rf "$CACHE/duesseldorf/pdf" && mv "$CACHE/pdf" "$CACHE/duesseldorf/pdf"   # die 200 PDFs behalten
+rm -rf "$CACHE/text"                    # der Textstore steht aus der Referenz schon im neuen Ordner
+uv run georep status                    # zeigt, was danach noch zu laufen hat
+```
+
+Erst, wenn die Läufe unten durch sind: der Lauf im Worktree auf `v0.12.0` liest und schreibt die flachen
+Ordner noch. Wer von vorn anfängt (frischer Klon, anderer Rechner), hat keinen Handgriff — `bootstrap` und
+`run` legen den Ordner selbst an.
+
+Dann Konrads Läufe, je mit Runbook; bis dahin fehlen die betroffenen Teile auf der veröffentlichten Seite und
+der Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „GitHub Actions"):
 
 1. Periode 2014 bis 2020 (README, „Zweite Periode abrufen": rund 3 h Metadaten, 8 bis 11 h PDFs,
    wiederaufnehmbar), dann der Schnappschuss unter `snapshots/2014-2020` und die Abschnitte „Zwei
@@ -331,9 +379,8 @@ am 2026-10-12 (`docs/themenmodell-2026-10.md`, offene Annahmen in dessen § 7); 
 Kennzahlen, am 2026-10-13 (`docs/skalierung-2026-10.md`, § 8); Punkt 5, die Literaturübersicht, am 2026-10-13
 (Punkt 47; Titel der Arbeit und die Kölner Untersuchung sind nachzutragen); Punkt 2, die Seitengröße, am
 2026-10-13 (`docs/seitengroesse-2026-10.md`, § 8); Punkt 6, die Lizenz, am 2026-10-12 (Punkt 42).
-Offene Entscheidungen stehen in `docs/plans/fragen.md`
-(die acht wichtigsten oben): Datenpakete im Repo oder im
-R2-Bucket, Düsseldorf unter `data/duesseldorf/`, VPS und Domain, Lizenz der votemanager-CSV, Modellwahl der
-Kontrollvariablen. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,
+Die acht wichtigsten Fragen aus `docs/plans/fragen.md` hat Konrad am 2026-10-13 beantwortet; umgesetzt ist
+davon der Umzug nach `data/duesseldorf/` (Frage 1.7, Punkt 52, am 2026-10-13). Offen bleiben die Handgriffe,
+die daran hängen: die Datenpakete ins Repo legen (nach den Läufen) und der VPS samt Domain, beides später. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,
 wenn jemand es will: ein Ersatz für FlashText oder pypdf nur nach neuer Messung (`docs/decisions.md`, Punkt 14);
 die beiden deal-Eigenheiten upstream melden; die Abweichung in Tabelle 5 „ohne Ausreißer" mit Lukas klären.

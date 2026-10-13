@@ -7,7 +7,8 @@ Status („Supervisor: …"); diese Fragen brauchen keine Antwort mehr, Konrad d
 Frage blockiert die Implementierung**; alle Unteragenten arbeiten unter den Annahmen weiter.
 
 Stand nach dem Merge aller acht Optionen (2026-10-12): keine Frage wurde in Phase 3 bis 5 beantwortet, alle
-Annahmen gelten unverändert. Getroffen ist damit: Mönchengladbach statt Neuss (3), Düsseldorf bleibt flach (4),
+Annahmen gelten unverändert. Getroffen ist damit: Mönchengladbach statt Neuss (3), Düsseldorf bleibt flach (4,
+am 2026-10-13 umgekehrt und umgesetzt),
 Quartiersatlas im Repo unter `context/` (2, Teil), Hauptmodell ohne Parteianteile (8), Lizenzfeld „nicht
 angegeben" (7). Offen und nur von Konrad zu erledigen: die vier Netzläufe (1), die Pakete Mönchengladbach und
 2014 bis 2020 im Repo oder im R2-Bucket (2), VPS und Domain (5), R2-Bucket und Token (6).
@@ -49,9 +50,10 @@ Nummern verweisen auf die Tabellen unten.
    Arbeit (82 MB); Alternative wäre das R2-Bucket aus Option 7 mit einem Download-Schritt in Actions.
 3. **Mönchengladbach statt Neuss** (1.1): nur Mönchengladbach hat Stimmbezirksflächen als Open Data. Annahme:
    Mönchengladbach; Neuss später über Flächen aus dem Straßenverzeichnis (§ 9 des Plans 01).
-4. **Düsseldorf unter `data/duesseldorf/`** (1.7): Umzug der Ordner auf xtraspace und in Actions. Annahme in
-   Phase 3: Düsseldorf bleibt flach (`profile = ""`); der Umzug ist nach dem Merge von 01 ein Einzeiler plus
-   `mv`, wenn Konrad ihn will.
+4. **Düsseldorf unter `data/duesseldorf/`** (1.7): erledigt am 2026-10-13 (Punkt 52). `profile =
+   "duesseldorf"` im Profil, `Settings.base_profile` statt `for_profile("")` an den zwei Stellen, die die
+   Hauptperiode lesen, `publish` kopiert auch die erste Stadt, der Pages-Workflow legt die Periodenseite in
+   den Stadtordner. Offen bleibt nur Konrads `mv` für die alten flachen Ordner auf xtraspace.
 5. **VPS und Domain** (7.1, 7.2): `georep.konradvoelkel.de` mit `/2025/`, Pages bleibt Hauptseite. Annahme:
    so; bis DNS und Infra-Rolle stehen, läuft nur die Simulation auf kookaburra.
 6. **R2-Bucket und Token** (7.4): Bucket `georep`, WEUR, privat, zwei Token. Annahme: Konrad legt sie an, wenn
@@ -71,7 +73,7 @@ Nummern verweisen auf die Tabellen unten.
 | 1.4 | 2026-10-11 | Lizenz der votemanager-CSVs der ITK Rheinland? | die Seite nennt Lizenzen wörtlich | Quelle nennen, Lizenz „nicht angegeben" | beantwortet 2026-10-13: Quelle ist die Open-Data-Seite der votemanager-Wahlpräsentation; Lizenzfeld bleibt wie es ist, keine Anfrage jetzt |
 | 1.5 | 2026-10-11 | Marker des Vorlagenkopfs in Mönchengladbach? | ohne Marker zählen Treffer im Kopf | `betrifft`, Stichprobe misst | Supervisor: Annahme gilt, der Plan misst |
 | 1.6 | 2026-10-11 | Ausreißer der zweiten Regression für Mönchengladbach? | Tabelle 5 nennt 1 und 10 für Düsseldorf | leer bis zum Lauf, dann die zwei höchsten | Supervisor: Annahme gilt (`analysis.exclude_districts` je Profil, F3) |
-| 1.7 | 2026-10-11 | Düsseldorfs `data_root` auf `data/duesseldorf/`? | sonst Ausnahme ohne Slug | Slug für alle, Umzug dokumentiert | beantwortet 2026-10-13: Umzug gewünscht |
+| 1.7 | 2026-10-11 | Düsseldorfs `data_root` auf `data/duesseldorf/`? | sonst Ausnahme ohne Slug | Slug für alle, Umzug dokumentiert | beantwortet 2026-10-13: Umzug gewünscht; **umgesetzt 2026-10-13** (`docs/decisions.md`, Punkt 52; der Handgriff für die alten Ordner steht in `STATUS.md`) |
 | 1.8 | 2026-10-11 | Vergleich als `vergleich.html` an der Wurzel oder Abschnitt je Stadtseite? | Budget, Trennung der Läufe | Unterseite mit Teaser | Supervisor: Unterseite |
 | 1.9 | 2026-10-11 | Dauer und Rechner des vollen Abrufs (3 bis 5 h)? | über fünf Minuten braucht Freigabe | Konrad startet nach dem Merge auf kookaburra | freigegeben 2026-10-13, Supervisor startet den Lauf |
 ## Option 2: Zeitreihe

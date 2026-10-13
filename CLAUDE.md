@@ -18,7 +18,10 @@ Contract des eipy-Skripts.
    Venvs und Branches sind entfernt.
 2. Auf Konrads Rechner vor allem anderen, weil die Primärplatte voll ist:
    `export UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep UV_CACHE_DIR=/media/konrad/xtraspace/uv-cache`;
-   `settings.local.toml` (gitignored, vorhanden) zeigt `data_root` und `cache_root` auf `/media/konrad/xtraspace/georep/`.
+   `settings.local.toml` (gitignored, vorhanden) zeigt `data_root` und `cache_root` auf `/media/konrad/xtraspace/georep/`;
+   die Unterordner kommen vom Profil, nicht von dort — jeder Lauf liegt unter `data_root/<profil>/` und
+   `cache_root/<profil>/`, die Hauptperiode seit dem 2026-10-13 unter `duesseldorf/` (Punkt 52), nur
+   `http.sqlite` bleibt geteilt. Veröffentlicht wird `data_root/site/`, das `georep publish` füllt.
 3. `uv sync && uv run nox && uv run pytest -m slow`: alles grün ist der Ausgangspunkt, sonst zuerst das klären.
 4. Lesen: `STATUS.md` (Stand, Bekanntes), `docs/architecture.md` für den betroffenen Teil, `docs/decisions.md`,
    bevor eine Entscheidung dort umgestoßen wird. Für die Berichtsseite: `docs/plan-report-2026-10.md`, § 8 nennt
@@ -32,9 +35,10 @@ Contract des eipy-Skripts.
 uv sync                      # Umgebung aus uv.lock
 uv run nox                   # lint, typecheck, deps, test
 uv run pytest -m slow        # Kette über die volle Referenz, Vergleich mit der Arbeit
-uv run georep bootstrap && uv run georep run && uv run georep status   # run endet mit der Berichtsseite data/site/index.html
+uv run georep bootstrap && uv run georep run && uv run georep status   # run endet mit der Berichtsseite data/duesseldorf/site/index.html
 uv run georep profiles       # Stadtprofile im Paket; --profile <slug> waehlt eines (sonst GEOREP_PROFILE, sonst default_profile)
-uv run georep publish        # Stadtseiten nach data/site/ zusammentragen, vergleich.html bauen
+uv run georep publish        # Stadtseiten nach data/site/ zusammentragen (erste Stadt an die Wurzel), vergleich.html bauen
+uv run georep paths          # Profil und Pfade als key=wert; Skripte und Workflows lesen sie hier, nie von Hand
 uv run georep fetch opendata # der einzige schnelle Netzschritt; alles andere dauert Stunden
 uv run ruff check . && uv run ruff format --check .
 uv run mypy                  # strict für alles

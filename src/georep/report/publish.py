@@ -2,8 +2,10 @@
 
 Je Stadt aus ``publish.cities`` wird der veröffentlichte Ordner ``data/<profil>/site/`` gelesen
 und nach ``data/site/`` kopiert: die erste Stadt an die Wurzel, jede weitere nach
-``data/site/<slug>/``. Liegt eine Stadt flach (Profil leer, die Hauptstadt der Arbeit), ist ihre
-Seite schon die Wurzel und wird nicht kopiert (Frage 1.7). Aus ``summary.json``, ``wahlbezirke.geojson`` und
+``data/site/<slug>/``. Seit Punkt 52 liegt auch die erste Stadt unter ihrem Slug, wird also
+kopiert; damit bleibt ihre veröffentlichte Adresse die Wurzel, obwohl ihr Lauf einen Ordner
+tiefer rechnet. Eine Stadt, deren Ordner ausnahmsweise schon die Wurzel ist (``profile`` von Hand
+geleert), wird nicht kopiert. Aus ``summary.json``, ``wahlbezirke.geojson`` und
 ``wahlbezirke_auswertung.parquet`` beider Städte entsteht ``vergleich.html``; fehlt der Lauf
 einer Stadt, sagt die Zusammenfassung das und der Vergleich entfällt.
 
@@ -111,8 +113,8 @@ def city_layout(settings: Settings, root: Layout, slug: str) -> Layout:
 def claim_target(layout: Layout, out: Path | None) -> Path:
     """Der Zielordner, in dem publish löschen darf; legt ihn an und setzt die Markerdatei.
 
-    Erlaubt sind die Standardwurzel ``<data_root>/site`` (dort liegt die Seite der ersten Stadt
-    ohnehin), ein leeres Verzeichnis und jedes, das die Markerdatei trägt.
+    Erlaubt sind die Standardwurzel ``<data_root>/site`` (dorthin gehört die Seite der ersten
+    Stadt), ein leeres Verzeichnis und jedes, das die Markerdatei trägt.
     """
     default = layout.data_root / "site"
     root = default if out is None else out

@@ -40,7 +40,9 @@ if [[ "$*" == *paths* ]]; then
   if [[ "$*" == *--profile* ]]; then
     echo "profile=2025"; root="$GEOREP_DATA_ROOT/2025"; cache="$GEOREP_CACHE_ROOT/2025"
   else
-    echo "profile="; root="$GEOREP_DATA_ROOT"; cache="$GEOREP_CACHE_ROOT"
+    # Punkt 52: die Hauptperiode liegt unter dem Slug ihrer Stadt, nicht flach
+    echo "profile=duesseldorf"
+    root="$GEOREP_DATA_ROOT/duesseldorf"; cache="$GEOREP_CACHE_ROOT/duesseldorf"
   fi
   echo "data_root=$GEOREP_DATA_ROOT"
   echo "root=$root"
@@ -133,7 +135,7 @@ def sandbox(tmp_path: Path) -> dict[str, str]:
         DRY_RUN="1",
         STUB_LOG=str(tmp_path / "calls.log"),
         STUB_TRANSFER=str(tmp_path / "transfer.list"),
-        STUB_MAIN_SITE=str(data / "site"),
+        STUB_MAIN_SITE=str(data / "duesseldorf" / "site"),
         STUB_PROFILE_SITE=str(data / "2025" / "site"),
     )
     env.pop("STUB_FAIL", None)

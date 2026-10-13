@@ -1,5 +1,10 @@
-# Baut die Berichtsseite aus den Referenzdaten (bootstrap, run; kein Netzabruf) und lädt data/site
-# nach GitHub Pages. Quelle in den Repo-Einstellungen: Pages, Source „GitHub Actions" (Konrads Handgriff).
+# Baut die Berichtsseite aus den Referenzdaten (bootstrap, run; kein Netzabruf), stellt mit
+# `georep publish` data/site zusammen und lädt den Ordner nach GitHub Pages. Jede Stadt rechnet
+# unter ihrem Slug (data/<slug>/site/, decisions.md Punkt 52); erst `publish` legt die erste Stadt
+# an die Wurzel, darum bleibt die veröffentlichte Adresse dieselbe. Die Unterseite einer zweiten
+# Periode gehört in den Ordner ihrer Stadt, nicht nach data/site: sonst nähme die Kopie der
+# Stadtseite sie nicht mit. Pfade kommen aus `georep paths`, nirgends zweimal.
+# Quelle in den Repo-Einstellungen: Pages, Source „GitHub Actions" (Konrads Handgriff).
 # Actions per SHA gepinnt wie in ci.yml; Push per SSH, das gh-Token hat keinen workflow-Scope.
 name: pages
 
@@ -41,8 +46,17 @@ jobs:
           uv run georep --profile duesseldorf-2014 bootstrap || exit 1
           uv run georep --profile duesseldorf-2014 run || exit 1
           uv run georep --profile duesseldorf-vergleich run || exit 1
-          rm -rf data/site/2014-2020 || exit 1
-          cp -r data/2014-2020/site data/site/2014-2020 || exit 1
+          # Der Abschnitt „Zwei Wahlperioden" verlinkt <profil>/ relativ zur Stadtseite, also
+          # gehört die Unterseite in deren Ordner; publish nimmt sie mit.
+          uv run georep paths >main.paths || exit 1
+          uv run georep --profile duesseldorf-2014 paths >period.paths || exit 1
+          MAIN=$(sed -n 's/^site=//p' main.paths)
+          PERIOD=$(sed -n 's/^site=//p' period.paths)
+          PROFILE=$(sed -n 's/^profile=//p' period.paths)
+          [ -n "$MAIN" ] && [ -n "$PERIOD" ] && [ -n "$PROFILE" ] || exit 1
+          rm -rf "$MAIN/$PROFILE" || exit 1
+          cp -r "$PERIOD" "$MAIN/$PROFILE" || exit 1
+          rm -f main.paths period.paths || exit 1
       # Option 01: die zweite Stadt baut nur mit, wenn ihr Paket unter reference/<slug>/ liegt;
       # sonst meldet publish sie als "kein Lauf" und die Vergleichsseite entfällt (Exit 0).
       - name: Zweite Stadt, wenn ihr Paket da ist

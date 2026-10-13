@@ -5,7 +5,7 @@
 # Ein neues Profil ist eine Kopie dieser Datei mit anderer AGS, anderem Body, anderer Entität,
 # anderen URLs und anderer Ausschlussliste (docs/runbook-stadt.md).
 
-profile = ""                   # Düsseldorf bleibt flach unter data_root: die veröffentlichte URL und Konrads Ordner bleiben, wie sie sind (Frage 1.7, 2026-10-12)
+profile = "duesseldorf"        # Unterordner unter data_root und cache_root, wie jede Stadt: der Slug (Frage 1.7, beantwortet 2026-10-13; decisions.md Punkt 52). Die veröffentlichte Adresse bleibt, weil `georep publish` die erste Stadt an die Wurzel von data_root/site/ legt
 
 [city]
 slug = "duesseldorf"           # Ordnername im veröffentlichten Ordner und Dateiname dieses Profils

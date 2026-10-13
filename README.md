@@ -27,19 +27,21 @@ Systemabhängigkeiten gibt es keine (alle Wheels sind vorgebaut).
 git clone git@github.com:konradvoelkel/geographic-representation-dus.git
 cd geographic-representation-dus
 uv sync --locked                        # Umgebung aus dem Lockfile
-uv run georep bootstrap                 # Datensatz der Arbeit nach ./data übernehmen
-uv run georep run                       # zwanzig Offline-Schritte, rund 23 s; schreibt auch die Berichtsseite data/site/index.html
+uv run georep bootstrap                 # Datensatz der Arbeit nach ./data/duesseldorf/ übernehmen
+uv run georep run                       # zwanzig Offline-Schritte, rund 23 s; schreibt auch die Berichtsseite data/duesseldorf/site/index.html
+uv run georep publish                   # dieselbe Seite nach data/site/, der veröffentlichten Wurzel
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 uv run georep regress --controls        # Tabelle 6 mit den Kontrollvariablen
 ```
 
-Geprüft am 2026-10-11 aus einem frischen Klon, die Kontrollvariablen am 2026-10-12. Wer die Umgebung woanders ablegen will, setzt vor `uv sync`
+Geprüft am 2026-10-11 aus einem frischen Klon, die Kontrollvariablen am 2026-10-12, `bootstrap`, `run` und
+`publish` nach dem Umzug in den Stadtordner am 2026-10-13. Wer die Umgebung woanders ablegen will, setzt vor `uv sync`
 `UV_PROJECT_ENVIRONMENT` und `UV_CACHE_DIR`; wer Daten und Cache woanders haben will, schreibt `data_root`
 und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
 
 ## Berichtsseite
 
-`georep run` endet mit dem Schritt `report`: `data/site/index.html` ist eine in sich geschlossene Seite (rund
+`georep run` endet mit dem Schritt `report`: `data/duesseldorf/site/index.html` ist eine in sich geschlossene Seite (rund
 0,96 MB bei einem Budget von 1,0 MB, kein externes JavaScript, keine Kartenkacheln, offline aus dem
 Dateisystem zu öffnen) mit Kernzahlen,
 einem Suchfeld für Straßen und Orte (4176 Einträge in der Seite, darum ohne Netz: die Auswahl nennt Art,
@@ -64,8 +66,8 @@ gemessen in [docs/seitengroesse-2026-10.md](docs/seitengroesse-2026-10.md). Der 
 Varianten zur Seite (Spezifität je Begriff, Gewicht je Dokumentart, ein Thema je Zeile) und zeigt Tabelle 5
 unter jeder davon; mit Einheitsgewichten steht dort dieselbe Zeile wie oben. Die Themen tragen die Namen
 der Ausschüsse, aus deren Dokumenten sie gesät sind, und der Abschnitt „Gremien" nennt daneben, welcher
-Ausschuss sachlich zu einem Dokument passt (`docs/themenmodell-2026-10.md`). `data/site/karte.html` zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
-braucht Netz). Daneben liegen unter `data/site/data/` die Ergebnisse zum Weiterverarbeiten: die
+Ausschuss sachlich zu einem Dokument passt (`docs/themenmodell-2026-10.md`). `karte.html` daneben zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
+braucht Netz). Daneben liegen unter `site/data/` die Ergebnisse zum Weiterverarbeiten: die
 dreiundzwanzig Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema,
 `dokumente.json` (Dokumente mit Treffer ohne Texte) und `begriffe.json` (Begriffe mit Treffer je
 Wahlbezirk); Größe und SHA-256 jeder Datei stehen auf der Seite. Der Workflow
@@ -85,7 +87,7 @@ Abschnitt „Berichtsseite").
 | `georep status` | Settings, Pfade, Stores, Frische jedes Schritts mit Grund |
 | `georep profiles` | die Profile im Paket mit Stadt und amtlichem Gemeindeschlüssel |
 | `georep publish [--out DIR]` | die Stadtseiten nach `data/site/` zusammentragen und `vergleich.html` bauen |
-| `georep bootstrap [--force]` | den eingefrorenen Datensatz (`reference_root`) nach `data_root` übernehmen |
+| `georep bootstrap [--force]` | den eingefrorenen Datensatz (`reference_root`) in den Ordner des Profils unter `data_root` übernehmen |
 | `georep export` | die Parquet-Ergebnisse als CSV daneben schreiben |
 | `georep regress [--exclude …] [--varianten]` | lineare Regression Trefferquote gegen Wahlbeteiligung; `--varianten` dieselbe Rechnung je Gewichtungsvariante aus `wahlbezirke_gewichtet.parquet` |
 | `georep regress --controls` | Tabelle 6: dieselbe Regression mit Kontrollvariablen, je Modell und Stichprobe |
@@ -144,7 +146,8 @@ uv run georep --profile duesseldorf-vergleich run    # Hauptperiode mit dem Absc
 ```
 
 Beide Perioden werden mit **demselben Wörterbuch** durchsucht (Straßen und Orte je Wahlbezirk 2025, Stand
-November 2025): `period.dictionary = "base"` liest die Rohdaten der Hauptperiode, die Netzschritte
+November 2025): `period.dictionary = "base"` liest die Rohdaten der Hauptperiode (sie liegt unter dem Slug
+ihrer Stadt, `data_root/duesseldorf/`), die Netzschritte
 `streets_osm` und `pois_wiki` gibt es im Profil darum nicht. So unterscheiden sich die Perioden nur in den
 Dokumenten, und keine Trefferquote muss zwischen zwei Zuschnitten umgerechnet werden.
 
@@ -185,7 +188,7 @@ uv run georep $P status                # alles aktuell?
 - **`incremental = false`** ist Absicht: `modified` ist bei alten Papern das Migrationsdatum 2024-12-30, ein
   `modified_since` holte nach dem ersten Lauf nichts mehr.
 - **Platz.** Die PDFs liegen unter `cache_root/2014-2020/pdf/`; xtraspace hatte am 2026-10-11 322 GB frei.
-- **Danach** entsteht aus `raw/papers.jsonl`, `cache/text/<profil>/texts.parquet` und `external/` der
+- **Danach** entsteht aus `raw/papers.jsonl`, `cache_root/<profil>/text/texts.parquet` und `external/` der
   eingefrorene Schnappschuss `snapshots/2014-2020/` (geschätzt 35 bis 40 MB), auf den `reference_root` des
   Profils zeigt; `bootstrap` erkennt dieses Format und kopiert nur. Erst damit baut GitHub Pages beide
   Perioden ohne Netz.
@@ -197,8 +200,9 @@ Kommunalwahl am 14.09.2025: das Paketprofil
 [`duesseldorf-2025`](src/georep/profiles/duesseldorf-2025.toml). Es legt Daten unter `data/2025/`,
 PDFs und Texte unter `<cache_root>/2025/`, holt je Lauf nur Geändertes und baut eine eigene Seite ohne
 Regression (zu einer laufenden Periode gibt es keine Wahlbeteiligung), dafür mit der Monatsreihe.
-Straßen und Orte liest es bei der Hauptperiode (`period.dictionary = "base"`), damit sich nur die
-Dokumente unterscheiden; darum will es die Hauptperiode zuerst gebootstrappt haben.
+Straßen und Orte liest es bei der Hauptperiode (`period.dictionary = "base"`, also unter deren Slug
+`data/duesseldorf/`), damit sich nur die Dokumente unterscheiden; darum will es die Hauptperiode zuerst
+gebootstrappt haben.
 
 ```bash
 uv run georep bootstrap                                      # die Hauptperiode: Straßen und Orte
@@ -232,8 +236,11 @@ cache_root = "/media/konrad/xtraspace/georep/cache"
 
 ## Mehrere Städte
 
-Dieselbe Kette rechnet jede Kommune, deren Profil im Paket liegt; der Code kennt keine Stadt. Heute sind
-das Düsseldorf (Standard, flach unter `data/`) und Mönchengladbach (`data/moenchengladbach/`).
+Dieselbe Kette rechnet jede Kommune, deren Profil im Paket liegt; der Code kennt keine Stadt. Jede rechnet
+unter ihrem Slug: heute Düsseldorf (Standard, `data/duesseldorf/`) und Mönchengladbach
+(`data/moenchengladbach/`). `georep publish` legt die erste Stadt aus `publish.cities` an die Wurzel von
+`data/site/` und jede weitere nach `data/site/<slug>/`; die veröffentlichte Adresse bleibt dadurch dieselbe,
+obwohl der Lauf einen Ordner tiefer rechnet (decisions.md, Punkt 52).
 
 ```bash
 uv run georep profiles                                   # welche Städte es gibt
@@ -269,9 +276,11 @@ Abrufdatum und Prüfsummen in [context/README.md](context/README.md); die Seite 
 je Variable, was daraus wurde. Namensnennung nach Lizenz: Landeshauptstadt Düsseldorf, Amt für Statistik und
 Wahlen: Quartiersatlas Düsseldorf 2024 (Open-Data-Portal), dl-de/by-2-0.
 
-`reference/` und `context/` werden nur gelesen; Läufe schreiben nach `data_root`
-(Standard `./data`), Caches nach `cache_root` (Standard `data_root/cache`). Abgeleitete Daten sind Parquet;
-`georep export` legt CSV daneben, die Berichtsseite unter `data_root/site/` bietet beides zum Download an.
+`reference/` und `context/` werden nur gelesen; Läufe schreiben nach `data_root/<profil>/`
+(Standard `./data/duesseldorf`), Caches nach `cache_root/<profil>/` (Standard `data/cache/duesseldorf`), nur
+`http.sqlite` liegt geteilt in `cache_root`. Abgeleitete Daten sind Parquet; `georep export` legt CSV daneben,
+die Berichtsseite unter `data_root/<profil>/site/` bietet beides zum Download an, und `georep publish` trägt
+die Stadtseiten nach `data_root/site/` zusammen — das ist der Ordner, den GitHub Pages hochlädt.
 
 ## Literatur
 

@@ -34,8 +34,9 @@ def settings() -> Settings:
     return as_in_the_thesis(load_settings(cwd=Path("/nonexistent")))
 
 
-def _layout(tmp_path: Path, reference: Path) -> Layout:
-    return Layout(tmp_path / "data", tmp_path / "cache", reference)
+def _layout(tmp_path: Path, reference: Path, profile: str = "") -> Layout:
+    """Das Layout eines Laufs; ``profile`` ist der Ordner der Stadt (Punkt 52), sonst flach."""
+    return Layout(tmp_path / "data", tmp_path / "cache", reference, profile)
 
 
 def _results_as_legacy(path: Path) -> pl.DataFrame:
@@ -55,7 +56,7 @@ def _compare_results(got: pl.DataFrame, expected_csv: Path) -> None:
 def test_pipeline_runs_skips_and_reruns(
     tmp_path: Path, mini_root: Path, settings: Settings
 ) -> None:
-    layout = _layout(tmp_path, mini_root)
+    layout = _layout(tmp_path, mini_root, settings.profile)
     bootstrap(layout)
     steps = build_steps(settings, layout)
 
@@ -168,7 +169,7 @@ def test_the_committee_assignment_keeps_its_invariants_on_the_mini_fixture(
 def test_missing_corpus_names_bootstrap(
     tmp_path: Path, mini_root: Path, settings: Settings
 ) -> None:
-    layout = _layout(tmp_path, mini_root)
+    layout = _layout(tmp_path, mini_root, settings.profile)
     bootstrap(layout)
     with pytest.raises(MissingInputError, match="bootstrap"):
         run_pipeline(build_steps(settings, layout), settings, ["index"])
@@ -176,13 +177,18 @@ def test_missing_corpus_names_bootstrap(
 
 def test_unknown_step_is_an_error(tmp_path: Path, mini_root: Path, settings: Settings) -> None:
     with pytest.raises(UnknownStepError, match="unbekannt"):
-        run_pipeline(build_steps(settings, _layout(tmp_path, mini_root)), settings, ["unbekannt"])
+        run_pipeline(
+            build_steps(settings, _layout(tmp_path, mini_root, settings.profile)),
+            settings,
+            ["unbekannt"],
+        )
 
 
 def test_two_runs_write_identical_parquet(
     tmp_path: Path, mini_root: Path, settings: Settings
 ) -> None:
-    a, b = _layout(tmp_path / "a", mini_root), _layout(tmp_path / "b", mini_root)
+    a = _layout(tmp_path / "a", mini_root, settings.profile)
+    b = _layout(tmp_path / "b", mini_root, settings.profile)
     for layout in (a, b):
         bootstrap(layout)
         run_pipeline(build_steps(settings, layout), settings)
@@ -219,7 +225,7 @@ def test_two_runs_write_identical_parquet(
 def test_pipeline_reproduces_the_thesis_results(
     tmp_path: Path, reference_root: Path, settings: Settings
 ) -> None:
-    layout = _layout(tmp_path, reference_root)
+    layout = _layout(tmp_path, reference_root, settings.profile)
     bootstrap(layout)
     outcomes = run_pipeline(build_steps(settings, layout), settings)
     assert all(o.status == "ausgeführt" for o in outcomes if o.step not in NETWORK)
@@ -280,7 +286,7 @@ def test_weighted_variants_reproduce_table_five_and_decompose_the_count(
     Die Zahlen von Tabelle 5 stehen eingefroren in ``test_regression_numbers.py``; hier müssen sie
     aus ``trefferquote_gewichtet`` der Variante ``einheit`` auf dieselben Stellen fallen.
     """
-    layout = _layout(tmp_path, reference_root)
+    layout = _layout(tmp_path, reference_root, settings.profile)
     bootstrap(layout)
     run_pipeline(build_steps(settings, layout), settings)
     results = pl.read_parquet(layout.results)
@@ -362,7 +368,7 @@ def test_the_rules_change_the_reference_as_measured(
     Reproduktion mit abgeschalteten Regeln; dieser hält, was die Regeln daran ändern. Beide
     zusammen sind die Golden-Master-Politik aus decisions.md, Punkt 43.
     """
-    layout = _layout(tmp_path, reference_root)
+    layout = _layout(tmp_path, reference_root, default_settings.profile)
     bootstrap(layout)
     run_pipeline(build_steps(default_settings, layout), default_settings)
     assert pl.read_parquet(layout.pois_table).height == WITH_RULES["pois"]

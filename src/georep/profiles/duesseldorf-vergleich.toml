@@ -8,6 +8,9 @@
 # sind ein Fehler, kein stilles Überspringen: docs/architecture.md, Regel 3).
 
 base = "duesseldorf"
+# Kein eigenes `profile`: dieses Profil *ist* die Hauptperiode, nur mit einem Schritt mehr. Es erbt
+# darum ihren Ordner (den Slug der Stadt, Punkt 52) und rechnet auf ihren Tabellen weiter; ein
+# eigener Ordner wäre eine zweite Kopie derselben Kette.
 
 [compare]
 period = "2014-2020"           # Profil der älteren Periode; ihre Ergebnisse liegen unter data_root/2014-2020/processed/

@@ -10,7 +10,7 @@
 data_root = "./data"           # Laufzeitdaten und Zwischenergebnisse, relativ zum Arbeitsverzeichnis; gitignored
 cache_root = ""                # leer = <data_root>/cache: PDFs, Texte, HTTP-Cache; bei Konrad auf xtraspace
 reference_root = "./reference" # eingefrorener Datensatz der Arbeit; wird nur gelesen
-profile = ""                   # Unterordner je Stadt oder Periode unter data_root und cache_root (das Profil setzt ihn); leer = die Hauptperiode, flach
+profile = ""                   # Unterordner je Stadt oder Periode unter data_root und cache_root; jedes Profil setzt ihn (eine Stadt ihren Slug, eine Periode ihren Namen), leer heißt flach und ist nur noch die Notlösung von Hand
 default_profile = "duesseldorf" # Paketprofil, das ohne --profile und ohne GEOREP_PROFILE gilt (src/georep/profiles/<name>.toml)
 contracts = "on"               # "off" schaltet die deal-Verträge ab (deal.disable beim Start); zählt nicht zum Fingerprint
 log_level = "INFO"

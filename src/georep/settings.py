@@ -1275,7 +1275,8 @@ class Settings(BaseSettings):
     reference_root: Path = Path("reference")
     # Unterordner je Stadt oder Periode unter data_root und cache_root; leer = flach. Der Wert
     # kommt aus dem Profil, nie aus GEOREP_PROFILE: das wählt nur das Profil (siehe
-    # load_settings), und ein Profil darf flach bleiben (die Hauptstadt der Arbeit, Frage 1.7).
+    # load_settings). Jedes Paketprofil setzt ihn — eine Stadt ihren Slug, eine Periode ihren
+    # Namen (Punkt 52, Frage 1.7); flach ist seitdem nur noch, was jemand von Hand leert.
     # Darum der Alias: GEOREP_PROFILE landet nicht hier. Der Alias trägt das Präfix selbst, weil
     # pydantic-settings es auf Aliase nicht anwendet — ohne es setzte eine nackte Variable
     # PROFILE_FOLDER den Ordner (Review 2026-10-12). Die TOML-Schichten schreiben weiter `profile`.
@@ -1307,6 +1308,20 @@ class Settings(BaseSettings):
     bootstrap: Bootstrap = Bootstrap()  # Option 07
     publish: Publish = Publish()
     classify: Classify = Classify()  # Punkt 45: passender Ausschuss je Dokument
+
+    @property
+    def base_profile(self) -> str:
+        """Der Ordner der Hauptperiode dieser Stadt: ihr Slug (Punkt 52).
+
+        Dort liegt, was eine Periode derselben Stadt von der Hauptperiode liest: das Wörterbuch
+        (``period.dictionary = "base"``) und der Zuschnitt der Wahlbezirke
+        (``crosswalk.enabled``, ``Layout.target_view``). Der Slug ist der Dateiname des
+        Stadtprofils (``_slugs_match_their_file``), und eine Periode erbt ihn über ``base``.
+        Dass die Hauptperiode wirklich dort rechnet, hält ein Test über alle Paketprofile fest
+        (``tests/unit/test_settings.py``); dass ein Profil mit dem Wörterbuch der Hauptperiode
+        einen anderen Ordner hat, verlangt ``_period_profile_is_consistent``.
+        """
+        return self.city.slug
 
     @model_validator(mode="after")
     def _context_needs_the_geometry_columns(self) -> Settings:
@@ -1347,9 +1362,11 @@ class Settings(BaseSettings):
     def _period_profile_is_consistent(self) -> Settings:
         """Option 02: Basiswörterbuch, Crosswalk und Vergleich brauchen einander und ein Profil."""
         columns = self.columns.results
-        if self.period.dictionary == "base" and not self.profile:
+        if self.period.dictionary == "base" and self.profile in ("", self.base_profile):
             raise ValueError(
-                'period.dictionary = "base" liest die Hauptperiode und braucht darum ein profile'
+                'period.dictionary = "base" liest die Hauptperiode unter profile '
+                f"{self.base_profile!r} und braucht darum einen eigenen Ordner: "
+                f"profile {self.profile!r} wäre derselbe Lauf"
             )
         if self.crosswalk.enabled:
             if self.period.dictionary != "base":

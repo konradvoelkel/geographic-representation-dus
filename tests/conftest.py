@@ -168,9 +168,20 @@ def mg_settings() -> Settings:
 
 @pytest.fixture(scope="session")
 def mini_run(tmp_path_factory: pytest.TempPathFactory, default_settings: Settings) -> Layout:
-    """Die Offline-Kette einmal je Sitzung auf der Mini-Fixture: Tests lesen daraus, schreiben nie hinein."""
+    """Die Offline-Kette einmal je Sitzung auf der Mini-Fixture: Tests lesen daraus, schreiben nie hinein.
+
+    Das Profil kommt aus den Settings, also liegt der Lauf unter dem Slug der Stadt (Punkt 52) —
+    wie auf einem echten Rechner. Tests nehmen ihre Pfade darum aus diesem ``Layout`` und nie aus
+    ``tmp_path / "data" / …``.
+    """
     root = tmp_path_factory.mktemp("mini_run")
-    layout = Layout(root / "data", root / "cache", MINI, context_root=MINI / "context")
+    layout = Layout(
+        root / "data",
+        root / "cache",
+        MINI,
+        default_settings.profile,
+        context_root=MINI / "context",
+    )
     bootstrap(layout, context_files=default_settings.context.files.names())
     run_pipeline(build_steps(default_settings, layout), default_settings)
     return layout

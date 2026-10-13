@@ -26,6 +26,11 @@ def project(tmp_path: Path, mini_root: Path, monkeypatch: pytest.MonkeyPatch) ->
     return tmp_path
 
 
+def _layout(project: Path) -> Layout:
+    """Das Layout des Testprojekts: Pfade kommen aus dem Paket, nicht aus dem Test (Punkt 52)."""
+    return Layout.from_settings(load_settings(cwd=project))
+
+
 def test_steps_lists_the_chain(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["steps"]) == 0
     out = capsys.readouterr().out
@@ -53,7 +58,7 @@ def test_bootstrap_run_status_export_regress(
     out = capsys.readouterr().out
     assert f"{offline} ausgeführt, {network} übersprungen" in out
     assert "report       ausgeführt" in out
-    assert (project / "data" / "site" / "index.html").exists()
+    assert _layout(project).site_index.exists()
     assert main(["status"]) == 0
     status = capsys.readouterr().out
     assert status.count("aktuell") >= 7 and "200 Dokumente" in status and "[Netz]" in status
@@ -66,7 +71,7 @@ def test_bootstrap_run_status_export_regress(
         if path.exists()
     )
     assert f"{expected} CSV-Dateien" in capsys.readouterr().out
-    assert (project / "data" / "processed" / "wahlbezirke_auswertung.csv").exists()
+    assert (_layout(project).processed / "wahlbezirke_auswertung.csv").exists()
     assert main(["regress"]) == 0
     assert capsys.readouterr().out.startswith("alle: n=3")
     assert main(["regress", "--exclude", "1"]) == 1  # zwei Bezirke reichen nicht
@@ -299,7 +304,13 @@ def test_profiles_command_lists_the_package_profiles(
 def test_status_names_profile_and_city(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--profile", "duesseldorf", "status"]) == 0
     out = capsys.readouterr().out
-    assert "Profil:     duesseldorf (Düsseldorf)" in out and "flach" in out
+    assert "Profil:     duesseldorf (Düsseldorf)" in out
+    # Punkt 52: die Stadt der Arbeit liegt unter ihrem Slug, nicht mehr flach
+    assert f"Daten unter {_layout(project).root.resolve()}" in out
+    flat = project / "flach.toml"
+    flat.write_text('profile = ""\n', encoding="utf-8")
+    assert main(["--settings", str(flat), "status"]) == 0
+    assert "Daten flach unter" in capsys.readouterr().out  # von Hand geleert, gibt es weiter
 
 
 # --- Option 07: Monitoring -------------------------------------------------------------------
@@ -326,7 +337,7 @@ def test_profile_2025_bootstraps_without_a_corpus_and_shows_its_root(
         {p.name for p in (root / "raw").iterdir()} if (root / "raw").is_dir() else set()
     )
     assert not (root / "raw" / "papers.jsonl").exists()  # kein Korpus der Hauptperiode
-    assert not (project / "data" / "raw").exists()  # die Hauptperiode bleibt unberuehrt
+    assert not _layout(project).raw.exists()  # die Hauptperiode bleibt unberuehrt
     # Ohne Store plant der Metadatenschritt einen vollstaendigen Abruf; kein echter Abruf
     assert main(["--profile", "duesseldorf-2025", "run", "--dry-run", "--online", "papers"]) == 0
     assert "papers       geplant" in capsys.readouterr().out
@@ -338,9 +349,10 @@ def test_paths_prints_the_layout_for_scripts(
     """``georep paths`` ist die Quelle für deploy/; nur das Profil darf leer sein."""
     assert main(["paths"]) == 0
     main_profile = dict(line.split("=", 1) for line in capsys.readouterr().out.splitlines() if line)
-    assert main_profile["profile"] == ""
-    assert main_profile["root"] == str(project / "data")
-    assert main_profile["site"] == str(project / "data" / "site")
+    layout = _layout(project)
+    assert main_profile["profile"] == layout.profile == "duesseldorf"
+    assert main_profile["root"] == str(layout.root)
+    assert main_profile["site"] == str(layout.site)
     assert all(v.startswith("/") for k, v in main_profile.items() if k != "profile")
 
     assert main(["--profile", "duesseldorf-2025", "paths"]) == 0

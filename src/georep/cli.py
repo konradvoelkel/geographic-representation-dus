@@ -233,9 +233,10 @@ def _cmd_publish(args: argparse.Namespace, settings: Settings, layout: Layout) -
 def _cmd_paths(layout: Layout) -> int:
     """Profil und Pfade als ``key=wert``: die eine Quelle für Skripte außerhalb des Pakets.
 
-    Nur ``profile`` darf leer sein (Hauptperiode); alle Pfade sind absolut, auch wenn es sie noch
-    nicht gibt. ``deploy/bin/georep-monitor.sh`` liest daraus, wohin die Seite gehört und wie das
-    Profil heißt, statt beides in der Umgebungsdatei zu wiederholen (Option 07).
+    Nur ``profile`` darf leer sein (ein von Hand geleerter Ordner, Punkt 52); alle Pfade sind
+    absolut, auch wenn es sie noch nicht gibt. ``deploy/bin/georep-monitor.sh`` liest daraus,
+    wohin die Seite gehört und wie das Profil heißt, statt beides in der Umgebungsdatei zu
+    wiederholen (Option 07).
     """
     entries: dict[str, object] = {
         "profile": layout.profile,

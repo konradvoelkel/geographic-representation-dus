@@ -56,8 +56,16 @@ def period_run(
     tmp_path_factory: pytest.TempPathFactory, default_settings: Settings, mini_root: Path
 ) -> PeriodRun:
     root = tmp_path_factory.mktemp("period")
-    # Wie ``mini_run`` in conftest: die Fremddaten (Option 03) liegen in der Mini-Fixture
-    base = Layout(root / "data", root / "cache", mini_root, context_root=mini_root / "context")
+    # Wie ``mini_run`` in conftest: die Fremddaten (Option 03) liegen in der Mini-Fixture, und die
+    # Hauptperiode rechnet unter dem Slug der Stadt (Punkt 52) — dort sucht dieses Profil ihr
+    # Wörterbuch und ihren Zuschnitt.
+    base = Layout(
+        root / "data",
+        root / "cache",
+        mini_root,
+        default_settings.profile,
+        context_root=mini_root / "context",
+    )
     bootstrap(base, context_files=default_settings.context.files.names())
     run_pipeline(build_steps(default_settings, base), default_settings)
     settings = load_settings(profile=PROFILE, cwd=NOWHERE).model_copy(
@@ -93,6 +101,8 @@ def test_the_profile_runs_every_offline_step_and_skips_them_on_the_second_run(
 def test_the_profile_writes_into_its_own_subfolder(period_run: PeriodRun) -> None:
     layout, base = period_run.layout, period_run.base
     assert layout.root == base.data_root / "2014-2020"
+    assert base.root == base.data_root / period_run.settings.base_profile  # Punkt 52
+    assert layout.target_view(period_run.settings).root == base.root
     assert layout.texts != base.texts and layout.texts.is_file()
     assert layout.site_index.is_file() and base.site_index.is_file()
     shared = set(layout.runtime_dirs()) & set(base.runtime_dirs())

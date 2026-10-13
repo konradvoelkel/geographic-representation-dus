@@ -28,9 +28,10 @@ class Layout:
     data_root: Path
     cache_root: Path
     reference_root: Path
-    # Eine Stadt oder Periode neben der Hauptperiode: Unterordner unter data_root und cache_root
-    # (PDF-Namen sind je OParl-Body vergeben, Stamps und Textstore je Periode eigen); leer = flach.
-    # Der HTTP-Cache bleibt geteilt, sein Schlüssel ist die URL.
+    # Jede Stadt und jede Periode hat ihren Unterordner unter data_root und cache_root -- auch die
+    # Stadt der Arbeit, und dort ist es ihr Slug (Punkt 52); PDF-Namen sind je OParl-Body
+    # vergeben, Stamps und Textstore je Periode eigen. Leer heißt flach und kommt nur noch von
+    # Hand gesetzten Settings. Der HTTP-Cache bleibt geteilt, sein Schlüssel ist die URL.
     profile: str = ""
     # Option 03: Fremddaten je Raumeinheit, im Repo unter context/; wird nur gelesen.
     # None = keine Kontextdaten, dann fehlen die Schritte context_data, context und controls.
@@ -72,7 +73,10 @@ class Layout:
         )
 
     def for_profile(self, profile: str, districts_file: str | None = None) -> Layout:
-        """Dasselbe Layout für ein anderes Profil, etwa die Hauptperiode (``""``) derselben Stadt.
+        """Dasselbe Layout für ein anderes Profil, etwa die Hauptperiode derselben Stadt.
+
+        Der Name der Hauptperiode steht in ``Settings.base_profile`` (dem Slug der Stadt, Punkt
+        52); ``""`` ist der flache Ordner und kommt nur noch von Hand gesetzten Settings.
 
         ``districts_file`` nennt das Stimmbezirks-GeoJSON des anderen Profils, wenn es anders
         heißt (der Crosswalk liest so den Zielzuschnitt); ohne Angabe bleibt der eigene Name.
@@ -343,10 +347,11 @@ class Layout:
         Ohne Crosswalk ist es dieses selbst. Ein Periodenprofil mit Crosswalk rechnet auf den
         Wahlbezirken der Hauptperiode: Flächen, Namen und damit die Karte und die Bezirkstabelle
         der Seite kommen dann aus deren Stimmbezirks-GeoJSON, nicht aus dem eigenen (Option 02).
+        Die Hauptperiode liegt unter ``settings.base_profile``, dem Slug der Stadt (Punkt 52).
         """
         if not settings.crosswalk.enabled:
             return self
-        return self.for_profile("", settings.crosswalk.target_file)
+        return self.for_profile(settings.base_profile, settings.crosswalk.target_file)
 
     # Option 01: Quellen, die es nur in manchen Städten gibt, der kanonische Stand der
     # Stimmbezirke und die Schnittstelle des Städtevergleichs

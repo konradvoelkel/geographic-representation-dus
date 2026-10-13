@@ -546,10 +546,16 @@ def test_period_label_and_dictionary_have_defaults_and_a_derived_title() -> None
     )
 
 
-def test_base_dictionary_needs_a_profile(tmp_path: Path) -> None:
+def test_base_dictionary_needs_a_profile_of_its_own(tmp_path: Path) -> None:
+    """Punkt 52: die Hauptperiode liegt unter dem Slug; wer sie liest, braucht einen anderen Ordner."""
     (tmp_path / "settings.toml").write_text('[period]\ndictionary = "base"\n', encoding="utf-8")
     with pytest.raises(ValidationError, match="dictionary"):
-        load_settings(cwd=tmp_path)
+        load_settings(cwd=tmp_path)  # Ordner des Profils = base_profile: es läse sich selbst
+    (tmp_path / "settings.toml").write_text(
+        'profile = ""\n[period]\ndictionary = "base"\n', encoding="utf-8"
+    )
+    with pytest.raises(ValidationError, match="dictionary"):
+        load_settings(cwd=tmp_path)  # flach wäre kein eigener Ordner
     (tmp_path / "settings.toml").write_text(
         'profile = "alt"\n[period]\ndictionary = "base"\n', encoding="utf-8"
     )
@@ -718,7 +724,10 @@ def test_the_two_profiles_differ_from_the_main_period_in_the_fingerprint() -> No
     base = load_settings(cwd=NOWHERE)
     period = load_settings(profile="duesseldorf-2014", cwd=NOWHERE)
     compared = load_settings(profile="duesseldorf-vergleich", cwd=NOWHERE)
-    assert compared.profile == "" and compared.compare.period == period.profile
+    # Der Vergleich rechnet die Hauptperiode, erbt also ihren Ordner (Punkt 52), und liest daneben
+    # den der älteren Periode.
+    assert compared.profile == base.profile == compared.base_profile
+    assert compared.compare.period == period.profile
     prints = {base.fingerprint(), period.fingerprint(), compared.fingerprint()}
     assert len(prints) == 3
 
@@ -731,8 +740,10 @@ def test_period_profile_puts_everything_under_its_own_root(tmp_path: Path) -> No
     assert layout.root == tmp_path / "data" / "2014-2020"
     assert layout.districts_geojson.name == "Stimmbezirke_2020.geojson"
     assert layout.texts == tmp_path / "cache" / "2014-2020" / "text" / "texts.parquet"
-    target = layout.for_profile("", settings.crosswalk.target_file)
-    assert target.districts_geojson == tmp_path / "data" / "external" / "Stimmbezirke_2025.geojson"
+    # Der Zuschnitt der Hauptperiode liegt unter deren Slug, nicht flach (Punkt 52)
+    target = layout.target_view(settings)
+    own = tmp_path / "data" / settings.base_profile
+    assert target.districts_geojson == own / "external" / "Stimmbezirke_2025.geojson"
 
 
 # --- Option 01: Paketprofile ------------------------------------------------------------------
@@ -757,10 +768,11 @@ def _package_profile(folder: Path, slug: str, body: str = "") -> Path:
     return path
 
 
-def test_default_profile_is_duesseldorf_and_stays_flat(tmp_path: Path) -> None:
+def test_default_profile_is_duesseldorf_and_lies_under_its_slug(tmp_path: Path) -> None:
     s = load_settings(cwd=tmp_path)
     assert s.default_profile == "duesseldorf" and s.city.slug == "duesseldorf"
-    assert s.profile == "" and s.city.name == "Düsseldorf" and s.city.ags == "05111000"
+    assert s.profile == "duesseldorf"  # Punkt 52: ein Slug für jede Stadt, auch für diese
+    assert s.city.name == "Düsseldorf" and s.city.ags == "05111000"
     assert [source.name for source in s.report.sources] and all(
         source.url.startswith("https://") for source in s.report.sources
     )
@@ -857,6 +869,26 @@ def test_unknown_profile_names_the_available_ones(tmp_path: Path) -> None:
     assert "duesseldorf" in available_profiles()
 
 
+def test_every_package_profile_has_its_own_folder_and_the_city_keeps_its_slug() -> None:
+    """Punkt 52: ``base_profile`` ist der Slug, also muss die Hauptperiode dort liegen.
+
+    Sonst wäre die Zusage eine Lüge: ein Periodenprofil mit ``period.dictionary = "base"`` suchte
+    das Wörterbuch in einem Ordner, in dem niemand rechnet. Zwei Profile dürfen sich einen Ordner
+    teilen, wenn eines das andere nur um einen Schritt erweitert (der Vergleich die Hauptperiode).
+    """
+    folders: dict[str, str] = {}
+    for name in available_profiles():
+        settings = load_settings(profile=name, cwd=NOWHERE)
+        assert settings.base_profile == settings.city.slug
+        if settings.period.dictionary == "base":
+            assert settings.profile not in ("", settings.base_profile), name
+        else:
+            assert settings.profile == settings.base_profile, name
+        folders.setdefault(settings.profile, name)
+    # Jeder Ordner kommt einmal vor oder trägt denselben Lauf: 2014-2020, 2025 und zwei Städte
+    assert sorted(folders) == ["2014-2020", "2025", "duesseldorf", "moenchengladbach"]
+
+
 def test_profile_slug_must_match_the_file_name(tmp_path: Path) -> None:
     profiles = tmp_path / "profiles"
     profiles.mkdir()
@@ -872,7 +904,8 @@ def test_environment_selects_the_profile_but_never_sets_the_folder(
 ) -> None:
     monkeypatch.setenv("GEOREP_PROFILE", "duesseldorf")
     s = load_settings(cwd=tmp_path)
-    assert s.city.slug == "duesseldorf" and s.profile == ""  # flach, wie --profile duesseldorf
+    # Die Variable wählt das Profil; den Ordner setzt das Profil selbst (hier sein Slug)
+    assert s.city.slug == "duesseldorf" and s.profile == s.city.slug
     monkeypatch.setenv("GEOREP_PROFILE", "gibtsnicht")
     with pytest.raises(UnknownProfileError):
         load_settings(cwd=tmp_path)
@@ -888,7 +921,8 @@ def test_only_prefixed_variables_reach_the_settings(
     waehlt nur das Profil). Er darf dabei nicht das Praefix umgehen (Review 2026-10-12).
     """
     monkeypatch.setenv("PROFILE_FOLDER", "fremd")
-    assert load_settings(cwd=tmp_path).profile == ""
+    settings = load_settings(cwd=tmp_path)
+    assert settings.profile == settings.city.slug  # der Slug aus dem Profil, nicht „fremd"
     monkeypatch.setenv("GEOREP_PROFILE_FOLDER", "eigen")
     assert load_settings(cwd=tmp_path).profile == "eigen"
 

@@ -307,6 +307,7 @@ Phase 3.
   Vereinigung ist ein Join zur Lesezeit.
 - **Allowlist und Lizenztexte aus Settings** (01): gehört zu 01, nicht ins Fundament, weil nur 01 sie braucht
   und die anderen Optionen ihre Links als Konstanten ergänzen können.
-- **Umzug Düsseldorfs nach `data/duesseldorf/`** (01): wartet auf Konrads Antwort; technisch nach F4 ein
-  Einzeiler (`profile = "duesseldorf"` im Profil) plus Umzug der Ordner.
+- **Umzug Düsseldorfs nach `data/duesseldorf/`** (01): erledigt am 2026-10-13 (`docs/decisions.md`,
+  Punkt 52). Der Einzeiler im Profil war es nicht ganz: zwei Stellen lasen die Hauptperiode als
+  `for_profile("")` und fragen jetzt `Settings.base_profile`, und `publish` kopiert auch die erste Stadt.
 - **Option 9 und 10** wie im Meta-Plan.

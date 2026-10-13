@@ -293,9 +293,10 @@ def build_steps(
     with_context = layout.context_root is not None
     session: Transport | None = http
     # Option 02: ein Periodenprofil darf das Wörterbuch der Hauptperiode benutzen; dann liest es
-    # deren Rohdaten (Straßen, Orte) und holt selbst nichts aus dem Netz.
+    # deren Rohdaten (Straßen, Orte) und holt selbst nichts aus dem Netz. Die Hauptperiode liegt
+    # unter dem Slug ihrer Stadt (Punkt 52), nicht flach.
     own_dictionary = settings.period.dictionary == "own"
-    dictionary_source = layout if own_dictionary else layout.for_profile("")
+    dictionary_source = layout if own_dictionary else layout.for_profile(settings.base_profile)
 
     def transport() -> Transport:
         nonlocal session

@@ -117,6 +117,8 @@ PDF_MANIFEST=$(value_of "$WORK/paths.out" pdf_manifest)
 TEXT_STORE=$(value_of "$WORK/paths.out" text_store)
 PAPERS_JSONL=$(value_of "$WORK/paths.out" papers)
 PROCESSED=$(value_of "$WORK/paths.out" processed)
+# Dasselbe für die Hauptperiode: ihre Seite liegt im Ordner ihrer Stadt (dem Slug, decisions.md
+# Punkt 52), nicht flach unter der Datenwurzel -- gefragt wird auch sie beim Paket.
 query mainpaths georep paths
 MAIN_SITE=$(value_of "$WORK/mainpaths.out" site)
 log "Profil $PROFILE, Seite unter $PROFILE_SITE, Hauptseite unter $MAIN_SITE"
