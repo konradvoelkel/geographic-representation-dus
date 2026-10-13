@@ -126,6 +126,25 @@ def as_in_the_thesis(settings: Settings) -> Settings:
     )
 
 
+LITERATURE_SECTION = '<section id="literatur">'
+
+
+def without_literature(page: str) -> str:
+    """Die Seite ohne den Abschnitt „Literatur und verwandte Arbeiten" (Punkt 47).
+
+    Ein Test, der ein Wort oder eine Jahreszahl im **ganzen** HTML sucht, muss diesen Abschnitt
+    auslassen: er zitiert fremde Veröffentlichungen und nennt darum Jahre und Monate, die nichts
+    mit der Periode oder den Daten dieser Seite zu tun haben (zwei Tests wurden daran am
+    2026-10-13 rot). Dieselbe Lehre wie bei der Profiltabelle und bei ``data-value``: ein Test
+    prüft die Stelle, die er meint, nicht das ganze Dokument.
+    """
+    start = page.find(LITERATURE_SECTION)
+    if start < 0:
+        return page
+    end = page.index("</section>", start) + len("</section>")
+    return page[:start] + page[end:]
+
+
 def mg_settings() -> Settings:
     """Das Profil der zweiten Stadt, auf die Größe der Netzstichprobe gebracht (Option 01).
 

@@ -29,6 +29,7 @@ from georep.report.model import Download, MonthRow, ReportModel, build_report_mo
 from georep.report.render import Visuals, external_links, kib, render_map, render_report
 from georep.report.search import SearchEntry, search_payload
 from georep.settings import Settings
+from tests.conftest import without_literature
 
 DOWNLOADS = (
     Download(
@@ -508,7 +509,8 @@ def test_the_month_section_has_a_row_per_month_and_two_bars(open_page: str) -> N
     assert "Oktober 2025" in open_page and "November 2025" in open_page
     assert "ohne Datum" in open_page  # die Zeile ohne Monat
     assert open_page.count('class="bar bar-documents"') == 2  # nur die datierten Monate
-    assert "Dezember" not in open_page
+    # Ohne den Literaturabschnitt: der zitiert fremde Arbeiten und darf Monatsnamen nennen
+    assert "Dezember" not in without_literature(open_page)
 
 
 def test_without_regression_the_page_drops_scatter_and_the_turnout_switch(

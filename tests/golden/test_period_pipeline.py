@@ -31,6 +31,7 @@ from georep.prep.voters import (
     read_results_csv,
 )
 from georep.settings import Settings, load_settings
+from tests.conftest import without_literature
 
 REPO = Path(__file__).resolve().parents[2]
 MINI_2014 = REPO / "tests" / "fixtures" / "mini-2014"
@@ -293,7 +294,8 @@ YEAR_IN_TEXT = re.compile(r">[^<]*\b2025\b[^<]*<")
 
 
 def test_the_period_page_names_no_foreign_election_year(period_run: PeriodRun) -> None:
-    page = period_run.layout.site_index.read_text(encoding="utf-8")
+    # Ohne den Literaturabschnitt: er zitiert Veröffentlichungen mit eigenen Jahreszahlen (Punkt 47)
+    page = without_literature(period_run.layout.site_index.read_text(encoding="utf-8"))
     for allowed in ALLOWED_OTHER_YEAR:
         assert allowed in page, allowed
         page = page.replace(allowed, "")
