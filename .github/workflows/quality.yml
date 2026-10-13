@@ -4,15 +4,13 @@
 # echten Befund hat -- crosshair bei einem Gegenbeispiel, gremlins bei einem Abbruch.
 # Kein Netz (alle Tests arbeiten gegen die Fixtures), kein Pages-Schritt.
 #
-# Laufzeit, gemessen am 2026-10-13 auf dreizehn Kernen mit genau diesen Aufrufen:
-#   verify  580 s mit 31 Zielen; crosshair begrenzt jede Bedingung auf 20 s Rechenzeit, die Zahl
-#           der Kerne aendert daran wenig. Auf dem Runner sind rund 12 min zu erwarten.
-#   mutate  539 s fuer `nox -s mutate -- fast --gremlin-workers=2`, also genau den Aufruf unten.
-#           Mit zwei Arbeitern auf zwei Kernen ist etwa das Doppelte zu erwarten, rund 18 min.
-#   alone   228 s (97 Dateien einzeln plus die Suite rueckwaerts), auf dem Runner rund 8 min.
-# Zusammen mit Checkout und `uv sync` rund 40 min; `timeout-minutes: 45` ist die Grenze aus dem
-# Auftrag. Reisst der Lauf sie, faellt der Mutationsschritt weg und verify plus alone bleiben --
-# die Mutationssitzung ist ohnehin kein Gate.
+# Laufzeit, gemessen am 2026-10-13 auf dem GitHub-Runner (Lauf 38435284676, von Hand gestartet):
+#   verify   9 min 39 s mit 31 Zielen (lokal 580 s; crosshair begrenzt jede Bedingung auf 20 s)
+#   alone    5 min 15 s (97 Dateien einzeln plus die Suite rueckwaerts; lokal 228 s)
+#   mutate  14 min 53 s fuer `nox -s mutate -- fast --gremlin-workers=2` (lokal 539 s)
+# Zusammen mit Checkout und `uv sync` 30 min; `timeout-minutes: 45` laesst 15 min Luft. Reisst ein
+# Lauf sie, faellt der Mutationsschritt weg und verify plus alone bleiben -- die Mutationssitzung ist
+# ohnehin kein Gate.
 #
 # WICHTIG: die Session mutate laeuft **je Modul eine eigene Sitzung** mit genau den Testdateien
 # des Moduls (noxfile.py, MUTATION_SCOPE). Das ist keine Bequemlichkeit: die abdeckungsgefuehrte

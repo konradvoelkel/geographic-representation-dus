@@ -232,6 +232,6 @@ strenger, fünf Stellen sortieren nach einem Join, zwei Schritte tragen einen Zu
   coverage-Kern (`COVERAGE_CORE=ctrace`) wäre der nächste Schritt; gemessen ist er nicht.
 - **`analysis/topics.py`** bleibt aus der Sitzung draußen, weil jeder Mutant NMF rechnet
   (unverändert seit 2026-10-12).
-- **Der Qualitätslauf ist nicht erprobt.** Die Laufzeit auf einem Zwei-Kern-Runner ist geschätzt,
+- **Der Qualitätslauf ist einmal gelaufen.** Von Hand gestartet am 2026-10-13 (Lauf 38435284676): verify 9 min 39 s, alone 5 min 15 s, mutate 14 min 53 s, zusammen 30 min bei `timeout-minutes: 45`; der erste geplante Lauf ist Montag, 2026-10-19.
   nicht gemessen; der erste geplante Lauf zeigt es. Bleibt er über 30 Minuten, fällt die
   Mutationssitzung weg und nur `verify` bleibt (so steht es im Auftrag).
