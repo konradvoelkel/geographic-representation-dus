@@ -1308,3 +1308,38 @@ die Fakten, Zahlen und Messungen bleiben in STATUS und in den datierten Dokument
 Unterschied ist der Lesezeitpunkt: STATUS liest man, um den Stand zu erfahren, CLAUDE.md, bevor man etwas
 anfasst. Verworfen: die Regeln in beiden Dateien führen (eine Dopplung veraltet an einer der beiden
 Stellen); eine dritte Datei nur für Lehren (CLAUDE.md ist die Datei, die jede Sitzung ohnehin liest).
+
+## 54. Das Rechenbudget der Overpass-Abfrage ist ein Setting und steht auf 25 s (2026-10-13)
+
+`overpass_query` schrieb `[timeout:90]` fest in den Kopf der Abfrage. Gemessen am Mönchengladbach-Lauf
+vom 2026-10-13: mit dieser Zahl weisen **alle vier** öffentlichen Instanzen (overpass-api.de, lz4, z,
+maps.mail.ru) genau diese Stimmbezirksabfrage unter Last nach wenigen Sekunden mit `504 Gateway Timeout`
+ab, während dieselbe Abfrage mit `[timeout:25]` in 2 s mit 124 Elementen antwortet; die Trivialabfrage
+lief überall. Das `[timeout:N]` ist kein Netz-Timeout des Clients (der steht in `http.timeout_s` und
+bleibt bei 180 s), sondern das Rechenbudget, das der Server der Abfrage zusagt — und er schätzt die
+Kosten **vorab** und lehnt ab, was sein Slot-Budget überschreitet. Für eine Abfrage, die zwei Sekunden
+braucht, ist ein großes Budget darum kein Sicherheitsnetz, sondern der Grund der Ablehnung.
+
+Die Zahl steht jetzt als `sources.osm.query_timeout_s` in `defaults.toml` mit der Messung daneben,
+Bereich 5 bis 180 (unter 5 s rechnet keine Instanz die Polygonabfrage durch, über 180 s weist jede sie
+ab), und wird über `fetch_streets_per_precinct` und `fetch_street_names` bis `overpass_query`
+durchgereicht. Dass sie im Profil liegt und nicht im Code, ist der Punkt: welches Budget eine Instanz
+gewährt, ist eine Eigenschaft des Servers und des Tages, nicht der Stadt und nicht der Abfrage.
+
+**Zwei Folgen, beide gewollt.** Der POST-Body ist der Cache-Schlüssel (Punkt 9): die Antworten, die vor
+dem 2026-10-13 mit `[timeout:90]` erfolgreich waren, liegen unter ihrem alten Schlüssel in
+`http.sqlite` und werden nicht mehr getroffen. Sie werden einmal neu geholt — mit 2 s je Abfrage ist das
+billiger, als den Schlüssel künstlich stabil zu halten. Und der Settings-Fingerprint ist global, ein
+neuer Schlüssel in `sources` macht also jeden Stamp ungültig; `georep status` sagt nach diesem Commit
+für jeden gerechneten Schritt „offen: Settings geändert". Das ist das bekannte Verhalten eines neuen
+Parameters, kein Fehler.
+
+Verworfen: die Zahl im Code lassen und nur kleiner machen (dann steht die Messung an einer Stelle, an
+der sie beim nächsten Lauf keiner sieht, und eine Instanz mit anderem Budget braucht einen Commit);
+`[timeout:N]` ganz weglassen (Overpass setzt dann seinen eigenen Standard, und der ist 180 s — genau
+das, was abgelehnt wird); den Wert aus der Polygongröße rechnen (die Abfragezeit hängt an der
+Straßendichte, nicht an der Fläche, und 2 s gegen 25 s Budget ist kein Grenzfall, der eine Formel
+rechtfertigt); die aufgezeichneten Abfragen in `tests/fixtures/http/*.query.txt` auf 25 umschreiben —
+sie sind **Aufzeichnungen** dessen, was wirklich gesendet wurde (zwei tragen 60, vier tragen 90), und
+der Schlüssel der Fake-Session ist die URL, nicht der Abfragetext. Eine Aufzeichnung wird nicht
+rückdatiert, damit ein Test hübscher aussieht.

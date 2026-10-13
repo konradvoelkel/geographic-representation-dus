@@ -51,3 +51,13 @@ Antwort stammt aus der ersten Runde und ist stadtweit, also unverändert gültig
 
 Overpass wiederholt die Session nicht von selbst: ihre Retry-Regel erlaubt GET und HEAD, die
 Abfrage ist ein POST.
+
+## Der Abfragetext ist eine Aufzeichnung, kein Schlüssel (2026-10-13)
+
+Die `*.query.txt` tragen das `[timeout:N]`, mit dem damals wirklich gesendet wurde: 60 bei den zwei
+Düsseldorfer Abfragen vom 2026-10-11, 90 bei `overpass_0108` und den drei Mönchengladbacher. Seit
+`docs/decisions.md`, Punkt 54, ist der Standard 25, und die Dateien werden **nicht** nachgezogen —
+der Schlüssel der Fake-Session ist die URL (`tests/fakes.py`), nicht der Abfragetext, und eine
+Aufzeichnung wird nicht rückdatiert. Verglichen wird darum nur, was wirklich dieselbe Aussage ist:
+der Filter (`OSM_FILTER in recorded`). Die Antworten sind von der Zahl unberührt, sie hängen am
+Polygon und am Filter.

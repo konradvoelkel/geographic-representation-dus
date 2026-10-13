@@ -188,7 +188,8 @@ def test_streets_and_pois_steps_use_recorded_answers(
             ),
         ),
     }
-    steps = build_steps(settings, layout, FakeSession(routes), sleep=lambda _: None)
+    session = FakeSession(routes)
+    steps = build_steps(settings, layout, session, sleep=lambda _: None)
     outcomes = run_pipeline(
         steps, settings, ["streets_osm", "pois_wiki", "streets", "pois"], online=True
     )
@@ -206,6 +207,9 @@ def test_streets_and_pois_steps_use_recorded_answers(
     assert len(pois) == 25 + 2 and all("wahlkreis_id" in p for p in pois)
     assert "1 Stimmbezirke, 11 Straßennamen" in outcomes[0].reason
     assert "25 per SPARQL, 2 per GeoSearch" in outcomes[1].reason
+    # Punkt 54: der Abfrage-Timeout des Profils steht im POST-Body, nicht im Code
+    sent = next(data for url, data in session.calls if url == src.osm.overpass_endpoint)
+    assert sent["data"].startswith(f"[out:json][timeout:{src.osm.query_timeout_s}];")
     assert layout.streets_by_district.exists() and layout.pois_by_district.exists()
 
 

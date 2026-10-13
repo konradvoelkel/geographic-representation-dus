@@ -53,6 +53,13 @@ delay_s = 1.0                  # Pause zwischen den 306 GeoSearch-Abfragen
 overpass_endpoint = "https://overpass-api.de/api/interpreter"
 delay_s = 1.0                  # Pause zwischen den 306 Polygonabfragen; der öffentliche Server antwortet sonst mit 504
 simplify_m = 2.0               # Polygon vorher um 2 m vereinfachen (Douglas-Peucker), damit die Abfrage kurz bleibt
+# Das Rechenbudget, das Overpass der Abfrage gibt ([timeout:N] im Kopf), nicht der Netz-Timeout.
+# Gemessen am 2026-10-13: mit [timeout:90] wiesen alle vier öffentlichen Instanzen
+# (overpass-api.de, lz4, z, maps.mail.ru) dieselbe Stimmbezirksabfrage unter Last nach wenigen
+# Sekunden mit 504 ab, mit [timeout:25] antwortete sie in 2 s mit 124 Elementen. Der Server
+# schätzt die Kosten vorab und lehnt ab, was sein Slot-Budget überschreitet; ein kleines Budget
+# ist für eine Abfrage, die 2 s braucht, also kein Risiko, sondern die Eintrittskarte.
+query_timeout_s = 25
 
 [geo]
 working_crs = "EPSG:25832"     # metrisch rechnen (ETRS89 / UTM 32N); die Quellgeometrie kommt je Stadt in EPSG:4647 oder EPSG:25832, dasselbe Datum, 4647 mit Zonenpräfix

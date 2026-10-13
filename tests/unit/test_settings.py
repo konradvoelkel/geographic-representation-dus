@@ -228,6 +228,17 @@ def test_weights_and_topics_defaults_are_loaded(tmp_path: Path) -> None:
     assert s.topics.k == 20 and s.topics.stop_words == "de" and 0 < s.topics.max_df <= 1
 
 
+def test_overpass_query_timeout_stays_between_five_and_180_seconds(tmp_path: Path) -> None:
+    """Punkt 54: unter 5 s antwortet keine Instanz, über 180 s weist jede die Abfrage ab."""
+    assert load_settings(cwd=tmp_path).sources.osm.query_timeout_s == 25
+    for value in (4, 181):
+        (tmp_path / "settings.toml").write_text(
+            f"[sources.osm]\nquery_timeout_s = {value}\n", encoding="utf-8"
+        )
+        with pytest.raises(ValidationError, match="query_timeout_s"):
+            load_settings(cwd=tmp_path)
+
+
 def test_paper_type_weight_must_lie_between_zero_and_one(tmp_path: Path) -> None:
     (tmp_path / "settings.toml").write_text(
         '[[weights.paper_type]]\nname = "x"\nlabel = "x"\n'

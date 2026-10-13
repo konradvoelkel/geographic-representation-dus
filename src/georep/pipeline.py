@@ -459,6 +459,7 @@ def build_steps(
             found,
             settings.geo.working_crs,
             tolerance_m=settings.sources.osm.simplify_m,
+            query_timeout_s=settings.sources.osm.query_timeout_s,
             delay_s=settings.sources.osm.delay_s,
             sleep=sleep,
         )

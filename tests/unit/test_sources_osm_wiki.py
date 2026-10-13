@@ -70,6 +70,34 @@ def test_overpass_query_carries_the_osmnx_filter_and_recorded_query_matches() ->
     assert OSM_FILTER in recorded
 
 
+def test_the_query_timeout_is_a_setting_and_reaches_every_post_body(
+    precincts: list[Precinct], settings: Settings
+) -> None:
+    """Punkt 54: ``[timeout:…]`` kommt aus ``sources.osm.query_timeout_s``, nicht aus dem Code.
+
+    Die aufgezeichneten Abfragen tragen 60 beziehungsweise 90 (`tests/fixtures/http/README.md`);
+    der Schlüssel der Fake-Session ist die URL, nicht der Abfragetext, darum bleiben sie gültig.
+    """
+    assert settings.sources.osm.query_timeout_s == 25
+    assert overpass_query("51.1 6.7").startswith("[out:json][timeout:25];")
+    assert overpass_query("51.1 6.7", timeout_s=30).startswith("[out:json][timeout:30];")
+
+    endpoint = settings.sources.osm.overpass_endpoint
+    data = json.loads((HTTP / "overpass_1302.json").read_text(encoding="utf-8"))
+    session = FakeSession({endpoint: response(endpoint, payload=data)})
+    first = next(p for p in precincts if p.precinct_id == "1302")
+    fetch_streets_per_precinct(
+        session,
+        endpoint,
+        [first],
+        settings.geo.working_crs,
+        query_timeout_s=30,
+        delay_s=0,
+        sleep=lambda _: None,
+    )
+    assert session.calls[0][1]["data"].startswith("[out:json][timeout:30];")
+
+
 def test_fetch_streets_per_precinct_writes_the_legacy_shape(
     precincts: list[Precinct], settings: Settings, reference_root: Path
 ) -> None:

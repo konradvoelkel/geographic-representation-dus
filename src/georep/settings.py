@@ -187,6 +187,9 @@ class OsmSource(_Strict):
     overpass_endpoint: str
     delay_s: float = 1.0
     simplify_m: float = 2.0
+    # Punkt 54: das ``[timeout:…]`` der Abfrage selbst, nicht der Netz-Timeout (``http.timeout_s``).
+    # Unter 5 s rechnet keine Instanz die Polygonabfrage durch, über 180 s weist jede sie ab.
+    query_timeout_s: int = Field(default=25, ge=5, le=180)
 
 
 class Sources(_Strict):

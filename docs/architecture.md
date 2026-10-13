@@ -175,7 +175,10 @@ erreichbar, Fehlerstatus nach allen Wiederholungen), gesichert durch `deal.raise
   Organisations-URLs auf Parteien ab; ohne die Datei greifen nur die URL-Endungen aus den Settings.
 - Overpass: je Stimmbezirk der Außenring des größten Polygons, um 2 m vereinfacht, als `(poly:"…")`; der
   Filter bildet `network_type="all"` von osmnx nach, mit dem die Daten der Arbeit entstanden. Treue gegen
-  die Referenz: `tests/fixtures/http/README.md`.
+  die Referenz: `tests/fixtures/http/README.md`. Das Rechenbudget im Kopf der Abfrage (`[timeout:N]`)
+  steht als `sources.osm.query_timeout_s` in den Settings und ist 25 s: mit 90 s wiesen am 2026-10-13
+  alle vier öffentlichen Instanzen dieselbe Abfrage unter Last mit `504` ab, mit 25 s antwortete sie in
+  2 s (Punkt 54). Es ist nicht der Netz-Timeout, der bleibt bei 180 s.
 - Wikidata: ein SPARQL für alle Objekte mit Koordinate in der Verwaltungseinheit (P131*) und Artikel in der
   Sprache; Wikipedia-GeoSearch je Stimmbezirks-Bounding-Box, ein Treffer zählt nur für den Bezirk, dessen
   Box abgefragt wurde und der den Punkt enthält (Verhalten der Arbeit).

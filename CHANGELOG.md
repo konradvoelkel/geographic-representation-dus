@@ -4,6 +4,15 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Der Abfrage-Timeout von Overpass ist ein Setting und steht auf 25 s**
+  (`sources.osm.query_timeout_s`, `docs/decisions.md`, Punkt 54): `[timeout:90]` stand fest im Code,
+  und mit dieser Zahl weisen alle vier öffentlichen Instanzen dieselbe Stimmbezirksabfrage unter Last
+  nach wenigen Sekunden mit `504` ab, während sie mit 25 s in 2 s antwortet (gemessen 2026-10-13). Der
+  Netz-Timeout bleibt bei 180 s. Zwei Folgen für einen laufenden Datenstand: der POST-Body ist der
+  Cache-Schlüssel, die mit 90 s geholten Antworten werden also einmal neu geholt, und ein neuer
+  Schlüssel in `sources` macht jeden Stamp ungültig — `georep status` sagt einmal für jeden
+  gerechneten Schritt „offen: Settings geändert".
+
 - **Vier Vorbedingungen sind strenger** (`docs/decisions.md`, Punkt 53): `report.terms.terms_payload`,
   `report.geometry.fit`, `report.model.body_figures` und `report.charts.bars` sagen jetzt, was sie von
   ihrer Eingabe annehmen, statt es in der Nachbedingung festzustellen. Für einen Lauf ändert sich

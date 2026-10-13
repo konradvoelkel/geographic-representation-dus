@@ -23,10 +23,19 @@ OSM_FILTER = (
     '["highway"!~"abandoned|construction|planned|platform|proposed|raceway|razed"]'
     '["service"!~"private"]'
 )
+# Der Standard steht in ``defaults.toml`` unter ``sources.osm.query_timeout_s`` samt Messung; hier
+# liegt er, damit die Funktion allein aufrufbar bleibt (Tests, ``deal.cases``, crosshair).
+DEFAULT_QUERY_TIMEOUT_S = 25
 
 
 @deal.pure
-def overpass_query(polygon_latlon: str, *, timeout_s: int = 90) -> str:
+def overpass_query(polygon_latlon: str, *, timeout_s: int = DEFAULT_QUERY_TIMEOUT_S) -> str:
+    """Die Abfrage eines Stimmbezirks; ``timeout_s`` ist das ``[timeout:…]`` des Servers.
+
+    Die Zahl ist kein Netz-Timeout des Clients (der steht in ``http.timeout_s``), sondern das
+    Rechenbudget, das Overpass der Abfrage selbst gibt -- und zugleich Teil des POST-Bodys und
+    damit des Cache-Schlüssels (docs/decisions.md, Punkte 9 und 54).
+    """
     return f'[out:json][timeout:{timeout_s}];way{OSM_FILTER}(poly:"{polygon_latlon}");out tags;'
 
 
@@ -51,9 +60,17 @@ def street_names(data: dict[str, Any]) -> list[str]:
 
 
 @deal.raises(FetchError, NetworkError)
-def fetch_street_names(http: Transport, endpoint: str, polygon_latlon: str) -> list[str]:
+def fetch_street_names(
+    http: Transport,
+    endpoint: str,
+    polygon_latlon: str,
+    *,
+    timeout_s: int = DEFAULT_QUERY_TIMEOUT_S,
+) -> list[str]:
     with network_errors(endpoint):
-        response = http.post(endpoint, data={"data": overpass_query(polygon_latlon)})
+        response = http.post(
+            endpoint, data={"data": overpass_query(polygon_latlon, timeout_s=timeout_s)}
+        )
         response.raise_for_status()
     try:
         data = response.json()
@@ -72,6 +89,7 @@ def fetch_streets_per_precinct(
     working_crs: str,
     *,
     tolerance_m: float = 2.0,
+    query_timeout_s: int = DEFAULT_QUERY_TIMEOUT_S,
     delay_s: float = 1.0,
     sleep: Callable[[float], None] = time.sleep,
 ) -> list[dict[str, Any]]:
@@ -79,7 +97,7 @@ def fetch_streets_per_precinct(
     entries: list[dict[str, Any]] = []
     for precinct in precincts:
         polygon = overpass_polygon(precinct.geometry, working_crs, tolerance_m=tolerance_m)
-        names = fetch_street_names(http, endpoint, polygon)
+        names = fetch_street_names(http, endpoint, polygon, timeout_s=query_timeout_s)
         entries.append(
             {
                 "stimmbezirks_id": precinct.precinct_id,

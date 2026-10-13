@@ -318,6 +318,16 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   Benutzung: der Lauf im Worktree auf dem Tag `v0.12.0` liest und schreibt sie noch. Der Handgriff dafür steht
   unten unter „Nächster Schritt"; `data/site/` ist seit dem 2026-10-13 die Kopie aus `georep publish` und
   gehört damit ohnehin wieder dem neuen Stand.
+- **Overpass unter Last weist `[timeout:90]` ab, `[timeout:25]` nicht** (gemessen am 2026-10-13 am
+  Mönchengladbach-Lauf): dieselbe Stimmbezirksabfrage bekam von allen vier öffentlichen Instanzen
+  (overpass-api.de, lz4, z, maps.mail.ru) nach wenigen Sekunden `504 Gateway Timeout`, mit 25 s
+  Budget antwortete sie in 2 s mit 124 Elementen; die Trivialabfrage lief überall. Der Server
+  schätzt die Kosten vorab gegen sein Slot-Budget, ein großes `[timeout:N]` ist darum der Grund der
+  Ablehnung, nicht die Absicherung. Die Zahl steht seit dem 2026-10-13 als
+  `sources.osm.query_timeout_s` in den Settings (`docs/decisions.md`, Punkt 54). Zwei Folgen: die
+  vor dem Wechsel mit 90 s gecachten Antworten liegen unter ihrem alten POST-Body und werden nicht
+  mehr getroffen (Punkt 9), und ein neuer Schlüssel in `sources` macht jeden Stamp ungültig —
+  `georep status` sagt für jeden gerechneten Schritt einmal „offen: Settings geändert".
 - Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
 - Regel 1 sieht nur Namen: zwei der 113 entfernten Einrichtungen haben einen Kurznamen, der als eigenes
   Wikipedia-Lemma im Wörterbuch bleibt („tonhalle" 72 Dokumente, „nrw-forum" 11). Beide stehen damit in der
