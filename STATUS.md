@@ -253,6 +253,12 @@ Datensatz, kein Lauf).
 
 ## Bekannt
 
+Hier stehen **Fakten** über das System, die Daten und die Werkzeuge, je mit Datum. Die
+**Arbeitsregeln**, die sich daraus ergeben — wie man testet, was ein Join tut, wo eine
+Schema-Version hingehört, wie eine Zahl in einem Test gerundet wird —, stehen seit dem 2026-10-13
+in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen werden
+(`docs/absicherung-2026-10.md`, § 4). Verloren ist nichts, nur umgezogen.
+
 - deal 4.24.6: `deal.raises` vergleicht exakte Typen, keine Unterklassen; `deal.has()`/`deal.pure` sind nicht reentrant (Patch bleibt nach Rekursion stehen). Beides umschifft (NetworkError, `deal.safe` für `deep_merge`), nicht upstream gemeldet.
 - `nox -s verify` (crosshair) läuft wieder durch und ist grün (Exit 0, 16 Ziele „Not confirmed", 6 Minuten
   am 2026-10-12). Davor brach die Sitzung mit `re.PatternError` ab, bevor sie berichtete: `parse_reference`
@@ -264,8 +270,7 @@ Datensatz, kein Lauf).
   wenn die eingesetzte Langform mit dem nächsten Zeichen eine neue bildete (ersetzt jetzt bis zum
   Festpunkt), und `nice_ticks` warf einen `OverflowError` bei zwei endlichen Grenzen mit unendlicher
   Differenz (Vorbedingung verlangt eine endliche Spanne).
-- Überlebende Mutanten liegen in Vertrags-Lambdas (Grenzen von r und p); kein Test verletzt sie genau an der Grenze. Bewusst nicht nachgezogen (`docs/mutation-2026-10-12.md`).
-- `nox -s mutate` lässt `analysis/topics.py` aus: jeder Mutant dort lässt die schnelle Suite laufen, und die rechnet seit dem Themenmodell mehrfach NMF (Lauf am 2026-10-12 nach 35 Minuten abgebrochen, gezielt je Modul vier Minuten). Die schnelle Suite selbst ist dadurch rund 5 s langsamer; hingenommen.
+- `nox -s mutate` lässt `analysis/topics.py` aus: jeder Mutant dort lässt die schnelle Suite laufen, und die rechnet seit dem Themenmodell mehrfach NMF (Lauf am 2026-10-12 nach 35 Minuten abgebrochen). Die schnelle Suite selbst ist dadurch rund 5 s langsamer; hingenommen.
 - Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.
 - Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`,
   also im **flachen** Ordner der alten Hauptperiode. Das Hauptprofil rechnet seit dem Umzug (Punkt 52) unter
@@ -287,23 +292,9 @@ Datensatz, kein Lauf).
   Dokumente steigt, ist der Matcher: der längste Begriff gewinnt, und der längere fehlt jetzt.
 - Die Abkürzungsregel der Arbeit ersetzt „straße" überall im Begriff, nicht nur am Wortende; aus
   „Straßenbahn Düsseldorf" entstand der Begriff „str.nbahn düsseldorf" (trifft nichts, 2026-10-12 bemerkt).
-- Das Themenmodell ist je Rechner und je Thread-Zahl reproduzierbar, nicht darüber hinaus: zwischen 13 und 2 BLAS-Threads unterscheiden sich `themen.parquet` und `themen_anteile.parquet` in den letzten Stellen (gemessen 2026-10-12), Labels und Kennzahlen bleiben gleich. Die Golden-Master-Tests prüfen darum Invarianten, nicht Zahlen.
+- Das Themenmodell ist je Rechner und je Thread-Zahl reproduzierbar, nicht darüber hinaus: zwischen 13 und 2 BLAS-Threads unterscheiden sich `themen.parquet` und `themen_anteile.parquet` in den letzten Stellen (gemessen 2026-10-12), Labels und Kennzahlen bleiben gleich.
 - Die Nummern der Themen gelten nur für diesen Datenstand; ein Lauf über andere Dokumente vergibt sie neu. Seit Punkt 45 trägt ein gesätes Thema zusätzlich das Kürzel seines Ausschusses, und das ist stabil. Der Stadtname steht bewusst nicht in der Stoppwortliste; er prägt jetzt eines der drei freien Themen.
 - Sechs Personennamen überleben den Namensfilter des Themenmodells („hans", „christian", „stephan", „cardeneo", „kühbacher", „tobias"): sie stehen in ihren Ausschussdokumenten oft, aber nie neben einer Amtsbezeichnung (`docs/themenmodell-2026-10.md`, § 2.2). Eine Mandatsträgerliste aus OParl `memberships` würde das schließen und ist nicht abgerufen.
-- Ein Join legt die Zeilenfolge nicht fest, auch ein linker nicht: wer eine Spalte daraus positionell
-  gegen einen anderen Frame verwendet, hat einen stillen Versagensmodus (Review vom 2026-10-13 fand das
-  im Klassifikator; dieselbe Lehre stand schon in `crosswalk.py` und `prep/context.py`). Nach dem Join
-  sortieren und alles aus demselben Frame lesen.
-- Ein Schritt, dessen `Step` keine Schema-Version bekommt, bleibt bei 1, und `stamp_mismatch` meldet
-  „Schema geändert" nie — die Version in den Parquet-Metadaten allein genügt nicht
-  (`tests/unit/test_pipeline_steps.py` hält beides zusammen, seit 2026-10-13).
-- Ein Test darf die Jahreszahl einer anderen Periode nicht im ganzen HTML suchen: ein `data-value`
-  wie „0.040124486620252926" enthält „2025" zufällig. Seit 2026-10-13 sucht er zwischen den Tags.
-  Dieselbe Falle ein zweites Mal, am selben Tag: der Literaturabschnitt (Punkt 47) zitiert fremde
-  Veröffentlichungen und nennt darum Jahre und Monate, die nichts mit der Periode oder den Daten
-  dieser Seite zu tun haben — zwei Tests wurden rot („Dezember" aus einem Eintrag zu Open.NRW, 2025
-  aus zwei Aufsätzen). `without_literature(page)` in `tests/conftest.py` schneidet den Abschnitt
-  heraus; wer ein Wort im ganzen HTML sucht, nimmt sie.
 - Schnittstücke aus der Fließkomma-Arithmetik sind keine Gewichte mehr (`docs/decisions.md`,
   Punkt 51, 2026-10-13): `crosswalk.area_shares` nahm jedes Stück mit `area > 0.0`, und zwei
   Flächen mit gemeinsamer Grenze schneiden sich in etwa 4,44e-16 statt in 0 — ob dieses Nichts
@@ -318,18 +309,6 @@ Datensatz, kein Lauf).
   Abschnitte außer „Downloads" byteidentisch, `wahlbezirke_auswertung.parquet` byteidentisch,
   Treffer 29 010, Wörterbuch 5727). Der neue Schlüssel ändert den globalen Fingerprint, also
   liefen alle Offline-Schritte einmal neu (23 s).
-- Ein Test, der ein Element über sein Markup sucht, darf das schließende `>` nicht mitnehmen:
-  `<table id="districts">` fand nichts mehr, als die Tabelle `class="preview"` bekam (sechs Tests
-  und ein Snapshot wurden am 2026-10-13 rot). Seitdem steht in den Tests `<table id="districts"`
-  ohne Klammer. Dieselbe Lehre für die Konvention der Abschnitte: eine Vorlage, die an einem
-  Modellteil hängt, muss mit `{% if model.… %}` **beginnen** (`tests/unit/test_report_render.py`
-  liest das aus der Datei); ein `{% from "macros.html.j2" import … %}` davor machte „monate" und
-  „perioden" für den Test zu Pflichtabschnitten. Der Import steht darum dahinter.
-- Eine CSS-Klasse, die ein Umschalter tauscht, muss auf jeder Fläche dasselbe bedeuten: die Parteizellen
-  trugen `p<n>` aus dem Abschnitts-CSS, der Umschalter schrieb `q<n>`, und `.q0` bis `.q4` setzen nur `fill`
-  — nach einem Klick auf „Anteil" war die Tönung weg (gefunden am 2026-10-13 mit headless Chrome, nicht von
-  einem Test). Seitdem gilt `q<n>` auf einer SVG-Fläche als `fill` und in einer Tabellenzelle als Tönung
-  desselben Rangs, beides im Rahmen definiert.
 - **Behoben am 2026-10-13** (Punkt 53): der Schritt `report` trägt einen eigenen Zusatz im Stamp, einen
   Hash über die Vorlagendateien des Pakets samt ihrem CSS und JavaScript, über `literatur.toml` und über
   `settings.report`. Davor machte weder ein Vorlagenwechsel noch eine geänderte Klassengrenze unter
@@ -349,8 +328,6 @@ Datensatz, kein Lauf).
 - Die votemanager-CSVs der ITK Rheinland tragen keine Lizenzangabe; die Seite nennt Quelle und Herausgeber und schreibt „Lizenz laut Anbieter nicht angegeben" (Frage 1.4).
 - Mönchengladbachs Drucksachennummern tragen kein Kürzel des Gremiums (`0682/XI`, Stichprobe vom 2026-10-12, Body 0011). Das Profil lässt `bodies.reference_pattern` darum leer; der Abschnitt „Gremien" zeigt für diese Stadt 100 % „unbekannt". Woher das Gremium käme (OParl-Feld `organization` der Vorlage oder die Sitzungszuordnung), misst der volle Lauf nach (`docs/plans/01-staedte.md`, § 8, Frage 1.12).
 - Der Stadtbezirk Mönchengladbachs steckt im ersten Zeichen der Stimmbezirksnummer (`10401`: Stadtbezirk 1, Wahlbezirk 04, Stimmbezirk 01); das Profil liest ihn mit `columns.results.city_district_from_precinct`. Bestätigt ist die Regel bisher nur an der Fixture (Wahlbezirke 04, 09, 23) und an der Zahl der Stadtbezirke (vier); der volle Lauf prüft sie gegen die Wahlbezirks-CSV (`docs/plans/01-staedte.md`, § 8, Frage 1.13).
-- Ein Test darf nicht von der Reihenfolge abhängen: `test_a_city_that_lost_its_run_leaves_the_published_folder` war nur grün, wenn ein Test mit Standardziel vorher den Marker `.georep-publish` in die Quellseite geschrieben hatte; allein gestartet deckte er am 2026-10-12 auf, dass `publish` den Marker beim Kopieren der ersten Stadt löschte (behoben in 3f81995). Einen neuen Test einmal allein starten.
-- Die Merges liefen über Rebase je Branch; an rund zwölf Stellen endeten beide Konfliktseiten mitten in einer Funktion oder einem `{% if %}`, und ein Auto-Merge legte `Area` und `read_areas` doppelt an. mypy, ruff und die Zähl-Tests fingen alles; nach einem Rebase `def`-Zahlen je Datei vergleichen.
 
 ## Nächster Schritt
 
