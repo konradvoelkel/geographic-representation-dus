@@ -8,10 +8,10 @@
 #
 # Regeln für einen Eintrag (das Modell LiteratureEntry in georep.settings prüft sie):
 #   * key      Kleinbuchstaben, Ziffern, Bindestriche; wird zur Anker-ID lit-<key> auf der Seite
-#   * url      https, mit accessed (Abrufdatum, an dem der Link erreichbar war); oder doi
+#   * url      https, mit accessed (Abrufdatum, an dem der Link erreichbar war, 1990 bis 2100); oder doi
 #   * title    wörtlich wie auf der Titelseite oder in der Repositoriumsbeschreibung; nicht umformulieren,
 #              auch nicht gekürzt oder übersetzt (Review 2026-10-13: dreimal passiert)
-#   * note     ein bis zwei Sätze: was die Arbeit beiträgt und wie dieses Vorhaben sich dazu verhält;
+#   * note     Pflicht, ein bis zwei Sätze: was die Arbeit beiträgt und wie dieses Vorhaben sich dazu verhält;
 #              jede Jahres- oder Datumsangabe darin muss aus einer der genannten Quellen stammen
 #   * pending  true, solange Angaben nachzutragen sind; die Seite schreibt es sichtbar dazu
 # Kein Stadtwort in dieser Datei (tests/unit/test_report_literature.py prüft das).

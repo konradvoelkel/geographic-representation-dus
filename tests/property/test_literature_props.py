@@ -47,7 +47,7 @@ def entries(draw: st.DrawFn, key: str) -> LiteratureEntry:
         url=f"https://beispiel.invalid/{path}" if kind in ("url", "both") else "",
         doi=f"10.1234/{suffix}" if kind in ("doi", "both") else "",
         accessed=dt.date(2026, 10, 13) if kind in ("url", "both") else None,
-        note=draw(words),
+        note=draw(words.filter(bool)),  # Pflichtfeld, und leer waere auch inhaltlich falsch
         pending=draw(st.booleans()),
     )
 

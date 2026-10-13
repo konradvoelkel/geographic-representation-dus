@@ -1040,7 +1040,10 @@ class LiteratureEntry(_Strict):
     url: str = ""
     doi: str = ""
     accessed: date | None = None  # Abrufdatum; bei einer URL Pflicht, bei einem DOI nicht
-    note: str = ""
+    # Ein oder zwei Sätze, was die Arbeit beiträgt und wie dieses Vorhaben sich dazu verhält.
+    # Pflicht: ohne sie wäre die Übersicht eine Linksammlung, und der Vergleich mit dem README
+    # (tests/unit/test_report_literature.py) wäre für einen leeren Wert tautologisch.
+    note: str
     pending: bool = False  # Angaben nachzutragen; die Seite schreibt es dazu
 
     @field_validator("key")
@@ -1055,6 +1058,29 @@ class LiteratureEntry(_Strict):
     def _not_blank(cls, value: str) -> str:
         if not value.strip():
             raise ValueError("literature: Autor und Ort oder Institution sind Pflicht")
+        return value
+
+    @field_validator("note")
+    @classmethod
+    def _says_what_it_contributes(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("literature.note: ein Satz zum Beitrag gehört zu jedem Eintrag")
+        return value
+
+    @field_validator("accessed")
+    @classmethod
+    def _plausible_date(cls, value: date | None) -> date | None:
+        """Ein festes Fenster, kein Vergleich mit heute.
+
+        Die untere Grenze ist das Jahr, in dem das Web öffentlich wurde: ein Abrufdatum davor ist
+        ein Tippfehler, keine Angabe. „Nicht nach heute" wäre oben genauer, holte aber die Uhr in
+        die Validierung der Settings, und Zeit ist in diesem Programm eine Eingabe, kein
+        Seiteneffekt (docs/decisions.md, Punkt 10): dieselbe Datei wäre morgen gültig und gestern
+        nicht, und ein Testlauf hinge am Kalender. Das Fenster fängt, was es fangen soll -- 1969
+        oder 2126 (Review 2026-10-13).
+        """
+        if value is not None and not 1990 <= value.year <= 2100:
+            raise ValueError(f"literature.accessed {value}: ein Abrufdatum zwischen 1990 und 2100")
         return value
 
     @field_validator("year")

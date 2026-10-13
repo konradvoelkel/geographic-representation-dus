@@ -39,6 +39,7 @@ GOOD: dict[str, object] = {
     "title": "Ein Titel",
     "year": 2020,
     "venue": "Irgendeine Hochschule",
+    "note": "Was der Eintrag beiträgt.",
 }
 
 
@@ -61,7 +62,8 @@ def test_the_package_file_holds_citable_entries() -> None:
     for entry in found:
         assert entry.url or entry.doi
         assert not entry.url or entry.accessed is not None
-        assert entry.note, f"{entry.key}: ohne Satz zum Beitrag ist der Eintrag eine Linksammlung"
+        assert entry.note.strip(), f"{entry.key}: ohne Satz zum Beitrag wäre es eine Linksammlung"
+        assert entry.accessed is None or 1990 <= entry.accessed.year <= 2100
 
 
 def test_no_city_word_in_the_package_file() -> None:
@@ -109,9 +111,9 @@ def test_a_broken_package_file_is_a_schema_error(tmp_path: Path) -> None:
 def test_the_same_key_twice_in_the_package_file_breaks_the_contract(tmp_path: Path) -> None:
     (tmp_path / FILE).write_text(
         '[[literature]]\nkey = "a"\nauthors = "A"\ntitle = "T"\nyear = 2020\n'
-        'venue = "V"\ndoi = "10.1234/a"\n\n'
+        'venue = "V"\ndoi = "10.1234/a"\nnote = "Trägt bei."\n\n'
         '[[literature]]\nkey = "a"\nauthors = "B"\ntitle = "U"\nyear = 2021\n'
-        'venue = "W"\ndoi = "10.1234/b"\n',
+        'venue = "W"\ndoi = "10.1234/b"\nnote = "Trägt auch bei."\n',
         encoding="utf-8",
     )
     with pytest.raises(deal.PostContractError):
@@ -133,6 +135,9 @@ def test_the_same_key_twice_in_the_package_file_breaks_the_contract(tmp_path: Pa
         ({"doi": "10.1234/a", "year": 1800}, "Jahreszahl"),
         ({"doi": "10.1234/a", "key": "Gross"}, "Kleinbuchstaben"),
         ({"doi": "10.1234/a", "authors": "  "}, "Pflicht"),
+        ({"doi": "10.1234/a", "note": "   "}, "ein Satz zum Beitrag"),
+        ({"url": "https://a.invalid/", "accessed": "1969-07-20"}, "Abrufdatum"),
+        ({"url": "https://a.invalid/", "accessed": "2101-01-01"}, "Abrufdatum"),
     ],
 )
 def test_an_entry_that_cannot_be_checked_is_refused(
@@ -256,6 +261,7 @@ def test_the_readme_list_is_the_same_list_in_the_same_order(default_settings: Se
         assert entry.venue in bullet, entry.key
         if entry.year is not None:
             assert str(entry.year) in bullet, entry.key
+        assert entry.note.strip(), entry.key  # sonst wäre der Vergleich unten tautologisch
         assert " ".join(entry.note.split()) in bullet, entry.key
         for link in entry.links:
             assert link in bullet, entry.key

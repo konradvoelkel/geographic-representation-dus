@@ -966,9 +966,13 @@ und Grenzen" weiter das Original-Repository, führt die Arbeit aber nicht in ihr
 Ursprung des Programms, nicht der Untersuchung dieser Stadt.
 
 **Ein Eintrag muss nachprüfbar sein.** `LiteratureEntry` (in `georep.settings`, neben `ReportSource`) verlangt
-Autor, Titel wörtlich wie in der Quelle, Ort oder Institution, ein Jahr zwischen 1900 und 2100 und entweder eine `https`-URL mit
-Abrufdatum oder einen DOI der Form `10.xxxx/…`; der Schlüssel ist die Anker-ID `lit-<key>` und darf nur
-einmal vorkommen, auch nicht einmal im Profil und einmal im Paket. Alle Links waren am 2026-10-13 erreichbar
+Autor, Titel wörtlich wie in der Quelle, Ort oder Institution, ein Jahr zwischen 1900 und 2100, einen Satz
+zum Beitrag und entweder eine `https`-URL mit Abrufdatum oder einen DOI der Form `10.xxxx/…`; der Schlüssel
+ist die Anker-ID `lit-<key>` und darf nur einmal vorkommen, auch nicht einmal im Profil und einmal im Paket.
+Das Abrufdatum liegt zwischen 1990 (das Jahr, in dem das Web öffentlich wurde) und 2100 — ein festes Fenster
+statt „nicht nach heute", denn eine Uhr in der Validierung der Settings machte dieselbe Datei morgen gültig
+und gestern nicht (Punkt 10: Zeit ist eine Eingabe). Der Satz zum Beitrag ist Pflicht, weil die Übersicht
+sonst eine Linksammlung wäre und der Vergleich mit dem README für einen leeren Wert tautologisch. Alle Links waren am 2026-10-13 erreichbar
 (Statuscode geprüft), alle DOI über Crossref aufgelöst. **Die eine Ausnahme ist `pending = true`:** ein
 Eintrag, der aus dem Literaturverzeichnis einer nicht öffentlichen Arbeit nachzutragen ist, darf Jahr und Link
 vermissen, und die Seite schreibt „Angaben nachzutragen" sichtbar daneben, statt eine Zitation zu behaupten.
