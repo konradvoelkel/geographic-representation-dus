@@ -17,7 +17,9 @@ Zwei Regeln gelten hier für die ganze Seite:
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
+from dataclasses import dataclass
 
 import deal
 import polars as pl
@@ -140,6 +142,73 @@ def district_metrics(results: pl.DataFrame, dictionary: pl.DataFrame) -> pl.Data
         .with_columns(deviation_from(RATE, CITY_MEAN).alias(DEVIATION))
         .select(*METRIC_COLUMNS)
         .sort(DISTRICT)
+    )
+
+
+@dataclass(frozen=True)
+class DictionaryBias:
+    """Wie stark die Größe des Wörterbuchs die Trefferzahl treibt (Punkt 46).
+
+    Die Zahlen des Methodenabsatzes der Seite. Sie stehen nicht im Text, weil eine zweite Stadt
+    andere hat: ``r`` ist Pearson über die Wahlbezirke.
+    """
+
+    districts: int
+    hits_terms: float  # Treffer gegen Zahl der Begriffe -- die Verzerrung
+    hits_eligible: float  # Treffer gegen Wahlberechtigte -- die Normierung der Arbeit
+    per_term_terms: float  # Treffer je Begriff gegen Zahl der Begriffe -- die Überkorrektur
+    terms_min: int
+    terms_max: int
+    eligible_spread: float  # größte durch kleinste Wahlberechtigtenzahl
+
+
+def _pearson(frame: pl.DataFrame, left: str, right: str) -> float | None:
+    """Pearson zweier Spalten; ``None``, wenn eine keine Streuung hat (wie ``regression.spearman``)."""
+    from scipy.stats import pearsonr
+
+    if frame.height < 3:
+        return None
+    if frame.get_column(left).n_unique() < 2 or frame.get_column(right).n_unique() < 2:
+        return None
+    found = float(
+        pearsonr(frame.get_column(left).to_numpy(), frame.get_column(right).to_numpy()).statistic
+    )
+    return None if math.isnan(found) else found
+
+
+@deal.pre(
+    lambda metrics, results, eligible_column=ELIGIBLE_TOTAL: (
+        has_columns(metrics, DISTRICT, HITS, TERM_COUNT, PER_TERM)
+        and has_columns(results, DISTRICT, eligible_column)
+    )
+)
+def dictionary_bias(
+    metrics: pl.DataFrame, results: pl.DataFrame, eligible_column: str = ELIGIBLE_TOTAL
+) -> DictionaryBias | None:
+    """Die drei Korrelationen des Methodenabsatzes; ``None``, wenn eine Spalte keine Streuung hat.
+
+    Ohne Streuung gibt es keine Korrelation, und ein Absatz, der „r = nan" sagt, ist schlechter
+    als keiner: die Seite lässt ihn dann weg (eine Mini-Fixture oder eine Stichprobe hat den Fall).
+    """
+    frame = metrics.join(results.select(DISTRICT, eligible_column), on=DISTRICT, how="inner")
+    pairs = (
+        _pearson(frame, HITS, TERM_COUNT),
+        _pearson(frame, HITS, eligible_column),
+        _pearson(frame, PER_TERM, TERM_COUNT),
+    )
+    if any(value is None for value in pairs):
+        return None
+    terms = [int(value) for value in frame.get_column(TERM_COUNT).to_list()]
+    eligible = [int(value) for value in frame.get_column(eligible_column).to_list()]
+    hits_terms, hits_eligible, per_term_terms = (value for value in pairs if value is not None)
+    return DictionaryBias(
+        districts=frame.height,
+        hits_terms=hits_terms,
+        hits_eligible=hits_eligible,
+        per_term_terms=per_term_terms,
+        terms_min=min(terms),
+        terms_max=max(terms),
+        eligible_spread=max(eligible) / min(eligible) if min(eligible) > 0 else 0.0,
     )
 
 

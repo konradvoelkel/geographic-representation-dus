@@ -12,6 +12,7 @@ import pytest
 from georep.analysis.hits import DISTRICT, RATE
 from georep.analysis.scaling import CITY_MEAN, DEVIATION, PER_1000, PER_TERM, TERM_COUNT
 from georep.errors import SchemaError
+from georep.layout import Layout
 from georep.prep.voters import ELIGIBLE_TOTAL
 from georep.report.model import DistrictMetrics, ReportModel, with_metrics
 from georep.report.render import Visuals, render_report

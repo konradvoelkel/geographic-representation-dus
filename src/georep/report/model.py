@@ -627,6 +627,8 @@ class ReportModel:
     # Punkt 46: dieselbe Regression mit x = Treffer je Begriff im Wörterbuch; None ohne den
     # Schritt ``metrics``. Tabelle 5 (``regression``) bleibt unberührt.
     per_term_regression: RegressionPair | None = None
+    # Punkt 46: die gemessene Verzerrung für „Methode und Grenzen"; None ohne Streuung
+    bias: scaling.DictionaryBias | None = None
     # Option 07
     timeline: tuple[MonthRow, ...] = ()
     monitoring_url: str = ""  # relativer Link auf die Seite der laufenden Periode; leer = keiner
@@ -1669,6 +1671,11 @@ def build_report_model(
         body_regression=_body_regression(district_bodies, results, settings),
         # Punkt 46: die zweite Kennzahl des Methodik-Reviews mit eigener Regression (§ 2.6)
         per_term_regression=_per_term_regression(layout, results, settings),
+        bias=(
+            scaling.dictionary_bias(pl.read_parquet(layout.district_metrics), results)
+            if layout.district_metrics.exists()
+            else None
+        ),
         # Option 06: ohne die lange Tabelle gibt es den Abschnitt nicht
         # Option 07: die Sensitivitätstabelle ist Tabelle 5 je Gewichtungsvariante; ohne
         # Wahlbeteiligung zur Periode gibt es sie nicht, so wie es das Streudiagramm nicht gibt.
