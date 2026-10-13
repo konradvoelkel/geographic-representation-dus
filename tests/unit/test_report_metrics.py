@@ -12,6 +12,7 @@ import pytest
 from georep.analysis.hits import DISTRICT, RATE
 from georep.analysis.scaling import CITY_MEAN, DEVIATION, PER_1000, PER_TERM, TERM_COUNT
 from georep.errors import SchemaError
+from georep.prep.voters import ELIGIBLE_TOTAL
 from georep.report.model import DistrictMetrics, ReportModel, with_metrics
 from georep.report.render import Visuals, render_report
 from georep.search.index import HITS
@@ -130,3 +131,39 @@ def test_without_the_metrics_step_the_second_regression_is_absent(
     block = page.split('<section id="zusammenhang">', 1)[1].split("</section>", 1)[0]
     assert "Tabelle 5 der Arbeit" in block and block.count("<table") == 1
     assert "je Begriff im Wörterbuch" not in block
+
+
+# --- Review-Befund 4: der Absatz in „Methode und Grenzen" rechnet, statt Zahlen zu behaupten ------
+
+
+def test_the_bias_is_measured_not_written(mini_model: ReportModel, mini_run: Layout) -> None:
+    bias = mini_model.bias
+    assert bias is not None
+    metrics = pl.read_parquet(mini_run.district_metrics)
+    results = pl.read_parquet(mini_run.results)
+    assert bias.districts == metrics.height
+    assert bias.terms_min == int(metrics.get_column(TERM_COUNT).min())  # type: ignore[arg-type]
+    assert bias.terms_max == int(metrics.get_column(TERM_COUNT).max())  # type: ignore[arg-type]
+    for value in (bias.hits_terms, bias.hits_eligible, bias.per_term_terms):
+        assert -1.0 <= value <= 1.0
+    # Gegen scipy nachgerechnet, mit den Spalten, die auch die Seite nennt
+    from scipy.stats import pearsonr
+
+    joined = metrics.join(results.select(DISTRICT, ELIGIBLE_TOTAL), on=DISTRICT, how="inner")
+    assert bias.hits_terms == pytest.approx(
+        pearsonr(joined.get_column(HITS).to_list(), joined.get_column(TERM_COUNT).to_list())[0]
+    )
+
+
+def test_the_method_section_explains_the_dictionary_size(mini_page: str) -> None:
+    block = mini_page.split('<section id="methode">', 1)[1].split("</section>", 1)[0]
+    assert "Zur Größe des Wörterbuchs" in block
+    assert "Treffer je Begriff" in block
+    assert "Gegenproben" in block  # keine der beiden Kennzahlen ist die richtige
+
+
+def test_without_the_metrics_step_the_method_keeps_quiet(
+    mini_model: ReportModel, mini_visuals: Visuals
+) -> None:
+    page = render_report(replace(mini_model, bias=None), mini_visuals)
+    assert "Zur Größe des Wörterbuchs" not in page
