@@ -181,7 +181,7 @@ Abschnitte soll bleiben, `docs/plans/00-synergien.md`, § 5.1).
 
 ## 5. Die übrigen Posten, gemessen
 
-Die Prozente beziehen sich auf die Seite nach den Änderungen (885 879 Byte); das Dokument hat sie
+Die Prozente beziehen sich auf die Seite nach den Änderungen (886 328 Byte); das Dokument hat sie
 nach dem Review vom 2026-10-13 nachgezogen, vorher standen dort die Anteile an der alten Seite.
 
 | Posten | gemessen | Entscheidung |
@@ -207,7 +207,7 @@ dieselbe Referenz, mit demselben Skript:
 
 | Posten | vorher | nachher | Änderung |
 |---|---:|---:|---:|
-| **`index.html` gesamt** | **1 281 464** | **885 879** | **−395 585 (−30,9 %)** |
+| **`index.html` gesamt** | **1 281 464** | **886 328** | **−395 136 (−30,8 %)** |
 | davon gzip | rund 218 KB | rund 186 KB | rund −32 KB |
 | Abschnitt `begriffe` | 347 050 | 16 506 | −330 544 |
 | Abschnitt `karte` | 242 584 | 168 742 | −73 842 (die `<title>` der Orte) |
@@ -220,14 +220,14 @@ dieselbe Referenz, mit demselben Skript:
 | Abschnitt `gewichtung` | 34 396 | 34 746 | +350 |
 | Abschnitt `monate` | 29 980 | 30 153 | +173 |
 | Abschnitt `abgeleitete-daten` | 5818 | 6017 | +199 |
-| Rahmen (CSS, JavaScript, `<noscript>`) | 48 754 | 55 416 | +6662 |
+| Rahmen (CSS, JavaScript, `<noscript>`) | 48 754 | 55 865 | +7111 |
 | neu: `data/begriffe.json` | — | 96 413 | liegt daneben, nicht in der Seite |
 
 Die Vorschau kostet 2139 Byte in den Abschnitten (zwölf Schaltflächen und zwölf Klassen) und steht
 im Rahmen mit ihren Regeln, dem Druckblock, dem `<noscript>` (131 Byte) und der Logik der
 Schaltfläche; dazu kommen dort das Skript des Abschnitts „Begriffe", der gemeinsame Lader
-(`loadJson`, `forget`, `offlineNote`) und die nachgerechneten Kontraste als Kommentar — zusammen die
-6662 Byte. Gespart haben die Begriffslisten 330 544 und die `<title>` der Orte 73 842. Die gzip-Größe
+(`loadJson`, `forget`, `offlineNote` mit seinen zwei Sätzen) und die nachgerechneten Kontraste als
+Kommentar — zusammen die 7111 Byte. Gespart haben die Begriffslisten 330 544 und die `<title>` der Orte 73 842. Die gzip-Größe
 steht nur gerundet da: sie schwankt mit dem Zeitstempel in `generated_at`.
 
 Geprüft am 2026-10-13 mit headless Chrome und über den lokalen Server auf Port 8777, hell und
@@ -254,7 +254,7 @@ einer Seite von 1 281 464 Byte.
 (Review 2026-10-13, Befund 2). Gemessen an der Mini-Periode: 6859 Byte fest und 551 Byte je
 Wahlbezirk, auf 41 also rund 29 KB, dazu die 41 Punkte des Änderungsdiagramms statt dreier — rund
 35 KB zusammen. „Laufende Wahlperiode" (rund 0,5 KB) und die Städtezeile aus `georep publish` (rund
-0,2 KB) kommen obendrauf. 885 879 Byte lassen **114 121 Byte Luft (11,4 %)**; der Abschnitt passt
+0,2 KB) kommen obendrauf. 886 328 Byte lassen **113 672 Byte Luft (11,4 %)**; der Abschnitt passt
 also mit rund 79 KB Rest. Die 40 KB Reserve aus § 5 bleiben unangetastet daneben liegen.
 
 Die Luft ist bewusst nicht größer: die Seite ist zwischen dem 2026-10-11 und dem 2026-10-13 um
@@ -286,7 +286,7 @@ Grenze der Technik; wer sie ändert, ändert eine Zahl in `defaults.toml`.
    tragen ihre Felder selbst (`fields`).
 6. **Die Reserve bleibt liegen** (§ 5): rund 40 KB sind gemessen und nicht geholt, weil das Budget
    ohne sie hält. Wer sie will, bekommt sie zu den dort genannten Kosten.
-7. **Das Budget ist 1 000 000 Byte** (§ 7): 114 121 Byte Luft tragen den Abschnitt „Zwei
+7. **Das Budget ist 1 000 000 Byte** (§ 7): 113 672 Byte Luft tragen den Abschnitt „Zwei
    Wahlperioden" (rund 35 KB) und lassen danach rund 79 KB. Mehr Luft hieße, das nächste Wachstum
    erst zu merken, wenn es schon da ist; die Zahl steht in `defaults.toml` und lässt sich je Stadt
    ändern.

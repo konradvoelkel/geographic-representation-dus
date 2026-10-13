@@ -189,8 +189,8 @@ und sagt je, warum sie liegen bleiben.
 - **Das Budget ist 1,0 MB und steht in den Settings** (`report.page_budget_bytes`,
   `docs/decisions.md`, Punkt 50): die slow-Tests lesen es über `within_budget` (0 schaltet die
   Prüfung wirklich ab), der Schritt `report` meldet eine Überschreitung in seiner Zeile, und
-  `georep publish` nennt jede veröffentlichte Seite darüber. 885 879 von 1 000 000 Byte, also
-  114 121 Byte Luft (11,4 %) — sie trägt den Abschnitt „Zwei Wahlperioden" (gemessen rund 35 KB),
+  `georep publish` nennt jede veröffentlichte Seite darüber. 886 328 von 1 000 000 Byte, also
+  113 672 Byte Luft (11,4 %) — sie trägt den Abschnitt „Zwei Wahlperioden" (gemessen rund 35 KB),
   der nach Konrads Lauf dazukommt. Dafür sind die `<title>` der 1196 Orte gefallen (73 842 Byte;
   ihre Ebene ist `aria-hidden` und ohne JavaScript nie sichtbar, der Tooltip zeigt dasselbe aus
   Datenattributen). Rund 40 KB Reserve liegen gemessen in § 5 des Dokuments (doppelte SVG-Pfade
@@ -206,13 +206,13 @@ und sagt je, warum sie liegen bleiben.
 
 ## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46 und 47)
 
-- Tests: 1003 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
+- Tests: 1013 schnelle (nox-Gate, parallel in rund 44 s, Abdeckung 98,3 %), 20 `slow` (rund 2 min über die volle
   Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` 0,89 MB (885 879 Bytes, Budget 1,0 MB; die beiden Umschalter kosten
+- Berichtsseite: `index.html` 0,89 MB (886 328 Bytes, Budget 1,0 MB; die beiden Umschalter kosten
   110 KB, die Literaturübersicht 13,2 KB, die Vorschau langer Tabellen 4,1 KB), 53 Dateien zusammen
   13,1 MB (neu `begriffe.json`, 96 KB), fünfzehn
   Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,

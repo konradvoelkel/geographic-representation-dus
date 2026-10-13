@@ -1124,7 +1124,7 @@ kommen obendrauf. Mit 958 527 Byte blieben 41 473 Byte Luft — zu wenig (Review
 Darum ist **ein Hebel aus § 5 gezogen**: die `<title>` der 1196 Orts-Kreise, 73 842 Byte. Sie waren
 kein Verlust, denn ihre Ebene ist `aria-hidden="true"` und ohne JavaScript nie sichtbar — der Titel
 erreichte keinen Screenreader und wiederholte nur, was der Tooltip aus `data-name` und
-`data-district` zeigt. Die Seite trägt jetzt 885 879 Byte, also **114 121 Byte Luft (11,4 %)**, und
+`data-district` zeigt. Die Seite trägt jetzt 886 328 Byte, also **113 672 Byte Luft (11,4 %)**, und
 der Abschnitt passt mit rund 79 KB Rest. **Verworfen:** das Budget auf die Zahl zu heben, die der
 Vergleich braucht (dieselbe Blindheit, nur später); 1,1 MB; das Budget im Code (es ist eine
 Verabredung über die Anzeige, keine Grenze der Technik, und `[report]` zählt nicht zum

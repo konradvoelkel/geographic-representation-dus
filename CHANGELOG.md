@@ -11,7 +11,7 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 - **Die 1196 Orte der Karte tragen keinen `<title>` mehr** (Review 2026-10-13, Befund 2;
   `docs/decisions.md` Punkt 50): ihre Ebene ist `aria-hidden` und ohne JavaScript nie sichtbar, der
   Titel erreichte also keinen Screenreader und wiederholte nur, was der Tooltip zeigt. Das sind
-  73 842 Byte — `index.html` ist jetzt 885 879 Byte groß, und das Budget von 1,0 MB trägt damit auch
+  73 842 Byte — `index.html` ist jetzt 886 328 Byte groß, und das Budget von 1,0 MB trägt damit auch
   den Abschnitt „Zwei Wahlperioden" (gemessen rund 35 KB), der nach dem Abruf der zweiten Periode
   dazukommt.
 - **`georep publish` prüft das Budget jeder veröffentlichten Seite** und nennt sie in seiner Zeile;
