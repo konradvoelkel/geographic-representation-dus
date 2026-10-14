@@ -34,7 +34,14 @@ from georep.crosswalk import area_shares, transfer_counts
 from georep.geo import Area
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
-from georep.prep.bodies import ID, REFERENCE, BodyRules, classify_papers
+from georep.prep.bodies import (
+    CONSULTATION,
+    ID,
+    REFERENCE,
+    BodyRules,
+    classify_papers,
+    merge_consultations,
+)
 from georep.prep.extract import extract_text
 from georep.prep.voters import ELIGIBLE_TOTAL, aggregate_voters, read_results_csv
 from georep.search.dictionary import all_terms, build_dictionary
@@ -64,6 +71,7 @@ class MiniRun:
     units: pl.DataFrame  # Option 05
     paper_types: pl.DataFrame  # Option 06
     attribution_corpus: pl.DataFrame  # Option 04: Korpus mit den Spalten der Zuordnung
+    consultations: pl.DataFrame  # Punkt 58: Beratungsfolge je Dokument
 
 
 @pytest.fixture(scope="module")
@@ -90,6 +98,11 @@ def mini(tmp_path_factory: pytest.TempPathFactory, mini_root: Path) -> MiniRun:
         attribution_corpus=pl.read_parquet(
             layout.corpus,
             columns=["id", "paper_type", "name", "text", "originator_organization"],
+        ),
+        # Punkt 58: wie im Schritt ``bodies`` -- die Folge des Korpus, aufgefüllt aus dem Paket
+        consultations=merge_consultations(
+            pl.read_parquet(layout.corpus, columns=[ID, CONSULTATION]),
+            pl.read_parquet(layout.consultations, columns=[ID, CONSULTATION]),
         ),
     )
 
@@ -148,6 +161,21 @@ def test_classify_papers(benchmark: BenchmarkFixture, mini: MiniRun) -> None:
     corpus = mini.corpus.select(ID, pl.lit("BV6/108/2023").alias(REFERENCE))
     frame = benchmark(classify_papers, corpus, rules)
     assert frame.height == 200
+
+
+def test_classify_papers_with_consultations(benchmark: BenchmarkFixture, mini: MiniRun) -> None:
+    """Punkt 58: derselbe Parser mit der zweiten Quelle, also mit den vier Schleifen darüber.
+
+    Die Fixture trägt die Beratungsfolge ihrer 200 Dokumente (``raw/beratungsfolge.parquet``), und
+    das Profil die gelernte Tabelle; gemessen wird damit der Weg, den die Hauptperiode wirklich
+    nimmt. Der Benchmark daneben misst den Weg ohne sie -- die Differenz ist der Preis der Quelle.
+    """
+    rules = BodyRules.from_settings(mini.settings.bodies)
+    corpus = mini.corpus.select(ID, pl.lit("61/ 12/2014").alias(REFERENCE))
+    frame = benchmark(classify_papers, corpus, rules, mini.consultations)
+    assert frame.height == 200
+    # Die Nummer ist eine Amtsnummer: jede Zeile, die ein Gremium hat, hat es aus der Folge
+    assert int((frame.get_column("quelle") == "beratungsfolge").sum()) > 0
 
 
 def test_hits_by_body(benchmark: BenchmarkFixture, mini: MiniRun) -> None:

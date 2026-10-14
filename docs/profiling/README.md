@@ -192,6 +192,39 @@ Regel aus CLAUDE.md („`deal.pure` nicht in heiße Schleifen") mit einer Zahl d
 **Benchmarks.** Zwei neue Einträge in `tests/bench/`: `classify_papers` über die 200 Dokumente der
 Mini-Fixture (Minimum 1,00 ms) und `hits_by_body` über die drei Wahlbezirke der Mini-Fixture (Minimum
 3,19 ms). Der erste `nox -s bench` legte ihre Baseline an, der zweite lief grün dagegen.
+
+### Was die zweite Quelle kostet (2026-10-14, Punkt 58)
+
+`uv run georep --profile duesseldorf profile bodies` auf der Referenz, jetzt mit der Beratungsfolge
+aus `snapshots/duesseldorf-beratungsfolge/` und der Tabelle `[bodies.organizations]` (36 Zeilen):
+
+| Posten | unter cProfile |
+|---|---|
+| Schritt `bodies` zusammen | 0,286 s (vorher 0,33 s, anderer Stand) |
+| `classify_papers` | 0,207 s |
+| davon `_resolved_consultations` (19 108 Dokumente, 19 108 `resolve_organizations`) | 0,104 s |
+| davon `parse_reference` (19 108 Aufrufe) | 0,052 s |
+| `posix.fsync` beim Schreiben | 0,031 s |
+
+**Im Lauf 0,3 s statt 0,2 s** — die zweite Quelle kostet rund 0,1 s auf 19 108 Dokumente, und der
+Löwenanteil davon ist der Aufbau der Abbildung je Dokument, nicht die Entscheidung.
+
+Auf der Mini-Fixture (200 Dokumente, Minimum von fünf Läufen à 200 Wiederholungen):
+
+| Fall | Verträge an | Verträge aus |
+|---|---|---|
+| ohne Beratungsfolge | 696,9 µs | 388,7 µs |
+| mit Beratungsfolge | 1 290,0 µs | 852,3 µs |
+
+Der Benchmark `classify_papers` (ohne Folge) stieg damit von **525,9 auf 666,1 µs (+26,6 %)**, und
+das ist zum größeren Teil **Vertragsarbeit**: `_consistent` prüft je Dokument zwei Bedingungen mehr,
+und `_source_matches_the_class` und `_consultation_counts_fit` sind zwei zusätzliche
+Polars-Durchgänge über den fertigen Frame. Ein Zwischenstand ohne den Zweig „nichts aufzulösen" lag
+bei 713,9 µs (+35,7 %); der Zweig holt also ein Drittel des Aufpreises zurück, und wer die zweite
+Quelle nicht benutzt, zahlt nur noch die Verträge. Der neue Benchmark
+`classify_papers_with_consultations` misst denselben Parser **mit** der Quelle (1,24 ms Minimum) und
+hält damit fest, was sie wert ist. Beide Zahlen sind nach der Regel aus CLAUDE.md gelesen: erst
+messen, dann die Struktur ändern — hier war die Messung der Grund für den Zweig.
 ## Profile vom 2026-10-12: Gewichtung und Themenmodell (Option 06)
 
 Gemessen auf Konrads Rechner, während sieben weitere Agenten darauf arbeiteten; darum liefen alle Messungen

@@ -326,14 +326,27 @@ def classify_papers(
     Die Drucksachennummer entscheidet. ``consultations`` (Spalten ``id`` und
     ``consultation_organizations``) ist die zweite Quelle und ergänzt nur, wo die Nummer kein
     bekanntes Gremium liefert **und** die Folge genau eines nennt (Punkt 58, siehe Modulkopf).
-    Ohne das Argument rechnet die Funktion wie vor Punkt 58: allein aus der Nummer.
+    Ohne das Argument rechnet die Funktion wie vor Punkt 58: allein aus der Nummer. Löst die Folge
+    für kein Dokument ein Gremium auf (kein Argument, keine Tabelle im Profil, keine bekannte
+    Organisation), bleiben die vier Schleifen darüber aus und die drei neuen Spalten sind konstant
+    -- der Benchmark ``test_classify_papers`` war mit ihnen 713,9 µs über 200 Dokumente statt 666,1
+    (gemessen 2026-10-14). Der Rest des Aufpreises gegen 525,9 µs vor Punkt 58 sind die Verträge:
+    mit ``contracts = "off"`` sind es 388,7 µs statt 696,9, und die beiden neuen Nachbedingungen
+    über den Frame kosten je einen Polars-Durchgang. Was die Quelle kostet, wenn sie benutzt wird,
+    misst ``test_classify_papers_with_consultations`` (1,29 ms); im echten Schritt über 19 108
+    Dokumente sind es 0,1 s (docs/profiling/README.md).
     """
     refs = [parse_reference(r, rules) for r in corpus.get_column(REFERENCE).to_list()]
     resolved = _resolved_consultations(corpus, rules, consultations)
-    folge = [resolved.get(str(i), ()) for i in corpus.get_column(ID).to_list()]
-    counts = [len(codes) for codes in folge]
-    from_folge = [codes[0] if len(codes) == 1 else None for codes in folge]
-    decided = [_decide(ref, code, rules) for ref, code in zip(refs, from_folge, strict=True)]
+    if resolved:
+        folge = [resolved.get(str(i), ()) for i in corpus.get_column(ID).to_list()]
+        counts = [len(codes) for codes in folge]
+        from_folge: list[str | None] = [c[0] if len(c) == 1 else None for c in folge]
+        decided = [_decide(ref, code, rules) for ref, code in zip(refs, from_folge, strict=True)]
+    else:
+        counts = [0] * corpus.height
+        from_folge = [None] * corpus.height
+        decided = refs
     return pl.DataFrame(
         {
             ID: corpus.get_column(ID),

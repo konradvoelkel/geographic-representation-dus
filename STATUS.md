@@ -319,13 +319,13 @@ Auswahlregeln trifft die beste 993 von 1 658 Fällen (59,9 %) gegen 99,1 % bei e
 ## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56 und 58)
 
 - Tests: 1167 schnelle (nox-Gate, parallel in rund 53 s, Abdeckung 98,4 %), 33 `slow` (rund 4 min über die
-  volle Referenz, die fünf Datenpakete und die veröffentlichte Seite), 17 `bench` (grün gegen die
+  volle Referenz, die sechs Datenpakete und die veröffentlichte Seite), 18 `bench` (grün gegen die
   Baseline), 4 `network` (nur von Hand). Alle drei am 2026-10-14 nach Punkt 58 mit Exit 0 gelaufen.
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach (seit Punkt 58 ohne
   `committees`, dafür mit den Gremien aus der Beratungsfolge). Voller Offline-Lauf auf der Referenz
-  rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
-  0,1 s).
+  rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Gremien
+  0,3 s seit Punkt 58, Kennzahlen 0,1 s).
 - Berichtsseite: `index.html` der Hauptseite **932 817 Bytes veröffentlicht** (Budget 1 000 000,
   **67 183 Byte Luft, 6,7 %**; +511 Byte für den Quellensatz aus Punkt 58) mit beiden Periodenabschnitten,
   55 Dateien zusammen 13,2 MB; ohne die Abschnitte „Zwei Wahlperioden" und „Laufende Wahlperiode" sind es
