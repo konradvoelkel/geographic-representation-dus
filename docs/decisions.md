@@ -2022,8 +2022,24 @@ diesem Layer zwei Haken, beide am 2026-10-14 nachgesehen:
 die „Stelle" der Umschlag der ganzen Stadt (`geometry=310000,5662000,328000,5681000`,
 `geometryType=esriGeometryEnvelope`, `tolerance=0`, `layers=all:16`). Das ist der Preis: eine
 Anfrage, die ihren Zweck nicht im Namen trägt. Dafür steht sie vollständig im Profil, ein zweiter
-Mensch kann sie in die Adresszeile kopieren, und die Antwort ist 1 043 618 Byte mit SHA-256
-`c2d3de4b862e615e6ddc998c6b7b4dd3f58bf35c4d4137a1b41b25ac4d093b94`.
+Mensch kann sie in die Adresszeile kopieren, und die Antwort ist **1 043 618 Byte mit 179 Flächen
+und 25 187 Stützpunkten**, SHA-256 `c2d3de4b862e615e6ddc998c6b7b4dd3f58bf35c4d4137a1b41b25ac4d093b94`
+(abgerufen am 2026-10-14).
+
+**Die URL pinnt die Genauigkeit, und das ist nachgemessen.** Derselbe Dienst antwortet auf dieselbe
+Anfrage mit `maxAllowableOffset=1` in 443 085 Byte mit nur 17 326 Stützpunkten und auf zwei
+Nachkommastellen gerundeten Koordinaten — je Fläche bis **1 465 m²** Unterschied (am größten bei
+`40201`), in der Summe 48 736 m², und beide runden trotzdem auf 170,47 km². Welche von zwei
+vorliegenden Antworten die URL liefert, war offline nicht zu entscheiden; ein Abruf am 2026-10-14
+hat es entschieden: ohne den Parameter kommt die volle Genauigkeit, und `maxAllowableOffset=0`
+ändert daran **nichts** (byte- und prüfsummengleich). Der Parameter steht trotzdem in der URL, denn
+sonst hinge die Genauigkeit an einer Servervorgabe, die sich ändern darf.
+
+`geometryPrecision` steht **nicht** in der URL, obwohl der Dienst es annimmt. Mit `11` wächst die
+Antwort auf 1 073 358 Byte, und die Koordinaten sind dieselben Fließkommazahlen in längerer
+Schreibweise (gemessen: wertgleich bis aufs Bit, dieselben 25 187 Stützpunkte). Das wäre mehr Text
+ohne mehr Genauigkeit — die Rundung, die es verhindern soll, kommt hier von
+`maxAllowableOffset`.
 
 **Die Ringe sind die eigentliche Arbeit.** Esri-JSON kennt kein Feld für „Loch"; das Vorzeichen der
 Ringfläche sagt es (äußere Ringe im Uhrzeigersinn, innere dagegen — ArcGIS REST API, Geometry

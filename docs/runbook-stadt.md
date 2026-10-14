@@ -41,6 +41,21 @@ ist ein GET. Zwei Prüfungen lohnen sich dabei:
 
 - **179, nicht 180.** Das Shapefile von 2022 hatte 180 Polygone, von denen 175 zu Stimmbezirken der
   Wahl 2025 gehörten; der Dienst hat genau die 179 Urnen-Stimmbezirke der Wahl.
+- **25 187 Stützpunkte, nicht 17 326.** Die URL im Profil trägt `maxAllowableOffset=0` und holt
+  damit die volle Genauigkeit; derselbe Abruf mit `maxAllowableOffset=1` liefert eine auf zwei
+  Nachkommastellen gerundete, vereinfachte Fassung (443 085 statt 1 043 618 Byte, je Fläche bis
+  1 465 m² Unterschied). Beide runden auf 170,47 km², die Flächensumme verrät den Unterschied also
+  **nicht** — die Stützpunktzahl verrät ihn:
+
+  ```bash
+  uv run python - <<'EOF'
+  import json
+  from georep.layout import Layout
+  from georep.settings import load_settings
+  roh = json.loads(Layout.from_settings(load_settings(profile="moenchengladbach")).districts_geojson.read_text(encoding="utf-8"))
+  print(len(roh["results"]), "Flächen", sum(len(r) for e in roh["results"] for r in e["geometry"]["rings"]), "Stützpunkte")
+  EOF
+  ```
 - **Die Flächensumme ist 170,47 km²**, die Stadtfläche — dieselbe Zahl wie beim Shapefile von 2022.
   Das ist der Prüfpunkt für die Umwandlung der Esri-Ringe (Löcher und zweite Flächen):
 

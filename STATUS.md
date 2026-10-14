@@ -295,7 +295,8 @@ Abruf-URL einer **Operation** statt eines Dateinamens.
 | Flächen | 180 Polygone, davon 175 Stimmbezirke der Wahl 2025 | **179**, genau die Urnen-Stimmbezirke der Wahl |
 | Form | Zip mit `.shp/.shx/.dbf/.prj`, pyshp | Esri-JSON mit `rings`, ein GET auf `identify` |
 | Fläche | 170,47 km² | **170,47 km²** (dieselbe Stadtfläche; der Prüfpunkt der Ringumwandlung) |
-| Abruf | 199 548 Byte | 1 043 618 Byte, SHA-256 `c2d3de4b…4093b94` |
+| Abruf | 199 548 Byte | 1 043 618 Byte, 25 187 Stützpunkte, SHA-256 `c2d3de4b…4093b94` |
+| Genauigkeit | wie geliefert | von der URL gepinnt (`maxAllowableOffset=0`); mit `=1` wären es 17 326 Stützpunkte und je Fläche bis 1 465 m² Unterschied |
 
 - **`identify`, nicht `query`**: `query` liefert für diesen Layer kein `geometry`-Mitglied (der
   eigene Dienst `Stimmbezirke_Kommunalwahl_2025`, der es hätte, ist gestoppt), und ihr

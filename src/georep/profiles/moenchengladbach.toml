@@ -63,8 +63,19 @@ results_file = "Open-Data-05116000-Ratswahl-Stimmbezirk.csv"
 # über ``identify`` heraus (``query`` antwortet ohne), darum steht hier die ganze Anfrage. Der
 # Umschlag deckt die Stadt (Bounding Box 310 651-327 694 / 5 662 523-5 680 462), ``tolerance=0``
 # und ``layers=all:16`` holen genau diesen Layer, und ein GET liefert 1 043 618 Bytes mit 179
-# Flächen (gemessen am 2026-10-14). Die Anfrage ist damit reproduzierbar und steht nicht im Code.
-districts_url = "https://geoportal.moenchengladbach.de/server/rest/services/K12_Politik_und_Wahlen/K12_Politik_und_Wahlen/MapServer/identify?geometry=310000,5662000,328000,5681000&geometryType=esriGeometryEnvelope&sr=25832&layers=all:16&tolerance=0&mapExtent=310000,5662000,328000,5681000&imageDisplay=1000,1000,96&returnGeometry=true&f=json"
+# Flächen und 25 187 Stützpunkten, SHA-256 c2d3de4b862e615e6ddc998c6b7b4dd3f58bf35c4d4137a1b41b25ac4d093b94.
+#
+# ``maxAllowableOffset=0`` steht hier, obwohl es am 2026-10-14 nichts änderte (byte- und
+# prüfsummengleich): es **pinnt die Genauigkeit**. Derselbe Abruf mit ``maxAllowableOffset=1``
+# liefert 443 085 Bytes, 17 326 Stützpunkte und auf zwei Nachkommastellen gerundete Koordinaten
+# (je Fläche bis 1 465 m² Unterschied, in der Summe 48 736 m²; beide runden auf 170,47 km²), und
+# genau so entstand die zweite Antwort, die bei der Recherche vorlag. Ohne den Parameter hinge die
+# Genauigkeit an der Vorgabe des Servers.
+#
+# ``geometryPrecision`` steht **nicht** hier, obwohl der Dienst es annimmt: mit ``11`` wächst die
+# Antwort auf 1 073 358 Bytes, und die Koordinaten sind dieselben Fließkommazahlen in längerer
+# Schreibweise (gemessen, wertgleich bis aufs Bit). Das wäre mehr Text ohne mehr Genauigkeit.
+districts_url = "https://geoportal.moenchengladbach.de/server/rest/services/K12_Politik_und_Wahlen/K12_Politik_und_Wahlen/MapServer/identify?geometry=310000,5662000,328000,5681000&geometryType=esriGeometryEnvelope&sr=25832&layers=all:16&tolerance=0&mapExtent=310000,5662000,328000,5681000&imageDisplay=1000,1000,96&maxAllowableOffset=0&returnGeometry=true&f=json"
 districts_file = "Stimmbezirke_Kommunalwahl_2025.json"
 streets_url = "https://wep.itk-rheinland.de/vm/prod/kw_2025/05116000/daten/opendata/opendata-strassen.csv"
 streets_file = "opendata-strassen.csv"

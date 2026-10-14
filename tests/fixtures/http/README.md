@@ -53,7 +53,7 @@ Antwort stammt aus der ersten Runde und ist stadtweit, also unverändert gültig
 
 | Datei | Quelle | Anfrage | Inhalt |
 |---|---|---|---|
-| `identify_mg_mehrringig.json` | `geoportal.moenchengladbach.de/server/rest/…/MapServer` | die `identify`-URL aus dem Profil (ein GET, 1 043 618 Bytes, 179 Flächen, SHA-256 `c2d3de4b862e615e6ddc998c6b7b4dd3f58bf35c4d4137a1b41b25ac4d093b94`) | die **zwei** mehrringigen Flächen 11001 und 11003, 13 401 Bytes |
+| `identify_mg_mehrringig.json` | `geoportal.moenchengladbach.de/server/rest/…/MapServer` | die `identify`-URL aus dem Profil, Wort für Wort (ein GET am 2026-10-14: 1 043 618 Bytes, 179 Flächen, 25 187 Stützpunkte, SHA-256 `c2d3de4b862e615e6ddc998c6b7b4dd3f58bf35c4d4137a1b41b25ac4d093b94`) | die **zwei** mehrringigen Flächen 11001 und 11003, 13 401 Bytes |
 
 Sie sind der Grund, dass die Umwandlung der Esri-Ringe nicht am Betrag der Fläche hängen darf,
 sondern am Vorzeichen: 11003 trägt einen Ring **gegen** den Uhrzeigersinn (ein Loch von 1 641 m²),
