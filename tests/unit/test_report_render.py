@@ -13,6 +13,7 @@ import deal
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
+from georep.analysis.regression import RegressionPair, RegressionResult
 from georep.geo import read_canonical_precincts
 from georep.layout import Layout
 from georep.report.charts import (
@@ -25,7 +26,13 @@ from georep.report.charts import (
     turnout_label,
 )
 from georep.report.geometry import SIMPLIFY_M, bounds_of, district_shapes, fit
-from georep.report.model import Download, MonthRow, ReportModel, build_report_model
+from georep.report.model import (
+    Download,
+    MonthRow,
+    PeriodComparison,
+    ReportModel,
+    build_report_model,
+)
 from georep.report.render import Visuals, external_links, kib, render_map, render_report
 from georep.report.search import SearchEntry, search_payload
 from georep.settings import Settings
@@ -464,6 +471,119 @@ def test_the_method_section_mentions_the_control_variables(page: str, model: Rep
     method = page[page.index('<section id="methode">') : page.index('<section id="abgeleitete')]
     assert "Die Kontrollvariablen sind Fremddaten" in method
     assert model.derived.units_label in method and "Datenstand" in method
+
+
+# --- Punkt 61: die Spalte „ohne Ausreißer" ist explorativ ---------------------------------------
+#
+# Die Mini-Fixture hat drei Wahlbezirke, und zwei davon sind die Ausreißer: ``regression.without``
+# ist dort ``None``, und die zweite Spalte von Tabelle 5 gibt es gar nicht. Für diese Sätze wird
+# das Paar darum von Hand gesetzt -- geprüft wird die Vorlage, nicht die Regression.
+
+
+def _fit(r: float, p: float, n: int = 41) -> RegressionResult:
+    return RegressionResult(n=n, slope=200.0 * r, intercept=45.0, r=r, p=p, stderr=1.0)
+
+
+def _pair(r: float, p: float, without: tuple[float, float] | None) -> RegressionPair:
+    return RegressionPair(
+        all=_fit(r, p),
+        excluded=(1, 10),
+        without=_fit(*without, n=39) if without else None,
+    )
+
+
+def _comparison(previous: RegressionPair) -> PeriodComparison:
+    return PeriodComparison(
+        previous="Wahlperiode 2014 bis 2020",
+        current="Wahlperiode 2020 bis 2025",
+        rows=(),
+        districts=41,
+        regression=_fit(0.1008, 0.53045),
+        previous_pair=previous,
+        precincts=316,
+        split=269,
+        min_coverage=0.9776,
+        subpage="2014-2020/",
+    )
+
+
+def _rendered(model: ReportModel, visuals: Visuals, **changes: object) -> str:
+    return render_report(replace(model, **changes), visuals)  # type: ignore[arg-type]
+
+
+def test_the_outlier_column_is_marked_exploratory_and_explained(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    """Ohne Vergleichsprofil steht nur der erste Satz: die Spalte entstand nach den Daten."""
+    page = _rendered(model, visuals, regression=_pair(0.1891, 0.23641, (0.3351, 0.03705)))
+    head = page[page.index('id="zusammenhang"') : page.index('id="parteien"')]
+    assert 'ohne 1 und 10<br><span class="note">explorativ</span>' in head
+    assert "erst <em>nach</em> dem Ansehen der Daten entstanden" in head
+    assert "explorativ und kein Nachweis" in head
+    assert "Was das wert ist" not in head  # der zweite Satz braucht die andere Periode
+
+
+def test_the_outlier_column_names_both_p_values_of_both_periods(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    """Punkt 61: p = 0,037 hier gegen p = 0,082 dort, beide aus dem Modell, mit dem Urteil dazu."""
+    page = _rendered(
+        model,
+        visuals,
+        regression=_pair(0.1891, 0.23641, (0.3351, 0.03705)),
+        comparison=_comparison(_pair(0.2384, 0.13330, (0.2819, 0.08211))),
+    )
+    head = page[page.index('id="zusammenhang"') : page.index('id="parteien"')]
+    assert "Wahlperiode 2014 bis 2020" in head
+    assert "p = 0,082" in head and "p = 0,037" in head
+    assert "<em>r</em> = 0,282" in head and "<em>r</em> = 0,335" in head
+    assert "von der Signifikanz bleibt nichts" in head
+
+
+@pytest.mark.parametrize(
+    ("here", "there", "expected"),
+    [
+        ((0.3351, 0.03705), (0.2819, 0.08211), "von der Signifikanz bleibt nichts"),
+        ((0.3351, 0.03705), (0.4000, 0.01000), "in beiden Wahlperioden"),
+        ((0.1000, 0.50000), (0.1200, 0.40000), "in keiner der beiden Wahlperioden"),
+        ((0.1000, 0.50000), (0.4000, 0.01000), "signifikant nur in der älteren Wahlperiode"),
+    ],
+)
+def test_the_verdict_follows_the_two_p_values_and_not_the_text(
+    model: ReportModel,
+    visuals: Visuals,
+    here: tuple[float, float],
+    there: tuple[float, float],
+    expected: str,
+) -> None:
+    page = _rendered(
+        model,
+        visuals,
+        regression=_pair(0.1891, 0.23641, here),
+        comparison=_comparison(_pair(0.2384, 0.13330, there)),
+    )
+    head = page[page.index('id="zusammenhang"') : page.index('id="parteien"')]
+    assert expected in head
+
+
+def test_the_period_section_names_both_columns_of_both_periods(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    page = _rendered(
+        model,
+        visuals,
+        regression=_pair(0.1891, 0.23641, (0.3351, 0.03705)),
+        comparison=_comparison(_pair(0.2384, 0.13330, (0.2819, 0.08211))),
+    )
+    start = page.index('<section id="perioden">')
+    section = page[start : page.index("</section>", start)]
+    assert "In der Wahlperiode 2014 bis 2020 liegt die Regression" in section
+    assert "In der Wahlperiode 2020 bis 2025 sind es" in section
+    # Beide Spalten je Periode, und das Urteil je Periode aus ihren p-Werten
+    assert "p = 0,133" in section and "p = 0,082" in section
+    assert "p = 0,236" in section and "p = 0,037" in section
+    assert section.count("in keiner der beiden Spalten signifikant") == 1  # die alte Periode
+    assert section.count("nur in der explorativen zweiten Spalte signifikant") == 1  # die neue
 
 
 # --- Option 04: der Abschnitt „Urheber und Parteien" -----------------------------------------------

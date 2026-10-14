@@ -4,6 +4,13 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Die Spalte „ohne Ausreißer" von Tabelle 5 heißt jetzt „explorativ"** (`docs/decisions.md`,
+  Punkt 61): sie bleibt, aber der Spaltenkopf sagt es, und unter der Tabelle steht, warum — sie ist
+  **nach** dem Ansehen der Daten entstanden, und dieselbe Spalte ist in der Wahlperiode 2014 bis
+  2020 mit p = 0,082 nicht signifikant, während sie hier bei p = 0,037 liegt. Beide Zahlen kommen
+  aus dem Modell, und auch das Urteil dazu: vier Zweige, je nachdem, welche Spalte unter 0,05 liegt.
+  Ohne das Vergleichsprofil steht nur der erste Satz, ohne zweite Spalte (Mönchengladbach) keiner.
+  Im Abschnitt „Zwei Wahlperioden" steht dazu ein Satz je Periode mit r und p beider Spalten.
 - **Die Urheber der Wahlperiode 2014 bis 2020** (`docs/decisions.md`, Punkt 60): „Urheber
   unbekannt" fällt dort von **12 418 (55,9 %)** auf **2 356 (10,6 %)**. Zwei Dokumentarten jener
   Periode stehen neu im Profil (`Verwaltungsvorlage`, 8 337 Dokumente, und die dritte Schreibweise

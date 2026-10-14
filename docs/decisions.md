@@ -1816,3 +1816,57 @@ Fraktion ohne Partei. `bündnis90/die grünen` ohne Leerzeichen, `bü90/die grü
   also die beiden vorhandenen Textmarker und alle acht Verwaltungsarten mitschreiben, um einen Wert
   zu ergänzen. Zwei Wahrheiten über dieselbe Stadt in zwei Dateien, und jede Änderung an der einen
   müsste in der anderen nachgezogen werden.
+
+## 61. Die Spalte „ohne Ausreißer" bleibt, heißt explorativ und wird an der zweiten Periode gemessen (2026-10-14)
+
+Punkt 2 der Befunde vom 2026-10-14 (`docs/befunde-2026-10-14.md`, § 1 und § 6): die eine Spalte von
+Tabelle 5, in der die Arbeit ein signifikantes p berichtet (ohne die Wahlbezirke 1 und 10,
+p = 0,037), ist in der Wahlperiode 2014 bis 2020 mit **p = 0,082 nicht signifikant** — dieselbe
+Methode, dieselbe Stadt, ein anderer Zeitraum. Konrads Frage war: Satz auf der Seite oder Spalte
+weg.
+
+**Die Spalte bleibt, und sie sagt selbst, was sie ist.** Tabelle 5 ist die Tabelle der Arbeit, und
+die Seite zeigt beide Spalten, seit sie existiert; eine Spalte stillschweigend zu entfernen hieße,
+die Arbeit anders darzustellen, als sie ist. Stattdessen trägt der Spaltenkopf jetzt das Wort
+**„explorativ"**, und unter der Tabelle steht ein Absatz mit zwei Sätzen: der erste sagt, dass die
+Spalte **nach** dem Ansehen der Daten entstanden ist (ausgeschlossen sind die beiden Bezirke mit
+den höchsten Trefferquoten — eine Entscheidung über diesen Datensatz, keine Vorhersage, die er
+prüfen könnte, `docs/methodik-review-2026-10.md`, § 2.7); der zweite nennt beide p-Werte und sagt,
+was daraus folgt.
+
+**Kein Satz trägt eine Zahl hart.** Beide p-Werte und beide r kommen aus dem Modell, der eigene aus
+`model.regression`, der andere aus `model.comparison.previous_pair` — derselben Rechnung über die
+`results` der anderen Periode, aus der auch ihr `summary.json` entsteht. **Das Urteil kommt aus den
+Zahlen und nicht aus dem Text**: vier Zweige, je nachdem, welche der beiden Spalten unter 0,05
+liegt („von der Signifikanz bleibt nichts", „in beiden Wahlperioden", „in keiner der beiden
+Wahlperioden", „signifikant nur in der älteren Wahlperiode"). Ein `parametrize`-Test rendert alle
+vier. Ohne das Vergleichsprofil bleibt es beim ersten Satz, und ohne zweite Spalte
+(`analysis.exclude_districts` leer, so bei Mönchengladbach) fehlt der Absatz ganz.
+
+**Dazu ein Satz je Periode im Abschnitt „Zwei Wahlperioden"** mit r und p **beider** Spalten und
+demselben Urteil aus den Zahlen (ein Jinja-Makro `verdict`, fünf Zweige, weil dort auch „über alle
+Wahlbezirke signifikant, ohne die beiden nicht" vorkommen kann). Wer die Tabellen nicht
+nebeneinanderlegen will, liest dort beide Perioden in zwei Sätzen.
+
+**Was es kostet** (gemessen 2026-10-14 an der Hauptseite): 714 Byte der Absatz, 542 Byte der Satz
+je Periode, 40 Byte der Kopfhinweis.
+
+**Verworfen:**
+
+- **Die Spalte entfernen**: Tabelle 5 ist die Tabelle der Arbeit. Sie zu beschneiden macht die
+  Seite nicht ehrlicher, sondern unvollständiger — und die Abweichung der Arbeit in genau dieser
+  Spalte (`docs/baseline-2026-10-10.md`) wäre dann nicht mehr nachzuvollziehen. Mit Lukas zu klären
+  bleibt sie trotzdem.
+- **Die p-Werte aus `summary.json` der anderen Periode nachladen**: die Zahl steht schon im Modell
+  (`comparison.previous_pair`), aus derselben Quelle gerechnet. Ein zweiter Weg zu derselben Zahl
+  ist eine zweite Wahrheit, und er hinge daran, dass der Lauf der anderen Periode seine Seite schon
+  geschrieben hat.
+- **Den Hinweis auch über die Spalte „ohne 1 und 10" der zweiten Tabelle schreiben** (dieselbe
+  Rechnung je Begriff im Wörterbuch, Punkt 46): dort steht der Satz schon, und zwar stärker — mit
+  dieser Kennzahl bleibt von der Signifikanz ohnehin nichts (p = 0,80). Zwei Hinweise übereinander
+  lesen sich wie zwei verschiedene Einschränkungen.
+- **Eine automatische Ausreißerregel** (robuster z, Cook-Distanz) statt der zwei Nummern: sie füllte
+  die Spalte von Lauf zu Lauf anders, und der Methodik-Review hat sie mit diesem Grund schon
+  zurückgestellt (§ 2.7). Nach Regel 1 ist Bezirk 10 ohnehin kein Ausreißer mehr (robuster
+  z = 2,69), Bezirk 1 dagegen weiter einer (z = 9,71) — die Liste beschreibt also heute zwei
+  verschiedene Dinge, und auch das ist ein Grund für das Wort „explorativ".

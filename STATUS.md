@@ -406,7 +406,36 @@ Stadtprofil.
   liegt.
 - Die Seite der Periode wächst von 820 128 auf **820 168 Byte** (Budget 1 000 000).
 
-## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56, 58, 59 und 60)
+## Die Spalte „ohne Ausreißer" sagt, was sie ist (2026-10-14, `docs/decisions.md`, Punkt 61)
+
+Punkt 2 der Befunde ist umgesetzt: die Spalte bleibt, trägt im Kopf aber das Wort **„explorativ"**,
+und unter Tabelle 5 steht ein Absatz aus zwei Sätzen. Der erste sagt, dass die Spalte **nach** dem
+Ansehen der Daten entstanden ist — ausgeschlossen sind die beiden Bezirke mit den höchsten
+Trefferquoten, eine Entscheidung über diesen Datensatz und keine Vorhersage. Der zweite nennt beide
+p-Werte: „dort steht dieselbe Spalte bei *r* = 0,282 und p = 0,082, hier bei *r* = 0,335 und
+p = 0,037 — dieselbe Methode, dieselbe Stadt, ein anderer Zeitraum, und von der Signifikanz bleibt
+nichts."
+
+- **Keine Zahl steht hart im Text.** Beide p-Werte und beide *r* kommen aus dem Modell: der eigene
+  aus `regression`, der andere aus `comparison.previous_pair` — derselben Rechnung über die
+  `results` der anderen Periode, aus der auch ihr `summary.json` entsteht. Auch das Urteil kommt aus
+  den Zahlen: vier Zweige, je nachdem, welche der beiden Spalten unter 0,05 liegt; ein
+  `parametrize`-Test rendert alle vier.
+- **Ohne Vergleichsprofil nur der erste Satz**, ohne zweite Spalte (`analysis.exclude_districts`
+  leer, so bei Mönchengladbach) kein Absatz. Die Seite der Periode 2014 bis 2020 zeigt den ersten
+  Satz, die laufende Periode hat keine Regression und damit keinen Abschnitt.
+- **Ein Satz je Periode im Abschnitt „Zwei Wahlperioden"** mit *r* und p beider Spalten und dem
+  Urteil aus den Zahlen (Jinja-Makro `verdict`, fünf Zweige): „In der Wahlperiode 2014 bis 2020
+  liegt die Regression über alle 41 Wahlbezirke bei *r* = 0,238 und p = 0,133, ohne 1 und 10 bei
+  *r* = 0,282 und p = 0,082 — in keiner der beiden Spalten signifikant. In der Wahlperiode 2020 bis
+  2025 sind es *r* = 0,189 bei p = 0,236 über alle 41 Wahlbezirke und *r* = 0,335 bei p = 0,037 ohne
+  1 und 10 — nur in der explorativen zweiten Spalte signifikant."
+- Kosten, gemessen an der Hauptseite: **714 Byte** der Absatz, **542 Byte** der Satz je Periode,
+  **40 Byte** der Kopfhinweis.
+- **Mit Lukas zu klären bleibt die Spalte trotzdem**, zusammen mit der Abweichung aus
+  `docs/baseline-2026-10-10.md` (siehe „Bekannt").
+
+## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56, 58, 59, 60 und 61)
 
 - Tests: 1177 schnelle (nox-Gate, parallel in rund 53 s, Abdeckung 98,4 %), 34 `slow` (rund 4 min über die
   volle Referenz, die sechs Datenpakete und die veröffentlichte Seite), 18 `bench` (grün gegen die
@@ -568,7 +597,10 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   `index.html` war es falsch. `georep run report --force` braucht seitdem niemand mehr dafür, und die
   Datenschritte laufen nicht mit neu (der globale Fingerprint ist unberührt).
 - Der Settings-Fingerprint ist global: ein neuer Schlüssel lässt alle Schritte einmal neu laufen. Hinnehmbar; ein Fingerprint je Schritt ist zurückgestellt (`docs/plans/00-synergien.md`, § 8).
-- Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab (`docs/baseline-2026-10-10.md`).
+- Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab
+  (`docs/baseline-2026-10-10.md`). Seit dem 2026-10-14 heißt die Spalte auf der Seite im Kopf
+  „explorativ", und darunter steht, dass dieselbe Spalte in der Wahlperiode 2014 bis 2020 mit
+  p = 0,082 nicht signifikant ist (Punkt 61); mit Lukas zu klären ist sie weiterhin.
 - Der Stamp des Schritts `report` liegt als `site/index.html.stamp.json` in der Datenwurzel, also in der
   Stadtseite; dort gehört er hin. Im veröffentlichten Ordner ist er seit dem 2026-10-13 nicht mehr dabei:
   `georep publish` lässt `*.stamp.json` beim Kopieren aus, wie die rsync-Zeilen im Monitor-Skript.
@@ -679,7 +711,15 @@ entscheiden könnte; sein § 4 den einen Vorschlag für den nächsten Schritt. N
 als zweite Quelle des Gremiums"): „unbekannt" fällt in der alten Periode auf 7,4 %, in der
 laufenden auf 0 % und in Mönchengladbach auf 44,0 %. Die 1,6 %, die der Befund für die alte Periode
 schätzte, sind es **nicht** geworden — die 1 535 mehrdeutigen Folgen zählte er mit, und die
-entscheiden nicht (siehe „Bekannt"). Offen bleiben aus § 6 die Punkte 2 bis 5.
+entscheiden nicht (siehe „Bekannt").
+
+**Die Punkte 2, 3 und 4 sind am 2026-10-14 dazugekommen** (`docs/decisions.md`, Punkte 59, 60 und
+61; oben je ein Abschnitt): Mönchengladbach zeigt Urheber und Parteien („unbekannt" 100 % → 0 %),
+die Wahlperiode 2014 bis 2020 liest ihre Urheber aus `Verwaltungsvorlage` und dem Vorlagenkopf
+ihrer Form („unbekannt" 55,9 % → 10,6 %), und die Spalte „ohne Ausreißer" von Tabelle 5 heißt im
+Kopf „explorativ" und nennt daneben das p der anderen Periode. **Offen bleibt aus § 6 nur noch
+Punkt 5**, die Anfrage an Mönchengladbach nach den Stimmbezirksflächen von 2025 (Konrads
+Handgriff).
 
 **Zwei Fremdzeilen-Bestände in Konrads Textstores** (Review-Befund 6, 2026-10-14): die Stores auf xtraspace
 tragen noch, was beim Packen herausgefallen ist — `cache/moenchengladbach/text/texts.parquet` 663 Zeilen,

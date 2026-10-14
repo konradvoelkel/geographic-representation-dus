@@ -276,7 +276,13 @@ seine Parteispalten zwischen Anteil, Abweichung vom Mittel aller Parteien und Ve
 die Zahlen kommen, steht in `docs/skalierung-2026-10.md`; die Entscheidungen in `docs/decisions.md`,
 Punkt 46. „Methode und Grenzen" schließt mit dem Absatz zur Wörterbuchgröße, dessen Korrelationen
 `analysis.scaling.dictionary_bias` messen — ohne Streuung entfällt er. Neben Tabelle 5 steht dieselbe Regression mit `x = Treffer je Begriff` (`model.per_term_regression`),
-und ihre Deutungssätze entstehen aus den Zahlen, nicht aus festem Text. Die veröffentlichten Tabellen stehen im Register
+und ihre Deutungssätze entstehen aus den Zahlen, nicht aus festem Text. Die Spalte „ohne
+Ausreißer" von Tabelle 5 trägt im Kopf das Wort „explorativ", und unter der Tabelle steht, warum
+(Punkt 61): sie ist nach dem Ansehen der Daten entstanden, und dieselbe Spalte der anderen
+Wahlperiode steht daneben, sobald das Vergleichsprofil sie kennt (`model.comparison.previous_pair`,
+dieselbe Rechnung über deren `results`). Das Urteil dazu hat vier Zweige aus den beiden p-Werten;
+der Abschnitt „Zwei Wahlperioden" sagt dasselbe als Satz je Periode über beide Spalten (ein
+Jinja-Makro `verdict` mit fünf Zweigen). Die veröffentlichten Tabellen stehen im Register
 `report/tables.py` (Datei, Beschreibung, Spaltendoku, CSV-Regeln, `optional` für profilabhängige Tabellen);
 daraus entstehen Downloads, `schema.json`, CSV-Dateien und die Spaltentabelle. Die Seite bleibt unter 1,5 MB
 (slow-Test); mit allen Abschnitten sind es 1,27 MB. Die beiden Abschnitte der Kontrollvariablen

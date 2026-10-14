@@ -56,7 +56,9 @@ der Karte der 41 Wahlbezirke (sechs Einfärbungen zur Wahl: Trefferquote, Treffe
 im Wörterbuch, Abweichung vom Stadtmittel, Wahlbeteiligung, Anteil der eigenen Bezirksvertretung; Tooltips,
 Klick-Markierung, die 1196 Orte als
 Punkte), dem Streudiagramm mit beiden Regressionsgeraden und Tabelle 5 samt derselben Regression je Begriff
-im Wörterbuch, einer sortierbaren Tabelle je
+im Wörterbuch (die Spalte „ohne Ausreißer“ heißt im Kopf „explorativ“, und darunter steht, warum:
+sie ist nach dem Ansehen der Daten entstanden, und in der Wahlperiode 2014 bis 2020 ist dieselbe
+Spalte nicht signifikant), einer sortierbaren Tabelle je
 Wahlbezirk, dem Abschnitt „Urheber und Parteien" (sechs kleine Karten je Partei mit Umschalter auf die
 Abweichung vom Mittel aller Parteien, Tabelle je Partei mit dem Abgleich zum Stimmenanteil, Tabelle je
 Wahlbezirk mit den Urheberklassen), dem Abschnitt „Kontrollvariablen" (Tabelle 6 mit dem Quartiersatlas),

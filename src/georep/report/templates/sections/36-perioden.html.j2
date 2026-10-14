@@ -1,6 +1,10 @@
 {% if model.comparison %}
 {% from "macros.html.j2" import more %}
 {% set c = model.comparison %}
+{# Punkt 61: ein Satz je Periode über beide Spalten von Tabelle 5. Das Urteil kommt aus den
+   p-Werten und nicht aus dem Text: so sagt der Satz dasselbe wie die Tabelle, auch wenn ein
+   neuer Datenstand die Zahlen verschiebt. #}
+{% macro verdict(pair) %}{% if pair.without is none %}{% if pair.all.p < 0.05 %}auf dem 5-%-Niveau signifikant{% else %}nicht signifikant{% endif %}{% elif pair.all.p < 0.05 and pair.without.p < 0.05 %}in beiden Spalten auf dem 5-%-Niveau signifikant{% elif pair.all.p < 0.05 %}über alle Wahlbezirke signifikant, ohne die beiden nicht{% elif pair.without.p < 0.05 %}nur in der explorativen zweiten Spalte signifikant{% else %}in keiner der beiden Spalten signifikant{% endif %}{% endmacro %}
 <section id="perioden">
 <h2>Zwei Wahlperioden</h2>
 <p>Dieselbe Suche über die Dokumente der {{ c.previous }} und der {{ c.current }}, beide mit demselben Wörterbuch (Straßen und Orte je Wahlbezirk, Stand der Erhebung) und beide auf den {{ c.districts }} Wahlbezirken dieser Auswertung. Die Wahlbeteiligung der älteren Wahl lag auf {{ c.precincts }} Stimmbezirken eines anderen Zuschnitts; sie ist über Flächenanteile umgerechnet: Wahlberechtigte, Wähler und Stimmen werden anteilig übertragen und je Zielbezirk nach größtem Rest ganzzahlig gerundet, sodass die Stadtsumme exakt erhalten bleibt. Anteile wie die Wahlbeteiligung entstehen erst danach aus den übertragenen Zahlen.</p>
@@ -39,6 +43,11 @@
 <p class="footnote">Dieselbe Rechnung wie für die {{ c.current }} im Abschnitt „Trefferquote und Wahlbeteiligung", nur mit den Zahlen der älteren Periode. Die ganze Seite für diese Periode steht unter <a href="{{ c.subpage }}">{{ c.previous }}</a>.</p>
 </div>
 </div>
+{% if model.regression %}
+{# Punkt 61: beide Perioden mit beiden Spalten, je ein Satz #}
+{% set old = c.previous_pair %}{% set cur = model.regression %}
+<p class="footnote">In der {{ c.previous }} liegt die Regression über alle {{ old.all.n }} Wahlbezirke bei <em>r</em> = {{ old.all.r|num(3) }} und p = {{ old.all.p|num(3) }}{% if old.without %}, ohne {{ old.excluded|join(' und ') }} bei <em>r</em> = {{ old.without.r|num(3) }} und p = {{ old.without.p|num(3) }}{% endif %} — {{ verdict(old) }}. In der {{ c.current }} sind es <em>r</em> = {{ cur.all.r|num(3) }} bei p = {{ cur.all.p|num(3) }} über alle {{ cur.all.n }} Wahlbezirke{% if cur.without %} und <em>r</em> = {{ cur.without.r|num(3) }} bei p = {{ cur.without.p|num(3) }} ohne {{ cur.excluded|join(' und ') }}{% endif %} — {{ verdict(cur) }}. Welche der beiden Spalten die Arbeit trägt, steht unter <a href="#zusammenhang">Tabelle 5</a>.</p>
+{% endif %}
 <h3>Je Wahlbezirk</h3>
 <p class="note">Spaltenköpfe sortieren; eine Zeile anklicken markiert den Bezirk auch in Karte und Streudiagrammen.</p>
 {{ more("perioden-tabelle", c.rows|length, model.preview_rows) }}
