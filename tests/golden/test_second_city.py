@@ -128,16 +128,15 @@ def test_running_again_changes_nothing(run: Layout, settings: Settings) -> None:
     assert all(o.status == "übersprungen" for o in again)
 
 
-def test_the_steps_of_a_city_without_party_names_and_context(settings: Settings) -> None:
-    """Welche Schritte eine zweite Stadt laufen lässt: die Urheber (Option 04) brauchen Namen.
+def test_the_steps_of_a_city_without_context(settings: Settings) -> None:
+    """Welche Schritte eine zweite Stadt laufen lässt.
 
-    Mönchengladbach bringt weder Fraktionsnamen (``[originators]``) noch Kontextdaten mit; die
-    Schritte entfallen, statt mit einem leeren Regelsatz zu laufen. Die Flächen (``shapes``) und
-    die Gremien laufen -- letztere seit Punkt 58 mit den Gremien aus der Beratungsfolge, denn die
-    Drucksachennummer nennt hier keines.
+    Kontextdaten bringt Mönchengladbach nicht mit, die Schritte entfallen statt mit einem leeren
+    Regelsatz zu laufen. Die Flächen (``shapes``), die Gremien und seit Punkt 59 die Urheber
+    laufen -- die Gremien mit der Beratungsfolge, denn die Drucksachennummer nennt hier keines.
     """
     names = [step.name for step in build_steps(settings, Layout.from_settings(settings))]
-    assert "parties" not in names and "context" not in names and "controls" not in names
+    assert "context" not in names and "controls" not in names
     assert "shapes" in names and "bodies" in names and "topics" in names
     # Punkt 45 und 58: die Ausschüsse stehen im Profil, der Klassifikator ist trotzdem aus --
     # nur 650 der 2 895 Dokumente tragen Text, und welche das sind, entscheidet der Server.
@@ -145,6 +144,34 @@ def test_the_steps_of_a_city_without_party_names_and_context(settings: Settings)
     assert "committees" not in names
     # Punkt 58: die Nummer trägt kein Kürzel, die Beratungsfolge die Gremien
     assert not settings.bodies.reference_pattern and len(settings.bodies.organizations) == 27
+    # Punkt 59: die Fraktionen stehen im Profil, also läuft der Schritt ``parties``
+    assert "parties" in names
+    assert [p.key for p in settings.originators.parties] == [
+        "CDU",
+        "SPD",
+        "GRUENE",
+        "FDP",
+        "Die_Linke",
+        "AfD",
+    ]
+    assert settings.originators.fraction_types == ["3 - Fraktionsantrag"]
+    assert settings.originators.person_types == ["6.1 - Mitgliederantrag"]
+
+
+def test_the_paper_type_carries_the_originator_of_the_second_city(run: Layout) -> None:
+    """Punkt 59: hier nennt die Dokumentart die Klasse, nicht der Titel und nicht der Textkopf.
+
+    Die Fixture trägt fünf ``3 - Fraktionsantrag`` und eine ``6.2 - Berichtsvorlage
+    Sondergremien``; die Klasse kommt bei allen sechs aus ``paper_type``, die Partei bei den
+    Fraktionsanträgen aus Titel oder Briefkopf.
+    """
+    attribution = pl.read_parquet(run.document_originators)
+    assert attribution.height == 6
+    classes = dict(attribution.group_by("urheber_art").len().iter_rows())
+    assert classes == {"Fraktion": 5, "Verwaltung": 1}
+    assert set(attribution.get_column("quelle").to_list()) <= {"paper_type", "name", "text"}
+    page = run.site_index.read_text(encoding="utf-8")
+    assert 'id="parteien"' in page and "Urheber und Parteien" in page
 
 
 # --- Übereinstimmung mit dem Straßenverzeichnis der Wahl ---------------------------------------

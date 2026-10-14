@@ -498,6 +498,11 @@ def test_the_section_states_the_coverage_and_the_method_names_its_limits(
     figures = model.originator_figures
     assert figures is not None
     assert f"{figures.verwaltung} Vorlagen der Verwaltung" in page.replace("\u202f", "")
+    # Punkt 59: der Satz zählt die Quellen und nennt keine Beispiele einer einzelnen Stadt
+    plain = page.replace(" ", "")
+    for label, count in figures.sources:
+        assert f"{count} {label}" in plain
+    assert "anfrage cdu-fraktion vom 28. Juli 2023" not in page
     assert "Zum Urheber:" in page  # der Absatz in „Methode und Grenzen"
     assert page.index('id="methode"') < page.index("Zum Urheber:")
     assert "nicht angetreten" in page  # die Grenze steht im Methodentext

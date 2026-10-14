@@ -267,3 +267,109 @@ seed = "none"                  # Review 2026-10-14, konsequent zu classify.enabl
 
 [classify]                     # Punkt 45: der passende Ausschuss je Dokument
 enabled = false                # Mönchengladbach hat Ausschüsse (oben), aber nur 650 der 2 895 Dokumente tragen Text, und welche das sind, entscheidet das Ratsinformationssystem (2 213 Hauptdateien antworten mit 404). Ein Klassifikator auf dieser Teilmenge wäre an einer nicht zufälligen Stichprobe gemessen; die Entscheidung gehört zu einem eigenen Schritt, nicht zu Punkt 58
+
+# --- Option 04 und Punkt 59: Urheber und Parteien --------------------------------------------------
+#
+# Anders als in Düsseldorf steht der Urheber hier **in der Dokumentart**, aber ohne die Fraktion zu
+# nennen: alle 16 Dokumentarten dieser Periode sind eindeutig einer Klasse zuzuordnen (gemessen am
+# 2026-10-14 an reference/moenchengladbach/raw/papers.jsonl, Summe 2 895). Darum stehen hier keine
+# Antragspräfixe, keine Fraktions-, Personen- oder Textmarker: jede Art trifft eine der vier Listen,
+# und keine der markerbasierten Quellen wird je befragt. Die Partei kommt bei einem Fraktionsantrag
+# aus dem Titel („Fraktionsantrag von DIE LINKE und DIE FRAKTION") oder aus dem Briefkopf des Texts
+# („spd-ratsfraktion mönchengladbach fraktion bündnis 90/die grünen mönchengladbach …").
+# Der OParl-Server füllt die Urheberfelder auch hier nicht (0 von 2 895); die Quelle `oparl` greift
+# ohne Codeänderung, sobald er sie füllt, und die Organisations-URLs unten stehen dafür bereit.
+[originators]
+admin_types = [                # 2 278 Dokumente: Vorlagen der Verwaltung und ihrer Betriebe
+    "1.1 - Beratungsvorlage",            # 1 144
+    "2.1 - Berichtsvorlage",             # 946
+    "6.5 - Beratungsvorlage Nat. Beirat", # 28, Beirat der unteren Naturschutzbehörde
+    "6.3 - Beratungsvorlage Sondergremien", # 29
+    "2.2 - Berichtsvorlage BV",          # 19, Bezirksvertretung
+    "8.3 - GMMG Berichtsvorlage",        # 19
+    "8.4 - GMMG Berichtsvorlage BetrA",  # 27, Betriebsausschuss des Gebäudemanagements
+    "8.1 - GMMG Beratungsvorlage",       # 27
+    "8.2 - GMMG Beratungsvorlage BetrA", # 10
+    "4 - Änderungsvorlage",              # 12; alle zwölf sind Nachträge („3373/X-1") zu Vorlagen der Verwaltung, der Textkopf nennt den Fachbereich. Der Änderungsantrag einer Fraktion heißt hier „3 - Fraktionsantrag"
+    "1.2 - Beratungsvorlage BV",         # 8
+    "6.2 - Berichtsvorlage Sondergremien", # 6
+    "7.1 - EWMG Beratungsvorlage",       # 2, Entwicklungsgesellschaft der Stadt
+    "7.2 - EWMG Berichtsvorlage",        # 1
+]
+citizen_types = []             # diese Stadt führt keine Dokumentart für Eingaben nach § 24 GO NRW
+fraction_types = ["3 - Fraktionsantrag"]   # 581 Dokumente; die Art nennt die Klasse, die Partei steht im Titel oder im Briefkopf
+person_types = ["6.1 - Mitgliederantrag"]  # 36; Anträge einzelner Mitglieder, vor allem des Seniorenrates („senr/3165/x … mitgliederantrag")
+
+# Die acht Fraktionen des Rates aus raw/organizations.json (Abruf vom 2026-10-14,
+# `classification = "Fraktion"`), Namen wörtlich, und was sie in der Auswertung bedeuten:
+#
+#   name                      shortName             id         Periode                 hier
+#   CDU                       CDU                   gr/105     ab 1999-10-01           CDU
+#   SPD                       SPD                   gr/112     ab 1999-10-01           SPD
+#   BÜNDNIS 90/DIE GRÜNEN     GRÜNE                 gr/108     ab 1999-10-01           GRUENE
+#   FDP / VOLT                FDP / VOLT            gr/106     ab 1999-10-01           FDP, Gruppe VOLT
+#   AfD MG                    AfD MG                gr/166     ab 2014-06-01           AfD
+#   DIE LINKE / DIE PARTEI    DIE LINKE/DIE PARTEI  gr/127     ab 2009-10-21           Die_Linke, Gruppe PARTEI
+#   Die FRAKTION              Die FRAKTION          gr/226     2020-11-01 bis 2025-10-31  Gruppe FRAKTION
+#   Fraktionslos              (leer)                gr/216     ohne Angabe             keine Zeile
+#
+# „Fraktionslos" ist der Sammelplatz für Mandate ohne Fraktion und kein Urheber, der sich in einem
+# Briefkopf nennt: das Wort steht in keinem Titel und in keinem Textkopf dieser Periode (gemessen
+# 2026-10-14). Eine Zeile mit einem Muster, das nichts trifft, wäre eine Behauptung ohne Beleg.
+[[originators.parties]]
+key = "CDU"
+label = "CDU"
+short = "CDU"
+patterns = ['\bcdu\b']         # trifft „cdu-ratsfraktion" und den Briefkopf „fraktion@cdu-mg.de"
+organizations = ["/organizations/gr/105"]
+[[originators.parties]]
+key = "SPD"
+label = "SPD"
+short = "SPD"
+patterns = ['\bspd\b']         # „spd-ratsfraktion", „spd fraktion bv ost"
+organizations = ["/organizations/gr/112"]
+[[originators.parties]]
+key = "GRUENE"
+label = "Bündnis 90/Die Grünen"
+short = "Grüne"
+patterns = ['grüne', 'gruene', 'bündnis ?90', 'bü ?90']  # „bündnis 90/die grünen", „bündnis 90 / die grünen-fraktion"
+organizations = ["/organizations/gr/108"]
+[[originators.parties]]
+key = "FDP"
+label = "FDP"
+short = "FDP"
+patterns = ['\bfdp\b']         # trifft auch den Tippfehler der Textextraktion „fdp-ratafraktion"
+organizations = ["/organizations/gr/106"]  # FDP / VOLT
+[[originators.parties]]
+key = "Die_Linke"
+label = "Die Linke"
+short = "Linke"
+patterns = ['\blinke\b']       # „fraktion die linke", „die linke.", „die linke-ratsfraktion"
+organizations = ["/organizations/gr/127"]  # DIE LINKE / DIE PARTEI
+[[originators.parties]]
+key = "AfD"
+label = "AfD"
+short = "AfD"
+patterns = ['\bafd\b']
+organizations = ["/organizations/gr/166"]  # AfD MG
+
+# Gruppen ohne Stimmenspalte im Wahlergebnis (columns.results.parties führt D1 bis D6): sie zählen
+# als Klasse „Fraktion", bekommen aber keine Hochburg-Kennzahl, weil es kein <Partei>_anteil gibt.
+[[originators.groups]]
+key = "FRAKTION"
+label = "Die FRAKTION"
+short = "FRAKTION"
+patterns = ['die fraktion']    # „ratsgruppe die fraktion mönchengladbach", „die fraktion bv ost"; alle acht Fundstellen dieser Periode nennen wirklich die Gruppe (gemessen 2026-10-14)
+organizations = ["/organizations/gr/226"]
+[[originators.groups]]
+key = "PARTEI"
+label = "Die PARTEI"
+short = "PARTEI"
+patterns = ['die partei']      # „die partei-ratsfraktion"; sitzt mit DIE LINKE in einer Fraktion
+organizations = []             # die Organisation gr/127 trägt beide Namen und steht bei Die_Linke
+[[originators.groups]]
+key = "VOLT"
+label = "Volt"
+short = "Volt"
+patterns = ['\bvolt\b']        # in dieser Periode in keinem Titel und keinem Textkopf (0 Treffer); die Zeile hält die Zuordnung der Fraktion FDP / VOLT fest
+organizations = []             # dito: gr/106 steht bei FDP

@@ -326,15 +326,56 @@ so ein Gremium, das weder ihre Nummer noch ihre Folge eindeutig nennt.
   (1 Dokument der Hauptperiode, 21 der alten, keines mit eindeutiger Folge): welches Gremium das
   ist, sagen die Daten nicht.
 
-## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56 und 58)
+## Urheber für Mönchengladbach (2026-10-14, `docs/decisions.md`, Punkt 59)
+
+Punkt 3 der Befunde ist umgesetzt: die Stadtseite hat den Abschnitt „Urheber und Parteien". Der
+Urheber steht hier in der **Dokumentart**, aber ohne die Fraktion zu nennen, darum kennt
+`[originators]` zwei neue Listen — `fraction_types` (`3 - Fraktionsantrag`, 581 Dokumente) und
+`person_types` (`6.1 - Mitgliederantrag`, 36). Steht die Art dort, ist die Klasse entschieden, und
+die Partei wird im Titel und im **ganzen** Textkopf gesucht statt in einem Fenster um einen Marker:
+die Briefköpfe stehen über 300 Zeichen weit.
+
+| Deckung | Mönchengladbach | Düsseldorf, Hauptperiode |
+|---|---|---|
+| Dokumente | 2 895 | 19 108 |
+| Verwaltung | 2 278 (78,7 %) | 9 933 (52,0 %) |
+| Fraktion | 581 (20,1 %) | 7 859 (41,1 %) |
+| Person | 36 (1,2 %) | 865 (4,5 %) |
+| Eingabe | 0 | 124 (0,6 %) |
+| **unbekannt** | **0 (0,0 %)** | 327 (1,7 %) |
+| Quelle: Dokumentart / Titel / Textkopf | 2 653 / 145 / 97 | 13 432 / 4 618 / 731 |
+| Fraktionen mit genannter Partei | **242 von 581 (41,7 %)** | 7 859 von 7 859 bis auf die interfraktionellen |
+
+- **Alle 16 Dokumentarten der Periode sind eindeutig** (Summe 2 895, gemessen 2026-10-14): 14 Arten
+  mit 2 278 Dokumenten sind Vorlagen der Verwaltung und ihrer Betriebe, `3 - Fraktionsantrag` ist
+  die Fraktion, `6.1 - Mitgliederantrag` die Person. „Urheber unbekannt" ist damit 0,0 % — die
+  offene Zahl liegt eine Ebene tiefer: 339 der 581 Fraktionsanträge nennen keine Partei, weil 390
+  von ihnen gar keinen Text tragen (die 404 des Servers) und die Briefköpfe der anderen
+  „fraktionsantragfraktion im rat der stadt mönchengladbach" sagen.
+- **Die acht Fraktionen stehen im Profil**, Namen wörtlich aus `raw/organizations.json`: sechs mit
+  Stimmenspalte als `[[originators.parties]]` (CDU, SPD, GRUENE, FDP, Die_Linke, AfD), Die FRAKTION,
+  Die PARTEI und Volt als Gruppen ohne Stimmenanteil. „Fraktionslos" bekommt keine Zeile: das Wort
+  steht in keinem Titel und in keinem Textkopf dieser Periode.
+- **Der Abgleich mit den Hochburgen findet nichts**, in allen 33 Wahlbezirken und für alle sechs
+  Parteien: CDU r = −0,012 (p = 0,95), SPD +0,037 (0,84), GRÜNE +0,091 (0,61), FDP −0,199 (0,27),
+  Die Linke +0,194 (0,28), AfD −0,098 (0,59). Die Bonferroni-Grenze liegt bei 0,008, erreicht wird
+  sie nirgends; die AfD hat 5 Dokumente in 3 Bezirken, ihre Zeile ist eine Zahl ohne Aussage.
+- **Der Satz des Abschnitts zählt seine Quellen**, statt drei Düsseldorfer Beispiele zu zitieren
+  („2 653 aus der Dokumentart, 145 aus dem Titel und 97 aus dem Textkopf"): auf der
+  Mönchengladbacher Seite waren die Beispiele falsch, denn keine Dokumentart dieser Stadt nennt
+  eine Partei.
+- Die Seite der Stadt wächst von 649 721 auf **819 149 Byte** (Budget 1 000 000, 18,1 % Luft); den
+  Zuwachs tragen die sechs Parteikarten mit 33 Flächen und die Tabelle je Wahlbezirk.
+
+## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56, 58 und 59)
 
 - Tests: 1177 schnelle (nox-Gate, parallel in rund 53 s, Abdeckung 98,4 %), 34 `slow` (rund 4 min über die
   volle Referenz, die sechs Datenpakete und die veröffentlichte Seite), 18 `bench` (grün gegen die
   Baseline), 4 `network` (nur von Hand). Alle drei am 2026-10-14 nach dem Review zu Punkt 58 mit
   Exit 0 gelaufen.
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
-  2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach (seit Punkt 58 ohne
-  `committees`, dafür mit den Gremien aus der Beratungsfolge). Voller Offline-Lauf auf der Referenz
+  2014 bis 2020, 21 in der laufenden Periode, 23 für Mönchengladbach (seit Punkt 58 ohne
+  `committees`, dafür mit den Gremien aus der Beratungsfolge; seit Punkt 59 mit `parties`). Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Gremien
   0,3 s seit Punkt 58, Kennzahlen 0,1 s).
 - Berichtsseite: `index.html` der Hauptseite **932 830 Bytes veröffentlicht** (Budget 1 000 000,

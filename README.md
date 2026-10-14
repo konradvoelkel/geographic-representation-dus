@@ -285,6 +285,13 @@ Wahlbezirke. Die absoluten Zahlen der beiden Städte sind darum nicht vergleichb
 Kachel „Dokumente mit Treffer“ jeder Stadtseite nennt den Anteil an allen Dokumenten **und** den an denen
 mit Text.
 
+Was eine Stadt an Konfiguration mitbringen muss, zeigen die Urheber (Punkt 59): Düsseldorfs
+Dokumentarten nennen die Fraktion („Anfrage SPD“), Mönchengladbachs nennen nur die Klasse
+(`3 - Fraktionsantrag`). Darum stehen in `[originators]` neben `admin_types` und `citizen_types`
+auch `fraction_types` und `person_types` — Dokumentarten, die die Klasse allein entscheiden; die
+Partei kommt dann aus Titel und Briefkopf. Mönchengladbachs 16 Dokumentarten sind damit vollständig
+zugeordnet (0 % „Urheber unbekannt“), und 242 der 581 Fraktionsanträge nennen ihre Partei.
+
 ## Daten und Herkunft
 
 | Daten | Quelle | im Repo |
@@ -297,6 +304,7 @@ mit Text.
 | Kürzel und Namen der Gremien (Rat, Bezirksvertretungen, Ausschüsse, Beiräte) | Organisationsliste des Ratsinformationssystems (Stand 11.10.2026) und Dokumenttitel; das Gremium je Dokument liest der Parser aus der Drucksachennummer und, wo die nichts sagt, aus der Beratungsfolge | `src/georep/profiles/duesseldorf.toml`, Block `[bodies]` |
 | Beratungsfolge je Dokument 2020 bis 2025 (welche Gremien es beraten haben, Vollabruf der Metadaten 2026-10-14) | Ratsinformationssystem Düsseldorf über OParl 1.1, Body 0015, Feld `consultation` | `snapshots/duesseldorf-beratungsfolge/` (88 KiB) |
 | Mönchengladbach: Namen und Kürzel der Gremien (Abruf 2026-10-14) | Ratsinformationssystem Mönchengladbach über OParl 1.1, Body 0011, Endpunkt `organizations` | `reference/moenchengladbach/raw/organizations.json` |
+| Mönchengladbach: Namen der acht Fraktionen und die Urheberklasse je Dokumentart | derselbe Abruf (`classification = "Fraktion"`) und die 16 `paperType`-Werte des Pakets | `src/georep/profiles/moenchengladbach.toml`, Block `[originators]` |
 | Sozialdaten je Sozialraum, Stand 31.12.2021 (Kontrollvariablen) | Quartiersatlas Düsseldorf 2024, Open-Data-Portal der Stadt Düsseldorf (CSV und GeoJSON, Datenlizenz Deutschland Namensnennung 2.0) | `context/` |
 | Fraktionen, Ausschüsse und Bezirksvertretungen | Ratsinformationssystem Düsseldorf über OParl 1.1, Endpunkt `organizations` | nein, `georep fetch organizations` holt sie |
 | Wahlergebnis je Stimmbezirk und je Wahlbezirk, Ratswahl 13.09.2020 | Open-Data-Portal der Stadt Düsseldorf (CSV, Datenlizenz Deutschland Namensnennung 2.0) | `snapshots/2014-2020/external/` |

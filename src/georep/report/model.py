@@ -555,6 +555,12 @@ class OriginatorFigures:
     unbekannt: int
     with_two_parties: int
     from_oparl: int  # Dokumente, deren Urheber der Server geliefert hat (Stand 2026-10-09: null)
+    # Punkt 59: welche Quelle wie oft entschieden hat. Der Abschnitt nannte dafür bis zum
+    # 2026-10-14 drei Düsseldorfer Beispiele; mit einer zweiten Stadt, deren Dokumentart die
+    # Klasse trägt und die Fraktion verschweigt, waren sie falsch. Jetzt zählt der Satz.
+    from_type: int = 0
+    from_name: int = 0
+    from_text: int = 0
 
     @property
     def classified(self) -> int:
@@ -563,6 +569,17 @@ class OriginatorFigures:
     @property
     def coverage(self) -> float:
         return self.classified / self.documents if self.documents else 0.0
+
+    @property
+    def sources(self) -> tuple[tuple[str, int], ...]:
+        """Die Quellen, die wirklich etwas beigetragen haben, in der Reihenfolge der Abfrage."""
+        named = (
+            ("aus OParl", self.from_oparl),
+            ("aus der Dokumentart", self.from_type),
+            ("aus dem Titel", self.from_name),
+            ("aus dem Textkopf", self.from_text),
+        )
+        return tuple((label, count) for label, count in named if count)
 
 
 # --- Option 02: die Periode und, wenn eingeschaltet, der Vergleich mit einer zweiten -----------
@@ -1645,6 +1662,9 @@ def originator_overview(attribution: pl.DataFrame) -> OriginatorFigures:
         unbekannt=counted["unbekannt"],
         with_two_parties=attribution.filter(pl.col(PARTEIEN).list.len() >= 2).height,
         from_oparl=attribution.filter(pl.col(QUELLE) == "oparl").height,
+        from_type=attribution.filter(pl.col(QUELLE) == "paper_type").height,
+        from_name=attribution.filter(pl.col(QUELLE) == "name").height,
+        from_text=attribution.filter(pl.col(QUELLE) == "text").height,
     )
 
 

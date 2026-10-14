@@ -4,6 +4,18 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Mönchengladbach zeigt Urheber und Parteien** (`docs/decisions.md`, Punkt 59): die Stadtseite
+  hat den Abschnitt „Urheber und Parteien" mit sechs Parteikarten und dem Abgleich gegen den
+  Stimmenanteil. Hier nennt die **Dokumentart** die Klasse und nicht den Urheber, darum kennt
+  `[originators]` zwei neue Listen: `fraction_types` („3 - Fraktionsantrag", 581 Dokumente) und
+  `person_types` („6.1 - Mitgliederantrag", 36). Alle 16 Dokumentarten der Periode sind damit
+  zugeordnet, „Urheber unbekannt" ist **0,0 %** (Verwaltung 2 278, Fraktion 581, Person 36), und
+  242 der 581 Fraktionsanträge (41,7 %) nennen ihre Partei im Titel oder im Briefkopf. In keiner
+  der 33 Wahlbezirke erklärt der Dokumentanteil einer Partei ihren Stimmenanteil (r von −0,20 bis
+  +0,19, p von 0,27 bis 0,95).
+- Der Satz, der im Abschnitt „Urheber und Parteien" die Quellen nennt, **zählt** sie jetzt
+  („2 653 aus der Dokumentart, 145 aus dem Titel und 97 aus dem Textkopf") statt drei Düsseldorfer
+  Beispiele zu zitieren; mit einer zweiten Stadt waren die Beispiele falsch.
 - **Die Beratungsfolge ist die zweite Quelle des Gremiums** (`docs/decisions.md`, Punkt 58): neben
   der Drucksachennummer entscheidet jetzt, wo die nichts sagt, die Liste der Gremien, die ein
   Dokument beraten haben (OParl `consultation`). Sie entscheidet nur, wenn sie **genau eine**

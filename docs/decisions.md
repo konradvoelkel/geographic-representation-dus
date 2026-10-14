@@ -1661,3 +1661,71 @@ Implikation und keine Gleichheit.
   acht Ausschüsse ein eigenes Thema, gesät aus 11 bis 21 Dokumenten mit Text, und ihre Namen
   standen danach als Zeilen in der Sensitivitätstabelle der Seite. Das sah nach einer Zuordnung aus,
   die diese 650 Texte nicht tragen; freie Themen sagen dasselbe, ohne einen Ausschuss zu behaupten.
+
+## 59. Eine Dokumentart kann die Urheberklasse nennen, ohne den Urheber zu nennen (2026-10-14)
+
+Punkt 3 der Befunde vom 2026-10-14 (`docs/befunde-2026-10-14.md`, § 2 und § 6): Mönchengladbachs
+Stadtseite zeigte keine Urheber, weil `[originators]` im Profil leer war und der Schritt `parties`
+darum fehlte. Die Daten geben die Zuordnung her, aber **an einer anderen Stelle als in Düsseldorf**:
+dort nennt die Dokumentart die Fraktion („Anfrage SPD", „Antrag CDU/Grüne"), hier nennt sie nur die
+**Klasse** — `3 - Fraktionsantrag` (581 Dokumente), `6.1 - Mitgliederantrag` (36) — und wer den
+Antrag gestellt hat, steht im Titel oder im Briefkopf des Texts.
+
+**Zwei neue Listen statt einer neuen Quelle.** `[originators]` kannte `admin_types` (Verwaltung) und
+`citizen_types` (Eingabe); neu sind `fraction_types` und `person_types`. Steht die Art dort, ist die
+Klasse entschieden, und gesucht wird nur noch die Partei: zuerst im Titel („Fraktionsantrag von DIE
+LINKE und DIE FRAKTION vom 18.02."), dann im **ganzen** Textkopf statt in einem Fenster um einen
+Marker. Das Fenster ist bei dieser Art falsch: bei einer Dokumentart, die den Urheber schon benennt,
+ist der Kopf der Briefkopf des Antragstellers und keine Fundstelle in einem fremden Text — die
+Briefköpfe stehen über 300 Zeichen weit („mönchengladbach ratsfraktion franz-meyers-haus
+regentenstr. 11 … email: fraktion@cdu-mg.de"), ein Fenster von 80 Zeichen erreicht sie nicht. Nennt
+keine der beiden Quellen eine Partei, bleibt es bei der Klasse, so wie bei einem interfraktionellen
+Antrag.
+
+**Alle 16 Dokumentarten dieser Periode sind eindeutig** (gemessen am 2026-10-14 an
+`reference/moenchengladbach/raw/papers.jsonl`, Summe 2 895): 14 Arten mit 2 278 Dokumenten sind
+Vorlagen der Verwaltung und ihrer Betriebe (`1.1 - Beratungsvorlage` 1 144, `2.1 - Berichtsvorlage`
+946, die vier `8.x GMMG` 83, die zwei `7.x EWMG` 3, `4 - Änderungsvorlage` 12 und fünf weitere),
+`3 - Fraktionsantrag` ist die Fraktionsklasse und `6.1 - Mitgliederantrag` die Person. „Urheber
+unbekannt" ist damit **0,0 %**, und das ist keine Schönung: die Klasse steht in der Dokumentart, die
+der Server mitliefert, nicht in einem Muster über einem Text, den es bei 2 245 Dokumenten nicht gibt.
+Die offene Zahl steht eine Ebene tiefer — **242 der 581 Fraktionsanträge (41,7 %) nennen ihre
+Partei**, die übrigen 339 sind eine Fraktion ohne nennbare Partei, weil 390 von ihnen gar keinen Text
+tragen und der Briefkopf der anderen „fraktionsantragfraktion im rat der stadt mönchengladbach"
+sagt.
+
+**Die acht Fraktionen stehen im Profil, mit ihren Namen aus `raw/organizations.json`** (Abruf vom
+2026-10-14, `classification = "Fraktion"`): CDU, SPD, BÜNDNIS 90/DIE GRÜNEN, FDP / VOLT, AfD MG,
+DIE LINKE / DIE PARTEI, Die FRAKTION, Fraktionslos. Sechs tragen eine Stimmenspalte
+(`columns.results.parties`, D1 bis D6) und werden `[[originators.parties]]`; VOLT und DIE PARTEI
+sitzen in einer Fraktion mit FDP beziehungsweise DIE LINKE und werden `[[originators.groups]]`, wie
+Die FRAKTION. **Fraktionslos bekommt keine Zeile**: das ist der Sammelplatz für Mandate ohne
+Fraktion und kein Urheber, der sich in einem Briefkopf nennt — das Wort steht in keinem Titel und in
+keinem Textkopf dieser Periode. Eine Zeile mit einem Muster, das nichts trifft, wäre eine Behauptung
+ohne Beleg.
+
+**Der Satz des Abschnitts zählt jetzt seine Quellen.** „Der Urheber steht stattdessen in der
+Dokumentart, im Titel oder im Textkopf („Anfrage SPD", „Antrag der CDU-Fraktion", „(anfrage
+cdu-fraktion vom 28. Juli 2023)")" war ein Satz mit drei Düsseldorfer Belegen in einer Vorlage, die
+jede Stadt rendert; auf der Mönchengladbacher Seite war er falsch, denn keine Dokumentart dieser
+Stadt nennt eine Partei. Der Satz nennt stattdessen die gemessenen Zähler je Quelle
+(`OriginatorFigures.sources`, eine Quelle ohne Beitrag fehlt): „2 653 aus der Dokumentart, 145 aus
+dem Titel und 97 aus dem Textkopf".
+
+**Verworfen:**
+
+- **Mönchengladbachs Dokumentarten in Düsseldorfs `motion_prefixes` und Muster einpassen**:
+  `3 - Fraktionsantrag` enthält kein Antragspräfix mit einer Partei dahinter, und ein Muster, das
+  aus „Fraktionsantrag" eine Fraktion macht, wäre genau das, was die beiden neuen Listen jetzt als
+  Daten sagen — nur versteckt in einem Regex.
+- **`4 - Änderungsvorlage` offen lassen**: alle zwölf sind Nachträge („3373/X-1") zu Vorlagen der
+  Verwaltung, und die beiden mit Text nennen ihren Fachbereich („fachbereich fb 51", „fb 14
+  rechnungsprüfung"). Der Änderungsantrag einer Fraktion heißt in dieser Stadt
+  `3 - Fraktionsantrag` — die Art ist also eindeutig, nicht nur plausibel.
+- **Den Briefkopf auch in Düsseldorf ganz lesen** statt in einem Fenster: dort nennt die
+  Dokumentart die Klasse **nicht**, der Text muss also erst sagen, dass es überhaupt ein
+  Fraktionsantrag ist. Ohne das Fenster zählte „die cdu-fraktion beantragt" in einer
+  Verwaltungsvorlage mit (Option 04, § 2).
+- **`[originators]` in `defaults.toml` ablegen, damit jede Stadt etwas erbt**: die Dokumentarten
+  sind das Stadtspezifischste, was es gibt (16 hier, 39 dort, und keine einzige gemeinsam). Eine
+  geerbte Liste wäre in jeder zweiten Stadt falsch, und `deep_merge` ersetzt Listen ohnehin.

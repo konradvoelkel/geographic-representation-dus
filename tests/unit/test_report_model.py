@@ -587,6 +587,22 @@ def test_the_party_section_matches_polars(mini_run: Layout, default_settings: Se
     assert figures.classified + figures.unbekannt == figures.documents
     assert 0.0 <= figures.coverage <= 1.0
     assert figures.from_oparl == 0  # die Mini-Fixture trägt keine Urheberfelder
+    # Punkt 59: der Satz des Abschnitts zählt die Quellen, statt Beispiele einer Stadt zu nennen.
+    # Die Zähler zerlegen die Dokumente vollständig, und eine Quelle ohne Beitrag fehlt im Satz.
+    assert (
+        figures.from_oparl + figures.from_type + figures.from_name + figures.from_text
+        == figures.classified
+    )
+    assert [label for label, _ in figures.sources] == [
+        "aus der Dokumentart",
+        "aus dem Titel",
+        "aus dem Textkopf",
+    ]
+    assert dict(figures.sources) == {
+        "aus der Dokumentart": figures.from_type,
+        "aus dem Titel": figures.from_name,
+        "aus dem Textkopf": figures.from_text,
+    }
 
     districts = pl.read_parquet(mini_run.district_originators)
     assert len(model.originators) == districts.height
