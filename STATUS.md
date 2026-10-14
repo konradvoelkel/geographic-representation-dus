@@ -276,9 +276,9 @@ in **keinem** Paket (233 MB, 3,9 GB, 585 MB).
 
 ## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52 und 56)
 
-- Tests: 1106 schnelle (nox-Gate, parallel in rund 51 s, Abdeckung 98,4 %), 28 `slow` (3 min 9 s über die
-  volle Referenz und die drei Datenpakete), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von
-  Hand). Alle drei am 2026-10-14 mit Exit 0 gelaufen.
+- Tests: 1134 schnelle (nox-Gate, parallel in rund 50 s, Abdeckung 98,4 %), 30 `slow` (3 min 40 s über die
+  volle Referenz, die drei Datenpakete und die veröffentlichte Seite), 17 `bench` (grün gegen die
+  Baseline), 4 `network` (nur von Hand). Alle drei am 2026-10-14 nach dem Review mit Exit 0 gelaufen.
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
