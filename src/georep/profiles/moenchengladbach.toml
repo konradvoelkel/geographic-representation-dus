@@ -7,7 +7,7 @@
 # andere Kommune dieses Betreibers.
 
 profile = "moenchengladbach"   # eigener Unterordner unter data_root und cache_root; die PDF-Dateinamen der OParl-Bodies kollidieren sonst
-reference_root = "./reference/moenchengladbach"  # das Paket des vollen Laufs (Stufe G), noch nicht im Repo
+reference_root = "./reference/moenchengladbach"  # das Paket des vollen Laufs vom 2026-10-13, seit dem 2026-10-14 im Repo (Punkt 56; README dort mit Zahlen und Pruefsummen)
 
 [city]
 slug = "moenchengladbach"

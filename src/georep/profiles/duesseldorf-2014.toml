@@ -12,7 +12,7 @@
 base = "duesseldorf"
 
 profile = "2014-2020"          # Ordnername unter data_root und cache_root; trennt Daten, Stamps, PDFs und Texte von der Hauptperiode
-reference_root = "snapshots/2014-2020"  # eingefrorener Datensatz dieser Periode (Konrads Lauf, Stufe H des Plans); fehlt er, nennt bootstrap die Dateien und bricht nicht ab
+reference_root = "snapshots/2014-2020"  # eingefrorener Datensatz dieser Periode (Konrads Lauf vom 2026-10-13, seit dem 2026-10-14 im Repo, Punkt 56); fehlt er, nennt bootstrap die Dateien und bricht nicht ab
 
 [period]                       # beide Grenzen einschließlich, disjunkt zur Hauptperiode (die beginnt am 2020-09-13)
 start = 2014-05-25             # Ratswahl 2014
@@ -28,6 +28,7 @@ election = "Ratswahl 2020"     # ihr Ergebnis liefert Nenner und Zuschnitt diese
 # ersetzt Listen, die Fußzeile nennt damit genau die Dateien, aus denen diese Seite gerechnet ist.
 [report]
 data_note = "aus dem Datensatz der Arbeit (Stand November 2025)"
+monitoring_url = ""            # der Link auf die laufende Periode gehört auf die Hauptseite; von hier aus zeigte „2025/" in den eigenen Ordner (2014-2020/2025/), wo nichts liegt
 
 [[report.sources]]
 name = "Ratswahl 2020, Ergebnis je Stimmbezirk und je Wahlbezirk"

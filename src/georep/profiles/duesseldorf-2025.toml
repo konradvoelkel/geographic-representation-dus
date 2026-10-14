@@ -14,6 +14,7 @@
 base = "duesseldorf"
 
 profile = "2025"               # Ordnername unter data_root und cache_root; trennt Daten, Stamps, PDFs und Texte von der Hauptperiode
+reference_root = "snapshots/2025"  # der eingefrorene Erstabruf dieser Periode (Konrads Lauf vom 2026-10-13, snapshots/2025/README.md); ohne ihn hätte GitHub Pages keine Dokumente für diese Seite. Er veraltet mit jedem Lauf des Monitors; das ist Absicht
 
 [period]
 start = 2025-09-15             # der Tag nach der Wahl; Dokumente ab hier zählen
@@ -23,11 +24,12 @@ label = "Wahlperiode seit der Kommunalwahl 2025"  # Anzeigename im Kopf, im Date
 dictionary = "base"            # Straßen und Orte der Hauptperiode (Stand November 2025): so unterscheiden sich nur die Dokumente, und die Treffer bleiben über die Jahre vergleichbar (Plan § 2, Frage 8)
 
 [bootstrap]
-seed_corpus = false            # kein Korpus der Hauptperiode im Store dieser Periode: sonst stünden 19 108 Paper von 2020 bis 2025 darin und pdfs lüde deren PDFs (Stunden)
+seed_corpus = true             # seit dem 2026-10-14 (Punkt 56): die Referenz dieses Profils ist sein eigener Schnappschuss, nicht der Korpus der Arbeit, und der gehört in den Store. Vorher war der Schlüssel false, weil reference_root auf ./reference zeigte und sonst 19 108 Paper von 2020 bis 2025 hier gelandet wären. Gefüllt wird nur ein leerer Store; wer fortschreibt, behält seinen Stand
 
 [report]
 regression = false             # zur laufenden Periode gibt es keine Wahlbeteiligung: kein Streudiagramm, keine Tabelle 5, kein Umschalter auf der Karte
 data_note = "aus dem Datensatz der Arbeit (Stand November 2025), eingefroren für die ganze Periode"
+monitoring_url = ""            # die laufende Periode ist diese Seite; ein Link auf „2025/" zeigte von hier auf sich selbst
 
 [sources.oparl]
 incremental = true             # je Lauf nur Geändertes: modified_since = letztes modified minus ein Tag

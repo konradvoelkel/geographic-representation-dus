@@ -20,6 +20,7 @@ election = "Ratswahl 2025"
 [report]
 ris_url = "https://ris-oparl.itk-rheinland.de/"
 data_note = "aus dem Datensatz der Arbeit (Stand November 2025)"  # steht im Kopf, solange kein eigener Abruf gelaufen ist
+monitoring_url = "2025/"       # Option 07: der Abschnitt „Laufende Wahlperiode" verlinkt die Unterseite des Profils duesseldorf-2025. Relativ zur Stadtseite, denn dort legen sie `pages.yml` und `deploy/bin/georep-monitor.sh` ab (seit dem Schnappschuss snapshots/2025 im Repo, 2026-10-14); die beiden Periodenprofile setzen den Schlüssel wieder leer, sonst verlinkte eine Unterseite sich selbst oder ins Nichts
 # Sätze, die nur für diese Stadt in „Methode und Grenzen" stehen. Typografische Anführungszeichen
 # „…“: ein ASCII-" würde den TOML-String beenden, und als Daten escapt Jinja es zu &#34;.
 notes = [

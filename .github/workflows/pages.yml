@@ -58,6 +58,27 @@ jobs:
           [ -n "$MAIN" ] && [ -n "$PERIOD" ] && [ -n "$PROFILE" ] || exit 1
           rm -rf "$MAIN/$PROFILE" || exit 1
           cp -r "$PERIOD" "$MAIN/$PROFILE" || exit 1
+      # Option 07: die laufende Periode, sobald ihr Schnappschuss im Repo liegt
+      # (snapshots/2025/README.md). Derselbe Handgriff wie fuer die zweite Periode; der Link auf
+      # diese Unterseite steht als report.monitoring_url im Stadtprofil, die Hauptseite oben trägt
+      # ihn also schon. Der Schnappschuss ist der Erstabruf und veraltet mit jedem Lauf des
+      # Monitors (deploy/README.md); Pages zeigt seinen Stand, die Seite nennt ihr Abrufdatum.
+      - name: Laufende Periode, wenn ihr Schnappschuss da ist
+        run: |
+          if [ ! -d snapshots/2025 ]; then
+            echo "snapshots/2025 fehlt: keine Unterseite der laufenden Periode"
+            exit 0
+          fi
+          uv run georep --profile duesseldorf-2025 bootstrap || exit 1
+          uv run georep --profile duesseldorf-2025 run || exit 1
+          uv run georep paths >"$RUNNER_TEMP/main.paths" || exit 1
+          uv run georep --profile duesseldorf-2025 paths >"$RUNNER_TEMP/monitor.paths" || exit 1
+          MAIN=$(sed -n 's/^site=//p' "$RUNNER_TEMP/main.paths")
+          PERIOD=$(sed -n 's/^site=//p' "$RUNNER_TEMP/monitor.paths")
+          PROFILE=$(sed -n 's/^profile=//p' "$RUNNER_TEMP/monitor.paths")
+          [ -n "$MAIN" ] && [ -n "$PERIOD" ] && [ -n "$PROFILE" ] || exit 1
+          rm -rf "$MAIN/$PROFILE" || exit 1
+          cp -r "$PERIOD" "$MAIN/$PROFILE" || exit 1
       # Option 01: die zweite Stadt baut nur mit, wenn ihr Paket unter reference/<slug>/ liegt;
       # sonst meldet publish sie als "kein Lauf" und die Vergleichsseite entfällt (Exit 0).
       - name: Zweite Stadt, wenn ihr Paket da ist

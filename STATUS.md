@@ -1,11 +1,14 @@
 # Status
 
-Stand 2026-10-13, `main` auf `v0.12.0`: der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
+Stand 2026-10-14, `main` auf `v0.12.0`: der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
 abgearbeitet; `bartzsch-exakt` zeigt auf `v0.11.0`, den letzten Stand, der die Zahlen der Arbeit exakt
 reproduziert. Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
 Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>), und der Ausbau in
-acht Optionen ist gemerged (`docs/plan-ausbau-2026-10.md`, Pläne und Abnahmen unter `docs/plans/`). Aufbau in
+acht Optionen ist gemerged (`docs/plan-ausbau-2026-10.md`, Pläne und Abnahmen unter `docs/plans/`). Konrads
+drei Netzläufe vom 2026-10-13 sind durch, und ihre Daten liegen als Pakete im Repo („Datenpakete im Repo");
+GitHub Pages baut damit jeden Teil der Seite ohne Netz. Der vierte Lauf, der Vollabruf der Metadaten der
+Hauptperiode, läuft in eine eigene Datenwurzel („Nächster Schritt"). Aufbau in
 `docs/architecture.md`, Gründe in `docs/decisions.md`. Fakten mit Datum, Invarianten ohne.
 
 ## Abgeschlossen
@@ -229,20 +232,58 @@ Datensatz, kein Lauf).
   Texten, die der flache Lauf aus lokal extrahierten PDFs nahm (pypdf, siehe „Bekannt"); keine Tabelle danach
   merkt es.
 
-## Zahlen (2026-10-13, `v0.11.0` plus Punkt 44, 45, 46, 47 und 52)
+## Datenpakete im Repo (2026-10-14, `docs/decisions.md`, Punkt 56)
 
-- Tests: 1065 schnelle (nox-Gate, parallel in rund 56 s, Abdeckung 98,4 %), 20 `slow` (rund 3 min über die volle
-  Referenz), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
+Konrads drei Netzläufe vom 2026-10-13 liegen als eingefrorene **Eingaben** im Repo; damit baut GitHub Pages
+jede Seite ohne Netz, auch die der zweiten Stadt, der zweiten Periode und der laufenden Periode. Die Antwort
+auf die Fragen 1.2, 2.1 und 3.3 („können so erstmal ins Repo, ist ja alles relativ klein") ist damit
+umgesetzt.
+
+| Paket | Bytes | Inhalt | Profil |
+|---|---|---|---|
+| `reference/moenchengladbach/` | 3 980 958 | `external/` (4), `raw/` (3), `cache/text/texts.parquet` | `moenchengladbach` |
+| `snapshots/2014-2020/` | 37 875 851 | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
+| `snapshots/2025/` | 13 894 254 | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
+
+Zusammen 53,2 MiB neben `reference/` (81,8 MiB) und `context/` (2,1 MiB), also 137,1 MiB in fünf Paketen.
+Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, den Zahlen des Laufs und der SHA-256 jeder Datei;
+`tests/unit/test_data_packages.py` hält Dateiliste, Größe und Prüfsumme gegen das README (die Prüfsummen und
+die Zeilenzahlen als `slow`-Test) und lässt keine PDFs, Stamps, Manifeste und Caches hinein. Die PDFs liegen
+in **keinem** Paket (233 MB, 3,9 GB, 585 MB).
+
+- **Das Format ist dasselbe für alle drei**: `raw/papers.jsonl` und `cache/text/texts.parquet`, gelesen von
+  einer Funktion (`bootstrap.seed_stores_from_native`). Der Textstore liegt unter `cache/text/`, weil
+  `Layout.reference_view` `cache_root` auf `<reference_root>/cache` setzt. Der Schnappschuss aus
+  `deploy/README.md` (`out/2025/snapshots/<JJJJ-MM>/` mit `SHA256SUMS` und `stand.json`) ist etwas anderes:
+  ein **Ergebnis** für die Besucher der Seite, nicht eine Eingabe von `bootstrap`.
+- **Die laufende Periode hat jetzt ihre eigene Referenz** (`reference_root = "snapshots/2025"`,
+  `bootstrap.seed_corpus = true`): `bootstrap` füllt nur einen leeren Store, der fortgeschriebene Stand auf
+  kookaburra bleibt also stehen. Nur `bootstrap --force` setzt ihn auf den Stand des Pakets zurück.
+- **Die Hauptseite verlinkt `2025/`** (`report.monitoring_url` im Stadtprofil, in beiden Periodenprofilen
+  wieder leer); `pages.yml` hat dafür einen Block wie für die zweite Periode und legt die Unterseite nach
+  `<stadt>/site/2025/`.
+- **Der Nachbau des Pages-Workflows von Hand** (2026-10-14, frische Datenwurzel auf xtraspace, danach
+  gelöscht) baut alle Seiten: Hauptseite 932 274 Byte mit den Abschnitten „Zwei Wahlperioden" und „Laufende
+  Wahlperiode", `2014-2020/index.html` 818 172, `2025/index.html` 717 246, `moenchengladbach/index.html`
+  641 633, `vergleich.html` 88 979, dazu vier `karte.html`; `georep publish` meldet „2 Städte, 1 Vergleich,
+  187 Dateien, 34,6 MB" und `PublishSummary.over_budget` ist leer.
+
+## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52 und 56)
+
+- Tests: 1099 schnelle (nox-Gate, parallel in rund 49 s, Abdeckung 98,4 %), 27 `slow` (über die volle
+  Referenz und die drei Datenpakete), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` 0,89 MB (886 328 Bytes, Budget 1,0 MB; die beiden Umschalter kosten
-  110 KB, die Literaturübersicht 13,2 KB, die Vorschau langer Tabellen 4,1 KB), 53 Dateien zusammen
-  13,1 MB (neu `begriffe.json`, 96 KB), fünfzehn
-  Abschnitte in Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung,
-  parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads); „Zwei
-  Wahlperioden" und „Laufende Wahlperiode" erscheinen erst mit den Daten aus Konrads Läufen.
+- Berichtsseite: `index.html` der Hauptseite 932 274 Bytes (Budget 1 000 000, **6,8 % Luft**) mit beiden
+  Periodenabschnitten, 55 Dateien zusammen 13,2 MB; ohne die Abschnitte „Zwei Wahlperioden" und „Laufende
+  Wahlperiode" sind es 886 328 Bytes (die beiden Umschalter kosten 110 KB, die Literaturübersicht 13,2 KB,
+  die Vorschau langer Tabellen 4,1 KB, `begriffe.json` liegt mit 96 KB daneben). Siebzehn Abschnitte in
+  Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung, perioden,
+  parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads,
+  laufend). Die Unterseiten: `2014-2020/` 818 172, `2025/` 717 246, `moenchengladbach/` 641 633,
+  `vergleich.html` 88 979 Bytes.
 - Quelltext: 59 Python-Dateien unter `src/`, rund 16 600 Zeilen; fünf Profile im Paket.
 - Mutation (2026-10-13, `docs/mutation-2026-10-13.md`): 882 Mutanten über die dreizehn Module des
   Ausbaus, 717 getötet (81,3 %), 165 Überlebende — davon 100 in Vertragsgrenzen, 27 nachgerechnet
@@ -374,9 +415,50 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 - Der OParl-Server liefert für Düsseldorf keine Urheberfelder: 0 von 19 108 Rohobjekten und keines der sechs Paper der Seite vom 2026-10-09, auch der „Antrag FDP" nicht. Option 04 leitet den Urheber darum aus `paperType`, Titel und Textkopf ab (Deckung 98,3 %); `georep fetch papers --max-pages 1` ist die Probe, ob sich das geändert hat, und die Quelle `oparl` greift dann ohne Codeänderung.
 - Im Wahlbezirk 11 ist Die Linke nicht angetreten (0 Stimmen; die Stimmbezirks-CSV führt dort die 0, anderswo Dutzende). Der Abgleich Dokumentanteil gegen Stimmenanteil lässt solche Bezirke je Partei aus, Die Linke hat also n = 40 statt 41.
 - Die Ergebnis-CSV der Ratswahl heißt im Open-Data-Portal inzwischen `…_Stimmbezirke_1.csv` (Datensatzseite am 2026-10-11); `profiles/duesseldorf.toml` zeigt auf `…_0.csv`, woher die Referenz stammt. Vor einem `fetch opendata` nachsehen.
-- Mönchengladbach (Option 01, 2026-10-12): Profil, Kette und Vergleichsseite stehen, der volle Abruf steht aus (`docs/runbook-stadt.md`, 3 bis 5 h). Bis sein Paket unter `reference/moenchengladbach/` liegt, meldet `georep publish` die Stadt als „kein Lauf" und baut keine Vergleichsseite; CI überspringt sie. Der Marker `betrifft` kam in der PDF-Stichprobe in 0 von 5 Dokumenten vor (alles Fraktionsanträge der laufenden Periode); ohne Marker durchsucht die Kette den ganzen Text, das Runbook misst am echten Korpus nach (Frage 1.5).
+- **Mönchengladbachs Ratsinformationssystem liefert nur 658 von 2 871 Hauptdateien aus** (gemessen am
+  vollen Lauf vom 2026-10-13): die übrigen 2 213 antworten auf ihre `downloadfiles`-URL mit `404`. Der Abruf
+  isoliert jeden Fehler und läuft durch, die Kette rechnet also mit 650 Texten; die Stadtseite sagt es in
+  den Kernzahlen („Ratsdokumente 2 895, 650 mit Text, 2 245 ohne"). Jede absolute Zahl dieser Stadt ruht
+  damit auf rund einem Viertel der Periode und ist mit Düsseldorf nicht der Höhe nach vergleichbar; der
+  Städtevergleich sagt das im Abschnitt „Vergleichbarkeit". Woran die 404 liegen, sagt der Server nicht.
+- **Mönchengladbachs Straßen stimmen nur zu 86,2 % je Wahlbezirk mit dem amtlichen Verzeichnis überein**
+  (2 651 bekannte Namen, 66,5 % im selben Stimmbezirk; gemessen 2026-10-13). Die Grenze des Runbooks ist
+  90 %, also ist Frage 1.3 fällig: die Flächen stammen aus dem Datensatz „Wahlen" vom 08.06.2022, die Wahl
+  war am 14.09.2025. Gerechnet wird je Wahlbezirk, kleine Neuzuschnitte innerhalb eines Bezirks fallen
+  heraus; der Satz an `gdi@moenchengladbach.de` steht aus (Konrads Handgriff).
+- Mönchengladbach (Option 01, 2026-10-12): der Marker `betrifft` kam in der PDF-Stichprobe in 0 von 5
+  Dokumenten vor (alles Fraktionsanträge der laufenden Periode); ohne Marker durchsucht die Kette den ganzen
+  Text. Der volle Lauf hat das nicht geändert, der Marker bleibt wirkungslos (Frage 1.5).
 - Die votemanager-CSVs der ITK Rheinland tragen keine Lizenzangabe; die Seite nennt Quelle und Herausgeber und schreibt „Lizenz laut Anbieter nicht angegeben" (Frage 1.4).
-- Mönchengladbachs Drucksachennummern tragen kein Kürzel des Gremiums (`0682/XI`, Stichprobe vom 2026-10-12, Body 0011). Das Profil lässt `bodies.reference_pattern` darum leer; der Abschnitt „Gremien" zeigt für diese Stadt 100 % „unbekannt". Woher das Gremium käme (OParl-Feld `organization` der Vorlage oder die Sitzungszuordnung), misst der volle Lauf nach (`docs/plans/01-staedte.md`, § 8, Frage 1.12).
+- Mönchengladbachs Drucksachennummern tragen kein Kürzel des Gremiums (`0682/XI`; über alle 2 895 Nummern
+  des vollen Laufs vom 2026-10-13 bestätigt, Body 0011). Das Profil lässt `bodies.reference_pattern` darum
+  leer; der Abschnitt „Gremien" zeigt für diese Stadt 100 % „unbekannt". Woher das Gremium käme, bleibt das
+  OParl-Feld `consultation` oder die Sitzungszuordnung (`docs/plans/01-staedte.md`, § 8, Frage 1.12).
+- **Die Drucksachennummern der Periode 2014 bis 2020 tragen bis 2019 eine Amtsnummer statt eines
+  Gremiumskürzels** (gemessen 2026-10-14 an `snapshots/2014-2020/raw/papers.jsonl`): 18 018 der 22 215
+  Nummern haben die Form `<Amtsnummer>/ <Nummer>/<Jahr>` (`61/ 12/2014`), die 4 197 übrigen die heutige
+  (`BV7/108/2019`, `RAT/270/2020`); der Wechsel liegt im Jahr 2019. 18 070 Dokumente stehen damit auf
+  „Gremium unbekannt" (81,3 %), gegen 0 von 19 108 in der Hauptperiode. 22 verschiedene Amtsnummern kommen
+  vor; jede zeigt zwar in über 98 % der Fälle auf dieselbe `consultation`-Organisation, aber ein Amt ist
+  kein Gremium, und ohne `raw/organizations.json` (Netzschritt) ist die Organisations-ID kein Name.
+- **56 % der Urheber der Periode 2014 bis 2020 bleiben unbekannt**: die Dokumentart heißt dort in 9 601 von
+  22 215 Fällen `Vorlage aus der Politik` und nennt keine Fraktion, während die Hauptperiode `Antrag CDU`,
+  `Anfrage SPD/Volt` und so weiter führt (39 Dokumentarten in jeder Periode, aber andere). Die Muster in
+  `[originators]` beschreiben die heutige Benennung; eigene für die alte wären eine neue Messung am Textkopf
+  und sind nicht gebaut (`docs/plans/04-parteien.md`). Die Seite dieser Periode zeigt den Anteil offen.
+- **Der Schnappschuss `snapshots/2025/` veraltet mit jedem Lauf des Monitors**, und das ist in Ordnung: er
+  ist der Erstabruf vom 2026-10-13 (4 095 Dokumente), GitHub Pages zeigt diesen Stand, und die Seite nennt
+  ihr Abrufdatum selbst. Die aktuelle Fassung liefert der Timer auf kookaburra oder dem VPS — Konrads
+  späterer Schritt. Neu gepackt wird der Schnappschuss nur von Hand (`snapshots/2025/README.md`).
+- **Die Hauptseite hat mit beiden Periodenabschnitten nur noch 6,8 % Luft im Budget** (932 274 von
+  1 000 000 Byte, gemessen 2026-10-14). Die Abschätzung in `docs/seitengroesse-2026-10.md` lag bei rund
+  35 KB für „Zwei Wahlperioden"; zusammen mit „Laufende Wahlperiode" sind es 45 946 Byte. Rund 40 KB
+  Reserve liegen gemessen in § 5 jenes Dokuments (doppelte SVG-Pfade der Parteikarten 28 KB, Suchindex
+  8 KB, Leerraum 4,4 KB), falls ein weiterer Abschnitt dazukommt.
+- **`pages.yml` endet mit `georep status`, und der sagt seitdem für jeden Schritt „offen: Settings
+  geändert"**: die Hauptseite baut zuletzt das Profil `duesseldorf-vergleich`, dessen Settings-Fingerprint
+  ein anderer ist als der des Standardprofils, mit dem `status` läuft. Der Fingerprint ist global (siehe
+  unten), die Zeile ist eine Diagnose und kein Gate; der Schritt endet mit Exit 0.
 - Der Stadtbezirk Mönchengladbachs steckt im ersten Zeichen der Stimmbezirksnummer (`10401`: Stadtbezirk 1, Wahlbezirk 04, Stimmbezirk 01); das Profil liest ihn mit `columns.results.city_district_from_precinct`. Bestätigt ist die Regel bisher nur an der Fixture (Wahlbezirke 04, 09, 23) und an der Zahl der Stadtbezirke (vier); der volle Lauf prüft sie gegen die Wahlbezirks-CSV (`docs/plans/01-staedte.md`, § 8, Frage 1.13).
 
 ## Nächster Schritt
@@ -408,19 +490,28 @@ einmal neu (23 s): dieselben Zahlen, drei andere Texte (siehe „Bekannt"). Wer 
 Wer von vorn anfängt (frischer Klon, anderer Rechner), hat keinen Handgriff — `bootstrap` und `run` legen den
 Ordner selbst an.
 
-Dann Konrads Läufe, je mit Runbook; bis dahin fehlen die betroffenen Teile auf der veröffentlichten Seite und
-der Pages-Workflow überspringt sie (`.github/workflows/pages.yml`, Pages-Quelle „GitHub Actions"):
+**Konrads Läufe sind durch** (2026-10-13), und ihre Daten liegen als Pakete im Repo (oben, Punkt 56); der
+Pages-Workflow baut damit jeden Teil der Seite (`.github/workflows/pages.yml`, Pages-Quelle „GitHub
+Actions"). Erledigt:
 
-1. Periode 2014 bis 2020 (README, „Zweite Periode abrufen": rund 3 h Metadaten, 8 bis 11 h PDFs,
-   wiederaufnehmbar), dann der Schnappschuss unter `snapshots/2014-2020` und die Abschnitte „Zwei
-   Wahlperioden".
-2. Mönchengladbach (`docs/runbook-stadt.md`, 3 bis 5 h), dann das Paket unter `reference/moenchengladbach/`
-   und die Vergleichsseite `vergleich.html` aus `georep publish`.
-3. Erstabruf der laufenden Periode (`deploy/README.md`, 16 bis 30 min Metadaten, rund 2,3 h PDFs), danach
-   Timer auf kookaburra oder dem VPS; Domain, R2-Bucket und Token sind offene Fragen (`docs/plans/fragen.md`,
-   Fragen 7.1 bis 7.4).
-4. Optional der Vollabruf der Hauptperiode (2 bis 3 h; zeigt, ob der OParl-Server `modified_since` beachtet
-   und ob die Urheberfelder inzwischen gefüllt sind).
+1. Periode 2014 bis 2020: 22 215 Dokumente, 22 116 PDFs, 21 838 mit Text, 36 324 Treffer, 77 Monate →
+   `snapshots/2014-2020/` und die Abschnitte „Zwei Wahlperioden".
+2. Mönchengladbach: 2 895 Dokumente, 658 PDFs (die übrigen `404`), 1 704 Treffer über 33 Wahlbezirke →
+   `reference/moenchengladbach/` und `vergleich.html` aus `georep publish`.
+3. Erstabruf der laufenden Periode: 4 095 Dokumente, 4 088 PDFs, 5 448 Treffer, 14 Monate →
+   `snapshots/2025/` und die Unterseite `2025/`.
+
+Offen bleibt daran:
+
+- **Der Timer** auf kookaburra oder dem VPS, der die laufende Periode fortschreibt (`deploy/README.md`,
+  Installation und Erstabruf sind beschrieben, der Trockenlauf ist gelaufen). Bis dahin zeigt die
+  veröffentlichte Seite den Stand des Schnappschusses vom 2026-10-13.
+- **VPS und Domain** später, kein R2-Bucket (Konrads Antworten vom 2026-10-13 auf 7.1 und 7.4).
+- Der **Vollabruf der Metadaten der Hauptperiode** nach `data-vollabruf/` lief am 2026-10-13/14 noch
+  (Worktree `…/georep/worktrees/netzlauf`, Log unter `…/georep/logs/netzlauf-2026-10-13.log`); er zeigt, ob
+  der OParl-Server `modified_since` beachtet und ob die Urheberfelder inzwischen gefüllt sind.
+- **Die Anfrage an Mönchengladbach** nach den Stimmbezirksflächen von 2025 (Frage 1.3): mit 86,2 %
+  Übereinstimmung je Wahlbezirk liegt die Stadt unter der Grenze des Runbooks.
 
 Der Rückstand `docs/todo.md` ist abgearbeitet (`v0.12.0`): Punkt 4, Bartzschs Methodik, am 2026-10-12
 (`docs/methodik-review-2026-10.md`, Regeln in `docs/decisions.md`, Punkte 43 und 44); Punkt 1, das Themenmodell,
@@ -428,8 +519,8 @@ am 2026-10-12 (`docs/themenmodell-2026-10.md`, offene Annahmen in dessen § 7); 
 Kennzahlen, am 2026-10-13 (`docs/skalierung-2026-10.md`, § 8); Punkt 5, die Literaturübersicht, am 2026-10-13
 (Punkt 47; Titel der Arbeit und die Kölner Untersuchung sind nachzutragen); Punkt 2, die Seitengröße, am
 2026-10-13 (`docs/seitengroesse-2026-10.md`, § 8); Punkt 6, die Lizenz, am 2026-10-12 (Punkt 42).
-Die acht wichtigsten Fragen aus `docs/plans/fragen.md` hat Konrad am 2026-10-13 beantwortet; umgesetzt ist
-davon der Umzug nach `data/duesseldorf/` (Frage 1.7, Punkt 52, am 2026-10-13). Offen bleiben die Handgriffe,
-die daran hängen: die Datenpakete ins Repo legen (nach den Läufen) und der VPS samt Domain, beides später. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,
+Die acht wichtigsten Fragen aus `docs/plans/fragen.md` hat Konrad am 2026-10-13 beantwortet; umgesetzt sind
+davon der Umzug nach `data/duesseldorf/` (Frage 1.7, Punkt 52, am 2026-10-13) und die Datenpakete im Repo
+(Fragen 1.2, 2.1, 3.3, Punkt 56, am 2026-10-14). Offen bleibt der VPS samt Domain, später. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,
 wenn jemand es will: ein Ersatz für FlashText oder pypdf nur nach neuer Messung (`docs/decisions.md`, Punkt 14);
 die beiden deal-Eigenheiten upstream melden; die Abweichung in Tabelle 5 „ohne Ausreißer" mit Lukas klären.

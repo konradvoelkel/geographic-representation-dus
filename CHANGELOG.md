@@ -4,6 +4,32 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Die Datenpakete der drei Netzläufe vom 2026-10-13 liegen im Repo**, und damit baut GitHub Pages
+  **jede** Seite ohne Netz (`docs/decisions.md`, Punkt 56; Konrads Antwort auf die Fragen 1.2, 2.1
+  und 3.3): `reference/moenchengladbach/` (3 980 958 Bytes), `snapshots/2014-2020/` (37 875 851) und
+  `snapshots/2025/` (13 894 254), je mit README, Lizenz, Abrufdatum, den Zahlen des Laufs und der
+  SHA-256 jeder Datei. Jedes Paket trägt nur Eingaben: `external/`, `raw/papers.jsonl` und
+  `cache/text/texts.parquet`; **die PDFs sind nicht dabei** (233 MB, 3,9 GB, 585 MB), ebenso keine
+  Stamps, kein `manifest.jsonl`, kein `http.sqlite`. `tests/unit/test_data_packages.py` hält das
+  fest, auch die Größen (zusammen 137,1 von 180 MiB) und die Prüfsummen aus den READMEs.
+  - **Die zweite Stadt und die zweite Periode rechnen aus dem Repo**: `vergleich.html` mit beiden
+    Städten und der Abschnitt „Zwei Wahlperioden" entstehen seitdem auch in CI.
+  - **Die laufende Periode hat ihre eigene Referenz** (`snapshots/2025`, `seed_corpus = true` im
+    Profil `duesseldorf-2025`): `bootstrap` füllt Metadaten und Texte daraus, wenn der Store leer
+    ist. Wer die Periode fortschreibt, behält seinen Stand — nur `bootstrap --force` setzt ihn auf
+    den Schnappschuss zurück. Vorher stand `seed_corpus = false`, weil die Referenz dieses Profils
+    der Korpus der Arbeit war. Ein Umzug auf einen anderen Rechner braucht damit kein R2-Bucket
+    (`deploy/README.md`, „Umzug").
+  - **Die Hauptseite verlinkt die laufende Periode** (`report.monitoring_url = "2025/"` im Profil
+    `duesseldorf.toml`, stadtneutral weiter leer): `pages.yml` legt die Unterseite nach
+    `<stadt>/site/2025/`, wie schon die der Periode 2014 bis 2020. Wer lokal nur `georep run`
+    laufen lässt, hat den Link, aber die Seite dahinter erst nach dem Lauf des Periodenprofils.
+  - Befunde der Läufe, die in den READMEs und in `STATUS.md` stehen: Mönchengladbach liefert nur
+    **658 von 2 871** Hauptdateien aus (die übrigen `404`), seine Straßen stimmen nur zu **86,2 %**
+    je Wahlbezirk mit dem amtlichen Verzeichnis überein (Flächen von 2022), und alle 2 895
+    Dokumente bleiben „Gremium unbekannt"; in der Periode 2014 bis 2020 sind es 18 070 von 22 215,
+    weil die Drucksachennummern bis 2019 eine Amtsnummer statt eines Gremiumskürzels tragen.
+
 - **Ein einzelner 504 von Overpass beendet nicht mehr den Schritt `streets_osm`**
   (`sources.osm.retries`, Standard 3, `docs/decisions.md`, Punkt 55): bei `504` und `429` fragt
   `fetch_street_names` je Stimmbezirk bis zu dreimal nach, mit wachsender Pause (`delay_s`, dann 2×,

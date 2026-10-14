@@ -1004,17 +1004,42 @@ def test_publish_cities_are_plain_unique_slugs(tmp_path: Path) -> None:
 
 def test_report_and_bootstrap_switches_stay_out_of_the_fingerprint(tmp_path: Path) -> None:
     base = load_settings(cwd=tmp_path)
-    assert (
-        base.bootstrap.seed_corpus and base.report.regression and base.report.monitoring_url == ""
-    )
+    assert base.bootstrap.seed_corpus and base.report.regression
+    # Stadtneutral ist der Link leer; das Profil Düsseldorfs setzt ihn, seit snapshots/2025 im
+    # Repo liegt und auch GitHub Pages die Unterseite baut (Punkt 56, 2026-10-14).
+    assert base.report.monitoring_url == "2025/"
     (tmp_path / "settings.toml").write_text(
-        '[bootstrap]\nseed_corpus = false\n[report]\nregression = false\nmonitoring_url = "2025/"\n',
+        "[bootstrap]\nseed_corpus = false\n[report]\nregression = false\n"
+        'monitoring_url = "laufend/"\n',
         encoding="utf-8",
     )
     switched = load_settings(cwd=tmp_path)
     assert not switched.bootstrap.seed_corpus and not switched.report.regression
-    assert switched.report.monitoring_url == "2025/"
+    assert switched.report.monitoring_url == "laufend/"
     assert switched.fingerprint() == base.fingerprint()  # Anzeige, kein Parquet-Ergebnis
+
+
+def test_only_a_city_profile_links_the_page_of_the_current_period(tmp_path: Path) -> None:
+    """Punkt 56: der Link steht auf der Stadtseite, denn nur dort liegt die Unterseite daneben.
+
+    ``pages.yml`` und ``deploy/bin/georep-monitor.sh`` legen die laufende Periode nach
+    ``<stadt>/site/<profil>/``. Von einer Unterseite aus zeigte ``2025/`` darum in einen Ordner,
+    den es nicht gibt (``2014-2020/2025/``), oder auf sich selbst.
+    """
+    links = {
+        name: load_settings(profile=name, cwd=tmp_path).report.monitoring_url
+        for name in available_profiles()
+    }
+    assert links == {
+        "duesseldorf": "2025/",
+        "duesseldorf-vergleich": "2025/",  # dieselbe Seite, nur mit einem Schritt mehr
+        "duesseldorf-2014": "",
+        "duesseldorf-2025": "",
+        "moenchengladbach": "",
+    }
+    # Der Link zeigt auf den Ordner eines Profils, das es wirklich gibt
+    monitor = load_settings(profile="duesseldorf-2025", cwd=tmp_path)
+    assert links["duesseldorf"] == f"{monitor.profile}/"
 
 
 def test_monitoring_url_must_be_a_relative_link(tmp_path: Path) -> None:
@@ -1026,7 +1051,7 @@ def test_monitoring_url_must_be_a_relative_link(tmp_path: Path) -> None:
             load_settings(cwd=tmp_path)
 
 
-def test_profile_2025_is_an_open_period_without_corpus_seed(tmp_path: Path) -> None:
+def test_profile_2025_is_an_open_period_seeded_from_its_own_snapshot(tmp_path: Path) -> None:
     s = load_settings(profile="duesseldorf-2025", cwd=tmp_path)
     assert s.profile == "2025" and s.default_profile == "duesseldorf-2025"
     assert s.city.name == "Düsseldorf"  # base = "duesseldorf": dieselbe Stadt, andere Periode
@@ -1034,8 +1059,11 @@ def test_profile_2025_is_an_open_period_without_corpus_seed(tmp_path: Path) -> N
     assert s.context.root is None and s.topics.k == 0  # was die Regression braucht, entfällt
     assert s.period.start == date(2025, 9, 15) and s.period.end is None
     assert s.period.election_day == date(2025, 9, 14)
-    assert not s.bootstrap.seed_corpus and not s.report.regression
-    assert s.report.monitoring_url == ""
+    # Punkt 56: die Referenz dieses Profils ist sein eigener Schnappschuss, nicht der Korpus der
+    # Arbeit -- darum darf und soll ``bootstrap`` die Stores daraus füllen (nur leere).
+    assert s.reference_root == Path("snapshots/2025")
+    assert s.bootstrap.seed_corpus and not s.report.regression
+    assert s.report.monitoring_url == ""  # diese Seite *ist* die laufende Periode
     # Alles andere bleibt wie im Stadtprofil: Quellen, Suche
     assert s.sources.oparl.endpoint.endswith("/bodies/0015/papers")
     assert s.sources.oparl.stop_when_older and s.sources.oparl.incremental

@@ -738,7 +738,9 @@ def test_the_timeline_of_the_model_is_the_parquet_table(
     assert [row.month for row in model.timeline] == frame["monat"].to_list()
     assert sum(row.documents for row in model.timeline) == model.figures.documents
     assert all(row.with_hits <= row.with_text <= row.documents for row in model.timeline)
-    assert model.monitoring_url == ""  # Standard: kein Abschnitt auf der Hauptseite
+    # Punkt 56: das Profil Düsseldorfs verlinkt die Unterseite der laufenden Periode, seit
+    # snapshots/2025 im Repo liegt; stadtneutral ist der Schlüssel leer (defaults.toml).
+    assert model.monitoring_url == "2025/"
 
 
 def test_the_report_switches_turn_off_regression_and_name_the_monitoring_page(

@@ -116,6 +116,8 @@ Punkt 45; ohne Themenmodell und Klassifikator rund 9 s).
 
 ```
 reference/                 der Datensatz der Arbeit; wird nur gelesen (guard_writable)
+  moenchengladbach/        das Paket der zweiten Stadt: external/, raw/, cache/text/texts.parquet (Punkt 56)
+snapshots/<periode>/       dieselbe Form je weiterer Wahlperiode: 2014-2020 und 2025 (Punkt 56)
 context/                   Fremddaten je Raumeinheit mit README (Quelle, Lizenz, Stand, SHA-256); wird nur gelesen
 data_root/                 Standard ./data, gitignored
   <profil>/                ein Ordner je Lauf: jede Stadt unter ihrem Slug, jede Periode unter ihrem
@@ -139,6 +141,15 @@ cache_root/                Standard data_root/cache
                            Lebensdauer je Quelle, PDFs nie
 ```
 
+**Ein Datenpaket ist ein `reference_root`**: `Layout.reference_view()` liest es als Datenwurzel mit
+`cache_root = <reference_root>/cache`, darum liegt der Textstore eines Pakets unter `cache/text/`. Vier
+Pakete gibt es (Punkt 56): `reference/` (82 MiB, der Datensatz der Arbeit, Altformat
+`interim/paper_with_text.json`), `reference/moenchengladbach/` (3,8 MiB), `snapshots/2014-2020/` (36,1 MiB)
+und `snapshots/2025/` (13,2 MiB) im eigenen Format (`raw/papers.jsonl`, `cache/text/texts.parquet`), dazu
+`context/` (2,1 MiB) für die Fremddaten. Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, den Zahlen
+des Laufs und der SHA-256 jeder Datei; `tests/unit/test_data_packages.py` hält beides zusammen und lässt
+keine PDFs, Stamps, Manifeste und Caches hinein. Die PDFs liegen in keinem Paket.
+
 Eingaben behalten die Formate der Quellen, weil sie Rohdaten sind; alles Abgeleitete ist Parquet und trägt
 `georep.schema_version` in den Metadaten. Append-artige Metadaten (`papers.jsonl`, `manifest.jsonl`) bleiben
 JSONL. CSV entsteht nur für Menschen (`georep export`). Zwei Läufe auf denselben Eingaben schreiben
@@ -146,7 +157,7 @@ byteidentische Parquet-Dateien: alle Ausgaben sind sortiert, Mengen werden zu so
 
 ## Sicherheit: was „nichts geht kaputt" heißt
 
-1. Unter `reference/` schreibt nichts; `Layout.guard_writable` verweigert jeden Pfad darunter, auch über Symlinks.
+1. Unter `reference/` und unter dem `reference_root` eines Profils (`snapshots/<periode>/`) schreibt nichts; `Layout.guard_writable` verweigert jeden Pfad darunter, auch über Symlinks.
 2. Jeder Schreibvorgang ist atomar: Temporärdatei im Zielverzeichnis, `fsync`, `os.replace`. Ein Abbruch hinterlässt die alte Datei oder die neue, nie eine halbe.
 3. Fehlende Eingaben sind `MissingInputError` vor dem Lauf, leere Ergebnisse `EmptyResultError` vor dem Schreiben, falsche Spalten `SchemaError`.
 4. Wiederholung ohne Änderung ist ein No-op und sagt das; `--dry-run` zeigt den Plan.

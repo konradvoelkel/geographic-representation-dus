@@ -316,7 +316,7 @@ def test_status_names_profile_and_city(project: Path, capsys: pytest.CaptureFixt
 # --- Option 07: Monitoring -------------------------------------------------------------------
 
 
-def test_profile_2025_bootstraps_without_a_corpus_and_shows_its_root(
+def test_profile_2025_bootstraps_from_its_own_snapshot_and_shows_its_root(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     assert main(["--profile", "duesseldorf-2025", "status"]) == 0
@@ -327,7 +327,11 @@ def test_profile_2025_bootstraps_without_a_corpus_and_shows_its_root(
     assert "Profil:     duesseldorf-2025 (Düsseldorf)" in status  # base = duesseldorf
     assert main(["--profile", "duesseldorf-2025", "bootstrap"]) == 0
     out = capsys.readouterr().out
-    assert "Stores nicht aus der Referenz gefüllt" in out and "nicht gefunden" in out
+    # Punkt 56: die Referenz dieses Profils ist sein eigener Schnappschuss (``snapshots/2025``,
+    # hier die Mini-Fixture an seiner Stelle), und dessen Dokumente gehören in den Store -- sonst
+    # hätte GitHub Pages für diese Seite keinen Korpus. Vorher stand ``seed_corpus = false``, weil
+    # die Referenz der Korpus der Arbeit war.
+    assert "200 Paper und 200 Texte aus der Referenz" in out
     root = project / "data" / "2025"
     external = {p.name for p in (root / "external").iterdir()}
     assert {"Stimmbezirk_Wahlergebnis.csv", "Stimmbezirke_2025.geojson"} <= external
@@ -336,9 +340,9 @@ def test_profile_2025_bootstraps_without_a_corpus_and_shows_its_root(
     assert {"streets_per_district.json", "wikipedia_dict.json"}.isdisjoint(
         {p.name for p in (root / "raw").iterdir()} if (root / "raw").is_dir() else set()
     )
-    assert not (root / "raw" / "papers.jsonl").exists()  # kein Korpus der Hauptperiode
+    assert (root / "raw" / "papers.jsonl").is_file()  # der Korpus dieser Periode
     assert not _layout(project).raw.exists()  # die Hauptperiode bleibt unberuehrt
-    # Ohne Store plant der Metadatenschritt einen vollstaendigen Abruf; kein echter Abruf
+    # Der Metadatenschritt bleibt geplant: er hat keine Eingaben und holt je Lauf Geändertes
     assert main(["--profile", "duesseldorf-2025", "run", "--dry-run", "--online", "papers"]) == 0
     assert "papers       geplant" in capsys.readouterr().out
 

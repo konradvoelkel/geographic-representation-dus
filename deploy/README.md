@@ -50,16 +50,24 @@ Zugangsdaten braucht, schreibt `$CREDENTIALS_DIRECTORY/rclone.conf` ins Kommando
 
 1. `uv sync --locked` (beim ersten Mal mit Netz zu PyPI).
 2. `georep --profile $BASE bootstrap`, dann `georep --profile $MONITOR_PROFILE bootstrap`: die Hauptperiode muss
-   zuerst da sein, weil das Profil mit `period.dictionary = "base"` deren Straßen und Orte liest;
-   das Profil selbst bekommt nur Wahlergebnis und Stimmbezirke, **keinen** Korpus der Arbeit
-   (`seed_corpus = false`).
+   zuerst da sein, weil das Profil mit `period.dictionary = "base"` deren Straßen und Orte liest.
+   Das Profil selbst bekommt Wahlergebnis und Stimmbezirke aus **seinem eigenen** Schnappschuss
+   `snapshots/2025/` und, wenn sein Store leer ist, auch dessen Dokumente und Texte
+   (`seed_corpus = true` seit dem 2026-10-14, `docs/decisions.md` Punkt 56). Auf einem Rechner,
+   der die Periode schon fortschreibt, bleibt der eigene Stand stehen; auf einem frischen beginnt
+   der Lauf beim Erstabruf vom 2026-10-13, statt 4 088 PDFs noch einmal zu holen. Den Korpus der
+   **Arbeit** bekommt dieses Profil nach wie vor nicht: seine Referenz ist der Schnappschuss, nicht
+   `reference/`.
 3. `georep --profile … fetch papers --force`: eine Seite OParl mit `modified_since` (rund 45 bis 85 s).
    Das `--force` muss sein: der Schritt hat keine Eingaben und wäre sonst „aktuell".
 4. `georep … fetch pdfs texts`: nur die neuen PDFs (rund 15 je Tag) und deren Texte.
 5. `georep … run`: die Offline-Kette bis zur Seite des Profils.
 6. `GEOREP_REPORT__MONITORING_URL=2025/ georep --profile $BASE run`: die Hauptseite aus der
-   Referenz, diesmal mit dem Link auf die laufende Periode (GitHub Pages baut sie ohne diesen Link).
-   Sie entsteht im Ordner der Stadt, nicht flach unter `data_root` (Punkt 52).
+   Referenz, mit dem Link auf die laufende Periode. Sie entsteht im Ordner der Stadt, nicht flach
+   unter `data_root` (Punkt 52). Die Umgebungsvariable ist seit dem 2026-10-14 nur noch der Gurt:
+   `report.monitoring_url = "2025/"` steht im Stadtprofil, weil auch GitHub Pages die Unterseite
+   baut (Punkt 56). Sie bleibt im Skript, damit der Lauf auch mit einem Stadtprofil ohne den
+   Schlüssel die verlinkte Seite erzeugt.
 7. `out/` zusammenstellen: Hauptseite nach `out/`, Profil nach `out/2025/`, beim ersten Lauf eines
    Monats `out/2025/snapshots/<JJJJ-MM>/` als Kopie der Downloads mit `SHA256SUMS`; ältere über
    `MONITOR_SNAPSHOT_KEEP` hinaus werden entfernt, der Lauf druckt beide Zahlen.
@@ -166,7 +174,13 @@ GEOREP_SOURCES__OPARL__INCREMENTAL=false georep --profile duesseldorf-2025 fetch
 
 ## Umzug von kookaburra auf den VPS
 
-Der Cache ist die einzige Datenmenge, die zählt (PDFs und Textstore). Auf dem VPS:
-`rclone copy georep:georep/cache/2025 $GEOREP_CACHE_ROOT/2025`, dann einen Lauf starten: die
-Stamps entscheiden selbst, was fehlt. Die Metadaten (`papers.jsonl`) kommen genauso aus
-`georep:georep/2025/raw/`. Nichts muss neu abgerufen werden.
+Der Cache ist die einzige Datenmenge, die zählt (PDFs und Textstore). Ohne R2-Bucket (Konrads
+Antwort zu Frage 7.4 vom 2026-10-13: keines) macht das der Schnappschuss im Repo: ein `bootstrap`
+auf dem neuen Rechner füllt Metadaten und Texte aus `snapshots/2025/`, und der erste Lauf holt nur
+nach, was seit dem 2026-10-13 dazugekommen ist. Die PDFs kommen dabei **nicht** mit; sie sind nur
+die Eingabe der Extraktion, und die Texte liegen schon im Store. Wer sie doch braucht (eine andere
+Extraktion, eine Prüfung), holt sie neu: 4 088 Dateien, rund 2,3 h.
+
+Mit Bucket wäre es `rclone copy georep:georep/cache/2025 $GEOREP_CACHE_ROOT/2025` und ein Lauf —
+die Stamps entscheiden selbst, was fehlt; die Metadaten kämen genauso aus
+`georep:georep/2025/raw/`.

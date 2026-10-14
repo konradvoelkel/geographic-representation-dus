@@ -1379,3 +1379,48 @@ Instanzen durchprobieren (am 2026-10-13 wiesen alle vier dieselbe Abfrage ab, es
 einer Instanz, sondern der Abfrage — die löst Punkt 54); den Fehler je Stimmbezirk überspringen und
 den Schritt mit Lücke grün melden (eine fehlende Straßenliste verschiebt die Treffer eines Bezirks
 still nach unten, und das ist das Ergebnis der Arbeit).
+
+## 56. Die Datenpakete der Läufe liegen im Repo, nicht in einem Bucket (Konrad, 2026-10-13)
+
+Drei Netzläufe vom 2026-10-13 liefern Daten, aus denen GitHub Pages Seiten bauen soll, die es
+selbst nicht abrufen kann (Actions hat sechs Stunden Zeitlimit, der OParl-Server braucht Stunden):
+Mönchengladbach, die Wahlperiode 2014 bis 2020 und die laufende Periode seit 2025. Konrad hat die
+gebündelte Frage (fragen.md, oben 2; Fragen 1.2, 2.1, 3.3) am 2026-10-13 mit „die Datenpakete
+kommen ins Repo, sie sind klein" beantwortet. Seitdem liegen sie als eingefrorene **Eingaben**
+unter `reference/moenchengladbach/` (3 980 958 Bytes), `snapshots/2014-2020/` (37 875 851) und
+`snapshots/2025/` (13 894 254), zusammen 53,2 MiB neben den 82 MiB der Referenz der Arbeit und den
+2,1 MiB unter `context/`.
+
+**Ein Paket trägt genau die Eingaben**, in der Form, in der das Programm sie schreibt:
+`external/` (die Dateien der Portale, unverändert), `raw/papers.jsonl` (Metadaten),
+`cache/text/texts.parquet` (der Textstore) und, wo das Profil sein Wörterbuch selbst holt,
+`raw/streets_per_district.json` und `raw/wikipedia_dict.json`. Dieselbe Funktion liest alle drei
+(`bootstrap.seed_stores_from_native`); `Layout.reference_view` setzt `cache_root` auf
+`<reference_root>/cache`, daher liegt der Textstore unter `cache/text/`. Jedes Paket hat ein
+README mit Herkunft, Lizenz, Abrufdatum, den Zahlen des Laufs und der SHA-256 jeder Datei — wie
+`context/README.md` es seit Punkt 26 tut.
+
+**Die PDFs liegen in keinem Paket**, nur die Texte daraus: 233 MB, 3,9 GB und 585 MB, und
+urheberrechtlich ungeklärt (Frage 7.3). Ebenso draußen bleiben die Stamps (`*.stamp.json`: sie
+beschreiben einen Lauf, nicht seine Eingaben), `manifest.jsonl`, `papers.progress.json` und
+`http.sqlite`. Was ein Paket enthalten darf, steht nicht nur im README, sondern in
+`tests/unit/test_data_packages.py`: Dateiliste, Größe und Prüfsumme je Datei, eine Obergrenze je
+Paket und eine über alle, und eine Liste verbotener Endungen und Namen. Die pre-commit-Hooks
+`check-added-large-files`, `trailing-whitespace` und `end-of-file-fixer` lassen `snapshots/` wie
+`reference/` und `context/` aus; die Pakete sind absichtlich groß und byteweise die Quelle.
+
+**Verworfen:** das R2-Bucket aus Option 07 mit einem Download-Schritt in Actions — Konrad hat am
+2026-10-13 „kein Bucket, kaum Traffic und kleine Dateien" geantwortet, und ein Secret in Actions
+plus ein Schritt `fetch snapshot` wären zwei neue Teile für 53 MiB; die abgeleiteten Tabellen
+committen statt der Eingaben (dann baut `report` nicht, weil `dokumente.json` den Korpus braucht,
+und jede Änderung an einer Zwischentabelle wäre ein Bruch); das Altformat der Arbeit
+(`paper_with_text.json`, rund 80 MB unkomprimiert für dieselben Daten); git-lfs (ein zweites
+Protokoll, und GitHub Pages zieht die Dateien dann über eine Bandbreitenquote); die Texte
+komprimieren (Parquet ist es schon).
+
+**Gemessen am 2026-10-14**: der Pages-Workflow von Hand auf einer frischen Datenwurzel, genau die
+Schritte aus `.github/workflows/pages.yml`, baut aus den Paketen alle Seiten — Hauptseite
+932 274 Bytes (Budget 1 000 000, 6,8 % Luft) mit den Abschnitten „Zwei Wahlperioden" und
+„Laufende Wahlperiode", `2014-2020/index.html` 818 172, `2025/index.html` 717 246,
+`moenchengladbach/index.html` 641 633, `vergleich.html` 88 979; `georep publish` meldet
+„2 Städte, 1 Vergleich, 187 Dateien, 34,6 MB" und nichts über dem Budget.

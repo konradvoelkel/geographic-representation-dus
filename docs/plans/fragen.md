@@ -45,9 +45,12 @@ Nummern verweisen auf die Tabellen unten.
    PDFs, 3,7 bis 4,4 GB), Erstabruf der laufenden Periode (16 bis 30 min plus 2,3 h PDFs), optional der
    Vollabruf der Hauptperiode (2 bis 3 h; bringt keine Urheber, aber `modified` und `consultation`). Annahme:
    die Agenten rufen nichts ab; die Seite zeigt die neuen Teile erst nach Konrads Lauf.
-2. **Datenpakete im Repo** (1.2, 2.1, 3.3): Mönchengladbach-Paket (10 bis 20 MB), Schnappschuss
-   2014 bis 2020 (35 bis 40 MB), Quartiersatlas (2,3 MB). Annahme: alle drei ins Repo, wie die Referenz der
-   Arbeit (82 MB); Alternative wäre das R2-Bucket aus Option 7 mit einem Download-Schritt in Actions.
+2. **Datenpakete im Repo** (1.2, 2.1, 3.3): **erledigt am 2026-10-14** (`docs/decisions.md`, Punkt 56).
+   Im Repo liegen `reference/moenchengladbach/` (3 980 958 Bytes), `snapshots/2014-2020/` (37 875 851) und
+   `snapshots/2025/` (13 894 254) neben `reference/` (82 MiB) und `context/` (2 245 401); je mit README,
+   Lizenz, Zahlen und SHA-256, ohne PDFs, Stamps und `http.sqlite`. GitHub Pages baut damit Hauptseite,
+   beide Perioden, die laufende Periode, die zweite Stadt und den Vergleich ohne Netz. Das R2-Bucket
+   entfällt (Antwort zu 7.4).
 3. **Mönchengladbach statt Neuss** (1.1): nur Mönchengladbach hat Stimmbezirksflächen als Open Data. Annahme:
    Mönchengladbach; Neuss später über Flächen aus dem Straßenverzeichnis (§ 9 des Plans 01).
 4. **Düsseldorf unter `data/duesseldorf/`** (1.7): erledigt am 2026-10-13 (Punkt 52). `profile =
@@ -68,7 +71,7 @@ Nummern verweisen auf die Tabellen unten.
 | Nr. | Datum | Frage | Warum | Annahme | Status |
 |---|---|---|---|---|---|
 | 1.1 | 2026-10-11 | Mönchengladbach als erste zweite Stadt statt Neuss? | nur Mönchengladbach hat Stimmbezirksflächen als Open Data | Mönchengladbach | offen |
-| 1.2 | 2026-10-11 | Paket des vollen Laufs (10 bis 20 MB) nach `reference/moenchengladbach/` ins Repo? | CI baut nur aus dem Repo | ja | beantwortet 2026-10-13: ins Repo |
+| 1.2 | 2026-10-11 | Paket des vollen Laufs (10 bis 20 MB) nach `reference/moenchengladbach/` ins Repo? | CI baut nur aus dem Repo | ja | beantwortet 2026-10-13: ins Repo; **umgesetzt 2026-10-14** (3 980 958 Bytes, `reference/moenchengladbach/README.md`, `docs/decisions.md` Punkt 56) |
 | 1.3 | 2026-10-11 | Die Stadt nach den Flächen der Kommunalwahl 2025 fragen? | 4 bzw. 5 Stimmbezirke weichen zwischen 2022 und 2025 ab | Flächen von 2022 mit gemessener Übereinstimmung | offen (Konrads Satz an `gdi@moenchengladbach.de`) |
 | 1.4 | 2026-10-11 | Lizenz der votemanager-CSVs der ITK Rheinland? | die Seite nennt Lizenzen wörtlich | Quelle nennen, Lizenz „nicht angegeben" | beantwortet 2026-10-13: Quelle ist die Open-Data-Seite der votemanager-Wahlpräsentation; Lizenzfeld bleibt wie es ist, keine Anfrage jetzt |
 | 1.5 | 2026-10-11 | Marker des Vorlagenkopfs in Mönchengladbach? | ohne Marker zählen Treffer im Kopf | `betrifft`, Stichprobe misst | Supervisor: Annahme gilt, der Plan misst |
@@ -80,7 +83,7 @@ Nummern verweisen auf die Tabellen unten.
 
 | Nr. | Datum | Frage | Warum | Annahme | Status |
 |---|---|---|---|---|---|
-| 2.1 | 2026-10-11 | Schnappschuss 2014 bis 2020 (35 bis 40 MB) ins Repo oder nach R2? | Pages baut rein aus dem Repo | ins Repo unter `snapshots/2014-2020/` | offen (gebündelt, oben 2) |
+| 2.1 | 2026-10-11 | Schnappschuss 2014 bis 2020 (35 bis 40 MB) ins Repo oder nach R2? | Pages baut rein aus dem Repo | ins Repo unter `snapshots/2014-2020/` | beantwortet 2026-10-13: ins Repo; **umgesetzt 2026-10-14** (37 875 851 Bytes, `snapshots/2014-2020/README.md`, Punkt 56) |
 | 2.2 | 2026-10-11 | Dasselbe Wörterbuch (Stand November 2025) für beide Perioden? | Alternative macht Trefferquoten nicht additiv | ja | Supervisor: ja, wie der Meta-Plan vorschlägt |
 | 2.3 | 2026-10-11 | Zeitgrenzen 2014-05-25 bis 2020-09-12, Wahltag 13.09.2020? | wenige Dokumente am Rand | ja | Supervisor: ja |
 | 2.4 | 2026-10-11 | Briefwahl proportional zu A2 (Sperrvermerk W) verteilen? | bis 5,1 Prozentpunkte je Bezirk | A2, Alternative als Satz und Settings-Zeile | Supervisor: Annahme gilt |
@@ -95,7 +98,7 @@ Nummern verweisen auf die Tabellen unten.
 |---|---|---|---|---|---|
 | 3.1 | 2026-10-11 | Variablen des Hauptmodells; Parteianteile als Kontrollen? | bestimmt Tabelle 6 und die Plots; Endogenität | Handlungsbedarf-Score, Anteil 65+, Fluktuation; Parteien nur im Parteimodell und einzeln | Annahme bestätigt 2026-10-13 (Frage war unklar formuliert) |
 | 3.2 | 2026-10-11 | Ordinalskala gering = 1 bis hoch = 5 für `Sozialer_HB`? | ordinal als metrisch ist eine Annahme | ja, `Mindestsicherungsquote` als Gegenprobe | Supervisor: Annahme gilt |
-| 3.3 | 2026-10-11 | 2,3 MB Fremddaten unter `context/` ins Repo? | Reproduzierbarkeit ohne Netz | ja, mit README und SHA-256 | offen (gebündelt, oben 2) |
+| 3.3 | 2026-10-11 | 2,3 MB Fremddaten unter `context/` ins Repo? | Reproduzierbarkeit ohne Netz | ja, mit README und SHA-256 | beantwortet 2026-10-13: ins Repo; **umgesetzt 2026-10-14** — `context/` lag schon so da (2 245 401 Bytes, `context/README.md`), seit Punkt 56 gilt dieselbe Form für alle Datenpakete |
 | 3.4 | 2026-10-11 | Datenstand 31.12.2021 für eine Wahl 2025 akzeptabel? | Deutung der Koeffizienten | ja, mit Hinweis | Supervisor: ja, mit Hinweis auf der Seite |
 | 3.5 | 2026-10-11 | Tabelle 6 auch ohne die Wahlbezirke 1 und 10? | Seitenlänge gegen Konsistenz | beide in Parquet, Seite nur „alle" plus ein Satz | Supervisor: Annahme gilt |
 | 3.6 | 2026-10-11 | Einheiten: Prozent für Anteile, Trefferquote unskaliert, standardisierte Koeffizienten dazu? | Lesbarkeit | ja | Supervisor: Annahme gilt |

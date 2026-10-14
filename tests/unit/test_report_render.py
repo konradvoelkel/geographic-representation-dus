@@ -579,10 +579,15 @@ def test_without_regression_the_page_drops_scatter_and_the_turnout_switch(
     assert "lineare Regression setzt sie zur Wahlbeteiligung" in page
 
 
-def test_the_monitoring_link_is_relative_and_only_there_when_set(open_page: str, page: str) -> None:
+def test_the_monitoring_link_is_relative_and_only_there_when_set(
+    open_page: str, model: ReportModel, visuals: Visuals
+) -> None:
     assert '<section id="laufend">' in open_page and 'href="2025/"' in open_page
-    assert '<section id="laufend">' not in page and 'href="2025/"' not in page
     assert "2025/" not in external_links(open_page)
+    # Leer heißt: kein Abschnitt. Die Seite des Standardprofils trägt ihn seit Punkt 56, weil
+    # Düsseldorf eine laufende Periode fortschreibt; eine Stadt ohne sie hat den Schlüssel leer.
+    without = render_report(replace(model, monitoring_url=""), visuals)
+    assert '<section id="laufend">' not in without and 'href="2025/"' not in without
 
 
 def test_the_month_column_sorts_by_number_not_by_name(open_page: str) -> None:

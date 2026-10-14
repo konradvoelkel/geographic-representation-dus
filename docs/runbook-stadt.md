@@ -105,14 +105,36 @@ time uv run georep --profile moenchengladbach run
 uv run georep --profile moenchengladbach status
 ```
 
-`status` soll am Ende jeden Schritt als `aktuell` zeigen. Overpass antwortet unter Last mit 504;
-die Session wiederholt GET, nicht POST — ein zweiter Aufruf von `fetch streets_osm` holt die
-fehlenden Bezirke nach, der Cache hält die schon geholten.
+`status` soll am Ende jeden Schritt als `aktuell` zeigen.
+
+**Erfahrungen aus dem vollen Lauf Mönchengladbachs (2026-10-13), nach denen man nicht sucht:**
+
+- **Nicht jede Hauptdatei ist abrufbar.** Von 2 871 Dokumenten mit `mainFile` lieferte das
+  Ratsinformationssystem 658 aus, die übrigen 2 213 antworteten mit `404`. Der Abruf isoliert
+  jeden Fehler und läuft durch; die Kette rechnet dann mit einem Bruchteil der Dokumente, und das
+  verschiebt jede absolute Zahl der Stadt. Darum **vor** dem langen Teil die Stichprobe ansehen:
+  `fetch pdfs --limit 200` und die Zeile des Schritts vergleichen (200 geholt heißt gut, 40 geholt
+  heißt, dass dieselbe Quote für den ganzen Korpus zu erwarten ist). Die Quote gehört ins README
+  des Pakets und in die Kernzahlen der Seite („*n* mit Text, *m* ohne").
+- **Overpass weist ein großes `[timeout:N]` unter Last ab, ein kleines nicht.** Am 2026-10-13
+  gaben alle vier öffentlichen Instanzen auf die Stimmbezirksabfrage nach wenigen Sekunden
+  `504 Gateway Timeout`, mit 25 s Budget antwortete dieselbe Abfrage in 2 s: der Server schätzt
+  die Kosten vorab gegen sein Slot-Budget. Die Zahl steht als `sources.osm.query_timeout_s` in
+  den Settings (Vorgabe 25, `docs/decisions.md`, Punkt 54); wer sie hochdreht, macht es
+  schlechter. Je Versuch kamen rund 27 von 306 Abfragen durch, dann endete der Schritt — seit dem
+  2026-10-13 wiederholt `fetch_street_names` einen 504 oder 429 selbst, bis zu
+  `sources.osm.retries` mal je Stimmbezirk mit wachsender Pause (Punkt 55); die Session tut es
+  nicht, ihre Retry-Regel erlaubt GET und HEAD, und die Abfrage ist ein POST. Bleiben trotzdem
+  Bezirke offen, holt ein zweiter Aufruf von `fetch streets_osm` sie nach: der HTTP-Cache hält die
+  schon geholten. Wer `query_timeout_s` ändert, verliert die gecachten Antworten (der POST-Body
+  ist der Schlüssel) und macht jeden Stamp ungültig.
 
 Prüfpunkt Geometrie: die Zeile des Schritts `streets` nennt die Übereinstimmung mit dem
 Straßenverzeichnis, etwa `Verzeichnis: 1 450 bekannte Straßennamen: 93,2 % im selben Stimmbezirk,
 99,1 % im selben Wahlbezirk`. Unter 90 % je Wahlbezirk lohnt eine Anfrage an die Stadt nach den
-Flächen von 2025 (Frage 1.3); die Seite nennt die Zahl ohnehin.
+Flächen von 2025 (Frage 1.3); die Seite nennt die Zahl ohnehin. Mönchengladbach liegt mit
+**86,2 %** (2 651 bekannte Namen, 66,5 % im selben Stimmbezirk) darunter, weil seine Flächen vom
+08.06.2022 sind — der Satz an `gdi@moenchengladbach.de` ist damit fällig und nicht mehr optional.
 
 ## 5. Veröffentlichen und das Paket ins Repo
 
@@ -123,21 +145,30 @@ python3 -m http.server 8777 --directory data/site   # ansehen: /, /moenchengladb
 ```
 
 Damit CI dieselbe Seite ohne Netz baut, kommt das Ergebnis des Laufs als Paket ins Repo
-(Frage 1.2; geschätzt 10 bis 20 MB):
+(Frage 1.2, erledigt am 2026-10-14; `docs/decisions.md`, Punkt 56). Der Textstore gehört dabei
+unter `cache/text/`: `Layout.reference_view` setzt `cache_root` auf `<reference_root>/cache`, und
+genau dort sucht `bootstrap` ihn (`tests/fixtures/mg/` ist so gebaut, derselbe Pfad).
 
 ```bash
-mkdir -p reference/moenchengladbach/{external,raw,text}
+mkdir -p reference/moenchengladbach/{external,raw,cache/text}
 cp data/moenchengladbach/external/*.{csv,zip} reference/moenchengladbach/external/
 cp data/moenchengladbach/raw/{papers.jsonl,streets_per_district.json,wikipedia_dict.json} \
    reference/moenchengladbach/raw/
-cp /media/konrad/xtraspace/georep/cache/moenchengladbach/text/texts.parquet \
-   reference/moenchengladbach/text/
-du -sh reference/moenchengladbach
+cp "$(uv run georep --profile moenchengladbach paths | sed -n 's/^text_store=//p')" \
+   reference/moenchengladbach/cache/text/
+du -sb reference/moenchengladbach   # 2026-10-13: 3 980 958 Bytes
 ```
 
+Nur die Eingaben, nichts Abgeleitetes: keine Stamps (`*.stamp.json`), kein `manifest.jsonl`, kein
+`http.sqlite`, keine PDFs. Liegen im Textstore noch Zeilen aus einer Fixture oder Stichprobe
+(Spalte `source` ist dann nicht `pdf`), gehören sie vor dem Committen heraus — am 2026-10-13 waren
+es fünf aus `tests/fixtures/mg/`. Was im Paket sein darf, prüft
+`tests/unit/test_data_packages.py`; es hält auch die Größen und die Prüfsummen aus dem README.
+
 Dazu ein `reference/moenchengladbach/README.md` nach dem Muster von `tests/fixtures/mg/README.md`:
-Datum des Laufs, Zahl der Paper, Texte, Orte und Straßen, die Quellen mit Lizenz, und der Satz,
-dass die PDFs selbst **nicht** im Paket liegen (nur ihre Texte, wie bei der Referenz der Arbeit).
+Datum des Laufs, Zahl der Paper, Texte, Orte und Straßen, die Größe und SHA-256 jeder Datei, die
+Quellen mit Lizenz, und der Satz, dass die PDFs selbst **nicht** im Paket liegen (nur ihre Texte,
+wie bei der Referenz der Arbeit).
 
 Danach baut `pages.yml` die zweite Stadt von selbst mit (der Schritt prüft, ob
 `reference/moenchengladbach/` existiert), und `tests/golden/test_second_city.py` kann seine
