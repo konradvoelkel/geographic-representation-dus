@@ -6,9 +6,9 @@ reproduziert. Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
 Stufen A bis G, Seite unter <https://konradvoelkel.github.io/geographic-representation-dus/>), und der Ausbau in
 acht Optionen ist gemerged (`docs/plan-ausbau-2026-10.md`, Pläne und Abnahmen unter `docs/plans/`). Konrads
-drei Netzläufe vom 2026-10-13 sind durch, und ihre Daten liegen als Pakete im Repo („Datenpakete im Repo");
-GitHub Pages baut damit jeden Teil der Seite ohne Netz. Der vierte Lauf, der Vollabruf der Metadaten der
-Hauptperiode, läuft in eine eigene Datenwurzel („Nächster Schritt"). Aufbau in
+vier Netzläufe sind durch (drei am 2026-10-13, der Vollabruf der Metadaten am 2026-10-14 um 02:16), und
+die Daten der ersten drei liegen als Pakete im Repo („Datenpakete im Repo"); GitHub Pages baut damit jeden
+Teil der Seite ohne Netz. Aufbau in
 `docs/architecture.md`, Gründe in `docs/decisions.md`. Fakten mit Datum, Invarianten ohne.
 
 ## Abgeschlossen
@@ -414,7 +414,23 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 - Der Stamp des Schritts `report` liegt als `site/index.html.stamp.json` in der Datenwurzel, also in der
   Stadtseite; dort gehört er hin. Im veröffentlichten Ordner ist er seit dem 2026-10-13 nicht mehr dabei:
   `georep publish` lässt `*.stamp.json` beim Kopieren aus, wie die rsync-Zeilen im Monitor-Skript.
-- Der OParl-Server liefert für Düsseldorf keine Urheberfelder: 0 von 19 108 Rohobjekten und keines der sechs Paper der Seite vom 2026-10-09, auch der „Antrag FDP" nicht. Option 04 leitet den Urheber darum aus `paperType`, Titel und Textkopf ab (Deckung 98,3 %); `georep fetch papers --max-pages 1` ist die Probe, ob sich das geändert hat, und die Quelle `oparl` greift dann ohne Codeänderung.
+- **Der OParl-Server liefert für Düsseldorf keine Urheberfelder, und das ist jetzt über die ganze Periode
+  gemessen** (Vollabruf der Metadaten, 2026-10-14, 01:40 bis 02:16 in eine eigene Datenwurzel
+  `data-vollabruf/`): 122 Seiten, 24 400 Paper gesehen, 19 109 im Zeitraum, **0 mit Urheberfeld**. Option 04
+  leitet den Urheber darum weiter aus `paperType`, Titel und Textkopf ab (Deckung 98,3 %); die Quelle
+  `oparl` greift ohne Codeänderung, sobald der Server liefert, und `georep fetch papers --max-pages 1`
+  bleibt die billige Probe. Drei Nebenbefunde desselben Laufs:
+  - **Ein Dokument mehr als die Referenz der Arbeit**: 19 109 statt 19 108. Es ist `KUA/023/2026`
+    („Deutsche Oper am Rhein – Grundsatzbeschluss …", Datum 21.05.2025, Beschlussvorlage); die Nummer
+    trägt 2026, das Dokument ist also nach dem Datenstand der Arbeit angelegt und ins Jahr 2025
+    zurückdatiert worden. Kein Dokument der Referenz fehlt umgekehrt.
+  - **`modified` ist brauchbar**: alle 19 109 tragen einen Zeitstempel, die Spanne reicht bis zum
+    25.09.2026, und nur 1 200 tragen das Migrationsdatum 30.12.2024. Für diese Periode greift
+    `modified_since` also — anders als für 2014 bis 2020, wo es das Migrationsdatum war (darum steht dort
+    `incremental = false`).
+  - **18 708 der 19 109 tragen `consultation`**, also die Beratungsfolge. Das ist die Quelle, aus der ein
+    Gremium für die alte Nummernform zu holen wäre, wenn man die Organisations-IDs auflösen will
+    (`docs/decisions.md`, Punkt 57, dort verworfen).
 - Im Wahlbezirk 11 ist Die Linke nicht angetreten (0 Stimmen; die Stimmbezirks-CSV führt dort die 0, anderswo Dutzende). Der Abgleich Dokumentanteil gegen Stimmenanteil lässt solche Bezirke je Partei aus, Die Linke hat also n = 40 statt 41.
 - Die Ergebnis-CSV der Ratswahl heißt im Open-Data-Portal inzwischen `…_Stimmbezirke_1.csv` (Datensatzseite am 2026-10-11); `profiles/duesseldorf.toml` zeigt auf `…_0.csv`, woher die Referenz stammt. Vor einem `fetch opendata` nachsehen.
 - **Mönchengladbachs Ratsinformationssystem liefert nur 658 von 2 871 Hauptdateien aus** (gemessen am
@@ -515,9 +531,10 @@ Offen bleibt daran:
   Installation und Erstabruf sind beschrieben, der Trockenlauf ist gelaufen). Bis dahin zeigt die
   veröffentlichte Seite den Stand des Schnappschusses vom 2026-10-13.
 - **VPS und Domain** später, kein R2-Bucket (Konrads Antworten vom 2026-10-13 auf 7.1 und 7.4).
-- Der **Vollabruf der Metadaten der Hauptperiode** nach `data-vollabruf/` lief am 2026-10-13/14 noch
-  (Worktree `…/georep/worktrees/netzlauf`, Log unter `…/georep/logs/netzlauf-2026-10-13.log`); er zeigt, ob
-  der OParl-Server `modified_since` beachtet und ob die Urheberfelder inzwischen gefüllt sind.
+- Nichts mehr am **Vollabruf der Metadaten der Hauptperiode**: er ist am 2026-10-14 um 02:16 mit Exit 0
+  durchgelaufen (36 min, Worktree `…/georep/worktrees/netzlauf`, Log
+  `…/georep/logs/netzlauf-2026-10-13.log`, Daten in `…/georep/data-vollabruf/`). Seine drei Befunde stehen
+  oben unter „Bekannt"; die Datenwurzel kann weg, sobald Konrad sie nicht mehr ansehen will.
 - **Die Anfrage an Mönchengladbach** nach den Stimmbezirksflächen von 2025 (Frage 1.3): mit 86,2 %
   Übereinstimmung je Wahlbezirk liegt die Stadt unter der Grenze des Runbooks.
 

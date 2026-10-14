@@ -120,8 +120,12 @@ uv run georep run                         # corpus bis report neu, rund 7 s
 ```
 
 Ist `N` null, liefert der Server keine Urheber, und der Urheber kommt weiter aus `paperType`, Titel
-und Textkopf (Stand 2026-10-09: null von 19 108). Nur wenn `N > 0` ist oder die `modified`-Zeitstempel
-gebraucht werden, lohnt der volle Metadatenabruf:
+und Textkopf. **Am 2026-10-14 ist der volle Metadatenabruf gelaufen und hat es bestätigt**: 122 Seiten,
+24 400 Paper gesehen, 19 109 im Zeitraum, davon **null** mit Urheberfeld (36 min in eine eigene
+Datenwurzel). Zwei Nebenbefunde: 18 708 der 19 109 tragen `consultation`, und `modified` ist überall
+gefüllt und reicht bis zum 25.09.2026 — nur 1 200 Objekte tragen das Migrationsdatum 30.12.2024, für
+diese Periode ist `modified_since` also brauchbar (anders als für 2014 bis 2020). Nur wenn `N > 0`
+ist oder die `modified`-Zeitstempel gebraucht werden, lohnt der volle Metadatenabruf:
 
 ```bash
 uv run georep fetch papers --force        # rund 95 Seiten mit stop_when_older, je 85 s plus 1 s Pause: 2 bis 3 h.
