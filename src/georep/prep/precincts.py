@@ -445,17 +445,27 @@ def _wkid_crs(name: str, results: Sequence[Any]) -> str:
 
     Esri führt neben den EPSG-Codes eigene Nummern (102100 für EPSG:3857); wo beide stehen, ist
     ``latestWkid`` der EPSG-Code. Zwei verschiedene Codes in einer Antwort sind ein Fehler -- die
-    kanonische Datei trägt genau ein CRS. Steht keiner da, gilt ``precincts.source_crs``.
+    kanonische Datei trägt genau ein CRS.
+
+    **Ohne ``spatialReference`` gilt ``precincts.source_crs``, mit einem unlesbaren nicht**
+    (Befund 10 des Reviews): ein ``wkid`` als Text war bisher dasselbe wie keines, und dann stand
+    im kanonischen GeoJSON das CRS des Profils, während der Dienst ein anderes nannte. Alles
+    dahinter projiziert damit falsch, und niemand sieht es. Fehlt die Angabe ganz, ist die
+    Rückfallebene des Profils dagegen genau richtig: dann hat niemand etwas anderes behauptet.
     """
     codes = set()
     for entry in results:
         geometry = entry.get("geometry") if isinstance(entry, dict) else None
         reference = geometry.get("spatialReference") if isinstance(geometry, dict) else None
-        if not isinstance(reference, dict):
+        if not isinstance(reference, dict) or not {"wkid", "latestWkid"} & set(reference):
             continue
         code = reference.get("latestWkid", reference.get("wkid"))
-        if isinstance(code, int) and not isinstance(code, bool):
-            codes.add(code)
+        if not isinstance(code, int) or isinstance(code, bool):
+            raise SchemaError(
+                f"{name}: spatialReference nennt {code!r}, keine Zahl; "
+                "welches CRS gilt, ist damit nicht zu sagen"
+            )
+        codes.add(code)
     if len(codes) > 1:
         raise SchemaError(f"{name}: {sorted(codes)} -- mehr als ein CRS in einer Antwort")
     return f"EPSG:{codes.pop()}" if codes else ""

@@ -826,3 +826,47 @@ def test_a_valid_answer_says_nothing(tmp_path: Path) -> None:
     finally:
         logger.remove(sink)
     assert len(source.features) == 17 and lines == []
+
+
+@pytest.mark.parametrize("code", ["25832", 25832.0, None, True])
+def test_a_spatial_reference_that_is_no_number_is_refused(tmp_path: Path, code: object) -> None:
+    """Befund 10: ein unlesbares ``wkid`` war dasselbe wie keines -- und das ist es nicht.
+
+    Fiel es still auf ``precincts.source_crs`` zurück, stand im kanonischen GeoJSON das CRS des
+    Profils, während der Dienst ein anderes nannte; alles dahinter projizierte falsch, und
+    niemand sah es. Fehlt die Angabe **ganz**, ist die Rückfallebene richtig: dann hat niemand
+    etwas anderes behauptet.
+    """
+    path = _identify(
+        tmp_path / "identify.json", {"10401": [_clockwise(0.0, 0.0, 10.0)]}, {"wkid": code}
+    )
+    with pytest.raises(SchemaError, match="keine Zahl"):
+        read_source_esri_identify(path, "EPSG:25832")
+
+
+def test_a_geometry_without_any_spatial_reference_takes_the_profile(tmp_path: Path) -> None:
+    """Der Unterschied zum Fall oben: hier steht der Schlüssel nicht da, nicht einmal leer."""
+    path = tmp_path / "ohne.json"
+    path.write_text(
+        json.dumps(
+            {
+                "results": [
+                    {
+                        "attributes": {"Nummer": "10401"},
+                        "geometry": {"rings": [_clockwise(0.0, 0.0, 10.0)]},
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert read_source_esri_identify(path, "EPSG:25832").crs == "EPSG:25832"
+    assert read_source_esri_identify(path).crs == ""
+
+
+def test_a_result_that_is_no_object_is_refused(tmp_path: Path) -> None:
+    """``results: [1]`` ist lesbares JSON; ``1.get`` wäre ein ``AttributeError``."""
+    path = tmp_path / "zahl.json"
+    path.write_text(json.dumps({"results": [1]}), encoding="utf-8")
+    with pytest.raises(SchemaError, match="results\\[0\\] ist kein Objekt"):
+        read_source_esri_identify(path)
