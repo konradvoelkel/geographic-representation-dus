@@ -16,9 +16,9 @@ Zahl anzufassen. Dass der Zuschnitt die Datei im Repo zeichengleich wieder herst
 Shapefile-Zip von 2022 (`format = "shapefile-zip"`) als auch die Antwort des ArcGIS-Dienstes zum
 Stand der Kommunalwahl 2025 (`format = "esri-identify"`, `docs/decisions.md`, Punkt 62). Beide
 tragen dieselben 17 Stimmbezirke; gelaufen wird mit der Form, die das Profil nennt, und das ist
-seit Punkt 62 die zweite. Die erste bleibt liegen, weil `tests/unit/test_precincts.py` den
-Shapefile-Weg weiter prüft und weil ein Vergleich der beiden Stände ohne sie nicht mehr möglich
-wäre.
+seit Punkt 62 die zweite. Die erste bleibt liegen, weil ein Vergleich der beiden Stände ohne sie
+nicht mehr möglich wäre — **gelesen wird sie von keinem Test**: die Beispiele zum Shapefile-Weg in
+`tests/unit/test_precincts.py` schreiben ihr Zip mit pyshp selbst.
 
 **Warum diese drei Bezirke.** Nur ihre Straßennamen kommen in der PDF-Stichprobe überhaupt vor
 (Vorster Straße und Winkeln in 04, Brandenberger Straße in 09, Hauptstraße in 23) — und zwar in

@@ -10,8 +10,9 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   Geoportals — **alle 179**, 170,47 km² Stadtfläche, dl-de/zero-2.0. Diese Flächen gibt es nicht als
   Datei, nur über die ArcGIS-Operation `identify`; darum **eine dritte Quellform `esri-identify`**
   neben `geojson` und `shapefile-zip`. Esri-JSON kennt kein Feld für „Loch" (das Vorzeichen der
-  Ringfläche sagt es), und die Umwandlung nach GeoJSON ist flächentreu geprüft: Mönchengladbach hat
-  in derselben Ecke ein Loch von 1 641 m² (`11003`) und eine zweite Fläche von 1 639 m² (`11001`).
+  Ringfläche sagt es), und die Umwandlung nach GeoJSON ist an der Fläche geprüft, die sie erhalten
+  muss: Mönchengladbach hat in derselben Ecke ein Loch von 1 641 m² (`11003`) und eine zweite
+  Fläche von 1 639 m² (`11001`).
   `fetch_districts_file` holt dafür eine URL mit Query-String und erkennt die Fehlerform eines
   ArcGIS-Dienstes (ein `error`-Objekt mit HTTP 200). Die Settings prüfen jetzt auch, welche
   Schlüssel zu welcher Quellform gehören (`member` und `dbf_encoding` nur am Zip). **Noch nicht neu

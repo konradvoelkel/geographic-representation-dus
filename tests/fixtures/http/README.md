@@ -1,7 +1,10 @@
 # Aufgezeichnete Antworten (2026-10-11)
 
-Einmalige echte Abrufe, klein geschnitten; die Offline-Tests der Quellen lesen sie. Jede Antwort
-liegt neben ihrer Anfrage (`*.query.txt`, `*.params.json`).
+Einmalige echte Abrufe, klein geschnitten; die Offline-Tests der Quellen lesen sie. Die Antworten
+auf Overpass, SPARQL und GeoSearch liegen neben ihrer Anfrage (`*.query.txt`, `*.params.json`),
+denn die steckt im Rumpf oder in Parametern. Bei `identify_mg_mehrringig.json` ist die Anfrage die
+**URL**, und die steht als `sources.opendata.districts_url` im Profil Mönchengladbachs; eine Datei
+daneben wäre eine zweite Fassung derselben Angabe (Punkt 62).
 
 | Datei | Quelle | Anfrage | Inhalt |
 |---|---|---|---|
