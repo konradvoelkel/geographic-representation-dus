@@ -1,9 +1,12 @@
 """Die Datenpakete im Repo: was drin sein darf, wie groß sie sein dürfen, was ihr README sagt.
 
-Vier Pakete sind die Eingaben, aus denen GitHub Pages jede Seite ohne Netz baut (Punkt 56):
+Fünf Pakete sind die Eingaben, aus denen GitHub Pages jede Seite ohne Netz baut (Punkt 56):
 ``reference/`` (der Datensatz der Arbeit, Altformat), ``reference/moenchengladbach/`` und
 ``snapshots/<periode>/`` (das eigene Format: ``raw/papers.jsonl`` und ``cache/text/texts.parquet``)
-sowie ``context/`` (Fremddaten, Punkt 26). Geprüft wird hier nicht, was die Kette daraus rechnet --
+sowie ``context/`` (Fremddaten, Punkt 26). **Gezählt werden die Datendateien ohne das README**:
+es beschreibt das Paket und ist nicht sein Inhalt, darum lässt ``files_of`` es aus und darum nennt
+jede Zahl in den Dokumenten dieselbe Menge (Review-Befund 14). Geprüft wird hier nicht, was die
+Kette daraus rechnet --
 das tun ``tests/golden/test_second_city.py`` und ``test_period_pipeline.py`` an den Mini-Fixturen --
 sondern **dass die Pakete sind, was ihr README behauptet**, und dass nichts hineingerät, was nicht
 hineingehört: PDFs (233 MB, 3,9 GB, 585 MB), Stamps, Manifeste, der HTTP-Cache.
@@ -49,9 +52,10 @@ PACKAGES = (
     Package("reference/moenchengladbach", limit=8 * MIB, native=True, readme=True),  # 3 980 958
     Package("snapshots/2014-2020", limit=48 * MIB, native=True, readme=True),  # 37 875 851
     Package("snapshots/2025", limit=20 * MIB, native=True, readme=True),  # 13 894 254
-    Package("context", limit=4 * MIB, native=False, readme=True),  # 2 245 401
+    Package("context", limit=4 * MIB, native=False, readme=True),  # 2 242 316
 )
-# Alle zusammen, als zweite grobe Schranke: 137,1 MiB am 2026-10-14. Ein einziger PDF-Ordner einer
+# Alle zusammen, als zweite grobe Schranke: 143 765 275 Bytes = 137,11 MiB am 2026-10-14 (76 % der
+# Grenze). Ein einziger PDF-Ordner einer
 # Periode (585 MB bis 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 
@@ -161,6 +165,25 @@ def test_a_native_package_has_the_shape_bootstrap_reads(package: Package) -> Non
     assert (package.root / "raw" / "papers.jsonl").is_file()
     assert (package.root / "cache" / "text" / "texts.parquet").is_file()
     assert any(path.is_file() for path in (package.root / "external").iterdir())
+
+
+def test_gitattributes_keeps_the_package_bytes_untouched() -> None:
+    """Review-Befund 15: ohne ``-text`` entscheidet eine Heuristik, ob ein Checkout LF umschreibt.
+
+    Dann wäre jede Prüfsumme einer CSV oder eines GeoJSON im README falsch, und zwar nur auf dem
+    Rechner, der es anders auscheckt. Geprüft wird die Zeile, nicht die Wirkung: ``git`` hier zu
+    rufen wäre ein Test über git, und die Wirkung sieht man mit ``git check-attr -a``.
+    """
+    lines = (REPO / ".gitattributes").read_text(encoding="utf-8").splitlines()
+    rules = [line.split() for line in lines if line.strip() and not line.startswith("#")]
+    for package in PACKAGES:
+        top = package.path.split("/")[0]
+        assert [f"{top}/**", "-text"] in rules, f"{top} fehlt in .gitattributes"
+    # Die READMEs bleiben gewöhnlicher Text; die Zeile muss nach der Paketzeile stehen
+    readmes = [index for index, rule in enumerate(rules) if rule[0].endswith("README.md")]
+    assert readmes and min(readmes) > max(
+        index for index, rule in enumerate(rules) if rule[-1] == "-text"
+    )
 
 
 def test_the_profiles_point_at_the_packages_in_the_repo() -> None:

@@ -4,6 +4,10 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **`.gitattributes` hält die Bytes der Datenpakete fest** (`-text` für `reference/`, `snapshots/`
+  und `context/`, Review-Befund 15): ohne die Zeilen entscheidet eine Heuristik je Datei und je
+  Rechner, ob ein Checkout LF zu CRLF macht, und jede Prüfsumme einer CSV oder eines GeoJSON im
+  README wäre dann falsch. Die READMEs selbst bleiben gewöhnlicher Text.
 - **Eine zu große Seite macht den Pages-Lauf rot** (`georep publish --strict-budget`, in
   `pages.yml` gesetzt; Review-Befund 3): `report` und `publish` nannten eine Überschreitung des
   Budgets in ihrer Zeile, aber der Exit-Code blieb 0, und niemand liest eine Zeile in einem grünen
@@ -52,7 +56,8 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 - **Die Datenpakete der drei Netzläufe vom 2026-10-13 liegen im Repo**, und damit baut GitHub Pages
   **jede** Seite ohne Netz (`docs/decisions.md`, Punkt 56; Konrads Antwort auf die Fragen 1.2, 2.1
-  und 3.3): `reference/moenchengladbach/` (3 980 958 Bytes), `snapshots/2014-2020/` (37 875 851) und
+  und 3.3 — 3.3 ist der Quartiersatlas unter `context/` — und, für die laufende Periode, auf 7.4
+  „kein Bucket"): `reference/moenchengladbach/` (3 980 958 Bytes), `snapshots/2014-2020/` (37 875 851) und
   `snapshots/2025/` (13 894 254), je mit README, Lizenz, Abrufdatum, den Zahlen des Laufs und der
   SHA-256 jeder Datei. Jedes Paket trägt nur Eingaben: `external/`, `raw/papers.jsonl` und
   `cache/text/texts.parquet`; **die PDFs sind nicht dabei** (233 MB, 3,9 GB, 585 MB), ebenso keine

@@ -4,7 +4,9 @@ Die Eingaben des Erstabrufs der laufenden Wahlperiode (ab 15.09.2025, offenes En
 damit GitHub Pages die Unterseite `2025/` und den Abschnitt „Laufende Wahlperiode" der Hauptseite
 **ohne Netz** baut. `profiles/duesseldorf-2025.toml` zeigt mit `reference_root` hierher;
 `bootstrap` erkennt dieses Format und kopiert nur. Vorgehen: README, „Laufende Wahlperiode" und
-`deploy/README.md`; Entscheidung: `docs/decisions.md`, Punkt 56 (Frage 3.3).
+`deploy/README.md`; Entscheidung: `docs/decisions.md`, Punkt 56 — dazu Konrads Antwort auf Frage
+7.4 vom 2026-10-13 („kein Bucket, kaum Traffic und kleine Dateien"), die den Weg über R2
+ausschließt. Frage 3.3 betrifft den Quartiersatlas unter `context/`, nicht diese Periode.
 
 **Dieser Schnappschuss veraltet mit jedem Lauf des Monitors — das ist Absicht.** Die laufende
 Periode wird fortgeschrieben (`deploy/bin/georep-monitor.sh` hinter einem systemd-Timer); der

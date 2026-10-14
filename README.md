@@ -36,10 +36,12 @@ uv run georep regress --controls        # Tabelle 6 mit den Kontrollvariablen
 
 Geprüft am 2026-10-11 aus einem frischen Klon, die Kontrollvariablen am 2026-10-12, `bootstrap`, `run` und
 `publish` nach dem Umzug in den Stadtordner am 2026-10-13, die ganze Kette aus den Datenpaketen am 2026-10-14.
-Die Hauptseite verlinkt zwei Unterseiten, `2014-2020/` und `2025/`; die legen erst die Läufe der
-Periodenprofile daneben (unten „Zwei Wahlperioden" und „Laufende Wahlperiode", in CI
-`.github/workflows/pages.yml`). Wer nur die zwei Befehle oben laufen lässt, hat die beiden Links, aber noch
-nicht die Seiten dahinter. Wer die Umgebung woanders ablegen will, setzt vor `uv sync`
+Die Seite aus diesen zwei Befehlen trägt **einen** Link, der noch ins Leere zeigt: `2025/`, die Unterseite
+der laufenden Wahlperiode (`report.monitoring_url` im Stadtprofil). Der Abschnitt „Zwei Wahlperioden" und
+sein Link auf `2014-2020/` entstehen erst mit `georep --profile duesseldorf-vergleich run`, und die beiden
+Unterseiten selbst mit den Läufen ihrer Profile — unten „Zwei Wahlperioden" und „Laufende Wahlperiode", in
+CI `.github/workflows/pages.yml`. Wer die veröffentlichte Seite ganz nachbauen will, läuft die Blöcke dieses
+Workflows der Reihe nach. Wer die Umgebung woanders ablegen will, setzt vor `uv sync`
 `UV_PROJECT_ENVIRONMENT` und `UV_CACHE_DIR`; wer Daten und Cache woanders haben will, schreibt `data_root`
 und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
 

@@ -121,7 +121,8 @@ uv run georep --profile moenchengladbach status
   `504 Gateway Timeout`, mit 25 s Budget antwortete dieselbe Abfrage in 2 s: der Server schätzt
   die Kosten vorab gegen sein Slot-Budget. Die Zahl steht als `sources.osm.query_timeout_s` in
   den Settings (Vorgabe 25, `docs/decisions.md`, Punkt 54); wer sie hochdreht, macht es
-  schlechter. Je Versuch kamen rund 27 von 306 Abfragen durch, dann endete der Schritt — seit dem
+  schlechter. Je Versuch kamen rund 27 Abfragen durch, dann endete der Schritt (gemessen an
+  Düsseldorfs 306 Stimmbezirken; Mönchengladbach hat 180) — seit dem
   2026-10-13 wiederholt `fetch_street_names` einen 504 oder 429 selbst, bis zu
   `sources.osm.retries` mal je Stimmbezirk mit wachsender Pause (Punkt 55); die Session tut es
   nicht, ihre Retry-Regel erlaubt GET und HEAD, und die Abfrage ist ein POST. Bleiben trotzdem

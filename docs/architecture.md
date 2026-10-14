@@ -143,11 +143,11 @@ cache_root/                Standard data_root/cache
 ```
 
 **Ein Datenpaket ist ein `reference_root`**: `Layout.reference_view()` liest es als Datenwurzel mit
-`cache_root = <reference_root>/cache`, darum liegt der Textstore eines Pakets unter `cache/text/`. Vier
-Pakete gibt es (Punkt 56): `reference/` (82 MiB, der Datensatz der Arbeit, Altformat
+`cache_root = <reference_root>/cache`, darum liegt der Textstore eines Pakets unter `cache/text/`. Fünf
+Pakete gibt es (Punkt 56): `reference/` (81,8 MiB, der Datensatz der Arbeit, Altformat
 `interim/paper_with_text.json`), `reference/moenchengladbach/` (3,8 MiB), `snapshots/2014-2020/` (36,1 MiB)
 und `snapshots/2025/` (13,2 MiB) im eigenen Format (`raw/papers.jsonl`, `cache/text/texts.parquet`), dazu
-`context/` (2,1 MiB) für die Fremddaten. Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, den Zahlen
+`context/` (2,1 MiB) für die Fremddaten — zusammen 137,11 MiB, gezählt ohne die READMEs. Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, den Zahlen
 des Laufs und der SHA-256 jeder Datei; `tests/unit/test_data_packages.py` hält beides zusammen und lässt
 keine PDFs, Stamps, Manifeste und Caches hinein. Die PDFs liegen in keinem Paket.
 

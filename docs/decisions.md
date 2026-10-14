@@ -1388,8 +1388,10 @@ Mönchengladbach, die Wahlperiode 2014 bis 2020 und die laufende Periode seit 20
 gebündelte Frage (fragen.md, oben 2; Fragen 1.2, 2.1, 3.3) am 2026-10-13 mit „die Datenpakete
 kommen ins Repo, sie sind klein" beantwortet. Seitdem liegen sie als eingefrorene **Eingaben**
 unter `reference/moenchengladbach/` (3 980 958 Bytes), `snapshots/2014-2020/` (37 875 851) und
-`snapshots/2025/` (13 894 254), zusammen 53,2 MiB neben den 82 MiB der Referenz der Arbeit und den
-2,1 MiB unter `context/`.
+`snapshots/2025/` (13 894 254), zusammen 55 751 063 Bytes (53,17 MiB) neben den 85 771 896 der
+Referenz der Arbeit (81,80 MiB) und den 2 242 316 unter `context/` (2,14 MiB) -- **fünf Pakete,
+143 765 275 Bytes, 137,11 MiB**. Gezählt sind überall die Datendateien **ohne** das README: es
+beschreibt das Paket und ist nicht sein Inhalt (Review-Befund 14, 2026-10-14).
 
 **Ein Paket trägt genau die Eingaben**, in der Form, in der das Programm sie schreibt:
 `external/` (die Dateien der Portale, unverändert), `raw/papers.jsonl` (Metadaten),

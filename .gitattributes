@@ -1,0 +1,15 @@
+# Die Datenpakete sind byteweise die Quelle (docs/decisions.md, Punkt 56): Größe und SHA-256 jeder
+# Datei stehen im README daneben, und tests/unit/test_data_packages.py hält beides zusammen. `-text`
+# heißt „nie Zeilenenden umschreiben": ohne diese Zeilen entscheidet die Heuristik je Datei und je
+# Rechner, ob ein Checkout LF zu CRLF macht, und jede Prüfsumme einer CSV oder eines GeoJSON wäre
+# dann falsch (Review-Befund 15, 2026-10-14). Parquet und Zip erkennt git von selbst als binär;
+# hier geht es um die Textdateien der Portale.
+reference/** -text
+snapshots/** -text
+context/** -text
+
+# Die READMEs der Pakete sind gewöhnlicher Text, den wir schreiben, und keine Quelldatei: sie
+# stehen in keiner Prüfsummentabelle. Diese Zeile steht nach den drei oben, denn die letzte gewinnt.
+reference/**/README.md text
+snapshots/**/README.md text
+context/README.md text

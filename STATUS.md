@@ -237,8 +237,11 @@ Datensatz, kein Lauf).
 
 Konrads drei Netzläufe vom 2026-10-13 liegen als eingefrorene **Eingaben** im Repo; damit baut GitHub Pages
 jede Seite ohne Netz, auch die der zweiten Stadt, der zweiten Periode und der laufenden Periode. Die Antwort
-auf die Fragen 1.2, 2.1 und 3.3 („können so erstmal ins Repo, ist ja alles relativ klein") ist damit
-umgesetzt.
+auf die gebündelte Frage („können so erstmal ins Repo, ist ja alles relativ klein") ist damit umgesetzt:
+1.2 ist das Paket Mönchengladbachs, 2.1 der Schnappschuss 2014 bis 2020, 3.3 der Quartiersatlas unter
+`context/` (der lag schon so da). Für die **laufende** Periode gibt es keine eigene Frage; dass ihr
+Schnappschuss ins Repo geht und nicht in ein Bucket, folgt aus Punkt 56 und aus Konrads Antwort auf
+Frage 7.4 vom 2026-10-13 („kein Bucket").
 
 | Paket | Bytes | Inhalt | Profil |
 |---|---|---|---|
@@ -246,7 +249,9 @@ umgesetzt.
 | `snapshots/2014-2020/` | 37 875 851 | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
 | `snapshots/2025/` | 13 894 254 | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
 
-Zusammen 53,2 MiB neben `reference/` (81,8 MiB) und `context/` (2,1 MiB), also 137,1 MiB in fünf Paketen.
+Zusammen 55 751 063 Bytes (53,17 MiB) neben `reference/` (85 771 896, 81,80 MiB) und `context/`
+(2 242 316, 2,14 MiB): **fünf Pakete, 143 765 275 Bytes, 137,11 MiB**, 76 % der Grenze von 180 MiB im Test.
+Gezählt sind überall die Datendateien ohne das README (Review-Befund 14).
 Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, den Zahlen des Laufs und der SHA-256 jeder Datei;
 `tests/unit/test_data_packages.py` hält Dateiliste, Größe und Prüfsumme gegen das README (die Prüfsummen und
 die Zeilenzahlen als `slow`-Test) und lässt keine PDFs, Stamps, Manifeste und Caches hinein. Die PDFs liegen
@@ -584,6 +589,6 @@ Kennzahlen, am 2026-10-13 (`docs/skalierung-2026-10.md`, § 8); Punkt 5, die Lit
 2026-10-13 (`docs/seitengroesse-2026-10.md`, § 8); Punkt 6, die Lizenz, am 2026-10-12 (Punkt 42).
 Die acht wichtigsten Fragen aus `docs/plans/fragen.md` hat Konrad am 2026-10-13 beantwortet; umgesetzt sind
 davon der Umzug nach `data/duesseldorf/` (Frage 1.7, Punkt 52, am 2026-10-13) und die Datenpakete im Repo
-(Fragen 1.2, 2.1, 3.3, Punkt 56, am 2026-10-14). Offen bleibt der VPS samt Domain, später. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,
+(Fragen 1.2, 2.1, 3.3 und, für die laufende Periode, 7.4; Punkt 56, am 2026-10-14). Offen bleibt der VPS samt Domain, später. Zurückgestellt (`docs/plans/00-synergien.md`, § 8): Fingerprint je Schritt. Außerdem offen,
 wenn jemand es will: ein Ersatz für FlashText oder pypdf nur nach neuer Messung (`docs/decisions.md`, Punkt 14);
 die beiden deal-Eigenheiten upstream melden; die Abweichung in Tabelle 5 „ohne Ausreißer" mit Lukas klären.
