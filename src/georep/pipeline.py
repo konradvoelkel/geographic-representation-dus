@@ -344,7 +344,10 @@ def build_steps(
         # Option 01: byteweise, wie die Quelle liefert — ein Shapefile-Zip überlebt kein
         # Umschreiben; was daraus wird, entscheidet der Schritt ``shapes``.
         flaechen = fetch_districts_file(
-            transport(), portal.districts_url, fmt=settings.precincts.format
+            transport(),
+            portal.districts_url,
+            fmt=settings.precincts.format,
+            min_areas=settings.precincts.min_areas,
         )
         write_bytes(layout.districts_geojson, flaechen)
         done = f"{len(csv)} Bytes Wahlergebnis, {len(flaechen)} Bytes Flächen"

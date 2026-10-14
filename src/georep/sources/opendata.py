@@ -66,6 +66,7 @@ def fetch_districts_file(
     url: str,
     *,
     fmt: Literal["geojson", "shapefile-zip", "esri-identify"] = "geojson",
+    min_areas: int = 0,
 ) -> bytes:
     """Die Flächen als Bytes, nach Format geprüft und dann unverändert.
 
@@ -73,6 +74,12 @@ def fetch_districts_file(
     ArcGIS-Dienstes sein und keine Datei (``identify?geometry=…&f=json``, Punkt 59). Ein ``&``
     liest TOML wörtlich, der Abruf bleibt ein GET, und ``http.cache_pattern`` deckt die Anfrage
     mit seinem ``*`` ab -- am Cache ist dafür nichts zu ändern.
+
+    ``min_areas`` ist die Zahl, die die Stadt im Profil nennt (``precincts.min_areas``, 0 = keine
+    Erwartung): eine **vollständige** Antwort hat mindestens so viele Flächen. Geprüft wird sie an
+    den beiden Formen, die sich zählen lassen, ohne die Datei zu zerlegen -- GeoJSON an seinen
+    Features, Esri-JSON an seinen ``results``. Beim Shapefile-Zip bleibt es beim Schritt
+    ``shapes``: dort steht die Zahl in der Zeile des Laufs.
     """
     with network_errors(url):
         response = http.get(url)
@@ -81,13 +88,13 @@ def fetch_districts_file(
     if fmt == "shapefile-zip":
         _check_shapefile_zip(url, content)
     elif fmt == "esri-identify":
-        _check_identify(url, content)
+        _check_identify(url, content, min_areas)
     else:
-        _check_feature_collection(url, content)
+        _check_feature_collection(url, content, min_areas)
     return content
 
 
-def _check_feature_collection(url: str, content: bytes) -> None:
+def _check_feature_collection(url: str, content: bytes, min_areas: int = 0) -> None:
     try:
         data = json.loads(content)
     except ValueError as error:
@@ -98,14 +105,31 @@ def _check_feature_collection(url: str, content: bytes) -> None:
         or not data.get("features")
     ):
         raise FetchError(f"Stimmbezirke von {url}: keine FeatureCollection mit Features")
+    _check_count(url, len(data["features"]), min_areas)
 
 
-def _check_identify(url: str, content: bytes) -> None:
-    """Esri-JSON mit ``results[]``, jeder Treffer mit Ringen.
+def _check_count(url: str, found: int, min_areas: int) -> None:
+    """Weniger Flächen als das Profil erwartet: die Antwort ist unvollständig (Punkt 59)."""
+    if min_areas and found < min_areas:
+        raise FetchError(
+            f"Stimmbezirke von {url}: {found} Flächen, erwartet sind mindestens {min_areas} "
+            "(precincts.min_areas); die Antwort ist unvollständig"
+        )
+
+
+def _check_identify(url: str, content: bytes, min_areas: int = 0) -> None:
+    """Esri-JSON mit ``results[]``, jeder Treffer mit Ringen, und die Antwort nicht abgeschnitten.
 
     Ein ArcGIS-Dienst meldet seine Fehler **mit HTTP 200** und einem ``error``-Objekt; ohne diese
     Prüfung landete die Fehlermeldung als Datei in ``external/`` und der Schritt ``shapes`` wäre
     der erste, dem etwas auffällt.
+
+    **Abgeschnitten ist schlimmer als kaputt**: eine Antwort mit 1 000 von 1 200 Flächen ist
+    gültiges Esri-JSON, läuft durch die ganze Kette und macht eine Stadt kleiner, ohne dass
+    irgendwo ein Fehler steht. Zwei Anzeichen dafür: der Dienst setzt ``exceededTransferLimit``,
+    wenn er gekürzt hat, und das Profil nennt mit ``precincts.min_areas``, wie viele Flächen die
+    Stadt hat. Das erste ist die Auskunft des Dienstes, das zweite die der Stadt; beide sind
+    nötig, denn der Server setzt die Marke nicht in jeder Fassung, und die Zahl im Profil veraltet.
     """
     try:
         data = json.loads(content)
@@ -118,12 +142,18 @@ def _check_identify(url: str, content: bytes) -> None:
     results = data.get("results")
     if not isinstance(results, list) or not results:
         raise FetchError(f"Stimmbezirke von {url}: keine results in der identify-Antwort")
+    if data.get("exceededTransferLimit"):
+        raise FetchError(
+            f"Stimmbezirke von {url}: exceededTransferLimit, der Dienst hat die Antwort nach "
+            f"{len(results)} Flächen abgeschnitten; die Anfrage muss engere Umschläge nehmen"
+        )
     without = sum(not _has_rings(entry) for entry in results)
     if without:
         raise FetchError(
             f"Stimmbezirke von {url}: {without} von {len(results)} Treffern ohne "
             "geometry.rings; die Abfrage braucht returnGeometry=true"
         )
+    _check_count(url, len(results), min_areas)
 
 
 def _has_rings(entry: Any) -> bool:

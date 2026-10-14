@@ -2041,6 +2041,15 @@ Schreibweise (gemessen: wertgleich bis aufs Bit, dieselben 25 187 Stützpunkte).
 ohne mehr Genauigkeit — die Rundung, die es verhindern soll, kommt hier von
 `maxAllowableOffset`.
 
+**Abgeschnitten ist schlimmer als kaputt.** Eine Antwort mit 1 000 von 1 200 Flächen ist gültiges
+Esri-JSON: sie läuft durch die ganze Kette und macht eine Stadt kleiner, ohne dass irgendwo ein
+Fehler steht. Darum zwei Marken, und beide sind nötig: der Dienst setzt `exceededTransferLimit`,
+wenn er gekürzt hat (seine Auskunft, aber nicht jede Fassung setzt sie), und das Profil nennt mit
+`precincts.min_areas` die Zahl der Flächen der Stadt (die Auskunft der Stadt, aber sie veraltet).
+Mönchengladbach steht auf 179. Geprüft wird die Zahl an den beiden Formen, die sich ohne Zerlegen
+zählen lassen -- GeoJSON an seinen Features, Esri-JSON an seinen `results`; beim Shapefile-Zip
+bleibt es bei der Zeile des Schritts `shapes`.
+
 **Die Ringe sind die eigentliche Arbeit.** Esri-JSON kennt kein Feld für „Loch"; das Vorzeichen der
 Ringfläche sagt es (äußere Ringe im Uhrzeigersinn, innere dagegen — ArcGIS REST API, Geometry
 Objects), und GeoJSON hält es umgekehrt und schachtelt Löcher in die Fläche, zu der sie gehören.

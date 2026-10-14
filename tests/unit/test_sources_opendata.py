@@ -142,3 +142,52 @@ def test_an_identify_answer_that_carries_no_areas_is_a_fetch_error(
             URL,
             fmt="esri-identify",
         )
+
+
+def test_a_truncated_identify_answer_is_refused() -> None:
+    """Befund 3: abgeschnitten ist schlimmer als kaputt -- gültiges JSON, nur zu wenig davon.
+
+    Der Dienst setzt ``exceededTransferLimit``, wenn er gekürzt hat, und das Profil nennt mit
+    ``precincts.min_areas``, wie viele Flächen die Stadt hat. Ohne beides liefe eine Antwort mit
+    1 000 von 1 200 Flächen durch die ganze Kette und machte die Stadt kleiner, ohne dass
+    irgendwo ein Fehler stünde.
+    """
+    area = {
+        "attributes": {"Nummer": "10401"},
+        "geometry": {"rings": [RING], "spatialReference": {"wkid": 25832}},
+    }
+    cut = {"results": [area], "exceededTransferLimit": True}
+    with pytest.raises(FetchError, match="exceededTransferLimit"):
+        fetch_districts_file(
+            FakeSession({URL: response(URL, payload=cut)}), URL, fmt="esri-identify"
+        )
+    # ``exceededTransferLimit: false`` ist die Marke des Dienstes für „nicht gekürzt"
+    whole = {"results": [area], "exceededTransferLimit": False}
+    session = FakeSession({URL: response(URL, payload=whole)})
+    assert json.loads(fetch_districts_file(session, URL, fmt="esri-identify")) == whole
+
+
+@pytest.mark.parametrize("fmt", ["esri-identify", "geojson"])
+def test_fewer_areas_than_the_profile_expects_is_refused(fmt: str) -> None:
+    """Die zweite Marke: die Zahl aus dem Profil. Der Dienst setzt seine nicht in jeder Fassung."""
+    area = {
+        "attributes": {"Nummer": "10401"},
+        "geometry": {"rings": [RING], "spatialReference": {"wkid": 25832}},
+    }
+    payload: dict[str, object] = (
+        {"results": [area, area]}
+        if fmt == "esri-identify"
+        else {"type": "FeatureCollection", "features": [{"type": "Feature"}] * 2}
+    )
+    with pytest.raises(FetchError, match="2 Flächen, erwartet sind mindestens 179"):
+        fetch_districts_file(
+            FakeSession({URL: response(URL, payload=payload)}),
+            URL,
+            fmt=fmt,  # type: ignore[arg-type]
+            min_areas=179,
+        )
+    # Genau so viele wie erwartet ist genug, und ohne Erwartung wird nicht gezählt
+    session = FakeSession({URL: response(URL, payload=payload)})
+    assert fetch_districts_file(session, URL, fmt=fmt, min_areas=2)  # type: ignore[arg-type]
+    session = FakeSession({URL: response(URL, payload=payload)})
+    assert fetch_districts_file(session, URL, fmt=fmt)  # type: ignore[arg-type]

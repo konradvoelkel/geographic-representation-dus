@@ -91,6 +91,7 @@ source_crs = "EPSG:25832"      # nur die Rückfallebene: der Dienst nennt wkid 2
 id_property = "Nummer"         # fünf Zeichen: Stadtbezirk, Wahlbezirk, Stimmbezirk (10401); dasselbe Attribut wie im Shapefile
 district_from_id = [1, 3]      # Zeichen 1 und 2 sind der Wahlbezirk; durch Summenvergleich mit der Wahlbezirks-CSV für alle 33 bestätigt
 names_from_results = true      # der Dienst kennt nur die Nummer; die Namen stehen in der Wahlbezirks-CSV
+min_areas = 179                # Punkt 59: so viele Urnen-Stimmbezirke hatte die Kommunalwahl 2025 (gezählt am 2026-10-14). Eine abgeschnittene Dienstantwort ist gültiges JSON und fällt sonst nirgends auf
 
 [columns.results]
 sep = ";"

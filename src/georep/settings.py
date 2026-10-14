@@ -323,6 +323,9 @@ class Precincts(_Strict):
     names_from_results: bool = False  # sonst: Namen aus der Wahlbezirks-CSV der Quelle
     names_id_column: str = "gebiet-nr"  # Spalten dieser CSV (votemanager)
     names_name_column: str = "gebiet-name"
+    # Punkt 59: wie viele Flächen die Stadt hat (0 = keine Erwartung). Eine abgeschnittene Antwort
+    # eines Dienstes ist gültiges JSON und fällt sonst nirgends auf; der Fetcher weist sie ab.
+    min_areas: int = Field(default=0, ge=0)
     dbf_encoding: str = "utf-8"  # pyshp liest .dbf oft als latin-1; Fehler werden ersetzt
 
     @model_validator(mode="after")
