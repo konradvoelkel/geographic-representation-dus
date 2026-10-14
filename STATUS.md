@@ -423,14 +423,25 @@ und unter Tabelle 5 steht ein Absatz aus zwei Sätzen. Der erste sagt, dass die 
 Ansehen der Daten entstanden ist — ausgeschlossen sind die beiden Bezirke mit den höchsten
 Trefferquoten, eine Entscheidung über diesen Datensatz und keine Vorhersage. Der zweite nennt beide
 p-Werte: „dort steht dieselbe Spalte bei *r* = 0,282 und p = 0,082, hier bei *r* = 0,335 und
-p = 0,037 — dieselbe Methode, dieselbe Stadt, ein anderer Zeitraum, und von der Signifikanz bleibt
-nichts."
+p = 0,037 — zwei nah beieinander liegende Schätzungen, von denen eine darunter und eine knapp über
+der 5-%-Grenze liegt. Die Signifikanz dieser Spalte trägt damit nicht über die Perioden hinweg; die
+geschätzte Steigung schwankt dabei um den Faktor 2,6 (216 gegen 82)." Dass der Satz nicht „von der
+Signifikanz bleibt nichts" sagt, ist Review-Befund 10: die beiden *r* liegen 0,053 auseinander und
+sind nach Fisher-z nicht unterscheidbar (p = 0,80).
 
-- **Keine Zahl steht hart im Text.** Beide p-Werte und beide *r* kommen aus dem Modell: der eigene
-  aus `regression`, der andere aus `comparison.previous_pair` — derselben Rechnung über die
-  `results` der anderen Periode, aus der auch ihr `summary.json` entsteht. Auch das Urteil kommt aus
-  den Zahlen: vier Zweige, je nachdem, welche der beiden Spalten unter 0,05 liegt; ein
-  `parametrize`-Test rendert alle vier.
+- **Keine Zahl steht hart im Text.** Beide p-Werte, beide *r* und beide Steigungen kommen aus dem
+  Modell: die eigenen aus `regression`, die anderen aus `comparison.previous_pair` — derselben
+  Rechnung über die `results` der anderen Periode, aus der auch ihr `summary.json` entsteht. Auch
+  das Urteil kommt aus den Zahlen, in drei unabhängigen Stücken: wie weit die beiden *r*
+  auseinanderliegen (Grenze 0,1), auf welchen Seiten der 5-%-Grenze die beiden p liegen (vier Fälle,
+  „knapp" darüber nur unter 0,15) und ob die Steigung um mehr als die Hälfte schwankt;
+  `parametrize`-Tests rendern die Fälle, auch die fünf Zweige des Makros im Abschnitt „Zwei
+  Wahlperioden".
+- **„Methode und Grenzen" sagt es noch einmal länger** (Review-Befund 12): dorthin verweist die
+  Fußnote, und dort stand nichts dazu. Der Absatz nennt, warum die Nummern in den Einstellungen
+  stehen, dass eine hohe Trefferquote vor allem ein großes Wörterbuch anzeigt (*r* = 0,760 gegen
+  0,173 zu den Wahlberechtigten) — also genau die Eigenschaft, nach der ausgeschlossen wird —, und
+  dass 41 Wahlbezirke keine Stichprobe sind, sondern die ganze Grundgesamtheit.
 - **Ohne Vergleichsprofil nur der erste Satz**, ohne zweite Spalte (`analysis.exclude_districts`
   leer, so bei Mönchengladbach) kein Absatz. Die Seite der Periode 2014 bis 2020 zeigt den ersten
   Satz, die laufende Periode hat keine Regression und damit keinen Abschnitt.
@@ -440,8 +451,8 @@ nichts."
   *r* = 0,282 und p = 0,082 — in keiner der beiden Spalten signifikant. In der Wahlperiode 2020 bis
   2025 sind es *r* = 0,189 bei p = 0,236 über alle 41 Wahlbezirke und *r* = 0,335 bei p = 0,037 ohne
   1 und 10 — nur in der explorativen zweiten Spalte signifikant."
-- Kosten, gemessen an der Hauptseite: **714 Byte** der Absatz, **542 Byte** der Satz je Periode,
-  **40 Byte** der Kopfhinweis.
+- Kosten, gemessen an der Hauptseite: **878 Byte** der Absatz unter Tabelle 5, **542 Byte** der
+  Satz je Periode, **1 231 Byte** der Absatz in „Methode und Grenzen", **40 Byte** der Kopfhinweis.
 - **Mit Lukas zu klären bleibt die Spalte trotzdem**, zusammen mit der Abweichung aus
   `docs/baseline-2026-10-10.md` (siehe „Bekannt").
 

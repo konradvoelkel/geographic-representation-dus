@@ -1839,22 +1839,33 @@ den höchsten Trefferquoten — eine Entscheidung über diesen Datensatz, keine 
 prüfen könnte, `docs/methodik-review-2026-10.md`, § 2.7); der zweite nennt beide p-Werte und sagt,
 was daraus folgt.
 
-**Kein Satz trägt eine Zahl hart.** Beide p-Werte und beide r kommen aus dem Modell, der eigene aus
-`model.regression`, der andere aus `model.comparison.previous_pair` — derselben Rechnung über die
-`results` der anderen Periode, aus der auch ihr `summary.json` entsteht. **Das Urteil kommt aus den
-Zahlen und nicht aus dem Text**: vier Zweige, je nachdem, welche der beiden Spalten unter 0,05
-liegt („von der Signifikanz bleibt nichts", „in beiden Wahlperioden", „in keiner der beiden
-Wahlperioden", „signifikant nur in der älteren Wahlperiode"). Ein `parametrize`-Test rendert alle
-vier. Ohne das Vergleichsprofil bleibt es beim ersten Satz, und ohne zweite Spalte
-(`analysis.exclude_districts` leer, so bei Mönchengladbach) fehlt der Absatz ganz.
+**Kein Satz trägt eine Zahl hart.** Beide p-Werte, beide r und beide Steigungen kommen aus dem
+Modell, die eigenen aus `model.regression`, die anderen aus `model.comparison.previous_pair` —
+derselben Rechnung über die `results` der anderen Periode, aus der auch ihr `summary.json` entsteht.
+**Das Urteil kommt aus den Zahlen und nicht aus dem Text**, und zwar in drei unabhängigen Stücken:
+wie weit die beiden *r* auseinanderliegen („zwei nah beieinander liegende" gegen „zwei deutlich
+verschiedene Schätzungen", Grenze 0,1), auf welchen Seiten der 5-%-Grenze die beiden p liegen (vier
+Fälle, und „knapp" statt „deutlich" darüber nur unter 0,15), und ob die Steigung um mehr als die
+Hälfte schwankt. Ein `parametrize`-Test rendert die Fälle. Ohne das Vergleichsprofil bleibt es beim
+ersten Satz, und ohne zweite Spalte (`analysis.exclude_districts` leer, so bei Mönchengladbach)
+fehlt der Absatz ganz.
+
+*Review 2026-10-14:* der Satz hieß zuerst „dieselbe Methode, dieselbe Stadt, ein anderer Zeitraum,
+und von der Signifikanz bleibt nichts". Das tragen die Daten nicht: die beiden *r* liegen 0,053
+auseinander (0,335 gegen 0,282), und ein Vergleich der beiden Korrelationen nach Fisher-z gibt
+p = 0,80 — sie sind nicht unterscheidbar. Was wirklich schwankt, ist die **Steigung**: 216 gegen 82,
+Faktor 2,6. Die Spalte ist also nicht „nichts", sie ist **ein Zusammenhang ähnlicher Stärke, dessen
+p einmal knapp unter und einmal knapp über der Grenze liegt** — und genau das ist der Grund, warum
+sie explorativ heißt. Der Satz sagt das jetzt so.
 
 **Dazu ein Satz je Periode im Abschnitt „Zwei Wahlperioden"** mit r und p **beider** Spalten und
 demselben Urteil aus den Zahlen (ein Jinja-Makro `verdict`, fünf Zweige, weil dort auch „über alle
 Wahlbezirke signifikant, ohne die beiden nicht" vorkommen kann). Wer die Tabellen nicht
 nebeneinanderlegen will, liest dort beide Perioden in zwei Sätzen.
 
-**Was es kostet** (gemessen 2026-10-14 an der Hauptseite): 714 Byte der Absatz, 542 Byte der Satz
-je Periode, 40 Byte der Kopfhinweis.
+**Was es kostet** (gemessen 2026-10-14 an der Hauptseite): 878 Byte der Absatz unter Tabelle 5,
+542 Byte der Satz je Periode, 1 103 Byte der Absatz in „Methode und Grenzen", 40 Byte der
+Kopfhinweis.
 
 **Verworfen:**
 
@@ -1866,6 +1877,13 @@ je Periode, 40 Byte der Kopfhinweis.
   (`comparison.previous_pair`), aus derselben Quelle gerechnet. Ein zweiter Weg zu derselben Zahl
   ist eine zweite Wahrheit, und er hinge daran, dass der Lauf der anderen Periode seine Seite schon
   geschrieben hat.
+- **Nur die Fußnote und keinen Absatz in „Methode und Grenzen"** (Review-Befund 12): die Fußnote
+  verweist mit „(siehe Methode und Grenzen)" dorthin, und dort stand nichts dazu. Jetzt steht dort
+  ein Absatz, der dasselbe länger sagt: warum die Nummern in den Einstellungen stehen, warum ein
+  p-Wert aus einem nachträglich gewählten Modell nicht misst, wie überraschend das Muster ist, dass
+  eine hohe Trefferquote vor allem ein großes Wörterbuch anzeigt (*r* = 0,760 zwischen Treffern und
+  Begriffen gegen 0,173 zu den Wahlberechtigten, gerechnet aus `analysis.scaling.dictionary_bias`) — also genau die Eigenschaft, nach der ausgeschlossen wird —, und dass
+  41 Wahlbezirke keine Stichprobe sind, sondern die ganze Grundgesamtheit.
 - **Den Hinweis auch über die Spalte „ohne 1 und 10" der zweiten Tabelle schreiben** (dieselbe
   Rechnung je Begriff im Wörterbuch, Punkt 46): dort steht der Satz schon, und zwar stärker — mit
   dieser Kennzahl bleibt von der Signifikanz ohnehin nichts (p = 0,80). Zwei Hinweise übereinander

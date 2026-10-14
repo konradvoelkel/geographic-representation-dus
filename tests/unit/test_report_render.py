@@ -484,11 +484,14 @@ def _fit(r: float, p: float, n: int = 41) -> RegressionResult:
     return RegressionResult(n=n, slope=200.0 * r, intercept=45.0, r=r, p=p, stderr=1.0)
 
 
-def _pair(r: float, p: float, without: tuple[float, float] | None) -> RegressionPair:
+def _pair(
+    r: float, p: float, without: tuple[float, float] | None, slope: float | None = None
+) -> RegressionPair:
+    fit = _fit(*without, n=39) if without else None
     return RegressionPair(
         all=_fit(r, p),
         excluded=(1, 10),
-        without=_fit(*without, n=39) if without else None,
+        without=replace(fit, slope=slope) if fit is not None and slope is not None else fit,
     )
 
 
@@ -526,27 +529,40 @@ def test_the_outlier_column_is_marked_exploratory_and_explained(
 def test_the_outlier_column_names_both_p_values_of_both_periods(
     model: ReportModel, visuals: Visuals
 ) -> None:
-    """Punkt 61: p = 0,037 hier gegen p = 0,082 dort, beide aus dem Modell, mit dem Urteil dazu."""
+    """Punkt 61: p = 0,037 hier gegen p = 0,082 dort, beide aus dem Modell, mit dem Urteil dazu.
+
+    Review 2026-10-14: das Urteil sagt nicht „von der Signifikanz bleibt nichts" -- die beiden
+    <em>r</em> liegen 0,053 auseinander, und die eine Spalte liegt knapp unter, die andere knapp
+    über der 5-%-Grenze. Was dagegen schwankt, ist die Steigung: 216 gegen 82, Faktor 2,6.
+    """
     page = _rendered(
         model,
         visuals,
-        regression=_pair(0.1891, 0.23641, (0.3351, 0.03705)),
-        comparison=_comparison(_pair(0.2384, 0.13330, (0.2819, 0.08211))),
+        regression=_pair(0.1891, 0.23641, (0.3351, 0.03705), slope=216.2416),
+        comparison=_comparison(_pair(0.2384, 0.13330, (0.2819, 0.08211), slope=82.2060)),
     )
     head = page[page.index('id="zusammenhang"') : page.index('id="parteien"')]
     assert "Wahlperiode 2014 bis 2020" in head
     assert "p = 0,082" in head and "p = 0,037" in head
     assert "<em>r</em> = 0,282" in head and "<em>r</em> = 0,335" in head
-    assert "von der Signifikanz bleibt nichts" in head
+    assert "zwei nah beieinander liegende Schätzungen" in head
+    assert "von denen eine darunter und eine knapp über der 5-%-Grenze liegt" in head
+    assert "trägt damit nicht über die Perioden hinweg" in head
+    assert "um den Faktor 2,6 (216 gegen 82)" in head
+    assert "von der Signifikanz bleibt nichts" not in head  # zu stark für diese Zahlen
 
 
 @pytest.mark.parametrize(
     ("here", "there", "expected"),
     [
-        ((0.3351, 0.03705), (0.2819, 0.08211), "von der Signifikanz bleibt nichts"),
-        ((0.3351, 0.03705), (0.4000, 0.01000), "in beiden Wahlperioden"),
-        ((0.1000, 0.50000), (0.1200, 0.40000), "in keiner der beiden Wahlperioden"),
-        ((0.1000, 0.50000), (0.4000, 0.01000), "signifikant nur in der älteren Wahlperiode"),
+        # einmal darunter, einmal knapp darüber -- der gemessene Fall
+        ((0.3351, 0.03705), (0.2819, 0.08211), "eine knapp über der 5-%-Grenze liegt"),
+        # einmal darunter, einmal weit darüber
+        ((0.3351, 0.03705), (0.2900, 0.40000), "eine deutlich über der 5-%-Grenze liegt"),
+        ((0.3351, 0.03705), (0.4000, 0.01000), "in beiden Wahlperioden unter der 5-%-Grenze"),
+        ((0.1000, 0.50000), (0.1200, 0.40000), "in keiner der beiden Wahlperioden unter der"),
+        # und weit auseinanderliegende Schätzungen heißen nicht „nah beieinander"
+        ((0.1000, 0.50000), (0.4000, 0.01000), "zwei deutlich verschiedene Schätzungen"),
     ],
 )
 def test_the_verdict_follows_the_two_p_values_and_not_the_text(
@@ -564,6 +580,53 @@ def test_the_verdict_follows_the_two_p_values_and_not_the_text(
     )
     head = page[page.index('id="zusammenhang"') : page.index('id="parteien"')]
     assert expected in head
+
+
+def test_the_method_section_explains_the_exploratory_column(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    """Review-Befund 12: die Fußnote verweist auf „Methode und Grenzen", also steht es dort auch."""
+    page = _rendered(model, visuals, regression=_pair(0.1891, 0.23641, (0.3351, 0.03705)))
+    method = page[page.index('id="methode"') :]
+    assert 'Zur Spalte „ohne 1 und 10" von Tabelle 5' in method
+    assert "die Spalte ist darum explorativ" in method
+    assert "die ganze Grundgesamtheit" in method
+    # Ohne zweite Spalte fehlt der Absatz, wie die Fußnote
+    empty = _rendered(model, visuals, regression=_pair(0.1891, 0.23641, None))
+    assert "Zur Spalte" not in empty
+
+
+@pytest.mark.parametrize(
+    ("old_pair", "new_pair", "expected"),
+    [
+        # das Makro ``verdict`` in 36-perioden: fünf Zweige, hier alle
+        ((0.2384, 0.13330, (0.2819, 0.08211)), None, "in keiner der beiden Spalten signifikant"),
+        ((0.2384, 0.01000, (0.2819, 0.02000)), None, "in beiden Spalten auf dem 5-%-Niveau"),
+        (
+            (0.2384, 0.01000, (0.2819, 0.30000)),
+            None,
+            "über alle Wahlbezirke signifikant, ohne die beiden nicht",
+        ),
+        ((0.2384, 0.13330, None), None, "nicht signifikant"),
+        ((0.2384, 0.01000, None), None, "auf dem 5-%-Niveau signifikant"),
+    ],
+)
+def test_the_period_verdict_has_a_branch_for_every_pair_of_p_values(
+    model: ReportModel,
+    visuals: Visuals,
+    old_pair: tuple[float, float, tuple[float, float] | None],
+    new_pair: None,
+    expected: str,
+) -> None:
+    page = _rendered(
+        model,
+        visuals,
+        regression=_pair(0.1891, 0.23641, (0.3351, 0.03705)),
+        comparison=_comparison(_pair(*old_pair)),
+    )
+    start = page.index('<section id="perioden">')
+    section = page[start : page.index("</section>", start)]
+    assert expected in section
 
 
 def test_the_period_section_names_both_columns_of_both_periods(
