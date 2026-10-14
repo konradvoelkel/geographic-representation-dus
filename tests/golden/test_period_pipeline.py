@@ -156,6 +156,20 @@ def test_the_dictionary_comes_byte_identical_from_the_main_period(period_run: Pe
     )
 
 
+def test_the_period_page_links_back_to_the_main_period(
+    period_run: PeriodRun, mini_run: Layout
+) -> None:
+    """Review 2026-10-14: ``../`` fuehrt von ``<stadt>/site/<profil>/`` zur Hauptperiode.
+
+    Abgeleitet aus ``profile != base_profile``, also genau dort, wo ``publish`` und ``pages.yml``
+    die Seite eine Ebene tiefer legen; die Hauptseite derselben Stadt hat den Link nicht.
+    """
+    assert period_run.settings.profile != period_run.settings.base_profile
+    page = period_run.layout.site_index.read_text(encoding="utf-8")
+    assert '<a href="../">Zur Hauptperiode Düsseldorfs</a>' in page
+    assert 'data-parent="1"' not in mini_run.site_index.read_text(encoding="utf-8")
+
+
 def test_the_period_page_builds_on_the_target_districts(period_run: PeriodRun) -> None:
     page = period_run.layout.site_index.read_text(encoding="utf-8")
     assert "13.09.2020" in page  # der Wahltag, dessen Ergebnis den Nenner liefert

@@ -590,6 +590,20 @@ def test_the_monitoring_link_is_relative_and_only_there_when_set(
     assert '<section id="laufend">' not in without and 'href="2025/"' not in without
 
 
+def test_a_subpage_links_back_to_the_main_period(model: ReportModel, visuals: Visuals) -> None:
+    """Review 2026-10-14: eine Periodenseite liegt unter der Stadt und braucht einen Rückweg.
+
+    Der Link ist relativ (``../``) und taucht darum nicht unter den externen Links auf; die
+    Hauptseite hat ihn nicht, denn sie *ist* die Wurzel ihrer Stadt.
+    """
+    page = render_report(replace(model, parent_url="../"), visuals)
+    assert (
+        '<p class="meta" data-parent="1"><a href="../">Zur Hauptperiode Düsseldorfs</a></p>' in page
+    )
+    assert "../" not in external_links(page)
+    assert 'data-parent="1"' not in render_report(replace(model, parent_url=""), visuals)
+
+
 def test_the_month_column_sorts_by_number_not_by_name(open_page: str) -> None:
     """Nach Text sortiert stünde April vor Oktober; der Wert ist Jahr mal zwölf plus Monat."""
     import re as _re

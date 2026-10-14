@@ -637,6 +637,12 @@ class ReportModel:
     # Option 07
     timeline: tuple[MonthRow, ...] = ()
     monitoring_url: str = ""  # relativer Link auf die Seite der laufenden Periode; leer = keiner
+    # Review 2026-10-14: der Rückweg einer Unterseite. Eine Periode rechnet in ihrem eigenen
+    # Ordner unter der Stadt, und ``pages.yml`` wie ``deploy/bin/georep-monitor.sh`` legen ihre
+    # Seite nach ``<stadt>/site/<profil>/``; von dort führt ``../`` zur Hauptperiode. Leer heißt
+    # „diese Seite ist die Hauptseite ihrer Stadt". Relativ und darum nicht in der Allowlist der
+    # externen Links (die prüft nur ``http(s)://``).
+    parent_url: str = ""
     # Punkt 48: so viele Zeilen zeigt eine lange Tabelle; 0 klappt nichts ein. Die Vorlage baut
     # daraus die CSS-Regel der Vorschau und die Schaltfläche (docs/seitengroesse-2026-10.md, § 3).
     preview_rows: int = 3
@@ -1743,6 +1749,10 @@ def build_report_model(
         data_note=settings.report.data_note,
         timeline=month_rows(layout.timeline),  # Option 07
         monitoring_url=settings.report.monitoring_url,
+        # Eine Periode liegt unter der Stadt, nicht an ihrer Stelle: genau dann gibt es einen
+        # Rückweg. Abgeleitet und kein Settings-Schlüssel, weil derselbe Vergleich schon
+        # entscheidet, wo die Seite landet (Punkt 52, ``Settings.base_profile``).
+        parent_url="../" if settings.profile != settings.base_profile else "",
         preview_rows=settings.report.table_preview_rows,  # Punkt 48
     )
 
