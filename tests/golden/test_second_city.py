@@ -72,14 +72,31 @@ def test_bootstrap_takes_the_package_format(run: Layout) -> None:
 
 
 def test_the_precincts_step_reads_the_service_answer(run: Layout, settings: Settings) -> None:
+    """Die kanonische Datei der zweiten Stadt, festgenagelt an Zahl, Namen und Fläche (Befund 8).
+
+    Die Flächensumme ist der Prüfpunkt, der die Quellform verrät: sie kommt aus den Esri-Ringen
+    über die Schachtelung der Löcher, und sie ist auf den Quadratmeter dieselbe, die die Ringe
+    der Antwort nach der Trapezformel ergeben (``tests/unit/test_precincts.py`` rechnet sie dort
+    gegen das unabhängige Orakel). Ein stiller Wechsel der Quellform oder eine vereinfachte
+    Dienstantwort (``maxAllowableOffset``) fällt hier auf, die Zahl der Flächen allein zeigte es
+    nicht -- die 17 Stimmbezirke hat auch das Shapefile von 2022.
+    """
     import json
+
+    from shapely.geometry import shape
 
     canonical = json.loads(run.precincts_geojson.read_text(encoding="utf-8"))
     assert canonical["crs"]["properties"]["name"] == "EPSG:25832"
+    assert len(canonical["features"]) == 17
     districts = {f["properties"]["wahlbezirk"] for f in canonical["features"]}
     assert districts == {4, 9, 23}
     names = {f["properties"]["wahlbezirk_name"] for f in canonical["features"]}
     assert names == {"Hardt", "Hermges/Dahl/Ohler", "Dorfbroich/Hövel"}
+    area = sum(shape(f["geometry"]).area for f in canonical["features"])
+    assert area == pytest.approx(20_024_527.60, abs=0.01)  # m², gemessen am 2026-10-14
+    # Jede Fläche ist ein einfaches Polygon; mehrringig sind in dieser Stadt nur 11001 und 11003,
+    # und die gehören zu Wahlbezirk 10 (``tests/fixtures/http/identify_mg_mehrringig.json``).
+    assert {f["geometry"]["type"] for f in canonical["features"]} == {"Polygon"}
 
 
 def test_the_sums_per_district_match_the_source(run: Layout, settings: Settings) -> None:
