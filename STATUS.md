@@ -1,8 +1,8 @@
 # Status
 
-Stand 2026-10-14, `main` auf `v0.13.0` plus die Punkte 58 bis 61 (die Beratungsfolge als zweite Quelle
+Stand 2026-10-14, `main` auf `v0.13.0` plus die Punkte 58 bis 64 (die Beratungsfolge als zweite Quelle
 des Gremiums, die Urheber Mönchengladbachs und der Wahlperiode 2014 bis 2020, die Spalte „ohne
-Ausreißer" als explorativ; alle unveröffentlicht): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
+Ausreißer" als explorativ und die vier Korrekturen ihres Reviews; alle unveröffentlicht): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
 abgearbeitet; `bartzsch-exakt` zeigt auf `v0.11.0`, den letzten Stand, der die Zahlen der Arbeit exakt
 reproduziert. Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
@@ -458,7 +458,8 @@ sind nach Fisher-z nicht unterscheidbar (p = 0,80).
 
 ## Was das Review der Punkte 59 bis 61 geändert hat (2026-10-14)
 
-Die Punkte 62 bis 65 sind die Befunde des Reviews; je ein Abschnitt in `docs/decisions.md`.
+Die Punkte 62, 63 und 64 sind die Befunde des Reviews mit eigener Entscheidung; je ein Abschnitt in
+`docs/decisions.md`, die übrigen stehen in den Punkten 59 bis 61 selbst.
 
 - **Punkt 62, der Briefkopf vor der Dokumentart**: 47 Fraktionsanträge der alten Periode lagen
   unter `Verwaltungsvorlage`; Verwaltung 10 622 → 10 575, Fraktion 8 768 → 8 815.
@@ -490,30 +491,30 @@ Die Punkte 62 bis 65 sind die Befunde des Reviews; je ein Abschnitt in `docs/dec
   **`stop_keep` braucht die Stadt nicht**: keines der 13 Wörter steht in den 190
   Beschriftungswörtern der Seite als Sachwort, anders als „klima" und „tierschutz" in Düsseldorf.
 
-## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56, 58, 59, 60 und 61)
+## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56 und 58 bis 64)
 
-- Tests: 1186 schnelle (nox-Gate, parallel in rund 58 s, Abdeckung 98,5 %), 36 `slow` (rund 4 min über die
+- Tests: 1200 schnelle (nox-Gate, parallel in rund 60 s, Abdeckung 98,5 %), 38 `slow` (rund 4 min über die
   volle Referenz, die sechs Datenpakete, das Paket der Periode 2014 bis 2020 und die veröffentlichte
   Seite), 18 `bench` (grün gegen die
-  Baseline), 4 `network` (nur von Hand). Alle drei am 2026-10-14 nach den Punkten 59 bis 61 mit
+  Baseline), 4 `network` (nur von Hand). Alle drei am 2026-10-14 nach den Punkten 59 bis 64 mit
   Exit 0 gelaufen.
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 23 für Mönchengladbach (seit Punkt 58 ohne
   `committees`, dafür mit den Gremien aus der Beratungsfolge; seit Punkt 59 mit `parties`). Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Gremien
   0,3 s seit Punkt 58, Kennzahlen 0,1 s).
-- Berichtsseite: `index.html` der Hauptseite **934 111 Bytes veröffentlicht** (Budget 1 000 000,
-  **65 889 Byte Luft, 6,6 %**; +524 Byte für den Quellensatz aus Punkt 58, +1 281 für Punkt 61 und
-  den gezählten Quellensatz aus Punkt 59) mit beiden Periodenabschnitten,
+- Berichtsseite: `index.html` der Hauptseite **935 643 Bytes veröffentlicht** (Budget 1 000 000,
+  **64 357 Byte Luft, 6,4 %**; +524 Byte für den Quellensatz aus Punkt 58, +2 813 für die Punkte 59
+  bis 64) mit beiden Periodenabschnitten,
   55 Dateien zusammen 13,2 MB; ohne die Abschnitte „Zwei Wahlperioden" und „Laufende Wahlperiode" sind es
   886 360 Bytes, die beiden kosten also 45 417 und 374 Byte (gemessen 2026-10-14; die beiden Umschalter
   kosten 110 KB, die Literaturübersicht 13,2 KB, die Vorschau langer Tabellen 4,1 KB, `begriffe.json` liegt
   mit 96 KB daneben). Siebzehn Abschnitte in
   Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung, perioden,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads,
-  laufend). Die Unterseiten: `2014-2020/` 820 637, `2025/` 718 247, `moenchengladbach/` 819 288,
-  `vergleich.html` 89 597 Bytes (alle am 2026-10-14 nach den Punkten 59 bis 61 gemessen;
-  Mönchengladbach wuchs um 169 567 Byte, weil es seit Punkt 59 den Abschnitt „Urheber und Parteien"
+  laufend). Die Unterseiten: `2014-2020/` 822 027, `2025/` 718 384, `moenchengladbach/` 819 370,
+  `vergleich.html` 89 597 Bytes (alle am 2026-10-14 nach den Punkten 59 bis 64 gemessen;
+  Mönchengladbach wuchs um 169 649 Byte, weil es seit Punkt 59 den Abschnitt „Urheber und Parteien"
   mit sechs Parteikarten über 33 Flächen hat; `georep publish --strict-budget` endet mit Exit 0 und
   meldet „2 Städte, 1 Vergleich, 101 Dateien, 16,5 MB").
 - Quelltext: 64 Python-Dateien unter `src/`, rund 19 400 Zeilen; fünf Profile im Paket.
