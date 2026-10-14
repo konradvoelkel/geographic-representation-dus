@@ -58,9 +58,14 @@ def test_user_agent_names_the_project() -> None:
     assert "georep" in make_session().headers["User-Agent"]
 
 
-def test_cached_session_serves_repeats_from_cache(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def recording_session(
+    monkeypatch: pytest.MonkeyPatch, cache_path: Path, cache_rules: dict[str, int]
+) -> tuple[requests.Session, list[str]]:
+    """Eine Session mit Cache, deren Verkehr aufgezeichnet wird; geliefert wird sie und die Liste.
+
+    Geprüft wird damit die **Wirkung** der Cache-Regeln (wie oft wirklich gesendet wurde) und
+    nicht die Vergleichsfunktion von requests-cache, die kein Teil ihrer Schnittstelle ist.
+    """
     sent: list[str] = []
 
     def fake_send(
@@ -85,9 +90,16 @@ def test_cached_session_serves_repeats_from_cache(
         return resp
 
     monkeypatch.setattr(requests.Session, "send", fake_send)
-    session = make_session(
-        cache_path=tmp_path / "http.sqlite",
-        cache_rules={"api.invalid/cached*": 3600, "api.invalid/never*": 0},
+    return make_session(cache_path=cache_path, cache_rules=cache_rules), sent
+
+
+def test_cached_session_serves_repeats_from_cache(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    session, sent = recording_session(
+        monkeypatch,
+        tmp_path / "http.sqlite",
+        {"api.invalid/cached*": 3600, "api.invalid/never*": 0},
     )
     for _ in range(3):
         assert session.get("https://api.invalid/cached/x").json() == {"ok": True}
@@ -110,16 +122,18 @@ def test_cache_pattern_drops_scheme_and_adds_wildcard() -> None:
     )
 
 
-def test_a_url_with_a_query_string_still_gets_its_cache_rule() -> None:
+def test_a_url_with_a_query_string_still_gets_its_cache_rule(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Punkt 62: die Flächen einer Stadt dürfen eine Operation sein (``identify?…&f=json``).
 
     ``cache_pattern`` lässt den Query-String weg und endet mit ``*``; dass requests-cache damit
     trotzdem die ganze Anfrage trifft, ist eine Annahme über eine fremde Bibliothek und darum ein
-    Test: sie vergleicht die **vollständige** URL ohne Schema gegen das Muster. Trifft es nicht
-    mehr, wird die Antwort nicht gecacht und jeder Lauf holt sie neu (1 MB).
+    Test. Trifft es nicht mehr, wird die Antwort nicht gecacht und jeder Lauf holt sie neu (1 MB).
+    Geprüft wird die Wirkung an der Session -- wie oft wirklich gesendet wurde -- und nicht die
+    Vergleichsfunktion von requests-cache: die ist ein internes Modul und kein Versprechen
+    (Befund 13 des Reviews).
     """
-    from requests_cache.policy.expiration import get_url_expiration
-
     from georep.http import cache_pattern
 
     url = (
@@ -127,8 +141,14 @@ def test_a_url_with_a_query_string_still_gets_its_cache_rule() -> None:
         "?geometry=310000,5662000,328000,5681000&layers=all:16&returnGeometry=true&f=json"
     )
     assert cache_pattern(url).endswith("/MapServer/identify*")
-    assert get_url_expiration(url, {cache_pattern(url): 3600}) == 3600
-    # Und sie trifft nicht alles: ein anderer Pfad desselben Dienstes bleibt ungecacht
-    assert get_url_expiration(url.replace("/identify?", "/query?"), {cache_pattern(url): 3600}) is (
-        None
+    session, sent = recording_session(
+        monkeypatch, tmp_path / "http.sqlite", {cache_pattern(url): 3600}
     )
+    for _ in range(3):
+        assert session.get(url).json() == {"ok": True}
+    assert sent.count(url) == 1  # der Query-String kostet die Regel nicht ihre Wirkung
+    # Und die Regel trifft nicht alles: ein anderer Pfad desselben Dienstes bleibt ungecacht
+    andere = url.replace("/identify?", "/query?")
+    for _ in range(2):
+        session.get(andere)
+    assert sent.count(andere) == 2
