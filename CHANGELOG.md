@@ -4,6 +4,19 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Mönchengladbachs Stimmbezirksflächen sind die des Wahltags** (`docs/decisions.md`, Punkt 59):
+  statt des Datensatzes „Wahlen" vom 08.06.2022, in dem nur 175 der 179 Urnen-Stimmbezirke der
+  Kommunalwahl 2025 vorkamen, nennt das Profil jetzt den Layer „Kommunalwahl 2025 Stimmbezirke" des
+  Geoportals — **alle 179**, 170,47 km² Stadtfläche, dl-de/zero-2.0. Diese Flächen gibt es nicht als
+  Datei, nur über die ArcGIS-Operation `identify`; darum **eine dritte Quellform `esri-identify`**
+  neben `geojson` und `shapefile-zip`. Esri-JSON kennt kein Feld für „Loch" (das Vorzeichen der
+  Ringfläche sagt es), und die Umwandlung nach GeoJSON ist flächentreu geprüft: Mönchengladbach hat
+  in derselben Ecke ein Loch von 1 641 m² (`11003`) und eine zweite Fläche von 1 639 m² (`11001`).
+  `fetch_districts_file` holt dafür eine URL mit Query-String und erkennt die Fehlerform eines
+  ArcGIS-Dienstes (ein `error`-Objekt mit HTTP 200). Die Settings prüfen jetzt auch, welche
+  Schlüssel zu welcher Quellform gehören (`member` und `dbf_encoding` nur am Zip). **Noch nicht neu
+  gerechnet:** `reference/moenchengladbach/` trägt weiter das Zip von 2022, und die Zahlen der
+  Stadtseite stammen daraus (`STATUS.md`, „Bekannt" und „Nächster Schritt").
 - **Die Spalte „davon allein" der Parteitabelle heißt, was sie ist**: eine Trefferzahl, und sie
   steht hinter „Treffer" statt neben „Dokumente" — auf der Mönchengladbacher Seite war „Dokumente
   107 / davon allein 168" zu lesen. Der Satz zur Deckung nennt außerdem nur noch die Klassen, die

@@ -66,12 +66,12 @@ def test_the_steps_declare_the_street_directory_they_read(run: Layout, settings:
 def test_bootstrap_takes_the_package_format(run: Layout) -> None:
     """Das Paket der zweiten Stadt bringt Stores mit; es gibt kein ``paper_with_text.json``."""
     assert run.papers.is_file() and run.texts.is_file()
-    assert run.results_csv.is_file() and run.districts_geojson.suffix == ".zip"
+    assert run.results_csv.is_file() and run.districts_geojson.suffix == ".json"
     assert run.streets_directory is not None and run.streets_directory.is_file()
     assert run.district_names_csv is not None and run.district_names_csv.is_file()
 
 
-def test_the_precincts_step_reads_the_shapefile_zip(run: Layout, settings: Settings) -> None:
+def test_the_precincts_step_reads_the_service_answer(run: Layout, settings: Settings) -> None:
     import json
 
     canonical = json.loads(run.precincts_geojson.read_text(encoding="utf-8"))
@@ -195,7 +195,8 @@ def test_the_page_names_the_agreement_and_the_date_of_the_geometry(run: Layout) 
     page = run.site_index.read_text(encoding="utf-8")
     assert "amtliche Straßenverzeichnis der Wahl kennt" in page
     assert "demselben Stimmbezirk" in page and "demselben Wahlbezirk" in page
-    assert "08.06.2022" in page  # der Stand der Flächen, aus den Notizen des Profils
+    # Der Stand der Flächen, aus den Notizen des Profils: seit Punkt 59 der des Wahltags
+    assert "Kommunalwahl 2025 Stimmbezirke" in page and "alle 179" in page
 
 
 def test_the_marker_share_of_the_sample_is_recorded(run: Layout) -> None:

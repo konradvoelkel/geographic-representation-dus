@@ -1990,3 +1990,80 @@ Beleg wäre schlechter als die offene Klasse (Punkt 59).
 Der Kommentar im Profil sagte „alle acht Fundstellen nennen wirklich die Gruppe". Das waren sieben
 plus die eine falsche; die Messung war nicht falsch gelesen, sondern zu früh gemacht — gezählt
 wurde, was das Muster trifft, nicht, was es treffen soll.
+## 65. Die Flächen einer Stadt dürfen eine ArcGIS-Operation sein, und es ist `identify` (2026-10-14)
+
+Mönchengladbachs Stimmbezirksflächen rechneten bis hierher mit dem Datensatz „Wahlen" vom
+08.06.2022 (Punkt 35, Landtagswahl 2022): 175 der 179 Urnen-Stimmbezirke der Kommunalwahl 2025
+kamen darin vor, vier fehlten (`11006`, `21406`, `32906`, `40106`), fünf gab es nur dort. Die
+Flächen zum Stand der Wahl **gibt es**, nur nicht als Datei: sie sind Layer 16
+(„Kommunalwahl 2025 Stimmbezirke") des Dienstes
+`geoportal.moenchengladbach.de/server/rest/services/K12_Politik_und_Wahlen/K12_Politik_und_Wahlen/MapServer`,
+179 Flächen, Esri-JSON mit `rings`, `wkid` 25832, Attribut `Nummer` fünfstellig wie bisher,
+Datenlizenz Deutschland – Zero – Version 2.0, Aktualität „Kommunalwahl 2025".
+
+**Darum eine dritte Quellform `esri-identify` neben `geojson` und `shapefile-zip`** (Punkt 35: eine
+neue Quellform ist eine weitere Funktion). Das Profil nennt die ganze Abruf-URL mit Query-String;
+`fetch_districts_file` holt sie byteweise wie jede andere, denn ein GET bleibt ein GET, TOML liest
+das `&` wörtlich, und `http.cache_pattern` deckt die Anfrage mit seinem `*` ab. Neu geprüft wird
+nur, was diese Form eigen hat: ein ArcGIS-Dienst meldet seine Fehler **mit HTTP 200** und einem
+`error`-Objekt, und ohne diese Prüfung lägen sie als Datei in `external/`.
+
+**Warum `identify` und nicht `query`.** `query` ist die Operation, die man nähme, und sie hat an
+diesem Layer zwei Haken, beide am 2026-10-14 nachgesehen:
+
+- **Sie liefert für Layer 16 keine Geometrie.** Mit `returnGeometry=true` kommen die Attribute und
+  kein `geometry`-Mitglied; der eigene Dienst `Stimmbezirke_Kommunalwahl_2025`, der sie hätte, ist
+  **gestoppt**.
+- **Ihr `maxRecordCount` ist 2 000 und sie blättert.** Das reicht hier für 179 Flächen, aber eine
+  Form, die ab einer Grenze blättert, verlangt eine Schleife mit `resultOffset` und einen Vertrag
+  über das Ende. `identify` antwortet in **einem** GET mit allem, was im Umschlag liegt.
+
+`identify` ist dafür gemacht, an einer Stelle nachzusehen, nicht eine Fläche abzuholen; hier ist
+die „Stelle" der Umschlag der ganzen Stadt (`geometry=310000,5662000,328000,5681000`,
+`geometryType=esriGeometryEnvelope`, `tolerance=0`, `layers=all:16`). Das ist der Preis: eine
+Anfrage, die ihren Zweck nicht im Namen trägt. Dafür steht sie vollständig im Profil, ein zweiter
+Mensch kann sie in die Adresszeile kopieren, und die Antwort ist 1 043 618 Byte mit SHA-256
+`c2d3de4b862e615e6ddc998c6b7b4dd3f58bf35c4d4137a1b41b25ac4d093b94`.
+
+**Die Ringe sind die eigentliche Arbeit.** Esri-JSON kennt kein Feld für „Loch"; das Vorzeichen der
+Ringfläche sagt es (äußere Ringe im Uhrzeigersinn, innere dagegen — ArcGIS REST API, Geometry
+Objects), und GeoJSON hält es umgekehrt und schachtelt Löcher in die Fläche, zu der sie gehören.
+`geometry_from_esri_rings` dreht darum jeden Ring und ordnet jedes Loch dem **kleinsten** äußeren
+Ring zu, der es enthält. Mönchengladbach hat beide Fälle, und zwar in derselben Ecke: Stimmbezirk
+`11003` trägt einen Ring gegen den Uhrzeigersinn (ein Loch von 1 641 m²), `11001` an dieser Stelle
+einen im Uhrzeigersinn (eine zweite Fläche von 1 639 m², also ein MultiPolygon). Wer beide gleich
+behandelte, läge bei `11003` um 1 641 m² zu hoch und bei `11001` um 1 639 m² zu niedrig, und die
+Stadtfläche stimmte zufällig trotzdem fast.
+
+Geprüft ist das an der Fläche: die Nachbedingung der Umwandlung ist, dass die Netto-Fläche der
+Ringe erhalten bleibt (Esri zählt außen negativ, also ist sie die negierte Summe über alle Ringe).
+Über alle 179 Flächen der Antwort sind das **170,47 km²** — dieselbe Zahl, die das Shapefile von
+2022 ergibt (`docs/plans/01-staedte.md`, § 3.2) und die Stadtfläche Mönchengladbachs. Dazu
+hypothesis-Tests über Rechtecke (Umlaufrichtung, Loch, zweite Fläche, Flächentreue), crosshair über
+`ring_signed_area` und `point_in_ring`, und Beispieltests an der echten Antwort.
+
+**Verworfen:**
+
+- **Das Shapefile von 2022 behalten und die Lücke auf der Seite nennen** (der Stand bis hierher).
+  Die Flächen des Wahltags sind erreichbar, und „je Wahlbezirk gerechnet, kleine Neuzuschnitte
+  fallen heraus" war eine Einschränkung aus Mangel, nicht aus Methode.
+- **Die Flächen aus OpenStreetMap herleiten.** OSM kennt keine Stimmbezirke; sie wären aus
+  Straßenabschnitten zu konstruieren, und das Ergebnis wäre eine eigene Behauptung statt einer
+  amtlichen Angabe.
+- **Die Flächen aus dem amtlichen Straßenverzeichnis der Wahl herleiten** (Straße und Hausnummern
+  je Stimmbezirk). Dasselbe Problem eine Ebene tiefer: aus Adressen entstünden Polygone nur über
+  eine Hüllen- oder Voronoi-Annahme, und die Übereinstimmung mit dem Verzeichnis, die die Seite
+  heute als Maß zeigt, wäre danach per Konstruktion 100 % und sagte nichts mehr.
+- **Den gestoppten Dienst `Stimmbezirke_Kommunalwahl_2025` bei der Stadt anfragen.** Eine Mail
+  (`gdi@moenchengladbach.de`) wäre weiter sinnvoll — für eine Datei statt einer Operation und für
+  eine Lizenzangabe bei der ITK Rheinland (Frage 1.4) —, aber sie ist kein nächster Schritt,
+  sondern eine Bitte mit offener Antwortzeit.
+
+**Kosten:** `member` und `dbf_encoding` entfallen im Profil der Stadt, `source_crs` kommt dazu (als
+Rückfallebene, der Dienst nennt sein CRS selbst). Die Settings prüfen jetzt, **welche Schlüssel zu
+welcher Quellform gehören**: `member` an einem GeoJSON sagt nichts, und `source_crs` an einem
+Shapefile sieht aus, als gälte es — es gilt das `.prj` im Zip. Und die Zahlen der Stadt ändern
+sich: 179 statt 180 Flächen im Schritt `shapes`, die vier bisher fehlenden Stimmbezirke kommen
+dazu, und die Übereinstimmung mit dem Straßenverzeichnis wird neu gemessen. Das rechnet Phase 2
+mit einem echten Abruf und `georep pack`; bis dahin nennt das Profil den Dienst, und
+`reference/moenchengladbach/` trägt noch das Zip von 2022 (siehe `STATUS.md`, „Bekannt").

@@ -33,10 +33,34 @@ uv run georep --profile moenchengladbach fetch opendata
 uv run georep --profile moenchengladbach run shapes
 ```
 
-Erwartet (gemessen am 2026-10-12): `30574 Bytes Wahlergebnis, 199548 Bytes Flächen
-(shapefile-zip), Straßenverzeichnis, Wahlbezirksnamen` in 1,7 s, danach `180 Stimmbezirke in 33
-Wahlbezirken, CRS EPSG:25832`. Weichen die Zahlen stark ab, hat die Stadt ihre Dateien ersetzt:
-dann erst `docs/plans/01-staedte.md`, § 3.2 gegen die neue Datei halten.
+Erwartet: `30574 Bytes Wahlergebnis, 1043618 Bytes Flächen (esri-identify), Straßenverzeichnis,
+Wahlbezirksnamen` in wenigen Sekunden, danach **`179 Stimmbezirke in 33 Wahlbezirken, CRS
+EPSG:25832`**. Die Flächen sind seit dem 2026-10-14 die des Wahltags und kommen aus der Operation
+`identify` des Geoportals (`docs/decisions.md`, Punkt 59); die URL steht vollständig im Profil und
+ist ein GET. Zwei Prüfungen lohnen sich dabei:
+
+- **179, nicht 180.** Das Shapefile von 2022 hatte 180 Polygone, von denen 175 zu Stimmbezirken der
+  Wahl 2025 gehörten; der Dienst hat genau die 179 Urnen-Stimmbezirke der Wahl.
+- **Die Flächensumme ist 170,47 km²**, die Stadtfläche — dieselbe Zahl wie beim Shapefile von 2022.
+  Das ist der Prüfpunkt für die Umwandlung der Esri-Ringe (Löcher und zweite Flächen):
+
+  ```bash
+  uv run python - <<'EOF'
+  import json
+  from shapely.geometry import shape
+  from georep.layout import Layout
+  from georep.settings import load_settings
+  settings = load_settings(profile="moenchengladbach")
+  layout = Layout.from_settings(settings)
+  flaechen = json.loads(layout.precincts_geojson.read_text(encoding="utf-8"))["features"]
+  print(len(flaechen), "Flächen", round(sum(shape(f["geometry"]).area for f in flaechen) / 1e6, 2), "km²")
+  EOF
+  ```
+
+Weichen die Zahlen stark ab, hat die Stadt ihren Dienst geändert: dann erst `docs/decisions.md`,
+Punkt 59 und `docs/plans/01-staedte.md`, § 3.2 gegen die neue Antwort halten. Antwortet der Dienst
+mit einem `error`-Objekt (ArcGIS tut das mit HTTP 200), bricht `fetch opendata` mit genau dieser
+Meldung ab und schreibt nichts.
 
 Prüfpunkt: das Wahlergebnis aggregiert zu denselben Summen wie die Wahlbezirks-CSV der Quelle.
 
@@ -133,9 +157,12 @@ uv run georep --profile moenchengladbach status
 Prüfpunkt Geometrie: die Zeile des Schritts `streets` nennt die Übereinstimmung mit dem
 Straßenverzeichnis, etwa `Verzeichnis: 1 450 bekannte Straßennamen: 93,2 % im selben Stimmbezirk,
 99,1 % im selben Wahlbezirk`. Unter 90 % je Wahlbezirk lohnt eine Anfrage an die Stadt nach den
-Flächen von 2025 (Frage 1.3); die Seite nennt die Zahl ohnehin. Mönchengladbach liegt mit
-**86,2 %** (2 651 bekannte Namen, 66,5 % im selben Stimmbezirk) darunter, weil seine Flächen vom
-08.06.2022 sind — der Satz an `gdi@moenchengladbach.de` ist damit fällig und nicht mehr optional.
+Flächen von 2025 (Frage 1.3); die Seite nennt die Zahl ohnehin. Mönchengladbach lag mit **86,2 %**
+(2 651 bekannte Namen, 66,5 % im selben Stimmbezirk) darunter, solange seine Flächen vom 08.06.2022
+waren. Seit dem 2026-10-14 rechnet das Profil mit den Flächen des Wahltags (`docs/decisions.md`,
+Punkt 59); **wie hoch die Übereinstimmung damit ist, ist noch nicht gemessen** — die Zeile des
+Schritts `streets` sagt es nach dem nächsten Lauf. Frage 1.3 ist damit beantwortet, und die Mail an
+`gdi@moenchengladbach.de` bleibt eine Bitte um eine Datei statt einer Operation, kein Hindernis.
 
 ## 4b. Die Gremien der Stadt (zehn Minuten, ein kleiner Netzschritt)
 

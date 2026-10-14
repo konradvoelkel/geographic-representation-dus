@@ -1,8 +1,9 @@
 # Status
 
-Stand 2026-10-14, `main` auf `v0.13.0` plus die Punkte 58 bis 64 (die Beratungsfolge als zweite Quelle
+Stand 2026-10-14, `main` auf `v0.13.0` plus die Punkte 58 bis 65 (die Beratungsfolge als zweite Quelle
 des Gremiums, die Urheber Mönchengladbachs und der Wahlperiode 2014 bis 2020, die Spalte „ohne
-Ausreißer" als explorativ und die vier Korrekturen ihres Reviews; alle unveröffentlicht): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
+Ausreißer" als explorativ, die vier Korrekturen ihres Reviews und die Flächen Mönchengladbachs zum
+Stand der Wahl; alle unveröffentlicht): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
 abgearbeitet; `bartzsch-exakt` zeigt auf `v0.11.0`, den letzten Stand, der die Zahlen der Arbeit exakt
 reproduziert. Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
@@ -278,6 +279,37 @@ in **keinem** Paket (233 MB, 3,9 GB, 585 MB).
   187 Dateien, 34,6 MB" und `PublishSummary.over_budget` ist leer. Die Größen sind der Stand jenes
   Nachbaus; die heutigen stehen unten unter „Zahlen" (die Punkte 58 bis 61 haben sie verschoben,
   Mönchengladbach am stärksten).
+
+## Die Flächen Mönchengladbachs zum Stand der Wahl (2026-10-14, `docs/decisions.md`, Punkt 59)
+
+Frage 1.3 ist beantwortet, und zwar mit Ja: die Stimmbezirksflächen der Kommunalwahl 2025 sind
+öffentlich — nicht als Datei, sondern als Layer 16 („Kommunalwahl 2025 Stimmbezirke") des Dienstes
+`K12_Politik_und_Wahlen` im Geoportal der Stadt, 179 Flächen, Esri-JSON, `wkid` 25832, Attribut
+`Nummer` fünfstellig wie bisher, dl-de/zero-2.0 (recherchiert am 2026-10-14). Darum eine dritte
+Quellform `esri-identify` neben `geojson` und `shapefile-zip`, und darum steht im Profil die ganze
+Abruf-URL einer **Operation** statt eines Dateinamens.
+
+| | Shapefile „Wahlen" (bis hierher) | Dienst, Layer 16 (ab Punkt 59) |
+|---|---|---|
+| Stand | 08.06.2022 (Landtagswahl 2022) | Aktualität Kommunalwahl 2025 |
+| Flächen | 180 Polygone, davon 175 Stimmbezirke der Wahl 2025 | **179**, genau die Urnen-Stimmbezirke der Wahl |
+| Form | Zip mit `.shp/.shx/.dbf/.prj`, pyshp | Esri-JSON mit `rings`, ein GET auf `identify` |
+| Fläche | 170,47 km² | **170,47 km²** (dieselbe Stadtfläche; der Prüfpunkt der Ringumwandlung) |
+| Abruf | 199 548 Byte | 1 043 618 Byte, SHA-256 `c2d3de4b…4093b94` |
+
+- **`identify`, nicht `query`**: `query` liefert für diesen Layer kein `geometry`-Mitglied (der
+  eigene Dienst `Stimmbezirke_Kommunalwahl_2025`, der es hätte, ist gestoppt), und ihr
+  `maxRecordCount` ist 2 000 mit Blätterung. `identify` antwortet in einem GET mit allem, was im
+  Umschlag liegt; der Umschlag ist hier die ganze Stadt.
+- **Die Ringe sind die Arbeit**: Esri-JSON kennt kein Feld für „Loch", das Vorzeichen der
+  Ringfläche sagt es (außen im Uhrzeigersinn). Mönchengladbach hat beide Fälle in derselben Ecke:
+  `11003` ein Loch von 1 641 m², `11001` dort eine zweite Fläche von 1 639 m². Die Umwandlung dreht
+  jeden Ring und schachtelt jedes Loch in den kleinsten äußeren Ring, der es enthält; geprüft ist
+  sie an der Fläche, die dabei erhalten bleibt (Vertrag, hypothesis, crosshair und Beispieltests an
+  der echten Antwort).
+- **Noch nicht gerechnet**: `reference/moenchengladbach/` trägt weiter das Zip von 2022, die
+  Stadtseite und alle Zahlen unten stammen daraus, und `bootstrap` meldet die Datei des Profils als
+  fehlend. Der Abruf, die Neuberechnung und `georep pack` sind der nächste Schritt.
 
 ## Die Beratungsfolge als zweite Quelle des Gremiums (2026-10-14, `docs/decisions.md`, Punkt 58)
 
@@ -695,11 +727,21 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   Text" und nennt im Abschnitt „Vergleichbarkeit" je Stadt beide Zahlen, und die Kachel „Dokumente mit
   Treffer" jeder Stadtseite nennt zusätzlich den Anteil an den Dokumenten **mit Text** (Mönchengladbach
   489 von 650 = 75,2 %, nicht nur 16,9 % aller 2 895). Woran die 404 liegen, sagt der Server nicht.
-- **Mönchengladbachs Straßen stimmen nur zu 86,2 % je Wahlbezirk mit dem amtlichen Verzeichnis überein**
+- **Mönchengladbachs Straßen stimmten nur zu 86,2 % je Wahlbezirk mit dem amtlichen Verzeichnis überein**
   (2 651 bekannte Namen, 66,5 % im selben Stimmbezirk; gemessen 2026-10-13). Die Grenze des Runbooks ist
-  90 %, also ist Frage 1.3 fällig: die Flächen stammen aus dem Datensatz „Wahlen" vom 08.06.2022, die Wahl
-  war am 14.09.2025. Gerechnet wird je Wahlbezirk, kleine Neuzuschnitte innerhalb eines Bezirks fallen
-  heraus; der Satz an `gdi@moenchengladbach.de` steht aus (Konrads Handgriff).
+  90 %, und der Grund ist gefunden: die Flächen stammten aus dem Datensatz „Wahlen" vom 08.06.2022, die
+  Wahl war am 14.09.2025. **Frage 1.3 ist damit beantwortet** (Punkt 59): seit dem 2026-10-14 nennt das
+  Profil die Flächen des Wahltags, alle 179 statt 175. Wie hoch die Übereinstimmung damit ausfällt, ist
+  noch **nicht gemessen** — das sagt der Lauf der Phase 2. Der Satz an `gdi@moenchengladbach.de` bleibt
+  eine Bitte um eine Datei statt einer Operation, kein Hindernis.
+- **Mönchengladbachs Paket und sein Profil nennen seit dem 2026-10-14 verschiedene Flächen**
+  (Punkt 59, Zwischenstand): das Profil die `identify`-Antwort des Dienstes
+  (`Stimmbezirke_Kommunalwahl_2025.json`), `reference/moenchengladbach/external/` das Zip von 2022.
+  `uv run georep --profile moenchengladbach bootstrap` meldet die Datei des Profils darum als
+  fehlend, und `run shapes` findet sie nicht. **Die Tests sind davon nicht betroffen**: die
+  Mini-Fixture `tests/fixtures/mg/` trägt beide Formen, und der Golden-Master-Test der zweiten Stadt
+  rechnet mit der, die das Profil nennt. Aufgelöst wird das mit dem Abruf und `georep pack` der
+  Phase 2 (siehe „Nächster Schritt").
 - Mönchengladbach (Option 01, 2026-10-12): der Marker `betrifft` kam in der PDF-Stichprobe in 0 von 5
   Dokumenten vor (alles Fraktionsanträge der laufenden Periode); ohne Marker durchsucht die Kette den ganzen
   Text. Der volle Lauf hat das nicht geändert, der Marker bleibt wirkungslos (Frage 1.5).
@@ -761,6 +803,30 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 ## Nächster Schritt
 
 **Die Dokumentation steht seit dem 2026-10-14 in vier Sichten** (Konrads Auftrag, Branch `docs/sichten`): `docs/technik.md` (Schnittstellen, Kette, Veröffentlichung), `docs/inhalt.md` (Daten und Seite), `docs/statistik.md` (Auswertungen mit Einwänden), `docs/workflow-ratsmitglied.md` (Arbeitsablauf); das README verweist darauf, `docs/architecture.md` und `docs/decisions.md` sind unberührt.
+
+**Phase 2 zu Punkt 59: Mönchengladbachs Flächen einmal wirklich holen und neu rechnen.** Code,
+Profil, Tests und Doku sind fertig (siehe „Die Flächen Mönchengladbachs zum Stand der Wahl"), die
+Daten nicht: `reference/moenchengladbach/external/` trägt noch das Zip von 2022. Was zu tun ist, in
+dieser Reihenfolge:
+
+```bash
+uv run georep --profile moenchengladbach fetch opendata   # ein GET, 1 043 618 Byte erwartet
+uv run georep --profile moenchengladbach run              # shapes bis report, 179 Stimmbezirke
+uv run georep --profile moenchengladbach pack reference/moenchengladbach
+uv run georep publish                                     # beide Städte und den Vergleich neu
+```
+
+Danach sind nachzuziehen, je mit der gemessenen Zahl: `reference/moenchengladbach/README.md`
+(Bytes und SHA-256 je Datei, die Tabelle ist maschinenlesbar und `tests/unit/test_data_packages.py`
+hält sie gegen die Dateien), die Zeile der Stadt in `README.md` („Stand 08.06.2022" → der Dienst),
+die Zahlen in `STATUS.md` („Zahlen", „Bekannt": Übereinstimmung mit dem Straßenverzeichnis,
+Stimmbezirke, Seitengröße) und `docs/runbook-stadt.md` § 4 (die 86,2 % und die Grenze von 90 %).
+**Was sich ändern wird**: 179 statt 180 Flächen, die vier bisher fehlenden Stimmbezirke (`11006`,
+`21406`, `32906`, `40106`) kommen dazu, `streets_osm` fragt Overpass für sie neu (der HTTP-Cache
+hält die übrigen), und die Übereinstimmung mit dem Straßenverzeichnis steigt — um wie viel, ist die
+offene Frage, und sie ist der eigentliche Grund für Punkt 59. Die Trefferzahlen je Wahlbezirk können
+sich dabei leicht verschieben; das ist richtig und kein Bruch des Golden Masters, denn der der
+zweiten Stadt ist der Summenvergleich mit der Wahlbezirks-CSV, und der hängt an der Geometrie nicht.
 
 **Zuerst zu lesen: der Befundbericht zu den vier Netzläufen** (`docs/befunde-2026-10-14.md`, 2026-10-14).
 Er sagt, was die Daten zeigen — die zwei Wahlperioden (Spearman der Trefferquoten 0,8106; die Regression
