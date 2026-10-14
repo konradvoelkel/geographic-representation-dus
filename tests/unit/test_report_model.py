@@ -574,7 +574,9 @@ def test_the_party_section_matches_polars(mini_run: Layout, default_settings: Se
     for party in model.parties:
         mine = party_table.filter(pl.col("partei") == party.key)
         assert party.hits == int(mine.get_column("anzahl_treffer").sum())
-        assert party.alone == int(mine.get_column("treffer_allein").sum())
+        # Review 2026-10-14: eine Trefferzahl, darum höchstens so groß wie ``hits``
+        assert party.hits_alone == int(mine.get_column("treffer_allein").sum())
+        assert party.hits_alone <= party.hits
         assert party.documents == int(mine.get_column("dokumente_partei").to_list()[0])
         assert party.n == mine.filter(pl.col("angetreten")).height
         assert party.districts_hit == mine.filter(pl.col("anzahl_treffer") > 0).height

@@ -4,6 +4,10 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Die Spalte „davon allein" der Parteitabelle heißt, was sie ist**: eine Trefferzahl, und sie
+  steht hinter „Treffer" statt neben „Dokumente" — auf der Mönchengladbacher Seite war „Dokumente
+  107 / davon allein 168" zu lesen. Der Satz zur Deckung nennt außerdem nur noch die Klassen, die
+  es in der Stadt gibt (Punkt 39: was eine Stadt nicht hat, fehlt).
 - **Im Titel zählt nur, was hinter dem letzten „hier:" steht** (`docs/decisions.md`, Punkt 63):
   Mönchengladbachs Titel stapeln Bezüge („… Fraktionsantrag DIE LINKE; hier: Antrag der
   Ratsfraktionen von SPD, Bündnis 90/Die Grünen und FDP"), und drei Dokumente bekamen so die Partei

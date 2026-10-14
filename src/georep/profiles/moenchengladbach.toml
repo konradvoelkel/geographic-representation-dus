@@ -303,7 +303,7 @@ citizen_types = []             # diese Stadt führt keine Dokumentart für Einga
 # den Marker, drei nannten ohne ihn die Partei des zitierten Antrags (0590/X, 0591/X, 3732/X).
 title_split_markers = ["hier ?:"]
 fraction_types = ["3 - Fraktionsantrag"]   # 581 Dokumente; die Art nennt die Klasse, die Partei steht im Titel oder im Briefkopf
-person_types = ["6.1 - Mitgliederantrag"]  # 36; Anträge einzelner Mitglieder, vor allem des Seniorenrates („senr/3165/x … mitgliederantrag")
+person_types = ["6.1 - Mitgliederantrag"]  # 36; Anträge einzelner Mitglieder der Sondergremien — 10 nennen in Titel oder Textkopf den Seniorenrat, 3 den Integrationsrat, 2 das Jugendparlament, die übrigen kein Gremium (gezählt 2026-10-14; wer der Antragsteller ist, sagt keines, darum die Klasse Person ohne Namen)
 
 # Die acht Fraktionen des Rates aus raw/organizations.json (Abruf vom 2026-10-14,
 # `classification = "Fraktion"`), Namen wörtlich, und was sie in der Auswertung bedeuten:

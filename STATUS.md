@@ -470,6 +470,13 @@ Die Punkte 62 bis 65 sind die Befunde des Reviews; je ein Abschnitt in `docs/dec
   stehen (sonst entschiede die Reihenfolge im Code, welche Klasse gewinnt), und die
   Eigenschaftstests der Zuordnung laufen über **beide** Konfigurationsformen — Düsseldorf mit
   Antragspräfix, Titel und Textkopf, Mönchengladbach mit `fraction_types` und `title_split_markers`.
+- **Drei Stellen auf der Seite sagten etwas anderes als die Zahl darunter**: die Spalte „davon
+  allein" der Parteitabelle ist eine **Trefferzahl** und stand neben „Dokumente", wo auf der
+  Mönchengladbacher Seite „Dokumente 107 / davon allein 168" zu lesen war — sie heißt jetzt so und
+  steht hinter „Treffer" (`PartyRow.hits_alone`). Der Satz zur Deckung nennt nur noch die Klassen,
+  die es in der Stadt gibt (vorher „0 Eingaben nach § 24 GO NRW und 0 ohne erkennbaren Urheber",
+  Punkt 39). Und der Kommentar zu `person_types` sagt jetzt, was gezählt ist: von den 36 Anträgen
+  nennen 10 den Seniorenrat, 3 den Integrationsrat, 2 das Jugendparlament.
 - **Die Zahlen Mönchengladbachs sind eingefroren** wie die der alten Periode
   (`tests/golden/test_parties_numbers.py`, `slow`): Klassen, Quellen, Dokumente je Partei, die 239
   mit Partei und die Zerlegung der 342 ohne.

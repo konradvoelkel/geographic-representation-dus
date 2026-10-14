@@ -497,7 +497,10 @@ class PartyRow:
     short: str  # Kürzel für den engen Spaltenkopf der Bezirkstabelle
     documents: int  # alle Dokumente der Partei in der Wahlperiode
     hits: int  # Summe der Treffer über die Wahlbezirke (Mehrfachnennung je Bezirk)
-    alone: int  # davon Dokumente, deren einziger Urheber die Partei ist
+    # Review 2026-10-14: davon die Treffer der Dokumente, deren einziger Urheber die Partei ist --
+    # eine Trefferzahl, keine Dokumentzahl. Sie hieß ``alone`` und stand neben ``documents``, wo
+    # „Dokumente 108 / davon allein 168" zu lesen war.
+    hits_alone: int
     districts_hit: int  # Wahlbezirke mit mindestens einem Treffer
     n: int  # Wahlbezirke, in denen die Partei angetreten ist
     r: float | None  # Pearson zwischen anteil_dokumente und stimmenanteil
@@ -578,6 +581,23 @@ class OriginatorFigures:
             ("aus der Dokumentart", self.from_type),
             ("aus dem Titel", self.from_name),
             ("aus dem Textkopf", self.from_text),
+        )
+        return tuple((label, count) for label, count in named if count)
+
+    @property
+    def classes(self) -> tuple[tuple[str, int], ...]:
+        """Die Klassen, die es in dieser Stadt gibt, in der Reihenfolge von ``URHEBER_ARTEN``.
+
+        Punkt 39: was eine Stadt nicht hat, fehlt. Mönchengladbach führt keine Dokumentart für
+        Eingaben nach § 24 GO NRW und hat keinen unbekannten Urheber; „0 Eingaben … und 0 ohne
+        erkennbaren Urheber" sind zwei Nullen, die wie ein Befund aussehen (Review 2026-10-14).
+        """
+        named = (
+            ("Vorlagen der Verwaltung", self.verwaltung),
+            ("Anträge und Anfragen von Fraktionen", self.fraktion),
+            ("von einzelnen Mandatsträgern", self.person),
+            ("Eingaben nach § 24 GO NRW", self.eingabe),
+            ("ohne erkennbaren Urheber", self.unbekannt),
         )
         return tuple((label, count) for label, count in named if count)
 
@@ -1624,7 +1644,7 @@ def party_section(
             short=party.column_label,
             documents=by_key[party.key].documents,
             hits=by_key[party.key].hits,
-            alone=int(alone.get(party.key, 0)),
+            hits_alone=int(alone.get(party.key, 0)),
             districts_hit=by_key[party.key].districts_hit,
             n=by_key[party.key].n,
             r=by_key[party.key].r,
