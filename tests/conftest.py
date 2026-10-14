@@ -64,6 +64,12 @@ def mini_root() -> Path:
 
 
 @pytest.fixture(scope="session")
+def mg_root() -> Path:
+    """Die Mini-Fixture der zweiten Stadt; sie trägt beide Quellformen ihrer Flächen (Punkt 59)."""
+    return MG
+
+
+@pytest.fixture(scope="session")
 def context_root() -> Path:
     """Die Fremddaten des Repos (Option 03); die Mini-Fixture hat ihre eigenen unter ``mini/context``."""
     return REPO / "context"

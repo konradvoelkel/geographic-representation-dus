@@ -83,6 +83,10 @@ VERIFY_TARGETS = [
     "georep.report.model.format_de",
     "georep.report.search.canonical_term",
     "georep.report.charts.nice_ticks",
+    # Punkt 59: die Esri-Ringe. Beide sind rein-pythonisch und total unter ihren Vorbedingungen;
+    # der Leser der Antwort ist es nicht (er liest eine Datei) und steht darum nicht hier.
+    "georep.prep.precincts.ring_signed_area",
+    "georep.prep.precincts.point_in_ring",
     # Punkt 46: feste Klassengrenzen; rein, total und ohne Polars
     "georep.report.charts.classify_fixed",
     # Punkt 45: die Ableitung der Stoppwörter aus dem Profil ist rein und total.

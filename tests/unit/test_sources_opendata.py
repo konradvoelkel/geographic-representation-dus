@@ -88,3 +88,57 @@ def test_districts_file_requires_a_complete_shapefile_in_the_zip() -> None:
         fetch_districts_file(
             FakeSession({URL: response(URL, content=b"PK-nicht")}), URL, fmt="shapefile-zip"
         )
+
+
+# --- Punkt 59: Esri-JSON als dritte Quellform (eine ArcGIS-Operation, keine Datei) -------------
+
+IDENTIFY_URL = (
+    "https://geo.invalid/server/rest/services/Wahlen/MapServer/identify"
+    "?geometry=310000,5662000,328000,5681000&geometryType=esriGeometryEnvelope&sr=25832"
+    "&layers=all:16&tolerance=0&returnGeometry=true&f=json"
+)
+RING = [[0.0, 0.0], [0.0, 10.0], [10.0, 10.0], [10.0, 0.0], [0.0, 0.0]]
+
+
+def test_districts_file_fetches_an_identify_answer_with_its_query_string() -> None:
+    """Die Flächen können eine Operation sein; der Query-String gehört zur URL und bleibt dran."""
+    good = {
+        "results": [
+            {
+                "attributes": {"Nummer": "10401"},
+                "geometry": {"rings": [RING], "spatialReference": {"wkid": 25832}},
+            }
+        ]
+    }
+    session = FakeSession({IDENTIFY_URL: response(IDENTIFY_URL, payload=good)})
+    content = fetch_districts_file(session, IDENTIFY_URL, fmt="esri-identify")
+    assert json.loads(content) == good
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({"results": []}, "keine results"),
+        ({"results": [{"attributes": {"Nummer": "10401"}}]}, "ohne geometry.rings"),
+        ({"results": [{"geometry": {"rings": []}}]}, "ohne geometry.rings"),
+        ([], "kein Esri-JSON-Objekt"),
+        (
+            {"error": {"code": 400, "message": "Unable to complete operation."}},
+            "der Dienst meldet",
+        ),
+    ],
+)
+def test_an_identify_answer_that_carries_no_areas_is_a_fetch_error(
+    payload: object, message: str
+) -> None:
+    """Ein ArcGIS-Dienst meldet seine Fehler mit HTTP 200; ohne diese Prüfung lägen sie als Datei da."""
+    with pytest.raises(FetchError, match=message):
+        fetch_districts_file(
+            FakeSession({URL: response(URL, payload=payload)}), URL, fmt="esri-identify"
+        )
+    with pytest.raises(FetchError, match="kein JSON"):
+        fetch_districts_file(
+            FakeSession({URL: response(URL, content=b"<html>Wartung</html>")}),
+            URL,
+            fmt="esri-identify",
+        )

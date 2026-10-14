@@ -290,6 +290,18 @@ class Columns(_Strict):
     results: ResultsColumns
 
 
+# Welcher Schlüssel zu welcher Quellform gehört (Punkt 59). Ein Schlüssel an der falschen Form ist
+# ein stiller Irrtum: ``member`` an einem GeoJSON sagt nichts, und wer ``source_crs`` an ein
+# Shapefile schreibt, glaubt, es gelte -- es gilt das ``.prj`` im Zip. ``esri-identify`` nennt
+# ``source_crs``, weil es nur greift, wenn der Dienst keine ``spatialReference`` mitschickt.
+PRECINCT_FORM_KEYS: dict[str, frozenset[str]] = {
+    "geojson": frozenset({"source_crs"}),
+    "shapefile-zip": frozenset({"member", "dbf_encoding"}),
+    "esri-identify": frozenset({"source_crs"}),
+}
+PRECINCT_FORM_ONLY_KEYS = frozenset({"member", "dbf_encoding", "source_crs"})
+
+
 class Precincts(_Strict):
     """Wie aus der Quellgeometrie die kanonischen Stimmbezirke werden (Option 01, Schritt ``precincts``).
 
@@ -300,9 +312,10 @@ class Precincts(_Strict):
     # Option 02: eine Periode mit fremdem Zuschnitt hat keine eigenen Wahlbezirke in der
     # Quellgeometrie; dann entfällt der Schritt ``shapes`` und der Crosswalk ordnet zu.
     enabled: bool = True
-    format: Literal["geojson", "shapefile-zip"] = "geojson"
+    # Punkt 59: ``esri-identify`` ist keine Datei, sondern die Antwort einer ArcGIS-Operation.
+    format: Literal["geojson", "shapefile-zip", "esri-identify"] = "geojson"
     member: str = ""  # Pfad des .shp im Zip; leer = das einzige im Archiv
-    source_crs: str = ""  # nur für GeoJSON ohne crs-Mitglied; Shapefiles bringen ihr .prj mit
+    source_crs: str = ""  # GeoJSON ohne crs-Mitglied, Esri-JSON ohne spatialReference; Shapefiles bringen ihr .prj mit
     id_property: str = ""  # trägt die Stimmbezirksnummer
     district_property: str = ""  # trägt die Wahlbezirksnummer
     district_from_id: tuple[int, int] | None = None  # sonst: Zeichenausschnitt [start, stop)
@@ -327,6 +340,17 @@ class Precincts(_Strict):
             and not 0 <= self.district_from_id[0] < (self.district_from_id[1])
         ):
             raise ValueError(f"precincts.district_from_id {self.district_from_id}: [start, stop)")
+        allowed = PRECINCT_FORM_KEYS[self.format]
+        wrong = sorted(
+            key
+            for key in PRECINCT_FORM_ONLY_KEYS - allowed
+            if getattr(self, key) != Precincts.model_fields[key].default
+        )
+        if wrong:
+            raise ValueError(
+                f"precincts: {wrong} gehören nicht zu format = {self.format!r}; "
+                f"diese Form kennt {sorted(allowed)}"
+            )
         return self
 
 
