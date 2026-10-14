@@ -4,7 +4,7 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
-- **Mönchengladbachs Stimmbezirksflächen sind die des Wahltags** (`docs/decisions.md`, Punkt 59):
+- **Mönchengladbachs Stimmbezirksflächen sind die des Wahltags** (`docs/decisions.md`, Punkt 62):
   statt des Datensatzes „Wahlen" vom 08.06.2022, in dem nur 175 der 179 Urnen-Stimmbezirke der
   Kommunalwahl 2025 vorkamen, nennt das Profil jetzt den Layer „Kommunalwahl 2025 Stimmbezirke" des
   Geoportals — **alle 179**, 170,47 km² Stadtfläche, dl-de/zero-2.0. Diese Flächen gibt es nicht als

@@ -49,7 +49,7 @@ Treffer fände. Die zweite Runde gegen 02:05 Uhr holte die drei Bezirke oben (kn
 Overpass antwortete dreimal mit 504, das Aufzeichnungsskript wiederholt nach 15 s). Die SPARQL-
 Antwort stammt aus der ersten Runde und ist stadtweit, also unverändert gültig.
 
-### Die mehrringigen Flächen des Geoportals (2026-10-14, Punkt 59)
+### Die mehrringigen Flächen des Geoportals (2026-10-14, Punkt 62)
 
 | Datei | Quelle | Anfrage | Inhalt |
 |---|---|---|---|

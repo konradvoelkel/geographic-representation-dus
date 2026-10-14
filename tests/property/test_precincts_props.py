@@ -1,6 +1,6 @@
 """Eigenschaften der Regel „Wahlbezirk steckt in der Stimmbezirksnummer" (Option 01, Stufe B).
 
-Dazu die Eigenschaften der Esri-Ringumwandlung (Punkt 59): Umlaufrichtung, Löcher und die Fläche,
+Dazu die Eigenschaften der Esri-Ringumwandlung (Punkt 62): Umlaufrichtung, Löcher und die Fläche,
 die dabei erhalten bleibt. Beispiele dafür stehen in ``tests/unit/test_precincts.py`` an der
 echten Antwort des Dienstes; hier gilt es für alle Rechtecke, die hypothesis baut.
 """
@@ -57,7 +57,7 @@ def test_leading_zeroes_do_not_change_the_district(number: str, start: int, widt
     )
 
 
-# --- Esri-Ringe (Punkt 59) ------------------------------------------------------------------
+# --- Esri-Ringe (Punkt 62) ------------------------------------------------------------------
 #
 # Rechtecke genügen: die Umwandlung entscheidet am Vorzeichen der Fläche und an der
 # Punkt-im-Ring-Frage, und beides hängt nicht an der Zahl der Ecken. Die Koordinaten bleiben in

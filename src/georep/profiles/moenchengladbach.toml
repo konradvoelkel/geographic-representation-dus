@@ -59,7 +59,7 @@ organizations_endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0011/o
 [sources.opendata]
 results_url = "https://wep.itk-rheinland.de/vm/prod/kw_2025/05116000/daten/opendata/Open-Data-05116000-Ratswahl-Stimmbezirk.csv"
 results_file = "Open-Data-05116000-Ratswahl-Stimmbezirk.csv"
-# Punkt 59: keine Datei, sondern eine Operation. Layer 16 des Dienstes gibt seine Geometrie nur
+# Punkt 62: keine Datei, sondern eine Operation. Layer 16 des Dienstes gibt seine Geometrie nur
 # über ``identify`` heraus (``query`` antwortet ohne), darum steht hier die ganze Anfrage. Der
 # Umschlag deckt die Stadt (Bounding Box 310 651-327 694 / 5 662 523-5 680 462), ``tolerance=0``
 # und ``layers=all:16`` holen genau diesen Layer, und ein GET liefert 1 043 618 Bytes mit 179
@@ -86,12 +86,12 @@ district_names_file = "Open-Data-05116000-Ratswahl-Wahlbezirk.csv"
 entity = "Q2758"               # Mönchengladbach; 1185 Objekte mit P131* und deutschem Artikel (Düsseldorf: 995)
 
 [precincts]
-format = "esri-identify"       # Punkt 59: Esri-JSON mit Ringen, kein Shapefile mehr (member und dbf_encoding entfallen damit)
+format = "esri-identify"       # Punkt 62: Esri-JSON mit Ringen, kein Shapefile mehr (member und dbf_encoding entfallen damit)
 source_crs = "EPSG:25832"      # nur die Rückfallebene: der Dienst nennt wkid 25832 an jeder Geometrie
 id_property = "Nummer"         # fünf Zeichen: Stadtbezirk, Wahlbezirk, Stimmbezirk (10401); dasselbe Attribut wie im Shapefile
 district_from_id = [1, 3]      # Zeichen 1 und 2 sind der Wahlbezirk; durch Summenvergleich mit der Wahlbezirks-CSV für alle 33 bestätigt
 names_from_results = true      # der Dienst kennt nur die Nummer; die Namen stehen in der Wahlbezirks-CSV
-min_areas = 179                # Punkt 59: so viele Urnen-Stimmbezirke hatte die Kommunalwahl 2025 (gezählt am 2026-10-14). Eine abgeschnittene Dienstantwort ist gültiges JSON und fällt sonst nirgends auf
+min_areas = 179                # Punkt 62: so viele Urnen-Stimmbezirke hatte die Kommunalwahl 2025 (gezählt am 2026-10-14). Eine abgeschnittene Dienstantwort ist gültiges JSON und fällt sonst nirgends auf
 
 [columns.results]
 sep = ";"

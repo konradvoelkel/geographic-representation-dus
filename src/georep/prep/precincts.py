@@ -3,7 +3,7 @@
 Jede Stadt liefert ihre Flächen anders: das eine Portal ein GeoJSON in EPSG:4647 mit drei Spalten
 im Klartext, das nächste ein Shapefile-Zip in EPSG:25832, das nur eine fünfstellige Nummer kennt,
 deren erste Stellen den Wahlbezirk tragen, und die dritte gar keine Datei, sondern die Antwort
-einer ArcGIS-Operation in Esri-JSON (``identify``, docs/decisions.md, Punkt 59). Die Regeln dafür
+einer ArcGIS-Operation in Esri-JSON (``identify``, docs/decisions.md, Punkt 62). Die Regeln dafür
 stehen im Profil (``[precincts]``); hier entsteht daraus ``interim/stimmbezirke.geojson`` mit
 genau drei Eigenschaften (``stimmbezirk``, ``wahlbezirk``, ``wahlbezirk_name``) und dem CRS der
 Quelle. Alles dahinter (Overpass, GeoSearch, STRtree, Karte, Seite) kennt nur dieses Format.
@@ -146,7 +146,7 @@ def _crs_name(crs: CRS) -> str:
     return f"EPSG:{code}" if code is not None else crs.to_wkt()
 
 
-# --- Esri-JSON: die Antwort der ArcGIS-Operation ``identify`` (Punkt 59) -------------------------
+# --- Esri-JSON: die Antwort der ArcGIS-Operation ``identify`` (Punkt 62) -------------------------
 #
 # Esri-JSON kennt kein Feld für „Loch". Eine Fläche ist eine Liste von Ringen, und das **Vorzeichen
 # der Ringfläche** sagt, was der Ring ist: äußere Ringe laufen im Uhrzeigersinn (negative Fläche
@@ -309,7 +309,7 @@ def _enclosing_ring(hole: Ring, outer: Sequence[tuple[Ring, float]]) -> int:
 def read_source_esri_identify(path: Path, source_crs: str = "") -> SourcePrecincts:
     """Die Antwort der Operation ``identify``: ``results`` mit ``attributes`` und ``geometry.rings``.
 
-    Warum ``identify`` und nicht ``query`` steht in docs/decisions.md, Punkt 59. Das CRS hängt
+    Warum ``identify`` und nicht ``query`` steht in docs/decisions.md, Punkt 62. Das CRS hängt
     hier an jeder Geometrie (``spatialReference``) und nicht am Dokument wie bei GeoJSON; die
     Eigenschaften sind die ``attributes`` des Treffers, so wie der Dienst sie formatiert (eine
     ``OBJECTID`` kommt als Text).

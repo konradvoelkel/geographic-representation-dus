@@ -290,7 +290,7 @@ class Columns(_Strict):
     results: ResultsColumns
 
 
-# Welcher Schlüssel zu welcher Quellform gehört (Punkt 59). Ein Schlüssel an der falschen Form ist
+# Welcher Schlüssel zu welcher Quellform gehört (Punkt 62). Ein Schlüssel an der falschen Form ist
 # ein stiller Irrtum: ``member`` an einem GeoJSON sagt nichts, und wer ``source_crs`` an ein
 # Shapefile schreibt, glaubt, es gelte -- es gilt das ``.prj`` im Zip. ``esri-identify`` nennt
 # ``source_crs``, weil es nur greift, wenn der Dienst keine ``spatialReference`` mitschickt.
@@ -312,7 +312,7 @@ class Precincts(_Strict):
     # Option 02: eine Periode mit fremdem Zuschnitt hat keine eigenen Wahlbezirke in der
     # Quellgeometrie; dann entfällt der Schritt ``shapes`` und der Crosswalk ordnet zu.
     enabled: bool = True
-    # Punkt 59: ``esri-identify`` ist keine Datei, sondern die Antwort einer ArcGIS-Operation.
+    # Punkt 62: ``esri-identify`` ist keine Datei, sondern die Antwort einer ArcGIS-Operation.
     format: Literal["geojson", "shapefile-zip", "esri-identify"] = "geojson"
     member: str = ""  # Pfad des .shp im Zip; leer = das einzige im Archiv
     source_crs: str = ""  # GeoJSON ohne crs-Mitglied, Esri-JSON ohne spatialReference; Shapefiles bringen ihr .prj mit
@@ -323,7 +323,7 @@ class Precincts(_Strict):
     names_from_results: bool = False  # sonst: Namen aus der Wahlbezirks-CSV der Quelle
     names_id_column: str = "gebiet-nr"  # Spalten dieser CSV (votemanager)
     names_name_column: str = "gebiet-name"
-    # Punkt 59: wie viele Flächen die Stadt hat (0 = keine Erwartung). Eine abgeschnittene Antwort
+    # Punkt 62: wie viele Flächen die Stadt hat (0 = keine Erwartung). Eine abgeschnittene Antwort
     # eines Dienstes ist gültiges JSON und fällt sonst nirgends auf; der Fetcher weist sie ab.
     min_areas: int = Field(default=0, ge=0)
     dbf_encoding: str = "utf-8"  # pyshp liest .dbf oft als latin-1; Fehler werden ersetzt

@@ -195,7 +195,7 @@ def test_the_page_names_the_agreement_and_the_date_of_the_geometry(run: Layout) 
     page = run.site_index.read_text(encoding="utf-8")
     assert "amtliche Straßenverzeichnis der Wahl kennt" in page
     assert "demselben Stimmbezirk" in page and "demselben Wahlbezirk" in page
-    # Der Stand der Flächen, aus den Notizen des Profils: seit Punkt 59 der des Wahltags
+    # Der Stand der Flächen, aus den Notizen des Profils: seit Punkt 62 der des Wahltags
     assert "Kommunalwahl 2025 Stimmbezirke" in page and "alle 179" in page
 
 

@@ -90,7 +90,7 @@ def test_districts_file_requires_a_complete_shapefile_in_the_zip() -> None:
         )
 
 
-# --- Punkt 59: Esri-JSON als dritte Quellform (eine ArcGIS-Operation, keine Datei) -------------
+# --- Punkt 62: Esri-JSON als dritte Quellform (eine ArcGIS-Operation, keine Datei) -------------
 
 IDENTIFY_URL = (
     "https://geo.invalid/server/rest/services/Wahlen/MapServer/identify"
