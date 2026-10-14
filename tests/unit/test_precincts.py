@@ -3,7 +3,7 @@
 Das Shapefile im Test schreibt pyshp selbst; so hängt der Test an keiner Datei, die jemand
 abrufen müsste, und prüft trotzdem den Weg, den Mönchengladbach nahm (Option 01, Stufe B). Die
 Esri-Ringe sind das Gegenstück dazu: dort ist die **echte** Antwort des Dienstes die Eingabe
-(``tests/fixtures/mg/``, Punkt 62), weil die Ringfolge einer Stadt nicht nachzubauen ist.
+(``tests/fixtures/mg/``, Punkt 65), weil die Ringfolge einer Stadt nicht nachzubauen ist.
 """
 
 from __future__ import annotations
@@ -170,7 +170,7 @@ def test_two_shapefiles_in_one_zip_ask_for_the_member(tmp_path: Path) -> None:
     assert read_source_shapefile_zip(path, "Wahlen/Stimmbezirke_MG.shp").features
 
 
-# --- Esri-Ringe (Punkt 62) ------------------------------------------------------------------
+# --- Esri-Ringe (Punkt 65) ------------------------------------------------------------------
 
 IDENTIFY = Precincts(
     format="esri-identify",
@@ -590,7 +590,7 @@ def test_precincts_rules_demand_exactly_one_way_to_the_district_and_the_name() -
 def test_the_source_form_decides_which_keys_the_profile_may_set(
     form: str, key: str, value: str
 ) -> None:
-    """Ein Schlüssel an der falschen Quellform ist ein stiller Irrtum, also ein Fehler (Punkt 62).
+    """Ein Schlüssel an der falschen Quellform ist ein stiller Irrtum, also ein Fehler (Punkt 65).
 
     ``source_crs`` an einem Shapefile sieht aus, als gälte es; es gilt das ``.prj`` im Zip. Und
     ``dbf_encoding`` an einem Esri-JSON hat nichts, worauf es wirken könnte.
@@ -619,7 +619,7 @@ def test_the_default_profile_reads_its_geojson_with_the_portal_columns(tmp_path:
     assert rules.name_property == "Kommunalwahlbezirk Name"
 
 
-# --- der Zuschnitt der Fixture (Punkt 62, Befund 2) -----------------------------------------
+# --- der Zuschnitt der Fixture (Punkt 65, Befund 2) -----------------------------------------
 
 
 def test_the_fixture_maker_cuts_the_identify_answer_and_writes_json(

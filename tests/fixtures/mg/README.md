@@ -14,9 +14,9 @@ Zahl anzufassen. Dass der Zuschnitt die Datei im Repo zeichengleich wieder herst
 
 **Beide Quellformen der Flächen.** Seit dem 2026-10-14 liegen unter `external/` sowohl das
 Shapefile-Zip von 2022 (`format = "shapefile-zip"`) als auch die Antwort des ArcGIS-Dienstes zum
-Stand der Kommunalwahl 2025 (`format = "esri-identify"`, `docs/decisions.md`, Punkt 62). Beide
+Stand der Kommunalwahl 2025 (`format = "esri-identify"`, `docs/decisions.md`, Punkt 65). Beide
 tragen dieselben 17 Stimmbezirke; gelaufen wird mit der Form, die das Profil nennt, und das ist
-seit Punkt 62 die zweite. Die erste bleibt liegen, weil ein Vergleich der beiden Stände ohne sie
+seit Punkt 65 die zweite. Die erste bleibt liegen, weil ein Vergleich der beiden Stände ohne sie
 nicht mehr möglich wäre — **gelesen wird sie von keinem Test**: die Beispiele zum Shapefile-Weg in
 `tests/unit/test_precincts.py` schreiben ihr Zip mit pyshp selbst.
 

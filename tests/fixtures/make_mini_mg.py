@@ -11,7 +11,7 @@ aufgezeichneten Antworten (``tests/fixtures/http/``, ``tests/fixtures/oparl/``,
 ``tests/fixtures/pdf/mg/``) und aus den öffentlichen votemanager-Dateien samt den Flächen der
 Stadt, die am 2026-10-12 und am 2026-10-14 einmal geladen wurden; das Skript schneidet sie auf die
 drei Wahlbezirke zu. Für die Flächen gibt es **je Quellform einen Zweig**: ein Shapefile-Zip wird
-mit pyshp neu geschrieben, eine ``identify``-Antwort auf ihre ``results`` geschnitten (Punkt 62).
+mit pyshp neu geschrieben, eine ``identify``-Antwort auf ihre ``results`` geschnitten (Punkt 65).
 Welche von beiden entsteht, entscheidet ``precincts.format`` im Profil, und die Fixture darf beide
 tragen.
 
@@ -115,7 +115,7 @@ def write_shapefile_zip(source: Path, target: Path, keep: set[str]) -> None:
 
 
 def write_identify_json(source: Path, target: Path, keep: set[str], id_property: str) -> None:
-    """Die ``identify``-Antwort, geschnitten auf die Flächen der drei Wahlbezirke (Punkt 62).
+    """Die ``identify``-Antwort, geschnitten auf die Flächen der drei Wahlbezirke (Punkt 65).
 
     Wort für Wort die Einträge des Dienstes, nur weniger davon: das Schneiden fasst keine Zahl an.
     ``json`` schreibt sie in der kürzesten Form, die denselben Fließkommawert wieder liest, die
@@ -246,7 +246,7 @@ def main() -> None:
         if str(f["properties"][settings.precincts.id_property]).strip()[1:3].isdigit()
         and int(str(f["properties"][settings.precincts.id_property]).strip()[1:3]) in DISTRICTS
     }
-    # Je Quellform ein Zweig (Punkt 62): das Profil nennt seit dem 2026-10-14 die
+    # Je Quellform ein Zweig (Punkt 65): das Profil nennt seit dem 2026-10-14 die
     # ``identify``-Antwort, und die durch ``write_shapefile_zip`` zu schieben hieß, ein Zip unter
     # dem Namen einer JSON-Datei zu schreiben -- und vorher an ``BadZipFile`` zu scheitern.
     target = MG / "external" / settings.sources.opendata.districts_file

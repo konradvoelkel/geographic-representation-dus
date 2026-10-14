@@ -125,7 +125,7 @@ def test_cache_pattern_drops_scheme_and_adds_wildcard() -> None:
 def test_a_url_with_a_query_string_still_gets_its_cache_rule(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Punkt 62: die Flächen einer Stadt dürfen eine Operation sein (``identify?…&f=json``).
+    """Punkt 65: die Flächen einer Stadt dürfen eine Operation sein (``identify?…&f=json``).
 
     ``cache_pattern`` lässt den Query-String weg und endet mit ``*``; dass requests-cache damit
     trotzdem die ganze Anfrage trifft, ist eine Annahme über eine fremde Bibliothek und darum ein

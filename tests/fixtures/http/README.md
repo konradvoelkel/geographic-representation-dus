@@ -4,7 +4,7 @@ Einmalige echte Abrufe, klein geschnitten; die Offline-Tests der Quellen lesen s
 auf Overpass, SPARQL und GeoSearch liegen neben ihrer Anfrage (`*.query.txt`, `*.params.json`),
 denn die steckt im Rumpf oder in Parametern. Bei `identify_mg_mehrringig.json` ist die Anfrage die
 **URL**, und die steht als `sources.opendata.districts_url` im Profil Mönchengladbachs; eine Datei
-daneben wäre eine zweite Fassung derselben Angabe (Punkt 62).
+daneben wäre eine zweite Fassung derselben Angabe (Punkt 65).
 
 | Datei | Quelle | Anfrage | Inhalt |
 |---|---|---|---|
@@ -52,7 +52,7 @@ Treffer fände. Die zweite Runde gegen 02:05 Uhr holte die drei Bezirke oben (kn
 Overpass antwortete dreimal mit 504, das Aufzeichnungsskript wiederholt nach 15 s). Die SPARQL-
 Antwort stammt aus der ersten Runde und ist stadtweit, also unverändert gültig.
 
-### Die mehrringigen Flächen des Geoportals (2026-10-14, Punkt 62)
+### Die mehrringigen Flächen des Geoportals (2026-10-14, Punkt 65)
 
 | Datei | Quelle | Anfrage | Inhalt |
 |---|---|---|---|

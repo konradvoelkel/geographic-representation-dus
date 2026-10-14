@@ -65,7 +65,7 @@ def mini_root() -> Path:
 
 @pytest.fixture(scope="session")
 def mg_root() -> Path:
-    """Die Mini-Fixture der zweiten Stadt; sie trägt beide Quellformen ihrer Flächen (Punkt 62)."""
+    """Die Mini-Fixture der zweiten Stadt; sie trägt beide Quellformen ihrer Flächen (Punkt 65)."""
     return MG
 
 

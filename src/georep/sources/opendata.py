@@ -71,7 +71,7 @@ def fetch_districts_file(
     """Die Flächen als Bytes, nach Format geprüft und dann unverändert.
 
     Die URL darf einen Query-String tragen: die Flächen einer Stadt können eine Operation eines
-    ArcGIS-Dienstes sein und keine Datei (``identify?geometry=…&f=json``, Punkt 62). Ein ``&``
+    ArcGIS-Dienstes sein und keine Datei (``identify?geometry=…&f=json``, Punkt 65). Ein ``&``
     liest TOML wörtlich, der Abruf bleibt ein GET, und ``http.cache_pattern`` deckt die Anfrage
     mit seinem ``*`` ab -- am Cache ist dafür nichts zu ändern.
 
@@ -109,7 +109,7 @@ def _check_feature_collection(url: str, content: bytes, min_areas: int = 0) -> N
 
 
 def _check_count(url: str, found: int, min_areas: int) -> None:
-    """Weniger Flächen als das Profil erwartet: die Antwort ist unvollständig (Punkt 62)."""
+    """Weniger Flächen als das Profil erwartet: die Antwort ist unvollständig (Punkt 65)."""
     if min_areas and found < min_areas:
         raise FetchError(
             f"Stimmbezirke von {url}: {found} Flächen, erwartet sind mindestens {min_areas} "
