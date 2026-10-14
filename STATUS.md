@@ -1,6 +1,6 @@
 # Status
 
-Stand 2026-10-14, `main` auf `v0.12.0`: der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
+Stand 2026-10-14, `main` auf `v0.13.0`: der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
 abgearbeitet; `bartzsch-exakt` zeigt auf `v0.11.0`, den letzten Stand, der die Zahlen der Arbeit exakt
 reproduziert. Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,

@@ -2,7 +2,16 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
-## Unreleased
+## 0.13.0 (2026-10-14), Absicherung, Umzug und die Daten der Netzlaeufe
+
+- Konrads vier Netzläufe vom 2026-10-13 sind gelaufen und liegen als Pakete im Repo: die Periode 2014 bis
+  2020 (`snapshots/2014-2020/`), die laufende Periode seit September 2025 (`snapshots/2025/`) und
+  Mönchengladbach (`reference/moenchengladbach/`); GitHub Pages baut damit die Hauptseite mit „Zwei
+  Wahlperioden" und „Laufende Wahlperiode", die Unterseiten `2014-2020/`, `2025/` und `moenchengladbach/`
+  sowie den Städtevergleich `vergleich.html` ohne Netz. Dazu die Absicherung (Mutationstests, crosshair,
+  Stamps über Vorlagen und Anzeige, Reihenfolgeunabhängigkeit, wöchentlicher Qualitätslauf), der Umzug
+  Düsseldorfs unter seinen Slug, das Overpass-Timeout als Setting mit Wiederholung, `georep pack` und
+  `georep publish --strict-budget`. Einzelheiten in den Absätzen darunter.
 
 - **`.gitattributes` hält die Bytes der Datenpakete fest** (`-text` für `reference/`, `snapshots/`
   und `context/`, Review-Befund 15): ohne die Zeilen entscheidet eine Heuristik je Datei und je

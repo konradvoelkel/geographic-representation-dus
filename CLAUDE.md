@@ -13,7 +13,7 @@ Contract des eipy-Skripts.
 ## Einstieg in eine neue Sitzung
 
 1. `git switch main && git pull`. Gearbeitet wird direkt auf `main`, keine Branches (Konrad, 2026-10-11);
-   `main` trägt den letzten Tag (`v0.12.0` am 2026-10-13). Die Ausnahme der acht Ausbau-Branches `feat/NN-name`
+   `main` trägt den letzten Tag (`v0.13.0` am 2026-10-14). Die Ausnahme der acht Ausbau-Branches `feat/NN-name`
    in Worktrees auf xtraspace (Konrad, 2026-10-11) ist mit dem Merge aller acht am 2026-10-12 beendet; Worktrees,
    Venvs und Branches sind entfernt.
 2. Auf Konrads Rechner vor allem anderen, weil die Primärplatte voll ist:
