@@ -191,10 +191,10 @@ und sagt je, warum sie liegen bleiben.
 - **Das Budget ist 1,0 MB und steht in den Settings** (`report.page_budget_bytes`,
   `docs/decisions.md`, Punkt 50): die slow-Tests lesen es über `within_budget` (0 schaltet die
   Prüfung wirklich ab), der Schritt `report` meldet eine Überschreitung in seiner Zeile, und
-  `georep publish` nennt jede veröffentlichte Seite darüber. 886 328 von 1 000 000 Byte, also
-  113 672 Byte Luft (11,4 %) — sie trug den Abschnitt „Zwei Wahlperioden" (geschätzt rund 35 KB),
-  der am 2026-10-14 mit den Datenpaketen dazugekommen ist (zusammen mit „Laufende Wahlperiode"
-  45 946 Byte, Seite 932 274, noch 6,8 % Luft). Dafür sind die `<title>` der 1196 Orte gefallen (73 842 Byte;
+  `georep publish` nennt jede veröffentlichte Seite darüber. Damals 886 328 von 1 000 000 Byte, also
+  113 672 Byte Luft (11,4 %) — sie trug den Abschnitt „Zwei Wahlperioden" (geschätzt rund 35 KB,
+  gemessen 45 417), der am 2026-10-14 mit den Datenpaketen dazugekommen ist; die Seite steht seitdem
+  bei 932 306 Byte und 6,8 % Luft (oben, „Zahlen"). Dafür sind die `<title>` der 1196 Orte gefallen (73 842 Byte;
   ihre Ebene ist `aria-hidden` und ohne JavaScript nie sichtbar, der Tooltip zeigt dasselbe aus
   Datenattributen). Rund 40 KB Reserve liegen gemessen in § 5 des Dokuments (doppelte SVG-Pfade
   der Parteikarten 28 KB, Suchindex 8 KB, Leerraum 4,4 KB); der Minify-Schritt für Leerraum fällt
@@ -283,14 +283,16 @@ in **keinem** Paket (233 MB, 3,9 GB, 585 MB).
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` der Hauptseite 932 274 Bytes (Budget 1 000 000, **6,8 % Luft**) mit beiden
-  Periodenabschnitten, 55 Dateien zusammen 13,2 MB; ohne die Abschnitte „Zwei Wahlperioden" und „Laufende
-  Wahlperiode" sind es 886 328 Bytes (die beiden Umschalter kosten 110 KB, die Literaturübersicht 13,2 KB,
-  die Vorschau langer Tabellen 4,1 KB, `begriffe.json` liegt mit 96 KB daneben). Siebzehn Abschnitte in
+- Berichtsseite: `index.html` der Hauptseite **932 306 Bytes veröffentlicht** (932 151 vor der Zeile
+  „Weitere Städte", Budget 1 000 000, **67 694 Byte Luft, 6,8 %**) mit beiden Periodenabschnitten,
+  55 Dateien zusammen 13,2 MB; ohne die Abschnitte „Zwei Wahlperioden" und „Laufende Wahlperiode" sind es
+  886 360 Bytes, die beiden kosten also 45 417 und 374 Byte (gemessen 2026-10-14; die beiden Umschalter
+  kosten 110 KB, die Literaturübersicht 13,2 KB, die Vorschau langer Tabellen 4,1 KB, `begriffe.json` liegt
+  mit 96 KB daneben). Siebzehn Abschnitte in
   Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung, perioden,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads,
-  laufend). Die Unterseiten: `2014-2020/` 818 486, `2025/` 717 246, `moenchengladbach/` 641 633,
-  `vergleich.html` 88 979 Bytes.
+  laufend). Die Unterseiten: `2014-2020/` 818 602, `2025/` 717 361, `moenchengladbach/` 641 660,
+  `vergleich.html` 89 597 Bytes (alle am 2026-10-14 im veröffentlichten Ordner gemessen).
 - Quelltext: 59 Python-Dateien unter `src/`, rund 16 600 Zeilen; fünf Profile im Paket.
 - Mutation (2026-10-13, `docs/mutation-2026-10-13.md`): 882 Mutanten über die dreizehn Module des
   Ausbaus, 717 getötet (81,3 %), 165 Überlebende — davon 100 in Vertragsgrenzen, 27 nachgerechnet
@@ -482,11 +484,15 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   ist der Erstabruf vom 2026-10-13 (4 095 Dokumente), GitHub Pages zeigt diesen Stand, und die Seite nennt
   ihr Abrufdatum selbst. Die aktuelle Fassung liefert der Timer auf kookaburra oder dem VPS — Konrads
   späterer Schritt. Neu gepackt wird der Schnappschuss nur von Hand (`snapshots/2025/README.md`).
-- **Die Hauptseite hat mit beiden Periodenabschnitten nur noch 6,8 % Luft im Budget** (932 274 von
-  1 000 000 Byte, gemessen 2026-10-14). Die Abschätzung in `docs/seitengroesse-2026-10.md` lag bei rund
-  35 KB für „Zwei Wahlperioden"; zusammen mit „Laufende Wahlperiode" sind es 45 946 Byte. Rund 40 KB
-  Reserve liegen gemessen in § 5 jenes Dokuments (doppelte SVG-Pfade der Parteikarten 28 KB, Suchindex
-  8 KB, Leerraum 4,4 KB), falls ein weiterer Abschnitt dazukommt.
+- **Die Hauptseite hat mit beiden Periodenabschnitten nur noch 6,8 % Luft im Budget** (932 306 von
+  1 000 000 Byte im veröffentlichten Ordner, 67 694 Byte Luft; gemessen 2026-10-14). Die Schätzung in
+  `docs/seitengroesse-2026-10.md` lag bei rund 35 KB für „Zwei Wahlperioden" und damit **rund 10 KB zu
+  niedrig**: gemessen sind es 45 417 Byte (41 Zeilen mit je sechs `data-value`, nicht hochrechenbar aus
+  drei Bezirken der Mini-Periode). „Laufende Wahlperiode" kam mit 374 Byte genau hin, die Zeile „Weitere
+  Städte" kostet 155. Rund 40 KB Reserve liegen gemessen in § 5 jenes Dokuments (doppelte SVG-Pfade der
+  Parteikarten 28 KB, Suchindex 8 KB, Leerraum 4,4 KB); wer einen weiteren Abschnitt will, holt sie
+  zuerst. Seit dem 2026-10-14 hängt die Zusage nicht mehr an einer Zeile: ein `slow`-Test baut die Seite
+  und `georep publish --strict-budget` macht den Pages-Lauf rot (Review-Befunde 3 und 12).
 - **Behoben am 2026-10-14** (Review-Befund 5): `pages.yml` fragte die Frische zuletzt mit dem
   Standardprofil ab und meldete nach dem Lauf des Vergleichsprofils jeden Schritt als „offen: Settings
   geändert" — der Fingerprint ist global (siehe unten), die Diagnose sagte also nichts. Jetzt läuft

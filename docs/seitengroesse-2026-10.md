@@ -251,11 +251,28 @@ dort kommen die Zeile „Weitere Städte" und die Vergleichsseite dazu. Vorher w
 einer Seite von 1 281 464 Byte.
 
 **Das Budget muss den Abschnitt „Zwei Wahlperioden" tragen**, der nach Konrads Lauf dazukommt
-(Review 2026-10-13, Befund 2). Gemessen an der Mini-Periode: 6859 Byte fest und 551 Byte je
+(Review 2026-10-13, Befund 2). Geschätzt war er an der Mini-Periode: 6859 Byte fest und 551 Byte je
 Wahlbezirk, auf 41 also rund 29 KB, dazu die 41 Punkte des Änderungsdiagramms statt dreier — rund
-35 KB zusammen. „Laufende Wahlperiode" (rund 0,5 KB) und die Städtezeile aus `georep publish` (rund
-0,2 KB) kommen obendrauf. 886 328 Byte lassen **113 672 Byte Luft (11,4 %)**; der Abschnitt passt
-also mit rund 79 KB Rest. Die 40 KB Reserve aus § 5 bleiben unangetastet daneben liegen.
+35 KB zusammen; „Laufende Wahlperiode" rund 0,5 KB und die Städtezeile aus `georep publish` rund
+0,2 KB obendrauf.
+
+**Nachgemessen am 2026-10-14** auf der vollen Referenz (dreimal dieselbe Hauptseite, nur die zwei
+Abschnitte geschaltet; Review-Befund 12):
+
+| Seite | Byte |
+|---|---|
+| ohne beide Abschnitte | 886 360 |
+| mit „Laufende Wahlperiode" | 886 734 (**+374**) |
+| mit beiden (die Seite des Vergleichsprofils) | 932 151 (**+45 417** für „Zwei Wahlperioden") |
+| veröffentlicht, mit der Zeile „Weitere Städte" | 932 306 (**+155**) |
+
+Die Schätzung lag also **um rund 10 KB zu niedrig** (45 417 statt 35 000 Byte): die 41 Zeilen der
+Periodentabelle tragen je zwei Quoten, zwei Beteiligungen und zwei Differenzen mit `data-value`, und
+das wiegt mehr als die Mini-Periode mit drei Bezirken hochrechnen ließ. „Laufende Wahlperiode" kam
+mit 374 Byte dagegen genau hin. Es bleiben **67 694 Byte Luft (6,8 %)** — knapp, aber die Zusage
+hält, und seit dem 2026-10-14 prüft sie ein Test (`tests/golden/test_published_page.py`) und ein
+Exit-Code (`georep publish --strict-budget` in `pages.yml`). Die 40 KB Reserve aus § 5 bleiben
+unangetastet daneben liegen; wer einen weiteren Abschnitt will, holt sie zuerst.
 
 Die Luft ist bewusst nicht größer: die Seite ist zwischen dem 2026-10-11 und dem 2026-10-13 um
 594 KB gewachsen (Suche 142 KB, Umschalter 110 KB, Parteikarten 63 KB, Gewichtung 33 KB, Monate
