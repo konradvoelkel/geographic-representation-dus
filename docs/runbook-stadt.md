@@ -33,11 +33,13 @@ uv run georep --profile moenchengladbach fetch opendata
 uv run georep --profile moenchengladbach run shapes
 ```
 
-Erwartet: `30574 Bytes Wahlergebnis, 1043618 Bytes Flächen (esri-identify), Straßenverzeichnis,
-Wahlbezirksnamen` in wenigen Sekunden, danach **`179 Stimmbezirke in 33 Wahlbezirken, CRS
-EPSG:25832`**. Die Flächen sind seit dem 2026-10-14 die des Wahltags und kommen aus der Operation
-`identify` des Geoportals (`docs/decisions.md`, Punkt 62); die URL steht vollständig im Profil und
-ist ein GET. Zwei Prüfungen lohnen sich dabei:
+Erwartet: `30574 Bytes Wahlergebnis, 1043618 Bytes Flächen, Straßenverzeichnis,
+Wahlbezirksnamen`, danach **`179 Stimmbezirke in 33 Wahlbezirken, CRS EPSG:25832`**. Die Zeile des
+Schritts nennt die Quellform **nicht** — welche gilt, sagt `precincts.format` im Profil. Die
+Flächenzahl ist am 2026-10-14 am Dienst nachgemessen (der Abruf der Flächen allein 5,2 s), die
+Zahl der Wahlergebnis-CSV stammt vom 2026-10-12. Die Flächen sind seit dem 2026-10-14 die des
+Wahltags und kommen aus der Operation `identify` des Geoportals (`docs/decisions.md`, Punkt 62);
+die URL steht vollständig im Profil und ist ein GET. Zwei Prüfungen lohnen sich dabei:
 
 - **179, nicht 180.** Das Shapefile von 2022 hatte 180 Polygone, von denen 175 zu Stimmbezirken der
   Wahl 2025 gehörten; der Dienst hat genau die 179 Urnen-Stimmbezirke der Wahl.
