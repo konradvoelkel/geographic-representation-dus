@@ -1418,10 +1418,12 @@ und jede Änderung an einer Zwischentabelle wäre ein Bruch); das Altformat der 
 Protokoll, und GitHub Pages zieht die Dateien dann über eine Bandbreitenquote); die Texte
 komprimieren (Parquet ist es schon).
 
-**Gemessen am 2026-10-14**: der Pages-Workflow von Hand auf einer frischen Datenwurzel, genau die
-Schritte aus `.github/workflows/pages.yml`, baut aus den Paketen alle Seiten — Hauptseite
+**Gemessen am 2026-10-14** (zweimal: vor und nach Punkt 57, dessen Gremienzahlen die Unterseite der
+alten Periode um 314 Byte wachsen lassen): der Pages-Workflow von Hand auf einer frischen
+Datenwurzel, genau die Schritte aus `.github/workflows/pages.yml`, baut aus den Paketen alle
+Seiten — Hauptseite
 932 274 Bytes (Budget 1 000 000, 6,8 % Luft) mit den Abschnitten „Zwei Wahlperioden" und
-„Laufende Wahlperiode", `2014-2020/index.html` 818 172, `2025/index.html` 717 246,
+„Laufende Wahlperiode", `2014-2020/index.html` 818 486, `2025/index.html` 717 246,
 `moenchengladbach/index.html` 641 633, `vergleich.html` 88 979; `georep publish` meldet
 „2 Städte, 1 Vergleich, 187 Dateien, 34,6 MB" und nichts über dem Budget.
 

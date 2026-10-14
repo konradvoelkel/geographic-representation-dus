@@ -80,7 +80,7 @@ pending = true
 note = "Die Arbeit zitiert eine Kölner Untersuchung zu Parteien und Ratsdokumenten; sie ist am 2026-10-13 nicht auffindbar. Gesucht wurde in OpenAlex und Crossref (Ratsinformationssystem, Ratsdokumente, Köln, Text Mining, geografische Repräsentation), auf arXiv, in Hochschulrepositorien und auf GitHub, und im öffentlichen Quelltext der Arbeit steht kein Literaturverzeichnis — die Zitation ist nur aus der Arbeit selbst zu holen. Die nächste belegte Verwandte ist Harmening u. a. 2025 weiter unten, die zwölf deutsche Großstädte mit demselben Verfahren untersucht."
 
 [publish]
-cities = ["duesseldorf", "moenchengladbach"]  # Reihenfolge der Veröffentlichung; die erste liegt an der Wurzel, jede weitere unter ihrem Slug. Mönchengladbach steht hier, seit sein Profil existiert; `georep publish` meldet es als „kein Lauf", bis sein Paket im Repo liegt (Stufe G).
+cities = ["duesseldorf", "moenchengladbach"]  # Reihenfolge der Veröffentlichung; die erste liegt an der Wurzel, jede weitere unter ihrem Slug. Mönchengladbach steht hier, seit sein Profil existiert; sein Paket liegt seit dem 2026-10-14 unter reference/moenchengladbach/ (Punkt 56), `georep publish` baut also die Vergleichsseite.
 
 # --- Aus defaults.toml hierher gezogen: alles, was nur für diese Stadt gilt --------------------
 

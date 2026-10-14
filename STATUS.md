@@ -192,8 +192,9 @@ und sagt je, warum sie liegen bleiben.
   `docs/decisions.md`, Punkt 50): die slow-Tests lesen es über `within_budget` (0 schaltet die
   Prüfung wirklich ab), der Schritt `report` meldet eine Überschreitung in seiner Zeile, und
   `georep publish` nennt jede veröffentlichte Seite darüber. 886 328 von 1 000 000 Byte, also
-  113 672 Byte Luft (11,4 %) — sie trägt den Abschnitt „Zwei Wahlperioden" (gemessen rund 35 KB),
-  der nach Konrads Lauf dazukommt. Dafür sind die `<title>` der 1196 Orte gefallen (73 842 Byte;
+  113 672 Byte Luft (11,4 %) — sie trug den Abschnitt „Zwei Wahlperioden" (geschätzt rund 35 KB),
+  der am 2026-10-14 mit den Datenpaketen dazugekommen ist (zusammen mit „Laufende Wahlperiode"
+  45 946 Byte, Seite 932 274, noch 6,8 % Luft). Dafür sind die `<title>` der 1196 Orte gefallen (73 842 Byte;
   ihre Ebene ist `aria-hidden` und ohne JavaScript nie sichtbar, der Tooltip zeigt dasselbe aus
   Datenattributen). Rund 40 KB Reserve liegen gemessen in § 5 des Dokuments (doppelte SVG-Pfade
   der Parteikarten 28 KB, Suchindex 8 KB, Leerraum 4,4 KB); der Minify-Schritt für Leerraum fällt
@@ -264,14 +265,15 @@ in **keinem** Paket (233 MB, 3,9 GB, 585 MB).
   `<stadt>/site/2025/`.
 - **Der Nachbau des Pages-Workflows von Hand** (2026-10-14, frische Datenwurzel auf xtraspace, danach
   gelöscht) baut alle Seiten: Hauptseite 932 274 Byte mit den Abschnitten „Zwei Wahlperioden" und „Laufende
-  Wahlperiode", `2014-2020/index.html` 818 172, `2025/index.html` 717 246, `moenchengladbach/index.html`
+  Wahlperiode", `2014-2020/index.html` 818 486, `2025/index.html` 717 246, `moenchengladbach/index.html`
   641 633, `vergleich.html` 88 979, dazu vier `karte.html`; `georep publish` meldet „2 Städte, 1 Vergleich,
   187 Dateien, 34,6 MB" und `PublishSummary.over_budget` ist leer.
 
 ## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52 und 56)
 
-- Tests: 1099 schnelle (nox-Gate, parallel in rund 49 s, Abdeckung 98,4 %), 27 `slow` (über die volle
-  Referenz und die drei Datenpakete), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von Hand).
+- Tests: 1106 schnelle (nox-Gate, parallel in rund 51 s, Abdeckung 98,4 %), 28 `slow` (3 min 9 s über die
+  volle Referenz und die drei Datenpakete), 17 `bench` (grün gegen die Baseline), 4 `network` (nur von
+  Hand). Alle drei am 2026-10-14 mit Exit 0 gelaufen.
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
@@ -282,7 +284,7 @@ in **keinem** Paket (233 MB, 3,9 GB, 585 MB).
   die Vorschau langer Tabellen 4,1 KB, `begriffe.json` liegt mit 96 KB daneben). Siebzehn Abschnitte in
   Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung, perioden,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads,
-  laufend). Die Unterseiten: `2014-2020/` 818 172, `2025/` 717 246, `moenchengladbach/` 641 633,
+  laufend). Die Unterseiten: `2014-2020/` 818 486, `2025/` 717 246, `moenchengladbach/` 641 633,
   `vergleich.html` 88 979 Bytes.
 - Quelltext: 59 Python-Dateien unter `src/`, rund 16 600 Zeilen; fünf Profile im Paket.
 - Mutation (2026-10-13, `docs/mutation-2026-10-13.md`): 882 Mutanten über die dreizehn Module des
