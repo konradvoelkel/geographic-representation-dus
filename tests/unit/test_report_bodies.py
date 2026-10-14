@@ -374,3 +374,16 @@ def test_the_row_without_a_code_says_what_it_is(default_settings: Settings) -> N
     assert labels["OVA"] == "Ordnungs- und Verkehrsausschuss"
     # Ein Kürzel ohne gesicherten Namen zählt, die Zeile ohne Kürzel nicht
     assert body_figures(rows, (), default_settings.bodies).without_name == 0
+
+
+def test_an_unknown_source_is_a_violated_precondition(default_settings: Settings) -> None:
+    """crosshair, 2026-10-14: eine fremde Quelle flog als ``KeyError`` ohne Fehlertext (Punkt 58).
+
+    ``source_counts`` liefert immer genau die vier Quellen; ein von Hand gebautes ``SourceCounts``
+    nicht, und die Beschriftung aus ``prep.bodies.SOURCE_LABELS`` fand dann keinen Eintrag.
+    """
+    wrong = prep_bodies.SourceCounts((("nummer", 0), ("\x00", 0)), 0, 0, 0)
+    with pytest.raises(deal.PreContractError):
+        body_figures((), (), default_settings.bodies, wrong)
+    right = prep_bodies.SourceCounts(tuple((s, 0) for s in prep_bodies.SOURCES), 0, 0, 0)
+    assert body_figures((), (), default_settings.bodies, right).by_source[0][0] == "nummer"

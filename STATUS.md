@@ -398,8 +398,11 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   Seite danach ein `georep run report --force` je Profil. Dasselbe gilt für eine geänderte
   Klassengrenze (siehe `defaults.toml`, `[report.diverging]`).
 - deal 4.24.6: `deal.raises` vergleicht exakte Typen, keine Unterklassen; `deal.has()`/`deal.pure` sind nicht reentrant (Patch bleibt nach Rekursion stehen). Beides umschifft (NetworkError, `deal.safe` für `deep_merge`), nicht upstream gemeldet.
-- `nox -s verify` (crosshair) läuft wieder durch und ist grün (Exit 0, 16 Ziele „Not confirmed", 6 Minuten
-  am 2026-10-12). Davor brach die Sitzung mit `re.PatternError` ab, bevor sie berichtete: `parse_reference`
+- `nox -s verify` (crosshair) läuft wieder durch und ist grün (Exit 0, 33 Ziele „Not confirmed", 10 Minuten
+  am 2026-10-14; 6 Minuten bei 16 Zielen am 2026-10-12). Der Lauf vom 2026-10-14 fand dabei ein echtes
+  Gegenbeispiel in `report.model.body_figures`: ein von Hand gebautes `SourceCounts` mit einer fremden
+  Quelle flog als `KeyError` ohne Fehlertext (Punkt 58). Behoben als Vorbedingung `_sources_are_known`,
+  dieselbe Sorte wie `_kinds_are_known` vom 2026-10-13. Davor brach die Sitzung mit `re.PatternError` ab, bevor sie berichtete: `parse_reference`
   bekommt ein `BodyRules`, dessen Feld `pattern` den Typ `re.Pattern[str] | None` hat, und crosshair ruft
   für den Union-Zweig `re.compile` auf einem symbolischen String. Ein Artefakt des Werkzeugs (crosshair
   0.0.111, Python 3.14), kein Befund — der Code kompiliert keinen Regex aus Daten; das Ziel ist in

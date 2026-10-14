@@ -1000,7 +1000,25 @@ def _kinds_are_known(
     )
 
 
+def _sources_are_known(
+    rows: Sequence[BodyRow],
+    districts: Sequence[DistrictRow],
+    settings: Bodies,
+    sources: prep_bodies.SourceCounts | None = None,
+) -> bool:
+    """Punkt 58: jede Quelle in ``SourceCounts`` ist eine aus ``prep_bodies.SOURCES``.
+
+    ``source_counts`` sichert das selbst zu; von Hand gebaut nicht, und dann flog die Beschriftung
+    unten als ``KeyError`` ohne Fehlertext (crosshair-Gegenbeispiel vom 2026-10-14, dieselbe Sorte
+    wie bei ``_kinds_are_known``).
+    """
+    return sources is None or {source for source, _ in sources.per_source} <= set(
+        prep_bodies.SOURCES
+    )
+
+
 @deal.pre(_kinds_are_known, message="jede Gremienzeile trägt eine Klasse aus prep.bodies.KINDS")
+@deal.pre(_sources_are_known, message="jede Quelle kommt aus prep.bodies.SOURCES")
 @deal.post(
     _kind_shares_add_up, message="die Klassen zerlegen die Dokumente, Anteile summieren zu 1"
 )
