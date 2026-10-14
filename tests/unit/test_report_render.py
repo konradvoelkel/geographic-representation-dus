@@ -582,6 +582,24 @@ def test_the_verdict_follows_the_two_p_values_and_not_the_text(
     assert expected in head
 
 
+def test_the_method_section_names_the_limits_of_the_two_type_based_sources(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    """Review-Befund 2: die Grenze der Titelquelle steht auch in „Methode und Grenzen".
+
+    Die Mini-Fixture hat keine Dokumentart, die nur die Klasse nennt (``originator_types`` 0), der
+    Satz fehlt also; mit einer solchen Stadt steht er da und nennt die Zahl.
+    """
+    assert model.originator_types == 0
+    plain = render_report(model, visuals)
+    assert "hinter seinem letzten Bezug" not in plain
+    page = _rendered(model, visuals, originator_types=617)
+    method = page[page.index('id="methode"') :]
+    assert "ein eigener Briefkopf im Textkopf steht vor der Dokumentart" in method
+    assert "617 Dokumente" in method.replace("\u202f", "")
+    assert "hinter seinem letzten Bezug" in method
+
+
 def test_the_method_section_explains_the_exploratory_column(
     model: ReportModel, visuals: Visuals
 ) -> None:

@@ -1705,6 +1705,13 @@ Fraktion und kein Urheber, der sich in einem Briefkopf nennt — das Wort steht 
 keinem Textkopf dieser Periode. Eine Zeile mit einem Muster, das nichts trifft, wäre eine Behauptung
 ohne Beleg.
 
+**Die Grenze dieser Quelle steht auf der Seite.** „Methode und Grenzen" sagt, dass ein eigener
+Briefkopf vor der Dokumentart gilt (Punkt 62), dass bei einer Dokumentart, die nur die Klasse nennt
+(hier 617 Dokumente), die Partei aus Titel oder Briefkopf kommt, und dass vom Titel nur zählt, was
+hinter seinem letzten Bezug steht (Punkt 63) — weil davor der Antrag genannt wird, auf den sich das
+Dokument bezieht. Der Satz entfällt in einer Stadt ohne solche Dokumentarten
+(``model.originator_types`` ist dort 0).
+
 **Der Satz des Abschnitts zählt jetzt seine Quellen.** „Der Urheber steht stattdessen in der
 Dokumentart, im Titel oder im Textkopf („Anfrage SPD", „Antrag der CDU-Fraktion", „(anfrage
 cdu-fraktion vom 28. Juli 2023)")" war ein Satz mit drei Düsseldorfer Belegen in einer Vorlage, die

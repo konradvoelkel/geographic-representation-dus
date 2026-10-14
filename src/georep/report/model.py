@@ -695,6 +695,10 @@ class ReportModel:
     # Option 04: der Abschnitt „Urheber und Parteien"; ohne den Schritt ``parties`` bleibt er leer
     # und die Vorlage lässt ihn weg (``{% if model.parties %}``).
     parties: tuple[PartyRow, ...] = ()
+    # Punkt 59 und 63: Dokumente, deren Dokumentart die Klasse nennt, aber nicht den Urheber. 0
+    # heißt „diese Stadt kennt solche Arten nicht", und der Satz dazu in „Methode und Grenzen"
+    # entfällt (Mönchengladbach 617, Düsseldorf 0).
+    originator_types: int = 0
     party_cells: tuple[PartyCell, ...] = ()
     originators: tuple[OriginatorRow, ...] = ()
     originator_figures: OriginatorFigures | None = None
@@ -1823,6 +1827,7 @@ def build_report_model(
     cells: tuple[PartyCell, ...] = ()
     districts: tuple[OriginatorRow, ...] = ()
     figures: OriginatorFigures | None = None
+    by_type_only = 0
     if layout.party_results.exists() and layout.document_originators.exists():
         party_table = pl.read_parquet(layout.party_results)
         attribution = pl.read_parquet(layout.document_originators)
@@ -1835,6 +1840,18 @@ def build_report_model(
             settings.report.diverging,
         )
         figures = originator_overview(attribution)
+        # Punkt 59 und 63: wie viele Dokumente ihre Klasse allein aus der Dokumentart haben, ohne
+        # einen Urheber darin -- nur dafür steht der Satz in „Methode und Grenzen". Gelesen wird
+        # eine Spalte, nicht der ganze Korpus.
+        by_type_only = (
+            pl.read_parquet(layout.corpus, columns=["paper_type"])
+            .filter(
+                pl.col("paper_type").is_in(
+                    [*settings.originators.fraction_types, *settings.originators.person_types]
+                )
+            )
+            .height
+        )
     return ReportModel(
         generated_at=now,
         version=__version__,
@@ -1911,6 +1928,7 @@ def build_report_model(
         party_cells=cells,
         originators=districts,
         originator_figures=figures,
+        originator_types=by_type_only,
         # Option 02
         period=period_info(settings),
         comparison=period_comparison(

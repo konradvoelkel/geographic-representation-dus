@@ -360,6 +360,10 @@ die Briefköpfe stehen über 300 Zeichen weit.
   Stimmenspalte als `[[originators.parties]]` (CDU, SPD, GRUENE, FDP, Die_Linke, AfD), Die FRAKTION,
   Die PARTEI und Volt als Gruppen ohne Stimmenanteil. „Fraktionslos" bekommt keine Zeile: das Wort
   steht in keinem Titel und in keinem Textkopf dieser Periode.
+- **Die Grenzen stehen in „Methode und Grenzen"**: dass der Briefkopf vor der Dokumentart gilt,
+  dass bei den 617 Dokumenten, deren Art nur die Klasse nennt, die Partei aus Titel oder Briefkopf
+  kommt, und dass vom Titel nur zählt, was hinter seinem letzten Bezug steht. In einer Stadt ohne
+  solche Dokumentarten entfällt der Satz.
 - **Der Abgleich mit den Hochburgen findet nichts**, in allen 33 Wahlbezirken und für alle sechs
   Parteien: CDU r = −0,012 (p = 0,95), SPD +0,037 (0,84), GRÜNE +0,091 (0,61), FDP −0,199 (0,27),
   Die Linke +0,151 (0,40), AfD −0,098 (0,59). Die Bonferroni-Grenze liegt bei 0,008, erreicht wird
@@ -493,7 +497,7 @@ Die Punkte 62, 63 und 64 sind die Befunde des Reviews mit eigener Entscheidung; 
 
 ## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56 und 58 bis 64)
 
-- Tests: 1200 schnelle (nox-Gate, parallel in rund 60 s, Abdeckung 98,5 %), 38 `slow` (rund 4 min über die
+- Tests: 1201 schnelle (nox-Gate, parallel in rund 60 s, Abdeckung 98,5 %), 38 `slow` (rund 4 min über die
   volle Referenz, die sechs Datenpakete, das Paket der Periode 2014 bis 2020 und die veröffentlichte
   Seite), 18 `bench` (grün gegen die
   Baseline), 4 `network` (nur von Hand). Alle drei am 2026-10-14 nach den Punkten 59 bis 64 mit
@@ -503,8 +507,8 @@ Die Punkte 62, 63 und 64 sind die Befunde des Reviews mit eigener Entscheidung; 
   `committees`, dafür mit den Gremien aus der Beratungsfolge; seit Punkt 59 mit `parties`). Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Gremien
   0,3 s seit Punkt 58, Kennzahlen 0,1 s).
-- Berichtsseite: `index.html` der Hauptseite **935 643 Bytes veröffentlicht** (Budget 1 000 000,
-  **64 357 Byte Luft, 6,4 %**; +524 Byte für den Quellensatz aus Punkt 58, +2 813 für die Punkte 59
+- Berichtsseite: `index.html` der Hauptseite **935 619 Bytes veröffentlicht** (Budget 1 000 000,
+  **64 381 Byte Luft, 6,4 %**; +524 Byte für den Quellensatz aus Punkt 58, +2 813 für die Punkte 59
   bis 64) mit beiden Periodenabschnitten,
   55 Dateien zusammen 13,2 MB; ohne die Abschnitte „Zwei Wahlperioden" und „Laufende Wahlperiode" sind es
   886 360 Bytes, die beiden kosten also 45 417 und 374 Byte (gemessen 2026-10-14; die beiden Umschalter
@@ -512,9 +516,9 @@ Die Punkte 62, 63 und 64 sind die Befunde des Reviews mit eigener Entscheidung; 
   mit 96 KB daneben). Siebzehn Abschnitte in
   Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung, perioden,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads,
-  laufend). Die Unterseiten: `2014-2020/` 822 027, `2025/` 718 384, `moenchengladbach/` 819 370,
+  laufend). Die Unterseiten: `2014-2020/` 822 027, `2025/` 718 384, `moenchengladbach/` 819 872,
   `vergleich.html` 89 597 Bytes (alle am 2026-10-14 nach den Punkten 59 bis 64 gemessen;
-  Mönchengladbach wuchs um 169 649 Byte, weil es seit Punkt 59 den Abschnitt „Urheber und Parteien"
+  Mönchengladbach wuchs um 170 151 Byte, weil es seit Punkt 59 den Abschnitt „Urheber und Parteien"
   mit sechs Parteikarten über 33 Flächen hat; `georep publish --strict-budget` endet mit Exit 0 und
   meldet „2 Städte, 1 Vergleich, 101 Dateien, 16,5 MB").
 - Quelltext: 64 Python-Dateien unter `src/`, rund 19 400 Zeilen; fünf Profile im Paket.
