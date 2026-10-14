@@ -8,8 +8,12 @@ Auswahl: die drei Wahlbezirke 04, 09 und 23 Mönchengladbachs. Sie sind die, der
 in der PDF-Stichprobe überhaupt vorkommen (Vorster Straße, Winkeln, Brandenberger Straße,
 Hauptstraße); mit drei beliebigen Bezirken fände die Kette keinen einzigen Treffer. Die Eingaben kommen aus den
 aufgezeichneten Antworten (``tests/fixtures/http/``, ``tests/fixtures/oparl/``,
-``tests/fixtures/pdf/mg/``) und aus den vier öffentlichen votemanager-Dateien samt Shapefile-Zip,
-die am 2026-10-12 einmal geladen wurden; das Skript schneidet sie auf die drei Wahlbezirke zu.
+``tests/fixtures/pdf/mg/``) und aus den öffentlichen votemanager-Dateien samt den Flächen der
+Stadt, die am 2026-10-12 und am 2026-10-14 einmal geladen wurden; das Skript schneidet sie auf die
+drei Wahlbezirke zu. Für die Flächen gibt es **je Quellform einen Zweig**: ein Shapefile-Zip wird
+mit pyshp neu geschrieben, eine ``identify``-Antwort auf ihre ``results`` geschnitten (Punkt 59).
+Welche von beiden entsteht, entscheidet ``precincts.format`` im Profil, und die Fixture darf beide
+tragen.
 
 Erwartung (``mg/expected/`` gibt es noch nicht): bis zum echten Lauf (Stufe G) ist der Golden
 Master dieser Stadt eine Charakterisierung der eigenen Kette, kein unabhängiges Orakel.
@@ -108,6 +112,24 @@ def write_shapefile_zip(source: Path, target: Path, keep: set[str]) -> None:
         out.writestr(f"{member}.dbf", dbf.getvalue())
         out.writestr(f"{member}.prj", prj)
     print(f"  {target.name}: {kept} Polygone, {target.stat().st_size} Bytes")
+
+
+def write_identify_json(source: Path, target: Path, keep: set[str], id_property: str) -> None:
+    """Die ``identify``-Antwort, geschnitten auf die Flächen der drei Wahlbezirke (Punkt 59).
+
+    Wort für Wort die Einträge des Dienstes, nur weniger davon: das Schneiden fasst keine Zahl an.
+    ``json`` schreibt sie in der kürzesten Form, die denselben Fließkommawert wieder liest, die
+    Datei ist also wertgleich zur Antwort und nicht bytegleich zu ihrem Ausschnitt.
+    """
+    payload = json.loads(source.read_text(encoding="utf-8"))
+    kept = [e for e in payload["results"] if str(e["attributes"][id_property]).strip() in keep]
+    target.write_text(
+        json.dumps({"results": kept}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+    )
+    points = sum(len(ring) for e in kept for ring in e["geometry"]["rings"])
+    print(
+        f"  {target.name}: {len(kept)} Flächen, {points} Stützpunkte, {target.stat().st_size} Bytes"
+    )
 
 
 def write_streets_json(precincts: list[Any]) -> None:
@@ -224,11 +246,18 @@ def main() -> None:
         if str(f["properties"][settings.precincts.id_property]).strip()[1:3].isdigit()
         and int(str(f["properties"][settings.precincts.id_property]).strip()[1:3]) in DISTRICTS
     }
-    write_shapefile_zip(
-        layout.districts_geojson,
-        MG / "external" / settings.sources.opendata.districts_file,
-        keep,
-    )
+    # Je Quellform ein Zweig (Punkt 59): das Profil nennt seit dem 2026-10-14 die
+    # ``identify``-Antwort, und die durch ``write_shapefile_zip`` zu schieben hieß, ein Zip unter
+    # dem Namen einer JSON-Datei zu schreiben -- und vorher an ``BadZipFile`` zu scheitern.
+    target = MG / "external" / settings.sources.opendata.districts_file
+    if settings.precincts.format == "shapefile-zip":
+        write_shapefile_zip(layout.districts_geojson, target, keep)
+    elif settings.precincts.format == "esri-identify":
+        write_identify_json(layout.districts_geojson, target, keep, settings.precincts.id_property)
+    else:
+        raise SystemExit(
+            f"Quellform {settings.precincts.format!r}: dieses Skript schneidet sie nicht zu"
+        )
 
     # Die kanonischen Stimmbezirke der Fixture, einmal gelesen: Namen und Wahlbezirke je Nummer
     from georep.prep.precincts import district_names_from_csv

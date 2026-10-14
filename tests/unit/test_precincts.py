@@ -617,3 +617,33 @@ def test_the_default_profile_reads_its_geojson_with_the_portal_columns(tmp_path:
     assert rules.id_property == "Stimm-/ Wahlbezirk"
     assert rules.district_property == "Kommunalwahlbezirk Nr."
     assert rules.name_property == "Kommunalwahlbezirk Name"
+
+
+# --- der Zuschnitt der Fixture (Punkt 59, Befund 2) -----------------------------------------
+
+
+def test_the_fixture_maker_cuts_the_identify_answer_and_writes_json(
+    tmp_path: Path, mg_root: Path
+) -> None:
+    """``write_identify_json`` schneidet die ``results`` und fasst keine Zahl an.
+
+    Vorher schob ``make_mini_mg`` die Flächen jeder Quellform durch ``write_shapefile_zip``: mit
+    der ``identify``-Antwort hieß das ``BadZipFile``, und im Erfolgsfall läge ein Zip unter dem
+    Namen einer JSON-Datei. Der Test ist die Gegenprobe auf die Datei im Repo: derselbe Zuschnitt
+    muss sie **zeichengleich** wieder herstellen, sonst ist die Fixture nicht reproduzierbar.
+    """
+    from tests.fixtures.make_mini_mg import write_identify_json
+
+    committed = mg_root / "external" / IDENTIFY_FILE
+    numbers = {
+        str(e["attributes"]["Nummer"])
+        for e in json.loads(committed.read_text(encoding="utf-8"))["results"]
+    }
+    again = tmp_path / IDENTIFY_FILE
+    write_identify_json(committed, again, numbers, "Nummer")
+    assert again.read_text(encoding="utf-8") == committed.read_text(encoding="utf-8")
+
+    one = tmp_path / "einer.json"
+    write_identify_json(committed, one, {"10404"}, "Nummer")
+    source = read_source_esri_identify(one)
+    assert [f["properties"]["Nummer"] for f in source.features] == ["10404"]

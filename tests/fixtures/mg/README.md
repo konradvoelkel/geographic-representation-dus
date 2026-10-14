@@ -1,10 +1,16 @@
 # Mini-Fixture Mönchengladbach
 
 Die drei Wahlbezirke 04 (Hardt), 09 (Hermges/Dahl/Ohler) und 23 (Dorfbroich/Hövel) der
-Kommunalwahl 2025, erzeugt mit `uv run python -m tests.fixtures.make_mini_mg` am 2026-10-12. Sie
-ist die Eingabe von `tests/golden/test_second_city.py`; der Golden Master dieser Stufe ist der
-Vergleich der aggregierten Stimmbezirke mit der Wahlbezirks-CSV der Quelle, nicht eine Datei unter
-`expected/` — die gibt es hier (noch) nicht.
+Kommunalwahl 2025, erzeugt mit `uv run python -m tests.fixtures.make_mini_mg` am 2026-10-12, die
+Flächen neu am 2026-10-14. Sie ist die Eingabe von `tests/golden/test_second_city.py`; der Golden
+Master dieser Stufe ist der Vergleich der aggregierten Stimmbezirke mit der Wahlbezirks-CSV der
+Quelle, nicht eine Datei unter `expected/` — die gibt es hier (noch) nicht.
+
+Für die Flächen hat das Skript **je Quellform einen Zweig** und schreibt die, die
+`precincts.format` im Profil nennt: `write_shapefile_zip` schreibt das Zip mit pyshp neu,
+`write_identify_json` schneidet die `results` der Dienstantwort auf die drei Bezirke, ohne eine
+Zahl anzufassen. Dass der Zuschnitt die Datei im Repo zeichengleich wieder herstellt, prüft
+`test_the_fixture_maker_cuts_the_identify_answer_and_writes_json`.
 
 **Beide Quellformen der Flächen.** Seit dem 2026-10-14 liegen unter `external/` sowohl das
 Shapefile-Zip von 2022 (`format = "shapefile-zip"`) als auch die Antwort des ArcGIS-Dienstes zum
