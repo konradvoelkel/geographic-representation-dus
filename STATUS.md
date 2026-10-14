@@ -819,17 +819,26 @@ hat:
 | `run shapes` | **179 Stimmbezirke in 33 Wahlbezirken**, CRS EPSG:25832, **170,47 km²**, **25 187 Stützpunkte**, jede Fläche gültig |
 | `run voters` | 33 Wahlbezirke, 204 219 Wahlberechtigte, 96 880 Wähler (unverändert, sie hängen am Wahlergebnis) |
 | `fetch pois_wiki` | 1 190 per SPARQL, 1 029 per GeoSearch, 2 215 zugeordnet, 2 219 Einträge (vorher 2 373); 400,8 s |
-| `fetch streets_osm` | **offen**: overpass-api.de antwortet seit 15:58 auf **jede** Abfrage mit `504` |
+| `fetch streets_osm` | **offen**: overpass-api.de antwortet auf fast jede Abfrage mit `504`; 96 der 179 liegen im Cache (Stand 19:18, siehe unten) |
 
 Der 504 ist keine Überlast durch diese Abfragen und kein Fehler des Codes: der Dienst meldet
 `runtime error: … Dispatcher_Client::request_read_and_idx::timeout`, sein Status nennt dabei
 4 freie Slots, und **auch eine Trivialabfrage** (ein Knoten in einer kleinen Box) bekommt denselben
 504. Gegengeprüft ist auch der naheliegende Verdacht, die neuen Flächen seien aufwendiger: über
 alle Flächen sind die Polygone nach `simplify_m = 2` praktisch gleich groß wie die von 2022
-(Punkte je Fläche im Median 79 statt 75, Maximum in beiden 368, Summe 14 991 statt 14 283).
-17 Versuche in einer Stunde mit 90 s Pause, einmal (16:53) antwortete eine Trivialabfrage mit 200,
-vier Minuten später wieder 504 — die Instanz flackert. Der nächste Lauf fängt nicht von vorn an:
-die erfolgreichen POSTs liegen im geteilten HTTP-Cache.
+(Punkte je Fläche im Median 79 statt 75, Maximum in beiden 368, Summe 14 991 statt 14 283). Die
+Instanz flackert: eine Trivialabfrage antwortete um 16:53 und um 17:07 mit 200, dazwischen und
+danach mit 504.
+
+**Wie weit der Cache ist: 96 der 179 Abfragen** (gemessen am 2026-10-14 um 19:18 mit derselben
+Anfrage, die der Fetcher stellt, gegen `session.cache.contains`). Zwei Zeitfenster, zusammen drei
+Stunden und 34 Durchläufe (17 mit 90 s Pause, 17 mit 5 min Pause), haben die Zahl von 47 auf 96
+gebracht — rund 2,8 Abfragen je Durchlauf, denn jeder Durchlauf läuft die schon gecachten Bezirke
+durch und bleibt am ersten stehen, der seine vier Versuche verbraucht. **Der Fortschritt ist
+monoton**: der Schlüssel des Caches ist Host, Methode und Abfragetext, und solange Endpunkt,
+`query_timeout_s` und `simplify_m` gleich bleiben, setzt jeder weitere Durchlauf auf. Die 83 noch
+offenen Bezirke brauchen bei dieser Rate rund 30 Durchläufe; sinnvoll ist, zu warten, bis der
+Dispatcher wieder antwortet, und dann **einen** Durchlauf zu fahren.
 
 **Vorsicht beim Weitermachen: `raw/streets_per_district.json` ist noch der alte Stand** (180
 Stimmbezirke, 1 814 Straßennamen, aus dem Paket von 2022). `streets_by_district` liest **nur**
