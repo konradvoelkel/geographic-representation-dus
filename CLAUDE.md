@@ -45,7 +45,7 @@ uv run ruff check . && uv run ruff format --check .
 uv run mypy                  # strict für alles
 uv run nox -s bench          # heiße Pfade gegen die gespeicherte Baseline; der erste Lauf legt sie nur an
 uv run georep profile index  # echter Schritt unter cProfile; .prof nach docs/profiling/, Zahlen ins README dort
-uv run nox -s verify         # crosshair über die reinen Funktionen mit Verträgen, rund drei Minuten
+uv run nox -s verify         # crosshair über die reinen Funktionen mit Verträgen, rund zehn Minuten
 uv run nox -s mutate         # pytest-gremlins je Modul (MUTATION_SCOPE); `-- fast` sind die acht schnellen, kein Gate
 ```
 
@@ -97,7 +97,7 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - Messungen stehen datiert in `docs/profiling/README.md`, `.prof`-Dateien und `.benchmarks/` bleiben lokal. Ein Profil des echten Schritts (`georep profile`) vor jedem Nachbau; cProfile verdreifacht die Zeit reiner Python-Bibliotheken (pypdf), die Verteilung stimmt trotzdem.
 - `georep fetch pdfs --limit N` schreibt `pdf_limit` in den Settings-Fingerprint des Stamps; `status` zeigt `pdfs` danach als „offen: Settings geändert". Das ist richtig, nicht kaputt.
 - deal (Phase 6): `deal.raises` vergleicht exakte Typen, keine Unterklassen (`requests.RequestException` deckt `HTTPError` nicht ab); darum wandeln Fetcher Netzfehler in `NetworkError`. `deal.has()`/`deal.pure` patchen `socket.socket` und `sys.stdout` prozessweit und sind nicht reentrant: rekursive Funktionen bekommen `deal.safe`, sonst bleibt der Patch stehen (2026-10-11, `deep_merge`). Das mypy-Plugin `deal.mypy` modelliert `result` in `ensure` als positionalen Parameter; Validatoren mit optionalen Argumenten werden benannte Funktionen und stehen vor dem ganzen Decorator-Stapel, nie dazwischen. Prädikate für Verträge liegen in `georep.contracts`.
-- `deal.cases` läuft ohne Beispiel-Datenbank: ein Gegenbeispiel kann im nächsten Lauf fehlen, hypothesis druckt den Reproduktions-Blob. `check_types=False`, weil typeguard nicht installiert ist. `nox -s verify` (crosshair) braucht rund drei Minuten; „Not confirmed" ist kein Befund.
+- `deal.cases` läuft ohne Beispiel-Datenbank: ein Gegenbeispiel kann im nächsten Lauf fehlen, hypothesis druckt den Reproduktions-Blob. `check_types=False`, weil typeguard nicht installiert ist. `nox -s verify` (crosshair) braucht rund zehn Minuten (33 Ziele, gemessen 2026-10-14; drei Minuten waren es bei zehn Zielen); „Not confirmed" ist kein Befund.
 - `except OSError, TimeoutExpired:` ohne Klammern ist seit Python 3.14 gültig (PEP 758), und `ruff format` schreibt
   es so; das System-`python3` ist 3.12 und meldet dafür einen Syntaxfehler. Prüfungen laufen nur über `uv run`
   (am 2026-10-12 hielt ein Agent die Form für kaputt und „reparierte" sie).
