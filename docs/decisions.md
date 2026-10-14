@@ -1527,6 +1527,17 @@ Menge — die Information ist also da, nur nicht die Stelle. Die beste Regel wä
 fünf Fällen ein erfundenes Gremium in genau der Spalte, die die Seite zeigt; der ehrliche Anteil
 „unbekannt" ist das bessere Ergebnis (Punkt 39).
 
+**Was damit auf den Einwand aus Punkt 57 antwortet.** Dort war „die Amtsnummern über ihre
+`consultation`-Organisation auf Ausschüsse abbilden" aus drei Gründen verworfen: der Netzschritt
+`organizations` für eine abgeschlossene Periode, eine Abbildung von Organisations-IDs auf Kürzel und
+die Annahme, dass die erste Beratungsstation das Gremium *ist*. Zwei davon sind weg: die Abbildung
+ist **aus den Nummern gelernt** und braucht `organizations.json` nicht (für Düsseldorf ist der
+Katalog nie abgerufen worden), und die Annahme wird **nicht** gemacht — entschieden wird nur, wo die
+Folge genau eine Organisation nennt, also wo es keine „erste" Station zu wählen gibt. Der dritte
+Grund bleibt richtig und ist der Grund für die Reihenfolge: eine Amtsnummer bedeutet weiter kein
+Gremium, und die 7 313 Dokumente mit einer bekommen ihres nicht aus ihrer Nummer, sondern aus ihrer
+Folge — und nur, wenn die eindeutig ist.
+
 **Die Abbildung Organisation → Kürzel ist gelernt, nicht geraten.** Die Folge nennt URLs
 (`…/organizations/gr/6`), die Nummer nennt Kürzel. Wo eine Folge genau eine Organisation nennt,
 sagt das Kürzel der Nummer, welche das ist; über alle Dokumente einer Periode entsteht daraus eine
@@ -1545,9 +1556,12 @@ eine Eigenschaft der Stadt und steht im Stadtprofil, nicht in einem Periodenprof
 eine: „unbekannt" fällt auf 1 275 (44,0 %). Die Namen kommen aus einem Abruf von
 `…/bodies/0011/organizations` (eine Seite, 122 Organisationen, 3,8 s); er liegt als
 `raw/organizations.json` im Paket der Stadt, damit die Quelle der Namen im Repo steht. Welche
-Nummer zu welcher Bezirksvertretung gehört, ist ebenfalls gemessen: die Dokumente mit genau einer
-BV in der Folge treffen mehrheitlich Wahlbezirke ihres eigenen Stadtbezirks (Nord 59 % in 1, Ost
-61 % in 2, Süd 52 % in 3, West 56 % in 4 — je die größte Zelle ihrer Zeile und Spalte), und
+Nummer zu welcher Bezirksvertretung gehört, ist ebenfalls gemessen: die **167 Dokumente**, deren
+Folge genau eine Bezirksvertretung nennt und die mindestens einen Treffer haben, verteilen 683
+Dokument-Bezirk-Paare so, dass jede Bezirksvertretung in den Wahlbezirken ihres eigenen
+Stadtbezirks die größte Zelle hat — in ihrer Zeile und in ihrer Spalte (Nord 144 von 244 = 59 %,
+Ost 91 von 149 = 61 %, Süd 68 von 131 = 52 %, West 89 von 159 = 56 %; die ganze Matrix steht als
+Kommentar über `[bodies.district_body_names]` im Profil, damit die Aussage nachzusehen ist).
 `[bodies.district_body_names]` gibt ihnen ihren Namen statt einer Nummer.
 
 **Das Paket.** Der Korpus der Hauptperiode Düsseldorfs kommt aus dem Altformat der Arbeit und trägt
@@ -1642,4 +1656,8 @@ Implikation und keine Gleichheit.
 - **Den Ausschuss-Klassifikator für Mönchengladbach einschalten**, nun da die Stadt Ausschüsse hat:
   nur 650 der 2 895 Dokumente tragen Text, und welche das sind, entscheidet das
   Ratsinformationssystem (2 213 Hauptdateien antworten mit `404`). Eine Güte an dieser Stichprobe
-  wäre keine Güte. `classify.enabled = false` steht mit diesem Grund im Profil.
+  wäre keine Güte. `classify.enabled = false` steht mit diesem Grund im Profil — und aus demselben
+  Grund steht dort seit dem Review vom 2026-10-14 auch `topics.seed = "none"`: mit der Saat bekamen
+  acht Ausschüsse ein eigenes Thema, gesät aus 11 bis 21 Dokumenten mit Text, und ihre Namen
+  standen danach als Zeilen in der Sensitivitätstabelle der Seite. Das sah nach einer Zuordnung aus,
+  die diese 650 Texte nicht tragen; freie Themen sagen dasselbe, ohne einen Ausschuss zu behaupten.

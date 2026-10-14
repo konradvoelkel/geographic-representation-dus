@@ -162,8 +162,14 @@ exclude_districts = []         # bis zum ersten echten Lauf leer; danach die bei
 # ``raw/organizations.json`` (ein Abruf am 2026-10-14, 122 Organisationen); gelistet und
 # klassifiziert hat sie `georep --profile moenchengladbach learn-bodies`, das sie mit
 # ``classification`` und ``shortName`` des Servers ausgibt. Aus den Nummern ist hier **nichts zu
-# lernen** -- die Zuordnung unten ist darum aus den Namen gelesen und nicht aus Daten abgestimmt;
-# die Kürzel sind die ``shortName`` des Servers, auf eine Form ohne Leerzeichen gebracht.
+# lernen** -- die Zuordnung unten ist darum aus den Namen gelesen und nicht aus Daten abgestimmt.
+# Die Kürzel folgen dem ``shortName`` des Servers, wo der eines ist: 13 sind zeichengleich (HA,
+# AFBW, AUM, APBS, ASB, ASGSG, JHA, ABV, AFSB, AK, AFOK, IR, RPA), drei unterscheiden sich nur in
+# der Schreibung (RAT, SENR, JUPA), und **elf sind frei gewählt**, weil der ``shortName`` dort ein
+# Name mit Leerzeichen ist oder abgeschnitten ankommt: BV1 bis BV4 („BV Nord" …), NATB
+# („Naturschutzbeirat"), ABB („Beschwerdeausschuss"), WAKW („WahlA Kommunal"), WPA
+# („Wahlprüfungsausschus", so abgeschnitten im Katalog), WAIR („Wahlausschuss IR"), WABTW („WahlA
+# Bundestag") und WALTW („WA-LtW22").
 [bodies]
 district_body = "BV"           # Kürzel der vier Bezirksvertretungen; die Nummer dahinter ist der Stadtbezirk (GO NRW: eine je Stadtbezirk)
 district_body_name = "Bezirksvertretung {n}"  # greift nur ohne Eintrag in district_body_names
@@ -172,12 +178,21 @@ names_as_of = 2026-10-14       # Stand der Namen: der Abruf von organizations; n
 # Die Bezirksvertretungen heißen hier nach der Himmelsrichtung und nicht nach einer Nummer; welche
 # Nummer zu welcher gehört, sagen die Daten. Die Stimmbezirksnummer trägt den Stadtbezirk an der
 # ersten Stelle (``city_district_from_precinct``), und die Dokumente, deren Beratungsfolge **genau
-# eine** Bezirksvertretung nennt, treffen mehrheitlich Wahlbezirke ihres eigenen Stadtbezirks
-# (gemessen 2026-10-14 über die 167 Dokumente mit Text und Treffer): BV Nord 59 % in Stadtbezirk 1,
-# BV Ost 61 % in 2, BV Süd 52 % in 3, BV West 56 % in 4 -- je die größte Zelle ihrer Zeile und
-# ihrer Spalte. Dazu passt die Geographie: Stadtbezirk 1 sind Hardt, Venn, Eicken und die Altstadt
-# (Nord), 2 Neuwerk und Giesenkirchen (Ost), 3 Rheydt und Odenkirchen (Süd), 4 Rheindahlen und
-# Wickrath (West).
+# eine** Bezirksvertretung nennt und die mindestens einen Treffer haben, treffen mehrheitlich
+# Wahlbezirke ihres eigenen Stadtbezirks. Basis sind 167 solcher Dokumente mit 683
+# Dokument-Bezirk-Paaren (gemessen 2026-10-14; Zeile = die genannte Bezirksvertretung, Spalte =
+# Stadtbezirk des getroffenen Wahlbezirks):
+#
+#               Nord   Ost  Süd  West   Summe  Dokumente
+#   BV Nord      144    51   20    29     244     44      Diagonale 59 %
+#   BV Ost        22    91   32     4     149     42                61 %
+#   BV Süd        23    27   68    13     131     26                52 %
+#   BV West       28    34    8    89     159     55                56 %
+#
+# Die Diagonale ist in jeder Zeile **und** in jeder Spalte die größte Zelle; mit der Tabelle ist
+# das nachzusehen und nicht zu glauben. Dazu passt die Geographie: Stadtbezirk 1 sind Hardt, Venn,
+# Eicken und die Altstadt (Nord), 2 Neuwerk und Giesenkirchen (Ost), 3 Rheydt und Odenkirchen
+# (Süd), 4 Rheindahlen und Wickrath (West).
 [bodies.district_body_names]   # Kürzel -> Anzeigename, wo die Bezirksvertretung keine Nummer trägt
 BV1 = "Bezirksvertretung Nord"
 BV2 = "Bezirksvertretung Ost"
@@ -203,7 +218,7 @@ ABB = "Ausschuss für Anregungen und Beschwerden"  # shortName des Servers ist "
 RPA = "Rechnungsprüfungsausschuss"
 WPA = "Wahlprüfungsausschuss"
 WAKW = "Wahlausschuss Kommunalwahl"
-WABTW = "Kreiswahlausschuss Bundestagswahl"
+WABTW = "Kreiswahlausschuss Bundestagswahl 2009"  # so heißt die Organisation im Katalog, auch 2025
 WALTW = "Kreiswahlausschuss Landtagswahl"
 WAIR = "Wahlausschuss für die Integrationsratswahl"  # classification "Gremium", aber der Name sagt Ausschuss
 
@@ -246,6 +261,9 @@ NATB = "Beirat der unteren Naturschutzbehörde"
 "gr/158" = "WAIR"              # 1, 1
 "gr/144" = "WABTW"             # 1, 1
 "gr/248" = "WALTW"             # 1, 1
+
+[topics]                       # Option 06 und Punkt 45: Themenmodell und die Saat je Ausschuss
+seed = "none"                  # Review 2026-10-14, konsequent zu classify.enabled = false: mit der Saat bekamen acht Ausschüsse ein eigenes Thema, gesät aus 11 bis 21 Dokumenten mit Text, und ihre Namen standen danach als Zeilen in der Sensitivitätstabelle der Seite -- eine Zuordnung, die nach mehr aussieht, als 650 Texte aus 2 895 Dokumenten tragen (welche davon der Server ausliefert, entscheidet er selbst). Freie Themen sagen hier dasselbe, ohne einen Ausschuss zu behaupten
 
 [classify]                     # Punkt 45: der passende Ausschuss je Dokument
 enabled = false                # Mönchengladbach hat Ausschüsse (oben), aber nur 650 der 2 895 Dokumente tragen Text, und welche das sind, entscheidet das Ratsinformationssystem (2 213 Hauptdateien antworten mit 404). Ein Klassifikator auf dieser Teilmenge wäre an einer nicht zufälligen Stichprobe gemessen; die Entscheidung gehört zu einem eigenen Schritt, nicht zu Punkt 58

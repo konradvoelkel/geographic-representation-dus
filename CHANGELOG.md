@@ -32,8 +32,9 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 - **Mönchengladbach hat Gremien**: 27 Organisationen mit Namen und Kürzel aus einem Abruf von
   `organizations` (2026-10-14), vier Bezirksvertretungen mit ihrem Himmelsrichtungsnamen statt
   einer Nummer (`[bodies.district_body_names]`), 18 Ausschüsse, vier Beiräte. Der
-  Organisationskatalog liegt neu im Paket der Stadt. Das Themenmodell sät dort jetzt acht Themen je
-  Ausschuss; der Ausschuss-Klassifikator bleibt aus, weil nur 650 der 2 895 Dokumente Text tragen.
+  Organisationskatalog liegt neu im Paket der Stadt. Der Ausschuss-Klassifikator bleibt aus, und das
+  Themenmodell sät dort **keine** Themen je Ausschuss (`topics.seed = "none"`): beides, weil nur 650
+  der 2 895 Dokumente Text tragen und der Server entscheidet, welche.
 - `papers_gremien.parquet` trägt drei Spalten mehr (`quelle`, `folge_gremium`, `folge_anzahl`,
   Schema-Version 2); der Schritt `bodies` nennt in seiner Zeile, wie viele Zuordnungen die
   Beratungsfolge ergänzt, bestätigt, widerspricht oder mehrdeutig lässt. Die Zeile „ohne

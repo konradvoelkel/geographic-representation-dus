@@ -303,10 +303,14 @@ so ein Gremium, das weder ihre Nummer noch ihre Folge eindeutig nennt.
 - **Mönchengladbach hat Gremien**: 27 Organisationen mit Namen und Kürzel aus einem Abruf von
   `…/bodies/0011/organizations` (2026-10-14, eine Seite, 122 Organisationen, 3,8 s; die Datei liegt
   als `raw/organizations.json` im Paket der Stadt). Vier Bezirksvertretungen heißen dort nach der
-  Himmelsrichtung; welche Nummer zu welcher gehört, ist an den Treffern belegt (Nord 59 % in
-  Stadtbezirk 1, Ost 61 % in 2, Süd 52 % in 3, West 56 % in 4). Das Themenmodell sät dort jetzt
-  acht Themen je Ausschuss statt keines; `classify.enabled` bleibt `false`, weil nur 650 der 2 895
-  Dokumente Text tragen.
+  Himmelsrichtung; welche Nummer zu welcher gehört, ist an den Treffern belegt — 167 Dokumente mit
+  genau einer Bezirksvertretung in der Folge verteilen 683 Dokument-Bezirk-Paare, und die Diagonale
+  ist in jeder Zeile und Spalte die größte Zelle (Nord 144/244 = 59 %, Ost 91/149 = 61 %, Süd
+  68/131 = 52 %, West 89/159 = 56 %; die Matrix steht im Profil). `classify.enabled` bleibt
+  `false`, weil nur 650 der 2 895 Dokumente Text tragen, und seit dem Review vom 2026-10-14 steht
+  dort aus demselben Grund `topics.seed = "none"`: acht Themen, gesät aus 11 bis 21 Texten je
+  Ausschuss, standen mit Ausschussnamen in der Sensitivitätstabelle und sahen nach mehr aus, als
+  diese Texte tragen.
 - **Das Paket** `snapshots/duesseldorf-beratungsfolge/` (90 455 Bytes, eine Parquet-Datei mit `id`,
   `consultation_organizations` und `modified`) trägt die Folge der Hauptperiode, deren Korpus aus
   dem Altformat der Arbeit kommt; `georep pack --consultations` schreibt es, `[bodies].consultations`
@@ -324,25 +328,27 @@ so ein Gremium, das weder ihre Nummer noch ihre Folge eindeutig nennt.
 
 ## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56 und 58)
 
-- Tests: 1167 schnelle (nox-Gate, parallel in rund 53 s, Abdeckung 98,4 %), 33 `slow` (rund 4 min über die
+- Tests: 1177 schnelle (nox-Gate, parallel in rund 53 s, Abdeckung 98,4 %), 34 `slow` (rund 4 min über die
   volle Referenz, die sechs Datenpakete und die veröffentlichte Seite), 18 `bench` (grün gegen die
-  Baseline), 4 `network` (nur von Hand). Alle drei am 2026-10-14 nach Punkt 58 mit Exit 0 gelaufen.
+  Baseline), 4 `network` (nur von Hand). Alle drei am 2026-10-14 nach dem Review zu Punkt 58 mit
+  Exit 0 gelaufen.
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
   2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach (seit Punkt 58 ohne
   `committees`, dafür mit den Gremien aus der Beratungsfolge). Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Gremien
   0,3 s seit Punkt 58, Kennzahlen 0,1 s).
-- Berichtsseite: `index.html` der Hauptseite **932 817 Bytes veröffentlicht** (Budget 1 000 000,
-  **67 183 Byte Luft, 6,7 %**; +511 Byte für den Quellensatz aus Punkt 58) mit beiden Periodenabschnitten,
+- Berichtsseite: `index.html` der Hauptseite **932 830 Bytes veröffentlicht** (Budget 1 000 000,
+  **67 170 Byte Luft, 6,7 %**; +524 Byte für den Quellensatz aus Punkt 58) mit beiden Periodenabschnitten,
   55 Dateien zusammen 13,2 MB; ohne die Abschnitte „Zwei Wahlperioden" und „Laufende Wahlperiode" sind es
   886 360 Bytes, die beiden kosten also 45 417 und 374 Byte (gemessen 2026-10-14; die beiden Umschalter
   kosten 110 KB, die Literaturübersicht 13,2 KB, die Vorschau langer Tabellen 4,1 KB, `begriffe.json` liegt
   mit 96 KB daneben). Siebzehn Abschnitte in
   Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung, perioden,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads,
-  laufend). Die Unterseiten: `2014-2020/` 819 506, `2025/` 717 922, `moenchengladbach/` 651 010,
-  `vergleich.html` 89 597 Bytes (alle am 2026-10-14 nach Punkt 58 gemessen; Mönchengladbach wuchs um
-  9 350 Byte, weil seine Gremientabelle jetzt 27 Zeilen hat statt einer).
+  laufend). Die Unterseiten: `2014-2020/` 820 128, `2025/` 718 264, `moenchengladbach/` 649 716,
+  `vergleich.html` 89 597 Bytes (alle am 2026-10-14 nach dem Review zu Punkt 58 gemessen;
+  Mönchengladbach wuchs um 8 056 Byte, weil seine Gremientabelle jetzt 27 Zeilen hat statt einer,
+  und schrumpfte wieder um 1 294, als die Themen ihre Ausschussnamen verloren).
 - Quelltext: 64 Python-Dateien unter `src/`, rund 19 400 Zeilen; fünf Profile im Paket.
 - Mutation (2026-10-13, `docs/mutation-2026-10-13.md`): 882 Mutanten über die dreizehn Module des
   Ausbaus, 717 getötet (81,3 %), 165 Überlebende — davon 100 in Vertragsgrenzen, 27 nachgerechnet

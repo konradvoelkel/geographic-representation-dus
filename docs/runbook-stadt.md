@@ -155,8 +155,9 @@ Kürzel mit seiner Reinheit und, wenn `raw/organizations.json` vorliegt, `shortN
 
 - **Die Nummern tragen Kürzel** (Düsseldorf): der Befehl druckt den fertigen `[bodies.organizations]`-Block.
   Er geht so, wie er ist, ins Stadtprofil; die Kommentare je Zeile nennen die Zahlen. Eine Zeile,
-  deren Kürzel in keiner Tabelle des Profils steht, lehnt der Validator ab — entweder gehört das
-  Kürzel in `[bodies.committees]`, oder die Zeile bleibt draußen.
+  deren Kürzel in keiner Tabelle des Profils steht, kommt **auskommentiert** heraus und mit dem
+  Hinweis „NICHT GÜLTIG" — der Validator würde sie ablehnen. Entweder gehört das Kürzel in
+  `[bodies.committees]` (dann erst wird die Zeile erlaubt), oder sie bleibt draußen.
 - **Die Nummern tragen keine** (Mönchengladbach): dann ist aus ihnen nichts zu lernen, und die
   Namen müssen aus dem Organisationskatalog kommen:
   `uv run georep --profile <slug> fetch organizations` (eine Seite, Sekunden). Danach denselben
@@ -172,11 +173,12 @@ Zwei Prüfungen danach:
    Widersprüche nennen, und unter „Unterschiede zur Tabelle im Profil" darf keine Zeile
    „Profil X, gelernt Y" stehen.
 2. **Welche Bezirksvertretung welche Nummer hat**, ist zu belegen und nicht zu raten, wenn die
-   Namen keine Nummer tragen. Das Maß dafür steht in `profiles/moenchengladbach.toml` über
-   `[bodies.district_body_names]`: die Dokumente, deren Folge genau eine Bezirksvertretung nennt,
-   müssen mehrheitlich Wahlbezirke ihres eigenen Stadtbezirks treffen (dort 52 bis 61 %, je die
-   größte Zelle ihrer Zeile und Spalte). Eine falsche Zuordnung verdreht die Kennzahl „eigene
-   Bezirksvertretung" still.
+   Namen keine Nummer tragen. Das Maß dafür steht als Matrix in `profiles/moenchengladbach.toml`
+   über `[bodies.district_body_names]`: Zeile ist die Bezirksvertretung, die die Folge **allein**
+   nennt, Spalte der Stadtbezirk des getroffenen Wahlbezirks, gezählt in Dokument-Bezirk-Paaren
+   (dort 167 Dokumente, 683 Paare). Die Diagonale muss in jeder Zeile **und** jeder Spalte die
+   größte Zelle sein (dort 52 bis 61 % der Zeile). Eine falsche Zuordnung verdreht die Kennzahl
+   „eigene Bezirksvertretung" still.
 
 Trägt der Korpus der Stadt die Beratungsfolge nicht (nur die Hauptperiode Düsseldorfs, deren Daten
 aus dem Altformat der Arbeit kommen), holt ein eigener Metadatenabruf sie, und
