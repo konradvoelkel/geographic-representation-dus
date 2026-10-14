@@ -490,6 +490,34 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 
 ## Nächster Schritt
 
+**Zwei Fremdzeilen-Bestände in Konrads Textstores** (Review-Befund 6, 2026-10-14): die Stores auf xtraspace
+tragen noch, was beim Packen herausgefallen ist — `cache/moenchengladbach/text/texts.parquet` 663 Zeilen,
+davon 5 mit `source = "stichprobe"`, und `cache/2014-2020/text/texts.parquet` 22 216, davon 100 mit
+`source = "fixture"`. **Auf die Ergebnisse wirkt das nicht**: der Join im Schritt `corpus` lässt einen Text
+ohne Paper fallen, und genau das sind sie. Nur `georep pack` verweigert den Store, solange sie drin liegen
+(mit Zahl und Beispielen). Der Handgriff, wenn er je nötig wird:
+
+```bash
+uv run python - <<'EOF'
+from pathlib import Path
+from georep.stores import TextStore
+for path in (
+    Path("/media/konrad/xtraspace/georep/cache/moenchengladbach/text/texts.parquet"),
+    Path("/media/konrad/xtraspace/georep/cache/2014-2020/text/texts.parquet"),
+):
+    store = TextStore(path)
+    foreign = [n for n, r in store.rows.items() if r["source"] not in ("pdf", "reference")]
+    for name in foreign:
+        del store.rows[name]
+    store.save()
+    print(path, "entfernt:", len(foreign), "verbleibend:", len(TextStore(path)))
+EOF
+uv run georep --profile moenchengladbach status   # texts bleibt aktuell, der Stamp zählt die Eingaben
+```
+
+Danach rechnet die Kette `corpus` und alles dahinter einmal neu (dieselben Zahlen, ein anderer
+Eingabe-Hash). Wer das nicht will, lässt die Zeilen liegen: die Pakete im Repo sind ohne sie gepackt.
+
 **Ein Handgriff auf Konrads Rechner** (Punkt 52): die flachen Ordner der alten Hauptperiode wegräumen.
 **Erst, wenn die Netzläufe unten durch sind** — der Lauf im Worktree auf `v0.12.0` liest und schreibt sie
 noch. `data/duesseldorf/` und `data/site/` sind am 2026-10-13 gebaut, es ist also nichts nachzurechnen; PDFs

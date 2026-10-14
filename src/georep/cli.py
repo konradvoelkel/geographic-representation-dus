@@ -22,6 +22,7 @@ from georep.contracts import configure as configure_contracts
 from georep.errors import GeorepError, MissingInputError
 from georep.export import export_csv
 from georep.layout import Layout
+from georep.pack import pack
 from georep.pipeline import build_steps, freshness, run_pipeline, select_steps
 from georep.profiling import profile_step
 from georep.report.build import current_commit
@@ -84,6 +85,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     boot = sub.add_parser("bootstrap", help="Referenzdatensatz nach data_root übernehmen")
     boot.add_argument("--force", action="store_true", help="vorhandene Dateien überschreiben")
+
+    # Punkt 56: die Gegenrichtung von bootstrap; das Rezept stand vorher als cp-Zeilen im Runbook
+    pack_cmd = sub.add_parser(
+        "pack", help="aus dem gelaufenen Profil ein Datenpaket für das Repo schreiben"
+    )
+    pack_cmd.add_argument("target", type=Path, help="Zielordner, etwa snapshots/2014-2020")
+    pack_cmd.add_argument("--force", action="store_true", help="vorhandene Dateien überschreiben")
 
     sub.add_parser("export", help="Parquet-Ergebnisse als CSV neben die Parquet-Dateien schreiben")
 
@@ -273,6 +281,18 @@ def _cmd_bootstrap(args: argparse.Namespace, settings: Settings, layout: Layout)
     return 0
 
 
+def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
+    """Das Datenpaket schreiben und die Prüfsummentabelle drucken (Punkt 56).
+
+    Die Tabelle steht immer auf stdout, auch wenn ein vorhandenes README nicht angefasst wurde:
+    dann gehört sie von Hand hinein, und nur dort weiß ein Mensch, wo.
+    """
+    report = pack(layout, settings, args.target, force=args.force)
+    print(report.line())
+    print(report.table(), end="")
+    return 0
+
+
 def _cmd_export(layout: Layout) -> int:
     written = export_csv(layout)
     for path in written:
@@ -372,6 +392,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cmd_paths(settings, layout)  # Option 07
         if args.command == "bootstrap":
             return _cmd_bootstrap(args, settings, layout)
+        if args.command == "pack":
+            return _cmd_pack(args, settings, layout)  # Punkt 56
         if args.command == "export":
             return _cmd_export(layout)
         if args.command == "regress":

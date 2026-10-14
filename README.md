@@ -92,6 +92,7 @@ Abschnitt „Berichtsseite").
 | `georep profiles` | die Profile im Paket mit Stadt und amtlichem Gemeindeschlüssel |
 | `georep publish [--out DIR]` | die Stadtseiten nach `data/site/` zusammentragen und `vergleich.html` bauen |
 | `georep bootstrap [--force]` | den eingefrorenen Datensatz (`reference_root`) in den Ordner des Profils unter `data_root` übernehmen |
+| `georep pack ZIEL [--force]` | die Gegenrichtung: aus dem gelaufenen Profil ein Datenpaket für das Repo schreiben (genau die Eingaben, ohne PDFs, Stamps und Caches), mit Prüfsummentabelle und README-Gerüst; bricht ab, wenn eine Eingabe fehlt oder der Textstore Zeilen trägt, die nicht aus einem Lauf kommen |
 | `georep export` | die Parquet-Ergebnisse als CSV daneben schreiben |
 | `georep regress [--exclude …] [--varianten]` | lineare Regression Trefferquote gegen Wahlbeteiligung; `--varianten` dieselbe Rechnung je Gewichtungsvariante aus `wahlbezirke_gewichtet.parquet` |
 | `georep regress --controls` | Tabelle 6: dieselbe Regression mit Kontrollvariablen, je Modell und Stichprobe |
@@ -201,7 +202,10 @@ uv run georep $P status                # alles aktuell?
   [`snapshots/2014-2020/`](snapshots/2014-2020/README.md) (36,1 MiB: `raw/papers.jsonl`,
   `cache/text/texts.parquet`, `external/`), auf den `reference_root` des Profils zeigt; `bootstrap` erkennt
   dieses Format und kopiert nur. Damit baut GitHub Pages beide Perioden ohne Netz. Wer den Abruf wiederholt,
-  packt den Schnappschuss neu — die Schritte stehen im README dort.
+  packt den Schnappschuss mit einem Befehl neu:
+  `uv run georep --profile duesseldorf-2014 pack snapshots/2014-2020 --force` (`georep pack` ist die
+  Gegenrichtung von `bootstrap` und verweigert alles, was nicht aus dem Lauf kommt; `docs/runbook-stadt.md`,
+  § 5).
 
 ## Laufende Wahlperiode
 

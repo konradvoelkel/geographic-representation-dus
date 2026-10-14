@@ -40,6 +40,7 @@ uv run georep profiles       # Stadtprofile im Paket; --profile <slug> waehlt ei
 uv run georep publish        # Stadtseiten nach data/site/ zusammentragen (erste Stadt an die Wurzel), vergleich.html bauen
 uv run georep paths          # Profil und Pfade als key=wert; Skripte und Workflows lesen sie hier, nie von Hand
 uv run georep fetch opendata # der einzige schnelle Netzschritt; alles andere dauert Stunden
+uv run georep --profile <p> pack <ziel>   # Gegenrichtung von bootstrap: aus dem gelaufenen Profil ein Datenpaket ins Repo (Punkt 56); bricht ab, wenn eine Eingabe fehlt oder der Textstore Fremdzeilen traegt
 uv run ruff check . && uv run ruff format --check .
 uv run mypy                  # strict für alles
 uv run nox -s bench          # heiße Pfade gegen die gespeicherte Baseline; der erste Lauf legt sie nur an
@@ -61,6 +62,7 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - `georep fetch` ohne Not auf dem vollen Datensatz: Metadaten und 19108 PDFs dauern Stunden. `fetch opendata` ist der einzige schnelle Netzschritt.
 - In `reference/` schreiben. `Layout.guard_writable` verweigert es; Tests arbeiten in `tmp_path` mit `Layout(tmp/data, tmp/cache, mini_root)`.
 - In `context/` schreiben oder die Dateien formatieren: Portaldateien, unverändert gespeichert, mit SHA-256 im README. `Layout.guard_writable` verweigert das Schreiben, die pre-commit-Hooks lassen den Ordner aus.
+- In `snapshots/` schreiben, außer mit `georep pack`: die eingefrorenen Eingaben der Perioden (`2014-2020`, `2025`), wie `reference/` nur lesbar. `Layout.guard_writable` verweigert jeden Pfad darunter, die pre-commit-Hooks lassen den Ordner aus, und Größe wie SHA-256 jeder Datei stehen im README daneben (Punkt 56). Dasselbe gilt für `reference/moenchengladbach/`.
 - `pre-commit run --all-files` über `reference/` oder `tests/fixtures/`.
 - pandas, geopandas, osmnx: die nox-Session `deps` verbietet sie im Lockfile. Tabellen sind Polars, Dateien Parquet, Geometrie shapely und pyproj; alles ist typisiert und besteht `mypy --strict`.
 - Netztests in CI. Der OParl-Server braucht 85 s pro Seite; Netztests tragen den Marker `network` und laufen nur von Hand. Netz in Unit-Tests kommt über das `Transport`-Protokoll aus `georep.http` und die Fake-Session in `tests/fakes.py` mit den aufgezeichneten Antworten in `tests/fixtures/http/`; OParl-JSON wird mit `georep.oparl` geparst, nie mit `.get()`-Ketten.

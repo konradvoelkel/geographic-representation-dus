@@ -4,6 +4,17 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **`georep pack ZIEL` macht aus einem gelaufenen Profil ein Datenpaket** (Review-Befund 6, die
+  Gegenrichtung von `bootstrap`): es schreibt genau die Dateien, die `bootstrap` später sucht —
+  `external/`, `raw/papers.jsonl`, Straßen und Orte, wo das Profil sein Wörterbuch selbst holt, und
+  den Textstore nach `cache/text/` —, druckt die Prüfsummentabelle und schreibt ein fehlendes
+  `README.md` als Gerüst. Vorher waren das sechs `cp`-Zeilen im Runbook, und genau daran ist es
+  schiefgegangen: im Textstore des Laufs lagen fünf Zeilen aus einer Stichprobe und 100 aus einer
+  synthetischen Fixture. `pack` bricht jetzt ab, statt ein halbes Paket zu schreiben, wenn eine
+  Eingabe fehlt, eine Textzeile nicht aus einem Lauf dieses Profils kommt (`source` weder `pdf`
+  noch `reference`) oder ein Text kein Paper in `papers.jsonl` hat; jede Meldung nennt Zahl und
+  Beispiele. Dieselbe Invariante hält `tests/unit/test_data_packages.py` jetzt auch über die drei
+  Pakete im Repo (Review-Befund 7).
 - **Der Städtevergleich sagt, aus wie vielen Dokumenten überhaupt Text zu holen war** (Spalte
   „davon mit Text" plus ein Satz im Abschnitt „Vergleichbarkeit", Review-Befund 1): die Tabelle
   stellte 2 895 Mönchengladbacher Dokumente neben 19 108 Düsseldorfer, während nur 650 davon Text

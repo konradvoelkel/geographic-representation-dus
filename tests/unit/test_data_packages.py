@@ -24,6 +24,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from georep.pack import RUN_SOURCES, paper_file_names
 from tests.conftest import REPO
 
 MIB = 1024 * 1024
@@ -210,5 +211,16 @@ def test_the_stores_of_a_package_have_the_rows_its_readme_claims(path: str) -> N
     store = pl.read_parquet(root / "cache" / "text" / "texts.parquet")
     assert store.height == texts
     assert int((store.get_column("chars") > 0).sum()) == with_text
-    # Ein Paket trägt nur, was abgerufen wurde: keine Zeile aus einer Fixture oder Stichprobe
-    assert set(store.get_column("source")) == {"pdf"}
+    # Ein Paket trägt nur, was abgerufen wurde: keine Zeile aus einer Fixture oder Stichprobe.
+    # Erlaubt wäre auch "reference" (ein aus dem Datensatz gebootstrappter Lauf, pack.RUN_SOURCES);
+    # diese drei kommen aus echten Abrufen, und das ist die scharfere Aussage.
+    assert set(store.get_column("source")) == {"pdf"} <= RUN_SOURCES
+    # Review-Befund 7: jeder Text gehört zu einem Paper des Pakets. Ein verwaister Text fiele im
+    # Schritt ``corpus`` heraus und wäre Ballast, der niemandem auffällt -- genau wie die 100
+    # synthetischen Zeilen, die am 2026-10-13 im Store des Laufs lagen.
+    names = set(store.get_column("name"))
+    known = paper_file_names(root / "raw" / "papers.jsonl")
+    assert names <= known, sorted(names - known)[:5]
+    # Umgekehrt gilt keine Gleichheit: ein Paper ohne Hauptdatei trägt keinen Namen, und eines,
+    # dessen PDF der Server nicht ausliefert (Mönchengladbach: 2 213), hat keinen Text.
+    assert texts <= len(known) <= papers

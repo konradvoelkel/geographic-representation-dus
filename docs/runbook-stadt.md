@@ -145,30 +145,33 @@ python3 -m http.server 8777 --directory data/site   # ansehen: /, /moenchengladb
 ```
 
 Damit CI dieselbe Seite ohne Netz baut, kommt das Ergebnis des Laufs als Paket ins Repo
-(Frage 1.2, erledigt am 2026-10-14; `docs/decisions.md`, Punkt 56). Der Textstore gehört dabei
-unter `cache/text/`: `Layout.reference_view` setzt `cache_root` auf `<reference_root>/cache`, und
-genau dort sucht `bootstrap` ihn (`tests/fixtures/mg/` ist so gebaut, derselbe Pfad).
+(Frage 1.2, erledigt am 2026-10-14; `docs/decisions.md`, Punkt 56). Das macht **ein Befehl**, die
+Gegenrichtung von `bootstrap`:
 
 ```bash
-mkdir -p reference/moenchengladbach/{external,raw,cache/text}
-cp data/moenchengladbach/external/*.{csv,zip} reference/moenchengladbach/external/
-cp data/moenchengladbach/raw/{papers.jsonl,streets_per_district.json,wikipedia_dict.json} \
-   reference/moenchengladbach/raw/
-cp "$(uv run georep --profile moenchengladbach paths | sed -n 's/^text_store=//p')" \
-   reference/moenchengladbach/cache/text/
+uv run georep --profile moenchengladbach pack reference/moenchengladbach
 du -sb reference/moenchengladbach   # 2026-10-13: 3 980 958 Bytes
 ```
 
-Nur die Eingaben, nichts Abgeleitetes: keine Stamps (`*.stamp.json`), kein `manifest.jsonl`, kein
-`http.sqlite`, keine PDFs. Liegen im Textstore noch Zeilen aus einer Fixture oder Stichprobe
-(Spalte `source` ist dann nicht `pdf`), gehören sie vor dem Committen heraus — am 2026-10-13 waren
-es fünf aus `tests/fixtures/mg/`. Was im Paket sein darf, prüft
-`tests/unit/test_data_packages.py`; es hält auch die Größen und die Prüfsummen aus dem README.
+`pack` kopiert genau die Dateien, die `bootstrap` später sucht — `external/`, `raw/papers.jsonl`,
+Straßen und Orte (wenn das Profil sein Wörterbuch selbst holt) und den Textstore nach
+`cache/text/`, denn `Layout.reference_view` setzt `cache_root` auf `<reference_root>/cache`. Nichts
+Abgeleitetes, keine Stamps, kein `manifest.jsonl`, kein `http.sqlite`, keine PDFs. Es **bricht ab**,
+statt ein halbes Paket zu schreiben, wenn
 
-Dazu ein `reference/moenchengladbach/README.md` nach dem Muster von `tests/fixtures/mg/README.md`:
-Datum des Laufs, Zahl der Paper, Texte, Orte und Straßen, die Größe und SHA-256 jeder Datei, die
-Quellen mit Lizenz, und der Satz, dass die PDFs selbst **nicht** im Paket liegen (nur ihre Texte,
-wie bei der Referenz der Arbeit).
+- eine Eingabe fehlt (dann lief `georep run` für dieses Profil nicht),
+- der Textstore Zeilen trägt, die nicht aus einem Lauf dieses Profils kommen (Spalte `source`
+  weder `pdf` noch `reference`) — am 2026-10-13 lagen fünf Zeilen aus `tests/fixtures/mg/` im Store
+  der Stadt, und nur ein Blick von Hand hat sie gefunden,
+- ein Text kein Paper in `papers.jsonl` hat (er fällt im Schritt `corpus` ohnehin heraus).
+
+Vorhandene Dateien bleibt `pack` stehen; `--force` überschreibt sie. Die Prüfsummentabelle druckt
+es immer, und ein **fehlendes** `README.md` schreibt es als Gerüst: Tabelle, Größen und Zahlen
+fertig, die Prosa als `[nachzutragen]`. Dort gehören hinein, nach dem Muster von
+`reference/moenchengladbach/README.md`: Datum des Laufs, Zahl der Paper, Texte, Orte und Straßen,
+die Quellen mit Lizenz, der Satz, dass die PDFs selbst **nicht** im Paket liegen, und was am Lauf
+auffiel. Was im Paket sein darf, prüft `tests/unit/test_data_packages.py`; es hält auch die Größen
+und die Prüfsummen gegen das README.
 
 Danach baut `pages.yml` die zweite Stadt von selbst mit (der Schritt prüft, ob
 `reference/moenchengladbach/` existiert), und `tests/golden/test_second_city.py` kann seine
