@@ -506,8 +506,10 @@ def test_originators_defaults_describe_duesseldorf(tmp_path: Path) -> None:
     assert o.fraction_types == [] and o.person_types == []
     # Die längsten Antragspräfixe zuerst, sonst bleibt von „Haushaltsantrag CDU/Grüne" ein Rest
     assert o.motion_prefixes[0] == "Haushaltsantrag"
-    # Punkt 60: drei Textmarker, der dritte ist der Vorlagenkopf der älteren Periode
-    assert len(o.text_markers) == 3 and "rsd" in o.text_markers[-1]
+    # Punkt 60 und 62: zwei Textmarker, und der Vorlagenkopf der älteren Periode steht als
+    # Briefkopfmarker daneben -- der gilt vor der Dokumentart, der Textmarker danach
+    assert len(o.text_markers) == 2
+    assert len(o.letterhead_markers) == 1 and "rsd" in o.letterhead_markers[0]
     assert o.text_head_chars == 600 and o.text_window_chars == 80
     assert all(p.organizations for p in o.parties)  # jede Partei kennt ihre OParl-Organisation
 

@@ -259,8 +259,10 @@ PERIOD_BEFORE = {
     "unbekannt": 12_418,  # 55,9 % der 22 215 Dokumente
 }
 PERIOD_AFTER = {
-    "Verwaltung": 10_622,  # 2 285 + 8 337 Verwaltungsvorlagen
-    "Fraktion": 8_768,
+    # Punkt 62: 47 der 8 337 Verwaltungsvorlagen tragen ihren eigenen Fraktionsbriefkopf und
+    # zählen darum als Fraktion; vor der Korrektur standen hier 10 622 und 8 768.
+    "Verwaltung": 10_575,  # 2 285 + 8 337 Verwaltungsvorlagen − 47 mit eigenem Briefkopf
+    "Fraktion": 8_815,
     "Person": 449,  # 28 waren Verwaltungsvorlagen mit einem Mandatsträger im Titel
     "Eingabe": 20,
     "unbekannt": 2_356,  # 10,6 %
@@ -269,15 +271,14 @@ PERIOD_AFTER = {
 
 def _without_the_old_form(originators: Originators) -> Originators:
     """Dieselben Settings ohne die drei Einträge für die ältere Vorlagenform (Punkt 60)."""
-    marker = [m for m in originators.text_markers if "rsd" in m]
-    assert len(marker) == 1, originators.text_markers
+    assert [m for m in originators.letterhead_markers if "rsd" in m]
     assert PERIOD_ADMIN_TYPE in originators.admin_types
     assert PERIOD_CITIZEN_TYPE in originators.citizen_types
     return originators.model_copy(
         update={
             "admin_types": [t for t in originators.admin_types if t != PERIOD_ADMIN_TYPE],
             "citizen_types": [t for t in originators.citizen_types if t != PERIOD_CITIZEN_TYPE],
-            "text_markers": [m for m in originators.text_markers if m not in marker],
+            "letterhead_markers": [],
         }
     )
 
@@ -329,7 +330,47 @@ def test_the_older_document_types_and_form_sheet_name_the_originators(
     # Partei mit Stimmenspalte stellt Dokumente (die AfD saß damals als Einzelmandat).
     per_party = documents_per_party(after, settings.originators.parties)
     assert all(count > 0 for count in per_party.values())
-    assert per_party["CDU"] == 3_598 and per_party["AfD"] == 13
+    assert per_party["CDU"] == 3_647 and per_party["AfD"] == 13
+
+
+def test_an_own_letterhead_beats_the_document_type_but_a_citation_does_not(
+    period_corpus: pl.DataFrame, settings: Settings
+) -> None:
+    """Punkt 62: 47 Anträge liegen unter ``Verwaltungsvorlage`` und tragen ihren Briefkopf.
+
+    Die Dokumentart sagt, wie das System die Vorlage geführt hat, der Briefkopf sagt, wer sie
+    geschrieben hat -- und bei diesen 47 widersprechen sich beide. Die Bedingung, unter der der
+    Kopf gewinnen darf, ist die zweite Hälfte dieses Tests: die Formularzeile trifft **keine** der
+    161 Verwaltungsvorlagen, die einen Fraktionsantrag nur zitieren, keine der beiden Eingaben
+    nach § 24 GO NRW und keines der 28 Dokumente mit einem Mandatsträger im Titel.
+    """
+    marker = settings.originators.letterhead_markers[0]
+    head = pl.col("text").str.slice(0, settings.originators.text_head_chars)
+    admin = period_corpus.filter(pl.col("paper_type") == PERIOD_ADMIN_TYPE)
+    assert admin.height == 8_337
+    own = admin.filter(head.str.contains(marker))
+    assert own.height == 47
+
+    after = classify_originators(period_corpus, settings.originators)
+    mine = own.select("id").join(after, on="id")
+    assert set(mine.get_column(ART).to_list()) == {"Fraktion"}
+    # 39 der 47 nennen auch ihre Partei: der Kopf steht zwischen Formularzeile und Gremium. Die
+    # übrigen acht sagen „interfraktioneller antrag" und nennen keine -- eine Fraktion ohne Partei.
+    assert mine.filter(pl.col(PARTEIEN).list.len() > 0).height == 39
+
+    # Die Gegenprobe: ohne den Briefkopf sind es dieselben 8 337 minus 47 Verwaltungsvorlagen,
+    # und die Zitate bleiben Verwaltung -- sie tragen die Formularzeile nicht.
+    rest = admin.join(own.select("id"), on="id", how="anti").select("id").join(after, on="id")
+    assert rest.height == 8_337 - 47
+    assert set(rest.get_column(ART).to_list()) == {"Verwaltung"}
+    before = classify_originators(period_corpus, _without_the_old_form(settings.originators))
+    cited = (
+        admin.join(own.select("id"), on="id", how="anti")
+        .select("id")
+        .join(before, on="id")
+        .filter(pl.col(ART) == "Fraktion")
+    )
+    assert cited.height == 161  # die Zitate, die vor Punkt 60 als Fraktion galten
 
 
 def test_the_older_form_leaves_the_other_two_periods_byte_identical(

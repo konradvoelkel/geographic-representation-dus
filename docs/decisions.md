@@ -1740,11 +1740,15 @@ keiner Liste von `[originators]`, und beide nennen keine Fraktion.
 
 **Die Taxonomie hatte zwei Hälften, und eine davon ist die Verwaltung.** `Verwaltungsvorlage` ist
 der Gegenbegriff zu `Vorlage aus der Politik`; er steht in dieser Periode 8 337-mal und in der
-Hauptperiode wie in der laufenden **kein einziges Mal**. Er gehört darum in `admin_types` — und
-damit sind auch die 197 Dokumente richtig eingeordnet, die bis dahin über Titel oder Textkopf zu
-einer Fraktion wurden: es waren Vorlagen der Verwaltung, die einen Fraktionsantrag **zitieren**,
-genau der Fehler, gegen den das Fenster um einen Marker gebaut ist (Option 04, § 2). Dasselbe gilt
-für `Bezirksvertretung Eingabe nach 24Go` (2 Dokumente), die dritte Schreibweise derselben Eingabe.
+Hauptperiode wie in der laufenden **kein einziges Mal**. Er gehört darum in `admin_types`. Von den
+197 Dokumenten, die bis dahin über Titel oder Textkopf zu einer Fraktion wurden, sind damit **161
+richtig** eingeordnet — Vorlagen der Verwaltung, die einen Fraktionsantrag **zitieren**, genau der
+Fehler, gegen den das Fenster um einen Marker gebaut ist (Option 04, § 2). Die **anderen 36 waren
+es nicht**: sie tragen ihren eigenen Fraktionsbriefkopf, und mit ihnen elf weitere, die vorher
+unbekannt waren. Zusammen 47 Dokumente, und sie sind der Grund für Punkt 62 (*Review 2026-10-14*;
+der erste Satz dieses Punktes hieß „damit sind auch die 197 richtig eingeordnet" und war falsch).
+Dasselbe gilt für `Bezirksvertretung Eingabe nach 24Go` (2 Dokumente), die dritte Schreibweise
+derselben Eingabe.
 
 **Die andere Hälfte steht im Briefkopf, und der ist ein Formular.** Jede `Vorlage aus der Politik`
 trägt denselben Kopf:
@@ -1870,3 +1874,46 @@ je Periode, 40 Byte der Kopfhinweis.
   zurückgestellt (§ 2.7). Nach Regel 1 ist Bezirk 10 ohnehin kein Ausreißer mehr (robuster
   z = 2,69), Bezirk 1 dagegen weiter einer (z = 9,71) — die Liste beschreibt also heute zwei
   verschiedene Dinge, und auch das ist ein Grund für das Wort „explorativ".
+
+## 62. Der eigene Briefkopf steht vor der Dokumentart (Review 2026-10-14)
+
+Befund 1 des Reviews zu den Punkten 59 bis 61. Punkt 60 hat `Verwaltungsvorlage` in `admin_types`
+geschrieben, und weil die Dokumentart vor dem Textkopf gefragt wird, standen danach **47 echte
+Fraktionsanträge als Verwaltung** da: sie liegen im Ratsinformationssystem unter dieser Art und
+tragen trotzdem den Fraktionsbriefkopf der alten Vorlagenform (`vo/58872`, Titel „Antrag der
+Ratsfraktionen von SPD, BÜ90/GRÜ und FDP …", Kopf „rsd vorlage x öffentlich nicht öffentlich  spd
+ratsfraktion ratsfraktion bündnis 90/die grünen fdp ratsfraktion"). 36 von ihnen galten vor
+Punkt 60 als Fraktion, 11 waren unbekannt.
+
+**Die Dokumentart sagt, wie das System die Vorlage geführt hat; der Briefkopf sagt, wer sie
+geschrieben hat.** Wo beides sich widerspricht, gewinnt der Briefkopf — aber nur, wenn das Muster
+dafür ein *Briefkopf* ist und kein Zitat treffen kann. `[originators]` bekommt dafür eine eigene
+Liste `letterhead_markers`, die **vor** allen Dokumentart-Listen gefragt wird; die vorhandenen
+`text_markers` bleiben, wo sie waren (nach dem Titel), denn „antrag der cdu-fraktion" steht genauso
+in einer Vorlage, die den Antrag zitiert.
+
+**Die Bedingung ist gemessen, nicht geschätzt** (2026-10-14, eingefroren in
+`tests/golden/test_parties_numbers.py::test_an_own_letterhead_beats_the_document_type_but_a_citation_does_not`):
+die Formularzeile trifft **keine** der 161 Verwaltungsvorlagen, die einen Fraktionsantrag nur
+zitieren, **keine** der beiden Eingaben nach § 24 GO NRW und **keines** der 28 Dokumente, deren
+Titel einen Mandatsträger nennt. Der Grund ist mechanisch: der Korpus schneidet den Text am
+`search.text_split_marker` („betrifft") ab, und wo ein Dokument zitiert, beginnt sein Text hinter
+diesem Marker — die Formularzeile des *fremden* Antrags liegt davor und ist weg.
+
+**Wirkung** auf die Wahlperiode 2014 bis 2020: Verwaltung 10 622 → **10 575**, Fraktion 8 768 →
+**8 815**; „unbekannt" bleibt bei 2 356 (10,6 %), Person bei 449, Eingabe bei 20. 39 der 47 nennen
+auch ihre Partei, die acht übrigen sagen „interfraktioneller antrag". Dokumente je Partei: CDU
+3 598 → 3 647, SPD 2 650 → 2 708, GRÜNE 2 363 → 2 417, FDP 1 285 → 1 335, Die Linke 494 → 505.
+Die Hauptperiode, die laufende Periode und Mönchengladbach bleiben **byteidentisch** (dieselbe
+Zusage und derselbe Test wie in Punkt 60: die Formularzeile kommt dort in 0 Dokumenten vor).
+
+**Verworfen:**
+
+- **Die Formularzeile in `text_markers` lassen und `Verwaltungsvorlage` wieder aus `admin_types`
+  nehmen**: dann stünden 8 112 Verwaltungsvorlagen wieder als „unbekannt" da, um 47 Dokumente
+  richtig zu bekommen.
+- **Alle `text_markers` vor die Dokumentart stellen**: „antrag der cdu-fraktion" steht in 161
+  Vorlagen, die den Antrag nur zitieren — sie würden alle zu Fraktionsanträgen. Die Reihenfolge
+  ist nicht pauschal falsch, sie ist nur für einen Briefkopf falsch.
+- **Die 47 im Profil als Ausnahmeliste führen**: eine Liste von 47 Dokument-IDs ist keine Regel,
+  und beim nächsten Abruf wäre sie falsch.

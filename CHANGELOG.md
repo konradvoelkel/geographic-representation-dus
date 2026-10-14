@@ -4,6 +4,14 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Der eigene Briefkopf eines Dokuments gilt vor seiner Dokumentart** (`docs/decisions.md`,
+  Punkt 62): 47 Fraktionsanträge der Wahlperiode 2014 bis 2020 liegen im Ratsinformationssystem
+  unter `Verwaltungsvorlage` und tragen trotzdem den Fraktionsbriefkopf der alten Vorlagenform.
+  `[originators]` hat dafür die neue Liste `letterhead_markers`, die vor allen
+  Dokumentart-Listen gefragt wird; die vorhandenen `text_markers` bleiben hinter dem Titel, denn
+  „antrag der cdu-fraktion" steht genauso in einer Vorlage, die den Antrag nur zitiert. Gemessen
+  und als Test eingefroren: die Formularzeile trifft keines der 161 Zitate. Wirkung auf jene
+  Periode: Verwaltung 10 622 → 10 575, Fraktion 8 768 → 8 815.
 - **Die Spalte „ohne Ausreißer" von Tabelle 5 heißt jetzt „explorativ"** (`docs/decisions.md`,
   Punkt 61): sie bleibt, aber der Spaltenkopf sagt es, und unter der Tabelle steht, warum — sie ist
   **nach** dem Ansehen der Daten entstanden, und dieselbe Spalte ist in der Wahlperiode 2014 bis

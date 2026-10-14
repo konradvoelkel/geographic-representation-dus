@@ -102,6 +102,7 @@ class Patterns:
     joint: re.Pattern[str] | None
     person: re.Pattern[str] | None
     text: re.Pattern[str] | None
+    letterhead: re.Pattern[str] | None  # eigener Briefkopf: steht vor der Dokumentart
     name_party: re.Pattern[str] | None  # schwaches Tor, erst nach den Personenmarkern
     parties: tuple[
         tuple[str, re.Pattern[str]], ...
@@ -129,6 +130,7 @@ class Patterns:
             joint=_any_of(originators.joint_markers),
             person=_any_of(originators.person_markers),
             text=_any_of(originators.text_markers),
+            letterhead=_any_of(originators.letterhead_markers),
             name_party=_any_of(originators.name_party_markers),
             parties=tuple(
                 (p.key, _alternation(p.patterns))
@@ -291,6 +293,17 @@ def classify_document(
     if keys:
         return Classification("Fraktion", keys, "oparl", url)
 
+    head = text_head[: patterns.head_chars]
+    title = (name or "").lower()
+    # Punkt 62: der eigene Briefkopf steht **vor** der Dokumentart. Er gehört dem Verfasser, die
+    # Dokumentart sagt nur, wie das System die Vorlage geführt hat -- und das kann falsch sein:
+    # 47 Anträge der Wahlperiode 2014 bis 2020 liegen unter „Verwaltungsvorlage" und tragen ihren
+    # Fraktionsbriefkopf (gemessen 2026-10-14). Ein Muster darf hier nur stehen, wenn es im
+    # zitierenden Dokument nicht trifft; für Düsseldorfs Formularzeile ist das gemessen.
+    letterhead = patterns.letterhead.search(head) if patterns.letterhead is not None else None
+    if letterhead is not None:
+        return _fraction_from_text(head, title, letterhead, patterns)
+
     typ = paper_type or ""
     if typ in patterns.admin_types:
         return Classification("Verwaltung", (), "paper_type", typ)
@@ -306,7 +319,6 @@ def classify_document(
         if keys:
             return Classification("Fraktion", keys, "paper_type", hit)
 
-    title = (name or "").lower()
     if patterns.fraction is not None and patterns.fraction.search(title):
         keys, hit = _parties_in(title, patterns)
         if keys:
@@ -315,22 +327,9 @@ def classify_document(
         if joint is not None:
             return Classification("Fraktion", (), "name", _excerpt(title, *joint.span()))
 
-    head = text_head[: patterns.head_chars]
     found = patterns.text.search(head) if patterns.text is not None else None
     if found is not None:
-        pad = patterns.window_chars
-        window = head[max(0, found.start() - pad) : found.end() + pad]
-        keys, hit = _parties_in(window, patterns)
-        if keys:
-            return Classification("Fraktion", keys, "text", hit)
-        # Der Kopf sagt „eine Fraktion", nennt sie aber nicht. Die Klasse steht damit fest, der
-        # Urheber nicht: das schwache Titel-Tor darf ihn noch nennen (BV3/134/2025: der Kopf
-        # trifft „beantragenden fraktionen", der Titel nennt alle drei Parteien in der Klammer).
-        # Die Personenmarker bleiben außen vor, sie widersprächen der schon gesetzten Klasse.
-        keys, hit = _parties_in_bracket(title, patterns)
-        if keys:
-            return Classification("Fraktion", keys, "name", hit)
-        return Classification("Fraktion", (), "text", _excerpt(head, *found.span()))
+        return _fraction_from_text(head, title, found, patterns)
 
     person = patterns.person.search(title) if patterns.person is not None else None
     if person is not None:
@@ -343,6 +342,29 @@ def classify_document(
     if keys:
         return Classification("Fraktion", keys, "name", hit)
     return Classification("unbekannt", (), "", "")
+
+
+def _fraction_from_text(
+    head: str, title: str, found: re.Match[str], patterns: Patterns
+) -> Classification:
+    """Ein Treffer im Textkopf: die Klasse steht fest, die Partei kommt aus dem Fenster darum.
+
+    Nennt das Fenster keine, nennt sie vielleicht der Titel: das schwache Titel-Tor darf noch
+    greifen (BV3/134/2025: der Kopf trifft „beantragenden fraktionen", der Titel nennt alle drei
+    Parteien in der Klammer). Die Personenmarker bleiben außen vor, sie widersprächen der schon
+    gesetzten Klasse. Dieselben drei Schritte gelten für ``text_markers`` und für
+    ``letterhead_markers``; der Unterschied zwischen beiden ist nur, wo sie in der Reihenfolge
+    stehen.
+    """
+    pad = patterns.window_chars
+    window = head[max(0, found.start() - pad) : found.end() + pad]
+    keys, hit = _parties_in(window, patterns)
+    if keys:
+        return Classification("Fraktion", keys, "text", hit)
+    keys, hit = _parties_in_bracket(title, patterns)
+    if keys:
+        return Classification("Fraktion", keys, "name", hit)
+    return Classification("Fraktion", (), "text", _excerpt(head, *found.span()))
 
 
 def _fraction_from_type(

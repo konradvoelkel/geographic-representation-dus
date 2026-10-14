@@ -78,6 +78,40 @@ def test_administration_and_citizen_input_come_from_the_paper_type(patterns: Pat
     ) == ("Verwaltung", (), "paper_type")
 
 
+def test_an_own_letterhead_beats_the_document_type(
+    patterns: Patterns, originators: Originators
+) -> None:
+    """Punkt 62: der Briefkopf gehört dem Verfasser, die Dokumentart dem System.
+
+    Die Wahlperiode 2014 bis 2020 führt 47 Fraktionsanträge unter ``Verwaltungsvorlage``; ihr
+    Text beginnt mit der Formularzeile und dem Briefkopf der Fraktion. Ein Dokument, das denselben
+    Antrag nur **zitiert**, trägt die Formularzeile nicht -- sein Text beginnt hinter „betrifft".
+    """
+    letterhead = (
+        "vorlage 171/ 121/2014   seite 1 von 1 rsd vorlage x öffentlich  nicht öffentlich  "
+        "fdp-fraktion  der bezirksvertretung 1  an frau  bezirksvorsteherin  des stadtbezirks 1"
+    )
+    assert _classify(patterns, paper_type="Verwaltungsvorlage", text=letterhead) == (
+        "Fraktion",
+        ("FDP",),
+        "text",
+    )
+    # Dasselbe Dokument ohne Formularzeile ist eine Vorlage der Verwaltung, die zitiert
+    citation = (
+        ": umweltfolgen von mikropartikeln   der umweltausschuss hatte in seiner sitzung am "
+        "23.01.2014 auf antrag der spd – ratsfraktion die verwaltung gebeten"
+    )
+    assert _classify(patterns, paper_type="Verwaltungsvorlage", text=citation) == (
+        "Verwaltung",
+        (),
+        "paper_type",
+    )
+    # Und ohne Briefkopfmarker im Profil entscheidet wieder die Dokumentart
+    assert originators.letterhead_markers  # das Profil bringt genau diese Zeile mit
+    without = Patterns.from_settings(originators.model_copy(update={"letterhead_markers": []}))
+    assert _classify(without, paper_type="Verwaltungsvorlage", text=letterhead)[0] == "Verwaltung"
+
+
 # Eine Dokumentart, die nur die Klasse nennt: Mönchengladbachs „3 - Fraktionsantrag" (581
 # Dokumente) und „6.1 - Mitgliederantrag" (36). Die Partei steht dann im Titel oder im Briefkopf.
 BY_TYPE = Originators(

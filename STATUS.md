@@ -378,12 +378,12 @@ Stadtprofil.
 
 | Klasse | vorher | nachher |
 |---|---|---|
-| Verwaltung | 2 285 (10,3 %) | **10 622 (47,8 %)** |
-| Fraktion | 7 008 (31,5 %) | **8 768 (39,5 %)** |
+| Verwaltung | 2 285 (10,3 %) | **10 575 (47,6 %)** |
+| Fraktion | 7 008 (31,5 %) | **8 815 (39,7 %)** |
 | Person | 486 (2,2 %) | 449 (2,0 %) |
 | Eingabe | 18 | 20 |
 | **unbekannt** | **12 418 (55,9 %)** | **2 356 (10,6 %)** |
-| Quelle: Dokumentart / Titel / Textkopf | 2 866 / 2 821 / 4 110 | **11 205 / 2 762 / 5 892** |
+| Quelle: Dokumentart / Titel / Textkopf | 2 866 / 2 821 / 4 110 | **11 158 / 2 462 / 6 239** |
 
 - **`Verwaltungsvorlage` ist die Verwaltung** (8 337 Dokumente, 37,5 % jener Periode, und in der
   Hauptperiode wie in der laufenden kein einziges Mal): sie ist der Gegenbegriff zu `Vorlage aus der
@@ -391,17 +391,23 @@ Stadtprofil.
   Titel oder Textkopf zu einer Fraktion wurden — Vorlagen, die einen Fraktionsantrag **zitieren**.
 - **Der Vorlagenkopf der älteren Form nennt den Urheber**: „vorlage 173/ 85/2014 seite 1 von 2 rsd
   vorlage x öffentlich nicht öffentlich  fraktion die linke  der bezirksvertretung 3  an den
-  bezirksvorsteher …". Der dritte Textmarker ist genau diese Formularzeile plus „fraktion" in 80
+  bezirksvorsteher …". Der Briefkopfmarker ist genau diese Formularzeile plus „fraktion" in 80
   Zeichen; 5 454 Köpfe treffen, 5 168 davon nennen eine Partei, die 286 übrigen sind
-  „interfraktioneller antrag".
+  „interfraktioneller antrag". Er steht **vor** der Dokumentart (Punkt 62), denn der Briefkopf
+  gehört dem Verfasser und die Dokumentart dem System.
 - **Die Hauptperiode und die laufende Periode sind byteidentisch unberührt**, gemessen und als Test
   eingefroren (`tests/golden/test_parties_numbers.py`): `classify_originators` liefert mit und ohne
   die drei neuen Einträge dieselbe Tabelle für alle 19 108 und alle 4 095 Dokumente. Der Anker kommt
   dort in 0 Dokumenten vor, weil der Korpus den Text hinter „betrifft" abschneidet.
 - **Neue Parteischreibweisen brauchte es nicht**: `bündnis90/die grünen` ohne Leerzeichen,
   `bü90/die grünen`, `b90/die grünen`, `die linke.` mit Punkt und `AFD` treffen alle auf vorhandene
-  Muster. Dokumente je Partei: CDU 3 598, SPD 2 650, GRÜNE 2 363, FDP 1 285, Die Linke 494, AfD 13
+  Muster. Dokumente je Partei: CDU 3 647, SPD 2 708, GRÜNE 2 417, FDP 1 335, Die Linke 505, AfD 13
   (damals ein Einzelmandat), Tierschutz/Freie Wähler 168.
+- **47 Fraktionsanträge liegen unter `Verwaltungsvorlage`** und tragen trotzdem ihren eigenen
+  Briefkopf (Review 2026-10-14, Punkt 62). Weil die Dokumentart vor dem Textkopf gefragt wird,
+  standen sie als Verwaltung da; seit dem Review gilt ein **Briefkopfmarker vor der Dokumentart**,
+  und sie sind Fraktion. Die Bedingung dafür ist gemessen: die Formularzeile trifft keine der 161
+  Zitate, keine der beiden Eingaben und keines der 28 Dokumente mit Mandatsträger im Titel.
 - **Der Abgleich mit den Hochburgen** (Ratswahl 2020, Parteispalten D1 bis D6 im Profil
   `duesseldorf-2014`): FDP r = +0,395 (p = 0,0106), AfD −0,378 (0,0149), Die Linke −0,255 (0,108),
   SPD +0,127 (0,429), GRÜNE +0,052 (0,748), CDU −0,0005 (0,998). Unter der Bonferroni-Grenze von

@@ -962,6 +962,11 @@ class Originators(_Strict):
     joint_markers: list[str] = []  # „interfraktionell": Fraktion ohne nennbare Partei
     person_markers: list[str] = []  # „Bezirksvertreterin": Klasse Person
     text_markers: list[str] = []  # Fenster im Textkopf: Antrag/Anfrage … Fraktion
+    # Briefkopf des Antragstellers: ein Muster, das **nur** im eigenen Kopf eines Dokuments
+    # trifft, nie in einem zitierten Antrag. Es steht vor der Dokumentart, denn der Briefkopf
+    # gehört dem Verfasser, während die Dokumentart sagt, wie das System die Vorlage geführt hat
+    # (Punkt 62). Leer heißt: nur die Reihenfolge paper_type > name > text.
+    letterhead_markers: list[str] = []
     name_party_markers: list[str] = []  # schwaches Tor: Antragsklammer ohne das Wort „Fraktion"
     text_head_chars: int = 600  # so viele Zeichen des Texts nach „betrifft" werden gelesen
     text_window_chars: int = 80  # Fenster links und rechts um den Treffer im Textkopf
@@ -973,6 +978,7 @@ class Originators(_Strict):
         "joint_markers",
         "person_markers",
         "text_markers",
+        "letterhead_markers",
         "name_party_markers",
     )
     @classmethod

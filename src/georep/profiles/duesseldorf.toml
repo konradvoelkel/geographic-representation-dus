@@ -577,10 +577,14 @@ person_markers = [
 # Zusammensetzungen („haushaltsantrag der cdu-fraktion", „antragsstellende liste und fraktion")
 # und die Fälle, in denen die PDF-Extraktion die Leerzeichen gefressen hat
 # („anfragefraktionbündnis90/diegrünen", BV5/054/2022): sechs Dokumente gemessen.
-# Das dritte Muster ist der Vorlagenkopf der Wahlperiode 2014 bis 2020 (Punkt 60). Damals trug
-# jede Vorlage aus der Politik denselben Briefkopf — „vorlage 173/ 85/2014 seite 1 von 2 rsd
-# vorlage x öffentlich nicht öffentlich  fraktion die linke  der bezirksvertretung 3  an den
-# bezirksvorsteher …" —, und der Urheber steht darin zwischen „nicht öffentlich" und dem Gremium.
+text_markers = [
+    "(?<!be)(?<!ge)(antrag|anfrage).{0,80}?(fraktion|ratsfraktion|interfraktionell|überfraktionell)",
+    "(interfraktionell|überfraktionell)\\w*.{0,20}?(antrag|anfrage)",
+]
+# Der Vorlagenkopf der Wahlperiode 2014 bis 2020 (Punkt 60). Damals trug jede Vorlage aus der
+# Politik denselben Briefkopf — „vorlage 173/ 85/2014 seite 1 von 2 rsd vorlage x öffentlich nicht
+# öffentlich  fraktion die linke  der bezirksvertretung 3  an den bezirksvorsteher …" —, und der
+# Urheber steht darin zwischen „nicht öffentlich" und dem Gremium.
 # Der Anker ist genau diese Formularzeile; sie kommt in der Hauptperiode und in der laufenden
 # Periode **nicht ein einziges Mal** vor (0 von 19 108 und 0 von 4 095, gemessen 2026-10-14), weil
 # dort der Text erst hinter „betrifft" beginnt. Darum steht das Muster hier im Stadtprofil und
@@ -590,9 +594,13 @@ person_markers = [
 # mitglied des jugendrates" eine Fraktion. Die Anrede „an herrn bezirksvorsteher" verbietet es
 # umgekehrt, hier nach Personen zu suchen — der Empfänger stünde sonst als Urheber da (776
 # Dokumente gemessen).
-text_markers = [
-    "(?<!be)(?<!ge)(antrag|anfrage).{0,80}?(fraktion|ratsfraktion|interfraktionell|überfraktionell)",
-    "(interfraktionell|überfraktionell)\\w*.{0,20}?(antrag|anfrage)",
+# Es steht in letterhead_markers und nicht in text_markers, weil es ein **Briefkopf** ist und
+# darum vor der Dokumentart gilt (Punkt 62): 47 Anträge jener Periode liegen unter
+# „Verwaltungsvorlage" und tragen diesen Kopf. Die Bedingung dafür ist gemessen — die Zeile trifft
+# keine der 161 Verwaltungsvorlagen, die einen Fraktionsantrag nur zitieren, keine der beiden
+# Eingaben nach § 24 GO NRW und keines der 28 Dokumente mit einem Mandatsträger im Titel: ihr
+# Text beginnt hinter „betrifft", und die Formularzeile liegt davor.
+letterhead_markers = [
     "rsd\\s*vorlage\\s*x?\\s*öffentlich\\s*nicht\\s*öffentlich.{0,80}?(\\w*fraktion|interfraktionell|überfraktionell|ratsgruppe)",
 ]
 # Schwaches Tor für den Titel, erst nach den Personenmarkern befragt: eine Antragsklammer, die
