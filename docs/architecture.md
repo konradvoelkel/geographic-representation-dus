@@ -483,7 +483,8 @@ getötet, 165 Überlebende, davon 100 in Vertragsgrenzen), 79 % über `search/` 
   (Punkt 59): `originators.fraction_types` und `person_types` nennen solche Arten, die Klasse steht
   dann fest, und die Partei wird im Titel und im ganzen Textkopf gesucht statt in einem Fenster.
   Mönchengladbachs 16 Dokumentarten sind so vollständig zugeordnet (`Urheber unbekannt` 0,0 %); offen
-  bleibt dort die Partei — 242 der 581 Fraktionsanträge (41,7 %) nennen eine, die übrigen sind eine
-  Fraktion ohne Namen, weil 390 von ihnen keinen Text tragen.
+  bleibt dort die Partei — 239 der 581 Fraktionsanträge (41,1 %) nennen eine, die übrigen 342 sind
+  eine Fraktion ohne Namen (314 ohne Text, 28 mit Briefkopf ohne Namen). Vom Titel zählt dabei nur,
+  was hinter seinem letzten Bezugsmarker steht (`title_split_markers`, Punkt 63).
 - Im Wahlbezirk 11 ist Die Linke nicht angetreten (0 Stimmen). Der Abgleich mit dem Stimmenanteil lässt
   solche Bezirke je Partei aus (`angetreten`), sonst läse sich „kein Wahlvorschlag“ wie „keine Zustimmung“.

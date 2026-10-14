@@ -4,6 +4,14 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Im Titel zählt nur, was hinter dem letzten „hier:" steht** (`docs/decisions.md`, Punkt 63):
+  Mönchengladbachs Titel stapeln Bezüge („… Fraktionsantrag DIE LINKE; hier: Antrag der
+  Ratsfraktionen von SPD, Bündnis 90/Die Grünen und FDP"), und drei Dokumente bekamen so die Partei
+  des zitierten Antrags. `[originators].title_split_markers` nennt den Marker, der letzte gewinnt,
+  und gefragt wird nur bei einer Dokumentart aus `fraction_types`. Von den 581 Fraktionsanträgen
+  nennen damit 239 statt 242 eine Partei.
+- **Das Muster der Gruppe „Die FRAKTION" bekommt Wortgrenzen** (Punkt 64): `die fraktion` traf auch
+  „die Fraktionsvorsitzende" und machte einen Antrag der Zentrumspartei zu einem der Gruppe.
 - **Der eigene Briefkopf eines Dokuments gilt vor seiner Dokumentart** (`docs/decisions.md`,
   Punkt 62): 47 Fraktionsanträge der Wahlperiode 2014 bis 2020 liegen im Ratsinformationssystem
   unter `Verwaltungsvorlage` und tragen trotzdem den Fraktionsbriefkopf der alten Vorlagenform.
@@ -36,11 +44,11 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   `[originators]` zwei neue Listen: `fraction_types` („3 - Fraktionsantrag", 581 Dokumente) und
   `person_types` („6.1 - Mitgliederantrag", 36). Alle 16 Dokumentarten der Periode sind damit
   zugeordnet, „Urheber unbekannt" ist **0,0 %** (Verwaltung 2 278, Fraktion 581, Person 36), und
-  242 der 581 Fraktionsanträge (41,7 %) nennen ihre Partei im Titel oder im Briefkopf. In keiner
-  der 33 Wahlbezirke erklärt der Dokumentanteil einer Partei ihren Stimmenanteil (r von −0,20 bis
-  +0,19, p von 0,27 bis 0,95).
+  239 der 581 Fraktionsanträge (41,1 %) nennen ihre Partei im Titel oder im Briefkopf. In keiner
+  der 33 Wahlbezirke erklärt der Dokumentanteil einer Partei ihren Stimmenanteil (r von −0,199 bis
+  +0,151, p von 0,27 bis 0,95).
 - Der Satz, der im Abschnitt „Urheber und Parteien" die Quellen nennt, **zählt** sie jetzt
-  („2 653 aus der Dokumentart, 145 aus dem Titel und 97 aus dem Textkopf") statt drei Düsseldorfer
+  („2 656 aus der Dokumentart, 142 aus dem Titel und 97 aus dem Textkopf") statt drei Düsseldorfer
   Beispiele zu zitieren; mit einer zweiten Stadt waren die Beispiele falsch.
 - **Die Beratungsfolge ist die zweite Quelle des Gremiums** (`docs/decisions.md`, Punkt 58): neben
   der Drucksachennummer entscheidet jetzt, wo die nichts sagt, die Liste der Gremien, die ein

@@ -1689,10 +1689,11 @@ Vorlagen der Verwaltung und ihrer Betriebe (`1.1 - Beratungsvorlage` 1 144, `2.1
 `3 - Fraktionsantrag` ist die Fraktionsklasse und `6.1 - Mitgliederantrag` die Person. „Urheber
 unbekannt" ist damit **0,0 %**, und das ist keine Schönung: die Klasse steht in der Dokumentart, die
 der Server mitliefert, nicht in einem Muster über einem Text, den es bei 2 245 Dokumenten nicht gibt.
-Die offene Zahl steht eine Ebene tiefer — **242 der 581 Fraktionsanträge (41,7 %) nennen ihre
-Partei**, die übrigen 339 sind eine Fraktion ohne nennbare Partei, weil 390 von ihnen gar keinen Text
-tragen und der Briefkopf der anderen „fraktionsantragfraktion im rat der stadt mönchengladbach"
-sagt.
+Die offene Zahl steht eine Ebene tiefer — **239 der 581 Fraktionsanträge (41,1 %) nennen ihre
+Partei** (242 vor Punkt 63 und 64). Die übrigen 342 sind eine Fraktion ohne nennbare Partei: 314
+von ihnen tragen gar keinen Text, die 28 anderen einen Briefkopf, der nur
+„fraktionsantragfraktion im rat der stadt mönchengladbach" sagt. Ohne Text sind insgesamt 390
+Fraktionsanträge, und 76 davon nennen ihre Partei trotzdem — im Titel.
 
 **Die acht Fraktionen stehen im Profil, mit ihren Namen aus `raw/organizations.json`** (Abruf vom
 2026-10-14, `classification = "Fraktion"`): CDU, SPD, BÜNDNIS 90/DIE GRÜNEN, FDP / VOLT, AfD MG,
@@ -1709,7 +1710,7 @@ Dokumentart, im Titel oder im Textkopf („Anfrage SPD", „Antrag der CDU-Frakt
 cdu-fraktion vom 28. Juli 2023)")" war ein Satz mit drei Düsseldorfer Belegen in einer Vorlage, die
 jede Stadt rendert; auf der Mönchengladbacher Seite war er falsch, denn keine Dokumentart dieser
 Stadt nennt eine Partei. Der Satz nennt stattdessen die gemessenen Zähler je Quelle
-(`OriginatorFigures.sources`, eine Quelle ohne Beitrag fehlt): „2 653 aus der Dokumentart, 145 aus
+(`OriginatorFigures.sources`, eine Quelle ohne Beitrag fehlt): „2 656 aus der Dokumentart, 142 aus
 dem Titel und 97 aus dem Textkopf".
 
 **Verworfen:**
@@ -1917,3 +1918,50 @@ Zusage und derselbe Test wie in Punkt 60: die Formularzeile kommt dort in 0 Doku
   ist nicht pauschal falsch, sie ist nur für einen Briefkopf falsch.
 - **Die 47 im Profil als Ausnahmeliste führen**: eine Liste von 47 Dokument-IDs ist keine Regel,
   und beim nächsten Abruf wäre sie falsch.
+
+## 63. Im Titel zählt nur, was hinter dem letzten Bezugsmarker steht (Review 2026-10-14)
+
+Befund 2 des Reviews. Punkt 59 lässt bei einer Dokumentart aus `fraction_types` den **ganzen** Titel
+nach Parteien durchsuchen, weil dort kein Fraktionsmarker als Tor davorsteht. Mönchengladbachs Titel
+stapeln aber Bezüge: „Evaluation und Ausbau Rats-TV Fraktionsantrag DIE LINKE; **hier:** Antrag der
+Ratsfraktionen von SPD, Bündnis 90/Die Grünen und FDP" nennt zwei Urheber — den **zitierten** vor
+dem Marker und den **eigenen** dahinter. Drei Dokumente bekamen so die falsche Partei: `0590/X` und
+`0591/X` zusätzlich DIE LINKE, `3732/X` zusätzlich SPD, Grüne und FDP statt nur CDU.
+
+**`title_split_markers` im Profil, der letzte Marker gewinnt.** Mönchengladbach nennt `hier ?:`;
+142 der 581 Fraktionsanträge tragen den Marker, und `0591/X` trägt ihn zweimal („…; hier: Antrag der
+Ratsfraktion DIE LINKE vom 26.02.2021; hier: Antrag der Ratsfraktionen von SPD, … vom 16.03.2021").
+Darum der letzte und nicht der erste: jeder weitere Bezug schiebt den eigenen Gegenstand nach
+hinten. Der Briefkopf bestätigt die Zuordnung in allen drei Fällen, in denen es einen gibt.
+
+**Gefragt wird nur bei `fraction_types`**, nicht im allgemeinen Titelpfad. Dort steht das Tor der
+`fraction_markers` davor und danach das Fenster um den Textmarker; die Quelle ist also nie der ganze
+Titel allein. Düsseldorf lässt die Liste darum leer, und seine Zahlen sind unberührt.
+
+**Wirkung** auf Mönchengladbach (gemessen 2026-10-14): die Klassen bleiben (Verwaltung 2 278,
+Fraktion 581, Person 36, unbekannt 0), die Quellen verschieben sich auf 2 656 Dokumentart, 142
+Titel, 97 Textkopf, und von den 581 Fraktionsanträgen nennen **239 statt 242** eine Partei.
+Dokumente je Partei: CDU 107 (vorher 108), FDP 78 (79), Die Linke 34 (37), Die FRAKTION 5 (7) —
+die letzte Zahl auch wegen Punkt 64.
+
+**Verworfen:**
+
+- **Den Marker im Code** (`"hier:"` in `parties.py`): kein Stadtwort im Code, und ob eine Stadt
+  „hier:", „betreffend:" oder gar nichts schreibt, ist ihre Vorlagenform.
+- **Den ersten statt den letzten Marker nehmen**: `0591/X` zeigt, dass Bezüge gestapelt werden.
+- **Den Titel bei `fraction_types` ganz weglassen und nur den Briefkopf fragen**: 390 der 581
+  Fraktionsanträge tragen gar keinen Text, und 76 von ihnen nennen ihre Partei im Titel.
+
+## 64. Ein Parteimuster braucht Wortgrenzen, wo sein Name ein Wortanfang ist (Review 2026-10-14)
+
+Befund 3 des Reviews. Das Muster `die fraktion` der Mönchengladbacher Gruppe *Die FRAKTION* traf
+auch „vertreten durch **die Fraktion**svorsitzende" und machte `1785/X` — einen Antrag der
+Deutschen Zentrumspartei — zu einem Antrag dieser Gruppe. Mit `\bdie fraktion\b` sind es sieben
+Fundstellen in dieser Periode, und alle sieben nennen wirklich die Gruppe. `1785/X` bleibt
+Fraktion **ohne Partei**: die Zentrumspartei hat in dieser Stadt keine Stimmenspalte und keine
+Fraktion im Organisationskatalog, also auch keine Zeile in `[originators]` — und eine Zeile ohne
+Beleg wäre schlechter als die offene Klasse (Punkt 59).
+
+Der Kommentar im Profil sagte „alle acht Fundstellen nennen wirklich die Gruppe". Das waren sieben
+plus die eine falsche; die Messung war nicht falsch gelesen, sondern zu früh gemacht — gezählt
+wurde, was das Muster trifft, nicht, was es treffen soll.

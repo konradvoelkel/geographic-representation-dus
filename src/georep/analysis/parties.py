@@ -17,10 +17,15 @@ Die erste Quelle mit Parteitreffer gewinnt, die anderen werden nicht mehr befrag
 ist eine Partition (genau eine Klasse je Dokument), ``parteien`` eine sortierte Menge von
 Settings-Schlüsseln, bei Nicht-Fraktionen leer.
 
+Vor allem dem steht der **Briefkopf**: ``originators.letterhead_markers`` trifft nur im eigenen
+Kopf eines Dokuments, nie in einem zitierten Antrag, und entscheidet darum vor jeder Dokumentart
+(Punkt 62).
+
 Eine Dokumentart kann auch nur die **Klasse** nennen und den Urheber verschweigen
 (``originators.fraction_types`` und ``person_types``, Mönchengladbachs ``3 - Fraktionsantrag`` und
 ``6.1 - Mitgliederantrag``). Dann steht die Klasse fest, und die Partei wird im Titel und im ganzen
-Textkopf gesucht statt in einem Fenster.
+Textkopf gesucht statt in einem Fenster -- im Titel aber nur hinter dem letzten Bezugsmarker
+(``title_split_markers``, Punkt 63), denn davor steht der Antrag, auf den sich das Dokument bezieht.
 
 Alle Muster und Dokumentarten stehen im Stadtprofil unter ``[originators]``, nichts davon im Code
 (Option 10: eine zweite Kommune bringt andere ``paperType``-Werte mit).
@@ -103,6 +108,7 @@ class Patterns:
     person: re.Pattern[str] | None
     text: re.Pattern[str] | None
     letterhead: re.Pattern[str] | None  # eigener Briefkopf: steht vor der Dokumentart
+    title_split: re.Pattern[str] | None  # dahinter nennt der Titel seinen eigenen Gegenstand
     name_party: re.Pattern[str] | None  # schwaches Tor, erst nach den Personenmarkern
     parties: tuple[
         tuple[str, re.Pattern[str]], ...
@@ -131,6 +137,7 @@ class Patterns:
             person=_any_of(originators.person_markers),
             text=_any_of(originators.text_markers),
             letterhead=_any_of(originators.letterhead_markers),
+            title_split=_any_of(originators.title_split_markers),
             name_party=_any_of(originators.name_party_markers),
             parties=tuple(
                 (p.key, _alternation(p.patterns))
@@ -377,16 +384,31 @@ def _fraction_from_type(
     zuerst im Titel („Fraktionsantrag von DIE LINKE und DIE FRAKTION"), dann im **ganzen**
     Textkopf, nicht in einem Fenster um einen Marker — bei einer Dokumentart, die den Urheber
     schon benennt, ist der Kopf der Briefkopf des Antragstellers und keine Fundstelle in einem
-    fremden Text. Nennt keine der beiden Quellen eine Partei, bleibt es bei der Klasse: eine
-    Fraktion ohne nennbare Partei, wie ein interfraktioneller Antrag.
+    fremden Text. Vom Titel zählt nur, was hinter seinem letzten Bezugsmarker steht (Punkt 63).
+    Nennt keine der beiden Quellen eine Partei, bleibt es bei der Klasse: eine Fraktion ohne
+    nennbare Partei, wie ein interfraktioneller Antrag.
     """
-    keys, hit = _parties_in((name or "").lower(), patterns)
+    keys, hit = _parties_in(_own_subject((name or "").lower(), patterns), patterns)
     if keys:
         return Classification("Fraktion", keys, "name", hit)
     keys, hit = _parties_in(text_head[: patterns.head_chars], patterns)
     if keys:
         return Classification("Fraktion", keys, "text", hit)
     return Classification("Fraktion", (), "paper_type", typ)
+
+
+def _own_subject(title: str, patterns: Patterns) -> str:
+    """Der Teil des Titels hinter dem letzten Bezugsmarker; ohne Marker der ganze Titel.
+
+    Punkt 63: ein Titel wie „Evaluation und Ausbau Rats-TV Fraktionsantrag DIE LINKE; hier: Antrag
+    der Ratsfraktionen von SPD, Bündnis 90/Die Grünen und FDP" nennt **zwei** Urheber — den
+    zitierten vor dem Marker und den eigenen dahinter. Der **letzte** Marker gewinnt, denn ein
+    Titel kann mehrere Bezüge stapeln („…; hier: Antrag A vom 26.02.; hier: Antrag B vom 16.03.").
+    """
+    if patterns.title_split is None:
+        return title
+    found = [m.end() for m in patterns.title_split.finditer(title)]
+    return title[found[-1] :] if found else title
 
 
 def _parties_in_bracket(title: str, patterns: Patterns) -> tuple[tuple[str, ...], str]:

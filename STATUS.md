@@ -346,25 +346,26 @@ die Briefköpfe stehen über 300 Zeichen weit.
 | Person | 36 (1,2 %) | 865 (4,5 %) |
 | Eingabe | 0 | 124 (0,6 %) |
 | **unbekannt** | **0 (0,0 %)** | 327 (1,7 %) |
-| Quelle: Dokumentart / Titel / Textkopf | 2 653 / 145 / 97 | 13 432 / 4 618 / 731 |
-| Fraktionen mit genannter Partei | **242 von 581 (41,7 %)** | 7 859 von 7 859 bis auf die interfraktionellen |
+| Quelle: Dokumentart / Titel / Textkopf | 2 656 / 142 / 97 | 13 432 / 4 618 / 731 |
+| Fraktionen mit genannter Partei | **239 von 581 (41,1 %)** | 7 859 von 7 859 bis auf die interfraktionellen |
 
 - **Alle 16 Dokumentarten der Periode sind eindeutig** (Summe 2 895, gemessen 2026-10-14): 14 Arten
   mit 2 278 Dokumenten sind Vorlagen der Verwaltung und ihrer Betriebe, `3 - Fraktionsantrag` ist
   die Fraktion, `6.1 - Mitgliederantrag` die Person. „Urheber unbekannt" ist damit 0,0 % — die
-  offene Zahl liegt eine Ebene tiefer: 339 der 581 Fraktionsanträge nennen keine Partei, weil 390
-  von ihnen gar keinen Text tragen (die 404 des Servers) und die Briefköpfe der anderen
-  „fraktionsantragfraktion im rat der stadt mönchengladbach" sagen.
+  offene Zahl liegt eine Ebene tiefer: **342 der 581 Fraktionsanträge nennen keine Partei** — 314
+  von ihnen tragen gar keinen Text (die 404 des Servers), die 28 übrigen einen Briefkopf ohne
+  nennbaren Namen („fraktionsantragfraktion im rat der stadt mönchengladbach"). Ohne Text sind
+  insgesamt 390, und 76 davon nennen ihre Partei trotzdem — im Titel.
 - **Die acht Fraktionen stehen im Profil**, Namen wörtlich aus `raw/organizations.json`: sechs mit
   Stimmenspalte als `[[originators.parties]]` (CDU, SPD, GRUENE, FDP, Die_Linke, AfD), Die FRAKTION,
   Die PARTEI und Volt als Gruppen ohne Stimmenanteil. „Fraktionslos" bekommt keine Zeile: das Wort
   steht in keinem Titel und in keinem Textkopf dieser Periode.
 - **Der Abgleich mit den Hochburgen findet nichts**, in allen 33 Wahlbezirken und für alle sechs
   Parteien: CDU r = −0,012 (p = 0,95), SPD +0,037 (0,84), GRÜNE +0,091 (0,61), FDP −0,199 (0,27),
-  Die Linke +0,194 (0,28), AfD −0,098 (0,59). Die Bonferroni-Grenze liegt bei 0,008, erreicht wird
+  Die Linke +0,151 (0,40), AfD −0,098 (0,59). Die Bonferroni-Grenze liegt bei 0,008, erreicht wird
   sie nirgends; die AfD hat 5 Dokumente in 3 Bezirken, ihre Zeile ist eine Zahl ohne Aussage.
 - **Der Satz des Abschnitts zählt seine Quellen**, statt drei Düsseldorfer Beispiele zu zitieren
-  („2 653 aus der Dokumentart, 145 aus dem Titel und 97 aus dem Textkopf"): auf der
+  („2 656 aus der Dokumentart, 142 aus dem Titel und 97 aus dem Textkopf"): auf der
   Mönchengladbacher Seite waren die Beispiele falsch, denn keine Dokumentart dieser Stadt nennt
   eine Partei.
 - Die Seite der Stadt wächst von 649 721 auf **819 149 Byte** (Budget 1 000 000, 18,1 % Luft); den

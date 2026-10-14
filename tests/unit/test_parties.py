@@ -122,7 +122,11 @@ BY_TYPE = Originators(
         {"key": "SPD", "label": "SPD", "patterns": [r"\bspd\b"]},  # type: ignore[list-item]
         {"key": "GRUENE", "label": "Grüne", "patterns": ["grüne"]},  # type: ignore[list-item]
     ],
+    groups=[
+        {"key": "LINKE", "label": "Die Linke", "patterns": [r"\blinke\b"]},  # type: ignore[list-item]
+    ],
     fraction_markers=["fraktion"],
+    title_split_markers=["hier ?:"],
 )
 
 
@@ -151,6 +155,36 @@ def test_a_paper_type_can_name_the_class_without_naming_the_party() -> None:
     ) == ("Person", (), "paper_type")
     # Und die Verwaltung bleibt Verwaltung
     assert _classify(by_type, paper_type="1.1 - Beratungsvorlage")[0] == "Verwaltung"
+
+
+def test_only_the_last_reference_clause_of_the_title_names_the_originator() -> None:
+    """Punkt 63: vor dem letzten „hier:" steht der zitierte Antrag, dahinter der eigene.
+
+    Die drei Titel sind die drei Mönchengladbacher Fälle, in denen der ganze Titel die Partei des
+    **zitierten** Antrags geliefert hat (0590/X, 0591/X, 3732/X, gemessen 2026-10-14).
+    """
+    by_type = Patterns.from_settings(BY_TYPE)
+    assert _classify(
+        by_type,
+        paper_type="3 - Fraktionsantrag",
+        name="Evaluation und Ausbau Rats-TV Fraktionsantrag DIE LINKE; hier: Antrag der SPD",
+    ) == ("Fraktion", ("SPD",), "name")
+    # Zwei gestapelte Bezüge: der letzte gewinnt
+    assert _classify(
+        by_type,
+        paper_type="3 - Fraktionsantrag",
+        name="Übersicht; hier: Antrag DIE LINKE vom 26.02.; hier: Antrag der Grünen vom 16.03.",
+    ) == ("Fraktion", ("GRUENE",), "name")
+    # Und umgekehrt: der eigene Antrag steht hinten, der zitierte vorn
+    assert _classify(
+        by_type,
+        paper_type="3 - Fraktionsantrag",
+        name="Änderungsantrag zum Ergänzungsantrag von SPD/Grüne; hier: Antrag DIE LINKE",
+    ) == ("Fraktion", ("LINKE",), "name")
+    # Ohne Marker im Titel bleibt der ganze Titel die Quelle
+    assert _classify(
+        by_type, paper_type="3 - Fraktionsantrag", name="Antrag der SPD und der Grünen"
+    ) == ("Fraktion", ("SPD", "GRUENE"), "name")
 
 
 def test_the_paper_type_names_the_fraction(patterns: Patterns) -> None:

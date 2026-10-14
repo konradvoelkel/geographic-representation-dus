@@ -283,7 +283,9 @@ Dokumentarten nennen die Fraktion („Anfrage SPD“), Mönchengladbachs nennen 
 (`3 - Fraktionsantrag`). Darum stehen in `[originators]` neben `admin_types` und `citizen_types`
 auch `fraction_types` und `person_types` — Dokumentarten, die die Klasse allein entscheiden; die
 Partei kommt dann aus Titel und Briefkopf. Mönchengladbachs 16 Dokumentarten sind damit vollständig
-zugeordnet (0 % „Urheber unbekannt“), und 242 der 581 Fraktionsanträge nennen ihre Partei.
+zugeordnet (0 % „Urheber unbekannt“), und 239 der 581 Fraktionsanträge nennen ihre Partei — im
+Titel aber nur, was hinter seinem letzten „hier:" steht, denn davor nennt er oft den Antrag, auf
+den er sich bezieht.
 
 Dasselbe gilt zwischen zwei **Perioden** derselben Stadt (Punkt 60): die Wahlperiode 2014 bis 2020
 führte jede Vorlage der Verwaltung als `Verwaltungsvorlage` und jede andere als `Vorlage aus der

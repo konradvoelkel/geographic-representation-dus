@@ -297,6 +297,11 @@ admin_types = [                # 2 278 Dokumente: Vorlagen der Verwaltung und ih
     "7.2 - EWMG Berichtsvorlage",        # 1
 ]
 citizen_types = []             # diese Stadt führt keine Dokumentart für Eingaben nach § 24 GO NRW
+# Punkt 63: hinter dem letzten „hier:" nennt der Titel seinen eigenen Gegenstand, davor den Antrag,
+# auf den er sich bezieht („Evaluation und Ausbau Rats-TV Fraktionsantrag DIE LINKE; hier: Antrag
+# der Ratsfraktionen von SPD, Bündnis 90/Die Grünen und FDP"). 142 der 581 Fraktionsanträge tragen
+# den Marker, drei nannten ohne ihn die Partei des zitierten Antrags (0590/X, 0591/X, 3732/X).
+title_split_markers = ["hier ?:"]
 fraction_types = ["3 - Fraktionsantrag"]   # 581 Dokumente; die Art nennt die Klasse, die Partei steht im Titel oder im Briefkopf
 person_types = ["6.1 - Mitgliederantrag"]  # 36; Anträge einzelner Mitglieder, vor allem des Seniorenrates („senr/3165/x … mitgliederantrag")
 
@@ -359,7 +364,7 @@ organizations = ["/organizations/gr/166"]  # AfD MG
 key = "FRAKTION"
 label = "Die FRAKTION"
 short = "FRAKTION"
-patterns = ['die fraktion']    # „ratsgruppe die fraktion mönchengladbach", „die fraktion bv ost"; alle acht Fundstellen dieser Periode nennen wirklich die Gruppe (gemessen 2026-10-14)
+patterns = ['\bdie fraktion\b']    # „ratsgruppe die fraktion mönchengladbach", „die fraktion bv ost"; die Wortgrenze hält „die Fraktionsvorsitzende" draußen (1785/X, Zentrumspartei). Sieben Fundstellen dieser Periode nennen die Gruppe, eine nicht (gemessen 2026-10-14)
 organizations = ["/organizations/gr/226"]
 [[originators.groups]]
 key = "PARTEI"
