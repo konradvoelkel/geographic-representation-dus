@@ -185,6 +185,78 @@ aus dem Altformat der Arbeit kommen), holt ein eigener Metadatenabruf sie, und
 `georep pack --consultations snapshots/<slug>-beratungsfolge` legt sie als Paket ins Repo;
 `[bodies].consultations` im Profil zeigt darauf.
 
+## 4c. Die Urheber der Stadt (zwanzig Minuten, kein Netzschritt)
+
+Ohne `[originators]` im Profil fehlt der Schritt `parties`, und die Stadtseite hat den Abschnitt
+„Urheber und Parteien" nicht (`docs/decisions.md`, Punkte 59 und 60). Gebraucht werden zwei Dinge:
+**die Fraktionen** und **jede Dokumentart**.
+
+```bash
+# Welche Dokumentarten hat die Stadt, und wie viele Dokumente je Art?
+uv run python - <<'PY'
+import collections, json, pathlib
+rows = [json.loads(l) for l in pathlib.Path("reference/<slug>/raw/papers.jsonl").read_text("utf-8").splitlines()]
+for typ, n in collections.Counter(r.get("paper_type") or "" for r in rows).most_common():
+    print(f"{n:6d}  {typ!r}")
+PY
+# Und die Fraktionen aus dem Katalog von Schritt 4b
+uv run python -c "
+import json, pathlib
+for o in json.loads(pathlib.Path('reference/<slug>/raw/organizations.json').read_text('utf-8')):
+    if o.get('classification') == 'Fraktion':
+        print(o['id'].rsplit('/organizations/')[-1], repr(o.get('shortName')), repr(o.get('name')))
+"
+```
+
+**Jede Dokumentart gehört in genau eine Liste** — und wo keine passt, bleibt die Art draußen und
+ihre Dokumente stehen sichtbar als „Urheber unbekannt" auf der Seite. Vier Listen gibt es:
+
+| Liste | Bedeutung | Beispiel |
+|---|---|---|
+| `admin_types` | Vorlage der Verwaltung | `1.1 - Beratungsvorlage`, `Verwaltungsvorlage` |
+| `citizen_types` | Bürgerantrag (§ 24 GO NRW) | `Eingabe nach 24GO` |
+| `fraction_types` | **Klasse** Fraktion, Partei woanders | `3 - Fraktionsantrag` |
+| `person_types` | **Klasse** Person | `6.1 - Mitgliederantrag` |
+
+Nennt die Art die Partei schon selbst („Anfrage SPD"), braucht sie keine Liste: `motion_prefixes`
+schneidet das Präfix ab, und die Parteimuster finden den Rest. Nennt sie nur die Klasse, gehört sie
+in eine der beiden unteren Listen; dann steht die Klasse fest, und die Partei wird im Titel und im
+ganzen Textkopf gesucht. Nennt sie gar nichts (Düsseldorfs nacktes „Antrag"), entscheiden Titel und
+Textkopf über beides, und dafür braucht es `fraction_markers`, `text_markers` und `person_markers`.
+
+Die Fraktionen werden `[[originators.parties]]`, wenn ihr Schlüssel in `columns.results.parties`
+steht (nur dann gibt es einen Stimmenanteil zum Abgleich), sonst `[[originators.groups]]`. Jede
+braucht mindestens ein Muster; **ein Muster, das nichts trifft, ist eine Behauptung ohne Beleg** und
+gehört stattdessen in einen Kommentar. Zwei Fallen:
+
+1. **Jedes Wort eines Parteimusters wird Stoppwort des Themenmodells** (`topics.stop_sources`).
+   Ein Muster wie `alternative für deutschland` nimmt „alternative" und „deutschland" aus dem
+   Vokabular; ein Sachwort holt `topics.stop_keep` zurück (so „klima" und „tierschutz" bei
+   Düsseldorf).
+2. **Ein Personenmarker im Textkopf trifft oft die Anrede** und nicht den Urheber („an herrn
+   bezirksvorsteher"): in der Düsseldorfer Periode 2014 bis 2020 in 776 von 1 503 Fällen. Darum
+   suchen die `person_markers` im Titel.
+
+Zwei Prüfungen danach:
+
+```bash
+uv run georep --profile <slug> run            # die Zeile von `parties` nennt die Klassenanteile
+uv run python -c "
+import polars as pl
+from georep.layout import Layout
+from georep.settings import load_settings
+s = load_settings(profile='<slug>'); lay = Layout.from_settings(s)
+c = pl.read_parquet(lay.corpus); a = pl.read_parquet(lay.document_originators)
+j = c.select('id','paper_type').join(a, on='id')
+print(j.group_by('urheber_art').len().sort('len', descending=True))
+print(j.filter(pl.col('urheber_art')=='unbekannt').group_by('paper_type').len().sort('len', descending=True))
+"
+```
+
+Die zweite Zeile ist die wichtige: steht dort eine Dokumentart mit vielen Dokumenten, fehlt sie in
+einer Liste. „unbekannt" soll **offen angezeigt** werden und nicht verschwinden — eine Art, deren
+Klasse die Daten nicht hergeben, bekommt keine geratene.
+
 ## 5. Veröffentlichen und das Paket ins Repo
 
 ```bash
@@ -234,7 +306,8 @@ Erwartungen vom Mini-Paket auf das echte umstellen.
    Dateinamen), `[sources.wikidata] entity`, `[precincts]` (Format und Regeln der Quelle),
    `[columns.results]` (Spalten und Parteien), `[search] exclude`, `[report]`.
 2. `uv run georep profiles` muss die Stadt zeigen, `uv run georep --profile <slug> status` laufen.
-   `[bodies]` bleibt zunächst leer: die Gremien kommen in § 4b dazu, wenn der Korpus steht.
+   `[bodies]` und `[originators]` bleiben zunächst leer: die Gremien kommen in § 4b dazu und die
+   Urheber in § 4c, wenn der Korpus steht und seine Dokumentarten zu zählen sind.
 3. `publish.cities` in **allen** Profilen um den Slug erweitern (die Reihenfolge bestimmt, wer an
    der Wurzel liegt).
 4. Dieses Runbook von § 1 an.
