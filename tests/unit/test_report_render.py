@@ -590,6 +590,22 @@ def test_the_monitoring_link_is_relative_and_only_there_when_set(
     assert '<section id="laufend">' not in without and 'href="2025/"' not in without
 
 
+def test_the_hit_tile_relates_to_the_documents_with_text(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    """Review 2026-10-14: wo Dokumente ohne Text liegen, nennt die Kachel beide Anteile.
+
+    Mönchengladbach hat 489 Dokumente mit Treffer aus 2 895, aber nur 650 mit Text: „16,9 % aller
+    Dokumente" allein ist eine Aussage über das Ratsinformationssystem, nicht über die Stadt. Wo
+    jedes Dokument Text hat, wäre die zweite Zahl dieselbe und bleibt darum weg.
+    """
+    figures = replace(model.figures, documents=200, documents_with_text=50, documents_hit=40)
+    page = render_report(replace(model, figures=figures), visuals)
+    assert "20,0\u202f% aller Dokumente, 80,0\u202f% der 50 mit Text" in page
+    full = render_report(replace(model, figures=replace(figures, documents_with_text=200)), visuals)
+    assert "mit Text" not in full.split('<div class="label">Dokumente mit Treffer</div>')[1][:300]
+
+
 def test_a_subpage_links_back_to_the_main_period(model: ReportModel, visuals: Visuals) -> None:
     """Review 2026-10-14: eine Periodenseite liegt unter der Stadt und braucht einen Rückweg.
 

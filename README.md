@@ -273,8 +273,10 @@ Der volle Abruf einer weiteren Stadt ist ein Handgriff mit Prüfpunkten:
 2026-10-13 gelaufen, sein Paket liegt unter
 [`reference/moenchengladbach/`](reference/moenchengladbach/README.md): 2 895 Ratsdokumente, von denen das
 Ratsinformationssystem nur **658** als PDF ausliefert (die übrigen antworten mit `404`), 1 704 Treffer über 33
-Wahlbezirke. Die absoluten Zahlen der beiden Städte sind darum nicht vergleichbar, die Verteilungen schon;
-`vergleich.html` sagt das im Abschnitt „Vergleichbarkeit“.
+Wahlbezirke. Die absoluten Zahlen der beiden Städte sind darum nicht vergleichbar, die Verteilungen schon:
+`vergleich.html` führt dafür die Spalte „davon mit Text“ und sagt es im Abschnitt „Vergleichbarkeit“, und die
+Kachel „Dokumente mit Treffer“ jeder Stadtseite nennt den Anteil an allen Dokumenten **und** den an denen
+mit Text.
 
 ## Daten und Herkunft
 

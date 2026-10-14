@@ -33,6 +33,8 @@ FIGURES = {
     "districts": 3,
     "precincts": 22,
     "documents": 200,
+    # Review 2026-10-14: nicht jedes Dokument ist durchsuchbar; die Tabelle sagt es jetzt
+    "documents_with_text": 150,
     "terms": 150,
     "documents_hit": 90,
     "turnout_median": 0.5,
@@ -101,6 +103,7 @@ def test_the_table_row_names_the_numbers_of_the_summary() -> None:
     assert first["href"] == "./"  # die erste Stadt liegt an der Wurzel
     assert second["href"] == "b/"
     assert first["districts"] == "3" and first["documents"] == "200"
+    assert first["documents_with_text"] == "150"  # Review 2026-10-14
     assert first["eligible_per_district"] == "2\u202f000"  # Mittel, mit Tausendertrenner
     assert first["rate_median"] == second["rate_median"]  # derselbe Median derselben Quoten
     assert (first["r"], first["p"]) == ("0,500", "0,250")

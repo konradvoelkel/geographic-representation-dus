@@ -268,6 +268,10 @@ def table_rows(model: ComparisonModel) -> list[dict[str, str]]:
                 "districts": format_de(float(figures["districts"])),
                 "precincts": format_de(float(figures["precincts"])),
                 "documents": format_de(float(figures["documents"])),
+                # Review 2026-10-14: ohne diese Spalte las die Tabelle 2 895 Mönchengladbacher
+                # Dokumente gegen 19 108 Düsseldorfer, während nur 650 davon überhaupt Text
+                # haben. Welche Stadt wie viele ausliefert, entscheidet ihr Ratsinformationssystem.
+                "documents_with_text": format_de(float(figures["documents_with_text"])),
                 "terms": format_de(float(figures["terms"])),
                 "documents_hit": format_de(float(figures["documents_hit"])),
                 "rate_median": rate_label(statistics.median(rates) if rates else 0.0),

@@ -437,8 +437,11 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   vollen Lauf vom 2026-10-13): die übrigen 2 213 antworten auf ihre `downloadfiles`-URL mit `404`. Der Abruf
   isoliert jeden Fehler und läuft durch, die Kette rechnet also mit 650 Texten; die Stadtseite sagt es in
   den Kernzahlen („Ratsdokumente 2 895, 650 mit Text, 2 245 ohne"). Jede absolute Zahl dieser Stadt ruht
-  damit auf rund einem Viertel der Periode und ist mit Düsseldorf nicht der Höhe nach vergleichbar; der
-  Städtevergleich sagt das im Abschnitt „Vergleichbarkeit". Woran die 404 liegen, sagt der Server nicht.
+  damit auf rund einem Viertel der Periode und ist mit Düsseldorf nicht der Höhe nach vergleichbar. Seit dem
+  2026-10-14 sagen die Seiten das selbst (Review-Befund 1): der Städtevergleich führt die Spalte „davon mit
+  Text" und nennt im Abschnitt „Vergleichbarkeit" je Stadt beide Zahlen, und die Kachel „Dokumente mit
+  Treffer" jeder Stadtseite nennt zusätzlich den Anteil an den Dokumenten **mit Text** (Mönchengladbach
+  489 von 650 = 75,2 %, nicht nur 16,9 % aller 2 895). Woran die 404 liegen, sagt der Server nicht.
 - **Mönchengladbachs Straßen stimmen nur zu 86,2 % je Wahlbezirk mit dem amtlichen Verzeichnis überein**
   (2 651 bekannte Namen, 66,5 % im selben Stimmbezirk; gemessen 2026-10-13). Die Grenze des Runbooks ist
   90 %, also ist Frage 1.3 fällig: die Flächen stammen aus dem Datensatz „Wahlen" vom 08.06.2022, die Wahl

@@ -50,9 +50,11 @@ ihre `downloadfiles`-URL mit `404`. Der Abruf isoliert jeden Fehler (Phase 1), d
 durch und die Kette rechnet mit den 658 Texten, die es gibt. Woran es liegt, sagt der Server
 nicht; die Metadaten nennen die Datei, der Download verweigert sie. Für die Seite heißt das: die
 Trefferzahlen Mönchengladbachs ruhen auf rund einem Viertel der Dokumente der Periode und sind
-mit denen Düsseldorfs **nicht** der Höhe nach vergleichbar. Die Stadtseite sagt es in den
-Kernzahlen („Ratsdokumente 2 895, 650 mit Text, 2 245 ohne"), der Städtevergleich im Abschnitt
-„Vergleichbarkeit".
+mit denen Düsseldorfs **nicht** der Höhe nach vergleichbar. Beide Seiten sagen es seit dem
+2026-10-14 selbst: die Stadtseite in den Kernzahlen („Ratsdokumente 2 895, 650 mit Text, 2 245
+ohne"; die Kachel „Dokumente mit Treffer" nennt 489 als 16,9 % aller Dokumente **und** 75,2 % der
+650 mit Text), der Städtevergleich in der Spalte „davon mit Text" seiner Tabelle und mit einem
+Satz im Abschnitt „Vergleichbarkeit".
 
 **Die Flächen sind drei Jahre älter als die Wahl**, und das kostet mehr als gedacht: 86,2 % der
 2 651 bekannten Straßennamen liegen im selben Wahlbezirk wie im Verzeichnis der Wahl, 66,5 % im

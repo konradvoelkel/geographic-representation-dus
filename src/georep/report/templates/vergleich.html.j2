@@ -76,6 +76,7 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
 <th scope="col" class="num">Wahl&shy;bezirke</th>
 <th scope="col" class="num">Stimm&shy;bezirke</th>
 <th scope="col" class="num">Doku&shy;mente</th>
+<th scope="col" class="num">davon mit Text</th>
 <th scope="col" class="num">Begriffe</th>
 <th scope="col" class="num">mit Treffer</th>
 <th scope="col" class="num">Treffer&shy;quote, Median</th>
@@ -91,6 +92,7 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
 <td class="num">{{ row.districts }}</td>
 <td class="num">{{ row.precincts }}</td>
 <td class="num">{{ row.documents }}</td>
+<td class="num">{{ row.documents_with_text }}</td>
 <td class="num">{{ row.terms }}</td>
 <td class="num">{{ row.documents_hit }}</td>
 <td class="num">{{ row.rate_median }}</td>
@@ -138,7 +140,7 @@ footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem;
 <section id="vergleichbarkeit">
 <h2>Vergleichbarkeit</h2>
 <p>Die Städte sind verschieden groß zugeschnitten: {% for row in rows %}{{ row.name }} hat {{ row.districts }} Wahlbezirke mit im Mittel {{ row.eligible_per_district }} Wahlberechtigte je Wahlbezirk{% if not loop.last %}, {% else %}. {% endif %}{% endfor %}Ein Wahlbezirk mit mehr Wahlberechtigten braucht mehr Dokumente für dieselbe Trefferquote, denn die Quote teilt durch die Wahlberechtigten.</p>
-<p>Auch die Dokumente sind nicht dieselben: Zahl, Art und Aufbau der Vorlagen unterscheiden sich je Ratsinformationssystem, und wo der Vorlagenkopf nicht abgeschnitten werden kann, zählen Treffer in Briefköpfen mit. Die Flächen der Stimmbezirke stammen je Stadt aus einem anderen Jahr; jede Stadtseite nennt ihren Stand und, wo es ein amtliches Straßenverzeichnis gibt, die gemessene Übereinstimmung. Verglichen werden darum Verteilungen, nicht Absolutwerte.</p>
+<p>Auch die Dokumente sind nicht dieselben: Zahl, Art und Aufbau der Vorlagen unterscheiden sich je Ratsinformationssystem, und wo der Vorlagenkopf nicht abgeschnitten werden kann, zählen Treffer in Briefköpfen mit. <strong>Und nicht jedes Dokument ist durchsuchbar</strong>: ob ein Ratsinformationssystem die Hauptdatei einer Vorlage ausliefert, entscheidet es selbst. Die Spalte „davon mit Text" sagt je Stadt, aus wie vielen Dokumenten überhaupt Text zu holen war{% for row in rows %}{% if loop.first %} ({% endif %}{{ row.name }} {{ row.documents_with_text }} von {{ row.documents }}{% if not loop.last %}, {% else %}){% endif %}{% endfor %}; liegt sie deutlich unter der Dokumentzahl, ruhen die Trefferzahlen dieser Stadt auf einem Bruchteil ihrer Wahlperiode, und ihre Absolutwerte sind mit denen der anderen nicht zu vergleichen. Die Flächen der Stimmbezirke stammen je Stadt aus einem anderen Jahr; jede Stadtseite nennt ihren Stand und, wo es ein amtliches Straßenverzeichnis gibt, die gemessene Übereinstimmung. Verglichen werden darum Verteilungen, nicht Absolutwerte.</p>
 <p class="note">Jede Stadtseite trägt ihre Daten als Parquet, CSV und GeoJSON, dazu <code>summary.json</code> mit genau den Zahlen dieser Seite.</p>
 </section>
 </main>

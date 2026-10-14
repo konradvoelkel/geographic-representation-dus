@@ -169,6 +169,17 @@ class KeyFigures:
         """Dokumente ohne extrahierten Text; in der laufenden Periode wächst das zwischen zwei Läufen."""
         return self.documents - self.documents_with_text
 
+    @property
+    def hit_share_of_text(self) -> float | None:
+        """Anteil der Dokumente mit Treffer an denen **mit Text**; None, wenn es keinen gibt.
+
+        Review 2026-10-14: der Anteil an allen Dokumenten verwässert, wo das
+        Ratsinformationssystem Hauptdateien nicht ausliefert -- in Mönchengladbach sind 489 von
+        2 895 Dokumenten 16,9 %, von den 650 mit Text aber 75,2 %. Durchsucht wurde die zweite
+        Menge, und nur über die sagt die Zahl etwas.
+        """
+        return self.documents_hit / self.documents_with_text if self.documents_with_text else None
+
 
 @dataclass(frozen=True)
 class Download:

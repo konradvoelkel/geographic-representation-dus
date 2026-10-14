@@ -775,6 +775,15 @@ def test_key_figures_count_documents_without_text(mini_run: Layout, tmp_path: Pa
     assert figures.documents == corpus.height
     assert figures.documents_with_text == corpus.height - 3
     assert figures.documents_without_text == 3
+    # Review 2026-10-14: der Anteil "mit Treffer" gehört auf die Dokumente mit Text bezogen --
+    # durchsucht wurde nur diese Menge. Ohne Text gibt es keinen Anteil, nur None.
+    share = figures.hit_share_of_text
+    assert share is not None
+    assert share == pytest.approx(figures.documents_hit / figures.documents_with_text)
+    assert share > figures.documents_hit / figures.documents  # der kleinere Nenner
+    from dataclasses import replace as _replace
+
+    assert _replace(figures, documents_with_text=0).hit_share_of_text is None
 
 
 def test_the_citywide_section_names_the_threshold_and_its_terms(

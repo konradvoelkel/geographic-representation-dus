@@ -4,6 +4,17 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Der Städtevergleich sagt, aus wie vielen Dokumenten überhaupt Text zu holen war** (Spalte
+  „davon mit Text" plus ein Satz im Abschnitt „Vergleichbarkeit", Review-Befund 1): die Tabelle
+  stellte 2 895 Mönchengladbacher Dokumente neben 19 108 Düsseldorfer, während nur 650 davon Text
+  haben, und vier Dokumente behaupteten, die Seite sage das — sie tat es nicht. Dazu bezieht die
+  Kachel „Dokumente mit Treffer" jeder Stadtseite den Anteil zusätzlich auf die Dokumente **mit
+  Text** (Mönchengladbach 489 von 650 = 75,2 % statt nur 16,9 % aller 2 895); wo jedes Dokument
+  Text hat, bleibt die zweite Zahl weg, weil sie dieselbe wäre.
+- **Eine Periodenunterseite hat einen Rückweg**: ihr Kopf trägt „Zur Hauptperiode <Stadt>" als
+  relativen Link `../` (Review-Befund 9). Er entsteht genau dort, wo `profile != base_profile`
+  ist, also wo `publish` und `pages.yml` die Seite eine Ebene tiefer legen.
+
 - **Die Bezirksvertretungen der Nummernform vor 2019 werden erkannt** (`[bodies.aliases]` im
   Stadtprofil, `docs/decisions.md`, Punkt 57): in der Wahlperiode 2014 bis 2020 heißt eine
   Drucksache bis 2019 `<Amtsnummer>/ <Nummer>/<Jahr>` (`61/ 12/2014`) und trug darum kein Gremium.

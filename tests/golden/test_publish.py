@@ -269,6 +269,15 @@ def test_the_comparison_names_the_numbers_of_both_cities(
         assert str(summary["figures"]["districts"]) in page
     # Hinweise zur Vergleichbarkeit stehen auf der Seite, nicht im Kopf des Lesers
     assert "Vergleichbarkeit" in page and "Wahlberechtigte je Wahlbezirk" in page
+    # Review 2026-10-14: die Seite sagt selbst, aus wie vielen Dokumenten Text zu holen war --
+    # vorher behaupteten vier Dokumente, sie täte es, und sie tat es nicht.
+    assert "davon mit Text" in page and "nicht jedes Dokument ist durchsuchbar" in page
+    for folder in (site, site / "moenchengladbach"):
+        figures = json.loads((folder / "data" / "summary.json").read_text(encoding="utf-8"))[
+            "figures"
+        ]
+        assert str(figures["documents_with_text"]) in page
+        assert f"von {figures['documents']}" in page
 
 
 def test_the_comparison_is_a_table_with_one_row_per_city(
