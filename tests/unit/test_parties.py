@@ -78,6 +78,47 @@ def test_administration_and_citizen_input_come_from_the_paper_type(patterns: Pat
     ) == ("Verwaltung", (), "paper_type")
 
 
+# Eine Dokumentart, die nur die Klasse nennt: Mönchengladbachs „3 - Fraktionsantrag" (581
+# Dokumente) und „6.1 - Mitgliederantrag" (36). Die Partei steht dann im Titel oder im Briefkopf.
+BY_TYPE = Originators(
+    admin_types=["1.1 - Beratungsvorlage"],
+    fraction_types=["3 - Fraktionsantrag"],
+    person_types=["6.1 - Mitgliederantrag"],
+    parties=[
+        {"key": "SPD", "label": "SPD", "patterns": [r"\bspd\b"]},  # type: ignore[list-item]
+        {"key": "GRUENE", "label": "Grüne", "patterns": ["grüne"]},  # type: ignore[list-item]
+    ],
+    fraction_markers=["fraktion"],
+)
+
+
+def test_a_paper_type_can_name_the_class_without_naming_the_party() -> None:
+    by_type = Patterns.from_settings(BY_TYPE)
+    # Der Titel nennt die Fraktionen
+    assert _classify(
+        by_type,
+        paper_type="3 - Fraktionsantrag",
+        name="Antrag der SPD und der Grünen",
+    ) == ("Fraktion", ("SPD", "GRUENE"), "name")
+    # Nur der Briefkopf nennt sie, und zwar jenseits eines Fensters um einen Marker
+    assert _classify(
+        by_type,
+        paper_type="3 - Fraktionsantrag",
+        name="Eichhörnchenseil über die Peter-Krall-Straße",
+        text="spd-ratsfraktion mönchengladbach " + "x" * 300 + " brucknerallee 126",
+    ) == ("Fraktion", ("SPD",), "text")
+    # Keine der beiden nennt eine: die Klasse bleibt, die Partei bleibt leer
+    assert _classify(
+        by_type, paper_type="3 - Fraktionsantrag", name="Nutzungsvertrag Alte Schule Wanlo"
+    ) == ("Fraktion", (), "paper_type")
+    # Der Antrag eines einzelnen Mitglieds ist eine Person, auch wenn der Titel eine Partei nennt
+    assert _classify(
+        by_type, paper_type="6.1 - Mitgliederantrag", name="Antrag der SPD-Fraktion"
+    ) == ("Person", (), "paper_type")
+    # Und die Verwaltung bleibt Verwaltung
+    assert _classify(by_type, paper_type="1.1 - Beratungsvorlage")[0] == "Verwaltung"
+
+
 def test_the_paper_type_names_the_fraction(patterns: Patterns) -> None:
     assert _classify(patterns, paper_type="Anfrage SPD") == ("Fraktion", ("SPD",), "paper_type")
     assert _classify(patterns, paper_type="Antrag CDU/Grüne") == (

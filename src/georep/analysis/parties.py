@@ -15,8 +15,15 @@ stattdessen in drei vorhandenen Feldern, und genau in dieser Reihenfolge wird ge
 
 Die erste Quelle mit Parteitreffer gewinnt, die anderen werden nicht mehr befragt. ``urheber_art``
 ist eine Partition (genau eine Klasse je Dokument), ``parteien`` eine sortierte Menge von
-Settings-Schlüsseln, bei Nicht-Fraktionen leer. Alle Muster stehen in ``defaults.toml`` unter
-``[originators]``, nichts davon im Code (Vorbereitung für Option 10).
+Settings-Schlüsseln, bei Nicht-Fraktionen leer.
+
+Eine Dokumentart kann auch nur die **Klasse** nennen und den Urheber verschweigen
+(``originators.fraction_types`` und ``person_types``, Mönchengladbachs ``3 - Fraktionsantrag`` und
+``6.1 - Mitgliederantrag``). Dann steht die Klasse fest, und die Partei wird im Titel und im ganzen
+Textkopf gesucht statt in einem Fenster.
+
+Alle Muster und Dokumentarten stehen im Stadtprofil unter ``[originators]``, nichts davon im Code
+(Option 10: eine zweite Kommune bringt andere ``paperType``-Werte mit).
 """
 
 from __future__ import annotations
@@ -88,6 +95,8 @@ class Patterns:
 
     admin_types: frozenset[str]
     citizen_types: frozenset[str]
+    fraction_types: frozenset[str]  # die Dokumentart ist die Klasse; die Partei steht anderswo
+    person_types: frozenset[str]  # dito für einzelne Mandatsträger
     motion_prefixes: tuple[str, ...]  # längste zuerst, damit „Haushaltsantrag" vor „Antrag" greift
     fraction: re.Pattern[str] | None
     joint: re.Pattern[str] | None
@@ -111,6 +120,8 @@ class Patterns:
         return cls(
             admin_types=frozenset(originators.admin_types),
             citizen_types=frozenset(originators.citizen_types),
+            fraction_types=frozenset(originators.fraction_types),
+            person_types=frozenset(originators.person_types),
             motion_prefixes=tuple(
                 sorted((p.lower() for p in originators.motion_prefixes), key=len, reverse=True)
             ),
@@ -285,6 +296,10 @@ def classify_document(
         return Classification("Verwaltung", (), "paper_type", typ)
     if typ in patterns.citizen_types:
         return Classification("Eingabe", (), "paper_type", typ)
+    if typ in patterns.fraction_types:
+        return _fraction_from_type(typ, name, text_head, patterns)
+    if typ in patterns.person_types:
+        return Classification("Person", (), "paper_type", typ)
     rest = _without_prefix(typ.lower(), patterns.motion_prefixes)
     if rest:
         keys, hit = _parties_in(rest, patterns)
@@ -328,6 +343,28 @@ def classify_document(
     if keys:
         return Classification("Fraktion", keys, "name", hit)
     return Classification("unbekannt", (), "", "")
+
+
+def _fraction_from_type(
+    typ: str, name: str | None, text_head: str, patterns: Patterns
+) -> Classification:
+    """Die Dokumentart sagt „Fraktion"; die Partei steht im Titel oder im Textkopf.
+
+    Eine Stadt kann die Klasse in der Dokumentart führen und die Fraktion nicht (Mönchengladbach:
+    ``3 - Fraktionsantrag``). Dann steht die Klasse fest, und gesucht wird nur noch die Partei:
+    zuerst im Titel („Fraktionsantrag von DIE LINKE und DIE FRAKTION"), dann im **ganzen**
+    Textkopf, nicht in einem Fenster um einen Marker — bei einer Dokumentart, die den Urheber
+    schon benennt, ist der Kopf der Briefkopf des Antragstellers und keine Fundstelle in einem
+    fremden Text. Nennt keine der beiden Quellen eine Partei, bleibt es bei der Klasse: eine
+    Fraktion ohne nennbare Partei, wie ein interfraktioneller Antrag.
+    """
+    keys, hit = _parties_in((name or "").lower(), patterns)
+    if keys:
+        return Classification("Fraktion", keys, "name", hit)
+    keys, hit = _parties_in(text_head[: patterns.head_chars], patterns)
+    if keys:
+        return Classification("Fraktion", keys, "text", hit)
+    return Classification("Fraktion", (), "paper_type", typ)
 
 
 def _parties_in_bracket(title: str, patterns: Patterns) -> tuple[tuple[str, ...], str]:

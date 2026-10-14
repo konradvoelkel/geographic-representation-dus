@@ -953,6 +953,10 @@ class Originators(_Strict):
 
     admin_types: list[str] = []  # paperType-Werte der Verwaltung: Vorlagen ohne Urheber im Typ
     citizen_types: list[str] = []  # Eingaben nach § 24 GO NRW: Bürgeranträge
+    # Dokumentarten, die die Klasse nennen, aber nicht den Urheber („3 - Fraktionsantrag"): die
+    # Klasse steht damit fest, die Partei kommt aus Titel oder Textkopf (oder bleibt leer).
+    fraction_types: list[str] = []
+    person_types: list[str] = []  # dito für einzelne Mandatsträger („6.1 - Mitgliederantrag")
     motion_prefixes: list[str] = []  # „Antrag", „Anfrage": davor steht die Art, danach die Partei
     fraction_markers: list[str] = []  # erst mit einem dieser Marker wird der Titel befragt
     joint_markers: list[str] = []  # „interfraktionell": Fraktion ohne nennbare Partei
