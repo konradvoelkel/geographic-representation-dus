@@ -345,7 +345,7 @@ so ein Gremium, das weder ihre Nummer noch ihre Folge eindeutig nennt.
   mit 96 KB daneben). Siebzehn Abschnitte in
   Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung, perioden,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads,
-  laufend). Die Unterseiten: `2014-2020/` 820 128, `2025/` 718 264, `moenchengladbach/` 649 716,
+  laufend). Die Unterseiten: `2014-2020/` 820 128, `2025/` 718 264, `moenchengladbach/` 649 721,
   `vergleich.html` 89 597 Bytes (alle am 2026-10-14 nach dem Review zu Punkt 58 gemessen;
   Mönchengladbach wuchs um 8 056 Byte, weil seine Gremientabelle jetzt 27 Zeilen hat statt einer,
   und schrumpfte wieder um 1 294, als die Themen ihre Ausschussnamen verloren).
