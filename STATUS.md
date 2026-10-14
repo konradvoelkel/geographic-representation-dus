@@ -445,6 +445,33 @@ nichts."
 - **Mit Lukas zu klären bleibt die Spalte trotzdem**, zusammen mit der Abweichung aus
   `docs/baseline-2026-10-10.md` (siehe „Bekannt").
 
+## Was das Review der Punkte 59 bis 61 geändert hat (2026-10-14)
+
+Die Punkte 62 bis 65 sind die Befunde des Reviews; je ein Abschnitt in `docs/decisions.md`.
+
+- **Punkt 62, der Briefkopf vor der Dokumentart**: 47 Fraktionsanträge der alten Periode lagen
+  unter `Verwaltungsvorlage`; Verwaltung 10 622 → 10 575, Fraktion 8 768 → 8 815.
+- **Punkt 63, die letzte `hier:`-Klausel des Titels**: drei Mönchengladbacher Dokumente trugen die
+  Partei des zitierten Antrags; Fraktionen mit Partei 242 → 239 von 581.
+- **Punkt 64, `\bdie fraktion\b`**: ein Antrag der Zentrumspartei galt als Antrag der Gruppe Die
+  FRAKTION, weil das Muster „die Fraktionsvorsitzende" traf.
+- **Zwei Verträge mehr in den Settings**: eine Dokumentart darf in höchstens einer der vier Listen
+  stehen (sonst entschiede die Reihenfolge im Code, welche Klasse gewinnt), und die
+  Eigenschaftstests der Zuordnung laufen über **beide** Konfigurationsformen — Düsseldorf mit
+  Antragspräfix, Titel und Textkopf, Mönchengladbach mit `fraction_types` und `title_split_markers`.
+- **Die Zahlen Mönchengladbachs sind eingefroren** wie die der alten Periode
+  (`tests/golden/test_parties_numbers.py`, `slow`): Klassen, Quellen, Dokumente je Partei, die 239
+  mit Partei und die Zerlegung der 342 ohne.
+- **Das Themenmodell der Stadt rechnet mit den neuen Stoppwörtern**, und das ist die Absicht:
+  `[originators]` bringt über `topics.stop_sources` 13 Wörter in die Liste (cdu, spd, fdp, afd,
+  grüne, grünen, gruene, bündnis, linke, partei, volt, fraktion, die). Gemessen am 2026-10-14
+  ändern sich dadurch **19 der 20 Themenzeilen** — meist nur ihre Nummer, inhaltlich fallen die
+  **zwei Briefkopf-Themen** weg („spd, bündnis, grünen, fdp, fraktion, ratsfraktion" und „cdu,
+  ratsfraktion, email, meyers, regentenstr, franz"), und ein Sachthema kommt dafür („auswirkung,
+  nrw, abs, finanzielle, nordrhein, hauptausschuss"). Dasselbe hat Punkt 45a in Düsseldorf getan.
+  **`stop_keep` braucht die Stadt nicht**: keines der 13 Wörter steht in den 190
+  Beschriftungswörtern der Seite als Sachwort, anders als „klima" und „tierschutz" in Düsseldorf.
+
 ## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56, 58, 59, 60 und 61)
 
 - Tests: 1186 schnelle (nox-Gate, parallel in rund 58 s, Abdeckung 98,5 %), 36 `slow` (rund 4 min über die

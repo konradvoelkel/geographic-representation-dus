@@ -544,6 +544,29 @@ def test_doubled_party_keys_and_broken_patterns_are_rejected(tmp_path: Path) -> 
         load_settings(cwd=tmp_path)
 
 
+def test_a_paper_type_may_stand_in_only_one_of_the_four_lists(tmp_path: Path) -> None:
+    """Review 2026-10-14: sonst entschiede die Reihenfolge im Code, welche Klasse gewinnt."""
+    (tmp_path / "settings.toml").write_text(
+        "[originators]\n"
+        'admin_types = ["Berichtsvorlage", "Antrag X"]\n'
+        'fraction_types = ["Antrag X"]\n',
+        encoding="utf-8",
+    )
+    with pytest.raises(ValidationError, match="Dokumentart in mehr als einer Liste"):
+        load_settings(cwd=tmp_path)
+    # Dieselbe Art in derselben Liste zweimal ist keine Doppeldeutigkeit, nur Redundanz
+    (tmp_path / "settings.toml").write_text(
+        '[originators]\nadmin_types = ["Berichtsvorlage", "Berichtsvorlage"]\n', encoding="utf-8"
+    )
+    assert load_settings(cwd=tmp_path).originators.admin_types == [
+        "Berichtsvorlage",
+        "Berichtsvorlage",
+    ]
+    # Und die fünf Paketprofile sind sauber
+    for profile in ("duesseldorf", "duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
+        load_settings(profile=profile, cwd=Path("/nonexistent"))
+
+
 def test_a_changed_pattern_changes_the_fingerprint(tmp_path: Path) -> None:
     """Die Muster bestimmen das Ergebnis, also zählen sie zum Fingerprint; der Pfad nicht."""
     base = load_settings(cwd=Path("/nonexistent")).fingerprint()

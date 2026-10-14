@@ -394,3 +394,76 @@ def test_the_older_form_leaves_the_other_two_periods_byte_identical(
     # Und die beiden Dokumentarten der alten Periode kommen hier nicht vor
     types = set(corpus.get_column("paper_type").unique().to_list())
     assert PERIOD_ADMIN_TYPE not in types and PERIOD_CITIZEN_TYPE not in types
+
+
+# --- Punkt 59, 63 und 64: die Urheber Mönchengladbachs über ihr Paket --------------------------
+#
+# Dieselbe Art Golden Master wie PERIOD_BEFORE/PERIOD_AFTER oben, nur für die zweite Stadt: dort
+# entscheidet die **Dokumentart** die Klasse, und die Partei steht im Titel oder im Briefkopf. Die
+# Zahlen sind am 2026-10-14 gemessen und eingefroren (Review-Befund 6); ändert eine Liste oder ein
+# Muster sie, ist das eine Entscheidung.
+CITY_PACKAGE = Path(__file__).resolve().parents[2] / "reference" / "moenchengladbach"
+CITY_DOCUMENTS = 2_895
+CITY_CLASSES = {
+    "Verwaltung": 2_278,  # 14 Dokumentarten der Verwaltung und ihrer Betriebe
+    "Fraktion": 581,  # „3 - Fraktionsantrag"
+    "Person": 36,  # „6.1 - Mitgliederantrag"
+    "Eingabe": 0,  # diese Stadt führt keine Eingabe-Dokumentart
+    "unbekannt": 0,  # alle 16 Dokumentarten sind zugeordnet
+}
+CITY_SOURCES = {"paper_type": 2_656, "name": 142, "text": 97}
+CITY_PARTIES_NAMED = 239  # von den 581 Fraktionsanträgen
+CITY_PER_PARTY = {"CDU": 107, "SPD": 79, "GRUENE": 82, "FDP": 78, "Die_Linke": 34, "AfD": 5}
+
+
+@pytest.fixture(scope="module")
+def city_corpus(tmp_path_factory: pytest.TempPathFactory) -> pl.DataFrame:
+    """Der Korpus des Pakets der zweiten Stadt, wie ``bootstrap`` ihn aufbaut."""
+    root = tmp_path_factory.mktemp("parties_city")
+    layout = Layout(root / "data", root / "cache", CITY_PACKAGE)
+    layout.ensure_dirs()
+    seed_stores_from_native(layout, layout.reference_view())
+    found = build_corpus(PaperStore(layout.papers).load().values(), TextStore(layout.texts))
+    assert found.height == CITY_DOCUMENTS
+    return found
+
+
+def test_the_document_type_decides_every_class_of_the_second_city(
+    city_corpus: pl.DataFrame,
+) -> None:
+    """Alle 16 Dokumentarten sind zugeordnet, „Urheber unbekannt" ist 0,0 %.
+
+    Die Partei bleibt die offene Zahl: 239 der 581 Fraktionsanträge nennen eine, 314 der übrigen
+    tragen gar keinen Text und 28 einen Briefkopf ohne Namen.
+    """
+    settings = load_settings(profile="moenchengladbach", cwd=Path("/nonexistent"))
+    originators = settings.originators
+    found = classify_originators(city_corpus, originators)
+    assert originator_figures(found) == CITY_CLASSES
+    assert dict(found.group_by(QUELLE).len().iter_rows()) == CITY_SOURCES
+    assert documents_per_party(found, originators.parties) == CITY_PER_PARTY
+
+    # Jede Dokumentart des Pakets steht in genau einer der vier Listen
+    patterns = Patterns.from_settings(originators)
+    types = set(city_corpus.get_column("paper_type").unique().to_list())
+    assert len(types) == 16
+    assert types <= (
+        patterns.admin_types
+        | patterns.citizen_types
+        | patterns.fraction_types
+        | patterns.person_types
+    )
+
+    motions = city_corpus.select("id", "text").join(
+        found.filter(pl.col(ART) == "Fraktion"), on="id"
+    )
+    assert motions.height == CITY_CLASSES["Fraktion"]
+    named = motions.filter(pl.col(PARTEIEN).list.len() > 0)
+    assert named.height == CITY_PARTIES_NAMED
+    rest = motions.filter(pl.col(PARTEIEN).list.len() == 0)
+    without_text = rest.filter(pl.col("text").str.len_chars() == 0)
+    assert (without_text.height, rest.height - without_text.height) == (314, 28)
+    # Und umgekehrt: 390 Fraktionsanträge haben keinen Text, 76 davon nennen die Partei im Titel
+    no_text = motions.filter(pl.col("text").str.len_chars() == 0)
+    assert no_text.height == 390
+    assert no_text.filter(pl.col(PARTEIEN).list.len() > 0).height == 76

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import polars as pl
 import pytest
 from hypothesis import given
@@ -21,7 +23,7 @@ from georep.analysis.parties import (
     originators_by_district,
     party_hits,
 )
-from georep.settings import Originators, Settings
+from georep.settings import Originators, Settings, load_settings
 
 # Bausteine, aus denen echte Titel und Typen bestehen: Antragsarten, Parteinamen, Rauschen.
 WORDS = (
@@ -38,6 +40,11 @@ WORDS = (
     "grüne",
     "bündnis 90",
     "tierschutz",
+    # Review 2026-10-14: die Formen, mit denen Mönchengladbach arbeitet
+    "3 - fraktionsantrag",
+    "6.1 - mitgliederantrag",
+    "1.1 - beratungsvorlage",
+    "hier:",
     "die partei",
     "volt",
     "fraktion",
@@ -56,9 +63,17 @@ WORDS = (
 phrases = st.lists(st.sampled_from(WORDS), max_size=8).map(" ".join)
 
 
-@pytest.fixture(scope="module")
-def originators(default_settings: Settings) -> Originators:
-    return default_settings.originators
+# Review 2026-10-14: die Eigenschaften müssen für **beide** Konfigurationsformen gelten. Düsseldorf
+# leitet die Klasse aus Antragspräfix, Titel und Textkopf ab und bringt einen Briefkopfmarker mit;
+# Mönchengladbach entscheidet sie allein aus der Dokumentart (``fraction_types``, ``person_types``)
+# und schneidet den Titel an seinem Bezugsmarker. Beide Profile liegen im Paket, also sind es die
+# echten Regelsätze und keine erfundenen.
+PROFILES = ("duesseldorf", "moenchengladbach")
+
+
+@pytest.fixture(scope="module", params=PROFILES)
+def originators(request: pytest.FixtureRequest) -> Originators:
+    return load_settings(profile=str(request.param), cwd=Path("/nonexistent")).originators
 
 
 @pytest.fixture(scope="module")

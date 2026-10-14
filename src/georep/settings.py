@@ -1006,6 +1006,32 @@ class Originators(_Strict):
             raise ValueError(f"originators: doppelte Parteischlüssel {doubled}")
         return self
 
+    @model_validator(mode="after")
+    def _each_paper_type_decides_one_class(self) -> Originators:
+        """Eine Dokumentart steht in höchstens einer der vier Listen (Review 2026-10-14).
+
+        Sonst entschiede die Reihenfolge in ``classify_document``, welche Klasse gewinnt, und die
+        Settings sähen aus, als wäre beides gemeint. Ein Tippfehler in einer langen Liste -- die
+        Mönchengladbacher hat 14 Zeilen -- fällt damit beim Laden auf und nicht erst in einer Zahl.
+        """
+        lists = {
+            "admin_types": self.admin_types,
+            "citizen_types": self.citizen_types,
+            "fraction_types": self.fraction_types,
+            "person_types": self.person_types,
+        }
+        where: dict[str, set[str]] = {}
+        for field, types in lists.items():
+            for typ in set(types):  # dieselbe Art zweimal in derselben Liste ist nur Redundanz
+                where.setdefault(typ, set()).add(field)
+        doubled = {typ: names for typ, names in where.items() if len(names) > 1}
+        if doubled:
+            found = ", ".join(
+                f"{typ!r} in {sorted(names)}" for typ, names in sorted(doubled.items())
+            )
+            raise ValueError(f"originators: Dokumentart in mehr als einer Liste ({found})")
+        return self
+
     @property
     def all_keys(self) -> tuple[str, ...]:
         """Alle Schlüssel, Parteien vor Gruppen; die Reihenfolge der Settings bleibt erhalten."""
