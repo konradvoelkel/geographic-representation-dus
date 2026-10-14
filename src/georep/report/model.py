@@ -244,8 +244,15 @@ class BodyRow:
 
     @property
     def label(self) -> str:
-        """Was die Seite zeigt: der Name, sonst das Kürzel (Entscheidung 9)."""
-        return self.name or self.code or "ohne Drucksachennummer"
+        """Was die Seite zeigt: der Name, sonst das Kürzel (Entscheidung 9).
+
+        Die Zeile ohne Kürzel sammelt die Dokumente, deren Gremium keine Quelle nennt -- bis
+        Punkt 58 hieß sie „ohne Drucksachennummer", und das war schon in der Periode 2014 bis 2020
+        falsch (die Amtsnummern **sind** Drucksachennummern) und in Mönchengladbach erst recht:
+        dort hat jedes Dokument eine Nummer, und 1 275 haben eine Beratungsfolge mit mehreren
+        Gremien. Die Zeile sagt jetzt, was sie ist.
+        """
+        return self.name or self.code or "ohne erkanntes Gremium"
 
 
 @dataclass(frozen=True)
@@ -1022,7 +1029,9 @@ def body_figures(
         by_kind=by_kind,
         unknown_share=per_kind[prep_bodies.UNKNOWN] / documents if documents else 0.0,
         bodies=len(rows),
-        without_name=sum(1 for r in rows if not r.name),
+        # Nur Zeilen mit Kürzel: die Zeile ohne eines hat keinen Namen, weil sie kein Gremium
+        # ist, und „n Kürzel ohne gesicherten Namen" hätte sie mitgezählt (Punkt 58).
+        without_name=sum(1 for r in rows if r.code and not r.name),
         hits=sum(d.hits for d in districts),
         own_hits=own,
         names_as_of=settings.names_as_of,

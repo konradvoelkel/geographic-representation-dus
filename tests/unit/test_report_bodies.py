@@ -341,3 +341,36 @@ def test_the_section_names_both_sources_with_their_shares(built: str) -> None:
     assert "0 Dokumente (0,0 %) bekommen ihr Gremium so" in plain
     assert "Wo beide Quellen etwas sagen, bleibt die Nummer" in plain
     assert "sie stimmen in 156 Fällen überein und widersprechen sich in 2" in plain
+
+
+def test_the_row_without_a_code_says_what_it_is(default_settings: Settings) -> None:
+    """Punkt 58: die Sammelzeile heißt „ohne erkanntes Gremium", nicht „ohne Drucksachennummer".
+
+    Sie zählt die Dokumente, für die keine Quelle ein Gremium nennt. In Mönchengladbach haben
+    alle davon eine Drucksachennummer **und** eine Beratungsfolge -- die Folge nennt nur mehrere
+    Gremien. Und sie ist kein Kürzel ohne Namen: in der Zahl darunter zählt sie nicht mit.
+    """
+    frame = pl.DataFrame(
+        {
+            prep_bodies.BODY: ["", "OVA"],
+            prep_bodies.KIND: [prep_bodies.UNKNOWN, prep_bodies.COMMITTEE],
+            prep_bodies.CITY_DISTRICT: [None, None],
+            analysis_bodies.DOCUMENTS: [1275, 10],
+            analysis_bodies.WITH_HITS: [0, 5],
+            analysis_bodies.LOCAL_SHARE: [None, None],
+        },
+        schema={
+            prep_bodies.BODY: pl.String,
+            prep_bodies.KIND: pl.String,
+            prep_bodies.CITY_DISTRICT: pl.Int64,
+            analysis_bodies.DOCUMENTS: pl.Int64,
+            analysis_bodies.WITH_HITS: pl.Int64,
+            analysis_bodies.LOCAL_SHARE: pl.Float64,
+        },
+    )
+    rows = body_rows(frame, default_settings.bodies)
+    labels = {row.code: row.label for row in rows}
+    assert labels[""] == "ohne erkanntes Gremium"
+    assert labels["OVA"] == "Ordnungs- und Verkehrsausschuss"
+    # Ein Kürzel ohne gesicherten Namen zählt, die Zeile ohne Kürzel nicht
+    assert body_figures(rows, (), default_settings.bodies).without_name == 0
