@@ -870,3 +870,22 @@ def test_a_result_that_is_no_object_is_refused(tmp_path: Path) -> None:
     path.write_text(json.dumps({"results": [1]}), encoding="utf-8")
     with pytest.raises(SchemaError, match="results\\[0\\] ist kein Objekt"):
         read_source_esri_identify(path)
+
+
+def test_every_source_form_says_which_keys_belong_to_it() -> None:
+    """Befund 18: eine vierte Quellform ohne Eintrag in ``PRECINCT_FORM_KEYS`` wäre ein KeyError.
+
+    Der Validator liest die Form als Schlüssel; die beiden Listen müssen darum deckungsgleich
+    sein. Und ``PRECINCT_FORM_ONLY_KEYS`` ist die Vereinigung aller Formen -- stünde ein Schlüssel
+    nur in einer Form und nicht dort, prüfte ihn niemand.
+    """
+    from typing import get_args
+
+    from georep.settings import PRECINCT_FORM_KEYS, PRECINCT_FORM_ONLY_KEYS
+
+    forms = get_args(Precincts.model_fields["format"].annotation)
+    assert set(forms) == {"geojson", "shapefile-zip", "esri-identify"}
+    assert set(PRECINCT_FORM_KEYS) == set(forms)
+    assert PRECINCT_FORM_ONLY_KEYS == frozenset().union(*PRECINCT_FORM_KEYS.values())
+    # Jeder genannte Schlüssel ist ein Feld des Modells, kein Tippfehler
+    assert PRECINCT_FORM_ONLY_KEYS <= set(Precincts.model_fields)
