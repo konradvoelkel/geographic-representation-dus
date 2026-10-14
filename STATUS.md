@@ -508,6 +508,16 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 
 ## Nächster Schritt
 
+**Zuerst zu lesen: der Befundbericht zu den vier Netzläufen** (`docs/befunde-2026-10-14.md`, 2026-10-14).
+Er sagt, was die Daten zeigen — die zwei Wahlperioden (Spearman der Trefferquoten 0,8106; die Regression
+der Differenzen r = 0,1008, p = 0,53045; Tabelle 5 der alten Periode ohne 1 und 10 **p = 0,08211**, also
+nicht signifikant), die zwei Städte, die laufende Periode (die ersten 13 Monate gleichen denen der
+Hauptperiode), die **Beratungsfolge** aus dem Vollabruf (18 708 von 19 109 Dokumenten, 98,9 % Deckung mit
+dem Gremium der Drucksachennummer; dieselbe Abbildung löst 7 010 der 7 365 unbekannten Gremien der alten
+Periode auf) und die Datenqualität über alle vier Läufe. Sein § 6 nennt fünf Punkte, die Konrad
+entscheiden könnte; sein § 4 den einen Vorschlag für den nächsten Schritt. Nachrechnen:
+`uv run python docs/befunde-2026-10-14-messung.py`.
+
 **Zwei Fremdzeilen-Bestände in Konrads Textstores** (Review-Befund 6, 2026-10-14): die Stores auf xtraspace
 tragen noch, was beim Packen herausgefallen ist — `cache/moenchengladbach/text/texts.parquet` 663 Zeilen,
 davon 5 mit `source = "stichprobe"`, und `cache/2014-2020/text/texts.parquet` 22 216, davon 100 mit

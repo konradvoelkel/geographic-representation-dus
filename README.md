@@ -316,6 +316,11 @@ Datensatz der Arbeit), `reference/moenchengladbach/` (3,8 MiB), `snapshots/2014-
 Datei; `tests/unit/test_data_packages.py` hält diese Angaben gegen die Dateien und lässt keine PDFs, Stamps
 oder Caches hinein. Die PDFs selbst liegen in **keinem** Paket, nur die Texte daraus.
 
+**Was die Daten dieser vier Netzläufe zeigen**, steht mit Zahlen, Deutung und Grenze in
+[docs/befunde-2026-10-14.md](docs/befunde-2026-10-14.md) (zwei Wahlperioden, zwei Städte, die laufende
+Periode, die Beratungsfolge aus dem Vollabruf der Metadaten, Datenqualität); jede Zahl dort rechnet
+`uv run python docs/befunde-2026-10-14-messung.py` aus den Parquet-Dateien und `summary.json` nach.
+
 `reference/`, `snapshots/` und `context/` werden nur gelesen; Läufe schreiben nach `data_root/<profil>/`
 (Standard `./data/duesseldorf`), Caches nach `cache_root/<profil>/` (Standard `data/cache/duesseldorf`), nur
 `http.sqlite` liegt geteilt in `cache_root`. Abgeleitete Daten sind Parquet; `georep export` legt CSV daneben,
