@@ -342,6 +342,15 @@ will, trainiert auf dem Text **ohne** Beratungsfolge (der Marker `betrifft` schn
 ab, nicht den Fuß) — das ist ein eigener Punkt und braucht einen Blick in die PDFs, nicht nur
 eine Stoppwortliste.
 
+**Nachtrag 2026-10-14:** das Label, das dieser Absatz vermisst, liegt seit Punkt 58 vor. Die
+Beratungsfolge steht jetzt als Angabe **neben** dem Text in `papers_gremien.parquet`
+(`folge_gremium`, `folge_anzahl`), nicht nur in ihm: für 17 047 Dokumente der Hauptperiode nennt
+sie genau ein Gremium, und die Tabelle sagt je Dokument, ob das Gremium aus der Nummer oder aus
+der Folge kommt. Ein Klassifikator, der darauf trainiert und bewertet wird, misst die
+Zuordenbarkeit an einem Ziel, das nicht aus dem Volltext stammt — die Untergrenze von § 4.4
+könnte damit eine Schätzung werden. Umgebaut ist hier nichts; der Zielwert des Schritts
+`committees` bleibt das Kürzel der Drucksachennummer.
+
 ### 4.4 Konrads Frage: lässt sich jedes Schriftstück einem Ausschuss zuordnen?
 
 **Nein — für ein knappes Drittel sicher, für den Rest nicht.** Mit der Vorgabe (Schwelle 0,4)

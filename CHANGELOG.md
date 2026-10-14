@@ -2,6 +2,41 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## Unreleased
+
+- **Die Beratungsfolge ist die zweite Quelle des Gremiums** (`docs/decisions.md`, Punkt 58): neben
+  der Drucksachennummer entscheidet jetzt, wo die nichts sagt, die Liste der Gremien, die ein
+  Dokument beraten haben (OParl `consultation`). Sie entscheidet nur, wenn sie **genau eines**
+  nennt; nennt sie mehrere, bleibt das Dokument sichtbar „unbekannt", denn die Reihenfolge der
+  Beratung steht nicht in den Daten und die beste von fünf Auswahlregeln trifft nur 59,9 %
+  (gemessen 2026-10-14). „Gremium unbekannt" fällt damit in der Wahlperiode 2014 bis 2020 von
+  7 365 (33,2 %) auf **1 866 (8,4 %)** und in Mönchengladbach von 2 895 (100 %) auf **1 275
+  (44,0 %)**; in der Hauptperiode bleibt es 0, und die Folge bestätigt dort 16 903 Zuordnungen und
+  widerspricht 146. Der Abschnitt „Gremien" nennt die Anteile beider Quellen in einem Satz.
+- **`georep learn-bodies`** lernt die Abbildung Organisation → Gremiumskürzel aus den Daten: aus
+  den Dokumenten, deren Beratungsfolge genau eine Organisation nennt und deren Nummer ein Kürzel
+  trägt. Der Befehl druckt den Katalog je Organisation (mit Namen und Klassifikation aus
+  `raw/organizations.json`, wo sie vorliegt), den fertigen TOML-Block für das Profil und die
+  Gegenprobe mit der Tabelle, die das Profil heute trägt; geschrieben wird nichts. Für Düsseldorf
+  sind es 35 Organisationen mit einer Reinheit von 99,1 %, und die Rechnung auf den beiden anderen
+  Perioden widerspricht in keiner gemeinsamen Zeile.
+- **`georep pack --consultations ZIEL`** schreibt ein kleines Paket mit nur der Beratungsfolge je
+  Dokument. Die Hauptperiode Düsseldorfs braucht es, weil ihr Korpus aus dem Altformat der Arbeit
+  kommt und die Folge nicht trägt: `snapshots/duesseldorf-beratungsfolge/` (90 455 Bytes aus dem
+  Vollabruf vom 2026-10-14) steht im Repo, das Profil nennt es, und `bootstrap` kopiert es.
+- **Mönchengladbach hat Gremien**: 27 Organisationen mit Namen und Kürzel aus einem Abruf von
+  `organizations` (2026-10-14), vier Bezirksvertretungen mit ihrem Himmelsrichtungsnamen statt
+  einer Nummer (`[bodies.district_body_names]`), 18 Ausschüsse, vier Beiräte. Der
+  Organisationskatalog liegt neu im Paket der Stadt. Das Themenmodell sät dort jetzt acht Themen je
+  Ausschuss; der Ausschuss-Klassifikator bleibt aus, weil nur 650 der 2 895 Dokumente Text tragen.
+- `papers_gremien.parquet` trägt drei Spalten mehr (`quelle`, `folge_gremium`, `folge_anzahl`,
+  Schema-Version 2); der Schritt `bodies` nennt in seiner Zeile, wie viele Zuordnungen die
+  Beratungsfolge ergänzt, bestätigt, widerspricht oder mehrdeutig lässt. Die Zeile „ohne
+  Drucksachennummer" der Gremientabelle heißt jetzt „ohne erkanntes Gremium".
+- Der erste Lauf nach dieser Änderung rechnet alles neu (die neuen Settings-Schlüssel zählen zum
+  Fingerprint), und die Seite braucht ein `georep run report --force`, weil nur die Vorlagen und
+  `[report]` im Stamp des Schritts stehen, nicht der Python-Code.
+
 ## 0.13.0 (2026-10-14), Absicherung, Umzug und die Daten der Netzlaeufe
 
 - Konrads vier Netzläufe vom 2026-10-13 sind gelaufen und liegen als Pakete im Repo: die Periode 2014 bis

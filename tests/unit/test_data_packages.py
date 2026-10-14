@@ -50,14 +50,14 @@ class Package:
 PACKAGES = (
     # 85 771 896 Bytes, eingefroren seit v0.2.0 und ohne README-Tabelle (Golden Master der Arbeit)
     Package("reference", limit=120 * MIB, native=False, readme=False),
-    Package("reference/moenchengladbach", limit=8 * MIB, native=True, readme=True),  # 3 980 958
+    Package("reference/moenchengladbach", limit=8 * MIB, native=True, readme=True),  # 4 405 625
     Package("snapshots/2014-2020", limit=48 * MIB, native=True, readme=True),  # 37 875 851
     Package("snapshots/2025", limit=20 * MIB, native=True, readme=True),  # 13 894 254
     # Punkt 58: nur die Beratungsfolge je Dokument, kein Store und keine Eingabe (90 455 Bytes)
     Package("snapshots/duesseldorf-beratungsfolge", limit=1 * MIB, native=False, readme=True),
     Package("context", limit=4 * MIB, native=False, readme=True),  # 2 242 316
 )
-# Alle zusammen, als zweite grobe Schranke: 143 855 730 Bytes = 137,19 MiB am 2026-10-14 (76 % der
+# Alle zusammen, als zweite grobe Schranke: 144 280 397 Bytes = 137,60 MiB am 2026-10-14 (76 % der
 # Grenze). Ein einziger PDF-Ordner einer
 # Periode (585 MB bis 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB

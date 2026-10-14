@@ -1489,3 +1489,114 @@ Bezirksvertretungen mit einer Nummer ab 1 sind.
 **Zahlen vorher/nachher** auf dem Paket (`tests/golden/test_bodies_reference.py`, `slow`):
 Bezirksvertretung 2 539 → 13 244, Rat 338, Ausschuss 1 193, Beirat 75 unverändert, unbekannt
 18 070 → **7 365** (81,3 % → 33,2 %). Die Hauptperiode bleibt bei 10 999 / 2 301 / 5 360 / 448 / 0.
+
+## 58. Die Beratungsfolge ist die zweite Quelle des Gremiums, und sie entscheidet nur, wenn sie eindeutig ist (2026-10-14)
+
+Punkt 1 der Befunde vom 2026-10-14 (`docs/befunde-2026-10-14.md`, § 4 und § 6): neben der
+Drucksachennummer (Punkt 23) und ihrer älteren Form (Punkt 57) bekommt das Gremium eine zweite
+Quelle, nämlich die Gremien, die ein Dokument **beraten** haben — OParl liefert sie als
+`consultation[].organization`, und der Server füllt sie, während er die Urheberfelder leer lässt
+(0 von 19 109).
+
+**Die Nummer entscheidet, die Folge ergänzt.** Wo die Nummer ein bekanntes Gremium nennt, bleibt
+es dabei, auch wenn die Folge etwas anderes sagt; die Folge wird dann gezählt (bestätigt oder
+Widerspruch) und erscheint als Zahl auf der Seite. Wo die Nummer keines nennt, entscheidet die
+Folge — **und nur dann, wenn sie genau ein Gremium nennt**.
+
+**Dass sie bei mehreren nicht entscheidet, ist gemessen und nicht vorsichtig.**
+`georep.oparl.OparlPaper.consultation_organizations` liest die Liste sortiert und entdoppelt, die
+Reihenfolge der Beratung ist also nicht in den Daten; damit fällt die naheliegende Regel „die erste
+Station" weg. Fünf Regeln, die ohne Reihenfolge auskommen, am 2026-10-14 gegen die Nummer gemessen
+(1 658 Dokumente der Hauptperiode mit Kürzel und mehrdeutiger Folge, 371 der Periode 2014 bis 2020):
+
+| Regel | Hauptperiode | 2014 bis 2020 |
+|---|---|---|
+| die seltenste Organisation | **993 (59,9 %)** | **214 (57,7 %)** |
+| alphabetisch das erste Kürzel | 844 (50,9 %) | 175 (47,2 %) |
+| das seltenste Kürzel | 667 (40,2 %) | 141 (38,0 %) |
+| Klassenvorrang (BV, dann Ausschuss, Beirat, Rat), darin die seltenste | 437 (26,4 %) | 99 (26,7 %) |
+| die häufigste Organisation | 243 (14,7 %) | 75 (20,2 %) |
+
+Bei **eindeutiger** Folge sind es dagegen 16 903 von 17 049 (99,1 %) beziehungsweise 14 420 von
+14 450 (99,8 %). Das Kürzel der Nummer steht in 96,1 % der mehrdeutigen Fälle überhaupt in der
+Menge — die Information ist also da, nur nicht die Stelle. Die beste Regel wäre damit in zwei von
+fünf Fällen ein erfundenes Gremium in genau der Spalte, die die Seite zeigt; der ehrliche Anteil
+„unbekannt" ist das bessere Ergebnis (Punkt 39).
+
+**Die Abbildung Organisation → Kürzel ist gelernt, nicht geraten.** Die Folge nennt URLs
+(`…/organizations/gr/6`), die Nummer nennt Kürzel. Wo eine Folge genau eine Organisation nennt,
+sagt das Kürzel der Nummer, welche das ist; über alle Dokumente einer Periode entsteht daraus eine
+Tabelle mit messbarer Reinheit. `georep learn-bodies` rechnet sie je Stadt, druckt den Katalog (mit
+`shortName`, `classification` und Namen aus `raw/organizations.json`, wenn sie vorliegt), den
+TOML-Block und die Gegenprobe mit der Tabelle, die das Profil **jetzt** trägt — und schreibt
+nichts: die Tabelle kommt von Hand ins Profil, wie die Aliastabelle aus Punkt 57. Für Düsseldorf
+sind es 35 Organisationen aus 17 047 Dokumenten mit einer Reinheit von 16 902/17 047 = **99,1 %**;
+dieselbe Rechnung auf der Periode 2014 bis 2020 (30, 99,8 %) und auf der laufenden (32, 99,3 %)
+widerspricht in **keiner** der 29 beziehungsweise 30 gemeinsamen Zeilen. Die Abbildung ist damit
+eine Eigenschaft der Stadt und steht im Stadtprofil, nicht in einem Periodenprofil.
+
+**Mönchengladbach lebt von dieser Quelle.** Dort trägt keine Drucksachennummer ein Kürzel
+(`0682/XI`), und bis zum 2026-10-14 standen alle 2 895 Dokumente unter „Gremium unbekannt". Alle
+2 895 tragen eine Beratungsfolge, sie nennt 27 Organisationen, und 1 620 (56,0 %) nennen genau
+eine: „unbekannt" fällt auf 1 275 (44,0 %). Die Namen kommen aus einem Abruf von
+`…/bodies/0011/organizations` (eine Seite, 122 Organisationen, 3,8 s); er liegt als
+`raw/organizations.json` im Paket der Stadt, damit die Quelle der Namen im Repo steht. Welche
+Nummer zu welcher Bezirksvertretung gehört, ist ebenfalls gemessen: die Dokumente mit genau einer
+BV in der Folge treffen mehrheitlich Wahlbezirke ihres eigenen Stadtbezirks (Nord 59 % in 1, Ost
+61 % in 2, Süd 52 % in 3, West 56 % in 4 — je die größte Zelle ihrer Zeile und Spalte), und
+`[bodies.district_body_names]` gibt ihnen ihren Namen statt einer Nummer.
+
+**Das Paket.** Der Korpus der Hauptperiode Düsseldorfs kommt aus dem Altformat der Arbeit und trägt
+die Folge nicht; Konrads Vollabruf der Metadaten vom 2026-10-14 (122 Seiten, 36 Minuten) hat sie
+geholt. `georep pack --consultations` schreibt daraus
+`snapshots/duesseldorf-beratungsfolge/raw/beratungsfolge.parquet` (90 455 Bytes, drei Spalten,
+README mit Prüfsummen), das Profil nennt es als `[bodies].consultations`, `bootstrap` kopiert es
+nach `raw/`. **Parquet statt JSONL**, anders als `raw/papers.jsonl`: derselbe Inhalt kostet als
+JSONL 4 467 207 Bytes, also fast fünfzigmal so viel. Jede andere Periode trägt die Folge in ihrem
+eigenen `raw/papers.jsonl` und setzt den Schlüssel wieder leer; bringt ein eingefrorener Datensatz
+eine eigene Datei mit, gilt seine (so hat die Mini-Fixture ihre 200 Zeilen).
+
+**Jede Spalte sagt, woher sie kommt.** `papers_gremien.parquet` bekommt `quelle` (`nummer`,
+`alias`, `beratungsfolge`, `unbekannt`), `folge_gremium` (was die Folge allein sagen würde) und
+`folge_anzahl` (wie viele Gremien sie auflöst), Schema-Version 2. Zustimmung, Widerspruch und
+Mehrdeutigkeit sind damit Abfragen auf der Tabelle und keine Rechnung an einer zweiten Stelle; die
+Nachbedingungen halten die beiden Aussagen zusammen (`quelle = unbekannt` genau bei
+`gremium_art = unbekannt`, `folge_gremium` genau bei `folge_anzahl = 1`). Der Abschnitt „Gremien"
+nennt die Anteile beider Quellen in einem Satz aus diesen Spalten.
+
+**Wirkung** (Läufe vom 2026-10-14, „unbekannt" vorher → nachher):
+
+| Profil | Dokumente | unbekannt vorher | nachher | ergänzt | mehrdeutig | bestätigt | Widerspruch |
+|---|---|---|---|---|---|---|---|
+| `duesseldorf` | 19 108 | 0 (0,0 %) | 0 (0,0 %) | 0 | 0 | 16 903 | 146 |
+| `duesseldorf-2014` | 22 215 | 7 365 (33,2 %) | **1 866 (8,4 %)** | 5 499 | 1 511 | 14 420 | 30 |
+| `duesseldorf-2025` | 4 095 | 55 (1,3 %) | 53 (1,3 %) | 2 | 0 | 3 612 | 26 |
+| `moenchengladbach` | 2 895 | 2 895 (100,0 %) | **1 275 (44,0 %)** | 1 620 | 1 275 | 0 | 0 |
+
+Die Befunde hatten für die alte Periode 1,6 % geschätzt, weil sie die 1 511 mehrdeutigen
+mitzählten; mit der Regel „nur eindeutig" sind es 8,4 %. Das ist der Preis der Entscheidung und
+steht so auf der Seite.
+
+**Verworfen:**
+
+- **Eine Auswahlregel bei mehreren Gremien** (die fünf oben): höchstens 59,9 % Treffer, siehe die
+  Tabelle. Eine Regel, die in zwei von fünf Fällen falsch liegt, ist keine Quelle, sondern ein
+  Rauschen mit Vorzeichen.
+- **Die Folge über die Nummer stellen**, wo beide etwas sagen: die 146 Widersprüche der
+  Hauptperiode sind keine Fehler des Parsers, sondern sechs Kürzel, die ihre Organisation mit einem
+  anderen teilen (GLA und RPAU mit dem Rat, BAU mit SEBD) — die Folge kann sie nicht
+  auseinanderhalten, die Nummer kann es.
+- **Die Folge in den Korpus mischen** (Schritt `corpus` statt `bodies`): dann trüge
+  `interim/papers.parquet` eine Angabe, die der Abruf dieser Periode nicht geliefert hat, und der
+  Schritt, der die Frage beantwortet, wäre nicht der, der die Quelle liest. Der Schritt `bodies`
+  liest beides und schreibt, was er daraus gemacht hat.
+- **Die Tabelle im Code** (eine Abbildung `gr/6 → RAT` in `prep/bodies.py`): dieselbe Regel wie
+  immer — kein Stadtwort im Code. Sie ist Daten im Profil, mit Zahlen je Zeile.
+- **`gr/26 → POA` und `gr/400237 → ACI` aufnehmen**: beide Kürzel stehen in keiner Kürzeltabelle
+  des Profils, und der Validator lässt kein Ziel ins Nichts zu (wie bei den Aliassen). Sie wären je
+  eine Zeile in `[bodies.committees]` und würden 304 beziehungsweise 56 Dokumente auflösen — eine
+  eigene Entscheidung (`docs/befunde-2026-10-14.md`, § 5), kein Nebenprodukt dieser.
+- **Den Ausschuss-Klassifikator für Mönchengladbach einschalten**, nun da die Stadt Ausschüsse hat:
+  nur 650 der 2 895 Dokumente tragen Text, und welche das sind, entscheidet das
+  Ratsinformationssystem (2 213 Hauptdateien antworten mit `404`). Eine Güte an dieser Stichprobe
+  wäre keine Güte. `classify.enabled = false` steht mit diesem Grund im Profil.

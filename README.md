@@ -94,7 +94,8 @@ Abschnitt „Berichtsseite").
 | `georep profiles` | die Profile im Paket mit Stadt und amtlichem Gemeindeschlüssel |
 | `georep publish [--out DIR]` | die Stadtseiten nach `data/site/` zusammentragen und `vergleich.html` bauen |
 | `georep bootstrap [--force]` | den eingefrorenen Datensatz (`reference_root`) in den Ordner des Profils unter `data_root` übernehmen |
-| `georep pack ZIEL [--force]` | die Gegenrichtung: aus dem gelaufenen Profil ein Datenpaket für das Repo schreiben (genau die Eingaben, ohne PDFs, Stamps und Caches), mit Prüfsummentabelle und README-Gerüst; bricht ab, wenn eine Eingabe fehlt oder der Textstore Zeilen trägt, die nicht aus einem Lauf kommen |
+| `georep pack ZIEL [--force] [--consultations]` | die Gegenrichtung: aus dem gelaufenen Profil ein Datenpaket für das Repo schreiben (genau die Eingaben, ohne PDFs, Stamps und Caches), mit Prüfsummentabelle und README-Gerüst; bricht ab, wenn eine Eingabe fehlt oder der Textstore Zeilen trägt, die nicht aus einem Lauf kommen. `--consultations` packt stattdessen nur die Beratungsfolge je Dokument |
+| `georep learn-bodies [--min-documents N]` | die Abbildung OParl-Organisation → Gremiumskürzel aus den Daten lernen und als `[bodies.organizations]` drucken, dazu den Katalog der Organisationen und die Gegenprobe mit der Tabelle im Profil; schreibt nichts |
 | `georep export` | die Parquet-Ergebnisse als CSV daneben schreiben |
 | `georep regress [--exclude …] [--varianten]` | lineare Regression Trefferquote gegen Wahlbeteiligung; `--varianten` dieselbe Rechnung je Gewichtungsvariante aus `wahlbezirke_gewichtet.parquet` |
 | `georep regress --controls` | Tabelle 6: dieselbe Regression mit Kontrollvariablen, je Modell und Stichprobe |
@@ -293,7 +294,9 @@ mit Text.
 | Ratsdokumente 2020 bis 2025, Metadaten und Texte | Ratsinformationssystem Düsseldorf über OParl 1.1 (`ris-oparl.itk-rheinland.de`, Body 0015) | `reference/interim/`, die PDFs nicht |
 | Straßennamen je Stimmbezirk | OpenStreetMap über die Overpass-API (ODbL), Stand der Arbeit November 2025 | `reference/raw/` |
 | Orte je Stimmbezirk | Wikidata (CC0) per SPARQL, Wikipedia-GeoSearch | `reference/raw/` |
-| Kürzel und Namen der Gremien (Rat, Bezirksvertretungen, Ausschüsse, Beiräte) | Organisationsliste des Ratsinformationssystems (Stand 11.10.2026) und Dokumenttitel; das Gremium je Dokument liest der Parser aus der Drucksachennummer | `src/georep/profiles/duesseldorf.toml`, Block `[bodies]` |
+| Kürzel und Namen der Gremien (Rat, Bezirksvertretungen, Ausschüsse, Beiräte) | Organisationsliste des Ratsinformationssystems (Stand 11.10.2026) und Dokumenttitel; das Gremium je Dokument liest der Parser aus der Drucksachennummer und, wo die nichts sagt, aus der Beratungsfolge | `src/georep/profiles/duesseldorf.toml`, Block `[bodies]` |
+| Beratungsfolge je Dokument 2020 bis 2025 (welche Gremien es beraten haben, Vollabruf der Metadaten 2026-10-14) | Ratsinformationssystem Düsseldorf über OParl 1.1, Body 0015, Feld `consultation` | `snapshots/duesseldorf-beratungsfolge/` (88 KiB) |
+| Mönchengladbach: Namen und Kürzel der Gremien (Abruf 2026-10-14) | Ratsinformationssystem Mönchengladbach über OParl 1.1, Body 0011, Endpunkt `organizations` | `reference/moenchengladbach/raw/organizations.json` |
 | Sozialdaten je Sozialraum, Stand 31.12.2021 (Kontrollvariablen) | Quartiersatlas Düsseldorf 2024, Open-Data-Portal der Stadt Düsseldorf (CSV und GeoJSON, Datenlizenz Deutschland Namensnennung 2.0) | `context/` |
 | Fraktionen, Ausschüsse und Bezirksvertretungen | Ratsinformationssystem Düsseldorf über OParl 1.1, Endpunkt `organizations` | nein, `georep fetch organizations` holt sie |
 | Wahlergebnis je Stimmbezirk und je Wahlbezirk, Ratswahl 13.09.2020 | Open-Data-Portal der Stadt Düsseldorf (CSV, Datenlizenz Deutschland Namensnennung 2.0) | `snapshots/2014-2020/external/` |
@@ -301,7 +304,7 @@ mit Text.
 | Ratsdokumente 2014 bis 2020, Metadaten und Texte (Abruf 2026-10-13) | Ratsinformationssystem Düsseldorf über OParl 1.1, Body 0015, ab Seite 90 | `snapshots/2014-2020/` (36,1 MiB), die PDFs nicht |
 | Mönchengladbach: Wahlergebnis, Wahlbezirke, Straßenverzeichnis | votemanager der ITK Rheinland (`wep.itk-rheinland.de`, Lizenz laut Anbieter nicht angegeben) | `reference/moenchengladbach/external/` |
 | Mönchengladbach: Stimmbezirksflächen (Stand 08.06.2022) | Geoportal der Stadt Mönchengladbach (Shapefile, Datenlizenz Deutschland – Zero – Version 2.0) | `reference/moenchengladbach/external/` |
-| Mönchengladbach: Ratsdokumente 2020 bis 2025, Metadaten und Texte (Abruf 2026-10-13) | Ratsinformationssystem Mönchengladbach über OParl 1.1, Body 0011 | `reference/moenchengladbach/` (3,8 MiB), die PDFs nicht |
+| Mönchengladbach: Ratsdokumente 2020 bis 2025, Metadaten und Texte (Abruf 2026-10-13) | Ratsinformationssystem Mönchengladbach über OParl 1.1, Body 0011 | `reference/moenchengladbach/` (4,2 MiB), die PDFs nicht |
 | Ratsdokumente seit der Kommunalwahl 2025, Metadaten und Texte (Erstabruf 2026-10-13) | Ratsinformationssystem Düsseldorf über OParl 1.1, Body 0015, `modified_since` | `snapshots/2025/` (13,2 MiB), die PDFs nicht; veraltet mit jedem Lauf des Monitors |
 
 `context/` trägt die Fremddaten, aus denen die Kontrollvariablen entstehen, mit Herkunft, Lizenz, Datenstand,
@@ -311,8 +314,9 @@ Wahlen: Quartiersatlas Düsseldorf 2024 (Open-Data-Portal), dl-de/by-2-0.
 
 **Die Datenpakete im Repo** sind die eingefrorenen Eingaben der Läufe, aus denen GitHub Pages jede Seite ohne
 Netz baut (Konrads Entscheidung vom 2026-10-13, `docs/decisions.md`, Punkt 56): `reference/` (82 MiB, der
-Datensatz der Arbeit), `reference/moenchengladbach/` (3,8 MiB), `snapshots/2014-2020/` (36,1 MiB),
-`snapshots/2025/` (13,2 MiB) und `context/` (2,1 MiB). Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, Zahlen und der SHA-256 jeder
+Datensatz der Arbeit), `reference/moenchengladbach/` (4,2 MiB), `snapshots/2014-2020/` (36,1 MiB),
+`snapshots/2025/` (13,2 MiB), `snapshots/duesseldorf-beratungsfolge/` (88 KiB, nur die Beratungsfolge je
+Dokument, Punkt 58) und `context/` (2,1 MiB). Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, Zahlen und der SHA-256 jeder
 Datei; `tests/unit/test_data_packages.py` hält diese Angaben gegen die Dateien und lässt keine PDFs, Stamps
 oder Caches hinein. Die PDFs selbst liegen in **keinem** Paket, nur die Texte daraus.
 

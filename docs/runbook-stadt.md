@@ -137,6 +137,52 @@ Flächen von 2025 (Frage 1.3); die Seite nennt die Zahl ohnehin. Mönchengladbac
 **86,2 %** (2 651 bekannte Namen, 66,5 % im selben Stimmbezirk) darunter, weil seine Flächen vom
 08.06.2022 sind — der Satz an `gdi@moenchengladbach.de` ist damit fällig und nicht mehr optional.
 
+## 4b. Die Gremien der Stadt (zehn Minuten, ein kleiner Netzschritt)
+
+Ohne diesen Schritt steht die Stadt mit „Gremium unbekannt" auf ihrer Seite, wenn ihre
+Drucksachennummern kein Kürzel tragen (`docs/decisions.md`, Punkt 58). Zwei Quellen gibt es: die
+Nummer (`[bodies] reference_pattern`) und die **Beratungsfolge** aus OParl, also die Gremien, die
+ein Dokument beraten haben.
+
+```bash
+# Der Katalog: welche Organisationen stehen überhaupt in einer Beratungsfolge?
+uv run georep --profile <slug> learn-bodies
+```
+
+Der Befehl liest den Korpus und druckt je Organisation die Dokumente, das aus den Nummern gelernte
+Kürzel mit seiner Reinheit und, wenn `raw/organizations.json` vorliegt, `shortName`,
+`classification` und Namen vom Server. Danach gilt eines von beidem:
+
+- **Die Nummern tragen Kürzel** (Düsseldorf): der Befehl druckt den fertigen `[bodies.organizations]`-Block.
+  Er geht so, wie er ist, ins Stadtprofil; die Kommentare je Zeile nennen die Zahlen. Eine Zeile,
+  deren Kürzel in keiner Tabelle des Profils steht, lehnt der Validator ab — entweder gehört das
+  Kürzel in `[bodies.committees]`, oder die Zeile bleibt draußen.
+- **Die Nummern tragen keine** (Mönchengladbach): dann ist aus ihnen nichts zu lernen, und die
+  Namen müssen aus dem Organisationskatalog kommen:
+  `uv run georep --profile <slug> fetch organizations` (eine Seite, Sekunden). Danach denselben
+  Befehl noch einmal, und die Tabelle aus den Namen schreiben: `classification` `Bezirk` sind die
+  Bezirksvertretungen (`BV1`, `BV2`, … mit `[bodies.district_body_names]`, wenn sie Namen statt
+  Nummern tragen), `Ausschuss` die Ausschüsse, der Rat gehört in `[bodies.council]`, Beiräte,
+  Integrations- und Seniorenräte in `[bodies.advisory]`. Die Kürzel sind frei wählbar; die
+  `shortName` des Servers ohne Leerzeichen sind die naheliegende Wahl.
+
+Zwei Prüfungen danach:
+
+1. `uv run georep --profile <slug> learn-bodies` ein letztes Mal: die Gegenprobe soll wenige
+   Widersprüche nennen, und unter „Unterschiede zur Tabelle im Profil" darf keine Zeile
+   „Profil X, gelernt Y" stehen.
+2. **Welche Bezirksvertretung welche Nummer hat**, ist zu belegen und nicht zu raten, wenn die
+   Namen keine Nummer tragen. Das Maß dafür steht in `profiles/moenchengladbach.toml` über
+   `[bodies.district_body_names]`: die Dokumente, deren Folge genau eine Bezirksvertretung nennt,
+   müssen mehrheitlich Wahlbezirke ihres eigenen Stadtbezirks treffen (dort 52 bis 61 %, je die
+   größte Zelle ihrer Zeile und Spalte). Eine falsche Zuordnung verdreht die Kennzahl „eigene
+   Bezirksvertretung" still.
+
+Trägt der Korpus der Stadt die Beratungsfolge nicht (nur die Hauptperiode Düsseldorfs, deren Daten
+aus dem Altformat der Arbeit kommen), holt ein eigener Metadatenabruf sie, und
+`georep pack --consultations snapshots/<slug>-beratungsfolge` legt sie als Paket ins Repo;
+`[bodies].consultations` im Profil zeigt darauf.
+
 ## 5. Veröffentlichen und das Paket ins Repo
 
 ```bash
@@ -186,6 +232,7 @@ Erwartungen vom Mini-Paket auf das echte umstellen.
    Dateinamen), `[sources.wikidata] entity`, `[precincts]` (Format und Regeln der Quelle),
    `[columns.results]` (Spalten und Parteien), `[search] exclude`, `[report]`.
 2. `uv run georep profiles` muss die Stadt zeigen, `uv run georep --profile <slug> status` laufen.
+   `[bodies]` bleibt zunächst leer: die Gremien kommen in § 4b dazu, wenn der Korpus steht.
 3. `publish.cities` in **allen** Profilen um den Slug erweitern (die Reihenfolge bestimmt, wer an
    der Wurzel liegt).
 4. Dieses Runbook von § 1 an.

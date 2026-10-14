@@ -1,6 +1,7 @@
 # Status
 
-Stand 2026-10-14, `main` auf `v0.13.0`: der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
+Stand 2026-10-14, `main` auf `v0.13.0` plus Punkt 58 (die Beratungsfolge als zweite Quelle des Gremiums,
+unveröffentlicht): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
 abgearbeitet; `bartzsch-exakt` zeigt auf `v0.11.0`, den letzten Stand, der die Zahlen der Arbeit exakt
 reproduziert. Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
@@ -245,12 +246,13 @@ Frage 7.4 vom 2026-10-13 („kein Bucket").
 
 | Paket | Bytes | Inhalt | Profil |
 |---|---|---|---|
-| `reference/moenchengladbach/` | 3 980 958 | `external/` (4), `raw/` (3), `cache/text/texts.parquet` | `moenchengladbach` |
+| `reference/moenchengladbach/` | 4 405 625 | `external/` (4), `raw/` (4, seit Punkt 58 mit `organizations.json`), `cache/text/texts.parquet` | `moenchengladbach` |
 | `snapshots/2014-2020/` | 37 875 851 | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
 | `snapshots/2025/` | 13 894 254 | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
+| `snapshots/duesseldorf-beratungsfolge/` | 90 455 | `raw/beratungsfolge.parquet` (Punkt 58) | `duesseldorf` |
 
-Zusammen 55 751 063 Bytes (53,17 MiB) neben `reference/` (85 771 896, 81,80 MiB) und `context/`
-(2 242 316, 2,14 MiB): **fünf Pakete, 143 765 275 Bytes, 137,11 MiB**, 76 % der Grenze von 180 MiB im Test.
+Zusammen 56 266 185 Bytes (53,66 MiB) neben `reference/` (85 771 896, 81,80 MiB) und `context/`
+(2 242 316, 2,14 MiB): **sechs Pakete, 144 280 397 Bytes, 137,60 MiB**, 76 % der Grenze von 180 MiB im Test.
 Gezählt sind überall die Datendateien ohne das README (Review-Befund 14).
 Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, den Zahlen des Laufs und der SHA-256 jeder Datei;
 `tests/unit/test_data_packages.py` hält Dateiliste, Größe und Prüfsumme gegen das README (die Prüfsummen und
@@ -274,26 +276,68 @@ in **keinem** Paket (233 MB, 3,9 GB, 585 MB).
   641 633, `vergleich.html` 88 979, dazu vier `karte.html`; `georep publish` meldet „2 Städte, 1 Vergleich,
   187 Dateien, 34,6 MB" und `PublishSummary.over_budget` ist leer.
 
-## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52 und 56)
+## Die Beratungsfolge als zweite Quelle des Gremiums (2026-10-14, `docs/decisions.md`, Punkt 58)
 
-- Tests: 1134 schnelle (nox-Gate, parallel in rund 50 s, Abdeckung 98,4 %), 30 `slow` (3 min 40 s über die
-  volle Referenz, die drei Datenpakete und die veröffentlichte Seite), 17 `bench` (grün gegen die
-  Baseline), 4 `network` (nur von Hand). Alle drei am 2026-10-14 nach dem Review mit Exit 0 gelaufen.
+Punkt 1 der Befunde vom 2026-10-14 ist umgesetzt: neben der Drucksachennummer entscheidet jetzt die
+Beratungsfolge aus OParl (`consultation`), wo die Nummer kein bekanntes Gremium nennt — und nur,
+wenn sie **genau eines** nennt. Dass sie bei mehreren nicht entscheidet, ist gemessen: die Liste
+kommt sortiert und entdoppelt, die Reihenfolge der Beratung ist nicht in den Daten, und von fünf
+Auswahlregeln trifft die beste 993 von 1 658 Fällen (59,9 %) gegen 99,1 % bei eindeutiger Folge.
+
+| Profil | Dokumente | unbekannt vorher | nachher | ergänzt | mehrdeutig | bestätigt | Widerspruch |
+|---|---|---|---|---|---|---|---|
+| `duesseldorf` | 19 108 | 0 (0,0 %) | 0 (0,0 %) | 0 | 0 | 16 903 | 146 |
+| `duesseldorf-2014` | 22 215 | 7 365 (33,2 %) | **1 866 (8,4 %)** | 5 499 | 1 511 | 14 420 | 30 |
+| `duesseldorf-2025` | 4 095 | 55 (1,3 %) | 53 (1,3 %) | 2 | 0 | 3 612 | 26 |
+| `moenchengladbach` | 2 895 | 2 895 (100,0 %) | **1 275 (44,0 %)** | 1 620 | 1 275 | 0 | 0 |
+
+- **Die Abbildung Organisation → Kürzel ist gelernt, nicht geraten**: `georep learn-bodies` nimmt
+  die Dokumente mit eindeutiger Folge und bekanntem Kürzel und lässt sie abstimmen. Düsseldorf: 35
+  Organisationen aus 17 047 Dokumenten, Reinheit 16 902/17 047 = **99,1 %**; dieselbe Rechnung auf
+  der alten Periode (30, 99,8 %) und der laufenden (32, 99,3 %) widerspricht in **keiner** der 29
+  beziehungsweise 30 gemeinsamen Zeilen. Die Tabelle steht als `[bodies.organizations]` im
+  Stadtprofil (36 Zeilen, die 36. aus der laufenden Periode).
+- **Mönchengladbach hat Gremien**: 27 Organisationen mit Namen und Kürzel aus einem Abruf von
+  `…/bodies/0011/organizations` (2026-10-14, eine Seite, 122 Organisationen, 3,8 s; die Datei liegt
+  als `raw/organizations.json` im Paket der Stadt). Vier Bezirksvertretungen heißen dort nach der
+  Himmelsrichtung; welche Nummer zu welcher gehört, ist an den Treffern belegt (Nord 59 % in
+  Stadtbezirk 1, Ost 61 % in 2, Süd 52 % in 3, West 56 % in 4). Das Themenmodell sät dort jetzt
+  acht Themen je Ausschuss statt keines; `classify.enabled` bleibt `false`, weil nur 650 der 2 895
+  Dokumente Text tragen.
+- **Das Paket** `snapshots/duesseldorf-beratungsfolge/` (90 455 Bytes, eine Parquet-Datei mit `id`,
+  `consultation_organizations` und `modified`) trägt die Folge der Hauptperiode, deren Korpus aus
+  dem Altformat der Arbeit kommt; `georep pack --consultations` schreibt es, `[bodies].consultations`
+  nennt es, `bootstrap` kopiert es nach `raw/`. Als JSONL wären es 4 467 207 Bytes.
+- `papers_gremien.parquet` trägt `quelle`, `folge_gremium` und `folge_anzahl` (Schema-Version 2);
+  der Abschnitt „Gremien" nennt die Anteile beider Quellen in einem Satz, und die Zeile „ohne
+  Drucksachennummer" der Gremientabelle heißt jetzt „ohne erkanntes Gremium".
+- Offen und als Befund notiert: `gr/26 → POA` (304 Dokumente der alten Periode) und
+  `gr/400237 → ACI` (56 der laufenden) stehen **nicht** in der Tabelle, weil ihre Kürzel in keiner
+  Kürzeltabelle des Profils stehen. Je eine Zeile in `[bodies.committees]` würde sie auflösen —
+  eine eigene Entscheidung (`docs/befunde-2026-10-14.md`, § 5).
+
+## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56 und 58)
+
+- Tests: 1167 schnelle (nox-Gate, parallel in rund 53 s, Abdeckung 98,4 %), 33 `slow` (rund 4 min über die
+  volle Referenz, die fünf Datenpakete und die veröffentlichte Seite), 17 `bench` (grün gegen die
+  Baseline), 4 `network` (nur von Hand). Alle drei am 2026-10-14 nach Punkt 58 mit Exit 0 gelaufen.
 - Register: 29 Schritte; `georep steps` zeigt 27 für Düsseldorf, 28 mit Vergleich, 22 im Periodenprofil
-  2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach. Voller Offline-Lauf auf der Referenz
+  2014 bis 2020, 21 in der laufenden Periode, 22 für Mönchengladbach (seit Punkt 58 ohne
+  `committees`, dafür mit den Gremien aus der Beratungsfolge). Voller Offline-Lauf auf der Referenz
   rund 23 s (Themenmodell 7,4 s, passender Ausschuss 6,5 s, Index 4,2 s, Berichtsseite 1,7 s, Kennzahlen
   0,1 s).
-- Berichtsseite: `index.html` der Hauptseite **932 306 Bytes veröffentlicht** (932 151 vor der Zeile
-  „Weitere Städte", Budget 1 000 000, **67 694 Byte Luft, 6,8 %**) mit beiden Periodenabschnitten,
+- Berichtsseite: `index.html` der Hauptseite **932 817 Bytes veröffentlicht** (Budget 1 000 000,
+  **67 183 Byte Luft, 6,7 %**; +511 Byte für den Quellensatz aus Punkt 58) mit beiden Periodenabschnitten,
   55 Dateien zusammen 13,2 MB; ohne die Abschnitte „Zwei Wahlperioden" und „Laufende Wahlperiode" sind es
   886 360 Bytes, die beiden kosten also 45 417 und 374 Byte (gemessen 2026-10-14; die beiden Umschalter
   kosten 110 KB, die Literaturübersicht 13,2 KB, die Vorschau langer Tabellen 4,1 KB, `begriffe.json` liegt
   mit 96 KB daneben). Siebzehn Abschnitte in
   Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung, perioden,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads,
-  laufend). Die Unterseiten: `2014-2020/` 818 602, `2025/` 717 361, `moenchengladbach/` 641 660,
-  `vergleich.html` 89 597 Bytes (alle am 2026-10-14 im veröffentlichten Ordner gemessen).
-- Quelltext: 59 Python-Dateien unter `src/`, rund 16 600 Zeilen; fünf Profile im Paket.
+  laufend). Die Unterseiten: `2014-2020/` 819 506, `2025/` 717 922, `moenchengladbach/` 651 010,
+  `vergleich.html` 89 597 Bytes (alle am 2026-10-14 nach Punkt 58 gemessen; Mönchengladbach wuchs um
+  9 350 Byte, weil seine Gremientabelle jetzt 27 Zeilen hat statt einer).
+- Quelltext: 64 Python-Dateien unter `src/`, rund 19 400 Zeilen; fünf Profile im Paket.
 - Mutation (2026-10-13, `docs/mutation-2026-10-13.md`): 882 Mutanten über die dreizehn Module des
   Ausbaus, 717 getötet (81,3 %), 165 Überlebende — davon 100 in Vertragsgrenzen, 27 nachgerechnet
   äquivalent, 38 Grenzen, die nur ein genauer Wert unterscheidet. Auf `v0.12.0` waren es 652 von 876
@@ -341,6 +385,18 @@ Schema-Version hingehört, wie eine Zahl in einem Test gerundet wird —, stehen
 in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen werden
 (`docs/absicherung-2026-10.md`, § 4). Verloren ist nichts, nur umgezogen.
 
+- **1 511 Dokumente der Periode 2014 bis 2020 und 1 275 Mönchengladbachs bleiben „unbekannt",
+  obwohl ihre Beratungsfolge Gremien nennt** (2026-10-14, Punkt 58): sie nennt mehrere, und welches
+  das federführende ist, steht nicht in den Daten
+  (`georep.oparl.OparlPaper.consultation_organizations` liest die Liste sortiert und entdoppelt).
+  Fünf Auswahlregeln sind gemessen, die beste trifft 59,9 %; das ist kein Ersatz für eine Quelle.
+  Wer es besser wissen will, braucht die Beratungsfolge **mit** Reihenfolge, also einen Abruf der
+  `consultation`-Objekte selbst (je Dokument ein Objekt mit `meeting` und `order`).
+- **Eine Änderung am Python-Code der Berichtsseite macht den Stamp des Schritts `report` nicht
+  ungültig** (2026-10-14, bei Punkt 58 wieder aufgefallen): im Stamp stehen die Paketdateien der
+  Vorlagen, `[report]` und die Code-**Version**, nicht der Code. Ohne Versionssprung braucht die
+  Seite danach ein `georep run report --force` je Profil. Dasselbe gilt für eine geänderte
+  Klassengrenze (siehe `defaults.toml`, `[report.diverging]`).
 - deal 4.24.6: `deal.raises` vergleicht exakte Typen, keine Unterklassen; `deal.has()`/`deal.pure` sind nicht reentrant (Patch bleibt nach Rekursion stehen). Beides umschifft (NetworkError, `deal.safe` für `deep_merge`), nicht upstream gemeldet.
 - `nox -s verify` (crosshair) läuft wieder durch und ist grün (Exit 0, 16 Ziele „Not confirmed", 6 Minuten
   am 2026-10-12). Davor brach die Sitzung mit `re.PatternError` ab, bevor sie berichtete: `parse_reference`
@@ -517,6 +573,14 @@ dem Gremium der Drucksachennummer; dieselbe Abbildung löst 7 010 der 7 365 unbe
 Periode auf) und die Datenqualität über alle vier Läufe. Sein § 6 nennt fünf Punkte, die Konrad
 entscheiden könnte; sein § 4 den einen Vorschlag für den nächsten Schritt. Nachrechnen:
 `uv run python docs/befunde-2026-10-14-messung.py`.
+
+**Punkt 1 davon ist umgesetzt** (2026-10-14, `docs/decisions.md`, Punkt 58, oben „Die Beratungsfolge
+als zweite Quelle des Gremiums"): „unbekannt" fällt in der alten Periode auf 8,4 % und in
+Mönchengladbach auf 44,0 %. Die 1,6 %, die der Befund schätzte, sind es **nicht** geworden — die
+1 511 mehrdeutigen Folgen zählte er mit, und die entscheiden nicht (siehe „Bekannt"). Offen bleiben
+aus § 6 die Punkte 2 bis 5, und als Befund daneben: zwei Kürzel (`POA` für die alte, `ACI` für die
+laufende Periode) fehlen in `[bodies.committees]` und würden 304 beziehungsweise 55 weitere
+Dokumente auflösen.
 
 **Zwei Fremdzeilen-Bestände in Konrads Textstores** (Review-Befund 6, 2026-10-14): die Stores auf xtraspace
 tragen noch, was beim Packen herausgefallen ist — `cache/moenchengladbach/text/texts.parquet` 663 Zeilen,
