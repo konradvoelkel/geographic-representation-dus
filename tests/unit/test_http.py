@@ -108,3 +108,27 @@ def test_cache_pattern_drops_scheme_and_adds_wildcard() -> None:
         cache_pattern("https://ris.invalid/Oparl/bodies/0015/papers")
         == "ris.invalid/Oparl/bodies/0015/papers*"
     )
+
+
+def test_a_url_with_a_query_string_still_gets_its_cache_rule() -> None:
+    """Punkt 59: die Flächen einer Stadt dürfen eine Operation sein (``identify?…&f=json``).
+
+    ``cache_pattern`` lässt den Query-String weg und endet mit ``*``; dass requests-cache damit
+    trotzdem die ganze Anfrage trifft, ist eine Annahme über eine fremde Bibliothek und darum ein
+    Test: sie vergleicht die **vollständige** URL ohne Schema gegen das Muster. Trifft es nicht
+    mehr, wird die Antwort nicht gecacht und jeder Lauf holt sie neu (1 MB).
+    """
+    from requests_cache.policy.expiration import get_url_expiration
+
+    from georep.http import cache_pattern
+
+    url = (
+        "https://geo.invalid/server/rest/services/Wahlen/MapServer/identify"
+        "?geometry=310000,5662000,328000,5681000&layers=all:16&returnGeometry=true&f=json"
+    )
+    assert cache_pattern(url).endswith("/MapServer/identify*")
+    assert get_url_expiration(url, {cache_pattern(url): 3600}) == 3600
+    # Und sie trifft nicht alles: ein anderer Pfad desselben Dienstes bleibt ungecacht
+    assert get_url_expiration(url.replace("/identify?", "/query?"), {cache_pattern(url): 3600}) is (
+        None
+    )
