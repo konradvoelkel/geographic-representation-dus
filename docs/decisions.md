@@ -1424,3 +1424,63 @@ Schritte aus `.github/workflows/pages.yml`, baut aus den Paketen alle Seiten —
 „Laufende Wahlperiode", `2014-2020/index.html` 818 172, `2025/index.html` 717 246,
 `moenchengladbach/index.html` 641 633, `vergleich.html` 88 979; `georep publish` meldet
 „2 Städte, 1 Vergleich, 187 Dateien, 34,6 MB" und nichts über dem Budget.
+
+## 57. Die Nummernform einer Stadt vor 2019 wird eine Tabelle im Profil, kein zweites Muster (2026-10-14)
+
+Der volle Abruf der Wahlperiode 2014 bis 2020 (Konrads Lauf vom 2026-10-13, Paket
+`snapshots/2014-2020/`) brachte 18 070 von 22 215 Dokumenten mit „Gremium unbekannt" — gegen 0 von
+19 108 in der Hauptperiode. Der Grund steht in den Drucksachennummern: **bis ins Jahr 2019 hieß eine
+Drucksache `<Amtsnummer>/ <laufende Nummer>/<Jahr>`** (`61/ 12/2014`), nicht `BV7/108/2019`. 18 018
+Nummern haben die alte Form, 4 197 die heutige; `bodies.reference_pattern` (Punkt 23) verlangt
+Buchstaben vor dem ersten Schrägstrich und trifft die alte Form darum nicht.
+
+**Ein Amt ist kein Gremium**, und 22 der 32 Köpfe sind Amtsnummern (7 313 Dokumente: `01`, `61`,
+`66`, …). Jeder von ihnen zeigt zwar in über 98 % seiner Dokumente auf dieselbe
+`consultation`-Organisation, aber das ist der zuständige Fachausschuss der Verwaltungsvorlage und
+nicht das Gremium, das die Nummer vergibt; welchen Namen die Organisations-ID trägt, sagt nur
+`raw/organizations.json`, und das ist ein Netzschritt. Gemessen am 2026-10-14 nennt der Text eines
+`01`-Dokuments in 628 von 1 331 Fällen den Rat und in 540 gar kein Gremium — zu wenig für eine
+Zuordnung. Diese 7 313 Dokumente bleiben „unbekannt", sichtbar mit Anteil auf der Seite (Punkt 39).
+
+**Eindeutig sind genau die zehn Bezirksvertretungen**: `17X` ist die Bezirksvertretung des
+Stadtbezirks X, `170` die zehnte (10 705 Dokumente). Nachgewiesen an den Dokumenttexten des Pakets:
+von den 10 008 dieser Dokumente, deren Text überhaupt eine Bezirksvertretung nennt, nennt er in
+9 999 (**99,91 %**) genau die des dritten Zeichens. Die Gegenprobe mit dem heutigen Kürzel `BVn`
+derselben Periode trifft zu 99,89 % — **die Zuordnung ist so gut wie die, die der Parser schon
+benutzt**, und das ist das Argument: sie ist keine schwächere Quelle, sie ist dieselbe Quelle in
+einer älteren Schreibweise. Dazu passt, dass die zehn Köpfe auf zehn aufeinanderfolgende
+`consultation`-Organisationen zeigen (`gr/32` bis `gr/41`), jeder auf genau eine.
+
+**Umgesetzt als `[bodies.aliases]` im Stadtprofil**, einer Tabelle „Kopf der Nummer (alles vor dem
+ersten `/`) → Kürzel" mit zehn Zeilen. `parse_reference` befragt sie **nur, wenn das Muster nicht
+trifft**, und übersetzt den Kopf in ein Kürzel, das dann dieselben zwei Regeln durchläuft wie ein
+Kürzel aus dem Muster (`_from_code`). Daraus folgt alles Wichtige von selbst: die Hauptperiode und
+die laufende Periode merken nichts (dort trifft das Muster jede Nummer, 19 108 und 4 095),
+Mönchengladbach ohne Muster merkt nichts, und ein Alias ins Nichts ist ein Settings-Fehler — der
+Validator lässt nur Ziele zu, die in einer Tabelle des Profils stehen oder das Kürzel der
+Bezirksvertretungen mit einer Nummer ab 1 sind.
+
+**Verworfen:**
+
+- **Ein zweites Muster** (`reference_pattern` als Liste, oder ein `legacy_pattern` daneben): ein
+  Regex kann `171` nicht in `BV1` umschreiben, also bräuchte die alte Form ein eigenes
+  `district_body` („17") und damit ein zweites Kürzel für dieselbe Bezirksvertretung — in einer
+  Periode hieße sie `BV1`, in der anderen `171`, und jede Tabelle und jede Karte müsste beides
+  kennen. Dazu kommt, dass `170` als Stadtbezirk 0 gelesen würde und die Regel „Nummer ab 1" die
+  zehnte Bezirksvertretung verwerfen müsste; „0 bedeutet 10" wäre eine Düsseldorfer Eigenheit im
+  Code. Zehn Zeilen Daten sagen dasselbe und sind nachlesbar.
+- **Die Amtsnummern über ihre `consultation`-Organisation auf Ausschüsse abbilden**: das verlangte
+  den Netzschritt `organizations` für eine abgeschlossene Periode, eine Abbildung von
+  Organisations-IDs auf Kürzel und die Annahme, dass die erste Beratungsstation das Gremium *ist*.
+  Offen, mit Zahlen begründet, und der ehrliche Anteil „unbekannt" bleibt sichtbar.
+- **Das Muster der alten Form in das Periodenprofil** `duesseldorf-2014.toml` statt in das
+  Stadtprofil: die Nummernform gehört der Stadt und nicht einer Periode (ein Dokument aus 2019 kann
+  in beiden Formen auftreten, und beide Perioden lesen dieselbe Tabelle). Weil die Tabelle nur bei
+  einem Fehlschlag des Musters greift, kostet sie die anderen Profile nichts.
+- **Die Zuordnung aus den Dokumenttexten rechnen** statt aus der Nummer: das wäre ein neuer Schritt
+  mit 22 116 Volltexten, 99,91 % Trefferquote statt einer Regel, und für 2 108 Dokumente ohne
+  nutzbaren Text gar keine Antwort. Der Text war das Orakel, nicht die Quelle.
+
+**Zahlen vorher/nachher** auf dem Paket (`tests/golden/test_bodies_reference.py`, `slow`):
+Bezirksvertretung 2 539 → 13 244, Rat 338, Ausschuss 1 193, Beirat 75 unverändert, unbekannt
+18 070 → **7 365** (81,3 % → 33,2 %). Die Hauptperiode bleibt bei 10 999 / 2 301 / 5 360 / 448 / 0.

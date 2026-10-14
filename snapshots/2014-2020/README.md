@@ -49,9 +49,13 @@ gebootstrappt haben.
 
 **Die Drucksachennummern dieser Periode tragen bis 2019 kein Gremiumskürzel.** 18 018 der 22 215
 Nummern haben die Form `<Amtsnummer>/ <Nummer>/<Jahr>` (`61/ 12/2014`), die 4 197 übrigen die
-heutige Form (`BV7/108/2019`, `RAT/270/2020`); der Wechsel liegt im Jahr 2019. 18 070 Dokumente
-stehen damit auf „Gremium unbekannt" (81,3 %), gegen 0 von 19 108 in der Hauptperiode. Ob und wie
-weit sich daraus doch ein Gremium lesen lässt, ist die offene Frage dieses Pakets.
+heutige Form (`BV7/108/2019`, `RAT/270/2020`); der Wechsel liegt im Jahr 2019. Vor dem 2026-10-14
+standen damit 18 070 Dokumente auf „Gremium unbekannt" (81,3 %), gegen 0 von 19 108 in der
+Hauptperiode. Seitdem übersetzt `[bodies.aliases]` im Stadtprofil die zehn Köpfe `170` bis `179` in
+die Bezirksvertretungen 10 und 1 bis 9 (`docs/decisions.md`, Punkt 57; nachgewiesen an den
+Dokumenttexten dieses Pakets: 9 999 von 10 008, 99,91 %). Danach sind es **7 365** (33,2 %):
+Bezirksvertretung 2 539 → 13 244, unbekannt 18 070 → 7 365, die übrigen Klassen unverändert. Die
+22 echten Amtsnummern (7 313 Dokumente) bleiben unbekannt — ein Amt ist kein Gremium.
 
 **56 % der Urheber sind unbekannt** (Option 04): die Dokumentart heißt hier in 9 601 Fällen
 `Vorlage aus der Politik` und nennt keine Fraktion, während die Hauptperiode `Antrag CDU`,

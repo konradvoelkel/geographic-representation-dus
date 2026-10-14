@@ -112,6 +112,71 @@ def test_every_reference_number_gets_a_body(
     assert summary(frame).startswith("19108 Dokumente: 10999 Bezirksvertretung")
 
 
+# Punkt 57: die Nummernform vor 2019 im Paket der Wahlperiode 2014 bis 2020. Die Zahlen sind
+# gemessen am 2026-10-14 und eingefroren; ändert ein Muster oder die Aliastabelle sie, ist das eine
+# Entscheidung. „vorher" heißt: nur mit reference_pattern, ohne bodies.aliases.
+PERIOD_PACKAGE = Path(__file__).resolve().parents[2] / "snapshots" / "2014-2020"
+PERIOD_DOCUMENTS = 22_215
+PERIOD_BEFORE = {
+    DISTRICT_BODY: 2_539,
+    COUNCIL: 338,
+    COMMITTEE: 1_193,
+    ADVISORY: 75,
+    UNKNOWN: 18_070,
+}
+PERIOD_AFTER = {
+    DISTRICT_BODY: 13_244,  # 2 539 + 10 705 aus der alten Nummernform
+    COUNCIL: 338,
+    COMMITTEE: 1_193,
+    ADVISORY: 75,
+    UNKNOWN: 7_365,  # 7 313 Amtsnummern plus 52 Nummern mit Kürzel ohne Tabelle
+}
+
+
+def _period_corpus() -> pl.DataFrame:
+    """Die Metadaten des Pakets, wie ``bootstrap`` sie kopiert (eine JSON-Zeile je Paper)."""
+    rows = [
+        json.loads(line)
+        for line in (PERIOD_PACKAGE / "raw" / "papers.jsonl").read_text("utf-8").splitlines()
+    ]
+    return pl.DataFrame(
+        {
+            ID: [str(r["id"]) for r in rows],
+            REFERENCE: [str(r.get("reference") or "") for r in rows],
+        },
+        schema={ID: pl.String, REFERENCE: pl.String},
+    )
+
+
+@pytest.mark.slow
+def test_the_old_numbering_of_the_period_yields_its_district_bodies(
+    default_settings: Settings,
+) -> None:
+    """Die zehn Köpfe ``170`` bis ``179`` holen 10 705 Dokumente aus „unbekannt" heraus.
+
+    Die Hauptperiode ist davon unberührt (der Test oben): dort trifft das Muster jede Nummer, und
+    die Aliastabelle wird nur befragt, wenn es nicht trifft.
+    """
+    bodies = default_settings.bodies
+    assert sorted(bodies.aliases) == [str(170 + n) for n in range(10)]
+    frame = classify_papers(_period_corpus(), BodyRules.from_settings(bodies))
+    assert frame.height == PERIOD_DOCUMENTS
+    assert counts_by_kind(frame) == PERIOD_AFTER
+    without = classify_papers(
+        _period_corpus(), BodyRules.from_settings(bodies.model_copy(update={"aliases": {}}))
+    )
+    assert counts_by_kind(without) == PERIOD_BEFORE
+    recovered = PERIOD_BEFORE[UNKNOWN] - PERIOD_AFTER[UNKNOWN]
+    assert recovered == 10_705 and PERIOD_AFTER[UNKNOWN] / PERIOD_DOCUMENTS < 0.34
+    # Jeder der zehn Stadtbezirke kommt vor, und keine andere Klasse ändert sich
+    gained = frame.filter(pl.col(KIND) == DISTRICT_BODY).join(
+        without.filter(pl.col(KIND) == DISTRICT_BODY), on=ID, how="anti"
+    )
+    assert gained.height == recovered
+    assert sorted(set(gained.get_column(CITY_DISTRICT))) == list(range(1, 11))
+    assert set(gained.get_column(BODY)) == {f"BV{n}" for n in range(1, 11)}
+
+
 @pytest.mark.slow
 def test_city_districts_of_the_reference_match_the_geojson(
     reference_root: Path, default_settings: Settings

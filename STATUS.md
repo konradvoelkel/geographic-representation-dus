@@ -437,10 +437,16 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 - **Die Drucksachennummern der Periode 2014 bis 2020 tragen bis 2019 eine Amtsnummer statt eines
   Gremiumskürzels** (gemessen 2026-10-14 an `snapshots/2014-2020/raw/papers.jsonl`): 18 018 der 22 215
   Nummern haben die Form `<Amtsnummer>/ <Nummer>/<Jahr>` (`61/ 12/2014`), die 4 197 übrigen die heutige
-  (`BV7/108/2019`, `RAT/270/2020`); der Wechsel liegt im Jahr 2019. 18 070 Dokumente stehen damit auf
-  „Gremium unbekannt" (81,3 %), gegen 0 von 19 108 in der Hauptperiode. 22 verschiedene Amtsnummern kommen
-  vor; jede zeigt zwar in über 98 % der Fälle auf dieselbe `consultation`-Organisation, aber ein Amt ist
-  kein Gremium, und ohne `raw/organizations.json` (Netzschritt) ist die Organisations-ID kein Name.
+  (`BV7/108/2019`, `RAT/270/2020`); der Wechsel liegt im Jahr 2019. Davon sind die zehn Köpfe `170` bis
+  `179` eindeutig die Bezirksvertretungen (10 705 Dokumente): `[bodies.aliases]` im Stadtprofil übersetzt
+  sie seit dem 2026-10-14 (`docs/decisions.md`, Punkt 57), und **unbekannt fällt von 18 070 auf 7 365**
+  (81,3 % → 33,2 %), Bezirksvertretung steigt von 2 539 auf 13 244, die anderen Klassen bleiben. Belegt
+  an den Dokumenttexten des Pakets: 9 999 von 10 008 (99,91 %) nennen die Bezirksvertretung des dritten
+  Zeichens; die Gegenprobe mit dem heutigen Kürzel `BVn` derselben Periode trifft zu 99,89 %. Die 22
+  echten Amtsnummern (7 313 Dokumente) bleiben unbekannt: jede zeigt in über 98 % der Fälle auf dieselbe
+  `consultation`-Organisation, aber ein Amt ist kein Gremium, und ohne `raw/organizations.json`
+  (Netzschritt) ist die Organisations-ID kein Name. Die Hauptperiode und die laufende Periode sind
+  unberührt — dort trifft das Muster jede Nummer, und die Tabelle wird nur sonst befragt.
 - **56 % der Urheber der Periode 2014 bis 2020 bleiben unbekannt**: die Dokumentart heißt dort in 9 601 von
   22 215 Fällen `Vorlage aus der Politik` und nennt keine Fraktion, während die Hauptperiode `Antrag CDU`,
   `Anfrage SPD/Volt` und so weiter führt (39 Dokumentarten in jeder Periode, aber andere). Die Muster in

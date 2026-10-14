@@ -54,6 +54,19 @@ foreign = st.text(alphabet="ABCXYZÄÖÜ", min_size=1, max_size=5).filter(
 )
 
 
+def _alias_body(code: str) -> BodyRef:
+    """Das Gremium zu einem Ziel aus ``bodies.aliases``, als Orakel des Tests (Punkt 57).
+
+    Dieselben zwei Regeln wie am Muster, hier noch einmal von Hand: das Kürzel der
+    Bezirksvertretungen mit einer Nummer ab 1 ist eine Bezirksvertretung, alles andere entscheidet
+    die Tabelle. Absichtlich nicht die Funktion des Programms, sonst prüfte der Test sich selbst.
+    """
+    number = code.removeprefix(RULES.district_body)
+    if code != number and number.isdigit() and int(number) >= 1:
+        return BodyRef(DISTRICT_BODY, code, int(number))
+    return BodyRef(_kind(code), code, None)
+
+
 def _kind(code: str) -> str:
     if code in RULES.council:
         return COUNCIL
@@ -68,7 +81,22 @@ def _kind(code: str) -> str:
 def references(draw: st.DrawFn) -> tuple[str, BodyRef]:
     """Eine Drucksachennummer aus der Grammatik mit dem Gremium, das sie bedeutet."""
     tail = f"/{draw(sequence)}/{draw(year)}{draw(suffix)}"
-    form = draw(st.sampled_from(["bv", "known", "foreign", "known+number", "bv-without-number"]))
+    form = draw(
+        st.sampled_from(
+            ["bv", "known", "foreign", "known+number", "bv-without-number", "alias", "no-alias"]
+        )
+    )
+    if form == "alias":
+        # Punkt 57: die Nummernform vor 2019 trägt statt eines Kürzels einen Kopf, den das Profil
+        # übersetzt ("171/ 23/2016"). Dieselbe Grammatik dahinter, nur ein Leerzeichen mehr.
+        head = draw(st.sampled_from(sorted(RULES.aliases)))
+        return f"{head}/ {draw(sequence)}/{draw(year)}{draw(suffix)}", _alias_body(
+            RULES.aliases[head]
+        )
+    if form == "no-alias":
+        # Ein Kopf, den das Profil nicht übersetzt (eine Amtsnummer): unbekannt ohne Kürzel
+        head = draw(st.integers(1, 999).map(str).filter(lambda h: h not in RULES.aliases))
+        return f"{head}/ {draw(sequence)}/{draw(year)}", BodyRef(UNKNOWN, None, None)
     if form == "bv":
         n = draw(numbers)
         return f"{RULES.district_body}{n}{tail}", BodyRef(
@@ -100,7 +128,12 @@ def test_any_text_yields_a_consistent_reference(text: str) -> None:
     assert ref.district is None or ref.district >= 1
     assert ref.code is not None or ref.kind == UNKNOWN
     if ref.kind != UNKNOWN:
-        assert RULES.pattern is not None and RULES.pattern.match(text) is not None
+        # Eine Klasse kommt aus dem Muster oder, wenn es nicht trifft, aus bodies.aliases
+        # (Punkt 57); vorher stand hier nur die erste Hälfte, und sie war seitdem falsch.
+        assert RULES.pattern is not None
+        assert (
+            RULES.pattern.match(text) is not None or text.split("/", 1)[0].strip() in RULES.aliases
+        )
 
 
 @given(cases=st.lists(references(), min_size=0, max_size=30), ids=st.permutations(range(30)))

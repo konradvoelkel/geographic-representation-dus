@@ -43,6 +43,12 @@ def rules(default_settings: Settings) -> BodyRules:
         ("BV7/233/2022/1", BodyRef(DISTRICT_BODY, "BV7", 7)),
         ("BV10/104/2020-2", BodyRef(DISTRICT_BODY, "BV10", 10)),
         ("BV10/149/2022/-1", BodyRef(DISTRICT_BODY, "BV10", 10)),
+        # Punkt 57: die Nummernform vor 2019, deren Kopf eine Bezirksvertretung bedeutet
+        ("171/ 23/2016", BodyRef(DISTRICT_BODY, "BV1", 1)),
+        ("170/ 1/2015", BodyRef(DISTRICT_BODY, "BV10", 10)),  # der zehnte Stadtbezirk
+        ("179/ 108/2019/1", BodyRef(DISTRICT_BODY, "BV9", 9)),  # mit Nachtrag
+        ("01/ 113/2014 - 1", BodyRef(UNKNOWN, None, None)),  # eine Amtsnummer ist kein Gremium
+        ("61/ 12/2014", BodyRef(UNKNOWN, None, None)),
         # kein Treffer des Musters
         ("11/3/2019", BodyRef(UNKNOWN, None, None)),
         ("bv1/1/2020", BodyRef(UNKNOWN, None, None)),
@@ -89,6 +95,46 @@ def test_rules_are_independent_of_the_city(default_settings: Settings) -> None:
     assert parse_reference("rat-1", rules) == BodyRef(COUNCIL, "rat", None)
     assert parse_reference("jr-1", rules) == BodyRef(ADVISORY, "jr", None)
     assert parse_reference("BV6/108/2023", rules) == BodyRef(UNKNOWN, None, None)
+
+
+def test_the_alias_of_an_older_numbering_is_data_not_code(default_settings: Settings) -> None:
+    """Punkt 57: ``bodies.aliases`` übersetzt den Kopf einer alten Nummer in ein Kürzel.
+
+    Befragt wird die Tabelle nur, wenn das Muster nicht trifft -- die Hauptperiode, in der es
+    jede Nummer trifft, merkt von ihr nichts. Das Ziel entscheidet dann über die Klasse, nach
+    denselben zwei Regeln wie das Muster.
+    """
+    bodies = default_settings.bodies.model_copy(
+        update={"aliases": {"170": "BV10", "9": "RAT", "8": "JURAT", "7": "KUA"}}
+    )
+    rules = BodyRules.from_settings(bodies)
+    assert parse_reference("170/ 1/2015", rules) == BodyRef(DISTRICT_BODY, "BV10", 10)
+    assert parse_reference("9/ 1/2015", rules) == BodyRef(COUNCIL, "RAT", None)
+    assert parse_reference("8/ 1/2015", rules) == BodyRef(ADVISORY, "JURAT", None)
+    assert parse_reference("7/ 1/2015", rules) == BodyRef(COMMITTEE, "KUA", None)
+    assert parse_reference("6/ 1/2015", rules) == BodyRef(UNKNOWN, None, None)  # kein Alias
+    # Eine Nummer, die das Muster trifft, nimmt den Weg des Musters; der Kopf wird nie befragt
+    assert parse_reference("RAT/270/2023", rules) == BodyRef(COUNCIL, "RAT", None)
+    # Ohne Tabelle bleibt alles, wie es war (jede andere Stadt und jedes andere Profil)
+    plain = BodyRules.from_settings(default_settings.bodies.model_copy(update={"aliases": {}}))
+    assert plain.aliases == {}
+    assert parse_reference("170/ 1/2015", plain) == BodyRef(UNKNOWN, None, None)
+
+
+def test_an_alias_must_point_at_a_code_the_profile_knows(default_settings: Settings) -> None:
+    """Ein Alias ins Nichts wäre „unbekannt" mit einem erfundenen Kürzel daneben."""
+    for aliases, message in (
+        ({"170": "BV0"}, "steht in keiner Tabelle"),  # Bezirk 0 gibt es nicht
+        ({"170": "XYZ"}, "steht in keiner Tabelle"),
+        ({"170": "BV"}, "steht in keiner Tabelle"),  # ohne Nummer keine Bezirksvertretung
+        ({"": "BV1"}, "ist kein Kopf einer Nummer"),
+        ({"170/ 1": "BV1"}, "ist kein Kopf einer Nummer"),
+    ):
+        with pytest.raises(ValueError, match=message):
+            Bodies.model_validate(default_settings.bodies.model_dump() | {"aliases": aliases})
+    # Eine Stadt ohne Muster kennt keine Kürzel, also auch keine Aliasse (Mönchengladbach)
+    with pytest.raises(ValueError, match="kennt keine Kürzel"):
+        Bodies(aliases={"170": "BV1"})
 
 
 def test_a_pattern_without_the_group_code_is_unknown_not_an_error() -> None:

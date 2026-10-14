@@ -18,6 +18,7 @@ crosshair.
 from __future__ import annotations
 
 import re
+import types
 from collections.abc import Mapping
 from dataclasses import dataclass
 
@@ -71,6 +72,9 @@ class BodyRules:
     committees: frozenset[str]
     advisory: frozenset[str]
     names: Mapping[str, str]  # Kürzel -> Name; leer = nicht gesichert
+    # Punkt 57: Kopf einer älteren Nummernform -> Kürzel, nur befragt, wenn das Muster nicht
+    # trifft. Leer ist der Normalfall; die Settings prüfen, dass jedes Ziel ein bekanntes Kürzel ist.
+    aliases: Mapping[str, str] = types.MappingProxyType({})
 
     @classmethod
     def from_settings(cls, bodies: Bodies) -> BodyRules:
@@ -82,6 +86,7 @@ class BodyRules:
             committees=frozenset(bodies.committees),
             advisory=frozenset(bodies.advisory),
             names={**bodies.council, **bodies.committees, **bodies.advisory},
+            aliases=dict(bodies.aliases),
         )
 
     def kind_of(self, code: str) -> str:
@@ -110,6 +115,22 @@ def _consistent(result: BodyRef) -> bool:
     )
 
 
+def _from_code(code: str, rules: BodyRules) -> BodyRef:
+    """Die Klasse eines fertigen Kürzels, wie ``bodies.aliases`` es liefert (Punkt 57).
+
+    Dieselben zwei Regeln wie am Ende von ``parse_reference``, nur ohne die Gruppen eines Musters:
+    das Kürzel der Bezirksvertretungen mit einer Nummer ab 1 ist eine Bezirksvertretung, alles
+    andere entscheidet die Tabelle. ``isascii()`` vor ``isdigit()`` wie überall, wo eine
+    Gebietsnummer gelesen wird (Punkt 40).
+    """
+    number = code.removeprefix(rules.district_body)
+    if rules.district_body and code != number:
+        if not (number.isascii() and number.isdigit() and int(number) >= 1):
+            return BodyRef(UNKNOWN, code, None)
+        return BodyRef(DISTRICT_BODY, code, int(number))
+    return BodyRef(rules.kind_of(code), code, None)
+
+
 @deal.safe
 @deal.post(_consistent, message="Klasse aus KINDS, Stadtbezirk genau bei Bezirksvertretungen, ab 1")
 def parse_reference(reference: str | None, rules: BodyRules) -> BodyRef:
@@ -119,6 +140,12 @@ def parse_reference(reference: str | None, rules: BodyRules) -> BodyRef:
         return BodyRef(UNKNOWN, None, None)
     match = rules.pattern.match(reference)
     if match is None:
+        # Punkt 57: eine ältere Nummernform derselben Stadt, deren Kopf kein Kürzel ist
+        # (``171/ 23/2016``). Das Profil übersetzt genau die Köpfe, die eines bedeuten; alles
+        # übrige bleibt „unbekannt", und ein Profil ohne Tabelle merkt von alledem nichts.
+        alias = rules.aliases.get(reference.split("/", 1)[0].strip())
+        if alias is not None:
+            return _from_code(alias, rules)
         return BodyRef(UNKNOWN, None, None)
     # ``groupdict`` statt ``group``: ein Muster ohne die Gruppe ``code`` ist dann „unbekannt" statt
     # eines KeyError. Die Settings erzwingen beide Gruppen, ein von Hand gebautes BodyRules nicht

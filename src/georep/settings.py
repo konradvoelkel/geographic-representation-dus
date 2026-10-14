@@ -399,6 +399,11 @@ class Bodies(_Strict):
     council: dict[str, str] = {}
     committees: dict[str, str] = {}
     advisory: dict[str, str] = {}
+    # Punkt 57: eine ältere Nummernform derselben Stadt, deren Kopf kein Kürzel ist. Abbildung
+    # „Kopf der Nummer (alles vor dem ersten /) -> Kürzel", nur befragt, wenn das Muster nicht
+    # trifft. Ein Ziel, das in keiner Tabelle steht, wäre ein Alias ins Nichts; der Validator
+    # unten lässt nur Kürzel zu, die das Profil kennt.
+    aliases: dict[str, str] = {}
 
     @field_validator("reference_pattern")
     @classmethod
@@ -419,7 +424,7 @@ class Bodies(_Strict):
         if not self.reference_pattern:
             named = [
                 name
-                for name in ("district_body", "council", "committees", "advisory")
+                for name in ("district_body", "council", "committees", "advisory", "aliases")
                 if getattr(self, name)
             ]
             if named:
@@ -443,7 +448,31 @@ class Bodies(_Strict):
                 f"bodies.district_body {self.district_body!r} steht auch in "
                 f"bodies.{seen[self.district_body]}"
             )
+        self._aliases_resolve(seen)
         return self
+
+    def _aliases_resolve(self, seen: dict[str, str]) -> None:
+        """Jedes Ziel in ``bodies.aliases`` muss ein Kürzel sein, das dieses Profil kennt.
+
+        Sonst übersetzte das Profil eine alte Nummernform in ein Gremium, das es nicht gibt -- und
+        das Ergebnis wäre „unbekannt" mit einem erfundenen Kürzel daneben (Punkt 57).
+        """
+        for head, code in self.aliases.items():
+            if not head or "/" in head:
+                raise ValueError(
+                    f"bodies.aliases: {head!r} ist kein Kopf einer Nummer (leer oder mit /)"
+                )
+            number = code.removeprefix(self.district_body) if code != self.district_body else ""
+            is_district = (
+                code.startswith(self.district_body)
+                and number.isascii()
+                and number.isdigit()
+                and int(number) >= 1
+            )
+            if not is_district and code not in seen:
+                raise ValueError(
+                    f"bodies.aliases: {head!r} zeigt auf {code!r}, und das steht in keiner Tabelle"
+                )
 
     @property
     def codes(self) -> frozenset[str]:

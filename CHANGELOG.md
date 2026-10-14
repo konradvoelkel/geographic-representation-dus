@@ -4,6 +4,19 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Die Bezirksvertretungen der Nummernform vor 2019 werden erkannt** (`[bodies.aliases]` im
+  Stadtprofil, `docs/decisions.md`, Punkt 57): in der Wahlperiode 2014 bis 2020 heißt eine
+  Drucksache bis 2019 `<Amtsnummer>/ <Nummer>/<Jahr>` (`61/ 12/2014`) und trug darum kein Gremium.
+  Die zehn Köpfe `170` bis `179` sind die Bezirksvertretungen 10 und 1 bis 9; **unbekannt fällt von
+  18 070 auf 7 365 von 22 215 Dokumenten** (81,3 % → 33,2 %), Bezirksvertretung steigt von 2 539 auf
+  13 244, die anderen Klassen bleiben. Belegt an den Dokumenttexten des Pakets: 9 999 von 10 008
+  (99,91 %) nennen die Bezirksvertretung des dritten Zeichens, die Gegenprobe mit dem heutigen
+  Kürzel `BVn` derselben Periode trifft zu 99,89 %. Die 22 echten Amtsnummern (7 313 Dokumente)
+  bleiben unbekannt — ein Amt ist kein Gremium. Die Hauptperiode (0 von 19 108 unbekannt) und die
+  laufende Periode sind unberührt: die Tabelle wird nur befragt, wenn das Muster nicht trifft, und
+  dort trifft es jede Nummer. Eine Stadt ohne `reference_pattern` darf keine Aliasse haben, und ein
+  Alias auf ein Kürzel, das in keiner Tabelle des Profils steht, ist ein Settings-Fehler.
+
 - **Die Datenpakete der drei Netzläufe vom 2026-10-13 liegen im Repo**, und damit baut GitHub Pages
   **jede** Seite ohne Netz (`docs/decisions.md`, Punkt 56; Konrads Antwort auf die Fragen 1.2, 2.1
   und 3.3): `reference/moenchengladbach/` (3 980 958 Bytes), `snapshots/2014-2020/` (37 875 851) und

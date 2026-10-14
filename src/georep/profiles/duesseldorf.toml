@@ -261,6 +261,33 @@ INTR = "Integrationsrat"       # OParl-organizations-Seite 2026-10-11
 BR = "Behindertenrat"          # aus Dokumenttiteln
 SENR = "Seniorenrat"           # OParl-organizations-Seite 2026-10-11
 
+# Die Nummernform vor 2019 (Punkt 57). Bis ins Jahr 2019 hieß eine Drucksache
+# "<Amtsnummer>/ <laufende Nummer>/<Jahr>" ("61/ 12/2014"), also ohne Gremiumskürzel: 18 018 der
+# 22 215 Nummern der Wahlperiode 2014 bis 2020, die übrigen 4 197 tragen schon die heutige Form.
+# Eindeutig ein Gremium sind daraus genau die zehn Köpfe unten: "17X" ist die Bezirksvertretung des
+# Stadtbezirks X, "170" die zehnte. Nachgewiesen am 2026-10-14 an den Dokumenttexten des Pakets
+# snapshots/2014-2020 -- von 10 008 der 10 705 Dokumente, deren Text eine Bezirksvertretung nennt,
+# nennt er in 9 999 Fällen (99,91 %) genau diese; die Gegenprobe mit dem heutigen Kürzel BVn
+# derselben Periode trifft zu 99,89 %, die Zuordnung ist also so gut wie die, die der Parser schon
+# benutzt. Jeder Kopf zeigt außerdem in allen seinen Dokumenten auf dieselbe consultation-
+# Organisation (gr/32 bis gr/41), und zwar auf zehn aufeinanderfolgende.
+# Die 22 echten Amtsnummern (7 313 Dokumente, "01", "61", "66", ...) stehen hier *nicht*: ein Amt
+# ist kein Gremium, seine Vorlage geht an den zuständigen Ausschuss, und dessen Name steckt nicht
+# in der Nummer. Sie bleiben "unbekannt", sichtbar mit Anteil auf der Seite.
+# Die Hauptperiode und die laufende Periode merken davon nichts: dort trifft das Muster jede Nummer
+# (19 108 bzw. 4 095 von 4 095), und diese Tabelle wird nur befragt, wenn es nicht trifft.
+[bodies.aliases]               # Kopf der Nummer (alles vor dem ersten /) -> Kürzel
+171 = "BV1"
+172 = "BV2"
+173 = "BV3"
+174 = "BV4"
+175 = "BV5"
+176 = "BV6"
+177 = "BV7"
+178 = "BV8"
+179 = "BV9"
+170 = "BV10"                   # der zehnte Stadtbezirk, einstellig geschrieben
+
 # --- Option 06: Gewichtung (docs/plans/06-gewichtung.md). Alle Gewichte liegen in [0, 1]; ein Dokument
 # Fremddaten je Raumeinheit (hier der Quartiersatlas der Stadt je Sozialraum) werden über die
 # Stimmbezirke auf die Wahlbezirke umgerechnet und als Kontrollvariablen in eine multiple Regression
