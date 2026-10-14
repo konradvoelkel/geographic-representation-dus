@@ -351,6 +351,11 @@ Zuordenbarkeit an einem Ziel, das nicht aus dem Volltext stammt — die Untergre
 könnte damit eine Schätzung werden. Umgebaut ist hier nichts; der Zielwert des Schritts
 `committees` bleibt das Kürzel der Drucksachennummer.
 
+Zwei Zahlen dieses Dokuments haben sich dabei verschoben, und zwar nicht durch das Modell: mit
+`POA` und `ACI` in `[bodies.committees]` (Punkt 58) kommen zwei Kürzel mehr in die Stoppwortliste
+aus `topics.stop_sources = ["gremien", …]`, und die Kette ordnet seitdem **7 174** statt 7 180
+Dokumente zu (37,7 %), davon treffen **4 750** statt 4 756 das Gremium der Nummer (66,2 %).
+
 ### 4.4 Konrads Frage: lässt sich jedes Schriftstück einem Ausschuss zuordnen?
 
 **Nein — für ein knappes Drittel sicher, für den Rest nicht.** Mit der Vorgabe (Schwelle 0,4)

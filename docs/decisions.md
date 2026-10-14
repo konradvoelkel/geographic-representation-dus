@@ -1489,6 +1489,8 @@ Bezirksvertretungen mit einer Nummer ab 1 sind.
 **Zahlen vorher/nachher** auf dem Paket (`tests/golden/test_bodies_reference.py`, `slow`):
 Bezirksvertretung 2 539 → 13 244, Rat 338, Ausschuss 1 193, Beirat 75 unverändert, unbekannt
 18 070 → **7 365** (81,3 % → 33,2 %). Die Hauptperiode bleibt bei 10 999 / 2 301 / 5 360 / 448 / 0.
+*Nachtrag 2026-10-14:* seit `POA` in `[bodies.committees]` steht (Punkt 58) sind es 1 244 Ausschüsse
+und 18 019 beziehungsweise **7 314** unbekannte; die 10 705 der Aliastabelle sind unberührt.
 
 ## 58. Die Beratungsfolge ist die zweite Quelle des Gremiums, und sie entscheidet nur, wenn sie eindeutig ist (2026-10-14)
 
@@ -1571,9 +1573,15 @@ nennt die Anteile beider Quellen in einem Satz aus diesen Spalten.
 | Profil | Dokumente | unbekannt vorher | nachher | ergänzt | mehrdeutig | bestätigt | Widerspruch |
 |---|---|---|---|---|---|---|---|
 | `duesseldorf` | 19 108 | 0 (0,0 %) | 0 (0,0 %) | 0 | 0 | 16 902 | 145 |
-| `duesseldorf-2014` | 22 215 | 7 365 (33,2 %) | **1 896 (8,5 %)** | 5 469 | 1 541 | 14 419 | 30 |
-| `duesseldorf-2025` | 4 095 | 55 (1,3 %) | 55 (1,3 %) | 0 | 2 | 3 612 | 26 |
+| `duesseldorf-2014` | 22 215 | 7 314 (32,9 %) | **1 655 (7,4 %)** | 5 659 | 1 535 | 14 464 | 30 |
+| `duesseldorf-2025` | 4 095 | 55 (1,3 %) | **0 (0,0 %)** | 0 | 0 | 3 665 | 26 |
 | `moenchengladbach` | 2 895 | 2 895 (100,0 %) | **1 275 (44,0 %)** | 1 620 | 1 275 | 0 | 0 |
+
+„Vorher" ist die Drucksachennummer allein, und zwar mit den beiden Kürzeln `POA` und `ACI`, die
+der Review vom 2026-10-14 in `[bodies.committees]` nachgetragen hat (siehe unten): sie lösen 51
+Nummern der alten Periode selbst auf, darum stehen dort 7 314 statt der 7 365 aus Punkt 57. In der
+laufenden Periode sind es die 55 Nummern mit `ACI`, und weil sie jetzt aus der Nummer kommen, fällt
+„unbekannt" dort auf 0, ohne dass die Beratungsfolge eine Zeile beiträgt.
 
 Die Befunde hatten für die alte Periode 1,6 % geschätzt, weil sie die mehrdeutigen mitzählten; mit
 der Regel „nur eindeutig" sind es 8,5 %. Das ist der Preis der Entscheidung und steht so auf der
@@ -1606,10 +1614,16 @@ Implikation und keine Gleichheit.
   liest beides und schreibt, was er daraus gemacht hat.
 - **Die Tabelle im Code** (eine Abbildung `gr/6 → RAT` in `prep/bodies.py`): dieselbe Regel wie
   immer — kein Stadtwort im Code. Sie ist Daten im Profil, mit Zahlen je Zeile.
-- **`gr/26 → POA` und `gr/400237 → ACI` aufnehmen**: beide Kürzel stehen in keiner Kürzeltabelle
-  des Profils, und der Validator lässt kein Ziel ins Nichts zu (wie bei den Aliassen). Sie wären je
-  eine Zeile in `[bodies.committees]` und würden 304 beziehungsweise 56 Dokumente auflösen — eine
-  eigene Entscheidung (`docs/befunde-2026-10-14.md`, § 5), kein Nebenprodukt dieser.
+- ~~**`gr/26 → POA` und `gr/400237 → ACI` weglassen**~~, weil ihre Kürzel in keiner Kürzeltabelle
+  standen: **zurückgenommen im Review vom 2026-10-14**. Beide sind echte Ausschüsse, und beide
+  Namen sind belegt — `POA` ist der *Personal- und Organisationsausschuss* (der Name steht 19-mal in
+  den Texten der 51 POA-Dokumente der Periode 2014 bis 2020, „Sitzungstermine des Personal- und
+  Organisationsausschusses"), `ACI` der *Ausschuss für Chancengerechtigkeit und Integration* (im
+  Titel von `ACI/003/2025`). Sie stehen seitdem in `[bodies.committees]`, und damit darf auch ihre
+  Organisation in `[bodies.organizations]` stehen. Gewonnen: in der alten Periode 241 Dokumente
+  (51 aus der Nummer, 190 aus der Folge, „unbekannt" 1 896 → **1 655**), in der laufenden alle 55
+  (aus der Nummer, „unbekannt" 55 → **0**). Dass die Zeilen fehlten, war kein Argument für die
+  Lücke, sondern ihr Grund.
 - **Den Ausschuss-Klassifikator für Mönchengladbach einschalten**, nun da die Stadt Ausschüsse hat:
   nur 650 der 2 895 Dokumente tragen Text, und welche das sind, entscheidet das
   Ratsinformationssystem (2 213 Hauptdateien antworten mit `404`). Eine Güte an dieser Stichprobe

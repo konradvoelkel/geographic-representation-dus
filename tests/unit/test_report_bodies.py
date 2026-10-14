@@ -125,7 +125,8 @@ def test_body_figures_decompose_the_documents(model: ReportModel, mini_run: Layo
     assert figures.hits == sum(d.hits for d in model.districts)
     assert figures.own_hits == 26 + 22 + 9  # § 3.3 des Plans
     assert figures.without_name > 0  # ungesicherte Kürzel sind sichtbar, nicht erfunden
-    assert figures.names_as_of == dt.date(2026, 10, 11)
+    # Der Stand der Namen aus dem Profil; seit POA und ACI dazukamen der 2026-10-14 (Punkt 58)
+    assert figures.names_as_of == dt.date(2026, 10, 14)
 
 
 def test_regression_on_three_districts_exists(model: ReportModel) -> None:

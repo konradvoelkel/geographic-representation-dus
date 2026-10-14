@@ -126,16 +126,18 @@ PERIOD_DOCUMENTS = 22_215
 PERIOD_BEFORE = {
     DISTRICT_BODY: 2_539,
     COUNCIL: 338,
-    COMMITTEE: 1_193,
+    # Seit dem Review vom 2026-10-14 steht POA in [bodies.committees] (51 Nummern dieser Periode);
+    # vorher waren es 1 193 Ausschüsse und 18 070 unbekannte.
+    COMMITTEE: 1_244,
     ADVISORY: 75,
-    UNKNOWN: 18_070,
+    UNKNOWN: 18_019,
 }
 PERIOD_AFTER = {
     DISTRICT_BODY: 13_244,  # 2 539 + 10 705 aus der alten Nummernform
     COUNCIL: 338,
-    COMMITTEE: 1_193,
+    COMMITTEE: 1_244,
     ADVISORY: 75,
-    UNKNOWN: 7_365,  # 7 313 Amtsnummern plus 52 Nummern mit Kürzel ohne Tabelle
+    UNKNOWN: 7_314,  # 7 313 Amtsnummern plus eine Nummer mit Kürzel ohne Tabelle
 }
 
 
@@ -173,7 +175,7 @@ def test_the_old_numbering_of_the_period_yields_its_district_bodies(
     )
     assert counts_by_kind(without) == PERIOD_BEFORE
     recovered = PERIOD_BEFORE[UNKNOWN] - PERIOD_AFTER[UNKNOWN]
-    assert recovered == 10_705 and PERIOD_AFTER[UNKNOWN] / PERIOD_DOCUMENTS < 0.34
+    assert recovered == 10_705 and PERIOD_AFTER[UNKNOWN] / PERIOD_DOCUMENTS < 0.33
     # Jeder der zehn Stadtbezirke kommt vor, und keine andere Klasse ändert sich
     gained = frame.filter(pl.col(KIND) == DISTRICT_BODY).join(
         without.filter(pl.col(KIND) == DISTRICT_BODY), on=ID, how="anti"
@@ -272,17 +274,17 @@ def test_metrics_per_district_on_the_frozen_results(
 # Tabelle oder die Regel sie, ist das eine Entscheidung und keine Überraschung.
 MAIN_CONSULTATION = {"ergaenzt": 0, "bestaetigt": 16_902, "widerspruch": 145, "mehrdeutig": 0}
 PERIOD_CONSULTATION = {
-    "ergaenzt": 5_469,
-    "bestaetigt": 14_419,
+    "ergaenzt": 5_659,
+    "bestaetigt": 14_464,
     "widerspruch": 30,
-    "mehrdeutig": 1_541,
+    "mehrdeutig": 1_535,
 }
 PERIOD_WITH_CONSULTATION = {
     DISTRICT_BODY: 13_245,  # 13 244 aus der Nummer plus eines aus der Folge
     COUNCIL: 1_664,  # 338 plus 1 326
-    COMMITTEE: 4_814,  # 1 193 plus 3 621
+    COMMITTEE: 5_055,  # 1 244 plus 3 811
     ADVISORY: 596,  # 75 plus 521
-    UNKNOWN: 1_896,  # 7 365 minus 5 469; 8,5 % statt 33,2 %
+    UNKNOWN: 1_655,  # 7 314 minus 5 659; 7,4 % statt 33,2 %
 }
 PACKAGE = Path(__file__).resolve().parents[2] / "snapshots" / "duesseldorf-beratungsfolge"
 
@@ -311,7 +313,7 @@ def test_the_consultation_confirms_the_numbers_of_the_main_period(
     BAU mit SEBD), und die Folge kann sie darum nicht auseinanderhalten.
     """
     rules = BodyRules.from_settings(default_settings.bodies)
-    assert len(default_settings.bodies.organizations) == 36
+    assert len(default_settings.bodies.organizations) == 38
     folge = pl.read_parquet(PACKAGE / "raw" / "beratungsfolge.parquet").select(ID, CONSULTATION)
     corpus = _reference_corpus(reference_root)
     frame = classify_papers(corpus, rules, folge)
@@ -331,12 +333,12 @@ def test_the_consultation_confirms_the_numbers_of_the_main_period(
 def test_the_consultation_halves_the_unknown_bodies_of_the_old_period(
     default_settings: Settings,
 ) -> None:
-    """Punkt 58, die Hauptwirkung: „unbekannt" fällt in der Periode 2014 bis 2020 auf 8,5 %.
+    """Punkt 58, die Hauptwirkung: „unbekannt" fällt in der Periode 2014 bis 2020 auf 7,4 %.
 
-    5 469 der 7 365 Dokumente ohne Gremium bekommen eines, weil ihre Beratungsfolge genau **eine
-    Organisation** nennt; 1 541 bleiben unbekannt, weil sie mehrere nennt (dazu der Modulkopf von
-    ``georep.prep.bodies``), die übrigen 325 haben keine Folge oder eine Organisation, die die
-    Tabelle nicht kennt. Bei den Dokumenten mit Kürzel und eindeutiger Folge sind 14 419 bestätigt
+    5 659 der 7 314 Dokumente ohne Gremium bekommen eines, weil ihre Beratungsfolge genau **eine
+    Organisation** nennt; 1 535 bleiben unbekannt, weil sie mehrere nennt (dazu der Modulkopf von
+    ``georep.prep.bodies``), die übrigen 120 haben keine Folge oder eine Organisation, die die
+    Tabelle nicht kennt. Bei den Dokumenten mit Kürzel und eindeutiger Folge sind 14 464 bestätigt
     und 30 widersprochen (0,2 %).
     """
     rules = BodyRules.from_settings(default_settings.bodies)
@@ -346,7 +348,7 @@ def test_the_consultation_halves_the_unknown_bodies_of_the_old_period(
     assert frame.height == PERIOD_DOCUMENTS
     assert counts_by_kind(frame) == PERIOD_WITH_CONSULTATION
     unknown = PERIOD_WITH_CONSULTATION[UNKNOWN]
-    assert unknown / PERIOD_DOCUMENTS < 0.086 and PERIOD_AFTER[UNKNOWN] / PERIOD_DOCUMENTS > 0.33
+    assert unknown / PERIOD_DOCUMENTS < 0.075 and PERIOD_AFTER[UNKNOWN] / PERIOD_DOCUMENTS > 0.32
     counts = source_counts(frame)
     assert dict(counts.per_source)[FROM_CONSULTATION] == PERIOD_CONSULTATION["ergaenzt"]
     assert counts.confirmed == PERIOD_CONSULTATION["bestaetigt"]

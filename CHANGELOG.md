@@ -10,9 +10,14 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   **Organisation** nennt; nennt sie mehrere, bleibt das Dokument sichtbar „unbekannt", denn die
   Reihenfolge der Beratung steht nicht in den Daten und die beste von fünf Auswahlregeln trifft nur
   59,9 % (gemessen 2026-10-14). „Gremium unbekannt" fällt damit in der Wahlperiode 2014 bis 2020 von
-  7 365 (33,2 %) auf **1 896 (8,5 %)** und in Mönchengladbach von 2 895 (100 %) auf **1 275
-  (44,0 %)**; in der Hauptperiode bleibt es 0, und die Folge bestätigt dort 16 902 Zuordnungen und
-  widerspricht 145. Der Abschnitt „Gremien" nennt die Anteile beider Quellen in einem Satz.
+  7 365 (33,2 %) auf **1 655 (7,4 %)**, in der laufenden Periode von 55 auf **0** und in
+  Mönchengladbach von 2 895 (100 %) auf **1 275 (44,0 %)**; in der Hauptperiode bleibt es 0, und
+  die Folge bestätigt dort 16 902 Zuordnungen und widerspricht 145. Der Abschnitt „Gremien" nennt
+  die Anteile beider Quellen in einem Satz.
+- **Zwei Ausschüsse mehr im Düsseldorfer Profil**: `POA` (Personal- und Organisationsausschuss, 51
+  Nummern der Periode 2014 bis 2020) und `ACI` (Ausschuss für Chancengerechtigkeit und Integration,
+  55 der laufenden). Beide Namen sind aus den Dokumenten belegt; ihre Nummern waren bis dahin
+  „unbekannt", und ihre Organisationen durften darum nicht in der Abbildung stehen.
 - **`georep learn-bodies`** lernt die Abbildung Organisation → Gremiumskürzel aus den Daten: aus
   den Dokumenten, deren Beratungsfolge genau eine Organisation nennt und deren Nummer ein Kürzel
   trägt. Der Befehl druckt den Katalog je Organisation (mit Namen und Klassifikation aus

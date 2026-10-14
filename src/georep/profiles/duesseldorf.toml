@@ -222,7 +222,7 @@ postal_marker = ""             # Option 02: Namensbestandteil der Briefwahlbezir
 reference_pattern = '^(?P<code>[A-ZÄÖÜ]+?)(?P<number>\d{1,2})?/\d+/\d{4}(?:[/-].*)?$'
 district_body = "BV"           # Kürzel der Bezirksvertretungen; die Nummer dahinter ist der Stadtbezirk (GO NRW: eine Bezirksvertretung je Stadtbezirk)
 district_body_name = "Bezirksvertretung {n}"  # Anzeigename, {n} ist der Stadtbezirk
-names_as_of = 2026-10-11       # Stand der Namen unten (OParl-organizations-Seite des Bodys und Sitzungstitel); nur Anzeige, nicht im Fingerprint
+names_as_of = 2026-10-14       # Stand der Namen unten (OParl-organizations-Seite des Bodys, Sitzungstitel und, seit dem 2026-10-14, die Texte der POA- und ACI-Dokumente); nur Anzeige, nicht im Fingerprint
 # Punkt 58: die Beratungsfolge je Dokument als zweite Quelle des Gremiums. Der Korpus der
 # Hauptperiode kommt aus dem Altformat der Arbeit und trägt sie nicht; der Vollabruf der Metadaten
 # vom 2026-10-14 (122 Seiten, 35 Minuten) hat sie geholt, und das Paket im Repo friert sie ein
@@ -249,6 +249,11 @@ BAU = "Bauausschuss"
 SPOA = "Sportausschuss"
 ABA = "Anregungs- und Beschwerdeausschuss"
 RPAU = "Rechnungsprüfungsausschuss"
+# Punkt 58 (Review 2026-10-14): zwei Ausschüsse, die nur in einer anderen Periode vorkommen und
+# darum in der Tabelle fehlten -- und deren Organisationen deshalb nicht in [bodies.organizations]
+# stehen durften (ein Alias ins Nichts ist ein Settings-Fehler). Beide Namen sind belegt:
+POA = "Personal- und Organisationsausschuss"  # 51 Nummern der Periode 2014 bis 2020; der Name steht 19-mal in den Texten dieser Dokumente ("Sitzungstermine des Personal- und Organisationsausschusses"), Organisation gr/26
+ACI = "Ausschuss für Chancengerechtigkeit und Integration"  # 55 Nummern der laufenden Periode; der Name steht im Titel von ACI/003/2025 ("Wahl einer / eines Vorsitzenden des Ausschusses für Chancengerechtigkeit und Integration"), Organisation gr/400237
 # Kürzel ohne gesicherten Namen (nur plausibel; nach dem Merge von Option 4 aus raw/organizations.json, fragen.md 5.2):
 KUA = ""
 JHA = ""
@@ -313,13 +318,8 @@ SENR = "Seniorenrat"           # OParl-organizations-Seite 2026-10-11
 # von SEBD; daher die 84,3 % von gr/20 und die 66,5 % von gr/17). Für diese Richtung ist das
 # gleichgültig: gefragt wird immer „welches Gremium nennt diese Organisation".
 #
-# Nicht dabei, weil ihr Kürzel in keiner Tabelle oben steht und ein Alias ins Nichts ein Fehler
-# wäre (der Validator in georep.settings verlangt ein bekanntes Kürzel):
-#   gr/26 -> POA   304 Dokumente der Periode 2014 bis 2020, 45 davon eindeutig, Reinheit 100 %
-#   gr/400237 -> ACI  56 der laufenden Periode, 53 eindeutig, 100 %
-# Beide wären eine Zeile in [bodies.committees] und dann auch aus der Nummer zu lesen; das ist eine
-# eigene Entscheidung (docs/befunde-2026-10-14.md, § 5) und steht hier nur als Befund.
-# Ebenfalls nicht dabei: gr/27 (1 Dokument der Hauptperiode, 21 der alten, keines davon eindeutig).
+# Nicht dabei: gr/27 (1 Dokument der Hauptperiode, 21 der alten, keines davon mit eindeutiger
+# Folge) -- welches Gremium das ist, sagen die Daten nicht, und ein Eintrag wäre geraten.
 [bodies.organizations]         # Organisation der Beratungsfolge -> Kürzel
 "gr/6" = "RAT"                 # 2062 eindeutige Dokumente, 2002 als RAT (die übrigen RPAU, OVA, KUA)
 "gr/32" = "BV1"                # 1381, davon 1380
@@ -357,6 +357,10 @@ SENR = "Seniorenrat"           # OParl-organizations-Seite 2026-10-11
 "gr/400208" = "AWIZ"           # 8, davon 8
 "gr/15" = "AWTL"               # 1, davon 1; in der Periode 2014 bis 2020 sind es 33 von 33
 "gr/400242" = "GLA"            # 0 in der Hauptperiode; gelernt aus der laufenden (17 von 17)
+# Zwei Organisationen, die nur in einer anderen Periode vorkommen (Review 2026-10-14; ihre Kürzel
+# stehen seitdem in [bodies.committees], und erst damit darf die Zeile hier stehen):
+"gr/26" = "POA"                # 0 in der Hauptperiode; 304 in der Periode 2014 bis 2020, 45 davon eindeutig, Reinheit 100 %
+"gr/400237" = "ACI"            # 0 in der Hauptperiode; 56 in der laufenden, 53 eindeutig, 100 %
 
 # --- Option 06: Gewichtung (docs/plans/06-gewichtung.md). Alle Gewichte liegen in [0, 1]; ein Dokument
 # Fremddaten je Raumeinheit (hier der Quartiersatlas der Stadt je Sozialraum) werden über die

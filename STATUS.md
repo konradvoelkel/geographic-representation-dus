@@ -290,8 +290,8 @@ so ein Gremium, das weder ihre Nummer noch ihre Folge eindeutig nennt.
 | Profil | Dokumente | unbekannt vorher | nachher | ergänzt | mehrdeutig | bestätigt | Widerspruch |
 |---|---|---|---|---|---|---|---|
 | `duesseldorf` | 19 108 | 0 (0,0 %) | 0 (0,0 %) | 0 | 0 | 16 902 | 145 |
-| `duesseldorf-2014` | 22 215 | 7 365 (33,2 %) | **1 896 (8,5 %)** | 5 469 | 1 541 | 14 419 | 30 |
-| `duesseldorf-2025` | 4 095 | 55 (1,3 %) | 55 (1,3 %) | 0 | 2 | 3 612 | 26 |
+| `duesseldorf-2014` | 22 215 | 7 314 (32,9 %) | **1 655 (7,4 %)** | 5 659 | 1 535 | 14 464 | 30 |
+| `duesseldorf-2025` | 4 095 | 55 (1,3 %) | **0 (0,0 %)** | 0 | 0 | 3 665 | 26 |
 | `moenchengladbach` | 2 895 | 2 895 (100,0 %) | **1 275 (44,0 %)** | 1 620 | 1 275 | 0 | 0 |
 
 - **Die Abbildung Organisation → Kürzel ist gelernt, nicht geraten**: `georep learn-bodies` nimmt
@@ -314,10 +314,13 @@ so ein Gremium, das weder ihre Nummer noch ihre Folge eindeutig nennt.
 - `papers_gremien.parquet` trägt `quelle`, `folge_gremium` und `folge_anzahl` (Schema-Version 2);
   der Abschnitt „Gremien" nennt die Anteile beider Quellen in einem Satz, und die Zeile „ohne
   Drucksachennummer" der Gremientabelle heißt jetzt „ohne erkanntes Gremium".
-- Offen und als Befund notiert: `gr/26 → POA` (304 Dokumente der alten Periode) und
-  `gr/400237 → ACI` (56 der laufenden) stehen **nicht** in der Tabelle, weil ihre Kürzel in keiner
-  Kürzeltabelle des Profils stehen. Je eine Zeile in `[bodies.committees]` würde sie auflösen —
-  eine eigene Entscheidung (`docs/befunde-2026-10-14.md`, § 5).
+- **`POA` und `ACI` stehen seit dem Review vom 2026-10-14 in `[bodies.committees]`** (Personal- und
+  Organisationsausschuss, Ausschuss für Chancengerechtigkeit und Integration; beide Namen belegt),
+  und damit auch ihre Organisationen `gr/26` und `gr/400237` in `[bodies.organizations]`. Das löst
+  in der alten Periode 241 Dokumente (51 aus der Nummer, 190 aus der Folge) und in der laufenden
+  alle 55 — die laufende Periode hat seitdem **0 unbekannte Gremien**. Offen bleibt `gr/27`
+  (1 Dokument der Hauptperiode, 21 der alten, keines mit eindeutiger Folge): welches Gremium das
+  ist, sagen die Daten nicht.
 
 ## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56 und 58)
 
@@ -388,7 +391,7 @@ Schema-Version hingehört, wie eine Zahl in einem Test gerundet wird —, stehen
 in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen werden
 (`docs/absicherung-2026-10.md`, § 4). Verloren ist nichts, nur umgezogen.
 
-- **1 541 Dokumente der Periode 2014 bis 2020 und 1 275 Mönchengladbachs bleiben „unbekannt",
+- **1 535 Dokumente der Periode 2014 bis 2020 und 1 275 Mönchengladbachs bleiben „unbekannt",
   obwohl ihre Beratungsfolge Gremien nennt** (2026-10-14, Punkt 58): sie nennt mehrere, und welches
   das federführende ist, steht nicht in den Daten
   (`georep.oparl.OparlPaper.consultation_organizations` liest die Liste sortiert und entdoppelt).
@@ -581,12 +584,10 @@ entscheiden könnte; sein § 4 den einen Vorschlag für den nächsten Schritt. N
 `uv run python docs/befunde-2026-10-14-messung.py`.
 
 **Punkt 1 davon ist umgesetzt** (2026-10-14, `docs/decisions.md`, Punkt 58, oben „Die Beratungsfolge
-als zweite Quelle des Gremiums"): „unbekannt" fällt in der alten Periode auf 8,5 % und in
-Mönchengladbach auf 44,0 %. Die 1,6 %, die der Befund schätzte, sind es **nicht** geworden — die
-1 541 mehrdeutigen Folgen zählte er mit, und die entscheiden nicht (siehe „Bekannt"). Offen bleiben
-aus § 6 die Punkte 2 bis 5, und als Befund daneben: zwei Kürzel (`POA` für die alte, `ACI` für die
-laufende Periode) fehlen in `[bodies.committees]` und würden 304 beziehungsweise 55 weitere
-Dokumente auflösen.
+als zweite Quelle des Gremiums"): „unbekannt" fällt in der alten Periode auf 7,4 %, in der
+laufenden auf 0 % und in Mönchengladbach auf 44,0 %. Die 1,6 %, die der Befund für die alte Periode
+schätzte, sind es **nicht** geworden — die 1 535 mehrdeutigen Folgen zählte er mit, und die
+entscheiden nicht (siehe „Bekannt"). Offen bleiben aus § 6 die Punkte 2 bis 5.
 
 **Zwei Fremdzeilen-Bestände in Konrads Textstores** (Review-Befund 6, 2026-10-14): die Stores auf xtraspace
 tragen noch, was beim Packen herausgefallen ist — `cache/moenchengladbach/text/texts.parquet` 663 Zeilen,
