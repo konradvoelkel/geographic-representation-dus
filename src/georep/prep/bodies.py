@@ -19,7 +19,9 @@ beratenden Gremien als Organisations-URLs (``consultation_organizations``). ``[b
 bildet sie auf dieselben Kürzel ab; die Tabelle ist gelernt und nicht geraten
 (``georep learn-bodies``). Die Reihenfolge der Quellen ist fest: **die Nummer entscheidet**, die
 Folge ergänzt nur, wo die Nummer kein bekanntes Gremium liefert -- und auch dann nur, wenn sie
-**genau eines** nennt. Nennt sie mehrere, bleibt das Dokument „unbekannt": die Liste ist sortiert
+**genau eine Organisation** nennt (``consultation_body``; die Zahl der genannten, nicht der
+aufgelösten -- sonst entschiede eine Lücke in der Tabelle, Review 2026-10-14).
+Nennt sie mehrere, bleibt das Dokument „unbekannt": die Liste ist sortiert
 und entdoppelt (``georep.oparl.OparlPaper.consultation_organizations``), die Beratungsreihenfolge
 also nicht mehr darin, und gemessen am 2026-10-14 trifft die beste von fünf Auswahlregeln
 (seltenste Organisation, Klassenvorrang, alphabetisch …) nur 59,9 % der Fälle, in denen die Nummer
@@ -88,9 +90,10 @@ BODIES_SCHEMA = {
     KIND: pl.String,  # eines aus KINDS
     CITY_DISTRICT: pl.Int64,  # nur bei Bezirksvertretungen
     SOURCE: pl.String,  # eines aus SOURCES
-    # Punkt 58: was die Beratungsfolge allein sagen würde; null, wenn sie nichts oder mehr als ein
-    # Gremium nennt. Daneben die Zahl der Gremien, die sie auflöst: 0 = keine Folge oder keine
-    # bekannte Organisation darin, 1 = entschieden, mehr = mehrdeutig.
+    # Punkt 58: was die Beratungsfolge allein sagen würde; null, wenn sie nichts entscheidet.
+    # Daneben die Zahl der **genannten** Organisationen (nicht der aufgelösten): 0 keine Folge,
+    # 1 eindeutig -- und dann steht das Kürzel daneben, wenn die Tabelle sie kennt --, mehr als 1
+    # mehrdeutig (Review 2026-10-14).
     CONSULTATION_BODY: pl.String,
     CONSULTATION_COUNT: pl.Int64,
 }
@@ -198,8 +201,10 @@ def resolve_organizations(
     """Die Kürzel, auf die eine Beratungsfolge zeigt: sortiert, jedes einmal.
 
     Zwei Wege je Organisation, erst die volle URL, dann ihre beiden letzten Segmente; eine
-    Organisation, die die Tabelle nicht kennt, fällt weg. Genau ein Kürzel heißt „entschieden",
-    mehrere heißen „mehrdeutig", und die aufrufende Stelle entscheidet, was das bedeutet.
+    Organisation, die die Tabelle nicht kennt, **fällt weg**. Genau darum ist diese Funktion nicht
+    die Entscheidung, sondern nur ihre eine Hälfte: ein Kürzel heißt hier nicht „eindeutig" --
+    eine Folge aus zwei Organisationen, von denen die Tabelle eine kennt, liefert auch eines
+    (Review 2026-10-14). Wer entscheidet, ist ``consultation_body``.
     """
     found = {
         code
@@ -207,6 +212,47 @@ def resolve_organizations(
         if (code := mapping.get(url) or mapping.get(organization_key(url)))
     }
     return tuple(sorted(found))
+
+
+def named_organizations(organizations: Sequence[str]) -> int:
+    """Wie viele verschiedene Organisationen eine Beratungsfolge nennt -- die **Rohfolge**.
+
+    Gezählt wird auf dem Schlüssel (``organization_key``), damit dieselbe Organisation unter
+    ``http`` und ``https`` einmal zählt, und ohne Rücksicht darauf, ob die Tabelle sie kennt:
+    genau das ist die Frage, von der die Eindeutigkeit hängt.
+    """
+    return len({organization_key(url) for url in organizations})
+
+
+def _decided_only_when_unique(result: tuple[str | None, int]) -> bool:
+    code, named = result
+    return named >= 0 and (code is None or (named == 1 and bool(code)))
+
+
+@deal.safe
+@deal.post(
+    _decided_only_when_unique,
+    message="ein Gremium nur, wenn die Beratungsfolge genau eine Organisation nennt",
+)
+def consultation_body(
+    organizations: Sequence[str], mapping: Mapping[str, str]
+) -> tuple[str | None, int]:
+    """Was eine Beratungsfolge entscheidet, und wie viele Organisationen sie nennt.
+
+    **Die Regel ist „genau eine genannte Organisation", nicht „genau ein aufgelöstes Kürzel"**
+    (Review 2026-10-14). Der Unterschied sind die Dokumente, deren Folge mehrere Organisationen
+    nennt, von denen die Tabelle nur eine kennt: ``ACI/001/2026`` wurde so zu AGS, weil neben
+    ``gr/400237`` (damals ohne Zeile) noch ``gr/9`` in der Folge stand -- eine Entscheidung aus
+    einer Lücke in der Tabelle, und sichtbar war sie nicht. Gemessen am 2026-10-14: 31 Dokumente
+    der Periode 2014 bis 2020, 2 der laufenden und 2 der Hauptperiode.
+
+    Geliefert wird ``(Kürzel oder None, Zahl der genannten Organisationen)``. ``None`` heißt „diese
+    Quelle entscheidet hier nicht", und die Zahl daneben sagt, warum: 0 keine Folge, 1 eine
+    Organisation, die die Tabelle nicht kennt, mehr als 1 mehrdeutig.
+    """
+    named = named_organizations(organizations)
+    codes = resolve_organizations(organizations, mapping)
+    return (codes[0] if named == 1 and codes else None, named)
 
 
 def _from_code(code: str, rules: BodyRules, source: str = FROM_ALIAS) -> BodyRef:
@@ -291,13 +337,15 @@ def _source_matches_the_class(frame: pl.DataFrame) -> bool:
 
 
 def _consultation_counts_fit(frame: pl.DataFrame) -> bool:
-    """``folge_gremium`` steht genau dann, wenn die Folge genau ein Gremium auflöst."""
+    """``folge_gremium`` steht nur, wo die Folge **genau eine** Organisation nennt.
+
+    Keine Gleichheit, sondern eine Implikation: eine Folge mit genau einer Organisation, die die
+    Tabelle nicht kennt, hat ``folge_anzahl = 1`` und trotzdem kein Kürzel (Review 2026-10-14).
+    """
+    decided = frame.get_column(CONSULTATION_BODY).is_not_null()
     return bool(
         (frame.get_column(CONSULTATION_COUNT) >= 0).all()
-        and (
-            frame.get_column(CONSULTATION_BODY).is_not_null()
-            == (frame.get_column(CONSULTATION_COUNT) == 1)
-        ).all()
+        and not (decided & (frame.get_column(CONSULTATION_COUNT) != 1)).any()
     )
 
 
@@ -339,9 +387,9 @@ def classify_papers(
     refs = [parse_reference(r, rules) for r in corpus.get_column(REFERENCE).to_list()]
     resolved = _resolved_consultations(corpus, rules, consultations)
     if resolved:
-        folge = [resolved.get(str(i), ()) for i in corpus.get_column(ID).to_list()]
-        counts = [len(codes) for codes in folge]
-        from_folge: list[str | None] = [c[0] if len(c) == 1 else None for c in folge]
+        folge = [resolved.get(str(i), _NO_CONSULTATION) for i in corpus.get_column(ID).to_list()]
+        from_folge: list[str | None] = [code for code, _ in folge]
+        counts = [named for _, named in folge]
         decided = [_decide(ref, code, rules) for ref, code in zip(refs, from_folge, strict=True)]
     else:
         counts = [0] * corpus.height
@@ -370,15 +418,18 @@ def _decide(ref: BodyRef, from_consultation: str | None, rules: BodyRules) -> Bo
     return ref if candidate.kind == UNKNOWN else candidate
 
 
+_NO_CONSULTATION: tuple[str | None, int] = (None, 0)
+
+
 def _resolved_consultations(
     corpus: pl.DataFrame, rules: BodyRules, consultations: pl.DataFrame | None
-) -> dict[str, tuple[str, ...]]:
-    """Dokument-ID -> die Kürzel, die seine Beratungsfolge auflöst (leer, wo es keine gibt)."""
+) -> dict[str, tuple[str | None, int]]:
+    """Dokument-ID -> was seine Beratungsfolge entscheidet und wie viele Organisationen sie nennt."""
     if consultations is None or not rules.organizations:
         return {}
     wanted = set(corpus.get_column(ID).to_list())
     return {
-        str(row[ID]): resolve_organizations(row[CONSULTATION] or (), rules.organizations)
+        str(row[ID]): consultation_body(row[CONSULTATION] or (), rules.organizations)
         for row in consultations.select(ID, CONSULTATION).iter_rows(named=True)
         if str(row[ID]) in wanted
     }

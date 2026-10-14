@@ -17,8 +17,10 @@ from georep.prep.bodies import (
     BodyRef,
     BodyRules,
     classify_papers,
+    consultation_body,
     counts_by_kind,
     merge_consultations,
+    named_organizations,
     organization_key,
     parse_reference,
     resolve_organizations,
@@ -280,7 +282,7 @@ def test_the_number_decides_and_the_consultation_only_fills_the_gaps(
         {
             "id": ["p1", "p2", "p3", "p4", "p5"],
             # p1 Amtsnummer (die Folge ergänzt), p2 bestätigt, p3 Widerspruch, p4 mehrdeutig,
-            # p5 Amtsnummer ohne auflösbare Folge
+            # p5 Amtsnummer mit einer Organisation, die die Tabelle nicht kennt
             "reference": ["61/ 12/2014", "RAT/1/2021", "OVA/2/2021", "61/ 13/2014", "61/ 14/2014"],
         }
     )
@@ -304,12 +306,46 @@ def test_the_number_decides_and_the_consultation_only_fills_the_gaps(
     ]
     assert frame.get_column("stadtbezirk").to_list() == [1, None, None, None, None]
     assert frame.get_column("folge_gremium").to_list() == ["BV1", "RAT", "RAT", None, None]
-    assert frame.get_column("folge_anzahl").to_list() == [1, 1, 1, 2, 0]
+    # p5 nennt eine Organisation, die die Tabelle nicht kennt: eine genannte, keine aufgelöste
+    assert frame.get_column("folge_anzahl").to_list() == [1, 1, 1, 2, 1]
     counts = source_counts(frame)
     assert counts.documents == 5 and counts.from_consultation == 1
     assert (counts.confirmed, counts.conflicting, counts.ambiguous) == (1, 1, 1)
     assert counts.line() == ("Beratungsfolge: 1 ergänzt, 1 bestätigt, 1 Widerspruch, 1 mehrdeutig")
     assert summary(frame).endswith(counts.line())
+
+
+def test_a_second_organization_makes_the_consultation_ambiguous(
+    with_organizations: BodyRules,
+) -> None:
+    """Review 2026-10-14: entschieden ist nur, was **eine** Organisation nennt.
+
+    ``ACI/001/2026`` der laufenden Periode nennt ``gr/400237`` (damals ohne Zeile in der Tabelle)
+    und ``gr/9``; vorher löste die Tabelle daraus AGS auf und „entschied" damit aus ihrer eigenen
+    Lücke -- für ein Dokument, dessen Nummer ACI trägt. Jetzt zählt die Rohfolge: zwei genannte
+    Organisationen sind mehrdeutig, auch wenn nur eine aufgelöst wird.
+    """
+    corpus = pl.DataFrame(
+        {"id": ["p1", "p2", "p3"], "reference": ["61/ 1/2014", "61/ 2/2014", "61/ 3/2014"]}
+    )
+    folge = _folge({"p1": ["gr/6"], "p2": ["gr/6", "gr/999"], "p3": ["gr/999"]})
+    frame = classify_papers(corpus, with_organizations, folge)
+    assert frame.get_column("gremium").to_list() == ["RAT", None, None]
+    assert frame.get_column("quelle").to_list() == ["beratungsfolge", "unbekannt", "unbekannt"]
+    assert frame.get_column("folge_gremium").to_list() == ["RAT", None, None]
+    # Die Zahl ist die der genannten Organisationen, nicht der aufgelösten
+    assert frame.get_column("folge_anzahl").to_list() == [1, 2, 1]
+    counts = source_counts(frame)
+    assert (counts.from_consultation, counts.ambiguous) == (1, 1)
+    # Dieselbe Aussage an der reinen Funktion, mit und ohne Tabelleneintrag
+    mapping = with_organizations.organizations
+    assert consultation_body([f"{ORG}/gr/6", f"{ORG}/gr/999"], mapping) == (None, 2)
+    assert consultation_body([f"{ORG}/gr/6"], mapping) == ("RAT", 1)
+    assert consultation_body([f"{ORG}/gr/999"], mapping) == (None, 1)
+    assert consultation_body([], mapping) == (None, 0)
+    # Dieselbe Organisation zweimal bleibt eine
+    assert consultation_body([f"{ORG}/gr/6", f"{ORG}/gr/6"], mapping) == ("RAT", 1)
+    assert named_organizations([f"{ORG}/gr/6", f"{ORG}/gr/6"]) == 1
 
 
 def test_without_the_mapping_nothing_changes(default_settings: Settings) -> None:

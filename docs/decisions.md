@@ -1507,7 +1507,9 @@ Folge — **und nur dann, wenn sie genau ein Gremium nennt**.
 `georep.oparl.OparlPaper.consultation_organizations` liest die Liste sortiert und entdoppelt, die
 Reihenfolge der Beratung ist also nicht in den Daten; damit fällt die naheliegende Regel „die erste
 Station" weg. Fünf Regeln, die ohne Reihenfolge auskommen, am 2026-10-14 gegen die Nummer gemessen
-(1 658 Dokumente der Hauptperiode mit Kürzel und mehrdeutiger Folge, 371 der Periode 2014 bis 2020):
+— die Grundmenge sind die Dokumente, deren Folge **mehr als ein Kürzel auflöst** und deren Nummer
+ein Gremium nennt, also genau die, bei denen eine Auswahlregel überhaupt etwas zu wählen hätte
+(1 658 in der Hauptperiode, 371 in der Periode 2014 bis 2020):
 
 | Regel | Hauptperiode | 2014 bis 2020 |
 |---|---|---|
@@ -1517,8 +1519,8 @@ Station" weg. Fünf Regeln, die ohne Reihenfolge auskommen, am 2026-10-14 gegen 
 | Klassenvorrang (BV, dann Ausschuss, Beirat, Rat), darin die seltenste | 437 (26,4 %) | 99 (26,7 %) |
 | die häufigste Organisation | 243 (14,7 %) | 75 (20,2 %) |
 
-Bei **eindeutiger** Folge sind es dagegen 16 903 von 17 049 (99,1 %) beziehungsweise 14 420 von
-14 450 (99,8 %). Das Kürzel der Nummer steht in 96,1 % der mehrdeutigen Fälle überhaupt in der
+Bei **eindeutiger** Folge sind es dagegen 16 902 von 17 047 (99,1 %) beziehungsweise 14 419 von
+14 449 (99,8 %). Das Kürzel der Nummer steht in 96,1 % der mehrdeutigen Fälle überhaupt in der
 Menge — die Information ist also da, nur nicht die Stelle. Die beste Regel wäre damit in zwei von
 fünf Fällen ein erfundenes Gremium in genau der Spalte, die die Seite zeigt; der ehrliche Anteil
 „unbekannt" ist das bessere Ergebnis (Punkt 39).
@@ -1568,14 +1570,26 @@ nennt die Anteile beider Quellen in einem Satz aus diesen Spalten.
 
 | Profil | Dokumente | unbekannt vorher | nachher | ergänzt | mehrdeutig | bestätigt | Widerspruch |
 |---|---|---|---|---|---|---|---|
-| `duesseldorf` | 19 108 | 0 (0,0 %) | 0 (0,0 %) | 0 | 0 | 16 903 | 146 |
-| `duesseldorf-2014` | 22 215 | 7 365 (33,2 %) | **1 866 (8,4 %)** | 5 499 | 1 511 | 14 420 | 30 |
-| `duesseldorf-2025` | 4 095 | 55 (1,3 %) | 53 (1,3 %) | 2 | 0 | 3 612 | 26 |
+| `duesseldorf` | 19 108 | 0 (0,0 %) | 0 (0,0 %) | 0 | 0 | 16 902 | 145 |
+| `duesseldorf-2014` | 22 215 | 7 365 (33,2 %) | **1 896 (8,5 %)** | 5 469 | 1 541 | 14 419 | 30 |
+| `duesseldorf-2025` | 4 095 | 55 (1,3 %) | 55 (1,3 %) | 0 | 2 | 3 612 | 26 |
 | `moenchengladbach` | 2 895 | 2 895 (100,0 %) | **1 275 (44,0 %)** | 1 620 | 1 275 | 0 | 0 |
 
-Die Befunde hatten für die alte Periode 1,6 % geschätzt, weil sie die 1 511 mehrdeutigen
-mitzählten; mit der Regel „nur eindeutig" sind es 8,4 %. Das ist der Preis der Entscheidung und
-steht so auf der Seite.
+Die Befunde hatten für die alte Periode 1,6 % geschätzt, weil sie die mehrdeutigen mitzählten; mit
+der Regel „nur eindeutig" sind es 8,5 %. Das ist der Preis der Entscheidung und steht so auf der
+Seite.
+
+**Die Eindeutigkeit zählt die genannten Organisationen, nicht die aufgelösten Kürzel** (Review
+2026-10-14). Eine Folge aus zwei Organisationen, von denen die Tabelle nur eine kennt, löst genau
+ein Kürzel auf — und entschied damit zuerst, ganz leise, aus einer **Lücke in der Tabelle**:
+`ACI/001/2026` und `ACI/022/2026` nennen `gr/400237` (damals ohne Zeile) und `gr/9` und wurden so
+zu AGS, obwohl ihre Nummer `ACI` trägt; `01/ 281/2014` wurde aus `{gr/26, gr/6}` zum Rat und
+`66/ 7/2016` aus `{gr/25, gr/26}` zum Ordnungs- und Verkehrsausschuss. Betroffen waren 31
+Dokumente der Periode 2014 bis 2020, 2 der laufenden und 2 der Hauptperiode. Die Regel heißt darum
+„genau eine **genannte** Organisation" (`consultation_body`), und `folge_anzahl` zählt ebenso: so
+hängt die Entscheidung nicht daran, wie vollständig die Tabelle ist. Eine Organisation, die sie
+nicht kennt, ergibt `folge_anzahl = 1` **ohne** Kürzel — die Nachbedingung ist darum eine
+Implikation und keine Gleichheit.
 
 **Verworfen:**
 

@@ -33,7 +33,9 @@ from georep.prep.bodies import (
     BodyRef,
     BodyRules,
     classify_papers,
+    consultation_body,
     counts_by_kind,
+    named_organizations,
     organization_key,
     parse_reference,
     resolve_organizations,
@@ -376,14 +378,48 @@ def test_the_number_always_wins_over_the_consultation(
     by_id = dict(zip(ids, cases, strict=True))
     for row in frame.iter_rows(named=True):
         (_, expected), organizations = by_id[row["id"]]
-        codes = resolve_organizations(organizations, MAPPING)
-        assert row["folge_anzahl"] == len(codes)
-        assert row["folge_gremium"] == (codes[0] if len(codes) == 1 else None)
+        # Das Orakel steht hier und ruft **nicht** die Funktionen, die geprüft werden
+        # (Review 2026-10-14: mit ``resolve_organizations`` als Orakel war der Fehler unsichtbar):
+        # die Rohfolge, auf ihre Schlüssel verdichtet, und die Tabelle als Nachschlagewerk.
+        named = {url.rsplit("/", 2)[-2] + "/" + url.rsplit("/", 1)[-1] for url in organizations}
+        only = next(iter(named)) if len(named) == 1 else None
+        from_folge = MAPPING.get(only) if only is not None else None
+        assert row["folge_anzahl"] == len(named)
+        assert row["folge_gremium"] == from_folge
         if expected.kind != UNKNOWN:  # die Nummer entscheidet
             assert (row["gremium"], row["gremium_art"]) == (expected.code, expected.kind)
             assert row["quelle"] in ("nummer", "alias")
-        elif len(codes) == 1:  # die Folge ergänzt
-            assert row["gremium"] == codes[0] and row["quelle"] == "beratungsfolge"
+        elif from_folge is not None:  # die Folge ergänzt
+            assert row["gremium"] == from_folge and row["quelle"] == "beratungsfolge"
         else:
             assert row["gremium_art"] == UNKNOWN and row["quelle"] == "unbekannt"
         assert (row["quelle"] == "unbekannt") == (row["gremium_art"] == UNKNOWN)
+
+
+@given(organizations=urls)
+def test_only_a_single_named_organization_decides(organizations: list[str]) -> None:
+    """Review 2026-10-14: die Eindeutigkeit hängt an der Rohfolge, nicht an den Kürzeln.
+
+    Die Strategie zieht aus fünf URLs, von denen eine (``gr/999``) in keiner Tabelle steht. Zwei
+    gezogene Organisationen heißen darum „mehrdeutig", **auch wenn nur eine davon aufgelöst wird**
+    -- und genau das war der Fehler. Das Orakel zählt die Schlüssel von Hand.
+    """
+    keys = {url.rsplit("/", 1)[-1] for url in organizations}
+    code, named = consultation_body(organizations, MAPPING)
+    assert named == len(keys)
+    if len(keys) != 1:
+        assert code is None
+    else:
+        assert code == MAPPING.get(f"gr/{next(iter(keys))}")
+    # Die aufgelösten Kürzel allein dürfen nicht entscheiden
+    resolved = resolve_organizations(organizations, MAPPING)
+    if len(resolved) == 1 and len(keys) > 1:
+        assert code is None
+
+
+@given(organizations=st.lists(st.text(alphabet="gr/0123456789", max_size=10), max_size=6))
+def test_named_organizations_counts_the_distinct_keys(organizations: list[str]) -> None:
+    """``named_organizations`` zählt Schlüssel, also dieselbe Organisation genau einmal."""
+    assert named_organizations(organizations) == len({organization_key(u) for u in organizations})
+    assert named_organizations(organizations) <= len(organizations)
+    assert named_organizations(organizations + organizations) == named_organizations(organizations)

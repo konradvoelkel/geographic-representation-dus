@@ -6,13 +6,13 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 - **Die Beratungsfolge ist die zweite Quelle des Gremiums** (`docs/decisions.md`, Punkt 58): neben
   der Drucksachennummer entscheidet jetzt, wo die nichts sagt, die Liste der Gremien, die ein
-  Dokument beraten haben (OParl `consultation`). Sie entscheidet nur, wenn sie **genau eines**
-  nennt; nennt sie mehrere, bleibt das Dokument sichtbar „unbekannt", denn die Reihenfolge der
-  Beratung steht nicht in den Daten und die beste von fünf Auswahlregeln trifft nur 59,9 %
-  (gemessen 2026-10-14). „Gremium unbekannt" fällt damit in der Wahlperiode 2014 bis 2020 von
-  7 365 (33,2 %) auf **1 866 (8,4 %)** und in Mönchengladbach von 2 895 (100 %) auf **1 275
-  (44,0 %)**; in der Hauptperiode bleibt es 0, und die Folge bestätigt dort 16 903 Zuordnungen und
-  widerspricht 146. Der Abschnitt „Gremien" nennt die Anteile beider Quellen in einem Satz.
+  Dokument beraten haben (OParl `consultation`). Sie entscheidet nur, wenn sie **genau eine**
+  **Organisation** nennt; nennt sie mehrere, bleibt das Dokument sichtbar „unbekannt", denn die
+  Reihenfolge der Beratung steht nicht in den Daten und die beste von fünf Auswahlregeln trifft nur
+  59,9 % (gemessen 2026-10-14). „Gremium unbekannt" fällt damit in der Wahlperiode 2014 bis 2020 von
+  7 365 (33,2 %) auf **1 896 (8,5 %)** und in Mönchengladbach von 2 895 (100 %) auf **1 275
+  (44,0 %)**; in der Hauptperiode bleibt es 0, und die Folge bestätigt dort 16 902 Zuordnungen und
+  widerspricht 145. Der Abschnitt „Gremien" nennt die Anteile beider Quellen in einem Satz.
 - **`georep learn-bodies`** lernt die Abbildung Organisation → Gremiumskürzel aus den Daten: aus
   den Dokumenten, deren Beratungsfolge genau eine Organisation nennt und deren Nummer ein Kürzel
   trägt. Der Befehl druckt den Katalog je Organisation (mit Namen und Klassifikation aus

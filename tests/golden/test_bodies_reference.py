@@ -270,19 +270,19 @@ def test_metrics_per_district_on_the_frozen_results(
 # Gemessen am 2026-10-14 mit der Tabelle [bodies.organizations] des Profils (36 Einträge, gelernt
 # mit `georep learn-bodies`, Reinheit 99,1 %). Die Zahlen sind eingefroren: ändert eine Zeile der
 # Tabelle oder die Regel sie, ist das eine Entscheidung und keine Überraschung.
-MAIN_CONSULTATION = {"ergaenzt": 0, "bestaetigt": 16_903, "widerspruch": 146, "mehrdeutig": 0}
+MAIN_CONSULTATION = {"ergaenzt": 0, "bestaetigt": 16_902, "widerspruch": 145, "mehrdeutig": 0}
 PERIOD_CONSULTATION = {
-    "ergaenzt": 5_499,
-    "bestaetigt": 14_420,
+    "ergaenzt": 5_469,
+    "bestaetigt": 14_419,
     "widerspruch": 30,
-    "mehrdeutig": 1_511,
+    "mehrdeutig": 1_541,
 }
 PERIOD_WITH_CONSULTATION = {
     DISTRICT_BODY: 13_245,  # 13 244 aus der Nummer plus eines aus der Folge
-    COUNCIL: 1_688,  # 338 plus 1 350
-    COMMITTEE: 4_818,  # 1 193 plus 3 625
-    ADVISORY: 598,  # 75 plus 523
-    UNKNOWN: 1_866,  # 7 365 minus 5 499; 8,4 % statt 33,2 %
+    COUNCIL: 1_664,  # 338 plus 1 326
+    COMMITTEE: 4_814,  # 1 193 plus 3 621
+    ADVISORY: 596,  # 75 plus 521
+    UNKNOWN: 1_896,  # 7 365 minus 5 469; 8,5 % statt 33,2 %
 }
 PACKAGE = Path(__file__).resolve().parents[2] / "snapshots" / "duesseldorf-beratungsfolge"
 
@@ -331,12 +331,13 @@ def test_the_consultation_confirms_the_numbers_of_the_main_period(
 def test_the_consultation_halves_the_unknown_bodies_of_the_old_period(
     default_settings: Settings,
 ) -> None:
-    """Punkt 58, die Hauptwirkung: „unbekannt" fällt in der Periode 2014 bis 2020 auf 8,4 %.
+    """Punkt 58, die Hauptwirkung: „unbekannt" fällt in der Periode 2014 bis 2020 auf 8,5 %.
 
-    5 499 der 7 365 Dokumente ohne Gremium bekommen eines, weil ihre Beratungsfolge genau eines
-    nennt; 1 511 bleiben unbekannt, weil sie mehrere nennt (dazu der Modulkopf von
-    ``georep.prep.bodies``), und 355 haben keine auflösbare Folge. Bei den 14 450 Dokumenten mit
-    Kürzel und eindeutiger Folge sind 14 420 bestätigt und 30 widersprochen (0,2 %).
+    5 469 der 7 365 Dokumente ohne Gremium bekommen eines, weil ihre Beratungsfolge genau **eine
+    Organisation** nennt; 1 541 bleiben unbekannt, weil sie mehrere nennt (dazu der Modulkopf von
+    ``georep.prep.bodies``), die übrigen 325 haben keine Folge oder eine Organisation, die die
+    Tabelle nicht kennt. Bei den Dokumenten mit Kürzel und eindeutiger Folge sind 14 419 bestätigt
+    und 30 widersprochen (0,2 %).
     """
     rules = BodyRules.from_settings(default_settings.bodies)
     folge = _consultation_of_jsonl(PERIOD_PACKAGE / "raw" / "papers.jsonl")
@@ -345,7 +346,7 @@ def test_the_consultation_halves_the_unknown_bodies_of_the_old_period(
     assert frame.height == PERIOD_DOCUMENTS
     assert counts_by_kind(frame) == PERIOD_WITH_CONSULTATION
     unknown = PERIOD_WITH_CONSULTATION[UNKNOWN]
-    assert unknown / PERIOD_DOCUMENTS < 0.085 and PERIOD_AFTER[UNKNOWN] / PERIOD_DOCUMENTS > 0.33
+    assert unknown / PERIOD_DOCUMENTS < 0.086 and PERIOD_AFTER[UNKNOWN] / PERIOD_DOCUMENTS > 0.33
     counts = source_counts(frame)
     assert dict(counts.per_source)[FROM_CONSULTATION] == PERIOD_CONSULTATION["ergaenzt"]
     assert counts.confirmed == PERIOD_CONSULTATION["bestaetigt"]

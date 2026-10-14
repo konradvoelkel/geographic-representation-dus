@@ -280,15 +280,18 @@ in **keinem** Paket (233 MB, 3,9 GB, 585 MB).
 
 Punkt 1 der Befunde vom 2026-10-14 ist umgesetzt: neben der Drucksachennummer entscheidet jetzt die
 Beratungsfolge aus OParl (`consultation`), wo die Nummer kein bekanntes Gremium nennt — und nur,
-wenn sie **genau eines** nennt. Dass sie bei mehreren nicht entscheidet, ist gemessen: die Liste
-kommt sortiert und entdoppelt, die Reihenfolge der Beratung ist nicht in den Daten, und von fünf
-Auswahlregeln trifft die beste 993 von 1 658 Fällen (59,9 %) gegen 99,1 % bei eindeutiger Folge.
+wenn sie **genau eine Organisation** nennt. Dass sie bei mehreren nicht entscheidet, ist gemessen:
+die Liste kommt sortiert und entdoppelt, die Reihenfolge der Beratung ist nicht in den Daten, und
+von fünf Auswahlregeln trifft die beste 993 von 1 658 Fällen (59,9 %) gegen 99,1 % bei eindeutiger
+Folge. **Gezählt werden die genannten Organisationen, nicht die aufgelösten Kürzel** (Review
+2026-10-14): sonst entschied eine Lücke in der Tabelle, und 35 Dokumente über alle Profile bekamen
+so ein Gremium, das weder ihre Nummer noch ihre Folge eindeutig nennt.
 
 | Profil | Dokumente | unbekannt vorher | nachher | ergänzt | mehrdeutig | bestätigt | Widerspruch |
 |---|---|---|---|---|---|---|---|
-| `duesseldorf` | 19 108 | 0 (0,0 %) | 0 (0,0 %) | 0 | 0 | 16 903 | 146 |
-| `duesseldorf-2014` | 22 215 | 7 365 (33,2 %) | **1 866 (8,4 %)** | 5 499 | 1 511 | 14 420 | 30 |
-| `duesseldorf-2025` | 4 095 | 55 (1,3 %) | 53 (1,3 %) | 2 | 0 | 3 612 | 26 |
+| `duesseldorf` | 19 108 | 0 (0,0 %) | 0 (0,0 %) | 0 | 0 | 16 902 | 145 |
+| `duesseldorf-2014` | 22 215 | 7 365 (33,2 %) | **1 896 (8,5 %)** | 5 469 | 1 541 | 14 419 | 30 |
+| `duesseldorf-2025` | 4 095 | 55 (1,3 %) | 55 (1,3 %) | 0 | 2 | 3 612 | 26 |
 | `moenchengladbach` | 2 895 | 2 895 (100,0 %) | **1 275 (44,0 %)** | 1 620 | 1 275 | 0 | 0 |
 
 - **Die Abbildung Organisation → Kürzel ist gelernt, nicht geraten**: `georep learn-bodies` nimmt
@@ -385,7 +388,7 @@ Schema-Version hingehört, wie eine Zahl in einem Test gerundet wird —, stehen
 in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen werden
 (`docs/absicherung-2026-10.md`, § 4). Verloren ist nichts, nur umgezogen.
 
-- **1 511 Dokumente der Periode 2014 bis 2020 und 1 275 Mönchengladbachs bleiben „unbekannt",
+- **1 541 Dokumente der Periode 2014 bis 2020 und 1 275 Mönchengladbachs bleiben „unbekannt",
   obwohl ihre Beratungsfolge Gremien nennt** (2026-10-14, Punkt 58): sie nennt mehrere, und welches
   das federführende ist, steht nicht in den Daten
   (`georep.oparl.OparlPaper.consultation_organizations` liest die Liste sortiert und entdoppelt).
@@ -578,9 +581,9 @@ entscheiden könnte; sein § 4 den einen Vorschlag für den nächsten Schritt. N
 `uv run python docs/befunde-2026-10-14-messung.py`.
 
 **Punkt 1 davon ist umgesetzt** (2026-10-14, `docs/decisions.md`, Punkt 58, oben „Die Beratungsfolge
-als zweite Quelle des Gremiums"): „unbekannt" fällt in der alten Periode auf 8,4 % und in
+als zweite Quelle des Gremiums"): „unbekannt" fällt in der alten Periode auf 8,5 % und in
 Mönchengladbach auf 44,0 %. Die 1,6 %, die der Befund schätzte, sind es **nicht** geworden — die
-1 511 mehrdeutigen Folgen zählte er mit, und die entscheiden nicht (siehe „Bekannt"). Offen bleiben
+1 541 mehrdeutigen Folgen zählte er mit, und die entscheiden nicht (siehe „Bekannt"). Offen bleiben
 aus § 6 die Punkte 2 bis 5, und als Befund daneben: zwei Kürzel (`POA` für die alte, `ACI` für die
 laufende Periode) fehlen in `[bodies.committees]` und würden 304 beziehungsweise 55 weitere
 Dokumente auflösen.

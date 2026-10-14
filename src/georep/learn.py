@@ -38,9 +38,9 @@ from georep.prep.bodies import (
     UNKNOWN,
     BodyRules,
     classify_papers,
+    consultation_body,
     merge_consultations,
     organization_key,
-    resolve_organizations,
 )
 from georep.settings import Settings
 
@@ -252,22 +252,27 @@ def _cross_check(
 
     So sagt der Befehl, was die Tabelle im Profil heute leistet, und nicht, was sie leisten
     könnte: die gelernte Tabelle ist per Konstruktion mit sich selbst einig.
+
+    Gerechnet wird mit ``consultation_body``, also mit derselben Regel wie der Schritt ``bodies``:
+    „genau eine **genannte** Organisation". Vorher stand hier ``resolve_organizations`` mit
+    ``len(codes) == 1``, und damit zählte die Gegenprobe Dokumente als entschieden, die der Schritt
+    heute mehrdeutig nennt (Review 2026-10-14).
     """
     mapping = dict(settings.bodies.organizations)
     confirmed = conflicting = resolvable = ambiguous = without = unknown = 0
     for row in by_number.iter_rows(named=True):
-        codes = resolve_organizations(lists.get(str(row[ID])) or [], mapping)
+        code, named = consultation_body(lists.get(str(row[ID])) or [], mapping)
         if row[KIND] == UNKNOWN:
             unknown += 1
-            if len(codes) == 1:
+            if code is not None:
                 resolvable += 1
-            elif codes:
+            elif named > 1:
                 ambiguous += 1
             else:
                 without += 1
-        elif len(codes) == 1:
-            confirmed += codes[0] == row[BODY]
-            conflicting += codes[0] != row[BODY]
+        elif code is not None:
+            confirmed += code == row[BODY]
+            conflicting += code != row[BODY]
     return {
         "confirmed": confirmed,
         "conflicting": conflicting,

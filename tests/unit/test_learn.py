@@ -103,10 +103,16 @@ def test_min_documents_keeps_a_single_vote_out_of_the_table(
 def test_the_cross_check_measures_the_table_the_profile_carries(
     run: Layout, settings: Settings
 ) -> None:
-    """Gezählt wird mit der Tabelle des Profils, nicht mit der gelernten (die wäre tautologisch)."""
+    """Gezählt wird mit der Tabelle des Profils, nicht mit der gelernten (die wäre tautologisch).
+
+    „Mehrdeutig" heißt seit dem Review vom 2026-10-14 „die Folge nennt mehrere Organisationen" --
+    unabhängig davon, ob die Tabelle sie kennt. Darum zählt p6 (``gr/32`` und ``gr/6``) auch ohne
+    Tabelle als mehrdeutig: eine Zeile mehr darin würde daran nichts ändern, und genau das soll
+    die Gegenprobe sagen.
+    """
     without = learn_bodies(run, settings)
     assert (without.confirmed, without.conflicting) == (0, 0)
-    assert (without.unknown, without.resolvable, without.ambiguous, without.without) == (3, 0, 0, 3)
+    assert (without.unknown, without.resolvable, without.ambiguous, without.without) == (3, 0, 1, 2)
     assert without.differences() == ["  gr/32: nur gelernt (BV1)", "  gr/6: nur gelernt (RAT)"]
 
     with_table = settings.model_copy(
