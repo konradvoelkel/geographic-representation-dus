@@ -113,6 +113,25 @@ def write_inputs() -> None:
 
     write_geojson()
     write_context()
+    write_consultations(keep)
+
+
+def write_consultations(keep: set[str]) -> int:
+    """Punkt 58: die Beratungsfolge dieser 200 Dokumente aus dem Paket der Hauptperiode.
+
+    Der Korpus der Fixture kommt wie der der Referenz aus dem Altformat der Arbeit und trägt die
+    Folge nicht; das Paket ``snapshots/duesseldorf-beratungsfolge`` trägt sie je Dokument-ID. Die
+    Fixture bekommt genau die Zeilen ihrer Dokumente, damit der Schritt ``bodies`` in den Tests
+    dieselbe zweite Quelle liest wie auf dem echten Datensatz -- ohne das Paket zu kopieren.
+    """
+    import polars as pl
+
+    from georep.io import write_parquet
+
+    package = REPO / "snapshots" / "duesseldorf-beratungsfolge" / "raw" / "beratungsfolge.parquet"
+    frame = pl.read_parquet(package).filter(pl.col("id").is_in(sorted(keep))).sort("id")
+    write_parquet(frame, MINI / "raw" / "beratungsfolge.parquet", schema_version=2)
+    return frame.height
 
 
 def write_geojson() -> int:

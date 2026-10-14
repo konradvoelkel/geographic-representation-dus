@@ -17,7 +17,7 @@ from loguru import logger
 
 from georep import __version__
 from georep.analysis.regression import regress
-from georep.bootstrap import bootstrap
+from georep.bootstrap import bootstrap_from_settings
 from georep.contracts import configure as configure_contracts
 from georep.errors import GeorepError, MissingInputError
 from georep.export import export_csv
@@ -309,17 +309,7 @@ def _cmd_paths(settings: Settings, layout: Layout) -> int:
 
 
 def _cmd_bootstrap(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
-    report = bootstrap(
-        layout,
-        force=args.force,
-        context_files=settings.context.files.names(),
-        # Option 02: mit dem Wörterbuch der Hauptperiode gehören Straßen und Orte nicht hierher
-        needs_dictionary=settings.period.dictionary == "own",
-        # Option 07: ein Profil mit laufender Periode holt seine Paper selbst
-        seed_corpus=settings.bootstrap.seed_corpus,
-        # Punkt 58: die Beratungsfolge je Dokument, wo der Abruf dieser Periode sie nicht trug
-        consultations=settings.bodies.consultations,
-    )
+    report = bootstrap_from_settings(layout, settings, force=args.force)
     print(report.summary())
     return 0
 

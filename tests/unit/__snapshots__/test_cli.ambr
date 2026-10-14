@@ -31,7 +31,7 @@
                -> combined_searchdict.parquet
   corpus       <- papers.jsonl, texts.parquet
                -> papers.parquet
-  bodies       <- papers.parquet
+  bodies       <- papers.parquet, beratungsfolge.parquet
                -> papers_gremien.parquet
   topics       <- papers.parquet, papers_gremien.parquet
                -> themen.parquet, themen_dokumente.parquet, themen_anteile.parquet

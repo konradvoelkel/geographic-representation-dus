@@ -14,6 +14,15 @@ ist byte-treu gefiltert (UTF-8, `;`, CRLF, Dezimalkomma), `sozialraeume_2021.geo
 Quelle (CRS84, lon/lat) und alle Eigenschaften, `quartiersatlas_2024_indikatoren.csv` ist unverändert
 (keine Daten je Einheit). Eingaben der Schritte `context` und `controls`; `expected/` kennt sie nicht.
 
+`raw/beratungsfolge.parquet` (seit 2026-10-14, Punkt 58): die Beratungsfolge genau dieser 200
+Dokumente, aus `snapshots/duesseldorf-beratungsfolge/raw/beratungsfolge.parquet` gefiltert
+(`make_mini.write_consultations`; 200 Zeilen, 195 mit Folge, 27 Organisationen). Der Korpus der
+Fixture kommt wie der der Referenz aus dem Altformat der Arbeit und trägt die Folge nicht; so liest
+der Schritt `bodies` im Testlauf dieselbe zweite Quelle wie auf dem echten Datensatz, ohne dass die
+Fixture an einer Datei außerhalb dieses Ordners hängt. `expected/` kennt sie nicht, und an den
+Gremienzahlen der Fixture ändert sie nichts: dort trifft jede Drucksachennummer, und die Nummer
+entscheidet.
+
 `expected/`: die sieben Ausgaben des Altcodes der Arbeit (pandas, FlashText) auf genau diesen
 Eingaben, erzeugt am 2026-10-11 auf dem Stand des Tags `v0.2.0`. Sie sind der Golden Master für
 die Polars-Kette und werden nicht neu erzeugt.

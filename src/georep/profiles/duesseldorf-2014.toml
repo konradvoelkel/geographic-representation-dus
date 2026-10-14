@@ -94,3 +94,13 @@ precinct_id = "Stimmbezchar"   # einzige Eigenschaft des 2020-Stimmbezirks-GeoJS
 district_id = "Kommunalwahlbezirk"  # Eigenschaften von Kommunalwahlbezirke.geojson, Stand 29.01.2020
 district_name = "Name"
 min_coverage = 0.95            # die Abdeckung liegt zwischen 97,76 % und 100 % (Stadtgrenze, Rhein); deutlich weniger heißt falsches CRS oder falsche Datei
+
+# Punkt 58: die Beratungsfolge dieser Periode steht in ihrem eigenen raw/papers.jsonl (22 066 von
+# 22 215 Dokumenten), das Paket der Hauptperiode gehört also nicht hierher; der leere Schlüssel
+# nimmt den geerbten Pfad aus profiles/duesseldorf.toml zurück. Die Tabelle
+# [bodies.organizations] bleibt geerbt: die Abbildung Organisation -> Kürzel gilt für die Stadt,
+# nicht für die Periode. `georep --profile duesseldorf-2014 learn-bodies` lernt sie auf dieser
+# Periode als 30 Organisationen mit einer Reinheit von 99,8 % und widerspricht in keiner der 29
+# Zeilen, die sie mit der Hauptperiode teilt (gemessen 2026-10-14).
+[bodies]
+consultations = ""

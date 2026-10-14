@@ -23,7 +23,7 @@ from pathlib import Path
 
 import pytest
 
-from georep.bootstrap import bootstrap
+from georep.bootstrap import bootstrap, bootstrap_from_settings
 from georep.layout import Layout
 from georep.pipeline import Outcome, build_steps, run_pipeline
 from georep.report.publish import publish_sites
@@ -62,7 +62,7 @@ def published(tmp_path_factory: pytest.TempPathFactory) -> PublishedRun:
         update={"data_root": root / "data", "cache_root": root / "cache"}
     )
     base = Layout.from_settings(compare)
-    assert bootstrap(base, context_files=compare.context.files.names()).missing == []
+    assert bootstrap_from_settings(base, compare).missing == []
 
     period_settings = load_settings(profile=PERIOD_PROFILE, cwd=NOWHERE).model_copy(
         update={

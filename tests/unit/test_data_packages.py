@@ -1,9 +1,10 @@
 """Die Datenpakete im Repo: was drin sein darf, wie groß sie sein dürfen, was ihr README sagt.
 
-Fünf Pakete sind die Eingaben, aus denen GitHub Pages jede Seite ohne Netz baut (Punkt 56):
+Sechs Pakete sind die Eingaben, aus denen GitHub Pages jede Seite ohne Netz baut (Punkt 56):
 ``reference/`` (der Datensatz der Arbeit, Altformat), ``reference/moenchengladbach/`` und
-``snapshots/<periode>/`` (das eigene Format: ``raw/papers.jsonl`` und ``cache/text/texts.parquet``)
-sowie ``context/`` (Fremddaten, Punkt 26). **Gezählt werden die Datendateien ohne das README**:
+``snapshots/<periode>/`` (das eigene Format: ``raw/papers.jsonl`` und ``cache/text/texts.parquet``),
+``snapshots/duesseldorf-beratungsfolge/`` (nur die Beratungsfolge je Dokument, Punkt 58) sowie
+``context/`` (Fremddaten, Punkt 26). **Gezählt werden die Datendateien ohne das README**:
 es beschreibt das Paket und ist nicht sein Inhalt, darum lässt ``files_of`` es aus und darum nennt
 jede Zahl in den Dokumenten dieselbe Menge (Review-Befund 14). Geprüft wird hier nicht, was die
 Kette daraus rechnet --
@@ -52,9 +53,11 @@ PACKAGES = (
     Package("reference/moenchengladbach", limit=8 * MIB, native=True, readme=True),  # 3 980 958
     Package("snapshots/2014-2020", limit=48 * MIB, native=True, readme=True),  # 37 875 851
     Package("snapshots/2025", limit=20 * MIB, native=True, readme=True),  # 13 894 254
+    # Punkt 58: nur die Beratungsfolge je Dokument, kein Store und keine Eingabe (90 455 Bytes)
+    Package("snapshots/duesseldorf-beratungsfolge", limit=1 * MIB, native=False, readme=True),
     Package("context", limit=4 * MIB, native=False, readme=True),  # 2 242 316
 )
-# Alle zusammen, als zweite grobe Schranke: 143 765 275 Bytes = 137,11 MiB am 2026-10-14 (76 % der
+# Alle zusammen, als zweite grobe Schranke: 143 855 730 Bytes = 137,19 MiB am 2026-10-14 (76 % der
 # Grenze). Ein einziger PDF-Ordner einer
 # Periode (585 MB bis 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
@@ -201,6 +204,27 @@ def test_the_profiles_point_at_the_packages_in_the_repo() -> None:
         settings = load_settings(profile=profile, cwd=nowhere)
         assert (REPO / settings.reference_root).resolve() == (REPO / path).resolve(), profile
         assert (REPO / settings.reference_root).is_dir(), profile
+
+
+def test_the_package_with_the_consultation_is_declared_by_exactly_one_profile() -> None:
+    """Punkt 58: die Hauptperiode liest es, jede Periode mit eigener Folge nimmt es zurück.
+
+    Ohne den leeren Schlüssel in den Periodenprofilen kopierte ``bootstrap`` dort die Folge der
+    Hauptperiode in ein ``raw/``, in dem sie nichts zu tun hat (die IDs sind disjunkt).
+    """
+    from georep.settings import load_settings
+
+    nowhere = Path("/nonexistent")
+    main = load_settings(profile="duesseldorf", cwd=nowhere).bodies
+    assert main.consultations is not None
+    assert (REPO / main.consultations).is_file(), main.consultations
+    assert main.consultations.parts[:2] == ("snapshots", "duesseldorf-beratungsfolge")
+    for profile in ("duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
+        assert load_settings(profile=profile, cwd=nowhere).bodies.consultations is None, profile
+    # Der Vergleich *ist* die Hauptperiode und liest dieselbe Datei (Punkt 52)
+    assert load_settings(profile="duesseldorf-vergleich", cwd=nowhere).bodies.consultations == (
+        main.consultations
+    )
 
 
 # --- slow: Prüfsummen und Zeilenzahlen der echten Pakete ---------------------------------------

@@ -223,6 +223,13 @@ reference_pattern = '^(?P<code>[A-ZÄÖÜ]+?)(?P<number>\d{1,2})?/\d+/\d{4}(?:[/
 district_body = "BV"           # Kürzel der Bezirksvertretungen; die Nummer dahinter ist der Stadtbezirk (GO NRW: eine Bezirksvertretung je Stadtbezirk)
 district_body_name = "Bezirksvertretung {n}"  # Anzeigename, {n} ist der Stadtbezirk
 names_as_of = 2026-10-11       # Stand der Namen unten (OParl-organizations-Seite des Bodys und Sitzungstitel); nur Anzeige, nicht im Fingerprint
+# Punkt 58: die Beratungsfolge je Dokument als zweite Quelle des Gremiums. Der Korpus der
+# Hauptperiode kommt aus dem Altformat der Arbeit und trägt sie nicht; der Vollabruf der Metadaten
+# vom 2026-10-14 (122 Seiten, 35 Minuten) hat sie geholt, und das Paket im Repo friert sie ein
+# (snapshots/duesseldorf-beratungsfolge/README.md mit Zahlen und Prüfsumme). bootstrap kopiert die
+# Datei nach raw/, gelesen wird nur die Kopie. Jede andere Periode trägt die Folge in ihrem eigenen
+# raw/papers.jsonl und setzt den Schlüssel wieder leer.
+consultations = "snapshots/duesseldorf-beratungsfolge/raw/beratungsfolge.parquet"
 
 [bodies.council]               # der Rat der Stadt, Kürzel -> Name
 RAT = "Rat"
@@ -287,6 +294,69 @@ SENR = "Seniorenrat"           # OParl-organizations-Seite 2026-10-11
 178 = "BV8"
 179 = "BV9"
 170 = "BV10"                   # der zehnte Stadtbezirk, einstellig geschrieben
+
+# Punkt 58: die Beratungsfolge als zweite Quelle des Gremiums. Die Tabelle ist **gelernt und nicht
+# geraten**: `georep --profile duesseldorf learn-bodies` nimmt die Dokumente, deren Folge genau
+# eine Organisation nennt und deren Drucksachennummer ein Kürzel trägt, und lässt sie abstimmen.
+# Am 2026-10-14 ergaben das 35 Organisationen aus 17 047 Dokumenten der Hauptperiode mit einer
+# Reinheit von 16 902/17 047 = 99,1 %; die Zahlen je Zeile stehen daneben (Dokumente mit genau
+# dieser Organisation, davon Stimmen für dieses Kürzel). Dieselbe Rechnung auf der Periode 2014 bis
+# 2020 (30 Organisationen, 99,8 %) und auf der laufenden (32, 99,3 %) widerspricht in **keiner**
+# der 29 beziehungsweise 30 gemeinsamen Zeilen -- die Abbildung ist eine Eigenschaft der Stadt und
+# nicht der Periode, und darum steht sie hier und nicht in einem Periodenprofil.
+#
+# Der Schlüssel sind die beiden letzten Segmente der Organisations-URL; eine volle URL wäre auch
+# erlaubt (georep.prep.bodies.organization_key). Die Abbildung ist **nicht umkehrbar**: mehrere
+# Organisationen zeigen auf dasselbe Kürzel (gr/14 und gr/400214 auf AUS, gr/10 und gr/400213 auf
+# AÖE, gr/400211 und gr/400232 auf ADIG -- der Server hat die Gremien 2020 und 2024 neu angelegt),
+# und mehrere Kürzel zeigen auf dieselbe Organisation (GLA und RPAU auf die des Rates, BAU auf die
+# von SEBD; daher die 84,3 % von gr/20 und die 66,5 % von gr/17). Für diese Richtung ist das
+# gleichgültig: gefragt wird immer „welches Gremium nennt diese Organisation".
+#
+# Nicht dabei, weil ihr Kürzel in keiner Tabelle oben steht und ein Alias ins Nichts ein Fehler
+# wäre (der Validator in georep.settings verlangt ein bekanntes Kürzel):
+#   gr/26 -> POA   304 Dokumente der Periode 2014 bis 2020, 45 davon eindeutig, Reinheit 100 %
+#   gr/400237 -> ACI  56 der laufenden Periode, 53 eindeutig, 100 %
+# Beide wären eine Zeile in [bodies.committees] und dann auch aus der Nummer zu lesen; das ist eine
+# eigene Entscheidung (docs/befunde-2026-10-14.md, § 5) und steht hier nur als Befund.
+# Ebenfalls nicht dabei: gr/27 (1 Dokument der Hauptperiode, 21 der alten, keines davon eindeutig).
+[bodies.organizations]         # Organisation der Beratungsfolge -> Kürzel
+"gr/6" = "RAT"                 # 2062 eindeutige Dokumente, 2002 als RAT (die übrigen RPAU, OVA, KUA)
+"gr/32" = "BV1"                # 1381, davon 1380
+"gr/40" = "BV9"                # 1272, davon 1272
+"gr/39" = "BV8"                # 1252, davon 1250
+"gr/33" = "BV2"                # 1194, davon 1193
+"gr/38" = "BV7"                # 1147, davon 1147
+"gr/37" = "BV6"                # 1098, davon 1097
+"gr/36" = "BV5"                # 962, davon 962
+"gr/41" = "BV10"               # 950, davon 950
+"gr/35" = "BV4"                # 939, davon 939
+"gr/34" = "BV3"                # 792, davon 792
+"gr/25" = "OVA"                # 464, davon 463
+"gr/22" = "JHA"                # 440, davon 439
+"gr/24" = "KUA"                # 434, davon 434
+"gr/28" = "SCHUA"              # 325, davon 324
+"gr/29" = "SPOA"               # 282, davon 282
+"gr/9" = "AGS"                 # 271, davon 270
+"gr/400214" = "AUS"            # 214, davon 214 (der Ausschuss ab 2020)
+"gr/16" = "AWM"                # 190, davon 190
+"gr/400213" = "AÖE"            # 180, davon 180 (der Ausschuss ab 2020)
+"gr/17" = "SEBD"               # 170, davon 113; die übrigen 57 nennen BAU, das dieselbe Organisation führt
+"gr/4" = "JURAT"               # 169, davon 169
+"gr/144" = "INTR"              # 153, davon 151
+"gr/8" = "ABA"                 # 137, davon 137
+"gr/11" = "APS"                # 119, davon 119
+"gr/20" = "HFA"                # 102, davon 86; die übrigen 16 nennen RAT, ADIG, AWIR
+"gr/400211" = "ADIG"           # 99, davon 99
+"gr/400212" = "AWIR"           # 99, davon 99
+"gr/3" = "BR"                  # 52, davon 52
+"gr/400232" = "ADIG"           # 36, davon 36 (nach der Umbenennung vom 2024-09-19)
+"gr/14" = "AUS"                # 28, davon 27 (der Ausschuss vor 2020)
+"gr/10" = "AÖE"                # 13, davon 13 (der Ausschuss vor 2020)
+"gr/160" = "SENR"              # 12, davon 12
+"gr/400208" = "AWIZ"           # 8, davon 8
+"gr/15" = "AWTL"               # 1, davon 1; in der Periode 2014 bis 2020 sind es 33 von 33
+"gr/400242" = "GLA"            # 0 in der Hauptperiode; gelernt aus der laufenden (17 von 17)
 
 # --- Option 06: Gewichtung (docs/plans/06-gewichtung.md). Alle Gewichte liegen in [0, 1]; ein Dokument
 # Fremddaten je Raumeinheit (hier der Quartiersatlas der Stadt je Sozialraum) werden über die

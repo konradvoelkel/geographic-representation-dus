@@ -14,7 +14,7 @@ from polars.testing import assert_frame_equal
 from georep.analysis import scaling
 from georep.analysis.hits import DISTRICT, citywide_terms
 from georep.analysis.regression import regression_pair
-from georep.bootstrap import bootstrap
+from georep.bootstrap import bootstrap, bootstrap_from_settings
 from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.pipeline import Outcome, UnknownStepError, build_steps, run_pipeline
@@ -203,7 +203,7 @@ def test_two_runs_write_identical_parquet(
 
     a, b = with_context(tmp_path / "a"), with_context(tmp_path / "b")
     for layout in (a, b):
-        bootstrap(layout, context_files=settings.context.files.names())
+        bootstrap_from_settings(layout, settings)
         run_pipeline(build_steps(settings, layout), settings)
     for name in (
         "dictionary",
@@ -243,7 +243,7 @@ def test_pipeline_reproduces_the_thesis_results(
     tmp_path: Path, reference_root: Path, settings: Settings
 ) -> None:
     layout = _layout(tmp_path, reference_root, settings.profile)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     outcomes = run_pipeline(build_steps(settings, layout), settings)
     assert all(o.status == "ausgeführt" for o in outcomes if o.step not in NETWORK)
     page = layout.site_index.read_text(encoding="utf-8")
@@ -304,7 +304,7 @@ def test_weighted_variants_reproduce_table_five_and_decompose_the_count(
     aus ``trefferquote_gewichtet`` der Variante ``einheit`` auf dieselben Stellen fallen.
     """
     layout = _layout(tmp_path, reference_root, settings.profile)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     run_pipeline(build_steps(settings, layout), settings)
     results = pl.read_parquet(layout.results)
     weighted = pl.read_parquet(layout.weighted)
@@ -386,7 +386,7 @@ def test_the_rules_change_the_reference_as_measured(
     zusammen sind die Golden-Master-Politik aus decisions.md, Punkt 43.
     """
     layout = _layout(tmp_path, reference_root, default_settings.profile)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, default_settings)
     run_pipeline(build_steps(default_settings, layout), default_settings)
     assert pl.read_parquet(layout.pois_table).height == WITH_RULES["pois"]
     index = pl.read_parquet(layout.index)

@@ -312,10 +312,13 @@ def test_the_number_decides_and_the_consultation_only_fills_the_gaps(
     assert summary(frame).endswith(counts.line())
 
 
-def test_without_the_mapping_nothing_changes(rules: BodyRules) -> None:
+def test_without_the_mapping_nothing_changes(default_settings: Settings) -> None:
     """Ein Profil ohne ``[bodies.organizations]`` rechnet wie vor Punkt 58, auch mit Folge."""
+    plain = BodyRules.from_settings(
+        default_settings.bodies.model_copy(update={"organizations": {}})
+    )
     corpus = pl.DataFrame({"id": ["p1"], "reference": ["61/ 12/2014"]})
-    frame = classify_papers(corpus, rules, _folge({"p1": ["gr/32"]}))
+    frame = classify_papers(corpus, plain, _folge({"p1": ["gr/32"]}))
     assert frame.get_column("gremium_art").to_list() == [UNKNOWN]
     assert frame.get_column("folge_anzahl").to_list() == [0]
     assert source_counts(frame).line() == ""

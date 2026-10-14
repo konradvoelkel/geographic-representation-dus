@@ -24,6 +24,7 @@ from loguru import logger
 from georep.io import atomic_path
 from georep.layout import Layout
 from georep.records import PaperRecord
+from georep.settings import Settings
 from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextMeta, TextStore
 
@@ -99,6 +100,27 @@ def seed_stores_from_native(layout: Layout, reference: Layout) -> tuple[int, int
     return len(PaperStore(layout.papers).load()), len(TextStore(layout.texts))
 
 
+def bootstrap_from_settings(
+    layout: Layout, settings: Settings, *, force: bool = False
+) -> BootstrapReport:
+    """``bootstrap`` mit genau den Argumenten, die aus den Settings folgen.
+
+    Die eine Stelle, an der die Nähte des Befehls verdrahtet sind: die Kontextdateien (Option 03),
+    das Wörterbuch der Hauptperiode (Option 02), der leere Store einer laufenden Periode
+    (Option 07) und das Paket mit der Beratungsfolge (Punkt 58). ``georep bootstrap`` ruft genau
+    das, und Tests, die die Kette auf einem echten Datensatz fahren, auch -- sonst stünde die
+    Verdrahtung zweimal da und ein neuer Schlüssel fehlte in der Hälfte der Läufe.
+    """
+    return bootstrap(
+        layout,
+        force=force,
+        context_files=settings.context.files.names(),
+        needs_dictionary=settings.period.dictionary == "own",
+        seed_corpus=settings.bootstrap.seed_corpus,
+        consultations=settings.bodies.consultations,
+    )
+
+
 def bootstrap(
     layout: Layout,
     *,
@@ -117,8 +139,10 @@ def bootstrap(
     zuständig. ``seed_corpus`` ist die Naht von Option 07: ein Profil mit laufender Periode
     bekommt die Eingaben der Referenz, aber keine Paper und Texte der Hauptperiode; die holt
     sein Netzschritt ``papers`` selbst. ``consultations`` ist die Naht von Punkt 58: der Pfad des
-    Pakets mit der Beratungsfolge je Dokument (``[bodies].consultations``); ohne ihn hat diese
-    Periode die Folge in ihrem eigenen ``raw/papers.jsonl``, und es gibt nichts zu kopieren.
+    Pakets mit der Beratungsfolge je Dokument (``[bodies].consultations``), benutzt nur, wenn der
+    eingefrorene Datensatz nicht selbst eine ``raw/beratungsfolge.parquet`` mitbringt. Ohne beides
+    hat diese Periode die Folge in ihrem eigenen ``raw/papers.jsonl``, und es gibt nichts zu
+    kopieren.
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -130,9 +154,12 @@ def bootstrap(
     ]
     if needs_dictionary:
         pairs += [(reference.streets, layout.streets), (reference.pois, layout.pois)]
-    # Punkt 58: die Beratungsfolge je Dokument, wenn das Profil ein Paket dafür nennt
-    if consultations is not None:
-        pairs.append((consultations, layout.consultations))
+    # Punkt 58: die Beratungsfolge je Dokument. Bringt der eingefrorene Datensatz sie selbst mit,
+    # gilt seine Datei -- sie gehört zu genau diesen Dokumenten; sonst das Paket, das das Profil
+    # nennt (``[bodies].consultations``). Fehlt beides, gibt es die zweite Quelle hier nicht.
+    folge = reference.consultations if reference.consultations.is_file() else consultations
+    if folge is not None:
+        pairs.append((folge, layout.consultations))
     # Option 01: zwei Quellen, die nur manche Städte veröffentlichen (votemanager)
     for source, target in (
         (reference.streets_directory, layout.streets_directory),

@@ -32,15 +32,21 @@ from georep.prep.bodies import (
     BODY,
     CITY_DISTRICT,
     COMMITTEE,
+    CONSULTATION,
+    CONSULTATION_COUNT,
     COUNCIL,
     DISTRICT_BODY,
+    FROM_CONSULTATION,
+    FROM_NUMBER,
     ID,
     KIND,
     REFERENCE,
+    SOURCE,
     UNKNOWN,
     BodyRules,
     classify_papers,
     counts_by_kind,
+    source_counts,
     summary,
 )
 from georep.prep.voters import ELIGIBLE, UNIT, district_units, read_results_csv
@@ -257,3 +263,98 @@ def test_metrics_per_district_on_the_frozen_results(
     assert set(local) == set(LOCALITY)
     for code, expected in LOCALITY.items():
         assert local[code] == pytest.approx(expected, abs=5e-4), code
+
+
+# --- Punkt 58: die Beratungsfolge als zweite Quelle, auf den echten Daten ----------------------
+
+# Gemessen am 2026-10-14 mit der Tabelle [bodies.organizations] des Profils (36 Einträge, gelernt
+# mit `georep learn-bodies`, Reinheit 99,1 %). Die Zahlen sind eingefroren: ändert eine Zeile der
+# Tabelle oder die Regel sie, ist das eine Entscheidung und keine Überraschung.
+MAIN_CONSULTATION = {"ergaenzt": 0, "bestaetigt": 16_903, "widerspruch": 146, "mehrdeutig": 0}
+PERIOD_CONSULTATION = {
+    "ergaenzt": 5_499,
+    "bestaetigt": 14_420,
+    "widerspruch": 30,
+    "mehrdeutig": 1_511,
+}
+PERIOD_WITH_CONSULTATION = {
+    DISTRICT_BODY: 13_245,  # 13 244 aus der Nummer plus eines aus der Folge
+    COUNCIL: 1_688,  # 338 plus 1 350
+    COMMITTEE: 4_818,  # 1 193 plus 3 625
+    ADVISORY: 598,  # 75 plus 523
+    UNKNOWN: 1_866,  # 7 365 minus 5 499; 8,4 % statt 33,2 %
+}
+PACKAGE = Path(__file__).resolve().parents[2] / "snapshots" / "duesseldorf-beratungsfolge"
+
+
+def _consultation_of_jsonl(path: Path) -> pl.DataFrame:
+    """``id`` und ``consultation_organizations`` aus einer ``papers.jsonl``, wie der Korpus sie trägt."""
+    rows = [json.loads(line) for line in path.read_text("utf-8").splitlines() if line.strip()]
+    return pl.DataFrame(
+        {
+            ID: [str(r["id"]) for r in rows],
+            CONSULTATION: [[str(o) for o in (r.get(CONSULTATION) or ())] for r in rows],
+        },
+        schema={ID: pl.String, CONSULTATION: pl.List(pl.String)},
+    )
+
+
+@pytest.mark.slow
+def test_the_consultation_confirms_the_numbers_of_the_main_period(
+    reference_root: Path, default_settings: Settings
+) -> None:
+    """Punkt 58: in der Hauptperiode trifft die Nummer jede Zeile; die Folge ist die Gegenprobe.
+
+    Sie bestätigt 16 903 von 17 049 Zuordnungen mit eindeutiger Folge und widerspricht 146 (0,9 %)
+    -- und ändert keine einzige, weil die Nummer entscheidet. Die 146 sind keine Fehler des
+    Parsers: sechs Kürzel teilen ihre Organisation mit einem anderen (GLA und RPAU mit dem Rat,
+    BAU mit SEBD), und die Folge kann sie darum nicht auseinanderhalten.
+    """
+    rules = BodyRules.from_settings(default_settings.bodies)
+    assert len(default_settings.bodies.organizations) == 36
+    folge = pl.read_parquet(PACKAGE / "raw" / "beratungsfolge.parquet").select(ID, CONSULTATION)
+    corpus = _reference_corpus(reference_root)
+    frame = classify_papers(corpus, rules, folge)
+    assert frame.height == 19_108
+    assert counts_by_kind(frame) == KIND_COUNTS  # die Nummer entscheidet: nichts ändert sich
+    counts = source_counts(frame)
+    assert dict(counts.per_source)[FROM_NUMBER] == 19_108
+    assert dict(counts.per_source)[FROM_CONSULTATION] == MAIN_CONSULTATION["ergaenzt"]
+    assert counts.confirmed == MAIN_CONSULTATION["bestaetigt"]
+    assert counts.conflicting == MAIN_CONSULTATION["widerspruch"]
+    assert counts.ambiguous == MAIN_CONSULTATION["mehrdeutig"]
+    # Das Paket trägt ein Dokument mehr als die Referenz (KUA/023/2026); der Korpus entscheidet.
+    assert pl.read_parquet(PACKAGE / "raw" / "beratungsfolge.parquet").height == 19_109
+
+
+@pytest.mark.slow
+def test_the_consultation_halves_the_unknown_bodies_of_the_old_period(
+    default_settings: Settings,
+) -> None:
+    """Punkt 58, die Hauptwirkung: „unbekannt" fällt in der Periode 2014 bis 2020 auf 8,4 %.
+
+    5 499 der 7 365 Dokumente ohne Gremium bekommen eines, weil ihre Beratungsfolge genau eines
+    nennt; 1 511 bleiben unbekannt, weil sie mehrere nennt (dazu der Modulkopf von
+    ``georep.prep.bodies``), und 355 haben keine auflösbare Folge. Bei den 14 450 Dokumenten mit
+    Kürzel und eindeutiger Folge sind 14 420 bestätigt und 30 widersprochen (0,2 %).
+    """
+    rules = BodyRules.from_settings(default_settings.bodies)
+    folge = _consultation_of_jsonl(PERIOD_PACKAGE / "raw" / "papers.jsonl")
+    assert int((folge.get_column(CONSULTATION).list.len() > 0).sum()) == 22_066
+    frame = classify_papers(_period_corpus(), rules, folge)
+    assert frame.height == PERIOD_DOCUMENTS
+    assert counts_by_kind(frame) == PERIOD_WITH_CONSULTATION
+    unknown = PERIOD_WITH_CONSULTATION[UNKNOWN]
+    assert unknown / PERIOD_DOCUMENTS < 0.085 and PERIOD_AFTER[UNKNOWN] / PERIOD_DOCUMENTS > 0.33
+    counts = source_counts(frame)
+    assert dict(counts.per_source)[FROM_CONSULTATION] == PERIOD_CONSULTATION["ergaenzt"]
+    assert counts.confirmed == PERIOD_CONSULTATION["bestaetigt"]
+    assert counts.conflicting == PERIOD_CONSULTATION["widerspruch"]
+    assert counts.ambiguous == PERIOD_CONSULTATION["mehrdeutig"]
+    assert PERIOD_AFTER[UNKNOWN] - unknown == PERIOD_CONSULTATION["ergaenzt"]
+    # Jede ergänzte Zeile trägt ihr Kürzel und, bei einer Bezirksvertretung, ihren Stadtbezirk
+    added = frame.filter(pl.col(SOURCE) == FROM_CONSULTATION)
+    assert added.height == PERIOD_CONSULTATION["ergaenzt"]
+    assert added.get_column(BODY).null_count() == 0
+    assert set(added.get_column(KIND)) <= {DISTRICT_BODY, COUNCIL, COMMITTEE, ADVISORY}
+    assert added.get_column(CONSULTATION_COUNT).to_list() == [1] * added.height

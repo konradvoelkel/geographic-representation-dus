@@ -405,20 +405,24 @@ def test_paths_prints_the_layout_for_scripts(
 def test_learn_bodies_prints_the_catalogue_and_the_cross_check(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Ohne Beratungsfolge im Korpus sagt der Befehl genau das -- und bleibt Exit 0.
+    """Punkt 58: der Befehl lernt auf der Fixture dieselbe Tabelle, die im Profil steht.
 
-    Die Mini-Fixture kommt aus dem Altformat der Arbeit, ihre Dokumente tragen also keine Folge.
-    Der Befehl ist damit auch der Nachweis, dass eine Stadt ohne diese Quelle nichts lernt und
-    nichts behauptet.
+    Die 200 Dokumente der Fixture sind eine Stichprobe der Referenz, und ihre Beratungsfolge liegt
+    als ``raw/beratungsfolge.parquet`` daneben (``make_mini.write_consultations``). Die Gegenprobe
+    nennt darum echte Zahlen, und die Unterschiede zur Tabelle des Profils sind genau die
+    Organisationen, die in dieser Stichprobe nicht vorkommen.
     """
     assert main(["bootstrap"]) == 0
     assert main(["run", "corpus"]) == 0
     capsys.readouterr()
     assert main(["learn-bodies"]) == 0
     out = capsys.readouterr().out
-    assert "200 Dokumente, 0 mit Beratungsfolge, 0 verschiedene Organisationen" in out
-    assert "Aus den Drucksachennummern ist nichts zu lernen" in out
+    assert "200 Dokumente, 195 mit Beratungsfolge, 27 verschiedene Organisationen" in out
+    assert "[bodies.organizations]" in out and '"gr/32" = "BV1"' in out
     assert "unbekannt 0: davon eindeutig auflösbar 0" in out
+    # Kein Widerspruch zur Tabelle im Profil, nur Zeilen, die die Stichprobe nicht sieht
+    differences = out.split("Unterschiede zur Tabelle im Profil:")[1]
+    assert ", gelernt " not in differences and "nur im Profil" in differences
 
 
 def test_learn_bodies_needs_the_corpus(project: Path, capsys: pytest.CaptureFixture[str]) -> None:

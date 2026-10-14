@@ -43,3 +43,13 @@ root = ""                      # leer heißt: die Schritte context_data (Netz), 
 
 [topics]                       # Option 06: das Themenmodell speist die Gewichtungsvarianten der Regression
 k = 0                          # ohne Regression zeigt die Seite keine Sensitivitätstabelle; der Schritt topics entfällt damit und spart vier Sekunden je Lauf
+
+# Punkt 58: wie beim Profil der alten Periode steht die Beratungsfolge hier im eigenen
+# raw/papers.jsonl (3 966 von 4 095 Dokumenten); der leere Schlüssel nimmt den geerbten Pfad des
+# Pakets der Hauptperiode zurück, die geerbte Tabelle [bodies.organizations] bleibt. Auf dieser
+# Periode gelernt sind es 32 Organisationen mit einer Reinheit von 99,3 %, ohne Widerspruch in den
+# 30 gemeinsamen Zeilen; zwei kennt die Hauptperiode nicht -- gr/400242 (GLA) steht darum in der
+# Tabelle der Stadt, gr/400237 (ACI) nicht, weil ACI in keiner Kürzeltabelle steht (dieselben 55
+# Dokumente, die schon die Nummer nicht auflöst: docs/befunde-2026-10-14.md, § 5).
+[bodies]
+consultations = ""

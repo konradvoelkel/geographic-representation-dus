@@ -146,12 +146,12 @@ def test_the_partition_holds_in_all_41_districts_and_the_party_sums_match(
     """Die Kette auf der Referenz: in jedem der 41 Wahlbezirke summieren die fünf Urheberklassen
     zu ``anzahl_treffer``, und die Treffer je Partei stimmen mit der Messung vom 2026-10-12."""
     from georep.analysis.parties import originators_by_district, party_correlations
-    from georep.bootstrap import bootstrap
+    from georep.bootstrap import bootstrap_from_settings
     from georep.pipeline import build_steps, run_pipeline
 
     root = tmp_path_factory.mktemp("parties_chain")
     layout = Layout(root / "data", root / "cache", reference_root)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     offline = [s.name for s in build_steps(settings, layout) if not s.network]
     outcomes = run_pipeline(build_steps(settings, layout), settings, offline)
     assert all(o.status == "ausgeführt" for o in outcomes)
@@ -189,14 +189,14 @@ def test_two_runs_write_the_same_party_tables(
     reference_root: Path, settings: Settings, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
     """Byteidentisch: der Schritt hängt nur von Korpus, Auswertung, Wählern und Settings ab."""
-    from georep.bootstrap import bootstrap
+    from georep.bootstrap import bootstrap_from_settings
     from georep.pipeline import build_steps, run_pipeline
 
     roots = []
     for name in ("a", "b"):
         root = tmp_path_factory.mktemp(f"parties_twice_{name}")
         layout = Layout(root / "data", root / "cache", reference_root)
-        bootstrap(layout)
+        bootstrap_from_settings(layout, settings)
         steps = build_steps(settings, layout)
         run_pipeline(steps, settings, [s.name for s in steps if not s.network])
         roots.append(layout)
@@ -209,13 +209,13 @@ def test_the_page_carries_the_section_within_the_budget(
     reference_root: Path, settings: Settings, tmp_path_factory: pytest.TempPathFactory
 ) -> None:
     """Auf der vollen Referenz: der Abschnitt steht auf der Seite, und sie bleibt unter dem Budget."""
-    from georep.bootstrap import bootstrap
+    from georep.bootstrap import bootstrap_from_settings
     from georep.pipeline import build_steps, run_pipeline
     from georep.report.tables import published
 
     root = tmp_path_factory.mktemp("parties_site")
     layout = Layout(root / "data", root / "cache", reference_root)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     steps = build_steps(settings, layout)
     run_pipeline(steps, settings, [s.name for s in steps if not s.network])
     page = layout.site_index.read_text(encoding="utf-8")

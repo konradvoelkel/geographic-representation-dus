@@ -43,6 +43,14 @@ def _corpus(layout: Layout, rows: list[tuple[str, str, list[str]]]) -> None:
 
 
 @pytest.fixture
+def settings(default_settings: Settings) -> Settings:
+    """Die Default-Settings ohne die gelernte Tabelle: so beginnt jede Stadt (Punkt 58)."""
+    return default_settings.model_copy(
+        update={"bodies": default_settings.bodies.model_copy(update={"organizations": {}})}
+    )
+
+
+@pytest.fixture
 def run(tmp_path: Path, default_settings: Settings) -> Layout:
     """Ein kleiner Korpus mit Folge: zwei eindeutige Rats-, eine BV- und zwei andere Zeilen."""
     layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
@@ -63,9 +71,9 @@ def run(tmp_path: Path, default_settings: Settings) -> Layout:
 
 
 def test_the_majority_decides_and_the_purity_says_how_clear_it_was(
-    run: Layout, default_settings: Settings
+    run: Layout, settings: Settings
 ) -> None:
-    report = learn_bodies(run, default_settings)
+    report = learn_bodies(run, settings)
     assert (report.documents, report.with_consultation) == (8, 7)
     learned = {entry.key: entry for entry in report.learned}
     assert set(learned) == {"gr/6", "gr/32"}
@@ -85,30 +93,30 @@ def test_the_majority_decides_and_the_purity_says_how_clear_it_was(
 
 
 def test_min_documents_keeps_a_single_vote_out_of_the_table(
-    run: Layout, default_settings: Settings
+    run: Layout, settings: Settings
 ) -> None:
-    report = learn_bodies(run, default_settings, min_documents=4)
+    report = learn_bodies(run, settings, min_documents=4)
     assert [entry.key for entry in report.learned] == []  # keine schafft vier
-    assert learn_bodies(run, default_settings, min_documents=3).learned[0].key == "gr/6"
+    assert learn_bodies(run, settings, min_documents=3).learned[0].key == "gr/6"
 
 
 def test_the_cross_check_measures_the_table_the_profile_carries(
-    run: Layout, default_settings: Settings
+    run: Layout, settings: Settings
 ) -> None:
     """Gezählt wird mit der Tabelle des Profils, nicht mit der gelernten (die wäre tautologisch)."""
-    without = learn_bodies(run, default_settings)
+    without = learn_bodies(run, settings)
     assert (without.confirmed, without.conflicting) == (0, 0)
     assert (without.unknown, without.resolvable, without.ambiguous, without.without) == (3, 0, 0, 3)
     assert without.differences() == ["  gr/32: nur gelernt (BV1)", "  gr/6: nur gelernt (RAT)"]
 
-    settings = default_settings.model_copy(
+    with_table = settings.model_copy(
         update={
-            "bodies": default_settings.bodies.model_copy(
+            "bodies": settings.bodies.model_copy(
                 update={"organizations": {"gr/6": "RAT", "gr/32": "BV1", "gr/25": "OVA"}}
             )
         }
     )
-    report = learn_bodies(run, settings)
+    report = learn_bodies(run, with_table)
     assert (report.confirmed, report.conflicting) == (3, 1)  # p3 nennt RPAU, die Folge RAT
     assert (report.unknown, report.resolvable, report.ambiguous, report.without) == (3, 1, 1, 1)
     assert report.differences() == ["  gr/25: nur im Profil (OVA)"]
@@ -116,7 +124,7 @@ def test_the_cross_check_measures_the_table_the_profile_carries(
 
 
 def test_the_catalogue_adds_the_names_from_the_organizations_file(
-    run: Layout, default_settings: Settings
+    run: Layout, settings: Settings
 ) -> None:
     """Mit ``raw/organizations.json`` tragen die Zeilen Kürzel, Klassifikation und Namen.
 
@@ -137,7 +145,7 @@ def test_the_catalogue_adds_the_names_from_the_organizations_file(
         ),
         encoding="utf-8",
     )
-    report = learn_bodies(run, default_settings)
+    report = learn_bodies(run, settings)
     entry = next(e for e in report.organizations if e.key == "gr/6")
     assert (entry.short_name, entry.classification, entry.name) == ("RAT", "Ausschuss", "Rat")
     assert "Ausschuss RAT Rat" in report.table()
@@ -145,15 +153,15 @@ def test_the_catalogue_adds_the_names_from_the_organizations_file(
 
 
 def test_without_a_corpus_the_command_says_which_step_is_missing(
-    tmp_path: Path, default_settings: Settings
+    tmp_path: Path, settings: Settings
 ) -> None:
     layout = Layout(tmp_path / "leer", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
     with pytest.raises(MissingInputError, match="papers.parquet fehlt"):
-        learn_bodies(layout, default_settings)
+        learn_bodies(layout, settings)
 
 
 def test_the_package_fills_the_consultation_of_a_period_without_one(
-    tmp_path: Path, default_settings: Settings
+    tmp_path: Path, settings: Settings
 ) -> None:
     """Punkt 58: ``[bodies].consultations`` ist die Quelle, wenn der Korpus keine Folge trägt."""
     layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
@@ -171,13 +179,11 @@ def test_the_package_fills_the_consultation_of_a_period_without_one(
         schema_version=2,
     )
     assert layout.consultations.is_file() and not package.exists()
-    settings = default_settings.model_copy(
+    declared = settings.model_copy(
         update={
-            "bodies": default_settings.bodies.model_copy(
-                update={"consultations": layout.consultations}
-            )
+            "bodies": settings.bodies.model_copy(update={"consultations": layout.consultations})
         }
     )
-    report = learn_bodies(layout, settings)
+    report = learn_bodies(layout, declared)
     assert report.with_consultation == 2
     assert {entry.key: entry.code for entry in report.learned} == {"gr/6": "RAT"}

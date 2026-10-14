@@ -7,7 +7,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from georep.bootstrap import bootstrap
+from georep.bootstrap import bootstrap, bootstrap_from_settings
 from georep.io import digest
 from georep.layout import Layout
 from georep.pipeline import build_steps, freshness, run_pipeline
@@ -29,7 +29,7 @@ def _layout(root: Path, mini_root: Path) -> Layout:
 
 def _run(root: Path, mini_root: Path, settings: Settings) -> Layout:
     layout = _layout(root, mini_root)
-    bootstrap(layout, context_files=settings.context.files.names())
+    bootstrap_from_settings(layout, settings)
     outcomes = run_pipeline(build_steps(settings, layout), settings)
     assert {o.step for o in outcomes} >= OFFLINE
     assert all(o.status == "ausgeführt" for o in outcomes if o.step in OFFLINE)
@@ -104,7 +104,7 @@ def test_the_whole_chain_on_the_reference_publishes_both_sections(
     layout = Layout(
         tmp_path / "data", tmp_path / "cache", reference_root, context_root=context_root
     )
-    bootstrap(layout, context_files=settings.context.files.names())
+    bootstrap_from_settings(layout, settings)
     steps = build_steps(settings, layout)
     outcomes = run_pipeline(steps, settings)
     offline = [o for o in outcomes if o.step not in {s.name for s in steps if s.network}]
