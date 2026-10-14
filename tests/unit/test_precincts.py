@@ -681,3 +681,69 @@ def test_the_contract_of_the_pure_functions_demands_finite_rings() -> None:
         ring_signed_area(nan_ring)
     with pytest.raises(deal.PreContractError):
         geometry_from_esri_rings([nan_ring])
+
+
+# --- Befund 5: BOM und kaputtes JSON in beiden JSON-Lesern -----------------------------------
+
+
+@pytest.mark.parametrize(
+    "reader", [read_source_geojson, read_source_esri_identify], ids=["geojson", "esri-identify"]
+)
+@pytest.mark.parametrize(
+    ("content", "ids"),
+    [
+        (b"", "leer"),
+        (b"<html>Wartung</html>", "html"),
+        (b'{"results":[', "abgebrochen"),
+        (b"\xff\xfe{}", "falsche Kodierung"),
+    ],
+    ids=lambda value: value if isinstance(value, str) else "",
+)
+def test_a_file_that_is_no_json_names_itself(
+    tmp_path: Path, reader: Any, content: bytes, ids: str
+) -> None:
+    """Vorher endete beides als ``RaisesContractError`` **ohne Text**: welche Datei, stand nicht da.
+
+    Eine halb geschriebene Datei, eine HTML-Fehlerseite unter dem Namen der Antwort oder falsche
+    Bytes sind Datenfälle. ``UnicodeDecodeError`` ist ein ``ValueError``, ein Zweig deckt beide.
+    """
+    path = tmp_path / "flaechen.json"
+    path.write_bytes(content)
+    with pytest.raises(SchemaError, match="kein lesbares JSON"):
+        reader(path)
+
+
+@pytest.mark.parametrize("reader", [read_source_geojson, read_source_esri_identify])
+def test_a_utf8_bom_in_front_of_the_json_is_no_error(tmp_path: Path, reader: Any) -> None:
+    """Ein Portal, das UTF-8 mit BOM ausliefert, ist kein Fehlerfall, sondern ein Portal.
+
+    Dasselbe BOM nimmt ``georep.io.read_text_without_bom`` den CSVs des Portals weg; ohne ihn
+    stolperte ``json.loads`` über U+FEFF, und die Meldung nannte eine Spalte 1.
+    """
+    ring = _clockwise(0.0, 0.0, 10.0)
+    payload = {
+        "type": "FeatureCollection",
+        "crs": {"type": "name", "properties": {"name": "EPSG:25832"}},
+        "features": [{"properties": {"Nummer": "10401"}, "geometry": {"type": "Polygon"}}],
+        "results": [
+            {
+                "attributes": {"Nummer": "10401"},
+                "geometry": {"rings": [ring], "spatialReference": {"wkid": 25832}},
+            }
+        ],
+    }
+    path = tmp_path / "mit-bom.json"
+    path.write_bytes(b"\xef\xbb\xbf" + json.dumps(payload).encode("utf-8"))
+    source = reader(path)
+    assert [f["properties"]["Nummer"] for f in source.features] == ["10401"]
+    assert source.crs == "EPSG:25832"
+
+
+def test_a_json_list_instead_of_an_object_is_a_schema_error(tmp_path: Path) -> None:
+    """``[]`` ist lesbares JSON und hat kein ``get``; das endete als ``AttributeError``."""
+    path = tmp_path / "liste.json"
+    path.write_text("[]", encoding="utf-8")
+    with pytest.raises(SchemaError, match="keine Features"):
+        read_source_geojson(path)
+    with pytest.raises(SchemaError, match="keine results"):
+        read_source_esri_identify(path)

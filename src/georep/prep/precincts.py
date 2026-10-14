@@ -52,10 +52,29 @@ def read_source(path: Path, rules: Precincts) -> SourcePrecincts:
 
 
 @deal.raises(SchemaError)
+def read_json_source(path: Path) -> Any:
+    """JSON einer Quelldatei: ohne BOM, und ein Fehler darin hat einen Text (Review 2026-10-14).
+
+    Zwei Fälle, die beide Leser vorher als ``RaisesContractError`` **ohne Meldung** durchließen:
+    ein Portal, das UTF-8 mit BOM ausliefert (``json.loads`` stolpert über U+FEFF), und eine
+    halb geschriebene oder mit einer HTML-Fehlerseite überschriebene Datei. Beides ist ein
+    Datenfall und keine Vertragsverletzung -- der Nutzer muss lesen können, **welche** Datei
+    gemeint ist. ``UnicodeDecodeError`` ist ein ``ValueError``, ein Zweig deckt also beide.
+
+    Das BOM fällt mit ``georep.io.read_text_without_bom`` weg, demselben Leser, mit dem die CSVs
+    des Portals gelesen werden; eigene Logik dafür gäbe es damit zweimal.
+    """
+    try:
+        return json.loads(read_text_without_bom(path, "utf-8"))
+    except ValueError as error:
+        raise SchemaError(f"{path.name}: kein lesbares JSON ({error})") from error
+
+
+@deal.raises(SchemaError)
 def read_source_geojson(path: Path, source_crs: str = "") -> SourcePrecincts:
     """Eine FeatureCollection, wie ein Open-Data-Portal sie liefert; ``crs``-Mitglied wenn vorhanden."""
-    collection = json.loads(path.read_text(encoding="utf-8"))
-    features = collection.get("features")
+    collection = read_json_source(path)
+    features = collection.get("features") if isinstance(collection, dict) else None
     if not isinstance(features, list) or not features:
         raise SchemaError(f"{path.name}: keine Features")
     crs = collection.get("crs")
@@ -295,7 +314,7 @@ def read_source_esri_identify(path: Path, source_crs: str = "") -> SourcePrecinc
     Eigenschaften sind die ``attributes`` des Treffers, so wie der Dienst sie formatiert (eine
     ``OBJECTID`` kommt als Text).
     """
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload = read_json_source(path)
     results = payload.get("results") if isinstance(payload, dict) else None
     if not isinstance(results, list) or not results:
         raise SchemaError(f"{path.name}: keine results; eine identify-Antwort hat results[]")
