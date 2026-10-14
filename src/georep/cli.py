@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|export|regress|profile``.
+"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
@@ -22,7 +22,8 @@ from georep.contracts import configure as configure_contracts
 from georep.errors import GeorepError, MissingInputError
 from georep.export import export_csv
 from georep.layout import Layout
-from georep.pack import pack
+from georep.learn import learn_bodies
+from georep.pack import pack, pack_consultations
 from georep.pipeline import build_steps, freshness, run_pipeline, select_steps
 from georep.profiling import profile_step
 from georep.report.build import current_commit
@@ -99,6 +100,26 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pack_cmd.add_argument("target", type=Path, help="Zielordner, etwa snapshots/2014-2020")
     pack_cmd.add_argument("--force", action="store_true", help="vorhandene Dateien überschreiben")
+    # Punkt 58: die zweite Quelle des Gremiums als eigenes, kleines Paket
+    pack_cmd.add_argument(
+        "--consultations",
+        action="store_true",
+        help="nur die Beratungsfolge je Dokument packen (raw/beratungsfolge.parquet) statt der "
+        "Eingaben eines Laufs",
+    )
+
+    # Punkt 58: die Abbildung Organisation -> Gremium aus den Daten lernen, nicht raten
+    learn = sub.add_parser(
+        "learn-bodies",
+        help="die Abbildung Organisation -> Gremium aus Beratungsfolge und Drucksachennummer "
+        "lernen und als [bodies.organizations] drucken",
+    )
+    learn.add_argument(
+        "--min-documents",
+        type=int,
+        default=1,
+        help="eine Organisation braucht so viele Dokumente mit genau ihr in der Folge (Standard 1)",
+    )
 
     sub.add_parser("export", help="Parquet-Ergebnisse als CSV neben die Parquet-Dateien schreiben")
 
@@ -307,11 +328,26 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
     """Das Datenpaket schreiben und die Prüfsummentabelle drucken (Punkt 56).
 
     Die Tabelle steht immer auf stdout, auch wenn ein vorhandenes README nicht angefasst wurde:
-    dann gehört sie von Hand hinein, und nur dort weiß ein Mensch, wo.
+    dann gehört sie von Hand hinein, und nur dort weiß ein Mensch, wo. Mit ``--consultations``
+    entsteht statt der Eingaben eines Laufs nur die Beratungsfolge je Dokument (Punkt 58).
     """
-    report = pack(layout, settings, args.target, force=args.force)
+    write = pack_consultations if args.consultations else pack
+    report = write(layout, settings, args.target, force=args.force)
     print(report.line())
     print(report.table(), end="")
+    return 0
+
+
+def _cmd_learn_bodies(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
+    """Die Abbildung Organisation -> Gremium drucken, wie sie aus den Daten folgt (Punkt 58).
+
+    Ein Befehl und kein Skript unter ``docs/``, weil er je Stadt läuft, die Pfade aus dem Profil
+    nimmt und mit ``--profile`` dieselbe Naht hat wie jeder andere Schritt; ein Skript müsste
+    Profil und Layout ein zweites Mal verdrahten. Geschrieben wird nichts: der TOML-Block kommt
+    von Hand ins Profil, so wie die Aliastabelle aus Punkt 57.
+    """
+    report = learn_bodies(layout, settings, min_documents=args.min_documents)
+    print(report.text(), end="")
     return 0
 
 
@@ -416,6 +452,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cmd_bootstrap(args, settings, layout)
         if args.command == "pack":
             return _cmd_pack(args, settings, layout)  # Punkt 56
+        if args.command == "learn-bodies":
+            return _cmd_learn_bodies(args, settings, layout)  # Punkt 58
         if args.command == "export":
             return _cmd_export(layout)
         if args.command == "regress":

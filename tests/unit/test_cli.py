@@ -397,3 +397,43 @@ def test_paths_prints_the_layout_for_scripts(
     assert set(profile) == set(main_profile) and len(profile) == 12
     # Jeder Wert ohne Leerzeichen am Rand: das Skript liest sie als key=wert
     assert all(v == v.strip() for v in profile.values())
+
+
+# --- Punkt 58: die Beratungsfolge als zweite Quelle --------------------------------------------
+
+
+def test_learn_bodies_prints_the_catalogue_and_the_cross_check(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Ohne Beratungsfolge im Korpus sagt der Befehl genau das -- und bleibt Exit 0.
+
+    Die Mini-Fixture kommt aus dem Altformat der Arbeit, ihre Dokumente tragen also keine Folge.
+    Der Befehl ist damit auch der Nachweis, dass eine Stadt ohne diese Quelle nichts lernt und
+    nichts behauptet.
+    """
+    assert main(["bootstrap"]) == 0
+    assert main(["run", "corpus"]) == 0
+    capsys.readouterr()
+    assert main(["learn-bodies"]) == 0
+    out = capsys.readouterr().out
+    assert "200 Dokumente, 0 mit Beratungsfolge, 0 verschiedene Organisationen" in out
+    assert "Aus den Drucksachennummern ist nichts zu lernen" in out
+    assert "unbekannt 0: davon eindeutig auflösbar 0" in out
+
+
+def test_learn_bodies_needs_the_corpus(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["learn-bodies"]) == 1
+    assert "papers.parquet fehlt" in capsys.readouterr().err
+
+
+def test_pack_consultations_writes_the_small_package(
+    project: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["bootstrap"]) == 0
+    capsys.readouterr()
+    target = tmp_path / "paket-folge"
+    assert main(["pack", "--consultations", str(target)]) == 0
+    out = capsys.readouterr().out
+    assert "200 Dokumente, 0 mit Beratungsfolge" in out
+    assert "| `raw/beratungsfolge.parquet` |" in out  # die Prüfsummentabelle auf stdout
+    assert (target / "raw" / "beratungsfolge.parquet").is_file()

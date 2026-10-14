@@ -34,9 +34,12 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
+import polars as pl
+
 from georep.errors import GeorepError
-from georep.io import atomic_path, write_text
+from georep.io import atomic_path, write_parquet, write_text
 from georep.layout import Layout
+from georep.prep.bodies import BODIES_SCHEMA_VERSION, CONSULTATION
 from georep.settings import Settings
 from georep.stores import TextStore
 
@@ -68,8 +71,10 @@ class PackReport:
     target: Path
     files: tuple[PackedFile, ...]
     skipped: tuple[str, ...]  # vorhanden und ohne --force nicht überschrieben
-    papers: int
-    texts: int
+    # Die Zahlen des Laufs als (Bezeichnung, Wert): „Paper", „Texte" beim Paket der Eingaben,
+    # „Dokumente", „mit Beratungsfolge", „Organisationen" beim Paket der Folge (Punkt 58). Sie
+    # stehen in der Zeile des Befehls und in der Tabelle des READMEs, und zwar genau einmal.
+    figures: tuple[tuple[str, int], ...]
     readme_written: bool
 
     @property
@@ -78,7 +83,7 @@ class PackReport:
 
     def line(self) -> str:
         parts = [f"{len(self.files)} Dateien, {self.total_bytes} Bytes"]
-        parts.append(f"{self.papers} Paper, {self.texts} Texte")
+        parts.append(", ".join(f"{value} {label}" for label, value in self.figures))
         if self.skipped:
             parts.append(f"{len(self.skipped)} vorhanden (nicht überschrieben)")
         parts.append(README_NAME if self.readme_written else f"{README_NAME} vorhanden")
@@ -194,17 +199,21 @@ def claim_target(layout: Layout, target: Path) -> Path:
     return target
 
 
-def readme_skeleton(report: PackReport, *, profile: str, city: str, today: dt.date) -> str:
+def readme_skeleton(
+    report: PackReport, *, profile: str, city: str, today: dt.date, command: str = "pack"
+) -> str:
     """Das Gerüst eines Paket-READMEs: Tabelle fertig, Prosa als Platzhalter.
 
     Was nur ein Mensch weiß, steht als ``[…]`` da: woher die Dateien kommen, unter welcher Lizenz,
-    was am Lauf auffiel. Was die Maschine weiß, steht fertig drin -- Größen, Prüfsummen, Zahl der
-    Paper und Texte, das Profil, das es liest.
+    was am Lauf auffiel. Was die Maschine weiß, steht fertig drin -- Größen, Prüfsummen, die
+    Zahlen des Laufs, das Profil, das es liest.
     """
+    rows = "\n".join(f"| {label} | {_thousands(value)} |" for label, value in report.figures)
     return f"""# Datenpaket {report.target.name} ({city}, gepackt am {today.isoformat()})
 
 Die eingefrorenen **Eingaben** eines Laufs, damit GitHub Pages seine Seite ohne Netz baut
-(`docs/decisions.md`, Punkt 56). Erzeugt mit `georep --profile {profile} pack {report.target}`;
+(`docs/decisions.md`, Punkt 56). Erzeugt mit
+`georep --profile {profile} {command} {report.target}`;
 `reference_root` des Profils `{profile}` zeigt hierher, und `bootstrap` kopiert nur.
 
 Der Ordner wird **nur gelesen**: `Layout.guard_writable` verweigert jeden Schreibvorgang darunter,
@@ -220,8 +229,7 @@ Tabelle gegen die Dateien im Repo.
 
 | Größe | Wert |
 |---|---|
-| Dokumente in `raw/papers.jsonl` | {_thousands(report.papers)} |
-| Texte im Store | {_thousands(report.texts)} |
+{rows}
 | Abrufdatum | [nachzutragen] |
 
 ## Herkunft und Lizenz
@@ -276,18 +284,98 @@ def pack(
         target=target,
         files=tuple(files),
         skipped=tuple(skipped),
-        papers=papers,
-        texts=texts,
+        figures=(("Paper", papers), ("Texte", texts)),
         readme_written=not (target / README_NAME).exists(),
     )
+    return _with_readme(report, settings, today)
+
+
+def _with_readme(
+    report: PackReport, settings: Settings, today: dt.date | None, command: str = "pack"
+) -> PackReport:
+    """Das README-Gerüst schreiben, wenn keines liegt; die drei im Repo tragen mehr Prosa."""
     if report.readme_written:
         write_text(
-            target / README_NAME,
+            report.target / README_NAME,
             readme_skeleton(
                 report,
                 profile=settings.default_profile,
                 city=settings.city.name,
                 today=today or dt.date.today(),
+                command=command,
             ),
         )
     return report
+
+
+# --- Punkt 58: ein Paket, das nur die Beratungsfolge je Dokument trägt --------------------------
+
+
+def consultation_rows(papers: Path) -> pl.DataFrame:
+    """``id``, ``consultation_organizations`` und ``modified`` aus einer ``papers.jsonl``.
+
+    Genau die drei Felder, die die zweite Quelle des Gremiums braucht (Punkt 58): die
+    Dokument-ID als Schlüssel in den Korpus, die beratenden Gremien als Organisations-URLs und,
+    weil es 15 KB kostet, der Stand des Datensatzes je Dokument. Alles andere -- Titel,
+    Dokumentart, Hauptdatei -- steht schon im Paket der Periode oder in ihrer Referenz.
+    """
+    rows = [
+        json.loads(line) for line in papers.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
+    return pl.DataFrame(
+        {
+            "id": [str(row["id"]) for row in rows],
+            CONSULTATION: [[str(url) for url in (row.get(CONSULTATION) or ())] for row in rows],
+            "modified": [row.get("modified") for row in rows],
+        },
+        schema={"id": pl.String, CONSULTATION: pl.List(pl.String), "modified": pl.String},
+    ).sort("id")
+
+
+def pack_consultations(
+    layout: Layout,
+    settings: Settings,
+    target: Path,
+    *,
+    force: bool = False,
+    today: dt.date | None = None,
+) -> PackReport:
+    """Nur die Beratungsfolge je Dokument packen: ``raw/beratungsfolge.parquet`` (Punkt 58).
+
+    Gedacht für die Periode, deren Korpus die Folge nicht trägt (die Hauptperiode Düsseldorfs
+    kommt aus dem Altformat der Arbeit) und für die ein eigener Metadatenabruf sie geholt hat.
+    Gepackt wird aus ``raw/papers.jsonl`` dieses Laufs -- wer den Vollabruf in einer eigenen
+    Datenwurzel liegen hat, zeigt ``data_root`` mit ``--settings`` darauf.
+    """
+    claim_target(layout, target)
+    if not layout.papers.is_file():
+        raise PackError(f"{layout.papers} fehlt; lief `georep fetch papers` für dieses Profil?")
+    frame = consultation_rows(layout.papers)
+    name = f"raw/{layout.consultations.name}"
+    destination = target / name
+    skipped: list[str] = []
+    if destination.exists() and not force:
+        skipped.append(name)
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        write_parquet(frame, destination, schema_version=BODIES_SCHEMA_VERSION)
+    with_folge = int((frame.get_column(CONSULTATION).list.len() > 0).sum())
+    organizations = frame.get_column(CONSULTATION).explode().drop_nulls().n_unique()
+    report = PackReport(
+        target=target,
+        files=(
+            PackedFile(
+                name=name,
+                bytes=destination.stat().st_size,
+                sha256=sha256_of(destination),
+            ),
+        ),
+        skipped=tuple(skipped),
+        figures=(
+            ("Dokumente", frame.height),
+            ("mit Beratungsfolge", with_folge),
+            ("verschiedene Organisationen", organizations),
+        ),
+        readme_written=not (target / README_NAME).exists(),
+    )
+    return _with_readme(report, settings, today, command="pack --consultations")

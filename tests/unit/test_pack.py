@@ -23,6 +23,7 @@ from georep.pack import (
     PackError,
     check_text_store,
     pack,
+    pack_consultations,
     package_files,
     paper_file_names,
 )
@@ -190,3 +191,91 @@ def test_check_text_store_counts_the_rows_it_approves(mini_run: Layout) -> None:
     assert check_text_store(mini_run) == store.height
     # Die Mini-Fixture ist aus der Referenz gebootstrappt, nicht abgerufen: auch das ist ein Lauf
     assert set(store.get_column("source")) == {"reference"} <= RUN_SOURCES
+
+
+# --- Punkt 58: das Paket mit der Beratungsfolge je Dokument ------------------------------------
+
+
+def _papers_jsonl(path: Path, rows: list[dict[str, object]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "\n".join(json.dumps(row, ensure_ascii=False) for row in rows) + "\n", encoding="utf-8"
+    )
+
+
+@pytest.fixture
+def folge_run(tmp_path: Path, default_settings: Settings) -> Layout:
+    """Ein Lauf, dessen ``raw/papers.jsonl`` eine Beratungsfolge trägt (wie der Vollabruf)."""
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
+    organizations = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations"
+    _papers_jsonl(
+        layout.papers,
+        [
+            {
+                "id": "p2",
+                "reference": "RAT/1/2021",
+                "consultation_organizations": [f"{organizations}/gr/6"],
+                "modified": "2026-03-01T10:00:00+01:00",
+            },
+            {
+                "id": "p1",
+                "reference": "BV1/1/2021",
+                "consultation_organizations": [
+                    f"{organizations}/gr/32",
+                    f"{organizations}/gr/6",
+                ],
+                "modified": None,
+            },
+            {"id": "p3", "reference": "KUA/1/2021", "consultation_organizations": []},
+        ],
+    )
+    return layout
+
+
+def test_pack_consultations_writes_only_the_three_columns(
+    folge_run: Layout, tmp_path: Path, default_settings: Settings
+) -> None:
+    target = tmp_path / "beratungsfolge"
+    report = pack_consultations(folge_run, default_settings, target, today=dt.date(2026, 10, 14))
+    assert {str(p.relative_to(target)) for p in target.rglob("*") if p.is_file()} == {
+        README_NAME,
+        "raw/beratungsfolge.parquet",
+    }
+    frame = pl.read_parquet(target / "raw" / "beratungsfolge.parquet")
+    assert frame.columns == ["id", "consultation_organizations", "modified"]
+    assert frame.get_column("id").to_list() == ["p1", "p2", "p3"]  # sortiert
+    assert frame.get_column("consultation_organizations").list.len().to_list() == [2, 1, 0]
+    assert report.figures == (
+        ("Dokumente", 3),
+        ("mit Beratungsfolge", 2),
+        ("verschiedene Organisationen", 2),
+    )
+    assert "3 Dokumente, 2 mit Beratungsfolge" in report.line()
+    readme = (target / README_NAME).read_text(encoding="utf-8")
+    assert "pack --consultations" in readme and "| Dokumente | 3 |" in readme
+    assert "| `raw/beratungsfolge.parquet` |" in readme
+
+
+def test_pack_consultations_keeps_what_is_there_without_force(
+    folge_run: Layout, tmp_path: Path, default_settings: Settings
+) -> None:
+    target = tmp_path / "beratungsfolge"
+    pack_consultations(folge_run, default_settings, target, today=dt.date(2026, 10, 14))
+    again = pack_consultations(folge_run, default_settings, target, today=dt.date(2026, 10, 14))
+    assert again.skipped == ("raw/beratungsfolge.parquet",) and not again.readme_written
+    forced = pack_consultations(
+        folge_run, default_settings, target, force=True, today=dt.date(2026, 10, 14)
+    )
+    assert not forced.skipped
+
+
+def test_pack_consultations_says_when_the_metadata_are_missing(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout = Layout(tmp_path / "leer", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
+    with pytest.raises(PackError, match="fehlt; lief"):
+        pack_consultations(layout, default_settings, tmp_path / "ziel")
+    # Und ein Ziel in der Datenwurzel bleibt verboten, wie beim Paket der Eingaben
+    _papers_jsonl(layout.papers, [{"id": "p1", "consultation_organizations": []}])
+    with pytest.raises(PackError, match="gehört daneben"):
+        pack_consultations(layout, default_settings, layout.root / "paket")
