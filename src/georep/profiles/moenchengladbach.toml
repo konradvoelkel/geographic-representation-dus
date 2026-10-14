@@ -23,7 +23,7 @@ election = "Ratswahl 2025"
 ris_url = "https://ris-oparl.itk-rheinland.de/"
 data_note = "aus dem Paket dieser Stadt"
 notes = [
-    "Die Stimmbezirksflächen sind die des Wahltags: der Layer „Kommunalwahl 2025 Stimmbezirke“ des Geoportals, alle 179 Urnen-Stimmbezirke und alle 33 Wahlbezirke. Bis zum 14.10.2026 rechnete diese Seite mit dem Datensatz „Wahlen“ vom 08.06.2022, in dem nur 175 der 179 vorkamen.",
+    "Die Stimmbezirksflächen sind die des Wahltags: der Layer „Kommunalwahl 2025 Stimmbezirke“ des Geoportals, alle 179 Urnen-Stimmbezirke und alle 33 Wahlbezirke. Frühere Stände dieser Seite rechneten mit dem Datensatz „Wahlen“ vom 08.06.2022, in dem nur 175 der 179 vorkamen.",
     "Wahlbezirke heißen hier wie Stadtteile („Venn“, „Hardt“); die Ausschlussliste nimmt die Stadtteilnamen trotzdem heraus, weil ein Stadtteil mehr umfasst als der gleichnamige Wahlbezirk.",
 ]
 
