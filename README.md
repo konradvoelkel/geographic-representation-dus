@@ -292,6 +292,15 @@ auch `fraction_types` und `person_types` — Dokumentarten, die die Klasse allei
 Partei kommt dann aus Titel und Briefkopf. Mönchengladbachs 16 Dokumentarten sind damit vollständig
 zugeordnet (0 % „Urheber unbekannt“), und 242 der 581 Fraktionsanträge nennen ihre Partei.
 
+Dasselbe gilt zwischen zwei **Perioden** derselben Stadt (Punkt 60): die Wahlperiode 2014 bis 2020
+führte jede Vorlage der Verwaltung als `Verwaltungsvorlage` und jede andere als `Vorlage aus der
+Politik`, und ihr Urheber steht im Briefkopf der damaligen Vorlagenform. Beides steht im
+Stadtprofil — die Vorlagenform gehört der Stadt, in einer älteren Schreibung —, und „Urheber
+unbekannt“ liegt in jener Periode bei 10,6 % statt 55,9 %. Die Hauptperiode ändert sich dadurch
+nicht: ihr Text beginnt hinter `search.text_split_marker`, die Formularzeile liegt davor, und ein
+`slow`-Test hält fest, dass die Zuordnung aller 19 108 Dokumente mit und ohne die neuen Einträge
+dieselbe Tabelle ist.
+
 ## Daten und Herkunft
 
 | Daten | Quelle | im Repo |

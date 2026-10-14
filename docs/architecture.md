@@ -463,6 +463,13 @@ getötet, 165 Überlebende, davon 100 in Vertragsgrenzen), 79 % über `search/` 
   Einzelne Mandatsträger (865 Dokumente) bleiben ohne Partei, auch wenn der Titel eine nennt; nennt erst der
   Textkopf den Mandatsträger, zählt das Dokument als unbekannt (die Anreden der Vorlagen würden sonst halbe
   Anträge zu Personen machen).
+- Eine Periode derselben Stadt kann eine andere Taxonomie und eine andere Vorlagenform haben
+  (Punkt 60): `Verwaltungsvorlage` steht in `admin_types` und kommt nur in der Wahlperiode 2014 bis
+  2020 vor (8 337 Dokumente), und der dritte Textmarker ist der Briefkopf jener Form, der den
+  Urheber zwischen der Formularzeile und dem Gremium nennt. „Urheber unbekannt" liegt damit in
+  jener Periode bei 10,6 % statt 55,9 %; die beiden anderen Perioden sind byteidentisch unberührt,
+  weil ihr Korpus den Text hinter `search.text_split_marker` abschneidet und die Formularzeile
+  davor liegt.
 - Eine Stadt kann die Urheberklasse in der **Dokumentart** führen, ohne den Urheber zu nennen
   (Punkt 59): `originators.fraction_types` und `person_types` nennen solche Arten, die Klasse steht
   dann fest, und die Partei wird im Titel und im ganzen Textkopf gesucht statt in einem Fenster.

@@ -1729,3 +1729,90 @@ dem Titel und 97 aus dem Textkopf".
 - **`[originators]` in `defaults.toml` ablegen, damit jede Stadt etwas erbt**: die Dokumentarten
   sind das Stadtspezifischste, was es gibt (16 hier, 39 dort, und keine einzige gemeinsam). Eine
   geerbte Liste wäre in jeder zweiten Stadt falsch, und `deep_merge` ersetzt Listen ohnehin.
+
+## 60. Die Vorlagenform einer Stadt vor 2020 wird ein Textmarker im Stadtprofil, kein Periodenprofil (2026-10-14)
+
+Punkt 4 der Befunde vom 2026-10-14 (`docs/befunde-2026-10-14.md`, § 5 und § 6): in der Wahlperiode
+2014 bis 2020 blieben **12 418 von 22 215 Urhebern unbekannt (55,9 %)**, gegen 1,7 % in der
+Hauptperiode. Der Grund stand in zwei Zahlen: die beiden häufigsten Dokumentarten jener Periode,
+`Vorlage aus der Politik` (9 601) und `Verwaltungsvorlage` (8 337), zusammen 80,7 %, standen in
+keiner Liste von `[originators]`, und beide nennen keine Fraktion.
+
+**Die Taxonomie hatte zwei Hälften, und eine davon ist die Verwaltung.** `Verwaltungsvorlage` ist
+der Gegenbegriff zu `Vorlage aus der Politik`; er steht in dieser Periode 8 337-mal und in der
+Hauptperiode wie in der laufenden **kein einziges Mal**. Er gehört darum in `admin_types` — und
+damit sind auch die 197 Dokumente richtig eingeordnet, die bis dahin über Titel oder Textkopf zu
+einer Fraktion wurden: es waren Vorlagen der Verwaltung, die einen Fraktionsantrag **zitieren**,
+genau der Fehler, gegen den das Fenster um einen Marker gebaut ist (Option 04, § 2). Dasselbe gilt
+für `Bezirksvertretung Eingabe nach 24Go` (2 Dokumente), die dritte Schreibweise derselben Eingabe.
+
+**Die andere Hälfte steht im Briefkopf, und der ist ein Formular.** Jede `Vorlage aus der Politik`
+trägt denselben Kopf:
+
+```
+vorlage 173/ 85/2014   seite 1 von 2 rsd vorlage x öffentlich  nicht öffentlich
+  fraktion die linke  der bezirksvertretung 3   an den  bezirksvorsteher …
+```
+
+Der Urheber steht zwischen der Formularzeile und dem Gremium, und zwar in 8 090 von 9 601 Fällen in
+einem Block, der sich zählen lässt: `cdu-fraktion` 1 276, `spd-fraktion` 982, `fraktion bündnis
+90/die grünen` 439, `interfraktioneller antrag` 263, `fdp-fraktion` 245 und so weiter. Der neue
+Textmarker ist genau diese Formularzeile plus das Wort „fraktion" innerhalb von 80 Zeichen; die
+Parteien kommen wie überall aus dem Fenster um den Treffer.
+
+**Wirkung** (gemessen 2026-10-14 am Paket `snapshots/2014-2020/`, eingefroren in
+`tests/golden/test_parties_numbers.py`):
+
+| Klasse | vorher | nachher |
+|---|---|---|
+| Verwaltung | 2 285 | **10 622** |
+| Fraktion | 7 008 | **8 768** |
+| Person | 486 | 449 |
+| Eingabe | 18 | 20 |
+| **unbekannt** | **12 418 (55,9 %)** | **2 356 (10,6 %)** |
+
+Was offen bleibt, bleibt sichtbar offen: 2 122 `Vorlage aus der Politik`, deren Kopf das Wort
+„fraktion" nicht trägt (Jugendratsmitglieder, Einzelmandate, Listen des Integrationsrats), 135
+`Antrag`, 96 `Anfrage` und 3 `zAnfrage Piraten`.
+
+**Das Muster steht im Stadtprofil, nicht im Periodenprofil**, aus demselben Grund wie die
+Nummerntabelle aus Punkt 57: die Vorlagenform gehört der Stadt, in einer älteren Schreibung. Dass
+das die anderen Perioden nichts kostet, ist nicht argumentiert, sondern **gemessen und als Test
+eingefroren**: die Zuordnung aller 19 108 Dokumente der Hauptperiode und aller 4 095 der laufenden
+ist mit und ohne die drei neuen Einträge **dieselbe Tabelle**, byteidentisch. Der Grund ist
+mechanisch — der Korpus schneidet den Text an `search.text_split_marker` („betrifft") ab, und die
+Formularzeile liegt davor; in beiden Perioden kommt der Anker in 0 Dokumenten vor.
+
+**Die Schreibweisen der Parteien reichten schon.** Konrads Vermutung, die alte Periode brauche
+eigene Namen, trifft nicht: von 5 454 Briefköpfen mit Fraktion nennen 5 168 eine Partei, die die
+vorhandenen Muster kennen, und die 286 übrigen sind „interfraktioneller antrag" — also richtig eine
+Fraktion ohne Partei. `bündnis90/die grünen` ohne Leerzeichen, `bü90/die grünen`, `b90/die grünen`,
+`die linke.` mit Punkt und `AFD` in Großbuchstaben treffen alle auf vorhandene Muster.
+
+**Verworfen:**
+
+- **Piraten, REP, FWG und die Zentrumspartei als eigene Gruppen aufnehmen**: sie kommen in dieser
+  Periode vor (41, 80, 83 und 482 Dokumente mit dem Wort im Volltext), aber die Zeilen kosten mehr
+  als sie bringen. `topics.stop_sources = ["fraktionen", …]` nimmt jedes Wort aus jedem Parteimuster
+  in die Stoppwortliste des **Themenmodells** — „piraten", „rep", „fwg" und bei der AfD-Variante
+  „alternative für deutschland" auch „alternative" und „deutschland", und die beiden stehen in 518
+  und 587 Dokumenten der **Hauptperiode**. Ein Wort mehr in der Stoppwortliste ist ein anderes
+  Vokabular, ein anderes NMF und andere `thema_NN`-Zeilen auf der Hauptseite. Gewonnen wären 3
+  Dokumente (die `zAnfrage Piraten`, die heute unbekannt sind); die 21 anderen Piraten- und 12
+  REP-Dokumente sind schon richtig als Person eingeordnet, weil ihr Titel einen Mandatsträger nennt.
+- **Personenmarker im Textkopf**: 1 503 Köpfe tragen einen Personenmarker ohne „fraktion" in der
+  Nähe, aber in 776 Fällen ist der Treffer die **Anrede** („an herrn bezirksvorsteher", „herrn
+  wolfgang scheffler, vorsitzender des schulausschusses") und nicht der Urheber — diese Dokumente
+  bekommen ihre Fraktion heute richtig aus dem Titel. Ein Marker, der in der Hälfte der Fälle den
+  Empfänger für den Absender nimmt, ist keine Quelle. Darum nennt die alte Periode weiterhin nur
+  449 Personen, und die Mandatsträger ohne das Wort „Fraktion" im Kopf bleiben unbekannt.
+- **`Vorlage aus der Politik` als `fraction_types`** (Punkt 59): die Art ist **nicht** eindeutig.
+  Sie trägt Fraktionsanträge, Anträge einzelner Bezirksvertreter, Anfragen von
+  Jugendratsmitgliedern („leon brink  mitglied des jugendrates"), Listen des Integrationsrats
+  („giol grüne internationale offene liste") und sogar Verwaltungsakte („Bestellung der
+  Schriftführerin des Rates"). Eine Klasse aus der Art wäre hier eine Behauptung; der Briefkopf
+  sagt es genauer.
+- **Die Muster in `duesseldorf-2014.toml`**: `deep_merge` ersetzt Listen, das Periodenprofil müsste
+  also die beiden vorhandenen Textmarker und alle acht Verwaltungsarten mitschreiben, um einen Wert
+  zu ergänzen. Zwei Wahrheiten über dieselbe Stadt in zwei Dateien, und jede Änderung an der einen
+  müsste in der anderen nachgezogen werden.

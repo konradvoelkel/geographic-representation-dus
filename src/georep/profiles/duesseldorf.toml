@@ -548,8 +548,19 @@ admin_types = [
     "A+F Beschluss",                         # 145, Ausschuss für Anregungen und Beschwerden
     "Bedarfsbeschluss",                      # 78
     "Beschlussvorlage RPA",                  # 32, Rechnungsprüfungsamt
+    # Punkt 60: die Dokumentart der Wahlperiode 2014 bis 2020. Damals hieß jede Vorlage der
+    # Verwaltung so (8 337 Dokumente, 37,5 % jener Periode), heute heißt keine mehr so; die
+    # Hauptperiode und die laufende Periode kennen den Wert nicht. Dass er die Verwaltung meint,
+    # sagt der Gegenbegriff derselben Taxonomie: „Vorlage aus der Politik". Die 197 Dokumente, die
+    # bis zum 2026-10-14 über Titel oder Textkopf zu einer Fraktion wurden, sind damit richtig
+    # Verwaltung -- es waren Vorlagen, die einen Fraktionsantrag zitieren.
+    "Verwaltungsvorlage",                    # 8 337 in der Periode 2014 bis 2020, 0 sonst
 ]
-citizen_types = ["Eingabe nach 24GO", "Eingabe nach 24 GO"]  # 73 + 51 Bürgeranträge nach § 24 GO NRW; weder Verwaltung noch Mandatsträger
+citizen_types = [
+    "Eingabe nach 24GO",                     # 73
+    "Eingabe nach 24 GO",                    # 51; Bürgeranträge nach § 24 GO NRW, weder Verwaltung noch Mandatsträger
+    "Bezirksvertretung Eingabe nach 24Go",   # 2 in der Periode 2014 bis 2020, 0 sonst
+]
 motion_prefixes = ["Haushaltsantrag", "Antrag", "Anfrage", "zAnfrage"]  # längste zuerst, sonst bleibt bei „Haushaltsantrag CDU/Grüne" ein „haushalts" stehen
 fraction_markers = ["frak\\w{0,2}ion", "interfraktionell", "überfraktionell", "ratsgruppe"]  # erst damit wird der Titel befragt; „die cdu beantragt" in einer Verwaltungsvorlage soll nicht zählen. frak\w{0,2}ion deckt den Tippfehler der Quelle „Antrag der CDU-Frakion" (BV7/018/2025, Stichprobe vom 2026-10-12)
 joint_markers = ["interfraktionell", "überfraktionell", "fraktionen"]  # Fraktion ohne nennbare Partei: 220 Dokumente („Interfraktioneller Antrag der Ratsfraktionen von …" nennt sie, andere nicht)
@@ -566,9 +577,23 @@ person_markers = [
 # Zusammensetzungen („haushaltsantrag der cdu-fraktion", „antragsstellende liste und fraktion")
 # und die Fälle, in denen die PDF-Extraktion die Leerzeichen gefressen hat
 # („anfragefraktionbündnis90/diegrünen", BV5/054/2022): sechs Dokumente gemessen.
+# Das dritte Muster ist der Vorlagenkopf der Wahlperiode 2014 bis 2020 (Punkt 60). Damals trug
+# jede Vorlage aus der Politik denselben Briefkopf — „vorlage 173/ 85/2014 seite 1 von 2 rsd
+# vorlage x öffentlich nicht öffentlich  fraktion die linke  der bezirksvertretung 3  an den
+# bezirksvorsteher …" —, und der Urheber steht darin zwischen „nicht öffentlich" und dem Gremium.
+# Der Anker ist genau diese Formularzeile; sie kommt in der Hauptperiode und in der laufenden
+# Periode **nicht ein einziges Mal** vor (0 von 19 108 und 0 von 4 095, gemessen 2026-10-14), weil
+# dort der Text erst hinter „betrifft" beginnt. Darum steht das Muster hier im Stadtprofil und
+# nicht in einem Periodenprofil: es ist die Vorlagenform dieser Stadt in einer älteren Schreibung,
+# so wie [bodies.aliases] ihre ältere Nummernform ist (Punkt 57).
+# Das Wort „fraktion" muss im Kopf stehen, bevor das Muster greift: ohne es wäre „leon brink
+# mitglied des jugendrates" eine Fraktion. Die Anrede „an herrn bezirksvorsteher" verbietet es
+# umgekehrt, hier nach Personen zu suchen — der Empfänger stünde sonst als Urheber da (776
+# Dokumente gemessen).
 text_markers = [
     "(?<!be)(?<!ge)(antrag|anfrage).{0,80}?(fraktion|ratsfraktion|interfraktionell|überfraktionell)",
     "(interfraktionell|überfraktionell)\\w*.{0,20}?(antrag|anfrage)",
+    "rsd\\s*vorlage\\s*x?\\s*öffentlich\\s*nicht\\s*öffentlich.{0,80}?(\\w*fraktion|interfraktionell|überfraktionell|ratsgruppe)",
 ]
 # Schwaches Tor für den Titel, erst nach den Personenmarkern befragt: eine Antragsklammer, die
 # eine Partei ohne das Wort „Fraktion" nennt („(Antrag BÜNDNIS 90/DIE GRÜNEN)", BV3/065/2021).

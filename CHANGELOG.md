@@ -4,6 +4,17 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Die Urheber der Wahlperiode 2014 bis 2020** (`docs/decisions.md`, Punkt 60): „Urheber
+  unbekannt" fällt dort von **12 418 (55,9 %)** auf **2 356 (10,6 %)**. Zwei Dokumentarten jener
+  Periode stehen neu im Profil (`Verwaltungsvorlage`, 8 337 Dokumente, und die dritte Schreibweise
+  der Eingabe nach § 24 GO NRW), und ein dritter Textmarker liest den **Vorlagenkopf** der älteren
+  Form, der den Urheber zwischen der Formularzeile und dem Gremium nennt („rsd vorlage x öffentlich
+  nicht öffentlich  cdu-fraktion  der bezirksvertretung 8 …"). Verwaltung 2 285 → 10 622, Fraktion
+  7 008 → 8 768. Die Hauptperiode und die laufende Periode sind davon **byteidentisch unberührt**
+  (gemessen und als Test eingefroren): ihr Text beginnt hinter „betrifft", die Formularzeile liegt
+  davor. Neue Schreibweisen der Parteien brauchte es nicht — 5 168 der 5 454 Briefköpfe mit
+  Fraktion nennen eine Partei, die die vorhandenen Muster kennen, die übrigen 286 sind
+  interfraktionelle Anträge.
 - **Mönchengladbach zeigt Urheber und Parteien** (`docs/decisions.md`, Punkt 59): die Stadtseite
   hat den Abschnitt „Urheber und Parteien" mit sechs Parteikarten und dem Abgleich gegen den
   Stimmenanteil. Hier nennt die **Dokumentart** die Klasse und nicht den Urheber, darum kennt

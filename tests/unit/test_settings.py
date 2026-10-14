@@ -497,9 +497,17 @@ def test_originators_defaults_describe_duesseldorf(tmp_path: Path) -> None:
         "PARTEI",
         "VOLT",
     )
-    assert len(o.admin_types) == 8 and len(o.citizen_types) == 2
+    # Punkt 60: neun Verwaltungs- und drei Eingabearten, je eine davon nur in der Periode
+    # 2014 bis 2020 („Verwaltungsvorlage", „Bezirksvertretung Eingabe nach 24Go")
+    assert len(o.admin_types) == 9 and len(o.citizen_types) == 3
+    assert "Verwaltungsvorlage" in o.admin_types
+    # Punkt 59: diese Stadt braucht die beiden Listen nicht -- ihre Dokumentarten nennen die
+    # Fraktion selbst, und wo nicht, entscheiden Titel und Textkopf
+    assert o.fraction_types == [] and o.person_types == []
     # Die längsten Antragspräfixe zuerst, sonst bleibt von „Haushaltsantrag CDU/Grüne" ein Rest
     assert o.motion_prefixes[0] == "Haushaltsantrag"
+    # Punkt 60: drei Textmarker, der dritte ist der Vorlagenkopf der älteren Periode
+    assert len(o.text_markers) == 3 and "rsd" in o.text_markers[-1]
     assert o.text_head_chars == 600 and o.text_window_chars == 80
     assert all(p.organizations for p in o.parties)  # jede Partei kennt ihre OParl-Organisation
 

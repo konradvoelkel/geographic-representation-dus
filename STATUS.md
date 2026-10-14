@@ -367,7 +367,46 @@ die Briefköpfe stehen über 300 Zeichen weit.
 - Die Seite der Stadt wächst von 649 721 auf **819 149 Byte** (Budget 1 000 000, 18,1 % Luft); den
   Zuwachs tragen die sechs Parteikarten mit 33 Flächen und die Tabelle je Wahlbezirk.
 
-## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56, 58 und 59)
+## Urheber der Wahlperiode 2014 bis 2020 (2026-10-14, `docs/decisions.md`, Punkt 60)
+
+Punkt 4 der Befunde ist umgesetzt: „Urheber unbekannt" fällt in jener Periode von **12 418
+(55,9 %)** auf **2 356 (10,6 %)**. Es brauchte zwei Dokumentarten und einen Briefkopf, alle drei im
+Stadtprofil.
+
+| Klasse | vorher | nachher |
+|---|---|---|
+| Verwaltung | 2 285 (10,3 %) | **10 622 (47,8 %)** |
+| Fraktion | 7 008 (31,5 %) | **8 768 (39,5 %)** |
+| Person | 486 (2,2 %) | 449 (2,0 %) |
+| Eingabe | 18 | 20 |
+| **unbekannt** | **12 418 (55,9 %)** | **2 356 (10,6 %)** |
+| Quelle: Dokumentart / Titel / Textkopf | 2 866 / 2 821 / 4 110 | **11 205 / 2 762 / 5 892** |
+
+- **`Verwaltungsvorlage` ist die Verwaltung** (8 337 Dokumente, 37,5 % jener Periode, und in der
+  Hauptperiode wie in der laufenden kein einziges Mal): sie ist der Gegenbegriff zu `Vorlage aus der
+  Politik` in derselben Taxonomie. Damit sind auch die 197 Dokumente richtig, die bis dahin über
+  Titel oder Textkopf zu einer Fraktion wurden — Vorlagen, die einen Fraktionsantrag **zitieren**.
+- **Der Vorlagenkopf der älteren Form nennt den Urheber**: „vorlage 173/ 85/2014 seite 1 von 2 rsd
+  vorlage x öffentlich nicht öffentlich  fraktion die linke  der bezirksvertretung 3  an den
+  bezirksvorsteher …". Der dritte Textmarker ist genau diese Formularzeile plus „fraktion" in 80
+  Zeichen; 5 454 Köpfe treffen, 5 168 davon nennen eine Partei, die 286 übrigen sind
+  „interfraktioneller antrag".
+- **Die Hauptperiode und die laufende Periode sind byteidentisch unberührt**, gemessen und als Test
+  eingefroren (`tests/golden/test_parties_numbers.py`): `classify_originators` liefert mit und ohne
+  die drei neuen Einträge dieselbe Tabelle für alle 19 108 und alle 4 095 Dokumente. Der Anker kommt
+  dort in 0 Dokumenten vor, weil der Korpus den Text hinter „betrifft" abschneidet.
+- **Neue Parteischreibweisen brauchte es nicht**: `bündnis90/die grünen` ohne Leerzeichen,
+  `bü90/die grünen`, `b90/die grünen`, `die linke.` mit Punkt und `AFD` treffen alle auf vorhandene
+  Muster. Dokumente je Partei: CDU 3 598, SPD 2 650, GRÜNE 2 363, FDP 1 285, Die Linke 494, AfD 13
+  (damals ein Einzelmandat), Tierschutz/Freie Wähler 168.
+- **Der Abgleich mit den Hochburgen** (Ratswahl 2020, Parteispalten D1 bis D6 im Profil
+  `duesseldorf-2014`): FDP r = +0,395 (p = 0,0106), AfD −0,378 (0,0149), Die Linke −0,255 (0,108),
+  SPD +0,127 (0,429), GRÜNE +0,052 (0,748), CDU −0,0005 (0,998). Unter der Bonferroni-Grenze von
+  0,008 bleibt **keine** Partei — anders als in der Hauptperiode, wo die FDP mit p = 0,0033 darunter
+  liegt.
+- Die Seite der Periode wächst von 820 128 auf **820 168 Byte** (Budget 1 000 000).
+
+## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56, 58, 59 und 60)
 
 - Tests: 1177 schnelle (nox-Gate, parallel in rund 53 s, Abdeckung 98,4 %), 34 `slow` (rund 4 min über die
   volle Referenz, die sechs Datenpakete und die veröffentlichte Seite), 18 `bench` (grün gegen die
@@ -587,11 +626,17 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   `consultation`-Organisation, aber ein Amt ist kein Gremium, und ohne `raw/organizations.json`
   (Netzschritt) ist die Organisations-ID kein Name. Die Hauptperiode und die laufende Periode sind
   unberührt — dort trifft das Muster jede Nummer, und die Tabelle wird nur sonst befragt.
-- **56 % der Urheber der Periode 2014 bis 2020 bleiben unbekannt**: die Dokumentart heißt dort in 9 601 von
-  22 215 Fällen `Vorlage aus der Politik` und nennt keine Fraktion, während die Hauptperiode `Antrag CDU`,
-  `Anfrage SPD/Volt` und so weiter führt (39 Dokumentarten in jeder Periode, aber andere). Die Muster in
-  `[originators]` beschreiben die heutige Benennung; eigene für die alte wären eine neue Messung am Textkopf
-  und sind nicht gebaut (`docs/plans/04-parteien.md`). Die Seite dieser Periode zeigt den Anteil offen.
+- **11 % der Urheber der Periode 2014 bis 2020 bleiben unbekannt** (2026-10-14, Punkt 60; vorher 56 %):
+  2 122 der 9 601 Dokumente mit der Dokumentart `Vorlage aus der Politik` tragen das Wort „fraktion"
+  nicht in ihrem Vorlagenkopf — es sind Jugendratsmitglieder, Einzelmandate und Listen des
+  Integrationsrats —, dazu 135 `Antrag`, 96 `Anfrage` und 3 `zAnfrage Piraten`. Ein Personenmarker im
+  Textkopf schließt die Lücke **nicht**: in 776 von 1 503 Fällen trifft er die Anrede („an herrn
+  bezirksvorsteher") und nicht den Urheber. Die Seite dieser Periode zeigt den Anteil offen.
+- **Piraten, REP, FWG und die Zentrumspartei haben keine Zeile in `[originators]`** (2026-10-14,
+  Punkt 60): jedes Wort eines Parteimusters wird über `topics.stop_sources` zum Stoppwort des
+  Themenmodells, und „alternative" und „deutschland" stehen in 518 und 587 Dokumenten der
+  **Hauptperiode**. Drei Dokumente wären zu gewinnen, ein anderes Vokabular der Hauptseite wäre der
+  Preis. Die 21 Piraten- und 12 REP-Dokumente sind ohnehin richtig als Person eingeordnet.
 - **Der Schnappschuss `snapshots/2025/` veraltet mit jedem Lauf des Monitors**, und das ist in Ordnung: er
   ist der Erstabruf vom 2026-10-13 (4 095 Dokumente), GitHub Pages zeigt diesen Stand, und die Seite nennt
   ihr Abrufdatum selbst. Die aktuelle Fassung liefert der Timer auf kookaburra oder dem VPS — Konrads
