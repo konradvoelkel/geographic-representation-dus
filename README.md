@@ -14,9 +14,23 @@ abgeschaltet sind. Seit dem 2026-10-12 sind zwei davon an: Orte, deren Name den 
 und Begriffe mit auffällig hoher Dokumentzahl stehen auf der Seite als eigene Liste. Was das an den Zahlen
 ändert, steht gemessen in [docs/methodik-review-2026-10.md](docs/methodik-review-2026-10.md); der Tag
 `bartzsch-exakt` (`v0.11.0`) markiert den letzten Stand ohne Abweichung, und `search.city_facilities = false`
-stellt ihn jederzeit wieder her. Aufbau: [docs/architecture.md](docs/architecture.md);
-Gründe und verworfene Alternativen: [docs/decisions.md](docs/decisions.md); Stand und Bekanntes:
-[STATUS.md](STATUS.md); Änderungen aus Nutzersicht: [CHANGELOG.md](CHANGELOG.md).
+stellt ihn jederzeit wieder her.
+
+## Dokumentation
+
+Vier Sichten auf dasselbe Vorhaben, je eine Datei; dieses README ist der Einstieg und bleibt kurz.
+
+| Sicht | Beantwortet |
+|---|---|
+| [docs/technik.md](docs/technik.md) | Mit welchen Schnittstellen und Datenplattformen arbeitet das Programm (Endpunkt, Format, Lizenz, Abrufverhalten), was liegt lokal, wie läuft die Kette, wie wird veröffentlicht, was braucht eine neue Stadt. |
+| [docs/inhalt.md](docs/inhalt.md) | Welche Daten es gibt (vier Datensätze mit ihren Lücken) und was die veröffentlichte Seite kann: Suche, Dokumentdialog, Karten und Umschalter, die siebzehn Abschnitte, die Downloads, die Unterseiten. |
+| [docs/statistik.md](docs/statistik.md) | Zehn Auswertungen, je mit Frage, Rechnung, heutigen Zahlen, Interpretationsspielraum und Einwänden — dazu, welche Einwände die Seite selbst nennt und welche Auswertung offen ist. |
+| [docs/workflow-ratsmitglied.md](docs/workflow-ratsmitglied.md) | Ein exemplarischer Arbeitsablauf: neu im Rat, ein Gebiet oder ein Thema einarbeiten — Schritt für Schritt über die Seite, ein zweiter Pfad über die Kommandozeile, und was die Seite nicht kann. |
+
+Dazu, unverändert: **Aufbau** des Codes in [docs/architecture.md](docs/architecture.md),
+**Gründe** und verworfene Alternativen in [docs/decisions.md](docs/decisions.md). Stand und
+Bekanntes: [STATUS.md](STATUS.md); Änderungen aus Nutzersicht: [CHANGELOG.md](CHANGELOG.md);
+Regeln für Commits und für Agenten: [CLAUDE.md](CLAUDE.md).
 
 ## Loslegen
 
@@ -47,43 +61,31 @@ und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
 
 ## Berichtsseite
 
-`georep run` endet mit dem Schritt `report`: `data/duesseldorf/site/index.html` ist eine in sich geschlossene Seite (rund
-0,96 MB bei einem Budget von 1,0 MB, kein externes JavaScript, keine Kartenkacheln, offline aus dem
-Dateisystem zu öffnen) mit Kernzahlen,
-einem Suchfeld für Straßen und Orte (4176 Einträge in der Seite, darum ohne Netz: die Auswahl nennt Art,
-Wahlbezirke und Dokumente und markiert sie auf der Karte; `index.html#suche=hofgarten` ist teilbar),
-der Karte der 41 Wahlbezirke (sechs Einfärbungen zur Wahl: Trefferquote, Treffer absolut, Treffer je Begriff
-im Wörterbuch, Abweichung vom Stadtmittel, Wahlbeteiligung, Anteil der eigenen Bezirksvertretung; Tooltips,
-Klick-Markierung, die 1196 Orte als
-Punkte), dem Streudiagramm mit beiden Regressionsgeraden und Tabelle 5 samt derselben Regression je Begriff
-im Wörterbuch (die Spalte „ohne Ausreißer“ heißt im Kopf „explorativ“, und darunter steht, warum:
-sie ist nach dem Ansehen der Daten entstanden, und in der Wahlperiode 2014 bis 2020 ist dieselbe
-Spalte nicht signifikant), einer sortierbaren Tabelle je
-Wahlbezirk, dem Abschnitt „Urheber und Parteien" (sechs kleine Karten je Partei mit Umschalter auf die
-Abweichung vom Mittel aller Parteien, Tabelle je Partei mit dem Abgleich zum Stimmenanteil, Tabelle je
-Wahlbezirk mit den Urheberklassen), dem Abschnitt „Kontrollvariablen" (Tabelle 6 mit dem Quartiersatlas),
-den Begriffen (ein Klick zeigt die Dokumente mit Datum, Drucksache, Urheber und PDF-Link), den
-Dokumenten je Monat, Methode und
-Grenzen, Lizenzen. Lange Tabellen zeigen Kopf und drei Zeilen und klappen über „alle *n* Zeilen zeigen"
-auf (`report.table_preview_rows`; ohne JavaScript und im Druck steht alles offen, und eine Zeile, die
-aus Karte, Diagramm oder Suche markiert wird, klappt von allein auf). Die Begriffslisten je Wahlbezirk
-kommen beim Aufklappen aus `data/begriffe.json`, wie die Dokumente beim ersten Klick aus
-`data/dokumente.json`; aus dem Dateisystem geöffnet sagt die Seite, dass der Browser das Nachladen
-dort nicht erlaubt. Was die Seite wie groß macht und welche Posten bewusst liegen bleiben, steht
-gemessen in [docs/seitengroesse-2026-10.md](docs/seitengroesse-2026-10.md). Der Abschnitt „Was ändert die Gewichtung?" stellt der binären Trefferquote 26 gewichtete
-Varianten zur Seite (Spezifität je Begriff, Gewicht je Dokumentart, ein Thema je Zeile) und zeigt Tabelle 5
-unter jeder davon; mit Einheitsgewichten steht dort dieselbe Zeile wie oben. Die Themen tragen die Namen
-der Ausschüsse, aus deren Dokumenten sie gesät sind, und der Abschnitt „Gremien" nennt daneben, welcher
-Ausschuss sachlich zu einem Dokument passt (`docs/themenmodell-2026-10.md`). `karte.html` daneben zeigt dieselben Flächen und Orte auf OpenStreetMap-Kacheln (Leaflet,
-braucht Netz). Daneben liegen unter `site/data/` die Ergebnisse zum Weiterverarbeiten: die
-dreiundzwanzig Ergebnistabellen als Parquet und CSV, `wahlbezirke.geojson` (EPSG:4326), `schema.json` mit dem Spaltenschema,
-`dokumente.json` (Dokumente mit Treffer ohne Texte) und `begriffe.json` (Begriffe mit Treffer je
-Wahlbezirk); Größe und SHA-256 jeder Datei stehen auf der Seite. Der Workflow
-`.github/workflows/pages.yml` baut die Seite bei jedem Push auf `main` aus den Referenzdaten (`bootstrap`, `run`,
-kein Netzabruf) und veröffentlicht sie über GitHub Pages unter
-<https://konradvoelkel.github.io/geographic-representation-dus/> (Plan und Entscheidungen:
-[docs/plan-report-2026-10.md](docs/plan-report-2026-10.md); Aufbau: [docs/architecture.md](docs/architecture.md),
-Abschnitt „Berichtsseite").
+`georep run` endet mit dem Schritt `report`: `data/duesseldorf/site/index.html` ist **eine** in sich
+geschlossene Seite (am 2026-10-14 veröffentlicht 932 839 Byte bei einem Budget von 1 000 000, kein
+externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit siebzehn
+Abschnitten — Kernzahlen, Suche über Straßen und Orte, Karte der 41 Wahlbezirke mit sechs
+Einfärbungen, Regression (die Spalte „ohne Ausreißer" heißt im Kopf „explorativ", und darunter
+steht, warum: sie ist nach dem Ansehen der Daten entstanden, und in der Wahlperiode 2014 bis 2020
+ist dieselbe Spalte nicht signifikant), Kontrollvariablen, Gewichtung, zwei Wahlperioden, Urheber und Parteien,
+Tabelle je Wahlbezirk, Gremien, Begriffe mit Dokumentdialog, Monatsreihe, Methode und Grenzen,
+abgeleitete Daten, Literatur, Downloads, laufende Periode. Daneben `karte.html` (Leaflet und
+OpenStreetMap-Kacheln, braucht Netz) und unter `site/data/` die 24 Ergebnistabellen als Parquet und
+CSV plus `wahlbezirke.geojson`, `schema.json`, `summary.json`, `dokumente.json` und `begriffe.json`,
+je mit Größe und SHA-256 auf der Seite.
+
+**Was die Seite kann, Abschnitt für Abschnitt, steht in [docs/inhalt.md](docs/inhalt.md)**; was ihre
+Zahlen bedeuten und was gegen sie spricht, in [docs/statistik.md](docs/statistik.md); wie man damit
+arbeitet, in [docs/workflow-ratsmitglied.md](docs/workflow-ratsmitglied.md). Was die Seite wie groß
+macht, steht gemessen in [docs/seitengroesse-2026-10.md](docs/seitengroesse-2026-10.md); Plan und
+Entscheidungen in [docs/plan-report-2026-10.md](docs/plan-report-2026-10.md), der Aufbau des
+Generators in [docs/architecture.md](docs/architecture.md), Abschnitt „Berichtsseite".
+
+Der Workflow `.github/workflows/pages.yml` baut bei jedem Push auf `main` **alle** Seiten aus den
+Datenpaketen im Repo (`bootstrap`, `run`, `publish --strict-budget`, kein Netzabruf) und
+veröffentlicht sie über GitHub Pages unter
+<https://konradvoelkel.github.io/geographic-representation-dus/> mit den Unterseiten `2014-2020/`,
+`2025/`, `moenchengladbach/` und `vergleich.html`.
 
 ## Befehle
 
@@ -93,6 +95,7 @@ Abschnitt „Berichtsseite").
 | `georep fetch [SCHRITT …] [--force] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `pdfs`, `streets_osm`, `pois_wiki`, danach `shapes` und `texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Metadatenseiten |
 | `georep steps` | Schritte mit Eingaben und Ausgaben |
 | `georep status` | Settings, Pfade, Stores, Frische jedes Schritts mit Grund |
+| `georep paths` | Profil und Pfade des Layouts als `key=wert`, eine Zeile je Wert (das lesen `pages.yml` und das Monitor-Skript) |
 | `georep profiles` | die Profile im Paket mit Stadt und amtlichem Gemeindeschlüssel |
 | `georep publish [--out DIR]` | die Stadtseiten nach `data/site/` zusammentragen und `vergleich.html` bauen |
 | `georep bootstrap [--force]` | den eingefrorenen Datensatz (`reference_root`) in den Ordner des Profils unter `data_root` übernehmen |
@@ -111,13 +114,21 @@ nicht; ein Lauf ohne Änderung ist ein No-op.
 
 Ein voller Abruf von Grund auf (`georep fetch` auf leerem `data_root`) dauert Stunden: der OParl-Server
 brauchte am 2026-10-09 85 s pro Seite, die PDFs kommen seriell mit einer Sekunde Pause (Hochrechnung 2026-10-11:
-5,8 h für 19 108 PDFs, 2,8 GB). Alles ist wiederaufnehmbar; ein zweiter `fetch` holt nur Geändertes.
+5,8 h für 19 108 PDFs, 2,8 GB). **Jeder Schritt ist wiederaufnehmbar, und zwar je Einheit**: `papers`
+speichert nach jeder Seite und schreibt die nächste URL nach `raw/papers.progress.json` (ein Abbruch
+macht dort weiter, nicht bei `first_page`; die Datei verschwindet, wenn ein Abruf durchläuft, und
+`--force` löscht sie **nicht** — es umgeht den Stamp, nicht den Netz-Cursor), `pdfs` je Datei,
+`streets_osm` je Stimmbezirk über den HTTP-Cache. Ein zweiter `fetch` holt nur Geändertes. Wer
+innerhalb einer Stunde neu startet, liest die OParl-Seiten noch aus dem Cache
+(`cache.oparl_pages_s`); für einen langen zweiten Versuch lohnt es, den Wert zu erhöhen. Die
+Einzelheiten je Quelle stehen in [docs/technik.md](docs/technik.md), § 2.
 
-### Der eine schnelle Netzschritt und die Probe auf die Urheberfelder
+### Die schnellen Netzschritte
 
-`organizations` ist der kurze Abruf: eine Seite mit 58 Fraktionen, Ausschüssen und
-Bezirksvertretungen, am 2026-10-11 in 0,47 s. Daraus liest der Schritt `parties` die Abbildung von
-Organisations-URL auf Parteikürzel, falls der Server eines Tages `originatorOrganization` füllt.
+Schnell sind vier: `opendata` und `context_data` holen je eine Handvoll Portaldateien in Sekunden,
+`organizations` eine Seite (Düsseldorf: 58 Fraktionen, Ausschüsse und Bezirksvertretungen, am
+2026-10-11 in 0,47 s), und `papers --max-pages 1` ist die billige Probe, ob
+der Server inzwischen Urheberfelder liefert:
 
 ```bash
 uv run georep fetch organizations         # eine Seite, Sekunden; schreibt raw/organizations.json
@@ -125,22 +136,11 @@ uv run georep fetch papers --max-pages 1  # Probe, rund 90 s: "1 Seiten, 200 Pap
 uv run georep run                         # corpus bis report neu, rund 7 s
 ```
 
-Ist `N` null, liefert der Server keine Urheber, und der Urheber kommt weiter aus `paperType`, Titel
-und Textkopf. **Am 2026-10-14 ist der volle Metadatenabruf gelaufen und hat es bestätigt**: 122 Seiten,
-24 400 Paper gesehen, 19 109 im Zeitraum, davon **null** mit Urheberfeld (36 min in eine eigene
-Datenwurzel). Zwei Nebenbefunde: 18 708 der 19 109 tragen `consultation`, und `modified` ist überall
-gefüllt und reicht bis zum 25.09.2026 — nur 1 200 Objekte tragen das Migrationsdatum 30.12.2024, für
-diese Periode ist `modified_since` also brauchbar (anders als für 2014 bis 2020). Nur wenn `N > 0`
-ist oder die `modified`-Zeitstempel gebraucht werden, lohnt der volle Metadatenabruf:
-
-```bash
-uv run georep fetch papers --force        # rund 95 Seiten mit stop_when_older, je 85 s plus 1 s Pause: 2 bis 3 h.
-                                          # Nicht seitenweise wiederaufnehmbar (ein Abbruch beginnt von vorn, der
-                                          # HTTP-Cache hält Seiten eine Stunde; für einen zweiten Versuch
-                                          # cache.oparl_pages_s erhöhen). Danach uv run georep run.
-uv run georep status                      # pdfs steht danach auf "Settings geändert", solange max_pages im Stamp
-                                          # steht: das ist richtig, nicht kaputt
-```
+Ist `N` null, kommt der Urheber weiter aus `paperType`, Titel und Textkopf. **Der volle
+Metadatenabruf vom 2026-10-14 hat es über die ganze Periode bestätigt**: 19 109 Dokumente, **null**
+mit Urheberfeld. Seine drei Nebenbefunde (Beratungsfolge, `modified`, ein Dokument mehr als die
+Referenz) stehen in [docs/befunde-2026-10-14.md](docs/befunde-2026-10-14.md), § 4; das Abrufverhalten
+je Quelle mit Pausen, Wiederholungen und Caches in [docs/technik.md](docs/technik.md), § 2.
 
 ## Zwei Wahlperioden
 
@@ -163,15 +163,11 @@ Beide Perioden werden mit **demselben Wörterbuch** durchsucht (Straßen und Ort
 November 2025): `period.dictionary = "base"` liest die Rohdaten der Hauptperiode (sie liegt unter dem Slug
 ihrer Stadt, `data_root/duesseldorf/`), die Netzschritte
 `streets_osm` und `pois_wiki` gibt es im Profil darum nicht. So unterscheiden sich die Perioden nur in den
-Dokumenten, und keine Trefferquote muss zwischen zwei Zuschnitten umgerechnet werden.
-
-Die Wahlbeteiligung der Ratswahl 2020 liegt dagegen auf den **316 Stimmbezirken von 2020**, die Auswertung auf
-den **41 Wahlbezirken von 2025**. Der Schritt `precincts` rechnet um: Flächenanteile der Stimmbezirke an den
-Zielbezirken, Zählgrößen (Wahlberechtigte, Wähler, Stimmen) proportional übertragen und je Zielbezirk nach
-größtem Rest ganzzahlig gerundet, sodass die Stadtsumme exakt erhalten bleibt. Die 44,6 % Briefwähler von 2020
-haben keine Geometrie; sie werden je Wahlbezirk aus der Differenz zur Wahlbezirks-CSV erschlossen und
-proportional zu den Wahlberechtigten mit Wahlschein auf die Stimmbezirke verteilt. Die Zuordnung steht als
-`stimmbezirke_zuordnung.parquet` zum Download und macht beides nachrechenbar.
+Dokumenten. Die Wahlbeteiligung der Ratswahl 2020 liegt dagegen auf den **316 Stimmbezirken von 2020** und
+wird im Schritt `precincts` über Flächenanteile summentreu auf die **41 Wahlbezirke von 2025** übertragen;
+wie belastbar das ist und was die Zahlen beider Perioden sagen, steht in
+[docs/statistik.md](docs/statistik.md), § 7, und nachrechenbar in `stimmbezirke_zuordnung.parquet` unter
+`2014-2020/data/`.
 
 ### Zweite Periode abrufen
 
@@ -202,15 +198,12 @@ uv run georep $P status                # alles aktuell?
 - **`incremental = false`** ist Absicht: `modified` ist bei alten Papern das Migrationsdatum 2024-12-30, ein
   `modified_since` holte nach dem ersten Lauf nichts mehr.
 - **Platz.** Die PDFs liegen unter `cache_root/2014-2020/pdf/`; xtraspace hatte am 2026-10-11 322 GB frei.
-- **Gelaufen am 2026-10-13**, Exit 0: 22 215 Dokumente, 22 116 PDFs (26 fehlgeschlagen), 21 838 mit Text,
-  36 324 Treffer über die 41 Wahlbezirke, 77 Monate. Daraus entstand der eingefrorene Schnappschuss
-  [`snapshots/2014-2020/`](snapshots/2014-2020/README.md) (36,1 MiB: `raw/papers.jsonl`,
-  `cache/text/texts.parquet`, `external/`), auf den `reference_root` des Profils zeigt; `bootstrap` erkennt
-  dieses Format und kopiert nur. Damit baut GitHub Pages beide Perioden ohne Netz. Wer den Abruf wiederholt,
+- **Gelaufen am 2026-10-13**, Exit 0. Daraus entstand der eingefrorene Schnappschuss
+  [`snapshots/2014-2020/`](snapshots/2014-2020/README.md) (36,1 MiB), auf den `reference_root` des Profils
+  zeigt; `bootstrap` erkennt dieses Format und kopiert nur, und GitHub Pages baut damit beide Perioden ohne
+  Netz. Die Zahlen des Laufs stehen in [docs/inhalt.md](docs/inhalt.md), § 1. Wer den Abruf wiederholt,
   packt den Schnappschuss mit einem Befehl neu:
-  `uv run georep --profile duesseldorf-2014 pack snapshots/2014-2020 --force` (`georep pack` ist die
-  Gegenrichtung von `bootstrap` und verweigert alles, was nicht aus dem Lauf kommt; `docs/runbook-stadt.md`,
-  § 5).
+  `uv run georep --profile duesseldorf-2014 pack snapshots/2014-2020 --force` (`docs/runbook-stadt.md`, § 5).
 
 ## Laufende Wahlperiode
 
@@ -231,17 +224,16 @@ uv run georep --profile duesseldorf-2025 fetch papers --force  # erst mit Netz: 
 ```
 
 Seine Referenz ist der eingefrorene Erstabruf
-[`snapshots/2025/`](snapshots/2025/README.md) (13,2 MiB, 2026-10-13: 4 095 Dokumente, 4 088 PDFs, 4 075 mit
-Text, 5 448 Treffer, 14 Monate). `bootstrap` füllt daraus Metadaten und Texte, **wenn der Store leer ist**;
-wer die Periode fortschreibt, behält seinen Stand, und nur `bootstrap --force` setzt ihn auf den des Pakets
-zurück. Damit baut GitHub Pages die Unterseite `2025/` ohne Netz, und die Hauptseite verlinkt sie
+[`snapshots/2025/`](snapshots/2025/README.md) (13,2 MiB, 2026-10-13; die Zahlen in
+[docs/inhalt.md](docs/inhalt.md), § 1). `bootstrap` füllt daraus Metadaten und Texte, **wenn der Store leer
+ist**; wer die Periode fortschreibt, behält seinen Stand, und nur `bootstrap --force` setzt ihn auf den des
+Pakets zurück. Damit baut GitHub Pages die Unterseite `2025/` ohne Netz, und die Hauptseite verlinkt sie
 (`report.monitoring_url = "2025/"` im Stadtprofil). Der Schnappschuss veraltet mit jedem Lauf des Monitors —
 das ist Absicht; die Seite nennt ihr Abrufdatum, und die aktuelle Fassung liefert der Timer.
 
 Im Betrieb macht das ein Skript hinter einem systemd-Timer: `deploy/bin/georep-monitor.sh` holt, rechnet,
-stellt beide Seiten zusammen (Hauptseite und darunter `2025/`), sichert PDFs und Texte optional in ein
-privates R2-Bucket und überträgt das Ergebnis per `rsync` auf einen Server. Alles Rechnerspezifische steht
-in einer Umgebungsdatei, nichts im Code; Installation, Trockenlauf und der einmalige Erstabruf stehen in
+stellt beide Seiten zusammen und überträgt das Ergebnis. Was ein Lauf tut, steht in
+[docs/technik.md](docs/technik.md), § 5; Installation, Trockenlauf und Erstabruf in
 [deploy/README.md](deploy/README.md).
 
 ## Konfiguration
@@ -277,15 +269,14 @@ uv run georep publish                                    # data/site/ mit allen 
 ```
 
 Der volle Abruf einer weiteren Stadt ist ein Handgriff mit Prüfpunkten:
-[`docs/runbook-stadt.md`](docs/runbook-stadt.md). Bis er gelaufen ist und sein Paket im Repo liegt, meldet
-`georep publish` die Stadt als „kein Lauf“ und baut die Vergleichsseite nicht. Mönchengladbachs Lauf ist am
-2026-10-13 gelaufen, sein Paket liegt unter
-[`reference/moenchengladbach/`](reference/moenchengladbach/README.md): 2 895 Ratsdokumente, von denen das
-Ratsinformationssystem nur **658** als PDF ausliefert (die übrigen antworten mit `404`), 1 704 Treffer über 33
-Wahlbezirke. Die absoluten Zahlen der beiden Städte sind darum nicht vergleichbar, die Verteilungen schon:
-`vergleich.html` führt dafür die Spalte „davon mit Text“ und sagt es im Abschnitt „Vergleichbarkeit“, und die
-Kachel „Dokumente mit Treffer“ jeder Stadtseite nennt den Anteil an allen Dokumenten **und** den an denen
-mit Text.
+[`docs/runbook-stadt.md`](docs/runbook-stadt.md); was eine neue Stadt an Daten und Konfiguration braucht,
+steht als Liste in [docs/technik.md](docs/technik.md), § 6. Bis der Lauf gelaufen ist und sein Paket im Repo
+liegt, meldet `georep publish` die Stadt als „kein Lauf“ und baut die Vergleichsseite nicht.
+Mönchengladbachs Lauf ist am 2026-10-13 gelaufen, sein Paket liegt unter
+[`reference/moenchengladbach/`](reference/moenchengladbach/README.md). **Die absoluten Zahlen der beiden
+Städte sind nicht vergleichbar**, weil das dortige Ratsinformationssystem nur 658 von 2 871 Hauptdateien
+ausliefert; wie die Seiten das sagen, steht in [docs/inhalt.md](docs/inhalt.md), § 1 und § 3, und was es
+für die Auswertung bedeutet, in [docs/statistik.md](docs/statistik.md), § 8.
 
 Was eine Stadt an Konfiguration mitbringen muss, zeigen die Urheber (Punkt 59): Düsseldorfs
 Dokumentarten nennen die Fraktion („Anfrage SPD“), Mönchengladbachs nennen nur die Klasse
@@ -305,44 +296,37 @@ dieselbe Tabelle ist.
 
 ## Daten und Herkunft
 
-| Daten | Quelle | im Repo |
+Sieben Hosts, alle öffentlich und ohne Zugangsdaten: OParl 1.1 am Ratsinformationssystem der ITK Rheinland
+(Düsseldorf Body 0015, Mönchengladbach Body 0011), das Open-Data-Portal Düsseldorf (Wahlergebnis, Stimmbezirke,
+Quartiersatlas), der votemanager der ITK Rheinland und das Geoportal Mönchengladbach, dazu Overpass/
+OpenStreetMap, Wikidata-SPARQL und die Wikipedia-GeoSearch. Das Gremium je Dokument hat seit Punkt 58 zwei
+Quellen: die Drucksachennummer und, wo die kein bekanntes Gremium nennt, die Beratungsfolge aus OParl
+(`consultation`). **Jeder Endpunkt mit Format, Lizenz und
+Abrufverhalten steht in [docs/technik.md](docs/technik.md), § 1 und § 2**; die Lizenzen in einer Übersicht in
+[docs/inhalt.md](docs/inhalt.md), § 4; welcher Schritt welche Quelle liest, in
+[docs/architecture.md](docs/architecture.md). Namensnennung nach Lizenz: Landeshauptstadt Düsseldorf, Amt für
+Statistik und Wahlen: Quartiersatlas Düsseldorf 2024 (Open-Data-Portal), dl-de/by-2-0.
+
+**Die sechs Datenpakete im Repo** sind die eingefrorenen Eingaben der Läufe, aus denen GitHub Pages jede Seite
+ohne Netz baut (Konrads Entscheidung vom 2026-10-13, `docs/decisions.md`, Punkt 56):
+
+| Paket | Größe | Inhalt |
 |---|---|---|
-| Wahlergebnis je Stimmbezirk, Kommunalwahl 14.09.2025 | Open-Data-Portal der Stadt Düsseldorf (CSV, Datenlizenz Deutschland Namensnennung 2.0) | `reference/external/` |
-| Stimmbezirke 2025 (ETRS89, EPSG:4647) | Open-Data-Portal der Stadt Düsseldorf (GeoJSON, Datenlizenz Deutschland – Zero – Version 2.0) | `reference/external/` |
-| Ratsdokumente 2020 bis 2025, Metadaten und Texte | Ratsinformationssystem Düsseldorf über OParl 1.1 (`ris-oparl.itk-rheinland.de`, Body 0015) | `reference/interim/`, die PDFs nicht |
-| Straßennamen je Stimmbezirk | OpenStreetMap über die Overpass-API (ODbL), Stand der Arbeit November 2025 | `reference/raw/` |
-| Orte je Stimmbezirk | Wikidata (CC0) per SPARQL, Wikipedia-GeoSearch | `reference/raw/` |
-| Kürzel und Namen der Gremien (Rat, Bezirksvertretungen, Ausschüsse, Beiräte) | Organisationsliste des Ratsinformationssystems (Stand 11.10.2026) und Dokumenttitel; das Gremium je Dokument liest der Parser aus der Drucksachennummer und, wo die nichts sagt, aus der Beratungsfolge | `src/georep/profiles/duesseldorf.toml`, Block `[bodies]` |
-| Beratungsfolge je Dokument 2020 bis 2025 (welche Gremien es beraten haben, Vollabruf der Metadaten 2026-10-14) | Ratsinformationssystem Düsseldorf über OParl 1.1, Body 0015, Feld `consultation` | `snapshots/duesseldorf-beratungsfolge/` (88 KiB) |
-| Mönchengladbach: Namen und Kürzel der Gremien (Abruf 2026-10-14) | Ratsinformationssystem Mönchengladbach über OParl 1.1, Body 0011, Endpunkt `organizations` | `reference/moenchengladbach/raw/organizations.json` |
-| Mönchengladbach: Namen der acht Fraktionen und die Urheberklasse je Dokumentart | derselbe Abruf (`classification = "Fraktion"`) und die 16 `paperType`-Werte des Pakets | `src/georep/profiles/moenchengladbach.toml`, Block `[originators]` |
-| Sozialdaten je Sozialraum, Stand 31.12.2021 (Kontrollvariablen) | Quartiersatlas Düsseldorf 2024, Open-Data-Portal der Stadt Düsseldorf (CSV und GeoJSON, Datenlizenz Deutschland Namensnennung 2.0) | `context/` |
-| Fraktionen, Ausschüsse und Bezirksvertretungen | Ratsinformationssystem Düsseldorf über OParl 1.1, Endpunkt `organizations` | nein, `georep fetch organizations` holt sie |
-| Wahlergebnis je Stimmbezirk und je Wahlbezirk, Ratswahl 13.09.2020 | Open-Data-Portal der Stadt Düsseldorf (CSV, Datenlizenz Deutschland Namensnennung 2.0) | `snapshots/2014-2020/external/` |
-| Stimmbezirke und Kommunalwahlbezirke 2020 (ETRS89, EPSG:4647) | Open-Data-Portal der Stadt Düsseldorf (GeoJSON, Datenlizenz Deutschland – Zero – Version 2.0) | `snapshots/2014-2020/external/` |
-| Ratsdokumente 2014 bis 2020, Metadaten und Texte (Abruf 2026-10-13) | Ratsinformationssystem Düsseldorf über OParl 1.1, Body 0015, ab Seite 90 | `snapshots/2014-2020/` (36,1 MiB), die PDFs nicht |
-| Mönchengladbach: Wahlergebnis, Wahlbezirke, Straßenverzeichnis | votemanager der ITK Rheinland (`wep.itk-rheinland.de`, Lizenz laut Anbieter nicht angegeben) | `reference/moenchengladbach/external/` |
-| Mönchengladbach: Stimmbezirksflächen (Stand 08.06.2022) | Geoportal der Stadt Mönchengladbach (Shapefile, Datenlizenz Deutschland – Zero – Version 2.0) | `reference/moenchengladbach/external/` |
-| Mönchengladbach: Ratsdokumente 2020 bis 2025, Metadaten und Texte (Abruf 2026-10-13) | Ratsinformationssystem Mönchengladbach über OParl 1.1, Body 0011 | `reference/moenchengladbach/` (4,2 MiB), die PDFs nicht |
-| Ratsdokumente seit der Kommunalwahl 2025, Metadaten und Texte (Erstabruf 2026-10-13) | Ratsinformationssystem Düsseldorf über OParl 1.1, Body 0015, `modified_since` | `snapshots/2025/` (13,2 MiB), die PDFs nicht; veraltet mit jedem Lauf des Monitors |
+| [`reference/`](reference/) | 81,8 MiB | der Datensatz der Arbeit (Wahlergebnis, Stimmbezirke, Straßen, Orte, Dokumente mit Text) |
+| [`reference/moenchengladbach/`](reference/moenchengladbach/README.md) | 4,2 MiB | der Lauf Mönchengladbachs vom 2026-10-13, seit Punkt 58 mit `raw/organizations.json` |
+| [`snapshots/2014-2020/`](snapshots/2014-2020/README.md) | 36,1 MiB | die Wahlperiode 2014 bis 2020, Abruf 2026-10-13 |
+| [`snapshots/2025/`](snapshots/2025/README.md) | 13,2 MiB | der Erstabruf der laufenden Periode, 2026-10-13 |
+| [`snapshots/duesseldorf-beratungsfolge/`](snapshots/duesseldorf-beratungsfolge/README.md) | 88 KiB | die Beratungsfolge je Dokument der Hauptperiode (Punkt 58) |
+| [`context/`](context/README.md) | 2,1 MiB | Quartiersatlas 2024 für die Kontrollvariablen |
 
-`context/` trägt die Fremddaten, aus denen die Kontrollvariablen entstehen, mit Herkunft, Lizenz, Datenstand,
-Abrufdatum und Prüfsummen in [context/README.md](context/README.md); die Seite nennt unter „Abgeleitete Daten"
-je Variable, was daraus wurde. Namensnennung nach Lizenz: Landeshauptstadt Düsseldorf, Amt für Statistik und
-Wahlen: Quartiersatlas Düsseldorf 2024 (Open-Data-Portal), dl-de/by-2-0.
-
-**Die Datenpakete im Repo** sind die eingefrorenen Eingaben der Läufe, aus denen GitHub Pages jede Seite ohne
-Netz baut (Konrads Entscheidung vom 2026-10-13, `docs/decisions.md`, Punkt 56): `reference/` (82 MiB, der
-Datensatz der Arbeit), `reference/moenchengladbach/` (4,2 MiB), `snapshots/2014-2020/` (36,1 MiB),
-`snapshots/2025/` (13,2 MiB), `snapshots/duesseldorf-beratungsfolge/` (88 KiB, nur die Beratungsfolge je
-Dokument, Punkt 58) und `context/` (2,1 MiB). Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, Zahlen und der SHA-256 jeder
+Zusammen 137,60 MiB. Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, Zahlen und der SHA-256 jeder
 Datei; `tests/unit/test_data_packages.py` hält diese Angaben gegen die Dateien und lässt keine PDFs, Stamps
 oder Caches hinein. Die PDFs selbst liegen in **keinem** Paket, nur die Texte daraus.
 
 **Was die Daten dieser vier Netzläufe zeigen**, steht mit Zahlen, Deutung und Grenze in
-[docs/befunde-2026-10-14.md](docs/befunde-2026-10-14.md) (zwei Wahlperioden, zwei Städte, die laufende
-Periode, die Beratungsfolge aus dem Vollabruf der Metadaten, Datenqualität); jede Zahl dort rechnet
-`uv run python docs/befunde-2026-10-14-messung.py` aus den Parquet-Dateien und `summary.json` nach.
+[docs/befunde-2026-10-14.md](docs/befunde-2026-10-14.md); jede Zahl dort rechnet
+`uv run python docs/befunde-2026-10-14-messung.py` nach. Was die Daten **sind**, steht in
+[docs/inhalt.md](docs/inhalt.md), § 1, was sie **belegen** in [docs/statistik.md](docs/statistik.md).
 
 `reference/`, `snapshots/` und `context/` werden nur gelesen; Läufe schreiben nach `data_root/<profil>/`
 (Standard `./data/duesseldorf`), Caches nach `cache_root/<profil>/` (Standard `data/cache/duesseldorf`), nur
