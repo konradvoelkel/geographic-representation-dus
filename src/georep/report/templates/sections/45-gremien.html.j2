@@ -8,8 +8,11 @@
 {% else %}
 <p>Die Drucksachennummern dieser Stadt nennen das Gremium nicht: sie sind laufende Nummer und Wahlperiode. Woher es stattdessen kommt, sagt der nächste Absatz.</p>
 {% endif %}
-{% if f.by_source %}
-<p>Die zweite Quelle ist die <em>Beratungsfolge</em> des Ratsinformationssystems, also die Gremien, die ein Dokument beraten haben. Sie entscheidet, wo die Nummer kein bekanntes Gremium nennt &ndash; und auch dann nur, wenn sie <em>genau eines</em> nennt: {{ f.from_consultation|num }} Dokumente ({{ (f.from_consultation / f.documents)|pct(1) }}) bekommen ihr Gremium so.{% if f.confirmed or f.conflicting %} Wo beide Quellen etwas sagen, bleibt die Nummer; sie stimmen in {{ f.confirmed|num }} Fällen überein und widersprechen sich in {{ f.conflicting|num }} ({{ (f.conflicting / (f.confirmed + f.conflicting))|pct(1) }} der Vergleiche).{% endif %}{% if f.ambiguous %} Bei {{ f.ambiguous|num }} Dokumenten nennt die Folge mehrere Gremien und die Nummer keines; welches davon das federführende ist, steht nicht in den Daten, und sie bleiben darum <em>unbekannt</em>.{% endif %}</p>
+{% if f.has_second_source %}
+<p>Die zweite Quelle ist die <em>Beratungsfolge</em> des Ratsinformationssystems, also die Gremien, die ein Dokument beraten haben. Sie entscheidet, wo die Nummer kein bekanntes Gremium nennt &ndash; und auch dann nur, wenn sie <em>genau eine Organisation</em> nennt: {{ f.from_consultation|num }} Dokumente ({{ (f.from_consultation / f.documents)|pct(1) }}) bekommen ihr Gremium so.{% if f.confirmed or f.conflicting %} Wo beide Quellen etwas sagen, bleibt die Nummer; sie stimmen in {{ f.confirmed|num }} Fällen überein und widersprechen sich in {{ f.conflicting|num }} ({{ (f.conflicting / (f.confirmed + f.conflicting))|pct(1) }} der Vergleiche).{% endif %}{% if f.ambiguous %} Bei {{ f.ambiguous|num }} Dokumenten nennt die Folge mehrere Organisationen und die Nummer kein Gremium; welche davon die federführende ist, steht nicht in den Daten, und sie bleiben darum <em>unbekannt</em>.{% endif %}</p>
+{% endif %}
+{% if f.sources|length > 1 %}
+<p class="note">Je Quelle: {% for label, count, share in f.sources %}{{ label }} {{ count|num }} ({{ share|pct(1) }}){{ ", " if not loop.last }}{% endfor %}.</p>
 {% endif %}
 <div class="tiles">
 {% for kind, label, count, share in f.by_kind %}

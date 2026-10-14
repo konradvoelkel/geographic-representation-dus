@@ -139,10 +139,11 @@ def bootstrap(
     zuständig. ``seed_corpus`` ist die Naht von Option 07: ein Profil mit laufender Periode
     bekommt die Eingaben der Referenz, aber keine Paper und Texte der Hauptperiode; die holt
     sein Netzschritt ``papers`` selbst. ``consultations`` ist die Naht von Punkt 58: der Pfad des
-    Pakets mit der Beratungsfolge je Dokument (``[bodies].consultations``), benutzt nur, wenn der
-    eingefrorene Datensatz nicht selbst eine ``raw/beratungsfolge.parquet`` mitbringt. Ohne beides
-    hat diese Periode die Folge in ihrem eigenen ``raw/papers.jsonl``, und es gibt nichts zu
-    kopieren.
+    Pakets mit der Beratungsfolge je Dokument (``[bodies].consultations``). ``None`` heißt „dieses
+    Profil hat keine zweite Quelle", und dann wird auch nichts kopiert -- selbst wenn der
+    eingefrorene Datensatz eine ``raw/beratungsfolge.parquet`` mitbringt: der Schritt ``bodies``
+    liest sie dann nicht, und eine Kopie ohne Leser wäre eine Angabe ohne Stamp. Ist der Pfad
+    gesetzt und bringt der Datensatz eine eigene Datei mit, gilt seine.
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -154,11 +155,14 @@ def bootstrap(
     ]
     if needs_dictionary:
         pairs += [(reference.streets, layout.streets), (reference.pois, layout.pois)]
-    # Punkt 58: die Beratungsfolge je Dokument. Bringt der eingefrorene Datensatz sie selbst mit,
-    # gilt seine Datei -- sie gehört zu genau diesen Dokumenten; sonst das Paket, das das Profil
-    # nennt (``[bodies].consultations``). Fehlt beides, gibt es die zweite Quelle hier nicht.
-    folge = reference.consultations if reference.consultations.is_file() else consultations
-    if folge is not None:
+    # Punkt 58: die Beratungsfolge je Dokument -- **nur**, wenn das Profil eine zweite Quelle
+    # deklariert (``[bodies].consultations``). Sonst liest der Schritt ``bodies`` die Datei nicht,
+    # sie stünde in keinem Stamp, und eine Kopie in ``raw/`` wäre eine Angabe, die niemand benutzt
+    # und niemand prüft (Review 2026-10-14). Welche Datei es ist, entscheidet dann der
+    # eingefrorene Datensatz: bringt er eine mit, gehört sie zu genau diesen Dokumenten und gilt
+    # vor dem Paket aus dem Profil (so hat die Mini-Fixture ihre eigenen 200 Zeilen).
+    if consultations is not None:
+        folge = reference.consultations if reference.consultations.is_file() else consultations
         pairs.append((folge, layout.consultations))
     # Option 01: zwei Quellen, die nur manche Städte veröffentlichen (votemanager)
     for source, target in (

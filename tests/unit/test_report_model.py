@@ -412,11 +412,11 @@ def test_controls_section_on_the_mini_fixture_keeps_only_what_fits(model: Report
 def test_controls_and_derived_are_none_without_context_data(
     tmp_path: Path, mini_root: Path, default_settings: Settings
 ) -> None:
-    from georep.bootstrap import bootstrap
+    from georep.bootstrap import bootstrap_from_settings
     from georep.pipeline import build_steps, run_pipeline
 
     layout = Layout(tmp_path / "data", tmp_path / "cache", mini_root)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, default_settings)
     run_pipeline(build_steps(default_settings, layout), default_settings)
     plain = build_report_model(layout, default_settings, now=NOW)
     assert plain.controls is None and plain.derived is None
@@ -615,11 +615,11 @@ def test_without_the_parties_step_the_section_stays_empty(
 ) -> None:
     """Ein Lauf ohne den Schritt ``parties`` lässt die vier Modellfelder leer; die Vorlage
     blendet den Abschnitt dann aus."""
-    from georep.bootstrap import bootstrap
+    from georep.bootstrap import bootstrap_from_settings
     from georep.pipeline import build_steps, run_pipeline
 
     layout = Layout(tmp_path / "data", tmp_path / "cache", mini_root)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, default_settings)
     steps = [
         s for s in build_steps(default_settings, layout) if s.name not in ("parties", "report")
     ]

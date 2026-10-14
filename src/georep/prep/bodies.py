@@ -435,19 +435,44 @@ def _resolved_consultations(
     }
 
 
-def merge_consultations(own: pl.DataFrame, extra: pl.DataFrame | None) -> pl.DataFrame:
+def _rows_of_own(
+    own: pl.DataFrame, extra: pl.DataFrame | None = None, result: pl.DataFrame | None = None
+) -> bool:
+    """Genau die Zeilen des Korpus: eine je ID, keine dazu, keine vervielfacht.
+
+    Die Vervielfachung ist der Fall, auf den es ankommt: ein Paket, das dieselbe ID zweimal
+    trägt, machte aus einem ``left``-Join zwei Zeilen je Dokument, und der Schritt ``bodies``
+    schriebe danach mehr Zeilen als der Korpus hat (Review 2026-10-14).
+    """
+    assert result is not None
+    return result.height == own.height and set(result.get_column(ID)) == set(own.get_column(ID))
+
+
+@deal.pre(
+    lambda own, extra=None: (
+        has_columns(own, ID, CONSULTATION)
+        and (extra is None or has_columns(extra, ID, CONSULTATION))
+    ),
+    message="beide Frames mit id und consultation_organizations",
+)
+@deal.post(lambda result: result.columns == [ID, CONSULTATION])
+@deal.ensure(_rows_of_own, message="genau die Zeilen des Korpus, keine vervielfacht")
+def merge_consultations(own: pl.DataFrame, extra: pl.DataFrame | None = None) -> pl.DataFrame:
     """Die Beratungsfolge des Korpus, aufgefüllt aus einem Paket (Punkt 58).
 
     ``own`` sind ``id`` und ``consultation_organizations`` aus dem Korpus dieses Profils, ``extra``
     dieselben zwei Spalten aus ``[bodies].consultations``. Was das Dokument selbst mitbringt,
     gewinnt: das Paket ist für die Periode gedacht, deren Abruf die Folge nicht trug (die
     Hauptperiode Düsseldorfs kommt aus dem Altformat der Arbeit). Dokumente, die nur im Paket
-    stehen, fallen weg -- der Korpus sagt, welche Dokumente es gibt.
+    stehen, fallen weg -- der Korpus sagt, welche Dokumente es gibt --, und eine ID, die im Paket
+    zweimal steht, zählt einmal: die erste Zeile gewinnt, sonst vervielfachte der Join den Korpus.
     """
     empty = pl.col(CONSULTATION).list.len() == 0
     if extra is None:
         return own.select(ID, CONSULTATION)
-    filled = extra.select(ID, pl.col(CONSULTATION).alias("_extra"))
+    filled = extra.unique(subset=[ID], keep="first").select(
+        ID, pl.col(CONSULTATION).alias("_extra")
+    )
     return (
         own.select(ID, CONSULTATION)
         .join(filled, on=ID, how="left")

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from pathlib import Path
 
 import polars as pl
@@ -35,6 +36,7 @@ from georep.prep.bodies import (
     classify_papers,
     consultation_body,
     counts_by_kind,
+    merge_consultations,
     named_organizations,
     organization_key,
     parse_reference,
@@ -423,3 +425,52 @@ def test_named_organizations_counts_the_distinct_keys(organizations: list[str]) 
     assert named_organizations(organizations) == len({organization_key(u) for u in organizations})
     assert named_organizations(organizations) <= len(organizations)
     assert named_organizations(organizations + organizations) == named_organizations(organizations)
+
+
+# Review 2026-10-14: ``merge_consultations`` bekam Verträge; die Eigenschaft dazu greift den Fall
+# an, der ohne sie durchgegangen wäre -- dieselbe ID zweimal im Paket.
+_ids = st.lists(st.sampled_from(["p1", "p2", "p3"]), max_size=4)
+
+
+@st.composite
+def _folge_frame(draw: st.DrawFn) -> pl.DataFrame:
+    ids = draw(_ids)
+    lists = draw(
+        st.lists(
+            st.lists(st.sampled_from([f"{ORG}/6", f"{ORG}/32"]), max_size=2),
+            min_size=len(ids),
+            max_size=len(ids),
+        )
+    )
+    return pl.DataFrame(
+        {"id": ids, "consultation_organizations": lists},
+        schema={"id": pl.String, "consultation_organizations": pl.List(pl.String)},
+    )
+
+
+@given(own=_folge_frame(), extra=_folge_frame())
+def test_merging_keeps_exactly_the_rows_of_the_corpus(
+    own: pl.DataFrame, extra: pl.DataFrame
+) -> None:
+    """Eine ID zweimal im Paket darf den Korpus nicht vervielfachen, und sein Wert gewinnt."""
+    merged = merge_consultations(own, extra)
+    assert merged.columns == ["id", "consultation_organizations"]
+    assert merged.height == own.height
+    first_extra: dict[str, list[str]] = {}
+    for row in extra.iter_rows(named=True):
+        first_extra.setdefault(str(row["id"]), list(row["consultation_organizations"]))
+    # Als Multimenge verglichen: ein Join legt die Zeilenfolge nicht fest, und hier zählt sie nicht
+    expected = Counter(
+        (
+            str(row["id"]),
+            tuple(row["consultation_organizations"] or first_extra.get(str(row["id"]), [])),
+        )
+        for row in own.iter_rows(named=True)
+    )
+    got = Counter(
+        (str(row["id"]), tuple(row["consultation_organizations"]))
+        for row in merged.iter_rows(named=True)
+    )
+    assert got == expected
+    # Ohne Paket bleibt der Korpus, wie er ist
+    assert merge_consultations(own).to_dicts() == own.to_dicts()

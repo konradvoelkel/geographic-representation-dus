@@ -228,12 +228,12 @@ def built(
     tmp_path_factory: pytest.TempPathFactory, mini_root: Path, default_settings: Settings
 ) -> str:
     """Die Seite, wie ``build_site`` sie baut: mit der dritten Kennzahl und ihrer Legende."""
-    from georep.bootstrap import bootstrap
+    from georep.bootstrap import bootstrap_from_settings
     from georep.pipeline import build_steps, run_pipeline
 
     root = tmp_path_factory.mktemp("site_bodies")
     layout = Layout(root / "data", root / "cache", mini_root)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, default_settings)
     run_pipeline(build_steps(default_settings, layout), default_settings)
     build_site(
         layout, default_settings, now=dt.datetime(2026, 10, 12, 9, 0, tzinfo=dt.UTC), commit=None
@@ -388,3 +388,58 @@ def test_an_unknown_source_is_a_violated_precondition(default_settings: Settings
         body_figures((), (), default_settings.bodies, wrong)
     right = prep_bodies.SourceCounts(tuple((s, 0) for s in prep_bodies.SOURCES), 0, 0, 0)
     assert body_figures((), (), default_settings.bodies, right).by_source[0][0] == "nummer"
+
+
+def test_without_a_second_source_the_section_says_nothing_about_it(model: ReportModel) -> None:
+    """Review 2026-10-14: der Wächter der Vorlage ist ``has_second_source``, nicht ``by_source``.
+
+    Ein Profil ohne ``[bodies.organizations]`` bekommt vier Nullen in ``by_source`` -- und bekam
+    damit einen Absatz „0 Dokumente (0,0 %) bekommen ihr Gremium so". Jetzt fehlt der Absatz, und
+    die Zeile „Je Quelle" fehlt auch, weil nur eine Quelle etwas beigetragen hat.
+    """
+    figures = model.body_figures
+    assert figures is not None and figures.has_second_source  # die Fixture hat eine Folge
+    alone = replace(
+        figures,
+        by_source=tuple(
+            (source, label, count if source == prep_bodies.FROM_NUMBER else 0, 0.0)
+            for source, label, count, _ in figures.by_source
+        ),
+        confirmed=0,
+        conflicting=0,
+        ambiguous=0,
+    )
+    assert not alone.has_second_source and len(alone.sources) == 1
+    page = render_report(replace(model, body_figures=alone), _visuals(model))
+    assert "Die zweite Quelle ist die <em>Beratungsfolge</em>" not in page
+    assert "Je Quelle:" not in page
+    # Mit Folge stehen beide da, und die Beschriftungen kommen aus prep.bodies.SOURCE_LABELS
+    with_folge = render_report(model, _visuals(model))
+    assert "Die zweite Quelle ist die <em>Beratungsfolge</em>" in with_folge
+    assert prep_bodies.SOURCE_LABELS[prep_bodies.FROM_NUMBER] in with_folge
+
+
+def test_an_old_data_root_loses_the_sources_instead_of_the_page(
+    tmp_path: Path, mini_run: Layout, default_settings: Settings
+) -> None:
+    """Review 2026-10-14: ``papers_gremien.parquet`` ohne die Spalten aus Schema 2 ist eine Zeile.
+
+    Vorher las das Modell die Datei ohne Prüfung, und die Vorbedingung von ``source_counts`` flog
+    als ``PreContractError`` mitten im Seitenbau -- für eine Datenwurzel, in der der Schritt
+    ``bodies`` zuletzt vor Punkt 58 lief. Jetzt fehlen die Quellen im Abschnitt, und der Rest der
+    Seite entsteht.
+    """
+    from georep.io import write_parquet
+    from georep.report.model import _source_counts
+
+    old = pl.read_parquet(mini_run.papers_bodies).select(
+        prep_bodies.ID, prep_bodies.REFERENCE, prep_bodies.BODY, prep_bodies.KIND
+    )
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
+    layout.processed.mkdir(parents=True, exist_ok=True)
+    write_parquet(old, layout.papers_bodies, schema_version=1)
+    assert _source_counts(layout) is None
+    # Ohne die Datei ebenso, und mit allen Spalten kommen die Zahlen
+    assert _source_counts(Layout(tmp_path / "leer", tmp_path / "c", tmp_path / "r")) is None
+    counts = _source_counts(mini_run)
+    assert counts is not None and counts.documents == 200

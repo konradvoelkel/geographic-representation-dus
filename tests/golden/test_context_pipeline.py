@@ -7,7 +7,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from georep.bootstrap import bootstrap, bootstrap_from_settings
+from georep.bootstrap import bootstrap_from_settings
 from georep.io import digest
 from georep.layout import Layout
 from georep.pipeline import build_steps, freshness, run_pipeline
@@ -87,7 +87,7 @@ def test_without_context_data_the_chain_is_the_old_one(
     tmp_path: Path, mini_root: Path, settings: Settings
 ) -> None:
     layout = Layout(tmp_path / "data", tmp_path / "cache", mini_root)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     names = [s.name for s in build_steps(settings, layout)]
     assert not OFFLINE & set(names) and "context_data" not in names
     outcomes = run_pipeline(build_steps(settings, layout), settings)

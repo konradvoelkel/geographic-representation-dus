@@ -26,6 +26,7 @@ from dataclasses import dataclass
 import polars as pl
 
 from georep.analysis.parties import read_organizations
+from georep.contracts import is_district_code
 from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.oparl import OparlOrganization
@@ -59,6 +60,10 @@ class LearnedOrganization:
     short_name: str  # aus raw/organizations.json, wenn sie vorliegt
     classification: str
     name: str
+    # Review 2026-10-14: kennt das Profil dieses Kürzel schon? Wenn nicht, wäre die Zeile im
+    # Profil ein Fehler (der Validator lässt nur Ziele zu, die in einer Tabelle stehen), und der
+    # Befehl darf sie nicht als gültige TOML-Zeile drucken.
+    known: bool = True
 
     @property
     def purity(self) -> float:
@@ -108,8 +113,19 @@ class LearnReport:
             )
         return head + "\n".join(rows) + "\n"
 
+    @property
+    def unknown_codes(self) -> tuple[LearnedOrganization, ...]:
+        """Gelernte Zeilen, deren Kürzel das Profil nicht kennt: auskommentiert, nicht gültig."""
+        return tuple(entry for entry in self.learned if not entry.known)
+
     def toml(self) -> str:
-        """Der Block für das Profil; leer, wenn aus den Nummern nichts zu lernen war."""
+        """Der Block für das Profil; leer, wenn aus den Nummern nichts zu lernen war.
+
+        Eine Zeile, deren Kürzel in keiner Tabelle des Profils steht, kommt **auskommentiert**
+        heraus: so wie sie ist, wäre sie ein Settings-Fehler (``bodies.organizations: 'gr/26' zeigt
+        auf 'POA', und das steht in keiner Tabelle``), und wer sie einsetzen will, braucht zuerst
+        eine Zeile in ``[bodies.committees]`` (Review 2026-10-14).
+        """
         if not self.learned:
             return ""
         lines = [
@@ -117,11 +133,20 @@ class LearnReport:
             f"gelernt mit `georep --profile {self.profile} learn-bodies`",
         ]
         for entry in sorted(self.learned, key=lambda e: (-e.alone, e.key)):
-            lines.append(
-                f'"{entry.key}" = "{entry.code}"'.ljust(26)
-                + f"# {entry.alone} Dokumente nennen nur sie, {entry.pure} davon "
-                f"als {entry.code}" + (f" ({entry.name})" if entry.name else "")
+            assignment = f'"{entry.key}" = "{entry.code}"'
+            note = (
+                f"# {entry.alone} Dokumente nennen nur sie, {entry.pure} davon als {entry.code}"
+                + (f" ({entry.name})" if entry.name else "")
             )
+            if entry.known:
+                lines.append(assignment.ljust(26) + note)
+            else:
+                lines.append(
+                    f"# {assignment}".ljust(26)
+                    + f"{note} -- NICHT GÜLTIG: {entry.code} steht in keiner Kürzeltabelle "
+                    "des Profils; erst eine Zeile in [bodies.committees] (oder council/advisory) "
+                    "macht sie erlaubt"
+                )
         return "\n".join(lines) + "\n"
 
     def differences(self) -> list[str]:
@@ -154,6 +179,13 @@ class LearnReport:
                 f"{sum(e.alone for e in self.learned)} Dokumenten mit genau einer, Reinheit "
                 f"{self.purity:.1%}\n"
             )
+            if self.unknown_codes:
+                codes = ", ".join(sorted({e.code for e in self.unknown_codes}))
+                parts.append(
+                    f"{len(self.unknown_codes)} Zeile(n) sind auskommentiert, weil das Profil ihr "
+                    f"Kürzel nicht kennt ({codes}); eine Zeile in [bodies.committees] macht sie "
+                    "erlaubt.\n"
+                )
             parts.append("\n" + self.toml())
         else:
             parts.append(
@@ -176,6 +208,12 @@ class LearnReport:
             if len(notes) > EXAMPLES:
                 parts.append(f"  … und {len(notes) - EXAMPLES} weitere\n")
         return "".join(parts)
+
+
+def _is_known(code: str, settings: Settings) -> bool:
+    """Dieselbe Regel wie der Validator von ``settings.Bodies``: Kürzel aus einer Tabelle oder BVn."""
+    bodies = settings.bodies
+    return not code or is_district_code(code, bodies.district_body) or code in bodies.codes
 
 
 def _catalogue(layout: Layout) -> dict[str, OparlOrganization]:
@@ -233,6 +271,7 @@ def learn_bodies(layout: Layout, settings: Settings, *, min_documents: int = 1) 
                 short_name=(entry.short_name or "") if entry else "",
                 classification=(entry.classification or "") if entry else "",
                 name=(entry.name or "") if entry else "",
+                known=_is_known(best[0][0] if best else "", settings),
             )
         )
     return LearnReport(

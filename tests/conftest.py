@@ -10,7 +10,7 @@ import pytest
 from hypothesis import HealthCheck
 from hypothesis import settings as hypothesis_settings
 
-from georep.bootstrap import bootstrap
+from georep.bootstrap import bootstrap_from_settings
 from georep.geo import read_canonical_precincts
 from georep.io import write_json
 from georep.layout import Layout
@@ -182,7 +182,10 @@ def mini_run(tmp_path_factory: pytest.TempPathFactory, default_settings: Setting
         default_settings.profile,
         context_root=MINI / "context",
     )
-    bootstrap(layout, context_files=default_settings.context.files.names())
+    # Punkt 58, Review 2026-10-14: dieselbe Verdrahtung wie `georep bootstrap`; die
+    # Beratungsfolge der 200 Dokumente bringt die Fixture selbst mit, und sie gilt vor dem
+    # Paket, das das Profil nennt (``bootstrap_from_settings``).
+    bootstrap_from_settings(layout, default_settings)
     run_pipeline(build_steps(default_settings, layout), default_settings)
     return layout
 

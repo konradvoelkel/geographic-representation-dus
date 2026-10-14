@@ -224,11 +224,11 @@ def test_organizations_from_the_server_map_urls_without_settings(patterns: Patte
 def mini_attribution(
     mini_root: Path, default_settings: Settings, tmp_path_factory: pytest.TempPathFactory
 ) -> pl.DataFrame:
-    from georep.bootstrap import bootstrap
+    from georep.bootstrap import bootstrap_from_settings
 
     root = tmp_path_factory.mktemp("attribution")
     layout = Layout(root / "data", root / "cache", mini_root)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, default_settings)
     corpus = build_corpus(PaperStore(layout.papers).load().values(), TextStore(layout.texts))
     return classify_originators(corpus, default_settings.originators)
 

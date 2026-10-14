@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import polars as pl
@@ -430,14 +431,39 @@ def test_learn_bodies_needs_the_corpus(project: Path, capsys: pytest.CaptureFixt
     assert "papers.parquet fehlt" in capsys.readouterr().err
 
 
-def test_pack_consultations_writes_the_small_package(
+def test_pack_consultations_refuses_a_package_without_a_consultation(
     project: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """Review 2026-10-14: ein Paket ohne eine einzige Folge ist eine Liste von IDs, kein Paket.
+
+    Die Mini-Fixture bootstrappt ihre Metadaten aus dem Altformat der Arbeit, ihr
+    ``raw/papers.jsonl`` trägt also keine Beratungsfolge -- genau der Fall, in dem jemand aus der
+    falschen Datenwurzel packt. Der Befehl bricht ab und sagt, woraus zu packen wäre.
+    """
     assert main(["bootstrap"]) == 0
     capsys.readouterr()
     target = tmp_path / "paket-folge"
+    assert main(["pack", "--consultations", str(target)]) == 1
+    assert "trägt eine Beratungsfolge" in capsys.readouterr().err
+    assert not target.exists()
+
+
+def test_pack_consultations_writes_the_small_package(
+    project: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Mit einer Folge im ``papers.jsonl`` entsteht das Paket samt Prüfsummentabelle."""
+    assert main(["bootstrap"]) == 0
+    capsys.readouterr()
+    layout = _layout(project)
+    organizations = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations"
+    lines = layout.papers.read_text(encoding="utf-8").splitlines()
+    first = json.loads(lines[0]) | {"consultation_organizations": [f"{organizations}/gr/6"]}
+    layout.papers.write_text(
+        "\n".join([json.dumps(first, ensure_ascii=False), *lines[1:]]) + "\n", encoding="utf-8"
+    )
+    target = tmp_path / "paket-folge"
     assert main(["pack", "--consultations", str(target)]) == 0
     out = capsys.readouterr().out
-    assert "200 Dokumente, 0 mit Beratungsfolge" in out
+    assert "200 Dokumente, 1 mit Beratungsfolge, 1 verschiedene Organisationen" in out
     assert "| `raw/beratungsfolge.parquet` |" in out  # die Prüfsummentabelle auf stdout
     assert (target / "raw" / "beratungsfolge.parquet").is_file()

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from georep.bootstrap import bootstrap
+from georep.bootstrap import bootstrap_from_settings
 from georep.layout import Layout
 from georep.pipeline import Step, build_steps
 from georep.profiling import profile_step
@@ -21,7 +21,7 @@ def settings() -> Settings:
 
 def _steps(tmp_path: Path, mini_root: Path, settings: Settings) -> dict[str, Step]:
     layout = Layout(tmp_path / "data", tmp_path / "cache", mini_root)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     return {s.name: s for s in build_steps(settings, layout)}
 
 

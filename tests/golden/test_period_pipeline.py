@@ -19,7 +19,7 @@ import polars as pl
 import pytest
 
 from georep.analysis.periods import D_TURNOUT, comparison_columns
-from georep.bootstrap import bootstrap
+from georep.bootstrap import bootstrap_from_settings
 from georep.errors import SchemaError
 from georep.layout import Layout
 from georep.pipeline import Outcome, build_steps, run_pipeline
@@ -66,7 +66,7 @@ def period_run(
         default_settings.profile,
         context_root=mini_root / "context",
     )
-    bootstrap(base, context_files=default_settings.context.files.names())
+    bootstrap_from_settings(base, default_settings)
     run_pipeline(build_steps(default_settings, base), default_settings)
     settings = load_settings(profile=PROFILE, cwd=NOWHERE).model_copy(
         update={
@@ -76,7 +76,8 @@ def period_run(
         }
     )
     layout = Layout.from_settings(settings)
-    report = bootstrap(layout, needs_dictionary=False)
+    # Punkt 58: dieses Profil setzt ``[bodies].consultations`` leer (eigene Folge im papers.jsonl)
+    report = bootstrap_from_settings(layout, settings)
     assert report.missing == [], report.summary()
     outcomes = run_pipeline(build_steps(settings, layout), settings)
     return PeriodRun(settings, layout, base, outcomes)

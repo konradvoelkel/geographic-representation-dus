@@ -15,7 +15,7 @@ from typing import Any
 import polars as pl
 import pytest
 
-from georep.bootstrap import bootstrap
+from georep.bootstrap import bootstrap_from_settings
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
 from georep.prep.streets import directory_agreement
@@ -40,7 +40,7 @@ def run(tmp_path_factory: pytest.TempPathFactory, settings: Settings) -> Layout:
         cache_root=root / "cache",
         reference_root=MG,
     )
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     outcomes = run_pipeline(build_steps(settings, layout), settings)
     failed = [o for o in outcomes if o.step not in NETWORK and o.status != "ausgeführt"]
     assert not failed, [o.line() for o in failed]
@@ -205,7 +205,7 @@ def test_the_network_steps_of_the_second_city_use_the_recorded_answers(
         cache_root=tmp_path / "cache",
         reference_root=MG,
     )
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     run_pipeline(build_steps(settings, layout), settings, ["shapes"])
     canonical = json.loads(layout.precincts_geojson.read_text(encoding="utf-8"))
     one = {

@@ -294,7 +294,14 @@ def _step_versions_in_source() -> dict[str, str]:
 # ``stores.TEXT_SCHEMA_VERSION`` gehört zu keinem Schritt: der Textstore schreibt seine Datei
 # selbst (``cache_root/<profil>/text/texts.parquet``), sie ist keine Ausgabe des Registers und
 # trägt darum auch keinen Stamp. Jede andere Konstante muss im Register ankommen.
-SCHEMA_CONSTANTS_WITHOUT_A_STEP = {"georep.stores.TEXT_SCHEMA_VERSION"}
+SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
+    "georep.stores.TEXT_SCHEMA_VERSION",
+    # Punkt 58, Review 2026-10-14: die Version der Parquet-Datei, die ``georep pack
+    # --consultations`` schreibt. Sie gehört zu einem Befehl und nicht zu einem Schritt; der
+    # Schritt ``bodies`` **liest** die Datei nur, und seine eigene Version ist
+    # ``prep.bodies.BODIES_SCHEMA_VERSION``.
+    "georep.pack.CONSULTATIONS_SCHEMA_VERSION",
+}
 
 
 def test_a_step_names_its_constant_instead_of_a_number() -> None:

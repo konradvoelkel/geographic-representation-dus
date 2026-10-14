@@ -92,6 +92,32 @@ def test_the_majority_decides_and_the_purity_says_how_clear_it_was(
     assert "Gelernt: 2 Organisationen aus 4 Dokumenten mit genau einer, Reinheit 75.0%" in text
 
 
+def test_a_code_the_profile_does_not_know_comes_out_commented(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """Review 2026-10-14: eine Zeile, die das Profil ablehnen würde, ist keine gültige TOML-Zeile.
+
+    ``POA`` stand bis zum Review in keiner Kürzeltabelle Düsseldorfs, und der Befehl druckte
+    ``"gr/26" = "POA"`` zum Einsetzen -- wer es einsetzte, bekam einen Settings-Fehler. Jetzt kommt
+    die Zeile auskommentiert heraus, mit dem Grund daneben.
+    """
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
+    _corpus(layout, [("p1", "XYZ/1/2021", ["gr/42"]), ("p2", "RAT/1/2021", ["gr/6"])])
+    report = learn_bodies(layout, settings)
+    learned = {entry.key: entry for entry in report.learned}
+    assert learned["gr/42"].code == "XYZ" and not learned["gr/42"].known
+    assert learned["gr/6"].code == "RAT" and learned["gr/6"].known
+    block = report.toml()
+    assert '# "gr/42" = "XYZ"' in block and "NICHT GÜLTIG" in block
+    assert '"gr/6" = "RAT"' in block and '# "gr/6"' not in block
+    assert "1 Zeile(n) sind auskommentiert" in report.text()
+    # Und die auskommentierte Zeile ist genau die, die der Validator ablehnen würde
+    with pytest.raises(ValueError, match="steht in keiner Tabelle"):
+        settings.bodies.model_validate(
+            settings.bodies.model_dump() | {"organizations": {"gr/42": "XYZ"}}
+        )
+
+
 def test_min_documents_keeps_a_single_vote_out_of_the_table(
     run: Layout, settings: Settings
 ) -> None:

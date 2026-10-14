@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from georep.bootstrap import bootstrap
+from georep.bootstrap import bootstrap_from_settings
 from georep.layout import Layout, ReferenceWriteError
 from georep.pipeline import build_steps, run_pipeline
 from georep.report.publish import (
@@ -42,7 +42,7 @@ def _run(root: Path, settings: Settings, reference: Path) -> Layout:
         # Option 03: die Fremddaten liegen bei der Fixture; die zweite Stadt hat keine
         context_root=reference / "context" if settings.context.root is not None else None,
     )
-    bootstrap(layout, context_files=settings.context.files.names())
+    bootstrap_from_settings(layout, settings)
     run_pipeline(build_steps(settings, layout), settings)
     return layout
 

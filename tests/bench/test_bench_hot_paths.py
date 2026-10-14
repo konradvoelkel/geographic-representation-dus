@@ -29,7 +29,7 @@ from georep.analysis.weights import (
     variants,
     weighted_hits,
 )
-from georep.bootstrap import bootstrap
+from georep.bootstrap import bootstrap_from_settings
 from georep.crosswalk import area_shares, transfer_counts
 from georep.geo import Area
 from georep.layout import Layout
@@ -79,7 +79,7 @@ def mini(tmp_path_factory: pytest.TempPathFactory, mini_root: Path) -> MiniRun:
     settings = load_settings(cwd=Path("/nonexistent"))
     root = tmp_path_factory.mktemp("bench")
     layout = Layout(root / "data", root / "cache", mini_root)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     run_pipeline(build_steps(settings, layout), settings)
     dictionary = pl.read_parquet(layout.dictionary)
     return MiniRun(

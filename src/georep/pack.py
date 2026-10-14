@@ -39,7 +39,7 @@ import polars as pl
 from georep.errors import GeorepError
 from georep.io import atomic_path, write_parquet, write_text
 from georep.layout import Layout
-from georep.prep.bodies import BODIES_SCHEMA_VERSION, CONSULTATION
+from georep.prep.bodies import CONSULTATION
 from georep.settings import Settings
 from georep.stores import TextStore
 
@@ -51,6 +51,10 @@ README_NAME = "README.md"
 RUN_SOURCES = frozenset({"pdf", "reference"})
 # Die Grenze, bis zu der ein Abbruch Beispiele nennt; mehr liest niemand.
 EXAMPLES = 5
+# Punkt 58: die Schema-Version von ``raw/beratungsfolge.parquet``. Eigene Konstante und nicht
+# ``BODIES_SCHEMA_VERSION``: das ist die Version der **Ausgabe** des Schritts ``bodies``, und die
+# steigt, wenn dort eine Spalte dazukommt -- das Paket hat davon keine (Review 2026-10-14).
+CONSULTATIONS_SCHEMA_VERSION = 1
 
 
 class PackError(GeorepError):
@@ -355,6 +359,16 @@ def pack_consultations(
     if not layout.papers.is_file():
         raise PackError(f"{layout.papers} fehlt; lief `georep fetch papers` für dieses Profil?")
     frame = consultation_rows(layout.papers)
+    with_folge = int((frame.get_column(CONSULTATION).list.len() > 0).sum())
+    if not with_folge:
+        # Review 2026-10-14: ein Paket ohne eine einzige Beratungsfolge ist kein Paket, sondern
+        # eine Liste von IDs -- und es entsteht genau dann, wenn jemand aus der Datenwurzel eines
+        # Laufs packt, der die Metadaten aus dem Altformat der Arbeit gebootstrappt hat.
+        raise PackError(
+            f"{layout.papers}: keines der {frame.height} Dokumente trägt eine Beratungsfolge; "
+            "das Paket wäre leer. Gepackt wird aus einem Metadatenabruf (`georep fetch papers`), "
+            "nicht aus einem Lauf, dessen papers.jsonl aus dem Altformat der Arbeit kommt."
+        )
     name = f"raw/{layout.consultations.name}"
     destination = target / name
     skipped: list[str] = []
@@ -362,8 +376,7 @@ def pack_consultations(
         skipped.append(name)
     else:
         destination.parent.mkdir(parents=True, exist_ok=True)
-        write_parquet(frame, destination, schema_version=BODIES_SCHEMA_VERSION)
-    with_folge = int((frame.get_column(CONSULTATION).list.len() > 0).sum())
+        write_parquet(frame, destination, schema_version=CONSULTATIONS_SCHEMA_VERSION)
     organizations = frame.get_column(CONSULTATION).explode().drop_nulls().n_unique()
     report = PackReport(
         target=target,

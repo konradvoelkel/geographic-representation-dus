@@ -14,7 +14,7 @@ from polars.testing import assert_frame_equal
 from georep.analysis import scaling
 from georep.analysis.hits import DISTRICT, citywide_terms
 from georep.analysis.regression import regression_pair
-from georep.bootstrap import bootstrap, bootstrap_from_settings
+from georep.bootstrap import bootstrap_from_settings
 from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.pipeline import Outcome, UnknownStepError, build_steps, run_pipeline
@@ -58,7 +58,7 @@ def test_pipeline_runs_skips_and_reruns(
     tmp_path: Path, mini_root: Path, settings: Settings
 ) -> None:
     layout = _layout(tmp_path, mini_root, settings.profile)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     steps = build_steps(settings, layout)
 
     def offline(outcomes: list[Outcome]) -> dict[str, str]:
@@ -171,7 +171,7 @@ def test_missing_corpus_names_bootstrap(
     tmp_path: Path, mini_root: Path, settings: Settings
 ) -> None:
     layout = _layout(tmp_path, mini_root, settings.profile)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     with pytest.raises(MissingInputError, match="bootstrap"):
         run_pipeline(build_steps(settings, layout), settings, ["index"])
 

@@ -17,6 +17,7 @@ from pathlib import Path
 
 import deal
 import polars as pl
+from loguru import logger
 
 from georep import __version__
 from georep.analysis import bodies, scaling
@@ -287,6 +288,25 @@ class BodyFigures:
     @property
     def from_consultation(self) -> int:
         return self.documents_from(prep_bodies.FROM_CONSULTATION)
+
+    @property
+    def has_second_source(self) -> bool:
+        """Hat die Beratungsfolge hier überhaupt etwas getan? Derselbe Wächter wie ``line()``.
+
+        Ein Profil ohne ``[bodies.organizations]`` bekommt ``by_source`` mit vier Nullen -- die
+        Vorlage darf daraus keinen Absatz „0 Dokumente (0,0 %) bekommen ihr Gremium so" machen
+        (Review 2026-10-14).
+        """
+        return bool(self.from_consultation or self.confirmed or self.conflicting or self.ambiguous)
+
+    @property
+    def sources(self) -> tuple[tuple[str, int, float], ...]:
+        """Die Quellen mit Dokumenten, als (Beschriftung, Zahl, Anteil) für die Seite.
+
+        Die Beschriftungen kommen aus ``prep_bodies.SOURCE_LABELS``, damit Daten und Seite
+        dasselbe Wort benutzen; Quellen ohne Dokument fallen weg.
+        """
+        return tuple((label, count, share) for _, label, count, share in self.by_source if count)
 
 
 # --- Option 06: Gewichtung (docs/plans/06-gewichtung.md) ---------------------------------------
@@ -977,6 +997,34 @@ def _kind_shares_add_up(result: BodyFigures) -> bool:
         and counted == result.documents
         and 0.0 <= result.unknown_share <= 1.0
     )
+
+
+def _source_counts(layout: Layout) -> prep_bodies.SourceCounts | None:
+    """Die Quellen je Dokument aus ``papers_gremien.parquet``, wenn die Datei sie trägt.
+
+    Review 2026-10-14: eine Datenwurzel, in der der Schritt ``bodies`` vor Schema-Version 2 lief,
+    hat die drei Spalten nicht, und die Vorbedingung von ``source_counts`` flog dann als
+    ``PreContractError`` mitten im Seitenbau. Der Abschnitt lässt den Satz lieber weg -- die Zahlen
+    kommen zurück, sobald der Schritt wieder läuft (``georep run bodies``).
+    """
+    if not layout.papers_bodies.exists():
+        return None
+    frame = pl.read_parquet(layout.papers_bodies)
+    if not has_columns(
+        frame,
+        prep_bodies.BODY,
+        prep_bodies.KIND,
+        prep_bodies.SOURCE,
+        prep_bodies.CONSULTATION_BODY,
+        prep_bodies.CONSULTATION_COUNT,
+    ):
+        logger.warning(
+            f"{layout.papers_bodies.name}: ohne die Spalten aus Schema-Version "
+            f"{prep_bodies.BODIES_SCHEMA_VERSION} nennt der Abschnitt Gremien keine Quellen; "
+            "`georep run bodies` schreibt sie"
+        )
+        return None
+    return prep_bodies.source_counts(frame)
 
 
 def _kinds_are_known(
@@ -1798,9 +1846,7 @@ def build_report_model(
             rows,
             settings.bodies,
             # Punkt 58: die Quellen je Dokument; die Datei ist Eingabe des Schritts ``report``
-            prep_bodies.source_counts(pl.read_parquet(layout.papers_bodies))
-            if layout.papers_bodies.exists()
-            else None,
+            _source_counts(layout),
         ),
         body_regression=_body_regression(district_bodies, results, settings),
         # Punkt 46: die zweite Kennzahl des Methodik-Reviews mit eigener Regression (§ 2.6)

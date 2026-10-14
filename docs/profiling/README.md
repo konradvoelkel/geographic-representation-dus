@@ -225,6 +225,7 @@ Quelle nicht benutzt, zahlt nur noch die Verträge. Der neue Benchmark
 `classify_papers_with_consultations` misst denselben Parser **mit** der Quelle (1,24 ms Minimum) und
 hält damit fest, was sie wert ist. Beide Zahlen sind nach der Regel aus CLAUDE.md gelesen: erst
 messen, dann die Struktur ändern — hier war die Messung der Grund für den Zweig.
+
 ## Profile vom 2026-10-12: Gewichtung und Themenmodell (Option 06)
 
 Gemessen auf Konrads Rechner, während sieben weitere Agenten darauf arbeiteten; darum liefen alle Messungen

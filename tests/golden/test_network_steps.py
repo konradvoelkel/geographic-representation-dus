@@ -10,7 +10,7 @@ import polars as pl
 import pytest
 import requests
 
-from georep.bootstrap import bootstrap
+from georep.bootstrap import bootstrap, bootstrap_from_settings
 from georep.errors import NetworkError
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
@@ -222,7 +222,7 @@ def test_organizations_step_feeds_the_party_attribution(tmp_path: Path, settings
     from georep.analysis.parties import ART, PARTEIEN, QUELLE, read_organizations
 
     layout = Layout(tmp_path / "data", tmp_path / "cache", MINI)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     fixture = (MINI.parent / "oparl" / "organizations_page.json").read_text(encoding="utf-8")
     endpoint = settings.sources.oparl.organizations_endpoint
     session = FakeSession({endpoint: response(endpoint, content=fixture.encode())})
@@ -264,7 +264,7 @@ def test_the_parties_step_runs_without_the_organizations_file(
 ) -> None:
     """Ohne den Netzschritt greifen nur die URL-Endungen der Settings; die Kette läuft trotzdem."""
     layout = Layout(tmp_path / "data", tmp_path / "cache", MINI)
-    bootstrap(layout)
+    bootstrap_from_settings(layout, settings)
     steps = build_steps(settings, layout)
     parties_step = next(s for s in steps if s.name == "parties")
     assert layout.organizations not in parties_step.inputs and not layout.organizations.exists()
