@@ -34,7 +34,9 @@ from georep.prep.bodies import (
     BodyRules,
     classify_papers,
     counts_by_kind,
+    organization_key,
     parse_reference,
+    resolve_organizations,
 )
 from georep.prep.voters import ELIGIBLE, UNIT, district_units
 from georep.search.index import HITS
@@ -326,3 +328,62 @@ def test_every_document_counts_at_exactly_one_body(
     )
     got = dict(zip(frame.get_column(BODY), frame.get_column(WITH_HITS), strict=True))
     assert {k: got[k] for k in expected.get_column("gremium")} == dict(expected.iter_rows())
+
+
+# --- Punkt 58: die Beratungsfolge als zweite Quelle --------------------------------------------
+
+ORG = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations/gr"
+# Eine gelernte Abbildung in klein: je Klasse ein Kürzel, das die Default-Settings kennen.
+MAPPING = {"gr/6": "RAT", "gr/32": "BV1", "gr/25": "OVA", "gr/4": "JURAT"}
+RULES_WITH_ORGANIZATIONS = BodyRules.from_settings(
+    load_settings(cwd=Path("/nonexistent")).bodies.model_copy(update={"organizations": MAPPING})
+)
+urls = st.lists(
+    st.sampled_from([f"{ORG}/{key.split('/')[1]}" for key in MAPPING] + [f"{ORG}/999"]),
+    max_size=6,
+)
+
+
+@given(organizations=urls)
+def test_resolve_organizations_is_the_set_of_known_codes(organizations: list[str]) -> None:
+    codes = resolve_organizations(organizations, MAPPING)
+    expected = sorted(
+        {MAPPING[organization_key(u)] for u in organizations if organization_key(u) in MAPPING}
+    )
+    assert list(codes) == expected
+    assert len(set(codes)) == len(codes)
+
+
+@given(cases=st.lists(st.tuples(references(), urls), max_size=20))
+def test_the_number_always_wins_over_the_consultation(
+    cases: list[tuple[tuple[str, BodyRef], list[str]]],
+) -> None:
+    """Punkt 58: wo die Nummer ein Gremium nennt, steht es in der Ausgabe -- egal, was die Folge sagt.
+
+    Und wo sie keines nennt, steht genau dann eines, wenn die Folge **genau eines** auflöst, das
+    die Regeln kennen. Dazu die Invarianten der beiden neuen Spalten.
+    """
+    ids = [f"p{index:02d}" for index in range(len(cases))]
+    corpus = pl.DataFrame(
+        {"id": ids, "reference": [c[0][0] for c in cases]},
+        schema={"id": pl.String, "reference": pl.String},
+    )
+    folge = pl.DataFrame(
+        {"id": ids, "consultation_organizations": [list(c[1]) for c in cases]},
+        schema={"id": pl.String, "consultation_organizations": pl.List(pl.String)},
+    )
+    frame = classify_papers(corpus, RULES_WITH_ORGANIZATIONS, folge)
+    by_id = dict(zip(ids, cases, strict=True))
+    for row in frame.iter_rows(named=True):
+        (_, expected), organizations = by_id[row["id"]]
+        codes = resolve_organizations(organizations, MAPPING)
+        assert row["folge_anzahl"] == len(codes)
+        assert row["folge_gremium"] == (codes[0] if len(codes) == 1 else None)
+        if expected.kind != UNKNOWN:  # die Nummer entscheidet
+            assert (row["gremium"], row["gremium_art"]) == (expected.code, expected.kind)
+            assert row["quelle"] in ("nummer", "alias")
+        elif len(codes) == 1:  # die Folge ergänzt
+            assert row["gremium"] == codes[0] and row["quelle"] == "beratungsfolge"
+        else:
+            assert row["gremium_art"] == UNKNOWN and row["quelle"] == "unbekannt"
+        assert (row["quelle"] == "unbekannt") == (row["gremium_art"] == UNKNOWN)

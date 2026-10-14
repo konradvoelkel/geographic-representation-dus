@@ -56,7 +56,13 @@ from georep.geo import (
 from georep.http import Transport
 from georep.io import digest, write_bytes, write_json, write_parquet
 from georep.layout import Layout
-from georep.prep.bodies import BODIES_SCHEMA_VERSION, BodyRules, classify_papers
+from georep.prep.bodies import (
+    BODIES_SCHEMA_VERSION,
+    CONSULTATION,
+    BodyRules,
+    classify_papers,
+    merge_consultations,
+)
 from georep.prep.bodies import summary as papers_bodies_summary
 from georep.prep.context import (
     CONTEXT_SCHEMA_VERSION,
@@ -745,9 +751,20 @@ def build_steps(
         return metrics_summary(frame)
 
     # --- Option 05: Gremium je Dokument aus der Drucksachennummer, dann die Kennzahlen
+    # Punkt 58: dazu die Beratungsfolge als zweite Quelle -- aus dem Korpus selbst und, wo der
+    # Abruf dieser Periode sie nicht trug, aus dem Paket in ``[bodies].consultations``.
     def bodies() -> str:
-        corpus = pl.read_parquet(layout.corpus, columns=["id", "reference"])
-        frame = classify_papers(corpus, BodyRules.from_settings(settings.bodies))
+        corpus = pl.read_parquet(layout.corpus, columns=["id", "reference", CONSULTATION])
+        extra = (
+            pl.read_parquet(layout.consultations, columns=["id", CONSULTATION])
+            if settings.bodies.consultations is not None
+            else None
+        )
+        frame = classify_papers(
+            corpus.select("id", "reference"),
+            BodyRules.from_settings(settings.bodies),
+            merge_consultations(corpus, extra),
+        )
         write_parquet(frame, layout.papers_bodies, schema_version=BODIES_SCHEMA_VERSION)
         return papers_bodies_summary(frame)
 
@@ -955,6 +972,8 @@ def build_steps(
     with_topics = settings.topics.k > 0
     # Punkt 45: mit Saat liest ``topics`` auch die Gremien je Dokument (``papers_gremien.parquet``)
     seed_inputs = (layout.papers_bodies,) if settings.topics.seed != "none" else ()
+    # Punkt 58: die zweite Quelle des Gremiums liegt in einem Paket, nicht im eigenen Abruf
+    with_consultations = settings.bodies.consultations is not None
     # Punkt 45: ohne Ausschüsse im Profil gibt es keine Klasse zu lernen (Option 01: Mönchengladbach)
     with_committees = settings.classify.enabled and bool(settings.bodies.committees)
     # Option 01: die Urheber (Option 04) brauchen die Fraktionsnamen der Stadt
@@ -1094,7 +1113,9 @@ def build_steps(
         # Punkt 45 die Gremien als Saat liest (``topics.seed``); er liest nur den Korpus.
         Step(
             "bodies",
-            (layout.corpus,),
+            # Punkt 58: das Paket mit der Beratungsfolge ist Eingabe, wo das Profil eines nennt;
+            # sein Hash wandert damit in den Stamp.
+            (layout.corpus, *((layout.consultations,) if with_consultations else ())),
             (layout.papers_bodies,),
             bodies,
             BODIES_SCHEMA_VERSION,

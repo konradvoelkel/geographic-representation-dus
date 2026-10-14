@@ -379,13 +379,14 @@ def report_fingerprint(settings: Settings, folder: Traversable | None = None) ->
        das richtig; für ``index.html`` war es falsch, und ``georep status`` meldete den Schritt
        nach einer geänderten Klassengrenze als „aktuell".
 
-    Nicht nur ``settings.report``: der globale Fingerprint lässt noch vier weitere **Anzeigewerte**
-    aus, weil kein Parquet-Ergebnis an ihnen hängt -- und alle vier stehen auf der Seite
+    Nicht nur ``settings.report``: der globale Fingerprint lässt noch fünf weitere **Anzeigewerte**
+    aus, weil kein Parquet-Ergebnis an ihnen hängt -- und alle fünf stehen auf der Seite
     (Review-Befund 8, 2026-10-13). ``bodies.names_as_of`` ist der Stand der Gremiennamen im
-    Abschnitt „Gremien", ``period.label`` die Überschrift der Periode, ``context.dataset`` die
-    Namensnennung der Fremddaten im Fuß und unter „Abgeleitete Daten", und die ``label`` der
-    Gewichtungsregeln sind die Zeilenköpfe von Tabelle 5b. Eine geänderte Namensnennung soll die
-    Kette nicht neu rechnen lassen -- die Seite aber schon.
+    Abschnitt „Gremien", ``bodies.district_body_names`` die Namen der Bezirksvertretungen, wo sie
+    keine Nummer tragen (Punkt 58), ``period.label`` die Überschrift der Periode,
+    ``context.dataset`` die Namensnennung der Fremddaten im Fuß und unter „Abgeleitete Daten", und
+    die ``label`` der Gewichtungsregeln sind die Zeilenköpfe von Tabelle 5b. Eine geänderte
+    Namensnennung soll die Kette nicht neu rechnen lassen -- die Seite aber schon.
 
     ``templates/vergleich.html.j2`` zählt mit, obwohl es zu ``georep publish`` gehört und nicht zum
     Schritt ``report``: der Preis dafür ist ein Seitenbau von 1,7 s, wenn jemand nur die
@@ -407,6 +408,8 @@ def report_fingerprint(settings: Settings, folder: Traversable | None = None) ->
         "report": settings.report.model_dump(mode="json"),
         # Die vier Anzeigewerte, die ``Settings.fingerprint`` ausnimmt (siehe Docstring)
         "bodies.names_as_of": settings.bodies.names_as_of,
+        # Punkt 58: die Namen der Bezirksvertretungen, wo sie keine Nummer tragen
+        "bodies.district_body_names": settings.bodies.district_body_names,
         "period.label": settings.period.label,
         "context.dataset": settings.context.dataset.model_dump(mode="json"),
         "weights.labels": [rule_set.label for rule_set in settings.weights.paper_type],

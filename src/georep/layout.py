@@ -241,6 +241,17 @@ class Layout:
         """Wahlbezirk zu Stadtbezirk mit Gewicht; zweite Ausgabe des Schritts ``voters``."""
         return self.processed / "wahlbezirke_stadtbezirke.parquet"
 
+    # Punkt 58: die Beratungsfolge je Dokument als zweite Quelle des Gremiums
+    @property
+    def consultations(self) -> Path:
+        """Beratungsfolge je Dokument aus einem Paket (``[bodies].consultations``).
+
+        Eine Periode, deren eigener Abruf die Folge mitbrachte, braucht die Datei nicht: sie
+        steht dann in ``raw/papers.jsonl`` und damit im Korpus. ``bootstrap`` kopiert sie wie
+        jede andere Eingabe hierher, und nur diese Kopie wird gelesen.
+        """
+        return self.raw / "beratungsfolge.parquet"
+
     # Option 06: Gewichtung und Themenmodell (docs/plans/06-gewichtung.md)
     @property
     def topics(self) -> Path:

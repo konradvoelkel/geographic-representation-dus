@@ -98,6 +98,10 @@ VERIFY_TARGETS = [
     # 2026-10-12). Ein Artefakt des Werkzeugs, kein Befund: die Funktion kompiliert keinen Regex
     # aus Daten, nur ``bodies.reference_pattern`` aus den Settings. Angegriffen wird sie weiter von
     # ``deal.cases`` in tests/property/test_contract_cases.py.
+    # Punkt 58: die zweite Quelle des Gremiums. Beide Funktionen sind rein und total über
+    # Sequenz und Mapping -- anders als ``parse_reference`` kennen sie kein ``re.Pattern``.
+    "georep.prep.bodies.organization_key",
+    "georep.prep.bodies.resolve_organizations",
     "georep.prep.context.ordinal_score",  # Option 03
     "georep.analysis.parties.classify_document",  # Option 04
     "georep.crosswalk.largest_remainder",  # Option 02

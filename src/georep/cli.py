@@ -296,6 +296,8 @@ def _cmd_bootstrap(args: argparse.Namespace, settings: Settings, layout: Layout)
         needs_dictionary=settings.period.dictionary == "own",
         # Option 07: ein Profil mit laufender Periode holt seine Paper selbst
         seed_corpus=settings.bootstrap.seed_corpus,
+        # Punkt 58: die Beratungsfolge je Dokument, wo der Abruf dieser Periode sie nicht trug
+        consultations=settings.bodies.consultations,
     )
     print(report.summary())
     return 0

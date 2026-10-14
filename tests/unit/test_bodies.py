@@ -18,7 +18,11 @@ from georep.prep.bodies import (
     BodyRules,
     classify_papers,
     counts_by_kind,
+    merge_consultations,
+    organization_key,
     parse_reference,
+    resolve_organizations,
+    source_counts,
     summary,
 )
 from georep.settings import Bodies, Settings
@@ -213,3 +217,183 @@ def test_numbers_without_a_body_code_are_all_unknown() -> None:
     corpus = pl.DataFrame({"id": ["a", "b"], "reference": ["0682/XI", None]})
     frame = classify_papers(corpus, rules)
     assert frame.get_column("gremium_art").to_list() == [UNKNOWN, UNKNOWN]
+
+
+# --- Punkt 58: die Beratungsfolge als zweite Quelle -------------------------------------------
+
+ORG = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/organizations"
+
+
+def _folge(pairs: dict[str, list[str]]) -> pl.DataFrame:
+    """Beratungsfolge je Dokument, wie Korpus und Paket sie tragen (volle Organisations-URLs)."""
+    return pl.DataFrame(
+        {
+            "id": list(pairs),
+            "consultation_organizations": [[f"{ORG}/{k}" for k in v] for v in pairs.values()],
+        },
+        schema={"id": pl.String, "consultation_organizations": pl.List(pl.String)},
+    )
+
+
+@pytest.fixture
+def with_organizations(default_settings: Settings) -> BodyRules:
+    """Die Regeln der Hauptperiode plus eine kleine, gelernte Abbildung (gr/6 ist der Rat)."""
+    return BodyRules.from_settings(
+        default_settings.bodies.model_copy(
+            update={
+                "organizations": {
+                    "gr/6": "RAT",
+                    "gr/32": "BV1",
+                    "gr/25": "OVA",
+                    f"{ORG}/gr/22": "JHA",  # auch eine volle URL ist ein Schlüssel
+                }
+            }
+        )
+    )
+
+
+def test_organization_key_cuts_a_url_to_its_last_two_segments() -> None:
+    assert organization_key(f"{ORG}/gr/6") == "gr/6"
+    assert organization_key("gr/6") == "gr/6"
+    assert organization_key("gr") == "gr"  # weniger als zwei Segmente bleiben, wie sie sind
+    assert organization_key("") == ""
+
+
+def test_resolve_organizations_is_sorted_unique_and_forgets_the_unknown(
+    with_organizations: BodyRules,
+) -> None:
+    mapping = with_organizations.organizations
+    assert resolve_organizations([f"{ORG}/gr/6"], mapping) == ("RAT",)
+    assert resolve_organizations([f"{ORG}/gr/22"], mapping) == ("JHA",)  # Schlüssel als URL
+    assert resolve_organizations([f"{ORG}/gr/25", f"{ORG}/gr/6"], mapping) == ("OVA", "RAT")
+    assert resolve_organizations([f"{ORG}/gr/6", f"{ORG}/gr/6"], mapping) == ("RAT",)
+    assert resolve_organizations([f"{ORG}/gr/999"], mapping) == ()
+    assert resolve_organizations([], mapping) == ()
+    assert resolve_organizations([f"{ORG}/gr/6"], {}) == ()
+
+
+def test_the_number_decides_and_the_consultation_only_fills_the_gaps(
+    with_organizations: BodyRules,
+) -> None:
+    """Punkt 58: vier Fälle in einem Frame -- ergänzt, bestätigt, Widerspruch, mehrdeutig."""
+    corpus = pl.DataFrame(
+        {
+            "id": ["p1", "p2", "p3", "p4", "p5"],
+            # p1 Amtsnummer (die Folge ergänzt), p2 bestätigt, p3 Widerspruch, p4 mehrdeutig,
+            # p5 Amtsnummer ohne auflösbare Folge
+            "reference": ["61/ 12/2014", "RAT/1/2021", "OVA/2/2021", "61/ 13/2014", "61/ 14/2014"],
+        }
+    )
+    folge = _folge(
+        {
+            "p1": ["gr/32"],
+            "p2": ["gr/6"],
+            "p3": ["gr/6"],
+            "p4": ["gr/6", "gr/25"],
+            "p5": ["gr/999"],
+        }
+    )
+    frame = classify_papers(corpus, with_organizations, folge)
+    assert frame.get_column("gremium").to_list() == ["BV1", "RAT", "OVA", None, None]
+    assert frame.get_column("quelle").to_list() == [
+        "beratungsfolge",
+        "nummer",
+        "nummer",
+        "unbekannt",
+        "unbekannt",
+    ]
+    assert frame.get_column("stadtbezirk").to_list() == [1, None, None, None, None]
+    assert frame.get_column("folge_gremium").to_list() == ["BV1", "RAT", "RAT", None, None]
+    assert frame.get_column("folge_anzahl").to_list() == [1, 1, 1, 2, 0]
+    counts = source_counts(frame)
+    assert counts.documents == 5 and counts.from_consultation == 1
+    assert (counts.confirmed, counts.conflicting, counts.ambiguous) == (1, 1, 1)
+    assert counts.line() == ("Beratungsfolge: 1 ergänzt, 1 bestätigt, 1 Widerspruch, 1 mehrdeutig")
+    assert summary(frame).endswith(counts.line())
+
+
+def test_without_the_mapping_nothing_changes(rules: BodyRules) -> None:
+    """Ein Profil ohne ``[bodies.organizations]`` rechnet wie vor Punkt 58, auch mit Folge."""
+    corpus = pl.DataFrame({"id": ["p1"], "reference": ["61/ 12/2014"]})
+    frame = classify_papers(corpus, rules, _folge({"p1": ["gr/32"]}))
+    assert frame.get_column("gremium_art").to_list() == [UNKNOWN]
+    assert frame.get_column("folge_anzahl").to_list() == [0]
+    assert source_counts(frame).line() == ""
+    assert summary(frame) == (
+        "1 Dokumente: 0 Bezirksvertretung, 0 Rat, 0 Ausschuss, 0 Beirat, 1 unbekannt"
+    )
+
+
+def test_the_alias_is_its_own_source(default_settings: Settings) -> None:
+    rules = BodyRules.from_settings(default_settings.bodies)
+    assert parse_reference("171/ 23/2016", rules).source == "alias"
+    assert parse_reference("RAT/270/2023", rules).source == "nummer"
+    assert parse_reference("BV6/1/2023", rules).source == "nummer"
+    assert parse_reference("61/ 12/2014", rules).source == "unbekannt"
+    assert parse_reference("XYZ/1/2020", rules).source == "unbekannt"
+    # Die Herkunft ist keine Identität: dasselbe Gremium bleibt dasselbe (``compare=False``)
+    assert BodyRef(COUNCIL, "RAT", None, "nummer") == BodyRef(
+        COUNCIL, "RAT", None, "beratungsfolge"
+    )
+
+
+def test_merge_consultations_lets_the_document_win(with_organizations: BodyRules) -> None:
+    own = _folge({"p1": ["gr/6"], "p2": [], "p3": []})
+    extra = _folge({"p1": ["gr/25"], "p2": ["gr/32"], "p9": ["gr/6"]})
+    merged = merge_consultations(own, extra)
+    assert merged.columns == ["id", "consultation_organizations"]
+    assert merged.height == 3  # p9 steht nur im Paket und fällt weg
+    by_id = dict(
+        zip(
+            merged.get_column("id").to_list(),
+            merged.get_column("consultation_organizations").to_list(),
+            strict=True,
+        )
+    )
+    assert by_id["p1"] == [f"{ORG}/gr/6"]  # das Dokument selbst gewinnt
+    assert by_id["p2"] == [f"{ORG}/gr/32"]  # aus dem Paket aufgefüllt
+    assert by_id["p3"] == []
+    assert merge_consultations(own, None).to_dicts() == own.to_dicts()
+
+
+def test_a_consultation_target_must_be_a_code_the_profile_knows(
+    default_settings: Settings,
+) -> None:
+    for organizations, message in (
+        ({"gr/6": "XYZ"}, "steht in keiner Tabelle"),
+        ({"gr/6": "BV0"}, "steht in keiner Tabelle"),
+        ({"gr 6": "RAT"}, "ist kein Schlüssel"),
+        ({"": "RAT"}, "ist kein Schlüssel"),
+        ({"organizations/gr/6": "RAT"}, "weder eine URL noch zwei Segmente"),
+    ):
+        with pytest.raises(ValueError, match=message):
+            Bodies.model_validate(
+                default_settings.bodies.model_dump() | {"organizations": organizations}
+            )
+
+
+def test_a_city_without_a_pattern_may_still_know_bodies_from_the_consultation() -> None:
+    """Mönchengladbach: keine Nummer trägt ein Kürzel, die Beratungsfolge nennt die Gremien.
+
+    Dann sind die Kürzeltabellen erlaubt, obwohl ``reference_pattern`` leer ist; ohne beides
+    bleiben sie verboten, weil ein Kürzel dann nie zustande käme.
+    """
+    bodies = Bodies(
+        district_body="BV",
+        district_body_name="Bezirksvertretung {n}",
+        district_body_names={"BV1": "Bezirksvertretung Nord"},
+        council={"RAT": "Rat"},
+        organizations={"gr/83": "RAT", "gr/117": "BV1"},
+    )
+    rules = BodyRules.from_settings(bodies)
+    corpus = pl.DataFrame({"id": ["a", "b"], "reference": ["0682/XI", "0683/XI"]})
+    frame = classify_papers(corpus, rules, _folge({"a": ["gr/117"], "b": ["gr/83", "gr/117"]}))
+    assert frame.get_column("gremium").to_list() == ["BV1", None]
+    assert frame.get_column("gremium_art").to_list() == [DISTRICT_BODY, UNKNOWN]
+    assert frame.get_column("stadtbezirk").to_list() == [1, None]
+    assert rules.name_of(BodyRef(DISTRICT_BODY, "BV1", 1)) == "Bezirksvertretung Nord"
+    assert rules.name_of(BodyRef(DISTRICT_BODY, "BV2", 2)) == "Bezirksvertretung 2"
+    with pytest.raises(ValueError, match="kennt keine Kürzel"):
+        Bodies(district_body_names={"BV1": "Bezirksvertretung Nord"})
+    with pytest.raises(ValueError, match="ist kein Kürzel einer Bezirksvertretung"):
+        Bodies.model_validate(bodies.model_dump() | {"district_body_names": {"RAT": "Rat"}})

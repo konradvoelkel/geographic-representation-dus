@@ -106,6 +106,7 @@ def bootstrap(
     context_files: Sequence[str] = (),
     needs_dictionary: bool = True,
     seed_corpus: bool = True,
+    consultations: Path | None = None,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
 
@@ -115,7 +116,9 @@ def bootstrap(
     das Wörterbuch der Hauptperiode. Dann sind die beiden Dateien nicht fehlend, sondern nicht
     zuständig. ``seed_corpus`` ist die Naht von Option 07: ein Profil mit laufender Periode
     bekommt die Eingaben der Referenz, aber keine Paper und Texte der Hauptperiode; die holt
-    sein Netzschritt ``papers`` selbst.
+    sein Netzschritt ``papers`` selbst. ``consultations`` ist die Naht von Punkt 58: der Pfad des
+    Pakets mit der Beratungsfolge je Dokument (``[bodies].consultations``); ohne ihn hat diese
+    Periode die Folge in ihrem eigenen ``raw/papers.jsonl``, und es gibt nichts zu kopieren.
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -127,10 +130,15 @@ def bootstrap(
     ]
     if needs_dictionary:
         pairs += [(reference.streets, layout.streets), (reference.pois, layout.pois)]
+    # Punkt 58: die Beratungsfolge je Dokument, wenn das Profil ein Paket dafür nennt
+    if consultations is not None:
+        pairs.append((consultations, layout.consultations))
     # Option 01: zwei Quellen, die nur manche Städte veröffentlichen (votemanager)
     for source, target in (
         (reference.streets_directory, layout.streets_directory),
         (reference.district_names_csv, layout.district_names_csv),
+        # Punkt 58: der Organisationskatalog, wenn das Paket ihn mitbringt (Namen der Gremien)
+        (reference.organizations, layout.organizations),
     ):
         if source is not None and target is not None and source.is_file():
             _copy_input(layout, source, target, report, force=force)

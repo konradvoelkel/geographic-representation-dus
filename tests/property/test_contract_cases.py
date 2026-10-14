@@ -19,7 +19,12 @@ from georep.analysis.topics import profile_stop_words
 from georep.analysis.weights import district_weight, idf_weight
 from georep.crosswalk import largest_remainder
 from georep.http import cache_pattern
-from georep.prep.bodies import BodyRules, parse_reference
+from georep.prep.bodies import (
+    BodyRules,
+    organization_key,
+    parse_reference,
+    resolve_organizations,
+)
 from georep.prep.extract import after_marker, normalise_text
 from georep.prep.pois import is_city_facility
 from georep.report.charts import nice_ticks
@@ -175,6 +180,27 @@ BODY_RULES = BodyRules.from_settings(load_settings(cwd=Path("/nonexistent")).bod
     kwargs={"reference": st.one_of(st.none(), st.text(max_size=30)), "rules": st.just(BODY_RULES)},
 )
 def test_parse_reference(case: deal.TestCase) -> None:
+    case()
+
+
+# Punkt 58: die Auflösung der Beratungsfolge ist rein und total über zwei einfachen Typen.
+@deal.cases(
+    resolve_organizations,
+    count=COUNT,
+    check_types=False,
+    kwargs={
+        "organizations": st.lists(st.text(max_size=20), max_size=5),
+        "mapping": st.dictionaries(
+            st.text(max_size=12), st.sampled_from(["RAT", "BV1", "OVA"]), max_size=4
+        ),
+    },
+)
+def test_resolve_organizations(case: deal.TestCase) -> None:
+    case()
+
+
+@deal.cases(organization_key, count=COUNT, check_types=False, kwargs={"url": st.text(max_size=40)})
+def test_organization_key(case: deal.TestCase) -> None:
     case()
 
 

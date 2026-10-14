@@ -391,14 +391,27 @@ class Bodies(_Strict):
     """
 
     # Option 01: leer heißt „die Nummern dieser Stadt tragen kein Kürzel" (Mönchengladbach:
-    # 0682/XI); dann ist jedes Dokument „unbekannt", und die Tabellen bleiben leer.
+    # 0682/XI); dann entscheidet allein die Beratungsfolge (``organizations`` unten), und ohne
+    # beides ist jedes Dokument „unbekannt" und die Tabellen bleiben leer.
     reference_pattern: str = ""
     district_body: str = ""
     district_body_name: str = "{n}"  # Anzeigename der Bezirksvertretung, {n} ist der Stadtbezirk
+    # Punkt 58: Anzeigename je Kürzel einer Bezirksvertretung, wo sie keine Nummer trägt
+    # (Mönchengladbach: „Bezirksvertretung Nord"). Nur Anzeige, darum nicht im Fingerprint,
+    # sondern in ``report.build.report_fingerprint``; ohne Eintrag gilt ``district_body_name``.
+    district_body_names: dict[str, str] = {}
     names_as_of: date | None = None  # Stand der Namen; nur Anzeige, nicht im Fingerprint
     council: dict[str, str] = {}
     committees: dict[str, str] = {}
     advisory: dict[str, str] = {}
+    # Punkt 58: die Beratungsfolge als zweite Quelle des Gremiums. ``organizations`` bildet eine
+    # OParl-Organisation auf ein Kürzel ab -- als volle URL oder als ihre beiden letzten Segmente
+    # (``gr/6``); gelernt wird die Tabelle mit ``georep learn-bodies`` aus der Übereinstimmung mit
+    # der Drucksachennummer, nicht von Hand geraten. ``consultations`` nennt das Paket, das die
+    # Folge je Dokument trägt, wenn der Abruf dieser Periode sie nicht mitbrachte (die
+    # Hauptperiode Düsseldorfs: ihr Korpus kommt aus dem Altformat der Arbeit).
+    organizations: dict[str, str] = {}
+    consultations: Path | None = None
     # Punkt 57: eine ältere Nummernform derselben Stadt, deren Kopf kein Kürzel ist. Abbildung
     # „Kopf der Nummer (alles vor dem ersten /) -> Kürzel", nur befragt, wenn das Muster nicht
     # trifft. Ein Ziel, das in keiner Tabelle steht, wäre ein Alias ins Nichts; der Validator
@@ -419,17 +432,49 @@ class Bodies(_Strict):
             raise ValueError(f"bodies.reference_pattern braucht die Gruppen {missing}")
         return value
 
+    @field_validator("consultations", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+    @field_validator("organizations")
+    @classmethod
+    def _keys_are_urls_or_tails(cls, value: dict[str, str]) -> dict[str, str]:
+        """Ein Schlüssel ist eine Organisations-URL oder ihre beiden letzten Segmente.
+
+        ``georep.prep.bodies.organization_key`` schneidet jede URL auf diese beiden Segmente
+        zurück und sucht sie hier; ein Schlüssel mit drei Segmenten oder mit Leerzeichen fände
+        nie etwas, und das soll beim Laden auffallen und nicht als stilles „unbekannt" enden.
+        """
+        for key in value:
+            if not key or key.strip() != key or any(c.isspace() for c in key):
+                raise ValueError(f"bodies.organizations: {key!r} ist kein Schlüssel (leer/Raum)")
+            if "://" not in key and key.count("/") != 1:
+                raise ValueError(
+                    f"bodies.organizations: {key!r} ist weder eine URL noch zwei Segmente "
+                    "wie 'gr/6'"
+                )
+        return value
+
     @model_validator(mode="after")
     def _codes_disjoint(self) -> Bodies:
-        if not self.reference_pattern:
+        if not self.reference_pattern and not self.organizations:
             named = [
                 name
-                for name in ("district_body", "council", "committees", "advisory", "aliases")
+                for name in (
+                    "district_body",
+                    "district_body_names",
+                    "council",
+                    "committees",
+                    "advisory",
+                    "aliases",
+                )
                 if getattr(self, name)
             ]
             if named:
                 raise ValueError(
-                    f"bodies ohne reference_pattern kennt keine Kürzel: bodies.{', '.join(named)}"
+                    "bodies ohne reference_pattern und ohne organizations kennt keine Kürzel: "
+                    f"bodies.{', '.join(named)}"
                 )
             return self
         if not self.district_body:
@@ -449,7 +494,22 @@ class Bodies(_Strict):
                 f"bodies.{seen[self.district_body]}"
             )
         self._aliases_resolve(seen)
+        self._targets_are_known(self.organizations, "organizations", seen)
+        for code in self.district_body_names:
+            if not is_district_code(code, self.district_body):
+                raise ValueError(
+                    f"bodies.district_body_names: {code!r} ist kein Kürzel einer "
+                    f"Bezirksvertretung ({self.district_body!r} und eine Nummer)"
+                )
         return self
+
+    def _targets_are_known(self, table: dict[str, str], name: str, seen: dict[str, str]) -> None:
+        """Jedes Ziel zeigt auf ein Kürzel, das dieses Profil kennt (wie bei ``aliases``)."""
+        for key, code in table.items():
+            if not is_district_code(code, self.district_body) and code not in seen:
+                raise ValueError(
+                    f"bodies.{name}: {key!r} zeigt auf {code!r}, und das steht in keiner Tabelle"
+                )
 
     def _aliases_resolve(self, seen: dict[str, str]) -> None:
         """Jedes Ziel in ``bodies.aliases`` muss ein Kürzel sein, das dieses Profil kennt.
@@ -1496,7 +1556,9 @@ class Settings(BaseSettings):
                 "log_level": True,
                 "cache": True,
                 "contracts": True,
-                "bodies": {"names_as_of"},
+                # Punkt 58: ``consultations`` ist ein Pfad (sein Inhalt steht im Stamp des
+                # Schritts ``bodies``), ``district_body_names`` sind reine Anzeigenamen.
+                "bodies": {"names_as_of", "consultations", "district_body_names"},
                 # Nur Anzeige: die Beschriftung eines Regelsatzes auf der Berichtsseite.
                 "weights": {"paper_type": {"__all__": {"label"}}},
                 "context": {
