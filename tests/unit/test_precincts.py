@@ -36,7 +36,7 @@ from georep.prep.precincts import (
     ring_signed_area,
 )
 from georep.settings import Precincts, ResultsColumns, Settings, load_settings
-from tests.conftest import REPO
+from tests.conftest import MG, REPO
 
 MG_CRS_WKT = (
     'PROJCS["ETRS89_UTM_zone_32N",GEOGCS["GCS_ETRS_1989",DATUM["D_ETRS_1989",'
@@ -787,3 +787,42 @@ def test_a_hole_that_shares_an_edge_still_finds_its_ring() -> None:
     geometry = geometry_from_esri_rings([outer, hole])
     assert geometry["type"] == "Polygon" and len(geometry["coordinates"]) == 2
     assert shape(geometry).area == pytest.approx(100 * 100 - 50 * 50)
+
+
+def test_a_touching_pair_of_outer_rings_is_reported(tmp_path: Path) -> None:
+    """Befund 16: die Nachbedingung sieht eine Selbstüberschneidung nicht, sie vergleicht Flächen.
+
+    Zwei äußere Ringe, die eine Kante teilen, sind ein ungültiges MultiPolygon. Abgebrochen wird
+    deswegen nicht -- ``geo.read_canonical_precincts`` repariert das mit ``make_valid`` --, aber
+    der Lauf sagt es jetzt, mit Nummer und Grund.
+    """
+    from loguru import logger
+
+    path = _identify(
+        tmp_path / "identify.json",
+        {"10401": [_clockwise(0.0, 0.0, 50.0), _clockwise(50.0, 0.0, 50.0)]},
+    )
+    geometry = read_source_esri_identify(path, id_property="Nummer").features[0]["geometry"]
+    assert geometry["type"] == "MultiPolygon" and not shape(geometry).is_valid
+
+    lines: list[str] = []
+    sink = logger.add(lines.append, level="WARNING", format="{message}")
+    try:
+        read_source_esri_identify(path, id_property="Nummer")
+    finally:
+        logger.remove(sink)
+    assert len(lines) == 1
+    assert "1 von 1 Flächen" in lines[0] and "10401" in lines[0] and "make_valid" in lines[0]
+
+
+def test_a_valid_answer_says_nothing(tmp_path: Path) -> None:
+    """Kein Rauschen im Normalfall: die 17 Flächen der Fixture sind gültig."""
+    from loguru import logger
+
+    lines: list[str] = []
+    sink = logger.add(lines.append, level="WARNING", format="{message}")
+    try:
+        source = read_source_esri_identify(MG / "external" / IDENTIFY_FILE, id_property="Nummer")
+    finally:
+        logger.remove(sink)
+    assert len(source.features) == 17 and lines == []

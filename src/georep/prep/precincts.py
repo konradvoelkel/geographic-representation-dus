@@ -26,7 +26,10 @@ from typing import Any
 import deal
 import polars as pl
 import shapefile
+from loguru import logger
 from pyproj import CRS
+from shapely.geometry import shape
+from shapely.validation import explain_validity
 
 from georep.errors import SchemaError
 from georep.geo import DISTRICT_NAME_PROPERTY, DISTRICT_PROPERTY, PRECINCT_PROPERTY
@@ -47,7 +50,7 @@ def read_source(path: Path, rules: Precincts) -> SourcePrecincts:
     if rules.format == "shapefile-zip":
         return read_source_shapefile_zip(path, rules.member, rules.dbf_encoding)
     if rules.format == "esri-identify":
-        return read_source_esri_identify(path, rules.source_crs)
+        return read_source_esri_identify(path, rules.source_crs, rules.id_property)
     return read_source_geojson(path, rules.source_crs)
 
 
@@ -343,8 +346,44 @@ def _enclosing_ring(hole: Ring, outer: Sequence[tuple[Ring, float]]) -> int:
     )
 
 
+def _warn_about_invalid(name: str, features: Sequence[Mapping[str, Any]], id_property: str) -> None:
+    """Eine Zeile, wenn eine umgewandelte Fläche keine gültige Geometrie ist (Befund 16).
+
+    Berührende äußere Ringe sind der Fall, der vorkommt: shapely nennt das eine
+    Selbstüberschneidung, und die Nachbedingung der Umwandlung sieht sie **nicht** -- sie
+    vergleicht Flächen, und die stimmt dabei. Kein ``SchemaError``: ``geo.read_canonical_precincts``
+    repariert die Geometrie beim Lesen mit ``make_valid``, und eine Stadt, deren Dienst so etwas
+    ausliefert, soll nicht an dieser Stelle stehen bleiben. Was fehlte, war die Auskunft, dass es
+    passiert ist -- bisher fiel es nirgends auf.
+
+    ``id_property`` nennt das Profil (``precincts.id_property``); ohne es nennt die Warnung den
+    Index des Treffers. Kosten: 11,6 ms für die 179 Flächen Mönchengladbachs (gemessen am
+    2026-10-14), einmal je Lauf des Schritts ``shapes``.
+    """
+    labelled = [
+        (
+            str(feature["properties"].get(id_property, "?"))
+            if id_property
+            else f"results[{index}]",
+            shape(feature["geometry"]),
+        )
+        for index, feature in enumerate(features)
+    ]
+    bad = [(label, geometry) for label, geometry in labelled if not geometry.is_valid]
+    if not bad:
+        return
+    reasons = ", ".join(f"{label}: {explain_validity(geometry)}" for label, geometry in bad[:5])
+    logger.warning(
+        f"{name}: {len(bad)} von {len(features)} Flächen sind keine gültige Geometrie "
+        f"({reasons}{', …' if len(bad) > 5 else ''}); geo.read_canonical_precincts repariert sie "
+        "mit make_valid, und die Flächensumme kann sich dadurch ändern"
+    )
+
+
 @deal.raises(SchemaError)
-def read_source_esri_identify(path: Path, source_crs: str = "") -> SourcePrecincts:
+def read_source_esri_identify(
+    path: Path, source_crs: str = "", id_property: str = ""
+) -> SourcePrecincts:
     """Die Antwort der Operation ``identify``: ``results`` mit ``attributes`` und ``geometry.rings``.
 
     Warum ``identify`` und nicht ``query`` steht in docs/decisions.md, Punkt 62. Das CRS hängt
@@ -368,6 +407,7 @@ def read_source_esri_identify(path: Path, source_crs: str = "") -> SourcePrecinc
                 "geometry": geometry_from_esri_rings(_checked_rings(path.name, index, entry)),
             }
         )
+    _warn_about_invalid(path.name, features, id_property)
     return SourcePrecincts(features, _wkid_crs(path.name, results) or source_crs)
 
 
