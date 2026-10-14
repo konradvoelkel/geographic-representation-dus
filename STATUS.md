@@ -807,8 +807,40 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 
 **Phase 2 zu Punkt 65: Mönchengladbachs Flächen einmal wirklich holen und neu rechnen.** Code,
 Profil, Tests und Doku sind fertig (siehe „Die Flächen Mönchengladbachs zum Stand der Wahl"), die
-Daten nicht: `reference/moenchengladbach/external/` trägt noch das Zip von 2022. Was zu tun ist, in
-dieser Reihenfolge:
+Daten nicht: `reference/moenchengladbach/external/` trägt noch das Zip von 2022.
+
+**Angefangen und an Overpass hängengeblieben (2026-10-14, 15:58 bis 17:04).** Vier der fünf
+Netz- und Rechenschritte sind durch, und ihre Zahlen stimmen mit dem, was Punkt 65 vorhergesagt
+hat:
+
+| Schritt | Ergebnis |
+|---|---|
+| `fetch opendata` | 1 043 618 Byte Flächen, SHA-256 `c2d3de4b…4093b94` — byte- und prüfsummengleich mit der Recherche; 3,9 s |
+| `run shapes` | **179 Stimmbezirke in 33 Wahlbezirken**, CRS EPSG:25832, **170,47 km²**, **25 187 Stützpunkte**, jede Fläche gültig |
+| `run voters` | 33 Wahlbezirke, 204 219 Wahlberechtigte, 96 880 Wähler (unverändert, sie hängen am Wahlergebnis) |
+| `fetch pois_wiki` | 1 190 per SPARQL, 1 029 per GeoSearch, 2 215 zugeordnet, 2 219 Einträge (vorher 2 373); 400,8 s |
+| `fetch streets_osm` | **offen**: overpass-api.de antwortet seit 15:58 auf **jede** Abfrage mit `504` |
+
+Der 504 ist keine Überlast durch diese Abfragen und kein Fehler des Codes: der Dienst meldet
+`runtime error: … Dispatcher_Client::request_read_and_idx::timeout`, sein Status nennt dabei
+4 freie Slots, und **auch eine Trivialabfrage** (ein Knoten in einer kleinen Box) bekommt denselben
+504. Gegengeprüft ist auch der naheliegende Verdacht, die neuen Flächen seien aufwendiger: über
+alle Flächen sind die Polygone nach `simplify_m = 2` praktisch gleich groß wie die von 2022
+(Punkte je Fläche im Median 79 statt 75, Maximum in beiden 368, Summe 14 991 statt 14 283).
+17 Versuche in einer Stunde mit 90 s Pause, einmal (16:53) antwortete eine Trivialabfrage mit 200,
+vier Minuten später wieder 504 — die Instanz flackert. Der nächste Lauf fängt nicht von vorn an:
+die erfolgreichen POSTs liegen im geteilten HTTP-Cache.
+
+**Vorsicht beim Weitermachen: `raw/streets_per_district.json` ist noch der alte Stand** (180
+Stimmbezirke, 1 814 Straßennamen, aus dem Paket von 2022). `streets_by_district` liest **nur**
+diese Datei und nie die kanonischen Flächen; ein `georep run` würde daraus ohne Fehler und ohne
+Warnung ein Wörterbuch bauen, in dem die vier neuen Stimmbezirke (`11006`, `21406`, `32906`,
+`40106`) fehlen und fünf verschwundene noch mitzählen. Die Zahlen der Seite sähen plausibel aus und
+wären falsch. Darum ist nach `fetch streets_osm` zu laufen und nicht davor; bis dahin sind
+`data/moenchengladbach/` und `cache/moenchengladbach/` ein halber Stand, und das Paket im Repo ist
+unberührt.
+
+Was dann zu tun ist, in dieser Reihenfolge:
 
 ```bash
 uv run georep --profile moenchengladbach fetch opendata   # ein GET, 1 043 618 Byte erwartet
