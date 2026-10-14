@@ -54,6 +54,7 @@ cities = ["duesseldorf", "moenchengladbach"]
 
 [sources.oparl]
 endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0011/papers"  # Body 0011 = Mönchengladbach laut Serverkatalog; die Probe in docs/runbook-stadt.md bestätigt ihn
+organizations_endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0011/organizations"  # Punkt 58: eine Seite, 122 Organisationen, 3,8 s am 2026-10-14; daraus die Namen der Gremien unten. raw/organizations.json liegt im Paket dieser Stadt, der Abruf muss also nicht wiederholt werden
 
 [sources.opendata]
 results_url = "https://wep.itk-rheinland.de/vm/prod/kw_2025/05116000/daten/opendata/Open-Data-05116000-Ratswahl-Stimmbezirk.csv"
@@ -151,3 +152,100 @@ exclude = [                    # Stadt, Stadtbezirke, Fluss und die 44 Stadtteil
 
 [analysis]
 exclude_districts = []         # bis zum ersten echten Lauf leer; danach die beiden höchsten Trefferquoten wie in Tabelle 5 (Frage 1.6)
+
+# --- Punkt 58: das Gremium je Dokument aus der Beratungsfolge -------------------------------------
+#
+# Mönchengladbachs Drucksachennummern tragen kein Kürzel (``0682/XI`` ist laufende Nummer und
+# Wahlperiode), darum bleibt ``reference_pattern`` leer und die Nummer sagt hier nichts. Die
+# **Beratungsfolge** sagt alles: alle 2 895 Dokumente der Periode tragen eine, und sie nennt 27
+# verschiedene Organisationen (gemessen 2026-10-14). Deren Namen und Kürzel kommen aus
+# ``raw/organizations.json`` (ein Abruf am 2026-10-14, 122 Organisationen); gelistet und
+# klassifiziert hat sie `georep --profile moenchengladbach learn-bodies`, das sie mit
+# ``classification`` und ``shortName`` des Servers ausgibt. Aus den Nummern ist hier **nichts zu
+# lernen** -- die Zuordnung unten ist darum aus den Namen gelesen und nicht aus Daten abgestimmt;
+# die Kürzel sind die ``shortName`` des Servers, auf eine Form ohne Leerzeichen gebracht.
+[bodies]
+district_body = "BV"           # Kürzel der vier Bezirksvertretungen; die Nummer dahinter ist der Stadtbezirk (GO NRW: eine je Stadtbezirk)
+district_body_name = "Bezirksvertretung {n}"  # greift nur ohne Eintrag in district_body_names
+names_as_of = 2026-10-14       # Stand der Namen: der Abruf von organizations; nur Anzeige, nicht im Fingerprint
+
+# Die Bezirksvertretungen heißen hier nach der Himmelsrichtung und nicht nach einer Nummer; welche
+# Nummer zu welcher gehört, sagen die Daten. Die Stimmbezirksnummer trägt den Stadtbezirk an der
+# ersten Stelle (``city_district_from_precinct``), und die Dokumente, deren Beratungsfolge **genau
+# eine** Bezirksvertretung nennt, treffen mehrheitlich Wahlbezirke ihres eigenen Stadtbezirks
+# (gemessen 2026-10-14 über die 167 Dokumente mit Text und Treffer): BV Nord 59 % in Stadtbezirk 1,
+# BV Ost 61 % in 2, BV Süd 52 % in 3, BV West 56 % in 4 -- je die größte Zelle ihrer Zeile und
+# ihrer Spalte. Dazu passt die Geographie: Stadtbezirk 1 sind Hardt, Venn, Eicken und die Altstadt
+# (Nord), 2 Neuwerk und Giesenkirchen (Ost), 3 Rheydt und Odenkirchen (Süd), 4 Rheindahlen und
+# Wickrath (West).
+[bodies.district_body_names]   # Kürzel -> Anzeigename, wo die Bezirksvertretung keine Nummer trägt
+BV1 = "Bezirksvertretung Nord"
+BV2 = "Bezirksvertretung Ost"
+BV3 = "Bezirksvertretung Süd"
+BV4 = "Bezirksvertretung West"
+
+[bodies.council]
+RAT = "Rat"
+
+[bodies.committees]            # Ausschüsse des Rates; Namen wörtlich aus raw/organizations.json
+HA = "Hauptausschuss"
+AFBW = "Ausschuss für Finanzen, Beteiligungen und Wirtschaft"
+AUM = "Ausschuss für Umwelt und Mobilität"
+APBS = "Ausschuss für Planung, Bauen und Stadtentwicklung"
+ASB = "Ausschuss für Schule und Bildung"
+ASGSG = "Ausschuss für Soziales, Gesundheit, Senioren und Gleichstellung"
+JHA = "Jugendhilfeausschuss"
+ABV = "Ausschuss für Betriebe und Vergaben"
+AFSB = "Ausschuss für Freizeit, Sport und Bäder"
+AK = "Ausschuss für Kultur"
+AFOK = "Ausschuss für Feuerwehr, öffentliche Ordnung und Katastrophenschutz"
+ABB = "Ausschuss für Anregungen und Beschwerden"  # shortName des Servers ist "Beschwerdeausschuss"
+RPA = "Rechnungsprüfungsausschuss"
+WPA = "Wahlprüfungsausschuss"
+WAKW = "Wahlausschuss Kommunalwahl"
+WABTW = "Kreiswahlausschuss Bundestagswahl"
+WALTW = "Kreiswahlausschuss Landtagswahl"
+WAIR = "Wahlausschuss für die Integrationsratswahl"  # classification "Gremium", aber der Name sagt Ausschuss
+
+[bodies.advisory]              # keine Ausschüsse des Rates: eigene Klasse in der Tabelle, nicht auf der Karte
+IR = "Integrationsrat"
+SENR = "Seniorenrat der Stadt Mönchengladbach"
+JUPA = "Jugendparlament"
+NATB = "Beirat der unteren Naturschutzbehörde"
+
+# Organisation der Beratungsfolge -> Kürzel. Die Zahl dahinter sind die Dokumente, in deren Folge
+# sie steht, und die Dokumente, deren Folge **nur** sie nennt (die entschiedenen): zusammen 1 620
+# der 2 895 Dokumente, die übrigen 1 275 nennen mehr als ein Gremium und bleiben „unbekannt"
+# (georep.prep.bodies, Modulkopf). Aufsichtsräte, Gesellschafterversammlungen und Verbandsgremien
+# aus dem Katalog kommen in keiner Beratungsfolge dieser Periode vor und stehen darum nicht hier.
+[bodies.organizations]
+"gr/83" = "RAT"                # 1000 Dokumente, 270 entschieden
+"gr/76" = "HA"                 # 837, 35
+"gr/125" = "AFBW"              # 610, 46
+"gr/229" = "AUM"               # 337, 74
+"gr/82" = "APBS"               # 328, 39
+"gr/117" = "BV1"               # 317, 70 (Bezirksvertretung Nord)
+"gr/123" = "BV3"               # 304, 95 (Süd)
+"gr/115" = "BV2"               # 278, 99 (Ost)
+"gr/85" = "ASB"                # 266, 122
+"gr/124" = "BV4"               # 259, 64 (West)
+"gr/68" = "ASGSG"              # 250, 117
+"gr/78" = "JHA"                # 226, 92
+"gr/228" = "ABV"               # 161, 65
+"gr/75" = "AFSB"               # 150, 77
+"gr/80" = "AK"                 # 137, 95
+"gr/227" = "AFOK"              # 130, 70
+"gr/25" = "IR"                 # 78, 46
+"gr/31" = "NATB"               # 59, 59
+"gr/73" = "ABB"                # 47, 39
+"gr/259" = "SENR"              # 35, 35
+"gr/207" = "WAKW"              # 4, 4
+"gr/264" = "JUPA"              # 4, 3
+"gr/84" = "RPA"                # 3, 1
+"gr/93" = "WPA"                # 2, 0
+"gr/158" = "WAIR"              # 1, 1
+"gr/144" = "WABTW"             # 1, 1
+"gr/248" = "WALTW"             # 1, 1
+
+[classify]                     # Punkt 45: der passende Ausschuss je Dokument
+enabled = false                # Mönchengladbach hat Ausschüsse (oben), aber nur 650 der 2 895 Dokumente tragen Text, und welche das sind, entscheidet das Ratsinformationssystem (2 213 Hauptdateien antworten mit 404). Ein Klassifikator auf dieser Teilmenge wäre an einer nicht zufälligen Stichprobe gemessen; die Entscheidung gehört zu einem eigenen Schritt, nicht zu Punkt 58

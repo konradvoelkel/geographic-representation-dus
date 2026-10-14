@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from georep.errors import SchemaError
 from georep.layout import Layout
 from georep.settings import (
+    Bodies,
     Period,
     UnknownProfileError,
     available_profiles,
@@ -711,16 +712,23 @@ def test_labels_and_file_names_stay_out_of_the_fingerprint(tmp_path: Path) -> No
 # --- Option 01: was eine zweite Stadt nicht hat -----------------------------------------------
 
 
-def test_a_second_city_needs_neither_context_data_nor_body_codes() -> None:
-    """Nicht jede Stadt hat einen Quartiersatlas, und nicht jedes RIS nennt das Gremium.
+def test_a_second_city_needs_neither_context_data_nor_a_number_pattern() -> None:
+    """Nicht jede Stadt hat einen Quartiersatlas, und nicht jedes RIS nennt das Gremium in der Nummer.
 
     Mönchengladbach veröffentlicht keinen Datensatz je Raumeinheit (Option 03), und seine
-    Drucksachennummern tragen kein Kürzel (``0682/XI``, Stichprobe 2026-10-12, Option 05).
-    Beide Blöcke fehlen im Profil; die Schritte entfallen, die Gremien sind „unbekannt".
+    Drucksachennummern tragen kein Kürzel (``0682/XI``, Stichprobe 2026-10-12, Option 05):
+    ``reference_pattern`` bleibt leer, und die Kontextschritte entfallen. Seit Punkt 58 kommen die
+    Gremien dort aus der Beratungsfolge, und darum stehen die Kürzeltabellen trotzdem im Profil --
+    der Validator erlaubt sie, sobald eine der beiden Quellen da ist.
     """
     settings = load_settings(profile="moenchengladbach", cwd=Path("/nonexistent"))
     assert settings.context.root is None and not settings.context.variables
-    assert settings.bodies.reference_pattern == "" and settings.bodies.district_body == ""
+    assert settings.bodies.reference_pattern == ""
+    assert settings.bodies.organizations and settings.bodies.district_body == "BV"
+    assert set(settings.bodies.district_body_names) == {"BV1", "BV2", "BV3", "BV4"}
+    # Ohne beide Quellen bleiben die Tabellen verboten: ein Kürzel käme dann nie zustande.
+    with pytest.raises(ValueError, match="kennt keine Kürzel"):
+        Bodies(district_body="BV", council={"RAT": "Rat"})
 
 
 # --- Option 02: die beiden Profildateien im Repo ----------------------------------------------

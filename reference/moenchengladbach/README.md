@@ -23,12 +23,13 @@ Rechners, der sie geholt hat.
 | `external/Open-Data-05116000-Ratswahl-Wahlbezirk.csv` | 4 429 | `48f806fd70f460dd1cebe83c5f3cddbf28b2e4bdd123c33b6e3b8239948296d2` |
 | `external/opendata-strassen.csv` | 99 117 | `d4dcc486eaf2741a8a3fc5c42ead1270aa3872ac2de41357bbb3d9ed1881626e` |
 | `external/Wahlen_EPSG25832_SHAPE.zip` | 199 548 | `df6c3bb7e30d1b22db12cb5373cd980618552366aac5b7631390ac5cc513c48b` |
+| `raw/organizations.json` | 424 667 | `df7f706b091d8ffae3c8e02325b20267e60ff9592f3ed2d135bfd218f379d94c` |
 | `raw/papers.jsonl` | 2 157 088 | `d1f92f4c9400697628990548c32272338ddb8c38043acf4834125b478933a9ae` |
 | `raw/streets_per_district.json` | 74 291 | `982c87025cf0ce3997ed620aacc7de10d5f4828ad4238cd6aab547146e426067` |
 | `raw/wikipedia_dict.json` | 421 707 | `9317b237c3151c0de0e50514582e9c48f4d246bf0098fa93e4dad1138aa4d00c` |
 | `cache/text/texts.parquet` | 994 204 | `f65d088bcddc5a09717024a5b1b6d5056f6081dcefab64012b21bd9293f056b8` |
 
-Zusammen 3 980 958 Bytes (3,80 MiB). `tests/unit/test_data_packages.py` hält diese Tabelle gegen
+Zusammen 4 405 625 Bytes (4,20 MiB). `tests/unit/test_data_packages.py` hält diese Tabelle gegen
 die Dateien im Repo (Größe und Prüfsumme je Zeile, der `slow`-Teil auch die Zeilenzahlen).
 
 ## Zahlen des Laufs (2026-10-13)
@@ -44,6 +45,8 @@ die Dateien im Repo (Größe und Prüfsumme je Zeile, der `slow`-Teil auch die Z
 | Orte (Wikidata Q2758 und Wikipedia-GeoSearch) | 2 373 Einträge |
 | Übereinstimmung mit dem amtlichen Straßenverzeichnis | 2 651 bekannte Namen: 66,5 % im selben Stimmbezirk, **86,2 % im selben Wahlbezirk**; 315 nicht im Verzeichnis |
 | Dokumentarten | 16, häufigste `1.1 - Beratungsvorlage` (1 144), `2.1 - Berichtsvorlage` (946), `3 - Fraktionsantrag` (581) |
+| Organisationen im Katalog (`raw/organizations.json`, 2026-10-14) | **122**, davon 8 Fraktionen |
+| Organisationen in einer Beratungsfolge | 27; alle 2 895 Dokumente tragen eine |
 
 **2 213 der 2 871 Hauptdateien sind nicht abrufbar**: das Ratsinformationssystem antwortet auf
 ihre `downloadfiles`-URL mit `404`. Der Abruf isoliert jeden Fehler (Phase 1), der Lauf geht also
@@ -62,12 +65,15 @@ selben Stimmbezirk. Das Runbook nennt 90 % je Wahlbezirk als die Grenze, unter d
 die Stadt nach den Flächen von 2025 lohnt (`docs/runbook-stadt.md`, § 4, Frage 1.3); diese Zahl
 liegt darunter. Die Stadtseite nennt sie, der Städtevergleich verweist darauf.
 
-**Alle Dokumente stehen unter „Gremium unbekannt"**: Mönchengladbachs Drucksachennummern tragen
-kein Kürzel (`0682/XI`), `bodies.reference_pattern` ist im Profil darum leer, und der Abschnitt
-„Gremien" zeigt 100 % unbekannt (`docs/decisions.md`, Punkt 39). Der volle Lauf hat die Frage
-nicht beantwortet, sondern bestätigt: auch über 2 895 Nummern taucht kein Kürzel auf. Woher das
-Gremium käme, bleibt das OParl-Feld `consultation` oder die Sitzungszuordnung
-(`docs/plans/01-staedte.md`, § 8, Frage 1.12).
+**Die Drucksachennummer nennt kein Gremium, die Beratungsfolge schon** (Punkt 58, seit dem
+2026-10-14): Mönchengladbachs Nummern tragen kein Kürzel (`0682/XI`), `bodies.reference_pattern`
+ist im Profil darum leer, und bis zum 2026-10-14 zeigte der Abschnitt „Gremien" 100 % unbekannt.
+Das OParl-Feld `consultation` füllt die Lücke zur Hälfte: **alle 2 895 Dokumente** tragen eine
+Beratungsfolge, sie nennt 27 verschiedene Organisationen, und 1 620 Dokumente (56,0 %) nennen
+genau eine -- die entscheidet dann. Die übrigen 1 275 nennen mehrere; welches davon das
+federführende ist, steht nicht in den Daten (die Liste kommt sortiert und entdoppelt), und sie
+bleiben darum sichtbar „unbekannt". Die Namen und Kürzel der 27 stehen als `[bodies]` im Profil
+und sind aus `raw/organizations.json` gelesen, das darum in diesem Paket liegt.
 
 ## Herkunft und Lizenz
 
@@ -76,6 +82,7 @@ Gremium käme, bleibt das OParl-Feld `consultation` oder die Sitzungszuordnung
 | `external/Open-Data-05116000-Ratswahl-*.csv`, `external/opendata-strassen.csv` | `wep.itk-rheinland.de/vm/prod/kw_2025/05116000/daten/opendata/` (votemanager-Wahlpräsentation der ITK Rheinland für die Stadt Mönchengladbach) | laut Anbieter **nicht angegeben**; genannt werden Quelle und Herausgeber (Frage 1.4) |
 | `external/Wahlen_EPSG25832_SHAPE.zip` | `geoportal.moenchengladbach.de/wms/Hotlinks/OpenData/` (Datensatz „Wahlen", Stand 08.06.2022) | Datenlizenz Deutschland – Zero – Version 2.0 |
 | `raw/papers.jsonl` | Ratsinformationssystem der Stadt Mönchengladbach über OParl 1.1, `ris-oparl.itk-rheinland.de`, Body 0011 | kein Lizenzhinweis am Endpunkt; genannt werden die Kennungen |
+| `raw/organizations.json` | derselbe Endpunkt, `…/bodies/0011/organizations`, **abgerufen am 2026-10-14** (eine Seite, 122 Organisationen, 3,8 s); Namen und Kürzel der Gremien in `[bodies]` | wie die Dokumente; die Datei nennt Organisationen, keine Personen |
 | `cache/text/texts.parquet` | aus den 658 PDFs desselben Endpunkts mit pypdf 6.20.0 extrahiert | wie die Dokumente |
 | `raw/streets_per_district.json` | OpenStreetMap über die Overpass-API, je Stimmbezirk | ODbL |
 | `raw/wikipedia_dict.json` | Wikidata (SPARQL, Q2758) und Wikipedia-GeoSearch | CC0 bzw. CC BY-SA |

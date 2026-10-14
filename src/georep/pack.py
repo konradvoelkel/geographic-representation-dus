@@ -132,6 +132,10 @@ def package_files(layout: Layout, settings: Settings) -> list[tuple[Path, str]]:
     for source in (layout.streets_directory, layout.district_names_csv):
         if source is not None and source.is_file():
             pairs.append((source, f"external/{source.name}"))
+    # Punkt 58: der Organisationskatalog, wenn der Netzschritt lief. Er ist der Beleg für die
+    # Namen und Kürzel in ``[bodies]`` und ``[originators]``; ohne ihn stünden sie ohne Quelle da.
+    if layout.organizations.is_file():
+        pairs.append((layout.organizations, "raw/organizations.json"))
     # Option 02: die zwei Eingaben des Crosswalks, wenn diese Periode einen eigenen Zuschnitt hat
     for source in (layout.district_shapes_geojson, layout.district_results_csv):
         if source.is_file():

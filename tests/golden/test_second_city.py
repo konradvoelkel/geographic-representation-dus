@@ -133,14 +133,18 @@ def test_the_steps_of_a_city_without_party_names_and_context(settings: Settings)
 
     Mönchengladbach bringt weder Fraktionsnamen (``[originators]``) noch Kontextdaten mit; die
     Schritte entfallen, statt mit einem leeren Regelsatz zu laufen. Die Flächen (``shapes``) und
-    die Gremien laufen, letztere mit „unbekannt" als einziger Klasse.
+    die Gremien laufen -- letztere seit Punkt 58 mit den Gremien aus der Beratungsfolge, denn die
+    Drucksachennummer nennt hier keines.
     """
     names = [step.name for step in build_steps(settings, Layout.from_settings(settings))]
     assert "parties" not in names and "context" not in names and "controls" not in names
     assert "shapes" in names and "bodies" in names and "topics" in names
-    # Punkt 45: ohne Ausschüsse im Profil gibt es keine Klasse zu lernen; der Schritt entfällt,
-    # statt mit einer einzigen Restklasse zu laufen.
-    assert not settings.bodies.committees and "committees" not in names
+    # Punkt 45 und 58: die Ausschüsse stehen im Profil, der Klassifikator ist trotzdem aus --
+    # nur 650 der 2 895 Dokumente tragen Text, und welche das sind, entscheidet der Server.
+    assert settings.bodies.committees and not settings.classify.enabled
+    assert "committees" not in names
+    # Punkt 58: die Nummer trägt kein Kürzel, die Beratungsfolge die Gremien
+    assert not settings.bodies.reference_pattern and len(settings.bodies.organizations) == 27
 
 
 # --- Übereinstimmung mit dem Straßenverzeichnis der Wahl ---------------------------------------
