@@ -25,7 +25,7 @@ from dataclasses import dataclass
 import deal
 import polars as pl
 
-from georep.contracts import has_columns, sorted_unique
+from georep.contracts import has_columns, is_district_code, sorted_unique
 from georep.settings import Bodies
 
 KINDS = ("bezirksvertretung", "rat", "ausschuss", "beirat", "unbekannt")
@@ -120,14 +120,16 @@ def _from_code(code: str, rules: BodyRules) -> BodyRef:
 
     Dieselben zwei Regeln wie am Ende von ``parse_reference``, nur ohne die Gruppen eines Musters:
     das Kürzel der Bezirksvertretungen mit einer Nummer ab 1 ist eine Bezirksvertretung, alles
-    andere entscheidet die Tabelle. ``isascii()`` vor ``isdigit()`` wie überall, wo eine
-    Gebietsnummer gelesen wird (Punkt 40).
+    andere entscheidet die Tabelle. Die erste Regel ist ``contracts.is_district_code``, dasselbe
+    Prädikat, das der Validator von ``settings.Bodies`` auf die Ziele in ``bodies.aliases``
+    anwendet -- vorher stand sie zweimal da und wich bei leerem ``district_body`` auseinander.
     """
-    number = code.removeprefix(rules.district_body)
-    if rules.district_body and code != number:
-        if not (number.isascii() and number.isdigit() and int(number) >= 1):
-            return BodyRef(UNKNOWN, code, None)
-        return BodyRef(DISTRICT_BODY, code, int(number))
+    if is_district_code(code, rules.district_body):
+        return BodyRef(DISTRICT_BODY, code, int(code[len(rules.district_body) :]))
+    if rules.district_body and code.startswith(rules.district_body):
+        # Das Kürzel der Bezirksvertretungen ohne brauchbare Nummer (``BV``, ``BV0``, ``BVx``):
+        # unbekannt, aber mit Kürzel -- wie am Muster, damit die Seite es nennen kann.
+        return BodyRef(UNKNOWN, code, None)
     return BodyRef(rules.kind_of(code), code, None)
 
 

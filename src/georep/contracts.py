@@ -168,3 +168,19 @@ def one_threshold(quantile: float, median_factor: float) -> bool:
     Validator von ``settings.Search``, damit die Regel nur an einer Stelle steht.
     """
     return 0.0 <= quantile < 1.0 and median_factor >= 0.0 and not (quantile and median_factor)
+
+
+def is_district_code(code: str, district_body: str) -> bool:
+    """``BV7`` ist eine Bezirksvertretung, ``BV`` und ``BV0`` nicht (Punkt 57).
+
+    Dasselbe Prädikat prüft ``prep.bodies._from_code`` zur Laufzeit und der Validator von
+    ``settings.Bodies`` die Ziele in ``bodies.aliases``, damit die Regel nur an einer Stelle steht
+    (wie ``one_threshold``). Vorher stand sie zweimal da und wich auseinander: ohne
+    ``district_body`` hielt der Validator jede Zahl für eine Bezirksvertretung, die Laufzeit
+    keine. ``isascii()`` vor ``isdigit()`` wie überall, wo eine Gebietsnummer gelesen wird
+    (Punkt 40: ``'²'.isdigit()`` ist wahr, ``int('²')`` wirft).
+    """
+    if not district_body or not code.startswith(district_body):
+        return False
+    number = code[len(district_body) :]
+    return bool(number) and number.isascii() and number.isdigit() and int(number) >= 1

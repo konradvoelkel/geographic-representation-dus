@@ -30,7 +30,7 @@ import deal
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
-from georep.contracts import one_threshold
+from georep.contracts import is_district_code, one_threshold
 from georep.errors import GeorepError, SchemaError
 
 LOG_LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
@@ -462,14 +462,7 @@ class Bodies(_Strict):
                 raise ValueError(
                     f"bodies.aliases: {head!r} ist kein Kopf einer Nummer (leer oder mit /)"
                 )
-            number = code.removeprefix(self.district_body) if code != self.district_body else ""
-            is_district = (
-                code.startswith(self.district_body)
-                and number.isascii()
-                and number.isdigit()
-                and int(number) >= 1
-            )
-            if not is_district and code not in seen:
+            if not is_district_code(code, self.district_body) and code not in seen:
                 raise ValueError(
                     f"bodies.aliases: {head!r} zeigt auf {code!r}, und das steht in keiner Tabelle"
                 )
