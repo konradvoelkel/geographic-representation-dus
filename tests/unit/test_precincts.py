@@ -647,3 +647,37 @@ def test_the_fixture_maker_cuts_the_identify_answer_and_writes_json(
     write_identify_json(committed, one, {"10404"}, "Nummer")
     source = read_source_esri_identify(one)
     assert [f["properties"]["Nummer"] for f in source.features] == ["10404"]
+
+
+# --- Befund 4: NaN und Infinity in einer Koordinate ------------------------------------------
+
+
+@pytest.mark.parametrize("bad", ["NaN", "Infinity", "-Infinity"])
+def test_a_coordinate_that_is_not_finite_is_refused(tmp_path: Path, bad: str) -> None:
+    """Pythons ``json`` liest ``NaN`` und ``Infinity``, obwohl der Standard sie nicht kennt.
+
+    Eine solche Koordinate macht die Ringfläche ``NaN``, und ``NaN`` ist weder kleiner noch
+    größer als null: der Ring wäre weder außen noch innen und fiele **still** aus der Fläche
+    heraus -- bei einer mehrringigen Fläche ohne jede Meldung, bei einer einringigen als
+    irreführendes „kein äußerer Ring" (Review 2026-10-14).
+    """
+    path = tmp_path / "identify.json"
+    path.write_text(
+        '{"results":[{"attributes":{"Nummer":"10401"},"geometry":{"rings":[[[0,0],[0,'
+        + bad
+        + "],[10,10],[10,0],[0,0]]]}}]}",
+        encoding="utf-8",
+    )
+    with pytest.raises(SchemaError, match="endlichen Zahlen"):
+        read_source_esri_identify(path)
+
+
+def test_the_contract_of_the_pure_functions_demands_finite_rings() -> None:
+    """Dieselbe Bedingung als Vertrag: ohne sie rechnete die Trapezformel ``NaN`` aus."""
+    nan_ring = [[0.0, 0.0], [0.0, float("nan")], [10.0, 10.0], [10.0, 0.0], [0.0, 0.0]]
+    assert not is_ring(nan_ring)
+    assert not is_ring([[0.0, 0.0], [float("inf"), 0.0], [1.0, 1.0], [0.0, 0.0]])
+    with pytest.raises(deal.PreContractError):
+        ring_signed_area(nan_ring)
+    with pytest.raises(deal.PreContractError):
+        geometry_from_esri_rings([nan_ring])

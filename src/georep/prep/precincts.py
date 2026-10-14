@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import io
 import json
+import math
 import zipfile
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -139,14 +140,31 @@ Ring = Sequence[Sequence[float]]
 """Ein Esri-Ring: geschlossene Folge von Punkten, jeder mit mindestens x und y."""
 
 
+def _are_numbers(values: Sequence[Any]) -> bool:
+    """Endliche Zahlen, keine Wahrheitswerte.
+
+    ``math.isfinite`` ist der Punkt: ``NaN`` und ``Infinity`` sind ``float`` und kämen sonst
+    durch -- Pythons ``json`` schreibt und liest sie, auch wenn der Standard sie nicht kennt. Ein
+    ``NaN`` in einer Koordinate macht die Ringfläche ``NaN``, und ``NaN`` ist weder kleiner noch
+    größer als null: der Ring wäre damit weder außen noch innen und fiele **still** aus der
+    Fläche heraus (Review 2026-10-14).
+    """
+    return all(
+        isinstance(v, int | float) and not isinstance(v, bool) and math.isfinite(v) for v in values
+    )
+
+
 def is_ring(ring: Ring) -> bool:
-    """Ein Ring, wie Esri ihn schreibt: vier Punkte oder mehr, jeder mit x und y, geschlossen.
+    """Ein Ring, wie Esri ihn schreibt: vier endliche Punkte oder mehr, geschlossen.
 
     Vier, weil drei Ecken plus der wiederholte Anfangspunkt das kleinste Polygon sind. Mit drei
     Punkten wäre es eine Linie; shapely machte daraus still eine Fläche ohne Fläche, und das
-    Vorzeichen, an dem die Umwandlung außen von innen unterscheidet, wäre null.
+    Vorzeichen, an dem die Umwandlung außen von innen unterscheidet, wäre null. **Endlich**, weil
+    das Vorzeichen eines ``NaN`` nichts ist: der Ring wäre weder außen noch innen (Review
+    2026-10-14). Der Leser der Antwort prüft dasselbe und sagt es als ``SchemaError``, bevor der
+    Vertrag greift.
     """
-    if len(ring) < 4 or any(len(point) < 2 for point in ring):
+    if len(ring) < 4 or any(len(point) < 2 or not _are_numbers(point[:2]) for point in ring):
         return False
     return ring[0][0] == ring[-1][0] and ring[0][1] == ring[-1][1]
 
@@ -316,17 +334,13 @@ def _checked_rings(name: str, index: int, entry: Mapping[str, Any]) -> list[Ring
             isinstance(point, list) and len(point) >= 2 and _are_numbers(point[:2])
             for point in ring
         ):
-            raise SchemaError(f"{where} ist keine Folge von Punkten [x, y]")
+            raise SchemaError(f"{where} ist keine Folge von Punkten [x, y] mit endlichen Zahlen")
         if len(ring) < 4:
             raise SchemaError(f"{where}: {len(ring)} Punkte, ein Ring hat vier oder mehr")
         if not is_ring(ring):
             raise SchemaError(f"{where} ist nicht geschlossen: {ring[0][:2]} != {ring[-1][:2]}")
         checked.append(ring)
     return checked
-
-
-def _are_numbers(values: Sequence[Any]) -> bool:
-    return all(isinstance(v, int | float) and not isinstance(v, bool) for v in values)
 
 
 def _wkid_crs(name: str, results: Sequence[Any]) -> str:
