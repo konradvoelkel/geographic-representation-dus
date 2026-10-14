@@ -1257,9 +1257,11 @@ def build_steps(
                 layout.target_view(settings).precincts_geojson,
                 # Option 01: die Seite nennt die Übereinstimmung mit dem Straßenverzeichnis
                 *((layout.streets_directory,) if layout.streets_directory is not None else ()),
-                # Option 05
+                # Option 05; Punkt 58: ``papers_gremien`` nennt die Quelle je Dokument, und der
+                # Abschnitt „Gremien" sagt die Anteile der beiden Quellen in einem Satz
                 layout.district_bodies,
                 layout.bodies_table,
+                layout.papers_bodies,
                 layout.district_units,
                 # Option 06
                 layout.weighted,

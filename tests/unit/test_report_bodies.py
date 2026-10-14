@@ -295,3 +295,49 @@ def test_the_assignment_table_follows_the_switch_and_the_committees(
         update={"bodies": default_settings.bodies.model_copy(update={"committees": {}})}
     )
     assert assignment_rows(mini_run, without) == ()
+
+
+# --- Punkt 58: die beiden Quellen des Gremiums auf der Seite -----------------------------------
+
+
+def test_the_figures_carry_the_sources_and_the_cross_check(model: ReportModel) -> None:
+    """Die Mini-Fixture trägt die Beratungsfolge ihrer 200 Dokumente, und jede Nummer trifft.
+
+    Darum kommen alle 200 Gremien aus der Nummer, keines aus der Folge -- und die Folge bestätigt,
+    wo sie eindeutig ist. Die Anteile zerlegen die Dokumente, das ist die Zusicherung.
+    """
+    figures = model.body_figures
+    assert figures is not None
+    assert {source for source, _, _, _ in figures.by_source} == set(prep_bodies.SOURCES)
+    assert sum(count for _, _, count, _ in figures.by_source) == figures.documents == 200
+    assert sum(share for _, _, _, share in figures.by_source) == pytest.approx(1.0)
+    assert figures.from_number == 200 and figures.from_consultation == 0
+    assert figures.confirmed > 0 and figures.conflicting + figures.ambiguous >= 0
+    assert figures.documents_from(prep_bodies.FROM_NOWHERE) == 0
+    # Die Labels kommen aus prep.bodies, damit Seite und Schrittzeile dasselbe Wort benutzen
+    assert dict((s, label) for s, label, _, _ in figures.by_source) == prep_bodies.SOURCE_LABELS
+
+
+def test_without_the_file_the_figures_have_no_sources(
+    model: ReportModel, default_settings: Settings
+) -> None:
+    """Ohne ``papers_gremien.parquet`` gibt es die Zahlen nicht, und die Vorlage lässt den Satz weg."""
+    assert model.bodies and model.body_figures
+    plain = body_figures(model.bodies, model.districts, default_settings.bodies)
+    assert plain.by_source == () and plain.from_number == 0
+    assert (plain.confirmed, plain.conflicting, plain.ambiguous) == (0, 0, 0)
+
+
+def test_the_section_names_both_sources_with_their_shares(built: str) -> None:
+    section = built[
+        built.index('<section id="gremien">') : built.index(
+            "</section>", built.index('<section id="gremien">')
+        )
+    ]
+    # ``percent_de`` setzt ein schmales geschütztes Leerzeichen vor das Prozentzeichen
+    plain = section.replace("\u202f", " ").replace("\u00a0", " ")
+    assert "nennt bei 200 der 200 Dokumente (100,0 %) das Gremium" in plain
+    assert "Die zweite Quelle ist die <em>Beratungsfolge</em>" in plain
+    assert "0 Dokumente (0,0 %) bekommen ihr Gremium so" in plain
+    assert "Wo beide Quellen etwas sagen, bleibt die Nummer" in plain
+    assert "sie stimmen in 156 Fällen überein und widersprechen sich in 2" in plain

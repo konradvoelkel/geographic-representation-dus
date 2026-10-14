@@ -260,6 +260,26 @@ class BodyFigures:
     hits: int  # Dokument-Bezirk-Paare über alle Wahlbezirke
     own_hits: int
     names_as_of: dt.date | None  # Stand der Namen aus den Settings
+    # Punkt 58: woher das Gremium kommt, (Quelle, Label, Dokumente, Anteil) in der Reihenfolge von
+    # ``prep.bodies.SOURCES``, dazu die drei Zahlen über das Verhältnis der beiden Quellen. Ohne
+    # den Schritt ``bodies`` neu gerechnet gibt es sie nicht, und die Vorlage lässt den Satz weg.
+    by_source: tuple[tuple[str, str, int, float], ...] = ()
+    confirmed: int = 0  # Nummer und Beratungsfolge nennen dasselbe Gremium
+    conflicting: int = 0  # beide nennen eines, und es ist nicht dasselbe; die Nummer bleibt
+    ambiguous: int = 0  # ohne Gremium aus der Nummer, und die Folge nennt mehr als eines
+
+    def documents_from(self, *sources: str) -> int:
+        """Dokumente, deren Gremium aus einer dieser Quellen kommt (``prep.bodies.SOURCES``)."""
+        return sum(count for source, _, count, _ in self.by_source if source in sources)
+
+    @property
+    def from_number(self) -> int:
+        """Aus der Drucksachennummer, einschließlich der älteren Nummernform (Punkt 57)."""
+        return self.documents_from(prep_bodies.FROM_NUMBER, prep_bodies.FROM_ALIAS)
+
+    @property
+    def from_consultation(self) -> int:
+        return self.documents_from(prep_bodies.FROM_CONSULTATION)
 
 
 # --- Option 06: Gewichtung (docs/plans/06-gewichtung.md) ---------------------------------------
@@ -953,7 +973,10 @@ def _kind_shares_add_up(result: BodyFigures) -> bool:
 
 
 def _kinds_are_known(
-    rows: Sequence[BodyRow], districts: Sequence[DistrictRow], settings: Bodies
+    rows: Sequence[BodyRow],
+    districts: Sequence[DistrictRow],
+    settings: Bodies,
+    sources: prep_bodies.SourceCounts | None = None,
 ) -> bool:
     """Jede Zeile trägt eine bekannte Klasse und nicht negative, geordnete Zahlen.
 
@@ -975,9 +998,16 @@ def _kinds_are_known(
     _kind_shares_add_up, message="die Klassen zerlegen die Dokumente, Anteile summieren zu 1"
 )
 def body_figures(
-    rows: Sequence[BodyRow], districts: Sequence[DistrictRow], settings: Bodies
+    rows: Sequence[BodyRow],
+    districts: Sequence[DistrictRow],
+    settings: Bodies,
+    sources: prep_bodies.SourceCounts | None = None,
 ) -> BodyFigures:
-    """Dokumente je Klasse mit Anteil, Anteil „unbekannt", Treffer und Stand der Namen."""
+    """Dokumente je Klasse mit Anteil, Anteil „unbekannt", Treffer und Stand der Namen.
+
+    ``sources`` sind die Zahlen aus ``papers_gremien.parquet`` (Punkt 58): woher das Gremium
+    kommt, und wie oft sich die beiden Quellen bestätigen, widersprechen oder nichts entscheiden.
+    """
     documents = sum(r.documents for r in rows)
     per_kind = {kind: 0 for kind in prep_bodies.KINDS}
     for row in rows:
@@ -996,6 +1026,22 @@ def body_figures(
         hits=sum(d.hits for d in districts),
         own_hits=own,
         names_as_of=settings.names_as_of,
+        by_source=(
+            ()
+            if sources is None
+            else tuple(
+                (
+                    source,
+                    prep_bodies.SOURCE_LABELS[source],
+                    count,
+                    count / sources.documents if sources.documents else 0.0,
+                )
+                for source, count in sources.per_source
+            )
+        ),
+        confirmed=0 if sources is None else sources.confirmed,
+        conflicting=0 if sources is None else sources.conflicting,
+        ambiguous=0 if sources is None else sources.ambiguous,
     )
 
 
@@ -1720,7 +1766,15 @@ def build_report_model(
         bodies=table,
         assignment=assignment_rows(layout, settings),
         assignment_threshold=settings.classify.min_probability,
-        body_figures=body_figures(table, rows, settings.bodies),
+        body_figures=body_figures(
+            table,
+            rows,
+            settings.bodies,
+            # Punkt 58: die Quellen je Dokument; die Datei ist Eingabe des Schritts ``report``
+            prep_bodies.source_counts(pl.read_parquet(layout.papers_bodies))
+            if layout.papers_bodies.exists()
+            else None,
+        ),
         body_regression=_body_regression(district_bodies, results, settings),
         # Punkt 46: die zweite Kennzahl des Methodik-Reviews mit eigener Regression (§ 2.6)
         per_term_regression=_per_term_regression(layout, results, settings),
