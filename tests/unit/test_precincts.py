@@ -747,3 +747,43 @@ def test_a_json_list_instead_of_an_object_is_a_schema_error(tmp_path: Path) -> N
         read_source_geojson(path)
     with pytest.raises(SchemaError, match="keine results"):
         read_source_esri_identify(path)
+
+
+# --- Befund 9 und 17: welchem äußeren Ring ein Loch gehört ------------------------------------
+
+
+def test_a_hole_goes_to_the_ring_that_holds_all_of_it_not_one_corner() -> None:
+    """Befund 17: ein einzelner Punkt im Ring genügt nicht, sonst entscheidet die Fläche falsch.
+
+    Hier ragt eine Ecke des Lochs in einen **kleineren** äußeren Ring, der es nicht enthält. Mit
+    ``any`` traf dieser kleinere Ring, und weil die Zuordnung den kleinsten Treffer nahm, bekam er
+    das Loch -- das Ergebnis war ein Polygon mit einem Loch, das darüber hinausragt. Jetzt
+    schließt schon das umschließende Rechteck ihn aus, und ``all`` wäre die zweite Schranke.
+    """
+    big = _clockwise(0.0, 0.0, 100.0)
+    small = _clockwise(90.0, 90.0, 20.0)  # kleiner und überlappt die Ecke von big
+    hole = list(reversed(_clockwise(80.0, 80.0, 19.0)))  # ganz in big, eine Ecke auch in small
+    assert point_in_ring(hole[2], small) and not point_in_ring(hole[0], small)
+
+    geometry = geometry_from_esri_rings([big, small, hole])
+    assert geometry["type"] == "MultiPolygon"
+    # Das Loch sitzt im ersten Teil (big), nicht im zweiten (small)
+    assert [len(polygon) for polygon in geometry["coordinates"]] == [2, 1]
+    assert shape(geometry).area == pytest.approx(100 * 100 + 20 * 20 - 19 * 19)
+
+
+def test_a_hole_that_shares_an_edge_still_finds_its_ring() -> None:
+    """Der Rückfall auf ``any``: auf dem Rand ist das Strahlverfahren nicht entschieden.
+
+    Dieses Loch teilt die rechte und die obere Kante seines Rings; drei seiner fünf Punkte liegen
+    damit genau auf dem Rand und gelten als außen. ``all`` findet so keinen Ring -- ohne den
+    Rückfall wäre eine gültige Fläche ein ``SchemaError``.
+    """
+    outer = _clockwise(0.0, 0.0, 100.0)
+    hole = list(reversed(_clockwise(50.0, 50.0, 50.0)))
+    assert not all(point_in_ring(point, outer) for point in hole)
+    assert any(point_in_ring(point, outer) for point in hole)
+
+    geometry = geometry_from_esri_rings([outer, hole])
+    assert geometry["type"] == "Polygon" and len(geometry["coordinates"]) == 2
+    assert shape(geometry).area == pytest.approx(100 * 100 - 50 * 50)

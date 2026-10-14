@@ -290,19 +290,57 @@ def _turned(ring: Ring) -> list[list[float]]:
     return [[point[0], point[1]] for point in reversed(ring)]
 
 
+Box = tuple[float, float, float, float]
+"""Das umschließende Rechteck eines Rings: ``(x0, y0, x1, y1)``."""
+
+
+def _bounds(ring: Ring) -> Box:
+    x = [point[0] for point in ring]
+    y = [point[1] for point in ring]
+    return min(x), min(y), max(x), max(y)
+
+
+def _box_inside(inner: Box, outer: Box) -> bool:
+    """Notwendige Bedingung für „enthalten": das Rechteck liegt im Rechteck."""
+    return (
+        outer[0] <= inner[0]
+        and outer[1] <= inner[1]
+        and inner[2] <= outer[2]
+        and inner[3] <= outer[3]
+    )
+
+
 def _enclosing_ring(hole: Ring, outer: Sequence[tuple[Ring, float]]) -> int:
-    """Der kleinste äußere Ring, der das Loch enthält; verschachtelte Flächen sind damit eindeutig."""
-    found = [
-        (abs(area), index)
-        for index, (ring, area) in enumerate(outer)
-        if any(point_in_ring(point, ring) for point in hole)
-    ]
-    if not found:
-        raise SchemaError(
-            f"ein Ring gegen den Uhrzeigersinn ({abs(ring_signed_area(hole)):.0f} Flächeneinheiten) "
-            f"liegt in keinem der {len(outer)} äußeren Ringe; so ist er weder Loch noch Fläche"
-        )
-    return min(found)[1]
+    """Der kleinste äußere Ring, der das Loch enthält; verschachtelte Flächen sind damit eindeutig.
+
+    Drei Stufen, von billig nach teuer, und die Kandidaten nach Fläche aufsteigend -- der erste
+    Treffer ist damit der kleinste, und die Schleife endet dort:
+
+    1. **Das umschließende Rechteck** schließt einen Ring aus, ohne einen Strahl zu schießen.
+       Vier Vergleiche statt eines Punkttests über bis zu 400 Kanten.
+    2. **Alle** Punkte des Lochs liegen im Ring (``all``), nicht einer (``any``, Befund 17 des
+       Reviews): ein einzelner Punkt kann auch der einer Fläche sein, die das Loch nur
+       schneidet, und bei geschachtelten Ringen entschied dann die Reihenfolge. ``all`` bricht
+       bei einem Ring, der nicht passt, beim ersten Punkt außerhalb ab und ist damit meist
+       billiger als ``any``.
+    3. **Ein Punkt genügt**, wenn Stufe 2 nichts findet: ein Loch, das eine Kante mit seinem Ring
+       teilt, hat Punkte genau auf dem Rand, und für die ist das Strahlverfahren nicht
+       entschieden. Lieber der richtige Ring aus der schwächeren Bedingung als ein
+       ``SchemaError`` über gültige Daten.
+    """
+    box = _bounds(hole)
+    nearby = sorted(
+        (index for index, (ring, _) in enumerate(outer) if _box_inside(box, _bounds(ring))),
+        key=lambda index: abs(outer[index][1]),
+    )
+    for enough in (all, any):
+        for index in nearby:
+            if enough(point_in_ring(point, outer[index][0]) for point in hole):
+                return index
+    raise SchemaError(
+        f"ein Ring gegen den Uhrzeigersinn ({abs(ring_signed_area(hole)):.0f} Flächeneinheiten) "
+        f"liegt in keinem der {len(outer)} äußeren Ringe; so ist er weder Loch noch Fläche"
+    )
 
 
 @deal.raises(SchemaError)
