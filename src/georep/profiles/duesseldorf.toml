@@ -314,9 +314,10 @@ SENR = "Seniorenrat"           # OParl-organizations-Seite 2026-10-11
 # erlaubt (georep.prep.bodies.organization_key). Die Abbildung ist **nicht umkehrbar**: mehrere
 # Organisationen zeigen auf dasselbe Kürzel (gr/14 und gr/400214 auf AUS, gr/10 und gr/400213 auf
 # AÖE, gr/400211 und gr/400232 auf ADIG -- der Server hat die Gremien 2020 und 2024 neu angelegt),
-# und mehrere Kürzel zeigen auf dieselbe Organisation (GLA und RPAU auf die des Rates, BAU auf die
+# und mehrere Kürzel zeigen auf dieselbe Organisation (RPAU und WPA auf die des Rates, BAU auf die
 # von SEBD; daher die 84,3 % von gr/20 und die 66,5 % von gr/17). Für diese Richtung ist das
-# gleichgültig: gefragt wird immer „welches Gremium nennt diese Organisation".
+# gleichgültig: gefragt wird immer „welches Gremium nennt diese Organisation". GLA gehört seit
+# gr/400242 nicht mehr dazu -- es hat seit der laufenden Periode eine eigene Organisation.
 #
 # Nicht dabei: gr/27 (1 Dokument der Hauptperiode, 21 der alten, keines davon mit eindeutiger
 # Folge) -- welches Gremium das ist, sagen die Daten nicht, und ein Eintrag wäre geraten.

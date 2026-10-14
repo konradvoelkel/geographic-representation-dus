@@ -1604,10 +1604,25 @@ Implikation und keine Gleichheit.
 - **Eine Auswahlregel bei mehreren Gremien** (die fünf oben): höchstens 59,9 % Treffer, siehe die
   Tabelle. Eine Regel, die in zwei von fünf Fällen falsch liegt, ist keine Quelle, sondern ein
   Rauschen mit Vorzeichen.
-- **Die Folge über die Nummer stellen**, wo beide etwas sagen: die 146 Widersprüche der
-  Hauptperiode sind keine Fehler des Parsers, sondern sechs Kürzel, die ihre Organisation mit einem
-  anderen teilen (GLA und RPAU mit dem Rat, BAU mit SEBD) — die Folge kann sie nicht
-  auseinanderhalten, die Nummer kann es.
+- **Die Folge über die Nummer stellen**, wo beide etwas sagen: die 145 Widersprüche der
+  Hauptperiode sind keine Fehler des Parsers, und sie zerfallen in zwei Klassen, die beide für die
+  Nummer sprechen (gemessen 2026-10-14, eingefroren in
+  `tests/golden/test_bodies_reference.py::test_the_two_kinds_of_disagreement`):
+
+  | Klasse | Dokumente | Paare Nummer → Folge |
+  |---|---|---|
+  | das Kürzel der Nummer hat **keine eigene Organisation** und teilt sie mit einem anderen Gremium | **88** | BAU → SEBD 57, RPAU → RAT 30, WPA → RAT 1 |
+  | beide haben eine, und die Folge nennt eine **andere Beratungsstation** | **57** | RAT → HFA 14, OVA → RAT 9, KUA → RAT 8, APS → RAT 3, SPOA → RAT 3, GLA 7 auf fünf Ziele, … |
+
+  Die erste Klasse ist eine Grenze der Quelle: die Folge *kann* `BAU` nicht nennen, weil der
+  Bauausschuss im Organisationsregister die Organisation von `SEBD` führt. Die zweite ist der
+  eigentliche Grund für die Reihenfolge der Quellen: **die Folge ist ein Weg, die Nummer ist eine
+  Akte.** Eine Ratsvorlage, die nur im Haupt- und Finanzausschuss beraten wurde (`RAT/388/2020`,
+  14 solche Fälle), ist eine Vorlage *des Rates*; ein Nachtrag eines Ausschusses, der nur im Rat
+  lief (`OVA/153/2023/1`), gehört in die Akte seines Ausschusses. Wer hier die Folge vorzieht,
+  verschiebt Dokumente auf das Gremium, das sie zuletzt angefasst hat. GLA gehört seit
+  `gr/400242` (eigene Organisation in der laufenden Periode) in die zweite Klasse und nicht mehr in
+  die erste — bis zum Review vom 2026-10-14 stand es dort falsch.
 - **Die Folge in den Korpus mischen** (Schritt `corpus` statt `bodies`): dann trüge
   `interim/papers.parquet` eine Angabe, die der Abruf dieser Periode nicht geliefert hat, und der
   Schritt, der die Frage beantwortet, wäre nicht der, der die Quelle liest. Der Schritt `bodies`

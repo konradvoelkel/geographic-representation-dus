@@ -9,6 +9,7 @@ den ganzen Korpus liest.
 from __future__ import annotations
 
 import json
+from collections import Counter
 from pathlib import Path
 
 import polars as pl
@@ -33,6 +34,7 @@ from georep.prep.bodies import (
     CITY_DISTRICT,
     COMMITTEE,
     CONSULTATION,
+    CONSULTATION_BODY,
     CONSULTATION_COUNT,
     COUNCIL,
     DISTRICT_BODY,
@@ -307,10 +309,9 @@ def test_the_consultation_confirms_the_numbers_of_the_main_period(
 ) -> None:
     """Punkt 58: in der Hauptperiode trifft die Nummer jede Zeile; die Folge ist die Gegenprobe.
 
-    Sie bestätigt 16 903 von 17 049 Zuordnungen mit eindeutiger Folge und widerspricht 146 (0,9 %)
-    -- und ändert keine einzige, weil die Nummer entscheidet. Die 146 sind keine Fehler des
-    Parsers: sechs Kürzel teilen ihre Organisation mit einem anderen (GLA und RPAU mit dem Rat,
-    BAU mit SEBD), und die Folge kann sie darum nicht auseinanderhalten.
+    Sie bestätigt 16 902 von 17 047 Zuordnungen mit eindeutiger Folge und widerspricht 145 (0,9 %)
+    -- und ändert keine einzige, weil die Nummer entscheidet. Die 145 zerfallen in zwei Klassen,
+    und ``test_the_two_kinds_of_disagreement`` hält sie auseinander.
     """
     rules = BodyRules.from_settings(default_settings.bodies)
     assert len(default_settings.bodies.organizations) == 38
@@ -327,6 +328,53 @@ def test_the_consultation_confirms_the_numbers_of_the_main_period(
     assert counts.ambiguous == MAIN_CONSULTATION["mehrdeutig"]
     # Das Paket trägt ein Dokument mehr als die Referenz (KUA/023/2026); der Korpus entscheidet.
     assert pl.read_parquet(PACKAGE / "raw" / "beratungsfolge.parquet").height == 19_109
+
+
+# Review 2026-10-14: die 145 Widersprüche der Hauptperiode, aufgeteilt nach ihrem Grund. Erste
+# Klasse: ein Kürzel ohne eigene Organisation -- die Folge kann es nicht nennen. Zweite Klasse:
+# beide haben eine, und die Folge nennt eine andere Beratungsstation als die Nummer.
+SHARED_ORGANIZATION = {("BAU", "SEBD"): 57, ("RPAU", "RAT"): 30, ("WPA", "RAT"): 1}
+OTHER_STATION_TOTAL = 57
+OTHER_STATION_TOP = {("RAT", "HFA"): 14, ("OVA", "RAT"): 9, ("KUA", "RAT"): 8}
+
+
+@pytest.mark.slow
+def test_the_two_kinds_of_disagreement(reference_root: Path, default_settings: Settings) -> None:
+    """Warum die Folge der Nummer widerspricht -- zwei Gründe, und beide sprechen für die Nummer.
+
+    **88 Dokumente**: das Kürzel der Nummer hat keine eigene Organisation, es teilt sie mit einem
+    anderen Gremium (``BAU`` mit ``SEBD``, ``RPAU`` und ``WPA`` mit dem Rat). Die Folge *kann* es
+    nicht nennen, und sie nennt darum das Kürzel des Teilhabers.
+
+    **57 Dokumente**: beide haben eine eigene Organisation, und die Folge nennt trotzdem eine
+    andere -- weil sie eine **Beratungsstation** ist und nicht die Zuständigkeit der Nummer. Die
+    14 Ratsvorlagen, deren Folge nur den Haupt- und Finanzausschuss nennt
+    (``RAT/388/2020``), und die Nachträge eines Ausschusses, die nur im Rat liefen
+    (``OVA/153/2023/1``), sind genau der Fall, für den „die Nummer entscheidet" die richtige Regel
+    ist: das Gremium der Drucksachennummer ist die Akte, die Folge ist der Weg.
+    """
+    rules = BodyRules.from_settings(default_settings.bodies)
+    folge = pl.read_parquet(PACKAGE / "raw" / "beratungsfolge.parquet").select(ID, CONSULTATION)
+    frame = classify_papers(_reference_corpus(reference_root), rules, folge)
+    disagreeing = frame.filter(
+        (pl.col(KIND) != UNKNOWN)
+        & pl.col(CONSULTATION_BODY).is_not_null()
+        & (pl.col(CONSULTATION_BODY) != pl.col(BODY))
+    )
+    assert disagreeing.height == MAIN_CONSULTATION["widerspruch"]
+    # Kürzel mit eigener Organisation: sie stehen als Ziel in der Abbildung des Profils
+    with_organization = set(default_settings.bodies.organizations.values())
+    pairs = Counter(
+        (str(row[BODY]), str(row[CONSULTATION_BODY])) for row in disagreeing.iter_rows(named=True)
+    )
+    shared = {pair: n for pair, n in pairs.items() if pair[0] not in with_organization}
+    other = {pair: n for pair, n in pairs.items() if pair[0] in with_organization}
+    assert shared == SHARED_ORGANIZATION
+    assert sum(shared.values()) == 88 and sum(other.values()) == OTHER_STATION_TOTAL
+    assert {pair: other[pair] for pair in OTHER_STATION_TOP} == OTHER_STATION_TOP
+    # GLA hat seit `gr/400242` eine eigene Organisation und gehört damit in die zweite Klasse
+    assert "GLA" in with_organization
+    assert sum(n for (code, _), n in other.items() if code == "GLA") == 7
 
 
 @pytest.mark.slow
