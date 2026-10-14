@@ -313,6 +313,28 @@ def test_status_names_profile_and_city(project: Path, capsys: pytest.CaptureFixt
     assert "Daten flach unter" in capsys.readouterr().out  # von Hand geleert, gibt es weiter
 
 
+def test_publish_turns_a_page_over_budget_into_an_exit_code(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Punkt 50, Review 2026-10-14: die Zeile nannte die Überschreitung, der Exit-Code nicht.
+
+    Von Hand soll man die Seite sehen und die Zahl lesen (Exit 0); in Actions ist das Budget eine
+    Zusage, und ``--strict-budget`` macht den Lauf rot (``pages.yml``).
+    """
+    assert main(["bootstrap"]) == 0 and main(["run"]) == 0
+    capsys.readouterr()
+    assert main(["publish"]) == 0
+    assert "über dem Budget" not in capsys.readouterr().out
+    tight = project / "knapp.toml"
+    tight.write_text("[report]\npage_budget_bytes = 1\n", encoding="utf-8")
+    assert main(["--settings", str(tight), "publish"]) == 0  # ohne Schalter nur eine Zeile
+    assert "über dem Budget: index.html" in capsys.readouterr().out
+    assert main(["--settings", str(tight), "publish", "--strict-budget"]) == 1
+    printed = capsys.readouterr()
+    assert "über dem Budget: index.html" in printed.out  # die Zeile steht auch im Fehlerfall
+    assert "Fehler: über dem Budget von 1 Byte" in printed.err
+
+
 # --- Option 07: Monitoring -------------------------------------------------------------------
 
 

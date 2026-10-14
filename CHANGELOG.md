@@ -4,6 +4,17 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 
 ## Unreleased
 
+- **Eine zu große Seite macht den Pages-Lauf rot** (`georep publish --strict-budget`, in
+  `pages.yml` gesetzt; Review-Befund 3): `report` und `publish` nannten eine Überschreitung des
+  Budgets in ihrer Zeile, aber der Exit-Code blieb 0, und niemand liest eine Zeile in einem grünen
+  Lauf. Von Hand bleibt es bei der Zeile. Dazu rechnet `tests/golden/test_published_page.py`
+  (`slow`, 33 s) **die Seite, die wirklich veröffentlicht wird**: volle Referenz,
+  `snapshots/2014-2020`, Profil `duesseldorf-vergleich`, beide Periodenabschnitte, 932 274 von
+  1 000 000 Byte. Vorher stand das Budget in vier Tests, und keiner baute diese Kombination.
+- **`pages.yml` fragt die Frische je Profil ab** (Review-Befund 5): der abschließende
+  `georep status` lief mit dem Standardprofil und meldete nach dem Lauf des Vergleichsprofils
+  jeden Schritt als „offen: Settings geändert" — der Fingerprint ist global. Jetzt eine Zeile je
+  Profil.
 - **`georep pack ZIEL` macht aus einem gelaufenen Profil ein Datenpaket** (Review-Befund 6, die
   Gegenrichtung von `bootstrap`): es schreibt genau die Dateien, die `bootstrap` später sucht —
   `external/`, `raw/papers.jsonl`, Straßen und Orte, wo das Profil sein Wörterbuch selbst holt, und

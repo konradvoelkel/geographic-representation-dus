@@ -79,6 +79,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     pub = sub.add_parser("publish", help="Stadtseiten zusammentragen und den Städtevergleich bauen")
     pub.add_argument("--out", type=Path, help="Zielordner (Standard: <data_root>/site)")
+    # Punkt 50, Review 2026-10-14: die Zeile nannte eine Überschreitung, der Exit-Code nicht.
+    # In Actions ist das Budget eine Zusage und keine Notiz, darum dort gesetzt (pages.yml).
+    pub.add_argument(
+        "--strict-budget",
+        action="store_true",
+        help="Exit 1, wenn eine veröffentlichte Seite über report.page_budget_bytes liegt",
+    )
     # Option 07: maschinenlesbar für Skripte (deploy/), damit kein Pfad und kein Profilname
     # außerhalb des Pakets ein zweites Mal definiert wird.
     sub.add_parser("paths", help="Profil und Pfade des Layouts als key=wert, eine Zeile je Wert")
@@ -227,6 +234,12 @@ def _cmd_profiles(settings: Settings) -> int:
 
 
 def _cmd_publish(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
+    """Die Stadtseiten zusammentragen; mit ``--strict-budget`` ist eine zu große Seite ein Fehler.
+
+    Die Zusammenfassung nennt eine Überschreitung immer (Punkt 50). Ob sie den Lauf rot macht,
+    entscheidet der Aufrufer: von Hand will man die Seite sehen und die Zahl lesen, in Actions ist
+    das Budget eine Zusage (Review 2026-10-14). Die Zeile steht auch im Fehlerfall auf stdout.
+    """
     summary = publish_sites(
         settings,
         layout,
@@ -235,6 +248,13 @@ def _cmd_publish(args: argparse.Namespace, settings: Settings, layout: Layout) -
         out=args.out,
     )
     print(summary.line())
+    if args.strict_budget and summary.over_budget:
+        pages = ", ".join(summary.over_budget)
+        print(
+            f"Fehler: über dem Budget von {settings.report.page_budget_bytes} Byte: {pages}",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

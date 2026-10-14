@@ -482,10 +482,17 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   35 KB für „Zwei Wahlperioden"; zusammen mit „Laufende Wahlperiode" sind es 45 946 Byte. Rund 40 KB
   Reserve liegen gemessen in § 5 jenes Dokuments (doppelte SVG-Pfade der Parteikarten 28 KB, Suchindex
   8 KB, Leerraum 4,4 KB), falls ein weiterer Abschnitt dazukommt.
-- **`pages.yml` endet mit `georep status`, und der sagt seitdem für jeden Schritt „offen: Settings
-  geändert"**: die Hauptseite baut zuletzt das Profil `duesseldorf-vergleich`, dessen Settings-Fingerprint
-  ein anderer ist als der des Standardprofils, mit dem `status` läuft. Der Fingerprint ist global (siehe
-  unten), die Zeile ist eine Diagnose und kein Gate; der Schritt endet mit Exit 0.
+- **Behoben am 2026-10-14** (Review-Befund 5): `pages.yml` fragte die Frische zuletzt mit dem
+  Standardprofil ab und meldete nach dem Lauf des Vergleichsprofils jeden Schritt als „offen: Settings
+  geändert" — der Fingerprint ist global (siehe unten), die Diagnose sagte also nichts. Jetzt läuft
+  `georep status` je Profil, eine Zeile nach der anderen.
+- **Das Budget der veröffentlichten Seite ist seit dem 2026-10-14 ein Gate** (Review-Befund 3):
+  `georep publish --strict-budget` endet mit Exit 1, wenn eine veröffentlichte Seite über
+  `report.page_budget_bytes` liegt, und `pages.yml` setzt den Schalter; von Hand bleibt es bei der Zeile.
+  Gerechnet wird die Seite seitdem auch in einem Test: `tests/golden/test_published_page.py` (`slow`,
+  33 s) baut die volle Referenz mit `snapshots/2014-2020` unter dem Profil `duesseldorf-vergleich` und
+  hält `index.html` gegen das Budget — vorher prüften vier Tests das Budget, und keiner baute diese
+  Kombination.
 - Der Stadtbezirk Mönchengladbachs steckt im ersten Zeichen der Stimmbezirksnummer (`10401`: Stadtbezirk 1, Wahlbezirk 04, Stimmbezirk 01); das Profil liest ihn mit `columns.results.city_district_from_precinct`. Bestätigt ist die Regel bisher nur an der Fixture (Wahlbezirke 04, 09, 23) und an der Zahl der Stadtbezirke (vier); der volle Lauf prüft sie gegen die Wahlbezirks-CSV (`docs/plans/01-staedte.md`, § 8, Frage 1.13).
 
 ## Nächster Schritt

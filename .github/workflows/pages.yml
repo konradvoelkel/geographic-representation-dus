@@ -6,6 +6,10 @@
 # Stadtseite sie nicht mit. Pfade kommen aus `georep paths`, nirgends zweimal.
 # Quelle in den Repo-Einstellungen: Pages, Source „GitHub Actions" (Konrads Handgriff).
 # Actions per SHA gepinnt wie in ci.yml; Push per SSH, das gh-Token hat keinen workflow-Scope.
+# Seit die Datenpakete im Repo liegen (Punkt 56), bricht ein Fehler in **irgendeinem** Block den
+# ganzen Deploy ab, und das ist Absicht: die Daten sind da, also ist ein fehlgeschlagener Teil ein
+# Fehler und keine fehlende Eingabe. Die drei `if [ ! -d … ]`-Wachen bleiben trotzdem stehen --
+# sie sind die Zusage, dass ein Klon ohne ein Paket die uebrigen Seiten weiter baut.
 name: pages
 
 on:
@@ -87,9 +91,21 @@ jobs:
             uv run georep --profile moenchengladbach bootstrap || exit 1
             uv run georep --profile moenchengladbach run || exit 1
           fi
+      # --strict-budget macht den Lauf rot, wenn eine veroeffentlichte Seite ueber
+      # report.page_budget_bytes liegt (Punkt 50): von Hand ist das eine Notiz, hier eine Zusage.
+      # Geprueft werden alle Seiten im Zielordner, auch die Unterseiten und vergleich.html.
       - name: Stadtseiten und Vergleich veroeffentlichen
-        run: uv run georep publish
-      - run: ls -la data/site data/site/data && uv run georep status
+        run: uv run georep publish --strict-budget
+      - run: ls -la data/site data/site/data
+      # Je Profil eine Zeile: der Settings-Fingerprint ist global, und die Hauptseite baut zuletzt
+      # das Vergleichsprofil -- ein `georep status` mit dem Standardprofil meldete darum jeden
+      # Schritt als "offen: Settings geändert" und sagte nichts (Review 2026-10-14).
+      - name: Frische je Profil
+        run: |
+          for profile in duesseldorf-vergleich duesseldorf-2014 duesseldorf-2025 moenchengladbach; do
+            echo "--- $profile"
+            uv run georep --profile "$profile" status || exit 1
+          done
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: data/site
