@@ -31,7 +31,7 @@ und Abrufregeln hat. Die Endpunkte stehen nie im Code, sondern im Profil der Sta
 | Open-Data-Portal Düsseldorf, Wahlergebnis und Stimmbezirke | `https://opendata.duesseldorf.de/sites/default/files/…` | CSV (latin-1, `;`), GeoJSON in EPSG:4647 | Ergebnis dl-de/by-2-0, Geometrie dl-de/zero-2-0 | `external/` → Wähler, Zuschnitt |
 | Open-Data-Portal Düsseldorf, Quartiersatlas 2024 | `…/Daten_QA_2024.csv`, `…Sozialräume_QA_Daten_WGS84_EPSG_4326.geojson`, `…Erläuterung_Indikatoren_QA_0.csv` | CSV (utf-8, `;`, Dezimalkomma), GeoJSON in CRS84 | dl-de/by-2-0 (Namensnennung: Landeshauptstadt Düsseldorf, Amt für Statistik und Wahlen) | `context/` → Kontrollvariablen je Wahlbezirk |
 | votemanager der ITK Rheinland (Mönchengladbach, AGS 05116000) | `https://wep.itk-rheinland.de/vm/prod/kw_2025/05116000/daten/opendata/…csv` | CSV | **laut Anbieter nicht angegeben**; die Seite nennt Quelle und Herausgeber | Wahlergebnis je Stimm- und Wahlbezirk, amtliches Straßenverzeichnis |
-| Geoportal Mönchengladbach | `https://geoportal.moenchengladbach.de/wms/Hotlinks/OpenData/Wahlen_EPSG25832_SHAPE.zip` | Shapefile-Zip (EPSG:25832), gelesen mit pyshp | dl-de/zero-2-0 | Stimmbezirksflächen (Datenstand 08.06.2022) |
+| Geoportal Mönchengladbach | `…/K12_Politik_und_Wahlen/MapServer/identify?…&layers=all:16&maxAllowableOffset=0&f=json` (die ganze Anfrage steht im Profil) | Esri-JSON mit Ringen (`wkid` 25832), ein GET auf die Operation `identify` | dl-de/zero-2-0 | Stimmbezirksflächen, Aktualität Kommunalwahl 2025 (Punkt 65); bis zum 2026-10-14 das Shapefile-Zip `Wahlen_EPSG25832_SHAPE.zip` vom 08.06.2022 |
 | Overpass-API / OpenStreetMap | `https://overpass-api.de/api/interpreter` (POST) | Overpass-JSON | ODbL, © OpenStreetMap-Mitwirkende | Straßennamen je Stimmbezirk |
 | Wikidata SPARQL | `https://query.wikidata.org/sparql` | SPARQL-JSON | CC0 | Orte mit Koordinate in der Verwaltungseinheit (`P131*`) |
 | Wikipedia GeoSearch | `https://de.wikipedia.org/w/api.php` | MediaWiki-JSON | Artikeltitel aus der deutschsprachigen Wikipedia | Orte je Stimmbezirks-Bounding-Box |
@@ -251,7 +251,7 @@ plus ein Abruf. Der ausführliche Ablauf mit Prüfpunkten steht in
 |---|---|---|
 | OParl-Body der Stadt | Serverkatalog, etwa `https://ris-oparl.itk-rheinland.de/Oparl/bodies` | ja |
 | Wahlergebnis je Stimmbezirk (CSV) mit Wahlberechtigten, Wählern und Stimmen je Partei | Open-Data-Portal oder votemanager | ja |
-| Flächen der Stimmbezirke (GeoJSON oder Shapefile-Zip) mit Stimmbezirks- und Wahlbezirksnummer | Portal oder Geoportal | ja |
+| Flächen der Stimmbezirke (GeoJSON, Shapefile-Zip oder Esri-JSON einer ArcGIS-Operation) mit Stimmbezirks- und Wahlbezirksnummer | Portal oder Geoportal | ja |
 | Wikidata-Entität der Stadt (`Q…`) | Wikidata | ja |
 | Spaltennamen und Parteien der Ergebnis-CSV (`[columns.results]`) | aus der Datei ablesen | ja |
 | Ausschlussliste der Stadtteil- und Stadtbezirksnamen (`search.exclude`) | von Hand, einmal je Stadt | ja — ohne sie dominiert der Stadtname (in Düsseldorf stünde „düsseldorf" in 8 385 Dokumenten) |

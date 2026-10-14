@@ -330,7 +330,13 @@ statt ein halbes Paket zu schreiben, wenn
   der Stadt, und nur ein Blick von Hand hat sie gefunden,
 - ein Text kein Paper in `papers.jsonl` hat (er fällt im Schritt `corpus` ohnehin heraus).
 
-Vorhandene Dateien bleibt `pack` stehen; `--force` überschreibt sie. Die Prüfsummentabelle druckt
+Vorhandene Dateien bleibt `pack` stehen; `--force` überschreibt sie. **Beim zweiten Packen
+derselben Stadt ist das die Falle**: ohne `--force` meldet es jede Datei als übersprungen und das
+Paket bleibt der alte Stand. Und `pack` **räumt nicht auf** — es schreibt die Dateien, die das
+Profil heute nennt, und lässt liegen, was es früher nannte. Wechselt eine Stadt die Quellform ihrer
+Flächen (Punkt 65: vom Shapefile-Zip zur `identify`-Antwort), ist die alte Datei von Hand zu
+löschen; `tests/unit/test_data_packages.py` merkt es, weil die Prüfsummentabelle des READMEs dann
+nicht mehr zu den Dateien im Ordner passt. Die Prüfsummentabelle druckt
 es immer, und ein **fehlendes** `README.md` schreibt es als Gerüst: Tabelle, Größen und Zahlen
 fertig, die Prosa als `[nachzutragen]`. Dort gehören hinein, nach dem Muster von
 `reference/moenchengladbach/README.md`: Datum des Laufs, Zahl der Paper, Texte, Orte und Straßen,

@@ -22,7 +22,7 @@ sind Konrads; ihre Eingaben liegen als Pakete im Repo, damit GitHub Pages ohne N
 | Periode | 13.09.2020 – 14.09.2025 | 25.05.2014 – 12.09.2020 | ab 15.09.2025, **offen** | 13.09.2020 – 14.09.2025 |
 | Wahl, die den Nenner liefert | Ratswahl 14.09.2025 | Ratswahl 13.09.2020 | Ratswahl 14.09.2025 | Ratswahl 14.09.2025 |
 | Wahlbezirke | 41 | 41 (Zuschnitt 2025) | 41 | 33 |
-| Stimmbezirke | 306 | 316 (Zuschnitt 2020) | 306 | 180 |
+| Stimmbezirke | 306 | 316 (Zuschnitt 2020) | 306 | 179 |
 | Dokumente | 19 108 | 22 215 | 4 095 | 2 895 |
 | davon mit Text | 19 033 (99,6 %) | 21 838 (98,3 %) | 4 075 (99,5 %) | **650 (22,5 %)** |
 | davon mit Treffer | 10 739 | 12 977 | 2 173 | 489 |
@@ -30,7 +30,7 @@ sind Konrads; ihre Eingaben liegen als Pakete im Repo, damit GitHub Pages ohne N
 | Begriffe im Wörterbuch | 5 727 | 5 727 (geborgt) | 5 727 (geborgt) | 6 005 |
 | Monate in der Reihe | 61 | 77 | 14 | 61 |
 | Stand der Dokumente | Datensatz der Arbeit, November 2025 | Abruf 13.10.2026 | Erstabruf 13.10.2026 | Abruf 13.10.2026 |
-| Stand der Geometrie | Stimmbezirke 2025 | Stimmbezirke 2020, umgerechnet | Stimmbezirke 2025 | Flächen vom **08.06.2022** |
+| Stand der Geometrie | Stimmbezirke 2025 | Stimmbezirke 2020, umgerechnet | Stimmbezirke 2025 | **Stimmbezirke der Kommunalwahl 2025** (Punkt 65; bis zum 2026-10-14 Flächen vom 08.06.2022) |
 | Seite | [Wurzel](https://konradvoelkel.github.io/geographic-representation-dus/) | [`2014-2020/`](https://konradvoelkel.github.io/geographic-representation-dus/2014-2020/) | [`2025/`](https://konradvoelkel.github.io/geographic-representation-dus/2025/) | [`moenchengladbach/`](https://konradvoelkel.github.io/geographic-representation-dus/moenchengladbach/) |
 
 **Das Wörterbuch** entsteht je Wahlbezirk aus Straßennamen (OpenStreetMap über Overpass) und Orten
