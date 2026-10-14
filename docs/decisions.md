@@ -1503,7 +1503,7 @@ Quelle, nämlich die Gremien, die ein Dokument **beraten** haben — OParl liefe
 **Die Nummer entscheidet, die Folge ergänzt.** Wo die Nummer ein bekanntes Gremium nennt, bleibt
 es dabei, auch wenn die Folge etwas anderes sagt; die Folge wird dann gezählt (bestätigt oder
 Widerspruch) und erscheint als Zahl auf der Seite. Wo die Nummer keines nennt, entscheidet die
-Folge — **und nur dann, wenn sie genau ein Gremium nennt**.
+Folge — **und nur dann, wenn sie genau eine Organisation nennt** (siehe unten).
 
 **Dass sie bei mehreren nicht entscheidet, ist gemessen und nicht vorsichtig.**
 `georep.oparl.OparlPaper.consultation_organizations` liest die Liste sortiert und entdoppelt, die

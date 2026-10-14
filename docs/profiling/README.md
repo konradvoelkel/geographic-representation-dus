@@ -222,8 +222,9 @@ und `_source_matches_the_class` und `_consultation_counts_fit` sind zwei zusätz
 Polars-Durchgänge über den fertigen Frame. Ein Zwischenstand ohne den Zweig „nichts aufzulösen" lag
 bei 713,9 µs (+35,7 %); der Zweig holt also ein Drittel des Aufpreises zurück, und wer die zweite
 Quelle nicht benutzt, zahlt nur noch die Verträge. Der neue Benchmark
-`classify_papers_with_consultations` misst denselben Parser **mit** der Quelle (1,24 ms Minimum) und
-hält damit fest, was sie wert ist. Beide Zahlen sind nach der Regel aus CLAUDE.md gelesen: erst
+`classify_papers_with_consultations` misst denselben Parser **mit** der Quelle (1,24 ms Minimum, nach
+dem Review vom 2026-10-14 1,42 ms: ``consultation_body`` zählt seitdem auch die genannten
+Organisationen, also eine Menge je Dokument mehr) und hält damit fest, was sie wert ist. Beide Zahlen sind nach der Regel aus CLAUDE.md gelesen: erst
 messen, dann die Struktur ändern — hier war die Messung der Grund für den Zweig.
 
 ## Profile vom 2026-10-12: Gewichtung und Themenmodell (Option 06)

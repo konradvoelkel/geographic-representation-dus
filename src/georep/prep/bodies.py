@@ -373,7 +373,8 @@ def classify_papers(
 
     Die Drucksachennummer entscheidet. ``consultations`` (Spalten ``id`` und
     ``consultation_organizations``) ist die zweite Quelle und ergänzt nur, wo die Nummer kein
-    bekanntes Gremium liefert **und** die Folge genau eines nennt (Punkt 58, siehe Modulkopf).
+    bekanntes Gremium liefert **und** die Folge genau eine Organisation nennt, die die Tabelle
+    kennt (Punkt 58, ``consultation_body``, siehe Modulkopf).
     Ohne das Argument rechnet die Funktion wie vor Punkt 58: allein aus der Nummer. Löst die Folge
     für kein Dokument ein Gremium auf (kein Argument, keine Tabelle im Profil, keine bekannte
     Organisation), bleiben die vier Schleifen darüber aus und die drei neuen Spalten sind konstant
