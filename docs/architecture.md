@@ -1,6 +1,6 @@
 # Architektur
 
-Stand 2026-10-14, `v0.13.0`. Diese Datei beschreibt, was das Programm ist und wie es gebaut ist. Warum es so
+Stand 2026-10-15, `v0.14.0`. Diese Datei beschreibt, was das Programm ist und wie es gebaut ist. Warum es so
 gebaut ist, steht mit den verworfenen Alternativen in [decisions.md](decisions.md); was sich aus Nutzersicht
 geändert hat, in [../CHANGELOG.md](../CHANGELOG.md); der Befund vor dem Umbau in
 [baseline-2026-10-10.md](baseline-2026-10-10.md); Messwerte datiert in [profiling/README.md](profiling/README.md).
@@ -441,7 +441,7 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `alone` | Reihenfolgeunabhängigkeit: jede Testdatei einmal allein (drei parallel), dann die ganze schnelle Suite rückwärts | lokal |
 | `mutate` | pytest-gremlins, **eine Sitzung je Modul** mit genau seinen Testdateien (`MUTATION_SCOPE` im `noxfile.py`), drei Arbeiter, einmal pro größerer Änderung; `analysis/topics.py` ist ausgenommen (jeder Mutant rechnet NMF). Der Zuschnitt ist Pflicht, nicht Bequemlichkeit: ohne Abdeckungsdaten läuft jeder Mutant gegen alle übergebenen Tests | lokal, und wöchentlich in Actions (`quality.yml`) mit `-- fast` |
 
-Stand 2026-10-13: 1065 schnelle Tests in rund 56 s, Abdeckung 98,4 %; Mutationsquote 81 % über die
+Stand 2026-10-15: 1277 schnelle Tests in rund 45 s, Abdeckung 98,5 %; Mutationsquote 81 % über die
 dreizehn Module des Ausbaus ([mutation-2026-10-13.md](mutation-2026-10-13.md): 882 Mutanten, 717
 getötet, 165 Überlebende, davon 100 in Vertragsgrenzen), 79 % über `search/` und `analysis/`
 ([mutation-2026-10-11.md](mutation-2026-10-11.md)), 83 % über `analysis/weights.py`

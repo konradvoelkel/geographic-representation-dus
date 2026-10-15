@@ -351,3 +351,15 @@ Kein neuer Benchmark in `tests/bench/`: auf der Mini-Fixture (200 Dokumente, 22 
 nach dem Beschneiden) rechnen beide Schritte in Millisekunden, und beide hängen an sklearn, dessen
 Iterationszahl mit den Daten schwankt. Nach den Erfahrungen aus Option 04 und 06 braucht ein
 20-%-Gate eine Stufe, deren Rauschen deutlich darunter liegt; hier wird gemessen, nicht gegatet.
+
+## 2026-10-15: Bench unter Fremdlast
+
+Nach dem Merge von Punkt 65 schlug `nox -s bench` zweimal mit denselben sieben Stufen an
+(`weights_step` +430 %, `hits_by_body` +193 %, `hits_and_voter_join` +98 %, `document_weights`
++104 %, `transfer_counts` +59 %, `aggregate_voters` +49 %, `build_dictionary` +24 %), obwohl der
+Merge keine der gemessenen Funktionen berührt. Der Baseline-Commit `eae5b0a`, in einem eigenen
+Worktree mit eigener Umgebung gegen dieselbe Baseline 0047 gemessen, zeigte dieselben Ausreißer
+(+397 %, +300 %, +61 %, …): die Ursache war `tracker-miner-fs`, der nach den Läufen der Nacht mit
+vier Kernen indexierte (Lastmittel zwischen 4 und 12 bei 19 % Systemzeit). Die verfälschten Läufe
+sind aus `.benchmarks/` entfernt, Baseline bleibt 0047; die Regel steht in `CLAUDE.md` unter
+„Arbeitsweise".

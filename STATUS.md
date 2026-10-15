@@ -1,9 +1,9 @@
 # Status
 
-Stand 2026-10-14, `main` auf `v0.13.0` plus die Punkte 58 bis 65 (die Beratungsfolge als zweite Quelle
+Stand 2026-10-15, `main` auf `v0.14.0` (die Punkte 58 bis 65: die Beratungsfolge als zweite Quelle
 des Gremiums, die Urheber Mönchengladbachs und der Wahlperiode 2014 bis 2020, die Spalte „ohne
 Ausreißer" als explorativ, die vier Korrekturen ihres Reviews und die Flächen Mönchengladbachs zum
-Stand der Wahl, seit dem 2026-10-15 auch gerechnet und gepackt; alle unveröffentlicht): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
+Stand der Wahl, gerechnet und gepackt am 2026-10-15; dazu die Dokumentation in vier Sichten): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
 abgearbeitet; `bartzsch-exakt` zeigt auf `v0.11.0`, den letzten Stand, der die Zahlen der Arbeit exakt
 reproduziert. Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
@@ -528,9 +528,9 @@ Die Punkte 62, 63 und 64 sind die Befunde des Reviews mit eigener Entscheidung; 
   **`stop_keep` braucht die Stadt nicht**: keines der 13 Wörter steht in den 190
   Beschriftungswörtern der Seite als Sachwort, anders als „klima" und „tierschutz" in Düsseldorf.
 
-## Zahlen (2026-10-14, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56 und 58 bis 64)
+## Zahlen (2026-10-15, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56 und 58 bis 65)
 
-- Tests: 1201 schnelle (nox-Gate, parallel in rund 60 s, Abdeckung 98,5 %), 38 `slow` (rund 4 min über die
+- Tests: 1277 schnelle (nox-Gate, parallel in rund 45 s, Abdeckung 98,5 %), 39 `slow` (rund 5 min über die
   volle Referenz, die sechs Datenpakete, das Paket der Periode 2014 bis 2020 und die veröffentlichte
   Seite), 18 `bench` (grün gegen die
   Baseline), 4 `network` (nur von Hand). Alle drei am 2026-10-14 nach den Punkten 59 bis 64 mit
@@ -811,6 +811,15 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 - Der Stadtbezirk Mönchengladbachs steckt im ersten Zeichen der Stimmbezirksnummer (`10401`: Stadtbezirk 1, Wahlbezirk 04, Stimmbezirk 01); das Profil liest ihn mit `columns.results.city_district_from_precinct`. Bestätigt ist die Regel bisher nur an der Fixture (Wahlbezirke 04, 09, 23) und an der Zahl der Stadtbezirke (vier); der volle Lauf prüft sie gegen die Wahlbezirks-CSV (`docs/plans/01-staedte.md`, § 8, Frage 1.13).
 
 ## Nächster Schritt
+
+**Stand nach dem Merge von Punkt 65 (2026-10-15, `v0.14.0`):** alles aus der Runde vom 2026-10-14 liegt
+auf `main` (Merge `1e3e409`, 34 Commits des Branches `feat/esri-identify`, zwei Reviews) und ist gepusht.
+Offen und Konrads Entscheidung: ob die Grenze von 90 % im Runbook (§ 4) für Städte bleibt, deren
+Verzeichnis über Adressen zuordnet; die drei lokalen Stamps „offen: Settings geändert" (`papers`,
+`organizations`, `pdfs` Mönchengladbachs) bleiben alt, bis ein Abruf ohnehin ansteht; die lokale
+Hauptseite braucht nach jedem Lauf des Hauptprofils die Kopie der Periodenseiten aus `pages.yml`
+(siehe unten). Eine neue Ausbaurunde folgt dem Muster Meta-Plan, Supervisor, Unteragenten (Konrad,
+2026-10-13: mittlere Priorität).
 
 **Die Dokumentation steht seit dem 2026-10-14 in vier Sichten** (Konrads Auftrag, Branch `docs/sichten`): `docs/technik.md` (Schnittstellen, Kette, Veröffentlichung), `docs/inhalt.md` (Daten und Seite), `docs/statistik.md` (Auswertungen mit Einwänden), `docs/workflow-ratsmitglied.md` (Arbeitsablauf); das README verweist darauf, `docs/architecture.md` und `docs/decisions.md` sind unberührt.
 

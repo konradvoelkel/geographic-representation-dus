@@ -13,7 +13,7 @@ Contract des eipy-Skripts.
 ## Einstieg in eine neue Sitzung
 
 1. `git switch main && git pull`. Gearbeitet wird direkt auf `main`, keine Branches (Konrad, 2026-10-11);
-   `main` trägt den letzten Tag (`v0.13.0` am 2026-10-14). Die Ausnahme der acht Ausbau-Branches `feat/NN-name`
+   `main` trägt den letzten Tag (`v0.14.0` am 2026-10-15). Die Ausnahme der acht Ausbau-Branches `feat/NN-name`
    in Worktrees auf xtraspace (Konrad, 2026-10-11) ist mit dem Merge aller acht am 2026-10-12 beendet; Worktrees,
    Venvs und Branches sind entfernt.
 2. Auf Konrads Rechner vor allem anderen, weil die Primärplatte voll ist:
@@ -82,6 +82,9 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - Eine Eigenschaft, die für alle Eingaben gilt, wird ein hypothesis-Test in `tests/property/`, kein Beispieltest; wer den Matcher ersetzt, misst sich an `tests/property/oracle_matcher.py`. Snapshots (`syrupy`) nur für kleine, stabile Ausgaben und nie blind mit `--snapshot-update` erneuern.
 - Direkt auf `main`: nach jedem Commit `uv run nox`, dann Push; CI über die Actions-REST-API prüfen (`gh run list` liefert für dieses Repo leer). Tag bei Versionssprung; Versionen stehen in `pyproject.toml`, `src/georep/__init__.py` und `uv.lock` (`uv lock`), jede mit einer Zeile im `CHANGELOG.md`. So hat Konrad es am 2026-10-11 angewiesen.
 - Prüfschritte in Skripten nie hinter eine Pipe stellen (`uv run pytest | tail`): die Pipe frisst den Exit-Code, und am 2026-10-11 landeten so zwei rote Commits. Erst der Befehl allein, dann die Ausgabe ansehen.
+- Entscheidungspunkte in `docs/decisions.md` bekommen ihre Nummer beim Merge, nicht auf dem Branch: parallel
+  laufende Branches vergeben sonst dieselbe Nummer, und `feat/esri-identify` musste seinen Punkt zweimal
+  umnummerieren (59, 62, 65 am 2026-10-14).
 
 ## Arbeitsweise, gelernt im Umbau 2026-10
 
@@ -93,11 +96,11 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - mutmut 3 forkt und blockiert mit Polars (`docs/mutation-2026-10-11.md`); Polars-Threads nicht nur für ein Werkzeug drosseln.
 - `.gitignore` kennt keine Kommentare hinter dem Muster; git liest sie als Teil des Musters, und die Zeile ignoriert nichts (so lagen `/data/` und `mutants/` bis 2026-10-11 offen). Kommentare auf eigene Zeilen, danach `git check-ignore -v`.
 - Ein Test darf nicht von der Laufzeit abhängen: ob ein Funktionsname in einer Top-N-Profiltabelle steht, wechselt unter xdist von Lauf zu Lauf (rot am 2026-10-11). Den äußersten Frame oder die Sortierzeile prüfen.
-- pytest-benchmark: `--benchmark-compare-fail` ohne gespeicherten Lauf ist ein Bedienfehler (Exit 4); die nox-Session `bench` prüft `.benchmarks/` vorher. Die CPU-Taktfrequenz schwankt zwischen Läufen, darum ist die `machine_info`-Warnung gefiltert. Eine Schwelle erst nach gemessenem Rauschen setzen: 10 % im Minimum schlugen bei 1-ms-Polars-Stufen ohne Codeänderung an (12,7 %), 20 % liegen über allem Gemessenen.
+- pytest-benchmark: `--benchmark-compare-fail` ohne gespeicherten Lauf ist ein Bedienfehler (Exit 4); die nox-Session `bench` prüft `.benchmarks/` vorher. Die CPU-Taktfrequenz schwankt zwischen Läufen, darum ist die `machine_info`-Warnung gefiltert. Eine Schwelle erst nach gemessenem Rauschen setzen: 10 % im Minimum schlugen bei 1-ms-Polars-Stufen ohne Codeänderung an (12,7 %), 20 % liegen über allem Gemessenen. Bei Fremdlast schlagen alle Polars-Benches zugleich um das Vier- bis Fünffache an (2026-10-15, `tracker-miner-fs` auf vier Kernen): dann den Baseline-Commit in einem eigenen Worktree gegen dieselbe Baseline messen; zeigt er dieselben Ausreißer, ist es die Maschine, und der verfälschte Lauf fliegt aus `.benchmarks/`.
 - Messungen stehen datiert in `docs/profiling/README.md`, `.prof`-Dateien und `.benchmarks/` bleiben lokal. Ein Profil des echten Schritts (`georep profile`) vor jedem Nachbau; cProfile verdreifacht die Zeit reiner Python-Bibliotheken (pypdf), die Verteilung stimmt trotzdem.
 - `georep fetch pdfs --limit N` schreibt `pdf_limit` in den Settings-Fingerprint des Stamps; `status` zeigt `pdfs` danach als „offen: Settings geändert". Das ist richtig, nicht kaputt.
 - deal (Phase 6): `deal.raises` vergleicht exakte Typen, keine Unterklassen (`requests.RequestException` deckt `HTTPError` nicht ab); darum wandeln Fetcher Netzfehler in `NetworkError`. `deal.has()`/`deal.pure` patchen `socket.socket` und `sys.stdout` prozessweit und sind nicht reentrant: rekursive Funktionen bekommen `deal.safe`, sonst bleibt der Patch stehen (2026-10-11, `deep_merge`). Das mypy-Plugin `deal.mypy` modelliert `result` in `ensure` als positionalen Parameter; Validatoren mit optionalen Argumenten werden benannte Funktionen und stehen vor dem ganzen Decorator-Stapel, nie dazwischen. Prädikate für Verträge liegen in `georep.contracts`.
-- `deal.cases` läuft ohne Beispiel-Datenbank: ein Gegenbeispiel kann im nächsten Lauf fehlen, hypothesis druckt den Reproduktions-Blob. `check_types=False`, weil typeguard nicht installiert ist. `nox -s verify` (crosshair) braucht rund zehn Minuten (33 Ziele, gemessen 2026-10-14; drei Minuten waren es bei zehn Zielen); „Not confirmed" ist kein Befund.
+- `deal.cases` läuft ohne Beispiel-Datenbank: ein Gegenbeispiel kann im nächsten Lauf fehlen, hypothesis druckt den Reproduktions-Blob. `check_types=False`, weil typeguard nicht installiert ist. `nox -s verify` (crosshair) braucht rund zehn Minuten (37 Ziele, elf Minuten gemessen 2026-10-15; drei Minuten waren es bei zehn Zielen); „Not confirmed" ist kein Befund.
 - `except OSError, TimeoutExpired:` ohne Klammern ist seit Python 3.14 gültig (PEP 758), und `ruff format` schreibt
   es so; das System-`python3` ist 3.12 und meldet dafür einen Syntaxfehler. Prüfungen laufen nur über `uv run`
   (am 2026-10-12 hielt ein Agent die Form für kaputt und „reparierte" sie).

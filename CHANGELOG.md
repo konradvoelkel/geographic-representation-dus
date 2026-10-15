@@ -2,7 +2,7 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
-## Unreleased
+## 0.14.0 (2026-10-15), Flaechen der Wahl, Beratungsfolge, Urheber, vier Sichten
 
 - **Mönchengladbachs Stimmbezirksflächen sind die des Wahltags** (`docs/decisions.md`, Punkt 65):
   statt des Datensatzes „Wahlen" vom 08.06.2022, in dem nur 175 der 179 Urnen-Stimmbezirke der
