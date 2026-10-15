@@ -2099,7 +2099,7 @@ weg.
 
 **Der erhoffte Sprung bleibt aus, und das ist das Ergebnis.** Die Übereinstimmung mit dem
 amtlichen Straßenverzeichnis steigt von 86,2 % auf **88,8 %** je Wahlbezirk und von 66,5 % auf
-**70,8 %** je Stimmbezirk (2 667 statt 2 651 bekannte Namen) — und bleibt damit unter den 90 %,
+**70,8 %** je Stimmbezirk (2 667 statt 2 651 Zuordnungen mit bekanntem Namen) — und bleibt damit unter den 90 %,
 die `docs/runbook-stadt.md`, § 4 als Grenze nennt. Das Alter der Flächen war also **nicht** der
 ganze Grund. Was bleibt, ist ein Unterschied der Bezugsgrößen, kein Fehler: das Verzeichnis ordnet
 eine Straße über **Adressen** genau einem Stimmbezirk zu, Overpass liefert sie über die

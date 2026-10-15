@@ -186,8 +186,13 @@ Straßenverzeichnis, etwa `Verzeichnis: 1 450 bekannte Straßennamen: 93,2 % im 
 99,1 % im selben Wahlbezirk`. Unter 90 % je Wahlbezirk lohnt eine Anfrage an die Stadt nach den
 Flächen von 2025 (Frage 1.3); die Seite nennt die Zahl ohnehin. Mönchengladbach lag mit **86,2 %**
 (2 651 bekannte Namen, 66,5 % im selben Stimmbezirk) darunter, solange seine Flächen vom 08.06.2022
-waren. Mit den Flächen des Wahltags sind es **88,8 %** und 70,8 % auf 2 667 Namen (gemessen am
-2026-10-15, `docs/decisions.md`, Punkt 65) — besser, aber **weiter unter der Grenze**.
+waren. Mit den Flächen des Wahltags sind es **88,8 %** und 70,8 % auf 2 667 Zuordnungen (gemessen
+am 2026-10-15, `docs/decisions.md`, Punkt 65) — besser, aber **weiter unter der Grenze**.
+
+Gezählt werden **Zuordnungen**, also Paare (Stimmbezirk, Straßenname), und nicht Namen: derselbe
+Name kommt in mehreren Bezirken vor und zählt dann mehrfach. Mönchengladbach hat 2 982 solche
+Paare über 1 814 verschiedene Namen; davon kennt das Verzeichnis 2 667 Paare (1 563 Namen), die
+übrigen 315 Paare (251 Namen) nicht.
 
 Daran ist zu lernen, wofür diese Grenze taugt: sie zeigt nicht nur veraltete Flächen an. Ein
 Verzeichnis ordnet eine Straße über **Adressen** genau einem Stimmbezirk zu, Overpass liefert sie

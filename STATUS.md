@@ -617,8 +617,9 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   Seite danach ein `georep run report --force` je Profil. Dasselbe gilt für eine geänderte
   Klassengrenze (siehe `defaults.toml`, `[report.diverging]`).
 - deal 4.24.6: `deal.raises` vergleicht exakte Typen, keine Unterklassen; `deal.has()`/`deal.pure` sind nicht reentrant (Patch bleibt nach Rekursion stehen). Beides umschifft (NetworkError, `deal.safe` für `deep_merge`), nicht upstream gemeldet.
-- `nox -s verify` (crosshair) läuft wieder durch und ist grün (Exit 0, 33 Ziele „Not confirmed", 10 Minuten
-  am 2026-10-14; 6 Minuten bei 16 Zielen am 2026-10-12). Der Lauf vom 2026-10-14 fand dabei ein echtes
+- `nox -s verify` (crosshair) läuft wieder durch und ist grün (Exit 0, alle Ziele „Not confirmed";
+  **37 Ziele** seit dem 2026-10-15, als die vier Funktionen der Esri-Ringe dazukamen, 10 Minuten bei
+  33 Zielen am 2026-10-14; 6 Minuten bei 16 Zielen am 2026-10-12). Der Lauf vom 2026-10-14 fand dabei ein echtes
   Gegenbeispiel in `report.model.body_figures`: ein von Hand gebautes `SourceCounts` mit einer fremden
   Quelle flog als `KeyError` ohne Fehlertext (Punkt 58). Behoben als Vorbedingung `_sources_are_known`,
   dieselbe Sorte wie `_kinds_are_known` vom 2026-10-13. Davor brach die Sitzung mit `re.PatternError` ab, bevor sie berichtete: `parse_reference`
@@ -731,9 +732,11 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   Treffer" jeder Stadtseite nennt zusätzlich den Anteil an den Dokumenten **mit Text** (Mönchengladbach
   489 von 650 = 75,2 %, nicht nur 16,9 % aller 2 895). Woran die 404 liegen, sagt der Server nicht.
 - **Mönchengladbachs Straßen stimmen zu 88,8 % je Wahlbezirk mit dem amtlichen Verzeichnis überein**
-  (2 667 bekannte Namen, 70,8 % im selben Stimmbezirk; gemessen am 2026-10-15 mit den Flächen des
-  Wahltags). Vorher waren es **86,2 %** und **66,5 %** auf 2 651 Namen, gemessen am 2026-10-13 mit dem
-  Shapefile vom 08.06.2022. Die neuen Flächen heben die Zahl also um 2,6 bzw. 4,3 Prozentpunkte — und
+  (2 667 Zuordnungen mit bekanntem Namen, 70,8 % im selben Stimmbezirk; gemessen am 2026-10-15 mit den
+  Flächen des Wahltags). Vorher waren es **86,2 %** und **66,5 %** auf 2 651 Zuordnungen, gemessen am
+  2026-10-13 mit dem Shapefile vom 08.06.2022. Gezählt werden Paare (Stimmbezirk, Name) und nicht
+  Namen: 2 982 Paare über 1 814 verschiedene Namen, davon kennt das Verzeichnis 2 667 Paare mit
+  1 563 Namen; die übrigen 315 Paare tragen 251 Namen, die es nicht führt. Die neuen Flächen heben die Zahl also um 2,6 bzw. 4,3 Prozentpunkte — und
   **nicht über die Grenze von 90 %**, die das Runbook nennt. Das Alter der Flächen war damit nicht der
   ganze Grund. Was bleibt, ist der Unterschied der Bezugsgrößen: das Verzeichnis ordnet eine Straße über
   **Adressen** genau einem Stimmbezirk zu, Overpass liefert sie über die **Geometrie** des Straßenzugs,

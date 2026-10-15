@@ -19,7 +19,8 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   2026-10-15 ist es auch **gerechnet und gepackt**: `reference/moenchengladbach/` trägt die
   Antwort des Dienstes statt des Zips, und die Stadtseite rechnet mit 179 Flächen. Die
   Übereinstimmung mit dem amtlichen Straßenverzeichnis steigt damit von 86,2 % auf **88,8 %** je
-  Wahlbezirk (66,5 % → 70,8 % je Stimmbezirk) — und bleibt unter den 90 %, die das Runbook als
+  Wahlbezirk (66,5 % → 70,8 % je Stimmbezirk, gezählt über 2 667 Zuordnungen von Stimmbezirk und
+  Straßenname, nicht über Namen) — und bleibt unter den 90 %, die das Runbook als
   Grenze nennt: das Alter der Flächen war nicht der ganze Grund, der Rest liegt daran, dass das
   Verzeichnis über Adressen und OpenStreetMap über Straßenzüge zuordnet. Die Stadt hat damit
   1 682 Treffer statt 1 704; die 489 Dokumente mit mindestens einem Treffer bleiben.

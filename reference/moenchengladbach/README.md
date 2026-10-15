@@ -44,7 +44,7 @@ die Dateien im Repo (Größe und Prüfsumme je Zeile, der `slow`-Teil auch die Z
 | Stimmbezirksflächen (Geoportal, `identify`) | **179** Flächen in 33 Wahlbezirken, 170,47 km², 25 187 Stützpunkte |
 | Straßenlisten (Overpass) | 179 Stimmbezirke, 2 982 Zuordnungen, 1 814 verschiedene Straßennamen |
 | Orte (Wikidata Q2758 und Wikipedia-GeoSearch) | 2 219 Einträge, 2 215 einem Bezirk zugeordnet |
-| Übereinstimmung mit dem amtlichen Straßenverzeichnis | 2 667 bekannte Namen: 70,8 % im selben Stimmbezirk, **88,8 % im selben Wahlbezirk**; 315 nicht im Verzeichnis |
+| Übereinstimmung mit dem amtlichen Straßenverzeichnis | 2 667 Zuordnungen (Stimmbezirk, Name) mit einem Namen, den das Verzeichnis kennt — 1 563 verschiedene Namen: 70,8 % im selben Stimmbezirk, **88,8 % im selben Wahlbezirk**; dazu 315 Zuordnungen mit 251 Namen, die das Verzeichnis nicht führt |
 | Dokumentarten | 16, häufigste `1.1 - Beratungsvorlage` (1 144), `2.1 - Berichtsvorlage` (946), `3 - Fraktionsantrag` (581) |
 | Organisationen im Katalog (`raw/organizations.json`, 2026-10-14) | **122**, davon 8 Fraktionen |
 | Organisationen in einer Beratungsfolge | 27; alle 2 895 Dokumente tragen eine |
@@ -66,8 +66,8 @@ der Datensatz „Wahlen" vom 08.06.2022 mit 180 Polygonen, von denen nur 175 zu 
 Wahl gehörten.
 
 **Das hebt die Übereinstimmung, aber nicht über die Grenze des Runbooks**: von 86,2 % auf
-**88,8 %** je Wahlbezirk und von 66,5 % auf **70,8 %** je Stimmbezirk (2 667 statt 2 651 bekannte
-Namen). 90 % je Wahlbezirk nennt `docs/runbook-stadt.md`, § 4 als die Grenze, unter der eine
+**88,8 %** je Wahlbezirk und von 66,5 % auf **70,8 %** je Stimmbezirk (2 667 statt 2 651
+Zuordnungen mit bekanntem Namen). 90 % je Wahlbezirk nennt `docs/runbook-stadt.md`, § 4 als die Grenze, unter der eine
 Anfrage an die Stadt lohnt — die Zahl liegt weiter darunter, und das Alter der Flächen war damit
 **nicht** der ganze Grund. Was bleibt, ist der Unterschied der Bezugsgrößen: das Verzeichnis ordnet
 eine Straße über Adressen genau einem Stimmbezirk zu, die Overpass-Antwort über die Geometrie des
