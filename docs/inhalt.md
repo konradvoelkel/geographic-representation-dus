@@ -27,7 +27,7 @@ sind Konrads; ihre Eingaben liegen als Pakete im Repo, damit GitHub Pages ohne N
 | davon mit Text | 19 033 (99,6 %) | 21 838 (98,3 %) | 4 075 (99,5 %) | **650 (22,5 %)** |
 | davon mit Treffer | 10 739 | 12 977 | 2 173 | 489 |
 | Treffer (Dokument-Bezirk-Paare) | 29 010 | 36 324 | 5 448 | 1 682 |
-| Begriffe im Wörterbuch | 5 727 | 5 727 (geborgt) | 5 727 (geborgt) | 6 005 |
+| Begriffe im Wörterbuch | 5 727 | 5 727 (geborgt) | 5 727 (geborgt) | 5 759 |
 | Monate in der Reihe | 61 | 77 | 14 | 61 |
 | Stand der Dokumente | Datensatz der Arbeit, November 2025 | Abruf 13.10.2026 | Erstabruf 13.10.2026 | Abruf 13.10.2026 |
 | Stand der Geometrie | Stimmbezirke 2025 | Stimmbezirke 2020, umgerechnet | Stimmbezirke 2025 | **Stimmbezirke der Kommunalwahl 2025** (Punkt 65; bis zum 2026-10-14 Flächen vom 08.06.2022) |
