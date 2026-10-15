@@ -18,6 +18,7 @@ import io
 import json
 import math
 import zipfile
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -588,6 +589,21 @@ def canonical_precincts(
                 },
                 "geometry": feature["geometry"],
             }
+        )
+    doppelt = sorted(
+        {
+            nummer
+            for nummer, anzahl in Counter(
+                f["properties"][PRECINCT_PROPERTY] for f in features
+            ).items()
+            if anzahl > 1
+        }
+    )
+    if doppelt:
+        raise SchemaError(
+            f"{len(doppelt)} Stimmbezirksnummern kommen mehrfach vor: {doppelt[:8]}"
+            f"{' …' if len(doppelt) > 8 else ''}. Bei einer identify-Antwort heißt das meist "
+            "layers=all statt layers=all:<id> -- dann liefert der Dienst mehrere Layer"
         )
     return {
         "type": "FeatureCollection",

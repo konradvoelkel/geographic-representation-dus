@@ -956,3 +956,23 @@ def test_fewer_areas_than_the_profile_expects_is_refused_by_the_reader(
         return
     with pytest.raises(SchemaError, match="1 Flächen, erwartet sind mindestens 179"):
         read_source(path, Precincts.model_validate(rules))
+
+
+def test_a_repeated_precinct_number_names_itself(tmp_path: Path) -> None:
+    """N6: doppelte Nummern endeten als ``PostContractError`` ohne Datei und ohne Nummer.
+
+    Mit ``contracts = "off"`` fielen sie gar nicht auf. Erreichbar ist das nicht nur theoretisch:
+    eine ``identify``-Anfrage mit ``layers=all`` statt ``layers=all:16`` liefert mehrere Layer,
+    und dieselbe Stimmbezirksnummer kommt dann mehrfach -- darum nennt die Meldung diesen Fall.
+    """
+    quelle = read_source_esri_identify(
+        _identify(
+            tmp_path / "doppelt.json",
+            {"10401": [_clockwise(0.0, 0.0, 10.0)], "10402": [_clockwise(20.0, 0.0, 10.0)]},
+        )
+    )
+    doppelt = type(quelle)([*quelle.features, quelle.features[0]], quelle.crs)
+    with pytest.raises(SchemaError, match="kommen mehrfach vor"):
+        canonical_precincts(doppelt, IDENTIFY, {4: "Hardt"})
+    # Ohne Dublette bleibt es dabei, dass die Nachbedingung trägt
+    assert len(canonical_precincts(quelle, IDENTIFY, {4: "Hardt"})["features"]) == 2
