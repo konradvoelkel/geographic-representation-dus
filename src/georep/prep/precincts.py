@@ -45,13 +45,27 @@ class SourcePrecincts:
     crs: str
 
 
+@deal.raises(SchemaError)
 def read_source(path: Path, rules: Precincts) -> SourcePrecincts:
-    """Liest die Quelldatei nach ``rules.format``; eine neue Quellform ist eine weitere Funktion."""
+    """Liest die Quelldatei nach ``rules.format``; eine neue Quellform ist eine weitere Funktion.
+
+    Hier steht auch die Prüfung gegen ``precincts.min_areas``, und zwar **für jede Form**: der
+    Fetcher sieht eine abgeschnittene Antwort nur, wenn sie aus dem Netz kommt. GitHub Pages und
+    jeder Lauf aus einem Paket gehen den anderen Weg -- aus ``reference/<stadt>/external/`` --,
+    und eine dort gekürzte Datei ergäbe eine kleinere Stadt mit Exit 0 (Review 2026-10-15).
+    """
     if rules.format == "shapefile-zip":
-        return read_source_shapefile_zip(path, rules.member, rules.dbf_encoding)
-    if rules.format == "esri-identify":
-        return read_source_esri_identify(path, rules.source_crs, rules.id_property)
-    return read_source_geojson(path, rules.source_crs)
+        source = read_source_shapefile_zip(path, rules.member, rules.dbf_encoding)
+    elif rules.format == "esri-identify":
+        source = read_source_esri_identify(path, rules.source_crs, rules.id_property)
+    else:
+        source = read_source_geojson(path, rules.source_crs)
+    if rules.min_areas and len(source.features) < rules.min_areas:
+        raise SchemaError(
+            f"{path.name}: {len(source.features)} Flächen, erwartet sind mindestens "
+            f"{rules.min_areas} (precincts.min_areas); die Datei ist unvollständig"
+        )
+    return source
 
 
 @deal.raises(SchemaError)
@@ -395,6 +409,11 @@ def read_source_esri_identify(
     results = payload.get("results") if isinstance(payload, dict) else None
     if not isinstance(results, list) or not results:
         raise SchemaError(f"{path.name}: keine results; eine identify-Antwort hat results[]")
+    if isinstance(payload, dict) and payload.get("exceededTransferLimit"):
+        raise SchemaError(
+            f"{path.name}: exceededTransferLimit -- der Dienst hat die Antwort nach "
+            f"{len(results)} Flächen abgeschnitten; die Datei ist unvollständig"
+        )
     features: list[dict[str, Any]] = []
     for index, entry in enumerate(results):
         if not isinstance(entry, dict):

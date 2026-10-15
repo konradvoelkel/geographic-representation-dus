@@ -889,3 +889,69 @@ def test_every_source_form_says_which_keys_belong_to_it() -> None:
     assert PRECINCT_FORM_ONLY_KEYS == frozenset().union(*PRECINCT_FORM_KEYS.values())
     # Jeder genannte Schlüssel ist ein Feld des Modells, kein Tippfehler
     assert PRECINCT_FORM_ONLY_KEYS <= set(Precincts.model_fields)
+
+
+# --- M1: eine abgeschnittene Datei im Paket -------------------------------------------------
+
+
+def test_a_truncated_answer_is_refused_by_the_reader_too(tmp_path: Path) -> None:
+    """Die Marke des Dienstes zählt auch im Paket, nicht nur frisch aus dem Netz.
+
+    GitHub Pages und jeder Lauf aus einem Paket lesen die Datei aus ``external/`` und sehen den
+    Fetcher nie. Eine dort abgeschnittene Antwort ergäbe eine kleinere Stadt mit Exit 0
+    (Review 2026-10-15).
+    """
+    path = _identify(tmp_path / "identify.json", {"10401": [_clockwise(0.0, 0.0, 10.0)]})
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps({**payload, "exceededTransferLimit": True}), encoding="utf-8")
+    with pytest.raises(SchemaError, match="exceededTransferLimit"):
+        read_source_esri_identify(path)
+    # Die Marke „nicht gekürzt" ist kein Fehler
+    path.write_text(json.dumps({**payload, "exceededTransferLimit": False}), encoding="utf-8")
+    assert len(read_source_esri_identify(path).features) == 1
+
+
+@pytest.mark.parametrize("form", ["esri-identify", "geojson", "shapefile-zip"])
+def test_fewer_areas_than_the_profile_expects_is_refused_by_the_reader(
+    tmp_path: Path, form: str
+) -> None:
+    """``precincts.min_areas`` gilt an **jeder** Quellform, sobald die Datei gelesen wird."""
+    rules: dict[str, Any] = {
+        "id_property": "Nummer",
+        "district_from_id": (1, 3),
+        "names_from_results": True,
+        "min_areas": 179,
+    }
+    if form == "esri-identify":
+        path = _identify(tmp_path / "f.json", {"10401": [_clockwise(0.0, 0.0, 10.0)]})
+        rules |= {"format": form, "source_crs": "EPSG:25832"}
+    elif form == "geojson":
+        path = tmp_path / "f.geojson"
+        path.write_text(
+            json.dumps(
+                {
+                    "type": "FeatureCollection",
+                    "crs": {"type": "name", "properties": {"name": "EPSG:25832"}},
+                    "features": [
+                        {
+                            "properties": {"Nummer": "10401"},
+                            "geometry": {
+                                "type": "Polygon",
+                                "coordinates": [_clockwise(0.0, 0.0, 10.0)],
+                            },
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        rules |= {"format": form}
+    else:
+        path = _shapefile_zip(tmp_path / "f.zip", ("10401",))
+        # min_areas gehört nicht zum Zip (M2); der Validator lässt es dort nicht zu
+        rules |= {"format": form}
+        del rules["min_areas"]
+        assert read_source(path, Precincts.model_validate(rules)).features
+        return
+    with pytest.raises(SchemaError, match="1 Flächen, erwartet sind mindestens 179"):
+        read_source(path, Precincts.model_validate(rules))

@@ -271,3 +271,39 @@ def test_the_stores_of_a_package_have_the_rows_its_readme_claims(path: str) -> N
     # Umgekehrt gilt keine Gleichheit: ein Paper ohne Hauptdatei trägt keinen Namen, und eines,
     # dessen PDF der Server nicht ausliefert (Mönchengladbach: 2 213), hat keinen Text.
     assert texts <= len(known) <= papers
+
+
+# --- M1: die Flächen im Paket sind die der Stadt -----------------------------------------------
+
+
+@pytest.mark.slow
+def test_the_packed_areas_are_the_whole_second_city() -> None:
+    """Die Stadt im Paket ist vollständig: 179 Stimmbezirke, 170,47 km², 25 187 Stützpunkte.
+
+    Bis zum Review vom 2026-10-15 hielt **kein** Test diese Zahlen am echten Paket fest. Nur der
+    Fetcher prüfte auf eine abgeschnittene Dienstantwort, und GitHub Pages ruft ihn nie auf: es
+    liest diese Datei. Eine hier gekürzte Antwort hätte eine kleinere Stadt mit Exit 0 ergeben --
+    die Flächensumme ist die Zahl, an der das auffällt (`docs/decisions.md`, Punkt 65).
+    """
+    from shapely.geometry import shape
+
+    from georep.prep.precincts import read_source_esri_identify
+
+    datei = (
+        REPO / "reference" / "moenchengladbach" / "external" / "Stimmbezirke_Kommunalwahl_2025.json"
+    )
+    quelle = read_source_esri_identify(datei, id_property="Nummer")
+    assert len(quelle.features) == 179 and quelle.crs == "EPSG:25832"
+    nummern = {str(f["properties"]["Nummer"]) for f in quelle.features}
+    assert len(nummern) == 179
+    assert {"11006", "21406", "32906", "40106"} <= nummern  # 2022 fehlten sie
+    assert not {"10506", "11204", "21505", "32405", "32805"} & nummern  # 2022 gab es sie noch
+
+    flaeche = sum(shape(f["geometry"]).area for f in quelle.features)
+    assert flaeche == pytest.approx(170_469_644.10, abs=0.1)  # m², die Stadtfläche
+    punkte = sum(
+        len(ring)
+        for entry in json.loads(datei.read_text(encoding="utf-8"))["results"]
+        for ring in entry["geometry"]["rings"]
+    )
+    assert punkte == 25_187  # maxAllowableOffset=0; mit =1 wären es 17 326
