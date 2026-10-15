@@ -585,10 +585,11 @@ def test_precincts_rules_demand_exactly_one_way_to_the_district_and_the_name() -
         ("esri-identify", "member", "a/b.shp"),
         ("esri-identify", "dbf_encoding", "latin-1"),
         ("shapefile-zip", "source_crs", "EPSG:25832"),
+        ("shapefile-zip", "min_areas", 179),
     ],
 )
 def test_the_source_form_decides_which_keys_the_profile_may_set(
-    form: str, key: str, value: str
+    form: str, key: str, value: object
 ) -> None:
     """Ein Schlüssel an der falschen Quellform ist ein stiller Irrtum, also ein Fehler (Punkt 65).
 
