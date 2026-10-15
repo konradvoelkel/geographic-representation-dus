@@ -37,7 +37,7 @@ MIB = 1024 * 1024
 @dataclass(frozen=True)
 class Package:
     path: str
-    limit: int  # Obergrenze in Bytes, grob: rund ein Drittel Luft über dem Stand vom 2026-10-14
+    limit: int  # Obergrenze in Bytes, grob: ein Drittel bis das Mehrfache Luft über dem Stand
     native: bool  # eigenes Format (raw/papers.jsonl plus Textstore) statt Altformat der Arbeit
     readme: bool  # trägt eine Tabelle mit Bytes und SHA-256 je Datei
 
@@ -50,15 +50,15 @@ class Package:
 PACKAGES = (
     # 85 771 896 Bytes, eingefroren seit v0.2.0 und ohne README-Tabelle (Golden Master der Arbeit)
     Package("reference", limit=120 * MIB, native=False, readme=False),
-    Package("reference/moenchengladbach", limit=8 * MIB, native=True, readme=True),  # 4 405 625
+    Package("reference/moenchengladbach", limit=8 * MIB, native=True, readme=True),  # 5 224 917
     Package("snapshots/2014-2020", limit=48 * MIB, native=True, readme=True),  # 37 875 851
     Package("snapshots/2025", limit=20 * MIB, native=True, readme=True),  # 13 894 254
     # Punkt 58: nur die Beratungsfolge je Dokument, kein Store und keine Eingabe (90 455 Bytes)
     Package("snapshots/duesseldorf-beratungsfolge", limit=1 * MIB, native=False, readme=True),
     Package("context", limit=4 * MIB, native=False, readme=True),  # 2 242 316
 )
-# Alle zusammen, als zweite grobe Schranke: 144 280 397 Bytes = 137,60 MiB am 2026-10-14 (76 % der
-# Grenze). Ein einziger PDF-Ordner einer
+# Alle zusammen, als zweite grobe Schranke: 145 099 689 Bytes = 138,38 MiB am 2026-10-15 (76,9 %
+# der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes). Ein einziger PDF-Ordner einer
 # Periode (585 MB bis 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 
