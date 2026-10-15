@@ -332,7 +332,9 @@ Gegenrichtung von `bootstrap`:
 
 ```bash
 uv run georep --profile moenchengladbach pack reference/moenchengladbach
-du -sb reference/moenchengladbach   # 2026-10-13: 3 980 958 Bytes; 2026-10-15: 5 232 353
+du -sb reference/moenchengladbach   # 2026-10-13: 3 980 958 Bytes
+# pack selbst nennt die Summe seiner Dateien (2026-10-15: 9 Dateien, 5 224 917 Bytes); du zaehlt
+# das README mit, dessen Groesse sich mit jeder Zeile aendert, die man hineinschreibt.
 ```
 
 `pack` kopiert genau die Dateien, die `bootstrap` später sucht — `external/`, `raw/papers.jsonl`,
