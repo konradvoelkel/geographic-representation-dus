@@ -850,10 +850,15 @@ Geprüft ist das an der Datei, am Wörterbuch und an der Seite.
   Ein erneuter Abruf kostet Stunden und brächte dieselben Dateien; ihre Stamps bleiben darum alt.
 - **Düsseldorf ist nicht neu gerechnet.** `georep publish` baut den Vergleich aus den
   veröffentlichten Ordnern, nicht aus einem Lauf; die Hauptstadtseite ist der Stand vom 2026-10-13.
-  In `data/duesseldorf/site/` fehlen die Unterseiten `2014-2020/` und `2025/` (sie lagen dort beim
-  Nachbau vom 2026-10-14, siehe oben), darum meldet `publish` jetzt 101 Dateien und nicht 187; die
-  Links darauf gehen in der veröffentlichten Hauptseite ins Leere. Das ist älter als Punkt 65 und
-  mit einem Lauf der beiden Periodenprofile behoben.
+  In `data/duesseldorf/site/` fehlen dabei die Unterseiten `2014-2020/` und `2025/`, darum meldet
+  `publish` 101 Dateien und nicht 187. **Das ist lokal und kein Schaden an der veröffentlichten
+  Seite**: die beiden Periodenseiten entstehen nicht aus `publish` und nicht aus einem Lauf des
+  Hauptprofils, sondern aus einer **Kopie**, die `.github/workflows/pages.yml` nach dem Lauf macht
+  (`cp -r "$PERIOD" "$MAIN/$PROFILE"`). Jedes Periodenprofil hat seinen eigenen Ordner --
+  `georep --profile duesseldorf-2014 paths` nennt `profile=2014-2020` und
+  `site=data/2014-2020/site` --, und dort liegen beide Seiten vollständig (822 027 und 718 384
+  Byte vom 2026-10-14). Der letzte Lauf des Hauptprofils hat seinen `site`-Ordner neu geschrieben
+  und die Kopien damit entfernt; wer sie lokal wieder will, kopiert sie, statt etwas zu rechnen.
 
 
 **Zuerst zu lesen: der Befundbericht zu den vier Netzläufen** (`docs/befunde-2026-10-14.md`, 2026-10-14).

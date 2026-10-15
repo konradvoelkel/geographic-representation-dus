@@ -174,8 +174,10 @@ uv run georep --profile moenchengladbach status
   overpass-api.de Mönchengladbachs 179 Abfragen fast durchgehend ab -- `504` mit
   `Dispatcher_Client::request_read_and_idx::timeout`, zeitweise `502` und `Connection refused`, und
   zwar bei vier freien Slots und auch für eine Trivialabfrage. Das ist nicht zu beheben, nur
-  auszusitzen: eine Schleife mit fünf Minuten Pause, bis ein Durchlauf durchkommt (hier der 130.,
-  nach 14 Stunden). Dass das überhaupt aufsetzt, liegt allein am HTTP-Cache, und sein Schlüssel ist
+  auszusitzen: eine Schleife, bis ein Durchlauf durchkommt. Hier war es der **130.**, nach rund
+  zwölf Stunden Schleife mit zwei Minuten Pause (2026-10-14 21:25 bis 2026-10-15 09:13) und gut
+  17 Stunden, vom ersten Versuch um 15:58 an gerechnet; zwei kürzere Schleifen mit 90 s und fünf
+  Minuten Pause gingen voraus. Dass das überhaupt aufsetzt, liegt allein am HTTP-Cache, und sein Schlüssel ist
   Host, Methode und Abfragetext — **wer währenddessen Endpunkt, `query_timeout_s` oder
   `sources.osm.simplify_m` anfasst, fängt das Sammeln von vorn an**. Ob die Instanz überhaupt
   antwortet, sagt `curl https://overpass-api.de/api/status` zusammen mit einer Trivialabfrage;
@@ -337,7 +339,7 @@ Gegenrichtung von `bootstrap`:
 
 ```bash
 uv run georep --profile moenchengladbach pack reference/moenchengladbach
-du -sb reference/moenchengladbach   # 2026-10-13: 3 980 958 Bytes
+du -sb reference/moenchengladbach   # 2026-10-15: 5 233 747 Bytes
 # pack selbst nennt die Summe seiner Dateien (2026-10-15: 9 Dateien, 5 224 917 Bytes); du zaehlt
 # das README mit, dessen Groesse sich mit jeder Zeile aendert, die man hineinschreibt.
 ```
