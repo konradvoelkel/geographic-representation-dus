@@ -740,7 +740,10 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   **nicht über die Grenze von 90 %**, die das Runbook nennt. Das Alter der Flächen war damit nicht der
   ganze Grund. Was bleibt, ist der Unterschied der Bezugsgrößen: das Verzeichnis ordnet eine Straße über
   **Adressen** genau einem Stimmbezirk zu, Overpass liefert sie über die **Geometrie** des Straßenzugs,
-  und ein Zug über eine Bezirksgrenze zählt in beiden. Die 315 Namen, die das Verzeichnis gar nicht
+  und ein Zug über eine Bezirksgrenze zählt in beiden. Nachgerechnet am 2026-10-15: von den 2 667
+  Zuordnungen weichen **300 (11,2 %, 248 verschiedene Namen)** im Wahlbezirk ab, und **alle 300**
+  betreffen Namen, die Overpass in mehr als einem Wahlbezirk liefert, während das Verzeichnis nur
+  bei **48** davon mehrere nennt -- die Abweichung sitzt also genau an den Bezirksgrenzen. Die 315 Namen, die das Verzeichnis gar nicht
   kennt (Fußwege, Plätze, neue Straßen), sind in beiden Messungen dieselben. Frage 1.3 ist beantwortet
   (Punkt 65); der Satz an `gdi@moenchengladbach.de` bleibt eine Bitte um eine Datei statt einer
   Operation, kein Hindernis.

@@ -2104,8 +2104,16 @@ die `docs/runbook-stadt.md`, § 4 als Grenze nennt. Das Alter der Flächen war a
 ganze Grund. Was bleibt, ist ein Unterschied der Bezugsgrößen, kein Fehler: das Verzeichnis ordnet
 eine Straße über **Adressen** genau einem Stimmbezirk zu, Overpass liefert sie über die
 **Geometrie** des Straßenzugs, und ein Zug, der eine Bezirksgrenze überschreitet, zählt in beiden
-Bezirken. Die 315 Namen, die das Verzeichnis gar nicht kennt, sind vor und nach dem Wechsel
-dieselben. Die Grenze von 90 % misst damit für eine Stadt wie diese nicht nur den Stand der
+Bezirken. Die 315 Zuordnungen mit Namen, die das Verzeichnis gar nicht kennt, sind vor und nach
+dem Wechsel dieselben.
+
+**Nachgerechnet, nicht plausibel gemacht** (2026-10-15): von den 2 667 Zuordnungen mit bekanntem
+Namen weichen **300 (11,2 %)** im Wahlbezirk ab, und sie verteilen sich auf 248 verschiedene
+Namen. **Alle 300** betreffen Namen, die Overpass in **mehr als einem** Wahlbezirk liefert --
+während das Verzeichnis nur bei **48** davon mehrere Bezirke nennt. Die Abweichung ist damit
+nicht verteilt, sondern sitzt genau dort, wo ein Straßenzug eine Bezirksgrenze überschreitet: OSM
+gibt ihn beiden Bezirken, das Verzeichnis einem. Das ist der Rest, den auch die Flächen des
+Wahltags nicht einsammeln können. Die Grenze von 90 % misst damit für eine Stadt wie diese nicht nur den Stand der
 Flächen; ob sie so bleiben soll, gehört in die nächste Runde am Runbook.
 
 **Was sich sonst in den Zahlen bewegt hat:** 1 682 Treffer statt 1 704, 5 759 Begriffe, 2 219 Orte

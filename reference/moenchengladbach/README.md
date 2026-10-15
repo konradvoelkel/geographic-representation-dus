@@ -72,7 +72,7 @@ Anfrage an die Stadt lohnt — die Zahl liegt weiter darunter, und das Alter der
 **nicht** der ganze Grund. Was bleibt, ist der Unterschied der Bezugsgrößen: das Verzeichnis ordnet
 eine Straße über Adressen genau einem Stimmbezirk zu, die Overpass-Antwort über die Geometrie des
 Straßenzugs, und ein Straßenzug, der eine Bezirksgrenze überschreitet, zählt dann in beiden
-Bezirken. Die 315 Namen, die das Verzeichnis gar nicht kennt, sind unverändert. Die Stadtseite
+Bezirken. Nachgerechnet am 2026-10-15: von den 2 667 Zuordnungen mit bekanntem Namen weichen 300 (11,2 %, 248 verschiedene Namen) im Wahlbezirk ab, und **alle 300** betreffen Namen, die Overpass in mehr als einem Wahlbezirk liefert, während das Verzeichnis nur bei 48 davon mehrere nennt. Die 315 Namen, die das Verzeichnis gar nicht kennt, sind unverändert. Die Stadtseite
 nennt die Zahl, der Städtevergleich verweist darauf.
 
 **Die Drucksachennummer nennt kein Gremium, die Beratungsfolge schon** (Punkt 58, seit dem
