@@ -1,7 +1,10 @@
 # Aufgezeichnete Antworten (2026-10-11)
 
-Einmalige echte Abrufe, klein geschnitten; die Offline-Tests der Quellen lesen sie. Jede Antwort
-liegt neben ihrer Anfrage (`*.query.txt`, `*.params.json`).
+Einmalige echte Abrufe, klein geschnitten; die Offline-Tests der Quellen lesen sie. Die Antworten
+auf Overpass, SPARQL und GeoSearch liegen neben ihrer Anfrage (`*.query.txt`, `*.params.json`),
+denn die steckt im Rumpf oder in Parametern. Bei `identify_mg_mehrringig.json` ist die Anfrage die
+**URL**, und die steht als `sources.opendata.districts_url` im Profil Mönchengladbachs; eine Datei
+daneben wäre eine zweite Fassung derselben Angabe (Punkt 65).
 
 | Datei | Quelle | Anfrage | Inhalt |
 |---|---|---|---|
@@ -48,6 +51,19 @@ weil in jenen Bezirken kein Straßenname der PDF-Stichprobe vorkommt und die Ket
 Treffer fände. Die zweite Runde gegen 02:05 Uhr holte die drei Bezirke oben (knapp zwei Minuten,
 Overpass antwortete dreimal mit 504, das Aufzeichnungsskript wiederholt nach 15 s). Die SPARQL-
 Antwort stammt aus der ersten Runde und ist stadtweit, also unverändert gültig.
+
+### Die mehrringigen Flächen des Geoportals (2026-10-14, Punkt 65)
+
+| Datei | Quelle | Anfrage | Inhalt |
+|---|---|---|---|
+| `identify_mg_mehrringig.json` | `geoportal.moenchengladbach.de/server/rest/…/MapServer` | die `identify`-URL aus dem Profil, Wort für Wort (ein GET am 2026-10-14: 1 043 618 Bytes, 179 Flächen, 25 187 Stützpunkte, SHA-256 `c2d3de4b862e615e6ddc998c6b7b4dd3f58bf35c4d4137a1b41b25ac4d093b94`) | die **zwei** mehrringigen Flächen 11001 und 11003, 13 401 Bytes |
+
+Sie sind der Grund, dass die Umwandlung der Esri-Ringe nicht am Betrag der Fläche hängen darf,
+sondern am Vorzeichen: 11003 trägt einen Ring **gegen** den Uhrzeigersinn (ein Loch von 1 641 m²),
+11001 an derselben Stelle einen **im** Uhrzeigersinn (eine zweite Fläche von 1 639 m²). Sie liegen
+hier und nicht in `tests/fixtures/mg/`, weil ihr Wahlbezirk (10) nicht zu den drei Bezirken der
+Mini-Fixture gehört und die Kette dort keinen Namen für ihn fände. Die 17 Flächen dieser drei
+Bezirke liegen als Paketeingabe unter `tests/fixtures/mg/external/`.
 
 Overpass wiederholt die Session nicht von selbst: ihre Retry-Regel erlaubt GET und HEAD, die
 Abfrage ist ein POST. Seit dem 2026-10-13 wiederholt darum `fetch_street_names` selbst, bis zu

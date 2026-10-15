@@ -1990,3 +1990,133 @@ Beleg wäre schlechter als die offene Klasse (Punkt 59).
 Der Kommentar im Profil sagte „alle acht Fundstellen nennen wirklich die Gruppe". Das waren sieben
 plus die eine falsche; die Messung war nicht falsch gelesen, sondern zu früh gemacht — gezählt
 wurde, was das Muster trifft, nicht, was es treffen soll.
+## 65. Die Flächen einer Stadt dürfen eine ArcGIS-Operation sein, und es ist `identify` (2026-10-14)
+
+Mönchengladbachs Stimmbezirksflächen rechneten bis hierher mit dem Datensatz „Wahlen" vom
+08.06.2022 (Punkt 35, Landtagswahl 2022): 175 der 179 Urnen-Stimmbezirke der Kommunalwahl 2025
+kamen darin vor, vier fehlten (`11006`, `21406`, `32906`, `40106`), fünf gab es nur dort. Die
+Flächen zum Stand der Wahl **gibt es**, nur nicht als Datei: sie sind Layer 16
+(„Kommunalwahl 2025 Stimmbezirke") des Dienstes
+`geoportal.moenchengladbach.de/server/rest/services/K12_Politik_und_Wahlen/K12_Politik_und_Wahlen/MapServer`,
+179 Flächen, Esri-JSON mit `rings`, `wkid` 25832, Attribut `Nummer` fünfstellig wie bisher,
+Datenlizenz Deutschland – Zero – Version 2.0, Aktualität „Kommunalwahl 2025".
+
+**Darum eine dritte Quellform `esri-identify` neben `geojson` und `shapefile-zip`** (Punkt 35: eine
+neue Quellform ist eine weitere Funktion). Das Profil nennt die ganze Abruf-URL mit Query-String;
+`fetch_districts_file` holt sie byteweise wie jede andere, denn ein GET bleibt ein GET, TOML liest
+das `&` wörtlich, und `http.cache_pattern` deckt die Anfrage mit seinem `*` ab. Neu geprüft wird
+nur, was diese Form eigen hat: ein ArcGIS-Dienst meldet seine Fehler **mit HTTP 200** und einem
+`error`-Objekt, und ohne diese Prüfung lägen sie als Datei in `external/`.
+
+**Warum `identify` und nicht `query`.** `query` ist die Operation, die man nähme, und sie hat an
+diesem Layer zwei Haken, beide am 2026-10-14 nachgesehen:
+
+- **Sie liefert für Layer 16 keine Geometrie.** Mit `returnGeometry=true` kommen die Attribute und
+  kein `geometry`-Mitglied; der eigene Dienst `Stimmbezirke_Kommunalwahl_2025`, der sie hätte, ist
+  **gestoppt**.
+- **Ihr `maxRecordCount` ist 2 000 und sie blättert.** Das reicht hier für 179 Flächen, aber eine
+  Form, die ab einer Grenze blättert, verlangt eine Schleife mit `resultOffset` und einen Vertrag
+  über das Ende. `identify` antwortet in **einem** GET mit allem, was im Umschlag liegt.
+
+`identify` ist dafür gemacht, an einer Stelle nachzusehen, nicht eine Fläche abzuholen; hier ist
+die „Stelle" der Umschlag der ganzen Stadt (`geometry=310000,5662000,328000,5681000`,
+`geometryType=esriGeometryEnvelope`, `tolerance=0`, `layers=all:16`). Das ist der Preis: eine
+Anfrage, die ihren Zweck nicht im Namen trägt. Dafür steht sie vollständig im Profil, ein zweiter
+Mensch kann sie in die Adresszeile kopieren, und die Antwort ist **1 043 618 Byte mit 179 Flächen
+und 25 187 Stützpunkten**, SHA-256 `c2d3de4b862e615e6ddc998c6b7b4dd3f58bf35c4d4137a1b41b25ac4d093b94`
+(abgerufen am 2026-10-14).
+
+**Die URL pinnt die Genauigkeit, und das ist nachgemessen.** Derselbe Dienst antwortet auf dieselbe
+Anfrage mit `maxAllowableOffset=1` in 443 085 Byte mit nur 17 326 Stützpunkten und auf zwei
+Nachkommastellen gerundeten Koordinaten — je Fläche bis **1 465 m²** Unterschied (am größten bei
+`40201`), in der Summe 48 736 m², und beide runden trotzdem auf 170,47 km². Welche von zwei
+vorliegenden Antworten die URL liefert, war offline nicht zu entscheiden; ein Abruf am 2026-10-14
+hat es entschieden: ohne den Parameter kommt die volle Genauigkeit, und `maxAllowableOffset=0`
+ändert daran **nichts** (byte- und prüfsummengleich). Der Parameter steht trotzdem in der URL, denn
+sonst hinge die Genauigkeit an einer Servervorgabe, die sich ändern darf.
+
+`geometryPrecision` steht **nicht** in der URL, obwohl der Dienst es annimmt. Mit `11` wächst die
+Antwort auf 1 073 358 Byte, und die Koordinaten sind dieselben Fließkommazahlen in längerer
+Schreibweise (gemessen: wertgleich bis aufs Bit, dieselben 25 187 Stützpunkte). Das wäre mehr Text
+ohne mehr Genauigkeit — die Rundung, die es verhindern soll, kommt hier von
+`maxAllowableOffset`.
+
+**Abgeschnitten ist schlimmer als kaputt.** Eine Antwort mit 1 000 von 1 200 Flächen ist gültiges
+Esri-JSON: sie läuft durch die ganze Kette und macht eine Stadt kleiner, ohne dass irgendwo ein
+Fehler steht. Darum zwei Marken, und beide sind nötig: der Dienst setzt `exceededTransferLimit`,
+wenn er gekürzt hat (seine Auskunft, aber nicht jede Fassung setzt sie), und das Profil nennt mit
+`precincts.min_areas` die Zahl der Flächen der Stadt (die Auskunft der Stadt, aber sie veraltet).
+Mönchengladbach steht auf 179. Geprüft wird die Zahl an den beiden Formen, die sich ohne Zerlegen
+zählen lassen -- GeoJSON an seinen Features, Esri-JSON an seinen `results`; beim Shapefile-Zip
+bleibt es bei der Zeile des Schritts `shapes`.
+
+**Die Ringe sind die eigentliche Arbeit.** Esri-JSON kennt kein Feld für „Loch"; das Vorzeichen der
+Ringfläche sagt es (äußere Ringe im Uhrzeigersinn, innere dagegen — ArcGIS REST API, Geometry
+Objects), und GeoJSON hält es umgekehrt und schachtelt Löcher in die Fläche, zu der sie gehören.
+`geometry_from_esri_rings` dreht darum jeden Ring und ordnet jedes Loch dem **kleinsten** äußeren
+Ring zu, der es enthält. Mönchengladbach hat beide Fälle, und zwar in derselben Ecke: Stimmbezirk
+`11003` trägt einen Ring gegen den Uhrzeigersinn (ein Loch von 1 641 m²), `11001` an dieser Stelle
+einen im Uhrzeigersinn (eine zweite Fläche von 1 639 m², also ein MultiPolygon). Wer beide gleich
+behandelte, läge bei `11003` um 1 641 m² zu hoch und bei `11001` um 1 639 m² zu niedrig, und die
+Stadtfläche stimmte zufällig trotzdem fast.
+
+Geprüft ist das an der Fläche: die Nachbedingung der Umwandlung ist, dass die Netto-Fläche der
+Ringe erhalten bleibt (Esri zählt außen negativ, also ist sie die negierte Summe über alle Ringe).
+Über alle 179 Flächen der Antwort sind das **170,47 km²** — dieselbe Zahl, die das Shapefile von
+2022 ergibt (`docs/plans/01-staedte.md`, § 3.2) und die Stadtfläche Mönchengladbachs. Dazu
+hypothesis-Tests über Rechtecke (Umlaufrichtung, Loch, zweite Fläche, Flächentreue), crosshair über
+`ring_signed_area` und `point_in_ring`, und Beispieltests an der echten Antwort.
+
+**Verworfen:**
+
+- **Das Shapefile von 2022 behalten und die Lücke auf der Seite nennen** (der Stand bis hierher).
+  Die Flächen des Wahltags sind erreichbar, und „je Wahlbezirk gerechnet, kleine Neuzuschnitte
+  fallen heraus" war eine Einschränkung aus Mangel, nicht aus Methode.
+- **Die Flächen aus OpenStreetMap herleiten.** OSM kennt keine Stimmbezirke; sie wären aus
+  Straßenabschnitten zu konstruieren, und das Ergebnis wäre eine eigene Behauptung statt einer
+  amtlichen Angabe.
+- **Die Flächen aus dem amtlichen Straßenverzeichnis der Wahl herleiten** (Straße und Hausnummern
+  je Stimmbezirk). Dasselbe Problem eine Ebene tiefer: aus Adressen entstünden Polygone nur über
+  eine Hüllen- oder Voronoi-Annahme, und die Übereinstimmung mit dem Verzeichnis, die die Seite
+  heute als Maß zeigt, wäre danach per Konstruktion 100 % und sagte nichts mehr.
+- **Den gestoppten Dienst `Stimmbezirke_Kommunalwahl_2025` bei der Stadt anfragen.** Eine Mail
+  (`gdi@moenchengladbach.de`) wäre weiter sinnvoll — für eine Datei statt einer Operation und für
+  eine Lizenzangabe bei der ITK Rheinland (Frage 1.4) —, aber sie ist kein nächster Schritt,
+  sondern eine Bitte mit offener Antwortzeit.
+
+**Kosten:** `member` und `dbf_encoding` entfallen im Profil der Stadt, `source_crs` kommt dazu (als
+Rückfallebene, der Dienst nennt sein CRS selbst). Die Settings prüfen jetzt, **welche Schlüssel zu
+welcher Quellform gehören**: `member` an einem GeoJSON sagt nichts, und `source_crs` an einem
+Shapefile sieht aus, als gälte es — es gilt das `.prj` im Zip. Und die Zahlen der Stadt ändern
+sich: 179 statt 180 Flächen im Schritt `shapes`, die vier bisher fehlenden Stimmbezirke kommen
+dazu, und die Übereinstimmung mit dem Straßenverzeichnis wird neu gemessen.
+
+**Gerechnet und gepackt am 2026-10-15.** Der Abruf lieferte genau die Antwort der Recherche
+(1 043 618 Byte, dieselbe Prüfsumme), `shapes` rechnet 179 Stimmbezirke in 33 Wahlbezirken mit
+170,47 km² und 25 187 Stützpunkten, und das Paket im Repo trägt die `identify`-Antwort statt des
+Zips. Die vier Stimmbezirke, die 2022 fehlten, haben Straßen; die fünf, die es nur 2022 gab, sind
+weg.
+
+**Der erhoffte Sprung bleibt aus, und das ist das Ergebnis.** Die Übereinstimmung mit dem
+amtlichen Straßenverzeichnis steigt von 86,2 % auf **88,8 %** je Wahlbezirk und von 66,5 % auf
+**70,8 %** je Stimmbezirk (2 667 statt 2 651 Zuordnungen mit bekanntem Namen) — und bleibt damit unter den 90 %,
+die `docs/runbook-stadt.md`, § 4 als Grenze nennt. Das Alter der Flächen war also **nicht** der
+ganze Grund. Was bleibt, ist ein Unterschied der Bezugsgrößen, kein Fehler: das Verzeichnis ordnet
+eine Straße über **Adressen** genau einem Stimmbezirk zu, Overpass liefert sie über die
+**Geometrie** des Straßenzugs, und ein Zug, der eine Bezirksgrenze überschreitet, zählt in beiden
+Bezirken. Die 315 Zuordnungen mit Namen, die das Verzeichnis gar nicht kennt, sind vor und nach
+dem Wechsel dieselben.
+
+**Nachgerechnet, nicht plausibel gemacht** (2026-10-15): von den 2 667 Zuordnungen mit bekanntem
+Namen weichen **300 (11,2 %)** im Wahlbezirk ab, und sie verteilen sich auf 248 verschiedene
+Namen. **Alle 300** betreffen Namen, die Overpass in **mehr als einem** Wahlbezirk liefert --
+während das Verzeichnis nur bei **48** davon mehrere Bezirke nennt. Die Abweichung ist damit
+nicht verteilt, sondern sitzt genau dort, wo ein Straßenzug eine Bezirksgrenze überschreitet: OSM
+gibt ihn beiden Bezirken, das Verzeichnis einem. Das ist der Rest, den auch die Flächen des
+Wahltags nicht einsammeln können. Die Grenze von 90 % misst damit für eine Stadt wie diese nicht nur den Stand der
+Flächen; ob sie so bleiben soll, gehört in die nächste Runde am Runbook.
+
+**Was sich sonst in den Zahlen bewegt hat:** 1 682 Treffer statt 1 704, 5 759 Begriffe, 2 219 Orte
+statt 2 373 — und **489 Dokumente mit Treffer wie zuvor**, die Kachel der Seite ändert sich also
+nicht. Die geometrieunabhängigen Golden Master (Urheber, Gremien, Korpus) sind unberührt; die
+ganze `slow`-Suite blieb grün, ohne dass eine eingefrorene Zahl nachgezogen werden musste.

@@ -33,10 +33,51 @@ uv run georep --profile moenchengladbach fetch opendata
 uv run georep --profile moenchengladbach run shapes
 ```
 
-Erwartet (gemessen am 2026-10-12): `30574 Bytes Wahlergebnis, 199548 Bytes Flächen
-(shapefile-zip), Straßenverzeichnis, Wahlbezirksnamen` in 1,7 s, danach `180 Stimmbezirke in 33
-Wahlbezirken, CRS EPSG:25832`. Weichen die Zahlen stark ab, hat die Stadt ihre Dateien ersetzt:
-dann erst `docs/plans/01-staedte.md`, § 3.2 gegen die neue Datei halten.
+Erwartet: `30574 Bytes Wahlergebnis, 1043618 Bytes Flächen, Straßenverzeichnis,
+Wahlbezirksnamen`, danach **`179 Stimmbezirke in 33 Wahlbezirken, CRS EPSG:25832`**. Die Zeile des
+Schritts nennt die Quellform **nicht** — welche gilt, sagt `precincts.format` im Profil. Die
+Flächenzahl ist am 2026-10-14 am Dienst nachgemessen (der Abruf der Flächen allein 5,2 s), die
+Zahl der Wahlergebnis-CSV stammt vom 2026-10-12. Die Flächen sind seit dem 2026-10-14 die des
+Wahltags und kommen aus der Operation `identify` des Geoportals (`docs/decisions.md`, Punkt 65);
+die URL steht vollständig im Profil und ist ein GET. Zwei Prüfungen lohnen sich dabei:
+
+- **179, nicht 180.** Das Shapefile von 2022 hatte 180 Polygone, von denen 175 zu Stimmbezirken der
+  Wahl 2025 gehörten; der Dienst hat genau die 179 Urnen-Stimmbezirke der Wahl.
+- **25 187 Stützpunkte, nicht 17 326.** Die URL im Profil trägt `maxAllowableOffset=0` und holt
+  damit die volle Genauigkeit; derselbe Abruf mit `maxAllowableOffset=1` liefert eine auf zwei
+  Nachkommastellen gerundete, vereinfachte Fassung (443 085 statt 1 043 618 Byte, je Fläche bis
+  1 465 m² Unterschied). Beide runden auf 170,47 km², die Flächensumme verrät den Unterschied also
+  **nicht** — die Stützpunktzahl verrät ihn:
+
+  ```bash
+  uv run python - <<'EOF'
+  import json
+  from georep.layout import Layout
+  from georep.settings import load_settings
+  roh = json.loads(Layout.from_settings(load_settings(profile="moenchengladbach")).districts_geojson.read_text(encoding="utf-8"))
+  print(len(roh["results"]), "Flächen", sum(len(r) for e in roh["results"] for r in e["geometry"]["rings"]), "Stützpunkte")
+  EOF
+  ```
+- **Die Flächensumme ist 170,47 km²**, die Stadtfläche — dieselbe Zahl wie beim Shapefile von 2022.
+  Das ist der Prüfpunkt für die Umwandlung der Esri-Ringe (Löcher und zweite Flächen):
+
+  ```bash
+  uv run python - <<'EOF'
+  import json
+  from shapely.geometry import shape
+  from georep.layout import Layout
+  from georep.settings import load_settings
+  settings = load_settings(profile="moenchengladbach")
+  layout = Layout.from_settings(settings)
+  flaechen = json.loads(layout.precincts_geojson.read_text(encoding="utf-8"))["features"]
+  print(len(flaechen), "Flächen", round(sum(shape(f["geometry"]).area for f in flaechen) / 1e6, 2), "km²")
+  EOF
+  ```
+
+Weichen die Zahlen stark ab, hat die Stadt ihren Dienst geändert: dann erst `docs/decisions.md`,
+Punkt 65 und `docs/plans/01-staedte.md`, § 3.2 gegen die neue Antwort halten. Antwortet der Dienst
+mit einem `error`-Objekt (ArcGIS tut das mit HTTP 200), bricht `fetch opendata` mit genau dieser
+Meldung ab und schreibt nichts.
 
 Prüfpunkt: das Wahlergebnis aggregiert zu denselben Summen wie die Wahlbezirks-CSV der Quelle.
 
@@ -129,13 +170,40 @@ uv run georep --profile moenchengladbach status
   Bezirke offen, holt ein zweiter Aufruf von `fetch streets_osm` sie nach: der HTTP-Cache hält die
   schon geholten. Wer `query_timeout_s` ändert, verliert die gecachten Antworten (der POST-Body
   ist der Schlüssel) und macht jeden Stamp ungültig.
+- **Die Instanz kann auch tagelang weg sein.** Vom 2026-10-14 bis zum 2026-10-15 wies
+  overpass-api.de Mönchengladbachs 179 Abfragen fast durchgehend ab -- `504` mit
+  `Dispatcher_Client::request_read_and_idx::timeout`, zeitweise `502` und `Connection refused`, und
+  zwar bei vier freien Slots und auch für eine Trivialabfrage. Das ist nicht zu beheben, nur
+  auszusitzen: eine Schleife, bis ein Durchlauf durchkommt. Hier war es der **130.**, nach rund
+  zwölf Stunden Schleife mit zwei Minuten Pause (2026-10-14 21:25 bis 2026-10-15 09:13) und gut
+  17 Stunden, vom ersten Versuch um 15:58 an gerechnet; zwei kürzere Schleifen mit 90 s und fünf
+  Minuten Pause gingen voraus. Dass das überhaupt aufsetzt, liegt allein am HTTP-Cache, und sein Schlüssel ist
+  Host, Methode und Abfragetext — **wer währenddessen Endpunkt, `query_timeout_s` oder
+  `sources.osm.simplify_m` anfasst, fängt das Sammeln von vorn an**. Ob die Instanz überhaupt
+  antwortet, sagt `curl https://overpass-api.de/api/status` zusammen mit einer Trivialabfrage;
+  antwortet die auch nicht, liegt es nicht an den eigenen Polygonen.
 
 Prüfpunkt Geometrie: die Zeile des Schritts `streets` nennt die Übereinstimmung mit dem
 Straßenverzeichnis, etwa `Verzeichnis: 1 450 bekannte Straßennamen: 93,2 % im selben Stimmbezirk,
 99,1 % im selben Wahlbezirk`. Unter 90 % je Wahlbezirk lohnt eine Anfrage an die Stadt nach den
-Flächen von 2025 (Frage 1.3); die Seite nennt die Zahl ohnehin. Mönchengladbach liegt mit
-**86,2 %** (2 651 bekannte Namen, 66,5 % im selben Stimmbezirk) darunter, weil seine Flächen vom
-08.06.2022 sind — der Satz an `gdi@moenchengladbach.de` ist damit fällig und nicht mehr optional.
+Flächen von 2025 (Frage 1.3); die Seite nennt die Zahl ohnehin. Mönchengladbach lag mit **86,2 %**
+(2 651 bekannte Namen, 66,5 % im selben Stimmbezirk) darunter, solange seine Flächen vom 08.06.2022
+waren. Mit den Flächen des Wahltags sind es **88,8 %** und 70,8 % auf 2 667 Zuordnungen (gemessen
+am 2026-10-15, `docs/decisions.md`, Punkt 65) — besser, aber **weiter unter der Grenze**.
+
+Gezählt werden **Zuordnungen**, also Paare (Stimmbezirk, Straßenname), und nicht Namen: derselbe
+Name kommt in mehreren Bezirken vor und zählt dann mehrfach. Mönchengladbach hat 2 982 solche
+Paare über 1 814 verschiedene Namen; davon kennt das Verzeichnis 2 667 Paare (1 563 Namen), die
+übrigen 315 Paare (251 Namen) nicht.
+
+Daran ist zu lernen, wofür diese Grenze taugt: sie zeigt nicht nur veraltete Flächen an. Ein
+Verzeichnis ordnet eine Straße über **Adressen** genau einem Stimmbezirk zu, Overpass liefert sie
+über die **Geometrie** des Straßenzugs; ein Zug über eine Bezirksgrenze zählt dann in beiden, und
+das drückt die Quote unabhängig vom Stand der Flächen. Wer die Zahl einer neuen Stadt beurteilt,
+vergleiche darum zuerst je Wahlbezirk (gröber, verzeiht die Grenzfälle) und sehe sich die Namen an,
+die das Verzeichnis gar nicht kennt (hier 315: Fußwege, Plätze, neue Straßen). Frage 1.3 ist
+beantwortet, und die Mail an `gdi@moenchengladbach.de` bleibt eine Bitte um eine Datei statt einer
+Operation, kein Hindernis.
 
 ## 4b. Die Gremien der Stadt (zehn Minuten, ein kleiner Netzschritt)
 
@@ -271,7 +339,9 @@ Gegenrichtung von `bootstrap`:
 
 ```bash
 uv run georep --profile moenchengladbach pack reference/moenchengladbach
-du -sb reference/moenchengladbach   # 2026-10-13: 3 980 958 Bytes
+du -sb reference/moenchengladbach   # 2026-10-15: 5 233 747 Bytes
+# pack selbst nennt die Summe seiner Dateien (2026-10-15: 9 Dateien, 5 224 917 Bytes); du zaehlt
+# das README mit, dessen Groesse sich mit jeder Zeile aendert, die man hineinschreibt.
 ```
 
 `pack` kopiert genau die Dateien, die `bootstrap` später sucht — `external/`, `raw/papers.jsonl`,
@@ -286,7 +356,13 @@ statt ein halbes Paket zu schreiben, wenn
   der Stadt, und nur ein Blick von Hand hat sie gefunden,
 - ein Text kein Paper in `papers.jsonl` hat (er fällt im Schritt `corpus` ohnehin heraus).
 
-Vorhandene Dateien bleibt `pack` stehen; `--force` überschreibt sie. Die Prüfsummentabelle druckt
+Vorhandene Dateien bleibt `pack` stehen; `--force` überschreibt sie. **Beim zweiten Packen
+derselben Stadt ist das die Falle**: ohne `--force` meldet es jede Datei als übersprungen und das
+Paket bleibt der alte Stand. Und `pack` **räumt nicht auf** — es schreibt die Dateien, die das
+Profil heute nennt, und lässt liegen, was es früher nannte. Wechselt eine Stadt die Quellform ihrer
+Flächen (Punkt 65: vom Shapefile-Zip zur `identify`-Antwort), ist die alte Datei von Hand zu
+löschen; `tests/unit/test_data_packages.py` merkt es, weil die Prüfsummentabelle des READMEs dann
+nicht mehr zu den Dateien im Ordner passt. Die Prüfsummentabelle druckt
 es immer, und ein **fehlendes** `README.md` schreibt es als Gerüst: Tabelle, Größen und Zahlen
 fertig, die Prosa als `[nachzutragen]`. Dort gehören hinein, nach dem Muster von
 `reference/moenchengladbach/README.md`: Datum des Laufs, Zahl der Paper, Texte, Orte und Straßen,

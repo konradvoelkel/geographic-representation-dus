@@ -1,8 +1,9 @@
 # Status
 
-Stand 2026-10-14, `main` auf `v0.13.0` plus die Punkte 58 bis 64 (die Beratungsfolge als zweite Quelle
+Stand 2026-10-14, `main` auf `v0.13.0` plus die Punkte 58 bis 65 (die Beratungsfolge als zweite Quelle
 des Gremiums, die Urheber Mönchengladbachs und der Wahlperiode 2014 bis 2020, die Spalte „ohne
-Ausreißer" als explorativ und die vier Korrekturen ihres Reviews; alle unveröffentlicht): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
+Ausreißer" als explorativ, die vier Korrekturen ihres Reviews und die Flächen Mönchengladbachs zum
+Stand der Wahl, seit dem 2026-10-15 auch gerechnet und gepackt; alle unveröffentlicht): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
 abgearbeitet; `bartzsch-exakt` zeigt auf `v0.11.0`, den letzten Stand, der die Zahlen der Arbeit exakt
 reproduziert. Der Umbau in sieben Phasen ist abgeschlossen
 (`docs/development-plan-2026-10.md`), die Berichtsseite ist gebaut und veröffentlicht (`docs/plan-report-2026-10.md`,
@@ -247,7 +248,7 @@ Frage 7.4 vom 2026-10-13 („kein Bucket").
 
 | Paket | Bytes | Inhalt | Profil |
 |---|---|---|---|
-| `reference/moenchengladbach/` | 4 405 625 | `external/` (4), `raw/` (4, seit Punkt 58 mit `organizations.json`), `cache/text/texts.parquet` | `moenchengladbach` |
+| `reference/moenchengladbach/` | 5 224 917 | `external/` (4), `raw/` (4, seit Punkt 58 mit `organizations.json`), `cache/text/texts.parquet` | `moenchengladbach` |
 | `snapshots/2014-2020/` | 37 875 851 | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
 | `snapshots/2025/` | 13 894 254 | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
 | `snapshots/duesseldorf-beratungsfolge/` | 90 455 | `raw/beratungsfolge.parquet` (Punkt 58) | `duesseldorf` |
@@ -278,6 +279,38 @@ in **keinem** Paket (233 MB, 3,9 GB, 585 MB).
   187 Dateien, 34,6 MB" und `PublishSummary.over_budget` ist leer. Die Größen sind der Stand jenes
   Nachbaus; die heutigen stehen unten unter „Zahlen" (die Punkte 58 bis 61 haben sie verschoben,
   Mönchengladbach am stärksten).
+
+## Die Flächen Mönchengladbachs zum Stand der Wahl (2026-10-14, `docs/decisions.md`, Punkt 65)
+
+Frage 1.3 ist beantwortet, und zwar mit Ja: die Stimmbezirksflächen der Kommunalwahl 2025 sind
+öffentlich — nicht als Datei, sondern als Layer 16 („Kommunalwahl 2025 Stimmbezirke") des Dienstes
+`K12_Politik_und_Wahlen` im Geoportal der Stadt, 179 Flächen, Esri-JSON, `wkid` 25832, Attribut
+`Nummer` fünfstellig wie bisher, dl-de/zero-2.0 (recherchiert am 2026-10-14). Darum eine dritte
+Quellform `esri-identify` neben `geojson` und `shapefile-zip`, und darum steht im Profil die ganze
+Abruf-URL einer **Operation** statt eines Dateinamens.
+
+| | Shapefile „Wahlen" (bis hierher) | Dienst, Layer 16 (ab Punkt 65) |
+|---|---|---|
+| Stand | 08.06.2022 (Landtagswahl 2022) | Aktualität Kommunalwahl 2025 |
+| Flächen | 180 Polygone, davon 175 Stimmbezirke der Wahl 2025 | **179**, genau die Urnen-Stimmbezirke der Wahl |
+| Form | Zip mit `.shp/.shx/.dbf/.prj`, pyshp | Esri-JSON mit `rings`, ein GET auf `identify` |
+| Fläche | 170,47 km² | **170,47 km²** (dieselbe Stadtfläche; der Prüfpunkt der Ringumwandlung) |
+| Abruf | 199 548 Byte | 1 043 618 Byte, 25 187 Stützpunkte, SHA-256 `c2d3de4b…4093b94` |
+| Genauigkeit | wie geliefert | von der URL gepinnt (`maxAllowableOffset=0`); mit `=1` wären es 17 326 Stützpunkte und je Fläche bis 1 465 m² Unterschied |
+
+- **`identify`, nicht `query`**: `query` liefert für diesen Layer kein `geometry`-Mitglied (der
+  eigene Dienst `Stimmbezirke_Kommunalwahl_2025`, der es hätte, ist gestoppt), und ihr
+  `maxRecordCount` ist 2 000 mit Blätterung. `identify` antwortet in einem GET mit allem, was im
+  Umschlag liegt; der Umschlag ist hier die ganze Stadt.
+- **Die Ringe sind die Arbeit**: Esri-JSON kennt kein Feld für „Loch", das Vorzeichen der
+  Ringfläche sagt es (außen im Uhrzeigersinn). Mönchengladbach hat beide Fälle in derselben Ecke:
+  `11003` ein Loch von 1 641 m², `11001` dort eine zweite Fläche von 1 639 m². Die Umwandlung dreht
+  jeden Ring und schachtelt jedes Loch in den kleinsten äußeren Ring, der es enthält; geprüft ist
+  sie an der Fläche, die dabei erhalten bleibt (Vertrag, hypothesis, crosshair und Beispieltests an
+  der echten Antwort).
+- **Noch nicht gerechnet**: `reference/moenchengladbach/` trägt weiter das Zip von 2022, die
+  Stadtseite und alle Zahlen unten stammen daraus, und `bootstrap` meldet die Datei des Profils als
+  fehlend. Der Abruf, die Neuberechnung und `georep pack` sind der nächste Schritt.
 
 ## Die Beratungsfolge als zweite Quelle des Gremiums (2026-10-14, `docs/decisions.md`, Punkt 58)
 
@@ -517,7 +550,9 @@ Die Punkte 62, 63 und 64 sind die Befunde des Reviews mit eigener Entscheidung; 
   Nummernfolge (kernzahlen, suche, karte, zusammenhang, kontrollvariablen, gewichtung, perioden,
   parteien, wahlbezirke, gremien, begriffe, monate, methode, abgeleitete-daten, literatur, downloads,
   laufend). Die Unterseiten: `2014-2020/` 822 027, `2025/` 718 384, `moenchengladbach/` 819 872,
-  `vergleich.html` 89 597 Bytes (alle am 2026-10-14 nach den Punkten 59 bis 64 gemessen;
+  `vergleich.html` 89 597 Bytes (alle am 2026-10-14 nach den Punkten 59 bis 64 gemessen; am
+  2026-10-15 nach Punkt 65 neu: `moenchengladbach/` **807 393** und `vergleich.html` **93 794**,
+  die Stadtseite also 12 479 Byte kleiner und der Vergleich 4 197 größer;
   Mönchengladbach wuchs um 170 151 Byte, weil es seit Punkt 59 den Abschnitt „Urheber und Parteien"
   mit sechs Parteikarten über 33 Flächen hat; `georep publish --strict-budget` endet mit Exit 0 und
   meldet „2 Städte, 1 Vergleich, 101 Dateien, 16,5 MB").
@@ -582,8 +617,9 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   Seite danach ein `georep run report --force` je Profil. Dasselbe gilt für eine geänderte
   Klassengrenze (siehe `defaults.toml`, `[report.diverging]`).
 - deal 4.24.6: `deal.raises` vergleicht exakte Typen, keine Unterklassen; `deal.has()`/`deal.pure` sind nicht reentrant (Patch bleibt nach Rekursion stehen). Beides umschifft (NetworkError, `deal.safe` für `deep_merge`), nicht upstream gemeldet.
-- `nox -s verify` (crosshair) läuft wieder durch und ist grün (Exit 0, 33 Ziele „Not confirmed", 10 Minuten
-  am 2026-10-14; 6 Minuten bei 16 Zielen am 2026-10-12). Der Lauf vom 2026-10-14 fand dabei ein echtes
+- `nox -s verify` (crosshair) läuft wieder durch und ist grün (Exit 0, alle Ziele „Not confirmed";
+  **37 Ziele** seit dem 2026-10-15, als die vier Funktionen der Esri-Ringe dazukamen, 10 Minuten bei
+  33 Zielen am 2026-10-14; 6 Minuten bei 16 Zielen am 2026-10-12). Der Lauf vom 2026-10-14 fand dabei ein echtes
   Gegenbeispiel in `report.model.body_figures`: ein von Hand gebautes `SourceCounts` mit einer fremden
   Quelle flog als `KeyError` ohne Fehlertext (Punkt 58). Behoben als Vorbedingung `_sources_are_known`,
   dieselbe Sorte wie `_kinds_are_known` vom 2026-10-13. Davor brach die Sitzung mit `re.PatternError` ab, bevor sie berichtete: `parse_reference`
@@ -695,11 +731,27 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   Text" und nennt im Abschnitt „Vergleichbarkeit" je Stadt beide Zahlen, und die Kachel „Dokumente mit
   Treffer" jeder Stadtseite nennt zusätzlich den Anteil an den Dokumenten **mit Text** (Mönchengladbach
   489 von 650 = 75,2 %, nicht nur 16,9 % aller 2 895). Woran die 404 liegen, sagt der Server nicht.
-- **Mönchengladbachs Straßen stimmen nur zu 86,2 % je Wahlbezirk mit dem amtlichen Verzeichnis überein**
-  (2 651 bekannte Namen, 66,5 % im selben Stimmbezirk; gemessen 2026-10-13). Die Grenze des Runbooks ist
-  90 %, also ist Frage 1.3 fällig: die Flächen stammen aus dem Datensatz „Wahlen" vom 08.06.2022, die Wahl
-  war am 14.09.2025. Gerechnet wird je Wahlbezirk, kleine Neuzuschnitte innerhalb eines Bezirks fallen
-  heraus; der Satz an `gdi@moenchengladbach.de` steht aus (Konrads Handgriff).
+- **Mönchengladbachs Straßen stimmen zu 88,8 % je Wahlbezirk mit dem amtlichen Verzeichnis überein**
+  (2 667 Zuordnungen mit bekanntem Namen, 70,8 % im selben Stimmbezirk; gemessen am 2026-10-15 mit den
+  Flächen des Wahltags). Vorher waren es **86,2 %** und **66,5 %** auf 2 651 Zuordnungen, gemessen am
+  2026-10-13 mit dem Shapefile vom 08.06.2022. Gezählt werden Paare (Stimmbezirk, Name) und nicht
+  Namen: 2 982 Paare über 1 814 verschiedene Namen, davon kennt das Verzeichnis 2 667 Paare mit
+  1 563 Namen; die übrigen 315 Paare tragen 251 Namen, die es nicht führt. Die neuen Flächen heben die Zahl also um 2,6 bzw. 4,3 Prozentpunkte — und
+  **nicht über die Grenze von 90 %**, die das Runbook nennt. Das Alter der Flächen war damit nicht der
+  ganze Grund. Was bleibt, ist der Unterschied der Bezugsgrößen: das Verzeichnis ordnet eine Straße über
+  **Adressen** genau einem Stimmbezirk zu, Overpass liefert sie über die **Geometrie** des Straßenzugs,
+  und ein Zug über eine Bezirksgrenze zählt in beiden. Nachgerechnet am 2026-10-15: von den 2 667
+  Zuordnungen weichen **300 (11,2 %, 248 verschiedene Namen)** im Wahlbezirk ab, und **alle 300**
+  betreffen Namen, die Overpass in mehr als einem Wahlbezirk liefert, während das Verzeichnis nur
+  bei **48** davon mehrere nennt -- die Abweichung sitzt also genau an den Bezirksgrenzen. Die 315 Namen, die das Verzeichnis gar nicht
+  kennt (Fußwege, Plätze, neue Straßen), sind in beiden Messungen dieselben. Frage 1.3 ist beantwortet
+  (Punkt 65); der Satz an `gdi@moenchengladbach.de` bleibt eine Bitte um eine Datei statt einer
+  Operation, kein Hindernis.
+- **Mönchengladbachs Paket und sein Profil nennen dieselben Flächen** (seit dem 2026-10-15,
+  Punkt 65): `reference/moenchengladbach/external/Stimmbezirke_Kommunalwahl_2025.json` ist die
+  `identify`-Antwort des Dienstes, das Zip von 2022 ist aus dem Paket entfernt. `georep pack` räumt
+  **nicht** auf -- die alte Datei musste von Hand weg, und `tests/unit/test_data_packages.py` hätte
+  es sonst gemeldet (die Prüfsummentabelle des READMEs passt dann nicht mehr zu den Dateien).
 - Mönchengladbach (Option 01, 2026-10-12): der Marker `betrifft` kam in der PDF-Stichprobe in 0 von 5
   Dokumenten vor (alles Fraktionsanträge der laufenden Periode); ohne Marker durchsucht die Kette den ganzen
   Text. Der volle Lauf hat das nicht geändert, der Marker bleibt wirkungslos (Frage 1.5).
@@ -761,6 +813,56 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 ## Nächster Schritt
 
 **Die Dokumentation steht seit dem 2026-10-14 in vier Sichten** (Konrads Auftrag, Branch `docs/sichten`): `docs/technik.md` (Schnittstellen, Kette, Veröffentlichung), `docs/inhalt.md` (Daten und Seite), `docs/statistik.md` (Auswertungen mit Einwänden), `docs/workflow-ratsmitglied.md` (Arbeitsablauf); das README verweist darauf, `docs/architecture.md` und `docs/decisions.md` sind unberührt.
+
+**Phase 2 zu Punkt 65 ist durch** (2026-10-15): Mönchengladbach rechnet mit den Flächen des
+Wahltags, und das Paket im Repo trägt sie. Der Weg dahin und was dabei herauskam:
+
+| Schritt | Ergebnis |
+|---|---|
+| `fetch opendata` | 1 043 618 Byte, SHA-256 `c2d3de4b…4093b94` — byte- und prüfsummengleich mit der Recherche vom 2026-10-14 |
+| `run shapes` | **179 Stimmbezirke in 33 Wahlbezirken**, EPSG:25832, **170,47 km²**, **25 187 Stützpunkte**, jede Fläche gültig |
+| `run voters` | 33 Wahlbezirke, 204 219 Wahlberechtigte, 96 880 Wähler (unverändert; sie hängen am Wahlergebnis) |
+| `fetch pois_wiki` | 1 190 per SPARQL, 1 029 per GeoSearch, 2 219 Einträge (vorher 2 373), 1 929 Orte nach der Bereinigung |
+| `fetch streets_osm` | **179 Stimmbezirke, 2 982 Zuordnungen, 1 814 verschiedene Namen** (245,7 s im Durchlauf, der durchkam) |
+| `run` bis `report` | 5 759 Begriffe, **1 682 Treffer** (vorher 1 704), 489 Dokumente mit Treffer (unverändert), Seite 3,2 MB |
+| `pack --force` | 9 Dateien, 5 224 917 Byte (vorher 4 405 625); das Zip von 2022 von Hand entfernt |
+| `publish --strict-budget` | 2 Städte, 1 Vergleich, 101 Dateien, 16,5 MB, Exit 0 |
+
+**Overpass hat zwei Tage gekostet.** Vom 2026-10-14 15:58 bis zum 2026-10-15 09:13 wies
+overpass-api.de fast jede Abfrage mit `504` ab (`Dispatcher_Client::request_read_and_idx::timeout`,
+dabei vier freie Slots und derselbe Fehler für eine Trivialabfrage; zeitweise auch `502` und
+`Connection refused`). Es lag **nicht** an den neuen Flächen: deren Polygone sind nach
+`simplify_m = 2` praktisch gleich groß wie die von 2022 (Punkte je Fläche im Median 79 statt 75,
+Maximum in beiden 368). Gerettet hat es der HTTP-Cache — sein Schlüssel ist Host, Methode und
+Abfragetext, also setzte jeder Durchlauf auf dem vorigen auf, bis Durchlauf 130 alle 179 Abfragen
+beisammen hatte. **Wer so etwas wieder fährt: nichts anfassen, was den Schlüssel ändert** (Endpunkt,
+`query_timeout_s`, `simplify_m`), sonst beginnt das Sammeln von vorn.
+
+**Die Falle, die der halbe Stand war**, ist damit weg: `raw/streets_per_district.json` ist der neue
+Stand mit 179 Stimmbezirken, die vier Bezirke der Wahl, die im Shapefile von 2022 fehlten (`11006`,
+`21406`, `32906`, `40106`), haben Straßen, und die fünf, die es nur 2022 gab, kommen nicht mehr vor.
+Geprüft ist das an der Datei, am Wörterbuch und an der Seite.
+
+**Was dabei offen bleibt:**
+
+- **Die Übereinstimmung bleibt unter 90 %** (88,8 % je Wahlbezirk; siehe „Bekannt"). Ob die Grenze
+  des Runbooks für eine Stadt, deren Verzeichnis über Adressen und deren Geometrie über Straßenzüge
+  geht, überhaupt erreichbar ist, ist eine offene Frage an die Methode, nicht mehr an die Daten.
+- **Drei Netzschritte stehen auf „offen: Settings geändert"** (`papers`, `organizations`, `pdfs`):
+  die neuen Schlüssel in `[precincts]` haben den Settings-Fingerprint geändert, ihre Daten nicht.
+  Ein erneuter Abruf kostet Stunden und brächte dieselben Dateien; ihre Stamps bleiben darum alt.
+- **Düsseldorf ist nicht neu gerechnet.** `georep publish` baut den Vergleich aus den
+  veröffentlichten Ordnern, nicht aus einem Lauf; die Hauptstadtseite ist der Stand vom 2026-10-13.
+  In `data/duesseldorf/site/` fehlen dabei die Unterseiten `2014-2020/` und `2025/`, darum meldet
+  `publish` 101 Dateien und nicht 187. **Das ist lokal und kein Schaden an der veröffentlichten
+  Seite**: die beiden Periodenseiten entstehen nicht aus `publish` und nicht aus einem Lauf des
+  Hauptprofils, sondern aus einer **Kopie**, die `.github/workflows/pages.yml` nach dem Lauf macht
+  (`cp -r "$PERIOD" "$MAIN/$PROFILE"`). Jedes Periodenprofil hat seinen eigenen Ordner --
+  `georep --profile duesseldorf-2014 paths` nennt `profile=2014-2020` und
+  `site=data/2014-2020/site` --, und dort liegen beide Seiten vollständig (822 027 und 718 384
+  Byte vom 2026-10-14). Der letzte Lauf des Hauptprofils hat seinen `site`-Ordner neu geschrieben
+  und die Kopien damit entfernt; wer sie lokal wieder will, kopiert sie, statt etwas zu rechnen.
+
 
 **Zuerst zu lesen: der Befundbericht zu den vier Netzläufen** (`docs/befunde-2026-10-14.md`, 2026-10-14).
 Er sagt, was die Daten zeigen — die zwei Wahlperioden (Spearman der Trefferquoten 0,8106; die Regression
@@ -848,7 +950,9 @@ Actions"). Erledigt:
 1. Periode 2014 bis 2020: 22 215 Dokumente, 22 116 PDFs, 21 838 mit Text, 36 324 Treffer, 77 Monate →
    `snapshots/2014-2020/` und die Abschnitte „Zwei Wahlperioden".
 2. Mönchengladbach: 2 895 Dokumente, 658 PDFs (die übrigen `404`), 1 704 Treffer über 33 Wahlbezirke →
-   `reference/moenchengladbach/` und `vergleich.html` aus `georep publish`.
+   `reference/moenchengladbach/` und `vergleich.html` aus `georep publish`. **Seit dem 2026-10-15 sind
+   es 1 682 Treffer** (Punkt 65, die Flächen des Wahltags); die Zahl der Dokumente mit mindestens einem
+   Treffer bleibt **489**, die Kachel der Seite also unverändert.
 3. Erstabruf der laufenden Periode: 4 095 Dokumente, 4 088 PDFs, 5 448 Treffer, 14 Monate →
    `snapshots/2025/` und die Unterseite `2025/`.
 
@@ -862,8 +966,10 @@ Offen bleibt daran:
   durchgelaufen (36 min, Worktree `…/georep/worktrees/netzlauf`, Log
   `…/georep/logs/netzlauf-2026-10-13.log`, Daten in `…/georep/data-vollabruf/`). Seine drei Befunde stehen
   oben unter „Bekannt"; die Datenwurzel kann weg, sobald Konrad sie nicht mehr ansehen will.
-- **Die Anfrage an Mönchengladbach** nach den Stimmbezirksflächen von 2025 (Frage 1.3): mit 86,2 %
-  Übereinstimmung je Wahlbezirk liegt die Stadt unter der Grenze des Runbooks.
+- **Die Anfrage an Mönchengladbach** nach den Stimmbezirksflächen von 2025 (Frage 1.3) ist **erledigt**
+  (2026-10-15, Punkt 65) und war keine Anfrage: die Flächen des Wahltags sind öffentlich, nur nicht als
+  Datei. Die Übereinstimmung stieg damit auf 88,8 % je Wahlbezirk und bleibt unter der Grenze des
+  Runbooks -- der Rest liegt an den Bezugsgrößen, nicht am Alter der Flächen (siehe „Bekannt").
 
 Der Rückstand `docs/todo.md` ist abgearbeitet (`v0.12.0`): Punkt 4, Bartzschs Methodik, am 2026-10-12
 (`docs/methodik-review-2026-10.md`, Regeln in `docs/decisions.md`, Punkte 43 und 44); Punkt 1, das Themenmodell,

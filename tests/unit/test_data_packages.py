@@ -37,7 +37,7 @@ MIB = 1024 * 1024
 @dataclass(frozen=True)
 class Package:
     path: str
-    limit: int  # Obergrenze in Bytes, grob: rund ein Drittel Luft über dem Stand vom 2026-10-14
+    limit: int  # Obergrenze in Bytes, grob: ein Drittel bis das Mehrfache Luft über dem Stand
     native: bool  # eigenes Format (raw/papers.jsonl plus Textstore) statt Altformat der Arbeit
     readme: bool  # trägt eine Tabelle mit Bytes und SHA-256 je Datei
 
@@ -50,15 +50,15 @@ class Package:
 PACKAGES = (
     # 85 771 896 Bytes, eingefroren seit v0.2.0 und ohne README-Tabelle (Golden Master der Arbeit)
     Package("reference", limit=120 * MIB, native=False, readme=False),
-    Package("reference/moenchengladbach", limit=8 * MIB, native=True, readme=True),  # 4 405 625
+    Package("reference/moenchengladbach", limit=8 * MIB, native=True, readme=True),  # 5 224 917
     Package("snapshots/2014-2020", limit=48 * MIB, native=True, readme=True),  # 37 875 851
     Package("snapshots/2025", limit=20 * MIB, native=True, readme=True),  # 13 894 254
     # Punkt 58: nur die Beratungsfolge je Dokument, kein Store und keine Eingabe (90 455 Bytes)
     Package("snapshots/duesseldorf-beratungsfolge", limit=1 * MIB, native=False, readme=True),
     Package("context", limit=4 * MIB, native=False, readme=True),  # 2 242 316
 )
-# Alle zusammen, als zweite grobe Schranke: 144 280 397 Bytes = 137,60 MiB am 2026-10-14 (76 % der
-# Grenze). Ein einziger PDF-Ordner einer
+# Alle zusammen, als zweite grobe Schranke: 145 099 689 Bytes = 138,38 MiB am 2026-10-15 (76,9 %
+# der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes). Ein einziger PDF-Ordner einer
 # Periode (585 MB bis 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 
@@ -271,3 +271,39 @@ def test_the_stores_of_a_package_have_the_rows_its_readme_claims(path: str) -> N
     # Umgekehrt gilt keine Gleichheit: ein Paper ohne Hauptdatei trägt keinen Namen, und eines,
     # dessen PDF der Server nicht ausliefert (Mönchengladbach: 2 213), hat keinen Text.
     assert texts <= len(known) <= papers
+
+
+# --- M1: die Flächen im Paket sind die der Stadt -----------------------------------------------
+
+
+@pytest.mark.slow
+def test_the_packed_areas_are_the_whole_second_city() -> None:
+    """Die Stadt im Paket ist vollständig: 179 Stimmbezirke, 170,47 km², 25 187 Stützpunkte.
+
+    Bis zum Review vom 2026-10-15 hielt **kein** Test diese Zahlen am echten Paket fest. Nur der
+    Fetcher prüfte auf eine abgeschnittene Dienstantwort, und GitHub Pages ruft ihn nie auf: es
+    liest diese Datei. Eine hier gekürzte Antwort hätte eine kleinere Stadt mit Exit 0 ergeben --
+    die Flächensumme ist die Zahl, an der das auffällt (`docs/decisions.md`, Punkt 65).
+    """
+    from shapely.geometry import shape
+
+    from georep.prep.precincts import read_source_esri_identify
+
+    datei = (
+        REPO / "reference" / "moenchengladbach" / "external" / "Stimmbezirke_Kommunalwahl_2025.json"
+    )
+    quelle = read_source_esri_identify(datei, id_property="Nummer")
+    assert len(quelle.features) == 179 and quelle.crs == "EPSG:25832"
+    nummern = {str(f["properties"]["Nummer"]) for f in quelle.features}
+    assert len(nummern) == 179
+    assert {"11006", "21406", "32906", "40106"} <= nummern  # 2022 fehlten sie
+    assert not {"10506", "11204", "21505", "32405", "32805"} & nummern  # 2022 gab es sie noch
+
+    flaeche = sum(shape(f["geometry"]).area for f in quelle.features)
+    assert flaeche == pytest.approx(170_469_644.10, abs=0.1)  # m², die Stadtfläche
+    punkte = sum(
+        len(ring)
+        for entry in json.loads(datei.read_text(encoding="utf-8"))["results"]
+        for ring in entry["geometry"]["rings"]
+    )
+    assert punkte == 25_187  # maxAllowableOffset=0; mit =1 wären es 17 326

@@ -64,6 +64,12 @@ def mini_root() -> Path:
 
 
 @pytest.fixture(scope="session")
+def mg_root() -> Path:
+    """Die Mini-Fixture der zweiten Stadt; sie trägt beide Quellformen ihrer Flächen (Punkt 65)."""
+    return MG
+
+
+@pytest.fixture(scope="session")
 def context_root() -> Path:
     """Die Fremddaten des Repos (Option 03); die Mini-Fixture hat ihre eigenen unter ``mini/context``."""
     return REPO / "context"
@@ -163,7 +169,14 @@ def mg_settings() -> Settings:
     Probe, nicht des Profils, und steht darum hier und nicht in ``profiles/``.
     """
     base = load_settings(profile="moenchengladbach", cwd=Path("/nonexistent"))
-    return base.model_copy(update={"topics": base.topics.model_copy(update={"k": 3, "min_df": 1})})
+    return base.model_copy(
+        update={
+            "topics": base.topics.model_copy(update={"k": 3, "min_df": 1}),
+            # Dasselbe für die Flächen: das Profil erwartet die 179 der Stadt, die Probe hat 17
+            # (Review 2026-10-15). Auch das ist eine Grenze der Probe, nicht des Profils.
+            "precincts": base.precincts.model_copy(update={"min_areas": 17}),
+        }
+    )
 
 
 @pytest.fixture(scope="session")
