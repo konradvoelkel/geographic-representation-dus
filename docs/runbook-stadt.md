@@ -170,16 +170,33 @@ uv run georep --profile moenchengladbach status
   Bezirke offen, holt ein zweiter Aufruf von `fetch streets_osm` sie nach: der HTTP-Cache hält die
   schon geholten. Wer `query_timeout_s` ändert, verliert die gecachten Antworten (der POST-Body
   ist der Schlüssel) und macht jeden Stamp ungültig.
+- **Die Instanz kann auch tagelang weg sein.** Vom 2026-10-14 bis zum 2026-10-15 wies
+  overpass-api.de Mönchengladbachs 179 Abfragen fast durchgehend ab -- `504` mit
+  `Dispatcher_Client::request_read_and_idx::timeout`, zeitweise `502` und `Connection refused`, und
+  zwar bei vier freien Slots und auch für eine Trivialabfrage. Das ist nicht zu beheben, nur
+  auszusitzen: eine Schleife mit fünf Minuten Pause, bis ein Durchlauf durchkommt (hier der 130.,
+  nach 14 Stunden). Dass das überhaupt aufsetzt, liegt allein am HTTP-Cache, und sein Schlüssel ist
+  Host, Methode und Abfragetext — **wer währenddessen Endpunkt, `query_timeout_s` oder
+  `sources.osm.simplify_m` anfasst, fängt das Sammeln von vorn an**. Ob die Instanz überhaupt
+  antwortet, sagt `curl https://overpass-api.de/api/status` zusammen mit einer Trivialabfrage;
+  antwortet die auch nicht, liegt es nicht an den eigenen Polygonen.
 
 Prüfpunkt Geometrie: die Zeile des Schritts `streets` nennt die Übereinstimmung mit dem
 Straßenverzeichnis, etwa `Verzeichnis: 1 450 bekannte Straßennamen: 93,2 % im selben Stimmbezirk,
 99,1 % im selben Wahlbezirk`. Unter 90 % je Wahlbezirk lohnt eine Anfrage an die Stadt nach den
 Flächen von 2025 (Frage 1.3); die Seite nennt die Zahl ohnehin. Mönchengladbach lag mit **86,2 %**
 (2 651 bekannte Namen, 66,5 % im selben Stimmbezirk) darunter, solange seine Flächen vom 08.06.2022
-waren. Seit dem 2026-10-14 rechnet das Profil mit den Flächen des Wahltags (`docs/decisions.md`,
-Punkt 65); **wie hoch die Übereinstimmung damit ist, ist noch nicht gemessen** — die Zeile des
-Schritts `streets` sagt es nach dem nächsten Lauf. Frage 1.3 ist damit beantwortet, und die Mail an
-`gdi@moenchengladbach.de` bleibt eine Bitte um eine Datei statt einer Operation, kein Hindernis.
+waren. Mit den Flächen des Wahltags sind es **88,8 %** und 70,8 % auf 2 667 Namen (gemessen am
+2026-10-15, `docs/decisions.md`, Punkt 65) — besser, aber **weiter unter der Grenze**.
+
+Daran ist zu lernen, wofür diese Grenze taugt: sie zeigt nicht nur veraltete Flächen an. Ein
+Verzeichnis ordnet eine Straße über **Adressen** genau einem Stimmbezirk zu, Overpass liefert sie
+über die **Geometrie** des Straßenzugs; ein Zug über eine Bezirksgrenze zählt dann in beiden, und
+das drückt die Quote unabhängig vom Stand der Flächen. Wer die Zahl einer neuen Stadt beurteilt,
+vergleiche darum zuerst je Wahlbezirk (gröber, verzeiht die Grenzfälle) und sehe sich die Namen an,
+die das Verzeichnis gar nicht kennt (hier 315: Fußwege, Plätze, neue Straßen). Frage 1.3 ist
+beantwortet, und die Mail an `gdi@moenchengladbach.de` bleibt eine Bitte um eine Datei statt einer
+Operation, kein Hindernis.
 
 ## 4b. Die Gremien der Stadt (zehn Minuten, ein kleiner Netzschritt)
 
@@ -315,7 +332,7 @@ Gegenrichtung von `bootstrap`:
 
 ```bash
 uv run georep --profile moenchengladbach pack reference/moenchengladbach
-du -sb reference/moenchengladbach   # 2026-10-13: 3 980 958 Bytes
+du -sb reference/moenchengladbach   # 2026-10-13: 3 980 958 Bytes; 2026-10-15: 5 232 353
 ```
 
 `pack` kopiert genau die Dateien, die `bootstrap` später sucht — `external/`, `raw/papers.jsonl`,

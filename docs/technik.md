@@ -123,7 +123,7 @@ damit jede Seite ohne einen einzigen Netzaufruf (decisions.md, Punkt 56). Ein Pa
 | Paket | Bytes | Inhalt | Profil |
 |---|---|---|---|
 | `reference/` | 85 771 896 (81,80 MiB) | Altformat `interim/paper_with_text.json`, `external/`, `raw/`, dazu `processed/` mit den Golden-Master-CSVs der Arbeit | `duesseldorf` |
-| `reference/moenchengladbach/` | 4 405 625 (4,2 MiB) | `external/` (4), `raw/` (4, seit Punkt 58 mit `organizations.json`), `cache/text/texts.parquet` | `moenchengladbach` |
+| `reference/moenchengladbach/` | 5 224 917 (4,98 MiB) | `external/` (4), `raw/` (4, seit Punkt 58 mit `organizations.json`), `cache/text/texts.parquet` | `moenchengladbach` |
 | `snapshots/2014-2020/` | 37 875 851 (36,1 MiB) | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
 | `snapshots/2025/` | 13 894 254 (13,2 MiB) | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
 | `snapshots/duesseldorf-beratungsfolge/` | 90 455 (88 KiB) | `raw/beratungsfolge.parquet`: `id`, `consultation_organizations`, `modified` (Punkt 58) | `duesseldorf` |

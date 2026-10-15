@@ -2089,6 +2089,26 @@ Rückfallebene, der Dienst nennt sein CRS selbst). Die Settings prüfen jetzt, *
 welcher Quellform gehören**: `member` an einem GeoJSON sagt nichts, und `source_crs` an einem
 Shapefile sieht aus, als gälte es — es gilt das `.prj` im Zip. Und die Zahlen der Stadt ändern
 sich: 179 statt 180 Flächen im Schritt `shapes`, die vier bisher fehlenden Stimmbezirke kommen
-dazu, und die Übereinstimmung mit dem Straßenverzeichnis wird neu gemessen. Das rechnet Phase 2
-mit einem echten Abruf und `georep pack`; bis dahin nennt das Profil den Dienst, und
-`reference/moenchengladbach/` trägt noch das Zip von 2022 (siehe `STATUS.md`, „Bekannt").
+dazu, und die Übereinstimmung mit dem Straßenverzeichnis wird neu gemessen.
+
+**Gerechnet und gepackt am 2026-10-15.** Der Abruf lieferte genau die Antwort der Recherche
+(1 043 618 Byte, dieselbe Prüfsumme), `shapes` rechnet 179 Stimmbezirke in 33 Wahlbezirken mit
+170,47 km² und 25 187 Stützpunkten, und das Paket im Repo trägt die `identify`-Antwort statt des
+Zips. Die vier Stimmbezirke, die 2022 fehlten, haben Straßen; die fünf, die es nur 2022 gab, sind
+weg.
+
+**Der erhoffte Sprung bleibt aus, und das ist das Ergebnis.** Die Übereinstimmung mit dem
+amtlichen Straßenverzeichnis steigt von 86,2 % auf **88,8 %** je Wahlbezirk und von 66,5 % auf
+**70,8 %** je Stimmbezirk (2 667 statt 2 651 bekannte Namen) — und bleibt damit unter den 90 %,
+die `docs/runbook-stadt.md`, § 4 als Grenze nennt. Das Alter der Flächen war also **nicht** der
+ganze Grund. Was bleibt, ist ein Unterschied der Bezugsgrößen, kein Fehler: das Verzeichnis ordnet
+eine Straße über **Adressen** genau einem Stimmbezirk zu, Overpass liefert sie über die
+**Geometrie** des Straßenzugs, und ein Zug, der eine Bezirksgrenze überschreitet, zählt in beiden
+Bezirken. Die 315 Namen, die das Verzeichnis gar nicht kennt, sind vor und nach dem Wechsel
+dieselben. Die Grenze von 90 % misst damit für eine Stadt wie diese nicht nur den Stand der
+Flächen; ob sie so bleiben soll, gehört in die nächste Runde am Runbook.
+
+**Was sich sonst in den Zahlen bewegt hat:** 1 682 Treffer statt 1 704, 5 759 Begriffe, 2 219 Orte
+statt 2 373 — und **489 Dokumente mit Treffer wie zuvor**, die Kachel der Seite ändert sich also
+nicht. Die geometrieunabhängigen Golden Master (Urheber, Gremien, Korpus) sind unberührt; die
+ganze `slow`-Suite blieb grün, ohne dass eine eingefrorene Zahl nachgezogen werden musste.

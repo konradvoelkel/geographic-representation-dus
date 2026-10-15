@@ -15,9 +15,14 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
   Fläche von 1 639 m² (`11001`).
   `fetch_districts_file` holt dafür eine URL mit Query-String und erkennt die Fehlerform eines
   ArcGIS-Dienstes (ein `error`-Objekt mit HTTP 200). Die Settings prüfen jetzt auch, welche
-  Schlüssel zu welcher Quellform gehören (`member` und `dbf_encoding` nur am Zip). **Noch nicht neu
-  gerechnet:** `reference/moenchengladbach/` trägt weiter das Zip von 2022, und die Zahlen der
-  Stadtseite stammen daraus (`STATUS.md`, „Bekannt" und „Nächster Schritt").
+  Schlüssel zu welcher Quellform gehören (`member` und `dbf_encoding` nur am Zip). Seit dem
+  2026-10-15 ist es auch **gerechnet und gepackt**: `reference/moenchengladbach/` trägt die
+  Antwort des Dienstes statt des Zips, und die Stadtseite rechnet mit 179 Flächen. Die
+  Übereinstimmung mit dem amtlichen Straßenverzeichnis steigt damit von 86,2 % auf **88,8 %** je
+  Wahlbezirk (66,5 % → 70,8 % je Stimmbezirk) — und bleibt unter den 90 %, die das Runbook als
+  Grenze nennt: das Alter der Flächen war nicht der ganze Grund, der Rest liegt daran, dass das
+  Verzeichnis über Adressen und OpenStreetMap über Straßenzüge zuordnet. Die Stadt hat damit
+  1 682 Treffer statt 1 704; die 489 Dokumente mit mindestens einem Treffer bleiben.
 - **Die Spalte „davon allein" der Parteitabelle heißt, was sie ist**: eine Trefferzahl, und sie
   steht hinter „Treffer" statt neben „Dokumente" — auf der Mönchengladbacher Seite war „Dokumente
   107 / davon allein 168" zu lesen. Der Satz zur Deckung nennt außerdem nur noch die Klassen, die
