@@ -83,10 +83,14 @@ VERIFY_TARGETS = [
     "georep.report.model.format_de",
     "georep.report.search.canonical_term",
     "georep.report.charts.nice_ticks",
-    # Punkt 65: die Esri-Ringe. Beide sind rein-pythonisch und total unter ihren Vorbedingungen;
-    # der Leser der Antwort ist es nicht (er liest eine Datei) und steht darum nicht hier.
+    # Punkt 65: die Esri-Ringe. Alle vier sind rein-pythonisch und total unter ihren
+    # Vorbedingungen; der Leser der Antwort ist es nicht (er liest eine Datei) und steht darum
+    # nicht hier. ``geometry_from_esri_rings`` darf ``SchemaError`` werfen und sagt das im
+    # Vertrag -- crosshair prüft dann, dass **nur** das herauskommt.
+    "georep.prep.precincts.is_ring",
     "georep.prep.precincts.ring_signed_area",
     "georep.prep.precincts.point_in_ring",
+    "georep.prep.precincts.geometry_from_esri_rings",
     # Punkt 46: feste Klassengrenzen; rein, total und ohne Polars
     "georep.report.charts.classify_fixed",
     # Punkt 45: die Ableitung der Stoppwörter aus dem Profil ist rein und total.
