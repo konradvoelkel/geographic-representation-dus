@@ -14,10 +14,11 @@ dependencies = [
     "polars>=2,<3",
     "pydantic>=2.14",
     "pydantic-settings>=2.15",
-    # Unter 7, bis es entschieden ist (docs/decisions.md, Punkt 66): 7.1.0 liefert fuer 63 % der
-    # PDFs einen anderen Text, und der Extraktorname mit Version macht jeden Text veraltet.
-    # Untergrenze 6.21.4 wegen der Sicherheitskorrekturen (Commit 358973d, 2026-11-09).
-    "pypdf>=6.21.4,<7",
+    # Der Extraktor seit dem 2026-11-16 (docs/decisions.md, Punkt 67), mit Absicht genau eine
+    # Version: der Extraktorname traegt sie, jede andere macht alle extrahierten Texte veraltet,
+    # und 7.1.0 gegen 6.21.4 aenderte 63 % der Texte. Eine neue Version erst nach einer Messung
+    # an den lokalen PDFs (Punkt 66 sagt, wie), dann Pakete neu packen.
+    "pypdf==7.1.0",
     "pyyaml>=6.0.3",
     "requests>=2.32.4",
     "scipy>=1.16.2",
