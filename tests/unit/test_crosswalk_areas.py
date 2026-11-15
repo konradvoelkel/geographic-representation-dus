@@ -105,9 +105,11 @@ def test_both_crosswalks_agree_when_each_precinct_lies_in_one_unit() -> None:
     attributes = unit_weights(
         table.with_columns(pl.Series("einheit", ["A", "B", "B"])), "einheit", "wahlberechtigte"
     )
-    assert geometric.rows() == pytest.approx(
-        attributes.select("wahlkreis_id", "einheit", "gewicht").rows()
-    )
+    expected = attributes.select("wahlkreis_id", "einheit", "gewicht").rows()
+    # Schlüssel exakt, Gewichte mit Toleranz: approx über Zeilentupel verglich bis pytest 9.1
+    # still exakt und ist seit 9.2 ein TypeError.
+    assert [row[:2] for row in geometric.rows()] == [row[:2] for row in expected]
+    assert [row[2] for row in geometric.rows()] == pytest.approx([row[2] for row in expected])
 
 
 def test_a_district_without_eligible_voters_falls_away_instead_of_dividing_by_zero() -> None:
