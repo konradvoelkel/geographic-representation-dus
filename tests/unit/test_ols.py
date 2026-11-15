@@ -81,6 +81,23 @@ def test_without_variance_in_y_there_is_no_fit() -> None:
         fit_ols(_frame(rows), "y", ["a"])
 
 
+def test_a_perfect_fit_has_no_residual_variance_to_test_against() -> None:
+    """Gegenbeispiel von hypothesis (2026-11-16): sieben Zeilen, aber nur drei verschiedene Punkte.
+
+    Konstante und zwei Terme treffen drei Punkte exakt, die Designmatrix ist dabei nicht singulär.
+    Ohne Reststreuung gibt es weder Standardfehler noch F-Wert; vorher endete das in einem
+    ZeroDivisionError statt in dem Fehler, den der Vertrag nennt.
+    """
+    points = [
+        (-498.876155050928, -4681.500677818765, -3375.9921875),
+        (-5594.640625, 3005.125, 0.0),
+        (-5357.236203446457, -3857.7092752206872, 8837.829573355233),
+    ]
+    rows = [points[0], points[1], points[0], points[2], points[1], points[1], points[1]]
+    with pytest.raises(EmptyResultError, match="Reststreuung"):
+        fit_ols(_frame(rows), "y", ["a", "b"])
+
+
 def test_too_few_rows_violate_the_contract() -> None:
     rows = [(1.0, 1.0, 2.0), (2.0, 2.0, 1.0), (3.0, 3.0, 4.0)]
     with pytest.raises(deal.PreContractError):

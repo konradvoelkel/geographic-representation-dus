@@ -131,8 +131,9 @@ def fit_ols(
     Standardfehler aus σ² (XᵀX)⁻¹, p zweiseitig über die t-Verteilung mit n − k − 1
     Freiheitsgraden, F-Test gegen das Modell nur mit Konstante, VIF je Term aus einer
     Hilfsregression auf die übrigen Terme, standardisierte Koeffizienten als b · sd(x)/sd(y)
-    (die Einheiten der Terme sind verschieden). Ohne Streuung in ``y`` oder bei praktisch
-    singulärer Designmatrix gibt es kein Ergebnis: ``EmptyResultError``.
+    (die Einheiten der Terme sind verschieden). Ohne Streuung in ``y``, bei praktisch singulärer
+    Designmatrix oder bei exakter Anpassung (keine Reststreuung) gibt es kein Ergebnis:
+    ``EmptyResultError``.
     """
     names = list(terms)
     matrix = _design(frame, names)
@@ -153,6 +154,12 @@ def fit_ols(
     r2, tss = _r_squared(target, residuals)
     rss = float(residuals @ residuals)
     sigma2 = rss / df
+    if sigma2 == 0.0:
+        # Wenige verschiedene Punkte, viele Zeilen: die Matrix ist nicht singulär, die Anpassung
+        # aber exakt, und ohne Reststreuung sind Standardfehler und F-Wert nicht definiert.
+        raise EmptyResultError(
+            f"Regression ohne Reststreuung: die Terme {names} treffen alle {n} Werte von {y} exakt."
+        )
     covariance = sigma2 * np.linalg.inv(matrix.T @ matrix)
     stderr = np.sqrt(np.diag(covariance))
     scores = coefficients / stderr
