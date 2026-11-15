@@ -199,6 +199,15 @@ def test_district_weight_refuses_zero_districts() -> None:
         district_weight(0)
 
 
+def test_district_weight_refuses_a_count_no_float_can_hold() -> None:
+    """Gegenbeispiel von crosshair 0.0.113 (2026-11-15): jenseits des größten floats gibt es
+    keinen Kehrwert, und ``1.0 / n`` endete in einem OverflowError statt im Vertrag."""
+    from georep.analysis.weights import district_weight
+
+    with pytest.raises(deal.PreContractError):
+        district_weight(10**400)
+
+
 def test_idf_weight_refuses_more_documents_than_there_are() -> None:
     from georep.analysis.weights import idf_weight
 

@@ -19,6 +19,7 @@ von außen mit jedem Frame läuft.
 from __future__ import annotations
 
 import math
+import sys
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 
@@ -71,7 +72,9 @@ class TypeRules:
 
 
 @deal.pure
-@deal.pre(lambda n: n >= 1)
+# Die obere Grenze ist kein Fachwert, sondern die des Datentyps: jenseits des größten floats hat
+# ``n`` keinen Kehrwert, und ``1.0 / n`` endete im OverflowError (crosshair 0.0.113, 2026-11-15).
+@deal.pre(lambda n: 1 <= n <= sys.float_info.max)
 @deal.post(lambda result: 0.0 < result <= 1.0)
 def district_weight(n: int) -> float:
     """Spezifität nach Bezirken: ein Begriff in ``n`` Wörterbüchern zählt für jeden mit ``1/n``.
