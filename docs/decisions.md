@@ -2120,3 +2120,82 @@ Flächen; ob sie so bleiben soll, gehört in die nächste Runde am Runbook.
 statt 2 373 — und **489 Dokumente mit Treffer wie zuvor**, die Kachel der Seite ändert sich also
 nicht. Die geometrieunabhängigen Golden Master (Urheber, Gremien, Korpus) sind unberührt; die
 ganze `slow`-Suite blieb grün, ohne dass eine eingefrorene Zahl nachgezogen werden musste.
+
+## 66. Was eine Abhängigkeitsrunde zurückhält: pypdf unter 7, crosshair bei 0.0.111 (2026-11-15)
+
+Die Runde vom 2026-11-15 hob alles, was sich als wirkungsgleich messen ließ, und hält zwei Pakete
+mit Absicht fest. `pyproject.toml` nennt beide Grenzen mit Grund, damit ein nacktes
+`uv lock --upgrade` sie nicht mitnimmt (vorher hatte nur polars eine Obergrenze).
+
+**Wie gemessen wurde.** Ein Paket, das Zahlen der Seite rechnet, bekommt einen A/B-Bau statt nur
+der Tests: alle Seiten wie in `pages.yml` aus den Datenpaketen, einmal in einem Worktree am alten
+Lock, einmal am neuen, je in eigener Datenwurzel über `GEOREP_SETTINGS`. Parquet wird als Frame
+verglichen (die Bytes tragen den Schreiber), alles andere byteweise; `generated_at` und die daraus
+abgeleiteten Prüfsummen der Download-Tabelle sind herausgerechnet. **Zwei Bauten am selben Lock
+sind danach in allen 606 Dateien gleich**, das Rauschen ist also null und jede Abweichung ein
+Befund. Ergebnis: polars 2.0.0 → 2.1.0 und numpy 2.5.3 → 2.5.4 ändern keine Zahl (in den
+HTML-Seiten weichen allein sieben Größenangaben von Parquet-Dateien ab, weil der Schreiber von 2.1
+dieselben Frames kleiner ablegt); pydantic 2.14.3 und pydantic-settings 2.16.3 lassen Fingerprint
+und vollen Settings-Dump aller fünf Profile unverändert; unter loguru 0.8.0 ist die
+Konsolenausgabe eines ganzen Baus zeilengleich. Die Laufzeit ist gepaart gemessen (alter und neuer
+Stand abwechselnd, Minimum aus je drei Läufen), weil der Rechner unter Fremdlast stand.
+
+**pypdf bleibt unter 7.** Der Name des Extraktors ist `pypdf-<Version>` und steht an jedem Text;
+jede neue Version macht darum alle extrahierten Texte veraltet (Punkt 14). Gemessen an den 27 062
+lokal gecachten PDFs (200 der Hauptperiode, 22 116 aus 2014 bis 2020, 4 088 der laufenden Periode,
+658 aus Mönchengladbach):
+
+| Vergleich | gleicher Text | anderer Text | Fehler |
+|---|---|---|---|
+| 6.21.4 gegen die abgelegten Texte aus 6.20.0 | 27 047 | 0 | 15 |
+| 7.1.0 gegen 6.21.4 | 9 972 | 17 075 | 15 (dieselben) |
+
+- **6.21.4 ist textgleich mit 6.20.0**, bis auf 15 PDFs aus 2014 bis 2020, die jetzt an einer
+  neuen Schutzgrenze scheitern (`Reached maximum number of tokens per stream`). Ihr alter Text
+  bleibt im Store stehen, denn `extract_missing` zählt sie als fehlerhaft und löscht nichts; jeder
+  Lauf versucht sie erneut. Die Pakete im Repo tragen weiter `pypdf-6.20.0` und sind richtig.
+- **7.1.0 ändert 63 % der Texte, und immer auf dieselbe Art**: einzelne Leerzeichen mitten im Wort
+  fallen weg („ver putzt" → „verputzt", „halt estelle" → „haltestelle"; in vier Stichproben waren
+  alle 63 Änderungen ein gelöschtes Leerzeichen). Das ist der bessere Text. Kein neuer Fehler: die
+  im Netz gemeldete Ausnahme bei abgekürzten Filternamen trifft keine dieser PDFs.
+- **Die Treue zur Arbeit sinkt von 197 auf 123 von 200 Texten** (zeichengleich mit den Texten der
+  Arbeit; 6.20.0 und 6.21.4 erreichen beide 197).
+- **Der Golden Master der Extraktion wird rot**: einer der vier Snapshots,
+  `test_text_after_marker_snapshot[00439409.pdf]`.
+- **Rund ein Prozent mehr Treffer**, bei gleicher Rangfolge der Wahlbezirke:
+
+| Datensatz | Treffer 6.21.4 | Treffer 7.1.0 | Dokumente mit Treffer | Spearman der Quoten |
+|---|---|---|---|---|
+| Mönchengladbach | 1 682 | 1 700 (+1,1 %) | 489 → 490 | 0,9990 |
+| laufende Periode | 5 448 | 5 453 (+0,1 %) | 2 173 → 2 173 | 0,9993 |
+| 2014 bis 2020 | 36 324 | 36 788 (+1,3 %) | 12 977 → 13 085 | 0,9991 |
+
+  Die Regression bewegt sich nicht (2014 bis 2020: r 0,2384 → 0,2368, p 0,133 → 0,136).
+
+Warum es trotzdem nicht mitging: der Golden Master ist rot, also ist es kein Refactoring; die
+19 033 Texte der Hauptperiode sind die der Arbeit und ließen sich nur nach einem Abruf aller
+19 108 PDFs neu extrahieren — ohne ihn rechneten die Perioden mit zwei Extraktoren, und der
+Abschnitt „Zwei Wahlperioden" vergliche auch die; und drei Pakete wären neu zu packen (rund 34 MB
+neue Blobs). Das ist eine Methodenentscheidung mit eigenem Lauf, keine Abhängigkeitsrunde. Die
+Untergrenze steigt auf 6.21.4, den Stand der Sicherheitskorrekturen vom 2026-11-09.
+
+**crosshair-tool bleibt bei 0.0.111.** 0.0.113 (mit z3-solver 5.4.1) fand ein echtes Gegenbeispiel,
+das 0.0.111 nie fand — `district_weight(n)` jenseits des größten floats, behoben mit rotem Test —,
+stürzte danach aber in einem von vier vollen Läufen von `nox -s verify` selbst ab
+(`ValueError: wrong parameter order: keyword-only parameter before variadic positional parameter`
+in `dynamic_typing.intersect_signatures`, beim Ausformulieren eines Gegenbeispiels). 37 Einzelläufe
+und sechs Teilläufe mit einer Hülle um die Meldung fanden kein Ziel dazu. Der Wochenlauf
+`quality.yml` soll nur bei einem echten Befund rot werden; darum bleibt das gemessene Gespann
+stehen, `crosshair-tool` 0.0.111 mit `z3-solver` 5.1.0.0 und `typeshed-client` 2.13.0 (die beiden
+transitiven über `constraint-dependencies`). 0.0.112 ist nicht gemessen.
+
+**Nebenbefund: die Extraktion hängt an der Umgebung.** pypdf meldet über die 27 062 PDFs 2 886 Mal,
+dass fontTools fehlt („required to fully parse the encoding of a CFF Type1 font"). Ist es installiert,
+ändern sich 12 der 27 062 Texte (alle aus 2014 bis 2020: der weiche Trennstrich U+00AD wird zum
+Bindestrich). fontTools kommt nur über matplotlib in der Gruppe `notebook` ins Lock; extrahiert
+wird in der Standardumgebung ohne diese Gruppe, und so sind die Pakete entstanden.
+
+Verworfen: pypdf 7 still im Lock mitnehmen (der nächste lokale Lauf extrahierte alles neu, und
+`georep pack` schriebe andere Texte ins Repo als die veröffentlichten); crosshair 0.0.113 behalten
+und den Absturz hinnehmen; numpy 2.5.5 mitnehmen, das am Abend der Runde erschien und beim Heben
+des Rests zweieinhalb Stunden alt war (gemessen ist 2.5.4).

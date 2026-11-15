@@ -2,6 +2,24 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## Unreleased
+
+- **Abhängigkeiten gehoben, keine Zahl bewegt sich** (Runde vom 2026-11-15, `docs/decisions.md`,
+  Punkt 66): polars 2.1.0, numpy 2.5.4, pydantic 2.14.3, pydantic-settings 2.16.3, pyshp 3.1.8,
+  loguru 0.8.0, dazu pytest 9.2.0, hypothesis, pytest-gremlins 1.14.1, syrupy 7.0.1, mypy, ruff,
+  nox und 33 transitive Pakete. Geprüft mit einem A/B-Bau aller Seiten aus den Datenpaketen gegen
+  den alten Stand: alle Tabellen gleich, alle CSV, JSON und GeoJSON bytegleich. Sichtbar ist allein,
+  dass sieben Parquet-Dateien der Download-Tabellen etwas kleiner sind.
+- **Zwei Sicherheitsmeldungen geschlossen**: tornado 6.6.1 (Open Redirect) und soupsieve 4.1.1
+  (drei Denial-of-Service-Einträge); `uv audit` meldet für das Lock keinen Treffer mehr. Beide
+  kamen nur über Entwicklungs- und Notebook-Werkzeuge ins Lock, nicht über die Kette.
+- **pypdf bleibt unter 7, und `pyproject.toml` sagt es** (Punkt 66): 7.1.0 liefert für 63 % der
+  PDFs einen anderen Text (Leerzeichen mitten im Wort fallen weg) und fände rund ein Prozent mehr
+  Treffer. Das ist eine Methodenentscheidung mit eigenem Lauf und geht nicht mit einer
+  Abhängigkeitsrunde mit.
+- **`district_weight` weist eine Zahl jenseits des float-Bereichs ab**, statt in einem
+  OverflowError zu enden (Gegenbeispiel von crosshair 0.0.113).
+
 ## 0.14.0 (2026-10-15), Flaechen der Wahl, Beratungsfolge, Urheber, vier Sichten
 
 - **Mönchengladbachs Stimmbezirksflächen sind die des Wahltags** (`docs/decisions.md`, Punkt 65):

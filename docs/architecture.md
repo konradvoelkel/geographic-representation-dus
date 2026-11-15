@@ -226,7 +226,8 @@ der Arbeit wird für alle 1996 Orte reproduziert.
 - `prep.extract.PdfTextExtractor` (`name` als Cache-Schlüssel, `extract(path) -> str`), Implementierung
   `PypdfExtractor`. Normalisierung (Zeilenumbrüche weg, kleingeschrieben) und der Schnitt am Marker
   `betrifft` liegen außerhalb. Ein Ersatz muss den Golden Master der vier Fixture-PDFs bestehen oder seine
-  Abweichung dokumentieren; pypdf 6.20.0 reproduziert 197 von 200 Texten der Arbeit zeichengleich.
+  Abweichung dokumentieren; pypdf 6.20.0 und 6.21.4 reproduzieren 197 von 200 Texten der Arbeit
+  zeichengleich, 7.1.0 nur 123 (`decisions.md`, Punkt 66).
 
 Gemessen (2026-10-11): der Matcher kostet 4,1 s für 5841 Begriffe über 19 108 Dokumente, 3,8 s davon reines
 Python in FlashText; die Extraktion 38 ms je PDF, 17 ms je Seite. Kein Flaschenhals rechtfertigt derzeit

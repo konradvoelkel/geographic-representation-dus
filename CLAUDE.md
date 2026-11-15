@@ -47,6 +47,7 @@ uv run nox -s bench          # heiße Pfade gegen die gespeicherte Baseline; der
 uv run georep profile index  # echter Schritt unter cProfile; .prof nach docs/profiling/, Zahlen ins README dort
 uv run nox -s verify         # crosshair über die reinen Funktionen mit Verträgen, rund zehn Minuten
 uv run nox -s mutate         # pytest-gremlins je Modul (MUTATION_SCOPE); `-- fast` sind die acht schnellen, kein Gate
+uv tree --frozen --outdated --depth 1 && uv audit --frozen   # was veraltet ist und was eine Sicherheitsmeldung hat; beides liest nur
 ```
 
 Settings: `src/georep/defaults.toml` ist die stadtneutrale Quelle, `src/georep/profiles/<slug>.toml` die
@@ -82,6 +83,12 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - Eine Eigenschaft, die für alle Eingaben gilt, wird ein hypothesis-Test in `tests/property/`, kein Beispieltest; wer den Matcher ersetzt, misst sich an `tests/property/oracle_matcher.py`. Snapshots (`syrupy`) nur für kleine, stabile Ausgaben und nie blind mit `--snapshot-update` erneuern.
 - Direkt auf `main`: nach jedem Commit `uv run nox`, dann Push; CI über die Actions-REST-API prüfen (`gh run list` liefert für dieses Repo leer). Tag bei Versionssprung; Versionen stehen in `pyproject.toml`, `src/georep/__init__.py` und `uv.lock` (`uv lock`), jede mit einer Zeile im `CHANGELOG.md`. So hat Konrad es am 2026-10-11 angewiesen.
 - Prüfschritte in Skripten nie hinter eine Pipe stellen (`uv run pytest | tail`): die Pipe frisst den Exit-Code, und am 2026-10-11 landeten so zwei rote Commits. Erst der Befehl allein, dann die Ausgabe ansehen.
+- Abhängigkeiten je Name heben (`uv lock --upgrade-package <name>`), eine Sorte je Commit, nie ein nacktes
+  `uv lock --upgrade` als erster Schritt. Was Zahlen rechnet (polars, numpy, scipy, scikit-learn, shapely, pyproj),
+  bekommt einen A/B-Bau aller Seiten aus den Datenpaketen gegen den alten Stand, pydantic einen Vergleich der
+  Fingerprints, und pypdf steht bis zur Entscheidung unter 7 (`docs/decisions.md`, Punkt 66, 2026-11-15). Ein
+  Release, das jünger als ein Tag ist, bleibt liegen. `verify`, `alone` und `mutate` sieht der Push-CI nicht:
+  wer hypothesis, crosshair oder pytest-gremlins hebt, fährt sie von Hand.
 - Entscheidungspunkte in `docs/decisions.md` bekommen ihre Nummer beim Merge, nicht auf dem Branch: parallel
   laufende Branches vergeben sonst dieselbe Nummer, und `feat/esri-identify` musste seinen Punkt zweimal
   umnummerieren (59, 62, 65 am 2026-10-14).
@@ -120,4 +127,9 @@ bleiben in `STATUS.md` und in den datierten Dokumenten unter `docs/`.
 - **Überlebende Mutanten in Vertrags-Lambdas werden nicht nachgezogen** (`docs/decisions.md`, Punkt 12); „äquivalent" dagegen will nachgerechnet werden — eine falsche Behauptung stand am 2026-10-12 schon in einer Notiz.
 - **Mutationsziele je Modul messen**, nie alles in einer Sitzung: `nox -s mutate -- <schlüssel>` nimmt die Testdateien des Moduls aus `MUTATION_SCOPE`, denn ohne Abdeckungsdaten läuft jeder Mutant gegen **alle** übergebenen Tests (`docs/mutation-2026-10-13.md`). `analysis/topics.py` bleibt draußen: NMF je Mutant.
 - **Golden-Master-Tests über das Themenmodell prüfen Invarianten, nicht Zahlen**: es ist nur je Rechner und je Thread-Zahl reproduzierbar (2026-10-12).
+- **`pytest.approx` über Zeilentupel ist kein Toleranzvergleich**: bis pytest 9.1 fiel es je Tupel still auf
+  exakte Gleichheit zurück, seit 9.2 ist es ein TypeError. Schlüssel exakt, Zahlen als flache Liste unter
+  `approx` (2026-11-15, `test_crosswalk_areas.py`).
+- **Die zsh dieser Umgebung zerlegt `$VAR` nicht in Wörter und expandiert `--include=*.py` als Glob**: Listen
+  als Array oder in einem bash-Skript, Muster in Anführungszeichen (2026-11-15, zwei verlorene Läufe).
 - **Eine Zahl in einem Test rundet wie die Seite**: `format_de` setzt U+202F als Tausendertrenner und ein Komma als Dezimaltrenner, eine Erwartung mit `"2.000"` ist also rot (2026-10-13).

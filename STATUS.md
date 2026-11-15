@@ -1,6 +1,7 @@
 # Status
 
-Stand 2026-10-15, `main` auf `v0.14.0` (die Punkte 58 bis 65: die Beratungsfolge als zweite Quelle
+Stand 2026-11-15, `main` auf `v0.14.0` plus die Abhängigkeitsrunde vom 2026-11-15 (Punkt 66; keine
+Zahl der Seite bewegt sich). `v0.14.0` sind die Punkte 58 bis 65: die Beratungsfolge als zweite Quelle
 des Gremiums, die Urheber Mönchengladbachs und der Wahlperiode 2014 bis 2020, die Spalte „ohne
 Ausreißer" als explorativ, die vier Korrekturen ihres Reviews und die Flächen Mönchengladbachs zum
 Stand der Wahl, gerechnet und gepackt am 2026-10-15; dazu die Dokumentation in vier Sichten): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
@@ -604,6 +605,29 @@ Schema-Version hingehört, wie eine Zahl in einem Test gerundet wird —, stehen
 in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen werden
 (`docs/absicherung-2026-10.md`, § 4). Verloren ist nichts, nur umgezogen.
 
+- **Das Lock nennt pypdf 6.21.4, die Texte der Pakete nennen `pypdf-6.20.0`, und beides stimmt**
+  (2026-11-15, Punkt 66): an allen 27 062 lokal gecachten PDFs gemessen liefert 6.21.4 denselben
+  Text. Weil der Extraktorname die Version trägt, extrahiert der nächste lokale Lauf des Schritts
+  `texts` trotzdem alle 26 862 PDFs der drei Datensätze neu (rund 20 Minuten) und kommt beim selben
+  Text an. In CI gibt es keine PDFs; dort bleiben die Texte der Pakete, wie sie sind.
+- **15 PDFs der Periode 2014 bis 2020 scheitern seit pypdf 6.21 an einer Schutzgrenze**
+  (`Reached maximum number of tokens per stream`, 2026-11-15). Ihr Text aus 6.20.0 bleibt im Store
+  stehen, die Zahlen ändern sich nicht; jeder Lauf zählt sie als fehlerhaft und versucht sie erneut.
+- **pypdf 7 ist zurückgehalten und wäre der bessere Extraktor** (Punkt 66): 7.1.0 ändert 63 % der
+  Texte (Leerzeichen mitten im Wort fallen weg), findet rund ein Prozent mehr Treffer (2014 bis
+  2020: 36 324 → 36 788) und reproduziert nur noch 123 statt 197 der 200 Texte der Arbeit. Die
+  Übernahme braucht einen Abruf der 19 108 PDFs der Hauptperiode und neue Pakete; `pyproject.toml`
+  hält pypdf bis dahin unter 7.
+- **Die Extraktion hängt an der Umgebung** (2026-11-15): mit installiertem fontTools ändern sich 12
+  der 27 062 Texte (weicher Trennstrich wird Bindestrich). fontTools kommt nur über die Gruppe
+  `notebook` ins Lock; extrahiert wird in der Standardumgebung ohne sie.
+- **crosshair-tool steht fest bei 0.0.111** (Punkt 66): 0.0.113 stürzte in einem von vier vollen
+  Läufen von `nox -s verify` selbst ab. `z3-solver` 5.1.0.0 und `typeshed-client` 2.13.0 sind über
+  `constraint-dependencies` mit festgehalten.
+- **Die lokale Datenwurzel ist als Ganzes „offen"** (gemessen am 2026-11-15): `georep status`
+  meldet für alle fünf Profile jeden Schritt als offen, die meisten mit „Settings geändert". Das
+  liegt nicht an der Abhängigkeitsrunde (Fingerprints und Status sind vor und nach ihr gleich); ein
+  lokaler `georep run` je Profil ohne Netz bringt die Ergebnisse auf den Stand des Codes.
 - **1 535 Dokumente der Periode 2014 bis 2020 und 1 275 Mönchengladbachs bleiben „unbekannt",
   obwohl ihre Beratungsfolge Gremien nennt** (2026-10-14, Punkt 58): sie nennt mehrere, und welches
   das federführende ist, steht nicht in den Daten
@@ -811,6 +835,13 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 - Der Stadtbezirk Mönchengladbachs steckt im ersten Zeichen der Stimmbezirksnummer (`10401`: Stadtbezirk 1, Wahlbezirk 04, Stimmbezirk 01); das Profil liest ihn mit `columns.results.city_district_from_precinct`. Bestätigt ist die Regel bisher nur an der Fixture (Wahlbezirke 04, 09, 23) und an der Zahl der Stadtbezirke (vier); der volle Lauf prüft sie gegen die Wahlbezirks-CSV (`docs/plans/01-staedte.md`, § 8, Frage 1.13).
 
 ## Nächster Schritt
+
+**Offen aus der Abhängigkeitsrunde vom 2026-11-15, Konrads Entscheidung:** ob pypdf 7 der Extraktor
+wird. Die Messung steht in `docs/decisions.md`, Punkt 66; die Übernahme hieße, die PDFs der
+Hauptperiode abzurufen, alle vier Datensätze neu zu extrahieren, drei Pakete neu zu packen und den
+Snapshot der Fixture-PDFs bewusst zu erneuern. Ebenfalls offen: numpy 2.5.5 (am 2026-11-15 abends
+erschienen, noch nicht gemessen) und crosshair-tool über 0.0.111 hinaus, sobald eine Version den
+Absturz nicht mehr zeigt.
 
 **Stand nach dem Merge von Punkt 65 (2026-10-15, `v0.14.0`):** alles aus der Runde vom 2026-10-14 liegt
 auf `main` (Merge `1e3e409`, 34 Commits des Branches `feat/esri-identify`, zwei Reviews) und ist gepusht.
