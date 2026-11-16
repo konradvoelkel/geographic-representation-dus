@@ -123,13 +123,13 @@ damit jede Seite ohne einen einzigen Netzaufruf (decisions.md, Punkt 56). Ein Pa
 | Paket | Bytes | Inhalt | Profil |
 |---|---|---|---|
 | `reference/` | 85 771 896 (81,80 MiB) | Altformat `interim/paper_with_text.json`, `external/`, `raw/`, dazu `processed/` mit den Golden-Master-CSVs der Arbeit | `duesseldorf` |
-| `reference/moenchengladbach/` | 5 224 917 (4,98 MiB) | `external/` (4), `raw/` (4, seit Punkt 58 mit `organizations.json`), `cache/text/texts.parquet` | `moenchengladbach` |
-| `snapshots/2014-2020/` | 37 875 851 (36,1 MiB) | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
-| `snapshots/2025/` | 13 894 254 (13,2 MiB) | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
+| `reference/moenchengladbach/` | 5 213 942 (4,97 MiB) | `external/` (4), `raw/` (4, seit Punkt 58 mit `organizations.json`), `cache/text/texts.parquet` | `moenchengladbach` |
+| `snapshots/2014-2020/` | 37 625 770 (35,9 MiB) | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
+| `snapshots/2025/` | 13 889 015 (13,2 MiB) | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
 | `snapshots/duesseldorf-beratungsfolge/` | 90 455 (88 KiB) | `raw/beratungsfolge.parquet`: `id`, `consultation_organizations`, `modified` (Punkt 58) | `duesseldorf` |
 | `context/` | 2 242 316 (2,14 MiB) | drei Dateien des Quartiersatlas | alle Düsseldorf-Profile |
 
-Zusammen **144 280 397 Bytes, 137,60 MiB**, 76 % der Grenze von 180 MiB im Test; gezählt sind die
+Zusammen **144 833 394 Bytes, 138,12 MiB** (Stand 2026-11-16, Texte aus pypdf 7.1.0), 77 % der Grenze von 180 MiB im Test; gezählt sind die
 Datendateien ohne die READMEs. Jedes Paket trägt ein README mit Herkunft, Lizenz, Abrufdatum, den
 Zahlen des Laufs und der SHA-256 jeder Datei; `tests/unit/test_data_packages.py` hält Dateiliste,
 Größe und Prüfsumme dagegen und lässt keine PDFs, Stamps, Manifeste und Caches hinein. **Die PDFs

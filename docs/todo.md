@@ -111,3 +111,24 @@ DL-DE Zero 2.0, ODbL, CC BY-SA, CC BY 4.0); die Seite nennt sie je Quelle. Der A
 Heute CC0 1.0 wie das Original (README, „Lizenz"). Konrad möchte den Code nach einem Tag auf GPL-3.0-or-later
 stellen (2026-10-12). CC0 des Ursprungs lässt das zu; Daten, Fremddaten und Fixtures behalten ihre eigenen
 Lizenzen (DL-DE BY 2.0, ODbL, CC BY-SA), die Seite nennt sie weiter je Quelle.
+
+## 7. Die Seite nennt den Extraktor nicht
+
+Aufgenommen am 2026-11-16 mit `docs/decisions.md`, Punkt 67. Seit pypdf 7.1.0 der Extraktor ist,
+sind die Hauptperiode (Texte der Arbeit) und die drei anderen Datensätze mit zwei Extraktoren
+gelesen, und der neue findet rund ein Prozent mehr Treffer. Die Abschnitte „Zwei Wahlperioden" und
+`vergleich.html` stellen solche Datensätze nebeneinander, ohne es zu sagen; „Methode und Grenzen"
+schreibt nur „der Text jedes PDFs wird extrahiert". Die Angabe liegt schon in den Daten: die Spalte
+`extractor` des Textstores nennt sie je Dokument. Zu prüfen wäre ein Satz aus dem Modell im
+Methodenabschnitt (welcher Extraktor, wie viele Texte) und ein Hinweis dort, wo zwei Datensätze mit
+verschiedenen Extraktoren verglichen werden. Mit Punkt 8 erledigt sich der zweite Teil.
+
+## 8. Die PDFs der Hauptperiode abrufen
+
+Aufgeschoben von Konrad am 2026-11-16 (`docs/decisions.md`, Punkt 67). Die 19 033 Texte der
+Hauptperiode sind die der Arbeit; lokal liegen nur 200 ihrer 19 108 PDFs. Erst mit allen PDFs lässt
+sich die Hauptperiode mit pypdf 7.1.0 lesen und der Zwischenstand aus Punkt 7 auflösen. Der Abruf
+dauert Stunden (`georep fetch pdfs`, ein Netzlauf, den Konrad freigibt). Zu entscheiden ist danach,
+woher die Hauptseite ihre Texte nimmt: `reference/` bleibt der Stand der Arbeit und nur lesbar, die
+neu extrahierten Texte bräuchten ein eigenes Paket, und die Zahlen der Hauptseite lösten sich damit
+von denen der Arbeit (`bartzsch-exakt` bleibt der Anker).

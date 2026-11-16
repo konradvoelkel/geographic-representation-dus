@@ -13,10 +13,18 @@ Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind G
 - **Zwei Sicherheitsmeldungen geschlossen**: tornado 6.6.1 (Open Redirect) und soupsieve 4.1.1
   (drei Denial-of-Service-Einträge); `uv audit` meldet für das Lock keinen Treffer mehr. Beide
   kamen nur über Entwicklungs- und Notebook-Werkzeuge ins Lock, nicht über die Kette.
-- **pypdf bleibt unter 7, und `pyproject.toml` sagt es** (Punkt 66): 7.1.0 liefert für 63 % der
-  PDFs einen anderen Text (Leerzeichen mitten im Wort fallen weg) und fände rund ein Prozent mehr
-  Treffer. Das ist eine Methodenentscheidung mit eigenem Lauf und geht nicht mit einer
-  Abhängigkeitsrunde mit.
+- **pypdf 7.1.0 ist der Extraktor** (`docs/decisions.md`, Punkte 66 und 67): die neue Version
+  lässt Leerzeichen mitten im Wort weg („ver putzt" wird „verputzt") und findet darum rund ein
+  Prozent mehr Treffer. Die drei Datensätze mit eigenen PDFs sind neu extrahiert und neu gepackt:
+  Mönchengladbach 1 700 Treffer statt 1 682 (490 statt 489 Dokumente mit Treffer), die laufende
+  Periode 5 453 statt 5 448, die Wahlperiode 2014 bis 2020 36 788 statt 36 324 (13 085 statt 12 977
+  Dokumente). Kein Urteil der Seite kippt: die Regression der alten Periode steht bei p = 0,136
+  (ohne 1 und 10: 0,083), der Spearman der Trefferquoten zwischen den Perioden bei 0,8127.
+  **Die Hauptperiode rechnet weiter mit den Texten der Arbeit**, bis ihre PDFs abgerufen sind; die
+  Abschnitte, die Perioden oder Städte nebeneinanderstellen, vergleichen bis dahin Datensätze aus
+  zwei Extraktoren.
+- **Eine exakte Anpassung ist kein Regressionsergebnis**: `fit_ols` meldet sie als fehlendes
+  Ergebnis, statt in einer Division durch null zu enden (Gegenbeispiel von hypothesis).
 - **`district_weight` weist eine Zahl jenseits des float-Bereichs ab**, statt in einem
   OverflowError zu enden (Gegenbeispiel von crosshair 0.0.113).
 

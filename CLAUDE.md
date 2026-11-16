@@ -86,7 +86,9 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - Abhängigkeiten je Name heben (`uv lock --upgrade-package <name>`), eine Sorte je Commit, nie ein nacktes
   `uv lock --upgrade` als erster Schritt. Was Zahlen rechnet (polars, numpy, scipy, scikit-learn, shapely, pyproj),
   bekommt einen A/B-Bau aller Seiten aus den Datenpaketen gegen den alten Stand, pydantic einen Vergleich der
-  Fingerprints, und pypdf steht bis zur Entscheidung unter 7 (`docs/decisions.md`, Punkt 66, 2026-11-15). Ein
+  Fingerprints. pypdf steht auf genau einer Version (`pypdf==7.1.0`): der Extraktorname trägt sie, eine neue
+  kommt erst nach einer Messung an den lokalen PDFs, und danach werden die Pakete neu gepackt
+  (`docs/decisions.md`, Punkte 66 und 67, 2026-11-16). Ein
   Release, das jünger als ein Tag ist, bleibt liegen. `verify`, `alone` und `mutate` sieht der Push-CI nicht:
   wer hypothesis, crosshair oder pytest-gremlins hebt, fährt sie von Hand.
 - Entscheidungspunkte in `docs/decisions.md` bekommen ihre Nummer beim Merge, nicht auf dem Branch: parallel

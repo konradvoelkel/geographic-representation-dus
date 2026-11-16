@@ -25,8 +25,9 @@ sind Konrads; ihre Eingaben liegen als Pakete im Repo, damit GitHub Pages ohne N
 | Stimmbezirke | 306 | 316 (Zuschnitt 2020) | 306 | 179 |
 | Dokumente | 19 108 | 22 215 | 4 095 | 2 895 |
 | davon mit Text | 19 033 (99,6 %) | 21 838 (98,3 %) | 4 075 (99,5 %) | **650 (22,5 %)** |
-| davon mit Treffer | 10 739 | 12 977 | 2 173 | 489 |
-| Treffer (Dokument-Bezirk-Paare) | 29 010 | 36 324 | 5 448 | 1 682 |
+| Texte extrahiert mit | pypdf der Arbeit (Januar 2026) | pypdf 7.1.0 | pypdf 7.1.0 | pypdf 7.1.0 |
+| davon mit Treffer | 10 739 | 13 085 | 2 173 | 490 |
+| Treffer (Dokument-Bezirk-Paare) | 29 010 | 36 788 | 5 453 | 1 700 |
 | Begriffe im Wörterbuch | 5 727 | 5 727 (geborgt) | 5 727 (geborgt) | 5 759 |
 | Monate in der Reihe | 61 | 77 | 14 | 61 |
 | Stand der Dokumente | Datensatz der Arbeit, November 2025 | Abruf 13.10.2026 | Erstabruf 13.10.2026 | Abruf 13.10.2026 |
@@ -63,11 +64,17 @@ jedes Dokument eine Nummer, sie sagt nur nichts.
 
 Vier Lücken sind groß genug, um jede Deutung zu tragen:
 
+- **Zwei Extraktoren.** Seit dem 2026-11-16 liest pypdf 7.1.0 die PDFs ([decisions.md](decisions.md),
+  Punkt 67): es lässt Leerzeichen mitten im Wort weg und findet rund ein Prozent mehr Treffer. Die
+  drei Datensätze mit eigenen PDFs sind damit neu extrahiert; die Hauptperiode rechnet weiter mit
+  den Texten der Arbeit, bis ihre PDFs abgerufen sind. Wo die Seiten Perioden oder Städte
+  nebeneinanderstellen, vergleichen sie bis dahin Datensätze aus zwei Extraktoren, und die Seiten
+  sagen das noch nicht ([todo.md](todo.md), Punkte 7 und 8).
 - **Mönchengladbachs 404.** Von 2 871 Dokumenten mit Hauptdatei liefert das Ratsinformationssystem
   658 aus; die übrigen 2 213 antworten mit `404`, und warum, sagt der Server nicht. Die Seiten sagen
   es selbst: der Städtevergleich führt die Spalte „davon mit Text", und die Kachel „Dokumente mit
   Treffer" jeder Stadtseite nennt den Anteil an allen Dokumenten **und** den an denen mit Text
-  (Mönchengladbach 489 von 650 = 75,2 %, nicht nur 16,9 % aller 2 895). Was die Lücke für die
+  (Mönchengladbach 490 von 650 = 75,4 %, nicht nur 16,9 % aller 2 895). Was die Lücke für die
   Auswertung bedeutet, steht in [statistik.md](statistik.md), § 8.
 - **Mönchengladbachs Gremien.** Die Drucksachennummern tragen kein Kürzel (`0682/XI`), über alle
   2 895 bestätigt. Seit Punkt 58 kommen sie aus der Beratungsfolge: alle 2 895 tragen eine, sie nennt

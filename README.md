@@ -315,13 +315,14 @@ ohne Netz baut (Konrads Entscheidung vom 2026-10-13, `docs/decisions.md`, Punkt 
 | Paket | Größe | Inhalt |
 |---|---|---|
 | [`reference/`](reference/) | 81,8 MiB | der Datensatz der Arbeit (Wahlergebnis, Stimmbezirke, Straßen, Orte, Dokumente mit Text) |
-| [`reference/moenchengladbach/`](reference/moenchengladbach/README.md) | 4,2 MiB | der Lauf Mönchengladbachs vom 2026-10-13, seit Punkt 58 mit `raw/organizations.json` |
-| [`snapshots/2014-2020/`](snapshots/2014-2020/README.md) | 36,1 MiB | die Wahlperiode 2014 bis 2020, Abruf 2026-10-13 |
+| [`reference/moenchengladbach/`](reference/moenchengladbach/README.md) | 5,0 MiB | der Lauf Mönchengladbachs vom 2026-10-13, seit Punkt 58 mit `raw/organizations.json`, seit Punkt 65 mit den Flächen der Wahl |
+| [`snapshots/2014-2020/`](snapshots/2014-2020/README.md) | 35,9 MiB | die Wahlperiode 2014 bis 2020, Abruf 2026-10-13 |
 | [`snapshots/2025/`](snapshots/2025/README.md) | 13,2 MiB | der Erstabruf der laufenden Periode, 2026-10-13 |
 | [`snapshots/duesseldorf-beratungsfolge/`](snapshots/duesseldorf-beratungsfolge/README.md) | 88 KiB | die Beratungsfolge je Dokument der Hauptperiode (Punkt 58) |
 | [`context/`](context/README.md) | 2,1 MiB | Quartiersatlas 2024 für die Kontrollvariablen |
 
-Zusammen 137,60 MiB. Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, Zahlen und der SHA-256 jeder
+Zusammen 138,12 MiB; die Texte der drei Laufpakete sind seit dem 2026-11-16 mit pypdf 7.1.0 extrahiert
+(`docs/decisions.md`, Punkt 67). Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, Zahlen und der SHA-256 jeder
 Datei; `tests/unit/test_data_packages.py` hält diese Angaben gegen die Dateien und lässt keine PDFs, Stamps
 oder Caches hinein. Die PDFs selbst liegen in **keinem** Paket, nur die Texte daraus.
 

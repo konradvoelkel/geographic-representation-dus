@@ -2179,6 +2179,9 @@ Abschnitt „Zwei Wahlperioden" vergliche auch die; und drei Pakete wären neu z
 neue Blobs). Das ist eine Methodenentscheidung mit eigenem Lauf, keine Abhängigkeitsrunde. Die
 Untergrenze steigt auf 6.21.4, den Stand der Sicherheitskorrekturen vom 2026-11-09.
 
+**Entschieden am 2026-11-16: pypdf 7.1.0 wird der Extraktor, siehe Punkt 67.** Was hier als Grund
+fürs Zurückhalten steht, ist dort der Zwischenstand, den die Entscheidung in Kauf nimmt.
+
 **crosshair-tool bleibt bei 0.0.111.** 0.0.113 (mit z3-solver 5.4.1) fand ein echtes Gegenbeispiel,
 das 0.0.111 nie fand — `district_weight(n)` jenseits des größten floats, behoben mit rotem Test —,
 stürzte danach aber in einem von vier vollen Läufen von `nox -s verify` selbst ab
@@ -2199,3 +2202,69 @@ Verworfen: pypdf 7 still im Lock mitnehmen (der nächste lokale Lauf extrahierte
 `georep pack` schriebe andere Texte ins Repo als die veröffentlichten); crosshair 0.0.113 behalten
 und den Absturz hinnehmen; numpy 2.5.5 mitnehmen, das am Abend der Runde erschien und beim Heben
 des Rests zweieinhalb Stunden alt war (gemessen ist 2.5.4).
+
+## 67. pypdf 7.1.0 ist der Extraktor; die Hauptperiode zieht nach, wenn ihre PDFs da sind (2026-11-16)
+
+Konrads Entscheidung auf die Messung in Punkt 66: pypdf 7 wird der Extraktor, der Abruf der
+19 108 PDFs der Hauptperiode ist aufgeschoben.
+
+**Was umgestellt ist.** `pyproject.toml` nennt `pypdf==7.1.0`, mit Absicht genau eine Version: der
+Extraktorname trägt sie, und jede andere macht alle extrahierten Texte veraltet. Der Golden Master
+der Extraktion ist bewusst erneuert, eine Zeile in einem von vier Snapshots (`chars` 2880 → 2879 in
+`00439409.pdf`: das Leerzeichen vor einem Punkt). Die drei Datensätze mit lokalem PDF-Bestand sind
+neu extrahiert und neu gepackt — je aus ihrem Paket aufgesetzt, die PDFs als Kopie daneben, die
+Kette gerechnet, `georep pack --force`. In jedem Paket ändert sich allein `cache/text/texts.parquet`.
+
+| Datensatz | neu extrahiert | Zeichen im Store | Treffer | Dokumente mit Treffer |
+|---|---|---|---|---|
+| Mönchengladbach | 658 von 658 | 3 394 323 → 3 388 824 | 1 682 → **1 700** | 489 → 490 |
+| laufende Periode | 4 088 von 4 088 | 9 961 880 → 9 959 847 | 5 448 → **5 453** | 2 173 → 2 173 |
+| 2014 bis 2020 | 22 101 von 22 116 | 67 852 547 → 67 697 693 | 36 324 → **36 788** | 12 977 → 13 085 |
+
+**Kein Urteil der Seite kippt.** Was sich an den Aussagen bewegt:
+
+| Größe | pypdf 6.20.0 | pypdf 7.1.0 |
+|---|---|---|
+| 2014 bis 2020, Tabelle 5 über alle 41 | r = 0,2384, p = 0,13330 | r = 0,2368, p = 0,13605 |
+| 2014 bis 2020, ohne 1 und 10 | r = 0,2819, p = 0,08211 | r = 0,2808, p = 0,08334 |
+| Regression der Differenzen zwischen den Perioden | r = 0,1008, p = 0,53045 | r = 0,1050, p = 0,51365 |
+| Spearman der Trefferquoten zwischen den Perioden | 0,8106 | 0,8127 |
+| Δ Trefferquote, Median (Spanne) | −0,0099 (−0,0865 bis +0,0079) | −0,0115 (−0,0870 bis +0,0059) |
+| Mönchengladbach, Tabelle 5 | r = 0,1384, p = 0,44238 | r = 0,1294, p = 0,47310 |
+| Mönchengladbach, Trefferquote max/min | 27,12 | 28,93 |
+
+Die Urheber der alten Periode sind mit dem heutigen Profil dieselben geblieben (10 575 Verwaltung,
+8 815 Fraktion, 2 356 unbekannt), ebenso alle Zahlen Mönchengladbachs zu Urhebern und Parteien.
+Bewegt hat sich nur die Gegenprobe ohne den alten Vorlagenkopf (Punkte 60 und 62): mit den neuen
+Texten zählt sie 7 014 statt 7 008 Fraktionsdokumente und 163 statt 161 Verwaltungsvorlagen, die
+einen Fraktionsantrag nur zitieren. Die zwei Erwartungen in `tests/golden/test_parties_numbers.py`
+sind bewusst nachgezogen, mit dem alten Wert im Kommentar.
+
+**Der Zwischenstand, und was er kostet.** Die Hauptperiode rechnet weiter mit den 19 033 Texten
+der Arbeit (`reference/`, Extraktor „pypdf (Arbeit, Januar 2026)"), die drei anderen Datensätze mit
+7.1.0. Der Abschnitt „Zwei Wahlperioden" und der Städtevergleich stellen damit Datensätze
+nebeneinander, die mit zwei Extraktoren gelesen sind. Der Extraktor allein hebt die Treffer der
+alten Periode um 1,3 % (464 von 36 788) und die Mönchengladbachs um 1,1 %; gegen die Unterschiede,
+die diese Abschnitte beschreiben (der Median der Trefferquote der Hauptperiode liegt 16 % unter
+dem der alten), ist das klein, aber nicht null — und die Seite nennt den Extraktor nicht
+(`docs/todo.md`, Punkt 7). Aufgelöst wird es mit dem Abruf der PDFs der Hauptperiode: dann lässt
+auch sie sich mit 7.1.0 lesen. Das ist eine eigene Entscheidung, denn sie löst die Zahlen der
+Hauptseite von den Texten der Arbeit; `bartzsch-exakt` bleibt der Anker (`docs/todo.md`, Punkt 8).
+
+**Die 15 PDFs.** In 2014 bis 2020 tragen 15 Texte weiter `pypdf-6.20.0`: ihre PDFs weist pypdf seit
+6.21 an einer Schutzgrenze ab (Punkt 66), `extract_missing` lässt den alten Text stehen, und die
+Spalte `extractor` des Stores sagt es je Zeile. Wer die Periode ohne den alten Store aus den PDFs
+extrahiert, bekommt diese 15 nicht.
+
+**Der letzte Stand mit den Texten aus 6.20.0** ist der Tag `v0.14.0` und jeder Commit bis
+`e340ade`. Lokale Textstores tragen ihn weiter, bis der Schritt `texts` dort wieder läuft; er
+extrahiert dann alles neu (rund 20 Minuten für die drei Datensätze) und kommt bei den Texten der
+Pakete an. Die 200 lokal gecachten PDFs der Hauptperiode liest ein lokaler Lauf ebenfalls mit
+7.1.0, und 77 davon weichen dann von den Texten der Arbeit ab (mit 6.20.0 waren es drei); in CI
+gibt es diese PDFs nicht, die veröffentlichte Hauptseite rechnet also rein mit den Texten der Arbeit.
+
+Verworfen: die Schutzgrenze anheben, damit die 15 PDFs wieder lesbar sind (eine
+Sicherheitskorrektur zurücknehmen für 15 Dokumente); die 15 alten Texte löschen (verliert ihre
+Treffer, und der Store sagt je Zeile, woher ein Text kommt); eine Spanne statt einer Version
+(`>=7.1,<8` ließe ein Patch-Release alle Texte veralten, ohne dass es jemand gemessen hätte); mit
+dem Umstellen warten, bis die PDFs der Hauptperiode da sind (Konrad: jetzt umstellen, Abruf später).

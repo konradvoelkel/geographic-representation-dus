@@ -1,7 +1,9 @@
 # Status
 
-Stand 2026-11-15, `main` auf `v0.14.0` plus die Abhängigkeitsrunde vom 2026-11-15 (Punkt 66; keine
-Zahl der Seite bewegt sich). `v0.14.0` sind die Punkte 58 bis 65: die Beratungsfolge als zweite Quelle
+Stand 2026-11-16, `main` auf `v0.14.0` plus die Abhängigkeitsrunde vom 2026-11-15 (Punkt 66; keine
+Zahl der Seite bewegt sich) und pypdf 7.1.0 als Extraktor (Punkt 67; drei Datensätze sind neu
+extrahiert und haben rund ein Prozent mehr Treffer, die Hauptperiode rechnet weiter mit den Texten
+der Arbeit). `v0.14.0` sind die Punkte 58 bis 65: die Beratungsfolge als zweite Quelle
 des Gremiums, die Urheber Mönchengladbachs und der Wahlperiode 2014 bis 2020, die Spalte „ohne
 Ausreißer" als explorativ, die vier Korrekturen ihres Reviews und die Flächen Mönchengladbachs zum
 Stand der Wahl, gerechnet und gepackt am 2026-10-15; dazu die Dokumentation in vier Sichten): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
@@ -249,13 +251,14 @@ Frage 7.4 vom 2026-10-13 („kein Bucket").
 
 | Paket | Bytes | Inhalt | Profil |
 |---|---|---|---|
-| `reference/moenchengladbach/` | 5 224 917 | `external/` (4), `raw/` (4, seit Punkt 58 mit `organizations.json`), `cache/text/texts.parquet` | `moenchengladbach` |
-| `snapshots/2014-2020/` | 37 875 851 | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
-| `snapshots/2025/` | 13 894 254 | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
+| `reference/moenchengladbach/` | 5 213 942 | `external/` (4), `raw/` (4, seit Punkt 58 mit `organizations.json`), `cache/text/texts.parquet` | `moenchengladbach` |
+| `snapshots/2014-2020/` | 37 625 770 | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
+| `snapshots/2025/` | 13 889 015 | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
 | `snapshots/duesseldorf-beratungsfolge/` | 90 455 | `raw/beratungsfolge.parquet` (Punkt 58) | `duesseldorf` |
 
-Zusammen 56 266 185 Bytes (53,66 MiB) neben `reference/` (85 771 896, 81,80 MiB) und `context/`
-(2 242 316, 2,14 MiB): **sechs Pakete, 144 280 397 Bytes, 137,60 MiB**, 76 % der Grenze von 180 MiB im Test.
+Zusammen 56 819 182 Bytes (54,19 MiB) neben `reference/` (85 771 896, 81,80 MiB) und `context/`
+(2 242 316, 2,14 MiB): **sechs Pakete, 144 833 394 Bytes, 138,12 MiB**, 77 % der Grenze von 180 MiB im Test
+(Stand 2026-11-16: Mönchengladbach mit den Flächen der Wahl, die drei Textstores aus pypdf 7.1.0).
 Gezählt sind überall die Datendateien ohne das README (Review-Befund 14).
 Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, den Zahlen des Laufs und der SHA-256 jeder Datei;
 `tests/unit/test_data_packages.py` hält Dateiliste, Größe und Prüfsumme gegen das README (die Prüfsummen und
@@ -460,7 +463,8 @@ Punkt 2 der Befunde ist umgesetzt: die Spalte bleibt, trägt im Kopf aber das Wo
 und unter Tabelle 5 steht ein Absatz aus zwei Sätzen. Der erste sagt, dass die Spalte **nach** dem
 Ansehen der Daten entstanden ist — ausgeschlossen sind die beiden Bezirke mit den höchsten
 Trefferquoten, eine Entscheidung über diesen Datensatz und keine Vorhersage. Der zweite nennt beide
-p-Werte: „dort steht dieselbe Spalte bei *r* = 0,282 und p = 0,082, hier bei *r* = 0,335 und
+p-Werte (Zahlen seit dem 2026-11-16, Punkt 67; mit den Texten aus pypdf 6.20.0 standen dort
+*r* = 0,282 und p = 0,082): „dort steht dieselbe Spalte bei *r* = 0,281 und p = 0,083, hier bei *r* = 0,335 und
 p = 0,037 — zwei nah beieinander liegende Schätzungen, von denen eine darunter und eine knapp über
 der 5-%-Grenze liegt. Die Signifikanz dieser Spalte trägt damit nicht über die Perioden hinweg; die
 geschätzte Steigung schwankt dabei um den Faktor 2,6 (216 gegen 82)." Dass der Satz nicht „von der
@@ -485,8 +489,8 @@ sind nach Fisher-z nicht unterscheidbar (p = 0,80).
   Satz, die laufende Periode hat keine Regression und damit keinen Abschnitt.
 - **Ein Satz je Periode im Abschnitt „Zwei Wahlperioden"** mit *r* und p beider Spalten und dem
   Urteil aus den Zahlen (Jinja-Makro `verdict`, fünf Zweige): „In der Wahlperiode 2014 bis 2020
-  liegt die Regression über alle 41 Wahlbezirke bei *r* = 0,238 und p = 0,133, ohne 1 und 10 bei
-  *r* = 0,282 und p = 0,082 — in keiner der beiden Spalten signifikant. In der Wahlperiode 2020 bis
+  liegt die Regression über alle 41 Wahlbezirke bei *r* = 0,237 und p = 0,136, ohne 1 und 10 bei
+  *r* = 0,281 und p = 0,083 — in keiner der beiden Spalten signifikant. In der Wahlperiode 2020 bis
   2025 sind es *r* = 0,189 bei p = 0,236 über alle 41 Wahlbezirke und *r* = 0,335 bei p = 0,037 ohne
   1 und 10 — nur in der explorativen zweiten Spalte signifikant."
 - Kosten, gemessen an der Hauptseite: **878 Byte** der Absatz unter Tabelle 5, **542 Byte** der
@@ -529,6 +533,33 @@ Die Punkte 62, 63 und 64 sind die Befunde des Reviews mit eigener Entscheidung; 
   **`stop_keep` braucht die Stadt nicht**: keines der 13 Wörter steht in den 190
   Beschriftungswörtern der Seite als Sachwort, anders als „klima" und „tierschutz" in Düsseldorf.
 
+## pypdf 7.1.0 als Extraktor (2026-11-16, `docs/decisions.md`, Punkt 67)
+
+Konrads Entscheidung auf die Messung der Abhängigkeitsrunde (Punkt 66): pypdf 7 liest die PDFs, der
+Abruf der PDFs der Hauptperiode ist aufgeschoben. `pyproject.toml` nennt `pypdf==7.1.0`; der eine
+Snapshot der Fixture-PDFs ist bewusst erneuert; die drei Datensätze mit lokalem PDF-Bestand sind neu
+extrahiert und neu gepackt, in jedem Paket ändert sich allein `cache/text/texts.parquet`.
+
+| Datensatz | Texte aus 7.1.0 | Treffer | Dokumente mit Treffer | Tabelle 5 über alle |
+|---|---|---|---|---|
+| Mönchengladbach | 658 von 658 | 1 682 → **1 700** | 489 → 490 | r 0,1384 → 0,1294, p 0,44238 → 0,47310 |
+| laufende Periode | 4 088 von 4 088 | 5 448 → **5 453** | 2 173 | (keine Regression) |
+| 2014 bis 2020 | 22 101 von 22 116 | 36 324 → **36 788** | 12 977 → 13 085 | r 0,2384 → 0,2368, p 0,13330 → 0,13605 |
+| Hauptperiode | keine: 19 033 Texte der Arbeit | 29 010 | 10 739 | r = 0,1891, p = 0,23641 |
+
+Zwischen den Perioden: Spearman der Trefferquoten 0,8106 → 0,8127, Regression der Differenzen
+p 0,53045 → 0,51365, die Spalte ohne 1 und 10 der alten Periode p 0,08211 → 0,08334. **Kein Urteil
+der Seite kippt.** Was der Zwischenstand kostet, steht in Punkt 67 und unter „Bekannt": Hauptperiode
+und übrige Datensätze sind mit zwei Extraktoren gelesen, bis die PDFs der Hauptperiode da sind.
+
+Die Urheber der alten Periode und Mönchengladbachs sind unverändert; zwei eingefrorene Zahlen der
+Gegenprobe ohne den alten Vorlagenkopf sind bewusst nachgezogen (7 008 → 7 014 Fraktionsdokumente,
+161 → 163 Zitate, `tests/golden/test_parties_numbers.py`).
+
+Geprüft: `uv run nox` und `uv run pytest -m slow` grün; ein A/B-Bau gegen den Stand davor zeigt die
+Änderungen genau in den drei Datensätzen und in den Abschnitten der Hauptseite, die mit der alten
+Periode vergleichen — die Zahlen der Hauptperiode selbst sind unverändert.
+
 ## Zahlen (2026-10-15, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56 und 58 bis 65)
 
 - Tests: 1277 schnelle (nox-Gate, parallel in rund 45 s, Abdeckung 98,5 %), 39 `slow` (rund 5 min über die
@@ -553,7 +584,9 @@ Die Punkte 62, 63 und 64 sind die Befunde des Reviews mit eigener Entscheidung; 
   laufend). Die Unterseiten: `2014-2020/` 822 027, `2025/` 718 384, `moenchengladbach/` 819 872,
   `vergleich.html` 89 597 Bytes (alle am 2026-10-14 nach den Punkten 59 bis 64 gemessen; am
   2026-10-15 nach Punkt 65 neu: `moenchengladbach/` **807 393** und `vergleich.html` **93 794**,
-  die Stadtseite also 12 479 Byte kleiner und der Vergleich 4 197 größer;
+  die Stadtseite also 12 479 Byte kleiner und der Vergleich 4 197 größer; am 2026-11-16 nach der
+  Abhängigkeitsrunde und Punkt 67 aus den Paketen gebaut: Hauptseite 935 619, `2014-2020/` 821 933,
+  `2025/` 718 278, `moenchengladbach/` 806 131, `vergleich.html` 93 800;
   Mönchengladbach wuchs um 170 151 Byte, weil es seit Punkt 59 den Abschnitt „Urheber und Parteien"
   mit sechs Parteikarten über 33 Flächen hat; `georep publish --strict-budget` endet mit Exit 0 und
   meldet „2 Städte, 1 Vergleich, 101 Dateien, 16,5 MB").
@@ -605,21 +638,30 @@ Schema-Version hingehört, wie eine Zahl in einem Test gerundet wird —, stehen
 in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen werden
 (`docs/absicherung-2026-10.md`, § 4). Verloren ist nichts, nur umgezogen.
 
-- **Das Lock nennt pypdf 6.21.4, die Texte der Pakete nennen `pypdf-6.20.0`, und beides stimmt**
-  (2026-11-15, Punkt 66): an allen 27 062 lokal gecachten PDFs gemessen liefert 6.21.4 denselben
-  Text. Weil der Extraktorname die Version trägt, extrahiert der nächste lokale Lauf des Schritts
-  `texts` trotzdem alle 26 862 PDFs der drei Datensätze neu (rund 20 Minuten) und kommt beim selben
-  Text an. In CI gibt es keine PDFs; dort bleiben die Texte der Pakete, wie sie sind.
-- **15 PDFs der Periode 2014 bis 2020 scheitern seit pypdf 6.21 an einer Schutzgrenze**
-  (`Reached maximum number of tokens per stream`, 2026-11-15). Ihr Text aus 6.20.0 bleibt im Store
-  stehen, die Zahlen ändern sich nicht; jeder Lauf zählt sie als fehlerhaft und versucht sie erneut.
-- **pypdf 7 ist zurückgehalten und wäre der bessere Extraktor** (Punkt 66): 7.1.0 ändert 63 % der
-  Texte (Leerzeichen mitten im Wort fallen weg), findet rund ein Prozent mehr Treffer (2014 bis
-  2020: 36 324 → 36 788) und reproduziert nur noch 123 statt 197 der 200 Texte der Arbeit. Die
-  Übernahme braucht einen Abruf der 19 108 PDFs der Hauptperiode und neue Pakete; `pyproject.toml`
-  hält pypdf bis dahin unter 7.
-- **Die Extraktion hängt an der Umgebung** (2026-11-15): mit installiertem fontTools ändern sich 12
-  der 27 062 Texte (weicher Trennstrich wird Bindestrich). fontTools kommt nur über die Gruppe
+- **Hauptperiode und übrige Datensätze sind mit zwei Extraktoren gelesen** (seit dem 2026-11-16,
+  Punkt 67): die 19 033 Texte der Hauptperiode sind die der Arbeit, die Texte der Periode 2014 bis
+  2020, der laufenden Periode und Mönchengladbachs kommen aus pypdf 7.1.0, das rund ein Prozent mehr
+  Treffer findet (Leerzeichen mitten im Wort fallen weg). „Zwei Wahlperioden" und `vergleich.html`
+  stellen solche Datensätze nebeneinander, und die Seite nennt den Extraktor nicht
+  (`docs/todo.md`, Punkt 7). Aufgelöst wird es mit dem Abruf der PDFs der Hauptperiode, den Konrad
+  aufgeschoben hat (`docs/todo.md`, Punkt 8).
+- **pypdf steht auf genau 7.1.0**, und die Treue zur Arbeit ist damit geringer (Punkt 66): 7.1.0
+  reproduziert 123 der 200 lokal vorhandenen Texte der Hauptperiode zeichengleich, 6.20.0 und 6.21.4
+  reproduzierten 197. Eine neue Version erst nach einer Messung an den lokalen PDFs, dann die
+  Pakete neu packen.
+- **15 Texte der Periode 2014 bis 2020 tragen weiter `pypdf-6.20.0`** (Punkt 67): ihre PDFs weist
+  pypdf seit 6.21 an einer Schutzgrenze ab (`Reached maximum number of tokens per stream`), der
+  alte Text bleibt im Store und im Paket stehen, und jeder Lauf mit PDFs zählt sie als fehlerhaft
+  und versucht sie erneut. Wer die Periode ohne den alten Store aus den PDFs extrahiert, bekommt
+  diese 15 nicht.
+- **Lokale Textstores sind noch die aus pypdf 6.20.0** (2026-11-16): die Pakete im Repo sind neu
+  extrahiert, der Cache auf Konrads Rechner nicht. Der nächste lokale Lauf des Schritts `texts`
+  extrahiert alle 26 862 PDFs der drei Datensätze neu (rund 20 Minuten) und kommt bei den Texten
+  der Pakete an. Die 200 lokalen PDFs der Hauptperiode liest er ebenfalls mit 7.1.0; 77 davon
+  weichen dann von den Texten der Arbeit ab (mit 6.20.0 waren es drei), und ob das eine lokale
+  Ergebnistabelle der Hauptperiode bewegt, ist nicht gemessen. In CI gibt es diese PDFs nicht.
+- **Die Extraktion hängt an der Umgebung** (2026-11-15, gemessen mit pypdf 6.21.4): mit installiertem
+  fontTools ändern sich 12 der 27 062 Texte (weicher Trennstrich wird Bindestrich). fontTools kommt nur über die Gruppe
   `notebook` ins Lock; extrahiert wird in der Standardumgebung ohne sie.
 - **crosshair-tool steht fest bei 0.0.111** (Punkt 66): 0.0.113 stürzte in einem von vier vollen
   Läufen von `nox -s verify` selbst ab. `z3-solver` 5.1.0.0 und `typeshed-client` 2.13.0 sind über
@@ -627,7 +669,8 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 - **Die lokale Datenwurzel ist als Ganzes „offen"** (gemessen am 2026-11-15): `georep status`
   meldet für alle fünf Profile jeden Schritt als offen, die meisten mit „Settings geändert". Das
   liegt nicht an der Abhängigkeitsrunde (Fingerprints und Status sind vor und nach ihr gleich); ein
-  lokaler `georep run` je Profil ohne Netz bringt die Ergebnisse auf den Stand des Codes.
+  lokaler `georep run` je Profil ohne Netz bringt die Ergebnisse auf den Stand des Codes und
+  extrahiert dabei die Texte neu (siehe oben).
 - **1 535 Dokumente der Periode 2014 bis 2020 und 1 275 Mönchengladbachs bleiben „unbekannt",
   obwohl ihre Beratungsfolge Gremien nennt** (2026-10-14, Punkt 58): sie nennt mehrere, und welches
   das federführende ist, steht nicht in den Daten
@@ -665,7 +708,8 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   geändert", weil dann `--limit 200` im mitgezogenen Stamp steht — und auch das ist richtig so.
 - Dieselben 200 PDFs sind der Grund, dass der flache Lauf drei Texte anders hat als die Referenz: pypdf 6.20.0
   reproduziert 197 von 200 zeichengleich (`docs/profiling/README.md`). Auf `index.html` und alle
-  Ergebnistabellen wirkt sich keiner der drei aus.
+  Ergebnistabellen wirkt sich keiner der drei aus. Seit dem 2026-11-16 ist pypdf 7.1.0 der Extraktor,
+  und ein neuer lokaler Lauf hätte 77 abweichende Texte statt drei (Punkt 67; Wirkung nicht gemessen).
 - Auf Konrads Rechner liegen die flachen Ordner `data/{external,raw,interim,processed,site}` und
   `cache/{pdf,text}` nach dem Umzug (Punkt 52) weiter da und sind bis zum Ende seiner Netzläufe auch in
   Benutzung: der Lauf im Worktree auf dem Tag `v0.12.0` liest und schreibt sie noch. Der Handgriff dafür steht
@@ -723,7 +767,8 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 - Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab
   (`docs/baseline-2026-10-10.md`). Seit dem 2026-10-14 heißt die Spalte auf der Seite im Kopf
   „explorativ", und darunter steht, dass dieselbe Spalte in der Wahlperiode 2014 bis 2020 mit
-  p = 0,082 nicht signifikant ist (Punkt 61); mit Lukas zu klären ist sie weiterhin.
+  p = 0,083 nicht signifikant ist (Punkt 61; bis zum 2026-11-16 stand dort 0,082); mit Lukas zu klären ist
+  sie weiterhin.
 - Der Stamp des Schritts `report` liegt als `site/index.html.stamp.json` in der Datenwurzel, also in der
   Stadtseite; dort gehört er hin. Im veröffentlichten Ordner ist er seit dem 2026-10-13 nicht mehr dabei:
   `georep publish` lässt `*.stamp.json` beim Kopieren aus, wie die rsync-Zeilen im Monitor-Skript.
@@ -754,7 +799,7 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   2026-10-14 sagen die Seiten das selbst (Review-Befund 1): der Städtevergleich führt die Spalte „davon mit
   Text" und nennt im Abschnitt „Vergleichbarkeit" je Stadt beide Zahlen, und die Kachel „Dokumente mit
   Treffer" jeder Stadtseite nennt zusätzlich den Anteil an den Dokumenten **mit Text** (Mönchengladbach
-  489 von 650 = 75,2 %, nicht nur 16,9 % aller 2 895). Woran die 404 liegen, sagt der Server nicht.
+  490 von 650 = 75,4 %, nicht nur 16,9 % aller 2 895). Woran die 404 liegen, sagt der Server nicht.
 - **Mönchengladbachs Straßen stimmen zu 88,8 % je Wahlbezirk mit dem amtlichen Verzeichnis überein**
   (2 667 Zuordnungen mit bekanntem Namen, 70,8 % im selben Stimmbezirk; gemessen am 2026-10-15 mit den
   Flächen des Wahltags). Vorher waren es **86,2 %** und **66,5 %** auf 2 651 Zuordnungen, gemessen am
@@ -836,12 +881,13 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 
 ## Nächster Schritt
 
-**Offen aus der Abhängigkeitsrunde vom 2026-11-15, Konrads Entscheidung:** ob pypdf 7 der Extraktor
-wird. Die Messung steht in `docs/decisions.md`, Punkt 66; die Übernahme hieße, die PDFs der
-Hauptperiode abzurufen, alle vier Datensätze neu zu extrahieren, drei Pakete neu zu packen und den
-Snapshot der Fixture-PDFs bewusst zu erneuern. Ebenfalls offen: numpy 2.5.5 (am 2026-11-15 abends
-erschienen, noch nicht gemessen) und crosshair-tool über 0.0.111 hinaus, sobald eine Version den
-Absturz nicht mehr zeigt.
+**Stand nach Punkt 67 (2026-11-16):** pypdf 7.1.0 ist der Extraktor, die drei Pakete sind neu
+gepackt. Offen, in dieser Reihenfolge sinnvoll: der **Abruf der PDFs der Hauptperiode** (von Konrad
+aufgeschoben; Stunden, ein freigegebener Netzlauf; danach die Entscheidung, woher die Hauptseite
+ihre Texte nimmt — `docs/todo.md`, Punkt 8), bis dahin ein **Satz auf der Seite**, der den
+Extraktor nennt (`docs/todo.md`, Punkt 7). Aus der Abhängigkeitsrunde bleiben numpy 2.5.5 (am
+2026-11-15 abends erschienen, nicht gemessen) und crosshair-tool über 0.0.111 hinaus, sobald eine
+Version den Absturz nicht mehr zeigt.
 
 **Stand nach dem Merge von Punkt 65 (2026-10-15, `v0.14.0`):** alles aus der Runde vom 2026-10-14 liegt
 auf `main` (Merge `1e3e409`, 34 Commits des Branches `feat/esri-identify`, zwei Reviews) und ist gepusht.
@@ -907,7 +953,8 @@ Geprüft ist das an der Datei, am Wörterbuch und an der Seite.
 **Zuerst zu lesen: der Befundbericht zu den vier Netzläufen** (`docs/befunde-2026-10-14.md`, 2026-10-14).
 Er sagt, was die Daten zeigen — die zwei Wahlperioden (Spearman der Trefferquoten 0,8106; die Regression
 der Differenzen r = 0,1008, p = 0,53045; Tabelle 5 der alten Periode ohne 1 und 10 **p = 0,08211**, also
-nicht signifikant), die zwei Städte, die laufende Periode (die ersten 13 Monate gleichen denen der
+nicht signifikant; alle drei mit den Texten aus pypdf 6.20.0, die Zahlen seit dem 2026-11-16 stehen
+oben unter „pypdf 7.1.0 als Extraktor"), die zwei Städte, die laufende Periode (die ersten 13 Monate gleichen denen der
 Hauptperiode), die **Beratungsfolge** aus dem Vollabruf (18 708 von 19 109 Dokumenten, 98,9 % Deckung mit
 dem Gremium der Drucksachennummer; dieselbe Abbildung löst 7 010 der 7 365 unbekannten Gremien der alten
 Periode auf) und die Datenqualität über alle vier Läufe. Sein § 6 nennt fünf Punkte, die Konrad
@@ -988,13 +1035,16 @@ Pages-Workflow baut damit jeden Teil der Seite (`.github/workflows/pages.yml`, P
 Actions"). Erledigt:
 
 1. Periode 2014 bis 2020: 22 215 Dokumente, 22 116 PDFs, 21 838 mit Text, 36 324 Treffer, 77 Monate →
-   `snapshots/2014-2020/` und die Abschnitte „Zwei Wahlperioden".
+   `snapshots/2014-2020/` und die Abschnitte „Zwei Wahlperioden". **Seit dem 2026-11-16 sind es
+   36 788 Treffer** (Punkt 67, pypdf 7.1.0).
 2. Mönchengladbach: 2 895 Dokumente, 658 PDFs (die übrigen `404`), 1 704 Treffer über 33 Wahlbezirke →
    `reference/moenchengladbach/` und `vergleich.html` aus `georep publish`. **Seit dem 2026-10-15 sind
    es 1 682 Treffer** (Punkt 65, die Flächen des Wahltags); die Zahl der Dokumente mit mindestens einem
-   Treffer bleibt **489**, die Kachel der Seite also unverändert.
+   Treffer bleibt **489**, die Kachel der Seite also unverändert. **Seit dem 2026-11-16 sind es
+   1 700 Treffer und 490 Dokumente** (Punkt 67, pypdf 7.1.0).
 3. Erstabruf der laufenden Periode: 4 095 Dokumente, 4 088 PDFs, 5 448 Treffer, 14 Monate →
-   `snapshots/2025/` und die Unterseite `2025/`.
+   `snapshots/2025/` und die Unterseite `2025/`. **Seit dem 2026-11-16 sind es 5 453 Treffer**
+   (Punkt 67, pypdf 7.1.0).
 
 Offen bleibt daran:
 

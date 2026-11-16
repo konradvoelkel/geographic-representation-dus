@@ -62,7 +62,7 @@ Koeffizient geteilt durch 2,2.
 3. **Mit Kontrollvariablen bleibt nichts übrig** (§ 4): R² steigt von 0,036 auf 0,887, und der
    Koeffizient der Trefferquote fällt auf p = 0,145.
 4. **In der vorigen Wahlperiode verschwindet der Befund** (§ 6): dieselbe Methode, dieselbe Stadt,
-   anderer Zeitraum, p = 0,08211 ohne 1 und 10. Das ist der stärkste Einwand, der aus den Daten
+   anderer Zeitraum, p = 0,08334 ohne 1 und 10. Das ist der stärkste Einwand, der aus den Daten
    selbst kommt.
 5. **Die Verzerrung der Wörterbuchgröße** (§ 3) steckt in x.
 6. **Die Normierung** teilt durch eine Größe, die kaum schwankt (§ 3).
@@ -254,20 +254,27 @@ Wahlzahlen von 2020 liegen auf 316 Stimmbezirken eines anderen Zuschnitts und we
 
 | Periode | n | Steigung | r | R² | p |
 |---|---|---|---|---|---|
-| 2014 bis 2020, alle | 41 | 65,6986 | 0,2384 | 0,0568 | 0,13330 |
-| 2014 bis 2020, ohne 1 und 10 | 39 | 82,2060 | 0,2819 | 0,0795 | **0,08211** |
+| 2014 bis 2020, alle | 41 | 64,8653 | 0,2368 | 0,0561 | 0,13605 |
+| 2014 bis 2020, ohne 1 und 10 | 39 | 81,7005 | 0,2808 | 0,0789 | **0,08334** |
 | 2020 bis 2025, alle | 41 | 79,9539 | 0,1891 | 0,0358 | 0,23641 |
 | 2020 bis 2025, ohne 1 und 10 | 39 | 216,2416 | 0,3351 | 0,1123 | **0,03705** |
-| **Regression der Differenzen** | 41 | 7,5288 | 0,1008 | 0,0102 | **0,53045** |
+| **Regression der Differenzen** | 41 | 7,8493 | 0,1050 | 0,0110 | **0,51365** |
 
-Die Rangfolge hält: Spearman der Trefferquoten zwischen den Perioden **0,8106**, der
-Wahlbeteiligungen 0,9826. Δ Trefferquote hat den Median −0,0099 (−0,0865 bis +0,0079); 8 der 41
+Die Rangfolge hält: Spearman der Trefferquoten zwischen den Perioden **0,8127**, der
+Wahlbeteiligungen 0,9826. Δ Trefferquote hat den Median −0,0115 (−0,0870 bis +0,0059); 8 der 41
 Bezirke gewinnen an Quote, 24 an Beteiligung.
+
+**Stand der Zahlen.** Seit dem 2026-11-16 sind die Texte der alten Periode mit pypdf 7.1.0
+extrahiert, die der Hauptperiode sind weiter die der Arbeit ([decisions.md](decisions.md),
+Punkt 67). Der neue Extraktor allein hebt die Treffer der alten Periode um 1,3 % (36 324 → 36 788);
+mit den Texten aus pypdf 6.20.0 standen in der Tabelle r = 0,2384 und p = 0,13330, ohne 1 und 10
+p = 0,08211, für die Differenzen p = 0,53045 und als Spearman 0,8106. Dieselbe Mischung gilt für
+den Städtevergleich in § 8 (Mönchengladbach: 7.1.0).
 
 **Der Interpretationsspielraum.** Die alte Periode ist eineinhalb Jahre länger und trägt 3 107
 Dokumente mehr; die Quoten sind fast überall niedriger, der Median um 16 %. Was sich **nicht**
 mitbewegt, ist die Wahlbeteiligung: ein Bezirk mit gestiegener Sichtbarkeit hat keine gestiegene
-Beteiligung (p = 0,53). Und: die eine signifikante Spalte der Arbeit ist in der alten Periode nicht
+Beteiligung (p = 0,51). Und: die eine signifikante Spalte der Arbeit ist in der alten Periode nicht
 signifikant.
 
 **Die Einwände.**
@@ -294,12 +301,12 @@ aus den `summary.json` der Stadtseiten und rechnet selbst nichts.
 
 | | Düsseldorf | Mönchengladbach |
 |---|---|---|
-| Wahlbezirke / Stimmbezirke | 41 / 306 | 33 / 180 |
+| Wahlbezirke / Stimmbezirke | 41 / 306 | 33 / 179 |
 | Wahlberechtigte je Bezirk | 11 457 im Mittel | 6 188 im Mittel |
 | Dokumente / davon mit Text | 19 108 / 19 033 (99,6 %) | 2 895 / **650 (22,5 %)** |
 | Trefferquote: Median | 0,060 | 0,006 |
-| Trefferquote: max/min | 5,80 | **27,12** |
-| Tabelle 5, alle | r = 0,1891, p = 0,23641 | r = 0,1341, p = 0,45701 |
+| Trefferquote: max/min | 5,80 | **28,93** |
+| Tabelle 5, alle | r = 0,1891, p = 0,23641 | r = 0,1294, p = 0,47310 |
 
 **Der Interpretationsspielraum.** Was beide Städte teilen, ist der Nicht-Befund: in keiner erklärt
 die Trefferquote die Wahlbeteiligung. Die Verteilungen sind verschieden **geformt**, nicht nur
@@ -575,7 +582,7 @@ durchgestrichen mit dem, was von ihnen offen blieb. Entschieden wird hier nichts
 2. ~~**Die Spalte „ohne Ausreißer" von Tabelle 5.**~~ **Umgesetzt am 2026-10-14**
    ([decisions.md](decisions.md), Punkt 61): die Spalte bleibt — sie ist die Tabelle der Arbeit —,
    heißt im Kopf „explorativ", und darunter stehen zwei Sätze, die den Grund und beide p-Werte
-   nennen (0,082 in der alten Periode gegen 0,037 hier). Mit Lukas zu klären bleibt sie trotzdem,
+   nennen (0,083 in der alten Periode gegen 0,037 hier). Mit Lukas zu klären bleibt sie trotzdem,
    zusammen mit der Abweichung aus [baseline-2026-10-10.md](baseline-2026-10-10.md).
 3. ~~**Urheberklassen für Mönchengladbach.**~~ **Umgesetzt am 2026-10-14**
    ([decisions.md](decisions.md), Punkt 59): `fraction_types = ["3 - Fraktionsantrag"]` (581
