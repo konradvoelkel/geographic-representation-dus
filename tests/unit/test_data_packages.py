@@ -46,19 +46,20 @@ class Package:
         return REPO / self.path
 
 
-# Die Pakete mit ihrem Stand vom 2026-10-14 im Kommentar; die Grenze ist nicht der Stand.
+# Die Pakete mit ihrem Stand vom 2026-11-16 im Kommentar; die Grenze ist nicht der Stand.
 PACKAGES = (
     # 85 771 896 Bytes, eingefroren seit v0.2.0 und ohne README-Tabelle (Golden Master der Arbeit)
     Package("reference", limit=120 * MIB, native=False, readme=False),
-    Package("reference/moenchengladbach", limit=8 * MIB, native=True, readme=True),  # 5 224 917
-    Package("snapshots/2014-2020", limit=48 * MIB, native=True, readme=True),  # 37 875 851
-    Package("snapshots/2025", limit=20 * MIB, native=True, readme=True),  # 13 894 254
+    Package("reference/moenchengladbach", limit=8 * MIB, native=True, readme=True),  # 5 213 942
+    Package("snapshots/2014-2020", limit=48 * MIB, native=True, readme=True),  # 37 625 770
+    Package("snapshots/2025", limit=20 * MIB, native=True, readme=True),  # 13 889 015
     # Punkt 58: nur die Beratungsfolge je Dokument, kein Store und keine Eingabe (90 455 Bytes)
     Package("snapshots/duesseldorf-beratungsfolge", limit=1 * MIB, native=False, readme=True),
     Package("context", limit=4 * MIB, native=False, readme=True),  # 2 242 316
 )
-# Alle zusammen, als zweite grobe Schranke: 145 099 689 Bytes = 138,38 MiB am 2026-10-15 (76,9 %
-# der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes). Ein einziger PDF-Ordner einer
+# Alle zusammen, als zweite grobe Schranke: 144 833 394 Bytes = 138,12 MiB am 2026-11-16 (76,7 %
+# der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, und die drei Textstores sind
+# seit Punkt 67 zusammen 266 295 Bytes kleiner). Ein einziger PDF-Ordner einer
 # Periode (585 MB bis 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 

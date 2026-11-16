@@ -251,12 +251,16 @@ def test_the_page_carries_the_section_within_the_budget(
 PERIOD_PACKAGE = Path(__file__).resolve().parents[2] / "snapshots" / "2014-2020"
 PERIOD_ADMIN_TYPE = "Verwaltungsvorlage"
 PERIOD_CITIZEN_TYPE = "Bezirksvertretung Eingabe nach 24Go"
+# Stand der Texte: pypdf 7.1.0 seit dem 2026-11-16 (docs/decisions.md, Punkt 67). Mit den Texten aus
+# 6.20.0 standen hier 7 008 Fraktionsdokumente und 12 418 unbekannte; sechs Köpfe, in denen ein
+# Leerzeichen mitten im Wort stand, liest der neue Extraktor als Fraktion. ``PERIOD_AFTER``, die
+# Zuordnung mit dem heutigen Profil, ist dieselbe geblieben.
 PERIOD_BEFORE = {
     "Verwaltung": 2_285,
-    "Fraktion": 7_008,
+    "Fraktion": 7_014,
     "Person": 486,
     "Eingabe": 18,
-    "unbekannt": 12_418,  # 55,9 % der 22 215 Dokumente
+    "unbekannt": 12_412,  # 55,9 % der 22 215 Dokumente
 }
 PERIOD_AFTER = {
     # Punkt 62: 47 der 8 337 Verwaltungsvorlagen tragen ihren eigenen Fraktionsbriefkopf und
@@ -341,7 +345,7 @@ def test_an_own_letterhead_beats_the_document_type_but_a_citation_does_not(
     Die Dokumentart sagt, wie das System die Vorlage geführt hat, der Briefkopf sagt, wer sie
     geschrieben hat -- und bei diesen 47 widersprechen sich beide. Die Bedingung, unter der der
     Kopf gewinnen darf, ist die zweite Hälfte dieses Tests: die Formularzeile trifft **keine** der
-    161 Verwaltungsvorlagen, die einen Fraktionsantrag nur zitieren, keine der beiden Eingaben
+    163 Verwaltungsvorlagen, die einen Fraktionsantrag nur zitieren, keine der beiden Eingaben
     nach § 24 GO NRW und keines der 28 Dokumente mit einem Mandatsträger im Titel.
     """
     marker = settings.originators.letterhead_markers[0]
@@ -370,7 +374,8 @@ def test_an_own_letterhead_beats_the_document_type_but_a_citation_does_not(
         .join(before, on="id")
         .filter(pl.col(ART) == "Fraktion")
     )
-    assert cited.height == 161  # die Zitate, die vor Punkt 60 als Fraktion galten
+    # 163 mit den Texten aus pypdf 7.1.0; mit denen aus 6.20.0 waren es 161 (Punkt 67)
+    assert cited.height == 163  # die Zitate, die vor Punkt 60 als Fraktion galten
 
 
 def test_the_older_form_leaves_the_other_two_periods_byte_identical(

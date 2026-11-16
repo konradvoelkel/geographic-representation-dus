@@ -23,9 +23,9 @@ PDFs sind 3,9 GB; sie bleiben im Cache des Rechners, der sie geholt hat.
 | `external/Kommunalwahlbezirke.geojson` | 576 574 | `4fff1d369bb280a8aa7469f84e2a2103e6f805e34ce70f765b6c875e04716225` |
 | `external/Wahlbezirk_Wahlergebnis.csv` | 6 454 | `6edb43dd4278914c22ac0d88150a46092beea1dff46f01382c317d8219d92435` |
 | `raw/papers.jsonl` | 14 834 478 | `3d3be11e729f67997761ff907f457ca6600e1f6f6c883ebe8ef6a8ad93a30f33` |
-| `cache/text/texts.parquet` | 19 737 837 | `f6cae48388f1232e007fae55137f8aca11bfedf14424a61e227ec5134aac63af` |
+| `cache/text/texts.parquet` | 19 487 756 | `f3461ab1afa50d18167cd02b28d5bde7e752a76bc2a9ec3c6aa6201d2f3edc9c` |
 
-Zusammen 37 875 851 Bytes (36,12 MiB). `tests/unit/test_data_packages.py` hält diese Tabelle gegen
+Zusammen 37 625 770 Bytes (35,88 MiB). `tests/unit/test_data_packages.py` hält diese Tabelle gegen
 die Dateien im Repo.
 
 **Straßen und Orte fehlen hier mit Absicht**: `period.dictionary = "base"` liest das Wörterbuch
@@ -42,8 +42,8 @@ gebootstrappt haben.
 | davon mit Hauptdatei (`mainFile`) | 22 142 |
 | abgerufene PDFs | 22 116, **26 fehlgeschlagen** |
 | Texte im Store | 22 116, davon 21 838 mit Inhalt |
-| Zeichen im Store | 67 852 547 |
-| Treffer über alle 41 Wahlbezirke | 36 324 (Hauptperiode: 29 010) |
+| Zeichen im Store | 67 697 693 (mit pypdf 6.20.0 waren es 67 852 547) |
+| Treffer über alle 41 Wahlbezirke | 36 788 (Hauptperiode: 29 010; mit pypdf 6.20.0 waren es 36 324) |
 | Monate in der Monatsreihe | 77 |
 | Dokumentarten | 39, häufigste `Vorlage aus der Politik` (9 601) und `Verwaltungsvorlage` (8 337) |
 
@@ -72,7 +72,7 @@ Periode zeigt den Anteil offen an, statt ihn zu verschweigen.
 | `external/Stimmbezirke_2020.geojson` (316 Flächen, EPSG:4647) | ebenda | Datenlizenz Deutschland – Zero – Version 2.0 |
 | `external/Kommunalwahlbezirke.geojson` (41 Flächen, Stand 29.01.2020) | ebenda | Datenlizenz Deutschland – Zero – Version 2.0 |
 | `raw/papers.jsonl` | Ratsinformationssystem Düsseldorf über OParl 1.1, `ris-oparl.itk-rheinland.de`, Body 0015, ab Seite 90 | kein Lizenzhinweis am Endpunkt |
-| `cache/text/texts.parquet` | aus den 22 116 PDFs desselben Endpunkts mit pypdf 6.20.0 extrahiert | wie die Dokumente |
+| `cache/text/texts.parquet` | aus den 22 116 PDFs desselben Endpunkts mit **pypdf 7.1.0** extrahiert (neu gepackt am 2026-11-16, `docs/decisions.md`, Punkt 67; bis dahin pypdf 6.20.0). **15 Texte tragen weiter `pypdf-6.20.0`**: ihre PDFs weist pypdf seit 6.21 an einer Schutzgrenze ab (`Reached maximum number of tokens per stream`), der alte Text bleibt stehen, und die Spalte `extractor` sagt es je Zeile | wie die Dokumente |
 
 Namensnennung nach Lizenz: Landeshauptstadt Düsseldorf, Amt für Statistik und Wahlen
 (Open-Data-Portal), dl-de/by-2-0 bzw. dl-de/zero-2-0.

@@ -37,9 +37,9 @@ Form; `stand.json` bleibt beim Betrieb, wo es entsteht.
 | `external/Stimmbezirk_Wahlergebnis.csv` | 65 982 | `ac45b7ae5d2e60deef155dd50acbfe9df0f207d7c1b4daacd797d292e3b4fc33` |
 | `external/Stimmbezirke_2025.geojson` | 7 927 291 | `358d8c5498489feec0d70f2833a1dd753ce89790bd9f3bbdc9780bfc141b69b6` |
 | `raw/papers.jsonl` | 2 863 955 | `a010228dad59f6fcc166110b08130b58e4529f53fcf9a433c98f9803d71bac20` |
-| `cache/text/texts.parquet` | 3 037 026 | `fd8370744ba757011379089ebf6bbf44ef4248d22680208b76105729697bea07` |
+| `cache/text/texts.parquet` | 3 031 787 | `3d6e8c4330c29c6d70b214e38167f6e7f37d9bddb9835f2999ad49f890ee12fb` |
 
-Zusammen 13 894 254 Bytes (13,25 MiB). `tests/unit/test_data_packages.py` hält diese Tabelle gegen
+Zusammen 13 889 015 Bytes (13,25 MiB). `tests/unit/test_data_packages.py` hält diese Tabelle gegen
 die Dateien im Repo.
 
 Die beiden Dateien unter `external/` sind **byteidentisch** zu `reference/external/`: die laufende
@@ -61,8 +61,8 @@ Deshalb will dieses Profil die Hauptperiode zuerst gebootstrappt haben.
 | davon mit Hauptdatei (`mainFile`) | 4 088 |
 | abgerufene PDFs | 4 088, keiner fehlgeschlagen |
 | Texte im Store | 4 088, davon 4 075 mit Inhalt |
-| Zeichen im Store | 9 961 880 |
-| Treffer über alle 41 Wahlbezirke | 5 448 |
+| Zeichen im Store | 9 959 847 (mit pypdf 6.20.0 waren es 9 961 880) |
+| Treffer über alle 41 Wahlbezirke | 5 453 (mit pypdf 6.20.0 waren es 5 448) |
 | Monate in der Monatsreihe | 14 |
 | Gremium aus der Drucksachennummer | 4 040 von 4 095 erkannt, 55 unbekannt (1,3 %) |
 | Dokumentarten | 39, häufigste `Beschlussvorlage` (808), `Anfrage` (585), `Antrag` (580) |
@@ -77,7 +77,7 @@ die Grundlage, auf die der Monitor fortschreibt (`deploy/README.md`, „Erstabru
 | `external/Stimmbezirk_Wahlergebnis.csv` (Kommunalwahl 14.09.2025) | Open-Data-Portal der Landeshauptstadt Düsseldorf | Datenlizenz Deutschland Namensnennung 2.0 |
 | `external/Stimmbezirke_2025.geojson` (306 Flächen, EPSG:4647) | ebenda | Datenlizenz Deutschland – Zero – Version 2.0 |
 | `raw/papers.jsonl` | Ratsinformationssystem Düsseldorf über OParl 1.1, `ris-oparl.itk-rheinland.de`, Body 0015 | kein Lizenzhinweis am Endpunkt |
-| `cache/text/texts.parquet` | aus den 4 088 PDFs desselben Endpunkts mit pypdf 6.20.0 extrahiert | wie die Dokumente |
+| `cache/text/texts.parquet` | aus den 4 088 PDFs desselben Endpunkts mit **pypdf 7.1.0** extrahiert (neu gepackt am 2026-11-16, `docs/decisions.md`, Punkt 67; bis dahin pypdf 6.20.0) | wie die Dokumente |
 
 Namensnennung nach Lizenz: Landeshauptstadt Düsseldorf, Amt für Statistik und Wahlen
 (Open-Data-Portal), dl-de/by-2-0 bzw. dl-de/zero-2-0.
