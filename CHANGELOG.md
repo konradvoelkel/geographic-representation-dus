@@ -2,7 +2,7 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
-## Unreleased
+## 0.15.0 (2026-11-16), pypdf 7.1.0 als Extraktor, Abhaengigkeitsrunde
 
 - **Abhängigkeiten gehoben, keine Zahl bewegt sich** (Runde vom 2026-11-15, `docs/decisions.md`,
   Punkt 66): polars 2.1.0, numpy 2.5.4, pydantic 2.14.3, pydantic-settings 2.16.3, pyshp 3.1.8,

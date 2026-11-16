@@ -1,9 +1,9 @@
 # Status
 
-Stand 2026-11-16, `main` auf `v0.14.0` plus die Abhängigkeitsrunde vom 2026-11-15 (Punkt 66; keine
+Stand 2026-11-16, `main` auf `v0.15.0`: die Abhängigkeitsrunde vom 2026-11-15 (Punkt 66; keine
 Zahl der Seite bewegt sich) und pypdf 7.1.0 als Extraktor (Punkt 67; drei Datensätze sind neu
 extrahiert und haben rund ein Prozent mehr Treffer, die Hauptperiode rechnet weiter mit den Texten
-der Arbeit). `v0.14.0` sind die Punkte 58 bis 65: die Beratungsfolge als zweite Quelle
+der Arbeit). `v0.14.0` waren die Punkte 58 bis 65: die Beratungsfolge als zweite Quelle
 des Gremiums, die Urheber Mönchengladbachs und der Wahlperiode 2014 bis 2020, die Spalte „ohne
 Ausreißer" als explorativ, die vier Korrekturen ihres Reviews und die Flächen Mönchengladbachs zum
 Stand der Wahl, gerechnet und gepackt am 2026-10-15; dazu die Dokumentation in vier Sichten): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
