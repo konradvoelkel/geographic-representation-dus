@@ -32,17 +32,38 @@ def _frame(rows: list[tuple[float, float, float]]) -> pl.DataFrame:
     )
 
 
-def test_an_exact_plane_is_fitted_without_residuals() -> None:
-    """y = 2 + 3a - b auf vier Punkten: Koeffizienten exakt, R² = 1, Residuen 0."""
-    rows = [(2.0, 0.0, 0.0), (5.0, 1.0, 0.0), (1.0, 0.0, 1.0), (7.0, 2.0, 1.0)]
+def test_a_plane_with_orthogonal_noise_keeps_its_coefficients() -> None:
+    """y = 2 + 3a - b plus ein Rest e, der auf 1, a und b senkrecht steht.
+
+    Dann sind die Koeffizienten exakt die der Ebene, die Residuen genau e, und R² ist
+    1 - 4 / (437/6) = 413/437. Bis zum 2026-11-18 stand hier eine exakte Ebene ohne Rest; die
+    gilt seit 0.15.0 als exakte Anpassung ohne Ergebnis, und bestanden hat der Test nur, weil
+    auf diesem Kern ein Rundungsrest übrig blieb.
+    """
+    a = [0.0, 1.0, 0.0, 2.0, 1.0, 3.0]
+    b = [0.0, 0.0, 1.0, 1.0, 2.0, 0.0]
+    noise = [0.0, -1.0, 1.0, -1.0, 0.0, 1.0]
+    rows = [(2 + 3 * x - z + e, x, z) for x, z, e in zip(a, b, noise, strict=True)]
     fit = fit_ols(_frame(rows), "y", ["a", "b"])
-    assert fit.n == 4 and fit.k == 2
+    assert fit.n == 6 and fit.k == 2
     assert fit.intercept.coefficient == pytest.approx(2.0)
     assert fit.term("a").coefficient == pytest.approx(3.0)
     assert fit.term("b").coefficient == pytest.approx(-1.0)
-    assert fit.r2 == pytest.approx(1.0) and fit.r2_adj == pytest.approx(1.0)
-    assert all(abs(r) < 1e-9 for r in fit.residuals)
+    assert list(fit.residuals) == pytest.approx(noise, abs=1e-9)
+    assert fit.r2 == pytest.approx(413 / 437) and fit.r2_adj == pytest.approx(397 / 437)
     assert fit.terms[0].term == CONSTANT and fit.terms[0].vif is None
+
+
+def test_an_exact_plane_has_no_result_on_any_kernel() -> None:
+    """y = 2 + 3a - b auf vier Punkten ohne Rest: R² ist 1, also kein Ergebnis.
+
+    Als Rundungsrest bleiben hier rss = 5e-30 (Kern Zen) und 7e-30 (Sandybridge), bei den
+    sieben Zeilen unten 0,0 und 1,2e-24 (gemessen 2026-11-18); eine Prüfung über rss == 0
+    hätte diese Ebene durchgelassen und die sieben Zeilen je nach Kern.
+    """
+    rows = [(2.0, 0.0, 0.0), (5.0, 1.0, 0.0), (1.0, 0.0, 1.0), (7.0, 2.0, 1.0)]
+    with pytest.raises(EmptyResultError, match="Reststreuung"):
+        fit_ols(_frame(rows), "y", ["a", "b"])
 
 
 def test_the_bivariate_fit_equals_the_regression_of_the_thesis(

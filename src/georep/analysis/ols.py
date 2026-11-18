@@ -154,9 +154,13 @@ def fit_ols(
     r2, tss = _r_squared(target, residuals)
     rss = float(residuals @ residuals)
     sigma2 = rss / df
-    if sigma2 == 0.0:
+    if r2 >= 1.0:
         # Wenige verschiedene Punkte, viele Zeilen: die Matrix ist nicht singulär, die Anpassung
         # aber exakt, und ohne Reststreuung sind Standardfehler und F-Wert nicht definiert.
+        # Geprüft wird R² und nicht rss == 0: was bei einer exakten Anpassung als Rest bleibt,
+        # ist Rundung, und die hängt am BLAS-Kern (im Gegenbeispiel von hypothesis 0,0 mit Zen,
+        # 1,2e-24 mit Sandybridge; CI wurde damit am 2026-11-18 rot). R² ist 1, sobald der Rest
+        # unter der Rundung der Streuung von y liegt, auf jedem Kern.
         raise EmptyResultError(
             f"Regression ohne Reststreuung: die Terme {names} treffen alle {n} Werte von {y} exakt."
         )
