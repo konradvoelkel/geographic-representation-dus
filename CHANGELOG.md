@@ -2,6 +2,23 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## Unreleased
+
+- **Die Hauptperiode liest ihre Texte selbst, mit pypdf 7.1.0** (`docs/decisions.md`, Punkt 68):
+  nach dem Abruf ihrer 19 092 PDFs am 2026-11-17/18 kommen die Texte der Hauptseite nicht mehr aus
+  der Arbeit, sondern aus dem Paket `snapshots/duesseldorf-texte/` (19 091 Texte aus pypdf 7.1.0,
+  einer bleibt der der Arbeit, weil sein PDF mit AES verschlüsselt ist). Treffer 29 010 → 29 330,
+  Dokumente mit Treffer 10 739 → 10 799, Tabelle 5 p = 0,234 (ohne 1 und 10: 0,036), Spearman
+  zwischen den Perioden 0,8230. Kein Urteil der Seite kippt, und jeder Datensatz ist jetzt mit
+  demselben Extraktor gelesen. Die Zahlen der Arbeit reproduziert weiter der Tag `bartzsch-exakt`.
+- **Die Seite nennt die ausgeschlossenen Wahlbezirke nur noch „die beiden höchsten
+  Trefferquoten", wenn sie es sind**, sonst ihre Plätze: auf der Seite der Periode 2014 bis 2020
+  stehen 1 und 10 auf Platz 2 und 9, und seit Punkt 68 steht 10 auch in der Hauptperiode auf Platz 3.
+- **`georep pack --texts`** packt nur den Textstore eines Laufs, **`[bootstrap].texts`** legt ein
+  solches Paket über die Texte der Referenz, wenn es genau ihre Dateien trägt.
+- **Eine exakte Anpassung erkennt `fit_ols` an R² = 1**, nicht mehr an einer Reststreuung von genau
+  null: die hing am BLAS-Kern, und CI wurde auf einem anderen Prozessor rot.
+
 ## 0.15.0 (2026-11-16), pypdf 7.1.0 als Extraktor, Abhaengigkeitsrunde
 
 - **Abhängigkeiten gehoben, keine Zahl bewegt sich** (Runde vom 2026-11-15, `docs/decisions.md`,

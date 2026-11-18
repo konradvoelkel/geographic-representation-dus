@@ -1,10 +1,11 @@
 # Status
 
-Stand 2026-11-18, `main` auf `v0.15.0`: die Abhängigkeitsrunde vom 2026-11-15 (Punkt 66; keine
-Zahl der Seite bewegt sich) und pypdf 7.1.0 als Extraktor (Punkt 67; drei Datensätze sind neu
-extrahiert und haben rund ein Prozent mehr Treffer, die Hauptperiode rechnet weiter mit den Texten
-der Arbeit). Seit dem 2026-11-18 liegen alle 19 092 PDFs der Hauptperiode lokal, und Konrad hat
-entschieden, sie mit pypdf 7.1.0 neu zu lesen (`docs/todo.md`, Punkt 8). `v0.14.0` waren die Punkte 58 bis 65: die Beratungsfolge als zweite Quelle
+Stand 2026-11-18, `main` auf `v0.15.0` plus Punkt 68: die Abhängigkeitsrunde vom 2026-11-15
+(Punkt 66; keine Zahl der Seite bewegt sich), pypdf 7.1.0 als Extraktor (Punkt 67; drei Datensätze
+neu extrahiert, rund ein Prozent mehr Treffer) und seit dem 2026-11-18 auch die Hauptperiode mit
+pypdf 7.1.0 gelesen (Punkt 68, Konrads Entscheidung nach dem Abruf ihrer 19 092 PDFs; Treffer
+29 010 → 29 330, kein Urteil der Seite kippt). Jeder Datensatz der Seite ist damit mit demselben
+Extraktor gelesen. `v0.14.0` waren die Punkte 58 bis 65: die Beratungsfolge als zweite Quelle
 des Gremiums, die Urheber Mönchengladbachs und der Wahlperiode 2014 bis 2020, die Spalte „ohne
 Ausreißer" als explorativ, die vier Korrekturen ihres Reviews und die Flächen Mönchengladbachs zum
 Stand der Wahl, gerechnet und gepackt am 2026-10-15; dazu die Dokumentation in vier Sichten): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
@@ -256,10 +257,11 @@ Frage 7.4 vom 2026-10-13 („kein Bucket").
 | `snapshots/2014-2020/` | 37 625 770 | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
 | `snapshots/2025/` | 13 889 015 | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
 | `snapshots/duesseldorf-beratungsfolge/` | 90 455 | `raw/beratungsfolge.parquet` (Punkt 58) | `duesseldorf` |
+| `snapshots/duesseldorf-texte/` | 15 563 293 | `cache/text/texts.parquet` aus pypdf 7.1.0 (Punkt 68) | `duesseldorf` |
 
-Zusammen 56 819 182 Bytes (54,19 MiB) neben `reference/` (85 771 896, 81,80 MiB) und `context/`
-(2 242 316, 2,14 MiB): **sechs Pakete, 144 833 394 Bytes, 138,12 MiB**, 77 % der Grenze von 180 MiB im Test
-(Stand 2026-11-16: Mönchengladbach mit den Flächen der Wahl, die drei Textstores aus pypdf 7.1.0).
+Zusammen 72 382 475 Bytes (69,03 MiB) neben `reference/` (85 771 896, 81,80 MiB) und `context/`
+(2 242 316, 2,14 MiB): **sieben Pakete, 160 396 687 Bytes, 152,97 MiB**, 85 % der Grenze von 180 MiB im
+Test (Stand 2026-11-18: Mönchengladbach mit den Flächen der Wahl, alle vier Textstores aus pypdf 7.1.0).
 Gezählt sind überall die Datendateien ohne das README (Review-Befund 14).
 Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, den Zahlen des Laufs und der SHA-256 jeder Datei;
 `tests/unit/test_data_packages.py` hält Dateiliste, Größe und Prüfsumme gegen das README (die Prüfsummen und
@@ -561,6 +563,39 @@ Geprüft: `uv run nox` und `uv run pytest -m slow` grün; ein A/B-Bau gegen den 
 Änderungen genau in den drei Datensätzen und in den Abschnitten der Hauptseite, die mit der alten
 Periode vergleichen — die Zahlen der Hauptperiode selbst sind unverändert.
 
+## Die Hauptperiode mit pypdf 7.1.0 (2026-11-18, `docs/decisions.md`, Punkt 68)
+
+Konrads Entscheidung, nachdem die 19 092 PDFs der Hauptperiode da waren (Abruf 2026-11-17 22:40 bis
+2026-11-18 04:34): die Hauptseite nimmt ihre Texte aus pypdf 7.1.0. Die Paper bleiben die der Arbeit
+in `reference/`; die neuen Texte liegen als eigenes Paket `snapshots/duesseldorf-texte/` (nur der
+Textstore, 15 563 293 Bytes), gepackt mit dem neuen `georep pack --texts`. `[bootstrap].texts` im
+Stadtprofil nennt es, und `bootstrap` legt es über die Texte der Referenz — nur, wenn es genau ihre
+Dateien trägt, sonst bleiben die Texte der Referenz (so bleibt die Mini-Fixture unberührt).
+
+| Größe | Texte der Arbeit | pypdf 7.1.0 |
+|---|---|---|
+| Texte aus pypdf 7.1.0 | 0 von 19 033 | 19 032 von 19 033 (einer bleibt der der Arbeit, siehe „Bekannt") |
+| Treffer | 29 010 | **29 330** |
+| Dokumente mit Treffer | 10 739 | **10 799** |
+| Tabelle 5 über alle 41 | r = 0,1891, p = 0,23641 | r = 0,1901, p = 0,23383 |
+| Tabelle 5 ohne 1 und 10 | r = 0,3351, p = 0,03705 | r = 0,3363, p = 0,03635 |
+| Spearman zwischen den Perioden | 0,8127 | 0,8230 |
+| Regression der Differenzen | p = 0,51365 | p = 0,54136 |
+
+Jeder Wahlbezirk gewinnt 1 bis 25 Treffer, keiner verliert. **Kein Urteil der Seite kippt**: die
+Spalte mit signifikantem p bleibt es, und kein Term der Trefferquote in den Regressionen mit
+Kontrollen kreuzt die 0,05. Die Seiten der anderen drei Datensätze sind unverändert.
+
+Geprüft: `uv run nox` und `uv run pytest -m slow` grün; ein Bau aller Seiten aus dem Checkout ohne
+PDFs (wie `pages.yml`) ist in allen 606 Dateien gleich dem Bau aus dem Lauf mit den PDFs. Gegen die
+Arbeit rechnen die Golden-Master-Tests weiter mit ihren Texten (`as_in_the_thesis`), und
+`test_the_text_package_moves_the_reference_as_measured` hält die neuen Zahlen fest. Unterwegs
+gefunden und behoben: `fit_ols` erkannte eine exakte Anpassung über `rss == 0`, und das hing am
+BLAS-Kern (CI rot am 2026-11-18, `6aa7245`); und vier Sätze nannten die ausgeschlossenen Bezirke 1
+und 10 immer „die (beiden) höchsten Trefferquoten" — mit den neuen Texten steht 10 auf Platz 3, auf
+der Seite der Periode 2014 bis 2020 stehen sie seit jeher auf Platz 2 und 9. Die Sätze nennen jetzt
+die Plätze, wenn es nicht die höchsten sind.
+
 ## Zahlen (2026-10-15, `v0.11.0` plus Punkt 44, 45, 46, 47, 52, 56 und 58 bis 65)
 
 - Tests: 1277 schnelle (nox-Gate, parallel in rund 45 s, Abdeckung 98,5 %), 39 `slow` (rund 5 min über die
@@ -639,14 +674,15 @@ Schema-Version hingehört, wie eine Zahl in einem Test gerundet wird —, stehen
 in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen werden
 (`docs/absicherung-2026-10.md`, § 4). Verloren ist nichts, nur umgezogen.
 
-- **Hauptperiode und übrige Datensätze sind mit zwei Extraktoren gelesen** (seit dem 2026-11-16,
-  Punkt 67): die 19 033 Texte der Hauptperiode sind die der Arbeit, die Texte der Periode 2014 bis
-  2020, der laufenden Periode und Mönchengladbachs kommen aus pypdf 7.1.0, das rund ein Prozent mehr
-  Treffer findet (Leerzeichen mitten im Wort fallen weg). „Zwei Wahlperioden" und `vergleich.html`
-  stellen solche Datensätze nebeneinander, und die Seite nennt den Extraktor nicht
-  (`docs/todo.md`, Punkt 7). Die PDFs der Hauptperiode liegen seit dem 2026-11-18 lokal, und Konrad
-  hat entschieden, sie mit pypdf 7.1.0 neu zu lesen; aufgelöst ist es, wenn ihre Texte als eigenes
-  Paket im Repo liegen (`docs/todo.md`, Punkt 8).
+- **Alle vier Datensätze sind mit pypdf 7.1.0 gelesen, bis auf 16 Texte** (seit dem 2026-11-18,
+  Punkt 68; die drei anderen seit dem 2026-11-16, Punkt 67): 15 der Periode 2014 bis 2020 tragen
+  `pypdf-6.20.0` (unten), einer der Hauptperiode den Text der Arbeit (unten). Die Seite nennt den
+  Extraktor nicht (`docs/todo.md`, Punkt 7).
+- **Ein PDF der Hauptperiode ist mit AES verschlüsselt** (2026-11-18, Punkt 68): `00403713.pdf`.
+  pypdf braucht dafür `cryptography`, das nicht im Lock steht, meldet `CorruptPdfError:
+  cryptography>=3.1 is required for AES algorithm`, und der Store behält den Text der Arbeit
+  (187 472 Zeichen). Jeder Lauf mit PDFs zählt es als fehlerhaft und versucht es erneut. Ob
+  `cryptography` ins Lock kommt, ist offen.
 - **pypdf steht auf genau 7.1.0**, und die Treue zur Arbeit ist damit geringer (Punkt 66): 7.1.0
   reproduziert 123 der 200 lokal vorhandenen Texte der Hauptperiode zeichengleich, 6.20.0 und 6.21.4
   reproduzierten 197. Eine neue Version erst nach einer Messung an den lokalen PDFs, dann die
@@ -656,13 +692,12 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   alte Text bleibt im Store und im Paket stehen, und jeder Lauf mit PDFs zählt sie als fehlerhaft
   und versucht sie erneut. Wer die Periode ohne den alten Store aus den PDFs extrahiert, bekommt
   diese 15 nicht.
-- **Lokale Textstores sind noch die aus pypdf 6.20.0** (2026-11-16): die Pakete im Repo sind neu
-  extrahiert, der Cache auf Konrads Rechner nicht. Der nächste lokale Lauf des Schritts `texts`
-  extrahiert alle 26 862 PDFs der drei Datensätze neu (rund 20 Minuten) und kommt bei den Texten
-  der Pakete an. Seit dem 2026-11-18 liegen auch alle 19 092 PDFs der Hauptperiode lokal: ein
-  lokaler Lauf des Hauptprofils liest sie alle mit 7.1.0 neu und ersetzt im lokalen Store die Texte
-  der Arbeit (an den 200 zuerst geholten wichen 77 von ihnen ab, mit 6.20.0 waren es drei). In CI
-  gibt es diese PDFs nicht.
+- **Lokale Textstores sind noch die alten** (2026-11-18): die drei Datensätze tragen auf Konrads
+  Rechner Texte aus pypdf 6.20.0, die Hauptperiode die Texte der Arbeit; die Pakete im Repo sind
+  neu. Der nächste lokale Lauf des Schritts `texts` liest alle PDFs neu (19 092 der Hauptperiode in
+  rund 10 Minuten, 26 862 der drei anderen in rund 20) und kommt bei den Texten der Pakete an; ein
+  `bootstrap --force` des Hauptprofils legt stattdessen das Textpaket über den Store. In CI gibt es
+  keine PDFs, dort kommen alle Texte aus den Paketen.
 - **Die Extraktion hängt an der Umgebung** (2026-11-15, gemessen mit pypdf 6.21.4): mit installiertem
   fontTools ändern sich 12 der 27 062 Texte (weicher Trennstrich wird Bindestrich). fontTools kommt nur über die Gruppe
   `notebook` ins Lock; extrahiert wird in der Standardumgebung ohne sie.
@@ -891,15 +926,13 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 
 ## Nächster Schritt
 
-**Stand 2026-11-18:** pypdf 7.1.0 ist der Extraktor (Punkt 67), die drei Pakete sind neu gepackt,
-und alle 19 092 PDFs der Hauptperiode liegen lokal (`cache_root/duesseldorf/pdf/`, 2,7 GB). Konrad
-hat am 2026-11-18 entschieden, die Hauptperiode mit pypdf 7.1.0 neu zu lesen. Offen, in dieser
-Reihenfolge: die Zahlen der Seite mit neu gelesener Hauptperiode gegen den heutigen Stand stellen,
-dann ein **eigenes Paket** für ihre Texte (`reference/` bleibt der Stand der Arbeit, `bartzsch-exakt`
-der Anker; `docs/todo.md`, Punkt 8), danach der **Satz auf der Seite**, der den Extraktor nennt
-(`docs/todo.md`, Punkt 7). Aus der Abhängigkeitsrunde bleiben numpy 2.5.5 (am
-2026-11-15 abends erschienen, nicht gemessen) und crosshair-tool über 0.0.111 hinaus, sobald eine
-Version den Absturz nicht mehr zeigt.
+**Stand 2026-11-18:** alle vier Datensätze sind mit pypdf 7.1.0 gelesen (Punkte 67 und 68), die
+Hauptperiode aus dem Textpaket `snapshots/duesseldorf-texte/`; ihre 19 092 PDFs liegen lokal
+(`cache_root/duesseldorf/pdf/`, 2,7 GB). Offen: der **Satz auf der Seite**, der den Extraktor nennt
+(`docs/todo.md`, Punkt 7); ob `cryptography` ins Lock kommt, damit auch das eine AES-verschlüsselte
+PDF der Hauptperiode neu gelesen wird (Konrads Entscheidung, siehe „Bekannt"). Aus der
+Abhängigkeitsrunde bleiben numpy 2.5.5 (am 2026-11-15 abends erschienen, nicht gemessen) und
+crosshair-tool über 0.0.111 hinaus, sobald eine Version den Absturz nicht mehr zeigt.
 
 **Stand nach dem Merge von Punkt 65 (2026-10-15, `v0.14.0`):** alles aus der Runde vom 2026-10-14 liegt
 auf `main` (Merge `1e3e409`, 34 Commits des Branches `feat/esri-identify`, zwei Reviews) und ist gepusht.

@@ -114,21 +114,12 @@ Lizenzen (DL-DE BY 2.0, ODbL, CC BY-SA), die Seite nennt sie weiter je Quelle.
 
 ## 7. Die Seite nennt den Extraktor nicht
 
-Aufgenommen am 2026-11-16 mit `docs/decisions.md`, Punkt 67. Seit pypdf 7.1.0 der Extraktor ist,
-sind die Hauptperiode (Texte der Arbeit) und die drei anderen Datensätze mit zwei Extraktoren
-gelesen, und der neue findet rund ein Prozent mehr Treffer. Die Abschnitte „Zwei Wahlperioden" und
-`vergleich.html` stellen solche Datensätze nebeneinander, ohne es zu sagen; „Methode und Grenzen"
-schreibt nur „der Text jedes PDFs wird extrahiert". Die Angabe liegt schon in den Daten: die Spalte
-`extractor` des Textstores nennt sie je Dokument. Zu prüfen wäre ein Satz aus dem Modell im
-Methodenabschnitt (welcher Extraktor, wie viele Texte) und ein Hinweis dort, wo zwei Datensätze mit
-verschiedenen Extraktoren verglichen werden. Mit Punkt 8 erledigt sich der zweite Teil.
-
-## 8. Die Hauptperiode mit pypdf 7.1.0 lesen
-
-Aufgenommen am 2026-11-16 (`docs/decisions.md`, Punkt 67), entschieden von Konrad am 2026-11-18:
-die Hauptseite nimmt die Texte aus pypdf 7.1.0, nicht mehr die 19 033 Texte der Arbeit. Alle
-19 092 PDFs der Hauptperiode liegen seit dem 2026-11-18 lokal (die übrigen 16 der 19 108 Dokumente
-nennen keine Hauptdatei). Zu tun: die Zahlen der Seite mit neu gelesener Hauptperiode gegen den
-heutigen Stand stellen, die neuen Texte als eigenes Paket ins Repo legen (`reference/` bleibt der
-Stand der Arbeit und nur lesbar, `bartzsch-exakt` der Anker) und `bootstrap` des Hauptprofils daraus
-lesen lassen. Die Zahlen der Hauptseite lösen sich damit von denen der Arbeit; die Seite sagt das.
+Aufgenommen am 2026-11-16 mit `docs/decisions.md`, Punkt 67. Seit dem 2026-11-18 (Punkt 68) sind
+alle vier Datensätze mit pypdf 7.1.0 gelesen, bis auf 16 Texte (15 der Periode 2014 bis 2020 aus
+pypdf 6.20.0, einer der Hauptperiode aus der Arbeit). „Methode und Grenzen" schreibt nur „der Text
+jedes PDFs wird extrahiert". Der Absatz „Zwei Regeln weichen bewusst von der Arbeit ab" nennt die
+beiden eigenen Regeln (Punkt 44), aber nicht, dass die Hauptseite seit Punkt 68 auch eigene Texte
+liest (rund ein Prozent mehr Treffer, Tabelle 5 ohne 1 und 10 p = 0,036 statt 0,037). Die Angabe
+liegt schon in den Daten: die Spalte `extractor` des Textstores nennt sie je Dokument. Zu prüfen
+wäre ein Satz aus dem Modell im Methodenabschnitt (welcher Extraktor, wie viele Texte, wie viele
+anders als in der Arbeit), neben den beiden Regeln.

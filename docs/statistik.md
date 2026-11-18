@@ -3,9 +3,13 @@
 Stand 2026-10-14, `v0.13.0`. Die veröffentlichte Seite ist aus Commit `813827e` gebaut und zeigt
 alles bis **Punkt 58**; die **Punkte 59 bis 61** liegen seit dem 2026-10-14 auf `main` und sind in
 der veröffentlichten Seite noch nicht zu sehen — wo eine Zahl unten davon betroffen ist, steht es
-dabei. Diese Sicht beantwortet: **welche Frage rechnet welche Auswertung, mit
-welcher Formel, mit welchem Ergebnis — und was spricht dagegen.** Sie entscheidet nichts: wo etwas
-offen ist, steht das als offen. Die drei anderen Sichten: [technik.md](technik.md),
+dabei. Die Zahlen der Hauptperiode in den §§ 1 bis 9 und 11 bis 13 und ihre Treffer in § 10 sind die
+seit dem 2026-11-18, als ihre Texte mit pypdf 7.1.0 neu gelesen wurden ([decisions.md](decisions.md),
+Punkt 68), nachgerechnet am Bau aller Seiten aus diesen Texten; nicht nachgerechnet sind in § 10 das
+Themenmodell (NPMI, Saattreue, Reinheit) und der Klassifikator, die den Stand ihres Datums
+(2026-10-14, Texte der Arbeit) zeigen. Diese Sicht beantwortet: **welche Frage rechnet welche
+Auswertung, mit welcher Formel, mit welchem Ergebnis — und was spricht dagegen.** Sie entscheidet
+nichts: wo etwas offen ist, steht das als offen. Die drei anderen Sichten: [technik.md](technik.md),
 [inhalt.md](inhalt.md), [workflow-ratsmitglied.md](workflow-ratsmitglied.md). Gründe und verworfene
 Alternativen: [decisions.md](decisions.md); Aufbau: [architecture.md](architecture.md).
 
@@ -33,18 +37,21 @@ Wahlbeteiligung **in Prozent**, über alle 41 Bezirke und ein zweites Mal ohne d
 | | alle Wahlbezirke | ohne 1 und 10 |
 |---|---|---|
 | n | 41 | 39 |
-| Steigung | 79,9539 | 216,2416 |
-| Achsenabschnitt | 48,1709 | 40,5715 |
-| r | 0,1891 | 0,3351 |
-| R² | 0,0358 | 0,1123 |
-| p | 0,23641 | **0,03705** |
-| Standardfehler der Steigung | 66,488 | 99,957 |
+| Steigung | 79,4275 | 214,9840 |
+| Achsenabschnitt | 48,1482 | 40,5023 |
+| r | 0,1901 | 0,3363 |
+| R² | 0,0361 | 0,1131 |
+| p | 0,23383 | **0,03635** |
+| Standardfehler der Steigung | 65,681 | 98,988 |
 
-**Der Interpretationsspielraum.** Über alle 41 Bezirke belegt p = 0,24 keinen Zusammenhang. Die
+Mit den Texten der Arbeit (bis zum 2026-11-18) standen dort Steigung 79,9539 und 216,2416, r = 0,1891
+und 0,3351, p = 0,23641 und 0,03705.
+
+**Der Interpretationsspielraum.** Über alle 41 Bezirke belegt p = 0,23 keinen Zusammenhang. Die
 zweite Spalte ist die einzige Stelle im ganzen Vorhaben, an der ein p unter 0,05 steht — und sie
 erklärt R² = 0,11 der Streuung, also neun Zehntel nicht. Das Vorzeichen ist in allen Varianten
-positiv (mehr Sichtbarkeit, mehr Beteiligung), aber kein Standardfehler ist kleiner als der
-Koeffizient geteilt durch 2,2.
+positiv (mehr Sichtbarkeit, mehr Beteiligung) außer in einer Themenzeile ohne Aussage (§ 6), aber
+kein Standardfehler ist kleiner als der Koeffizient geteilt durch 2,2.
 
 **Die Einwände, in der Reihenfolge ihrer Schwere.**
 
@@ -52,15 +59,16 @@ Koeffizient geteilt durch 2,2.
    hier „wie wahrscheinlich wäre dieses Muster, wenn die Trefferquote zufällig verteilt wäre", nicht
    „gilt das auch für andere Städte".
 2. **Die zweite Spalte ist nach Ansehen der Daten entstanden.** Wer die zwei höchsten Punkte
-   entfernt und dann p = 0,037 berichtet, hat zwei Tests gerechnet und einen berichtet. Die Arbeit
+   entfernt (seit dem 2026-11-18 genau genommen den höchsten und den dritthöchsten, § 2) und dann
+   p = 0,036 berichtet, hat zwei Tests gerechnet und einen berichtet. Die Arbeit
    berichtet beide Spalten, das ist redlich; die Deutung der zweiten als „signifikant" stand bis zum
    2026-10-14 ohne Korrektur da. **Punkt 61 beantwortet das**: der Spaltenkopf trägt auf `main` das
    Wort „explorativ", und darunter stehen zwei Sätze — der erste nennt den Grund (ausgeschlossen sind
    die beiden Bezirke mit den höchsten Quoten, eine Entscheidung über diesen Datensatz), der zweite
    beide p-Werte samt dem Urteil, und keine der Zahlen steht hart im Text. Die veröffentlichte Seite
    zeigt das noch nicht.
-3. **Mit Kontrollvariablen bleibt nichts übrig** (§ 4): R² steigt von 0,036 auf 0,887, und der
-   Koeffizient der Trefferquote fällt auf p = 0,145.
+3. **Mit Kontrollvariablen bleibt nichts übrig** (§ 5): R² steigt von 0,036 auf 0,886, und der
+   Koeffizient der Trefferquote fällt auf p = 0,163.
 4. **In der vorigen Wahlperiode verschwindet der Befund** (§ 6): dieselbe Methode, dieselbe Stadt,
    anderer Zeitraum, p = 0,08334 ohne 1 und 10. Das ist der stärkste Einwand, der aus den Daten
    selbst kommt.
@@ -73,21 +81,29 @@ Koeffizient geteilt durch 2,2.
 
 **Die Rechnung.** Robuster z-Wert über Median und MAD der Trefferquote.
 
-**Die Zahlen** (Methodik-Review § 2.7 und § 4; Referenz 2026-10-12):
+**Die Zahlen** (linke Spalte: Methodik-Review § 2.7 und § 4, Referenz 2026-10-12; rechte Spalte:
+Hauptperiode mit den Texten aus pypdf 7.1.0, seit dem 2026-11-18):
 
 | | Regeln aus (wie die Arbeit) | Regel 1 an (heute) |
 |---|---|---|
-| Median / MAD der Quote | 0,0613 / 0,0097 | 0,0604 / 0,0094 |
-| Bezirk 1 (Altstadt, Carlstadt, Hofgarten) | z = 10,43 | z = 9,71 |
-| Bezirk 10 (Flingern Süd) | z = 4,04 | **z = 2,69** |
-| dritt- bzw. zweithöchster | 2,38 (Bezirk 2) | 2,58 (Bezirk 2) |
+| Median / MAD der Quote | 0,0613 / 0,0097 | 0,0612 / 0,0090 |
+| Bezirk 1 (Altstadt, Carlstadt, Hofgarten) | z = 10,43 | z = 10,21 |
+| Bezirk 10 (Flingern Süd) | z = 4,04 | **z = 2,74** |
+| dritt- bzw. zweithöchster | 2,38 (Bezirk 2) | 2,79 (Bezirk 2) |
+
+Mit den Texten der Arbeit stand die rechte Spalte bei 0,0604 / 0,0094, z = 9,71 und z = 2,69, und
+Bezirk 2 lag mit 2,58 hinter Bezirk 10 (so im Methodik-Review, § 4).
 
 **Der Interpretationsspielraum.** Die beiden sind aus verschiedenen Gründen abgesetzt. Bezirk 1 hat
 751 Begriffe im Wörterbuch (Median 147 auf der Referenz der Arbeit), weil in der Innenstadt fast
 jedes zweite Gebäude einen Wikipedia-Artikel hat — ein Artefakt der **Wörterbuchgröße**, kein
 Artefakt der Benennung. Bezirk 10 hing mit 177 von 1 189 Treffern (14,9 %) allein am Ort „Stadtwerke
 Düsseldorf"; seit Regel 1 („Einrichtung mit Stadtnamen") ist er **kein Ausreißer mehr**, wird aber
-weiter aus der zweiten Spalte genommen, weil Tabelle 5 der Arbeit ihn nennt.
+weiter aus der zweiten Spalte genommen, weil Tabelle 5 der Arbeit ihn nennt. Mit den neu gelesenen
+Texten hat er nicht einmal mehr die zweithöchste Quote: Bezirk 2 liegt mit 0,0864 knapp vor ihm
+(0,0860). Die Seite nannte die ausgeschlossenen Bezirke bis dahin immer „die beiden höchsten
+Trefferquoten", auch auf der Seite der Periode 2014 bis 2020, wo sie auf Platz 2 und 9 stehen; seit
+dem 2026-11-18 sagt sie das nur noch, wenn es stimmt, und nennt sonst die Plätze (hier 1 und 3).
 
 **Die Einwände.** Die Liste `[1, 10]` ist eine Entscheidung von Hand; eine automatische Regel
 (robuster z, Cook-Distanz) wäre übertragbar, würde aber die Spalte „ohne Ausreißer" von Lauf zu Lauf
@@ -101,12 +117,13 @@ Punkte ist die andere Alternative und ebenfalls nicht gebaut.
 **Die Rechnung.** Pearson-Korrelationen über die 41 Bezirke in `analysis.scaling.dictionary_bias`;
 die Deutungssätze auf der Seite entstehen aus diesen Zahlen, nicht aus festem Text.
 
-**Die Zahlen** (Abschnitt „Methode und Grenzen" der veröffentlichten Seite):
+**Die Zahlen** (Abschnitt „Methode und Grenzen" der Seite; mit den Texten der Arbeit stand die
+zweite Zeile bei 0,17, die beiden anderen gleich):
 
 | Paar | r |
 |---|---|
 | Treffer gegen Zahl der Begriffe | **0,76** (erklärt 58 % der Streuung) |
-| Treffer gegen Wahlberechtigte | 0,17 |
+| Treffer gegen Wahlberechtigte | 0,16 |
 | Treffer je Begriff gegen Zahl der Begriffe | **−0,51** |
 
 Wörterbücher reichen von 77 bis 751 Begriffen (Faktor 9,8), Wahlberechtigte von 10 168 bis 13 086
@@ -136,15 +153,17 @@ Bezirks (`model.per_term_regression`).
 | | alle Wahlbezirke | ohne 1 und 10 |
 |---|---|---|
 | n | 41 | 39 |
-| Steigung | −0,56 | −0,24 |
-| r | −0,112 | −0,042 |
+| Steigung | −0,56 | −0,25 |
+| r | −0,113 | −0,043 |
 | R² | 0,013 | 0,002 |
-| p | 0,486 | 0,800 |
+| p | 0,484 | 0,793 |
+
+Mit den Texten der Arbeit: Steigung −0,56 und −0,24, p = 0,486 und 0,800.
 
 **Der Interpretationsspielraum.** Es bleibt **nicht einmal das Vorzeichen**. Die einzige Spalte, in
 der die Arbeit ein signifikantes p berichtet, hängt damit an der Größe der Wörterbücher. Median der
-Kennzahl 4,5656, Spannweite 2,2485 bis 9,5472; 28 der 41 Quantilklassen liegen anders als bei der
-Quote.
+Kennzahl 4,5984, Spannweite 2,2727 bis 9,5849; 29 der 41 Quantilklassen liegen anders als bei der
+Quote (mit den Texten der Arbeit 4,5656, 2,2485 bis 9,5472 und 28).
 
 **Die Einwände.** Siehe § 3: die Kennzahl ist gegenläufig verzerrt. Die Rechnung widerlegt Tabelle 5
 nicht, sie zeigt, dass das Ergebnis an der Wahl der Kennzahl hängt.
@@ -165,22 +184,26 @@ Koeffizienten und VIF.
 
 | Modell | Terme neben der Konstante | Koeffizient der Trefferquote | p | R² | korrigiert |
 |---|---|---|---|---|---|
-| A | 1 (nur Trefferquote) | 79,954 (± 66,488) | 0,236 | 0,036 | 0,011 |
-| **B (Hauptmodell)** | 4 | 43,531 (± 29,203) | **0,145** | **0,887** | 0,874 |
-| C | 6 | 40,426 (± 24,179) | 0,104 | 0,928 | 0,915 |
+| A | 1 (nur Trefferquote) | 79,428 (± 65,681) | 0,234 | 0,036 | 0,011 |
+| **B (Hauptmodell)** | 4 | 41,602 (± 29,197) | **0,163** | **0,886** | 0,874 |
+| C | 6 | 39,355 (± 24,139) | 0,112 | 0,928 | 0,915 |
 
-Im Modell B tragen den Befund: sozialer Handlungsbedarf (Koeffizient −9,880, standardisiert **−0,96**,
-p < 0,001, VIF 1,46), Fluktuationsrate (−0,314, p = 0,034) und Anteil 65 Jahre und älter (−0,463,
-p = 0,104). Modell C fügt die Stimmenanteile von CDU (−0,259, p = 0,005) und AfD (−0,432, p = 0,035)
+Mit den Texten der Arbeit standen in der Spalte der Trefferquote 79,954 (p = 0,236), 43,531
+(p = 0,145, R² = 0,887) und 40,426 (p = 0,104); in keinem Modell und keiner Stichprobe kreuzt ein p
+der Trefferquote durch die neuen Texte die Grenze von 0,05.
+
+Im Modell B tragen den Befund: sozialer Handlungsbedarf (Koeffizient −9,877, standardisiert **−0,96**,
+p < 0,001, VIF 1,46), Fluktuationsrate (−0,312, p = 0,037) und Anteil 65 Jahre und älter (−0,459,
+p = 0,108). Modell C fügt die Stimmenanteile von CDU (−0,259, p = 0,005) und AfD (−0,436, p = 0,034)
 hinzu. Tabelle 6b rechnet dieselbe Regression mit **genau einer** Kontrollvariable neben der
-Trefferquote; die Spanne des korrigierten R² reicht dort von −0,014 (Anteil unter 18 Jahren) bis
-0,865 (sozialer Handlungsbedarf, Anteil mit Migrationshintergrund).
+Trefferquote; die Spanne des korrigierten R² reicht dort von −0,013 (Anteil unter 18 Jahren) bis
+0,866 (Anteil mit Migrationshintergrund; sozialer Handlungsbedarf 0,864).
 
 **Der Interpretationsspielraum.** Das ist nicht eine Relativierung von Tabelle 5, es ist ihre
 Ersetzung als Antwort: ein einziger Index der Stadtstatistik erklärt die Wahlbeteiligung fast
 vollständig, und die Trefferquote erklärt daneben nichts mehr. Dass ihr Koeffizient positiv bleibt
-und von 80 auf 44 fällt, lässt sich als „ein kleiner eigener Beitrag, nicht signifikant" lesen oder
-als „Rauschen" — beides ist mit p = 0,145 bei n = 41 vereinbar.
+und von 79 auf 42 fällt, lässt sich als „ein kleiner eigener Beitrag, nicht signifikant" lesen oder
+als „Rauschen" — beides ist mit p = 0,163 bei n = 41 vereinbar.
 
 **Die Einwände.**
 
@@ -189,19 +212,22 @@ als „Rauschen" — beides ist mit p = 0,145 bei n = 41 vereinbar.
 2. **Zirkularität bei den Stimmenanteilen** (Modell C): Parteianteile und Wahlbeteiligung sind beides
    Größen derselben Wahl; der Koeffizient der CDU erklärt die Beteiligung nicht, er beschreibt sie
    mit. Siehe § 9.
-3. **Multikollinearität**: in Modell C steht der soziale Handlungsbedarf bei VIF 6,67, der Anteil 65+
-   fällt von p = 0,104 auf p = 0,940. Das Hauptmodell ist darum B, nicht C.
+3. **Multikollinearität**: in Modell C steht der soziale Handlungsbedarf bei VIF 6,66, der Anteil 65+
+   fällt von p = 0,108 auf p = 0,950. Das Hauptmodell ist darum B, nicht C.
 4. **Die Umrechnung** von 171 Sozialräumen auf 41 Wahlbezirke über Flächenanteile setzt voraus, dass
    sich die Wahlberechtigten innerhalb eines Stimmbezirks gleichmäßig verteilen; ein
    Bevölkerungsraster wäre genauer und ist nicht Teil der Auswertung. Die Abdeckung liegt bei 0,9999.
 5. **Modellwahl nach Ansehen**: dass B das Hauptmodell ist, ist eine Entscheidung; 6b zeigt, wie
-   empfindlich der Koeffizient der Trefferquote auf die Wahl der einen Kontrollvariable reagiert
-   (7,60 bis 149,75).
+   empfindlich der Koeffizient der Trefferquote auf die Wahl der einen Kontrollvariable reagiert:
+   von −27,24 (Mindestsicherungsquote) über 5,72 (sozialer Handlungsbedarf) bis 150,77
+   (Fluktuationsrate). Bis zum 2026-11-18 stand hier „7,60 bis 149,75", also nur der Wert neben dem
+   sozialen Handlungsbedarf und der größte; die kleinsten Werte (−26,05 neben der
+   Mindestsicherungsquote, −7,80 neben der AfD) fehlten schon damals.
 
 ## 6. Die 26 Gewichtungsvarianten
 
 **Die Frage.** Hängt die Schlussfolgerung an der binären Zählung? Heute zählt ein Dokument für einen
-Bezirk, sobald **ein** Begriff seines Wörterbuchs darin vorkommt — „grafenberger allee" (205
+Bezirk, sobald **ein** Begriff seines Wörterbuchs darin vorkommt — „grafenberger allee" (206
 Dokumente) zählt so viel wie ein Begriff mit einem einzigen Treffer.
 
 **Die Rechnung.** Ein Dokument bekommt je Wahlbezirk das Gewicht `max` über seine getroffenen
@@ -215,21 +241,27 @@ zur ungewichteten Quote.
 
 | Variante | Summe | p (alle) | p (ohne 1, 10) | ρ |
 |---|---|---|---|---|
-| ohne Gewichtung (= Tabelle 5) | 29 010,0 | 0,236 | **0,037** | 1,000 |
-| Spezifität nach Wahlbezirken (ein Begriff in n Wörterbüchern zählt 1/n) | 17 823,4 | 0,184 | **0,027** | 0,774 |
-| Spezifität nach Dokumenthäufigkeit ((ln N − ln df) / ln N) | 19 562,6 | 0,218 | **0,032** | 0,982 |
-| Anträge, Anfragen, Eingaben halb | 23 570,0 | 0,354 | 0,093 | 0,990 |
-| nur Verwaltungsvorlagen | 18 130,0 | 0,639 | 0,368 | 0,888 |
-| kombiniert (Dokumenthäufigkeit × Anträge halb) | 15 970,5 | 0,330 | 0,082 | 0,979 |
+| ohne Gewichtung (= Tabelle 5) | 29 330,0 | 0,234 | **0,036** | 1,000 |
+| Spezifität nach Wahlbezirken (ein Begriff in n Wörterbüchern zählt 1/n) | 18 031,0 | 0,182 | **0,026** | 0,777 |
+| Spezifität nach Dokumenthäufigkeit ((ln N − ln df) / ln N) | 19 760,6 | 0,219 | **0,033** | 0,978 |
+| Anträge, Anfragen, Eingaben halb | 23 829,5 | 0,348 | 0,091 | 0,986 |
+| nur Verwaltungsvorlagen | 18 329,0 | 0,627 | 0,358 | 0,887 |
+| kombiniert (Dokumenthäufigkeit × Anträge halb) | 16 132,7 | 0,330 | 0,083 | 0,974 |
 
-Dazu 20 Themenzeilen, die je Dokument nur seinen Anteil an einem Thema zählen (ρ von 0,530 bis
-0,953). Über alle 26 Varianten erreichen **2 ein p unter 0,05 in der Spalte über alle 41 Bezirke**
-(Thema 6 Sportausschuss 0,039, Thema 19 0,017) und **8 in der Spalte ohne 1 und 10** (die drei oben
-plus Thema 0 0,014, Thema 6 0,004, Thema 11 0,026, Thema 17 0,015, Thema 19 0,004).
+Dazu 20 Themenzeilen, die je Dokument nur seinen Anteil an einem Thema zählen (ρ von 0,529 bis
+0,957). Über alle 26 Varianten erreichen **2 ein p unter 0,05 in der Spalte über alle 41 Bezirke**
+(Thema 6 Sportausschuss 0,043, Thema 19 0,016) und **8 in der Spalte ohne 1 und 10** (die drei oben
+plus Thema 0 0,011, Thema 6 0,004, Thema 11 0,028, Thema 17 0,015, Thema 19 0,004). Mit den Texten
+der Arbeit lagen genau dieselben Zeilen unter 0,05 (Summe der ersten Zeile 29 010,0, p = 0,236 und
+0,037; Themen-ρ 0,530 bis 0,953); das Themenmodell ist für die neuen Texte auf demselben Rechner neu
+gerechnet, und seine Themen tragen dieselben Kürzel.
 
 **Der Interpretationsspielraum.** Die Kernaussage ist stabil: die drei Varianten, die nur die
 Spezifität der Begriffe ändern, lassen Vorzeichen und Größenordnung stehen, und die Varianten, die
-Anträge abwerten, machen den Zusammenhang schwächer. Keine Variante dreht das Vorzeichen.
+Anträge abwerten, machen den Zusammenhang schwächer. Keine der sechs Varianten ohne Thema dreht das
+Vorzeichen; unter den Themenzeilen ist die Steigung über alle 41 Bezirke einmal negativ (Thema 18,
+p = 0,998, also ohne Aussage), ohne 1 und 10 nie. Mit den Texten der Arbeit waren es zwei solche
+Zeilen (Thema 5 und Thema 18, beide mit p über 0,97).
 
 **Die Einwände.** Bei 26 Varianten × 2 Spalten sind 52 Tests gerechnet; unter der Nullhypothese
 wären rund 2,6 Werte unter 0,05 zu erwarten, und gefunden sind 10 — mehr als Zufall, aber die acht
@@ -256,26 +288,33 @@ Wahlzahlen von 2020 liegen auf 316 Stimmbezirken eines anderen Zuschnitts und we
 |---|---|---|---|---|---|
 | 2014 bis 2020, alle | 41 | 64,8653 | 0,2368 | 0,0561 | 0,13605 |
 | 2014 bis 2020, ohne 1 und 10 | 39 | 81,7005 | 0,2808 | 0,0789 | **0,08334** |
-| 2020 bis 2025, alle | 41 | 79,9539 | 0,1891 | 0,0358 | 0,23641 |
-| 2020 bis 2025, ohne 1 und 10 | 39 | 216,2416 | 0,3351 | 0,1123 | **0,03705** |
-| **Regression der Differenzen** | 41 | 7,8493 | 0,1050 | 0,0110 | **0,51365** |
+| 2020 bis 2025, alle | 41 | 79,4275 | 0,1901 | 0,0361 | 0,23383 |
+| 2020 bis 2025, ohne 1 und 10 | 39 | 214,9840 | 0,3363 | 0,1131 | **0,03635** |
+| **Regression der Differenzen** | 41 | 7,3455 | 0,0982 | 0,0096 | **0,54136** |
 
-Die Rangfolge hält: Spearman der Trefferquoten zwischen den Perioden **0,8127**, der
-Wahlbeteiligungen 0,9826. Δ Trefferquote hat den Median −0,0115 (−0,0870 bis +0,0059); 8 der 41
+Die Rangfolge hält: Spearman der Trefferquoten zwischen den Perioden **0,8230**, der
+Wahlbeteiligungen 0,9826. Δ Trefferquote hat den Median −0,0102 (−0,0865 bis +0,0070); 8 der 41
 Bezirke gewinnen an Quote, 24 an Beteiligung.
 
-**Stand der Zahlen.** Seit dem 2026-11-16 sind die Texte der alten Periode mit pypdf 7.1.0
-extrahiert, die der Hauptperiode sind weiter die der Arbeit ([decisions.md](decisions.md),
-Punkt 67). Der neue Extraktor allein hebt die Treffer der alten Periode um 1,3 % (36 324 → 36 788);
-mit den Texten aus pypdf 6.20.0 standen in der Tabelle r = 0,2384 und p = 0,13330, ohne 1 und 10
-p = 0,08211, für die Differenzen p = 0,53045 und als Spearman 0,8106. Dieselbe Mischung gilt für
-den Städtevergleich in § 8 (Mönchengladbach: 7.1.0).
+**Stand der Zahlen.** Seit dem 2026-11-18 sind die Texte beider Perioden mit pypdf 7.1.0
+extrahiert: die der alten Periode seit dem 2026-11-16 ([decisions.md](decisions.md), Punkt 67), die
+der Hauptperiode seit dem 2026-11-18 ([decisions.md](decisions.md), Punkt 68); bis dahin waren es in
+der Hauptperiode die Texte der Arbeit. Der neue Extraktor allein hebt die Treffer der alten Periode
+um 1,3 % (36 324 → 36 788) und die der Hauptperiode um 1,1 % (29 010 → 29 330); mit den Texten aus
+pypdf 6.20.0 (und den Texten der Arbeit in der Hauptperiode) standen in der Tabelle für die alte
+Periode r = 0,2384 und p = 0,13330, ohne 1 und 10 p = 0,08211, für die Differenzen p = 0,53045 und
+als Spearman 0,8106. Mit den Texten der Arbeit in der Hauptperiode und 7.1.0 in der alten (vom
+2026-11-16 bis zum 2026-11-18) standen in den Zeilen der Hauptperiode r = 0,1891 und p = 0,23641,
+ohne 1 und 10 p = 0,03705, für die Differenzen p = 0,51365 (Steigung 7,8493, r = 0,1050) und als
+Spearman 0,8127; Δ Trefferquote hatte den Median −0,0115 (−0,0870 bis +0,0059). Die Zeilen der
+alten Periode ändert Punkt 68 nicht. Dieselbe Umstellung gilt für den Städtevergleich in § 8
+(Mönchengladbach liest seit Punkt 67 mit 7.1.0).
 
 **Der Interpretationsspielraum.** Die alte Periode ist eineinhalb Jahre länger und trägt 3 107
-Dokumente mehr; die Quoten sind fast überall niedriger, der Median um 16 %. Was sich **nicht**
-mitbewegt, ist die Wahlbeteiligung: ein Bezirk mit gestiegener Sichtbarkeit hat keine gestiegene
-Beteiligung (p = 0,51). Und: die eine signifikante Spalte der Arbeit ist in der alten Periode nicht
-signifikant.
+Dokumente mehr; die Quoten sind fast überall niedriger, der Median um 15 % (mit den Texten der
+Arbeit 16 %). Was sich **nicht** mitbewegt, ist die Wahlbeteiligung: ein Bezirk mit gestiegener
+Sichtbarkeit hat keine gestiegene Beteiligung (p = 0,54). Und: die eine signifikante Spalte der
+Arbeit ist in der alten Periode nicht signifikant.
 
 **Die Einwände.**
 
@@ -304,9 +343,14 @@ aus den `summary.json` der Stadtseiten und rechnet selbst nichts.
 | Wahlbezirke / Stimmbezirke | 41 / 306 | 33 / 179 |
 | Wahlberechtigte je Bezirk | 11 457 im Mittel | 6 188 im Mittel |
 | Dokumente / davon mit Text | 19 108 / 19 033 (99,6 %) | 2 895 / **650 (22,5 %)** |
-| Trefferquote: Median | 0,060 | 0,006 |
-| Trefferquote: max/min | 5,80 | **28,93** |
-| Tabelle 5, alle | r = 0,1891, p = 0,23641 | r = 0,1294, p = 0,47310 |
+| Trefferquote: Median | 0,061 | 0,006 |
+| Trefferquote: max/min | 5,84 | **28,93** |
+| Tabelle 5, alle | r = 0,1901, p = 0,23383 | r = 0,1294, p = 0,47310 |
+
+**Stand der Zahlen.** Die Spalte Düsseldorf trägt seit dem 2026-11-18 die Texte aus pypdf 7.1.0
+([decisions.md](decisions.md), Punkt 68), wie Mönchengladbach schon seit Punkt 67; mit den Texten der
+Arbeit standen dort 0,060, 5,80 und r = 0,1891, p = 0,23641. Die Spalte Mönchengladbach ändert sich
+nicht.
 
 **Der Interpretationsspielraum.** Was beide Städte teilen, ist der Nicht-Befund: in keiner erklärt
 die Trefferquote die Wahlbeteiligung. Die Verteilungen sind verschieden **geformt**, nicht nur
@@ -336,16 +380,22 @@ und getroffener Zeichenkette in `dokumente_urheber` zum Download.
 
 | Partei | Dokumente | davon allein | Anteil im Mittel | n | r | p |
 |---|---|---|---|---|---|---|
-| CDU | 2 140 | 1 584 | 3,28 % | 41 | 0,052 | 0,748 |
-| Bündnis 90/Die Grünen | 2 308 | 1 969 | 3,57 % | 41 | 0,077 | 0,632 |
-| SPD | 2 107 | 1 747 | 2,61 % | 41 | 0,022 | 0,890 |
-| FDP | 879 | 686 | 2,65 % | 41 | **0,450** | **0,003** |
+| CDU | 2 140 | 1 602 | 3,33 % | 41 | 0,046 | 0,773 |
+| Bündnis 90/Die Grünen | 2 308 | 1 999 | 3,63 % | 41 | 0,076 | 0,637 |
+| SPD | 2 107 | 1 767 | 2,65 % | 41 | 0,035 | 0,830 |
+| FDP | 879 | 694 | 2,68 % | 41 | **0,459** | **0,003** |
 | Die Linke | 792 | 356 | 1,32 % | 40 | 0,141 | 0,385 |
 | AfD | 183 | 67 | 0,89 % | 41 | **−0,363** | 0,020 |
 
+Die Dokumente und die Urheberzuordnung ändern die neu gelesenen Texte nicht, nur die Treffer: mit den
+Texten der Arbeit standen in der Spalte „davon allein" 1 584, 1 969, 1 747 und 686, im Mittel
+3,28 %, 3,57 %, 2,61 % und 2,65 %, und r = 0,052, 0,077, 0,022 und 0,450 (FDP p = 0,003); Die Linke
+und AfD sind unverändert.
+
 Die Bonferroni-Grenze bei 6 Tests ist 0,05/6 = 0,008; **nur die FDP liegt darunter**. Der Umschalter
 rechnet jede Zelle zusätzlich als Abweichung vom Mittel aller Parteien in Prozentpunkten und als
-Verhältnis dazu (AfD 0,32, Die Linke 0,57, FDP 0,97, SPD 1,21, CDU 1,33, GRÜNE **1,59**); das Mittel
+Verhältnis dazu (AfD 0,32, Die Linke 0,56, FDP 0,98, SPD 1,21, CDU 1,33, GRÜNE **1,60**; mit den
+Texten der Arbeit Die Linke 0,57, FDP 0,97, GRÜNE 1,59); das Mittel
 ist ungewichtet, das gewichtete ist gemessen und verworfen, weil GRÜNE, CDU und SPD es fast allein
 setzen.
 
@@ -403,8 +453,8 @@ setzen.
 | Größe | Wert |
 |---|---|
 | Gremium je Dokument, Hauptperiode | 38 Klassen, **0 unbekannt**; BV 10 999 (57,6 %), Rat 2 301 (12,0 %), Ausschuss 5 360 (28,1 %), Beirat 448 (2,3 %) |
-| Treffer aus der eigenen Bezirksvertretung | 14 377 der 29 010 Dokument-Bezirk-Paare |
-| Anteil eigene BV je Wahlberechtigtem gegen Wahlbeteiligung | r = 0,24, p = 0,12 über alle 41; ohne 1 und 10 p = 0,09 |
+| Treffer aus der eigenen Bezirksvertretung | 14 486 der 29 330 Dokument-Bezirk-Paare (mit den Texten der Arbeit 14 377 der 29 010) |
+| Anteil eigene BV je Wahlberechtigtem gegen Wahlbeteiligung | r = 0,25, p = 0,12 über alle 41; ohne 1 und 10 p = 0,08 (mit den Texten der Arbeit r = 0,24, p = 0,12 und 0,09) |
 | Themenmodell, NPMI der Topwörter | +0,4164 → +0,4208 mit den Stoppwörtern aus dem Profil; **+0,3349 mit Saat** |
 | Saattreue / Reinheit | 0,72 bis 1,00 (Median 0,83) / 0,15 bis 0,57 |
 | Klassifikator, Kreuzvalidierung | **0,941** Genauigkeit, **0,878** Makro-F1 über 20 Klassen |
@@ -414,7 +464,10 @@ setzen.
 Die Zahlen des Klassifikators sind die der **veröffentlichten Seite**; über Rechner hinweg sind sie
 nicht exakt reproduzierbar (die logistische Regression hat einen festen Startwert, die
 BLAS-Thread-Zahl aber nicht, und ein lokaler Lauf landet um einzelne Dokumente daneben). Als
-Größenordnung sind sie stabil, auf die letzte Stelle nicht.
+Größenordnung sind sie stabil, auf die letzte Stelle nicht. Sie und die drei Zeilen des
+Themenmodells sind der Stand vom 2026-10-14, also mit den Texten der Arbeit, und für die Texte aus
+pypdf 7.1.0 (Punkt 68) nicht nachgerechnet; die Zeilen der Gremien hängen nicht an den Texten und
+sind gleich geblieben.
 
 **Was die zweite Quelle gebracht hat** (Punkt 58, Läufe vom 2026-10-14; „ergänzt" sind die
 Dokumente, deren Gremium aus der Folge kommt, „mehrdeutig" die, deren Folge mehrere nennt):
@@ -502,18 +555,21 @@ Treffer je Monat und Wahlbezirk (`wahlbezirke_monate.parquet`). Es ist eine Zäh
 die Nachbedingung hält sie gegen `hits_by_district`, die Summe über die Monate muss also die Treffer
 der Auswertung ergeben.
 
-**Die Zahlen** (veröffentlichte Seiten, Abschnitt `#monate`):
+**Die Zahlen** (Seiten, Abschnitt `#monate`; die Zeile `duesseldorf` mit den Texten aus pypdf 7.1.0,
+seit dem 2026-11-18 — mit den Texten der Arbeit hatte ihr erster Monat 81 Dokumente mit Treffer):
 
 | Datensatz | Monate | erster | letzter |
 |---|---|---|---|
-| `duesseldorf` | 61 | September 2020: 135 Dokumente, 133 mit Text, 81 mit Treffer | September 2025: 131 / 131 / 76 |
+| `duesseldorf` | 61 | September 2020: 135 Dokumente, 133 mit Text, 82 mit Treffer | September 2025: 131 / 131 / 76 |
 | `duesseldorf-2014` | 77 | Mai 2014: 9 / 9 / 7 | September 2020: 103 / 103 / 65 |
 | `duesseldorf-2025` | 14 | September 2025: 106 / 105 / 66 | Oktober 2026: 52 / 51 / 27 |
 | `moenchengladbach` | 61 | September 2020: 19 / **0** / 0 | September 2025: 12 / **0** / 0 |
 
-Die laufende Periode gegen dieselben dreizehn Monate der Hauptperiode (Befundbericht § 3): 4 043
-gegen 4 365 Dokumente, 2 146 (53,1 %) gegen 2 390 (54,8 %) mit Treffer, Median je Monat 332 gegen
-379. Die Rangfolge der Bezirke nach Treffern gleicht der Hauptperiode mit **Spearman 0,8261**.
+Die laufende Periode gegen dieselben dreizehn Monate der Hauptperiode (Befundbericht § 3, die Seite
+der Hauptperiode seit dem 2026-11-18 nachgerechnet): 4 043 gegen 4 365 Dokumente, 2 146 (53,1 %)
+gegen 2 400 (55,0 %) mit Treffer, Median je Monat 332 gegen 379. Die Rangfolge der Bezirke nach
+Treffern gleicht der Hauptperiode mit **Spearman 0,8431**. Mit den Texten der Arbeit in der
+Hauptperiode waren es 2 390 (54,8 %) und 0,8261.
 
 **Der Interpretationsspielraum.** Der Rhythmus ist der der Ratsarbeit und keine Eigenschaft der
 Methode: Dezember 131 und Juli 176 gegen Juni 488 sind Sitzungs- und Ferienpausen. Dass dreizehn
@@ -543,13 +599,13 @@ nicht mehr.
 | Einwand | wo er wirkt | sagt die Seite es? |
 |---|---|---|
 | Wörterbuchgröße treibt die Trefferzahl (r = 0,76) | jede Kennzahl mit Treffern im Zähler | **ja**, Absatz in „Methode und Grenzen", plus Karteneinfärbung „Treffer je Begriff" |
-| Ausreißer 1 und 10 sind von Hand gewählt | Tabelle 5, zweite Spalte | seit Punkt 61 **ja**: der Absatz nennt sie als „die beiden Bezirke mit den höchsten Trefferquoten" und damit als Entscheidung über diesen Datensatz |
+| Ausreißer 1 und 10 sind von Hand gewählt | Tabelle 5, zweite Spalte | seit Punkt 61 **ja**: der Absatz nennt sie als Entscheidung über diesen Datensatz, und seit dem 2026-11-18 mit ihren Plätzen, wenn sie nicht die höchsten Quoten haben (Hauptperiode 1 und 3, Periode 2014 bis 2020 2 und 9; § 2) |
 | Zweite Spalte nach Ansehen der Daten entstanden | Tabelle 5 | **ja, seit Punkt 61**: der Spaltenkopf sagt „explorativ", darunter zwei Sätze mit beiden p-Werten (auf `main`, noch nicht veröffentlicht) |
 | n = 41 ist die Grundgesamtheit, kein p-Wert-Fall | alle Regressionen | nein |
 | Kein Konfidenzintervall neben dem p-Wert | alle Regressionen | nein — offene Empfehlung, § 6 Punkt 4 |
 | Umlaute sind Wortgrenzen im Matcher („Köölberg" trifft „ölberg") | jede Trefferzählung | **nein**, nur als Kommentar im Quelltext |
 | Normierung auf Wahlberechtigte nimmt die falsche Verzerrung heraus | Trefferquote | ja, im Absatz zur Wörterbuchgröße |
-| „schulweg" zählt mit, wird nicht angezeigt: 144 Dokumente, und 127 der 869 Treffer des Bezirks 22 (14,6 %) hängen allein an ihm | Trefferquote Bezirk 22 | ja, in der Liste der stadtweiten Begriffe und als Fußnote |
+| „schulweg" zählt mit, wird nicht angezeigt: 143 Dokumente, und 127 der 876 Treffer des Bezirks 22 (14,5 %) hängen allein an ihm (mit den Texten der Arbeit 144 und 127 der 869, 14,6 %) | Trefferquote Bezirk 22 | ja, in der Liste der stadtweiten Begriffe und als Fußnote |
 | Endogenität der Parteianteile | § 9, Modell C in § 5 | nein |
 | „Unbekannt" bei Urheber und Gremium misst die Konfiguration mit, nicht nur die Quelle | § 9, § 10 | teilweise: jede Seite zeigt ihren Anteil offen und nennt seit Punkt 59 die Zähler je Quelle (Dokumentart / Titel / Textkopf) |
 | Mehrfachtests ohne Korrektur (52 in der Gewichtungstabelle) | § 6 | nein; Bonferroni nur bei den Parteien |
@@ -582,8 +638,9 @@ durchgestrichen mit dem, was von ihnen offen blieb. Entschieden wird hier nichts
 2. ~~**Die Spalte „ohne Ausreißer" von Tabelle 5.**~~ **Umgesetzt am 2026-10-14**
    ([decisions.md](decisions.md), Punkt 61): die Spalte bleibt — sie ist die Tabelle der Arbeit —,
    heißt im Kopf „explorativ", und darunter stehen zwei Sätze, die den Grund und beide p-Werte
-   nennen (0,083 in der alten Periode gegen 0,037 hier). Mit Lukas zu klären bleibt sie trotzdem,
-   zusammen mit der Abweichung aus [baseline-2026-10-10.md](baseline-2026-10-10.md).
+   nennen (0,083 in der alten Periode gegen 0,036 hier, mit den Texten der Arbeit 0,037). Mit Lukas
+   zu klären bleibt sie trotzdem, zusammen mit der Abweichung aus
+   [baseline-2026-10-10.md](baseline-2026-10-10.md).
 3. ~~**Urheberklassen für Mönchengladbach.**~~ **Umgesetzt am 2026-10-14**
    ([decisions.md](decisions.md), Punkt 59): `fraction_types = ["3 - Fraktionsantrag"]` (581
    Dokumente) und `person_types = ["6.1 - Mitgliederantrag"]` (36) entscheiden die Klasse aus der

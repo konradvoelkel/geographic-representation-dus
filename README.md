@@ -99,7 +99,7 @@ veröffentlicht sie über GitHub Pages unter
 | `georep profiles` | die Profile im Paket mit Stadt und amtlichem Gemeindeschlüssel |
 | `georep publish [--out DIR]` | die Stadtseiten nach `data/site/` zusammentragen und `vergleich.html` bauen |
 | `georep bootstrap [--force]` | den eingefrorenen Datensatz (`reference_root`) in den Ordner des Profils unter `data_root` übernehmen |
-| `georep pack ZIEL [--force] [--consultations]` | die Gegenrichtung: aus dem gelaufenen Profil ein Datenpaket für das Repo schreiben (genau die Eingaben, ohne PDFs, Stamps und Caches), mit Prüfsummentabelle und README-Gerüst; bricht ab, wenn eine Eingabe fehlt oder der Textstore Zeilen trägt, die nicht aus einem Lauf kommen. `--consultations` packt stattdessen nur die Beratungsfolge je Dokument |
+| `georep pack ZIEL [--force] [--consultations \| --texts]` | die Gegenrichtung: aus dem gelaufenen Profil ein Datenpaket für das Repo schreiben (genau die Eingaben, ohne PDFs, Stamps und Caches), mit Prüfsummentabelle und README-Gerüst; bricht ab, wenn eine Eingabe fehlt oder der Textstore Zeilen trägt, die nicht aus einem Lauf kommen. `--consultations` packt stattdessen nur die Beratungsfolge je Dokument, `--texts` nur den Textstore (Punkt 68) |
 | `georep learn-bodies [--min-documents N]` | die Abbildung OParl-Organisation → Gremiumskürzel aus den Daten lernen und als `[bodies.organizations]` drucken, dazu den Katalog der Organisationen und die Gegenprobe mit der Tabelle im Profil; schreibt nichts |
 | `georep export` | die Parquet-Ergebnisse als CSV daneben schreiben |
 | `georep regress [--exclude …] [--varianten]` | lineare Regression Trefferquote gegen Wahlbeteiligung; `--varianten` dieselbe Rechnung je Gewichtungsvariante aus `wahlbezirke_gewichtet.parquet` |
@@ -309,7 +309,7 @@ Abrufverhalten steht in [docs/technik.md](docs/technik.md), § 1 und § 2**; die
 [docs/architecture.md](docs/architecture.md). Namensnennung nach Lizenz: Landeshauptstadt Düsseldorf, Amt für
 Statistik und Wahlen: Quartiersatlas Düsseldorf 2024 (Open-Data-Portal), dl-de/by-2-0.
 
-**Die sechs Datenpakete im Repo** sind die eingefrorenen Eingaben der Läufe, aus denen GitHub Pages jede Seite
+**Die sieben Datenpakete im Repo** sind die eingefrorenen Eingaben der Läufe, aus denen GitHub Pages jede Seite
 ohne Netz baut (Konrads Entscheidung vom 2026-10-13, `docs/decisions.md`, Punkt 56):
 
 | Paket | Größe | Inhalt |
@@ -319,10 +319,11 @@ ohne Netz baut (Konrads Entscheidung vom 2026-10-13, `docs/decisions.md`, Punkt 
 | [`snapshots/2014-2020/`](snapshots/2014-2020/README.md) | 35,9 MiB | die Wahlperiode 2014 bis 2020, Abruf 2026-10-13 |
 | [`snapshots/2025/`](snapshots/2025/README.md) | 13,2 MiB | der Erstabruf der laufenden Periode, 2026-10-13 |
 | [`snapshots/duesseldorf-beratungsfolge/`](snapshots/duesseldorf-beratungsfolge/README.md) | 88 KiB | die Beratungsfolge je Dokument der Hauptperiode (Punkt 58) |
+| [`snapshots/duesseldorf-texte/`](snapshots/duesseldorf-texte/README.md) | 14,8 MiB | die Texte der Hauptperiode, gelesen mit pypdf 7.1.0 (Punkt 68) |
 | [`context/`](context/README.md) | 2,1 MiB | Quartiersatlas 2024 für die Kontrollvariablen |
 
-Zusammen 138,12 MiB; die Texte der drei Laufpakete sind seit dem 2026-11-16 mit pypdf 7.1.0 extrahiert
-(`docs/decisions.md`, Punkt 67). Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, Zahlen und der SHA-256 jeder
+Zusammen 152,97 MiB; die Texte der drei Laufpakete sind seit dem 2026-11-16 mit pypdf 7.1.0 extrahiert
+(`docs/decisions.md`, Punkt 67), die der Hauptperiode seit dem 2026-11-18 (Punkt 68). Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, Zahlen und der SHA-256 jeder
 Datei; `tests/unit/test_data_packages.py` hält diese Angaben gegen die Dateien und lässt keine PDFs, Stamps
 oder Caches hinein. Die PDFs selbst liegen in **keinem** Paket, nur die Texte daraus.
 

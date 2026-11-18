@@ -5,7 +5,10 @@ ist ein **Beispiel**, kein Versprechen: sie zeigt Schritt für
 Schritt, wie jemand, der neu im Rat der Stadt Düsseldorf ist, mit der veröffentlichten Seite und den
 Schnittstellen schneller findet, was zu seinem Gebiet oder seinem Thema gehört — und § 4 sagt
 ehrlich, was die Seite dafür **nicht** kann. Jede Behauptung unten ist am 2026-10-14 an der
-veröffentlichten Seite oder an den Seitenvorlagen geprüft.
+veröffentlichten Seite oder an den Seitenvorlagen geprüft. Die Zahlen sind die jenes Tages: seit
+dem 2026-11-18 liest die Hauptseite ihre Texte selbst mit pypdf 7.1.0 statt der Texte der Arbeit
+([decisions.md](decisions.md), Punkt 68), und die Treffer liegen rund ein Prozent höher (10 799
+statt 10 739 Dokumente mit Treffer); die Schritte bleiben dieselben.
 
 Die drei anderen Sichten: [technik.md](technik.md), [inhalt.md](inhalt.md),
 [statistik.md](statistik.md). Als durchgehendes Beispiel dient **Wahlbezirk 39, Benrath,

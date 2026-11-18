@@ -2268,3 +2268,96 @@ Sicherheitskorrektur zurücknehmen für 15 Dokumente); die 15 alten Texte lösch
 Treffer, und der Store sagt je Zeile, woher ein Text kommt); eine Spanne statt einer Version
 (`>=7.1,<8` ließe ein Patch-Release alle Texte veralten, ohne dass es jemand gemessen hätte); mit
 dem Umstellen warten, bis die PDFs der Hauptperiode da sind (Konrad: jetzt umstellen, Abruf später).
+
+## 68. Die Hauptperiode liest ihre Texte mit pypdf 7.1.0, aus einem eigenen Textpaket (2026-11-18)
+
+Konrads Entscheidung, nachdem die PDFs da waren: die Hauptseite nimmt die Texte aus pypdf 7.1.0,
+nicht mehr die 19 033 Texte der Arbeit. Damit liest jeder Datensatz der Seite mit demselben
+Extraktor, und der Zwischenstand aus Punkt 67 ist aufgelöst.
+
+**Woher die PDFs kommen.** `georep fetch pdfs` hat am 2026-11-17 von 22:40 bis 04:34 die fehlenden
+17 892 der 19 092 Hauptdateien geholt (5 h 35 min, keine fehlgeschlagen, zusammen 2,7 GB). Die
+19 108 Dokumente der Arbeit haben 19 092 PDFs: 16 nennen keine Hauptdatei, keine Datei gehört zu
+zwei Dokumenten. Der Server war am Tag davor ausgefallen (jede Adresse `503`, `STATUS.md`,
+„Bekannt").
+
+**Wie die Texte ins Repo kommen.** Die Paper bleiben die der Arbeit (`reference/`, Altformat), nur
+die Texte sind neu. Ein ganzes Paket wie für die anderen Perioden wäre ein zweites `reference/`;
+ein Paket nur mit dem Textstore, wie das der Beratungsfolge (Punkt 58), ist genau die Änderung:
+
+- `georep pack --texts <ziel>` packt nur `cache/text/texts.parquet` eines gelaufenen Profils, prüft
+  ihn wie `pack` (jede Zeile aus einem Lauf, jeder Name ein Paper) und verweigert einen Store ohne
+  einen einzigen Text aus einem PDF — das wäre der Store der Referenz ein zweites Mal.
+- `[bootstrap].texts` nennt das Paket, `bootstrap` füllt die Stores wie bisher und legt danach den
+  Store des Pakets über den Textstore (`overlay_texts`) — **nur, wenn er genau die Hauptdateien der
+  Paper trägt**. Sonst ist es das Paket eines anderen Datensatzes, und die Texte der Referenz
+  bleiben, mit einer Zeile im Bericht. Das ist keine Vorsicht um ihrer selbst willen: die
+  Mini-Fixture bootstrappt mit den Settings der Hauptperiode und hat 200 ihrer Dateien; ohne die
+  Bedingung trüge ihr Golden Master die neuen Texte.
+- `profiles/duesseldorf.toml` setzt den Schlüssel auf `snapshots/duesseldorf-texte/…`, die beiden
+  Periodenprofile nehmen ihn zurück, der Vergleich erbt ihn. `bootstrap` steht außerhalb des
+  Settings-Fingerprints; was die Kette bemerkt, ist der neue Textstore.
+
+Das Paket trägt 19 092 Texte, einen je Hauptdatei: 19 091 aus pypdf 7.1.0, 59 davon leer (PDFs ohne
+Textschicht, die die Arbeit ebenfalls ohne Text führte), und einen Text der Arbeit. Gegen die Arbeit
+sind 11 002 der 19 033 Texte mit Inhalt zeichengleich und 8 031 verschieden (42 %); das ist die
+Sorte aus Punkt 66, Leerzeichen mitten im Wort, die der Extraktor der Arbeit setzte. 15 563 293
+Bytes; alle Pakete zusammen 160 396 687 Bytes.
+
+**Was sich bewegt** (A/B-Bau aller Seiten aus den Datenpaketen, wie `pages.yml`, am 2026-11-18;
+dieselben Regeln, nur die Texte verschieden):
+
+| Größe | Texte der Arbeit | pypdf 7.1.0 |
+|---|---|---|
+| Treffer (Dokument-Bezirk-Paare) | 29 010 | **29 330** (+1,1 %) |
+| Dokumente mit Treffer | 10 739 | **10 799** |
+| Median der Trefferquote (Spanne) | 0,0604 (0,0261 bis 0,1513) | 0,0612 (0,0263 bis 0,1535) |
+| Tabelle 5 über alle 41 | r = 0,1891, p = 0,23641 | r = 0,1901, p = 0,23383 |
+| Tabelle 5 ohne 1 und 10 | r = 0,3351, p = 0,03705 | r = 0,3363, p = 0,03635 |
+| Treffer je Begriff, Regression über alle | r = −0,1118, p = 0,48644 | r = −0,1125, p = 0,48365 |
+| Kontrollen, Modell B (Term der Quote) | 43,531, p = 0,14476 | 41,602, p = 0,16280 |
+| Regression der Differenzen zwischen den Perioden | r = 0,1050, p = 0,51365 | r = 0,0982, p = 0,54136 |
+| Spearman der Trefferquoten zwischen den Perioden | 0,8127 | 0,8230 |
+| Δ Trefferquote, Median (Spanne) | −0,0115 (−0,0870 bis +0,0059) | −0,0102 (−0,0865 bis +0,0070) |
+| Trefferquote max/min (Städtevergleich) | 5,80 | 5,84 |
+| stadtweite Begriffe (über 64 Dokumenten) | 55 | 57 |
+
+Jeder der 41 Wahlbezirke bekommt Treffer dazu (1 bis 25), keiner verliert; die Rangfolge der Quoten
+bleibt fast gleich (Spearman 0,9983, 14 Bezirke rücken um höchstens zwei Plätze, 2 und 10 tauschen
+den zweiten und dritten Platz). **Kein Urteil der Seite kippt**: die eine Spalte mit signifikantem p
+bleibt es, und von den 32 Termen der Trefferquote in den Regressionen mit Kontrollen kreuzt keiner
+die 0,05 (am nächsten „Migrationshintergrund, ohne 1 und 10" mit 0,067 → 0,054). Die Seiten der
+Periode 2014 bis 2020, der laufenden Periode und Mönchengladbachs bleiben, wie sie sind; das
+Themenmodell behält seine Themen, nur hintere Wörter der Beschriftungen wechseln.
+
+**Was die Golden-Master-Tests prüfen.** Gegen die Arbeit wird weiter mit ihren Texten gerechnet:
+`as_in_the_thesis` nimmt das Paket zurück, und `test_the_rules_change_the_reference_as_measured`
+misst die beiden Regeln aus Punkt 44 allein. Was das Paket dazu ändert, hält
+`test_the_text_package_moves_the_reference_as_measured` fest; dass es zu genau den Dateien der Arbeit
+gehört, ein `slow`-Test in `tests/unit/test_data_packages.py`. `reference/` bleibt unberührt, der Tag
+`bartzsch-exakt` der Anker für die Zahlen der Arbeit, und der letzte Stand der Hauptseite mit den
+Texten der Arbeit ist `v0.15.0` samt jedem Commit bis `648bfe4`.
+
+**Was dabei auffiel: vier Sätze der Seite stimmten nicht.** Die Seite nannte die ausgeschlossenen
+Wahlbezirke 1 und 10 an vier Stellen „die (beiden) höchsten Trefferquoten" (Tabelle 5, ihre
+Fußnote, „Methode und Grenzen", die Fußnote der Gewichtung), fest im Text. Mit den neuen Texten
+steht 10 auf Platz 3 — und auf der Seite der Periode 2014 bis 2020 stehen die beiden schon seit
+ihrer Veröffentlichung auf Platz 2 und 9. `RegressionPair` trägt jetzt die Plätze der
+ausgeschlossenen Bezirke (`excluded_ranks`), und das Makro `excluded_rates` sagt „die beiden
+höchsten" nur, wenn es stimmt, sonst „Trefferquoten auf den Plätzen 1 und 3". Der Ausschluss selbst
+bleibt, wie er ist: er ist die Entscheidung der Arbeit, und Punkt 61 begründet, warum keine Regel
+ihn ersetzt.
+
+**Der eine Text der Arbeit.** `00403713.pdf` (6,5 MB) ist mit AES verschlüsselt; pypdf braucht dafür
+das Paket `cryptography`, das nicht im Lock steht, und meldet `CorruptPdfError: cryptography>=3.1 is
+required for AES algorithm`. `extract_missing` lässt den alten Text stehen (187 472 Zeichen). Ob
+`cryptography` ins Lock kommt, ist eine eigene Frage: es ist eine kompilierte Abhängigkeit für ein
+einziges Dokument der Hauptperiode, und in den anderen drei Datensätzen fehlt kein Text aus diesem
+Grund.
+
+Verworfen: ein ganzes Paket der Hauptperiode im eigenen Format (verdoppelte die Paper der Arbeit,
+die sich nicht ändern, und trennte sie von `reference/`); die neuen Texte nach `reference/` schreiben
+(der Golden Master der Arbeit ist nur lesbar, Punkt 56); das Paket ohne die Bedingung der gleichen
+Dateien übernehmen (die Mini-Fixture bekäme fremde Texte); die Bedingung über eine Prüfsumme des
+Korpus der Arbeit statt über die Dateinamen (strenger, aber ein Paket aus einem neuen Abruf der
+Metadaten bräuchte dann eine neue Prüfsumme, obwohl seine Dateien dieselben wären).

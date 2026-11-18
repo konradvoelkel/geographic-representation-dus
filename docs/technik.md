@@ -127,9 +127,10 @@ damit jede Seite ohne einen einzigen Netzaufruf (decisions.md, Punkt 56). Ein Pa
 | `snapshots/2014-2020/` | 37 625 770 (35,9 MiB) | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
 | `snapshots/2025/` | 13 889 015 (13,2 MiB) | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
 | `snapshots/duesseldorf-beratungsfolge/` | 90 455 (88 KiB) | `raw/beratungsfolge.parquet`: `id`, `consultation_organizations`, `modified` (Punkt 58) | `duesseldorf` |
+| `snapshots/duesseldorf-texte/` | 15 563 293 (14,8 MiB) | `cache/text/texts.parquet`: die Texte der Hauptperiode aus pypdf 7.1.0 (Punkt 68) | `duesseldorf` |
 | `context/` | 2 242 316 (2,14 MiB) | drei Dateien des Quartiersatlas | alle Düsseldorf-Profile |
 
-Zusammen **144 833 394 Bytes, 138,12 MiB** (Stand 2026-11-16, Texte aus pypdf 7.1.0), 77 % der Grenze von 180 MiB im Test; gezählt sind die
+Zusammen **160 396 687 Bytes, 152,97 MiB** (Stand 2026-11-18, alle Texte aus pypdf 7.1.0), 85 % der Grenze von 180 MiB im Test; gezählt sind die
 Datendateien ohne die READMEs. Jedes Paket trägt ein README mit Herkunft, Lizenz, Abrufdatum, den
 Zahlen des Laufs und der SHA-256 jeder Datei; `tests/unit/test_data_packages.py` hält Dateiliste,
 Größe und Prüfsumme dagegen und lässt keine PDFs, Stamps, Manifeste und Caches hinein. **Die PDFs
@@ -147,7 +148,16 @@ fast fünfzigmal so viel.
 genau die Dateien, die `bootstrap` später sucht, mit Prüfsummentabelle und README-Gerüst. Es bricht
 ab, statt ein halbes Paket zu schreiben, wenn eine Eingabe fehlt, wenn der Textstore Zeilen trägt,
 die nicht aus einem Lauf kommen, oder wenn ein Text kein Paper hat. `georep pack --consultations`
-packt stattdessen nur die Beratungsfolge je Dokument.
+packt stattdessen nur die Beratungsfolge je Dokument, `georep pack --texts` nur den Textstore
+(Punkt 68).
+
+Das **Textpaket der Hauptperiode** (`snapshots/duesseldorf-texte/`, 15 563 293 Bytes) gibt es aus
+demselben Grund wie das der Beratungsfolge: die Paper kommen aus dem Altformat der Arbeit, die Texte
+seit dem 2026-11-18 aus den PDFs, gelesen mit pypdf 7.1.0. `[bootstrap].texts` im Stadtprofil nennt
+es; `bootstrap` füllt die Stores aus der Referenz und legt danach den Store des Pakets über den
+Textstore, **wenn er genau die Hauptdateien der Paper trägt** (`overlay_texts`). Sonst bleiben die
+Texte der Referenz, und der Bericht sagt warum — so bekommt die Mini-Fixture, die mit den Settings
+der Hauptperiode bootstrappt, keine fremden Texte. Die Periodenprofile setzen den Schlüssel leer.
 
 ## 4. Wie die Kette läuft
 
