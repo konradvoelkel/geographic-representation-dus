@@ -1,6 +1,6 @@
 # Status
 
-Stand 2026-11-18, `main` auf `v0.15.0` plus Punkt 68: die Abhängigkeitsrunde vom 2026-11-15
+Stand 2026-11-18, `main` auf `v0.16.0`: die Abhängigkeitsrunde vom 2026-11-15
 (Punkt 66; keine Zahl der Seite bewegt sich), pypdf 7.1.0 als Extraktor (Punkt 67; drei Datensätze
 neu extrahiert, rund ein Prozent mehr Treffer) und seit dem 2026-11-18 auch die Hauptperiode mit
 pypdf 7.1.0 gelesen (Punkt 68, Konrads Entscheidung nach dem Abruf ihrer 19 092 PDFs; Treffer

@@ -2,7 +2,7 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
-## Unreleased
+## 0.16.0 (2026-11-18), Hauptperiode mit pypdf 7.1.0, Textpaket
 
 - **Die Hauptperiode liest ihre Texte selbst, mit pypdf 7.1.0** (`docs/decisions.md`, Punkt 68):
   nach dem Abruf ihrer 19 092 PDFs am 2026-11-17/18 kommen die Texte der Hauptseite nicht mehr aus
