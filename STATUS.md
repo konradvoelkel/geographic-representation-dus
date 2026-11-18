@@ -1,9 +1,10 @@
 # Status
 
-Stand 2026-11-16, `main` auf `v0.15.0`: die Abhängigkeitsrunde vom 2026-11-15 (Punkt 66; keine
+Stand 2026-11-18, `main` auf `v0.15.0`: die Abhängigkeitsrunde vom 2026-11-15 (Punkt 66; keine
 Zahl der Seite bewegt sich) und pypdf 7.1.0 als Extraktor (Punkt 67; drei Datensätze sind neu
 extrahiert und haben rund ein Prozent mehr Treffer, die Hauptperiode rechnet weiter mit den Texten
-der Arbeit). `v0.14.0` waren die Punkte 58 bis 65: die Beratungsfolge als zweite Quelle
+der Arbeit). Seit dem 2026-11-18 liegen alle 19 092 PDFs der Hauptperiode lokal, und Konrad hat
+entschieden, sie mit pypdf 7.1.0 neu zu lesen (`docs/todo.md`, Punkt 8). `v0.14.0` waren die Punkte 58 bis 65: die Beratungsfolge als zweite Quelle
 des Gremiums, die Urheber Mönchengladbachs und der Wahlperiode 2014 bis 2020, die Spalte „ohne
 Ausreißer" als explorativ, die vier Korrekturen ihres Reviews und die Flächen Mönchengladbachs zum
 Stand der Wahl, gerechnet und gepackt am 2026-10-15; dazu die Dokumentation in vier Sichten): der Rückstand nach dem Ausbau (`docs/todo.md`, sechs Punkte) ist
@@ -643,8 +644,9 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   2020, der laufenden Periode und Mönchengladbachs kommen aus pypdf 7.1.0, das rund ein Prozent mehr
   Treffer findet (Leerzeichen mitten im Wort fallen weg). „Zwei Wahlperioden" und `vergleich.html`
   stellen solche Datensätze nebeneinander, und die Seite nennt den Extraktor nicht
-  (`docs/todo.md`, Punkt 7). Aufgelöst wird es mit dem Abruf der PDFs der Hauptperiode, den Konrad
-  aufgeschoben hat (`docs/todo.md`, Punkt 8).
+  (`docs/todo.md`, Punkt 7). Die PDFs der Hauptperiode liegen seit dem 2026-11-18 lokal, und Konrad
+  hat entschieden, sie mit pypdf 7.1.0 neu zu lesen; aufgelöst ist es, wenn ihre Texte als eigenes
+  Paket im Repo liegen (`docs/todo.md`, Punkt 8).
 - **pypdf steht auf genau 7.1.0**, und die Treue zur Arbeit ist damit geringer (Punkt 66): 7.1.0
   reproduziert 123 der 200 lokal vorhandenen Texte der Hauptperiode zeichengleich, 6.20.0 und 6.21.4
   reproduzierten 197. Eine neue Version erst nach einer Messung an den lokalen PDFs, dann die
@@ -657,9 +659,10 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 - **Lokale Textstores sind noch die aus pypdf 6.20.0** (2026-11-16): die Pakete im Repo sind neu
   extrahiert, der Cache auf Konrads Rechner nicht. Der nächste lokale Lauf des Schritts `texts`
   extrahiert alle 26 862 PDFs der drei Datensätze neu (rund 20 Minuten) und kommt bei den Texten
-  der Pakete an. Die 200 lokalen PDFs der Hauptperiode liest er ebenfalls mit 7.1.0; 77 davon
-  weichen dann von den Texten der Arbeit ab (mit 6.20.0 waren es drei), und ob das eine lokale
-  Ergebnistabelle der Hauptperiode bewegt, ist nicht gemessen. In CI gibt es diese PDFs nicht.
+  der Pakete an. Seit dem 2026-11-18 liegen auch alle 19 092 PDFs der Hauptperiode lokal: ein
+  lokaler Lauf des Hauptprofils liest sie alle mit 7.1.0 neu und ersetzt im lokalen Store die Texte
+  der Arbeit (an den 200 zuerst geholten wichen 77 von ihnen ab, mit 6.20.0 waren es drei). In CI
+  gibt es diese PDFs nicht.
 - **Die Extraktion hängt an der Umgebung** (2026-11-15, gemessen mit pypdf 6.21.4): mit installiertem
   fontTools ändern sich 12 der 27 062 Texte (weicher Trennstrich wird Bindestrich). fontTools kommt nur über die Gruppe
   `notebook` ins Lock; extrahiert wird in der Standardumgebung ohne sie.
@@ -700,7 +703,14 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
   Differenz (Vorbedingung verlangt eine endliche Spanne).
 - `nox -s mutate` lässt `analysis/topics.py` aus: jeder Mutant dort lässt die schnelle Suite laufen, und die rechnet seit dem Themenmodell mehrfach NMF (Lauf am 2026-10-12 nach 35 Minuten abgebrochen; gezielt je Modul mit nur seinen Testdateien sind es vier Minuten). Die schnelle Suite selbst ist dadurch rund 5 s langsamer; hingenommen.
 - `georep publish` löschte die Markerdatei `.georep-publish` beim Kopieren der ersten Stadt; aufgefallen ist das erst, als der Test einmal allein lief (2026-10-12, behoben in 3f81995). Die Arbeitsregel daraus steht in `CLAUDE.md`, die Prüfung in `nox -s alone`.
-- Ein voller `georep fetch` von Grund auf lief noch nie; er dauert Stunden und ist wiederaufnehmbar. Hochrechnung aus der Stichprobe: 5,8 h Abruf, 2,8 GB, 12 min Extraktion.
+- Ein voller `georep fetch` von Grund auf in einem Zug lief noch nie; er dauert Stunden und ist wiederaufnehmbar.
+  Gemessen sind seine Teile: der Vollabruf der Metadaten 36 min (2026-10-14), der Abruf der PDFs der
+  Hauptperiode 17 892 Dateien in 5 h 35 min (2026-11-17 22:40 bis 2026-11-18 04:34, keine
+  fehlgeschlagen; alle 19 092 zusammen 2,7 GB). Die 19 108 Dokumente der Hauptperiode haben 19 092
+  PDFs: 16 nennen keine Hauptdatei, keine Datei gehört zu zwei Dokumenten.
+- **ris-oparl.itk-rheinland.de fiel am 2026-11-16 einen Tag lang aus**: von 01:48 bis mindestens
+  17:40 antwortete jede Adresse mit `503`, auch aus einem fremden Netz, also keine Sperre gegen
+  Konrads Adresse; am 2026-11-17 um 22:40 antwortete der Server wieder mit `200`.
 - Auf Konrads Rechner liegen seit dem 2026-10-11 die ersten 200 PDFs nach Paper-ID unter `cache_root/pdf/`,
   also im **flachen** Ordner der alten Hauptperiode. Das Hauptprofil rechnet seit dem Umzug (Punkt 52) unter
   `cache_root/duesseldorf/` und zeigt dort `0 PDFs` und für `pdfs` „kein Stamp"; das ist der Zustand vor dem
@@ -881,11 +891,13 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 
 ## Nächster Schritt
 
-**Stand nach Punkt 67 (2026-11-16):** pypdf 7.1.0 ist der Extraktor, die drei Pakete sind neu
-gepackt. Offen, in dieser Reihenfolge sinnvoll: der **Abruf der PDFs der Hauptperiode** (von Konrad
-aufgeschoben; Stunden, ein freigegebener Netzlauf; danach die Entscheidung, woher die Hauptseite
-ihre Texte nimmt — `docs/todo.md`, Punkt 8), bis dahin ein **Satz auf der Seite**, der den
-Extraktor nennt (`docs/todo.md`, Punkt 7). Aus der Abhängigkeitsrunde bleiben numpy 2.5.5 (am
+**Stand 2026-11-18:** pypdf 7.1.0 ist der Extraktor (Punkt 67), die drei Pakete sind neu gepackt,
+und alle 19 092 PDFs der Hauptperiode liegen lokal (`cache_root/duesseldorf/pdf/`, 2,7 GB). Konrad
+hat am 2026-11-18 entschieden, die Hauptperiode mit pypdf 7.1.0 neu zu lesen. Offen, in dieser
+Reihenfolge: die Zahlen der Seite mit neu gelesener Hauptperiode gegen den heutigen Stand stellen,
+dann ein **eigenes Paket** für ihre Texte (`reference/` bleibt der Stand der Arbeit, `bartzsch-exakt`
+der Anker; `docs/todo.md`, Punkt 8), danach der **Satz auf der Seite**, der den Extraktor nennt
+(`docs/todo.md`, Punkt 7). Aus der Abhängigkeitsrunde bleiben numpy 2.5.5 (am
 2026-11-15 abends erschienen, nicht gemessen) und crosshair-tool über 0.0.111 hinaus, sobald eine
 Version den Absturz nicht mehr zeigt.
 

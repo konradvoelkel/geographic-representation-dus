@@ -123,12 +123,12 @@ schreibt nur „der Text jedes PDFs wird extrahiert". Die Angabe liegt schon in 
 Methodenabschnitt (welcher Extraktor, wie viele Texte) und ein Hinweis dort, wo zwei Datensätze mit
 verschiedenen Extraktoren verglichen werden. Mit Punkt 8 erledigt sich der zweite Teil.
 
-## 8. Die PDFs der Hauptperiode abrufen
+## 8. Die Hauptperiode mit pypdf 7.1.0 lesen
 
-Aufgeschoben von Konrad am 2026-11-16 (`docs/decisions.md`, Punkt 67). Die 19 033 Texte der
-Hauptperiode sind die der Arbeit; lokal liegen nur 200 ihrer 19 108 PDFs. Erst mit allen PDFs lässt
-sich die Hauptperiode mit pypdf 7.1.0 lesen und der Zwischenstand aus Punkt 7 auflösen. Der Abruf
-dauert Stunden (`georep fetch pdfs`, ein Netzlauf, den Konrad freigibt). Zu entscheiden ist danach,
-woher die Hauptseite ihre Texte nimmt: `reference/` bleibt der Stand der Arbeit und nur lesbar, die
-neu extrahierten Texte bräuchten ein eigenes Paket, und die Zahlen der Hauptseite lösten sich damit
-von denen der Arbeit (`bartzsch-exakt` bleibt der Anker).
+Aufgenommen am 2026-11-16 (`docs/decisions.md`, Punkt 67), entschieden von Konrad am 2026-11-18:
+die Hauptseite nimmt die Texte aus pypdf 7.1.0, nicht mehr die 19 033 Texte der Arbeit. Alle
+19 092 PDFs der Hauptperiode liegen seit dem 2026-11-18 lokal (die übrigen 16 der 19 108 Dokumente
+nennen keine Hauptdatei). Zu tun: die Zahlen der Seite mit neu gelesener Hauptperiode gegen den
+heutigen Stand stellen, die neuen Texte als eigenes Paket ins Repo legen (`reference/` bleibt der
+Stand der Arbeit und nur lesbar, `bartzsch-exakt` der Anker) und `bootstrap` des Hauptprofils daraus
+lesen lassen. Die Zahlen der Hauptseite lösen sich damit von denen der Arbeit; die Seite sagt das.

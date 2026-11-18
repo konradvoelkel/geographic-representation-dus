@@ -52,7 +52,7 @@ die URL beziehungsweise bei Overpass der POST-Body), PDFs **nie** — die gehör
 |---|---|---|---|---|---|
 | OParl `papers` | eine Seite = 200 Paper, neueste zuerst | 1 s (`sources.oparl.delay_s`) | global (5×, Backoff) | 1 h (`cache.oparl_pages_s`) | **85 s je Seite** (2026-10-09); Vollabruf der Hauptperiode 122 Seiten in 36 min (2026-10-14) |
 | OParl `organizations` | eine Seite | — | global | 1 h | Düsseldorf 58 Objekte in **0,47 s** (2026-10-11), Mönchengladbach 122 Organisationen in **3,8 s** (2026-10-14) |
-| OParl Hauptdateien | eine Datei | 1 s | global | **nie** | 38 ms Extraktion je PDF; Hochrechnung 5,8 h für 19 108 PDFs, 2,8 GB |
+| OParl Hauptdateien | eine Datei | 1 s | global | **nie** | 38 ms Extraktion je PDF; gemessen 2026-11-18: 17 892 PDFs in 5 h 35 min, alle 19 092 der Hauptperiode 2,7 GB |
 | Open-Data-Portal / votemanager / Geoportal | eine Datei | — | global | 30 Tage (`cache.opendata_s`) | vier Dateien Mönchengladbachs in 1,7 s |
 | Overpass | ein Stimmbezirkspolygon (Außenring des größten Polygons, um 2 m vereinfacht) | 1 s | **eigene**: bis zu `sources.osm.retries` = 3 mal je Stimmbezirk bei 504/429, Pause 1×, 2×, 4× | 30 Tage | mit `[timeout:25]` 2 s je Abfrage, mit `[timeout:90]` 504 von allen vier öffentlichen Instanzen (2026-10-13) |
 | Wikidata SPARQL | **eine** Abfrage für alle Objekte der Stadt | — | global | 30 Tage | — |
