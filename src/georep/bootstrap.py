@@ -41,17 +41,25 @@ class BootstrapReport:
     seed_corpus: bool = (
         True  # False: Stores absichtlich leer gelassen (Option 07, laufende Periode)
     )
+    texts_package: Path | None = None  # Punkt 68: die Texte kommen aus diesem Paket
+    texts_refused: str = ""  # Punkt 68: warum ein genanntes Textpaket nicht übernommen wurde
 
     def summary(self) -> str:
         if not self.seed_corpus:
             stores = "Stores nicht aus der Referenz gefüllt (bootstrap.seed_corpus = false)"
+        elif self.papers is not None and self.texts_package is not None:
+            stores = (
+                f"{self.papers} Paper aus der Referenz und {self.texts} Texte aus "
+                f"{self.texts_package}"
+            )
         elif self.papers is not None:
             stores = f"{self.papers} Paper und {self.texts} Texte aus der Referenz"
         else:
             stores = "Stores vorhanden"
+        refused = f"; {self.texts_refused}" if self.texts_refused else ""
         return (
             f"{len(self.copied)} Dateien kopiert, {len(self.skipped)} übersprungen, "
-            f"{len(self.missing)} in Referenz oder Kontext nicht gefunden; {stores}"
+            f"{len(self.missing)} in Referenz oder Kontext nicht gefunden; {stores}{refused}"
         )
 
 
@@ -100,6 +108,33 @@ def seed_stores_from_native(layout: Layout, reference: Layout) -> tuple[int, int
     return len(PaperStore(layout.papers).load()), len(TextStore(layout.texts))
 
 
+def overlay_texts(layout: Layout, package: Path, report: BootstrapReport) -> None:
+    """Punkt 68: den Textstore eines Pakets über den der Referenz legen, wenn er ihrer ist.
+
+    Ein Textpaket gehört zu einem Datensatz: es trägt einen Text (auch einen leeren, für ein PDF
+    ohne Textschicht) für jede Hauptdatei seiner Paper und keinen sonst. Weicht die Menge der
+    Namen ab, ist es das Paket eines anderen Datensatzes -- die Mini-Fixture bootstrappt mit den
+    Settings der Hauptperiode, hat aber nur 200 ihrer Dateien --, und dann bleiben die Texte der
+    Referenz stehen, mit einer Zeile im Bericht. Ein fehlendes Paket steht unter ``missing``.
+    """
+    if not package.is_file():
+        report.missing.append(package.name)
+        return
+    names = set(TextStore(package).rows)
+    files = {r.file_name for r in PaperStore(layout.papers).load().values() if r.file_name}
+    if names != files:
+        report.texts_refused = (
+            f"Textpaket {package} nicht übernommen: {len(names)} Texte, {len(names & files)} "
+            f"davon für die {len(files)} Dateien dieses Datensatzes"
+        )
+        logger.warning(report.texts_refused)
+        return
+    with atomic_path(layout.guard_writable(layout.texts)) as tmp:
+        shutil.copyfile(package, tmp)
+    report.texts = len(names)
+    report.texts_package = package
+
+
 def bootstrap_from_settings(
     layout: Layout, settings: Settings, *, force: bool = False
 ) -> BootstrapReport:
@@ -107,7 +142,8 @@ def bootstrap_from_settings(
 
     Die eine Stelle, an der die Nähte des Befehls verdrahtet sind: die Kontextdateien (Option 03),
     das Wörterbuch der Hauptperiode (Option 02), der leere Store einer laufenden Periode
-    (Option 07) und das Paket mit der Beratungsfolge (Punkt 58). ``georep bootstrap`` ruft genau
+    (Option 07), das Paket mit der Beratungsfolge (Punkt 58) und das Textpaket (Punkt 68).
+    ``georep bootstrap`` ruft genau
     das, und Tests, die die Kette auf einem echten Datensatz fahren, auch -- sonst stünde die
     Verdrahtung zweimal da und ein neuer Schlüssel fehlte in der Hälfte der Läufe.
     """
@@ -118,6 +154,7 @@ def bootstrap_from_settings(
         needs_dictionary=settings.period.dictionary == "own",
         seed_corpus=settings.bootstrap.seed_corpus,
         consultations=settings.bodies.consultations,
+        texts=settings.bootstrap.texts,
     )
 
 
@@ -129,6 +166,7 @@ def bootstrap(
     needs_dictionary: bool = True,
     seed_corpus: bool = True,
     consultations: Path | None = None,
+    texts: Path | None = None,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
 
@@ -143,7 +181,9 @@ def bootstrap(
     Profil hat keine zweite Quelle", und dann wird auch nichts kopiert -- selbst wenn der
     eingefrorene Datensatz eine ``raw/beratungsfolge.parquet`` mitbringt: der Schritt ``bodies``
     liest sie dann nicht, und eine Kopie ohne Leser wäre eine Angabe ohne Stamp. Ist der Pfad
-    gesetzt und bringt der Datensatz eine eigene Datei mit, gilt seine.
+    gesetzt und bringt der Datensatz eine eigene Datei mit, gilt seine. ``texts`` ist die Naht
+    von Punkt 68: ein Textpaket, das nach dem Füllen der Stores den Textstore ersetzt, wenn es
+    genau die Dateien dieses Datensatzes trägt (``overlay_texts``).
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -196,5 +236,7 @@ def bootstrap(
         elif fresh:
             items = json.loads(reference.corpus_legacy.read_text(encoding="utf-8"))
             report.papers, report.texts = seed_stores_from_legacy(layout, items)
+        if texts is not None and report.papers is not None:
+            overlay_texts(layout, texts, report)
     logger.success(f"Bootstrap aus {layout.reference_root}: {report.summary()}")
     return report

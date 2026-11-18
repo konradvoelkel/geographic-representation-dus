@@ -1418,6 +1418,14 @@ class Bootstrap(_Strict):
     seed_corpus: bool = (
         True  # False: nur die Eingaben kopieren, papers.jsonl und Textstore bleiben leer
     )
+    # Punkt 68: ein Textpaket (``georep pack --texts``), dessen Store den der Referenz ersetzt,
+    # wenn er genau ihre Dateien trägt; ``None`` = die Texte der Referenz.
+    texts: Path | None = None
+
+    @field_validator("texts", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
 
 
 class Settings(BaseSettings):

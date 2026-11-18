@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from georep.bootstrap import bootstrap
+from georep.bootstrap import REFERENCE_EXTRACTOR, bootstrap, bootstrap_from_settings
 from georep.layout import Layout
-from georep.settings import Settings
+from georep.settings import Bootstrap, Settings
+from georep.stores import PaperStore, TextMeta, TextStore
 
 
 def _layout(tmp_path: Path, mini_root: Path) -> Layout:
@@ -143,3 +144,92 @@ def test_the_consultation_is_copied_only_when_the_profile_declares_one(
         path for step in build_steps(period, plain) if step.name == "bodies" for path in step.inputs
     }
     assert plain.consultations not in inputs
+
+
+# --- Punkt 68: ein Textpaket legt neu gelesene Texte über die der Referenz ----------------------
+
+
+def _text_package(tmp_path: Path, names: list[str]) -> Path:
+    """Ein Textstore wie aus ``pack --texts``: je Name ein neu gelesener Text."""
+    package = tmp_path / "texte" / "cache" / "text" / "texts.parquet"
+    package.parent.mkdir(parents=True)
+    store = TextStore(package)
+    for name in names:
+        store.put(name, f"neu gelesen: {name}", TextMeta(extractor="pypdf-7.1.0", source="pdf"))
+    store.save()
+    return package
+
+
+def _file_names(layout: Layout) -> list[str]:
+    return sorted(r.file_name for r in PaperStore(layout.papers).load().values() if r.file_name)
+
+
+def test_a_text_package_replaces_the_texts_of_its_own_dataset(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    """Die Paper bleiben die der Referenz, die Texte kommen aus dem Paket, Byte für Byte."""
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    package = _text_package(tmp_path, _file_names(probe))
+    layout = _layout(tmp_path / "neu", mini_root)
+    report = bootstrap(layout, texts=package)
+    assert report.missing == [] and (report.papers, report.texts) == (200, 200)
+    assert layout.texts.read_bytes() == package.read_bytes()
+    assert layout.papers.read_bytes() == probe.papers.read_bytes()
+    assert f"200 Paper aus der Referenz und 200 Texte aus {package}" in report.summary()
+    # Ohne force bleiben vorhandene Stores stehen, wie ohne Paket
+    assert bootstrap(layout, texts=package).texts is None
+
+
+def test_a_text_package_of_other_documents_leaves_the_reference_texts(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    """Die Mini-Fixture bootstrappt mit den Settings der Hauptperiode, deren Paket nicht ihres ist.
+
+    Ein Textpaket gehört zu genau den Dateien seines Datensatzes; eine Datei zu viel oder zu
+    wenig heißt, es ist das Paket eines anderen, und dann bleiben die Texte der Referenz.
+    """
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    names = _file_names(probe)
+    for other in (names[:-1], [*names, "99999999.pdf"]):
+        package = _text_package(tmp_path / str(len(other)), other)
+        layout = _layout(tmp_path / f"neu-{len(other)}", mini_root)
+        report = bootstrap(layout, texts=package)
+        assert layout.texts.read_bytes() == probe.texts.read_bytes()
+        assert report.missing == [] and report.texts == 200
+        assert f"Textpaket {package} nicht übernommen: {len(other)} Texte" in report.summary()
+
+
+def test_a_missing_text_package_is_named_and_the_reference_texts_stay(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    layout = _layout(tmp_path, mini_root)
+    report = bootstrap(layout, texts=tmp_path / "gibt-es-nicht.parquet")
+    assert report.missing == ["gibt-es-nicht.parquet"] and report.texts == 200
+    extractors = {str(row["extractor"]) for row in TextStore(layout.texts).rows.values()}
+    assert extractors == {REFERENCE_EXTRACTOR}
+
+
+def test_a_period_without_seeded_stores_takes_no_text_package(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    layout = _layout(tmp_path, mini_root).for_profile("2025")
+    report = bootstrap(layout, seed_corpus=False, texts=tmp_path / "gibt-es-nicht.parquet")
+    assert report.missing == [] and not layout.texts.exists()
+
+
+def test_the_settings_wire_the_text_package_into_bootstrap(
+    tmp_path: Path, mini_root: Path, default_settings: Settings
+) -> None:
+    """``[bootstrap].texts``: leer heißt kein Paket, ein Pfad geht an ``bootstrap``."""
+    assert Bootstrap(texts="").texts is None  # type: ignore[arg-type]
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    package = _text_package(tmp_path, _file_names(probe))
+    settings = default_settings.model_copy(
+        update={"bootstrap": default_settings.bootstrap.model_copy(update={"texts": package})}
+    )
+    layout = _layout(tmp_path / "neu", mini_root)
+    assert bootstrap_from_settings(layout, settings).texts == 200
+    assert layout.texts.read_bytes() == package.read_bytes()
