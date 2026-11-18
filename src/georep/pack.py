@@ -396,3 +396,58 @@ def pack_consultations(
         readme_written=not (target / README_NAME).exists(),
     )
     return _with_readme(report, settings, today, command="pack --consultations")
+
+
+# --- Punkt 68: ein Paket, das nur den Textstore trägt -------------------------------------------
+
+TEXTS_NAME = "cache/text/texts.parquet"
+
+
+def pack_texts(
+    layout: Layout,
+    settings: Settings,
+    target: Path,
+    *,
+    force: bool = False,
+    today: dt.date | None = None,
+) -> PackReport:
+    """Nur den Textstore packen: ``cache/text/texts.parquet`` (Punkt 68).
+
+    Gedacht für die Periode, deren Metadaten aus dem Altformat der Arbeit kommen und deren Texte
+    ein eigener Lauf aus den PDFs neu gelesen hat (die Hauptperiode Düsseldorfs seit pypdf
+    7.1.0): die Paper bleiben die der Referenz, ``[bootstrap].texts`` legt nur die Texte darüber.
+    Geprüft wird wie bei ``pack`` (jede Zeile aus einem Lauf, jeder Name ein Paper) und dazu, dass
+    überhaupt ein Text aus einem PDF kommt -- sonst wäre das Paket der Textstore der Referenz
+    ein zweites Mal.
+    """
+    claim_target(layout, target)
+    missing = [str(path) for path in (layout.papers, layout.texts) if not path.is_file()]
+    if missing:
+        raise PackError(f"{missing} fehlen; lief `georep run texts` für dieses Profil?")
+    texts = check_text_store(layout)
+    from_pdf = sum(1 for row in TextStore(layout.texts).rows.values() if row["source"] == "pdf")
+    if not from_pdf:
+        raise PackError(
+            f"{layout.texts}: keiner der {texts} Texte ist aus einem PDF gelesen; das Paket wäre "
+            "der Textstore der Referenz. Gepackt wird nach einem Lauf mit den PDFs der Periode."
+        )
+    destination = target / TEXTS_NAME
+    skipped: list[str] = []
+    if destination.exists() and not force:
+        skipped.append(TEXTS_NAME)
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        with atomic_path(destination) as tmp:
+            shutil.copyfile(layout.texts, tmp)
+    report = PackReport(
+        target=target,
+        files=(
+            PackedFile(
+                name=TEXTS_NAME, bytes=destination.stat().st_size, sha256=sha256_of(destination)
+            ),
+        ),
+        skipped=tuple(skipped),
+        figures=(("Texte", texts), ("aus PDFs", from_pdf), ("übernommen", texts - from_pdf)),
+        readme_written=not (target / README_NAME).exists(),
+    )
+    return _with_readme(report, settings, today, command="pack --texts")

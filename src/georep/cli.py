@@ -23,7 +23,7 @@ from georep.errors import GeorepError, MissingInputError
 from georep.export import export_csv
 from georep.layout import Layout
 from georep.learn import learn_bodies
-from georep.pack import pack, pack_consultations
+from georep.pack import pack, pack_consultations, pack_texts
 from georep.pipeline import build_steps, freshness, run_pipeline, select_steps
 from georep.profiling import profile_step
 from georep.report.build import current_commit
@@ -101,11 +101,18 @@ def build_parser() -> argparse.ArgumentParser:
     pack_cmd.add_argument("target", type=Path, help="Zielordner, etwa snapshots/2014-2020")
     pack_cmd.add_argument("--force", action="store_true", help="vorhandene Dateien überschreiben")
     # Punkt 58: die zweite Quelle des Gremiums als eigenes, kleines Paket
-    pack_cmd.add_argument(
+    only = pack_cmd.add_mutually_exclusive_group()
+    only.add_argument(
         "--consultations",
         action="store_true",
         help="nur die Beratungsfolge je Dokument packen (raw/beratungsfolge.parquet) statt der "
         "Eingaben eines Laufs",
+    )
+    # Punkt 68: die neu gelesenen Texte einer Periode, deren Metadaten aus der Referenz kommen
+    only.add_argument(
+        "--texts",
+        action="store_true",
+        help="nur den Textstore packen (cache/text/texts.parquet) statt der Eingaben eines Laufs",
     )
 
     # Punkt 58: die Abbildung Organisation -> Gremium aus den Daten lernen, nicht raten
@@ -319,9 +326,10 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
 
     Die Tabelle steht immer auf stdout, auch wenn ein vorhandenes README nicht angefasst wurde:
     dann gehört sie von Hand hinein, und nur dort weiß ein Mensch, wo. Mit ``--consultations``
-    entsteht statt der Eingaben eines Laufs nur die Beratungsfolge je Dokument (Punkt 58).
+    entsteht statt der Eingaben eines Laufs nur die Beratungsfolge je Dokument (Punkt 58), mit
+    ``--texts`` nur der Textstore (Punkt 68).
     """
-    write = pack_consultations if args.consultations else pack
+    write = pack_consultations if args.consultations else pack_texts if args.texts else pack
     report = write(layout, settings, args.target, force=args.force)
     print(report.line())
     print(report.table(), end="")

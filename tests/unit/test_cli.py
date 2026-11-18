@@ -467,3 +467,23 @@ def test_pack_consultations_writes_the_small_package(
     assert "200 Dokumente, 1 mit Beratungsfolge, 1 verschiedene Organisationen" in out
     assert "| `raw/beratungsfolge.parquet` |" in out  # die Prüfsummentabelle auf stdout
     assert (target / "raw" / "beratungsfolge.parquet").is_file()
+
+
+def test_pack_texts_refuses_the_texts_of_the_reference(
+    project: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Punkt 68: nach einem bootstrap ohne PDFs trägt der Store nur übernommene Texte."""
+    assert main(["bootstrap"]) == 0
+    capsys.readouterr()
+    target = tmp_path / "paket-texte"
+    assert main(["pack", "--texts", str(target)]) == 1
+    assert "keiner der 200 Texte ist aus einem PDF gelesen" in capsys.readouterr().err
+    assert not target.exists()
+
+
+def test_pack_takes_one_kind_of_small_package_at_a_time(
+    project: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    with pytest.raises(SystemExit) as stop:
+        main(["pack", "--texts", "--consultations", str(tmp_path / "paket")])
+    assert stop.value.code == 2 and "not allowed with argument" in capsys.readouterr().err

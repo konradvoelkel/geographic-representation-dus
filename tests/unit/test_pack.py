@@ -24,6 +24,7 @@ from georep.pack import (
     check_text_store,
     pack,
     pack_consultations,
+    pack_texts,
     package_files,
     paper_file_names,
 )
@@ -267,6 +268,75 @@ def test_pack_consultations_keeps_what_is_there_without_force(
         folge_run, default_settings, target, force=True, today=dt.date(2026, 10, 14)
     )
     assert not forced.skipped
+
+
+def test_pack_texts_writes_only_the_text_store(tmp_path: Path, default_settings: Settings) -> None:
+    """Punkt 68: die Paper bleiben die der Referenz, nur die Texte kommen aus dem Paket."""
+    layout = _text_run(tmp_path)
+    target = tmp_path / "texte"
+    report = pack_texts(layout, default_settings, target, today=dt.date(2026, 11, 18))
+    assert {str(p.relative_to(target)) for p in target.rglob("*") if p.is_file()} == {
+        README_NAME,
+        "cache/text/texts.parquet",
+    }
+    assert (target / "cache" / "text" / "texts.parquet").read_bytes() == layout.texts.read_bytes()
+    assert report.figures == (("Texte", 2), ("aus PDFs", 1), ("übernommen", 1))
+    assert "2 Texte, 1 aus PDFs, 1 übernommen" in report.line()
+    assert "pack --texts" in (target / README_NAME).read_text(encoding="utf-8")
+
+
+def test_pack_texts_keeps_what_is_there_without_force(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout = _text_run(tmp_path)
+    target = tmp_path / "texte"
+    pack_texts(layout, default_settings, target, today=dt.date(2026, 11, 18))
+    again = pack_texts(layout, default_settings, target, today=dt.date(2026, 11, 18))
+    assert again.skipped == ("cache/text/texts.parquet",) and not again.readme_written
+    assert not pack_texts(layout, default_settings, target, force=True).skipped
+
+
+def test_pack_texts_refuses_a_store_without_a_single_extraction(
+    tmp_path: Path, mini_run: Layout, default_settings: Settings
+) -> None:
+    """Nur übernommene Texte wären der Textstore der Referenz ein zweites Mal, kein Paket."""
+    with pytest.raises(PackError, match="keiner der 200 Texte"):
+        pack_texts(mini_run, default_settings, tmp_path / "texte")
+    assert not (tmp_path / "texte").exists()
+
+
+def test_pack_texts_checks_the_store_like_pack(tmp_path: Path, default_settings: Settings) -> None:
+    layout = _text_run(tmp_path)
+    store = TextStore(layout.texts)
+    store.put("c.pdf", "ohne Paper", TextMeta(extractor="pypdf-7.1.0", source="pdf"))
+    store.save()
+    with pytest.raises(PackError, match="haben kein Paper"):
+        pack_texts(layout, default_settings, tmp_path / "texte")
+    with pytest.raises(PackError, match="gehört daneben"):
+        pack_texts(layout, default_settings, layout.root / "texte")
+
+
+def test_pack_texts_says_when_the_store_is_missing(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout = Layout(tmp_path / "leer", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
+    with pytest.raises(PackError, match="fehlen; lief"):
+        pack_texts(layout, default_settings, tmp_path / "texte")
+
+
+def _text_run(tmp_path: Path) -> Layout:
+    """Ein Lauf mit zwei Papern und zwei Texten: einer neu extrahiert, einer übernommen."""
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
+    _papers_jsonl(
+        layout.papers,
+        [{"id": "p1", "file_name": "a.pdf"}, {"id": "p2", "file_name": "b.pdf"}, {"id": "p3"}],
+    )
+    layout.texts.parent.mkdir(parents=True, exist_ok=True)
+    store = TextStore(layout.texts)
+    store.put("a.pdf", "neu gelesen", TextMeta(extractor="pypdf-7.1.0", source="pdf"))
+    store.put("b.pdf", "aus der Arbeit", TextMeta(extractor="Arbeit", source="reference"))
+    store.save()
+    return layout
 
 
 def test_pack_consultations_says_when_the_metadata_are_missing(
