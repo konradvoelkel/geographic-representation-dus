@@ -7,6 +7,14 @@
 
 profile = "duesseldorf"        # Unterordner unter data_root und cache_root, wie jede Stadt: der Slug (Frage 1.7, beantwortet 2026-10-13; decisions.md Punkt 52). Die veröffentlichte Adresse bleibt, weil `georep publish` die erste Stadt an die Wurzel von data_root/site/ legt
 
+# Punkt 68: die Paper der Hauptperiode kommen aus dem Altformat der Arbeit, ihre Texte seit dem
+# 2026-11-18 aus den PDFs, neu gelesen mit pypdf 7.1.0 (Konrads Entscheidung; 19 091 von 19 092,
+# einer behält den Text der Arbeit). bootstrap legt das Paket über die Texte der Referenz; die
+# Golden-Master-Tests gegen die Arbeit nehmen es mit as_in_the_thesis zurück, und jede Periode mit
+# eigenem Schnappschuss setzt den Schlüssel wieder leer.
+[bootstrap]
+texts = "snapshots/duesseldorf-texte/cache/text/texts.parquet"
+
 [city]
 slug = "duesseldorf"           # Ordnername im veröffentlichten Ordner und Dateiname dieses Profils
 name = "Düsseldorf"

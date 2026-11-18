@@ -55,12 +55,15 @@ PACKAGES = (
     Package("snapshots/2025", limit=20 * MIB, native=True, readme=True),  # 13 889 015
     # Punkt 58: nur die Beratungsfolge je Dokument, kein Store und keine Eingabe (90 455 Bytes)
     Package("snapshots/duesseldorf-beratungsfolge", limit=1 * MIB, native=False, readme=True),
+    # Punkt 68: nur der Textstore der Hauptperiode aus pypdf 7.1.0 (15 563 293 Bytes)
+    Package("snapshots/duesseldorf-texte", limit=20 * MIB, native=False, readme=True),
     Package("context", limit=4 * MIB, native=False, readme=True),  # 2 242 316
 )
-# Alle zusammen, als zweite grobe Schranke: 144 833 394 Bytes = 138,12 MiB am 2026-11-16 (76,7 %
-# der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, und die drei Textstores sind
-# seit Punkt 67 zusammen 266 295 Bytes kleiner). Ein einziger PDF-Ordner einer
-# Periode (585 MB bis 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
+# Alle zusammen, als zweite grobe Schranke: 160 396 687 Bytes = 152,97 MiB am 2026-11-18 (85,0 %
+# der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, die drei Textstores sind seit
+# Punkt 67 zusammen 266 295 Bytes kleiner, und das Textpaket der Hauptperiode kam mit Punkt 68
+# dazu). Ein einziger PDF-Ordner einer Periode (585 MB bis 3,9 GB) reißt sie um ein Mehrfaches,
+# und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 
 # Was in keinem Paket liegen darf, mit dem Grund. Endungen werden gegen das Suffix geprüft, Namen
@@ -228,6 +231,23 @@ def test_the_package_with_the_consultation_is_declared_by_exactly_one_profile() 
     )
 
 
+def test_the_text_package_is_read_by_the_main_period_alone() -> None:
+    """Punkt 68: dieselbe Regel wie für die Beratungsfolge, für den Textstore der Hauptperiode.
+
+    ``bootstrap`` übernähme das Paket in einer anderen Periode ohnehin nicht (die Dateien sind
+    andere), aber ein geerbter Pfad, der nie gilt, ist eine Angabe, die niemand prüft.
+    """
+    from georep.settings import load_settings
+
+    nowhere = Path("/nonexistent")
+    main = load_settings(profile="duesseldorf", cwd=nowhere).bootstrap.texts
+    assert main is not None and (REPO / main).is_file(), main
+    assert main.parts[:2] == ("snapshots", "duesseldorf-texte")
+    assert load_settings(profile="duesseldorf-vergleich", cwd=nowhere).bootstrap.texts == main
+    for profile in ("duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
+        assert load_settings(profile=profile, cwd=nowhere).bootstrap.texts is None, profile
+
+
 # --- slow: Prüfsummen und Zeilenzahlen der echten Pakete ---------------------------------------
 
 # Die Zahlen der Läufe vom 2026-10-13, wie sie in den READMEs stehen: Paper, Texte, Texte mit
@@ -272,6 +292,30 @@ def test_the_stores_of_a_package_have_the_rows_its_readme_claims(path: str) -> N
     # Umgekehrt gilt keine Gleichheit: ein Paper ohne Hauptdatei trägt keinen Namen, und eines,
     # dessen PDF der Server nicht ausliefert (Mönchengladbach: 2 213), hat keinen Text.
     assert texts <= len(known) <= papers
+
+
+@pytest.mark.slow
+def test_the_text_package_carries_exactly_the_files_of_the_thesis_corpus() -> None:
+    """Punkt 68: 19 092 Texte für die 19 092 Hauptdateien der 19 108 Paper der Arbeit.
+
+    Nur unter dieser Bedingung übernimmt ``bootstrap`` das Paket (``overlay_texts``); ein Text zu
+    viel oder zu wenig, und die Hauptseite rechnete still mit den Texten der Arbeit weiter. 59
+    PDFs haben keine Textschicht (dieselben 75 Dokumente ohne Text wie in der Arbeit, mit den 16
+    ohne Hauptdatei), und eines weist pypdf 7.1.0 ab: es behält den Text der Arbeit.
+    """
+    from georep.bootstrap import REFERENCE_EXTRACTOR
+    from georep.records import PaperRecord
+
+    items = json.loads(
+        (REPO / "reference" / "interim" / "paper_with_text.json").read_text(encoding="utf-8")
+    )
+    files = {r.file_name for r in map(PaperRecord.from_legacy, items) if r.file_name}
+    assert (len(items), len(files)) == (19108, 19092)
+    store = pl.read_parquet(REPO / "snapshots" / "duesseldorf-texte" / "cache/text/texts.parquet")
+    assert set(store.get_column("name")) == files
+    assert int((store.get_column("chars") > 0).sum()) == 19033
+    kinds = store.group_by("source", "extractor").len().sort("source").rows()
+    assert kinds == [("pdf", "pypdf-7.1.0", 19091), ("reference", REFERENCE_EXTRACTOR, 1)]
 
 
 # --- M1: die Flächen im Paket sind die der Stadt -----------------------------------------------

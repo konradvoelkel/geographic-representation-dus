@@ -104,3 +104,6 @@ min_coverage = 0.95            # die Abdeckung liegt zwischen 97,76 % und 100 % 
 # Zeilen, die sie mit der Hauptperiode teilt (gemessen 2026-10-14).
 [bodies]
 consultations = ""
+
+[bootstrap]
+texts = ""                     # Punkt 68: das Textpaket der Hauptperiode gehört nicht hierher; der Schnappschuss trägt seine eigenen Texte

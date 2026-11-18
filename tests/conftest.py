@@ -125,10 +125,14 @@ def as_in_the_thesis(settings: Settings) -> Settings:
     Golden-Master-Tests gegen ``reference/`` und ``tests/fixtures/mini/expected/`` nehmen diese
     Settings; die Regeln, die von der Arbeit abweichen, stehen je als Schalter in
     ``defaults.toml`` und sind hier aufgezählt (docs/decisions.md, Punkte 43 und 44). Alles
-    andere im Testlauf rechnet mit den Vorgaben, also mit den Regeln an.
+    andere im Testlauf rechnet mit den Vorgaben, also mit den Regeln an. Dazu kommen die Texte
+    der Arbeit statt des Textpakets der Hauptperiode (Punkt 68).
     """
     return settings.model_copy(
-        update={"search": settings.search.model_copy(update={"city_facilities": False})}
+        update={
+            "search": settings.search.model_copy(update={"city_facilities": False}),
+            "bootstrap": settings.bootstrap.model_copy(update={"texts": None}),
+        }
     )
 
 

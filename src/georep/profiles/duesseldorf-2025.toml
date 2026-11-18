@@ -25,6 +25,7 @@ dictionary = "base"            # Straßen und Orte der Hauptperiode (Stand Novem
 
 [bootstrap]
 seed_corpus = true             # seit dem 2026-10-14 (Punkt 56): die Referenz dieses Profils ist sein eigener Schnappschuss, nicht der Korpus der Arbeit, und der gehört in den Store. Vorher war der Schlüssel false, weil reference_root auf ./reference zeigte und sonst 19 108 Paper von 2020 bis 2025 hier gelandet wären. Gefüllt wird nur ein leerer Store; wer fortschreibt, behält seinen Stand
+texts = ""                     # Punkt 68: das Textpaket der Hauptperiode gehört nicht hierher; der Schnappschuss trägt seine eigenen Texte
 
 [report]
 regression = false             # zur laufenden Periode gibt es keine Wahlbeteiligung: kein Streudiagramm, keine Tabelle 5, kein Umschalter auf der Karte

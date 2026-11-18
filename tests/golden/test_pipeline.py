@@ -383,11 +383,16 @@ def test_the_rules_change_the_reference_as_measured(
 
     Der Test daneben (``test_pipeline_reproduces_the_thesis_results``) hält die exakte
     Reproduktion mit abgeschalteten Regeln; dieser hält, was die Regeln daran ändern. Beide
-    zusammen sind die Golden-Master-Politik aus decisions.md, Punkt 43.
+    zusammen sind die Golden-Master-Politik aus decisions.md, Punkt 43. Gemessen wird mit den
+    Texten der Arbeit, damit die Zahlen die Wirkung der Regeln allein sind; was das Textpaket
+    der Hauptperiode dazu ändert, hält der Test darunter (Punkt 68).
     """
+    rules_only = default_settings.model_copy(
+        update={"bootstrap": default_settings.bootstrap.model_copy(update={"texts": None})}
+    )
     layout = _layout(tmp_path, reference_root, default_settings.profile)
-    bootstrap_from_settings(layout, default_settings)
-    run_pipeline(build_steps(default_settings, layout), default_settings)
+    bootstrap_from_settings(layout, rules_only)
+    run_pipeline(build_steps(rules_only, layout), rules_only)
     assert pl.read_parquet(layout.pois_table).height == WITH_RULES["pois"]
     index = pl.read_parquet(layout.index)
     assert index.height == WITH_RULES["terms"]
@@ -467,3 +472,82 @@ def test_the_rules_change_the_reference_as_measured(
         layout.site_index.stat().st_size, default_settings.report.page_budget_bytes
     )
     assert "Stadtweite Begriffe" in page and "Zwei Regeln weichen bewusst" in page
+
+
+# Punkt 68: dieselben Vorgaben mit dem Textpaket der Hauptperiode (pypdf 7.1.0), wie die Seite seit
+# dem 2026-11-18 rechnet; gemessen am selben Tag in einem eigenen Bau. Wörterbuch und Orte bleiben,
+# es ändern sich nur die Texte und mit ihnen die Treffer.
+WITH_TEXTS = {"hits": 29_330, "documents_hit": 10_799, "citywide": 57}
+WITH_TEXTS_TABLE_FIVE = (79.4275, 48.1482, 0.1901, 0.23383)  # Steigung, Achse, r, p
+WITH_TEXTS_WITHOUT_OUTLIERS = (214.9840, 40.5023, 0.3363, 0.03635)
+WITH_TEXTS_PER_TERM = {"min": 2.2727, "median": 4.5984, "max": 9.5849, "city_mean": 0.062503}
+WITH_TEXTS_PER_TERM_TABLE = (-0.5568, 55.7853, -0.1125, 0.48365)
+WITH_TEXTS_PER_TERM_WITHOUT_OUTLIERS = (-0.2465, 54.4770, -0.0435, 0.79275)
+
+
+@pytest.mark.slow
+def test_the_text_package_moves_the_reference_as_measured(
+    tmp_path: Path, reference_root: Path, default_settings: Settings
+) -> None:
+    """Die Vorgaben samt Textpaket: so rechnet die Hauptseite seit Punkt 68.
+
+    Gegen den Test darüber (dieselben Regeln, die Texte der Arbeit) bekommt jeder der 41
+    Wahlbezirke Treffer dazu und keiner verliert: pypdf 7.1.0 lässt Leerzeichen mitten im Wort
+    weg, die der Extraktor der Arbeit setzte. Die eine Spalte mit signifikantem p bleibt es.
+    """
+    layout = _layout(tmp_path, reference_root, default_settings.profile)
+    report = bootstrap_from_settings(layout, default_settings)
+    assert report.texts_package is not None and report.texts == 19_092, report.summary()
+    store = pl.read_parquet(layout.texts)
+    assert int((store.get_column("extractor") == "pypdf-7.1.0").sum()) == 19_091
+    run_pipeline(build_steps(default_settings, layout), default_settings)
+
+    results = pl.read_parquet(layout.results)
+    assert int(results.get_column("anzahl_treffer").sum()) == WITH_TEXTS["hits"]
+    summary = json.loads((layout.site / "data" / "summary.json").read_text(encoding="utf-8"))
+    assert summary["figures"]["documents_hit"] == WITH_TEXTS["documents_hit"]
+    found = citywide_terms(
+        pl.read_parquet(layout.index),
+        quantile=default_settings.search.citywide_quantile,
+        median_factor=default_settings.search.citywide_median_factor,
+    )
+    assert found.threshold == 64 and len(found.terms) == WITH_TEXTS["citywide"]
+
+    pair = regression_pair(results, default_settings.analysis.exclude_districts)
+    assert pair.without is not None
+    for got, (slope, intercept, r, p) in (
+        (pair.all, WITH_TEXTS_TABLE_FIVE),
+        (pair.without, WITH_TEXTS_WITHOUT_OUTLIERS),
+    ):
+        assert got.slope == pytest.approx(slope, abs=5e-4)
+        assert got.intercept == pytest.approx(intercept, abs=5e-4)
+        assert got.r == pytest.approx(r, abs=5e-5)
+        assert got.p == pytest.approx(p, abs=5e-5)
+    assert pair.all.p > 0.05 and pair.without.p < 0.05
+
+    metrics = pl.read_parquet(layout.district_metrics)
+    per_term = metrics.get_column(scaling.PER_TERM)
+    for value, key in (
+        (per_term.min(), "min"),
+        (per_term.median(), "median"),
+        (per_term.max(), "max"),
+    ):
+        assert float(value) == pytest.approx(WITH_TEXTS_PER_TERM[key], abs=5e-5)  # type: ignore[arg-type]
+    assert float(metrics.get_column(scaling.CITY_MEAN)[0]) == pytest.approx(
+        WITH_TEXTS_PER_TERM["city_mean"], abs=5e-7
+    )
+    second = regression_pair(
+        metrics.join(results.select(DISTRICT, TURNOUT), on=DISTRICT, how="inner"),
+        default_settings.analysis.exclude_districts,
+        x=scaling.PER_TERM,
+        y=TURNOUT,
+    )
+    assert second.without is not None
+    for got, (slope, intercept, r, p_value) in (
+        (second.all, WITH_TEXTS_PER_TERM_TABLE),
+        (second.without, WITH_TEXTS_PER_TERM_WITHOUT_OUTLIERS),
+    ):
+        assert got.slope == pytest.approx(slope, abs=5e-4)
+        assert got.intercept == pytest.approx(intercept, abs=5e-4)
+        assert got.r == pytest.approx(r, abs=5e-5)
+        assert got.p == pytest.approx(p_value, abs=5e-5)
