@@ -1,5 +1,5 @@
 {% if model.sensitivity %}
-{% from "macros.html.j2" import more %}
+{% from "macros.html.j2" import excluded_rates, more %}
 {% set s = model.sensitivity %}
 <section id="gewichtung">
 <h2>Was ändert die Gewichtung?</h2>
@@ -56,7 +56,7 @@
 </tbody></table></div>
 <p>Von den {{ s.rows|length }} Gewichtungen erreicht der Zusammenhang über alle {{ model.figures.districts }} Wahlbezirke in {{ s.significant_all|num }} das {{ s.level|pct(0) }}-Niveau{% if s.has_without %}, ohne die Wahlbezirke {{ s.excluded|join(' und ') }} in {{ s.significant_without|num }}{% endif %}. Welche das sind, steht in der Tabelle; eine „richtige" Gewichtung benennt diese Seite nicht.</p>
 {% if s.has_without %}
-<p class="footnote">Die rechte Hälfte lässt für jede Variante dieselben Wahlbezirke weg ({{ s.excluded|join(' und ') }}, die beiden höchsten ungewichteten Trefferquoten), damit die Zeilen vergleichbar bleiben. Unter einer Gewichtung können andere Wahlbezirke die höchsten Quoten haben.</p>
+<p class="footnote">Die rechte Hälfte lässt für jede Variante dieselben Wahlbezirke weg ({{ s.excluded|join(' und ') }}{% if model.regression %}, {% if not model.regression.excluded_are_top %}die {% endif %}{{ excluded_rates(model.regression, 'ungewichteten ') }}{% endif %}), damit die Zeilen vergleichbar bleiben. Unter einer Gewichtung können andere Wahlbezirke die höchsten Quoten haben.</p>
 {% endif %}
 {% if s.topics %}
 {% set seeded = s.topics|selectattr('body')|list %}

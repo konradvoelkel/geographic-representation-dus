@@ -34,3 +34,10 @@
 {% endfor %}
 </fieldset>
 {% endmacro %}
+{#
+  Punkt 68 (2026-11-18): wie die Seite die ausgeschlossenen Wahlbezirke von Tabelle 5 nennt. Vier
+  Sätze sagten „die (beiden) höchsten Trefferquoten", auch wo es nicht stimmte (Periode 2014 bis
+  2020: Platz 2 und 9; Hauptperiode seit Punkt 68: Platz 1 und 3). ``pair`` ist ein
+  ``RegressionPair``, ``kind`` ein Wort vor „Trefferquoten" mit Leerzeichen dahinter.
+#}
+{% macro excluded_rates(pair, kind='') %}{% if pair.excluded_are_top %}die {% if pair.excluded|length == 2 %}beiden {% endif %}höchsten {{ kind }}Trefferquoten{% else %}{{ kind }}Trefferquoten auf {% if pair.excluded_ranks|length == 1 %}Platz{% else %}den Plätzen{% endif %} {{ pair.excluded_ranks|join(' und ') }}{% endif %}{% endmacro %}

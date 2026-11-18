@@ -53,6 +53,17 @@ class RegressionPair:
     all: RegressionResult
     excluded: tuple[int, ...]
     without: RegressionResult | None
+    # Der Platz jedes ausgeschlossenen Bezirks nach ``x``, von der höchsten Quote an gezählt, in
+    # der Reihenfolge von ``excluded``. Die Seite nannte sie immer „die beiden höchsten
+    # Trefferquoten"; in der Periode 2014 bis 2020 sind es die Plätze 2 und 9 (2026-11-18).
+    excluded_ranks: tuple[int, ...] = ()
+
+    @property
+    def excluded_are_top(self) -> bool:
+        """Sind die ausgeschlossenen Bezirke genau die mit den höchsten Werten von ``x``?"""
+        return bool(self.excluded_ranks) and sorted(self.excluded_ranks) == list(
+            range(1, len(self.excluded_ranks) + 1)
+        )
 
 
 @deal.pre(
@@ -128,8 +139,16 @@ def regression_pair(
             without = regress(results, exclude=excluded, x=x, y=y, y_scale=y_scale)
         except EmptyResultError:
             without = None
+    ranks = dict(
+        results.select(
+            DISTRICT, pl.col(x).rank("ordinal", descending=True).cast(pl.Int64).alias("rang")
+        ).iter_rows()
+    )
     return RegressionPair(
-        all=regress(results, x=x, y=y, y_scale=y_scale), excluded=excluded, without=without
+        all=regress(results, x=x, y=y, y_scale=y_scale),
+        excluded=excluded,
+        without=without,
+        excluded_ranks=tuple(int(ranks[d]) for d in excluded if d in ranks),
     )
 
 

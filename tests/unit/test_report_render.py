@@ -552,6 +552,30 @@ def test_the_outlier_column_names_both_p_values_of_both_periods(
     assert "von der Signifikanz bleibt nichts" not in head  # zu stark für diese Zahlen
 
 
+def test_the_page_calls_the_excluded_districts_the_highest_only_when_they_are(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    """Vier Sätze nannten 1 und 10 „die (beiden) höchsten Trefferquoten", immer.
+
+    Auf der Seite der Periode 2014 bis 2020 stehen sie auf Platz 2 und 9, und seit Punkt 68 steht
+    10 auch in der Hauptperiode auf Platz 3 (2026-11-18). Dann nennen die Sätze die Plätze.
+    """
+    pair = _pair(0.1901, 0.23383, (0.3363, 0.03635))
+    third = _rendered(model, visuals, regression=replace(pair, excluded_ranks=(1, 3)))
+    assert "beiden höchsten" not in third and "mit den höchsten Trefferquoten" not in third
+    assert "ohne die Wahlbezirke 1 und 10 (Trefferquoten auf den Plätzen 1 und 3)" in third
+    assert "hier mit den Trefferquoten auf den Plätzen 1 und 3, und das ist eine" in third
+    assert "haben hier die Trefferquoten auf den Plätzen 1 und 3 und stehen in den" in third
+    if model.sensitivity is not None and model.sensitivity.has_without:
+        assert "(1 und 10, die ungewichteten Trefferquoten auf den Plätzen 1 und 3)" in third
+    top = _rendered(model, visuals, regression=replace(pair, excluded_ranks=(1, 2)))
+    assert "ohne die Wahlbezirke 1 und 10 (die beiden höchsten Trefferquoten)" in top
+    assert "ausgeschlossen sind die Wahlbezirke mit den höchsten Trefferquoten" in top
+    assert "die ausgeschlossenen Wahlbezirke sind die mit den höchsten Trefferquoten" in top
+    if model.sensitivity is not None and model.sensitivity.has_without:
+        assert "(1 und 10, die beiden höchsten ungewichteten Trefferquoten)" in top
+
+
 @pytest.mark.parametrize(
     ("here", "there", "expected"),
     [
