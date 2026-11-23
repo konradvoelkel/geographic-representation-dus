@@ -79,3 +79,45 @@ der Schlüssel der Fake-Session ist die URL (`tests/fakes.py`), nicht der Abfrag
 Aufzeichnung wird nicht rückdatiert. Verglichen wird darum nur, was wirklich dieselbe Aussage ist:
 der Filter (`OSM_FILTER in recorded`). Die Antworten sind von der Zahl unberührt, sie hängen am
 Polygon und am Filter.
+
+## OParl: Sitzungen, Tagesordnung, Personen (2026-11-23, Fundament F6)
+
+Die Netzstichprobe, die Konrad am 2026-11-23 für F6 freigegeben hat (rund fünf Minuten, je ein, zwei
+Seiten der Listen, ein paar Einzelobjekte, kein PDF). Abgerufen von 18:11 bis 18:18 Uhr (MEZ) über die
+Session aus `georep.sources.cached_session` (User-Agent und Timeout der Settings, eine Sekunde Pause);
+keine der Antworten fiel unter eine Cache-Regel. Zusammen **41,3 s** reine Antwortzeit für elf Abrufe.
+`tests/unit/test_oparl_council.py` liest die Dateien: jedes Modell muss jeden Schlüssel kennen, den der
+Server schickt (bei Personen außer den Kontaktfeldern, siehe unten), und die Befunde zu dem, was der
+Server füllt, stehen dort als Tests.
+
+| Abruf (`…/Oparl/bodies/0015/…`) | HTTP | Zeit | Bytes | Datei hier | Auswahl |
+|---|---|---|---|---|---|
+| (ohne Pfad: das Body-Objekt) | 200 | 0,17 s | 3 655 | `oparl_body_0015.json` | unverändert; nennt die Listen `meetings`, `people`, `memberships`, `agendaitems`, `consultations`, `files` |
+| `meetings` (Seite 1) | 200 | 14,97 s | 2 887 050 | — | nur ausgewertet: 200 Sitzungen, angelegt 2025-12-01 bis 2026-11-23, Beginn 2026-01-12 bis 2027-12-15 (also auch geplante) |
+| `meetings?page=4` | 200 | 20,26 s | 4 029 429 | `oparl_meetings_0015.json` | 4 der 200 Sitzungen (angelegt 2023-09 bis 2023-12, Beginn 2022-08 bis 2024-12): Haupt- und Finanzausschuss 2024-12-02 (`26272`, mit Niederschrift und `resultsProtocol`), eine gemeinsame Sitzung zweier Gremien (`26143`), eine Sitzung ohne öffentliche Tagesordnung mit Niederschrift (`26193`), eine ohne alles (`25791`); die Tagesordnung der ersten auf 8 von 31, der zweiten auf 3 von 12 Punkten **gekürzt** (je ein Punkt je Kombination aus Ergebnis, Beratung und Anlage, in der Reihenfolge des Servers) |
+| `people` (Seite 1) | 200 | 4,73 s | 409 244 | `oparl_people_0015.json` | 3 der 200 Personen (mit Titel und drei Mitgliedschaften, mit beendeter Mitgliedschaft, ohne Mitgliedschaft); **geschwärzt**: Namen ersetzt durch `VornameN NachnameN`, `phone` und `email` durch `["entfernt"]`, Anschriftfelder von `locationObject` geleert. Die Schlüssel bleiben, damit der Test sieht, dass der Server sie schickt und das Modell sie nicht liest |
+| `memberships` (Seite 1) | 200 | 0,19 s | 90 195 | `oparl_memberships_0015.json` | 4 der 200 (je eine Kombination aus `votingRight` und `endDate`) |
+| `agendaitems` (Seite 1) | 200 | 0,77 s | 106 774 | `oparl_agendaitems_0015.json` | 4 der 200 (je eine Kombination aus Beratung, Ergebnis und Anlage) |
+| `consultations/141791` | 200 | 0,03 s | 588 | `oparl_consultation_141791.json` | unverändert; die Beratung des Papers `vo/114093` aus `tests/fixtures/oparl/papers_page.json` |
+| `agendaitems/399178` | 200 | 0,03 s | 506 | `oparl_agendaitem_399178.json` | unverändert; der Punkt dieser Beratung |
+| `files/581120` | 200 | 0,03 s | 578 | — | nur ausgewertet: die Datei hinter `resultsProtocol` einer Sitzung von Seite 1 („Haushaltsanträge der Liste B"), keine Niederschrift |
+| `files/541049` | 200 | 0,09 s | 565 | `oparl_file_541049.json` | unverändert; die Niederschrift („Niederschrift Ö") der Sitzung `26272` |
+| `HEAD downloadfiles/00541049.pdf` | 200 | 0,02 s | — | — | nur `Content-Length: 348439`, `application/pdf`; das PDF selbst wurde nicht geladen |
+
+Kompakt wie vom Server geliefert; `pagination` und `links` sind die der echten Seite (Seite 4 trägt
+auch `prev`, das `Links` seitdem kennt). SHA-256 der Dateien hier:
+
+```
+4a4e1ebcd0478e385b40f5a91a070552b8fdcd39071752fe314e62b9b935f454  oparl_meetings_0015.json
+11a6efc3560953ad9c3c8eb96c699aed58540b0cb37a34f5d1c2e64a68003361  oparl_people_0015.json
+7464928ab8cbbc863ff3da46d3b34d9ce098543fad14a9a3d671af1ca8223b81  oparl_memberships_0015.json
+9c8e3bf04b38598316a1d55a48fdab21330f9a9e7b1dd7e060b4b7ae69b7ec45  oparl_agendaitems_0015.json
+d907b12e30dde8f09db8ad7825bafe02577e735b2fe85bf1e24ceb1e54693f42  oparl_body_0015.json
+ebe2495c9fbb1433a2840e3055e25d8bdd63e54dc2efbccb342d40aea51e5c34  oparl_consultation_141791.json
+117804573d2bc51c94670ab6f9359e95a9efba6f285d65f7d3df64396b4887ba  oparl_agendaitem_399178.json
+f349e31d120e50c2b179e21c956faed65d2855ed29c218287ab1fdb1bab37782  oparl_file_541049.json
+```
+
+Die vollen Antworten (rund 7,5 MB) lagen nur für die Auswertung auf xtraspace; die Personenseite trug
+Kontaktdaten und ist danach gelöscht worden. Was die beiden Sitzungsseiten über die Füllgrade sagen,
+steht in `docs/runbook-sitzungen.md`, § 2.

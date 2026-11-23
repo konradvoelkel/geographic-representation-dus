@@ -34,6 +34,14 @@ from georep.analysis.periods import compare_periods, delta_regression
 from georep.analysis.scaling import district_metrics
 from georep.analysis.scaling import summary as metrics_summary
 from georep.analysis.timeline import WITH_TEXT, district_months, monthly_series
+from georep.council import (
+    COUNCIL_SCHEMA_VERSION,
+    council_digest,
+    council_files,
+    run_consultations,
+    run_meetings,
+    run_persons,
+)
 from georep.crosswalk import (
     COVERAGE,
     SHARE,
@@ -202,6 +210,12 @@ def freshness(step: Step, settings: Settings) -> tuple[bool, str]:
     missing_out = [p.name for p in step.outputs if not p.exists()]
     if missing_out:
         return False, f"Ausgabe fehlt: {', '.join(missing_out)}"
+    # Fundament F6, Review 2026-11-23: ein Netzschritt mit offenem Fortschritt neben seiner
+    # ersten Ausgabe (``raw/<schritt>.progress.json``, so halten es ``papers`` und die Listen von
+    # F6) ist mitten in einem Abruf und nicht aktuell, auch wenn sein Stamp passt.
+    pending = step.outputs[0].with_name(f"{step.name}.progress.json")
+    if step.network and pending.exists():
+        return False, f"Abruf unvollständig: {pending.name}"
     if not step.stamp_path.exists():
         return False, "kein Stamp"
     missing_in = [p.name for p in step.inputs if not p.exists()]
@@ -227,7 +241,10 @@ def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -
         # Der Text deckt beide Zusätze: die Vorlagen und Anzeigewerte der Seite (``report``) und
         # die Stoppwortliste des Pakets (``topics``). „Vorlagen oder Anzeige" allein beschrieb die
         # zweite nicht (2026-10-13).
-        return "Paketdateien oder Anzeige geändert"
+        # Fundament F6: bei einem Netzschritt ist der Zusatz der Hash seiner Abrufregeln
+        return (
+            "Regeln des Abrufs geändert" if step.network else "Paketdateien oder Anzeige geändert"
+        )
     if stamped.get("code") != __version__:
         return f"Code-Version {stamped.get('code')} -> {__version__}"
     stamped_inputs = stamped.get("inputs")
@@ -321,6 +338,7 @@ def build_steps(
     """
     columns = settings.columns.results
     oparl = settings.sources.oparl
+    council, council_out = settings.council, council_files(layout)  # Fundament F6
     context = settings.context
     # Option 03: ohne context_root im Layout (settings ``context.root = ""``) gibt es die drei
     # Schritte nicht; die Dateinamen und alles Inhaltliche stehen in den Settings.
@@ -1033,6 +1051,54 @@ def build_steps(
         Step("papers", (), (layout.papers,), papers, network=True),
         # --- Option 04: eine Seite, rund eine halbe Sekunde; liefert die Abbildung URL zu Partei
         Step("organizations", (), (layout.organizations,), organizations, network=True),
+        # --- Fundament F6: Sitzungen mit Tagesordnung, Beratungen, Personen; ohne den Schalter
+        # ``council.enabled`` oder ohne Endpunkt im Profil fehlt der Schritt (georep.council,
+        # docs/runbook-sitzungen.md)
+        *(
+            [
+                Step(
+                    "meetings",
+                    (),
+                    (council_out.meetings, council_out.agenda_items),
+                    lambda: run_meetings(settings, layout, transport(), sleep=sleep),
+                    COUNCIL_SCHEMA_VERSION,
+                    network=True,
+                    extra=council_digest(settings),
+                )
+            ]
+            if council.enabled and council.meetings_endpoint
+            else []
+        ),
+        *(
+            [
+                Step(
+                    "consultations",
+                    (),
+                    (council_out.consultations,),
+                    lambda: run_consultations(settings, layout, transport(), sleep=sleep),
+                    COUNCIL_SCHEMA_VERSION,
+                    network=True,
+                    extra=council_digest(settings),
+                )
+            ]
+            if council.enabled and council.consultations_endpoint
+            else []
+        ),
+        *(
+            [
+                Step(
+                    "persons",
+                    (),
+                    (council_out.persons, council_out.memberships),
+                    lambda: run_persons(settings, layout, transport(), sleep=sleep),
+                    COUNCIL_SCHEMA_VERSION,
+                    network=True,
+                    extra=council_digest(settings),
+                )
+            ]
+            if council.enabled and council.persons_endpoint
+            else []
+        ),
         Step("pdfs", (layout.papers,), (layout.pdf_manifest,), pdfs, network=True),
         # --- Option 02: mit dem Wörterbuch der Hauptperiode gibt es die beiden Netzschritte nicht
         *(

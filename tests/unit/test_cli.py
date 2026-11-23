@@ -487,3 +487,28 @@ def test_pack_takes_one_kind_of_small_package_at_a_time(
     with pytest.raises(SystemExit) as stop:
         main(["pack", "--texts", "--consultations", str(tmp_path / "paket")])
     assert stop.value.code == 2 and "not allowed with argument" in capsys.readouterr().err
+
+
+# --- Fundament F6: der Trockenlauf eines Abrufs -------------------------------------------------
+
+
+def test_fetch_dry_run_plans_the_council_steps_without_a_session(
+    project: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`georep fetch meetings --dry-run` zeigt, was liefe; eine Session entsteht nicht einmal."""
+
+    def no_session(*_: object) -> None:
+        raise AssertionError("Trockenlauf mit Netz")
+
+    monkeypatch.setattr("georep.pipeline.cached_session", no_session)
+    assert main(["fetch", "--dry-run"]) == 0  # ohne Schalter nimmt ein bloßes fetch sie nicht mit
+    out = capsys.readouterr().out
+    assert not {"meetings", "consultations", "persons"} & {
+        line.split()[0] for line in out.splitlines()
+    }
+    with (project / "settings.toml").open("a", encoding="utf-8") as settings_file:
+        settings_file.write("council.enabled = true\n")
+    assert main(["fetch", "--dry-run", "meetings", "consultations", "persons"]) == 0
+    out = capsys.readouterr().out
+    assert out.rstrip().endswith("3 geplant") and "Netz aus" not in out
+    assert "meetings     geplant" in out

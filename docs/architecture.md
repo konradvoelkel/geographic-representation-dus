@@ -30,10 +30,11 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `io` | atomare Schreibvorgänge (Temporärdatei, fsync, `os.replace`), JSON, Parquet mit `schema_version` in den Metadaten, SHA-256 (`digest`) |
 | `http` | Session mit Timeout, Retry mit Backoff, User-Agent, requests-cache je Quelle; `Transport`-Protokoll als Testnaht; `network_errors` wandelt requests-Fehler in `NetworkError` |
 | `errors` | Domänenfehler: `MissingInputError`, `EmptyResultError`, `SchemaError`, `CorruptPdfError`, `FetchError`, `NetworkError` |
-| `oparl` | OParl 1.1 als pydantic-Vertrag (`OparlPaper` mit den drei Urheberfeldern und `consultation_organizations`, `OparlFile`, `OparlOrganization`, `PaperPage`, `OrganizationPage`), echte Antworten als Fixtures |
+| `oparl` | OParl 1.1 als pydantic-Vertrag (`OparlPaper` mit den drei Urheberfeldern und `consultation_organizations`, `OparlFile`, `OparlOrganization`, `PaperPage`, `OrganizationPage`), echte Antworten als Fixtures; Fundament F6: `OparlMeeting` mit Tagesordnung, `OparlAgendaItem`, `OparlConsultation`, `OparlPerson` (ohne Kontaktdaten, `PERSON_PRIVATE_KEYS`), `OparlMembership`, gemeinsame Basis `OparlObject` und der Umschlag `ListPage` für jede Liste; `OparlPaper.consultations` liest die eingebetteten Beratungen typisiert |
+| `council` | Fundament F6: die Netzschritte `meetings`, `consultations`, `persons` (`run_*`), ihre Dateien (`council_files`), ein `JsonlStore` je Objektart (letzte Zeile gewinnt, sortiert und atomar gespeichert) und die Fortsetzung über Teildateien und Fortschritt; Runbook `docs/runbook-sitzungen.md` |
 | `records` | `PaperRecord`: die Zeile in `raw/papers.jsonl`, aus OParl oder dem Altformat der Arbeit; die vier URL-Listen sind Tupel, weil der Record `frozen` und damit hashbar ist |
 | `stores` | `PaperStore` (JSONL, Upsert nach `modified`), `TextStore` (eine Parquet-Datei, Schlüssel Dateiname, Frische über Extraktorname und PDF-Hash) |
-| `sources/` | reine Fetch-Funktionen über `Transport`: `opendata` (`fetch_csv`, `fetch_districts_file` für GeoJSON, Shapefile-Zip oder die Esri-JSON-Antwort einer ArcGIS-Operation; die URL darf einen Query-String tragen, und eine abgeschnittene Antwort ist ein `FetchError` -- `exceededTransferLimit` des Dienstes oder weniger Flächen als `precincts.min_areas`, Punkt 65), `oparl` (Paper-Seiten), `pdfs` (`PdfStore` mit Manifest), `overpass` (Straßen je Polygon), `wiki` (SPARQL, GeoSearch) |
+| `sources/` | reine Fetch-Funktionen über `Transport`: `opendata` (`fetch_csv`, `fetch_districts_file` für GeoJSON, Shapefile-Zip oder die Esri-JSON-Antwort einer ArcGIS-Operation; die URL darf einen Query-String tragen, und eine abgeschnittene Antwort ist ein `FetchError` -- `exceededTransferLimit` des Dienstes oder weniger Flächen als `precincts.min_areas`, Punkt 65), `oparl` (Paper-Seiten; `fetch_objects` für jede andere Liste, F6), `pdfs` (`PdfStore` mit Manifest), `overpass` (Straßen je Polygon), `wiki` (SPARQL, GeoSearch) |
 | `geo` | GeoJSON lesen, nach EPSG:25832 projizieren, `make_valid`, `PrecinctIndex` (STRtree), eine Rückprojektion nach lon/lat; `read_canonical_precincts` für den kanonischen Stand (drei feste Eigenschaften), `read_precincts` für eine Quellgeometrie mit Wahlbezirksattributen, `read_areas` für Flächen, die nur eine Kennung tragen |
 | `prep/` | `extract` (PDF-Text hinter `PdfTextExtractor`), `papers` (Korpus), `precincts` (jede Quellgeometrie zu `interim/stimmbezirke.geojson`, GeoJSON, Shapefile-Zip über pyshp oder Esri-JSON der ArcGIS-Operation `identify`; dort wandeln `ring_signed_area`, `point_in_ring` und `geometry_from_esri_rings` die Ringe nach GeoJSON -- rein, mit Verträgen und, zusammen mit dem Prädikat `is_ring`, alle vier in `VERIFY_TARGETS`, Punkt 65. Die Nachbedingung vergleicht die Trapezformel über die Quellringe mit der über die Ergebnisringe: sie hält damit fest, dass jeder Ring genau einmal und mit dem richtigen Vorzeichen im Ergebnis steht, nicht dass die Geometrie im Übrigen stimmt), `voters` (auch `district_units`: Wahlbezirk zu Stadtbezirk über den Crosswalk), `streets` (dazu die Übereinstimmung mit dem Straßenverzeichnis der Wahl), `pois`, `bodies` (Gremium je Dokument: `parse_reference` als reine Funktion über `BodyRules`, `classify_papers` als Batch-Grenze; trifft das Muster nicht, übersetzt `bodies.aliases` den Kopf der Nummer, und `_from_code` wendet dieselben zwei Regeln an. Punkt 58: die zweite Quelle ist die Beratungsfolge -- `organization_key` und `resolve_organizations` sind rein und total, `merge_consultations` füllt die Folge des Korpus aus einem Paket auf, und `source_counts` zählt Quelle, Zustimmung, Widerspruch und Mehrdeutigkeit aus der Ausgabe), `context` (Fremddaten je Raumeinheit: Stimmbezirkstabelle, Tabelle der Quelle lesen, gewichtetes Mittel je Wahlbezirk): Polars-Funktionen Frame zu Frame. `voters` benennt die Zählspalten beim Lesen auf die kanonischen Namen um (`Wahlberechtigte_insgesamt`, `Waehler`, `<Partei>_Stimmen`), damit jede Wahl dasselbe Schema liefert, liest Wahlbezirk und Stadtbezirk aus einer Spalte oder aus der Stimmbezirksnummer und kennt für einen älteren Zuschnitt zusätzlich `precinct_counts`, `district_results` und `spread_postal` (Briefwahl ohne Geometrie) |
 | `search/` | `dictionary` (Wörterbuch je Wahlbezirk), `matcher` (`KeywordMatcher`-Protokoll, FlashText), `index` (invertierter Index) |
@@ -69,7 +70,10 @@ also wenn `context.root` gesetzt ist; `parties` nur, wenn das Profil Fraktionsna
 (`[originators]`). Option 02 bringt zwei weitere Profilschritte: `precincts`
 mit `crosswalk.enabled` und `compare` mit `compare.period`; mit `period.dictionary = "base"`
 entfallen dafür `streets_osm` und `pois_wiki`. Option 01 bringt `shapes`: er entfällt, wo eine
-Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`).
+Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`). Fundament F6 bringt drei
+Netzschritte nach `organizations`, nur mit dem Schalter `council.enabled` (Vorgabe aus) und je einen,
+wo das Profil unter `[council]` einen Endpunkt nennt (Düsseldorf und Mönchengladbach: alle drei);
+kein Offline-Schritt liest ihre Ausgaben bisher.
 
 | Schritt | Netz | liest | schreibt |
 |---|---|---|---|
@@ -78,6 +82,9 @@ Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`).
 | `context_data` | ja | Open-Data-Portal: Tabelle je Raumeinheit, ihre Flächen, die Erläuterung der Indikatoren | `external/` unter den Namen aus `context.files` |
 | `papers` | ja | OParl-Liste, neueste zuerst, Abbruch unter dem Periodenbeginn; beim zweiten Mal `modified_since`, `--max-pages` als Probe | `raw/papers.jsonl` |
 | `organizations` | ja | OParl-Endpunkt `organizations`: Fraktionen, Ausschüsse, Bezirksvertretungen (Düsseldorf: eine Seite, 58 Objekte, 0,47 s) | `raw/organizations.json` |
+| `meetings` | ja | OParl-Liste `meetings` mit eingebetteter Tagesordnung, neueste zuerst; behält Sitzungen ab `period.start` ohne Obergrenze, Abbruch nach der ersten Seite, die mehr als `council.created_margin_days` vor dem Beginn angelegt wurde; immer vollständig (F6) | `raw/meetings.jsonl`, `raw/agenda_items.jsonl` |
+| `consultations` | ja | OParl-Liste `consultations`: Paper, Sitzung, Tagesordnungspunkt, Rolle je Beratung; beim zweiten Mal `modified_since` (F6) | `raw/consultations.jsonl` |
+| `persons` | ja | OParl-Liste `people` mit eingebetteten Mitgliedschaften, ohne Kontaktdaten; immer vollständig (F6) | `raw/persons.jsonl`, `raw/memberships.jsonl` |
 | `pdfs` | ja | Download-URLs der Paper, seriell mit Pause, `--limit` | `cache_root/<profil>/pdf/*.pdf`, `…/pdf/manifest.jsonl` |
 | `streets_osm` | ja | Overpass je Stimmbezirkspolygon (aus `interim/stimmbezirke.geojson`) | `raw/streets_per_district.json` |
 | `pois_wiki` | ja | Wikidata-SPARQL, Wikipedia-GeoSearch je Stimmbezirk (ebenda) | `raw/wikipedia_dict.json` |
@@ -130,7 +137,8 @@ data_root/                 Standard ./data, gitignored
                            Namen (Punkt 52); Standard ohne --profile ist der Slug der Stadt der Arbeit
     external/              Eingaben der Quellen, Dateinamen und Formate der Quelle (CSV, GeoJSON, Shapefile-Zip, Esri-JSON)
     raw/                   papers.jsonl, organizations.json, beratungsfolge.parquet (Punkt 58),
-                           streets_per_district.json, wikipedia_dict.json
+                           streets_per_district.json, wikipedia_dict.json; F6: meetings.jsonl,
+                           agenda_items.jsonl, consultations.jsonl, persons.jsonl, memberships.jsonl
     interim/               papers.parquet (Korpus: Metadaten plus Text), stimmbezirke.geojson (kanonisch),
                            themen_anteile.parquet (Themenanteile je Dokument, nicht veröffentlicht)
     processed/             die Ergebnistabellen als Parquet (zstd), je mit Stamp; mit Fremddaten drei mehr; dazu stimmbezirke_zuordnung (Profil mit Crosswalk)
@@ -191,6 +199,26 @@ erreichbar, Fehlerstatus nach allen Wiederholungen), gesichert durch `deal.raise
   0,47 s (2026-10-11). Der Server der ITK Rheinland setzt `classification` („Fraktion“, „Ausschuss“,
   „Bezirk“, „Gremium“ oder nichts), nie `organizationType`. Der Schritt `parties` bildet daraus
   Organisations-URLs auf Parteien ab; ohne die Datei greifen nur die URL-Endungen aus den Settings.
+- OParl `meetings`, `consultations`, `people` (Fundament F6, `docs/runbook-sitzungen.md`): dieselbe
+  Mechanik wie die Paper-Seiten in `fetch_objects`, für jede Objektart über ihr Modell; die Listen sind
+  nach ID absteigend, 200 Objekte je Seite. Gemessen am 2026-11-23: Sitzungen 15 bis 20 s und 3 bis 4 MB
+  je Seite (die Tagesordnung ist eingebettet), Personen 4,7 s, die flachen Listen `agendaitems` und
+  `memberships` unter einer Sekunde. Jede Seite geht mit `fsync` in eine Teildatei, danach der
+  Fortschritt nach `raw/<schritt>.progress.json` (nächste URL, Zeilen je Teildatei, Löschungen,
+  Beginn, Schlüssel aus Endpunkt, `period.start` und Hash von `[council]`); erst ein vollständiger
+  Abruf schreibt die Ausgabe, eine Probe mit `--max-pages` ist der Anfang des Abrufs, und
+  `freshness` meldet einen Netzschritt mit offenem Fortschritt als „Abruf unvollständig" (das gilt
+  auch für `papers`). Eine Fortsetzung kürzt die Teildateien auf die Zeilen des Fortschritts und
+  verwirft ihn, wenn er älter als ein Tag ist, eine Teildatei fehlt oder der Schlüssel abweicht.
+  Eine Sperre (`fcntl.flock` auf `raw/<schritt>.lock`) lässt jeden Schritt je Ordner `raw/` nur
+  einmal laufen. Die Sitzungsliste ist nach Anlage sortiert (`start − created` von −418 bis +447
+  Tagen); ihr Abruf endet erst nach einer Seite, die mehr als 500 Tage vor dem Beginn angelegt wurde.
+  Eine volle Seite ohne `links.next` ist ein `FetchError`. `[council]` steht nicht im Fingerprint;
+  die drei Schritte tragen seinen Hash als `extra`. `modified_since` nur für
+  `consultations`: bei Sitzungen und Personen folgt `modified` den eingebetteten Objekten nicht. Der
+  Server füllt `result` je Tagesordnungspunkt (96,5 % mit Beratung), nie `resolutionText`,
+  `resolutionFile`, `cancelled`; `resultsProtocol` ist ein Nachtrag zur Tagesordnung, die
+  Niederschrift eine Anlage. Keine der drei Listen fällt unter eine Cache-Regel.
 - Overpass: je Stimmbezirk der Außenring des größten Polygons, um 2 m vereinfacht, als `(poly:"…")`; der
   Filter bildet `network_type="all"` von osmnx nach, mit dem die Daten der Arbeit entstanden. Treue gegen
   die Referenz: `tests/fixtures/http/README.md`. Das Rechenbudget im Kopf der Abfrage (`[timeout:N]`)

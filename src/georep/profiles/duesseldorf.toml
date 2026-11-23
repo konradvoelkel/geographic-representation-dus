@@ -681,3 +681,9 @@ patterns = ['\bvolt\b']
 organizations = []             # Volt sitzt in der Ratsfraktion SPD/Volt, hat also keine eigene Organisation
 
 # --- Option 02: Zeitreihe (docs/plans/02-zeitreihe.md, § 2)
+
+# --- Fundament F6: OParl Sitzungen und Personen (docs/runbook-sitzungen.md)
+[council]                      # am 2026-11-23 aus dem Body-Objekt gelesen; meetings und people mit je einer Probe abgerufen, von consultations nur ein Einzelobjekt (docs/runbook-sitzungen.md)
+meetings_endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/meetings"
+consultations_endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/consultations"
+persons_endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/people"  # der Server nennt die Liste people, nicht persons

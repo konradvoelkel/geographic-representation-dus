@@ -1428,6 +1428,30 @@ class Bootstrap(_Strict):
         return None if value in ("", None) else value
 
 
+# --- Fundament F6: OParl Sitzungen und Personen
+class Council(_Strict):
+    """Die Listen der Sitzungen, Beratungen und Personen eines OParl-Bodys (Fundament F6).
+
+    Die Endpunkte nennt das Profil (das Body-Objekt des Servers listet sie); leer heißt, der Schritt
+    fehlt, und stadtneutral sind alle leer. ``incremental`` nennt die Schritte, die mit
+    ``modified_since`` nachholen (docs/runbook-sitzungen.md, § 2).
+    """
+
+    # Review 2026-11-23, Befund 6: volle Abrufe sind Konrads Läufe (Plan 2026-11, § 4), und ein
+    # neuer Schritt steht hinter einem Schalter, der zunächst aus ist (§ 7). Ohne ihn fehlen die
+    # drei Schritte, und ein bloßes ``georep fetch`` nimmt sie nicht mit.
+    enabled: bool = False
+    meetings_endpoint: str = ""
+    consultations_endpoint: str = ""
+    persons_endpoint: str = ""
+    incremental: tuple[Literal["meetings", "consultations", "persons"], ...] = ("consultations",)
+    stop_when_older: bool = True
+    # Review 2026-11-23, Befund 3: die Sitzungsliste ist nach Anlage sortiert, nicht nach Beginn;
+    # ``start - created`` reichte in 400 Sitzungen von -418 bis +447 Tagen. Erst eine Seite, deren
+    # jüngstes ``created`` mehr als so viele Tage vor ``period.start`` liegt, beendet den Abruf.
+    created_margin_days: int = Field(default=500, ge=0)
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -1475,6 +1499,7 @@ class Settings(BaseSettings):
     bootstrap: Bootstrap = Bootstrap()  # Option 07
     publish: Publish = Publish()
     classify: Classify = Classify()  # Punkt 45: passender Ausschuss je Dokument
+    council: Council = Council()  # Fundament F6: Sitzungen, Beratungen, Personen
 
     @property
     def base_profile(self) -> str:
@@ -1635,6 +1660,9 @@ class Settings(BaseSettings):
                 "log_level": True,
                 "cache": True,
                 "contracts": True,
+                # Fundament F6: ``[council]`` betrifft nur drei Netzschritte; ihr Stamp trägt den
+                # Hash als ``extra`` (``georep.council.council_digest``, Muster Punkt 53)
+                "council": True,
                 # Punkt 58: ``consultations`` ist ein Pfad (sein Inhalt steht im Stamp des
                 # Schritts ``bodies``), ``district_body_names`` sind reine Anzeigenamen.
                 "bodies": {"names_as_of", "consultations", "district_body_names"},
