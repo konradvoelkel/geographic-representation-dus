@@ -59,9 +59,16 @@ SPAN_SCHEMA: dict[str, pl.DataType] = {
 ORDER = ("id", "start", "end", "kind", "value", "norm", "section", "extractor")
 
 
-def empty_spans() -> pl.DataFrame:
-    """Ein leerer Frame im Schema der Spannen."""
-    return pl.DataFrame(schema=SPAN_SCHEMA)
+def empty_spans(extra: Mapping[str, pl.DataType] | None = None) -> pl.DataFrame:
+    """Ein leerer Frame im Schema der Spannen, mit den Zusatzspalten ``extra`` dahinter.
+
+    Ein Vorhaben mit Zusatzspalte (12: ``attr``) schreibt ohne Treffer dasselbe Schema wie mit
+    (Review F7, N3). Eine Zusatzspalte mit dem Namen einer der acht ist ein ``SchemaError``.
+    """
+    clash = sorted(set(extra or {}) & set(SPAN_SCHEMA))
+    if clash:
+        raise SchemaError(f"Spannen: Zusatzspalten tragen Namen der acht: {', '.join(clash)}")
+    return pl.DataFrame(schema={**SPAN_SCHEMA, **(extra or {})})
 
 
 def sort_spans(spans: pl.DataFrame) -> pl.DataFrame:

@@ -141,3 +141,17 @@ def test_ein_nullwert_in_den_acht_ist_ein_fehler(column: str) -> None:
     )
     with pytest.raises(SchemaError, match="leere Werte"):
         check_spans(spans, LENGTHS)
+
+
+def test_eine_leere_tabelle_mit_zusatzspalten() -> None:
+    """Review F7, N3: ein Vorhaben ohne Treffer schreibt dasselbe Schema wie eines mit."""
+    empty = empty_spans({"attr": pl.String(), "zeile": pl.UInt32()})
+    assert dict(empty.schema) == {**SPAN_SCHEMA, "attr": pl.String(), "zeile": pl.UInt32()}
+    assert list(empty.columns) == [*SPAN_SCHEMA, "attr", "zeile"]
+    check_spans(empty, LENGTHS)
+    assert empty_spans().columns == list(SPAN_SCHEMA)
+
+
+def test_eine_zusatzspalte_darf_keine_der_acht_ueberschreiben() -> None:
+    with pytest.raises(SchemaError, match="norm"):
+        empty_spans({"norm": pl.Int64()})
