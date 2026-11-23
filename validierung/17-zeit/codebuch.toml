@@ -1,0 +1,111 @@
+# Codebuch Vorhaben 17 „Zeit und Neuigkeiten", Stufe 1 (2026-11-23): Präzision des Lexikons
+# bundespolitischer Begriffe. Vorläufiges Format wie validierung/15-funktion/codebuch.toml; F4 baut
+# den Rahmen (`georep validate`) parallel, dann wird dieses Codebuch übertragen, die Fragen bleiben.
+# Messdokument: docs/plans/17-zeit.md, § 4. Lexikon: docs/plans/17-zeit-lexikon.toml (Version
+# 2026-11-23.1). Stichprobe: stichprobe.csv (Aufgabe, Dokument-ID, Kategorie des Lexikons; den
+# Kodierern NICHT zeigen). Kodieraufgaben mit Ausschnitt lokal unter
+# /media/konrad/xtraspace/georep/messdaten/kodierung/17-zeit/aufgaben.jsonl.
+
+[meta]
+vorhaben = "17-zeit"
+version = "2026-11-23.1"
+einheit = """Ein Treffer: eine Fundstelle eines Lexikonbegriffs in einem Ratsdokument der drei \
+Düsseldorfer Wahlperioden (2014-2020, 2020-2025, ab 2025). Das gefundene Wort ist im Ausschnitt mit \
+⟦ und ⟧ markiert und steht zusätzlich im Feld fundwort."""
+stichprobe = """100 Treffer, zehn je Kategorie des Lexikons (zehn Kategorien), je Kategorie zehn \
+Dokumente mit Seed "17-<kategorie>", je Dokument eine zufällige Fundstelle; die Reihenfolge der \
+Aufgaben ist gemischt (Seed 17)."""
+kodierer = """Zwei unabhängige Kodier-Agenten, die einander nicht sehen, und ein Schlicht-Agent nur für \
+die Uneinigkeiten (plan-vorverarbeitung-2026-11.md, § 2.6 und F4). Kein menschlicher Goldstandard."""
+material = """Je Aufgabe: Drucksache, Titel, Dokumentart, Datum, Gremium, das Fundwort und ein \
+Ausschnitt von rund 350 Zeichen links und rechts der Fundstelle, mit Groß- und Kleinschreibung aus \
+dem Rohtext (textquelle = "rohtext"); steht die Fundstelle im Titel, ist der Ausschnitt der Titel \
+(textquelle = "titel"); fehlt der Rohtext, kleingeschrieben aus dem Textstore (textquelle = \
+"klein")."""
+nicht_gezeigt = """Die Kategorie des Lexikons, zu der das Muster gehört, und die Schichtung der \
+Stichprobe; F4: ohne die Ausgabe des zu prüfenden Verfahrens. Die Kodierer sehen das Fundwort, weil \
+sie sonst die Stelle nicht finden; sie wählen das Thema aus allen zehn Kategorien."""
+grundsatz = """Maßgeblich ist, was das markierte Wort **an dieser Stelle** bedeutet und wovon der Satz \
+handelt, in dem es steht — nicht, wovon das ganze Dokument handelt, und nicht, ob das Thema wichtig \
+ist. Ein Wort kann ein Thema treffen, auch wenn die Stadt es nur örtlich umsetzt (die Unterbringung \
+Geflüchteter ist migration_asyl). Ein Wort, das hier etwas anderes meint (ein Name, eine andere \
+Bedeutung, ein Ereignis außerhalb der Definition), ist anderes."""
+datenschutz = "Schreibe nie einen Personennamen in eine Antwort, auch nicht in begruendung."
+
+[antwortformat]
+datei = "antworten-<kodierer>.jsonl"   # <kodierer> = A oder B; neben aufgaben.jsonl, eine Zeile je Aufgabe
+felder = """aufgabe (Zeichenkette wie in der Aufgabe), thema (Liste aus den Optionen der Frage thema, \
+mindestens ein Eintrag; anderes und unklar stehen nur allein), ebene (eine Option der Frage ebene), \
+unsicher (true oder false), begruendung (ein Satz, höchstens 200 Zeichen, ohne Personennamen)"""
+beispiel = '''{"aufgabe": "17-001", "thema": ["migration_asyl", "ukraine_krieg"], "ebene": "lokal", "unsicher": false, "begruendung": "Unterbringung von Geflüchteten aus der Ukraine in einer städtischen Turnhalle."}'''
+reihenfolge = "Die Zeilen in der Reihenfolge der Aufgaben; jede Aufgabe genau einmal."
+rueckmeldung = "Lücken des Codebuchs in rueckmeldung-<kodierer>.md neben den Antworten, mit Aufgabennummern."
+
+[[fragen]]
+id = "thema"
+frage = "Wovon handelt die Fundstelle, gemessen an der Bedeutung des markierten Worts? Mehrfachauswahl."
+optionen = ["migration_asyl", "klima_energie", "sozialstaat", "gendern", "bundesverkehr", "wohnen_bund", "cannabis", "corona", "ukraine_krieg", "energiekrise", "anderes", "unklar"]
+anleitung = """Lies den Satz mit dem markierten Wort und die Sätze davor und danach. Wähle jede \
+Kategorie, deren Definition die Stelle trifft; meist ist es eine, bei Überschneidungen zwei \
+(Geflüchtete aus der Ukraine: migration_asyl und ukraine_krieg; Energiepreise wegen des Krieges: \
+energiekrise und ukraine_krieg). anderes: das Wort meint hier etwas außerhalb aller Definitionen \
+(ein Eigenname, eine andere Bedeutung, ein Ereignis vor dem Zeitraum der Definition, etwa ein \
+Pandemieplan für Grippe von 2018). unklar: der Ausschnitt reicht nicht (etwa eine Tabelle ohne \
+Satz, ein abgeschnittenes Wort); nicht raten. anderes und unklar stehen allein."""
+
+[fragen.definitionen]
+migration_asyl = """Flucht, Asyl, Abschiebung, Seenotrettung, Staatsangehörigkeit und Einwanderung als \
+Gegenstand von Bundesrecht oder bundesweiter Debatte, auch in ihrer örtlichen Folge (Unterbringung und \
+Versorgung Geflüchteter, Integration Geflüchteter). Nicht: Wanderung im Sinne der \
+Bevölkerungsstatistik (Zu- und Fortzüge), Tierasyl."""
+klima_energie = """Gesetze, Ziele und Instrumente der Klima- und Energiepolitik des Bundes: \
+Klimaschutzgesetz, Gebäudeenergiegesetz („Heizungsgesetz"), Erneuerbare-Energien-Gesetz, \
+Energiewende, Kohle- und Atomausstieg, CO2-Preis, Wärmeplanungsgesetz, Klimaneutralität bis 2045. \
+Nicht: Klimaschutz der Stadt ohne Bezug auf diese Instrumente."""
+sozialstaat = """Leistungen und Reformen des Sozialstaats nach Bundesrecht: Bürgergeld, Hartz IV \
+(Arbeitslosengeld II), Kindergrundsicherung, Mindestlohn, Bildungs- und Teilhabepaket, Grundrente, \
+Elterngeld, Wohngeld, der Sozialstaat als Gegenstand — auch wenn die Stadt die Leistung auszahlt."""
+gendern = """Die bundesweite Debatte um geschlechtergerechte Sprache (Gendern, Gendersternchen, \
+Genderverbot) und das Geschlechtsrecht des Bundes (Selbstbestimmungsgesetz, Transsexuellengesetz, \
+drittes Geschlecht). Nicht: Gleichstellungsarbeit der Stadt ohne Bezug darauf."""
+bundesverkehr = """Verkehrspolitik und -finanzierung des Bundes: Deutschlandticket, 9-Euro-Ticket, \
+Bundesverkehrswegeplan, Regionalisierungsmittel, Gemeindeverkehrsfinanzierungsgesetz, \
+Diesel-Fahrverbote und Abgasskandal, Reform des Straßenverkehrsrechts, Pkw- und Lkw-Maut, das \
+Bundesverkehrsministerium."""
+wohnen_bund = """Mietrecht und Bodenrecht des Bundes: Mietpreisbremse, Mietendeckel, \
+Baulandmobilisierungsgesetz, „Bau-Turbo", neue Wohngemeinnützigkeit. Nicht: Wohnungsbau der Stadt \
+ohne Bezug darauf."""
+cannabis = """Legalisierung und Regulierung von Cannabis (Konsumcannabisgesetz, Anbauvereinigungen, \
+Modellprojekte, Konsumverbotszonen) und die Debatte darum, auch Cannabis in der Drogen- und \
+Suchtpolitik der Stadt. Nicht: Hanf als Pflanze oder Rohstoff ohne Bezug auf Drogen."""
+corona = """Die Covid-19-Pandemie seit 2020 und ihre Folgen (Schutzverordnungen, Lockdown, Hilfen, \
+Testzentren, Impfung, Ausfälle). Ein Pandemieplan oder eine Pandemie ohne Bezug auf Covid-19 ist \
+anderes."""
+ukraine_krieg = """Russlands Krieg gegen die Ukraine (seit 2014, Vollinvasion seit dem 24.02.2022) und \
+seine Folgen: Geflüchtete aus der Ukraine, Hilfe, Solidarität, Sanktionen. Nicht: die Ukraine ohne \
+Bezug auf den Krieg (Kultur, Sport, Partnerschaften vor 2014)."""
+energiekrise = """Die Gas- und Energiepreiskrise 2022/23: Gasmangellage, Preisbremsen, Gasumlage, \
+Entlastungspakete, Energiesicherungsverordnungen, Energiesparen wegen der Krise. Nicht: \
+Energiesperren und Energiearmut einzelner Haushalte ohne Bezug auf diese Krise."""
+anderes = "Das Wort meint hier etwas außerhalb aller Definitionen oben."
+unklar = "Der Ausschnitt reicht für keine Entscheidung."
+
+[[fragen]]
+id = "ebene"
+frage = "Nennt die Fundstelle die Bundesebene?"
+optionen = ["bund", "land_eu", "lokal", "unklar"]
+anleitung = """bund: der Satz mit dem markierten Wort oder seine Nachbarsätze nennen ein Gesetz, eine \
+Institution, eine Entscheidung, eine Förderung oder eine Debatte des Bundes (Bundesregierung, \
+Bundestag, Bundesministerium, Bundesgesetz, Bundesmittel, „bundesweit"), oder das markierte Wort ist \
+selbst ein Bundesgesetz oder eine Bundesleistung (Bürgergeld, Deutschlandticket, Mindestlohn). \
+land_eu: nur das Land NRW oder die EU, nicht der Bund. lokal: nur Maßnahmen der Stadt, eines \
+Gremiums oder Dritter vor Ort, keine höhere Ebene genannt. unklar: nicht zu entscheiden. Diese Frage \
+beschreibt die Treffer (Nationalisierung gegen örtliche Umsetzung) und wird nicht als Präzision \
+gewertet."""
+
+# Nur für die Auswertung (F4, `score`); steht nicht in den Kodieraufgaben.
+[auswertung]
+kriterium = "Präzision >= 0,9 an den 100 Treffern (Briefing, unverändert): Anteil der Aufgaben, bei denen die Kategorie des Lexikons (stichprobe.csv) im Endlabel thema steht; unklar wird gezählt und berichtet, nicht gewertet."
+praezision = "ungewichtet an den 100 (das Kriterium), mit Wilson-95-%-Intervall; dazu mit der Population je Kategorie gewichtet (die Präzision über alle Treffer des Korpus) und je Kategorie mit Wilson-Intervall (n = 10, nur zur Orientierung)."
+ebene = "Anteil bund, land_eu, lokal je Kategorie und Periode (beschreibend)."
+uebereinstimmung = "Krippendorffs alpha zwischen den beiden Kodierern: thema als MASI-Distanz über die Mengen und zusätzlich binär (Lexikonkategorie im Thema ja/nein), ebene nominal; Stufe 3 verlangt alpha >= 0,8."
