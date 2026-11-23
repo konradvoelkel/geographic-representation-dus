@@ -23,6 +23,12 @@ Eine Zeile ist eine Spanne:
 Die Folge ist fest: sortiert nach ``id``, ``start``, ``end``, ``kind`` (CLAUDE.md: die Zeilenfolge
 nach einem Join nie dem Zufall überlassen).
 
+Ein Vorhaben darf **hinter** den acht weitere Spalten tragen (Nachzug F3, Entscheidung des
+Supervisors vom 2026-11-23, ``docs/plans/00-synergien-2026-11.md``, Konflikt 3): Vorhaben 12 etwa
+``attr``, die Form eines Betrags oder Termins. ``check_spans`` prüft die acht in ihrer Folge und mit
+ihren Typen und lässt die weiteren unberührt -- was sie bedeuten und ob sie leer sein dürfen, weiß
+ihr Vorhaben. ``sort_spans`` behält sie, in ihrer Folge, hinter den acht.
+
 Eine Schema-Version steht hier nicht: sie gehört dem Modul, das eine Spannen-Datei schreibt, und
 steht an dessen Schritt (CLAUDE.md, „Jeder ``Step`` bekommt seine Schema-Version aus der Konstante
 des Moduls, das die Datei schreibt").
@@ -56,21 +62,25 @@ def empty_spans() -> pl.DataFrame:
 
 
 def sort_spans(spans: pl.DataFrame) -> pl.DataFrame:
-    """Spalten in Schemafolge, Zeilen in der festen Folge."""
-    return spans.select(list(SPAN_SCHEMA)).sort(list(ORDER), maintain_order=True)
+    """Die acht Spalten in Schemafolge, dahinter die weiteren in ihrer Folge; Zeilen in der festen
+    Folge."""
+    extra = [name for name in spans.columns if name not in SPAN_SCHEMA]
+    return spans.select([*SPAN_SCHEMA, *extra]).sort(list(ORDER), maintain_order=True)
 
 
 def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
     """``SchemaError``, wenn eine Spanne das Schema, die Folge oder ihren Text verletzt.
 
     ``lengths`` nennt je Dokument-ID die Länge des Texts, auf den die Positionen zeigen. Geprüft
-    werden Spalten und Typen, ``0 <= start < end <= len(text)``, eine bekannte ID je Zeile, kein
-    leeres ``kind`` und die feste Folge. Die Meldung nennt die erste verletzende Zeile.
+    werden die acht Spalten vorn in ihrer Folge und mit ihren Typen, ``0 <= start < end <=
+    len(text)``, eine bekannte ID je Zeile, kein leeres ``kind`` und die feste Folge. Spalten
+    dahinter gehören dem Vorhaben und sind frei. Die Meldung nennt die erste verletzende Zeile.
     """
-    schema = dict(spans.schema)
-    if schema != SPAN_SCHEMA:
-        raise SchemaError(f"Spannen: Schema {schema} statt {SPAN_SCHEMA}")
-    if spans.select(pl.all().is_null().any()).select(pl.any_horizontal(pl.all())).item():
+    head = dict(list(spans.schema.items())[: len(SPAN_SCHEMA)])
+    if head != SPAN_SCHEMA:
+        raise SchemaError(f"Spannen: Schema {dict(spans.schema)} beginnt nicht mit {SPAN_SCHEMA}")
+    core = spans.select(list(SPAN_SCHEMA))
+    if core.select(pl.all().is_null().any()).select(pl.any_horizontal(pl.all())).item():
         raise SchemaError(
             "Spannen: leere Werte; norm und section sind leere Zeichenketten, nie null"
         )
@@ -78,7 +88,8 @@ def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
         {"id": list(lengths), "length": list(lengths.values())},
         schema={"id": pl.String(), "length": pl.Int64()},
     )
-    checked = spans.with_row_index("zeile").join(known, on="id", how="left")
+    # über die acht allein: eine Zusatzspalte darf ``zeile`` oder ``length`` heißen
+    checked = core.with_row_index("zeile").join(known, on="id", how="left")
     bad = checked.filter(
         pl.col("length").is_null()
         | (pl.col("start") < 0)
