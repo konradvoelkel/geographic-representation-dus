@@ -222,7 +222,7 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
     fetching = args.command == "fetch"
     models = getattr(args, "models", False)
     if not fetching and args.limit is not None and not models:
-        # Ohne Modellschritt hieße es nur: neuer Fingerprint, alle Schritte neu, nichts begrenzt.
+        # Ohne --models begrenzte --limit nichts; ein stiller No-op wäre ein Bedienfehler.
         print("Fehler: --limit gilt nur mit --models (bei `fetch`: PDFs)", file=sys.stderr)
         return 2
     retry = getattr(args, "retry_rejected", False)

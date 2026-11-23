@@ -92,7 +92,7 @@ veröffentlicht sie über GitHub Pages unter
 
 | Befehl | Was er tut |
 |---|---|
-| `georep run [SCHRITT …] [--force] [--dry-run] [--online] [--models [--limit N]]` | führt die Schritte aus und überspringt, was aktuell ist; Netzschritte nur mit `--online`, Schritte mit lokalem Modell nur mit `--models` (`--limit` begrenzt dann die neuen Eingaben je Stapellauf; was offen bleibt, zeigt `georep status`); scheitert ein Modellschritt, endet der Lauf mit Exit 1 |
+| `georep run [SCHRITT …] [--force] [--dry-run] [--online] [--models [--limit N] [--retry-rejected]]` | führt die Schritte aus und überspringt, was aktuell ist; Netzschritte nur mit `--online`, Schritte mit lokalem Modell nur mit `--models` (`--limit` begrenzt dann die neuen Eingaben je Stapellauf; was offen bleibt, zeigt `georep status`; `--retry-rejected` fragt Eingaben erneut, die das Modell abwies); scheitert ein Modellschritt, endet der Lauf mit Exit 1 |
 | `georep fetch [SCHRITT …] [--force] [--dry-run] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `meetings`, `consultations`, `persons`, `pdfs`, `streets_osm`, `pois_wiki`, danach `shapes` und `texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Seiten je Liste, `--dry-run` zeigt nur den Plan |
 | `georep steps` | Schritte mit Eingaben und Ausgaben |
 | `georep status` | Settings, Pfade, Stores, Frische jedes Schritts mit Grund |

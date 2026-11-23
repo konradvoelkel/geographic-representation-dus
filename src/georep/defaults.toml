@@ -244,7 +244,7 @@ retry_rejected = false         # true: Eingaben, die das Modell einmal abwies (4
 model = "nomic-embed-text-v2-moe"  # mehrsprachig, 475 M Parameter, F16, 958 MB; ohne Tag heisst es :latest
 dimension = 768                # Laenge jedes Vektors; eine Antwort mit anderer Laenge ist ein Fehler
 num_ctx = 512                  # Fenster in Token: das Modell liest hoechstens 512 (context_length laut /api/show), laengere Texte schneidet ollama hinten ab. Wer mehr braucht, zerteilt den Text vorher. Fenster und truncate stehen im Cache-Schluessel und in der Kennung des Schritts
-truncate = true                # false: ein Text ueber dem Fenster ist ein Fehler des Servers statt still abgeschnitten (der Stapellauf zaehlt ihn als gescheitert)
+truncate = true                # false: ein Text ueber dem Fenster ist ein Fehler des Servers statt still abgeschnitten (der Stapellauf merkt ihn sich als abgewiesen und fragt ihn nicht wieder, ausser mit retry_rejected)
 
 [ml.generation]                # Vorhaben 19 und 20; ein Vorhaben darf in seinem Block ein anderes Modell nennen, die Optionen kommen von hier
 model = "qwen3.6:27b"          # 27,8 B Parameter, Q4_K_M, 17,4 GB auf der Platte, mit num_ctx = 8192 aber 22,9 GB Grafikspeicher (/api/ps, 2026-11-23): das Einbettungsmodell passt NICHT daneben in 24 GB, ollama laedt um. Einbettung und qwen nacheinander, nicht zugleich

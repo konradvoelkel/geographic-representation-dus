@@ -2627,7 +2627,7 @@ die Fehlerbehandlung in `run_step` und ein Zusatz in `expected_stamp` und `stamp
 
 **Nichts aus `[ml]` steht im Settings-Fingerprint.** Was ein Ergebnis bestimmt (Modell, Digest,
 Optionen, Fenster), steht in der Kennung im Stamp des Modellschritts; ein Teillauf (`--limit`, oder
-Eingaben, die das Modell abwies) steht dort als `open` und macht den Schritt nicht aktuell
+Eingaben, die ohne Abweisung scheiterten) steht dort als `open` und macht den Schritt nicht aktuell
 („offen: n Eingaben"). Der Rest ist Ort und Laufzeit. Im globalen Fingerprint ließ jede Änderung an
 `[ml]`, auch ein `--limit`, alle Schritte neu laufen, auch die ohne Modell, und der Merge von F5
 hätte die ganze Kette einmal neu gerechnet; so ändert F5 den Fingerprint nicht. `--limit` ohne
@@ -2637,12 +2637,36 @@ hätte die ganze Kette einmal neu gerechnet; so ändert F5 den Fingerprint nicht
 Commit: das Fenster des Einbetters in Schlüssel und Kennung (vorher kam ein Vektor mit 64 Token aus
 dem Cache eines mit 512); abgeschnittene Antworten markiert statt als vollständig gecacht (`Reply`,
 Spalte `truncated`, Schema 2); `[ml]` aus dem Fingerprint und Teilläufe als offen; ein Lese-Timeout
-nicht wiederholt (`ModelUnreachableError`); ohne Server eine Probe je Prozess, ein Schritt
+nicht wiederholt; ohne Server eine Probe je Prozess, ein Schritt
 „fehlgeschlagen" statt eines abgebrochenen Laufs, „unbekannt" in `status`, `--dry-run` plant
 weiter; `SQLITE_BUSY` beim gleichzeitigen ersten Öffnen wiederholt; ein abgewiesener Text scheitert
 allein, und der Lauf geht weiter (zehn in Folge brechen ab); `ml status` liest den Cache nur;
 `--limit` geprüft; Doku; und der Server muss auf diesem Rechner laufen (`is_loopback_url`, sonst
 `ml.allow_remote = true`), die Session liest keine Proxys aus der Umgebung.
+
+**Die dritte Runde: abgewiesen ist erledigt, gescheitert ist offen.** Die Nachprüfung fand, dass ab
+zehn dauerhaft abgewiesenen Eingaben jeder weitere Lauf an „zehn Fehlschläge in Folge" scheiterte:
+im nächsten Lauf standen genau sie als einzige fehlende hintereinander. Ein realistischer Auslöser
+ist `ml.embedding.truncate = false`. Darum unterscheidet der Stapellauf jetzt zwei Arten und merkt
+sich beide mit Grund in der Tabelle `failures` des Modellcaches (Schema 3):
+
+- **abgewiesen** (`ModelRejectedError`, ein 4xx außer 404): das Modell nimmt diese Eingabe so nicht.
+  Eine zweite Frage gäbe dieselbe Antwort. Spätere Läufe überspringen sie, sie zählen nicht in die
+  Fehlschläge in Folge, und im Stamp stehen sie als `rejected`, **nicht** als `open`: der Schritt
+  ist aktuell und sagt „aktuell, n Eingaben abgewiesen" (auch in `georep status`). Wer sie erneut
+  fragen will, etwa nach einem größeren Fenster, setzt `ml.retry_rejected` (`--retry-rejected`);
+  dann gilt der Schritt als offen. Verworfen: abgewiesene als `open` zählen. Dann wäre der Schritt
+  nie aktuell, jeder Lauf fragte sie erneut und endete mit Exit 1, obwohl nichts mehr zu tun ist.
+- **gescheitert** (jeder andere `ModelError`: Lese-Timeout, 5xx nach den Wiederholungen,
+  unbrauchbare Antwort): vielleicht vorübergehend. Er bleibt offen (`open`, `failed`), und spätere
+  Läufe fragen ihn erneut, aber hinter allem Neuen, damit er nicht bei jedem Lauf zuerst `limit`
+  verbraucht.
+
+Ein Lese-Timeout ist seitdem kein `ModelUnreachableError` mehr: die Probe hatte den Server erreicht,
+nur dieser Text dauerte zu lange. `ModelUnreachableError` heißt nur noch „Verbindung abgelehnt" und
+bricht den Lauf ab. `ModelUse.record` summiert die Stapelläufe eines Schritts, `run_step` setzt vor
+jedem Lauf zurück; vorher meldete ein Schritt mit zwei Stapelläufen nach dem zweiten „aktuell",
+obwohl Eingaben des ersten fehlten. `CacheStat` nennt die Datei, aus der es zählt.
 
 **Cache: SQLite je Modell, nicht Parquet-Scherben.** Ein Eintrag ist (Digest, Prompt-Version,
 SHA-256 der Eingabe) → Wert, und die Eingabe ist, was das Modell sieht. Gemessen am 2026-11-23 auf

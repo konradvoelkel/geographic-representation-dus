@@ -1497,7 +1497,11 @@ class GenerationModel(_Strict):
 
 
 class Ml(_Strict):
-    """Der lokale Modellserver: Ort und Laufzeit (nicht im Fingerprint), Modelle und ``limit`` (darin)."""
+    """Der lokale Modellserver: Ort, Laufzeit, Modelle, Optionen. Nichts davon steht im Fingerprint.
+
+    Was ein Ergebnis bestimmt (Modell, Digest, Optionen, Fenster), steht als Kennung im Stamp des
+    Modellschritts, ein Teillauf als offene Eingaben (``ModelUse``, Review F5, N5).
+    """
 
     base_url: str = Field(default="http://localhost:11434", pattern=r"^https?://")
     allow_remote: bool = False  # ein Server, der nicht auf diesem Rechner läuft, nur ausdrücklich

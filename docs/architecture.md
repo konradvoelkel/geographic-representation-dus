@@ -29,7 +29,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `schema` | die Schema-Versionen der zwei Modellausgaben (Themen, passender Ausschuss) -- importfrei, damit `build_steps` sie ohne scikit-learn kennt (Punkt 45) |
 | `io` | atomare Schreibvorgänge (Temporärdatei, fsync, `os.replace`), JSON, Parquet mit `schema_version` in den Metadaten, SHA-256 (`digest`) |
 | `http` | Session mit Timeout, Retry mit Backoff, User-Agent, requests-cache je Quelle; `Transport`-Protokoll als Testnaht; `network_errors` wandelt requests-Fehler in `NetworkError`; `is_loopback_url` sagt, ob eine Adresse auf diesen Rechner zeigt (der Modellserver, Fundament F5) |
-| `errors` | Domänenfehler: `MissingInputError`, `EmptyResultError`, `SchemaError`, `CorruptPdfError`, `FetchError`, `NetworkError`, `ModelError` (Fundament F5: Modell fehlt, Anfrage abgewiesen, Antwort unbrauchbar) und seine Unterklasse `ModelUnreachableError` (Server fehlt oder antwortet nicht in `ml.timeout_s`) |
+| `errors` | Domänenfehler: `MissingInputError`, `EmptyResultError`, `SchemaError`, `CorruptPdfError`, `FetchError`, `NetworkError`, `ModelError` (Fundament F5: Modell fehlt, Antwort unbrauchbar oder nicht in `ml.timeout_s`) mit den Unterklassen `ModelRejectedError` (der Server wies diese Eingabe ab) und `ModelUnreachableError` (der Server nahm die Verbindung nicht an) |
 | `oparl` | OParl 1.1 als pydantic-Vertrag (`OparlPaper` mit den drei Urheberfeldern und `consultation_organizations`, `OparlFile`, `OparlOrganization`, `PaperPage`, `OrganizationPage`), echte Antworten als Fixtures; Fundament F6: `OparlMeeting` mit Tagesordnung, `OparlAgendaItem`, `OparlConsultation`, `OparlPerson` (ohne Kontaktdaten, `PERSON_PRIVATE_KEYS`), `OparlMembership`, gemeinsame Basis `OparlObject` und der Umschlag `ListPage` für jede Liste; `OparlPaper.consultations` liest die eingebetteten Beratungen typisiert |
 | `council` | Fundament F6: die Netzschritte `meetings`, `consultations`, `persons` (`run_*`), ihre Dateien (`council_files`), ein `JsonlStore` je Objektart (letzte Zeile gewinnt, sortiert und atomar gespeichert) und die Fortsetzung über Teildateien und Fortschritt; Runbook `docs/runbook-sitzungen.md` |
 | `records` | `PaperRecord`: die Zeile in `raw/papers.jsonl`, aus OParl oder dem Altformat der Arbeit; die vier URL-Listen sind Tupel, weil der Record `frozen` und damit hashbar ist |
@@ -300,15 +300,21 @@ Kurzfassungen (20). Sie sprechen nicht mit einem Modell, sondern mit einer Naht:
   ersten Arbeit fragt der Client einmal `/api/version`, ohne Wiederholung; fehlt der Server, ist
   jeder weitere Aufruf sofort ein `ModelUnreachableError`, und `client_from_settings` gibt allen
   Schritten eines Prozesses denselben Client, also eine Probe. Einmal erreicht, wird eine abgelehnte
-  Verbindung mit Backoff wiederholt (`ml.retries`), ebenso 429 und 5xx; ein Lese-Timeout nach
-  `ml.timeout_s` nicht (`ModelUnreachableError`), ein 4xx auch nicht (`ModelError`). Der
-  Konstruktor spricht nicht mit dem Server: `build_steps` darf Modelle bauen, ohne dass einer läuft.
+  Verbindung mit Backoff wiederholt (`ml.retries`), ebenso 429 und 5xx. Nicht wiederholt werden ein
+  Lese-Timeout nach `ml.timeout_s` (ein `ModelError` dieses Texts: der Server lief ja), ein 404
+  (ein fehlendes Modell, `ModelError`) und jeder andere 4xx: der Server wies die Eingabe ab
+  (`ModelRejectedError`). Der Konstruktor spricht nicht mit dem Server: `build_steps` darf Modelle
+  bauen, ohne dass einer läuft.
 - **Settings und Stamp**: `[ml]` steht **nicht** im Settings-Fingerprint; eine Änderung dort lässt
   keinen anderen Schritt neu laufen. Was ein Ergebnis bestimmt, steht als Kennung im Stamp des
-  Modellschritts, lesbar unter `"models"` samt `limit`, `open` und `failed`. `run_step` fragt die
-  Kennung erst, wenn der Schritt laufen darf, also mit `--models`; eine andere meldet
+  Modellschritts, lesbar unter `"models"` samt `limit`, `open`, `failed` und `rejected`; `run_step`
+  setzt sie vor jedem Lauf zurück, und die Stapelläufe des Schritts summieren hinein. `run_step`
+  fragt die Kennung erst, wenn der Schritt laufen darf, also mit `--models`; eine andere meldet
   `stamp_mismatch` als „Modell oder Prompt geändert", ein Teillauf als „offen: n Eingaben" (davon
-  m gescheitert), und der nächste Lauf rechnet weiter. Ohne `--models` wird der Schritt übersprungen
+  m gescheitert), und der nächste Lauf rechnet weiter. **Abgewiesene Eingaben sind erledigt, nicht
+  offen**: der Schritt ist aktuell und sagt es („aktuell, n Eingaben abgewiesen", so auch in
+  `georep status`); mit `ml.retry_rejected` (`georep run --models --retry-rejected`) gilt er wieder
+  als offen und fragt sie erneut. Ohne `--models` wird der Schritt übersprungen
   wie ein Netzschritt ohne `--online`, und sein Ergebnis kommt aus einem Paket (`georep pack`,
   `bootstrap`): CI und GitHub Pages haben weder GPU noch Modellserver. Fehlt der Server, ist der
   Schritt „fehlgeschlagen", nicht der Lauf: `georep run` druckt jede Zeile, sobald ein Schritt fertig
@@ -318,17 +324,23 @@ Kurzfassungen (20). Sie sprechen nicht mit einem Modell, sondern mit einer Naht:
   geteilt. Schlüssel ist (Digest, Prompt-Version samt Schlüssel der Optionen, SHA-256 der Eingabe),
   und die Eingabe ist, was das Modell sieht: bei Einbettungen der Text samt Präfix, bei Generatoren
   System und Prompt zusammen. Ein Stapel ist eine Transaktion (WAL); eine abgeschnittene Antwort
-  liegt markiert darin (`truncated`, Schema 2). Öffnen mehrere Läufe dieselbe neue Datei zugleich,
-  wiederholt `with_busy_retry` die Vorbereitung, solange SQLite „besetzt" meldet. `cache_stats` liest
-  nur (`mode=ro`) und überspringt Dateien, die nicht zum Cache gehören. Einbettungen liegen als
+  liegt markiert darin (`truncated`). Die Tabelle `failures` (Schema 3) merkt sich je Eingabe,
+  die scheiterte, Art und Grund: `abgewiesen` (vom Modell, erledigt) oder `gescheitert` (Zeit, 5xx,
+  offen); ein Wert für dieselbe Eingabe löscht den Eintrag. Öffnen mehrere Läufe dieselbe neue Datei
+  zugleich, wiederholt `with_busy_retry` die Vorbereitung, solange SQLite „besetzt" meldet.
+  `cache_stats` liest nur (`mode=ro`), überspringt Dateien, die nicht zum Cache gehören, und nennt je
+  Zeile die Datei (`CacheStat.path`), deren Name nicht zum Modell passen muss. Einbettungen liegen als
   float32 little endian.
 - **Stapellauf** `ml.batch`: `run_batch` rechnet nur, was unter dem Schlüssel fehlt, jede verschiedene
   Eingabe einmal, in Stapeln zu `ml.batch_size`; `limit` (`georep run --models --limit N`) begrenzt
   die neuen Eingaben **je Stapellauf**, also je Aufruf von `embed_texts` oder `generate_texts`, und ein
-  Abbruch verliert höchstens den laufenden Stapel. Weist das Modell einen Stapel ab, wird er in
-  Einzeltexte zerlegt; was dann noch scheitert, steht mit Index und Grund in `BatchReport.failures`,
-  bleibt offen, und der Lauf geht weiter. Ein fehlender Server und zehn Fehlschläge in Folge brechen
-  ab. Nach jedem Stapel ein Fortschritt mit Restzeit; `progress_log` schreibt höchstens alle 30 s
+  Abbruch verliert höchstens den laufenden Stapel. Scheitert ein Stapel, wird er in Einzeltexte
+  zerlegt; was dann noch scheitert, steht mit Index und Grund im Bericht, und der Lauf geht weiter:
+  eine Abweisung in `BatchReport.rejected` (gemerkt, spätere Läufe überspringen sie, außer mit
+  `retry_rejected`), jeder andere Fehlschlag in `BatchReport.failures` (gemerkt, offen, im nächsten
+  Lauf hinter allem Neuen, damit er nicht zuerst `limit` verbraucht). Ein fehlender Server und zehn
+  neue Fehlschläge in Folge brechen ab; was bis dahin abgewiesen wurde, ist gemerkt, und der nächste
+  Lauf kommt weiter. Nach jedem Stapel ein Fortschritt mit Restzeit; `progress_log` schreibt höchstens alle 30 s
   eine Zeile. `embed_texts` und `generate_texts` lesen danach alles aus dem Cache zurück, markieren,
   was fehlt (`present`, `None`) und was abgeschnitten ist (`Generated.truncated`), und tragen das
   Ergebnis in die `ModelUse` ein.
