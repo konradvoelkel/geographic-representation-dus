@@ -656,6 +656,45 @@ Rückfallregel.
 **Was ein Bestehen bedeutet**: C wird die Gewichtsvariante `ortsbezug` (§ 6) neben `stelle`, nicht
 die Standardzählung; die triviale Regel wird weiter daneben berichtet (§ 9.2).
 
+### 5.4 Runde 2: Stichprobe und Aufgaben (2026-11-23, nach § 5.3)
+
+Gezogen und geschrieben nach dem Commit von § 5.3 (`1902bd4`), mit
+
+```bash
+nice -n 10 uv run python docs/plans/16-ortsbezug-messung.py --fassung 2 --aufgaben-2
+nice -n 10 uv run python docs/plans/16-ortsbezug-messung.py --auswertung-2   # sobald labels-2.csv da ist
+```
+
+**Stichprobe** ([../../validierung/16-ortsbezug/stichprobe-2.csv](../../validierung/16-ortsbezug/stichprobe-2.csv),
+nur IDs, Spalten wie Runde 1): 100 Paare aus 100 Dokumenten, keines aus Runde 1; Grundgesamtheit ohne
+die 200 Dokumente der Runde 1.
+
+| Schicht | Paare mit Stelle | Stichprobe | Gewicht | C sagt |
+|---|---|---|---|---|
+| Titel oder Betreff | 11 857 | 34 | 348,74 | handelt von (34) |
+| Kern | 4 826 | 32 | 150,81 | handelt von (32) |
+| Begleittext und Rest | 11 491 | 34 | 337,97 | handelt von 14, erwähnt 20 |
+
+**Codebuch**: [../../validierung/16-ortsbezug/codebuch-2.toml](../../validierung/16-ortsbezug/codebuch-2.toml),
+Fassung 2026-11-23.2: die Regeln (a) bis (e) aus § 9.13 je mit Beispiel, die Anweisung über
+Begriffe und Bezirk nach (a), Frage, Klassen und Antwortformat wie Fassung 1 (Aufgaben-IDs
+`16-2-NNN`), Maße und Kriterium aus § 5.3.
+
+**Kodieraufgaben**: `/media/konrad/xtraspace/georep/messdaten/kodierung/16-ortsbezug/aufgaben-2.jsonl`
+(100 Zeilen, 521 KB, lokal; ein Dokument über 600 Zeilen gekürzt, seine Zeilen mit Begriffen als
+`auszug`), Reihenfolge gemischt (Seed `"16-2-reihenfolge"`). Neu im Material: `stadtbezirk` und
+`stadtteile_im_wahlbezirk` (jeder Stadtteil der Stadtteilgrenzen 2025, der mindestens 5 % der
+Fläche des Wahlbezirks deckt, mit Anteil; im Mittel 2,0 je Wahlbezirk). Daneben `regel-2.jsonl`
+mit `verfahren` (= C), den anderen Regeln und der Stelle — **den Kodierern nicht zeigen**. Beide
+Dateien und die Stichprobe sind über zwei Läufe bytegleich (SHA-256 `aufgaben-2.jsonl` `998b19a9…`,
+`regel-2.jsonl` `ab29d8c1…`, `stichprobe-2.csv` `f91527e1…`), die Aufgaben der Runde 1 unverändert
+(`20b9f85b…`).
+
+**Auswertung** (`--auswertung-2`, mit erfundenen Labels geprüft, je einmal bestanden und nicht
+bestanden): Hauptmaß und Urteil nach § 5.3, daneben die ursprüngliche Regel, A, B und die triviale
+Regel explorativ, Übereinstimmung, Fehler nach Stelle und Dokumentart. Die Ergebnisse kommen in
+einen eigenen Abschnitt; § 5.3 bleibt, wie er ist.
+
 ## 6. Bauplan Stufe 2
 
 **Beitrag** `places` im Register `georep.enrich.CONTRIBUTIONS` (F2, Punkt 69), ein Schritt `places`,
@@ -789,7 +828,7 @@ Tabelle 5 sind zehn weitere Tests derselben Frage.
 | 9.10 | Titel: der OParl-Titel ist nicht im Index. Zählt ein Begriff, der nur im Titel steht, als Treffer? | Würde den Index ändern | nein; „Titel" ist nur die Stelle eines Treffers, der auch im Text steht |
 | 9.11 | F4 ist nicht gemerged; Format der Aufgaben vorläufig | Kodier-Agenten brauchen ein festes Format | F4 übernimmt `stichprobe.csv` und liest `aufgaben.jsonl` oder erzeugt sie neu; das Antwortformat steht im Codebuch fest |
 | 9.12 | Mönchengladbach und die anderen Perioden | Stufe 2 läuft für jedes Profil mit Eingaben | die Stelle geht überall, wo 11 Regeln hat; Hausnummern nur mit GebRef der Stadt (Mönchengladbach liegt in NRW, Auszug wie hier) |
-| 9.13 | **Codebuch Fassung 2** (Lücken beider Kodierer, Vorschläge des Schlichters; nicht auf die gemessene Regel angewandt): (a) liegt der Gegenstand in einem Stadtteil außerhalb des Bezirks, auch einem benachbarten, ist dieser Begriff `kein_bezug`; nur aus Weltwissen erschlossen → nach dem Wörterbuch und `unsicher`; der Stadtbezirk des Wahlbezirks kommt ins Material; (b) lineare Maßnahmen: Anfang, Ende und bedienter Ort → `handelt_von`, Herkunft und Richtung → `erwaehnt`; (c) Beispiele in Anfragen nur `handelt_von`, wenn sich eine Frage auf den Ort richtet; Rückblicke in Sachstandslisten → `erwaehnt`; (d) Ortsname in einem Organisationsnamen: nach Sitz und Gegenstand; (e) Veranstaltungen: „bliebe die Aussage gleich, wenn sie anderswo stattfände?" → dann `erwaehnt`, sonst `handelt_von` | Vier der 51 falsch „erwähnt" würden mit (a) zu „kein Bezug" (§ 4.1; F1 der Regel dann 0,784, C 0,880), (c) und (d) beschreiben vier der 11 falsch „handelt von" (Beispiel in einer Anfrage, Rückblick, Kirchengemeinde als Empfänger), die die Kodierer schon so lasen, aber unsicher; die Bestätigungsstichprobe braucht ein Codebuch ohne diese Lücken | Fassung 2 mit (a) bis (e) für die Bestätigungsstichprobe von Nebenregel C; die 200 Labels hier bleiben nach Fassung 1 |
+| 9.13 | **Codebuch Fassung 2** (Lücken beider Kodierer, Vorschläge des Schlichters; nicht auf die gemessene Regel angewandt; umgesetzt in `codebuch-2.toml` für Runde 2, § 5.4): (a) liegt der Gegenstand in einem Stadtteil außerhalb des Bezirks, auch einem benachbarten, ist dieser Begriff `kein_bezug`; nur aus Weltwissen erschlossen → nach dem Wörterbuch und `unsicher`; der Stadtbezirk des Wahlbezirks kommt ins Material; (b) lineare Maßnahmen: Anfang, Ende und bedienter Ort → `handelt_von`, Herkunft und Richtung → `erwaehnt`; (c) Beispiele in Anfragen nur `handelt_von`, wenn sich eine Frage auf den Ort richtet; Rückblicke in Sachstandslisten → `erwaehnt`; (d) Ortsname in einem Organisationsnamen: nach Sitz und Gegenstand; (e) Veranstaltungen: „bliebe die Aussage gleich, wenn sie anderswo stattfände?" → dann `erwaehnt`, sonst `handelt_von` | Vier der 51 falsch „erwähnt" würden mit (a) zu „kein Bezug" (§ 4.1; F1 der Regel dann 0,784, C 0,880), (c) und (d) beschreiben vier der 11 falsch „handelt von" (Beispiel in einer Anfrage, Rückblick, Kirchengemeinde als Empfänger), die die Kodierer schon so lasen, aber unsicher; die Bestätigungsstichprobe braucht ein Codebuch ohne diese Lücken | Fassung 2 mit (a) bis (e) für die Bestätigungsstichprobe von Nebenregel C; die 200 Labels hier bleiben nach Fassung 1 |
 | 9.14 | Kodierer und Schlichter sind dasselbe Modell (Frage 19 an Konrad, offen) | α 0,917 misst die Eindeutigkeit des Codebuchs für ein Modell, nicht Wahrheit | wie bei 11 und 14: die Seite sagt „geprüft von zwei KI-Kodierern, nicht von Menschen"; ein zweites Modell als Kodierer B, wenn Frage 19 es freigibt |
 | 9.15 | Der Matcher trifft „flughafenstr." in „Alte Flughafenstr.", weil die längere Straße im Wörterbuch dieses Bezirks fehlt | Ein Fehltreffer an der Wortgrenze, den die Stelle nicht sieht (1 von 5 „kein Bezug") | außerhalb des Vorhabens; gehört zu den Wörterbuchregeln (Methodik-Review), nicht zur Stelle |
 
