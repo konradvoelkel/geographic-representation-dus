@@ -1247,6 +1247,7 @@ def auswertung(
                 .sort(spalte)
             )
         t.write_csv(AUS / "ndcg_je_anfrage.csv")
+        intervalle_je_form(gueltig)
         del nach_text
     lab_n = labels_lesen(V_NACHBARN)
     if lab_n is None:
@@ -1266,7 +1267,9 @@ def auswertung(
         treffer = sum(1 for w in bekannt if w in NACHBAR_LABELS[1:])
         streng = sum(1 for w in bekannt if w == NACHBAR_LABELS[2])
         iv_lo, iv_hi = wilson_interval(treffer, len(bekannt))
-        anker_ids = p["anker"].unique().to_list()
+        anker_ids = sorted(
+            p["anker"].unique().to_list()
+        )  # feste Folge: der Bootstrap zieht nach Platz
         je_anker = {
             a: [
                 paarlabel.get((a, b)) in NACHBAR_LABELS[1:]
@@ -1283,6 +1286,40 @@ def auswertung(
         )
         praez[verfahren] = treffer / max(1, len(bekannt))
     urteil(suche, besser, praez["einbettung"], praez["tfidf"])
+
+
+def _mittel_ci(x: np.ndarray, rng: np.random.Generator) -> tuple[float, float, float]:
+    zieh = rng.integers(0, len(x), size=(BOOT, len(x)))
+    m = x[zieh].mean(axis=1)
+    return float(x.mean()), float(np.percentile(m, 2.5)), float(np.percentile(m, 97.5))
+
+
+def intervalle_je_form(gueltig: pl.DataFrame) -> None:
+    """Nachgetragen nach der Kodierung (Supervisor, 2026-11-24), ohne Einfluss auf das Kriterium:
+    nDCG@10 je Verfahren mit Bootstrap-Intervall über die Fragen, insgesamt und je ``form``, dazu
+    die Differenzen zu BM25 je ``form`` mit Intervall und Permutationstest. Ein eigener Zufallsstrom
+    je Block (Seed wie § 3.1), damit die vorab festgelegten Intervalle oben unverändert bleiben."""
+    gruppen = [("alle", gueltig)] + [
+        (f, gueltig.filter(pl.col("form") == f)) for f in ("wort", "umschrieben", "frage")
+    ]
+    for name, g in gruppen:
+        rng = np.random.default_rng(SEED)
+        teile = []
+        for v in VERFAHREN:
+            m, lo, hi = _mittel_ci(g[v].to_numpy(), rng)
+            teile.append(f"{v} {m:.3f} ({lo:.3f} bis {hi:.3f})")
+        log(f"nDCG@10 je Verfahren, {name} (n = {g.height}): " + "; ".join(teile))
+        bm = g["bm25"].to_numpy()
+        for v in ("einbettung", "mischung"):
+            x = g[v].to_numpy()
+            lo, hi = bootstrap_diff(x, bm, rng)
+            p = permutation_p(x, bm, rng)
+            besser = int((x > bm + 1e-12).sum())
+            schlechter = int((x < bm - 1e-12).sum())
+            log(
+                f"  {v} − bm25, {name}: {float((x - bm).mean()):+.3f} ({lo:+.3f} bis {hi:+.3f}), "
+                f"p = {p:.4f}; besser bei {besser}, schlechter bei {schlechter} von {g.height} Fragen"
+            )
 
 
 def urteil(suche: bool | None, besser: str, p_einb: float | None, p_tfidf: float | None) -> None:

@@ -1,0 +1,30 @@
+{
+  "vorhaben": "18-einbettungen",
+  "codebuch_version": "2026-11-23.1",
+  "einheit": "query_document",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-24",
+  "einheiten": 916,
+  "uneinig": 35,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "relevanz": {
+      "n": 916,
+      "beide": 916,
+      "einig": 881,
+      "anteil": 0.9617903930131004,
+      "anteil_wilson95": [
+        0.9473241623090948,
+        0.9723995486493519
+      ],
+      "cohen_kappa": 0.9333933056740344,
+      "krippendorff_alpha_nominal": 0.9334290406655745,
+      "krippendorff_alpha_skala": 0.9754758198256933,
+      "krippendorff_alpha": 0.9754758198256933,
+      "markierungen": null,
+      "alpha_genuegt": true
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 916 Paaren aus Suchanfrage und Dokument, nicht von Menschen"
+}
