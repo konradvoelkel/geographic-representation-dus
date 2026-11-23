@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import polars as pl
 import pytest
-from hypothesis import assume, given
+from hypothesis import assume, example, given
 from hypothesis import strategies as st
 from scipy.stats import linregress
 
@@ -95,12 +95,29 @@ def test_the_added_variable_slope_is_the_coefficient(
 
 
 @given(rows=triples, scale=st.floats(min_value=0.1, max_value=1000.0))
+# Gegenbeispiel vom 2026-11-23: y trifft a bis auf Werte unter 1e-76, die Anpassung ist exakt, und
+# fit_ols meldet das zu Recht als fehlendes Ergebnis (R² = 1, Punkt vom 2026-11-18).
+@example(
+    rows=[
+        (0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0),
+        (0.0, 2.3595557237527787e-279, 0.0),
+        (1.0, 1.0, 0.0),
+        (2.719386485578939e-77, 0.0, 0.0),
+    ],
+    scale=1.0,
+)
 def test_scaling_y_scales_the_coefficients_and_leaves_p_alone(
     rows: list[tuple[float, float, float]], scale: float
 ) -> None:
     frame = _frame(rows)
     assume(_usable(frame, ("y", "a")))
-    one = fit_ols(frame, "y", ["a"])
+    try:
+        one = fit_ols(frame, "y", ["a"])
+    except EmptyResultError:
+        # Exakte Anpassung: ohne Reststreuung gibt es kein p, das die Skalierung erhalten müsste.
+        return
     scaled = fit_ols(frame, "y", ["a"], y_scale=scale)
     assert scaled.term("a").coefficient == pytest.approx(
         one.term("a").coefficient * scale, rel=1e-7
