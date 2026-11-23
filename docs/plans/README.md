@@ -22,7 +22,7 @@ der Supervisor führt sie bei jedem Start, Urteil und Merge nach.
 | 14 | Vorgänge | `feat/14-vorgaenge` | 1 → 2 | **Urteil bauen, mit der Rückfallregel** (2026-11-23): stark nur Kanten aus Titel, Anlage, Nachtragsnummer, Sammelbericht; 104/106 = 0,981 (Wilson 0,934–0,995); 3 563 starke Kanten, 2 169 Vorgänge, 39,6 % der Anfragen mit Antwort; Stufe 2 wartet auf F6 (Anlagen) und Haltepunkt A, mit einer eigenen Stichprobe von rund 50 Rückfall-Kanten daneben (Frage 9.18) |
 | 15 | Dokumentfunktion und gemeinsame Anträge | `feat/15-funktion` | 1 → 2 | **Urteil bauen, Variante B** (2026-11-23): κ 0,905 (A 0,829, Untergrenze 0,748), Fehler nur bei Anträgen; Urheber-Präzision 119/119, Recall 0,86; Restklasse heißt auf der Seite „Funktion nicht erkannt"; Stufe 2 wartet auf Haltepunkt A |
 | 16 | Ortsbezug verfeinern | `feat/16-ortsbezug` | – | wartet auf 11 |
-| 17 | Zeit und Neuigkeiten | `feat/17-zeit` | – | offen |
+| 17 | Zeit und Neuigkeiten | `feat/17-zeit` | 1 | Messdokument auf `main` (2026-11-23): vorläufig bauen; H17.1 Wahlzyklus nicht bestätigt, H17.2 Haushaltsmonat bestätigt (fast mechanisch), H17.3 Bundesvokabular nicht bestätigt; 41 gültige Atom-Feeds; Kodierung des Lexikons (100 Treffer) folgt |
 | 18 | Einbettungen, Ähnlichkeit, Suche | `feat/18-einbettungen` | – | wartet auf F5 |
 | 19 | Politikfelder (CAP) | `feat/19-politikfelder` | – | wartet auf F5 |
 | 20 | Kurzfassungen (lokal) | `feat/20-kurzfassungen` | – | wartet auf F5 |
