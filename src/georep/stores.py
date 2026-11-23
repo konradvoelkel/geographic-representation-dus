@@ -186,3 +186,92 @@ class TextStore:
     def save(self) -> None:
         frame = pl.DataFrame([self.rows[name] for name in sorted(self.rows)], schema=TEXT_SCHEMA)
         write_parquet(frame, self.path, schema_version=TEXT_SCHEMA_VERSION)
+
+
+# --- Fundament F1: der Rohtext neben dem Suchtext (docs/plan-vorverarbeitung-2026-11.md, § 7) ---
+
+# Der Seitenwechsel im Rohtext. Er gehört zum Format der Datei, darum steht er hier und nicht im
+# Modul, das ihn schreibt: der Vertrag von ``RawTextStore.save`` prüft gegen ihn.
+PAGE_BREAK = "\f"
+RAW_TEXT_SCHEMA = {
+    "name": pl.String,
+    "text": pl.String,
+    "pages": pl.Int64,
+    "chars": pl.Int64,
+    "extractor": pl.String,
+    "pdf_sha256": pl.String,
+}
+RAW_TEXT_SCHEMA_VERSION = 1
+
+
+def _rows_are_consistent(rows: Iterable[dict[str, object]]) -> bool:
+    """Jede Zeile: ``chars`` ist die Länge, und zwischen ``pages`` Seiten stehen ``pages - 1`` ``\\f``."""
+    for row in rows:
+        text, pages = str(row["text"]), int(row["pages"])  # type: ignore[call-overload]
+        if row["chars"] != len(text) or text.count(PAGE_BREAK) != max(pages - 1, 0):
+            return False
+    return True
+
+
+class RawTextStore:
+    """Der Rohtext je Dateiname: Groß- und Kleinschreibung, Zeilen, Seiten, mit Vorlagenkopf.
+
+    Wie ``TextStore`` eine Parquet-Datei, die ``save`` einmal atomar schreibt; ein Text entsteht
+    nur neu, wenn PDF-Hash oder Extraktor sich geändert haben (``prep.raw_texts``). Jede Zeile kommt
+    aus einem PDF, darum fehlt die Spalte ``source`` des Textstores.
+    """
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self._rows: dict[str, dict[str, object]] | None = None
+
+    @property
+    def rows(self) -> dict[str, dict[str, object]]:
+        if self._rows is None:
+            if self.path.exists():
+                frame = pl.read_parquet(self.path)
+                self._rows = {str(r["name"]): r for r in frame.iter_rows(named=True)}
+            else:
+                self._rows = {}
+        return self._rows
+
+    def __len__(self) -> int:
+        return len(self.rows)
+
+    def __contains__(self, name: str) -> bool:
+        return name in self.rows
+
+    def get(self, name: str) -> str | None:
+        row = self.rows.get(name)
+        return str(row["text"]) if row is not None else None
+
+    @deal.pre(
+        lambda self, name, text, *, pages, extractor, pdf_sha256: name != "" and pages >= 0,
+        message="ein Rohtext braucht einen Dateinamen und eine Seitenzahl",
+    )
+    def put(self, name: str, text: str, *, pages: int, extractor: str, pdf_sha256: str) -> None:
+        self.rows[name] = {
+            "name": name,
+            "text": text,
+            "pages": pages,
+            "chars": len(text),
+            "extractor": extractor,
+            "pdf_sha256": pdf_sha256,
+        }
+
+    def is_current(self, name: str, *, pdf_sha256: str, extractor: str) -> bool:
+        """Text braucht keine Neuberechnung, wenn Extraktor und PDF-Hash übereinstimmen."""
+        row = self.rows.get(name)
+        return row is not None and row["extractor"] == extractor and row["pdf_sha256"] == pdf_sha256
+
+    # Der Vertrag an der Batch-Grenze: einmal je Lauf über alle Zeilen, nicht je Dokument in
+    # ``put`` (CLAUDE.md: kein ``deal.inv`` auf Stores, deren Methoden je Dokument laufen).
+    @deal.pre(
+        lambda self: _rows_are_consistent(self.rows.values()),
+        message="eine Zeile nennt eine falsche Länge oder Seitenzahl",
+    )
+    def save(self) -> None:
+        frame = pl.DataFrame(
+            [self.rows[name] for name in sorted(self.rows)], schema=RAW_TEXT_SCHEMA
+        )
+        write_parquet(frame, self.path, schema_version=RAW_TEXT_SCHEMA_VERSION)

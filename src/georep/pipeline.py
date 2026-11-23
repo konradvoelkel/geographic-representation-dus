@@ -91,6 +91,7 @@ from georep.prep.pois import (
     read_pois_json,
 )
 from georep.prep.precincts import canonical_precincts, district_names_from_csv, read_source
+from georep.prep.raw_texts import extract_raw_missing
 from georep.prep.streets import directory_agreement, read_streets_json, streets_by_district
 from georep.prep.voters import (
     ELIGIBLE_TOTAL,
@@ -139,7 +140,7 @@ from georep.sources.opendata import fetch_csv, fetch_districts_file, fetch_geojs
 from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
 from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_query
-from georep.stores import PaperStore, TextStore, UpsertReport
+from georep.stores import RAW_TEXT_SCHEMA_VERSION, PaperStore, RawTextStore, TextStore, UpsertReport
 
 Status = Literal["ausgeführt", "übersprungen", "geplant", "fehlgeschlagen"]
 PARTIES_SCHEMA = 2  # Option 04, Punkt 46: drei Spalten relativ zum Mittel aller Parteien
@@ -576,6 +577,16 @@ def build_steps(
             PdfStore(layout.pdf_dir), store, names, settings.search.text_split_marker
         )
         if not layout.texts.exists():
+            store.save()
+        return report.summary()
+
+    # --- Fundament F1: der Rohtext derselben PDFs; ohne PDFs (CI, Pages) bleibt der Store, den
+    # ``bootstrap`` aus einem Paket gelegt hat, oder es entsteht ein leerer
+    def raw_texts() -> str:
+        store = RawTextStore(layout.raw_texts)
+        names = [r.file_name for r in PaperStore(layout.papers).load().values() if r.file_name]
+        report = extract_raw_missing(PdfStore(layout.pdf_dir), store, names)
+        if not layout.raw_texts.exists():
             store.save()
         return report.summary()
 
@@ -1174,6 +1185,14 @@ def build_steps(
             else []
         ),
         Step("texts", (layout.papers, layout.pdf_manifest), (layout.texts,), texts),
+        # --- Fundament F1
+        Step(
+            "raw_texts",
+            (layout.papers, layout.pdf_manifest),
+            (layout.raw_texts,),
+            raw_texts,
+            RAW_TEXT_SCHEMA_VERSION,
+        ),
         # --- Option 02: der Crosswalk braucht beide Zuschnitte, dann rechnet voters über ihn
         *(
             [

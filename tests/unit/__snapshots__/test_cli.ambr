@@ -19,6 +19,8 @@
                -> wikipedia_dict.json
   texts        <- papers.jsonl, manifest.jsonl
                -> texts.parquet
+  raw_texts    <- papers.jsonl, manifest.jsonl
+               -> rohtexte.parquet
   voters       <- Stimmbezirk_Wahlergebnis.csv
                -> wahlbezirke_waehler.parquet, wahlbezirke_stadtbezirke.parquet
   context      <- Stimmbezirke_2025.geojson, Stimmbezirk_Wahlergebnis.csv, sozialraeume_2021.geojson, quartiersatlas_2024.csv, wahlbezirke_waehler.parquet

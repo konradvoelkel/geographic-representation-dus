@@ -33,6 +33,7 @@ from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION, stop_words_digest
 from georep.settings import Settings
+from georep.stores import RAW_TEXT_SCHEMA_VERSION
 
 
 def _layout(tmp_path: Path) -> Layout:
@@ -59,6 +60,8 @@ VERSIONS = {
     "meetings": COUNCIL_SCHEMA_VERSION,
     "consultations": COUNCIL_SCHEMA_VERSION,
     "persons": COUNCIL_SCHEMA_VERSION,
+    # Fundament F1: der Rohtextstore schreibt seine Datei selbst, der Schritt nennt seine Version
+    "raw_texts": RAW_TEXT_SCHEMA_VERSION,
 }
 
 
@@ -268,9 +271,9 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
         stored = pl.read_parquet_metadata(first)["georep.schema_version"]
         assert stored == str(step.schema_version), (step.name, first.name, stored)
         checked += 1
-    # Heute 18: texts, voters, context, streets, pois, dictionary, corpus, bodies, topics,
-    # committees, index, timeline, results, metrics, body_hits, weights, controls, parties.
-    assert checked == 18, checked
+    # Heute 19: texts, raw_texts, voters, context, streets, pois, dictionary, corpus, bodies,
+    # topics, committees, index, timeline, results, metrics, body_hits, weights, controls, parties.
+    assert checked == 19, checked
 
 
 def _step_versions_in_source() -> dict[str, str]:

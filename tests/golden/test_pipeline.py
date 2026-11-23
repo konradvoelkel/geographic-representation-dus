@@ -104,6 +104,7 @@ def test_pipeline_runs_skips_and_reruns(
     assert offline(third) == {
         "shapes": "übersprungen",
         "texts": "übersprungen",
+        "raw_texts": "übersprungen",  # Fundament F1
         "voters": "übersprungen",
         "streets": "übersprungen",
         "pois": "ausgeführt",
