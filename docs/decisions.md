@@ -2846,6 +2846,11 @@ derselben Signatur wie `steps`; `build_steps` setzt ihre Schritte unmittelbar vo
 `index`, `results`, `metrics` und `body_hits`, sodass ein früher Schritt alles lesen kann, was der
 Kern vor `weights` schreibt. `check_unique_names` prüft wie bisher die ganze Liste, früh, spät und
 Kern. Das Feld steht am Ende der Dataclass, damit kein Aufruf mit Positionen seine Bedeutung ändert.
+Dass ein früher Schritt keine Ausgabe eines späten liest, stand zuerst nur im Docstring; seit dem
+Review (2026-11-24, M1) prüft es `check_step_order` am Ende von `build_steps` für jeden Schritt:
+`StepOrderError`, wenn er eine Eingabe oder eine optionale Eingabe liest, die erst ein späterer
+schreibt, und `DuplicateOutputError`, wenn zwei Schritte dieselbe Datei schreiben. Der Kern erfüllt
+beides in allen fünf Paketprofilen (ein Test je Profil).
 
 *Warum ein zweites Feld und nicht `stage`.* Mit einem Feld `stage = "early" | "late"` landete ein
 Beitrag ganz vorn oder ganz hinten; ein Vorhaben mit beiden Arten (ein Schritt, den `weights` liest,
@@ -2869,7 +2874,12 @@ ihrer Folge hinter die acht und ordnet die Zeilen wie ohne sie (hypothesis,
 `tests/property/test_spans.py`). Die Grenzprüfung rechnet nur über die acht, damit eine Zusatzspalte
 auch `zeile` oder `length` heißen darf. Die Kodieraufträge von F4 lesen weiter nur `start`, `end`,
 `kind` und den Text; eine Zusatzspalte erreicht die Kodierer nicht. Verworfen: `attr` in einer
-Nebentabelle (ein Join mehr für jeden Leser, ohne dass F3 einfacher würde).
+Nebentabelle (ein Join mehr für jeden Leser, ohne dass F3 einfacher würde). Nach dem Review
+(2026-11-24): der Kopf wird als Liste verglichen, nicht als dict, sonst bestanden acht vertauschte
+Spalten die Schemaprüfung (K1); `sort_spans` sortiert bei Gleichstand von `id, start, end, kind`
+nach den übrigen vier, damit zwei Spannen an derselben Stelle, etwa aus zwei Extraktoren, nicht in
+der Folge der Eingabe stehen (N2, hypothesis über vertauschte Zeilen); `empty_spans(extra)` legt
+die Zusatzspalten leer an, damit ein Vorhaben ohne Treffer dasselbe Schema schreibt wie mit (N3).
 
 **Stelle im Rohtext je Zeichen (Konflikt 1).** `prep.raw_texts.flatten_with_offsets(raw, marker,
 form_feeds) -> (text, offsets)`: `text` ist genau `flatten(...)`, `offsets[i]` der Index im Rohtext
@@ -2887,10 +2897,12 @@ der von `flatten`, und jedes Zeichen ist die Kleinschreibung des Rohtextzeichens
 (die einzige Kontextregel von `str.lower` ist das Schluss-Sigma). Über die Hauptperiode als
 `slow`-Test aus dem Paket: 19 091 von 19 091 Rohtexten ohne Abweichung, kein Zeichen falsch
 verortet, die 41 inneren `\f` von `00532917.pdf` auf genau ihren gespeicherten Offsets (6,6 s).
-Gegen die Stores im Cache (Messskript, nur lesend): Mönchengladbach 658 und die laufende Periode 4
-088 ohne Abweichung; 2014 bis 2020 liegt dort noch in Schema-Version 1 ohne `form_feeds` vor, und
-die 8 Abweichungen unter 22 101 sind genau die acht PDFs mit eigenen `\f` (Punkt 73), dieselben wie
-bei `flatten` auf diesem Store; kein Zeichen ist falsch verortet.
+Gegen die Stores im Cache (Messskript, nur lesend, 2026-11-24, alle vier in Schema-Version 2):
+2014 bis 2020 22 101, Mönchengladbach 658 und die laufende Periode 4 088 Rohtexte ohne Abweichung,
+kein Zeichen falsch verortet, und in den acht PDFs mit eigenen `\f` in 2014 bis 2020 (2 bis 525)
+zeigt jedes auf seinen gespeicherten Offset. Eine erste Messung am 2026-11-23 traf den Store von
+2014 bis 2020 noch in Version 1 ohne `form_feeds` und fand dort genau diese acht abweichend, wie
+`flatten` auf demselben Store.
 
 **Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
 (Skripte `ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace), vor dem Nachzug (`main`, `444a611`)

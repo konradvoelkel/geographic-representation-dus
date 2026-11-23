@@ -210,6 +210,13 @@ Fake-Session in `tests/fakes.py` auch. `make_session` baut Timeout, Retry, User-
 PDF-Store. Jeder Fetcher wirft nur `FetchError` (Antwort nicht brauchbar) oder `NetworkError` (nicht
 erreichbar, Fehlerstatus nach allen Wiederholungen), gesichert durch `deal.raises`.
 
+Ein Netzschritt eines Beitrags (`Contribution.steps` oder `early_steps`, etwa `need_data` von
+Vorhaben 22) bekommt dieselbe Session wie der Kern, über `http` (Fundament F2). Ihre Cache-Regeln
+kennen aber nur die Quellen des Kerns (`sources.cached_session`), und eine URL ohne Regel cacht
+requests-cache nicht (`expire_after=DO_NOT_CACHE`): ohne eigene Regel holt der Schritt seine
+Antworten in jedem Lauf neu. Wer das nicht will, trägt die Regel mit seinem Vorhaben ein oder legt
+die Antwort selbst unter `raw/` ab, wie `opendata` (Review F7, N7).
+
 - OParl: Paper-Seiten neueste zuerst, Abbruch, sobald eine Seite nur noch Paper vor dem Periodenbeginn trägt
   (spart 270 von 365 Seiten); beim zweiten Lauf `modified_since` (letztes `modified` minus ein Tag). Nur mit
   diesem Filter liefert der Server gelöschte Paper (`deleted: true`, ohne Datum); sie kommen als
