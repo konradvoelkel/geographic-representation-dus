@@ -164,6 +164,11 @@ VERIFY_TARGETS = [
     # Nachzug F1 (docs/plans/00-synergien-2026-11.md, Konflikt 1): die Stelle im Rohtext je Zeichen
     # des geplätteten Texts. Einzeln geprüft am 2026-11-23, Exit 0 nach 44 s, „Not confirmed"
     "georep.prep.raw_texts.flatten_with_offsets",
+    # Vorhaben 15 (2026-11-24): das Lager eines Dokuments, rein über Fraktionen und Mehrheit; einzeln
+    # geprüft, 25 s, kein Gegenbeispiel. Nicht dabei: classify_function und cosponsors, deren Regeln
+    # ``re.Pattern`` tragen (dasselbe Werkzeugartefakt wie bei ``parse_reference`` oben); ihre
+    # Eigenschaften prüft tests/property/test_functions_props.py.
+    "georep.analysis.cosponsors.camp",
 ]
 
 
@@ -342,6 +347,21 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
             "tests/unit/test_weights.py",
             "tests/unit/test_contract_violations.py",
             "tests/property/test_weights_props.py",
+        ),
+    ),
+    # Vorhaben 15: Funktion, Antragsteller und beobachtet/erwartet; Zeit nicht gemessen
+    "functions": (
+        (
+            "src/georep/analysis/functions.py",
+            "src/georep/analysis/cosponsors.py",
+            "src/georep/analysis/practice.py",
+        ),
+        (
+            "tests/unit/test_functions.py",
+            "tests/unit/test_cosponsors.py",
+            "tests/unit/test_practice.py",
+            "tests/property/test_functions_props.py",
+            "tests/property/test_practice_props.py",
         ),
     ),
 }
