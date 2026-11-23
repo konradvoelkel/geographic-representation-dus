@@ -82,7 +82,7 @@ def test_a_page_break_means_a_page_break_and_nothing_else(pages: list[str]) -> N
 def each_character_is_its_source_lowercased(text: str, offsets: Sequence[int], source: str) -> bool:
     """Jedes Zeichen des geplätteten Texts ist die Kleinschreibung des Zeichens an seiner Stelle.
 
-    ``source`` ist der Rohtext mit den ``\f`` der Seiten zurück (``restore_form_feeds``). Gleiche
+    ``source`` ist der Rohtext mit den ``\\f`` der Seiten zurück (``restore_form_feeds``). Gleiche
     Offsets nebeneinander sind eine Gruppe: die Kleinschreibung eines Zeichens kann mehrere sein
     (``"İ".lower()``), und die Gruppe ist dann genau sie -- am Anfang darf der Marker sie teilen.
     Die einzige Kontextregel von ``str.lower`` ist das Schluss-Sigma (Σ wird ς). Schneller Weg für
@@ -115,7 +115,8 @@ def test_flatten_with_offsets_is_flatten_with_a_place_in_the_raw_text(
     pages: list[str], marker: str
 ) -> None:
     """Der Text ist genau der von ``flatten``, je Zeichen eine Stelle im Rohtext, aufsteigend, nie
-    auf einem Zeilenumbruch oder Seitenwechsel, und dort steht das Zeichen in Großschreibung."""
+    auf einem Zeilenumbruch oder Seitenwechsel, und das Rohtextzeichen dort ergibt kleingeschrieben
+    das Zeichen des Texts."""
     raw, feeds = raw_from_pages(pages)
     text, offsets = flatten_with_offsets(raw, marker, feeds)
     assert text == flatten(raw, marker, feeds)
@@ -127,7 +128,7 @@ def test_flatten_with_offsets_is_flatten_with_a_place_in_the_raw_text(
 
 @given(pages=DIRTY_PAGES, marker=MARKERS)
 def test_an_inner_form_feed_maps_to_its_stored_offset(pages: list[str], marker: str) -> None:
-    """Ein ``\f`` aus dem Text einer Seite steht im geplätteten Text und zeigt auf die Stelle,
+    """Ein ``\\f`` aus dem Text einer Seite steht im geplätteten Text und zeigt auf die Stelle,
     die ``form_feeds`` nennt (Review F1, M3; im Paket ``00532917.pdf`` mit 41)."""
     raw, feeds = raw_from_pages(pages)
     text, offsets = flatten_with_offsets(raw, marker, feeds)

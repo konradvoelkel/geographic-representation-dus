@@ -389,9 +389,9 @@ def test_the_raw_text_package_places_every_character_of_the_text_package() -> No
     """Nachzug F1 (Synergien 2026-11, Konflikt 1): ``flatten_with_offsets`` über die Hauptperiode.
 
     Für jeden Rohtext ist der Text genau der des Textpakets, ohne Abweichung wie bei ``flatten``,
-    und jedes Zeichen hat seine Stelle im Rohtext: aufsteigend, dort die Großschreibung des
-    Zeichens. Die 41 ``\f`` aus dem Seitentext von ``00532917.pdf`` zeigen auf genau die
-    gespeicherten Offsets (``form_feeds``).
+    und jedes Zeichen hat seine Stelle im Rohtext: aufsteigend, und das Rohtextzeichen dort ergibt
+    kleingeschrieben das Zeichen. Die 41 ``\\f`` aus dem Seitentext von ``00532917.pdf`` zeigen
+    auf genau die gespeicherten Offsets (``form_feeds``).
     """
     from georep.prep.raw_texts import PAGE_BREAK, flatten_with_offsets, restore_form_feeds
     from tests.property.test_raw_text_props import each_character_is_its_source_lowercased

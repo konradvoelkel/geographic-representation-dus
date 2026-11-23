@@ -241,7 +241,7 @@ def flatten_with_offsets(
 
     Die Offsets sind so viele wie Zeichen und aufsteigend. Zwei gleiche nebeneinander gibt es nur,
     wo die Kleinschreibung eines Zeichens mehrere Zeichen ist (``"İ".lower()``). Seitenwechsel und
-    Zeilenumbrüche fallen weg wie in ``flatten``, kein Offset zeigt auf sie; ein ``\f`` aus dem
+    Zeilenumbrüche fallen weg wie in ``flatten``, kein Offset zeigt auf sie; ein ``\\f`` aus dem
     Text einer Seite zeigt auf sein Ersatzzeichen, also auf die Stelle aus ``form_feeds``.
     """
     restored = restore_form_feeds(raw.replace(PAGE_BREAK, "\n"), form_feeds)

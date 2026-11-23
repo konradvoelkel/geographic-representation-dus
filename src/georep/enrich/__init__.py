@@ -15,10 +15,10 @@ Wo die Beiträge landen:
   ``(settings, layout, http)``: ``http`` ist der ``Transport`` aus ``build_steps``, in Tests die
   Fake-Session, sonst eine Session, die erst beim ersten Aufruf entsteht
   (``georep.http.DeferredTransport``). Ein Netzschritt nimmt ihn statt einer eigenen Session.
-* ``early_steps`` — dieselbe Fabrik, aber die Schritte stehen unmittelbar vor ``weights``, also
-  hinter ``index``, ``results``, ``metrics`` und ``body_hits``: für Ausgaben, die ``weights``
-  liest (Vorhaben 16 ``places``, das 11 ``sections`` braucht; 13 ``families``, wenn es gebaut
-  wird). Ein früher Schritt kann keine Ausgabe eines späten lesen, auch nicht aus einem
+* ``early_steps`` — eine Fabrik mit derselben Signatur, aber ihre Schritte stehen unmittelbar
+  vor ``weights``, hinter ``index``, ``results``, ``metrics`` und ``body_hits``: für Ausgaben, die
+  ``weights`` liest (Vorhaben 16 ``places``, das 11 ``sections`` braucht; 13 ``families``, wenn es
+  gebaut wird). Ein früher Schritt kann keine Ausgabe eines späten lesen, auch nicht aus einem
   Beitrag, der weiter vorn im Register steht: ``run`` plant alle späten danach. Ein Vorhaben mit
   beiden Arten bleibt **ein** Beitrag. ``check_unique_names`` gilt über alle Schritte, früh,
   spät und Kern.
