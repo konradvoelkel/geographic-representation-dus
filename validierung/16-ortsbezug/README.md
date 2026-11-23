@@ -18,6 +18,8 @@
 - **Runde 2 (Umbau, `docs/plans/16-ortsbezug.md`, § 5.3 und § 5.4)**: `codebuch-2.toml` (Fassung
   2026-11-23.2, Regeln (a) bis (e), Stadtbezirk und Stadtteile im Material), `stichprobe-2.csv`
   (100 Paare aus 100 Dokumenten, keines aus Runde 1, Seed `16-2`, Aufgaben `16-2-NNN`, nur IDs).
-  `labels-2.csv` kommt nach der Kodierung, Spalten wie `labels.csv`; ausgewertet mit
-  `uv run python docs/plans/16-ortsbezug-messung.py --auswertung-2`. Aufgaben (`aufgaben-2.jsonl`)
+  `labels-2.csv`: Endlabels der Runde 2 (zwei Kodier-Agenten nach Fassung 2, Schlichtung einer
+  Uneinigkeit, 2026-11-23), Spalten wie `labels.csv`; ausgewertet mit
+  `uv run python docs/plans/16-ortsbezug-messung.py --auswertung-2`, Ergebnis im Messdokument § 4.4
+  und § 5.5. Aufgaben (`aufgaben-2.jsonl`)
   und Ausgabe des Verfahrens (`regel-2.jsonl`, den Kodierern nicht zeigen) nur lokal.
