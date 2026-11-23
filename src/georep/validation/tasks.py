@@ -1,16 +1,17 @@
 """Der Kodierauftrag je Kodierer (``georep validate tasks <vorhaben> --coder A|B``, F4).
 
-Je Einheit der Stichprobe eine JSONL-Zeile: der Schlüssel, die Frage, je Dokument ein Ausschnitt
-aus dem Text mit seinen hervorgehobenen Spannen (Schema von F3), die Optionen des Codebuchs und
-eine leere Antwort. Daneben eine Antwortdatei, die der Kodier-Agent füllt (je Zeile ``id``,
-``label``, ``begruendung``), und das Codebuch als Text. Alles liegt unter
-``validation.coding_root/<vorhaben>/<A|B>/``, nie im Repo: die Ausschnitte sind Text aus
-Ratsdokumenten (plan-vorverarbeitung-2026-11.md, § 4, „Daten").
+Je Einheit der Stichprobe eine JSONL-Zeile: der Schlüssel, die Fragen des Codebuchs mit Optionen
+und Bedingungen, je Dokument ein Ausschnitt aus dem Text mit seinen hervorgehobenen Spannen
+(Schema von F3, ``georep.spans``) und eine leere Antwort. Daneben eine Antwortdatei, die der
+Kodier-Agent füllt (je Zeile ``id``, ``codebuch_version``, je Frage ein Wert, ``begruendung``), und
+das Codebuch als Text. Alles liegt unter ``validation.coding_root/<vorhaben>/<A|B>/``, nie im Repo:
+die Ausschnitte sind Text aus Ratsdokumenten (plan-vorverarbeitung-2026-11.md, § 4, „Daten").
 
-Was der Auftrag **nicht** trägt, ist Absicht: keine Ausgabe des geprüften Verfahrens (außer der
-Spanne, die selbst die Einheit ist, und Kontextspalten, die das Codebuch ausdrücklich nennt) und
-nichts vom anderen Kodierer. Die Folge der Einheiten ist je Kodierer eine andere, fest aus Seed
-und Kodierer, damit Reihenfolgeeffekte nicht bei beiden gleich wirken.
+Was der Auftrag **nicht** trägt, ist Absicht: keine Ausgabe des geprüften Verfahrens. Die Spanne,
+die selbst die Einheit ist, steht im Feld ``markiert`` und nicht noch einmal unter ``spannen``; die
+Art (``kind``) einer Spanne zeigt der Auftrag nur mit ``text.show_kind``, und nie, wenn die
+hervorgehobenen Spannen dieselbe Datei wie die Einheiten sind (Review 2026-11-23, Befund 2). Die
+Folge der Einheiten ist je Kodierer eine andere, fest aus Seed und Kodierer.
 """
 
 from __future__ import annotations
@@ -24,18 +25,17 @@ from typing import Any
 import polars as pl
 
 from georep.errors import MissingInputError, SchemaError
-from georep.io import write_text
+from georep.io import digest, write_text
 from georep.layout import Layout
 from georep.settings import Settings
+from georep.spans import check_spans
+from georep.spans import excerpt as span_excerpt
 from georep.validation import CodingError
 from georep.validation.codebook import Codebook, load_codebook
 from georep.validation.paths import Coder, Role, ValidationPaths, validation_paths
-from georep.validation.sample import ID, rank, read_sample, sample_meta
+from georep.validation.sample import ID, population_path, rank, read_sample, sample_meta
 
-# Die Spalten, die eine Spannentabelle nach F3 tragen muss; value, norm, section und extractor
-# zeigt der Auftrag nicht (sie sind Ausgabe des Verfahrens).
-SPAN_COLUMNS = ("id", "start", "end", "kind")
-MARK_OPEN, MARK_CLOSE = "⟦", "⟧"  # umschließen im Feld ``markiert`` die Spanne einer Einheit span
+MARK_OPEN, MARK_CLOSE = "⟦", "⟧"  # umschließen im Feld ``markiert`` die Spanne einer Einheit
 RAW_TEXT_FILE = "rohtexte.parquet"  # der Rohtextstore von F1, neben texts.parquet
 
 
@@ -46,7 +46,7 @@ class Document:
     text: str
 
 
-def _jsonl(records: Sequence[Mapping[str, Any]]) -> str:
+def jsonl(records: Sequence[Mapping[str, Any]]) -> str:
     return "".join(json.dumps(record, ensure_ascii=False) + "\n" for record in records)
 
 
@@ -84,46 +84,47 @@ def load_documents(
     }
 
 
-def load_spans(path: Path, ids: set[str], kinds: Sequence[str]) -> dict[str, list[dict[str, Any]]]:
-    """Die Spannen (F3) der Stichprobendokumente, je Dokument nach Anfang sortiert."""
+def checked_spans(
+    path: Path, documents: Mapping[str, Document], kinds: Sequence[str]
+) -> pl.DataFrame:
+    """Die Spannen (F3) der Stichprobendokumente, geprüft mit ``georep.spans.check_spans``.
+
+    Geprüft wird gegen die Längen der gewählten Textquelle, dazu, dass ``value`` wörtlich der
+    Text an der Stelle ist: sonst zeigen die Positionen auf einen anderen Text (Befund 3).
+    """
     if not path.is_file():
         raise MissingInputError(f"Spannen {path} fehlen")
-    frame = pl.read_parquet(path)
-    missing = [column for column in SPAN_COLUMNS if column not in frame.columns]
-    if missing:
-        raise SchemaError(f"{path}: Spannen ohne Spalten {missing} (Schema von F3)")
-    frame = frame.filter(pl.col("id").is_in(sorted(ids)))
+    frame = pl.read_parquet(path).filter(pl.col("id").is_in(sorted(documents)))
+    check_spans(frame, {doc: len(d.text) for doc, d in documents.items()})
     if kinds:
         frame = frame.filter(pl.col("kind").is_in(list(kinds)))
-    spans: dict[str, list[dict[str, Any]]] = {}
-    for row in frame.sort(["id", "start", "end"]).iter_rows(named=True):
-        spans.setdefault(row["id"], []).append(row)
-    return spans
+    for row in frame.iter_rows(named=True):
+        _check_value(documents[row["id"]], row)
+    return frame
 
 
-def _check_span(document: Document, start: int, end: int, source: str) -> None:
+def _check_value(document: Document, span: Mapping[str, Any]) -> None:
+    found = document.text[int(span["start"]) : int(span["end"])]
+    if span.get("value") != found:
+        raise SchemaError(
+            f"Spanne {span['start']}..{span['end']} in {document.id!r}: dort steht {found!r}, die "
+            f"Spanne sagt {span.get('value')!r}; sie kommt aus einem anderen Text (extractor "
+            f"{span.get('extractor')!r})"
+        )
+
+
+def _window(document: Document, start: int, end: int, context: int) -> tuple[int, int]:
     if not 0 <= start < end <= len(document.text):
         raise SchemaError(
             f"Spanne {start}..{end} liegt außerhalb des Textes von {document.id!r} "
-            f"({len(document.text)} Zeichen aus {source!r}); Spannen beziehen sich auf den Text, "
-            "aus dem sie gefunden wurden (text.source im Codebuch)"
+            f"({len(document.text)} Zeichen); Spannen beziehen sich auf den Text, aus dem sie "
+            "gefunden wurden (text.source im Codebuch)"
         )
+    before, _, after = span_excerpt(document.text, start, end, context)
+    return start - len(before), end + len(after)
 
 
-def _check_value(document: Document, span: Mapping[str, Any], source: str) -> None:
-    """F3: ``value`` ist der Text an der Stelle, wörtlich. Weicht er ab, zeigen die Positionen auf
-    einen anderen Text als den des Auftrags, und jede Hervorhebung säße an der falschen Stelle."""
-    value = span.get("value")
-    found = document.text[int(span["start"]) : int(span["end"])]
-    if value is not None and value != found:
-        raise SchemaError(
-            f"Spanne {span['start']}..{span['end']} in {document.id!r}: dort steht {found!r}, die "
-            f"Spanne sagt {value!r}; sie kommt aus einem anderen Text (extractor "
-            f"{span.get('extractor')!r}, text.source {source!r})"
-        )
-
-
-def excerpt(
+def show_document(
     document: Document,
     codebook: Codebook,
     spans: Sequence[Mapping[str, Any]],
@@ -132,30 +133,24 @@ def excerpt(
     """Ein Dokument im Auftrag und die Zahl seiner Spannen, die außerhalb des Ausschnitts liegen.
 
     Ohne Spanne der Einheit ist der Ausschnitt der Anfang des Textes (``text.chars`` Zeichen),
-    sonst ``text.window`` Zeichen vor und hinter ihr; ``markiert`` zeigt die Spanne dann im
-    Ausschnitt zwischen ⟦ und ⟧. Die Offsets der Spannen sind relativ zum Ausschnitt.
+    sonst ``text.window`` Zeichen vor und hinter ihr (``georep.spans.excerpt``); ``markiert``
+    zeigt die Spanne dann zwischen ⟦ und ⟧, und unter ``spannen`` steht sie nicht noch einmal.
     """
     text, rules = document.text, codebook.text
     if unit_span is None:
         begin, stop = 0, min(len(text), rules.chars)
     else:
-        _check_span(document, *unit_span, rules.source)
-        begin = max(0, unit_span[0] - rules.window)
-        stop = min(len(text), unit_span[1] + rules.window)
+        begin, stop = _window(document, *unit_span, rules.window)
     shown, outside = [], 0
     for span in spans:
         start, end = int(span["start"]), int(span["end"])
-        _check_span(document, start, end, rules.source)
-        _check_value(document, span, rules.source)
+        if (start, end) == unit_span:
+            continue
         if start >= begin and end <= stop:
-            shown.append(
-                {
-                    "start": start - begin,
-                    "end": end - begin,
-                    "art": span["kind"],
-                    "text": text[start:end],
-                }
-            )
+            item: dict[str, Any] = {"start": start - begin, "end": end - begin}
+            if rules.show_kind:
+                item["art"] = span["kind"]
+            shown.append(item | {"text": text[start:end]})
         else:
             outside += 1
     record: dict[str, Any] = {"id": document.id}
@@ -177,11 +172,26 @@ def excerpt(
     return record, outside
 
 
-def options(codebook: Codebook) -> list[dict[str, str]]:
-    return [
-        {"wert": o.value, "definition": o.definition, "beispiel": o.example}
-        for o in codebook.options
-    ]
+def questions(codebook: Codebook) -> list[dict[str, Any]]:
+    """Die Fragen, wie der Auftrag sie zeigt: ohne ``positive`` und ``ignore`` (Auswertung)."""
+    shown = []
+    for q in codebook.questions:
+        item: dict[str, Any] = {"id": q.id, "frage": q.question, "skala": q.scale}
+        if q.instructions:
+            item["anleitung"] = q.instructions
+        if q.options:
+            item["optionen"] = [
+                {"wert": o.value, "definition": o.definition, "beispiel": o.example}
+                for o in q.options
+            ]
+        if q.only_if is not None:
+            item["nur_wenn"] = {"frage": q.only_if.question, "antworten": q.only_if.values}
+        shown.append(item)
+    return shown
+
+
+def _int_or_none(value: object) -> int | None:
+    return None if value is None else int(str(value))
 
 
 def build_task(
@@ -196,40 +206,55 @@ def build_task(
         "id": row[ID],
         "vorhaben": codebook.project,
         "codebuch_version": codebook.version,
-        "frage": codebook.question,
     }
     if unit == "query_document":
         task["anfrage"] = row["anfrage"]
     if codebook.text.context:
         task["kontext"] = {column: row.get(column) for column in codebook.text.context}
     targets: list[tuple[str, tuple[int, int] | None]]
-    if unit == "document":
-        targets = [(row[ID], None)]
+    if unit in ("document", "marking"):
+        targets = [(row.get("dokument") or row[ID], None)]
     elif unit == "document_pair":
         targets = [(row["id_a"], None), (row["id_b"], None)]
+    elif unit == "pair_with_span":
+        start, end = _int_or_none(row.get("start")), _int_or_none(row.get("end"))
+        found = (start, end) if start is not None and end is not None else None
+        targets = [(row["id_a"], None), (row["id_b"], found)]
     elif unit == "span":
         targets = [(row["dokument"], (int(row["start"]), int(row["end"])))]
     else:
         targets = [(row["dokument"], None)]
     shown, outside = [], 0
     for doc, unit_span in targets:
-        record, missed = excerpt(documents[doc], codebook, spans.get(doc, ()), unit_span)
+        record, missed = show_document(documents[doc], codebook, spans.get(doc, ()), unit_span)
         shown.append(record)
         outside += missed
     task["dokumente"] = shown
-    task["optionen"] = options(codebook)
+    task["fragen"] = questions(codebook)
     task["antwort"] = None
     return task, outside
 
 
 def document_ids(sample: pl.DataFrame, codebook: Codebook) -> set[str]:
     columns = {
-        "document": (ID,),
+        "document": ("dokument",) if "dokument" in sample.columns else (ID,),
+        "marking": ("dokument",) if "dokument" in sample.columns else (ID,),
         "document_pair": ("id_a", "id_b"),
+        "pair_with_span": ("id_a", "id_b"),
         "span": ("dokument",),
         "query_document": ("dokument",),
     }[codebook.unit]
     return {str(v) for column in columns for v in sample.get_column(column).to_list()}
+
+
+def answer_template(task: Mapping[str, Any], codebook: Codebook) -> dict[str, Any]:
+    """Eine leere Antwortzeile: je Frage ``null``, dazu Codebuch-Version und Begründung."""
+    return {
+        "id": task["id"],
+        "codebuch_version": codebook.version,
+        **dict.fromkeys(codebook.question_ids),
+        "begruendung": "",
+    }
 
 
 def brief(codebook: Codebook, who: Role) -> str:
@@ -238,39 +263,51 @@ def brief(codebook: Codebook, who: Role) -> str:
         f"# Codebuch {codebook.project}, Version {codebook.version}",
         "",
         f"Rolle: {'Schlichtung' if who == 'schlichtung' else f'Kodierer {who}'}. "
-        f"Einheit: {codebook.unit}. Skala: {codebook.scale}.",
-        "",
-        "## Frage",
-        "",
-        codebook.question,
+        f"Einheit: {codebook.unit}.",
         "",
         "## Anweisungen",
         "",
         codebook.instructions.strip(),
         "",
-        "## Optionen" + (" (aufsteigend)" if codebook.scale == "ordinal" else ""),
-        "",
     ]
-    for option in codebook.options:
-        lines.append(f"- `{option.value}`: {option.definition}")
-        if option.example:
-            lines.append(f"  Beispiel: {option.example}")
+    for q in codebook.questions:
+        lines += [f"## Frage `{q.id}` ({q.scale})", "", q.question, ""]
+        if q.only_if is not None:
+            values = ", ".join(f"`{v}`" for v in q.only_if.values)
+            lines += [f"Nur, wenn `{q.only_if.question}` eine von {values} ist; sonst `null`.", ""]
+        if q.instructions:
+            lines += [q.instructions.strip(), ""]
+        for option in q.options:
+            lines.append(f"- `{option.value}`: {option.definition}".rstrip(": "))
+            if option.example:
+                lines.append(f"  Beispiel: {option.example}")
+        if q.options:
+            lines.append("")
+        if q.scale == "interval":
+            lines += ["Antwort: eine Zahl, oder `null`, wenn es nichts gibt.", ""]
+        if q.scale == "open":
+            lines += [
+                "Antwort: ein JSON-Wert wie beschrieben, oder `null`, wenn es nichts gibt.",
+                "",
+            ]
     lines += [
-        "",
         "## Antworten",
         "",
         "`auftrag.jsonl` hat je Einheit eine Zeile. `antworten.jsonl` hat dieselben Einheiten in "
-        "derselben Folge; setze in jeder Zeile `label` auf genau einen der Werte oben und "
-        "`begruendung` auf einen kurzen Satz (ohne längere Zitate). Ändere `id` nicht, lass keine "
-        "Zeile weg und füge keine hinzu. Lies nur die Dateien in diesem Ordner.",
+        "derselben Folge; setze in jeder Zeile je Frage den Wert (bei Optionen genau einer der "
+        "Werte oben; eine Frage, die nach ihrer Bedingung nicht gestellt ist, bleibt `null`) und "
+        "`begruendung` auf einen kurzen Satz (ohne längere Zitate). Ändere `id` und "
+        "`codebuch_version` nicht, lass keine Zeile weg und füge keine hinzu. Lies nur die "
+        "Dateien in diesem Ordner.",
     ]
     if who == "schlichtung":
         lines += [
             "",
-            "Jede Zeile des Auftrags ist eine Einheit, bei der zwei Kodierer verschieden "
-            "geantwortet haben (`kodierung_1`, `kodierung_2`, je mit Begründung). Entscheide nach "
-            "dem Codebuch, nicht nach der Mehrheit oder der Länge der Begründung; jede Option ist "
-            "erlaubt, auch eine dritte.",
+            "Jede Zeile des Auftrags ist eine Einheit, bei der zwei Kodierer bei mindestens einer "
+            "Frage verschieden geantwortet haben (`strittig`; `kodierung_1`, `kodierung_2`, je mit "
+            "Begründung). Beantworte die strittigen Fragen nach dem Codebuch, nicht nach der "
+            "Mehrheit oder der Länge der Begründung; jede Option ist erlaubt, auch eine dritte. "
+            "Die übrigen Fragen bleiben `null`.",
         ]
     return "\n".join(lines) + "\n"
 
@@ -292,7 +329,7 @@ class TaskReport:
 
 
 def answers_started(path: Path) -> int:
-    """Wie viele Zeilen einer Antwortdatei schon ein Label tragen; 0, wenn es sie nicht gibt."""
+    """Wie viele Zeilen einer Antwortdatei schon einen Wert tragen; 0 ohne Datei, -1 unlesbar."""
     if not path.is_file():
         return 0
     count = 0
@@ -302,7 +339,14 @@ def answers_started(path: Path) -> int:
                 record = json.loads(line)
             except json.JSONDecodeError:
                 return -1
-            count += isinstance(record, dict) and record.get("label") is not None
+            if not isinstance(record, dict):
+                return -1
+            values = {
+                k: v
+                for k, v in record.items()
+                if k not in ("id", "codebuch_version", "begruendung")
+            }
+            count += any(v is not None for v in values.values())
     return count
 
 
@@ -321,12 +365,38 @@ def write_assignment(
             f"{paths.answers(who)} trägt schon Antworten ({'unlesbar' if started < 0 else started}); "
             "--force schreibt einen neuen Auftrag und leert sie"
         )
-    write_text(paths.tasks(who), _jsonl(tasks))
-    write_text(
-        paths.answers(who),
-        _jsonl([{"id": task["id"], "label": None, "begruendung": ""} for task in tasks]),
-    )
+    write_text(paths.tasks(who), jsonl(tasks))
+    write_text(paths.answers(who), jsonl([answer_template(task, codebook) for task in tasks]))
     write_text(paths.brief(who), brief(codebook, who))
+
+
+def unit_spans(
+    layout: Layout,
+    paths: ValidationPaths,
+    codebook: Codebook,
+    population: Path | None,
+    documents: Mapping[str, Document],
+) -> None:
+    """Die Spannen der Einheiten ``span`` gegen ihren Text prüfen (Befund 3).
+
+    ``value`` und ``extractor`` stehen nicht in ``stichprobe.csv`` (``value`` ist Ratstext und
+    die Stichprobe liegt im Repo); sie kommen aus der Grundgesamtheit, die dieselbe sein muss wie
+    beim Ziehen (Prüfsumme aus ``stichprobe.json``). Geprüft wird mit ``check_spans`` und ``value``.
+    """
+    source = population_path(layout, codebook, population)
+    if not source.is_file():
+        raise MissingInputError(f"Grundgesamtheit {source} fehlt; --population nennt sie")
+    expected = sample_meta(paths).get("grundgesamtheit_sha256")
+    if expected and digest(source) != expected:
+        raise CodingError(
+            f"Grundgesamtheit {source} ist nicht die der Stichprobe (Prüfsumme in stichprobe.json)"
+        )
+    if codebook.text.show_kind and codebook.text.spans == codebook.sample.population:
+        raise SchemaError(
+            "text.spans ist die Grundgesamtheit der Einheiten: mit text.show_kind sähen die "
+            "Kodierer die Art, die das Verfahren vergeben hat (Ausgabe des Verfahrens)"
+        )
+    checked_spans(source, documents, ())
 
 
 def task_project(
@@ -337,6 +407,7 @@ def task_project(
     *,
     texts: Path | None = None,
     spans: Path | None = None,
+    population: Path | None = None,
     force: bool = False,
 ) -> TaskReport:
     """``georep validate tasks``: den Auftrag eines Kodierers aus Stichprobe und Text bauen."""
@@ -350,8 +421,15 @@ def task_project(
         )
     ids = document_ids(sample, codebook)
     documents = load_documents(layout, codebook, ids, texts)
+    if codebook.unit == "span":
+        unit_spans(layout, paths, codebook, population, documents)
     span_file = spans or (layout.root / codebook.text.spans if codebook.text.spans else None)
-    found = load_spans(span_file, ids, codebook.text.span_kinds) if span_file else {}
+    found: dict[str, list[dict[str, Any]]] = {}
+    if span_file is not None:
+        for row in checked_spans(span_file, documents, codebook.text.span_kinds).iter_rows(
+            named=True
+        ):
+            found.setdefault(row["id"], []).append(row)
     tasks, outside = [], 0
     for row in sample.iter_rows(named=True):
         task, missed = build_task(row, codebook, documents, found)

@@ -2,7 +2,8 @@
 
 Kein Lauf der Kette: der Korpus entsteht hier als Parquet mit genau den Spalten, die
 ``georep.validation`` liest, damit jede Zahl im Test von Hand nachzuzählen ist. Der Durchlauf über
-die Mini-Fixture steht in ``tests/unit/test_validation_flow.py``.
+die Mini-Fixture steht in ``tests/unit/test_validation_flow.py``. Das Repo liegt unter
+``tmp_path/repo`` (dort ``validierung/``), die Aufträge außerhalb unter ``tmp_path/lokal``.
 """
 
 from __future__ import annotations
@@ -43,16 +44,20 @@ CODEBOOK = """\
 project = "11-test"
 version = "1"
 unit = "document"
-question = "Enthält das Dokument einen Beschlussvorschlag?"
-scale = "binary"
 instructions = "Lies den Ausschnitt. Antworte ja, wenn ein Beschlussvorschlag dasteht."
 
-[[options]]
+[[questions]]
+id = "bv"
+question = "Enthält das Dokument einen Beschlussvorschlag?"
+scale = "binary"
+positive = ["ja"]
+
+[[questions.options]]
 value = "ja"
 definition = "Der Ausschnitt nennt einen Beschlussvorschlag."
 example = "Der Rat beschließt ..."
 
-[[options]]
+[[questions.options]]
 value = "nein"
 definition = "Kein Beschlussvorschlag im Ausschnitt."
 
@@ -63,38 +68,45 @@ stratum = "paper_type"
 
 [text]
 chars = 60
-
-[score]
-positive = "ja"
 """
 
 
 def make_project(tmp_path: Path, codebook: str = CODEBOOK, project: str = PROJECT) -> Layout:
-    """Settings, Korpus und Codebuch unter ``tmp_path``; Arbeitsverzeichnis setzt der Test."""
-    (tmp_path / "settings.toml").write_text(
+    """Settings, Korpus und Codebuch unter ``tmp_path``; das Arbeitsverzeichnis ist ``repo``."""
+    repo = tmp_path / "repo"
+    repo.mkdir(exist_ok=True)
+    (repo / "settings.toml").write_text(
         f'data_root = "{tmp_path / "data"}"\n'
-        f'validation.root = "{tmp_path / "validierung"}"\n'
+        f'validation.root = "{repo / "validierung"}"\n'
         f'validation.coding_root = "{tmp_path / "lokal"}"\n',
         encoding="utf-8",
     )
-    layout = Layout.from_settings(load_settings(cwd=tmp_path))
+    layout = Layout.from_settings(load_settings(cwd=repo))
     layout.interim.mkdir(parents=True, exist_ok=True)
     corpus_frame().write_parquet(layout.corpus)
-    folder = tmp_path / "validierung" / project
+    folder = repo / "validierung" / project
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "codebuch.toml").write_text(codebook, encoding="utf-8")
     return layout
 
 
 def fill_answers(
-    coding_root: Path, project: str, who: str, label: Callable[[str], str | None]
+    coding_root: Path,
+    project: str,
+    who: str,
+    label: Callable[[str], object],
+    question: str = "bv",
 ) -> None:
-    """Eine Antwortdatei füllen, wie ein Agent es täte: je Zeile ein Label und ein kurzer Satz."""
+    """Eine Antwortdatei füllen, wie ein Agent es täte: je Zeile eine Antwort und ein kurzer Satz.
+
+    ``label`` gibt je Einheit die Antwort auf ``question`` oder, als dict, auf mehrere Fragen.
+    """
     path = coding_root / project / who / "antworten.jsonl"
     rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
     for row in rows:
-        row["label"] = label(row["id"])
-        row["begruendung"] = f"{who} meint {row['label']}"
+        answer = label(row["id"])
+        row |= answer if isinstance(answer, dict) else {question: answer}
+        row["begruendung"] = f"{who} meint {answer}"
     path.write_text(
         "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8"
     )

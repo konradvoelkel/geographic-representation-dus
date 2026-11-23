@@ -60,6 +60,11 @@ def add_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None
         "--spans", type=Path, help="Spannen nach F3 als Parquet statt text.spans aus dem Codebuch"
     )
     tasks.add_argument(
+        "--population",
+        type=Path,
+        help="Grundgesamtheit wie bei sample (bei der Einheit span für value und extractor)",
+    )
+    tasks.add_argument(
         "--force", action="store_true", help="auch über begonnene Antworten schreiben"
     )
 
@@ -112,6 +117,7 @@ def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
             args.coder,
             texts=args.texts,
             spans=args.spans,
+            population=args.population,
             force=args.force,
         )
         print(written.line())

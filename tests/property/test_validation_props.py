@@ -28,6 +28,7 @@ from georep.validation.measures import (
     cohen_kappa,
     krippendorff_alpha,
     ndcg_at_k,
+    stratified_share,
     wilson_interval,
 )
 from georep.validation.sample import Allocation, allocate, draw_sample
@@ -109,8 +110,9 @@ def test_every_score_is_a_proportion_and_scikit_learns(
         ("micro", (scores.micro_precision, scores.micro_recall, scores.micro_f1)),
         ("macro", (scores.macro_precision, scores.macro_recall, scores.macro_f1)),
     ):
+        present = sorted(set(gold) | set(predicted))  # Befund 5: nur belegte Klassen
         theirs = precision_recall_fscore_support(
-            gold, predicted, labels=CATEGORIES, average=average, zero_division=0.0
+            gold, predicted, labels=present, average=average, zero_division=0.0
         )[:3]
         assert all(
             math.isclose(m, float(t), abs_tol=1e-9) for m, t in zip(mine, theirs, strict=True)
@@ -144,29 +146,42 @@ judged = st.dictionaries(
 
 @given(judged, st.integers(1, 15))
 def test_the_ideal_ranking_has_ndcg_one(gains: dict[str, float], k: int) -> None:
-    ideal = sorted(gains, key=lambda doc: -gains[doc])
-    value = ndcg_at_k(ideal, gains, k)
+    value = ndcg_at_k(dict(gains), gains, k)
     if any(gain > 0 for gain in gains.values()):
         assert value is not None and math.isclose(value, 1.0)
     else:
         assert value is None
 
 
-@given(judged, st.integers(1, 15), st.randoms(use_true_random=False))
-def test_ndcg_is_scikit_learns_for_any_ranking_of_the_judged(
-    gains: dict[str, float], k: int, rng: random.Random
+@given(judged, st.integers(1, 15), st.data())
+def test_ndcg_is_scikit_learns_for_any_scores_with_ties(
+    gains: dict[str, float], k: int, data: st.DataObject
 ) -> None:
-    assume(any(gain > 0 for gain in gains.values()))
+    """Auch mit Gleichständen (Befund 4): Punktzahlen aus wenigen Werten, gemittelt wie sklearn."""
+    assume(any(gain > 0 for gain in gains.values()) and len(gains) > 1)
     docs = sorted(gains)
-    ranking = rng.sample(docs, len(docs))
-    score = {doc: float(len(ranking) - i) for i, doc in enumerate(ranking)}  # keine Gleichstände
-    expected = (
-        ndcg_score([[gains[d] for d in docs]], [[score[d] for d in docs]], k=k)
-        if len(docs) > 1
-        else 1.0
-    )
-    value = ndcg_at_k(ranking, gains, k)
+    score = {doc: data.draw(st.sampled_from([0.0, 0.5, 1.0, 2.0])) for doc in docs}
+    expected = ndcg_score([[gains[d] for d in docs]], [[score[d] for d in docs]], k=k)
+    value = ndcg_at_k(score, gains, k)
     assert value is not None and math.isclose(value, float(expected), abs_tol=1e-9)
+
+
+@given(
+    st.dictionaries(
+        st.sampled_from("abcdef"),
+        st.tuples(st.integers(0, 30), st.integers(1, 30)).map(lambda t: (min(t), t[1])),
+        min_size=1,
+    ),
+    st.integers(1, 5),
+)
+def test_a_self_weighting_stratified_share_is_the_plain_share(
+    hits: dict[str, tuple[int, int]], factor: int
+) -> None:
+    sizes = {h: m * factor for h, (_, m) in hits.items()}
+    result = stratified_share(hits, sizes)
+    x, m = sum(h for h, _ in hits.values()), sum(n for _, n in hits.values())
+    assert math.isclose(result.estimate, x / m) and math.isclose(result.effective_n, m)
+    assert result.interval[0] <= result.estimate <= result.interval[1]
 
 
 # --- deal.cases: hypothesis greift die Verträge direkt an (wie test_contract_cases.py) -------------
@@ -204,7 +219,7 @@ def test_agreement_contract(case: deal.TestCase) -> None:
     count=COUNT,
     check_types=False,
     kwargs={
-        "ranking": st.lists(st.sampled_from([f"d{i}" for i in range(8)]), max_size=8),
+        "scores": st.dictionaries(st.sampled_from([f"d{i}" for i in range(8)]), st.floats(-5, 5)),
         "gains": st.dictionaries(st.text(max_size=3), st.floats(allow_nan=True)),
     },
 )
@@ -259,15 +274,15 @@ SAMPLE_CODEBOOK = """\
 project = "p"
 version = "1"
 unit = "document"
+instructions = "-"
+[[questions]]
+id = "q"
 question = "?"
 scale = "nominal"
-instructions = "-"
-[[options]]
+[[questions.options]]
 value = "x"
-definition = "-"
-[[options]]
+[[questions.options]]
 value = "y"
-definition = "-"
 [sample]
 size = {size}
 seed = {seed}

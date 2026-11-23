@@ -29,16 +29,20 @@ CODEBOOK = """\
 project = "99-durchlauf"
 version = "2026-11-23"
 unit = "document"
-question = "Fordert das Dokument etwas von der Verwaltung?"
-scale = "binary"
 instructions = "Lies Titel und Ausschnitt. ja, wenn eine Forderung oder ein Auftrag dasteht."
 
-[[options]]
+[[questions]]
+id = "fordert"
+question = "Fordert das Dokument etwas von der Verwaltung?"
+scale = "binary"
+positive = ["ja"]
+
+[[questions.options]]
 value = "ja"
 definition = "Eine Forderung oder ein Auftrag an die Verwaltung."
 example = "Die Verwaltung wird beauftragt, ..."
 
-[[options]]
+[[questions.options]]
 value = "nein"
 definition = "Nur Information, Frage oder Bericht."
 
@@ -49,25 +53,24 @@ stratum = "paper_type"
 
 [text]
 chars = 400
-
-[score]
-positive = "ja"
 """
 
 
 @pytest.fixture
 def project(tmp_path: Path, mini_root: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    (tmp_path / "settings.toml").write_text(
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "settings.toml").write_text(
         f'data_root = "{tmp_path / "data"}"\nreference_root = "{mini_root}"\n'
         f'context.root = "{mini_root / "context"}"\n'
-        f'validation.root = "{tmp_path / "validierung"}"\n'
+        f'validation.root = "{tmp_path / "repo" / "validierung"}"\n'
         f'validation.coding_root = "{tmp_path / "kodierung"}"\n',
         encoding="utf-8",
     )
-    folder = tmp_path / "validierung" / PROJECT
+    folder = tmp_path / "repo" / "validierung" / PROJECT
     folder.mkdir(parents=True)
     (folder / "codebuch.toml").write_text(CODEBOOK, encoding="utf-8")
-    monkeypatch.chdir(tmp_path)
+    monkeypatch.chdir(tmp_path / "repo")
     return tmp_path
 
 
@@ -83,7 +86,7 @@ def test_from_sample_to_number_with_fake_labels(project: Path) -> None:
     assert main(["bootstrap"]) == 0
     assert main(["run", "corpus"]) == 0
     assert main(["validate", "sample", PROJECT]) == 0
-    sample = pl.read_csv(project / "validierung" / PROJECT / "stichprobe.csv")
+    sample = pl.read_csv(project / "repo" / "validierung" / PROJECT / "stichprobe.csv")
     assert sample.height == 24 and sample.get_column("id").n_unique() == 24
     for coder in ("A", "B"):
         assert main(["validate", "tasks", PROJECT, "--coder", coder]) == 0
@@ -102,17 +105,18 @@ def test_from_sample_to_number_with_fake_labels(project: Path) -> None:
     def other(unit: str) -> str:
         return rule(unit) if unit not in flipped else ("nein" if rule(unit) == "ja" else "ja")
 
-    fill_answers(project / "kodierung", PROJECT, "A", rule)
-    fill_answers(project / "kodierung", PROJECT, "B", other)
+    fill_answers(project / "kodierung", PROJECT, "A", rule, "fordert")
+    fill_answers(project / "kodierung", PROJECT, "B", other, "fordert")
     assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
     adjudication = project / "kodierung" / PROJECT / "schlichtung" / "auftrag.jsonl"
     assert sorted(
         json.loads(line)["id"] for line in adjudication.read_text().splitlines()
     ) == sorted(flipped)
-    fill_answers(project / "kodierung", PROJECT, "schlichtung", rule)
+    fill_answers(project / "kodierung", PROJECT, "schlichtung", rule, "fordert")
     assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
 
-    labels = pl.read_csv(project / "validierung" / PROJECT / "labels.csv").sort("id")
+    labels = pl.read_csv(project / "repo" / "validierung" / PROJECT / "labels.csv").sort("id")
+    assert labels.get_column("frage").unique().to_list() == ["fordert"]
     assert labels.get_column("label").to_list() == [rule(unit) for unit in ids]
 
     # Ein „Verfahren", das nur auf den Titel schaut
@@ -124,23 +128,23 @@ def test_from_sample_to_number_with_fake_labels(project: Path) -> None:
     assert main(["validate", "score", PROJECT, "--pred", str(project / "pred.parquet")]) == 0
 
     quality = json.loads(
-        (project / "validierung" / PROJECT / "guete.json").read_text(encoding="utf-8")
+        (project / "repo" / "validierung" / PROJECT / "guete.json").read_text(encoding="utf-8")
     )
     first, second = [rule(u) for u in ids], [other(u) for u in ids]
-    assert quality["uebereinstimmung"]["einig"] == 21
-    assert quality["uebereinstimmung"]["cohen_kappa"] == cohen_kappa(first, second)
-    assert quality["uebereinstimmung"]["krippendorff_alpha_nominal"] == krippendorff_alpha(
+    assert quality["fragen"]["fordert"]["einig"] == 21
+    assert quality["fragen"]["fordert"]["cohen_kappa"] == cohen_kappa(first, second)
+    assert quality["fragen"]["fordert"]["krippendorff_alpha_nominal"] == krippendorff_alpha(
         list(zip(first, second, strict=True)), "nominal", ["ja", "nein"]
     )
     expected = classify_scores(first, [guess[u] for u in ids], ["ja", "nein"])
-    assert quality["verfahren"]["klassifikation"]["genauigkeit"] == expected.accuracy
+    assert quality["fragen"]["fordert"]["verfahren"]["genauigkeit"] == expected.accuracy
     assert quality["satz"] == "geprüft von zwei KI-Kodierern an 24 Dokumenten, nicht von Menschen"
     assert quality["modell"] == MODEL and quality["codebuch_version"] == "2026-11-23"
 
     # Im Repo-Ordner liegen nur Schlüssel, Labels und Zahlen, kein Ratstext.
-    corpus = pl.read_parquet(Layout.from_settings(load_settings(cwd=project)).corpus)
+    corpus = pl.read_parquet(Layout.from_settings(load_settings(cwd=project / "repo")).corpus)
     snippets = [t[100:140] for t in corpus.get_column("text").to_list() if len(t) > 140]
-    for path in (project / "validierung").rglob("*"):
+    for path in (project / "repo" / "validierung").rglob("*"):
         if path.is_file():
             content = path.read_text(encoding="utf-8")
             assert not any(snippet in content for snippet in snippets), path

@@ -23,6 +23,7 @@ from georep.validation.measures import (
     cohen_kappa,
     krippendorff_alpha,
     ndcg_at_k,
+    stratified_share,
     wilson_interval,
 )
 
@@ -175,8 +176,10 @@ def test_per_class_scores_are_scikit_learns() -> None:
 @pytest.mark.parametrize("average", ["micro", "macro"])
 def test_averages_are_scikit_learns(average: str) -> None:
     scores = classify_scores(GOLD, PRED, LABELS)
+    # Befund 5: das Makromittel zählt nur Klassen mit Gold oder Vorhersage, „d" also nicht
+    present = ["a", "b", "c"]
     precision, recall, f1, _ = precision_recall_fscore_support(
-        GOLD, PRED, labels=LABELS, average=average, zero_division=0.0
+        GOLD, PRED, labels=present, average=average, zero_division=0.0
     )
     mine = (
         (scores.micro_precision, scores.micro_recall, scores.micro_f1)
@@ -214,21 +217,83 @@ def test_scores_reject_an_unknown_label() -> None:
 def test_ndcg_is_scikit_learns_when_every_judged_document_is_ranked() -> None:
     gains = {"d1": 2.0, "d2": 0.0, "d3": 1.0, "d4": 2.0, "d5": 0.0, "d6": 1.0}
     scores = {"d1": 0.3, "d2": 0.9, "d3": 0.8, "d4": 0.1, "d5": 0.5, "d6": 0.7}
-    ranking = sorted(scores, key=lambda doc: -scores[doc])
     docs = sorted(gains)
     for k in (1, 3, 5, 10):
         expected = ndcg_score([[gains[d] for d in docs]], [[scores[d] for d in docs]], k=k)
-        assert ndcg_at_k(ranking, gains, k) == pytest.approx(expected)
+        assert ndcg_at_k(scores, gains, k) == pytest.approx(expected)
 
 
-def test_ndcg_counts_unjudged_documents_as_irrelevant() -> None:
-    gains = {"d1": 1.0}
-    assert ndcg_at_k(["d1", "x"], gains, 2) == 1.0
-    # d1 auf Rang 2: 1 / log2(3)
-    assert ndcg_at_k(["x", "d1"], gains, 2) == pytest.approx(1 / math.log2(3))
-    assert ndcg_at_k(["x", "d1"], gains, 1) == 0.0
+def test_ndcg_averages_ties_like_scikit_learn() -> None:
+    """Befund 4: gleiche Punktzahlen bekommen das Mittel ihrer Ränge, wie ``ndcg_score``."""
+    gains = {"d1": 2.0, "d2": 0.0, "d3": 1.0, "d4": 2.0}
+    scores = {"d1": 0.5, "d2": 0.5, "d3": 0.5, "d4": 0.1}
+    docs = sorted(gains)
+    for k in (1, 2, 3, 4):
+        expected = ndcg_score([[gains[d] for d in docs]], [[scores[d] for d in docs]], k=k)
+        assert ndcg_at_k(scores, gains, k) == pytest.approx(expected)
+
+
+def test_ndcg_counts_only_judged_documents() -> None:
+    """Befund 4: ein ungeurteiltes Dokument vorn drückt die Zahl nicht; ein geurteiltes ohne
+    Punktzahl steht hinten."""
+    gains = {"d1": 1.0, "d2": 0.0}
+    assert ndcg_at_k({"x": 9.0, "d1": 1.0, "d2": 0.5}, gains, 1) == 1.0
+    assert ndcg_at_k({"d2": 1.0}, gains, 2) == pytest.approx(1 / math.log2(3))
 
 
 def test_ndcg_is_undefined_without_a_relevant_document() -> None:
-    assert ndcg_at_k(["d1"], {"d1": 0.0}, 5) is None
-    assert ndcg_at_k(["d1"], {}, 5) is None
+    assert ndcg_at_k({"d1": 1.0}, {"d1": 0.0}, 5) is None
+    assert ndcg_at_k({"d1": 1.0}, {}, 5) is None
+
+
+def test_ndcg_rejects_scores_that_are_not_finite() -> None:
+    with pytest.raises(deal.PreContractError):
+        ndcg_at_k({"d1": float("nan")}, {"d1": 1.0}, 5)
+
+
+# --- Gewichte: geschichteter Schätzer (Befund 1) ----------------------------------------------------
+
+
+def test_stratified_share_by_hand_is_project_14s_weighted_precision() -> None:
+    """Die Kantenpräzision von Vorhaben 14, gewichtet mit den Schichtgrößen (Messdokument § 4.1)."""
+    hits = {
+        "mg": (12, 15),
+        "periode": (10, 10),
+        "antwort": (25, 25),
+        "nachfrage": (14, 15),
+        "umsetzung": (21, 25),
+        "aenderung": (18, 20),
+        "nachtrag": (10, 10),
+        "bau": (5, 5),
+        "bezug_titel": (12, 12),
+        "bezug_text": (12, 13),
+    }
+    sizes = {
+        "mg": 387,
+        "periode": 2599,
+        "antwort": 272,
+        "nachfrage": 303,
+        "umsetzung": 2915,
+        "aenderung": 657,
+        "nachtrag": 301,
+        "bau": 22,
+        "bezug_titel": 438,
+        "bezug_text": 6976,
+    }
+    result = stratified_share(hits, sizes)
+    assert round(result.estimate, 3) == 0.922 and result.population == 14870
+    # Kish: n_eff = N² / Σ N_h²/m_h, deutlich unter 150, weil bezug_text 47 % mit 13 Kanten trägt
+    expected = 14870**2 / sum(sizes[h] ** 2 / m for h, (_, m) in hits.items())
+    assert result.effective_n == pytest.approx(expected) and result.effective_n < 60
+    low, high = result.interval
+    assert (
+        low < 0.922 < high
+        and high - low > wilson_interval(139, 150)[1] - wilson_interval(139, 150)[0]
+    )
+
+
+def test_a_self_weighting_sample_gives_the_plain_share_and_wilson() -> None:
+    hits = {"a": (9, 10), "b": (2, 5)}
+    result = stratified_share(hits, {"a": 100, "b": 50})
+    assert result.estimate == pytest.approx(11 / 15) and result.effective_n == pytest.approx(15)
+    assert result.interval == pytest.approx(wilson_interval(11, 15))

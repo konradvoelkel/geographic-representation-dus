@@ -1,26 +1,30 @@
 """Zwei Kodierungen zusammenführen, Uneinigkeiten schlichten lassen, Labels ablegen (F4).
 
-``georep validate merge <vorhaben> --model <name>`` liest die Antworten von A und B. Sind beide
-vollständig, gibt es zwei Ausgänge:
+``georep validate merge <vorhaben> --model <name>`` liest die Antworten von A und B, je Einheit und
+Frage. Sind beide vollständig, gibt es zwei Ausgänge:
 
-1. Es gibt Uneinigkeiten, und die Schlichtung ist noch nicht vollständig: der Auftrag des
-   Schlicht-Agenten entsteht unter ``<coding_root>/<vorhaben>/schlichtung/`` (nur die strittigen
-   Einheiten, mit beiden Labels und Begründungen) samt leerer Antwortdatei. Begonnene Antworten
-   der Schlichtung bleiben stehen; der Befehl sagt, wie viele noch offen sind.
+1. Es gibt Uneinigkeiten, und die Schlichtung ist nicht vollständig: der Auftrag des
+   Schlicht-Agenten entsteht unter ``<coding_root>/<vorhaben>/schlichtung/`` (je Einheit mit
+   Uneinigkeit eine Zeile: die strittigen Fragen und beide Kodierungen mit Begründung, in einer
+   je Einheit festen, aber nicht immer gleichen Folge) samt leerer Antwortdatei. Begonnene
+   Antworten bleiben stehen; passt der Auftrag nicht mehr zu den Uneinigkeiten (A oder B haben
+   neu kodiert), bricht der Befehl ab, bis ``--force`` die Schlichtung zurücksetzt.
 2. Es gibt keine Uneinigkeit, oder die Schlichtung ist vollständig: ``labels.csv`` (``id``,
-   ``kodierer_a``, ``kodierer_b``, ``schlichtung``, ``label``), ``README.md`` (Codebuch-Version,
-   Modell, Datum, Stichprobe, Übereinstimmung) und ``guete.json`` mit der Übereinstimmung
-   entstehen im Ordner des Vorhabens im Repo. Begründungen bleiben lokal: sie dürfen Text zitieren.
+   ``frage``, ``kodierer_a``, ``kodierer_b``, ``schlichtung``, ``label``), ``README.md`` und
+   ``guete.json`` mit der Übereinstimmung je Frage entstehen im Ordner des Vorhabens im Repo.
+   Begründungen bleiben lokal: sie dürfen Text zitieren.
 
-Eine Antwortdatei ist nur brauchbar, wenn sie jede Einheit genau einmal mit einem Label aus dem
-Codebuch trägt; sonst nennt ein ``CodingError`` Zahl und Beispiele.
+Eine Antwortdatei ist nur brauchbar, wenn sie jede Einheit genau einmal trägt, mit der
+``codebuch_version`` des Codebuchs und je gestellter Frage einer gültigen Antwort; eine Frage,
+deren Bedingung nicht erfüllt ist, bleibt ``null``. Sonst nennt ein ``CodingError`` Zahl und
+Beispiel je Fehlerart.
 """
 
 from __future__ import annotations
 
 import datetime as dt
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -32,118 +36,197 @@ from georep.io import atomic_path, write_json, write_text
 from georep.layout import Layout
 from georep.settings import Settings
 from georep.validation import CodingError
-from georep.validation.codebook import Codebook, load_codebook
+from georep.validation.codebook import OPTION_SCALES, Codebook, Question, applies, load_codebook
 from georep.validation.measures import agreement, cohen_kappa, krippendorff_alpha, wilson_interval
 from georep.validation.paths import ADJUDICATION, ValidationPaths, validation_paths
-from georep.validation.sample import ID, read_sample, sample_meta
+from georep.validation.sample import ID, rank, read_sample, sample_meta
 from georep.validation.tasks import answers_started, write_assignment
 
-LABEL_COLUMNS = ("id", "kodierer_a", "kodierer_b", "schlichtung", "label")
+LABEL_COLUMNS = ("id", "frage", "kodierer_a", "kodierer_b", "schlichtung", "label")
+META_KEYS = ("id", "codebuch_version", "begruendung", "kodierer")
 # Wie die Seite eine Einheit im Plural nennt: „geprüft von zwei KI-Kodierern an n …".
 UNIT_PLURAL = {
     "document": "Dokumenten",
     "document_pair": "Dokumentpaaren",
+    "pair_with_span": "Dokumentpaaren",
     "span": "Textstellen",
     "query_document": "Paaren aus Suchanfrage und Dokument",
+    "marking": "Dokumenten",
 }
+Values = dict[str, str | None]
 
 
 @dataclass(frozen=True)
-class Answer:
+class Coding:
+    """Die Antworten eines Agenten zu einer Einheit, kanonisch; ``None``: nicht gestellt."""
+
     id: str
-    label: str
+    values: Values
     reason: str
 
 
-def read_answers(path: Path, ids: Sequence[str], labels: Sequence[str]) -> dict[str, Answer]:
-    """Eine vollständige Antwortdatei: jede Einheit genau einmal, jedes Label aus dem Codebuch."""
+class _Problems:
+    def __init__(self) -> None:
+        self.items: dict[str, list[str]] = {}
+
+    def note(self, kind: str, what: str) -> None:
+        self.items.setdefault(kind, []).append(what)
+
+    def raise_if_any(self, path: Path) -> None:
+        if self.items:
+            summary = "; ".join(
+                f"{kind} {len(found)} (etwa {found[0]})"
+                for kind, found in sorted(self.items.items())
+            )
+            raise CodingError(f"{path}: nicht vollständig: {summary}")
+
+
+def _records(path: Path, problems: _Problems) -> list[dict[str, Any]]:
     if not path.is_file():
         raise MissingInputError(f"{path} fehlt; `georep validate tasks` schreibt sie")
-    expected = set(ids)
-    found: dict[str, Answer] = {}
-    problems: dict[str, list[str]] = {}
-
-    def note(kind: str, what: str) -> None:
-        problems.setdefault(kind, []).append(what)
-
+    records = []
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
         try:
             record = json.loads(line)
         except json.JSONDecodeError:
-            note("kein JSON", f"Zeile {number}")
+            problems.note("kein JSON", f"Zeile {number}")
             continue
-        unit = record.get("id") if isinstance(record, dict) else None
-        if not isinstance(unit, str) or unit not in expected:
-            note("unbekannte id", repr(unit))
+        if not isinstance(record, dict):
+            problems.note("kein JSON-Objekt", f"Zeile {number}")
             continue
-        if unit in found:
-            note("doppelt", unit)
+        records.append(record)
+    return records
+
+
+def _fill(
+    codebook: Codebook,
+    record: Mapping[str, Any],
+    asked: Sequence[str],
+    given: Values,
+    problems: _Problems,
+    unit: str,
+) -> Values:
+    """Die Antworten auf ``asked`` aus ``record``; die übrigen aus ``given``, Bedingungen in Folge."""
+    values: Values = {}
+    for question in codebook.questions:
+        if question.id not in asked:
+            value = given.get(question.id)
+            values[question.id] = value if applies(question, values) else None
             continue
-        label = record.get("label")
-        if label is None:
-            note("ohne Label", unit)
+        raw = record.get(question.id)
+        if not applies(question, values):
+            if raw is not None:
+                problems.note("beantwortet, obwohl nicht gestellt", f"{unit}: {question.id}")
+            values[question.id] = None
             continue
-        if label not in labels:
-            note("Label nicht im Codebuch", f"{unit}: {label!r}")
+        try:
+            value = question.canonical(raw)
+        except ValueError as error:
+            problems.note("ungültige Antwort", f"{unit}: {error}")
+            values[question.id] = None
             continue
+        if value is None:
+            problems.note("ohne Antwort", f"{unit}: {question.id}")
+        values[question.id] = value
+    return values
+
+
+def read_answers(path: Path, ids: Sequence[str], codebook: Codebook) -> dict[str, Coding]:
+    """Eine vollständige Antwortdatei: jede Einheit genau einmal, jede gestellte Frage beantwortet."""
+    problems = _Problems()
+    expected, seen = set(ids), set()
+    found: dict[str, Coding] = {}
+    for record in _records(path, problems):
+        unit = record.get("id")
+        if not isinstance(unit, str) or not unit:
+            problems.note("leere id", repr(unit))
+            continue
+        if unit not in expected:
+            problems.note("unbekannte id", repr(unit))
+            continue
+        if unit in seen:
+            problems.note("doppelt", unit)
+            continue
+        seen.add(unit)
+        if record.get("codebuch_version") != codebook.version:
+            problems.note(
+                "andere codebuch_version",
+                f"{unit}: {record.get('codebuch_version')!r} statt {codebook.version!r}",
+            )
+            continue
+        values = _fill(codebook, record, codebook.question_ids, {}, problems, unit)
         reason = record.get("begruendung")
-        found[unit] = Answer(unit, label, reason if isinstance(reason, str) else "")
-    missing = sorted(expected - set(found) - set(problems.get("ohne Label", ())))
-    if missing:
-        problems["fehlt"] = missing
-    if problems:
-        summary = "; ".join(
-            f"{kind} {len(items)} (etwa {items[0]})" for kind, items in sorted(problems.items())
-        )
-        raise CodingError(f"{path}: nicht vollständig: {summary}")
+        found[unit] = Coding(unit, values, reason if isinstance(reason, str) else "")
+    for unit in sorted(expected - seen):
+        problems.note("fehlt", unit)
+    problems.raise_if_any(path)
     return found
 
 
 @dataclass(frozen=True)
 class Reliability:
-    """Übereinstimmung der beiden Kodierer über die Stichprobe."""
+    """Übereinstimmung der beiden Kodierer bei einer Frage über die Einheiten, wo sie gestellt war."""
 
-    n: int
+    question: str
+    scale: str
+    n: int  # Einheiten, bei denen mindestens ein Kodierer die Frage beantwortet hat
+    both: int  # Einheiten, bei denen beide geantwortet haben
     agreed: int
-    share: float
-    interval: tuple[float, float]
+    share: float | None
+    interval: tuple[float, float] | None
     kappa: float | None
     alpha_nominal: float | None
-    alpha_ordinal: float | None  # nur bei ordinaler Skala
+    alpha_scale: float | None  # ordinal bei ordinaler, intervall bei Intervallskala, sonst None
 
     def alpha(self) -> float | None:
-        """Das α, an dem Stufe 3 gemessen wird: ordinal bei ordinaler Skala, sonst nominal."""
-        return self.alpha_ordinal if self.alpha_ordinal is not None else self.alpha_nominal
+        """Das α, an dem Stufe 3 gemessen wird: das der Skala, sonst das nominale."""
+        return self.alpha_scale if self.scale in ("ordinal", "interval") else self.alpha_nominal
 
     def as_json(self) -> dict[str, Any]:
         return {
             "n": self.n,
+            "beide": self.both,
             "einig": self.agreed,
             "anteil": self.share,
-            "anteil_wilson95": list(self.interval),
+            "anteil_wilson95": list(self.interval) if self.interval else None,
             "cohen_kappa": self.kappa,
             "krippendorff_alpha_nominal": self.alpha_nominal,
-            "krippendorff_alpha_ordinal": self.alpha_ordinal,
+            "krippendorff_alpha_skala": self.alpha_scale,
+            "krippendorff_alpha": self.alpha(),
         }
 
 
-def reliability(first: Sequence[str], second: Sequence[str], codebook: Codebook) -> Reliability:
-    units = list(zip(first, second, strict=True))
-    share = agreement(first, second)
-    assert share is not None  # Vorbedingung: mindestens eine Einheit (die Stichprobe ist nie leer)
-    agreed = sum(1 for a, b in units if a == b)
+def reliability(
+    question: Question, first: Sequence[str | None], second: Sequence[str | None]
+) -> Reliability:
+    """κ, α und der Anteil gleicher Antworten für eine Frage; ``None`` heißt „nicht gestellt"."""
+    units = [(a, b) for a, b in zip(first, second, strict=True) if a is not None or b is not None]
+    both = [(a, b) for a, b in units if a is not None and b is not None]
+    firsts = [a for a, _ in both if a is not None]
+    seconds = [b for _, b in both if b is not None]
+    agreed = sum(1 for a, b in both if a == b)
+    observed = sorted({v for pair in units for v in pair if v is not None})
+    categories = list(question.labels) if question.scale in OPTION_SCALES else observed
+    alpha_scale = None
+    if question.scale == "ordinal":
+        alpha_scale = krippendorff_alpha(units, "ordinal", categories)
+    elif question.scale == "interval":
+        numbers = [v for v in observed if v != "null"]
+        numeric = [tuple(v if v != "null" else None for v in pair) for pair in units]
+        alpha_scale = krippendorff_alpha(numeric, "interval", numbers) if numbers else None
     return Reliability(
+        question=question.id,
+        scale=question.scale,
         n=len(units),
+        both=len(both),
         agreed=agreed,
-        share=share,
-        interval=wilson_interval(agreed, len(units)),
-        kappa=cohen_kappa(first, second),
-        alpha_nominal=krippendorff_alpha(units, "nominal", codebook.labels),
-        alpha_ordinal=krippendorff_alpha(units, "ordinal", codebook.labels)
-        if codebook.scale == "ordinal"
-        else None,
+        share=agreement(firsts, seconds),
+        interval=wilson_interval(agreed, len(both)) if both else None,
+        kappa=cohen_kappa(firsts, seconds) if both else None,
+        alpha_nominal=krippendorff_alpha(units, "nominal", categories) if units else None,
+        alpha_scale=alpha_scale,
     )
 
 
@@ -151,8 +234,19 @@ def format_number(value: float | None, digits: int = 3) -> str:
     return "nicht definiert" if value is None else f"{value:.{digits}f}".replace(".", ",")
 
 
-def format_percent(value: float) -> str:
-    return f"{100 * value:.1f}".replace(".", ",") + " %"
+def format_percent(value: float | None) -> str:
+    return "nicht definiert" if value is None else f"{100 * value:.1f}".replace(".", ",") + " %"
+
+
+def _cell(text: str) -> str:
+    """Ein Wert in einer Markdown-Tabelle: ``|`` darf die Zelle nicht teilen."""
+    return text.replace("|", "\\|")
+
+
+def alpha_suffices(result: Reliability, min_alpha: float) -> bool:
+    """Stufe 3: α definiert und mindestens ``min_alpha``; ein undefiniertes α genügt nie."""
+    alpha = result.alpha()
+    return alpha is not None and alpha >= min_alpha
 
 
 def _adjudicated(disputed: int) -> str:
@@ -166,23 +260,21 @@ def _adjudicated(disputed: int) -> str:
 
 def readme(
     codebook: Codebook,
-    meta: dict[str, Any],
-    result: Reliability,
+    meta: Mapping[str, Any],
+    results: Sequence[Reliability],
+    units: int,
     disputed: int,
     model: str,
     today: dt.date,
     min_alpha: float,
 ) -> str:
-    alpha = result.alpha()
-    verdict = (
-        "nicht definiert"
-        if alpha is None
-        else ("erfüllt" if alpha >= min_alpha else "nicht erfüllt: das Codebuch ist zu unscharf")
-    )
     stratum = meta.get("schicht") or ""
-    alpha_line = f"Krippendorffs α nominal {format_number(result.alpha_nominal)}"
-    if result.alpha_ordinal is not None:
-        alpha_line += f", ordinal {format_number(result.alpha_ordinal)}"
+    rows = [
+        f"| `{_cell(r.question)}` | {r.scale} | {r.n} | {r.agreed} von {r.both} "
+        f"({format_percent(r.share)}) | {format_number(r.kappa)} | {format_number(r.alpha())} | "
+        f"{'ja' if alpha_suffices(r, min_alpha) else 'nein'} |"
+        for r in results
+    ]
     return "\n".join(
         [
             f"# Validierung {codebook.project}",
@@ -191,32 +283,34 @@ def readme(
             "Der Ablauf steht in [docs/validierung.md](../../docs/validierung.md).",
             "",
             f"- **Codebuch**: `codebuch.toml`, Version {codebook.version}; Einheit "
-            f"`{codebook.unit}`, Skala `{codebook.scale}`, Optionen "
-            + ", ".join(f"`{label}`" for label in codebook.labels)
-            + ".",
-            f"- **Stichprobe**: {result.n} Einheiten aus Profil `{meta.get('profil')}`, "
+            f"`{codebook.unit}`, {len(codebook.questions)} "
+            f"Frage{'n' if len(codebook.questions) != 1 else ''}.",
+            f"- **Stichprobe**: {units} Einheiten aus Profil `{meta.get('profil')}`, "
             + (f"geschichtet nach `{stratum}`, " if stratum else "ungeschichtet, ")
-            + f"Seed {meta.get('seed')}, gezogen am {meta.get('gezogen')} "
-            "(`stichprobe.csv`, `stichprobe.json`).",
-            f"- **Kodierer**: zwei KI-Kodierer, Modell `{model}`, unabhängig voneinander und ohne "
-            f"die Ausgabe des geprüften Verfahrens; {_adjudicated(disputed)}. **Kein "
+            + ("selbstgewichtend" if meta.get("selbstgewichtend") else "gewichtet mit N_h/n_h")
+            + " (`stichprobe.csv`, `stichprobe.json`).",
+            f"- **Kodierer**: zwei KI-Kodierer, Modell `{_cell(model)}`, unabhängig voneinander und "
+            f"ohne die Ausgabe des geprüften Verfahrens; {_adjudicated(disputed)}. **Kein "
             "menschlicher Goldstandard**: die Labels messen Übereinstimmung mit einem "
             "stärkeren Modell, nicht mit Menschen.",
             f"- **Datum**: {today.isoformat()}.",
-            f"- **Übereinstimmung A–B**: {format_percent(result.share)} der Einheiten (Wilson 95 %: "
-            f"{format_percent(result.interval[0])} bis {format_percent(result.interval[1])}), Cohens κ "
-            f"{format_number(result.kappa)}, {alpha_line}. Stufe 3 verlangt α ≥ {format_number(min_alpha, 1)}: "
-            f"{verdict}.",
+            "",
+            f"Übereinstimmung A–B je Frage; Stufe 3 verlangt α ≥ {format_number(min_alpha, 2)} "
+            "(ordinal bei ordinaler, intervall bei Intervallskala, sonst nominal):",
+            "",
+            "| Frage | Skala | gestellt | gleich | Cohens κ | Krippendorffs α | genügt |",
+            "|---|---|---|---|---|---|---|",
+            *rows,
             "",
             "## labels.csv",
             "",
             "| Spalte | Inhalt |",
             "|---|---|",
-            "| `id` | Schlüssel der Einheit; bei `document` die Dokument-ID, sonst die Teile mit `|` "
-            "verbunden (`stichprobe.csv` trägt sie einzeln) |",
-            "| `kodierer_a` | Label von Kodierer A |",
-            "| `kodierer_b` | Label von Kodierer B |",
-            "| `schlichtung` | Label der Schlichtung; leer, wo A und B einig waren |",
+            "| `id` | Schlüssel der Einheit (`stichprobe.csv` trägt seine Teile einzeln) |",
+            "| `frage` | die Frage aus dem Codebuch |",
+            "| `kodierer_a`, `kodierer_b` | die Antworten von A und B; leer, wo die Frage nicht "
+            "gestellt war |",
+            "| `schlichtung` | die Antwort der Schlichtung; leer, wo A und B einig waren |",
             "| `label` | das Endlabel: das gemeinsame, sonst das der Schlichtung |",
             "",
         ]
@@ -225,48 +319,107 @@ def readme(
 
 @dataclass(frozen=True)
 class MergeReport:
-    reliability: Reliability
-    disputed: int
+    results: tuple[Reliability, ...]
+    disputed: int  # strittige Paare aus Einheit und Frage
     open: int  # Einheiten, die die Schlichtung noch nicht entschieden hat
     labels: Path | None  # None, solange die Schlichtung offen ist
     adjudication: Path | None
 
     def lines(self) -> list[str]:
-        r = self.reliability
-        head = (
-            f"{r.n} Einheiten, einig {r.agreed} ({format_percent(r.share)}), κ {format_number(r.kappa)}, "
-            f"α nominal {format_number(r.alpha_nominal)}"
-            + (f", ordinal {format_number(r.alpha_ordinal)}" if r.alpha_ordinal is not None else "")
-            + f"; {self.disputed} Uneinigkeiten"
-        )
+        out = [
+            f"{r.question}: {r.n} Einheiten, einig {r.agreed} von {r.both} "
+            f"({format_percent(r.share)}), κ {format_number(r.kappa)}, α {format_number(r.alpha())}"
+            for r in self.results
+        ]
+        out.append(f"{self.disputed} Uneinigkeiten")
         if self.labels is not None:
-            return [head, f"Labels -> {self.labels}"]
-        return [head, f"Schlichtung offen: {self.open} von {self.disputed} -> {self.adjudication}"]
+            return [*out, f"Labels -> {self.labels}"]
+        return [*out, f"Schlichtung offen: {self.open} Einheiten -> {self.adjudication}"]
+
+
+def _first_is_a(seed: int, unit: str) -> bool:
+    """Welche Kodierung die Schlichtung als erste sieht: je Einheit fest, im Mittel halb A."""
+    return int(rank(seed, f"schlichtung|{unit}"), 16) % 2 == 0
+
+
+def _tasks_of(path: Path) -> dict[str, dict[str, Any]]:
+    if not path.is_file():
+        return {}
+    return {
+        record["id"]: record
+        for record in (
+            json.loads(line)
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        )
+    }
 
 
 def _adjudication_tasks(
-    paths: ValidationPaths, disputed: Sequence[str], a: dict[str, Answer], b: dict[str, Answer]
+    paths: ValidationPaths,
+    codebook: Codebook,
+    disputes: Mapping[str, list[str]],
+    a: Mapping[str, Coding],
+    b: Mapping[str, Coding],
 ) -> list[dict[str, Any]]:
-    """Die strittigen Einheiten aus dem Auftrag von A, mit beiden Kodierungen."""
-    tasks = {}
-    for line in paths.tasks("A").read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            record = json.loads(line)
-            tasks[record["id"]] = record
-    missing = [unit for unit in disputed if unit not in tasks]
-    if missing:
-        raise CodingError(
-            f"{paths.tasks('A')} kennt {len(missing)} Einheiten nicht, etwa {missing[0]!r}"
+    """Je Einheit mit Uneinigkeit: der Auftrag von A (wo es ihn gibt) und beide Kodierungen."""
+    tasks = _tasks_of(paths.tasks("A"))
+    records = []
+    for unit, strittig in disputes.items():
+        first, second = (
+            (a[unit], b[unit]) if _first_is_a(codebook.sample.seed, unit) else (b[unit], a[unit])
         )
-    return [
-        tasks[unit]
-        | {
-            "kodierung_1": {"label": a[unit].label, "begruendung": a[unit].reason},
-            "kodierung_2": {"label": b[unit].label, "begruendung": b[unit].reason},
-            "antwort": None,
-        }
-        for unit in disputed
-    ]
+        records.append(
+            tasks.get(
+                unit,
+                {"id": unit, "vorhaben": codebook.project, "codebuch_version": codebook.version},
+            )
+            | {
+                "strittig": strittig,
+                "kodierung_1": {**first.values, "begruendung": first.reason},
+                "kodierung_2": {**second.values, "begruendung": second.reason},
+                "antwort": None,
+            }
+        )
+    return records
+
+
+def reset_adjudication(paths: ValidationPaths) -> None:
+    """``merge --force``: Auftrag, Antworten und Codebuch der Schlichtung entfernen."""
+    for path in (paths.tasks(ADJUDICATION), paths.answers(ADJUDICATION), paths.brief(ADJUDICATION)):
+        path.unlink(missing_ok=True)
+
+
+def read_adjudication(
+    path: Path,
+    codebook: Codebook,
+    disputes: Mapping[str, list[str]],
+    agreed: Mapping[str, Values],
+) -> dict[str, Values]:
+    """Die Endantworten der strittigen Einheiten: Einigkeit plus Schlichtung, Bedingungen in Folge."""
+    problems = _Problems()
+    seen: set[str] = set()
+    final: dict[str, Values] = {}
+    for record in _records(path, problems):
+        unit = record.get("id")
+        if not isinstance(unit, str) or unit not in disputes:
+            problems.note("unbekannte id", repr(unit))
+            continue
+        if unit in seen:
+            problems.note("doppelt", unit)
+            continue
+        seen.add(unit)
+        if record.get("codebuch_version") != codebook.version:
+            problems.note(
+                "andere codebuch_version",
+                f"{unit}: {record.get('codebuch_version')!r} statt {codebook.version!r}",
+            )
+            continue
+        final[unit] = _fill(codebook, record, disputes[unit], agreed[unit], problems, unit)
+    for unit in sorted(set(disputes) - seen):
+        problems.note("fehlt", unit)
+    problems.raise_if_any(path)
+    return final
 
 
 def merge_project(
@@ -282,59 +435,93 @@ def merge_project(
     paths = validation_paths(settings, project)
     codebook = load_codebook(paths.codebook, project)
     ids = read_sample(paths, codebook).get_column(ID).to_list()
-    a = read_answers(paths.answers("A"), ids, codebook.labels)
-    b = read_answers(paths.answers("B"), ids, codebook.labels)
-    result = reliability([a[u].label for u in ids], [b[u].label for u in ids], codebook)
-    disputed = [unit for unit in ids if a[unit].label != b[unit].label]
-    decided: dict[str, Answer] = {}
-    if disputed:
+    a = read_answers(paths.answers("A"), ids, codebook)
+    b = read_answers(paths.answers("B"), ids, codebook)
+    results = tuple(
+        reliability(q, [a[u].values[q.id] for u in ids], [b[u].values[q.id] for u in ids])
+        for q in codebook.questions
+    )
+    disputes = {
+        unit: [q for q in codebook.question_ids if a[unit].values[q] != b[unit].values[q]]
+        for unit in ids
+    }
+    disputes = {unit: qs for unit, qs in disputes.items() if qs}
+    count = sum(len(qs) for qs in disputes.values())
+    if force:
+        reset_adjudication(paths)
+    final: dict[str, Values] = {unit: dict(a[unit].values) for unit in ids}
+    if disputes:
+        asked = {u: t.get("strittig") for u, t in _tasks_of(paths.tasks(ADJUDICATION)).items()}
         started = answers_started(paths.answers(ADJUDICATION))
-        if (
-            started >= len(disputed) or started < 0
-        ):  # vollständig, oder kaputt: read_answers sagt was
-            decided = read_answers(paths.answers(ADJUDICATION), disputed, codebook.labels)
-        else:
-            if started == 0:
-                tasks = _adjudication_tasks(paths, disputed, a, b)
-                write_assignment(paths, ADJUDICATION, tasks, codebook, force=False)
+        if asked and asked != disputes:
+            if started:
+                raise CodingError(
+                    f"{paths.tasks(ADJUDICATION)} passt nicht mehr zu den Uneinigkeiten (A oder B "
+                    "haben neu kodiert); `merge --force` setzt die Schlichtung zurück"
+                )
+            asked = {}
+        if not asked and started == 0:
+            tasks = _adjudication_tasks(paths, codebook, disputes, a, b)
+            write_assignment(paths, ADJUDICATION, tasks, codebook, force=False)
+            return MergeReport(results, count, len(disputes), None, paths.role(ADJUDICATION))
+        if 0 <= started < len(disputes):
             return MergeReport(
-                result,
-                len(disputed),
-                len(disputed) - max(started, 0),
-                None,
-                paths.role(ADJUDICATION),
+                results, count, len(disputes) - started, None, paths.role(ADJUDICATION)
             )
-    if paths.labels.exists() and not force:
-        raise CodingError(f"{paths.labels} gibt es schon; --force schreibt die Labels neu")
-    frame = pl.DataFrame(
-        {
-            "id": ids,
-            "kodierer_a": [a[u].label for u in ids],
-            "kodierer_b": [b[u].label for u in ids],
-            "schlichtung": [decided[u].label if u in decided else "" for u in ids],
-            "label": [decided[u].label if u in decided else a[u].label for u in ids],
+        agreed = {
+            u: {q: v for q, v in a[u].values.items() if q not in disputes[u]} for u in disputes
         }
-    ).sort("id")
-    with atomic_path(paths.labels) as tmp:
-        frame.write_csv(tmp)
+        final |= read_adjudication(paths.answers(ADJUDICATION), codebook, disputes, agreed)
+    write_labels(paths, codebook, ids, a, b, disputes, final)
     meta = sample_meta(paths)
     min_alpha = settings.validation.min_alpha
-    write_text(paths.readme, readme(codebook, meta, result, len(disputed), model, today, min_alpha))
+    write_text(
+        paths.readme, readme(codebook, meta, results, len(ids), count, model, today, min_alpha)
+    )
     write_json(
         paths.quality,
         {
             "vorhaben": project,
             "codebuch_version": codebook.version,
             "einheit": codebook.unit,
-            "skala": codebook.scale,
             "modell": model,
             "datum": today.isoformat(),
-            "uneinig": len(disputed),
-            "uebereinstimmung": result.as_json(),
+            "einheiten": len(ids),
+            "uneinig": count,
             "alpha_mindestens": min_alpha,
-            "alpha_genuegt": (result.alpha() or 0.0) >= min_alpha,
-            "satz": f"geprüft von zwei KI-Kodierern an {result.n} "
+            "fragen": {
+                r.question: r.as_json() | {"alpha_genuegt": alpha_suffices(r, min_alpha)}
+                for r in results
+            },
+            "satz": f"geprüft von zwei KI-Kodierern an {len(ids)} "
             f"{UNIT_PLURAL[codebook.unit]}, nicht von Menschen",
         },
     )
-    return MergeReport(result, len(disputed), 0, paths.labels, None)
+    return MergeReport(results, count, 0, paths.labels, None)
+
+
+def write_labels(
+    paths: ValidationPaths,
+    codebook: Codebook,
+    ids: Sequence[str],
+    a: Mapping[str, Coding],
+    b: Mapping[str, Coding],
+    disputes: Mapping[str, list[str]],
+    final: Mapping[str, Values],
+) -> None:
+    """``labels.csv``: je Einheit und gestellter Frage eine Zeile, nach id und Fragefolge."""
+    rows = []
+    for unit in sorted(ids):
+        for question in codebook.question_ids:
+            first, second, label = (
+                a[unit].values[question],
+                b[unit].values[question],
+                final[unit][question],
+            )
+            if first is None and second is None and label is None:
+                continue
+            adjudicated = label if question in disputes.get(unit, ()) else None
+            rows.append((unit, question, first or "", second or "", adjudicated or "", label or ""))
+    frame = pl.DataFrame(rows, schema=list(LABEL_COLUMNS), orient="row")
+    with atomic_path(paths.labels) as tmp:
+        frame.write_csv(tmp)

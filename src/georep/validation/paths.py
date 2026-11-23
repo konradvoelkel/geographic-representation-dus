@@ -67,11 +67,27 @@ class ValidationPaths:
 
 
 def validation_paths(settings: Settings, project: str) -> ValidationPaths:
-    """Die Pfade eines Vorhabens; die lokalen dürfen nicht unter dem Ordner im Repo liegen."""
+    """Die Pfade eines Vorhabens; die lokalen dürfen nicht im Arbeitsbaum des Repos liegen.
+
+    Ein gesetztes ``validation.coding_root`` muss absolut sein und außerhalb des Ordners, der
+    ``validation.root`` enthält (des Arbeitsbaums); relativ hinge es am Arbeitsverzeichnis
+    (Review 2026-11-23). Ohne Eintrag gilt ``<data_root>/kodierung``: ``data_root`` ist
+    gitignored oder liegt ohnehin außerhalb.
+    """
     if not PROJECT_NAME.fullmatch(project):
         raise SchemaError(f"Vorhaben {project!r}: ein Ordnername wie 11-struktur")
     root = settings.validation.root
-    coding_root = settings.validation.coding_root or settings.data_root / "kodierung"
+    explicit = settings.validation.coding_root
+    if explicit is not None:
+        if not explicit.is_absolute():
+            raise SchemaError(f"validation.coding_root {explicit} ist relativ; ein absoluter Pfad")
+        tree = root.resolve().parent
+        if explicit.resolve().is_relative_to(tree):
+            raise SchemaError(
+                f"validation.coding_root {explicit} liegt im Arbeitsbaum {tree}: die Aufträge "
+                "tragen Text aus Ratsdokumenten und gehören nicht ins Repo"
+            )
+    coding_root = explicit or settings.data_root / "kodierung"
     paths = ValidationPaths(project, root / project, coding_root / project)
     if paths.coding.resolve().is_relative_to(root.resolve()):
         raise SchemaError(

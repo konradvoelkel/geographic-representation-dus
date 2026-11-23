@@ -290,9 +290,10 @@ def classify_scores(
     über alle Klassen sind dann gleich der Genauigkeit (jeder Fehler ist ein falsch Positiver der
     einen und ein falsch Negativer der anderen Klasse) und haben deren Wilson-Intervall. Präzision
     und Recall einer Klasse sind Anteile und bekommen ihr eigenes; F1 und die Makromittel sind
-    keine Anteile und bekommen keines. Die Makromittel sind ungewichtete Mittel über ``labels``
-    und zählen eine undefinierte Klasse als 0 (``zero_division=0`` in scikit-learn); das Makro-F1
-    ist das Mittel der F1 je Klasse, nicht das F1 der beiden Makromittel.
+    keine Anteile und bekommen keines. Die Makromittel sind ungewichtete Mittel über die Klassen,
+    die im Goldstandard vorkommen oder vergeben werden (scikit-learn mit ``labels`` = diese Klassen
+    und ``zero_division=0``); das Makro-F1 ist das Mittel der F1 je Klasse, nicht das F1 der
+    beiden Makromittel.
     """
     n = len(gold)
     position = {label: i for i, label in enumerate(labels)}
@@ -322,6 +323,10 @@ def classify_scores(
     correct = sum(matrix[i][i] for i in range(len(labels)))
     accuracy = correct / n
 
+    # Befund 5 (Review 2026-11-23): eine Klasse, die weder im Goldstandard vorkommt noch vergeben
+    # wird, sagt nichts über das Verfahren und zöge jedes Makromittel nach unten.
+    present = [c for c in classes if c.support or c.predicted]
+
     def mean(values: list[float | None]) -> float:
         return sum(v or 0.0 for v in values) / len(values)
 
@@ -334,50 +339,144 @@ def classify_scores(
         micro_precision=accuracy,
         micro_recall=accuracy,
         micro_f1=accuracy,
-        macro_precision=mean([c.precision for c in classes]),
-        macro_recall=mean([c.recall for c in classes]),
-        macro_f1=mean([c.f1 for c in classes]),
+        macro_precision=mean([c.precision for c in present]),
+        macro_recall=mean([c.recall for c in present]),
+        macro_f1=mean([c.f1 for c in present]),
         confusion=tuple(tuple(row) for row in matrix),
     )
 
 
-def _ranking_fits(ranking: Sequence[str], gains: Mapping[str, float], k: int) -> bool:
+def _ranking_fits(scores: Mapping[str, float], gains: Mapping[str, float], k: int) -> bool:
     return (
         k >= 1
-        and len(set(ranking)) == len(ranking)
+        and all(math.isfinite(v) for v in scores.values())
         and all(math.isfinite(g) and g >= 0.0 for g in gains.values())
         and math.isfinite(sum(gains.values()))
     )
 
 
 def _ndcg_bounded(
-    ranking: Sequence[str], gains: Mapping[str, float], k: int, result: float | None
+    scores: Mapping[str, float], gains: Mapping[str, float], k: int, result: float | None
 ) -> bool:
-    return result is None or 0.0 <= result <= 1.0 + 1e-12
+    return result is None or 0.0 <= result <= 1.0 + 1e-9
 
 
-def _dcg(values: Sequence[float]) -> float:
-    return sum(gain / math.log2(rank + 2) for rank, gain in enumerate(values))
+def _discount(rank: int, k: int) -> float:
+    return 1.0 / math.log2(rank + 2) if rank < k else 0.0
+
+
+def _tie_averaged_dcg(groups: Sequence[Sequence[float]], k: int) -> float:
+    """DCG@k über Gruppen gleicher Punktzahl in absteigender Folge: jede Gruppe trägt das Mittel
+    ihrer Gewinne mal die Summe ihrer Abschläge, wie ``sklearn.metrics.ndcg_score``."""
+    total, rank = 0.0, 0
+    for group in groups:
+        discounts = sum(_discount(r, k) for r in range(rank, rank + len(group)))
+        total += sum(group) / len(group) * discounts
+        rank += len(group)
+    return total
 
 
 @deal.pre(
     _ranking_fits,
-    message="k ≥ 1, jedes Dokument höchstens einmal in der Rangfolge, Gewinne ≥ 0 und endlich, auch summiert",
+    message="k ≥ 1, Punktzahlen endlich, Gewinne ≥ 0 und endlich, auch summiert",
 )
 @deal.ensure(_ndcg_bounded, message="nDCG liegt in [0, 1]")
 @deal.pure
-def ndcg_at_k(ranking: Sequence[str], gains: Mapping[str, float], k: int) -> float | None:
-    """nDCG@k einer Anfrage: die Rangfolge des Verfahrens gegen die Urteile der Kodierer.
+def ndcg_at_k(scores: Mapping[str, float], gains: Mapping[str, float], k: int) -> float | None:
+    """nDCG@k einer Anfrage über die geurteilten Dokumente: Punktzahlen des Verfahrens gegen Urteile.
 
-    ``ranking`` sind die Dokumente in der Reihenfolge des Verfahrens, ``gains`` die geurteilten
-    Dokumente der Anfrage mit ihrer Relevanz (die Stufe des Codebuchs, 0 für die niedrigste).
-    Ein nicht geurteiltes Dokument zählt 0, wie in der gepoolten Auswertung üblich. Der Gewinn ist
-    linear, Σ rel_i / log2(i + 1) über die ersten k Ränge, wie ``sklearn.metrics.ndcg_score``;
-    das Ideal ordnet die geurteilten Dokumente nach ihrer Relevanz. ``None``, wenn die Anfrage
-    kein Dokument mit Relevanz über 0 hat: dann gibt es nichts zu finden, und eine Null wäre ein
-    Urteil über das Verfahren, das die Daten nicht tragen.
+    ``gains`` sind die geurteilten Dokumente mit ihrer Relevanz (die Stufe des Codebuchs, 0 für
+    die niedrigste), ``scores`` die Punktzahlen des Verfahrens. Gewertet werden nur geurteilte
+    Dokumente (die „condensed list" nach Sakai 2007): ein nicht geurteiltes Dokument zählt weder
+    als relevant noch als irrelevant, statt still als 0 die Zahl zu drücken. Ein geurteiltes
+    Dokument ohne Punktzahl steht hinter allen mit Punktzahl. Gleichstände werden gemittelt, der
+    Gewinn ist linear, Σ rel_i / log2(i + 1) über die ersten k Ränge -- beides wie
+    ``sklearn.metrics.ndcg_score``. ``None``, wenn kein geurteiltes Dokument Relevanz über 0 hat.
     """
-    ideal = _dcg(sorted(gains.values(), reverse=True)[:k])
+    ideal = _tie_averaged_dcg([[g] for g in sorted(gains.values(), reverse=True)], k)
     if ideal <= 0.0:
         return None
-    return _dcg([gains.get(doc, 0.0) for doc in ranking[:k]]) / ideal
+    ranked: dict[float, list[float]] = {}
+    for doc, gain in gains.items():
+        if doc in scores:
+            ranked.setdefault(scores[doc], []).append(gain)
+    groups = [ranked[score] for score in sorted(ranked, reverse=True)]
+    unscored = [gain for doc, gain in gains.items() if doc not in scores]
+    if unscored:
+        groups.append(unscored)
+    return min(1.0, _tie_averaged_dcg(groups, k) / ideal)
+
+
+# --- Gewichte: die geschichtete Stichprobe (Befund 1 des Reviews, 2026-11-23) -------------------
+
+
+@dataclass(frozen=True)
+class StratifiedShare:
+    """Ein Anteil, geschätzt für die Grundgesamtheit aus einer geschichteten Stichprobe."""
+
+    estimate: float
+    interval: Interval
+    effective_n: float  # Kishs effektive Stichprobengröße (Σ w)² / Σ w²
+    population: int  # Σ N_h über die Schichten mit mindestens einer gewerteten Einheit
+
+
+def _shares_fit(hits: Mapping[str, tuple[int, int]], sizes: Mapping[str, int]) -> bool:
+    return (
+        bool(hits)
+        and set(hits) <= set(sizes)
+        and all(0 <= x <= m and m >= 1 for x, m in hits.values())
+        and all(sizes[h] >= hits[h][1] for h in hits)
+    )
+
+
+def _share_holds(
+    hits: Mapping[str, tuple[int, int]], sizes: Mapping[str, int], result: StratifiedShare
+) -> bool:
+    low, high = result.interval
+    return (
+        0.0 <= low <= result.estimate <= high <= 1.0
+        and 0.0 < result.effective_n <= sum(m for _, m in hits.values()) + 1e-9
+    )
+
+
+@deal.pre(_shares_fit, message="je Schicht 0 ≤ Treffer ≤ gewertet ≥ 1, und gewertet ≤ N_h")
+@deal.ensure(_share_holds, message="Schätzer im Intervall, n_eff höchstens die Zahl der Einheiten")
+@deal.pure
+def stratified_share(
+    hits: Mapping[str, tuple[int, int]], sizes: Mapping[str, int]
+) -> StratifiedShare:
+    """Σ_h W_h · x_h/m_h mit W_h = N_h/N, und ein Wilson-Intervall mit Kishs effektivem n.
+
+    ``hits`` nennt je Schicht (Treffer x_h, gewertete Einheiten m_h), ``sizes`` die Schichtgrößen
+    N_h der Grundgesamtheit; jede gewertete Einheit trägt das Gewicht N_h/m_h. Das Intervall ist
+    das nach Wilson für den Schätzer bei n_eff = (Σ w)² / Σ w² = N² / Σ_h N_h²/m_h (Kish 1965):
+    geschlossen, ohne Zufall, in [0, 1], und anders als ein Bootstrap oder die geschichtete
+    Normalnäherung nicht null breit, wenn Schichten nur Treffer haben. Bei einer
+    selbstgewichtenden Stichprobe ist n_eff = n und alles fällt auf den einfachen Anteil zurück.
+    Schichten ohne gewertete Einheit tragen nichts bei; ihr Anteil an N fehlt dem Schätzer.
+    """
+    population = sum(sizes[h] for h in hits)
+    estimate = sum(sizes[h] * x / m for h, (x, m) in hits.items()) / population
+    effective = population * population / sum(sizes[h] * sizes[h] / m for h, (_, m) in hits.items())
+    effective = min(effective, float(sum(m for _, m in hits.values())))
+    return StratifiedShare(estimate, _wilson_share(estimate, effective), effective, population)
+
+
+def _wilson_share(p: float, n: float) -> Interval:
+    """Wilson für einen Anteil ``p`` bei (auch nicht ganzzahligem) ``n``."""
+    z2 = Z95 * Z95
+    denominator = 1.0 + z2 / n
+    centre = (p + z2 / (2 * n)) / denominator
+    half = Z95 * math.sqrt(max(0.0, p * (1.0 - p)) / n + z2 / (4 * n * n)) / denominator
+    return max(0.0, min(p, centre - half)), min(1.0, max(p, centre + half))
+
+
+def weighted_accuracy(
+    gold: Sequence[str], predicted: Sequence[str], strata: Sequence[str], sizes: Mapping[str, int]
+) -> StratifiedShare:
+    """Die Genauigkeit eines Verfahrens, für die Grundgesamtheit geschätzt (Gewichte N_h/n_h)."""
+    hits: dict[str, tuple[int, int]] = {}
+    for g, p, h in zip(gold, predicted, strata, strict=True):
+        x, m = hits.get(h, (0, 0))
+        hits[h] = (x + (g == p), m + 1)
+    return stratified_share(hits, sizes)

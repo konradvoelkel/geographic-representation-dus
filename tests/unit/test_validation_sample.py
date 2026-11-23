@@ -20,8 +20,8 @@ from tests.validation_project import CODEBOOK, PROJECT, corpus_frame, make_proje
 @pytest.fixture
 def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     make_project(tmp_path)
-    monkeypatch.chdir(tmp_path)
-    return tmp_path
+    monkeypatch.chdir(tmp_path / "repo")
+    return tmp_path / "repo"
 
 
 def _codebook(text: str = CODEBOOK) -> Codebook:
@@ -44,6 +44,11 @@ def test_equal_allocation_fills_small_strata_completely() -> None:
     assert allocate({"a": 2, "b": 10, "c": 10}, 12, "equal") == {"a": 2, "b": 5, "c": 5}
 
 
+def test_proportional_allocation_is_self_weighting_where_it_can_be() -> None:
+    """Review 2026-11-23: mit einer Mindesteinheit vorab kamen 8/2 statt 9/1 heraus."""
+    assert allocate({"a": 900, "b": 100}, 10, "proportional") == {"a": 9, "b": 1}
+
+
 def test_every_stratum_gets_one_even_if_tiny() -> None:
     assert allocate({"groß": 1000, "klein": 1}, 2, "proportional") == {"groß": 1, "klein": 1}
 
@@ -54,13 +59,22 @@ def test_every_stratum_gets_one_even_if_tiny() -> None:
 def test_the_codebook_reads_and_knows_its_labels(project: Path) -> None:
     paths = validation_paths(load_settings(cwd=project), PROJECT)
     codebook = load_codebook(paths.codebook, PROJECT)
-    assert codebook.labels == ("ja", "nein") and codebook.key_columns == ("id",)
+    assert codebook.question("bv").labels == ("ja", "nein") and codebook.key_columns == ("id",)
 
 
 @pytest.mark.parametrize(
     ("change", "message"),
     [
-        (('positive = "ja"', 'positive = ""'), "score.positive"),
+        (('positive = ["ja"]', "positive = []"), "genau ein Label in positive"),
+        (('positive = ["ja"]', 'positive = ["vielleicht"]'), "keine Optionen"),
+        (('id = "bv"', 'id = "id"'), "question id"),
+        (
+            (
+                "[sample]",
+                '[[questions]]\nid = "x"\nquestion = "?"\nscale = "open"\nonly_if = {question = "y", values = ["ja"]}\n\n[sample]',
+            ),
+            "keine frühere Frage",
+        ),
         (('value = "nein"', 'value = "ja"'), "jedes Label einmal"),
         (('unit = "document"', 'unit = "absatz"'), "unit"),
         (("[text]\n", '[text]\ncontext = ["id"]\n'), "Schlüsselspalten"),
@@ -83,11 +97,21 @@ def test_a_missing_codebook_is_a_missing_input(project: Path) -> None:
         load_codebook(paths.codebook, "12-fehlt")
 
 
-def test_the_coding_folder_may_not_lie_in_the_repository(project: Path) -> None:
+@pytest.mark.parametrize(
+    ("where", "message"),
+    [
+        ("{repo}/validierung/lokal", "Arbeitsbaum"),
+        ("{repo}/lokal", "Arbeitsbaum"),
+        ("lokal", "relativ"),
+    ],
+)
+def test_the_coding_folder_may_not_lie_in_the_repository(
+    project: Path, where: str, message: str
+) -> None:
     (project / "settings.local.toml").write_text(
-        f'validation.coding_root = "{project / "validierung" / "lokal"}"\n', encoding="utf-8"
+        f'validation.coding_root = "{where.format(repo=project)}"\n', encoding="utf-8"
     )
-    with pytest.raises(SchemaError, match="nicht ins Repo"):
+    with pytest.raises(SchemaError, match=message):
         validation_paths(load_settings(cwd=project), PROJECT)
 
 
@@ -99,20 +123,23 @@ def test_sample_draws_by_stratum_and_writes_keys_only(
 ) -> None:
     assert main(["validate", "sample", PROJECT]) == 0
     out = capsys.readouterr().out
-    assert "9 Einheiten aus 28, 2 ohne Text weggelassen, 3 Schichten" in out
+    assert "9 Einheiten aus 28, 2 ohne Text weggelassen, 3 Schichten; nicht selbstgewichtend" in out
     folder = project / "validierung" / PROJECT
     sample = pl.read_csv(folder / "stichprobe.csv")
-    assert sample.columns == ["id", "schicht"]
+    assert sample.columns == ["id", "schicht", "schicht_n"]
     assert sample.height == 9 and sample.get_column("id").n_unique() == 9
     assert sample.get_column("id").is_sorted()
-    # 9 aus 15/10/3 (zwei Vorlagen ohne Text): je eine, Rest 6 nach 14/9/2 (25):
-    # 84/25 = 3 Rest 9, 54/25 = 2 Rest 4, 12/25 = 0 Rest 12 -> die fehlende an Vorlage
+    # 9 aus 15/10/3 (zwei Vorlagen ohne Text, N = 28): Quoten 4,82 / 3,21 / 0,96, abgerundet
+    # 4/3/0, die zwei fehlenden an die größten Reste (Vorlage 0,96, Antrag 0,82)
     counts = dict(sample.group_by("schicht").len().iter_rows())
-    assert counts == {"Antrag": 4, "Anfrage": 3, "Vorlage": 2}
+    assert counts == {"Antrag": 5, "Anfrage": 3, "Vorlage": 1}
+    sizes = dict(sample.select("schicht", "schicht_n").unique().iter_rows())
+    assert sizes == {"Antrag": 15, "Anfrage": 10, "Vorlage": 3}
     assert not set(sample.get_column("id")) & {"d28", "d29"}
     meta = json.loads((folder / "stichprobe.json").read_text(encoding="utf-8"))
     assert meta["einheiten"] == 28 and meta["ohne_text"] == 2 and meta["seed"] == 7
-    assert meta["schichten"]["Vorlage"] == {"grundgesamtheit": 3, "stichprobe": 2}
+    assert meta["schichten"]["Vorlage"] == {"grundgesamtheit": 3, "stichprobe": 1}
+    assert meta["selbstgewichtend"] is False
     assert meta["grundgesamtheit"] == "interim/papers.parquet"
     assert "text" not in (folder / "stichprobe.csv").read_text(encoding="utf-8")
 
@@ -167,7 +194,7 @@ def test_a_pair_population_from_the_command_line(
         main(["validate", "sample", PROJECT, "--population", str(project / "paare.parquet")]) == 0
     )
     sample = pl.read_csv(project / "validierung" / PROJECT / "stichprobe.csv")
-    assert sample.columns == ["id", "id_a", "id_b", "schicht"]
+    assert sample.columns == ["id", "id_a", "id_b", "schicht", "schicht_n"]
     assert set(sample.get_column("id")) <= {"d00|d03", "d01|d04", "d02|d05"}  # d28 ohne Text
 
 
@@ -192,8 +219,8 @@ def test_a_span_population_keeps_document_and_offsets() -> None:
         .replace('stratum = "paper_type"', 'stratum = "kind"')
     )
     sample = draw_sample(spans, codebook).frame
-    assert sample.columns == ["id", "dokument", "start", "end", "schicht"]
-    assert sample.get_column("id").to_list() == ["d00|0|4", "d00|5|9", "d01|3|8"]
+    assert sample.columns == ["id", "dokument", "start", "end", "kind", "schicht", "schicht_n"]
+    assert sample.get_column("id").to_list() == ["d00|0|4|x", "d00|5|9|x", "d01|3|8|x"]
 
 
 def test_a_doubled_unit_is_a_schema_error() -> None:
@@ -228,3 +255,37 @@ def test_the_validation_settings_stay_out_of_the_fingerprint(project: Path) -> N
     )
     moved = load_settings(cwd=project)
     assert moved.validation.min_alpha == 0.7 and moved.fingerprint() == base.fingerprint()
+
+
+def test_the_stored_sample_keeps_leading_zeros(project: Path) -> None:
+    """Review 2026-11-23, Befund 7: ohne Typvorgabe wurde die Kennung „010" zur Zahl 10."""
+    pairs = pl.DataFrame({"id_a": ["010", "011"], "id_b": ["d03", "d04"]})
+    pairs.write_parquet(project / "paare.parquet")
+    (project / "validierung" / PROJECT / "codebuch.toml").write_text(
+        CODEBOOK.replace('unit = "document"', 'unit = "document_pair"')
+        .replace("size = 9", "size = 2")
+        .replace('stratum = "paper_type"', "require_text = false"),
+        encoding="utf-8",
+    )
+    assert (
+        main(["validate", "sample", PROJECT, "--population", str(project / "paare.parquet")]) == 0
+    )
+    paths = validation_paths(load_settings(cwd=project), PROJECT)
+    frame = read_sample(paths, load_codebook(paths.codebook, PROJECT))
+    assert frame.get_column("id_a").to_list() == ["010", "011"]
+    assert frame.schema["schicht_n"] == pl.Int64
+
+
+def test_a_key_column_names_the_unit_and_keeps_the_document() -> None:
+    population = corpus_frame().with_columns((pl.lit("aufgabe-") + pl.col("id")).alias("aufgabe"))
+    codebook = _codebook(CODEBOOK.replace("[sample]\n", '[sample]\nkey = "aufgabe"\n'))
+    sample = draw_sample(population, codebook).frame
+    assert sample.columns == ["id", "dokument", "schicht", "schicht_n"]
+    assert all(i == "aufgabe-" + d for i, d in sample.select("id", "dokument").iter_rows())
+
+
+def test_a_long_context_value_is_refused() -> None:
+    """Kontextspalten landen in stichprobe.csv im Repo: kein Ratstext (Befund 8)."""
+    codebook = _codebook(CODEBOOK.replace("[text]\n", '[text]\ncontext = ["text"]\n'))
+    with pytest.raises(SchemaError, match="context_chars"):
+        draw_sample(corpus_frame(), codebook)
