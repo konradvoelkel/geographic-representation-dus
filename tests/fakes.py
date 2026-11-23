@@ -202,7 +202,8 @@ class FakeOllama:
     def _gate(self, url: str) -> requests.Response | None:
         if self.down:
             raise requests.ConnectionError(f"Connection refused: {url}")
-        if self.failures:
+        # Die Fehlerfolge trifft die Arbeit, nicht die Probe des Clients (``/api/version``).
+        if self.failures and not url.endswith("/api/version"):
             status = self.failures.pop(0)
             return response(url, status=status, payload={"error": f"Fehler {status}"})
         return None

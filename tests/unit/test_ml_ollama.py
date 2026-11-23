@@ -202,7 +202,8 @@ def test_a_persistent_server_error_ends_as_model_error_after_bounded_retries() -
     client, pauses = _client(server, retries=2, backoff_s=1.0)
     with pytest.raises(ModelError, match=r"503"):
         client.info("fake-embed")
-    assert len(server.requests) == 3 and pauses == [1.0, 2.0]
+    assert server.paths == ["/api/version", "/api/tags", "/api/tags", "/api/tags"]
+    assert pauses == [1.0, 2.0]
 
 
 def test_a_client_error_is_not_retried() -> None:
@@ -210,7 +211,7 @@ def test_a_client_error_is_not_retried() -> None:
     client, pauses = _client(server, retries=3)
     with pytest.raises(ModelError, match=r"not found"):
         client.capabilities("gibt-es-nicht")
-    assert len(server.requests) == 1 and pauses == []
+    assert server.paths == ["/api/version", "/api/show"] and pauses == []
 
 
 @pytest.mark.parametrize(
@@ -221,7 +222,8 @@ def test_a_client_error_is_not_retried() -> None:
     ],
 )
 def test_an_unusable_answer_is_a_model_error(answer: requests.Response) -> None:
-    session = FakeSession({f"{URL}/api/tags": answer})
+    version = response(f"{URL}/api/version", payload={"version": "0.0-fake"})
+    session = FakeSession({f"{URL}/api/version": version, f"{URL}/api/tags": answer})
     client = OllamaClient(URL, transport=session)
     with pytest.raises(ModelError, match=r"unbrauchbar"):
         client.info("fake-embed")
@@ -255,25 +257,41 @@ def test_dimension_comes_from_the_model_info_of_an_embedding_model() -> None:
 
 def test_a_read_timeout_is_not_retried_and_says_what_it_is() -> None:
     """Befund 4 des Reviews (Probe 3): ein Lese-Timeout lief dreimal und hieß „nicht erreichbar"."""
-    session = SequenceSession(f"{URL}/api/chat", [requests.ReadTimeout("read timed out")])
+    version = response(f"{URL}/api/version", payload={"version": "0.0-fake"})
+    session = SequenceSession(f"{URL}/api/chat", [version, requests.ReadTimeout("read timed out")])
     pauses: list[float] = []
     client = OllamaClient(URL, transport=session, timeout_s=300.0, sleep=pauses.append)
     with pytest.raises(ModelUnreachableError, match=r"Zeitüberschreitung nach 300 s"):
         client.chat({"model": "fake-chat:latest"})
-    assert len(session.calls) == 1 and pauses == []
+    assert len(session.calls) == 2 and pauses == []
 
 
-def test_a_server_that_stays_away_is_unreachable_after_the_retries() -> None:
-    server = FakeOllama(down=True)
+def test_a_server_that_goes_away_mid_run_is_retried_then_unreachable() -> None:
+    server = FakeOllama()
     client, pauses = _client(server, retries=2, backoff_s=1.0)
+    client.version()
+    server.down = True
     with pytest.raises(ModelUnreachableError, match=r"nicht erreichbar"):
         client.info("fake-embed")
-    assert len(server.requests) == 3 and pauses == [1.0, 2.0]
+    assert server.paths == ["/api/version", "/api/tags", "/api/tags", "/api/tags"]
+    assert pauses == [1.0, 2.0]
+
+
+def test_a_missing_server_is_asked_once_and_never_waited_for() -> None:
+    """Befund 5 des Reviews (Probe 4): drei Modellschritte warteten je 6 s auf denselben Server."""
+    server = FakeOllama(down=True)
+    client, pauses = _client(server, retries=2, backoff_s=1.0)
+    embedder = OllamaEmbedder(client, "fake-embed", dimension=8)
+    for ask in (lambda: client.info("fake-embed"), lambda: embedder.embed(["a"]), client.models):
+        with pytest.raises(ModelUnreachableError, match=r"nicht erreichbar"):
+            ask()
+    assert server.paths == ["/api/version"] and pauses == []
 
 
 def test_another_request_error_is_a_model_error_at_once() -> None:
-    session = SequenceSession(f"{URL}/api/tags", [requests.TooManyRedirects("zu viele")])
+    version = response(f"{URL}/api/version", payload={"version": "0.0-fake"})
+    session = SequenceSession(f"{URL}/api/tags", [version, requests.TooManyRedirects("zu viele")])
     client = OllamaClient(URL, transport=session)
     with pytest.raises(ModelError, match=r"zu viele") as caught:
         client.info("fake-embed")
-    assert type(caught.value) is ModelError and len(session.calls) == 1
+    assert type(caught.value) is ModelError and len(session.calls) == 2

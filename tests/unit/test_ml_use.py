@@ -55,4 +55,4 @@ def test_the_identity_asks_the_server_only_when_called() -> None:
     assert server.requests == []
     use.identity()
     use.identity()
-    assert server.paths == ["/api/tags"]
+    assert server.paths == ["/api/version", "/api/tags"]

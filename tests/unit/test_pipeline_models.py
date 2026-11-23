@@ -9,9 +9,10 @@ from pathlib import Path
 import pytest
 
 from georep import cli
-from georep.errors import ModelError
+from georep.errors import ModelError, ModelUnreachableError
 from georep.layout import Layout
 from georep.pipeline import Step, freshness, run_pipeline, run_step
+from georep.profiling import profile_step
 from georep.settings import Settings, load_settings
 
 IDENTITY = {"model": "fake-embed:latest", "digest": "e" * 64, "prompt": "dok-1"}
@@ -176,16 +177,78 @@ def test_cli_limit_without_models_is_an_operating_error(
     assert "--limit gilt nur mit --models" in capsys.readouterr().err
 
 
-def test_cli_status_names_an_unreachable_model_server_instead_of_failing(
+# --- ohne Server (Befund 5 des Reviews) ----------------------------------------------------------
+
+
+def _down() -> dict[str, str]:
+    raise ModelUnreachableError("ollama unter http://ollama.test nicht erreichbar")
+
+
+def test_a_missing_server_fails_the_model_step_instead_of_the_run(
+    tmp_path: Path, settings: Settings
+) -> None:
+    step = Step("modell", (), (tmp_path / "out.txt",), lambda: "1", models=Use(_down))
+    outcome = run_step(step, settings, models=True)
+    assert outcome.status == "fehlgeschlagen" and "nicht erreichbar" in outcome.reason
+
+
+def test_a_dry_run_still_plans_a_model_step_without_server(
+    tmp_path: Path, settings: Settings
+) -> None:
+    step = Step("modell", (), (tmp_path / "out.txt",), lambda: "1", models=Use(_down))
+    outcome = run_step(step, settings, models=True, dry_run=True)
+    assert outcome.status == "geplant" and outcome.reason.startswith("Frische unbekannt")
+
+
+def test_a_model_error_while_running_fails_the_step(tmp_path: Path, settings: Settings) -> None:
+    def run() -> str:
+        raise ModelError("10 Fehlschläge in Folge")
+
+    step = Step("modell", (), (tmp_path / "out.txt",), run, models=Use(lambda: dict(IDENTITY)))
+    outcome = run_step(step, settings, models=True)
+    assert outcome.status == "fehlgeschlagen" and "in Folge" in outcome.reason
+    assert not step.stamp_path.exists()
+
+
+def test_cli_prints_every_line_and_exits_1_when_a_model_step_failed(
     project: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    def down() -> dict[str, str]:
-        raise ModelError("ollama unter http://ollama.test nicht erreichbar")
+    def build(settings: Settings, layout: Layout) -> list[Step]:
+        out = layout.processed / "danach.txt"
 
+        def run() -> str:
+            out.write_text("x", encoding="utf-8")
+            return "1 Datei"
+
+        return [
+            Step("modell", (), (layout.processed / "modell.txt",), lambda: "1", models=Use(_down)),
+            Step("danach", (), (out,), run),
+        ]
+
+    monkeypatch.setattr(cli, "build_steps", build)
+    assert cli.main(["run", "--models"]) == 1
+    out = capsys.readouterr().out
+    assert "modell       fehlgeschlagen" in out and "danach       ausgeführt" in out
+    assert "1 fehlgeschlagen" in out
+
+
+def test_cli_status_says_unknown_without_server(
+    project: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     _only_model_steps(monkeypatch, lambda: dict(IDENTITY), [])
     assert cli.main(["run", "--models"]) == 0
-    _only_model_steps(monkeypatch, down, [])
+    _only_model_steps(monkeypatch, _down, [])
     capsys.readouterr()
     assert cli.main(["status"]) == 0
     line = next(x for x in capsys.readouterr().out.splitlines() if x.startswith("modell "))
-    assert "offen" in line and "nicht erreichbar" in line and "[Modell]" in line
+    assert "unbekannt" in line and "offen" not in line
+    assert "nicht erreichbar" in line and "[Modell]" in line
+
+
+def test_profile_runs_a_model_step_with_models(tmp_path: Path, settings: Settings) -> None:
+    out = tmp_path / "out.txt"
+    step = _model_step(out, IDENTITY, [])
+    skipped = profile_step(step, settings, tmp_path / "prof", models=False)
+    assert skipped.path is None and "--models" in skipped.outcome.reason
+    ran = profile_step(step, settings, tmp_path / "prof", models=True)
+    assert ran.outcome.status == "ausgeführt" and ran.path is not None and ran.path.exists()

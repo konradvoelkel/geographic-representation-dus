@@ -108,6 +108,13 @@ def test_the_factories_build_without_asking_the_server(tmp_path: Path) -> None:
     assert server.requests == []
 
 
+def test_without_a_transport_all_steps_share_one_client() -> None:
+    """Befund 5: eine Probe des Servers je Prozess, nicht je Schritt."""
+    ml = load_settings(cwd=Path("/nonexistent")).ml
+    assert client_from_settings(ml) is client_from_settings(ml)
+    assert client_from_settings(ml, transport=FakeOllama()) is not client_from_settings(ml)
+
+
 def test_the_model_cache_lies_under_cache_root_shared_by_all_profiles() -> None:
     settings = load_settings(cwd=Path("/nonexistent"))
     layout = Layout.from_settings(settings)

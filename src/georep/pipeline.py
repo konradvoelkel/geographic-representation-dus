@@ -52,7 +52,7 @@ from georep.crosswalk import (
     district_weights,
     transfer_counts,
 )
-from georep.errors import GeorepError, MissingInputError, SchemaError
+from georep.errors import GeorepError, MissingInputError, ModelError, SchemaError
 from georep.geo import (
     Area,
     PrecinctIndex,
@@ -141,7 +141,7 @@ from georep.sources.pdfs import PdfStore
 from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_query
 from georep.stores import PaperStore, TextStore, UpsertReport
 
-Status = Literal["ausgeführt", "übersprungen", "geplant"]
+Status = Literal["ausgeführt", "übersprungen", "geplant", "fehlgeschlagen"]
 PARTIES_SCHEMA = 2  # Option 04, Punkt 46: drei Spalten relativ zum Mittel aller Parteien
 METRICS_SCHEMA = 1  # Punkt 46: Schema-Version von wahlbezirke_kennzahlen.parquet
 
@@ -285,8 +285,17 @@ def run_step(
 ) -> Outcome:
     if step.network and not online:
         return Outcome(step.name, "übersprungen", "Netz aus; `--online` oder `georep fetch`")
-    if step.models is not None and not models:
-        return Outcome(step.name, "übersprungen", "Modelle aus; `--models`")
+    if step.models is not None:
+        if not models:
+            return Outcome(step.name, "übersprungen", "Modelle aus; `--models`")
+        # F5: die Kennung braucht den Server (Digest). Fehlt er, scheitert der Schritt, nicht
+        # der Lauf, und ein Trockenlauf plant ihn trotzdem (Review 2026-11-23, Befund 5).
+        try:
+            step.models.identity()
+        except ModelError as error:
+            if dry_run:
+                return Outcome(step.name, "geplant", f"Frische unbekannt: {error}")
+            return Outcome(step.name, "fehlgeschlagen", str(error))
     fresh, reason = freshness(step, settings)
     if fresh and not force:
         return Outcome(step.name, "übersprungen", reason)
@@ -302,7 +311,12 @@ def run_step(
             "Fehlt der Korpus oder die Rohdaten, hilft `georep bootstrap`."
         )
     started = time.perf_counter()
-    summary = step.run()
+    try:
+        summary = step.run()
+    except ModelError as error:
+        if step.models is None:
+            raise
+        return Outcome(step.name, "fehlgeschlagen", str(error), time.perf_counter() - started)
     stamp = expected_stamp(step, settings) | {"written": dt.datetime.now(dt.UTC).isoformat()}
     write_json(step.stamp_path, stamp)
     outcome = Outcome(

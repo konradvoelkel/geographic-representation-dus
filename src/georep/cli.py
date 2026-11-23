@@ -25,7 +25,7 @@ from georep.layout import Layout
 from georep.learn import learn_bodies
 from georep.ml import commands as ml_commands
 from georep.pack import pack, pack_consultations, pack_texts
-from georep.pipeline import build_steps, freshness, run_pipeline, select_steps
+from georep.pipeline import Outcome, build_steps, freshness, run_step, select_steps
 from georep.profiling import profile_step
 from georep.report.build import current_commit
 from georep.report.model import sensitivity_rows
@@ -168,6 +168,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--sort", choices=["cumulative", "tottime"], default="cumulative", help="Sortierung"
     )
     prof.add_argument("--online", action="store_true", help="auch Netzschritte profilieren")
+    prof.add_argument("--models", action="store_true", help="auch Modellschritte profilieren")
     add_validate_parser(sub)  # Fundament F4
     ml_commands.add_parser(sub)  # Fundament F5: `georep ml status|bench`
     return parser
@@ -217,23 +218,26 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
     default_names = (
         [s.name for s in steps if s.network or s.name in ("shapes", "texts")] if fetching else None
     )
-    outcomes = run_pipeline(
-        steps,
-        settings,
-        args.steps or default_names,
-        force=args.force,
-        dry_run=getattr(args, "dry_run", False),
-        online=fetching or args.online,
-        models=models,
-    )
-    for outcome in outcomes:
-        print(outcome.line())
+    # Je Schritt eine Zeile, sobald er fertig ist: bricht ein späterer Schritt mit einem
+    # Domänenfehler ab, stehen die Zeilen davor schon da (F5, Review 2026-11-23, Befund 5).
+    outcomes: list[Outcome] = []
+    for step in select_steps(steps, args.steps or default_names):
+        outcome = run_step(
+            step,
+            settings,
+            force=args.force,
+            dry_run=getattr(args, "dry_run", False),
+            online=fetching or args.online,
+            models=models,
+        )
+        print(outcome.line(), flush=True)
+        outcomes.append(outcome)
     counts = {
         s: sum(1 for o in outcomes if o.status == s)
-        for s in ("ausgeführt", "übersprungen", "geplant")
+        for s in ("ausgeführt", "übersprungen", "geplant", "fehlgeschlagen")
     }
     print(", ".join(f"{n} {s}" for s, n in counts.items() if n))
-    return 0
+    return 1 if counts["fehlgeschlagen"] else 0
 
 
 def _cmd_steps(settings: Settings, layout: Layout) -> int:
@@ -279,12 +283,13 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
     for step in build_steps(settings, layout):
         try:
             fresh, reason = freshness(step, settings)
+            state = "aktuell" if fresh else "offen"
         except ModelError as error:
-            # F5: ob ein Modellschritt aktuell ist, weiß nur der Server (Digest); fehlt er, sagt
-            # die Zeile das, statt den ganzen Status abzubrechen.
-            fresh, reason = False, str(error)
+            # F5: ob ein Modellschritt aktuell ist, weiß nur der Server (Digest). Fehlt er, ist
+            # die Frische unbekannt, nicht offen (Review 2026-11-23, Befund 5).
+            state, reason = "unbekannt", str(error)
         tag = " [Netz]" if step.network else " [Modell]" if step.models is not None else ""
-        print(f"{step.name:<12} {'aktuell' if fresh else 'offen':<8} {reason}{tag}")
+        print(f"{step.name:<12} {state:<8} {reason}{tag}")
     return 0
 
 
@@ -397,10 +402,18 @@ def _cmd_profile(args: argparse.Namespace, settings: Settings, layout: Layout) -
     layout.ensure_dirs()
     PdfStore(layout.pdf_dir).ensure()
     steps = build_steps(settings, layout)
-    names = args.steps or [s.name for s in steps if not s.network and s.models is None]
+    names = args.steps or [
+        s.name for s in steps if not s.network and (s.models is None or args.models)
+    ]
     for step in select_steps(steps, names):
         result = profile_step(
-            step, settings, args.out, online=args.online, top=args.top, sort=args.sort
+            step,
+            settings,
+            args.out,
+            online=args.online,
+            models=args.models,
+            top=args.top,
+            sort=args.sort,
         )
         print(result.outcome.line())
         if result.path is not None:

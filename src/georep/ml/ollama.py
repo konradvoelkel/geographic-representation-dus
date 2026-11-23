@@ -146,6 +146,10 @@ class OllamaClient:
         self.sleep = sleep
         self._transport = transport
         self._infos: dict[str, ModelInfo] = {}
+        # Befund 5 des Reviews: ``None`` ungeprüft, sonst das Ergebnis der einen Probe. Ein
+        # fehlender Server wird einmal gefragt, ohne Wiederholung, und dann nie wieder; einer, der
+        # einmal lief, wird bei einer abgelehnten Verbindung wie bisher wiederholt.
+        self._running: bool | None = None
         self._shows: dict[str, _Show] = {}
 
     @property
@@ -162,6 +166,8 @@ class OllamaClient:
         *,
         retries: int | None = None,
     ) -> object:
+        if path != "/api/version":
+            self._require_server()
         url = self.base_url + path
         attempts = (self.retries if retries is None else retries) + 1
         problem = ""
@@ -203,11 +209,26 @@ class OllamaClient:
         except ValidationError as error:
             raise ModelError(f"{path}: Antwort unbrauchbar: {error}") from error
 
+    def _require_server(self) -> None:
+        """Die eine Probe je Client; ohne Server ist jeder weitere Aufruf sofort ein Fehler."""
+        if self._running is None:
+            try:
+                self.version()
+            except ModelUnreachableError:
+                self._running = False
+                raise
+        if self._running is False:
+            raise ModelUnreachableError(
+                f"ollama unter {self.base_url} nicht erreichbar; läuft `ollama serve`?"
+            )
+
     @deal.raises(ModelError, ModelUnreachableError)
     def version(self) -> str:
         """Die Version des Servers. Eine Probe, darum ohne Wiederholung: fehlt er, sofort Bescheid."""
         data = self._call("GET", "/api/version", retries=0)
-        return self._parse(_Version, data, "/api/version").version
+        found = self._parse(_Version, data, "/api/version").version
+        self._running = True
+        return found
 
     @deal.raises(ModelError, ModelUnreachableError)
     def models(self) -> list[ModelInfo]:
@@ -393,8 +414,15 @@ class OllamaGenerator:
 # Client und Modell, ohne mit dem Server zu sprechen (das tut erst ``Step.models`` oder ``run``).
 
 
+_SHARED: dict[str, OllamaClient] = {}
+
+
 def client_from_settings(ml: Ml, *, transport: Transport | None = None) -> OllamaClient:
-    return OllamaClient(
+    """Der Client aus ``[ml]``. Ohne ``transport`` ist es je Settings einer für den ganzen Prozess:
+    alle Modellschritte teilen die eine Probe des Servers und die Tags (Befund 5 des Reviews)."""
+    if transport is None and ml.model_dump_json() in _SHARED:
+        return _SHARED[ml.model_dump_json()]
+    client = OllamaClient(
         ml.base_url,
         transport=transport,
         timeout_s=ml.timeout_s,
@@ -402,6 +430,9 @@ def client_from_settings(ml: Ml, *, transport: Transport | None = None) -> Ollam
         backoff_s=ml.backoff_s,
         keep_alive=ml.keep_alive,
     )
+    if transport is None:
+        _SHARED[ml.model_dump_json()] = client
+    return client
 
 
 def generation_options(ml: Ml) -> GenerationOptions:
