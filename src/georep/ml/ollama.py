@@ -62,6 +62,7 @@ class _Tags(_Reply):
 
 class _Show(_Reply):
     capabilities: tuple[str, ...] = ()
+    model_info: dict[str, Any] = Field(default_factory=dict)
 
 
 class Running(_Reply):
@@ -93,7 +94,9 @@ class _Chat(_Reply):
     total_duration: int = 0
     load_duration: int = 0
     prompt_eval_count: int = 0
+    prompt_eval_duration: int = 0
     eval_count: int = 0
+    eval_duration: int = 0
 
 
 def _error_text(resp: requests.Response) -> str:
@@ -133,7 +136,7 @@ class OllamaClient:
         self.sleep = sleep
         self._transport = transport
         self._infos: dict[str, ModelInfo] = {}
-        self._capabilities: dict[str, tuple[str, ...]] = {}
+        self._shows: dict[str, _Show] = {}
 
     @property
     def transport(self) -> Transport:
@@ -217,14 +220,26 @@ class OllamaClient:
             )
         return self._infos[wanted]
 
+    def _show(self, name: str) -> _Show:
+        wanted = full_name(name)
+        if wanted not in self._shows:
+            data = self._call("POST", "/api/show", {"model": wanted})
+            self._shows[wanted] = self._parse(_Show, data, "/api/show")
+        return self._shows[wanted]
+
     @deal.raises(ModelError)
     def capabilities(self, name: str) -> tuple[str, ...]:
         """Was ein Modell kann (``embedding``, ``completion``, ``thinking`` …), aus ``/api/show``."""
-        wanted = full_name(name)
-        if wanted not in self._capabilities:
-            data = self._call("POST", "/api/show", {"model": wanted})
-            self._capabilities[wanted] = self._parse(_Show, data, "/api/show").capabilities
-        return self._capabilities[wanted]
+        return self._show(name).capabilities
+
+    @deal.raises(ModelError)
+    def dimension(self, name: str) -> int:
+        """Die Vektorlänge eines Einbettungsmodells (``<familie>.embedding_length`` in ``/api/show``)."""
+        show = self._show(name)
+        lengths = [v for k, v in show.model_info.items() if k.endswith(".embedding_length")]
+        if "embedding" not in show.capabilities or len(lengths) != 1:
+            raise ModelError(f"{full_name(name)} ist kein Einbettungsmodell mit einer Vektorlänge")
+        return int(lengths[0])
 
     @deal.raises(ModelError)
     def loaded(self) -> list[Running]:
@@ -286,6 +301,7 @@ class OllamaEmbedder:
                 output_tokens=0,
                 seconds=(reply.total_duration - reply.load_duration) / NANOSECONDS,
                 load_seconds=reply.load_duration / NANOSECONDS,
+                prompt_seconds=(reply.total_duration - reply.load_duration) / NANOSECONDS,
             )
         )
         return np.asarray(reply.embeddings, dtype=np.float32)
@@ -336,6 +352,8 @@ class OllamaGenerator:
                 seconds=(reply.total_duration - reply.load_duration) / NANOSECONDS,
                 load_seconds=reply.load_duration / NANOSECONDS,
                 truncated=reply.done_reason == "length",
+                prompt_seconds=reply.prompt_eval_duration / NANOSECONDS,
+                output_seconds=reply.eval_duration / NANOSECONDS,
             )
         )
         return reply.message.content

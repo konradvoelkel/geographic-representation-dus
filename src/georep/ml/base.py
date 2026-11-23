@@ -98,6 +98,8 @@ class Call:
     seconds: float  # Rechenzeit des Servers ohne das Laden des Modells
     load_seconds: float
     truncated: bool = False  # die Antwort stieß an ``num_predict``
+    prompt_seconds: float = 0.0  # davon das Lesen der Eingabe
+    output_seconds: float = 0.0  # davon das Schreiben der Antwort
 
 
 @dataclass(frozen=True)

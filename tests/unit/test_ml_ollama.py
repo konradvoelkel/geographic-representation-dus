@@ -232,3 +232,10 @@ def test_options_key_changes_with_every_option() -> None:
         GenerationOptions(think=True).key(),
     }
     assert len(keys) == 6 and base.key() == GenerationOptions().key()
+
+
+def test_dimension_comes_from_the_model_info_of_an_embedding_model() -> None:
+    client, _ = _client(FakeOllama(dimension=8))
+    assert client.dimension("fake-embed") == 8
+    with pytest.raises(ModelError, match=r"kein Einbettungsmodell"):
+        client.dimension("fake-chat")

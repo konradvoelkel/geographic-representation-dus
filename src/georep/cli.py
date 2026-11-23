@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies|validate``.
+"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies|validate|ml``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
@@ -23,6 +23,7 @@ from georep.errors import GeorepError, MissingInputError, ModelError
 from georep.export import export_csv
 from georep.layout import Layout
 from georep.learn import learn_bodies
+from georep.ml import commands as ml_commands
 from georep.pack import pack, pack_consultations, pack_texts
 from georep.pipeline import build_steps, freshness, run_pipeline, select_steps
 from georep.profiling import profile_step
@@ -168,6 +169,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     prof.add_argument("--online", action="store_true", help="auch Netzschritte profilieren")
     add_validate_parser(sub)  # Fundament F4
+    ml_commands.add_parser(sub)  # Fundament F5: `georep ml status|bench`
     return parser
 
 
@@ -494,6 +496,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cmd_profile(args, settings, layout)
         if args.command == "validate":
             return run_validate(args, settings, layout)  # Fundament F4
+        if args.command == "ml":
+            return ml_commands.run(args, settings, layout)  # Fundament F5
     except (GeorepError, FileNotFoundError) as error:
         print(f"Fehler: {error}", file=sys.stderr)
         return 1

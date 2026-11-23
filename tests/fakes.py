@@ -235,7 +235,9 @@ class FakeOllama:
         if spec is None:
             return response(url, status=404, payload={"error": f"model '{name}' not found"})
         if path == "/api/show":
-            return response(url, payload={"capabilities": spec["capabilities"], "model_info": {}})
+            embeds = "embedding" in spec["capabilities"]
+            info = {"fake.embedding_length": self.dimension} if embeds else {"fake.block_count": 2}
+            return response(url, payload={"capabilities": spec["capabilities"], "model_info": info})
         if path == "/api/embed":
             texts = payload["input"]
             return response(
