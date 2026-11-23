@@ -16,7 +16,9 @@ Ohne Teil rechnet es aus dem, was liegt, alle Zahlen des Messdokuments nach (Dat
 - `cap`: liest die deutschen CAP-Daten (Fremddaten, nur lesend, nur CSV) und schreibt
   Training, zurückgehaltene 10 % und die 200 Anfragentitel der zweiten Prüfung.
 - `tfidf`: das Nebenverfahren (TF-IDF und logistische Regression auf den CAP-Daten).
-- `llm --menge test|entwicklung|cap [--modell M] [--limit N]`: Weg 1 über die Naht von F5; nur unter
+- `silber`: zieht 4 000 Ratsdokumente außerhalb von Test- und Entwicklungsmenge (Silberlabels).
+- `eingabe`: schreibt die Eingabe von Weg 3 (Titel und Textanfang) für das Trainingsskript.
+- `llm --menge test|entwicklung|silber|cap [--modell M] [--limit N]`: Weg 1 über die Naht von F5; nur unter
   der GPU-Sperre aufrufen (`flock …/gpu-queue/gpu.lock`). Antworten liegen im Modellcache und sind
   fortsetzbar; die Ausgabe ist eine Parquet-Datei je Menge und Modell unter `$GEOREP_MESSDATEN`.
 - `prompt`: druckt Prompt-Version, Länge und SHA-256 des Systemprompts (für das Einfrieren).
@@ -67,6 +69,7 @@ ENTWICKLUNG = VALID / "entwicklung.csv"
 LABELS = VALID / "labels.csv"
 GRUNDGESAMTHEIT = "messung/19-politikfelder-grundgesamtheit.parquet"  # relativ zum Profilordner
 LAUFZEITEN = AUSGABE / "laufzeiten.jsonl"
+SILBER = AUSGABE / "silber.csv"  # IDs der Silbermenge (aus dem Seed nachrechenbar)
 
 # ================================================================================================
 # Vorab festgelegt (Messdokument § 8, 2026-11-23). Nicht nach einem Ergebnis ändern.
@@ -74,6 +77,9 @@ LAUFZEITEN = AUSGABE / "laufzeiten.jsonl"
 SEED_TEST = 20261123  # Testmenge (codebuch.toml, [sample]) und Bootstrap
 SEED_ENTWICKLUNG = 20261124
 SEED_CAP = 20261125  # 200 Anfragentitel der zweiten Prüfung und die zurückgehaltenen 10 %
+SEED_SILBER = 20261126  # 4 000 Ratsdokumente für Silberlabels (GPU-Warteschlange), ohne Test
+N_SILBER = 4000
+WEG3_ZEICHEN = 1500  # Titel und so viele Zeichen Rohtext sind die Eingabe von Weg 3
 N_ENTWICKLUNG = 200
 N_CAP_TITEL = 200
 ANTEIL_ZURUECK = 0.10  # zurückgehaltener Anteil der deutschen CAP-Daten (Weg 3, zweite Prüfung)
@@ -247,6 +253,41 @@ def schreibe_entwicklung(layout: Layout) -> None:
     print(f"{entw.height} Dokumente nach {ENTWICKLUNG} (ohne {len(test)} der Testmenge)")
 
 
+def schreibe_silber(layout: Layout) -> None:
+    """4 000 Ratsdokumente außerhalb von Test- und Entwicklungsmenge für Silberlabels (Weg 3b)."""
+    raus = set(lies_ids(STICHPROBE)) | set(lies_ids(ENTWICKLUNG))
+    gg = grundgesamtheit(layout).filter(~pl.col("id").is_in(sorted(raus)))
+    silber = ziehe(gg, N_SILBER, SEED_SILBER).select(
+        "id", "schicht", pl.col("n").alias("schicht_n")
+    )
+    AUSGABE.mkdir(parents=True, exist_ok=True)
+    silber.write_csv(SILBER)
+    print(f"{silber.height} Dokumente nach {SILBER}")
+
+
+def schreibe_eingabe(layout: Layout) -> None:
+    """Die Eingabe von Weg 3 je Ratsdokument (Titel und Textanfang) für das Trainingsskript.
+
+    Das Trainingsskript läuft in einem eigenen Venv ohne georep; es liest nur diese Datei.
+    """
+    mengen = {"test": lies_ids(STICHPROBE), "entwicklung": lies_ids(ENTWICKLUNG)}
+    if SILBER.is_file():
+        mengen["silber"] = lies_ids(SILBER)
+    alle = sorted({i for ids in mengen.values() for i in ids})
+    docs = load_documents(layout, codebuch(), set(alle), texts=ROHTEXT)
+    rows = [
+        {
+            "id": i,
+            "menge": menge,
+            "text": " ".join(f"{docs[i].title}\n{docs[i].text[:WEG3_ZEICHEN]}".split()),
+        }
+        for menge, ids in mengen.items()
+        for i in ids
+    ]
+    pl.DataFrame(rows).sort("menge", "id").write_parquet(AUSGABE / "ratsdokumente.parquet")
+    print(f"{len(rows)} Eingaben nach {AUSGABE / 'ratsdokumente.parquet'}")
+
+
 # ------------------------------------------------------------------------------------------------
 # Weg 2: Ausschuss -> CAP
 # ------------------------------------------------------------------------------------------------
@@ -357,6 +398,8 @@ def weg1(settings: Any, layout: Layout, menge: str, modell: str, limit: int) -> 
         paare = prompts_ratsdokumente(layout, lies_ids(STICHPROBE))
     elif menge == "entwicklung":
         paare = prompts_ratsdokumente(layout, lies_ids(ENTWICKLUNG))
+    elif menge == "silber":
+        paare = prompts_ratsdokumente(layout, lies_ids(SILBER))
     else:
         paare = prompts_cap()
     system = systemprompt(codebuch())
@@ -577,8 +620,10 @@ def nachrechnen(settings: Any, layout: Layout) -> None:
     for name in namen:
         verteilung = Counter(wege[name].get(d, "fehlt") for d in test)
         print(f"{name}: {sorted(verteilung.items(), key=lambda kv: -kv[1])}")
+    entwurf_einigkeit(wege, test)
     zweite_pruefung()
     laufzeiten()
+    hochrechnung()
     if LABELS.is_file():
         urteil(wege, test)
 
@@ -609,6 +654,45 @@ def zweite_pruefung() -> None:
             )
 
 
+PROFILE = ("duesseldorf-2014", "duesseldorf", "duesseldorf-2025", "moenchengladbach")
+
+
+def dokumente_mit_text() -> dict[str, int]:
+    """Dokumente mit Text je Profil (aus dem Korpus, den `georep --profile <p> run` schreibt)."""
+    zahlen = {}
+    for profil in PROFILE:
+        layout = Layout.from_settings(load_settings(cwd=REPO, profile=profil))
+        if layout.corpus.is_file():
+            zahlen[profil] = int(
+                pl.read_parquet(layout.corpus, columns=["text"])
+                .select((pl.col("text").fill_null("").str.strip_chars() != "").sum())
+                .item()
+            )
+    return zahlen
+
+
+def hochrechnung() -> None:
+    """Sekunden je Ratsdokument aus den Läufen mit neuen Eingaben, mal Dokumente je Profil."""
+    titel("Hochrechnung auf alle Perioden (GPU-Stunden, ohne Laden)")
+    if not LAUFZEITEN.is_file():
+        return
+    je_modell: dict[str, list[tuple[int, float]]] = {}
+    for zeile in LAUFZEITEN.read_text(encoding="utf-8").splitlines():
+        e = json.loads(zeile)
+        if e.get("teil") == "llm" and e.get("menge") != "cap" and e.get("neu"):
+            je_modell.setdefault(e["modell"], []).append((e["neu"], e["sekunden_batch"]))
+    zahlen = dokumente_mit_text()
+    print(f"Dokumente mit Text: {zahlen}, zusammen {sum(zahlen.values())}")
+    for modell, laeufe in je_modell.items():
+        n, sek = sum(a for a, _ in laeufe), sum(b for _, b in laeufe)
+        je = sek / n
+        teile = ", ".join(f"{p} {je * k / 3600:.1f} h" for p, k in zahlen.items())
+        print(
+            f"{modell}: {je:.2f} s je Dokument aus {n} Dokumenten; {teile}; "
+            f"alle {je * sum(zahlen.values()) / 3600:.1f} h"
+        )
+
+
 def laufzeiten() -> None:
     titel("Laufzeiten der Modelläufe (laufzeiten.jsonl)")
     if not LAUFZEITEN.is_file():
@@ -623,10 +707,58 @@ def laufzeiten() -> None:
         )
 
 
+def gewichte(ids: Sequence[str]) -> dict[str, float]:
+    """Schichtgewicht N_h / n_h je Dokument der Testmenge (stichprobe.csv)."""
+    st = pl.read_csv(STICHPROBE, infer_schema_length=0)
+    n_h = Counter(st.get_column("schicht").to_list())
+    w = {r["id"]: int(r["schicht_n"]) / n_h[r["schicht"]] for r in st.iter_rows(named=True)}
+    return {d: w[d] for d in ids}
+
+
+def einigkeit(wege: dict[str, dict[str, str]], ids: Sequence[str]) -> tuple[str, str] | None:
+    """Die Wege der Einigkeitsregel (§ 8.6): Weg 1 (qwen) und Weg 3 (3b, sonst 3a)."""
+    w1 = "qwen3.6-27b"
+    w3 = next((k for k in ("weg3b_test", "weg3a_test") if k in wege), None)
+    return (w1, w3) if w1 in wege and w3 else None
+
+
+def entwurf_einigkeit(wege: dict[str, dict[str, str]], test: list[str]) -> None:
+    """Vor der Kodierung schon rechenbar: die Abdeckung der Einigkeitsregel (ohne Gold)."""
+    paar = einigkeit(wege, test)
+    if paar is None:
+        return
+    a, b = paar
+    w = gewichte(test)
+    einig = [d for d in test if wege[a].get(d) == wege[b].get(d)]
+    abdeckung = sum(w[d] for d in einig) / sum(w.values())
+    print(
+        f"Einigkeitsregel {a} ∩ {b}: {len(einig)}/{len(test)} Dokumente, "
+        f"gewichtet {abdeckung:.3f} (Schwelle {ABDECKUNG_RUECKFALL})"
+    )
+
+
+def alpha(labels: pl.DataFrame) -> float | None:
+    from georep.validation.measures import krippendorff_alpha
+
+    units = [
+        [r["kodierer_a"] or None, r["kodierer_b"] or None] for r in labels.iter_rows(named=True)
+    ]
+    return krippendorff_alpha(units, "nominal", list(CODES))
+
+
 def urteil(wege: dict[str, dict[str, str]], test: list[str]) -> None:
     """Nach der Kodierung: Kriterium und Entscheidung nach § 8.5 und § 8.6 des Messdokuments."""
     titel("Urteil gegen die Labels (F4)")
     labels = pl.read_csv(LABELS, infer_schema_length=0).filter(pl.col("frage") == "politikfeld")
+    a = alpha(labels)
+    stufe = (
+        "kein Urteil: Codebuch zu unscharf (Fassung 2)"
+        if a is None or a < ALPHA_URTEIL
+        else "Urteil vorläufig, Stufe 3 gesperrt"
+        if a < ALPHA_STUFE3
+        else "Urteil gilt"
+    )
+    print(f"Krippendorffs α (nominal) zwischen den Kodierern: {a}; {stufe}")
     gold_map = dict(labels.select("id", "label").iter_rows())
     ids = [d for d in test if gold_map.get(d)]
     gold = [gold_map[d] for d in ids]
@@ -638,16 +770,50 @@ def urteil(wege: dict[str, dict[str, str]], test: list[str]) -> None:
             f"{perzentil(werte[k], 0.025):.3f}–{perzentil(werte[k], 0.975):.3f}"
         )
     ref = max(("weg2a", "weg2b"), key=lambda k: makro_f1(gold, vorhersagen[k]))
-    for k in vorhersagen:
-        if k.startswith("weg2"):
-            continue
-        diff = [a - b for a, b in zip(werte[k], werte[ref], strict=True)]
+    kandidaten = [k for k in ("qwen3.6-27b", "weg3b_test", "weg3a_test") if k in vorhersagen]
+    if "weg3b_test" in kandidaten and "weg3a_test" in kandidaten:
+        lauf = AUSGABE / "weg3b_lauf.json"
+        silber = json.loads(lauf.read_text())["silber_dokumente"] if lauf.is_file() else 0
+        kandidaten.remove("weg3a_test" if silber >= SILBER_MINDESTENS else "weg3b_test")
+    erfuellt = []
+    for k in kandidaten:
+        diff = [x - y for x, y in zip(werte[k], werte[ref], strict=True)]
         punkt = makro_f1(gold, vorhersagen[k])
-        erfuellt = punkt >= KRITERIUM_F1 and perzentil(diff, 0.025) > 0
+        ok = punkt >= KRITERIUM_F1 and perzentil(diff, 0.025) > 0
+        erfuellt += [k] if ok else []
         print(
             f"{k} gegen {ref}: Differenz {punkt - makro_f1(gold, vorhersagen[ref]):+.3f} "
-            f"(2,5 % {perzentil(diff, 0.025):+.3f}); Kriterium {'erfüllt' if erfuellt else 'nicht'}"
+            f"(2,5 % {perzentil(diff, 0.025):+.3f}); Kriterium {'erfüllt' if ok else 'nicht'}"
         )
+    if erfuellt:
+        erfuellt.sort(key=lambda k: -makro_f1(gold, vorhersagen[k]))
+        if len(erfuellt) > 1:
+            diff = [x - y for x, y in zip(werte[erfuellt[0]], werte[erfuellt[1]], strict=True)]
+            if perzentil(diff, 0.025) <= 0:
+                billig = [k for k in erfuellt[:2] if k.startswith("weg3")]
+                erfuellt = billig + [k for k in erfuellt if k not in billig]
+        print(f"Entscheidung: bauen mit {erfuellt[0]}")
+        return
+    paar = einigkeit(wege, ids)
+    if paar is None:
+        print("Entscheidung: verwerfen (kein Weg erfüllt das Kriterium, keine Einigkeitsregel)")
+        return
+    x, y = paar
+    einig = [i for i, d in enumerate(ids) if wege[x].get(d) == wege[y].get(d)]
+    w = gewichte(ids)
+    abdeckung = sum(w[ids[i]] for i in einig) / sum(w.values())
+    g = [gold[i] for i in einig]
+    v = [vorhersagen[x][i] for i in einig]
+    r = [vorhersagen[ref][i] for i in einig]
+    bw = bootstrap(g, {"regel": v, "ref": r})
+    diff = [p - q for p, q in zip(bw["regel"], bw["ref"], strict=True)]
+    ok = makro_f1(g, v) >= KRITERIUM_F1 and perzentil(diff, 0.025) > 0
+    ok = ok and abdeckung >= ABDECKUNG_RUECKFALL
+    print(
+        f"Rückfall (Einigkeit {x} ∩ {y}): {len(einig)} Dokumente, Abdeckung gewichtet "
+        f"{abdeckung:.3f}, {guete(g, v)}, gegen {ref} 2,5 % {perzentil(diff, 0.025):+.3f}"
+    )
+    print(f"Entscheidung: {'bauen mit der Einigkeitsregel' if ok else 'verwerfen'}")
 
 
 def main() -> None:
@@ -655,9 +821,12 @@ def main() -> None:
     ap.add_argument(
         "teil",
         nargs="*",
-        choices=["grundgesamtheit", "entwicklung", "ausschuss", "cap", "tfidf", "llm", "prompt"],
+        choices=["grundgesamtheit", "entwicklung", "silber", "eingabe", "ausschuss", "cap", "tfidf"]
+        + ["llm", "prompt"],
     )
-    ap.add_argument("--menge", choices=["test", "entwicklung", "cap"], default="entwicklung")
+    ap.add_argument(
+        "--menge", choices=["test", "entwicklung", "silber", "cap"], default="entwicklung"
+    )
     ap.add_argument("--modell", default=MODELL)
     ap.add_argument("--limit", type=int, default=0)
     args = ap.parse_args()
@@ -670,6 +839,10 @@ def main() -> None:
             schreibe_grundgesamtheit(layout)
         elif teil == "entwicklung":
             schreibe_entwicklung(layout)
+        elif teil == "silber":
+            schreibe_silber(layout)
+        elif teil == "eingabe":
+            schreibe_eingabe(layout)
         elif teil == "ausschuss":
             w2 = weg2(settings, layout)
             AUSGABE.mkdir(parents=True, exist_ok=True)

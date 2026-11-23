@@ -1,0 +1,90 @@
+{
+  "vorhaben": "19-politikfelder",
+  "codebuch_version": "2026-11-23.1",
+  "profil": "duesseldorf",
+  "einheit": "document",
+  "grundgesamtheit": "messung/19-politikfelder-grundgesamtheit.parquet",
+  "grundgesamtheit_sha256": "2afe0a65b61e8fa0b1b7dde6eb4d2826a38c97b3a35fece60d8ae5fb3a309793",
+  "einheiten": 19032,
+  "ohne_text": 0,
+  "groesse": 300,
+  "seed": 20261123,
+  "schicht": "schicht",
+  "aufteilung": "proportional",
+  "selbstgewichtend": false,
+  "schichten": {
+    "ausschuss|anfrage": {
+      "grundgesamtheit": 1001,
+      "stichprobe": 16
+    },
+    "ausschuss|antrag": {
+      "grundgesamtheit": 754,
+      "stichprobe": 12
+    },
+    "ausschuss|beschluss": {
+      "grundgesamtheit": 2327,
+      "stichprobe": 37
+    },
+    "ausschuss|eingabe": {
+      "grundgesamtheit": 113,
+      "stichprobe": 2
+    },
+    "ausschuss|information": {
+      "grundgesamtheit": 1156,
+      "stichprobe": 18
+    },
+    "beirat|anfrage": {
+      "grundgesamtheit": 114,
+      "stichprobe": 2
+    },
+    "beirat|antrag": {
+      "grundgesamtheit": 186,
+      "stichprobe": 3
+    },
+    "beirat|beschluss": {
+      "grundgesamtheit": 98,
+      "stichprobe": 1
+    },
+    "beirat|information": {
+      "grundgesamtheit": 43,
+      "stichprobe": 1
+    },
+    "bezirksvertretung|anfrage": {
+      "grundgesamtheit": 2200,
+      "stichprobe": 35
+    },
+    "bezirksvertretung|antrag": {
+      "grundgesamtheit": 3090,
+      "stichprobe": 49
+    },
+    "bezirksvertretung|beschluss": {
+      "grundgesamtheit": 2893,
+      "stichprobe": 45
+    },
+    "bezirksvertretung|eingabe": {
+      "grundgesamtheit": 11,
+      "stichprobe": 1
+    },
+    "bezirksvertretung|information": {
+      "grundgesamtheit": 2803,
+      "stichprobe": 44
+    },
+    "rat|anfrage": {
+      "grundgesamtheit": 609,
+      "stichprobe": 9
+    },
+    "rat|antrag": {
+      "grundgesamtheit": 1033,
+      "stichprobe": 16
+    },
+    "rat|beschluss": {
+      "grundgesamtheit": 403,
+      "stichprobe": 6
+    },
+    "rat|information": {
+      "grundgesamtheit": 198,
+      "stichprobe": 3
+    }
+  },
+  "gezogen": "2026-11-23"
+}

@@ -139,3 +139,19 @@ Weg 1 auf den 200 CAP-Anfragentiteln (§ 8.2), Weg 3 auf den zurückgehaltenen 1
 CAP-Daten, beide gegen die menschlichen Codes: Makro-F1 mit Bootstrap-Intervall. Berichtet, nicht im
 Kriterium (Bundestag 1976 bis 2005, Titel statt Ratsdokument). Sie ist die einzige Zahl dieses
 Vorhabens, hinter der Menschen stehen.
+
+### 8.8 Eingefroren vor dem ersten Testlauf (2026-11-23, 23:10 Uhr)
+
+- **Weg 1**: Prompt-Version `19-cap-1` unverändert seit der Vorab-Festlegung; Systemprompt aus
+  `codebuch.toml` (Fassung 2026-11-23.1) mit `systemprompt()` des Messskripts, **18 307 Zeichen,
+  SHA-256 `b19eaa091e801db97bda50f6824666675a3f92ebf66116349b04a820caf7efa4`**; Nutzerprompt
+  `nutzerprompt()`, Parser `ANTWORT` (erste Nummer hinter `THEMA:`), `num_predict` 64. Geprüft an 20
+  Dokumenten der Entwicklungsmenge (alle 20 in der Antwortform, keine Änderung nötig).
+- **Weg 3**: Trainingsskript `19-politikfelder-training.py` mit den Werten aus § 8.3, Gewichten von
+  `FacebookAI/xlm-roberta-large` im Stand `c23d21b0620b635a76227c604d44e43a9f0ee389` (MIT,
+  safetensors); Eingabe je Ratsdokument: Titel und die ersten 1 500 Zeichen des Rohtexts, Leerraum
+  zusammengezogen (`schreibe_eingabe()`). Für 3b werden die Silberlabels so oft wiederholt, dass sie
+  rund ein Viertel der Beispiele stellen, höchstens 20-fach; nur Antworten von `qwen3.6:27b` mit
+  gültiger Nummer, nie von Dokumenten der Testmenge.
+- **Silbermenge**: 4 000 Ratsdokumente außerhalb von Test- und Entwicklungsmenge, gleiche Schichtung,
+  Seed 20261126 (`schreibe_silber()`; IDs unter `$GEOREP_MESSDATEN/19-politikfelder/silber.csv`).
