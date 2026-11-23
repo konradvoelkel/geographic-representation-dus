@@ -10,12 +10,17 @@ Ausgaben nach, ohne Modell; die Teile `llm`, `ausschuss`, `cap`, `tfidf` erzeuge
 für Weg 3, in einem eigenen Venv außerhalb des Pakets: [19-politikfelder-training.py](19-politikfelder-training.py).
 Codebuch, Stichprobe, Entwicklungsmenge und später die Labels: `validierung/19-politikfelder/`.
 
-**Urteil: offen bis zur Kodierung der 300** (§ 5). Vorab festgelegt in `b813d43` (22:43 Uhr, § 8),
-Prompt und Training eingefroren in `c194e08` (23:10 Uhr, § 8.8), beides vor dem ersten Lauf auf der
-Testmenge. Alle Zahlen unten sind Messungen ohne Gold oder an menschlich kodierten Fremddaten; jede
-Aussage über das Kriterium ist eine **Entwurfsschätzung**.
+**Urteil (vorläufig, Wege 1, 2 und 3a; 2026-11-24, 00:50 Uhr): bauen mit Weg 1**, `qwen3.6:27b` mit
+dem Codebuch im Systemprompt (§ 5). Gegen die Labels von zwei KI-Kodierern und einem Schlichter
+desselben Modells (Opus, α 0,943, nicht von Menschen) erreicht Weg 1 **Makro-F1 0,753** (Bootstrap
+0,658–0,822), Genauigkeit 0,843, und schlägt die Ausschussabbildung (2B: 0,242) im gepaarten Bootstrap
+sicher; Weg 3a erreicht 0,509 und erfüllt das Kriterium nicht. Endgültig wird das Urteil, wenn Weg 3b
+gerechnet ist. Vorab festgelegt in `b813d43` (22:43 Uhr, § 8), Prompt und Training eingefroren in
+`c194e08` (23:10 Uhr, § 8.8), beides vor dem ersten Lauf auf der Testmenge; an den Labels ist nichts
+nachgestellt.
 
-Die Zahlen, auf die es ankommt:
+Die Zahlen vor der Kodierung, auf die es ankam (die Abschnitte 3 und 3.5 sind so stehen geblieben, wie
+sie vor den Labels geschrieben wurden):
 
 1. **Weg 1 ist billig**: `qwen3.6:27b` mit dem ganzen Codebuch im Systemprompt braucht **0,86 s je
    Dokument** (300 der Testmenge in 258 s, alle in der Antwortform), weil die Antwort fünf Token hat und
@@ -305,20 +310,113 @@ durchgespielt (alle Zweige: α-Stufen, Kriterium, Rückfall).
 
 **Maße**: § 8.5. Die zweite Prüfung (§ 3.6) ist die einzige Zahl mit menschlichem Gold.
 
+### 4.1 Ergebnis der Kodierung (2026-11-24)
+
+Zwei Kodier-Agenten und ein Schlicht-Agent, **alle drei dasselbe Modell** (`claude-opus-5-5`; Frage 19
+aus F4, die Annahme „Opus für beide" gilt), ohne die Ausgabe eines Verfahrens; zusammengeführt mit
+`georep validate merge` (`validierung/19-politikfelder/labels.csv`, `README.md`, `guete.json`).
+
+| Frage | einig | Cohens κ | Krippendorffs α | genügt (α ≥ 0,8) |
+|---|---|---|---|---|
+| `politikfeld` | 285 von 300 (95,0 %) | 0,943 | **0,943** | ja |
+| `unsicher` | 286 von 300 (95,3 %) | 0,890 | 0,890 | ja |
+
+Die 15 Uneinigkeiten entschied die Schlichtung: viermal wie Kodierung 1, zehnmal wie Kodierung 2,
+einmal etwas Drittes. α liegt über beiden Schwellen (0,67 für ein Urteil, 0,8 für Stufe 3): das Urteil
+gilt nach § 8.5, und Stufe 3 ist nicht gesperrt. Weil alle drei dasselbe Modell sind, ist α eine obere
+Schätzung der Schärfe des Codebuchs, kein Beleg der Richtigkeit (`docs/validierung.md`, § 1).
+
+**Gold-Verteilung** (300): 10 Verkehr 78, 20 Staat und Verwaltung 33, 13 Soziales 32, 14 Wohnen 31, 7
+Umwelt 29, 23 Kultur 27, 6 Bildung 12, 21 Flächen 9, 8 Energie 8, 12 Ordnung 8, 15 Wirtschaft 8, 2
+Bürgerrechte 7, 3 Gesundheit 7, 17 Technik 4, 1 Haushalt 3, 4, 5, 9, 19 je 1; nie 16, 18, 99. Damit hat
+das Hauptmaß 19 Klassen mit Gold, davon 13 mit mindestens fünf. `unsicher` sagte mindestens einer der
+beiden bei 98 Dokumenten, beide bei 84.
+
+### 4.2 Güte der Wege gegen die Labels
+
+Messskript, 2026-11-24, 00:44 bis 00:50 Uhr (Lastmittel 20 bis 28, ein Lauf 65 s), Bootstrap über die
+Dokumente mit 2 000 Ziehungen, Seed 20261123, gepaart über alle Wege:
+
+| Weg | Makro-F1 (Hauptmaß) | 95 % | Makro-F1, Klassen ≥ 5 Gold | Genauigkeit | κ | gewichtetes Makro-F1 |
+|---|---|---|---|---|---|---|
+| **1 qwen3.6:27b** | **0,753** | 0,658–0,822 | **0,769** | **0,843** | 0,820 | 0,840 |
+| 1, gemma4 (Nebenlauf) | 0,612 | 0,519–0,702 | 0,670 | 0,757 | 0,719 | 0,747 |
+| 3a xlm-roberta-large | 0,509 | 0,422–0,583 | 0,597 | 0,637 | 0,586 | 0,650 |
+| 2B Ausschuss ohne Schwelle | 0,242 | 0,222–0,310 | 0,354 | 0,587 | 0,502 | 0,512 |
+| 2A Ausschuss der Kette | 0,191 | 0,175–0,242 | 0,294 | 0,320 | 0,279 | 0,416 |
+| TF-IDF (Nebenverfahren) | 0,260 | 0,183–0,306 | 0,298 | 0,320 | 0,258 | 0,346 |
+
+`georep validate score 19-politikfelder --pred <Weg 1>` bestätigt 0,753 und Genauigkeit 84,3 % in der
+Stichprobe wie für die Grundgesamtheit (mit Schichtgewichten); das steht in `guete.json`.
+
+Kriterium nach § 8.5 (bessere Ausschussvariante ist 2B):
+
+| Weg | Makro-F1 ≥ 0,70 | Differenz zu 2B | 2,5-%-Perzentil der Differenz | Kriterium |
+|---|---|---|---|---|
+| 1 qwen3.6:27b | ja (0,753) | +0,511 | **+0,379** | **erfüllt** |
+| 3a | nein (0,509) | +0,267 | +0,147 | nicht erfüllt |
+
+### 4.3 Teilmengen (Frage 9.2) und Unsicherheit
+
+Genauigkeit und Makro-F1 getrennt nach Dokumenten, deren Ausschnitt mit einem Ausschusskürzel in der
+Drucksachennummer beginnt (84), und den übrigen (216):
+
+| Weg | mit Kürzel: Genauigkeit | Makro-F1 | ohne Kürzel: Genauigkeit | Makro-F1 |
+|---|---|---|---|---|
+| 1 qwen3.6:27b | 0,833 | 0,662 | **0,847** | 0,748 |
+| 3a | 0,643 | 0,431 | 0,634 | 0,542 |
+| 2B | 0,714 | 0,360 | 0,537 | 0,207 |
+| 2A | 0,655 | 0,326 | 0,190 | 0,127 |
+
+Der Hinweis auf den Ausschuss hilft der Ausschussabbildung (2B: 0,714 gegen 0,537), nicht Weg 1, der
+ohne Kürzel nicht schlechter ist. Die Labels bevorzugen Weg 2 also höchstens auf den 84
+Ausschussdokumenten, und dort liegt Weg 1 trotzdem vorn; die Makro-Werte der Teilmengen haben wenige
+Dokumente je Klasse und sind nur grob.
+
+Ohne die 98 Dokumente, die mindestens ein Kodierer unsicher nannte: Weg 1 Genauigkeit 0,980, Makro-F1
+0,946 (202 Dokumente); 3a 0,767 und 0,652; 2B 0,678 und 0,268. Die Fehler von Weg 1 liegen fast alle
+dort, wo auch die Kodierer zwischen zwei Feldern schwankten.
+
+### 4.4 Fehlerbild von Weg 1
+
+F1 je Klasse (Gold/vorhergesagt): Verkehr 0,96 (78/83), Wohnen 0,95 (31/30), Soziales 0,84 (32/35),
+Staat und Verwaltung 0,83 (33/37), Bildung 0,83 (12/17), Umwelt 0,81 (29/25), Wirtschaft 0,80 (8/7),
+Energie 0,80 (8/7), Kultur 0,78 (27/19), Bürgerrechte 0,77 (7/6), Technik 0,75 (4/4), Flächen 0,58
+(9/15), Haushalt 0,57 (3/4), Ordnung 0,55 (8/3), Gesundheit 0,50 (7/5); 4, 9, 19 je 1/1 richtig, 5
+(1/0) falsch. Häufigste Verwechslungen (Gold → Weg 1): Kultur → Soziales 5, Kultur → Bildung 3,
+Umwelt → Flächen 3, Umwelt → Staat und Verwaltung 2, Flächen → Verkehr 2 (47 Fehler insgesamt).
+Kultur wird unterschätzt: Zuschüsse an Schützen- und Heimatvereine gibt das Modell an 13, die
+Programme „Kultur und Schule" und kulturelle Bildung an 6. Flächen wird überschätzt: Wasserspender
+auf Plätzen, eine Baumscheibe, Mahd am Deich sind nach den Labels Umwelt, eine Platzsanierung Wohnen,
+eine Rattenplage auf einem Platz Gesundheit. Das sind genau die Stellen, für die der Schlichter Regeln
+einer Fassung 2 des Codebuchs vorschlägt (Frage 9.16).
+
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
 
-**Offen bis zur Kodierung.** Ein Urteil gibt es erst gegen die geschlichteten Labels der 300; das
-Messskript rechnet es dann nach § 8.5 und § 8.6 ohne weiteren Eingriff. Was bis dahin feststeht:
+**Vorläufiges Urteil (2026-11-24, 00:50 Uhr, Wege 1, 2 und 3a): bauen mit Weg 1, `qwen3.6:27b` mit
+dem Codebuch im Systemprompt (Prompt `19-cap-1`).** Nach der vorab festgelegten Regel (`b813d43`, § 8.5),
+ohne Anpassung an die Labels:
 
-- **Kosten**: Weg 1 ist billig genug für alle Perioden (11,0 GPU-Stunden mit qwen, eine Nacht).
-- **Weg 2 ist ein schwacher Vergleich**: 2A lässt 58 % der Testmenge ohne Feld, 2B legt 46 % des
-  Korpus auf Verkehr, zehn Felder kann die Tabelle nie ausgeben.
-- **Entwurfsschätzung, kein Urteil**: Weg 1 schlägt Weg 2 vermutlich deutlich; ob er Makro-F1 0,70
-  erreicht, hängt an den seltenen Klassen (Frage 9.1). An menschlicher Kodierung (Bundestagstitel)
-  erreicht er 0,58 (0,49–0,64). Weg 3a erreicht auf zurückgehaltenen menschlichen CAP-Daten 0,71
-  und auf den 200 Titeln 0,706 (0,62–0,79), mehr als Weg 1 dort; auf Ratsdokumenten stimmt er mit Weg 1 in 197 von 300 überein
-  und legt 75 auf Staat und Verwaltung. Welcher Weg gegen das Gold vorn liegt, ist offen. Die
-  Einigkeitsregel deckt heute 0,660 ab (gewichtet), unter ihrer Schwelle 0,70.
+- **α 0,943** zwischen den Kodierern: das Urteil gilt, Stufe 3 ist erlaubt. Kodierer und Schlichter
+  sind dasselbe Modell (Opus), die Labels also das Urteil eines Modells, nicht von Menschen.
+- **Weg 1 erfüllt das Kriterium**: Makro-F1 **0,753** ≥ 0,70 und im gepaarten Bootstrap besser als
+  die bessere Ausschussvariante 2B (Differenz +0,511, 2,5-%-Perzentil +0,379). Das Intervall des
+  Makro-F1 selbst reicht bis 0,658 hinunter; die Regel verlangt den Punktwert, nicht die Untergrenze.
+  Das Nebenmaß über die 13 Klassen mit mindestens fünf Gold-Dokumenten (Frage 36, entschieden: nur
+  Nebenmaß) gibt 0,769.
+- **Weg 3a erfüllt es nicht** (0,509): der auf Bundestagstiteln und Wahlprogrammen trainierte
+  Klassifikator überträgt schlecht auf Ratsdokumente (75 Vorhersagen auf 20 bei 33 Gold), obwohl er auf
+  seiner eigenen Textsorte 0,71 erreicht (§ 3.6).
+- **Weg 2** ist mit 0,242 (2B) und 0,191 (2A) kein brauchbares Politikfeld; er bleibt, was er ist, die
+  Zuordnung zu einem Ausschuss.
+- **Die Rückfallregel greift nicht**, weil ein Weg das Kriterium erfüllt. Zur Information: Weg 1 und 3a
+  sind sich bei 197 Dokumenten einig (gewichtet 0,660, unter der Abdeckung 0,70), dort Makro-F1 0,762.
+- **Vorläufig**, weil Weg 3b noch rechnet (`gpu-queue/19-silber.sh`). Nach § 8.3 geht 3b statt 3a ins
+  Urteil, wenn Silberlabels für mindestens 2 000 Ratsdokumente vorliegen; erfüllt 3b das Kriterium und
+  liegt Weg 1 im gepaarten Bootstrap nicht sicher vor ihm (2,5-%-Perzentil der Differenz ≤ 0), wird nach
+  § 8.5 der billigere Weg 3b gebaut. Sonst bleibt es bei Weg 1.
+
+Kosten des Baus mit Weg 1: 11,0 GPU-Stunden für alle vier Datensätze (§ 3.7), Bauplan § 6.
 
 ## 6. Bauplan Stufe 2 (Beiträge, Ausgaben mit Schema, Verträge, Tests, berührte Dateien, Settings, Paket)
 
@@ -412,7 +510,10 @@ steckt in 13 zusammen mit Sozialem und Sport (Frage 9.6).
 5. *Wie die Felder entstehen*: Codebuch als Link, Modell, Prompt-Version, und die Validierung im
    Wortlaut aus `guete.json`: „geprüft von zwei KI-Kodierern desselben Modells an 300 Dokumenten,
    nicht von Menschen", Makro-F1 mit Intervall, dazu die zweite Prüfung an menschlich kodierten
-   Bundestagstiteln mit ihrer Zahl.
+   Bundestagstiteln mit ihrer Zahl. Mit den Werten dieser Messung: „Politikfeld je Dokument von einem
+   lokalen Sprachmodell nach dem Codebuch des CAP; geprüft von zwei KI-Kodierern desselben Modells an
+   300 Dokumenten der Periode 2020–2025, nicht von Menschen: Genauigkeit 84 %, Makro-F1 0,75
+   (0,66–0,82); an 200 von Menschen kodierten Bundestagsanfragen Makro-F1 0,58."
 
 Größe geschätzt **60 bis 90 KB** ohne Karte (vier Leisten, eine Tabelle Fraktion × Feld von höchstens
 10 × 22, eine Tabelle Wahlbezirk × Feld von 41 × 22); die Karte bringt die Geometrie der 41 Wahlbezirke
@@ -569,9 +670,9 @@ Vorhabens, hinter der Menschen stehen.
 
 | Nr. | Frage | warum sie zählt | Annahme ohne Antwort |
 |---|---|---|---|
-| 9.1 | Soll das Hauptmaß das Makro-F1 über **Klassen mit mindestens fünf Gold-Dokumenten** sein statt über alle Klassen mit Gold oder Vorhersage? | Bei 300 Dokumenten und 22 Klassen haben nach der Verteilung von Weg 1 acht Klassen höchstens drei Dokumente (5, 16, 18, 99 keines; 4, 9, 19 eines; 12 drei). Eine Klasse mit einem Gold-Dokument und einem Fehler zählt mit F1 0 so viel wie Verkehr mit 83; eine einzige falsche Vorhersage in eine leere Klasse ebenso. Das Kriterium misst dann vor allem die seltenen Klassen. Nur der Supervisor darf das vor der Kodierung ändern (Plan § 4) | **unverändert** (§ 8.5, F4-Maß); das Messskript berechnet das Makro über Klassen mit ≥ 5 Gold-Dokumenten als Nebenmaß, sodass beide Zahlen nebeneinander stehen |
-| 9.2 | Die Ausschnitte nennen oft den Ausschuss (84 der 300 beginnen mit einem Ausschusskürzel in der Drucksachennummer, 69 nennen einen Ausschussnamen, meist in der Beratungsfolge). Bevorzugt das Gold damit Weg 2? | Kodierer und Weg 1 sehen den Hinweis, Weg 2 ist aus ihm gebaut; Grundregel 2 sagt „Hinweis, nicht Kriterium" | hingenommen: das Material ist das echte Dokument; das Messskript berichtet die Güte getrennt für Dokumente mit und ohne Ausschuss im Kopf |
-| 9.3 | Kodierer B ein anderes Modell (Frage 19 aus F4)? | Die Kodierer sind Opus, Weg 1 ist qwen: das Urteil misst qwen gegen Opus, nicht gegen Menschen. Die zweite Prüfung (0,58 gegen Menschen auf Bundestagstiteln) ist die einzige menschliche Zahl | Opus für beide; die Seite sagt „desselben Modells" |
+| 9.1 | Soll das Hauptmaß das Makro-F1 über **Klassen mit mindestens fünf Gold-Dokumenten** sein statt über alle Klassen mit Gold oder Vorhersage? | Bei 300 Dokumenten und 22 Klassen haben nach der Verteilung von Weg 1 acht Klassen höchstens drei Dokumente (5, 16, 18, 99 keines; 4, 9, 19 eines; 12 drei). Eine Klasse mit einem Gold-Dokument und einem Fehler zählt mit F1 0 so viel wie Verkehr mit 83; eine einzige falsche Vorhersage in eine leere Klasse ebenso. Das Kriterium misst dann vor allem die seltenen Klassen. Nur der Supervisor darf das vor der Kodierung ändern (Plan § 4) | **entschieden vor der Auswertung (Frage 36 des Supervisors): Hauptmaß wie festgelegt**, das Makro über Klassen mit ≥ 5 Gold-Dokumenten als Nebenmaß. Ergebnis: 19 Klassen mit Gold, 13 mit ≥ 5; Weg 1 0,753 (Hauptmaß) und 0,769 (Nebenmaß) |
+| 9.2 | Die Ausschnitte nennen oft den Ausschuss (84 der 300 beginnen mit einem Ausschusskürzel in der Drucksachennummer, 69 nennen einen Ausschussnamen, meist in der Beratungsfolge). Bevorzugt das Gold damit Weg 2? | Kodierer und Weg 1 sehen den Hinweis, Weg 2 ist aus ihm gebaut; Grundregel 2 sagt „Hinweis, nicht Kriterium" | hingenommen; **gemessen (§ 4.3)**: der Hinweis hilft 2B (Genauigkeit 0,714 mit, 0,537 ohne Kürzel), nicht Weg 1 (0,833 mit, 0,847 ohne) |
+| 9.3 | Kodierer B ein anderes Modell (Frage 19 aus F4)? | Die Kodierer sind Opus, Weg 1 ist qwen: das Urteil misst qwen gegen Opus, nicht gegen Menschen. Die zweite Prüfung (0,58 gegen Menschen auf Bundestagstiteln) ist die einzige menschliche Zahl | Opus für beide **und für den Schlichter** (Annahme gilt, Supervisor 2026-11-24); das Urteil nennt es, die Seite sagt „desselben Modells" |
 | 9.4 | Lizenz: die CAP-Codes und alles, was sie bearbeitet, sind CC BY-NC-SA 4.0. Darf `codebuch.toml` so im GPL-Repo liegen, und steht `politikfelder.parquet` unter derselben Lizenz? | ShareAlike verlangt dieselbe Lizenz für Bearbeitungen; NonCommercial verbietet kommerzielle Nutzung. Weg 1 nutzt nur das Codebuch, Weg 3 trainiert auf CAP-Daten | Codebuch mit Lizenzvermerk im Kopf (erledigt); Paket und Tabelle der Seite tragen „Codes nach dem CAP, CC BY-NC-SA 4.0" mit Zitat; die Seite ist nicht kommerziell. Vor Stufe 2 bestätigen lassen |
 | 9.5 | ParlaCAP-train (CC BY 4.0, GPT-4o-Labels, darunter österreichische Nationalratsreden auf Deutsch) als zusätzliche Silberdaten für 3b? | mehr deutschsprachige, parlamentarische Beispiele; aber nicht von Menschen und fremde Lizenz neben CC BY-NC-SA | nein, nicht in dieser Runde |
 | 9.6 | Vorhaben 22 braucht „Jugend" getrennt; CAP legt Kitas, Jugendhilfe, Sport und Sozialhilfe zusammen in 13 | H3 von 22 misst Jugend und Schule | 22 nimmt 6 (Schule) aus 19 und behält `JHA` aus der Ausschusszuordnung; ein Unterthema (1308) bräuchte eine eigene Frage im Codebuch (Fassung 2) |
@@ -581,9 +682,10 @@ Vorhabens, hinter der Menschen stehen.
 | 9.10 | Andere Städte (Mönchengladbach): Prompt ohne Düsseldorfer Beispiele, nicht validiert | Stadtneutralität; der Prompt hat Ortsbeispiele | Stufe 2 trennt Beispiele ins Profil (§ 6); andere Städte „explorativ" bis zu einer eigenen Stichprobe |
 | 9.11 | 99 kommt in Weg 1 nie vor, Verwaltungsinterna sind 20 | wenn die Kodierer 99 öfter vergeben, kostet es Weg 1 eine Klasse | Codebuch wie festgelegt; Uneinigkeiten 20/99 werden in der Auswertung gezählt |
 | 9.12 | Die Ausschnitte sind die ersten 4 000 Zeichen; 59 der 300 Texte sind länger | der Gegenstand steht in Ratsdokumenten fast immer im Titel und Betreff | hingenommen, für Kodierer und Weg 1 gleich |
-| 9.13 | Silberlabels (4 000 Dokumente, 56 GPU-Minuten) und Training 3b vor der Auswertung laufen lassen? | sonst geht 3a ins Urteil (§ 8.3) | ja, Auftrag `gpu-queue/19-silber.sh` liegt; der Supervisor startet ihn, wenn die GPU frei ist |
-| 9.14 | Die Einigkeitsregel deckt mit 3a nur 0,660 der Testmenge ab (gewichtet), unter der vorab festgelegten Schwelle 0,70 | trägt der Rückfall nicht, heißt „kein Weg erfüllt das Kriterium" verwerfen | unverändert; mit 3b neu rechnen (das Messskript tut es) |
+| 9.13 | Silberlabels (4 000 Dokumente, 56 GPU-Minuten) und Training 3b vor der Auswertung laufen lassen? | sonst geht 3a ins Urteil (§ 8.3) | ja; der Supervisor hat `gpu-queue/19-silber.sh` am 2026-11-24 gestartet, das Urteil bleibt bis dahin vorläufig |
+| 9.14 | Die Einigkeitsregel deckt mit 3a nur 0,660 der Testmenge ab (gewichtet), unter der vorab festgelegten Schwelle 0,70 | trägt der Rückfall nicht, heißt „kein Weg erfüllt das Kriterium" verwerfen | **greift nicht**: Weg 1 erfüllt das Kriterium (§ 5); zur Information mit 3a 197 Dokumente, Abdeckung 0,660, dort Makro-F1 0,762; mit 3b neu rechnen |
 | 9.15 | Das Trainings-Venv braucht `torch 2.13.0+cu129` vom PyTorch-Index (`download.pytorch.org/whl/cu129`), weil der Treiber 575.57 nur CUDA 12.9 kann; PyPI liefert heute CUDA 13.2 | eine zweite Paketquelle neben PyPI; ein Treiber-Update würde es ändern | hingenommen für ein Venv außerhalb des Pakets; Versionen in § 3.4 |
+| 9.16 | Fassung 2 des Codebuchs mit den Regeln, die der Schlichter an den 15 Uneinigkeiten formuliert hat: **Zweck gegen Mittel** (das Ziel einer Maßnahme entscheidet, nicht der Ort oder das Instrument, etwa Infektionsschutz in Schulen 3, Prävention gegen Übergriffe 12); **ein Bauantrag ist 14**; **Vereinszuschuss nach Vereinszweck** (Schützen- und Heimatverein, Straßenfest 23 wie Brauchtum, Sportverein 13); **kulturelle Bildung** eindeutig verorten (heute uneinig zwischen 6 und 23); **Sammelvorlagen nach Posten**; **Plätze, Toiletten, Schädlinge** (Pflege und Instandsetzung von Plätzen 21, Toiletten und Rattenbekämpfung nach Zweck); **die Haushaltsstelle ist nie das Feld**; **Eigenbetriebe nach Aufgabe**; **Ernennungen und Wahlen einzelner Personen 20** | Kultur (F1 0,78) und Flächen (0,58) verlieren bei Weg 1 genau an diesen Stellen (§ 4.4) | nicht in dieser Runde: Fassung 2 hieße eine neue Stichprobe in einem eigenen Ordner (F4), und Weg 1 erfüllt das Kriterium mit Fassung 1; für Stufe 2 bleibt der eingefrorene Prompt `19-cap-1`. Vorschlag für eine spätere Runde |
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
