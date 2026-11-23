@@ -1134,15 +1134,20 @@ def stratified_bootstrap(
     return boot[int(0.025 * len(boot))], boot[int(0.975 * len(boot)) - 1]
 
 
+def decode(cell: str) -> Any:
+    """Zellen von labels.csv sind JSON; leer heißt ohne Wert (uneinig ohne Schlichtung)."""
+    return json.loads(cell) if cell else None
+
+
 def score_labels() -> None:
     """Liest `labels.csv`, wenn die Kodierung da ist, und rechnet das Kriterium (F1 ≥ 0,8).
 
     Vorab festgelegt (2026-11-23, vor der Kodierung): Hauptmaß ist F1 der Klasse „handelt von"
     für die Regel, mit den Schichtgewichten aus `stichprobe.csv` hochgerechnet, mit
     geschichtetem Bootstrap (2000 Ziehungen, Seed) als Intervall. Daneben, ohne Einfluss auf das
-    Urteil: ungewichtet, F1 der Klasse „erwähnt oder kein Bezug", Cohens κ zwischen Regel und
-    Label, die Nebenregeln A bis C und die triviale Regel „alles handelt von" als Vergleich — bei
-    hoher Prävalenz erreicht sie ein hohes F1 ohne jede Trennung (§ 9 des Messdokuments).
+    Kriterium: ungewichtet, F1 der Klasse „erwähnt oder kein Bezug", Cohens κ zwischen Regel und
+    Label mit Intervall (Annahme 9.2: die Regel muss die triviale schlagen, κ-Intervall über 0),
+    die Nebenregeln A bis C und die triviale Regel „alles handelt von" als Vergleich.
     """
     labels_path = VALIDIERUNG / "labels.csv"
     sample_path = VALIDIERUNG / "stichprobe.csv"
@@ -1152,43 +1157,77 @@ def score_labels() -> None:
     with sample_path.open(encoding="utf-8") as handle:
         sample = {r["aufgabe"]: r for r in csv.DictReader(handle)}
     with labels_path.open(encoding="utf-8") as handle:
-        labels = [r for r in csv.DictReader(handle) if r["frage"] == "bezug" and r["label"]]
+        all_rows = list(csv.DictReader(handle))
+    field: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+    for r in all_rows:
+        field[r["frage"]][r["aufgabe"]] = {
+            k: decode(r[k]) for k in ("kodierer_a", "kodierer_b", "schlichtung", "label")
+        }
+    bezug = field["bezug"]
     rule_rows = {}
     with (AUFGABEN_DIR / "regel.jsonl").open(encoding="utf-8") as handle:
         for line in handle:
             r = json.loads(line)
             rule_rows[r["aufgabe"]] = r
-    print(f"  Labels: {len(labels)}; Verteilung: {dict(Counter(r['label'] for r in labels))}")
-    both = [r for r in labels if r["kodierer_a"] and r["kodierer_b"]]
-    alpha = krippendorff_nominal([r["kodierer_a"] for r in both], [r["kodierer_b"] for r in both])
-    agree = sum(r["kodierer_a"] == r["kodierer_b"] for r in both)
+    art: dict[str, str] = {}
+    tasks_path = AUFGABEN_DIR / "aufgaben.jsonl"
+    if tasks_path.exists():  # nur für die Fehler nach Dokumentart; lokal
+        with tasks_path.open(encoding="utf-8") as handle:
+            for line in handle:
+                t = json.loads(line)
+                art[t["aufgabe"]] = t["dokumentart"]
+    tasks = sorted(bezug)
+    label = {t: bezug[t]["label"] for t in tasks}
+    print(f"  Labels: {len(tasks)}; Verteilung: {dict(Counter(label.values()))}")
+    a = [bezug[t]["kodierer_a"] for t in tasks]
+    b = [bezug[t]["kodierer_b"] for t in tasks]
+    agree = sum(x == y for x, y in zip(a, b, strict=True))
+    alpha3 = krippendorff_nominal(a, b)
+    alpha2 = krippendorff_nominal(
+        [str(x == "handelt_von") for x in a], [str(y == "handelt_von") for y in b]
+    )
     print(
-        f"  Übereinstimmung der Kodierer: {agree} von {len(both)}, Krippendorffs α (nominal, drei Klassen) = {alpha:.3f}"
+        f"  Übereinstimmung der Kodierer: {agree} von {len(tasks)}; α drei Klassen {alpha3:.3f}, α handelt von ja/nein {alpha2:.3f}"
+    )
+    print(
+        f"  A → B: {dict(Counter(f'{x}/{y}' for x, y in zip(a, b, strict=True)))}; geschlichtet: {sum(1 for t in tasks if bezug[t]['schlichtung'])}"
+    )
+    unsure = field["unsicher"]
+    print(
+        f"  unsicher: A {sum(1 for t in tasks if unsure[t]['kodierer_a'])}, B {sum(1 for t in tasks if unsure[t]['kodierer_b'])}, "
+        f"beide {sum(1 for t in tasks if unsure[t]['kodierer_a'] and unsure[t]['kodierer_b'])}"
+    )
+    print(
+        "  je Schicht: Paare | Label handelt von (Wilson) | Regel richtig (Wilson; in den vorderen Schichten = Präzision)"
     )
     for stratum in sorted({s["schicht"] for s in sample.values()}):
-        sub = [r for r in labels if sample[r["aufgabe"]]["schicht"] == stratum]
-        k = sum(r["label"] == "handelt_von" for r in sub)
-        print(f"  Schicht {stratum}: handelt von {wil(k, len(sub))}")
+        sub = [t for t in tasks if sample[t]["schicht"] == stratum]
+        k = sum(label[t] == "handelt_von" for t in sub)
+        ok = sum((label[t] == "handelt_von") == bool(rule_rows[t]["regel"]) for t in sub)
+        print(f"  {stratum} | {len(sub)} | {wil(k, len(sub))} | {wil(ok, len(sub))}")
     for col in ("regel", "neben_a", "neben_b", "neben_c", "alle"):
         rows = [
             (
-                r["label"] == "handelt_von",
-                True if col == "alle" else bool(rule_rows[r["aufgabe"]][col]),
-                float(sample[r["aufgabe"]]["gewicht"]),
+                label[t] == "handelt_von",
+                True if col == "alle" else bool(rule_rows[t][col]),
+                float(sample[t]["gewicht"]),
             )
-            for r in labels
+            for t in tasks
         ]
         by_stratum: dict[str, list[tuple[bool, bool, float]]] = defaultdict(list)
-        for lab, row in zip(labels, rows, strict=True):
-            by_stratum[sample[lab["aufgabe"]]["schicht"]].append(row)
-        p_u, r_u, f_u = f1_weighted([(t, p, 1.0) for t, p, _w in rows])
+        for t, row in zip(tasks, rows, strict=True):
+            by_stratum[sample[t]["schicht"]].append(row)
+        tp = sum(1 for x, y, _w in rows if x and y)
+        fp = sum(1 for x, y, _w in rows if not x and y)
+        fn = sum(1 for x, y, _w in rows if x and not y)
+        p_u, r_u, f_u = f1_weighted([(x, y, 1.0) for x, y, _w in rows])
         p_w, r_w, f_w = f1_weighted(rows)
         lo, hi = stratified_bootstrap(by_stratum, lambda d: f1_weighted(d)[2])
-        neg = f1_weighted([(not t, not p, w) for t, p, w in rows])[2]
+        p_lo, p_hi = stratified_bootstrap(by_stratum, lambda d: f1_weighted(d)[0])
+        r_lo, r_hi = stratified_bootstrap(by_stratum, lambda d: f1_weighted(d)[1])
+        neg = f1_weighted([(not x, not y, w) for x, y, w in rows])[2]
         kappa = cohen_kappa(rows) if col != "alle" else 0.0
         k_lo, k_hi = stratified_bootstrap(by_stratum, cohen_kappa) if col != "alle" else (0.0, 0.0)
-        # Kriterium aus dem Briefing; daneben, ob die Regel die triviale „alles handelt von"
-        # schlägt (κ-Intervall über 0), Annahme 9.2 des Messdokuments.
         verdict = (
             f"; Kriterium F1 ≥ 0,8: {'erfüllt' if f_w >= 0.8 else 'nicht erfüllt'}; "
             f"schlägt die triviale Regel (κ-Intervall über 0): {'ja' if k_lo > 0 else 'nein'}"
@@ -1196,15 +1235,58 @@ def score_labels() -> None:
             else ""
         )
         print(
-            f"  {col}: ungewichtet P {p_u:.3f} R {r_u:.3f} F1 {f_u:.3f}; hochgerechnet P {p_w:.3f} R {r_w:.3f} "
+            f"  {col}: TP {tp} FP {fp} FN {fn}; ungewichtet P {wil(tp, tp + fp)} R {wil(tp, tp + fn)} F1 {f_u:.3f}; "
+            f"hochgerechnet P {p_w:.3f} ({p_lo:.3f}–{p_hi:.3f}) R {r_w:.3f} ({r_lo:.3f}–{r_hi:.3f}) "
             f"F1 {f_w:.3f} (95 % {lo:.3f}–{hi:.3f}); F1 der Gegenklasse {neg:.3f}; "
             f"κ {kappa:.3f} (95 % {k_lo:.3f}–{k_hi:.3f}){verdict}"
         )
-    wrong = [(r["label"] == "kein_bezug", float(sample[r["aufgabe"]]["gewicht"])) for r in labels]
-    k = sum(1 for t, _w in wrong if t)
-    share = sum(w for t, w in wrong if t) / sum(w for _t, w in wrong)
+    for who in ("kodierer_a", "kodierer_b"):
+        rows = [
+            (
+                bezug[t][who] == "handelt_von",
+                bool(rule_rows[t]["regel"]),
+                float(sample[t]["gewicht"]),
+            )
+            for t in tasks
+        ]
+        print(
+            f"  Regel gegen {who} allein: hochgerechnet F1 {f1_weighted(rows)[2]:.3f}, κ {cohen_kappa(rows):.3f}"
+        )
+    sure = [t for t in tasks if not (unsure[t]["kodierer_a"] and unsure[t]["kodierer_b"])]
+    rows = [
+        (label[t] == "handelt_von", bool(rule_rows[t]["regel"]), float(sample[t]["gewicht"]))
+        for t in sure
+    ]
     print(
-        f"  kein Bezug (der Begriff meint keinen Ort im Bezirk): {k} von {len(wrong)}, hochgerechnet {100 * share:.1f} % der Paare"
+        f"  Regel ohne die {len(tasks) - len(sure)} Aufgaben, die beide unsicher nannten: hochgerechnet F1 {f1_weighted(rows)[2]:.3f}"
+    )
+    errors = [t for t in tasks if (label[t] == "handelt_von") != bool(rule_rows[t]["regel"])]
+    fn_tasks = [t for t in errors if label[t] == "handelt_von"]
+    fp_tasks = [t for t in errors if label[t] != "handelt_von"]
+    print(
+        f"  Fehler der Regel: {len(errors)} (falsch „erwähnt“ {len(fn_tasks)}, falsch „handelt von“ {len(fp_tasks)})"
+    )
+    for name, group in (("falsch erwähnt", fn_tasks), ("falsch handelt von", fp_tasks)):
+        print(f"    {name} nach Stelle: {dict(Counter(rule_rows[t]['stelle'] for t in group))}")
+        print(f"    {name} nach Label: {dict(Counter(label[t] for t in group))}")
+        if art:
+            print(
+                f"    {name} nach Dokumentart: {dict(Counter(art[t] for t in group).most_common())}"
+            )
+        print(f"    {name}, Aufgaben: {', '.join(t.rsplit('-', 1)[1] for t in group)}")
+    fn_list = [t for t in fn_tasks if rule_rows[t]["n_liste"]]
+    print(
+        f"    falsch erwähnt mit Listenzeile oder Adresse im Begleittext (Nebenregel C fängt sie): {len(fn_list)} von {len(fn_tasks)}"
+    )
+    wrong = [(label[t] == "kein_bezug", float(sample[t]["gewicht"])) for t in tasks]
+    k = sum(1 for x, _w in wrong if x)
+    share = sum(w for x, w in wrong if x) / sum(w for _x, w in wrong)
+    terms = Counter(
+        term for t in tasks for term in (field["begriffe_kein_bezug"][t]["label"] or [])
+    )
+    print(
+        f"  kein Bezug (der Begriff meint keinen Ort im Bezirk): {k} von {len(wrong)}, hochgerechnet {100 * share:.1f} % der Paare; "
+        f"Begriffe ohne Bezug in {sum(1 for t in tasks if field['begriffe_kein_bezug'][t]['label'])} Aufgaben: {dict(terms)}"
     )
 
 
