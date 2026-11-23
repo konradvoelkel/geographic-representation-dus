@@ -32,6 +32,11 @@ def _probe_steps(settings: Settings, layout: Layout, http: Transport) -> list[St
     return [Step("probe", (layout.corpus,), (target,), lambda: "nichts")]
 
 
+def _late_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
+    target = layout.processed / "spaet.parquet"
+    return [Step("spaet", (layout.corpus,), (target,), lambda: "nichts")]
+
+
 def test_ohne_beitraege_bleibt_das_register_wie_es_war(
     tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -61,6 +66,51 @@ def test_zwei_beitraege_mit_demselben_schritt_sind_ein_fehler(
         build_steps(default_settings, _layout(tmp_path))
 
 
+# --- Nachzug F2: ein zweiter Einhängepunkt vor ``weights`` (Synergien 2026-11, Konflikt 6) ---
+
+
+def test_ein_frueher_schritt_steht_unmittelbar_vor_weights(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Was ``weights`` liest (16 ``places``, 11 ``sections``), muss vor ``weights`` entstehen."""
+    monkeypatch.setattr(
+        georep.enrich, "CONTRIBUTIONS", (Contribution("probe", early_steps=_probe_steps),)
+    )
+    names = [s.name for s in build_steps(default_settings, _layout(tmp_path))]
+    assert names.index("index") < names.index("probe") == names.index("weights") - 1
+
+
+def test_ein_beitrag_mit_fruehen_und_spaeten_schritten(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ein Beitrag je Vorhaben, mit allen Schritten: früh vor ``weights``, spät vor ``report``."""
+    both = Contribution("probe", early_steps=_probe_steps, steps=_late_steps)
+    monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", (both,))
+    names = [s.name for s in build_steps(default_settings, _layout(tmp_path))]
+    assert names.index("probe") == names.index("weights") - 1
+    assert names.index("spaet") == names.index("report") - 1
+
+
+def test_frueh_und_spaet_mit_demselben_namen_sind_ein_fehler(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    twice = (Contribution("a", early_steps=_probe_steps), Contribution("b", steps=_probe_steps))
+    monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", twice)
+    with pytest.raises(DuplicateStepError, match="probe"):
+        build_steps(default_settings, _layout(tmp_path))
+
+
+def test_ein_frueher_schritt_mit_dem_namen_eines_kernschritts_ist_ein_fehler(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def weights(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
+        return [Step("weights", (), (layout.processed / "x.parquet",), lambda: "nichts")]
+
+    monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", (Contribution("a", early_steps=weights),))
+    with pytest.raises(DuplicateStepError, match="weights"):
+        build_steps(default_settings, _layout(tmp_path))
+
+
 # --- Nachzug F2: der Transport an den Beiträgen (Synergien 2026-11, Konflikt 7) -------------
 
 PROBE_URL = "https://example.org/probe.json"
@@ -76,14 +126,23 @@ def _network_steps(settings: Settings, layout: Layout, http: Transport) -> list[
     return [Step("probe_netz", (), (target,), run, network=True)]
 
 
+@pytest.mark.parametrize(
+    "contribution",
+    [
+        Contribution("probe", early_steps=_network_steps),
+        Contribution("probe", steps=_network_steps),
+    ],
+    ids=["frueh", "spaet"],
+)
 def test_ein_netzschritt_eines_beitrags_laeuft_ueber_die_session_aus_build_steps(
-    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
+    default_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+    contribution: Contribution,
 ) -> None:
     """Die Naht für Tests mit der Fake-Session (CLAUDE.md, „Nie": Netz in Unit-Tests)."""
     layout = _layout(tmp_path)
-    monkeypatch.setattr(
-        georep.enrich, "CONTRIBUTIONS", (Contribution("probe", steps=_network_steps),)
-    )
+    monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", (contribution,))
     session = FakeSession({PROBE_URL: response(PROBE_URL, payload={"ok": 1})})
     steps = build_steps(default_settings, layout, session)
     [outcome] = run_pipeline(steps, default_settings, ["probe_netz"], online=True)
@@ -102,7 +161,9 @@ def test_ohne_netzschritt_entsteht_keine_session(
     """
     layout = _layout(tmp_path)
     monkeypatch.setattr(
-        georep.enrich, "CONTRIBUTIONS", (Contribution("probe", steps=_network_steps),)
+        georep.enrich,
+        "CONTRIBUTIONS",
+        (Contribution("probe", early_steps=_network_steps, steps=_late_steps),),
     )
     steps = build_steps(default_settings, layout)
     run_pipeline(steps, default_settings, ["probe_netz"])  # ohne --online übersprungen

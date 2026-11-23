@@ -1048,13 +1048,15 @@ def build_steps(
         ).line()
 
     # Fundament F2 (docs/plan-vorverarbeitung-2026-11.md, § 7): die Beiträge der Vorhaben stehen
-    # unmittelbar vor ``report``. Import hier, nicht oben: die Beiträge bauen ``Step`` aus diesem
-    # Modul, ein Import auf Modulebene wäre ein Kreis. Nachzug (Synergien 2026-11, Konflikt 7):
-    # sie bekommen ``http``; ohne Angabe eine Session, die erst beim ersten Aufruf entsteht, wie
+    # unmittelbar vor ``report``, die frühen unmittelbar vor ``weights`` (Nachzug, Synergien
+    # 2026-11, Konflikt 6). Import hier, nicht oben: die Beiträge bauen ``Step`` aus diesem
+    # Modul, ein Import auf Modulebene wäre ein Kreis. Nachzug (Konflikt 7): sie bekommen
+    # ``http``; ohne Angabe eine Session, die erst beim ersten Aufruf entsteht, wie
     # ``transport()`` für die Netzschritte des Kerns.
-    from georep.enrich import check_unique_names, contributed_steps
+    from georep.enrich import check_unique_names, contributed_early_steps, contributed_steps
 
     contributed_http = http if http is not None else DeferredTransport(transport)
+    contributed_early = contributed_early_steps(settings, layout, contributed_http)
     contributed = contributed_steps(settings, layout, contributed_http)
 
     def page_step(page: Page) -> Step:
@@ -1361,6 +1363,8 @@ def build_steps(
             (layout.district_bodies, layout.bodies_table),
             body_hits,
         ),
+        # --- Fundament F2, Nachzug: frühe Beiträge, deren Ausgaben ``weights`` liest
+        *contributed_early,
         # --- Option 06
         Step(
             "weights",

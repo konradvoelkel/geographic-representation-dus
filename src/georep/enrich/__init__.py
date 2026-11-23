@@ -15,6 +15,13 @@ Wo die Beiträge landen:
   ``(settings, layout, http)``: ``http`` ist der ``Transport`` aus ``build_steps``, in Tests die
   Fake-Session, sonst eine Session, die erst beim ersten Aufruf entsteht
   (``georep.http.DeferredTransport``). Ein Netzschritt nimmt ihn statt einer eigenen Session.
+* ``early_steps`` — dieselbe Fabrik, aber die Schritte stehen unmittelbar vor ``weights``, also
+  hinter ``index``, ``results``, ``metrics`` und ``body_hits``: für Ausgaben, die ``weights``
+  liest (Vorhaben 16 ``places``, das 11 ``sections`` braucht; 13 ``families``, wenn es gebaut
+  wird). Ein früher Schritt kann keine Ausgabe eines späten lesen, auch nicht aus einem
+  Beitrag, der weiter vorn im Register steht: ``run`` plant alle späten danach. Ein Vorhaben mit
+  beiden Arten bleibt **ein** Beitrag. ``check_unique_names`` gilt über alle Schritte, früh,
+  spät und Kern.
 * ``tables`` — veröffentlichte Tabellen, hinter denen des Kerns (``report.tables.published``).
 * ``pages`` — Unterseiten neben ``index.html`` (``report.pages``), je ein Schritt nach ``report``.
 
@@ -58,14 +65,26 @@ class Contribution:
     steps: Callable[[Settings, Layout, Transport], list[Step]] = no_steps
     tables: tuple[PublishedTable, ...] = ()
     pages: tuple[Page, ...] = ()
+    # Nachzug F2 (Synergien 2026-11, Konflikt 6): Schritte vor ``weights``. Am Ende, damit kein
+    # Aufruf mit Positionen seine Bedeutung ändert.
+    early_steps: Callable[[Settings, Layout, Transport], list[Step]] = no_steps
 
 
 # Je Vorhaben eine Zeile, in der Reihenfolge der Abhängigkeiten (Plan, § 3).
 CONTRIBUTIONS: tuple[Contribution, ...] = ()
 
 
+def contributed_early_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
+    """Die frühen Schritte aller Beiträge (vor ``weights``) in Registerfolge."""
+    return [
+        step
+        for contribution in CONTRIBUTIONS
+        for step in contribution.early_steps(settings, layout, http)
+    ]
+
+
 def contributed_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
-    """Die Schritte aller Beiträge in Registerfolge."""
+    """Die späten Schritte aller Beiträge (vor ``report``) in Registerfolge."""
     return [
         step
         for contribution in CONTRIBUTIONS
