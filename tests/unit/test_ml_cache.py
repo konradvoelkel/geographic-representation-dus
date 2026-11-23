@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import multiprocessing
 import sqlite3
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -17,6 +19,7 @@ from georep.ml.cache import (
     decode_vectors,
     encode_vector,
     input_sha256,
+    with_busy_retry,
 )
 
 KEY = CacheKey(model="fake-embed:latest", digest="e" * 64, prompt="dokument-1")
@@ -115,3 +118,69 @@ def test_vectors_round_trip_as_little_endian_float32() -> None:
     back = decode_vectors(blobs, 3)
     assert back.dtype == np.float32 and np.array_equal(back, rows)
     assert decode_vectors([], 3).shape == (0, 3)
+
+
+def test_a_busy_database_is_tried_again() -> None:
+    """Befund 6 des Reviews: ``PRAGMA journal_mode=WAL`` antwortet ``SQLITE_BUSY`` ohne zu warten."""
+    calls: list[int] = []
+    pauses: list[float] = []
+
+    def busy_twice() -> str:
+        calls.append(1)
+        if len(calls) < 3:
+            raise sqlite3.OperationalError("database is locked")
+        return "wal"
+
+    assert with_busy_retry(busy_twice, sleep=pauses.append) == "wal"
+    assert len(calls) == 3 and len(pauses) == 2 and pauses[0] < pauses[1]
+
+
+def test_another_database_error_is_not_tried_again() -> None:
+    def broken() -> str:
+        raise sqlite3.OperationalError("no such table: meta")
+
+    with pytest.raises(sqlite3.OperationalError, match="no such table"):
+        with_busy_retry(broken, sleep=lambda s: None)
+
+
+BATCHES = 20
+
+
+def _writer(root: str, worker: int, start: Any, results: Any) -> None:
+    """Ein Prozess, der eine neue Cache-Datei öffnet und Stapel schreibt (Probe 2 des Reviews).
+
+    ``start`` ist eine Schranke für alle Prozesse und den Test: erst wenn jeder bereit ist, öffnen
+    alle zugleich. Ohne sie kämen die Prozesse nacheinander an und stießen nie zusammen.
+    """
+    start.wait()
+    try:
+        with ModelCache(Path(root), KEY.model) as cache:
+            for batch in range(BATCHES):
+                rows = [(f"{worker:04d}{batch:04d}{i:056d}", b"\0" * 3072) for i in range(32)]
+                cache.put_many(KEY, rows)
+                cache.known(KEY)
+        results.put("ok")
+    except sqlite3.Error as error:
+        results.put(f"{worker}: {error!r}")
+
+
+def test_processes_opening_a_new_cache_file_together_all_get_in(tmp_path: Path) -> None:
+    context = multiprocessing.get_context("forkserver")
+    workers_per_round = 6
+    for round_ in range(4):
+        root = tmp_path / f"runde-{round_}"
+        start = context.Barrier(workers_per_round + 1)
+        results = context.Queue()
+        workers = [
+            context.Process(target=_writer, args=(str(root), w, start, results))
+            for w in range(workers_per_round)
+        ]
+        for worker in workers:
+            worker.start()
+        start.wait(timeout=120)
+        answers = [results.get(timeout=120) for _ in workers]
+        for worker in workers:
+            worker.join(timeout=120)
+        assert answers == ["ok"] * workers_per_round, answers
+        with ModelCache(root, KEY.model) as cache:
+            assert len(cache.known(KEY)) == workers_per_round * BATCHES * 32

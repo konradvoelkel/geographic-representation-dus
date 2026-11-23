@@ -20,7 +20,8 @@ import datetime as dt
 import hashlib
 import re
 import sqlite3
-from collections.abc import Iterable, Sequence
+import time
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from types import TracebackType
@@ -49,6 +50,30 @@ CREATE TABLE IF NOT EXISTS entries (
     PRIMARY KEY (digest, prompt, input_sha256)
 );
 """
+
+
+_BUSY = ("SQLITE_BUSY", "SQLITE_LOCKED")
+
+
+def with_busy_retry[T](
+    action: Callable[[], T], *, attempts: int = 12, sleep: Callable[[float], None] = time.sleep
+) -> T:
+    """``action`` noch einmal, solange SQLite „besetzt" meldet; jeder andere Fehler sofort.
+
+    Der Wechsel einer neuen Datei auf WAL braucht die Datei für sich, und SQLite antwortet darauf
+    ``SQLITE_BUSY``, ohne den eigenen Wartemechanismus zu benutzen: öffnen mehrere Läufe dieselbe
+    neue Datei zugleich, scheitern die übrigen (Review 2026-11-23, Befund 6; Probe 2 und 3).
+    Gewartet wird 0,05 s, dann jeweils doppelt so lange, höchstens 2 s, zusammen rund 15 s.
+    """
+    for attempt in range(attempts):
+        try:
+            return action()
+        except sqlite3.OperationalError as error:
+            busy = getattr(error, "sqlite_errorname", "") in _BUSY or "locked" in str(error)
+            if not busy or attempt + 1 == attempts:
+                raise
+            sleep(min(0.05 * 2**attempt, 2.0))
+    raise AssertionError("unerreichbar")  # pragma: no cover
 
 
 @dataclass(frozen=True)
@@ -135,14 +160,22 @@ class ModelCache:
     def _open(self) -> sqlite3.Connection:
         self.root.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(self.path, timeout=30.0)
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA synchronous=NORMAL")
-        with conn:
-            conn.executescript(_TABLES)
-            conn.execute(
-                "INSERT OR IGNORE INTO meta VALUES ('model', ?), ('schema_version', ?)",
-                (self.model, str(CACHE_SCHEMA_VERSION)),
-            )
+
+        def prepare() -> None:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA synchronous=NORMAL")
+            with conn:
+                conn.executescript(_TABLES)
+                conn.execute(
+                    "INSERT OR IGNORE INTO meta VALUES ('model', ?), ('schema_version', ?)",
+                    (self.model, str(CACHE_SCHEMA_VERSION)),
+                )
+
+        try:
+            with_busy_retry(prepare)
+        except sqlite3.Error:
+            conn.close()
+            raise
         meta = dict(conn.execute("SELECT key, value FROM meta").fetchall())
         if meta["model"] != self.model or meta["schema_version"] != str(CACHE_SCHEMA_VERSION):
             conn.close()
