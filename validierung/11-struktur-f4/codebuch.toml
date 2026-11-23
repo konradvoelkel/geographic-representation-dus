@@ -99,6 +99,7 @@ question = """
 Amt oder Institut im Kopf, wie geschrieben (Feld „Fachbereich:", „Amt / Institut:" oder „Amt:"), z. B. „52 - Sportamt" oder „Bezirksverwaltungsstelle 8"; null, wenn der Kopf kein solches Feld hat.
 """
 scale = "open"
+whitespace = "ignore"  # pypdf setzt Leerraum verschieden; die Messung verglich ohne Leerraum
 
 [[questions]]
 id = "dezernat_titel"

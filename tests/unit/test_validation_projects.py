@@ -107,3 +107,19 @@ def test_import_and_merge_rebuild_the_labels_of_project_14(
     assert (target / "labels.csv").read_bytes() == (
         VALIDATION / project / "labels.csv"
     ).read_bytes()
+
+
+def test_score_recomputes_the_agreement_of_project_11(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """docs/plans/11-struktur.md § 4.1: 200 von 200 gleich (114 mit Vorschlag zeilengenau), nur
+    sitzung 199 von 200 (α 0,99); amt vergleicht ohne Leerraum wie die Messung."""
+    target = _copy(tmp_path, monkeypatch, "11-struktur-f4")
+    assert main(["validate", "score", "11-struktur-f4"]) == 0
+    questions = json.loads((target / "guete.json").read_text(encoding="utf-8"))["fragen"]
+    for question in ("bv_vorhanden", "amt", "dezernat_titel", "beratungsfolge", "briefdatum"):
+        assert (questions[question]["einig"], questions[question]["beide"]) == (200, 200), question
+    for question in ("bv_erste_zeile", "bv_letzte_zeile"):
+        assert (questions[question]["einig"], questions[question]["beide"]) == (114, 114), question
+    assert questions["sitzung"]["einig"] == 199
+    assert round(questions["sitzung"]["krippendorff_alpha"], 2) == 0.99
