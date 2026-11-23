@@ -1,0 +1,70 @@
+{
+  "vorhaben": "17-zeit-f4",
+  "codebuch_version": "2026-11-23.1",
+  "einheit": "document",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-23",
+  "einheiten": 100,
+  "uneinig": 8,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "thema": {
+      "n": 100,
+      "beide": 100,
+      "einig": 96,
+      "anteil": 0.96,
+      "anteil_wilson95": [
+        0.9016292856411208,
+        0.9843366960084523
+      ],
+      "cohen_kappa": 0.9564554757239278,
+      "krippendorff_alpha_nominal": 0.9566496024398213,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9566496024398213,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "[\"anderes\"]": 6,
+        "[\"bundesverkehr\"]": 10,
+        "[\"cannabis\"]": 10,
+        "[\"corona\"]": 10,
+        "[\"energiekrise\", \"ukraine_krieg\"]": 5,
+        "[\"energiekrise\"]": 5,
+        "[\"gendern\"]": 8,
+        "[\"klima_energie\"]": 9,
+        "[\"migration_asyl\", \"ukraine_krieg\"]": 3,
+        "[\"migration_asyl\"]": 8,
+        "[\"sozialstaat\"]": 10,
+        "[\"ukraine_krieg\"]": 6,
+        "[\"wohnen_bund\"]": 10
+      },
+      "treffer": null
+    },
+    "ebene": {
+      "n": 100,
+      "beide": 100,
+      "einig": 96,
+      "anteil": 0.96,
+      "anteil_wilson95": [
+        0.9016292856411208,
+        0.9843366960084523
+      ],
+      "cohen_kappa": 0.9272991639403854,
+      "krippendorff_alpha_nominal": 0.927656093792602,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.927656093792602,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "bund": 48,
+        "land_eu": 5,
+        "lokal": 47,
+        "unklar": 0
+      },
+      "treffer": null
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 100 Dokumenten, nicht von Menschen",
+  "selbstgewichtend": false
+}

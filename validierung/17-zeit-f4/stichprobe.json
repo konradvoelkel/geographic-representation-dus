@@ -1,0 +1,56 @@
+{
+  "vorhaben": "17-zeit-f4",
+  "codebuch_version": "2026-11-23.1",
+  "profil": "duesseldorf, duesseldorf-2014, duesseldorf-2025",
+  "einheit": "document",
+  "uebernommen": "validierung/17-zeit/stichprobe.csv vom Mess-Agenten; schicht ist die Kategorie des Lexikons (Ausgabe des Verfahrens, nicht im Auftrag), Population je Kategorie aus dem Messdokument § 4",
+  "einheiten": 4071,
+  "groesse": 100,
+  "seed": "17",
+  "schicht": "kategorie",
+  "aufteilung": "zehn je Kategorie (Messdokument)",
+  "selbstgewichtend": false,
+  "schichten": {
+    "bundesverkehr": {
+      "grundgesamtheit": 199,
+      "stichprobe": 10
+    },
+    "cannabis": {
+      "grundgesamtheit": 49,
+      "stichprobe": 10
+    },
+    "corona": {
+      "grundgesamtheit": 1678,
+      "stichprobe": 10
+    },
+    "energiekrise": {
+      "grundgesamtheit": 56,
+      "stichprobe": 10
+    },
+    "gendern": {
+      "grundgesamtheit": 17,
+      "stichprobe": 10
+    },
+    "klima_energie": {
+      "grundgesamtheit": 133,
+      "stichprobe": 10
+    },
+    "migration_asyl": {
+      "grundgesamtheit": 1360,
+      "stichprobe": 10
+    },
+    "sozialstaat": {
+      "grundgesamtheit": 284,
+      "stichprobe": 10
+    },
+    "ukraine_krieg": {
+      "grundgesamtheit": 226,
+      "stichprobe": 10
+    },
+    "wohnen_bund": {
+      "grundgesamtheit": 69,
+      "stichprobe": 10
+    }
+  },
+  "gezogen": "2026-11-23"
+}

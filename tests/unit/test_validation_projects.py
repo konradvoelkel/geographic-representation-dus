@@ -161,3 +161,16 @@ def test_score_recomputes_the_agreement_of_project_15(
     for question, (agreed, alpha) in expected.items():
         assert questions[question]["einig"] == agreed, question
         assert round(questions[question]["krippendorff_alpha"], 3) == alpha, question
+
+
+def test_score_recomputes_the_agreement_of_project_17(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """docs/plans/17-zeit.md § 4.1: thema 96/100, α 0,957 mit der Menge als einem Wert; ebene
+    96/100, α 0,928."""
+    target = _copy(tmp_path, monkeypatch, "17-zeit-f4")
+    assert main(["validate", "score", "17-zeit-f4"]) == 0
+    questions = json.loads((target / "guete.json").read_text(encoding="utf-8"))["fragen"]
+    for question, alpha in (("thema", 0.957), ("ebene", 0.928)):
+        assert questions[question]["einig"] == 96, question
+        assert round(questions[question]["krippendorff_alpha"], 3) == alpha, question
