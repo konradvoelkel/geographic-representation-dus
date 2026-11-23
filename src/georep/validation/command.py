@@ -13,6 +13,7 @@ from pathlib import Path
 
 from georep.layout import Layout
 from georep.settings import Settings
+from georep.validation.merge import merge_project
 from georep.validation.paths import CODERS
 from georep.validation.sample import sample_project
 from georep.validation.tasks import task_project
@@ -61,6 +62,19 @@ def add_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None
         "--force", action="store_true", help="auch über begonnene Antworten schreiben"
     )
 
+    merge = actions.add_parser(
+        "merge",
+        help="Antworten von A und B zusammenführen: Auftrag der Schlichtung für die "
+        "Uneinigkeiten, danach labels.csv, README.md und guete.json",
+    )
+    merge.add_argument("project", metavar="vorhaben", help=PROJECT_HELP)
+    merge.add_argument(
+        "--model",
+        required=True,
+        help="Modell der Kodier- und Schlicht-Agenten, wie es im README steht (etwa claude-opus-5-5)",
+    )
+    merge.add_argument("--force", action="store_true", help="vorhandene Labels neu schreiben")
+
 
 def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
     """Einen Unterbefehl ausführen; Domänenfehler fängt ``cli.main``."""
@@ -88,5 +102,16 @@ def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
             force=args.force,
         )
         print(written.line())
+        return 0
+    if args.action == "merge":
+        merged = merge_project(
+            settings,
+            layout,
+            args.project,
+            model=args.model,
+            today=dt.date.today(),
+            force=args.force,
+        )
+        print("\n".join(merged.lines()))
         return 0
     return 2
