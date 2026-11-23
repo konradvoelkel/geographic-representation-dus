@@ -92,7 +92,7 @@ veröffentlicht sie über GitHub Pages unter
 
 | Befehl | Was er tut |
 |---|---|
-| `georep run [SCHRITT …] [--force] [--dry-run] [--online] [--models [--limit N]]` | führt die Schritte aus und überspringt, was aktuell ist; Netzschritte nur mit `--online`, Schritte mit lokalem Modell nur mit `--models` (`--limit` begrenzt dann die neuen Modellaufrufe je Schritt) |
+| `georep run [SCHRITT …] [--force] [--dry-run] [--online] [--models [--limit N]]` | führt die Schritte aus und überspringt, was aktuell ist; Netzschritte nur mit `--online`, Schritte mit lokalem Modell nur mit `--models` (`--limit` begrenzt dann die neuen Eingaben je Stapellauf; was offen bleibt, zeigt `georep status`); scheitert ein Modellschritt, endet der Lauf mit Exit 1 |
 | `georep fetch [SCHRITT …] [--force] [--dry-run] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `meetings`, `consultations`, `persons`, `pdfs`, `streets_osm`, `pois_wiki`, danach `shapes` und `texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Seiten je Liste, `--dry-run` zeigt nur den Plan |
 | `georep steps` | Schritte mit Eingaben und Ausgaben |
 | `georep status` | Settings, Pfade, Stores, Frische jedes Schritts mit Grund |
@@ -105,9 +105,9 @@ veröffentlicht sie über GitHub Pages unter
 | `georep export` | die Parquet-Ergebnisse als CSV daneben schreiben |
 | `georep regress [--exclude …] [--varianten]` | lineare Regression Trefferquote gegen Wahlbeteiligung; `--varianten` dieselbe Rechnung je Gewichtungsvariante aus `wahlbezirke_gewichtet.parquet` |
 | `georep regress --controls` | Tabelle 6: dieselbe Regression mit Kontrollvariablen, je Modell und Stichprobe |
-| `georep profile [SCHRITT …] [--top N] [--sort tottime]` | einen echten Schritt unter cProfile, `.prof` für snakeviz |
+| `georep profile [SCHRITT …] [--top N] [--sort tottime] [--models]` | einen echten Schritt unter cProfile, `.prof` für snakeviz; mit `--models` auch Schritte mit Modell |
 | `georep validate sample\|tasks\|merge\|score VORHABEN` | Validierung einer Messung mit zwei KI-Kodierern (Fundament F4, [docs/validierung.md](docs/validierung.md)): Stichprobe nach dem Codebuch `validierung/VORHABEN/codebuch.toml`, Kodierauftrag je Kodierer (`--coder A\|B`, lokal unter `validation.coding_root`), Zusammenführen mit Schlichtung (`--model`), Übereinstimmung und Güte eines Verfahrens (`--pred`) |
-| `georep ml status` | der lokale Modellserver (ollama): erreichbar, die Modelle aus `[ml]` mit Digest, was im Grafikspeicher liegt, der Modellcache je Modell; Exit 1, wenn etwas fehlt |
+| `georep ml status` | der lokale Modellserver (ollama, nur auf diesem Rechner): erreichbar, die Modelle aus `[ml]` mit Digest, was im Grafikspeicher liegt, der Modellcache je Modell (nur gelesen); Exit 1, wenn etwas fehlt |
 | `georep ml bench MODELL [--n 20] [--chars 8000] [--max-tokens 120]` | misst ein Modell an n Dokumenten des Korpus: Sekunden je Dokument, Token je Sekunde, Hochrechnung auf den Korpus |
 
 `--profile SLUG` wählt die Stadt (`georep profiles` listet sie; sonst gilt `GEOREP_PROFILE`, sonst

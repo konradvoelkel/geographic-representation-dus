@@ -229,15 +229,15 @@ coding_root = ""               # Kodierauftraege und Antworten der Agenten, je V
 min_alpha = 0.8                # Krippendorffs alpha zwischen den beiden Kodier-Agenten, das Stufe 3 verlangt (plan-vorverarbeitung-2026-11.md, § 2.6); darunter ist das Codebuch zu unscharf, und das Vorhaben geht zurueck in Stufe 1
 
 # --- Fundament F5: Modelle (docs/plan-vorverarbeitung-2026-11.md, § 7; docs/decisions.md, Modellnaht)
-[ml]                           # lokale Modelle ueber einen ollama-Server; Schritte mit Modell laufen nur mit `georep run --models`, sonst kommt ihr Ergebnis aus einem Paket
+[ml]                           # lokale Modelle ueber einen ollama-Server; Schritte mit Modell laufen nur mit `georep run --models`, sonst kommt ihr Ergebnis aus einem Paket. Nichts aus [ml] steht im Settings-Fingerprint: was ein Ergebnis bestimmt (Modell, Digest, Optionen, Fenster), steht als Kennung im Stamp des Modellschritts, dazu die offenen Eingaben eines Teillaufs
 base_url = "http://localhost:11434"  # der lokale Server (`ollama serve`). Kein externer Dienst: die Dokumente verlassen den Rechner nicht (Plan § 2.8); ein Host, der nicht localhost oder eine Loopback-Adresse ist, braucht allow_remote. Die Session des Backends liest keine Proxys aus der Umgebung
 allow_remote = false           # true schaltet einen Modellserver auf einem anderen Rechner frei; nur ausdruecklich und nur fuer Daten, die den Rechner verlassen duerfen
-timeout_s = 300.0              # je Anfrage; ein 27-B-Modell braucht beim ersten Aufruf rund 10 s zum Laden, eine Antwort mit 512 Token bei 13 Token/s rund 40 s. Laufzeit, nicht im Fingerprint
-retries = 2                    # Wiederholungen bei 429, 5xx und nicht erreichbarem Server, Pause backoff_s, dann das Doppelte; ein 4xx kommt sofort heraus. Laufzeit
+timeout_s = 300.0              # je Anfrage; ein 27-B-Modell braucht beim ersten Aufruf rund 10 s zum Laden, eine Antwort mit 512 Token bei 33 Token/s rund 16 s (gemessen 2026-11-23). Ein Lese-Timeout wird nicht wiederholt
+retries = 2                    # Wiederholungen bei 429, 5xx und abgelehnter Verbindung, wenn der Server schon einmal antwortete; Pause backoff_s, dann das Doppelte. Ein fehlender Server wird einmal ohne Wiederholung gefragt, ein Lese-Timeout und ein 4xx kommen sofort heraus
 backoff_s = 2.0
 keep_alive = "10m"             # so lange haelt ollama ein Modell nach dem letzten Aufruf im Grafikspeicher; Laufzeit
 batch_size = 32                # Texte je Einbettungsaufruf und je Transaktion im Modellcache. Laufzeit: ein anderer Stapel kann die letzten Bits einer Einbettung aendern, doch was im Cache liegt, wird nicht neu gerechnet
-limit = 0                      # hoechstens so viele neue Modellaufrufe je Schritt und Lauf; 0 = alle. `georep run --models --limit N` setzt es fuer einen Lauf und steht wie pdf_limit im Fingerprint, damit `georep status` den Schritt danach als offen zeigt
+limit = 0                      # hoechstens so viele neue Eingaben je Stapellauf, also je Aufruf von embed_texts oder generate_texts (ein Schritt mit zwei Stapellaeufen rechnet bis zu zweimal so viele); 0 = alle. `georep run --models --limit N` setzt es fuer einen Lauf; was offen bleibt, steht im Stamp des Schritts, und `georep status` zeigt ihn danach als offen
 
 [ml.embedding]                 # Vorhaben 18
 model = "nomic-embed-text-v2-moe"  # mehrsprachig, 475 M Parameter, F16, 958 MB; ohne Tag heisst es :latest
@@ -246,7 +246,7 @@ num_ctx = 512                  # Fenster in Token: das Modell liest hoechstens 5
 truncate = true                # false: ein Text ueber dem Fenster ist ein Fehler des Servers statt still abgeschnitten (der Stapellauf zaehlt ihn als gescheitert)
 
 [ml.generation]                # Vorhaben 19 und 20; ein Vorhaben darf in seinem Block ein anderes Modell nennen, die Optionen kommen von hier
-model = "qwen3.6:27b"          # 27,8 B Parameter, Q4_K_M, 17,4 GB; passt mit dem Einbettungsmodell zusammen in 24 GB
+model = "qwen3.6:27b"          # 27,8 B Parameter, Q4_K_M, 17,4 GB auf der Platte, mit num_ctx = 8192 aber 22,9 GB Grafikspeicher (/api/ps, 2026-11-23): das Einbettungsmodell passt NICHT daneben in 24 GB, ollama laedt um. Einbettung und qwen nacheinander, nicht zugleich
 temperature = 0.0              # mit festem seed je Rechner reproduzierbar
 seed = 0
 num_ctx = 8192                 # Fenster in Token (Prompt und Antwort); qwen3.6 koennte 262 144, aber der Speicher je Token waechst mit

@@ -2608,25 +2608,41 @@ Stapel von Hunderten Dokumenten kein Gewinn, den ollama nicht auch hat) und die 
 Schnittstelle von ollama (`/v1/…`; sie nennt weder Digest noch Fähigkeiten, und die Kennung im
 Stamp braucht beides).
 
-**Wie ein Schritt das Modell bekannt gibt.** `Step` bekommt **ein** Feld `models`: die Kennung
-seiner Modelle als Funktion (`model_stamp`: Name, Digest, Prompt-Version, bei Generatoren der Hash
-der Optionen). Ist es gesetzt, läuft der Schritt nur mit `georep run --models`, wie ein
-Netzschritt nur mit `--online`, und ohne Schalter kommt sein Ergebnis aus einem Paket. Ein Feld
-statt zweier (`models: bool` und eine Kennung daneben), weil zwei Felder zwei falsche Zustände
-zulassen: ein Modellschritt ohne Kennung (ein neues Modell machte ihn nicht veraltet) und eine
-Kennung ohne Schalter (der Server würde ohne `--models` gefragt). Eine Funktion statt eines festen
-Werts, weil den Digest nur der Server kennt: `build_steps`, `georep steps` und jeder Lauf ohne
-Schalter fragen ihn nie. Die Kennung steht lesbar unter `"models"` im Stamp, nicht als Hash in
-`extra`, damit ein Mensch sieht, mit welchem Modell eine Datei entstand; Stamps anderer Schritte
-bekommen den Schlüssel nicht und bleiben gültig. Der Diff in `pipeline.py` ist ein Feld, eine
-Bedingung in `run_step` und ein Zusatz in `expected_stamp` und `stamp_mismatch`.
+**Wie ein Schritt das Modell bekannt gibt.** `Step` bekommt **ein** Feld `models`: das Modell im
+Schritt als `ModelUse` (`EmbeddingUse`, `GenerationUse`), mit `identity` (Name, Digest,
+Prompt-Version, Schlüssel der Optionen, bei Einbettungen der des Fensters `num_ctx` und
+`truncate`) und `stamp` (dazu `limit`, `open`, `failed` des letzten Laufs). Ist es gesetzt, läuft
+der Schritt nur mit `georep run --models`, wie ein Netzschritt nur mit `--online`, und ohne
+Schalter kommt sein Ergebnis aus einem Paket. Ein Feld statt zweier (`models: bool` und eine
+Kennung daneben), weil zwei Felder zwei falsche Zustände zulassen: ein Modellschritt ohne Kennung
+(ein neues Modell machte ihn nicht veraltet) und eine Kennung ohne Schalter (der Server würde ohne
+`--models` gefragt). Ein Objekt statt eines festen Werts, weil den Digest nur der Server kennt
+(`build_steps`, `georep steps` und jeder Lauf ohne Schalter fragen ihn nie) und weil erst der Lauf
+weiß, was offen blieb. Und dasselbe Objekt geht an `embed_texts` oder `generate_texts`: es bildet
+auch die Prompt-Version im Cache-Schlüssel, so können Kennung im Stamp und Schlüssel im Cache nicht
+auseinanderlaufen. Die Kennung steht lesbar unter `"models"` im Stamp, nicht als Hash in `extra`,
+damit ein Mensch sieht, mit welchem Modell eine Datei entstand; Stamps anderer Schritte bekommen
+den Schlüssel nicht und bleiben gültig. Der Diff in `pipeline.py` ist ein Feld, die Bedingung und
+die Fehlerbehandlung in `run_step` und ein Zusatz in `expected_stamp` und `stamp_mismatch`.
 
-Im Settings-Fingerprint stehen die Modellnamen, die Optionen und `ml.limit` (wie `pdf_limit`: ein
-begrenzter Lauf hat ein anderes Ergebnis, und `georep status` soll das danach zeigen); nicht darin
-stehen `base_url` (ein Ort) und Timeout, Wiederholungen, `keep_alive` und `batch_size` (Laufzeit:
-ein anderer Stapel kann die letzten Bits einer Einbettung ändern, doch was im Cache liegt, wird
-nicht neu gerechnet). `--limit` ohne `--models` ist ein Bedienfehler, denn es änderte nur den
-Fingerprint.
+**Nichts aus `[ml]` steht im Settings-Fingerprint.** Was ein Ergebnis bestimmt (Modell, Digest,
+Optionen, Fenster), steht in der Kennung im Stamp des Modellschritts; ein Teillauf (`--limit`, oder
+Eingaben, die das Modell abwies) steht dort als `open` und macht den Schritt nicht aktuell
+(„offen: n Eingaben"). Der Rest ist Ort und Laufzeit. Im globalen Fingerprint ließ jede Änderung an
+`[ml]`, auch ein `--limit`, alle Schritte neu laufen, auch die ohne Modell, und der Merge von F5
+hätte die ganze Kette einmal neu gerechnet; so ändert F5 den Fingerprint nicht. `--limit` ohne
+`--models` und ein negatives `--limit` sind Bedienfehler.
+
+**Was das Review vom 2026-11-23 geändert hat.** Elf Befunde mit Proben des Reviewers, je ein
+Commit: das Fenster des Einbetters in Schlüssel und Kennung (vorher kam ein Vektor mit 64 Token aus
+dem Cache eines mit 512); abgeschnittene Antworten markiert statt als vollständig gecacht (`Reply`,
+Spalte `truncated`, Schema 2); `[ml]` aus dem Fingerprint und Teilläufe als offen; ein Lese-Timeout
+nicht wiederholt (`ModelUnreachableError`); ohne Server eine Probe je Prozess, ein Schritt
+„fehlgeschlagen" statt eines abgebrochenen Laufs, „unbekannt" in `status`, `--dry-run` plant
+weiter; `SQLITE_BUSY` beim gleichzeitigen ersten Öffnen wiederholt; ein abgewiesener Text scheitert
+allein, und der Lauf geht weiter (zehn in Folge brechen ab); `ml status` liest den Cache nur;
+`--limit` geprüft; Doku; und der Server muss auf diesem Rechner laufen (`is_loopback_url`, sonst
+`ml.allow_remote = true`), die Session liest keine Proxys aus der Umgebung.
 
 **Cache: SQLite je Modell, nicht Parquet-Scherben.** Ein Eintrag ist (Digest, Prompt-Version,
 SHA-256 der Eingabe) → Wert, und die Eingabe ist, was das Modell sieht. Gemessen am 2026-11-23 auf
