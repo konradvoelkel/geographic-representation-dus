@@ -133,3 +133,13 @@ Fehler noch: eine Probe mit `--max-pages` auf einem leeren Store hinterlässt ei
 der nächste Lauf mit `modified_since` nur noch Geändertes holt, statt die Liste zu Ende zu lesen.
 Zu tun: denselben Weg wie in F6 (eine Probe ist der Anfang des Abrufs, der nächste Lauf setzt
 fort) für `papers`, mit rotem Test.
+
+## 9. Urheber: Mitantragsteller gehen verloren, das BSW fehlt
+
+Aufgenommen am 2026-11-23 aus der Messung von Vorhaben 15 (`docs/plans/15-funktion.md`, Frage 9.5).
+In `analysis/parties.py` gewinnt die erste Quelle (Dokumentart, Titel, Textkopf): bei 281 Dokumenten
+gehen Mitantragsteller verloren (etwa „Antrag CDU/Grüne" mit vier Fraktionen im Titel), bei 49
+zählt eine Partei mit, die nur im Gegenstand vorkommt, und das BSW fehlt in `[originators]` des
+Profils, sodass 12 Anfragen als Person ohne Partei geführt werden. Zu tun: Quellen vereinigen statt
+der ersten zu folgen, Parteien im Gegenstand ausschließen, das BSW ergänzen; Wirkung auf die
+Parteikarten der Seite mit A/B-Bau messen, weil sich Zahlen ändern.
