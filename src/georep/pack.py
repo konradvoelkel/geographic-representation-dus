@@ -40,6 +40,7 @@ from georep.errors import GeorepError
 from georep.io import atomic_path, write_parquet, write_text
 from georep.layout import Layout
 from georep.prep.bodies import CONSULTATION
+from georep.prep.raw_texts import RAW_SUFFIX
 from georep.settings import Settings
 from georep.stores import RawTextStore, TextStore
 
@@ -458,6 +459,37 @@ def pack_texts(
 RAW_TEXTS_NAME = "cache/text/rohtexte.parquet"
 
 
+def check_raw_bridge(layout: Layout, store: RawTextStore) -> None:
+    """Jeder Rohtext gehört zu einem Text des Textstores: gleicher PDF-Hash, gleicher Extraktor.
+
+    Review F1, N2. Nur dann plättet der Rohtext zum Text, den die Suche liest, und das Paket hält,
+    was die Eigenschaft von Fundament F1 verspricht. Ein Rohtext, dessen PDF sich seit dem Text
+    geändert hat (anderer Hash), oder der mit einem anderen pypdf gelesen ist, bricht ab -- mit
+    Zahl und Beispielen; der Handgriff ist ein neuer Lauf von ``texts`` und ``raw_texts``.
+    """
+    texts = TextStore(layout.texts).rows
+    problems: dict[str, list[str]] = {
+        "keinen Text": [],
+        "einen anderen PDF-Hash": [],
+        "einen anderen Extraktor": [],
+    }
+    for name, row in sorted(store.rows.items()):
+        text = texts.get(name)
+        if text is None:
+            problems["keinen Text"].append(name)
+        elif text["pdf_sha256"] != row["pdf_sha256"]:
+            problems["einen anderen PDF-Hash"].append(name)
+        elif f"{text['extractor']}{RAW_SUFFIX}" != row["extractor"]:
+            problems["einen anderen Extraktor"].append(name)
+    found = [(what, names) for what, names in problems.items() if names]
+    if found:
+        said = "; ".join(
+            f"{len(names)} haben im Textstore {what} ({', '.join(names[:EXAMPLES])})"
+            for what, names in found
+        )
+        raise PackError(f"{layout.raw_texts}: Rohtexte ohne Brücke zum Textstore: {said}")
+
+
 def pack_raw_texts(
     layout: Layout,
     settings: Settings,
@@ -473,9 +505,11 @@ def pack_raw_texts(
     ein Paper dieser Periode ist und dass es überhaupt einen Rohtext gibt -- ohne PDFs schreibt
     der Schritt ``raw_texts`` einen leeren Store, und der wäre kein Paket, sondern ein Irrtum.
     Ein Name ohne Rohtext ist dagegen erlaubt (ein defektes PDF); die Zahl steht im README.
+    Dazu die Brücke zum Textstore (``check_raw_bridge``, Review F1, N2).
     """
     claim_target(layout, target)
-    missing = [str(path) for path in (layout.papers, layout.raw_texts) if not path.is_file()]
+    paths = (layout.papers, layout.texts, layout.raw_texts)
+    missing = [str(path) for path in paths if not path.is_file()]
     if missing:
         raise PackError(f"{missing} fehlen; lief `georep run raw_texts` für dieses Profil?")
     store = RawTextStore(layout.raw_texts)
@@ -491,6 +525,7 @@ def pack_raw_texts(
             f"{layout.raw_texts}: {len(orphans)} Rohtexte haben kein Paper in "
             f"{layout.papers.name} ({', '.join(orphans[:EXAMPLES])})"
         )
+    check_raw_bridge(layout, store)
     destination = target / RAW_TEXTS_NAME
     skipped: list[str] = []
     if destination.exists() and not force:

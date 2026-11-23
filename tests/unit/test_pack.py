@@ -366,6 +366,12 @@ def _raw_run(tmp_path: Path) -> Layout:
     store = RawTextStore(layout.raw_texts)
     store.put("a.pdf", "Kopf\nBetrifft: A\fSeite 2", pages=2, extractor="x+roh", pdf_sha256="0")
     store.save()
+    # Der Textstore desselben Laufs: dieselbe Datei, derselbe PDF-Hash, der Extraktor ohne Zusatz;
+    # b.pdf hat dort den Text der Arbeit (ohne Hash), wie 00403713.pdf in der Hauptperiode
+    texts = TextStore(layout.texts)
+    texts.put("a.pdf", ": a", TextMeta(extractor="x", pdf_sha256="0", source="pdf"))
+    texts.put("b.pdf", "arbeit", TextMeta(extractor="Arbeit", source="reference"))
+    texts.save()
     return layout
 
 
@@ -425,3 +431,36 @@ def test_pack_raw_texts_says_when_the_store_is_missing(
     layout = Layout(tmp_path / "leer", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
     with pytest.raises(PackError, match="fehlen; lief"):
         pack_raw_texts(layout, default_settings, tmp_path / "rohtexte")
+
+
+@pytest.mark.parametrize(
+    ("meta", "expected"),
+    [
+        (
+            TextMeta(extractor="x", pdf_sha256="1", source="pdf"),
+            "1 haben im Textstore einen anderen PDF-Hash",
+        ),
+        (
+            TextMeta(extractor="y", pdf_sha256="0", source="pdf"),
+            "1 haben im Textstore einen anderen Extraktor",
+        ),
+        (None, "1 haben im Textstore keinen Text"),
+    ],
+)
+def test_pack_raw_texts_checks_the_bridge_to_the_text_store(
+    tmp_path: Path, default_settings: Settings, meta: TextMeta | None, expected: str
+) -> None:
+    """Review F1, N2: ein Rohtext gehört zu dem Text, den die Suche liest.
+
+    Gleicher PDF-Hash je Name, und der Extraktor ist der des Textstores mit ``+roh``; sonst
+    plättet der Rohtext nicht zum Text, und das Paket behauptete eine Brücke, die es nicht gibt.
+    """
+    layout = _raw_run(tmp_path)
+    texts = TextStore(layout.texts)
+    texts.rows.pop("a.pdf")
+    if meta is not None:
+        texts.put("a.pdf", ": a", meta)
+    texts.save()
+    with pytest.raises(PackError, match=expected):
+        pack_raw_texts(layout, default_settings, tmp_path / "rohtexte")
+    assert not (tmp_path / "rohtexte").exists()
