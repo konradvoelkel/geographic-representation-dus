@@ -11,7 +11,7 @@ from georep.cli import main
 from georep.layout import Layout
 from georep.pipeline import build_steps
 from georep.report.tables import csv_plan
-from georep.settings import load_settings
+from georep.settings import Settings, load_settings
 
 
 @pytest.fixture
@@ -112,6 +112,23 @@ def test_fetch_plans_network_steps_and_texts(
     assert out.rstrip().endswith("2 geplant") and "Netz aus" not in out
 
 
+def test_fetch_takes_the_offline_steps_that_need_the_pdfs(default_settings: Settings) -> None:
+    """Review F1, N5: wie ``texts`` liest ``raw_texts`` die PDFs, die ``fetch`` gerade geholt hat.
+
+    Ohne ihn im Standard von ``fetch`` liegen neue PDFs bis zum nächsten ``run`` ohne Rohtext da;
+    der Monitoring-Lauf der laufenden Periode ruft ``fetch`` und dann ``run``, ein Abruf von Hand
+    oft nur ``fetch``.
+    """
+    from georep.cli import FETCH_OFFLINE_STEPS
+    from georep.layout import Layout
+    from georep.pipeline import build_steps
+
+    layout = Layout(Path("data"), Path("cache"), Path("reference"), "duesseldorf")
+    offline = {s.name for s in build_steps(default_settings, layout) if not s.network}
+    assert FETCH_OFFLINE_STEPS == ("shapes", "texts", "raw_texts")
+    assert set(FETCH_OFFLINE_STEPS) <= offline
+
+
 def test_steps_output_is_stable(
     project: Path, capsys: pytest.CaptureFixture[str], snapshot: SnapshotAssertion
 ) -> None:
@@ -124,7 +141,7 @@ def test_fetch_with_limit_runs_only_the_named_step(
 ) -> None:
     import requests
 
-    from georep.settings import Settings, load_settings
+    from georep.settings import load_settings
     from tests.fakes import FakeSession, response
 
     src = load_settings(cwd=project).sources
@@ -236,7 +253,7 @@ def test_fetch_max_pages_is_the_originator_probe(
     gesehenen Paper ein Urheberfeld tragen; am 2026-10-09 war das keines."""
     import requests
 
-    from georep.settings import Settings, load_settings
+    from georep.settings import load_settings
     from tests.fakes import FakeSession, response
 
     src = load_settings(cwd=project).sources

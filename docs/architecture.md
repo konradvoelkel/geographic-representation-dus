@@ -62,7 +62,7 @@ Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps
 (nachgezählt am 2026-10-13 aus `build_steps`: siebenundzwanzig für Düsseldorf, achtundzwanzig mit
 Vergleich, zweiundzwanzig im Periodenprofil 2014 bis 2020, einundzwanzig in der laufenden Periode,
 zweiundzwanzig für Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
-`georep fetch`, Schritte mit lokalem Modell (`Step.models`, Fundament F5) nur mit `--models`; `georep fetch` führt `shapes` und `texts` mit, weil die Netzschritte die Flächen
+`georep fetch`, Schritte mit lokalem Modell (`Step.models`, Fundament F5) nur mit `--models`; `georep fetch` führt `shapes`, `texts` und `raw_texts` mit, weil die Netzschritte die Flächen
 brauchen und die Texte sonst im Cache liegen blieben. Mit
 `topics.k = 0` fehlt der Schritt `topics`, und `weights` rechnet ohne Themenvarianten; `bodies` steht
 vor `topics`, weil die Saat der Themen die Gremien je Dokument liest (Punkt 45). Den Schritt

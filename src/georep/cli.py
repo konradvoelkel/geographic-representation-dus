@@ -36,6 +36,12 @@ from georep.stores import PaperStore, TextStore
 from georep.validation.command import add_parser as add_validate_parser
 from georep.validation.command import run as run_validate
 
+# `fetch` ohne Namen heißt: alle Netzschritte, dazu die Offline-Schritte, ohne die sie nicht laufen
+# (`shapes` liefert die Flächen für streets_osm und pois_wiki) oder die die gerade geholten PDFs
+# lesen (`texts`, und seit Fundament F1 `raw_texts`, Review N5): ihr Ergebnis kann ohne die PDFs
+# im Cache niemand nachholen.
+FETCH_OFFLINE_STEPS = ("shapes", "texts", "raw_texts")
+
 
 def _setup_logging(level: str) -> None:
     logger.remove()
@@ -88,10 +94,10 @@ def build_parser() -> argparse.ArgumentParser:
     fetch = sub.add_parser(
         "fetch",
         help="Netzschritte ausführen (opendata, papers, organizations, meetings, consultations, "
-        "persons, pdfs, streets_osm, pois_wiki), dazu shapes und texts",
+        "persons, pdfs, streets_osm, pois_wiki), dazu shapes, texts und raw_texts",
     )
     fetch.add_argument(
-        "steps", nargs="*", help="Namen (Standard: alle Netzschritte, shapes und texts)"
+        "steps", nargs="*", help="Namen (Standard: alle Netzschritte, shapes, texts und raw_texts)"
     )
     fetch.add_argument("--force", action="store_true", help="auch aktuelle Schritte ausführen")
     # Fundament F6: der Plan eines Abrufs, ohne eine Anfrage; wie `run --dry-run --online`
@@ -247,11 +253,8 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
             update={"ml": settings.ml.model_copy(update={"retry_rejected": True})}
         )
     steps = build_steps(settings, layout)
-    # `fetch` ohne Namen heißt: alle Netzschritte, dazu die beiden Offline-Schritte, ohne die sie
-    # nicht laufen (`shapes` liefert die Flächen für streets_osm und pois_wiki) oder deren
-    # Ergebnis niemand ohne Netz nachholen kann (`texts` braucht die PDFs im Cache).
     default_names = (
-        [s.name for s in steps if s.network or s.name in ("shapes", "texts")] if fetching else None
+        [s.name for s in steps if s.network or s.name in FETCH_OFFLINE_STEPS] if fetching else None
     )
     # Je Schritt eine Zeile, sobald er fertig ist: bricht ein späterer Schritt mit einem
     # Domänenfehler ab, stehen die Zeilen davor schon da (F5, Review 2026-11-23, Befund 5).
