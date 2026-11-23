@@ -1,0 +1,66 @@
+{
+  "vorhaben": "20-kurzfassungen",
+  "codebuch_version": "1",
+  "profil": "duesseldorf",
+  "einheit": "document",
+  "grundgesamtheit": "validierung/20-kurzfassungen/stichprobe200.csv (Spalten id, art)",
+  "grundgesamtheit_sha256": "ff51b4ea746fc0f4cb66ed02ca7aae9b738aada2c0cc9f80aafba691b82e8795",
+  "einheiten": 200,
+  "ohne_text": 0,
+  "groesse": 50,
+  "seed": 2026112321,
+  "schicht": "art",
+  "aufteilung": "proportional",
+  "selbstgewichtend": false,
+  "schichten": {
+    "A+F Beschluss": {
+      "grundgesamtheit": 3,
+      "stichprobe": 1
+    },
+    "Anfrage": {
+      "grundgesamtheit": 41,
+      "stichprobe": 10
+    },
+    "Antrag": {
+      "grundgesamtheit": 49,
+      "stichprobe": 12
+    },
+    "Bedarfsbeschluss": {
+      "grundgesamtheit": 2,
+      "stichprobe": 1
+    },
+    "Berichtsvorlage": {
+      "grundgesamtheit": 2,
+      "stichprobe": 1
+    },
+    "Beschlussvorlage": {
+      "grundgesamtheit": 40,
+      "stichprobe": 10
+    },
+    "Beschlussvorlage RPA": {
+      "grundgesamtheit": 3,
+      "stichprobe": 1
+    },
+    "Bezirksvertretung Beschlussvorlage": {
+      "grundgesamtheit": 15,
+      "stichprobe": 3
+    },
+    "Bezirksvertretung Informationsvorlage": {
+      "grundgesamtheit": 26,
+      "stichprobe": 6
+    },
+    "Eingabe": {
+      "grundgesamtheit": 2,
+      "stichprobe": 1
+    },
+    "Haushaltsantrag": {
+      "grundgesamtheit": 5,
+      "stichprobe": 1
+    },
+    "Informationsvorlage": {
+      "grundgesamtheit": 12,
+      "stichprobe": 3
+    }
+  },
+  "gezogen": "2026-11-23"
+}
