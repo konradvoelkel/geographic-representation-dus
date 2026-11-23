@@ -52,7 +52,7 @@ def test(session: nox.Session) -> None:
         "-n",
         "auto",
         "-m",
-        "not slow and not network and not bench",
+        "not slow and not network and not bench and not models",
         "--cov=georep",
         "--cov-report=term-missing:skip-covered",
         "--cov-fail-under=90",
@@ -385,7 +385,7 @@ def mutate(session: nox.Session) -> None:
             "pytest",
             *tests,
             "-m",
-            "not slow and not network and not bench",
+            "not slow and not network and not bench and not models",
             "-p",
             "no:cacheprovider",
             "--gremlins",
@@ -418,7 +418,7 @@ def alone(session: nox.Session) -> None:
     in 228 s.
     Keine Abhängigkeit gefunden.
     """
-    marker = "not slow and not network and not bench"
+    marker = "not slow and not network and not bench and not models"
     files = sorted(
         str(path)
         for folder in ("tests/unit", "tests/golden", "tests/property")
