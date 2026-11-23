@@ -318,6 +318,8 @@ def run_step(
             "Fehlt der Korpus oder die Rohdaten, hilft `georep bootstrap`."
         )
     started = time.perf_counter()
+    if step.models is not None:
+        step.models.reset()  # F5: die offenen Eingaben gelten je Lauf und summieren sich in ihm
     try:
         summary = step.run()
     except ModelError as error:

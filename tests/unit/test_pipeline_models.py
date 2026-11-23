@@ -12,9 +12,13 @@ from pydantic import ValidationError
 from georep import cli
 from georep.errors import ModelError, ModelUnreachableError
 from georep.layout import Layout
+from georep.ml.base import EmbeddingUse
+from georep.ml.batch import embed_texts
+from georep.ml.cache import ModelCache
 from georep.pipeline import Step, freshness, run_pipeline, run_step
 from georep.profiling import profile_step
 from georep.settings import Settings, load_settings
+from tests.fakes import FakeEmbedder
 
 IDENTITY = {"model": "fake-embed:latest", "digest": "e" * 64, "prompt": "dok-1"}
 
@@ -35,6 +39,9 @@ class Use:
     def identity(self) -> dict[str, str]:
         self.asked.append(1)
         return self._identity()
+
+    def reset(self) -> None:
+        """Wie ``ModelUse``: ``run_step`` setzt vor jedem Lauf zurück; die Tabelle setzt ``run``."""
 
     def stamp(self) -> dict[str, object]:
         return {
@@ -304,3 +311,30 @@ def test_cli_retry_rejected_sets_the_switch_for_the_run(
     _only_model_steps(monkeypatch, lambda: dict(IDENTITY), seen)
     assert cli.main(["run", "--models", "--retry-rejected"]) == 0
     assert seen[-1].ml.retry_rejected and not load_settings(cwd=project).ml.retry_rejected
+
+
+def test_a_step_with_two_batch_runs_stays_open_until_both_are_done(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """Review F5, dritte Runde, N3 (Probe B7x): nach dem zweiten Stapellauf hieß es „aktuell"."""
+    embedder = FakeEmbedder(dimension=4)
+    use = EmbeddingUse(embedder, "dok-1")
+    out = tmp_path / "out.txt"
+    limit = [2]
+
+    def run() -> str:
+        with ModelCache(tmp_path / "ml", use.name) as cache:
+            embed_texts(use, cache, [f"x{i}" for i in range(5)], limit=limit[0])
+            embed_texts(use, cache, ["y0"], limit=limit[0])
+        out.write_text("x", encoding="utf-8")
+        return "2 Stapelläufe"
+
+    step = Step("modell", (), (out,), run, models=use)
+    run_step(step, settings, models=True)
+    assert freshness(step, settings) == (False, "offen: 3 Eingaben")
+    # Der nächste Lauf zählt von vorn, nicht auf die 3 von eben drauf.
+    run_step(step, settings, models=True)
+    assert freshness(step, settings) == (False, "offen: 1 Eingaben")
+    limit[0] = 0
+    run_step(step, settings, models=True)
+    assert freshness(step, settings) == (True, "aktuell")

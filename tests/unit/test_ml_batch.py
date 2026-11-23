@@ -150,6 +150,7 @@ def test_embed_texts_with_limit_marks_what_is_missing_and_tells_the_use(tmp_path
     with ModelCache(tmp_path, embedder.name) as cache:
         partial = embed_texts(use, cache, ["a", "b", "c"], limit=2)
         assert (use.open, use.limit) == (1, 2)
+        use.reset()  # wie run_step vor dem nächsten Lauf des Schritts
         embed_texts(use, cache, ["a", "b", "c"])
     assert partial.present.tolist() == [True, True, False]
     assert not partial.vectors[2].any() and partial.report.left == 1
@@ -313,6 +314,7 @@ def test_known_rejections_are_skipped_and_do_not_block_later_runs(tmp_path: Path
     with ModelCache(tmp_path, embedder.name) as cache:
         first = embed_texts(use, cache, texts, batch_size=4)
         calls = len(embedder.calls)
+        use.reset()  # wie run_step vor dem nächsten Lauf des Schritts
         second = embed_texts(use, cache, texts, batch_size=4)
     assert (first.report.computed, len(first.report.rejected), first.report.failed) == (12, 12, 0)
     assert first.report.rejected[0] == (1, "400 input rejected")

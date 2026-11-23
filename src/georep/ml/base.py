@@ -168,12 +168,15 @@ class ModelStamp(Protocol):
 
     ``identity`` ist, was den Schritt veraltet macht, wenn es sich ändert (Modell, Digest,
     Prompt-Version, Optionen); ``stamp`` ist ``identity`` plus das Ergebnis des letzten Laufs
-    (``limit``, ``open``). Beide fragen den Server erst beim Aufruf.
+    (``limit``, ``open``, ``failed``, ``rejected``). Beide fragen den Server erst beim Aufruf.
+    ``reset`` setzt das Ergebnis vor einem Lauf auf null; die Stapelläufe summieren hinein.
     """
 
     def identity(self) -> dict[str, str]: ...
 
     def stamp(self) -> dict[str, object]: ...
+
+    def reset(self) -> None: ...
 
 
 class ModelUse:
@@ -217,10 +220,16 @@ class ModelUse:
         }
 
     def record(self, *, open: int, limit: int, failed: int = 0, rejected: int = 0) -> None:
-        self.open = open
-        self.failed = failed
-        self.rejected = rejected
-        self.limit = limit
+        """Ein Stapellauf trägt ein. Mehrere im selben Schritt summieren sich (Review F5, N3);
+        ``limit`` ist das größte, unter dem einer lief."""
+        self.open += open
+        self.failed += failed
+        self.rejected += rejected
+        self.limit = max(self.limit, limit)
+
+    def reset(self) -> None:
+        """Vor jedem Lauf des Schritts (``run_step``): die Zahlen gelten je Lauf, nicht je Prozess."""
+        self.open = self.failed = self.rejected = self.limit = 0
 
 
 class EmbeddingUse(ModelUse):

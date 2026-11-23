@@ -56,3 +56,13 @@ def test_the_identity_asks_the_server_only_when_called() -> None:
     use.identity()
     use.identity()
     assert server.paths == ["/api/version", "/api/tags"]
+
+
+def test_two_batch_runs_in_one_step_add_up_and_a_reset_starts_over() -> None:
+    """Review F5, dritte Runde, N3: der zweite Stapellauf überschrieb, was der erste offen ließ."""
+    use = EmbeddingUse(FakeEmbedder(), "dok-1")
+    use.record(open=3, failed=1, rejected=2, limit=2)
+    use.record(open=0, failed=0, rejected=1, limit=5)
+    assert (use.open, use.failed, use.rejected, use.limit) == (3, 1, 3, 5)
+    use.reset()
+    assert (use.open, use.failed, use.rejected, use.limit) == (0, 0, 0, 0)
