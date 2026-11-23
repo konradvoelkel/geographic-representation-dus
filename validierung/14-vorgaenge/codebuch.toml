@@ -1,0 +1,79 @@
+# Codebuch Vorhaben 14 „Vorgänge", Stufe 1 (2026-11-23). Vorläufiges Format: F4 baut den Rahmen
+# (`georep validate`) parallel; wenn er steht, wird dieses Codebuch in sein Format übertragen, die
+# Fragen bleiben. Messdokument: docs/plans/14-vorgaenge.md, § 4. Stichprobe: stichprobe.csv (nur
+# IDs), Kodieraufgaben mit Ausschnitten lokal unter messdaten/kodierung/14-vorgaenge/aufgaben.jsonl.
+
+[meta]
+vorhaben = "14-vorgaenge"
+version = "2026-11-23.1"
+einheit = """Eine Kante zwischen zwei Drucksachen derselben Stadt: B (die spätere, nennende) nennt A \
+(die frühere, genannte) mit ihrer Drucksachennummer im Titel, im Text oder im Namen einer Anlage, \
+oder B ist ein Nachtrag zu A (dieselbe Nummer mit Zusatz wie /1 oder -1)."""
+stichprobe = "150 Kanten, geschichtet nach Kantentyp, Stadt und Periodengrenze, Seed 14 (stichprobe.csv)"
+kodierer = """Zwei unabhängige Kodier-Agenten, die einander nicht sehen, und ein Schlicht-Agent nur für \
+die Uneinigkeiten (plan-vorverarbeitung-2026-11.md, § 2.6 und F4). Kein menschlicher Goldstandard."""
+material = """Je Dokument: Drucksachennummer, Titel, Dokumentart, Datum, Gremium, Namen der Anlagen und \
+der Textanfang (bis 1 500 Zeichen; der Textstore ist kleingeschrieben und ohne Zeilenumbrüche). Dazu \
+die Fundstelle in B: 300 Zeichen links und rechts der genannten Nummer, mit Start und Ende des \
+Treffers im Ausschnitt. Bei Nachträgen ohne Nennung fehlt die Fundstelle."""
+nicht_gezeigt = "Der Kantentyp, den das Verfahren vergibt (F4: ohne die Ausgabe des zu prüfenden Verfahrens)."
+
+[[fragen]]
+id = "nummer_gemeint"
+frage = "Meint die Fundstelle in B die Drucksache A?"
+optionen = ["ja", "nein", "keine_fundstelle"]
+anleitung = """ja: an der Fundstelle steht die Nummer von A als Verweis auf eine Drucksache (Vorlage, \
+Antrag, Anfrage, Beschluss), auch in anderer Schreibweise (ohne führende Nullen, mit Leerzeichen, \
+an ein Wort geklebt). nein: die Zeichenfolge ist etwas anderes, das nur so aussieht — ein Datum \
+(„01/12/2014"), eine Bebauungsplan- oder Haushaltsnummer, eine Aktenzahl außerhalb des \
+Ratsinformationssystems — oder sie meint eine andere Drucksache mit ähnlicher Nummer. \
+keine_fundstelle: die Aufgabe hat keinen Ausschnitt (Nachtrag über die Nummer); dann nur die \
+beiden anderen Fragen."""
+
+[[fragen]]
+id = "selbe_sache"
+frage = "Gehören A und B zur selben Sache — würde jemand, der die Akte von A führt, B darin erwarten?"
+optionen = ["ja", "nein", "unklar"]
+anleitung = """ja: B antwortet auf A, fragt zu A nach, setzt A um, berichtet über A, ändert, ergänzt \
+oder ersetzt A, oder führt dieselbe Maßnahme einen Schritt weiter (etwa vom Bedarfs- zum \
+Ausführungsbeschluss desselben Bauvorhabens). nein: B nennt A nur am Rand — als eine von vielen \
+Rechtsgrundlagen oder Fundstellen (Haushaltssatzung, Zuständigkeitsordnung, ein allgemeiner \
+Grundsatzbeschluss), in einer Liste erledigter Vorgänge, oder die Nummer meint A gar nicht \
+(Frage nummer_gemeint = nein). unklar: der Ausschnitt reicht für keine der beiden Antworten; \
+nicht raten. Maßstab ist die Sache, nicht das Gremium: dieselbe Sache kann in zwei Gremien \
+laufen."""
+
+[[fragen]]
+id = "beziehung"
+frage = "Welche Rolle hat B gegenüber A? Genau eine Option, die engste, die passt."
+optionen = ["antwort", "nachfrage", "umsetzung", "aenderung", "fortsetzung", "bezug", "kein_bezug", "unklar"]
+anleitung = """Die Rolle beschreibt B aus der Sicht von A. Bei mehreren passenden die erste der \
+Liste. Fragen und Antworten der Verwaltung erkennt man an Formeln wie „die Verwaltung beantwortet \
+die Anfrage wie folgt", „zu Frage 1", „Beantwortung der Anfrage"; eine Nachfrage an „Nachfrage zur \
+Antwort", „Rückfrage"."""
+
+[fragen.definitionen]
+antwort = "A ist eine Anfrage, B beantwortet sie ganz oder teilweise (auch eine Zwischennachricht)."
+nachfrage = "A ist eine Anfrage oder deren Antwort, B ist eine weitere Anfrage dazu (Nachfrage, Rückfrage, Folgeanfrage)."
+umsetzung = "A ist ein Antrag oder Beschluss, B berichtet über seine Umsetzung, Prüfung oder Erledigung oder legt ihn zur Entscheidung vor."
+aenderung = "B ändert, ergänzt oder ersetzt A: Änderungs- oder Ergänzungsantrag zu einer Vorlage, Nachtrag, Ergänzungs- oder Neufassungsvorlage."
+fortsetzung = "B führt dieselbe Maßnahme in einem späteren Verfahrensschritt weiter (Bedarfsbeschluss → Ausführungs- und Finanzierungsbeschluss, Offenlage → Satzungsbeschluss, Folgebericht)."
+bezug = "B gehört zur selben Sache, aber keine der Rollen oben trifft (B nennt A als Vorgeschichte oder Hintergrund derselben Sache)."
+kein_bezug = "B nennt A nur am Rand oder meint A nicht (dann ist selbe_sache = nein)."
+unklar = "Der Ausschnitt reicht nicht."
+
+# Nur für die Auswertung (F4, `score`); steht nicht in den Kodieraufgaben. Kantentyp des
+# Verfahrens -> Rollen der Frage `beziehung`, die als richtig zählen.
+[auswertung]
+kantenpraezision = "Anteil selbe_sache = ja unter ja und nein; unklar wird gezählt und berichtet, nicht gewertet. Gesamtzahl gewichtet mit den Schichtgrößen aus stichprobe.csv."
+rollenpraezision = "je Kantentyp: Anteil beziehung in der Erwartung unten, unter den Kanten mit selbe_sache = ja"
+uebereinstimmung = "Krippendorffs alpha zwischen den beiden Kodierern je Frage (nominal); Stufe 3 verlangt alpha >= 0,8"
+
+[auswertung.erwartet]
+antwort = ["antwort"]
+nachfrage = ["nachfrage"]
+umsetzung = ["umsetzung"]
+aenderung = ["aenderung"]
+nachtrag = ["aenderung"]
+bau = ["fortsetzung"]
+bezug = ["antwort", "nachfrage", "umsetzung", "aenderung", "fortsetzung", "bezug"]
