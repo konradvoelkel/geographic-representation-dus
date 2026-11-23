@@ -1481,6 +1481,7 @@ class EmbeddingModel(_Strict):
     model: str = "nomic-embed-text-v2-moe"
     dimension: int = Field(default=768, ge=1)
     num_ctx: int = Field(default=512, ge=0)  # Fenster in Token; 0 = was das Modell mitbringt
+    truncate: bool = True  # längere Texte hinten abschneiden; false: ein Fehler je solchem Text
 
 
 class GenerationModel(_Strict):

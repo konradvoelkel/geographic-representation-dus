@@ -13,7 +13,7 @@ import numpy as np
 import numpy.typing as npt
 import requests
 
-from georep.ml.base import GenerationOptions
+from georep.ml.base import EmbeddingOptions, GenerationOptions
 
 
 def response(
@@ -108,11 +108,16 @@ class FakeEmbedder:
     """Erfüllt ``georep.ml.base.Embedder`` ohne Modell; ``calls`` hält jeden Stapel fest."""
 
     def __init__(
-        self, name: str = "fake-embed:latest", dimension: int = 8, digest: str = "e" * 64
+        self,
+        name: str = "fake-embed:latest",
+        dimension: int = 8,
+        digest: str = "e" * 64,
+        options: EmbeddingOptions | None = None,
     ) -> None:
         self.name = name
         self.dimension = dimension
         self.digest = digest
+        self.options = options if options is not None else EmbeddingOptions()
         self.calls: list[list[str]] = []
 
     def embed(self, texts: Sequence[str]) -> npt.NDArray[np.float32]:

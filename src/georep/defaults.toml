@@ -241,7 +241,8 @@ limit = 0                      # hoechstens so viele neue Modellaufrufe je Schri
 [ml.embedding]                 # Vorhaben 18
 model = "nomic-embed-text-v2-moe"  # mehrsprachig, 475 M Parameter, F16, 958 MB; ohne Tag heisst es :latest
 dimension = 768                # Laenge jedes Vektors; eine Antwort mit anderer Laenge ist ein Fehler
-num_ctx = 512                  # Fenster in Token: das Modell liest hoechstens 512 (context_length laut /api/show), laengere Texte schneidet ollama hinten ab. Wer mehr braucht, zerteilt den Text vorher
+num_ctx = 512                  # Fenster in Token: das Modell liest hoechstens 512 (context_length laut /api/show), laengere Texte schneidet ollama hinten ab. Wer mehr braucht, zerteilt den Text vorher. Fenster und truncate stehen im Cache-Schluessel und in der Kennung des Schritts
+truncate = true                # false: ein Text ueber dem Fenster ist ein Fehler des Servers statt still abgeschnitten (der Stapellauf zaehlt ihn als gescheitert)
 
 [ml.generation]                # Vorhaben 19 und 20; ein Vorhaben darf in seinem Block ein anderes Modell nennen, die Optionen kommen von hier
 model = "qwen3.6:27b"          # 27,8 B Parameter, Q4_K_M, 17,4 GB; passt mit dem Einbettungsmodell zusammen in 24 GB

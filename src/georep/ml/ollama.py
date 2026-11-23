@@ -25,7 +25,14 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from georep.errors import ModelError
 from georep.http import TimeoutSession, Transport
-from georep.ml.base import Call, GenerationOptions, ModelInfo, Vectors, full_name
+from georep.ml.base import (
+    Call,
+    EmbeddingOptions,
+    GenerationOptions,
+    ModelInfo,
+    Vectors,
+    full_name,
+)
 from georep.settings import Ml
 
 DEFAULT_URL = "http://localhost:11434"
@@ -265,12 +272,17 @@ class OllamaEmbedder:
     """
 
     def __init__(
-        self, client: OllamaClient, model: str, *, dimension: int, num_ctx: int = 0
+        self,
+        client: OllamaClient,
+        model: str,
+        *,
+        dimension: int,
+        options: EmbeddingOptions | None = None,
     ) -> None:
         self.client = client
         self.name = full_name(model)
         self.dimension = dimension
-        self.num_ctx = num_ctx
+        self.options = options if options is not None else EmbeddingOptions()
         self.calls: list[Call] = []
 
     @property
@@ -282,9 +294,13 @@ class OllamaEmbedder:
     def embed(self, texts: Sequence[str]) -> Vectors:
         if not texts:
             return np.zeros((0, self.dimension), dtype=np.float32)
-        payload: dict[str, Any] = {"model": self.name, "input": list(texts), "truncate": True}
-        if self.num_ctx:
-            payload["options"] = {"num_ctx": self.num_ctx}
+        payload: dict[str, Any] = {
+            "model": self.name,
+            "input": list(texts),
+            "truncate": self.options.truncate,
+        }
+        if self.options.num_ctx:
+            payload["options"] = {"num_ctx": self.options.num_ctx}
         payload["keep_alive"] = self.client.keep_alive
         reply = self.client.embed(payload)
         if len(reply.embeddings) != len(texts):
@@ -388,7 +404,8 @@ def generation_options(ml: Ml) -> GenerationOptions:
 
 def embedder_from_settings(ml: Ml, client: OllamaClient) -> OllamaEmbedder:
     emb = ml.embedding
-    return OllamaEmbedder(client, emb.model, dimension=emb.dimension, num_ctx=emb.num_ctx)
+    options = EmbeddingOptions(num_ctx=emb.num_ctx, truncate=emb.truncate)
+    return OllamaEmbedder(client, emb.model, dimension=emb.dimension, options=options)
 
 
 def generator_from_settings(

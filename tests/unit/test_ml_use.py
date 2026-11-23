@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from georep.ml.base import EmbeddingUse, GenerationOptions, GenerationUse
+from georep.ml.base import EmbeddingOptions, EmbeddingUse, GenerationOptions, GenerationUse
 from georep.ml.ollama import OllamaClient, OllamaGenerator
 from tests.fakes import FAKE_URL, FakeEmbedder, FakeGenerator, FakeOllama
 
@@ -12,6 +12,21 @@ def test_an_embedding_use_names_model_digest_and_prompt() -> None:
     identity = use.identity()
     assert identity["model"] == "fake-embed:latest" and identity["digest"] == "e" * 64
     assert identity["prompt"] == "dok-1"
+
+
+def test_an_embedding_use_keys_on_window_and_truncation() -> None:
+    """Befund 1 des Reviews: das Fenster des Einbetters fehlte in Schlüssel und Kennung."""
+    uses = [
+        EmbeddingUse(FakeEmbedder(options=options), "dok-1")
+        for options in (
+            EmbeddingOptions(num_ctx=512),
+            EmbeddingOptions(num_ctx=64),
+            EmbeddingOptions(num_ctx=512, truncate=False),
+        )
+    ]
+    assert len({use.identity()["options"] for use in uses}) == 3
+    assert len({use.prompt_key() for use in uses}) == 3
+    assert uses[0].prompt_key() == f"dok-1+{EmbeddingOptions(num_ctx=512).key()}"
 
 
 def test_a_generation_use_carries_the_key_of_its_options() -> None:

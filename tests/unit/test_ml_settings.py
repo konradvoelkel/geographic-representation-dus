@@ -8,7 +8,7 @@ import pytest
 from pydantic import ValidationError
 
 from georep.layout import Layout
-from georep.ml.base import GenerationOptions
+from georep.ml.base import EmbeddingOptions, GenerationOptions
 from georep.ml.ollama import (
     OllamaEmbedder,
     OllamaGenerator,
@@ -47,6 +47,7 @@ def test_the_defaults_name_the_local_models_and_deterministic_options() -> None:
         "[ml]\nlimit = 500\n",
         '[ml.embedding]\nmodel = "nomic-embed-text"\n',
         "[ml.embedding]\nnum_ctx = 256\n",
+        "[ml.embedding]\ntruncate = false\n",
         '[ml.generation]\nmodel = "gemma4"\n',
         "[ml.generation]\ntemperature = 0.2\n",
         "[ml.generation]\nseed = 1\n",
@@ -99,7 +100,7 @@ def test_the_factories_build_without_asking_the_server(tmp_path: Path) -> None:
     other = generator_from_settings(ml, client, model="gemma4")
     assert isinstance(embedder, OllamaEmbedder) and isinstance(generator, OllamaGenerator)
     assert embedder.name == "nomic-embed-text-v2-moe:latest" and embedder.dimension == 768
-    assert embedder.num_ctx == ml.embedding.num_ctx
+    assert embedder.options == EmbeddingOptions(num_ctx=ml.embedding.num_ctx, truncate=True)
     assert generator.options == GenerationOptions(
         temperature=0.0, seed=9, num_ctx=ml.generation.num_ctx, num_predict=120, think=False
     )

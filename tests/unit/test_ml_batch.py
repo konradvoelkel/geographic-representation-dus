@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from georep.errors import ModelError, SchemaError
-from georep.ml.base import EmbeddingUse, GenerationOptions, GenerationUse
+from georep.ml.base import EmbeddingOptions, EmbeddingUse, GenerationOptions, GenerationUse
 from georep.ml.batch import (
     BatchReport,
     Progress,
@@ -154,6 +154,16 @@ def test_embed_texts_with_limit_marks_what_is_missing_and_tells_the_use(tmp_path
     assert not partial.vectors[2].any() and partial.report.left == 1
     # Der zweite Lauf ohne Grenze schließt ab: nichts mehr offen.
     assert (use.open, use.limit) == (0, 0)
+
+
+def test_another_window_does_not_hit_the_vectors_of_the_first(tmp_path: Path) -> None:
+    """Befund 1 des Reviews (Probe 1): mit 64 statt 512 Token kam der Vektor aus dem Cache."""
+    wide = FakeEmbedder(dimension=4, options=EmbeddingOptions(num_ctx=512))
+    narrow = FakeEmbedder(dimension=4, options=EmbeddingOptions(num_ctx=64))
+    with ModelCache(tmp_path, wide.name) as cache:
+        embed_texts(EmbeddingUse(wide, "dok-1"), cache, ["langer text"])
+        second = embed_texts(EmbeddingUse(narrow, "dok-1"), cache, ["langer text"])
+    assert second.report.computed == 1 and narrow.calls == [["langer text"]]
 
 
 def test_embed_texts_refuses_the_cache_of_another_model(tmp_path: Path) -> None:

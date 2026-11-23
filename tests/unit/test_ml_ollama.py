@@ -7,7 +7,7 @@ import pytest
 import requests
 
 from georep.errors import ModelError
-from georep.ml.base import Embedder, GenerationOptions, Generator, full_name
+from georep.ml.base import Embedder, EmbeddingOptions, GenerationOptions, Generator, full_name
 from georep.ml.ollama import OllamaClient, OllamaEmbedder, OllamaGenerator
 from tests.fakes import FakeOllama, FakeSession, fake_answer, fake_vector, response
 
@@ -75,7 +75,9 @@ def test_a_missing_model_says_how_to_get_it() -> None:
 def test_embedder_returns_one_float32_row_per_text_and_sends_the_options() -> None:
     server = FakeOllama(dimension=8)
     client, _ = _client(server, keep_alive="5m")
-    embedder: Embedder = OllamaEmbedder(client, "fake-embed", dimension=8, num_ctx=512)
+    embedder: Embedder = OllamaEmbedder(
+        client, "fake-embed", dimension=8, options=EmbeddingOptions(num_ctx=512)
+    )
     vectors = embedder.embed(["eins", "zwei zwei"])
     assert vectors.dtype == np.float32 and vectors.shape == (2, 8)
     assert np.allclose(vectors[1], fake_vector("zwei zwei", 8), atol=1e-7)
@@ -89,6 +91,15 @@ def test_embedder_returns_one_float32_row_per_text_and_sends_the_options() -> No
         "keep_alive": "5m",
     }
     assert embedder.name == "fake-embed:latest" and embedder.digest == "e" * 64
+
+
+def test_embedder_without_truncation_says_so_and_leaves_the_window_to_the_model() -> None:
+    server = FakeOllama(dimension=8)
+    client, _ = _client(server)
+    options = EmbeddingOptions(truncate=False)
+    OllamaEmbedder(client, "fake-embed", dimension=8, options=options).embed(["eins"])
+    _, payload = server.requests[-1]
+    assert payload["truncate"] is False and "options" not in payload
 
 
 def test_embedder_without_texts_asks_nothing() -> None:

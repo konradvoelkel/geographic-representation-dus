@@ -56,8 +56,27 @@ class GenerationOptions:
         return hashlib.sha256(text.encode()).hexdigest()[:12]
 
 
+@dataclass(frozen=True)
+class EmbeddingOptions:
+    """Was außer Modell und Text eine Einbettung bestimmt: das Fenster und was mit dem Rest geschieht.
+
+    ``num_ctx`` ist das Fenster in Token (0: was das Modell mitbringt), ``truncate`` schneidet einen
+    längeren Text hinten ab; ohne ist er ein Fehler des Servers. Beides gehört in den Schlüssel:
+    derselbe Text gibt mit 64 Token einen anderen Vektor als mit 512 (Review 2026-11-23, Befund 1).
+    """
+
+    num_ctx: int = 0
+    truncate: bool = True
+
+    def key(self) -> str:
+        """Kurzer Hash beider Werte: Teil des Cache-Schlüssels und der Kennung im Stamp."""
+        text = json.dumps(asdict(self), sort_keys=True)
+        return hashlib.sha256(text.encode()).hexdigest()[:12]
+
+
 class Embedder(Protocol):
-    """Text zu Vektor. ``name`` und ``digest`` bezeichnen das Modell, ``dimension`` die Vektorlänge.
+    """Text zu Vektor. ``name`` und ``digest`` bezeichnen das Modell, ``dimension`` die Vektorlänge,
+    ``options`` Fenster und Abschneiden.
 
     ``embed`` liefert eine Zeile je Text als float32, in der Reihenfolge der Eingabe; ein leerer
     Stapel ist eine Matrix mit null Zeilen und ``dimension`` Spalten.
@@ -71,6 +90,9 @@ class Embedder(Protocol):
 
     @property
     def dimension(self) -> int: ...
+
+    @property
+    def options(self) -> EmbeddingOptions: ...
 
     def embed(self, texts: Sequence[str]) -> Vectors: ...
 
@@ -180,10 +202,14 @@ class ModelUse:
 
 
 class EmbeddingUse(ModelUse):
-    """Ein Einbettungsmodell in einem Schritt; ``prompt`` sagt, wie der Text vorbereitet ist."""
+    """Ein Einbettungsmodell in einem Schritt; ``prompt`` sagt, wie der Text vorbereitet ist.
+
+    Der Schlüssel der Optionen kommt vom Einbetter selbst (Fenster, Abschneiden), damit kein
+    Schritt ihn vergessen kann.
+    """
 
     def __init__(self, embedder: Embedder, prompt: str) -> None:
-        super().__init__(embedder, prompt)
+        super().__init__(embedder, prompt, embedder.options.key())
         self.embedder = embedder
 
 
