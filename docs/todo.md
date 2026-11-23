@@ -123,3 +123,13 @@ liest (rund ein Prozent mehr Treffer, Tabelle 5 ohne 1 und 10 p = 0,036 statt 0,
 liegt schon in den Daten: die Spalte `extractor` des Textstores nennt sie je Dokument. Zu prüfen
 wäre ein Satz aus dem Modell im Methodenabschnitt (welcher Extraktor, wie viele Texte, wie viele
 anders als in der Arbeit), neben den beiden Regeln.
+
+## 8. Eine Probe mit `fetch papers --max-pages` verdirbt den folgenden vollen Abruf
+
+Aufgenommen am 2026-11-23, gefunden vom Agenten des Fundaments F6 der Vorverarbeitung 2026-11
+(`docs/plan-vorverarbeitung-2026-11.md`). Für die neuen Schritte `meetings`, `consultations` und
+`persons` hat er es behoben und mit einem roten Test belegt; in `fetch papers` steckt derselbe
+Fehler noch: eine Probe mit `--max-pages` auf einem leeren Store hinterlässt einen Stand, nach dem
+der nächste Lauf mit `modified_since` nur noch Geändertes holt, statt die Liste zu Ende zu lesen.
+Zu tun: denselben Weg wie in F6 (eine Probe ist der Anfang des Abrufs, der nächste Lauf setzt
+fort) für `papers`, mit rotem Test.
