@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies``.
+"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies|validate``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
@@ -32,6 +32,8 @@ from georep.report.publish import publish_sites
 from georep.settings import Settings, available_profiles, load_settings, settings_files
 from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextStore
+from georep.validation.command import add_parser as add_validate_parser
+from georep.validation.command import run as run_validate
 
 
 def _setup_logging(level: str) -> None:
@@ -156,6 +158,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--sort", choices=["cumulative", "tottime"], default="cumulative", help="Sortierung"
     )
     prof.add_argument("--online", action="store_true", help="auch Netzschritte profilieren")
+    add_validate_parser(sub)  # Fundament F4
     return parser
 
 
@@ -461,6 +464,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cmd_regress(args, settings, layout)
         if args.command == "profile":
             return _cmd_profile(args, settings, layout)
+        if args.command == "validate":
+            return run_validate(args, settings, layout)  # Fundament F4
     except (GeorepError, FileNotFoundError) as error:
         print(f"Fehler: {error}", file=sys.stderr)
         return 1

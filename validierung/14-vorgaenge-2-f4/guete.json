@@ -1,0 +1,218 @@
+{
+  "vorhaben": "14-vorgaenge-2-f4",
+  "codebuch_version": "2026-11-23.2",
+  "einheit": "pair_with_span",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-23",
+  "einheiten": 100,
+  "uneinig": 8,
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "nummer_gemeint": {
+      "n": 100,
+      "beide": 100,
+      "einig": 100,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9630065017930143,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "alpha_genuegt": true,
+      "labels": {
+        "ja": 96,
+        "nein": 1,
+        "keine_fundstelle": 3
+      },
+      "treffer": null
+    },
+    "selbe_sache": {
+      "n": 100,
+      "beide": 100,
+      "einig": 98,
+      "anteil": 0.98,
+      "anteil_wilson95": [
+        0.929988209271456,
+        0.9944980324498376
+      ],
+      "cohen_kappa": 0.9215686274509803,
+      "krippendorff_alpha_nominal": 0.9219607843137255,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9219607843137255,
+      "alpha_genuegt": true,
+      "labels": {
+        "ja": 85,
+        "nein": 15,
+        "unklar": 0
+      },
+      "treffer": {
+        "positiv": [
+          "ja"
+        ],
+        "stichprobe": {
+          "treffer": 85,
+          "gewertet": 100,
+          "ignoriert": 0,
+          "anteil": 0.85,
+          "wilson95": [
+            0.7671644040916763,
+            0.9069401471634337
+          ]
+        },
+        "grundgesamtheit": {
+          "schaetzer": 0.8402862279022164,
+          "wilson95_kish": [
+            0.7375710010166425,
+            0.9078228334993326
+          ],
+          "n_eff": 70.47615135606367,
+          "n": 12609,
+          "selbstgewichtend": false
+        },
+        "je_schicht": {
+          "aenderung": {
+            "treffer": 10,
+            "gewertet": 10,
+            "schicht_n": 723,
+            "anteil": 1.0,
+            "wilson95": [
+              0.7224672001371107,
+              1.0
+            ]
+          },
+          "antwort": {
+            "treffer": 6,
+            "gewertet": 8,
+            "schicht_n": 227,
+            "anteil": 0.75,
+            "wilson95": [
+              0.40927543031016883,
+              0.9285207872478909
+            ]
+          },
+          "bezug_text": {
+            "treffer": 10,
+            "gewertet": 14,
+            "schicht_n": 3261,
+            "anteil": 0.7142857142857143,
+            "wilson95": [
+              0.4535091567010681,
+              0.8827862135542308
+            ]
+          },
+          "bezug_titel": {
+            "treffer": 4,
+            "gewertet": 5,
+            "schicht_n": 148,
+            "anteil": 0.8,
+            "wilson95": [
+              0.37553462976252533,
+              0.9637758913675698
+            ]
+          },
+          "fortsetzung": {
+            "treffer": 4,
+            "gewertet": 6,
+            "schicht_n": 702,
+            "anteil": 0.6666666666666666,
+            "wilson95": [
+              0.299993315138392,
+              0.9032285888942195
+            ]
+          },
+          "kontrolle": {
+            "treffer": 6,
+            "gewertet": 6,
+            "schicht_n": 548,
+            "anteil": 1.0,
+            "wilson95": [
+              0.6096657120978346,
+              1.0
+            ]
+          },
+          "mg": {
+            "treffer": 10,
+            "gewertet": 12,
+            "schicht_n": 304,
+            "anteil": 0.8333333333333334,
+            "wilson95": [
+              0.5519691377470266,
+              0.9530348578161463
+            ]
+          },
+          "nachfrage": {
+            "treffer": 8,
+            "gewertet": 10,
+            "schicht_n": 948,
+            "anteil": 0.8,
+            "wilson95": [
+              0.49016247153664183,
+              0.9433178485456247
+            ]
+          },
+          "nachtrag": {
+            "treffer": 3,
+            "gewertet": 3,
+            "schicht_n": 291,
+            "anteil": 1.0,
+            "wilson95": [
+              0.4385029682449546,
+              1.0
+            ]
+          },
+          "periodenuebergreifend": {
+            "treffer": 6,
+            "gewertet": 8,
+            "schicht_n": 2086,
+            "anteil": 0.75,
+            "wilson95": [
+              0.40927543031016883,
+              0.9285207872478909
+            ]
+          },
+          "umsetzung": {
+            "treffer": 18,
+            "gewertet": 18,
+            "schicht_n": 3371,
+            "anteil": 1.0,
+            "wilson95": [
+              0.8241207763533425,
+              1.0
+            ]
+          }
+        }
+      }
+    },
+    "beziehung": {
+      "n": 100,
+      "beide": 100,
+      "einig": 94,
+      "anteil": 0.94,
+      "anteil_wilson95": [
+        0.8752318455410406,
+        0.9722138760368118
+      ],
+      "cohen_kappa": 0.9231163505894413,
+      "krippendorff_alpha_nominal": 0.9234909650134564,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9234909650134564,
+      "alpha_genuegt": true,
+      "labels": {
+        "antwort": 4,
+        "nachfrage": 11,
+        "umsetzung": 36,
+        "aenderung": 23,
+        "fortsetzung": 6,
+        "bezug": 5,
+        "kein_bezug": 15,
+        "unklar": 0
+      },
+      "treffer": null
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 100 Dokumentpaaren, nicht von Menschen",
+  "selbstgewichtend": false
+}

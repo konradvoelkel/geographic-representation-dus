@@ -1,0 +1,60 @@
+{
+  "vorhaben": "14-vorgaenge-2-f4",
+  "codebuch_version": "2026-11-23.2",
+  "profil": "mehrere: duesseldorf, duesseldorf-2014, duesseldorf-2025, moenchengladbach",
+  "einheit": "pair_with_span",
+  "uebernommen": "validierung/14-vorgaenge/stichprobe-2.csv vom Mess-Agenten, 2026-11-23; typ ist der Kantentyp des Verfahrens (nicht im Auftrag)",
+  "einheiten": 12609,
+  "groesse": 100,
+  "seed": "14-2",
+  "schicht": "schicht",
+  "aufteilung": "feste Zahl je Schicht (Messdokument)",
+  "selbstgewichtend": false,
+  "schichten": {
+    "aenderung": {
+      "grundgesamtheit": 723,
+      "stichprobe": 10
+    },
+    "antwort": {
+      "grundgesamtheit": 227,
+      "stichprobe": 8
+    },
+    "bezug_text": {
+      "grundgesamtheit": 3261,
+      "stichprobe": 14
+    },
+    "bezug_titel": {
+      "grundgesamtheit": 148,
+      "stichprobe": 5
+    },
+    "fortsetzung": {
+      "grundgesamtheit": 702,
+      "stichprobe": 6
+    },
+    "kontrolle": {
+      "grundgesamtheit": 548,
+      "stichprobe": 6
+    },
+    "mg": {
+      "grundgesamtheit": 304,
+      "stichprobe": 12
+    },
+    "nachfrage": {
+      "grundgesamtheit": 948,
+      "stichprobe": 10
+    },
+    "nachtrag": {
+      "grundgesamtheit": 291,
+      "stichprobe": 3
+    },
+    "periodenuebergreifend": {
+      "grundgesamtheit": 2086,
+      "stichprobe": 8
+    },
+    "umsetzung": {
+      "grundgesamtheit": 3371,
+      "stichprobe": 18
+    }
+  },
+  "gezogen": "2026-11-23"
+}

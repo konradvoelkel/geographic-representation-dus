@@ -1,0 +1,36 @@
+{
+  "vorhaben": "12-kennungen-recall-f4",
+  "codebuch_version": "1",
+  "profil": "duesseldorf",
+  "einheit": "marking",
+  "uebernommen": "validierung/12-kennungen/stichprobe.csv vom Mess-Agenten, typ recall",
+  "einheiten": 34595,
+  "groesse": 50,
+  "seed": 20261123,
+  "schicht": "schicht",
+  "aufteilung": "vom Mess-Agenten (Messdokument)",
+  "selbstgewichtend": false,
+  "schichten": {
+    "bezirk": {
+      "grundgesamtheit": 4131,
+      "stichprobe": 10
+    },
+    "fraktion": {
+      "grundgesamtheit": 8628,
+      "stichprobe": 10
+    },
+    "haushalt": {
+      "grundgesamtheit": 3148,
+      "stichprobe": 10
+    },
+    "planung": {
+      "grundgesamtheit": 209,
+      "stichprobe": 10
+    },
+    "zufall": {
+      "grundgesamtheit": 18479,
+      "stichprobe": 10
+    }
+  },
+  "gezogen": "2026-11-23"
+}

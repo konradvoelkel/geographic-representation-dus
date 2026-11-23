@@ -1,0 +1,1743 @@
+id,frage,kodierer_a,kodierer_b,schlichtung,label
+11-struktur-001,bv_vorhanden,nein,nein,"",nein
+11-struktur-001,amt,"""Bezirksverwaltungsstelle 8""","""Bezirksverwaltungsstelle 8""","","""Bezirksverwaltungsstelle 8"""
+11-struktur-001,dezernat_titel,keins,keins,"",keins
+11-struktur-001,beratungsfolge,"[{""datum"": ""12.05.2022"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""12.05.2022"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""12.05.2022"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-001,sitzung,null,null,"",null
+11-struktur-001,briefdatum,null,null,"",null
+11-struktur-001,unsicher,nein,nein,"",nein
+11-struktur-002,bv_vorhanden,ja,ja,"",ja
+11-struktur-002,bv_erste_zeile,21,21,"",21
+11-struktur-002,bv_letzte_zeile,26,26,"",26
+11-struktur-002,bv_mehrteilig,nein,nein,"",nein
+11-struktur-002,amt,"""68 - Garten-, Friedhofs- und Forstamt""","""68 - Garten-, Friedhofs- und Forstamt""","","""68 - Garten-, Friedhofs- und Forstamt"""
+11-struktur-002,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-002,beratungsfolge,"[{""datum"": ""27.10.2023"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""27.10.2023"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""27.10.2023"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-002,sitzung,null,null,"",null
+11-struktur-002,briefdatum,null,null,"",null
+11-struktur-002,unsicher,nein,nein,"",nein
+11-struktur-003,bv_vorhanden,ja,ja,"",ja
+11-struktur-003,bv_erste_zeile,28,28,"",28
+11-struktur-003,bv_letzte_zeile,35,35,"",35
+11-struktur-003,bv_mehrteilig,nein,nein,"",nein
+11-struktur-003,amt,null,null,"",null
+11-struktur-003,dezernat_titel,keins,keins,"",keins
+11-struktur-003,beratungsfolge,[],[],"",[]
+11-struktur-003,sitzung,"{""datum"": ""16.12.2021"", ""gremium"": ""Rat""}","{""datum"": ""16.12.2021"", ""gremium"": ""Rat""}","","{""datum"": ""16.12.2021"", ""gremium"": ""Rat""}"
+11-struktur-003,briefdatum,"""10.12.2021""","""10.12.2021""","","""10.12.2021"""
+11-struktur-003,unsicher,nein,nein,"",nein
+11-struktur-004,bv_vorhanden,ja,ja,"",ja
+11-struktur-004,bv_erste_zeile,23,23,"",23
+11-struktur-004,bv_letzte_zeile,31,31,"",31
+11-struktur-004,bv_mehrteilig,nein,nein,"",nein
+11-struktur-004,amt,"""41 - Kulturamt""","""41 - Kulturamt""","","""41 - Kulturamt"""
+11-struktur-004,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-004,beratungsfolge,"[{""datum"": ""01.06.2023"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Entscheidung""}, {""datum"": ""02.06.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}]","[{""datum"": ""01.06.2023"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Entscheidung""}, {""datum"": ""02.06.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}]","","[{""datum"": ""01.06.2023"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Entscheidung""}, {""datum"": ""02.06.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}]"
+11-struktur-004,sitzung,null,null,"",null
+11-struktur-004,briefdatum,null,null,"",null
+11-struktur-004,unsicher,nein,nein,"",nein
+11-struktur-005,bv_vorhanden,ja,ja,"",ja
+11-struktur-005,bv_erste_zeile,26,26,"",26
+11-struktur-005,bv_letzte_zeile,29,29,"",29
+11-struktur-005,bv_mehrteilig,nein,nein,"",nein
+11-struktur-005,amt,"""37 - Feuerwehr""","""37 - Feuerwehr""","","""37 - Feuerwehr"""
+11-struktur-005,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-005,beratungsfolge,"[{""datum"": ""14.08.2023"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""28.08.2023"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""07.09.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""14.08.2023"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""28.08.2023"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""07.09.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""14.08.2023"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""28.08.2023"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""07.09.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-005,sitzung,null,null,"",null
+11-struktur-005,briefdatum,null,null,"",null
+11-struktur-005,unsicher,nein,nein,"",nein
+11-struktur-006,bv_vorhanden,ja,ja,"",ja
+11-struktur-006,bv_erste_zeile,23,23,"",23
+11-struktur-006,bv_letzte_zeile,27,27,"",27
+11-struktur-006,bv_mehrteilig,nein,nein,"",nein
+11-struktur-006,amt,null,null,"",null
+11-struktur-006,dezernat_titel,keins,keins,"",keins
+11-struktur-006,beratungsfolge,[],[],"",[]
+11-struktur-006,sitzung,"{""datum"": ""23.02.2021"", ""gremium"": ""Bezirksvertretung 5""}","{""datum"": ""23.02.2021"", ""gremium"": ""Bezirksvertretung 5""}","","{""datum"": ""23.02.2021"", ""gremium"": ""Bezirksvertretung 5""}"
+11-struktur-006,briefdatum,"""10.02.2021""","""10.02.2021""","","""10.02.2021"""
+11-struktur-006,unsicher,nein,nein,"",nein
+11-struktur-007,bv_vorhanden,nein,nein,"",nein
+11-struktur-007,amt,null,null,"",null
+11-struktur-007,dezernat_titel,keins,keins,"",keins
+11-struktur-007,beratungsfolge,[],[],"",[]
+11-struktur-007,sitzung,"{""datum"": ""18.10.2023"", ""gremium"": ""Ordnungs- und Verkehrsausschuss""}","{""datum"": ""18.10.2023"", ""gremium"": ""Ordnungs- und Verkehrsausschuss""}","","{""datum"": ""18.10.2023"", ""gremium"": ""Ordnungs- und Verkehrsausschuss""}"
+11-struktur-007,briefdatum,"""09.10.2023""","""09.10.2023""","","""09.10.2023"""
+11-struktur-007,unsicher,nein,nein,"",nein
+11-struktur-008,bv_vorhanden,ja,ja,"",ja
+11-struktur-008,bv_erste_zeile,28,28,"",28
+11-struktur-008,bv_letzte_zeile,31,31,"",31
+11-struktur-008,bv_mehrteilig,nein,nein,"",nein
+11-struktur-008,amt,null,null,"",null
+11-struktur-008,dezernat_titel,keins,keins,"",keins
+11-struktur-008,beratungsfolge,[],[],"",[]
+11-struktur-008,sitzung,"{""datum"": ""17.03.2021"", ""gremium"": ""Bezirksvertretung 4""}","{""datum"": ""17.03.2021"", ""gremium"": ""Bezirksvertretung 4""}","","{""datum"": ""17.03.2021"", ""gremium"": ""Bezirksvertretung 4""}"
+11-struktur-008,briefdatum,"""02.03.2021""","""02.03.2021""","","""02.03.2021"""
+11-struktur-008,unsicher,nein,nein,"",nein
+11-struktur-009,bv_vorhanden,nein,nein,"",nein
+11-struktur-009,amt,null,null,"",null
+11-struktur-009,dezernat_titel,keins,keins,"",keins
+11-struktur-009,beratungsfolge,[],[],"",[]
+11-struktur-009,sitzung,"{""datum"": ""04.11.2022"", ""gremium"": ""Bezirksvertretung 9""}","{""datum"": ""04.11.2022"", ""gremium"": ""Bezirksvertretung 9""}","","{""datum"": ""04.11.2022"", ""gremium"": ""Bezirksvertretung 9""}"
+11-struktur-009,briefdatum,"""24.10.2022""","""24.10.2022""","","""24.10.2022"""
+11-struktur-009,unsicher,nein,nein,"",nein
+11-struktur-010,bv_vorhanden,ja,ja,"",ja
+11-struktur-010,bv_erste_zeile,22,22,"",22
+11-struktur-010,bv_letzte_zeile,26,26,"",26
+11-struktur-010,bv_mehrteilig,nein,nein,"",nein
+11-struktur-010,amt,"""54 - Amt für Migration und Integration""","""54 - Amt für Migration und Integration""","","""54 - Amt für Migration und Integration"""
+11-struktur-010,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-010,beratungsfolge,"[{""datum"": ""23.10.2023"", ""gremium"": ""Integrationsrat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""23.10.2023"", ""gremium"": ""Integrationsrat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""23.10.2023"", ""gremium"": ""Integrationsrat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-010,sitzung,null,null,"",null
+11-struktur-010,briefdatum,null,null,"",null
+11-struktur-010,unsicher,nein,nein,"",nein
+11-struktur-011,bv_vorhanden,nein,nein,"",nein
+11-struktur-011,amt,"""Bezirksverwaltungsstelle 7""","""Bezirksverwaltungsstelle 7""","","""Bezirksverwaltungsstelle 7"""
+11-struktur-011,dezernat_titel,keins,keins,"",keins
+11-struktur-011,beratungsfolge,"[{""datum"": ""24.05.2022"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""24.05.2022"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""24.05.2022"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-011,sitzung,null,null,"",null
+11-struktur-011,briefdatum,null,null,"",null
+11-struktur-011,unsicher,nein,nein,"",nein
+11-struktur-012,bv_vorhanden,nein,nein,"",nein
+11-struktur-012,amt,null,null,"",null
+11-struktur-012,dezernat_titel,keins,keins,"",keins
+11-struktur-012,beratungsfolge,[],[],"",[]
+11-struktur-012,sitzung,"{""datum"": ""03.02.2022"", ""gremium"": ""Rat""}","{""datum"": ""03.02.2022"", ""gremium"": ""Rat""}","","{""datum"": ""03.02.2022"", ""gremium"": ""Rat""}"
+11-struktur-012,briefdatum,"""21.01.2022""","""21.01.2022""","","""21.01.2022"""
+11-struktur-012,unsicher,nein,nein,"",nein
+11-struktur-013,bv_vorhanden,nein,nein,"",nein
+11-struktur-013,amt,"""Bezirksverwaltungsstelle 4""","""Bezirksverwaltungsstelle 4""","","""Bezirksverwaltungsstelle 4"""
+11-struktur-013,dezernat_titel,keins,keins,"",keins
+11-struktur-013,beratungsfolge,"[{""datum"": ""01.09.2021"", ""gremium"": ""Bezirksvertretung 4"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""01.09.2021"", ""gremium"": ""Bezirksvertretung 4"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""01.09.2021"", ""gremium"": ""Bezirksvertretung 4"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-013,sitzung,null,null,"",null
+11-struktur-013,briefdatum,null,null,"",null
+11-struktur-013,unsicher,nein,nein,"",nein
+11-struktur-014,bv_vorhanden,nein,nein,"",nein
+11-struktur-014,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-014,dezernat_titel,keins,keins,"",keins
+11-struktur-014,beratungsfolge,"[{""datum"": ""09.09.2021"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","[{""datum"": ""09.09.2021"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","","[{""datum"": ""09.09.2021"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]"
+11-struktur-014,sitzung,null,null,"",null
+11-struktur-014,briefdatum,null,null,"",null
+11-struktur-014,unsicher,nein,nein,"",nein
+11-struktur-015,bv_vorhanden,nein,nein,"",nein
+11-struktur-015,amt,null,null,"",null
+11-struktur-015,dezernat_titel,keins,keins,"",keins
+11-struktur-015,beratungsfolge,[],[],"",[]
+11-struktur-015,sitzung,null,null,"",null
+11-struktur-015,briefdatum,null,null,"",null
+11-struktur-015,unsicher,nein,ja,"",""
+11-struktur-016,bv_vorhanden,nein,nein,"",nein
+11-struktur-016,amt,"""20/3 - Kämmerei""","""20/3 - Kämmerei""","","""20/3 - Kämmerei"""
+11-struktur-016,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-016,beratungsfolge,"[{""datum"": ""09.09.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""19.09.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""09.09.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""19.09.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""09.09.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""19.09.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-016,sitzung,null,null,"",null
+11-struktur-016,briefdatum,null,null,"",null
+11-struktur-016,unsicher,nein,nein,"",nein
+11-struktur-017,bv_vorhanden,ja,ja,"",ja
+11-struktur-017,bv_erste_zeile,17,17,"",17
+11-struktur-017,bv_letzte_zeile,55,55,"",55
+11-struktur-017,bv_mehrteilig,nein,nein,"",nein
+11-struktur-017,amt,"""Bezirksverwaltungsstelle 5""","""Bezirksverwaltungsstelle 5""","","""Bezirksverwaltungsstelle 5"""
+11-struktur-017,dezernat_titel,keins,keins,"",keins
+11-struktur-017,beratungsfolge,"[{""datum"": ""26.04.2022"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""26.04.2022"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""26.04.2022"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-017,sitzung,null,null,"",null
+11-struktur-017,briefdatum,null,null,"",null
+11-struktur-017,unsicher,nein,nein,"",nein
+11-struktur-018,bv_vorhanden,ja,ja,"",ja
+11-struktur-018,bv_erste_zeile,23,23,"",23
+11-struktur-018,bv_letzte_zeile,30,30,"",30
+11-struktur-018,bv_mehrteilig,nein,nein,"",nein
+11-struktur-018,amt,"""41 - Kulturamt""","""41 - Kulturamt""","","""41 - Kulturamt"""
+11-struktur-018,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-018,beratungsfolge,"[{""datum"": ""13.05.2025"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""15.05.2025"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""19.05.2025"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""28.05.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""13.05.2025"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""15.05.2025"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""19.05.2025"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""28.05.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""13.05.2025"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""15.05.2025"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""19.05.2025"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""28.05.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-018,sitzung,null,null,"",null
+11-struktur-018,briefdatum,null,null,"",null
+11-struktur-018,unsicher,nein,nein,"",nein
+11-struktur-019,bv_vorhanden,nein,nein,"",nein
+11-struktur-019,amt,"""20 - Kämmerei""","""20 - Kämmerei""","","""20 - Kämmerei"""
+11-struktur-019,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-019,beratungsfolge,"[{""datum"": ""09.05.2023"", ""gremium"": ""Ausschuss für Gleichstellung"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""09.05.2023"", ""gremium"": ""Ausschuss für Gleichstellung"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""09.05.2023"", ""gremium"": ""Ausschuss für Gleichstellung"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-019,sitzung,null,null,"",null
+11-struktur-019,briefdatum,null,null,"",null
+11-struktur-019,unsicher,nein,nein,"",nein
+11-struktur-020,bv_vorhanden,ja,ja,"",ja
+11-struktur-020,bv_erste_zeile,26,26,"",26
+11-struktur-020,bv_letzte_zeile,28,28,"",28
+11-struktur-020,bv_mehrteilig,nein,nein,"",nein
+11-struktur-020,amt,null,null,"",null
+11-struktur-020,dezernat_titel,keins,keins,"",keins
+11-struktur-020,beratungsfolge,[],[],"",[]
+11-struktur-020,sitzung,"{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}","{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}","","{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}"
+11-struktur-020,briefdatum,"""30.11.2022""","""30.11.2022""","","""30.11.2022"""
+11-struktur-020,unsicher,nein,nein,"",nein
+11-struktur-021,bv_vorhanden,nein,nein,"",nein
+11-struktur-021,amt,null,null,"",null
+11-struktur-021,dezernat_titel,keins,keins,"",keins
+11-struktur-021,beratungsfolge,[],[],"",[]
+11-struktur-021,sitzung,"{""datum"": ""15.03.2024"", ""gremium"": ""Bezirksvertretung 9""}","{""datum"": ""15.03.2024"", ""gremium"": ""Bezirksvertretung 9""}","","{""datum"": ""15.03.2024"", ""gremium"": ""Bezirksvertretung 9""}"
+11-struktur-021,briefdatum,"""13.02.2024""","""13.02.2024""","","""13.02.2024"""
+11-struktur-021,unsicher,nein,nein,"",nein
+11-struktur-022,bv_vorhanden,ja,ja,"",ja
+11-struktur-022,bv_erste_zeile,15,15,"",15
+11-struktur-022,bv_letzte_zeile,18,18,"",18
+11-struktur-022,bv_mehrteilig,nein,nein,"",nein
+11-struktur-022,amt,"""Bezirksverwaltungsstelle 10""","""Bezirksverwaltungsstelle 10""","","""Bezirksverwaltungsstelle 10"""
+11-struktur-022,dezernat_titel,keins,keins,"",keins
+11-struktur-022,beratungsfolge,"[{""datum"": ""25.06.2024"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""25.06.2024"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""25.06.2024"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-022,sitzung,null,null,"",null
+11-struktur-022,briefdatum,null,null,"",null
+11-struktur-022,unsicher,nein,nein,"",nein
+11-struktur-023,bv_vorhanden,nein,nein,"",nein
+11-struktur-023,amt,null,null,"",null
+11-struktur-023,dezernat_titel,keins,keins,"",keins
+11-struktur-023,beratungsfolge,[],[],"",[]
+11-struktur-023,sitzung,"{""datum"": ""23.06.2022"", ""gremium"": ""Rat""}","{""datum"": ""23.06.2022"", ""gremium"": ""Rat""}","","{""datum"": ""23.06.2022"", ""gremium"": ""Rat""}"
+11-struktur-023,briefdatum,"""13.06.2022""","""13.06.2022""","","""13.06.2022"""
+11-struktur-023,unsicher,nein,nein,"",nein
+11-struktur-024,bv_vorhanden,nein,nein,"",nein
+11-struktur-024,amt,"""12 - Amt für Statistik und Wahlen""","""12 - Amt für Statistik und Wahlen""","","""12 - Amt für Statistik und Wahlen"""
+11-struktur-024,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-024,beratungsfolge,"[{""datum"": ""18.11.2020"", ""gremium"": ""Ausschuss für Gesundheit und Soziales"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""18.11.2020"", ""gremium"": ""Ausschuss für Gesundheit und Soziales"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""18.11.2020"", ""gremium"": ""Ausschuss für Gesundheit und Soziales"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-024,sitzung,null,null,"",null
+11-struktur-024,briefdatum,null,null,"",null
+11-struktur-024,unsicher,nein,nein,"",nein
+11-struktur-025,bv_vorhanden,nein,nein,"",nein
+11-struktur-025,amt,null,null,"",null
+11-struktur-025,dezernat_titel,keins,keins,"",keins
+11-struktur-025,beratungsfolge,[],[],"",[]
+11-struktur-025,sitzung,"{""datum"": ""15.06.2023"", ""gremium"": ""Rat""}","{""datum"": ""15.06.2023"", ""gremium"": ""Rat""}","","{""datum"": ""15.06.2023"", ""gremium"": ""Rat""}"
+11-struktur-025,briefdatum,"""01.06.2023""","""01.06.2023""","","""01.06.2023"""
+11-struktur-025,unsicher,nein,nein,"",nein
+11-struktur-026,bv_vorhanden,nein,nein,"",nein
+11-struktur-026,amt,"""Bezirksverwaltungsstelle 6""","""Bezirksverwaltungsstelle 6""","","""Bezirksverwaltungsstelle 6"""
+11-struktur-026,dezernat_titel,keins,keins,"",keins
+11-struktur-026,beratungsfolge,"[{""datum"": ""12.11.2025"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""12.11.2025"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""12.11.2025"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-026,sitzung,null,null,"",null
+11-struktur-026,briefdatum,null,null,"",null
+11-struktur-026,unsicher,nein,nein,"",nein
+11-struktur-027,bv_vorhanden,nein,nein,"",nein
+11-struktur-027,amt,"""02/0 Stadtkämmerin""","""02/0 Stadtkämmerin""","","""02/0 Stadtkämmerin"""
+11-struktur-027,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-027,beratungsfolge,"[{""datum"": ""07.04.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""07.04.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""07.04.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-027,sitzung,null,null,"",null
+11-struktur-027,briefdatum,null,null,"",null
+11-struktur-027,unsicher,nein,nein,"",nein
+11-struktur-028,bv_vorhanden,ja,ja,"",ja
+11-struktur-028,bv_erste_zeile,22,22,"",22
+11-struktur-028,bv_letzte_zeile,26,26,"",26
+11-struktur-028,bv_mehrteilig,nein,nein,"",nein
+11-struktur-028,amt,null,null,"",null
+11-struktur-028,dezernat_titel,keins,keins,"",keins
+11-struktur-028,beratungsfolge,[],[],"",[]
+11-struktur-028,sitzung,"{""datum"": ""17.01.2024"", ""gremium"": ""Ordnungs- und Verkehrsausschuss""}","{""datum"": ""17.01.2024"", ""gremium"": ""Ordnungs- und Verkehrsausschuss""}","","{""datum"": ""17.01.2024"", ""gremium"": ""Ordnungs- und Verkehrsausschuss""}"
+11-struktur-028,briefdatum,"""05.01.2024""","""05.01.2024""","","""05.01.2024"""
+11-struktur-028,unsicher,nein,nein,"",nein
+11-struktur-029,bv_vorhanden,ja,ja,"",ja
+11-struktur-029,bv_erste_zeile,21,21,"",21
+11-struktur-029,bv_letzte_zeile,33,33,"",33
+11-struktur-029,bv_mehrteilig,nein,nein,"",nein
+11-struktur-029,amt,"""66 - Amt für Verkehrsmanagement""","""66 - Amt für Verkehrsmanagement""","","""66 - Amt für Verkehrsmanagement"""
+11-struktur-029,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-029,beratungsfolge,"[{""datum"": ""17.11.2021"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Anhörung""}, {""datum"": ""24.11.2021"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""01.12.2021"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""06.12.2021"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""16.12.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""17.11.2021"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Anhörung""}, {""datum"": ""24.11.2021"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""01.12.2021"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""06.12.2021"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""16.12.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""17.11.2021"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Anhörung""}, {""datum"": ""24.11.2021"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""01.12.2021"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""06.12.2021"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""16.12.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-029,sitzung,null,null,"",null
+11-struktur-029,briefdatum,null,null,"",null
+11-struktur-029,unsicher,nein,nein,"",nein
+11-struktur-030,bv_vorhanden,nein,nein,"",nein
+11-struktur-030,amt,null,null,"",null
+11-struktur-030,dezernat_titel,keins,keins,"",keins
+11-struktur-030,beratungsfolge,[],[],"",[]
+11-struktur-030,sitzung,"{""datum"": ""31.01.2025"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz""}","{""datum"": ""31.01.2025"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz""}","","{""datum"": ""31.01.2025"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz""}"
+11-struktur-030,briefdatum,"""17.01.2025""","""17.01.2025""","","""17.01.2025"""
+11-struktur-030,unsicher,nein,nein,"",nein
+11-struktur-031,bv_vorhanden,ja,ja,"",ja
+11-struktur-031,bv_erste_zeile,25,25,"",25
+11-struktur-031,bv_letzte_zeile,27,27,"",27
+11-struktur-031,bv_mehrteilig,nein,nein,"",nein
+11-struktur-031,amt,null,null,"",null
+11-struktur-031,dezernat_titel,keins,keins,"",keins
+11-struktur-031,beratungsfolge,[],[],"",[]
+11-struktur-031,sitzung,null,null,"",null
+11-struktur-031,briefdatum,"""03.05.2021""","""03.05.2021""","","""03.05.2021"""
+11-struktur-031,unsicher,nein,nein,"",nein
+11-struktur-032,bv_vorhanden,nein,nein,"",nein
+11-struktur-032,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-032,dezernat_titel,keins,keins,"",keins
+11-struktur-032,beratungsfolge,"[{""datum"": ""11.05.2023"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","[{""datum"": ""11.05.2023"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","","[{""datum"": ""11.05.2023"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]"
+11-struktur-032,sitzung,null,null,"",null
+11-struktur-032,briefdatum,null,null,"",null
+11-struktur-032,unsicher,nein,nein,"",nein
+11-struktur-033,bv_vorhanden,ja,ja,"",ja
+11-struktur-033,bv_erste_zeile,18,18,"",18
+11-struktur-033,bv_letzte_zeile,22,22,"",22
+11-struktur-033,bv_mehrteilig,nein,nein,"",nein
+11-struktur-033,amt,"""67 - Stadtentwässerungsbetrieb""","""67 - Stadtentwässerungsbetrieb""","","""67 - Stadtentwässerungsbetrieb"""
+11-struktur-033,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-033,beratungsfolge,"[{""datum"": ""13.05.2025"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""13.05.2025"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""13.05.2025"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-033,sitzung,null,null,"",null
+11-struktur-033,briefdatum,null,null,"",null
+11-struktur-033,unsicher,nein,nein,"",nein
+11-struktur-034,bv_vorhanden,nein,nein,"",nein
+11-struktur-034,amt,"""Bezirksverwaltungsstelle 1""","""Bezirksverwaltungsstelle 1""","","""Bezirksverwaltungsstelle 1"""
+11-struktur-034,dezernat_titel,keins,keins,"",keins
+11-struktur-034,beratungsfolge,"[{""datum"": ""26.04.2024"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""26.04.2024"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""26.04.2024"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-034,sitzung,null,null,"",null
+11-struktur-034,briefdatum,null,null,"",null
+11-struktur-034,unsicher,nein,nein,"",nein
+11-struktur-035,bv_vorhanden,ja,ja,"",ja
+11-struktur-035,bv_erste_zeile,24,24,"",24
+11-struktur-035,bv_letzte_zeile,27,27,"",27
+11-struktur-035,bv_mehrteilig,nein,nein,"",nein
+11-struktur-035,amt,"""68 - Garten-, Friedhofs- und Forstamt""","""68 - Garten-, Friedhofs- und Forstamt""","","""68 - Garten-, Friedhofs- und Forstamt"""
+11-struktur-035,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-035,beratungsfolge,"[{""datum"": ""16.06.2025"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz"", ""qualitaet"": ""Entscheidung""}, {""datum"": ""23.05.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Anhörung""}]","[{""datum"": ""16.06.2025"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz"", ""qualitaet"": ""Entscheidung""}, {""datum"": ""23.05.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Anhörung""}]","","[{""datum"": ""16.06.2025"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz"", ""qualitaet"": ""Entscheidung""}, {""datum"": ""23.05.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Anhörung""}]"
+11-struktur-035,sitzung,null,null,"",null
+11-struktur-035,briefdatum,null,null,"",null
+11-struktur-035,unsicher,nein,nein,"",nein
+11-struktur-036,bv_vorhanden,ja,ja,"",ja
+11-struktur-036,bv_erste_zeile,17,17,"",17
+11-struktur-036,bv_letzte_zeile,22,22,"",22
+11-struktur-036,bv_mehrteilig,nein,nein,"",nein
+11-struktur-036,amt,"""66 - Amt für Verkehrsmanagement""","""66-AmtfürVerkehrsmanagement""","","""66 - Amt für Verkehrsmanagement"""
+11-struktur-036,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-036,beratungsfolge,"[{""datum"": ""16.12.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""16.12.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""16.12.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-036,sitzung,null,null,"",null
+11-struktur-036,briefdatum,null,null,"",null
+11-struktur-036,unsicher,nein,nein,"",nein
+11-struktur-037,bv_vorhanden,nein,nein,"",nein
+11-struktur-037,amt,null,null,"",null
+11-struktur-037,dezernat_titel,keins,keins,"",keins
+11-struktur-037,beratungsfolge,[],[],"",[]
+11-struktur-037,sitzung,null,null,"",null
+11-struktur-037,briefdatum,"""12.01.2021""","""12.01.2021""","","""12.01.2021"""
+11-struktur-037,unsicher,nein,nein,"",nein
+11-struktur-038,bv_vorhanden,nein,nein,"",nein
+11-struktur-038,amt,"""03/0 - Dezernat für Planen, Bauen, Wohnen und Grundstückswesen""","""03/0 - Dezernat für Planen, Bauen, Wohnen und Grundstückswesen""","","""03/0 - Dezernat für Planen, Bauen, Wohnen und Grundstückswesen"""
+11-struktur-038,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-038,beratungsfolge,"[{""datum"": ""10.07.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""10.07.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""10.07.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-038,sitzung,null,null,"",null
+11-struktur-038,briefdatum,null,null,"",null
+11-struktur-038,unsicher,nein,nein,"",nein
+11-struktur-039,bv_vorhanden,ja,ja,"",ja
+11-struktur-039,bv_erste_zeile,24,24,"",24
+11-struktur-039,bv_letzte_zeile,31,31,"",31
+11-struktur-039,bv_mehrteilig,nein,nein,"",nein
+11-struktur-039,amt,"""23 - Amt für Gebäudemanagement""","""23 - Amt für Gebäudemanagement""","","""23 - Amt für Gebäudemanagement"""
+11-struktur-039,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-039,beratungsfolge,"[{""datum"": ""02.05.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""08.05.2023"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""17.05.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""02.05.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""08.05.2023"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""17.05.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""02.05.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""08.05.2023"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""17.05.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-039,sitzung,null,null,"",null
+11-struktur-039,briefdatum,null,null,"",null
+11-struktur-039,unsicher,nein,nein,"",nein
+11-struktur-040,bv_vorhanden,nein,nein,"",nein
+11-struktur-040,amt,null,null,"",null
+11-struktur-040,dezernat_titel,keins,keins,"",keins
+11-struktur-040,beratungsfolge,[],[],"",[]
+11-struktur-040,sitzung,null,null,"",null
+11-struktur-040,briefdatum,"""02.02.2024""","""02.02.2024""","","""02.02.2024"""
+11-struktur-040,unsicher,nein,nein,"",nein
+11-struktur-041,bv_vorhanden,nein,nein,"",nein
+11-struktur-041,amt,"""20 - Kämmerei""","""20 - Kämmerei""","","""20 - Kämmerei"""
+11-struktur-041,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-041,beratungsfolge,"[{""datum"": ""08.11.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""08.11.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""08.11.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-041,sitzung,null,null,"",null
+11-struktur-041,briefdatum,null,null,"",null
+11-struktur-041,unsicher,nein,nein,"",nein
+11-struktur-042,bv_vorhanden,ja,ja,"",ja
+11-struktur-042,bv_erste_zeile,21,21,"",21
+11-struktur-042,bv_letzte_zeile,22,22,"",22
+11-struktur-042,bv_mehrteilig,nein,nein,"",nein
+11-struktur-042,amt,null,null,"",null
+11-struktur-042,dezernat_titel,keins,keins,"",keins
+11-struktur-042,beratungsfolge,[],[],"",[]
+11-struktur-042,sitzung,null,null,"",null
+11-struktur-042,briefdatum,"""06.02.2024""","""06.02.2024""","","""06.02.2024"""
+11-struktur-042,unsicher,nein,nein,"",nein
+11-struktur-043,bv_vorhanden,ja,ja,"",ja
+11-struktur-043,bv_erste_zeile,20,20,"",20
+11-struktur-043,bv_letzte_zeile,25,25,"",25
+11-struktur-043,bv_mehrteilig,nein,nein,"",nein
+11-struktur-043,amt,"""67 - Stadtentwässerungsbetrieb""","""67 - Stadtentwässerungsbetrieb""","","""67 - Stadtentwässerungsbetrieb"""
+11-struktur-043,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-043,beratungsfolge,"[{""datum"": ""22.08.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}, {""datum"": ""24.08.2023"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""22.08.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}, {""datum"": ""24.08.2023"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""22.08.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}, {""datum"": ""24.08.2023"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-043,sitzung,null,null,"",null
+11-struktur-043,briefdatum,null,null,"",null
+11-struktur-043,unsicher,nein,nein,"",nein
+11-struktur-044,bv_vorhanden,ja,ja,"",ja
+11-struktur-044,bv_erste_zeile,24,24,"",24
+11-struktur-044,bv_letzte_zeile,32,32,"",32
+11-struktur-044,bv_mehrteilig,nein,nein,"",nein
+11-struktur-044,amt,null,null,"",null
+11-struktur-044,dezernat_titel,keins,keins,"",keins
+11-struktur-044,beratungsfolge,[],[],"",[]
+11-struktur-044,sitzung,"{""datum"": ""03.11.2021"", ""gremium"": ""Sportausschuss""}","{""datum"": ""03.11.2021"", ""gremium"": ""Sportausschuss""}","","{""datum"": ""03.11.2021"", ""gremium"": ""Sportausschuss""}"
+11-struktur-044,briefdatum,"""29.10.2021""","""29.10.2021""","","""29.10.2021"""
+11-struktur-044,unsicher,nein,nein,"",nein
+11-struktur-045,bv_vorhanden,nein,nein,"",nein
+11-struktur-045,amt,"""Bezirksverwaltungsstelle 7""","""Bezirksverwaltungsstelle 7""","","""Bezirksverwaltungsstelle 7"""
+11-struktur-045,dezernat_titel,keins,keins,"",keins
+11-struktur-045,beratungsfolge,"[{""datum"": ""01.12.2020"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""01.12.2020"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""01.12.2020"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-045,sitzung,null,null,"",null
+11-struktur-045,briefdatum,null,null,"",null
+11-struktur-045,unsicher,nein,nein,"",nein
+11-struktur-046,bv_vorhanden,ja,ja,"",ja
+11-struktur-046,bv_erste_zeile,15,15,"",15
+11-struktur-046,bv_letzte_zeile,18,18,"",18
+11-struktur-046,bv_mehrteilig,nein,nein,"",nein
+11-struktur-046,amt,"""Bezirksverwaltungsstelle 6""","""Bezirksverwaltungsstelle 6""","","""Bezirksverwaltungsstelle 6"""
+11-struktur-046,dezernat_titel,keins,keins,"",keins
+11-struktur-046,beratungsfolge,"[{""datum"": ""30.08.2023"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""30.08.2023"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""30.08.2023"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-046,sitzung,null,null,"",null
+11-struktur-046,briefdatum,null,null,"",null
+11-struktur-046,unsicher,nein,nein,"",nein
+11-struktur-047,bv_vorhanden,nein,nein,"",nein
+11-struktur-047,amt,"""Bezirksverwaltungsstelle 8""","""Bezirksverwaltungsstelle 8""","","""Bezirksverwaltungsstelle 8"""
+11-struktur-047,dezernat_titel,keins,keins,"",keins
+11-struktur-047,beratungsfolge,"[{""datum"": ""02.09.2021"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""02.09.2021"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""02.09.2021"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-047,sitzung,null,null,"",null
+11-struktur-047,briefdatum,null,null,"",null
+11-struktur-047,unsicher,nein,nein,"",nein
+11-struktur-048,bv_vorhanden,nein,nein,"",nein
+11-struktur-048,amt,"""05/0 - Dezernat für Mobilität und Umwelt""","""05/0 - Dezernat für Mobilität und Umwelt""","","""05/0 - Dezernat für Mobilität und Umwelt"""
+11-struktur-048,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-048,beratungsfolge,"[{""datum"": ""27.06.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""27.06.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""27.06.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-048,sitzung,null,null,"",null
+11-struktur-048,briefdatum,null,null,"",null
+11-struktur-048,unsicher,nein,nein,"",nein
+11-struktur-049,bv_vorhanden,ja,ja,"",ja
+11-struktur-049,bv_erste_zeile,68,68,"",68
+11-struktur-049,bv_letzte_zeile,107,107,"",107
+11-struktur-049,bv_mehrteilig,nein,nein,"",nein
+11-struktur-049,amt,"""61 - Stadtplanungsamt""","""61 - Stadtplanungsamt""","","""61 - Stadtplanungsamt"""
+11-struktur-049,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-049,beratungsfolge,"[{""datum"": ""02.12.2020"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""25.11.2020"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""02.12.2020"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""25.11.2020"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""02.12.2020"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""25.11.2020"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-049,sitzung,null,null,"",null
+11-struktur-049,briefdatum,null,null,"",null
+11-struktur-049,unsicher,nein,nein,"",nein
+11-struktur-050,bv_vorhanden,ja,ja,"",ja
+11-struktur-050,bv_erste_zeile,18,18,"",18
+11-struktur-050,bv_letzte_zeile,20,20,"",20
+11-struktur-050,bv_mehrteilig,nein,nein,"",nein
+11-struktur-050,amt,"""Bezirksverwaltungsstelle 10""","""Bezirksverwaltungsstelle 10""","","""Bezirksverwaltungsstelle 10"""
+11-struktur-050,dezernat_titel,keins,keins,"",keins
+11-struktur-050,beratungsfolge,"[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-050,sitzung,null,null,"",null
+11-struktur-050,briefdatum,null,null,"",null
+11-struktur-050,unsicher,nein,nein,"",nein
+11-struktur-051,bv_vorhanden,nein,nein,"",nein
+11-struktur-051,amt,"""Bezirksverwaltungsstelle 7""","""Bezirksverwaltungsstelle 7""","","""Bezirksverwaltungsstelle 7"""
+11-struktur-051,dezernat_titel,keins,keins,"",keins
+11-struktur-051,beratungsfolge,"[{""datum"": ""27.02.2024"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""27.02.2024"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""27.02.2024"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-051,sitzung,null,null,"",null
+11-struktur-051,briefdatum,null,null,"",null
+11-struktur-051,unsicher,nein,nein,"",nein
+11-struktur-052,bv_vorhanden,ja,ja,"",ja
+11-struktur-052,bv_erste_zeile,15,15,"",15
+11-struktur-052,bv_letzte_zeile,18,18,"",18
+11-struktur-052,bv_mehrteilig,nein,nein,"",nein
+11-struktur-052,amt,"""14 - Rechnungsprüfungsamt""","""14 - Rechnungsprüfungsamt""","","""14 - Rechnungsprüfungsamt"""
+11-struktur-052,dezernat_titel,keins,keins,"",keins
+11-struktur-052,beratungsfolge,"[{""datum"": ""10.05.2022"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""23.06.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""10.05.2022"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""23.06.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""10.05.2022"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""23.06.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-052,sitzung,null,null,"",null
+11-struktur-052,briefdatum,null,null,"",null
+11-struktur-052,unsicher,nein,nein,"",nein
+11-struktur-053,bv_vorhanden,nein,nein,"",nein
+11-struktur-053,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-053,dezernat_titel,keins,keins,"",keins
+11-struktur-053,beratungsfolge,"[{""datum"": ""31.08.2023"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","[{""datum"": ""31.08.2023"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","","[{""datum"": ""31.08.2023"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]"
+11-struktur-053,sitzung,null,null,"",null
+11-struktur-053,briefdatum,null,null,"",null
+11-struktur-053,unsicher,nein,nein,"",nein
+11-struktur-054,bv_vorhanden,nein,nein,"",nein
+11-struktur-054,amt,null,null,"",null
+11-struktur-054,dezernat_titel,keins,keins,"",keins
+11-struktur-054,beratungsfolge,[],[],"",[]
+11-struktur-054,sitzung,"{""datum"": ""30.04.2025"", ""gremium"": ""Bezirksvertretung 4""}","{""datum"": ""30.04.2025"", ""gremium"": ""Bezirksvertretung 4""}","","{""datum"": ""30.04.2025"", ""gremium"": ""Bezirksvertretung 4""}"
+11-struktur-054,briefdatum,"""09.04.2025""","""09.04.2025""","","""09.04.2025"""
+11-struktur-054,unsicher,nein,nein,"",nein
+11-struktur-055,bv_vorhanden,ja,ja,"",ja
+11-struktur-055,bv_erste_zeile,19,19,"",19
+11-struktur-055,bv_letzte_zeile,25,25,"",25
+11-struktur-055,bv_mehrteilig,nein,nein,"",nein
+11-struktur-055,amt,"""51 - Amt für Soziales und Jugend / Jugend""","""51 - Amt für Soziales und Jugend / Jugend""","","""51 - Amt für Soziales und Jugend / Jugend"""
+11-struktur-055,dezernat_titel,Stadtdirektor,Stadtdirektor,"",Stadtdirektor
+11-struktur-055,beratungsfolge,"[{""datum"": ""13.11.2024"", ""gremium"": ""Jugendhilfeausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""13.11.2024"", ""gremium"": ""Jugendhilfeausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""13.11.2024"", ""gremium"": ""Jugendhilfeausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-055,sitzung,null,null,"",null
+11-struktur-055,briefdatum,null,null,"",null
+11-struktur-055,unsicher,nein,nein,"",nein
+11-struktur-056,bv_vorhanden,ja,ja,"",ja
+11-struktur-056,bv_erste_zeile,24,24,"",24
+11-struktur-056,bv_letzte_zeile,31,31,"",31
+11-struktur-056,bv_mehrteilig,nein,nein,"",nein
+11-struktur-056,amt,null,null,"",null
+11-struktur-056,dezernat_titel,keins,keins,"",keins
+11-struktur-056,beratungsfolge,[],[],"",[]
+11-struktur-056,sitzung,null,null,"",null
+11-struktur-056,briefdatum,"""09.01.2023""","""09.01.2023""","","""09.01.2023"""
+11-struktur-056,unsicher,nein,nein,"",nein
+11-struktur-057,bv_vorhanden,ja,ja,"",ja
+11-struktur-057,bv_erste_zeile,20,20,"",20
+11-struktur-057,bv_letzte_zeile,20,20,"",20
+11-struktur-057,bv_mehrteilig,nein,nein,"",nein
+11-struktur-057,amt,"""63 - Bauaufsichtsamt""","""63 - Bauaufsichtsamt""","","""63 - Bauaufsichtsamt"""
+11-struktur-057,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-057,beratungsfolge,"[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-057,sitzung,null,null,"",null
+11-struktur-057,briefdatum,null,null,"",null
+11-struktur-057,unsicher,nein,nein,"",nein
+11-struktur-058,bv_vorhanden,ja,ja,"",ja
+11-struktur-058,bv_erste_zeile,14,14,"",14
+11-struktur-058,bv_letzte_zeile,15,15,"",15
+11-struktur-058,bv_mehrteilig,nein,nein,"",nein
+11-struktur-058,amt,null,null,"",null
+11-struktur-058,dezernat_titel,keins,keins,"",keins
+11-struktur-058,beratungsfolge,[],[],"",[]
+11-struktur-058,sitzung,"{""datum"": ""04.03.2022"", ""gremium"": ""Bezirksvertretung 1""}","{""datum"": ""04.03.2022"", ""gremium"": ""Bezirksvertretung 1""}","","{""datum"": ""04.03.2022"", ""gremium"": ""Bezirksvertretung 1""}"
+11-struktur-058,briefdatum,"""18.02.2022""","""18.02.2022""","","""18.02.2022"""
+11-struktur-058,unsicher,nein,nein,"",nein
+11-struktur-059,bv_vorhanden,nein,nein,"",nein
+11-struktur-059,amt,null,null,"",null
+11-struktur-059,dezernat_titel,keins,keins,"",keins
+11-struktur-059,beratungsfolge,[],[],"",[]
+11-struktur-059,sitzung,null,null,"",null
+11-struktur-059,briefdatum,"""27.10.2020""","""27.10.2020""","","""27.10.2020"""
+11-struktur-059,unsicher,nein,nein,"",nein
+11-struktur-060,bv_vorhanden,ja,ja,"",ja
+11-struktur-060,bv_erste_zeile,19,19,"",19
+11-struktur-060,bv_letzte_zeile,30,30,"",30
+11-struktur-060,bv_mehrteilig,nein,nein,"",nein
+11-struktur-060,amt,"""14 - Amt für kommunale Prüfung""","""14 - Amt für kommunale Prüfung""","","""14 - Amt für kommunale Prüfung"""
+11-struktur-060,dezernat_titel,keins,keins,"",keins
+11-struktur-060,beratungsfolge,"[{""datum"": ""12.11.2024"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""12.12.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""12.11.2024"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""12.12.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""12.11.2024"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""12.12.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-060,sitzung,null,null,"",null
+11-struktur-060,briefdatum,null,null,"",null
+11-struktur-060,unsicher,nein,nein,"",nein
+11-struktur-061,bv_vorhanden,ja,ja,"",ja
+11-struktur-061,bv_erste_zeile,12,12,"",12
+11-struktur-061,bv_letzte_zeile,32,32,"",32
+11-struktur-061,bv_mehrteilig,nein,nein,"",nein
+11-struktur-061,amt,"""Bezirksverwaltungsstelle 7""","""Bezirksverwaltungsstelle 7""","","""Bezirksverwaltungsstelle 7"""
+11-struktur-061,dezernat_titel,keins,keins,"",keins
+11-struktur-061,beratungsfolge,"[{""datum"": ""21.06.2022"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""21.06.2022"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""21.06.2022"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-061,sitzung,null,null,"",null
+11-struktur-061,briefdatum,null,null,"",null
+11-struktur-061,unsicher,nein,nein,"",nein
+11-struktur-062,bv_vorhanden,ja,ja,"",ja
+11-struktur-062,bv_erste_zeile,20,20,"",20
+11-struktur-062,bv_letzte_zeile,37,37,"",37
+11-struktur-062,bv_mehrteilig,nein,nein,"",nein
+11-struktur-062,amt,"""51 - Jugendamt""","""51 - Jugendamt""","","""51 - Jugendamt"""
+11-struktur-062,dezernat_titel,Stadtdirektor,Stadtdirektor,"",Stadtdirektor
+11-struktur-062,beratungsfolge,"[{""datum"": ""24.11.2020"", ""gremium"": ""Jugendhilfeausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""24.11.2020"", ""gremium"": ""Jugendhilfeausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""24.11.2020"", ""gremium"": ""Jugendhilfeausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-062,sitzung,null,null,"",null
+11-struktur-062,briefdatum,null,null,"",null
+11-struktur-062,unsicher,nein,nein,"",nein
+11-struktur-063,bv_vorhanden,nein,nein,"",nein
+11-struktur-063,amt,"""Bezirksverwaltungsstelle 7""","""Bezirksverwaltungsstelle 7""","","""Bezirksverwaltungsstelle 7"""
+11-struktur-063,dezernat_titel,keins,keins,"",keins
+11-struktur-063,beratungsfolge,"[{""datum"": ""26.01.2021"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""26.01.2021"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""26.01.2021"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-063,sitzung,null,null,"",null
+11-struktur-063,briefdatum,null,null,"",null
+11-struktur-063,unsicher,nein,nein,"",nein
+11-struktur-064,bv_vorhanden,nein,nein,"",nein
+11-struktur-064,amt,"""Bezirksverwaltungsstelle 10""","""Bezirksverwaltungsstelle 10""","","""Bezirksverwaltungsstelle 10"""
+11-struktur-064,dezernat_titel,keins,keins,"",keins
+11-struktur-064,beratungsfolge,"[{""datum"": ""31.05.2022"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""31.05.2022"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""31.05.2022"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-064,sitzung,null,null,"",null
+11-struktur-064,briefdatum,null,null,"",null
+11-struktur-064,unsicher,nein,nein,"",nein
+11-struktur-065,bv_vorhanden,nein,nein,"",nein
+11-struktur-065,amt,"""01/02 - Amt für Gleichstellung und Antidiskriminierung""","""01/02 - Amt für Gleichstellung und Antidiskriminierung""","","""01/02 - Amt für Gleichstellung und Antidiskriminierung"""
+11-struktur-065,dezernat_titel,Oberbürgermeister,Oberbürgermeister,"",Oberbürgermeister
+11-struktur-065,beratungsfolge,"[{""datum"": ""08.10.2024"", ""gremium"": ""Ausschuss für Gleichstellung"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""08.10.2024"", ""gremium"": ""Ausschuss für Gleichstellung"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""08.10.2024"", ""gremium"": ""Ausschuss für Gleichstellung"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-065,sitzung,null,null,"",null
+11-struktur-065,briefdatum,null,null,"",null
+11-struktur-065,unsicher,nein,nein,"",nein
+11-struktur-066,bv_vorhanden,nein,nein,"",nein
+11-struktur-066,amt,null,null,"",null
+11-struktur-066,dezernat_titel,keins,keins,"",keins
+11-struktur-066,beratungsfolge,[],[],"",[]
+11-struktur-066,sitzung,"{""datum"": ""26.01.2022"", ""gremium"": ""Bezirksvertretung 4""}","{""datum"": ""26.01.2022"", ""gremium"": ""Bezirksvertretung 4""}","","{""datum"": ""26.01.2022"", ""gremium"": ""Bezirksvertretung 4""}"
+11-struktur-066,briefdatum,"""12.01.2022""","""12.01.2022""","","""12.01.2022"""
+11-struktur-066,unsicher,nein,nein,"",nein
+11-struktur-067,bv_vorhanden,ja,ja,"",ja
+11-struktur-067,bv_erste_zeile,20,20,"",20
+11-struktur-067,bv_letzte_zeile,25,25,"",25
+11-struktur-067,bv_mehrteilig,nein,nein,"",nein
+11-struktur-067,amt,"""63 - Bauaufsichtsamt""","""63 - Bauaufsichtsamt""","","""63 - Bauaufsichtsamt"""
+11-struktur-067,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-067,beratungsfolge,"[{""datum"": ""30.08.2024"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""30.08.2024"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""30.08.2024"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-067,sitzung,null,null,"",null
+11-struktur-067,briefdatum,null,null,"",null
+11-struktur-067,unsicher,nein,nein,"",nein
+11-struktur-068,bv_vorhanden,nein,nein,"",nein
+11-struktur-068,amt,null,null,"",null
+11-struktur-068,dezernat_titel,keins,keins,"",keins
+11-struktur-068,beratungsfolge,[],[],"",[]
+11-struktur-068,sitzung,"{""datum"": ""19.02.2021"", ""gremium"": ""Bezirksvertretung 9""}","{""datum"": ""19.02.2021"", ""gremium"": ""Bezirksvertretung 9""}","","{""datum"": ""19.02.2021"", ""gremium"": ""Bezirksvertretung 9""}"
+11-struktur-068,briefdatum,"""08.02.2021""","""08.02.2021""","","""08.02.2021"""
+11-struktur-068,unsicher,nein,nein,"",nein
+11-struktur-069,bv_vorhanden,ja,ja,"",ja
+11-struktur-069,bv_erste_zeile,22,22,"",22
+11-struktur-069,bv_letzte_zeile,27,27,"",27
+11-struktur-069,bv_mehrteilig,nein,nein,"",nein
+11-struktur-069,amt,null,null,"",null
+11-struktur-069,dezernat_titel,keins,keins,"",keins
+11-struktur-069,beratungsfolge,[],[],"",[]
+11-struktur-069,sitzung,"{""datum"": ""16.12.2021"", ""gremium"": ""Rat""}","{""datum"": ""16.12.2021"", ""gremium"": ""Rat""}","","{""datum"": ""16.12.2021"", ""gremium"": ""Rat""}"
+11-struktur-069,briefdatum,"""07.12.2021""","""07.12.2021""","","""07.12.2021"""
+11-struktur-069,unsicher,nein,nein,"",nein
+11-struktur-070,bv_vorhanden,ja,ja,"",ja
+11-struktur-070,bv_erste_zeile,14,14,"",14
+11-struktur-070,bv_letzte_zeile,27,27,"",27
+11-struktur-070,bv_mehrteilig,nein,nein,"",nein
+11-struktur-070,amt,null,null,"",null
+11-struktur-070,dezernat_titel,keins,keins,"",keins
+11-struktur-070,beratungsfolge,[],[],"",[]
+11-struktur-070,sitzung,"{""datum"": ""07.04.2022"", ""gremium"": ""Rat""}","{""datum"": ""07.04.2022"", ""gremium"": ""Rat""}","","{""datum"": ""07.04.2022"", ""gremium"": ""Rat""}"
+11-struktur-070,briefdatum,"""28.03.2022""","""28.03.2022""","","""28.03.2022"""
+11-struktur-070,unsicher,nein,nein,"",nein
+11-struktur-071,bv_vorhanden,ja,ja,"",ja
+11-struktur-071,bv_erste_zeile,27,27,"",27
+11-struktur-071,bv_letzte_zeile,38,38,"",38
+11-struktur-071,bv_mehrteilig,nein,nein,"",nein
+11-struktur-071,amt,null,null,"",null
+11-struktur-071,dezernat_titel,keins,keins,"",keins
+11-struktur-071,beratungsfolge,[],[],"",[]
+11-struktur-071,sitzung,"{""datum"": ""16.12.2021"", ""gremium"": ""Rat""}","{""datum"": ""16.12.2021"", ""gremium"": ""Rat""}","","{""datum"": ""16.12.2021"", ""gremium"": ""Rat""}"
+11-struktur-071,briefdatum,"""08.12.2021""","""08.12.2021""","","""08.12.2021"""
+11-struktur-071,unsicher,nein,nein,"",nein
+11-struktur-072,bv_vorhanden,ja,ja,"",ja
+11-struktur-072,bv_erste_zeile,20,20,"",20
+11-struktur-072,bv_letzte_zeile,25,25,"",25
+11-struktur-072,bv_mehrteilig,nein,nein,"",nein
+11-struktur-072,amt,"""63 - Bauaufsichtsamt""","""63 - Bauaufsichtsamt""","","""63 - Bauaufsichtsamt"""
+11-struktur-072,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-072,beratungsfolge,"[{""datum"": ""06.11.2024"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""06.11.2024"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""06.11.2024"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-072,sitzung,null,null,"",null
+11-struktur-072,briefdatum,null,null,"",null
+11-struktur-072,unsicher,nein,nein,"",nein
+11-struktur-073,bv_vorhanden,ja,ja,"",ja
+11-struktur-073,bv_erste_zeile,24,24,"",24
+11-struktur-073,bv_letzte_zeile,26,26,"",26
+11-struktur-073,bv_mehrteilig,nein,nein,"",nein
+11-struktur-073,amt,null,null,"",null
+11-struktur-073,dezernat_titel,keins,keins,"",keins
+11-struktur-073,beratungsfolge,[],[],"",[]
+11-struktur-073,sitzung,null,null,"",null
+11-struktur-073,briefdatum,"""12.06.2025""","""12.06.2025""","","""12.06.2025"""
+11-struktur-073,unsicher,nein,nein,"",nein
+11-struktur-074,bv_vorhanden,ja,ja,"",ja
+11-struktur-074,bv_erste_zeile,29,29,"",29
+11-struktur-074,bv_letzte_zeile,46,46,"",46
+11-struktur-074,bv_mehrteilig,nein,nein,"",nein
+11-struktur-074,amt,null,null,"",null
+11-struktur-074,dezernat_titel,keins,keins,"",keins
+11-struktur-074,beratungsfolge,[],[],"",[]
+11-struktur-074,sitzung,"{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}","{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}","","{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}"
+11-struktur-074,briefdatum,"""09.12.2022""","""09.12.2022""","","""09.12.2022"""
+11-struktur-074,unsicher,nein,nein,"",nein
+11-struktur-075,bv_vorhanden,nein,nein,"",nein
+11-struktur-075,amt,"""Bezirksverwaltungsstelle 9""","""Bezirksverwaltungsstelle 9""","","""Bezirksverwaltungsstelle 9"""
+11-struktur-075,dezernat_titel,keins,keins,"",keins
+11-struktur-075,beratungsfolge,"[{""datum"": ""06.12.2024"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""06.12.2024"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""06.12.2024"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-075,sitzung,null,null,"",null
+11-struktur-075,briefdatum,null,null,"",null
+11-struktur-075,unsicher,nein,nein,"",nein
+11-struktur-076,bv_vorhanden,ja,ja,"",ja
+11-struktur-076,bv_erste_zeile,15,15,"",15
+11-struktur-076,bv_letzte_zeile,20,20,"",20
+11-struktur-076,bv_mehrteilig,nein,nein,"",nein
+11-struktur-076,amt,null,null,"",null
+11-struktur-076,dezernat_titel,keins,keins,"",keins
+11-struktur-076,beratungsfolge,[],[],"",[]
+11-struktur-076,sitzung,"{""datum"": ""02.02.2022"", ""gremium"": ""Bezirksvertretung 6""}","{""datum"": ""02.02.2022"", ""gremium"": ""Bezirksvertretung 6""}","","{""datum"": ""02.02.2022"", ""gremium"": ""Bezirksvertretung 6""}"
+11-struktur-076,briefdatum,"""19.01.2022""","""19.01.2022""","","""19.01.2022"""
+11-struktur-076,unsicher,nein,nein,"",nein
+11-struktur-077,bv_vorhanden,ja,ja,"",ja
+11-struktur-077,bv_erste_zeile,20,20,"",20
+11-struktur-077,bv_letzte_zeile,33,33,"",33
+11-struktur-077,bv_mehrteilig,nein,nein,"",nein
+11-struktur-077,amt,"""50 - Amt für Soziales und Jugend / Soziales""","""50 - Amt für Soziales und Jugend / Soziales""","","""50 - Amt für Soziales und Jugend / Soziales"""
+11-struktur-077,dezernat_titel,Stadtdirektor,Stadtdirektor,"",Stadtdirektor
+11-struktur-077,beratungsfolge,"[{""datum"": ""05.11.2024"", ""gremium"": ""Ausschuss für Gesundheit und Soziales"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""05.11.2024"", ""gremium"": ""Ausschuss für Gesundheit und Soziales"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""05.11.2024"", ""gremium"": ""Ausschuss für Gesundheit und Soziales"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-077,sitzung,null,null,"",null
+11-struktur-077,briefdatum,null,null,"",null
+11-struktur-077,unsicher,nein,nein,"",nein
+11-struktur-078,bv_vorhanden,nein,nein,"",nein
+11-struktur-078,amt,null,null,"",null
+11-struktur-078,dezernat_titel,keins,keins,"",keins
+11-struktur-078,beratungsfolge,[],[],"",[]
+11-struktur-078,sitzung,null,null,"",null
+11-struktur-078,briefdatum,"""08.06.2021""","""08.06.2021""","","""08.06.2021"""
+11-struktur-078,unsicher,nein,nein,"",nein
+11-struktur-079,bv_vorhanden,nein,nein,"",nein
+11-struktur-079,amt,null,null,"",null
+11-struktur-079,dezernat_titel,keins,keins,"",keins
+11-struktur-079,beratungsfolge,[],[],"",[]
+11-struktur-079,sitzung,"{""datum"": ""07.09.2023"", ""gremium"": ""Rat""}","{""datum"": ""07.09.2023"", ""gremium"": ""Rat""}","","{""datum"": ""07.09.2023"", ""gremium"": ""Rat""}"
+11-struktur-079,briefdatum,"""22.08.2023""","""22.08.2023""","","""22.08.2023"""
+11-struktur-079,unsicher,nein,nein,"",nein
+11-struktur-080,bv_vorhanden,nein,nein,"",nein
+11-struktur-080,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-080,dezernat_titel,keins,keins,"",keins
+11-struktur-080,beratungsfolge,"[{""datum"": ""02.11.2023"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","[{""datum"": ""02.11.2023"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","","[{""datum"": ""02.11.2023"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]"
+11-struktur-080,sitzung,null,null,"",null
+11-struktur-080,briefdatum,null,null,"",null
+11-struktur-080,unsicher,nein,nein,"",nein
+11-struktur-081,bv_vorhanden,nein,nein,"",nein
+11-struktur-081,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-081,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-081,beratungsfolge,"[{""datum"": ""04.02.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""04.02.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""04.02.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-081,sitzung,null,null,"",null
+11-struktur-081,briefdatum,null,null,"",null
+11-struktur-081,unsicher,nein,nein,"",nein
+11-struktur-082,bv_vorhanden,ja,ja,"",ja
+11-struktur-082,bv_erste_zeile,18,18,"",18
+11-struktur-082,bv_letzte_zeile,24,24,"",24
+11-struktur-082,bv_mehrteilig,nein,nein,"",nein
+11-struktur-082,amt,"""14 - Amt für kommunale Prüfung""","""14 - Amt für kommunale Prüfung""","","""14 - Amt für kommunale Prüfung"""
+11-struktur-082,dezernat_titel,keins,keins,"",keins
+11-struktur-082,beratungsfolge,"[{""datum"": ""30.09.2025"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""09.10.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""30.09.2025"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""09.10.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""30.09.2025"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""09.10.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-082,sitzung,null,null,"",null
+11-struktur-082,briefdatum,null,null,"",null
+11-struktur-082,unsicher,nein,nein,"",nein
+11-struktur-083,bv_vorhanden,nein,nein,"",nein
+11-struktur-083,amt,null,null,"",null
+11-struktur-083,dezernat_titel,keins,keins,"",keins
+11-struktur-083,beratungsfolge,[],[],"",[]
+11-struktur-083,sitzung,null,null,"",null
+11-struktur-083,briefdatum,"""08.02.2022""","""08.02.2022""","","""08.02.2022"""
+11-struktur-083,unsicher,nein,nein,"",nein
+11-struktur-084,bv_vorhanden,nein,nein,"",nein
+11-struktur-084,amt,"""Bezirksverwaltungsstelle 8""","""Bezirksverwaltungsstelle 8""","","""Bezirksverwaltungsstelle 8"""
+11-struktur-084,dezernat_titel,keins,keins,"",keins
+11-struktur-084,beratungsfolge,"[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-084,sitzung,null,null,"",null
+11-struktur-084,briefdatum,null,null,"",null
+11-struktur-084,unsicher,nein,nein,"",nein
+11-struktur-085,bv_vorhanden,ja,ja,"",ja
+11-struktur-085,bv_erste_zeile,27,27,"",27
+11-struktur-085,bv_letzte_zeile,29,29,"",29
+11-struktur-085,bv_mehrteilig,nein,nein,"",nein
+11-struktur-085,amt,null,null,"",null
+11-struktur-085,dezernat_titel,keins,keins,"",keins
+11-struktur-085,beratungsfolge,[],[],"",[]
+11-struktur-085,sitzung,"{""datum"": ""10.03.2023"", ""gremium"": ""Bezirksvertretung 9""}","{""datum"": ""10.03.2023"", ""gremium"": ""Bezirksvertretung 9""}","","{""datum"": ""10.03.2023"", ""gremium"": ""Bezirksvertretung 9""}"
+11-struktur-085,briefdatum,"""27.02.2023""","""27.02.2023""","","""27.02.2023"""
+11-struktur-085,unsicher,nein,nein,"",nein
+11-struktur-086,bv_vorhanden,nein,nein,"",nein
+11-struktur-086,amt,null,null,"",null
+11-struktur-086,dezernat_titel,keins,keins,"",keins
+11-struktur-086,beratungsfolge,[],[],"",[]
+11-struktur-086,sitzung,"{""datum"": ""20.10.2024"", ""gremium"": ""Schulausschuss""}","{""datum"": ""20.10.2024"", ""gremium"": ""Schulausschuss""}","","{""datum"": ""20.10.2024"", ""gremium"": ""Schulausschuss""}"
+11-struktur-086,briefdatum,"""07.10.2024""","""07.10.2024""","","""07.10.2024"""
+11-struktur-086,unsicher,ja,ja,"",ja
+11-struktur-087,bv_vorhanden,nein,nein,"",nein
+11-struktur-087,amt,"""02/0 Stadtkämmerin""","""02/0 Stadtkämmerin""","","""02/0 Stadtkämmerin"""
+11-struktur-087,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-087,beratungsfolge,"[{""datum"": ""09.03.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""09.03.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""09.03.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-087,sitzung,null,null,"",null
+11-struktur-087,briefdatum,null,null,"",null
+11-struktur-087,unsicher,nein,nein,"",nein
+11-struktur-088,bv_vorhanden,ja,ja,"",ja
+11-struktur-088,bv_erste_zeile,19,19,"",19
+11-struktur-088,bv_letzte_zeile,40,40,"",40
+11-struktur-088,bv_mehrteilig,nein,nein,"",nein
+11-struktur-088,amt,"""41 - Kulturamt""","""41 - Kulturamt""","","""41 - Kulturamt"""
+11-struktur-088,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-088,beratungsfolge,"[{""datum"": ""10.07.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""10.07.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""10.07.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-088,sitzung,null,null,"",null
+11-struktur-088,briefdatum,null,null,"",null
+11-struktur-088,unsicher,nein,nein,"",nein
+11-struktur-089,bv_vorhanden,ja,ja,"",ja
+11-struktur-089,bv_erste_zeile,29,29,"",29
+11-struktur-089,bv_letzte_zeile,38,38,"",38
+11-struktur-089,bv_mehrteilig,nein,nein,"",nein
+11-struktur-089,amt,null,null,"",null
+11-struktur-089,dezernat_titel,keins,keins,"",keins
+11-struktur-089,beratungsfolge,[],[],"",[]
+11-struktur-089,sitzung,"{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}","{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}","","{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}"
+11-struktur-089,briefdatum,"""08.12.2022""","""08.12.2022""","","""08.12.2022"""
+11-struktur-089,unsicher,nein,nein,"",nein
+11-struktur-090,bv_vorhanden,ja,ja,"",ja
+11-struktur-090,bv_erste_zeile,28,28,"",28
+11-struktur-090,bv_letzte_zeile,96,96,"",96
+11-struktur-090,bv_mehrteilig,nein,nein,"",nein
+11-struktur-090,amt,null,null,"",null
+11-struktur-090,dezernat_titel,keins,keins,"",keins
+11-struktur-090,beratungsfolge,[],[],"",[]
+11-struktur-090,sitzung,"{""datum"": ""14.12.2023"", ""gremium"": ""Rat""}","{""datum"": ""14.12.2023"", ""gremium"": ""Rat""}","","{""datum"": ""14.12.2023"", ""gremium"": ""Rat""}"
+11-struktur-090,briefdatum,"""06.12.2023""","""06.12.2023""","","""06.12.2023"""
+11-struktur-090,unsicher,nein,nein,"",nein
+11-struktur-091,bv_vorhanden,nein,nein,"",nein
+11-struktur-091,amt,null,null,"",null
+11-struktur-091,dezernat_titel,keins,keins,"",keins
+11-struktur-091,beratungsfolge,[],[],"",[]
+11-struktur-091,sitzung,null,null,"",null
+11-struktur-091,briefdatum,null,null,"",null
+11-struktur-091,unsicher,ja,ja,"",ja
+11-struktur-092,bv_vorhanden,ja,ja,"",ja
+11-struktur-092,bv_erste_zeile,16,16,"",16
+11-struktur-092,bv_letzte_zeile,19,19,"",19
+11-struktur-092,bv_mehrteilig,nein,nein,"",nein
+11-struktur-092,amt,"""Bezirksverwaltungsstelle 9""","""Bezirksverwaltungsstelle 9""","","""Bezirksverwaltungsstelle 9"""
+11-struktur-092,dezernat_titel,keins,keins,"",keins
+11-struktur-092,beratungsfolge,"[{""datum"": ""25.06.2021"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""25.06.2021"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""25.06.2021"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-092,sitzung,null,null,"",null
+11-struktur-092,briefdatum,null,null,"",null
+11-struktur-092,unsicher,nein,nein,"",nein
+11-struktur-093,bv_vorhanden,nein,nein,"",nein
+11-struktur-093,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-093,dezernat_titel,keins,keins,"",keins
+11-struktur-093,beratungsfolge,"[{""datum"": ""20.02.2025"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","[{""datum"": ""20.02.2025"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","","[{""datum"": ""20.02.2025"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]"
+11-struktur-093,sitzung,null,null,"",null
+11-struktur-093,briefdatum,null,null,"",null
+11-struktur-093,unsicher,nein,nein,"",nein
+11-struktur-094,bv_vorhanden,ja,ja,"",ja
+11-struktur-094,bv_erste_zeile,22,22,"",22
+11-struktur-094,bv_letzte_zeile,26,26,"",26
+11-struktur-094,bv_mehrteilig,nein,nein,"",nein
+11-struktur-094,amt,null,null,"",null
+11-struktur-094,dezernat_titel,keins,keins,"",keins
+11-struktur-094,beratungsfolge,[],[],"",[]
+11-struktur-094,sitzung,"{""datum"": ""10.07.2025"", ""gremium"": ""Rat""}","{""datum"": ""10.07.2025"", ""gremium"": ""Rat""}","","{""datum"": ""10.07.2025"", ""gremium"": ""Rat""}"
+11-struktur-094,briefdatum,"""26.06.2025""","""26.06.2025""","","""26.06.2025"""
+11-struktur-094,unsicher,nein,nein,"",nein
+11-struktur-095,bv_vorhanden,ja,ja,"",ja
+11-struktur-095,bv_erste_zeile,15,15,"",15
+11-struktur-095,bv_letzte_zeile,89,89,"",89
+11-struktur-095,bv_mehrteilig,nein,nein,"",nein
+11-struktur-095,amt,"""Bezirksverwaltungsstelle 7""","""Bezirksverwaltungsstelle 7""","","""Bezirksverwaltungsstelle 7"""
+11-struktur-095,dezernat_titel,keins,keins,"",keins
+11-struktur-095,beratungsfolge,"[{""datum"": ""30.08.2022"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""30.08.2022"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""30.08.2022"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-095,sitzung,null,null,"",null
+11-struktur-095,briefdatum,null,null,"",null
+11-struktur-095,unsicher,nein,nein,"",nein
+11-struktur-096,bv_vorhanden,ja,ja,"",ja
+11-struktur-096,bv_erste_zeile,15,15,"",15
+11-struktur-096,bv_letzte_zeile,17,17,"",17
+11-struktur-096,bv_mehrteilig,nein,nein,"",nein
+11-struktur-096,amt,"""Bezirksverwaltungsstelle 10""","""Bezirksverwaltungsstelle 10""","","""Bezirksverwaltungsstelle 10"""
+11-struktur-096,dezernat_titel,keins,keins,"",keins
+11-struktur-096,beratungsfolge,"[{""datum"": ""02.09.2025"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""02.09.2025"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""02.09.2025"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-096,sitzung,null,null,"",null
+11-struktur-096,briefdatum,null,null,"",null
+11-struktur-096,unsicher,nein,nein,"",nein
+11-struktur-097,bv_vorhanden,nein,nein,"",nein
+11-struktur-097,amt,null,null,"",null
+11-struktur-097,dezernat_titel,keins,keins,"",keins
+11-struktur-097,beratungsfolge,[],[],"",[]
+11-struktur-097,sitzung,"{""datum"": ""23.06.2022"", ""gremium"": ""Rat""}","{""datum"": ""23.06.2022"", ""gremium"": ""Rat""}","","{""datum"": ""23.06.2022"", ""gremium"": ""Rat""}"
+11-struktur-097,briefdatum,"""14.06.2022""","""14.06.2022""","","""14.06.2022"""
+11-struktur-097,unsicher,nein,nein,"",nein
+11-struktur-098,bv_vorhanden,ja,ja,"",ja
+11-struktur-098,bv_erste_zeile,14,14,"",14
+11-struktur-098,bv_letzte_zeile,34,34,"",34
+11-struktur-098,bv_mehrteilig,nein,nein,"",nein
+11-struktur-098,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-098,dezernat_titel,Oberbürgermeister,Oberbürgermeister,"",Oberbürgermeister
+11-struktur-098,beratungsfolge,"[{""datum"": ""04.02.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""04.02.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""04.02.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-098,sitzung,null,null,"",null
+11-struktur-098,briefdatum,null,null,"",null
+11-struktur-098,unsicher,nein,nein,"",nein
+11-struktur-099,bv_vorhanden,nein,nein,"",nein
+11-struktur-099,amt,"""Bezirksverwaltungsstelle 1""","""Bezirksverwaltungsstelle 1""","","""Bezirksverwaltungsstelle 1"""
+11-struktur-099,dezernat_titel,keins,keins,"",keins
+11-struktur-099,beratungsfolge,"[{""datum"": ""05.05.2023"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""05.05.2023"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""05.05.2023"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-099,sitzung,null,null,"",null
+11-struktur-099,briefdatum,null,null,"",null
+11-struktur-099,unsicher,nein,nein,"",nein
+11-struktur-100,bv_vorhanden,nein,nein,"",nein
+11-struktur-100,amt,"""03/0 - Dezernat für Planen, Bauen, Mobilität und Grundstückswesen""","""03/0 - Dezernat für Planen, Bauen, Mobilität und Grundstückswesen""","","""03/0 - Dezernat für Planen, Bauen, Mobilität und Grundstückswesen"""
+11-struktur-100,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-100,beratungsfolge,"[{""datum"": ""19.05.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""19.05.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""19.05.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-100,sitzung,null,null,"",null
+11-struktur-100,briefdatum,null,null,"",null
+11-struktur-100,unsicher,nein,nein,"",nein
+11-struktur-101,bv_vorhanden,ja,ja,"",ja
+11-struktur-101,bv_erste_zeile,21,21,"",21
+11-struktur-101,bv_letzte_zeile,33,33,"",33
+11-struktur-101,bv_mehrteilig,nein,nein,"",nein
+11-struktur-101,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-101,dezernat_titel,keins,keins,"",keins
+11-struktur-101,beratungsfolge,"[{""datum"": ""05.11.2020"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""05.11.2020"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""05.11.2020"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-101,sitzung,null,null,"",null
+11-struktur-101,briefdatum,null,null,"",null
+11-struktur-101,unsicher,ja,ja,"",ja
+11-struktur-102,bv_vorhanden,ja,ja,"",ja
+11-struktur-102,bv_erste_zeile,21,21,"",21
+11-struktur-102,bv_letzte_zeile,23,23,"",23
+11-struktur-102,bv_mehrteilig,nein,nein,"",nein
+11-struktur-102,amt,"""63 - Bauaufsichtsamt""","""63 - Bauaufsichtsamt""","","""63 - Bauaufsichtsamt"""
+11-struktur-102,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-102,beratungsfolge,"[{""datum"": ""24.01.2024"", ""gremium"": ""Bezirksvertretung 4"", ""qualitaet"": ""Anhörung""}, {""datum"": ""24.01.2024"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""24.01.2024"", ""gremium"": ""Bezirksvertretung 4"", ""qualitaet"": ""Anhörung""}, {""datum"": ""24.01.2024"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""24.01.2024"", ""gremium"": ""Bezirksvertretung 4"", ""qualitaet"": ""Anhörung""}, {""datum"": ""24.01.2024"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-102,sitzung,null,null,"",null
+11-struktur-102,briefdatum,null,null,"",null
+11-struktur-102,unsicher,nein,nein,"",nein
+11-struktur-103,bv_vorhanden,nein,nein,"",nein
+11-struktur-103,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-103,dezernat_titel,keins,keins,"",keins
+11-struktur-103,beratungsfolge,"[{""datum"": ""05.12.2024"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","[{""datum"": ""05.12.2024"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","","[{""datum"": ""05.12.2024"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]"
+11-struktur-103,sitzung,null,null,"",null
+11-struktur-103,briefdatum,null,null,"",null
+11-struktur-103,unsicher,nein,nein,"",nein
+11-struktur-104,bv_vorhanden,nein,nein,"",nein
+11-struktur-104,amt,"""Bezirksverwaltungsstelle 8""","""Bezirksverwaltungsstelle 8""","","""Bezirksverwaltungsstelle 8"""
+11-struktur-104,dezernat_titel,keins,keins,"",keins
+11-struktur-104,beratungsfolge,"[{""datum"": ""15.05.2025"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""15.05.2025"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""15.05.2025"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-104,sitzung,null,null,"",null
+11-struktur-104,briefdatum,null,null,"",null
+11-struktur-104,unsicher,nein,nein,"",nein
+11-struktur-105,bv_vorhanden,nein,nein,"",nein
+11-struktur-105,amt,null,null,"",null
+11-struktur-105,dezernat_titel,keins,keins,"",keins
+11-struktur-105,beratungsfolge,[],[],"",[]
+11-struktur-105,sitzung,"{""datum"": ""25.03.2025"", ""gremium"": ""Ausschuss für Gesundheit und Soziales""}","{""datum"": ""25.03.2025"", ""gremium"": ""Ausschuss für Gesundheit und Soziales""}","","{""datum"": ""25.03.2025"", ""gremium"": ""Ausschuss für Gesundheit und Soziales""}"
+11-struktur-105,briefdatum,"""14.03.2025""","""14.03.2025""","","""14.03.2025"""
+11-struktur-105,unsicher,nein,nein,"",nein
+11-struktur-106,bv_vorhanden,nein,nein,"",nein
+11-struktur-106,amt,"""64 - Amt für Wohnungswesen""","""64 - Amt für Wohnungswesen""","","""64 - Amt für Wohnungswesen"""
+11-struktur-106,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-106,beratungsfolge,"[{""datum"": ""21.08.2023"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""21.08.2023"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""21.08.2023"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-106,sitzung,null,null,"",null
+11-struktur-106,briefdatum,null,null,"",null
+11-struktur-106,unsicher,nein,nein,"",nein
+11-struktur-107,bv_vorhanden,nein,nein,"",nein
+11-struktur-107,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-107,dezernat_titel,keins,keins,"",keins
+11-struktur-107,beratungsfolge,"[{""datum"": ""01.02.2024"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","[{""datum"": ""01.02.2024"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","","[{""datum"": ""01.02.2024"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]"
+11-struktur-107,sitzung,null,null,"",null
+11-struktur-107,briefdatum,null,null,"",null
+11-struktur-107,unsicher,nein,nein,"",nein
+11-struktur-108,bv_vorhanden,ja,ja,"",ja
+11-struktur-108,bv_erste_zeile,27,27,"",27
+11-struktur-108,bv_letzte_zeile,30,30,"",30
+11-struktur-108,bv_mehrteilig,nein,nein,"",nein
+11-struktur-108,amt,null,null,"",null
+11-struktur-108,dezernat_titel,keins,keins,"",keins
+11-struktur-108,beratungsfolge,[],[],"",[]
+11-struktur-108,sitzung,"{""datum"": ""29.03.2023"", ""gremium"": ""Bezirksvertretung 6""}","{""datum"": ""29.03.2023"", ""gremium"": ""Bezirksvertretung 6""}","","{""datum"": ""29.03.2023"", ""gremium"": ""Bezirksvertretung 6""}"
+11-struktur-108,briefdatum,"""15.03.2023""","""15.03.2023""","","""15.03.2023"""
+11-struktur-108,unsicher,nein,nein,"",nein
+11-struktur-109,bv_vorhanden,nein,nein,"",nein
+11-struktur-109,amt,null,null,"",null
+11-struktur-109,dezernat_titel,keins,keins,"",keins
+11-struktur-109,beratungsfolge,[],[],"",[]
+11-struktur-109,sitzung,"{""datum"": ""25.01.2022"", ""gremium"": ""Bezirksvertretung 10""}","{""datum"": ""25.01.2022"", ""gremium"": ""Bezirksvertretung 10""}","","{""datum"": ""25.01.2022"", ""gremium"": ""Bezirksvertretung 10""}"
+11-struktur-109,briefdatum,"""12.01.2022""","""12.01.2022""","","""12.01.2022"""
+11-struktur-109,unsicher,nein,nein,"",nein
+11-struktur-110,bv_vorhanden,ja,ja,"",ja
+11-struktur-110,bv_erste_zeile,18,18,"",18
+11-struktur-110,bv_letzte_zeile,19,19,"",19
+11-struktur-110,bv_mehrteilig,nein,nein,"",nein
+11-struktur-110,amt,"""14 - Amt für kommunale Prüfung""","""14 - Amt für kommunale Prüfung""","","""14 - Amt für kommunale Prüfung"""
+11-struktur-110,dezernat_titel,keins,keins,"",keins
+11-struktur-110,beratungsfolge,"[{""datum"": ""12.11.2024"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""21.11.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""12.11.2024"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""21.11.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""12.11.2024"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""21.11.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-110,sitzung,null,null,"",null
+11-struktur-110,briefdatum,null,null,"",null
+11-struktur-110,unsicher,nein,nein,"",nein
+11-struktur-111,bv_vorhanden,ja,ja,"",ja
+11-struktur-111,bv_erste_zeile,25,25,"",25
+11-struktur-111,bv_letzte_zeile,30,30,"",30
+11-struktur-111,bv_mehrteilig,nein,nein,"",nein
+11-struktur-111,amt,"""41 - Kulturamt""","""41 - Kulturamt""","","""41 - Kulturamt"""
+11-struktur-111,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-111,beratungsfolge,"[{""datum"": ""24.10.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""26.10.2023"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""30.10.2023"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""09.11.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""24.10.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""26.10.2023"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""30.10.2023"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""09.11.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""24.10.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""26.10.2023"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""30.10.2023"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""09.11.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-111,sitzung,null,null,"",null
+11-struktur-111,briefdatum,null,null,"",null
+11-struktur-111,unsicher,nein,nein,"",nein
+11-struktur-112,bv_vorhanden,nein,nein,"",nein
+11-struktur-112,amt,null,null,"",null
+11-struktur-112,dezernat_titel,keins,keins,"",keins
+11-struktur-112,beratungsfolge,[],[],"",[]
+11-struktur-112,sitzung,"{""datum"": ""08.11.2023"", ""gremium"": ""Bezirksvertretung 6""}","{""datum"": ""08.11.2023"", ""gremium"": ""Bezirksvertretung 6""}","","{""datum"": ""08.11.2023"", ""gremium"": ""Bezirksvertretung 6""}"
+11-struktur-112,briefdatum,"""25.10.2023""","""25.10.2023""","","""25.10.2023"""
+11-struktur-112,unsicher,nein,nein,"",nein
+11-struktur-113,bv_vorhanden,ja,ja,"",ja
+11-struktur-113,bv_erste_zeile,19,19,"",19
+11-struktur-113,bv_letzte_zeile,20,20,"",20
+11-struktur-113,bv_mehrteilig,nein,nein,"",nein
+11-struktur-113,amt,"""63 - Bauaufsichtsamt""","""63 - Bauaufsichtsamt""","","""63 - Bauaufsichtsamt"""
+11-struktur-113,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-113,beratungsfolge,"[{""datum"": ""17.06.2021"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""17.06.2021"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""17.06.2021"", ""gremium"": ""Bezirksvertretung 8"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-113,sitzung,null,null,"",null
+11-struktur-113,briefdatum,null,null,"",null
+11-struktur-113,unsicher,nein,nein,"",nein
+11-struktur-114,bv_vorhanden,ja,ja,"",ja
+11-struktur-114,bv_erste_zeile,21,21,"",21
+11-struktur-114,bv_letzte_zeile,31,31,"",31
+11-struktur-114,bv_mehrteilig,nein,nein,"",nein
+11-struktur-114,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-114,dezernat_titel,Oberbürgermeister,Oberbürgermeister,"",Oberbürgermeister
+11-struktur-114,beratungsfolge,"[{""datum"": ""02.02.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""02.02.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""02.02.2023"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-114,sitzung,null,null,"",null
+11-struktur-114,briefdatum,null,null,"",null
+11-struktur-114,unsicher,nein,nein,"",nein
+11-struktur-115,bv_vorhanden,ja,ja,"",ja
+11-struktur-115,bv_erste_zeile,20,20,"",20
+11-struktur-115,bv_letzte_zeile,24,24,"",24
+11-struktur-115,bv_mehrteilig,nein,nein,"",nein
+11-struktur-115,amt,"""67 - Stadtentwässerungsbetrieb""","""67 - Stadtentwässerungsbetrieb""","","""67 - Stadtentwässerungsbetrieb"""
+11-struktur-115,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-115,beratungsfolge,"[{""datum"": ""03.09.2024"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""09.09.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""19.09.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""03.09.2024"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""09.09.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""19.09.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""03.09.2024"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""09.09.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""19.09.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-115,sitzung,null,null,"",null
+11-struktur-115,briefdatum,null,null,"",null
+11-struktur-115,unsicher,nein,nein,"",nein
+11-struktur-116,bv_vorhanden,ja,ja,"",ja
+11-struktur-116,bv_erste_zeile,24,24,"",24
+11-struktur-116,bv_letzte_zeile,31,31,"",31
+11-struktur-116,bv_mehrteilig,nein,nein,"",nein
+11-struktur-116,amt,null,null,"",null
+11-struktur-116,dezernat_titel,keins,keins,"",keins
+11-struktur-116,beratungsfolge,[],[],"",[]
+11-struktur-116,sitzung,null,null,"",null
+11-struktur-116,briefdatum,"""03.06.2021""","""03.06.2021""","","""03.06.2021"""
+11-struktur-116,unsicher,nein,nein,"",nein
+11-struktur-117,bv_vorhanden,ja,ja,"",ja
+11-struktur-117,bv_erste_zeile,20,20,"",20
+11-struktur-117,bv_letzte_zeile,20,20,"",20
+11-struktur-117,bv_mehrteilig,nein,nein,"",nein
+11-struktur-117,amt,"""63 - Bauaufsichtsamt""","""63 - Bauaufsichtsamt""","","""63 - Bauaufsichtsamt"""
+11-struktur-117,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-117,beratungsfolge,"[{""datum"": ""08.10.2024"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""08.10.2024"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""08.10.2024"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-117,sitzung,null,null,"",null
+11-struktur-117,briefdatum,null,null,"",null
+11-struktur-117,unsicher,nein,nein,"",nein
+11-struktur-118,bv_vorhanden,ja,ja,"",ja
+11-struktur-118,bv_erste_zeile,22,22,"",22
+11-struktur-118,bv_letzte_zeile,35,35,"",35
+11-struktur-118,bv_mehrteilig,nein,nein,"",nein
+11-struktur-118,amt,null,null,"",null
+11-struktur-118,dezernat_titel,keins,keins,"",keins
+11-struktur-118,beratungsfolge,[],[],"",[]
+11-struktur-118,sitzung,"{""datum"": ""30.05.2022"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung""}","{""datum"": ""30.05.2022"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung""}","","{""datum"": ""30.05.2022"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung""}"
+11-struktur-118,briefdatum,"""30.05.2022""","""30.05.2022""","","""30.05.2022"""
+11-struktur-118,unsicher,nein,nein,"",nein
+11-struktur-119,bv_vorhanden,ja,ja,"",ja
+11-struktur-119,bv_erste_zeile,16,16,"",16
+11-struktur-119,bv_letzte_zeile,20,20,"",20
+11-struktur-119,bv_mehrteilig,nein,nein,"",nein
+11-struktur-119,amt,"""67 - Stadtentwässerungsbetrieb""","""67-Stadtentwässerungsbetrieb""","","""67 - Stadtentwässerungsbetrieb"""
+11-struktur-119,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-119,beratungsfolge,"[{""datum"": ""15.02.2022"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""15.02.2022"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""15.02.2022"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-119,sitzung,null,null,"",null
+11-struktur-119,briefdatum,null,null,"",null
+11-struktur-119,unsicher,nein,nein,"",nein
+11-struktur-120,bv_vorhanden,ja,ja,"",ja
+11-struktur-120,bv_erste_zeile,16,16,"",16
+11-struktur-120,bv_letzte_zeile,18,18,"",18
+11-struktur-120,bv_mehrteilig,nein,nein,"",nein
+11-struktur-120,amt,null,null,"",null
+11-struktur-120,dezernat_titel,keins,keins,"",keins
+11-struktur-120,beratungsfolge,[],[],"",[]
+11-struktur-120,sitzung,"{""datum"": ""30.03.2022"", ""gremium"": ""Bezirksvertretung 4""}","{""datum"": ""30.03.2022"", ""gremium"": ""Bezirksvertretung 4""}","","{""datum"": ""30.03.2022"", ""gremium"": ""Bezirksvertretung 4""}"
+11-struktur-120,briefdatum,"""16.03.2022""","""16.03.2022""","","""16.03.2022"""
+11-struktur-120,unsicher,nein,nein,"",nein
+11-struktur-121,bv_vorhanden,nein,nein,"",nein
+11-struktur-121,amt,null,null,"",null
+11-struktur-121,dezernat_titel,keins,keins,"",keins
+11-struktur-121,beratungsfolge,[],[],"",[]
+11-struktur-121,sitzung,"{""datum"": ""22.11.2023"", ""gremium"": ""Bezirksvertretung 4""}","{""datum"": ""22.11.2023"", ""gremium"": ""Bezirksvertretung 4""}","","{""datum"": ""22.11.2023"", ""gremium"": ""Bezirksvertretung 4""}"
+11-struktur-121,briefdatum,"""08.11.2023""","""08.11.2023""","","""08.11.2023"""
+11-struktur-121,unsicher,nein,nein,"",nein
+11-struktur-122,bv_vorhanden,ja,ja,"",ja
+11-struktur-122,bv_erste_zeile,27,27,"",27
+11-struktur-122,bv_letzte_zeile,28,28,"",28
+11-struktur-122,bv_mehrteilig,nein,nein,"",nein
+11-struktur-122,amt,null,null,"",null
+11-struktur-122,dezernat_titel,keins,keins,"",keins
+11-struktur-122,beratungsfolge,[],[],"",[]
+11-struktur-122,sitzung,"{""datum"": ""31.08.2022"", ""gremium"": ""Bezirksvertretung 6""}","{""datum"": ""31.08.2022"", ""gremium"": ""Bezirksvertretung 6""}","","{""datum"": ""31.08.2022"", ""gremium"": ""Bezirksvertretung 6""}"
+11-struktur-122,briefdatum,"""17.08.2022""","""17.08.2022""","","""17.08.2022"""
+11-struktur-122,unsicher,nein,nein,"",nein
+11-struktur-123,bv_vorhanden,ja,ja,"",ja
+11-struktur-123,bv_erste_zeile,15,15,"",15
+11-struktur-123,bv_letzte_zeile,17,17,"",17
+11-struktur-123,bv_mehrteilig,nein,nein,"",nein
+11-struktur-123,amt,"""Bezirksverwaltungsstelle 9""","""Bezirksverwaltungsstelle 9""","","""Bezirksverwaltungsstelle 9"""
+11-struktur-123,dezernat_titel,keins,keins,"",keins
+11-struktur-123,beratungsfolge,"[{""datum"": ""16.05.2025"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""16.05.2025"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""16.05.2025"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-123,sitzung,null,null,"",null
+11-struktur-123,briefdatum,null,null,"",null
+11-struktur-123,unsicher,nein,nein,"",nein
+11-struktur-124,bv_vorhanden,ja,ja,"",ja
+11-struktur-124,bv_erste_zeile,14,14,"",14
+11-struktur-124,bv_letzte_zeile,19,19,"",19
+11-struktur-124,bv_mehrteilig,nein,nein,"",nein
+11-struktur-124,amt,null,null,"",null
+11-struktur-124,dezernat_titel,keins,keins,"",keins
+11-struktur-124,beratungsfolge,[],[],"",[]
+11-struktur-124,sitzung,"{""datum"": ""28.01.2022"", ""gremium"": ""Bezirksvertretung 1""}","{""datum"": ""28.01.2022"", ""gremium"": ""Bezirksvertretung 1""}","","{""datum"": ""28.01.2022"", ""gremium"": ""Bezirksvertretung 1""}"
+11-struktur-124,briefdatum,"""13.01.2022""","""13.01.2022""","","""13.01.2022"""
+11-struktur-124,unsicher,nein,nein,"",nein
+11-struktur-125,bv_vorhanden,nein,nein,"",nein
+11-struktur-125,amt,"""Bezirksverwaltungsstelle 9""","""Bezirksverwaltungsstelle 9""","","""Bezirksverwaltungsstelle 9"""
+11-struktur-125,dezernat_titel,keins,keins,"",keins
+11-struktur-125,beratungsfolge,"[{""datum"": ""03.11.2023"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""03.11.2023"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""03.11.2023"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-125,sitzung,null,null,"",null
+11-struktur-125,briefdatum,null,null,"",null
+11-struktur-125,unsicher,nein,nein,"",nein
+11-struktur-126,bv_vorhanden,ja,ja,"",ja
+11-struktur-126,bv_erste_zeile,23,23,"",23
+11-struktur-126,bv_letzte_zeile,28,28,"",28
+11-struktur-126,bv_mehrteilig,nein,nein,"",nein
+11-struktur-126,amt,"""66 - Amt für Verkehrsmanagement""","""66 - Amt für Verkehrsmanagement""","","""66 - Amt für Verkehrsmanagement"""
+11-struktur-126,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-126,beratungsfolge,"[{""datum"": ""26.01.2021"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Anhörung""}, {""datum"": ""13.01.2021"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""26.01.2021"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Anhörung""}, {""datum"": ""13.01.2021"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""26.01.2021"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Anhörung""}, {""datum"": ""13.01.2021"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-126,sitzung,null,null,"",null
+11-struktur-126,briefdatum,null,null,"",null
+11-struktur-126,unsicher,nein,nein,"",nein
+11-struktur-127,bv_vorhanden,ja,ja,"",ja
+11-struktur-127,bv_erste_zeile,17,17,"",17
+11-struktur-127,bv_letzte_zeile,19,19,"",19
+11-struktur-127,bv_mehrteilig,nein,nein,"",nein
+11-struktur-127,amt,"""61 - Stadtplanungsamt""","""61 - Stadtplanungsamt""","","""61 - Stadtplanungsamt"""
+11-struktur-127,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-127,beratungsfolge,"[{""datum"": ""16.02.2022"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""21.02.2022"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""16.02.2022"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""21.02.2022"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""16.02.2022"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""21.02.2022"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-127,sitzung,null,null,"",null
+11-struktur-127,briefdatum,null,null,"",null
+11-struktur-127,unsicher,nein,nein,"",nein
+11-struktur-128,bv_vorhanden,ja,ja,"",ja
+11-struktur-128,bv_erste_zeile,23,23,"",23
+11-struktur-128,bv_letzte_zeile,28,28,"",28
+11-struktur-128,bv_mehrteilig,nein,nein,"",nein
+11-struktur-128,amt,null,null,"",null
+11-struktur-128,dezernat_titel,keins,keins,"",keins
+11-struktur-128,beratungsfolge,[],[],"",[]
+11-struktur-128,sitzung,"{""datum"": ""07.11.2024"", ""gremium"": ""AÖE""}","{""datum"": ""07.11.2024"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz""}","{""datum"": ""07.11.2024"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz""}","{""datum"": ""07.11.2024"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz""}"
+11-struktur-128,briefdatum,"""31.10.2024""","""31.10.2024""","","""31.10.2024"""
+11-struktur-128,unsicher,ja,ja,"",ja
+11-struktur-129,bv_vorhanden,ja,ja,"",ja
+11-struktur-129,bv_erste_zeile,20,20,"",20
+11-struktur-129,bv_letzte_zeile,23,23,"",23
+11-struktur-129,bv_mehrteilig,nein,nein,"",nein
+11-struktur-129,amt,"""52 - Sportamt""","""52 - Sportamt""","","""52 - Sportamt"""
+11-struktur-129,dezernat_titel,Stadtdirektor,Stadtdirektor,"",Stadtdirektor
+11-struktur-129,beratungsfolge,"[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-129,sitzung,null,null,"",null
+11-struktur-129,briefdatum,null,null,"",null
+11-struktur-129,unsicher,nein,nein,"",nein
+11-struktur-130,bv_vorhanden,ja,ja,"",ja
+11-struktur-130,bv_erste_zeile,14,14,"",14
+11-struktur-130,bv_letzte_zeile,15,15,"",15
+11-struktur-130,bv_mehrteilig,nein,nein,"",nein
+11-struktur-130,amt,"""Bezirksverwaltungsstelle 3""","""Bezirksverwaltungsstelle 3""","","""Bezirksverwaltungsstelle 3"""
+11-struktur-130,dezernat_titel,keins,keins,"",keins
+11-struktur-130,beratungsfolge,"[{""datum"": ""05.03.2024"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""05.03.2024"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""05.03.2024"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-130,sitzung,null,null,"",null
+11-struktur-130,briefdatum,null,null,"",null
+11-struktur-130,unsicher,nein,nein,"",nein
+11-struktur-131,bv_vorhanden,ja,ja,"",ja
+11-struktur-131,bv_erste_zeile,16,16,"",16
+11-struktur-131,bv_letzte_zeile,18,18,"",18
+11-struktur-131,bv_mehrteilig,nein,nein,"",nein
+11-struktur-131,amt,"""Bezirksverwaltungsstelle 6""","""Bezirksverwaltungsstelle 6""","","""Bezirksverwaltungsstelle 6"""
+11-struktur-131,dezernat_titel,keins,keins,"",keins
+11-struktur-131,beratungsfolge,"[{""datum"": ""02.12.2020"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""02.12.2020"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""02.12.2020"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-131,sitzung,null,null,"",null
+11-struktur-131,briefdatum,null,null,"",null
+11-struktur-131,unsicher,nein,nein,"",nein
+11-struktur-132,bv_vorhanden,ja,ja,"",ja
+11-struktur-132,bv_erste_zeile,19,19,"",19
+11-struktur-132,bv_letzte_zeile,24,24,"",24
+11-struktur-132,bv_mehrteilig,nein,nein,"",nein
+11-struktur-132,amt,"""51 - Amt für Soziales und Jugend / Jugend""","""51 - Amt für Soziales und Jugend / Jugend""","","""51 - Amt für Soziales und Jugend / Jugend"""
+11-struktur-132,dezernat_titel,Stadtdirektor,Stadtdirektor,"",Stadtdirektor
+11-struktur-132,beratungsfolge,"[{""datum"": ""20.11.2024"", ""gremium"": ""Jugendhilfeausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""20.11.2024"", ""gremium"": ""Jugendhilfeausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""20.11.2024"", ""gremium"": ""Jugendhilfeausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-132,sitzung,null,null,"",null
+11-struktur-132,briefdatum,null,null,"",null
+11-struktur-132,unsicher,nein,nein,"",nein
+11-struktur-133,bv_vorhanden,nein,nein,"",nein
+11-struktur-133,amt,"""80 - Wirtschaftsförderungsamt""","""80 - Wirtschaftsförderungsamt""","","""80 - Wirtschaftsförderungsamt"""
+11-struktur-133,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-133,beratungsfolge,"[{""datum"": ""16.09.2025"", ""gremium"": ""Ausschuss für Wirtschaftsförderung, internationale und regionale Zusammenarbeit"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""22.09.2025"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""16.09.2025"", ""gremium"": ""Ausschuss für Wirtschaftsförderung, internationale und regionale Zusammenarbeit"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""22.09.2025"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""16.09.2025"", ""gremium"": ""Ausschuss für Wirtschaftsförderung, internationale und regionale Zusammenarbeit"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""22.09.2025"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-133,sitzung,null,null,"",null
+11-struktur-133,briefdatum,null,null,"",null
+11-struktur-133,unsicher,nein,nein,"",nein
+11-struktur-134,bv_vorhanden,ja,ja,"",ja
+11-struktur-134,bv_erste_zeile,21,21,"",21
+11-struktur-134,bv_letzte_zeile,22,22,"",22
+11-struktur-134,bv_mehrteilig,nein,nein,"",nein
+11-struktur-134,amt,null,null,"",null
+11-struktur-134,dezernat_titel,keins,keins,"",keins
+11-struktur-134,beratungsfolge,[],[],"",[]
+11-struktur-134,sitzung,"{""datum"": ""09.06.2021"", ""gremium"": ""Ausschuss für Gesundheit und Soziales""}","{""datum"": ""09.06.2021"", ""gremium"": ""Ausschuss für Gesundheit und Soziales""}","","{""datum"": ""09.06.2021"", ""gremium"": ""Ausschuss für Gesundheit und Soziales""}"
+11-struktur-134,briefdatum,"""27.05.2021""","""27.05.2021""","","""27.05.2021"""
+11-struktur-134,unsicher,nein,nein,"",nein
+11-struktur-135,bv_vorhanden,nein,nein,"",nein
+11-struktur-135,amt,null,null,"",null
+11-struktur-135,dezernat_titel,keins,keins,"",keins
+11-struktur-135,beratungsfolge,[],[],"",[]
+11-struktur-135,sitzung,null,null,"",null
+11-struktur-135,briefdatum,"""02.05.2022""","""02.05.2022""","","""02.05.2022"""
+11-struktur-135,unsicher,nein,nein,"",nein
+11-struktur-136,bv_vorhanden,ja,ja,"",ja
+11-struktur-136,bv_erste_zeile,22,22,"",22
+11-struktur-136,bv_letzte_zeile,24,24,"",24
+11-struktur-136,bv_mehrteilig,nein,nein,"",nein
+11-struktur-136,amt,null,null,"",null
+11-struktur-136,dezernat_titel,keins,keins,"",keins
+11-struktur-136,beratungsfolge,[],[],"",[]
+11-struktur-136,sitzung,"{""datum"": ""03.12.2020"", ""gremium"": ""Bezirksvertretung 10""}","{""datum"": ""03.12.2020"", ""gremium"": ""Bezirksvertretung 10""}","","{""datum"": ""03.12.2020"", ""gremium"": ""Bezirksvertretung 10""}"
+11-struktur-136,briefdatum,"""02.12.2020""","""02.12.2020""","","""02.12.2020"""
+11-struktur-136,unsicher,nein,nein,"",nein
+11-struktur-137,bv_vorhanden,ja,ja,"",ja
+11-struktur-137,bv_erste_zeile,24,24,"",24
+11-struktur-137,bv_letzte_zeile,32,32,"",32
+11-struktur-137,bv_mehrteilig,nein,nein,"",nein
+11-struktur-137,amt,null,null,"",null
+11-struktur-137,dezernat_titel,keins,keins,"",keins
+11-struktur-137,beratungsfolge,[],[],"",[]
+11-struktur-137,sitzung,null,null,"",null
+11-struktur-137,briefdatum,"""04.05.2021""","""04.05.2021""","","""04.05.2021"""
+11-struktur-137,unsicher,nein,nein,"",nein
+11-struktur-138,bv_vorhanden,nein,nein,"",nein
+11-struktur-138,amt,"""05/0 - Dezernat für Mobilität und Umwelt""","""05/0 - Dezernat für Mobilität und Umwelt""","","""05/0 - Dezernat für Mobilität und Umwelt"""
+11-struktur-138,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-138,beratungsfolge,"[{""datum"": ""12.12.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""12.12.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""12.12.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-138,sitzung,null,null,"",null
+11-struktur-138,briefdatum,null,null,"",null
+11-struktur-138,unsicher,nein,nein,"",nein
+11-struktur-139,bv_vorhanden,ja,ja,"",ja
+11-struktur-139,bv_erste_zeile,28,28,"",28
+11-struktur-139,bv_letzte_zeile,30,30,"",30
+11-struktur-139,bv_mehrteilig,nein,nein,"",nein
+11-struktur-139,amt,null,null,"",null
+11-struktur-139,dezernat_titel,keins,keins,"",keins
+11-struktur-139,beratungsfolge,[],[],"",[]
+11-struktur-139,sitzung,"{""datum"": ""30.06.2021"", ""gremium"": ""Bezirksvertretung 6""}","{""datum"": ""30.06.2021"", ""gremium"": ""Bezirksvertretung 6""}","","{""datum"": ""30.06.2021"", ""gremium"": ""Bezirksvertretung 6""}"
+11-struktur-139,briefdatum,"""16.06.2021""","""16.06.2021""","","""16.06.2021"""
+11-struktur-139,unsicher,nein,nein,"",nein
+11-struktur-140,bv_vorhanden,ja,ja,"",ja
+11-struktur-140,bv_erste_zeile,22,22,"",22
+11-struktur-140,bv_letzte_zeile,38,38,"",38
+11-struktur-140,bv_mehrteilig,nein,nein,"",nein
+11-struktur-140,amt,"""20 - Kämmerei""","""20 - Kämmerei""","","""20 - Kämmerei"""
+11-struktur-140,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-140,beratungsfolge,"[{""datum"": ""25.01.2021"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""25.01.2021"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""25.01.2021"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-140,sitzung,null,null,"",null
+11-struktur-140,briefdatum,null,null,"",null
+11-struktur-140,unsicher,nein,nein,"",nein
+11-struktur-141,bv_vorhanden,ja,ja,"",ja
+11-struktur-141,bv_erste_zeile,15,15,"",15
+11-struktur-141,bv_letzte_zeile,17,17,"",17
+11-struktur-141,bv_mehrteilig,nein,nein,"",nein
+11-struktur-141,amt,"""Bezirksverwaltungsstelle 9""","""Bezirksverwaltungsstelle 9""","","""Bezirksverwaltungsstelle 9"""
+11-struktur-141,dezernat_titel,keins,keins,"",keins
+11-struktur-141,beratungsfolge,"[{""datum"": ""26.09.2025"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""26.09.2025"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""26.09.2025"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-141,sitzung,null,null,"",null
+11-struktur-141,briefdatum,null,null,"",null
+11-struktur-141,unsicher,nein,nein,"",nein
+11-struktur-142,bv_vorhanden,ja,ja,"",ja
+11-struktur-142,bv_erste_zeile,19,19,"",19
+11-struktur-142,bv_letzte_zeile,21,21,"",21
+11-struktur-142,bv_mehrteilig,nein,nein,"",nein
+11-struktur-142,amt,"""66 - Amt für Verkehrsmanagement""","""66 - Amt für Verkehrsmanagement""","","""66 - Amt für Verkehrsmanagement"""
+11-struktur-142,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-142,beratungsfolge,"[{""datum"": ""23.05.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""23.05.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""23.05.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-142,sitzung,null,null,"",null
+11-struktur-142,briefdatum,null,null,"",null
+11-struktur-142,unsicher,nein,nein,"",nein
+11-struktur-143,bv_vorhanden,ja,ja,"",ja
+11-struktur-143,bv_erste_zeile,18,18,"",18
+11-struktur-143,bv_letzte_zeile,23,23,"",23
+11-struktur-143,bv_mehrteilig,nein,nein,"",nein
+11-struktur-143,amt,"""14 - Amt für kommunale Prüfung""","""14 - Amt für kommunale Prüfung""","","""14 - Amt für kommunale Prüfung"""
+11-struktur-143,dezernat_titel,keins,keins,"",keins
+11-struktur-143,beratungsfolge,"[{""datum"": ""18.02.2025"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""10.04.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""18.02.2025"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""10.04.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""18.02.2025"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""10.04.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-143,sitzung,null,null,"",null
+11-struktur-143,briefdatum,null,null,"",null
+11-struktur-143,unsicher,nein,nein,"",nein
+11-struktur-144,bv_vorhanden,ja,ja,"",ja
+11-struktur-144,bv_erste_zeile,20,20,"",20
+11-struktur-144,bv_letzte_zeile,22,22,"",22
+11-struktur-144,bv_mehrteilig,nein,nein,"",nein
+11-struktur-144,amt,"""63 - Bauaufsichtsamt""","""63 - Bauaufsichtsamt""","","""63 - Bauaufsichtsamt"""
+11-struktur-144,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-144,beratungsfolge,"[{""datum"": ""29.04.2025"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""29.04.2025"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""29.04.2025"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-144,sitzung,null,null,"",null
+11-struktur-144,briefdatum,null,null,"",null
+11-struktur-144,unsicher,nein,nein,"",nein
+11-struktur-145,bv_vorhanden,nein,nein,"",nein
+11-struktur-145,amt,"""19 - Amt für Umwelt- und Verbraucherschutz""","""19 - Amt für Umwelt- und Verbraucherschutz""","","""19 - Amt für Umwelt- und Verbraucherschutz"""
+11-struktur-145,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-145,beratungsfolge,"[{""datum"": ""19.11.2020"", ""gremium"": ""Ausschuss für Umweltschutz"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""19.11.2020"", ""gremium"": ""Ausschuss für Umweltschutz"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""19.11.2020"", ""gremium"": ""Ausschuss für Umweltschutz"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-145,sitzung,null,null,"",null
+11-struktur-145,briefdatum,null,null,"",null
+11-struktur-145,unsicher,nein,nein,"",nein
+11-struktur-146,bv_vorhanden,ja,ja,"",ja
+11-struktur-146,bv_erste_zeile,16,16,"",16
+11-struktur-146,bv_letzte_zeile,17,17,"",17
+11-struktur-146,bv_mehrteilig,nein,nein,"",nein
+11-struktur-146,amt,"""Bezirksverwaltungsstelle 1""","""Bezirksverwaltungsstelle 1""","","""Bezirksverwaltungsstelle 1"""
+11-struktur-146,dezernat_titel,keins,keins,"",keins
+11-struktur-146,beratungsfolge,"[{""datum"": ""05.09.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""05.09.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""05.09.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-146,sitzung,null,null,"",null
+11-struktur-146,briefdatum,null,null,"",null
+11-struktur-146,unsicher,nein,nein,"",nein
+11-struktur-147,bv_vorhanden,ja,ja,"",ja
+11-struktur-147,bv_erste_zeile,19,19,"",19
+11-struktur-147,bv_letzte_zeile,22,22,"",22
+11-struktur-147,bv_mehrteilig,nein,nein,"",nein
+11-struktur-147,amt,"""52 - Sportamt""","""52 - Sportamt""","","""52 - Sportamt"""
+11-struktur-147,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-147,beratungsfolge,"[{""datum"": ""29.11.2023"", ""gremium"": ""Sportausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""29.11.2023"", ""gremium"": ""Sportausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""29.11.2023"", ""gremium"": ""Sportausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-147,sitzung,null,null,"",null
+11-struktur-147,briefdatum,null,null,"",null
+11-struktur-147,unsicher,nein,nein,"",nein
+11-struktur-148,bv_vorhanden,ja,ja,"",ja
+11-struktur-148,bv_erste_zeile,23,23,"",23
+11-struktur-148,bv_letzte_zeile,26,26,"",26
+11-struktur-148,bv_mehrteilig,nein,nein,"",nein
+11-struktur-148,amt,null,null,"",null
+11-struktur-148,dezernat_titel,keins,keins,"",keins
+11-struktur-148,beratungsfolge,[],[],"",[]
+11-struktur-148,sitzung,"{""datum"": ""14.12.2023"", ""gremium"": ""Rat""}","{""datum"": ""14.12.2023"", ""gremium"": ""Rat""}","","{""datum"": ""14.12.2023"", ""gremium"": ""Rat""}"
+11-struktur-148,briefdatum,"""06.12.2023""","""06.12.2023""","","""06.12.2023"""
+11-struktur-148,unsicher,nein,nein,"",nein
+11-struktur-149,bv_vorhanden,ja,ja,"",ja
+11-struktur-149,bv_erste_zeile,27,27,"",27
+11-struktur-149,bv_letzte_zeile,34,34,"",34
+11-struktur-149,bv_mehrteilig,nein,nein,"",nein
+11-struktur-149,amt,null,null,"",null
+11-struktur-149,dezernat_titel,keins,keins,"",keins
+11-struktur-149,beratungsfolge,[],[],"",[]
+11-struktur-149,sitzung,"{""datum"": ""23.08.2023"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung""}","{""datum"": ""23.08.2023"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung""}","","{""datum"": ""23.08.2023"", ""gremium"": ""Ausschuss für Planung und Stadtentwicklung""}"
+11-struktur-149,briefdatum,"""22.08.2023""","""22.08.2023""","","""22.08.2023"""
+11-struktur-149,unsicher,ja,ja,"",ja
+11-struktur-150,bv_vorhanden,nein,nein,"",nein
+11-struktur-150,amt,"""69 - Amt für Brücken-, Tunnel- und Stadtbahnbau""","""69 - Amt für Brücken-, Tunnel- und Stadtbahnbau""","","""69 - Amt für Brücken-, Tunnel- und Stadtbahnbau"""
+11-struktur-150,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-150,beratungsfolge,"[{""datum"": ""20.09.2022"", ""gremium"": ""Bezirksvertretung 2"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""20.09.2022"", ""gremium"": ""Bezirksvertretung 2"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""20.09.2022"", ""gremium"": ""Bezirksvertretung 2"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-150,sitzung,null,null,"",null
+11-struktur-150,briefdatum,null,null,"",null
+11-struktur-150,unsicher,nein,nein,"",nein
+11-struktur-151,bv_vorhanden,ja,ja,"",ja
+11-struktur-151,bv_erste_zeile,27,27,"",27
+11-struktur-151,bv_letzte_zeile,31,31,"",31
+11-struktur-151,bv_mehrteilig,nein,nein,"",nein
+11-struktur-151,amt,"""66 - Amt für Verkehrsmanagement""","""66 - Amt für Verkehrsmanagement""","","""66 - Amt für Verkehrsmanagement"""
+11-struktur-151,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-151,beratungsfolge,"[{""datum"": ""17.11.2021"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Anhörung""}, {""datum"": ""24.11.2021"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""06.12.2021"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""16.12.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""17.11.2021"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Anhörung""}, {""datum"": ""24.11.2021"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""06.12.2021"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""16.12.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""17.11.2021"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Anhörung""}, {""datum"": ""24.11.2021"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""06.12.2021"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""16.12.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-151,sitzung,null,null,"",null
+11-struktur-151,briefdatum,null,null,"",null
+11-struktur-151,unsicher,nein,nein,"",nein
+11-struktur-152,bv_vorhanden,ja,ja,"",ja
+11-struktur-152,bv_erste_zeile,19,19,"",19
+11-struktur-152,bv_letzte_zeile,24,24,"",24
+11-struktur-152,bv_mehrteilig,nein,nein,"",nein
+11-struktur-152,amt,"""67 - Stadtentwässerungsbetrieb""","""67 - Stadtentwässerungsbetrieb""","","""67 - Stadtentwässerungsbetrieb"""
+11-struktur-152,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-152,beratungsfolge,"[{""datum"": ""02.06.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""02.06.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""02.06.2023"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-152,sitzung,null,null,"",null
+11-struktur-152,briefdatum,null,null,"",null
+11-struktur-152,unsicher,nein,nein,"",nein
+11-struktur-153,bv_vorhanden,nein,nein,"",nein
+11-struktur-153,amt,"""02/0 Stadtkämmerin""","""02/0 Stadtkämmerin""","","""02/0 Stadtkämmerin"""
+11-struktur-153,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-153,beratungsfolge,"[{""datum"": ""04.02.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""04.02.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""04.02.2021"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-153,sitzung,null,null,"",null
+11-struktur-153,briefdatum,null,null,"",null
+11-struktur-153,unsicher,nein,nein,"",nein
+11-struktur-154,bv_vorhanden,ja,ja,"",ja
+11-struktur-154,bv_erste_zeile,15,15,"",15
+11-struktur-154,bv_letzte_zeile,16,16,"",16
+11-struktur-154,bv_mehrteilig,nein,nein,"",nein
+11-struktur-154,amt,"""Bezirksverwaltungsstelle 1""","""Bezirksverwaltungsstelle 1""","","""Bezirksverwaltungsstelle 1"""
+11-struktur-154,dezernat_titel,keins,keins,"",keins
+11-struktur-154,beratungsfolge,"[{""datum"": ""24.01.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""24.01.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""24.01.2025"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-154,sitzung,null,null,"",null
+11-struktur-154,briefdatum,null,null,"",null
+11-struktur-154,unsicher,nein,nein,"",nein
+11-struktur-155,bv_vorhanden,nein,nein,"",nein
+11-struktur-155,amt,"""67 - Stadtentwässerungsbetrieb""","""67 - Stadtentwässerungsbetrieb""","","""67 - Stadtentwässerungsbetrieb"""
+11-struktur-155,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-155,beratungsfolge,"[{""datum"": ""26.10.2021"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""02.11.2021"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""26.10.2021"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""02.11.2021"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""26.10.2021"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""02.11.2021"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-155,sitzung,null,null,"",null
+11-struktur-155,briefdatum,null,null,"",null
+11-struktur-155,unsicher,nein,nein,"",nein
+11-struktur-156,bv_vorhanden,nein,nein,"",nein
+11-struktur-156,amt,"""Bezirksverwaltungsstelle 9""","""Bezirksverwaltungsstelle 9""","","""Bezirksverwaltungsstelle 9"""
+11-struktur-156,dezernat_titel,keins,keins,"",keins
+11-struktur-156,beratungsfolge,"[{""datum"": ""15.03.2024"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""15.03.2024"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""15.03.2024"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-156,sitzung,null,null,"",null
+11-struktur-156,briefdatum,null,null,"",null
+11-struktur-156,unsicher,nein,nein,"",nein
+11-struktur-157,bv_vorhanden,ja,ja,"",ja
+11-struktur-157,bv_erste_zeile,20,20,"",20
+11-struktur-157,bv_letzte_zeile,27,27,"",27
+11-struktur-157,bv_mehrteilig,nein,nein,"",nein
+11-struktur-157,amt,"""41 - Kulturamt""","""41 - Kulturamt""","","""41 - Kulturamt"""
+11-struktur-157,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-157,beratungsfolge,"[{""datum"": ""21.11.2023"", ""gremium"": ""Schulausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""30.11.2023"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""21.11.2023"", ""gremium"": ""Schulausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""30.11.2023"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""21.11.2023"", ""gremium"": ""Schulausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""30.11.2023"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-157,sitzung,null,null,"",null
+11-struktur-157,briefdatum,null,null,"",null
+11-struktur-157,unsicher,nein,nein,"",nein
+11-struktur-158,bv_vorhanden,ja,ja,"",ja
+11-struktur-158,bv_erste_zeile,25,25,"",25
+11-struktur-158,bv_letzte_zeile,26,26,"",26
+11-struktur-158,bv_mehrteilig,nein,nein,"",nein
+11-struktur-158,amt,null,null,"",null
+11-struktur-158,dezernat_titel,keins,keins,"",keins
+11-struktur-158,beratungsfolge,[],[],"",[]
+11-struktur-158,sitzung,null,null,"",null
+11-struktur-158,briefdatum,"""09.01.2023""","""09.01.2023""","","""09.01.2023"""
+11-struktur-158,unsicher,nein,nein,"",nein
+11-struktur-159,bv_vorhanden,ja,ja,"",ja
+11-struktur-159,bv_erste_zeile,24,24,"",24
+11-struktur-159,bv_letzte_zeile,26,26,"",26
+11-struktur-159,bv_mehrteilig,nein,nein,"",nein
+11-struktur-159,amt,null,null,"",null
+11-struktur-159,dezernat_titel,keins,keins,"",keins
+11-struktur-159,beratungsfolge,[],[],"",[]
+11-struktur-159,sitzung,null,null,"",null
+11-struktur-159,briefdatum,"""06.12.2022""","""06.12.2022""","","""06.12.2022"""
+11-struktur-159,unsicher,nein,nein,"",nein
+11-struktur-160,bv_vorhanden,nein,nein,"",nein
+11-struktur-160,amt,"""68 - Garten-, Friedhofs- und Forstamt""","""68 - Garten-, Friedhofs- und Forstamt""","","""68 - Garten-, Friedhofs- und Forstamt"""
+11-struktur-160,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-160,beratungsfolge,"[{""datum"": ""23.08.2022"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""23.08.2022"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""23.08.2022"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-160,sitzung,null,null,"",null
+11-struktur-160,briefdatum,null,null,"",null
+11-struktur-160,unsicher,nein,nein,"",nein
+11-struktur-161,bv_vorhanden,ja,ja,"",ja
+11-struktur-161,bv_erste_zeile,47,47,"",47
+11-struktur-161,bv_letzte_zeile,52,52,"",52
+11-struktur-161,bv_mehrteilig,nein,nein,"",nein
+11-struktur-161,amt,null,null,"",null
+11-struktur-161,dezernat_titel,keins,keins,"",keins
+11-struktur-161,beratungsfolge,[],[],"",[]
+11-struktur-161,sitzung,"{""datum"": ""22.11.2022"", ""gremium"": ""Schulausschuss""}","{""datum"": ""22.11.2022"", ""gremium"": ""Schulausschuss""}","","{""datum"": ""22.11.2022"", ""gremium"": ""Schulausschuss""}"
+11-struktur-161,briefdatum,"""09.11.2022""","""09.11.2022""","","""09.11.2022"""
+11-struktur-161,unsicher,nein,nein,"",nein
+11-struktur-162,bv_vorhanden,ja,ja,"",ja
+11-struktur-162,bv_erste_zeile,25,25,"",25
+11-struktur-162,bv_letzte_zeile,37,37,"",37
+11-struktur-162,bv_mehrteilig,nein,nein,"",nein
+11-struktur-162,amt,null,null,"",null
+11-struktur-162,dezernat_titel,keins,keins,"",keins
+11-struktur-162,beratungsfolge,[],[],"",[]
+11-struktur-162,sitzung,"{""datum"": ""15.03.2022"", ""gremium"": ""Ausschuss für Digitalisierung und allgemeine Verwaltungsorganisation""}","{""datum"": ""15.03.2022"", ""gremium"": ""Ausschuss für Digitalisierung und allgemeine Verwaltungsorganisation""}","","{""datum"": ""15.03.2022"", ""gremium"": ""Ausschuss für Digitalisierung und allgemeine Verwaltungsorganisation""}"
+11-struktur-162,briefdatum,"""03.03.2022""","""03.03.2022""","","""03.03.2022"""
+11-struktur-162,unsicher,ja,ja,"",ja
+11-struktur-163,bv_vorhanden,nein,nein,"",nein
+11-struktur-163,amt,"""05/0 - Dezernat für Mobilität und Umwelt""","""05/0 - Dezernat für Mobilität und Umwelt""","","""05/0 - Dezernat für Mobilität und Umwelt"""
+11-struktur-163,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-163,beratungsfolge,"[{""datum"": ""26.02.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""26.02.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""26.02.2025"", ""gremium"": ""Rat"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-163,sitzung,null,null,"",null
+11-struktur-163,briefdatum,null,null,"",null
+11-struktur-163,unsicher,nein,nein,"",nein
+11-struktur-164,bv_vorhanden,ja,ja,"",ja
+11-struktur-164,bv_erste_zeile,13,13,"",13
+11-struktur-164,bv_letzte_zeile,16,16,"",16
+11-struktur-164,bv_mehrteilig,nein,nein,"",nein
+11-struktur-164,amt,"""Bezirksverwaltungsstelle 6""","""Bezirksverwaltungsstelle 6""","","""Bezirksverwaltungsstelle 6"""
+11-struktur-164,dezernat_titel,keins,keins,"",keins
+11-struktur-164,beratungsfolge,"[{""datum"": ""15.06.2022"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""15.06.2022"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""15.06.2022"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-164,sitzung,null,null,"",null
+11-struktur-164,briefdatum,null,null,"",null
+11-struktur-164,unsicher,nein,nein,"",nein
+11-struktur-165,bv_vorhanden,nein,nein,"",nein
+11-struktur-165,amt,"""19 - Amt für Umwelt- und Verbraucherschutz""","""19 - Amt für Umwelt- und Verbraucherschutz""","","""19 - Amt für Umwelt- und Verbraucherschutz"""
+11-struktur-165,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-165,beratungsfolge,"[{""datum"": ""25.11.2021"", ""gremium"": ""Ausschuss für Umwelt-, Klima- und Verbraucherschutz"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""25.11.2021"", ""gremium"": ""Ausschuss für Umwelt-, Klima- und Verbraucherschutz"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""25.11.2021"", ""gremium"": ""Ausschuss für Umwelt-, Klima- und Verbraucherschutz"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-165,sitzung,null,null,"",null
+11-struktur-165,briefdatum,null,null,"",null
+11-struktur-165,unsicher,nein,nein,"",nein
+11-struktur-166,bv_vorhanden,nein,nein,"",nein
+11-struktur-166,amt,"""64 - Amt für Wohnungswesen""","""64 - Amt für Wohnungswesen""","","""64 - Amt für Wohnungswesen"""
+11-struktur-166,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-166,beratungsfolge,"[{""datum"": ""25.11.2024"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""25.11.2024"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""25.11.2024"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-166,sitzung,null,null,"",null
+11-struktur-166,briefdatum,null,null,"",null
+11-struktur-166,unsicher,nein,nein,"",nein
+11-struktur-167,bv_vorhanden,nein,nein,"",nein
+11-struktur-167,amt,"""Bezirksverwaltungsstelle 1""","""Bezirksverwaltungsstelle 1""","","""Bezirksverwaltungsstelle 1"""
+11-struktur-167,dezernat_titel,keins,keins,"",keins
+11-struktur-167,beratungsfolge,"[{""datum"": ""27.01.2023"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""27.01.2023"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""27.01.2023"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-167,sitzung,null,null,"",null
+11-struktur-167,briefdatum,null,null,"",null
+11-struktur-167,unsicher,nein,nein,"",nein
+11-struktur-168,bv_vorhanden,ja,ja,"",ja
+11-struktur-168,bv_erste_zeile,25,25,"",25
+11-struktur-168,bv_letzte_zeile,31,31,"",31
+11-struktur-168,bv_mehrteilig,nein,nein,"",nein
+11-struktur-168,amt,null,null,"",null
+11-struktur-168,dezernat_titel,keins,keins,"",keins
+11-struktur-168,beratungsfolge,[],[],"",[]
+11-struktur-168,sitzung,"{""datum"": ""04.11.2022"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz""}","{""datum"": ""04.11.2022"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz""}","","{""datum"": ""04.11.2022"", ""gremium"": ""Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz""}"
+11-struktur-168,briefdatum,"""03.11.2022""","""03.11.2022""","","""03.11.2022"""
+11-struktur-168,unsicher,nein,nein,"",nein
+11-struktur-169,bv_vorhanden,ja,ja,"",ja
+11-struktur-169,bv_erste_zeile,13,13,"",13
+11-struktur-169,bv_letzte_zeile,17,17,"",17
+11-struktur-169,bv_mehrteilig,nein,nein,"",nein
+11-struktur-169,amt,"""Bezirksverwaltungsstelle 10""","""Bezirksverwaltungsstelle 10""","","""Bezirksverwaltungsstelle 10"""
+11-struktur-169,dezernat_titel,keins,keins,"",keins
+11-struktur-169,beratungsfolge,"[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""10.11.2020"", ""gremium"": ""Bezirksvertretung 10"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-169,sitzung,null,null,"",null
+11-struktur-169,briefdatum,null,null,"",null
+11-struktur-169,unsicher,nein,nein,"",nein
+11-struktur-170,bv_vorhanden,ja,ja,"",ja
+11-struktur-170,bv_erste_zeile,25,25,"",25
+11-struktur-170,bv_letzte_zeile,36,36,"",36
+11-struktur-170,bv_mehrteilig,nein,nein,"",nein
+11-struktur-170,amt,null,null,"",null
+11-struktur-170,dezernat_titel,keins,keins,"",keins
+11-struktur-170,beratungsfolge,[],[],"",[]
+11-struktur-170,sitzung,"{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}","{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}","","{""datum"": ""15.12.2022"", ""gremium"": ""Rat""}"
+11-struktur-170,briefdatum,"""13.12.2022""","""13.12.2022""","","""13.12.2022"""
+11-struktur-170,unsicher,nein,nein,"",nein
+11-struktur-171,bv_vorhanden,nein,nein,"",nein
+11-struktur-171,amt,null,null,"",null
+11-struktur-171,dezernat_titel,keins,keins,"",keins
+11-struktur-171,beratungsfolge,[],[],"",[]
+11-struktur-171,sitzung,"{""datum"": ""22.01.2025"", ""gremium"": ""Bezirksvertretung 4""}","{""datum"": ""22.01.2025"", ""gremium"": ""Bezirksvertretung 4""}","","{""datum"": ""22.01.2025"", ""gremium"": ""Bezirksvertretung 4""}"
+11-struktur-171,briefdatum,"""08.01.2025""","""08.01.2025""","","""08.01.2025"""
+11-struktur-171,unsicher,nein,nein,"",nein
+11-struktur-172,bv_vorhanden,ja,ja,"",ja
+11-struktur-172,bv_erste_zeile,24,24,"",24
+11-struktur-172,bv_letzte_zeile,25,25,"",25
+11-struktur-172,bv_mehrteilig,nein,nein,"",nein
+11-struktur-172,amt,null,null,"",null
+11-struktur-172,dezernat_titel,keins,keins,"",keins
+11-struktur-172,beratungsfolge,[],[],"",[]
+11-struktur-172,sitzung,"{""datum"": ""27.09.2022"", ""gremium"": ""Bezirksvertretung 7""}","{""datum"": ""27.09.2022"", ""gremium"": ""Bezirksvertretung 7""}","","{""datum"": ""27.09.2022"", ""gremium"": ""Bezirksvertretung 7""}"
+11-struktur-172,briefdatum,"""12.09.2022""","""12.09.2022""","","""12.09.2022"""
+11-struktur-172,unsicher,nein,nein,"",nein
+11-struktur-173,bv_vorhanden,nein,nein,"",nein
+11-struktur-173,amt,"""Bezirksverwaltungsstelle 3""","""Bezirksverwaltungsstelle 3""","","""Bezirksverwaltungsstelle 3"""
+11-struktur-173,dezernat_titel,keins,keins,"",keins
+11-struktur-173,beratungsfolge,"[{""datum"": ""26.11.2024"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""26.11.2024"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""26.11.2024"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-173,sitzung,null,null,"",null
+11-struktur-173,briefdatum,null,null,"",null
+11-struktur-173,unsicher,nein,nein,"",nein
+11-struktur-174,bv_vorhanden,ja,ja,"",ja
+11-struktur-174,bv_erste_zeile,21,21,"",21
+11-struktur-174,bv_letzte_zeile,22,22,"",22
+11-struktur-174,bv_mehrteilig,nein,nein,"",nein
+11-struktur-174,amt,"""66 - Amt für Verkehrsmanagement""","""66 - Amt für Verkehrsmanagement""","","""66 - Amt für Verkehrsmanagement"""
+11-struktur-174,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-174,beratungsfolge,"[{""datum"": ""22.09.2023"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""22.09.2023"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""22.09.2023"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-174,sitzung,null,null,"",null
+11-struktur-174,briefdatum,null,null,"",null
+11-struktur-174,unsicher,nein,nein,"",nein
+11-struktur-175,bv_vorhanden,ja,ja,"",ja
+11-struktur-175,bv_erste_zeile,13,13,"",13
+11-struktur-175,bv_letzte_zeile,15,15,"",15
+11-struktur-175,bv_mehrteilig,nein,nein,"",nein
+11-struktur-175,amt,"""Bezirksverwaltungsstelle 9""","""Bezirksverwaltungsstelle 9""","","""Bezirksverwaltungsstelle 9"""
+11-struktur-175,dezernat_titel,keins,keins,"",keins
+11-struktur-175,beratungsfolge,"[{""datum"": ""18.03.2022"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""18.03.2022"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""18.03.2022"", ""gremium"": ""Bezirksvertretung 9"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-175,sitzung,null,null,"",null
+11-struktur-175,briefdatum,null,null,"",null
+11-struktur-175,unsicher,nein,nein,"",nein
+11-struktur-176,bv_vorhanden,ja,ja,"",ja
+11-struktur-176,bv_erste_zeile,24,24,"",24
+11-struktur-176,bv_letzte_zeile,28,28,"",28
+11-struktur-176,bv_mehrteilig,nein,nein,"",nein
+11-struktur-176,amt,"""66 - Amt für Verkehrsmanagement""","""66 - Amt für Verkehrsmanagement""","","""66 - Amt für Verkehrsmanagement"""
+11-struktur-176,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-176,beratungsfolge,"[{""datum"": ""08.11.2022"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Anhörung""}, {""datum"": ""23.11.2022"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""05.12.2022"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""15.12.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""08.11.2022"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Anhörung""}, {""datum"": ""23.11.2022"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""05.12.2022"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""15.12.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""08.11.2022"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Anhörung""}, {""datum"": ""23.11.2022"", ""gremium"": ""Ordnungs- und Verkehrsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""05.12.2022"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""15.12.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-176,sitzung,null,null,"",null
+11-struktur-176,briefdatum,null,null,"",null
+11-struktur-176,unsicher,nein,nein,"",nein
+11-struktur-177,bv_vorhanden,ja,ja,"",ja
+11-struktur-177,bv_erste_zeile,23,23,"",23
+11-struktur-177,bv_letzte_zeile,28,28,"",28
+11-struktur-177,bv_mehrteilig,nein,nein,"",nein
+11-struktur-177,amt,"""23 - Amt für Gebäudemanagement""","""23 - Amt für Gebäudemanagement""","","""23 - Amt für Gebäudemanagement"""
+11-struktur-177,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-177,beratungsfolge,"[{""datum"": ""05.11.2024"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""05.11.2024"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""08.11.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""21.11.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""05.11.2024"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""05.11.2024"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""08.11.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""21.11.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""05.11.2024"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""05.11.2024"", ""gremium"": ""Bezirksvertretung 5"", ""qualitaet"": ""Kenntnisnahme""}, {""datum"": ""08.11.2024"", ""gremium"": ""Haupt- und Finanzausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""21.11.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-177,sitzung,null,null,"",null
+11-struktur-177,briefdatum,null,null,"",null
+11-struktur-177,unsicher,nein,nein,"",nein
+11-struktur-178,bv_vorhanden,ja,ja,"",ja
+11-struktur-178,bv_erste_zeile,24,24,"",24
+11-struktur-178,bv_letzte_zeile,32,32,"",32
+11-struktur-178,bv_mehrteilig,nein,nein,"",nein
+11-struktur-178,amt,"""19 - Amt für Umwelt- und Verbraucherschutz""","""19 - Amt für Umwelt- und Verbraucherschutz""","","""19 - Amt für Umwelt- und Verbraucherschutz"""
+11-struktur-178,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-178,beratungsfolge,"[{""datum"": ""27.10.2022"", ""gremium"": ""Ausschuss für Umwelt-, Klima- und Verbraucherschutz"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""27.10.2022"", ""gremium"": ""Ausschuss für Umwelt-, Klima- und Verbraucherschutz"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""27.10.2022"", ""gremium"": ""Ausschuss für Umwelt-, Klima- und Verbraucherschutz"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-178,sitzung,null,null,"",null
+11-struktur-178,briefdatum,null,null,"",null
+11-struktur-178,unsicher,nein,nein,"",nein
+11-struktur-179,bv_vorhanden,nein,nein,"",nein
+11-struktur-179,amt,"""Bezirksverwaltungsstelle 3""","""Bezirksverwaltungsstelle 3""","","""Bezirksverwaltungsstelle 3"""
+11-struktur-179,dezernat_titel,keins,keins,"",keins
+11-struktur-179,beratungsfolge,"[{""datum"": ""08.11.2022"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""08.11.2022"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""08.11.2022"", ""gremium"": ""Bezirksvertretung 3"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-179,sitzung,null,null,"",null
+11-struktur-179,briefdatum,null,null,"",null
+11-struktur-179,unsicher,nein,nein,"",nein
+11-struktur-180,bv_vorhanden,nein,nein,"",nein
+11-struktur-180,amt,null,null,"",null
+11-struktur-180,dezernat_titel,keins,keins,"",keins
+11-struktur-180,beratungsfolge,[],[],"",[]
+11-struktur-180,sitzung,"{""datum"": ""28.02.2023"", ""gremium"": ""Bezirksvertretung 7""}","{""datum"": ""28.02.2023"", ""gremium"": ""Bezirksvertretung 7""}","","{""datum"": ""28.02.2023"", ""gremium"": ""Bezirksvertretung 7""}"
+11-struktur-180,briefdatum,"""09.02.2023""","""09.02.2023""","","""09.02.2023"""
+11-struktur-180,unsicher,nein,nein,"",nein
+11-struktur-181,bv_vorhanden,nein,nein,"",nein
+11-struktur-181,amt,null,null,"",null
+11-struktur-181,dezernat_titel,keins,keins,"",keins
+11-struktur-181,beratungsfolge,[],[],"",[]
+11-struktur-181,sitzung,"{""datum"": ""27.11.2023"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung""}","{""datum"": ""27.11.2023"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung""}","","{""datum"": ""27.11.2023"", ""gremium"": ""Ausschuss für Wohnungswesen und Modernisierung""}"
+11-struktur-181,briefdatum,"""17.11.2023""","""17.11.2023""","","""17.11.2023"""
+11-struktur-181,unsicher,nein,nein,"",nein
+11-struktur-182,bv_vorhanden,nein,nein,"",nein
+11-struktur-182,amt,"""Bezirksverwaltungsstelle 1""","""Bezirksverwaltungsstelle 1""","","""Bezirksverwaltungsstelle 1"""
+11-struktur-182,dezernat_titel,keins,keins,"",keins
+11-struktur-182,beratungsfolge,"[{""datum"": ""25.08.2023"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""25.08.2023"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""25.08.2023"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-182,sitzung,null,null,"",null
+11-struktur-182,briefdatum,null,null,"",null
+11-struktur-182,unsicher,nein,nein,"",nein
+11-struktur-183,bv_vorhanden,nein,nein,"",nein
+11-struktur-183,amt,"""Bezirksverwaltungsstelle 6""","""Bezirksverwaltungsstelle 6""","","""Bezirksverwaltungsstelle 6"""
+11-struktur-183,dezernat_titel,keins,keins,"",keins
+11-struktur-183,beratungsfolge,"[{""datum"": ""19.06.2024"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""19.06.2024"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""19.06.2024"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-183,sitzung,null,null,"",null
+11-struktur-183,briefdatum,null,null,"",null
+11-struktur-183,unsicher,nein,nein,"",nein
+11-struktur-184,bv_vorhanden,nein,nein,"",nein
+11-struktur-184,amt,"""41 - Kulturamt""","""41 - Kulturamt""","","""41 - Kulturamt"""
+11-struktur-184,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-184,beratungsfolge,"[{""datum"": ""01.12.2022"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""01.12.2022"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""01.12.2022"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-184,sitzung,null,null,"",null
+11-struktur-184,briefdatum,null,null,"",null
+11-struktur-184,unsicher,nein,nein,"",nein
+11-struktur-185,bv_vorhanden,nein,nein,"",nein
+11-struktur-185,amt,null,null,"",null
+11-struktur-185,dezernat_titel,keins,keins,"",keins
+11-struktur-185,beratungsfolge,[],[],"",[]
+11-struktur-185,sitzung,"{""datum"": ""22.01.2025"", ""gremium"": ""Bezirksvertretung 4""}","{""datum"": ""22.01.2025"", ""gremium"": ""Bezirksvertretung 4""}","","{""datum"": ""22.01.2025"", ""gremium"": ""Bezirksvertretung 4""}"
+11-struktur-185,briefdatum,"""08.01.2025""","""08.01.2025""","","""08.01.2025"""
+11-struktur-185,unsicher,nein,nein,"",nein
+11-struktur-186,bv_vorhanden,ja,ja,"",ja
+11-struktur-186,bv_erste_zeile,22,22,"",22
+11-struktur-186,bv_letzte_zeile,39,39,"",39
+11-struktur-186,bv_mehrteilig,nein,nein,"",nein
+11-struktur-186,amt,null,null,"",null
+11-struktur-186,dezernat_titel,keins,keins,"",keins
+11-struktur-186,beratungsfolge,[],[],"",[]
+11-struktur-186,sitzung,"{""datum"": ""08.09.2022"", ""gremium"": ""Rat""}","{""datum"": ""08.09.2022"", ""gremium"": ""Rat""}","","{""datum"": ""08.09.2022"", ""gremium"": ""Rat""}"
+11-struktur-186,briefdatum,"""26.08.2022""","""26.08.2022""","","""26.08.2022"""
+11-struktur-186,unsicher,nein,nein,"",nein
+11-struktur-187,bv_vorhanden,nein,nein,"",nein
+11-struktur-187,amt,"""Bezirksverwaltungsstelle 7""","""Bezirksverwaltungsstelle 7""","","""Bezirksverwaltungsstelle 7"""
+11-struktur-187,dezernat_titel,keins,keins,"",keins
+11-struktur-187,beratungsfolge,"[{""datum"": ""30.01.2024"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""30.01.2024"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""30.01.2024"", ""gremium"": ""Bezirksvertretung 7"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-187,sitzung,null,null,"",null
+11-struktur-187,briefdatum,null,null,"",null
+11-struktur-187,unsicher,nein,nein,"",nein
+11-struktur-188,bv_vorhanden,ja,ja,"",ja
+11-struktur-188,bv_erste_zeile,20,20,"",20
+11-struktur-188,bv_letzte_zeile,21,21,"",21
+11-struktur-188,bv_mehrteilig,nein,nein,"",nein
+11-struktur-188,amt,"""63 - Bauaufsichtsamt""","""63 - Bauaufsichtsamt""","","""63 - Bauaufsichtsamt"""
+11-struktur-188,dezernat_titel,Beigeordnete,Beigeordnete,"",Beigeordnete
+11-struktur-188,beratungsfolge,"[{""datum"": ""29.01.2021"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""29.01.2021"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""29.01.2021"", ""gremium"": ""Bezirksvertretung 1"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-188,sitzung,null,null,"",null
+11-struktur-188,briefdatum,null,null,"",null
+11-struktur-188,unsicher,nein,nein,"",nein
+11-struktur-189,bv_vorhanden,ja,ja,"",ja
+11-struktur-189,bv_erste_zeile,22,22,"",22
+11-struktur-189,bv_letzte_zeile,25,25,"",25
+11-struktur-189,bv_mehrteilig,nein,nein,"",nein
+11-struktur-189,amt,"""41 - Kulturamt""","""41 - Kulturamt""","","""41 - Kulturamt"""
+11-struktur-189,dezernat_titel,Beigeordneter,Beigeordneter,"",Beigeordneter
+11-struktur-189,beratungsfolge,"[{""datum"": ""02.09.2021"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""02.09.2021"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""02.09.2021"", ""gremium"": ""Kulturausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-189,sitzung,null,null,"",null
+11-struktur-189,briefdatum,null,null,"",null
+11-struktur-189,unsicher,nein,nein,"",nein
+11-struktur-190,bv_vorhanden,ja,ja,"",ja
+11-struktur-190,bv_erste_zeile,22,22,"",22
+11-struktur-190,bv_letzte_zeile,24,24,"",24
+11-struktur-190,bv_mehrteilig,nein,nein,"",nein
+11-struktur-190,amt,null,null,"",null
+11-struktur-190,dezernat_titel,keins,keins,"",keins
+11-struktur-190,beratungsfolge,[],[],"",[]
+11-struktur-190,sitzung,null,null,"",null
+11-struktur-190,briefdatum,"""23.09.2024""","""23.09.2024""","","""23.09.2024"""
+11-struktur-190,unsicher,nein,nein,"",nein
+11-struktur-191,bv_vorhanden,ja,ja,"",ja
+11-struktur-191,bv_erste_zeile,17,17,"",17
+11-struktur-191,bv_letzte_zeile,23,23,"",23
+11-struktur-191,bv_mehrteilig,nein,nein,"",nein
+11-struktur-191,amt,"""14 - Rechnungsprüfungsamt""","""14 - Rechnungsprüfungsamt""","","""14 - Rechnungsprüfungsamt"""
+11-struktur-191,dezernat_titel,keins,keins,"",keins
+11-struktur-191,beratungsfolge,"[{""datum"": ""07.12.2021"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""03.02.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""07.12.2021"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""03.02.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""07.12.2021"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""03.02.2022"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-191,sitzung,null,null,"",null
+11-struktur-191,briefdatum,null,null,"",null
+11-struktur-191,unsicher,nein,nein,"",nein
+11-struktur-192,bv_vorhanden,ja,ja,"",ja
+11-struktur-192,bv_erste_zeile,18,18,"",18
+11-struktur-192,bv_letzte_zeile,23,23,"",23
+11-struktur-192,bv_mehrteilig,nein,nein,"",nein
+11-struktur-192,amt,"""14 - Amt für kommunale Prüfung""","""14 - Amt für kommunale Prüfung""","","""14 - Amt für kommunale Prüfung"""
+11-struktur-192,dezernat_titel,keins,keins,"",keins
+11-struktur-192,beratungsfolge,"[{""datum"": ""12.11.2024"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""12.12.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""12.11.2024"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""12.12.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""12.11.2024"", ""gremium"": ""Rechnungsprüfungsausschuss"", ""qualitaet"": ""Vorberatung""}, {""datum"": ""12.12.2024"", ""gremium"": ""Rat"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-192,sitzung,null,null,"",null
+11-struktur-192,briefdatum,null,null,"",null
+11-struktur-192,unsicher,nein,nein,"",nein
+11-struktur-193,bv_vorhanden,nein,nein,"",nein
+11-struktur-193,amt,"""Bezirksverwaltungsstelle 6""","""Bezirksverwaltungsstelle 6""","","""Bezirksverwaltungsstelle 6"""
+11-struktur-193,dezernat_titel,keins,keins,"",keins
+11-struktur-193,beratungsfolge,"[{""datum"": ""02.12.2020"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""02.12.2020"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""02.12.2020"", ""gremium"": ""Bezirksvertretung 6"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-193,sitzung,null,null,"",null
+11-struktur-193,briefdatum,null,null,"",null
+11-struktur-193,unsicher,nein,nein,"",nein
+11-struktur-194,bv_vorhanden,nein,nein,"",nein
+11-struktur-194,amt,null,null,"",null
+11-struktur-194,dezernat_titel,keins,keins,"",keins
+11-struktur-194,beratungsfolge,[],[],"",[]
+11-struktur-194,sitzung,"{""datum"": ""29.11.2022"", ""gremium"": ""Bezirksvertretung 5""}","{""datum"": ""29.11.2022"", ""gremium"": ""Bezirksvertretung 5""}","","{""datum"": ""29.11.2022"", ""gremium"": ""Bezirksvertretung 5""}"
+11-struktur-194,briefdatum,"""15.11.2022""","""15.11.2022""","","""15.11.2022"""
+11-struktur-194,unsicher,nein,nein,"",nein
+11-struktur-195,bv_vorhanden,ja,ja,"",ja
+11-struktur-195,bv_erste_zeile,24,24,"",24
+11-struktur-195,bv_letzte_zeile,25,25,"",25
+11-struktur-195,bv_mehrteilig,nein,nein,"",nein
+11-struktur-195,amt,null,null,"",null
+11-struktur-195,dezernat_titel,keins,keins,"",keins
+11-struktur-195,beratungsfolge,[],[],"",[]
+11-struktur-195,sitzung,"{""datum"": ""14.12.2023"", ""gremium"": ""Rat""}","{""datum"": ""14.12.2023"", ""gremium"": ""Rat""}","","{""datum"": ""14.12.2023"", ""gremium"": ""Rat""}"
+11-struktur-195,briefdatum,"""12.12.2023""","""12.12.2023""","","""12.12.2023"""
+11-struktur-195,unsicher,nein,nein,"",nein
+11-struktur-196,bv_vorhanden,nein,nein,"",nein
+11-struktur-196,amt,"""40 - Amt für Schule und Bildung""","""40 - Amt für Schule und Bildung""","","""40 - Amt für Schule und Bildung"""
+11-struktur-196,dezernat_titel,Stadtdirektor,Stadtdirektor,"",Stadtdirektor
+11-struktur-196,beratungsfolge,"[{""datum"": ""22.11.2022"", ""gremium"": ""Schulausschuss"", ""qualitaet"": ""Kenntnisnahme""}]","[{""datum"": ""22.11.2022"", ""gremium"": ""Schulausschuss"", ""qualitaet"": ""Kenntnisnahme""}]","","[{""datum"": ""22.11.2022"", ""gremium"": ""Schulausschuss"", ""qualitaet"": ""Kenntnisnahme""}]"
+11-struktur-196,sitzung,null,null,"",null
+11-struktur-196,briefdatum,null,null,"",null
+11-struktur-196,unsicher,nein,nein,"",nein
+11-struktur-197,bv_vorhanden,nein,nein,"",nein
+11-struktur-197,amt,null,null,"",null
+11-struktur-197,dezernat_titel,keins,keins,"",keins
+11-struktur-197,beratungsfolge,[],[],"",[]
+11-struktur-197,sitzung,"{""datum"": ""31.10.2023"", ""gremium"": ""Bezirksvertretung 5""}","{""datum"": ""31.10.2023"", ""gremium"": ""Bezirksvertretung 5""}","","{""datum"": ""31.10.2023"", ""gremium"": ""Bezirksvertretung 5""}"
+11-struktur-197,briefdatum,"""17.10.2023""","""17.10.2023""","","""17.10.2023"""
+11-struktur-197,unsicher,nein,nein,"",nein
+11-struktur-198,bv_vorhanden,ja,ja,"",ja
+11-struktur-198,bv_erste_zeile,18,18,"",18
+11-struktur-198,bv_letzte_zeile,23,23,"",23
+11-struktur-198,bv_mehrteilig,nein,nein,"",nein
+11-struktur-198,amt,"""67 - Stadtentwässerungsbetrieb""","""67 - Stadtentwässerungsbetrieb""","","""67 - Stadtentwässerungsbetrieb"""
+11-struktur-198,dezernat_titel,Stadtkämmerin,Stadtkämmerin,"",Stadtkämmerin
+11-struktur-198,beratungsfolge,"[{""datum"": ""03.09.2024"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]","[{""datum"": ""03.09.2024"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]","","[{""datum"": ""03.09.2024"", ""gremium"": ""Bauausschuss"", ""qualitaet"": ""Entscheidung""}]"
+11-struktur-198,sitzung,null,null,"",null
+11-struktur-198,briefdatum,null,null,"",null
+11-struktur-198,unsicher,nein,nein,"",nein
+11-struktur-199,bv_vorhanden,nein,nein,"",nein
+11-struktur-199,amt,"""01/13 - Ratsangelegenheiten und Stadtverfassung""","""01/13 - Ratsangelegenheiten und Stadtverfassung""","","""01/13 - Ratsangelegenheiten und Stadtverfassung"""
+11-struktur-199,dezernat_titel,keins,keins,"",keins
+11-struktur-199,beratungsfolge,"[{""datum"": ""02.10.2025"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","[{""datum"": ""02.10.2025"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]","","[{""datum"": ""02.10.2025"", ""gremium"": ""Anregungs- und Beschwerdeausschuss"", ""qualitaet"": ""keine""}]"
+11-struktur-199,sitzung,null,null,"",null
+11-struktur-199,briefdatum,null,null,"",null
+11-struktur-199,unsicher,nein,nein,"",nein
+11-struktur-200,bv_vorhanden,ja,ja,"",ja
+11-struktur-200,bv_erste_zeile,26,26,"",26
+11-struktur-200,bv_letzte_zeile,28,28,"",28
+11-struktur-200,bv_mehrteilig,nein,nein,"",nein
+11-struktur-200,amt,null,null,"",null
+11-struktur-200,dezernat_titel,keins,keins,"",keins
+11-struktur-200,beratungsfolge,[],[],"",[]
+11-struktur-200,sitzung,"{""datum"": ""27.06.2025"", ""gremium"": ""Bezirksvertretung 9""}","{""datum"": ""27.06.2025"", ""gremium"": ""Bezirksvertretung 9""}","","{""datum"": ""27.06.2025"", ""gremium"": ""Bezirksvertretung 9""}"
+11-struktur-200,briefdatum,"""16.06.2025""","""16.06.2025""","","""16.06.2025"""
+11-struktur-200,unsicher,nein,nein,"",nein

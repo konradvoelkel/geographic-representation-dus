@@ -1452,6 +1452,28 @@ class Council(_Strict):
     created_margin_days: int = Field(default=500, ge=0)
 
 
+# --- Fundament F4: Validierung (docs/validierung.md)
+class Validation(_Strict):
+    """Wo die Validierung liegt: Codebücher und Labels im Repo, Kodieraufträge nur lokal.
+
+    Die Aufträge tragen Ausschnitte aus Ratsdokumenten und gehören nicht ins Repo
+    (plan-vorverarbeitung-2026-11.md, § 4, „Daten"); ``coding_root`` ist darum rechnerspezifisch
+    und steht auf Konrads Rechner in ``settings.local.toml``. Nichts hier ändert ein Ergebnis
+    der Kette: der Block zählt nicht zum Fingerprint.
+    """
+
+    root: Path = Path("validierung")  # Codebücher, Stichproben, Labels, README je Vorhaben
+    coding_root: Path | None = None  # Kodieraufträge und Antworten; None = <data_root>/kodierung
+    min_alpha: float = Field(
+        default=0.8, ge=0.0, le=1.0
+    )  # Stufe 3 verlangt so viel α zwischen A und B
+
+    @field_validator("coding_root", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -1500,6 +1522,7 @@ class Settings(BaseSettings):
     publish: Publish = Publish()
     classify: Classify = Classify()  # Punkt 45: passender Ausschuss je Dokument
     council: Council = Council()  # Fundament F6: Sitzungen, Beratungen, Personen
+    validation: Validation = Validation()  # Fundament F4
 
     @property
     def base_profile(self) -> str:
@@ -1663,6 +1686,9 @@ class Settings(BaseSettings):
                 # Fundament F6: ``[council]`` betrifft nur drei Netzschritte; ihr Stamp trägt den
                 # Hash als ``extra`` (``georep.council.council_digest``, Muster Punkt 53)
                 "council": True,
+                # Fundament F4: Pfade der Validierung und die Schwelle für Stufe 3; kein Schritt
+                # der Kette liest sie.
+                "validation": True,
                 # Punkt 58: ``consultations`` ist ein Pfad (sein Inhalt steht im Stamp des
                 # Schritts ``bodies``), ``district_body_names`` sind reine Anzeigenamen.
                 "bodies": {"names_as_of", "consultations", "district_body_names"},

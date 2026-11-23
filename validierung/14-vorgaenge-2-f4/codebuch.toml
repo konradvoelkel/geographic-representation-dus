@@ -1,0 +1,139 @@
+# Codebuch Vorhaben 14 „Vorgänge", Fassung 2026-11-23.2 (Mess-Agent Vorhaben 14), am 2026-11-23 ins
+# Format von F4 (georep validate) übertragen: Fragen, Anleitungen und Definitionen wörtlich wie in der
+# vorläufigen Fassung, nur die Form ist neu. Messdokument: docs/plans/14-vorgaenge.md, § 4.
+# Daneben unverändert, wie das Messskript sie liest: validierung/14-vorgaenge/ (stichprobe-2.csv, labels-2.csv).
+#
+# Aus [meta] der vorläufigen Fassung, wörtlich:
+# stichprobe = Runde 1: 150 Kanten, Seed 14 (stichprobe.csv); Bestätigung: 100 starke Kanten der Fassung .2, Seed 14-2, ohne die 150 (stichprobe-2.csv)
+# kodierer = Zwei unabhängige Kodier-Agenten, die einander nicht sehen, und ein Schlicht-Agent nur für die Uneinigkeiten (plan-vorverarbeitung-2026-11.md, § 2.6 und F4). Kein menschlicher Goldstandard.
+# aenderungen = .2 gegenüber .1: (1) Sammelvorlagen und Beschlusskontrollen mit eigener Zeile zu A sind dieselbe Sache und umsetzung, eine bloße Aufzählung früherer Beschlüsse nicht; (2) ein Grundsatzbeschluss ist dieselbe Sache, wo B ihn ausführt, nicht, wo B ihn als Rahmen zitiert; (3) eine Finanzierungsquelle und ein Beleg in Fußnote, Quellenliste oder mit „vgl." sind keine selbe Sache; (4) nachfrage umfasst die Frage nach dem Stand von A, auch wenn A ein Antrag oder Beschluss ist; (5) fortsetzung umfasst den Antrag auf eine in A erfragte oder geprüfte Maßnahme und den Folgebericht; (6) aenderung umfasst den späteren Beschluss, der A inhaltlich ändert, und die abschließende Antwort nach einer Zwischennachricht; (7) für die Rolle zählt, was A und B inhaltlich sind, nicht das Feld Dokumentart; (8) bei Sammelanträgen genügt, dass B genau einen Punkt von A aufgreift; (9) ein Zitierfehler in B (die Nummer existiert, beschreibt aber etwas anderes) ist nummer_gemeint = nein.
+
+project = "14-vorgaenge-2-f4"
+version = "2026-11-23.2"
+unit = "pair_with_span"  # A = id_a (die genannte), B = id_b (die nennende, mit der Fundstelle)
+instructions = """
+Einheit: Eine Kante zwischen zwei Drucksachen derselben Stadt: B (die spätere, nennende) nennt A (die frühere, genannte) mit ihrer Drucksachennummer im Titel, im Text oder im Namen einer Anlage, oder B ist ein Nachtrag zu A (dieselbe Nummer mit Zusatz wie /1 oder -1).
+
+Material: Je Dokument: Drucksachennummer, Titel, Dokumentart, Datum, Gremium, Namen der Anlagen und der Textanfang (bis 1 500 Zeichen; der Textstore ist kleingeschrieben und ohne Zeilenumbrüche). Dazu die Fundstelle in B: 300 Zeichen links und rechts der genannten Nummer, mit Start und Ende des Treffers im Ausschnitt. Bei Nachträgen ohne Nennung fehlt die Fundstelle.
+
+Nicht gezeigt: Der Kantentyp, den das Verfahren vergibt (F4: ohne die Ausgabe des zu prüfenden Verfahrens).
+"""
+
+[[questions]]
+id = "nummer_gemeint"
+question = "Meint die Fundstelle in B die Drucksache A?"
+scale = "nominal"
+instructions = """
+ja: an der Fundstelle steht die Nummer von A als Verweis auf eine Drucksache (Vorlage, Antrag, Anfrage, Beschluss), auch in anderer Schreibweise (ohne führende Nullen, mit Leerzeichen, an ein Wort geklebt). nein: die Zeichenfolge ist etwas anderes, das nur so aussieht — ein Datum („01/12/2014"), eine Bebauungsplan- oder Haushaltsnummer, eine Aktenzahl außerhalb des Ratsinformationssystems — oder sie meint eine andere Drucksache: passt das, was B unter der Nummer beschreibt, erkennbar nicht zu Titel und Text von A, ist es nein (Zitierfehler in B). keine_fundstelle: die Aufgabe hat keinen Ausschnitt (Nachtrag über die Nummer); dann nur die beiden anderen Fragen.
+"""
+
+[[questions.options]]
+value = "ja"
+
+[[questions.options]]
+value = "nein"
+
+[[questions.options]]
+value = "keine_fundstelle"
+
+[[questions]]
+id = "selbe_sache"
+question = "Gehören A und B zur selben Sache — würde jemand, der die Akte von A führt, B darin erwarten?"
+scale = "nominal"
+instructions = """
+ja: B antwortet auf A, fragt zu A oder zu dessen Stand nach, setzt A um, berichtet über A, ändert, ergänzt oder ersetzt A, oder führt dieselbe Maßnahme einen Schritt weiter (etwa vom Bedarfs- zum Ausführungsbeschluss desselben Bauvorhabens, oder von einer Anfrage zur Machbarkeit zum Antrag auf genau diese Maßnahme). Maßstab ist die Sache, nicht das Gremium: dieselbe Sache kann in zwei Gremien laufen.
+
+Grenzfälle, entschieden in Fassung .2:
+- Sammelvorlage (Beschlusskontrolle, Veränderungsverzeichnis, Ergebnis der Haushaltsberatungen, Liste offener Anträge): ja, wenn B zu A eine eigene Zeile mit Sachstand, Entscheidung oder Antwort führt; nein, wenn B frühere Beschlüsse nur aufzählt (etwa im Kopf „Beschlusslage" oder „bisherige Beschlüsse" einer Vorlage zu etwas anderem).
+- Grundsatz- oder Rahmenbeschluss: ja, wenn B genau den Auftrag aus A ausführt oder A den Gegenstand von B nennt; nein, wenn B A nur als Rahmen, Begründungskette oder Textbaustein zitiert, wie jeder Einzelbeschluss desselben Programms es täte.
+- Finanzierung: nein, wenn B A nur als Quelle der Mittel nennt („finanziert über den Beschluss …").
+- Beleg: nein, wenn B A nur in einer Fußnote, Quellenliste oder mit „vgl." als Beleg für eine allgemeine Aussage nennt und sonst eine andere Sache behandelt.
+- Sammelantrag mit vielen Punkten: ja, wenn B genau einen Punkt von A aufgreift.
+- nein immer, wenn nummer_gemeint = nein.
+unklar: der Ausschnitt reicht für keine der beiden Antworten; nicht raten.
+"""
+positive = ["ja"]  # Kantenpräzision: Anteil ja unter ja und nein ([auswertung] unten)
+ignore = ["unklar"]  # „unklar wird gezählt und berichtet, nicht gewertet"
+
+[[questions.options]]
+value = "ja"
+
+[[questions.options]]
+value = "nein"
+
+[[questions.options]]
+value = "unklar"
+
+[[questions]]
+id = "beziehung"
+question = "Welche Rolle hat B gegenüber A? Genau eine Option, die engste, die passt."
+scale = "nominal"
+instructions = """
+Die Rolle beschreibt B aus der Sicht von A. Für die Rolle zählt, was A und B inhaltlich sind, nicht das Feld Dokumentart (eine als „Anfrage" eingestellte Drucksache, die einen Antrag stellt, ist ein Antrag). Passen mehrere, gilt die erste der Liste — auch dann, wenn B die eine Rolle in der Begründung und die andere im Beschlussvorschlag erfüllt. Fragen und Antworten der Verwaltung erkennt man an Formeln wie „die Verwaltung beantwortet die Anfrage wie folgt", „zu Frage 1", „Beantwortung der Anfrage"; eine Nachfrage an „Nachfrage zur Antwort", „Rückfrage", „wie ist der Stand".
+"""
+
+[[questions.options]]
+value = "antwort"
+definition = "A ist eine Anfrage, B beantwortet sie ganz oder teilweise, auch Zusatzfragen aus der Sitzung oder mit einer Zwischennachricht."
+
+[[questions.options]]
+value = "nachfrage"
+definition = "B ist eine Anfrage und fragt nach A, nach der Antwort auf A oder nach dem Stand der Umsetzung von A; A kann eine Anfrage, ein Antrag, ein Beschluss oder eine Vorlage sein."
+
+[[questions.options]]
+value = "umsetzung"
+definition = "A ist ein Antrag, Beschluss oder eine Eingabe, B berichtet über Umsetzung, Prüfung oder Erledigung oder legt A zur Entscheidung vor — auch als eigene Zeile einer Sammelvorlage (Beschlusskontrolle)."
+
+[[questions.options]]
+value = "aenderung"
+definition = "B ändert, ergänzt oder ersetzt A: Änderungs- oder Ergänzungsantrag, Nachtrag, Ergänzungs- oder Neufassungsvorlage, ein späterer Beschluss, der A inhaltlich ändert (Mittel umwidmet, Frist verlängert), oder die abschließende Antwort, wenn A die Zwischennachricht ist."
+
+[[questions.options]]
+value = "fortsetzung"
+definition = "B führt dieselbe Maßnahme in einem späteren Schritt weiter: Bedarfs- → Ausführungsbeschluss, Offenlage → Satzungsbeschluss, Folgebericht zu einem Bericht, Antrag auf eine in A erfragte oder geprüfte Maßnahme."
+
+[[questions.options]]
+value = "bezug"
+definition = "B gehört zur selben Sache, aber keine der Rollen oben trifft (B nennt A als Vorgeschichte derselben Sache)."
+
+[[questions.options]]
+value = "kein_bezug"
+definition = "B nennt A nur am Rand, als Rahmen, Finanzierungsquelle oder Beleg, oder meint A nicht (dann ist selbe_sache = nein)."
+
+[[questions.options]]
+value = "unklar"
+definition = "Der Ausschnitt reicht nicht."
+
+# Aus [auswertung] der vorläufigen Fassung, wörtlich (nur für die Auswertung, nicht im Auftrag):
+# kantenpraezision = "Anteil selbe_sache = ja unter ja und nein; unklar wird gezählt und berichtet, nicht gewertet. Gesamtzahl gewichtet mit den Schichtgrößen der jeweiligen Stichprobe."
+# rollenpraezision = "je Kantentyp: Anteil beziehung in der Erwartung unten, unter den Kanten mit selbe_sache = ja"
+# uebereinstimmung = "Krippendorffs alpha zwischen den beiden Kodierern je Frage (nominal); Stufe 3 verlangt alpha >= 0,8"
+# [auswertung.erwartet] Kantentyp des Verfahrens -> Rollen der Frage beziehung, die als richtig zählen:
+# antwort = ["antwort"]
+# nachfrage = ["nachfrage"]
+# umsetzung = ["umsetzung"]
+# kontrolle = ["umsetzung"]
+# aenderung = ["aenderung"]
+# nachtrag = ["aenderung"]
+# bau = ["fortsetzung"]
+# fortsetzung = ["fortsetzung"]
+# bezug = ["antwort", "nachfrage", "umsetzung", "aenderung", "fortsetzung", "bezug"]
+
+[sample]
+# Gezogen hat der Mess-Agent selbst (Schichten in Vorrangfolge, feste Zahl je Schicht,
+# Seed 14-2; docs/plans/14-vorgaenge.md); übernommen nach stichprobe.csv mit Schlüssel kante und
+# den Schichtgrößen aus der Tabelle dort. size und seed beschreiben sie; gezogen wird nicht neu.
+size = 100
+seed = 14
+stratum = "schicht"
+key = "kante"
+
+[text]
+chars = 1500   # Textanfang je Dokument
+window = 300   # Zeichen links und rechts der Fundstelle
+
+[provisional]  # die Antwortdateien unter messdaten/kodierung/14-vorgaenge/
+key = "kante"
+coder_a = "antworten-2-A.jsonl"
+coder_b = "antworten-2-B.jsonl"
+adjudication = "schlichtung-2.jsonl"

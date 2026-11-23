@@ -1,0 +1,942 @@
+{
+  "vorhaben": "11-struktur-f4",
+  "codebuch_version": "2026-11-23",
+  "einheit": "document",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-23",
+  "einheiten": 200,
+  "uneinig": 1,
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "bv_vorhanden": {
+      "n": 200,
+      "beide": 200,
+      "einig": 200,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9811546736227335,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "alpha_genuegt": true,
+      "labels": {
+        "ja": 114,
+        "nein": 86
+      },
+      "treffer": {
+        "positiv": [
+          "ja"
+        ],
+        "stichprobe": {
+          "treffer": 114,
+          "gewertet": 200,
+          "ignoriert": 0,
+          "anteil": 0.57,
+          "wilson95": [
+            0.5007048776415268,
+            0.6366567766656557
+          ]
+        },
+        "grundgesamtheit": {
+          "schaetzer": 0.559508547008547,
+          "wilson95_kish": [
+            0.48133537175346525,
+            0.6348379967243828
+          ],
+          "n_eff": 156.9332922288008,
+          "n": 19032,
+          "selbstgewichtend": false
+        },
+        "je_schicht": {
+          "A+F Beschluss": {
+            "treffer": 8,
+            "gewertet": 9,
+            "schicht_n": 145,
+            "anteil": 0.8888888888888888,
+            "wilson95": [
+              0.5650002944233439,
+              0.9801091123614551
+            ]
+          },
+          "Anfrage": {
+            "treffer": 0,
+            "gewertet": 29,
+            "schicht_n": 3924,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.11696979849974075
+            ]
+          },
+          "Antrag": {
+            "treffer": 34,
+            "gewertet": 34,
+            "schicht_n": 4725,
+            "anteil": 1.0,
+            "wilson95": [
+              0.8984854458466761,
+              1.0
+            ]
+          },
+          "Bedarfsbeschluss": {
+            "treffer": 8,
+            "gewertet": 8,
+            "schicht_n": 78,
+            "anteil": 1.0,
+            "wilson95": [
+              0.6755924351161198,
+              1.0
+            ]
+          },
+          "Berichtsvorlage": {
+            "treffer": 0,
+            "gewertet": 9,
+            "schicht_n": 177,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.2991450484195441
+            ]
+          },
+          "Beschlussvorlage": {
+            "treffer": 29,
+            "gewertet": 30,
+            "schicht_n": 3993,
+            "anteil": 0.9666666666666667,
+            "wilson95": [
+              0.8332960900859082,
+              0.9940914096183874
+            ]
+          },
+          "Beschlussvorlage RPA": {
+            "treffer": 8,
+            "gewertet": 8,
+            "schicht_n": 32,
+            "anteil": 1.0,
+            "wilson95": [
+              0.6755924351161198,
+              1.0
+            ]
+          },
+          "Bezirksvertretung Beschlussvorlage": {
+            "treffer": 16,
+            "gewertet": 16,
+            "schicht_n": 1473,
+            "anteil": 1.0,
+            "wilson95": [
+              0.8063923194655637,
+              1.0
+            ]
+          },
+          "Bezirksvertretung Informationsvorlage": {
+            "treffer": 0,
+            "gewertet": 23,
+            "schicht_n": 2699,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.14311661845042686
+            ]
+          },
+          "Eingabe": {
+            "treffer": 1,
+            "gewertet": 9,
+            "schicht_n": 124,
+            "anteil": 0.1111111111111111,
+            "wilson95": [
+              0.019890887638544907,
+              0.434999705576656
+            ]
+          },
+          "Haushaltsantrag": {
+            "treffer": 10,
+            "gewertet": 10,
+            "schicht_n": 338,
+            "anteil": 1.0,
+            "wilson95": [
+              0.7224672001371107,
+              1.0
+            ]
+          },
+          "Informationsvorlage": {
+            "treffer": 0,
+            "gewertet": 15,
+            "schicht_n": 1324,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.20388330103584862
+            ]
+          }
+        }
+      }
+    },
+    "bv_erste_zeile": {
+      "n": 114,
+      "beide": 114,
+      "einig": 114,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9674014658411585,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": 1.0,
+      "krippendorff_alpha": 1.0,
+      "alpha_genuegt": true,
+      "labels": {
+        "12": 1,
+        "13": 3,
+        "14": 5,
+        "15": 9,
+        "16": 5,
+        "17": 4,
+        "18": 7,
+        "19": 8,
+        "20": 12,
+        "21": 8,
+        "22": 10,
+        "23": 7,
+        "24": 12,
+        "25": 6,
+        "26": 3,
+        "27": 6,
+        "28": 4,
+        "29": 2,
+        "47": 1,
+        "68": 1
+      },
+      "treffer": null
+    },
+    "bv_letzte_zeile": {
+      "n": 114,
+      "beide": 114,
+      "einig": 114,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9674014658411585,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": 1.0,
+      "krippendorff_alpha": 1.0,
+      "alpha_genuegt": true,
+      "labels": {
+        "107": 1,
+        "15": 3,
+        "16": 2,
+        "17": 5,
+        "18": 5,
+        "19": 4,
+        "20": 6,
+        "21": 2,
+        "22": 7,
+        "23": 6,
+        "24": 6,
+        "25": 7,
+        "26": 8,
+        "27": 6,
+        "28": 7,
+        "29": 2,
+        "30": 5,
+        "31": 8,
+        "32": 4,
+        "33": 3,
+        "34": 2,
+        "35": 2,
+        "36": 1,
+        "37": 2,
+        "38": 3,
+        "39": 1,
+        "40": 1,
+        "46": 1,
+        "52": 1,
+        "55": 1,
+        "89": 1,
+        "96": 1
+      },
+      "treffer": null
+    },
+    "bv_mehrteilig": {
+      "n": 114,
+      "beide": 114,
+      "einig": 114,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9674014658411585,
+        1.0
+      ],
+      "cohen_kappa": null,
+      "krippendorff_alpha_nominal": null,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": null,
+      "alpha_genuegt": false,
+      "labels": {
+        "ja": 0,
+        "nein": 114
+      },
+      "treffer": {
+        "positiv": [
+          "ja"
+        ],
+        "stichprobe": {
+          "treffer": 0,
+          "gewertet": 114,
+          "ignoriert": 0,
+          "anteil": 0.0,
+          "wilson95": [
+            0.0,
+            0.03259853415884162
+          ]
+        },
+        "grundgesamtheit": {
+          "schaetzer": 0.0,
+          "wilson95_kish": [
+            0.0,
+            0.04242721033999633
+          ],
+          "n_eff": 86.70087921921146,
+          "n": 10908,
+          "selbstgewichtend": false
+        },
+        "je_schicht": {
+          "A+F Beschluss": {
+            "treffer": 0,
+            "gewertet": 8,
+            "schicht_n": 145,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.32440756488388023
+            ]
+          },
+          "Antrag": {
+            "treffer": 0,
+            "gewertet": 34,
+            "schicht_n": 4725,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.10151455415332376
+            ]
+          },
+          "Bedarfsbeschluss": {
+            "treffer": 0,
+            "gewertet": 8,
+            "schicht_n": 78,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.32440756488388023
+            ]
+          },
+          "Beschlussvorlage": {
+            "treffer": 0,
+            "gewertet": 29,
+            "schicht_n": 3993,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.11696979849974075
+            ]
+          },
+          "Beschlussvorlage RPA": {
+            "treffer": 0,
+            "gewertet": 8,
+            "schicht_n": 32,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.32440756488388023
+            ]
+          },
+          "Bezirksvertretung Beschlussvorlage": {
+            "treffer": 0,
+            "gewertet": 16,
+            "schicht_n": 1473,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.1936076805344365
+            ]
+          },
+          "Eingabe": {
+            "treffer": 0,
+            "gewertet": 1,
+            "schicht_n": 124,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.7934506856227626
+            ]
+          },
+          "Haushaltsantrag": {
+            "treffer": 0,
+            "gewertet": 10,
+            "schicht_n": 338,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.2775327998628892
+            ]
+          }
+        }
+      }
+    },
+    "amt": {
+      "n": 200,
+      "beide": 200,
+      "einig": 200,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9811546736227335,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "alpha_genuegt": true,
+      "labels": {
+        "\"01/02 - Amt für Gleichstellung und Antidiskriminierung\"": 1,
+        "\"01/13 - Ratsangelegenheiten und Stadtverfassung\"": 12,
+        "\"02/0 Stadtkämmerin\"": 3,
+        "\"03/0 - Dezernat für Planen, Bauen, Mobilität und Grundstückswesen\"": 1,
+        "\"03/0 - Dezernat für Planen, Bauen, Wohnen und Grundstückswesen\"": 1,
+        "\"05/0 - Dezernat für Mobilität und Umwelt\"": 3,
+        "\"12 - Amt für Statistik und Wahlen\"": 1,
+        "\"14 - Amt für kommunale Prüfung\"": 5,
+        "\"14 - Rechnungsprüfungsamt\"": 2,
+        "\"19 - Amt für Umwelt- und Verbraucherschutz\"": 3,
+        "\"20 - Kämmerei\"": 3,
+        "\"20/3 - Kämmerei\"": 1,
+        "\"23 - Amt für Gebäudemanagement\"": 2,
+        "\"37 - Feuerwehr\"": 1,
+        "\"40 - Amt für Schule und Bildung\"": 1,
+        "\"41 - Kulturamt\"": 7,
+        "\"50 - Amt für Soziales und Jugend / Soziales\"": 1,
+        "\"51 - Amt für Soziales und Jugend / Jugend\"": 2,
+        "\"51 - Jugendamt\"": 1,
+        "\"52 - Sportamt\"": 2,
+        "\"54 - Amt für Migration und Integration\"": 1,
+        "\"61 - Stadtplanungsamt\"": 2,
+        "\"63 - Bauaufsichtsamt\"": 8,
+        "\"64 - Amt für Wohnungswesen\"": 2,
+        "\"66 - Amt für Verkehrsmanagement\"": 7,
+        "\"67 - Stadtentwässerungsbetrieb\"": 7,
+        "\"68 - Garten-, Friedhofs- und Forstamt\"": 3,
+        "\"69 - Amt für Brücken-, Tunnel- und Stadtbahnbau\"": 1,
+        "\"80 - Wirtschaftsförderungsamt\"": 1,
+        "\"Bezirksverwaltungsstelle 1\"": 6,
+        "\"Bezirksverwaltungsstelle 10\"": 5,
+        "\"Bezirksverwaltungsstelle 3\"": 3,
+        "\"Bezirksverwaltungsstelle 4\"": 1,
+        "\"Bezirksverwaltungsstelle 5\"": 1,
+        "\"Bezirksverwaltungsstelle 6\"": 6,
+        "\"Bezirksverwaltungsstelle 7\"": 7,
+        "\"Bezirksverwaltungsstelle 8\"": 4,
+        "\"Bezirksverwaltungsstelle 9\"": 7,
+        "null": 75
+      },
+      "treffer": null
+    },
+    "dezernat_titel": {
+      "n": 200,
+      "beide": 200,
+      "einig": 200,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9811546736227335,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "alpha_genuegt": true,
+      "labels": {
+        "Oberbürgermeister": 3,
+        "Oberbürgermeisterin": 0,
+        "Bürgermeister": 0,
+        "Bürgermeisterin": 0,
+        "Stadtdirektor": 6,
+        "Stadtdirektorin": 0,
+        "Stadtkämmerer": 0,
+        "Stadtkämmerin": 16,
+        "Beigeordneter": 18,
+        "Beigeordnete": 26,
+        "andere": 0,
+        "keins": 131
+      },
+      "treffer": null
+    },
+    "beratungsfolge": {
+      "n": 200,
+      "beide": 200,
+      "einig": 200,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9811546736227335,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "alpha_genuegt": true,
+      "labels": {
+        "[]": 75,
+        "[{\"datum\": \"01.02.2024\", \"gremium\": \"Anregungs- und Beschwerdeausschuss\", \"qualitaet\": \"keine\"}]": 1,
+        "[{\"datum\": \"01.06.2023\", \"gremium\": \"Kulturausschuss\", \"qualitaet\": \"Entscheidung\"}, {\"datum\": \"02.06.2023\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Vorberatung\"}]": 1,
+        "[{\"datum\": \"01.09.2021\", \"gremium\": \"Bezirksvertretung 4\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"01.12.2020\", \"gremium\": \"Bezirksvertretung 7\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"01.12.2022\", \"gremium\": \"Kulturausschuss\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"02.02.2023\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"02.05.2023\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"08.05.2023\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"17.05.2023\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"02.06.2023\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"02.09.2021\", \"gremium\": \"Bezirksvertretung 8\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"02.09.2021\", \"gremium\": \"Kulturausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"02.09.2025\", \"gremium\": \"Bezirksvertretung 10\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"02.10.2025\", \"gremium\": \"Anregungs- und Beschwerdeausschuss\", \"qualitaet\": \"keine\"}]": 1,
+        "[{\"datum\": \"02.11.2023\", \"gremium\": \"Anregungs- und Beschwerdeausschuss\", \"qualitaet\": \"keine\"}]": 1,
+        "[{\"datum\": \"02.12.2020\", \"gremium\": \"Bezirksvertretung 6\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"02.12.2020\", \"gremium\": \"Bezirksvertretung 6\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"02.12.2020\", \"gremium\": \"Bezirksvertretung 6\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"25.11.2020\", \"gremium\": \"Ausschuss für Planung und Stadtentwicklung\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"03.09.2024\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"03.09.2024\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"09.09.2024\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"19.09.2024\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"03.11.2023\", \"gremium\": \"Bezirksvertretung 9\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"04.02.2021\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"04.02.2021\", \"gremium\": \"Rat\", \"qualitaet\": \"Kenntnisnahme\"}]": 2,
+        "[{\"datum\": \"05.03.2024\", \"gremium\": \"Bezirksvertretung 3\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"05.05.2023\", \"gremium\": \"Bezirksvertretung 1\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"05.09.2025\", \"gremium\": \"Bezirksvertretung 1\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"05.11.2020\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"05.11.2024\", \"gremium\": \"Ausschuss für Gesundheit und Soziales\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"05.11.2024\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"05.11.2024\", \"gremium\": \"Bezirksvertretung 5\", \"qualitaet\": \"Kenntnisnahme\"}, {\"datum\": \"08.11.2024\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"21.11.2024\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"05.12.2024\", \"gremium\": \"Anregungs- und Beschwerdeausschuss\", \"qualitaet\": \"keine\"}]": 1,
+        "[{\"datum\": \"06.11.2024\", \"gremium\": \"Bezirksvertretung 6\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"06.12.2024\", \"gremium\": \"Bezirksvertretung 9\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"07.04.2022\", \"gremium\": \"Rat\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"07.12.2021\", \"gremium\": \"Rechnungsprüfungsausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"03.02.2022\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"08.10.2024\", \"gremium\": \"Ausschuss für Gleichstellung\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"08.10.2024\", \"gremium\": \"Bezirksvertretung 5\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"08.11.2022\", \"gremium\": \"Bezirksvertretung 3\", \"qualitaet\": \"Anhörung\"}, {\"datum\": \"23.11.2022\", \"gremium\": \"Ordnungs- und Verkehrsausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"05.12.2022\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"15.12.2022\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"08.11.2022\", \"gremium\": \"Bezirksvertretung 3\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"08.11.2024\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"09.03.2023\", \"gremium\": \"Rat\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"09.05.2023\", \"gremium\": \"Ausschuss für Gleichstellung\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"09.09.2021\", \"gremium\": \"Anregungs- und Beschwerdeausschuss\", \"qualitaet\": \"keine\"}]": 1,
+        "[{\"datum\": \"09.09.2024\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Kenntnisnahme\"}, {\"datum\": \"19.09.2024\", \"gremium\": \"Rat\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"10.05.2022\", \"gremium\": \"Rechnungsprüfungsausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"23.06.2022\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"10.07.2025\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"10.07.2025\", \"gremium\": \"Rat\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"10.11.2020\", \"gremium\": \"Bezirksvertretung 10\", \"qualitaet\": \"Entscheidung\"}]": 2,
+        "[{\"datum\": \"10.11.2020\", \"gremium\": \"Bezirksvertretung 7\", \"qualitaet\": \"Entscheidung\"}]": 2,
+        "[{\"datum\": \"10.11.2020\", \"gremium\": \"Bezirksvertretung 8\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"11.05.2023\", \"gremium\": \"Anregungs- und Beschwerdeausschuss\", \"qualitaet\": \"keine\"}]": 1,
+        "[{\"datum\": \"12.05.2022\", \"gremium\": \"Bezirksvertretung 8\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"12.11.2024\", \"gremium\": \"Rechnungsprüfungsausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"12.12.2024\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 2,
+        "[{\"datum\": \"12.11.2024\", \"gremium\": \"Rechnungsprüfungsausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"21.11.2024\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"12.11.2025\", \"gremium\": \"Bezirksvertretung 6\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"12.12.2024\", \"gremium\": \"Rat\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"13.05.2025\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"13.05.2025\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"15.05.2025\", \"gremium\": \"Kulturausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"19.05.2025\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"28.05.2025\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"13.11.2024\", \"gremium\": \"Jugendhilfeausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"14.08.2023\", \"gremium\": \"Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"28.08.2023\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"07.09.2023\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"15.02.2022\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"15.03.2024\", \"gremium\": \"Bezirksvertretung 9\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"15.05.2025\", \"gremium\": \"Bezirksvertretung 8\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"15.06.2022\", \"gremium\": \"Bezirksvertretung 6\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"16.02.2022\", \"gremium\": \"Ausschuss für Planung und Stadtentwicklung\", \"qualitaet\": \"Kenntnisnahme\"}, {\"datum\": \"21.02.2022\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"16.05.2025\", \"gremium\": \"Bezirksvertretung 9\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"16.06.2025\", \"gremium\": \"Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz\", \"qualitaet\": \"Entscheidung\"}, {\"datum\": \"23.05.2025\", \"gremium\": \"Bezirksvertretung 1\", \"qualitaet\": \"Anhörung\"}]": 1,
+        "[{\"datum\": \"16.09.2025\", \"gremium\": \"Ausschuss für Wirtschaftsförderung, internationale und regionale Zusammenarbeit\", \"qualitaet\": \"Kenntnisnahme\"}, {\"datum\": \"22.09.2025\", \"gremium\": \"Ausschuss für Wohnungswesen und Modernisierung\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"16.12.2021\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"17.06.2021\", \"gremium\": \"Bezirksvertretung 8\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"17.11.2021\", \"gremium\": \"Bezirksvertretung 1\", \"qualitaet\": \"Anhörung\"}, {\"datum\": \"24.11.2021\", \"gremium\": \"Ordnungs- und Verkehrsausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"01.12.2021\", \"gremium\": \"Ausschuss für Planung und Stadtentwicklung\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"06.12.2021\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"16.12.2021\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"17.11.2021\", \"gremium\": \"Bezirksvertretung 1\", \"qualitaet\": \"Anhörung\"}, {\"datum\": \"24.11.2021\", \"gremium\": \"Ordnungs- und Verkehrsausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"06.12.2021\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"16.12.2021\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"18.02.2025\", \"gremium\": \"Rechnungsprüfungsausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"10.04.2025\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"18.03.2022\", \"gremium\": \"Bezirksvertretung 9\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"18.11.2020\", \"gremium\": \"Ausschuss für Gesundheit und Soziales\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"19.05.2022\", \"gremium\": \"Rat\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"19.06.2024\", \"gremium\": \"Bezirksvertretung 6\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"19.11.2020\", \"gremium\": \"Ausschuss für Umweltschutz\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"20.02.2025\", \"gremium\": \"Anregungs- und Beschwerdeausschuss\", \"qualitaet\": \"keine\"}]": 1,
+        "[{\"datum\": \"20.09.2022\", \"gremium\": \"Bezirksvertretung 2\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"20.11.2024\", \"gremium\": \"Jugendhilfeausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"21.06.2022\", \"gremium\": \"Bezirksvertretung 7\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"21.08.2023\", \"gremium\": \"Ausschuss für Wohnungswesen und Modernisierung\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"21.11.2023\", \"gremium\": \"Schulausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"30.11.2023\", \"gremium\": \"Kulturausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"22.08.2023\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Entscheidung\"}, {\"datum\": \"24.08.2023\", \"gremium\": \"Bezirksvertretung 8\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"22.09.2023\", \"gremium\": \"Bezirksvertretung 9\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"22.11.2022\", \"gremium\": \"Schulausschuss\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"23.05.2025\", \"gremium\": \"Bezirksvertretung 1\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"23.08.2022\", \"gremium\": \"Bezirksvertretung 5\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"23.10.2023\", \"gremium\": \"Integrationsrat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"24.01.2024\", \"gremium\": \"Bezirksvertretung 4\", \"qualitaet\": \"Anhörung\"}, {\"datum\": \"24.01.2024\", \"gremium\": \"Ausschuss für Planung und Stadtentwicklung\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"24.01.2025\", \"gremium\": \"Bezirksvertretung 1\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"24.05.2022\", \"gremium\": \"Bezirksvertretung 7\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"24.10.2023\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"26.10.2023\", \"gremium\": \"Kulturausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"30.10.2023\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"09.11.2023\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"24.11.2020\", \"gremium\": \"Jugendhilfeausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"25.01.2021\", \"gremium\": \"Haupt- und Finanzausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"25.06.2021\", \"gremium\": \"Bezirksvertretung 9\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"25.06.2024\", \"gremium\": \"Bezirksvertretung 10\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"25.08.2023\", \"gremium\": \"Bezirksvertretung 1\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"25.11.2021\", \"gremium\": \"Ausschuss für Umwelt-, Klima- und Verbraucherschutz\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"25.11.2024\", \"gremium\": \"Ausschuss für Wohnungswesen und Modernisierung\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"26.01.2021\", \"gremium\": \"Bezirksvertretung 3\", \"qualitaet\": \"Anhörung\"}, {\"datum\": \"13.01.2021\", \"gremium\": \"Ordnungs- und Verkehrsausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"26.01.2021\", \"gremium\": \"Bezirksvertretung 7\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"26.02.2025\", \"gremium\": \"Rat\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"26.04.2022\", \"gremium\": \"Bezirksvertretung 5\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"26.04.2024\", \"gremium\": \"Bezirksvertretung 1\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"26.09.2025\", \"gremium\": \"Bezirksvertretung 9\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"26.10.2021\", \"gremium\": \"Bezirksvertretung 5\", \"qualitaet\": \"Kenntnisnahme\"}, {\"datum\": \"02.11.2021\", \"gremium\": \"Bauausschuss\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"26.11.2024\", \"gremium\": \"Bezirksvertretung 3\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"27.01.2023\", \"gremium\": \"Bezirksvertretung 1\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"27.02.2024\", \"gremium\": \"Bezirksvertretung 7\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"27.06.2024\", \"gremium\": \"Rat\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"27.10.2022\", \"gremium\": \"Ausschuss für Umwelt-, Klima- und Verbraucherschutz\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"27.10.2023\", \"gremium\": \"Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"29.01.2021\", \"gremium\": \"Bezirksvertretung 1\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"29.04.2025\", \"gremium\": \"Bezirksvertretung 5\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"29.11.2023\", \"gremium\": \"Sportausschuss\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"30.01.2024\", \"gremium\": \"Bezirksvertretung 7\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"30.08.2022\", \"gremium\": \"Bezirksvertretung 7\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"30.08.2023\", \"gremium\": \"Bezirksvertretung 6\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"30.08.2024\", \"gremium\": \"Bezirksvertretung 9\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"30.09.2025\", \"gremium\": \"Rechnungsprüfungsausschuss\", \"qualitaet\": \"Vorberatung\"}, {\"datum\": \"09.10.2025\", \"gremium\": \"Rat\", \"qualitaet\": \"Entscheidung\"}]": 1,
+        "[{\"datum\": \"31.05.2022\", \"gremium\": \"Bezirksvertretung 10\", \"qualitaet\": \"Kenntnisnahme\"}]": 1,
+        "[{\"datum\": \"31.08.2023\", \"gremium\": \"Anregungs- und Beschwerdeausschuss\", \"qualitaet\": \"keine\"}]": 1
+      },
+      "treffer": null
+    },
+    "sitzung": {
+      "n": 200,
+      "beide": 200,
+      "einig": 199,
+      "anteil": 0.995,
+      "anteil_wilson95": [
+        0.9722262956021069,
+        0.9991168312843989
+      ],
+      "cohen_kappa": 0.989873930433902,
+      "krippendorff_alpha_nominal": 0.98989898989899,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.98989898989899,
+      "alpha_genuegt": true,
+      "labels": {
+        "null": 142,
+        "{\"datum\": \"02.02.2022\", \"gremium\": \"Bezirksvertretung 6\"}": 1,
+        "{\"datum\": \"03.02.2022\", \"gremium\": \"Rat\"}": 1,
+        "{\"datum\": \"03.11.2021\", \"gremium\": \"Sportausschuss\"}": 1,
+        "{\"datum\": \"03.12.2020\", \"gremium\": \"Bezirksvertretung 10\"}": 1,
+        "{\"datum\": \"04.03.2022\", \"gremium\": \"Bezirksvertretung 1\"}": 1,
+        "{\"datum\": \"04.11.2022\", \"gremium\": \"Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz\"}": 1,
+        "{\"datum\": \"04.11.2022\", \"gremium\": \"Bezirksvertretung 9\"}": 1,
+        "{\"datum\": \"07.04.2022\", \"gremium\": \"Rat\"}": 1,
+        "{\"datum\": \"07.09.2023\", \"gremium\": \"Rat\"}": 1,
+        "{\"datum\": \"07.11.2024\", \"gremium\": \"Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz\"}": 1,
+        "{\"datum\": \"08.09.2022\", \"gremium\": \"Rat\"}": 1,
+        "{\"datum\": \"08.11.2023\", \"gremium\": \"Bezirksvertretung 6\"}": 1,
+        "{\"datum\": \"09.06.2021\", \"gremium\": \"Ausschuss für Gesundheit und Soziales\"}": 1,
+        "{\"datum\": \"10.03.2023\", \"gremium\": \"Bezirksvertretung 9\"}": 1,
+        "{\"datum\": \"10.07.2025\", \"gremium\": \"Rat\"}": 1,
+        "{\"datum\": \"14.12.2023\", \"gremium\": \"Rat\"}": 3,
+        "{\"datum\": \"15.03.2022\", \"gremium\": \"Ausschuss für Digitalisierung und allgemeine Verwaltungsorganisation\"}": 1,
+        "{\"datum\": \"15.03.2024\", \"gremium\": \"Bezirksvertretung 9\"}": 1,
+        "{\"datum\": \"15.06.2023\", \"gremium\": \"Rat\"}": 1,
+        "{\"datum\": \"15.12.2022\", \"gremium\": \"Rat\"}": 4,
+        "{\"datum\": \"16.12.2021\", \"gremium\": \"Rat\"}": 3,
+        "{\"datum\": \"17.01.2024\", \"gremium\": \"Ordnungs- und Verkehrsausschuss\"}": 1,
+        "{\"datum\": \"17.03.2021\", \"gremium\": \"Bezirksvertretung 4\"}": 1,
+        "{\"datum\": \"18.10.2023\", \"gremium\": \"Ordnungs- und Verkehrsausschuss\"}": 1,
+        "{\"datum\": \"19.02.2021\", \"gremium\": \"Bezirksvertretung 9\"}": 1,
+        "{\"datum\": \"20.10.2024\", \"gremium\": \"Schulausschuss\"}": 1,
+        "{\"datum\": \"22.01.2025\", \"gremium\": \"Bezirksvertretung 4\"}": 2,
+        "{\"datum\": \"22.11.2022\", \"gremium\": \"Schulausschuss\"}": 1,
+        "{\"datum\": \"22.11.2023\", \"gremium\": \"Bezirksvertretung 4\"}": 1,
+        "{\"datum\": \"23.02.2021\", \"gremium\": \"Bezirksvertretung 5\"}": 1,
+        "{\"datum\": \"23.06.2022\", \"gremium\": \"Rat\"}": 2,
+        "{\"datum\": \"23.08.2023\", \"gremium\": \"Ausschuss für Planung und Stadtentwicklung\"}": 1,
+        "{\"datum\": \"25.01.2022\", \"gremium\": \"Bezirksvertretung 10\"}": 1,
+        "{\"datum\": \"25.03.2025\", \"gremium\": \"Ausschuss für Gesundheit und Soziales\"}": 1,
+        "{\"datum\": \"26.01.2022\", \"gremium\": \"Bezirksvertretung 4\"}": 1,
+        "{\"datum\": \"27.06.2025\", \"gremium\": \"Bezirksvertretung 9\"}": 1,
+        "{\"datum\": \"27.09.2022\", \"gremium\": \"Bezirksvertretung 7\"}": 1,
+        "{\"datum\": \"27.11.2023\", \"gremium\": \"Ausschuss für Wohnungswesen und Modernisierung\"}": 1,
+        "{\"datum\": \"28.01.2022\", \"gremium\": \"Bezirksvertretung 1\"}": 1,
+        "{\"datum\": \"28.02.2023\", \"gremium\": \"Bezirksvertretung 7\"}": 1,
+        "{\"datum\": \"29.03.2023\", \"gremium\": \"Bezirksvertretung 6\"}": 1,
+        "{\"datum\": \"29.11.2022\", \"gremium\": \"Bezirksvertretung 5\"}": 1,
+        "{\"datum\": \"30.03.2022\", \"gremium\": \"Bezirksvertretung 4\"}": 1,
+        "{\"datum\": \"30.04.2025\", \"gremium\": \"Bezirksvertretung 4\"}": 1,
+        "{\"datum\": \"30.05.2022\", \"gremium\": \"Ausschuss für Wohnungswesen und Modernisierung\"}": 1,
+        "{\"datum\": \"30.06.2021\", \"gremium\": \"Bezirksvertretung 6\"}": 1,
+        "{\"datum\": \"31.01.2025\", \"gremium\": \"Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz\"}": 1,
+        "{\"datum\": \"31.08.2022\", \"gremium\": \"Bezirksvertretung 6\"}": 1,
+        "{\"datum\": \"31.10.2023\", \"gremium\": \"Bezirksvertretung 5\"}": 1
+      },
+      "treffer": null
+    },
+    "briefdatum": {
+      "n": 200,
+      "beide": 200,
+      "einig": 200,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9811546736227335,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "alpha_genuegt": true,
+      "labels": {
+        "\"01.06.2023\"": 1,
+        "\"02.02.2024\"": 1,
+        "\"02.03.2021\"": 1,
+        "\"02.05.2022\"": 1,
+        "\"02.12.2020\"": 1,
+        "\"03.03.2022\"": 1,
+        "\"03.05.2021\"": 1,
+        "\"03.06.2021\"": 1,
+        "\"03.11.2022\"": 1,
+        "\"04.05.2021\"": 1,
+        "\"05.01.2024\"": 1,
+        "\"06.02.2024\"": 1,
+        "\"06.12.2022\"": 1,
+        "\"06.12.2023\"": 2,
+        "\"07.10.2024\"": 1,
+        "\"07.12.2021\"": 1,
+        "\"08.01.2025\"": 2,
+        "\"08.02.2021\"": 1,
+        "\"08.02.2022\"": 1,
+        "\"08.06.2021\"": 1,
+        "\"08.11.2023\"": 1,
+        "\"08.12.2021\"": 1,
+        "\"08.12.2022\"": 1,
+        "\"09.01.2023\"": 2,
+        "\"09.02.2023\"": 1,
+        "\"09.04.2025\"": 1,
+        "\"09.10.2023\"": 1,
+        "\"09.11.2022\"": 1,
+        "\"09.12.2022\"": 1,
+        "\"10.02.2021\"": 1,
+        "\"10.12.2021\"": 1,
+        "\"12.01.2021\"": 1,
+        "\"12.01.2022\"": 2,
+        "\"12.06.2025\"": 1,
+        "\"12.09.2022\"": 1,
+        "\"12.12.2023\"": 1,
+        "\"13.01.2022\"": 1,
+        "\"13.02.2024\"": 1,
+        "\"13.06.2022\"": 1,
+        "\"13.12.2022\"": 1,
+        "\"14.03.2025\"": 1,
+        "\"14.06.2022\"": 1,
+        "\"15.03.2023\"": 1,
+        "\"15.11.2022\"": 1,
+        "\"16.03.2022\"": 1,
+        "\"16.06.2021\"": 1,
+        "\"16.06.2025\"": 1,
+        "\"17.01.2025\"": 1,
+        "\"17.08.2022\"": 1,
+        "\"17.10.2023\"": 1,
+        "\"17.11.2023\"": 1,
+        "\"18.02.2022\"": 1,
+        "\"19.01.2022\"": 1,
+        "\"21.01.2022\"": 1,
+        "\"22.08.2023\"": 2,
+        "\"23.09.2024\"": 1,
+        "\"24.10.2022\"": 1,
+        "\"25.10.2023\"": 1,
+        "\"26.06.2025\"": 1,
+        "\"26.08.2022\"": 1,
+        "\"27.02.2023\"": 1,
+        "\"27.05.2021\"": 1,
+        "\"27.10.2020\"": 1,
+        "\"28.03.2022\"": 1,
+        "\"29.10.2021\"": 1,
+        "\"30.05.2022\"": 1,
+        "\"30.11.2022\"": 1,
+        "\"31.10.2024\"": 1,
+        "null": 127
+      },
+      "treffer": null
+    },
+    "unsicher": {
+      "n": 200,
+      "beide": 200,
+      "einig": 199,
+      "anteil": 0.995,
+      "anteil_wilson95": [
+        0.9722262956021069,
+        0.9991168312843989
+      ],
+      "cohen_kappa": 0.9205087440381559,
+      "krippendorff_alpha_nominal": 0.9206917113893858,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9206917113893858,
+      "alpha_genuegt": true,
+      "labels": {
+        "ja": 6,
+        "nein": 193
+      },
+      "treffer": {
+        "positiv": [
+          "ja"
+        ],
+        "stichprobe": {
+          "treffer": 6,
+          "gewertet": 199,
+          "ignoriert": 0,
+          "anteil": 0.03015075376884422,
+          "wilson95": [
+            0.013890126214792575,
+            0.06420761037611564
+          ]
+        },
+        "grundgesamtheit": {
+          "schaetzer": 0.036219110421052365,
+          "wilson95_kish": [
+            0.016366644257860077,
+            0.07823693767146393
+          ],
+          "n_eff": 156.9134399722426,
+          "n": 19032,
+          "selbstgewichtend": false
+        },
+        "je_schicht": {
+          "A+F Beschluss": {
+            "treffer": 0,
+            "gewertet": 8,
+            "schicht_n": 145,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.32440756488388023
+            ]
+          },
+          "Anfrage": {
+            "treffer": 1,
+            "gewertet": 29,
+            "schicht_n": 3924,
+            "anteil": 0.034482758620689655,
+            "wilson95": [
+              0.006113214292762653,
+              0.17175521879320288
+            ]
+          },
+          "Antrag": {
+            "treffer": 3,
+            "gewertet": 34,
+            "schicht_n": 4725,
+            "anteil": 0.08823529411764706,
+            "wilson95": [
+              0.030465943674648555,
+              0.22960486562808868
+            ]
+          },
+          "Bedarfsbeschluss": {
+            "treffer": 0,
+            "gewertet": 8,
+            "schicht_n": 78,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.32440756488388023
+            ]
+          },
+          "Berichtsvorlage": {
+            "treffer": 0,
+            "gewertet": 9,
+            "schicht_n": 177,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.2991450484195441
+            ]
+          },
+          "Beschlussvorlage": {
+            "treffer": 1,
+            "gewertet": 30,
+            "schicht_n": 3993,
+            "anteil": 0.03333333333333333,
+            "wilson95": [
+              0.005908590381612455,
+              0.16670390991409173
+            ]
+          },
+          "Beschlussvorlage RPA": {
+            "treffer": 1,
+            "gewertet": 8,
+            "schicht_n": 32,
+            "anteil": 0.125,
+            "wilson95": [
+              0.02241749145005667,
+              0.4708881822128535
+            ]
+          },
+          "Bezirksvertretung Beschlussvorlage": {
+            "treffer": 0,
+            "gewertet": 16,
+            "schicht_n": 1473,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.1936076805344365
+            ]
+          },
+          "Bezirksvertretung Informationsvorlage": {
+            "treffer": 0,
+            "gewertet": 23,
+            "schicht_n": 2699,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.14311661845042686
+            ]
+          },
+          "Eingabe": {
+            "treffer": 0,
+            "gewertet": 9,
+            "schicht_n": 124,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.2991450484195441
+            ]
+          },
+          "Haushaltsantrag": {
+            "treffer": 0,
+            "gewertet": 10,
+            "schicht_n": 338,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.2775327998628892
+            ]
+          },
+          "Informationsvorlage": {
+            "treffer": 0,
+            "gewertet": 15,
+            "schicht_n": 1324,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.20388330103584862
+            ]
+          }
+        }
+      }
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 200 Dokumenten, nicht von Menschen",
+  "selbstgewichtend": false
+}

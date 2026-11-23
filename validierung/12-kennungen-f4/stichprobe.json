@@ -1,0 +1,128 @@
+{
+  "vorhaben": "12-kennungen-f4",
+  "codebuch_version": "1",
+  "profil": "duesseldorf",
+  "einheit": "span",
+  "uebernommen": "validierung/12-kennungen/stichprobe.csv vom Mess-Agenten, typ praezision; kind ist die Artgruppe des Extraktors (nicht im Auftrag)",
+  "einheiten": 123134,
+  "groesse": 600,
+  "seed": 20261123,
+  "schicht": "schicht",
+  "aufteilung": "vom Mess-Agenten (Messdokument)",
+  "selbstgewichtend": false,
+  "schichten": {
+    "amt:kopf": {
+      "grundgesamtheit": 10001,
+      "stichprobe": 37
+    },
+    "amt:name": {
+      "grundgesamtheit": 6543,
+      "stichprobe": 30
+    },
+    "amt:nummer": {
+      "grundgesamtheit": 591,
+      "stichprobe": 16
+    },
+    "betrag:ansatz": {
+      "grundgesamtheit": 4820,
+      "stichprobe": 13
+    },
+    "betrag:einsparung": {
+      "grundgesamtheit": 135,
+      "stichprobe": 10
+    },
+    "betrag:ertrag": {
+      "grundgesamtheit": 1111,
+      "stichprobe": 11
+    },
+    "betrag:foerderung": {
+      "grundgesamtheit": 1129,
+      "stichprobe": 11
+    },
+    "betrag:kosten": {
+      "grundgesamtheit": 10981,
+      "stichprobe": 18
+    },
+    "betrag:sonstig": {
+      "grundgesamtheit": 3650,
+      "stichprobe": 13
+    },
+    "betrag:verfuegungsmittel": {
+      "grundgesamtheit": 794,
+      "stichprobe": 10
+    },
+    "betrag:zuschuss": {
+      "grundgesamtheit": 5234,
+      "stichprobe": 14
+    },
+    "bplan": {
+      "grundgesamtheit": 2061,
+      "stichprobe": 70
+    },
+    "dezernat:nummer": {
+      "grundgesamtheit": 979,
+      "stichprobe": 17
+    },
+    "fnp": {
+      "grundgesamtheit": 265,
+      "stichprobe": 30
+    },
+    "investition": {
+      "grundgesamtheit": 348,
+      "stichprobe": 19
+    },
+    "produkt": {
+      "grundgesamtheit": 1277,
+      "stichprobe": 30
+    },
+    "psp": {
+      "grundgesamtheit": 156,
+      "stichprobe": 17
+    },
+    "recht:gesetz": {
+      "grundgesamtheit": 7250,
+      "stichprobe": 37
+    },
+    "recht:gesetz_nah": {
+      "grundgesamtheit": 382,
+      "stichprobe": 21
+    },
+    "recht:gesetz_vor": {
+      "grundgesamtheit": 24,
+      "stichprobe": 20
+    },
+    "recht:ohne_gesetz": {
+      "grundgesamtheit": 702,
+      "stichprobe": 22
+    },
+    "sachkonto": {
+      "grundgesamtheit": 1574,
+      "stichprobe": 34
+    },
+    "termin:frist": {
+      "grundgesamtheit": 1285,
+      "stichprobe": 30
+    },
+    "termin:jahr": {
+      "grundgesamtheit": 1817,
+      "stichprobe": 12
+    },
+    "termin:monat": {
+      "grundgesamtheit": 4223,
+      "stichprobe": 13
+    },
+    "termin:quartal": {
+      "grundgesamtheit": 1285,
+      "stichprobe": 12
+    },
+    "termin:relativ": {
+      "grundgesamtheit": 273,
+      "stichprobe": 12
+    },
+    "termin:tag": {
+      "grundgesamtheit": 54244,
+      "stichprobe": 21
+    }
+  },
+  "gezogen": "2026-11-23"
+}

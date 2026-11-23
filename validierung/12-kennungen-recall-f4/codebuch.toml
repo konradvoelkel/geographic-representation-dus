@@ -1,0 +1,35 @@
+# Codebuch Vorhaben 12-kennungen-recall (vorläufige Fassung 1 des Mess-Agenten), am 2026-11-23
+# ins Format von F4 (georep validate) übertragen, neben den unveränderten Dateien unter validierung/12-kennungen/: Fragen, Anleitungen und Definitionen wörtlich,
+# nur die Form ist neu. Was die vorläufige Fassung zur Auswertung sagte, steht als Kommentar.
+
+# Die Recall-Aufgaben von Vorhaben 12; die Arten und ihre Regeln stehen in validierung/12-kennungen/codebuch.toml.
+
+project = "12-kennungen-recall-f4"
+version = "1"
+unit = "marking"
+instructions = """
+Lies das ganze Dokument und markiere jede Stelle, die eine der Arten oben ist, mit Art, normalisiertem Wert und bei betrag der Rolle, bei termin der Funktion. Beträge in Tabellen ohne eigene Einheit mit tabelle = true.
+
+Antwort: je Spanne ein Objekt: {"text": genauer Text, "vorkommen": n-tes Vorkommen dieses Texts im Dokument (ab 1), "art": …, "norm": …, "rolle": …, "frist": …, "tabelle": false}
+
+Offsets nicht zählen: Text und Vorkommen genügen, die Zusammenführung rechnet die Offsets.
+"""
+
+[[questions]]
+id = "spannen"
+question = "Jede Stelle im Dokument, die eine der Arten ist."
+scale = "spans"
+
+[sample]
+size = 50
+seed = 20261123
+stratum = "schicht"
+key = "aufgabe"
+
+[text]
+source = "raw"
+chars = 200000
+
+[provisional]
+key = "aufgabe"
+reason = ["begruendung", "bemerkung"]
