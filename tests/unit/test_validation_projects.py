@@ -123,3 +123,27 @@ def test_score_recomputes_the_agreement_of_project_11(
         assert (questions[question]["einig"], questions[question]["beide"]) == (114, 114), question
     assert questions["sitzung"]["einig"] == 199
     assert round(questions["sitzung"]["krippendorff_alpha"], 2) == 0.99
+
+
+def test_score_recomputes_the_agreement_of_project_12(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """docs/plans/12-kennungen.md § 4.1: Art 600/600, Grenzen 597/597, Normwert 555/597 (α 0,929),
+    Rolle 90/98 (0,901), Funktion 89/100 (0,850); vier Entscheide vom Auswerter."""
+    target = _copy(tmp_path, monkeypatch, "12-kennungen-f4")
+    assert main(["validate", "score", "12-kennungen-f4"]) == 0
+    quality = json.loads((target / "guete.json").read_text(encoding="utf-8"))
+    expected = {
+        "art": (600, 600, 1.0),
+        "grenzen": (597, 597, 1.0),
+        "norm": (555, 597, 0.929),
+        "rolle": (90, 98, 0.901),
+        "frist": (89, 100, 0.85),
+    }
+    for question, (agreed, both, alpha) in expected.items():
+        found = quality["fragen"][question]
+        assert (found["einig"], found["beide"]) == (agreed, both), question
+        assert round(found["krippendorff_alpha"], 3) == alpha, question
+    assert quality["schlichtung_herkunft"] == {
+        "Auswerter nach den Regeln des Schlichters, Runde 1": 4
+    }
