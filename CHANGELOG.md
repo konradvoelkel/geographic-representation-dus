@@ -2,6 +2,17 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.20.0 (2026-11-23), Validierung: Herkunft, Mengen, vier Vorhaben im neuen Format
+
+- Eine Schlichtungszeile kann ihre **Herkunft** nennen (`herkunft`), etwa einen Entscheid des
+  Auswerters nach den Regeln des Schlichters; README und `guete.json` zählen sie getrennt.
+- Fragen mit Mehrfachauswahl vergleichen ihre Antworten mit `unordered = true` als Menge.
+- Eine Schlichtung für eine Einheit, bei der die Kodierer nach F4 einig sind, wird übergangen und
+  gezählt, statt `merge` abzubrechen.
+- Die Labels der Vorhaben 12, 15 und 17 liegen im Format von F4 neben den alten
+  (`validierung/*-f4/`) und rechnen die Zahlen ihrer Messdokumente nach. Keine Zahl der Seite ändert
+  sich.
+
 ## 0.19.0 (2026-11-23), Validierung mit zwei KI-Kodierern
 
 - **`georep validate`** (`docs/decisions.md`, Punkt 71; Handbuch `docs/validierung.md`): `sample` zieht

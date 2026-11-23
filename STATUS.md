@@ -2,7 +2,7 @@
 
 **Vorverarbeitung 2026-11 läuft** (`docs/plan-vorverarbeitung-2026-11.md`, Stand je Vorhaben in
 `docs/plans/README.md`): am 2026-11-23 sind die Fundamente F2 und F3 (`v0.17.0`, Punkt 69) F6 (`v0.18.0`, Punkt 70:
-OParl-Sitzungen, Beratungen, Personen, hinter einem Schalter) und F4 (`v0.19.0`, Punkt 71: `georep validate`)
+OParl-Sitzungen, Beratungen, Personen, hinter einem Schalter) und F4 (`v0.19.0` und `v0.20.0`, Punkt 71: `georep validate`)
 auf `main`; F1 und F5 bessern nach ihren Reviews nach. Abgeschlossen sind die Messungen 11, 14, 15 und 22 (bauen), 12 (teils bauen,
 teils umbauen), 13 (verworfen); Stand je Vorhaben in `docs/plans/README.md`. Keine Zahl der Seite
 hat sich bewegt.
