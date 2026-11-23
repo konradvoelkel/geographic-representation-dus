@@ -48,7 +48,7 @@ from georep.oparl import (
     OparlPerson,
 )
 from georep.settings import Settings
-from georep.sources.oparl import fetch_objects
+from georep.sources.oparl import ListReport, fetch_objects
 
 # Die Version der fünf JSONL-Dateien; die drei Schritte nennen sie (tests/unit/test_pipeline_steps.py).
 COUNCIL_SCHEMA_VERSION = 1
@@ -229,13 +229,23 @@ def _page_writer[O: OparlObject](
     return page_done
 
 
-def _finish(run: _Run, next_url: str | None, *partials: Path) -> None:
-    """Nach dem letzten Blatt weg mit Teildateien und Fortschritt; nach einer Probe bleiben sie."""
-    if next_url is not None:
-        return
+def _finish(run: _Run, *partials: Path) -> None:
+    """Nach dem letzten Blatt weg mit Teildateien und Fortschritt."""
     for partial in partials:
         partial.unlink(missing_ok=True)
     run.progress.unlink(missing_ok=True)
+
+
+def _probe(run: _Run, report: ListReport, counts: str) -> str:
+    """Die Zeile eines unvollständigen Abrufs (``--max-pages``): seine Zahlen, die Ausgabe nicht.
+
+    Eine Probe schreibt keine Ausgabe (Review 2026-11-23, Befund 1): sonst ersetzte sie einen
+    vollständigen Bestand durch ihre Seiten, und ``since`` käme beim nächsten Lauf aus ihr.
+    """
+    return (
+        f"{run.mode}: {report.summary()}; Probe: {counts} bisher in der Teildatei, "
+        "die Ausgabe bleibt, wie sie war; der nächste Lauf setzt fort"
+    )
 
 
 def _share(part: int, whole: int) -> str:
@@ -309,6 +319,9 @@ def run_meetings(
         sleep=sleep,
     )
     fetched = new_meetings.load()
+    if report.next_url is not None:
+        found = f"{len(fetched)} Sitzungen, {len(new_items.load())} Tagesordnungspunkte"
+        return _probe(run, report, found)
     base = known if run.since else {}
     all_meetings = merge(base, fetched, report.deleted_ids)
     all_items = _children(
@@ -321,7 +334,7 @@ def run_meetings(
     )
     meetings.save(all_meetings.values())
     items.save(all_items.values())
-    _finish(run, report.next_url, new_meetings.path, new_items.path)
+    _finish(run, new_meetings.path, new_items.path)
     result = sum(1 for item in all_items.values() if item.result)
     consulted = sum(1 for item in all_items.values() if item.consultation)
     return (
@@ -357,9 +370,12 @@ def run_consultations(
         on_page=_page_writer(run, new.append),
         sleep=sleep,
     )
-    merged = merge(known if run.since else {}, new.load(), report.deleted_ids)
+    fetched_consultations = new.load()
+    if report.next_url is not None:
+        return _probe(run, report, f"{len(fetched_consultations)} Beratungen")
+    merged = merge(known if run.since else {}, fetched_consultations, report.deleted_ids)
     store.save(merged.values())
-    _finish(run, report.next_url, new.path)
+    _finish(run, new.path)
     linked = sum(1 for c in merged.values() if c.meeting and c.agenda_item)
     return (
         f"{run.mode}: {report.summary()}; {len(merged)} Beratungen, "
@@ -404,6 +420,9 @@ def run_persons(
         sleep=sleep,
     )
     fetched = new_persons.load()
+    if report.next_url is not None:
+        found = f"{len(fetched)} Personen, {len(new_memberships.load())} Mitgliedschaften"
+        return _probe(run, report, found)
     all_persons = merge(known if run.since else {}, fetched, report.deleted_ids)
     all_memberships = _children(
         memberships.load() if run.since else {},
@@ -415,7 +434,7 @@ def run_persons(
     )
     persons.save(all_persons.values())
     memberships.save(all_memberships.values())
-    _finish(run, report.next_url, new_persons.path, new_memberships.path)
+    _finish(run, new_persons.path, new_memberships.path)
     voting = sum(1 for m in all_memberships.values() if m.voting_right)
     ended = sum(1 for m in all_memberships.values() if m.end_date is not None)
     return (

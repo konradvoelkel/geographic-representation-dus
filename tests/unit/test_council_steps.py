@@ -272,8 +272,8 @@ def test_max_pages_is_a_probe_and_the_next_run_goes_on_from_there(
     tmp_path: Path, settings: Settings
 ) -> None:
     """``fetch persons --max-pages 1`` ist der Anfang des Abrufs, nicht ein kleiner ganzer: die
-    Ausgabe zeigt die erste Seite, der Fortschritt bleibt, und der nächste Lauf ohne Grenze setzt
-    bei Seite 2 fort, statt den Bestand der Probe für vollständig zu halten."""
+    Zeile nennt die Zahlen der Probe, die Ausgabe entsteht erst mit dem letzten Blatt, und der
+    nächste Lauf ohne Grenze setzt bei Seite 2 fort (Review 2026-11-23, Befund 1)."""
     layout = _layout(tmp_path)
     layout.ensure_dirs()
     files = council_files(layout)
@@ -282,8 +282,9 @@ def test_max_pages_is_a_probe_and_the_next_run_goes_on_from_there(
     steps = build_steps(probing, layout, session, sleep=lambda _: None)
     outcome = run_pipeline(steps, probing, ["persons"], online=True)[0]
     assert "1 Seite(n)" in outcome.reason and "weiter bei" in outcome.reason
+    assert "Probe: 3 Personen, 6 Mitgliedschaften" in outcome.reason
     assert session.urls == [settings.council.persons_endpoint]
-    assert len(_lines(files.persons)) == 3
+    assert not files.persons.exists() and not files.memberships.exists()
     following = json.loads((HTTP / "oparl_people_0015.json").read_text(encoding="utf-8"))
     progress = json.loads(files.progress("persons").read_text(encoding="utf-8"))
     assert progress["next_url"] == following["links"]["next"]
@@ -291,7 +292,9 @@ def test_max_pages_is_a_probe_and_the_next_run_goes_on_from_there(
     rest = _session(settings)
     full = build_steps(settings, layout, rest, sleep=lambda _: None)
     outcome = run_pipeline(full, settings, ["persons"], online=True)[0]
-    assert outcome.reason.startswith("Settings geändert; vollständig (fortgesetzt):")
+    assert outcome.reason.startswith(
+        "Ausgabe fehlt: persons.jsonl, memberships.jsonl; vollständig (fortgesetzt):"
+    )
     assert rest.urls == [following["links"]["next"]] and rest.calls[0][1] is None
     assert len(_lines(files.persons)) == 3 and not files.progress("persons").exists()
 
@@ -324,3 +327,68 @@ def test_a_probe_does_not_make_the_next_run_incremental(tmp_path: Path, settings
         online=True,
     )
     assert session.calls == [(following, None)]  # fortgesetzt, ohne modified_since
+
+
+def test_a_probe_leaves_a_complete_output_as_it_was(tmp_path: Path, settings: Settings) -> None:
+    """Review 2026-11-23, Befund 1: eine Probe auf einem vollständigen Bestand ersetzte ihn durch
+    ihre eine Seite, weil ohne ``incremental`` nichts darunter lag."""
+    layout = _layout(tmp_path)
+    layout.ensure_dirs()
+    files = council_files(layout)
+    run_pipeline(
+        build_steps(settings, layout, _session(settings), sleep=lambda _: None),
+        settings,
+        ["meetings", "persons"],
+        online=True,
+    )
+    complete = {path: path.read_bytes() for path in (files.meetings, files.agenda_items)}
+    complete |= {path: path.read_bytes() for path in (files.persons, files.memberships)}
+    # die Probe sieht nur die ersten beiden Sitzungen der Seite
+    endpoint = settings.council.meetings_endpoint
+    page = json.loads((HTTP / "oparl_meetings_0015.json").read_text(encoding="utf-8"))
+    short = {"data": page["data"][:2], "links": {"next": f"{endpoint}?page=2"}}
+    session = FakeSession(
+        _recorded(settings.council.persons_endpoint, "oparl_people_0015.json")
+        | {endpoint: response(endpoint, payload=short)}
+    )
+    probing = _probing(settings)
+    outcomes = run_pipeline(
+        build_steps(probing, layout, session, sleep=lambda _: None),
+        probing,
+        ["meetings", "persons"],
+        online=True,
+        force=True,
+    )
+    assert "Probe: 2 Sitzungen" in outcomes[0].reason
+    assert {path: path.read_bytes() for path in complete} == complete
+
+
+def test_starting_over_after_a_probe_is_a_full_fetch(tmp_path: Path, settings: Settings) -> None:
+    """Probe auf leerem Bestand, dann „Neu beginnen" (Fortschritt gelöscht): ``since`` darf nicht
+    aus der Probe kommen, der Lauf fragt also ohne ``modified_since`` von vorn."""
+    layout = _layout(tmp_path)
+    layout.ensure_dirs()
+    files = council_files(layout)
+    endpoint = settings.council.consultations_endpoint
+    following = "https://ris.invalid/consultations?page=2"
+    routes: dict[str, requests.Response | Exception] = {
+        endpoint: response(endpoint, payload=_consultation_page() | {"links": {"next": following}}),
+        following: response(following, payload={"data": [], "links": {}}),
+    }
+    probing = _probing(settings)
+    run_pipeline(
+        build_steps(probing, layout, FakeSession(routes), sleep=lambda _: None),
+        probing,
+        ["consultations"],
+        online=True,
+    )
+    files.progress("consultations").unlink()
+    session = FakeSession(routes)
+    run_pipeline(
+        build_steps(settings, layout, session, sleep=lambda _: None),
+        settings,
+        ["consultations"],
+        online=True,
+    )
+    assert session.calls == [(endpoint, None), (following, None)]
+    assert len(_lines(files.consultations)) == 6
