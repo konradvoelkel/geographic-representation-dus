@@ -51,7 +51,7 @@ norm = "„FNP-Änderung 188“"
 
 [arten.produkt]
 art = "2 Haushalt"
-was = "Nummer eines Produkts oder Profitcenters, auch als erstes Glied einer Kontierung („Konto 1111114 5/74990600“, „1111114/1000/5490200/2“, Tabellenzeile „1111115 13 52910000“) und nach „Produktes“, „Haushaltsstelle“"
+was = "Nummer eines Produkts oder Profitcenters, auch als erstes Glied einer Kontierung („Konto 1111114 5/74990600“, „1111114/1000/5490200/2“, Tabellenzeile „1111115 13 52910000“) und nach „Produktes“"
 spanne = "die Ziffernfolge mit ihren Leerzeichen"
 norm = "nur Ziffern; acht Ziffern sind ein Sachkonto"
 
@@ -63,7 +63,7 @@ norm = "nur Ziffern"
 
 [arten.psp]
 art = "2 Haushalt"
-was = "PSP-Element eines konsumtiven Ansatzes; „Haushaltsstelle 11.111.05.001“ ist ein Produkt (produkt), kein PSP-Element"
+was = "PSP-Element oder Kontierungsobjekt mit Punkten, auch ohne Schlüsselwort und als „Haushaltsstelle“ („1.10.36.365.01“, „1.10.11.111.05.001“, „11.111.05.001“); Investitionsmaßnahmen 7.… sind investition"
 spanne = "das Element ohne Satzzeichen am Ende"
 norm = "wie geschrieben"
 
@@ -107,7 +107,7 @@ was = "Amt, Institut, Fachbereich, Eigenbetrieb, Bezirksverwaltungsstelle (auch 
 spanne = "im Kopffeld der Wert ohne Feldnamen, bei mehreren Zeilen (mehrere Ämter) eine Spanne je Zeile; im Text der Name, eine direkt folgende Klammer mit Nummer gehört dazu; der volle Name („Feuerwehr, Rettungsdienst und Bevölkerungsschutz“, „64 - Amt für Wohnungswesen“)"
 R1 = "Norm: Amtsnummer nur, wenn sie in der Spanne steht oder ihr im Ausschnitt direkt zugeordnet ist (Kopffeld, „Amt 66“, Klammer dahinter); sonst der Name wie in der Spanne (Zeilenumbruch = ein Leerzeichen, ohne Artikel, Grundform ohne Genitiv-s). Keine Nummer aus Weltwissen, anderen Vorlagen oder Codebuch-Beispielen; ein Abteilungskürzel im Briefkopf (66/5) ist keine direkte Zuordnung"
 auswertung = "Der Vergleich mit dem Extraktor bildet Namen über das Amtsverzeichnis aus den Kopffeldern des Korpus auf die Nummer ab; die Kodierer schreiben trotzdem den Namen"
-nicht = ["Gremien", "„die Verwaltung“ ohne Namen", "städtische Gesellschaften", "Personen, auch Beigeordnete: nie kodieren"]
+nicht = ["Gremien", "„die Verwaltung“, „das Fachamt“ ohne Namen", "Behörden von Land und Bund (Finanzamt, Schulamt, Landesamt, Bundesamt …)", "„Ehrenamt“, „insgesamt“", "städtische Gesellschaften", "Personen, auch Beigeordnete: nie kodieren"]
 
 [arten.dezernat]
 art = "6 Verwaltungseinheit"
@@ -171,3 +171,36 @@ norm = "Normwert gleich unter den streng richtigen Treffern; daneben äquivalent
 rolle = "Rolle des Extraktors gleich dem Endlabel unter den Beträgen; Kriterium ≥ 0,8"
 frist = "Funktion des Extraktors gleich dem Endlabel unter den Terminen (vier Klassen); Kriterium ≥ 0,8 (Supervisor, vor der Messung); daneben Präzision und Recall der Klasse frist"
 kriterium = "Präzision ≥ 0,95 und Recall ≥ 0,85 je Art (Briefing, unverändert)"
+
+# ---------------------------------------------------------------------------------------------
+# Runde 2: Bestätigung der Fassung 2 des Extraktors (stichprobe-2.csv, aufgaben-2.jsonl)
+# ---------------------------------------------------------------------------------------------
+
+[runde2]
+stichprobe = "stichprobe-2.csv, Seed 12-2, 410 Aufgaben, ohne die Dokumente der 650 Aufgaben der ersten Runde"
+praezision_fragen = ["art", "grenzen", "norm"]
+nicht_gefragt = "rolle und frist (beide fallen, Messdokument § 5); die Felder bleiben im Antwortformat und sind null"
+recall_arten = ["produkt", "sachkonto", "psp", "investition", "recht", "amt", "dezernat"]
+recall_anweisung = "Nur die Arten aus recall_arten markieren (Haushalt, Rechtsgrundlage, Verwaltungseinheit); Beträge, Termine, Pläne nicht."
+antwortdateien = "antworten-2-A.jsonl, antworten-2-B.jsonl unter messdaten/kodierung/12-kennungen/, eine Zeile je Aufgabe, in der Reihenfolge von aufgaben-2.jsonl"
+
+# Festgelegtes Antwortformat (JSON, eine Zeile je Aufgabe). Kein anderes Feld, keine anderen Werte.
+[antwortformat.praezision-2]
+aufgabe = "string, wie in der Aufgabe („12-2-0001“)"
+kodierer = "string, „A“ oder „B“"
+art = "string, eine der Optionen von fragen.art"
+grenzen = "string, eine der Optionen von fragen.grenzen; null, wenn art = keine"
+text_korrigiert = "string, der richtige Text genau wie im Ausschnitt (Zeilenumbrüche als \\n), nur wenn grenzen nicht „richtig“ ist; sonst null"
+norm = "string nach der Normregel der Art (für die korrigierte Spanne, wenn grenzen nicht richtig ist); null, wenn art = keine"
+rolle = "null"
+frist = "null"
+sicher = "boolean"
+bemerkung = "string oder null, höchstens ein Satz; keine Textausschnitte über die Spanne hinaus"
+beispiel = '{"aufgabe": "12-2-0001", "kodierer": "A", "art": "recht", "grenzen": "zu_kurz", "text_korrigiert": "§ 2 Abs. 1 bis 3 Taxentarifordnung", "norm": "Taxentarifordnung § 2 Abs. 1 bis 3", "rolle": null, "frist": null, "sicher": true, "bemerkung": null}'
+
+[antwortformat.recall-2]
+aufgabe = "string"
+kodierer = "string, „A“ oder „B“"
+spannen = "Liste von Objekten {\"text\": string genau wie im Dokument, \"vorkommen\": int ab 1 (n-tes Vorkommen dieses Texts im ganzen Dokument), \"art\": eine aus runde2.recall_arten, \"norm\": string, \"rolle\": null, \"frist\": null, \"tabelle\": false}; leere Liste, wenn das Dokument keine Kennung dieser Arten enthält"
+bemerkung = "string oder null"
+beispiel = '{"aufgabe": "12-2-0002", "kodierer": "B", "spannen": [{"text": "1111114", "vorkommen": 1, "art": "produkt", "norm": "1111114", "rolle": null, "frist": null, "tabelle": false}, {"text": "54990600", "vorkommen": 1, "art": "sachkonto", "norm": "54990600", "rolle": null, "frist": null, "tabelle": false}], "bemerkung": null}'

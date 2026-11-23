@@ -2,6 +2,7 @@
 
     uv run python docs/plans/12-kennungen-messung.py [--profil duesseldorf] [--alle] [--stichprobe]
     uv run python docs/plans/12-kennungen-messung.py --auswertung
+    uv run python docs/plans/12-kennungen-messung.py --entwurf --stichprobe-2
 
 Ohne Schalter misst es die Hauptperiode (rund eine Minute auf vier Kernen); `--alle` misst dazu
 2014-2020, 2025 und Mönchengladbach (Übertragbarkeit, § 3.4 des Dokuments); `--stichprobe` zieht
@@ -15,6 +16,12 @@ labels.csv` (Werte als JSON, Offsets statt Textausschnitten) und misst den Extra
 Präzision streng und mild, Recall streng und mild, Normwert, Rolle, Funktion, je mit Wilson-Intervall
 und, wo die Stichprobe geschichtet ist, mit `schicht_n` gewichtet; dazu Krippendorffs α der Kodierer
 und eine Fehlerliste mit Kontext (lokal, `fehler-extraktor.jsonl`).
+
+Fassung 2 des Extraktors (Umbau nach der Kodierung, § 3.7): `--fassung 2` wählt sie für jeden Lauf;
+`--entwurf` misst Fassung 1 und 2 an den Labels der ersten Runde (nur Entwurfsschätzung, die Regeln sind
+an diesen Fällen entwickelt), `--stichprobe-2` zieht die Bestätigungsstichprobe (Seed `12-2`, ohne die
+Dokumente der ersten Runde) nach `validierung/12-kennungen/stichprobe-2.csv` und die Aufgaben ohne
+Ausgabe des Extraktors nach `messdaten/kodierung/12-kennungen/aufgaben-2.jsonl`.
 
 Liest nur: den Rohtext unter `messdaten/rohtext/<profil>.parquet` (pypdf 7.1.0, Groß- und
 Kleinschreibung, Zeilenumbrüche, Seitenwechsel als `\\f`; vom Supervisor am 2026-11-23
@@ -452,11 +459,12 @@ class Kontext:
     rx: dict[str, re.Pattern[str]] = field(default_factory=dict)
     aemter: dict[str, str] = field(default_factory=dict)  # Name -> Code aus den Kopffeldern
     aemter_rx: re.Pattern[str] | None = None
+    fassung: int = 1
 
 
-def kontext_bauen(stadt: str, aemter: dict[str, str]) -> Kontext:
+def kontext_bauen(stadt: str, aemter: dict[str, str], fassung: int = 1) -> Kontext:
     m = PROFILMUSTER[stadt]
-    k = Kontext(stadt=stadt, aemter=aemter)
+    k = Kontext(stadt=stadt, aemter=aemter, fassung=fassung)
     k.rx = {
         "bplan": re.compile(
             BPLAN_SCHLUESSEL
@@ -524,6 +532,8 @@ def kontext_bauen(stadt: str, aemter: dict[str, str]) -> Kontext:
             + WS
             + r"\((?:Amt[ \t]*)?\d{2}(?:/\d{1,2})?\))?"
         )
+    if fassung == 2:
+        kontext_fassung_2(k)
     return k
 
 
@@ -551,7 +561,7 @@ def betrag_norm(num: str, sign: str | None, mult: str | None, unit: str) -> Deci
     if unit.replace(" ", "").upper() in {"T€", "TEUR"}:
         faktor *= 1000
     wert *= faktor
-    if sign:
+    if sign and sign.strip() != "+":
         wert = -wert
     return wert.quantize(Decimal("0.01"))
 
@@ -925,6 +935,547 @@ EXTRAKTOREN: tuple[Callable[[str, Kontext], Iterator[tuple[int, int, str, str, s
     verwaltung,
 )
 
+# --------------------------------------------------------------------------------------------
+# Fassung 2: Umbau nach der Kodierung (2026-11-23, Messdokument § 3.7). Haushalt, Recht und Amt
+# umgebaut, kleine Korrekturen an Betrag und Termin. Fassung 1 bleibt wörtlich, damit ihre Zahlen
+# nachrechenbar bleiben; was Fassung 2 ändert, steht hier und wird über `--fassung 2` gewählt.
+# --------------------------------------------------------------------------------------------
+
+EXTRACTOR_2 = "kennungen-messung-v2"
+NIE = r"(?!x)x"
+
+# Stadtspezifisch, zieht wie PROFILMUSTER ins Profil
+PROFILMUSTER_2: dict[str, dict[str, str]] = {
+    "duesseldorf": {
+        # Produkt auch gebeugt („aus Mitteln des Produktes 2528101“)
+        "produkt": r"(?:Produkt(?:sachkonto|nummer|nr\.?|es|s|en|e)?|Profitcenter(?:/Konto/Maßnahme)?)"
+        + WS
+        + r":?"
+        + WSN
+        + r"(?P<n>\d{2,3}(?:[ \n]?\d){4,8})(?![\d.])",
+        # Kontierungskette ab einem siebenstelligen Produkt ohne Schlüsselwort: „1111114 5/74990600“,
+        # „1111114/1000/54990700/7“, Tabellenzeile „2525206 15 53150900“, „2528101 / 790000537/70810000“
+        "kette_produkt": r"(?<![\d.,\w])(?P<p>[1-6]\d{6})(?![\d.,])",
+        "kette_glied": r"(?P<sep>[ \t]*/?[ \t]*\n?[ \t]*)(?:(?P<m>7\.\d{8}(?:\.[A-Z0-9]{1,3}){0,2}|7\d{8})"
+        r"|(?P<k>[4-8]\d{7})|(?P<kk>5\d{6})|(?P<ks>1000|\d{1,2}))(?![\d,]|\.\d)",
+        # Kontierungsobjekte mit Punkten ohne Schlüsselwort (Haushaltsstelle, PSP-Element)
+        "psp_frei": r"(?<![\d.\w])(?:\d{2}\.\d{3}\.\d{2}\.\d{3}|1\.\d{2}\.\d{2}\.\d{3}\.\d{2}(?:\.\d{3})?)(?![\d.])",
+        # Bezirksverwaltungsstelle im Text, mit und ohne Nummer
+        "amt_text": r"(?<![\w-])Bezirksverwaltungsstellen?(?:[ \t]+(?P<n>\d{1,2})(?![\d.]))?(?![\w])",
+    },
+    "moenchengladbach": {
+        "produkt": PROFILMUSTER["moenchengladbach"]["produkt"],
+        "kette_produkt": NIE,
+        "kette_glied": NIE,
+        "psp_frei": NIE,
+        "amt_text": NIE,
+    },
+}
+
+# Stadtneutral (defaults.toml)
+NUM_2 = (
+    r"(?<![\d.,\w])(?P<sign>[-−]|\+[ \t]?)?"
+    r"(?P<num>(?:\d{1,3}(?:[.\u00a0\u202f]\d{3})+|\d{2,3}(?: \d{3})+|\d+)(?:,(?:\d{1,2}|-{1,2}|–))?)(?![\d])"
+)
+BETRAG_NACH_2 = NUM_2 + WSN + r"(?:" + MULT + WSN + r")?" + UNIT
+BETRAG_VOR_2 = (
+    r"(?P<unit>€|EUR\b|Euro\b)[ \t\u00a0]?\n?[ \t\u00a0]?" + NUM_2 + r"(?:" + WS + MULT + r")?"
+)
+JAHR_IM_KOPF = re.compile(
+    r"(?:19|20)\d{2}"
+)  # „2021 ⏎Mio. EUR“, „2023     €“: Spaltenkopf, kein Betrag
+
+DATUM_TEXT_2 = (
+    r"(?<![\d\w])(?P<tag>\d{1,2})\.?" + WSN + MONAT + WSN + r"(?P<jahr>(?:19|20)\d{2})(?!\d)"
+)
+MONAT_JAHR_2 = r"(?<![\d.][ \t])(?<![\d.])" + MONAT + WSN + r"(?P<jahr>(?:19|20)\d{2})(?!\d)"
+MONAT_ZUSATZ = r"(?P<q>Anfang|Mitte|Ende)[ \t\n]+" + MONAT + WSN + r"(?P<jahr>(?:19|20)\d{2})(?!\d)"
+JAHR_QUALIFIZIERT_2 = (
+    r"(?P<q>Anfang|Mitte|Ende|Frühjahr|Frühling|Sommer|Herbst|Winter|Jahresende|Jahresmitte)"
+    r"[ \t\n]+(?:des[ \t\n]+Jahres[ \t\n]+)?(?P<jahr>(?:19|20)\d{2})(?!\d)"
+)
+ISO_DATUM = r"(?<![\d-])(?P<jahr>(?:19|20)\d{2})-(?P<mon>\d{2})-(?P<tag>\d{2})(?![\d-])"
+# R10: die vorangestellte unvollständige Angabe einer Spanne („10. und 11. Juni 2023“,
+# „22. April bis einschließlich 2. Mai 2025“, „10.07. bis zum 17.07.2022“, „März bis Dezember 2021“)
+R10_VERBINDER = r"[ \t\n]*(?:und|bis(?:[ \t]+(?:zum|einschließlich))?|-|–)[ \t\n]*$"
+R10_TAG = re.compile(r"(?<![\d\w.])(?P<tag>\d{1,2})\." + R10_VERBINDER)
+R10_TAG_MONAT = re.compile(r"(?<![\d\w.])(?P<tag>\d{1,2})\.[ \t]*" + MONAT + R10_VERBINDER)
+R10_TAG_ZAHL = re.compile(r"(?<![\d\w.])(?P<tag>\d{1,2})\.(?P<mon>\d{1,2})\." + R10_VERBINDER)
+R10_MONAT = re.compile(r"(?<![\w.])" + MONAT + R10_VERBINDER)
+RELATIV_2: tuple[tuple[str, str], ...] = (
+    (
+        "relativ:naechste_sitzung",
+        # „in/auf der nächsten Sitzung“ mit Präposition; nach „zur“ ohne („bis zur nächsten Sitzung“
+        # → „nächsten Sitzung“, so die Labels)
+        r"(?:(?:in|zu|auf)[ \t\n]+(?:der|einer|den)[ \t\n]+(?:der[ \t\n]+)?|(?<=zur[ \t])|(?<=zur\n))"
+        r"(?:nächsten|kommenden|folgenden|übernächsten)[ \t\n]+Sitzung(?:en)?",
+    ),
+    ("relativ:nach_sommerpause", r"nach[ \t]+der[ \t]+Sommerpause(?:[ \t]+(?:19|20)\d{2})?"),
+    ("relativ:vor_sommerpause", r"vor[ \t]+der[ \t]+Sommerpause(?:[ \t]+(?:19|20)\d{2})?"),
+    (
+        "relativ:frist",
+        r"(?:innerhalb[ \t]+(?:von[ \t]+)?|nach[ \t]+)(?:\d+|eines|einem|zwei|drei|vier|sechs|zwölf)[ \t]+"
+        r"(?:Tag|Woche|Monat|Jahr)(?:es|en|e|s)?\b",
+    ),
+    ("relativ:jahresende", r"bis[ \t]+(?:zum[ \t]+)?(?:Jahresende|Ende[ \t]+des[ \t]+Jahres)"),
+)
+UMLAUT = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss"})
+
+# Recht: Kettengrammatik und Gesetzesnamen (R3 bis R9 des Schlichters)
+KOPF_2 = r"(?:§§?|Art(?:ikel|\.)?(?=[ \t]*\d)|Paragraph(?:en)?(?:[ \t]*\(§§?\))?(?=[ \t]*\d))"
+NUMMER_2 = (
+    r"[ \t\u00a0]*\d+(?:[a-z](?![\w])|[ \t][a-z](?![.\w]))?(?:[ \t]?ff\b\.?|[ \t]?f\.)?(?![\w])"
+)
+SPEZ_WORT = (
+    r"(?:Abs(?:atz|ätze|\.)?|Satz|S\.|Nr\.?|Nummer|Ziff(?:er|\.)?|lit\.|Buchst(?:abe|\.)?|Halbsatz|"
+    r"Alt(?:ernative|\.)?|Unterabs(?:atz|\.)?)"
+)
+SPEZ_WERT = (
+    r"(?:\d+(?:\.\d+)*(?:[a-z]|[ \t][a-z](?![.\w]))?|\(\d{1,2}[a-z]?\)|[a-z]\)?|[IVX]+)(?![\w])"
+)
+LISTE_BLICK = (
+    r"(?=[ \t\n]*(?:,|und\b|bis\b|sowie\b|oder\b|Satz\b|S\.|Nr\.|Abs|Ziff|lit\.|i\.|in[ \t\n]+Verbindung|"
+    r"der\b|des\b|[A-ZÄÖÜ][A-Za-zÄÖÜäöü\-]*[A-ZÄÖÜ]|[A-ZÄÖÜ][\wäöüß\-]*(?:gesetz|ordnung|satzung|richtlinie)|"
+    r"[)\].;:]|$)|[ \t]*\n)"
+)
+SPEZ_LISTE = (
+    r"(?:[ \t\n]*(?:,|und|bis|sowie|oder|-|–)[ \t\n]*(?:\d+(?:\.\d+)*[a-z]?|\(\d{1,2}[a-z]?\))"
+    + LISTE_BLICK
+    + r")*"
+)
+PARA_2 = (
+    KOPF_2
+    + NUMMER_2
+    + r"(?:[ \t\u00a0\n]*(?:"
+    + SPEZ_WORT
+    + r"[ \t\u00a0]*\n?[ \t\u00a0]*"
+    + SPEZ_WERT
+    + SPEZ_LISTE
+    + r"|\(\d{1,2}[a-z]?\)(?:[ \t]+\d{1,2}(?![\w.,]))?"
+    + SPEZ_LISTE
+    + r"|[a-z]\)|[IVX]{1,4}(?![.\w])))*"
+)
+SPEZ_2 = SPEZ_WORT + r"[ \t\u00a0]*\n?[ \t\u00a0]*" + SPEZ_WERT + SPEZ_LISTE
+VERBINDER_2 = (
+    r"[ \t\u00a0\n]*(?:,|und|sowie|bzw\.|oder|bis|i\.[ \t]?V\.[ \t]?(?:m\.|mit)|"
+    r"in[ \t\n]+Verbindung[ \t\n]+mit|-|–)[ \t\u00a0\n]*"
+)
+GESETZ_KURZ_2 = (
+    r"(?=[A-ZÄÖÜ])(?!(?:AG|GmbH|EU|NRW|NW|BV|OB|DB|VRR|ÖPNV|SPD|CDU|FDP|AfD|[IVX]+)(?![\w-]))"
+    r"(?:[A-ZÄÖÜ]{2,}[ ][A-Z][a-z]+[A-Z][A-Za-z]*(?![\w])"  # „APO WbK“
+    r"|[A-Za-zÄÖÜäöü]*[A-ZÄÖÜ][A-Za-zÄÖÜäöü]*[A-ZÄÖÜ][A-Za-zÄÖÜäöü/\-]*|GO|GG)"
+    r"(?:[ \t]+(?:NRW|NW|[IVX]{1,4}))?(?![\w])"
+)
+GESETZ_WORT = (
+    r"(?:gesetzbuch|gesetz|verordnung|ordnung|satzung|richtlinien|richtlinie|vertrag|regelung|statut)"
+    r"(?:es|s|en|n)?(?![\w])"
+)
+GESETZ_ZUSATZ = (
+    r"(?:[ \t\n]+(?:des|der)[ \t\n]+(?:Landes|Stadt|Landeshauptstadt|Bundes)(?:[ \t]+[A-ZÄÖÜ][\w\-]*){1,2}"
+    r"|[ \t]+(?:NRW|NW)(?![\w])|[ \t]+(?:für[ \t]+das[ \t]+Land[ \t]+)?Nordrhein-Westfalen)?"
+)
+GESETZ_LANG_2 = (
+    r"[‚„\"'»«]?(?:[A-ZÄÖÜa-zäöü][a-zäöüß]{2,}(?:en|er|es)[ \t\n]+)?"  # „Allgemeinen“, „städtischen“
+    r"(?:[A-ZÄÖÜ](?:[\wäöüß\-]|-[ \t]*\n[ \t]*)*?"
+    + GESETZ_WORT
+    + r"|[A-ZÄÖÜ][\wäöüß]*-[ \t]+(?:und|oder)[ \t]+[\wäöüß]*"
+    + GESETZ_WORT
+    + r"|[A-ZÄÖÜ][\wäöüß]+[ \t\n]+(?:Ordnung|Gesetz|Verordnung|Satzung)(?:es|s)?(?![\w]))"
+    + GESETZ_ZUSATZ
+    + r"[‘“\"'»«]?"
+    + r"|Sozialgesetzbuch(?:es)?[ \t]*(?:[-–][ \t]*)?(?:[IVX]{1,4}|\(?[A-ZÄÖÜ]\w+[ \t]+Buch\)?)"
+    + r"|(?:Satzung|Verordnung|Ordnung|Richtlinie|Gesetz(?:es)?|Vertrag(?:es)?)(?![\w])"
+)
+_KETTE_2 = (
+    r"(?:"
+    + VERBINDER_2
+    + r"(?:"
+    + PARA_2
+    + r"|"
+    + SPEZ_2
+    + r"|\d+(?:[a-z]|[ \t][a-z](?![.\w]))?\b(?:[ \t]?ff\b\.?)?(?:[ \t\u00a0\n]*"
+    + SPEZ_2
+    + r")*"
+    + LISTE_BLICK
+    + r"))*"
+)
+RECHT_2 = (
+    r"(?:"
+    + PARA_2
+    + _KETTE_2
+    + r")"
+    + r"(?P<gesetz>"
+    + WSN
+    + r"(?:(?:der|des|im|in[ \t]+der|nach[ \t]+dem|gemäß|gem\.)[ \t\n]+)?"
+    + r"(?:"
+    + GESETZ_LANG_2
+    + r"|"
+    + GESETZ_KURZ_2
+    + r"))?"
+)
+GESETZ_NAH_2 = re.compile(r"(?<![\w])(?P<g>" + GESETZ_LANG_2 + r"|" + GESETZ_KURZ_2 + r")")
+GESETZ_VOR_2 = re.compile(r"(?<![\w])(?P<g>" + GESETZ_KURZ_2 + r")[ \t]*\n?[ \t]*$")
+R8_ZWISCHEN = re.compile(
+    r"[ \t\n]*(?:\([A-ZÄÖÜ][\w\- ]*\)[ \t\n]*)?(?:i\.[ \t]?V\.[ \t]?(?:m\.|mit)|in[ \t\n]+Verbindung[ \t\n]+mit)"
+    r"[ \t\n]*"
+)
+GESETZ_KANON_2: tuple[tuple[str, str], ...] = (
+    (r"^Gemeinde ?[Oo]rdnung|^GO(?: NRW| NW)?$", "GO NRW"),
+    (r"^Straßenverkehrs[- ]?[Oo]rdnung$", "StVO"),
+    (r"^ZO$|^Zuständigkeitsordnung", "Zuständigkeitsordnung"),
+    (r"^(?:APO[ -])?WbK$", "APO-WbK"),
+    (r"^Allgemeine[ns]? Eisenbahngesetz", "AEG"),
+    (r"^Abgabenordnung$", "AO"),
+    (r"^Landesforstgesetz|^LFoG", "LFoG NRW"),
+    (r"^Straßen- und Wegegesetz", "StrWG NRW"),
+)
+GESETZ_KANON_2_RX = [(re.compile(rx), kanon) for rx, kanon in GESETZ_KANON_2]
+
+# Amt: Wörter auf -amt, die kein Amt der Stadtverwaltung nennen (stadtneutral)
+AMT_WORT = r"(?<![\w-])(?P<name>[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜa-zäöüß][a-zäöüß]+)*amt)(?P<flex>e?s)?(?![\w-])"
+AMT_WORT_NICHT = re.compile(
+    r"^(?:Gesamt|Insgesamt|Fachamt|Ehrenamt|Finanzamt|Schulamt|Schiedsamt)$|^(?:Bundes|Landes)\w*amt$|bundesamt$"
+)
+
+
+def gesetz_kanon_2(roh: str) -> str:
+    g = re.sub(r"-[ \t]*\n[ \t]*(?=[a-zäöüß])", "", roh)
+    g = re.sub(r"\s+", " ", g).strip().strip("‚„\"'»«‘“")
+    g = re.sub(r"^(?:der|des|im|in der|nach dem|gemäß|gem\.)\s+", "", g).strip("‚„\"'»«‘“")
+    g = re.sub(
+        r"^[a-zäöü][\wäöüß]+\s+(?=[A-ZÄÖÜ])", "", g
+    )  # „städtischen Straßenreinigungssatzung“
+    ohne_zusatz = re.sub(
+        r"\s+(?:des|der)\s+(?:Landes|Stadt|Landeshauptstadt|Bundes)(?:\s+[A-ZÄÖÜ][\w\-]*){1,2}$",
+        "",
+        g,
+    )
+    for rx, kanon in GESETZ_KANON_2_RX:
+        if rx.search(ohne_zusatz):
+            return kanon
+    k = gesetz_kanon(ohne_zusatz)
+    return (
+        re.sub(r"(?<=[a-zäöüß])(?:es|s)$", "", k) if re.search(r"(?:gesetzes|ordnungs?)$", k) else k
+    )
+
+
+def para_kanon_2(roh: str) -> str:
+    """R3: „Abs.“, „Satz“ ausgeschrieben, „Nr.“, „i. V. m.“; Absatz in Klammern als „Abs. n“."""
+    t = re.sub(r"[\s\u00a0]+", " ", roh).strip()
+    t = re.sub(r"^Paragraph(?:en)?(?: \(§§?\))?", "§", t)
+    t = re.sub(r"\bArtikel\b", "Art.", t)
+    t = re.sub(r"\bAbsatz\b|\bAbsätze\b|\bAbs\b(?!\.)", "Abs.", t)
+    t = re.sub(r"\bS\.(?= ?\d)", "Satz", t)
+    t = re.sub(r"\bNummer\b|\bNr\b(?!\.)", "Nr.", t)
+    t = re.sub(r"\bZiffer\b", "Ziff.", t)
+    t = re.sub(r"i\. ?V\. ?(?:m\.|mit)|in Verbindung mit", "i. V. m.", t)
+    t = re.sub(r"(§§?|Art\.|Abs\.|Nr\.|Ziff\.)\s*", r"\1 ", t)
+    t = re.sub(r"Abs\. \((\d{1,2}[a-z]?)\)", r"Abs. \1", t)
+    t = re.sub(r"(?<![\w.])\((\d{1,2}[a-z]?)\)", r"Abs. \1", t)
+    t = re.sub(r"(\d) ([a-z])\b(?!\.)", r"\1\2", t)
+    t = re.sub(r"Abs\. (\d+[a-z]?) (\d+)$", r"Abs. \1 Nr. \2", t)  # R5: „(1b) 5“ → „Abs. 1b Nr. 5“
+    return re.sub(r"\s+", " ", t).strip(" ,")
+
+
+def betraege_2(text: str, k: Kontext) -> Iterator[tuple[int, int, str, str, str, str]]:
+    """Wie Fassung 1, dazu „+“, Einheit vorn als Wort und über den Zeilenwechsel, kein Jahreskopf."""
+    belegt: list[tuple[int, int]] = []
+    einheiten: set[int] = set()
+    funde: list[tuple[int, int, Decimal, str]] = []
+    for m in k.rx["betrag_nach"].finditer(text):
+        zwischen = text[m.end("num") : m.start("unit")]
+        if JAHR_IM_KOPF.fullmatch(m.group("num")) and (
+            m.group("mult") or "\n" in zwischen or "  " in zwischen
+        ):
+            continue
+        wert = betrag_norm(m.group("num"), m.group("sign"), m.group("mult"), m.group("unit"))
+        if wert is None:
+            continue
+        s = m.start("sign") if m.group("sign") else m.start("num")
+        funde.append((s, m.end(), wert, "nach"))
+        belegt.append((s, m.end()))
+        einheiten.update(range(m.start("unit"), m.end("unit")))
+        v = k.rx["spanne_vor"].search(text, max(0, s - 40), s)
+        if v and not re.fullmatch(r"(?:19|20)\d{2}", v.group("num")):
+            w = betrag_norm(v.group("num"), None, m.group("mult"), m.group("unit"))
+            if w is not None:
+                funde.append((v.start("num"), v.end("num"), w, "spanne"))
+                belegt.append((v.start("num"), v.end("num")))
+    for m in k.rx["betrag_vor"].finditer(text):
+        if m.start("unit") in einheiten or re.fullmatch(r"(?:19|20)\d{2}", m.group("num")):
+            continue
+        if "\n" in text[m.end("unit") : m.start("num")] and not re.search(r"[.,]", m.group("num")):
+            continue  # „EUR ⏎2. Teilbetrag“: über den Zeilenwechsel nur mit Tausenderpunkt oder Komma
+        if any(a < m.end() and m.start() < b for a, b in belegt):
+            continue
+        wert = betrag_norm(m.group("num"), m.group("sign"), m.group("mult"), m.group("unit"))
+        if wert is None:
+            continue
+        funde.append((m.start(), m.end(), wert, "vor"))
+        belegt.append((m.start(), m.end()))
+    for s, e, wert, form in funde:
+        je = bool(k.rx["je_einheit"].match(text, e))
+        yield s, e, "betrag", f"{wert}", form + (";je" if je else ""), ""
+
+
+def termine_2(text: str, k: Kontext) -> Iterator[tuple[int, int, str, str, str, str]]:
+    """Zeitangaben ohne Funktion (fällt, § 5): Fassung 1 plus Zeilenwechsel, Zusätze, ISO, R10."""
+    belegt: list[tuple[int, int]] = []
+
+    def frei(s: int, e: int) -> bool:
+        return not any(a < e and s < b for a, b in belegt)
+
+    def nimm(s: int, e: int, norm: str, form: str) -> tuple[int, int, str, str, str, str]:
+        belegt.append((s, e))
+        return s, e, "termin", norm, form, ""
+
+    def r10(s: int, monat: int, jahr: int) -> Iterator[tuple[int, int, str, str, str, str]]:
+        """Die unvollständige erste Angabe vor „und“/„bis“ erbt Monat und Jahr (R10)."""
+        lo = max(0, s - 40)
+        davor = text[lo:s]
+        for rx in (R10_TAG_MONAT, R10_TAG_ZAHL, R10_TAG):
+            v = rx.search(davor)
+            if not v:
+                continue
+            gruppen = v.groupdict()
+            mon = monat
+            if gruppen.get("monat"):
+                mon = MONATE.get(v.group("monat").lower().rstrip("."), 0)
+                ende = lo + v.end("monat")
+            elif gruppen.get("mon"):
+                mon = int(v.group("mon"))
+                ende = lo + v.end("mon") + 1
+            else:
+                ende = lo + v.end("tag") + 1
+            iso = datum_iso(int(v.group("tag")), mon, jahr)
+            if iso and frei(lo + v.start(), ende):
+                yield nimm(lo + v.start(), ende, iso, "tag;r10")
+            return
+
+    for m in k.rx["datum_text"].finditer(text):
+        monat = MONATE.get(m.group("monat").lower().rstrip("."))
+        iso = datum_iso(int(m.group("tag")), monat or 0, int(m.group("jahr")))
+        if iso and frei(m.start(), m.end()):
+            yield nimm(m.start(), m.end(), iso, "tag")
+            yield from r10(m.start(), monat or 0, int(m.group("jahr")))
+    for m in k.rx["datum_zahl"].finditer(text):
+        tag, mon, j = m.group("tag"), m.group("mon"), m.group("jahr")
+        if len(j) == 2 and (len(tag) != 2 or len(mon) != 2):
+            continue
+        iso = datum_iso(int(tag), int(mon), jahr4(j))
+        if iso and frei(m.start(), m.end()):
+            yield nimm(m.start(), m.end(), iso, "tag")
+            yield from r10(m.start(), int(mon), jahr4(j))
+    for m in k.rx["iso_datum"].finditer(text):
+        iso = datum_iso(int(m.group("tag")), int(m.group("mon")), int(m.group("jahr")))
+        if iso and frei(m.start(), m.end()):
+            yield nimm(m.start(), m.end(), iso, "tag;iso")
+    for m in k.rx["quartal"].finditer(text):
+        q = m.group("q")
+        q = {"I": "1", "II": "2", "III": "3", "IV": "4"}.get(q, q)
+        if m.group("art").startswith("Halb") and q not in {"1", "2"}:
+            continue
+        norm = f"{m.group('jahr')}-{'Q' if m.group('art').startswith('Q') else 'H'}{q}"
+        if frei(m.start(), m.end()):
+            yield nimm(m.start(), m.end(), norm, "quartal")
+    for m in k.rx["monat_zusatz"].finditer(text):
+        monat = MONATE.get(m.group("monat").lower().rstrip("."))
+        if monat and frei(m.start(), m.end()):
+            yield nimm(
+                m.start(), m.end(), f"{m.group('jahr')}-{monat:02d}~{m.group('q').lower()}", "monat"
+            )
+    for m in k.rx["monat_jahr"].finditer(text):
+        monat = MONATE.get(m.group("monat").lower().rstrip("."))
+        if monat and frei(m.start(), m.end()):
+            yield nimm(m.start(), m.end(), f"{m.group('jahr')}-{monat:02d}", "monat")
+            v = R10_MONAT.search(text[max(0, m.start() - 25) : m.start()])
+            if v:
+                lo = max(0, m.start() - 25) + v.start()
+                mon = MONATE.get(v.group("monat").lower().rstrip("."), 0)
+                ende = lo + len(v.group("monat"))
+                if mon and frei(lo, ende):
+                    yield nimm(lo, ende, f"{m.group('jahr')}-{mon:02d}", "monat;r10")
+    for m in k.rx["jahr_q"].finditer(text):
+        if frei(m.start(), m.end()):
+            q = m.group("q").lower().translate(UMLAUT)
+            q = {"jahresende": "ende", "jahresmitte": "mitte", "fruehling": "fruehjahr"}.get(q, q)
+            yield nimm(m.start(), m.end(), f"{m.group('jahr')}~{q}", "jahr")
+    for name, _ in RELATIV_2:
+        for m in k.rx[name].finditer(text):
+            if frei(m.start(), m.end()):
+                yield nimm(m.start(), m.end(), name, "relativ")
+
+
+def haushalt_2(text: str, k: Kontext) -> Iterator[tuple[int, int, str, str, str, str]]:
+    """Fassung 1, „Haushaltsstelle“ als PSP-Element, dazu Kontierungsketten und freie PSP-Elemente."""
+    spans: list[tuple[int, int, str, str, str, str]] = []
+    for s, e, kind, norm, attr, cue in haushalt(text, k):
+        if cue == "HHSt":
+            kind, norm = "psp", text[s:e]
+        spans.append((s, e, kind, norm, attr, cue))
+
+    def frei(s: int, e: int, kind: str) -> bool:
+        return not any(a < e and s < b and kk == kind for a, b, kk, *_ in spans)
+
+    for m in k.rx["psp_frei"].finditer(text):
+        if frei(m.start(), m.end(), "psp") and frei(m.start(), m.end(), "investition"):
+            spans.append((m.start(), m.end(), "psp", m.group(0), "frei", ""))
+    anfaenge: list[tuple[int, int, bool]] = [
+        (s, e, False) for s, e, kind, *_ in spans if kind in ("produkt", "psp")
+    ]
+    anfaenge += [(m.start("p"), m.end("p"), True) for m in k.rx["kette_produkt"].finditer(text)]
+    for s0, e0, frei_stehend in sorted(set(anfaenge)):
+        pos, glieder, vorher = e0, [], ""
+        for _ in range(4):
+            g = k.rx["kette_glied"].match(text, pos)
+            if not g or not re.search(r"[ \t/\n]", g.group("sep")):
+                break
+            art_ = next(x for x in ("m", "k", "kk", "ks") if g.group(x))
+            if art_ == "kk" and vorher != "1000":
+                break
+            glieder.append((g.start(art_), g.end(art_), art_, g.group(art_)))
+            vorher, pos = g.group(art_), g.end()
+        konten = [x for x in glieder if x[2] in ("m", "k", "kk")]
+        if not konten:
+            continue
+        if frei_stehend and frei(s0, e0, "produkt"):
+            spans.append((s0, e0, "produkt", text[s0:e0], "kette", ""))
+        for s, e, art_, wert in konten:
+            kind = "investition" if art_ == "m" else "sachkonto"
+            norm = (wert if "." in wert else f"7.{wert[1:]}") if art_ == "m" else wert
+            norm = re.sub(r"\.[A-Z]\w{0,2}(?:\.\w+)?$", "", norm) if art_ == "m" else norm  # R7
+            if frei(s, e, kind):
+                spans.append((s, e, kind, norm, "kette", ""))
+    yield from spans
+
+
+def rechtsgrundlagen_2(text: str, k: Kontext) -> Iterator[tuple[int, int, str, str, str, str]]:
+    """Kettengrammatik und Gesetzesnamen nach R3 bis R9; R8: gleiches Gesetz über „i. V. m.“ = eine Spanne."""
+    roh: list[list[object]] = []
+    for m in k.rx["recht"].finditer(text):
+        gesetz = m.group("gesetz")
+        kette_ende = m.start("gesetz") if gesetz else m.end()
+        kette = para_kanon_2(text[m.start() : kette_ende])
+        if gesetz:
+            roh.append([m.start(), m.end(), gesetz_kanon_2(gesetz), kette, "gesetz"])
+            continue
+        ende = m.start() + len(text[m.start() : m.end()].rstrip(" \t\n,"))
+        nah = GESETZ_NAH_2.search(text, ende, min(len(text), ende + 60))
+        if nah and not re.search(r"[.;:]\s|\n\s*\n|§", text[ende : nah.start()]):
+            roh.append([m.start(), ende, gesetz_kanon_2(nah.group("g")), kette, "gesetz_nah"])
+            continue
+        vor = GESETZ_VOR_2.search(text, max(0, m.start() - 40), m.start())
+        if vor:
+            roh.append([m.start(), ende, gesetz_kanon_2(vor.group("g")), kette, "gesetz_vor"])
+        else:
+            roh.append([m.start(), ende, "?", kette, "ohne_gesetz"])
+    i = 0
+    while i < len(roh):
+        s, e, g, kette, attr = roh[i]
+        while i + 1 < len(roh):
+            s2, e2, g2, kette2, attr2 = roh[i + 1]
+            if (
+                g == g2
+                and g != "?"
+                and attr == attr2 == "gesetz"
+                and R8_ZWISCHEN.fullmatch(text[int(e) : int(s2)])
+            ):
+                e, kette, i = e2, f"{kette} i. V. m. {kette2}", i + 1
+            else:
+                break
+        norm = f"{g} {kette}" if g != "?" else f"? {kette}"
+        yield int(s), int(e), "recht", norm, str(attr), ""
+        i += 1
+
+
+def verwaltung_2(text: str, k: Kontext) -> Iterator[tuple[int, int, str, str, str, str]]:
+    """Fassung 1 (Verzeichnis mit Genitiv), dazu mehrzeiliger Kopf, Bezirksverwaltungsstelle, Wörter auf -amt."""
+    spans = []
+    for s, e, kind, norm, attr, cue in verwaltung(text, k):
+        vor = re.search(r"(?<![\d\w])\d{2}(?:/\d{1,2})?[ \t]*[-–][ \t]*$", text[max(0, s - 12) : s])
+        if attr == "name" and vor:  # „64 - Amt für Wohnungswesen“ außerhalb des Kopffelds
+            s = s - len(vor.group(0))
+            norm = vor.group(0).split("-")[0].split("–")[0].strip()
+        spans.append((s, e, kind, norm, attr, cue))
+    belegt = [(s, e) for s, e, kind, *_ in spans if kind == "amt"]
+
+    def frei(s: int, e: int) -> bool:
+        return not any(a < e and s < b for a, b in belegt)
+
+    for m in k.rx["amt_kopf"].finditer(text[:6000]):
+        pos = m.end("v")
+        while True:
+            z = re.compile(r"[ \t]*\n[ \t]*(?P<v>[^\n]*?\S)[ \t]*(?=\n|$)").match(text, pos)
+            if not z or not k.rx["amt_kopf_code"].match(z.group("v")):
+                break
+            r = kopf_amt(z.group("v"), k)
+            if r and frei(z.start("v"), z.end("v")):
+                belegt.append((z.start("v"), z.end("v")))
+                spans.append((z.start("v"), z.end("v"), "amt", r[0], "kopf", ""))
+            pos = z.end("v")
+    for m in k.rx["amt_text"].finditer(text):
+        if frei(m.start(), m.end()):
+            norm = (
+                f"Bezirksverwaltungsstelle {m.group('n')}"
+                if m.group("n")
+                else "Bezirksverwaltungsstelle"
+            )
+            belegt.append((m.start(), m.end()))
+            spans.append((m.start(), m.end(), "amt", norm, "text", ""))
+    for m in k.rx["amt_wort"].finditer(text):
+        name = m.group("name")
+        if AMT_WORT_NICHT.search(name) or not frei(m.start(), m.end()):
+            continue
+        belegt.append((m.start(), m.end()))
+        spans.append((m.start(), m.end(), "amt", k.aemter.get(name, name), "wort", ""))
+    yield from spans
+
+
+EXTRAKTOREN_2: tuple[
+    Callable[[str, Kontext], Iterator[tuple[int, int, str, str, str, str]]], ...
+] = (
+    bauleitplanung,
+    haushalt_2,
+    betraege_2,
+    termine_2,
+    rechtsgrundlagen_2,
+    verwaltung_2,
+)
+
+
+def kontext_fassung_2(k: Kontext) -> None:
+    """Überschreibt die Muster, die Fassung 2 ändert; die übrigen bleiben aus Fassung 1."""
+    m2 = PROFILMUSTER_2[k.stadt]
+    k.rx.update(
+        {
+            "produkt": re.compile(m2["produkt"]),
+            "kette_produkt": re.compile(m2["kette_produkt"]),
+            "kette_glied": re.compile(m2["kette_glied"]),
+            "psp_frei": re.compile(m2["psp_frei"]),
+            "amt_text": re.compile(m2["amt_text"]),
+            "amt_wort": re.compile(AMT_WORT),
+            "betrag_nach": re.compile(BETRAG_NACH_2),
+            "betrag_vor": re.compile(BETRAG_VOR_2),
+            "datum_text": re.compile(DATUM_TEXT_2),
+            "monat_jahr": re.compile(MONAT_JAHR_2),
+            "monat_zusatz": re.compile(MONAT_ZUSATZ),
+            "jahr_q": re.compile(JAHR_QUALIFIZIERT_2),
+            "iso_datum": re.compile(ISO_DATUM),
+            "recht": re.compile(RECHT_2),
+        }
+    )
+    for name, rx in RELATIV_2:
+        k.rx[name] = re.compile(rx)
+    if k.aemter:
+        namen = sorted(k.aemter, key=len, reverse=True)
+        k.aemter_rx = re.compile(
+            r"(?<![\w-])(?P<name>"
+            + "|".join(re.escape(n).replace(r"\ ", r"[ \t\n]+") for n in namen)
+            + r")(?:e?s)?(?![\w-])(?P<klammer>"
+            + WS
+            + r"\((?:Amt[ \t]*)?\d{2}(?:/\d{1,2})?\))?"
+        )
+
 
 @dataclass
 class DokErgebnis:
@@ -938,7 +1489,8 @@ class DokErgebnis:
 def dokument(name: str, text: str, k: Kontext) -> DokErgebnis:
     starts, names = abschnitte(text)
     spans: list[Span] = []
-    for fn in EXTRAKTOREN:
+    extraktor = EXTRACTOR_2 if k.fassung == 2 else EXTRACTOR
+    for fn in EXTRAKTOREN_2 if k.fassung == 2 else EXTRAKTOREN:
         for s, e, kind, norm, attr, cue in fn(text, k):
             assert 0 <= s < e <= len(text), (name, s, e, kind)
             spans.append(
@@ -952,6 +1504,7 @@ def dokument(name: str, text: str, k: Kontext) -> DokErgebnis:
                     section=abschnitt_an(s, starts, names),
                     attr=attr,
                     cue=re.sub(r"\s+", " ", cue)[:40],
+                    extractor=extraktor,
                 )
             )
     spans.sort(key=lambda x: (x.start, x.end, x.kind))
@@ -964,9 +1517,9 @@ def dokument(name: str, text: str, k: Kontext) -> DokErgebnis:
 _K: Kontext | None = None
 
 
-def _init(stadt: str, aemter: dict[str, str]) -> None:
+def _init(stadt: str, aemter: dict[str, str], fassung: int = 1) -> None:
     global _K
-    _K = kontext_bauen(stadt, aemter)
+    _K = kontext_bauen(stadt, aemter, fassung)
 
 
 def _stapel(paare: Sequence[tuple[str, str]]) -> list[DokErgebnis]:
@@ -1024,7 +1577,7 @@ def amtsverzeichnis(df: pl.DataFrame, stadt: str) -> tuple[dict[str, str], dict[
 
 
 def extrahieren(
-    profil: str,
+    profil: str, fassung: int = 1
 ) -> tuple[pl.DataFrame, list[DokErgebnis], dict[str, str], dict[str, Counter[str]]]:
     df = rohtext(profil)
     stadt = PROFILE[profil][1]
@@ -1032,7 +1585,7 @@ def extrahieren(
     paare = list(zip(df["name"].to_list(), df["text"].to_list(), strict=True))
     stapel = [paare[i : i + 400] for i in range(0, len(paare), 400)]
     ergebnisse: list[DokErgebnis] = []
-    with ProcessPoolExecutor(ARBEITER, initializer=_init, initargs=(stadt, aemter)) as ex:
+    with ProcessPoolExecutor(ARBEITER, initializer=_init, initargs=(stadt, aemter, fassung)) as ex:
         for teil in ex.map(_stapel, stapel):
             ergebnisse.extend(teil)
     return df, ergebnisse, aemter, je_name
@@ -2000,6 +2553,274 @@ def auswertung(df: pl.DataFrame, sp: pl.DataFrame, aemter: dict[str, str]) -> No
     print(f"  Fehlerliste mit Kontext (lokal): {KODIERUNG / 'fehler-extraktor.jsonl'}")
 
 
+# --------------------------------------------------------------------------------------------
+# Fassung 2 an den alten Labels (Entwurfsschätzung, kein Urteil) und Bestätigungsstichprobe 2
+# --------------------------------------------------------------------------------------------
+
+
+def label_grenzen(z: dict[str, str], lb: dict[str, object]) -> tuple[int, int] | None:
+    """Richtige Grenzen nach dem Endlabel: die markierte Spanne oder die korrigierte."""
+    if lb["art"] == "keine":
+        return None
+    if lb["grenzen"] == "richtig":
+        return int(z["start"]), int(z["end"])
+    k = lb.get("grenzen_korrigiert")
+    return (int(k[0]), int(k[1])) if isinstance(k, list) else None
+
+
+def entwurf(df: pl.DataFrame, faelle: dict[str, pl.DataFrame], aemter: dict[str, str]) -> None:
+    """Präzision, Recall und Normwert je Fassung an den Labels der ersten Runde (Fassung .1)."""
+    texte = dict(zip(df["name"].to_list(), df["text"].to_list(), strict=True))
+    aufgaben: dict[str, dict[str, object]] = {}
+    for x in (KODIERUNG / "aufgaben.jsonl").read_text(encoding="utf-8").splitlines():
+        auf = json.loads(x)
+        auf["_text"] = texte[auf["datei"]]
+        aufgaben[auf["aufgabe"]] = auf
+    with (VALIDIERUNG / "stichprobe.csv").open(encoding="utf-8") as f:
+        stich = {z["aufgabe"]: z for z in csv.DictReader(f)}
+    lab = endlabels(aufgaben)
+    quote = Counter(z["schicht"] for z in stich.values() if z["typ"] == "praezision")
+    print("\n=== Entwurfsschätzung an den Labels der ersten Runde (keine Bestätigung) ===")
+    zeilen_art: dict[str, list[str]] = defaultdict(list)
+    for fassung, sp in faelle.items():
+        je_dok: dict[str, list[dict[str, object]]] = defaultdict(list)
+        for r in sp.rows(named=True):
+            je_dok[r["name"]].append(r)
+        praez: dict[str, list[tuple[bool, bool, bool, bool, float]]] = defaultdict(list)
+        entfallen: Counter[str] = Counter()
+        for nr, lb in lab.praezision.items():
+            z = stich[nr]
+            s0, e0 = int(z["start"]), int(z["end"])
+            kand = [
+                r
+                for r in je_dok[z["datei"]]
+                if r["art"] == z["art"] and int(str(r["start"])) < e0 and s0 < int(str(r["end"]))
+            ]
+            if not kand:
+                entfallen[f"{z['art']}:{'keine' if lb['art'] == 'keine' else 'kennung'}"] += 1
+                continue
+            x = max(kand, key=lambda r: min(e0, int(str(r["end"]))) - max(s0, int(str(r["start"]))))
+            gr = label_grenzen(z, lb)
+            mild = KIND_ART[str(lb["art"])] == z["art"]
+            streng = mild and gr == (int(str(x["start"])), int(str(x["end"])))
+            norm = streng and x["norm"] == lb["norm"]
+            aequiv = streng and norm_aequivalent(str(x["kind"]), x["norm"], lb["norm"], aemter)
+            praez[z["art"]].append(
+                (streng, mild, norm, aequiv, int(z["schicht_n"]) / quote[z["schicht"]])
+            )
+        rec: dict[str, list[tuple[bool, bool]]] = defaultdict(list)
+        for nr, spannen in lab.recall.items():
+            xs = je_dok[stich[nr]["datei"]]
+            for s in spannen:
+                if s["tabelle"]:
+                    continue
+                art = KIND_ART[str(s["art"])]
+                s0, e0 = int(str(s["start"])), int(str(s["end"]))
+                gleich = [x for x in xs if x["art"] == art]
+                rec[art].append(
+                    (
+                        any(
+                            int(str(x["start"])) == s0 and int(str(x["end"])) == e0 for x in gleich
+                        ),
+                        any(int(str(x["start"])) < e0 and s0 < int(str(x["end"])) for x in gleich),
+                    )
+                )
+        for art in ARTEN:
+            p = praez[art]
+            ps = gewichtet([(a, w) for a, _, _, _, w in p])
+            pm = gewichtet([(b, w) for _, b, _, _, w in p])
+            pn = gewichtet([(c, w) for a, _, c, _, w in p if a])
+            pa = gewichtet([(d, w) for a, _, _, d, w in p if a])
+            r = rec[art]
+            rs = wilson(sum(a for a, _ in r), len(r))
+            rm = sum(b for _, b in r)
+            ent = ", ".join(
+                f"{k.split(':')[1]} {v}" for k, v in sorted(entfallen.items()) if k.startswith(art)
+            )
+            zeilen_art[art].append(
+                f"    Fassung {fassung}: Präzision streng {ps[0]:.3f} [{ps[3]:.3f}, {ps[4]:.3f}] n={ps[1]}, "
+                f"mild {pm[0]:.3f}; Recall streng {sum(a for a, _ in r)}/{len(r)} = "
+                f"{sum(a for a, _ in r) / max(1, len(r)):.3f} [{rs[0]:.3f}, {rs[1]:.3f}], mild {rm}/{len(r)}; "
+                f"Norm {pn[0]:.3f}, äquivalent {pa[0]:.3f}" + (f"; entfallen: {ent}" if ent else "")
+            )
+    for art in ARTEN:
+        print(f"  {art}")
+        for zeile in zeilen_art[art]:
+            print(zeile)
+
+
+PRAEZISION_2: dict[str, int] = {
+    "2 Haushalt": 100,
+    "5 Rechtsgrundlage": 100,
+    "6 Verwaltungseinheit": 100,
+    "3 Betrag": 30,
+    "4 Termin": 30,
+}
+# Mindestzahl je Schicht; die neuen Muster bekommen den größten Teil
+MINDEST_2: dict[str, dict[str, int]] = {
+    "2 Haushalt": {"neu": 40, "": 12},
+    "5 Rechtsgrundlage": {"neu": 40, "": 12},
+    "6 Verwaltungseinheit": {"neu": 35, "kopf": 20, "": 12},
+    "3 Betrag": {"neu": 20, "alt": 10},
+    "4 Termin": {"neu": 20, "alt": 10},
+}
+RECALL_2 = {"haushalt": 30, "bezirk": 20}
+RECALL_2_ARTEN = ("produkt", "sachkonto", "psp", "investition", "recht", "amt", "dezernat")
+HAUSHALT_WORT = r"(?i)produkt|konto|psp|haushaltsstelle|profitcenter|kostenstelle|kontierung"
+
+
+def schicht_2(art: str, r: dict[str, object], neu: bool) -> str:
+    if art in ("3 Betrag", "4 Termin"):
+        return "neu" if neu else "alt"
+    if neu:
+        return "neu"
+    if art == "6 Verwaltungseinheit":
+        return f"{r['kind']}:{r['attr']}"
+    if art == "5 Rechtsgrundlage":
+        return f"recht:{r['attr']}"
+    return str(r["kind"])
+
+
+def stichprobe_2(
+    df: pl.DataFrame, sp1: pl.DataFrame, sp2: pl.DataFrame, meta: pl.DataFrame
+) -> None:
+    """Bestätigung der Fassung 2: Seed 12-2, ohne die Dokumente der 650 alten Aufgaben."""
+    rng = random.Random("12-2")
+    texte = dict(zip(df["name"].to_list(), df["text"].to_list(), strict=True))
+    sha = dict(zip(df["name"].to_list(), df["pdf_sha256"].to_list(), strict=True))
+    ids = dict(zip(meta["file_name"].to_list(), meta["id"].to_list(), strict=True))
+    with (VALIDIERUNG / "stichprobe.csv").open(encoding="utf-8") as f:
+        alt_doks = {z["datei"] for z in csv.DictReader(f)}
+    v1 = {(r[0], r[1], r[2], r[3]) for r in sp1.select("name", "start", "end", "kind").iter_rows()}
+    kand = sp2.filter(~pl.col("name").is_in(sorted(alt_doks))).sort("name", "start", "end", "kind")
+    zeilen: list[dict[str, object]] = []
+    aufgaben: list[dict[str, object]] = []
+    print(
+        "\nStichprobe 2 (Präzision): Schichten und Quoten je Art (neu = in Fassung 1 nicht so vorhanden)"
+    )
+    for art, n in PRAEZISION_2.items():
+        rows = kand.filter(pl.col("art") == art).rows(named=True)
+        je: dict[str, list[dict[str, object]]] = defaultdict(list)
+        for r in rows:
+            neu = (r["name"], r["start"], r["end"], r["kind"]) not in v1
+            je[schicht_2(art, r, neu)].append(r)
+        groessen = {s: len(v) for s, v in je.items()}
+        mind = MINDEST_2[art]
+        quote = {s: min(mind.get(s, mind.get("", 0)), g) for s, g in groessen.items()}
+        rest = n - sum(quote.values())
+        frei = {s: groessen[s] - quote[s] for s in groessen}
+        gesamt = sum(frei.values())
+        if rest > 0 and gesamt:
+            roh = {s: rest * frei[s] / gesamt for s in sorted(frei)}
+            for s in roh:
+                quote[s] += int(roh[s])
+            for s in sorted(roh, key=lambda s: -(roh[s] - int(roh[s])))[: n - sum(quote.values())]:
+                quote[s] += 1
+        print(f"  {art}: " + ", ".join(f"{s} {quote[s]}/{groessen[s]}" for s in sorted(quote)))
+        for s in sorted(quote):
+            for r in rng.sample(je[s], quote[s]):
+                text = texte[str(r["name"])]
+                st, en = int(str(r["start"])), int(str(r["end"]))
+                lo, hi = max(0, st - AUSSCHNITT), min(len(text), en + AUSSCHNITT)
+                zeilen.append(
+                    {
+                        "typ": "praezision",
+                        "art": art,
+                        "schicht": s,
+                        "schicht_n": groessen[s],
+                        "dok_id": ids.get(str(r["name"]), ""),
+                        "datei": r["name"],
+                        "start": st,
+                        "end": en,
+                    }
+                )
+                aufgaben.append(
+                    {
+                        "typ": "praezision",
+                        "dok_id": ids.get(str(r["name"]), ""),
+                        "datei": r["name"],
+                        "pdf_sha256": sha[str(r["name"])],
+                        "rohtext": "messdaten/rohtext/duesseldorf.parquet (pypdf-7.1.0 roh)",
+                        "codebuch": "validierung/12-kennungen/codebuch-2.toml (2026-11-23.2)",
+                        "ausschnitt_start": lo,
+                        "ausschnitt": text[lo:st] + "⟦" + text[st:en] + "⟧" + text[en:hi],
+                        "markierung": {"start": st, "end": en, "text": text[st:en]},
+                        "fragen": ["art", "grenzen", "norm"],
+                        "antwortformat": "praezision-2",
+                    }
+                )
+    m = meta.join(df.select("name", "chars"), left_on="file_name", right_on="name")
+    m = m.filter(
+        (pl.col("chars") >= 300)
+        & (pl.col("chars") <= RECALL_MAX_ZEICHEN)
+        & ~pl.col("file_name").is_in(sorted(alt_doks))
+    ).sort("file_name")
+    titel = pl.col("title").str.to_lowercase()
+    typ = pl.col("paper_type").str.to_lowercase()
+    haushalt_meta = typ.str.contains("haushalt") | titel.str.contains(
+        r"haushalt|verfügungsmittel|zuschuss|förder|finanz|investition|mittel"
+    )
+    wort = {f for f in m["file_name"].to_list() if re.search(HAUSHALT_WORT, texte[f])}
+    pools = {
+        "haushalt": [f for f in m.filter(haushalt_meta)["file_name"].to_list() if f in wort],
+        "bezirk": m.filter(typ.str.contains("bezirksvertretung"))["file_name"].to_list(),
+    }
+    gezogen: set[str] = set()
+    print("Stichprobe 2 (Recall):")
+    for name, n in RECALL_2.items():
+        pool = [f for f in pools[name] if f not in gezogen]
+        wahl = rng.sample(pool, n)
+        gezogen.update(wahl)
+        print(f"  {name}: {n} aus Pool {len(pool)}")
+        for f in wahl:
+            text = texte[f]
+            zeilen.append(
+                {
+                    "typ": "recall",
+                    "art": "2, 5, 6",
+                    "schicht": name,
+                    "schicht_n": len(pool),
+                    "dok_id": ids.get(f, ""),
+                    "datei": f,
+                    "start": 0,
+                    "end": len(text),
+                }
+            )
+            aufgaben.append(
+                {
+                    "typ": "recall",
+                    "dok_id": ids.get(f, ""),
+                    "datei": f,
+                    "pdf_sha256": sha[f],
+                    "rohtext": "messdaten/rohtext/duesseldorf.parquet (pypdf-7.1.0 roh)",
+                    "codebuch": "validierung/12-kennungen/codebuch-2.toml (2026-11-23.2)",
+                    "text": text,
+                    "arten": list(RECALL_2_ARTEN),
+                    "fragen": ["alle_spannen"],
+                    "antwortformat": "recall-2",
+                }
+            )
+    reihenfolge = list(range(len(zeilen)))
+    rng.shuffle(reihenfolge)
+    felder = ["aufgabe", "typ", "art", "schicht", "schicht_n", "dok_id", "datei", "start", "end"]
+    with (VALIDIERUNG / "stichprobe-2.csv").open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=felder, lineterminator="\n")
+        w.writeheader()
+        for nr, i in enumerate(reihenfolge, 1):
+            w.writerow({"aufgabe": f"12-2-{nr:04d}", **zeilen[i]})
+    with (KODIERUNG / "aufgaben-2.jsonl").open("w", encoding="utf-8") as f:
+        for nr, i in enumerate(reihenfolge, 1):
+            f.write(
+                json.dumps({"aufgabe": f"12-2-{nr:04d}", **aufgaben[i]}, ensure_ascii=False) + "\n"
+            )
+    sha_csv = hashlib.sha256((VALIDIERUNG / "stichprobe-2.csv").read_bytes()).hexdigest()
+    recall_zeichen = sum(len(str(a["text"])) for a in aufgaben if a["typ"] == "recall")
+    print(
+        f"  geschrieben: stichprobe-2.csv ({len(zeilen)} Aufgaben, SHA-256 {sha_csv}), aufgaben-2.jsonl "
+        f"({(KODIERUNG / 'aufgaben-2.jsonl').stat().st_size} Bytes); Recall-Dokumente {recall_zeichen} Zeichen"
+    )
+
+
 def main(argv: Sequence[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
     ap.add_argument("--profil", default="duesseldorf", choices=sorted(PROFILE))
@@ -2010,13 +2831,18 @@ def main(argv: Sequence[str]) -> int:
     ap.add_argument(
         "--auswertung", action="store_true", help="Kodierung gegen den Extraktor messen"
     )
+    ap.add_argument("--fassung", type=int, default=1, choices=(1, 2), help="Fassung des Extraktors")
+    ap.add_argument("--entwurf", action="store_true", help="Fassung 1 und 2 an den alten Labels")
+    ap.add_argument(
+        "--stichprobe-2", action="store_true", help="Bestätigungsstichprobe der Fassung 2"
+    )
     ap.add_argument("--einzelprozess", action="store_true", help="Laufzeit in einem Prozess messen")
     ap.add_argument("--beispiele", default="", help="kind: zufällige Beispiele mit Kontext zeigen")
     args = ap.parse_args(argv)
     profile = [args.profil] + ([p for p in PROFILE if p != args.profil] if args.alle else [])
     for i, profil in enumerate(profile):
         t0 = time.perf_counter()
-        df, erg, aemter, je_name = extrahieren(profil)
+        df, erg, aemter, je_name = extrahieren(profil, args.fassung)
         sp = spans_frame(erg)
         meta = metadaten(profil)
         dauer = time.perf_counter() - t0
@@ -2049,6 +2875,25 @@ def main(argv: Sequence[str]) -> int:
             stichprobe(df, sp, meta)
         if args.auswertung and i == 0:
             auswertung(df, sp, aemter)
+        if (args.entwurf or args.stichprobe_2) and i == 0:
+            t1 = time.perf_counter()
+            andere = 2 if args.fassung == 1 else 1
+            sp_andere = spans_frame(extrahieren(profil, andere)[1])
+            sp1, sp2 = (sp, sp_andere) if args.fassung == 1 else (sp_andere, sp)
+            print(
+                f"  Extraktion der Fassung {andere}: {time.perf_counter() - t1:.1f} s; "
+                f"Spannen Fassung 1 {sp1.height}, Fassung 2 {sp2.height}"
+            )
+            for art in ARTEN:
+                a1, a2 = (
+                    sp1.filter(pl.col("art") == art).height,
+                    sp2.filter(pl.col("art") == art).height,
+                )
+                print(f"    {art}: {a1} -> {a2}")
+            if args.entwurf:
+                entwurf(df, {1: sp1, 2: sp2}, aemter)
+            if args.stichprobe_2:
+                stichprobe_2(df, sp1, sp2, meta)
     return 0
 
 
