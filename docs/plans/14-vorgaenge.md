@@ -398,7 +398,40 @@ Typ; Krippendorffs α je Frage zwischen den Kodierern. Wilson-95-%-Intervall: 14
 Text liegt nicht lokal. Ihre Regel ist eine Namensregel über 2 419 verschiedene Anlagennamen (alle
 Dokumentarten); geprüft werden kann sie an den Namen allein (Frage 9.5).
 
+### 4.1 Ergebnis der Kodierung (2026-11-23, Supervisor)
+
+Zwei Kodier-Agenten (Opus) haben die 150 Kanten unabhängig nach `codebuch.toml` (Fassung
+2026-11-23.1) kodiert, ein Schlicht-Agent hat die 8 Uneinigkeiten entschieden (dreimal wie A,
+fünfmal wie B). Kein menschlicher Goldstandard. Labels je Kante und Frage:
+`validierung/14-vorgaenge/labels.csv`.
+
+| Frage | gleich kodiert | Krippendorffs α (nominal) |
+|---|---|---|
+| `nummer_gemeint` | 150 / 150 | 1,000 |
+| `selbe_sache` | 146 / 150 | 0,819 |
+| `beziehung` | 142 / 150 | 0,935 |
+
+**Kantenpräzision 139 / 150 = 0,927** (Wilson 95 %: 0,873 bis 0,959), mit den Schichtgrößen
+gewichtet über alle 14 870 Kanten 0,922. **Das Kriterium (≥ 0,95) ist nicht erfüllt.** Je Schicht:
+Antwort 25/25, Nachtrag 10/10, periodenübergreifend 10/10, Bau 5/5, Bezug mit Titel 12/12, Nachfrage
+14/15, Bezug nur Text 12/13, Änderung 18/20, **Umsetzung 21/25**, **Mönchengladbach 12/15**. Die 11
+falschen Kanten: `181e4fc42bb2`, `789e32e45dfd`, `c707f89125b1`, `f6edd40eb21f` (Umsetzung),
+`017519188ef7`, `3ce35d466ae7`, `de552350d2a7` (Mönchengladbach), `11ed57a4aa2d`, `28b1b1a7c8e7`
+(Änderung), `3c7dc42ebf60` (Nachfrage), `25b8500b0bd4` (Bezug nur Text).
+
+Rollenpräzision unter den Kanten derselben Sache: Antwort 23/25, Nachfrage 13/14, Änderung 21/24,
+Umsetzung 26/26, Nachtrag 10/10, Bau 5/5, Bezug 35/35.
+
+Beide Kodierer und der Schlichter nennen dieselben Lücken des Codebuchs (Sammelvorlagen und
+Beschlusskontrollen, Grundsatzbeschluss angewandt oder nur zitiert, Anfragen zum Umsetzungsstand,
+Änderung über förmliche Änderungsdokumente hinaus); ihre Vorschläge liegen lokal unter
+`messdaten/kodierung/14-vorgaenge/` (`rueckmeldung-A.md`, `rueckmeldung-B.md`, `schlichtung.jsonl`).
+
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
+
+**Nachtrag 2026-11-23 (Supervisor): Urteil umbauen.** Die Kodierung (§ 4.1) ergibt eine
+Kantenpräzision von 0,927, das Kriterium verlangt 0,95. Nach § 8 des Meta-Plans folgt eine Runde
+Umbauen; was unten steht, ist der Stand vor der Kodierung.
 
 **Kriterium** (Briefing, unverändert): Präzision der Kanten ≥ 0,95 an 150; weiter, wenn mindestens 30 %
 der Anfragen eine Antwort finden.
