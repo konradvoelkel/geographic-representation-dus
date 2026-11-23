@@ -1,0 +1,59 @@
+{
+  "vorhaben": "26-beschluesse",
+  "codebuch_version": "1",
+  "profil": "duesseldorf",
+  "profile": [
+    "duesseldorf-2014",
+    "duesseldorf",
+    "duesseldorf-2025"
+  ],
+  "einheit": "document",
+  "grundgesamtheit": "/media/konrad/xtraspace/georep/messdaten/26-beschluesse/grundgesamtheit.parquet (Anträge der drei Düsseldorfer Perioden, Klasse der Regel)",
+  "grundgesamtheit_sha256": "950502138321b67429879dfa9416c50b113a0d5fa3b58d421d66b8d835681926",
+  "einheiten": 9225,
+  "ohne_text": 0,
+  "groesse": 150,
+  "seed": 26,
+  "schicht": "schicht",
+  "aufteilung": "fest (Messdokument § 3.1)",
+  "selbstgewichtend": false,
+  "schichten": {
+    "abgelehnt": {
+      "grundgesamtheit": 1784,
+      "stichprobe": 20
+    },
+    "beschlossen": {
+      "grundgesamtheit": 3668,
+      "stichprobe": 25
+    },
+    "erledigt": {
+      "grundgesamtheit": 444,
+      "stichprobe": 15
+    },
+    "geaendert": {
+      "grundgesamtheit": 761,
+      "stichprobe": 20
+    },
+    "offen": {
+      "grundgesamtheit": 24,
+      "stichprobe": 10
+    },
+    "ohne_ergebnis": {
+      "grundgesamtheit": 510,
+      "stichprobe": 10
+    },
+    "pruefauftrag": {
+      "grundgesamtheit": 1254,
+      "stichprobe": 20
+    },
+    "vertagt": {
+      "grundgesamtheit": 65,
+      "stichprobe": 15
+    },
+    "zurueckgezogen": {
+      "grundgesamtheit": 715,
+      "stichprobe": 15
+    }
+  },
+  "gezogen": "2026-11-24"
+}
