@@ -150,6 +150,10 @@ VERIFY_TARGETS = [
     "georep.validation.measures.cohen_kappa",
     "georep.validation.measures.classify_scores",
     "georep.validation.measures.ndcg_at_k",
+    # Zweite Runde (2026-11-23): ndcg_at_k mit neuer Signatur und der geschichtete Anteil, je
+    # einzeln mit crosshair geprüft, kein Gegenbeispiel. ``allocate`` bleibt draußen („Unable to
+    # meet precondition").
+    "georep.validation.measures.stratified_share",
 ]
 
 
