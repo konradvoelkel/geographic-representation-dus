@@ -1,275 +1,169 @@
-# Codebuch Vorhaben 12-kennungen (vorläufige Fassung 1 des Mess-Agenten), am 2026-11-23
-# ins Format von F4 (georep validate) übertragen: Fragen, Anleitungen und Definitionen wörtlich,
-# nur die Form ist neu. Was die vorläufige Fassung zur Auswertung sagte, steht als Kommentar.
+# Codebuch für Vorhaben 12 „Kennungen und Beträge“, Stufe 1 (vorläufig).
+#
+# Wer kodiert: zwei Kodier-Agenten unabhängig voneinander, ein Schlicht-Agent für die
+# Uneinigkeiten (Plan § 2.6, F4). Niemand sieht die Ausgabe des Extraktors außer der markierten
+# Stelle; Art, normalisierter Wert, Rolle und Frist bestimmt der Kodierer selbst.
+# Aufgaben: messdaten/kodierung/12-kennungen/aufgaben.jsonl (lokal auf xtraspace, nie im Repo),
+# Stichprobe: stichprobe.csv daneben (nur IDs und Spannengrenzen). Das Format folgt F4, sobald
+# es gemerged ist; bis dahin gilt das hier.
 
-# Aus [meta] der vorläufigen Fassung, wörtlich:
-# vorhaben = 12-kennungen
-# version = 1
-# datum = "2026-11-23"
-# messdokument = docs/plans/12-kennungen.md
-# messskript = docs/plans/12-kennungen-messung.py
-# extraktor = kennungen-messung-v1
-# rohtext = messdaten/rohtext/duesseldorf.parquet, pypdf-7.1.0 roh (Groß-/Kleinschreibung, Zeilenumbrüche, Seitenwechsel als \f)
-# seed = 20261123
-# offsets = Python-Zeichenindizes (Codepunkte) in den Rohtext; gebunden an pdf_sha256 der Aufgabe
-# status = vorläufig, Validierung ausstehend
-
-project = "12-kennungen"
-version = "1"
-unit = "span"
-instructions = """
-Präzision: eine markierte Spanne (zwischen ⟦ und ⟧ im Ausschnitt). Recall: ein ganzes Dokument; der Kodierer markiert jede Kennung aller Arten.
-
-Arten. Jede Spanne hat genau eine Art; „keine“, wenn die Stelle keine der Arten ist.
-"""
-
-[[questions]]
-id = "art"
-question = "Welche Art ist die markierte Stelle?"
-scale = "nominal"
-
-[[questions.options]]
-value = "bplan"
-name = "1 Bauleitplanung"
-definition = """
-Nummer eines Bebauungsplans (auch Entwurf, Vorentwurf, vorhabenbezogen, Änderung, alter Fluchtlinien- oder Durchführungsplan), die im Text als solche genannt ist
-Spanne: nur die Nummer (5674/26, 03/017, 809/N), ohne „Bebauungsplan Nr.“ und ohne Planname
-Norm: Düsseldorf: alte Nummern vierstellig/dreistellig mit Schrägstrich (5674/26 und 5674-026 → 5674/026), neue Bezirk/lfd. Nr. (03/017, 06-018 → 06/018); Mönchengladbach: Nummer/Bezirk (809/N, 517/III)
-Nicht: Drucksachennummern (APS/130/2020, 1828/X) — sie gehören Vorhaben 14; Hausnummern, Telefonnummern, Schuljahre (2027/28); Nummern von Wettbewerben, Workshops, Vorkaufsrechtssatzungen, auch wenn sie dasselbe Format haben
-"""
-
-[[questions.options]]
-value = "fnp"
-name = "1 Bauleitplanung"
-definition = """
-Nummer einer Änderung des Flächennutzungsplans
-Spanne: nur die Nummer (178 in „Flächennutzungsplanänderung Nr. 178“ oder „178. Änderung des Flächennutzungsplans“)
-Norm: „FNP-Änderung 178“
-"""
-
-[[questions.options]]
-value = "produkt"
-name = "2 Haushalt"
-definition = """
-Nummer eines Produkts oder Profitcenters des Haushalts
-Spanne: die Ziffernfolge mit ihren Leerzeichen (2528101, 25 28101, 55 551 02)
-Norm: nur Ziffern (2528101); Düsseldorf: sieben Ziffern = Produktbereich (2) + Produktgruppe (4) + Produkt, zehnstellige Formen bleiben zehnstellig; acht Ziffern sind ein Sachkonto, kein Produkt
-"""
-
-[[questions.options]]
-value = "sachkonto"
-name = "2 Haushalt"
-definition = """
-Sachkonto oder Kostenart (Düsseldorf acht Ziffern, Mönchengladbach 4+4 Ziffern)
-Spanne: nur die Kontonummer, nicht das Produkt davor („Konto 21 211 01 / 52415100“ → 52415100)
-Norm: nur Ziffern (52415100)
-"""
-
-[[questions.options]]
-value = "psp"
-name = "2 Haushalt"
-definition = """
-PSP-Element (Kontierungsobjekt) eines konsumtiven Ansatzes
-Spanne: das Element ohne Satzzeichen am Ende (1.10.36.365.01)
-Norm: wie geschrieben, ohne Leerzeichen
-"""
-
-[[questions.options]]
-value = "investition"
-name = "2 Haushalt"
-definition = """
-Nummer einer Investitionsmaßnahme (Düsseldorf: PSP-Element mit 7. am Anfang, auch als „Maßnahme 790000724“; Mönchengladbach: LDI-Nummer)
-Spanne: die Nummer (7.90000278, 790000724, LDI-1301 nur die Ziffern)
-Norm: Düsseldorf 7.NNNNNNNN mit Punkt (790000724 → 7.90000724), Mönchengladbach LDI-NNNN vierstellig
-"""
-
-[[questions.options]]
-value = "betrag"
-name = "3 Betrag"
-definition = """
-ein Geldbetrag in Euro mit Einheit im Text (€, EUR, Euro, T€, TEUR, Mio., Mrd., Tsd.), auch die erste Zahl einer Spanne („5.000 bis 10.000 Euro“: beide sind Beträge)
-Spanne: Zahl mit Vorzeichen, Faktor und Einheit („-38.000,00 €“, „1,2 Mio. Euro“, „EUR 2.700“), ohne „ca.“, „brutto“, „/m²“; bei der ersten Zahl einer Spanne nur die Zahl
-Norm: Betrag in Euro mit zwei Nachkommastellen, Punkt als Dezimalzeichen (1,2 Mio. Euro → 1200000.00; 3,5 T€ → 3500.00; 15.000,- → 15000.00)
-Nicht: Zahlen in Tabellen ohne eigene Einheit (Spalte „in EUR“): für den Recall markieren und mit tabelle = true kennzeichnen, sie zählen getrennt; Prozente, Mengen, Flächen
-"""
-
-[[questions.options]]
-value = "termin"
-name = "4 Termin"
-definition = """
-eine Zeitangabe mit Kalenderbezug (Tag, Monat und Jahr; Monat und Jahr; Quartal oder Halbjahr; Anfang/Mitte/Ende eines Jahres) oder eine relative Frist mit Sitzungs- oder Zeitbezug („in der nächsten Sitzung“, „innerhalb von drei Monaten“, „bis zum Jahresende“)
-Spanne: die Zeitangabe selbst (31.03.2024, „19. Januar 2024“, „3. Quartal 2023“, „Ende 2022“, „in der nächsten Sitzung“), ohne „bis zum“
-Norm: ISO: 2024-03-31; 2024-03; 2023-Q3 oder 2023-H1; Jahr mit Zusatz 2022~ende; relativ:naechste_sitzung, relativ:frist, relativ:jahresende, relativ:nach_sommerpause
-Nicht: Jahreszahlen allein (2024); Zeiträume wie „2021 bis 2025“ ohne Monat; Gliederungsnummern (3.2.10); Uhrzeiten
-"""
-
-[[questions.options]]
-value = "recht"
-name = "5 Rechtsgrundlage"
-definition = """
-ein Zitat einer Vorschrift mit § oder Art. (auch Ketten: „§ 3 Abs. 2 i. V. m. § 13 Abs. 2 Nr. 2 BauGB“, „§§ 26, 27 und 72 KWahlO“)
-Spanne: vom ersten § bis zum letzten Spezifizierer, dazu der Gesetzesname, wenn er unmittelbar folgt („der Bezirkssatzung“ gehört dazu, „(BauGB)“ in Klammern dahinter nicht)
-Norm: Gesetz in Kurzform, dann die Kette: „BauGB § 13 Abs. 2 Nr. 2“; Langformen auf die Kurzform (Baugesetzbuch → BauGB, Gemeindeordnung → GO NRW); Ortsrecht mit seinem Namen (Bezirkssatzung, Zuständigkeitsordnung); „? § 34“, wenn der Text das Gesetz nirgends im Satz nennt
-"""
-
-[[questions.options]]
-value = "amt"
-name = "6 Verwaltungseinheit"
-definition = """
-Nennung eines Amts, Instituts, Fachbereichs, Eigenbetriebs oder einer Bezirksverwaltungsstelle der Stadtverwaltung, mit Nummer oder Namen (Kopffeld „Fachbereich: 63 - Bauaufsichtsamt“, „Amt 66“, „das Amt für Verkehrsmanagement (Amt 66)“, „Sportamt“)
-Spanne: im Kopffeld der Wert ohne Feldnamen; im Text der Name, eine direkt folgende Klammer mit der Nummer gehört dazu
-Norm: Amtsnummer wie die Stadt sie schreibt (63; 01/13; Mönchengladbach 31.20); Bezirksverwaltungsstellen ohne Nummer mit Namen („Bezirksverwaltungsstelle 9“)
-Nicht: Gremien (Ausschuss für Umwelt, Jugendhilfeausschuss, Bezirksvertretung, Behindertenrat); „die Verwaltung“, „die Fachverwaltung“ ohne Namen; städtische Gesellschaften (Rheinbahn, Stadtwerke); Personen, auch Beigeordnete mit Namen: nie kodieren
-"""
-
-[[questions.options]]
-value = "dezernat"
-name = "6 Verwaltungseinheit"
-definition = """
-Nennung eines Dezernats mit Nummer („Dezernat 06“)
-Spanne: „Dezernat 06“
-Norm: zweistellig (06)
-"""
-
-[[questions.options]]
-value = "keine"
-definition = """
-die markierte Stelle ist keine Kennung der Arten oben
-"""
-
-[[questions]]
-id = "grenzen"
-question = "Ist die Spanne nach den Regeln oben richtig abgegrenzt? Wenn nein: der richtige Text, genau wie im Ausschnitt."
-scale = "nominal"
-only_if = { question = "art", values = ["bplan", "fnp", "produkt", "sachkonto", "psp", "investition", "betrag", "termin", "recht", "amt", "dezernat"] }
-
-[[questions.options]]
-value = "richtig"
-
-[[questions.options]]
-value = "zu_kurz"
-
-[[questions.options]]
-value = "zu_lang"
-
-[[questions.options]]
-value = "verschoben"
-
-[[questions]]
-id = "text_korrigiert"
-question = "Der richtige Text, genau wie im Ausschnitt (korrektur der Frage grenzen)."
-scale = "open"
-only_if = { question = "grenzen", values = ["zu_kurz", "zu_lang", "verschoben"] }
-
-[[questions]]
-id = "norm"
-question = "Normalisierter Wert nach den Regeln der Art (leer bei „keine“)."
-scale = "open"
-only_if = { question = "art", values = ["bplan", "fnp", "produkt", "sachkonto", "psp", "investition", "betrag", "termin", "recht", "amt", "dezernat"] }
-
-[[questions]]
-id = "rolle"
-question = "Nur bei betrag: Welche Rolle hat der Betrag im Satz oder in der Tabellenzeile?"
-scale = "nominal"
-only_if = { question = "art", values = ["betrag"] }
-instructions = """
-Vorrang: Passen zwei, gilt die erste der Liste: verfuegungsmittel, einsparung, foerderung, zuschuss, ertrag, ansatz, kosten, sonstig
-"""
-
-[[questions.options]]
-value = "kosten"
-definition = "Ausgaben oder Aufwand der Stadt für eine eigene Maßnahme: Bau-, Planungs-, Gesamt-, Mehr-, Folgekosten, Auftragswert, Kaufpreis, Personalkosten, Finanzbedarf"
-
-[[questions.options]]
-value = "zuschuss"
-definition = "Geld der Stadt an Dritte (Vereine, Träger, Initiativen, Künstler): Zuschuss, Zuwendung, Festbetrag, Fehlbedarfsfinanzierung, städtische Förderung"
-
-[[questions.options]]
-value = "verfuegungsmittel"
-definition = "Betrag aus den Verfügungsmitteln oder bezirklichen Mitteln einer Bezirksvertretung (Vorrang vor zuschuss)"
-
-[[questions.options]]
-value = "foerderung"
-definition = "Geld Dritter (Land, Bund, EU, Stiftungen) an die Stadt oder an ein Vorhaben in der Stadt: Fördermittel, Landeszuschuss, Zuweisung"
-
-[[questions.options]]
-value = "ertrag"
-definition = "Einnahmen der Stadt: Erträge, Einzahlungen, Erlöse, Gebühren, Entgelte, Mieten, Steuern, Bußgelder"
-
-[[questions.options]]
-value = "einsparung"
-definition = "Einsparung, Kürzung, Minderaufwand, Haushaltsverbesserung"
-
-[[questions.options]]
-value = "ansatz"
-definition = "Haushaltsansatz, Budget, bereitgestellte oder veranschlagte Mittel, Ermächtigung, Restmittel — ohne konkrete Kosten einer Maßnahme oder einen Empfänger"
-
-[[questions.options]]
-value = "sonstig"
-definition = "alles andere: Vergleichszahlen, Schäden, Umsätze und Preise Dritter, Einkommen, Bilanzwerte, Beträge ohne erkennbare Rolle"
-
-[[questions]]
-id = "frist"
-question = "Nur bei termin: Welche Funktion hat die Zeitangabe?"
-scale = "nominal"
-only_if = { question = "art", values = ["termin"] }
-
-[[questions.options]]
-value = "frist"
-definition = "Zeitpunkt, bis zu dem etwas geschehen soll oder muss: Erledigungs- oder Berichtsfrist, Abgabefrist, Zieltermin („bis zum 31.03.2023 vorzulegen“, „in der nächsten Sitzung zu berichten“, „bis Ende 2024 in Betrieb“)"
-
-[[questions.options]]
-value = "sitzung"
-definition = "Datum oder Termin einer Sitzung, auch „Antrag in der nächsten Sitzung zu beschließen“"
-
-[[questions.options]]
-value = "zeitraum"
-definition = "Anfang oder Ende eines Zeitraums oder einer Dauer („vom 10.07. bis zum 17.07.2022“, „bis zum 30.11.2020 untersagt“, „befristet bis“)"
-
-[[questions.options]]
-value = "sonst"
-definition = "alle anderen Zeitangaben: Briefdatum, Datum eines Beschlusses oder Ereignisses, Stichtag einer Statistik"
-
-[[questions]]
-id = "sicher"
-question = "Bist du dir sicher? (Feld sicher der vorläufigen Antwort)"
-scale = "binary"
-positive = ["ja"]
-adjudicate = false
-
-[[questions.options]]
-value = "ja"
-
-[[questions.options]]
-value = "nein"
-
-# Aus [antwort] der vorläufigen Fassung, wörtlich:
-# praezision = {"aufgabe": "12-0001", "art": …, "grenzen": …, "text_korrigiert": …, "norm": …, "rolle": …, "frist": …, "sicher": true|false, "bemerkung": …}
-# recall = {"aufgabe": "12-0001", "spannen": [ … ], "bemerkung": …}
-
-# Aus [masse] der vorläufigen Fassung, wörtlich:
-# praezision_streng = Anteil der Treffer, bei denen Art (auf Ebene der sechs Arten), Grenzen und normalisierter Wert stimmen; gewichtet mit schicht_n/Quote je Schicht; Wilson-Intervall
-# praezision_mild = nur die Art stimmt
-# recall = je Art: Anteil der von den Kodierern markierten Spannen, die eine Spanne des Extraktors derselben Art überlappt; Tabellenbeträge getrennt
-# rolle = Übereinstimmung der Rolle (Extraktor gegen Endlabel) unter den Treffern, die streng richtig sind; dazu Cohens κ
-# frist = Präzision und Recall der Funktion frist unter den Terminen
-# kodierer = Krippendorffs α je Frage zwischen den beiden Kodier-Agenten; unter 0,8 ist das Codebuch zu unscharf (Plan § 2.6)
-# kriterium = Präzision (streng) ≥ 0,95 und Recall ≥ 0,85 je Art; Rolle eines Betrags ≥ 0,8, sonst kommt nur der Betrag (Plan § 11, Vorhaben 12)
-
-[sample]
-# gezogen vom Mess-Agenten (docs/plans/12-kennungen.md); nur die Präzisionsaufgaben, der Recall
-# steht in validierung/12-kennungen-recall/
-size = 600
+[meta]
+vorhaben = "12-kennungen"
+version = 1
+datum = 2026-11-23
+messdokument = "docs/plans/12-kennungen.md"
+messskript = "docs/plans/12-kennungen-messung.py"
+extraktor = "kennungen-messung-v1"
+rohtext = "messdaten/rohtext/duesseldorf.parquet, pypdf-7.1.0 roh (Groß-/Kleinschreibung, Zeilenumbrüche, Seitenwechsel als \\f)"
 seed = 20261123
-stratum = "schicht"
-key = "aufgabe"
+offsets = "Python-Zeichenindizes (Codepunkte) in den Rohtext; gebunden an pdf_sha256 der Aufgabe"
+status = "vorläufig, Validierung ausstehend"
 
-[text]
-source = "raw"
-window = 400
+[einheit]
+praezision = "eine markierte Spanne (zwischen ⟦ und ⟧ im Ausschnitt)"
+recall = "ein ganzes Dokument; der Kodierer markiert jede Kennung aller Arten"
 
-[provisional]
-key = "aufgabe"
-reason = ["begruendung", "bemerkung", "regel"]
-adjudication_nested = "entscheid"
-values = { sicher = { "true" = "ja", "false" = "nein" } }
+# ---------------------------------------------------------------------------------------------
+# Arten. Jede Spanne hat genau eine Art; „keine“, wenn die Stelle keine der Arten ist.
+# ---------------------------------------------------------------------------------------------
+
+[arten.bplan]
+art = "1 Bauleitplanung"
+was = "Nummer eines Bebauungsplans (auch Entwurf, Vorentwurf, vorhabenbezogen, Änderung, alter Fluchtlinien- oder Durchführungsplan), die im Text als solche genannt ist"
+spanne = "nur die Nummer (5674/26, 03/017, 809/N), ohne „Bebauungsplan Nr.“ und ohne Planname"
+norm = "Düsseldorf: alte Nummern vierstellig/dreistellig mit Schrägstrich (5674/26 und 5674-026 → 5674/026), neue Bezirk/lfd. Nr. (03/017, 06-018 → 06/018); Mönchengladbach: Nummer/Bezirk (809/N, 517/III)"
+nicht = ["Drucksachennummern (APS/130/2020, 1828/X) — sie gehören Vorhaben 14", "Hausnummern, Telefonnummern, Schuljahre (2027/28)", "Nummern von Wettbewerben, Workshops, Vorkaufsrechtssatzungen, auch wenn sie dasselbe Format haben"]
+
+[arten.fnp]
+art = "1 Bauleitplanung"
+was = "Nummer einer Änderung des Flächennutzungsplans"
+spanne = "nur die Nummer (178 in „Flächennutzungsplanänderung Nr. 178“ oder „178. Änderung des Flächennutzungsplans“)"
+norm = "„FNP-Änderung 178“"
+
+[arten.produkt]
+art = "2 Haushalt"
+was = "Nummer eines Produkts oder Profitcenters des Haushalts"
+spanne = "die Ziffernfolge mit ihren Leerzeichen (2528101, 25 28101, 55 551 02)"
+norm = "nur Ziffern (2528101); Düsseldorf: sieben Ziffern = Produktbereich (2) + Produktgruppe (4) + Produkt, zehnstellige Formen bleiben zehnstellig; acht Ziffern sind ein Sachkonto, kein Produkt"
+
+[arten.sachkonto]
+art = "2 Haushalt"
+was = "Sachkonto oder Kostenart (Düsseldorf acht Ziffern, Mönchengladbach 4+4 Ziffern)"
+spanne = "nur die Kontonummer, nicht das Produkt davor („Konto 21 211 01 / 52415100“ → 52415100)"
+norm = "nur Ziffern (52415100)"
+
+[arten.psp]
+art = "2 Haushalt"
+was = "PSP-Element (Kontierungsobjekt) eines konsumtiven Ansatzes"
+spanne = "das Element ohne Satzzeichen am Ende (1.10.36.365.01)"
+norm = "wie geschrieben, ohne Leerzeichen"
+
+[arten.investition]
+art = "2 Haushalt"
+was = "Nummer einer Investitionsmaßnahme (Düsseldorf: PSP-Element mit 7. am Anfang, auch als „Maßnahme 790000724“; Mönchengladbach: LDI-Nummer)"
+spanne = "die Nummer (7.90000278, 790000724, LDI-1301 nur die Ziffern)"
+norm = "Düsseldorf 7.NNNNNNNN mit Punkt (790000724 → 7.90000724), Mönchengladbach LDI-NNNN vierstellig"
+
+[arten.betrag]
+art = "3 Betrag"
+was = "ein Geldbetrag in Euro mit Einheit im Text (€, EUR, Euro, T€, TEUR, Mio., Mrd., Tsd.), auch die erste Zahl einer Spanne („5.000 bis 10.000 Euro“: beide sind Beträge)"
+spanne = "Zahl mit Vorzeichen, Faktor und Einheit („-38.000,00 €“, „1,2 Mio. Euro“, „EUR 2.700“), ohne „ca.“, „brutto“, „/m²“; bei der ersten Zahl einer Spanne nur die Zahl"
+norm = "Betrag in Euro mit zwei Nachkommastellen, Punkt als Dezimalzeichen (1,2 Mio. Euro → 1200000.00; 3,5 T€ → 3500.00; 15.000,- → 15000.00)"
+nicht = ["Zahlen in Tabellen ohne eigene Einheit (Spalte „in EUR“): für den Recall markieren und mit tabelle = true kennzeichnen, sie zählen getrennt", "Prozente, Mengen, Flächen"]
+
+[arten.termin]
+art = "4 Termin"
+was = "eine Zeitangabe mit Kalenderbezug (Tag, Monat und Jahr; Monat und Jahr; Quartal oder Halbjahr; Anfang/Mitte/Ende eines Jahres) oder eine relative Frist mit Sitzungs- oder Zeitbezug („in der nächsten Sitzung“, „innerhalb von drei Monaten“, „bis zum Jahresende“)"
+spanne = "die Zeitangabe selbst (31.03.2024, „19. Januar 2024“, „3. Quartal 2023“, „Ende 2022“, „in der nächsten Sitzung“), ohne „bis zum“"
+norm = "ISO: 2024-03-31; 2024-03; 2023-Q3 oder 2023-H1; Jahr mit Zusatz 2022~ende; relativ:naechste_sitzung, relativ:frist, relativ:jahresende, relativ:nach_sommerpause"
+nicht = ["Jahreszahlen allein (2024)", "Zeiträume wie „2021 bis 2025“ ohne Monat", "Gliederungsnummern (3.2.10)", "Uhrzeiten"]
+
+[arten.recht]
+art = "5 Rechtsgrundlage"
+was = "ein Zitat einer Vorschrift mit § oder Art. (auch Ketten: „§ 3 Abs. 2 i. V. m. § 13 Abs. 2 Nr. 2 BauGB“, „§§ 26, 27 und 72 KWahlO“)"
+spanne = "vom ersten § bis zum letzten Spezifizierer, dazu der Gesetzesname, wenn er unmittelbar folgt („der Bezirkssatzung“ gehört dazu, „(BauGB)“ in Klammern dahinter nicht)"
+norm = "Gesetz in Kurzform, dann die Kette: „BauGB § 13 Abs. 2 Nr. 2“; Langformen auf die Kurzform (Baugesetzbuch → BauGB, Gemeindeordnung → GO NRW); Ortsrecht mit seinem Namen (Bezirkssatzung, Zuständigkeitsordnung); „? § 34“, wenn der Text das Gesetz nirgends im Satz nennt"
+
+[arten.amt]
+art = "6 Verwaltungseinheit"
+was = "Nennung eines Amts, Instituts, Fachbereichs, Eigenbetriebs oder einer Bezirksverwaltungsstelle der Stadtverwaltung, mit Nummer oder Namen (Kopffeld „Fachbereich: 63 - Bauaufsichtsamt“, „Amt 66“, „das Amt für Verkehrsmanagement (Amt 66)“, „Sportamt“)"
+spanne = "im Kopffeld der Wert ohne Feldnamen; im Text der Name, eine direkt folgende Klammer mit der Nummer gehört dazu"
+norm = "Amtsnummer wie die Stadt sie schreibt (63; 01/13; Mönchengladbach 31.20); Bezirksverwaltungsstellen ohne Nummer mit Namen („Bezirksverwaltungsstelle 9“)"
+nicht = ["Gremien (Ausschuss für Umwelt, Jugendhilfeausschuss, Bezirksvertretung, Behindertenrat)", "„die Verwaltung“, „die Fachverwaltung“ ohne Namen", "städtische Gesellschaften (Rheinbahn, Stadtwerke)", "Personen, auch Beigeordnete mit Namen: nie kodieren"]
+
+[arten.dezernat]
+art = "6 Verwaltungseinheit"
+was = "Nennung eines Dezernats mit Nummer („Dezernat 06“)"
+spanne = "„Dezernat 06“"
+norm = "zweistellig (06)"
+
+[arten.keine]
+was = "die markierte Stelle ist keine Kennung der Arten oben"
+
+# ---------------------------------------------------------------------------------------------
+# Fragen je Präzisionsaufgabe, in dieser Reihenfolge
+# ---------------------------------------------------------------------------------------------
+
+[fragen.art]
+frage = "Welche Art ist die markierte Stelle?"
+optionen = ["bplan", "fnp", "produkt", "sachkonto", "psp", "investition", "betrag", "termin", "recht", "amt", "dezernat", "keine"]
+
+[fragen.grenzen]
+frage = "Ist die Spanne nach den Regeln oben richtig abgegrenzt? Wenn nein: der richtige Text, genau wie im Ausschnitt."
+optionen = ["richtig", "zu_kurz", "zu_lang", "verschoben"]
+korrektur = "text"
+
+[fragen.norm]
+frage = "Normalisierter Wert nach den Regeln der Art (leer bei „keine“)."
+korrektur = "text"
+
+[fragen.rolle]
+frage = "Nur bei betrag: Welche Rolle hat der Betrag im Satz oder in der Tabellenzeile?"
+optionen = ["kosten", "zuschuss", "verfuegungsmittel", "foerderung", "ertrag", "einsparung", "ansatz", "sonstig"]
+vorrang = "Passen zwei, gilt die erste der Liste: verfuegungsmittel, einsparung, foerderung, zuschuss, ertrag, ansatz, kosten, sonstig"
+
+[fragen.rolle.definitionen]
+kosten = "Ausgaben oder Aufwand der Stadt für eine eigene Maßnahme: Bau-, Planungs-, Gesamt-, Mehr-, Folgekosten, Auftragswert, Kaufpreis, Personalkosten, Finanzbedarf"
+zuschuss = "Geld der Stadt an Dritte (Vereine, Träger, Initiativen, Künstler): Zuschuss, Zuwendung, Festbetrag, Fehlbedarfsfinanzierung, städtische Förderung"
+verfuegungsmittel = "Betrag aus den Verfügungsmitteln oder bezirklichen Mitteln einer Bezirksvertretung (Vorrang vor zuschuss)"
+foerderung = "Geld Dritter (Land, Bund, EU, Stiftungen) an die Stadt oder an ein Vorhaben in der Stadt: Fördermittel, Landeszuschuss, Zuweisung"
+ertrag = "Einnahmen der Stadt: Erträge, Einzahlungen, Erlöse, Gebühren, Entgelte, Mieten, Steuern, Bußgelder"
+einsparung = "Einsparung, Kürzung, Minderaufwand, Haushaltsverbesserung"
+ansatz = "Haushaltsansatz, Budget, bereitgestellte oder veranschlagte Mittel, Ermächtigung, Restmittel — ohne konkrete Kosten einer Maßnahme oder einen Empfänger"
+sonstig = "alles andere: Vergleichszahlen, Schäden, Umsätze und Preise Dritter, Einkommen, Bilanzwerte, Beträge ohne erkennbare Rolle"
+
+[fragen.frist]
+frage = "Nur bei termin: Welche Funktion hat die Zeitangabe?"
+optionen = ["frist", "sitzung", "zeitraum", "sonst"]
+
+[fragen.frist.definitionen]
+frist = "Zeitpunkt, bis zu dem etwas geschehen soll oder muss: Erledigungs- oder Berichtsfrist, Abgabefrist, Zieltermin („bis zum 31.03.2023 vorzulegen“, „in der nächsten Sitzung zu berichten“, „bis Ende 2024 in Betrieb“)"
+sitzung = "Datum oder Termin einer Sitzung, auch „Antrag in der nächsten Sitzung zu beschließen“"
+zeitraum = "Anfang oder Ende eines Zeitraums oder einer Dauer („vom 10.07. bis zum 17.07.2022“, „bis zum 30.11.2020 untersagt“, „befristet bis“)"
+sonst = "alle anderen Zeitangaben: Briefdatum, Datum eines Beschlusses oder Ereignisses, Stichtag einer Statistik"
+
+# ---------------------------------------------------------------------------------------------
+# Recall-Aufgaben
+# ---------------------------------------------------------------------------------------------
+
+[recall]
+anweisung = "Lies das ganze Dokument und markiere jede Stelle, die eine der Arten oben ist, mit Art, normalisiertem Wert und bei betrag der Rolle, bei termin der Funktion. Beträge in Tabellen ohne eigene Einheit mit tabelle = true."
+antwort = "je Spanne ein Objekt: {\"text\": genauer Text, \"vorkommen\": n-tes Vorkommen dieses Texts im Dokument (ab 1), \"art\": …, \"norm\": …, \"rolle\": …, \"frist\": …, \"tabelle\": false}"
+hinweis = "Offsets nicht zählen: Text und Vorkommen genügen, die Zusammenführung rechnet die Offsets."
+
+# ---------------------------------------------------------------------------------------------
+# Antwortformat und Maße
+# ---------------------------------------------------------------------------------------------
+
+[antwort]
+praezision = "{\"aufgabe\": \"12-0001\", \"art\": …, \"grenzen\": …, \"text_korrigiert\": …, \"norm\": …, \"rolle\": …, \"frist\": …, \"sicher\": true|false, \"bemerkung\": …}"
+recall = "{\"aufgabe\": \"12-0001\", \"spannen\": [ … ], \"bemerkung\": …}"
+
+[masse]
+praezision_streng = "Anteil der Treffer, bei denen Art (auf Ebene der sechs Arten), Grenzen und normalisierter Wert stimmen; gewichtet mit schicht_n/Quote je Schicht; Wilson-Intervall"
+praezision_mild = "nur die Art stimmt"
+recall = "je Art: Anteil der von den Kodierern markierten Spannen, die eine Spanne des Extraktors derselben Art überlappt; Tabellenbeträge getrennt"
+rolle = "Übereinstimmung der Rolle (Extraktor gegen Endlabel) unter den Treffern, die streng richtig sind; dazu Cohens κ"
+frist = "Präzision und Recall der Funktion frist unter den Terminen"
+kodierer = "Krippendorffs α je Frage zwischen den beiden Kodier-Agenten; unter 0,8 ist das Codebuch zu unscharf (Plan § 2.6)"
+kriterium = "Präzision (streng) ≥ 0,95 und Recall ≥ 0,85 je Art; Rolle eines Betrags ≥ 0,8, sonst kommt nur der Betrag (Plan § 11, Vorhaben 12)"

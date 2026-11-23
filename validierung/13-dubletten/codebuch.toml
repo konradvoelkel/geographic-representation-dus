@@ -1,11 +1,16 @@
-# Codebuch Vorhaben 13-dubletten (vorläufige Fassung 1 des Mess-Agenten), am 2026-11-23
-# ins Format von F4 (georep validate) übertragen: Fragen, Anleitungen und Definitionen wörtlich,
-# nur die Form ist neu. Was die vorläufige Fassung zur Auswertung sagte, steht als Kommentar.
+# Codebuch für Vorhaben 13 „Dubletten und Dokumentfamilien" (Stufe 1, vorläufiges Format bis F4).
+# Messdokument: docs/plans/13-dubletten.md, § 4. Stichprobe: stichprobe.csv (IDs, Stufe, Größe der Stufe, Jaccard; kein Text),
+# Ausschnitte lokal unter messdaten/kodierung/13-dubletten/aufgaben.jsonl, nie im Repo.
 
-project = "13-dubletten"
-version = "1"
-unit = "document_pair"
-instructions = """
+vorhaben = "13-dubletten"
+version = 1
+datum = "2026-11-23"
+einheit = "Dokumentpaar"
+frage = """
+Sind die beiden Ratsdokumente dasselbe Dokument oder Fassungen derselben Sache, sodass eine
+Zählung „wie oft kommt ein Ort in den Ratsdokumenten vor" sie nur einmal zählen sollte?
+"""
+anleitung = """
 Lies Titel, Drucksachennummer, Datum, Art, Gremium und die beiden Ausschnitte (Anfang des Texts,
 höchstens 1 500 Zeichen; `zeichen` nennt die volle Länge). Entscheide nach dem Inhalt, nicht nach
 dem Aufbau: zwei Texte aus demselben Formular oder derselben Vorlage sind nicht deshalb gleich.
@@ -14,33 +19,25 @@ dieselbe Förderung. Wähle genau eine Option. Wenn der Ausschnitt nicht reicht,
 dem, was Titel, Datum und Ausschnitt zusammen am wahrscheinlichsten machen, und sage es in der
 Begründung. Du siehst keine Zahl des Verfahrens, und du sollst keine suchen.
 """
+# Antwort je Paar, eine JSON-Zeile: {"paar": "p001", "code": "<code>", "begruendung": "<ein Satz>"}
+antwort_felder = ["paar", "code", "begruendung"]
 
-[[questions]]
-id = "code"
-question = """
-Sind die beiden Ratsdokumente dasselbe Dokument oder Fassungen derselben Sache, sodass eine
-Zählung „wie oft kommt ein Ort in den Ratsdokumenten vor" sie nur einmal zählen sollte?
-"""
-scale = "nominal"
-positive = ["gleich", "fast_gleich"]  # [praezision] richtig
-# richtig_streng = ["gleich"] (die strenge Lesart, im Messskript)
-
-[[questions.options]]
-value = "gleich"
+[[optionen]]
+code = "gleich"
 name = "gleich"
 definition = """
 Derselbe Text zur selben Sache. Unterschiede höchstens in Kopf und Rahmen: Drucksachennummer,
 Datum, adressiertes Gremium (etwa eine andere Bezirksvertretung), Sitzungstermin, Seitenzahlen,
 Satz und Formatierung, Tippfehler.
 """
-example = """
+beispiel = """
 BV5/136/2024 und BV2/221/2024 „Sachstandsbericht zum Lärmaktionsplan IV": dieselbe
 Informationsvorlage der Verwaltung an zwei Bezirksvertretungen. Ebenso ein Antrag, der unverändert
 in einer späteren Sitzung wieder eingebracht wird (BV8/214/2024 und BV8/032/2025).
 """
 
-[[questions.options]]
-value = "fast_gleich"
+[[optionen]]
+code = "fast_gleich"
 name = "fast gleich, gleiche Sache"
 definition = """
 Weitgehend derselbe Text zur selben Sache, mit inhaltlichen Änderungen: eine ergänzte oder
@@ -48,13 +45,13 @@ geänderte Fassung (Nummer mit /1, /2), ein ergänzter oder gestrichener Absatz,
 Beschlussvorschlag, aktualisierte Zahlen oder Termine zur selben Maßnahme, eine Wiedervorlage mit
 Ergänzung, zwei Anträge derselben Antragsteller zum selben Ort in kaum veränderter Fassung.
 """
-example = """
+beispiel = """
 KUA/123/2024 und KUA/123/2024/1 „Weiterentwicklung der Wochenendöffnungen von
 Stadtteilbüchereien": die zweite Fassung derselben Beschlussvorlage.
 """
 
-[[questions.options]]
-value = "aehnlich_andere_sache"
+[[optionen]]
+code = "aehnlich_andere_sache"
 name = "ähnlich, andere Sache"
 definition = """
 Gleicher Aufbau, gleiche Vorlage oder viel gemeinsamer Standardtext, aber eine andere Sache: ein
@@ -63,39 +60,32 @@ derselben Maßnahmenart, ein anderer Zuschussempfänger desselben Förderformula
 Person bei einer Wahl oder Ersatzwahl, derselbe Musterantrag für einen anderen Stadtbezirk mit
 eigenem Ort.
 """
-example = """
+beispiel = """
 RAT/143/2024 und RAT/099/2025 „Beschlusskontrolle des Rates": derselbe Bericht für verschiedene
 Zeiträume. BV6/093/2024 und BV6/200/2024 „Baumfällungen im Stadtbezirk 6": dieselbe
 Mitteilungsform für verschiedene Kalenderwochen und Bäume.
 """
 
-[[questions.options]]
-value = "verschieden"
+[[optionen]]
+code = "verschieden"
 name = "verschieden"
 definition = """
 Die Texte haben außer Floskeln (Briefkopf, Anrede, Grußformel, Rechtsbehelfsbelehrung, Standardsätze
 zu Finanzen oder Klima) nichts gemeinsam; sie behandeln verschiedene Sachen in verschiedener Form.
 """
-example = """
+beispiel = """
 Ein Antrag zu einer Bushaltestelle und eine Informationsvorlage zu einem Kita-Neubau, die nur den
 Kopf der Bezirksvertretung teilen.
 """
 
-# Aus [praezision] der vorläufigen Fassung, wörtlich:
-# richtig = ["gleich", "fast_gleich"]
-# richtig_streng = ["gleich"]
-# schwellen = [0.7, 0.8, 0.85, 0.9, 0.95]
-# mindestpraezision = 0.95
-
-[sample]
-# gezogen vom Mess-Agenten (docs/plans/13-dubletten.md, § 4); übernommen, nicht neu gezogen
-size = 200
-seed = 13
-stratum = "schicht"
-key = "paar"
-
-[text]
-chars = 1500
-
-[provisional]  # Antwort je Paar: {"paar", "code", "begruendung"}
-key = "paar"
+[praezision]
+# Für die Präzision der Familien zählt ein Paar als richtig, wenn es eine dieser Optionen trägt.
+richtig = ["gleich", "fast_gleich"]
+# Die strenge Lesart (nur unveränderte Texte) steht daneben.
+richtig_streng = ["gleich"]
+# Gewichtung: Paare tragen das Gewicht grundgesamtheit / gezogen ihrer Stufe (stichprobe.csv).
+# Vorab festgelegt (13-dubletten.md, § 5): τ* ist die kleinste Grenze der Stufen, für die die
+# gewichtete Präzision über alle Paare mit J ≥ τ* mindestens 0,95 ist; erreicht keine sie, gilt
+# das Kriterium als verfehlt.
+schwellen = [0.70, 0.80, 0.85, 0.90, 0.95]
+mindestpraezision = 0.95

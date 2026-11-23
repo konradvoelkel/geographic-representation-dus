@@ -1,10 +1,10 @@
 # Codebuch Vorhaben 12-kennungen-recall (vorläufige Fassung 1 des Mess-Agenten), am 2026-11-23
-# ins Format von F4 (georep validate) übertragen: Fragen, Anleitungen und Definitionen wörtlich,
+# ins Format von F4 (georep validate) übertragen, neben den unveränderten Dateien unter validierung/12-kennungen/: Fragen, Anleitungen und Definitionen wörtlich,
 # nur die Form ist neu. Was die vorläufige Fassung zur Auswertung sagte, steht als Kommentar.
 
 # Die Recall-Aufgaben von Vorhaben 12; die Arten und ihre Regeln stehen in validierung/12-kennungen/codebuch.toml.
 
-project = "12-kennungen-recall"
+project = "12-kennungen-recall-f4"
 version = "1"
 unit = "marking"
 instructions = """

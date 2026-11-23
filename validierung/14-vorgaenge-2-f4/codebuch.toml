@@ -1,13 +1,14 @@
 # Codebuch Vorhaben 14 „Vorgänge", Fassung 2026-11-23.2 (Mess-Agent Vorhaben 14), am 2026-11-23 ins
 # Format von F4 (georep validate) übertragen: Fragen, Anleitungen und Definitionen wörtlich wie in der
 # vorläufigen Fassung, nur die Form ist neu. Messdokument: docs/plans/14-vorgaenge.md, § 4.
+# Daneben unverändert, wie das Messskript sie liest: validierung/14-vorgaenge/ (stichprobe-2.csv, labels-2.csv).
 #
 # Aus [meta] der vorläufigen Fassung, wörtlich:
 # stichprobe = Runde 1: 150 Kanten, Seed 14 (stichprobe.csv); Bestätigung: 100 starke Kanten der Fassung .2, Seed 14-2, ohne die 150 (stichprobe-2.csv)
 # kodierer = Zwei unabhängige Kodier-Agenten, die einander nicht sehen, und ein Schlicht-Agent nur für die Uneinigkeiten (plan-vorverarbeitung-2026-11.md, § 2.6 und F4). Kein menschlicher Goldstandard.
 # aenderungen = .2 gegenüber .1: (1) Sammelvorlagen und Beschlusskontrollen mit eigener Zeile zu A sind dieselbe Sache und umsetzung, eine bloße Aufzählung früherer Beschlüsse nicht; (2) ein Grundsatzbeschluss ist dieselbe Sache, wo B ihn ausführt, nicht, wo B ihn als Rahmen zitiert; (3) eine Finanzierungsquelle und ein Beleg in Fußnote, Quellenliste oder mit „vgl." sind keine selbe Sache; (4) nachfrage umfasst die Frage nach dem Stand von A, auch wenn A ein Antrag oder Beschluss ist; (5) fortsetzung umfasst den Antrag auf eine in A erfragte oder geprüfte Maßnahme und den Folgebericht; (6) aenderung umfasst den späteren Beschluss, der A inhaltlich ändert, und die abschließende Antwort nach einer Zwischennachricht; (7) für die Rolle zählt, was A und B inhaltlich sind, nicht das Feld Dokumentart; (8) bei Sammelanträgen genügt, dass B genau einen Punkt von A aufgreift; (9) ein Zitierfehler in B (die Nummer existiert, beschreibt aber etwas anderes) ist nummer_gemeint = nein.
 
-project = "14-vorgaenge-2"
+project = "14-vorgaenge-2-f4"
 version = "2026-11-23.2"
 unit = "pair_with_span"  # A = id_a (die genannte), B = id_b (die nennende, mit der Fundstelle)
 instructions = """

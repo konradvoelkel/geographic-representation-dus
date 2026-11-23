@@ -27,9 +27,9 @@ CODING = Path("/media/konrad/xtraspace/georep/messdaten/kodierung/14-vorgaenge")
 REPO_FILES = ("codebuch.toml", "stichprobe.csv", "stichprobe.json", "labels.csv", "guete.json")
 
 
-# Die Vorhaben, die im Format von F4 vorliegen. Vorhaben 15 kam nach der zweiten Runde von F4
-# auf main und ist noch im vorläufigen Format (docs/validierung.md, § 7).
-CONVERTED = sorted(p.parent.name for p in VALIDATION.glob("1[1-4]-*/codebuch.toml"))
+# Die Vorhaben im Format von F4: je ein Ordner <vorhaben>-f4 neben dem unveränderten Ordner der
+# Messung, deren Messskript die alten Dateien liest (docs/validierung.md, § 3).
+CONVERTED = sorted(p.parent.name for p in VALIDATION.glob("*-f4/codebuch.toml"))
 
 
 @pytest.mark.parametrize("folder", CONVERTED, ids=str)
@@ -64,9 +64,9 @@ def _copy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, project: str) -> Path
     ("project", "alphas", "hits", "share", "weighted"),
     [
         # § 4.1: α 1,000 / 0,819 / 0,935; Kantenpräzision 139/150 = 0,927, gewichtet 0,922
-        ("14-vorgaenge", (1.0, 0.819, 0.935), (139, 150), 0.927, 0.922),
+        ("14-vorgaenge-f4", (1.0, 0.819, 0.935), (139, 150), 0.927, 0.922),
         # § 4.2: α 1,000 / 0,922 / 0,923; Kantenpräzision 85/100 = 0,850, gewichtet 0,840
-        ("14-vorgaenge-2", (1.0, 0.922, 0.923), (85, 100), 0.850, 0.840),
+        ("14-vorgaenge-2-f4", (1.0, 0.922, 0.923), (85, 100), 0.850, 0.840),
     ],
 )
 def test_score_recomputes_the_numbers_of_project_14(
@@ -96,7 +96,7 @@ def test_score_recomputes_the_numbers_of_project_14(
 @pytest.mark.skipif(
     not CODING.is_dir(), reason="die vorläufigen Antworten liegen nur auf Konrads Rechner"
 )
-@pytest.mark.parametrize("project", ["14-vorgaenge", "14-vorgaenge-2"])
+@pytest.mark.parametrize("project", ["14-vorgaenge-f4", "14-vorgaenge-2-f4"])
 def test_import_and_merge_rebuild_the_labels_of_project_14(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, project: str
 ) -> None:

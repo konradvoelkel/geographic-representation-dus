@@ -50,7 +50,7 @@ Feld. Ein Codebuch hat eine oder mehrere Fragen; Übereinstimmung, Schlichtung u
 Frage.
 
 ```toml
-project = "11-struktur"          # der Ordnername; eine zweite Runde ist ein eigener Ordner (14-vorgaenge-2)
+project = "11-struktur"          # der Ordnername; eine zweite Runde ist ein eigener Ordner (14-vorgaenge-2-f4)
 version = "1"                    # bei jeder Änderung hochzählen; steht in Aufträgen, Antworten, README, guete.json
 unit = "document"                # document | document_pair | pair_with_span | span | query_document | marking
 instructions = """
@@ -140,7 +140,7 @@ decken alles ab; jede hat eine Definition und, wo es geht, ein Beispiel aus der 
 Anweisungen sagen, was zu lesen ist und wie Grenzfälle entschieden werden („im Zweifel …"). Eine
 Option „unklar" senkt α und gehört nur hinein, wenn das Vorhaben sie auswerten will (dann als
 `ignore`). Ändert sich das Codebuch nach einer Kodierung, zählt `version` hoch, und die Kodierung
-beginnt mit einer neuen Stichprobe in einem eigenen Ordner (Vorhaben 14: `14-vorgaenge-2`): wer
+beginnt mit einer neuen Stichprobe in einem eigenen Ordner (Vorhaben 14: `14-vorgaenge-2-f4`): wer
 das Codebuch an den Uneinigkeiten derselben Einheiten schärft und sie dann neu kodieren lässt,
 misst seine eigene Anpassung.
 
@@ -208,6 +208,13 @@ werden; Schlichtung je Feld in langer Form oder verschachtelt). `georep validate
 <ordner>` schreibt daraus die Antworten im Format von F4, ohne die Quelldateien zu ändern; danach
 geht es mit `merge` weiter. Für Vorhaben 14 rechnet das die Zahlen des Messdokuments nach
 (`tests/unit/test_validation_projects.py`).
+
+**Wo die übertragenen Vorhaben liegen.** Die Messskripte der Vorhaben 11 bis 14
+(`docs/plans/*-messung.py`) lesen die vorläufigen Dateien unter `validierung/<NN-name>/` und
+prüfen, dass die gespeicherten Stichproben unverändert sind. Das Format von F4 liegt darum daneben,
+in `validierung/<NN-name>-f4/` (Runde 2 von 14: `14-vorgaenge-2-f4`, die Recall-Aufgaben von 12:
+`12-kennungen-recall-f4`); die alten Ordner bleiben, wie die Messung sie geschrieben hat. Ein neues
+Vorhaben legt sein Codebuch gleich im Format von F4 an und braucht kein `-f4`.
 
 Was ins Repo kommt und was nicht:
 
@@ -308,7 +315,7 @@ zieht es im Messskript per Bootstrap über die Einheiten.
   keine Auswertung: die Markierungen beider Kodierer abgleichen und gegen die Spannen des
   Verfahrens mit strenger (gleiche Grenzen und Art) und milder Grenze (Überlappung und Art)
   zählen.
-- Vorhaben 15 kam nach der zweiten Runde von F4 und ist noch im vorläufigen Format.
+- Die Vorhaben 15 und 17 kamen nach der zweiten Runde von F4 und sind noch im vorläufigen Format.
 - Der Ausschnitt ist der Anfang des Textes (`text.chars`); was dahinter steht, sehen die Kodierer
   nicht.
 - Eine HTML-Ansicht für Menschen gibt es nicht, solange niemand von Hand kodiert (Plan, § 7).

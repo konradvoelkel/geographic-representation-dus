@@ -2566,11 +2566,11 @@ einfache ausgezählt: jede Zeile trägt N_h (`schicht_n`), `score` gibt je Schic
 und für die Grundgesamtheit (Σ W_h·p_h mit Wilson bei Kishs effektivem n; verworfen: geschichteter
 Bootstrap und geschichtete Normalnäherung, beide null breit, wenn Schichten nur Treffer haben), und
 `allocate` teilt proportional ohne vorab gesetzte Mindesteinheit. Eine zweite Kodierrunde mit
-neuem Codebuch ist ein eigener Ordner (`14-vorgaenge-2`), nicht eine zweite Datei im selben:
+neuem Codebuch ist ein eigener Ordner (`14-vorgaenge-2-f4`), nicht eine zweite Datei im selben:
 Codebuch, Stichprobe und Labels gehören zusammen. Vorläufige Antworten von vor F4 übernimmt
 `georep validate import` nach `[provisional]` im Codebuch, ohne die Quelldateien zu ändern; für
 Vorhaben 14 rechnet das die Zahlen des Messdokuments nach (α 1,000 / 0,819 / 0,935,
 Kantenpräzision 139/150 = 0,927, gewichtet 0,922; Runde 2: 85/100 = 0,850, gewichtet 0,840).
-Verworfen: den Leerraum in offenen Antworten ganz zu entfernen, wie es die vorläufigen Auswertungen
+Die übertragenen Vorhaben liegen in eigenen Ordnern `<NN-name>-f4` neben den Ordnern der Messungen, weil deren Messskripte die alten Dateien lesen und ihre Unverändertheit prüfen (Supervisor, dritte Runde). Verworfen: den Leerraum in offenen Antworten ganz zu entfernen, wie es die vorläufigen Auswertungen
 von 11 und 12 taten („66 - Amt" gleich „66-Amt"): das ist eine Entscheidung über die Frage, nicht
 über die Form, und gehört, wenn überhaupt, als Einstellung je Frage ins Codebuch.
