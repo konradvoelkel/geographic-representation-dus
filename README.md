@@ -92,7 +92,7 @@ veröffentlicht sie über GitHub Pages unter
 | Befehl | Was er tut |
 |---|---|
 | `georep run [SCHRITT …] [--force] [--dry-run] [--online]` | führt die Schritte aus und überspringt, was aktuell ist; Netzschritte nur mit `--online` |
-| `georep fetch [SCHRITT …] [--force] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `pdfs`, `streets_osm`, `pois_wiki`, danach `shapes` und `texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Metadatenseiten |
+| `georep fetch [SCHRITT …] [--force] [--dry-run] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `meetings`, `consultations`, `persons`, `pdfs`, `streets_osm`, `pois_wiki`, danach `shapes` und `texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Seiten je Liste, `--dry-run` zeigt nur den Plan |
 | `georep steps` | Schritte mit Eingaben und Ausgaben |
 | `georep status` | Settings, Pfade, Stores, Frische jedes Schritts mit Grund |
 | `georep paths` | Profil und Pfade des Layouts als `key=wert`, eine Zeile je Wert (das lesen `pages.yml` und das Monitor-Skript) |
@@ -134,6 +134,16 @@ der Server inzwischen Urheberfelder liefert:
 uv run georep fetch organizations         # eine Seite, Sekunden; schreibt raw/organizations.json
 uv run georep fetch papers --max-pages 1  # Probe, rund 90 s: "1 Seiten, 200 Paper gesehen, …, davon N mit Urheberfeld"
 uv run georep run                         # corpus bis report neu, rund 7 s
+```
+
+Sitzungen mit Tagesordnung und Ergebnis, Beratungen und Personen mit Mitgliedschaften holen drei
+weitere Netzschritte (Fundament F6). Die Seite liest sie noch nicht; Befehle, Dauer und was der Server
+füllt stehen in [docs/runbook-sitzungen.md](docs/runbook-sitzungen.md):
+
+```bash
+uv run georep fetch --dry-run meetings consultations persons
+uv run georep fetch meetings --max-pages 1    # Probe, rund 20 s; der nächste Lauf setzt bei Seite 2 fort
+uv run georep fetch meetings persons consultations
 ```
 
 Ist `N` null, kommt der Urheber weiter aus `paperType`, Titel und Textkopf. **Der volle

@@ -2413,3 +2413,72 @@ Felder zur Klassendefinition kennen, und die Anhängeregel hat im Oktober gereic
 auf `index.html` mit größerem Budget (das Budget ist eine Zusage an die Leser, Punkt 50);
 Unterseiten ohne den Rahmen der Hauptseite, wie `vergleich.html` (eine zweite Kopie der Farben, die
 auseinanderläuft).
+
+## NN. Sitzungen, Beratungen und Personen sind drei Netzschritte, und der Server bestimmt, wie sie nachholen (Fundament F6, 2026-11-23)
+
+Fundament F6 (`docs/plan-vorverarbeitung-2026-11.md`, § 7) holt, was die Vorhaben 26 bis 28 brauchen:
+Sitzungen mit Tagesordnung und Ergebnis, die Beratungen, die ein Paper mit ihnen verbinden, und
+Personen mit ihren Mitgliedschaften. Grundlage ist eine Netzstichprobe vom 2026-11-23 (41 s
+Antwortzeit, je ein, zwei Seiten, `tests/fixtures/http/README.md`) und der Paper-Abruf vom
+2026-10-13/14, dessen Seiten noch im HTTP-Cache liegen. Die Zahlen stehen in
+`docs/runbook-sitzungen.md`, § 2 bis 4.
+
+**Drei Schritte, drei Listen, ein Abruf.** `meetings` (Liste `meetings`, die Tagesordnung ist
+eingebettet), `consultations` (Liste `consultations`) und `persons` (Liste `people`, die
+Mitgliedschaften sind eingebettet); jeder fehlt, wo das Profil unter `[council]` keinen Endpunkt nennt,
+und die Vorgaben sind stadtneutral leer. `fetch_objects` liest jede Liste mit der Mechanik von
+`fetch_papers` und prüft jedes Objekt gegen sein Modell; `OparlObject` ist die gemeinsame Basis, ein
+Umschlag `ListPage` ersetzt eine Seitenklasse je Liste. Die Schritte heißen nach dem, was sie
+schreiben (`persons`), die Endpunkte nach dem Server (`…/people`).
+
+**Nachholen mit `modified_since` nur, wo `modified` stimmt.** Bei 69 von 314 Sitzungen mit
+Tagesordnung ist ein Punkt jünger als die Sitzung (bis 245 Tage), bei 91 von 198 Personen eine
+Mitgliedschaft jünger als die Person. Ein Lauf mit Filter verpasste also nachgetragene Ergebnisse und
+neue Mitgliedschaften. `council.incremental` nennt darum nur `consultations`; `meetings` und `persons`
+holen jedes Mal alles, geschätzt drei und zweieinhalb Minuten.
+
+**Sitzungen ab dem Periodenbeginn, ohne Obergrenze.** Eine Vorlage vom Periodenende wird oft erst in
+der nächsten Periode beraten; mit Obergrenze fehlte ihr Ergebnis. Die Liste ist nach ID absteigend
+(Anlegedatum), nicht nach Beginn; der Abruf endet nach der ersten Seite, deren spätester Beginn vor dem
+Periodenbeginn liegt, wie bei den Papers.
+
+**Personen ohne Kontaktdaten, durch das Modell.** Der Server schickt zu jeder Person Telefon, E-Mail
+und Anschrift, auch von Fraktionsmitarbeitern und sachkundigen Einwohnern. `OparlPerson` kennt diese
+Felder nicht (`PERSON_PRIVATE_KEYS`), also steht keines in einer Datei eines Laufs; ein Test hält
+beides fest, und die Fixture ist geschwärzt.
+
+**Die Verbindung zum Ergebnis läuft über die ID der Beratung.** Jedes Paper bettet seine Beratungen
+mit `meeting` und `agendaItem` ein (98,9 %), jeder Tagesordnungspunkt nennt seine Beratung. Verbunden
+wird über `agendaItem.consultation == consultation.id`, denn eine vertagte Vorlage steht auf zwei
+Tagesordnungen, und die Beratung nennt nur den späteren Punkt (340 von 3 880 Fällen auf einer Seite).
+Die 19 108 Paper müssen dafür nicht neu abgerufen werden; die Beratungen liefert der Schritt
+`consultations` oder einmalig ein Auszug aus dem Cache.
+
+**Eine Probe ist der Anfang des Abrufs.** Jede Seite geht sofort in eine Teildatei, der Fortschritt
+mit dem `since` des ganzen Abrufs nach `raw/<schritt>.progress.json`; erst ein vollständiger Abruf
+ersetzt die Ausgabe, atomar. Nach `--max-pages` bleiben Teildatei und Fortschritt liegen, und der
+nächste Lauf setzt fort. Sonst gälte der Bestand einer Probe beim nächsten Lauf als vollständig, und
+`consultations` holte mit `modified_since` nur noch das Geänderte — so steht es heute noch in
+`fetch papers` (Probe auf leerem Store, dann der volle Lauf), was dieser Punkt nicht ändert.
+
+**Die Pfade gehören dem Modul, nicht dem Layout.** `georep.council.council_files(layout)` nennt die
+fünf Dateien unter `raw/`; `Layout` und `pipeline.py` bekommen damit nur die drei Step-Zeilen, und die
+Vorhaben, die die Dateien lesen, finden sie an einer Stelle.
+
+**Was der Server nicht füllt, steht in Tests.** `resolutionText`, `resolutionFile`, `cancelled`,
+`meetingState`: nie. `resultsProtocol`, `verbatimProtocol` und `invitation` sind dieselbe Datei, ein
+Nachtrag zur Tagesordnung; die Niederschrift ist eine Anlage („Niederschrift Ö"). Ändert der Server
+das, wird `tests/unit/test_oparl_council.py` rot.
+
+Verworfen: die Liste `agendaitems` statt der Sitzungen (sie ist mit 0,77 s je Seite schnell, braucht
+aber für rund 90 000 Punkte rund 450 Seiten mit je einer Sekunde Pause, die Sitzungsliste 18 und
+bringt Datum und Gremium mit); die Liste `memberships` neben den Personen (dieselben Objekte, 80 von
+80 gleich); die 19 108 Paper neu abrufen, um die Beratungen zu behalten (Stunden für eine Angabe, die
+die Liste `consultations` oder der Cache liefert); Tagesordnungspunkt und Paper über den Titel
+verbinden (97,4 % wortgleich, als Rückfall brauchbar, als Schlüssel nicht); `resultsProtocol` als
+Niederschrift lesen (es ist keine); die drei Listen im HTTP-Cache halten (die Teildateien ersetzen ihn
+für die Fortsetzung, und `http.sqlite` wüchse um rund 70 MB je Abruf der Sitzungen); die Felder
+`auxiliaryFile`, `consultation` und `subordinatedPaper` jetzt in `PaperRecord` aufnehmen (berührt den
+Korpus und gehört zu Vorhaben 14 oder 26; Empfehlung im Runbook, § 3); Niederschriften jetzt holen
+(Vorhaben 26 braucht sie nicht, `result` trägt das Ergebnis; erst Vorhaben 28 entscheidet nach einer
+Stichprobe, Runbook, § 7).
