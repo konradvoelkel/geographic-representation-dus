@@ -1,0 +1,1491 @@
+aufgabe,frage,kodierer_a,kodierer_b,schlichtung,label
+12-2-0001,art,"""recht""","""recht""",,"""recht"""
+12-2-0001,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0001,grenzen_korrigiert,"[794, 824]","[794, 889]","{""auswerter"": ""B"", ""regel"": ""Spannenregel .2: der Langtitel gehört zur Spanne"", ""wahl"": [794, 889]}","[794, 889]"
+12-2-0001,norm,"""EU VO 1370/2007 Art. 7 Abs. 1""","""VO (EG) Nr. 1370/2007 Art. 7 Abs. 1""","""VO (EG) Nr. 1370/2007 Art. 7 Abs. 1""","""VO (EG) Nr. 1370/2007 Art. 7 Abs. 1"""
+12-2-0002,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0002,grenzen,"""richtig""","""zu_kurz""","""richtig""","""richtig"""
+12-2-0002,grenzen_korrigiert,null,"[493, 503]",,null
+12-2-0002,norm,"""72415600""","""72415600""",,"""72415600"""
+12-2-0003,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0003,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0003,grenzen_korrigiert,null,null,,null
+12-2-0003,norm,"""331512.00""","""331512.00""",,"""331512.00"""
+12-2-0004,art,"""keine""","""keine""",,"""keine"""
+12-2-0004,grenzen,null,null,,null
+12-2-0004,grenzen_korrigiert,null,null,,null
+12-2-0004,norm,null,null,,null
+12-2-0005,spannen,"[{""start"": 1000, ""end"": 1013, ""art"": ""recht"", ""norm"": ""SGB VIII § 75"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1514, ""end"": 1543, ""art"": ""amt"", ""norm"": ""Amt für Soziales und Jugend"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1667, ""end"": 1699, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1936, ""end"": 1966, ""art"": ""amt"", ""norm"": ""Amt für Soziales und Jugend"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 241, ""end"": 282, ""art"": ""amt"", ""norm"": ""51"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2599, ""end"": 2613, ""art"": ""psp"", ""norm"": ""1.10.36.365.01"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 1000, ""end"": 1013, ""art"": ""recht"", ""norm"": ""SGB VIII § 75"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1514, ""end"": 1543, ""art"": ""amt"", ""norm"": ""51"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1667, ""end"": 1699, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1936, ""end"": 1966, ""art"": ""amt"", ""norm"": ""51"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 241, ""end"": 282, ""art"": ""amt"", ""norm"": ""51"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2599, ""end"": 2613, ""art"": ""psp"", ""norm"": ""1.10.36.365.01"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""auswerter"": [{""start"": 1514, ""end"": 1543, ""auswerter"": ""A"", ""regel"": ""R1: Name ohne Nummer""}, {""start"": 1936, ""end"": 1966, ""auswerter"": ""A"", ""regel"": ""R1: Name ohne Nummer""}]}","[{""start"": 241, ""end"": 282, ""art"": ""amt"", ""norm"": ""51"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1000, ""end"": 1013, ""art"": ""recht"", ""norm"": ""SGB VIII § 75"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1514, ""end"": 1543, ""art"": ""amt"", ""norm"": ""Amt für Soziales und Jugend"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1667, ""end"": 1699, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1936, ""end"": 1966, ""art"": ""amt"", ""norm"": ""Amt für Soziales und Jugend"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2599, ""end"": 2613, ""art"": ""psp"", ""norm"": ""1.10.36.365.01"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0006,spannen,"[{""start"": 211, ""end"": 237, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 7"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 211, ""end"": 237, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 7"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 211, ""end"": 237, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 7"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0007,art,"""psp""","""psp""",,"""psp"""
+12-2-0007,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0007,grenzen_korrigiert,null,null,,null
+12-2-0007,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0008,art,"""recht""","""recht""",,"""recht"""
+12-2-0008,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0008,grenzen_korrigiert,null,null,,null
+12-2-0008,norm,"""? § 6 Abs. 2 Nr. 2""","""? § 6 Abs. 2 Nr. 2""",,"""? § 6 Abs. 2 Nr. 2"""
+12-2-0009,art,"""amt""","""amt""",,"""amt"""
+12-2-0009,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0009,grenzen_korrigiert,null,null,,null
+12-2-0009,norm,"""Rechtsamt""","""Rechtsamt""",,"""Rechtsamt"""
+12-2-0010,art,"""recht""","""recht""",,"""recht"""
+12-2-0010,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0010,grenzen_korrigiert,null,null,,null
+12-2-0010,norm,"""? § 45 Abs. 1b Nr. 5""","""? § 45 Abs. 1b Nr. 5""",,"""? § 45 Abs. 1b Nr. 5"""
+12-2-0011,art,"""recht""","""recht""",,"""recht"""
+12-2-0011,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0011,grenzen_korrigiert,null,null,,null
+12-2-0011,norm,"""GO NRW § 60 Abs. 1 Satz 2 i. V. m. § 36 Abs. 5 Satz 2""","""GO NRW § 60 Abs. 1 Satz 2 i. V. m. § 36 Abs. 5 Satz 2""",,"""GO NRW § 60 Abs. 1 Satz 2 i. V. m. § 36 Abs. 5 Satz 2"""
+12-2-0012,spannen,"[{""start"": 200, ""end"": 227, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 248, ""end"": 275, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 200, ""end"": 227, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 248, ""end"": 275, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 200, ""end"": 227, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 248, ""end"": 275, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0013,art,"""amt""","""amt""",,"""amt"""
+12-2-0013,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0013,grenzen_korrigiert,null,null,,null
+12-2-0013,norm,"""Sozialamt""","""Sozialamt""",,"""Sozialamt"""
+12-2-0014,art,"""amt""","""amt""",,"""amt"""
+12-2-0014,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0014,grenzen_korrigiert,null,null,,null
+12-2-0014,norm,"""41""","""41""",,"""41"""
+12-2-0015,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0015,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0015,grenzen_korrigiert,null,null,,null
+12-2-0015,norm,"""52413000""","""52413000""",,"""52413000"""
+12-2-0016,art,"""termin""","""termin""",,"""termin"""
+12-2-0016,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0016,grenzen_korrigiert,null,null,,null
+12-2-0016,norm,"""relativ:frist""","""relativ:frist""",,"""relativ:frist"""
+12-2-0017,art,"""amt""","""amt""",,"""amt"""
+12-2-0017,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0017,grenzen_korrigiert,null,null,,null
+12-2-0017,norm,"""Stadtentwässerungsbetrieb""","""Stadtentwässerungsbetrieb""",,"""Stadtentwässerungsbetrieb"""
+12-2-0018,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0018,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0018,grenzen_korrigiert,null,null,,null
+12-2-0018,norm,"""52420000""","""52420000""",,"""52420000"""
+12-2-0019,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0019,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0019,grenzen_korrigiert,null,null,,null
+12-2-0019,norm,"""165420.00""","""165420.00""",,"""165420.00"""
+12-2-0020,art,"""psp""","""psp""",,"""psp"""
+12-2-0020,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0020,grenzen_korrigiert,null,null,,null
+12-2-0020,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0021,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0021,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0021,grenzen_korrigiert,"[1520, 1539]","[1520, 1539]",,"[1520, 1539]"
+12-2-0021,norm,"""-320150.00""","""-320150.00""",,"""-320150.00"""
+12-2-0022,art,"""recht""","""recht""",,"""recht"""
+12-2-0022,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0022,grenzen_korrigiert,null,null,,null
+12-2-0022,norm,"""? § 48""","""? § 48""",,"""? § 48"""
+12-2-0023,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0023,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0023,grenzen_korrigiert,null,null,,null
+12-2-0023,norm,"""1111114""","""1111114""",,"""1111114"""
+12-2-0024,art,"""psp""","""psp""",,"""psp"""
+12-2-0024,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0024,grenzen_korrigiert,null,null,,null
+12-2-0024,norm,"""1.10.11.111.05.001""","""1.10.11.111.05.001""",,"""1.10.11.111.05.001"""
+12-2-0025,art,"""recht""","""recht""",,"""recht"""
+12-2-0025,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0025,grenzen_korrigiert,null,null,,null
+12-2-0025,norm,"""BauNVO § 4 Abs. 1 und 2""","""BauNVO § 4 Abs. 1 und 2""",,"""BauNVO § 4 Abs. 1 und 2"""
+12-2-0026,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0026,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0026,grenzen_korrigiert,null,null,,null
+12-2-0026,norm,"""52420000""","""52420000""",,"""52420000"""
+12-2-0027,art,"""amt""","""amt""",,"""amt"""
+12-2-0027,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0027,grenzen_korrigiert,null,null,,null
+12-2-0027,norm,"""Amt für Verkehrsmanagement""","""Amt für Verkehrsmanagement""",,"""Amt für Verkehrsmanagement"""
+12-2-0028,art,"""amt""","""amt""",,"""amt"""
+12-2-0028,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0028,grenzen_korrigiert,null,null,,null
+12-2-0028,norm,"""Gartenamt""","""Gartenamt""",,"""Gartenamt"""
+12-2-0029,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0029,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0029,grenzen_korrigiert,null,null,,null
+12-2-0029,norm,"""260200000.00""","""260200000.00""",,"""260200000.00"""
+12-2-0030,art,"""amt""","""amt""",,"""amt"""
+12-2-0030,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0030,grenzen_korrigiert,null,null,,null
+12-2-0030,norm,"""Bezirksverwaltungsstelle 10""","""Bezirksverwaltungsstelle 10""",,"""Bezirksverwaltungsstelle 10"""
+12-2-0031,spannen,"[{""start"": 163, ""end"": 189, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 5"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 505, ""end"": 512, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 518, ""end"": 526, ""art"": ""sachkonto"", ""norm"": ""54990500"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 163, ""end"": 189, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 5"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 505, ""end"": 512, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 518, ""end"": 526, ""art"": ""sachkonto"", ""norm"": ""54990500"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 163, ""end"": 189, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 5"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 505, ""end"": 512, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 518, ""end"": 526, ""art"": ""sachkonto"", ""norm"": ""54990500"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0032,art,"""psp""","""psp""",,"""psp"""
+12-2-0032,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0032,grenzen_korrigiert,null,null,,null
+12-2-0032,norm,"""1.10.11.111.05.001""","""1.10.11.111.05.001""",,"""1.10.11.111.05.001"""
+12-2-0033,art,"""recht""","""recht""",,"""recht"""
+12-2-0033,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0033,grenzen_korrigiert,null,null,,null
+12-2-0033,norm,"""Bezirkssatzung § 3 Abs. 2""","""Bezirkssatzung § 3 Abs. 2""",,"""Bezirkssatzung § 3 Abs. 2"""
+12-2-0034,spannen,"[{""start"": 1153, ""end"": 1161, ""art"": ""sachkonto"", ""norm"": ""51511100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1192, ""end"": 1200, ""art"": ""sachkonto"", ""norm"": ""52910000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3939, ""end"": 3947, ""art"": ""sachkonto"", ""norm"": ""51511100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3949, ""end"": 3957, ""art"": ""sachkonto"", ""norm"": ""52910000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 1153, ""end"": 1161, ""art"": ""sachkonto"", ""norm"": ""51511100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1192, ""end"": 1200, ""art"": ""sachkonto"", ""norm"": ""52910000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3939, ""end"": 3947, ""art"": ""sachkonto"", ""norm"": ""51511100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3949, ""end"": 3957, ""art"": ""sachkonto"", ""norm"": ""52910000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 1153, ""end"": 1161, ""art"": ""sachkonto"", ""norm"": ""51511100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1192, ""end"": 1200, ""art"": ""sachkonto"", ""norm"": ""52910000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3939, ""end"": 3947, ""art"": ""sachkonto"", ""norm"": ""51511100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3949, ""end"": 3957, ""art"": ""sachkonto"", ""norm"": ""52910000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0035,art,"""amt""","""amt""",,"""amt"""
+12-2-0035,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0035,grenzen_korrigiert,null,null,,null
+12-2-0035,norm,"""37""","""37""",,"""37"""
+12-2-0036,art,"""recht""","""recht""",,"""recht"""
+12-2-0036,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0036,grenzen_korrigiert,"[445, 537]","[445, 537]",,"[445, 537]"
+12-2-0036,norm,"""Gesellschaftsvertrag der SWD Städt. Wohnungsgesellschaft Düsseldorf mbH & Co. KG § 11""","""Gesellschaftsvertrag der SWD Städt. Wohnungsgesellschaft Düsseldorf mbH & Co. KG § 11""",,"""Gesellschaftsvertrag der SWD Städt. Wohnungsgesellschaft Düsseldorf mbH & Co. KG § 11"""
+12-2-0037,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0037,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0037,grenzen_korrigiert,null,null,,null
+12-2-0037,norm,"""53170000""","""53170000""",,"""53170000"""
+12-2-0038,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0038,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0038,grenzen_korrigiert,null,null,,null
+12-2-0038,norm,"""230000.00""","""230000.00""",,"""230000.00"""
+12-2-0039,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0039,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0039,grenzen_korrigiert,null,null,,null
+12-2-0039,norm,"""5656102""","""5656102""",,"""5656102"""
+12-2-0040,art,"""amt""","""amt""",,"""amt"""
+12-2-0040,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0040,grenzen_korrigiert,null,null,,null
+12-2-0040,norm,"""Garten-, Friedhofs- und Forstamt""","""Garten-, Friedhofs- und Forstamt""",,"""Garten-, Friedhofs- und Forstamt"""
+12-2-0041,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0041,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0041,grenzen_korrigiert,null,null,,null
+12-2-0041,norm,"""3131506""","""3131506""",,"""3131506"""
+12-2-0042,art,"""recht""","""recht""",,"""recht"""
+12-2-0042,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0042,grenzen_korrigiert,null,null,,null
+12-2-0042,norm,"""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2""","""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2""",,"""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2"""
+12-2-0043,art,"""recht""","""recht""",,"""recht"""
+12-2-0043,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0043,grenzen_korrigiert,null,null,,null
+12-2-0043,norm,"""? § 17 Abs. 6""","""? § 17 Abs. 6""",,"""? § 17 Abs. 6"""
+12-2-0044,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0044,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0044,grenzen_korrigiert,null,null,,null
+12-2-0044,norm,"""54990700""","""54990700""",,"""54990700"""
+12-2-0045,art,"""amt""","""amt""",,"""amt"""
+12-2-0045,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0045,grenzen_korrigiert,null,null,,null
+12-2-0045,norm,"""66""","""66""",,"""66"""
+12-2-0046,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0046,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0046,grenzen_korrigiert,null,null,,null
+12-2-0046,norm,"""2528101""","""2528101""",,"""2528101"""
+12-2-0047,art,"""recht""","""recht""",,"""recht"""
+12-2-0047,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0047,grenzen_korrigiert,"[394, 532]","[394, 532]",,"[394, 532]"
+12-2-0047,norm,"""KorruptionsbG NRW § 17 Abs. 2""","""KorruptionsbG § 17 Abs. 2""","""KorruptionsbG § 17 Abs. 2""","""KorruptionsbG § 17 Abs. 2"""
+12-2-0048,art,"""investition""","""investition""",,"""investition"""
+12-2-0048,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0048,grenzen_korrigiert,null,null,,null
+12-2-0048,norm,"""7.90000278""","""7.90000278""",,"""7.90000278"""
+12-2-0049,art,"""recht""","""recht""",,"""recht"""
+12-2-0049,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0049,grenzen_korrigiert,null,null,,null
+12-2-0049,norm,"""? § 4""","""? § 4""",,"""? § 4"""
+12-2-0050,art,"""recht""","""recht""",,"""recht"""
+12-2-0050,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0050,grenzen_korrigiert,null,null,,null
+12-2-0050,norm,"""BauGB § 34""","""BauGB § 34""",,"""BauGB § 34"""
+12-2-0051,art,"""amt""","""amt""",,"""amt"""
+12-2-0051,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0051,grenzen_korrigiert,null,null,,null
+12-2-0051,norm,"""40""","""40""",,"""40"""
+12-2-0052,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0052,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0052,grenzen_korrigiert,null,null,,null
+12-2-0052,norm,"""06""","""06""",,"""06"""
+12-2-0053,art,"""amt""","""amt""",,"""amt"""
+12-2-0053,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0053,grenzen_korrigiert,null,null,,null
+12-2-0053,norm,"""Gartenamt""","""Gartenamt""",,"""Gartenamt"""
+12-2-0054,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0054,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0054,grenzen_korrigiert,null,null,,null
+12-2-0054,norm,"""78170100""","""78170100""",,"""78170100"""
+12-2-0055,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0055,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0055,grenzen_korrigiert,null,null,,null
+12-2-0055,norm,"""2756408.00""","""2756408.00""",,"""2756408.00"""
+12-2-0056,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0056,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0056,grenzen_korrigiert,null,null,,null
+12-2-0056,norm,"""03""","""03""",,"""03"""
+12-2-0057,art,"""recht""","""recht""",,"""recht"""
+12-2-0057,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0057,grenzen_korrigiert,null,null,,null
+12-2-0057,norm,"""? § 35a""","""? § 35a""",,"""? § 35a"""
+12-2-0058,art,"""psp""","""psp""",,"""psp"""
+12-2-0058,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0058,grenzen_korrigiert,null,null,,null
+12-2-0058,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0059,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0059,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0059,grenzen_korrigiert,null,null,,null
+12-2-0059,norm,"""1111114""","""1111114""",,"""1111114"""
+12-2-0060,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0060,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0060,grenzen_korrigiert,null,null,,null
+12-2-0060,norm,"""1111114""","""1111114""",,"""1111114"""
+12-2-0061,art,"""investition""","""investition""",,"""investition"""
+12-2-0061,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0061,grenzen_korrigiert,null,null,,null
+12-2-0061,norm,"""7.90000537""","""7.90000537""",,"""7.90000537"""
+12-2-0062,art,"""recht""","""recht""",,"""recht"""
+12-2-0062,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0062,grenzen_korrigiert,null,null,,null
+12-2-0062,norm,"""? § 265a""","""? § 265a""",,"""? § 265a"""
+12-2-0063,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0063,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0063,grenzen_korrigiert,null,null,,null
+12-2-0063,norm,"""52415700""","""52415700""",,"""52415700"""
+12-2-0064,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0064,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0064,grenzen_korrigiert,null,null,,null
+12-2-0064,norm,"""8400.00""","""8400.00""",,"""8400.00"""
+12-2-0065,spannen,"[{""start"": 218, ""end"": 245, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 728, ""end"": 754, ""art"": ""amt"", ""norm"": ""Amt für Verkehrsmanagement"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 218, ""end"": 245, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 728, ""end"": 754, ""art"": ""amt"", ""norm"": ""Amt für Verkehrsmanagement"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 218, ""end"": 245, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 728, ""end"": 754, ""art"": ""amt"", ""norm"": ""Amt für Verkehrsmanagement"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0066,art,"""termin""","""termin""",,"""termin"""
+12-2-0066,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0066,grenzen_korrigiert,null,null,,null
+12-2-0066,norm,"""2021-07-14""","""2021-07-14""",,"""2021-07-14"""
+12-2-0067,art,"""recht""","""recht""",,"""recht"""
+12-2-0067,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0067,grenzen_korrigiert,"[472, 537]","[472, 537]",,"[472, 537]"
+12-2-0067,norm,"""GO NRW § 58 Abs. 3""","""GO NRW § 58 Abs. 3""",,"""GO NRW § 58 Abs. 3"""
+12-2-0068,art,"""amt""","""amt""",,"""amt"""
+12-2-0068,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0068,grenzen_korrigiert,null,null,,null
+12-2-0068,norm,"""Bezirksverwaltungsstelle 10""","""Bezirksverwaltungsstelle 10""",,"""Bezirksverwaltungsstelle 10"""
+12-2-0069,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0069,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0069,grenzen_korrigiert,null,null,,null
+12-2-0069,norm,"""3135102""","""3135102""",,"""3135102"""
+12-2-0070,art,"""recht""","""recht""",,"""recht"""
+12-2-0070,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0070,grenzen_korrigiert,null,null,,null
+12-2-0070,norm,"""Zuständigkeitsordnung § 24 Abs. 5""","""Zuständigkeitsordnung § 24 Abs. 5""",,"""Zuständigkeitsordnung § 24 Abs. 5"""
+12-2-0071,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0071,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0071,grenzen_korrigiert,null,null,,null
+12-2-0071,norm,"""53172800""","""53172800""",,"""53172800"""
+12-2-0072,art,"""recht""","""recht""",,"""recht"""
+12-2-0072,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0072,grenzen_korrigiert,null,null,,null
+12-2-0072,norm,"""GO NRW § 24""","""GO NRW § 24""",,"""GO NRW § 24"""
+12-2-0073,art,"""amt""","""amt""",,"""amt"""
+12-2-0073,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0073,grenzen_korrigiert,null,null,,null
+12-2-0073,norm,"""Denkmalamt""","""Denkmalamt""",,"""Denkmalamt"""
+12-2-0074,art,"""recht""","""recht""",,"""recht"""
+12-2-0074,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0074,grenzen_korrigiert,null,null,,null
+12-2-0074,norm,"""ZPO § 383 Abs. 1 Nr. 1 bis 3""","""ZPO § 383 Abs. 1 Nr. 1 bis 3""",,"""ZPO § 383 Abs. 1 Nr. 1 bis 3"""
+12-2-0075,art,"""amt""","""amt""",,"""amt"""
+12-2-0075,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0075,grenzen_korrigiert,null,null,,null
+12-2-0075,norm,"""Bezirksverwaltungsstelle 3""","""Bezirksverwaltungsstelle 3""",,"""Bezirksverwaltungsstelle 3"""
+12-2-0076,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0076,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0076,grenzen_korrigiert,null,null,,null
+12-2-0076,norm,"""5656102""","""5656102""",,"""5656102"""
+12-2-0077,art,"""termin""","""termin""",,"""termin"""
+12-2-0077,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0077,grenzen_korrigiert,null,null,,null
+12-2-0077,norm,"""2025-12-31""","""2025-12-31""",,"""2025-12-31"""
+12-2-0078,art,"""termin""","""termin""",,"""termin"""
+12-2-0078,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0078,grenzen_korrigiert,null,null,,null
+12-2-0078,norm,"""2021-11-11""","""2021-11-11""",,"""2021-11-11"""
+12-2-0079,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0079,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0079,grenzen_korrigiert,null,null,,null
+12-2-0079,norm,"""1111114""","""1111114""",,"""1111114"""
+12-2-0080,art,"""termin""","""termin""",,"""termin"""
+12-2-0080,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0080,grenzen_korrigiert,null,null,,null
+12-2-0080,norm,"""2024-06-27""","""2024-06-27""",,"""2024-06-27"""
+12-2-0081,art,"""psp""","""psp""",,"""psp"""
+12-2-0081,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0081,grenzen_korrigiert,null,null,,null
+12-2-0081,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0082,art,"""recht""","""recht""",,"""recht"""
+12-2-0082,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0082,grenzen_korrigiert,null,null,,null
+12-2-0082,norm,"""Hauptsatzung § 26""","""Hauptsatzung der Landeshauptstadt Düsseldorf § 26""","""Hauptsatzung § 26""","""Hauptsatzung § 26"""
+12-2-0083,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0083,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0083,grenzen_korrigiert,null,null,,null
+12-2-0083,norm,"""53180000""","""53180000""",,"""53180000"""
+12-2-0084,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0084,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0084,grenzen_korrigiert,null,null,,null
+12-2-0084,norm,"""52910000""","""52910000""",,"""52910000"""
+12-2-0085,art,"""amt""","""amt""",,"""amt"""
+12-2-0085,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0085,grenzen_korrigiert,null,null,,null
+12-2-0085,norm,"""Umweltamt""","""Umweltamt""",,"""Umweltamt"""
+12-2-0086,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0086,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0086,grenzen_korrigiert,null,null,,null
+12-2-0086,norm,"""4242404""","""4242404""",,"""4242404"""
+12-2-0087,art,"""recht""","""recht""",,"""recht"""
+12-2-0087,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0087,grenzen_korrigiert,null,null,,null
+12-2-0087,norm,"""BWO § 72 Abs. 3, § 75 Abs. 6, § 76 Abs. 1 und 6, § 77 Abs. 1 und § 78 Abs. 4""","""BWO § 72 Abs. 3, § 75 Abs. 6, § 76 Abs. 1 und 6, § 77 Abs. 1 und § 78 Abs. 4""",,"""BWO § 72 Abs. 3, § 75 Abs. 6, § 76 Abs. 1 und 6, § 77 Abs. 1 und § 78 Abs. 4"""
+12-2-0088,art,"""amt""","""amt""",,"""amt"""
+12-2-0088,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0088,grenzen_korrigiert,null,null,,null
+12-2-0088,norm,"""Bezirksverwaltungsstelle 8""","""Bezirksverwaltungsstelle 8""",,"""Bezirksverwaltungsstelle 8"""
+12-2-0089,art,"""termin""","""termin""",,"""termin"""
+12-2-0089,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0089,grenzen_korrigiert,null,null,,null
+12-2-0089,norm,"""2022-10-19""","""2022-10-19""",,"""2022-10-19"""
+12-2-0090,spannen,"[{""start"": 181, ""end"": 195, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 5887, ""end"": 5898, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 5900, ""end"": 5907, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 5915, ""end"": 5923, ""art"": ""sachkonto"", ""norm"": ""53170000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 631, ""end"": 642, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 644, ""end"": 651, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 659, ""end"": 667, ""art"": ""sachkonto"", ""norm"": ""53170000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 181, ""end"": 195, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 5887, ""end"": 5898, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 5900, ""end"": 5907, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 5915, ""end"": 5923, ""art"": ""sachkonto"", ""norm"": ""53170000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 631, ""end"": 642, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 644, ""end"": 651, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 659, ""end"": 667, ""art"": ""sachkonto"", ""norm"": ""53170000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""auswerter"": [{""start"": 631, ""end"": 642, ""auswerter"": ""A"", ""regel"": ""R1: Name ohne Nummer""}, {""start"": 5887, ""end"": 5898, ""auswerter"": ""A"", ""regel"": ""R1: Name ohne Nummer""}]}","[{""start"": 181, ""end"": 195, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 631, ""end"": 642, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 644, ""end"": 651, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 659, ""end"": 667, ""art"": ""sachkonto"", ""norm"": ""53170000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 5887, ""end"": 5898, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 5900, ""end"": 5907, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 5915, ""end"": 5923, ""art"": ""sachkonto"", ""norm"": ""53170000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0091,art,"""termin""","""termin""",,"""termin"""
+12-2-0091,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0091,grenzen_korrigiert,null,null,,null
+12-2-0091,norm,"""2020-01-01""","""2020-01-01""",,"""2020-01-01"""
+12-2-0092,art,"""termin""","""termin""",,"""termin"""
+12-2-0092,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0092,grenzen_korrigiert,null,null,,null
+12-2-0092,norm,"""2022-03~anfang""","""2022-03~anfang""",,"""2022-03~anfang"""
+12-2-0093,art,"""amt""","""amt""",,"""amt"""
+12-2-0093,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0093,grenzen_korrigiert,"[2316, 2336]","[2316, 2336]",,"[2316, 2336]"
+12-2-0093,norm,"""68""","""68""",,"""68"""
+12-2-0094,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0094,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0094,grenzen_korrigiert,null,null,,null
+12-2-0094,norm,"""01""","""01""",,"""01"""
+12-2-0095,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0095,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0095,grenzen_korrigiert,null,null,,null
+12-2-0095,norm,"""09""","""09""",,"""09"""
+12-2-0096,art,"""termin""","""termin""",,"""termin"""
+12-2-0096,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0096,grenzen_korrigiert,null,null,,null
+12-2-0096,norm,"""2022-02-22""","""2022-02-22""",,"""2022-02-22"""
+12-2-0097,art,"""recht""","""recht""",,"""recht"""
+12-2-0097,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0097,grenzen_korrigiert,null,null,,null
+12-2-0097,norm,"""BauGB § 35 Abs. 2""","""BauGB § 35 Abs. 2""",,"""BauGB § 35 Abs. 2"""
+12-2-0098,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0098,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0098,grenzen_korrigiert,null,null,,null
+12-2-0098,norm,"""2121101""","""2121101""",,"""2121101"""
+12-2-0099,art,"""recht""","""recht""",,"""recht"""
+12-2-0099,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0099,grenzen_korrigiert,null,null,,null
+12-2-0099,norm,"""KiBiz § 33 Abs. 1 und 2""","""KiBiz § 33 Abs. 1 und 2""",,"""KiBiz § 33 Abs. 1 und 2"""
+12-2-0100,spannen,"[{""start"": 226, ""end"": 252, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 3"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 423, ""end"": 452, ""art"": ""recht"", ""norm"": ""Bezirkssatzung § 3 Abs. 2"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 594, ""end"": 612, ""art"": ""psp"", ""norm"": ""1.10.11.111.05.001"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 614, ""end"": 622, ""art"": ""sachkonto"", ""norm"": ""52415300"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 226, ""end"": 252, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 3"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 423, ""end"": 452, ""art"": ""recht"", ""norm"": ""Bezirkssatzung § 3 Abs. 2"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 594, ""end"": 612, ""art"": ""psp"", ""norm"": ""1.10.11.111.05.001"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 614, ""end"": 622, ""art"": ""sachkonto"", ""norm"": ""52415300"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 226, ""end"": 252, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 3"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 423, ""end"": 452, ""art"": ""recht"", ""norm"": ""Bezirkssatzung § 3 Abs. 2"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 594, ""end"": 612, ""art"": ""psp"", ""norm"": ""1.10.11.111.05.001"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 614, ""end"": 622, ""art"": ""sachkonto"", ""norm"": ""52415300"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0101,art,"""investition""","""investition""",,"""investition"""
+12-2-0101,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0101,grenzen_korrigiert,null,null,,null
+12-2-0101,norm,"""7.01190065""","""7.01190065""",,"""7.01190065"""
+12-2-0102,art,"""termin""","""termin""",,"""termin"""
+12-2-0102,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0102,grenzen_korrigiert,null,null,,null
+12-2-0102,norm,"""2021~fruehjahr""","""2021~fruehjahr""",,"""2021~fruehjahr"""
+12-2-0103,art,"""psp""","""psp""",,"""psp"""
+12-2-0103,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0103,grenzen_korrigiert,null,null,,null
+12-2-0103,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0104,art,"""recht""","""recht""",,"""recht"""
+12-2-0104,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0104,grenzen_korrigiert,null,null,,null
+12-2-0104,norm,"""BauGB § 30 Abs. 1 i. V. m. § 34 Abs. 2""","""BauGB § 30 Abs. 1 i. V. m. § 34 Abs. 2""",,"""BauGB § 30 Abs. 1 i. V. m. § 34 Abs. 2"""
+12-2-0105,art,"""recht""","""recht""",,"""recht"""
+12-2-0105,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0105,grenzen_korrigiert,"[970, 1035]","[970, 1035]",,"[970, 1035]"
+12-2-0105,norm,"""GO NRW § 41 Abs. 1 Buchstabe m""","""GO NRW § 41 Abs. 1m""","""GO NRW § 41 Abs. 1m""","""GO NRW § 41 Abs. 1m"""
+12-2-0106,spannen,"[{""start"": 142, ""end"": 168, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 142, ""end"": 168, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 142, ""end"": 168, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0107,spannen,"[{""start"": 1291, ""end"": 1316, ""art"": ""amt"", ""norm"": ""Amt für Verbraucherschutz"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1816, ""end"": 1827, ""art"": ""amt"", ""norm"": ""Jugendamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 210, ""end"": 224, ""art"": ""amt"", ""norm"": ""51"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2526, ""end"": 2540, ""art"": ""psp"", ""norm"": ""1.10.36.365.01"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 861, ""end"": 874, ""art"": ""recht"", ""norm"": ""SGB VIII § 75"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 1291, ""end"": 1316, ""art"": ""amt"", ""norm"": ""Amt für Verbraucherschutz"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1816, ""end"": 1827, ""art"": ""amt"", ""norm"": ""51"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 210, ""end"": 224, ""art"": ""amt"", ""norm"": ""51"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2526, ""end"": 2540, ""art"": ""psp"", ""norm"": ""1.10.36.365.01"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 861, ""end"": 874, ""art"": ""recht"", ""norm"": ""SGB VIII § 75"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""auswerter"": [{""start"": 1816, ""end"": 1827, ""auswerter"": ""A"", ""regel"": ""R1: Name ohne Nummer""}]}","[{""start"": 210, ""end"": 224, ""art"": ""amt"", ""norm"": ""51"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 861, ""end"": 874, ""art"": ""recht"", ""norm"": ""SGB VIII § 75"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1291, ""end"": 1316, ""art"": ""amt"", ""norm"": ""Amt für Verbraucherschutz"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1816, ""end"": 1827, ""art"": ""amt"", ""norm"": ""Jugendamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2526, ""end"": 2540, ""art"": ""psp"", ""norm"": ""1.10.36.365.01"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0108,art,"""recht""","""recht""",,"""recht"""
+12-2-0108,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0108,grenzen_korrigiert,null,null,,null
+12-2-0108,norm,"""SGB XII §§ 67 ff.""","""SGB XII §§ 67 ff.""",,"""SGB XII §§ 67 ff."""
+12-2-0109,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0109,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0109,grenzen_korrigiert,null,null,,null
+12-2-0109,norm,"""378180.00""","""378180.00""",,"""378180.00"""
+12-2-0110,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0110,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0110,grenzen_korrigiert,null,null,,null
+12-2-0110,norm,"""800.00""","""800.00""",,"""800.00"""
+12-2-0111,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0111,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0111,grenzen_korrigiert,null,null,,null
+12-2-0111,norm,"""5252201""","""5252201""",,"""5252201"""
+12-2-0112,art,"""recht""","""recht""",,"""recht"""
+12-2-0112,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0112,grenzen_korrigiert,null,null,,null
+12-2-0112,norm,"""GO NRW § 36 Abs. 5 Satz 2 i. V. m. § 60 Abs. 1 Satz 2""","""GO NRW § 36 Abs. 5 Satz 2 i. V. m. § 60 Abs. 1 Satz 2""",,"""GO NRW § 36 Abs. 5 Satz 2 i. V. m. § 60 Abs. 1 Satz 2"""
+12-2-0113,art,"""termin""","""termin""",,"""termin"""
+12-2-0113,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0113,grenzen_korrigiert,null,null,,null
+12-2-0113,norm,"""2021-11-23""","""2021-11-23""",,"""2021-11-23"""
+12-2-0114,art,"""amt""","""amt""",,"""amt"""
+12-2-0114,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0114,grenzen_korrigiert,null,null,,null
+12-2-0114,norm,"""Feuerwehr""","""Feuerwehr""",,"""Feuerwehr"""
+12-2-0115,spannen,"[{""start"": 167, ""end"": 193, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3777, ""end"": 3788, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 167, ""end"": 193, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3777, ""end"": 3788, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 167, ""end"": 193, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3777, ""end"": 3788, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0116,art,"""recht""","""recht""",,"""recht"""
+12-2-0116,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0116,grenzen_korrigiert,null,null,,null
+12-2-0116,norm,"""GO NRW § 58 Abs. 3""","""GO NRW § 58 Abs. 3""",,"""GO NRW § 58 Abs. 3"""
+12-2-0117,art,"""psp""","""psp""",,"""psp"""
+12-2-0117,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0117,grenzen_korrigiert,null,null,,null
+12-2-0117,norm,"""11.111.05.001""","""11.111.05.001""",,"""11.111.05.001"""
+12-2-0118,art,"""recht""","""recht""",,"""recht"""
+12-2-0118,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0118,grenzen_korrigiert,null,null,,null
+12-2-0118,norm,"""BGB § 247""","""BGB § 247""",,"""BGB § 247"""
+12-2-0119,art,"""amt""","""amt""",,"""amt"""
+12-2-0119,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0119,grenzen_korrigiert,null,null,,null
+12-2-0119,norm,"""Bezirksverwaltungsstelle 10""","""Bezirksverwaltungsstelle 10""",,"""Bezirksverwaltungsstelle 10"""
+12-2-0120,spannen,"[{""start"": 171, ""end"": 183, ""art"": ""dezernat"", ""norm"": ""07"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 225, ""end"": 237, ""art"": ""dezernat"", ""norm"": ""07"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 344, ""end"": 351, ""art"": ""produkt"", ""norm"": ""1111108"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 424, ""end"": 431, ""art"": ""produkt"", ""norm"": ""1212101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 467, ""end"": 474, ""art"": ""produkt"", ""norm"": ""1212102"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 500, ""end"": 507, ""art"": ""produkt"", ""norm"": ""5151104"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 171, ""end"": 183, ""art"": ""dezernat"", ""norm"": ""07"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 225, ""end"": 237, ""art"": ""dezernat"", ""norm"": ""07"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 344, ""end"": 351, ""art"": ""produkt"", ""norm"": ""1111108"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 424, ""end"": 431, ""art"": ""produkt"", ""norm"": ""1212101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 467, ""end"": 474, ""art"": ""produkt"", ""norm"": ""1212102"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 500, ""end"": 507, ""art"": ""produkt"", ""norm"": ""5151104"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 171, ""end"": 183, ""art"": ""dezernat"", ""norm"": ""07"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 225, ""end"": 237, ""art"": ""dezernat"", ""norm"": ""07"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 344, ""end"": 351, ""art"": ""produkt"", ""norm"": ""1111108"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 424, ""end"": 431, ""art"": ""produkt"", ""norm"": ""1212101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 467, ""end"": 474, ""art"": ""produkt"", ""norm"": ""1212102"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 500, ""end"": 507, ""art"": ""produkt"", ""norm"": ""5151104"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0121,spannen,"[{""start"": 1432, ""end"": 1460, ""art"": ""amt"", ""norm"": ""Amt für Verkehrsmanagement"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 293, ""end"": 319, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3121, ""end"": 3155, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3299, ""end"": 3332, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4129, ""end"": 4161, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4311, ""end"": 4320, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4388, ""end"": 4397, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4437, ""end"": 4446, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 649, ""end"": 656, ""art"": ""produkt"", ""norm"": ""5656103"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 1432, ""end"": 1460, ""art"": ""amt"", ""norm"": ""Amt für Verkehrsmanagement"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 293, ""end"": 319, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3121, ""end"": 3155, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3299, ""end"": 3332, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4129, ""end"": 4161, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4311, ""end"": 4320, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4388, ""end"": 4397, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4437, ""end"": 4446, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 649, ""end"": 656, ""art"": ""produkt"", ""norm"": ""5656103"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 293, ""end"": 319, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 649, ""end"": 656, ""art"": ""produkt"", ""norm"": ""5656103"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1432, ""end"": 1460, ""art"": ""amt"", ""norm"": ""Amt für Verkehrsmanagement"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3121, ""end"": 3155, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3299, ""end"": 3332, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4129, ""end"": 4161, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4311, ""end"": 4320, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4388, ""end"": 4397, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 4437, ""end"": 4446, ""art"": ""amt"", ""norm"": ""Gartenamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0122,spannen,[],[],,[]
+12-2-0123,spannen,"[{""start"": 2163, ""end"": 2316, ""art"": ""recht"", ""norm"": ""Bestimmungen über die Verleihung der Förderpreise für Bildende Kunst, Darstellende Kunst, Musik und Literatur der Landeshauptstadt Düsseldorf § 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 229, ""end"": 243, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2322, ""end"": 2382, ""art"": ""recht"", ""norm"": ""Satzung Förderpreis SSK Kunst- und Kulturstiftung § 5"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2788, ""end"": 2795, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2797, ""end"": 2806, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2827, ""end"": 2835, ""art"": ""sachkonto"", ""norm"": ""54990000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 2163, ""end"": 2316, ""art"": ""recht"", ""norm"": ""Bestimmungen über die Verleihung der Förderpreise für Bildende Kunst, Darstellende Kunst, Musik und Literatur der Landeshauptstadt Düsseldorf § 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 229, ""end"": 243, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2322, ""end"": 2382, ""art"": ""recht"", ""norm"": ""Satzung Förderpreis SSK Kunst- und Kulturstiftung § 5"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2788, ""end"": 2795, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2797, ""end"": 2806, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2827, ""end"": 2835, ""art"": ""sachkonto"", ""norm"": ""54990000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""auswerter"": [{""start"": 2797, ""end"": 2806, ""auswerter"": ""A"", ""regel"": ""R1: Name ohne Nummer""}]}","[{""start"": 229, ""end"": 243, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2163, ""end"": 2316, ""art"": ""recht"", ""norm"": ""Bestimmungen über die Verleihung der Förderpreise für Bildende Kunst, Darstellende Kunst, Musik und Literatur der Landeshauptstadt Düsseldorf § 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2322, ""end"": 2382, ""art"": ""recht"", ""norm"": ""Satzung Förderpreis SSK Kunst- und Kulturstiftung § 5"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2788, ""end"": 2795, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2797, ""end"": 2806, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2827, ""end"": 2835, ""art"": ""sachkonto"", ""norm"": ""54990000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0124,spannen,"[{""start"": 157, ""end"": 170, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 618, ""end"": 627, ""art"": ""produkt"", ""norm"": ""4242404"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 629, ""end"": 637, ""art"": ""sachkonto"", ""norm"": ""78170100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 639, ""end"": 649, ""art"": ""investition"", ""norm"": ""7.90000278"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 157, ""end"": 170, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 618, ""end"": 627, ""art"": ""produkt"", ""norm"": ""4242404"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 629, ""end"": 637, ""art"": ""sachkonto"", ""norm"": ""78170100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 639, ""end"": 649, ""art"": ""investition"", ""norm"": ""7.90000278"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 157, ""end"": 170, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 618, ""end"": 627, ""art"": ""produkt"", ""norm"": ""4242404"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 629, ""end"": 637, ""art"": ""sachkonto"", ""norm"": ""78170100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 639, ""end"": 649, ""art"": ""investition"", ""norm"": ""7.90000278"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0125,spannen,"[{""start"": 1084, ""end"": 1116, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1139, ""end"": 1171, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 267, ""end"": 294, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 1084, ""end"": 1116, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1139, ""end"": 1171, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 267, ""end"": 294, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 267, ""end"": 294, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1084, ""end"": 1116, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1139, ""end"": 1171, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0126,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0126,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0126,grenzen_korrigiert,null,null,,null
+12-2-0126,norm,"""52415700""","""52415700""",,"""52415700"""
+12-2-0127,art,"""recht""","""recht""",,"""recht"""
+12-2-0127,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0127,grenzen_korrigiert,null,null,,null
+12-2-0127,norm,"""Bezirkssatzung § 1 Abs. 3""","""Bezirkssatzung § 1 Abs. 3""",,"""Bezirkssatzung § 1 Abs. 3"""
+12-2-0128,art,"""recht""","""recht""",,"""recht"""
+12-2-0128,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0128,grenzen_korrigiert,null,null,,null
+12-2-0128,norm,"""GO NRW § 24""","""GO NRW § 24""",,"""GO NRW § 24"""
+12-2-0129,art,"""amt""","""amt""",,"""amt"""
+12-2-0129,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0129,grenzen_korrigiert,null,null,,null
+12-2-0129,norm,"""Bezirksverwaltungsstelle 5""","""Bezirksverwaltungsstelle 5""",,"""Bezirksverwaltungsstelle 5"""
+12-2-0130,art,"""amt""","""amt""",,"""amt"""
+12-2-0130,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0130,grenzen_korrigiert,null,null,,null
+12-2-0130,norm,"""Bezirksverwaltungsstelle 3""","""Bezirksverwaltungsstelle 3""",,"""Bezirksverwaltungsstelle 3"""
+12-2-0131,art,"""amt""","""amt""",,"""amt"""
+12-2-0131,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0131,grenzen_korrigiert,null,null,,null
+12-2-0131,norm,"""Gartenamt""","""Gartenamt""",,"""Gartenamt"""
+12-2-0132,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0132,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0132,grenzen_korrigiert,null,null,,null
+12-2-0132,norm,"""09""","""09""",,"""09"""
+12-2-0133,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0133,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0133,grenzen_korrigiert,null,null,,null
+12-2-0133,norm,"""54990700""","""54990700""",,"""54990700"""
+12-2-0134,spannen,"[{""start"": 262, ""end"": 288, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 262, ""end"": 288, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 262, ""end"": 288, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0135,art,"""recht""","""recht""",,"""recht"""
+12-2-0135,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0135,grenzen_korrigiert,"[1929, 1950]","[1929, 1950]",,"[1929, 1950]"
+12-2-0135,norm,"""GO NRW § 60 Abs. 3 Satz 1""","""GO NRW § 60 Abs. 3 Satz 1""",,"""GO NRW § 60 Abs. 3 Satz 1"""
+12-2-0136,art,"""amt""","""amt""",,"""amt"""
+12-2-0136,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0136,grenzen_korrigiert,null,null,,null
+12-2-0136,norm,"""66""","""66""",,"""66"""
+12-2-0137,spannen,"[{""start"": 207, ""end"": 234, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 644, ""end"": 670, ""art"": ""amt"", ""norm"": ""Amt für Verkehrsmanagement"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 207, ""end"": 234, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 644, ""end"": 670, ""art"": ""amt"", ""norm"": ""Amt für Verkehrsmanagement"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 207, ""end"": 234, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 10"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 644, ""end"": 670, ""art"": ""amt"", ""norm"": ""Amt für Verkehrsmanagement"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0138,art,"""investition""","""investition""",,"""investition"""
+12-2-0138,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0138,grenzen_korrigiert,null,null,,null
+12-2-0138,norm,"""7.90000042""","""7.90000042""",,"""7.90000042"""
+12-2-0139,art,"""recht""","""recht""",,"""recht"""
+12-2-0139,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0139,grenzen_korrigiert,"[5365, 5394]","[5365, 5394]",,"[5365, 5394]"
+12-2-0139,norm,"""StVO § 20""","""StVO § 20""",,"""StVO § 20"""
+12-2-0140,art,"""recht""","""recht""",,"""recht"""
+12-2-0140,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0140,grenzen_korrigiert,null,null,,null
+12-2-0140,norm,"""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2""","""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2""",,"""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2"""
+12-2-0141,art,"""amt""","""amt""",,"""amt"""
+12-2-0141,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0141,grenzen_korrigiert,null,null,,null
+12-2-0141,norm,"""Bezirksverwaltungsstelle 7""","""Bezirksverwaltungsstelle 7""",,"""Bezirksverwaltungsstelle 7"""
+12-2-0142,art,"""recht""","""recht""",,"""recht"""
+12-2-0142,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0142,grenzen_korrigiert,"[2872, 2931]","[2872, 2931]",,"[2872, 2931]"
+12-2-0142,norm,"""Satzung Förderpreis SSK Kunst-und Kulturstiftung § 5""","""Satzung Förderpreis SSK Kunst-und Kulturstiftung § 5""",,"""Satzung Förderpreis SSK Kunst-und Kulturstiftung § 5"""
+12-2-0143,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0143,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0143,grenzen_korrigiert,null,null,,null
+12-2-0143,norm,"""1111114""","""1111114""",,"""1111114"""
+12-2-0144,art,"""recht""","""recht""",,"""recht"""
+12-2-0144,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0144,grenzen_korrigiert,null,null,,null
+12-2-0144,norm,"""Zuständigkeitsordnung § 12""","""Zuständigkeitsordnung § 12""",,"""Zuständigkeitsordnung § 12"""
+12-2-0145,art,"""psp""","""psp""",,"""psp"""
+12-2-0145,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0145,grenzen_korrigiert,null,null,,null
+12-2-0145,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0146,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0146,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0146,grenzen_korrigiert,null,null,,null
+12-2-0146,norm,"""2528101""","""2528101""",,"""2528101"""
+12-2-0147,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0147,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0147,grenzen_korrigiert,null,null,,null
+12-2-0147,norm,"""52415200""","""52415200""",,"""52415200"""
+12-2-0148,art,"""recht""","""recht""",,"""recht"""
+12-2-0148,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0148,grenzen_korrigiert,null,null,,null
+12-2-0148,norm,"""BauGB § 35 Abs. 2 i. V. m. § 35 Abs. 4 Nr. 1""","""BauGB § 35 Abs. 2 i. V. m. § 35 Abs. 4 Nr. 1""",,"""BauGB § 35 Abs. 2 i. V. m. § 35 Abs. 4 Nr. 1"""
+12-2-0149,art,"""psp""","""psp""",,"""psp"""
+12-2-0149,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0149,grenzen_korrigiert,null,null,,null
+12-2-0149,norm,"""1.10.11.111.05.001""","""1.10.11.111.05.001""",,"""1.10.11.111.05.001"""
+12-2-0150,art,"""amt""","""amt""",,"""amt"""
+12-2-0150,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0150,grenzen_korrigiert,null,null,,null
+12-2-0150,norm,"""66""","""66""",,"""66"""
+12-2-0151,art,"""amt""","""amt""",,"""amt"""
+12-2-0151,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0151,grenzen_korrigiert,null,null,,null
+12-2-0151,norm,"""Amt für Verkehrsmanagement""","""Amt für Verkehrsmanagement""",,"""Amt für Verkehrsmanagement"""
+12-2-0152,art,"""recht""","""recht""",,"""recht"""
+12-2-0152,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0152,grenzen_korrigiert,null,null,,null
+12-2-0152,norm,"""BauGB § 34""","""BauGB § 34""",,"""BauGB § 34"""
+12-2-0153,art,"""amt""","""amt""",,"""amt"""
+12-2-0153,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0153,grenzen_korrigiert,null,null,,null
+12-2-0153,norm,"""63""","""63""",,"""63"""
+12-2-0154,spannen,"[{""start"": 197, ""end"": 223, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 509, ""end"": 550, ""art"": ""amt"", ""norm"": ""68"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 197, ""end"": 223, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 509, ""end"": 550, ""art"": ""amt"", ""norm"": ""68"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 197, ""end"": 223, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 509, ""end"": 550, ""art"": ""amt"", ""norm"": ""68"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0155,art,"""recht""","""recht""",,"""recht"""
+12-2-0155,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0155,grenzen_korrigiert,null,null,,null
+12-2-0155,norm,"""? § 6 Abs. 1, § 7 Abs. 1""","""? § 6 Abs. 1, § 7 Abs. 1""",,"""? § 6 Abs. 1, § 7 Abs. 1"""
+12-2-0156,art,"""investition""","""investition""",,"""investition"""
+12-2-0156,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0156,grenzen_korrigiert,null,null,,null
+12-2-0156,norm,"""7.90000278""","""7.90000278""",,"""7.90000278"""
+12-2-0157,art,"""recht""","""recht""",,"""recht"""
+12-2-0157,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0157,grenzen_korrigiert,null,null,,null
+12-2-0157,norm,"""? § 45 Abs. 1b Nr. 5""","""? § 45 Abs. 1b Nr. 5""",,"""? § 45 Abs. 1b Nr. 5"""
+12-2-0158,art,"""recht""","""recht""",,"""recht"""
+12-2-0158,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0158,grenzen_korrigiert,null,null,,null
+12-2-0158,norm,"""KWahlG § 40 Abs. 1 Buchstabe d""","""KWahlG § 40 Abs. 1d""","""KWahlG § 40 Abs. 1d""","""KWahlG § 40 Abs. 1d"""
+12-2-0159,art,"""recht""","""recht""",,"""recht"""
+12-2-0159,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0159,grenzen_korrigiert,null,null,,null
+12-2-0159,norm,"""NKF-CIG § 6""","""NKF-CIG § 6""",,"""NKF-CIG § 6"""
+12-2-0160,art,"""recht""","""recht""",,"""recht"""
+12-2-0160,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0160,grenzen_korrigiert,"[2071, 2133]","[2071, 2133]",,"[2071, 2133]"
+12-2-0160,norm,"""APO-S I § 1 Abs. 2""","""APO-S I § 1 Abs. 2""",,"""APO-S I § 1 Abs. 2"""
+12-2-0161,spannen,"[{""start"": 2230, ""end"": 2239, ""art"": ""produkt"", ""norm"": ""4242401"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2254, ""end"": 2262, ""art"": ""sachkonto"", ""norm"": ""52420000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 324, ""end"": 337, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 2230, ""end"": 2239, ""art"": ""produkt"", ""norm"": ""4242401"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2254, ""end"": 2262, ""art"": ""sachkonto"", ""norm"": ""52420000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 324, ""end"": 337, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 324, ""end"": 337, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2230, ""end"": 2239, ""art"": ""produkt"", ""norm"": ""4242401"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2254, ""end"": 2262, ""art"": ""sachkonto"", ""norm"": ""52420000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0162,art,"""termin""","""termin""",,"""termin"""
+12-2-0162,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0162,grenzen_korrigiert,null,null,,null
+12-2-0162,norm,"""2022~herbst""","""2022~herbst""",,"""2022~herbst"""
+12-2-0163,spannen,"[{""start"": 195, ""end"": 209, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 568, ""end"": 575, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 576, ""end"": 584, ""art"": ""sachkonto"", ""norm"": ""53180000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 195, ""end"": 209, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 568, ""end"": 575, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 576, ""end"": 584, ""art"": ""sachkonto"", ""norm"": ""53180000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 195, ""end"": 209, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 568, ""end"": 575, ""art"": ""produkt"", ""norm"": ""2528101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 576, ""end"": 584, ""art"": ""sachkonto"", ""norm"": ""53180000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0164,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0164,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0164,grenzen_korrigiert,null,null,,null
+12-2-0164,norm,"""500000.00""","""500000.00""",,"""500000.00"""
+12-2-0165,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0165,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0165,grenzen_korrigiert,null,null,,null
+12-2-0165,norm,"""4000.00""","""4000.00""",,"""4000.00"""
+12-2-0166,art,"""amt""","""amt""",,"""amt"""
+12-2-0166,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0166,grenzen_korrigiert,null,null,,null
+12-2-0166,norm,"""Bezirksverwaltungsstelle 9""","""Bezirksverwaltungsstelle 9""",,"""Bezirksverwaltungsstelle 9"""
+12-2-0167,art,"""investition""","""investition""",,"""investition"""
+12-2-0167,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0167,grenzen_korrigiert,null,null,,null
+12-2-0167,norm,"""7.01320011""","""7.01320011""",,"""7.01320011"""
+12-2-0168,art,"""amt""","""amt""",,"""amt"""
+12-2-0168,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0168,grenzen_korrigiert,null,null,,null
+12-2-0168,norm,"""41""","""41""",,"""41"""
+12-2-0169,art,"""recht""","""recht""",,"""recht"""
+12-2-0169,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0169,grenzen_korrigiert,null,null,,null
+12-2-0169,norm,"""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2""","""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2""",,"""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2"""
+12-2-0170,art,"""amt""","""amt""",,"""amt"""
+12-2-0170,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0170,grenzen_korrigiert,null,null,,null
+12-2-0170,norm,"""Amt für Gebäudemanagement""","""Amt für Gebäudemanagement""",,"""Amt für Gebäudemanagement"""
+12-2-0171,art,"""amt""","""amt""",,"""amt"""
+12-2-0171,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0171,grenzen_korrigiert,null,null,,null
+12-2-0171,norm,"""Marktamt""","""Marktamt""",,"""Marktamt"""
+12-2-0172,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0172,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0172,grenzen_korrigiert,null,null,,null
+12-2-0172,norm,"""5656102""","""5656102""",,"""5656102"""
+12-2-0173,art,"""investition""","""investition""",,"""investition"""
+12-2-0173,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0173,grenzen_korrigiert,null,null,,null
+12-2-0173,norm,"""7.01070016""","""7.01070016""",,"""7.01070016"""
+12-2-0174,spannen,[],[],,[]
+12-2-0175,spannen,"[{""start"": 165, ""end"": 191, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2047, ""end"": 2079, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 821, ""end"": 828, ""art"": ""produkt"", ""norm"": ""1111105"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 831, ""end"": 839, ""art"": ""sachkonto"", ""norm"": ""72415600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 165, ""end"": 191, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2047, ""end"": 2079, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 821, ""end"": 828, ""art"": ""produkt"", ""norm"": ""1111105"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 829, ""end"": 839, ""art"": ""sachkonto"", ""norm"": ""72415600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""spannen_hinzu"": [{""start"": 831, ""end"": 839, ""art"": ""sachkonto"", ""norm"": ""72415600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}], ""spannen_weg"": []}","[{""start"": 165, ""end"": 191, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 821, ""end"": 828, ""art"": ""produkt"", ""norm"": ""1111105"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 831, ""end"": 839, ""art"": ""sachkonto"", ""norm"": ""72415600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2047, ""end"": 2079, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0176,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0176,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0176,grenzen_korrigiert,null,null,,null
+12-2-0176,norm,"""78180000""","""78180000""",,"""78180000"""
+12-2-0177,art,"""termin""","""termin""",,"""termin"""
+12-2-0177,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0177,grenzen_korrigiert,null,null,,null
+12-2-0177,norm,"""2021-10""","""2021-10""",,"""2021-10"""
+12-2-0178,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0178,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0178,grenzen_korrigiert,null,null,,null
+12-2-0178,norm,"""52415400""","""52415400""",,"""52415400"""
+12-2-0179,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0179,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0179,grenzen_korrigiert,null,null,,null
+12-2-0179,norm,"""400000.00""","""400000.00""",,"""400000.00"""
+12-2-0180,spannen,"[{""start"": 150, ""end"": 163, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 649, ""end"": 658, ""art"": ""produkt"", ""norm"": ""4242404"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 660, ""end"": 668, ""art"": ""sachkonto"", ""norm"": ""78170100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 670, ""end"": 680, ""art"": ""investition"", ""norm"": ""7.90000278"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 150, ""end"": 163, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 649, ""end"": 658, ""art"": ""produkt"", ""norm"": ""4242404"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 660, ""end"": 668, ""art"": ""sachkonto"", ""norm"": ""78170100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 670, ""end"": 680, ""art"": ""investition"", ""norm"": ""7.90000278"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 150, ""end"": 163, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 649, ""end"": 658, ""art"": ""produkt"", ""norm"": ""4242404"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 660, ""end"": 668, ""art"": ""sachkonto"", ""norm"": ""78170100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 670, ""end"": 680, ""art"": ""investition"", ""norm"": ""7.90000278"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0181,art,"""termin""","""termin""",,"""termin"""
+12-2-0181,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0181,grenzen_korrigiert,null,null,,null
+12-2-0181,norm,"""relativ:naechste_sitzung""","""relativ:naechste_sitzung""",,"""relativ:naechste_sitzung"""
+12-2-0182,art,"""investition""","""investition""",,"""investition"""
+12-2-0182,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0182,grenzen_korrigiert,null,null,,null
+12-2-0182,norm,"""7.01070016""","""7.01070016""",,"""7.01070016"""
+12-2-0183,spannen,"[{""start"": 131, ""end"": 144, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2251, ""end"": 2259, ""art"": ""amt"", ""norm"": ""Sportamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 444, ""end"": 451, ""art"": ""produkt"", ""norm"": ""4242101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 452, ""end"": 458, ""art"": ""sachkonto"", ""norm"": ""531800"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 131, ""end"": 144, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2251, ""end"": 2259, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 444, ""end"": 451, ""art"": ""produkt"", ""norm"": ""4242101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 452, ""end"": 458, ""art"": ""sachkonto"", ""norm"": ""531800"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""auswerter"": [{""start"": 2251, ""end"": 2259, ""auswerter"": ""A"", ""regel"": ""R1: Name ohne Nummer""}]}","[{""start"": 131, ""end"": 144, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 444, ""end"": 451, ""art"": ""produkt"", ""norm"": ""4242101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 452, ""end"": 458, ""art"": ""sachkonto"", ""norm"": ""531800"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2251, ""end"": 2259, ""art"": ""amt"", ""norm"": ""Sportamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0184,spannen,"[{""start"": 289, ""end"": 315, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 5578, ""end"": 5587, ""art"": ""amt"", ""norm"": ""Feuerwehr"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 8266, ""end"": 8275, ""art"": ""amt"", ""norm"": ""Feuerwehr"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 289, ""end"": 315, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""spannen_hinzu"": [{""start"": 5578, ""end"": 5587, ""art"": ""amt"", ""norm"": ""Feuerwehr"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 8266, ""end"": 8275, ""art"": ""amt"", ""norm"": ""Feuerwehr"", ""rolle"": null, ""frist"": null, ""tabelle"": false}], ""spannen_weg"": []}","[{""start"": 289, ""end"": 315, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 5578, ""end"": 5587, ""art"": ""amt"", ""norm"": ""Feuerwehr"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 8266, ""end"": 8275, ""art"": ""amt"", ""norm"": ""Feuerwehr"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0185,art,"""recht""","""recht""",,"""recht"""
+12-2-0185,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0185,grenzen_korrigiert,null,null,,null
+12-2-0185,norm,"""Zuständigkeitsordnung § 1 Abs. 3""","""Zuständigkeitsordnung § 1 Abs. 3""",,"""Zuständigkeitsordnung § 1 Abs. 3"""
+12-2-0186,art,"""termin""","""termin""",,"""termin"""
+12-2-0186,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0186,grenzen_korrigiert,null,null,,null
+12-2-0186,norm,"""2022-03-22""","""2022-03-22""",,"""2022-03-22"""
+12-2-0187,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0187,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0187,grenzen_korrigiert,null,null,,null
+12-2-0187,norm,"""2526101""","""2526101""",,"""2526101"""
+12-2-0188,art,"""psp""","""psp""",,"""psp"""
+12-2-0188,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0188,grenzen_korrigiert,null,null,,null
+12-2-0188,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0189,art,"""amt""","""amt""",,"""amt"""
+12-2-0189,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0189,grenzen_korrigiert,null,null,,null
+12-2-0189,norm,"""Stadtplanungsamt""","""Stadtplanungsamt""",,"""Stadtplanungsamt"""
+12-2-0190,art,"""termin""","""termin""",,"""termin"""
+12-2-0190,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0190,grenzen_korrigiert,null,null,,null
+12-2-0190,norm,"""2022-09-10""","""2022-09-10""",,"""2022-09-10"""
+12-2-0191,art,"""recht""","""recht""",,"""recht"""
+12-2-0191,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0191,grenzen_korrigiert,null,null,,null
+12-2-0191,norm,"""KomHVO NRW § 13""","""KomHVO NRW § 13""",,"""KomHVO NRW § 13"""
+12-2-0192,art,"""psp""","""psp""",,"""psp"""
+12-2-0192,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0192,grenzen_korrigiert,null,null,,null
+12-2-0192,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0193,art,"""recht""","""recht""",,"""recht"""
+12-2-0193,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0193,grenzen_korrigiert,null,null,,null
+12-2-0193,norm,"""? § 3 Abs. 2 Nr. 2""","""? § 3 Abs. 2 Nr. 2""",,"""? § 3 Abs. 2 Nr. 2"""
+12-2-0194,spannen,"[{""start"": 121, ""end"": 134, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 513, ""end"": 522, ""art"": ""produkt"", ""norm"": ""4242404"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 524, ""end"": 532, ""art"": ""sachkonto"", ""norm"": ""78170100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 534, ""end"": 544, ""art"": ""investition"", ""norm"": ""7.90000278"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 121, ""end"": 134, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 513, ""end"": 522, ""art"": ""produkt"", ""norm"": ""4242404"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 524, ""end"": 532, ""art"": ""sachkonto"", ""norm"": ""78170100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 534, ""end"": 544, ""art"": ""investition"", ""norm"": ""7.90000278"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 121, ""end"": 134, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 513, ""end"": 522, ""art"": ""produkt"", ""norm"": ""4242404"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 524, ""end"": 532, ""art"": ""sachkonto"", ""norm"": ""78170100"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 534, ""end"": 544, ""art"": ""investition"", ""norm"": ""7.90000278"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0195,art,"""recht""","""recht""",,"""recht"""
+12-2-0195,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0195,grenzen_korrigiert,null,null,,null
+12-2-0195,norm,"""StVO § 3 Abs. 3 Nr. 1""","""StVO § 3 Abs. 3 Nr. 1""",,"""StVO § 3 Abs. 3 Nr. 1"""
+12-2-0196,art,"""recht""","""recht""",,"""recht"""
+12-2-0196,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0196,grenzen_korrigiert,"[1907, 1924]","[1907, 1924]",,"[1907, 1924]"
+12-2-0196,norm,"""StVO § 45 Abs. 1b Nr. 2a""","""StVO § 45 Abs. 1b Nr. 2a""",,"""StVO § 45 Abs. 1b Nr. 2a"""
+12-2-0197,art,"""termin""","""termin""",,"""termin"""
+12-2-0197,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0197,grenzen_korrigiert,null,null,,null
+12-2-0197,norm,"""2021-07-02""","""2021-07-02""",,"""2021-07-02"""
+12-2-0198,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0198,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0198,grenzen_korrigiert,null,null,,null
+12-2-0198,norm,"""52415100""","""52415100""",,"""52415100"""
+12-2-0199,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0199,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0199,grenzen_korrigiert,null,null,,null
+12-2-0199,norm,"""06""","""06""",,"""06"""
+12-2-0200,art,"""amt""","""amt""",,"""amt"""
+12-2-0200,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0200,grenzen_korrigiert,null,null,,null
+12-2-0200,norm,"""Jugendamt""","""Jugendamt""",,"""Jugendamt"""
+12-2-0201,spannen,"[{""start"": 289, ""end"": 303, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 6938, ""end"": 6951, ""art"": ""dezernat"", ""norm"": ""09"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 9332, ""end"": 9347, ""art"": ""recht"", ""norm"": ""KomHVO NRW § 13"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 934, ""end"": 944, ""art"": ""produkt"", ""norm"": ""2525301001"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 9389, ""end"": 9392, ""art"": ""amt"", ""norm"": ""RPA"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 9445, ""end"": 9453, ""art"": ""amt"", ""norm"": ""Kämmerei"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 957, ""end"": 965, ""art"": ""sachkonto"", ""norm"": ""52413000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 289, ""end"": 303, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 6938, ""end"": 6951, ""art"": ""dezernat"", ""norm"": ""09"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 9332, ""end"": 9347, ""art"": ""recht"", ""norm"": ""KomHVO NRW § 13"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 934, ""end"": 944, ""art"": ""produkt"", ""norm"": ""2525301001"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 9445, ""end"": 9453, ""art"": ""amt"", ""norm"": ""Kämmerei"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 957, ""end"": 965, ""art"": ""sachkonto"", ""norm"": ""52413000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""spannen_hinzu"": [{""start"": 9389, ""end"": 9392, ""art"": ""amt"", ""norm"": ""RPA"", ""rolle"": null, ""frist"": null, ""tabelle"": false}], ""spannen_weg"": []}","[{""start"": 289, ""end"": 303, ""art"": ""amt"", ""norm"": ""41"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 934, ""end"": 944, ""art"": ""produkt"", ""norm"": ""2525301001"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 957, ""end"": 965, ""art"": ""sachkonto"", ""norm"": ""52413000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 6938, ""end"": 6951, ""art"": ""dezernat"", ""norm"": ""09"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 9332, ""end"": 9347, ""art"": ""recht"", ""norm"": ""KomHVO NRW § 13"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 9389, ""end"": 9392, ""art"": ""amt"", ""norm"": ""RPA"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 9445, ""end"": 9453, ""art"": ""amt"", ""norm"": ""Kämmerei"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0202,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0202,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0202,grenzen_korrigiert,null,null,,null
+12-2-0202,norm,"""2528101""","""2528101""",,"""2528101"""
+12-2-0203,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0203,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0203,grenzen_korrigiert,null,null,,null
+12-2-0203,norm,"""5252201""","""5252201""",,"""5252201"""
+12-2-0204,spannen,"[{""start"": 217, ""end"": 243, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 587, ""end"": 594, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 597, ""end"": 605, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 217, ""end"": 243, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 587, ""end"": 594, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 595, ""end"": 605, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""spannen_hinzu"": [{""start"": 597, ""end"": 605, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}], ""spannen_weg"": []}","[{""start"": 217, ""end"": 243, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 587, ""end"": 594, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 597, ""end"": 605, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0205,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0205,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0205,grenzen_korrigiert,null,null,,null
+12-2-0205,norm,"""78311000""","""78311000""",,"""78311000"""
+12-2-0206,art,"""recht""","""recht""",,"""recht"""
+12-2-0206,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0206,grenzen_korrigiert,"[3580, 3600]","[3580, 3600]",,"[3580, 3600]"
+12-2-0206,norm,"""WohnStG § 13 Punkt 5""","""WohnStG § 13 Nr. 5""","""WohnStG § 13 Nr. 5""","""WohnStG § 13 Nr. 5"""
+12-2-0207,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0207,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0207,grenzen_korrigiert,null,null,,null
+12-2-0207,norm,"""02""","""02""",,"""02"""
+12-2-0208,art,"""recht""","""recht""",,"""recht"""
+12-2-0208,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0208,grenzen_korrigiert,null,null,,null
+12-2-0208,norm,"""GO NRW § 60 Abs. 1 Satz 2 i. V. m. § 36 Abs. 5 Satz 2""","""GO NRW § 60 Abs. 1 Satz 2 i. V. m. § 36 Abs. 5 Satz 2""",,"""GO NRW § 60 Abs. 1 Satz 2 i. V. m. § 36 Abs. 5 Satz 2"""
+12-2-0209,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0209,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0209,grenzen_korrigiert,null,null,,null
+12-2-0209,norm,"""59400.00""","""59400.00""",,"""59400.00"""
+12-2-0210,spannen,"[{""start"": 121, ""end"": 169, ""art"": ""amt"", ""norm"": ""Amt für Gleichstellung und Antidiskriminierung"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 185, ""end"": 239, ""art"": ""amt"", ""norm"": ""01/02"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 562, ""end"": 610, ""art"": ""amt"", ""norm"": ""Amt für Gleichstellung und Antidiskriminierung"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 121, ""end"": 169, ""art"": ""amt"", ""norm"": ""01/02"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 185, ""end"": 239, ""art"": ""amt"", ""norm"": ""01/02"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 562, ""end"": 610, ""art"": ""amt"", ""norm"": ""01/02"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""auswerter"": [{""start"": 121, ""end"": 169, ""auswerter"": ""A"", ""regel"": ""R1: Name ohne Nummer""}, {""start"": 562, ""end"": 610, ""auswerter"": ""A"", ""regel"": ""R1: Name ohne Nummer""}]}","[{""start"": 121, ""end"": 169, ""art"": ""amt"", ""norm"": ""Amt für Gleichstellung und Antidiskriminierung"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 185, ""end"": 239, ""art"": ""amt"", ""norm"": ""01/02"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 562, ""end"": 610, ""art"": ""amt"", ""norm"": ""Amt für Gleichstellung und Antidiskriminierung"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0211,art,"""amt""","""amt""",,"""amt"""
+12-2-0211,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0211,grenzen_korrigiert,null,null,,null
+12-2-0211,norm,"""Katasteramt""","""Katasteramt""",,"""Katasteramt"""
+12-2-0212,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0212,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0212,grenzen_korrigiert,null,null,,null
+12-2-0212,norm,"""50000.00""","""50000.00""",,"""50000.00"""
+12-2-0213,spannen,"[{""start"": 1114, ""end"": 1121, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1185, ""end"": 1193, ""art"": ""sachkonto"", ""norm"": ""53181200"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 6375, ""end"": 6382, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 6386, ""end"": 6394, ""art"": ""sachkonto"", ""norm"": ""53181200"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 1114, ""end"": 1121, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1185, ""end"": 1193, ""art"": ""sachkonto"", ""norm"": ""53181200"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 6375, ""end"": 6382, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 6386, ""end"": 6394, ""art"": ""sachkonto"", ""norm"": ""53181200"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 1114, ""end"": 1121, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1185, ""end"": 1193, ""art"": ""sachkonto"", ""norm"": ""53181200"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 6375, ""end"": 6382, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 6386, ""end"": 6394, ""art"": ""sachkonto"", ""norm"": ""53181200"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0214,art,"""recht""","""recht""",,"""recht"""
+12-2-0214,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0214,grenzen_korrigiert,null,null,,null
+12-2-0214,norm,"""GO NRW § 60 Abs. 2""","""GO NRW § 60 Abs. 2""",,"""GO NRW § 60 Abs. 2"""
+12-2-0215,art,"""termin""","""termin""",,"""termin"""
+12-2-0215,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0215,grenzen_korrigiert,null,null,,null
+12-2-0215,norm,"""2022-09-27""","""2022-09-27""",,"""2022-09-27"""
+12-2-0216,art,"""recht""","""recht""",,"""recht"""
+12-2-0216,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0216,grenzen_korrigiert,null,null,,null
+12-2-0216,norm,"""Zuständigkeitsordnung § 10 Abs. 1 Nr. 2""","""Zuständigkeitsordnung § 10 Abs. 1 Nr. 2""",,"""Zuständigkeitsordnung § 10 Abs. 1 Nr. 2"""
+12-2-0217,art,"""amt""","""amt""",,"""amt"""
+12-2-0217,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0217,grenzen_korrigiert,null,null,,null
+12-2-0217,norm,"""Bauaufsichtsamt""","""Bauaufsichtsamt""",,"""Bauaufsichtsamt"""
+12-2-0218,art,"""amt""","""amt""",,"""amt"""
+12-2-0218,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0218,grenzen_korrigiert,null,null,,null
+12-2-0218,norm,"""01/02""","""01/02""",,"""01/02"""
+12-2-0219,spannen,"[{""start"": 153, ""end"": 179, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 153, ""end"": 179, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 153, ""end"": 179, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0220,art,"""amt""","""amt""",,"""amt"""
+12-2-0220,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0220,grenzen_korrigiert,null,null,,null
+12-2-0220,norm,"""23""","""23""",,"""23"""
+12-2-0221,art,"""amt""","""amt""",,"""amt"""
+12-2-0221,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0221,grenzen_korrigiert,null,null,,null
+12-2-0221,norm,"""68""","""68""",,"""68"""
+12-2-0222,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0222,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0222,grenzen_korrigiert,null,null,,null
+12-2-0222,norm,"""4000.00""","""4000.00""",,"""4000.00"""
+12-2-0223,art,"""investition""","""investition""",,"""investition"""
+12-2-0223,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0223,grenzen_korrigiert,null,null,,null
+12-2-0223,norm,"""7.90000585""","""7.90000585""",,"""7.90000585"""
+12-2-0224,art,"""amt""","""amt""",,"""amt"""
+12-2-0224,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0224,grenzen_korrigiert,null,null,,null
+12-2-0224,norm,"""Amt für Gleichstellung und Antidiskriminierung""","""Amt für Gleichstellung und Antidiskriminierung""",,"""Amt für Gleichstellung und Antidiskriminierung"""
+12-2-0225,spannen,"[{""start"": 187, ""end"": 213, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 187, ""end"": 213, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 187, ""end"": 213, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 8"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0226,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0226,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0226,grenzen_korrigiert,null,null,,null
+12-2-0226,norm,"""25000.00""","""25000.00""",,"""25000.00"""
+12-2-0227,art,"""keine""","""keine""",,"""keine"""
+12-2-0227,grenzen,null,null,,null
+12-2-0227,grenzen_korrigiert,null,null,,null
+12-2-0227,norm,null,null,,null
+12-2-0228,art,"""amt""","""amt""",,"""amt"""
+12-2-0228,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0228,grenzen_korrigiert,null,null,,null
+12-2-0228,norm,"""Gesundheitsamt""","""53""","""Gesundheitsamt""","""Gesundheitsamt"""
+12-2-0229,art,"""amt""","""amt""",,"""amt"""
+12-2-0229,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0229,grenzen_korrigiert,null,null,,null
+12-2-0229,norm,"""Bezirksverwaltungsstelle 4""","""Bezirksverwaltungsstelle 4""",,"""Bezirksverwaltungsstelle 4"""
+12-2-0230,art,"""recht""","""recht""",,"""recht"""
+12-2-0230,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0230,grenzen_korrigiert,null,null,,null
+12-2-0230,norm,"""Zuständigkeitsordnung § 10 Abs. 1 Nr. 2""","""Zuständigkeitsordnung § 10 Abs. 1 Nr. 2""",,"""Zuständigkeitsordnung § 10 Abs. 1 Nr. 2"""
+12-2-0231,art,"""investition""","""investition""",,"""investition"""
+12-2-0231,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0231,grenzen_korrigiert,null,null,,null
+12-2-0231,norm,"""7.90000537""","""7.90000537""",,"""7.90000537"""
+12-2-0232,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0232,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0232,grenzen_korrigiert,null,null,,null
+12-2-0232,norm,"""60000.00""","""60000.00""",,"""60000.00"""
+12-2-0233,art,"""investition""","""investition""",,"""investition"""
+12-2-0233,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0233,grenzen_korrigiert,null,null,,null
+12-2-0233,norm,"""7.90000537""","""7.90000537""",,"""7.90000537"""
+12-2-0234,art,"""amt""","""amt""",,"""amt"""
+12-2-0234,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0234,grenzen_korrigiert,null,null,,null
+12-2-0234,norm,"""Jugendamt""","""Jugendamt""",,"""Jugendamt"""
+12-2-0235,art,"""recht""","""recht""",,"""recht"""
+12-2-0235,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0235,grenzen_korrigiert,null,null,,null
+12-2-0235,norm,"""Wohnraumschutzsatzung § 9 Abs. 4""","""Düsseldorfer Wohnraumschutzsatzung § 9 Abs. 4""","""Wohnraumschutzsatzung § 9 Abs. 4""","""Wohnraumschutzsatzung § 9 Abs. 4"""
+12-2-0236,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0236,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0236,grenzen_korrigiert,null,null,,null
+12-2-0236,norm,"""42500.00""","""42500.00""",,"""42500.00"""
+12-2-0237,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0237,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0237,grenzen_korrigiert,null,null,,null
+12-2-0237,norm,"""3133801""","""3133801""",,"""3133801"""
+12-2-0238,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0238,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0238,grenzen_korrigiert,null,null,,null
+12-2-0238,norm,"""50000.00""","""50000.00""",,"""50000.00"""
+12-2-0239,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0239,grenzen,"""verschoben""","""verschoben""",,"""verschoben"""
+12-2-0239,grenzen_korrigiert,"[2613, 2624]","[2613, 2624]",,"[2613, 2624]"
+12-2-0239,norm,"""2059.00""","""2059.00""",,"""2059.00"""
+12-2-0240,art,"""amt""","""amt""",,"""amt"""
+12-2-0240,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0240,grenzen_korrigiert,null,null,,null
+12-2-0240,norm,"""Jugendamt""","""Jugendamt""",,"""Jugendamt"""
+12-2-0241,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0241,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0241,grenzen_korrigiert,null,null,,null
+12-2-0241,norm,"""52415700""","""52415700""",,"""52415700"""
+12-2-0242,art,"""recht""","""recht""",,"""recht"""
+12-2-0242,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0242,grenzen_korrigiert,null,null,,null
+12-2-0242,norm,"""GO NRW § 58 Abs. 3 Satz 6""","""GO NRW § 58 Abs. 3 Satz 6""",,"""GO NRW § 58 Abs. 3 Satz 6"""
+12-2-0243,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0243,grenzen,"""richtig""","""zu_kurz""","""richtig""","""richtig"""
+12-2-0243,grenzen_korrigiert,null,"[517, 527]",,null
+12-2-0243,norm,"""74990600""","""74990600""",,"""74990600"""
+12-2-0244,art,"""amt""","""amt""",,"""amt"""
+12-2-0244,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0244,grenzen_korrigiert,null,null,,null
+12-2-0244,norm,"""Bezirksverwaltungsstelle 8""","""Bezirksverwaltungsstelle 8""",,"""Bezirksverwaltungsstelle 8"""
+12-2-0245,spannen,"[{""start"": 1908, ""end"": 1915, ""art"": ""produkt"", ""norm"": ""5656101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1948, ""end"": 1956, ""art"": ""sachkonto"", ""norm"": ""53180000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 1908, ""end"": 1915, ""art"": ""produkt"", ""norm"": ""5656101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1948, ""end"": 1956, ""art"": ""sachkonto"", ""norm"": ""53180000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 1908, ""end"": 1915, ""art"": ""produkt"", ""norm"": ""5656101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1948, ""end"": 1956, ""art"": ""sachkonto"", ""norm"": ""53180000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0246,spannen,"[{""start"": 166, ""end"": 192, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 4"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 458, ""end"": 465, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 478, ""end"": 486, ""art"": ""sachkonto"", ""norm"": ""54990400"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 166, ""end"": 192, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 4"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 458, ""end"": 465, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 478, ""end"": 486, ""art"": ""sachkonto"", ""norm"": ""54990400"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 166, ""end"": 192, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 4"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 458, ""end"": 465, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 478, ""end"": 486, ""art"": ""sachkonto"", ""norm"": ""54990400"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0247,spannen,"[{""start"": 1137, ""end"": 1171, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 238, ""end"": 264, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 7"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 1137, ""end"": 1171, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 238, ""end"": 264, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 7"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 238, ""end"": 264, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 7"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1137, ""end"": 1171, ""art"": ""amt"", ""norm"": ""Garten-, Friedhofs- und Forstamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0248,art,"""psp""","""psp""",,"""psp"""
+12-2-0248,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0248,grenzen_korrigiert,null,null,,null
+12-2-0248,norm,"""1.10.11.111.05.001""","""1.10.11.111.05.001""",,"""1.10.11.111.05.001"""
+12-2-0249,art,"""amt""","""amt""",,"""amt"""
+12-2-0249,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0249,grenzen_korrigiert,null,null,,null
+12-2-0249,norm,"""Kulturamt""","""Kulturamt""",,"""Kulturamt"""
+12-2-0250,art,"""amt""","""amt""",,"""amt"""
+12-2-0250,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0250,grenzen_korrigiert,null,null,,null
+12-2-0250,norm,"""Ordnungsamt""","""Ordnungsamt""",,"""Ordnungsamt"""
+12-2-0251,art,"""recht""","""recht""",,"""recht"""
+12-2-0251,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0251,grenzen_korrigiert,null,null,,null
+12-2-0251,norm,"""PBefG § 8 Abs. 3""","""PBefG § 8 Abs. 3""",,"""PBefG § 8 Abs. 3"""
+12-2-0252,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0252,grenzen,"""richtig""","""zu_kurz""","""richtig""","""richtig"""
+12-2-0252,grenzen_korrigiert,null,"[604, 614]",,null
+12-2-0252,norm,"""74990600""","""74990600""",,"""74990600"""
+12-2-0253,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0253,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0253,grenzen_korrigiert,null,null,,null
+12-2-0253,norm,"""53175500""","""53175500""",,"""53175500"""
+12-2-0254,art,"""recht""","""recht""",,"""recht"""
+12-2-0254,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0254,grenzen_korrigiert,null,null,,null
+12-2-0254,norm,"""Straßenausbaubeitragssatzung § 4 Abs. 2 Nr. 1.2.2 und § 4 Abs. 2 Nr. 1.3""","""Straßenausbaubeitragssatzung § 4 Abs. 2 Nr. 1.2.2 und § 4 Abs. 2 Nr. 1.3""",,"""Straßenausbaubeitragssatzung § 4 Abs. 2 Nr. 1.2.2 und § 4 Abs. 2 Nr. 1.3"""
+12-2-0255,art,"""recht""","""recht""",,"""recht"""
+12-2-0255,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0255,grenzen_korrigiert,null,null,,null
+12-2-0255,norm,"""KomHVO NRW § 13""","""KomHVO NRW § 13""",,"""KomHVO NRW § 13"""
+12-2-0256,art,"""amt""","""amt""",,"""amt"""
+12-2-0256,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0256,grenzen_korrigiert,null,null,,null
+12-2-0256,norm,"""Gesundheitsamt""","""Gesundheitsamt""",,"""Gesundheitsamt"""
+12-2-0257,art,"""recht""","""recht""",,"""recht"""
+12-2-0257,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0257,grenzen_korrigiert,null,null,,null
+12-2-0257,norm,"""StVO § 45 Abs. 1c""","""StVO § 45 Abs. 1c""",,"""StVO § 45 Abs. 1c"""
+12-2-0258,art,"""recht""","""recht""",,"""recht"""
+12-2-0258,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0258,grenzen_korrigiert,null,null,,null
+12-2-0258,norm,"""Bezirkssatzung § 3 Abs. 2""","""Bezirkssatzung § 3 Abs. 2""",,"""Bezirkssatzung § 3 Abs. 2"""
+12-2-0259,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0259,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0259,grenzen_korrigiert,null,null,,null
+12-2-0259,norm,"""02""","""02""",,"""02"""
+12-2-0260,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0260,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0260,grenzen_korrigiert,null,null,,null
+12-2-0260,norm,"""07""","""07""",,"""07"""
+12-2-0261,art,"""recht""","""recht""",,"""recht"""
+12-2-0261,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0261,grenzen_korrigiert,"[935, 952]","[935, 952]",,"[935, 952]"
+12-2-0261,norm,"""StVO § 45 Abs. 1 bis 1e""","""VwV-StVO § 45 Abs. 1 bis 1e""","""StVO § 45 Abs. 1 bis 1e""","""StVO § 45 Abs. 1 bis 1e"""
+12-2-0262,art,"""investition""","""investition""",,"""investition"""
+12-2-0262,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0262,grenzen_korrigiert,null,null,,null
+12-2-0262,norm,"""7.00310002""","""7.00310002""",,"""7.00310002"""
+12-2-0263,art,"""recht""","""recht""",,"""recht"""
+12-2-0263,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0263,grenzen_korrigiert,null,null,,null
+12-2-0263,norm,"""UStG § 2b""","""UStG § 2b""",,"""UStG § 2b"""
+12-2-0264,art,"""recht""","""recht""",,"""recht"""
+12-2-0264,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0264,grenzen_korrigiert,null,null,,null
+12-2-0264,norm,"""? Art. 1""","""? Art. 1""",,"""? Art. 1"""
+12-2-0265,art,"""recht""","""recht""",,"""recht"""
+12-2-0265,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0265,grenzen_korrigiert,null,null,,null
+12-2-0265,norm,"""? § 4""","""? § 4""",,"""? § 4"""
+12-2-0266,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0266,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0266,grenzen_korrigiert,null,null,,null
+12-2-0266,norm,"""3636201""","""3636201""",,"""3636201"""
+12-2-0267,art,"""amt""","""amt""",,"""amt"""
+12-2-0267,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0267,grenzen_korrigiert,null,null,,null
+12-2-0267,norm,"""Bezirksverwaltungsstelle 10""","""Bezirksverwaltungsstelle 10""",,"""Bezirksverwaltungsstelle 10"""
+12-2-0268,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0268,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0268,grenzen_korrigiert,null,null,,null
+12-2-0268,norm,"""916099665.00""","""916099665.00""",,"""916099665.00"""
+12-2-0269,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0269,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0269,grenzen_korrigiert,null,null,,null
+12-2-0269,norm,"""500.00""","""500.00""",,"""500.00"""
+12-2-0270,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0270,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0270,grenzen_korrigiert,null,null,,null
+12-2-0270,norm,"""6575.00""","""6575.00""",,"""6575.00"""
+12-2-0271,art,"""termin""","""termin""",,"""termin"""
+12-2-0271,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0271,grenzen_korrigiert,null,null,,null
+12-2-0271,norm,"""2022~sommer""","""2022~sommer""",,"""2022~sommer"""
+12-2-0272,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0272,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0272,grenzen_korrigiert,null,null,,null
+12-2-0272,norm,"""1111114""","""1111114""",,"""1111114"""
+12-2-0273,art,"""investition""","""investition""",,"""investition"""
+12-2-0273,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0273,grenzen_korrigiert,null,null,,null
+12-2-0273,norm,"""7.00150042""","""7.00150042""",,"""7.00150042"""
+12-2-0274,art,"""investition""","""investition""",,"""investition"""
+12-2-0274,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0274,grenzen_korrigiert,null,null,,null
+12-2-0274,norm,"""7.90000638""","""7.90000638""",,"""7.90000638"""
+12-2-0275,spannen,"[{""start"": 196, ""end"": 222, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 552, ""end"": 559, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 562, ""end"": 570, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 196, ""end"": 222, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 552, ""end"": 559, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 560, ""end"": 570, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""spannen_hinzu"": [{""start"": 562, ""end"": 570, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}], ""spannen_weg"": []}","[{""start"": 196, ""end"": 222, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 552, ""end"": 559, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 562, ""end"": 570, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0276,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0276,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0276,grenzen_korrigiert,null,null,,null
+12-2-0276,norm,"""85500.00""","""85500.00""",,"""85500.00"""
+12-2-0277,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0277,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0277,grenzen_korrigiert,null,null,,null
+12-2-0277,norm,"""53176000""","""53176000""",,"""53176000"""
+12-2-0278,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0278,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0278,grenzen_korrigiert,null,null,,null
+12-2-0278,norm,"""53182700""","""53182700""",,"""53182700"""
+12-2-0279,art,"""recht""","""recht""",,"""recht"""
+12-2-0279,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0279,grenzen_korrigiert,"[393, 443]","[393, 443]",,"[393, 443]"
+12-2-0279,norm,"""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2""","""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2""",,"""GO NRW § 63 Abs. 2 i. V. m. § 113 Abs. 2"""
+12-2-0280,art,"""termin""","""termin""",,"""termin"""
+12-2-0280,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0280,grenzen_korrigiert,null,null,,null
+12-2-0280,norm,"""2025-05-13""","""2025-05-13""",,"""2025-05-13"""
+12-2-0281,art,"""termin""","""termin""",,"""termin"""
+12-2-0281,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0281,grenzen_korrigiert,null,null,,null
+12-2-0281,norm,"""2022-09-20""","""2022-09-20""",,"""2022-09-20"""
+12-2-0282,art,"""recht""","""recht""",,"""recht"""
+12-2-0282,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0282,grenzen_korrigiert,"[690, 754]","[690, 754]",,"[690, 754]"
+12-2-0282,norm,"""Geschäftsordnung des Rates § 20 und 21""","""Geschäftsordnung des Rates der Landeshauptstadt § 20 und 21""","""Geschäftsordnung des Rates § 20 und 21""","""Geschäftsordnung des Rates § 20 und 21"""
+12-2-0283,art,"""psp""","""psp""",,"""psp"""
+12-2-0283,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0283,grenzen_korrigiert,null,null,,null
+12-2-0283,norm,"""11.111.05.001""","""11.111.05.001""",,"""11.111.05.001"""
+12-2-0284,art,"""amt""","""amt""",,"""amt"""
+12-2-0284,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0284,grenzen_korrigiert,null,null,,null
+12-2-0284,norm,"""Gesundheitsamt""","""Gesundheitsamt""",,"""Gesundheitsamt"""
+12-2-0285,spannen,"[{""start"": 1940, ""end"": 1947, ""art"": ""produkt"", ""norm"": ""5656103"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1998, ""end"": 2006, ""art"": ""sachkonto"", ""norm"": ""52410000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 1940, ""end"": 1947, ""art"": ""produkt"", ""norm"": ""5656103"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1998, ""end"": 2006, ""art"": ""sachkonto"", ""norm"": ""52410000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 1940, ""end"": 1947, ""art"": ""produkt"", ""norm"": ""5656103"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1998, ""end"": 2006, ""art"": ""sachkonto"", ""norm"": ""52410000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0286,art,"""recht""","""recht""",,"""recht"""
+12-2-0286,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0286,grenzen_korrigiert,null,null,,null
+12-2-0286,norm,"""Hauptsatzung § 26""","""Hauptsatzung der Landeshauptstadt Düsseldorf § 26""","""Hauptsatzung § 26""","""Hauptsatzung § 26"""
+12-2-0287,spannen,"[{""start"": 218, ""end"": 244, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 567, ""end"": 574, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 580, ""end"": 588, ""art"": ""sachkonto"", ""norm"": ""54990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 218, ""end"": 244, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 567, ""end"": 574, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 580, ""end"": 588, ""art"": ""sachkonto"", ""norm"": ""54990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 218, ""end"": 244, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 567, ""end"": 574, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 580, ""end"": 588, ""art"": ""sachkonto"", ""norm"": ""54990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0288,spannen,"[{""start"": 200, ""end"": 226, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 1"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 570, ""end"": 579, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 843, ""end"": 852, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 200, ""end"": 226, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 1"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 570, ""end"": 579, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 843, ""end"": 852, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 200, ""end"": 226, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 1"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 570, ""end"": 579, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 843, ""end"": 852, ""art"": ""amt"", ""norm"": ""Kulturamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0289,art,"""amt""","""amt""",,"""amt"""
+12-2-0289,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0289,grenzen_korrigiert,null,null,,null
+12-2-0289,norm,"""66""","""66""",,"""66"""
+12-2-0290,art,"""recht""","""recht""",,"""recht"""
+12-2-0290,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0290,grenzen_korrigiert,null,null,,null
+12-2-0290,norm,"""SGB II § 21""","""SGB II § 21""",,"""SGB II § 21"""
+12-2-0291,art,"""recht""","""recht""",,"""recht"""
+12-2-0291,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0291,grenzen_korrigiert,null,null,,null
+12-2-0291,norm,"""Zuständigkeitsordnung § 5 Abs. 3""","""Zuständigkeitsordnung § 5 Abs. 3""",,"""Zuständigkeitsordnung § 5 Abs. 3"""
+12-2-0292,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0292,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0292,grenzen_korrigiert,null,null,,null
+12-2-0292,norm,"""5757101""","""5757101""",,"""5757101"""
+12-2-0293,art,"""amt""","""amt""",,"""amt"""
+12-2-0293,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0293,grenzen_korrigiert,null,null,,null
+12-2-0293,norm,"""Bezirksverwaltungsstelle 2""","""Bezirksverwaltungsstelle 2""",,"""Bezirksverwaltungsstelle 2"""
+12-2-0294,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0294,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0294,grenzen_korrigiert,null,null,,null
+12-2-0294,norm,"""54210000""","""54210000""",,"""54210000"""
+12-2-0295,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0295,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0295,grenzen_korrigiert,null,null,,null
+12-2-0295,norm,"""52415400""","""52415400""",,"""52415400"""
+12-2-0296,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0296,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0296,grenzen_korrigiert,null,null,,null
+12-2-0296,norm,"""53175700""","""53175700""",,"""53175700"""
+12-2-0297,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0297,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0297,grenzen_korrigiert,null,null,,null
+12-2-0297,norm,"""Dezernat für Planen, Bauen, Wohnen und Grundstückswesen""","""Dezernat für Planen, Bauen, Wohnen und Grundstückswesen""",,"""Dezernat für Planen, Bauen, Wohnen und Grundstückswesen"""
+12-2-0298,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0298,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0298,grenzen_korrigiert,null,null,,null
+12-2-0298,norm,"""258810.00""","""258810.00""",,"""258810.00"""
+12-2-0299,art,"""recht""","""recht""",,"""recht"""
+12-2-0299,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0299,grenzen_korrigiert,null,null,,null
+12-2-0299,norm,"""GO NRW § 24""","""GO NRW § 24""",,"""GO NRW § 24"""
+12-2-0300,art,"""recht""","""recht""",,"""recht"""
+12-2-0300,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0300,grenzen_korrigiert,null,null,,null
+12-2-0300,norm,"""? § 13""","""? § 13""",,"""? § 13"""
+12-2-0301,art,"""amt""","""amt""",,"""amt"""
+12-2-0301,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0301,grenzen_korrigiert,null,null,,null
+12-2-0301,norm,"""51""","""51""",,"""51"""
+12-2-0302,art,"""recht""","""recht""",,"""recht"""
+12-2-0302,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0302,grenzen_korrigiert,null,null,,null
+12-2-0302,norm,"""SpkG NRW §§ 8 Abs. 1 und 12 Abs. 5""","""SpkG NRW §§ 8 Abs. 1 und 12 Abs. 5""",,"""SpkG NRW §§ 8 Abs. 1 und 12 Abs. 5"""
+12-2-0303,art,"""termin""","""termin""",,"""termin"""
+12-2-0303,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0303,grenzen_korrigiert,null,null,,null
+12-2-0303,norm,"""2021-08-25""","""2021-08-25""",,"""2021-08-25"""
+12-2-0304,spannen,"[{""start"": 1003, ""end"": 1042, ""art"": ""amt"", ""norm"": ""Amt für Umwelt- und Verbraucherschutz"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 138, ""end"": 164, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 1"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 1003, ""end"": 1042, ""art"": ""amt"", ""norm"": ""Amt für Umwelt- und Verbraucherschutz"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 138, ""end"": 164, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 1"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 138, ""end"": 164, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 1"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1003, ""end"": 1042, ""art"": ""amt"", ""norm"": ""Amt für Umwelt- und Verbraucherschutz"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0305,art,"""amt""","""amt""",,"""amt"""
+12-2-0305,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0305,grenzen_korrigiert,null,null,,null
+12-2-0305,norm,"""Denkmalamt""","""Denkmalamt""",,"""Denkmalamt"""
+12-2-0306,art,"""psp""","""psp""",,"""psp"""
+12-2-0306,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0306,grenzen_korrigiert,null,null,,null
+12-2-0306,norm,"""11.111.05.001""","""11.111.05.001""",,"""11.111.05.001"""
+12-2-0307,art,"""psp""","""psp""",,"""psp"""
+12-2-0307,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0307,grenzen_korrigiert,null,null,,null
+12-2-0307,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0308,art,"""psp""","""psp""",,"""psp"""
+12-2-0308,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0308,grenzen_korrigiert,null,null,,null
+12-2-0308,norm,"""1.10.11.111.05.001""","""1.10.11.111.05.001""",,"""1.10.11.111.05.001"""
+12-2-0309,art,"""keine""","""keine""",,"""keine"""
+12-2-0309,grenzen,null,null,,null
+12-2-0309,grenzen_korrigiert,null,null,,null
+12-2-0309,norm,null,null,,null
+12-2-0310,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0310,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0310,grenzen_korrigiert,null,null,,null
+12-2-0310,norm,"""5151110""","""5151110""",,"""5151110"""
+12-2-0311,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0311,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0311,grenzen_korrigiert,null,null,,null
+12-2-0311,norm,"""05""","""05""",,"""05"""
+12-2-0312,art,"""psp""","""psp""",,"""psp"""
+12-2-0312,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0312,grenzen_korrigiert,null,null,,null
+12-2-0312,norm,"""1.10.11.111.11""","""1.10.11.111.11""",,"""1.10.11.111.11"""
+12-2-0313,art,"""amt""","""amt""",,"""amt"""
+12-2-0313,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0313,grenzen_korrigiert,null,null,,null
+12-2-0313,norm,"""19""","""19""",,"""19"""
+12-2-0314,art,"""amt""","""amt""",,"""amt"""
+12-2-0314,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0314,grenzen_korrigiert,null,null,,null
+12-2-0314,norm,"""Gartenamt""","""Gartenamt""",,"""Gartenamt"""
+12-2-0315,art,"""psp""","""psp""",,"""psp"""
+12-2-0315,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0315,grenzen_korrigiert,null,null,,null
+12-2-0315,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0316,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0316,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0316,grenzen_korrigiert,null,null,,null
+12-2-0316,norm,"""53180000""","""53180000""",,"""53180000"""
+12-2-0317,art,"""amt""","""amt""",,"""amt"""
+12-2-0317,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0317,grenzen_korrigiert,null,null,,null
+12-2-0317,norm,"""40""","""40""",,"""40"""
+12-2-0318,art,"""amt""","""amt""",,"""amt"""
+12-2-0318,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0318,grenzen_korrigiert,null,null,,null
+12-2-0318,norm,"""Gartenamt""","""Gartenamt""",,"""Gartenamt"""
+12-2-0319,art,"""psp""","""psp""",,"""psp"""
+12-2-0319,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0319,grenzen_korrigiert,null,null,,null
+12-2-0319,norm,"""1.10.11.111.05.001""","""1.10.11.111.05.001""",,"""1.10.11.111.05.001"""
+12-2-0320,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0320,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0320,grenzen_korrigiert,null,null,,null
+12-2-0320,norm,"""025281010""","""025281010""",,"""025281010"""
+12-2-0321,art,"""recht""","""recht""",,"""recht"""
+12-2-0321,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0321,grenzen_korrigiert,null,null,,null
+12-2-0321,norm,"""Düsseldorfer Straßenverkehrsordnung § 5""","""Düsseldorfer Straßenverkehrsordnung § 5""",,"""Düsseldorfer Straßenverkehrsordnung § 5"""
+12-2-0322,art,"""recht""","""recht""",,"""recht"""
+12-2-0322,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0322,grenzen_korrigiert,null,null,,null
+12-2-0322,norm,"""Zuständigkeitsordnung § 2 Abs. 1""","""Zuständigkeitsordnung § 2 Abs. 1""",,"""Zuständigkeitsordnung § 2 Abs. 1"""
+12-2-0323,spannen,"[{""start"": 238, ""end"": 275, ""art"": ""amt"", ""norm"": ""68"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3900, ""end"": 3910, ""art"": ""investition"", ""norm"": ""7.01330011"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3923, ""end"": 3931, ""art"": ""sachkonto"", ""norm"": ""54991800"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3932, ""end"": 3940, ""art"": ""sachkonto"", ""norm"": ""78311000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3952, ""end"": 3959, ""art"": ""produkt"", ""norm"": ""5555401"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 238, ""end"": 275, ""art"": ""amt"", ""norm"": ""68"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3900, ""end"": 3910, ""art"": ""investition"", ""norm"": ""7.01330011"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3923, ""end"": 3931, ""art"": ""sachkonto"", ""norm"": ""54991800"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3932, ""end"": 3940, ""art"": ""sachkonto"", ""norm"": ""78311000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3952, ""end"": 3959, ""art"": ""produkt"", ""norm"": ""5555401"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 238, ""end"": 275, ""art"": ""amt"", ""norm"": ""68"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3900, ""end"": 3910, ""art"": ""investition"", ""norm"": ""7.01330011"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3923, ""end"": 3931, ""art"": ""sachkonto"", ""norm"": ""54991800"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3932, ""end"": 3940, ""art"": ""sachkonto"", ""norm"": ""78311000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 3952, ""end"": 3959, ""art"": ""produkt"", ""norm"": ""5555401"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0324,art,"""amt""","""amt""",,"""amt"""
+12-2-0324,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0324,grenzen_korrigiert,null,null,,null
+12-2-0324,norm,"""Jugendamt""","""Jugendamt""",,"""Jugendamt"""
+12-2-0325,art,"""amt""","""amt""",,"""amt"""
+12-2-0325,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0325,grenzen_korrigiert,null,null,,null
+12-2-0325,norm,"""Gartenamt""","""Gartenamt""",,"""Gartenamt"""
+12-2-0326,art,"""recht""","""recht""",,"""recht"""
+12-2-0326,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0326,grenzen_korrigiert,"[2133, 2163]","[2133, 2163]",,"[2133, 2163]"
+12-2-0326,norm,"""AufenthG § 60a Abs. 2 Satz 3""","""AufenthG § 60a Abs. 2 Satz 3""",,"""AufenthG § 60a Abs. 2 Satz 3"""
+12-2-0327,art,"""recht""","""recht""",,"""recht"""
+12-2-0327,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0327,grenzen_korrigiert,null,null,,null
+12-2-0327,norm,"""SGB II § 18d""","""SGB II § 18d""",,"""SGB II § 18d"""
+12-2-0328,art,"""amt""","""amt""",,"""amt"""
+12-2-0328,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0328,grenzen_korrigiert,null,null,,null
+12-2-0328,norm,"""Jugendamt""","""Jugendamt""",,"""Jugendamt"""
+12-2-0329,art,"""psp""","""psp""",,"""psp"""
+12-2-0329,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0329,grenzen_korrigiert,null,null,,null
+12-2-0329,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0330,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0330,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0330,grenzen_korrigiert,null,null,,null
+12-2-0330,norm,"""2121101""","""2121101""",,"""2121101"""
+12-2-0331,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0331,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0331,grenzen_korrigiert,null,null,,null
+12-2-0331,norm,"""3636601""","""3636601""",,"""3636601"""
+12-2-0332,art,"""recht""","""recht""",,"""recht"""
+12-2-0332,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0332,grenzen_korrigiert,"[128, 204]","[128, 204]",,"[128, 204]"
+12-2-0332,norm,"""Geschäftsordnung des Rates § 21 Abs. 14""","""Geschäftsordnung des Rates der Landeshauptstadt Düsseldorf § 21 Abs. 14""","""Geschäftsordnung des Rates § 21 Abs. 14""","""Geschäftsordnung des Rates § 21 Abs. 14"""
+12-2-0333,art,"""recht""","""recht""",,"""recht"""
+12-2-0333,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0333,grenzen_korrigiert,"[1359, 1381]","[1359, 1381]",,"[1359, 1381]"
+12-2-0333,norm,"""SpkG NRW § 8 Abs. 2 Buchstabe f""","""SpkG NRW § 8 Abs. 2f""","""SpkG NRW § 8 Abs. 2f""","""SpkG NRW § 8 Abs. 2f"""
+12-2-0334,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0334,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0334,grenzen_korrigiert,null,null,,null
+12-2-0334,norm,"""2528101""","""2528101""",,"""2528101"""
+12-2-0335,art,"""amt""","""amt""",,"""amt"""
+12-2-0335,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0335,grenzen_korrigiert,null,null,,null
+12-2-0335,norm,"""Bezirksverwaltungsstelle 10""","""Bezirksverwaltungsstelle 10""",,"""Bezirksverwaltungsstelle 10"""
+12-2-0336,art,"""termin""","""termin""",,"""termin"""
+12-2-0336,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0336,grenzen_korrigiert,null,null,,null
+12-2-0336,norm,"""2023-05-20""","""2023-05-20""",,"""2023-05-20"""
+12-2-0337,art,"""recht""","""recht""",,"""recht"""
+12-2-0337,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0337,grenzen_korrigiert,null,null,,null
+12-2-0337,norm,"""Haushaltssatzung § 6 Nr. 2""","""Haushaltssatzung § 6 Nr. 2""",,"""Haushaltssatzung § 6 Nr. 2"""
+12-2-0338,art,"""recht""","""recht""",,"""recht"""
+12-2-0338,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0338,grenzen_korrigiert,"[1327, 1344]","[1327, 1344]",,"[1327, 1344]"
+12-2-0338,norm,"""StVO § 45 Abs. 1b Nr. 2a""","""StVO § 45 Abs. 1b Nr. 2a""",,"""StVO § 45 Abs. 1b Nr. 2a"""
+12-2-0339,art,"""amt""","""amt""",,"""amt"""
+12-2-0339,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0339,grenzen_korrigiert,null,null,,null
+12-2-0339,norm,"""Gartenamt""","""Gartenamt""",,"""Gartenamt"""
+12-2-0340,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0340,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0340,grenzen_korrigiert,null,null,,null
+12-2-0340,norm,"""025281010""","""025281010""",,"""025281010"""
+12-2-0341,spannen,"[{""start"": 205, ""end"": 236, ""art"": ""amt"", ""norm"": ""40"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 617, ""end"": 626, ""art"": ""produkt"", ""norm"": ""2121101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 629, ""end"": 637, ""art"": ""sachkonto"", ""norm"": ""52415600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 205, ""end"": 236, ""art"": ""amt"", ""norm"": ""40"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 617, ""end"": 626, ""art"": ""produkt"", ""norm"": ""2121101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 629, ""end"": 637, ""art"": ""sachkonto"", ""norm"": ""52415600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 205, ""end"": 236, ""art"": ""amt"", ""norm"": ""40"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 617, ""end"": 626, ""art"": ""produkt"", ""norm"": ""2121101"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 629, ""end"": 637, ""art"": ""sachkonto"", ""norm"": ""52415600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0342,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0342,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0342,grenzen_korrigiert,null,null,,null
+12-2-0342,norm,"""49390.55""","""49390.55""",,"""49390.55"""
+12-2-0343,art,"""recht""","""recht""",,"""recht"""
+12-2-0343,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0343,grenzen_korrigiert,null,null,,null
+12-2-0343,norm,"""BauGB § 165 Abs. 4 i. V. m. § 138""","""BauGB § 165 Abs. 4 i. V. m. § 138""",,"""BauGB § 165 Abs. 4 i. V. m. § 138"""
+12-2-0344,spannen,"[{""start"": 220, ""end"": 246, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 220, ""end"": 246, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 220, ""end"": 246, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 9"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0345,art,"""amt""","""amt""",,"""amt"""
+12-2-0345,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0345,grenzen_korrigiert,null,null,,null
+12-2-0345,norm,"""51""","""51""",,"""51"""
+12-2-0346,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0346,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0346,grenzen_korrigiert,null,null,,null
+12-2-0346,norm,"""52410000""","""52410000""",,"""52410000"""
+12-2-0347,art,"""termin""","""termin""",,"""termin"""
+12-2-0347,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0347,grenzen_korrigiert,null,null,,null
+12-2-0347,norm,"""2021-08-23""","""2021-08-23""",,"""2021-08-23"""
+12-2-0348,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0348,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0348,grenzen_korrigiert,null,null,,null
+12-2-0348,norm,"""70810000""","""70810000""",,"""70810000"""
+12-2-0349,art,"""amt""","""amt""",,"""amt"""
+12-2-0349,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0349,grenzen_korrigiert,null,null,,null
+12-2-0349,norm,"""50""","""50""",,"""50"""
+12-2-0350,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0350,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0350,grenzen_korrigiert,null,null,,null
+12-2-0350,norm,"""3636302""","""3636302""",,"""3636302"""
+12-2-0351,art,"""recht""","""recht""",,"""recht"""
+12-2-0351,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0351,grenzen_korrigiert,null,null,,null
+12-2-0351,norm,"""BauGB § 4""","""BauGB § 4""",,"""BauGB § 4"""
+12-2-0352,art,"""amt""","""amt""",,"""amt"""
+12-2-0352,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0352,grenzen_korrigiert,null,null,,null
+12-2-0352,norm,"""Schulverwaltungsamt""","""Schulverwaltungsamt""",,"""Schulverwaltungsamt"""
+12-2-0353,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0353,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0353,grenzen_korrigiert,null,null,,null
+12-2-0353,norm,"""375710.00""","""375710.00""",,"""375710.00"""
+12-2-0354,art,"""recht""","""recht""",,"""recht"""
+12-2-0354,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0354,grenzen_korrigiert,null,null,,null
+12-2-0354,norm,"""KWahlO § 28 i. V. m. §§ 75a und 75b""","""KWahlO § 28 i. V. m. §§ 75a und 75b""",,"""KWahlO § 28 i. V. m. §§ 75a und 75b"""
+12-2-0355,spannen,"[{""start"": 2616, ""end"": 2623, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2644, ""end"": 2652, ""art"": ""sachkonto"", ""norm"": ""53181300"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 835, ""end"": 842, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 860, ""end"": 868, ""art"": ""sachkonto"", ""norm"": ""53181300"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 2616, ""end"": 2623, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2644, ""end"": 2652, ""art"": ""sachkonto"", ""norm"": ""53181300"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 835, ""end"": 842, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 860, ""end"": 868, ""art"": ""sachkonto"", ""norm"": ""53181300"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 835, ""end"": 842, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 860, ""end"": 868, ""art"": ""sachkonto"", ""norm"": ""53181300"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2616, ""end"": 2623, ""art"": ""produkt"", ""norm"": ""3131501"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2644, ""end"": 2652, ""art"": ""sachkonto"", ""norm"": ""53181300"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0356,art,"""termin""","""termin""",,"""termin"""
+12-2-0356,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0356,grenzen_korrigiert,null,null,,null
+12-2-0356,norm,"""2025-06-25""","""2025-06-25""",,"""2025-06-25"""
+12-2-0357,spannen,"[{""start"": 262, ""end"": 288, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 662, ""end"": 669, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 672, ""end"": 680, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 262, ""end"": 288, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 662, ""end"": 669, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 670, ""end"": 680, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""spannen_hinzu"": [{""start"": 672, ""end"": 680, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}], ""spannen_weg"": []}","[{""start"": 262, ""end"": 288, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 6"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 662, ""end"": 669, ""art"": ""produkt"", ""norm"": ""1111114"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 672, ""end"": 680, ""art"": ""sachkonto"", ""norm"": ""74990600"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0358,art,"""amt""","""amt""",,"""amt"""
+12-2-0358,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0358,grenzen_korrigiert,null,null,,null
+12-2-0358,norm,"""61""","""61""",,"""61"""
+12-2-0359,art,"""termin""","""termin""",,"""termin"""
+12-2-0359,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0359,grenzen_korrigiert,null,null,,null
+12-2-0359,norm,"""2024-09-05""","""2024-09-05""",,"""2024-09-05"""
+12-2-0360,art,"""recht""","""recht""",,"""recht"""
+12-2-0360,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0360,grenzen_korrigiert,"[531, 659]","[531, 659]",,"[531, 659]"
+12-2-0360,norm,"""GO NRW § 52 Abs. 1 Satz 1 i. V. m. § 58 Abs. 2 Satz 1 und Abs. 7 Satz 1""","""GO NRW § 52 Abs. 1 Satz 1 i. V. m. § 58 Abs. 2 Satz 1 und Abs. 7 Satz 1""",,"""GO NRW § 52 Abs. 1 Satz 1 i. V. m. § 58 Abs. 2 Satz 1 und Abs. 7 Satz 1"""
+12-2-0361,art,"""recht""","""recht""",,"""recht"""
+12-2-0361,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0361,grenzen_korrigiert,null,null,,null
+12-2-0361,norm,"""LVerf NRW Art. 78 Abs. 1""","""LVerf NRW Art. 78 Abs. 1""",,"""LVerf NRW Art. 78 Abs. 1"""
+12-2-0362,art,"""amt""","""amt""",,"""amt"""
+12-2-0362,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0362,grenzen_korrigiert,null,null,,null
+12-2-0362,norm,"""Kämmerei""","""Kämmerei""",,"""Kämmerei"""
+12-2-0363,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0363,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0363,grenzen_korrigiert,null,null,,null
+12-2-0363,norm,"""07""","""07""",,"""07"""
+12-2-0364,art,"""recht""","""recht""",,"""recht"""
+12-2-0364,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0364,grenzen_korrigiert,null,null,,null
+12-2-0364,norm,"""SGB VIII § 75""","""SGB VIII § 75""",,"""SGB VIII § 75"""
+12-2-0365,art,"""recht""","""recht""",,"""recht"""
+12-2-0365,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0365,grenzen_korrigiert,null,null,,null
+12-2-0365,norm,"""Bezirkssatzung § 3 Abs. 2""","""Bezirkssatzung § 3 Abs. 2""",,"""Bezirkssatzung § 3 Abs. 2"""
+12-2-0366,spannen,"[{""start"": 1733, ""end"": 1740, ""art"": ""produkt"", ""norm"": ""3636302"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1744, ""end"": 1752, ""art"": ""sachkonto"", ""norm"": ""53310000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 862, ""end"": 869, ""art"": ""produkt"", ""norm"": ""3636302"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 887, ""end"": 895, ""art"": ""sachkonto"", ""norm"": ""53310000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 1733, ""end"": 1740, ""art"": ""produkt"", ""norm"": ""3636302"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1744, ""end"": 1752, ""art"": ""sachkonto"", ""norm"": ""53310000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 862, ""end"": 869, ""art"": ""produkt"", ""norm"": ""3636302"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 887, ""end"": 895, ""art"": ""sachkonto"", ""norm"": ""53310000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 862, ""end"": 869, ""art"": ""produkt"", ""norm"": ""3636302"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 887, ""end"": 895, ""art"": ""sachkonto"", ""norm"": ""53310000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1733, ""end"": 1740, ""art"": ""produkt"", ""norm"": ""3636302"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 1744, ""end"": 1752, ""art"": ""sachkonto"", ""norm"": ""53310000"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0367,art,"""amt""","""amt""",,"""amt"""
+12-2-0367,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0367,grenzen_korrigiert,null,null,,null
+12-2-0367,norm,"""Gartenamt""","""Gartenamt""",,"""Gartenamt"""
+12-2-0368,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0368,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0368,grenzen_korrigiert,null,null,,null
+12-2-0368,norm,"""28967.00""","""28967.00""",,"""28967.00"""
+12-2-0369,art,"""amt""","""amt""",,"""amt"""
+12-2-0369,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0369,grenzen_korrigiert,null,null,,null
+12-2-0369,norm,"""Amt für Verkehrsmanagement""","""Amt für Verkehrsmanagement""",,"""Amt für Verkehrsmanagement"""
+12-2-0370,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0370,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0370,grenzen_korrigiert,null,null,,null
+12-2-0370,norm,"""377112.00""","""377112.00""",,"""377112.00"""
+12-2-0371,spannen,"[{""start"": 171, ""end"": 189, ""art"": ""psp"", ""norm"": ""1.10.11.111.05.001"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 190, ""end"": 202, ""art"": ""sachkonto"", ""norm"": ""531754175400"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 247, ""end"": 260, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 546, ""end"": 556, ""art"": ""amt"", ""norm"": ""Sportamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 171, ""end"": 189, ""art"": ""psp"", ""norm"": ""1.10.11.111.05.001"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 190, ""end"": 202, ""art"": ""sachkonto"", ""norm"": ""531754175400"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 247, ""end"": 260, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 546, ""end"": 556, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","{""auswerter"": [{""start"": 546, ""end"": 556, ""auswerter"": ""A"", ""regel"": ""R1: Name ohne Nummer""}]}","[{""start"": 171, ""end"": 189, ""art"": ""psp"", ""norm"": ""1.10.11.111.05.001"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 190, ""end"": 202, ""art"": ""sachkonto"", ""norm"": ""531754175400"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 247, ""end"": 260, ""art"": ""amt"", ""norm"": ""52"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 546, ""end"": 556, ""art"": ""amt"", ""norm"": ""Sportamt"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0372,art,"""psp""","""psp""",,"""psp"""
+12-2-0372,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0372,grenzen_korrigiert,null,null,,null
+12-2-0372,norm,"""1.10.36.365.01""","""1.10.36.365.01""",,"""1.10.36.365.01"""
+12-2-0373,art,"""amt""","""amt""",,"""amt"""
+12-2-0373,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0373,grenzen_korrigiert,null,null,,null
+12-2-0373,norm,"""Bezirksverwaltungsstelle 10""","""Bezirksverwaltungsstelle 10""",,"""Bezirksverwaltungsstelle 10"""
+12-2-0374,art,"""amt""","""amt""",,"""amt"""
+12-2-0374,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0374,grenzen_korrigiert,null,null,,null
+12-2-0374,norm,"""Feuerwehr""","""Feuerwehr""",,"""Feuerwehr"""
+12-2-0375,art,"""recht""","""recht""",,"""recht"""
+12-2-0375,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0375,grenzen_korrigiert,null,null,,null
+12-2-0375,norm,"""? § 35 Abs. 2""","""? § 35 Abs. 2""",,"""? § 35 Abs. 2"""
+12-2-0376,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0376,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0376,grenzen_korrigiert,null,null,,null
+12-2-0376,norm,"""52415800""","""52415800""",,"""52415800"""
+12-2-0377,art,"""termin""","""termin""",,"""termin"""
+12-2-0377,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0377,grenzen_korrigiert,null,null,,null
+12-2-0377,norm,"""2022~nach_sommerpause""","""relativ:nach_sommerpause""","""2022~nach_sommerpause""","""2022~nach_sommerpause"""
+12-2-0378,art,"""amt""","""amt""",,"""amt"""
+12-2-0378,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0378,grenzen_korrigiert,null,null,,null
+12-2-0378,norm,"""40""","""40""",,"""40"""
+12-2-0379,art,"""amt""","""amt""",,"""amt"""
+12-2-0379,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0379,grenzen_korrigiert,null,null,,null
+12-2-0379,norm,"""Gesundheitsamt""","""53""","""Gesundheitsamt""","""Gesundheitsamt"""
+12-2-0380,art,"""amt""","""amt""",,"""amt"""
+12-2-0380,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0380,grenzen_korrigiert,null,null,,null
+12-2-0380,norm,"""Rechnungsprüfungsamt""","""Rechnungsprüfungsamt""",,"""Rechnungsprüfungsamt"""
+12-2-0381,art,"""dezernat""","""dezernat""",,"""dezernat"""
+12-2-0381,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0381,grenzen_korrigiert,null,null,,null
+12-2-0381,norm,"""06""","""06""",,"""06"""
+12-2-0382,art,"""recht""","""recht""",,"""recht"""
+12-2-0382,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0382,grenzen_korrigiert,null,null,,null
+12-2-0382,norm,"""BauGB § 13a""","""BauGB § 13a""",,"""BauGB § 13a"""
+12-2-0383,art,"""recht""","""recht""",,"""recht"""
+12-2-0383,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0383,grenzen_korrigiert,null,null,,null
+12-2-0383,norm,"""? § 8""","""? § 8""",,"""? § 8"""
+12-2-0384,art,"""recht""","""recht""",,"""recht"""
+12-2-0384,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0384,grenzen_korrigiert,null,null,,null
+12-2-0384,norm,"""SpkG NRW §§ 24 Abs. 4 und 25 Abs. 1""","""SpkG NRW §§ 24 Abs. 4 und 25 Abs. 1""",,"""SpkG NRW §§ 24 Abs. 4 und 25 Abs. 1"""
+12-2-0385,art,"""recht""","""recht""",,"""recht"""
+12-2-0385,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0385,grenzen_korrigiert,"[829, 852]","[829, 852]",,"[829, 852]"
+12-2-0385,norm,"""SpkG NRW § 25 Abs. 1 Buchstabe b""","""SpkG NRW § 25 Abs. 1b""","""SpkG NRW § 25 Abs. 1b""","""SpkG NRW § 25 Abs. 1b"""
+12-2-0386,art,"""termin""","""termin""",,"""termin"""
+12-2-0386,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0386,grenzen_korrigiert,null,null,,null
+12-2-0386,norm,"""2021-01-13""","""2021-01-13""",,"""2021-01-13"""
+12-2-0387,art,"""amt""","""amt""",,"""amt"""
+12-2-0387,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0387,grenzen_korrigiert,null,null,,null
+12-2-0387,norm,"""01/13""","""01/13""",,"""01/13"""
+12-2-0388,art,"""psp""","""psp""",,"""psp"""
+12-2-0388,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0388,grenzen_korrigiert,null,null,,null
+12-2-0388,norm,"""1.10.11.111.05.001""","""1.10.11.111.05.001""",,"""1.10.11.111.05.001"""
+12-2-0389,art,"""termin""","""termin""",,"""termin"""
+12-2-0389,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0389,grenzen_korrigiert,null,null,,null
+12-2-0389,norm,"""2021-04-27""","""2021-04-27""",,"""2021-04-27"""
+12-2-0390,art,"""amt""","""amt""",,"""amt"""
+12-2-0390,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0390,grenzen_korrigiert,null,null,,null
+12-2-0390,norm,"""23""","""23""",,"""23"""
+12-2-0391,art,"""amt""","""amt""",,"""amt"""
+12-2-0391,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0391,grenzen_korrigiert,null,null,,null
+12-2-0391,norm,"""Amt für Umwelt- und Verbraucherschutz""","""Amt für Umwelt- und Verbraucherschutz""",,"""Amt für Umwelt- und Verbraucherschutz"""
+12-2-0392,art,"""termin""","""termin""",,"""termin"""
+12-2-0392,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0392,grenzen_korrigiert,null,null,,null
+12-2-0392,norm,"""2022~ende""","""2022~ende""",,"""2022~ende"""
+12-2-0393,art,"""recht""","""recht""",,"""recht"""
+12-2-0393,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0393,grenzen_korrigiert,"[745, 802]","[745, 802]",,"[745, 802]"
+12-2-0393,norm,"""EigVO NRW § 5 Abs. 5""","""EigVO NRW § 5 Abs. 5""",,"""EigVO NRW § 5 Abs. 5"""
+12-2-0394,art,"""amt""","""amt""",,"""amt"""
+12-2-0394,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0394,grenzen_korrigiert,null,null,,null
+12-2-0394,norm,"""Jugendamt""","""Jugendamt""",,"""Jugendamt"""
+12-2-0395,art,"""amt""","""amt""",,"""amt"""
+12-2-0395,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0395,grenzen_korrigiert,null,null,,null
+12-2-0395,norm,"""Amt für Verkehrsmanagement""","""Amt für Verkehrsmanagement""",,"""Amt für Verkehrsmanagement"""
+12-2-0396,art,"""investition""","""investition""",,"""investition"""
+12-2-0396,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0396,grenzen_korrigiert,null,null,,null
+12-2-0396,norm,"""7.90000262""","""7.90000262""",,"""7.90000262"""
+12-2-0397,art,"""produkt""","""produkt""",,"""produkt"""
+12-2-0397,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0397,grenzen_korrigiert,null,null,,null
+12-2-0397,norm,"""011111140""","""011111140""",,"""011111140"""
+12-2-0398,art,"""recht""","""recht""",,"""recht"""
+12-2-0398,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0398,grenzen_korrigiert,null,null,,null
+12-2-0398,norm,"""BauNVO § 1 Abs. 9""","""BauNVO § 1 Abs. 9""",,"""BauNVO § 1 Abs. 9"""
+12-2-0399,spannen,"[{""start"": 2151, ""end"": 2169, ""art"": ""amt"", ""norm"": ""Amt für Soziales"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 303, ""end"": 329, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 7"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]","[{""start"": 2151, ""end"": 2169, ""art"": ""amt"", ""norm"": ""Amt für Soziales"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 303, ""end"": 329, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 7"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]",,"[{""start"": 303, ""end"": 329, ""art"": ""amt"", ""norm"": ""Bezirksverwaltungsstelle 7"", ""rolle"": null, ""frist"": null, ""tabelle"": false}, {""start"": 2151, ""end"": 2169, ""art"": ""amt"", ""norm"": ""Amt für Soziales"", ""rolle"": null, ""frist"": null, ""tabelle"": false}]"
+12-2-0400,art,"""recht""","""recht""",,"""recht"""
+12-2-0400,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0400,grenzen_korrigiert,null,null,,null
+12-2-0400,norm,"""LPlG § 7 Abs. 1 und 2""","""LPlG § 7 Abs. 1 und 2""",,"""LPlG § 7 Abs. 1 und 2"""
+12-2-0401,art,"""amt""","""amt""",,"""amt"""
+12-2-0401,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0401,grenzen_korrigiert,null,null,,null
+12-2-0401,norm,"""68""","""68""",,"""68"""
+12-2-0402,art,"""amt""","""amt""",,"""amt"""
+12-2-0402,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0402,grenzen_korrigiert,null,null,,null
+12-2-0402,norm,"""Umweltamt""","""Umweltamt""",,"""Umweltamt"""
+12-2-0403,art,"""recht""","""recht""",,"""recht"""
+12-2-0403,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0403,grenzen_korrigiert,null,null,,null
+12-2-0403,norm,"""BWO § 72 Abs. 3, § 75 Abs. 6, § 76 Abs. 1 und 6, § 77 Abs. 1 und § 78 Abs. 4""","""BWO § 72 Abs. 3, § 75 Abs. 6, § 76 Abs. 1 und 6, § 77 Abs. 1 und § 78 Abs. 4""",,"""BWO § 72 Abs. 3, § 75 Abs. 6, § 76 Abs. 1 und 6, § 77 Abs. 1 und § 78 Abs. 4"""
+12-2-0404,art,"""recht""","""recht""",,"""recht"""
+12-2-0404,grenzen,"""zu_kurz""","""zu_kurz""",,"""zu_kurz"""
+12-2-0404,grenzen_korrigiert,"[746, 781]","[746, 781]",,"[746, 781]"
+12-2-0404,norm,"""GO NRW § 41 Abs. 1 Buchstabe m""","""GO NRW § 41 Abs. 1m""","""GO NRW § 41 Abs. 1m""","""GO NRW § 41 Abs. 1m"""
+12-2-0405,art,"""recht""","""recht""",,"""recht"""
+12-2-0405,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0405,grenzen_korrigiert,null,null,,null
+12-2-0405,norm,"""SpkG NRW §§ 8 Abs. 1 und 12 Abs. 5""","""SpkG NRW §§ 8 Abs. 1 und 12 Abs. 5""",,"""SpkG NRW §§ 8 Abs. 1 und 12 Abs. 5"""
+12-2-0406,art,"""betrag""","""betrag""",,"""betrag"""
+12-2-0406,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0406,grenzen_korrigiert,null,null,,null
+12-2-0406,norm,"""15000.00""","""15000.00""",,"""15000.00"""
+12-2-0407,art,"""amt""","""amt""",,"""amt"""
+12-2-0407,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0407,grenzen_korrigiert,null,null,,null
+12-2-0407,norm,"""Bezirksverwaltungsstelle 9""","""Bezirksverwaltungsstelle 9""",,"""Bezirksverwaltungsstelle 9"""
+12-2-0408,art,"""amt""","""amt""",,"""amt"""
+12-2-0408,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0408,grenzen_korrigiert,null,null,,null
+12-2-0408,norm,"""Garten-, Friedhofs- und Forstamt""","""Garten-, Friedhofs- und Forstamt""",,"""Garten-, Friedhofs- und Forstamt"""
+12-2-0409,art,"""amt""","""amt""",,"""amt"""
+12-2-0409,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0409,grenzen_korrigiert,null,null,,null
+12-2-0409,norm,"""Umweltamt""","""Umweltamt""",,"""Umweltamt"""
+12-2-0410,art,"""sachkonto""","""sachkonto""",,"""sachkonto"""
+12-2-0410,grenzen,"""richtig""","""richtig""",,"""richtig"""
+12-2-0410,grenzen_korrigiert,null,null,,null
+12-2-0410,norm,"""78170100""","""78170100""",,"""78170100"""

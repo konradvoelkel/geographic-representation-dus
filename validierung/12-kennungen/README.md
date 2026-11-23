@@ -21,6 +21,11 @@
   Schlichter entschieden hat (vier Präzisionsfelder, zwölf Felder gemeinsamer Recall-Spannen, alle nur
   Schreibung oder durch R1, R3, R17, R18 gedeckt), steht in `schlichtung` `{"auswerter": …, "regel":
   …}`. Kein menschlicher Goldstandard (`docs/plan-vorverarbeitung-2026-11.md`, § 2.6).
+- `labels-2.csv`: Endlabels der Stichprobe 2 (Codebuch .2), gleiches Format wie `labels.csv`, ohne die
+  Fragen `rolle` und `frist`; Schlichtung für 26 Aufgaben, ein Feld und zehn Normwerte gemeinsamer
+  Recall-Spannen nach Codebuch .2 vom Auswerter. Kodierer und Schlichter waren dasselbe Modell (Frage 19
+  an Konrad). Übereinstimmung: Art 360/360, Grenzen 354/357 (α 0,939), Norm 340/357 (α 0,952),
+  Recall-Spannen F1 0,965. Ergebnis: Messdokument § 4.4 und § 5.
 - Übereinstimmung der Kodierer: Art 600/600, Grenzen 597/597 (α 1,0), Norm 555/597 (α 0,93), Rolle
   90/98 (α 0,90), Funktion des Termins 89/100 (α 0,85); Recall-Spannen 502 gemeinsam, 14 nur bei
   einem (F1 0,986).
@@ -30,5 +35,6 @@
   Rückmeldungen der Kodierer und die Fehlerliste des Extraktors liegen nur lokal unter
   `/media/konrad/xtraspace/georep/messdaten/kodierung/12-kennungen/`.
 - Nachrechnen: `uv run python docs/plans/12-kennungen-messung.py --auswertung` (schreibt
-  `labels.csv` neu und druckt alle Maße); `--entwurf --stichprobe-2` für Fassung 2 und Stichprobe 2.
+  `labels.csv` neu und druckt alle Maße); `--entwurf --stichprobe-2` für Fassung 2 und Stichprobe 2,
+  `--fassung 2 --auswertung-2` für `labels-2.csv` und die Bestätigung.
 - Ergebnis: `docs/plans/12-kennungen.md`, § 4.1.

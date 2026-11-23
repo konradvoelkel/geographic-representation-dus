@@ -4,9 +4,10 @@ Stand 2026-11-23, Stufe 1 mit Kodierung. Briefing: [plan-vorverarbeitung-2026-11
 § 11. Messskript: [12-kennungen-messung.py](12-kennungen-messung.py). Codebuch, Stichprobe und Labels:
 `validierung/12-kennungen/`. **Urteil nach der Kodierung** (§ 4.1, § 5): Bauleitplanung, Betrag und
 Termin **bauen**; die Rolle eines Betrags und die Funktion eines Termins **fallen** (Supervisor,
-2026-11-23). Haushalt, Rechtsgrundlage und Amt sind **umgebaut** (Fassung 2, § 3.7); ihr Urteil ist
-**vorläufig, Bestätigung ausstehend**: Stichprobe 2 mit 410 Aufgaben liegt zur Kodierung bereit (§ 4.3),
-die Rückfallregeln sind vorab festgelegt (§ 5).
+2026-11-23). Haushalt, Rechtsgrundlage und Amt wurden **umgebaut** (Fassung 2, § 3.7) und an einer
+frischen Stichprobe bestätigt (§ 4.4): nach den vorab festgelegten Regeln (§ 5) **fallen Haushalt und
+Rechtsgrundlage**, die **Verwaltungseinheit wird mit Fassung 2 gebaut**, Termine mit Fassung 2, Beträge
+bleiben bei Fassung 1.
 
 Alle Zahlen dieses Dokuments rechnet das Skript nach:
 
@@ -17,6 +18,7 @@ uv run python docs/plans/12-kennungen-messung.py --profil moenchengladbach   # E
 uv run python docs/plans/12-kennungen-messung.py --beispiele betrag:sonstig   # 40 Beispiele mit Kontext
 uv run python docs/plans/12-kennungen-messung.py --auswertung   # Labels bilden, Extraktor messen (§ 4.1), rund 20 s
 uv run python docs/plans/12-kennungen-messung.py --entwurf --stichprobe-2   # Fassung 2: § 4.3, 46 s
+uv run python docs/plans/12-kennungen-messung.py --fassung 2 --auswertung-2   # Bestätigung: § 4.4, 15 s
 ```
 
 ## 1. Frage und Nutzen
@@ -261,6 +263,7 @@ Unter Fremdlast gemessen (Supervisor, 2026-11-23: Lastmittel zeitweise 144), mit
 | darin Hauptperiode in einem Prozess | 108,5 s | wie oben |
 | `--auswertung` (Hauptperiode, Labels, alle Maße) | 23,2 s, 672 MB RSS / 16,5 s | 19:45:02 27,22 / 19:45:25 25,53; 19:49:10 17,16 / 19:49:27 15,34 |
 | `--entwurf --stichprobe-2` (Fassung 1 und 2, Entwurf, Stichprobe 2) | 45,8 s, 757 MB RSS; Extraktion der Fassung 2 darin 15,8 s | 20:06:18 21,39 / 20:07:04 21,92 |
+| `--fassung 2 --auswertung-2` (Bestätigung, Labels der Runde 2) | 15,0 s, 661 MB RSS | 20:37:11 8,41 / 20:37:26 8,39 |
 
 Die Zeiten hängen an der Fremdlast um den Faktor zwei bis sechs; die ruhigen Läufe sind der
 Maßstab. Stichprobe und alle Zählungen waren in beiden Läufen gleich (SHA-256 der Stichprobe
@@ -470,6 +473,62 @@ Präzision je Art wird mit `schicht_n` gewichtet wie in § 4.1, die Schicht „n
 Die Spannen der Rechtsgrundlage in Haushalts- und BV-Dokumenten sind seltener als in der
 Planungsschicht der ersten Runde; der Recall der Art 5 hat dort darum ein breites Intervall.
 
+### 4.4 Bestätigung der Fassung 2 (Runde 2, 2026-11-23)
+
+**Kodierung.** Zwei Kodier-Agenten haben die 410 Aufgaben der Stichprobe 2 nach Codebuch .2 kodiert,
+ein Schlicht-Agent hat 26 Uneinigkeiten entschieden. **Kodierer und Schlichter sind dasselbe Modell**
+(Frage 19 an Konrad, offen); die Übereinstimmung misst also die Stabilität eines Modells, keine
+unabhängige Prüfung. Übereinstimmung vor der Schlichtung: Art 360/360 (α 1,000), Grenzen 354/357
+(α 0,939), Norm 340/357 (α 0,952); Recall-Spannen 153 gemeinsam, 11 nur bei einem (F1 0,965). Ein
+Unterschied, den der Schlichter nicht entschieden hat (die korrigierte Spanne in 12-2-0001, für kein Maß
+gebraucht), und zehn Normwerte gemeinsamer Recall-Spannen (Amt mit Name gegen Nummer) sind nach dem
+Codebuch .2 entschieden (Spannenregel; R1: ohne Nummer in der Spanne der Name). Die Regeln S1 bis S10
+des Schlichters stehen in § 9 als Vorschlag für eine Fassung 3; auf den Extraktor, der hier gemessen
+wird, ist keine angewandt. Endlabels: `validierung/12-kennungen/labels-2.csv` (1 490 Zeilen, Werte als
+JSON, Offsets statt Ausschnitten; `--fassung 2 --auswertung-2`).
+
+**Ergebnis** (Fassung 2 an der Stichprobe 2; Präzision gewichtet mit `schicht_n`, Wilson mit n_eff;
+Recall ungewichtet, streng; so vorab in § 5 festgelegt):
+
+| Art | Präzision streng | mild | Recall streng | Recall mild | Normwert gleich |
+|---|---|---|---|---|---|
+| 2 Haushalt | **1,000** [0,932; 1] n 100 | 1,000 | **0,716** [0,605; 0,806] 53/74 | 0,716 | 0,986 |
+| 5 Rechtsgrundlage | **0,861** [0,723; 0,937] n 100 | 0,999 | **0,667** [0,300; 0,903] 4/6 | 1,000 (6/6) | 0,855 |
+| 6 Verwaltungseinheit | **0,956** [0,851; 0,988] n 100 | 0,959 | **0,887** [0,800; 0,940] 71/80 | 0,887 | 0,657 (äquivalent 1,000) |
+| 3 Betrag (30) | 1,000 [0,723; 1] | 1,000 | – | – | 1,000 |
+| 4 Termin (30) | 1,000 [0,726; 1] | 1,000 | – | – | 1,000 |
+
+Je Schicht (streng): Haushalt alle 100 richtig, auch die 45 neuen Kontierungsketten; Recht neu 34/42,
+Gesetz direkt 28/32, Gesetz in der Nähe 3/12, ohne Gesetz 12/14; Amt Kopf 21/21, Name 15/17,
+Nummer 11/12, Dezernat 12/12, neu 38/38; Betrag neu **18/20**, alt 10/10; Termin neu 20/20, alt 10/10.
+Gewichteter Recall (Gegenprobe): Haushalt 0,706, Recht 0,784 (n 6), Amt 0,920.
+
+**Was verfehlt** (Fehlerliste lokal, `fehler-extraktor-2.jsonl`):
+
+- **Haushalt, Recall** (21 von 74 verpasst): Haushaltstabellen, in denen zwischen Produkt und Konto der
+  Produktname über mehrere Zeilen steht („5656101 ⏎Umwelt und ⏎Gewässer-⏎schutz ⏎ 53180000“),
+  Produktlisten ohne Konto (Seitenverzeichnis eines Haushaltsplans), das Schlüsselwort weit vor der
+  Nummer („im Produkt ⏎des Kulturamtes, 2528101“), „Konto 21 211 01 / 52415600“ (Produkt mit Leerzeichen
+  nach „Konto“), sechsstellige Konten („531800“), ein Punkt hinter einem PSP-Element. Die Präzision
+  ist makellos, die Lücken liegen in Tabellenformen, die die Kette nicht kennt.
+- **Recht, Präzision streng** (Gewicht vor allem in „Gesetz direkt“ und „in der Nähe“): Gesetzesnamen
+  über eine Silbentrennung am Zeilenende („Nordrhein-⏎Westfalen“, „Straßenverkehrs-⏎Ordnung“), Kürzel
+  auf der nächsten Zeile („GO ⏎NRW“), Zusätze wie „des Rates der …“ und „für das Land NRW“ nach dem
+  Namen, Spezifizierer ohne Punkt („Abs 3 S 1“), mit Wort („Buchstabe m“, „Punkt 5“), nach einem
+  Buchstaben („Abs. 2 f)“, „Abs. 1 m)“) oder auf der nächsten Zeile („§ 60 ⏎a“), Langtitel („Gesetz zur
+  Verbesserung der Korruptionsbekämpfung …“, „Gesellschaftsvertrag der SWD …“), EU-Recht.
+- **Recht, Rückfall „nur mild“**: milde Präzision 0,999 und milder Recall 1,000 (nur 6 Spannen) erfüllt;
+  das Gesetz im Normwert stimmt unter den mild richtigen Treffern aber nur zu **0,805** [0,658; 0,899]
+  (verlangt ≥ 0,95): das Gesetz fehlt („? §“), wo es über den Zeilenwechsel oder hinter einem Zusatz
+  steht, und die Schreibung weicht ab (EU-Recht, Ortsrecht ohne Stadtzusatz nach S2).
+- **Betrag, Schicht neu** (18/20): „-     Euro  320.150“ (Vorzeichen weit vor der Einheit vorn) und
+  eine Tabelle mit zerbrochenen Zahlen („93.916⏎,00 € ⏎2.059,⏎00 €“), in der das „€“ des einen Betrags
+  über den Zeilenwechsel an die nächste Zahl gebunden wird — genau die Korrektur „Einheit vorn über den
+  Zeilenwechsel“.
+- **Amt**: zwei Mal „Feuerwehr“ in „freiwillige Feuerwehr“ (keine Verwaltungseinheit), „Amt 68“ ohne
+  die Klammer, im Recall gebeugte Vollnamen („des Amtes für Soziales und Jugend“), „Amt für
+  Verbraucherschutz“ (nicht im Verzeichnis) und das Kürzel „RPA“.
+
 ## 5. Urteil gegen das Kriterium
 
 **Kriterium** (Briefing, unverändert): Präzision ≥ 0,95 und Recall ≥ 0,85 je Art, streng; die Rolle eines
@@ -491,7 +550,7 @@ Punktschätzer, das Intervall daneben (§ 4).
 | 6 Amt | 0,964 ✓ | 0,808 ✗ (mild 0,846) | 0,713 (äquivalent 1,000) | umbauen |
 | 6 Dezernat | 17/17 | – | 17/17 | nicht aus dem Text: Tabelle Amt → Dezernat im Profil |
 
-**Umbau** (Fassung 2, § 3.7), **Urteil vorläufig, Bestätigung ausstehend**:
+**Umbau** (Fassung 2, § 3.7), Stand vor der Bestätigung:
 
 | Art | Entwurf an alten Labels (§ 4.3) | Urteil vorläufig | Bestätigung (Stichprobe 2, § 4.3) |
 |---|---|---|---|
@@ -512,17 +571,38 @@ Codebuch .2 mit den Maßen aus § 4.1, Präzision gewichtet, Recall ungewichtet,
 | 3 Betrag, Korrekturen | Fassung 2 | die Schicht „neu“ unter 0,95 (mehr als 1 Fehler von 20): Betrag bleibt bei Fassung 1, die schon bestanden hat |
 | 4 Termin, Korrekturen | Fassung 2 | wie Betrag: Termin bleibt bei Fassung 1 |
 
+**Bestätigung** (Stichprobe 2, § 4.4, 2026-11-23) — **Urteil nach den vorab festgelegten Regeln**,
+ohne weitere Umbau-Runde; Kodierer und Schlichter sind dasselbe Modell (Frage 19 an Konrad, offen):
+
+| Art | Präzision streng | Recall streng | Regel | Urteil |
+|---|---|---|---|---|
+| 2 Haushalt | 1,000 [0,932; 1] | **0,716** [0,605; 0,806] ✗ | verfehlt → fällt | **fällt** |
+| 5 Rechtsgrundlage | **0,861** [0,723; 0,937] ✗ | 0,667 (4/6) | verfehlt → „nur mild“ verlangt Gesetz ≥ 0,95; gemessen 0,805 [0,658; 0,899] (milde Präzision 0,999, milder Recall 6/6 erfüllt) | **fällt** |
+| 6 Verwaltungseinheit (Amt, Dezernat) | 0,956 [0,851; 0,988] ✓ | 0,887 [0,800; 0,940] ✓ | erreicht → Fassung 2 | **bauen mit Fassung 2** (Kopf und Text); knapp: die untere Intervallgrenze der Präzision liegt bei 0,85 |
+| 3 Betrag, Korrekturen | Schicht neu 18/20 ✗ | – | mehr als 1 Fehler von 20 → Fassung 1 | **Betrag bleibt bei Fassung 1** (bestanden in Runde 1) |
+| 4 Termin, Korrekturen | Schicht neu 20/20 ✓ | – | erreicht → Fassung 2 | **Termin mit Fassung 2** |
+| 1 Bauleitplanung | (Runde 1) 1,000 | 0,901 | nicht umgebaut | **bauen mit Fassung 1** |
+
+Damit baut Stufe 2: Bauleitplanung (Fassung 1), Betrag (Fassung 1, ohne Rolle), Termin (Fassung 2,
+ohne Funktion), Verwaltungseinheit (Fassung 2). Haushalt und Rechtsgrundlage fallen; ihre Messungen
+bleiben in diesem Dokument, eine Zeile kommt nach `decisions.md` (Plan § 8). Das Dezernat kommt für 24
+weiter aus einer Tabelle Amt → Dezernat im Profil; die 12 von 12 richtigen Treffer „Dezernat 06“ aus
+dem Text gehören zur Verwaltungseinheit und dürfen mit.
+
 Die Rolle und die Funktion `frist` werden nicht umgebaut (beide fallen); wer sie für 21 oder 29
 braucht, misst neu mit einem Modell über F5 an frischen Labels. Ein binärer Merker „aus bezirklichen
 Mitteln“ bleibt Frage 11 (§ 9).
 
 ## 6. Bauplan Stufe 2
 
-Stufe 2 baut die Arten mit Urteil „bauen“ (§ 5): **Bauleitplanung** (`bplan`, `fnp`), **Betrag**
-(`betrag`, ohne Rolle) und **Termin** (`termin`, ohne Funktion). Haushalt (`produkt`, `sachkonto`,
-`psp`, `investition`), Rechtsgrundlage (`recht`) und Amt (`amt`) kommen erst dazu, wenn ihr Umbau die
-Bestätigungsstichprobe besteht (§ 5); der Code ist so geschnitten, dass sie je `kind` hinter einem
-Schalter dazukommen, ohne den Schritt umzubauen. Das Dezernat kommt aus einer Tabelle im Profil.
+Stufe 2 baut die Arten mit Urteil „bauen“ nach der Bestätigung (§ 5): **Bauleitplanung** (`bplan`,
+`fnp`, Fassung 1), **Betrag** (`betrag`, Fassung 1, ohne Rolle), **Termin** (`termin`, Fassung 2, ohne
+Funktion) und **Verwaltungseinheit** (`amt`, `dezernat`, Fassung 2). Haushalt (`produkt`, `sachkonto`,
+`psp`, `investition`) und Rechtsgrundlage (`recht`) fallen und werden nicht gebaut; der Code ist je
+`kind` geschnitten, damit eine spätere Messung sie ohne Umbau des Schritts dazunehmen könnte. Das
+Dezernat für 24 kommt aus einer Tabelle im Profil; Treffer „Dezernat NN“ aus dem Text dürfen mit.
+**Was oben zu Modulen, Ausgabe und Settings steht, gilt für diese vier Arten; Zeilen zu Haushalt und
+Recht entfallen.**
 
 **Beitrag** `identifiers` (Register `georep.enrich.CONTRIBUTIONS`, Fundament F2), eine Zeile im Tupel,
 hinter `sections` (11), wenn es da ist; sonst mit dem groben Abschnittsersatz aus § 3.1.
@@ -608,7 +688,8 @@ bekommt dann `haushalt` (mit dem Zerleger aus `PROFILMUSTER_2` im Profil), `rech
 
 Keine eigene Unterseite (Briefing: Download). `kennungen.parquet` im Tabellenregister
 (`report/tables.py` über das Register), mit `schema.json`-Eintrag; nur die `kind`s, die das Kriterium
-erreicht haben (heute `bplan`, `fnp`, `betrag`, `termin`). Größe gemessen (§ 3.5): alle Arten als
+erreicht haben (`bplan`, `fnp`, `betrag`, `termin`, `amt`, `dezernat`; für die Verwaltungseinheit die
+Güte aus § 4.4 und der Hinweis, dass dort Kodierer und Schlichter dasselbe Modell waren). Größe gemessen (§ 3.5): alle Arten als
 Parquet 1,4 MB, als CSV 11,3 MB; die CSV ist für die Seite zu groß, also Parquet, und als CSV nur
 Bauleitplanung und Beträge. Text an der Tabelle: was jede Spalte heißt, Stichprobengröße, Güte je Art
 (§ 4.1) und „geprüft von zwei KI-Kodierern an 100 Treffern und 50 Dokumenten je Art, nicht von
@@ -640,11 +721,13 @@ Stand nach der Kodierung; beantwortete Fragen mit der Antwort, neue ab Nummer 11
 | 11 | Soll ein binärer Merker „aus bezirklichen Mitteln“ (Verfügungs- und Bauunterhaltungsmittel der Bezirksvertretungen, R11) für 21 gemessen werden? | 21 fragt nach den Verfügungsmitteln; die volle Rolle fällt | nein, nicht in dieser Runde; 21 entscheidet in seiner Stufe 1, ob es den Merker braucht, und misst ihn dann an frischen Labels |
 | 12 | Meint das Kriterium der Funktion die Übereinstimmung über vier Klassen oder die Klasse `frist`? | die Kopfregel R20 höbe die Übereinstimmung auf geschätzt 0,94, die Klasse `frist` bliebe bei rund 0,5 | **beantwortet** (Supervisor, 2026-11-23, Frage 20): die Klasse `frist`; die Funktion fällt, es kommt nur die Zeitangabe |
 | 14 | Gehört der Zusatz „der Landeshauptstadt …“ zum Gesetzesnamen? | die Labels der ersten Runde schwanken (12-0264 ohne, 12-0337 und 12-0554 mit) | ja, wie Codebuch .2; der Normwert lässt ihn weg |
-| 15 | Reichen 30 Haushalts- und 20 BV-Dokumente für den Recall der Rechtsgrundlage? | Zitate stehen vor allem in Planungsvorlagen (65 von 74 in Runde 1) | ja für die Bestätigung des Umbaus, der vor allem die Präzision betraf; das Intervall steht daneben |
+| 15 | Reichen 30 Haushalts- und 20 BV-Dokumente für den Recall der Rechtsgrundlage? | Zitate stehen vor allem in Planungsvorlagen (65 von 74 in Runde 1) | **gemessen**: nur 6 Spannen; das Urteil folgt aus der Präzision (0,861) und dem Gesetz im Normwert (0,805), nicht aus dem Recall |
+| 16 | Kodierer und Schlichter der Runde 2 sind dasselbe Modell (Frage 19 an Konrad). Zählt die Bestätigung? | ohne ein zweites Modell misst α die Stabilität eines Modells | sie zählt wie vorab festgelegt; das Urteil nennt es, und die Seite schreibt „geprüft von KI-Kodierern desselben Modells“ |
+| 17 | Vorschläge des Schlichters für eine Fassung 3 (nicht angewandt; an diesen Labels darf keine Regel mehr gemessen werden): **S1** Kontenpaar „5/74990600“ — Spanne nur die acht Ziffern; **S2** Ortsrecht im Normwert ohne Stadtzusatz („der Landeshauptstadt …“), Zusätze wie „des Rates“ bleiben, die Spanne behält den Zusatz; **S3** Buchstabe nach Absatz- oder Nummernzahl ohne Leerzeichen, gleich ob „Buchstabe m“, „lit. m“, „m)“ („Abs. 1m“); **S4** „Punkt n“ und „Ziffer n“ werden „Nr. n“; **S5** EU-Recht in amtlicher Kurzbezeichnung („VO (EG) Nr. 1370/2007 Art. 7 Abs. 1“); **S6** Verwaltungsvorschrift zu einem § normiert auf das Gesetz („StVO § 45 …“, VV-Nummern dahinter); **S7** die Amtsnummer aus dem Kopffeld gilt nur für das Kopffeld, Nennungen im Text bekommen den Namen; **S8** relative Termine mit Jahr als Jahr mit Zusatz (`2022~nach_sommerpause`); **S9** „Feuerwehr“ allein ist Amt, wenn die Feuerwehr der Stadt gemeint ist, nicht die freiwillige oder eine Werkfeuerwehr; **S10** Amtskürzel („RPA“) ist eine Nennung, Norm das Kürzel | Haushalt und Recht fallen; ein neuer Anlauf bräuchte eine Fassung 3 des Codebuchs und eine frische Stichprobe | keine weitere Runde in diesem Vorhaben; die Regeln liegen für einen neuen Anlauf bereit |
 | 13 | Normwert des Amts: Nummer aus dem Verzeichnis (Extraktor) oder Name (R1 der Kodierer)? | Normwert 0,713 gleich, 1,000 nach Abbildung | der Extraktor bleibt bei der Nummer (24 braucht sie); das Codebuch .2 lässt die Kodierer den Namen schreiben, der Vergleich bildet ihn über das Verzeichnis ab |
 
-**Risiken**: Die Bestätigungsrunde für Haushalt, Recht und Amt braucht wieder zwei Kodier-Agenten und
-einen Schlicht-Agenten (rund 400 Aufgaben); das Recall-Intervall der Bauleitplanung reicht bis 0,81
+**Risiken**: Die Güte der Verwaltungseinheit ist knapp (Präzision 0,956, untere Grenze 0,851) und von
+demselben Modell kodiert und geschlichtet; das Recall-Intervall der Bauleitplanung reicht bis 0,81
 (64 von 71); ältere Vorlagen (2014–2020) und Mönchengladbach sind nicht kodiert — die Güte gilt für die
 Hauptperiode, die Übertragbarkeit nur nach den Zählungen in § 3.4.
 

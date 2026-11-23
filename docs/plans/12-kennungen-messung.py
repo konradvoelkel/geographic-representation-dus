@@ -3,6 +3,7 @@
     uv run python docs/plans/12-kennungen-messung.py [--profil duesseldorf] [--alle] [--stichprobe]
     uv run python docs/plans/12-kennungen-messung.py --auswertung
     uv run python docs/plans/12-kennungen-messung.py --entwurf --stichprobe-2
+    uv run python docs/plans/12-kennungen-messung.py --fassung 2 --auswertung-2
 
 Ohne Schalter misst es die Hauptperiode (rund eine Minute auf vier Kernen); `--alle` misst dazu
 2014-2020, 2025 und Mönchengladbach (Übertragbarkeit, § 3.4 des Dokuments); `--stichprobe` zieht
@@ -2098,18 +2099,24 @@ class Labels:
     paare: dict[str, list[tuple[object, object]]]  # Frage -> (A, B) je Aufgabe, für α
 
 
-def endlabels(aufgaben: dict[str, dict[str, object]]) -> Labels:
-    """Einig, sonst Schlichtung, sonst Auswerter; Recall: gemeinsame Spannen, dann Schlichtung."""
+def endlabels(
+    aufgaben: dict[str, dict[str, object]],
+    dateien: tuple[str, str, str] = ("antworten-A.jsonl", "antworten-B.jsonl", "schlichtung.jsonl"),
+    auswerter: dict[tuple[str, str], tuple[str, str]] | None = None,
+    recall_auswerter: dict[tuple[str, str], tuple[str, str]] | None = None,
+) -> Labels:
+    """Einig, sonst Schlichtung, sonst Auswerter; Recall: gemeinsame Spannen, dann Schlichtung.
+
+    Ohne Argumente die erste Runde; die zweite übergibt ihre Dateien und Auswerter-Entscheide.
+    """
+    auswerter = AUSWERTER if auswerter is None else auswerter
+    recall_auswerter = RECALL_AUSWERTER if recall_auswerter is None else recall_auswerter
 
     def lies(name: str) -> dict[str, dict[str, Any]]:
         zeilen_ = (KODIERUNG / name).read_text(encoding="utf-8").splitlines()
         return {z["aufgabe"]: z for z in (json.loads(t) for t in zeilen_ if t)}
 
-    a_all, b_all, sch = (
-        lies("antworten-A.jsonl"),
-        lies("antworten-B.jsonl"),
-        lies("schlichtung.jsonl"),
-    )
+    a_all, b_all, sch = lies(dateien[0]), lies(dateien[1]), lies(dateien[2])
     praez: dict[str, dict[str, object]] = {}
     recall: dict[str, list[dict[str, object]]] = {}
     zeilen: list[dict[str, str]] = []
@@ -2134,7 +2141,7 @@ def endlabels(aufgaben: dict[str, dict[str, object]]) -> Labels:
                     schl = leer_zu_null(ent[f])
                     label, quelle = schl, "schlichtung"
                 else:
-                    wer, grund = AUSWERTER[(nr, f)]
+                    wer, grund = auswerter[(nr, f)]
                     label, quelle = (va if wer == "A" else vb), "auswerter"
                     schl = {"auswerter": wer, "regel": grund}
                 quellen[f"{f}:{quelle}"] += 1
@@ -2175,9 +2182,13 @@ def endlabels(aufgaben: dict[str, dict[str, object]]) -> Labels:
                 abweichend.remove(o)
         entscheide_auswerter = []
         for k in abweichend:  # Feldunterschiede gemeinsamer Spannen, die der Schlichter nicht sah
-            wer, regel = RECALL_AUSWERTER.get((nr, text[k[0] : k[1]]), ("", ""))
-            if not wer and ka[k]["art"] in ("amt", "recht"):
+            wer, regel = recall_auswerter.get((nr, text[k[0] : k[1]]), ("", ""))
+            if not wer and ka[k]["art"] in ("amt", "recht") and dateien[0] == "antworten-A.jsonl":
                 wer, regel = "B", "R1: Name ohne Nummer" if ka[k]["art"] == "amt" else "R3: Satz"
+            if not wer and ka[k]["art"] == "amt" and not re.search(r"\d", text[k[0] : k[1]]):
+                # R1 (Codebuch .2): ohne Nummer in der Spanne der Name — wer ihn schrieb, gilt
+                wer = "A" if not re.fullmatch(r"[\d/.]+", str(ka[k]["norm"])) else "B"
+                regel = "R1: Name ohne Nummer"
             assert wer, (nr, k, ka[k], kb[k])
             final[k] = dict(ka[k] if wer == "A" else kb[k])
             entscheide_auswerter.append(
@@ -2821,6 +2832,218 @@ def stichprobe_2(
     )
 
 
+# --------------------------------------------------------------------------------------------
+# Auswertung der Bestätigung (Runde 2, Fassung 2, Codebuch .2) gegen die vorab festgelegten Regeln
+# --------------------------------------------------------------------------------------------
+
+# Ein Unterschied, den der Schlichter nicht entschieden hat (nur Schreibung der Korrektur; für kein
+# Maß gebraucht): nach der Spannenregel des Codebuchs .2 gehört der Langtitel zur Spanne, so auch der
+# Schlichter in seiner Begründung zu 12-2-0001.
+AUSWERTER_2: dict[tuple[str, str], tuple[str, str]] = {
+    ("12-2-0001", "text_korrigiert"): ("B", "Spannenregel .2: der Langtitel gehört zur Spanne"),
+}
+KRITERIUM_P, KRITERIUM_R = 0.95, 0.85
+
+
+def gesetz_teil(norm: object) -> str:
+    """Der Teil des Normwerts vor dem ersten § oder Art. (Rückfallregel der Rechtsgrundlage)."""
+    return re.split(r"\s*(?:§|Art\.)", str(norm), maxsplit=1)[0].strip()
+
+
+def auswertung_2(df: pl.DataFrame, sp2: pl.DataFrame, aemter: dict[str, str]) -> None:
+    texte = dict(zip(df["name"].to_list(), df["text"].to_list(), strict=True))
+    aufgaben: dict[str, dict[str, object]] = {}
+    for x in (KODIERUNG / "aufgaben-2.jsonl").read_text(encoding="utf-8").splitlines():
+        auf = json.loads(x)
+        auf["_text"] = texte[auf["datei"]]
+        aufgaben[auf["aufgabe"]] = auf
+    with (VALIDIERUNG / "stichprobe-2.csv").open(encoding="utf-8") as f:
+        stich = {z["aufgabe"]: z for z in csv.DictReader(f)}
+    lab = endlabels(
+        aufgaben,
+        ("antworten-2-A.jsonl", "antworten-2-B.jsonl", "schlichtung-2.jsonl"),
+        AUSWERTER_2,
+        {},
+    )
+    print(
+        f"\n=== Bestätigung (Runde 2): {len(lab.praezision)} Präzisions-, {len(lab.recall)} Recall-Aufgaben"
+    )
+    print("  Quellen der Endlabels:", dict(sorted(lab.quellen.items())))
+    for f_, pp in sorted(lab.paare.items()):
+        beide = [(a, b) for a, b in pp if a is not None and b is not None]
+        if beide:
+            gleich = sum(a == b for a, b in beide)
+            print(f"  Kodierer A/B {f_:<8} gleich {gleich}/{len(beide)}, α {alpha_nominal(pp):.3f}")
+    ein = lab.quellen["spannen:einig"]
+    print(
+        f"  Recall-Spannen A/B: gemeinsam {ein}, nur einer {lab.quellen['spannen:nur_einer']}, "
+        f"F1 {2 * ein / (2 * ein + lab.quellen['spannen:nur_einer']):.3f}; ohne Fundstelle {len(lab.fehlend)}"
+    )
+    with (VALIDIERUNG / "labels-2.csv").open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(
+            f,
+            fieldnames=["aufgabe", "frage", "kodierer_a", "kodierer_b", "schlichtung", "label"],
+            lineterminator="\n",
+        )
+        w.writeheader()
+        w.writerows(z for z in lab.zeilen if z["frage"] not in ("rolle", "frist"))
+    sha = hashlib.sha256((VALIDIERUNG / "labels-2.csv").read_bytes()).hexdigest()
+    print(f"  geschrieben: labels-2.csv, SHA-256 {sha}")
+
+    je_dok: dict[str, list[dict[str, object]]] = defaultdict(list)
+    for r in sp2.rows(named=True):
+        je_dok[r["name"]].append(r)
+    quote = Counter(z["schicht"] for z in stich.values() if z["typ"] == "praezision")
+    zeilen = []
+    for nr, lb in sorted(lab.praezision.items()):
+        z = stich[nr]
+        kand = [
+            r
+            for r in je_dok[z["datei"]]
+            if r["start"] == int(z["start"]) and r["end"] == int(z["end"]) and r["art"] == z["art"]
+        ]
+        assert kand, f"{nr}: Spanne der Fassung 2 fehlt — Extraktor geändert?"
+        x = kand[0]
+        mild = KIND_ART[str(lb["art"])] == z["art"]
+        streng = mild and lb["grenzen"] == "richtig"
+        zeilen.append(
+            {
+                "aufgabe": nr,
+                "art": z["art"],
+                "schicht": z["schicht"],
+                "gewicht": int(z["schicht_n"]) / quote[z["schicht"]],
+                "kind_x": x["kind"],
+                "norm_x": x["norm"],
+                "kind_l": lb["art"],
+                "norm_l": lb["norm"],
+                "grenzen": lb["grenzen"],
+                "mild": mild,
+                "streng": streng,
+                "norm": streng and x["norm"] == lb["norm"],
+                "aequiv": streng
+                and norm_aequivalent(str(x["kind"]), x["norm"], lb["norm"], aemter),
+                "gesetz": mild and gesetz_teil(x["norm"]) == gesetz_teil(lb["norm"]),
+            }
+        )
+    rec: dict[str, list[dict[str, object]]] = defaultdict(list)
+    for nr, spannen in lab.recall.items():
+        z = stich[nr]
+        xs = je_dok[z["datei"]]
+        for s in spannen:
+            art = KIND_ART[str(s["art"])]
+            s0, e0 = int(str(s["start"])), int(str(s["end"]))
+            gleich = [x for x in xs if x["art"] == art]
+            rec[art].append(
+                {
+                    "aufgabe": nr,
+                    "schicht": z["schicht"],
+                    "gewicht": int(z["schicht_n"]) / RECALL_2[z["schicht"]],
+                    "kind": s["art"],
+                    "streng": any(x["start"] == s0 and x["end"] == e0 for x in gleich),
+                    "mild": any(
+                        int(str(x["start"])) < e0 and s0 < int(str(x["end"])) for x in gleich
+                    ),
+                }
+            )
+
+    def anteil(t: Sequence[dict[str, object]], k: str) -> tuple[float, int, float, float, float]:
+        return gewichtet([(bool(z[k]), float(str(z["gewicht"]))) for z in t])
+
+    def ungewichtet(
+        t: Sequence[dict[str, object]], k: str
+    ) -> tuple[float, int, float, float, float]:
+        return gewichtet([(bool(z[k]), 1.0) for z in t])
+
+    print(
+        "\nPräzision (gewichtet mit schicht_n, Wilson mit n_eff), Recall (ungewichtet, streng), je Art:"
+    )
+    urteil: dict[str, str] = {}
+    for art in PRAEZISION_2:
+        t = [z for z in zeilen if z["art"] == art]
+        st, mi = anteil(t, "streng"), anteil(t, "mild")
+        nm = anteil([z for z in t if z["streng"]], "norm")
+        aq = anteil([z for z in t if z["streng"]], "aequiv")
+        print(f"  {art}")
+        print(f"    Präzision streng {fmt(st)}; mild {fmt(mi)}")
+        print(f"    Normwert gleich {fmt(nm)}; äquivalent {fmt(aq)}")
+        for sch in sorted({str(z["schicht"]) for z in t}):
+            ts = [z for z in t if z["schicht"] == sch]
+            print(
+                f"      Schicht {sch:<18} streng {sum(bool(z['streng']) for z in ts)}/{len(ts)}, "
+                f"mild {sum(bool(z['mild']) for z in ts)}/{len(ts)}"
+            )
+        r = rec.get(art, [])
+        if r:
+            rs, rm = ungewichtet(r, "streng"), ungewichtet(r, "mild")
+            rw = anteil(r, "streng")
+            print(f"    Recall streng {fmt(rs)}; mild {fmt(rm)}; gewichtet (Gegenprobe) {fmt(rw)}")
+            je_kind = Counter(str(z["kind"]) for z in r)
+            print(
+                "    je kind (streng/mild/alle): "
+                + ", ".join(
+                    f"{k} {sum(bool(z['streng']) for z in r if z['kind'] == k)}/"
+                    f"{sum(bool(z['mild']) for z in r if z['kind'] == k)}/{v}"
+                    for k, v in sorted(je_kind.items())
+                )
+            )
+        # Vorab festgelegte Regeln (Messdokument § 5, Stand 2026-11-23 vor der Kodierung)
+        if art in ("3 Betrag", "4 Termin"):
+            neu = [z for z in t if z["schicht"] == "neu"]
+            fehler = sum(not z["streng"] for z in neu)
+            urteil[art] = (
+                f"Korrekturen übernehmen (Schicht neu {len(neu) - fehler}/{len(neu)})"
+                if fehler <= 1
+                else f"zurück auf Fassung 1 (Schicht neu {len(neu) - fehler}/{len(neu)}, mehr als 1 Fehler)"
+            )
+            continue
+        rs_p = ungewichtet(r, "streng")[0] if r else float("nan")
+        if st[0] >= KRITERIUM_P and rs_p >= KRITERIUM_R:
+            urteil[art] = f"bauen mit Fassung 2 (P {st[0]:.3f}, R {rs_p:.3f})"
+        elif art == "2 Haushalt":
+            urteil[art] = f"fällt (P {st[0]:.3f}, R {rs_p:.3f})"
+        elif art == "5 Rechtsgrundlage":
+            rm_p = ungewichtet(r, "mild")[0]
+            gz = anteil([z for z in t if z["mild"]], "gesetz")
+            print(
+                f"    Rückfall nur mild: Präzision mild {mi[0]:.3f}, Recall mild {rm_p:.3f}, Gesetz unter den mild "
+                f"richtigen {fmt(gz)}"
+            )
+            urteil[art] = (
+                f"nur mild (P mild {mi[0]:.3f}, R mild {rm_p:.3f}, Gesetz {gz[0]:.3f})"
+                if mi[0] >= KRITERIUM_P and rm_p >= KRITERIUM_R and gz[0] >= KRITERIUM_P
+                else f"fällt (P {st[0]:.3f}, R {rs_p:.3f}; Rückfall nicht erfüllt)"
+            )
+        elif art == "6 Verwaltungseinheit":
+            kopf = [z for z in t if z["schicht"] == "amt:kopf"]
+            ks = sum(bool(z["streng"]) for z in kopf) / max(1, len(kopf))
+            urteil[art] = (
+                f"nur Kopffeld (Schicht Kopf streng {sum(bool(z['streng']) for z in kopf)}/{len(kopf)})"
+                if ks >= KRITERIUM_P
+                else f"fällt (Schicht Kopf {ks:.3f})"
+            )
+    print("\nUrteil nach den vorab festgelegten Regeln:")
+    for art, u in urteil.items():
+        print(f"  {art}: {u}")
+    fehler_datei = KODIERUNG / "fehler-extraktor-2.jsonl"
+    with fehler_datei.open("w", encoding="utf-8") as f:
+        for z in zeilen:
+            if not z["streng"] or not z["norm"]:
+                auf = aufgaben[str(z["aufgabe"])]
+                f.write(
+                    json.dumps(
+                        {**z, "markierung": auf["markierung"]}, ensure_ascii=False, default=str
+                    )
+                    + "\n"
+                )
+        for art, r in rec.items():
+            for z in r:
+                if not z["streng"]:
+                    f.write(
+                        json.dumps({"recall": True, "art": art, **z}, ensure_ascii=False) + "\n"
+                    )
+    print(f"  Fehlerliste (lokal): {fehler_datei}")
+
+
 def main(argv: Sequence[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
     ap.add_argument("--profil", default="duesseldorf", choices=sorted(PROFILE))
@@ -2836,6 +3059,7 @@ def main(argv: Sequence[str]) -> int:
     ap.add_argument(
         "--stichprobe-2", action="store_true", help="Bestätigungsstichprobe der Fassung 2"
     )
+    ap.add_argument("--auswertung-2", action="store_true", help="Bestätigung der Fassung 2 messen")
     ap.add_argument("--einzelprozess", action="store_true", help="Laufzeit in einem Prozess messen")
     ap.add_argument("--beispiele", default="", help="kind: zufällige Beispiele mit Kontext zeigen")
     args = ap.parse_args(argv)
@@ -2846,7 +3070,9 @@ def main(argv: Sequence[str]) -> int:
         sp = spans_frame(erg)
         meta = metadaten(profil)
         dauer = time.perf_counter() - t0
-        bericht(profil, df, sp, erg, aemter, je_name, meta, ausfuehrlich=i == 0)
+        bericht(
+            profil, df, sp, erg, aemter, je_name, meta, ausfuehrlich=i == 0 and args.fassung == 1
+        )
         if i == 0:
             groesse_ausgabe(sp)
         if args.einzelprozess and i == 0:
@@ -2875,6 +3101,9 @@ def main(argv: Sequence[str]) -> int:
             stichprobe(df, sp, meta)
         if args.auswertung and i == 0:
             auswertung(df, sp, aemter)
+        if args.auswertung_2 and i == 0:
+            assert args.fassung == 2, "--auswertung-2 misst Fassung 2: --fassung 2 angeben"
+            auswertung_2(df, sp, aemter)
         if (args.entwurf or args.stichprobe_2) and i == 0:
             t1 = time.perf_counter()
             andere = 2 if args.fassung == 1 else 1
