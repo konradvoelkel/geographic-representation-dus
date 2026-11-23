@@ -19,6 +19,8 @@ from georep.analysis.topics import profile_stop_words
 from georep.analysis.weights import district_weight, idf_weight
 from georep.crosswalk import largest_remainder
 from georep.http import cache_pattern
+from georep.ml.base import full_name
+from georep.ml.cache import cache_filename
 from georep.prep.bodies import (
     BodyRules,
     organization_key,
@@ -269,4 +271,26 @@ def test_largest_remainder(case: deal.TestCase) -> None:
     },
 )
 def test_is_city_facility(case: deal.TestCase) -> None:
+    case()
+
+
+# Fundament F5: der Name, unter dem ollama ein Modell führt -- mit Schrägstrichen und Doppelpunkten,
+# denn ein Registry-Port ist kein Tag.
+@deal.cases(
+    full_name,
+    count=COUNT,
+    check_types=False,
+    kwargs={"name": st.text(alphabet="ab:/.-0", max_size=12)},
+)
+def test_full_name(case: deal.TestCase) -> None:
+    case()
+
+
+@deal.cases(
+    cache_filename,
+    count=COUNT,
+    check_types=False,
+    kwargs={"model": st.text(alphabet="ab:/.-0_ ä", max_size=12)},
+)
+def test_cache_filename(case: deal.TestCase) -> None:
     case()

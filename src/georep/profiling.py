@@ -26,7 +26,7 @@ SortKey = Literal["cumulative", "tottime"]
 @dataclass(frozen=True)
 class ProfileResult:
     outcome: Outcome
-    path: Path | None  # None: der Schritt lief nicht (Netzschritt ohne ``online``)
+    path: Path | None  # None: der Schritt lief nicht (Netz ohne ``online``, Modell ohne ``models``)
     table: str  # pstats-Tabelle; leer, wenn der Schritt nicht lief
 
 
@@ -36,6 +36,7 @@ def profile_step(
     out_dir: Path,
     *,
     online: bool = False,
+    models: bool = False,
     top: int = 25,
     sort: SortKey = "cumulative",
     today: dt.date | None = None,
@@ -47,7 +48,7 @@ def profile_step(
     profiler = cProfile.Profile()
     profiler.enable()
     try:
-        outcome = run_step(step, settings, force=True, online=online)
+        outcome = run_step(step, settings, force=True, online=online, models=models)
     finally:
         profiler.disable()
     if outcome.status != "ausgeführt":

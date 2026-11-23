@@ -131,6 +131,12 @@ class Layout:
     def http_cache(self) -> Path:
         return self.cache_root / "http.sqlite"
 
+    # Fundament F5: der Modellcache, eine SQLite-Datei je Modell, wie http.sqlite von allen
+    # Profilen geteilt -- derselbe Text gibt mit demselben Modell dasselbe Ergebnis.
+    @property
+    def ml_cache(self) -> Path:
+        return self.cache_root / "ml"
+
     # Eingaben, wie die Quellen sie liefern
     @property
     def results_csv(self) -> Path:

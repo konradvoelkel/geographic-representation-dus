@@ -2574,3 +2574,133 @@ Kantenpräzision 139/150 = 0,927, gewichtet 0,922; Runde 2: 85/100 = 0,850, gewi
 Die übertragenen Vorhaben liegen in eigenen Ordnern `<NN-name>-f4` neben den Ordnern der Messungen, weil deren Messskripte die alten Dateien lesen und ihre Unverändertheit prüfen (Supervisor, dritte Runde). Verworfen: den Leerraum in offenen Antworten ganz zu entfernen, wie es die vorläufigen Auswertungen
 von 11 und 12 taten („66 - Amt" gleich „66-Amt"): das ist eine Entscheidung über die Frage, nicht
 über die Form, und gehört, wenn überhaupt, als Einstellung je Frage ins Codebuch.
+
+## NN. Lokale Modelle über ollama: eine Naht mit Cache, Kennung im Stamp und Schalter (2026-11-23, Fundament F5)
+
+Drei Vorhaben des Plans zur Vorverarbeitung brauchen ein Sprach- oder Einbettungsmodell
+(`docs/plan-vorverarbeitung-2026-11.md`, § 7 und § 11: 18 Einbettungen, 19 Politikfelder, 20
+Kurzfassungen). Fundament F5 legt fest, wie ein Schritt ein Modell benutzt; welches Modell er wofür
+nimmt, entscheidet jedes Vorhaben in seiner Messung.
+
+**Warum lokal.** Plan § 2.8 und Konrads Antwort auf Frage 3: die Dokumente verlassen den Rechner
+nicht, ein Lauf kostet je Dokument nichts, und Modellname und Digest im Stamp machen ihn
+wiederholbar. Ein externer Dienst kommt nur für eine Kalibrierungsstichprobe in Frage (Frage 4),
+und die übernehmen Opus-Agenten. Der Rechner hat eine RTX 4090 mit 24 GB.
+
+**Warum ollama über HTTP und keine Python-Bibliothek.** Der Client in `georep.ml.ollama` spricht
+sechs Endpunkte über `requests`, das ohnehin im Lock steht:
+
+- **Keine neue Abhängigkeit.** Die Bibliothek `ollama` brächte `httpx` und nichts, was diese sechs
+  Endpunkte nicht auch tun. `sentence-transformers` oder `transformers` brächten `torch` mit CUDA
+  (mehrere GB) ins Lock, das CI ohne GPU installieren müsste; `llama-cpp-python` ist ein Kompilat je
+  Rechner. Die Gewichte gehören nicht in die Umgebung des Pakets.
+- **Ein Modell im Speicher für alle.** Der Server hält ein geladenes Modell über Prozesse hinweg
+  (`keep_alive`); zwei Läufe, ein Rauchtest und `georep ml bench` teilen es, und die
+  GPU-Warteschlange des Supervisors (Plan § 5) stellt die Aufträge nur hintereinander. Ein
+  Modell im eigenen Prozess lüde 17 GB je Aufruf von `georep`.
+- **Dieselbe Testnaht wie jede Quelle.** `Transport` und ein Server als Tabelle (`FakeOllama`);
+  kein Test braucht eine GPU, und die Antworten prüft pydantic an der Grenze wie bei OParl.
+- **Der Digest ist eine genaue Kennung.** `/api/tags` nennt den SHA-256 des Modellmanifests; ein
+  `ollama pull` mit neuem Stand ändert ihn, auch wenn der Name bleibt.
+
+Verworfen außerdem: vLLM (ein eigener Server mit eigenem Speicherverwalter, für eine Karte und
+Stapel von Hunderten Dokumenten kein Gewinn, den ollama nicht auch hat) und die OpenAI-kompatible
+Schnittstelle von ollama (`/v1/…`; sie nennt weder Digest noch Fähigkeiten, und die Kennung im
+Stamp braucht beides).
+
+**Wie ein Schritt das Modell bekannt gibt.** `Step` bekommt **ein** Feld `models`: das Modell im
+Schritt als `ModelUse` (`EmbeddingUse`, `GenerationUse`), mit `identity` (Name, Digest,
+Prompt-Version, Schlüssel der Optionen, bei Einbettungen der des Fensters `num_ctx` und
+`truncate`) und `stamp` (dazu `limit`, `open`, `failed` des letzten Laufs). Ist es gesetzt, läuft
+der Schritt nur mit `georep run --models`, wie ein Netzschritt nur mit `--online`, und ohne
+Schalter kommt sein Ergebnis aus einem Paket. Ein Feld statt zweier (`models: bool` und eine
+Kennung daneben), weil zwei Felder zwei falsche Zustände zulassen: ein Modellschritt ohne Kennung
+(ein neues Modell machte ihn nicht veraltet) und eine Kennung ohne Schalter (der Server würde ohne
+`--models` gefragt). Ein Objekt statt eines festen Werts, weil den Digest nur der Server kennt
+(`build_steps`, `georep steps` und jeder Lauf ohne Schalter fragen ihn nie) und weil erst der Lauf
+weiß, was offen blieb. Und dasselbe Objekt geht an `embed_texts` oder `generate_texts`: es bildet
+auch die Prompt-Version im Cache-Schlüssel, so können Kennung im Stamp und Schlüssel im Cache nicht
+auseinanderlaufen. Die Kennung steht lesbar unter `"models"` im Stamp, nicht als Hash in `extra`,
+damit ein Mensch sieht, mit welchem Modell eine Datei entstand; Stamps anderer Schritte bekommen
+den Schlüssel nicht und bleiben gültig. Der Diff in `pipeline.py` ist ein Feld, die Bedingung und
+die Fehlerbehandlung in `run_step` und ein Zusatz in `expected_stamp` und `stamp_mismatch`.
+
+**Nichts aus `[ml]` steht im Settings-Fingerprint.** Was ein Ergebnis bestimmt (Modell, Digest,
+Optionen, Fenster), steht in der Kennung im Stamp des Modellschritts; ein Teillauf (`--limit`, oder
+Eingaben, die ohne Abweisung scheiterten) steht dort als `open` und macht den Schritt nicht aktuell
+(„offen: n Eingaben"). Der Rest ist Ort und Laufzeit. Im globalen Fingerprint ließ jede Änderung an
+`[ml]`, auch ein `--limit`, alle Schritte neu laufen, auch die ohne Modell, und der Merge von F5
+hätte die ganze Kette einmal neu gerechnet; so ändert F5 den Fingerprint nicht. `--limit` ohne
+`--models` und ein negatives `--limit` sind Bedienfehler.
+
+**Was das Review vom 2026-11-23 geändert hat.** Elf Befunde mit Proben des Reviewers, je ein
+Commit: das Fenster des Einbetters in Schlüssel und Kennung (vorher kam ein Vektor mit 64 Token aus
+dem Cache eines mit 512); abgeschnittene Antworten markiert statt als vollständig gecacht (`Reply`,
+Spalte `truncated`, Schema 2); `[ml]` aus dem Fingerprint und Teilläufe als offen; ein Lese-Timeout
+nicht wiederholt; ohne Server eine Probe je Prozess, ein Schritt
+„fehlgeschlagen" statt eines abgebrochenen Laufs, „unbekannt" in `status`, `--dry-run` plant
+weiter; `SQLITE_BUSY` beim gleichzeitigen ersten Öffnen wiederholt; ein abgewiesener Text scheitert
+allein, und der Lauf geht weiter (zehn in Folge brechen ab); `ml status` liest den Cache nur;
+`--limit` geprüft; Doku; und der Server muss auf diesem Rechner laufen (`is_loopback_url`, sonst
+`ml.allow_remote = true`), die Session liest keine Proxys aus der Umgebung.
+
+**Die dritte Runde: abgewiesen ist erledigt, gescheitert ist offen.** Die Nachprüfung fand, dass ab
+zehn dauerhaft abgewiesenen Eingaben jeder weitere Lauf an „zehn Fehlschläge in Folge" scheiterte:
+im nächsten Lauf standen genau sie als einzige fehlende hintereinander. Ein realistischer Auslöser
+ist `ml.embedding.truncate = false`. Darum unterscheidet der Stapellauf jetzt zwei Arten und merkt
+sich beide mit Grund in der Tabelle `failures` des Modellcaches (Schema 3):
+
+- **abgewiesen** (`ModelRejectedError`, 400, 413 oder 422): das Modell nimmt diese Eingabe so nicht.
+  Eine zweite Frage gäbe dieselbe Antwort. Spätere Läufe überspringen sie, sie zählen nicht in die
+  Fehlschläge in Folge, und im Stamp stehen sie als `rejected`, **nicht** als `open`: der Schritt
+  ist aktuell und sagt „aktuell, n Eingaben abgewiesen" (auch in `georep status`). Wer sie erneut
+  fragen will, etwa nach einem größeren Fenster, setzt `ml.retry_rejected` (`--retry-rejected`);
+  dann gilt der Schritt als offen. Verworfen: abgewiesene als `open` zählen. Dann wäre der Schritt
+  nie aktuell, jeder Lauf fragte sie erneut und endete mit Exit 1, obwohl nichts mehr zu tun ist.
+- **gescheitert** (jeder andere `ModelError`: Lese-Timeout, 408, 409, 425, 429 und 5xx nach den
+  Wiederholungen, unbrauchbare Antwort): vielleicht vorübergehend. Er bleibt offen (`open`, `failed`), und spätere
+  Läufe fragen ihn erneut, aber hinter allem Neuen, damit er nicht bei jedem Lauf zuerst `limit`
+  verbraucht.
+
+Ein Lese-Timeout ist seitdem kein `ModelUnreachableError` mehr: die Probe hatte den Server erreicht,
+nur dieser Text dauerte zu lange. `ModelUnreachableError` heißt nur noch „Verbindung abgelehnt" und
+bricht den Lauf ab. `ModelUse.record` summiert die Stapelläufe eines Schritts, `run_step` setzt vor
+jedem Lauf zurück; vorher meldete ein Schritt mit zwei Stapelläufen nach dem zweiten „aktuell",
+obwohl Eingaben des ersten fehlten. `CacheStat` nennt die Datei, aus der es zählt.
+
+**Die vierte Runde: wann ein Lauf anhält.** Zehn Fehlschläge in Folge hielten jeden Lauf an, sobald
+zehn bekannte Fehlschläge ans Ende sortiert hintereinander standen, und die Ausnahme kam, bevor der
+Schritt seine Ausgabe schrieb: neue Dokumente lagen im Cache, nicht in der Ausgabe. Seitdem:
+
+- In die Serie zählen nur Eingaben, die in diesem Lauf zum ersten Mal scheitern.
+- Zehn davon in Folge halten den Stapellauf an, **ohne Ausnahme**: der laufende Stapel wird noch
+  gespeichert, der Rest bleibt offen (`BatchReport.stopped`). Der Schritt schreibt, was er hat, sein
+  Stamp nennt den Rest offen, und `run_step` meldet ihn trotzdem „fehlgeschlagen" (Exit 1), damit
+  ein systematischer Fehler sichtbar bleibt. Verworfen: der Abbruch vor dem Rechnen (zehn
+  Fehlschläge sieht man erst, wenn sie da sind) und die Ausnahme (die Ausgabe hinkte dem Cache
+  hinterher, und jeder Lauf endete gleich).
+- Die Abweisungen der Serie, die den Lauf anhielt, gelten als „gescheitert": zehn Abweisungen in
+  Folge kommen eher von einer falschen Anfrage (einer Option außerhalb des Schlüssels) als von zehn
+  schlechten Texten, und dauerhaft gemerkt blieben sie nach dem Berichtigen liegen.
+- Abweisung heißt nur noch 400, 413, 422; 408, 409, 425 sind vorübergehend wie 429; 401 und 403 sind
+  Konfiguration und brechen den Lauf ab, ohne etwas zu merken (`ModelUnreachableError`).
+- `retry_rejected` steckt in der `ModelUse`; `run_step` setzt es aus den Settings. Vorher war es ein
+  Parameter der Stapelläufe, und ein Schritt nach dem Gerüst gab ihn nicht weiter.
+
+**Cache: SQLite je Modell, nicht Parquet-Scherben.** Ein Eintrag ist (Digest, Prompt-Version,
+SHA-256 der Eingabe) → Wert, und die Eingabe ist, was das Modell sieht. Gemessen am 2026-11-23 auf
+xtraspace, unter Fremdlast (Lastmittel um 90): 50 000 Einbettungen zu 3 KB in Stapeln zu 32
+schreiben 9,0 s, alle Schlüssel lesen 50 ms, alle Werte 1,6 s, die Datei hat 214 MB; 50 000 Texte zu
+512 B mit je einer Transaktion kosten 0,22 ms je Eintrag, gegen Sekunden je Antwort des Modells.
+Mit `WITHOUT ROWID` lagen die Werte im Schlüsselbaum, und dieselben Lesungen kosteten 708 ms und
+4,6 s; darum eine Rowid-Tabelle mit eigenem Schlüsselindex. Parquet-Scherben hätten je Stapel eine
+Datei bedeutet (1 600 bei 50 000 Einträgen) oder ein Umschreiben, beim Nachschlagen das Lesen
+aller Scherben und beim Lesen das Entfernen von Dubletten; SQLite gibt mit der Standardbibliothek
+eine Transaktion je Stapel (atomar, nach einem Abbruch fortsetzbar), Nachschlagen über den
+Primärschlüssel und parallele Leser (WAL). Parquet bleibt das Format der Ausgaben und Pakete: ein
+Schritt liest aus dem Cache und schreibt seine Tabelle. Eine Datei je Modell, damit `georep ml status`
+die Größe je Modell ohne Abfrage kennt und ein ausgedientes Modell mit einer Datei verschwindet.
+
+**Was F5 nicht entscheidet.** Welche Texte ein Vorhaben einbettet (Rohtext aus F1, Abschnitte aus
+11, Zerteilung bei mehr als 512 Token), welche Prompts es schreibt und mit welcher Version, und ob
+ein Ergebnis ins Repo darf (Kurzfassungen nicht, Plan § 10, Frage 6).

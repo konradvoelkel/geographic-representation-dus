@@ -32,6 +32,7 @@ from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, Settings
 
 from georep.contracts import is_district_code, one_threshold
 from georep.errors import GeorepError, SchemaError
+from georep.http import is_loopback_url
 
 LOG_LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
 PROFILE_NAME = re.compile(r"[a-z0-9][a-z0-9-]*")  # ein Ordnername unter data_root, kein Pfad
@@ -1474,6 +1475,57 @@ class Validation(_Strict):
         return None if value in ("", None) else value
 
 
+# --- Fundament F5: Modelle (docs/plan-vorverarbeitung-2026-11.md, § 7)
+class EmbeddingModel(_Strict):
+    """Das Einbettungsmodell auf dem ollama-Server; ``dimension`` prüft jede Antwort."""
+
+    model: str = "nomic-embed-text-v2-moe"
+    dimension: int = Field(default=768, ge=1)
+    num_ctx: int = Field(default=512, ge=0)  # Fenster in Token; 0 = was das Modell mitbringt
+    truncate: bool = True  # längere Texte hinten abschneiden; false: ein Fehler je solchem Text
+
+
+class GenerationModel(_Strict):
+    """Das Sprachmodell und seine Optionen; der Standard ist deterministisch (Temperatur 0, Seed)."""
+
+    model: str = "qwen3.6:27b"
+    temperature: float = Field(default=0.0, ge=0.0)
+    seed: int = 0
+    num_ctx: int = Field(default=8192, ge=1)
+    num_predict: int = Field(default=512, ge=1)
+    think: bool = False
+
+
+class Ml(_Strict):
+    """Der lokale Modellserver: Ort, Laufzeit, Modelle, Optionen. Nichts davon steht im Fingerprint.
+
+    Was ein Ergebnis bestimmt (Modell, Digest, Optionen, Fenster), steht als Kennung im Stamp des
+    Modellschritts, ein Teillauf als offene Eingaben (``ModelUse``, Review F5, N5).
+    """
+
+    base_url: str = Field(default="http://localhost:11434", pattern=r"^https?://")
+    allow_remote: bool = False  # ein Server, der nicht auf diesem Rechner läuft, nur ausdrücklich
+    timeout_s: float = Field(default=300.0, gt=0)
+    retries: int = Field(default=2, ge=0, le=10)
+    backoff_s: float = Field(default=2.0, ge=0)
+    keep_alive: str = "10m"
+    batch_size: int = Field(default=32, ge=1)
+    limit: int = Field(default=0, ge=0)
+    retry_rejected: bool = False  # abgewiesene Eingaben erneut fragen statt überspringen
+    embedding: EmbeddingModel = EmbeddingModel()
+    generation: GenerationModel = GenerationModel()
+
+    @model_validator(mode="after")
+    def _local_unless_allowed(self) -> Ml:
+        """Die Dokumente verlassen den Rechner nicht (Plan § 2.8), es sei denn, jemand sagt es."""
+        if not self.allow_remote and not is_loopback_url(self.base_url):
+            raise ValueError(
+                f"ml.base_url = {self.base_url} zeigt nicht auf diesen Rechner; "
+                "ml.allow_remote = true schaltet einen anderen Server ausdrücklich frei"
+            )
+        return self
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -1523,6 +1575,7 @@ class Settings(BaseSettings):
     classify: Classify = Classify()  # Punkt 45: passender Ausschuss je Dokument
     council: Council = Council()  # Fundament F6: Sitzungen, Beratungen, Personen
     validation: Validation = Validation()  # Fundament F4
+    ml: Ml = Ml()  # Fundament F5: lokale Modelle über ollama
 
     @property
     def base_profile(self) -> str:
@@ -1667,6 +1720,9 @@ class Settings(BaseSettings):
         denn es entscheidet, ob die Seite den Vergleich trägt.
         Option 07: ``bootstrap`` sagt, was kopiert wird, und ``report`` ist Anzeige; kein
         Parquet-Ergebnis hängt an einem der beiden.
+        Fundament F5: ``[ml]`` steht ganz draußen. Was davon ein Ergebnis bestimmt (Modell,
+        Optionen, Fenster), steht als Kennung im Stamp des Modellschritts, und ``limit`` als Zahl
+        der offenen Eingaben; der Rest ist Ort und Laufzeit.
         """
         payload = self.model_dump(
             mode="json",
@@ -1706,6 +1762,10 @@ class Settings(BaseSettings):
                 "period": {"label"},
                 "sources": {"opendata": {"districts_file"}},
                 "crosswalk": {"target_file"},
+                # Fundament F5: nichts aus ``[ml]``. Modell, Digest, Prompt-Version, Optionen und
+                # die offenen Eingaben eines Teillaufs stehen im Stamp des Modellschritts
+                # (``ModelUse``); hier ließen sie jeden Schritt neu laufen (Review 2026-11-23).
+                "ml": True,
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

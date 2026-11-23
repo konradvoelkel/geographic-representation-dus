@@ -309,6 +309,10 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # Schritt ``bodies`` **liest** die Datei nur, und seine eigene Version ist
     # ``prep.bodies.BODIES_SCHEMA_VERSION``.
     "georep.pack.CONSULTATIONS_SCHEMA_VERSION",
+    # Fundament F5: die Version der SQLite-Datei des Modellcaches. Kein Schritt schreibt sie als
+    # Ausgabe; der Cache prüft sie selbst beim Öffnen (``ModelCache._open``), und die Ausgabe
+    # eines Modellschritts trägt die Version ihres eigenen Moduls.
+    "georep.ml.cache.CACHE_SCHEMA_VERSION",
 }
 
 

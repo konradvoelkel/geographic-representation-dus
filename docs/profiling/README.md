@@ -363,3 +363,46 @@ Worktree mit eigener Umgebung gegen dieselbe Baseline 0047 gemessen, zeigte dies
 vier Kernen indexierte (Lastmittel zwischen 4 und 12 bei 19 % Systemzeit). Die verfälschten Läufe
 sind aus `.benchmarks/` entfernt, Baseline bleibt 0047; die Regel steht in `CLAUDE.md` unter
 „Arbeitsweise".
+
+## Lokale Modelle auf der RTX 4090 (2026-11-23, Fundament F5)
+
+`uv run georep ml bench <modell> --n 20` an denselben 20 Dokumenten der Hauptperiode (Stichprobe
+mit Seed 0 aus den 19 033 Dokumenten mit Text, nach ID geordnet), ollama 0.24.0, Optionen aus
+`[ml.generation]` (Temperatur 0, Seed 0, `num_ctx` 8192, `think` aus), bei den Generatoren
+höchstens 120 Token Antwort und der Zwei-Satz-Prompt aus `georep.ml.commands`. Gelesen wird der
+Korpustext (kleingeschrieben, ohne Umbrüche, ab dem Marker), je höchstens 8000 Zeichen; die
+Stichprobe hat im Mittel 1505 Zeichen, der Korpus 2297. „je Dokument" ist die Wanduhr um einen
+Aufruf, ohne das Laden, das der Aufruf zum Aufwärmen trägt. An diesem Abend lief ein anderes
+Projekt auf dem Rechner; das Lastmittel (eine Minute) steht neben jeder Zeile.
+
+| Modell | Last Anfang → Ende | Laden | je Dokument Mittel / Median | Eingabe | Ausgabe | 19 108 Dokumente |
+|---|---|---|---|---|---|---|
+| `nomic-embed-text-v2-moe` (F16, 958 MB) einzeln | 8,6 → 8,7 | 2,6 s | 0,20 s / 0,17 s | 3 901 Token/s | – | 1,1 h |
+| dasselbe, alle 20 in einem Aufruf | 8,7 | – | 0,014 s | – | – | 4,5 min |
+| `qwen3.6:27b` (Q4_K_M, 17,4 GB) | 9,7 → 28,5 | 11,9 s | 3,94 s / 3,94 s | 1 261 Token/s | 32,3 Token/s | 20,9 h |
+| `qwen3.6:27b`, Wiederholung | 13,6 → 25,1 | 9,3 s | 3,82 s / 3,88 s | 1 354 Token/s | 33,2 Token/s | 20,3 h |
+| `gemma4` (8 B, Q4_K_M, 9,6 GB) | 16,8 → 13,6 | 10,0 s | 1,06 s / 1,04 s | 11 080 Token/s | 154,6 Token/s | 5,6 h |
+
+Was daraus folgt:
+
+- **Einbettungen sind billig, wenn sie im Stapel laufen.** Einzeln kostet ein Aufruf 0,17 s, fast
+  alles HTTP und Verwaltung; im Stapel von 20 sind es 0,014 s je Dokument, die Hauptperiode in rund
+  fünf Minuten. Aber 5 der 20 Dokumente stießen an die 512 Token des Modells und wurden hinten
+  abgeschnitten (ab rund 2 000 Zeichen); wer ganze Dokumente einbetten will, zerteilt sie, und die
+  Rechnung wächst mit der Zahl der Stücke (Vorhaben 18).
+- **Ein 27-B-Modell braucht für die Hauptperiode eine knappe Nacht je Durchgang.** Die Zeit ist fast
+  ganz Ausgabe: rund 93 Token zu 33 Token/s sind 2,8 s, die Eingabe von rund 450 Token 0,3 s. Längere
+  Dokumente verschieben die Hochrechnung darum wenig (der Korpus ist im Mittel um die Hälfte länger
+  als die Stichprobe), längere Antworten verschieben sie im selben Verhältnis. Der Rauchtest des
+  Supervisors maß 13 Token/s Ausgabe; der Unterschied ist nicht geklärt (Denkspur, Last, Länge der
+  Antwort sind Kandidaten), die Zahl hier ist zweimal gemessen.
+- **gemma4 ist rund 3,6-mal so schnell** (5,6 h statt 20,3 h) und stieß zweimal an die 120 Token, qwen
+  nie; ob die Antworten taugen, misst Vorhaben 20, nicht dieser Durchsatztest.
+- **Wiederholbar**: beide qwen-Läufe gaben je Dokument dieselbe Zahl Ausgabetoken und auf das erste
+  Dokument denselben Text — Temperatur 0 und fester Seed tragen auf diesem Rechner. Die
+  Fremdlast verschob die Sekunden um 3 %.
+- **Grafikspeicher**: `qwen3.6:27b` belegt mit `num_ctx = 8192` laut `/api/ps` 22,9 GB, `gemma4`
+  10,8 GB. Neben qwen passt das Einbettungsmodell nicht; ollama verdrängte es, und beim Wechsel des
+  Modells lädt es neu (9 bis 12 s). Die GPU-Warteschlange (Plan § 5) stellt darum Einbettung und
+  27-B-Modell hintereinander, nicht nebeneinander; gemma4 und Einbettung passen rechnerisch
+  zusammen (rund 12 GB), gemessen ist das nicht.

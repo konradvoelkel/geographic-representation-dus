@@ -52,7 +52,7 @@ from georep.crosswalk import (
     district_weights,
     transfer_counts,
 )
-from georep.errors import GeorepError, MissingInputError, SchemaError
+from georep.errors import GeorepError, MissingInputError, ModelError, SchemaError
 from georep.geo import (
     Area,
     PrecinctIndex,
@@ -64,6 +64,7 @@ from georep.geo import (
 from georep.http import Transport
 from georep.io import digest, write_bytes, write_json, write_parquet
 from georep.layout import Layout
+from georep.ml.base import ModelStamp
 from georep.prep.bodies import (
     BODIES_SCHEMA_VERSION,
     CONSULTATION,
@@ -140,7 +141,7 @@ from georep.sources.pdfs import PdfStore
 from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_query
 from georep.stores import PaperStore, TextStore, UpsertReport
 
-Status = Literal["ausgeführt", "übersprungen", "geplant"]
+Status = Literal["ausgeführt", "übersprungen", "geplant", "fehlgeschlagen"]
 PARTIES_SCHEMA = 2  # Option 04, Punkt 46: drei Spalten relativ zum Mittel aller Parteien
 METRICS_SCHEMA = 1  # Punkt 46: Schema-Version von wahlbezirke_kennzahlen.parquet
 
@@ -166,6 +167,13 @@ class Step:
     # Schritt ``report`` füllt das Feld (``report.build.report_fingerprint``); für jeden anderen
     # bleibt es leer, und ein alter Stamp ohne das Feld bleibt damit gültig.
     extra: str = ""
+    # Fundament F5: ein Schritt mit lokalem Modell läuft nur mit ``--models``, wie ein Netzschritt
+    # nur mit ``--online``; ohne Schalter kommt sein Ergebnis aus einem Paket. Der Wert ist das
+    # Modell im Schritt (``georep.ml.base.ModelUse``): seine Kennung (Name, Digest, Prompt-Version,
+    # Optionen) wird erst gefragt, wenn der Schritt laufen darf, denn den Digest kennt nur der
+    # Server. Sie steht lesbar im Stamp samt den offenen Eingaben des Laufs; eine andere Kennung
+    # oder ein Teillauf macht den Schritt veraltet.
+    models: ModelStamp | None = None
 
     @property
     def stamp_path(self) -> Path:
@@ -202,7 +210,7 @@ def expected_stamp(step: Step, settings: Settings) -> dict[str, object]:
         "code": __version__,
         "inputs": input_digests(step),
         "outputs": [p.name for p in step.outputs],
-    }
+    } | ({"models": step.models.stamp()} if step.models is not None else {})
 
 
 def freshness(step: Step, settings: Settings) -> tuple[bool, str]:
@@ -226,7 +234,12 @@ def freshness(step: Step, settings: Settings) -> tuple[bool, str]:
     except ValueError:
         return False, "Stamp unlesbar"
     reason = stamp_mismatch(stamped, step, settings)
-    return (True, "aktuell") if reason is None else (False, reason)
+    if reason is not None:
+        return False, reason
+    # F5: ein Modellschritt mit abgewiesenen Eingaben ist aktuell, sagt aber, wie viele es sind.
+    found = stamped.get("models")
+    rejected = found.get("rejected") if isinstance(found, dict) else 0
+    return True, f"aktuell, {rejected} Eingaben abgewiesen" if rejected else "aktuell"
 
 
 def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -> str | None:
@@ -245,6 +258,19 @@ def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -
         return (
             "Regeln des Abrufs geändert" if step.network else "Paketdateien oder Anzeige geändert"
         )
+    # F5: nur ein Schritt mit Modell hat den Schlüssel; jeder andere Stamp bleibt gültig. Ein
+    # Teillauf (``limit``) ist nicht aktuell, auch wenn Modell und Prompt gleich blieben.
+    if step.models is not None:
+        found = stamped.get("models")
+        recorded = found if isinstance(found, dict) else {}
+        identity = step.models.identity()
+        if {key: recorded.get(key) for key in identity} != identity:
+            return "Modell oder Prompt geändert"
+        if recorded.get("open"):
+            failed = f", davon {recorded['failed']} gescheitert" if recorded.get("failed") else ""
+            return f"offen: {recorded['open']} Eingaben{failed}"
+        if recorded.get("rejected") and settings.ml.retry_rejected:
+            return f"{recorded['rejected']} abgewiesene Eingaben erneut versuchen"
     if stamped.get("code") != __version__:
         return f"Code-Version {stamped.get('code')} -> {__version__}"
     stamped_inputs = stamped.get("inputs")
@@ -262,9 +288,21 @@ def run_step(
     force: bool = False,
     dry_run: bool = False,
     online: bool = False,
+    models: bool = False,
 ) -> Outcome:
     if step.network and not online:
         return Outcome(step.name, "übersprungen", "Netz aus; `--online` oder `georep fetch`")
+    if step.models is not None:
+        if not models:
+            return Outcome(step.name, "übersprungen", "Modelle aus; `--models`")
+        # F5: die Kennung braucht den Server (Digest). Fehlt er, scheitert der Schritt, nicht
+        # der Lauf, und ein Trockenlauf plant ihn trotzdem (Review 2026-11-23, Befund 5).
+        try:
+            step.models.identity()
+        except ModelError as error:
+            if dry_run:
+                return Outcome(step.name, "geplant", f"Frische unbekannt: {error}")
+            return Outcome(step.name, "fehlgeschlagen", str(error))
     fresh, reason = freshness(step, settings)
     if fresh and not force:
         return Outcome(step.name, "übersprungen", reason)
@@ -280,12 +318,24 @@ def run_step(
             "Fehlt der Korpus oder die Rohdaten, hilft `georep bootstrap`."
         )
     started = time.perf_counter()
-    summary = step.run()
+    if step.models is not None:
+        # F5: die offenen Eingaben gelten je Lauf und summieren sich in ihm; der Schalter für
+        # abgewiesene Eingaben kommt aus den Settings dieses Laufs in die ModelUse.
+        step.models.reset(retry_rejected=settings.ml.retry_rejected)
+    try:
+        summary = step.run()
+    except ModelError as error:
+        if step.models is None:
+            raise
+        return Outcome(step.name, "fehlgeschlagen", str(error), time.perf_counter() - started)
     stamp = expected_stamp(step, settings) | {"written": dt.datetime.now(dt.UTC).isoformat()}
     write_json(step.stamp_path, stamp)
-    outcome = Outcome(
-        step.name, "ausgeführt", f"{reason}; {summary}", time.perf_counter() - started
-    )
+    # F5: hielt ein Stapellauf nach zehn neuen Fehlschlägen in Folge an, ist geschrieben, was er
+    # hatte, und der Stamp nennt den Rest offen; der Schritt scheitert trotzdem sichtbar.
+    recorded = stamp.get("models")
+    stopped = recorded.get("stopped") if isinstance(recorded, dict) else ""
+    status: Status = "fehlgeschlagen" if stopped else "ausgeführt"
+    outcome = Outcome(step.name, status, f"{reason}; {summary}", time.perf_counter() - started)
     return outcome
 
 
@@ -308,9 +358,10 @@ def run_pipeline(
     force: bool = False,
     dry_run: bool = False,
     online: bool = False,
+    models: bool = False,
 ) -> list[Outcome]:
     return [
-        run_step(s, settings, force=force, dry_run=dry_run, online=online)
+        run_step(s, settings, force=force, dry_run=dry_run, online=online, models=models)
         for s in select_steps(steps, names)
     ]
 

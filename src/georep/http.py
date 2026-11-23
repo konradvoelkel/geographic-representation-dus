@@ -9,6 +9,7 @@ kommen aber per Redirect von https.
 
 from __future__ import annotations
 
+import ipaddress
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
@@ -78,6 +79,26 @@ def cache_pattern(endpoint: str) -> str:
     """requests-cache vergleicht Muster ohne Schema: ``host/pfad*``."""
     parts = urlsplit(endpoint)
     return f"{parts.netloc}{parts.path}*"
+
+
+def is_loopback_url(url: str) -> bool:
+    """Zeigt ``url`` auf diesen Rechner: ``localhost`` oder eine Loopback-Adresse (127/8, ::1)?
+
+    Fundament F5: der Modellserver darf nur hier laufen, damit die Dokumente den Rechner nicht
+    verlassen; ``localhost.example.com`` ist ein fremder Name, kein Loopback.
+    """
+    try:
+        host = urlsplit(url).hostname
+    except ValueError:
+        return False
+    if host is None:
+        return False
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 @contextmanager

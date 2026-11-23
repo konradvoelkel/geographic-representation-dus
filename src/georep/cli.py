@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies|validate``.
+"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies|validate|ml``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
@@ -19,17 +19,18 @@ from georep import __version__
 from georep.analysis.regression import regress
 from georep.bootstrap import bootstrap_from_settings
 from georep.contracts import configure as configure_contracts
-from georep.errors import GeorepError, MissingInputError
+from georep.errors import GeorepError, MissingInputError, ModelError
 from georep.export import export_csv
 from georep.layout import Layout
 from georep.learn import learn_bodies
+from georep.ml import commands as ml_commands
 from georep.pack import pack, pack_consultations, pack_texts
-from georep.pipeline import build_steps, freshness, run_pipeline, select_steps
+from georep.pipeline import Outcome, build_steps, freshness, run_step, select_steps
 from georep.profiling import profile_step
 from georep.report.build import current_commit
 from georep.report.model import sensitivity_rows
 from georep.report.publish import publish_sites
-from georep.settings import Settings, available_profiles, load_settings, settings_files
+from georep.settings import Ml, Settings, available_profiles, load_settings, settings_files
 from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextStore
 from georep.validation.command import add_parser as add_validate_parser
@@ -39,6 +40,17 @@ from georep.validation.command import run as run_validate
 def _setup_logging(level: str) -> None:
     logger.remove()
     logger.add(sys.stderr, level=level, format="<level>{level: <8}</level> {message}")
+
+
+def _non_negative(text: str) -> int:
+    """``--limit`` als Zahl ab 0; eine negative Grenze ist ein Bedienfehler (Review 2026-11-23)."""
+    try:
+        value = int(text)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(f"keine ganze Zahl: {text}") from error
+    if value < 0:
+        raise argparse.ArgumentTypeError(f"muss nicht negativ sein: {value}")
+    return value
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -58,6 +70,20 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--force", action="store_true", help="auch aktuelle Schritte ausführen")
     run.add_argument("--dry-run", action="store_true", help="nur zeigen, was liefe")
     run.add_argument("--online", action="store_true", help="Netzschritte mitlaufen lassen")
+    # Fundament F5: Schritte mit lokalem Modell (ollama) laufen nur mit diesem Schalter
+    run.add_argument(
+        "--models", action="store_true", help="Schritte mit lokalem Modell mitlaufen lassen"
+    )
+    run.add_argument(
+        "--retry-rejected",
+        action="store_true",
+        help="mit --models: Eingaben, die das Modell abwies, erneut fragen (ml.retry_rejected)",
+    )
+    run.add_argument(
+        "--limit",
+        type=_non_negative,
+        help="mit --models: höchstens so viele neue Eingaben je Stapellauf (ml.limit)",
+    )
 
     fetch = sub.add_parser(
         "fetch",
@@ -158,7 +184,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--sort", choices=["cumulative", "tottime"], default="cumulative", help="Sortierung"
     )
     prof.add_argument("--online", action="store_true", help="auch Netzschritte profilieren")
+    prof.add_argument("--models", action="store_true", help="auch Modellschritte profilieren")
     add_validate_parser(sub)  # Fundament F4
+    ml_commands.add_parser(sub)  # Fundament F5: `georep ml status|bench`
     return parser
 
 
@@ -180,12 +208,37 @@ def _with_fetch_limits(settings: Settings, limit: int | None, max_pages: int | N
     return settings.model_copy(update={"sources": sources})
 
 
+def _with_model_limit(settings: Settings, limit: int) -> Settings:
+    """``--limit`` eines Modelllaufs als ``ml.limit``, geprüft wie jeder Wert der Settings.
+
+    ``model_copy`` allein prüft nicht (Review 2026-11-23, Befund 9); ``model_validate`` schon. Im
+    Fingerprint steht es nicht: ein Teillauf zeigt sich an den offenen Eingaben im Stamp.
+    """
+    ml = Ml.model_validate(settings.ml.model_dump() | {"limit": limit})
+    return settings.model_copy(update={"ml": ml})
+
+
 def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
+    fetching = args.command == "fetch"
+    models = getattr(args, "models", False)
+    if not fetching and args.limit is not None and not models:
+        # Ohne --models begrenzte --limit nichts; ein stiller No-op wäre ein Bedienfehler.
+        print("Fehler: --limit gilt nur mit --models (bei `fetch`: PDFs)", file=sys.stderr)
+        return 2
+    retry = getattr(args, "retry_rejected", False)
+    if retry and not models:
+        print("Fehler: --retry-rejected gilt nur mit --models", file=sys.stderr)
+        return 2
     layout.ensure_dirs()
     PdfStore(layout.pdf_dir).ensure()
-    fetching = args.command == "fetch"
     if fetching:
         settings = _with_fetch_limits(settings, args.limit, args.max_pages)
+    elif args.limit is not None:
+        settings = _with_model_limit(settings, args.limit)
+    if retry:
+        settings = settings.model_copy(
+            update={"ml": settings.ml.model_copy(update={"retry_rejected": True})}
+        )
     steps = build_steps(settings, layout)
     # `fetch` ohne Namen heißt: alle Netzschritte, dazu die beiden Offline-Schritte, ohne die sie
     # nicht laufen (`shapes` liefert die Flächen für streets_osm und pois_wiki) oder deren
@@ -193,27 +246,31 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
     default_names = (
         [s.name for s in steps if s.network or s.name in ("shapes", "texts")] if fetching else None
     )
-    outcomes = run_pipeline(
-        steps,
-        settings,
-        args.steps or default_names,
-        force=args.force,
-        dry_run=getattr(args, "dry_run", False),
-        online=fetching or args.online,
-    )
-    for outcome in outcomes:
-        print(outcome.line())
+    # Je Schritt eine Zeile, sobald er fertig ist: bricht ein späterer Schritt mit einem
+    # Domänenfehler ab, stehen die Zeilen davor schon da (F5, Review 2026-11-23, Befund 5).
+    outcomes: list[Outcome] = []
+    for step in select_steps(steps, args.steps or default_names):
+        outcome = run_step(
+            step,
+            settings,
+            force=args.force,
+            dry_run=getattr(args, "dry_run", False),
+            online=fetching or args.online,
+            models=models,
+        )
+        print(outcome.line(), flush=True)
+        outcomes.append(outcome)
     counts = {
         s: sum(1 for o in outcomes if o.status == s)
-        for s in ("ausgeführt", "übersprungen", "geplant")
+        for s in ("ausgeführt", "übersprungen", "geplant", "fehlgeschlagen")
     }
     print(", ".join(f"{n} {s}" for s, n in counts.items() if n))
-    return 0
+    return 1 if counts["fehlgeschlagen"] else 0
 
 
 def _cmd_steps(settings: Settings, layout: Layout) -> int:
     for step in build_steps(settings, layout):
-        tag = " [Netz]" if step.network else ""
+        tag = " [Netz]" if step.network else " [Modell]" if step.models is not None else ""
         print(f"{step.name:<12} <- {', '.join(p.name for p in step.inputs) or '(nichts)'}{tag}")
         print(f"{'':<12} -> {', '.join(p.name for p in step.outputs)}")
     return 0
@@ -252,9 +309,15 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
     )
     print(f"Stores:     {papers} Paper, {pdfs} PDFs, {texts} Texte; Korpus: {corpus} Dokumente")
     for step in build_steps(settings, layout):
-        fresh, reason = freshness(step, settings)
-        tag = " [Netz]" if step.network else ""
-        print(f"{step.name:<12} {'aktuell' if fresh else 'offen':<8} {reason}{tag}")
+        try:
+            fresh, reason = freshness(step, settings)
+            state = "aktuell" if fresh else "offen"
+        except ModelError as error:
+            # F5: ob ein Modellschritt aktuell ist, weiß nur der Server (Digest). Fehlt er, ist
+            # die Frische unbekannt, nicht offen (Review 2026-11-23, Befund 5).
+            state, reason = "unbekannt", str(error)
+        tag = " [Netz]" if step.network else " [Modell]" if step.models is not None else ""
+        print(f"{step.name:<12} {state:<8} {reason}{tag}")
     return 0
 
 
@@ -367,10 +430,18 @@ def _cmd_profile(args: argparse.Namespace, settings: Settings, layout: Layout) -
     layout.ensure_dirs()
     PdfStore(layout.pdf_dir).ensure()
     steps = build_steps(settings, layout)
-    names = args.steps or [s.name for s in steps if not s.network]
+    names = args.steps or [
+        s.name for s in steps if not s.network and (s.models is None or args.models)
+    ]
     for step in select_steps(steps, names):
         result = profile_step(
-            step, settings, args.out, online=args.online, top=args.top, sort=args.sort
+            step,
+            settings,
+            args.out,
+            online=args.online,
+            models=args.models,
+            top=args.top,
+            sort=args.sort,
         )
         print(result.outcome.line())
         if result.path is not None:
@@ -466,6 +537,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _cmd_profile(args, settings, layout)
         if args.command == "validate":
             return run_validate(args, settings, layout)  # Fundament F4
+        if args.command == "ml":
+            return ml_commands.run(args, settings, layout)  # Fundament F5
     except (GeorepError, FileNotFoundError) as error:
         print(f"Fehler: {error}", file=sys.stderr)
         return 1

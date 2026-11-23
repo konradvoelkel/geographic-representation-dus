@@ -35,3 +35,26 @@ class FetchError(GeorepError):
 
 class NetworkError(GeorepError):
     """Eine Quelle war nicht erreichbar oder antwortete nach allen Wiederholungen mit einem Fehlerstatus."""
+
+
+class ModelError(GeorepError):
+    """Ein lokales Modell war nicht erreichbar, fehlt auf dem Server oder antwortete unbrauchbar (F5)."""
+
+
+class ModelRejectedError(ModelError):
+    """Der Modellserver wies diese Eingabe ab (4xx, etwa ein Text über dem Fenster ohne ``truncate``).
+
+    Eine Unterklasse, weil der Stapellauf sich die Abweisung mit Grund merkt und die Eingabe in
+    späteren Läufen überspringt (Review F5, dritte Runde, N1); ein fehlendes Modell (404) ist es nicht.
+    """
+
+
+class ModelUnreachableError(ModelError):
+    """Der Modellserver ist für diesen Lauf nicht zu gebrauchen: er nahm die Verbindung nicht an
+    oder verweigerte den Zugriff (401, 403). Beides liegt nicht am Text; der Lauf bricht ab.
+
+    Ein Lese-Timeout gehört nicht hierher: dann lief der Server, nur dieser Text dauerte zu lange.
+
+    Eine Unterklasse, weil der Stapellauf daran unterscheidet: ein abgewiesener Text ist ein
+    Fehlschlag dieses Texts, ein fehlender Server bricht den Lauf ab (Review 2026-11-23).
+    """
