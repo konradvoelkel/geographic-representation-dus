@@ -184,3 +184,23 @@ def is_district_code(code: str, district_body: str) -> bool:
         return False
     number = code[len(district_body) :]
     return bool(number) and number.isascii() and number.isdigit() and int(number) >= 1
+
+
+# --- Fundament F4: Validierung (georep.validation, docs/validierung.md). Die Maße rechnen auf
+# Labels als Strings; diese drei Prädikate halten ihre Eingaben und Ausgaben zusammen.
+def labels_known(values: Iterable[str], labels: Sequence[str]) -> bool:
+    """Jeder Wert ist eines der Labels: ein Kodierer vergibt nur, was das Codebuch kennt."""
+    return set(values) <= set(labels)
+
+
+def proportion_or_none(result: float | None) -> bool:
+    """Ein Anteil in [0, 1], oder ``None`` für „nicht definiert" (keine Einheit, nichts zu teilen)."""
+    return result is None or 0.0 <= result <= 1.0
+
+
+def is_number(text: str) -> bool:
+    """Der Text ist eine endliche Zahl, wie Python sie liest: eine Stufe der Intervallskala."""
+    try:
+        return math.isfinite(float(text))
+    except ValueError:
+        return False

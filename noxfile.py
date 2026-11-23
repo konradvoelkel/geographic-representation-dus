@@ -141,6 +141,15 @@ VERIFY_TARGETS = [
     # Nicht probiert, weil der Typ es ausschließt: alles mit ``pl.DataFrame``, ``Path``,
     # ``Traversable`` oder shapely-Geometrie in der Signatur (docs/architecture.md, „Verträge").
     "tests.property.oracle_matcher.oracle_extract",
+    # --- Fundament F4 (2026-11-23): die Maße der Validierung, reines Python. Je einzeln geprüft,
+    # 22 bis 27 s, kein Gegenbeispiel. Nicht dabei: ``krippendorff_alpha`` -- crosshair meldet
+    # „Unable to meet precondition" (die Vorbedingung liest Kategorien als Zahlen), prüft also
+    # nichts; seine Eigenschaften stehen in tests/property/test_validation_props.py.
+    "georep.validation.measures.wilson_interval",
+    "georep.validation.measures.agreement",
+    "georep.validation.measures.cohen_kappa",
+    "georep.validation.measures.classify_scores",
+    "georep.validation.measures.ndcg_at_k",
 ]
 
 
