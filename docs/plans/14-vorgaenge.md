@@ -575,6 +575,24 @@ Beschlusskontrollen, Grundsatzbeschluss angewandt oder nur zitiert, Anfragen zum
 Änderung über förmliche Änderungsdokumente hinaus); ihre Vorschläge liegen lokal unter
 `messdaten/kodierung/14-vorgaenge/` (`rueckmeldung-A.md`, `rueckmeldung-B.md`, `schlichtung.jsonl`).
 
+### 4.2 Ergebnis der Bestätigungsstichprobe (2026-11-23, Supervisor)
+
+Stichprobe 2 (100 starke Kanten nach Regelfassung .2, Seed `14-2`, ohne Überschneidung mit den 150
+alten), kodiert nach Codebuch .2 von zwei neuen Kodier-Agenten, sechs Uneinigkeiten geschlichtet von
+einem dritten. Labels: `validierung/14-vorgaenge/labels-2.csv`. Übereinstimmung: `nummer_gemeint`
+100/100 (α 1,000), `selbe_sache` 98/100 (α 0,922), `beziehung` 94/100 (α 0,923).
+
+**Kantenpräzision der Fassung .2: 85 / 100 = 0,850** (Wilson 0,767–0,907), mit den Schichtgrößen
+gewichtet **0,840**. Das vorab festgelegte Kriterium (≥ 0,95, ungewichtet und gewichtet) ist
+**verfehlt**; die Entwurfsschätzung von 0,985 an den alten Labels hat die Präzision deutlich
+überschätzt. Je Schicht: Umsetzung 18/18, Änderung 10/10, Kontrolle 6/6, Nachtrag 3/3, Bezug mit
+Titel 4/5, Mönchengladbach 10/12, Nachfrage 8/10, Antwort 6/8, periodenübergreifend 6/8,
+Fortsetzung 4/6, **Bezug nur Text 10/14**.
+
+Nach § 5 (Frage 9.16) gilt damit **ohne weitere Runde die Rückfallregel**: stark sind nur Kanten aus
+Titel, Anlage, Nachtragsnummer und Sammelbericht. Ihre Präzision an den Labels beider Stichproben
+steht in § 5.
+
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
 
 **Nachtrag 2026-11-23 (Supervisor): Urteil umbauen.** Die Kodierung (§ 4.1) ergibt eine
