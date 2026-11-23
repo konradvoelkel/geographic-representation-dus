@@ -87,7 +87,7 @@ window = 400                     # bei unit = "span": Zeichen vor und hinter der
 title = true
 spans = ""                       # Spannen nach F3 (id, start, end, kind) zum Hervorheben
 span_kinds = []
-context = []                     # weitere Spalten der Grundgesamtheit im Auftrag; nie die Ausgabe des Verfahrens
+context = []                     # weitere Spalten im Auftrag (und in stichprobe.csv): kurze Werte, nie die Ausgabe des Verfahrens, nie Ratstext
 
 [score]
 positive = ""                    # Pflicht bei scale = "binary": das Label, das als Treffer zählt

@@ -104,7 +104,8 @@ class TextRules(_Strict):
     spans: str = ""  # Spannen nach F3 als Parquet relativ zum Profilordner; leer = keine
     span_kinds: list[str] = []  # nur Spannen dieser Arten (kind); leer = alle
     # Spalten der Grundgesamtheit, die der Auftrag zeigt. Nie die Ausgabe des geprüften
-    # Verfahrens: ein Kodierer, der sie sieht, misst Zustimmung, nicht Güte.
+    # Verfahrens: ein Kodierer, der sie sieht, misst Zustimmung, nicht Güte. Sie stehen auch in
+    # stichprobe.csv im Repo, darum nur kurze Werte (ein Wahlbezirk), nie Text aus Dokumenten.
     context: list[str] = []
 
 
