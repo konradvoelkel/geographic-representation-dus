@@ -142,6 +142,9 @@ VERIFY_TARGETS = [
     # seiner Vorbedingung -- das war der erste, echte Teil desselben Befunds.
     # Nicht probiert, weil der Typ es ausschließt: alles mit ``pl.DataFrame``, ``Path``,
     # ``Traversable`` oder shapely-Geometrie in der Signatur (docs/architecture.md, „Verträge").
+    # Fundament F1: die beiden reinen Funktionen des Rohtexts, 43 s zusammen (2026-11-23, Exit 0)
+    "georep.prep.raw_texts.raw_from_pages",
+    "georep.prep.raw_texts.flatten",
     "tests.property.oracle_matcher.oracle_extract",
     # --- Fundament F4 (2026-11-23): die Maße der Validierung, reines Python. Je einzeln geprüft,
     # 22 bis 27 s, kein Gegenbeispiel. Nicht dabei: ``krippendorff_alpha`` -- crosshair meldet
