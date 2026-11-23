@@ -29,7 +29,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `schema` | die Schema-Versionen der zwei Modellausgaben (Themen, passender Ausschuss) -- importfrei, damit `build_steps` sie ohne scikit-learn kennt (Punkt 45) |
 | `io` | atomare Schreibvorgänge (Temporärdatei, fsync, `os.replace`), JSON, Parquet mit `schema_version` in den Metadaten, SHA-256 (`digest`) |
 | `http` | Session mit Timeout, Retry mit Backoff, User-Agent, requests-cache je Quelle; `Transport`-Protokoll als Testnaht; `network_errors` wandelt requests-Fehler in `NetworkError`; `is_loopback_url` sagt, ob eine Adresse auf diesen Rechner zeigt (der Modellserver, Fundament F5) |
-| `errors` | Domänenfehler: `MissingInputError`, `EmptyResultError`, `SchemaError`, `CorruptPdfError`, `FetchError`, `NetworkError`, `ModelError` (Fundament F5: Modell fehlt, Antwort unbrauchbar oder nicht in `ml.timeout_s`) mit den Unterklassen `ModelRejectedError` (der Server wies diese Eingabe ab) und `ModelUnreachableError` (der Server nahm die Verbindung nicht an) |
+| `errors` | Domänenfehler: `MissingInputError`, `EmptyResultError`, `SchemaError`, `CorruptPdfError`, `FetchError`, `NetworkError`, `ModelError` (Fundament F5: Modell fehlt, Antwort unbrauchbar oder nicht in `ml.timeout_s`) mit den Unterklassen `ModelRejectedError` (der Server wies diese Eingabe ab) und `ModelUnreachableError` (der Server nahm die Verbindung nicht an oder verweigerte den Zugriff) |
 | `oparl` | OParl 1.1 als pydantic-Vertrag (`OparlPaper` mit den drei Urheberfeldern und `consultation_organizations`, `OparlFile`, `OparlOrganization`, `PaperPage`, `OrganizationPage`), echte Antworten als Fixtures; Fundament F6: `OparlMeeting` mit Tagesordnung, `OparlAgendaItem`, `OparlConsultation`, `OparlPerson` (ohne Kontaktdaten, `PERSON_PRIVATE_KEYS`), `OparlMembership`, gemeinsame Basis `OparlObject` und der Umschlag `ListPage` für jede Liste; `OparlPaper.consultations` liest die eingebetteten Beratungen typisiert |
 | `council` | Fundament F6: die Netzschritte `meetings`, `consultations`, `persons` (`run_*`), ihre Dateien (`council_files`), ein `JsonlStore` je Objektart (letzte Zeile gewinnt, sortiert und atomar gespeichert) und die Fortsetzung über Teildateien und Fortschritt; Runbook `docs/runbook-sitzungen.md` |
 | `records` | `PaperRecord`: die Zeile in `raw/papers.jsonl`, aus OParl oder dem Altformat der Arbeit; die vier URL-Listen sind Tupel, weil der Record `frozen` und damit hashbar ist |
@@ -300,11 +300,12 @@ Kurzfassungen (20). Sie sprechen nicht mit einem Modell, sondern mit einer Naht:
   ersten Arbeit fragt der Client einmal `/api/version`, ohne Wiederholung; fehlt der Server, ist
   jeder weitere Aufruf sofort ein `ModelUnreachableError`, und `client_from_settings` gibt allen
   Schritten eines Prozesses denselben Client, also eine Probe. Einmal erreicht, wird eine abgelehnte
-  Verbindung mit Backoff wiederholt (`ml.retries`), ebenso 429 und 5xx. Nicht wiederholt werden ein
-  Lese-Timeout nach `ml.timeout_s` (ein `ModelError` dieses Texts: der Server lief ja), ein 404
-  (ein fehlendes Modell, `ModelError`) und jeder andere 4xx: der Server wies die Eingabe ab
-  (`ModelRejectedError`). Der Konstruktor spricht nicht mit dem Server: `build_steps` darf Modelle
-  bauen, ohne dass einer läuft.
+  Verbindung mit Backoff wiederholt (`ml.retries`), ebenso 408, 409, 425, 429 und 5xx (danach ein
+  `ModelError`). Nicht wiederholt werden ein Lese-Timeout nach `ml.timeout_s` (ein `ModelError`
+  dieses Texts: der Server lief ja), ein 404 (ein fehlendes Modell), 400, 413 und 422 (der Server
+  wies die Eingabe ab, `ModelRejectedError`) und 401 und 403 (Zugriff verweigert, eine Frage der
+  Konfiguration: `ModelUnreachableError`, der Lauf bricht ab). Der Konstruktor spricht nicht mit dem
+  Server: `build_steps` darf Modelle bauen, ohne dass einer läuft.
 - **Settings und Stamp**: `[ml]` steht **nicht** im Settings-Fingerprint; eine Änderung dort lässt
   keinen anderen Schritt neu laufen. Was ein Ergebnis bestimmt, steht als Kennung im Stamp des
   Modellschritts, lesbar unter `"models"` samt `limit`, `open`, `failed` und `rejected`; `run_step`
@@ -337,10 +338,15 @@ Kurzfassungen (20). Sie sprechen nicht mit einem Modell, sondern mit einer Naht:
   Abbruch verliert höchstens den laufenden Stapel. Scheitert ein Stapel, wird er in Einzeltexte
   zerlegt; was dann noch scheitert, steht mit Index und Grund im Bericht, und der Lauf geht weiter:
   eine Abweisung in `BatchReport.rejected` (gemerkt, spätere Läufe überspringen sie, außer mit
-  `retry_rejected`), jeder andere Fehlschlag in `BatchReport.failures` (gemerkt, offen, im nächsten
-  Lauf hinter allem Neuen, damit er nicht zuerst `limit` verbraucht). Ein fehlender Server und zehn
-  neue Fehlschläge in Folge brechen ab; was bis dahin abgewiesen wurde, ist gemerkt, und der nächste
-  Lauf kommt weiter. Nach jedem Stapel ein Fortschritt mit Restzeit; `progress_log` schreibt höchstens alle 30 s
+  `retry_rejected`, den `run_step` aus `ml.retry_rejected` in die `ModelUse` setzt), jeder andere
+  Fehlschlag in `BatchReport.failures` (gemerkt, offen, im nächsten Lauf hinter allem Neuen, damit
+  er nicht zuerst `limit` verbraucht). Ein fehlender Server bricht ab. Zehn Eingaben in Folge, die
+  in diesem Lauf zum ersten Mal scheitern, halten den Stapellauf an, ohne Ausnahme: der Stapel, in
+  dem es geschah, ist gespeichert, der Rest bleibt offen, der Grund steht in `BatchReport.stopped`.
+  Der Schritt schreibt, was er hat, sein Stamp nennt den Rest offen, und `run_step` meldet ihn als
+  „fehlgeschlagen". Die Abweisungen dieser Serie gelten dann als „gescheitert", nicht als abgewiesen:
+  zehn in Folge sagen eher etwas über die Anfrage als über die Texte. Schon bekannte Fehlschläge
+  zählen nicht in die Serie. Nach jedem Stapel ein Fortschritt mit Restzeit; `progress_log` schreibt höchstens alle 30 s
   eine Zeile. `embed_texts` und `generate_texts` lesen danach alles aus dem Cache zurück, markieren,
   was fehlt (`present`, `None`) und was abgeschnitten ist (`Generated.truncated`), und tragen das
   Ergebnis in die `ModelUse` ein.
