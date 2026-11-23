@@ -1,0 +1,63 @@
+# Codebuch Vorhaben 24 „Anfragen als Kontrolle in der Kooperation", Stufe 1 (2026-11-23). Vorläufiges
+# Format wie validierung/15-funktion/codebuch.toml: F4 baut den Rahmen (`georep validate`); wenn er
+# steht, wird dieses Codebuch in sein Format übertragen, die Frage bleibt.
+# Messdokument: docs/plans/24-kontrolle.md, § 4. Stichprobe: stichprobe.csv (nur IDs und Schicht),
+# Kodieraufgaben mit Textanfang lokal unter messdaten/kodierung/24-kontrolle/aufgaben.jsonl.
+
+[meta]
+vorhaben = "24-kontrolle"
+version = "2026-11-23.1"
+einheit = """Eine Anfrage (Drucksache der Art „Anfrage …", bis 2019 „Vorlage aus der Politik" mit \
+„Anfrage" im Titel) einer Fraktion an Rat oder Ausschuss der Stadt Düsseldorf, gestellt in einer der \
+drei Wahlperioden 2014-2020, 2020-2025 oder ab 2025, im Zeitraum der jeweiligen Kooperation."""
+stichprobe = """100 Anfragen, geschichtet nach dem Weg, auf dem das Verfahren sie einem Dezernat \
+zuordnet (Antwort als eigene Drucksache, Fachausschuss, Amt im Text, Klassifikator mit hoher und mit \
+mittlerer Wahrscheinlichkeit, keine Zuordnung), Seed 24 (stichprobe.csv)."""
+kodierer = """Zwei unabhängige Kodier-Agenten, die einander nicht sehen, und ein Schlicht-Agent nur für \
+die Uneinigkeiten (plan-vorverarbeitung-2026-11.md, § 2.6 und F4). Kein menschlicher Goldstandard."""
+material = """Je Anfrage: Drucksachennummer, Titel, Datum, Gremium, Wahlperiode und der Textanfang (bis \
+3 000 Zeichen, mit Groß- und Kleinschreibung aus dem Rohtext; wo es keinen gibt, aus dem \
+kleingeschriebenen Textstore, dann steht textquelle = "klein"). Dazu die Liste der Dezernate, die am \
+Datum der Anfrage bestanden (dezernate_zum_datum): Code, Bezeichnung und die Ämter mit Nummer, aus dem \
+Dezernatsverteilungsplan der Stadt. Die Liste nennt keine Personen und keine Parteien."""
+nicht_gezeigt = """Das Dezernat, das das Verfahren vergibt, der Weg, auf dem es das tut, seine \
+Wahrscheinlichkeit, die Schicht der Stichprobe (sie verrät den Weg), die Antwort der Verwaltung und \
+wer die Dezernate führt (Person, Partei); F4: ohne die Ausgabe des zu prüfenden Verfahrens."""
+grundsatz = """Adressiert ist das Dezernat, in dessen Zuständigkeit nach dem Dezernatsverteilungsplan \
+am Datum der Anfrage die Beantwortung fällt: das Dezernat des Amtes, das die Sache führt, nach der man \
+fragt. Maßgeblich ist der Gegenstand der Fragen, nicht wer im Brief angeredet ist (Anfragen sind fast \
+immer an den Oberbürgermeister oder an die Vorsitzende des Ausschusses gerichtet; das macht sie nicht \
+zu Fragen an Dezernat 01) und nicht das Gremium, in dem gefragt wird."""
+
+[[fragen]]
+id = "dezernat"
+frage = "Welches Dezernat ist adressiert? Genau eine Antwort."
+optionen = ["<code aus dezernate_zum_datum>", "mehrere", "keins", "unklar"]
+anleitung = """Lies Titel und Fragen. Bestimme das Amt, das die Sache führt, über die gefragt wird, und \
+wähle das Dezernat, zu dem dieses Amt am Datum der Anfrage gehört (Liste dezernate_zum_datum). Nennen \
+die Fragen Sachen mehrerer Dezernate, entscheidet die erste Frage, wenn sie den Kern trägt und die \
+übrigen nur nachfragen; sind es gleichgewichtige Sachen verschiedener Dezernate, antworte mehrere und \
+nenne die Codes in weitere. Fragen zu einem städtischen Unternehmen (Rheinbahn, Stadtwerke, \
+Awista, Städtische Kliniken, Messe, Flughafen-Beteiligung) gehen an das Dezernat, das die Sache in der \
+Verwaltung führt (Rheinbahn und Linienführung: Verkehrsmanagement oder Schienengebundener ÖPNV; \
+Beteiligungsverwaltung und Ausschüttungen: Kämmerin). Fragen zu Ratsarbeit, Sitzungen, Geschäftsordnung, \
+Bezirksverwaltungsstellen, Städtepartnerschaften, Kommunikation und Veranstaltungen des OB gehen an 01. \
+keins nur, wenn die Fragen erkennbar keine Sache der Stadtverwaltung betreffen (etwa nur Land oder Bund, \
+ohne Bezug auf städtisches Handeln). unklar nur, wenn Titel und Textanfang für keine Zuordnung reichen; \
+nicht raten. Ist ein Dezernat in der Liste als vakant bezeichnet, ist es trotzdem eine gültige Antwort."""
+antwortformat = """Eine JSON-Zeile je Aufgabe in antworten-<A|B>.jsonl, in der Reihenfolge der Aufgaben: \
+{"id": "<id der Aufgabe>", "dezernat": "<code>" | "mehrere" | "keins" | "unklar", \
+"weitere": ["<code>", ...], "amt": "<Amtsnummer, die die Sache führt, oder leer>", \
+"sicherheit": "hoch" | "mittel" | "niedrig", "begruendung": "<ein Satz>"}. weitere ist nur bei \
+mehrere gefüllt (sonst []); amt ist eine Nummer aus den aemter der Liste (etwa "66" oder "40/603") \
+oder "" — es dient der Schlichtung, nicht dem Maß."""
+
+[mass]
+praezision = """Präzision des Verfahrens = Anteil der zugeordneten Anfragen der Stichprobe, deren \
+Dezernat (Code am Datum) dem Endlabel entspricht. mehrere zählt als richtig, wenn das Dezernat des \
+Verfahrens unter den genannten ist (milde Lesart) und als falsch in der strengen Lesart; das Kriterium \
+gilt streng. unklar und keins zählen als falsch, wenn das Verfahren ein Dezernat vergibt. Je Schicht mit \
+Wilson-Intervall, dazu mit den Schichtgewichten (Anteil der Schicht an den zugeordneten Anfragen der \
+Grundgesamtheit) hochgerechnet; die Schicht keine Zuordnung geht nicht in die Präzision ein, sie zeigt, \
+was dem Verfahren entgeht. Kriterium (Briefing, unverändert): Präzision ≥ 0,9."""
+uebereinstimmung = "Krippendorffs α (nominal) zwischen Kodierer A und B über alle 100 Aufgaben; Stufe 3 verlangt α ≥ 0,8."
