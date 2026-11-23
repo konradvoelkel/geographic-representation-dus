@@ -264,7 +264,12 @@ Claude-API selbst braucht einen Schlüssel, den es auf dem Rechner nicht gibt (2
 **Plätze.** Höchstens zehn Agenten gleichzeitig, davon höchstens sieben Mess- oder Bau-Agenten.
 Mindestens drei Plätze bleiben frei für Review, Nacharbeit, Kodierung und Fundament. Rechnerlast wie
 2026-10: im Alltag `uv run pytest -n 2 …`, das volle `nox` vor jedem Commit, der Supervisor drosselt
-über 13 Last.
+über 13 Last. **Unter Fremdlast** (am 2026-11-23 um 18:29 lag das Lastmittel bei 144, getragen von
+einem anderen Projekt auf demselben Rechner) gilt für alle Agenten: `uv run nox -s lint typecheck
+deps` und danach `uv run nox -s test -- -n 3` statt des vollen `nox` (die posargs überschreiben
+`-n auto`), `POLARS_MAX_THREADS=4`, `OMP_NUM_THREADS=2`, Mess- und Extraktionsläufe mit
+`nice -n 10`, Laufzeiten nur mit `uptime` daneben, und ein roter oder abgebrochener Lauf wird erst
+mit weniger Parallelität wiederholt, bevor er als Befund zählt.
 
 **GPU-Warteschlange.** Ein Auftrag ist ein Skript in `/media/konrad/xtraspace/georep/gpu-queue/` mit
 Modell, Eingabe, Ausgabe und geschätzter Dauer (aus einer gemessenen Stichprobe). Der Supervisor startet

@@ -2,6 +2,21 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.17.0 (2026-11-23), Fundament der Vorverarbeitung: Register und Spannen
+
+- **Vorhaben tragen bei, statt den Kern zu ändern** (`docs/decisions.md`, Punkt 69; Plan
+  `docs/plan-vorverarbeitung-2026-11.md`): `georep.enrich.CONTRIBUTIONS` nimmt Schritte,
+  veröffentlichte Tabellen und Unterseiten eines Vorhabens auf. Die Schritte stehen vor `report`,
+  die Tabellen hinter denen des Kerns, jede Unterseite bekommt einen Schritt `page_<name>` und einen
+  Eintrag im neuen Abschnitt „Weitere Auswertungen", der ohne Unterseiten fehlt. Noch trägt kein
+  Vorhaben etwas bei: jede Seite ist gleich geblieben, geprüft mit einem A/B-Bau aller Seiten (194
+  Dateien, keine Abweichung außer den Prüfsummen, die am Erzeugungszeitpunkt hängen).
+- **Der Rahmen der Seite liegt in zwei Teilvorlagen** (`templates/frame/style.css.j2` und
+  `templates/frame/script.js.j2`), die Hauptseite und Unterseiten gleich einbinden.
+- **Ein Schema für Stellen im Text** (`georep.spans`): Spannen mit Dokument, Grenzen, Art, Wert,
+  normalisiertem Wert, Abschnitt und Extraktor, mit einer Prüfung, die die erste falsche Zeile
+  nennt, und einem Ausschnitt mit Kontext.
+
 ## 0.16.0 (2026-11-18), Hauptperiode mit pypdf 7.1.0, Textpaket
 
 - **Die Hauptperiode liest ihre Texte selbst, mit pypdf 7.1.0** (`docs/decisions.md`, Punkt 68):

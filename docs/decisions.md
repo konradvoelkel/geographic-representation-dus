@@ -2361,3 +2361,55 @@ die sich nicht ändern, und trennte sie von `reference/`); die neuen Texte nach 
 Dateien übernehmen (die Mini-Fixture bekäme fremde Texte); die Bedingung über eine Prüfsumme des
 Korpus der Arbeit statt über die Dateinamen (strenger, aber ein Paket aus einem neuen Abruf der
 Metadaten bräuchte dann eine neue Prüfsumme, obwohl seine Dateien dieselben wären).
+
+## 69. Vorhaben tragen bei, statt den Kern zu ändern: Register für Schritte, Tabellen, Unterseiten; ein Schema für Spannen (2026-11-23)
+
+Fundament F2 und F3 der Vorverarbeitung 2026-11 (`docs/plan-vorverarbeitung-2026-11.md`, § 2.3,
+§ 2.4 und § 7), gebaut vom Supervisor direkt auf `main`, bevor Agenten parallel Code schreiben.
+
+**Das Problem.** Neunzehn Vorhaben würden dieselben Stellen ändern: `pipeline.build_steps` (eine
+Funktion von rund 950 Zeilen), `report/tables.py` (das Register der veröffentlichten Tabellen),
+`report/model.py` (2 401 Zeilen) und die Abschnitte von `index.html`. Beim Merge der acht Optionen
+im Oktober endeten an rund zwölf Stellen beide Konfliktseiten mitten in einer Funktion. Und
+`index.html` hat bis zum Budget von 1,0 MB (Punkt 50) nur rund 60 KB Luft.
+
+**Die Lösung.** `georep.enrich.CONTRIBUTIONS` ist ein Tupel von `Contribution`-Objekten, je Vorhaben
+eines, mit Schritten (`steps(settings, layout)`), veröffentlichten Tabellen und Unterseiten:
+
+- Die Schritte stehen in `build_steps` unmittelbar vor `report`, in Registerfolge; ein doppelter
+  Name ist ein `DuplicateStepError`.
+- Die Tabellen hängt `report.tables.all_tables` hinter die des Kerns; `published`, `csv_plan` und
+  das Aufräumen alter Downloads lesen nur noch diese Funktion. Ein doppelter Name ist ein
+  `SchemaError`, denn er ist Dateiname im Download-Ordner.
+- Eine Unterseite (`report.pages.Page`) hat einen eigenen Schritt `page_<name>` hinter `report`,
+  mit demselben Vorlagen-Hash im Stamp (Punkt 53), und steht im Abschnitt `58-weitere` der
+  Hauptseite, der ohne Unterseiten fehlt. Ihr Rahmen (`templates/page.html.j2`) bindet dieselben
+  zwei Teilvorlagen ein wie die Hauptseite: `templates/frame/style.css.j2` (Farbtokens hell und
+  dunkel, Typografie, Tabellen, Vorschau, Dialog) und `templates/frame/script.js.j2`
+  (`window.georep`). Sie sind aus `report.html.j2` herausgelöst; `{% include … +%}` hält den
+  Zeilenumbruch, den `trim_blocks` sonst schluckt.
+- `pipeline` und `report.tables` importieren das Register erst in der Funktion: die Beiträge bauen
+  `Step` und `PublishedTable` aus diesen Modulen, und ein Import auf Modulebene wäre ein Kreis.
+
+Die gemeinsame Stelle eines Vorhabens schrumpft damit auf eine Importzeile und einen Eintrag in
+`georep/enrich/__init__.py`; Settings bleiben bei der Anhängeregel aus
+`docs/plans/00-synergien.md`, § 2.
+
+**Spannen (F3).** `georep.spans` legt ein Schema für jede Stelle im Text fest: `id`, `start`, `end`
+(halboffen), `kind`, `value`, `norm`, `section`, `extractor`, sortiert nach `id, start, end,
+kind`. `check_spans` prüft Schema, Grenzen gegen die Textlänge je Dokument und die Folge und nennt
+die erste verletzende Zeile; `excerpt` liefert eine Spanne mit Kontext für Kodieraufträge.
+`extractor` steht an jeder Zeile, weil es zwei Textstores gibt (kleingeschrieben und, ab F1, roh) und
+eine Position nur in ihrem eigenen Text etwas bedeutet.
+
+**Geprüft.** Ein A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66, vor (`ab/f2-a`) und
+nach F2 (`ab/f2-b`), mit dem Vergleichsskript `ab/ab_vergleich.py` auf xtraspace. Ohne Beiträge ist
+jede Seite gleich bis auf die Prüfsummen, die an `generated_at` hängen.
+
+**Verworfen.** `Step` in ein eigenes Modul verschieben, um den Importkreis aufzulösen (sauberer,
+aber ein Konflikt mit jedem Branch, der gerade ein Feld an `Step` hängt, wie F5); ein Register auch
+für die Settings (jedes Vorhaben ein eigenes Settings-Modul, das sich anmeldet: pydantic will die
+Felder zur Klassendefinition kennen, und die Anhängeregel hat im Oktober gereicht); neue Abschnitte
+auf `index.html` mit größerem Budget (das Budget ist eine Zusage an die Leser, Punkt 50);
+Unterseiten ohne den Rahmen der Hauptseite, wie `vergleich.html` (eine zweite Kopie der Farben, die
+auseinanderläuft).
