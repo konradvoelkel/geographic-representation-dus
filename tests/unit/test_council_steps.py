@@ -392,3 +392,147 @@ def test_starting_over_after_a_probe_is_a_full_fetch(tmp_path: Path, settings: S
     )
     assert session.calls == [(endpoint, None), (following, None)]
     assert len(_lines(files.consultations)) == 6
+
+
+# --- Review 2026-11-23, Befunde 2 und 5: was eine Fortsetzung voraussetzt -----------------------
+
+
+def _incremental_store(tmp_path: Path, settings: Settings) -> tuple[Layout, list[dict[str, Any]]]:
+    """Ein vollständiger Bestand an Beratungen, auf dem ein zweiter Lauf inkrementell ist."""
+    layout = _layout(tmp_path)
+    layout.ensure_dirs()
+    run_pipeline(
+        build_steps(settings, layout, _session(settings), sleep=lambda _: None),
+        settings,
+        ["consultations"],
+        online=True,
+    )
+    return layout, _lines(council_files(layout).consultations)
+
+
+def test_a_deletion_before_an_abort_survives_the_resumption(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """Befund 2: Seite 1 meldet eine Löschung, Seite 2 bricht ab. Die Fortsetzung kennt die
+    gelöschte ID nur aus dem Fortschritt; vorher stand sie danach wieder im Bestand."""
+    layout, before = _incremental_store(tmp_path, settings)
+    endpoint = settings.council.consultations_endpoint
+    following = f"{endpoint}?page=2"
+    gone = before[0]["id"]
+    first = {"data": [{"id": gone, "deleted": True}], "links": {"next": following}}
+    broken = FakeSession(
+        {
+            endpoint: response(endpoint, payload=first),
+            following: requests.ConnectionError("weg"),
+        }
+    )
+    steps = build_steps(settings, layout, broken, sleep=lambda _: None)
+    with pytest.raises(NetworkError):
+        run_pipeline(steps, settings, ["consultations"], online=True, force=True)
+    progress = json.loads(council_files(layout).progress("consultations").read_text("utf-8"))
+    assert progress["deleted"] == [gone]
+    healed = FakeSession({following: response(following, payload={"data": [], "links": {}})})
+    run_pipeline(
+        build_steps(settings, layout, healed, sleep=lambda _: None),
+        settings,
+        ["consultations"],
+        online=True,
+        force=True,
+    )
+    after = {c["id"] for c in _lines(council_files(layout).consultations)}
+    assert after == {c["id"] for c in before} - {gone}
+
+
+def _aborted_meetings(tmp_path: Path, settings: Settings) -> Layout:
+    """Seite 1 der Sitzungen geholt, Seite 2 bricht ab: Teildateien und Fortschritt liegen."""
+    layout = _layout(tmp_path)
+    layout.ensure_dirs()
+    routes = _recorded(settings.council.meetings_endpoint, "oparl_meetings_0015.json")
+    following = next(url for url in routes if url != settings.council.meetings_endpoint)
+    broken = FakeSession(routes | {following: requests.ConnectionError("weg")})
+    with pytest.raises(NetworkError):
+        run_pipeline(
+            build_steps(settings, layout, broken, sleep=lambda _: None),
+            settings,
+            ["meetings"],
+            online=True,
+        )
+    return layout
+
+
+def _resume_meetings(layout: Layout, settings: Settings) -> tuple[str, FakeSession]:
+    session = _session(settings)
+    outcome = run_pipeline(
+        build_steps(settings, layout, session, sleep=lambda _: None),
+        settings,
+        ["meetings"],
+        online=True,
+    )[0]
+    return outcome.reason, session
+
+
+def _edit_progress(layout: Layout, **changes: Any) -> None:
+    path = council_files(layout).progress("meetings")
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    path.write_text(json.dumps(saved | changes), encoding="utf-8")
+
+
+def test_the_progress_names_lines_key_and_start_of_the_fetch(
+    tmp_path: Path, settings: Settings
+) -> None:
+    layout = _aborted_meetings(tmp_path, settings)
+    progress = json.loads(council_files(layout).progress("meetings").read_text("utf-8"))
+    assert progress["lines"] == {"meetings.jsonl.partial": 4, "agenda_items.jsonl.partial": 11}
+    assert progress["key"]["endpoint"] == settings.council.meetings_endpoint
+    assert progress["key"]["period_start"] == settings.period.start.isoformat()
+    assert progress["started"] and progress["deleted"] == [] and progress["pages"] == 1
+
+
+@pytest.mark.parametrize(
+    ("change", "why"),
+    [
+        ({"started": "2020-01-01T00:00:00+00:00"}, "älter als"),
+        ({"key": {"endpoint": "https://anderswo.invalid/meetings"}}, "Endpunkt"),
+    ],
+    ids=["zu alt", "anderer Schlüssel"],
+)
+def test_a_stale_or_foreign_progress_is_thrown_away(
+    tmp_path: Path, settings: Settings, change: dict[str, Any], why: str
+) -> None:
+    """Befund 2: ein Fortschritt älter als die Marge von ``since`` oder mit anderem Endpunkt,
+    Periodenbeginn oder anderen Regeln wird nicht fortgesetzt; der Lauf beginnt von vorn."""
+    layout = _aborted_meetings(tmp_path, settings)
+    _edit_progress(layout, **change)
+    reason, session = _resume_meetings(layout, settings)
+    assert f"Fortschritt verworfen ({why}" in reason and "(fortgesetzt)" not in reason
+    assert session.urls[0] == settings.council.meetings_endpoint
+    assert len(_lines(council_files(layout).meetings)) == 4
+
+
+def test_a_torn_last_line_is_cut_off_before_resuming(tmp_path: Path, settings: Settings) -> None:
+    """Befund 5: ein Abbruch mitten im Schreiben hinterlässt eine halbe Zeile; die Fortsetzung
+    kürzt die Teildatei auf die Zeilen, die der Fortschritt nennt."""
+    layout = _aborted_meetings(tmp_path, settings)
+    partial = council_files(layout).meetings.with_name("meetings.jsonl.partial")
+    partial.write_bytes(partial.read_bytes() + b'{"id": "halb')
+    reason, _ = _resume_meetings(layout, settings)
+    assert "(fortgesetzt)" in reason
+    assert len(_lines(council_files(layout).meetings)) == 4
+
+
+@pytest.mark.parametrize("damage", ["fehlt", "kürzer"])
+def test_a_missing_or_short_partial_means_starting_over(
+    tmp_path: Path, settings: Settings, damage: str
+) -> None:
+    """Befund 5: Fortschritt ohne Teildatei (oder mit weniger Zeilen, als er nennt) ist kein
+    Fortsetzungspunkt; vorher entstand still eine Ausgabe nur aus den Seiten danach."""
+    layout = _aborted_meetings(tmp_path, settings)
+    partial = council_files(layout).meetings.with_name("meetings.jsonl.partial")
+    if damage == "fehlt":
+        partial.unlink()
+    else:
+        partial.write_text(partial.read_text(encoding="utf-8").splitlines()[0] + "\n", "utf-8")
+    reason, session = _resume_meetings(layout, settings)
+    assert f"Fortschritt verworfen (Teildatei {damage}" in reason
+    assert session.urls[0] == settings.council.meetings_endpoint
+    assert len(_lines(council_files(layout).meetings)) == 4

@@ -72,7 +72,7 @@ def test_keep_filters_objects_and_older_stops_after_the_first_old_page() -> None
         OparlMeeting,
         keep=lambda m: m.starts_on_or_after(start),
         older=lambda page: all(not m.starts_on_or_after(start) for m in page),
-        on_page=lambda kept, next_url: seen_pages.append((len(kept), next_url)),
+        on_page=lambda kept, gone, next_url: seen_pages.append((len(kept), next_url)),
     )
     assert [m.id.rsplit("/", 1)[1] for m in found] == ["9", "8"]
     assert report.stopped_early and report.pages == 2 and report.seen == 3 and report.kept == 2

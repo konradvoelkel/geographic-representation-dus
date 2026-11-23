@@ -269,7 +269,7 @@ def fetch_objects[O: OparlObject](
     modified_since: dt.datetime | None = None,
     max_pages: int | None = None,
     resume_from: str | None = None,
-    on_page: Callable[[list[O], str | None], None] | None = None,
+    on_page: Callable[[list[O], tuple[str, ...], str | None], None] | None = None,
     sleep: Callable[[float], None] = time.sleep,
 ) -> tuple[list[O], ListReport]:
     """Eine OParl-Liste seitenweise lesen, jedes Objekt gegen ``model`` geprüft.
@@ -280,8 +280,8 @@ def fetch_objects[O: OparlObject](
     ihn weiter. Gelöschte Objekte kommen als IDs in den Bericht, nie in das Ergebnis, auch wenn
     eine frühere Seite sie noch lebend zeigte. Ein Objekt auf zwei Seiten (die Liste rutscht,
     während neue Sitzungen vorn dazukommen) zählt einmal. ``on_page`` bekommt nach jeder Seite
-    die behaltenen Objekte und die URL der nächsten, damit ein Abbruch nur die laufende Seite
-    kostet.
+    die behaltenen Objekte, die IDs der Gelöschten dieser Seite und die URL der nächsten, damit
+    ein Abbruch nur die laufende Seite kostet und eine Fortsetzung die Löschungen davor kennt.
     """
     found: list[O] = []
     known: set[str] = set()
@@ -307,9 +307,11 @@ def fetch_objects[O: OparlObject](
         pages += 1
         seen += len(objects)
         kept: list[O] = []
+        gone: list[str] = []
         for obj in objects:
             if obj.deleted:
                 deleted[obj.id] = None
+                gone.append(obj.id)
             elif obj.id not in known and keep(obj):
                 known.add(obj.id)
                 kept.append(obj)
@@ -317,11 +319,11 @@ def fetch_objects[O: OparlObject](
         if older is not None and older(objects):
             stopped, url = True, None  # der Rest ist älter: es gibt nichts fortzusetzen
             if on_page is not None:
-                on_page(kept, None)
+                on_page(kept, tuple(gone), None)
             break
         url = page.links.next
         if on_page is not None:
-            on_page(kept, url)
+            on_page(kept, tuple(gone), url)
         if url is not None and delay_s > 0:
             sleep(delay_s)
     found = [o for o in found if o.id not in deleted]
