@@ -1,25 +1,27 @@
 # Vorhaben 16: Ortsbezug verfeinern
 
-Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/16-ortsbezug`. Briefing:
+Stand 2026-11-23, Stufe 1 (Messen) abgeschlossen, Branch `feat/16-ortsbezug`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „16 Ortsbezug
-verfeinern". Messskript: [16-ortsbezug-messung.py](16-ortsbezug-messung.py). Codebuch und Stichprobe:
-[../../validierung/16-ortsbezug/](../../validierung/16-ortsbezug/).
+verfeinern". Messskript: [16-ortsbezug-messung.py](16-ortsbezug-messung.py). Codebuch, Stichprobe und
+Labels: [../../validierung/16-ortsbezug/](../../validierung/16-ortsbezug/).
 
-**Urteil, vorläufig: bauen in zwei Teilen, die Regel „handelt von" wartet auf die Kodierung.**
-Die Stelle jedes Treffers (Titel, Betreff, Kern, Begleittext, Rest) ist exakt messbar und deckt den
-Index der Arbeit ohne Rest; die Hausnummern erfüllen ihr Kriterium (92,3 % verortbar, Schwelle 80 %).
-Ob die Regel „handelt von" das Kriterium F1 ≥ 0,8 erreicht, entscheidet die Kodierung der 200 Paare;
-eine Durchsicht außerhalb der Stichprobe lässt erwarten, dass sie am Recall scheitert (§ 5).
-Unabhängig davon ändert keine Variante die stärkste Verzerrung: die Trefferzahl hängt an der Größe
-des Wörterbuchs mit r = 0,765, nur mit „handelt von" mit r = 0,770.
+**Urteil (Abschluss der Stufe 1, 2026-11-23): umbauen.** Die vorab festgelegte Regel „handelt von"
+(Titel, Betreff oder Kern) **verfehlt das Kriterium**: F1 0,772 (0,740–0,804) gegen die Kodierung von
+200 Paaren (α 0,917 zwischen den Kodierern). Nach der vorab festgelegten Entscheidungsregel geht es
+weiter mit **Nebenregel C** (dazu Listenzeilen und Adressen im Begleittext; F1 0,868, κ 0,399), die
+an einer neuen Stichprobe bestätigt werden muss. Keine Regel schlägt die triviale „alles handelt von"
+(F1 0,902): **82,1 % der Paare handeln von einem Ort im Bezirk, 2,5 % sind Fehltreffer.**
+**Gebaut werden die Stelle je Treffer und die Hausnummern** (92,3 % verortbar, Schwelle 80 %). Keine
+Variante ändert die stärkste Verzerrung: die Trefferzahl hängt an der Größe des Wörterbuchs mit
+r = 0,765, nur mit „handelt von" mit r = 0,770.
 
 Die drei Zahlen, auf die es ankommt:
 
-1. **41,3 % der Paare (Dokument, Wahlbezirk) haben ihren besten Treffer in Titel oder Betreff, 17,3 %
-   im Kern (Beschlussvorschlag, Fragen), 41,1 % nur im Begleittext**, 0,3 % nur im Rest
-   (Anlagenliste, Kopf, hinter der Grußformel). Die Regel „Titel, Betreff oder Kern" nennt damit
-   17 157 von 29 289 Paaren „handelt von" (58,6 %); in Informationsvorlagen nur 9,0 %, in Anträgen
-   81,0 %.
+1. **Die Regel trifft die Kodierung nicht genug**: 41,3 % der Paare (Dokument, Wahlbezirk) haben
+   ihren besten Treffer in Titel oder Betreff, 17,3 % im Kern (Beschlussvorschlag, Fragen), 41,1 %
+   nur im Begleittext; die Regel nennt 58,6 % „handelt von". Kodiert handeln aber auch **zwei
+   Drittel der Paare mit bestem Treffer im Begleittext** von dem Ort (67,1 %, 55,9–76,6) — Listen,
+   Berichte, Sachstände. Präzision 0,927, Recall 0,661, **F1 0,772**; triviale Regel 0,902.
 2. **Die Regel lässt die Verzerrung durch die Wörterbuchgröße stehen** (r 0,765 → 0,770) und
    bewegt Tabelle 5 wenig: p über alle 41 Bezirke 0,234 → 0,167, ohne 1 und 10 0,036 → 0,025;
    Rangkorrelation der Quote zur heutigen 0,932.
@@ -287,7 +289,7 @@ Kodierung gemessen und **explorativ**:
 Die Regel ist **an die Form gebunden**: Dokumente ohne Kern (Informations- und Berichtsvorlagen)
 handeln für sie nur dann von einem Ort, wenn er im Titel steht. Ein Bericht der Kleinen Kommission
 Radverkehr über Maßnahmen an vielen Straßen „erwähnt" für sie jede davon. Ob das falsch ist, sagt erst
-die Kodierung; das Codebuch zählt solche Listenpunkte als „handelt von" (§ 4).
+die Kodierung; das Codebuch zählt solche Listenpunkte als „handelt von", und kodiert handeln zwei Drittel der Paare im Begleittext von dem Ort (§ 4.1).
 
 **Dokumente**: 10 798 Dokumente haben Treffer mit Stelle; in 8 253 (76,4 %) handelt mindestens ein
 Paar von einem Bezirk. **1 542 Dokumente treffen fünf oder mehr Bezirke** und tragen 11 857 der
@@ -410,7 +412,86 @@ Wahlbezirk mit mindestens 5 % ihrer Fläche. Gesucht im Textstore mit demselben 
 
 ## 4. Validierung
 
-### 4.1 Was ohne Kodierer schon prüfbar ist
+### 4.1 Ergebnis der Kodierung (2026-11-23)
+
+Zwei Kodier-Agenten haben die 200 Paare unabhängig nach `codebuch.toml` (Fassung 2026-11-23.1)
+kodiert, ein Schlicht-Agent hat die fünf Uneinigkeiten entschieden. **Kodierer und Schlichter sind
+dasselbe Modell** (Frage 19 an Konrad, offen): die Übereinstimmung misst Zuverlässigkeit des Codebuchs,
+nicht Wahrheit, und kein Mensch hat geprüft. Labels je Aufgabe und Feld:
+[../../validierung/16-ortsbezug/labels.csv](../../validierung/16-ortsbezug/labels.csv) (`bezug`,
+`begriffe_kein_bezug`, `beleg_zeile`, `unsicher`; Werte als JSON, ohne Ausschnitte, Begründungen und
+Anschriften; Belegzeile und `unsicher` ohne Label, wo die Kodierer abweichen). Gerechnet mit
+`uv run python docs/plans/16-ortsbezug-messung.py` (Abschnitt „§ 4.1 Kodierung" der Ausgabe).
+
+**Übereinstimmung**: `bezug` 195 von 200, **Krippendorffs α 0,917** (drei Klassen), 0,915 für
+„handelt von" ja/nein; `begriffe_kein_bezug` 200 von 200. Die fünf Uneinigkeiten (A → B): dreimal
+erwähnt → handelt von, zweimal handelt von → erwähnt; geschlichtet zweimal zu „handelt von", dreimal
+zu „erwähnt". Unsicher nannten sich A in 22, B in 28, beide in 15 Aufgaben. α ≥ 0,8, wie Stufe 3
+verlangt.
+
+**Labels**: 164 „handelt von", 31 „erwähnt", 5 „kein Bezug" (82,0 %, 15,5 %, 2,5 %); mit den
+Schichtgewichten hochgerechnet auf alle Paare **82,1 % handelt von, 15,4 % erwähnt, 2,5 % kein
+Bezug**. „Kein Bezug" (der Begriff meint keinen Ort im Bezirk) ist die Fehltrefferquote des
+Wörterbuchs auf Paarebene: 5 von 200 (Wilson 1,1–5,7 %); die sechs Begriffe ohne Bezug sind
+„marktplatz" (ein früherer Name), „schulweg" (Gattungswort), „flughafenstr." (in „Alte
+Flughafenstr."), „düsseldorfer straße" (gleichnamig anderswo), „franz jürgens" und „st. cäcilia"
+(Namen, die anderes meinen).
+
+**Je Schicht** (Wilson, ungewichtet):
+
+| Schicht | Paare | Label „handelt von" | Regel richtig | Regel sagt |
+|---|---|---|---|---|
+| Titel oder Betreff | 75 | 97,3 % (90,8–99,3) | 97,3 % (90,8–99,3) = Präzision | handelt von |
+| Kern | 49 | 81,6 % (68,6–90,0) | 81,6 % (68,6–90,0) = Präzision | handelt von |
+| Begleittext und Rest | 76 | **67,1 % (55,9–76,6)** | 32,9 % (23,4–44,1) | erwähnt |
+
+**Die Regel gegen die Labels** (Hauptmaß hochgerechnet, Intervalle aus dem geschichteten Bootstrap;
+ungewichtet mit Wilson):
+
+| Regel | TP / FP / FN | Präzision hochgerechnet | Recall hochgerechnet | **F1 hochgerechnet** | F1 ungewichtet | F1 Gegenklasse | κ (95 %) |
+|---|---|---|---|---|---|---|---|
+| **Regel: Titel, Betreff oder Kern** | 113 / 11 / 51 | 0,927 (0,884–0,964) | 0,661 (0,628–0,700) | **0,772 (0,740–0,804)** | 0,785 (P 91,1 %, 84,8–95,0; R 68,9 %, 61,5–75,5) | 0,459 | **0,279 (0,161–0,399)** |
+| A: Regel oder ≥ 3 Erwähnungen im Begleittext | 126 / 11 / 38 | 0,935 (0,896–0,968) | 0,748 (0,698–0,798) | 0,831 (0,793–0,867) | 0,837 | 0,522 | 0,374 (0,241–0,510) |
+| B: nur Titel oder Betreff | 73 / 2 / 91 | 0,973 (0,933–1,000) | 0,490 (0,462–0,521) | 0,652 (0,622–0,681) | 0,611 | 0,439 | 0,226 (0,149–0,305) |
+| C: Regel oder Listenzeile oder Adresse im Begleittext | 138 / 15 / 26 | 0,913 (0,869–0,952) | 0,827 (0,778–0,879) | 0,868 (0,833–0,901) | 0,871 | 0,526 | 0,399 (0,239–0,548) |
+| trivial: alles handelt von | 164 / 36 / 0 | 0,821 (0,771–0,868) | 1,000 | **0,902 (0,871–0,929)** | 0,901 | – | 0 |
+
+- **Das Kriterium ist nicht erfüllt**: F1 0,772, das Intervall reicht bis 0,804 und schließt die
+  Schwelle gerade noch ein, der Punktwert liegt darunter. Gegen jeden Kodierer allein: 0,766 (A),
+  0,763 (B); ohne die 15 Aufgaben, die beide unsicher nannten: 0,793. Keine Lesart der Kodierung
+  hebt die Regel über 0,8.
+- **Die Regel schlägt die triviale Regel nur im κ** (Intervall 0,161–0,399, über 0; Annahme 9.2),
+  **nicht im F1**: „alles handelt von" kommt auf 0,902. Bei 82 % Prävalenz entfernt jede der
+  gemessenen Regeln mehr Paare, die von einem Ort handeln, als solche, die ihn nur erwähnen. κ von
+  0,28 bis 0,40 heißt: die Stelle trägt Information über den Ortsbezug, aber wenig.
+- **Die Regel scheitert am Recall, wie erwartet** (§ 5 der ersten Fassung schätzte F1 ≈ 0,75): zwei
+  Drittel der Paare mit bestem Treffer im Begleittext handeln von dem Ort. Die Präzision ist hoch
+  (92,7 %), im Titel fast vollständig (97,3 %), im Kern geringer (81,6 %).
+
+**Fehler der Regel nach Ursache** (62: 51 falsch „erwähnt", 11 falsch „handelt von"; Zuordnung des
+Mess-Agenten nach Titel, Belegzeile und Bemerkungen der Kodierer, Aufgaben-IDs im Skript):
+
+| Ursache | Fehler | Beispiele (Art des Dokuments) |
+|---|---|---|
+| **Falsch „erwähnt" (51, alle mit bestem Treffer im Begleittext)** | | |
+| Liste, Tabelle oder Bericht mit ortsbezogenen Punkten: Kommissionsberichte (Radverkehr, Spielplätze, Kö-Bogen, Opernhaus), Maßnahmen- und Standortlisten (Haltestellen, Lichtsignalanlagen, Winterdienst, Baumpflanzungen, Altkleidercontainer), Controlling-, Sachstands- und Förderberichte, Messstationen der Luftqualität, Veränderungsverzeichnis, Mitteilungen der Verwaltung | 28 | Informations-, BV-Informations-, Berichtsvorlagen |
+| Gegenstand im Begleittext, Titel und Kern nennen ihn mit einem anderen Namen (Stadtteil, Gebäude, Linie, Projekt), der Ort verortet, begrenzt oder bedient ihn: Tunnel unter einer Straße, Gelände zwischen Straßen, Poller vor einer Schule, P+R-Platz einer Stadtbahnlinie, Ersatzspielfeld, Fällungen an einem Weg | 17 | BV-Informationsvorlagen, Beschluss- und Bedarfsvorlagen, Anträge |
+| Anfrage oder Antrag: der Ort steht in Einleitung oder Begründung, die Frage oder der Antrag richtet sich auf ihn, ohne ihn zu nennen (oder 11 erkennt die Fragen nicht als Abschnitt) | 6 | Anfragen, Anträge |
+| **Falsch „handelt von" (11; 9 mit bestem Treffer im Kern, 2 im Titel)** | | |
+| kein Bezug: Gattungswort („Schulweg"), früherer Name („ehem. Marktplatz"), Teil eines längeren Straßennamens („Alte Flughafenstr.") | 3 | Anträge |
+| Beispiel in einer Anfrage oder einem Antrag zu Bezirk oder Stadt („z. B. …straße"), ohne dass sich eine Frage oder Maßnahme auf den Ort richtet | 3 | Anfrage, Anträge |
+| Umstand oder Begründung für eine andere Sache (Brückenneubau als Grund einer Priorität, Badneubau als zu berücksichtigender Umstand) | 2 | Anträge |
+| früherer Vorgang (Titel einer unbeantworteten Anfrage), Name einer Organisation (Kirchengemeinde als Zuschussempfänger), Herkunft oder Richtung („jenseits der …") | 3 | Anfrage, BV-Beschlussvorlage |
+
+25 der 51 falsch „erwähnt" haben eine Listenzeile oder Adresse im Begleittext; Nebenregel C fängt
+sie, bezahlt mit 4 zusätzlichen falsch „handelt von". Vier der falsch „erwähnt" (Gelände,
+Parkgebiet, Bauabschnitt, Planungskonzept einer Nachbarstraße) liegen nach den Bemerkungen der
+Kodierer in einem Nachbarstadtteil; nach dem Vorschlag (a) für Fassung 2 des Codebuchs (§ 9.13) wären
+sie „kein Bezug" und die Regel dort richtig. Auch dann bliebe sie unter der Schwelle (hochgerechnet
+F1 0,784; Nebenregel C 0,880) — nachgerechnet von Hand, nicht im Skript, weil Fassung 2 nicht
+kodiert ist.
+
+### 4.2 Was ohne Kodierer schon prüfbar ist
 
 - **Treffer und Stelle sind deterministisch und vollständig**: 30 695 der 30 695 Paare (Dokument,
   Begriff) mit Rohtext sind genau die des Index, keines mehr, keines weniger (§ 3.0). Die Stelle
@@ -420,7 +501,7 @@ Wahlbezirk mit mindestens 5 % ihrer Fläche. Gesucht im Textstore mit demselben 
   verortbar; von den verorteten liegen 10 143 von 10 146 (99,97 %) im Bezirk, dem das Wörterbuch die
   Straße zuordnet — eine Gegenprobe des Wörterbuchs selbst.
 
-### 4.2 Stichprobe, Codebuch, Kodieraufgaben (vorbereitet, nicht kodiert)
+### 4.3 Stichprobe, Codebuch, Kodieraufgaben
 
 **Stichprobe**: 200 Paare (Dokument, Wahlbezirk) mit Stelle, aus 200 verschiedenen Dokumenten,
 geschichtet nach der besten Stelle, proportional mit mindestens 30 je Schicht (Rest nach größtem
@@ -476,43 +557,63 @@ Kodierern (nominal, drei Klassen; Stufe 3 verlangt α ≥ 0,8).
 **Was die Stichprobe auflösen kann.** Mit 124 Paaren in den beiden Schichten, für die die Regel
 „handelt von" sagt, ist die Präzision auf rund ± 5 Punkte bestimmt; der Recall hängt an den 76 Paaren
 der dritten Schicht, die für 12 132 Paare stehen — das Intervall um F1 wird darum breit (geschätzt
-± 0,05 bis 0,07).
+± 0,05 bis 0,07; gemessen 0,740–0,804, also rund ± 0,03).
 
 ## 5. Urteil gegen das Kriterium
 
 Kriterium (unverändert): F1 der Regel ≥ 0,8; Hausnummern nur, wenn ≥ 80 % verortbar sind.
+Entscheidungsregel, vorab festgelegt (erste Fassung dieses Abschnitts, vor der Kodierung):
+F1 ≥ 0,8 und κ-Intervall über 0 → die Regel wird Gewichtsvariante `ortsbezug`; F1 < 0,8, aber eine
+Nebenregel (A oder C) ≥ 0,8 und besser als die triviale Regel im κ → umbauen auf diese Nebenregel,
+mit einer neuen Stichprobe zur Bestätigung (sie ist an derselben Kodierung ausgesucht, also
+explorativ; Vorbild 14, § 4.2); alle unter 0,8 oder keine besser als die triviale Regel → die Regel
+wird verworfen, die Stelle bleibt als Spalte und als Gewicht nach Stelle (explorativ); α < 0,8 →
+zurück in Stufe 1.
 
-- **Hausnummern: bauen.** 92,3 % (91,7–92,7) verortbar, die untere Grenze liegt 11,7 Punkte über
-  der Schwelle. Fehlerkennungen des Musters (in der Durchsicht 3 von 40, seither ausgeschlossen)
-  senken die Verortbarkeit eher, als dass sie sie erhöhen; dass zufällige Zahlen an einer Straße
-  als Hausnummer existieren, ist der eine Weg, auf dem die Zahl zu hoch sein könnte, und er ist
-  durch die Durchsicht klein.
+### 5.1 Urteil (Abschluss der Stufe 1, 2026-11-23): umbauen — Regel nicht bestätigt, Nebenregel C zur Bestätigung; Stelle und Hausnummern bauen
+
+- **Regel „handelt von" (Titel, Betreff oder Kern): Kriterium nicht erfüllt.** F1 hochgerechnet
+  **0,772 (0,740–0,804)**, Präzision 0,927, Recall 0,661; κ 0,279 (0,161–0,399). α zwischen den
+  Kodierern 0,917, das Codebuch ist also scharf genug; die Regel ist zu schmal.
+- **Nach der vorab festgelegten Regel: umbauen auf Nebenregel C** (Regel oder ein Begriff im
+  Begleittext in einer Listenzeile oder mit Hausnummer): F1 **0,868 (0,833–0,901)**, κ 0,399
+  (0,239–0,548), beides über den Schwellen. Nebenregel A (≥ 3 Erwähnungen) erfüllt sie auch (0,831;
+  κ 0,374), schwächer. C ist **an derselben Kodierung ausgesucht und darum explorativ**; Stufe 2 baut
+  sie erst als Variante, wenn eine **neue Stichprobe** sie bestätigt (Vorschlag: 100 Paare, gleiche
+  Schichtung, Seed neu, ohne die 200 Dokumente, Codebuch Fassung 2 aus § 9.13; Kriterium wie hier).
+- **Was der Vergleich mit der trivialen Regel sagt**: keine Regel schlägt „alles handelt von" im F1
+  (0,902). Hochgerechnet handeln **82,1 % aller Paare** von einem Ort im Bezirk, 15,4 % erwähnen ihn,
+  2,5 % haben keinen Bezug. Die binäre Zählung der Arbeit zählt also überwiegend Dokumente, die von
+  einem Ort im Bezirk handeln, und ein Filter nach der Stelle nähme mehr richtige als falsche Paare
+  heraus. Die Regel gehört darum **nicht** in die Standardzählung, auch nicht in der Fassung C;
+  bestätigt wird sie eine Gewichtsvariante neben den 26 der Seite, nicht mehr. Für die Seite ist
+  die Kodierung selbst der Befund: „82 % der Treffer handeln von einem Ort im Bezirk, 2,5 % sind
+  Fehltreffer des Wörterbuchs — geprüft von zwei KI-Kodierern an 200 Paaren, nicht von Menschen".
 - **Stelle je Treffer: bauen.** Exakt, deterministisch, deckungsgleich mit dem Index, rund 40 s für
-  die Hauptperiode; Zulieferer für Suche und Seitenstruktur, für 21 (ein Betrag gehört zum Ort des
-  Kerns) und für die Regel, wie immer sie nach der Kodierung aussieht.
-- **Regel „handelt von": offen, erwartet umbauen.** Eine Durchsicht von 40 Paaren mit bestem Treffer
-  im Begleittext außerhalb der Stichprobe (Mess-Agent, nach dem Codebuch gelesen, **keine Kodierung**)
-  fand rund 28 „handelt von" (Listen von Maßnahmen, Kommissionsberichte, Standorte von Stationen,
-  Förderlisten), rund 8 „erwähnt" (Anschrift einer Dienststelle, Beispiel in einer Anfrage, Richtung,
-  frühere Testphase anderswo) und 4 Grenzfälle. Grob gerechnet: wenn die Regel in den beiden
-  vorderen Schichten zu 90 % richtig liegt und im Begleittext zwei Drittel „handelt von" stehen, ist
-  der Recall 0,9 · 17 157 / (0,9 · 17 157 + 0,67 · 12 132) ≈ 0,65 und **F1 ≈ 0,75 — unter der
-  Schwelle**; die triviale Regel „alles handelt von" käme auf F1 ≈ 0,90. **Das ist eine Schätzung,
-  kein Ergebnis**, und sie benennt die Schwäche des Kriteriums (§ 9.2).
+  die Hauptperiode; im Titel steht ein Ort zu 97,3 % (90,8–99,3) als Gegenstand — die Stelle taugt
+  zum Ordnen einer Trefferliste, auch ohne Regel. Zulieferer für Suche, für 21 und für Nebenregel C.
+- **Hausnummern: bauen.** 92,3 % (91,7–92,7) verortbar, die untere Grenze liegt 11,7 Punkte über
+  der Schwelle; Fehlerkennungen des Musters (in der Durchsicht 3 von 40, seither ausgeschlossen)
+  senken die Verortbarkeit eher, als dass sie sie erhöhen. Sie tragen auch C: Adressen im
+  Begleittext sind dort ein Zeichen für „handelt von".
 - **Flächen: Stadtteile messbar, aber ein anderes Maß** (+23 % Paare, Gebiete statt Orte) — nur als
-  Schalter, der aus ist, und nur nach Konrads Entscheidung; Punktquellen (Schulen, Museen, Bahnhöfe,
-  Kitas, Kirchen, Sportstätten) +2,4 %, ohne Präzision; **Bebauungspläne verworfen** (der
-  Landesdatensatz deckt 19,7 % der genannten Plannummern).
-- **Wirkung**: keine Variante ändert die stärkste Verzerrung (r ≥ 0,76 in allen); die Regel ist eine
-  weitere Gewichtungsvariante neben den 26 der Seite, keine Korrektur.
+  Schalter, der aus ist, und nur nach Konrads Entscheidung; Punktquellen +2,4 %, ohne Präzision;
+  **Bebauungspläne verworfen** (der Landesdatensatz deckt 19,7 % der genannten Plannummern).
+- **Wirkung**: keine Variante ändert die stärkste Verzerrung (r ≥ 0,76 in allen); wer die
+  Wörterbuchgröße herausnehmen will, braucht weiter „Treffer je Begriff", nicht den Ortsbezug.
 
-**Was das Urteil umwirft.** F1 der Regel ≥ 0,8 an der Kodierung und κ-Intervall über 0 (§ 9.2) →
-die Regel wird Gewichtsvariante `ortsbezug` wie in § 6. F1 < 0,8, aber eine Nebenregel (A oder C) ≥ 0,8 und besser als die triviale
-Regel im κ → umbauen auf diese Nebenregel, mit einer neuen Stichprobe zur Bestätigung (sie ist an
-derselben Kodierung ausgesucht, also explorativ; Vorbild 14, § 4.2). Alle unter 0,8 oder keine
-besser als die triviale Regel → die Regel wird verworfen, die Stelle bleibt als Spalte und als
-Gewicht nach Stelle (Sensitivität, nicht validiert, auf der Seite „explorativ"). α < 0,8 zwischen
-den Kodierern → das Codebuch ist zu unscharf, zurück in Stufe 1 (eine Runde).
+**Vorbehalt.** Kodierer und Schlichter sind dasselbe Modell (Frage 19); α 0,917 misst, wie
+eindeutig das Codebuch für dieses Modell ist. Die Grenze von „handelt von" bei Listen und Beispielen
+ist eine Definitionsfrage (§ 9.1, § 9.13); mit einer engeren Definition (Listenpunkte als „erwähnt") stiege
+der Recall der Regel und fiele die Präzision der trivialen; ob die Regel dann besteht, ist nicht
+gemessen. Das Urteil hängt also an § 9.1, und Fassung 2 des Codebuchs muss es an der
+Bestätigungsstichprobe neu prüfen.
+
+### 5.2 Verlauf
+
+Die erste Fassung dieses Abschnitts (Commit `67d038f`, vor der Kodierung) schätzte nach einer
+Durchsicht von 40 Paaren außerhalb der Stichprobe F1 ≈ 0,75 für die Regel und ≈ 0,90 für die
+triviale; gemessen sind 0,772 und 0,902.
 
 ## 6. Bauplan Stufe 2
 
@@ -556,9 +657,11 @@ F1 mit (rund 40 s), kein eigenes Paket.
 einen vierten, optionalen Faktor `position_weights` mit (`id`, `suchbegriffe`, `gewicht`), der
 **vor** dem Maximum je Paar mit dem Begriffsgewicht multipliziert wird (er hängt an Dokument und
 Begriff, nicht an einem allein); `g = max_t w_begriff(t) · w_stelle(d, t) · w_art(d) · w_thema(d)`
-bleibt ≤ 1. Zwei feste Varianten, Namen in `settings.FIXED_VARIANTS`: `ortsbezug` (nur „handelt
-von": Gewichte 1 / 1 / 1 / 0 / 0) — **nur, wenn die Kodierung das Kriterium bestätigt** — und
-`stelle` (1 / 1 / 1 / 0,5 / 0,25, explorativ). Verträge: jedes Gewicht in [0, 1]; mit allen
+bleibt ≤ 1. Zwei feste Varianten, Namen in `settings.FIXED_VARIANTS`: `stelle` (1 / 1 / 1 / 0,5 /
+0,25, explorativ) sofort, und `ortsbezug` (nur „handelt von" nach **Nebenregel C**: Titel, Betreff,
+Kern oder ein Begriff im Begleittext in einer Listenzeile oder mit Hausnummer) **erst nach der
+Bestätigungsstichprobe** (§ 5.1); ohne Bestätigung bleibt `ortsbezug` weg. Die vorab festgelegte
+Regel (ohne Listen und Adressen) wird nicht gebaut: F1 0,772. Verträge: jedes Gewicht in [0, 1]; mit allen
 Stellengewichten 1 reproduziert die Variante `einheit` exakt (`_unit_and_topics_reproduce_the_count`
 erweitern); Paare ohne Stelle zählen 1.
 
@@ -597,14 +700,18 @@ die Grenzstraße, erzeugt keine Treffer; Flächen hinter Schalter; Bebauungsplä
 
 ## 7. Bauplan Stufe 3
 
-**Variante im Kartenumschalter**, wenn die Kodierung die Regel trägt: ein Radio „nur ‚handelt von‘"
+**Variante im Kartenumschalter**, erst wenn die Bestätigungsstichprobe Nebenregel C trägt (§ 5.1):
+ein Radio „nur ‚handelt von‘"
 neben „Treffer absolut", „je Begriff" und „Abweichung" (Makro `switcher`, `data-value-<variante>` an
 41 Flächen und Zellen, eine Legende). Geschätzt 3 bis 5 KB auf `index.html` (41 Werte je Fläche und
 Tabellenzelle plus Legende; die beiden Umschalter von Punkt 46 kosten zusammen 110 KB, aber vor
 allem über die sechs Parteikarten, eine Bezirksvariante nur einen Bruchteil); die Luft von rund 64 KB
 reicht. Gemessen wird das erst in Stufe 3. Dazu die
 Gewichtszeilen `ortsbezug` und `stelle` in der Tabelle „Was ändert die Gewichtung?" (zwei Zeilen,
-unter 1 KB), mit „explorativ" bei `stelle`. Ohne bestätigte Regel nur die Zeile `stelle`.
+unter 1 KB), mit „explorativ" bei `stelle`. Ohne bestätigte Regel nur die Zeile `stelle`. In jedem
+Fall gehört der Befund der Kodierung in „Methode und Grenzen" (ein Satz, unter 0,5 KB): 82 % der
+Treffer handeln von einem Ort im Bezirk, 2,5 % sind Fehltreffer des Wörterbuchs, geprüft von zwei
+KI-Kodierern an 200 Paaren, nicht von Menschen (α 0,917).
 
 **Unterseite `orte.html`** (unter 500 KB, Register von F2), wenn mehr gezeigt werden soll: je
 Wahlbezirk der Anteil der Treffer nach Stelle (die Tabelle aus § 3.1), die Adressen je Bezirk als
@@ -621,7 +728,7 @@ nicht.
 ## 8. Vorab festgelegte Hypothesen
 
 Keine Analyse mit Hypothese: Vorhaben 16 ist eine Vorverarbeitung. Festgelegt vor der Kodierung sind
-die Regel, die Nebenregeln, die Gewichte nach Stelle, das Hauptmaß und die Nebenmaße (§ 3.2, § 4.2,
+die Regel, die Nebenregeln, die Gewichte nach Stelle, das Hauptmaß und die Nebenmaße (§ 3.2, § 4.3,
 Codebuch `[mass]`). Die Sensitivität in § 3.3 ist explorativ: fünf Varianten × zwei Spalten von
 Tabelle 5 sind zehn weitere Tests derselben Frage.
 
@@ -630,7 +737,7 @@ Tabelle 5 sind zehn weitere Tests derselben Frage.
 | Nr. | Frage | warum sie zählt | Annahme ohne Antwort |
 |---|---|---|---|
 | 9.1 | Ist „handelt von" weit gemeint (auch ein Punkt einer Liste von Maßnahmen) oder eng (der Ort ist Hauptgegenstand)? | Entscheidet, ob die Regel das Kriterium erreichen kann: weit trifft den Recall, eng machte die Kodierung zum Spiegel der Regel | weit, wie im Codebuch; eine Maßnahme an einem Ort ist Aufmerksamkeit für ihn |
-| 9.2 | F1 der Klasse „handelt von" ist bei hoher Prävalenz schwach: die triviale Regel „alles handelt von" käme geschätzt auf 0,90. Soll das Kriterium zusätzlich verlangen, dass die Regel die triviale schlägt (κ > 0 mit Intervall, oder F1 der Gegenklasse ≥ 0,5)? | Sonst besteht eine Regel, die nichts trennt | Kriterium unverändert; das Skript berichtet die triviale Regel und κ mit Intervall daneben, und § 5 wertet eine Regel nur als bestanden, wenn zusätzlich das κ-Intervall über 0 liegt |
+| 9.2 | F1 der Klasse „handelt von" ist bei hoher Prävalenz schwach: gemessen kommt die triviale Regel „alles handelt von" auf 0,902, über jeder gemessenen Regel. Soll das Kriterium zusätzlich verlangen, dass die Regel die triviale schlägt (κ > 0 mit Intervall, oder F1 der Gegenklasse ≥ 0,5)? | Sonst besteht eine Regel, die nichts trennt | Kriterium unverändert; das Skript berichtet die triviale Regel und κ mit Intervall daneben, und § 5 wertet eine Regel nur als bestanden, wenn zusätzlich das κ-Intervall über 0 liegt (alle Regeln tun das: κ 0,23 bis 0,40; die F1 der Gegenklasse liegen bei 0,44 bis 0,53) |
 | 9.3 | Darf ein aus GebRef NRW abgeleitetes Paket (Straße, Nummer, Zusatz, Wahlbezirk; 92 827 Bytes, dl-de/zero-2.0) ins Repo? | Pages braucht es für die Hausnummern ohne Netz | ja, unter `snapshots/duesseldorf-adressen/` mit README und Prüfsumme |
 | 9.4 | Sollen Stadtteilnamen (46 neue Begriffe, +6 827 Paare, +23 %) je zählen? | Sie ändern das Maß von Orten zu Gebieten und alle Zahlen der Seite | nein; Schalter `area_sources` bleibt leer, die Zahl steht hier |
 | 9.5 | Bebauungspläne: die Stadt veröffentlicht ihre Geltungsbereiche nicht im Portal, der Landesdatensatz deckt 19,7 % der genannten Nummern. Anfrage an die Stadt? | Plannummern sind eindeutige Ortsbezüge in 605 Dokumenten | nein, außerhalb des Vorhabens; Konrads Handgriff, wenn gewünscht |
@@ -641,5 +748,8 @@ Tabelle 5 sind zehn weitere Tests derselben Frage.
 | 9.10 | Titel: der OParl-Titel ist nicht im Index. Zählt ein Begriff, der nur im Titel steht, als Treffer? | Würde den Index ändern | nein; „Titel" ist nur die Stelle eines Treffers, der auch im Text steht |
 | 9.11 | F4 ist nicht gemerged; Format der Aufgaben vorläufig | Kodier-Agenten brauchen ein festes Format | F4 übernimmt `stichprobe.csv` und liest `aufgaben.jsonl` oder erzeugt sie neu; das Antwortformat steht im Codebuch fest |
 | 9.12 | Mönchengladbach und die anderen Perioden | Stufe 2 läuft für jedes Profil mit Eingaben | die Stelle geht überall, wo 11 Regeln hat; Hausnummern nur mit GebRef der Stadt (Mönchengladbach liegt in NRW, Auszug wie hier) |
+| 9.13 | **Codebuch Fassung 2** (Lücken beider Kodierer, Vorschläge des Schlichters; nicht auf die gemessene Regel angewandt): (a) liegt der Gegenstand in einem Stadtteil außerhalb des Bezirks, auch einem benachbarten, ist dieser Begriff `kein_bezug`; nur aus Weltwissen erschlossen → nach dem Wörterbuch und `unsicher`; der Stadtbezirk des Wahlbezirks kommt ins Material; (b) lineare Maßnahmen: Anfang, Ende und bedienter Ort → `handelt_von`, Herkunft und Richtung → `erwaehnt`; (c) Beispiele in Anfragen nur `handelt_von`, wenn sich eine Frage auf den Ort richtet; Rückblicke in Sachstandslisten → `erwaehnt`; (d) Ortsname in einem Organisationsnamen: nach Sitz und Gegenstand; (e) Veranstaltungen: „bliebe die Aussage gleich, wenn sie anderswo stattfände?" → dann `erwaehnt`, sonst `handelt_von` | Vier der 51 falsch „erwähnt" würden mit (a) zu „kein Bezug" (§ 4.1; F1 der Regel dann 0,784, C 0,880), (c) und (d) beschreiben vier der 11 falsch „handelt von" (Beispiel in einer Anfrage, Rückblick, Kirchengemeinde als Empfänger), die die Kodierer schon so lasen, aber unsicher; die Bestätigungsstichprobe braucht ein Codebuch ohne diese Lücken | Fassung 2 mit (a) bis (e) für die Bestätigungsstichprobe von Nebenregel C; die 200 Labels hier bleiben nach Fassung 1 |
+| 9.14 | Kodierer und Schlichter sind dasselbe Modell (Frage 19 an Konrad, offen) | α 0,917 misst die Eindeutigkeit des Codebuchs für ein Modell, nicht Wahrheit | wie bei 11 und 14: die Seite sagt „geprüft von zwei KI-Kodierern, nicht von Menschen"; ein zweites Modell als Kodierer B, wenn Frage 19 es freigibt |
+| 9.15 | Der Matcher trifft „flughafenstr." in „Alte Flughafenstr.", weil die längere Straße im Wörterbuch dieses Bezirks fehlt | Ein Fehltreffer an der Wortgrenze, den die Stelle nicht sieht (1 von 5 „kein Bezug") | außerhalb des Vorhabens; gehört zu den Wörterbuchregeln (Methodik-Review), nicht zur Stelle |
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
