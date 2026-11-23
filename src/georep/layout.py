@@ -420,6 +420,12 @@ class Layout:
         """Treffer je Begriff, je 1000 Wahlberechtigte und relativ zum Stadtmittel."""
         return self.processed / "wahlbezirke_kennzahlen.parquet"
 
+    # Fundament F1: der Rohtext neben dem Suchtext (docs/plan-vorverarbeitung-2026-11.md, § 7)
+    @property
+    def raw_texts(self) -> Path:
+        """Rohtextstore: je PDF der Text mit Groß- und Kleinschreibung, Zeilen und ``\\f`` je Seite."""
+        return self.text_dir / "rohtexte.parquet"
+
     def runtime_dirs(self) -> tuple[Path, ...]:
         return (
             self.external,

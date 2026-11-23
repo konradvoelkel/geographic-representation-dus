@@ -11,9 +11,12 @@ profile = "duesseldorf"        # Unterordner unter data_root und cache_root, wie
 # 2026-11-18 aus den PDFs, neu gelesen mit pypdf 7.1.0 (Konrads Entscheidung; 19 091 von 19 092,
 # einer behält den Text der Arbeit). bootstrap legt das Paket über die Texte der Referenz; die
 # Golden-Master-Tests gegen die Arbeit nehmen es mit as_in_the_thesis zurück, und jede Periode mit
-# eigenem Schnappschuss setzt den Schlüssel wieder leer.
+# eigenem Schnappschuss setzt den Schlüssel wieder leer. Fundament F1: dazu der Rohtext derselben
+# PDFs (19 091 von 19 092; das AES-verschlüsselte PDF hat keinen), damit eine Kette ohne PDFs ihn
+# hat; auch ihn nehmen die Perioden zurück.
 [bootstrap]
 texts = "snapshots/duesseldorf-texte/cache/text/texts.parquet"
+raw_texts = "snapshots/duesseldorf-rohtexte/cache/text/rohtexte.parquet"
 
 [city]
 slug = "duesseldorf"           # Ordnername im veröffentlichten Ordner und Dateiname dieses Profils

@@ -24,7 +24,7 @@ from georep.export import export_csv
 from georep.layout import Layout
 from georep.learn import learn_bodies
 from georep.ml import commands as ml_commands
-from georep.pack import pack, pack_consultations, pack_texts
+from georep.pack import pack, pack_consultations, pack_raw_texts, pack_texts
 from georep.pipeline import Outcome, build_steps, freshness, run_step, select_steps
 from georep.profiling import profile_step
 from georep.report.build import current_commit
@@ -35,6 +35,12 @@ from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextStore
 from georep.validation.command import add_parser as add_validate_parser
 from georep.validation.command import run as run_validate
+
+# `fetch` ohne Namen heißt: alle Netzschritte, dazu die Offline-Schritte, ohne die sie nicht laufen
+# (`shapes` liefert die Flächen für streets_osm und pois_wiki) oder die die gerade geholten PDFs
+# lesen (`texts`, und seit Fundament F1 `raw_texts`, Review N5): ihr Ergebnis kann ohne die PDFs
+# im Cache niemand nachholen.
+FETCH_OFFLINE_STEPS = ("shapes", "texts", "raw_texts")
 
 
 def _setup_logging(level: str) -> None:
@@ -88,10 +94,10 @@ def build_parser() -> argparse.ArgumentParser:
     fetch = sub.add_parser(
         "fetch",
         help="Netzschritte ausführen (opendata, papers, organizations, meetings, consultations, "
-        "persons, pdfs, streets_osm, pois_wiki), dazu shapes und texts",
+        "persons, pdfs, streets_osm, pois_wiki), dazu shapes, texts und raw_texts",
     )
     fetch.add_argument(
-        "steps", nargs="*", help="Namen (Standard: alle Netzschritte, shapes und texts)"
+        "steps", nargs="*", help="Namen (Standard: alle Netzschritte, shapes, texts und raw_texts)"
     )
     fetch.add_argument("--force", action="store_true", help="auch aktuelle Schritte ausführen")
     # Fundament F6: der Plan eines Abrufs, ohne eine Anfrage; wie `run --dry-run --online`
@@ -144,6 +150,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--texts",
         action="store_true",
         help="nur den Textstore packen (cache/text/texts.parquet) statt der Eingaben eines Laufs",
+    )
+    # Fundament F1: der Rohtext für eine Kette ohne PDFs
+    only.add_argument(
+        "--raw-texts",
+        action="store_true",
+        help="nur den Rohtextstore packen (cache/text/rohtexte.parquet) statt der Eingaben eines "
+        "Laufs",
     )
 
     # Punkt 58: die Abbildung Organisation -> Gremium aus den Daten lernen, nicht raten
@@ -240,11 +253,8 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
             update={"ml": settings.ml.model_copy(update={"retry_rejected": True})}
         )
     steps = build_steps(settings, layout)
-    # `fetch` ohne Namen heißt: alle Netzschritte, dazu die beiden Offline-Schritte, ohne die sie
-    # nicht laufen (`shapes` liefert die Flächen für streets_osm und pois_wiki) oder deren
-    # Ergebnis niemand ohne Netz nachholen kann (`texts` braucht die PDFs im Cache).
     default_names = (
-        [s.name for s in steps if s.network or s.name in ("shapes", "texts")] if fetching else None
+        [s.name for s in steps if s.network or s.name in FETCH_OFFLINE_STEPS] if fetching else None
     )
     # Je Schritt eine Zeile, sobald er fertig ist: bricht ein späterer Schritt mit einem
     # Domänenfehler ab, stehen die Zeilen davor schon da (F5, Review 2026-11-23, Befund 5).
@@ -271,7 +281,8 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
 def _cmd_steps(settings: Settings, layout: Layout) -> int:
     for step in build_steps(settings, layout):
         tag = " [Netz]" if step.network else " [Modell]" if step.models is not None else ""
-        print(f"{step.name:<12} <- {', '.join(p.name for p in step.inputs) or '(nichts)'}{tag}")
+        names = [p.name for p in step.inputs] + [f"{p.name} (optional)" for p in step.optional]
+        print(f"{step.name:<12} <- {', '.join(names) or '(nichts)'}{tag}")
         print(f"{'':<12} -> {', '.join(p.name for p in step.outputs)}")
     return 0
 
@@ -376,6 +387,7 @@ def _cmd_paths(settings: Settings, layout: Layout) -> int:
         "pdf_dir": layout.pdf_dir.resolve(),
         "pdf_manifest": layout.pdf_manifest.resolve(),
         "text_store": layout.texts.resolve(),
+        "raw_text_store": layout.raw_texts.resolve(),  # Fundament F1
         "papers": layout.papers.resolve(),
         "processed": layout.processed.resolve(),
     }
@@ -396,9 +408,18 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
     Die Tabelle steht immer auf stdout, auch wenn ein vorhandenes README nicht angefasst wurde:
     dann gehört sie von Hand hinein, und nur dort weiß ein Mensch, wo. Mit ``--consultations``
     entsteht statt der Eingaben eines Laufs nur die Beratungsfolge je Dokument (Punkt 58), mit
-    ``--texts`` nur der Textstore (Punkt 68).
+    ``--texts`` nur der Textstore (Punkt 68), mit ``--raw-texts`` nur der Rohtextstore
+    (Fundament F1).
     """
-    write = pack_consultations if args.consultations else pack_texts if args.texts else pack
+    write = (
+        pack_consultations
+        if args.consultations
+        else pack_texts
+        if args.texts
+        else pack_raw_texts
+        if args.raw_texts
+        else pack
+    )
     report = write(layout, settings, args.target, force=args.force)
     print(report.line())
     print(report.table(), end="")

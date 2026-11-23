@@ -66,6 +66,7 @@ from georep.layout import Layout
 from georep.prep import bodies as prep_bodies
 from georep.prep.bodies import BodyRules
 from georep.prep.context import read_indicators
+from georep.prep.raw_texts import RAW_SUFFIX
 from georep.prep.streets import Agreement, directory_agreement
 from georep.prep.voters import ELIGIBLE_TOTAL, PRECINCT, TURNOUT, VOTERS
 from georep.report.literature import literature
@@ -85,6 +86,11 @@ from georep.settings import (
     ReportSource,
     Settings,
     Weights,
+)
+from georep.stores import (
+    RAW_TEXT_SCHEMA_VERSION,
+    REFERENCE_EXTRACTOR,
+    stored_schema_version,
 )
 
 NARROW_NBSP = "\u202f"  # schmales geschütztes Leerzeichen: Tausender und vor dem Prozentzeichen
@@ -659,6 +665,25 @@ class PeriodComparison:
 
 
 @dataclass(frozen=True)
+class Extraction:
+    """Womit die Texte gelesen sind (docs/todo.md, Punkt 7) und wie viele einen Rohtext haben (F1).
+
+    Aus der Spalte ``extractor`` des Textstores, je Dokument: ``extractors`` nennt jeden Extraktor,
+    der hier selbst gelesen hat, mit der Zahl seiner Texte (die meisten zuerst), ``thesis`` die
+    Texte, die ``bootstrap`` aus dem Korpus der Arbeit übernommen hat (``REFERENCE_EXTRACTOR``).
+    ``raw_texts`` zählt die Rohtexte, aber nur, wenn der Rohtextstore **vollständig** ist: jeder
+    Text, den ``raw_extractor`` gelesen hat, hat auch seinen Rohtext (Review F1, N1). Sonst ist es
+    0, und die Seite sagt nichts über den Rohtext; keine Zahl der Seite rechnet mit ihm.
+    """
+
+    texts: int
+    extractors: tuple[tuple[str, int], ...]
+    thesis: int
+    raw_texts: int
+    raw_extractor: str = ""  # der Extraktor der Rohtexte ohne ``+roh``, aus den Daten (N7)
+
+
+@dataclass(frozen=True)
 class ReportModel:
     generated_at: dt.datetime
     version: str
@@ -748,6 +773,9 @@ class ReportModel:
     # Fundament F2 der Vorverarbeitung 2026-11: die Unterseiten der Beiträge; leer heißt „kein
     # Abschnitt Weitere Auswertungen" ({% if model.pages %}), und die Seite bleibt bytegleich.
     pages: tuple[PageLink, ...] = ()
+    # docs/todo.md, Punkt 7, und Fundament F1: Extraktor je Text und die Zahl der Rohtexte für
+    # „Methode und Grenzen"; None ohne Textstore oder mit einem leeren
+    extraction: Extraction | None = None
 
 
 @dataclass(frozen=True)
@@ -1962,7 +1990,65 @@ def build_report_model(
         # entscheidet, wo die Seite landet (Punkt 52, ``Settings.base_profile``).
         parent_url="../" if settings.profile != settings.base_profile else "",
         preview_rows=settings.report.table_preview_rows,  # Punkt 48
+        extraction=extraction_figures(layout),  # docs/todo.md, Punkt 7; Fundament F1
     )
+
+
+def extraction_figures(layout: Layout) -> Extraction | None:
+    """Texte je Extraktor aus dem Textstore und die Zahl der Rohtexte; gelesen wird nur je eine Spalte.
+
+    Nach Zahl absteigend, bei Gleichstand nach Name, damit zwei Läufe denselben Satz schreiben.
+    """
+    if not layout.texts.is_file():
+        return None
+    column = pl.read_parquet(layout.texts, columns=["extractor"]).get_column("extractor")
+    if column.is_empty():
+        return None
+    counts = sorted(
+        ((str(name), int(n)) for name, n in column.value_counts().iter_rows()),
+        key=lambda pair: (-pair[1], pair[0]),
+    )
+    raw_texts, raw_extractor = complete_raw_texts(layout)
+    return Extraction(
+        texts=column.len(),
+        extractors=tuple(pair for pair in counts if pair[0] != REFERENCE_EXTRACTOR),
+        thesis=sum(n for name, n in counts if name == REFERENCE_EXTRACTOR),
+        raw_texts=raw_texts,
+        raw_extractor=raw_extractor,
+    )
+
+
+def complete_raw_texts(layout: Layout) -> tuple[int, str]:
+    """(Zahl der Rohtexte, ihr Extraktor ohne ``+roh``), wenn der Rohtextstore vollständig ist.
+
+    Review F1, N1: der Satz über den Rohtext stand auf jeder Seite, deren Rechner zufällig einen
+    Store hatte, auch einen halben (etwa 200 lokal gecachte PDFs einer Periode). Jetzt nur, wenn
+    der Store die aktuelle Schema-Version trägt, einen einzigen Extraktor hat und jeder Text, den
+    derselbe Extraktor gelesen hat, auch seinen Rohtext hat -- aus einem Paket oder einem Lauf über
+    alle PDFs. Dann ist die Zahl die der Texte dieses Extraktors, und der Satz stimmt auf jedem
+    Rechner, der ihn zeigt. Sonst ``(0, "")``.
+    """
+    if not layout.raw_texts.is_file() or not layout.texts.is_file():
+        return 0, ""
+    if stored_schema_version(layout.raw_texts) != str(RAW_TEXT_SCHEMA_VERSION):
+        return 0, ""
+    raw = pl.read_parquet(layout.raw_texts, columns=["name", "extractor", "pdf_sha256"])
+    labels = set(raw.get_column("extractor").to_list())
+    if len(labels) != 1:
+        return 0, ""
+    label = next(iter(labels))
+    if not label.endswith(RAW_SUFFIX):
+        return 0, ""
+    base = label.removesuffix(RAW_SUFFIX)
+    texts = pl.read_parquet(layout.texts, columns=["name", "extractor", "pdf_sha256"])
+    # Review F1, dritte Runde: gezählt werden die Texte dieses Extraktors, nicht die Zeilen des
+    # Rohtextstores (eine Zeile mehr machte aus 19 091 sonst 19 092), und je Text muss der Rohtext
+    # zu demselben PDF gehören -- dieselbe Brücke, die ``pack.check_raw_bridge`` beim Packen prüft.
+    wanted = dict(texts.filter(pl.col("extractor") == base).select("name", "pdf_sha256").rows())
+    have = dict(raw.select("name", "pdf_sha256").rows())
+    if not wanted or any(name not in have or have[name] != sha for name, sha in wanted.items()):
+        return 0, ""
+    return len(wanted), base
 
 
 def _per_term_regression(

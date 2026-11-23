@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
-from georep.bootstrap import REFERENCE_EXTRACTOR, bootstrap, bootstrap_from_settings
+import polars as pl
+
+from georep.bootstrap import bootstrap, bootstrap_from_settings
+from georep.io import write_parquet
 from georep.layout import Layout
 from georep.settings import Bootstrap, Settings
-from georep.stores import PaperStore, TextMeta, TextStore
+from georep.stores import REFERENCE_EXTRACTOR, PaperStore, RawTextStore, TextMeta, TextStore
 
 
 def _layout(tmp_path: Path, mini_root: Path) -> Layout:
@@ -233,3 +237,165 @@ def test_the_settings_wire_the_text_package_into_bootstrap(
     layout = _layout(tmp_path / "neu", mini_root)
     assert bootstrap_from_settings(layout, settings).texts == 200
     assert layout.texts.read_bytes() == package.read_bytes()
+
+
+# --- Fundament F1: ein Rohtextpaket legt den Rohtextstore an -------------------------------------
+
+
+def _raw_package(tmp_path: Path, names: list[str]) -> Path:
+    """Ein Rohtextstore wie aus ``pack --raw-texts``: je Name ein Text mit zwei Seiten."""
+    package = tmp_path / "rohtexte" / "cache" / "text" / "rohtexte.parquet"
+    package.parent.mkdir(parents=True)
+    store = RawTextStore(package)
+    for name in names:
+        store.put(name, f"Kopf {name}\fSeite 2", pages=2, extractor="x+roh", pdf_sha256="0")
+    store.save()
+    return package
+
+
+def test_a_raw_text_package_of_this_dataset_becomes_the_raw_store(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    """Ein Rohtext je lesbarer Hauptdatei: weniger als alle Dateien ist richtig, keine fremde."""
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    package = _raw_package(tmp_path, _file_names(probe)[:5])
+    layout = _layout(tmp_path / "neu", mini_root)
+    report = bootstrap(layout, raw_texts=package)
+    assert report.missing == [] and report.raw_texts == 5
+    assert layout.raw_texts.read_bytes() == package.read_bytes()
+    assert f"5 Rohtexte aus {package}" in report.summary()
+    # Ohne force bleibt ein vorhandener Rohtextstore stehen, mit force kommt das Paket wieder
+    RawTextStore(layout.raw_texts).save()  # derselbe Inhalt, neu geschrieben
+    again = bootstrap(layout, raw_texts=package)
+    assert again.raw_texts is None and "rohtexte.parquet" in again.skipped
+    assert bootstrap(layout, raw_texts=package, force=True).raw_texts == 5
+
+
+def test_a_raw_text_package_with_a_foreign_name_is_refused(tmp_path: Path, mini_root: Path) -> None:
+    """Das Paket der Hauptperiode gehört nicht zur Mini-Fixture, die mit ihren Settings bootstrappt."""
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    package = _raw_package(tmp_path, [*_file_names(probe)[:3], "99999999.pdf"])
+    layout = _layout(tmp_path / "neu", mini_root)
+    report = bootstrap(layout, raw_texts=package)
+    assert report.raw_texts is None and not layout.raw_texts.exists()
+    assert f"Rohtextpaket {package} nicht übernommen: 4 Rohtexte, 1 davon" in report.summary()
+
+
+def test_a_missing_raw_text_package_is_named(tmp_path: Path, mini_root: Path) -> None:
+    layout = _layout(tmp_path, mini_root)
+    report = bootstrap(layout, raw_texts=tmp_path / "gibt-es-nicht.parquet")
+    assert report.missing == ["gibt-es-nicht.parquet"] and not layout.raw_texts.exists()
+
+
+def test_a_period_without_seeded_stores_takes_no_raw_text_package(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    layout = _layout(tmp_path, mini_root).for_profile("2025")
+    report = bootstrap(layout, seed_corpus=False, raw_texts=tmp_path / "gibt-es-nicht.parquet")
+    assert report.missing == [] and not layout.raw_texts.exists()
+
+
+def test_the_settings_wire_the_raw_text_package_into_bootstrap(
+    tmp_path: Path, mini_root: Path, default_settings: Settings
+) -> None:
+    """``[bootstrap].raw_texts``: leer heißt kein Paket, ein Pfad geht an ``bootstrap``."""
+    assert Bootstrap(raw_texts="").raw_texts is None  # type: ignore[arg-type]
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    package = _raw_package(tmp_path, _file_names(probe))
+    settings = default_settings.model_copy(
+        update={"bootstrap": default_settings.bootstrap.model_copy(update={"raw_texts": package})}
+    )
+    layout = _layout(tmp_path / "neu", mini_root)
+    assert bootstrap_from_settings(layout, settings).raw_texts == 200
+    assert layout.raw_texts.read_bytes() == package.read_bytes()
+
+
+def test_an_empty_raw_text_store_does_not_block_the_package(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    """Review F1, M2: ``raw_texts`` ohne PDFs legt einen Store mit 0 Zeilen an.
+
+    Der stand danach als „vorhanden" da, und ``bootstrap`` übersprang das Paket für immer; ohne
+    ``--force`` kam der Rohtext nie mehr an. Ein leerer Store zählt wie ein fehlender.
+    """
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    package = _raw_package(tmp_path, _file_names(probe)[:5])
+    layout = _layout(tmp_path / "neu", mini_root)
+    bootstrap(layout)
+    RawTextStore(layout.raw_texts).save()  # wie der Schritt raw_texts ohne PDFs
+    report = bootstrap(layout, raw_texts=package)
+    assert report.raw_texts == 5 and layout.raw_texts.read_bytes() == package.read_bytes()
+
+
+def test_a_raw_text_package_or_store_of_another_schema_version_counts_as_missing(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    """Review F1, N3 und M3: Version 1 hat keine Offsets der inneren Formfeeds.
+
+    Ein Paket in Version 1 wird abgelehnt (mit dem Handgriff im Bericht), und ein Store in Version 1
+    am Ziel hält ein Paket in Version 2 nicht auf: der Code läse ihn ohnehin als leer.
+    """
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    package = _raw_package(tmp_path, _file_names(probe)[:5])
+    old = tmp_path / "alt" / "rohtexte.parquet"
+    old.parent.mkdir()
+    write_parquet(pl.read_parquet(package).drop("form_feeds"), old, schema_version=1)
+    layout = _layout(tmp_path / "neu", mini_root)
+    refused = bootstrap(layout, raw_texts=old)
+    assert refused.raw_texts is None and not layout.raw_texts.exists()
+    assert "Schema-Version 1" in refused.summary() and "pack --raw-texts" in refused.summary()
+    layout.raw_texts.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(old, layout.raw_texts)
+    assert bootstrap(layout, raw_texts=package).raw_texts == 5
+
+
+def _bridged_texts(layout: Layout, names: list[str]) -> None:
+    """Den Textstore so schreiben, wie ``pack`` ihn neben einem Rohtextpaket voraussetzt.
+
+    ``_raw_package`` legt je Name ``extractor="x+roh"`` und ``pdf_sha256="0"`` ab; die Brücke
+    verlangt im Textstore denselben Hash und den Extraktor ohne ``+roh``.
+    """
+    texts = TextStore(layout.texts)
+    for name in names:
+        texts.put(name, f"text {name}", TextMeta(extractor="x", pdf_sha256="0", source="pdf"))
+    texts.save()
+
+
+def test_a_half_raw_text_store_gets_the_missing_names_from_the_package(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    """Review F1, dritte Runde: ein halber, nicht leerer Store hielt das Paket fern.
+
+    Ein frischer Klon mit ``fetch pdfs --limit N`` und ``raw_texts`` vor ``bootstrap`` hat N
+    Rohtexte; das Paket kam danach ohne ``--force`` nie mehr an. Jetzt ergänzt ``bootstrap`` die
+    fehlenden Namen über die Brücke (gleicher PDF-Hash, Extraktor des Textstores mit ``+roh``) und
+    lässt die eigenen Zeilen stehen: ein eigener Lauf gilt vor dem Paket.
+    """
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    names = _file_names(probe)[:6]
+    package = _raw_package(tmp_path, names)
+    layout = _layout(tmp_path / "neu", mini_root)
+    bootstrap(layout)
+    _bridged_texts(layout, names[:5])  # names[5] hat keine Brücke: sein Text kommt aus der Arbeit
+    own = RawTextStore(layout.raw_texts)
+    own.put(names[0], "eigener Lauf", pages=1, extractor="x+roh", pdf_sha256="0")
+    own.save()
+    report = bootstrap(layout, raw_texts=package)
+    merged = RawTextStore(layout.raw_texts)
+    assert sorted(merged.rows) == sorted(names[:5])
+    assert merged.get(names[0]) == "eigener Lauf"
+    assert merged.get(names[1]) == RawTextStore(package).get(names[1])
+    assert report.raw_texts == 4 and "rohtexte.parquet" not in report.skipped
+    assert (
+        f"4 Rohtexte aus {package} ergänzt, 1 eigene behalten, 1 ohne Brücke zum Textstore"
+        in report.summary()
+    )
+    # Ein zweiter Bootstrap findet nichts mehr zu ergänzen und lässt den Store stehen
+    again = bootstrap(layout, raw_texts=package)
+    assert again.raw_texts is None and "rohtexte.parquet" in again.skipped

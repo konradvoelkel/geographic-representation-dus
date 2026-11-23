@@ -45,14 +45,18 @@ class PypdfExtractor:
     def name(self) -> str:
         return f"pypdf-{pypdf.__version__}"
 
-    def extract(self, path: Path) -> str:
+    def pages(self, path: Path) -> list[str]:
+        """Der rohe Text jeder Seite, in Reihenfolge; ``CorruptPdfError`` bei Defekt."""
         try:
             with path.open("rb") as f:
                 reader = PdfReader(f)
-                return "\n".join(page.extract_text() for page in reader.pages)
+                return [page.extract_text() for page in reader.pages]
         # pypdf wirft je nach Defekt PdfReadError, ValueError, KeyError, ...
         except Exception as error:
             raise CorruptPdfError(f"{path.name}: {error}") from error
+
+    def extract(self, path: Path) -> str:
+        return "\n".join(self.pages(path))
 
 
 DEFAULT_EXTRACTOR: PdfTextExtractor = PypdfExtractor()

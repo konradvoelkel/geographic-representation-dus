@@ -91,6 +91,7 @@ from georep.prep.pois import (
     read_pois_json,
 )
 from georep.prep.precincts import canonical_precincts, district_names_from_csv, read_source
+from georep.prep.raw_texts import extract_raw_missing
 from georep.prep.streets import directory_agreement, read_streets_json, streets_by_district
 from georep.prep.voters import (
     ELIGIBLE_TOTAL,
@@ -139,7 +140,7 @@ from georep.sources.opendata import fetch_csv, fetch_districts_file, fetch_geojs
 from georep.sources.overpass import fetch_streets_per_precinct
 from georep.sources.pdfs import PdfStore
 from georep.sources.wiki import fetch_geosearch_pois, fetch_sparql_pois, sparql_query
-from georep.stores import PaperStore, TextStore, UpsertReport
+from georep.stores import RAW_TEXT_SCHEMA_VERSION, PaperStore, RawTextStore, TextStore, UpsertReport
 
 Status = Literal["ausgeführt", "übersprungen", "geplant", "fehlgeschlagen"]
 PARTIES_SCHEMA = 2  # Option 04, Punkt 46: drei Spalten relativ zum Mittel aller Parteien
@@ -174,6 +175,12 @@ class Step:
     # Server. Sie steht lesbar im Stamp samt den offenen Eingaben des Laufs; eine andere Kennung
     # oder ein Teillauf macht den Schritt veraltet.
     models: ModelStamp | None = None
+    # Fundament F1, Review M1: Eingaben, die fehlen dürfen. Ihr Hash steht im Stamp wie der jeder
+    # Eingabe, eine fehlende als ``MISSING``; taucht sie auf oder verschwindet sie, ist der Stamp
+    # veraltet. Eine Bedingung beim Bauen des Registers (``if path.exists()``) ginge nicht: legt ein
+    # früherer Schritt die Datei im selben Lauf an, fehlte sie im Stamp, und der zweite Lauf
+    # rechnete den Schritt noch einmal.
+    optional: tuple[Path, ...] = ()
 
     @property
     def stamp_path(self) -> Path:
@@ -197,8 +204,12 @@ class UnknownStepError(GeorepError):
     """Ein angeforderter Schrittname existiert nicht."""
 
 
+MISSING = "fehlt"  # der Eintrag einer fehlenden optionalen Eingabe im Stamp
+
+
 def input_digests(step: Step) -> dict[str, str]:
-    return {p.name: digest(p) for p in step.inputs}
+    required = {p.name: digest(p) for p in step.inputs}
+    return required | {p.name: digest(p) if p.exists() else MISSING for p in step.optional}
 
 
 def expected_stamp(step: Step, settings: Settings) -> dict[str, object]:
@@ -578,6 +589,22 @@ def build_steps(
         if not layout.texts.exists():
             store.save()
         return report.summary()
+
+    # --- Fundament F1: der Rohtext derselben PDFs; ohne PDFs (CI, Pages) bleibt der Store, den
+    # ``bootstrap`` aus einem Paket gelegt hat, oder es entsteht ein leerer
+    def raw_texts() -> str:
+        store = RawTextStore(layout.raw_texts)
+        names = [r.file_name for r in PaperStore(layout.papers).load().values() if r.file_name]
+        report = extract_raw_missing(PdfStore(layout.pdf_dir), store, names)
+        # Eine Datei mit alter Schema-Version gilt als leer (Review F1, N3); ohne PDFs, die sie
+        # neu füllen, wird sie leer in der neuen Version geschrieben, damit ``bootstrap`` ein Paket
+        # darüberlegen kann und niemand die alten Zeilen zählt.
+        if not layout.raw_texts.exists() or (store.stale and not report.extracted):
+            store.save()
+        # Review F1, dritte Runde: ohne PDFs ist nichts neu gelesen, nur die Datei geleert
+        done = "neu gelesen" if report.extracted else "ohne PDFs leer neu geschrieben"
+        stale = f"; {done}, weil {store.stale}" if store.stale else ""
+        return report.summary() + stale
 
     def voters() -> str:
         raw = read_results_csv(layout.results_csv, columns)
@@ -1174,6 +1201,14 @@ def build_steps(
             else []
         ),
         Step("texts", (layout.papers, layout.pdf_manifest), (layout.texts,), texts),
+        # --- Fundament F1
+        Step(
+            "raw_texts",
+            (layout.papers, layout.pdf_manifest),
+            (layout.raw_texts,),
+            raw_texts,
+            RAW_TEXT_SCHEMA_VERSION,
+        ),
         # --- Option 02: der Crosswalk braucht beide Zuschnitte, dann rechnet voters über ihn
         *(
             [
@@ -1452,7 +1487,10 @@ def build_steps(
                 )
                 if settings.compare.period
                 else ()
-            ),
+            )
+            # --- docs/todo.md, Punkt 7, und Fundament F1: „Methode und Grenzen" nennt den
+            # Extraktor je Text (der Rohtextstore steht unten unter ``optional``)
+            + (layout.texts,),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
             # Punkt 53: der eine Schritt mit einem Zusatz im Stamp. Die Vorlagen des Pakets und
@@ -1460,6 +1498,9 @@ def build_steps(
             # keinem Settings-Fingerprint; ohne diesen Hash blieb der Stamp nach einer geänderten
             # Vorlage oder Klassengrenze gültig.
             extra=report_fingerprint(settings),
+            # Fundament F1, Review M1: eine Datenwurzel von vor F1 hat keinen Rohtextstore, und
+            # ``report`` brach dort als harte Eingabe ab; der Satz über den Rohtext fehlt dann
+            optional=(layout.raw_texts,),
         ),
         # --- Fundament F2: die Unterseiten der Beiträge
         *pages,

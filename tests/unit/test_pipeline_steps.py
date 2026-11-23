@@ -11,6 +11,8 @@ die Kette rechnet mit einer Datei weiter, deren Spalten sich geändert haben.
 from __future__ import annotations
 
 import ast
+import json
+import shutil
 from dataclasses import replace
 from pathlib import Path
 
@@ -22,9 +24,11 @@ from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.layout import Layout
 from georep.pipeline import (
     METRICS_SCHEMA,
+    MISSING,
     PARTIES_SCHEMA,
     Step,
     build_steps,
+    run_pipeline,
     stamp_mismatch,
 )
 from georep.prep.bodies import BODIES_SCHEMA_VERSION
@@ -33,6 +37,7 @@ from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION, stop_words_digest
 from georep.settings import Settings
+from georep.stores import RAW_TEXT_SCHEMA_VERSION
 
 
 def _layout(tmp_path: Path) -> Layout:
@@ -59,6 +64,8 @@ VERSIONS = {
     "meetings": COUNCIL_SCHEMA_VERSION,
     "consultations": COUNCIL_SCHEMA_VERSION,
     "persons": COUNCIL_SCHEMA_VERSION,
+    # Fundament F1: der Rohtextstore schreibt seine Datei selbst, der Schritt nennt seine Version
+    "raw_texts": RAW_TEXT_SCHEMA_VERSION,
 }
 
 
@@ -268,9 +275,9 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
         stored = pl.read_parquet_metadata(first)["georep.schema_version"]
         assert stored == str(step.schema_version), (step.name, first.name, stored)
         checked += 1
-    # Heute 18: texts, voters, context, streets, pois, dictionary, corpus, bodies, topics,
-    # committees, index, timeline, results, metrics, body_hits, weights, controls, parties.
-    assert checked == 18, checked
+    # Heute 19: texts, raw_texts, voters, context, streets, pois, dictionary, corpus, bodies,
+    # topics, committees, index, timeline, results, metrics, body_hits, weights, controls, parties.
+    assert checked == 19, checked
 
 
 def _step_versions_in_source() -> dict[str, str]:
@@ -353,3 +360,73 @@ def test_every_schema_constant_of_the_package_belongs_to_a_step() -> None:
         if short not in used and name not in SCHEMA_CONSTANTS_WITHOUT_A_STEP
     }
     assert not missing, f"Schema-Konstanten, die kein Schritt nennt: {sorted(missing)}"
+
+
+# --- Review F1, Befund M1: der Bericht ohne Rohtextstore ----------------------------------------
+
+
+def test_the_report_runs_on_a_data_root_without_a_raw_text_store(
+    mini_run: Layout, default_settings: Settings, tmp_path: Path
+) -> None:
+    """Eine Datenwurzel von vor Fundament F1 hat keinen ``rohtexte.parquet``.
+
+    ``georep run report`` brach dort ab, weil der Store eine harte Eingabe von ``report`` war, und
+    der Hinweis „hilft `georep bootstrap`" stimmte nur für die Hauptperiode. Der Store ist nur
+    Eingabe, wenn es ihn gibt; die Seite sagt dann nichts über den Rohtext.
+    """
+    data, cache = tmp_path / "data", tmp_path / "cache"
+    shutil.copytree(mini_run.data_root, data)
+    shutil.copytree(mini_run.cache_root, cache)
+    layout = Layout(
+        data, cache, mini_run.reference_root, mini_run.profile, context_root=mini_run.context_root
+    )
+    layout.raw_texts.unlink()
+    # ``--force`` wie im Befund: ohne die Eingabe bleibt der alte Stamp gültig
+    steps = build_steps(default_settings, layout)
+    outcomes = run_pipeline(steps, default_settings, ["report"], force=True)
+    assert [(o.step, o.status) for o in outcomes] == [("report", "ausgeführt")]
+    report = next(s for s in steps if s.name == "report")
+    assert report.optional == (layout.raw_texts,) and layout.texts in report.inputs
+    # Die fehlende Datei steht im Stamp; kommt sie dazu, ist der Stamp veraltet
+    stamped = json.loads(report.stamp_path.read_text(encoding="utf-8"))
+    assert stamped["inputs"][layout.raw_texts.name] == MISSING
+    assert stamp_mismatch(stamped, report, default_settings) is None
+    shutil.copyfile(mini_run.raw_texts, layout.raw_texts)
+    assert stamp_mismatch(stamped, report, default_settings) == (
+        f"Eingabe geändert: {layout.raw_texts.name}"
+    )
+
+
+def _old_raw_store(path: Path) -> None:
+    """Ein Rohtextstore in Schema-Version 1: ohne ``form_feeds``, mit Version 1 in den Metadaten."""
+    from georep.io import write_parquet
+    from georep.stores import RAW_TEXT_SCHEMA
+
+    columns = {k: v for k, v in RAW_TEXT_SCHEMA.items() if k != "form_feeds"}
+    row = {"name": "a.pdf", "text": "alt", "pages": 1, "chars": 3, "extractor": "x+roh"}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_parquet(pl.DataFrame([row | {"pdf_sha256": "0"}], schema=columns), path, schema_version=1)
+
+
+def test_raw_texts_says_it_wrote_an_old_store_empty_when_there_are_no_pdfs(
+    default_settings: Settings, tmp_path: Path
+) -> None:
+    """Review F1, dritte Runde: der Schritt meldete „neu gelesen", auch wenn kein PDF da war."""
+    import datetime as dt
+
+    from georep.records import PaperRecord
+    from georep.sources.pdfs import PdfStore
+    from georep.stores import PaperStore, RawTextStore
+
+    layout = _layout(tmp_path)
+    record = PaperRecord(id="p1", name="A", date=dt.date(2024, 1, 1), file_name="a.pdf")
+    PaperStore(layout.papers).save([record])
+    PdfStore(layout.pdf_dir).ensure()
+    _old_raw_store(layout.raw_texts)
+    steps = build_steps(default_settings, layout)
+    [outcome] = run_pipeline(steps, default_settings, ["raw_texts"])
+    assert "ohne PDFs leer neu geschrieben, weil rohtexte.parquet trägt Schema-Version 1" in (
+        outcome.reason
+    )
+    assert "neu gelesen" not in outcome.reason
+    assert len(RawTextStore(layout.raw_texts)) == 0 and RawTextStore(layout.raw_texts).stale == ""

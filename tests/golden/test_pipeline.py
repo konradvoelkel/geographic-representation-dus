@@ -104,6 +104,7 @@ def test_pipeline_runs_skips_and_reruns(
     assert offline(third) == {
         "shapes": "übersprungen",
         "texts": "übersprungen",
+        "raw_texts": "übersprungen",  # Fundament F1
         "voters": "übersprungen",
         "streets": "übersprungen",
         "pois": "ausgeführt",
@@ -509,7 +510,16 @@ def test_the_text_package_moves_the_reference_as_measured(
     assert report.texts_package is not None and report.texts == 19_092, report.summary()
     store = pl.read_parquet(layout.texts)
     assert int((store.get_column("extractor") == "pypdf-7.1.0").sum()) == 19_091
+    # Fundament F1: der Rohtext derselben PDFs kommt ebenso aus einem Paket, eines fehlt (AES)
+    assert report.raw_texts == 19_091, report.summary()
     run_pipeline(build_steps(default_settings, layout), default_settings)
+    page = (layout.site / "index.html").read_text(encoding="utf-8")
+    method = page[page.index('<section id="methode">') :]
+    method = method[: method.index("</section>")]
+    assert "Gelesen sind die Texte mit pypdf 7.1.0 (19\u202f091 von 19\u202f092 PDFs)." in method
+    assert (
+        "liegt für alle 19\u202f091 mit pypdf 7.1.0 gelesenen Dokumente auch der Rohtext" in method
+    )
 
     results = pl.read_parquet(layout.results)
     assert int(results.get_column("anzahl_treffer").sum()) == WITH_TEXTS["hits"]

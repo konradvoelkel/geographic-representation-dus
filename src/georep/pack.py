@@ -40,8 +40,9 @@ from georep.errors import GeorepError
 from georep.io import atomic_path, write_parquet, write_text
 from georep.layout import Layout
 from georep.prep.bodies import CONSULTATION
+from georep.prep.raw_texts import RAW_SUFFIX
 from georep.settings import Settings
-from georep.stores import TextStore
+from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextStore
 
 README_NAME = "README.md"
 # Herkünfte, die ein Lauf wirklich erzeugt: ``pdf`` ist eine eigene Extraktion, ``reference`` die
@@ -451,3 +452,120 @@ def pack_texts(
         readme_written=not (target / README_NAME).exists(),
     )
     return _with_readme(report, settings, today, command="pack --texts")
+
+
+# --- Fundament F1: ein Paket, das nur den Rohtextstore trägt -------------------------------------
+
+RAW_TEXTS_NAME = "cache/text/rohtexte.parquet"
+# Review F1, M4: das Rohtextpaket liegt im Repo, und jedes Byte steht in jedem Klon. zstd auf Stufe
+# 19 macht es 17 % kleiner als die Vorgabe von Polars (gemessen am Paket der Hauptperiode,
+# 2026-11-23); das Schreiben dauert Sekunden statt Bruchteilen, und das zahlt nur ``pack``, nie ein
+# Lauf. Der Cache bleibt bei der Vorgabe, denn ``raw_texts`` schreibt ihn bei jeder Änderung neu.
+RAW_TEXTS_ZSTD_LEVEL = 19
+
+
+def check_raw_bridge(layout: Layout, store: RawTextStore) -> None:
+    """Jeder Rohtext gehört zu einem Text des Textstores: gleicher PDF-Hash, gleicher Extraktor.
+
+    Review F1, N2. Nur dann plättet der Rohtext zum Text, den die Suche liest, und das Paket hält,
+    was die Eigenschaft von Fundament F1 verspricht. Ein Rohtext, dessen PDF sich seit dem Text
+    geändert hat (anderer Hash), oder der mit einem anderen pypdf gelesen ist, bricht ab -- mit
+    Zahl und Beispielen; der Handgriff ist ein neuer Lauf von ``texts`` und ``raw_texts``.
+    """
+    texts = TextStore(layout.texts).rows
+    problems: dict[str, list[str]] = {
+        "keinen Text": [],
+        "einen anderen PDF-Hash": [],
+        "einen anderen Extraktor": [],
+    }
+    for name, row in sorted(store.rows.items()):
+        text = texts.get(name)
+        if text is None:
+            problems["keinen Text"].append(name)
+        elif text["pdf_sha256"] != row["pdf_sha256"]:
+            problems["einen anderen PDF-Hash"].append(name)
+        elif f"{text['extractor']}{RAW_SUFFIX}" != row["extractor"]:
+            problems["einen anderen Extraktor"].append(name)
+    found = [(what, names) for what, names in problems.items() if names]
+    if found:
+        said = "; ".join(
+            f"{len(names)} haben im Textstore {what} ({', '.join(names[:EXAMPLES])})"
+            for what, names in found
+        )
+        raise PackError(f"{layout.raw_texts}: Rohtexte ohne Brücke zum Textstore: {said}")
+
+
+def pack_raw_texts(
+    layout: Layout,
+    settings: Settings,
+    target: Path,
+    *,
+    force: bool = False,
+    today: dt.date | None = None,
+    level: int = RAW_TEXTS_ZSTD_LEVEL,
+) -> PackReport:
+    """Nur den Rohtextstore packen: ``cache/text/rohtexte.parquet`` (Fundament F1).
+
+    Wie ``pack_texts`` für den zweiten Store: GitHub Pages hat keine PDFs, also kommt der Rohtext
+    dorthin nur als Paket, und ``[bootstrap].raw_texts`` legt es an. Geprüft wird, dass jeder Name
+    ein Paper dieser Periode ist und dass es überhaupt einen Rohtext gibt -- ohne PDFs schreibt
+    der Schritt ``raw_texts`` einen leeren Store, und der wäre kein Paket, sondern ein Irrtum.
+    Ein Name ohne Rohtext ist dagegen erlaubt (ein defektes PDF); die Zahl steht im README.
+    Dazu die Brücke zum Textstore (``check_raw_bridge``, Review F1, N2). Das Paket ist keine
+    Kopie, sondern derselbe Frame, mit zstd auf Stufe ``level`` neu geschrieben (Review F1, M4).
+    """
+    claim_target(layout, target)
+    paths = (layout.papers, layout.texts, layout.raw_texts)
+    missing = [str(path) for path in paths if not path.is_file()]
+    if missing:
+        raise PackError(f"{missing} fehlen; lief `georep run raw_texts` für dieses Profil?")
+    store = RawTextStore(layout.raw_texts)
+    if store.stale:  # Review F1, dritte Runde: eine alte Version liest der Store als leer
+        raise PackError(
+            f"{layout.raw_texts}: {store.stale}; erst `georep run raw_texts` mit den PDFs der "
+            "Periode, dann packen"
+        )
+    if not len(store):
+        raise PackError(
+            f"{layout.raw_texts}: kein einziger Rohtext; der Schritt raw_texts lief ohne PDFs. "
+            "Gepackt wird nach einem Lauf mit den PDFs der Periode."
+        )
+    known = paper_file_names(layout.papers)
+    orphans = sorted(name for name in store.rows if name not in known)
+    if orphans:
+        raise PackError(
+            f"{layout.raw_texts}: {len(orphans)} Rohtexte haben kein Paper in "
+            f"{layout.papers.name} ({', '.join(orphans[:EXAMPLES])})"
+        )
+    check_raw_bridge(layout, store)
+    destination = target / RAW_TEXTS_NAME
+    skipped: list[str] = []
+    if destination.exists() and not force:
+        skipped.append(RAW_TEXTS_NAME)
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        write_parquet(
+            pl.read_parquet(layout.raw_texts),
+            destination,
+            schema_version=RAW_TEXT_SCHEMA_VERSION,
+            compression_level=level,
+        )
+    pages = sum(int(row["pages"]) for row in store.rows.values())  # type: ignore[call-overload]
+    report = PackReport(
+        target=target,
+        files=(
+            PackedFile(
+                name=RAW_TEXTS_NAME,
+                bytes=destination.stat().st_size,
+                sha256=sha256_of(destination),
+            ),
+        ),
+        skipped=tuple(skipped),
+        figures=(
+            ("Rohtexte", len(store)),
+            ("Seiten", pages),
+            ("Hauptdateien ohne Rohtext", len(known - set(store.rows))),
+        ),
+        readme_written=not (target / README_NAME).exists(),
+    )
+    return _with_readme(report, settings, today, command="pack --raw-texts")

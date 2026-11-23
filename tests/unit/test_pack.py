@@ -24,12 +24,13 @@ from georep.pack import (
     check_text_store,
     pack,
     pack_consultations,
+    pack_raw_texts,
     pack_texts,
     package_files,
     paper_file_names,
 )
 from georep.settings import Settings
-from georep.stores import TextMeta, TextStore
+from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextMeta, TextStore
 
 
 @pytest.fixture
@@ -349,3 +350,179 @@ def test_pack_consultations_says_when_the_metadata_are_missing(
     _papers_jsonl(layout.papers, [{"id": "p1", "consultation_organizations": []}])
     with pytest.raises(PackError, match="gehört daneben"):
         pack_consultations(layout, default_settings, layout.root / "paket")
+
+
+# --- Fundament F1: ein Paket, das nur den Rohtextstore trägt -------------------------------------
+
+
+def _raw_run(tmp_path: Path) -> Layout:
+    """Ein Lauf mit zwei Hauptdateien, von denen eine einen Rohtext hat (die andere war defekt)."""
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
+    _papers_jsonl(
+        layout.papers,
+        [{"id": "p1", "file_name": "a.pdf"}, {"id": "p2", "file_name": "b.pdf"}, {"id": "p3"}],
+    )
+    layout.raw_texts.parent.mkdir(parents=True, exist_ok=True)
+    store = RawTextStore(layout.raw_texts)
+    store.put("a.pdf", "Kopf\nBetrifft: A\fSeite 2", pages=2, extractor="x+roh", pdf_sha256="0")
+    store.save()
+    # Der Textstore desselben Laufs: dieselbe Datei, derselbe PDF-Hash, der Extraktor ohne Zusatz;
+    # b.pdf hat dort den Text der Arbeit (ohne Hash), wie 00403713.pdf in der Hauptperiode
+    texts = TextStore(layout.texts)
+    texts.put("a.pdf", ": a", TextMeta(extractor="x", pdf_sha256="0", source="pdf"))
+    texts.put("b.pdf", "arbeit", TextMeta(extractor="Arbeit", source="reference"))
+    texts.save()
+    return layout
+
+
+def test_pack_raw_texts_writes_only_the_raw_store(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout = _raw_run(tmp_path)
+    target = tmp_path / "rohtexte"
+    report = pack_raw_texts(layout, default_settings, target, today=dt.date(2026, 11, 23))
+    assert {str(p.relative_to(target)) for p in target.rglob("*") if p.is_file()} == {
+        README_NAME,
+        "cache/text/rohtexte.parquet",
+    }
+    packed = target / "cache" / "text" / "rohtexte.parquet"
+    assert packed.read_bytes() == layout.raw_texts.read_bytes()
+    assert report.figures == (("Rohtexte", 1), ("Seiten", 2), ("Hauptdateien ohne Rohtext", 1))
+    assert "1 Rohtexte, 2 Seiten, 1 Hauptdateien ohne Rohtext" in report.line()
+    assert "pack --raw-texts" in (target / README_NAME).read_text(encoding="utf-8")
+
+
+def test_pack_raw_texts_keeps_what_is_there_without_force(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout = _raw_run(tmp_path)
+    target = tmp_path / "rohtexte"
+    pack_raw_texts(layout, default_settings, target, today=dt.date(2026, 11, 23))
+    again = pack_raw_texts(layout, default_settings, target, today=dt.date(2026, 11, 23))
+    assert again.skipped == ("cache/text/rohtexte.parquet",) and not again.readme_written
+    assert not pack_raw_texts(layout, default_settings, target, force=True).skipped
+
+
+def test_pack_raw_texts_refuses_an_empty_store(
+    tmp_path: Path, mini_run: Layout, default_settings: Settings
+) -> None:
+    """Ohne PDFs schreibt der Schritt einen leeren Store; als Paket hieße er „so sah der Lauf aus"."""
+    with pytest.raises(PackError, match="kein einziger Rohtext"):
+        pack_raw_texts(mini_run, default_settings, tmp_path / "rohtexte")
+    assert not (tmp_path / "rohtexte").exists()
+
+
+def test_pack_raw_texts_refuses_a_text_without_a_paper_and_a_target_inside(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout = _raw_run(tmp_path)
+    store = RawTextStore(layout.raw_texts)
+    store.put("c.pdf", "ohne Paper", pages=1, extractor="x+roh", pdf_sha256="1")
+    store.save()
+    with pytest.raises(PackError, match="haben kein Paper"):
+        pack_raw_texts(layout, default_settings, tmp_path / "rohtexte")
+    with pytest.raises(PackError, match="gehört daneben"):
+        pack_raw_texts(layout, default_settings, layout.root / "rohtexte")
+
+
+def test_pack_raw_texts_says_when_the_store_is_missing(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout = Layout(tmp_path / "leer", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
+    with pytest.raises(PackError, match="fehlen; lief"):
+        pack_raw_texts(layout, default_settings, tmp_path / "rohtexte")
+
+
+@pytest.mark.parametrize(
+    ("meta", "expected"),
+    [
+        (
+            TextMeta(extractor="x", pdf_sha256="1", source="pdf"),
+            "1 haben im Textstore einen anderen PDF-Hash",
+        ),
+        (
+            TextMeta(extractor="y", pdf_sha256="0", source="pdf"),
+            "1 haben im Textstore einen anderen Extraktor",
+        ),
+        (None, "1 haben im Textstore keinen Text"),
+    ],
+)
+def test_pack_raw_texts_checks_the_bridge_to_the_text_store(
+    tmp_path: Path, default_settings: Settings, meta: TextMeta | None, expected: str
+) -> None:
+    """Review F1, N2: ein Rohtext gehört zu dem Text, den die Suche liest.
+
+    Gleicher PDF-Hash je Name, und der Extraktor ist der des Textstores mit ``+roh``; sonst
+    plättet der Rohtext nicht zum Text, und das Paket behauptete eine Brücke, die es nicht gibt.
+    """
+    layout = _raw_run(tmp_path)
+    texts = TextStore(layout.texts)
+    texts.rows.pop("a.pdf")
+    if meta is not None:
+        texts.put("a.pdf", ": a", meta)
+    texts.save()
+    with pytest.raises(PackError, match=expected):
+        pack_raw_texts(layout, default_settings, tmp_path / "rohtexte")
+    assert not (tmp_path / "rohtexte").exists()
+
+
+def test_pack_raw_texts_writes_the_same_rows_with_a_stronger_compression(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    """Review F1, M4: das Paket liegt im Repo, also zählt jedes Byte; der Inhalt bleibt derselbe.
+
+    ``pack_raw_texts`` schreibt den Store neu, mit zstd auf Stufe ``level`` (Vorgabe 19) statt der
+    Stufe des Caches, und mit derselben Schema-Version in den Metadaten.
+    """
+    layout = _raw_run(tmp_path)
+    store = RawTextStore(layout.raw_texts)
+    for i in range(40):  # genug Text, dass die Stufe einen Unterschied macht
+        name = f"z{i:02d}.pdf"
+        store.put(
+            name,
+            "Beschlussvorlage Betrifft: " * 50 + str(i),
+            pages=1,
+            extractor="x+roh",
+            pdf_sha256=str(i),
+        )
+    store.save()
+    _papers_jsonl(
+        layout.papers, [{"id": f"p{i}", "file_name": name} for i, name in enumerate(store.rows)]
+    )
+    texts = TextStore(layout.texts)
+    for name, row in store.rows.items():
+        texts.put(
+            name, "t", TextMeta(extractor="x", pdf_sha256=str(row["pdf_sha256"]), source="pdf")
+        )
+    texts.save()
+    sizes = {}
+    for level in (1, 19):
+        target = tmp_path / f"stufe-{level}"
+        pack_raw_texts(layout, default_settings, target, level=level, today=dt.date(2026, 11, 23))
+        packed = target / "cache" / "text" / "rohtexte.parquet"
+        assert pl.read_parquet(packed).equals(pl.read_parquet(layout.raw_texts))
+        assert pl.read_parquet_metadata(packed)["georep.schema_version"] == str(
+            RAW_TEXT_SCHEMA_VERSION
+        )
+        sizes[level] = packed.stat().st_size
+    assert sizes[19] < sizes[1]
+    default = tmp_path / "vorgabe"
+    pack_raw_texts(layout, default_settings, default, today=dt.date(2026, 11, 23))
+    assert (default / "cache/text/rohtexte.parquet").read_bytes() == (
+        tmp_path / "stufe-19" / "cache/text/rohtexte.parquet"
+    ).read_bytes()
+
+
+def test_pack_raw_texts_names_an_old_schema_version(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    """Review F1, dritte Runde: ein Store in Version 1 hieß bisher „lief ohne PDFs"."""
+    from georep.io import write_parquet
+
+    layout = _raw_run(tmp_path)
+    write_parquet(
+        pl.read_parquet(layout.raw_texts).drop("form_feeds"), layout.raw_texts, schema_version=1
+    )
+    with pytest.raises(PackError, match="Schema-Version 1") as refused:
+        pack_raw_texts(layout, default_settings, tmp_path / "rohtexte")
+    assert "ohne PDFs" not in str(refused.value)

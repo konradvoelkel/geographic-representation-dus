@@ -63,12 +63,18 @@ def write_json(target: Path, data: object, *, indent: int | None = 2) -> None:
     write_text(target, json.dumps(data, ensure_ascii=False, indent=indent))
 
 
-def write_parquet(frame: pl.DataFrame, target: Path, *, schema_version: int) -> None:
+def write_parquet(
+    frame: pl.DataFrame, target: Path, *, schema_version: int, compression_level: int | None = None
+) -> None:
     """Parquet mit zstd, atomar; ``schema_version`` steht in den Metadaten (Lehre bubatzblick:
-    ein Cache muss sein eigenes Ausgabeschema kennen)."""
+    ein Cache muss sein eigenes Ausgabeschema kennen). ``compression_level`` ``None`` ist die
+    Vorgabe von Polars; nur ein Paket fürs Repo nimmt mehr (``pack.RAW_TEXTS_ZSTD_LEVEL``)."""
     with atomic_path(target) as tmp:
         frame.write_parquet(
-            tmp, compression="zstd", metadata={"georep.schema_version": str(schema_version)}
+            tmp,
+            compression="zstd",
+            compression_level=compression_level,
+            metadata={"georep.schema_version": str(schema_version)},
         )
 
 

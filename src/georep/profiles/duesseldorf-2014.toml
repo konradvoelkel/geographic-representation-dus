@@ -107,3 +107,4 @@ consultations = ""
 
 [bootstrap]
 texts = ""                     # Punkt 68: das Textpaket der Hauptperiode gehört nicht hierher; der Schnappschuss trägt seine eigenen Texte
+raw_texts = ""                 # Fundament F1: ebenso das Rohtextpaket der Hauptperiode; ihren Rohtext liest der Schritt raw_texts aus den PDFs

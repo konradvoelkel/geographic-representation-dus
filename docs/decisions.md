@@ -2704,3 +2704,129 @@ die Größe je Modell ohne Abfrage kennt und ein ausgedientes Modell mit einer D
 **Was F5 nicht entscheidet.** Welche Texte ein Vorhaben einbettet (Rohtext aus F1, Abschnitte aus
 11, Zerteilung bei mehr als 512 Token), welche Prompts es schreibt und mit welcher Version, und ob
 ein Ergebnis ins Repo darf (Kurzfassungen nicht, Plan § 10, Frage 6).
+
+## NN. Der Rohtext bekommt einen zweiten Store; der Textstore bleibt, wie die Arbeit ihn verlangt (Fundament F1, 2026-11-23)
+
+Der Textstore (`cache_root/<profil>/text/texts.parquet`) hält den Text so, wie die Arbeit ihn las:
+kleingeschrieben, ohne Zeilenumbrüche, erst ab dem Marker (`search.text_split_marker`). Das bleibt
+so, denn die Suche und jede Zahl der Seite hängen daran. Abschnitte, Beträge, Kopfdaten und
+Kurzfassungen (Vorhaben 11, 12, 18 und 20 aus `docs/plan-vorverarbeitung-2026-11.md`) brauchen
+aber Groß- und Kleinschreibung, Zeilen, Seiten und gerade den Vorlagenkopf, den der Marker
+abschneidet. Darum kommt ein zweiter Store dazu, kein Umbau des ersten.
+
+**Was gebaut ist.**
+
+- `cache_root/<profil>/text/rohtexte.parquet` (`Layout.raw_texts`, `stores.RawTextStore`,
+  Schema-Version 2) mit den Spalten `name`, `text`, `pages`, `chars`, `extractor`, `pdf_sha256` und
+  `form_feeds`; zwischen zwei Seiten steht ein `\f` (`stores.PAGE_BREAK`). Der Extraktor ist
+  derselbe wie im Textstore (`pypdf==7.1.0`, Punkt 67) und heißt hier `pypdf-7.1.0+roh`, damit
+  niemand die beiden Stores verwechselt, ohne es an einer Zeile zu merken. Eine Datei mit anderer
+  Schema-Version liest der Store als leer, und der Schritt liest dann jedes PDF neu.
+- Der Schritt `raw_texts` steht direkt nach `texts`, mit `RAW_TEXT_SCHEMA_VERSION` und Stamp.
+  `prep.raw_texts.extract_raw_missing` folgt `extract_missing` Zeile für Zeile: neu gelesen wird nur
+  bei anderem PDF-Hash oder Extraktor, `CorruptPdfError` zählt als fehlerhaft, ein alter Text bleibt
+  stehen. Ohne PDFs (CI, GitHub Pages) schreibt der Schritt einen leeren Store oder lässt den stehen,
+  den `bootstrap` aus einem Paket gelegt hat. `PypdfExtractor.pages` liefert die Seiten, `extract`
+  verbindet dieselbe Liste mit `\n` (ein eigenes Refactoring vorab, Textstore bytegleich).
+  `georep fetch` nimmt den Schritt mit, wie `texts`, weil beide die gerade geholten PDFs lesen.
+- `georep pack --raw-texts` packt den Store eines Profils. Es prüft die Brücke zum Textstore (je
+  Name derselbe PDF-Hash, Extraktor des Textstores mit `+roh`) und schreibt den Store mit zstd auf
+  Stufe 19 neu statt ihn zu kopieren (16,8 % kleiner als die Vorgabe von Polars, 24 s einmal beim
+  Packen). `[bootstrap].raw_texts` legt das Paket beim Bootstrap an. Gepackt ist nur die
+  Hauptperiode: `snapshots/duesseldorf-rohtexte/`, 14 183 802 Bytes (13,5 MiB; alle Pakete
+  zusammen 166,49 MiB). Konrad hat Rohtextpakete im Repo freigegeben
+  (`docs/plan-vorverarbeitung-2026-11.md`, § 10, Frage 6); ob weitere kommen, entscheidet er
+  (Frage 18). Die Seite zeigt keinen Rohtext.
+- Anders als ein Textpaket (Punkt 68) muss ein Rohtextpaket nicht jede Hauptdatei tragen: das
+  AES-verschlüsselte `00403713.pdf` hat keinen Rohtext, weil `cryptography` nicht im Lock steht,
+  und der Textstore führt dafür weiter den Text der Arbeit. `bootstrap` verlangt darum nur, dass
+  jeder Name eine Hauptdatei des Datensatzes ist und das Paket die aktuelle Schema-Version trägt;
+  die Mini-Fixture, die mit den Settings der Hauptperiode bootstrappt, lehnt das Paket damit weiter
+  ab. Ein Store am Ziel, der leer ist oder eine alte Version trägt, zählt wie ein fehlender: sonst
+  käme das Paket nach einem Lauf ohne PDFs ohne `--force` nie mehr an. Ein halber Store (ein
+  eigener Lauf über einen Teil der PDFs, etwa nach `fetch pdfs --limit N`) wird nicht ersetzt,
+  sondern um die fehlenden Namen ergänzt, über dieselbe Brücke wie beim Packen (gleicher
+  PDF-Hash, Extraktor des Textstores mit `+roh`); die eigenen Zeilen bleiben.
+- Der Schlüssel `raw_texts` steht im Block `[bootstrap]` von `defaults.toml` neben `texts` und nicht
+  in einem eigenen Block am Ende: TOML erlaubt eine Tabelle nur einmal. `bootstrap` liegt außerhalb
+  des Settings-Fingerprints, ein Merge rechnet darum nichts neu. Ein Schalter für den Schritt fehlt
+  mit Absicht: er ist ein Kernschritt, und ohne PDFs kostet er nichts.
+- „Methode und Grenzen" nennt jetzt aus dem Modell, womit die Texte gelesen sind und wie viele aus
+  der Arbeit stammen (`docs/todo.md`, Punkt 7, damit erledigt), und den Rohtext in einem Satz --
+  aber nur, wenn der Rohtextstore vollständig ist: aktuelle Schema-Version, ein Extraktor, und
+  jeder Text, den derselbe Extraktor gelesen hat, hat seinen Rohtext zu demselben PDF-Hash
+  (`complete_raw_texts`; gezählt werden diese Texte, nicht die Zeilen des Rohtextstores). Dann
+  stimmt der Satz auf jedem Rechner, der ihn zeigt; rechnerabhängig bleibt nur, ob er erscheint
+  (eine Periode ohne Paket zeigt ihn lokal mit PDFs, auf Pages nicht). Keine Zahl der Seite ändert
+  sich. Der Rohtextstore ist eine **optionale** Eingabe von `report` (`Step.optional`): ihr Hash
+  steht im Stamp, eine fehlende als `fehlt`, und ihr Fehlen bricht nichts ab -- als harte Eingabe
+  brach `georep run report` auf jeder Datenwurzel von vor F1 ab.
+
+**Die Eigenschaft, an der der Store hängt.** Der Rohtext eines Dokuments, geplättet
+(`prep.raw_texts.flatten`: `\f` zu `\n`, die `\f` aus dem Text einer Seite an den Offsets in
+`form_feeds` zurück, dann `normalise_text`, dann `after_marker`), ist **genau** der Text des
+Textstores, für jedes Dokument und ohne Ausnahme. Nur dann ist eine Stelle, die ein späteres
+Vorhaben im Rohtext findet, die Stelle, die die Suche zählt. Geprüft ist das dreifach: als
+hypothesis-Eigenschaft über Zufallsseiten, auch solche mit eigenen `\f`, gegen den Text, wie
+`extract_missing` ihn aus denselben Seiten bildet (`tests/property/test_raw_text_props.py`, auch
+über beide Schritte mit einem Fake-Extraktor), an den vier Fixture-PDFs und als `slow`-Test über die
+beiden Pakete der Hauptperiode (`tests/unit/test_data_packages.py`: 0 Abweichungen, derselbe
+PDF-Hash je Name). Ergebnis über die Hauptperiode: **19 091 von 19 091 Rohtexten**; ohne Rohtext ist
+allein `00403713.pdf`, dessen Text der Arbeit der Textstore behält. In Mönchengladbach (658) und der
+laufenden Periode (4 088) gibt es ebenfalls keine Abweichung, in 2014 bis 2020 keine unter den
+22 101 Rohtexten (geprüft am 2026-11-23 mit einem Messskript gegen die Stores im Cache; die acht
+PDFs mit eigenen `\f` dort einzeln mit dem neuen Format); ohne Rohtext sind dort die 15 PDFs, die
+pypdf seit 6.21 an einer Schutzgrenze abweist und deren Text aus 6.20.0 der Textstore behält
+(Punkt 66). Gegen die Messdatei, die der Supervisor in Phase 0 eigens extrahiert hat
+(`messdaten/rohtext/<profil>.parquet`, Seiten ebenfalls mit `\f` verbunden), sind in allen vier
+Datensätzen alle Rohtexte zeichengleich, bis auf neun Dateien, die sich nur an den Stellen der
+Formfeeds unterscheiden (dort `\f`, hier das Ersatzzeichen).
+
+**Formfeeds im Text einer Seite.** Eine Seite kann selbst ein `\f` tragen: in `00532917.pdf`
+liefert eine defekte Schriftkodierung Steuerzeichen statt Buchstaben, darunter 41 Formfeeds (in
+2014 bis 2020 acht weitere PDFs mit 2 bis 525, in allen neun Fällen Zeichensalat). Stünden sie im
+Rohtext, hieße `\f` nicht mehr „Seitenwechsel", und wer die Seiten von `00532917.pdf` zählt, zählte
+44 statt drei. Im Rohtext steht dort darum ein Leerzeichen (`stores.PAGE_BREAK_STANDIN`), und die
+Spalte `form_feeds` nennt die Offsets; jede Seite behält ihre Länge, und `flatten` setzt die `\f`
+zurück, bevor es normalisiert und schneidet. Die erste Fassung (Schema-Version 1) ließ die Offsets
+weg und nahm die Abweichung an diesen Stellen hin; der Review vom 2026-11-23 fand dazu einen Marker,
+den das Leerzeichen erst erzeugt („a\fb" wird „a b"), und die Entscheidung war: die Plättung bleibt
+genau. Darum ist `form_feeds` ein Pflichtargument von `flatten(raw, marker, form_feeds)`: eine
+Vorgabe `()` plättete einen Aufruf ohne Offsets still wie Version 1 (Review, dritte Runde); aus dem
+Store kommen sie mit `RawTextStore.form_feeds(name)`.
+
+**Laufzeit** des Schritts beim ersten Lauf je Profil, seriell wie `texts`, am 2026-11-23 unter
+starker Fremdlast (Lastmittel bis 144 auf 16 Kernen), mit `nice -n 10`, in Schema-Version 1; die
+Hauptperiode in Version 2 danach mit weniger Last:
+
+| Profil | PDFs | gelesen | Seiten | Sekunden | Store im Cache |
+|---|---|---|---|---|---|
+| Hauptperiode, Version 2 | 19 092 | 19 091 (1 fehlerhaft) | 39 965 | 827,8 | 17 045 208 Bytes |
+| Hauptperiode, Version 1 | 19 092 | 19 091 (1 fehlerhaft) | 39 965 | 1 178,1 | 17 044 606 Bytes |
+| 2014 bis 2020 | 22 116 | 22 101 (15 fehlerhaft, 26 Namen ohne PDF) | 50 861 | 1 817,2 | 21 809 955 Bytes |
+| laufende Periode | 4 088 | 4 088 | 8 265 | 152,3 | 3 311 563 Bytes |
+| Mönchengladbach | 658 | 658 (2 213 ohne PDF) | 2 485 | 52,5 | 1 079 714 Bytes |
+
+Der Textstore der Hauptperiode brauchte am 2026-11-18 ohne Fremdlast 628,5 s für dieselben PDFs. Dass
+die längere Zeit die Last ist und nicht der Schritt, zeigt eine gepaarte Messung an 200 PDFs der
+Hauptperiode, beide Schritte abwechselnd in je drei Runden: im Minimum 12,7 s für den Textstore und
+12,9 s für den Rohtext; die übrigen Runden streuen unter der Last zwischen 14 und 76 s. Beide lesen je
+Seite dasselbe `extract_text`. Danach ist der Schritt aktuell und kostet nur die SHA-256 der PDFs.
+Die Stores der drei anderen Profile im Cache tragen noch Version 1; ihr nächster Lauf liest sie neu.
+
+Verworfen: den Textstore umbauen, sodass er Zeilen und Großschreibung behält (änderte jede Zahl der
+Seite und die Treue zur Arbeit); den Textstore aus dem Rohtext ableiten, statt jedes PDF zweimal zu
+lesen (halbierte die Laufzeit, ändert aber Schritt und Stamp des Textstores, der bytegleich bleiben
+soll; ein eigener Schritt für später, wenn sich die doppelte Laufzeit lohnt); die Seiten als Liste
+(`List(String)`) statt mit `\f` (die Eigenschaft wäre dieselbe, aber jede Textsuche über das ganze
+Dokument müsste die Liste erst verbinden, und `\f` ist die Konvention von `pdftotext`); ein `\f`
+im Seitentext stehen lassen, wie die Messdatei aus Phase 0 es tut (die Seitenzahl ließe sich dann
+aus dem Text nicht mehr ablesen); das Ersatzzeichen ohne Offsets (Version 1: neun Dokumente wichen
+ab, siehe oben); dieselbe Bedingung wie beim Textpaket, gleiche Namensmenge (das Paket der
+Hauptperiode wäre wegen des einen verschlüsselten PDFs abgelehnt); ein paralleler Extraktor (die
+Polars-Threads blockieren nach einem `fork`, `docs/mutation-2026-10-11.md`; seriell wie `texts`);
+der Rohtextstore als harte Eingabe von `report` (brach ohne ihn ab) und als Eingabe nur, wenn er
+beim Bauen des Registers existiert (legt `raw_texts` ihn im selben Lauf an, fehlte er im Stamp, und
+der zweite Lauf rechnete die Seite neu); der Satz über den Rohtext mit der bloßen Zeilenzahl (stand
+auch bei einem halben Store); die Schema-Version des Textstores beim Laden prüfen wie hier (dasselbe
+Muster, aber ein eigener Eingriff in einen Store, an dem jede Zahl hängt; notiert, nicht gebaut).

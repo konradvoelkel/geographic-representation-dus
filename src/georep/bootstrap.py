@@ -19,16 +19,24 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import polars as pl
 from loguru import logger
 
 from georep.io import atomic_path
 from georep.layout import Layout
+from georep.prep.raw_texts import RAW_SUFFIX
 from georep.records import PaperRecord
 from georep.settings import Settings
 from georep.sources.pdfs import PdfStore
-from georep.stores import PaperStore, TextMeta, TextStore
-
-REFERENCE_EXTRACTOR = "pypdf (Arbeit, Januar 2026)"
+from georep.stores import (
+    RAW_TEXT_SCHEMA_VERSION,
+    REFERENCE_EXTRACTOR,
+    PaperStore,
+    RawTextStore,
+    TextMeta,
+    TextStore,
+    stored_schema_version,
+)
 
 
 @dataclass
@@ -43,6 +51,15 @@ class BootstrapReport:
     )
     texts_package: Path | None = None  # Punkt 68: die Texte kommen aus diesem Paket
     texts_refused: str = ""  # Punkt 68: warum ein genanntes Textpaket nicht übernommen wurde
+    # Fundament F1: so viele Rohtexte kamen aus diesem Paket; None = keiner übernommen
+    raw_texts: int | None = None
+    raw_texts_package: Path | None = None
+    raw_texts_refused: str = ""
+    # Review F1, dritte Runde: ein halber Store wird aus dem Paket ergänzt, nicht ersetzt. Dann
+    # nennt ``raw_texts_kept`` die eigenen Zeilen und ``raw_texts_unbridged`` die Namen des Pakets,
+    # deren Text im Textstore einen anderen PDF-Hash oder Extraktor trägt.
+    raw_texts_kept: int | None = None
+    raw_texts_unbridged: int = 0
 
     def summary(self) -> str:
         if not self.seed_corpus:
@@ -57,9 +74,24 @@ class BootstrapReport:
         else:
             stores = "Stores vorhanden"
         refused = f"; {self.texts_refused}" if self.texts_refused else ""
+        raw = ""
+        if self.raw_texts is not None and self.raw_texts_kept is not None:
+            unbridged = (
+                f", {self.raw_texts_unbridged} ohne Brücke zum Textstore"
+                if self.raw_texts_unbridged
+                else ""
+            )
+            raw = (
+                f"; {self.raw_texts} Rohtexte aus {self.raw_texts_package} ergänzt, "
+                f"{self.raw_texts_kept} eigene behalten{unbridged}"
+            )
+        elif self.raw_texts is not None:
+            raw = f"; {self.raw_texts} Rohtexte aus {self.raw_texts_package}"
+        raw_refused = f"; {self.raw_texts_refused}" if self.raw_texts_refused else ""
         return (
             f"{len(self.copied)} Dateien kopiert, {len(self.skipped)} übersprungen, "
-            f"{len(self.missing)} in Referenz oder Kontext nicht gefunden; {stores}{refused}"
+            f"{len(self.missing)} in Referenz oder Kontext nicht gefunden; "
+            f"{stores}{refused}{raw}{raw_refused}"
         )
 
 
@@ -135,6 +167,113 @@ def overlay_texts(layout: Layout, package: Path, report: BootstrapReport) -> Non
     report.texts_package = package
 
 
+def _holds_rows(store: Path) -> bool:
+    """Ob ein Rohtextstore da ist und Zeilen in der Schema-Version trägt, die der Code liest.
+
+    Gelesen werden nur die Metadaten und die Zeilenzahl. Eine alte Version zählt wie ein leerer
+    Store (Review F1, N3): ``RawTextStore`` liest sie als leer, und ohne das Paket bliebe er es.
+    """
+    return (
+        store.is_file()
+        and stored_schema_version(store) == str(RAW_TEXT_SCHEMA_VERSION)
+        and int(pl.scan_parquet(store).select(pl.len()).collect().item()) > 0
+    )
+
+
+def overlay_raw_texts(
+    layout: Layout, package: Path, report: BootstrapReport, *, force: bool
+) -> None:
+    """Fundament F1: den Rohtextstore aus einem Paket anlegen, wenn er zu diesem Datensatz gehört.
+
+    Anders als ein Textpaket (``overlay_texts``) muss ein Rohtextpaket nicht **jede** Hauptdatei
+    tragen: ein PDF, das pypdf nicht lesen kann, hat keinen Rohtext, und der Textstore behält dafür
+    den Text der Arbeit (Punkt 68). Es darf aber keinen Namen tragen, der keine Hauptdatei dieser
+    Paper ist -- dann ist es das Paket eines anderen Datensatzes (die Mini-Fixture bootstrappt mit
+    den Settings der Hauptperiode). Ein leerer Store oder einer in alter Version am Ziel zählt wie
+    ein fehlender (Review F1, M2): den legt der Schritt ``raw_texts`` ohne PDFs an. Trägt der Store
+    schon Zeilen (ein eigener Lauf über einen Teil der PDFs), wird er nicht ersetzt, sondern um die
+    fehlenden Namen ergänzt (``_complete_from_package``); ``force`` ersetzt ihn. Gelesen wird für die
+    Prüfung nur die Spalte ``name``.
+    """
+    if not package.is_file():
+        report.missing.append(package.name)
+        return
+    target = layout.guard_writable(layout.raw_texts)
+    version = stored_schema_version(package)
+    if version != str(RAW_TEXT_SCHEMA_VERSION):
+        report.raw_texts_refused = (
+            f"Rohtextpaket {package} nicht übernommen: Schema-Version {version}, gelesen wird "
+            f"{RAW_TEXT_SCHEMA_VERSION}; das Paket braucht ein neues `georep pack --raw-texts`"
+        )
+        logger.warning(report.raw_texts_refused)
+        return
+    names = set(pl.read_parquet(package, columns=["name"]).get_column("name").to_list())
+    files = {r.file_name for r in PaperStore(layout.papers).load().values() if r.file_name}
+    if not names <= files:
+        report.raw_texts_refused = (
+            f"Rohtextpaket {package} nicht übernommen: {len(names)} Rohtexte, "
+            f"{len(names - files)} davon für keine der {len(files)} Dateien dieses Datensatzes"
+        )
+        logger.warning(report.raw_texts_refused)
+        return
+    if not force and _holds_rows(target):
+        _complete_from_package(layout, package, report)
+        return
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with atomic_path(target) as tmp:
+        shutil.copyfile(package, tmp)
+    report.raw_texts = len(names)
+    report.raw_texts_package = package
+
+
+def _complete_from_package(layout: Layout, package: Path, report: BootstrapReport) -> None:
+    """Einen halben Rohtextstore um die Namen des Pakets ergänzen, die ihm fehlen.
+
+    Review F1, dritte Runde: ein frischer Klon mit ``georep fetch pdfs --limit N`` und
+    ``raw_texts`` vor ``bootstrap`` hat N Rohtexte, und bis dahin hielt dieser halbe Store das Paket
+    für immer fern. Die eigenen Zeilen bleiben (ein eigener Lauf gilt vor dem Paket); dazu kommt
+    jede Zeile des Pakets, deren Name fehlt und deren Brücke zum Textstore hält -- derselbe
+    PDF-Hash und der Extraktor des Textstores mit ``+roh``, wie ``pack.check_raw_bridge`` sie beim
+    Packen verlangt. Ohne Brücke gehörte der Rohtext zu einem anderen Text als dem, den die Suche
+    liest. Ist nichts zu ergänzen, bleibt der Store stehen wie jede vorhandene Eingabe.
+    """
+    target = layout.raw_texts
+    store = RawTextStore(target)
+    kept = len(store)
+    texts = TextStore(layout.texts).rows if layout.texts.is_file() else {}
+    source = RawTextStore(package)
+    added = unbridged = 0
+    for name, row in sorted(source.rows.items()):
+        if name in store:
+            continue
+        text = texts.get(name)
+        if (
+            text is None
+            or text["pdf_sha256"] != row["pdf_sha256"]
+            or f"{text['extractor']}{RAW_SUFFIX}" != row["extractor"]
+        ):
+            unbridged += 1
+            continue
+        store.put(
+            name,
+            str(row["text"]),
+            pages=int(row["pages"]),  # type: ignore[call-overload]
+            extractor=str(row["extractor"]),
+            pdf_sha256=str(row["pdf_sha256"]),
+            form_feeds=source.form_feeds(name),
+        )
+        added += 1
+    if not added:
+        report.skipped.append(target.name)
+        report.raw_texts_unbridged = unbridged
+        return
+    store.save()
+    report.raw_texts = added
+    report.raw_texts_kept = kept
+    report.raw_texts_unbridged = unbridged
+    report.raw_texts_package = package
+
+
 def bootstrap_from_settings(
     layout: Layout, settings: Settings, *, force: bool = False
 ) -> BootstrapReport:
@@ -142,7 +281,8 @@ def bootstrap_from_settings(
 
     Die eine Stelle, an der die Nähte des Befehls verdrahtet sind: die Kontextdateien (Option 03),
     das Wörterbuch der Hauptperiode (Option 02), der leere Store einer laufenden Periode
-    (Option 07), das Paket mit der Beratungsfolge (Punkt 58) und das Textpaket (Punkt 68).
+    (Option 07), das Paket mit der Beratungsfolge (Punkt 58), das Textpaket (Punkt 68) und das
+    Rohtextpaket (Fundament F1).
     ``georep bootstrap`` ruft genau
     das, und Tests, die die Kette auf einem echten Datensatz fahren, auch -- sonst stünde die
     Verdrahtung zweimal da und ein neuer Schlüssel fehlte in der Hälfte der Läufe.
@@ -155,6 +295,7 @@ def bootstrap_from_settings(
         seed_corpus=settings.bootstrap.seed_corpus,
         consultations=settings.bodies.consultations,
         texts=settings.bootstrap.texts,
+        raw_texts=settings.bootstrap.raw_texts,
     )
 
 
@@ -167,6 +308,7 @@ def bootstrap(
     seed_corpus: bool = True,
     consultations: Path | None = None,
     texts: Path | None = None,
+    raw_texts: Path | None = None,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
 
@@ -183,7 +325,10 @@ def bootstrap(
     liest sie dann nicht, und eine Kopie ohne Leser wäre eine Angabe ohne Stamp. Ist der Pfad
     gesetzt und bringt der Datensatz eine eigene Datei mit, gilt seine. ``texts`` ist die Naht
     von Punkt 68: ein Textpaket, das nach dem Füllen der Stores den Textstore ersetzt, wenn es
-    genau die Dateien dieses Datensatzes trägt (``overlay_texts``).
+    genau die Dateien dieses Datensatzes trägt (``overlay_texts``). ``raw_texts`` ist die Naht von
+    Fundament F1: ein Rohtextpaket, das den Rohtextstore anlegt, wenn keiner da ist oder ``force``
+    gilt, und nur, wenn jeder seiner Namen eine Datei dieses Datensatzes ist
+    (``overlay_raw_texts``).
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -238,5 +383,8 @@ def bootstrap(
             report.papers, report.texts = seed_stores_from_legacy(layout, items)
         if texts is not None and report.papers is not None:
             overlay_texts(layout, texts, report)
+        # Fundament F1: kein Netz, keine PDFs (Pages) -- der Rohtext kommt aus dem Paket
+        if raw_texts is not None and layout.papers.is_file():
+            overlay_raw_texts(layout, raw_texts, report, force=force)
     logger.success(f"Bootstrap aus {layout.reference_root}: {report.summary()}")
     return report

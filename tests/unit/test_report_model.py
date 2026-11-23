@@ -22,12 +22,14 @@ from georep.report.model import (
     ColumnDoc,
     ControlModel,
     ControlTerm,
+    Extraction,
     ReportModel,
     _verdict,
     build_report_model,
     column_docs,
     district_names,
     district_rows,
+    extraction_figures,
     format_de,
     percent_de,
     period_comparison,
@@ -841,3 +843,74 @@ def test_the_page_names_both_rules(mini_page: str) -> None:
     assert "Zwei Regeln weichen bewusst von der Arbeit ab" in mini_page
     assert "Einrichtung mit stadtweiter Bedeutung" in mini_page
     assert "Straßen sind nie betroffen" in mini_page
+
+
+# --- todo Punkt 7, Fundament F1: die Seite nennt ihren Extraktor und den Rohtext ----------------
+
+
+def test_the_mini_fixture_reads_the_texts_of_the_thesis(mini_model: ReportModel) -> None:
+    """200 Texte aus dem Korpus der Arbeit, kein PDF gelesen, darum auch kein Rohtext."""
+    assert mini_model.extraction == Extraction(texts=200, extractors=(), thesis=200, raw_texts=0)
+
+
+def test_the_extraction_counts_come_from_the_extractor_column(tmp_path: Path) -> None:
+    from georep.stores import REFERENCE_EXTRACTOR, RawTextStore, TextMeta, TextStore
+
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "p")
+    assert extraction_figures(layout) is None  # ohne Textstore kein Satz
+    layout.texts.parent.mkdir(parents=True)
+    texts = TextStore(layout.texts)
+    for i, extractor in enumerate(["pypdf-7.1.0"] * 3 + ["pypdf-6.20.0", REFERENCE_EXTRACTOR]):
+        texts.put(f"{i}.pdf", "text", TextMeta(extractor=extractor, pdf_sha256="0"))
+    texts.save()
+    assert extraction_figures(layout) == Extraction(
+        texts=5, extractors=(("pypdf-7.1.0", 3), ("pypdf-6.20.0", 1)), thesis=1, raw_texts=0
+    )
+    # Review F1, N1: ein halber Rohtextstore (einer von drei Texten aus pypdf 7.1.0) gibt keinen Satz
+    raw = RawTextStore(layout.raw_texts)
+    raw.put("0.pdf", "Text", pages=1, extractor="pypdf-7.1.0+roh", pdf_sha256="0")
+    raw.save()
+    half = extraction_figures(layout)
+    assert half is not None and (half.raw_texts, half.raw_extractor) == (0, "")
+    # vollständig: jeder Text dieses Extraktors hat seinen Rohtext; die anderen zählen nicht
+    for name in ("1.pdf", "2.pdf"):
+        raw.put(name, "Text", pages=1, extractor="pypdf-7.1.0+roh", pdf_sha256="0")
+    raw.save()
+    found = extraction_figures(layout)
+    assert found is not None and (found.raw_texts, found.raw_extractor) == (3, "pypdf-7.1.0")
+    # eine Datei in einer anderen Schema-Version zählt nicht, wie im Store selbst (N3)
+    frame = pl.read_parquet(layout.raw_texts).drop("form_feeds")
+    write_parquet(frame, layout.raw_texts, schema_version=1)
+    old = extraction_figures(layout)
+    assert old is not None and old.raw_texts == 0
+    # Ein leerer Store (eine laufende Periode vor ihrem ersten Abruf) gibt keinen Satz
+    empty = Layout(tmp_path / "d", tmp_path / "c", tmp_path / "r", "p")
+    empty.texts.parent.mkdir(parents=True)
+    TextStore(empty.texts).save()
+    assert extraction_figures(empty) is None
+
+
+def test_the_raw_sentence_counts_the_texts_and_checks_their_pdf_hash(tmp_path: Path) -> None:
+    """Review F1, dritte Runde: ``complete_raw_texts`` zählte die Zeilen des Rohtextstores.
+
+    Mit einer Zeile mehr -- einem Rohtext, dessen Text ein anderer Extraktor gelesen hat -- sagte
+    der Satz 19 092 statt 19 091. Und ein Rohtext zu einem anderen PDF als dem des Textes zählte
+    mit; jetzt ist der Store nur vollständig, wenn je Text derselbe PDF-Hash dasteht.
+    """
+    from georep.report.model import complete_raw_texts
+    from georep.stores import RawTextStore, TextMeta, TextStore
+
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "p")
+    layout.texts.parent.mkdir(parents=True)
+    texts = TextStore(layout.texts)
+    for i, extractor in enumerate(["pypdf-7.1.0"] * 3 + ["pypdf-6.20.0"]):
+        texts.put(f"{i}.pdf", "text", TextMeta(extractor=extractor, pdf_sha256="0"))
+    texts.save()
+    raw = RawTextStore(layout.raw_texts)
+    for i in range(4):  # 3.pdf: Rohtext da, sein Text aber aus einem anderen Extraktor
+        raw.put(f"{i}.pdf", "Text", pages=1, extractor="pypdf-7.1.0+roh", pdf_sha256="0")
+    raw.save()
+    assert complete_raw_texts(layout) == (3, "pypdf-7.1.0")
+    raw.put("2.pdf", "Text", pages=1, extractor="pypdf-7.1.0+roh", pdf_sha256="1")
+    raw.save()
+    assert complete_raw_texts(layout) == (0, "")
