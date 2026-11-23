@@ -5,12 +5,15 @@ Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/17-zeit`. Briefing:
 Messskript: [17-zeit-messung.py](17-zeit-messung.py) (`uv run python docs/plans/17-zeit-messung.py
 --feeds <ordner>`, rechnet jede Zahl dieses Dokuments nach und schreibt den Feed-Prototyp;
 `--stichprobe` schreibt Stichprobe und Kodieraufgaben). Lexikon: [17-zeit-lexikon.toml](17-zeit-lexikon.toml),
-Version 2026-11-23.1. Codebuch und Stichprobe: `validierung/17-zeit/`. **Hypothesen (§ 8) und Lexikon
-sind vor der Messung festgelegt und allein committet** (`4b9bf14`, 19:45 Uhr; das Messskript lief zum
-ersten Mal um 19:51 Uhr).
+Version 2026-11-23.1. Codebuch, Stichprobe und Endlabels: `validierung/17-zeit/`. **Hypothesen (§ 8)
+und Lexikon sind vor der Messung festgelegt und allein committet** (`9c7b3d6` auf `main`, Autorendatum
+19:45:04; auf dem Branch hieß der Commit vor dem Rebase `4b9bf14`; das Messskript lief zum ersten Mal um
+19:51 Uhr). Nachgetragen am selben Abend: das Ergebnis der Kodierung (§ 4.1) und das Urteil (§ 5).
 
-**Urteil: bauen, vorläufig — die Feeds erfüllen ihren Teil des Kriteriums, die Präzision des Lexikons
-ist noch nicht gemessen** (§ 5), mit vier Änderungen am Briefing.
+**Urteil: bauen.** Beide Teile des Kriteriums sind erfüllt: das Lexikon erreicht eine **Präzision von
+0,94** an 100 Treffern (Wilson 0,88 bis 0,97; α zwischen den Kodierern 0,957 für das Thema, 0,928 für
+die Ebene), und **41 von 41 Feeds sind gültig**. Version 2026-11-23.1 des Lexikons darf auf die Seite,
+mit vier Änderungen am Briefing (§ 5).
 
 Die drei Zahlen, auf die es ankommt:
 
@@ -27,10 +30,12 @@ Die drei Zahlen, auf die es ankommt:
    Kategorie ist er flach (1,57 / 1,58 / 2,30 %, nachträglich und explorativ). Klima- und
    Energiepolitik und Wohnungs- und Bodenrecht des Bundes steigen (explorativ, je p = 0,008 ohne
    Korrektur): das sind Bundesgesetze, die die Stadt umsetzen muss.
-3. **41 von 41 Atom-Feeds sind gültig**, nach dem RELAX-NG-Schema aus RFC 4287 und nach den normativen
-   Regeln, die das Schema nicht ausdrückt; ein absichtlich kaputter Feed fällt bei beiden durch, zwei
-   Bauten sind bytegleich. Je Feed die 50 neuesten Dokumente (18 bis 27 KB, zusammen 982 KB); sie
-   reichen im Median 140 Tage zurück, ein Wahlbezirk bekommt im Median 2,3 neue Dokumente je Woche.
+3. **Das „bundespolitische Vokabular" ist zur Hälfte örtliche Umsetzung.** Unter den richtigen
+   Treffern der Strukturkategorien nennt die Fundstelle die Bundesebene in **55 %** (mit der Population
+   gewichtet; ohne Migration 83 %): Bürgergeld und Sozialstaat sowie Wohnungs- und Bodenrecht 10 von 10,
+   Migration 4 von 10, Gendern 3 von 8, Cannabis 2 von 10, Corona 0 von 10 (§ 4.1). Die Feeds: 41 von 41
+   gültig nach RELAX NG (RFC 4287) und den normativen Regeln; je Feed die 50 neuesten Dokumente (18 bis
+   27 KB), im Median 140 Tage zurück, im Median 2,3 neue Dokumente je Wahlbezirk und Woche.
 
 ## 1. Frage und Nutzen (Literatur, Ratsarbeit)
 
@@ -100,10 +105,12 @@ veröffentlicht (Kennung, Drucksache, Titel, Datum, Link aufs PDF), keine Texte.
 
 ## 3. Messung (Vorgehen, Stichprobe mit Seed, Zahlen mit Datum)
 
-Alle Zahlen vom 2026-11-23, Läufe des Messskripts zwischen 19:51 und 20:04 Uhr. Zwei Läufe ohne
+Alle Zahlen vom 2026-11-23, Läufe des Messskripts zwischen 19:51 und 20:04 Uhr, die Auswertung der
+Kodierung (§ 4.1) zwischen 20:27 und 20:33 Uhr nach dem Rebase auf `main` (`v0.18.0`; die Zahlen von
+§ 3 blieben dabei gleich, nur die Versionsnummer im Feed-Kopf änderte sich). Zwei Läufe ohne
 Codeänderung ergeben bis auf die Laufzeit gleiche Ausgaben (geprüft mit `cmp`), die Feeds sind
 bytegleich, und ohne `--stichprobe` meldet das Skript „gespeicherte Stichprobe ist dieselbe". Laufzeit
-**18 bis 46 s** bei Lastmittel 7 bis 27 (`uptime` davor und danach, `nice -n 10`, Polars auf vier
+**17 bis 46 s** bei Lastmittel 7 bis 27 (`uptime` davor und danach, `nice -n 10`, Polars auf vier
 Threads, Fremdlast); davon Laden und Markieren mit den 95 Mustern 11 bis 27 s, die drei exakten Tests
 zusammen wenige Sekunden.
 
@@ -268,7 +275,8 @@ Wärmeplanungsgesetz, Baulandmobilisierungsgesetz, „Bau-Turbo" —, nicht die 
 Schlagworte, die Barari und Simko zählen: Gendern steht in 17 Dokumenten in elf Jahren, Cannabis in 49.
 Mit einer Bonferroni-Korrektur über zehn Kategorien hielte keiner der beiden Anstiege (0,008 · 10 =
 0,08). Ob ein Treffer die Bundesebene nennt oder nur die örtliche Umsetzung, beschreibt die Frage
-`ebene` der Kodierung (§ 4). Die Lesart „Nationalisierung" im Sinne von Barari und Simko stützen die Zahlen
+`ebene` der Kodierung: in den Strukturkategorien nennt gut die Hälfte der richtigen Treffer die
+Bundesebene, in der Migration, die den Anteil trägt, vier von zehn (§ 4.1). Die Lesart „Nationalisierung" im Sinne von Barari und Simko stützen die Zahlen
 nicht; sie zeigen die **Bundesagenda** in den Dokumenten, mit ihren Wellen (2015/16 Flucht, 2020/21
 Corona, 2022 Krieg und Energiepreise).
 
@@ -440,36 +448,129 @@ Corona (`pandemie` ohne Covid). Wohngeld und das Bildungs- und Teilhabepaket sin
 die Stadt auszahlt; sie zählen als `sozialstaat`, und `ebene` zeigt, wie oft die Stelle die Bundesebene
 nennt.
 
+### 4.1 Ergebnis der Kodierung (2026-11-23, abends)
+
+Zwei Kodier-Agenten (A, B) haben die 100 Aufgaben nach Codebuch 2026-11-23.1 unabhängig kodiert, ein
+Schlicht-Agent hat die acht Aufgaben entschieden, in denen sie uneinig waren. **Alle drei sind dasselbe
+Modell** (Opus; Frage 19 an Konrad, `fragen-2026-11.md`): die Übereinstimmung misst, wie fest das
+Codebuch für dieses Modell ist, nicht die Übereinstimmung zwischen Menschen oder zwischen verschiedenen
+Modellen, und gemeinsame Fehler des Modells sieht sie nicht. Endlabels in `validierung/17-zeit/labels.csv`
+(je Aufgabe und Frage A, B, Schlichtung, Endlabel; nur Labels als JSON, keine Ausschnitte, keine
+Begründungen); Antworten, Begründungen und Schlichtung liegen lokal unter `messdaten/kodierung/17-zeit/`.
+
+**Übereinstimmung** (vor der Schlichtung): `thema` gleich in 96 von 100 Aufgaben, Krippendorffs α
+**0,957** mit der Menge als einem Wert (nominal), 0,971 mit MASI-Distanz, 0,978 mit Jaccard-Distanz,
+Jaccard im Mittel 0,980; binär („die Kategorie des Lexikons steht im Thema") 100 von 100, α = 1,0 — die
+vier Uneinigkeiten betreffen nur ein zweites Thema (Corona neben dem Krieg oder neben Geflüchteten).
+`ebene` gleich in 96 von 100, α **0,928**. Beide über der Schwelle von 0,8 für Stufe 3. Als unsicher
+markiert hat A 17 Aufgaben, B 16, beide 13. Geschlichtet: viermal `thema`, viermal `ebene`, mit fünf
+Regeln (§ 9, Vorschlag für Codebuch .2).
+
+**Präzision** (ein Treffer ist richtig, wenn das Endlabel `thema` die Kategorie des Lexikons enthält;
+`unklar` kam nicht vor):
+
+| Kategorie | richtig | Wilson 95 % | Population | falsch, mit Fundwort und Grund |
+|---|---|---|---|---|
+| Migration und Asyl | 10/10 | 0,72–1,00 | 1 360 | — |
+| Klima- und Energiepolitik des Bundes | 9/10 | 0,60–0,98 | 133 | 17-080 `energiewende` in einer Webadresse (`mittelstand-energiewende.de`) |
+| Bürgergeld und Sozialstaat | 10/10 | 0,72–1,00 | 284 | — |
+| Gendern | 8/10 | 0,49–0,94 | 17 | 17-045, 17-087 `\bgendern` trifft „genderneutrale Toiletten" |
+| Verkehrspolitik des Bundes | 10/10 | 0,72–1,00 | 199 | — |
+| Wohnungs- und Bodenpolitik des Bundes | 10/10 | 0,72–1,00 | 69 | — |
+| Cannabispolitik | 10/10 | 0,72–1,00 | 49 | — |
+| Corona | 10/10 | 0,72–1,00 | 1 678 | — |
+| Krieg gegen die Ukraine | 8/10 | 0,49–0,94 | 226 | 17-018 ukrainische Musik der 1960er (2024), 17-025 Künstler der Partnerstadt Czernowitz (2022), beide ohne Krieg im Ausschnitt |
+| Energiekrise 2022 | 9/10 | 0,60–0,98 | 56 | 17-070 `energiesicherungs` (Energiesicherungsstelle 2015, § 3.4) |
+| **gesamt, ungewichtet** | **94/100 = 0,94** | **0,875–0,972** | | Kriterium ≥ 0,9: **erfüllt** |
+| gesamt, mit der Population gewichtet | 0,983 | 0,871–0,998 (Wilson mit effektivem n = 34,1) | 4 071 | |
+| nur Strukturkategorien (H17.3) | 67/70 = 0,957 | 0,881–0,985 | 2 111 | |
+
+Gewichtet liegt die Präzision höher, weil die beiden größten Kategorien (Corona, Migration; 75 % der
+Population) ohne Fehler sind; das Intervall ist breiter, weil zehn Kodierungen je Kategorie ein großes
+Gewicht tragen. Der effektive Stichprobenumfang ist 1/Σ(w²/n) über die Kategorien. Einen der sechs
+Fehler hatte die Gegenprobe vorhergesehen (`energiesicherungs`); für die Ukraine fand sie andere
+Ursachen (`angriffskrieg` und eine Sprachliste vor 2022) als die Kodierung (Kultur ohne Krieg nach 2022).
+Neu ist ein Musterfehler, der sich beheben lässt (`\bgendern` ohne Wortende: 4 der 17
+Gendern-Dokumente treffen nur über „genderneutral" oder „Genderneutralität"; `\bgenderns?\b` behielte
+„des Genderns"), und zwei Fehler lassen sich mit Mustern nicht beheben (eine Webadresse; „ukrainisch" in
+Kultur ohne Kriegsbezug).
+
+**Ebene** (Endlabel; Anteile unter allen zehn und unter den richtigen Treffern je Kategorie):
+
+| Kategorie | bund / land_eu / lokal, alle zehn | bund / land_eu / lokal, nur richtige | Anteil bund unter den richtigen |
+|---|---|---|---|
+| Migration und Asyl | 4 / 1 / 5 | 4 / 1 / 5 | 0,40 |
+| Klima- und Energiepolitik | 8 / 0 / 2 | 8 / 0 / 1 | 0,89 |
+| Bürgergeld und Sozialstaat | 10 / 0 / 0 | 10 / 0 / 0 | 1,00 |
+| Gendern | 3 / 0 / 7 | 3 / 0 / 5 | 0,38 |
+| Verkehrspolitik des Bundes | 7 / 1 / 2 | 7 / 1 / 2 | 0,70 |
+| Wohnungs- und Bodenpolitik | 10 / 0 / 0 | 10 / 0 / 0 | 1,00 |
+| Cannabispolitik | 2 / 1 / 7 | 2 / 1 / 7 | 0,20 |
+| Corona | 0 / 0 / 10 | 0 / 0 / 10 | 0,00 |
+| Krieg gegen die Ukraine | 1 / 2 / 7 | 1 / 2 / 5 | 0,13 |
+| Energiekrise 2022 | 3 / 0 / 7 | 3 / 0 / 6 | 0,33 |
+
+Mit der Population gewichtet nennen **55,5 %** der richtigen Treffer der Strukturkategorien die
+Bundesebene, ohne Migration **83,4 %**, über alle zehn Kategorien 29,9 %. Die Regeln des Schlichters
+(E1 bis E3) galten nur für die strittigen Aufgaben: 17-027 und 17-090 (Gendern) haben beide Kodierer
+einig als `bund` kodiert, mit der eigenen Begründung, der Nachbarsatz nenne das Beamtenstatusgesetz
+„ohne Bezug zur Sprache" — nach E2 wären sie `lokal`, Gendern also 1 von 8 statt 3 von 8. Die Endlabels
+bleiben nach dem Protokoll (einig oder geschlichtet); am gewichteten Anteil ändert das 0,2
+Prozentpunkte. Je Periode (alle 100, bund /
+land_eu / lokal): 2014-2020 15 / 2 / 13, 2020-2025 22 / 3 / 33, ab 2025 11 / 0 / 1 — die Stichprobe ist nach
+Kategorie geschichtet, nicht nach Periode, und ab 2025 sind es zwölf Treffer, meist Bau-Turbo und
+Mietpreisbremse; eine Aussage über die Zeit trägt das nicht.
+
+**Was das für H17.3 heißt.** Das Lexikon findet zuverlässig Gegenstände der Bundespolitik, aber an der
+Fundstelle ist nur gut die Hälfte davon Bundesebene: Leistungen (Bürgergeld, Wohngeld) und Gesetze
+(Bau-Turbo, Mietpreisbremse, Gebäudeenergiegesetz) nennen sie fast immer, die großen Wellen — Flucht
+2015/16, Corona, der Krieg — erscheinen in den Dokumenten als örtliche Aufgabe (Unterbringung,
+Schließungen, Hilfe vor Ort). Die Kategorie, die den Anteil 2014-2020 trägt, ist zu sechs von zehn
+örtliche Umsetzung oder Land. Die Lesart aus § 3.3 wird damit schärfer: die Dokumente zeigen die
+**Folgen** der Bundesagenda in der Stadt; wo sie die Bundesebene selbst nennen, sind es vor allem
+Gesetze und Leistungen, die die Stadt umsetzt — keine „Nationalisierung" der Debatte im Sinne von Barari
+und Simko.
+
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
 
 **Kriterium** (Briefing, unverändert): das Lexikon erreicht eine Präzision ≥ 0,9 an 100 Treffern; die
-Feeds sind gültig.
+Feeds sind gültig. Dazu für Stufe 3 (Meta-Plan § 2.6): α ≥ 0,8 zwischen den Kodierern.
 
+- **Lexikon: erfüllt.** 94 von 100 (0,94; Wilson 0,875 bis 0,972), mit der Population gewichtet 0,983;
+  α 0,957 (`thema`) und 0,928 (`ebene`). Unsicherheit: die untere Grenze des Intervalls liegt unter 0,9;
+  die Kodierer sind dasselbe Modell wie der Schlichter (§ 4.1); je Kategorie sind es zehn Kodierungen,
+  Gendern und Ukraine liegen bei 8 von 10 (untere Grenze 0,49).
 - **Feeds: erfüllt.** 41 von 41 nach RELAX NG und nach den normativen Regeln, die Gegenprobe greift, zwei
   Bauten bytegleich. Unsicherheit: das Schema ist von Hand übertragen; es verwirft den kaputten Feed, aber
   ein Übertragungsfehler, der es zu nachsichtig macht, ist nicht ausgeschlossen — darum prüfen die Regeln
   unabhängig davon.
-- **Lexikon: ausstehend.** Die Gegenprobe kennt sieben sicher falsche Dokumente (drei mit
-  `energiesicherungs`, vier Ukraine-Treffer vor 2022) unter 4 071 Dokument-Kategorie-Paaren; das
-  spricht für die großen Kategorien, aber die Stichprobe gibt den kleinen dasselbe Gewicht.
 
-**Urteil: bauen, vorläufig — Präzision ausstehend**, mit vier Änderungen am Briefing:
+**Urteil: bauen**, nach der vorab festgelegten Regel aus der ersten Fassung dieses Abschnitts
+(„das Lexikon erscheint auf der Seite erst nach der Kodierung, Präzision ≥ 0,9, α ≥ 0,8; fällt es durch,
+folgt Version 2"): **Version 2026-11-23.1 geht auf die Seite**, eine Version 2 ist für das Kriterium
+nicht nötig. Vier Änderungen am Briefing:
 
 1. **Die Feeds werden unabhängig vom Lexikon gebaut**; sie brauchen es nicht, und sie sind der Teil mit
    dem klarsten Nutzen für die Ratsarbeit (§ 1).
 2. **Die Hypothesen sind entschieden und kommen so auf die Seite**: H17.1 nicht bestätigt, H17.2
-   bestätigt mit dem Satz zu S2.1 (die Spitze sind die Haushaltsanträge selbst), H17.3 nicht bestätigt.
-   Die Tests werden in Stufe 2 ein Schritt, damit die Seite sie aus den Daten nachrechnet und H17.3 mit
-   jedem Monat der laufenden Periode neu rechnet — mit Lexikon Version 1, an die H17.3 gebunden ist.
-3. **Das Lexikon erscheint auf der Seite erst nach der Kodierung** (Präzision ≥ 0,9, α ≥ 0,8). Fällt es
-   durch, folgt Version 2 mit einer neuen Kodierrunde (höchstens eine Runde Umbauen, Meta-Plan § 8);
-   Kandidaten sind `energiesicherungs` streichen und `angriffskrieg` nur mit Ukraine oder Russland im
-   Muster. Die Zahlen von H17.3 bleiben die von Version 1.
-4. **Ereignisspuren nur für geprüfte Kategorien.** Corona, Ukraine und Energiekrise prüft die Kodierung
-   mit; Hochwasser steht nicht im Lexikon und ist nicht geprüft — auf die Seite nur mit eigener
-   Stichprobe (Frage 9.12), sonst bleibt es im Messdokument.
+   bestätigt mit dem Satz zu S2.1 (die Spitze sind die Haushaltsanträge selbst), H17.3 nicht bestätigt
+   und, weil das Lexikon trägt, gültig. Die Tests werden in Stufe 2 ein Schritt, damit die Seite sie aus
+   den Daten nachrechnet — mit Lexikon Version 1, an die H17.3 gebunden ist.
+3. **Das Lexikon zeigt je Kategorie seine Präzision und seine Ebene.** Die Seite nennt neben jeder
+   Kategorie „richtig: k von 10" und „nennt die Bundesebene: m von n", für Gendern und Ukraine die
+   bekannten Fehlerquellen (genderneutrale Toiletten; Kultur ohne Krieg). Die Ebene ist für H17.3 der
+   eigentliche Befund (§ 4.1) und steht darum nicht in einer Fußnote, sondern in der Tabelle.
+4. **Ereignisspuren nur für geprüfte Kategorien.** Corona, Ukraine und Energiekrise sind mitgeprüft
+   (10/10, 8/10, 9/10); Hochwasser steht nicht im Lexikon und ist nicht geprüft — auf die Seite nur mit
+   eigener Stichprobe (Frage 9.12), sonst bleibt es im Messdokument.
 
-Kippt die Präzision, betrifft das § 3.3 bis § 3.5, nicht die Feeds und nicht H17.1 und H17.2.
+**Version 2 ist ein Vorschlag, keine Bedingung** (Frage 9.16): `\bgendern` → `\bgenderns?\b` (17 → 13
+Dokumente), `energiesicherungs` streichen (56 → 52), `angriffskrieg` nur „gegen die Ukraine" oder
+„Russlands" (226 → 223; alle drei verlorenen vor 2022). Sie behöbe drei der sechs Fehler der Stichprobe,
+nicht die drei übrigen (Webadresse, zweimal Kultur), und **bräuchte eine frische Bestätigung**: eine
+neue Stichprobe aus Version 2 und eine neue Kodierung, nicht dieselben Labels — die 100 Treffer sind
+nach den Mustern von Version 1 gezogen, und wer sie zum Prüfen der Änderung benutzt, misst die Änderung
+an den Fällen, aus denen sie gemacht ist. H17.3 bliebe an Version 1 gebunden.
 
 ## 6. Bauplan Stufe 2 (Beiträge, Ausgaben mit Schema, Verträge, Tests, berührte Dateien, Settings, Paket)
 
@@ -537,12 +638,14 @@ Landeswahlleiterin NRW) und `cycles.enabled = true`; das Hauptprofil `duesseldor
 ["duesseldorf-2014", "duesseldorf", "duesseldorf-2025"]`; nur `duesseldorf-2025.toml` setzt
 `feeds.enabled = true`. Das **Lexikon** ist deutschsprachig, aber nicht städtisch: es zieht als
 Paketdatei `src/georep/lexika/bundespolitik.toml` ins Paket (Inhalt wie
-`docs/plans/17-zeit-lexikon.toml`, Version im Kopf, Version im Stamp und in jeder Ausgabe). Mönchengladbach
+`docs/plans/17-zeit-lexikon.toml`, Version 2026-11-23.1 unverändert, Version im Kopf, im Stamp und in
+jeder Ausgabe). Mönchengladbach
 bekommt `cycles` (Rhythmus, Vokabular, sofern Text) ohne Tests und ohne Feeds.
 
 **Tests.** Beispiele: Wahljahr an den Grenzen (31.08., 01.09., Wahltag, angeschnittene Monate je
 Periode); Haushaltsmonat mit Gleichstand, unter dem Minimum, ohne Haushaltsanträge; je Kategorie ein
-Treffer und ein Nichttreffer aus § 3.4 (`energiesicherungsstelle` trifft in Version 1, `tierasyl` nicht);
+Treffer und ein Nichttreffer aus § 3.4 und § 4.1 (`energiesicherungsstelle` und „genderneutrale" treffen
+in Version 1 und sind als bekannte Fehler festgeschrieben, `tierasyl` trifft nicht);
 ein Feed aus einem Mini-Korpus als syrupy-Snapshot (klein und stabil); ein Feed ohne Einträge; ein Titel
 mit `&`, `<`, Anführungszeichen und einem Steuerzeichen. **hypothesis**: `zeit_monate` summiert für jeden
 Zufallskorpus zur Dokumentzahl; jeder Feed ist für zufällige Titel, Daten und Links wohlgeformt, besteht
@@ -579,9 +682,13 @@ im Rahmen der Hauptseite, für alle Fraktionen gleich gebaut:
 2. *Vorab festgelegte Hypothesen* (nur im Profil mit `cycles.periods`): eine Zeile je Hypothese mit Maß,
    Test, Effekt, p, Holm, Ergebnis und dem Satz, wann und in welchem Commit sie festgelegt wurde;
    H17.2 mit dem Satz zu S2.1; „nicht bestätigt" so groß wie „bestätigt".
-3. *Bundespolitisches Vokabular*: Anteil je Wahljahr und Kategorie (Tabelle mit kleinen Balken), mit
-   „geprüft von zwei KI-Kodierern an 100 Treffern, nicht von Menschen", Präzision mit Intervall und α —
-   nur, wenn die Kodierung trägt.
+3. *Bundespolitisches Vokabular*: Anteil je Wahljahr und Kategorie (Tabelle mit kleinen Balken), je
+   Kategorie zwei Spalten aus § 4.1: „richtig: k von 10" und „nennt die Bundesebene: m von n", dazu der
+   Satz „geprüft von zwei KI-Kodierern desselben Modells an 100 Treffern, nicht von Menschen", die
+   Präzision 0,94 (Wilson 0,88 bis 0,97) und α 0,957 / 0,928. Die Ebene gehört in die Tabelle, nicht in
+   eine Fußnote: sie sagt, dass die Hälfte des Vokabulars örtliche Umsetzung ist. Die Zahlen von § 4.1
+   kommen als kleine Tabelle aus `validierung/17-zeit/labels.csv` (ins Paket kopiert oder als
+   Konstante mit Quelle; Frage 9.17).
 4. *Ereignisspuren* (explorativ überschrieben): Corona, Krieg gegen die Ukraine, Energiekrise je Monat
    und die Gremien mit den höchsten Anteilen; Hochwasser nur mit eigener Prüfung.
 5. *Neuigkeiten je Wahlbezirk* (nur mit `feeds.enabled`): die 41 Feeds als Liste mit Link und Zahl der
@@ -599,7 +706,8 @@ Benachrichtigung" wird zu „Neuigkeiten je Wahlbezirk als Feed, keine Benachric
 
 ## 8. Vorab festgelegte Hypothesen (nur Analysen: Hypothese, Maß, Test, Schwelle)
 
-Festgelegt am 2026-11-23 um 19:45 Uhr (Commit `4b9bf14`; dort stand „gegen 19:50", Korrektur 1),
+Festgelegt am 2026-11-23 um 19:45 Uhr (Commit `9c7b3d6` auf `main`, vor dem Rebase `4b9bf14`; dort stand
+„gegen 19:50", Korrektur 1),
 **bevor** eine Ergebnisgröße gerechnet war; der Commit, der
 diesen Abschnitt anlegt, trägt nur ihn und das Lexikon, sein Zeitstempel ist der Beleg (Meta-Plan,
 § 2.11). **Vorher angesehen** waren: die Schemas der Dateien; die Monatsreihe aller Dokumente in
@@ -713,7 +821,7 @@ Gremium sind **explorativ** und stehen so im Dokument und auf der Seite.
 
 ### 8.5 Ergebnis und Vorschlag (nach der Messung angefügt)
 
-Die Festlegung oben ist bis auf zwei gekennzeichnete Korrekturen der Text von Commit `4b9bf14`: die Uhrzeit
+Die Festlegung oben ist bis auf zwei gekennzeichnete Korrekturen der Text von Commit `9c7b3d6`: die Uhrzeit
 (19:45, nicht „gegen 19:50") und die Zahl der Zuordnungen von H17.2 (27 720, nicht 13 860 — ein
 Rechenfehler in der Zahl, der Test ist derselbe). Ergebnisse in § 3:
 
@@ -721,7 +829,7 @@ Rechenfehler in der Zahl, der Test ist derselbe). Ergebnisse in § 3:
 |---|---|---|---|---|
 | H17.1 Wahlzyklus | −4,9 % (90 %: −12,9 bis +3,8) | 0,847 | 1,0 | nicht bestätigt |
 | H17.2 Haushaltsrhythmus | +83,1 % | 1/27 720 ≈ 0,00004 | 0,0001 | bestätigt (ohne Haushaltsanträge −12,9 %, p zweiseitig 0,25) |
-| H17.3 Bundespolitisches Vokabular | 5,98 / 3,16 / 3,47 % | 0,987 | 1,0 | nicht bestätigt, und vorläufig, bis das Lexikon die Präzision erreicht |
+| H17.3 Bundespolitisches Vokabular | 5,98 / 3,16 / 3,47 % | 0,987 | 1,0 | nicht bestätigt; gültig, weil das Lexikon die Präzision erreicht (Strukturkategorien 67 von 70, § 4.1) |
 
 **Vorschlag für eine prospektive Hypothese** (für den Supervisor; prüfbar nur an neuem Material, weil
 das Muster jetzt bekannt ist): **H17.4 Anfangsschwung** — in der Periode ab 2025 liegen die
@@ -749,6 +857,50 @@ Prüfbar im September 2029.
 | 9.13 | Präzision mit Mehrfachauswahl: zählt ein Treffer, wenn die Lexikonkategorie eine von zwei gewählten ist? | Geflüchtete aus der Ukraine sind beides | ja; `unklar` wird gezählt, nicht gewertet |
 | 9.14 | H17.2 ist fast mechanisch (die Spitze sind die Haushaltsanträge). Zeigt die Seite sie als „bestätigt"? | die Leser könnten mehr hineinlesen | ja, wie vorab festgelegt, mit dem Satz zu S2.1 in derselben Zeile |
 | 9.15 | H17.3 rechnet mit jedem Monat der laufenden Periode neu; ab wann ist eine neue Rechnung ein neuer Befund? | wiederholtes Testen derselben Hypothese | die Seite zeigt den Stand mit Datum; als Befund zählt nur der Stand am Ende der Periode (Herbst 2030) |
+| 9.16 | Version 2 des Lexikons (§ 5: `\bgenderns?\b`, ohne `energiesicherungs`, `angriffskrieg` eingegrenzt)? | behebt drei der sechs Fehler; Gendern fiele von 17 auf 13 Dokumente | nein für Stufe 2; Version 1 hat das Kriterium erfüllt. Wenn ja, dann mit neuer Stichprobe aus Version 2 und frischer Kodierung, und H17.3 bleibt an Version 1 |
+| 9.17 | Woher nimmt die Seite die Präzision und die Ebene je Kategorie? | Stufe 3 zeigt nur Geprüftes, mit Zahlen | eine kleine Tabelle aus `validierung/17-zeit/labels.csv` und `stichprobe.csv`, im Bau ausgewertet (die Dateien liegen im Repo, nicht im Paket); kein Netz, kein Modell |
+| 9.18 | Kodierer und Schlichter sind dasselbe Modell (Frage 19 an Konrad) | gemeinsame Fehler des Modells sieht α nicht | die Seite sagt „zwei KI-Kodierer desselben Modells"; eine zweite Kodierung mit einem anderen Modell (lokal, F5) wäre die Gegenprobe |
+
+### Vorschlag für Codebuch .2 (aus Schlichtung und Rückmeldungen)
+
+Der Schlichter hat fünf Regeln formuliert; sie gehören ins Codebuch, bevor eine weitere Stichprobe
+kodiert wird (Version 2 des Lexikons oder ein anderes Vorhaben mit derselben Frage):
+
+- **T1 Zweites Thema**: kodiert wird, was das markierte Wort an dieser Stelle bezeichnet, als ganzes
+  Wort mit Kern und Beifügungen; ein Thema, das denselben Gegenstand näher bestimmt, zählt mit
+  (Geflüchtete aus der Ukraine), ein gereihtes Nachbarglied nicht (Corona und der Krieg in einer
+  Aufzählung, auch in einem Gesetzesnamen wie dem NKF-COVID-19-Ukraine-Isolierungsgesetz), ebenso wenig
+  der Rahmen (Titel, Überschrift, Einleitung einer Liste). Entschied 17-038, 17-056, 17-063, 17-068.
+- **E1 Fenster**: die Ebene stützt sich auf den Satz mit dem Fundwort, den davor und den danach (eine
+  Überschrift zählt als Satz); der Titel nur, wenn die Fundstelle im Titel steht. Entschied 17-004,
+  17-039.
+- **E2 Themenbezug**: eine höhere Ebene im Fenster zählt nur, wenn sie das Thema des Treffers betrifft;
+  ein Gesetz in einem Nachbarsatz zu anderer Sache (etwa das BauGB im nächsten Verfahrensschritt) nicht.
+  Entschied 17-039, 17-073.
+- **E3 Ohne das Wort Bund oder Land**: ein erkennbar benanntes Gesetz, eine Behörde, Leistung oder
+  Politik zählt nach ihrer Ebene (BauGB, SGB, die Energiewende als Ordnungsrahmen: bund; Bezirksregierung,
+  Landesgesetze: land_eu); das Fundwort selbst genügt, wenn es eine Bundespolitik meint, die das
+  Codebuch als Bundesinstrument führt. Entschied 17-073, 17-089.
+- **C1 Medizinisches Cannabis** ist Regulierung von Cannabis als Droge, also `cannabis`; Rezept, Arzt
+  oder Krankenkasse nennen keine höhere Ebene. Entschied 17-004.
+
+Lücken, die die Kodierer gemeldet haben (die Rückmeldung von A, die von B im Bericht an den Supervisor,
+dessen Notizen), mit vorgeschlagener Regel:
+
+- **Gendern bei redaktioneller Umstellung städtischer Texte** (17-027, 17-035, 17-090, 17-096, 17-098):
+  kodiert als `gendern`, unsicher. Vorschlag: `gendern` gilt auch für die örtliche Umsetzung der
+  Sprachdebatte; die Ebene ist dann `lokal`.
+- **„genderneutral" (Toiletten)** (17-045, 17-087): beide `anderes`. Vorschlag: so lassen und das Muster
+  in Version 2 schließen (§ 5).
+- **Tabellenzeilen, Webadressen, Eigennamen** (17-007, 17-067, 17-080, 17-084, 17-088): keine Regel
+  zwischen `unklar`, `anderes` und der Bedeutung des Worts. Vorschlag: nach der Bedeutung kodieren, wenn
+  die Zeile sie trägt; eine Webadresse oder ein Name, der das Wort nur enthält, ist `anderes`.
+- **Ebene über einen Nachbarsatz** (17-027, 17-073, 17-090): durch E1 und E2 geregelt; 17-027 und
+  17-090 sind einig als `bund` kodiert und darum nicht geschlichtet, nach E2 wären sie `lokal` (§ 4.1).
+- **Landesbehörden und Landesgesetze ohne das Wort „Land"** (17-063, 17-097): durch E3 geregelt.
+- **Ukraine ohne Krieg nach 2014, etwa die neue Partnerschaft mit Czernowitz** (17-025): `anderes`,
+  unsicher. Vorschlag: die Definition sagt ausdrücklich, dass Kultur, Sport und Partnerschaften ohne
+  Kriegsbezug im Fenster `anderes` sind, auch nach 2022.
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 

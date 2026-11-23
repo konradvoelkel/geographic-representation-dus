@@ -1,6 +1,6 @@
 """Rechnet die Zahlen von `17-zeit.md` nach (Vorhaben 17 „Zeit und Neuigkeiten").
 
-    uv run python docs/plans/17-zeit-messung.py [--stichprobe] [--feeds DIR]
+    uv run python docs/plans/17-zeit-messung.py [--stichprobe] [--labels] [--feeds DIR]
 
 Liest nur, was `georep run` je Profil schreibt (`interim/papers.parquet`,
 `processed/papers_gremien.parquet`, `processed/dokumente_urheber.parquet`, für die Feeds dazu
@@ -19,7 +19,13 @@ Mit `--stichprobe` schreibt es die Stichprobe von 100 Treffern (zehn je Kategori
 `validierung/17-zeit/stichprobe.csv` und die Kodieraufgaben nach
 `$GEOREP_MESSDATEN/kodierung/17-zeit/aufgaben.jsonl` (nie ins Repo); ohne den Schalter prüft es nur,
 ob die gespeicherte Stichprobe noch dieselbe ist. Das Codebuch (`validierung/17-zeit/codebuch.toml`)
-ist von Hand geschrieben. Alle Tabellen, die in Stufe 2 ins Stadtprofil gehören (Wahltage, Muster
+ist von Hand geschrieben.
+
+Liegen die Antworten der Kodierer (`antworten-A.jsonl`, `antworten-B.jsonl`, `schlichtung.jsonl` unter
+`$GEOREP_MESSDATEN/kodierung/17-zeit/`), bildet es die Endlabels, rechnet Krippendorffs α, die
+Präzision je Kategorie und gesamt (ungewichtet und mit der Population gewichtet, Wilson) und die Ebene
+je Kategorie (§ 4.1); mit `--labels` schreibt es `validierung/17-zeit/labels.csv` (nur Labels als
+JSON, keine Ausschnitte, keine Begründungen), ohne den Schalter prüft es, ob die Datei noch stimmt. Alle Tabellen, die in Stufe 2 ins Stadtprofil gehören (Wahltage, Muster
 der Haushaltsanträge), stehen unten im Block „Profil". Laufzeit rund eine Minute.
 """
 
@@ -65,6 +71,10 @@ AUFGABEN = MESSDATEN / "kodierung" / "17-zeit" / "aufgaben.jsonl"
 LEXIKON = REPO / "docs" / "plans" / "17-zeit-lexikon.toml"
 STICHPROBE = REPO / "validierung" / "17-zeit" / "stichprobe.csv"
 CODEBUCH = REPO / "validierung" / "17-zeit" / "codebuch.toml"
+KODIERUNG = MESSDATEN / "kodierung" / "17-zeit"
+LABELS = REPO / "validierung" / "17-zeit" / "labels.csv"
+FRAGEN = ("thema", "ebene")
+EBENEN = ("bund", "land_eu", "lokal", "unklar")
 SEED = 17
 JE_KATEGORIE = 10  # Treffer je Kategorie in der Stichprobe (zehn Kategorien, 100 Treffer)
 FENSTER = 350  # Zeichen links und rechts der Fundstelle in einer Kodieraufgabe
@@ -774,6 +784,28 @@ def gegenprobe(alle: pl.DataFrame, kategorien: Sequence[dict[str, object]]) -> N
         + ", ".join(f"{d} {es.filter(pl.col('datensatz') == d).height}" for d in DATENSAETZE)
         + " Dokumente"
     )
+    # Kandidaten für Version 2 (nach der Kodierung, § 4.1; nicht festgelegt): was eine Änderung je
+    # Kategorie an Dokumenten kostet
+    kandidaten = {
+        "gendern": ("\\bgendern", "\\bgenderns?\\b"),
+        "energiekrise": ("energiesicherungs", None),
+        "ukraine_krieg": ("angriffskrieg", "angriffskrieg\\s+(gegen\\s+die\\s+ukraine|russlands)"),
+    }
+    for kid, (alt, ersatz) in kandidaten.items():
+        k = next(x for x in kategorien if x["id"] == kid)
+        neu = [ersatz if m == alt else m for m in k["muster"] if not (m == alt and ersatz is None)]  # type: ignore[attr-defined]
+        rx2 = "|".join(f"(?:{m})" for m in neu)
+        v1 = t.filter(pl.col(f"k_{kid}"))
+        v2 = v1.filter(pl.col("suchtext").str.contains(rx2))
+        print(
+            f"Kandidat Version 2, {kid}: {alt!r} -> {ersatz!r}: {v1.height} -> {v2.height} Dokumente "
+            "("
+            + ", ".join(
+                f"{d} {v1.filter(pl.col('datensatz') == d).height}->{v2.filter(pl.col('datensatz') == d).height}"
+                for d in DATENSAETZE
+            )
+            + ")"
+        )
     uk = t.filter(pl.col("k_ukraine_krieg") & (pl.col("date") < dt.date(2022, 2, 24))).sort("date")
     rx_uk = muster(next(x for x in kategorien if x["id"] == "ukraine_krieg"))
     print(f"ukraine_krieg vor dem 24.02.2022: {uk.height} Dokumente")
@@ -999,6 +1031,258 @@ def stichprobe(
             fh.write(json.dumps(aufgabe, ensure_ascii=False) + "\n")
     print(
         f"geschrieben: {STICHPROBE} und {AUFGABEN} ({AUFGABEN.stat().st_size} Byte); Textquelle: {dict(quellen)}"
+    )
+
+
+# ================================================================================================
+# Kodierung: Endlabels, Übereinstimmung, Präzision, Ebene (§ 4.1)
+# ================================================================================================
+def lies_jsonl(pfad: Path) -> dict[str, dict[str, object]]:
+    out: dict[str, dict[str, object]] = {}
+    with pfad.open(encoding="utf-8") as fh:
+        for line in fh:
+            if line.strip():
+                o = json.loads(line)
+                out[str(o["aufgabe"])] = o
+    return out
+
+
+def wilson(k: float, n: float, z: float = 1.959964) -> tuple[float, float]:
+    if n <= 0:
+        return (0.0, 1.0)
+    p = k / n
+    nenner = 1 + z * z / n
+    mitte = (p + z * z / (2 * n)) / nenner
+    halb = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / nenner
+    return (max(0.0, mitte - halb), min(1.0, mitte + halb))
+
+
+def masi(a: frozenset[str], b: frozenset[str]) -> float:
+    """MASI-Distanz (Passonneau 2006): 1 − Jaccard · Monotonie."""
+    if not a and not b:
+        return 0.0
+    j = len(a & b) / len(a | b)
+    m = 1.0 if a == b else (2 / 3 if a <= b or b <= a else (1 / 3 if a & b else 0.0))
+    return 1 - j * m
+
+
+def jaccard_d(a: frozenset[str], b: frozenset[str]) -> float:
+    return 1 - len(a & b) / len(a | b) if a | b else 0.0
+
+
+def nominal(a: object, b: object) -> float:
+    return 0.0 if a == b else 1.0
+
+
+def krippendorff(paare: Sequence[tuple[object, object]], d: object) -> float:
+    """α für zwei Kodierer ohne fehlende Werte: 1 − D_o/D_e über alle paarbaren Werte."""
+    dist = d  # type: ignore[assignment]
+    werte = [v for paar in paare for v in paar]
+    n = len(werte)
+    do = sum(dist(a, b) for a, b in paare) / len(paare)  # type: ignore[operator]
+    de = sum(dist(werte[i], werte[j]) for i in range(n) for j in range(n) if i != j) / (n * (n - 1))  # type: ignore[operator]
+    return 1 - do / de if de else 1.0
+
+
+def endlabels(
+    a: dict[str, dict[str, object]],
+    b: dict[str, dict[str, object]],
+    s: dict[str, dict[str, object]],
+    ordnung: Sequence[str],
+) -> list[dict[str, object]]:
+    """Je Aufgabe und Frage: A, B, Schlichtung (nur bei Uneinigkeit), Endlabel."""
+
+    def norm(frage: str, wert: object) -> object:
+        if frage == "thema":
+            return sorted(wert, key=lambda k: ordnung.index(k) if k in ordnung else len(ordnung))  # type: ignore[arg-type]
+        return wert
+
+    zeilen: list[dict[str, object]] = []
+    for aufgabe in sorted(a):
+        entscheid = s.get(aufgabe, {}).get("entscheid", {})
+        for frage in FRAGEN:
+            va = norm(frage, a[aufgabe][frage])
+            vb = norm(frage, b[aufgabe][frage])
+            vs = norm(frage, entscheid[frage]) if frage in entscheid else None  # type: ignore[operator]
+            if va != vb and vs is None:
+                raise SystemExit(f"{aufgabe}/{frage}: uneinig und nicht geschlichtet")
+            if va == vb and vs is not None:
+                raise SystemExit(f"{aufgabe}/{frage}: geschlichtet, obwohl einig")
+            zeilen.append(
+                {
+                    "aufgabe": aufgabe,
+                    "frage": frage,
+                    "kodierer_a": va,
+                    "kodierer_b": vb,
+                    "schlichtung": vs,
+                    "label": vs if vs is not None else va,
+                }
+            )
+    return zeilen
+
+
+def kodierung(alle: pl.DataFrame, kategorien: Sequence[dict[str, object]], schreiben: bool) -> None:
+    print("\n== § 4.1 Kodierung: Endlabels, Übereinstimmung, Präzision, Ebene")
+    pfade = [KODIERUNG / f for f in ("antworten-A.jsonl", "antworten-B.jsonl", "schlichtung.jsonl")]
+    if not all(f.exists() for f in pfade):
+        print("keine Antworten der Kodierer gefunden; übersprungen")
+        return
+    a, b, s = (lies_jsonl(f) for f in pfade)
+    with STICHPROBE.open(encoding="utf-8") as fh:
+        stich = {r["aufgabe"]: r for r in csv.DictReader(fh)}
+    if not (set(a) == set(b) == set(stich)):
+        raise SystemExit("Antworten und Stichprobe decken nicht dieselben Aufgaben ab")
+    ordnung = [str(k["id"]) for k in kategorien] + ["anderes", "unklar"]
+    zeilen = endlabels(a, b, s, ordnung)
+    spalten = ["aufgabe", "frage", "kodierer_a", "kodierer_b", "schlichtung", "label"]
+    neu = [
+        [str(z["aufgabe"]), str(z["frage"])]
+        + ["" if z[c] is None else json.dumps(z[c], ensure_ascii=False) for c in spalten[2:]]
+        for z in zeilen
+    ]
+    if schreiben:
+        with LABELS.open("w", encoding="utf-8", newline="") as fh:
+            w = csv.writer(fh, lineterminator="\n")
+            w.writerow(spalten)
+            w.writerows(neu)
+        print(f"geschrieben: {LABELS} ({len(neu)} Zeilen)")
+    elif LABELS.exists():
+        with LABELS.open(encoding="utf-8") as fh:
+            alt = list(csv.reader(fh))[1:]
+        print(f"gespeicherte Labels sind {'dieselben' if alt == neu else 'NICHT dieselben'}")
+    label = {(str(z["aufgabe"]), str(z["frage"])): z for z in zeilen}
+    aufgaben = sorted(stich)
+
+    # Übereinstimmung zwischen den Kodierern
+    th = [(frozenset(a[k]["thema"]), frozenset(b[k]["thema"])) for k in aufgaben]  # type: ignore[arg-type]
+    eb = [(a[k]["ebene"], b[k]["ebene"]) for k in aufgaben]
+    binaer = [
+        (stich[k]["kategorie"] in a[k]["thema"], stich[k]["kategorie"] in b[k]["thema"])  # type: ignore[operator]
+        for k in aufgaben
+    ]
+    gleich_th = sum(x == y for x, y in th)
+    gleich_eb = sum(x == y for x, y in eb)
+    print(
+        f"Übereinstimmung thema {gleich_th}/{len(th)} (Jaccard im Mittel "
+        f"{sum(1 - jaccard_d(x, y) for x, y in th) / len(th):.3f}), α MASI "
+        f"{krippendorff(th, masi):.3f}, α Jaccard {krippendorff(th, jaccard_d):.3f}, α nominal "
+        f"(die Menge als ein Wert) {krippendorff(th, nominal):.3f}, α binär "
+        f"(Lexikonkategorie im Thema) {krippendorff(binaer, nominal):.3f} "
+        f"({sum(x == y for x, y in binaer)}/{len(binaer)} gleich)"
+    )
+    print(f"Übereinstimmung ebene {gleich_eb}/{len(eb)}, α nominal {krippendorff(eb, nominal):.3f}")
+    print(
+        f"geschlichtet: {len(s)} Aufgaben; thema "
+        f"{sum(1 for k in s if 'thema' in s[k]['entscheid'])}, ebene "  # type: ignore[operator]
+        f"{sum(1 for k in s if 'ebene' in s[k]['entscheid'])}; Regeln: "  # type: ignore[operator]
+        + ", ".join(sorted({str(s[k]["regel"]).split(" ")[0] for k in s}))
+    )
+    print(
+        "unsicher: A "
+        f"{sum(bool(a[k]['unsicher']) for k in aufgaben)}, B {sum(bool(b[k]['unsicher']) for k in aufgaben)}, "
+        f"beide {sum(bool(a[k]['unsicher']) and bool(b[k]['unsicher']) for k in aufgaben)}"
+    )
+
+    # Präzision je Kategorie und gesamt
+    t = alle.filter("mit_text")
+    pop = {str(k["id"]): t.filter(pl.col(f"k_{k['id']}")).height for k in kategorien}
+    print("Präzision je Kategorie (Endlabel thema enthält die Kategorie; unklar nicht gewertet):")
+    richtig_ges = 0
+    gewertet_ges = 0
+    gewichtet = 0.0
+    summe_w2_n = 0.0
+    gesamt_pop = sum(pop.values())
+    for k in kategorien:
+        kid = str(k["id"])
+        ids = [x for x in aufgaben if stich[x]["kategorie"] == kid]
+        themen = [label[(x, "thema")]["label"] for x in ids]
+        unklar = sum(1 for v in themen if v == ["unklar"])
+        gewertet = len(ids) - unklar
+        richtig = sum(1 for v in themen if kid in v)  # type: ignore[operator]
+        lo, hi = wilson(richtig, gewertet)
+        falsch = [x for x, v in zip(ids, themen, strict=True) if kid not in v]  # type: ignore[operator]
+        print(
+            f"  {kid:15} {richtig}/{gewertet} = {richtig / gewertet:.2f} (Wilson {lo:.2f} bis "
+            f"{hi:.2f}), unklar {unklar}, Population {pop[kid]}; falsch: "
+            + ", ".join(f"{x} ({stich[x]['treffer']})" for x in falsch)
+        )
+        richtig_ges += richtig
+        gewertet_ges += gewertet
+        w = pop[kid] / gesamt_pop
+        gewichtet += w * richtig / gewertet
+        summe_w2_n += w * w / gewertet
+    lo, hi = wilson(richtig_ges, gewertet_ges)
+    print(
+        f"GESAMT ungewichtet {richtig_ges}/{gewertet_ges} = {richtig_ges / gewertet_ges:.3f} "
+        f"(Wilson {lo:.3f} bis {hi:.3f}); Kriterium >= 0,9: "
+        f"{'erfüllt' if richtig_ges / gewertet_ges >= 0.9 else 'NICHT erfüllt'}"
+    )
+    n_eff = 1 / summe_w2_n
+    lo, hi = wilson(gewichtet * n_eff, n_eff)
+    print(
+        f"GESAMT mit der Population gewichtet {gewichtet:.3f} (Wilson mit effektivem n = "
+        f"{n_eff:.1f}: {lo:.3f} bis {hi:.3f})"
+    )
+    struktur = [str(k["id"]) for k in kategorien if k["art"] == "struktur"]
+    r_s = sum(
+        1
+        for x in aufgaben
+        if stich[x]["kategorie"] in struktur
+        and stich[x]["kategorie"] in label[(x, "thema")]["label"]  # type: ignore[operator]
+    )
+    n_s = sum(1 for x in aufgaben if stich[x]["kategorie"] in struktur)
+    lo, hi = wilson(r_s, n_s)
+    print(
+        f"Strukturkategorien (H17.3) {r_s}/{n_s} = {r_s / n_s:.3f} (Wilson {lo:.3f} bis {hi:.3f})"
+    )
+
+    # Ebene je Kategorie
+    print(
+        "Ebene je Kategorie (Endlabel; bund / land_eu / lokal / unklar), alle zehn und nur richtige:"
+    )
+    anteil_bund: dict[str, float] = {}
+    for k in kategorien:
+        kid = str(k["id"])
+        ids = [x for x in aufgaben if stich[x]["kategorie"] == kid]
+        alle_e = Counter(str(label[(x, "ebene")]["label"]) for x in ids)
+        nur_r = Counter(
+            str(label[(x, "ebene")]["label"])
+            for x in ids
+            if kid in label[(x, "thema")]["label"]  # type: ignore[operator]
+        )
+        anteil_bund[kid] = nur_r["bund"] / max(1, sum(nur_r.values()))
+        print(
+            f"  {kid:15} alle: "
+            + " / ".join(str(alle_e[e]) for e in EBENEN)
+            + "; richtige: "
+            + " / ".join(str(nur_r[e]) for e in EBENEN)
+        )
+    for name, gruppe in (
+        ("Strukturkategorien", struktur),
+        ("Strukturkategorien ohne Migration", [k for k in struktur if k != "migration_asyl"]),
+        ("alle zehn", [str(k["id"]) for k in kategorien]),
+    ):
+        w = sum(pop[k] for k in gruppe)
+        wert = sum(pop[k] * anteil_bund[k] for k in gruppe) / w
+        print(
+            f"Anteil bund unter den richtigen Treffern, mit der Population gewichtet, {name}: {wert:.3f}"
+        )
+    print(
+        "Ebene je Periode (Endlabel, alle 100): "
+        + "; ".join(
+            f"{d} "
+            + " / ".join(
+                str(
+                    sum(
+                        1
+                        for x in aufgaben
+                        if stich[x]["periode"] == d and label[(x, "ebene")]["label"] == e
+                    )
+                )
+                for e in EBENEN
+            )
+            for d in DATENSAETZE
+        )
     )
 
 
@@ -1563,6 +1847,7 @@ def main() -> None:
         "--stichprobe", action="store_true", help="Stichprobe und Kodieraufgaben schreiben"
     )
     ap.add_argument("--feeds", type=Path, default=None, help="Ordner für den Feed-Prototyp")
+    ap.add_argument("--labels", action="store_true", help="Endlabels nach validierung/ schreiben")
     args = ap.parse_args()
     t0 = time.perf_counter()
     meta, kategorien, lokal = lexikon()
@@ -1591,6 +1876,7 @@ def main() -> None:
     gegenprobe(alle, kategorien)
     ereignisse(alle, lokal)
     stichprobe(alle, kategorien, args.stichprobe)
+    kodierung(alle, kategorien, args.labels)
     ziel = args.feeds or Path(tempfile.mkdtemp(prefix="georep-17-feeds-"))
     feeds(ziel)
     print(f"\nLaufzeit {time.perf_counter() - t0:.1f} s")
