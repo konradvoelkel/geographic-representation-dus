@@ -1,0 +1,206 @@
+{
+  "vorhaben": "20-kurzfassungen",
+  "codebuch_version": "1",
+  "einheit": "document",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-24",
+  "einheiten": 50,
+  "uneinig": 76,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "k1_unbelegt": {
+      "n": 50,
+      "beide": 50,
+      "einig": 48,
+      "anteil": 0.96,
+      "anteil_wilson95": [
+        0.8653990931249297,
+        0.9889611156723802
+      ],
+      "cohen_kappa": 0.8106060606060606,
+      "krippendorff_alpha_nominal": 0.8125,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.8125,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "k1_treue": {
+      "n": 50,
+      "beide": 50,
+      "einig": 40,
+      "anteil": 0.8,
+      "anteil_wilson95": [
+        0.6696289406777459,
+        0.887562499842239
+      ],
+      "cohen_kappa": 0.6165644171779141,
+      "krippendorff_alpha_nominal": 0.6180555555555556,
+      "krippendorff_alpha_skala": 0.870263319044703,
+      "krippendorff_alpha": 0.870263319044703,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "k1_vollstaendigkeit": {
+      "n": 50,
+      "beide": 50,
+      "einig": 38,
+      "anteil": 0.76,
+      "anteil_wilson95": [
+        0.6258731624205708,
+        0.8570260860300828
+      ],
+      "cohen_kappa": 0.4350282485875706,
+      "krippendorff_alpha_nominal": 0.42912061508889954,
+      "krippendorff_alpha_skala": 0.5051533963112911,
+      "krippendorff_alpha": 0.5051533963112911,
+      "markierungen": null,
+      "alpha_genuegt": false
+    },
+    "k1_verstaendlichkeit": {
+      "n": 50,
+      "beide": 50,
+      "einig": 43,
+      "anteil": 0.86,
+      "anteil_wilson95": [
+        0.7381380628941446,
+        0.9304916657298371
+      ],
+      "cohen_kappa": 0.7422680412371134,
+      "krippendorff_alpha_nominal": 0.7441860465116279,
+      "krippendorff_alpha_skala": 0.8149529124520405,
+      "krippendorff_alpha": 0.8149529124520405,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "k2_unbelegt": {
+      "n": 50,
+      "beide": 50,
+      "einig": 49,
+      "anteil": 0.98,
+      "anteil_wilson95": [
+        0.8950455641036219,
+        0.9964607407283539
+      ],
+      "cohen_kappa": 0.8979591836734694,
+      "krippendorff_alpha_nominal": 0.898876404494382,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.898876404494382,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "k2_treue": {
+      "n": 50,
+      "beide": 50,
+      "einig": 45,
+      "anteil": 0.9,
+      "anteil_wilson95": [
+        0.7863976856252035,
+        0.9565242350681096
+      ],
+      "cohen_kappa": 0.771689497716895,
+      "krippendorff_alpha_nominal": 0.7726228755167662,
+      "krippendorff_alpha_skala": 0.9570668011989197,
+      "krippendorff_alpha": 0.9570668011989197,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "k2_vollstaendigkeit": {
+      "n": 50,
+      "beide": 50,
+      "einig": 43,
+      "anteil": 0.86,
+      "anteil_wilson95": [
+        0.7381380628941446,
+        0.9304916657298371
+      ],
+      "cohen_kappa": 0.5603015075376885,
+      "krippendorff_alpha_nominal": 0.5594405594405594,
+      "krippendorff_alpha_skala": 0.6877655843567612,
+      "krippendorff_alpha": 0.6877655843567612,
+      "markierungen": null,
+      "alpha_genuegt": false
+    },
+    "k2_verstaendlichkeit": {
+      "n": 50,
+      "beide": 50,
+      "einig": 41,
+      "anteil": 0.82,
+      "anteil_wilson95": [
+        0.6920394632569922,
+        0.9022980732976582
+      ],
+      "cohen_kappa": 0.651702786377709,
+      "krippendorff_alpha_nominal": 0.6523605150214593,
+      "krippendorff_alpha_skala": 0.8042152562850664,
+      "krippendorff_alpha": 0.8042152562850664,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "k3_unbelegt": {
+      "n": 50,
+      "beide": 50,
+      "einig": 47,
+      "anteil": 0.94,
+      "anteil_wilson95": [
+        0.8378290831116182,
+        0.979385029651026
+      ],
+      "cohen_kappa": 0.734982332155477,
+      "krippendorff_alpha_nominal": 0.7374005305039788,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.7374005305039788,
+      "markierungen": null,
+      "alpha_genuegt": false
+    },
+    "k3_treue": {
+      "n": 50,
+      "beide": 50,
+      "einig": 41,
+      "anteil": 0.82,
+      "anteil_wilson95": [
+        0.6920394632569922,
+        0.9022980732976582
+      ],
+      "cohen_kappa": 0.5927601809954751,
+      "krippendorff_alpha_nominal": 0.5940774487471526,
+      "krippendorff_alpha_skala": 0.8785732899022801,
+      "krippendorff_alpha": 0.8785732899022801,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "k3_vollstaendigkeit": {
+      "n": 50,
+      "beide": 50,
+      "einig": 44,
+      "anteil": 0.88,
+      "anteil_wilson95": [
+        0.7619518261679701,
+        0.9438239984906773
+      ],
+      "cohen_kappa": 0.7483221476510067,
+      "krippendorff_alpha_nominal": 0.7491554054054055,
+      "krippendorff_alpha_skala": 0.775296052631579,
+      "krippendorff_alpha": 0.775296052631579,
+      "markierungen": null,
+      "alpha_genuegt": false
+    },
+    "k3_verstaendlichkeit": {
+      "n": 50,
+      "beide": 50,
+      "einig": 45,
+      "anteil": 0.9,
+      "anteil_wilson95": [
+        0.7863976856252035,
+        0.9565242350681096
+      ],
+      "cohen_kappa": 0.764373232799246,
+      "krippendorff_alpha_nominal": 0.7657359204921912,
+      "krippendorff_alpha_skala": 0.7708549834671705,
+      "krippendorff_alpha": 0.7708549834671705,
+      "markierungen": null,
+      "alpha_genuegt": false
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 50 Dokumenten, nicht von Menschen"
+}

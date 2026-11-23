@@ -5,28 +5,31 @@ Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/20-kurzfassungen`. Briefing:
 Messskript: [20-kurzfassungen-messung.py](20-kurzfassungen-messung.py). Codebuch und Stichproben
 (nur IDs): [../../validierung/20-kurzfassungen/](../../validierung/20-kurzfassungen/).
 
-**Urteil (Stufe 1, 2026-11-23): nach der Festlegung nicht bestanden, weil das Instrument fehlerhaft ist —
-umbauen, eine Runde, an der Treueprüfung, nicht am Prompt** (§ 5). Prompt, Modelle, Eingabe,
-Prüfung, Kriterium und Regel der Hochrechnung standen vor der ersten Kurzfassung fest (§ 3.1,
-Commit `6e7b966`); danach ist dort nur die Uhrzeit berichtigt. Die Bewertung durch zwei
-Kodier-Agenten (Teil 2 des Kriteriums) ist vorbereitet, nicht gelaufen (§ 4).
+**Urteil (Stufe 1, abgeschlossen 2026-11-24): bauen mit `gemma4`, unter zwei Vorbehalten** (§ 5.3).
+Nach der ersten Festlegung bestand kein Modell, weil die Treueprüfung fehlerhaft war (§ 5.1); nach
+der einen Umbaurunde mit der vorab festgelegten Klasse e in Fassung 2 (§ 5.2, Frage 35) besteht
+gemma Teil 1 an frischen 200 Dokumenten knapp, qwen knapp nicht (§ 4.2); die Bewertung durch zwei
+Kodier-Agenten gibt gemma in Treue und Verständlichkeit den Median 4, qwen 5; Vollständigkeit ist
+nicht entscheidbar (α 0,659). Geprüft haben KI-Agenten desselben Modells, nicht Menschen. Die
+Vorbehalte: Vollständigkeit braucht ein schärferes Codebuch, und **eine von vier Kurzfassungen von
+gemma sagt falsch, wer etwas will** (Rollenfehler, nur von den Kodierern gefunden); Stufe 2 schreibt
+die Rolle in die Eingabe und misst das vor dem Stapellauf neu. § 3.1 ist seit `6e7b966` unverändert
+bis auf die Uhrzeit.
 
 Die drei Zahlen, auf die es ankommt:
 
-1. **Nach der vorab festgelegten Prüfung besteht keines der Modelle**: ohne unbelegte Angabe sind
-   geschichtet 51,6 % der Kurzfassungen von `qwen3.6:27b` und 68,9 % von `gemma4` (Kriterium 98 %).
-   **Jede Beanstandung bis auf eine liegt in der Klasse „seltenes großgeschriebenes Wort"**, und die
-   misst deutsche Substantive (Abstrakta, Zusammensetzungen), nicht Eigennamen: von 228
-   Beanstandungen ist von Hand genau eine ein Eigenname, der nicht in der Eingabe steht.
-2. **In den Klassen, die die Prüfung trägt, sind beide fast fehlerfrei**: 0 unbelegte Zahlen,
-   Daten und Drucksachennummern bei qwen (519 geprüft), eine bei gemma (597 geprüft, eine selbst
-   gerechnete, richtige Summe); nach der Durchsicht echte unbelegte Angaben bei **qwen 0 von 200, bei
-   gemma 2 von 200**.
-3. **Durchsatz auf der 4090**: qwen 2,98 s je Dokument (40 Token/s Ausgabe), gemma 1,09 s (131
-   Token/s), nach der festgelegten Rechnung ohne Laden; die Hauptperiode kostet **15,8 GPU-Stunden
-   mit qwen und 5,8 mit gemma** (mit der vollen Wanduhr je Aufruf 17,3 und 8,8), alle vier Perioden
-   37,6 und 13,8 (41,2 und 21,0). Frage 13: nicht 50 bis 60. Mit gemma laufen nach der Regel alle
-   vier Perioden, in beiden Rechnungen; mit qwen fiele die Hauptperiode heraus.
+1. **Treue der vier prüfbaren Klassen** (Zahl, Datum, Drucksache, Eigenname mit Klasse e in Fassung
+   2), frische 200: **gemma 98,4 %, qwen 97,3 %** (Kriterium 98 %). Von Hand gelesen ist keine der
+   verbleibenden Beanstandungen eine falsche Angabe: Fehlalarme der Prüfung und, bei qwen, drei
+   richtige, aber selbst gezählte oder gerechnete Zahlen. In Fassung 1 (erste Runde) maß Klasse e
+   deutsche Substantive statt Namen (51,6 % und 68,9 %).
+2. **Bewertung an 50 Dokumenten** (Opus-Agenten): ohne unbelegte Angabe **qwen 44, gemma 38,
+   Maßstab 50**; Median der Treue qwen 5, gemma 4, Maßstab 5. Was die Kodierer finden, sind
+   Rollenfehler, die keine deterministische Prüfung sieht; Prüfung und Kodierer beanstanden
+   **disjunkte** Kurzfassungen.
+3. **Durchsatz auf der 4090**: gemma rund 1,0 s je Dokument (volle Wanduhr 1,5), qwen 3,0 s (3,3);
+   die Hauptperiode kostet **5 bis 9 GPU-Stunden mit gemma, 16 bis 17 mit qwen**, alle vier
+   Perioden 12 bis 21 und 38 bis 41 (Frage 13: nicht 50 bis 60).
 
 **Kurzfassungen kommen nicht ins Repo und nicht auf die Seite** (Konrad, 2026-11-23, Meta-Plan
 § 10, Frage 6). Sie liegen im Modellcache von F5 (`cache_root/ml/`) und als Auszug unter
@@ -380,7 +383,7 @@ darum hier nichts Belastbares; die Versuche sind beschrieben, nicht gemessen.
 
 ## 4. Validierung
 
-**Stand: vorbereitet, nicht kodiert.** Ablauf für den Supervisor (Rollen nach F4, `docs/validierung.md`):
+**Ablauf** (vorbereitet in Stufe 1, gelaufen wie unten). Für den Supervisor (Rollen nach F4, `docs/validierung.md`):
 
 1. **Maßstab-Agent** (Opus, frisch, kein Fork): Auftrag unter
    `messdaten/kodierung/20-kurzfassungen/massstab/` (`anleitung.md`, `auftrag.jsonl` mit den 50
@@ -415,6 +418,80 @@ urteilen nur gegen den Ausschnitt, nicht gegeneinander und nicht nach Wissen von
 Codebuch, keinen menschlichen Goldstandard (F4, § 1); der Maßstab stammt vom selben Modell wie die
 Kodierer (Frage 20.2). Die Frage `unbelegt` ist die Gegenprobe der deterministischen Prüfung: sie
 sieht Sachverhalte, Rollen und Wirkungen, die keine Zahl und keinen Namen tragen.
+
+### 4.1 Ergebnis der Bewertung (2026-11-23/24)
+
+Gelaufen am 2026-11-23 und 24: Maßstab-Agent, zwei Kodier-Agenten, Schlicht-Agent, **alle vier
+dasselbe Modell (Opus)**; Frage 19 ist offen, ihre Annahme gilt. Das heißt: der Maßstab ist auf der
+Skala der Kodierer zu Hause (sein Stil ist ihr Stil, Frage 20.2), und die Übereinstimmung der
+Kodierer ist eine obere Schätzung der Schärfe des Codebuchs. `georep validate merge` (zweimal):
+76 Uneinigkeiten in 35 Einheiten, geschlichtet 40-mal nach Kodierung 1, 36-mal nach Kodierung 2.
+`labels.csv`, `README.md`, `guete.json` liegen unter `validierung/20-kurzfassungen/`.
+
+**Übereinstimmung** (Krippendorffs α; Skalen 1–5 ordinal, `unbelegt` nominal). Je Frage
+(`k1_…` bis `k3_…`) mischt α die Quellen, weil K1 bis K3 je Dokument eine andere ist; maßgeblich ist
+darum α je Dimension über alle 150 Kurzfassungen:
+
+| Dimension | α über 150 | qwen | gemma | Maßstab | zählt (α ≥ 0,8) |
+|---|---|---|---|---|---|
+| Treue | **0,898** | 0,875 | 0,893 | 0,484 | ja |
+| Vollständigkeit | **0,659** | 0,423 | 0,688 | 0,660 | **nein** |
+| Verständlichkeit | **0,802** | 0,786 | 0,853 | 0,505 | ja (knapp) |
+| unbelegt | 0,811 | 0,560 | 0,897 | – (alle „nein") | ja |
+
+Das niedrige α beim Maßstab kommt aus der fehlenden Streuung (47 von 50 bei Treue 5), nicht aus
+Uneinigkeit. **Vollständigkeit erreicht 0,8 nicht**; nach § 3.1 geht das Codebuch für diese
+Dimension zurück (Lücken in Frage 20.10, die Regeln des Schlichters in Frage 20.11).
+
+**Medians der geschlichteten Labels** (je 50):
+
+| Quelle | Treue | Vollständigkeit (zählt nicht) | Verständlichkeit | ohne unbelegte Angabe laut Kodierern |
+|---|---|---|---|---|
+| `qwen3.6:27b` | **5** (Mittel 4,54) | 5 (4,72) | **5** (4,70) | 44 / 50 = 88 % (76–94) |
+| `gemma4` | **4** (3,94; 9-mal Stufe 2) | 4 (4,24) | **4** (4,22) | 38 / 50 = 76 % (63–86) |
+| Maßstab (Opus) | 5 (4,94) | 5 (4,96) | 5 (4,78) | 50 / 50 = 100 % (93–100) |
+
+**Was die Kodierer finden und die Prüfung nicht.** Die Frage `unbelegt` und die deterministische
+Prüfung treffen **disjunkte Fehler**: mit Klasse e in Fassung 2 beanstandet die Prüfung 5 der 150
+Kurzfassungen, die Kodierer 18, gemeinsam **keine** (Fassung 1: 57 und 18, gemeinsam 6). Die
+Kodierer sehen fast nur **Rollenfehler**: bei gemma in 9 der 12 beanstandeten Kurzfassungen Rat
+oder Bezirksvertretung als Antragsteller einer Vorlage der Verwaltung (sie beschließen, sie
+beantragen nicht); bei qwen zweimal die Bezirksvertretung als Antragstellerin eines
+Fraktionsantrags, dazu ein Haushaltsansatz als Fördersumme, eine ins Gegenteil verkehrte Frage, eine
+Verkürzung, die eine volle Deckung nahelegt, und eine nicht belegte Folge. Keiner dieser Fehler
+trägt eine Zahl oder einen Namen, den die Prüfung sehen könnte. Die Prüfung umgekehrt beanstandet
+Formen, die die Kodierer zu Recht als gedeckt lesen.
+
+### 4.2 Bestätigung: Umbaurunde mit Klasse e in Fassung 2 (2026-11-24)
+
+Frage 35 (Supervisor, 2026-11-23): umbauen, eine Runde nach § 5.2. Stichprobe `stichprobe200-2.csv`
+(Seed 2026112330, 200 neue Dokumente, 32 Schichten, keines aus der ersten Runde; Commit `b39256a`
+vor der ersten Kurzfassung), Prompt, Modelle, Optionen und Kriterium unverändert. Läufe unter der
+Sperre: qwen 23:35–23:47 (65 / 65 Schichten auf der GPU, 23,2 GB), gemma 00:11–00:16 (43 / 43,
+10,7 GB), beide laut ollama-Log und `nvidia-smi`. Zahlen: `uv run python
+docs/plans/20-kurzfassungen-messung.py alles --runde 2`; `treue-2.csv` trägt `ok_fassung2`.
+
+| | `qwen3.6:27b` | `gemma4` |
+|---|---|---|
+| **ohne unbelegte Angabe, Klasse e in Fassung 2** (Kriterium ≥ 0,98, geschichtet) | 194 / 200; **0,973** (0,940–0,989) — **besteht nicht** | 196 / 200; **0,984** (0,955–0,995) — **besteht** |
+| verbleibende Beanstandungen | 3 Monatsangaben, 2 Zahlwörter, 1 Zahl, 1 seltenes Wort | 3 Monatsangaben, 2 seltene Wörter |
+| zum Vergleich Fassung 1 | 0,571 | 0,667 |
+| Durchsatz je Dokument (ohne Laden / volle Wanduhr) | 3,01 s / 3,26 s | 0,97 s / 1,46 s |
+
+**Durchsicht der verbleibenden Beanstandungen von Hand** (berichtet, nicht das Kriterium):
+- **Fehlalarme der Prüfung**: die drei Monatsangaben stehen bei beiden Modellen in denselben zwei
+  Dokumenten und sind belegt; die Prüfung übersieht sie in der Eingabe, einmal weil „ca." davor den
+  Ausschluss für „Tag. Monat Jahr" auslöst, einmal weil pypdf Monat und Jahr zusammenklebt
+  („Monat2022"). Dazu ein unregelmäßiger Plural eines Wortes der Eingabe (qwen) und zwei
+  Umschreibungen aus Wörtern der Eingabe (gemma).
+- **Abgeleitete, richtige Zahlen** (nur qwen): zweimal die Zahl der aufgezählten Veranstaltungen als
+  Zahlwort, einmal die Summe zweier Beträge. Alle drei stimmen, stehen aber nicht im Text; nach Regel
+  3 des Prompts und der Definition in § 3.1 sind sie unbelegt.
+- **Echte falsche Angaben** der vier Klassen: **keine**, bei beiden Modellen.
+
+Damit hängt das Ergebnis an der Grenze: qwen fehlt 0,7 Prozentpunkte, und das liegt an drei
+richtigen, aber selbst gezählten oder gerechneten Zahlen und an zwei Fehlalarmen; gemma besteht
+mit 0,4 Punkten Luft, und seine vier Beanstandungen sind alle Fehlalarme.
 
 ## 5. Urteil gegen das Kriterium
 
@@ -463,6 +540,38 @@ Gilt, wenn der Supervisor „umbauen" entscheidet; nichts davon ist an einer neu
   nicht mehr geprüft; ihn sucht die Bewertung (Frage `unbelegt`).
 - **Auswertung**: wie § 3.2, dazu die Vierfeldertafel Prüfung gegen Kodierer an den 50 der ersten
   Runde (§ 4), weil nur sie zeigt, was Fassung 2 übersieht.
+
+### 5.3 Nach Umbaurunde und Bewertung: bauen mit gemma4, unter zwei Vorbehalten
+
+| Teil des Kriteriums (§ 3.1, Klasse e nach § 5.2) | qwen3.6:27b | gemma4 |
+|---|---|---|
+| 1. Treue ≥ 0,98, geschichtet, frische 200 | 0,973 — **nicht bestanden** | 0,984 — **bestanden** |
+| 2. Median Treue ≥ 4 (α 0,898) | 5 | 4 |
+| 2. Median Verständlichkeit ≥ 4 (α 0,802) | 5 | 4 |
+| 2. Median Vollständigkeit ≥ 4 | **nicht entscheidbar**: α 0,659 < 0,8, das Codebuch geht für diese Dimension zurück | ebenso |
+| GPU-Stunden aller vier Perioden (Runde 2; volle Wanduhr) | 37,9 (40,9) | 12,2 (18,4) |
+
+Nach der festgelegten Regel („besteht eines, dieses") **baut Stufe 2 mit `gemma4`**; mit ihm laufen
+nach der Hochrechnungsregel alle vier Perioden (Hauptperiode 5,1 bis 7,7 GPU-Stunden). Geprüft haben
+zwei KI-Kodierer und ein Schlichter desselben Modells (Opus) an 50 Dokumenten, nicht Menschen; der
+Maßstab stammt vom selben Modell (Frage 19, Annahme gilt).
+
+**Vorbehalt 1, Vollständigkeit**: nicht gemessen, weil das Codebuch dort zu unscharf ist. Fassung 2
+des Codebuchs (Fragen 20.10, 20.11) an einer frischen Stichprobe gehört vor jede Anzeige oder Nutzung
+in 29, nicht vor den Bau.
+
+**Vorbehalt 2, Rollen**: die Kodierer finden in 12 von 50 Kurzfassungen von gemma eine unbelegte
+Angabe (qwen 6, Maßstab 0), fast immer einen Rollenfehler (Rat oder Bezirksvertretung als
+Antragsteller einer Verwaltungsvorlage). Die deterministische Prüfung sieht diese Fehler nicht und
+kann es nicht; Teil 1 des Kriteriums misst sie nicht. Für die Ratsarbeit ist das der wichtigere
+Befund: **eine von vier Kurzfassungen von gemma sagt falsch, wer etwas will**. Stufe 2 schreibt
+darum die Rolle in die Eingabe (Kopfzeile „Absender:" aus Dokumentart und Urheber nach Option 4 und
+15, „beschließt:" aus der Beratungsfolge), als **Eingabe Fassung 2**, und misst vor dem Stapellauf
+an 50 frischen Dokumenten nur die Frage `unbelegt` neu (Kriterium, hier vorgeschlagen und vor jener
+Messung festzulegen: höchstens so viele wie der Maßstab plus 2, also höchstens 2 von 50). Hält gemma das nicht, wird qwen gemessen (in der Bewertung
+halb so viele Fehler, 5 gegen 4 in der Treue), trotz Teil 1 von Runde 2: dessen Fehlbetrag besteht
+aus drei richtigen, selbst gerechneten Zahlen und zwei Fehlalarmen (§ 4.2). Das entscheidet der
+Supervisor.
 
 ## 6. Bauplan Stufe 2
 
@@ -542,6 +651,13 @@ Kurzfassungen nur lokal, Treueprüfung deterministisch, Modellwahl).
 
 **Paket**: keines (Frage 6). CI und Pages überspringen den Schritt; `bootstrap` kennt ihn nicht.
 
+**Nach dem Urteil (§ 5.3)**: Modell `gemma4` (`summaries.model`); die Treueprüfung mit Klasse e in
+Fassung 2 und den drei Korrekturen aus Frage 20.12; **Eingabe Fassung 2** mit einer Kopfzeile zur
+Rolle (Absender aus Dokumentart und Urheber nach Option 4 und 15, beschließendes Gremium aus der
+Beratungsfolge) und Prompt Fassung 2 (Regel 3 ohne selbst gezählte Zahlen, Regel 5 mit
+Straßennamen, Frage 20.8). Beides ändert den Cache-Schlüssel; vor dem Stapellauf misst der
+Bau-Agent `unbelegt` an frischen 50 (Frage 20.13), mit einem vorab festgelegten Kriterium.
+
 **Nicht in Stufe 2: Vorgang und „was ist neu"** (§ 3.6). Beides erst nach Stufe 2 von 14, als eigener
 Schritt `procedure_summaries` mit einer eigenen Messung: die Eingabe nennt je Dokument seine Rolle
 aus 14 (`rolle`) und die Dokumentart, damit das Modell sie nicht errät; „neu" nur, wenn der
@@ -563,12 +679,19 @@ Keine: Vorhaben 20 ist kein Analysevorhaben. Was vorab festgelegt war, ist das K
 
 | Nr. | Frage | warum sie zählt | Annahme ohne Antwort |
 |---|---|---|---|
-| 20.1 | Die Klasse e der Treueprüfung („seltenes großgeschriebenes Wort") misst keine Eigennamen, sondern deutsche Substantive (§ 3.2). Umbauen (Fassung 2 der Prüfung, vorab festgelegt in § 5.2, an einer frischen Stichprobe von 200), oder das Kriterium an den Klassen messen, die die Prüfung trägt, und den Rest der Bewertung überlassen? | Nach der Festlegung besteht kein Modell; der Grund liegt im Instrument, nicht in den Kurzfassungen | umbauen, eine Runde; bis dahin gilt das Urteil „nicht bestanden, Instrument fehlerhaft" |
+| 20.1 | Die Klasse e der Treueprüfung („seltenes großgeschriebenes Wort") misst keine Eigennamen, sondern deutsche Substantive (§ 3.2). Umbauen (Fassung 2 der Prüfung, vorab festgelegt in § 5.2, an einer frischen Stichprobe von 200), oder das Kriterium an den Klassen messen, die die Prüfung trägt, und den Rest der Bewertung überlassen? | Nach der Festlegung besteht kein Modell; der Grund liegt im Instrument, nicht in den Kurzfassungen | **entschieden (Supervisor, Frage 35, 2026-11-23): umbauen**, eine Runde nach § 5.2; Ergebnis in § 4.2 |
 | 20.2 | Die Maßstab-Kurzfassungen schreibt ein Opus-Agent, bewertet wird von zwei Opus-Agenten. Bevorzugen sie den Stil ihres eigenen Modells? | Die Obergrenze K wäre zu hoch, die lokalen Modelle zu niedrig | hingenommen und genannt; Frage 19 (Kodierer B ein anderes Modell) gilt hier besonders |
 | 20.3 | Darf ein Vorlagenspiegel mit Kurzfassungen als lokale HTML-Datei entstehen (unter `cache_root`, nie unter `site/`)? | Vorhaben 29 braucht eine Sicht, Frage 6 verbietet die Veröffentlichung | ja, lokal; veröffentlicht wird nichts davon |
 | 20.4 | Sind die Budgets der Hochrechnung (12 GPU-Stunden je Periode, 36 zusammen) richtig gewählt? | Sie entscheiden, welche Perioden laufen; mit `qwen3.6:27b` fiele die Hauptperiode knapp heraus | wie festgelegt; der Supervisor darf sie für Stufe 2 ändern, mit Grund |
 | 20.5 | Die Auswahl der Periode 2014–2020 nennt die Arten der Hauptperiode; die alten Sammelarten „Vorlage aus der Politik" (9 375) und „Verwaltungsvorlage" (8 079) fallen heraus | Die Auswahl dort ist kleiner, als sie gemeint war | Stufe 2 bildet die alten Arten über das Regelwerk von 14 (`art`) ab; bis dahin gilt die Zahl hier als Untergrenze |
 | 20.6 | 104 Dokumente der Hauptperiode haben nach dem Kopf keinen Text (Frage 31) | Ihre Kurzfassung kann nur den Betreff wiedergeben | keine OCR; Stufe 2 schreibt für sie keine Kurzfassung, sondern `text = null` mit Grund |
+| 20.7 | Nennt ein Dokument keinen Absender, schrieb der Maßstab-Agent „Mit der Beschlussvorlage … soll …" statt „Die Verwaltung schlägt vor" (Hinweis des Maßstab-Agenten, 2026-11-23). Darf eine Kurzfassung die Verwaltung als Absenderin einer Verwaltungsvorlage nennen? | Regel 1 verlangt „wer", Regel 4 verbietet Wissen von außen; die Rolle aus der Dokumentart ist Wissen aus den Metadaten | Stufe 2 schreibt die Rolle aus Dokumentart und 14 in die Eingabe (§ 6), dann ist sie belegt |
+| 20.8 | Straßennamen, die Personennamen tragen, behielt der Maßstab; einzelne Zuschussempfänger ließ er weg. Meinen Regel 5 (keine Personennamen) und Regel 2 (Ort, Betrag) das? | Ein Straßenname ist ein Ort, kein Personenbezug | ja; eine Fassung 2 des Prompts ergänzt Regel 5 um „Straßen- und Einrichtungsnamen sind keine Personennamen" |
+| 20.9 | Der Maßstab übernahm Tippfehler des Dokuments wörtlich und nannte überall die Drucksachennummer; die Anleitung sagt zur Nummer nichts | Regel 3 („genau so geschrieben") verlangt den Tippfehler; jede Nummer ist eine geprüfte Angabe mehr | beides ist nach der Anleitung richtig; keine Änderung |
+| 20.10 | Lücken des Codebuchs Fassung 1, gemeldet von den Kodier-Agenten (2026-11-23): Rollenfehler, die das Codebuch nicht nennt (ein Gremium „beantragt" bei einer Verwaltungsvorlage, ein Beschlussvorschlag im Indikativ ohne Antragsteller); eine Verkürzung ohne falsche Einzelangabe, die einen falschen Eindruck macht; ein Haushaltsansatz als Fördersumme; eine aus dem Ausschnitt nachzurechnende Summe; was ein „geläufiges" Kürzel ist; Grammatik gegen holprig (Stufe 2 der Verständlichkeit nie vergeben); Regel 5 (keine Personennamen) fragt keine Frage ab | Vollständigkeit erreicht α ≥ 0,8 bei keiner Kennung (0,505 bis 0,775), Verständlichkeit und `unbelegt` bei einer nicht; ein unscharfes Codebuch kann das Kriterium nicht entscheiden | Fassung 2 des Codebuchs mit diesen Fällen als Beispiele, eine Frage `personenname` je Kurzfassung, „nachgerechnete Zahl" ausdrücklich als unbelegt (wie Regel 3), Vollständigkeit mit einer Liste der Elemente a bis d statt einer Gesamtstufe; nach F4 an einer frischen Stichprobe |
+| 20.11 | Regeln des Schlicht-Agenten für eine Fassung 2 des Codebuchs (2026-11-24, nicht angewendet): Gremium als Antragsteller einer Verwaltungsvorlage ist Treue 2; Indikativ ohne falschen Akteur ist Treue 4; ein falsch besetztes Element zählt in der Vollständigkeit als vorhanden (der Fehler zählt nur in der Treue); woraus das Wesentliche kommt; Beschlussbetrag gegen Nebenbeträge; Verkürzung mit falschem Eindruck; geläufige Kürzel; Sprachstufen; Personennamen als eigene Frage; Kopplung von `unbelegt` und Treue | Mit ihnen wäre Vollständigkeit vermutlich über α 0,8; ohne sie entscheidet sie das Kriterium nicht | in Fassung 2 des Codebuchs übernehmen, an frischen 50 messen (F4), bevor 29 Kurzfassungen nutzt |
+| 20.12 | Drei Mängel der Prüfung, gefunden in der Umbaurunde: ein „ca." vor „Monat Jahr" in der Eingabe löst den Ausschluss für „Tag. Monat Jahr" aus; von pypdf zusammengeklebtes „Monat2022" wird nicht erkannt; unregelmäßige Plurale (Votum, Voten) fallen durch die Endungsliste. Dazu die Frage, ob selbst gezählte oder gerechnete, richtige Zahlen unbelegt sind | Alle drei Mängel sind Fehlalarme; die Zahlen sind nach Regel 3 unbelegt, aber nicht falsch | die drei Mängel in `enrich/fidelity.py` beheben, je mit einem Test aus diesen Fällen; abgeleitete Zahlen bleiben unbelegt, und Regel 3 des Prompts bekommt in Fassung 2 „keine selbst gezählten oder gerechneten Zahlen" |
+| 20.13 | Eingabe Fassung 2 mit Rolle (Absender aus Dokumentart und Urheber, beschließendes Gremium aus der Beratungsfolge) und eine Nachmessung von `unbelegt` an frischen 50, bevor der Stapellauf startet; wenn gemma dort mehr als 2 von 50 hat, qwen? | Rollenfehler in einer von vier Kurzfassungen machen sie für den Vorlagenspiegel unbrauchbar | ja; das Kriterium der Nachmessung legt der Bau-Agent vorab fest, Vorschlag in § 5.3 |
 
 ## 10. Änderungen durch die Synergie
 
