@@ -1,0 +1,366 @@
+# Vorhaben 18: die 50 Suchfragen der Messung, vorab festgelegt am 2026-11-23 (Messdokument § 3.1).
+#
+# Geschrieben aus der Sicht von Fraktionsmitarbeitern aller Parteien, bevor ein Verfahren
+# (BM25, Einbettung, Mischung) auf eine Frage lief. Vorher gelesen: 80 zufällige Titel des
+# Korpus (Seed 7) als Eindruck der Themen; keine Frage ist an einem Treffer geprüft.
+#
+# id      fest, a01 bis a50; Teil des Schlüssels nur über `anfrage`
+# anfrage was das Verfahren sieht, wörtlich
+# bedarf  was der Fragende sucht; sehen nur die Kodierer (Spalte `bedarf` im Auftrag), nie ein
+#         Verfahren. Höchstens 300 Zeichen, kein Ratstext
+# form    wort:        Stichwort im Wortlaut der Verwaltung, das in einschlägigen Dokumenten so
+#                      steht (Flexion und Zusammensetzung dürfen abweichen)
+#         umschrieben: Umgangssprache, Synonym oder Oberbegriff; die einschlägigen Dokumente sagen
+#                      es meist anders (Radweg, Schutzstreifen, Fahrradstraße für „Radverkehr")
+#         frage:       ein ganzer Satz, wie er in ein Suchfeld getippt wird
+# art     thema | ort | vorhaben
+
+[[anfrage]]
+id = "a01"
+anfrage = "Schulwegsicherheit"
+bedarf = "Maßnahmen und Anträge, die den Weg von Kindern zur Schule sicherer machen: Querungshilfen, Lotsen, Elterntaxis, Halteverbote vor Schulen."
+form = "wort"
+art = "thema"
+
+[[anfrage]]
+id = "a02"
+anfrage = "Baumfällungen"
+bedarf = "Fällungen von Bäumen im Stadtgebiet: angekündigte Fällungen, Gründe, Ersatzpflanzungen, Anfragen und Proteste dazu."
+form = "wort"
+art = "thema"
+
+[[anfrage]]
+id = "a03"
+anfrage = "Anwohnerparken"
+bedarf = "Bewohnerparkzonen und Bewohnerparkausweise: Einführung, Ausweitung, Gebühren, Anträge für einzelne Viertel."
+form = "wort"
+art = "thema"
+
+[[anfrage]]
+id = "a04"
+anfrage = "Tempo 30"
+bedarf = "Geschwindigkeitsbegrenzungen auf 30 km/h auf städtischen Straßen: Anträge, Prüfungen, Anordnungen, Modellversuche."
+form = "wort"
+art = "thema"
+
+[[anfrage]]
+id = "a05"
+anfrage = "Ladesäulen für Elektroautos"
+bedarf = "Öffentliche Ladeinfrastruktur für E-Autos: Standorte, Ausbau, Anträge für neue Ladepunkte."
+form = "wort"
+art = "thema"
+
+[[anfrage]]
+id = "a06"
+anfrage = "Hitzeschutz"
+bedarf = "Schutz der Bevölkerung vor Hitze: Hitzeaktionsplan, Trinkbrunnen, kühle Orte, Verschattung, Hitze in Gebäuden."
+form = "wort"
+art = "thema"
+
+[[anfrage]]
+id = "a07"
+anfrage = "Photovoltaik auf städtischen Dächern"
+bedarf = "Solaranlagen auf Gebäuden der Stadt (Schulen, Verwaltung, Sporthallen): Ausbau, Programme, Anträge."
+form = "wort"
+art = "thema"
+
+[[anfrage]]
+id = "a08"
+anfrage = "Starkregen"
+bedarf = "Starkregen und Überflutung: Vorsorge, Schäden, Entwässerung, Starkregengefahrenkarten, Hochwasser an Bächen."
+form = "wort"
+art = "thema"
+
+[[anfrage]]
+id = "a09"
+anfrage = "Fluglärm"
+bedarf = "Lärm durch den Flughafen: Nachtflüge, Lärmschutz, Messungen, Beschwerden der Anwohner."
+form = "wort"
+art = "thema"
+
+[[anfrage]]
+id = "a10"
+anfrage = "Umweltspuren"
+bedarf = "Die Umweltspuren (für Busse, Taxis, Räder und E-Autos reservierte Fahrstreifen): Einrichtung, Wirkung, Rücknahme."
+form = "wort"
+art = "vorhaben"
+
+[[anfrage]]
+id = "a11"
+anfrage = "Stadttauben"
+bedarf = "Umgang mit Tauben in der Stadt: Taubenschläge, Fütterungsverbot, Taubenhäuser, Tierschutz."
+form = "wort"
+art = "thema"
+
+[[anfrage]]
+id = "a12"
+anfrage = "Bezahlkarte für Geflüchtete"
+bedarf = "Die Bezahlkarte statt Bargeld für Leistungen an Asylsuchende: Einführung in der Stadt, Haltung von Rat und Verwaltung."
+form = "wort"
+art = "thema"
+
+[[anfrage]]
+id = "a13"
+anfrage = "Waffenverbotszone"
+bedarf = "Die Waffenverbotszone in der Altstadt: Einrichtung, Kontrollen, Wirkung, Verlängerung."
+form = "wort"
+art = "vorhaben"
+
+[[anfrage]]
+id = "a14"
+anfrage = "Worringer Platz"
+bedarf = "Alles zum Worringer Platz: Umgestaltung, Sicherheit, Aufenthaltsqualität, soziale Lage."
+form = "wort"
+art = "ort"
+
+[[anfrage]]
+id = "a15"
+anfrage = "Unterbacher See"
+bedarf = "Der Unterbacher See: Badebetrieb, Freizeit, Naturschutz, Verkehr und Parken dort."
+form = "wort"
+art = "ort"
+
+[[anfrage]]
+id = "a16"
+anfrage = "Opernhaus der Zukunft"
+bedarf = "Der Neubau oder die Sanierung der Oper: Standortwahl, Kosten, Beschlüsse, Bürgerbeteiligung."
+form = "wort"
+art = "vorhaben"
+
+[[anfrage]]
+id = "a17"
+anfrage = "U81"
+bedarf = "Die Stadtbahnlinie U81 (Anbindung von Flughafen und Messe, Rheinquerung): Planung, Bau, Finanzierung."
+form = "wort"
+art = "vorhaben"
+
+[[anfrage]]
+id = "a18"
+anfrage = "Glasmacherviertel"
+bedarf = "Das neue Wohnquartier Glasmacherviertel auf dem früheren Gelände der Glashütte in Gerresheim: Planung, Bebauungsplan, Erschließung."
+form = "wort"
+art = "vorhaben"
+
+[[anfrage]]
+id = "a19"
+anfrage = "Radverkehr"
+bedarf = "Alles, was das Radfahren betrifft: Radwege, Radfahrstreifen, Fahrradstraßen, Abstellanlagen, Radverkehrsnetz."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a20"
+anfrage = "Fahrradfahren sicherer machen"
+bedarf = "Maßnahmen für die Sicherheit von Radfahrenden: geschützte Radwege, Markierungen, Kreuzungsumbau, Unfallschwerpunkte."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a21"
+anfrage = "Bäume in der Stadt pflanzen"
+bedarf = "Neupflanzungen von Bäumen: Straßenbäume, Baumpflanzprogramme, Nachpflanzungen, Baumpatenschaften."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a22"
+anfrage = "Wohnungslose Menschen im Winter"
+bedarf = "Hilfe für obdachlose Menschen in der kalten Jahreszeit: Kältehilfe, Notschlafstellen, Kältebus, Unterkünfte."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a23"
+anfrage = "Lärm von Partys am Rheinufer"
+bedarf = "Nächtlicher Lärm und Feiern an der Rheinuferpromenade und in der Altstadt: Beschwerden, Ordnungsdienst, Regeln."
+form = "umschrieben"
+art = "ort"
+
+[[anfrage]]
+id = "a24"
+anfrage = "Drogenszene am Hauptbahnhof"
+bedarf = "Drogenkonsum und Suchtkranke im Umfeld des Hauptbahnhofs: Drogenkonsumraum, Hilfsangebote, Sicherheit."
+form = "umschrieben"
+art = "ort"
+
+[[anfrage]]
+id = "a25"
+anfrage = "Busse und Bahnen pünktlicher machen"
+bedarf = "Zuverlässigkeit des öffentlichen Nahverkehrs: Verspätungen, Ausfälle, Personalmangel bei der Rheinbahn, Busspuren, Ampelvorrang."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a26"
+anfrage = "Stadt grüner machen"
+bedarf = "Mehr Grün in der Stadt: Begrünung von Dächern und Fassaden, Entsiegelung, neue Grünflächen, Pocket-Parks."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a27"
+anfrage = "Barrieren für Rollstuhlfahrer"
+bedarf = "Barrierefreiheit für Menschen im Rollstuhl: abgesenkte Bordsteine, Aufzüge, barrierefreie Haltestellen und Gebäude."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a28"
+anfrage = "Hundewiesen"
+bedarf = "Flächen, auf denen Hunde frei laufen dürfen: Hundeauslaufflächen, neue Standorte, Anträge, Leinenpflicht."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a29"
+anfrage = "Müll in Parks"
+bedarf = "Verschmutzung von Grünanlagen und öffentlichen Plätzen: Abfallbehälter, Reinigung, wilde Müllablagerung."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a30"
+anfrage = "Kinderbetreuung nach der Schule"
+bedarf = "Betreuung von Schulkindern am Nachmittag: Offener Ganztag (OGS), Plätze, Ausbau, Elternbeiträge."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a31"
+anfrage = "E-Roller auf Gehwegen"
+bedarf = "Leih-E-Scooter: abgestellte Roller auf Gehwegen, Abstellflächen, Regeln für Anbieter."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a32"
+anfrage = "Schwimmbäder"
+bedarf = "Hallen- und Freibäder der Stadt: Bäderkonzept, Neubau, Sanierung, Öffnungszeiten, Schulschwimmen."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a33"
+anfrage = "Raser und Autoposer"
+bedarf = "Zu schnelles und lautes Fahren, illegale Autorennen, Poserszene: Kontrollen, Blitzer, bauliche Maßnahmen."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a34"
+anfrage = "bezahlbare Mieten"
+bedarf = "Bezahlbarer Wohnraum: geförderter und preisgedämpfter Wohnungsbau, Quoten, Mietpreise, städtische Wohnungsgesellschaft."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a35"
+anfrage = "Platz für Fahrräder am Bahnhof"
+bedarf = "Abstellanlagen für Fahrräder an Bahnhöfen und Haltestellen: Fahrradparkhaus, Radstation, Bike-and-Ride, Fahrradbügel."
+form = "umschrieben"
+art = "ort"
+
+[[anfrage]]
+id = "a36"
+anfrage = "Hilfe bei Einsamkeit im Alter"
+bedarf = "Angebote gegen Vereinsamung älterer Menschen: Seniorentreffs und Begegnungsstätten, Besuchsdienste, Quartiersarbeit."
+form = "umschrieben"
+art = "thema"
+
+[[anfrage]]
+id = "a37"
+anfrage = "Was unternimmt die Stadt gegen Hitze in Schulen und Kitas?"
+bedarf = "Maßnahmen gegen Überhitzung in Schul- und Kitagebäuden: Sonnenschutz, Lüftung, Verschattung, Begrünung von Schulhöfen."
+form = "frage"
+art = "thema"
+
+[[anfrage]]
+id = "a38"
+anfrage = "Wo fehlen Kita-Plätze?"
+bedarf = "Bedarf und Versorgung mit Kita-Plätzen nach Stadtteil oder Bezirk: Versorgungsquoten, fehlende Plätze, neue Kitas."
+form = "frage"
+art = "thema"
+
+[[anfrage]]
+id = "a39"
+anfrage = "Welche Anträge gab es zu Zebrastreifen vor Schulen?"
+bedarf = "Anträge und Anfragen zu Fußgängerüberwegen an Schulen und auf Schulwegen, und was daraus wurde."
+form = "frage"
+art = "thema"
+
+[[anfrage]]
+id = "a40"
+anfrage = "Wann wird die Theodor-Heuss-Brücke saniert?"
+bedarf = "Zustand und Sanierung der Theodor-Heuss-Brücke: Zeitplan, Sperrungen, Kosten."
+form = "frage"
+art = "ort"
+
+[[anfrage]]
+id = "a41"
+anfrage = "Was passiert gegen leerstehende Läden in der Innenstadt?"
+bedarf = "Leerstand im Einzelhandel der Innenstadt und der Stadtteilzentren: Zwischennutzung, Zentrenmanagement, Förderprogramme."
+form = "frage"
+art = "thema"
+
+[[anfrage]]
+id = "a42"
+anfrage = "Wie werden Geflüchtete aus der Ukraine untergebracht?"
+bedarf = "Unterbringung und Versorgung von Menschen, die seit 2022 aus der Ukraine geflohen sind: Unterkünfte, Kapazitäten, Kosten."
+form = "frage"
+art = "thema"
+
+[[anfrage]]
+id = "a43"
+anfrage = "Hat der Ordnungsdienst genug Personal?"
+bedarf = "Personal und Stellen des städtischen Ordnungs- und Servicedienstes (OSD): Ausstattung, Einsatzzeiten, Aufstockung."
+form = "frage"
+art = "thema"
+
+[[anfrage]]
+id = "a44"
+anfrage = "Welche Straßen werden umbenannt, weil ihre Namensgeber belastet sind?"
+bedarf = "Umbenennung von Straßen, deren Namensgeber etwa durch die NS-Zeit oder den Kolonialismus belastet sind: Prüfungen, Beschlüsse, Zusatzschilder."
+form = "frage"
+art = "thema"
+
+[[anfrage]]
+id = "a45"
+anfrage = "Wie sicher ist die Altstadt nachts?"
+bedarf = "Sicherheitslage in der Altstadt am Abend und in der Nacht: Gewalt, Kontrollen, Videobeobachtung, Präsenz von Polizei und Ordnungsdienst."
+form = "frage"
+art = "ort"
+
+[[anfrage]]
+id = "a46"
+anfrage = "Was kostet der Ausbau des Ganztags an Grundschulen?"
+bedarf = "Kosten und Finanzierung des Ganztagsausbaus an Grundschulen (Rechtsanspruch ab 2026): Bauprogramme, Fördermittel, Haushalt."
+form = "frage"
+art = "vorhaben"
+
+[[anfrage]]
+id = "a47"
+anfrage = "Was tut die Stadt gegen Ratten?"
+bedarf = "Rattenbefall und seine Bekämpfung: Köder, Kanalnetz, Hinweise an Anwohner, Anfragen zu einzelnen Orten."
+form = "frage"
+art = "thema"
+
+[[anfrage]]
+id = "a48"
+anfrage = "Wo werden neue Schulen gebaut?"
+bedarf = "Neubau und Erweiterung von Schulgebäuden: Standorte, Schulbauprogramm, Zeitpläne, Kosten."
+form = "frage"
+art = "vorhaben"
+
+[[anfrage]]
+id = "a49"
+anfrage = "Wie steht es um die Sanierung des Benrather Schlosses?"
+bedarf = "Bauliche Sanierung und Erhalt von Schloss und Schlosspark Benrath: Maßnahmen, Kosten, Zeitplan."
+form = "frage"
+art = "ort"
+
+[[anfrage]]
+id = "a50"
+anfrage = "Wie kommt man mit Bus und Bahn besser in den Medienhafen?"
+bedarf = "Anbindung des Medienhafens an den öffentlichen Nahverkehr: Linien, Takt, Haltestellen, Planungen."
+form = "frage"
+art = "ort"
