@@ -30,7 +30,7 @@ der Supervisor führt sie bei jedem Start, Urteil und Merge nach.
 | 22 | Bedarf und Aufmerksamkeit | `feat/22-bedarf` | 1 → 2 | **Urteil bauen** (2026-11-23): vier offene Quellen plus Lärm; H1 (Unfälle → Verkehrsdokumente) bestätigt, aber nur zwischen Stadtbezirken; H2 zeigt in Richtung ungleicher Aufmerksamkeit ohne Nachweis; Stadtbezirk als Schicht in jede Rechnung; Stufe 2 wartet auf Haltepunkt A |
 | 23 | Textübernahme | `feat/23-textuebernahme` | – | wartet auf 13, 18 |
 | 24 | Anfragen als Kontrolle | `feat/24-kontrolle` | – | wartet auf 11, 12 |
-| 25 | Wahlprogramme und Versprechen | `feat/25-versprechen` | – | Sammlung der Programme offen |
+| 25 | Wahlprogramme und Versprechen | `feat/25-versprechen` | Quellen | Sammlung auf `main` (2026-11-23, `docs/plans/25-quellen.md`): 24 Programme und 3 Vereinbarungen, Hauptperiode 83/90 Sitze; Texte lokal; Stufe 1 wartet auf 18 (Einbettungen, ollama angehalten) und 26 (Beschlusslage, Netzlauf) |
 | 26 | Beschlusslage und Antragserfolg | `feat/26-beschluesse` | – | wartet auf Netzlauf (F6) |
 | 27 | Personen und Mandatstyp | `feat/27-personen` | – | wartet auf Netzlauf (F6) |
 | 28 | Abstimmungen und Kooperation | `feat/28-abstimmungen` | – | wartet auf Netzlauf (F6) |
