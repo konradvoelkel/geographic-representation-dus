@@ -143,3 +143,7 @@ zählt eine Partei mit, die nur im Gegenstand vorkommt, und das BSW fehlt in `[o
 Profils, sodass 12 Anfragen als Person ohne Partei geführt werden. Zu tun: Quellen vereinigen statt
 der ersten zu folgen, Parteien im Gegenstand ausschließen, das BSW ergänzen; Wirkung auf die
 Parteikarten der Seite mit A/B-Bau messen, weil sich Zahlen ändern.
+Die Kodierung von Vorhaben 15 (2026-11-23, `docs/plans/15-funktion.md` § 4.2) bestätigt das: `parteien`
+nennt zweimal eine falsche Fraktion (AfD aus dem Gegenstand, SPD aus dem Briefkopf-Fenster); 19 Fraktionen
+fehlen, davon 10 in Dokumenten der Urheberklasse „unbekannt", 7 in interfraktionellen Anträgen, deren
+Fraktionen nur im Text stehen (Frage 9.15 dort).
