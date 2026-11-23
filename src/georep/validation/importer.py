@@ -111,6 +111,8 @@ def import_project(
             raise SchemaError(f"{path}: {len(missing)} Zeilen ohne Schlüsselfeld {rules.key!r}")
         if role == "schlichtung" and rules.adjudication_question:
             records = pivot(records, rules)
+        if role == "schlichtung" and rules.adjudication_nested:
+            records = [r | dict(r.get(rules.adjudication_nested) or {}) for r in records]
         kept = [convert(r, codebook, rules) for r in records if str(r[rules.key]) in units]
         write_text(paths.answers(role), jsonl(kept))
         written[role] = len(kept)

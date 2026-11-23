@@ -136,3 +136,28 @@ def test_a_long_adjudication_file_is_pivoted_per_unit(
     )
     assert adjudicated == {"id": ids[0], "codebuch_version": "1", "bv": "nein", "begruendung": "S"}
     assert main(["validate", "merge", PROJECT, "--model", "claude-opus-5-5"]) == 0
+
+
+def test_a_nested_adjudication_is_flattened(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Vorhaben 12 schlichtet ``{"aufgabe", "entscheid": {Frage: Antwort}, "begruendung"}``."""
+    make_project(tmp_path, PROVISIONAL + 'adjudication_nested = "entscheid"\n')
+    monkeypatch.chdir(tmp_path / "repo")
+    assert main(["validate", "sample", PROJECT]) == 0
+    ids = (
+        pl.read_csv(tmp_path / "repo" / "validierung" / PROJECT / "stichprobe.csv")
+        .get_column("id")
+        .to_list()
+    )
+    source = tmp_path / "vorlaeufig"
+    source.mkdir()
+    _write(source / "antworten-A.jsonl", [{"aufgabe": u, "beschluss": True} for u in ids])
+    _write(source / "antworten-B.jsonl", [{"aufgabe": u, "beschluss": u != ids[0]} for u in ids])
+    _write(source / "schlichtung.jsonl", [{"aufgabe": ids[0], "entscheid": {"beschluss": False}}])
+    assert main(["validate", "import", PROJECT, "--from", str(source)]) == 0
+    assert main(["validate", "merge", PROJECT, "--model", "claude-opus-5-5"]) == 0
+    labels = pl.read_csv(
+        tmp_path / "repo" / "validierung" / PROJECT / "labels.csv", infer_schema=False
+    )
+    assert labels.filter(pl.col("id") == ids[0]).row(0, named=True)["label"] == "nein"

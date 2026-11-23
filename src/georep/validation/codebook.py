@@ -269,6 +269,9 @@ class ProvisionalRules(_Strict):
     # mit der Frage und das mit der Antwort. Leer: eine Zeile je Einheit wie bei den Kodierern.
     adjudication_question: str = ""
     adjudication_value: str = ""
+    adjudication_nested: str = (
+        ""  # ein Feld der Schlichtung mit {Frage: Antwort} (Vorhaben 12: entscheid)
+    )
 
 
 class Codebook(_Strict):
