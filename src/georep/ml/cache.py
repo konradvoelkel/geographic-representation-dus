@@ -31,7 +31,7 @@ import numpy as np
 from georep.errors import SchemaError
 from georep.ml.base import Vectors, full_name
 
-CACHE_SCHEMA_VERSION = 1
+CACHE_SCHEMA_VERSION = 2  # 2: Spalte ``truncated`` (Review 2026-11-23, Befund 2)
 CHUNK = 500  # Schlüssel je SELECT; SQLite nimmt höchstens 32 766 Parameter, ältere 999
 _UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
 # Mit Rowid, nicht ``WITHOUT ROWID``: so liegt der Primärschlüssel in einem eigenen Index ohne die
@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS entries (
     prompt TEXT NOT NULL,
     input_sha256 TEXT NOT NULL,
     value BLOB NOT NULL,
+    truncated INTEGER NOT NULL DEFAULT 0,
     written TEXT NOT NULL,
     PRIMARY KEY (digest, prompt, input_sha256)
 );
@@ -171,15 +172,42 @@ class ModelCache:
             found.update(rows)
         return found
 
-    def put_many(self, key: CacheKey, items: Iterable[tuple[str, bytes]]) -> int:
-        """Schreibt einen Stapel in einer Transaktion; scheitert ein Eintrag, bleibt keiner."""
+    def put_many(
+        self, key: CacheKey, items: Iterable[tuple[str, bytes]], *, truncated: Iterable[str] = ()
+    ) -> int:
+        """Schreibt einen Stapel in einer Transaktion; scheitert ein Eintrag, bleibt keiner.
+
+        ``truncated`` nennt die Eingaben, deren Wert unvollständig ist (eine Antwort an
+        ``num_predict``): sie liegen im Cache, damit ein deterministisches Modell sie nicht bei
+        jedem Lauf neu rechnet, und ``truncated`` liefert sie markiert zurück.
+        """
+        cut = set(truncated)
         written = dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
-        rows = [(key.digest, key.prompt, sha, value, written) for sha, value in items]
+        rows = [
+            (key.digest, key.prompt, sha, value, int(sha in cut), written) for sha, value in items
+        ]
         with self.connection:
             self.connection.executemany(
-                "INSERT OR REPLACE INTO entries VALUES (?, ?, ?, ?, ?)", rows
+                "INSERT OR REPLACE INTO entries "
+                "(digest, prompt, input_sha256, value, truncated, written) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                rows,
             )
         return len(rows)
+
+    def truncated(self, key: CacheKey, shas: Sequence[str]) -> set[str]:
+        """Die Eingaben unter ``shas``, deren Wert als unvollständig markiert ist."""
+        found: set[str] = set()
+        for start in range(0, len(shas), CHUNK):
+            chunk = list(shas[start : start + CHUNK])
+            marks = ",".join("?" * len(chunk))
+            rows = self.connection.execute(
+                "SELECT input_sha256 FROM entries WHERE digest = ? AND prompt = ? "
+                f"AND truncated = 1 AND input_sha256 IN ({marks})",
+                (key.digest, key.prompt, *chunk),
+            )
+            found.update(sha for (sha,) in rows)
+        return found
 
     def stats(self) -> list[CacheStat]:
         rows = self.connection.execute(

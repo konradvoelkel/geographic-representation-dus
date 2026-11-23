@@ -7,7 +7,14 @@ import pytest
 import requests
 
 from georep.errors import ModelError
-from georep.ml.base import Embedder, EmbeddingOptions, GenerationOptions, Generator, full_name
+from georep.ml.base import (
+    Embedder,
+    EmbeddingOptions,
+    GenerationOptions,
+    Generator,
+    Reply,
+    full_name,
+)
 from georep.ml.ollama import OllamaClient, OllamaEmbedder, OllamaGenerator
 from tests.fakes import FakeOllama, FakeSession, fake_answer, fake_vector, response
 
@@ -130,7 +137,7 @@ def test_generator_sends_deterministic_options_and_switches_thinking_off() -> No
     options = GenerationOptions(temperature=0.0, seed=7, num_ctx=4096, num_predict=64, think=False)
     generator: Generator = OllamaGenerator(client, "fake-chat", options=options)
     answer = generator.generate("Fasse zusammen: Text", system="Du fasst zusammen.")
-    assert answer == fake_answer("Du fasst zusammen.", "Fasse zusammen: Text")
+    assert answer == Reply(fake_answer("Du fasst zusammen.", "Fasse zusammen: Text"))
     path, payload = server.requests[-1]
     assert path == "/api/chat"
     assert payload["messages"] == [
@@ -157,11 +164,14 @@ def test_thinking_on_a_model_that_cannot_think_is_an_error() -> None:
         generator.generate("Hallo")
 
 
-def test_generator_records_a_cut_answer() -> None:
+def test_generator_says_when_an_answer_was_cut() -> None:
+    """Befund 2 des Reviews: die Antwort an ``num_predict`` kam als vollständiger Text heraus."""
     client, _ = _client(FakeOllama())
     generator = OllamaGenerator(client, "fake-chat", options=GenerationOptions(num_predict=2))
-    assert len(generator.generate("ein langer Prompt").split()) == 2
+    reply = generator.generate("ein langer Prompt")
+    assert reply.truncated and len(reply.text.split()) == 2
     assert generator.calls[-1].truncated and generator.calls[-1].output_tokens == 2
+    assert not generator.generate("x", options=GenerationOptions(num_predict=50)).truncated
 
 
 def test_call_options_override_the_defaults() -> None:

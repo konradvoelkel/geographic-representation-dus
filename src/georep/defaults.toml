@@ -249,5 +249,5 @@ model = "qwen3.6:27b"          # 27,8 B Parameter, Q4_K_M, 17,4 GB; passt mit de
 temperature = 0.0              # mit festem seed je Rechner reproduzierbar
 seed = 0
 num_ctx = 8192                 # Fenster in Token (Prompt und Antwort); qwen3.6 koennte 262 144, aber der Speicher je Token waechst mit
-num_predict = 512              # hoechstens so viele Token Antwort; eine abgeschnittene Antwort zaehlt der Stapellauf
+num_predict = 512              # hoechstens so viele Token Antwort; eine Antwort, die daran stoesst, liegt markiert im Modellcache (truncated), der Stapellauf zaehlt sie, und der Schritt entscheidet, ob er sie verwirft
 think = false                  # die Denkspur von qwen3.6 und gemma4 aus: sie kostet Token und steht nicht in der Antwort. Nur Modelle mit der Faehigkeit "thinking" bekommen den Schalter; true bei einem anderen ist ein Fehler

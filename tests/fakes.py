@@ -13,7 +13,7 @@ import numpy as np
 import numpy.typing as npt
 import requests
 
-from georep.ml.base import EmbeddingOptions, GenerationOptions
+from georep.ml.base import EmbeddingOptions, GenerationOptions, Reply
 
 
 def response(
@@ -136,9 +136,13 @@ class FakeGenerator:
 
     def generate(
         self, prompt: str, *, system: str = "", options: GenerationOptions | None = None
-    ) -> str:
+    ) -> Reply:
+        """Wie ``FakeOllama``: mehr Wörter als ``num_predict`` werden abgeschnitten und markiert."""
         self.calls.append((system, prompt))
-        return fake_answer(system, prompt)
+        words = fake_answer(system, prompt).split()
+        limit = options.num_predict if options is not None else 0
+        cut = 0 < limit < len(words)
+        return Reply(" ".join(words[:limit] if cut else words), truncated=cut)
 
 
 FAKE_URL = "http://ollama.test"  # nie ein echter Server: FakeOllama ist der Transport

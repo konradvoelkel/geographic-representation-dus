@@ -190,6 +190,20 @@ def test_generate_texts_keys_on_system_prompt_and_options(tmp_path: Path) -> Non
     assert use.prompt_key() == f"kurz-1+{options.key()}"
 
 
+def test_a_cut_answer_is_cached_marked_and_counted(tmp_path: Path) -> None:
+    """Befund 2 des Reviews (Probe 2): eine abgeschnittene Antwort lag als vollständig im Cache."""
+    generator = FakeGenerator()
+    use = GenerationUse(generator, "kurz-1", GenerationOptions(num_predict=2))
+    with ModelCache(tmp_path, generator.name) as cache:
+        first = generate_texts(use, cache, ["Text A", "Text B"])
+        again = generate_texts(use, cache, ["Text A", "Text B"])
+    assert first.truncated == [True, True] and first.report.truncated == 2
+    assert all(text is not None and len(text.split()) == 2 for text in first.texts)
+    # Aus dem Cache: nichts neu gerechnet, die Markierung bleibt.
+    assert again.report.computed == 0 and again.truncated == [True, True]
+    assert "2 abgeschnitten" in first.report.line()
+
+
 def test_generate_texts_with_limit_leaves_none(tmp_path: Path) -> None:
     generator = FakeGenerator()
     use = GenerationUse(generator, "kurz-1", GenerationOptions())

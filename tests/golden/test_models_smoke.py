@@ -50,5 +50,5 @@ def test_the_configured_models_answer_and_the_cache_holds(tmp_path: Path) -> Non
     options = replace(generation_options(ml), num_predict=16)
     question = "Antworte mit einem einzigen Wort: Welche Farbe hat Gras?"
     answer = generator.generate(question, options=options)
-    assert answer.strip() and "<think>" not in answer
+    assert answer.text.strip() and "<think>" not in answer.text
     assert generator.generate(question, options=options) == answer  # Temperatur 0, fester Seed

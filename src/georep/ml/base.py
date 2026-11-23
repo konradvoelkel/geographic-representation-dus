@@ -97,8 +97,20 @@ class Embedder(Protocol):
     def embed(self, texts: Sequence[str]) -> Vectors: ...
 
 
+@dataclass(frozen=True)
+class Reply:
+    """Die Antwort eines Generators; ``truncated``: sie stieß an ``num_predict`` und ist unvollständig."""
+
+    text: str
+    truncated: bool = False
+
+
 class Generator(Protocol):
-    """Prompt zu Text. ``options`` ersetzt für einen Aufruf die Optionen, mit denen er gebaut ist."""
+    """Prompt zu Antwort. ``options`` ersetzt für einen Aufruf die Optionen, mit denen er gebaut ist.
+
+    Die Antwort sagt, ob sie abgeschnitten ist (Review 2026-11-23, Befund 2): ein Text allein
+    hätte eine halbe Kurzfassung als ganze in den Cache gelegt.
+    """
 
     @property
     def name(self) -> str: ...
@@ -108,7 +120,7 @@ class Generator(Protocol):
 
     def generate(
         self, prompt: str, *, system: str = "", options: GenerationOptions | None = None
-    ) -> str: ...
+    ) -> Reply: ...
 
 
 @dataclass(frozen=True)

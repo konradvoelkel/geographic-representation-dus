@@ -49,6 +49,13 @@ def test_put_and_get_round_trip_under_the_full_key(tmp_path: Path) -> None:
         assert cache.known(CacheKey(KEY.model, KEY.digest, "dokument-2")) == set()
 
 
+def test_a_value_can_be_marked_as_cut(tmp_path: Path) -> None:
+    with ModelCache(tmp_path, KEY.model) as cache:
+        cache.put_many(KEY, [("a" * 64, b"ganz"), ("b" * 64, b"halb")], truncated=["b" * 64])
+        assert cache.truncated(KEY, ["a" * 64, "b" * 64, "c" * 64]) == {"b" * 64}
+        assert cache.get_many(KEY, ["b" * 64]) == {"b" * 64: b"halb"}
+
+
 def test_get_many_reads_more_keys_than_sqlite_takes_parameters(tmp_path: Path) -> None:
     shas = [f"{i:064x}" for i in range(2500)]
     with ModelCache(tmp_path, KEY.model) as cache:

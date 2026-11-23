@@ -16,6 +16,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from typing import NamedTuple
 
 import deal
 import numpy as np
@@ -76,11 +77,13 @@ class BatchReport:
     computed: int
     left: int
     seconds: float
+    truncated: int = 0  # davon in diesem Lauf neu und abgeschnitten (an ``num_predict``)
 
     def line(self) -> str:
+        cut = f", {self.truncated} abgeschnitten" if self.truncated else ""
         left = f", {self.left} offen (limit)" if self.left else ""
         return (
-            f"{self.total} Eingaben: {self.cached} aus dem Cache, {self.computed} neu{left} "
+            f"{self.total} Eingaben: {self.cached} aus dem Cache, {self.computed} neu{cut}{left} "
             f"in {self.seconds:.1f} s"
         )
 
@@ -103,7 +106,14 @@ def progress_log(
     return log
 
 
-Compute = Callable[[Sequence[int]], Sequence[bytes]]
+class CacheValue(NamedTuple):
+    """Ein gerechneter Wert und ob er unvollständig ist; ``compute`` darf auch nackte Bytes liefern."""
+
+    value: bytes
+    truncated: bool = False
+
+
+Compute = Callable[[Sequence[int]], Sequence[bytes | CacheValue]]
 
 
 # Benannte Validatoren mit der ganzen Signatur: deal bindet Schlüsselwortparameter samt Vorgaben
@@ -170,13 +180,20 @@ def run_batch(
     missing = [index for sha, index in first.items() if sha not in known]
     todo = missing[:limit] if limit else missing
     done = 0
+    cut = 0
     for start in range(0, len(todo), batch_size):
         chunk = todo[start : start + batch_size]
-        values = compute(chunk)
+        values = [v if isinstance(v, CacheValue) else CacheValue(v) for v in compute(chunk)]
         if len(values) != len(chunk):
             raise ModelError(f"{label or key.model}: {len(values)} Werte für {len(chunk)} Eingaben")
-        cache.put_many(key, [(keys[i], value) for i, value in zip(chunk, values, strict=True)])
+        pairs = list(zip(chunk, values, strict=True))
+        cache.put_many(
+            key,
+            [(keys[i], v.value) for i, v in pairs],
+            truncated=[keys[i] for i, v in pairs if v.truncated],
+        )
         done += len(chunk)
+        cut += sum(v.truncated for v in values)
         if progress is not None:
             progress(Progress(label, done, len(todo), len(known), len(first), clock() - started))
     return BatchReport(
@@ -185,6 +202,7 @@ def run_batch(
         computed=done,
         left=len(missing) - done,
         seconds=clock() - started,
+        truncated=cut,
     )
 
 
@@ -246,9 +264,14 @@ def embed_texts(
 
 @dataclass(frozen=True)
 class Generated:
-    """Eine Antwort je Prompt; ``None``, wo sie wegen ``limit`` noch fehlt."""
+    """Eine Antwort je Prompt; ``None``, wo sie wegen ``limit`` noch fehlt.
+
+    ``truncated`` markiert je Prompt eine Antwort, die an ``num_predict`` stieß, auch eine aus
+    einem früheren Lauf: der Schritt entscheidet, ob er sie verwirft oder kennzeichnet.
+    """
 
     texts: list[str | None]
+    truncated: list[bool]
     report: BatchReport
 
 
@@ -273,11 +296,9 @@ def generate_texts(
     key = CacheKey(use.name, generator.digest, use.prompt_key())
     shas = [input_sha256(f"{system}\x00{text}") for text in prompts]
 
-    def compute(indices: Sequence[int]) -> list[bytes]:
-        return [
-            generator.generate(prompts[i], system=system, options=options).encode("utf-8")
-            for i in indices
-        ]
+    def compute(indices: Sequence[int]) -> list[CacheValue]:
+        replies = [generator.generate(prompts[i], system=system, options=options) for i in indices]
+        return [CacheValue(r.text.encode("utf-8"), r.truncated) for r in replies]
 
     report = run_batch(
         shas,
@@ -291,6 +312,8 @@ def generate_texts(
         clock=clock,
     )
     use.record(open=report.left, limit=limit)
-    found = cache.get_many(key, sorted(set(shas)))
+    distinct = sorted(set(shas))
+    found = cache.get_many(key, distinct)
+    cut = cache.truncated(key, distinct)
     texts = [found[sha].decode("utf-8") if sha in found else None for sha in shas]
-    return Generated(texts, report)
+    return Generated(texts, [sha in cut for sha in shas], report)

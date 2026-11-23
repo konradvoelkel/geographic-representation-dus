@@ -241,7 +241,7 @@ def bench(
             started = clock()
             answer = generator.generate(BENCH_PROMPT.format(text=text), system=BENCH_SYSTEM)
             rows.append(BenchRow(doc_id, len(text), generator.calls[-1], clock() - started))
-            example = example or answer
+            example = example or answer.text
             if on_row is not None:
                 on_row(rows[-1])
     capped = with_text.select(pl.col("text").str.len_chars().clip(upper_bound=chars).mean())

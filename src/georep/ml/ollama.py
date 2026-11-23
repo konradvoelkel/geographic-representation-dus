@@ -30,6 +30,7 @@ from georep.ml.base import (
     EmbeddingOptions,
     GenerationOptions,
     ModelInfo,
+    Reply,
     Vectors,
     full_name,
 )
@@ -345,7 +346,7 @@ class OllamaGenerator:
     @deal.raises(ModelError)
     def generate(
         self, prompt: str, *, system: str = "", options: GenerationOptions | None = None
-    ) -> str:
+    ) -> Reply:
         chosen = options if options is not None else self.options
         messages = [{"role": "system", "content": system}] if system else []
         payload: dict[str, Any] = {
@@ -372,7 +373,7 @@ class OllamaGenerator:
                 output_seconds=reply.eval_duration / NANOSECONDS,
             )
         )
-        return reply.message.content
+        return Reply(reply.message.content, truncated=reply.done_reason == "length")
 
 
 # --- aus den Settings -----------------------------------------------------------------------
