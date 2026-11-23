@@ -92,7 +92,7 @@ veröffentlicht sie über GitHub Pages unter
 
 | Befehl | Was er tut |
 |---|---|
-| `georep run [SCHRITT …] [--force] [--dry-run] [--online]` | führt die Schritte aus und überspringt, was aktuell ist; Netzschritte nur mit `--online` |
+| `georep run [SCHRITT …] [--force] [--dry-run] [--online] [--models [--limit N]]` | führt die Schritte aus und überspringt, was aktuell ist; Netzschritte nur mit `--online`, Schritte mit lokalem Modell nur mit `--models` (`--limit` begrenzt dann die neuen Modellaufrufe je Schritt) |
 | `georep fetch [SCHRITT …] [--force] [--dry-run] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `meetings`, `consultations`, `persons`, `pdfs`, `streets_osm`, `pois_wiki`, danach `shapes` und `texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Seiten je Liste, `--dry-run` zeigt nur den Plan |
 | `georep steps` | Schritte mit Eingaben und Ausgaben |
 | `georep status` | Settings, Pfade, Stores, Frische jedes Schritts mit Grund |
@@ -107,6 +107,8 @@ veröffentlicht sie über GitHub Pages unter
 | `georep regress --controls` | Tabelle 6: dieselbe Regression mit Kontrollvariablen, je Modell und Stichprobe |
 | `georep profile [SCHRITT …] [--top N] [--sort tottime]` | einen echten Schritt unter cProfile, `.prof` für snakeviz |
 | `georep validate sample\|tasks\|merge\|score VORHABEN` | Validierung einer Messung mit zwei KI-Kodierern (Fundament F4, [docs/validierung.md](docs/validierung.md)): Stichprobe nach dem Codebuch `validierung/VORHABEN/codebuch.toml`, Kodierauftrag je Kodierer (`--coder A\|B`, lokal unter `validation.coding_root`), Zusammenführen mit Schlichtung (`--model`), Übereinstimmung und Güte eines Verfahrens (`--pred`) |
+| `georep ml status` | der lokale Modellserver (ollama): erreichbar, die Modelle aus `[ml]` mit Digest, was im Grafikspeicher liegt, der Modellcache je Modell; Exit 1, wenn etwas fehlt |
+| `georep ml bench MODELL [--n 20] [--chars 8000] [--max-tokens 120]` | misst ein Modell an n Dokumenten des Korpus: Sekunden je Dokument, Token je Sekunde, Hochrechnung auf den Korpus |
 
 `--profile SLUG` wählt die Stadt (`georep profiles` listet sie; sonst gilt `GEOREP_PROFILE`, sonst
 `default_profile` aus den Settings). `--settings DATEI` legt eine weitere TOML-Schicht über die
@@ -477,7 +479,9 @@ diese Liste und die Seite zusammen.
 
 `uv run nox` (Ruff, mypy strict, Lockfile-Prüfung, Tests mit Abdeckung) lokal und in CI rufen dieselben
 Sessions; `uv run pytest -m slow` läuft die Kette über die volle Referenz und vergleicht mit den Ergebnissen
-der Arbeit; `nox -s bench`, `profile`, `verify` und `mutate` messen und prüfen von Hand. Test-Schichten,
+der Arbeit; `nox -s bench`, `profile`, `verify` und `mutate` messen und prüfen von Hand, ebenso
+`uv run pytest -m models` (ein Rauchtest gegen den lokalen Modellserver; kein anderer Test ruft ein
+Modell). Test-Schichten,
 Nähte für Ersatz-Matcher und -Extraktor und die nox-Sessions beschreibt [docs/architecture.md](docs/architecture.md);
 Regeln für Commits und für Agenten stehen in [CLAUDE.md](CLAUDE.md). Vor dem Commit einmalig
 `uvx pre-commit install`.

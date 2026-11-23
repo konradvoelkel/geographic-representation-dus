@@ -2574,3 +2574,74 @@ Kantenpräzision 139/150 = 0,927, gewichtet 0,922; Runde 2: 85/100 = 0,850, gewi
 Die übertragenen Vorhaben liegen in eigenen Ordnern `<NN-name>-f4` neben den Ordnern der Messungen, weil deren Messskripte die alten Dateien lesen und ihre Unverändertheit prüfen (Supervisor, dritte Runde). Verworfen: den Leerraum in offenen Antworten ganz zu entfernen, wie es die vorläufigen Auswertungen
 von 11 und 12 taten („66 - Amt" gleich „66-Amt"): das ist eine Entscheidung über die Frage, nicht
 über die Form, und gehört, wenn überhaupt, als Einstellung je Frage ins Codebuch.
+
+## NN. Lokale Modelle über ollama: eine Naht mit Cache, Kennung im Stamp und Schalter (2026-11-23, Fundament F5)
+
+Drei Vorhaben des Plans zur Vorverarbeitung brauchen ein Sprach- oder Einbettungsmodell
+(`docs/plan-vorverarbeitung-2026-11.md`, § 7 und § 11: 18 Einbettungen, 19 Politikfelder, 20
+Kurzfassungen). Fundament F5 legt fest, wie ein Schritt ein Modell benutzt; welches Modell er wofür
+nimmt, entscheidet jedes Vorhaben in seiner Messung.
+
+**Warum lokal.** Plan § 2.8 und Konrads Antwort auf Frage 3: die Dokumente verlassen den Rechner
+nicht, ein Lauf kostet je Dokument nichts, und Modellname und Digest im Stamp machen ihn
+wiederholbar. Ein externer Dienst kommt nur für eine Kalibrierungsstichprobe in Frage (Frage 4),
+und die übernehmen Opus-Agenten. Der Rechner hat eine RTX 4090 mit 24 GB.
+
+**Warum ollama über HTTP und keine Python-Bibliothek.** Der Client in `georep.ml.ollama` spricht
+sechs Endpunkte über `requests`, das ohnehin im Lock steht:
+
+- **Keine neue Abhängigkeit.** Die Bibliothek `ollama` brächte `httpx` und nichts, was diese sechs
+  Endpunkte nicht auch tun. `sentence-transformers` oder `transformers` brächten `torch` mit CUDA
+  (mehrere GB) ins Lock, das CI ohne GPU installieren müsste; `llama-cpp-python` ist ein Kompilat je
+  Rechner. Die Gewichte gehören nicht in die Umgebung des Pakets.
+- **Ein Modell im Speicher für alle.** Der Server hält ein geladenes Modell über Prozesse hinweg
+  (`keep_alive`); zwei Läufe, ein Rauchtest und `georep ml bench` teilen es, und die
+  GPU-Warteschlange des Supervisors (Plan § 5) stellt die Aufträge nur hintereinander. Ein
+  Modell im eigenen Prozess lüde 17 GB je Aufruf von `georep`.
+- **Dieselbe Testnaht wie jede Quelle.** `Transport` und ein Server als Tabelle (`FakeOllama`);
+  kein Test braucht eine GPU, und die Antworten prüft pydantic an der Grenze wie bei OParl.
+- **Der Digest ist eine genaue Kennung.** `/api/tags` nennt den SHA-256 des Modellmanifests; ein
+  `ollama pull` mit neuem Stand ändert ihn, auch wenn der Name bleibt.
+
+Verworfen außerdem: vLLM (ein eigener Server mit eigenem Speicherverwalter, für eine Karte und
+Stapel von Hunderten Dokumenten kein Gewinn, den ollama nicht auch hat) und die OpenAI-kompatible
+Schnittstelle von ollama (`/v1/…`; sie nennt weder Digest noch Fähigkeiten, und die Kennung im
+Stamp braucht beides).
+
+**Wie ein Schritt das Modell bekannt gibt.** `Step` bekommt **ein** Feld `models`: die Kennung
+seiner Modelle als Funktion (`model_stamp`: Name, Digest, Prompt-Version, bei Generatoren der Hash
+der Optionen). Ist es gesetzt, läuft der Schritt nur mit `georep run --models`, wie ein
+Netzschritt nur mit `--online`, und ohne Schalter kommt sein Ergebnis aus einem Paket. Ein Feld
+statt zweier (`models: bool` und eine Kennung daneben), weil zwei Felder zwei falsche Zustände
+zulassen: ein Modellschritt ohne Kennung (ein neues Modell machte ihn nicht veraltet) und eine
+Kennung ohne Schalter (der Server würde ohne `--models` gefragt). Eine Funktion statt eines festen
+Werts, weil den Digest nur der Server kennt: `build_steps`, `georep steps` und jeder Lauf ohne
+Schalter fragen ihn nie. Die Kennung steht lesbar unter `"models"` im Stamp, nicht als Hash in
+`extra`, damit ein Mensch sieht, mit welchem Modell eine Datei entstand; Stamps anderer Schritte
+bekommen den Schlüssel nicht und bleiben gültig. Der Diff in `pipeline.py` ist ein Feld, eine
+Bedingung in `run_step` und ein Zusatz in `expected_stamp` und `stamp_mismatch`.
+
+Im Settings-Fingerprint stehen die Modellnamen, die Optionen und `ml.limit` (wie `pdf_limit`: ein
+begrenzter Lauf hat ein anderes Ergebnis, und `georep status` soll das danach zeigen); nicht darin
+stehen `base_url` (ein Ort) und Timeout, Wiederholungen, `keep_alive` und `batch_size` (Laufzeit:
+ein anderer Stapel kann die letzten Bits einer Einbettung ändern, doch was im Cache liegt, wird
+nicht neu gerechnet). `--limit` ohne `--models` ist ein Bedienfehler, denn es änderte nur den
+Fingerprint.
+
+**Cache: SQLite je Modell, nicht Parquet-Scherben.** Ein Eintrag ist (Digest, Prompt-Version,
+SHA-256 der Eingabe) → Wert, und die Eingabe ist, was das Modell sieht. Gemessen am 2026-11-23 auf
+xtraspace, unter Fremdlast (Lastmittel um 90): 50 000 Einbettungen zu 3 KB in Stapeln zu 32
+schreiben 9,0 s, alle Schlüssel lesen 50 ms, alle Werte 1,6 s, die Datei hat 214 MB; 50 000 Texte zu
+512 B mit je einer Transaktion kosten 0,22 ms je Eintrag, gegen Sekunden je Antwort des Modells.
+Mit `WITHOUT ROWID` lagen die Werte im Schlüsselbaum, und dieselben Lesungen kosteten 708 ms und
+4,6 s; darum eine Rowid-Tabelle mit eigenem Schlüsselindex. Parquet-Scherben hätten je Stapel eine
+Datei bedeutet (1 600 bei 50 000 Einträgen) oder ein Umschreiben, beim Nachschlagen das Lesen
+aller Scherben und beim Lesen das Entfernen von Dubletten; SQLite gibt mit der Standardbibliothek
+eine Transaktion je Stapel (atomar, nach einem Abbruch fortsetzbar), Nachschlagen über den
+Primärschlüssel und parallele Leser (WAL). Parquet bleibt das Format der Ausgaben und Pakete: ein
+Schritt liest aus dem Cache und schreibt seine Tabelle. Eine Datei je Modell, damit `georep ml status`
+die Größe je Modell ohne Abfrage kennt und ein ausgedientes Modell mit einer Datei verschwindet.
+
+**Was F5 nicht entscheidet.** Welche Texte ein Vorhaben einbettet (Rohtext aus F1, Abschnitte aus
+11, Zerteilung bei mehr als 512 Token), welche Prompts es schreibt und mit welcher Version, und ob
+ein Ergebnis ins Repo darf (Kurzfassungen nicht, Plan § 10, Frage 6).

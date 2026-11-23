@@ -29,7 +29,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `schema` | die Schema-Versionen der zwei Modellausgaben (Themen, passender Ausschuss) -- importfrei, damit `build_steps` sie ohne scikit-learn kennt (Punkt 45) |
 | `io` | atomare Schreibvorgänge (Temporärdatei, fsync, `os.replace`), JSON, Parquet mit `schema_version` in den Metadaten, SHA-256 (`digest`) |
 | `http` | Session mit Timeout, Retry mit Backoff, User-Agent, requests-cache je Quelle; `Transport`-Protokoll als Testnaht; `network_errors` wandelt requests-Fehler in `NetworkError` |
-| `errors` | Domänenfehler: `MissingInputError`, `EmptyResultError`, `SchemaError`, `CorruptPdfError`, `FetchError`, `NetworkError` |
+| `errors` | Domänenfehler: `MissingInputError`, `EmptyResultError`, `SchemaError`, `CorruptPdfError`, `FetchError`, `NetworkError`, `ModelError` (Fundament F5: Modellserver nicht erreichbar, Modell fehlt, Antwort unbrauchbar) |
 | `oparl` | OParl 1.1 als pydantic-Vertrag (`OparlPaper` mit den drei Urheberfeldern und `consultation_organizations`, `OparlFile`, `OparlOrganization`, `PaperPage`, `OrganizationPage`), echte Antworten als Fixtures; Fundament F6: `OparlMeeting` mit Tagesordnung, `OparlAgendaItem`, `OparlConsultation`, `OparlPerson` (ohne Kontaktdaten, `PERSON_PRIVATE_KEYS`), `OparlMembership`, gemeinsame Basis `OparlObject` und der Umschlag `ListPage` für jede Liste; `OparlPaper.consultations` liest die eingebetteten Beratungen typisiert |
 | `council` | Fundament F6: die Netzschritte `meetings`, `consultations`, `persons` (`run_*`), ihre Dateien (`council_files`), ein `JsonlStore` je Objektart (letzte Zeile gewinnt, sortiert und atomar gespeichert) und die Fortsetzung über Teildateien und Fortschritt; Runbook `docs/runbook-sitzungen.md` |
 | `records` | `PaperRecord`: die Zeile in `raw/papers.jsonl`, aus OParl oder dem Altformat der Arbeit; die vier URL-Listen sind Tupel, weil der Record `frozen` und damit hashbar ist |
@@ -40,7 +40,7 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `search/` | `dictionary` (Wörterbuch je Wahlbezirk), `matcher` (`KeywordMatcher`-Protokoll, FlashText), `index` (invertierter Index) |
 | `analysis/` | `topics` (Themenmodell: TF-IDF und NMF; `TopicRules` trägt die Stoppwörter aus dem Profil und die Saat je Ausschuss, `vectorize` ist die eine Textdarstellung), `committees` (passender Ausschuss je Dokument: logistische Regression mit Restklasse), `hits` (Treffer je Wahlbezirk, Join mit Wählern), `regression` (`scipy.stats.linregress`; `regression_pair` rechnet beide Spalten von Tabelle 5 für jede Kennzahlspalte, Ausreißer aus den Settings; ohne Streuung in x oder y gibt es kein Ergebnis, sondern einen `EmptyResultError`), `periods` (zwei Perioden je Wahlbezirk nebeneinander und die Regression ihrer Änderungen), `timeline` (Dokumente je Monat, stadtweit und je Wahlbezirk; die Nachbedingung prüft gegen `hits_by_district`, Option 07) |
 | `crosswalk` | Umrechnung von Gebietseinheiten auf Wahlbezirke: `unit_weights` wiegt je Wahlbezirk die Einheiten (Stadtbezirk, Stadtteil) mit einer Zählgröße je Stimmbezirk; der Flächen-Crosswalk auf einen anderen Zuschnitt kommt mit `assign_by_point` (Zuordnung innerhalb eines Zuschnitts über den repräsentativen Punkt), `area_shares` (Flächenanteile, auf die Schnittsumme normiert, mit Abdeckung `min_coverage` als Wächter und `min_share` gegen Splitter: ein Schnittstück unter diesem Anteil der Quellfläche stammt aus der Fließkomma-Arithmetik einer geteilten Grenze und fällt vor der Normierung weg, Punkt 51), `target_weights` und `transfer_counts` (additive Zählgrößen übertragen, `largest_remainder` macht sie ganzzahlig ohne die Summe zu ändern). Verträge: Anteile je Quelle und Gewichte je Ziel summieren zu 1, Spaltensummen bleiben exakt erhalten |
-| `pipeline` | Schrittregister: Name, Eingaben, Ausgaben, `run()`, Schema-Version, optionaler Zusatz im Stamp (`extra`: `report` und die Unterseiten); Stamps; `run_step`, `run_pipeline`, `build_steps` |
+| `pipeline` | Schrittregister: Name, Eingaben, Ausgaben, `run()`, Schema-Version, optionaler Zusatz im Stamp (`extra`: `report` und die Unterseiten), optional die Kennung der Modelle (`models`, Fundament F5: der Schritt läuft nur mit `--models`); Stamps; `run_step`, `run_pipeline`, `build_steps` |
 | `enrich` | das Register der Beiträge der Vorverarbeitung 2026-11 (Punkt 69): `CONTRIBUTIONS` ist ein Tupel von `Contribution`-Objekten mit Schritten, veröffentlichten Tabellen und Unterseiten; `build_steps` setzt die Schritte vor `report` und prüft Namen auf Dubletten (`DuplicateStepError`). Ein Vorhaben ändert hier eine Importzeile und einen Eintrag, nicht den Kern |
 | `spans` | das gemeinsame Schema für Stellen im Text (Punkt 69): `id`, `start`, `end`, `kind`, `value`, `norm`, `section`, `extractor`; `check_spans` prüft Schema, Grenzen und Folge, `excerpt` schneidet eine Spanne mit Kontext aus |
 | `bootstrap` | kopiert die Referenz nach `data_root` und baut daraus `papers.jsonl` und den Textstore; `bootstrap_from_settings` ist die eine Stelle, an der die Nähte aus den Settings folgen (Kontextdateien, Wörterbuch, leerer Store, Beratungsfolge, Textpaket); `overlay_texts` legt ein Textpaket über den Store der Referenz, wenn es genau ihre Dateien trägt (Punkt 68) |
@@ -49,7 +49,8 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 | `validation/` | Fundament F4 ([validierung.md](validierung.md)): Prüfung einer Messung durch zwei unabhängige KI-Kodierer und einen Schlicht-Agenten. `codebook` (das Codebuch je Vorhaben als TOML unter `validation.root/<vorhaben>/`, geprüft von pydantic: Einheit `document`, `document_pair`, `pair_with_span`, `span`, `query_document` oder `marking`, eine oder mehrere Fragen mit Skala, Optionen, Bedingung `only_if`, `positive`/`ignore` für Treffer, `adjudicate`; dazu Regeln für Stichprobe, Auftrag, Auswertung und die Übernahme vorläufiger Antworten), `sample` (geschichtete Stichprobe ohne Zufallsgenerator: Rang SHA-256 aus Seed und Schlüssel, je Schicht die kleinsten; `allocate` teilt ganzzahlig auf; jede Zeile trägt `schicht_n`), `tasks` (Kodierauftrag je Kodierer mit Ausschnitten und Spannen nach F3, geprüft mit `georep.spans`, unter `validation.coding_root`, nie im Repo), `importer` (vorläufige Antwortdateien ins Format von F4), `merge` (zwei Kodierungen je Frage, Auftrag der Schlichtung, dann `labels.csv` mit `id, frage, …`, README und `guete.json`), `measures` (Wilson, Cohens κ, Krippendorffs α, Präzision, Recall, F1, Konfusionsmatrix, nDCG@k mit Gleichständen, geschichteter Anteil mit Wilson bei Kishs n_eff; rein und in reinem Python, gegen scikit-learn und Krippendorff 2011 geprüft), `score` (Übereinstimmung, Treffer je Schicht, in der Stichprobe und für die Grundgesamtheit, Güte eines Verfahrens), `paths`, `command` (der Unterbefehl `validate`, den `cli` mit drei Zeilen einhängt) |
 | `contracts` | `configure()` für `settings.contracts` und die Prädikate der deal-Verträge |
 | `profiling` | `profile_step`: ein echter Schritt unter cProfile, `.prof` datiert nach `docs/profiling/` |
-| `cli` | `georep run, fetch, steps, status, profiles, publish, paths, bootstrap, pack, learn-bodies, export, regress, profile, validate`; global `--profile`; `main(argv) -> int`; Exit 0, 1 (Domänenfehler), 2 (Bedienung) |
+| `cli` | `georep run, fetch, steps, status, profiles, publish, paths, bootstrap, pack, learn-bodies, export, regress, profile, validate, ml`; global `--profile`; `run --models [--limit N]` für Schritte mit Modell; `main(argv) -> int`; Exit 0, 1 (Domänenfehler), 2 (Bedienung) |
+| `ml/` | Fundament F5, lokale Modelle (Abschnitt „Modelle"): `base` (Protokolle `Embedder` und `Generator`, `GenerationOptions`, `model_stamp` für `Step.models`), `ollama` (Backend über HTTP, Fabriken aus `[ml]`), `cache` (inhaltsadressiert, eine SQLite-Datei je Modell unter `cache_root/ml/`), `batch` (fortsetzbarer Stapellauf, `embed_texts`, `generate_texts`), `commands` (`georep ml status`, `georep ml bench`) |
 | `export` | Parquet-Ergebnisse als CSV neben die Dateien; `csv_plan` und `write_csv` nutzt auch der Schritt `report` |
 | `report/` | die Berichtsseite: `model` (frozen dataclasses aus den Parquet-Ergebnissen, `format_de`, Spaltendoku; mit Fremddaten `controls` und `derived` für die beiden neuen Abschnitte), `geometry` (Wahlbezirke vereinigen und vereinfachen, SVG-Pfade, GeoJSON), `charts` (Quantilklassen, Legende, `nice_ticks`, `Axes`, Choroplethe, Streudiagramm und Added-Variable-Plots als SVG), `documents` (Dokumente mit Treffer ohne Texte, Begriffe als Indizes, für `dokumente.json`), `terms` (Begriffe mit Treffer je Wahlbezirk, für `begriffe.json`, Punkt 49), `render` (Jinja2 mit Autoescape, Allowlist der Links; `sections` liest die Abschnitte aus `templates/sections/`; `render_map` für die Leaflet-Datei), `search` (Sucheinträge je kanonischem Begriff mit Wahlbezirken, Dokumenten und Art, dazu die Faltung als Spiegel des Abschnitts-Skripts), `literature` (die Einträge der Literaturübersicht: stadtneutral aus `literatur.toml` im Paket, stadtspezifisch aus dem Profil), `tables` (Register der veröffentlichten Tabellen: Datei, Beschreibung, Spaltendoku, CSV-Regeln; `all_tables` hängt die Tabellen der Beiträge an, Punkt 69), `pages` (Unterseiten der Beiträge im Rahmen der Hauptseite, je ein Schritt `page_<name>`, Punkt 69), `build` (der Schritt `report`: Downloads, Schema, `summary.json`, Seiten), `comparison` und `publish` (`georep publish`: die Stadtseiten zusammentragen und `vergleich.html` bauen) |
 | `deploy/` (kein Modul) | außerhalb des Pakets: `bin/georep-monitor.sh` und die systemd-Einheiten des wiederkehrenden Laufs; sie sprechen mit `georep` nur über CLI, Settings und Umgebung (Abschnitt Betrieb, Option 07) |
@@ -61,7 +62,7 @@ Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps
 (nachgezählt am 2026-10-13 aus `build_steps`: siebenundzwanzig für Düsseldorf, achtundzwanzig mit
 Vergleich, zweiundzwanzig im Periodenprofil 2014 bis 2020, einundzwanzig in der laufenden Periode,
 zweiundzwanzig für Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
-`georep fetch`; `georep fetch` führt `shapes` und `texts` mit, weil die Netzschritte die Flächen
+`georep fetch`, Schritte mit lokalem Modell (`Step.models`, Fundament F5) nur mit `--models`; `georep fetch` führt `shapes` und `texts` mit, weil die Netzschritte die Flächen
 brauchen und die Texte sonst im Cache liegen blieben. Mit
 `topics.k = 0` fehlt der Schritt `topics`, und `weights` rechnet ohne Themenvarianten; `bodies` steht
 vor `topics`, weil die Saat der Themen die Gremien je Dokument liest (Punkt 45). Den Schritt
@@ -159,6 +160,8 @@ cache_root/                Standard data_root/cache
   <profil>/text/texts.parquet   alle Texte mit Extraktorname, PDF-Hash, Herkunft, Zeichenzahl
   http.sqlite              requests-cache, von allen Profilen geteilt (der Schlüssel ist die URL);
                            Lebensdauer je Quelle, PDFs nie
+  ml/<modell>.sqlite       Modellcache (Fundament F5), eine Datei je Modell, von allen Profilen
+                           geteilt; Schlüssel Digest, Prompt-Version, SHA-256 der Eingabe
 ```
 
 **Ein Datenpaket ist ein `reference_root`**: `Layout.reference_view()` liest es als Datenwurzel mit
@@ -268,6 +271,95 @@ der Arbeit wird für alle 1996 Orte reproduziert.
 Gemessen (2026-10-11): der Matcher kostet 4,1 s für 5841 Begriffe über 19 108 Dokumente, 3,8 s davon reines
 Python in FlashText; die Extraktion 38 ms je PDF, 17 ms je Seite. Kein Flaschenhals rechtfertigt derzeit
 einen Ersatz; die Kandidaten stehen in decisions.md.
+
+## Modelle
+
+Fundament F5 (`docs/plan-vorverarbeitung-2026-11.md`, § 7; Gründe in decisions.md, „Lokale Modelle
+über ollama"). Drei Vorhaben brauchen ein Modell: Einbettungen (18), Politikfelder (19) und
+Kurzfassungen (20). Sie sprechen nicht mit einem Modell, sondern mit einer Naht:
+
+- **Protokolle** in `ml.base`, wie Matcher und Extraktor: `Embedder` (`embed(texts)` liefert eine
+  float32-Zeile je Text, dazu `name`, `digest`, `dimension`) und `Generator` (`generate(prompt, *,
+  system, options) -> str`, dazu `name`, `digest`). `GenerationOptions` sind die Optionen, die das
+  Ergebnis bestimmen; der Standard ist deterministisch (Temperatur 0, fester Seed, `num_ctx`,
+  `num_predict`, `think` aus). Deterministisch heißt: je Rechner, Modell und Stapelgröße; über
+  Rechner hinweg rechnet die GPU anders.
+- **Backend** `ml.ollama`: ein ollama-Server auf localhost, über das `Transport`-Protokoll wie jede
+  Quelle. `/api/tags` liefert den Digest (den SHA-256 des Modellmanifests), `/api/show` die
+  Fähigkeiten; `think` geht nur an Modelle mit `thinking`. 429, 5xx und ein nicht erreichbarer
+  Server werden mit Backoff wiederholt (`ml.retries`), ein 4xx kommt sofort heraus, jeder Fehler ist
+  ein `ModelError`. Der Konstruktor spricht nicht mit dem Server: `build_steps` darf Modelle bauen,
+  ohne dass einer läuft. `[ml]` in den Settings nennt Ort, Laufzeitwerte, Modelle und Optionen; Ort
+  und Laufzeit stehen nicht im Fingerprint, Modelle, Optionen und `limit` schon.
+- **Stamp**: ein Schritt mit Modell trägt `models`, die Kennung seiner Modelle als Funktion
+  (`ml.base.model_stamp`: Modellname, Digest, Prompt-Version, bei Generatoren der Hash der
+  Optionen). `run_step` fragt sie erst, wenn der Schritt laufen darf, also mit `--models`; sie steht
+  lesbar unter `"models"` im Stamp, und eine andere meldet `stamp_mismatch` als „Modell oder Prompt
+  geändert". Ohne `--models` wird der Schritt übersprungen wie ein Netzschritt ohne `--online`, und
+  sein Ergebnis kommt aus einem Paket (`georep pack`, `bootstrap`): CI und GitHub Pages haben weder
+  GPU noch Modellserver. `georep status` nennt einen nicht erreichbaren Server in der Zeile des
+  Schritts.
+- **Cache** `ml.cache` unter `cache_root/ml/`: eine SQLite-Datei je Modell, von allen Profilen
+  geteilt. Schlüssel ist (Digest, Prompt-Version, SHA-256 der Eingabe), und die Eingabe ist, was
+  das Modell sieht: bei Einbettungen der Text samt Präfix, bei Generatoren System und Prompt
+  zusammen; die Prompt-Version eines Generators trägt den Hash seiner Optionen. Ein Stapel ist eine
+  Transaktion (WAL). Einbettungen liegen als float32 little endian.
+- **Stapellauf** `ml.batch`: `run_batch` rechnet nur, was unter dem Schlüssel fehlt, jede verschiedene
+  Eingabe einmal, in Stapeln zu `ml.batch_size`; `limit` (`georep run --models --limit N`) begrenzt
+  die neuen Eingaben eines Laufs, und ein Abbruch verliert höchstens den laufenden Stapel. Nach jedem
+  Stapel ein Fortschritt mit Restzeit; `progress_log` schreibt höchstens alle 30 s eine Zeile.
+  `embed_texts` und `generate_texts` lesen danach alles aus dem Cache zurück und markieren, was wegen
+  `limit` fehlt.
+- **Befehle**: `georep ml status` (Server, Modelle aus `[ml]` mit Digest, Grafikspeicher, Cache je
+  Modell; Exit 1, wenn etwas fehlt) und `georep ml bench MODELL --n 20` (Sekunden je Dokument, Token
+  je Sekunde, Hochrechnung; Zahlen in `docs/profiling/README.md`).
+- **Tests** rufen nie ein Modell: `tests/fakes.py` hat `FakeEmbedder` und `FakeGenerator`
+  (deterministisch aus dem SHA-256 der Eingabe) und `FakeOllama`, einen Server als Tabelle. Ein
+  Rauchtest gegen den echten Server trägt den Marker `models` und läuft nur von Hand
+  (`uv run pytest -m models`).
+
+Ein Schritt mit Modell, als Gerüst für die Vorhaben (Namen der Ausgabe und Konstanten sind deren
+Sache; `Path`-Eingaben und Schema-Version wie bei jedem Schritt):
+
+```python
+client = client_from_settings(settings.ml)  # spricht noch nicht mit dem Server
+embedder = embedder_from_settings(settings.ml, client)
+
+
+def embeddings() -> str:
+    texts = ...  # was das Modell sieht, samt Präfix
+    with ModelCache(layout.ml_cache, embedder.name) as cache:
+        found = embed_texts(
+            embedder,
+            cache,
+            texts,
+            prompt=PROMPT_VERSION,
+            batch_size=settings.ml.batch_size,
+            limit=settings.ml.limit,
+            progress=progress_log(),
+        )
+    ...  # Parquet schreiben, nur Zeilen mit found.present
+    return found.report.line()
+
+
+Step(
+    "embeddings",
+    (layout.corpus,),
+    (out,),
+    embeddings,
+    EMBEDDINGS_SCHEMA_VERSION,
+    models=model_stamp(embedder, PROMPT_VERSION),
+)
+```
+
+Ein Generator geht genauso mit `generator_from_settings`, `generate_texts(..., options=...)` und
+`model_stamp(generator, PROMPT_VERSION, options)`.
+
+Grenzen, gemessen am 2026-11-23: `nomic-embed-text-v2-moe` liest höchstens 512 Token, ein längerer
+Text wird hinten abgeschnitten (Vorhaben 18 zerteilt vorher); `qwen3.6:27b` belegt mit
+`num_ctx = 8192` 22,9 GB Grafikspeicher, und ollama hat das Einbettungsmodell daneben verdrängt
+(`gemma4` belegt 10,8 GB). Durchsatz und Hochrechnung je Modell stehen in
+[profiling/README.md](profiling/README.md), „Lokale Modelle auf der RTX 4090".
 
 ## Berichtsseite
 
@@ -473,6 +565,7 @@ auf dem rekursiven `deep_merge`).
 | Messskripte unter `docs/` | was kein Test tragen kann, weil es am Rechner hängt: die Methodikkennzahlen (`methodik-review-2026-10-messung.py`) und die Kohärenz, Saattreue und Kreuzvalidierung des Themenmodells (`themenmodell-2026-10-messung.py`) |
 | `tests/golden/` | Mini-Fixture (3 Wahlbezirke, 200 Dokumente, Erwartung aus dem Altcode `v0.2.0`) und die volle Referenz (`slow`) gegen die Ergebnisse der Arbeit; beide mit `as_in_the_thesis(...)`, also mit abgeschalteten eigenen Regeln (decisions.md, Punkte 43 und 44), und beide unter dem Profil der Settings, nicht flach (Punkt 52) |
 | `tests/bench/` | pytest-benchmark, nur in `nox -s bench` |
+| Marker `models` | ruft den lokalen Modellserver (Fundament F5), nur von Hand: `uv run pytest -m models`; jede nox-Session schließt ihn aus |
 | `tests/fixtures/` | Mini-Datensatz (drei Wahlbezirke mit ihren 22 Stimmbezirken), vier PDFs mit Herkunft, eine OParl-Seite, aufgezeichnete Antworten von Overpass, Wikidata, Wikipedia |
 
 Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesis-Profile) und Netz
