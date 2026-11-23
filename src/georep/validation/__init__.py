@@ -10,7 +10,9 @@ Uneinigkeiten. Das Paket trägt den Ablauf von der Stichprobe bis zur Zahl:
 - ``merge``: zwei Kodierungen, die Liste der Uneinigkeiten, nach der Schlichtung ``labels.csv``
   (``georep validate merge``);
 - ``measures``: Übereinstimmung (κ, α) und Güte (Präzision, Recall, F1, nDCG@k), rein;
-- ``score``: die Maße gegen die Labels und die Ausgabe eines Verfahrens (``georep validate score``).
+- ``score``: die Maße gegen die Labels und die Ausgabe eines Verfahrens (``georep validate score``);
+- ``paths``: was im Repo liegt (``validation.root``) und was nur lokal (``validation.coding_root``);
+- ``command``: der Unterbefehl ``georep validate``, den ``cli`` einhängt.
 """
 
 from __future__ import annotations

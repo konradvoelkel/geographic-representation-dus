@@ -28,7 +28,8 @@ Vier Sichten auf dasselbe Vorhaben, je eine Datei; dieses README ist der Einstie
 | [docs/workflow-ratsmitglied.md](docs/workflow-ratsmitglied.md) | Ein exemplarischer Arbeitsablauf: neu im Rat, ein Gebiet oder ein Thema einarbeiten — Schritt für Schritt über die Seite, ein zweiter Pfad über die Kommandozeile, und was die Seite nicht kann. |
 
 Dazu, unverändert: **Aufbau** des Codes in [docs/architecture.md](docs/architecture.md),
-**Gründe** und verworfene Alternativen in [docs/decisions.md](docs/decisions.md). Stand und
+**Gründe** und verworfene Alternativen in [docs/decisions.md](docs/decisions.md), die **Prüfung**
+einer Messung durch zwei KI-Kodierer in [docs/validierung.md](docs/validierung.md). Stand und
 Bekanntes: [STATUS.md](STATUS.md); Änderungen aus Nutzersicht: [CHANGELOG.md](CHANGELOG.md);
 Regeln für Commits und für Agenten: [CLAUDE.md](CLAUDE.md).
 
@@ -105,6 +106,7 @@ veröffentlicht sie über GitHub Pages unter
 | `georep regress [--exclude …] [--varianten]` | lineare Regression Trefferquote gegen Wahlbeteiligung; `--varianten` dieselbe Rechnung je Gewichtungsvariante aus `wahlbezirke_gewichtet.parquet` |
 | `georep regress --controls` | Tabelle 6: dieselbe Regression mit Kontrollvariablen, je Modell und Stichprobe |
 | `georep profile [SCHRITT …] [--top N] [--sort tottime]` | einen echten Schritt unter cProfile, `.prof` für snakeviz |
+| `georep validate sample\|tasks\|merge\|score VORHABEN` | Validierung einer Messung mit zwei KI-Kodierern (Fundament F4, [docs/validierung.md](docs/validierung.md)): Stichprobe nach dem Codebuch `validierung/VORHABEN/codebuch.toml`, Kodierauftrag je Kodierer (`--coder A\|B`, lokal unter `validation.coding_root`), Zusammenführen mit Schlichtung (`--model`), Übereinstimmung und Güte eines Verfahrens (`--pred`) |
 
 `--profile SLUG` wählt die Stadt (`georep profiles` listet sie; sonst gilt `GEOREP_PROFILE`, sonst
 `default_profile` aus den Settings). `--settings DATEI` legt eine weitere TOML-Schicht über die

@@ -2504,3 +2504,55 @@ für die Fortsetzung, und `http.sqlite` wüchse um rund 70 MB je Abruf der Sitzu
 Korpus und gehört zu Vorhaben 14 oder 26; Empfehlung im Runbook, § 3); Niederschriften jetzt holen
 (Vorhaben 26 braucht sie nicht, `result` trägt das Ergebnis; erst Vorhaben 28 entscheidet nach einer
 Stichprobe, Runbook, § 7).
+## 70. Validierung mit zwei KI-Kodierern: Codebuch je Vorhaben, Stichprobe ohne Zufallsgenerator, Maße in reinem Python (2026-11-23)
+
+Fundament F4 des Plans [plan-vorverarbeitung-2026-11.md](plan-vorverarbeitung-2026-11.md) (§ 2.6,
+§ 7). Konrad kodiert nicht selbst; jede Messung der neunzehn Vorhaben braucht trotzdem eine geprüfte
+Stichprobe, und Stufe 3 zeigt nur, was validiert ist. Gebaut ist das Paket `georep.validation` mit
+`georep validate sample|tasks|merge|score`; das Handbuch mit den Prompt-Vorlagen ist
+[validierung.md](validierung.md).
+
+**Zwei unabhängige Kodier-Agenten und ein Schlicht-Agent, kein menschlicher Goldstandard.** Die
+Kodierer sehen je ihren eigenen Ordner (Auftrag, Codebuch, Antworten), nicht die Ausgabe des
+Verfahrens und nicht einander, und dieselben Einheiten in verschiedener, fester Folge. Gestartet
+werden sie als frische Agenten, nicht als Fork des Supervisors, dessen Kontext die Ausgabe trüge.
+Die Schlichtung bekommt nur die strittigen Einheiten mit beiden Urteilen. Was das misst, sagt die
+Seite wörtlich: „geprüft von zwei KI-Kodierern an *n* Dokumenten, nicht von Menschen". Weil beide
+Kodierer dasselbe Modell sind, ist α eine obere Schätzung der Schärfe des Codebuchs, keine der
+Richtigkeit; die Schwelle α ≥ 0,8 für Stufe 3 steht als `validation.min_alpha` in den Settings.
+
+**Das Codebuch ist eine TOML-Datei im Repo** (`validierung/<NN-name>/codebuch.toml`), geprüft von
+pydantic: Einheit (`document`, `document_pair`, `span`, `query_document`), Frage, Optionen mit
+Definition und Beispiel, Skala (nominal, ordinal, binär), Anweisungen und die Regeln für Stichprobe,
+Auftrag und Auswertung. Es ist das Instrument und wird versioniert; wer es an den Uneinigkeiten
+schärft, kodiert eine neue Stichprobe.
+
+**Die Stichprobe zieht kein Zufallsgenerator, sondern ein Rang**: SHA-256 über Seed und Schlüssel,
+je Schicht die kleinsten Ränge (bottom-k), die Aufteilung ganzzahlig (proportional mit einer
+Einheit je Schicht und größtem Rest, oder gleich je Schicht). Damit ist sie auf jedem Rechner und
+mit jeder Bibliotheksversion dieselbe, hängt nicht an der Zeilenfolge und verschiebt sich um
+höchstens eine Einheit, wenn die Grundgesamtheit eine dazubekommt (hypothesis hält beides fest).
+
+**Was ins Repo kommt**: Codebuch, Stichprobe (nur Schlüssel und Schicht), `labels.csv` (`id`,
+`kodierer_a`, `kodierer_b`, `schlichtung`, `label`), README und `guete.json`. Aufträge und Antworten
+tragen Ausschnitte aus Ratsdokumenten und Begründungen, die sie zitieren dürfen; sie liegen unter
+`validation.coding_root` (auf Konrads Rechner `messdaten/kodierung/` auf xtraspace, sonst
+`data_root/kodierung/`), und das Paket verweigert einen solchen Ordner unter `validation.root`.
+Der Block `[validation]` zählt nicht zum Fingerprint: kein Schritt der Kette liest ihn.
+
+**Die Maße sind reines Python** (`georep.validation.measures`): Wilson-Intervall, Cohens κ,
+Krippendorffs α (nominal, ordinal, intervall, mit fehlenden Werten), Präzision, Recall, F1 je Klasse,
+mikro und makro, Konfusionsmatrix, nDCG@k. Geprüft gegen eine Rechnung von Hand (Wilson), die
+Rechenbeispiele aus Krippendorff (2011) und scikit-learn (`cohen_kappa_score`,
+`precision_recall_fscore_support`, `confusion_matrix`, `ndcg_score`), dazu hypothesis und
+`deal.cases`; fünf Funktionen stehen in `VERIFY_TARGETS`. Undefiniertes ist `None`, nicht 0.
+
+Verworfen: scikit-learn im Paket (es darf nur in zwei Modulen von `analysis/` stehen, und sein Import
+kostet jeden Befehl 0,4 s; als Gegenprobe in den Tests genügt es); das PyPI-Paket `krippendorff`
+(eine Abhängigkeit für rund vierzig Zeilen, die die veröffentlichten Beispiele ohnehin prüfen);
+numpy oder Polars zum Ziehen (ihre Zufallsfolgen sind über Versionen nicht zugesichert); ein
+Kodierer allein (keine Reliabilität, nur ein Urteil); Kodierer, die die Ausgabe des Verfahrens
+sehen (sie messen dann Zustimmung statt Güte); Wald-Intervalle (über 1 und null breit an den
+Rändern, wo die Präzisionen der Kriterien liegen); ein Wilson-Intervall für F1 und Makromittel (sie
+sind keine Anteile; ein Bootstrap gehört, wo nötig, ins Messskript); eine HTML-Ansicht für Menschen
+(niemand kodiert von Hand, Plan § 7); die Aufträge im Repo (Ratstext, Plan § 4).
