@@ -2,6 +2,20 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.21.0 (2026-11-23), Modellnaht für lokale Modelle
+
+- **`georep.ml`** (`docs/decisions.md`, Punkt 72; Abschnitt „Modelle" in `docs/architecture.md`):
+  Einbetter und Generator über ollama per HTTP, nur an `localhost` ohne ausdrückliche Freigabe
+  (`ml.allow_remote`), mit einem Cache in SQLite je Modell, der Antworten, abgeschnittene Antworten,
+  Abweisungen und Fehlschläge festhält. Ein Stapellauf rechnet nur, was fehlt, hält nach zehn neuen
+  Fehlschlägen in Folge an und speichert, was er hat.
+- Modellschritte laufen nur mit **`georep run --models`**; ohne den Schalter heißen sie „Modelle aus"
+  und der Lauf endet wie bisher. `--limit` rechnet in Blöcken, `--retry-rejected` fragt abgewiesene
+  Eingaben erneut, `georep ml status` zeigt Modelle und Caches, `georep ml bench` misst den Durchsatz.
+- Die Einstellungen unter `[ml]` stehen außerhalb des Fingerprints; ein Modellschritt erkennt Modell,
+  Digest, Prompt und Optionen an seinem Stamp. Noch nutzt kein Schritt ein Modell: keine Zahl der
+  Seite ändert sich, und kein Lauf gegen einen echten Server ist Teil dieser Version.
+
 ## 0.20.0 (2026-11-23), Validierung: Herkunft, Mengen, vier Vorhaben im neuen Format
 
 - Eine Schlichtungszeile kann ihre **Herkunft** nennen (`herkunft`), etwa einen Entscheid des

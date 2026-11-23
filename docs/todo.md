@@ -156,3 +156,13 @@ Fraktionsgrenzen 0,296, Schwelle 0,9 je Art. Die Fehler sind vor allem Zitate im
 und Bausteine; beides könnten die Kanten aus Vorhaben 14 (Stufe 2) und die Abschnitte aus 11
 abfangen. Eine neue Messung wäre ein eigenes Vorhaben mit neuer Regel, neuem Codebuch (die Vorschläge
 des Schlichters stehen in § 9 dort) und frischer Stichprobe, nicht eine zweite Runde an diesen Labels.
+
+## 11. Modellnaht: kleine Punkte aus dem Review von F5
+
+Aufgenommen am 2026-11-23 aus der letzten Nachprüfung von F5 (Punkt 72), keiner verfälscht ein
+Ergebnis. (a) Bei einem 5xx auf jede Anfrage fragt ein Lauf alle gemerkten Fehlschläge erneut, je mit
+Wartezeiten, ohne anzuhalten, weil sie nicht mehr in die Serie zählen; das kostet nur Zeit.
+(b) Weniger als zehn Abweisungen in Folge mit vorübergehender Ursache bleiben als abgewiesen gemerkt;
+der Rückweg ist `--retry-rejected`. (c) Wer `embed_texts` oder `generate_texts` außerhalb von
+`run_step` aufruft (etwa ein Skript der GPU-Warteschlange), muss `use.reset(retry_rejected=…)` selbst
+setzen. Zu klären, wenn die ersten Modellschritte (18 bis 20) gebaut werden.

@@ -2575,7 +2575,7 @@ Die übertragenen Vorhaben liegen in eigenen Ordnern `<NN-name>-f4` neben den Or
 von 11 und 12 taten („66 - Amt" gleich „66-Amt"): das ist eine Entscheidung über die Frage, nicht
 über die Form, und gehört, wenn überhaupt, als Einstellung je Frage ins Codebuch.
 
-## NN. Lokale Modelle über ollama: eine Naht mit Cache, Kennung im Stamp und Schalter (2026-11-23, Fundament F5)
+## 72. Lokale Modelle über ollama: eine Naht mit Cache, Kennung im Stamp und Schalter (2026-11-23, Fundament F5)
 
 Drei Vorhaben des Plans zur Vorverarbeitung brauchen ein Sprach- oder Einbettungsmodell
 (`docs/plan-vorverarbeitung-2026-11.md`, § 7 und § 11: 18 Einbettungen, 19 Politikfelder, 20
