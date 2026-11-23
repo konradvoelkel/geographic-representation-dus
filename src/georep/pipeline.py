@@ -950,6 +950,13 @@ def build_steps(
             layout, settings, now=dt.datetime.now(dt.UTC), commit=current_commit()
         ).line()
 
+    # Fundament F2 (docs/plan-vorverarbeitung-2026-11.md, § 7): die Beiträge der Vorhaben stehen
+    # unmittelbar vor ``report``. Import hier, nicht oben: die Beiträge bauen ``Step`` aus diesem
+    # Modul, ein Import auf Modulebene wäre ein Kreis.
+    from georep.enrich import check_unique_names, contributed_steps
+
+    contributed = contributed_steps(settings, layout)
+
     # --- Option 02: ein Periodenprofil holt zusätzlich den Zuschnitt seiner Wahlbezirke
     opendata_outputs = [layout.results_csv, layout.districts_geojson]
     if settings.sources.opendata.district_shapes_url:
@@ -983,7 +990,7 @@ def build_steps(
     with_parties = bool(settings.originators.parties)
     topic_outputs = (layout.topics, layout.topic_documents, layout.topic_shares)
     context_files = tuple(layout.external / name for name in context.files.names())
-    return [
+    steps = [
         Step("opendata", (), tuple(opendata_outputs), opendata, network=True),
         # --- Option 01: aus der Quellgeometrie der kanonische Stand der Stimmbezirke
         *(
@@ -1244,6 +1251,8 @@ def build_steps(
             if settings.compare.period
             else []
         ),
+        # --- Fundament F2: Beiträge der Vorverarbeitung 2026-11 (``georep.enrich``)
+        *contributed,
         Step(
             "report",
             (
@@ -1317,3 +1326,6 @@ def build_steps(
             extra=report_fingerprint(settings),
         ),
     ]
+    # Fundament F2: ein Beitrag darf keinen Namen eines anderen Schritts tragen
+    check_unique_names(steps)
+    return steps
