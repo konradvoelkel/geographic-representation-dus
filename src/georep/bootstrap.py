@@ -27,7 +27,14 @@ from georep.layout import Layout
 from georep.records import PaperRecord
 from georep.settings import Settings
 from georep.sources.pdfs import PdfStore
-from georep.stores import REFERENCE_EXTRACTOR, PaperStore, TextMeta, TextStore
+from georep.stores import (
+    RAW_TEXT_SCHEMA_VERSION,
+    REFERENCE_EXTRACTOR,
+    PaperStore,
+    TextMeta,
+    TextStore,
+    stored_schema_version,
+)
 
 
 @dataclass
@@ -146,8 +153,16 @@ def overlay_texts(layout: Layout, package: Path, report: BootstrapReport) -> Non
 
 
 def _holds_rows(store: Path) -> bool:
-    """Ob ein Rohtextstore da ist und mindestens eine Zeile trägt; gelesen wird nur die Zeilenzahl."""
-    return store.is_file() and int(pl.scan_parquet(store).select(pl.len()).collect().item()) > 0
+    """Ob ein Rohtextstore da ist und Zeilen in der Schema-Version trägt, die der Code liest.
+
+    Gelesen werden nur die Metadaten und die Zeilenzahl. Eine alte Version zählt wie ein leerer
+    Store (Review F1, N3): ``RawTextStore`` liest sie als leer, und ohne das Paket bliebe er es.
+    """
+    return (
+        store.is_file()
+        and stored_schema_version(store) == str(RAW_TEXT_SCHEMA_VERSION)
+        and int(pl.scan_parquet(store).select(pl.len()).collect().item()) > 0
+    )
 
 
 def overlay_raw_texts(
@@ -170,6 +185,14 @@ def overlay_raw_texts(
     target = layout.guard_writable(layout.raw_texts)
     if not force and _holds_rows(target):
         report.skipped.append(target.name)
+        return
+    version = stored_schema_version(package)
+    if version != str(RAW_TEXT_SCHEMA_VERSION):
+        report.raw_texts_refused = (
+            f"Rohtextpaket {package} nicht übernommen: Schema-Version {version}, gelesen wird "
+            f"{RAW_TEXT_SCHEMA_VERSION}; das Paket braucht ein neues `georep pack --raw-texts`"
+        )
+        logger.warning(report.raw_texts_refused)
         return
     names = set(pl.read_parquet(package, columns=["name"]).get_column("name").to_list())
     files = {r.file_name for r in PaperStore(layout.papers).load().values() if r.file_name}

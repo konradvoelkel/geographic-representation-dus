@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
+import polars as pl
+
 from georep.bootstrap import bootstrap, bootstrap_from_settings
+from georep.io import write_parquet
 from georep.layout import Layout
 from georep.settings import Bootstrap, Settings
 from georep.stores import REFERENCE_EXTRACTOR, PaperStore, RawTextStore, TextMeta, TextStore
@@ -325,3 +329,26 @@ def test_an_empty_raw_text_store_does_not_block_the_package(
     RawTextStore(layout.raw_texts).save()  # wie der Schritt raw_texts ohne PDFs
     report = bootstrap(layout, raw_texts=package)
     assert report.raw_texts == 5 and layout.raw_texts.read_bytes() == package.read_bytes()
+
+
+def test_a_raw_text_package_or_store_of_another_schema_version_counts_as_missing(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    """Review F1, N3 und M3: Version 1 hat keine Offsets der inneren Formfeeds.
+
+    Ein Paket in Version 1 wird abgelehnt (mit dem Handgriff im Bericht), und ein Store in Version 1
+    am Ziel hält ein Paket in Version 2 nicht auf: der Code läse ihn ohnehin als leer.
+    """
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    package = _raw_package(tmp_path, _file_names(probe)[:5])
+    old = tmp_path / "alt" / "rohtexte.parquet"
+    old.parent.mkdir()
+    write_parquet(pl.read_parquet(package).drop("form_feeds"), old, schema_version=1)
+    layout = _layout(tmp_path / "neu", mini_root)
+    refused = bootstrap(layout, raw_texts=old)
+    assert refused.raw_texts is None and not layout.raw_texts.exists()
+    assert "Schema-Version 1" in refused.summary() and "pack --raw-texts" in refused.summary()
+    layout.raw_texts.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(old, layout.raw_texts)
+    assert bootstrap(layout, raw_texts=package).raw_texts == 5

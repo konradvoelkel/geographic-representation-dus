@@ -4,9 +4,9 @@ Die zentrale Eigenschaft des zweiten Stores (docs/plan-vorverarbeitung-2026-11.m
 Rohtext eines Dokuments nimmt, die Seitenwechsel zu Zeilenumbrüchen macht und dann rechnet wie
 ``prep/extract.py`` (``normalise_text``, ``after_marker``), bekommt den Text, den die Suche liest.
 Nur dann ist eine Stelle, die ein späteres Vorhaben im Rohtext findet, dieselbe Stelle, die die
-Suche zählt. Die Ausnahme ist eine Seite, deren Text selbst ein ``\\f`` trägt; dort steht im Rohtext
-ein Leerzeichen, damit ``\\f`` nur den Seitenwechsel bedeutet (eine Stelle in der Hauptperiode,
-``tests/unit/test_data_packages.py``).
+Suche zählt. Das gilt ohne Ausnahme (Review F1, M3): trägt eine Seite selbst ein ``\\f``, steht im
+Rohtext dort ein Leerzeichen, damit ``\\f`` nur den Seitenwechsel bedeutet, und ``flatten`` setzt
+es über die Offsets in ``form_feeds`` zurück.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ import shutil
 from pathlib import Path
 
 import pytest
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 
 from georep.prep.extract import after_marker, extract_missing, normalise_text
@@ -25,6 +25,7 @@ from georep.prep.raw_texts import (
     extract_raw_missing,
     flatten,
     raw_from_pages,
+    restore_form_feeds,
 )
 from georep.sources.pdfs import PdfStore
 from georep.stores import RawTextStore, TextStore
@@ -49,30 +50,28 @@ DIRTY_PAGES = st.lists(
 )
 
 
-@given(pages=PAGES, marker=MARKERS)
+@given(pages=DIRTY_PAGES, marker=MARKERS)
+@example(pages=["Kopf a\fb Rest"], marker="a b")  # Review F1: der Marker aus dem Ersatzzeichen
+@example(pages=["Kopf\fBetrifft x", "y"], marker="betrifft")
 def test_the_flattened_raw_text_is_the_text_of_the_store(pages: list[str], marker: str) -> None:
-    """Rohtext → ``\\f`` zu ``\\n`` → ``normalise_text`` → ``after_marker`` = der Textstore."""
+    """Rohtext → ``\\f`` zu ``\\n``, innere ``\\f`` zurück → ``normalise_text`` → ``after_marker``
+    ist genau der Text, den ``extract_missing`` aus denselben Seiten bildet -- auch für Seiten, die
+    selbst ein ``\\f`` tragen (Review F1, M3: ohne Ausnahme)."""
     store_text = after_marker(normalise_text("\n".join(pages)), marker)
-    assert flatten(raw_from_pages(pages), marker) == store_text
+    raw, feeds = raw_from_pages(pages)
+    assert flatten(raw, marker, feeds) == store_text
 
 
 @given(pages=DIRTY_PAGES)
 def test_a_page_break_means_a_page_break_and_nothing_else(pages: list[str]) -> None:
-    raw = raw_from_pages(pages)
+    raw, feeds = raw_from_pages(pages)
     assert raw.count(PAGE_BREAK) == max(len(pages) - 1, 0)
+    assert list(feeds) == sorted(feeds) and all(raw[i] == PAGE_BREAK_STANDIN for i in feeds)
+    assert restore_form_feeds(raw, feeds) == PAGE_BREAK.join(pages)
     if pages:
         parts = raw.split(PAGE_BREAK)
         # Jede Seite behält ihre Länge; nur ein ``\f`` darin ist ersetzt.
         assert parts == [page.replace(PAGE_BREAK, PAGE_BREAK_STANDIN) for page in pages]
-
-
-@given(pages=DIRTY_PAGES, marker=MARKERS)
-def test_a_page_with_its_own_form_feed_differs_only_there(pages: list[str], marker: str) -> None:
-    """Die eine bekannte Abweichung: geplättet steht ein Leerzeichen, wo der Store ein ``\\f`` hat."""
-    clean = [page.replace(PAGE_BREAK, PAGE_BREAK_STANDIN) for page in pages]
-    assert flatten(raw_from_pages(pages), marker) == after_marker(
-        normalise_text("\n".join(clean)), marker
-    )
 
 
 class _Pages:
@@ -92,7 +91,7 @@ class _Pages:
 
 @given(
     documents=st.dictionaries(
-        st.sampled_from([f"{i:08d}.pdf" for i in range(6)]), PAGES, max_size=6
+        st.sampled_from([f"{i:08d}.pdf" for i in range(6)]), DIRTY_PAGES, max_size=6
     ),
     marker=MARKERS,
 )
@@ -113,5 +112,6 @@ def test_both_stores_from_one_extractor_agree_on_every_document(
     stored_texts, stored_raw = TextStore(texts.path), RawTextStore(raw.path)
     assert set(stored_raw.rows) == set(stored_texts.rows) == set(documents)
     for name in documents:
-        assert flatten(stored_raw.get(name) or "", marker) == stored_texts.get(name)
+        raw_text = stored_raw.get(name) or ""
+        assert flatten(raw_text, marker, stored_raw.form_feeds(name)) == stored_texts.get(name)
     shutil.rmtree(root)

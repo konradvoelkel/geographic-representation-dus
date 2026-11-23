@@ -7,12 +7,13 @@ Kopfdaten und Kurzfassungen reicht das nicht. Dieser zweite Store
 ungeglättet: Groß- und Kleinschreibung, Zeilenumbrüche, den Vorlagenkopf, und zwischen zwei Seiten
 ein ``\\f`` (``stores.PAGE_BREAK``).
 
-Die Brücke zwischen beiden ist eine Eigenschaft für jedes Dokument: ``flatten`` macht aus dem
+Die Brücke zwischen beiden ist eine Eigenschaft für **jedes** Dokument: ``flatten`` macht aus dem
 Rohtext genau den Text des Textstores (``tests/property/test_raw_text_props.py``; über die ganze
-Hauptperiode in ``tests/unit/test_data_packages.py``). Die eine Ausnahme ist eine Seite, deren Text
-selbst ein ``\\f`` trägt -- eine defekte Schriftkodierung liefert Steuerzeichen statt Buchstaben.
-Dort steht im Rohtext ein Leerzeichen (``PAGE_BREAK_STANDIN``), damit ``\\f`` nur den Seitenwechsel
-bedeutet; geplättet steht dann ein Leerzeichen, wo der Textstore das ``\\f`` behält.
+Hauptperiode in ``tests/unit/test_data_packages.py``). Ein ``\\f`` im Text einer Seite -- eine
+defekte Schriftkodierung liefert Steuerzeichen statt Buchstaben -- steht im Rohtext als Leerzeichen
+(``stores.PAGE_BREAK_STANDIN``), damit ``\\f`` nur den Seitenwechsel bedeutet; seine Offsets stehen
+in der Spalte ``form_feeds``, und ``flatten`` setzt es dort zurück (Review F1, M3). So bleibt die
+Seitenstruktur eindeutig, und die Plättung ist trotzdem genau.
 
 Dieselbe Bibliothek in derselben Version wie der Textstore (``pypdf==7.1.0``, Punkt 67), dieselbe
 Fehlerbehandlung (``CorruptPdfError`` zählt als fehlerhaft, ein alter Text bleibt stehen), dieselbe
@@ -30,7 +31,7 @@ import deal
 from georep.errors import CorruptPdfError
 from georep.prep.extract import ExtractReport, PypdfExtractor, after_marker, normalise_text
 from georep.sources.pdfs import PdfStore
-from georep.stores import PAGE_BREAK, RawTextStore
+from georep.stores import PAGE_BREAK, PAGE_BREAK_STANDIN, RawTextStore
 
 __all__ = [
     "DEFAULT_PAGE_EXTRACTOR",
@@ -42,11 +43,9 @@ __all__ = [
     "flatten",
     "raw_extractor_name",
     "raw_from_pages",
+    "restore_form_feeds",
 ]
 
-# Ein ``\f`` innerhalb einer Seite wird zu diesem Zeichen. So bleibt der Seitenwechsel eindeutig,
-# und jede Seite behält ihre Länge: ein Offset innerhalb einer Seite ist der des Extraktors.
-PAGE_BREAK_STANDIN = " "
 # Der Zusatz am Extraktornamen (``pypdf-7.1.0+roh``). Ohne ihn stünde derselbe Name an zwei
 # verschiedenen Texten, und wer die Stores verwechselt, merkte es an keiner Zeile.
 RAW_SUFFIX = "+roh"
@@ -71,31 +70,91 @@ def raw_extractor_name(extractor: PdfPageExtractor) -> str:
     return f"{extractor.name}{RAW_SUFFIX}"
 
 
-# Kein ``deal.pure``: die Funktion läuft je Dokument, und der Patcher von ``deal.has`` ist
-# prozessweit und nicht reentrant (CLAUDE.md, „Nie").
-@deal.ensure(
-    lambda pages, result: result.count(PAGE_BREAK) == max(len(pages) - 1, 0),
-    message="zwischen n Seiten stehen n - 1 Seitenwechsel",
-)
-@deal.safe
-def raw_from_pages(pages: Sequence[str]) -> str:
-    """Die Seiten eines PDFs als ein Text, getrennt durch ``\\f``; ein ``\\f`` in einer Seite wird Leerzeichen."""
-    return PAGE_BREAK.join(page.replace(PAGE_BREAK, PAGE_BREAK_STANDIN) for page in pages)
+def _feeds_point_at_standins(raw: str, form_feeds: Sequence[int]) -> bool:
+    return all(0 <= i < len(raw) and raw[i] == PAGE_BREAK_STANDIN for i in form_feeds)
 
 
-# ``deal.safe`` statt ``deal.pure``: ``normalise_text`` und ``after_marker`` sind selbst rein, und
-# ein reiner Aufruf in einem reinen Aufruf ist genau der reentrante Patch, den CLAUDE.md verbietet.
+# ``deal.safe``, kein ``deal.pure``: die Funktionen laufen je Dokument und rufen einander, und der
+# Patcher von ``deal.has`` ist prozessweit und nicht reentrant (CLAUDE.md, „Nie").
 @deal.pre(
-    lambda raw, marker: marker != "", message="leerer Marker: str.split braucht einen Trenner"
+    lambda raw, form_feeds: _feeds_point_at_standins(raw, form_feeds),
+    message="ein Offset in form_feeds zeigt nicht auf ein Ersatzzeichen",
 )
 @deal.ensure(
-    lambda raw, marker, result: "\n" not in result and result == result.lower(),
-    message="geplättet wie der Textstore: kleingeschrieben, eine Zeile",
+    lambda raw, form_feeds, result: len(result) == len(raw),
+    message="das Zurücksetzen ändert keine Länge",
 )
 @deal.safe
-def flatten(raw: str, marker: str) -> str:
-    """Rohtext zum Text des Textstores: Seitenwechsel zu Zeilenumbrüchen, dann wie ``prep.extract``."""
-    return after_marker(normalise_text(raw.replace(PAGE_BREAK, "\n")), marker)
+def restore_form_feeds(raw: str, form_feeds: Sequence[int]) -> str:
+    """Der Text mit den ``\\f`` aus dem Text der Seiten zurück, dort, wo ``form_feeds`` hinzeigt."""
+    if not form_feeds:
+        return raw
+    chars = list(raw)
+    for i in form_feeds:
+        chars[i] = PAGE_BREAK
+    return "".join(chars)
+
+
+@deal.ensure(
+    lambda pages, result: result[0].count(PAGE_BREAK) == max(len(pages) - 1, 0),
+    message="zwischen n Seiten stehen n - 1 Seitenwechsel und sonst kein Formfeed",
+)
+@deal.ensure(
+    lambda pages, result: restore_form_feeds(*result) == PAGE_BREAK.join(pages),
+    message="mit den Offsets zurückgesetzt ist der Rohtext genau die Seiten",
+)
+@deal.safe
+def raw_from_pages(pages: Sequence[str]) -> tuple[str, tuple[int, ...]]:
+    """Die Seiten eines PDFs als ein Text mit ``\\f`` dazwischen, und die Offsets der inneren ``\\f``.
+
+    Ein ``\\f`` im Text einer Seite wird ``PAGE_BREAK_STANDIN``; seine Stelle im ganzen Text steht im
+    zweiten Teil des Ergebnisses, fast immer leer.
+    """
+    feeds: list[int] = []
+    start = 0
+    for page in pages:
+        found = page.find(PAGE_BREAK)
+        while found != -1:
+            feeds.append(start + found)
+            found = page.find(PAGE_BREAK, found + 1)
+        start += len(page) + len(PAGE_BREAK)
+    text = PAGE_BREAK.join(page.replace(PAGE_BREAK, PAGE_BREAK_STANDIN) for page in pages)
+    return text, tuple(feeds)
+
+
+# Benannte Validatoren vor dem ganzen Stapel, weil ``form_feeds`` optional ist: das mypy-Plugin von
+# deal modelliert ``result`` als positionalen Parameter hinter den Argumenten (CLAUDE.md, deal).
+def _flatten_has_a_marker(raw: str, marker: str, form_feeds: Sequence[int] = ()) -> bool:
+    return marker != ""
+
+
+def _flatten_feeds_are_valid(raw: str, marker: str, form_feeds: Sequence[int] = ()) -> bool:
+    return _feeds_point_at_standins(raw, form_feeds)
+
+
+def _flattened_like_the_store(
+    raw: str, marker: str, form_feeds: Sequence[int] = (), result: str = ""
+) -> bool:
+    return "\n" not in result and result == result.lower()
+
+
+@deal.pre(_flatten_has_a_marker, message="leerer Marker: str.split braucht einen Trenner")
+@deal.pre(
+    _flatten_feeds_are_valid, message="ein Offset in form_feeds zeigt nicht auf ein Ersatzzeichen"
+)
+@deal.ensure(
+    _flattened_like_the_store, message="geplättet wie der Textstore: kleingeschrieben, eine Zeile"
+)
+@deal.safe
+def flatten(raw: str, marker: str, form_feeds: Sequence[int] = ()) -> str:
+    """Rohtext zum Text des Textstores: Seitenwechsel zu Zeilenumbrüchen, die ``\\f`` der Seiten
+    zurück, dann wie ``prep.extract`` (``normalise_text``, ``after_marker``).
+
+    Erst die Seitenwechsel, dann die inneren ``\\f``: beide Ersetzungen behalten die Länge, die
+    Offsets bleiben gültig, und kein inneres ``\\f`` wird zum Zeilenumbruch.
+    """
+    lines = raw.replace(PAGE_BREAK, "\n")
+    return after_marker(normalise_text(restore_form_feeds(lines, form_feeds)), marker)
 
 
 def extract_raw_missing(
@@ -108,7 +167,8 @@ def extract_raw_missing(
 
     Das Gegenstück zu ``prep.extract.extract_missing``, Zeile für Zeile dieselbe Regel: ohne PDF
     zählt ein Name als fehlend, ein defektes PDF als fehlerhaft, und in beiden Fällen bleibt ein
-    alter Text stehen.
+    alter Text stehen. Trägt die Datei eine andere Schema-Version, gilt der Store als leer
+    (``RawTextStore.stale``), und jedes PDF wird neu gelesen.
     """
     report = ExtractReport()
     label = raw_extractor_name(extractor)
@@ -126,7 +186,8 @@ def extract_raw_missing(
             report.failed += 1
             report.errors.append((name, str(error)))
             continue
-        store.put(name, raw_from_pages(pages), pages=len(pages), extractor=label, pdf_sha256=sha)
+        text, feeds = raw_from_pages(pages)
+        store.put(name, text, pages=len(pages), extractor=label, pdf_sha256=sha, form_feeds=feeds)
         report.extracted += 1
     if report.extracted:
         store.save()

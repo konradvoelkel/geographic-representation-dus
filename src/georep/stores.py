@@ -9,12 +9,13 @@ Dateiname, damit ein Text nur neu entsteht, wenn PDF oder Extraktor sich geände
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
 import deal
 import polars as pl
+from polars._typing import PolarsDataType
 from pydantic import BaseModel, ConfigDict
 
 from georep.io import atomic_path, write_parquet
@@ -198,22 +199,44 @@ class TextStore:
 # Der Seitenwechsel im Rohtext. Er gehört zum Format der Datei, darum steht er hier und nicht im
 # Modul, das ihn schreibt: der Vertrag von ``RawTextStore.save`` prüft gegen ihn.
 PAGE_BREAK = "\f"
-RAW_TEXT_SCHEMA = {
+# Ein ``\f`` innerhalb einer Seite (eine defekte Schriftkodierung liefert Steuerzeichen) steht im
+# Text als dieses Zeichen, damit ``\f`` nur den Seitenwechsel bedeutet; die Spalte ``form_feeds``
+# nennt seine Offsets, und ``prep.raw_texts.flatten`` setzt es dort zurück (Review F1, M3). Ein
+# Zeichen für eines: jede Seite behält ihre Länge, ein Offset ist der des Extraktors.
+PAGE_BREAK_STANDIN = " "
+RAW_TEXT_SCHEMA: dict[str, PolarsDataType] = {
     "name": pl.String,
     "text": pl.String,
     "pages": pl.Int64,
     "chars": pl.Int64,
     "extractor": pl.String,
     "pdf_sha256": pl.String,
+    # Version 2 (Review F1, M3): die Offsets der ``\f`` innerhalb einer Seite; null, wo es keine
+    # gibt -- in der Hauptperiode in 19 090 von 19 091 Zeilen.
+    "form_feeds": pl.List(pl.Int64),
 }
-RAW_TEXT_SCHEMA_VERSION = 1
+RAW_TEXT_SCHEMA_VERSION = 2
+SCHEMA_KEY = "georep.schema_version"  # der Schlüssel, unter dem ``io.write_parquet`` sie ablegt
+
+
+def stored_schema_version(path: Path) -> str | None:
+    """Die Schema-Version in den Parquet-Metadaten einer Datei; ``None`` ohne Angabe."""
+    return pl.read_parquet_metadata(path).get(SCHEMA_KEY)
+
+
+def _form_feeds(row: dict[str, object]) -> tuple[int, ...]:
+    feeds = row.get("form_feeds")
+    return tuple(int(i) for i in feeds) if isinstance(feeds, list) else ()
 
 
 def _rows_are_consistent(rows: Iterable[dict[str, object]]) -> bool:
-    """Jede Zeile: ``chars`` ist die Länge, und zwischen ``pages`` Seiten stehen ``pages - 1`` ``\\f``."""
+    """Jede Zeile: ``chars`` ist die Länge, zwischen ``pages`` Seiten stehen ``pages - 1`` ``\\f``,
+    und jeder Offset in ``form_feeds`` zeigt auf ein ``PAGE_BREAK_STANDIN``."""
     for row in rows:
         text, pages = str(row["text"]), int(row["pages"])  # type: ignore[call-overload]
         if row["chars"] != len(text) or text.count(PAGE_BREAK) != max(pages - 1, 0):
+            return False
+        if not all(0 <= i < len(text) and text[i] == PAGE_BREAK_STANDIN for i in _form_feeds(row)):
             return False
     return True
 
@@ -224,21 +247,39 @@ class RawTextStore:
     Wie ``TextStore`` eine Parquet-Datei, die ``save`` einmal atomar schreibt; ein Text entsteht
     nur neu, wenn PDF-Hash oder Extraktor sich geändert haben (``prep.raw_texts``). Jede Zeile kommt
     aus einem PDF, darum fehlt die Spalte ``source`` des Textstores.
+
+    Eine Datei mit einer anderen Schema-Version liest der Store als leer (Review F1, N3): ihre
+    Zeilen tragen das alte Format, und der Schritt ``raw_texts`` liest dann jedes PDF neu und
+    schreibt die Datei in der neuen Version. ``stale`` nennt den Grund. (Der Textstore prüft seine
+    Version beim Laden nicht; dasselbe Muster dort ist notiert, nicht gebaut.)
     """
 
     def __init__(self, path: Path) -> None:
         self.path = path
         self._rows: dict[str, dict[str, object]] | None = None
+        self._stale = ""
 
     @property
     def rows(self) -> dict[str, dict[str, object]]:
         if self._rows is None:
+            self._rows = {}
             if self.path.exists():
-                frame = pl.read_parquet(self.path)
-                self._rows = {str(r["name"]): r for r in frame.iter_rows(named=True)}
-            else:
-                self._rows = {}
+                version = stored_schema_version(self.path)
+                if version == str(RAW_TEXT_SCHEMA_VERSION):
+                    frame = pl.read_parquet(self.path)
+                    self._rows = {str(r["name"]): r for r in frame.iter_rows(named=True)}
+                else:
+                    self._stale = (
+                        f"{self.path.name} trägt Schema-Version {version}, gelesen wird "
+                        f"{RAW_TEXT_SCHEMA_VERSION}"
+                    )
         return self._rows
+
+    @property
+    def stale(self) -> str:
+        """Warum eine vorhandene Datei als leer gilt (andere Schema-Version); leer heißt „sie gilt"."""
+        self.rows  # noqa: B018 -- lädt die Datei und setzt den Grund
+        return self._stale
 
     def __len__(self) -> int:
         return len(self.rows)
@@ -250,11 +291,27 @@ class RawTextStore:
         row = self.rows.get(name)
         return str(row["text"]) if row is not None else None
 
+    def form_feeds(self, name: str) -> tuple[int, ...]:
+        """Die Offsets der ``\\f`` innerhalb einer Seite; das zweite Argument von ``flatten``."""
+        row = self.rows.get(name)
+        return _form_feeds(row) if row is not None else ()
+
     @deal.pre(
-        lambda self, name, text, *, pages, extractor, pdf_sha256: name != "" and pages >= 0,
+        lambda self, name, text, *, pages, extractor, pdf_sha256, form_feeds=(): (
+            name != "" and pages >= 0
+        ),
         message="ein Rohtext braucht einen Dateinamen und eine Seitenzahl",
     )
-    def put(self, name: str, text: str, *, pages: int, extractor: str, pdf_sha256: str) -> None:
+    def put(
+        self,
+        name: str,
+        text: str,
+        *,
+        pages: int,
+        extractor: str,
+        pdf_sha256: str,
+        form_feeds: Sequence[int] = (),
+    ) -> None:
         self.rows[name] = {
             "name": name,
             "text": text,
@@ -262,6 +319,7 @@ class RawTextStore:
             "chars": len(text),
             "extractor": extractor,
             "pdf_sha256": pdf_sha256,
+            "form_feeds": list(form_feeds) or None,
         }
 
     def is_current(self, name: str, *, pdf_sha256: str, extractor: str) -> bool:
@@ -273,7 +331,7 @@ class RawTextStore:
     # ``put`` (CLAUDE.md: kein ``deal.inv`` auf Stores, deren Methoden je Dokument laufen).
     @deal.pre(
         lambda self: _rows_are_consistent(self.rows.values()),
-        message="eine Zeile nennt eine falsche Länge oder Seitenzahl",
+        message="eine Zeile nennt eine falsche Länge, Seitenzahl oder Stelle eines Formfeeds",
     )
     def save(self) -> None:
         frame = pl.DataFrame(

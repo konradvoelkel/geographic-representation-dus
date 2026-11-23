@@ -596,9 +596,13 @@ def build_steps(
         store = RawTextStore(layout.raw_texts)
         names = [r.file_name for r in PaperStore(layout.papers).load().values() if r.file_name]
         report = extract_raw_missing(PdfStore(layout.pdf_dir), store, names)
-        if not layout.raw_texts.exists():
+        # Eine Datei mit alter Schema-Version gilt als leer (Review F1, N3); ohne PDFs, die sie
+        # neu füllen, wird sie leer in der neuen Version geschrieben, damit ``bootstrap`` ein Paket
+        # darüberlegen kann und niemand die alten Zeilen zählt.
+        if not layout.raw_texts.exists() or (store.stale and not report.extracted):
             store.save()
-        return report.summary()
+        stale = f"; neu gelesen, weil {store.stale}" if store.stale else ""
+        return report.summary() + stale
 
     def voters() -> str:
         raw = read_results_csv(layout.results_csv, columns)
