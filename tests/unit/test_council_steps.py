@@ -536,3 +536,47 @@ def test_a_missing_or_short_partial_means_starting_over(
     assert f"Fortschritt verworfen (Teildatei {damage}" in reason
     assert session.urls[0] == settings.council.meetings_endpoint
     assert len(_lines(council_files(layout).meetings)) == 4
+
+
+# --- Review 2026-11-23, Befund 4: zwei Läufe zugleich ----------------------------------------------
+
+
+def test_a_second_run_of_the_same_step_stops_instead_of_cutting_the_output(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """Läuft ein zweiter Abruf, während der erste zwischen zwei Seiten wartet (``georep fetch`` in
+    zwei Terminals, oder ``duesseldorf`` und ``duesseldorf-vergleich``, die denselben Ordner
+    ``raw/`` haben), hält die Sperre je Schritt ihn an. Vorher nahm er die Teildateien des ersten
+    mit, und dessen Ausgabe hatte danach 2 statt 4 Sitzungen."""
+    from georep.council import CouncilFetchError, run_meetings
+
+    layout = _layout(tmp_path)
+    layout.ensure_dirs()
+    files = council_files(layout)
+    endpoint = settings.council.meetings_endpoint
+    page = json.loads((HTTP / "oparl_meetings_0015.json").read_text(encoding="utf-8"))
+    following = f"{endpoint}?page=2"
+
+    def two_pages() -> FakeSession:
+        return FakeSession(
+            {
+                endpoint: response(
+                    endpoint, payload={"data": page["data"][:2], "links": {"next": following}}
+                ),
+                following: response(following, payload={"data": page["data"][2:], "links": {}}),
+            }
+        )
+
+    second: list[str] = []
+
+    def meanwhile(_: float) -> None:
+        with pytest.raises(CouncilFetchError, match="läuft schon"):
+            run_meetings(settings, layout, two_pages(), sleep=lambda _: None)
+        second.append("angehalten")
+
+    run_meetings(settings, layout, two_pages(), sleep=meanwhile)
+    assert second == ["angehalten"]
+    assert len(_lines(files.meetings)) == 4
+    # Die Sperre ist danach frei, auch für denselben Prozess
+    run_meetings(settings, layout, two_pages(), sleep=lambda _: None)
+    assert len(_lines(files.meetings)) == 4

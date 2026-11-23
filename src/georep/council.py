@@ -28,11 +28,13 @@ fallen heraus.
 from __future__ import annotations
 
 import datetime as dt
+import fcntl
 import hashlib
 import json
 import os
 import time
-from collections.abc import Callable, Collection, Iterable, Mapping
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -83,6 +85,10 @@ class CouncilFiles:
     @property
     def memberships(self) -> Path:
         return self.raw / "memberships.jsonl"
+
+    def lock(self, step: str) -> Path:
+        """Die Sperre eines Schritts; ``duesseldorf-vergleich`` teilt ``raw/`` mit ``duesseldorf``."""
+        return self.raw / f"{step}.lock"
 
     def progress(self, step: str) -> Path:
         """Wo ein unterbrochener Abruf weitergeht; die Datei gibt es nur, solange er unvollständig ist."""
@@ -317,6 +323,30 @@ class _Cursor:
         )
 
 
+@contextmanager
+def exclusive(lock: Path) -> Iterator[None]:
+    """Ein Schritt läuft je Ordner ``raw/`` höchstens einmal (Review 2026-11-23, Befund 4).
+
+    ``fcntl.flock`` auf ``<schritt>.lock``, nicht blockierend: ein zweiter Abruf desselben
+    Schritts -- in einem zweiten Terminal oder mit einem Profil, das denselben Ordner nutzt --
+    hält mit einer Zeile an, statt die Teildateien des ersten mitzunehmen. Die Sperre gilt je
+    geöffneter Datei, also auch innerhalb eines Prozesses, und endet mit ihm.
+    """
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    with lock.open("a") as handle:
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise CouncilFetchError(
+                f"{lock.name}: der Schritt läuft schon in einem anderen Abruf; "
+                "warten, bis er fertig ist"
+            ) from error
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
 def _when(value: object) -> dt.datetime | None:
     return dt.datetime.fromisoformat(value) if isinstance(value, str) else None
 
@@ -402,6 +432,13 @@ def run_meetings(
 ) -> str:
     """Sitzungen ab dem Periodenbeginn mit Tagesordnung nach ``meetings.jsonl`` und
     ``agenda_items.jsonl``; die Zeile nennt die Anteile mit Ergebnis und mit Beratung."""
+    with exclusive(council_files(layout).lock("meetings")):
+        return _meetings(settings, layout, http, sleep)
+
+
+def _meetings(
+    settings: Settings, layout: Layout, http: Transport, sleep: Callable[[float], None]
+) -> str:
     council, oparl = settings.council, settings.sources.oparl
     files = council_files(layout)
     meetings = JsonlStore(files.meetings, OparlMeeting, exclude=frozenset({"agenda_item"}))
@@ -469,6 +506,13 @@ def run_consultations(
     sleep: Callable[[float], None] = time.sleep,
 ) -> str:
     """Alle Beratungen des Bodys nach ``consultations.jsonl``: Paper, Sitzung, Punkt, Rolle."""
+    with exclusive(council_files(layout).lock("consultations")):
+        return _consultations(settings, layout, http, sleep)
+
+
+def _consultations(
+    settings: Settings, layout: Layout, http: Transport, sleep: Callable[[float], None]
+) -> str:
     council, oparl = settings.council, settings.sources.oparl
     files = council_files(layout)
     store = JsonlStore(files.consultations, OparlConsultation)
@@ -524,6 +568,13 @@ def run_persons(
     Die Liste ``…/memberships`` braucht es nicht: die eingebetteten Mitgliedschaften sind
     dieselben Objekte (80 von 80 gleich in der Stichprobe vom 2026-11-23).
     """
+    with exclusive(council_files(layout).lock("persons")):
+        return _persons(settings, layout, http, sleep)
+
+
+def _persons(
+    settings: Settings, layout: Layout, http: Transport, sleep: Callable[[float], None]
+) -> str:
     council, oparl = settings.council, settings.sources.oparl
     files = council_files(layout)
     persons = JsonlStore(files.persons, OparlPerson, exclude=frozenset({"membership"}))
