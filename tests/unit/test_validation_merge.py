@@ -67,6 +67,7 @@ def test_agreeing_coders_give_labels_without_adjudication(
     readme = (folder / "README.md").read_text(encoding="utf-8")
     assert f"Modell `{MODEL}`" in readme and "Kein menschlicher Goldstandard" in readme
     assert "Version 1" in readme and "geschichtet nach `paper_type`" in readme
+    assert "Uneinigkeiten gab es keine" in readme and "die 0 Uneinigkeiten" not in readme
     quality = json.loads((folder / "guete.json").read_text(encoding="utf-8"))
     assert quality["satz"] == "geprüft von zwei KI-Kodierern an 9 Dokumenten, nicht von Menschen"
     # alle sagen ja: keine Streuung, α und κ sind nicht definiert, Stufe 3 also nicht erreicht

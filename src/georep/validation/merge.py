@@ -155,6 +155,15 @@ def format_percent(value: float) -> str:
     return f"{100 * value:.1f}".replace(".", ",") + " %"
 
 
+def _adjudicated(disputed: int) -> str:
+    """Der Halbsatz zur Schlichtung, für keine, eine und mehrere Uneinigkeiten."""
+    if disputed == 0:
+        return "Uneinigkeiten gab es keine, eine Schlichtung war nicht nötig"
+    if disputed == 1:
+        return "die eine Uneinigkeit entschied ein dritter Agent (Schlichtung)"
+    return f"die {disputed} Uneinigkeiten entschied ein dritter Agent (Schlichtung)"
+
+
 def readme(
     codebook: Codebook,
     meta: dict[str, Any],
@@ -190,8 +199,7 @@ def readme(
             + f"Seed {meta.get('seed')}, gezogen am {meta.get('gezogen')} "
             "(`stichprobe.csv`, `stichprobe.json`).",
             f"- **Kodierer**: zwei KI-Kodierer, Modell `{model}`, unabhängig voneinander und ohne "
-            "die Ausgabe des geprüften Verfahrens; die "
-            f"{disputed} Uneinigkeiten entschied ein dritter Agent (Schlichtung). **Kein "
+            f"die Ausgabe des geprüften Verfahrens; {_adjudicated(disputed)}. **Kein "
             "menschlicher Goldstandard**: die Labels messen Übereinstimmung mit einem "
             "stärkeren Modell, nicht mit Menschen.",
             f"- **Datum**: {today.isoformat()}.",
