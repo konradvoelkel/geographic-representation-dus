@@ -411,3 +411,15 @@ def test_an_adjudication_of_an_agreed_unit_is_passed_over(
     capsys.readouterr()
     assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
     assert "1 Schlichtungen ohne Uneinigkeit übergangen" in capsys.readouterr().out
+
+
+def test_an_unordered_list_compares_as_a_set() -> None:
+    """Vorhaben 15: urheber ist eine Mehrfachauswahl; die Folge der Einträge zählt nicht."""
+    question = Question(id="urheber", question="?", scale="open", unordered=True)
+    assert (
+        question.canonical(["SPD", "CDU"]) == question.canonical(["CDU", "SPD"]) == '["CDU", "SPD"]'
+    )
+    assert (
+        Question(id="liste", question="?", scale="open").canonical(["SPD", "CDU"])
+        == '["SPD", "CDU"]'
+    )
