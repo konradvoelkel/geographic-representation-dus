@@ -1529,6 +1529,315 @@ class Ml(_Strict):
         return self
 
 
+# --- Vorhaben 15: Dokumentfunktion und gemeinsame Anträge (docs/plans/15-funktion.md)
+# Die fünf Funktionen eines Ratsdokuments und die Restklasse „Funktion nicht erkannt" (§ 4.2), je
+# Funktion die Instrumente (Unterart, nicht Teil des validierten Kriteriums). Die Tabellen stehen
+# hier und nicht im Modul ``analysis.functions``, weil die Dokumentarten des Profils beim Laden gegen
+# sie geprüft werden: ein Tippfehler wie „vollzug/beschlusvorlage" fällt vor dem ersten Lauf auf.
+FUNCTION_CLASSES = ("kontrolle", "information", "initiative", "symbol", "vollzug", "rest")
+FUNCTION_INSTRUMENTS: dict[str, tuple[str, ...]] = {
+    "kontrolle": ("anfrage", "nachfrage", "berichtsantrag"),
+    "information": ("informationsvorlage", "berichtsvorlage"),
+    "initiative": (
+        "antrag",
+        "aenderungsantrag",
+        "haushaltsantrag",
+        "pruefauftrag",
+        "berichtsantrag",  # Variante A; Variante B zählt ihn als Kontrolle
+        "eingabe",
+    ),
+    "symbol": ("resolution", "erklaerung_text"),
+    "vollzug": (
+        "beschlussvorlage",
+        "satzung",
+        "haushalt",
+        "bauleitplanung",
+        "besetzung",
+        "dringlichkeit",
+        "bau",
+        "rechnungspruefung",
+    ),
+    # Die Restklasse trägt statt eines Instruments den Grund: eine Sammelart ohne Merkmal in Titel
+    # und Textkopf, oder eine Dokumentart, die keine Tabelle kennt.
+    "rest": ("sammelart_ohne_merkmal", "art_unbekannt"),
+}
+
+
+def function_and_instrument(value: str) -> tuple[str, str]:
+    """``"vollzug/beschlussvorlage"`` als Paar; ``ValueError`` bei fremder Funktion oder Instrument."""
+    function, _, instrument = value.partition("/")
+    if function not in FUNCTION_INSTRUMENTS or function == "rest":
+        raise ValueError(
+            f"functions: {value!r} nennt keine Funktion aus {list(FUNCTION_CLASSES[:-1])}"
+        )
+    if instrument not in FUNCTION_INSTRUMENTS[function]:
+        raise ValueError(
+            f"functions: {value!r}: das Instrument gehört nicht zu {function} "
+            f"({', '.join(FUNCTION_INSTRUMENTS[function])})"
+        )
+    return function, instrument
+
+
+class EnforcementRule(_Strict):
+    """Ein Instrument des Vollzugs, wenn eines der Muster im Titel steht (Satzung, Bauleitplanung …)."""
+
+    instrument: str
+    patterns: list[str]
+
+    @field_validator("instrument")
+    @classmethod
+    def _known(cls, value: str) -> str:
+        if value not in FUNCTION_INSTRUMENTS["vollzug"]:
+            raise ValueError(f"functions.enforcement: {value!r} ist kein Instrument des Vollzugs")
+        return value
+
+    @field_validator("patterns")
+    @classmethod
+    def _compile(cls, value: list[str]) -> list[str]:
+        if not value:
+            raise ValueError("functions.enforcement: eine Regel braucht mindestens ein Muster")
+        return _compiles(value, "functions.enforcement[].patterns")
+
+
+class TextWord(_Strict):
+    """Das erste Instrumentwort im Textkopf einer Sammelart und die Funktion, die es nennt."""
+
+    pattern: str  # passt auf das ganze Wort (``re.fullmatch``)
+    function: str  # "funktion/instrument"
+
+    @field_validator("pattern")
+    @classmethod
+    def _compile(cls, value: str) -> str:
+        return _compiles([value], "functions.text_words[].pattern")[0]
+
+    @field_validator("function")
+    @classmethod
+    def _pair(cls, value: str) -> str:
+        function_and_instrument(value)
+        return value
+
+
+def _overlap(a_from: date, a_to: date | None, b_from: date, b_to: date | None) -> bool:
+    """Zwei geschlossene Zeiträume teilen einen Tag; ``None`` als Ende heißt offen."""
+    return (a_to is None or b_from <= a_to) and (b_to is None or a_from <= b_to)
+
+
+class Fraction(_Strict):
+    """Eine Fraktion aus mehreren Parteischlüsseln mit ihrem Zeitraum (Messdokument 15, § 3.8).
+
+    Ohne sie wäre „SPD – Volt" die stärkste Kante der laufenden Periode, und sie ist keine
+    Zusammenarbeit zweier Fraktionen. Die Tabelle entfällt, sobald ``raw/organizations.json`` die
+    Fraktionen der Stadt nennt (Frage 9.3).
+    """
+
+    key: str  # Schlüssel der Fraktion, etwa "SPD+VOLT"; so steht sie in ``fraktionen``
+    parties: list[str]  # Parteischlüssel aus [originators], mindestens zwei
+    valid_from: date
+    valid_to: date | None = None  # None: offen
+
+    @model_validator(mode="after")
+    def _two_parties_in_order(self) -> Fraction:
+        if len(self.parties) < 2 or len(set(self.parties)) != len(self.parties):
+            raise ValueError(
+                f"functions.fractions: {self.key} braucht mindestens zwei verschiedene Parteien"
+            )
+        if self.valid_to is not None and self.valid_to < self.valid_from:
+            raise ValueError(f"functions.fractions: {self.key} endet vor seinem Beginn")
+        return self
+
+    def holds_on(self, day: date) -> bool:
+        return self.valid_from <= day and (self.valid_to is None or day <= self.valid_to)
+
+
+class Functions(_Strict):
+    """Funktion je Ratsdokument und Antragsteller je Fraktionsdokument (Vorhaben 15).
+
+    Die Muster der Sprache der Ratsdokumente (Antrag, Anfrage, Resolution, Satzung …) stehen in
+    ``defaults.toml``; was nur eine Stadt kennt — ihre Dokumentarten, die Sammelarten einer alten
+    Vorlagenform samt deren Textregeln, ihr Briefkopf, ihre Fraktionen aus mehreren Parteien —, im
+    Stadtprofil. Alle Muster sind kleingeschriebene reguläre Ausdrücke; eine Liste wird zu einer
+    Alternative.
+    """
+
+    enabled: bool = False
+    variant: Literal["A", "B"] = "B"
+    head_chars: int = Field(default=700, ge=1)
+    wide_chars: int = Field(default=3000, ge=1)
+    decision_chars: int = Field(default=1200, ge=1)
+    letterhead_chars: int = Field(default=240, ge=1)
+    types: dict[str, str] = {}  # paper_type (ganzer Wert) -> "funktion/instrument"
+    type_prefixes: dict[str, str] = {}  # Präfix (klein) -> "funktion/instrument"
+    collection_political: list[str] = []
+    collection_admin: list[str] = []
+    symbol_title: list[str] = []
+    request_title: list[str] = []
+    motion_title: list[str] = []
+    followup_title: list[str] = []
+    amendment_title: list[str] = []
+    budget_motion_title: list[str] = []
+    review_title: list[str] = []
+    report_title: list[str] = []
+    enforcement: list[EnforcementRule] = []
+    symbol_text: list[str] = []
+    report_text: list[str] = []
+    author_start: list[str] = []
+    author_stop: list[str] = []
+    text_instrument: list[str] = []
+    text_words: list[TextWord] = []
+    not_instruments: list[str] = []
+    text_notice: list[str] = []
+    text_decision: list[str] = []
+    text_decision_head: list[str] = []
+    title_information: list[str] = []
+    title_decision: list[str] = []
+    letterhead: list[str] = []
+    letterhead_end: list[str] = []
+    fractions: list[Fraction] = []
+
+    @field_validator(
+        "symbol_title",
+        "request_title",
+        "motion_title",
+        "followup_title",
+        "amendment_title",
+        "budget_motion_title",
+        "review_title",
+        "report_title",
+        "symbol_text",
+        "report_text",
+        "author_start",
+        "author_stop",
+        "text_instrument",
+        "text_notice",
+        "text_decision",
+        "text_decision_head",
+        "title_information",
+        "title_decision",
+        "letterhead",
+        "letterhead_end",
+    )
+    @classmethod
+    def _patterns_compile(cls, value: list[str]) -> list[str]:
+        return _compiles(value, "functions patterns")
+
+    @field_validator("types", "type_prefixes")
+    @classmethod
+    def _pairs(cls, value: dict[str, str]) -> dict[str, str]:
+        for target in value.values():
+            function_and_instrument(target)
+        return value
+
+    @field_validator("type_prefixes")
+    @classmethod
+    def _lowercase_prefixes(cls, value: dict[str, str]) -> dict[str, str]:
+        wrong = sorted(p for p in value if p != p.lower() or not p.strip())
+        if wrong:
+            raise ValueError(
+                f"functions.type_prefixes: Präfixe klein und nicht leer, nicht {wrong}"
+            )
+        return value
+
+    @model_validator(mode="after")
+    def _one_place_per_type(self) -> Functions:
+        """Eine Dokumentart steht in höchstens einer Tabelle; sonst entschiede die Reihenfolge."""
+        tables = {
+            "types": set(self.types),
+            "collection_political": set(self.collection_political),
+            "collection_admin": set(self.collection_admin),
+        }
+        names = list(tables)
+        for i, first in enumerate(names):
+            for second in names[i + 1 :]:
+                both = sorted(tables[first] & tables[second])
+                if both:
+                    raise ValueError(f"functions: {both} in {first} und {second}")
+        return self
+
+    @model_validator(mode="after")
+    def _fractions_unique_and_disjoint(self) -> Functions:
+        """Ein Schlüssel einmal, und eine Partei gehört an keinem Tag zu zwei Fraktionen."""
+        keys = [f.key for f in self.fractions]
+        if len(keys) != len(set(keys)):
+            raise ValueError(f"functions.fractions: doppelte Schlüssel in {keys}")
+        for i, first in enumerate(self.fractions):
+            for second in self.fractions[i + 1 :]:
+                shared = sorted(set(first.parties) & set(second.parties))
+                if shared and _overlap(
+                    first.valid_from, first.valid_to, second.valid_from, second.valid_to
+                ):
+                    raise ValueError(
+                        f"functions.fractions: {shared} zugleich in {first.key} und {second.key}"
+                    )
+        return self
+
+
+# Die Gremienarten aus ``prep.bodies.KINDS``; hier als Literal, weil ``prep.bodies`` die Settings liest.
+BodyKind = Literal["bezirksvertretung", "rat", "ausschuss", "beirat", "unbekannt"]
+_PARTIAL_DATE = re.compile(r"\d{4}(-\d{2}(-\d{2})?)?")
+
+
+class Majority(_Strict):
+    """Die Mehrheit im Rat für einen Zeitraum, mit Quelle (Vorhaben 15, 24 und 28 lesen sie).
+
+    Eine **Annahme mit Beleg**: die Vereinbarung der Partner (gesammelt von Vorhaben 25) und die
+    Drucksachen, in denen der Korpus die Mehrheit selbst nennt. Abgeleitet aus den gemeinsamen
+    Anträgen ist sie nicht; für das Maß, das sie trägt, wäre das zirkulär (Messdokument 15, § 3.9).
+    """
+
+    period: str  # Anzeigename der Wahlperiode des Rates, etwa "2014-2020"
+    parties: list[str]  # Parteischlüssel aus [originators]
+    valid_from: date
+    valid_to: date | None = None  # None: offen (laufende Periode)
+    agreement: str  # die Vereinbarung in Worten
+    agreement_date: str = ""  # so genau, wie die Quelle es sagt: "2021-01-19", "2025-12", "2014"
+    evidence: list[str] = []  # Drucksachen des Korpus, die die Mehrheit nennen
+
+    @model_validator(mode="after")
+    def _consistent(self) -> Majority:
+        if not self.parties or len(set(self.parties)) != len(self.parties):
+            raise ValueError(f"majorities: {self.period} braucht verschiedene Parteien")
+        if self.valid_to is not None and self.valid_to < self.valid_from:
+            raise ValueError(f"majorities: {self.period} endet vor seinem Beginn")
+        if self.agreement_date and not _PARTIAL_DATE.fullmatch(self.agreement_date):
+            raise ValueError(
+                f"majorities: agreement_date {self.agreement_date!r} ist kein Datum der Form "
+                "JJJJ, JJJJ-MM oder JJJJ-MM-TT"
+            )
+        return self
+
+    def holds_on(self, day: date) -> bool:
+        return self.valid_from <= day and (self.valid_to is None or day <= self.valid_to)
+
+
+class Majorities(_Strict):
+    """Die Ratsmehrheiten der Stadt, stadtweit und nicht je Periodenprofil (Synergien 2026-11, § 1).
+
+    ``body_kinds`` sind die Gremienarten, in denen die Mehrheit des Rates gilt; die
+    Bezirksvertretungen haben eigene Mehrheiten, die im Datensatz nicht stehen (Vorhaben 27).
+    """
+
+    body_kinds: list[BodyKind] = ["rat", "ausschuss"]
+    terms: list[Majority] = []
+
+    @model_validator(mode="after")
+    def _ordered_and_disjoint(self) -> Majorities:
+        for before, after in zip(self.terms, self.terms[1:], strict=False):
+            if after.valid_from <= before.valid_from or _overlap(
+                before.valid_from, before.valid_to, after.valid_from, after.valid_to
+            ):
+                raise ValueError(
+                    f"majorities: {before.period} und {after.period} überlappen oder stehen "
+                    "nicht in der Folge ihres Beginns"
+                )
+        return self
+
+    def on(self, day: date | None) -> Majority | None:
+        """Die Mehrheit an einem Tag; ``None`` ohne Datum oder ohne Zeile für den Tag."""
+        if day is None:
+            return None
+        return next((term for term in self.terms if term.holds_on(day)), None)
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -1579,6 +1888,10 @@ class Settings(BaseSettings):
     council: Council = Council()  # Fundament F6: Sitzungen, Beratungen, Personen
     validation: Validation = Validation()  # Fundament F4
     ml: Ml = Ml()  # Fundament F5: lokale Modelle über ollama
+    functions: Functions = Functions()  # Vorhaben 15: Dokumentfunktion und Antragsteller
+    majorities: Majorities = (
+        Majorities()
+    )  # Vorhaben 15: Ratsmehrheiten, stadtweit (24, 28 lesen sie)
 
     @property
     def base_profile(self) -> str:
