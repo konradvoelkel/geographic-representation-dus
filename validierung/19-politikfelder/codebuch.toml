@@ -1,0 +1,395 @@
+# Codebuch Vorhaben 19 „Politikfelder nach dem Comparative Agendas Project" (Stufe 1, Fassung
+# 2026-11-23.1, vor jeder Kodierung und vor jedem Lauf eines Verfahrens festgelegt).
+#
+# Messdokument: docs/plans/19-politikfelder.md, § 4 und § 8. Grundlage sind das Master Topics Codebook
+# des CAP (Version 1.1 vom 2022-08-09, comparativeagendas.net/pages/master-codebook) und das deutsche
+# Codebuch des German Policy Agendas Project (v2.5, April 2019, zweisprachig), beide CC BY-NC-SA 4.0;
+# Kopien mit Prüfsumme unter /media/konrad/xtraspace/georep/fremddaten/cap/. Die 21 Hauptthemen und
+# ihre Nummern sind die des Master-Codebuchs; wo das deutsche Codebuch für eine Sache ausdrücklich
+# eine Stelle nennt (Kitas, Amateursport, Spielplätze, Bibliotheken, Denkmalschutz, Tierschutz,
+# Barrierefreiheit), folgt die kommunale Abbildung ihm, weil die menschlich kodierten deutschen Daten
+# (Weg 3) danach kodiert sind. Was keines der beiden regelt (Feuerwehr, Friedhöfe, Straßennamen,
+# Verfügungsmittel, Sitzungsformalien), legt diese Fassung fest, ohne Blick auf ein Ergebnis.
+#
+# Dasselbe Codebuch ist der Systemprompt des lokalen Sprachmodells (Weg 1): die Kodierer und das
+# Modell sehen dieselben Definitionen und denselben Ausschnitt. Die Ausgabe keines Verfahrens steht
+# im Auftrag, auch nicht das Gremium des Dokuments (Eingabe von Weg 2).
+
+project = "19-politikfelder"
+version = "2026-11-23.1"
+unit = "document"
+instructions = """
+Einheit: ein Ratsdokument der Wahlperiode 2020 bis 2025 (Vorlage der Verwaltung, Antrag, Anfrage,
+Mitteilung, Eingabe). Du siehst den Titel, die Dokumentart und den Anfang des Textes (rund 4 000
+Zeichen, mit Groß- und Kleinschreibung).
+
+Frage: Welches eine Politikfeld nach dem Comparative Agendas Project (CAP) trägt das Dokument?
+
+Grundregeln (aus dem deutschen CAP-Codebuch, „Generelle Kodierregeln"):
+1. Kodiere das eine vorherrschende inhaltliche Politikfeld: worum es in der Sache geht, nicht wen es
+   betrifft und nicht, mit welchem Mittel. Eine Kita für Kinder Geflüchteter ist Kinderbetreuung (13),
+   nicht Migration; der Neubau einer Schule ist Bildung (6), nicht Bauen; Geld für einen Sportverein
+   ist Sport (13), nicht Haushalt.
+2. Wer zuständig ist, ist oft ein Hinweis, aber nicht das Kriterium: ein Antrag im Umweltausschuss über
+   Busspuren ist Verkehr (10).
+3. Hat ein Dokument mehrere Gegenstände, zählt der, dem Titel und Beschlussvorschlag (oder die Fragen
+   einer Anfrage) das meiste Gewicht geben. Sind es gleichgewichtige, ganz verschiedene Gegenstände
+   (eine Sammelanfrage, eine Liste von Zuschüssen an Vereine aller Art), wähle den ersten im Titel; nur
+   wenn es keinen gibt, 20 (Sammlung ohne vorherrschendes Feld).
+4. Städtische Formalien und die Arbeit der Gremien selbst sind ein Politikfeld: Staat und Verwaltung
+   (20). Dazu gehören Sitzungstermine, Geschäftsordnung, Wahlen und Besetzungen von Gremien,
+   Beschlusskontrollen ohne vorherrschendes Thema, Personal und Organisation der Verwaltung.
+5. 99 (kein Politikfeld) nur, wenn der Ausschnitt keinen Gegenstand erkennen lässt: Text leer oder
+   unlesbar, nur ein Deckblatt, ein Begleitschreiben ohne Gegenstand. Im Zweifel zwischen 99 und einem
+   Feld: das Feld.
+6. Geld folgt der Sache: ein Haushaltsantrag, eine überplanmäßige Ausgabe, eine Gebühr, ein Zuschuss
+   oder eine Förderung zählt zum Feld dessen, wofür das Geld ist. Nur der Haushalt als Ganzes, Steuern
+   und Finanzen der Stadt allgemein sind 1.
+7. Ein Ort entscheidet nichts: „Ampel an der X-Straße" ist Verkehr, gleich in welchem Stadtteil.
+
+Lies Titel und Ausschnitt; was nicht darin steht, gibt es für die Kodierung nicht. Wähle genau eine
+Option. Die Grenzfälle unter den Optionen gehen den allgemeinen Regeln vor.
+
+Datenschutz: Schreibe nie einen Personennamen in eine Antwort, auch nicht in begruendung.
+"""
+
+[sample]
+size = 300
+seed = 20261123
+stratum = "schicht"            # Gremiumsart und Dokumentart, gebildet vom Messskript (--stichprobe)
+allocation = "proportional"
+population = "messung/19-politikfelder-grundgesamtheit.parquet"   # relativ zum Profilordner duesseldorf, vom Messskript geschrieben
+require_text = true
+
+[text]
+source = "raw"                 # Rohtext (Phase 0: messdaten/rohtext/duesseldorf.parquet, über --texts)
+chars = 4000
+title = true
+context = ["dokumentart"]      # die Dokumentart; nicht das Gremium (Eingabe von Weg 2)
+
+[[questions]]
+id = "politikfeld"
+question = "Welches Hauptthema nach dem Comparative Agendas Project trägt das Dokument?"
+scale = "nominal"
+instructions = """
+Genau eine Option (die Nummer des Hauptthemas als Text, etwa "10"). Die Definition jeder Option nennt
+zuerst den Gehalt des CAP-Hauptthemas, dann, was in einer Stadt dazugehört, dann die Grenzfälle mit der
+Option, zu der sie gehören.
+"""
+
+[[questions.options]]
+value = "1"
+name = "Wirtschaft und Finanzen allgemein (Makroökonomie)"
+definition = """
+CAP 1: allgemeine Wirtschaftslage, Haushalt, Schulden, Steuern, Inflation, Industriepolitik. In der
+Stadt: der Haushalt als Ganzes (Haushaltssatzung, Haushaltsplanentwurf, Nachtragshaushalt,
+Haushaltssicherung, Jahresabschluss und Gesamtabschluss, Kredite, Schulden, Zinsen, Liquidität),
+Steuern und Hebesätze (Grundsteuer, Gewerbesteuer, Vergnügungssteuer als Steuer), Finanzlage, Folgen der
+Inflation für den städtischen Haushalt, Haushaltsberatungen ohne einzelnen Gegenstand.
+Nicht: ein Haushaltsantrag oder eine Ausgabe für eine bestimmte Sache (das Feld der Sache);
+Wirtschaftsförderung (15); Rechnungsprüfung als Verfahren (20).
+"""
+example = "Haushaltssatzung und Haushaltsplan für das Jahr 2024; Hebesätze der Grund- und Gewerbesteuer"
+
+[[questions.options]]
+value = "2"
+name = "Bürgerrechte, Gleichstellung, Antidiskriminierung"
+definition = """
+CAP 2: Diskriminierung (Herkunft, Geschlecht, sexuelle Orientierung, Alter, Behinderung),
+Wahlrecht und Beteiligungsrechte, Meinungs-, Versammlungs- und Religionsfreiheit, Datenschutz und
+Informationsfreiheit, Extremismus. In der Stadt: Gleichstellungsplan und Gleichstellungsstelle,
+Frauenförderung als Gleichstellung, LSBTIQ*, Antirassismus und Antisemitismus, Demokratieförderung und
+Rechtsextremismus, Barrierefreiheit als Zugang für Menschen mit Behinderung zu Gebäuden, Plätzen und
+Angeboten (deutsches Codebuch 205), Beteiligung als Recht oder Verfahren an sich (Kinder- und
+Jugendbeteiligung, Regeln der Bürgerbeteiligung), Datenschutz, Informationsfreiheitssatzung,
+Religionsausübung, Gebetsräume, Bestattung nach religiösem Ritus.
+Nicht: Gewalt gegen Frauen, Frauenhäuser (12); Hilfen und Leistungen für Menschen mit Behinderung (13);
+eine Beteiligung zu einem bestimmten Vorhaben (das Feld des Vorhabens); der barrierefreie Umbau einer
+Haltestelle (10).
+"""
+example = "Gleichstellungsplan der Stadtverwaltung; Kinder- und Jugendbeteiligung verbindlich regeln"
+
+[[questions.options]]
+value = "3"
+name = "Gesundheit und Pflege"
+definition = """
+CAP 3: Gesundheitswesen, Krankenhäuser, Krankheitsvorbeugung, Pflege, Drogen- und Suchthilfe,
+psychische Gesundheit. In der Stadt: Gesundheitsamt, Infektionsschutz und Corona-Lage (Testen, Impfen,
+Fallzahlen), Krankenhäuser und städtische Kliniken, Rettungsdienst und Notarzt, Pflegeplanung,
+Pflegeheime und ambulante Pflege, Suchthilfe, Drogenkonsumraum, Hitzeschutz als Gesundheitsschutz,
+Gesundheitsförderung, Hebammen, Ärzteversorgung im Stadtteil.
+Nicht: Drogenkriminalität und Ordnung an Brennpunkten (12); Lebensmittelkontrolle (4); Hitze als
+Klimaanpassung der Stadt (7).
+"""
+example = "Kurzbericht über die Pflegebedarfsplanung; Entwicklung der Corona-Infektionslage"
+
+[[questions.options]]
+value = "4"
+name = "Landwirtschaft, Ernährung, Tierschutz"
+definition = """
+CAP 4: Landwirtschaft, Lebensmittelsicherheit, Tierseuchen, Wohlergehen von Haus- und Nutztieren,
+Fischerei. In der Stadt: Lebensmittelüberwachung und Veterinäramt, Tierheim, Tierschutz bei Haus-
+und Stadttieren (Stadttauben, Hunde, Katzenschutzverordnung, Pferde im Brauchtum), Hundesteuer als
+Tierfrage, landwirtschaftliche Flächen der Stadt, Ernährungsrat und regionale Lebensmittel.
+Nicht: Wildtiere, Artenschutz, Insekten (7); Wochenmärkte als Handel (15); Schulessen (6).
+"""
+example = "Stadttaubenmanagement; Kastrationspflicht für Freigängerkatzen"
+
+[[questions.options]]
+value = "5"
+name = "Arbeit und Beschäftigung"
+definition = """
+CAP 5: Arbeitsmarkt, Ausbildung und Weiterbildung, Arbeitsschutz, Tarif und Mindestlohn,
+Gewerkschaften, Renten, Beschäftigung Jugendlicher. In der Stadt: Jobcenter und
+Arbeitsmarktförderung, Beschäftigungsprogramme, Ausbildungsplätze in der Stadt als Arbeitsmarkt,
+Tariftreue und Mindestlohn bei Vergaben, Arbeitsbedingungen bei Dritten.
+Nicht: Personal, Stellen und Tarif der eigenen Verwaltung (20); Schulen und berufliche Schulen (6).
+"""
+example = "Kommunales Arbeitsmarktprogramm 2023; Tariftreue bei städtischen Aufträgen"
+
+[[questions.options]]
+value = "6"
+name = "Bildung und Schule"
+definition = """
+CAP 6: Schulen, Hochschulen, Berufsbildung, Weiterbildung, Inklusion in der Schule, öffentliche
+Bibliotheken (deutsches Codebuch 607). In der Stadt: Schulbau, Schulsanierung und Schulneubau,
+Schulentwicklungsplanung, Offener Ganztag (OGS), Schulsozialarbeit, Schülerbeförderung als Schulsache,
+Schulessen, Digitalisierung der Schulen, Volkshochschule, Musikschule, Stadtbüchereien, Hochschulen in
+der Stadt, Bildungsberatung, Umbenennung einer Schule.
+Nicht: Kitas und Kindertagespflege (13); Verkehrssicherheit auf Schulwegen (10); Jugendarbeit (13).
+"""
+example = "Neubau einer Realschule, Ausführungs- und Finanzierungsbeschluss; Schulentwicklungsplan Grundschulen"
+
+[[questions.options]]
+value = "7"
+name = "Umwelt und Klima"
+definition = """
+CAP 7: Umweltschutz, Trinkwasser, Abwasser und Abfall, Luft, Lärm, Klimawandel, Artenschutz,
+Wald- und Naturschutz, Schutz von Boden und Gewässern. In der Stadt: Klimaschutzkonzept und
+Klimaneutralität, Klimaanpassung (Hitze, Starkregen, Entsiegelung), Luftreinhalteplan,
+Lärmaktionsplan, Abfallwirtschaft, Sperrmüll, Wertstoffe, Altkleider, wilder Müll, Straßenreinigung,
+Abwasser, Kanalbau und Abwassergebühren (Stadtentwässerung), Bäume, Baumschutzsatzung, Biodiversität,
+Insekten, Naturschutzgebiete, Renaturierung von Gewässern, Altlasten, Verbraucherschutz als Umweltthema.
+Nicht: Energie, Photovoltaik, Wärme (8); Parks, Grünanlagen, Stadtwald, Friedhöfe (21); Hochwasserschutz
+an Rhein und Bächen (21).
+"""
+example = "Klimaanpassungskonzept; Kalkulation der Abwassergebühren; Baumbilanz 2023"
+
+[[questions.options]]
+value = "8"
+name = "Energie"
+definition = """
+CAP 8: Energiepolitik, Strom, Gas, Kohle, Kernkraft, erneuerbare Energien, Energieeffizienz. In der
+Stadt: Photovoltaik und Solarpflicht, Wärmeplanung, Fernwärme, Stadtwerke als Energieversorger,
+Energiepreise, Energiesparen in städtischen Gebäuden, energetische Sanierung, Ladesäulen als
+Energieinfrastruktur, Wasserstoff.
+Nicht: Klimaschutz allgemein ohne Energiemaßnahme (7); Elektrobusse und E-Mobilität als Verkehr (10).
+"""
+example = "Photovoltaik auf städtischen Dächern; kommunale Wärmeplanung"
+
+[[questions.options]]
+value = "9"
+name = "Migration und Integration"
+definition = """
+CAP 9: Einwanderung, Flucht, Asyl, Staatsangehörigkeit. In der Stadt: Unterbringung und Versorgung
+Geflüchteter, Flüchtlingsunterkünfte, Geflüchtete aus der Ukraine, Ausländerbehörde, Einbürgerung,
+Integrationskonzept und Integrationsrat, Integrationskurse, Sprachmittler, Rückkehr.
+Nicht: Diskriminierung und Rassismus (2); Kita oder Schule für Geflüchtete (13, 6); der Krieg selbst und
+Hilfe in der Ukraine (19).
+"""
+example = "Unterbringung von Geflüchteten, neue Standorte; Wartezeiten bei der Ausländerbehörde"
+
+[[questions.options]]
+value = "10"
+name = "Verkehr"
+definition = """
+CAP 10: Verkehr aller Art, Straßen, öffentlicher Nahverkehr, Bahn, Luftverkehr, Schifffahrt,
+Verkehrsinfrastruktur. In der Stadt: Straßenbau und -sanierung, Baustellen im Straßenraum, Brücken,
+Ampeln, Zebrastreifen, Tempo 30, Verkehrssicherheit, Schulwege, Radwege und Radverkehr, Fußverkehr,
+Parken und Anwohnerparken, Busse und Bahnen (Rheinbahn, Haltestellen, Fahrpläne), Carsharing,
+E-Scooter, Taxi, Flughafen, Hafen, Verkehrsüberwachung als Verkehrssache, Straßenverkehrsrecht,
+Barrierefreiheit von Haltestellen, Winterdienst.
+Nicht: Lärm und Luft an Straßen als Umweltschutz (7); Kanalbau unter der Straße (7); Ordnung und
+Sicherheit im Straßenraum ohne Verkehr (12).
+"""
+example = "Querungshilfe an der X-Straße; Ausbau der Radhauptroute; Taktverdichtung einer Buslinie"
+
+[[questions.options]]
+value = "12"
+name = "Recht, Ordnung und Kriminalität"
+definition = """
+CAP 12: Kriminalität und ihre Bekämpfung, Polizei, Justiz, Familienrecht, häusliche Gewalt,
+Kinderschutz bei Missbrauch, Drogenkriminalität. In der Stadt: Ordnungsamt und Ordnungs- und
+Servicedienst, öffentliche Sicherheit und Ordnung, Kriminalprävention, Videoüberwachung, Waffen- und
+Alkoholverbotszonen, Brennpunkte, Prostitution, Sondernutzung und Ordnungsverstöße ohne Verkehrsbezug,
+Gewalt gegen Frauen, Frauenhäuser, Opferschutz, Jugendkriminalität, Glücksspiel als Ordnungsrecht.
+Nicht: Feuerwehr und Katastrophenschutz (15); Verkehrsüberwachung (10); Kinder- und Jugendhilfe
+allgemein (13).
+"""
+example = "Kommunaler Ordnungs- und Servicedienst, Personalausstattung; Sicherheit in der Altstadt"
+
+[[questions.options]]
+value = "13"
+name = "Soziales, Kinder, Jugend, Sport"
+definition = """
+CAP 13: soziale Sicherung, Armut, Hilfen im Alter und bei Behinderung, Freiwilligendienste,
+Kinderbetreuung. Nach dem deutschen Codebuch gehören hierher die Kinder- und Jugendhilfe mit Kitas
+(1308) und Vereine, Freiwilligenarbeit und Amateursport (1305). In der Stadt: Sozialhilfe,
+Grundsicherung, Armut, Sozialpass, Seniorenarbeit und Seniorentreffs, Hilfen für Menschen mit
+Behinderung, Kitas und Kindertagespflege, Elternbeiträge, Jugendhilfe, Jugendzentren, Jugendarbeit,
+Familienzentren, Ehrenamt und Vereinsförderung, Sport: Sportvereine, Sportstätten, Sportplätze,
+Bäder, Sportförderung, Sportveranstaltungen ohne touristischen Zweck.
+Nicht: Wohnungslosigkeit (14); Gesundheit und Pflege (3); Schule (6); Sportgroßereignisse als
+Stadtmarketing und Tourismus (15); Barrierefreiheit als Zugang (2).
+"""
+example = "Ausbau der Kita-Plätze; Sanierung einer Bezirkssportanlage; Seniorentreff im Stadtteil"
+
+[[questions.options]]
+value = "14"
+name = "Wohnen und Stadtentwicklung"
+definition = """
+CAP 14: Wohnungswesen, Stadtentwicklung, Wohnungslosigkeit. In der Stadt: Bauleitplanung
+(Bebauungspläne, Flächennutzungsplan, Aufstellungs- und Satzungsbeschlüsse), Stadtplanung und
+Rahmenpläne, Quartiersentwicklung, Städtebauförderung, Baugenehmigungen und Bauordnung,
+Wohnungsbau, geförderter und preisgebundener Wohnraum, Wohnraumschutz, Zweckentfremdung,
+Ferienwohnungen, städtische Wohnungsgesellschaft, Obdach- und Wohnungslosigkeit, Kleingärten,
+Spielplätze (deutsches Codebuch 1401), Gestaltung von Plätzen und Innenstadt als Stadtentwicklung.
+Nicht: Bau einer Schule, Kita oder Feuerwache (das Feld der Einrichtung); Parks und Grünanlagen (21);
+Wirtschaftsförderung (15).
+"""
+example = "Bebauungsplan Nr. 0X – Aufstellungsbeschluss; Quote für geförderten Wohnungsbau"
+
+[[questions.options]]
+value = "15"
+name = "Wirtschaft, Handel, Tourismus, Bevölkerungsschutz"
+definition = """
+CAP 15: Handel und Gewerbe, kleine und mittlere Unternehmen, Banken, Verbraucherschutz im Handel,
+Tourismus, Sportgroßereignisse und Glücksspiel als Wirtschaft, Katastrophenschutz und
+Katastrophenhilfe (1523). In der Stadt: Wirtschaftsförderung und Ansiedlung, Gewerbeflächen als
+Wirtschaftsthema, Einzelhandel, Gastronomie und Außengastronomie, Märkte und Wochenmärkte,
+Ladenöffnung, Messe, Tourismus und Stadtmarketing, Großveranstaltungen mit touristischem Zweck,
+Kreativwirtschaft, Start-ups, Sparkasse, Feuerwehr, Brandschutz, Katastrophen- und Hochwassereinsatz,
+Unwetterhilfe.
+Nicht: Bauleitplanung für Gewerbegebiete (14); Zivilschutz im Verteidigungsfall, Sirenen,
+Schutzräume (16); Rettungsdienst (3).
+"""
+example = "Neubau einer Feuer- und Rettungswache; Stärkung des Einzelhandels in der Innenstadt"
+
+[[questions.options]]
+value = "16"
+name = "Verteidigung und Zivilschutz"
+definition = """
+CAP 16: Verteidigung, Bundeswehr, Bündnisse, Zivilschutz, Veteranen. In der Stadt: Bundeswehr und
+Kasernen, Zivilschutz (Sirenen, Warn-App, Schutzräume, Bunker), Vorsorge für den Verteidigungsfall,
+Rüstung als Gegenstand einer Resolution.
+Nicht: Krieg in der Ukraine und Hilfe dort (19); Katastrophenschutz bei Unwetter (15).
+"""
+example = "Wiederaufbau des Sirenennetzes; Zustand der öffentlichen Schutzräume"
+
+[[questions.options]]
+value = "17"
+name = "Wissenschaft, Technik, Kommunikation"
+definition = """
+CAP 17: Wissenschaft, Forschung, Raumfahrt, Telekommunikation, Rundfunk und Medien, Internet und
+IT-Sicherheit. In der Stadt: Breitband, Glasfaser, Mobilfunk, öffentliches WLAN, IT-Sicherheit,
+Smart City und offene Daten als Technik, lokale Medien, Wissenschaftsstandort und Forschung.
+Nicht: Digitalisierung der Verwaltung und Online-Dienste der Stadt (20); Digitalisierung der Schulen (6).
+"""
+example = "Ausbau des freien WLAN in der Innenstadt; Glasfaseranschluss für Gewerbegebiete"
+
+[[questions.options]]
+value = "18"
+name = "Außenhandel und internationale Wirtschaft"
+definition = """
+CAP 18: Außenhandel, Exporte, Zölle, Handelsabkommen, internationale Investitionen. In der Stadt:
+Ansiedlung ausländischer Unternehmen, internationale Wirtschaftsbeziehungen, Außenhandelsplatz,
+Handelsabkommen als Gegenstand einer Resolution.
+Nicht: Städtepartnerschaft und internationale Zusammenarbeit (19); örtliche Wirtschaftsförderung (15).
+"""
+example = "Ansiedlungsstrategie für Unternehmen aus Japan und China"
+
+[[questions.options]]
+value = "19"
+name = "Internationales und Europa"
+definition = """
+CAP 19: internationale Beziehungen, Europäische Union, Entwicklungszusammenarbeit, Menschenrechte
+weltweit, internationale Organisationen. In der Stadt: Städtepartnerschaften, internationale und
+europäische Zusammenarbeit, EU-Angelegenheiten, Europatag, Entwicklungszusammenarbeit, Fairtrade-Stadt,
+Hilfe für die Ukraine und andere Länder, Resolutionen zu Krieg und Menschenrechten anderswo.
+Nicht: Geflüchtete in der Stadt (9); Außenhandel (18).
+"""
+example = "Neue Städtepartnerschaft; Titel Fairtrade-Stadt erneuern; Hilfslieferungen in die Partnerstadt"
+
+[[questions.options]]
+value = "20"
+name = "Staat und Verwaltung"
+definition = """
+CAP 20: Regierung und Verwaltung, Verhältnis der Ebenen, Personal, Ernennungen, Beschaffung,
+Liegenschaften, Wahlen, Statistik, Ehrungen. In der Stadt: Organisation und Personal der Verwaltung
+(Stellenplan, Personalbedarf, Ausbildung in der Verwaltung, Tarif), Digitalisierung der Verwaltung
+und Online-Dienste, Bürgerbüros, Vergaben und Beschaffung, städtische Liegenschaften, Gebäude und
+Grundstücksgeschäfte ohne anderes Feld, Beteiligungen und Gesellschaften allgemein, Rechnungsprüfung,
+Wahlen (Kommunal-, Landtags-, Bundestagswahl, Wahlbezirke), Gremien: Sitzungstermine,
+Geschäftsordnung, Besetzung und Wahl von Mitgliedern und Vorsitzenden, Beschlusskontrolle,
+Verhältnis von Rat, Bezirksvertretungen und Verwaltung, Verhältnis zu Land und Bund, Statistik,
+Ehrungen und Ehrenbürgerschaft, Straßenbenennungen, Verfügungsmittel ohne vorherrschenden Zweck,
+Sammlungen ohne vorherrschendes Feld (Grundregel 3).
+Nicht: Haushalt als Ganzes (1); eine Vergabe oder ein Gebäude mit erkennbarem Zweck (das Feld des
+Zwecks, etwa Schule 6, Feuerwache 15).
+"""
+example = "Sitzungstermine 2024; Stellenplan; Umbesetzung in Ausschüssen; Benennung einer Straße"
+
+[[questions.options]]
+value = "21"
+name = "Öffentliche Flächen, Grün und Wasser"
+definition = """
+CAP 21: öffentliches Land, Parks, Denkmäler und historische Stätten, Erholung, Wald, Wasserwirtschaft
+und Hochwasserschutz. In der Stadt: Parks und Grünanlagen (Pflege, Gestaltung, Nutzung),
+Stadtwald, Friedhöfe und Friedhofsgebühren, Denkmalschutz und Baudenkmäler (deutsches Codebuch
+2101), Gedenkorte und Mahnmale, Rheinufer und Rheinwiesen als Fläche, Gewässer als Wasserwirtschaft,
+Hochwasser- und Deichschutz.
+Nicht: Bäume und Artenschutz als Umweltschutz (7); Spielplätze und Kleingärten (14); Kultur in einem
+Denkmal (23).
+"""
+example = "Neugestaltung des Volksgartens; Friedhofsgebührensatzung; Denkmalschutz für ein Bauwerk"
+
+[[questions.options]]
+value = "23"
+name = "Kultur"
+definition = """
+CAP 23: Kulturpolitik, Kunst, Theater, Museen, kulturelles Erbe. In der Stadt: Theater, Oper,
+Tonhalle, Museen, Ausstellungen, Kunst im öffentlichen Raum, freie Szene, Kulturförderung, Proberäume,
+Clubs und Nachtkultur als Kultur, Festivals, Brauchtum und Karneval, Erinnerungskultur und
+Gedenkveranstaltungen, Kulturzentren.
+Nicht: Bibliotheken, Musikschule und Volkshochschule (6); Denkmalschutz und Gedenkorte als Ort (21);
+Großveranstaltungen mit touristischem Zweck (15).
+"""
+example = "Förderung der freien Szene; kostenreduzierte Nutzung der Tonhalle"
+
+[[questions.options]]
+value = "99"
+name = "kein Politikfeld erkennbar"
+definition = """
+Nur, wenn der Ausschnitt keinen Gegenstand erkennen lässt: Text leer oder unlesbar, nur Deckblatt
+oder Begleitschreiben ohne Gegenstand, nur Seitenköpfe. Formalien der Gremien sind 20, nicht 99.
+"""
+example = "Ein Dokument, dessen Ausschnitt nur aus Seitenköpfen und Unterschriften besteht"
+
+[[questions]]
+id = "unsicher"
+question = "Ist die Antwort unsicher?"
+scale = "binary"
+positive = ["ja"]
+adjudicate = false
+instructions = """
+ja: zwei Optionen passen fast gleich gut, oder der Ausschnitt reicht kaum; nenne in begruendung die
+zweite Option. nein: sonst.
+"""
+
+[[questions.options]]
+value = "ja"
+definition = "Zwei Optionen passen fast gleich gut, oder der Ausschnitt reicht kaum."
+
+[[questions.options]]
+value = "nein"
+definition = "Die Option ist klar."
