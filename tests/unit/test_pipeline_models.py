@@ -30,13 +30,20 @@ class Use:
         self.limit = 0
         self.open = 0
         self.failed = 0
+        self.rejected = 0
 
     def identity(self) -> dict[str, str]:
         self.asked.append(1)
         return self._identity()
 
     def stamp(self) -> dict[str, object]:
-        return {**self.identity(), "limit": self.limit, "open": self.open, "failed": self.failed}
+        return {
+            **self.identity(),
+            "limit": self.limit,
+            "open": self.open,
+            "failed": self.failed,
+            "rejected": self.rejected,
+        }
 
 
 def _model_step(
@@ -47,12 +54,14 @@ def _model_step(
     name: str = "modell",
     leaves_open: int = 0,
     failed: int = 0,
+    rejected: int = 0,
 ) -> Step:
     use = Use(lambda: dict(identity), asked)
 
     def run() -> str:
         out.write_text("ergebnis", encoding="utf-8")
         use.limit, use.open, use.failed = (2 if leaves_open else 0), leaves_open, failed
+        use.rejected = rejected
         return "1 Ergebnis"
 
     return Step(name, (), (out,), run, models=use)
@@ -76,7 +85,7 @@ def test_with_the_switch_it_runs_and_stamps_the_model(tmp_path: Path, settings: 
     step = _model_step(tmp_path / "out.txt", IDENTITY, [])
     assert run_step(step, settings, models=True).status == "ausgeführt"
     stamp = json.loads(step.stamp_path.read_text(encoding="utf-8"))
-    assert stamp["models"] == IDENTITY | {"limit": 0, "open": 0, "failed": 0}
+    assert stamp["models"] == IDENTITY | {"limit": 0, "open": 0, "failed": 0, "rejected": 0}
     assert run_step(step, settings, models=True).reason == "aktuell"
 
 
@@ -266,3 +275,32 @@ def test_the_model_limit_is_validated_like_the_settings(settings: Settings) -> N
     assert cli._with_model_limit(settings, 7).ml.limit == 7
     with pytest.raises(ValidationError):
         cli._with_model_limit(settings, -1)
+
+
+# --- abgewiesene Eingaben (Review F5, dritte Runde, N1) ----------------------------------------
+
+
+def test_a_step_with_rejected_inputs_is_current_and_says_how_many(
+    tmp_path: Path, settings: Settings
+) -> None:
+    step = _model_step(tmp_path / "out.txt", IDENTITY, [], rejected=12)
+    run_step(step, settings, models=True)
+    assert freshness(step, settings) == (True, "aktuell, 12 Eingaben abgewiesen")
+    retry = settings.model_copy(
+        update={"ml": settings.ml.model_copy(update={"retry_rejected": True})}
+    )
+    assert freshness(step, retry) == (False, "12 abgewiesene Eingaben erneut versuchen")
+
+
+def test_cli_retry_rejected_needs_models(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    assert cli.main(["run", "--retry-rejected"]) == 2
+    assert "--retry-rejected gilt nur mit --models" in capsys.readouterr().err
+
+
+def test_cli_retry_rejected_sets_the_switch_for_the_run(
+    project: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: list[Settings] = []
+    _only_model_steps(monkeypatch, lambda: dict(IDENTITY), seen)
+    assert cli.main(["run", "--models", "--retry-rejected"]) == 0
+    assert seen[-1].ml.retry_rejected and not load_settings(cwd=project).ml.retry_rejected

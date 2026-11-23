@@ -75,6 +75,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--models", action="store_true", help="Schritte mit lokalem Modell mitlaufen lassen"
     )
     run.add_argument(
+        "--retry-rejected",
+        action="store_true",
+        help="mit --models: Eingaben, die das Modell abwies, erneut fragen (ml.retry_rejected)",
+    )
+    run.add_argument(
         "--limit",
         type=_non_negative,
         help="mit --models: höchstens so viele neue Eingaben je Stapellauf (ml.limit)",
@@ -220,12 +225,20 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
         # Ohne Modellschritt hieße es nur: neuer Fingerprint, alle Schritte neu, nichts begrenzt.
         print("Fehler: --limit gilt nur mit --models (bei `fetch`: PDFs)", file=sys.stderr)
         return 2
+    retry = getattr(args, "retry_rejected", False)
+    if retry and not models:
+        print("Fehler: --retry-rejected gilt nur mit --models", file=sys.stderr)
+        return 2
     layout.ensure_dirs()
     PdfStore(layout.pdf_dir).ensure()
     if fetching:
         settings = _with_fetch_limits(settings, args.limit, args.max_pages)
     elif args.limit is not None:
         settings = _with_model_limit(settings, args.limit)
+    if retry:
+        settings = settings.model_copy(
+            update={"ml": settings.ml.model_copy(update={"retry_rejected": True})}
+        )
     steps = build_steps(settings, layout)
     # `fetch` ohne Namen heißt: alle Netzschritte, dazu die beiden Offline-Schritte, ohne die sie
     # nicht laufen (`shapes` liefert die Flächen für streets_osm und pois_wiki) oder deren

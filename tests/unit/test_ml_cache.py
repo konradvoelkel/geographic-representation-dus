@@ -12,6 +12,7 @@ import pytest
 
 from georep.errors import SchemaError
 from georep.ml.cache import (
+    REJECTED,
     CacheKey,
     ModelCache,
     cache_filename,
@@ -205,3 +206,16 @@ def test_stats_skip_files_that_are_not_model_caches_and_change_nothing(tmp_path:
     assert {p.name: p.read_bytes() for p in tmp_path.glob("*.sqlite")} == before
     extra = {p.name for p in tmp_path.iterdir()} - set(before)
     assert extra <= {"fake-embed_latest.sqlite-shm", "fake-embed_latest.sqlite-wal"}
+
+
+def test_a_failure_is_noted_with_kind_and_reason_and_a_value_clears_it(tmp_path: Path) -> None:
+    with ModelCache(tmp_path, KEY.model) as cache:
+        cache.put_failure(KEY, "a" * 64, REJECTED, "400 zu lang")
+        cache.put_failure(KEY, "b" * 64, REJECTED, "400 zu lang")
+        assert cache.failures(KEY) == {
+            "a" * 64: (REJECTED, "400 zu lang"),
+            "b" * 64: (REJECTED, "400 zu lang"),
+        }
+        assert cache.failures(CacheKey(KEY.model, KEY.digest, "andere")) == {}
+        cache.put_many(KEY, [("a" * 64, b"doch")])
+        assert set(cache.failures(KEY)) == {"b" * 64}

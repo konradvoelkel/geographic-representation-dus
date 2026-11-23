@@ -1507,6 +1507,7 @@ class Ml(_Strict):
     keep_alive: str = "10m"
     batch_size: int = Field(default=32, ge=1)
     limit: int = Field(default=0, ge=0)
+    retry_rejected: bool = False  # abgewiesene Eingaben erneut fragen statt überspringen
     embedding: EmbeddingModel = EmbeddingModel()
     generation: GenerationModel = GenerationModel()
 

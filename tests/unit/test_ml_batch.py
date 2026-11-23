@@ -279,15 +279,16 @@ def test_ten_failures_in_a_row_stop_the_run(cache: ModelCache) -> None:
     assert len(computed) == 10
 
 
-def test_embed_texts_marks_a_rejected_text_and_leaves_it_open(tmp_path: Path) -> None:
+def test_embed_texts_marks_a_rejected_text_and_settles_it(tmp_path: Path) -> None:
+    """Eine Abweisung ist erledigt, nicht offen (Review F5, dritte Runde, N1)."""
     embedder = FakeEmbedder(dimension=4, rejects={"kaputt"})
     use = EmbeddingUse(embedder, "dok-1")
     with ModelCache(tmp_path, embedder.name) as cache:
         found = embed_texts(use, cache, ["eins", "kaputt", "zwei"], batch_size=3)
     assert found.present.tolist() == [True, False, True]
-    assert found.report.failures[0][0] == 1
-    assert (use.open, use.failed) == (1, 1)
-    assert use.stamp()["failed"] == 1
+    assert found.report.rejected[0][0] == 1 and found.report.failures == ()
+    assert (use.open, use.failed, use.rejected) == (0, 0, 1)
+    assert use.stamp()["rejected"] == 1
 
 
 def test_a_text_that_times_out_fails_alone_and_the_run_goes_on(tmp_path: Path) -> None:
@@ -299,3 +300,64 @@ def test_a_text_that_times_out_fails_alone_and_the_run_goes_on(tmp_path: Path) -
         found = embed_texts(use, cache, ["eins", "langsam", "zwei"], batch_size=3)
     assert found.present.tolist() == [True, False, True]
     assert found.report.failures[0][0] == 1 and "Zeitüberschreitung" in found.report.failures[0][1]
+
+
+# --- abgewiesene Eingaben (Review F5, dritte Runde, N1) ----------------------------------------
+
+
+def test_known_rejections_are_skipped_and_do_not_block_later_runs(tmp_path: Path) -> None:
+    """Probe des Reviewers (p_rerun): 24 Texte, 12 abgewiesen; ab Lauf 2 hieß es „10 in Folge"."""
+    texts = [f"bad{i}" if i % 2 else f"ok{i}" for i in range(24)]
+    embedder = FakeEmbedder(dimension=4, rejects={t for t in texts if t.startswith("bad")})
+    use = EmbeddingUse(embedder, "dok-1")
+    with ModelCache(tmp_path, embedder.name) as cache:
+        first = embed_texts(use, cache, texts, batch_size=4)
+        calls = len(embedder.calls)
+        second = embed_texts(use, cache, texts, batch_size=4)
+    assert (first.report.computed, len(first.report.rejected), first.report.failed) == (12, 12, 0)
+    assert first.report.rejected[0] == (1, "400 input rejected")
+    assert "12 abgewiesen" in first.report.line()
+    assert (second.report.cached, second.report.computed, len(second.report.rejected)) == (
+        12,
+        0,
+        12,
+    )
+    assert len(embedder.calls) == calls  # nichts neu gefragt
+    assert (use.open, use.failed, use.rejected) == (0, 0, 12)
+
+
+def test_ten_rejections_in_front_stop_one_run_but_not_the_next(tmp_path: Path) -> None:
+    texts = [f"bad{i}" for i in range(10)] + ["ok"]
+    embedder = FakeEmbedder(dimension=4, rejects=set(texts[:10]))
+    use = EmbeddingUse(embedder, "dok-1")
+    with ModelCache(tmp_path, embedder.name) as cache:
+        with pytest.raises(ModelError, match=r"10 Fehlschläge in Folge"):
+            embed_texts(use, cache, texts, batch_size=1)
+        again = embed_texts(use, cache, texts, batch_size=1)
+    assert again.present.tolist() == [False] * 10 + [True]
+    assert len(again.report.rejected) == 10 and again.report.computed == 1
+
+
+def test_retry_rejected_asks_again_and_forgets_a_rejection_that_passes(tmp_path: Path) -> None:
+    embedder = FakeEmbedder(dimension=4, rejects={"lang"})
+    use = EmbeddingUse(embedder, "dok-1")
+    with ModelCache(tmp_path, embedder.name) as cache:
+        embed_texts(use, cache, ["kurz", "lang"])
+        embedder.rejects = frozenset()
+        skipped = embed_texts(use, cache, ["kurz", "lang"])
+        retried = embed_texts(use, cache, ["kurz", "lang"], retry_rejected=True)
+        settled = embed_texts(use, cache, ["kurz", "lang"])
+    assert len(skipped.report.rejected) == 1 and skipped.report.computed == 0
+    assert retried.report.computed == 1 and retried.report.rejected == ()
+    assert settled.present.all() and settled.report.rejected == ()
+
+
+def test_a_rejection_from_the_server_is_recorded_with_its_reason(tmp_path: Path) -> None:
+    server = FakeOllama(dimension=4, rejects=["zu lang"])
+    client = OllamaClient(FAKE_URL, transport=server, sleep=lambda s: None)
+    use = EmbeddingUse(OllamaEmbedder(client, "fake-embed", dimension=4), "dok-1")
+    with ModelCache(tmp_path, use.name) as cache:
+        found = embed_texts(use, cache, ["kurz", "zu lang"], batch_size=2)
+    ((index, reason),) = found.report.rejected
+    assert index == 1 and "input length exceeds context" in reason
+    assert found.report.failures == ()

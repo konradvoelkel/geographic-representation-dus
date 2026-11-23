@@ -32,7 +32,11 @@ import numpy as np
 from georep.errors import SchemaError
 from georep.ml.base import Vectors, full_name
 
-CACHE_SCHEMA_VERSION = 2  # 2: Spalte ``truncated`` (Review 2026-11-23, Befund 2)
+CACHE_SCHEMA_VERSION = 3  # 2: Spalte ``truncated``; 3: Tabelle ``failures`` (Review F5, N1)
+REJECTED = "abgewiesen"  # das Modell wies die Eingabe ab; erledigt, bis jemand erneut fragt
+FAILED = (
+    "gescheitert"  # ein Fehlschlag ohne Abweisung (Zeit, 5xx); offen, beim nächsten Lauf zuletzt
+)
 CHUNK = 500  # Schlüssel je SELECT; SQLite nimmt höchstens 32 766 Parameter, ältere 999
 _UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
 # Mit Rowid, nicht ``WITHOUT ROWID``: so liegt der Primärschlüssel in einem eigenen Index ohne die
@@ -46,6 +50,15 @@ CREATE TABLE IF NOT EXISTS entries (
     input_sha256 TEXT NOT NULL,
     value BLOB NOT NULL,
     truncated INTEGER NOT NULL DEFAULT 0,
+    written TEXT NOT NULL,
+    PRIMARY KEY (digest, prompt, input_sha256)
+);
+CREATE TABLE IF NOT EXISTS failures (
+    digest TEXT NOT NULL,
+    prompt TEXT NOT NULL,
+    input_sha256 TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    reason TEXT NOT NULL,
     written TEXT NOT NULL,
     PRIMARY KEY (digest, prompt, input_sha256)
 );
@@ -226,7 +239,29 @@ class ModelCache:
                 "VALUES (?, ?, ?, ?, ?, ?)",
                 rows,
             )
+            # Ein Wert erledigt jeden früheren Fehlschlag derselben Eingabe, in derselben Transaktion.
+            self.connection.executemany(
+                "DELETE FROM failures WHERE digest = ? AND prompt = ? AND input_sha256 = ?",
+                [(key.digest, key.prompt, row[2]) for row in rows],
+            )
         return len(rows)
+
+    def put_failure(self, key: CacheKey, sha: str, kind: str, reason: str) -> None:
+        """Merkt sich, dass eine Eingabe scheiterte (``REJECTED`` oder ``FAILED``), mit Grund."""
+        written = dt.datetime.now(dt.UTC).isoformat(timespec="seconds")
+        with self.connection:
+            self.connection.execute(
+                "INSERT OR REPLACE INTO failures VALUES (?, ?, ?, ?, ?, ?)",
+                (key.digest, key.prompt, sha, kind, reason, written),
+            )
+
+    def failures(self, key: CacheKey) -> dict[str, tuple[str, str]]:
+        """Je gescheiterter Eingabe unter ``key``: (Art, Grund)."""
+        rows = self.connection.execute(
+            "SELECT input_sha256, kind, reason FROM failures WHERE digest = ? AND prompt = ?",
+            (key.digest, key.prompt),
+        )
+        return {sha: (kind, reason) for sha, kind, reason in rows}
 
     def truncated(self, key: CacheKey, shas: Sequence[str]) -> set[str]:
         """Die Eingaben unter ``shas``, deren Wert als unvollständig markiert ist."""

@@ -234,7 +234,12 @@ def freshness(step: Step, settings: Settings) -> tuple[bool, str]:
     except ValueError:
         return False, "Stamp unlesbar"
     reason = stamp_mismatch(stamped, step, settings)
-    return (True, "aktuell") if reason is None else (False, reason)
+    if reason is not None:
+        return False, reason
+    # F5: ein Modellschritt mit abgewiesenen Eingaben ist aktuell, sagt aber, wie viele es sind.
+    found = stamped.get("models")
+    rejected = found.get("rejected") if isinstance(found, dict) else 0
+    return True, f"aktuell, {rejected} Eingaben abgewiesen" if rejected else "aktuell"
 
 
 def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -> str | None:
@@ -264,6 +269,8 @@ def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -
         if recorded.get("open"):
             failed = f", davon {recorded['failed']} gescheitert" if recorded.get("failed") else ""
             return f"offen: {recorded['open']} Eingaben{failed}"
+        if recorded.get("rejected") and settings.ml.retry_rejected:
+            return f"{recorded['rejected']} abgewiesene Eingaben erneut versuchen"
     if stamped.get("code") != __version__:
         return f"Code-Version {stamped.get('code')} -> {__version__}"
     stamped_inputs = stamped.get("inputs")

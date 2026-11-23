@@ -23,9 +23,16 @@ import numpy as np
 import numpy.typing as npt
 from loguru import logger
 
-from georep.errors import ModelError, ModelUnreachableError, SchemaError
+from georep.errors import ModelError, ModelRejectedError, ModelUnreachableError, SchemaError
 from georep.ml.base import EmbeddingUse, GenerationUse, Vectors, full_name
-from georep.ml.cache import CacheKey, ModelCache, decode_vectors, encode_vector, input_sha256
+from georep.ml.cache import (
+    REJECTED,
+    CacheKey,
+    ModelCache,
+    decode_vectors,
+    encode_vector,
+    input_sha256,
+)
 
 
 def _duration(seconds: float) -> str:
@@ -70,7 +77,12 @@ class Progress:
 
 @dataclass(frozen=True)
 class BatchReport:
-    """Verschiedene Eingaben: aus dem Cache, in diesem Lauf gerechnet, offen wegen ``limit``."""
+    """Verschiedene Eingaben: aus dem Cache, neu, abgewiesen, gescheitert, offen wegen ``limit``.
+
+    ``rejected`` sind die Eingaben, die das Modell abwies, aus früheren Läufen (übersprungen) und
+    aus diesem; sie sind erledigt. ``failures`` sind die Fehlschläge dieses Laufs ohne Abweisung
+    (Zeit, 5xx); sie bleiben offen. Beide als (Index in ``keys``, Grund).
+    """
 
     total: int
     cached: int
@@ -78,8 +90,9 @@ class BatchReport:
     left: int
     seconds: float
     truncated: int = 0  # davon in diesem Lauf neu und abgeschnitten (an ``num_predict``)
-    # (Index in ``keys``, Grund) je Eingabe, die das Modell abwies; sie bleibt offen
     failures: tuple[tuple[int, str], ...] = ()
+    rejected: tuple[tuple[int, str], ...] = ()
+    skipped: int = 0  # davon aus früheren Läufen, in diesem nicht gefragt
 
     @property
     def failed(self) -> int:
@@ -87,11 +100,12 @@ class BatchReport:
 
     def line(self) -> str:
         cut = f", {self.truncated} abgeschnitten" if self.truncated else ""
+        rejected = f", {len(self.rejected)} abgewiesen" if self.rejected else ""
         failed = f", {self.failed} gescheitert" if self.failed else ""
         left = f", {self.left} offen (limit)" if self.left else ""
         return (
             f"{self.total} Eingaben: {self.cached} aus dem Cache, {self.computed} neu{cut}"
-            f"{failed}{left} in {self.seconds:.1f} s"
+            f"{rejected}{failed}{left} in {self.seconds:.1f} s"
         )
 
 
@@ -139,6 +153,7 @@ def _valid_sizes(
     label: str = "",
     progress: Callable[[Progress], None] | None = None,
     clock: Callable[[], float] = time.perf_counter,
+    retry_rejected: bool = False,
 ) -> bool:
     return batch_size >= 1 and limit >= 0
 
@@ -155,16 +170,18 @@ def _every_input_accounted_for(
     label: str = "",
     progress: Callable[[Progress], None] | None = None,
     clock: Callable[[], float] = time.perf_counter,
+    retry_rejected: bool = False,
 ) -> bool:
-    accounted = result.cached + result.computed + result.failed + result.left
-    tried = result.computed + result.failed
+    settled = result.cached + result.computed + len(result.rejected)
+    accounted = settled + result.failed + result.left
+    tried = result.computed + result.failed + len(result.rejected) - result.skipped
     return accounted == result.total == len(set(keys)) and (not limit or tried <= limit)
 
 
 @deal.pre(_valid_sizes, message="batch_size mindestens 1, limit nicht negativ")
 @deal.ensure(
     _every_input_accounted_for,
-    message="jede verschiedene Eingabe ist aus dem Cache, neu, gescheitert oder offen; "
+    message="jede verschiedene Eingabe ist aus dem Cache, neu, abgewiesen, gescheitert oder offen; "
     "versucht höchstens limit",
 )
 def run_batch(
@@ -178,28 +195,41 @@ def run_batch(
     label: str = "",
     progress: Callable[[Progress], None] | None = None,
     clock: Callable[[], float] = time.perf_counter,
+    retry_rejected: bool = False,
 ) -> BatchReport:
     """Rechnet die fehlenden Eingaben in Stapeln; ``compute`` bekommt Indizes in ``keys``.
 
     ``keys`` ist je Eingabe ihr SHA-256 (``input_sha256``); doppelte werden einmal gerechnet, an
     ihrer ersten Stelle. ``compute`` liefert je Index einen Wert, in derselben Reihenfolge.
 
-    Weist das Modell einen Stapel ab (``ModelError``), wird er in Einzeltexte zerlegt; was dann
-    noch scheitert, steht mit Index und Grund in ``failures``, bleibt offen, und der Lauf geht
-    weiter (Review 2026-11-23, Befund 7). Ein fehlender Server (``ModelUnreachableError``) und
-    ``MAX_FAILURES_IN_ROW`` Fehlschläge in Folge brechen ab: dann liegt es nicht an einem Text.
+    Scheitert ein Stapel (``ModelError``), wird er in Einzeltexte zerlegt; was dann noch
+    scheitert, steht mit Index und Grund im Bericht, und der Lauf geht weiter (Review F5, Befund 7).
+    Eine Abweisung (``ModelRejectedError``) merkt sich der Cache mit Grund: sie ist erledigt, und
+    spätere Läufe fragen sie nicht wieder, außer mit ``retry_rejected`` (dritte Runde, N1). Jeder
+    andere Fehlschlag bleibt offen. Ein fehlender Server (``ModelUnreachableError``) und
+    ``MAX_FAILURES_IN_ROW`` neue Fehlschläge in Folge brechen ab: dann liegt es nicht an einem Text.
+    Was bis dahin abgewiesen wurde, ist gemerkt; der nächste Lauf kommt also weiter.
     """
     started = clock()
     first: dict[str, int] = {}
     for index, sha in enumerate(keys):
         first.setdefault(sha, index)
     known = cache.known(key) & first.keys()
+    noted = {sha: note for sha, note in cache.failures(key).items() if sha in first}
     missing = [index for sha, index in first.items() if sha not in known]
-    todo = missing[:limit] if limit else missing
+    skipped = (
+        []
+        if retry_rejected
+        else [i for i in missing if noted.get(keys[i], ("", ""))[0] == REJECTED]
+    )
+    skip = set(skipped)
+    candidates = [i for i in missing if i not in skip]
+    todo = candidates[:limit] if limit else candidates
     name = label or key.model
     done = 0
     cut = 0
     failures: list[tuple[int, str]] = []
+    rejected = [(i, noted[keys[i]][1]) for i in skipped]
     in_row = 0
     for start in range(0, len(todo), batch_size):
         chunk = todo[start : start + batch_size]
@@ -211,8 +241,13 @@ def run_batch(
         )
         for indices, result in groups:
             if isinstance(result, ModelError):
-                failures.append((indices[0], str(result)))
-                logger.warning(f"{name}: Eingabe {indices[0]} gescheitert: {result}")
+                index = indices[0]
+                if isinstance(result, ModelRejectedError):
+                    cache.put_failure(key, keys[index], REJECTED, str(result))
+                    rejected.append((index, str(result)))
+                else:
+                    failures.append((index, str(result)))
+                logger.warning(f"{name}: Eingabe {index} gescheitert: {result}")
                 in_row += 1
                 if in_row >= MAX_FAILURES_IN_ROW:
                     raise ModelError(
@@ -231,16 +266,18 @@ def run_batch(
             done += len(indices)
             cut += sum(v.truncated for v in result)
         if progress is not None:
-            tried = done + len(failures)
+            tried = done + len(failures) + len(rejected) - len(skipped)
             progress(Progress(label, tried, len(todo), len(known), len(first), clock() - started))
     return BatchReport(
         total=len(first),
         cached=len(known),
         computed=done,
-        left=len(missing) - done - len(failures),
+        left=len(candidates) - done - len(failures) - (len(rejected) - len(skipped)),
         seconds=clock() - started,
         truncated=cut,
         failures=tuple(failures),
+        rejected=tuple(sorted(rejected)),
+        skipped=len(skipped),
     )
 
 
@@ -277,6 +314,7 @@ def embed_texts(
     limit: int = 0,
     progress: Callable[[Progress], None] | None = None,
     clock: Callable[[], float] = time.perf_counter,
+    retry_rejected: bool = False,
 ) -> Embedded:
     """Einbettungen für ``texts`` aus dem Cache und, was fehlt, vom Modell.
 
@@ -301,8 +339,14 @@ def embed_texts(
         label=use.name,
         progress=progress,
         clock=clock,
+        retry_rejected=retry_rejected,
     )
-    use.record(open=report.left + report.failed, failed=report.failed, limit=limit)
+    use.record(
+        open=report.left + report.failed,
+        failed=report.failed,
+        rejected=len(report.rejected),
+        limit=limit,
+    )
     found = cache.get_many(key, sorted(set(shas)))
     present = np.asarray([sha in found for sha in shas], dtype=np.bool_)
     zero = bytes(4 * embedder.dimension)
@@ -332,6 +376,7 @@ def generate_texts(
     limit: int = 0,
     progress: Callable[[Progress], None] | None = None,
     clock: Callable[[], float] = time.perf_counter,
+    retry_rejected: bool = False,
 ) -> Generated:
     """Antworten auf ``prompts`` (je ein fertiger Prompt) mit gemeinsamer Systemnachricht.
 
@@ -358,8 +403,14 @@ def generate_texts(
         label=use.name,
         progress=progress,
         clock=clock,
+        retry_rejected=retry_rejected,
     )
-    use.record(open=report.left + report.failed, failed=report.failed, limit=limit)
+    use.record(
+        open=report.left + report.failed,
+        failed=report.failed,
+        rejected=len(report.rejected),
+        limit=limit,
+    )
     distinct = sorted(set(shas))
     found = cache.get_many(key, distinct)
     cut = cache.truncated(key, distinct)

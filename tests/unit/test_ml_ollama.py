@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import requests
 
-from georep.errors import ModelError, ModelUnreachableError
+from georep.errors import ModelError, ModelRejectedError, ModelUnreachableError
 from georep.ml.base import (
     Embedder,
     EmbeddingOptions,
@@ -311,3 +311,15 @@ def test_the_client_refuses_a_server_elsewhere_unless_allowed() -> None:
 def test_the_session_ignores_proxies_and_netrc_from_the_environment() -> None:
     """Ein ``HTTP_PROXY`` aus der Umgebung leitete sonst auch localhost über einen Proxy."""
     assert OllamaClient(URL).transport.trust_env is False  # type: ignore[attr-defined]
+
+
+def test_a_rejected_input_is_its_own_error_and_a_missing_model_is_not() -> None:
+    """Review F5, N1: nur eine Abweisung der Eingabe (4xx außer 404) merkt sich der Stapellauf."""
+    server = FakeOllama(rejects=["zu lang"])
+    client, _ = _client(server)
+    embedder = OllamaEmbedder(client, "fake-embed", dimension=8)
+    with pytest.raises(ModelRejectedError, match=r"400.*exceeds context"):
+        embedder.embed(["zu lang"])
+    with pytest.raises(ModelError, match=r"not found") as caught:
+        client.capabilities("gibt-es-nicht")
+    assert type(caught.value) is ModelError

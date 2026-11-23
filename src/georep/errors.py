@@ -41,6 +41,14 @@ class ModelError(GeorepError):
     """Ein lokales Modell war nicht erreichbar, fehlt auf dem Server oder antwortete unbrauchbar (F5)."""
 
 
+class ModelRejectedError(ModelError):
+    """Der Modellserver wies diese Eingabe ab (4xx, etwa ein Text über dem Fenster ohne ``truncate``).
+
+    Eine Unterklasse, weil der Stapellauf sich die Abweisung mit Grund merkt und die Eingabe in
+    späteren Läufen überspringt (Review F5, dritte Runde, N1); ein fehlendes Modell (404) ist es nicht.
+    """
+
+
 class ModelUnreachableError(ModelError):
     """Der Modellserver war nicht erreichbar: er nahm die Verbindung nicht an.
 

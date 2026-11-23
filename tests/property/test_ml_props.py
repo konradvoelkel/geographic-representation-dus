@@ -10,6 +10,7 @@ import numpy as np
 from hypothesis import given
 from hypothesis import strategies as st
 
+from georep.errors import ModelError, ModelRejectedError
 from georep.ml.batch import run_batch
 from georep.ml.cache import CacheKey, ModelCache, decode_vectors, encode_vector
 from tests.fakes import fake_vector
@@ -62,3 +63,40 @@ def test_fake_vectors_are_unit_length_and_stable(text: str, dimension: int) -> N
     vector = fake_vector(text, dimension)
     assert len(vector) == dimension and fake_vector(text, dimension) == vector
     assert abs(sum(v * v for v in vector) - 1.0) < 1e-9
+
+
+@given(
+    keys=keys,
+    poison=st.sets(st.sampled_from([f"{i:064x}" for i in range(12)])),
+    batch_size=st.integers(1, 5),
+    limits=st.lists(st.integers(0, 6), min_size=1, max_size=4),
+)
+def test_every_input_is_computed_or_rejected_once_and_never_asked_again(
+    keys: list[str], poison: set[str], batch_size: int, limits: list[int]
+) -> None:
+    """Review F5, dritte Runde, N1: eine Abweisung ist erledigt, kein Lauf fragt sie ein zweites Mal.
+
+    Die Grenze ``MAX_FAILURES_IN_ROW`` darf einen Lauf beenden; der nächste kommt dann weiter,
+    weil die Abweisungen bis dahin gemerkt sind. Am Ende ist jede Eingabe gerechnet oder abgewiesen.
+    """
+    asked: list[str] = []
+
+    def compute(indices: Sequence[int]) -> list[bytes]:
+        if len(indices) == 1:
+            asked.append(keys[indices[0]])
+        if poison & {keys[i] for i in indices}:
+            raise ModelRejectedError("400 abgewiesen")
+        return [keys[i].encode() for i in indices]
+
+    with tempfile.TemporaryDirectory() as tmp, ModelCache(Path(tmp), KEY.model) as cache:
+        for limit in [*limits, 0, 0, 0]:
+            try:
+                report = run_batch(keys, compute, cache, KEY, batch_size=batch_size, limit=limit)
+            except ModelError:
+                continue  # zehn in Folge: der nächste Lauf fängt hinter ihnen an
+        distinct = set(keys)
+        assert report.left == 0 and report.failed == 0
+        assert {keys[i] for i, _ in report.rejected} == distinct & poison
+        assert set(cache.known(KEY)) == distinct - poison
+        # einzeln gefragt wird jede abgewiesene Eingabe genau einmal
+        assert sorted(a for a in asked if a in poison) == sorted(distinct & poison)

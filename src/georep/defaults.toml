@@ -238,6 +238,7 @@ backoff_s = 2.0
 keep_alive = "10m"             # so lange haelt ollama ein Modell nach dem letzten Aufruf im Grafikspeicher; Laufzeit
 batch_size = 32                # Texte je Einbettungsaufruf und je Transaktion im Modellcache. Laufzeit: ein anderer Stapel kann die letzten Bits einer Einbettung aendern, doch was im Cache liegt, wird nicht neu gerechnet
 limit = 0                      # hoechstens so viele neue Eingaben je Stapellauf, also je Aufruf von embed_texts oder generate_texts (ein Schritt mit zwei Stapellaeufen rechnet bis zu zweimal so viele); 0 = alle. `georep run --models --limit N` setzt es fuer einen Lauf; was offen bleibt, steht im Stamp des Schritts, und `georep status` zeigt ihn danach als offen
+retry_rejected = false         # true: Eingaben, die das Modell einmal abwies (4xx, Grund im Modellcache), erneut fragen; sonst ueberspringt jeder Lauf sie, und der Schritt gilt mit ihnen als aktuell ("aktuell, n Eingaben abgewiesen"). `georep run --models --retry-rejected` setzt es fuer einen Lauf
 
 [ml.embedding]                 # Vorhaben 18
 model = "nomic-embed-text-v2-moe"  # mehrsprachig, 475 M Parameter, F16, 958 MB; ohne Tag heisst es :latest

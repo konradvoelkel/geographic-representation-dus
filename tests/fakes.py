@@ -13,7 +13,7 @@ import numpy as np
 import numpy.typing as npt
 import requests
 
-from georep.errors import ModelError
+from georep.errors import ModelRejectedError
 from georep.ml.base import EmbeddingOptions, GenerationOptions, Reply
 
 
@@ -127,7 +127,7 @@ class FakeEmbedder:
         """Ein Stapel mit einem Text aus ``rejects`` wird ganz abgewiesen, wie vom Server (400)."""
         self.calls.append(list(texts))
         if self.rejects & set(texts):
-            raise ModelError("400 input rejected")
+            raise ModelRejectedError("400 input rejected")
         rows = [fake_vector(t, self.dimension) for t in texts]
         return np.asarray(rows, dtype=np.float32).reshape(len(rows), self.dimension)
 
@@ -185,6 +185,7 @@ class FakeOllama:
         failures: Sequence[int] = (),
         loaded: Sequence[str] = (),
         slow: Sequence[str] = (),
+        rejects: Sequence[str] = (),
     ) -> None:
         self.models = dict(FAKE_MODELS if models is None else models)
         self.base_url = base_url
@@ -193,6 +194,7 @@ class FakeOllama:
         self.failures = list(failures)
         self.loaded = list(loaded)
         self.slow = set(slow)  # Texte, bei denen /api/embed in den Lese-Timeout läuft
+        self.rejects = set(rejects)  # Texte, die /api/embed mit 400 abweist
         self.requests: list[tuple[str, Any]] = []
 
     @property
@@ -264,6 +266,8 @@ class FakeOllama:
             texts = payload["input"]
             if self.slow & set(texts):
                 raise requests.ReadTimeout(f"read timed out: {url}")
+            if self.rejects & set(texts):
+                return response(url, status=400, payload={"error": "input length exceeds context"})
             return response(
                 url,
                 payload={

@@ -25,7 +25,7 @@ import numpy as np
 import requests
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from georep.errors import ModelError, ModelUnreachableError
+from georep.errors import ModelError, ModelRejectedError, ModelUnreachableError
 from georep.http import TimeoutSession, Transport, is_loopback_url
 from georep.ml.base import (
     Call,
@@ -210,6 +210,10 @@ class OllamaClient:
                 except ValueError as error:
                     raise ModelError(f"{url}: Antwort unbrauchbar, kein JSON") from error
             problem = f"antwortete {resp.status_code}: {_error_text(resp)}"
+            if resp.status_code == 404:
+                raise ModelError(f"{url} {problem}")  # ein fehlendes Modell, kein Fehler des Texts
+            if resp.status_code < 500 and resp.status_code not in RETRY_STATUSES:
+                raise ModelRejectedError(f"{url} {problem}")
             if resp.status_code not in RETRY_STATUSES:
                 raise ModelError(f"{url} {problem}")
         if problem.startswith("nicht erreichbar"):
@@ -236,7 +240,7 @@ class OllamaClient:
                 f"ollama unter {self.base_url} nicht erreichbar; läuft `ollama serve`?"
             )
 
-    @deal.raises(ModelError, ModelUnreachableError)
+    @deal.raises(ModelError, ModelRejectedError, ModelUnreachableError)
     def version(self) -> str:
         """Die Version des Servers. Eine Probe, darum ohne Wiederholung: fehlt er, sofort Bescheid."""
         data = self._call("GET", "/api/version", retries=0)
@@ -244,7 +248,7 @@ class OllamaClient:
         self._running = True
         return found
 
-    @deal.raises(ModelError, ModelUnreachableError)
+    @deal.raises(ModelError, ModelRejectedError, ModelUnreachableError)
     def models(self) -> list[ModelInfo]:
         """Alle Modelle des Servers mit Digest, nach Namen sortiert; füllt den Speicher für ``info``."""
         tags = self._parse(_Tags, self._call("GET", "/api/tags"), "/api/tags")
@@ -263,7 +267,7 @@ class OllamaClient:
         self._infos = {info.name: info for info in found}
         return sorted(found, key=lambda info: info.name)
 
-    @deal.raises(ModelError, ModelUnreachableError)
+    @deal.raises(ModelError, ModelRejectedError, ModelUnreachableError)
     def info(self, name: str) -> ModelInfo:
         """Ein Modell mit Digest; fehlt es, sagt der Fehler, wie man es holt."""
         wanted = full_name(name)
@@ -282,12 +286,12 @@ class OllamaClient:
             self._shows[wanted] = self._parse(_Show, data, "/api/show")
         return self._shows[wanted]
 
-    @deal.raises(ModelError, ModelUnreachableError)
+    @deal.raises(ModelError, ModelRejectedError, ModelUnreachableError)
     def capabilities(self, name: str) -> tuple[str, ...]:
         """Was ein Modell kann (``embedding``, ``completion``, ``thinking`` …), aus ``/api/show``."""
         return self._show(name).capabilities
 
-    @deal.raises(ModelError, ModelUnreachableError)
+    @deal.raises(ModelError, ModelRejectedError, ModelUnreachableError)
     def dimension(self, name: str) -> int:
         """Die Vektorlänge eines Einbettungsmodells (``<familie>.embedding_length`` in ``/api/show``)."""
         show = self._show(name)
@@ -296,17 +300,17 @@ class OllamaClient:
             raise ModelError(f"{full_name(name)} ist kein Einbettungsmodell mit einer Vektorlänge")
         return int(lengths[0])
 
-    @deal.raises(ModelError, ModelUnreachableError)
+    @deal.raises(ModelError, ModelRejectedError, ModelUnreachableError)
     def loaded(self) -> list[Running]:
         """Die Modelle im Speicher des Servers; eine Probe ohne Wiederholung."""
         data = self._call("GET", "/api/ps", retries=0)
         return self._parse(_Ps, data, "/api/ps").models
 
-    @deal.raises(ModelError, ModelUnreachableError)
+    @deal.raises(ModelError, ModelRejectedError, ModelUnreachableError)
     def embed(self, payload: dict[str, Any]) -> _Embed:
         return self._parse(_Embed, self._call("POST", "/api/embed", payload), "/api/embed")
 
-    @deal.raises(ModelError, ModelUnreachableError)
+    @deal.raises(ModelError, ModelRejectedError, ModelUnreachableError)
     def chat(self, payload: dict[str, Any]) -> _Chat:
         return self._parse(_Chat, self._call("POST", "/api/chat", payload), "/api/chat")
 
@@ -337,7 +341,7 @@ class OllamaEmbedder:
     def digest(self) -> str:
         return self.client.info(self.name).digest
 
-    @deal.raises(ModelError, ModelUnreachableError)
+    @deal.raises(ModelError, ModelRejectedError, ModelUnreachableError)
     @deal.ensure(lambda self, texts, result: result.shape == (len(texts), self.dimension))
     def embed(self, texts: Sequence[str]) -> Vectors:
         if not texts:
@@ -390,7 +394,7 @@ class OllamaGenerator:
     def digest(self) -> str:
         return self.client.info(self.name).digest
 
-    @deal.raises(ModelError, ModelUnreachableError)
+    @deal.raises(ModelError, ModelRejectedError, ModelUnreachableError)
     def generate(
         self, prompt: str, *, system: str = "", options: GenerationOptions | None = None
     ) -> Reply:
