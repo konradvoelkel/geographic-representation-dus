@@ -352,3 +352,50 @@ def test_a_raw_text_package_or_store_of_another_schema_version_counts_as_missing
     layout.raw_texts.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(old, layout.raw_texts)
     assert bootstrap(layout, raw_texts=package).raw_texts == 5
+
+
+def _bridged_texts(layout: Layout, names: list[str]) -> None:
+    """Den Textstore so schreiben, wie ``pack`` ihn neben einem Rohtextpaket voraussetzt.
+
+    ``_raw_package`` legt je Name ``extractor="x+roh"`` und ``pdf_sha256="0"`` ab; die Brücke
+    verlangt im Textstore denselben Hash und den Extraktor ohne ``+roh``.
+    """
+    texts = TextStore(layout.texts)
+    for name in names:
+        texts.put(name, f"text {name}", TextMeta(extractor="x", pdf_sha256="0", source="pdf"))
+    texts.save()
+
+
+def test_a_half_raw_text_store_gets_the_missing_names_from_the_package(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    """Review F1, dritte Runde: ein halber, nicht leerer Store hielt das Paket fern.
+
+    Ein frischer Klon mit ``fetch pdfs --limit N`` und ``raw_texts`` vor ``bootstrap`` hat N
+    Rohtexte; das Paket kam danach ohne ``--force`` nie mehr an. Jetzt ergänzt ``bootstrap`` die
+    fehlenden Namen über die Brücke (gleicher PDF-Hash, Extraktor des Textstores mit ``+roh``) und
+    lässt die eigenen Zeilen stehen: ein eigener Lauf gilt vor dem Paket.
+    """
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    names = _file_names(probe)[:6]
+    package = _raw_package(tmp_path, names)
+    layout = _layout(tmp_path / "neu", mini_root)
+    bootstrap(layout)
+    _bridged_texts(layout, names[:5])  # names[5] hat keine Brücke: sein Text kommt aus der Arbeit
+    own = RawTextStore(layout.raw_texts)
+    own.put(names[0], "eigener Lauf", pages=1, extractor="x+roh", pdf_sha256="0")
+    own.save()
+    report = bootstrap(layout, raw_texts=package)
+    merged = RawTextStore(layout.raw_texts)
+    assert sorted(merged.rows) == sorted(names[:5])
+    assert merged.get(names[0]) == "eigener Lauf"
+    assert merged.get(names[1]) == RawTextStore(package).get(names[1])
+    assert report.raw_texts == 4 and "rohtexte.parquet" not in report.skipped
+    assert (
+        f"4 Rohtexte aus {package} ergänzt, 1 eigene behalten, 1 ohne Brücke zum Textstore"
+        in report.summary()
+    )
+    # Ein zweiter Bootstrap findet nichts mehr zu ergänzen und lässt den Store stehen
+    again = bootstrap(layout, raw_texts=package)
+    assert again.raw_texts is None and "rohtexte.parquet" in again.skipped

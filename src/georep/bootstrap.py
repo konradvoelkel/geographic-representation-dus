@@ -24,6 +24,7 @@ from loguru import logger
 
 from georep.io import atomic_path
 from georep.layout import Layout
+from georep.prep.raw_texts import RAW_SUFFIX
 from georep.records import PaperRecord
 from georep.settings import Settings
 from georep.sources.pdfs import PdfStore
@@ -31,6 +32,7 @@ from georep.stores import (
     RAW_TEXT_SCHEMA_VERSION,
     REFERENCE_EXTRACTOR,
     PaperStore,
+    RawTextStore,
     TextMeta,
     TextStore,
     stored_schema_version,
@@ -53,6 +55,11 @@ class BootstrapReport:
     raw_texts: int | None = None
     raw_texts_package: Path | None = None
     raw_texts_refused: str = ""
+    # Review F1, dritte Runde: ein halber Store wird aus dem Paket ergänzt, nicht ersetzt. Dann
+    # nennt ``raw_texts_kept`` die eigenen Zeilen und ``raw_texts_unbridged`` die Namen des Pakets,
+    # deren Text im Textstore einen anderen PDF-Hash oder Extraktor trägt.
+    raw_texts_kept: int | None = None
+    raw_texts_unbridged: int = 0
 
     def summary(self) -> str:
         if not self.seed_corpus:
@@ -67,11 +74,19 @@ class BootstrapReport:
         else:
             stores = "Stores vorhanden"
         refused = f"; {self.texts_refused}" if self.texts_refused else ""
-        raw = (
-            f"; {self.raw_texts} Rohtexte aus {self.raw_texts_package}"
-            if self.raw_texts is not None
-            else ""
-        )
+        raw = ""
+        if self.raw_texts is not None and self.raw_texts_kept is not None:
+            unbridged = (
+                f", {self.raw_texts_unbridged} ohne Brücke zum Textstore"
+                if self.raw_texts_unbridged
+                else ""
+            )
+            raw = (
+                f"; {self.raw_texts} Rohtexte aus {self.raw_texts_package} ergänzt, "
+                f"{self.raw_texts_kept} eigene behalten{unbridged}"
+            )
+        elif self.raw_texts is not None:
+            raw = f"; {self.raw_texts} Rohtexte aus {self.raw_texts_package}"
         raw_refused = f"; {self.raw_texts_refused}" if self.raw_texts_refused else ""
         return (
             f"{len(self.copied)} Dateien kopiert, {len(self.skipped)} übersprungen, "
@@ -174,18 +189,16 @@ def overlay_raw_texts(
     tragen: ein PDF, das pypdf nicht lesen kann, hat keinen Rohtext, und der Textstore behält dafür
     den Text der Arbeit (Punkt 68). Es darf aber keinen Namen tragen, der keine Hauptdatei dieser
     Paper ist -- dann ist es das Paket eines anderen Datensatzes (die Mini-Fixture bootstrappt mit
-    den Settings der Hauptperiode). Ein vorhandener Rohtextstore bleibt ohne ``force`` stehen, wie
-    jede andere Eingabe -- außer er ist leer: den legt der Schritt ``raw_texts`` ohne PDFs an, und
-    zählte er als vorhanden, käme das Paket ohne ``--force`` nie mehr an (Review F1, M2). Gelesen
-    wird für die Prüfung nur die Spalte ``name``.
+    den Settings der Hauptperiode). Ein leerer Store oder einer in alter Version am Ziel zählt wie
+    ein fehlender (Review F1, M2): den legt der Schritt ``raw_texts`` ohne PDFs an. Trägt der Store
+    schon Zeilen (ein eigener Lauf über einen Teil der PDFs), wird er nicht ersetzt, sondern um die
+    fehlenden Namen ergänzt (``_complete_from_package``); ``force`` ersetzt ihn. Gelesen wird für die
+    Prüfung nur die Spalte ``name``.
     """
     if not package.is_file():
         report.missing.append(package.name)
         return
     target = layout.guard_writable(layout.raw_texts)
-    if not force and _holds_rows(target):
-        report.skipped.append(target.name)
-        return
     version = stored_schema_version(package)
     if version != str(RAW_TEXT_SCHEMA_VERSION):
         report.raw_texts_refused = (
@@ -203,10 +216,61 @@ def overlay_raw_texts(
         )
         logger.warning(report.raw_texts_refused)
         return
+    if not force and _holds_rows(target):
+        _complete_from_package(layout, package, report)
+        return
     target.parent.mkdir(parents=True, exist_ok=True)
     with atomic_path(target) as tmp:
         shutil.copyfile(package, tmp)
     report.raw_texts = len(names)
+    report.raw_texts_package = package
+
+
+def _complete_from_package(layout: Layout, package: Path, report: BootstrapReport) -> None:
+    """Einen halben Rohtextstore um die Namen des Pakets ergänzen, die ihm fehlen.
+
+    Review F1, dritte Runde: ein frischer Klon mit ``georep fetch pdfs --limit N`` und
+    ``raw_texts`` vor ``bootstrap`` hat N Rohtexte, und bis dahin hielt dieser halbe Store das Paket
+    für immer fern. Die eigenen Zeilen bleiben (ein eigener Lauf gilt vor dem Paket); dazu kommt
+    jede Zeile des Pakets, deren Name fehlt und deren Brücke zum Textstore hält -- derselbe
+    PDF-Hash und der Extraktor des Textstores mit ``+roh``, wie ``pack.check_raw_bridge`` sie beim
+    Packen verlangt. Ohne Brücke gehörte der Rohtext zu einem anderen Text als dem, den die Suche
+    liest. Ist nichts zu ergänzen, bleibt der Store stehen wie jede vorhandene Eingabe.
+    """
+    target = layout.raw_texts
+    store = RawTextStore(target)
+    kept = len(store)
+    texts = TextStore(layout.texts).rows if layout.texts.is_file() else {}
+    source = RawTextStore(package)
+    added = unbridged = 0
+    for name, row in sorted(source.rows.items()):
+        if name in store:
+            continue
+        text = texts.get(name)
+        if (
+            text is None
+            or text["pdf_sha256"] != row["pdf_sha256"]
+            or f"{text['extractor']}{RAW_SUFFIX}" != row["extractor"]
+        ):
+            unbridged += 1
+            continue
+        store.put(
+            name,
+            str(row["text"]),
+            pages=int(row["pages"]),  # type: ignore[call-overload]
+            extractor=str(row["extractor"]),
+            pdf_sha256=str(row["pdf_sha256"]),
+            form_feeds=source.form_feeds(name),
+        )
+        added += 1
+    if not added:
+        report.skipped.append(target.name)
+        report.raw_texts_unbridged = unbridged
+        return
+    store.save()
+    report.raw_texts = added
+    report.raw_texts_kept = kept
+    report.raw_texts_unbridged = unbridged
     report.raw_texts_package = package
 
 

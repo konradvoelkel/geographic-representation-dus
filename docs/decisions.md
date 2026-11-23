@@ -2743,7 +2743,10 @@ abschneidet. Darum kommt ein zweiter Store dazu, kein Umbau des ersten.
   jeder Name eine Hauptdatei des Datensatzes ist und das Paket die aktuelle Schema-Version trägt;
   die Mini-Fixture, die mit den Settings der Hauptperiode bootstrappt, lehnt das Paket damit weiter
   ab. Ein Store am Ziel, der leer ist oder eine alte Version trägt, zählt wie ein fehlender: sonst
-  käme das Paket nach einem Lauf ohne PDFs ohne `--force` nie mehr an.
+  käme das Paket nach einem Lauf ohne PDFs ohne `--force` nie mehr an. Ein halber Store (ein
+  eigener Lauf über einen Teil der PDFs, etwa nach `fetch pdfs --limit N`) wird nicht ersetzt,
+  sondern um die fehlenden Namen ergänzt, über dieselbe Brücke wie beim Packen (gleicher
+  PDF-Hash, Extraktor des Textstores mit `+roh`); die eigenen Zeilen bleiben.
 - Der Schlüssel `raw_texts` steht im Block `[bootstrap]` von `defaults.toml` neben `texts` und nicht
   in einem eigenen Block am Ende: TOML erlaubt eine Tabelle nur einmal. `bootstrap` liegt außerhalb
   des Settings-Fingerprints, ein Merge rechnet darum nichts neu. Ein Schalter für den Schritt fehlt
