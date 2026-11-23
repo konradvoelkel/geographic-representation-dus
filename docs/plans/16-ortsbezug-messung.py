@@ -105,6 +105,10 @@ NEBEN_A_MIN_BEGLEIT = 3
 NEBEN_B = frozenset({"titel", "betreff"})
 LISTE_MAX_ZEILE = 60  # Zeichen der Zeile ohne Leerraum am Rand
 LISTE_MAX_VORLAUF = 12  # Zeichen vor dem Begriff in dieser Zeile („14 ", „1. ", „6 Anlage ")
+# Runde 2 (Umbau, vorab festgelegt am 2026-11-23 um 20:56, Messdokument § 5.3): bestätigt werden
+# soll Nebenregel C genau so, wie sie in Runde 1 gemessen ist; Rückfall ohne Regel.
+FASSUNG_2 = "neben_c"
+EXTRACTOR_2 = "ortsbezug-entwurf-2"
 # Gewicht nach Stelle (Sensitivität, kein Ergebnis der Validierung): bestes Gewicht über alle
 # Treffer des Paares, jeder Faktor in [0, 1] wie in analysis/weights.py.
 GEWICHT_STELLE = {"titel": 1.0, "betreff": 1.0, "kern": 1.0, "begleittext": 0.5, "rest": 0.25}

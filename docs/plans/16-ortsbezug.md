@@ -615,6 +615,47 @@ Die erste Fassung dieses Abschnitts (Commit `67d038f`, vor der Kodierung) schät
 Durchsicht von 40 Paaren außerhalb der Stichprobe F1 ≈ 0,75 für die Regel und ≈ 0,90 für die
 triviale; gemessen sind 0,772 und 0,902.
 
+### 5.3 Umbau, Runde 2: vorab festgelegt (2026-11-23, 20:56, vor Stichprobe, Codebuch und Kodierung)
+
+Eine Runde Umbauen nach § 8 des Meta-Plans, wie bei 12 und 14. Dieser Abschnitt ist geschrieben und
+committet, bevor die Stichprobe der Runde 2 gezogen, das Codebuch Fassung 2 geschrieben und ein Paar
+kodiert ist; er wird danach nicht mehr geändert, Ergebnisse kommen in einen eigenen Abschnitt.
+
+**Verfahren, das bestätigt werden soll: `ortsbezug-entwurf-2` = Nebenregel C, genau so, wie sie in
+§ 4.1 gemessen ist**, ohne weitere Anpassung an die Labels der Runde 1. Ein Paar (Dokument,
+Wahlbezirk) handelt von einem Ort des Bezirks, wenn mindestens ein Begriff seines Wörterbuchs
+(a) im Titel, im Betreff oder im Kern (Beschlussvorschlag, Fragen) steht, oder (b) im Begleittext in
+einer Listenzeile steht (die Zeile ohne Leerraum am Rand hat höchstens 60 Zeichen, vor dem Begriff
+stehen in ihr höchstens 12) oder eine Hausnummer trägt (Muster `HAUSNR` des Messskripts mit dem
+Ausschluss „Standort"). Code: `rule_columns`, Spalte `neben_c`, Konstanten `LISTE_MAX_ZEILE = 60`,
+`LISTE_MAX_VORLAUF = 12` im Messskript, unverändert seit Commit `7102908`; im Skript heißt die
+Fassung `FASSUNG_2 = "neben_c"`.
+
+**Kriterium** (gemessen wie in § 4.1): F1 der Klasse „handelt von", mit den Schichtgewichten der
+Stichprobe 2 hochgerechnet, **≥ 0,8**, **und** das 95-%-Intervall von Cohens κ zwischen Verfahren
+und Label (geschichteter Bootstrap, 2 000 Ziehungen, Seed 20261123) **liegt über 0**. „Erwähnt" und
+„kein Bezug" sind beide „nicht handelt von". Labels: zwei Kodier-Agenten nach Codebuch Fassung 2
+(`validierung/16-ortsbezug/codebuch-2.toml`: die Vorschläge (a) bis (e) aus § 9.13 als Regeln, der
+Stadtbezirk und die Stadtteile des Wahlbezirks im Material), ein Schlicht-Agent für die
+Uneinigkeiten.
+
+**Stichprobe**: 100 Paare mit Stelle, Seed `"16-2"`, ohne die 200 Dokumente der Runde 1, ein Paar
+je Dokument, geschichtet wie in § 4.3 (Titel/Betreff, Kern, Begleittext und Rest; proportional mit
+mindestens 30 je Schicht, `allocate` aus 11). Aufgaben-IDs `16-2-NNN`.
+
+**Rückfallregel, falls C scheitert** (F1 < 0,8 oder κ-Intervall nicht über 0): **keine Regel „handelt
+von" wird gebaut**, weder C noch A noch die ursprüngliche. Gebaut werden nur die Stelle je Treffer
+(Spalte und Gewichtsvariante `stelle`, explorativ) und die Hausnummern; die Seite nennt die
+Kodierung als Befund (Anteil „handelt von", Fehltreffer). Nebenregel A wird **nicht** als Ersatz
+geprüft: zwei Regeln an einer Bestätigungsstichprobe wären zwei Tests, und A war in Runde 1
+schwächer (0,831 gegen 0,868). A, B, die ursprüngliche Regel und die triviale „alles handelt von"
+werden an der Stichprobe 2 nur berichtet, explorativ. Liegt α zwischen den Kodierern unter 0,8, ist
+Fassung 2 zu unscharf; eine dritte Runde gibt es nicht (§ 8 des Meta-Plans), es gilt die
+Rückfallregel.
+
+**Was ein Bestehen bedeutet**: C wird die Gewichtsvariante `ortsbezug` (§ 6) neben `stelle`, nicht
+die Standardzählung; die triviale Regel wird weiter daneben berichtet (§ 9.2).
+
 ## 6. Bauplan Stufe 2
 
 **Beitrag** `places` im Register `georep.enrich.CONTRIBUTIONS` (F2, Punkt 69), ein Schritt `places`,
