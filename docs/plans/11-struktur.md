@@ -356,7 +356,42 @@ Kodierern je Frage.
 mindestens 180 von 200 richtig. Bei 180 reicht das Wilson-Intervall von 85,1 bis 93,4 %, bei 190 von
 91,0 bis 97,3 %. Wer die Aussage „mindestens 90 % im Korpus" will, braucht rund 190 richtige.
 
+### 4.1 Ergebnis der Kodierung (2026-11-23, Supervisor)
+
+Zwei Kodier-Agenten (Opus) haben die 200 Dokumente unabhängig nach `codebuch.toml` kodiert, ein
+Schlicht-Agent hat die eine Uneinigkeit entschieden (Aufgabe 128, Feld `sitzung`: Gremium
+ausgeschrieben, wie Kodierer B). Kein menschlicher Goldstandard. Labels je Aufgabe und Feld:
+`validierung/11-struktur/labels.csv` (Werte als JSON; drei Zeilen des Meta-Felds `unsicher` bleiben
+ohne Label).
+
+**Übereinstimmung**: in `bv_vorhanden`, `bv_erste_zeile`, `bv_letzte_zeile` (114 Dokumente mit
+Vorschlag, zeilengenau), `amt`, `dezernat_titel`, `beratungsfolge` und `briefdatum` 200 von 200
+(α = 1,0), in `sitzung` 199 von 200 (α = 0,99). So hohe Übereinstimmung spricht für eindeutige
+Formulare; sie misst Zuverlässigkeit, nicht Wahrheit — beide Kodierer sind dasselbe Modell.
+
+**Regelentwurf `struktur-entwurf-1` gegen die Labels:**
+
+| Maß | Ergebnis | Wilson 95 % | Kriterium |
+|---|---|---|---|
+| Beschlussvorschlag richtig, streng (Zeile genau) | 188 / 200 = 0,940 | 0,898–0,965 | ≥ 0,90: **erfüllt** |
+| dasselbe, mild (± 1 Zeile) | 190 / 200 = 0,950 | | |
+| Kopf: Amt | 125 / 125 = 1,000 | 0,970–1,000 | ≥ 0,95: erfüllt |
+| Kopf: Dezernat (Amtsbezeichnung) | 69 / 69 = 1,000 | 0,947–1,000 | erfüllt |
+| Kopf: Beratungsfolge (Gremium, Datum, Qualität) | 160 / 168 = 0,952 | 0,909–0,976 | erfüllt, knapp |
+| Kopf: Briefdatum | 73 / 73 = 1,000 | 0,950–1,000 | — |
+| Kopf: Sitzung, Datum | 48 / 48 = 1,000 | 0,926–1,000 | — |
+| Kopf: Sitzung, Gremium und Datum wörtlich | 27 / 48 | | — (Gremium im Genitiv oder abgekürzt) |
+
+Die 12 Fehler beim Beschlussvorschlag liegen fast alle am **Ende** (die Regel nimmt Zeilen nach dem
+Vorschlag mit: Haushaltsanträge, Anträge, lange Beschlussvorlagen); keiner in Anfragen,
+Informations-, Berichts- und BV-Beschlussvorlagen. Der Gremienname der Sitzung muss in Stufe 2 über
+die Gremien des Profils normalisiert werden (Nominativ, Kürzel ausgeschrieben), wie es die
+Kodierer und der Schlichter als Lücke des Codebuchs gemeldet haben.
+
 ## 5. Urteil gegen das Kriterium: **bauen** (vorläufig, Validierung ausstehend)
+
+**Nachtrag 2026-11-23 (Supervisor): Urteil bauen.** Die Kodierung (§ 4.1) bestätigt das Kriterium;
+Stufe 2 schärft das Ende des Beschlussvorschlags und normalisiert die Gremiennamen.
 
 Kriterium (unverändert): richtiger Beschlussvorschlag in mindestens 90 % der Stichprobe, Kopffelder mit
 Präzision ≥ 0,95.
