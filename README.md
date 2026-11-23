@@ -141,8 +141,9 @@ weitere Netzschritte (Fundament F6). Die Seite liest sie noch nicht; Befehle, Da
 füllt stehen in [docs/runbook-sitzungen.md](docs/runbook-sitzungen.md):
 
 ```bash
+export GEOREP_COUNCIL__ENABLED=true            # der Schalter; ohne ihn gibt es die drei Schritte nicht
 uv run georep fetch --dry-run meetings consultations persons
-uv run georep fetch meetings --max-pages 1    # Probe, rund 20 s; der nächste Lauf setzt bei Seite 2 fort
+uv run georep fetch meetings --max-pages 1    # Probe, rund 20 s; schreibt keine Ausgabe, der nächste Lauf setzt fort
 uv run georep fetch meetings persons consultations
 ```
 

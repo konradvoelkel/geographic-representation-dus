@@ -2439,8 +2439,14 @@ holen jedes Mal alles, geschätzt drei und zweieinhalb Minuten.
 
 **Sitzungen ab dem Periodenbeginn, ohne Obergrenze.** Eine Vorlage vom Periodenende wird oft erst in
 der nächsten Periode beraten; mit Obergrenze fehlte ihr Ergebnis. Die Liste ist nach ID absteigend
-(Anlegedatum), nicht nach Beginn; der Abruf endet nach der ersten Seite, deren spätester Beginn vor dem
-Periodenbeginn liegt, wie bei den Papers.
+(Anlegedatum), nicht nach Beginn, und `start − created` reichte in 400 Sitzungen von −418 bis +447
+Tagen. Der Abruf endet darum erst nach einer Seite, deren jüngste Sitzung mehr als
+`council.created_margin_days` (500) vor dem Periodenbeginn angelegt wurde (Review 2026-11-23). Die
+erste Fassung fragte wie bei den Papers nach dem Beginn und hätte nach einer nachgetragenen alten
+Sitzung aufgehört, vor einer früh angelegten der Periode auf der nächsten Seite. Verworfen auch
+„nach zwei Seiten ganz vor dem Beginn": die Marge folgt aus der Sortierung und einer gemessenen
+Grenze, nicht daraus, wie viele nachgetragene Sitzungen zufällig auf einer Seite stehen, und kostet
+höchstens die Seiten der 500 Tage davor.
 
 **Personen ohne Kontaktdaten, durch das Modell.** Der Server schickt zu jeder Person Telefon, E-Mail
 und Anschrift, auch von Fraktionsmitarbeitern und sachkundigen Einwohnern. `OparlPerson` kennt diese
@@ -2454,12 +2460,28 @@ Tagesordnungen, und die Beratung nennt nur den späteren Punkt (340 von 3 880 F�
 Die 19 108 Paper müssen dafür nicht neu abgerufen werden; die Beratungen liefert der Schritt
 `consultations` oder einmalig ein Auszug aus dem Cache.
 
-**Eine Probe ist der Anfang des Abrufs.** Jede Seite geht sofort in eine Teildatei, der Fortschritt
-mit dem `since` des ganzen Abrufs nach `raw/<schritt>.progress.json`; erst ein vollständiger Abruf
-ersetzt die Ausgabe, atomar. Nach `--max-pages` bleiben Teildatei und Fortschritt liegen, und der
-nächste Lauf setzt fort. Sonst gälte der Bestand einer Probe beim nächsten Lauf als vollständig, und
-`consultations` holte mit `modified_since` nur noch das Geänderte — so steht es heute noch in
-`fetch papers` (Probe auf leerem Store, dann der volle Lauf), was dieser Punkt nicht ändert.
+**Eine Probe ist der Anfang des Abrufs, und nur ein vollständiger schreibt.** Jede Seite geht mit
+`fsync` in eine Teildatei, danach der Fortschritt nach `raw/<schritt>.progress.json`: nächste URL,
+Zeilen je Teildatei, die gemeldeten Löschungen, Beginn und ein Schlüssel aus Endpunkt,
+`period.start` und dem Hash von `[council]`. Die Ausgabe schreibt erst der Abruf, der beim letzten
+Blatt ankommt; eine Probe mit `--max-pages` lässt sie stehen, und der nächste Lauf setzt fort. So
+kommt `since` nur aus einer vollständigen Ausgabe. Eine Fortsetzung kürzt die Teildateien auf die
+Zeilen des Fortschritts und verwirft ihn, wenn er älter als die Marge von `since` ist (ein Tag),
+eine Teildatei fehlt oder kürzer ist oder der Schlüssel abweicht; die Zeile sagt warum.
+`freshness` meldet einen Netzschritt mit offenem Fortschritt als „Abruf unvollständig", und eine
+Sperre auf `raw/<schritt>.lock` lässt jeden Schritt je Ordner `raw/` nur einmal laufen
+(`duesseldorf-vergleich` teilt ihn mit `duesseldorf`). Die erste Fassung schrieb die Seiten einer
+Probe als Ausgabe, verlor Löschungen bei einer Fortsetzung und ließ zwei gleichzeitige Läufe die
+Ausgabe kürzen (Review 2026-11-23, Befunde 1, 2, 4, 5). `fetch papers` hat die Schwäche der Probe
+noch (`docs/todo.md`); dieser Punkt ändert es nicht.
+
+**Hinter einem Schalter, außerhalb des Fingerprints.** `council.enabled` ist aus; ohne ihn fehlen
+die drei Schritte, und ein bloßes `georep fetch` nimmt sie nicht mit — volle Abrufe sind Konrads
+Läufe (Plan 2026-11, § 4 und § 7). `[council]` steht nicht im globalen Fingerprint, denn es
+betrifft nur diese drei Schritte; ihr Stamp trägt seinen Hash als `extra` (wie Punkt 53), und das
+Einschalten lässt die Kette nicht neu rechnen. Eine volle Seite ohne `links.next` ist ein
+`FetchError` statt eines stillen Endes; nur `pagination` könnte sie als letzte belegen, und dieser
+Server setzt `totalPages` nicht.
 
 **Die Pfade gehören dem Modul, nicht dem Layout.** `georep.council.council_files(layout)` nennt die
 fünf Dateien unter `raw/`; `Layout` und `pipeline.py` bekommen damit nur die drei Step-Zeilen, und die

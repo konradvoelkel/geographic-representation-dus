@@ -8,16 +8,21 @@ getestet: die Modelle in `georep.oparl`, der Listenabruf `fetch_objects`, die dr
 `tests/fixtures/http/README.md`) und der Paper-Abruf vom 2026-10-13/14, dessen 510 Seiten noch im
 HTTP-Cache liegen (nur lesend ausgewertet).
 
-**Kurz:** Hauptperiode zuerst, je Schritt erst eine Seite als Probe, dann der Rest. Geschätzt rund
-4 min für `meetings`, rund 2 min für `persons`; `consultations` ist nicht gemessen (wenige Minuten, wenn
-die Liste so schnell ist wie die anderen flachen Listen, Stunden, wenn sie so langsam ist wie die
+**Kurz:** Die drei Schritte sind aus, bis der Schalter `council.enabled` sie einschaltet (§ 5.1).
+Hauptperiode zuerst, je Schritt erst eine Seite als Probe, dann der Rest. Geschätzt rund 4 min für
+`meetings`, rund 2,5 min für `persons`; `consultations` ist nicht gemessen (wenige Minuten, wenn die
+Liste so schnell ist wie die anderen flachen Listen, Stunden, wenn sie so langsam ist wie die
 Paper-Liste) — die Probe entscheidet.
+
+Stand nach dem Review vom 2026-11-23: eine Probe schreibt keine Ausgabe mehr, eine Fortsetzung
+prüft Fortschritt und Teildateien, jeder Schritt läuft je Ordner `raw/` nur einmal, die Sitzungen
+enden nach dem Anlagedatum, und `[council]` steht nicht mehr im Fingerprint der Kette.
 
 ## 1. Was die drei Schritte tun
 
 | Schritt | Liste (Profil `[council]`) | behält | schreibt unter `data_root/<profil>/raw/` |
 |---|---|---|---|
-| `meetings` | `…/meetings` mit eingebetteter Tagesordnung | Sitzungen ab `period.start`, **ohne** Obergrenze (eine Vorlage vom Periodenende wird oft erst danach beraten); Abbruch nach der ersten Seite, die ganz vor dem Beginn liegt | `meetings.jsonl` (ohne Tagesordnung), `agenda_items.jsonl` |
+| `meetings` | `…/meetings` mit eingebetteter Tagesordnung | Sitzungen ab `period.start`, **ohne** Obergrenze (eine Vorlage vom Periodenende wird oft erst danach beraten); der Abruf endet nach der ersten Seite, deren jüngste Sitzung mehr als `council.created_margin_days` (500) vor dem Beginn **angelegt** wurde | `meetings.jsonl` (ohne Tagesordnung), `agenda_items.jsonl` |
 | `consultations` | `…/consultations` | alle Beratungen des Bodys | `consultations.jsonl` |
 | `persons` | `…/people` mit eingebetteten Mitgliedschaften | alle Personen des Bodys, **ohne** Telefon, E-Mail, Anschrift (das Modell kennt sie nicht) | `persons.jsonl`, `memberships.jsonl` |
 
@@ -27,12 +32,23 @@ Objekte (80 von 80 gleich in der Stichprobe). Die Listen sind je Body, nicht je 
 Düsseldorfer Profile lesen dieselben Personen und Beratungen, nur die Sitzungen schneidet jedes Profil
 an seinem Beginn.
 
-Jede Seite geht sofort in eine Teildatei (`*.jsonl.partial`), der Fortschritt nach
-`<schritt>.progress.json`. Erst ein vollständiger Abruf ersetzt die Ausgabe, atomar; bis dahin bleibt
-die alte Datei, wie sie war. `modified_since` (jüngstes `modified` minus ein Tag) nutzt nur
-`consultations` (`council.incremental`): bei Sitzungen und Personen folgt `modified` den eingebetteten
-Objekten nicht (§ 2), ein Lauf mit Filter verpasste nachgetragene Ergebnisse. Beide holen darum jedes
-Mal alles; das kostet wenige Minuten.
+**Wie ein Abruf seine Seiten hält.** Jede Seite geht sofort in eine Teildatei (`*.jsonl.partial`),
+mit `fsync`, danach der Fortschritt nach `<schritt>.progress.json`: die URL der nächsten Seite, die
+Zahl der Zeilen je Teildatei, die bisher gemeldeten Löschungen, der Beginn des Abrufs und ein
+Schlüssel aus Endpunkt, `period.start` und einem Hash von `[council]`. **Erst ein vollständiger
+Abruf schreibt die Ausgabe**, atomar; eine Probe (`--max-pages`) oder ein Abbruch lässt sie, wie sie
+war, und `georep status` zeigt den Schritt als „Abruf unvollständig". Der nächste Lauf setzt fort,
+wenn der Fortschritt passt: Teildateien da und mindestens so lang, wie er sagt (eine halbe letzte
+Zeile wird abgeschnitten), nicht älter als ein Tag, derselbe Schlüssel. Sonst beginnt er von vorn,
+und die Zeile sagt warum („Fortschritt verworfen (…)"). Jeder Schritt hält für seine Dauer eine
+Sperre auf `raw/<schritt>.lock`; ein zweiter Abruf desselben Schritts — auch aus
+`duesseldorf-vergleich`, das denselben Ordner `raw/` hat — hält mit einer Zeile an.
+
+`modified_since` (jüngstes `modified` minus ein Tag) nutzt nur `consultations`
+(`council.incremental`), und nur, wenn eine vollständige Ausgabe da ist: bei Sitzungen und Personen
+folgt `modified` den eingebetteten Objekten nicht (§ 2), ein Lauf mit Filter verpasste nachgetragene
+Ergebnisse. Beide holen darum jedes Mal alles; das kostet wenige Minuten. Ob der Filter bei
+`consultations` alles bringt, ist **nicht belegt** (§ 8).
 
 ## 2. Was der Server füllt
 
@@ -141,12 +157,13 @@ Minuten): der Server schwankt um das Vierfache, darum steht daneben der schlecht
 | `consultations` (0015) | **nicht gemessen** | — | 61 350 Beratungen in den Paper-Seiten seit 2013 | rund 310 |
 | `agendaitems`, `memberships` | 0,77 s, 0,19 s | 0,1 MB | (nicht gebraucht; zeigt, wie schnell eine flache Liste ist) | — |
 
-Je Profil:
+Je Profil. Die Sitzungen liest der Abruf bis zur ersten Seite, die ganz vor `period.start` minus 500
+Tagen angelegt wurde (rund 250 Sitzungen je Jahr):
 
 | Profil | `meetings` | `persons` | `consultations` |
 |---|---|---|---|
-| `duesseldorf` (Beginn 2020-09-13) | rund 1 700 Sitzungen ab Beginn, 9 bis 10 Seiten: **rund 3 min**, schlechter Fall 14 min | bis 25 Seiten: **rund 2,5 min** | 310 Seiten: rund 10 min wie eine flache Liste (1 s + 1 s Pause), schlechter Fall wie die Paper-Liste 1,5 bis 7 h |
-| `duesseldorf-2025` (Beginn 2025-09-15) | 2 bis 3 Seiten: rund 1 min | wie oben (dieselbe Liste) | wie oben; danach nur Geändertes |
+| `duesseldorf` (Beginn 2020-09-13, Grenze der Anlage 2019-04-02) | rund 1 900 Sitzungen seit April 2019 angelegt, 10 bis 11 Seiten: **rund 3,5 min**, schlechter Fall 16 min | bis 25 Seiten: **rund 2,5 min** | 310 Seiten: rund 10 min wie eine flache Liste (1 s + 1 s Pause), schlechter Fall wie die Paper-Liste 1,5 bis 7 h |
+| `duesseldorf-2025` (Beginn 2025-09-15, Grenze 2024-05-03) | 3 bis 4 Seiten: rund 1,5 min | wie oben (dieselbe Liste) | wie oben; danach nur Geändertes |
 | `duesseldorf-2014` (Beginn 2014-05-25) | fast die ganze Liste, 17 bis 18 Seiten: rund 6 min, schlechter Fall 26 min | wie oben | wie oben |
 | `moenchengladbach` (Body 0011) | rund 800 Sitzungen, 4 bis 5 Seiten: rund 1,5 min (Liste nicht gemessen) | nicht gemessen | 8 494 Beratungen, 43 Seiten: rund 1,5 min oder bis 1 h |
 
@@ -158,7 +175,7 @@ wächst also nicht.
 
 ## 5. Der Lauf
 
-### 5.1 Vorbereitung
+### 5.1 Vorbereitung und Schalter
 
 ```bash
 cd ~/files/work/__drafts/geographic-representation-dus
@@ -166,37 +183,46 @@ git switch main && git pull
 export UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep UV_CACHE_DIR=/media/konrad/xtraspace/uv-cache
 uv sync
 df -h /media/konrad/xtraspace          # unter 1 GB für alle vier Profile
+export GEOREP_COUNCIL__ENABLED=true    # der Schalter, nur für diese Shell
 uv run georep fetch --dry-run meetings consultations persons
 ```
 
-Erwartet: drei Zeilen `geplant` mit „Ausgabe fehlt", danach `3 geplant`. Steht ein Schritt nicht da,
-fehlt sein Endpunkt im Profil (`[council]`).
+Die drei Schritte gibt es nur mit `council.enabled` (Vorgabe aus, Plan § 7). Für diese Shell reicht
+die Umgebungsvariable; wer sie dauerhaft will, schreibt `[council]` mit `enabled = true` in
+`settings.local.toml`. Der Schalter steht nicht im Fingerprint: die übrige Kette rechnet deswegen
+nicht neu. Ohne ihn sagt `fetch meetings` „Unbekannte Schritte", und ein bloßes `georep fetch`
+nimmt die drei nicht mit.
+
+Erwartet: drei Zeilen `geplant` mit „Ausgabe fehlt", danach `3 geplant`.
 
 ### 5.2 Hauptperiode: erst je eine Seite, dann der Rest
 
 ```bash
-uv run georep fetch meetings --max-pages 1        # ~20 s: "1 Seite(n), 200 gesehen, 200 behalten; weiter bei …"
+uv run georep fetch meetings --max-pages 1        # ~20 s
 uv run georep fetch persons --max-pages 1         # ~5 s
 uv run georep fetch consultations --max-pages 1   # die eine unbekannte Zahl: Sekunden oder eine Minute?
 ```
 
-Die Zeile nennt die Dauer in Klammern. Eine Probe ist der **Anfang** des Abrufs: ihre Seite liegt in
-der Ausgabe und in der Teildatei, der Fortschritt zeigt auf Seite 2, und der nächste Lauf ohne
-`--max-pages` setzt dort fort. Dauert die Probe von `consultations` mehr als 30 s, lohnt Weg 1 aus § 3
-statt des vollen Abrufs; dann `consultations` nicht weiter abrufen und die Frage an den Supervisor
-geben.
+Eine Probe ist der **Anfang** des Abrufs. Ihre Zeile nennt die Dauer in Klammern und ihre Zahlen,
+etwa `vollständig: 1 Seite(n), 200 gesehen, 200 behalten; weiter bei …; Probe: 200 Sitzungen, 4 000
+Tagesordnungspunkte bisher in der Teildatei, die Ausgabe bleibt, wie sie war`. Eine Ausgabe gibt es
+danach **nicht** (oder die alte bleibt), `georep status` zeigt „Abruf unvollständig", und der nächste
+Lauf ohne `--max-pages` setzt bei Seite 2 fort — innerhalb eines Tages; danach beginnt er von vorn.
+Dauert die Probe von `consultations` mehr als 30 s, lohnt Weg 1 aus § 3 statt des vollen Abrufs;
+dann `consultations` nicht weiter abrufen und die Frage an den Supervisor geben.
 
 ```bash
 uv run georep fetch meetings persons consultations
 uv run georep status | grep -E "meetings|persons|consultations"   # dreimal "aktuell"
 ```
 
-Erwartete Zeilen (Zahlen gerundet): `meetings … vollständig (fortgesetzt): 9 Seite(n) …; Rest älter als
-der Periodenbeginn; ~1 700 Sitzungen, ~45 000 Tagesordnungspunkte, ~80% mit Ergebnis, ~70% mit
-Beratung`; `persons … N Personen, M Mitgliedschaften, ~60% mit Stimmrecht` (N und M sind nicht geschätzt, nur ihre Obergrenze, § 4); `consultations
-… ~61 000 Beratungen, ~98% mit Sitzung und Tagesordnungspunkt`. Weicht der Anteil mit Ergebnis oder mit
-Sitzung um mehr als zehn Punkte ab, hat sich der Server geändert: § 2 und die Tests in
-`tests/unit/test_oparl_council.py` sagen, was vorher galt.
+Erwartete Zeilen (Zahlen gerundet): `meetings … vollständig (fortgesetzt): 10 Seite(n) …; Rest älter
+als der Periodenbeginn; ~1 900 Sitzungen, ~50 000 Tagesordnungspunkte, ~80% mit Ergebnis, ~70% mit
+Beratung`; `persons … N Personen, M Mitgliedschaften, ~60% mit Stimmrecht` (N und M sind nicht
+geschätzt, nur ihre Obergrenze, § 4); `consultations … ~61 000 Beratungen, ~98% mit Sitzung und
+Tagesordnungspunkt`. Weicht der Anteil mit Ergebnis oder mit Sitzung um mehr als zehn Punkte ab, hat
+sich der Server geändert: § 2 und die Tests in `tests/unit/test_oparl_council.py` sagen, was vorher
+galt.
 
 ### 5.3 Die anderen Profile
 
@@ -207,21 +233,60 @@ uv run georep --profile moenchengladbach fetch meetings --max-pages 1   # die En
 uv run georep --profile moenchengladbach fetch meetings persons consultations
 ```
 
-`persons` und `consultations` sind je Body dieselben Listen; wer Zeit sparen will, kopiert die beiden
+`persons` und `consultations` sind je Body dieselben Listen; wer Zeit sparen will, kopiert die drei
 Dateien der Hauptperiode in die beiden anderen Düsseldorfer Profile, statt sie dreimal zu holen
 (`raw/persons.jsonl`, `raw/memberships.jsonl`, `raw/consultations.jsonl`), und läuft dort nur
-`meetings`. Ihr Stamp fehlt dann; `georep status` zeigt sie als „offen", und ein späteres `fetch` holt
-sie trotzdem.
+`meetings`. Ihr Stamp fehlt dann; `georep status` zeigt sie als „offen", und ein späteres `fetch`
+holt sie trotzdem.
+
+**Prüfung für den ersten vollen Lauf von `duesseldorf-2014`.** Ob die Abbruchregel keine Sitzung
+der Periode verliert, zeigt der Vergleich mit den Beratungen: jede Sitzung, in der ein Paper der
+Periode beraten wurde, muss in `meetings.jsonl` stehen. Beratungen und Paper liegen dann im Profil
+(`consultations` kopiert oder geholt):
+
+```bash
+uv run python - <<'EOF'
+from georep.council import JsonlStore, council_files
+from georep.layout import Layout
+from georep.oparl import OparlConsultation, OparlMeeting
+from georep.settings import load_settings
+from georep.stores import PaperStore
+layout = Layout.from_settings(load_settings(profile="duesseldorf-2014"))
+files = council_files(layout)
+papers = set(PaperStore(layout.papers).load())
+meetings = JsonlStore(files.meetings, OparlMeeting).load()
+wanted = {c.meeting for c in JsonlStore(files.consultations, OparlConsultation).load().values()
+          if c.paper in papers and c.meeting}
+missing = wanted - set(meetings)
+print(len(wanted), "Sitzungen mit Papern der Periode,", len(missing), "fehlen")
+print(sorted(missing)[:10])
+EOF
+```
+
+Erwartet: `0 fehlen`. Fehlen welche, liegen sie hinter der Grenze der Anlage: `created_margin_days`
+im Profil erhöhen (`[council]`, etwa 800) und `meetings` noch einmal holen, oder mit
+`stop_when_older = false` die ganze Liste. Dieselbe Prüfung taugt für jedes Profil.
 
 ### 5.4 Abbrechen und fortsetzen
 
 - **Abbrechen** mit Strg-C, jederzeit. Die Ausgabe bleibt die des letzten vollständigen Laufs; die
   geholten Seiten liegen in `raw/<datei>.jsonl.partial`, die nächste URL in
-  `raw/<schritt>.progress.json`.
-- **Fortsetzen**: derselbe Befehl. Die Zeile sagt „(fortgesetzt)". Ein Netzfehler (`NetworkError`, eine
-  Zeile auf stderr, Exit 1) ist dasselbe wie ein Abbruch.
-- **Neu beginnen**: `raw/<schritt>.progress.json` und die `.partial`-Dateien löschen. `--force` tut
-  das **nicht**: es umgeht den Stamp, nicht den Fortschritt (wie bei `papers`).
+  `raw/<schritt>.progress.json`, und `georep status` sagt „Abruf unvollständig".
+- **Fortsetzen**: derselbe Befehl, innerhalb eines Tages. Die Zeile sagt „(fortgesetzt)". Ein
+  Netzfehler (`NetworkError`, eine Zeile auf stderr, Exit 1) ist dasselbe wie ein Abbruch.
+- **Verworfen** wird ein Fortschritt von selbst, wenn er älter als ein Tag ist, wenn eine Teildatei
+  fehlt oder kürzer ist, als er sagt, oder wenn Endpunkt, `period.start` oder `[council]` sich
+  geändert haben; die Zeile beginnt dann mit „Fortschritt verworfen (…)". Von Hand neu beginnen:
+  `raw/<schritt>.progress.json` und die `.partial`-Dateien löschen. `--force` tut das **nicht**: es
+  umgeht den Stamp, nicht den Fortschritt.
+- **„der Schritt läuft schon"**: ein anderer Abruf desselben Schritts hält die Sperre
+  (`raw/<schritt>.lock`), auch aus einem anderen Profil mit demselben Ordner. Warten, bis er fertig
+  ist; die Sperre fällt mit seinem Prozess, die leere Datei darf liegen bleiben.
+- **„volle Seite ohne links.next"**: der Server hat eine volle Seite ohne Verweis auf die nächste
+  geschickt. Meist ist die Antwort abgeschnitten; dann hilft es, später fortzusetzen. Hat die Liste
+  genau ein Vielfaches von 200 Objekten, ist es das echte Ende — das lässt sich an der URL mit
+  `?page=` plus eins von Hand prüfen (leere Seite); dieser Server nennt keine Seitenzahl, an der der
+  Abruf es selbst sähe. In dem Fall an den Supervisor geben.
 - **Später nachholen**: `fetch meetings persons consultations --force`. `consultations` fragt dann
   nur nach Geändertem; `meetings` und `persons` holen alles neu (§ 1).
 
@@ -275,11 +340,29 @@ und extrahierte den Text wie `texts`.
 
 ## 8. Offen
 
+- **`modified_since` bei `consultations` ist plausibel, aber nicht belegt.** Bei den Papers liefert
+  der Server mit dem Filter Geändertes und Gelöschte (Option 07); für die Liste der Beratungen ist
+  das nicht gemessen. Prüfung nach dem ersten vollen Lauf, frühestens einen Tag später:
+
+  ```bash
+  raw=$(uv run georep paths | sed -n 's/^root=//p')/raw
+  uv run georep fetch consultations --force            # inkrementell: "seit <datum>"
+  cp "$raw/consultations.jsonl" /media/konrad/xtraspace/georep/consultations-inkrementell.jsonl
+  rm "$raw/consultations.jsonl"                        # ohne Bestand ist der nächste Lauf voll
+  uv run georep fetch consultations
+  diff <(sort /media/konrad/xtraspace/georep/consultations-inkrementell.jsonl) <(sort "$raw/consultations.jsonl") | head
+  ```
+
+  Gleich: der Filter trägt, `council.incremental` bleibt. Fehlen im inkrementellen Bestand Zeilen
+  oder stehen Gelöschte darin: `incremental = []` im Stadtprofil, und `consultations` holt wie die
+  anderen beiden jedes Mal alles.
 - Die Liste `consultations` ist nicht gemessen (die Freigabe galt für Einzelobjekte). Die Probe in
   § 5.2 ist die Messung.
 - Die Zahl der Personen und die Dauer von `people` über mehr als eine Seite sind geschätzt.
 - Die Endpunkte von Mönchengladbach (Body 0011) stehen nach dem Muster von Body 0015 im Profil; ihr
   Body-Objekt ist nicht abgerufen.
+- Die Abbruchregel der Sitzungen stützt sich auf `start − created` zwischen −418 und +447 Tagen in
+  400 Sitzungen; die Prüfung in § 5.3 ist ihre Probe an einer ganzen Periode.
 - `fetch papers --max-pages 1` auf einem leeren Store, danach `fetch papers`: der zweite Lauf holt
-  inkrementell nur, was sich seit dem jüngsten `modified` der Probe geändert hat. Die drei neuen
-  Schritte setzen nach einer Probe fort (`georep.council`), `papers` nicht.
+  inkrementell nur, was sich seit dem jüngsten `modified` der Probe geändert hat (`docs/todo.md`).
+  Die drei neuen Schritte schreiben nach einer Probe keine Ausgabe und setzen fort, `papers` nicht.

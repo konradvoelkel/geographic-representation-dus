@@ -71,8 +71,9 @@ also wenn `context.root` gesetzt ist; `parties` nur, wenn das Profil Fraktionsna
 mit `crosswalk.enabled` und `compare` mit `compare.period`; mit `period.dictionary = "base"`
 entfallen dafür `streets_osm` und `pois_wiki`. Option 01 bringt `shapes`: er entfällt, wo eine
 Periode den Zuschnitt einer anderen rechnet (`precincts.enabled = false`). Fundament F6 bringt drei
-Netzschritte nach `organizations`, je einen, wo das Profil unter `[council]` einen Endpunkt nennt
-(Düsseldorf und Mönchengladbach: alle drei); kein Offline-Schritt liest ihre Ausgaben bisher.
+Netzschritte nach `organizations`, nur mit dem Schalter `council.enabled` (Vorgabe aus) und je einen,
+wo das Profil unter `[council]` einen Endpunkt nennt (Düsseldorf und Mönchengladbach: alle drei);
+kein Offline-Schritt liest ihre Ausgaben bisher.
 
 | Schritt | Netz | liest | schreibt |
 |---|---|---|---|
@@ -81,7 +82,7 @@ Netzschritte nach `organizations`, je einen, wo das Profil unter `[council]` ein
 | `context_data` | ja | Open-Data-Portal: Tabelle je Raumeinheit, ihre Flächen, die Erläuterung der Indikatoren | `external/` unter den Namen aus `context.files` |
 | `papers` | ja | OParl-Liste, neueste zuerst, Abbruch unter dem Periodenbeginn; beim zweiten Mal `modified_since`, `--max-pages` als Probe | `raw/papers.jsonl` |
 | `organizations` | ja | OParl-Endpunkt `organizations`: Fraktionen, Ausschüsse, Bezirksvertretungen (Düsseldorf: eine Seite, 58 Objekte, 0,47 s) | `raw/organizations.json` |
-| `meetings` | ja | OParl-Liste `meetings` mit eingebetteter Tagesordnung, neueste zuerst; behält Sitzungen ab `period.start` ohne Obergrenze, Abbruch nach der ersten Seite ganz davor; immer vollständig (F6) | `raw/meetings.jsonl`, `raw/agenda_items.jsonl` |
+| `meetings` | ja | OParl-Liste `meetings` mit eingebetteter Tagesordnung, neueste zuerst; behält Sitzungen ab `period.start` ohne Obergrenze, Abbruch nach der ersten Seite, die mehr als `council.created_margin_days` vor dem Beginn angelegt wurde; immer vollständig (F6) | `raw/meetings.jsonl`, `raw/agenda_items.jsonl` |
 | `consultations` | ja | OParl-Liste `consultations`: Paper, Sitzung, Tagesordnungspunkt, Rolle je Beratung; beim zweiten Mal `modified_since` (F6) | `raw/consultations.jsonl` |
 | `persons` | ja | OParl-Liste `people` mit eingebetteten Mitgliedschaften, ohne Kontaktdaten; immer vollständig (F6) | `raw/persons.jsonl`, `raw/memberships.jsonl` |
 | `pdfs` | ja | Download-URLs der Paper, seriell mit Pause, `--limit` | `cache_root/<profil>/pdf/*.pdf`, `…/pdf/manifest.jsonl` |
@@ -202,9 +203,18 @@ erreichbar, Fehlerstatus nach allen Wiederholungen), gesichert durch `deal.raise
   Mechanik wie die Paper-Seiten in `fetch_objects`, für jede Objektart über ihr Modell; die Listen sind
   nach ID absteigend, 200 Objekte je Seite. Gemessen am 2026-11-23: Sitzungen 15 bis 20 s und 3 bis 4 MB
   je Seite (die Tagesordnung ist eingebettet), Personen 4,7 s, die flachen Listen `agendaitems` und
-  `memberships` unter einer Sekunde. Jede Seite geht in eine Teildatei, der Fortschritt nach
-  `raw/<schritt>.progress.json`; erst ein vollständiger Abruf ersetzt die Ausgabe, und eine Probe mit
-  `--max-pages` ist der Anfang des Abrufs, den der nächste Lauf fortsetzt. `modified_since` nur für
+  `memberships` unter einer Sekunde. Jede Seite geht mit `fsync` in eine Teildatei, danach der
+  Fortschritt nach `raw/<schritt>.progress.json` (nächste URL, Zeilen je Teildatei, Löschungen,
+  Beginn, Schlüssel aus Endpunkt, `period.start` und Hash von `[council]`); erst ein vollständiger
+  Abruf schreibt die Ausgabe, eine Probe mit `--max-pages` ist der Anfang des Abrufs, und
+  `freshness` meldet einen Netzschritt mit offenem Fortschritt als „Abruf unvollständig" (das gilt
+  auch für `papers`). Eine Fortsetzung kürzt die Teildateien auf die Zeilen des Fortschritts und
+  verwirft ihn, wenn er älter als ein Tag ist, eine Teildatei fehlt oder der Schlüssel abweicht.
+  Eine Sperre (`fcntl.flock` auf `raw/<schritt>.lock`) lässt jeden Schritt je Ordner `raw/` nur
+  einmal laufen. Die Sitzungsliste ist nach Anlage sortiert (`start − created` von −418 bis +447
+  Tagen); ihr Abruf endet erst nach einer Seite, die mehr als 500 Tage vor dem Beginn angelegt wurde.
+  Eine volle Seite ohne `links.next` ist ein `FetchError`. `[council]` steht nicht im Fingerprint;
+  die drei Schritte tragen seinen Hash als `extra`. `modified_since` nur für
   `consultations`: bei Sitzungen und Personen folgt `modified` den eingebetteten Objekten nicht. Der
   Server füllt `result` je Tagesordnungspunkt (96,5 % mit Beratung), nie `resolutionText`,
   `resolutionFile`, `cancelled`; `resultsProtocol` ist ein Nachtrag zur Tagesordnung, die
