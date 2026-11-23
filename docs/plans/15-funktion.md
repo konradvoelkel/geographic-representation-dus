@@ -4,27 +4,35 @@ Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/15-funktion`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „15 Dokumentfunktion und gemeinsame
 Anträge". Messskript: [15-funktion-messung.py](15-funktion-messung.py) (`uv run python
 docs/plans/15-funktion-messung.py`, rechnet jede Zahl dieses Dokuments nach; `--stichprobe` schreibt
-Stichprobe und Kodieraufgaben). Codebuch und Stichprobe: `validierung/15-funktion/`.
-**Urteil: bauen, vorläufig — Validierung ausstehend** (κ ist nicht gemessen, die Restklasse erfüllt das
-Kriterium), mit vier Änderungen am Briefing (§ 5).
+Stichprobe und Kodieraufgaben, `--labels` bildet die Endlabels der Kodierung). Codebuch, Stichprobe
+und Labels: `validierung/15-funktion/`.
+**Urteil: bauen, mit Variante B** (§ 5). Das Kriterium ist erfüllt: κ = **0,905** (Bootstrap-95-%
+0,840–0,960) für Variante B und 0,829 (0,748–0,900) für Variante A an den 135 Dokumenten, denen das
+Regelwerk eine Funktion gibt; Restklasse 5,5 % / 0 % / 0 %. Geprüft von zwei Kodier-Agenten desselben
+Modells (Opus), nicht von Menschen — ihre Übereinstimmung (α 0,99 bei `funktion`) ist darum ein
+schwacher Beleg (Frage 19), und B ist an denselben Labels gewählt, an denen es gemessen ist (§ 4.1).
 
 Die drei Zahlen, auf die es ankommt:
 
 1. **Das Regelwerk gibt 44 187 von 45 418 Düsseldorfer Dokumenten (97,3 %) eine Funktion**; die
-   Restklasse ist 5,5 % in der Periode 2014-2020 und 0 % in den beiden anderen (Kriterium ≤ 10 %). Drei
-   Gegenproben aus den Daten selbst stützen es: die Beratungsrolle der OParl-Objekte passt in **98,7 %**
-   (23 631 von 23 953), die Textregel der Sammelart „Verwaltungsvorlage" trifft die Dokumentart der
-   späteren Perioden in **95,9 %**, das Instrumentwort im Textkopf trifft das im Titel in **99,5 %**. Ob die
-   Funktion stimmt, sagt erst κ gegen die Kodierung.
+   Restklasse ist 5,5 % in der Periode 2014-2020 und 0 % in den beiden anderen (Kriterium ≤ 10 %). Gegen
+   die Kodierung trifft Variante B **125 von 135** (κ 0,905); Verwaltungsvorlagen und Anfragen
+   fehlerfrei, die zehn Fehler liegen alle bei Anträgen (Berichtsantrag, Symbolpolitik ohne Marker).
+   Drei Gegenproben aus den Daten selbst stützen es: die Beratungsrolle der OParl-Objekte passt in
+   **98,7 %**, die Textregel der Sammelart „Verwaltungsvorlage" trifft die Dokumentart der späteren
+   Perioden in **95,9 %**, das Instrumentwort im Textkopf trifft das im Titel in **99,5 %**.
 2. **Gemeinsame Dokumente**: 1 397 (2014-2020), 1 202 (2020-2025), 204 (ab 2025), 15,8 %, 15,3 % und
    11,8 % der Fraktionsdokumente. Die Urheberspalte `parteien` reicht dafür nicht: sie nimmt die erste
    Quelle mit Treffer und **übersieht bei 281 Dokumenten Mitantragsteller** („Antrag CDU/Grüne" mit vier
    Fraktionen im Titel), bei 49 nennt sie mehr Parteien als Art, Titel und Briefkopf, meist aus dem
-   Gegenstand. Die AfD stellt in keiner Periode ein Dokument gemeinsam mit einer anderen Fraktion (0 von
-   10, 183 und 265).
+   Gegenstand. An den Labels: die Antragsteller des Regelwerks haben **Präzision 119/119** und Recall
+   119/138 (0,86), und von 30 gemeinsamen Dokumenten erkennt es 26 mit genau denselben Fraktionen
+   (`parteien`: 23, dazu ein falsches). Die AfD stellt in keiner Periode ein Dokument gemeinsam mit einer
+   anderen Fraktion (0 von 10, 183 und 265).
 3. **Konkurrenz im Rat, Zusammenarbeit in den Bezirken.** In Rat und Ausschüssen trägt eine Fraktion der
    Ratsmehrheit **7,4 %** der Initiativen mit, an denen die Opposition beteiligt ist (2014-2020, Ampel),
-   **3,2 %** (2020-2025, CDU und Grüne) und **0 von 314** (ab 2025); und von den wenigen Dokumenten über
+   **3,2 %** (2020-2025, CDU und Grüne) und **0 von 314** (ab 2025; nach Variante B 7,5 %, 3,2 %, 0 von
+   312); und von den wenigen Dokumenten über
    die Grenze sind 42 von 50 und 27 von 43 Allparteienanträge (mindestens vier Fraktionen). In den
    Bezirksvertretungen, gezählt mit dem Lager der Ratsmehrheit, sind es 32,1 %, 23,6 % und 46,8 % — dort
    gelten andere Mehrheiten.
@@ -454,8 +462,9 @@ gemeinsam, ihre Anfragen nur zu 4,7 %; CDU und Grüne 87,0 % und 62,4 % (2020-20
 
 **Lesart.** In Rat und Ausschüssen ist Düsseldorf in allen drei Perioden eine Konkurrenzdemokratie im
 Sinne Holtkamps*: die Mehrheit beantragt gemeinsam, die Opposition allein, und was beide Seiten zusammen
-stellen, sind meist Erklärungen und Grundsatzfragen von vier bis sechs Fraktionen, nie mit der AfD. Der Anteil sinkt
-von Periode zu Periode (7,4 → 3,2 → 0,0 %); die laufende Periode ist 13 Monate alt. Die
+stellen, sind meist Erklärungen und Grundsatzfragen von vier bis sechs Fraktionen, nie mit der AfD. Der
+Anteil sinkt von Periode zu Periode (7,4 → 3,2 → 0,0 %; nach Variante B 7,5 %, 3,2 % und 0 von 312); die
+laufende Periode ist 13 Monate alt. Die
 Bezirksvertretungen sind anders: dort trägt in einem Viertel bis fast der Hälfte der Initiativen mit
 Oppositionsbeteiligung eine Fraktion der Ratsmehrheit mit. Weil die Mehrheiten der Bezirke nicht im
 Datensatz stehen, ist das dort **kein** Konkordanzmaß, sondern nur die Aussage, dass die Lager des Rates in
@@ -533,39 +542,206 @@ zwischen den Kodierern (Stufe 3 verlangt ≥ 0,8).
 p_e = 0,208 (unter gleichen Randverteilungen), κ = 0,7 also eine Trefferquote von mindestens 0,762:
 **höchstens 35 Abweichungen an 150**. Die Schichten sind bewusst schwer (55 der 150 sind Abweichung,
 Rest, Symbol oder Sammelart); auf dem Korpus gewichtet wird die Trefferquote höher liegen als an der
-Stichprobe.
+Stichprobe. **Supervisor-Entscheidung vor der Kodierung (Frage 17 in `fragen-2026-11.md`)**: die Schicht
+`rest` zählt nicht zum κ-Kriterium; κ wird an den Dokumenten gemessen, denen das Regelwerk eine Funktion
+gibt, und was die Kodierer in der Restklasse sehen, steht daneben (§ 4.2).
+
+### 4.1 Ergebnis der Kodierung (2026-11-23)
+
+Zwei Kodier-Agenten (Opus) haben die 150 Dokumente unabhängig nach `codebuch.toml` (Fassung
+2026-11-23.1) kodiert; ein Schlicht-Agent hat die zwei uneinigen Aufgaben entschieden (drei Felder:
+`40/ 1/2017 - 1` `funktion` = vollzug und `adressat` = stadt, wie Kodierer A; `RAT/412/2023` `adressat`
+= keiner). Kein menschlicher Goldstandard. Endlabel = gleiche Antwort, sonst Schlichtung:
+`validierung/15-funktion/labels.csv` (je Aufgabe und Frage, Werte als JSON). Ausgewertet vom
+Messskript (Abschnitt „4.1 Auswertung der Kodierung"), Läufe um 19:37 bis 19:45 Uhr, 21,0 bis 94,4 s
+bei Lastmittel 22 bis 37; die Auswertung braucht nur `labels.csv`, nicht die lokalen Antworten.
+
+| Frage | gleich kodiert | Krippendorffs α (nominal) | geschlichtet |
+|---|---|---|---|
+| `funktion` | 149 / 150 | 0,992 | 1 |
+| `urheber` | 150 / 150 | 1,000 | 0 |
+| `adressat` | 148 / 150 | 0,970 | 2 |
+
+**Die Übereinstimmung ist ein schwacher Beleg.** Beide Kodierer sind dasselbe Modell mit fast gleichem
+Auftrag; sie teilen ihre Lesarten und damit ihre Fehler, und α misst eher die Beständigkeit des Modells
+als die Zuverlässigkeit der Kodierung (Frage 19 in `fragen-2026-11.md`: Kodierer B künftig ein anderes
+Modell). Die Bedingung der Stufe 3 (α ≥ 0,8) ist formal erfüllt; die Seite nennt Modell und Verfahren.
+Beide Kodierer markieren rund 30 Aufgaben als unsicher, vor allem die alten Vorlagen, deren Textanfang
+nur eine Anlage ist.
+
+Labels `funktion`: Kontrolle 39, Initiative 37, Vollzug 29, Information 24, Symbol 19, unklar 2 (beide
+in der Schicht `rest`), Restklasse 0.
+
+**Funktion: Regelwerk gegen Label.** Basis nach Frage 17: die 135 Dokumente außerhalb der Restklasse (die
+beiden `unklar` liegen in ihr). Intervall für κ: Perzentil-Bootstrap über die Dokumente (2 000
+Ziehungen, Seed 15); für die Trefferquote Wilson. „Gewichtet" heißt mit den Schichtgrößen aus
+`stichprobe.csv` hochgerechnet auf den Korpus.
+
+| | κ (95 %) | Treffer (Wilson 95 %) | gewichtet: κ / Treffer |
+|---|---|---|---|
+| **Variante B** | **0,905** (0,840–0,960) | 125 / 135 = 0,926 (0,869–0,959) | 0,877 / 0,907 |
+| Variante A | 0,829 (0,748–0,900) | 117 / 135 = 0,867 (0,799–0,914) | 0,871 / 0,902 |
+| zum Vergleich mit der Restklasse (148, ohne die 2 `unklar`): B / A | 0,806 (0,729–0,873) / 0,739 (0,655–0,813) | 125 / 148, 117 / 148 | |
+
+Konfusion der Variante B (Zeile Regelwerk, Spalte Label):
+
+| | Kontrolle | Information | Initiative | Symbol | Vollzug | Präzision |
+|---|---|---|---|---|---|---|
+| Kontrolle | **34** | 0 | 1 | 0 | 0 | 34 / 35 |
+| Information | 0 | **19** | 0 | 0 | 0 | 19 / 19 |
+| Initiative | 5 | 0 | **33** | 3 | 0 | 33 / 41 |
+| Symbol | 0 | 0 | 1 | **16** | 0 | 16 / 17 |
+| Vollzug | 0 | 0 | 0 | 0 | **23** | 23 / 23 |
+| Recall | 34 / 39 | 19 / 19 | 33 / 35 | 16 / 19 | 23 / 23 | |
+
+Je Schicht (B / A): Abweichung A–B 9/10 / 1/10, gemeinsam 17/20, Information 15/15, Initiative 18/20,
+Kontrolle 20/20, Sammelart 12/15, Symbol 14/15, Vollzug 20/20 (außer der ersten Schicht in A und B
+gleich). **Alles, was die Verwaltung vorlegt, und jede Anfrage ist richtig**; die Fehler liegen bei
+Anträgen und Vorlagen aus der Politik:
+
+- **Antrag, der nur Auskunft verlangt, ohne die Wörter der Berichtsregel** (5, Kontrolle-Recall 34/39):
+  `AUS/057/2021` (Antrag CDU/Grüne), `BV3/047/2020`, `BV7/020/2024`, `170/ 43/2016`, `170/ 65/2015`.
+- **Symbolpolitik ohne Titel- oder Textmarker** (3): `RAT/526/2021` (Antrag CDU/Grüne), `BV10/027/2026`
+  („Konsequenzen aus der Veranstaltung der AfD im Kulturhaus Süd"), `170/ 21/2016`.
+- **Berichtsantrag, der eine Initiative ist** (1): `RAT/464/2024` (Haushaltsantrag CDU/Grüne).
+- **Symbol nach Titel, das die Kodierer als Initiative lesen** (1): `01/ 251/2019` (Änderungsantrag der CDU
+  zum „Palermo-Appell", dessen erster Punkt eine Sachentscheidung ist).
+
+**Variante A gegen B — ein Entwurfsvergleich, keine Messung der gewählten Variante.** Die Schicht
+`abweichung_ab` entscheidet: A trifft 1 von 10, B 9 von 10 (sieben Berichtsanträge, die die Kodierer als
+Kontrolle lesen, zwei Erklärungen aus dem Beschlusstext als Symbol, ein Haushaltsantrag falsch). Weil B
+an denselben Labels gewählt wird, an denen es gemessen ist, ist κ_B = 0,905 eine optimistische Zahl.
+Unabhängig von der Wahl gilt: **beide vorab festgelegten Varianten erfüllen das Kriterium**, auch mit
+der Restklasse, und die konservative Zahl ist die untere Grenze von A (0,748). Auf dem Korpus gewichtet
+liegen die Varianten nah beieinander (κ 0,877 gegen 0,871), weil nur 257 Dokumente verschieden sind. Die
+Fehlermuster oben sind **keine** Regeländerung dieser Runde: wer die Berichtsregel nach ihnen erweitert,
+misst an einer neuen Stichprobe (Lehre aus Vorhaben 14, § 4.2: die Entwurfsschätzung an alten Labels lag
+dort 0,135 zu hoch).
+
+**Urheber: Regelwerk gegen Label.** Verglichen werden die Optionen des Codebuchs; das Regelwerk liefert
+für Fraktionsdokumente die Fraktionen (§ 3.8), sonst Verwaltung, Einzelmitglied (Urheberklasse Person),
+Bürger (Eingabe) oder unklar (unbekannt). Gegenprobe ist `parteien` aus `dokumente_urheber`, auf
+Fraktionen abgebildet.
+
+| | exakt gleiche Urheber | Fraktionen: Präzision | Fraktionen: Recall | gemeinsame des Labels (30): erkannt / exakt / falsch gemeinsam |
+|---|---|---|---|---|
+| **Regelwerk** (Art, Autorenteil, Briefkopf) | **130 / 150** | **119 / 119 = 1,000** | 119 / 138 = 0,862 | 26 / **26** / 0 |
+| `parteien` (erste Quelle gewinnt) | 126 / 150 | 115 / 117 = 0,983 | 115 / 138 = 0,833 | 25 / 23 / 1 |
+
+Recall je Fraktion (Regelwerk): CDU 35/38, Grüne 28/33, SPD/Volt 15/18, Linke 14/20, FDP 13/15, SPD
+(2014-2020) 6/6, Tierschutz/FW 4/4, PARTEI 2/2, AfD 1/1, FW/Tierschutz/PARTEI 1/1. Die zwei Parteien,
+die `parteien` zu viel nennt, sind der Befund aus § 3.8: `BV10/027/2026` (die AfD aus dem Gegenstand)
+und `01/ 43/2016` (SPD aus dem Fenster um den Briefkopf). **Damit bestätigt die Kodierung den Rückstand
+in `docs/todo.md`, Punkt 9**: vereinigte Quellen statt der ersten und kein Gegenstand im Titel —
+gemeinsame Dokumente exakt 26 statt 23 von 30, keine falsche Fraktion statt zwei.
+
+Die 19 fehlenden Fraktionen liegen nicht im Antragsteller-Schritt, sondern **eine Ebene davor, in der
+Urheberklasse**: 8 Dokumente mit Urheber „unbekannt", die die Kodierer einer Fraktion geben (10 der 19;
+Vorlagen aus der Politik 2014-2020 ohne Fraktionswort im Briefkopf: `01/ 153/2016`, `01/ 175/2014`,
+`01/ 175/2016`, `170/ 65/2015`, alle Linke; dazu `BV3/047/2020`, `BV8/028/2019`, `BV9/025/2020`,
+`AGS/006/2024`), 2 Einzelmitglieder, deren Partei die Kodierer als Fraktion kodieren (`BV10/066/2021`,
+`BV9/191/2023`; eine Lücke des Codebuchs, § 4.3), und 2 interfraktionelle Anträge, deren Fraktionen nur
+im Text stehen (7 der 19; `BV1/224/2022`, `BV5/074/2024`). Dazu zwei Eingaben nach § 24 GO, die 2014-2020 als
+Verwaltungsvorlage geführt sind (`12/ 12/2017`, `173/ 89/2016`: Label Bürger, Regelwerk Verwaltung).
+Hochgerechnet ist die Klasse „unbekannt" (2 356 Dokumente 2014-2020, 327 und 84 danach) die größte
+Lücke; sie gehört zu Punkt 9 des Rückstands, nicht zu diesem Vorhaben.
+
+**Adressat**: das Regelwerk vergibt keinen; die Frage diente der Kodierung als Hilfe. Label `funktion` ×
+`adressat`: Kontrolle 38 Stadt, 1 beide; Information 24 keiner; Initiative 37 Stadt; Vollzug 29 Stadt;
+**Symbol uneinheitlich**: 5 Dritte, 3 beide, 5 keiner, 5 Stadt, 1 unklar. Ein Merkmal „richtet sich an
+Dritte" träfe also weniger als die Hälfte der Symbolpolitik (ein Bündnisbeitritt richtet sich an die
+Stadt, eine Erklärung an niemanden); die Textmarker der Variante B treffen 16 von 17.
+
+### 4.2 Was die Kodierer in der Restklasse sehen
+
+Die 15 Dokumente der Schicht `rest` (alle Verwaltungsvorlagen 2014-2020) bekommen von den Kodierern
+**Vollzug 6, Information 5, Initiative 2, unklar 2**, also 13 von 15 eine Funktion. Die zwei Initiativen
+sind Eingaben nach § 24 GO, die unter `Verwaltungsvorlage` liegen (`12/ 12/2017`, `173/ 89/2016`); die
+zwei `unklar` sind `61/ 23/2017` und `66/ 134/2018`. Kodierer A markiert 9 der 15 als unsicher,
+Kodierer B 12 (nur in den lokalen Antworten, nicht in `labels.csv`): sie haben die Funktion meist aus
+Titel und Anlage erschlossen. **Die Restklasse heißt also nicht „Dokument ohne Funktion", sondern
+„Funktion aus Art, Titel und Textanfang nicht erkannt"** — fast immer, weil der Text fehlt oder mit einer
+Anlage beginnt (§ 3.4). Für die 1 231 Dokumente ist das eine Verteilung aus 15 und kein Grund, die Regel
+zu ändern; die Seite nennt die Klasse „Funktion nicht erkannt".
+
+### 4.3 Lücken des Codebuchs: Vorschlag für Fassung .2
+
+Aus beiden Rückmeldungen (`rueckmeldung-A.md`, `rueckmeldung-B.md`) und der Schlichtung, lokal unter
+`messdaten/kodierung/15-funktion/`. Das Codebuch im Repo bleibt Fassung .1, nach der kodiert ist; .2 gilt
+für die nächste Kodierung (eine Bestätigung mit zweitem Modell nach Frage 19 oder die Erweiterungen von
+`akteure.html` durch 24, 27, 28).
+
+1. **Einzelmitglied mit Partei** (beide Kodierer; sieben Fälle bei A): ein Rats- oder
+   Bezirksvertretungsmitglied ohne Fraktion, das seine Partei nennt, oder ein Mitglied, das allein für
+   eine Gruppe zeichnet. Heute kodierten beide die Partei als Fraktion. Vorschlag: `einzelmitglied`
+   bleibt die Option, die Partei kommt in ein eigenes Feld `partei_des_mitglieds`; zeichnet ein Mitglied
+   ausdrücklich „für die Fraktion/Gruppe", ist es die Fraktion. Das hält die Urheberklasse Person von der
+   Fraktion getrennt, wie `parties.py` es tut.
+2. **Sondergremien**: ein Mitglied des Jugendrats oder Integrationsrats ist `beirat_oder_sondergremium`,
+   eine Liste des Integrationsrats (etwa „Grüne internationale offene Liste") `andere` mit Namen; ein
+   Verein, der eine Eingabe nach § 24 GO stellt, ist `buerger`.
+3. **Symbol gegen Initiative, wenn die Stadt bei Dritten etwas anstoßen soll** (beide; „DB-Bitte"):
+   Symbolpolitik nur, wenn das Gremium eine Haltung erklärt (Resolution, Appell, Verurteilung,
+   Solidarität, Bündnisbeitritt) oder Dritte zu Politik in deren Zuständigkeit auffordert; eine sachliche
+   Bitte um eine bestimmte Maßnahme eines Dritten für die Stadt (die Bahn soll einen Aufzug bauen, die
+   Verwaltung soll das bei ihr erwirken) ist `initiative` mit `adressat` dritte oder beide.
+4. **Erster Punkt und abgeschnittener Beschlusstext** (Schlichtung): `funktion` und `adressat` werden am
+   selben Punkt kodiert, dem ersten, soweit sichtbar; `adressat` = unklar nur, wenn gar kein Beschlusstext
+   im Textanfang steht; eine Erklärung des Gremiums ohne genannten Handelnden ist `keiner`.
+5. **Nur eine Anlage im Textanfang** (beide, Schlichtung): kodiert wird der Zweck, den Art, Titel und
+   Anlage zusammen erkennen lassen (Entwurfspläne eines städtischen Bauvorhabens in einer
+   Verwaltungsvorlage: Vollzug; Tabellen eines Berichts: Information); `unklar` nur ohne erkennbaren
+   Zweck; `rest` bleibt Dokumenten, die selbst keine der fünf Funktionen haben.
+6. **Mischtexte** (A): Fragen und Antrag in einem Dokument — der Beschlusstext entscheidet; stehen nur
+   Fragen da, ist es Kontrolle, auch wenn der Titel „Antrag" sagt (so haben beide schon kodiert; das
+   Codebuch sollte es sagen).
 
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
 
-**Kriterium** (Briefing, unverändert): κ ≥ 0,7 gegen 150 kodierte Dokumente, Restklasse ≤ 10 %.
+**Kriterium** (Briefing, unverändert): κ ≥ 0,7 gegen 150 kodierte Dokumente, Restklasse ≤ 10 %; nach der
+Supervisor-Entscheidung vor der Kodierung (Frage 17) wird κ an den Dokumenten gemessen, denen das
+Regelwerk eine Funktion gibt.
 
+- **κ: erfüllt.** Variante B 0,905 (Bootstrap-95-% 0,840–0,960), Variante A 0,829 (0,748–0,900), an 135
+  Dokumenten; gewichtet 0,877 und 0,871. Auch mit der Restklasse, wie vor Frage 17 vorgesehen, liegen
+  beide darüber (0,806 und 0,739). Die untere Intervallgrenze von A, der Variante, die nicht an diesen
+  Labels gewählt ist, liegt über 0,7.
 - **Restklasse: erfüllt.** 5,5 % in der Periode 2014-2020, 0 % in den beiden anderen, 2,7 % über alle
-  Düsseldorfer Dokumente; Mönchengladbach 0 %. Unsicherheit: die Null der jüngeren Perioden ist
-  konstruktionsbedingt (§ 3.2), die 5,5 % hängen an den Textregeln der alten Vorlagenform.
-- **κ: ausstehend.** Die Vorzeichen sind gut (§ 3.5), aber sie prüfen die Dokumentarten und die
-  Textregeln an der neuen Form, nicht die Grenzfälle, die die Kodierung prüft: Berichtsantrag, Symbol
-  aus dem Beschlusstext, die alte Vorlagenform. Ein Risiko für das Kriterium sehe ich in der Schicht
-  `rest` (15 Dokumente, die das Regelwerk absichtlich nicht entscheidet; die Kodierer werden ihnen meist
-  eine Funktion geben — 15 Abweichungen von 35 erlaubten) und in `abweichung_ab` (10, je nach Variante
-  die Hälfte falsch).
+  Düsseldorfer Dokumente; Mönchengladbach 0 %. Die Kodierer geben 13 der 15 Dokumente der Restklasse eine
+  Funktion (§ 4.2): die Klasse misst, was das Regelwerk nicht sehen kann, nicht Dokumente ohne Funktion.
+- **Grenze des Belegs**: zwei Kodierer desselben Modells, kein Mensch (Frage 19); die Übereinstimmung von
+  149 aus 150 sagt, dass das Modell sich treu ist, nicht, dass es recht hat. Die Fehler des Regelwerks
+  liegen genau dort, wo auch ein Mensch zögern würde (Antrag oder Berichtswunsch, Initiative oder
+  Erklärung); Vollzug und Information, die beiden großen Klassen der Verwaltung, sind an den Labels
+  fehlerfrei.
 
-**Urteil: bauen, vorläufig — Validierung ausstehend**, mit vier Änderungen am Briefing:
+**Urteil: bauen, mit Variante B.** Die Wahl folgt der Regel, die vor der Kodierung in Frage 9.1 stand
+(B, wenn κ_B ≥ κ_A und die Präzision von Symbol in B ≥ 0,8; gemessen 0,905 ≥ 0,829 und 16/17 = 0,94).
+Weil B an denselben Labels gewählt und gemessen ist, nennt die Seite für die Funktion das Intervall von B
+und dazu die Zahl von A als vorsichtige Untergrenze. Eine zweite Runde ist für das Kriterium nicht nötig;
+eine Bestätigung mit einem zweiten Modell als Kodierer gehört zu Frage 19.
+
+Änderungen am Briefing, bestätigt durch die Kodierung:
 
 1. **Die Mitantragsteller kommen nicht aus `parteien`**, sondern aus einer eigenen Spalte Antragsteller
-   (Dokumentart, Autorenteil des Titels, Verfasserblock des Briefkopfs; § 3.8), und sie werden zu
-   **Fraktionen** zusammengefasst (SPD/Volt). `analysis/parties.py` bleibt unverändert; die Befunde dazu
-   (erste Quelle gewinnt, Gegenstand im Titel, BSW fehlt) gehen an den Supervisor (Frage 9.5).
+   (Dokumentart, Autorenteil des Titels, Verfasserblock des Briefkopfs; § 3.8), zu **Fraktionen**
+   zusammengefasst (SPD/Volt). An den Labels: Präzision 119/119, gemeinsame Dokumente 26 von 30 exakt
+   (`parteien` 23 und ein falsches). `analysis/parties.py` bleibt unverändert; der Rückstand dazu steht
+   in `docs/todo.md`, Punkt 9, und die Kodierung erweitert ihn um die Urheberklasse „unbekannt" (Frage
+   9.15).
 2. **Konkordanz nur in Rat und Ausschüssen.** In den Bezirksvertretungen gibt es keine Lager im Datensatz;
    dort zeigt die Seite das Netz, nicht K3.
-3. **Symbolpolitik ist eine kleine Klasse** (39 bis 110 Dokumente in elf Jahren). Die Seite zeigt sie als
-   Liste mit Drucksachen, nicht als Anteil je Fraktion, und Variante A oder B wählt die Kodierung.
+3. **Symbolpolitik ist eine kleine Klasse** (110 Dokumente in elf Jahren nach Variante B). Die Seite zeigt
+   sie als Liste mit Drucksachen, nicht als Anteil je Fraktion.
 4. **Instrumente je Fraktion nur gegen die Praxis der Gremien** (beobachtet/erwartet), die rohen Anteile
    nur daneben, wie in Vorhaben 14.
+5. **Die Restklasse heißt auf der Seite „Funktion nicht erkannt"** (§ 4.2).
 
-Kippt die Kodierung (κ < 0,7), ist die erste Stellschraube der Berichtsantrag (A gegen B), die zweite die
-Textregel der Verwaltungsvorlage (313 Beschlussvorlagen lasen sich als Kenntnisnahme), die dritte, die
-Restklasse nicht in den κ zu nehmen, sondern als eigene Zahl zu berichten — die dritte ändert das
-Kriterium und gehört dem Supervisor. Dann eine Runde Umbauen nach § 8 des Meta-Plans.
+Nicht in dieser Runde geändert, obwohl die Labels es nahelegen: eine breitere Berichtsregel (fünf
+Anträge, die nur Auskunft verlangen, liest das Regelwerk als Initiative) und Marker für Symbolpolitik ohne
+die Wörter der Titelregel (drei). Beides wäre an denselben Labels nachgebaut und bräuchte eine neue
+Stichprobe; an den Labels betrifft es 8 der 41 Dokumente, die das Regelwerk als Initiative führt
+(Präzision der Initiative 33/41).
 
 ## 6. Bauplan Stufe 2 (Beiträge, Ausgaben mit Schema, Verträge, Tests, berührte Dateien, Settings, Paket)
 
@@ -603,7 +779,7 @@ von `defaults.toml` mit `# --- Vorhaben 15: Dokumentfunktion und gemeinsame Antr
 ```toml
 [functions]                     # Vorhaben 15; alle Muster und Tabellen im Stadtprofil, kein Stadtwort im Code
 enabled = false
-variant = "A"                   # "B" nach der Validierung, wenn sie trägt (Frage 9.1)
+variant = "B"                   # gewählt nach der Kodierung (Messdokument Vorhaben 15, § 5; A bleibt als Schalter)
 head_chars = 700                # Textkopf der Sammelarten
 wide_chars = 3000               # zweiter Blick der Verwaltungs-Sammelart
 types = {}                      # paper_type -> "funktion/instrument", ganzer Wert
@@ -638,8 +814,10 @@ gleicher Eingabe); ein Text hinter einem Trenner des Titels ändert die Antragst
 Gegenstand mit Parteinamen nach „: "); die Antragsteller sind unabhängig von der Zeilenfolge; `lager`
 ist für jede Zufallsmenge von Fraktionen und jede Mehrheit eine der sieben Klassen und symmetrisch in der
 Reihenfolge. Mini-Fixture: ein Dutzend Dokumente mit bekannten Funktionen und Antragstellern. **slow**,
-Golden auf allen drei Perioden: die Abdeckungstabelle (§ 3.2), die gemeinsamen Dokumente (§ 3.8), K3
-(§ 3.11); nach der Kodierung neu einfrieren, wenn sie Regeln ändert. Kein Netz, kein Modell.
+Golden auf allen drei Perioden: die Abdeckungstabelle der Variante B (§ 3.2), die gemeinsamen Dokumente
+(§ 3.8), K3 (§ 3.11), und **die Validierung als Regressionstest**: an `validierung/15-funktion/labels.csv`
+muss κ der Funktion ≥ 0,7 bleiben (heute 0,905) und die Präzision der Fraktionen 1,0 (119/119); ein Umbau
+der Regeln, der eine dieser Zahlen senkt, ist kein Refactoring. Kein Netz, kein Modell.
 
 **Berührte Dateien.** Neu: `src/georep/enrich/functions.py`, `src/georep/analysis/functions.py` (Regeln,
 rein), `src/georep/analysis/cosponsors.py` (Antragsteller, Fraktionen, Lager),
@@ -675,10 +853,15 @@ Schlagseite).
 
 Größe geschätzt **40 bis 70 KB** (drei Matrizen von höchstens 9 × 9, fünf Tabellen, eine Liste von rund
 40 Zeilen, drei Leisten). **Tabellen im Register**: `dokumente_funktion`, `mitantraege` (Parquet und CSV).
-**Validierung auf der Seite**: „Funktion geprüft von zwei KI-Kodierern an 150 Dokumenten, nicht von
-Menschen", κ mit Intervall und α; „Antragsteller geprüft an …"; „Mehrheiten: Annahme mit Beleg im Korpus".
-Stufe 3 zeigt nur, was validiert ist (Meta-Plan, § 2.6): trägt die Frage `funktion` (κ ≥ 0,7, α ≥ 0,8),
-aber nicht `urheber`, entfallen die Abschnitte 3 und 4; trägt nur `urheber`, entfallen 1, 2 und 5.
+**Validierung auf der Seite**, im Wortlaut der Messung: „Funktion geprüft von zwei KI-Kodierern
+desselben Modells (Claude Opus) an 150 Dokumenten, nicht von Menschen: das Regelwerk stimmt an 135
+Dokumenten in 125 mit ihnen überein, κ = 0,91 (0,84–0,96; die nicht gewählte Variante 0,83). Die
+Kodierer stimmten untereinander in 149 von 150 überein; bei zwei Kodierern desselben Modells ist das ein
+schwacher Beleg." Dazu: „Antragsteller: 119 von 119 genannten Fraktionen bestätigt, 119 von 138
+gefunden"; „Mehrheiten: Annahme mit Beleg im Korpus"; „Funktion nicht erkannt: 1 231 Vorlagen 2014-2020
+ohne lesbaren Text". Stufe 3 zeigt nur, was validiert ist (Meta-Plan, § 2.6): `funktion` und `urheber`
+tragen beide (κ ≥ 0,7, α ≥ 0,8), also alle fünf Abschnitte; ändert eine zweite Kodierung mit anderem
+Modell (Frage 19) das Bild, zeigt die Seite ihre Zahlen.
 
 ## 8. Vorab festgelegte Hypothesen (nur Analysen: Hypothese, Maß, Test, Schwelle)
 
@@ -700,7 +883,7 @@ schon (32,4 % gegen 51,4 %); H15.2 galt in allen drei Perioden. Wer eine These �
 
 | Nr. | Frage | warum sie zählt | Annahme ohne Antwort |
 |---|---|---|---|
-| 9.1 | Variante A oder B: Berichtsantrag als Kontrolle, Symbol aus dem Beschlusstext? | 257 Dokumente; B verdreifacht die Symbolpolitik | A, bis die Kodierung entscheidet; B, wenn κ_B ≥ κ_A und die Präzision von Symbol in B ≥ 0,8 |
+| 9.1 | Variante A oder B: Berichtsantrag als Kontrolle, Symbol aus dem Beschlusstext? | 257 Dokumente; B verdreifacht die Symbolpolitik | **beantwortet durch die Kodierung: B** (κ_B 0,905 ≥ κ_A 0,829, Präzision Symbol 16/17), nach der vorab notierten Regel; an denselben Labels gewählt und gemessen (§ 4.1) |
 | 9.2 | Reichen Korpusbelege für die Ratsmehrheit, oder braucht die Seite die Kooperationsvereinbarung als Quelle? | K3 hängt ganz an der Mehrheit | Korpusbelege mit Drucksache im Profil; Vorhaben 25 sammelt die Vereinbarungen und ersetzt die Quelle |
 | 9.3 | Fraktionen aus mehreren Parteien: Profiltabelle oder `raw/organizations.json`? | ohne sie ist „SPD – Volt" die stärkste Kante ab 2025 | Profiltabelle mit Zeitraum bis F6 die Organisationen Düsseldorfs abruft, dann aus OParl |
 | 9.4 | Zeigt die Seite K3 für Bezirksvertretungen? | dort gelten andere Mehrheiten | nein, nur das Netz, bis Vorhaben 27 die Mehrheiten der Bezirke kennt |
@@ -711,7 +894,10 @@ schon (32,4 % gegen 51,4 %); H15.2 galt in allen drei Perioden. Wer eine These �
 | 9.9 | Gilt die Mehrheit die ganze Periode? | ein Wechsel würde K3 verschieben | ja, bis ein Beleg anderes sagt; das Profil trägt Datumsgrenzen |
 | 9.10 | Mönchengladbach: keine Mehrheit, keine Anfragen | der Abschnitt Konkordanz hätte keine Grundlage | Abschnitt entfällt ohne `[[functions.majorities]]`; Funktionen und Netz bleiben (73 Fraktionsanträge mit mindestens zwei Parteien) |
 | 9.11 | Die laufende Periode ist 13 Monate alt: ist K3 = 0 ein Befund? | die Seite könnte eine junge Periode als Bruch lesen | die Seite nennt n und „laufend"; H15.2 prüft prospektiv |
-| 9.12 | Schließt das Kriterium die Schicht `rest` ein? | 15 Dokumente, die das Regelwerk absichtlich offen lässt, kosten fast die Hälfte der erlaubten Abweichungen | ja, wie vorgegeben; κ zusätzlich ohne `rest` berichten, die Entscheidung bleibt beim Supervisor |
+| 9.12 | Schließt das Kriterium die Schicht `rest` ein? | 15 Dokumente, die das Regelwerk absichtlich offen lässt, kosten fast die Hälfte der erlaubten Abweichungen | **entschieden vor der Kodierung (Frage 17): nein**; mit der Restklasse wäre κ 0,806 (B) und 0,739 (A), auch das über 0,7 |
+| 9.13 | Braucht es eine zweite Kodierrunde? | κ_B ist an denselben Labels gewählt und gemessen | nein für das Kriterium (beide Varianten tragen); eine Bestätigung mit einem zweiten Modell, wenn Frage 19 so beantwortet wird, dann nach Codebuch .2 (§ 4.3) |
+| 9.14 | Einzelmitglied mit Partei: Person oder Fraktion? | die Kodierer gaben die Partei als Fraktion (2 Fälle in der Stichprobe), `parties.py` führt sie als Person ohne Partei | Person; die Partei als eigenes Feld (Codebuch .2, Punkt 1), auf der Seite erst mit Vorhaben 27 |
+| 9.15 | Urheberklasse „unbekannt": 8 der 150 Dokumente geben die Kodierer einer Fraktion | 10 der 19 fehlenden Fraktionen; 2 356, 327 und 84 Dokumente sind „unbekannt" | Rückstand in `docs/todo.md`, Punkt 9 (Urheber), erweitern; nicht in Vorhaben 15, das `parties.py` nur liest |
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 

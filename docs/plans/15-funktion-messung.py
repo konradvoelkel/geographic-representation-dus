@@ -17,6 +17,11 @@ Mit `--stichprobe` schreibt es die geschichtete Stichprobe von 150 Dokumenten na
 nur, ob die gespeicherte Stichprobe noch dieselbe ist. Das Codebuch
 (`validierung/15-funktion/codebuch.toml`) ist von Hand geschrieben und wird nur gelesen.
 
+Mit `--labels` bildet es aus den Antworten der beiden Kodierer und der Schlichtung (lokal unter
+`$GEOREP_MESSDATEN/kodierung/15-funktion/`) die Endlabels `validierung/15-funktion/labels.csv`; liegt
+diese Datei, wertet es das Regelwerk dagegen aus (§ 4.1 des Messdokuments: κ, Konfusionsmatrix,
+Urheber, Restklasse). Die Auswertung braucht nur `labels.csv`, nicht die lokalen Antworten.
+
 Alle Tabellen des Regelwerks stehen unten in einem Block „Profil"; Stufe 2 legt sie ins Stadtprofil
 (`[functions]`), der Code kennt dann kein Stadtwort. Laufzeit rund eine halbe Minute.
 """
@@ -33,7 +38,7 @@ import subprocess
 import sys
 import time
 import tomllib
-from collections import Counter
+from collections import Counter, defaultdict
 from itertools import combinations
 from pathlib import Path
 from typing import Any
@@ -51,6 +56,12 @@ AUFGABEN = MESSDATEN / "kodierung" / "15-funktion" / "aufgaben.jsonl"
 STICHPROBE = REPO / "validierung" / "15-funktion" / "stichprobe.csv"
 CODEBUCH = REPO / "validierung" / "15-funktion" / "codebuch.toml"
 SEED = 15
+KODIERUNG = MESSDATEN / "kodierung" / "15-funktion"
+ANTWORTEN = {"a": KODIERUNG / "antworten-A.jsonl", "b": KODIERUNG / "antworten-B.jsonl"}
+SCHLICHTUNG = KODIERUNG / "schlichtung.jsonl"
+LABELS = REPO / "validierung" / "15-funktion" / "labels.csv"
+FRAGEN = ("funktion", "urheber", "adressat")
+BOOTSTRAP = 2000  # Ziehungen für das Intervall von kappa
 TEXTANFANG = 1500  # Zeichen je Dokument in einer Kodieraufgabe (Briefing)
 KOPF = 700  # Zeichen des Textkopfs, in denen die Regeln der Sammelarten suchen
 
@@ -554,6 +565,9 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915 -- ein Messskript liest sich
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--stichprobe", action="store_true", help="Stichprobe und Kodieraufgaben neu schreiben"
+    )
+    ap.add_argument(
+        "--labels", action="store_true", help="labels.csv aus Antworten und Schlichtung bilden"
     )
     args = ap.parse_args()
     t0 = time.perf_counter()
@@ -1127,6 +1141,13 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915 -- ein Messskript liest sich
                 f"    K2 über die Grenze / alle mit Fraktion: Initiative {pct(ci['ueber_grenze'], mit_i)}\n"
                 f"    K3 Opposition mit Mehrheitsfraktion / alle mit Opposition: alle {pct(c['ueber_grenze'], opp)}; Initiative {pct(ci['ueber_grenze'], opp_i)} (Wilson-95-% {lo:.3f}–{hi:.3f})"
             )
+            ini_b = f_.filter(pl.col("funktion_b").is_in(["initiative", "symbol"]))
+            cb = Counter(ini_b["lager"].to_list())
+            opp_b = cb["allein_opposition"] + cb["gemeinsam_opposition"] + cb["ueber_grenze"]
+            lo_b, hi_b = wilson(cb["ueber_grenze"], opp_b)
+            print(
+                f"    K3 Initiative nach Variante B: {pct(cb['ueber_grenze'], opp_b)} (Wilson-95-% {lo_b:.3f}–{hi_b:.3f})"
+            )
         if ebene.startswith("Rat"):
             print(
                 "  Mehrheit: Anteil gemeinsam je Funktion (Initiative gemeinsam, Kontrolle allein?)"
@@ -1252,10 +1273,380 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915 -- ein Messskript liest sich
             f"gespeicherte Stichprobe {'gleich' if gespeichert == sorted(sample) else 'VERSCHIEDEN'} ({len(gespeichert)} Zeilen)"
         )
 
+    if args.labels:
+        schreibe_labels()
+        print(f"geschrieben: {LABELS.relative_to(REPO)}")
+    if LABELS.exists():
+        auswertung(d3, groessen)
+
     print(
         f"\nRegelwerk (Varianten A und B) über {docs.height} Dokumente: {t_regel:.1f} s, einfädig"
     )
     print(f"Laufzeit {time.perf_counter() - t0:.1f} s")
+
+
+# ================================================================================================
+# Labels und Auswertung (§ 4.1)
+# ================================================================================================
+def _norm(frage: str, wert: Any) -> Any:
+    """Urheber als sortierte Liste ohne Doppel, sonst der Wert selbst."""
+    return sorted(set(wert)) if frage == "urheber" else wert
+
+
+def schreibe_labels() -> None:
+    """Endlabel je Aufgabe und Frage: gleich kodiert, sonst der Entscheid der Schlichtung."""
+    ant = {
+        k: {
+            json.loads(z)["id"]: json.loads(z)
+            for z in f.read_text(encoding="utf-8").splitlines()
+            if z
+        }
+        for k, f in ANTWORTEN.items()
+    }
+    schl = {}
+    if SCHLICHTUNG.exists():
+        for z in SCHLICHTUNG.read_text(encoding="utf-8").splitlines():
+            if z:
+                r = json.loads(z)
+                schl[r["id"]] = r["entscheid"]
+    if set(ant["a"]) != set(ant["b"]):
+        raise SystemExit("Kodierer A und B haben verschiedene Aufgaben")
+    LABELS.parent.mkdir(parents=True, exist_ok=True)
+    with LABELS.open("w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["aufgabe", "frage", "kodierer_a", "kodierer_b", "schlichtung", "label"])
+        for i in sorted(ant["a"]):
+            for frage in FRAGEN:
+                a = _norm(frage, ant["a"][i][frage])
+                b = _norm(frage, ant["b"][i][frage])
+                entscheid = schl.get(i, {})
+                if a == b:
+                    sch, label = "", json.dumps(a, ensure_ascii=False)
+                elif frage in entscheid:
+                    sch = json.dumps(_norm(frage, entscheid[frage]), ensure_ascii=False)
+                    label = sch
+                else:
+                    raise SystemExit(f"uneinig ohne Schlichtung: {i} {frage}")
+                w.writerow(
+                    [
+                        i,
+                        frage,
+                        json.dumps(a, ensure_ascii=False),
+                        json.dumps(b, ensure_ascii=False),
+                        sch,
+                        label,
+                    ]
+                )
+
+
+def lies_labels() -> dict[str, dict[str, Any]]:
+    out: dict[str, dict[str, Any]] = defaultdict(dict)
+    with LABELS.open(encoding="utf-8") as fh:
+        for r in csv.DictReader(fh):
+            out[r["aufgabe"]][r["frage"]] = {
+                "a": json.loads(r["kodierer_a"]),
+                "b": json.loads(r["kodierer_b"]),
+                "schlichtung": r["schlichtung"],
+                "label": json.loads(r["label"]),
+            }
+    return dict(out)
+
+
+def cohen_kappa(paare: list[tuple[str, str]], gewichte: list[float] | None = None) -> float:
+    """Cohens kappa für zwei nominale Bewerter; mit Gewichten je Paar (Schichtgewichte)."""
+    w = gewichte or [1.0] * len(paare)
+    n = sum(w)
+    if n == 0:
+        return float("nan")
+    po = sum(wi for (x, y), wi in zip(paare, w, strict=True) if x == y) / n
+    rx: Counter[str] = Counter()
+    ry: Counter[str] = Counter()
+    for (x, y), wi in zip(paare, w, strict=True):
+        rx[x] += wi
+        ry[y] += wi
+    pe = sum(rx[k] * ry[k] for k in set(rx) | set(ry)) / (n * n)
+    return (po - pe) / (1 - pe) if pe < 1 else float("nan")
+
+
+def kappa_intervall(paare: list[tuple[str, str]], seed: int = SEED) -> tuple[float, float]:
+    """Perzentil-Bootstrap (95 %) über die Dokumente."""
+    rnd = random.Random(seed)
+    werte = sorted(
+        cohen_kappa([paare[rnd.randrange(len(paare))] for _ in paare]) for _ in range(BOOTSTRAP)
+    )
+    return werte[int(0.025 * BOOTSTRAP)], werte[int(0.975 * BOOTSTRAP) - 1]
+
+
+def alpha_nominal(a: list[str], b: list[str]) -> float:
+    """Krippendorffs alpha, nominal, zwei Kodierer, keine fehlenden Werte."""
+    werte = a + b
+    n = len(werte)
+    c = Counter(werte)
+    do = sum(1 for x, y in zip(a, b, strict=True) if x != y) * 2 / n
+    de = sum(c[k] * (n - c[k]) for k in c) / (n * (n - 1))
+    return 1 - do / de if de else 1.0
+
+
+def regel_urheber(art: str | None, fraktionen: list[str] | None) -> list[str]:
+    """Die Urheber des Regelwerks in den Optionen des Codebuchs."""
+    if art == "Fraktion":
+        return sorted(fraktionen) if fraktionen else ["interfraktionell_ohne_namen"]
+    return [
+        {"Verwaltung": "verwaltung", "Person": "einzelmitglied", "Eingabe": "buerger"}.get(
+            art or "", "unklar"
+        )
+    ]
+
+
+def auswertung(d3: pl.DataFrame, groessen: Counter[str]) -> None:  # noqa: C901, PLR0912, PLR0915
+    titel("4.1 Auswertung der Kodierung (labels.csv)")
+    lab = lies_labels()
+    with STICHPROBE.open(encoding="utf-8") as fh:
+        schicht = {r["id"]: r["schicht"] for r in csv.DictReader(fh)}
+    if set(lab) != set(schicht):
+        print("labels.csv und stichprobe.csv haben verschiedene Dokumente")
+        return
+    # Übereinstimmung der Kodierer
+    for frage in FRAGEN:
+        a = [json.dumps(lab[i][frage]["a"], ensure_ascii=False) for i in sorted(lab)]
+        b = [json.dumps(lab[i][frage]["b"], ensure_ascii=False) for i in sorted(lab)]
+        gleich = sum(1 for x, y in zip(a, b, strict=True) if x == y)
+        geschl = sum(1 for i in lab if lab[i][frage]["schlichtung"])
+        print(
+            f"{frage:9s}: gleich {gleich}/{len(a)}, alpha (nominal) {alpha_nominal(a, b):.3f}, geschlichtet {geschl}"
+        )
+
+    unit = FRAKTION_EINHEIT
+    rows = {
+        r["id"]: r
+        for r in d3.filter(pl.col("id").is_in(list(lab)))
+        .select(
+            "id",
+            "reference",
+            "datensatz",
+            "paper_type",
+            "urheber_art",
+            "urheber_quelle",
+            "parteien",
+            "antragsteller",
+            "fraktionen",
+            "funktion",
+            "funktion_b",
+            "instrument_b",
+        )
+        .iter_rows(named=True)
+    }
+    gew = {
+        s: groessen[s] / sum(1 for x in schicht.values() if x == s) for s in set(schicht.values())
+    }
+
+    # --- funktion ------------------------------------------------------------------------------
+    print("\nLabel funktion je Schicht:")
+    tab: dict[str, Counter[str]] = defaultdict(Counter)
+    for i, s in schicht.items():
+        tab[s][lab[i]["funktion"]["label"]] += 1
+    for s in sorted(tab):
+        print(f"  {s:14s} {dict(sorted(tab[s].items()))}")
+    rest_ids = [i for i in lab if rows[i]["funktion"] == "rest"]
+    print(
+        f"Restklasse des Regelwerks: {len(rest_ids)} Dokumente, Labels {dict(Counter(lab[i]['funktion']['label'] for i in rest_ids))}"
+    )
+    for i in sorted(rest_ids, key=lambda x: rows[x]["reference"] or ""):
+        print(
+            f"    {rows[i]['reference']} [{rows[i]['paper_type']}] -> {lab[i]['funktion']['label']}"
+        )
+    if all(
+        f.exists() for f in ANTWORTEN.values()
+    ):  # nur lokal: das Feld unsicher steht nicht in labels.csv
+        for k, f in ANTWORTEN.items():
+            ant = [json.loads(z) for z in f.read_text(encoding="utf-8").splitlines() if z]
+            print(
+                f"  Kodierer {k.upper()}: unsicher {sum(r['unsicher'] for r in ant)}/{len(ant)}, "
+                f"davon in der Restklasse {sum(r['unsicher'] for r in ant if r['id'] in rest_ids)}/{len(rest_ids)}"
+            )
+    unklar = [i for i in lab if lab[i]["funktion"]["label"] == "unklar"]
+    print(
+        f"Label unklar: {len(unklar)} ({', '.join(sorted(rows[i]['reference'] for i in unklar))}), Regel {[rows[i]['funktion'] for i in unklar]}"
+    )
+
+    basis = sorted(
+        i for i in lab if rows[i]["funktion"] != "rest" and lab[i]["funktion"]["label"] != "unklar"
+    )
+    print(
+        f"\nBasis des Kriteriums (Frage 17): Regelwerk gibt eine Funktion, Label nicht unklar: {len(basis)} Dokumente"
+    )
+    for var, col in (("A", "funktion"), ("B", "funktion_b")):
+        paare = [(rows[i][col], lab[i]["funktion"]["label"]) for i in basis]
+        k = cohen_kappa(paare)
+        lo, hi = kappa_intervall(paare)
+        tr = sum(1 for x, y in paare if x == y)
+        wl, wh = wilson(tr, len(paare))
+        g = [gew[schicht[i]] for i in basis]
+        kw = cohen_kappa(paare, g)
+        tw = sum(gi for (x, y), gi in zip(paare, g, strict=True) if x == y) / sum(g)
+        print(
+            f"Variante {var}: kappa {k:.3f} (Bootstrap-95-% {lo:.3f}–{hi:.3f}), Treffer {tr}/{len(paare)} = {tr / len(paare):.3f} (Wilson {wl:.3f}–{wh:.3f}); gewichtet: kappa {kw:.3f}, Treffer {tw:.3f}"
+        )
+        mat: Counter[tuple[str, str]] = Counter(paare)
+        klassen = [f for f in FUNKTIONEN if f != "rest"]
+        print(
+            "  Konfusion (Zeile Regel, Spalte Label): " + " ".join(f"{f[:5]:>6s}" for f in klassen)
+        )
+        for f in klassen:
+            print(f"  {f:38s} " + " ".join(f"{mat[(f, g_)]:6d}" for g_ in klassen))
+        for f in klassen:
+            tp = mat[(f, f)]
+            pr = sum(mat[(f, g_)] for g_ in klassen)
+            rc = sum(mat[(g_, f)] for g_ in klassen)
+            print(f"    {f:12s} Präzision {tp}/{pr}  Recall {tp}/{rc}")
+        je: dict[str, list[int]] = defaultdict(lambda: [0, 0])
+        for i in basis:
+            je[schicht[i]][0] += rows[i][col] == lab[i]["funktion"]["label"]
+            je[schicht[i]][1] += 1
+        print(
+            "  je Schicht: " + ", ".join(f"{s_} {a_}/{n_}" for s_, (a_, n_) in sorted(je.items()))
+        )
+        falsch = [i for i in basis if rows[i][col] != lab[i]["funktion"]["label"]]
+        for i in sorted(falsch, key=lambda x: (schicht[x], rows[x]["reference"] or "")):
+            print(
+                f"    falsch [{schicht[i]}] {rows[i]['reference']} [{rows[i]['paper_type']}] Regel {rows[i][col]} ({rows[i]['instrument_b'] if col == 'funktion_b' else ''}), Label {lab[i]['funktion']['label']}"
+            )
+    mit_rest = sorted(i for i in lab if lab[i]["funktion"]["label"] != "unklar")
+    for var, col in (("A", "funktion"), ("B", "funktion_b")):
+        paare = [(rows[i][col], lab[i]["funktion"]["label"]) for i in mit_rest]
+        lo, hi = kappa_intervall(paare)
+        print(
+            f"Zum Vergleich mit der Restklasse (vor Frage 17 vorgesehen), Variante {var}: kappa {cohen_kappa(paare):.3f} "
+            f"({lo:.3f}–{hi:.3f}), Treffer {sum(x == y for x, y in paare)}/{len(paare)}"
+        )
+    ab = [i for i in basis if schicht[i] == "abweichung_ab"]
+    print(
+        f"Schicht abweichung_ab (Entwurfsvergleich A gegen B): A {sum(rows[i]['funktion'] == lab[i]['funktion']['label'] for i in ab)}/{len(ab)}, B {sum(rows[i]['funktion_b'] == lab[i]['funktion']['label'] for i in ab)}/{len(ab)}"
+    )
+    for i in sorted(ab, key=lambda x: rows[x]["reference"] or ""):
+        print(
+            f"    {rows[i]['reference']} B={rows[i]['funktion_b']}/{rows[i]['instrument_b']} Label {lab[i]['funktion']['label']} adressat {lab[i]['adressat']['label']}"
+        )
+
+    # --- urheber -------------------------------------------------------------------------------
+    print(
+        "\nUrheber (Regelwerk: Fraktionen aus Art, Autorenteil und Briefkopf; dagegen `parteien`):"
+    )
+    fr_ids = {
+        d: {x["id"] for x in tomllib.loads(CODEBUCH.read_text(encoding="utf-8"))["fraktionen"][d]}
+        for d in DUS
+    }
+
+    def klasse(lst: list[str], ds: str) -> str:
+        if any(x in fr_ids[ds] for x in lst) or "interfraktionell_ohne_namen" in lst:
+            return "Fraktion"
+        for k_, v_ in (
+            ("verwaltung", "Verwaltung"),
+            ("einzelmitglied", "Person"),
+            ("buerger", "Eingabe"),
+            ("beirat_oder_sondergremium", "Beirat"),
+            ("andere", "andere"),
+        ):
+            if k_ in lst:
+                return v_
+        return "unklar"
+
+    ex_r = ex_p = 0
+    kl = Counter()
+    for i in lab:
+        r = rows[i]
+        ru = regel_urheber(r["urheber_art"], r["fraktionen"])
+        pu = regel_urheber(
+            r["urheber_art"],
+            sorted({unit.get(r["datensatz"], {}).get(k, k) for k in (r["parteien"] or [])}),
+        )
+        lb = lab[i]["urheber"]["label"]
+        ex_r += ru == lb
+        ex_p += pu == lb
+        kl[(r["urheber_art"] or "unbekannt", klasse(lb, r["datensatz"]))] += 1
+    print(f"exakt gleiche Urheber: Regelwerk {ex_r}/{len(lab)}, `parteien` {ex_p}/{len(lab)}")
+    print(
+        "Urheberklasse (Regel, Label): "
+        + ", ".join(f"{a}->{b}: {n}" for (a, b), n in sorted(kl.items()))
+    )
+    for name, feld in (("Regelwerk", "fraktionen"), ("parteien", "parteien")):
+        tp = fp = fn = 0
+        je_f: dict[str, list[int]] = defaultdict(lambda: [0, 0, 0])
+        gem = [0, 0, 0, 0]  # tp, fp, fn, exakt unter Label-gemeinsam
+        gem_n = 0
+        for i in lab:
+            r = rows[i]
+            ds = r["datensatz"]
+            if r["urheber_art"] == "Fraktion":
+                werte = r[feld] or []
+                if feld == "parteien":
+                    werte = sorted({unit.get(ds, {}).get(k, k) for k in werte})
+                rs = set(werte)
+            else:
+                rs = set()
+            ls = {x for x in lab[i]["urheber"]["label"] if x in fr_ids[ds]}
+            tp += len(rs & ls)
+            fp += len(rs - ls)
+            fn += len(ls - rs)
+            for f_ in rs & ls:
+                je_f[f_][0] += 1
+            for f_ in rs - ls:
+                je_f[f_][1] += 1
+            for f_ in ls - rs:
+                je_f[f_][2] += 1
+            if len(ls) >= 2 or len(rs) >= 2:
+                gem[0] += len(ls) >= 2 and len(rs) >= 2
+                gem[1] += len(rs) >= 2 and len(ls) < 2
+                gem[2] += len(ls) >= 2 and len(rs) < 2
+            if len(ls) >= 2:
+                gem_n += 1
+                gem[3] += rs == ls
+        print(
+            f"  {name}: Fraktionen Präzision {tp}/{tp + fp} = {tp / max(1, tp + fp):.3f}, Recall {tp}/{tp + fn} = {tp / max(1, tp + fn):.3f}"
+        )
+        print(
+            "    je Fraktion (tp/fp/fn): "
+            + ", ".join(f"{k_} {v_[0]}/{v_[1]}/{v_[2]}" for k_, v_ in sorted(je_f.items()))
+        )
+        print(
+            f"    gemeinsam (mindestens zwei Fraktionen): beide {gem[0]}, nur Regel {gem[1]}, nur Label {gem[2]}; exakt gleiche Menge unter den {gem_n} gemeinsamen des Labels: {gem[3]}"
+        )
+    for i in sorted(lab, key=lambda x: rows[x]["reference"] or ""):
+        r = rows[i]
+        if r["urheber_art"] != "Fraktion":
+            continue
+        ps = {unit.get(r["datensatz"], {}).get(k, k) for k in (r["parteien"] or [])}
+        ls = {x for x in lab[i]["urheber"]["label"] if x in fr_ids[r["datensatz"]]}
+        if ps - ls:
+            print(
+                f"  `parteien` nennt, was das Label nicht nennt: {r['reference']} {sorted(ps - ls)} [{r['urheber_quelle']}]"
+            )
+    abw = [
+        i
+        for i in lab
+        if regel_urheber(rows[i]["urheber_art"], rows[i]["fraktionen"])
+        != lab[i]["urheber"]["label"]
+    ]
+    print(f"  Abweichungen Regelwerk gegen Label ({len(abw)}):")
+    for i in sorted(abw, key=lambda x: (rows[x]["datensatz"], rows[x]["reference"] or "")):
+        r = rows[i]
+        print(
+            f"    {r['reference']} [{r['paper_type']}, {r['urheber_art']}/{r['urheber_quelle']}] Regel {regel_urheber(r['urheber_art'], r['fraktionen'])} parteien {r['parteien']} Label {lab[i]['urheber']['label']}"
+        )
+
+    # --- adressat ------------------------------------------------------------------------------
+    print("\nAdressat (das Regelwerk vergibt keinen): Label funktion x Label adressat")
+    ad: Counter[tuple[str, str]] = Counter(
+        (lab[i]["funktion"]["label"], lab[i]["adressat"]["label"]) for i in lab
+    )
+    for f in (*FUNKTIONEN, "unklar"):
+        z = {a_: n for (f_, a_), n in ad.items() if f_ == f}
+        if z:
+            print(f"  {f:12s} {dict(sorted(z.items()))}")
+    sym_b = [i for i in lab if rows[i]["funktion_b"] == "symbol"]
+    print(
+        f"  Regel B symbol: {len(sym_b)}, Label adressat {dict(Counter(lab[i]['adressat']['label'] for i in sym_b))}, Label funktion {dict(Counter(lab[i]['funktion']['label'] for i in sym_b))}"
+    )
 
 
 def schreibe_aufgaben(sample: pl.DataFrame, docs: pl.DataFrame) -> None:
