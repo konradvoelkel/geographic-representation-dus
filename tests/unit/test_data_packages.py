@@ -120,6 +120,17 @@ def sha256_of(path: Path) -> str:
     return digest.hexdigest()
 
 
+def test_every_folder_under_snapshots_is_a_known_package() -> None:
+    """Review F1, M4: ein Ordner unter ``snapshots/`` ohne Eintrag hier entginge jeder Prüfung.
+
+    Die Grenzen, das README und die Liste verbotener Dateien gelten nur für ``PACKAGES``; ein neues
+    Paket, das dort fehlt, wüchse unbemerkt (und zählte auch nicht in ``TOTAL_LIMIT``).
+    """
+    known = {p.path for p in PACKAGES}
+    folders = {f"snapshots/{d.name}" for d in (REPO / "snapshots").iterdir() if d.is_dir()}
+    assert folders <= known, sorted(folders - known)
+
+
 @pytest.mark.parametrize("package", PACKAGES, ids=lambda p: p.path)
 def test_every_package_exists_and_is_not_empty(package: Package) -> None:
     assert package.root.is_dir(), (

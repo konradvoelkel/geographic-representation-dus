@@ -30,7 +30,7 @@ from georep.pack import (
     paper_file_names,
 )
 from georep.settings import Settings
-from georep.stores import RawTextStore, TextMeta, TextStore
+from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextMeta, TextStore
 
 
 @pytest.fixture
@@ -464,3 +464,50 @@ def test_pack_raw_texts_checks_the_bridge_to_the_text_store(
     with pytest.raises(PackError, match=expected):
         pack_raw_texts(layout, default_settings, tmp_path / "rohtexte")
     assert not (tmp_path / "rohtexte").exists()
+
+
+def test_pack_raw_texts_writes_the_same_rows_with_a_stronger_compression(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    """Review F1, M4: das Paket liegt im Repo, also zählt jedes Byte; der Inhalt bleibt derselbe.
+
+    ``pack_raw_texts`` schreibt den Store neu, mit zstd auf Stufe ``level`` (Vorgabe 19) statt der
+    Stufe des Caches, und mit derselben Schema-Version in den Metadaten.
+    """
+    layout = _raw_run(tmp_path)
+    store = RawTextStore(layout.raw_texts)
+    for i in range(40):  # genug Text, dass die Stufe einen Unterschied macht
+        name = f"z{i:02d}.pdf"
+        store.put(
+            name,
+            "Beschlussvorlage Betrifft: " * 50 + str(i),
+            pages=1,
+            extractor="x+roh",
+            pdf_sha256=str(i),
+        )
+    store.save()
+    _papers_jsonl(
+        layout.papers, [{"id": f"p{i}", "file_name": name} for i, name in enumerate(store.rows)]
+    )
+    texts = TextStore(layout.texts)
+    for name, row in store.rows.items():
+        texts.put(
+            name, "t", TextMeta(extractor="x", pdf_sha256=str(row["pdf_sha256"]), source="pdf")
+        )
+    texts.save()
+    sizes = {}
+    for level in (1, 19):
+        target = tmp_path / f"stufe-{level}"
+        pack_raw_texts(layout, default_settings, target, level=level, today=dt.date(2026, 11, 23))
+        packed = target / "cache" / "text" / "rohtexte.parquet"
+        assert pl.read_parquet(packed).equals(pl.read_parquet(layout.raw_texts))
+        assert pl.read_parquet_metadata(packed)["georep.schema_version"] == str(
+            RAW_TEXT_SCHEMA_VERSION
+        )
+        sizes[level] = packed.stat().st_size
+    assert sizes[19] < sizes[1]
+    default = tmp_path / "vorgabe"
+    pack_raw_texts(layout, default_settings, default, today=dt.date(2026, 11, 23))
+    assert (default / "cache/text/rohtexte.parquet").read_bytes() == (
+        tmp_path / "stufe-19" / "cache/text/rohtexte.parquet"
+    ).read_bytes()

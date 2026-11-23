@@ -42,7 +42,7 @@ from georep.layout import Layout
 from georep.prep.bodies import CONSULTATION
 from georep.prep.raw_texts import RAW_SUFFIX
 from georep.settings import Settings
-from georep.stores import RawTextStore, TextStore
+from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextStore
 
 README_NAME = "README.md"
 # Herkünfte, die ein Lauf wirklich erzeugt: ``pdf`` ist eine eigene Extraktion, ``reference`` die
@@ -457,6 +457,11 @@ def pack_texts(
 # --- Fundament F1: ein Paket, das nur den Rohtextstore trägt -------------------------------------
 
 RAW_TEXTS_NAME = "cache/text/rohtexte.parquet"
+# Review F1, M4: das Rohtextpaket liegt im Repo, und jedes Byte steht in jedem Klon. zstd auf Stufe
+# 19 macht es 17 % kleiner als die Vorgabe von Polars (gemessen am Paket der Hauptperiode,
+# 2026-11-23); das Schreiben dauert Sekunden statt Bruchteilen, und das zahlt nur ``pack``, nie ein
+# Lauf. Der Cache bleibt bei der Vorgabe, denn ``raw_texts`` schreibt ihn bei jeder Änderung neu.
+RAW_TEXTS_ZSTD_LEVEL = 19
 
 
 def check_raw_bridge(layout: Layout, store: RawTextStore) -> None:
@@ -497,6 +502,7 @@ def pack_raw_texts(
     *,
     force: bool = False,
     today: dt.date | None = None,
+    level: int = RAW_TEXTS_ZSTD_LEVEL,
 ) -> PackReport:
     """Nur den Rohtextstore packen: ``cache/text/rohtexte.parquet`` (Fundament F1).
 
@@ -505,7 +511,8 @@ def pack_raw_texts(
     ein Paper dieser Periode ist und dass es überhaupt einen Rohtext gibt -- ohne PDFs schreibt
     der Schritt ``raw_texts`` einen leeren Store, und der wäre kein Paket, sondern ein Irrtum.
     Ein Name ohne Rohtext ist dagegen erlaubt (ein defektes PDF); die Zahl steht im README.
-    Dazu die Brücke zum Textstore (``check_raw_bridge``, Review F1, N2).
+    Dazu die Brücke zum Textstore (``check_raw_bridge``, Review F1, N2). Das Paket ist keine
+    Kopie, sondern derselbe Frame, mit zstd auf Stufe ``level`` neu geschrieben (Review F1, M4).
     """
     claim_target(layout, target)
     paths = (layout.papers, layout.texts, layout.raw_texts)
@@ -532,8 +539,12 @@ def pack_raw_texts(
         skipped.append(RAW_TEXTS_NAME)
     else:
         destination.parent.mkdir(parents=True, exist_ok=True)
-        with atomic_path(destination) as tmp:
-            shutil.copyfile(layout.raw_texts, tmp)
+        write_parquet(
+            pl.read_parquet(layout.raw_texts),
+            destination,
+            schema_version=RAW_TEXT_SCHEMA_VERSION,
+            compression_level=level,
+        )
     pages = sum(int(row["pages"]) for row in store.rows.values())  # type: ignore[call-overload]
     report = PackReport(
         target=target,
