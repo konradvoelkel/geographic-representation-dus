@@ -244,6 +244,21 @@ def _keep_all(_: object) -> bool:
     return True
 
 
+def _looks_cut_off(page: ListPage, count: int) -> bool:
+    """Eine volle Seite ohne ``next`` (Review 2026-11-23): abgeschnitten, nicht das Ende.
+
+    Nur ``pagination`` kann sie als letzte belegen (``currentPage == totalPages``); dieser Server
+    setzt ``totalPages`` nicht, also ist eine volle letzte Seite hier ein Fehler mit Ansage.
+    """
+    pagination = page.pagination
+    if pagination is None or not pagination.elements_per_page:
+        return False
+    proven_last = (
+        pagination.total_pages is not None and pagination.current_page == pagination.total_pages
+    )
+    return count >= pagination.elements_per_page and not proven_last
+
+
 def _each_id_once(result: tuple[list[OparlObject], ListReport]) -> bool:
     found, report = result
     ids = {o.id for o in found}
@@ -322,6 +337,12 @@ def fetch_objects[O: OparlObject](
                 on_page(kept, tuple(gone), None)
             break
         url = page.links.next
+        if url is None and _looks_cut_off(page, len(objects)):
+            raise FetchError(
+                f"OParl {page.links.self_ or first}: volle Seite ohne links.next "
+                f"({len(objects)} Objekte); abgeschnitten oder genau ein Vielfaches der "
+                "Seitengröße? Die nächste Seite von Hand ansehen"
+            )
         if on_page is not None:
             on_page(kept, tuple(gone), url)
         if url is not None and delay_s > 0:

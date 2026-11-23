@@ -155,3 +155,21 @@ def test_the_recorded_pages_go_through_the_fetcher() -> None:
         FakeSession({LIST: response(LIST, content=page)}), LIST, OparlConsultation
     )
     assert found_c[0].agenda_item is not None and found_c[0].paper is not None
+
+
+def test_a_full_page_without_next_is_a_format_error() -> None:
+    """Review 2026-11-23 (klein): eine volle Seite ohne ``links.next`` ist eher eine abgeschnittene
+    Antwort als das Ende; der Abruf endete still. Nur ``pagination`` kann sie als letzte belegen."""
+    full = {
+        "data": [_meeting(9, "2026-03-01"), _meeting(8, "2025-11-01")],
+        "pagination": {"elementsPerPage": 2, "currentPage": 3},
+        "links": {"self": LIST},
+    }
+    with pytest.raises(FetchError, match="volle Seite ohne links.next"):
+        fetch_objects(FakeSession({LIST: response(LIST, payload=full)}), LIST, OparlMeeting)
+    last = full | {"pagination": {"elementsPerPage": 2, "currentPage": 3, "totalPages": 3}}
+    found, _ = fetch_objects(FakeSession({LIST: response(LIST, payload=last)}), LIST, OparlMeeting)
+    assert len(found) == 2
+    short = full | {"pagination": {"elementsPerPage": 3}}
+    found, _ = fetch_objects(FakeSession({LIST: response(LIST, payload=short)}), LIST, OparlMeeting)
+    assert len(found) == 2
