@@ -1,0 +1,30 @@
+{
+  "vorhaben": "18-einbettungen-nachbarn",
+  "codebuch_version": "2026-11-23.1",
+  "einheit": "document_pair",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-24",
+  "einheiten": 383,
+  "uneinig": 23,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "aehnlich": {
+      "n": 383,
+      "beide": 383,
+      "einig": 360,
+      "anteil": 0.9399477806788512,
+      "anteil_wilson95": [
+        0.9115038090283928,
+        0.9596541093275189
+      ],
+      "cohen_kappa": 0.9058153086208556,
+      "krippendorff_alpha_nominal": 0.9059196560814027,
+      "krippendorff_alpha_skala": 0.942803025947654,
+      "krippendorff_alpha": 0.942803025947654,
+      "markierungen": null,
+      "alpha_genuegt": true
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 383 Dokumentpaaren, nicht von Menschen"
+}

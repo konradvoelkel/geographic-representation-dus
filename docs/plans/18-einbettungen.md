@@ -1,40 +1,37 @@
 # Vorhaben 18: Einbettungen, Ähnlichkeit, semantische Suche
 
-Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/18-einbettungen`. Briefing:
+Stand 2026-11-24, Stufe 1 (Messen) abgeschlossen, Branch `feat/18-einbettungen`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „18 Einbettungen,
 Ähnlichkeit, semantische Suche". Messskript: [18-einbettungen-messung.py](18-einbettungen-messung.py).
-Suchfragen: [18-einbettungen-anfragen.toml](18-einbettungen-anfragen.toml). Codebücher und
-Stichproben: [../../validierung/18-einbettungen/](../../validierung/18-einbettungen/) (Suche) und
+Suchfragen: [18-einbettungen-anfragen.toml](18-einbettungen-anfragen.toml). Codebücher, Stichproben
+und Labels: [../../validierung/18-einbettungen/](../../validierung/18-einbettungen/) (Suche) und
 [../../validierung/18-einbettungen-nachbarn/](../../validierung/18-einbettungen-nachbarn/) (ähnliche
 Dokumente).
 
-**Urteil: offen bis zur Kodierung.** Verfahren, Kriterium und Rückfallregel sind vorab festgelegt
-(§ 3.1, Commit `a38e149`, 2026-11-23 um 22:37, bevor ein Verfahren lief). Die ganze Hauptperiode ist
-eingebettet, die drei Rangfolgen und beide Nachbarlisten sind gerechnet, die Pools liegen als
-Kodieraufgaben bereit (916 Paare Suchfrage–Dokument, 383 Paare Anker–Nachbar). Das Urteil gegen das
-Kriterium rechnet `--auswertung`, sobald `labels.csv` in beiden Ordnern liegt (§ 4.3); die
-Auswertung ist mit erfundenen Labels in beide Richtungen geprüft. Schon entschieden, weil es nicht
-an den Labels hängt: **die GPU trägt es** (die Hauptperiode in 11,5 Minuten, alle vier Datensätze in
-rund einer halben Stunde, § 3.3), **Vektoren gehören nicht ins Repo** (die Nachbartabelle mit 0,88
-MiB genügt für die Seite, § 3.4), und **Cluster über Einbettungen tragen nicht besser als das
-NMF-Modell** (sie sortieren nach Dokumentform, § 3.5).
+**Urteil (2026-11-24, nach der vorab festgelegten Regel aus § 3.1, Commit `a38e149`, ohne Anpassung
+an die Labels): bauen** — `embeddings`, `neighbors` und `georep suche` mit der Einbettung (§ 5.1).
+Beide Teile des Kriteriums sind erfüllt, die Rückfallregel greift nicht. Die Labels kommen von zwei
+KI-Kodierern und einem Schlicht-Agenten, alle drei dasselbe Modell (`claude-opus-5-5`, Frage 19 an
+Konrad: es gilt die Annahme), nicht von Menschen; α ordinal 0,975 (Suche) und 0,943 (Nachbarn).
+Schon vor den Labels entschieden: die GPU trägt es, Vektoren gehören nicht ins Repo, Cluster über
+Einbettungen werden nicht gebaut (§ 5).
 
-Die drei Zahlen, auf die es bis zur Kodierung ankommt:
+Die drei Zahlen, auf die es ankommt:
 
-1. **Laufzeit**: 47 407 Stücke (19 032 Dateien, 2,49 Stücke je Datei) in 693 s Wanduhr unter einem
-   Lastmittel von 3,9 bis 32,5; ohne Fremdlast 6,3 bis 6,8 ms GPU und 10,2 bis 11,1 ms Wanduhr je
-   Stück, also rund **16 ms GPU und 27 ms Wanduhr je Dokument**. Hochrechnung für alle vier
-   Datensätze: 121 044 Stücke, **17 GPU-Minuten**, 29 Minuten Wanduhr; weit unter den zwei Stunden,
-   ab denen ein Auftrag in die GPU-Warteschlange gehört.
-2. **Die Verfahren finden verschiedene Dokumente**: von den ersten zehn teilen BM25 und Einbettung im
-   Mittel nur 27 % (Jaccard) bei Stichwörtern im Amtswortlaut, 15 % bei umschriebenen Fragen und 20 %
-   bei ganzen Fragesätzen; der Pool hat darum 916 Paare, 18,3 je Frage statt höchstens 30.
-3. **Ähnliche Dokumente im Dialog kosten 29 Bytes je Dokument**: fünf Nachbarn für die 10 788
-   Dokumente des Dialogs 307 KB (gzip 128 KB), dazu die Metadaten der 3 726 Nachbarn außerhalb von
-   `dokumente.json` 513 KB (gzip 134 KB). Eine freie semantische Suche auf der statischen Seite
-   bräuchte dagegen ein Modell von rund 0,5 GB im Browser oder einen Server (§ 3.4).
+1. **Suche**: nDCG@10 über 50 Suchfragen **Einbettung 0,883 (0,842–0,919), Mischung 0,846
+   (0,792–0,899), BM25 0,709 (0,622–0,785)**; die Einbettung schlägt BM25 um **+0,175** (95 %
+   +0,106 bis +0,255), die Mischung um +0,137, Schwelle 0,05. Der Vorsprung hängt an der Form der
+   Frage: bei Stichwörtern im Amtswortlaut +0,032 (Intervall schließt 0 ein; die Mischung +0,046),
+   bei umschriebenen +0,181, bei ganzen Fragesätzen +0,350 (§ 4.4).
+2. **Ähnliche Dokumente**: Präzision@5 der Einbettung **0,832** (208 von 250, Wilson 0,781–0,873),
+   Schwelle 0,70; TF-IDF 0,652 (0,591–0,708) erreicht die Schwelle nicht, der billigere Weg fällt.
+   Dieselbe Sache (nicht nur dasselbe Thema) sind 34 % der Vorschläge der Einbettung.
+3. **Aufwand**: die Hauptperiode in 693 s Wanduhr (47 407 Stücke, rund 16 ms GPU und 27 ms Wanduhr
+   je Dokument ohne Fremdlast), alle vier Datensätze rund 17 GPU-Minuten; ins Repo nur die
+   Nachbartabelle (0,88 MiB), „ähnliche Dokumente" im Dialog 29 Bytes je Dokument (§ 3.3, § 3.4).
 
-Alle Zahlen sind am 2026-11-23 gemessen, an der Rohtext-Messdatei der Hauptperiode und am Korpus nach
+Alle Zahlen sind am 2026-11-23 gemessen (die Auswertung der Labels am 2026-11-24), an der
+Rohtext-Messdatei der Hauptperiode und am Korpus nach
 `georep bootstrap && georep run` im Worktree, ollama 0.24.0 auf der RTX 4090. Nachrechnen, mit den
 Lastregeln des Supervisors vom selben Tag:
 
@@ -451,7 +448,7 @@ Kodierern.
 für die Nachbarn (383), nach [../validierung.md](../validierung.md), § 3 und § 4.1; danach `georep
 validate merge` je Codebuch, Schlichtung, zweites `merge`, und `--auswertung` (§ 4.3).
 
-### 4.3 Auswertung (vorbereitet, nicht gerechnet)
+### 4.3 Auswertung (vorbereitet vor der Kodierung)
 
 `--auswertung` liest `labels.csv` beider Ordner und rechnet nach § 3.1: nDCG@10 je Frage und
 Verfahren (`georep.validation.measures.ndcg_at_k`), das Mittel über die Fragen mit mindestens einem
@@ -473,13 +470,106 @@ Die Güte nach F4 (`georep validate score 18-einbettungen --pred <ausgabe.parque
 Verfahren eine Datei mit `query`, `id`, `score` aus `rangfolgen.parquet`; sie rechnet dasselbe
 nDCG@10 und schreibt es nach `guete.json`, das Stufe 3 liest.
 
+### 4.4 Ergebnis der Kodierung (2026-11-24)
+
+Kodiert hat der Supervisor nach [../validierung.md](../validierung.md), § 3: zwei Kodier-Agenten,
+ein Schlicht-Agent für die Uneinigkeiten, **alle drei dasselbe Modell** (`claude-opus-5-5`; Frage 19
+an Konrad ist offen, es gilt die Annahme). Kein menschlicher Goldstandard; α misst die Schärfe des
+Codebuchs für dieses Modell, nicht die Richtigkeit der Labels (§ 4.1). Zusammengeführt mit `georep
+validate merge`; `labels.csv`, `README.md` und `guete.json` liegen in beiden Ordnern.
+
+| Codebuch | Einheiten | einig | Cohens κ | Krippendorffs α (ordinal) | geschlichtet |
+|---|---|---|---|---|---|
+| `18-einbettungen` (Suche) | 916 | 881 (96,2 %, Wilson 94,7–97,2) | 0,933 | **0,975** | 35 |
+| `18-einbettungen-nachbarn` | 383 | 360 (94,0 %, Wilson 91,2–96,0) | 0,906 | **0,943** | 23 |
+
+Beide α liegen über 0,8; Stufe 3 darf zeigen (Plan, § 2.6). Endlabels der Suche: 529 Paare
+relevant (`2`), 144 teilweise (`1`), 243 nicht relevant (`0`); jede der 50 Fragen hat mindestens ein
+relevantes Dokument, keine fällt heraus.
+
+**Suche, nDCG@10** (`--auswertung`, 2026-11-24; Intervalle Bootstrap über die Fragen, 2 000
+Ziehungen, Seed 20261123; p zweiseitig aus 10 000 Vorzeichen-Permutationen, 0,0001 ist der kleinste
+mögliche Wert). Die Zeile „alle" mit den Differenzen ist die vorab festgelegte Rechnung; die
+Intervalle der Mittel und alles je `form` sind nach der Kodierung auf Bitte des Supervisors
+nachgetragen (Frage 9.9) und explorativ, mit eigenem Zufallsstrom, damit die festgelegten Zahlen
+gleich bleiben.
+
+| Form | Fragen | BM25 | Einbettung | Mischung | Einbettung − BM25 | Mischung − BM25 |
+|---|---|---|---|---|---|---|
+| alle | 50 | 0,709 (0,622–0,785) | **0,883** (0,842–0,919) | 0,846 (0,792–0,899) | **+0,175** (+0,106 bis +0,255), p 0,0001 | **+0,137** (+0,094 bis +0,185), p 0,0001 |
+| wort | 18 | 0,933 (0,893–0,967) | 0,965 (0,934–0,991) | 0,979 (0,961–0,994) | +0,032 (−0,004 bis +0,064), p 0,108 | +0,046 (+0,021 bis +0,076), p 0,002 |
+| umschrieben | 18 | 0,623 (0,488–0,755) | 0,804 (0,722–0,876) | 0,771 (0,670–0,867) | +0,181 (+0,043 bis +0,330), p 0,022 | +0,148 (+0,072 bis +0,240), p 0,0002 |
+| frage | 14 | 0,529 (0,357–0,684) | 0,880 (0,817–0,933) | 0,770 (0,676–0,858) | +0,350 (+0,207 bis +0,488), p 0,0004 | +0,241 (+0,152 bis +0,329), p 0,0008 |
+
+Je Frage ist die Einbettung bei 35 der 50 Fragen besser als BM25 und bei 10 schlechter, die Mischung
+bei 39 besser und bei 5 schlechter. Nach `art`: Orte (9) BM25 0,610 gegen Einbettung 0,877, Themen
+(34) 0,730 gegen 0,887, Vorhaben (7) 0,730 gegen 0,876. Am deutlichsten verliert die Einbettung bei
+a25 „Busse und Bahnen pünktlicher machen" (0,310 gegen 0,605) und a07 „Photovoltaik auf städtischen
+Dächern" (0,756 gegen 0,931); in beiden Fällen liegt die Mischung nahe bei BM25 oder darüber.
+
+**Zu Frage 9.9** (liegt der Vorsprung nur bei umschriebenen Fragen?): Nein, aber er hängt an der
+Form. Am größten ist er bei ganzen Fragesätzen (+0,350), wo BM25 ohne Stoppwortliste (so vorab
+festgelegt) Funktionswörter mitzählt; bei Stichwörtern im Amtswortlaut ist er klein und nicht gegen
+null gesichert (+0,032), dort ist die **Mischung am besten** (0,979). Ohne die 14 Fragesätze, also an
+den 36 Stichwörtern, liegt die Einbettung explorativ um +0,107 (+0,032 bis +0,182) vorn, die Mischung
+um +0,097 (+0,055 bis +0,152): auch ohne den Vorteil bei Fragesätzen über der Schwelle, mit
+breiterem Intervall.
+
+**Explorative Varianten** (dieselben Labels; nicht geurteilte Dokumente zählen nicht, darum mit
+judged@10, und je kleiner judged@10, desto eher zu gut): BM25 ohne Stemmer 0,749 (judged@10 0,736),
+Einbettung nur mit dem ersten Stück 0,874 (0,642), Einbettung mit 256 Komponenten 0,874 (0,726),
+konvexe Mischung 0,845 (0,992). Die konvexe Mischung ist fast ganz geurteilt und liegt gleichauf mit
+RRF. Dass BM25 ohne Stemmer höher liegt als mit, ist bei einem Viertel ungeurteilter Treffer nicht
+gesichert; ein Kandidat ist die Verschmelzung „sicherer"/„Sicherheit" → „sich" (§ 3.6).
+
+**Ähnliche Dokumente** (Präzision@5; Intervalle Wilson über die 250 Paare und Bootstrap über die 50
+Anker):
+
+| | Einbettung | TF-IDF |
+|---|---|---|
+| `gleiche_sache` | 85 | 66 |
+| `gleiches_thema` | 123 | 97 |
+| `verschieden` | 42 | 87 |
+| **Präzision@5** | **0,832** (Wilson 0,781–0,873; Anker 0,760–0,892) | 0,652 (Wilson 0,591–0,708; Anker 0,560–0,744) |
+| streng (nur `gleiche_sache`) | 0,340 | 0,264 |
+| Präzision auf Rang 1 / 2 / 3 / 4 / 5 | 0,94 / 0,84 / 0,76 / 0,86 / 0,76 | 0,88 / 0,72 / 0,70 / 0,54 / 0,42 |
+
+Die Einbettung hält ihre Präzision bis Rang 5, TF-IDF fällt nach Rang 1 ab. Ein Zeichen für
+denselben Vorgang ohne Kodierung (Drucksachennummer, § 3.6) tragen bei beiden 11 % der Paare;
+kodiert sind 34 % der Vorschläge der Einbettung dieselbe Sache.
+
+Ein Fehler des Skripts, vor diesem Ergebnis behoben: der Bootstrap über die Anker zog nach Platz,
+und die Folge der Anker kam aus Polars `unique()` ohne feste Ordnung, so dass das Anker-Intervall
+von Lauf zu Lauf um ein Hundertstel schwankte (0,764 bis 0,768 als untere Grenze). Seit die Anker
+sortiert sind, geben zwei Läufe dieselben Zahlen; Punktschätzungen und Wilson-Intervalle waren nie
+betroffen.
+
 ## 5. Urteil gegen das Kriterium
 
-**Offen, bis beide Codebücher kodiert und geschlichtet sind.** Das Urteil folgt dann mechanisch aus
-§ 3.1 (`--auswertung` druckt `KRITERIUM SUCHE`, `KRITERIUM NACHBARN`, `URTEIL` und, wo sie greift, die
-Rückfallregel); es wird in einem eigenen Abschnitt nachgetragen, § 3.1 bleibt, wie er ist.
+### 5.1 Urteil (2026-11-24): bauen
 
-Was ohne Labels schon feststeht und das Urteil nicht berührt:
+Nach der Regel aus § 3.1 (Commit `a38e149`), ohne Anpassung an die Labels:
+
+- **Suche: erfüllt.** max(Einbettung − BM25, Mischung − BM25) = max(+0,175, +0,137) = +0,175 ≥ 0,05.
+  Auch die untere Grenze des Intervalls (+0,106) liegt über der Schwelle.
+- **Nachbarn: erfüllt.** Präzision@5 der Einbettung 0,832 ≥ 0,70 (Wilson 0,781–0,873, Bootstrap über
+  die Anker 0,760–0,892; beide unteren Grenzen über 0,70).
+- **Daraus: bauen** — `embeddings`, `neighbors` und `georep suche` mit dem Verfahren, das im Mittel
+  höher liegt: **die Einbettung** (0,883 gegen 0,846 der Mischung).
+- **Rückfallregel, TF-IDF-Nachbarn**: greift nicht; TF-IDF erreicht 0,652 < 0,70 (und liegt 0,180
+  unter der Einbettung).
+- **Validierung für Stufe 3**: α 0,975 und 0,943, beide ≥ 0,8. Die Seite sagt wörtlich, was
+  `guete.json` sagt („geprüft von zwei KI-Kodierern an 383 Dokumentpaaren, nicht von Menschen"), und
+  dazu, dass Kodierer und Schlichter dasselbe Modell sind.
+
+Was das Urteil nicht entscheidet, aber Stufe 2 wissen sollte: Bei Stichwörtern im Amtswortlaut war
+die Mischung das beste Verfahren (0,979 gegen 0,965) und nie weit hinter der Einbettung; die
+Einbettung verliert dort, wo das Wort der Verwaltung genau getroffen ist (a07, a25). `georep suche`
+nimmt die Einbettung als Vorgabe, wie die Regel es sagt; `--verfahren mischung` steht im Bauplan
+(§ 6) und kostet nur die Wortmatrix. Ob die Mischung Vorgabe werden soll, wäre eine neue Messung mit
+neuen Fragen (Frage 9.12), keine Auslegung dieser.
+
+### 5.2 Vor den Labels entschieden
 
 - **Rechenaufwand: tragbar.** Die Hauptperiode ist ganz eingebettet (11,5 Minuten in einem
   gesperrten Block), alle vier Datensätze kosten rund 17 GPU-Minuten (§ 3.3). Die Stichprobengrenze
@@ -491,11 +581,13 @@ Was ohne Labels schon feststeht und das Urteil nicht berührt:
   0,899); dem Ausschuss kommt das gesäte Modell der Seite näher (NMI 0,737 gegen 0,451).
 - **Freie semantische Suche auf der Seite: nicht in Stufe 3** (§ 3.4, Frage 9.3).
 
-Wie das Urteil zu lesen ist, wenn es kommt: Die Differenz ist ein Mittel über höchstens 50 Fragen;
-bei einer Streuung der nDCG-Differenz je Frage um 0,2 bis 0,3 wäre das Intervall geschätzt rund
-±0,06 bis ±0,08 breit, eine Differenz von 0,05 also auch bei bestandenem Kriterium nicht gegen null gesichert.
-Das Dokument nennt Intervall und p-Wert neben der Zahl; das Kriterium selbst bleibt die
-Punktschätzung, wie es das Briefing setzt.
+### 5.3 Wie die Zahlen zu lesen sind
+
+Die Differenzen sind Mittel über 50 Fragen (je Form 14 bis 18); die Intervalle sind darum breit,
+insgesamt rund ±0,07, je Form bis ±0,14. Das Kriterium ist die Punktschätzung, wie das Briefing es
+setzt; hier liegt auch die untere Grenze darüber. Gemessen ist die Übereinstimmung mit einem Modell
+(drei Agenten desselben Modells), an Fragen, die ein Agent geschrieben hat, und an der Hauptperiode;
+für Menschen, echte Suchprotokolle und andere Perioden ist nichts gemessen (Fragen 9.9, 9.10).
 
 ## 6. Bauplan Stufe 2
 
@@ -582,8 +674,9 @@ Vorhaben 14 in `templates/frame/script.js.j2` (Synergie § 1, „Dokumentdialog,
 `data/aehnlich.json` beim ersten Öffnen eines Dialogs nach; je Dokument fünf Nachbarn als Indizes in
 eine Tabelle. Größe (§ 3.4): fünf Nachbarn als Indizes 307 KB (gzip 128 KB) für die 10 788 Dokumente des Dialogs, dazu Datei, Datum, Drucksache und Titel der 3 726 Nachbarn, die nicht in `dokumente.json` stehen, 513 KB (gzip 134 KB); zusammen 820 KB, gzip 262 KB, einmal geladen. `index.html` wächst nur um die Zeilen des Hakens
 (unter 1 KB). Jeder Vorschlag mit Drucksache, Datum, Titel und Link wie die Trefferliste; darunter
-der Satz zur Validierung aus `guete.json` („geprüft von zwei KI-Kodierern an 50 Ankern, nicht von
-Menschen", Präzision@5 mit Intervall).
+der Satz zur Validierung aus `guete.json` („geprüft von zwei KI-Kodierern an 383 Dokumentpaaren,
+nicht von Menschen"), Präzision@5 0,83 mit Intervall und der Hinweis, dass Kodierer und Schlichter
+dasselbe Modell sind.
 
 **Keine freie semantische Suche auf der statischen Seite in Stufe 3.** Was sie bräuchte, beziffert
 § 3.4; beides ist größer als das, was eine Stufe 3 tragen soll (Frage 9.3).
@@ -601,14 +694,16 @@ vorab festgelegt ist (Verfahren, Kriterium, Rückfall, explorative Zusätze), st
 | Nr. | Frage | Warum sie zählt | Annahme ohne Antwort |
 |---|---|---|---|
 | 9.1 | Kommen Vektoren ins Repo (Frage 18/26)? | Dokumentvektoren 7,5 bis 25,7 MiB, Stückvektoren 64 MiB, je für die Hauptperiode allein; das Paketbudget hat rund 11 bis 14 MiB Luft | **Nein.** Ins Repo nur die Nachbartabelle (0,88 MiB); Vektoren bleiben im Modellcache, `georep suche` ist lokal. Damit ist Frage 26 für 18 beantwortet, Frage 18 nicht berührt |
-| 9.2 | Wer kodiert 916 + 383 Einheiten, und in wie vielen Läufen? | Der Pool der Top-10 je Verfahren ist groß (Plan § 11 verlangt ihn); je Kodierer rund 2,7 + 1,4 Mio. Zeichen Ausschnitt | Der Supervisor teilt nach F4 § 3 in Läufe zu höchstens 200 Einheiten (Suche 5, Nachbarn 2 je Kodierer). Kein Unterpool: eine Auswahl aus den Top-10 machte nDCG@10 für jedes Verfahren unvollständig |
+| 9.2 | Wer kodiert 916 + 383 Einheiten, und in wie vielen Läufen? | Der Pool der Top-10 je Verfahren ist groß (Plan § 11 verlangt ihn); je Kodierer rund 2,7 + 1,4 Mio. Zeichen Ausschnitt | Erledigt am 2026-11-24 durch den Supervisor (§ 4.4): alle 916 und 383 Einheiten kodiert, 35 und 23 geschlichtet |
 | 9.3 | Soll es eine freie semantische Suche auf der Seite geben? | Modell im Browser oder Server, § 3.4: rund 0,5 GB Modell oder ein eigener Dienst, dazu 12 bis 64 MB Index | Nicht in Stufe 3; „ähnliche Dokumente" und `georep suche` lokal decken die Ratsarbeit, eine Suche auf der Seite wäre ein eigenes Vorhaben mit eigener Messung (kleineres Modell, andere Vektoren) |
 | 9.4 | Snowball-Stemmer als eigene Umsetzung oder als Abhängigkeit `snowballstemmer`? | eine Bibliothek für rund 70 Zeilen gegen den Prüfaufwand einer eigenen | Eigene Umsetzung mit der vollständigen Beispielliste als Test (wie `krippendorff` in F4, Punkt 71) |
 | 9.5 | Wie erkennt ein Modellschritt, dass ollama still auf der CPU rechnet? | Am 2026-11-23 um 22:42 scheiterte die CUDA-Initialisierung (`ggml_cuda_init: failed to initialize CUDA: initialization error` im Log), `ollama ps` sagte trotzdem „100% GPU"; rund 1,6 Stücke/s statt rund 90 je Sekunde auf der GPU | Die Messung prüft das Tempo an einer Probe von 64 Stücken (`GPU_GRENZE_S`); 370 auf der CPU gerechnete Vektoren dieses Vorhabens sind aus dem Cache gelöscht und auf der GPU neu gerechnet. Für F5: eine Tempo-Probe in `georep ml status` oder vor dem ersten Stapel, Entscheidung des Supervisors |
 | 9.6 | Unter welcher Lizenz stehen die Gewichte von `nomic-embed-text-v2-moe`? | Die Seite nennt das Modell neben den Nachbarn | `ollama show --license` ist leer; nach Erinnerung Apache 2.0. Vor Stufe 3 auf der Modellseite nachsehen |
 | 9.7 | Verraten veröffentlichte Vektoren Text? | Aus Einbettungen lässt sich Text teilweise zurückgewinnen (Morris u. a. 2023, „vec2text"*), bei kurzen Texten weitgehend; die Seite veröffentlicht bewusst keine Volltexte (`workflow-ratsmitglied.md`, § 4) | Keine Vektoren auf der Seite und im Repo (9.1); die Nachbartabelle trägt nur IDs und Ähnlichkeiten |
-| 9.8 | Kommt `georep suche` mit BM25, auch wenn Teil 1 des Kriteriums verfehlt wird? | BM25 ist billig und ohne Modell; die Messung liefert seine Güte mit | Nicht unter diesem Kriterium; eine eigene Entscheidung des Supervisors mit der Zahl aus § 5 |
-| 9.9 | Sind die Labels voreingenommen? | Suchfragen, Bedarf und Kodierung kommen aus derselben Modellfamilie; der Bedarf beschreibt Synonyme, die BM25 nicht sieht, aber die Einbettung vielleicht | Als Grenze genannt (§ 4.1); die Auswertung je `form` zeigt, ob der Vorsprung nur bei umschriebenen Fragen liegt |
+| 9.8 | Kommt `georep suche` mit BM25, auch wenn Teil 1 des Kriteriums verfehlt wird? | BM25 ist billig und ohne Modell; die Messung liefert seine Güte mit | Entfällt: Teil 1 ist erfüllt (§ 5.1). BM25 bleibt als `--verfahren bm25` für Läufe ohne ollama (nDCG@10 0,709) |
+| 9.9 | Sind die Labels voreingenommen? | Suchfragen, Bedarf und Kodierung kommen aus derselben Modellfamilie; der Bedarf beschreibt Synonyme, die BM25 nicht sieht, aber die Einbettung vielleicht | Beantwortet, soweit es die Daten können (§ 4.4): der Vorsprung liegt nicht nur bei umschriebenen Fragen, am größten ist er bei Fragesätzen, bei Stichwörtern im Amtswortlaut ist er klein (+0,032, Intervall über 0); ohne Fragesätze +0,107. Dass Fragen, Bedarf und Labels aus derselben Modellfamilie kommen, bleibt als Grenze (Frage 19 an Konrad) |
 | 9.10 | Gilt das Ergebnis für die anderen Perioden und für Mönchengladbach? | Gemessen ist nur die Hauptperiode (Plan § 2.13) | Ja für Zerteilung, Laufzeit und Größen (§ 3.3); die Güte wird für andere Profile nicht nachgemessen, die Seite nennt die Hauptperiode als Ort der Prüfung |
+| 9.11 | Wie wird das Codebuch für eine nächste Fassung schärfer? | Die Schlichter haben an den 35 und 23 Uneinigkeiten Regeln vorgeschlagen; angewandt auf dieselben Einheiten würden sie die eigene Anpassung messen (F4, § 2) | **Nicht angewandt.** Für eine Fassung 2 mit neuer Stichprobe, Suche: (a) der Bedarf vor dem Doppelpunkt ist das Gesuchte, die Liste danach sind Beispiele; (b) fragt die Suchfrage nach einem Aspekt, ist er Pflicht; (c) die Reichweite eines Orts folgt dem Bedarf, Ortsarten zählen wie Orte; (d) der Betreff zählt wie ein Titel; (e) Sammelvorlagen: ein großer Abschnitt ist `1`, `2` erst, wenn Titel, Betreff oder Beschluss es nennen; (f) Gremienbesetzungen sind `0`. Nachbarn: ein Sachthema ist eine Art Maßnahme; derselbe Ort allein stiftet kein Thema; Teilvorlagen derselben Runde sind dieselbe Sache; Einzelbeschlüsse gegen denselben Topf bilden keine Liste; mehrjährige Programme sind Thema, derselbe Vorgang ist Sache |
+| 9.12 | Soll `georep suche` die Mischung statt der Einbettung als Vorgabe nehmen? | Bei Stichwörtern im Amtswortlaut war die Mischung am besten (0,979), insgesamt die Einbettung (0,883 gegen 0,846) | Vorgabe nach der Regel: Einbettung; `--verfahren mischung` als Option. Eine andere Vorgabe nur nach einer neuen Messung mit neuen Fragen |
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
