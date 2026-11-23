@@ -7,6 +7,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from georep import cli
 from georep.errors import ModelError, ModelUnreachableError
@@ -252,3 +253,16 @@ def test_profile_runs_a_model_step_with_models(tmp_path: Path, settings: Setting
     assert skipped.path is None and "--models" in skipped.outcome.reason
     ran = profile_step(step, settings, tmp_path / "prof", models=True)
     assert ran.outcome.status == "ausgeführt" and ran.path is not None and ran.path.exists()
+
+
+def test_cli_refuses_a_negative_limit(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    """Befund 9 des Reviews (Probe 8): ``--limit -5`` kam als ``ml.limit = -5`` am Validator vorbei."""
+    with pytest.raises(SystemExit) as stopped:
+        cli.main(["run", "--models", "--limit", "-5"])
+    assert stopped.value.code == 2 and "nicht negativ" in capsys.readouterr().err
+
+
+def test_the_model_limit_is_validated_like_the_settings(settings: Settings) -> None:
+    assert cli._with_model_limit(settings, 7).ml.limit == 7
+    with pytest.raises(ValidationError):
+        cli._with_model_limit(settings, -1)

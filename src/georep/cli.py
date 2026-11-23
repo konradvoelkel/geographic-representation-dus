@@ -30,7 +30,7 @@ from georep.profiling import profile_step
 from georep.report.build import current_commit
 from georep.report.model import sensitivity_rows
 from georep.report.publish import publish_sites
-from georep.settings import Settings, available_profiles, load_settings, settings_files
+from georep.settings import Ml, Settings, available_profiles, load_settings, settings_files
 from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextStore
 from georep.validation.command import add_parser as add_validate_parser
@@ -40,6 +40,17 @@ from georep.validation.command import run as run_validate
 def _setup_logging(level: str) -> None:
     logger.remove()
     logger.add(sys.stderr, level=level, format="<level>{level: <8}</level> {message}")
+
+
+def _non_negative(text: str) -> int:
+    """``--limit`` als Zahl ab 0; eine negative Grenze ist ein Bedienfehler (Review 2026-11-23)."""
+    try:
+        value = int(text)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(f"keine ganze Zahl: {text}") from error
+    if value < 0:
+        raise argparse.ArgumentTypeError(f"muss nicht negativ sein: {value}")
+    return value
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -65,8 +76,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run.add_argument(
         "--limit",
-        type=int,
-        help="mit --models: höchstens so viele neue Modellaufrufe je Schritt (ml.limit)",
+        type=_non_negative,
+        help="mit --models: höchstens so viele neue Eingaben je Stapellauf (ml.limit)",
     )
 
     fetch = sub.add_parser(
@@ -193,8 +204,12 @@ def _with_fetch_limits(settings: Settings, limit: int | None, max_pages: int | N
 
 
 def _with_model_limit(settings: Settings, limit: int) -> Settings:
-    """``--limit`` eines Modelllaufs als ``ml.limit``; zählt wie ``pdf_limit`` zum Fingerprint."""
-    ml = settings.ml.model_copy(update={"limit": limit})
+    """``--limit`` eines Modelllaufs als ``ml.limit``, geprüft wie jeder Wert der Settings.
+
+    ``model_copy`` allein prüft nicht (Review 2026-11-23, Befund 9); ``model_validate`` schon. Im
+    Fingerprint steht es nicht: ein Teillauf zeigt sich an den offenen Eingaben im Stamp.
+    """
+    ml = Ml.model_validate(settings.ml.model_dump() | {"limit": limit})
     return settings.model_copy(update={"ml": ml})
 
 
