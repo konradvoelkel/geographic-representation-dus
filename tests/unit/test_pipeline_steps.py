@@ -18,6 +18,7 @@ import polars as pl
 import pytest
 
 from georep import __version__
+from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.layout import Layout
 from georep.pipeline import (
     METRICS_SCHEMA,
@@ -54,6 +55,10 @@ VERSIONS = {
     "parties": PARTIES_SCHEMA,
     # Punkt 53: beide Ausgaben sind seit dem 2026-10-13 sortiert
     "context": CONTEXT_SCHEMA_VERSION,
+    # Fundament F6: die drei Netzschritte schreiben JSONL aus einem Modul
+    "meetings": COUNCIL_SCHEMA_VERSION,
+    "consultations": COUNCIL_SCHEMA_VERSION,
+    "persons": COUNCIL_SCHEMA_VERSION,
 }
 
 

@@ -24,7 +24,16 @@ from georep.report.tables import published
 from georep.settings import Settings, load_settings
 from tests.conftest import as_in_the_thesis, within_budget
 
-NETWORK = {"opendata", "papers", "organizations", "pdfs", "streets_osm", "pois_wiki"}
+_NOWHERE = Path("/nonexistent")
+# Die Netzschritte aus dem Register, nicht als Liste: Fundament F6 brachte drei dazu, und die
+# Liste hier wäre die zweite Stelle, die davon wissen muss (2026-11-23).
+NETWORK = {
+    s.name
+    for s in build_steps(
+        load_settings(cwd=Path("/nonexistent")), Layout(_NOWHERE, _NOWHERE, _NOWHERE)
+    )
+    if s.network
+}
 EXACT = ["wahlkreis_id", "anzahl_treffer", "Wahlberechtigte_insgesamt", "Waehler", "suchbegriffe"]
 FLOATS = ["wahlkreis_id", "trefferquote", "wahlbeteiligung"]
 

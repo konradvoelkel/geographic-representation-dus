@@ -1428,6 +1428,22 @@ class Bootstrap(_Strict):
         return None if value in ("", None) else value
 
 
+# --- Fundament F6: OParl Sitzungen und Personen
+class Council(_Strict):
+    """Die Listen der Sitzungen, Beratungen und Personen eines OParl-Bodys (Fundament F6).
+
+    Die Endpunkte nennt das Profil (das Body-Objekt des Servers listet sie); leer heißt, der Schritt
+    fehlt, und stadtneutral sind alle leer. ``incremental`` nennt die Schritte, die mit
+    ``modified_since`` nachholen (docs/runbook-sitzungen.md, § 2).
+    """
+
+    meetings_endpoint: str = ""
+    consultations_endpoint: str = ""
+    persons_endpoint: str = ""
+    incremental: tuple[Literal["meetings", "consultations", "persons"], ...] = ("consultations",)
+    stop_when_older: bool = True
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -1475,6 +1491,7 @@ class Settings(BaseSettings):
     bootstrap: Bootstrap = Bootstrap()  # Option 07
     publish: Publish = Publish()
     classify: Classify = Classify()  # Punkt 45: passender Ausschuss je Dokument
+    council: Council = Council()  # Fundament F6: Sitzungen, Beratungen, Personen
 
     @property
     def base_profile(self) -> str:

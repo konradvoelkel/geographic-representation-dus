@@ -34,6 +34,13 @@ from georep.analysis.periods import compare_periods, delta_regression
 from georep.analysis.scaling import district_metrics
 from georep.analysis.scaling import summary as metrics_summary
 from georep.analysis.timeline import WITH_TEXT, district_months, monthly_series
+from georep.council import (
+    COUNCIL_SCHEMA_VERSION,
+    council_files,
+    run_consultations,
+    run_meetings,
+    run_persons,
+)
 from georep.crosswalk import (
     COVERAGE,
     SHARE,
@@ -321,6 +328,7 @@ def build_steps(
     """
     columns = settings.columns.results
     oparl = settings.sources.oparl
+    council, council_out = settings.council, council_files(layout)  # Fundament F6
     context = settings.context
     # Option 03: ohne context_root im Layout (settings ``context.root = ""``) gibt es die drei
     # Schritte nicht; die Dateinamen und alles Inhaltliche stehen in den Settings.
@@ -1033,6 +1041,50 @@ def build_steps(
         Step("papers", (), (layout.papers,), papers, network=True),
         # --- Option 04: eine Seite, rund eine halbe Sekunde; liefert die Abbildung URL zu Partei
         Step("organizations", (), (layout.organizations,), organizations, network=True),
+        # --- Fundament F6: Sitzungen mit Tagesordnung, Beratungen, Personen; ohne Endpunkt im
+        # Profil fehlt der Schritt (georep.council, docs/runbook-sitzungen.md)
+        *(
+            [
+                Step(
+                    "meetings",
+                    (),
+                    (council_out.meetings, council_out.agenda_items),
+                    lambda: run_meetings(settings, layout, transport(), sleep=sleep),
+                    COUNCIL_SCHEMA_VERSION,
+                    network=True,
+                )
+            ]
+            if council.meetings_endpoint
+            else []
+        ),
+        *(
+            [
+                Step(
+                    "consultations",
+                    (),
+                    (council_out.consultations,),
+                    lambda: run_consultations(settings, layout, transport(), sleep=sleep),
+                    COUNCIL_SCHEMA_VERSION,
+                    network=True,
+                )
+            ]
+            if council.consultations_endpoint
+            else []
+        ),
+        *(
+            [
+                Step(
+                    "persons",
+                    (),
+                    (council_out.persons, council_out.memberships),
+                    lambda: run_persons(settings, layout, transport(), sleep=sleep),
+                    COUNCIL_SCHEMA_VERSION,
+                    network=True,
+                )
+            ]
+            if council.persons_endpoint
+            else []
+        ),
         Step("pdfs", (layout.papers,), (layout.pdf_manifest,), pdfs, network=True),
         # --- Option 02: mit dem Wörterbuch der Hauptperiode gibt es die beiden Netzschritte nicht
         *(
