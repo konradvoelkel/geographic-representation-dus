@@ -560,6 +560,8 @@ def perzentil(werte: Sequence[float], q: float) -> float:
 
 
 def guete(gold: Sequence[str], vorhersage: Sequence[str]) -> str:
+    if not gold:
+        return "n 0"
     labels = sorted(set(gold) | set(vorhersage))
     c = classify_scores(gold, vorhersage, labels)
     kappa = cohen_kappa(list(gold), list(vorhersage))
@@ -594,8 +596,10 @@ def nachrechnen(settings: Any, layout: Layout) -> None:
     test = lies_ids(STICHPROBE) if STICHPROBE.is_file() else []
     w2 = weg2(settings, layout)
     titel("Weg 2: Verteilung der Hauptthemen über alle Dokumente mit Text")
-    print(w2.group_by("weg2a").len().sort("len", descending=True).transpose(include_header=True))
-    print(w2.group_by("weg2b").len().sort("len", descending=True).transpose(include_header=True))
+    for spalte in ("weg2a", "weg2b"):
+        zahlen = w2.group_by(spalte).len().sort("len", descending=True).iter_rows()
+        print(f"{spalte} ({w2.height} Dokumente): {list(zahlen)}")
+    print(f"Ausschüsse der Kette: {w2.filter(pl.col('ausschuss') != '').height} zugeordnet")
     if not test:
         return
     wege: dict[str, dict[str, str]] = {
@@ -642,10 +646,23 @@ def zweite_pruefung() -> None:
                 f"{pfad.stem} gegen 200 Anfragentitel: {guete(g, p)}, "
                 f"Intervall {perzentil(werte, 0.025):.3f}–{perzentil(werte, 0.975):.3f}"
             )
-    for name in ("tfidf_cap_zurueck.parquet", "weg3a_cap_zurueck.parquet"):
+    for name in (
+        "tfidf_cap_zurueck.parquet",
+        "weg3a_cap_zurueck.parquet",
+        "weg3b_cap_zurueck.parquet",
+    ):
         f = lies(name)
         if f is None:
             continue
+        if pruefung is not None:
+            titel_ids = set(pruefung.get_column("id").to_list())
+            t = f.filter(pl.col("id").is_in(sorted(titel_ids))).sort("id")
+            g, p = t.get_column("label").to_list(), t.get_column("vorhersage").to_list()
+            werte = bootstrap(g, {"x": p}, SEED_CAP)["x"]
+            print(
+                f"{name} auf denselben 200 Anfragentiteln: {guete(g, p)}, "
+                f"Intervall {perzentil(werte, 0.025):.3f}–{perzentil(werte, 0.975):.3f}"
+            )
         for quelle in ("anfrage", "programm"):
             teil = f.filter(pl.col("quelle") == quelle)
             print(
@@ -694,7 +711,16 @@ def hochrechnung() -> None:
 
 
 def laufzeiten() -> None:
-    titel("Laufzeiten der Modelläufe (laufzeiten.jsonl)")
+    titel("Laufzeiten der Modelläufe (laufzeiten.jsonl) und Training (weg3*_lauf.json)")
+    for pfad in sorted(AUSGABE.glob("weg3*_lauf.json")):
+        lauf = json.loads(pfad.read_text())
+        print(
+            f"{pfad.name}: {lauf['training_beispiele']} Beispiele ({lauf['silber_dokumente']} "
+            f"Silberdokumente), {lauf['schritte']} Schritte in {lauf['sekunden_training']} s, "
+            f"{lauf['bloecke']} Block/Blöcke; Makro-F1 zurück je Epoche "
+            f"{[round(e['makro_f1_zurueck'], 3) for e in lauf['epochen']]}; {lauf['zeit']}, "
+            f"{lauf['uptime'][-40:]}"
+        )
     if not LAUFZEITEN.is_file():
         return
     for zeile in LAUFZEITEN.read_text(encoding="utf-8").splitlines():
@@ -746,6 +772,46 @@ def alpha(labels: pl.DataFrame) -> float | None:
     return krippendorff_alpha(units, "nominal", list(CODES))
 
 
+def nebenmasse(
+    gold: list[str], v: list[str], ids: list[str], unsicher: dict[str, str], kopf: set[str]
+) -> None:
+    """Die Nebenmaße aus § 8.5 (ohne Einfluss auf das Urteil) für eine Vorhersage."""
+    labels = sorted(set(gold) | set(v))
+    c = classify_scores(gold, v, labels)
+    gross = [k.label for k in c.classes if k.support >= 5]
+    f1_gross = [k.f1 or 0.0 for k in c.classes if k.label in gross]
+    gewichtet = sum((k.f1 or 0.0) * k.support for k in c.classes) / len(gold)
+    print(
+        f"  Makro-F1 über {len(gross)} Klassen mit ≥ 5 Gold: "
+        f"{sum(f1_gross) / max(1, len(f1_gross)):.3f}; gewichtetes Makro-F1 {gewichtet:.3f}"
+    )
+    print(
+        "  je Klasse (Gold/vorhergesagt/F1): "
+        + ", ".join(
+            f"{k.label} {k.support}/{k.predicted}/{(k.f1 or 0):.2f}"
+            for k in sorted(c.classes, key=lambda k: -k.support)
+        )
+    )
+    sicher = [i for i, d in enumerate(ids) if unsicher.get(d) != "ja"]
+    mit_kopf = [i for i, d in enumerate(ids) if d in kopf]
+    ohne_kopf = [i for i, d in enumerate(ids) if d not in kopf]
+    for name, teil in (("ohne unsichere", sicher), ("Ausschuss im Kopf", mit_kopf)):
+        print(f"  {name}: {guete([gold[i] for i in teil], [v[i] for i in teil])}")
+    print(
+        f"  ohne Ausschuss im Kopf: {guete([gold[i] for i in ohne_kopf], [v[i] for i in ohne_kopf])}"
+    )
+    paare = Counter((g, p) for g, p in zip(gold, v, strict=True) if g != p)
+    print(f"  häufigste Verwechslungen (Gold, Vorhersage): {paare.most_common(8)}")
+
+
+def kopf_mit_ausschuss(layout: Layout, ids: Sequence[str]) -> set[str]:
+    """Dokumente, deren Ausschnitt mit dem Kürzel eines Ausschusses beginnt (Frage 9.2)."""
+    docs = load_documents(layout, codebuch(), set(ids), texts=ROHTEXT)
+    kuerzel = "|".join(re.escape(k) for k in AUSSCHUSS_CAP if k)
+    muster = re.compile(rf"\s*({kuerzel})/\d")
+    return {d for d in ids if muster.match(docs[d].text[:200])}
+
+
 def urteil(wege: dict[str, dict[str, str]], test: list[str]) -> None:
     """Nach der Kodierung: Kriterium und Entscheidung nach § 8.5 und § 8.6 des Messdokuments."""
     titel("Urteil gegen die Labels (F4)")
@@ -768,6 +834,27 @@ def urteil(wege: dict[str, dict[str, str]], test: list[str]) -> None:
         print(
             f"{k}: {guete(gold, v)}, Intervall "
             f"{perzentil(werte[k], 0.025):.3f}–{perzentil(werte[k], 0.975):.3f}"
+        )
+    # unsicher: ohne Schlichtung (adjudicate = false); unsicher, wenn einer der beiden es sagt
+    unsicher = {
+        r["id"]: "ja" if "ja" in (r["kodierer_a"], r["kodierer_b"]) else "nein"
+        for r in pl.read_csv(LABELS, infer_schema_length=0)
+        .filter(pl.col("frage") == "unsicher")
+        .iter_rows(named=True)
+    }
+    kopf = kopf_mit_ausschuss(umgebung()[1], ids)
+    st = pl.read_csv(STICHPROBE, infer_schema_length=0)
+    schicht = dict(st.select("id", "schicht").iter_rows())
+    for k, v in vorhersagen.items():
+        print(f"Nebenmaße {k}:")
+        nebenmasse(gold, v, ids, unsicher, kopf)
+        je = Counter(schicht[d] for d in ids)
+        print(
+            "  Genauigkeit je Schicht: "
+            + ", ".join(
+                f"{s_} {sum(gold[i] == v[i] for i, d in enumerate(ids) if schicht[d] == s_)}/{n}"
+                for s_, n in sorted(je.items())
+            )
         )
     ref = max(("weg2a", "weg2b"), key=lambda k: makro_f1(gold, vorhersagen[k]))
     kandidaten = [k for k in ("qwen3.6-27b", "weg3b_test", "weg3a_test") if k in vorhersagen]

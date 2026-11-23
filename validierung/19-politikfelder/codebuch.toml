@@ -11,6 +11,12 @@
 # (Weg 3) danach kodiert sind. Was keines der beiden regelt (Feuerwehr, Friedhöfe, Straßennamen,
 # Verfügungsmittel, Sitzungsformalien), legt diese Fassung fest, ohne Blick auf ein Ergebnis.
 #
+# Lizenz: Die Hauptthemen und ihre Beschreibungen sind aus den beiden CAP-Codebüchern übersetzt und
+# bearbeitet (© Comparative Agendas Project; German Policy Agendas Project, Breunig, Guinaudeau,
+# Schnatterer). Diese Datei steht darum, anders als der Code des Repositorys, unter CC BY-NC-SA 4.0
+# (https://creativecommons.org/licenses/by-nc-sa/4.0/); Zitierweise wie auf
+# https://www.comparativeagendas.net/pages/How-to-cite.
+#
 # Dasselbe Codebuch ist der Systemprompt des lokalen Sprachmodells (Weg 1): die Kodierer und das
 # Modell sehen dieselben Definitionen und denselben Ausschnitt. Die Ausgabe keines Verfahrens steht
 # im Auftrag, auch nicht das Gremium des Dokuments (Eingabe von Weg 2).

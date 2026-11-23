@@ -7,7 +7,10 @@ kommen nie in `pyproject.toml` oder `uv.lock`), unter der GPU-Sperre und in Blö
     flock /media/konrad/xtraspace/georep/gpu-queue/gpu.lock \\
         $V/bin/python -I docs/plans/19-politikfelder-training.py --variante 3a --block-minuten 25
 
-`-I` hält das Arbeitsverzeichnis aus dem Suchpfad. Ein Block endet nach `--block-minuten` mit
+`-I` hält das Arbeitsverzeichnis aus dem Suchpfad. Das Venv (2026-11-23): `torch 2.13.0+cu129` vom
+PyTorch-Index (`--index https://download.pytorch.org/whl/cu129`; das Rad von PyPI ist für CUDA 13.2
+gebaut, der Treiber 575.57 kann 12.9), `transformers 5.22.2`, `polars 2.1.0`; dazu `HF_HOME` auf
+xtraspace und `HF_HUB_OFFLINE=1`, die Gewichte liegen im Cache. Ein Block endet nach `--block-minuten` mit
 einem Prüfpunkt; derselbe Aufruf setzt dort fort. Gelesen wird nur, was das Messskript unter
 `$GEOREP_MESSDATEN/19-politikfelder/` schreibt: `cap_de.parquet` (deutsche CAP-Daten mit Spalte
 `zurueck`), `ratsdokumente.parquet` (Eingabe je Ratsdokument) und für 3b die Antworten von Weg 1
