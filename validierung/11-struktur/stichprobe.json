@@ -1,0 +1,64 @@
+{
+  "vorhaben": "11-struktur",
+  "codebuch_version": "2026-11-23",
+  "profil": "duesseldorf",
+  "einheit": "document",
+  "uebernommen": "validierung/11-struktur/stichprobe.csv vom Mess-Agenten (gewicht = N_h/n_h); Schlüssel aufgabe aus aufgaben.jsonl",
+  "einheiten": 19032,
+  "groesse": 200,
+  "seed": "20261123",
+  "schicht": "schicht",
+  "aufteilung": "vom Mess-Agenten (Messdokument)",
+  "selbstgewichtend": false,
+  "schichten": {
+    "A+F Beschluss": {
+      "grundgesamtheit": 145,
+      "stichprobe": 9
+    },
+    "Anfrage": {
+      "grundgesamtheit": 3924,
+      "stichprobe": 29
+    },
+    "Antrag": {
+      "grundgesamtheit": 4725,
+      "stichprobe": 34
+    },
+    "Bedarfsbeschluss": {
+      "grundgesamtheit": 78,
+      "stichprobe": 8
+    },
+    "Berichtsvorlage": {
+      "grundgesamtheit": 177,
+      "stichprobe": 9
+    },
+    "Beschlussvorlage": {
+      "grundgesamtheit": 3993,
+      "stichprobe": 30
+    },
+    "Beschlussvorlage RPA": {
+      "grundgesamtheit": 32,
+      "stichprobe": 8
+    },
+    "Bezirksvertretung Beschlussvorlage": {
+      "grundgesamtheit": 1473,
+      "stichprobe": 16
+    },
+    "Bezirksvertretung Informationsvorlage": {
+      "grundgesamtheit": 2699,
+      "stichprobe": 23
+    },
+    "Eingabe": {
+      "grundgesamtheit": 124,
+      "stichprobe": 9
+    },
+    "Haushaltsantrag": {
+      "grundgesamtheit": 338,
+      "stichprobe": 10
+    },
+    "Informationsvorlage": {
+      "grundgesamtheit": 1324,
+      "stichprobe": 15
+    }
+  },
+  "gezogen": "2026-11-23"
+}

@@ -1,19 +1,11 @@
-# Codebuch Vorhaben 11: Struktur der Dokumente (Stufe 1, 2026-11-23, vorläufig)
-#
-# Format vorläufig: Fundament F4 baut den Rahmen (georep validate sample|tasks|merge|score) parallel;
-# was hier steht, übernimmt F4 oder bildet es ab. Messdokument: docs/plans/11-struktur.md, § 4.
+# Codebuch Vorhaben 11-struktur (vorläufige Fassung 2026-11-23 des Mess-Agenten), am 2026-11-23
+# ins Format von F4 (georep validate) übertragen: Fragen, Anleitungen und Definitionen wörtlich,
+# nur die Form ist neu. Was die vorläufige Fassung zur Auswertung sagte, steht als Kommentar.
 
-vorhaben = "11-struktur"
-stand = 2026-11-23
-einheit = "dokument"
-stichprobe = "validierung/11-struktur/stichprobe.csv"   # 200 IDs, geschichtet nach Dokumentart, Seed 20261123
-aufgaben = "/media/konrad/xtraspace/georep/messdaten/kodierung/11-struktur/aufgaben.jsonl"  # lokal, nie im Repo
-regelausgabe = "/media/konrad/xtraspace/georep/messdaten/kodierung/11-struktur/regel.jsonl"  # den Kodierern nicht zeigen
-kodierer = "zwei unabhängige Kodier-Agenten (Opus) und ein Schlicht-Agent für die Uneinigkeiten (plan-vorverarbeitung-2026-11.md, § 2.6)"
-blind = true   # die Kodierer sehen weder die Ausgabe der Regeln noch einander
-
-[anweisung]
-text = """
+project = "11-struktur"
+version = "2026-11-23"
+unit = "document"
+instructions = """
 Jede Aufgabe ist ein Ratsdokument als Liste von Zeilen (`zeilen`), so wie pypdf sie aus dem PDF
 liest: mit Groß- und Kleinschreibung, mit dem Vorlagenkopf, mit Seitenkopfzeilen wie „Seite 2".
 Zeilennummern sind 1-basiert: `zeilen[0]` ist Zeile 1. `seitenanfang_zeilen` nennt die Zeilen, mit
@@ -27,21 +19,26 @@ Datenschutz: Schreibe nie einen Personennamen in eine Antwort. Vom Feld „Dezer
 zählt nur die Amtsbezeichnung; Unterschriften werden nicht kodiert.
 """
 
-[antwortformat]
-datei = "antworten-<kodierer>.jsonl"   # eine Zeile je Aufgabe, neben aufgaben.jsonl
-beispiel = '''{"aufgabe": "11-struktur-002", "bv_vorhanden": true, "bv_erste_zeile": 21, "bv_letzte_zeile": 26, "bv_mehrteilig": false, "amt": "68 - Garten-, Friedhofs- und Forstamt", "dezernat_titel": "Beigeordneter", "beratungsfolge": [{"gremium": "Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz", "datum": "27.10.2023", "qualitaet": "Entscheidung"}], "sitzung": null, "briefdatum": null, "unsicher": false, "bemerkung": ""}'''
-
-[[frage]]
+[[questions]]
 id = "bv_vorhanden"
-typ = "ja_nein"
-text = "Enthält das Dokument einen Beschlussvorschlag?"
-ja = """
+question = """
+Enthält das Dokument einen Beschlussvorschlag?
+"""
+scale = "binary"
+positive = ["ja"]
+
+[[questions.options]]
+value = "ja"
+definition = """
 Ein Text, über den das Gremium, dem das Dokument vorgelegt wird, abstimmen soll: die
 „Beschlussdarstellung", der „Beschlussvorschlag" oder „Beschlussentwurf" einer Vorlage der
 Verwaltung, der Antragstext eines Antrags oder Haushaltsantrags einer Fraktion oder eines
 Mitglieds, der Beschlussvorschlag einer Eingabe.
 """
-nein = """
+
+[[questions.options]]
+value = "nein"
+definition = """
 Informationsvorlagen und Berichte ohne Beschlussvorschlag; die Fragen einer Anfrage (auch wenn der
 Brief „zur Abstimmung" sagt); ein zitierter früherer Beschluss („Die Bezirksvertretung fasste in
 ihrer Sitzung am … folgenden Beschluss: …"); eine Empfehlung eines anderen Gremiums, über die nur
@@ -49,12 +46,13 @@ berichtet wird; ein Dokument, dessen Text nach dem Kopf fehlt (dann zusätzlich 
 Bemerkung „Rumpf leer").
 """
 
-[[frage]]
+[[questions]]
 id = "bv_erste_zeile"
-typ = "zeile"
-nur_wenn = "bv_vorhanden"
-text = "Erste Zeile des Beschlussvorschlags."
-regel = """
+question = """
+Erste Zeile des Beschlussvorschlags.
+"""
+scale = "interval"
+instructions = """
 Die erste Zeile, in der Text des Beschlussvorschlags steht. Nicht dazu gehören die Überschrift
 allein („Beschlussdarstellung:" in einer eigenen Zeile) und die Bitt- oder Einleitungsformel des
 Antragstellers („wir bitten Sie, folgenden Antrag … beschließen zu lassen:", „… stellt folgenden
@@ -63,75 +61,164 @@ Antrag:", „Der Rat möge beschließen:"). Dazu gehört der Beschlusssatz selbs
 Steht die Überschrift mit Text in derselben Zeile („Beschlussentwurf: Der Rat beschließt …"), ist
 diese Zeile die erste.
 """
+only_if = { question = "bv_vorhanden", values = ["ja"] }
 
-[[frage]]
+[[questions]]
 id = "bv_letzte_zeile"
-typ = "zeile"
-nur_wenn = "bv_vorhanden"
-text = "Letzte Zeile des Beschlussvorschlags."
-regel = """
+question = """
+Letzte Zeile des Beschlussvorschlags.
+"""
+scale = "interval"
+instructions = """
 Die letzte Zeile mit Text des Beschlussvorschlags: vor der nächsten Überschrift (Sachdarstellung,
 Begründung, Anlagen …), vor Grußformel und Unterschrift. Tabellen, Kostenaufstellungen und
 Aufzählungen, die zum Beschluss gehören („Kosten: … Gesamtkosten …" in einem
 Ausführungsbeschluss), gehören dazu. Leere Zeilen und Seitenkopfzeilen („Seite 2", „Sitzung des
 … Vorlage Nr. …") sind nie die letzte Zeile.
 """
+only_if = { question = "bv_vorhanden", values = ["ja"] }
 
-[[frage]]
+[[questions]]
 id = "bv_mehrteilig"
-typ = "ja_nein"
-nur_wenn = "bv_vorhanden"
-text = "Steht der Beschlussvorschlag in mehreren getrennten Teilen (etwa Kurzfassung auf Seite 1, Beschlussentwurf auf Seite 3)? Dann gelten erste und letzte Zeile für den ersten Teil."
+question = """
+Steht der Beschlussvorschlag in mehreren getrennten Teilen (etwa Kurzfassung auf Seite 1, Beschlussentwurf auf Seite 3)? Dann gelten erste und letzte Zeile für den ersten Teil.
+"""
+scale = "binary"
+only_if = { question = "bv_vorhanden", values = ["ja"] }
+positive = ["ja"]
 
-[[frage]]
+[[questions.options]]
+value = "ja"
+
+[[questions.options]]
+value = "nein"
+
+[[questions]]
 id = "amt"
-typ = "freitext"
-text = "Amt oder Institut im Kopf, wie geschrieben (Feld „Fachbereich:\", „Amt / Institut:\" oder „Amt:\"), z. B. „52 - Sportamt\" oder „Bezirksverwaltungsstelle 8\"; null, wenn der Kopf kein solches Feld hat."
+question = """
+Amt oder Institut im Kopf, wie geschrieben (Feld „Fachbereich:", „Amt / Institut:" oder „Amt:"), z. B. „52 - Sportamt" oder „Bezirksverwaltungsstelle 8"; null, wenn der Kopf kein solches Feld hat.
+"""
+scale = "open"
 
-[[frage]]
+[[questions]]
 id = "dezernat_titel"
-typ = "auswahl"
-text = "Amtsbezeichnung im Feld „Dezernentin / Dezernent:\" — nur die Bezeichnung, nie der Name."
-optionen = ["Oberbürgermeister", "Oberbürgermeisterin", "Bürgermeister", "Bürgermeisterin", "Stadtdirektor", "Stadtdirektorin", "Stadtkämmerer", "Stadtkämmerin", "Beigeordneter", "Beigeordnete", "andere", "keins"]
+question = """
+Amtsbezeichnung im Feld „Dezernentin / Dezernent:" — nur die Bezeichnung, nie der Name.
+"""
+scale = "nominal"
 
-[[frage]]
+[[questions.options]]
+value = "Oberbürgermeister"
+
+[[questions.options]]
+value = "Oberbürgermeisterin"
+
+[[questions.options]]
+value = "Bürgermeister"
+
+[[questions.options]]
+value = "Bürgermeisterin"
+
+[[questions.options]]
+value = "Stadtdirektor"
+
+[[questions.options]]
+value = "Stadtdirektorin"
+
+[[questions.options]]
+value = "Stadtkämmerer"
+
+[[questions.options]]
+value = "Stadtkämmerin"
+
+[[questions.options]]
+value = "Beigeordneter"
+
+[[questions.options]]
+value = "Beigeordnete"
+
+[[questions.options]]
+value = "andere"
+
+[[questions.options]]
+value = "keins"
+
+[[questions]]
 id = "beratungsfolge"
-typ = "liste"
-text = "Die Zeilen der Tabelle „Beratungsfolge\" im Kopf, in der Reihenfolge des Dokuments."
-felder = { gremium = "wie geschrieben, Zeilenumbrüche durch ein Leerzeichen ersetzt", datum = "TT.MM.JJJJ", qualitaet = "Entscheidung, Kenntnisnahme, Vorberatung, Anhörung, Empfehlung oder keine (etwa „-\")" }
-leer = "[] ohne Tabelle"
+question = """
+Die Zeilen der Tabelle „Beratungsfolge" im Kopf, in der Reihenfolge des Dokuments.
+"""
+scale = "open"
+instructions = """
+Felder: gremium = wie geschrieben, Zeilenumbrüche durch ein Leerzeichen ersetzt; datum = TT.MM.JJJJ; qualitaet = Entscheidung, Kenntnisnahme, Vorberatung, Anhörung, Empfehlung oder keine (etwa „-")
 
-[[frage]]
+Leer: [] ohne Tabelle
+"""
+
+[[questions]]
 id = "sitzung"
-typ = "objekt"
-text = "Nur in Briefen von Fraktionen und Mitgliedern: die genannte Sitzung („zur Sitzung der Bezirksvertretung 5 am 24. Juni 2025\"); null sonst."
-felder = { gremium = "wie geschrieben", datum = "TT.MM.JJJJ" }
+question = """
+Nur in Briefen von Fraktionen und Mitgliedern: die genannte Sitzung („zur Sitzung der Bezirksvertretung 5 am 24. Juni 2025"); null sonst.
+"""
+scale = "open"
+instructions = """
+Felder: gremium = wie geschrieben; datum = TT.MM.JJJJ
+"""
 
-[[frage]]
+[[questions]]
 id = "briefdatum"
-typ = "datum"
-text = "Datum in der Zeile „<Ort>, <Datum>\" im Briefkopf (TT.MM.JJJJ); null ohne diese Zeile."
+question = """
+Datum in der Zeile „<Ort>, <Datum>" im Briefkopf (TT.MM.JJJJ); null ohne diese Zeile.
+"""
+scale = "open"
 
-[[frage]]
+[[questions]]
 id = "unsicher"
-typ = "ja_nein"
-text = "Ist eine der Antworten unsicher? Dann in `bemerkung` sagen, welche und warum."
+question = """
+Ist eine der Antworten unsicher? Dann in `bemerkung` sagen, welche und warum.
+"""
+scale = "binary"
+positive = ["ja"]
+adjudicate = false  # Meta-Feld: drei Uneinigkeiten blieben ohne Label (Messdokument § 4.1)
 
-[mass]
-# Kriterium aus plan-vorverarbeitung-2026-11.md, § 11, Vorhaben 11 (unverändert)
-kriterium_beschlussvorschlag = 0.90   # Anteil der Stichprobe mit richtigem Beschlussvorschlag
-kriterium_kopf_praezision = 0.95      # je Kopffeld
-richtig_beschlussvorschlag = """
-Hauptmaß, streng: bv_vorhanden der Regel gleich dem Endlabel; bei ja sind erste und letzte Zeile
-der Regel gleich denen des Endlabels, nachdem beide Seiten auf die nächste Zeile mit Text gerückt
-sind (leere Zeilen zählen nicht). Nebenmaß, mild: je eine Zeile Abweichung an Anfang und Ende
-erlaubt. Berichtet werden der ungewichtete Anteil (das Kriterium) mit Wilson-Intervall und der mit
-den Schichtgewichten aus stichprobe.csv hochgerechnete Anteil für den ganzen Korpus.
-"""
-praezision_kopf = """
-Je Feld: richtige Werte der Regel durch alle Werte der Regel; Recall daneben. Vergleich nach
-Leerraum- und Trennstrich-Normalisierung (eine Zeile „Ordnungs- und\\nVerkehrsausschuss" ist
-„Ordnungs- und Verkehrsausschuss"). Beratungsfolge je Zeile als Tripel (Gremium, Datum,
-Qualität); Amt als Nummer und Name; Dezernat als Auswahl; Sitzung als Paar.
-"""
-uebereinstimmung = "Krippendorffs α (nominal) zwischen Kodierer A und B je Frage; Stufe 3 verlangt α ≥ 0,8 (§ 2.6)."
+[[questions.options]]
+value = "ja"
+
+[[questions.options]]
+value = "nein"
+
+# Aus [antwortformat] der vorläufigen Fassung, wörtlich:
+# datei = antworten-<kodierer>.jsonl
+# beispiel = {"aufgabe": "11-struktur-002", "bv_vorhanden": true, "bv_erste_zeile": 21, "bv_letzte_zeile": 26, "bv_mehrteilig": false, "amt": "68 - Garten-, Friedhofs- und Forstamt", "dezernat_titel": "Beigeordneter", "beratungsfolge": [{"gremium": "Ausschuss für öffentliche Einrichtungen, Stadtökologie, Abfallmanagement und Bevölkerungsschutz", "datum": "27.10.2023", "qualitaet": "Entscheidung"}], "sitzung": null, "briefdatum": null, "unsicher": false, "bemerkung": ""}
+
+# Aus [mass] der vorläufigen Fassung, wörtlich:
+# kriterium_beschlussvorschlag = 0.9
+# kriterium_kopf_praezision = 0.95
+# richtig_beschlussvorschlag = Hauptmaß, streng: bv_vorhanden der Regel gleich dem Endlabel; bei ja sind erste und letzte Zeile
+#   der Regel gleich denen des Endlabels, nachdem beide Seiten auf die nächste Zeile mit Text gerückt
+#   sind (leere Zeilen zählen nicht). Nebenmaß, mild: je eine Zeile Abweichung an Anfang und Ende
+#   erlaubt. Berichtet werden der ungewichtete Anteil (das Kriterium) mit Wilson-Intervall und der mit
+#   den Schichtgewichten aus stichprobe.csv hochgerechnete Anteil für den ganzen Korpus.
+# praezision_kopf = Je Feld: richtige Werte der Regel durch alle Werte der Regel; Recall daneben. Vergleich nach
+#   Leerraum- und Trennstrich-Normalisierung (eine Zeile „Ordnungs- und\nVerkehrsausschuss" ist
+#   „Ordnungs- und Verkehrsausschuss"). Beratungsfolge je Zeile als Tripel (Gremium, Datum,
+#   Qualität); Amt als Nummer und Name; Dezernat als Auswahl; Sitzung als Paar.
+# uebereinstimmung = Krippendorffs α (nominal) zwischen Kodierer A und B je Frage; Stufe 3 verlangt α ≥ 0,8 (§ 2.6).
+
+[sample]
+# gezogen vom Mess-Agenten (docs/plans/11-struktur.md, § 3); übernommen, nicht neu gezogen
+size = 200
+seed = 20261123
+stratum = "schicht"
+key = "aufgabe"
+
+[text]
+source = "raw"
+chars = 60000  # die Aufgaben zeigten bis zu 600 Zeilen
+
+[provisional]
+key = "aufgabe"
+reason = ["begruendung", "bemerkung"]
+adjudication_question = "feld"
+adjudication_value = "wert"
+values = { bv_vorhanden = { "true" = "ja", "false" = "nein" }, bv_mehrteilig = { "true" = "ja", "false" = "nein" }, unsicher = { "true" = "ja", "false" = "nein" } }

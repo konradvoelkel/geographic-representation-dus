@@ -1,0 +1,44 @@
+{
+  "vorhaben": "13-dubletten",
+  "codebuch_version": "1",
+  "profil": "duesseldorf",
+  "einheit": "document_pair",
+  "uebernommen": "validierung/13-dubletten/stichprobe.csv vom Mess-Agenten; jaccard ist die Ausgabe des Verfahrens",
+  "einheiten": 9139,
+  "groesse": 200,
+  "seed": "13",
+  "schicht": "schicht",
+  "aufteilung": "vom Mess-Agenten (Messdokument)",
+  "selbstgewichtend": false,
+  "schichten": {
+    "0.30-0.50": {
+      "grundgesamtheit": 7111,
+      "stichprobe": 12
+    },
+    "0.50-0.70": {
+      "grundgesamtheit": 1400,
+      "stichprobe": 20
+    },
+    "0.70-0.80": {
+      "grundgesamtheit": 372,
+      "stichprobe": 34
+    },
+    "0.80-0.85": {
+      "grundgesamtheit": 116,
+      "stichprobe": 38
+    },
+    "0.85-0.90": {
+      "grundgesamtheit": 47,
+      "stichprobe": 38
+    },
+    "0.90-0.95": {
+      "grundgesamtheit": 77,
+      "stichprobe": 42
+    },
+    "0.95-1.00": {
+      "grundgesamtheit": 16,
+      "stichprobe": 16
+    }
+  },
+  "gezogen": "2026-11-23"
+}

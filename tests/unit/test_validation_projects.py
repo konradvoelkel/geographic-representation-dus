@@ -18,6 +18,8 @@ import pytest
 
 from georep.cli import main
 from georep.validation.codebook import load_codebook
+from georep.validation.paths import ValidationPaths
+from georep.validation.sample import read_sample
 
 REPO = Path(__file__).resolve().parents[2]
 VALIDATION = REPO / "validierung"
@@ -25,10 +27,21 @@ CODING = Path("/media/konrad/xtraspace/georep/messdaten/kodierung/14-vorgaenge")
 REPO_FILES = ("codebuch.toml", "stichprobe.csv", "stichprobe.json", "labels.csv", "guete.json")
 
 
-@pytest.mark.parametrize("folder", ["14-vorgaenge", "14-vorgaenge-2"])
+# Die Vorhaben, die im Format von F4 vorliegen. Vorhaben 15 kam nach der zweiten Runde von F4
+# auf main und ist noch im vorläufigen Format (docs/validierung.md, § 7).
+CONVERTED = sorted(p.parent.name for p in VALIDATION.glob("1[1-4]-*/codebuch.toml"))
+
+
+@pytest.mark.parametrize("folder", CONVERTED, ids=str)
 def test_every_codebook_in_the_repository_is_valid(folder: str) -> None:
+    """Jedes Codebuch unter validierung/ ist im Format von F4 und passt zu seiner Stichprobe."""
     codebook = load_codebook(VALIDATION / folder / "codebuch.toml", folder)
-    assert codebook.questions
+    paths = ValidationPaths(folder, VALIDATION / folder, Path("/nirgends"))
+    sample = read_sample(paths, codebook)
+    assert (
+        sample.height == codebook.sample.size
+        and sample.get_column("id").n_unique() == sample.height
+    )
 
 
 def _copy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, project: str) -> Path:

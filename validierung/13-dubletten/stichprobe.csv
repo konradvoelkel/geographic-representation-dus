@@ -1,4 +1,4 @@
-paar,id_a,id_b,stufe,grundgesamtheit,jaccard
+id,id_a,id_b,schicht,schicht_n,jaccard
 p001,http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92122,http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92123,0.85-0.90,47,0.8500
 p002,http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104706,http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108380,0.95-1.00,16,1.0000
 p003,http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106794,http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107436,0.85-0.90,47,0.8797
