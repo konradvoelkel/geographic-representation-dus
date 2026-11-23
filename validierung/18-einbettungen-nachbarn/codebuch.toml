@@ -1,0 +1,88 @@
+# Codebuch Vorhaben 18 „Einbettungen, Ähnlichkeit, semantische Suche", Teil ähnliche Dokumente,
+# Fassung 2026-11-23.1. Messdokument: docs/plans/18-einbettungen.md, § 3.1 (vorab festgelegt,
+# Commit a38e149) und § 4. Die Einheiten sind die Paare (Anker, Nachbar) aus den fünf nächsten
+# Nachbarn je Anker nach Einbettung und nach TF-IDF, vereinigt; A ist immer der Anker. Welches
+# Verfahren einen Nachbarn fand und auf welchem Rang, steht nirgends im Auftrag.
+
+project = "18-einbettungen-nachbarn"
+version = "2026-11-23.1"
+unit = "document_pair"
+instructions = """
+Du beurteilst Vorschläge „ähnliche Dokumente" in den Ratsdokumenten einer Großstadt (Wahlperiode
+2020 bis 2025: Vorlagen der Verwaltung, Anträge und Anfragen der Fraktionen, Mitteilungen an die
+Bezirksvertretungen). Ein Ratsmitglied liest Dokument A; unter A wird Dokument B als ähnlich
+vorgeschlagen. Stell dir vor, es arbeitet sich in die Sache von A ein: Hilft ihm B dabei?
+
+Material: je Dokument Titel und der Anfang des Textes (bis 3 000 Zeichen, mit Kopf, Beratungsfolge
+und Seitenumbrüchen wie im PDF; `zeichen` nennt die volle Länge). Urteile nach Titel und Ausschnitt.
+
+- Maßgeblich ist die Sache, nicht die Form. Gleiche Dokumentart, gleiches Gremium, gleicher
+  Briefkopf, gleiche Standardsätze (Klimarelevanz, finanzielle Auswirkungen, Rechtsgrundlagen) oder
+  derselbe Antragsteller machen zwei Dokumente nicht ähnlich.
+- „Sachthema" heißt ein konkretes Thema, unter dem ein Ratsmitglied suchen würde (Radwege,
+  Kita-Ausbau, Baumfällungen, Spielplätze, Schulsanierung, Anwohnerparken, Zuschüsse an
+  Sportvereine), nicht ein ganzes Politikfeld (Verkehr, Soziales, Kultur, Bauen).
+- Sammelvorlagen (Haushaltslisten, Beschlusskontrollen, Verfügungsmittel, Bauanträge): zwei
+  gleichartige Sammelvorlagen teilen ein Sachthema, wenn ihre Einträge dieselbe Art von Sache sind
+  (zwei Listen von Zuschüssen aus Verfügungsmitteln: `gleiches_thema`); dieselbe Liste in einer
+  anderen Fassung oder für dasselbe Jahr und Gremium ist `gleiche_sache`.
+- Im Zweifel zwischen zwei Stufen nimm die niedrigere und sag es in der Begründung.
+
+Datenschutz: Schreibe nie einen Personennamen in eine Antwort, auch nicht in die Begründung.
+"""
+
+[[questions]]
+id = "aehnlich"
+question = "Wie eng hängen A und B in der Sache zusammen?"
+scale = "ordinal"
+positive = ["gleiches_thema", "gleiche_sache"]   # Präzision@5 (Kriterium); streng: nur gleiche_sache
+instructions = "Genau eine Stufe."
+
+[[questions.options]]
+value = "verschieden"
+name = "verschieden"
+definition = """
+Kein gemeinsames Sachthema. Gemeinsam sind höchstens Form, Gremium, Stadtbezirk, Antragsteller,
+Standardtext oder ein ganzes Politikfeld.
+"""
+example = """
+A: Antrag auf einen Zebrastreifen an einer Schule; B: Antrag derselben Fraktion in derselben
+Bezirksvertretung auf neue Mülleimer in einem Park.
+"""
+
+[[questions.options]]
+value = "gleiches_thema"
+name = "gleiches Sachthema, andere Sache"
+definition = """
+Beide behandeln dasselbe konkrete Sachthema, aber eine andere Sache: einen anderen Ort, ein anderes
+Objekt, einen anderen Zuschussempfänger, einen anderen Zeitraum desselben wiederkehrenden Berichts.
+"""
+example = """
+A: Antrag auf einen Zebrastreifen an einer Grundschule im Norden; B: Mitteilung der Verwaltung zu
+einer Querungshilfe an einer Schule in einem anderen Stadtteil.
+"""
+
+[[questions.options]]
+value = "gleiche_sache"
+name = "gleiche Sache"
+definition = """
+Beide gehören zu derselben Sache: derselbe Vorgang (Anfrage und Antwort, Antrag und Stellungnahme,
+Vorlage und Änderungsantrag, Fassungen derselben Vorlage, Wiedervorlage), dasselbe Vorhaben in
+verschiedenen Schritten, oder derselbe Gegenstand am selben Ort.
+"""
+example = """
+A: Anfrage zur Sanierung eines bestimmten Spielplatzes; B: Beschlussvorlage zur Umgestaltung genau
+dieses Spielplatzes.
+"""
+
+[sample]
+size = 383                       # der ganze Pool (Messdokument § 4.2): alle Paare, keine Auswahl
+seed = 20261123
+stratum = ""
+population = "messung18/pool_nachbarn.parquet"
+require_text = false
+
+[text]
+source = "raw"
+chars = 3000
+title = true

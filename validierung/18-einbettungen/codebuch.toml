@@ -1,0 +1,109 @@
+# Codebuch Vorhaben 18 „Einbettungen, Ähnlichkeit, semantische Suche", Teil Suche, Fassung
+# 2026-11-23.1. Messdokument: docs/plans/18-einbettungen.md, § 3.1 (vorab festgelegt, Commit
+# a38e149) und § 4. Die Einheiten sind alle Paare (Suchfrage, Dokument) aus den ersten zehn Treffern
+# von BM25, Einbettung und Mischung, vereinigt; welches Verfahren ein Dokument fand und auf welchem
+# Rang, steht nirgends im Auftrag. Der Bedarf je Frage ist vom Mess-Agenten geschrieben (kein
+# Ratstext) und steht als Kontext im Auftrag; die Verfahren haben ihn nie gesehen.
+
+project = "18-einbettungen"
+version = "2026-11-23.1"
+unit = "query_document"
+instructions = """
+Du beurteilst Treffer einer Suche in den Ratsdokumenten einer Großstadt (Wahlperiode 2020 bis 2025:
+Vorlagen der Verwaltung, Anträge und Anfragen der Fraktionen, Mitteilungen an die
+Bezirksvertretungen). Stell dir einen Mitarbeiter einer Ratsfraktion vor, egal welcher Partei, der
+die Suchfrage (`anfrage`) in ein Suchfeld getippt hat. Was er eigentlich sucht, sagt der Satz im
+Kontext (`bedarf`); er ist der Maßstab, wo die Suchfrage knapp oder mehrdeutig ist.
+
+Material: die Suchfrage, der Bedarf, Titel des Dokuments und der Anfang seines Textes (bis 6 000
+Zeichen, mit Kopf, Beratungsfolge und Seitenumbrüchen wie im PDF; `zeichen` nennt die volle Länge).
+Was nach dem Ausschnitt kommt, siehst du nicht; urteile nach Titel und Ausschnitt.
+
+Frage dich: Würde der Fragende dieses Dokument öffnen und für sein Anliegen brauchen?
+
+- Maßgeblich ist der Gegenstand des Dokuments, nicht ob dieselben Wörter vorkommen. Ein Dokument,
+  das das Gesuchte mit anderen Worten behandelt („Radfahrstreifen" für „Radverkehr"), ist relevant;
+  ein Dokument, in dem das Suchwort nur zufällig oder in anderer Bedeutung steht, ist es nicht.
+- Ein Ort in der Suchfrage ist Teil des Gesuchten: „Lärm am Rheinufer" verlangt beides, das Thema und
+  den Ort. Ein Dokument zum Thema an einem anderen Ort ist höchstens teilweise relevant.
+- Formulare, Listen und Sammelvorlagen (Haushaltslisten, Beschlusskontrollen, Verfügungsmittel,
+  Tagesordnungen) sind relevant, wenn ein Eintrag das Gesuchte als eigenen Gegenstand behandelt
+  (dann meist `1`), nicht schon, weil ein Wort darin steht.
+- Die Fraktion oder Partei eines Antrags spielt keine Rolle. Ob das Dokument den Fragenden
+  politisch freut, auch nicht.
+- Im Zweifel zwischen zwei Stufen nimm die niedrigere und sag es in der Begründung.
+
+Datenschutz: Schreibe nie einen Personennamen in eine Antwort, auch nicht in die Begründung.
+"""
+
+[[questions]]
+id = "relevanz"
+question = "Wie relevant ist das Dokument für die Suchfrage und ihren Bedarf?"
+scale = "ordinal"
+instructions = """
+Genau eine Stufe. `2` und `1` setzen voraus, dass das Dokument etwas zum Gesuchten beiträgt, das
+der Fragende verwenden kann; Erwähnungen ohne Inhalt sind `0`.
+"""
+
+[[questions.options]]
+value = "0"
+name = "nicht relevant"
+definition = """
+Das Dokument handelt nicht vom Gesuchten. Das Suchwort fehlt oder steht nur beiläufig, in anderer
+Bedeutung, in einer Aufzählung ohne Inhalt, im Briefkopf oder in der Beratungsfolge. Oder es handelt
+vom selben Thema an einem anderen Ort, obwohl die Frage einen Ort nennt und nichts Übertragbares
+enthält.
+"""
+example = """
+Suchfrage „Stadttauben": eine Vorlage über die Sanierung eines Brückengeländers, die nebenbei einen
+Taubenschutz am Bauwerk erwähnt. Suchfrage „Worringer Platz": eine Liste von Haltestellen, in der
+der Platz als eine von dreißig Haltestellen steht.
+"""
+
+[[questions.options]]
+value = "1"
+name = "teilweise relevant"
+definition = """
+Das Dokument berührt das Gesuchte mit eigenem Inhalt, aber nicht als Hauptsache: ein Abschnitt,
+ein Absatz oder ein Eintrag in einer Sammelvorlage handelt davon; oder das Dokument handelt vom
+Oberthema oder einem Nachbarthema, aus dem der Fragende etwas mitnehmen kann; oder vom Thema an
+einem anderen Ort als dem gefragten, mit übertragbarem Inhalt.
+"""
+example = """
+Suchfrage „Hundewiesen": ein Pflegekonzept für einen Park mit einem Absatz über eine neue
+Hundeauslauffläche. Suchfrage „Fahrradfahren sicherer machen": ein Antrag auf Tempo 30 in einer
+Straße, der auch mit der Sicherheit von Radfahrenden begründet wird.
+"""
+
+[[questions.options]]
+value = "2"
+name = "relevant"
+definition = """
+Das Dokument handelt zu einem wesentlichen Teil vom Gesuchten (Titel, Betreff, Beschlussvorschlag,
+Fragen oder der größere Teil der Begründung): ein Antrag, eine Anfrage, eine Vorlage oder eine
+Mitteilung genau dazu. Bei einem Ort in der Frage: zum Thema an diesem Ort, oder zum Ort selbst,
+wenn die Frage nur den Ort nennt.
+"""
+example = """
+Suchfrage „Anwohnerparken": eine Beschlussvorlage zur Einführung einer Bewohnerparkzone in einem
+Viertel. Suchfrage „Wohnungslose Menschen im Winter": eine Mitteilung der Verwaltung zur Kältehilfe
+mit Notschlafstellen und Kältebus.
+"""
+
+[sample]
+size = 916                       # der ganze Pool (Messdokument § 4.2): alle Paare, keine Auswahl
+seed = 20261123
+stratum = ""
+population = "messung18/pool_suche.parquet"
+require_text = false             # die Verfahren lesen den Rohtext; der Korpustext darf leer sein
+
+[text]
+source = "raw"
+chars = 6000
+title = true
+context = ["bedarf"]
+context_chars = 300
+
+[score]
+k = 10
+relevance = "relevanz"

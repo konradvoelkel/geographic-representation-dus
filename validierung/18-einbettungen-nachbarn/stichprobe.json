@@ -1,0 +1,22 @@
+{
+  "vorhaben": "18-einbettungen-nachbarn",
+  "codebuch_version": "2026-11-23.1",
+  "profil": "duesseldorf",
+  "einheit": "document_pair",
+  "grundgesamtheit": "messung18/pool_nachbarn.parquet",
+  "grundgesamtheit_sha256": "568e8085d6b4360083afaaaa99be4fb8ce700a1a244ad1078efee936900c583b",
+  "einheiten": 383,
+  "ohne_text": 0,
+  "groesse": 383,
+  "seed": 20261123,
+  "schicht": "",
+  "aufteilung": "proportional",
+  "selbstgewichtend": true,
+  "schichten": {
+    "": {
+      "grundgesamtheit": 383,
+      "stichprobe": 383
+    }
+  },
+  "gezogen": "2026-11-23"
+}

@@ -1,0 +1,22 @@
+{
+  "vorhaben": "18-einbettungen",
+  "codebuch_version": "2026-11-23.1",
+  "profil": "duesseldorf",
+  "einheit": "query_document",
+  "grundgesamtheit": "messung18/pool_suche.parquet",
+  "grundgesamtheit_sha256": "ba5c904f3246c80ee7ca28f63c37e1c5eaf0e2fa351cddf3d15ecac9030db101",
+  "einheiten": 916,
+  "ohne_text": 0,
+  "groesse": 916,
+  "seed": 20261123,
+  "schicht": "",
+  "aufteilung": "proportional",
+  "selbstgewichtend": true,
+  "schichten": {
+    "": {
+      "grundgesamtheit": 916,
+      "stichprobe": 916
+    }
+  },
+  "gezogen": "2026-11-23"
+}
