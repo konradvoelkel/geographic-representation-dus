@@ -1,8 +1,10 @@
 # Vorhaben 12: Kennungen und Beträge
 
-Stand 2026-11-23, Stufe 1. Briefing: [plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md),
-§ 11. Messskript: [12-kennungen-messung.py](12-kennungen-messung.py). Codebuch und Stichprobe:
-`validierung/12-kennungen/`. **Urteil: vorläufig, Validierung ausstehend** (§ 5).
+Stand 2026-11-23, Stufe 1 mit Kodierung. Briefing: [plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md),
+§ 11. Messskript: [12-kennungen-messung.py](12-kennungen-messung.py). Codebuch, Stichprobe und Labels:
+`validierung/12-kennungen/`. **Urteil nach der Kodierung** (§ 4.1, § 5): Bauleitplanung, Betrag und
+Termin **bauen**; Haushalt, Rechtsgrundlage und Amt **umbauen** (eine Runde mit frischer
+Bestätigungsstichprobe); die Rolle eines Betrags und die Funktion eines Termins **fallen**.
 
 Alle Zahlen dieses Dokuments rechnet das Skript nach:
 
@@ -11,6 +13,7 @@ uv run python docs/plans/12-kennungen-messung.py --alle --stichprobe   # 54 s au
 uv run python docs/plans/12-kennungen-messung.py --einzelprozess   # dazu die Zeit in einem Prozess
 uv run python docs/plans/12-kennungen-messung.py --profil moenchengladbach   # Einzelheiten je Profil
 uv run python docs/plans/12-kennungen-messung.py --beispiele betrag:sonstig   # 40 Beispiele mit Kontext
+uv run python docs/plans/12-kennungen-messung.py --auswertung   # Labels bilden, Extraktor messen (§ 4.1), rund 20 s
 ```
 
 ## 1. Frage und Nutzen
@@ -253,6 +256,7 @@ Unter Fremdlast gemessen (Supervisor, 2026-11-23: Lastmittel zeitweise 144), mit
 | `--alle --stichprobe --einzelprozess` unter starker Fremdlast | 264,0 s, 739 MB RSS | 18:53:31 15,01 / 18:58:05 35,76 (zwischendurch 40,49) |
 | darin Extraktion je Datensatz | 98,8 / 29,6 / 16,6 / 2,7 s | wie oben |
 | darin Hauptperiode in einem Prozess | 108,5 s | wie oben |
+| `--auswertung` (Hauptperiode, Labels, alle Maße) | 23,2 s, 672 MB RSS / 16,5 s | 19:45:02 27,22 / 19:45:25 25,53; 19:49:10 17,16 / 19:49:27 15,34 |
 
 Die Zeiten hängen an der Fremdlast um den Faktor zwei bis sechs; die ruhigen Läufe sind der
 Maßstab. Stichprobe und alle Zählungen waren in beiden Läufen gleich (SHA-256 der Stichprobe
@@ -285,7 +289,8 @@ nicht Art, Norm und Rolle des Extraktors. Das ist kein menschlicher Goldstandard
   929 834 Bytes; je Präzisionsaufgabe 400 Zeichen links und rechts der Markierung ⟦…⟧, je Recall-Aufgabe der
   ganze Text) und eine leere `antworten-leer.jsonl`. Das Format ist vorläufig, F4 baut den Rahmen.
 
-**Maße** (Codebuch, `[masse]`): Präzision streng (Art, Grenzen und Norm stimmen) und mild (nur die Art),
+**Maße, wie vor der Kodierung geplant** (Codebuch .1, `[masse]`; gemessen wurde nach den Maßen des
+Supervisors in § 4.1, dort zählt der Normwert getrennt): Präzision streng (Art, Grenzen und Norm stimmen) und mild (nur die Art),
 je Art gewichtet nach Schicht, mit Wilson-Intervall; Recall je Art über Überlappung, Tabellenbeträge
 getrennt; Rolle als Übereinstimmung unter den streng richtigen Beträgen, mit κ; Funktion `frist` mit
 Präzision und Recall; Krippendorffs α je Frage zwischen den Kodierern (unter 0,8 ist das Codebuch zu
@@ -295,44 +300,162 @@ Intervall steht daneben. Für Art 1 und 2 enthalten die 50 Recall-Dokumente nur 
 Planungsschicht sorgt für Bebauungspläne, die Haushaltsschicht für Haushaltsnummern); ihr
 Recall-Intervall wird breit (§ 9, Frage 9).
 
-**Stand**: Kodierung ausstehend. Die Zahlen kommen nach der Kodierung in diesen Abschnitt.
+### 4.1 Ergebnis der Kodierung (2026-11-23)
+
+**Kodierung.** Zwei Kodier-Agenten (A, B) haben alle 650 Aufgaben nach Codebuch .1 kodiert, ein
+Schlicht-Agent hat 67 Uneinigkeiten entschieden (Regeln R1 bis R18 in seiner Begründung, übernommen in
+`codebuch-2.toml`). Übereinstimmung der beiden vor der Schlichtung:
+
+| Frage | gleich | α (nominal) |
+|---|---:|---:|
+| Art | 600 / 600 | 1,000 |
+| Grenzen | 597 / 597 | 1,000 |
+| Normwert | 555 / 597 | 0,929 |
+| Rolle (Beträge) | 90 / 98 | 0,901 |
+| Funktion (Termine) | 89 / 100 | 0,850 |
+| Recall-Spannen | 502 gemeinsam, 14 nur bei einem | F1 0,986 |
+
+Alle α liegen bei mindestens 0,8; das Codebuch ist scharf genug (Plan § 2.6). Die Endlabels: einig,
+sonst Schlichtung, sonst — bei vier Präzisionsfeldern und zwölf Feldern gemeinsamer Recall-Spannen,
+die dem Schlichter nicht vorlagen — der Auswerter nach den Regeln des Schlichters (R1, R3, R17, R18;
+alle nur Schreibung oder durch eine Regel gedeckt). Die drei Besonderheiten des Supervisors sind
+übernommen: 12-0101 („in der nächsten Sitzung“ → `frist`), 12-0012 („10.“ als eigene Spanne nach R10),
+Rechtsketten mit demselben Gesetz als eine Spanne (R8; 12-0023, 12-0431, 12-0502). Alle 516
+Recall-Spannen fanden ihre Stelle im Text. `labels.csv` (3 650 Zeilen, Werte als JSON, Offsets statt
+Textausschnitten) und README liegen in `validierung/12-kennungen/`.
+
+**Maße** (Supervisor, 2026-11-23): Präzision = Art und Grenzen richtig, daneben mild = nur die Art;
+Normwert getrennt unter den streng richtigen Treffern; Recall an den 50 Dokumenten mit strenger
+(gleiche Grenzen) und milder Grenze (Überlappung), Tabellenbeträge getrennt; Rolle und Funktion als
+Übereinstimmung mit dem Endlabel, Kriterium je ≥ 0,8. Präzision, Rolle und Funktion sind mit
+`schicht_n` / Quote gewichtet, das Wilson-Intervall nutzt das effektive n nach Kish. Den Recall
+bewerte ich **ungewichtet**: die fünf Recall-Schichten sind nacheinander aus überlappenden Pools
+gezogen, Pool/10 ist also kein Kehrwert einer Auswahlwahrscheinlichkeit; die gewichtete Zahl steht als
+Gegenprobe daneben und ist bei kleinem effektivem n (Art 1 und 5: 8) nicht belastbar.
+
+**Präzision, Recall und Normwert je Art** (Hauptperiode; in Klammern 95-%-Wilson):
+
+| Art | Präzision streng | mild | Recall streng | Recall mild | Normwert gleich | Norm äquivalent |
+|---|---|---|---|---|---|---|
+| 1 Bauleitplanung | **1,000** [0,957; 1] n 100 | 1,000 | **0,901** [0,810; 0,951] 64/71 | 0,901 | 1,000 | 1,000 |
+| 2 Haushalt | **1,000** [0,956; 1] n 100 | 1,000 | **0,524** [0,324; 0,717] 11/21 | 0,524 | 0,978 [0,920; 0,994] | 1,000 |
+| 3 Betrag | **0,962** [0,885; 0,988] n 100 | 0,983 | **0,955** [0,889; 0,982] 84/88 | 0,966 | 1,000 | 1,000 |
+| 4 Termin | **0,992** [0,867; 1] n 100 | 1,000 | **0,960** [0,923; 0,980] 192/200 | 0,960 | 0,994 | 0,994 |
+| 5 Rechtsgrundlage | **0,883** [0,763; 0,947] n 100 | 1,000 | **0,932** [0,851; 0,971] 69/74 | 0,986 | 0,822 [0,677; 0,910] | 0,853 |
+| 6 Verwaltungseinheit | **0,964** [0,896; 0,988] n 100 | 0,988 | **0,808** [0,681; 0,892] 42/52 | 0,846 | 0,713 [0,602; 0,803] | 1,000 |
+
+Gewichteter Recall (Gegenprobe, streng): Art 1 0,959 (n_eff 8), Art 2 0,631 (12), Art 3 0,862 (50),
+Art 4 0,967 (92), Art 5 0,559 (8; eine einzige verpasste Spanne in einem Zufallsdokument trägt das
+Gewicht), Art 6 0,761 (24). „Norm äquivalent“ ist eine Diagnose, kein Maß: gleich bis auf Schreibung,
+die Codebuch .1 offen ließ (Satz/S., „(3)“/„Abs. 3“, Suffix .A0) und, bei Ämtern, nach Abbildung des
+Namens über das Amtsverzeichnis aus den Kopffeldern auf die Nummer (R1 lässt die Kodierer den Namen
+schreiben, wo die Nummer nicht im Ausschnitt steht; der Extraktor schreibt die Nummer).
+
+Recall je Schicht (streng, gefunden/alle): Bauleitplanung Planung 61/68; Haushalt Haushalt 4/11,
+Bezirk 1/2, Fraktion 2/2, Zufall 4/6; Betrag Haushalt 50/50, Bezirk 17/17, Fraktion 8/8, Zufall 9/13;
+Termin 192/200 über alle Schichten; Rechtsgrundlage Planung 65/66, übrige 4/8; Amt Planung 10/11,
+Haushalt 10/13, Bezirk 16/20, Fraktion 1/1, Zufall 5/7. Drei Tabellenbeträge ohne eigene Einheit
+(`tabelle = true`) fand der Extraktor nicht (wie angelegt).
+
+**Rolle der Beträge**: Übereinstimmung **0,508** [0,389; 0,626] (n 98, n_eff 65). Je Rolle des
+Extraktors richtig: verfuegungsmittel 10/10, kosten 13/18, einsparung 5/10, ertrag 5/10, zuschuss
+5/13, foerderung 4/11, ansatz 4/13, sonstig 3/13. Häufigste Verwechslungen (Extraktor → Label):
+sonstig → kosten 7, ansatz → verfuegungsmittel 5, foerderung → zuschuss 4, kosten →
+verfuegungsmittel 3. Von 23 Beträgen mit Label `verfuegungsmittel` erkennt der Extraktor 10.
+
+**Funktion der Termine**: Übereinstimmung **0,613** [0,430; 0,769] (n 100, n_eff 28). Die Klasse
+`frist` hat Präzision 15/30 und im Recall-Teil Recall 2/6. Häufigste Verwechslungen: sonst → frist 14
+(Termine eines Terminplans: Baubeginn, Fertigstellung, Quartale), sonst → sitzung 11 (Daten der
+Beratungsfolge im Kopf, die ohne „Sitzung am“ in einer Tabelle stehen), frist → zeitraum 9 („bis“
+beendet eine Dauer: „bis zum 30.11.2020 untersagt“, „gültig bis“), sonst → zeitraum 6, frist →
+sonst 6 (vergangene Daten: „bis zum 30.06.2020 ausgegeben“).
+
+### 4.2 Ursachen der Verfehlungen
+
+Aus der Fehlerliste (`messdaten/kodierung/12-kennungen/fehler-extraktor.jsonl`, lokal, mit Kontext):
+
+| Art, Maß | Fehler | Ursache | Abhilfe | lohnt? |
+|---|---|---|---|---|
+| 5 Präzision streng 0,883 | 30 von 100 `zu_kurz`; je Schicht: Gesetz direkt 2/37, Gesetz in der Nähe 18/21, Gesetz davor 2/20, ohne Gesetz 8/22 | Kette endet vor dem Gesetz an Spezifizierern, die die Grammatik nicht kennt: „Abs. (4)“, „Nr. 1.2“, „Abs. 1 bis 3“, „Nr. 5, 8 und 9“, „Absatz 1 und 2“, „Abs. 1 b“, „ff.“; Gesetzesnamen mit Zusatz („Straßen- und Wegegesetz des Landes Nordrhein-Westfalen“, „‚Zuständigkeitsordnung der …‘“, „Allgemeinen Eisenbahngesetzes“, „Straßenverkehrs Ordnung“) | Kettengrammatik um diese Spezifizierer, Gesetzesname mit Adjektiv, Genitivzusatz und Anführungszeichen; R8 (gleiches Gesetz über „i. V. m.“ = eine Spanne) | ja: 26 der 30 Fehler sind dieselbe Lücke |
+| 5 Normwert 0,822 | 26 von 70 | Schreibung (S./Satz, „(3)“, „in Verbindung mit“), Kurzformen gegen R4 (ZO, KomHVO ohne NRW, WbK), Gesetz aus dem Satz davor (R6), Gremium „AG § 78“ als Gesetz | R3/R4/R6 in `gesetz_kanon` und `para_kanon` | ja, mit derselben Runde |
+| 2 Recall 0,524 | 10 von 21 | Kontierungen ohne Schlüsselwort je Glied: „1111114/1000/5490200/2“, „Konto 1111114 5/74990600“ (Produkt nach „Konto“), „Profitcenter/Konto/Maßnahme 42 424 04 /78170100/ 7.90000278“ (Fenster endet am Wort „Maßnahme“), Tabellenzeile „1111115 13 52910000“, „Haushaltsstelle:⏎Liste B) … 11.111.05.001 52415900“, „Produktes 2528101“ | ein Zerleger für Kontierungsketten (Produkt / Kostenstelle / Konto / Maßnahme nach Stellenzahl), Beugung „Produktes“ | ja, aber nur mit einer Bestätigung an mehr Haushaltsdokumenten: 21 Spannen sind wenig |
+| 6 Recall 0,808 / 0,846 | 10 von 52 (8 ganz verpasst) | Beugung („Umweltamts“, „Sportamts“, „Stadtplanungsamtes“), „Bezirksverwaltungsstelle“ im Text (mit und ohne Nummer; das Verzeichnis nimmt nur Namen mit Code auf), Kurzname „Gartenamt“, Kopffeld mit mehreren Ämtern (je Zeile eine Spanne) | Genitiv-s, Muster für Bezirksverwaltungsstelle, mehrzeiliges Kopffeld, Kurznamen aus dem Profil | ja, klein |
+| 6 Normwert 0,713 | 23 von 80 | Konvention: R1 schreibt den Namen, wo die Nummer nicht im Ausschnitt steht; der Extraktor nimmt die Nummer aus dem Verzeichnis | keine im Extraktor; Codebuch .2 vergleicht über das Verzeichnis | — |
+| 3 Rolle 0,508 | 49 von 98 | die Regeln R11 bis R15 brauchen Wissen über Dokument und Tabelle: Bauunterhaltungsmittel der Bezirksvertretung als Verfügungsmittel (R11), eigene benannte Maßnahme gegen Etat (R12), fremdes Vorhaben (R14), Spaltenkopf (R15); Schlüsselwörter im Satz tragen das nicht | eine Regelrunde (R11 als Dokumentmerkmal) brächte grob 12 der 49 Fehler, also rund 0,63 — nicht 0,8 | nein: die Rolle fällt; nur der Betrag (Briefing) |
+| 4 Funktion 0,613 | 51 von 100 (ungewichtet; die Tagesschicht mit 8 Fehlern von 21 trägt das Gewicht) | Kopftabelle der Beratungsfolge (R20) und „Sitzung … am“ über einen Zeilenwechsel sind strukturelle Lücken (die 8 Fehler der Tagesschicht); Terminplan (R19), Dauer gegen Frist (R16, R18) und vergangene Daten (R17) brauchen Satzverständnis (die übrigen 43) | R20 allein höbe die gewichtete Übereinstimmung auf geschätzt 0,94, weil die Tagesschicht das Gewicht trägt; die Klasse `frist` bliebe bei rund 0,5 Präzision — für die Wiedervorlage (29) unbrauchbar | nein: die Funktion `frist` fällt; die Zeitangabe bleibt (§ 9, Frage 12) |
+
+Kleinere Fehler der Arten, die das Kriterium erreichen: Betrag — „2021 Mio. EUR“ und „2023 €“ in
+Tabellenköpfen als Betrag (2 × `keine`), Vorzeichen „+“ nicht in der Spanne (3 × `zu_kurz`), im Recall
+„Euro 172.000“, „€⏎40.000“ (Einheit vorn als Wort oder über den Zeilenwechsel); Termin — „Ende Februar
+2021“, „Mitte Juli 2021“ ohne Zusatz, „bis zur nächsten Sitzung“ mit „bis zur“, im Recall
+Datumsangaben über einen Zeilenwechsel („23. Februar⏎2022“, „Ende des⏎Jahres 2023“), unvollständige
+Daten einer Spanne („22. April bis …“, R10), ISO-Daten in Dateinamen; Bauleitplanung — FNP-Nummern in
+Tabellenköpfen („Flächennutzungsplanänderung Stellungnahmen⏎Nr. 188“) und als Ordinalzahl über den
+Zeilenwechsel (5 von 30), „Plan Nr. 5776/014“ (2). Die Investitionsnummer trägt das Suffix .A0 im
+Normwert (4 von 19, R7).
 
 ## 5. Urteil gegen das Kriterium
 
 **Kriterium** (Briefing, unverändert): Präzision ≥ 0,95 und Recall ≥ 0,85 je Art; die Rolle eines
-Betrags mit ≥ 0,8, sonst kommt nur der Betrag. Urteil **vorläufig, Validierung ausstehend**; was hier
-steht, ist die Erwartung aus dem Lesen, keine Messung.
+Betrags mit ≥ 0,8, sonst kommt nur der Betrag; die Funktion eines Termins mit ≥ 0,8 (Supervisor, vor
+der Messung festgelegt, § 9, Frage 6). Gemessen am Punktschätzer, das Intervall daneben (§ 4).
 
-| Art | Urteil (vorläufig) | Erwartung und Risiko |
-|---|---|---|
-| 1 Bauleitplanung | **bauen** | Präzision hoch (beim Lesen kein Fehltreffer); Recall hängt an Plantabellen ohne Schlüsselwort und Namen zwischen Wort und Nummer (Näherung: höchstens 16,5 % Verlust, davon viele keine Pläne) |
-| 2 Haushalt | **bauen** | feste Formate, aber je Stadt eigene; Risiko bei gemischten Kontierungen (Produkt/Konto/Kostenstelle in einer Zeichenfolge) |
-| 3 Betrag | **bauen** (Betrag) | Spanne und Normalisierung sind regelhaft; Recall-Risiko sind Tabellen mit Spalteneinheit (bis zu 5 450 Zahlen) |
-| 3 Rolle | **offen**, Kernfrage | Heuristik nach Schlüsselwörtern; 13,1 % `sonstig`, Fehlerbilder (a) bis (c) in § 3.3. Erreicht sie 0,8 nicht, kommt nur der Betrag (Briefing), und 21 fasst Beträge ohne Rolle zusammen oder nimmt den Abschnitt „Finanzielle Auswirkungen“ aus 11 als Filter |
-| 4 Termin | **bauen** (Zeitangabe) | Datumsformate sind eindeutig; die Funktion `frist` ist schwerer (Dauer gegen Frist) und hat im Briefing kein eigenes Kriterium (§ 9, Frage 6) |
-| 5 Rechtsgrundlage | **bauen** | Gesetz und erster Paragraph sind verlässlich, die Grenzen langer Ketten weniger; streng gemessen ist das das Risiko |
-| 6 Amt | **bauen** (Kopf und Text) | Kopffeld strukturiert; Namen aus dem selbst gebauten Verzeichnis |
-| 6 Dezernat | **umbauen** | im Text fast nie (76 Dokumente); Dezernat über eine Tabelle Amt → Dezernat im Profil statt aus dem Text |
+| Art | Präzision | Recall | Normwert | Urteil |
+|---|---|---|---|---|
+| 1 Bauleitplanung | 1,000 ✓ | 0,901 ✓ | 1,000 | **bauen** (untere Grenze des Recall-Intervalls 0,81) |
+| 2 Haushalt | 1,000 ✓ | 0,524 ✗ | 0,978 | **umbauen**: Kontierungszerleger, Bestätigung an einer eigenen Haushaltsschicht |
+| 3 Betrag | 0,962 ✓ | 0,955 ✓ | 1,000 | **bauen** (nur der Betrag) |
+| 3 Rolle | 0,508 ✗ (≥ 0,8) | – | – | **fällt** (Briefing: dann kommt nur der Betrag) |
+| 4 Termin | 0,992 ✓ | 0,960 ✓ | 0,994 | **bauen** (nur die Zeitangabe) |
+| 4 Funktion | 0,613 ✗ (≥ 0,8) | `frist` 2/6 | – | **fällt** |
+| 5 Rechtsgrundlage | 0,883 ✗ | 0,932 ✓ | 0,822 | **umbauen**: Kettengrammatik und Gesetzesnamen, R3 bis R8 |
+| 6 Amt | 0,964 ✓ | 0,808 ✗ (mild 0,846) | 0,713 (äquivalent 1,000) | **umbauen**: Beugung, Bezirksverwaltungsstelle, mehrzeiliger Kopf |
+| 6 Dezernat | 17/17 | – (keine Spanne in den Recall-Dokumenten) | 17/17 | **umbauen wie zuvor**: Dezernat über eine Tabelle Amt → Dezernat im Profil, nicht aus dem Text |
 
-Wer nach der Kodierung eine Art unter dem Kriterium findet, baut sie nicht oder nur als Variante, die
-die Seite nicht zeigt (Plan § 2.6: Stufe 3 zeigt nur Validiertes).
+**Umbauen** heißt wie in Vorhaben 14: eine Runde, gemessen an einer **frischen Bestätigungsstichprobe**
+nach Codebuch .2, nie an denselben Labels. Vorschlag: Seed `12-2`, ohne die 650 Aufgaben, je
+umgebauter Art 100 Treffer des neuen Extraktors (Art 2 und 6 mit eigener Schicht für die neuen Muster,
+Art 5 mit den Schichten „Kette mit Spezifizierern“ und „Gesetzesname mit Zusatz“) und 30 Recall-
+Dokumente aus Haushaltsdokumenten (Art 2 hat im ersten Durchgang nur 21 Spannen) sowie 20 aus
+Bezirksvertretungen (Ämter). Verfehlt eine Art dort wieder, fällt sie. Die kleinen Korrekturen an
+Betrag und Termin (Vorzeichen „+“, Jahreszahl im Tabellenkopf, „Euro 172.000“, Datum über den
+Zeilenwechsel, „Ende Februar 2021“) baut Stufe 2 mit Tests und prüft sie in derselben
+Bestätigungsrunde mit je 30 Treffern mit.
+
+**Zwei Wege, die ich nicht vorschlage**: eine Regelrunde für die Rolle (bestenfalls rund 0,63, § 4.2)
+und eine für die Funktion `frist`. Wer sie für 21 oder 29 braucht, misst neu mit einem Modell über F5
+an frischen Labels; ein binärer Merker „aus bezirklichen Mitteln“ (Verfügungs- und
+Bauunterhaltungsmittel der Bezirksvertretungen) wäre der aussichtsreichste Teil (Extraktor heute 10/10
+richtig, aber nur 10 von 23 gefunden) und eine Frage an den Supervisor (§ 9, Frage 11).
 
 ## 6. Bauplan Stufe 2
+
+Stufe 2 baut die Arten mit Urteil „bauen“ (§ 5): **Bauleitplanung** (`bplan`, `fnp`), **Betrag**
+(`betrag`, ohne Rolle) und **Termin** (`termin`, ohne Funktion). Haushalt (`produkt`, `sachkonto`,
+`psp`, `investition`), Rechtsgrundlage (`recht`) und Amt (`amt`) kommen erst dazu, wenn ihr Umbau die
+Bestätigungsstichprobe besteht (§ 5); der Code ist so geschnitten, dass sie je `kind` hinter einem
+Schalter dazukommen, ohne den Schritt umzubauen. Das Dezernat kommt aus einer Tabelle im Profil.
 
 **Beitrag** `identifiers` (Register `georep.enrich.CONTRIBUTIONS`, Fundament F2), eine Zeile im Tupel,
 hinter `sections` (11), wenn es da ist; sonst mit dem groben Abschnittsersatz aus § 3.1.
 
-**Module** (neu, rund 600 Zeilen):
+**Module** (neu, rund 500 Zeilen für die drei Arten):
 
 - `src/georep/enrich/identifiers/__init__.py`: `CONTRIBUTION = Contribution(name="12-kennungen", steps=…,
   tables=…)`, Schritt `identifiers`, `IDENTIFIERS_SCHEMA_VERSION = 1` (Schema-Version aus der Konstante,
   CLAUDE.md).
 - `…/patterns.py`: kompiliert die Muster aus den Settings (stadtneutral aus `defaults.toml`,
-  stadtspezifisch aus dem Profil), Amtsverzeichnis aus den Kopffeldern.
-- `…/extract.py`: reine Funktionen je Art (`bauleitplanung`, `haushalt`, `betraege`, `termine`,
+  stadtspezifisch aus dem Profil).
+- `…/extract.py`: reine Funktionen je Art (`bauleitplanung`, `betraege`, `termine`; später `haushalt`,
   `rechtsgrundlagen`, `verwaltung`) mit `(text, patterns) -> list[Span]`, dazu `betrag_norm`,
-  `bplan_norm`, `gesetz_kanon`, `para_kanon`, `datum_iso`.
-- `…/roles.py`: Rolle eines Betrags und Funktion eines Termins.
+  `bplan_norm`, `datum_iso`. Übernommen aus `kennungen-messung-v1` mit den kleinen Korrekturen aus
+  § 4.2: Vorzeichen „+“ in der Spanne, keine Jahreszahl mit Einheit im Tabellenkopf als Betrag,
+  Einheit vorn auch als Wort („Euro 172.000“) und über den Zeilenwechsel, Datum und „Ende des Jahres“
+  über einen Zeilenwechsel, Monat mit Zusatz („Ende Februar 2021“ → `2021-02~ende`), Jahreszeiten in
+  der Normform `2022~herbst`, `relativ:vor_sommerpause`, „bis zur nächsten Sitzung“ ohne „bis zur“, FNP
+  im Tabellenkopf und als Ordinalzahl über den Zeilenwechsel. Jede Korrektur bekommt ihren Test aus
+  § 4.2 und eine Schicht in der Bestätigungsrunde (§ 5).
+- Keine Rolle, keine Funktion (beide fallen, § 5); kein `roles.py`.
 
 **Eingaben**: Rohtextstore aus F1 (`cache_root/<profil>/text/rohtexte.parquet`, Schritt `raw_texts`),
 `interim/papers.parquet` für die Dokument-ID; Abschnitte aus 11, wenn vorhanden.
@@ -343,65 +466,69 @@ hinter `sections` (11), wenn es da ist; sonst mit dem groben Abschnittsersatz au
 |---|---|---|
 | `id` | String | OParl-Paper-ID (je Datei die kleinste; nach dem Join sortieren) |
 | `start`, `end` | Int64 | Zeichenoffsets in den Rohtext, `0 <= start < end <= len(text)` |
-| `kind` | String (Enum) | `bplan, fnp, produkt, sachkonto, psp, investition, betrag, termin, recht, amt, dezernat` |
+| `kind` | String (Enum) | `bplan, fnp, betrag, termin` (später `produkt, sachkonto, psp, investition, recht, amt`) |
 | `value` | String | Text der Spanne |
-| `norm` | String | normalisiert (Betrag als Dezimalzahl in Euro, Termin ISO, Recht kanonisch, Amt Code) |
+| `norm` | String | Plannummer, `FNP-Änderung n`, Betrag als Dezimalzahl in Euro, Termin nach Codebuch .2 |
 | `section` | String | Abschnitt (aus 11, sonst Ersatz) |
 | `extractor` | String | `identifiers-v1` |
-| `attr` | String, nullbar | Rolle (`kosten` … `sonstig`, Zusätze `;je`, `;spanne`, `;dok`), Funktion (`frist`, `sitzung`, `zeitraum`, `sonst`), Herkunft (`kopf`, `name`, `nummer`, `gesetz_nah` …) |
+| `attr` | String, nullbar | nur die Form, keine Deutung: Betrag `je`, `spanne`; Termin `tag`, `monat`, `quartal`, `jahr`, `relativ` |
 
-Die F3-Felder bleiben, wie F3 sie festlegt; `attr` ist eine Erweiterungsspalte (§ 9, Frage 1). Dazu
-`processed/aemter.parquet` (Name, Code, Häufigkeit, erstes und letztes Datum) für 24.
+Die F3-Felder bleiben, wie F3 sie festlegt; `attr` ist eine Erweiterungsspalte (§ 9, Frage 1).
 
 **Verträge** an den Batch-Grenzen (`georep.contracts`): Spannen im Text, sortiert, keine Überlappung
-innerhalb eines `kind`; `norm` eines Betrags ist eine Dezimalzahl; `norm` eines Termins passt zu ISO
-oder `relativ:`. Kein `deal.pure` in der heißen Schleife (CLAUDE.md).
+innerhalb eines `kind`; `norm` eines Betrags ist eine Dezimalzahl; `norm` eines Termins passt zu den
+Normformen des Codebuchs .2. Kein `deal.pure` in der heißen Schleife (CLAUDE.md).
 
 **Tests**:
 
-- Beispiele aus dem Codebuch und § 3.3 als Unit-Tests (`tests/unit/test_identifiers.py`): jede
+- Beispiele aus dem Codebuch .2 und § 4.2 als Unit-Tests (`tests/unit/test_identifiers.py`): jede
   Schreibweise eines Betrags, „5.000 bis 10.000 Euro“, „Bezirk 6 800 Euro“ (kein Betrag 6 800),
-  „vom 10.07. bis zum 17.07.2022“ (`zeitraum`), „§§ 26, 27, 28 und 72 KWahlO“, „§ 5, 12 Mitglieder“
-  (Kette endet bei § 5), „Vorlage APS/130/2020“ (keine Plannummer), „Produktsachkonto 52910000“ (Konto).
+  „+536.000EUR“, „2021 Mio. EUR“ im Tabellenkopf (kein Betrag), „Euro 172.000“, „10. und 11. Juni 2023“
+  (zwei Termine, R10), „23. Februar⏎2022“, „Ende Februar 2021“, „Vorlage APS/130/2020“ (keine
+  Plannummer), „die 188.⏎Änderung des Flächennutzungsplans“.
 - hypothesis (`tests/property/`): für jeden Text liegen alle Spannen im Text und sind sortiert; ein
   Betrag, den eine Formatfunktion deutsch schreibt (Tausenderpunkt, Komma, Mio.), wird zur selben
   Dezimalzahl; jedes gültige Datum in jeder Schreibweise ergibt dasselbe ISO-Datum; ein Text ohne
-  Ziffern ergibt keine Spanne der Arten 1 bis 5.
-- grep-Test „kein Stadtwort“: die Kopffeldnamen („Fachbereich“, „Amt / Institut“) stehen nur im Profil.
+  Ziffern ergibt keine Spanne.
+- grep-Test „kein Stadtwort“: Nummernformate und Kopffeldnamen stehen nur im Profil.
 - Golden Master unberührt (der Schritt ist neu und schreibt eine neue Datei).
 
 **Settings** (Anhängeregel aus `00-synergien.md`, § 2): Modell `IdentifierSettings` vor
 `class Settings`, Feld `identifiers` am Ende; in `defaults.toml` ein Block `# --- Vorhaben 12:
-Kennungen und Beträge` mit `enabled = false`, Einheiten, Faktoren, Rollenwörtern, Fristwörtern, der
-Liste der Gesetzeskurzformen (NRW-Landesrecht, je Land überschreibbar) und Gremienwörtern; in
-`profiles/duesseldorf.toml` und `profiles/moenchengladbach.toml` je ein Block `[identifiers]` mit den
-Einträgen aus `PROFILMUSTER` (die Periodenprofile erben über `base`). Jeder Eintrag mit Kommentar und
-Beispiel.
+Kennungen und Beträge` mit `enabled = false`, `kinds = ["bplan", "fnp", "betrag", "termin"]`,
+Einheiten, Faktoren, Monatsnamen, Wörtern relativer Termine; in `profiles/duesseldorf.toml` und
+`profiles/moenchengladbach.toml` je ein Block `[identifiers]` mit den Plannummernformaten aus
+`PROFILMUSTER` (die Periodenprofile erben über `base`). Jeder Eintrag mit Kommentar und Beispiel.
 
 **Berührte Dateien**: neu `src/georep/enrich/identifiers/`, eine Zeile in
 `src/georep/enrich/__init__.py`, Modell und Feld in `src/georep/settings.py`, Block am Ende von
 `src/georep/defaults.toml`, `src/georep/profiles/duesseldorf.toml`, `…/moenchengladbach.toml`;
-`docs/architecture.md` (Abschnitt Vorverarbeitung), `docs/decisions.md` (Eintrag ohne Nummer).
+`docs/architecture.md` (Abschnitt Vorverarbeitung), `docs/decisions.md` (Eintrag ohne Nummer: Rolle und
+Funktion gemessen und verworfen, mit den Zahlen aus § 4.1).
 
-**Laufzeit**: rund 41 s für die Hauptperiode in einem Prozess bei ruhigem Rechner, 109 s unter
-Fremdlast (§ 3.6), offline; `nox -s bench` bekommt eine Stufe über 200 Dokumente. **Paket**: nicht
-nötig, denn der Schritt rechnet aus dem Rohtextpaket (F1) in rund einer Minute; wer Pages den Schritt
-ersparen will, packt `kennungen.parquet` (1,4 MB) mit `georep pack --identifiers`.
+**Laufzeit**: rund 41 s für alle Arten der Hauptperiode in einem Prozess bei ruhigem Rechner, 109 s
+unter Fremdlast (§ 3.6), offline; für drei Arten weniger. `nox -s bench` bekommt eine Stufe über 200
+Dokumente. **Paket**: nicht nötig, der Schritt rechnet aus dem Rohtextpaket (F1) in unter einer
+Minute; wer Pages den Schritt ersparen will, packt `kennungen.parquet` mit `georep pack --identifiers`.
 
-**Validierung in Stufe 2**: die Kodierung der Stichprobe (§ 4) läuft parallel; ihre Ergebnisse
-entscheiden je Art, welche `kind`s veröffentlicht werden, und ob eine zweite Runde (Tabellenbeträge,
-Rolle) nötig ist.
+**Umbau (parallel, eigener Branch-Abschnitt)**: Kontierungszerleger (Art 2), Kettengrammatik und
+Gesetzesnamen mit R3 bis R8 (Art 5), Beugung, Bezirksverwaltungsstelle und mehrzeiliger Kopf (Art 6),
+dann die Bestätigungsstichprobe nach § 5 mit `codebuch-2.toml`; das Messskript bekommt dafür
+`--stichprobe-2` und `--auswertung-2` nach dem Muster von Vorhaben 14. Erst nach bestandener Runde
+kommen die `kind`s in `kinds`.
 
 ## 7. Bauplan Stufe 3
 
-Keine eigene Unterseite (Briefing: Download). `kennungen.csv` und `kennungen.parquet` im
-Tabellenregister (`report/tables.py` über das Register), mit `schema.json`-Eintrag; nur Arten, die das
-Kriterium erreicht haben, und die Rolle nur, wenn sie 0,8 erreicht. Größe gemessen (§ 3.5): CSV mit
-Terminen 11,3 MB, ohne 5,7 MB, Parquet 1,4 MB beziehungsweise 0,8 MB; die CSV ist für die Seite zu
-groß, also nur Parquet, oder CSV ohne Termine aus dem Kopf (`section = kopf`). Text an der Tabelle: was jede Spalte heißt, Stichprobengröße, Güte
-je Art und „geprüft von zwei KI-Kodierern an *n* Treffern, nicht von Menschen“ (Plan § 2.6). Keine
-Personennamen in `value` (das Dezernentenfeld wird nicht extrahiert). Zulieferer für 21, 24 und 29, die
-ihre Seiten selbst bauen.
+Keine eigene Unterseite (Briefing: Download). `kennungen.parquet` im Tabellenregister
+(`report/tables.py` über das Register), mit `schema.json`-Eintrag; nur die `kind`s, die das Kriterium
+erreicht haben (heute `bplan`, `fnp`, `betrag`, `termin`). Größe gemessen (§ 3.5): alle Arten als
+Parquet 1,4 MB, als CSV 11,3 MB; die CSV ist für die Seite zu groß, also Parquet, und als CSV nur
+Bauleitplanung und Beträge. Text an der Tabelle: was jede Spalte heißt, Stichprobengröße, Güte je Art
+(§ 4.1) und „geprüft von zwei KI-Kodierern an 100 Treffern und 50 Dokumenten je Art, nicht von
+Menschen“ (Plan § 2.6); ausdrücklich, dass Beträge **keine Rolle** tragen (Kosten, Zuschuss und
+Einnahme sind nicht unterschieden) und Termine **keine Frist** markieren. Keine Personennamen in
+`value`. Zulieferer für 21 (Beträge ohne Rolle; der Abschnitt „Finanzielle Auswirkungen“ aus 11 als
+Filter), 24 (Amt erst nach dem Umbau) und 29 (Plannummern; Fristen nicht).
 
 ## 8. Vorab festgelegte Hypothesen
 
@@ -409,22 +536,27 @@ Keine; Vorhaben 12 ist Extraktion, keine Analyse.
 
 ## 9. Risiken und offene Fragen
 
+Stand nach der Kodierung; beantwortete Fragen mit der Antwort, neue ab Nummer 11.
+
 | Nr. | Frage | warum sie zählt | Annahme ohne Antwort |
 |---|---|---|---|
-| 1 | Rolle und Funktion als Erweiterungsspalte `attr` neben den F3-Feldern, oder als Unterart im `kind` (`betrag.kosten`)? | F3 legt das gemeinsame Schema fest; 21 und 29 lesen es | `attr` als nullbare Erweiterungsspalte, F3-Felder unverändert |
-| 2 | Das Kopffeld „Dezernentin / Dezernent“ nennt Beigeordnete mit Namen (5 669 Dokumente). Extrahieren? | Plan § 1: keine Personen aus freiem Text; 24 braucht aber das Dezernat | nicht extrahieren; Dezernat über eine Tabelle Amt → Dezernat mit Gültigkeitszeitraum im Profil, Quelle der öffentliche Dezernatsverteilungsplan (Fremddaten, Frage 8 des Plans) |
-| 3 | Ist „5674/26“ derselbe Plan wie „5674/026“? | Normalisierung führt 103 Pläne mit mehreren Schreibweisen zusammen | ja; in 16 gegen das Bebauungsplanverzeichnis des Portals prüfen |
-| 4 | Zählen die Düsseldorfer Verfahrensnummern im Planformat (Wettbewerb, Workshop, Vorkaufsrechtssatzung, „Plan Nr.“) zur Bauleitplanung? | sie teilen das Format und oft das Gebiet mit einem Bebauungsplan | nein, nur mit Planwort; „Plan Nr.“ bleibt draußen |
-| 5 | Tabellenbeträge mit Spalteneinheit in Stufe 2 aufnehmen? | bis zu 5 450 Zahlen in 546 Dokumenten; Recall-Risiko von Art 3 | erst, wenn der Recall daran scheitert; dann ein eigener Extraktor `tabelle` mit eigener Präzision |
-| 6 | Welches Kriterium gilt für die Funktion `frist`? | 29 (Wiedervorlage) braucht sie; das Briefing nennt keines | ≥ 0,8 wie die Rolle; der Supervisor entscheidet vor der Kodierung |
-| 7 | Termine aus Kopf und Beratungsfolge (Briefdatum, Sitzungsdaten) in der Ausgabe behalten? | sie machen 99,5 % Abdeckung, aber wenig Inhalt | behalten, mit `section = kopf`; Nutzer filtern |
-| 8 | Strenge Präzision bei Rechtsgrundlagen mit Grenzen langer Ketten? | Ketten sind auch für Menschen unscharf abzugrenzen | streng gilt für das Kriterium, mild steht daneben |
-| 9 | Reichen 50 Recall-Dokumente für Art 1 und 2? | wenige Kennungen je Dokument, breite Intervalle | genügt für „vorläufig“; ist das Intervall breiter als ±0,15, eine zweite Runde mit 50 Dokumenten der Planungs- und Haushaltsschicht |
-| 10 | Stimmen die Offsets der Messdatei mit dem Store aus F1 überein? | die Stichprobe zeigt auf Zeichenpositionen | ja, wenn F1 dasselbe pypdf 7.1.0 ohne weitere Normalisierung nutzt; Prüfung über `pdf_sha256` und Gleichheit des Texts, sonst die Spannen über den Text neu verorten |
+| 1 | `attr` als Erweiterungsspalte neben den F3-Feldern? | F3 legt das gemeinsame Schema fest | ja, aber nur für die Form (`je`, `spanne`, `tag` …); Rolle und Funktion entfallen (§ 5) |
+| 2 | Das Kopffeld „Dezernentin / Dezernent“ nennt Beigeordnete mit Namen (5 669 Dokumente). Extrahieren? | Plan § 1: keine Personen aus freiem Text; 24 braucht das Dezernat | nicht extrahieren; Dezernat über eine Tabelle Amt → Dezernat mit Gültigkeitszeitraum im Profil, Quelle der öffentliche Dezernatsverteilungsplan |
+| 3 | Ist „5674/26“ derselbe Plan wie „5674/026“? | Normalisierung führt 103 Pläne zusammen | ja; die Kodierer haben in 100 Fällen jede Norm so geschrieben (Normwert 1,000); in 16 gegen das Bebauungsplanverzeichnis prüfen |
+| 4 | Zählt „Plan Nr.“? | dasselbe Format wie Wettbewerbe und Satzungen | **beantwortet durch die Labels**: ja, wenn der Text dieselbe Nummer als Bebauungsplan behandelt (Codebuch .2); Wettbewerbe und Satzungen nicht |
+| 5 | Tabellenbeträge mit Spalteneinheit aufnehmen? | bis zu 5 450 Zahlen | nein: der Recall erreicht 0,955 ohne sie; in den 50 Dokumenten markierten die Kodierer nur 3 |
+| 6 | Kriterium der Funktion `frist`? | 29 braucht sie | **beantwortet** (Supervisor, vor der Messung): ≥ 0,8; siehe Frage 12 |
+| 7 | Termine aus Kopf und Beratungsfolge behalten? | 99,5 % Abdeckung, wenig Inhalt | behalten, mit `section = kopf` |
+| 8 | Strenge Präzision bei langen Rechtsketten? | Grenzen sind unscharf | streng gilt (Supervisor); die Kodierer waren sich bei den Grenzen in 597 von 597 Fällen einig, die Grenzen sind also nicht unscharf, sondern der Extraktor zu kurz |
+| 9 | Reichen 50 Recall-Dokumente für Art 1 und 2? | wenige Kennungen | für Art 1 ja (71 Spannen); für Art 2 nein (21 Spannen): die Bestätigungsrunde nimmt 30 Haushaltsdokumente |
+| 10 | Offsets der Messdatei gegen den Store aus F1? | Labels zeigen auf Zeichenpositionen | ja, wenn F1 denselben Text liefert; Prüfung über `pdf_sha256` und Textgleichheit |
+| 11 | Soll ein binärer Merker „aus bezirklichen Mitteln“ (Verfügungs- und Bauunterhaltungsmittel der Bezirksvertretungen, R11) für 21 gemessen werden? | 21 fragt nach den Verfügungsmitteln; die volle Rolle fällt | nein, nicht in dieser Runde; 21 entscheidet in seiner Stufe 1, ob es den Merker braucht, und misst ihn dann an frischen Labels |
+| 12 | Meint das Kriterium der Funktion die Übereinstimmung über vier Klassen oder die Klasse `frist`? | die Kopfregel R20 höbe die Übereinstimmung auf geschätzt 0,94, die Klasse `frist` bliebe bei rund 0,5 | die Klasse `frist`, weil nur sie der Wiedervorlage (29) dient; darum fällt die Funktion auch nach einem Umbau |
+| 13 | Normwert des Amts: Nummer aus dem Verzeichnis (Extraktor) oder Name (R1 der Kodierer)? | Normwert 0,713 gleich, 1,000 nach Abbildung | der Extraktor bleibt bei der Nummer (24 braucht sie); das Codebuch .2 lässt die Kodierer den Namen schreiben, der Vergleich bildet ihn über das Verzeichnis ab |
 
-**Risiken**: Die Rolle erreicht 0,8 nicht (dann nur der Betrag, 21 wird gröber); die Kodier-Agenten sind
-sich bei der Rolle uneins (α < 0,8: Codebuch schärfen, Plan § 2.6); ältere Vorlagen (2014–2020) haben
-andere Köpfe (Amtsanteil 39 %), Mönchengladbach nur 658 Dokumente, also kaum Bebauungspläne (15
-Dokumente) zum Prüfen.
+**Risiken**: Die Bestätigungsrunde für Haushalt, Recht und Amt braucht wieder zwei Kodier-Agenten und
+einen Schlicht-Agenten (rund 400 Aufgaben); das Recall-Intervall der Bauleitplanung reicht bis 0,81
+(64 von 71); ältere Vorlagen (2014–2020) und Mönchengladbach sind nicht kodiert — die Güte gilt für die
+Hauptperiode, die Übertragbarkeit nur nach den Zählungen in § 3.4.
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)

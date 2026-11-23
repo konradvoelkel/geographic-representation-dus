@@ -1,0 +1,173 @@
+# Codebuch Vorhaben 12 „Kennungen und Beträge“, Fassung 2026-11-23.2 (Vorschlag nach der Kodierung).
+#
+# Fassung .1 (codebuch.toml daneben) bleibt die Grundlage von labels.csv; diese Fassung gilt nur für
+# eine Bestätigungsstichprobe nach einem Umbau (Messdokument docs/plans/12-kennungen.md, § 5 und
+# § 6). Sie nimmt die Regeln R1 bis R18 des Schlicht-Agenten auf (Wortlaut sinngemäß, Nummern
+# gleich), die Wertformen, die beide Kodierer schon benutzt haben, und zwei Regeln aus den Labels
+# (R19, R20). Vorläufiges Format: F4 baut den Rahmen; Fragen und Antwortformat bleiben wie in .1.
+
+[meta]
+vorhaben = "12-kennungen"
+version = "2026-11-23.2"
+datum = 2026-11-23
+vorgaenger = "codebuch.toml (2026-11-23.1), Grundlage von labels.csv"
+kodierer = "zwei unabhängige Kodier-Agenten und ein Schlicht-Agent nur für die Uneinigkeiten (Plan § 2.6, F4); kein menschlicher Goldstandard"
+nicht_gezeigt = "Art, normalisierter Wert, Rolle und Funktion, die der Extraktor vergibt; gezeigt wird nur die markierte Stelle"
+offsets = "Python-Zeichenindizes in den Rohtext (pypdf-7.1.0 roh), gebunden an pdf_sha256"
+aenderungen = """.2 gegenüber .1: Regeln R1 bis R18 des Schlichters (Amt-Norm ohne Weltwissen, null statt \
+leer, Schreibung und Ketten der Rechtsnormen, Investitionsnummer ohne Suffix, keine Bereichsnorm für \
+Daten, Rollen der bezirklichen Bauunterhaltungsmittel, eigener Maßnahmen, Etats, fremder Vorhaben und \
+Tabellenspalten, Frist nach dem Handelnden, vergangene Daten, Zeitraum nur Anfang oder Ende); Wertformen \
+für Jahreszeit, Monat mit Zusatz und „vor der Sommerpause“; R19 Termine eines Terminplans sind frist; \
+R20 Daten der Beratungsfolge im Kopf sind sitzung; Spannenregeln für „+“, Tabellenköpfe, „Euro 172.000“, \
+„Plan Nr.“ und mehrzeilige Kopffelder."""
+
+# ---------------------------------------------------------------------------------------------
+# Allgemeine Regeln
+# ---------------------------------------------------------------------------------------------
+
+[regeln]
+R2 = "„leer bei keine“ ist JSON null, nie die leere Zeichenfolge."
+umlaute = "In Normwerten mit Wörtern (Termin-Zusätze, relative Termine) stehen ä, ö, ü, ß als ae, oe, ue, ss: 2023~fruehjahr."
+leerraum = "Ein Zeilenumbruch innerhalb einer Spanne zählt im Normwert als ein Leerzeichen; die Spanne selbst bleibt wie im Text."
+
+# ---------------------------------------------------------------------------------------------
+# Arten
+# ---------------------------------------------------------------------------------------------
+
+[arten.bplan]
+art = "1 Bauleitplanung"
+was = "Nummer eines Bebauungsplans (auch Entwurf, Vorentwurf, vorhabenbezogen, Änderung, alter Fluchtlinien- oder Durchführungsplan)"
+spanne = "nur die Nummer (5674/26, 03/017, 809/N), ohne „Bebauungsplan Nr.“ und ohne Planname"
+norm = "Düsseldorf alte Nummern vierstellig/dreistellig (5674/26 → 5674/026), neue Bezirk/lfd. Nr. (06-018 → 06/018); Mönchengladbach Nummer/Bezirk (809/N)"
+plan_nr = "„Plan Nr. 5776/014“ zählt, wenn der Text dieselbe Nummer als Bebauungsplan behandelt (Aufstellung, Änderung, Geltungsbereich); Nummern von Wettbewerben, Workshops und Vorkaufsrechtssatzungen nicht"
+nicht = ["Drucksachennummern (Vorhaben 14)", "Hausnummern, Telefonnummern, Schuljahre"]
+
+[arten.fnp]
+art = "1 Bauleitplanung"
+was = "Nummer einer Änderung des Flächennutzungsplans, auch als Ordinalzahl („die 188. Änderung“) und in Tabellenköpfen („Flächennutzungsplanänderung Stellungnahmen Nr. 188“)"
+spanne = "nur die Nummer, ohne Punkt der Ordinalzahl"
+norm = "„FNP-Änderung 188“"
+
+[arten.produkt]
+art = "2 Haushalt"
+was = "Nummer eines Produkts oder Profitcenters, auch als erstes Glied einer Kontierung („Konto 1111114 5/74990600“, „1111114/1000/5490200/2“, Tabellenzeile „1111115 13 52910000“) und nach „Produktes“, „Haushaltsstelle“"
+spanne = "die Ziffernfolge mit ihren Leerzeichen"
+norm = "nur Ziffern; acht Ziffern sind ein Sachkonto"
+
+[arten.sachkonto]
+art = "2 Haushalt"
+was = "Sachkonto oder Kostenart, auch als Glied einer Kontierung („42 424 04 /78170100/ 7.90000278“, „11.111.05.001 52415900“); ein Kontenpaar („5/74990600“) ist eine Spanne mit der achtstelligen Nummer"
+spanne = "nur die Kontonummer"
+norm = "nur Ziffern"
+
+[arten.psp]
+art = "2 Haushalt"
+was = "PSP-Element eines konsumtiven Ansatzes; „Haushaltsstelle 11.111.05.001“ ist ein Produkt (produkt), kein PSP-Element"
+spanne = "das Element ohne Satzzeichen am Ende"
+norm = "wie geschrieben"
+
+[arten.investition]
+art = "2 Haushalt"
+was = "Investitionsmaßnahme (Düsseldorf 7.NNNNNNNN, auch „Maßnahme 790000724“; Mönchengladbach LDI)"
+spanne = "die Nummer mit Suffix (.A0, .K0, .KO.99)"
+norm = "R7: ohne Suffix, 7.NNNNNNNN; Mönchengladbach LDI-NNNN"
+
+[arten.betrag]
+art = "3 Betrag"
+was = "Geldbetrag in Euro mit Einheit im Text, auch mit Einheit vorn („EUR 2.700“, „€ 40.000“, „Euro 172.000“) und die erste Zahl einer Spanne"
+spanne = "Zahl mit Vorzeichen (auch „+“), Faktor und Einheit; ohne „ca.“, „brutto“, „/m²“"
+norm = "Euro mit zwei Nachkommastellen, Punkt als Dezimalzeichen, Vorzeichen minus (−) wie im Text, plus ohne Zeichen"
+tabelle = "Eine Zahl, deren Einheit nur im Kopf einer Spalte oder Zeile steht („Beträge in EUR“, Veränderungstabellen mit „-50.000 -150.000“), ist ein Betrag mit tabelle = true"
+nicht = ["eine Jahreszahl mit Einheit in einem Tabellenkopf („2021 Mio. EUR“, „2023 €“)", "Prozente, Mengen, Flächen"]
+
+[arten.termin]
+art = "4 Termin"
+was = "Zeitangabe mit Kalenderbezug oder relative Frist (wie .1), auch ISO-Daten in Dateinamen („2020-10-05 BV6 …“)"
+spanne = "die Zeitangabe mit ihrem Zusatz („Ende Februar 2021“, „Mitte Juli 2021“, „nach der Sommerpause 2022“), ohne vorangestelltes „bis zur“, „bis zum“"
+norm = "2024-03-31; 2024-03; 2023-Q3, 2023-H1; Jahr mit Zusatz 2022~ende, 2022~herbst, 2023~fruehjahr; Monat mit Zusatz 2021-02~ende, 2021-07~mitte; relativ:naechste_sitzung (auch „bis zur“, „auf der nächsten Sitzung“), relativ:frist, relativ:jahresende, relativ:nach_sommerpause, relativ:vor_sommerpause"
+R10 = "Keine Bereichsnorm: jede Zeitangabe einer Aufzählung oder Spanne ist eine eigene Spanne; die vorangestellte unvollständige („10.“ in „10. und 11. Juni 2023“, „März“ in „März bis Dezember 2021“) mit ihrem Text und vervollständigter Norm"
+nicht = ["Jahreszahlen allein", "Gliederungsnummern", "Uhrzeiten"]
+
+[arten.recht]
+art = "5 Rechtsgrundlage"
+was = "Zitat einer Vorschrift mit §, Art., „Paragraph“ oder „Artikel“ (R9: „Paragraph (§) 45 …“ beginnt bei „Paragraph“)"
+spanne = "vom ersten § bis zum letzten Spezifizierer, dazu der Gesetzesname, wenn er unmittelbar folgt, mit Zusätzen wie „des Landes Nordrhein-Westfalen“ oder „der Landeshauptstadt …“; „(BauGB)“ in Klammern dahinter nicht"
+R8 = "Kette über „i. V. m.“/„in Verbindung mit“, deren Glieder dasselbe Gesetz nennen: eine Spanne vom ersten § bis zum letzten Gesetzesnamen; Glieder mit verschiedenen Gesetzen: eine Spanne je Glied"
+R3 = "Schreibung: „Abs.“, „Satz“ ausgeschrieben, „Nr.“, „i. V. m.“ mit Leerzeichen; Absatz in Klammern („(4)“, „§ 6 (2)“) als „Abs. n“; Buchstabe ohne Leerzeichen an der Zahl („Abs. 1b“)"
+R4 = "Gesetz in amtlicher Abkürzung und Schreibung (BauGB, GO NRW, KomHVO NRW, APO-WbK, NKF-CIG), auch wenn der Text anders schreibt (GO NW, APO WbK) oder den Langtitel nennt; Ortsrecht mit vollem Namen (Zuständigkeitsordnung, nicht ZO; „Satzung der Deutschen Sektion des RGRE“)"
+R5 = "Alle Spezifizierer der Spanne bleiben in der Norm („§ 52 Abs. 1 Nr. 5, 8 und 9“, „Abs. 1 bis 3“, „Nr. 1.2“); Nummern einer Verwaltungsvorschrift als „VV n.n.n“ hinter der Kette; ein unbezeichneter Spezifizierer („§ 6, 2“) bekommt die Bezeichnung, die der zitierte Text zeigt"
+R6 = "Nur ein Gesetzesname im selben Satz zählt; ein Rückverweis auf einen Namen im Satz davor ergibt „? §“"
+norm = "Gesetz, dann Kette: „BauGB § 13 Abs. 2 Nr. 2“; „? § 34“ ohne Gesetz im Satz"
+nicht = ["§ im Namen eines Gremiums („AG § 78“): die Arbeitsgemeinschaft ist kein Zitat; recht mit „? § 78“ nur, wenn der Text die Vorschrift meint"]
+
+[arten.amt]
+art = "6 Verwaltungseinheit"
+was = "Amt, Institut, Fachbereich, Eigenbetrieb, Bezirksverwaltungsstelle (auch ohne Nummer im Text), mit Nummer oder Namen, auch gebeugt („des Umweltamts“, „des Stadtplanungsamtes“)"
+spanne = "im Kopffeld der Wert ohne Feldnamen, bei mehreren Zeilen (mehrere Ämter) eine Spanne je Zeile; im Text der Name, eine direkt folgende Klammer mit Nummer gehört dazu; der volle Name („Feuerwehr, Rettungsdienst und Bevölkerungsschutz“, „64 - Amt für Wohnungswesen“)"
+R1 = "Norm: Amtsnummer nur, wenn sie in der Spanne steht oder ihr im Ausschnitt direkt zugeordnet ist (Kopffeld, „Amt 66“, Klammer dahinter); sonst der Name wie in der Spanne (Zeilenumbruch = ein Leerzeichen, ohne Artikel, Grundform ohne Genitiv-s). Keine Nummer aus Weltwissen, anderen Vorlagen oder Codebuch-Beispielen; ein Abteilungskürzel im Briefkopf (66/5) ist keine direkte Zuordnung"
+auswertung = "Der Vergleich mit dem Extraktor bildet Namen über das Amtsverzeichnis aus den Kopffeldern des Korpus auf die Nummer ab; die Kodierer schreiben trotzdem den Namen"
+nicht = ["Gremien", "„die Verwaltung“ ohne Namen", "städtische Gesellschaften", "Personen, auch Beigeordnete: nie kodieren"]
+
+[arten.dezernat]
+art = "6 Verwaltungseinheit"
+was = "„Dezernat 06“, auch als Zwischenüberschrift einer Haushaltstabelle"
+spanne = "„Dezernat 06“"
+norm = "zweistellig"
+
+[arten.keine]
+was = "keine Kennung der Arten oben"
+
+# ---------------------------------------------------------------------------------------------
+# Fragen (wie .1)
+# ---------------------------------------------------------------------------------------------
+
+[fragen.art]
+optionen = ["bplan", "fnp", "produkt", "sachkonto", "psp", "investition", "betrag", "termin", "recht", "amt", "dezernat", "keine"]
+
+[fragen.grenzen]
+optionen = ["richtig", "zu_kurz", "zu_lang", "verschoben"]
+korrektur = "text"
+
+[fragen.norm]
+korrektur = "text"
+
+[fragen.rolle]
+optionen = ["kosten", "zuschuss", "verfuegungsmittel", "foerderung", "ertrag", "einsparung", "ansatz", "sonstig"]
+vorrang = "verfuegungsmittel, einsparung, foerderung, zuschuss, ertrag, ansatz, kosten, sonstig"
+
+[fragen.rolle.definitionen]
+kosten = "Ausgaben der Stadt für eine eigene Maßnahme; R12: bereitgestellte oder veranschlagte Mittel für eine benannte eigene Maßnahme sind kosten"
+zuschuss = "Geld der Stadt an Dritte; R12: Einzelbetrag je Empfänger; R15: städtische Fördermittel und Förderdarlehen an Investoren"
+verfuegungsmittel = "Verfügungsmittel und bezirkliche Mittel; R11: auch Bauunterhaltungsmittel der Bezirksvertretungen (Listen A/B/C, „Unterhaltung von Grundstücken und baulichen Anlagen im Stadtbezirk“), ihre Restmittel und die daraus beschlossenen Maßnahmenbeträge (Vorrang vor kosten)"
+foerderung = "Geld Dritter (Land, Bund, EU, Stiftungen); R15: Landesmittel in Tabellen"
+ertrag = "Einnahmen der Stadt"
+einsparung = "Einsparung, Kürzung, Minderaufwand; R13: die Rücknahme einer Kürzung ist keine einsparung, es zählt die Rolle des Betrags im Satz"
+ansatz = "R12: Mittel für Produkt, Konto, Programm oder Etat ohne Einzelmaßnahme und ohne Empfänger"
+sonstig = "alles andere; R14: Kosten eines Vorhabens Dritter, das die Stadt bezuschusst (nicht der Betrag an den Dritten)"
+R15 = "In Tabellen bestimmt der Spaltenkopf die Rolle"
+
+[fragen.frist]
+optionen = ["frist", "sitzung", "zeitraum", "sonst"]
+
+[fragen.frist.definitionen]
+frist = "Zeitpunkt, bis zu dem oder an dem die Verwaltung oder ein Dritter handeln soll; R16: künftige Zeitangabe mit Gremienbezug und Handlung der Verwaltung (vorlegen, einbringen, berichten, vorstellen); R19: Termine eines Terminplans oder einer Meilensteinliste (Baubeginn, Ausschreibung, Fertigstellung)"
+sitzung = "Datum oder Termin einer Sitzung; R16: Beschluss oder Beratung durch das Gremium; R20: jedes Datum der Beratungsfolge im Kopf einer Vorlage (Gremium, Sitzungsdatum, Beratungsqualität)"
+zeitraum = "R18: nur Anfang oder Ende eines Zeitraums oder einer Dauer (vom, bis, ab, seit, begonnen, befristet, gültig bis)"
+sonst = "alles andere; R17: Datum, das eine Vorlage oder einen vergangenen Beschluss bezeichnet; R18: eine Periode als Ganzes (Quartal, Halbjahr), auf die sich Bericht, Programm oder Zählung beziehen"
+
+# ---------------------------------------------------------------------------------------------
+# Recall, Antwortformat, Maße (wie .1, Maße nach dem Auftrag des Supervisors vom 2026-11-23)
+# ---------------------------------------------------------------------------------------------
+
+[recall]
+anweisung = "Jede Stelle jeder Art markieren, mit Art, Norm, Rolle, Funktion; tabelle = true für Beträge ohne eigene Einheit"
+antwort = "je Spanne {\"text\", \"vorkommen\", \"art\", \"norm\", \"rolle\", \"frist\", \"tabelle\"}"
+
+[masse]
+praezision = "Art und Grenzen richtig (streng), daneben nur Art (mild); gewichtet mit schicht_n je Schicht, Wilson-Intervall mit effektivem n nach Kish"
+recall = "je Art Anteil der Spannen der Kodierer, die eine Spanne des Extraktors derselben Art trifft: streng gleiche Grenzen, mild Überlappung; Tabellenbeträge getrennt"
+norm = "Normwert gleich unter den streng richtigen Treffern; daneben äquivalent bis auf Schreibung"
+rolle = "Rolle des Extraktors gleich dem Endlabel unter den Beträgen; Kriterium ≥ 0,8"
+frist = "Funktion des Extraktors gleich dem Endlabel unter den Terminen (vier Klassen); Kriterium ≥ 0,8 (Supervisor, vor der Messung); daneben Präzision und Recall der Klasse frist"
+kriterium = "Präzision ≥ 0,95 und Recall ≥ 0,85 je Art (Briefing, unverändert)"
