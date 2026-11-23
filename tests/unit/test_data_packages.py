@@ -57,13 +57,16 @@ PACKAGES = (
     Package("snapshots/duesseldorf-beratungsfolge", limit=1 * MIB, native=False, readme=True),
     # Punkt 68: nur der Textstore der Hauptperiode aus pypdf 7.1.0 (15 563 293 Bytes)
     Package("snapshots/duesseldorf-texte", limit=20 * MIB, native=False, readme=True),
+    # Fundament F1: nur der Rohtextstore der Hauptperiode aus pypdf 7.1.0, Schema-Version 2, zstd
+    # auf Stufe 19 (14 183 802 Bytes; mit der Vorgabe von Polars waren es 17 044 579)
+    Package("snapshots/duesseldorf-rohtexte", limit=20 * MIB, native=False, readme=True),
     Package("context", limit=4 * MIB, native=False, readme=True),  # 2 242 316
 )
-# Alle zusammen, als zweite grobe Schranke: 160 396 687 Bytes = 152,97 MiB am 2026-11-18 (85,0 %
+# Alle zusammen, als zweite grobe Schranke: 174 580 489 Bytes = 166,49 MiB am 2026-11-23 (92,5 %
 # der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, die drei Textstores sind seit
-# Punkt 67 zusammen 266 295 Bytes kleiner, und das Textpaket der Hauptperiode kam mit Punkt 68
-# dazu). Ein einziger PDF-Ordner einer Periode (585 MB bis 3,9 GB) reißt sie um ein Mehrfaches,
-# und genau davor schützt sie.
+# Punkt 67 zusammen 266 295 Bytes kleiner, das Textpaket der Hauptperiode kam mit Punkt 68 dazu und
+# das Rohtextpaket mit Fundament F1). Ein einziger PDF-Ordner einer Periode (585 MB bis 3,9 GB)
+# reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 
 # Was in keinem Paket liegen darf, mit dem Grund. Endungen werden gegen das Suffix geprüft, Namen
@@ -242,6 +245,19 @@ def test_the_package_with_the_consultation_is_declared_by_exactly_one_profile() 
     )
 
 
+def test_the_raw_text_package_is_read_by_the_main_period_alone() -> None:
+    """Fundament F1: dieselbe Regel wie für das Textpaket, für den Rohtextstore der Hauptperiode."""
+    from georep.settings import load_settings
+
+    nowhere = Path("/nonexistent")
+    main = load_settings(profile="duesseldorf", cwd=nowhere).bootstrap.raw_texts
+    assert main is not None and (REPO / main).is_file(), main
+    assert main.parts[:2] == ("snapshots", "duesseldorf-rohtexte")
+    assert load_settings(profile="duesseldorf-vergleich", cwd=nowhere).bootstrap.raw_texts == main
+    for profile in ("duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
+        assert load_settings(profile=profile, cwd=nowhere).bootstrap.raw_texts is None, profile
+
+
 def test_the_text_package_is_read_by_the_main_period_alone() -> None:
     """Punkt 68: dieselbe Regel wie für die Beratungsfolge, für den Textstore der Hauptperiode.
 
@@ -327,6 +343,45 @@ def test_the_text_package_carries_exactly_the_files_of_the_thesis_corpus() -> No
     assert int((store.get_column("chars") > 0).sum()) == 19033
     kinds = store.group_by("source", "extractor").len().sort("source").rows()
     assert kinds == [("pdf", "pypdf-7.1.0", 19091), ("reference", REFERENCE_EXTRACTOR, 1)]
+
+
+@pytest.mark.slow
+def test_the_raw_text_package_flattens_to_the_text_package() -> None:
+    """Fundament F1, die Abnahme über die ganze Hauptperiode: Rohtext geplättet = Text, ohne Ausnahme.
+
+    Beide Pakete kommen aus denselben 19 092 PDFs (gleicher PDF-Hash je Name, Extraktor mit
+    ``+roh``). Für jeden Rohtext ist ``flatten`` genau der Text des Textpakets -- auch für
+    ``00532917.pdf``, das in einer Seite 41 ``\\f`` aus einer defekten Schriftkodierung trägt: der
+    Rohtext führt sie als Leerzeichen und ihre Offsets in ``form_feeds`` (Review F1, M3). Ohne
+    Rohtext ist allein der Text, den das Textpaket aus der Arbeit übernommen hat (``00403713.pdf``,
+    AES-verschlüsselt, Punkt 68).
+    """
+    from georep.prep.raw_texts import PAGE_BREAK, flatten
+    from georep.stores import RAW_TEXT_SCHEMA_VERSION, REFERENCE_EXTRACTOR, stored_schema_version
+
+    texts = pl.read_parquet(REPO / "snapshots" / "duesseldorf-texte" / "cache/text/texts.parquet")
+    path = REPO / "snapshots" / "duesseldorf-rohtexte" / "cache/text/rohtexte.parquet"
+    assert stored_schema_version(path) == str(RAW_TEXT_SCHEMA_VERSION)
+    raw = pl.read_parquet(path)
+    assert set(raw.get_column("extractor")) == {"pypdf-7.1.0+roh"}
+    by_name = {
+        row[0]: row for row in texts.select("name", "text", "pdf_sha256", "extractor").rows()
+    }
+    assert (
+        set(by_name) - set(raw.get_column("name"))
+        == {name for name, row in by_name.items() if row[3] == REFERENCE_EXTRACTOR}
+        == {"00403713.pdf"}
+    )
+    deviations = []
+    for name, text, sha, feeds in raw.select("name", "text", "pdf_sha256", "form_feeds").rows():
+        assert by_name[name][2] == sha, name
+        if flatten(text, "betrifft", feeds or ()) != by_name[name][1]:
+            deviations.append(name)
+    assert deviations == []
+    with_feeds = raw.filter(pl.col("form_feeds").is_not_null())
+    assert with_feeds.get_column("name").to_list() == ["00532917.pdf"]
+    assert with_feeds.get_column("form_feeds").list.len().to_list() == [41]
+    assert by_name["00532917.pdf"][1].count(PAGE_BREAK) == 41
 
 
 # --- M1: die Flächen im Paket sind die der Stadt -----------------------------------------------
