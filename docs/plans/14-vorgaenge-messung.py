@@ -14,6 +14,13 @@ aufgeräumt werden kann, zieht das Skript beim ersten Lauf einen Auszug nach
 `/media/konrad/xtraspace/georep/messdaten`) und liest danach nur noch diesen; `--neu-aus-cache`
 zieht ihn neu.
 
+Abschnitt 11 rechnet die Regelfassung .2 nach der Kodierung (Messdokument § 3.9) samt
+Entwurfsschätzung an den alten Labels (`labels.csv`); `--stichprobe-2` schreibt die
+Bestätigungsstichprobe (100 starke Kanten, Seed 14-2, ohne die 150 alten) nach
+`validierung/14-vorgaenge/stichprobe-2.csv` und ihre Aufgaben nach Codebuch .2 nach
+`$GEOREP_MESSDATEN/kodierung/14-vorgaenge/aufgaben-2.jsonl`. `--stichprobe` (Runde 1) verweigert
+sich, seit das Codebuch Fassung .2 trägt.
+
 Mit `--stichprobe` schreibt es die geschichtete Stichprobe von 150 Kanten nach
 `validierung/14-vorgaenge/stichprobe.csv` (nur IDs) und die Kodieraufgaben mit Ausschnitten nach
 `$GEOREP_MESSDATEN/kodierung/14-vorgaenge/aufgaben.jsonl` (nie ins Repo); ohne den Schalter prüft
@@ -21,6 +28,7 @@ es nur, ob die gespeicherte Stichprobe noch dieselbe ist. Das Codebuch
 (`validierung/14-vorgaenge/codebuch.toml`) ist von Hand geschrieben und wird nur gelesen.
 
 Laufzeit rund 1 bis 2 Minuten (Regex über 48 000 Texte, einfädig); Polars auf vier Threads.
+Unter Fremdlast mit `nice -n 10` und `POLARS_MAX_THREADS=4`, `OMP_NUM_THREADS=2` starten.
 """
 
 from __future__ import annotations
@@ -52,6 +60,10 @@ AUSZUG = MESSDATEN / "14-vorgaenge" / "oparl_papiere.parquet"
 AUFGABEN = MESSDATEN / "kodierung" / "14-vorgaenge" / "aufgaben.jsonl"
 STICHPROBE = REPO / "validierung" / "14-vorgaenge" / "stichprobe.csv"
 CODEBUCH = REPO / "validierung" / "14-vorgaenge" / "codebuch.toml"
+LABELS = REPO / "validierung" / "14-vorgaenge" / "labels.csv"
+STICHPROBE_2 = REPO / "validierung" / "14-vorgaenge" / "stichprobe-2.csv"
+AUFGABEN_2 = MESSDATEN / "kodierung" / "14-vorgaenge" / "aufgaben-2.jsonl"
+SEED_2 = "14-2"
 SEED = 14
 TEXTANFANG = 1500  # Zeichen je Dokument in einer Kodieraufgabe (Briefing)
 FENSTER = 300  # Zeichen links und rechts der Fundstelle
@@ -145,6 +157,70 @@ def kantentyp(von: str, nach: str) -> str:
     if nach == "bedarf" and von == "af":
         return "bau"
     return "bezug"
+
+
+# --- Regelfassung .2: nach der Kodierung der 150 Kanten (Messdokument § 3.9) -------------------
+# Ein Textverweis ist schwach, wenn er in einer Aufzählung steht oder ein Verweiszeichen trägt; eine
+# schwache Kante bleibt in den Daten, zählt aber nicht für Vorgang, Antwort und Anzeige.
+LISTE_ABSTAND = 150  # Zeichen bis zur nächsten anderen Drucksachennummer: darunter eine Aufzählung
+LISTE_ARTEN = ("vorlage", "information")  # nur in Verwaltungsvorlagen (Beschlusslage im Kopf)
+VERWEISZEICHEN = re.compile(
+    r"(?:quellen?:.*|\(\d\)\s*\w*\s*\w*\s*|vgl\.?|siehe|\bs\.|\[\d{1,2}\.?|\bz\.\s?b\.)\s*"
+    r"(?:die\s+|der\s+)?(?:vorlagen?|drucksachen?|beratungsvorlage|ratsbeschluss|beschluss)?\s*"
+    r"(?:-?nr\.?|nummer)?\s*[(:]?\s*$"
+)
+AENDERUNGSZEICHEN = re.compile(
+    r"änderungsantrag|ergänzungsantrag|zur vorlage|zu vorlage|zur drucksache|zur beratungsvorlage"
+    r"|zu beratungsvorlage|zu top|zum tagesordnungspunkt"
+)
+SAMMELBERICHT = re.compile(
+    r"beschlusskontrolle|veränderungsverzeichnis|ergebnis der haushaltsberatungen|stand der umsetzung"
+    r"|umsetzungsstand|erledigung"
+)
+
+
+def art2(paper_type: str | None, name: str | None) -> str:
+    """Wie ``art``, aber der Titel schlägt die Dokumentart, wo beide sich widersprechen (S1)."""
+    a = art(paper_type, name)
+    n = (name or "").lower().lstrip(" :")
+    if a == "anfrage" and n.startswith(("antrag", "änderungsantrag", "ergänzungsantrag")):
+        return "antrag"
+    if a == "antrag" and n.startswith("anfrage"):
+        return "anfrage"
+    return a
+
+
+def kantentyp2(von: str, nach: str, aenderung: bool, sammel: bool) -> str:
+    """Fassung .2: Sammelberichte, Nachfrage nach dem Stand, Fortsetzung, Änderung nur mit Zeichen."""
+    politisch = ("antrag", "politik")
+    if nach == "anfrage" and von == "information":
+        return "antwort"
+    if sammel:
+        return "kontrolle"
+    if von == "anfrage":
+        return "nachfrage"  # nach A oder nach dem Stand von A (Codebuch .2)
+    if nach in (*politisch, "eingabe") and von in ("information", "vorlage"):
+        return "umsetzung"
+    if von in politisch and nach in ("vorlage", "bedarf", "af", *politisch):
+        return "aenderung" if aenderung else "bezug"
+    if von in politisch and nach in ("anfrage", "information"):
+        return "fortsetzung"
+    if nach == "bedarf" and von == "af":
+        return "bau"
+    if von == "information" and nach == "information":
+        return "fortsetzung"
+    return "bezug"
+
+
+def abstand(t: Treffer, alle: list[Treffer]) -> int:
+    """Zeichen bis zur nächsten Nummer mit anderer Grundnummer im selben Feld."""
+    b = basis(t.key)
+    d = [
+        (u.start - t.end) if u.start >= t.end else max(0, t.start - u.end)
+        for u in alle
+        if basis(u.key) != b
+    ]
+    return min(d) if d else 10**6
 
 
 # --- Normalform ----------------------------------------------------------------------------------
@@ -395,6 +471,11 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915 -- ein Messskript liest sich
     ap.add_argument(
         "--neu-aus-cache", action="store_true", help="Auszug aus dem HTTP-Cache neu ziehen"
     )
+    ap.add_argument(
+        "--stichprobe-2",
+        action="store_true",
+        help="Bestätigungsstichprobe der Fassung .2 und ihre Kodieraufgaben schreiben",
+    )
     args = ap.parse_args()
     t0 = time.perf_counter()
     pl.Config.set_tbl_rows(40)
@@ -481,6 +562,7 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915 -- ein Messskript liest sich
     unknown_codes: Counter[str] = Counter()
     flags: Counter[tuple[str, str]] = Counter()
     docs_with: dict[tuple[str, str], set[str]] = defaultdict(set)
+    occ_rows: list[tuple[str, str, str, int, bool, bool, int, int, str]] = []  # für Fassung .2
     for _id, stadt, ds, own, name, text, anl in docs.select(
         "id", "stadt", "datensatz", "key", "name", "text", "anlage_name"
     ).rows():
@@ -493,7 +575,26 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915 -- ein Messskript liest sich
             if not s:
                 continue
             seen: set[str] = set()
-            for t in treffer(stadt, s, codes):
+            alle = list(treffer(stadt, s, codes))
+            for t in alle:
+                ziel = known[stadt].get(t.key) or (
+                    known[stadt].get(basis(t.key)) if ist_nachtrag(t.key) else None
+                )
+                if ziel and len(ziel) == 1 and _id not in ziel and t.key != own:
+                    vor = s[max(0, t.start - 120) : t.start]
+                    occ_rows.append(
+                        (
+                            _id,
+                            ziel[0],
+                            feld,
+                            abstand(t, alle) if feld == "text" else 10**6,
+                            feld == "text" and bool(VERWEISZEICHEN.search(vor[-30:])),
+                            bool(AENDERUNGSZEICHEN.search(s if feld == "titel" else vor)),
+                            t.start,
+                            t.end,
+                            s[t.start : t.end],
+                        )
+                    )
                 stat[(ds, feld, "roh")] += 1
                 if t.key in seen:
                     continue
@@ -1047,8 +1148,10 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915 -- ein Messskript liest sich
     rest = e
     sample_rows = []
     groessen_tab = []
+    schicht_alt = []
     for name, n, cond in schichten:
         pool = rest.filter(cond).sort("kante")
+        schicht_alt.append(pool.select("kante", pl.lit(name).alias("schicht_alt")))
         rest = rest.join(pool.select("kante"), on="kante", how="anti")
         rng = random.Random(f"{SEED}-{name}")
         idx = sorted(rng.sample(range(pool.height), min(n, pool.height)))
@@ -1064,12 +1167,16 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915 -- ein Messskript liest sich
     )
     rows_csv = sample.select("kante", "schicht", "typ", "von", "nach").rows()
     if args.stichprobe:
+        # Runde 1 ist kodiert (labels.csv); ihre Aufgaben wurden nach Codebuch .1 geschrieben.
+        version = tomllib.loads(CODEBUCH.read_text(encoding="utf-8"))["meta"]["version"]
+        if version != "2026-11-23.1":
+            sys.exit(f"--stichprobe ist Runde 1 (Codebuch .1); das Codebuch ist jetzt {version}")
         STICHPROBE.parent.mkdir(parents=True, exist_ok=True)
         with STICHPROBE.open("w", newline="", encoding="utf-8") as fh:
             w = csv.writer(fh, lineterminator="\n")
             w.writerow(["kante", "schicht", "typ", "von", "nach"])
             w.writerows(rows_csv)
-        schreibe_aufgaben(sample, docs, fund)
+        schreibe_aufgaben(sample, docs, fund, AUFGABEN)
         print(f"geschrieben: {STICHPROBE.relative_to(REPO)} ({len(rows_csv)} Kanten), {AUFGABEN}")
     elif STICHPROBE.exists():
         with STICHPROBE.open(encoding="utf-8") as fh:
@@ -1080,6 +1187,8 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915 -- ein Messskript liest sich
             if saved == [tuple(r) for r in rows_csv]
             else f"ABWEICHUNG ({len(set(saved) ^ {tuple(r) for r in rows_csv})} Zeilen)",
         )
+    e = e.join(pl.concat(schicht_alt), on="kante", how="left")
+    umbau(args, docs, e, occ_rows)
     lo, hi = wilson(147, 150)
     print(
         f"Wilson-95-%-Intervall bei 147/150: {lo:.3f}–{hi:.3f}; bei 150/150: {wilson(150, 150)[0]:.3f}–1"
@@ -1087,7 +1196,385 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915 -- ein Messskript liest sich
     print(f"\nLaufzeit {time.perf_counter() - t0:.1f} s")
 
 
-def schreibe_aufgaben(sample: pl.DataFrame, docs: pl.DataFrame, fund: pl.DataFrame) -> None:
+TYPISIERT_2 = ("antwort", "nachfrage", "umsetzung", "aenderung", "nachtrag", "bau", "fortsetzung")
+
+
+def umbau(  # noqa: C901, PLR0915 -- Messung liest sich von oben nach unten
+    args: argparse.Namespace,
+    docs: pl.DataFrame,
+    e: pl.DataFrame,
+    occ_rows: list[tuple[str, str, str, int, bool, bool, int, int, str]],
+) -> None:
+    """Abschnitt 11: Regelfassung .2, Entwurfsschätzung an den alten Labels, Stichprobe 2."""
+    titel("11 Umbau nach der Kodierung: Regelfassung .2")
+    a2 = docs.select(
+        "id",
+        "art",
+        pl.struct("paper_type", "name")
+        .map_elements(lambda r: art2(r["paper_type"], r["name"]), return_dtype=pl.String)
+        .alias("art2"),
+        pl.col("name").fill_null("").str.to_lowercase().alias("titel_klein"),
+    )
+    print(
+        "Art .2 weicht von .1 ab (Titel schlägt Dokumentart):",
+        a2.filter(pl.col("art") != pl.col("art2")).group_by("art", "art2").len().sort("len").rows(),
+    )
+    oc = pl.DataFrame(
+        occ_rows,
+        schema={
+            "von": pl.String,
+            "nach": pl.String,
+            "feld": pl.String,
+            "abstand": pl.Int64,
+            "schwach": pl.Boolean,
+            "aend": pl.Boolean,
+            "start": pl.Int64,
+            "end": pl.Int64,
+            "match": pl.String,
+        },
+        orient="row",
+    )
+    von_art = a2.select(pl.col("id").alias("von"), pl.col("art2").alias("von_art2"))
+    nach_art = a2.select(pl.col("id").alias("nach"), pl.col("art2").alias("nach_art2"))
+    oc = (
+        oc.join(von_art, on="von")
+        .with_columns(
+            liste=(pl.col("feld") == "text")
+            & (pl.col("abstand") <= LISTE_ABSTAND)
+            & pl.col("von_art2").is_in(LISTE_ARTEN)
+        )
+        .with_columns(stark=(pl.col("feld") != "text") | (~pl.col("liste") & ~pl.col("schwach")))
+    )
+    print(
+        "Fundstellen im Text:",
+        oc.filter(pl.col("feld") == "text").height,
+        "; in einer Aufzählung:",
+        oc.filter("liste").height,
+        "; mit Verweiszeichen:",
+        oc.filter("schwach").height,
+    )
+    agg = oc.group_by("von", "nach").agg(
+        pl.col("stark").any().alias("stark_fund"),
+        pl.col("liste").any().alias("liste"),
+        pl.col("schwach").any().alias("zeichen"),
+        pl.col("aend").any().alias("aend"),
+    )
+    sammel = a2.select(
+        pl.col("id").alias("von"),
+        (
+            pl.col("titel_klein").str.contains(SAMMELBERICHT.pattern)
+            & pl.col("art2").is_in(LISTE_ARTEN)
+        ).alias("sammel"),
+    )
+    e2 = (
+        e.join(agg, on=["von", "nach"], how="left")
+        .join(sammel, on="von", how="left")
+        .join(von_art, on="von")
+        .join(nach_art, on="nach")
+        .with_columns(pl.col("stark_fund", "liste", "zeichen", "aend", "sammel").fill_null(False))
+        .with_columns(
+            stark=pl.col("felder").str.contains("nummer") | pl.col("stark_fund") | pl.col("sammel")
+        )
+        .with_columns(
+            grund=pl.when(pl.col("stark"))
+            .then(pl.lit("stark"))
+            .when(pl.col("liste"))
+            .then(pl.lit("aufzaehlung"))
+            .otherwise(pl.lit("verweiszeichen")),
+            typ2=pl.when(pl.col("felder").str.contains("nummer"))
+            .then(pl.lit("nachtrag"))
+            .otherwise(
+                pl.struct("von_art2", "nach_art2", "aend", "sammel").map_elements(
+                    lambda r: kantentyp2(r["von_art2"], r["nach_art2"], r["aend"], r["sammel"]),
+                    return_dtype=pl.String,
+                )
+            ),
+        )
+        .sort("von", "nach")
+    )
+    print("Kanten nach Fassung .2:", dict(e2.group_by("grund").len().sort("grund").rows()))
+    print(
+        e2.group_by("stadt", "typ2")
+        .agg(pl.len().alias("kanten"), pl.col("stark").sum().alias("stark"))
+        .with_columns((pl.col("stark") / pl.col("kanten")).round(3).alias("anteil_stark"))
+        .sort("stadt", "kanten", descending=[False, True])
+    )
+    print("Übergänge Typ .1 -> .2 (nur starke, ohne gleichbleibende):")
+    print(
+        e2.filter(pl.col("stark") & (pl.col("typ") != pl.col("typ2")))
+        .group_by("typ", "typ2")
+        .len()
+        .sort("len", descending=True)
+    )
+    hp = e2.filter(
+        (pl.col("typ2") == "nachtrag")
+        & (pl.col("von_datensatz") == "2020-2025")
+        & (pl.col("nach_datensatz") == "2020-2025")
+    )
+    mit_text = set(docs.filter(pl.col("text").str.len_chars() > 0)["id"].to_list())
+    print(
+        "Nachträge über die Nummer in der Hauptperiode (Vorhaben 13: 128):",
+        hp.height,
+        "; beide mit Text:",
+        hp.filter(
+            pl.col("von").is_in(list(mit_text)) & pl.col("nach").is_in(list(mit_text))
+        ).height,
+    )
+
+    # Entwurfsschätzung an den alten Labels -- entworfen an denselben 150, keine Messung
+    lab = pl.read_csv(LABELS).pivot(on="frage", index="kante", values="label")
+    alt = (
+        pl.read_csv(STICHPROBE)
+        .select("kante", "schicht")
+        .join(lab, on="kante")
+        .join(e2.select("kante", "stark", "grund", "typ2"), on="kante")
+        .with_columns(ok=pl.col("selbe_sache") == "ja")
+    )
+    k = alt.filter("stark")
+    k_ok = k.filter("ok").height
+    lo, hi = wilson(k_ok, k.height)
+    print(
+        f"ENTWURFSSCHÄTZUNG (dieselben 150 Labels, an denen die Regeln entworfen sind): "
+        f"stark {k.height} von 150, davon richtig {k_ok} = {k_ok / k.height:.3f} "
+        f"(Wilson {lo:.3f}–{hi:.3f}); richtige verworfen {alt.filter(pl.col('ok') & ~pl.col('stark')).height}, "
+        f"falsche verworfen {alt.filter(~pl.col('ok') & ~pl.col('stark')).height} von 11"
+    )
+    print("  falsch und weiter stark:", k.filter(~pl.col("ok"))["kante"].to_list())
+    print(
+        "  richtig, aber schwach:",
+        alt.filter(pl.col("ok") & ~pl.col("stark")).select("kante", "schicht", "grund").rows(),
+    )
+    je = (
+        alt.group_by("schicht")
+        .agg(
+            pl.len().alias("n"),
+            pl.col("stark").sum().alias("stark"),
+            (pl.col("stark") & pl.col("ok")).sum().alias("stark_richtig"),
+        )
+        .sort("schicht")
+    )
+    print(je)
+    pop = (
+        e2.filter("stark")
+        .group_by("schicht_alt")
+        .len()
+        .rename({"schicht_alt": "schicht", "len": "N"})
+    )
+    w = je.join(pop, on="schicht").with_columns(p=pl.col("stark_richtig") / pl.col("stark"))
+    gew = (w["N"] * w["p"]).sum() / w["N"].sum()
+    print(f"  gewichtet mit den starken Kanten je alter Schicht: {gew:.3f}")
+    alternativen(docs, oc, e2, alt)
+    buch = tomllib.loads(CODEBUCH.read_text(encoding="utf-8"))
+    erw = buch["auswertung"]["erwartet"]
+    rollen = (
+        k.filter("ok")
+        .with_columns(
+            rolle_ok=pl.struct("typ2", "beziehung").map_elements(
+                lambda r: r["beziehung"] in erw[r["typ2"]], return_dtype=pl.Boolean
+            )
+        )
+        .group_by("typ2")
+        .agg(pl.len().alias("n"), pl.col("rolle_ok").sum().alias("rolle_richtig"))
+        .sort("typ2")
+    )
+    print(
+        f"  Rollen nach Typ .2 gegen die alten Rollen (Codebuch .1 kannte die erweiterten "
+        f"Rollen nicht; Erwartung aus Codebuch {buch['meta']['version']}):",
+        rollen.rows(),
+    )
+
+    # Vorgänge und Antworten mit starken Kanten
+    ids = docs.filter(pl.col("stadt") == "dus")["id"].to_list()
+    et = e2.filter(pl.col("stark") & pl.col("typ2").is_in(TYPISIERT_2) & (pl.col("stadt") == "dus"))
+    parent: dict[str, str] = {}
+    for von, nach in (
+        et.filter(pl.col("tage") >= 0)
+        .sort("von", "nach_date", "nach")
+        .unique("von", keep="first")
+        .select("von", "nach")
+        .rows()
+    ):
+        parent[von] = nach
+    baum = Counter(wurzel(i, parent) for i in ids)
+    bs = Counter(baum.values())
+    print(
+        f"Vorgänge .2 (Düsseldorf, Baum über {et.height} starke typisierte Kanten): "
+        f"{sum(c for s_, c in bs.items() if s_ > 1)} Vorgänge, darin "
+        f"{pct(sum(s_ * c for s_, c in bs.items() if s_ > 1), len(ids))};",
+        verteilung(bs),
+        "; größte:",
+        [n for _, n in baum.most_common(3)],
+    )
+    rf = e2.filter(pl.col("felder").str.contains("titel|anlage|nummer") | pl.col("sammel")).filter(
+        pl.col("stadt") == "dus"
+    )
+    rf_t = rf.filter(pl.col("typ2").is_in(TYPISIERT_2) & (pl.col("tage") >= 0))
+    p_rf: dict[str, str] = dict(
+        rf_t.sort("von", "nach_date", "nach")
+        .unique("von", keep="first")
+        .select("von", "nach")
+        .rows()
+    )
+    b_rf = Counter(Counter(wurzel(i, p_rf) for i in ids).values())
+    print(
+        f"Rückfallregel (nur Titel, Anlage, Nummer, Sammelbericht), Düsseldorf: {rf.height} starke "
+        f"Kanten, {sum(c for s_, c in b_rf.items() if s_ > 1)} Vorgänge mit "
+        f"{sum(s_ * c for s_, c in b_rf.items() if s_ > 1)} Dokumenten"
+    )
+    anf = docs.join(a2.select("id", "art2"), on="id").filter(
+        (pl.col("stadt") == "dus") & (pl.col("art2") == "anfrage")
+    )
+    anlage = anf.select(
+        "id",
+        pl.col("anlage_name")
+        .list.eval(
+            pl.element().str.to_lowercase().str.contains(ANTWORT_ANLAGE.pattern)
+            & ~pl.element().str.to_lowercase().str.contains(ZWISCHEN.pattern)
+        )
+        .list.any()
+        .fill_null(False)
+        .alias("anlage"),
+    )
+    vorlage = set(
+        e2.filter(pl.col("stark") & (pl.col("typ2") == "antwort") & (pl.col("tage") >= 0))[
+            "nach"
+        ].to_list()
+    )
+    beantwortet = anlage.filter(pl.col("anlage") | pl.col("id").is_in(list(vorlage))).height
+    print(
+        f"Anfragen .2 (Art aus Titel und Dokumentart): {anf.height}, mit Antwort {pct(beantwortet, anf.height)}"
+    )
+
+    # Bestätigungsstichprobe: 100 starke Kanten, ohne die 150 alten, neuer Seed
+    titel("12 Bestätigungsstichprobe der Fassung .2 (100 Kanten, Seed 14-2)")
+    alte = pl.read_csv(STICHPROBE)["kante"].to_list()
+    rest = e2.filter(pl.col("stark") & ~pl.col("kante").is_in(alte))
+    schichten = (
+        ("mg", 12, pl.col("stadt") == "mg"),
+        ("periodenuebergreifend", 8, pl.col("quer")),
+        ("antwort", 8, pl.col("typ2") == "antwort"),
+        ("nachfrage", 10, pl.col("typ2") == "nachfrage"),
+        ("umsetzung", 18, pl.col("typ2") == "umsetzung"),
+        ("aenderung", 10, pl.col("typ2") == "aenderung"),
+        ("kontrolle", 6, pl.col("typ2") == "kontrolle"),
+        ("fortsetzung", 6, pl.col("typ2").is_in(["fortsetzung", "bau"])),
+        ("nachtrag", 3, pl.col("typ2") == "nachtrag"),
+        ("bezug_titel", 5, (pl.col("typ2") == "bezug") & pl.col("felder").str.contains("titel")),
+        ("bezug_text", 14, pl.col("typ2") == "bezug"),
+    )
+    picks, tab = [], []
+    for name, n, cond in schichten:
+        pool = rest.filter(cond).sort("kante")
+        rest = rest.join(pool.select("kante"), on="kante", how="anti")
+        rng = random.Random(f"{SEED_2}-{name}")
+        idx = sorted(rng.sample(range(pool.height), min(n, pool.height)))
+        picks.append(pool[idx].with_columns(pl.lit(name).alias("schicht")))
+        tab.append((name, pool.height, len(idx)))
+    s2 = pl.concat(picks).sort("schicht", "kante")
+    print(
+        "Schicht, starke Kanten in der Schicht (ohne die alten 150), gezogen:",
+        tab,
+        "; Rest:",
+        rest.height,
+    )
+    rows = s2.select("kante", "schicht", pl.col("typ2").alias("typ"), "von", "nach").rows()
+    fund2 = (
+        oc.sort(
+            "von",
+            "nach",
+            pl.col("stark").not_(),
+            pl.col("feld").replace_strict(
+                {"titel": 0, "text": 1, "anlage": 2}, return_dtype=pl.Int8
+            ),
+            "start",
+        )
+        .unique(["von", "nach"], keep="first")
+        .select("von", "nach", "feld", "start", "end", "match")
+    )
+    if args.stichprobe_2:
+        version = buch["meta"]["version"]
+        if version != "2026-11-23.2":
+            sys.exit(f"--stichprobe-2 braucht Codebuch .2, gefunden {version}")
+        with STICHPROBE_2.open("w", newline="", encoding="utf-8") as fh:
+            wr = csv.writer(fh, lineterminator="\n")
+            wr.writerow(["kante", "schicht", "typ", "von", "nach"])
+            wr.writerows(rows)
+        schreibe_aufgaben(s2, docs, fund2, AUFGABEN_2)
+        print(f"geschrieben: {STICHPROBE_2.relative_to(REPO)} ({len(rows)} Kanten), {AUFGABEN_2}")
+    elif STICHPROBE_2.exists():
+        with STICHPROBE_2.open(encoding="utf-8") as fh:
+            saved = [tuple(r) for r in list(csv.reader(fh))[1:]]
+        print(
+            "gespeicherte Stichprobe 2:",
+            "unverändert" if saved == [tuple(r) for r in rows] else "ABWEICHUNG",
+        )
+
+
+STOPWORTE = frozenset(
+    """vorlage vorlagen antrag antrags anträge anfrage anfragen ratsfraktion ratsfraktionen fraktion
+    fraktionen düsseldorf landeshauptstadt stadt verwaltung beschluss beschlüsse sitzung sitzungen
+    bezirksvertretung ausschuss ausschusses beratungsvorlage informationsvorlage berichtsvorlage
+    mönchengladbach bündnis grünen grüne linke partei klima über unter zwischen sowie diese dieser
+    dieses einer eines einem werden wurde wurden haben hatte durch gegen nach seit bitte frage fragen
+    antwort beantwortung bezirk stadtbezirk stadtbezirks bezirks rates ratsherr ratsfrau herrn
+    sachstand""".split()
+)
+
+
+def worte(t: str | None) -> set[str]:
+    """Inhaltswörter (ab fünf Buchstaben, auf sechs gekürzt) für den verworfenen Titelabgleich."""
+    return {w[:6] for w in re.findall(r"[a-zäöüß]{5,}", (t or "").lower()) if w not in STOPWORTE}
+
+
+def alternativen(docs: pl.DataFrame, oc: pl.DataFrame, e2: pl.DataFrame, alt: pl.DataFrame) -> None:
+    """Verworfene Regelvarianten an denselben 150 Labels (Entwurf, keine Messung)."""
+    paare = (
+        pl.read_csv(STICHPROBE)
+        .select("kante", "von", "nach")
+        .join(alt.select("kante", "ok"), on="kante")
+    )
+    texte = dict(docs.select("id", "text").rows())
+    titel_ = dict(docs.select("id", "name").rows())
+    so = oc.join(paare, on=["von", "nach"])
+    ov = [
+        len(
+            worte(titel_[n])
+            & (worte((texte[v] or "")[max(0, a - 300) : b + 300]) | worte(titel_[v]))
+        )
+        if f == "text"
+        else 99
+        for v, n, f, a, b in so.select("von", "nach", "feld", "start", "end").rows()
+    ]
+    so = so.with_columns(pl.Series("ueberlapp", ov))
+    sam = e2.select("kante", "sammel", pl.col("felder").str.contains("nummer").alias("nummer"))
+    text = pl.col("feld") == "text"
+    varianten = {
+        "Aufzählung in allen Arten + Verweiszeichen": (pl.col("feld") != "text")
+        | ~((pl.col("abstand") <= LISTE_ABSTAND) | pl.col("schwach")),
+        ".2 + Titelabgleich ≥ 1": pl.col("stark") & (~text | (pl.col("ueberlapp") >= 1)),
+        ".2 + Titelabgleich ≥ 2": pl.col("stark") & (~text | (pl.col("ueberlapp") >= 2)),
+        "nur Titelabgleich ≥ 1": ~text | (pl.col("ueberlapp") >= 1),
+    }
+    for name, cond in varianten.items():
+        k = (
+            so.with_columns(cond.alias("s"))
+            .group_by("kante")
+            .agg(pl.col("s").any())
+            .join(paare.select("kante", "ok"), on="kante", how="right")
+            .join(sam, on="kante")
+            .with_columns(pl.col("s").fill_null(False) | pl.col("sammel") | pl.col("nummer"))
+        )
+        st = k.filter("s")
+        print(
+            f"  Variante „{name}“: stark {st.height}, richtig {st.filter('ok').height}, "
+            f"falsch {st.filter(~pl.col('ok')).height}, richtige verworfen "
+            f"{k.filter(pl.col('ok') & ~pl.col('s')).height}"
+        )
+
+
+def schreibe_aufgaben(
+    sample: pl.DataFrame, docs: pl.DataFrame, fund: pl.DataFrame, ziel: Path
+) -> None:
     """Eine JSON-Zeile je Kante: beide Dokumente (A = zitiert, B = zitierend) und die Fundstelle.
 
     Der Kantentyp des Verfahrens steht nicht darin: die Kodierer sollen die Beziehung selbst
@@ -1115,8 +1602,8 @@ def schreibe_aufgaben(sample: pl.DataFrame, docs: pl.DataFrame, fund: pl.DataFra
             "textanfang": (r["text"] or "")[:TEXTANFANG],
         }
 
-    AUFGABEN.parent.mkdir(parents=True, exist_ok=True)
-    with AUFGABEN.open("w", encoding="utf-8") as fh:
+    ziel.parent.mkdir(parents=True, exist_ok=True)
+    with ziel.open("w", encoding="utf-8") as fh:
         for r in sample.iter_rows(named=True):
             hit = f.get((r["von"], r["nach"]))
             fundstelle: dict[str, Any] = {"dokument": "B", "feld": "nummer", "ausschnitt": None}
