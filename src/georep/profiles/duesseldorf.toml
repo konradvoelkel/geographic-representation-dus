@@ -553,7 +553,7 @@ admin_types = [
     "Bezirksvertretung Beschlussvorlage",    # 1 474
     "Informationsvorlage",                   # 1 327
     "Berichtsvorlage",                       # 177
-    "A+F Beschluss",                         # 145, Ausschuss für Anregungen und Beschwerden
+    "A+F Beschluss",                         # 145, Ausführungs- und Finanzierungsbeschluss eines Bauvorhabens (Vorhaben 11 und 14, 2026-11-23)
     "Bedarfsbeschluss",                      # 78
     "Beschlussvorlage RPA",                  # 32, Rechnungsprüfungsamt
     # Punkt 60: die Dokumentart der Wahlperiode 2014 bis 2020. Damals hieß jede Vorlage der
