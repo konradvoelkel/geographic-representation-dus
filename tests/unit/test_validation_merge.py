@@ -391,3 +391,23 @@ def test_an_adjudication_can_name_who_decided(
     assert quality["schlichtung_herkunft"] == {
         "Auswerter nach den Regeln des Schlichters, Runde 1": 1
     }
+
+
+def test_an_adjudication_of_an_agreed_unit_is_passed_over(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Vorhaben 12: die vorläufige Schlichtung entschied drei Einheiten, die nach F4 einig sind
+    (ein leerer Text gilt wie null); sie stören nicht, sie werden genannt."""
+    ids = _ids(project)
+    fill(project, "A", lambda unit: "ja")
+    fill(project, "B", lambda unit: "nein" if unit == ids[0] else "ja")
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    path = project / "lokal" / PROJECT / "schlichtung" / "antworten.jsonl"
+    rows = [r | {"bv": "ja"} for r in _lines(path)]
+    rows.append({"id": ids[1], "codebuch_version": "1", "bv": "ja", "begruendung": "überzählig"})
+    path.write_text(
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8"
+    )
+    capsys.readouterr()
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    assert "1 Schlichtungen ohne Uneinigkeit übergangen" in capsys.readouterr().out

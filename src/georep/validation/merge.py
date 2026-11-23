@@ -414,6 +414,7 @@ class MergeReport:
     open: int  # Einheiten, die die Schlichtung noch nicht entschieden hat
     labels: Path | None  # None, solange die Schlichtung offen ist
     adjudication: Path | None
+    passed: int = 0  # Schlichtungen von Einheiten, die nach F4 einig sind
 
     def lines(self) -> list[str]:
         out = [
@@ -422,6 +423,8 @@ class MergeReport:
             for r in self.results
         ]
         out.append(f"{self.disputed} Uneinigkeiten")
+        if self.passed:
+            out.append(f"{self.passed} Schlichtungen ohne Uneinigkeit übergangen")
         if self.labels is not None:
             return [*out, f"Labels -> {self.labels}"]
         return [*out, f"Schlichtung offen: {self.open} Einheiten -> {self.adjudication}"]
@@ -485,7 +488,8 @@ def read_adjudication(
     codebook: Codebook,
     disputes: Mapping[str, list[str]],
     agreed: Mapping[str, Values],
-) -> tuple[dict[str, Values], dict[str, str]]:
+    known: frozenset[str] = frozenset(),
+) -> tuple[dict[str, Values], dict[str, str], list[str]]:
     """Die Endantworten der strittigen Einheiten: Einigkeit plus Schlichtung, Bedingungen in Folge.
 
     Dazu je Einheit die ``herkunft`` der Antwortzeile, wo eine dasteht: wer entschied, wenn es
@@ -494,8 +498,12 @@ def read_adjudication(
     seen: set[str] = set()
     final: dict[str, Values] = {}
     origins: dict[str, str] = {}  # Einheit -> wer entschied, wo nicht der Schlichter
+    passed: list[str] = []
     for record in _records(path, problems):
         unit = record.get("id")
+        if isinstance(unit, str) and unit in known and unit not in disputes:
+            passed.append(unit)  # einig nach F4 (etwa ein leerer Text wie null): übergangen
+            continue
         if not isinstance(unit, str) or unit not in disputes:
             problems.note("unbekannte id", repr(unit))
             continue
@@ -515,7 +523,7 @@ def read_adjudication(
     for unit in sorted(set(disputes) - seen):
         problems.note("fehlt", unit)
     problems.raise_if_any(path)
-    return final, origins
+    return final, origins, passed
 
 
 def merge_project(
@@ -550,6 +558,7 @@ def merge_project(
         reset_adjudication(paths)
     # Fragen ohne Schlichtung: das gemeinsame Label, bei Uneinigkeit keines
     origins: dict[str, str] = {}
+    passed: list[str] = []
     final: dict[str, Values] = {
         unit: {
             q: value if q in adjudicable or same(codebook, q, value, b[unit].values[q]) else None
@@ -576,8 +585,8 @@ def merge_project(
                 results, count, len(disputes) - started, None, paths.role(ADJUDICATION)
             )
         agreed = {u: {q: v for q, v in final[u].items() if q not in disputes[u]} for u in disputes}
-        decided, origins = read_adjudication(
-            paths.answers(ADJUDICATION), codebook, disputes, agreed
+        decided, origins, passed = read_adjudication(
+            paths.answers(ADJUDICATION), codebook, disputes, agreed, frozenset(ids)
         )
         final |= decided
     write_labels(paths, codebook, ids, a, b, disputes, final)
@@ -608,7 +617,7 @@ def merge_project(
             f"{UNIT_PLURAL[codebook.unit]}, nicht von Menschen",
         },
     )
-    return MergeReport(results, count, 0, paths.labels, None)
+    return MergeReport(results, count, 0, paths.labels, None, len(passed))
 
 
 def write_labels(
