@@ -120,6 +120,10 @@ class Question(_Strict):
     # false: eine Uneinigkeit geht nicht an die Schlichtung, das Label bleibt dort leer (für
     # Meta-Fragen wie „unsicher" bei Vorhaben 11, die nichts messen)
     adjudicate: bool = True
+    # Wie offene Antworten verglichen werden: squeeze zieht Leerraum zu einem Leerzeichen zusammen,
+    # ignore entfernt ihn ganz (pypdf setzt ihn verschieden: „66 - Amt" und „66-Amt", Vorhaben 11
+    # und 12). Gespeichert wird die Antwort selbst; nur der Vergleich sieht den Schlüssel.
+    whitespace: Literal["squeeze", "ignore"] = "squeeze"
 
     @property
     def labels(self) -> tuple[str, ...]:
@@ -154,6 +158,8 @@ class Question(_Strict):
         unknown = sorted(set(self.positive + self.ignore) - set(labels))
         if unknown:
             raise ValueError(f"{self.id}: positive und ignore {unknown} sind keine Optionen")
+        if self.whitespace == "ignore" and self.scale != "open":
+            raise ValueError(f'{self.id}: whitespace = "ignore" gilt nur für scale = "open"')
         if set(self.positive) & set(self.ignore):
             raise ValueError(f"{self.id}: ein Label ist positive oder ignore, nicht beides")
         return self
@@ -192,6 +198,13 @@ class Question(_Strict):
 def blank(value: object) -> bool:
     """Keine Antwort: ``null`` oder ein Text aus Leerraum."""
     return value is None or (isinstance(value, str) and not value.strip())
+
+
+def compare_key(question: Question, value: str | None) -> str | None:
+    """Was beim Vergleich zweier Antworten zählt: die kanonische Antwort, ohne Leerraum bei ``ignore``."""
+    if value is None or question.whitespace != "ignore":
+        return value
+    return "".join(value.split())
 
 
 def _squeeze(value: Any) -> Any:

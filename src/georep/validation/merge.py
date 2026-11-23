@@ -42,6 +42,7 @@ from georep.validation.codebook import (
     Question,
     applies,
     blank,
+    compare_key,
     load_codebook,
 )
 from georep.validation.measures import agreement, cohen_kappa, krippendorff_alpha, wilson_interval
@@ -209,6 +210,8 @@ def reliability(
     question: Question, first: Sequence[str | None], second: Sequence[str | None]
 ) -> Reliability:
     """κ, α und der Anteil gleicher Antworten für eine Frage; ``None`` heißt „nicht gestellt"."""
+    first = [compare_key(question, v) for v in first]
+    second = [compare_key(question, v) for v in second]
     units = [(a, b) for a, b in zip(first, second, strict=True) if a is not None or b is not None]
     both = [(a, b) for a, b in units if a is not None and b is not None]
     firsts = [a for a, _ in both if a is not None]
@@ -235,6 +238,12 @@ def reliability(
         alpha_nominal=krippendorff_alpha(units, "nominal", categories) if units else None,
         alpha_scale=alpha_scale,
     )
+
+
+def same(codebook: Codebook, question: str, first: str | None, second: str | None) -> bool:
+    """Zwei Antworten auf eine Frage sind gleich, wenn ihre Vergleichsschlüssel gleich sind."""
+    q = codebook.question(question)
+    return compare_key(q, first) == compare_key(q, second)
 
 
 def format_number(value: float | None, digits: int = 3) -> str:
@@ -450,7 +459,10 @@ def merge_project(
     )
     adjudicable = [q.id for q in codebook.questions if q.adjudicate]
     disputes = {
-        unit: [q for q in adjudicable if a[unit].values[q] != b[unit].values[q]] for unit in ids
+        unit: [
+            q for q in adjudicable if not same(codebook, q, a[unit].values[q], b[unit].values[q])
+        ]
+        for unit in ids
     }
     disputes = {unit: qs for unit, qs in disputes.items() if qs}
     count = sum(len(qs) for qs in disputes.values())
@@ -459,7 +471,7 @@ def merge_project(
     # Fragen ohne Schlichtung: das gemeinsame Label, bei Uneinigkeit keines
     final: dict[str, Values] = {
         unit: {
-            q: value if q in adjudicable or value == b[unit].values[q] else None
+            q: value if q in adjudicable or same(codebook, q, value, b[unit].values[q]) else None
             for q, value in a[unit].values.items()
         }
         for unit in ids

@@ -318,3 +318,33 @@ only_if = { question = "bv", values = ["ja"] }
     assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
     norms = _labels(tmp_path).filter(pl.col("frage") == "norm")
     assert norms.height == 8 and set(norms.get_column("label")) == {"null"}
+
+
+def test_whitespace_ignore_compares_text_without_any_whitespace(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Vorhaben 11 und 12: pypdf setzt Leerraum unterschiedlich („66 - Amt" gegen „66-Amt");
+    mit ``whitespace = "ignore"`` ist das keine Uneinigkeit, das Label behält den Text von A."""
+    codebook = CODEBOOK.replace(
+        "[sample]",
+        """[[questions]]
+id = "amt"
+question = "Amt im Kopf."
+scale = "open"
+whitespace = "ignore"
+
+[sample]""",
+    )
+    make_project(tmp_path, codebook)
+    monkeypatch.chdir(tmp_path / "repo")
+    assert main(["validate", "sample", PROJECT]) == 0
+    for coder in ("A", "B"):
+        assert main(["validate", "tasks", PROJECT, "--coder", coder]) == 0
+    fill(tmp_path, "A", lambda u: {"bv": "ja", "amt": "66 - Amt für Verkehr"})
+    fill(tmp_path, "B", lambda u: {"bv": "ja", "amt": "66-AmtfürVerkehr"})
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    amt = _labels(tmp_path).filter(pl.col("frage") == "amt")
+    assert set(amt.get_column("label")) == {'"66 - Amt für Verkehr"'}
+    assert set(amt.get_column("kodierer_b")) == {'"66-AmtfürVerkehr"'}
+    quality = json.loads((tmp_path / "repo" / "validierung" / PROJECT / "guete.json").read_text())
+    assert quality["fragen"]["amt"]["einig"] == 9
