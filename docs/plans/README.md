@@ -1,4 +1,42 @@
-# Pläne der acht Ausbau-Optionen
+# Pläne
+
+## Vorverarbeitung 2026-11
+
+Meta-Plan: [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md). Je Vorhaben ein
+Messdokument `NN-name.md` mit Messskript `NN-name-messung.py` (Stufe 1, Vorlage § 12.1), geschrieben vom
+Mess-Agenten auf seinem Branch; `00-synergien-2026-11.md` schreibt der Supervisor; `fragen-2026-11.md`
+sammelt die Fragen an Konrad. Stufen: 1 Messen, 2 Bauen, 3 Zeigen (§ 8). Diese Tabelle ist der Stand;
+der Supervisor führt sie bei jedem Start, Urteil und Merge nach.
+
+| Nr. | Vorhaben | Branch | Stufe | Stand |
+|---|---|---|---|---|
+| F1 | Rohtext | `fund/F1-rohtext` | Fundament | Messdatei in Phase 0 (Supervisor), Schritt offen |
+| F2 | Register | `main` | Fundament | offen (Supervisor) |
+| F3 | Spannen | `main` | Fundament | offen (Supervisor) |
+| F4 | Validierung | `fund/F4-validierung` | Fundament | offen |
+| F5 | Modellnaht | `fund/F5-modelle` | Fundament | offen |
+| F6 | OParl: Sitzungen, Tagesordnung, Personen | `fund/F6-oparl` | Fundament | offen |
+| 11 | Struktur der Dokumente | `feat/11-struktur` | – | wartet auf Rohtext-Messdatei |
+| 12 | Kennungen und Beträge | `feat/12-kennungen` | – | wartet auf Rohtext-Messdatei |
+| 13 | Dubletten und Dokumentfamilien | `feat/13-dubletten` | – | offen |
+| 14 | Vorgänge | `feat/14-vorgaenge` | – | offen |
+| 15 | Dokumentfunktion und gemeinsame Anträge | `feat/15-funktion` | – | offen |
+| 16 | Ortsbezug verfeinern | `feat/16-ortsbezug` | – | wartet auf 11 |
+| 17 | Zeit und Neuigkeiten | `feat/17-zeit` | – | offen |
+| 18 | Einbettungen, Ähnlichkeit, Suche | `feat/18-einbettungen` | – | wartet auf F5 |
+| 19 | Politikfelder (CAP) | `feat/19-politikfelder` | – | wartet auf F5 |
+| 20 | Kurzfassungen (lokal) | `feat/20-kurzfassungen` | – | wartet auf F5 |
+| 21 | Geld auf der Karte | `feat/21-geld` | – | wartet auf 11, 12, 16 |
+| 22 | Bedarf und Aufmerksamkeit | `feat/22-bedarf` | – | offen |
+| 23 | Textübernahme | `feat/23-textuebernahme` | – | wartet auf 13, 18 |
+| 24 | Anfragen als Kontrolle | `feat/24-kontrolle` | – | wartet auf 11, 12 |
+| 25 | Wahlprogramme und Versprechen | `feat/25-versprechen` | – | Sammlung der Programme offen |
+| 26 | Beschlusslage und Antragserfolg | `feat/26-beschluesse` | – | wartet auf Netzlauf (F6) |
+| 27 | Personen und Mandatstyp | `feat/27-personen` | – | wartet auf Netzlauf (F6) |
+| 28 | Abstimmungen und Kooperation | `feat/28-abstimmungen` | – | wartet auf Netzlauf (F6) |
+| 29 | Anwendungen für die Ratsarbeit | `feat/29-ratsarbeit` | – | wartet auf 14, 18, 20, 26 |
+
+## Ausbau 2026-10 (abgeschlossen)
 
 Meta-Plan: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md). Je Option ein Plan nach dessen § 8.3,
 geschrieben vom jeweiligen Unteragenten auf seinem Branch; `00-synergien.md` schreibt der Supervisor;

@@ -15,7 +15,11 @@ Contract des eipy-Skripts.
 1. `git switch main && git pull`. Gearbeitet wird direkt auf `main`, keine Branches (Konrad, 2026-10-11);
    `main` trägt den letzten Tag (`v0.16.0` am 2026-11-18). Die Ausnahme der acht Ausbau-Branches `feat/NN-name`
    in Worktrees auf xtraspace (Konrad, 2026-10-11) ist mit dem Merge aller acht am 2026-10-12 beendet; Worktrees,
-   Venvs und Branches sind entfernt.
+   Venvs und Branches sind entfernt. **Neue Ausnahme seit 2026-11-23** (Konrad): für die Vorverarbeitung nach
+   `docs/plan-vorverarbeitung-2026-11.md` arbeiten Unteragenten auf `feat/NN-name` und `fund/FN-name` in
+   Worktrees unter `/media/konrad/xtraspace/georep/worktrees/`, je mit eigenem Venv und eigener
+   `settings.local.toml` (§ 6 des Plans); nur der Supervisor merged nach `main`. Stand je Vorhaben:
+   `docs/plans/README.md`.
 2. Auf Konrads Rechner vor allem anderen, weil die Primärplatte voll ist:
    `export UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep UV_CACHE_DIR=/media/konrad/xtraspace/uv-cache`;
    `settings.local.toml` (gitignored, vorhanden) zeigt `data_root` und `cache_root` auf `/media/konrad/xtraspace/georep/`;
