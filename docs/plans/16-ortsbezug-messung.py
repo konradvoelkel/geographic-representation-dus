@@ -2,6 +2,8 @@
 
     uv run python docs/plans/16-ortsbezug-messung.py               # alle Zahlen, rund vier Minuten
     uv run python docs/plans/16-ortsbezug-messung.py --aufgaben    # dazu Stichprobe und Kodieraufgaben
+    uv run python docs/plans/16-ortsbezug-messung.py --fassung 2 --aufgaben-2   # Runde 2 (Umbau, § 5.3)
+    uv run python docs/plans/16-ortsbezug-messung.py --auswertung-2   # Kodierung der Runde 2 gegen § 5.3
 
 Liest nur: den Korpus der Hauptperiode nach `georep run` (`interim/papers.parquet`, Index,
 Wörterbuch, Straßen und Orte je Wahlbezirk, Auswertung, Stimmbezirke), den Rohtext der Messdatei
@@ -105,6 +107,10 @@ NEBEN_A_MIN_BEGLEIT = 3
 NEBEN_B = frozenset({"titel", "betreff"})
 LISTE_MAX_ZEILE = 60  # Zeichen der Zeile ohne Leerraum am Rand
 LISTE_MAX_VORLAUF = 12  # Zeichen vor dem Begriff in dieser Zeile („14 ", „1. ", „6 Anlage ")
+# Runde 2 (Umbau, vorab festgelegt am 2026-11-23 um 20:56, Messdokument § 5.3): bestätigt werden
+# soll Nebenregel C genau so, wie sie in Runde 1 gemessen ist; Rückfall ohne Regel.
+FASSUNG_2 = "neben_c"
+EXTRACTOR_2 = "ortsbezug-entwurf-2"
 # Gewicht nach Stelle (Sensitivität, kein Ergebnis der Validierung): bestes Gewicht über alle
 # Treffer des Paares, jeder Faktor in [0, 1] wie in analysis/weights.py.
 GEWICHT_STELLE = {"titel": 1.0, "betreff": 1.0, "kern": 1.0, "begleittext": 0.5, "rest": 0.25}
@@ -893,26 +899,67 @@ SCHICHT = {
 }
 
 
+@dataclass(frozen=True)
+class Runde:
+    """Eine Validierungsrunde: Umfang, Seeds, Dateien, Codebuch, Fassung des Verfahrens."""
+
+    nummer: int
+    umfang: int
+    seed: int | str  # Ziehung je Schicht
+    mischen: int | str  # Reihenfolge der Aufgaben
+    praefix: str  # Aufgaben-IDs
+    stichprobe: Path
+    aufgaben: Path
+    regel: Path
+    labels: Path
+    codebuch: str
+    extractor: str
+    verfahren: str  # Spalte von rule_columns, deren Ausgabe bestätigt werden soll
+
+
+RUNDE_1 = Runde(
+    1, STICHPROBE, SEED, SEED + 1, "16-ortsbezug-",
+    VALIDIERUNG / "stichprobe.csv", AUFGABEN_DIR / "aufgaben.jsonl", AUFGABEN_DIR / "regel.jsonl",
+    VALIDIERUNG / "labels.csv", "validierung/16-ortsbezug/codebuch.toml", EXTRACTOR, "regel",
+)  # fmt: skip
+# Runde 2 (§ 5.3): 100 Paare, Seed „16-2", ohne die Dokumente der Runde 1, Codebuch Fassung 2.
+RUNDE_2 = Runde(
+    2, 100, "16-2", "16-2-reihenfolge", "16-2-",
+    VALIDIERUNG / "stichprobe-2.csv", AUFGABEN_DIR / "aufgaben-2.jsonl", AUFGABEN_DIR / "regel-2.jsonl",
+    VALIDIERUNG / "labels-2.csv", "validierung/16-ortsbezug/codebuch-2.toml", EXTRACTOR_2, FASSUNG_2,
+)  # fmt: skip
+
+
 def pair_key(doc: str, district: int) -> str:
     return hashlib.sha1(f"{doc}|{district}".encode()).hexdigest()[:12]
 
 
-def draw_sample(pairs: pl.DataFrame, struktur: ModuleType) -> list[dict[str, Any]]:
-    """200 Paare mit Stelle, geschichtet nach der besten Stelle (drei Schichten), ein Paar je Dokument.
+def draw_sample(
+    pairs: pl.DataFrame,
+    struktur: ModuleType,
+    runde: Runde = RUNDE_1,
+    exclude_docs: frozenset[str] = frozenset(),
+) -> list[dict[str, Any]]:
+    """Paare mit Stelle, geschichtet nach der besten Stelle (drei Schichten), ein Paar je Dokument.
+
+    Runde 1: 200 Paare, Seed 20261123; Runde 2: 100 Paare, Seed „16-2", ohne die Dokumente der
+    Runde 1 (`exclude_docs`; sie fehlen schon in der Grundgesamtheit der Schichten).
 
     Proportional mit mindestens 30 je Schicht (Rest nach größtem Bruchteil, `allocate` aus 11);
     je Schicht in fester Folge gemischt (Seed), ein Paar, dessen Dokument schon gezogen ist, wird
     übersprungen. Gewicht = Paare der Schicht durch Stichprobe der Schicht.
     """
-    located = pairs.filter(pl.col("stelle").is_not_null()).with_columns(
+    located = pairs.filter(
+        pl.col("stelle").is_not_null() & ~pl.col("id").is_in(list(exclude_docs))
+    ).with_columns(
         pl.col("stelle").replace_strict(SCHICHT, return_dtype=pl.String).alias("schicht")
     )
     strata: dict[str, list[tuple[str, int]]] = defaultdict(list)
     for doc, wk, schicht in located.select("id", "wahlkreis_id", "schicht").iter_rows():
         strata[schicht].append((doc, int(wk)))
     sizes = {k: len(v) for k, v in strata.items()}
-    alloc = struktur.allocate(sizes, STICHPROBE, MINDESTENS_JE_SCHICHT)
-    rng = random.Random(SEED)
+    alloc = struktur.allocate(sizes, runde.umfang, MINDESTENS_JE_SCHICHT)
+    rng = random.Random(runde.seed)
     used: set[str] = set()
     chosen: list[dict[str, Any]] = []
     for schicht in sorted(strata):
@@ -943,6 +990,51 @@ def draw_sample(pairs: pl.DataFrame, struktur: ModuleType) -> list[dict[str, Any
     return chosen
 
 
+def material_2(data: Daten, bezirke: Bezirke) -> dict[int, dict[str, Any]]:
+    """Codebuch Fassung 2, Regel (a): Stadtbezirk und Stadtteile je Wahlbezirk ins Material.
+
+    Stadtbezirk aus `wahlbezirke_stadtbezirke.parquet` (ein Wahlbezirk liegt in zwei), Stadtteile
+    aus den Stadtteilgrenzen 2025 des Portals: jeder Stadtteil, der mindestens 5 % der Fläche des
+    Wahlbezirks deckt, mit seinem Anteil, der größte zuerst.
+    """
+    import shapely
+    from pyproj import Transformer
+
+    to4647 = Transformer.from_crs("EPSG:4326", "EPSG:4647", always_xy=True)
+    sb = pl.read_parquet(data.processed / "wahlbezirke_stadtbezirke.parquet").sort(
+        ["wahlkreis_id", "gewicht", "stadtbezirk"], descending=[False, True, False]
+    )
+    stadtbezirk: dict[int, list[int]] = defaultdict(list)
+    for wk, nr in sb.select("wahlkreis_id", "stadtbezirk").iter_rows():
+        stadtbezirk[int(wk)].append(int(nr))
+    path = FREMDDATEN / "duesseldorf-stadtteile/Stadtteile_2025_WGS84_EPSG4326_1.geojson"
+    teile = [
+        (f["properties"]["Name"], projected(shape(f["geometry"]), to4647))
+        for f in json.loads(checked(path).read_text(encoding="utf-8-sig"))["features"]
+    ]
+    out: dict[int, dict[str, Any]] = {}
+    for wk in sorted(data.dictionary):
+        area = shapely.union_all(
+            [g for g, d in zip(bezirke.shapes, bezirke.district, strict=True) if d == wk]
+        )
+        shares = sorted(
+            ((name, geom.intersection(area).area / area.area) for name, geom in teile),
+            key=lambda x: (-x[1], x[0]),
+        )
+        out[wk] = {
+            "stadtbezirk": stadtbezirk[wk],
+            "stadtteile_im_wahlbezirk": [
+                {"name": name, "anteil": round(share, 2)} for name, share in shares if share >= 0.05
+            ],
+        }
+    n = [len(v["stadtteile_im_wahlbezirk"]) for v in out.values()]
+    print(
+        f"  Material Fassung 2: Stadtbezirk und {sum(n)} Stadtteil-Anteile für {len(out)} Wahlbezirke "
+        f"(im Mittel {sum(n) / len(n):.1f} Stadtteile mit ≥ 5 % der Fläche)"
+    )
+    return out
+
+
 def line_of(lines: Sequence[tuple[int, int]], pos: int) -> int:
     starts = [s for s, _e in lines]
     return bisect.bisect_right(starts, pos)  # 1-basiert
@@ -955,15 +1047,22 @@ def write_tasks(
     data: Daten,
     results: dict[str, Any],
     names: dict[int, str],
+    runde: Runde = RUNDE_1,
+    material: dict[int, dict[str, Any]] | None = None,
 ) -> None:
-    VALIDIERUNG.mkdir(parents=True, exist_ok=True)
-    AUFGABEN_DIR.mkdir(parents=True, exist_ok=True)
-    rng = random.Random(SEED + 1)
+    """Stichprobe (nur IDs) ins Repo, Aufgaben und Ausgabe des Verfahrens lokal.
+
+    `material` je Wahlbezirk kommt in Runde 2 hinter `wahlbezirk_name` dazu (Stadtbezirk und
+    Stadtteile, Codebuch Fassung 2, Regel (a)); in Runde 1 fehlt es, die Aufgaben bleiben bytegleich.
+    """
+    runde.stichprobe.parent.mkdir(parents=True, exist_ok=True)
+    runde.aufgaben.parent.mkdir(parents=True, exist_ok=True)
+    rng = random.Random(runde.mischen)
     order = list(chosen)
     rng.shuffle(order)  # Kodierer sehen die Schichten gemischt
     for number, row in enumerate(order, start=1):
-        row["aufgabe"] = f"16-ortsbezug-{number:03d}"
-    with (VALIDIERUNG / "stichprobe.csv").open("w", newline="", encoding="utf-8") as handle:
+        row["aufgabe"] = f"{runde.praefix}{number:03d}"
+    with runde.stichprobe.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(["aufgabe", "paar", "id", "wahlkreis_id", "schicht", "gewicht"])
         for row in sorted(order, key=lambda r: r["aufgabe"]):
@@ -992,8 +1091,8 @@ def write_tasks(
     }
     n_cut = 0
     with (
-        (AUFGABEN_DIR / "aufgaben.jsonl").open("w", encoding="utf-8") as tasks,
-        (AUFGABEN_DIR / "regel.jsonl").open("w", encoding="utf-8") as rule_out,
+        runde.aufgaben.open("w", encoding="utf-8") as tasks,
+        runde.regel.open("w", encoding="utf-8") as rule_out,
     ):
         for row in order:
             doc, wk = row["id"], row["wahlkreis_id"]
@@ -1019,18 +1118,23 @@ def write_tasks(
                 )
             n_cut += len(lines) > MAX_ZEILEN_AUFGABE
             pages = [i + 1 for i, (s, _e) in enumerate(lines) if s > 0 and raw[s - 1] == "\f"]
+            task: dict[str, Any] = {
+                "vorhaben": "16-ortsbezug",
+                "aufgabe": row["aufgabe"],
+                "id": doc,
+                "drucksache": meta[doc]["reference"],
+                "dokumentart": meta[doc]["paper_type"],
+                "datum": str(meta[doc]["date"]),
+                "titel": meta[doc]["name"],
+                "wahlbezirk": wk,
+                "wahlbezirk_name": names.get(wk, ""),
+            }
+            if material is not None:
+                task.update(material[wk])
             tasks.write(
                 json.dumps(
                     {
-                        "vorhaben": "16-ortsbezug",
-                        "aufgabe": row["aufgabe"],
-                        "id": doc,
-                        "drucksache": meta[doc]["reference"],
-                        "dokumentart": meta[doc]["paper_type"],
-                        "datum": str(meta[doc]["date"]),
-                        "titel": meta[doc]["name"],
-                        "wahlbezirk": wk,
-                        "wahlbezirk_name": names.get(wk, ""),
+                        **task,
                         "begriffe": [
                             {
                                 "begriff": t,
@@ -1051,7 +1155,7 @@ def write_tasks(
                         ],
                         "seitenanfang_zeilen": [p for p in pages if p <= MAX_ZEILEN_AUFGABE],
                         "gekuerzt": len(lines) > MAX_ZEILEN_AUFGABE,
-                        "codebuch": "validierung/16-ortsbezug/codebuch.toml",
+                        "codebuch": runde.codebuch,
                     },
                     ensure_ascii=False,
                 )
@@ -1072,16 +1176,17 @@ def write_tasks(
                         "erwaehnungen": p["erwaehnungen"],
                         "n_begleit": p["n_begleit"],
                         "n_liste": p["n_liste"],
-                        "extractor": EXTRACTOR,
+                        **({"verfahren": p[runde.verfahren]} if runde.nummer > 1 else {}),
+                        "extractor": runde.extractor,
                     },
                     ensure_ascii=False,
                 )
                 + "\n"
             )
-    size = (AUFGABEN_DIR / "aufgaben.jsonl").stat().st_size
-    print(f"  geschrieben: {VALIDIERUNG / 'stichprobe.csv'} ({len(order)} Paare, nur IDs)")
+    size = runde.aufgaben.stat().st_size
+    print(f"  geschrieben: {runde.stichprobe} ({len(order)} Paare, nur IDs)")
     print(
-        f"  geschrieben: {AUFGABEN_DIR / 'aufgaben.jsonl'} ({size / 1e3:.0f} KB) und regel.jsonl (lokal, nicht im Repo); gekürzt über {MAX_ZEILEN_AUFGABE} Zeilen: {n_cut}"
+        f"  geschrieben: {runde.aufgaben} ({size / 1e3:.0f} KB) und {runde.regel.name} (lokal, nicht im Repo); gekürzt über {MAX_ZEILEN_AUFGABE} Zeilen: {n_cut}"
     )
 
 
@@ -1139,7 +1244,7 @@ def decode(cell: str) -> Any:
     return json.loads(cell) if cell else None
 
 
-def score_labels() -> None:
+def score_labels(runde: Runde = RUNDE_1) -> None:
     """Liest `labels.csv`, wenn die Kodierung da ist, und rechnet das Kriterium (F1 ≥ 0,8).
 
     Vorab festgelegt (2026-11-23, vor der Kodierung): Hauptmaß ist F1 der Klasse „handelt von"
@@ -1149,10 +1254,11 @@ def score_labels() -> None:
     Label mit Intervall (Annahme 9.2: die Regel muss die triviale schlagen, κ-Intervall über 0),
     die Nebenregeln A bis C und die triviale Regel „alles handelt von" als Vergleich.
     """
-    labels_path = VALIDIERUNG / "labels.csv"
-    sample_path = VALIDIERUNG / "stichprobe.csv"
+    labels_path = runde.labels
+    sample_path = runde.stichprobe
+    primary = runde.verfahren
     if not labels_path.exists():
-        print("  noch nicht kodiert: validierung/16-ortsbezug/labels.csv fehlt")
+        print(f"  noch nicht kodiert: {labels_path.name} fehlt")
         return
     with sample_path.open(encoding="utf-8") as handle:
         sample = {r["aufgabe"]: r for r in csv.DictReader(handle)}
@@ -1165,12 +1271,12 @@ def score_labels() -> None:
         }
     bezug = field["bezug"]
     rule_rows = {}
-    with (AUFGABEN_DIR / "regel.jsonl").open(encoding="utf-8") as handle:
+    with runde.regel.open(encoding="utf-8") as handle:
         for line in handle:
             r = json.loads(line)
             rule_rows[r["aufgabe"]] = r
     art: dict[str, str] = {}
-    tasks_path = AUFGABEN_DIR / "aufgaben.jsonl"
+    tasks_path = runde.aufgaben
     if tasks_path.exists():  # nur für die Fehler nach Dokumentart; lokal
         with tasks_path.open(encoding="utf-8") as handle:
             for line in handle:
@@ -1203,9 +1309,11 @@ def score_labels() -> None:
     for stratum in sorted({s["schicht"] for s in sample.values()}):
         sub = [t for t in tasks if sample[t]["schicht"] == stratum]
         k = sum(label[t] == "handelt_von" for t in sub)
-        ok = sum((label[t] == "handelt_von") == bool(rule_rows[t]["regel"]) for t in sub)
+        ok = sum((label[t] == "handelt_von") == bool(rule_rows[t][primary]) for t in sub)
         print(f"  {stratum} | {len(sub)} | {wil(k, len(sub))} | {wil(ok, len(sub))}")
-    for col in ("regel", "neben_a", "neben_b", "neben_c", "alle"):
+    passed = False
+    others = [c for c in ("regel", "neben_a", "neben_b", "neben_c") if c != primary]
+    for col in (primary, *others, "alle"):
         rows = [
             (
                 label[t] == "handelt_von",
@@ -1231,7 +1339,7 @@ def score_labels() -> None:
         verdict = (
             f"; Kriterium F1 ≥ 0,8: {'erfüllt' if f_w >= 0.8 else 'nicht erfüllt'}; "
             f"schlägt die triviale Regel (κ-Intervall über 0): {'ja' if k_lo > 0 else 'nein'}"
-            if col == "regel"
+            if col == primary
             else ""
         )
         print(
@@ -1240,11 +1348,22 @@ def score_labels() -> None:
             f"F1 {f_w:.3f} (95 % {lo:.3f}–{hi:.3f}); F1 der Gegenklasse {neg:.3f}; "
             f"κ {kappa:.3f} (95 % {k_lo:.3f}–{k_hi:.3f}){verdict}"
         )
+        if col == primary:
+            passed = f_w >= 0.8 and k_lo > 0
+    if runde.nummer == 2:
+        print(
+            f"  Urteil nach § 5.3 ({runde.extractor} = {primary}): "
+            + (
+                "bestanden — Nebenregel C wird die Gewichtsvariante `ortsbezug`"
+                if passed
+                else "nicht bestanden — Rückfall: keine Regel „handelt von“, gebaut werden nur Stelle und Hausnummern"
+            )
+        )
     for who in ("kodierer_a", "kodierer_b"):
         rows = [
             (
                 bezug[t][who] == "handelt_von",
-                bool(rule_rows[t]["regel"]),
+                bool(rule_rows[t][primary]),
                 float(sample[t]["gewicht"]),
             )
             for t in tasks
@@ -1254,13 +1373,13 @@ def score_labels() -> None:
         )
     sure = [t for t in tasks if not (unsure[t]["kodierer_a"] and unsure[t]["kodierer_b"])]
     rows = [
-        (label[t] == "handelt_von", bool(rule_rows[t]["regel"]), float(sample[t]["gewicht"]))
+        (label[t] == "handelt_von", bool(rule_rows[t][primary]), float(sample[t]["gewicht"]))
         for t in sure
     ]
     print(
         f"  Regel ohne die {len(tasks) - len(sure)} Aufgaben, die beide unsicher nannten: hochgerechnet F1 {f1_weighted(rows)[2]:.3f}"
     )
-    errors = [t for t in tasks if (label[t] == "handelt_von") != bool(rule_rows[t]["regel"])]
+    errors = [t for t in tasks if (label[t] == "handelt_von") != bool(rule_rows[t][primary])]
     fn_tasks = [t for t in errors if label[t] == "handelt_von"]
     fp_tasks = [t for t in errors if label[t] != "handelt_von"]
     print(
@@ -1895,7 +2014,21 @@ def main(argv: Sequence[str]) -> int:
     parser.add_argument(
         "--aufgaben", action="store_true", help="Stichprobe und Kodieraufgaben schreiben"
     )
+    parser.add_argument(
+        "--fassung", type=int, choices=(1, 2), default=1,
+        help="2: dazu die Stichprobe der Runde 2 (Umbau, § 5.3) ziehen und ausgeben",
+    )  # fmt: skip
+    parser.add_argument(
+        "--aufgaben-2", action="store_true",
+        help="mit --fassung 2: stichprobe-2.csv, aufgaben-2.jsonl und regel-2.jsonl schreiben",
+    )  # fmt: skip
+    parser.add_argument(
+        "--auswertung-2", action="store_true",
+        help="labels-2.csv gegen ortsbezug-entwurf-2 auswerten (Kriterium und Rückfall aus § 5.3)",
+    )  # fmt: skip
     args = parser.parse_args(argv)
+    if args.aufgaben_2 and args.fassung != 2:
+        parser.error("--aufgaben-2 braucht --fassung 2")
     t_start = time.perf_counter()
     load = os.getloadavg()
     print(
@@ -1975,6 +2108,34 @@ def main(argv: Sequence[str]) -> int:
         write_tasks(chosen, pairs, hits, data, check["results"], bezirke.names)
     print("\n§ 4.1 Kodierung")
     score_labels()
+    if args.fassung == 2 or args.auswertung_2:
+        with RUNDE_1.stichprobe.open(encoding="utf-8") as handle:
+            first = frozenset(r["id"] for r in csv.DictReader(handle))
+        print(
+            f"\n§ 5.3 Runde 2 (Umbau): Stichprobe von {RUNDE_2.umfang} Paaren, Seed {RUNDE_2.seed!r}, "
+            f"ohne die {len(first)} Dokumente der Runde 1; Verfahren {RUNDE_2.extractor} = {RUNDE_2.verfahren}"
+        )
+        chosen_2 = draw_sample(pairs, struktur, RUNDE_2, first)
+        docs_2 = {c["id"] for c in chosen_2}
+        print(
+            f"  gezogen: {len(chosen_2)} Paare aus {len(docs_2)} Dokumenten; Überschneidung mit Runde 1: {len(docs_2 & first)}"
+        )
+        said = Counter(
+            bool(r["neben_c"])
+            for r in pairs.filter(pl.col("id").is_in(list(docs_2))).iter_rows(named=True)
+            if (r["id"], r["wahlkreis_id"]) in {(c["id"], c["wahlkreis_id"]) for c in chosen_2}
+        )
+        print(
+            f"  {RUNDE_2.extractor} sagt in der Stichprobe: handelt von {said[True]}, erwähnt {said[False]}"
+        )
+        if args.aufgaben_2:
+            write_tasks(
+                chosen_2, pairs, hits, data, check["results"], bezirke.names, RUNDE_2,
+                material_2(data, bezirke),
+            )  # fmt: skip
+        if args.auswertung_2:
+            print("\n§ 5.3 Kodierung der Runde 2")
+            score_labels(RUNDE_2)
     load = os.getloadavg()
     print(f"\nLaufzeit gesamt: {time.perf_counter() - t_start:.0f} s, Last am Ende: {load[0]:.1f}")
     return 0
