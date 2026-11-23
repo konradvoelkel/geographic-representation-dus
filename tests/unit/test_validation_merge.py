@@ -363,3 +363,31 @@ def test_markings_agree_by_text_and_occurrence() -> None:
     result = mark_agreement(question, first, second)
     assert (result.marks_common, result.marks_single) == (3, 1)
     assert result.alpha() == pytest.approx(6 / 7) and result.agreed == 1
+
+
+def test_an_adjudication_can_name_who_decided(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Vorhaben 12: vier Entscheide traf der Auswerter nach den Regeln des Schlichters, nicht der
+    Schlichter; ``herkunft`` in der Antwortzeile sagt das, README und guete.json zählen es."""
+    ids = _ids(project)
+    fill(project, "A", lambda unit: "ja")
+    fill(project, "B", lambda unit: "nein" if unit in ids[:2] else "ja")
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    path = project / "lokal" / PROJECT / "schlichtung" / "antworten.jsonl"
+    rows = _lines(path)
+    for row in rows:
+        row["bv"] = "ja"
+        if row["id"] == ids[0]:
+            row["herkunft"] = "Auswerter nach den Regeln des Schlichters, Runde 1"
+    path.write_text(
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8"
+    )
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    folder = project / "repo" / "validierung" / PROJECT
+    readme = (folder / "README.md").read_text(encoding="utf-8")
+    assert "davon 1 Einheit: Auswerter nach den Regeln des Schlichters, Runde 1" in readme
+    quality = json.loads((folder / "guete.json").read_text(encoding="utf-8"))
+    assert quality["schlichtung_herkunft"] == {
+        "Auswerter nach den Regeln des Schlichters, Runde 1": 1
+    }
