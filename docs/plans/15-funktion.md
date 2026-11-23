@@ -901,4 +901,45 @@ schon (32,4 % gegen 51,4 %); H15.2 galt in allen drei Perioden. Wer eine These �
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
-—
+Übertragen am 2026-11-23 aus [00-synergien-2026-11.md](00-synergien-2026-11.md) (§ 1, § 2.1, § 2.2
+Konflikt 10, § 3 und § 4 „15 Funktion"), bevor die Stufe 2 beginnt. Wo das § 6 und § 7 ändert, gilt
+dieser Abschnitt.
+
+1. **Dateiname** (§ 1, „Attribute je Dokument"): `mitantraege.parquet` heißt
+   **`dokumente_antragsteller.parquet`**, nach der Konvention `dokumente_<attribut>.parquet`; Spalten wie
+   in § 6. Beide Ausgaben haben den Schlüssel `id`, eine Zeile je Korpus-ID (auch wo mehrere IDs eine
+   PDF-Datei teilen) und den Vertrag `one_row_per_document`.
+2. **Ein stadtweiter Mehrheitenblock** (§ 1, „Ratsmehrheit, Kooperation, Sitze je Periode"; § 3.1,
+   Punkt 4): kein `[[functions.majorities]]`, sondern ein Block im **Stadtprofil**, weder unter
+   `[functions]` noch unter `[council]` (das ist der Abrufblock von F6 und steht außerhalb des
+   Fingerprints, Punkt 70). 15 legt ihn an; je Zeile Periode, Fraktionen, Gültigkeit und Quelle: die
+   Vereinbarung aus Vorhaben 25 mit Datum ([25-quellen.md](25-quellen.md), § 2), dazu der Korpusbeleg
+   aus § 3.9. 24 (Kooperation) und 28 (Fraktionsstärken) lesen ihn. Frage 9.2 ist damit beantwortet.
+3. **Beobachtet/erwartet** (§ 1): die indirekte Standardisierung aus § 3.7 wird **eine reine Funktion
+   in `src/georep/analysis/`** (Schicht Gremium und Periode) mit Eigenschaftstests. 15 baut sie, weil
+   es vor 14 fertig wird; 14 nutzt sie in Stufe 3 für die Antworten je Fraktion (§ 4 „14").
+4. **Gemeinsame Dateien** (§ 2.1): **ein** Beitrag `15-funktion` mit beiden Schritten (`functions`,
+   `cosponsors`), eine Importzeile und ein Eintrag am Ende von `CONTRIBUTIONS`; Settings nach der
+   Anhängeregel (Modell vor `class Settings`, Feld am Ende, Block am Ende von `defaults.toml` mit
+   Kopfzeile, Schalter aus); Listen im Stadtprofil, weil `deep_merge` Listen ersetzt; der Snapshot von
+   `georep steps` wird bewusst erneuert; die Punktnummer in `decisions.md` vergibt der Merge. Der
+   F2-Nachzug (`steps(settings, layout, http)`, ein früher Einhängepunkt) läuft parallel; wird er vorher
+   gemerged, zieht 15 nach.
+5. **Zwei Zählungen der Parteien** (§ 2.2, Konflikt 10): Option 04 besitzt Urheberklasse und
+   `parteien`, `analysis/parties.py` bleibt unverändert; ob es nachzieht und damit „Dokumente je Partei"
+   auf `index.html` ändert, ist Frage 25 an Konrad (Annahme: nein). 14 nimmt die Fraktion aus 15
+   (`fraktionen`), nicht aus `parteien`; `akteure.html` nennt den Unterschied mit Zahl.
+6. **Fraktionstabelle** (§ 4 „15"): `[[functions.fractions]]` bleibt, bis Konrads Netzlauf
+   `raw/organizations.json` für Düsseldorf bringt (Frage 9.3).
+7. **Dokumentart-Tabellen** (§ 1): `functions.types` und `functions.type_prefixes` bleiben bei 15, so
+   wie sie validiert sind. Neu ist ein Test, der je Profil jede vorkommende Dokumentart gegen die
+   Tabellen prüft, damit eine neue Art sofort auffällt. Das Abschneiden der Fraktionsnamen hinter dem
+   Antragspräfix nimmt `originators.motion_prefixes`.
+8. **Seite** (§ 5): `akteure.html` zeigt Funktionen, Instrumente je Fraktion beobachtet/erwartet
+   („explorativ"), die Matrix wer mit wem, K3 nur in Rat und Ausschüssen mit der Quelle der Mehrheit,
+   die Liste der Resolutionen und „Funktion nicht erkannt"; nicht: eine Rangfolge der Symbolpolitik je
+   Fraktion, K3 für Bezirksvertretungen, H15.1 und H15.2 als Test (nur prospektiv). Die Zahlen der
+   Validierung kommen aus `validierung/15-funktion-f4/guete.json` mit dem Satz „desselben Modells"; die
+   an den Labels gewählte Variante B nennt A als Untergrenze.
+9. **Reihenfolge** (§ 3): Welle 1, Merge an Position 4 nach 11, 12 und 14; 15 braucht weder F1 noch
+   den Netzlauf noch ein Modell.
