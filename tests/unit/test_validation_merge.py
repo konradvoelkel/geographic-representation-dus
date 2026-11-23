@@ -11,7 +11,8 @@ import polars as pl
 import pytest
 
 from georep.cli import main
-from georep.validation.merge import _first_is_a
+from georep.validation.codebook import Question
+from georep.validation.merge import _first_is_a, mark_agreement
 from tests.validation_project import CODEBOOK, PROJECT, fill_answers, make_project
 
 MODEL = "claude-opus-5-5"
@@ -348,3 +349,17 @@ whitespace = "ignore"
     assert set(amt.get_column("kodierer_b")) == {'"66-AmtfürVerkehr"'}
     quality = json.loads((tmp_path / "repo" / "validierung" / PROJECT / "guete.json").read_text())
     assert quality["fragen"]["amt"]["einig"] == 9
+
+
+def test_markings_agree_by_text_and_occurrence() -> None:
+    """Einheit marking (Recall, Vorhaben 12): gemeinsam markiert, nur bei einem, F1 = 2g/(2g+e).
+
+    Gleich ist eine Markierung mit gleichem Text und Vorkommen; die Art gehört zu den Fragen an die
+    Stelle, nicht zum Abgleich der Stellen."""
+    question = Question(id="spannen", question="?", scale="spans")
+    marks = [{"text": "rat", "vorkommen": 1, "art": "x"}, {"text": "sache", "vorkommen": 2}]
+    first = [question.canonical(marks), question.canonical(marks)]
+    second = [question.canonical(marks[:1]), question.canonical([m | {"art": "z"} for m in marks])]
+    result = mark_agreement(question, first, second)
+    assert (result.marks_common, result.marks_single) == (3, 1)
+    assert result.alpha() == pytest.approx(6 / 7) and result.agreed == 1

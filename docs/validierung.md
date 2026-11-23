@@ -63,6 +63,7 @@ question = "Enthält das Dokument einen Beschlussvorschlag?"
 scale = "binary"                 # nominal | ordinal (aufsteigend) | binary (genau zwei) | interval | open | spans
 positive = ["ja"]                # was als Treffer zählt (Präzision, Anteil); binär genau eines
 ignore = []                      # Labels, die aus dem Nenner fallen (etwa "unklar")
+whitespace = "squeeze"           # offene Antworten: Leerraum zusammenziehen, oder "ignore": ganz entfernen
 instructions = "Ein Text, über den abgestimmt werden soll ..."
 
 [[questions.options]]
@@ -307,14 +308,17 @@ zieht es im Messskript per Bootstrap über die Einheiten.
   Schätzung der Schärfe des Codebuchs (§ 1).
 - Die verschiedene Folge der Einheiten je Kodierer mildert Reihenfolgeeffekte, schließt sie nicht
   aus.
-- Offene Antworten werden bis auf zusammengezogenen Leerraum genau verglichen. Die vorläufigen
-  Auswertungen der Vorhaben 11 und 12 entfernten Leerraum ganz und zählten „66 - Amt" und
-  „66-Amt" als gleich; nach F4 sind das zwei Uneinigkeiten für die Schlichtung (11: zwei bei
-  `amt`; 12: vier bei `norm` und `text_korrigiert`).
-- Die Einheit `marking` (Recall, Vorhaben 12) hat Codebuch, Stichprobe und Antworten, aber noch
-  keine Auswertung: die Markierungen beider Kodierer abgleichen und gegen die Spannen des
-  Verfahrens mit strenger (gleiche Grenzen und Art) und milder Grenze (Überlappung und Art)
-  zählen.
+- Offene Antworten werden bis auf zusammengezogenen Leerraum genau verglichen; mit
+  `whitespace = "ignore"` an der Frage ohne jeden Leerraum (pypdf setzt ihn verschieden: „66 -
+  Amt" und „66-Amt"). Vorhaben 11 setzt das für `amt`, wie seine Messung verglich. Vorhaben 12
+  verglich `norm` mit Leerraum (555 von 597, α 0,929) und ließ vier Uneinigkeiten, die der
+  Schlichtung nicht vorlagen, vom Auswerter entscheiden; `merge` wartet dort auf diese vier
+  (12-0092, -0377, -0470, -0650).
+- Die Einheit `marking` (Recall, Vorhaben 12): `merge` gleicht die Markierungen beider Kodierer
+  über Text und Vorkommen ab (gemeinsam, nur bei einem, F1; an 12 Runde 1: 502, 14, 0,986 wie
+  im Messdokument) und misst Stufe 3 an diesem F1. Offen sind die Endlabels (eine Schlichtung je
+  Markierung statt je Liste) und der Recall gegen die Spannen des Verfahrens mit strenger (gleiche
+  Grenzen und Art) und milder Grenze (Überlappung und Art).
 - Die Vorhaben 15 und 17 kamen nach der zweiten Runde von F4 und sind noch im vorläufigen Format.
 - Der Ausschnitt ist der Anfang des Textes (`text.chars`); was dahinter steht, sehen die Kodierer
   nicht.

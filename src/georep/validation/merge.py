@@ -187,9 +187,22 @@ class Reliability:
     kappa: float | None
     alpha_nominal: float | None
     alpha_scale: float | None  # ordinal bei ordinaler, intervall bei Intervallskala, sonst None
+    # Markierungen (scale = "spans"): gemeinsam markiert, nur von einem, F1 = 2g / (2g + e)
+    marks_common: int | None = None
+    marks_single: int | None = None
+
+    @property
+    def marks_f1(self) -> float | None:
+        if self.marks_common is None or self.marks_single is None:
+            return None
+        total = 2 * self.marks_common + self.marks_single
+        return 2 * self.marks_common / total if total else None
 
     def alpha(self) -> float | None:
-        """Das α, an dem Stufe 3 gemessen wird: das der Skala, sonst das nominale."""
+        """Woran Stufe 3 misst: α der Skala, sonst das nominale; bei Markierungen das F1 der beiden
+        Markierungsmengen (positive spezifische Übereinstimmung), denn α ist dort nicht definiert."""
+        if self.scale == "spans":
+            return self.marks_f1
         return self.alpha_scale if self.scale in ("ordinal", "interval") else self.alpha_nominal
 
     def as_json(self) -> dict[str, Any]:
@@ -202,7 +215,14 @@ class Reliability:
             "cohen_kappa": self.kappa,
             "krippendorff_alpha_nominal": self.alpha_nominal,
             "krippendorff_alpha_skala": self.alpha_scale,
-            "krippendorff_alpha": self.alpha(),
+            "krippendorff_alpha": self.alpha() if self.scale != "spans" else None,
+            "markierungen": None
+            if self.marks_common is None
+            else {
+                "gemeinsam": self.marks_common,
+                "nur_einer": self.marks_single,
+                "f1": self.marks_f1,
+            },
         }
 
 
@@ -210,6 +230,8 @@ def reliability(
     question: Question, first: Sequence[str | None], second: Sequence[str | None]
 ) -> Reliability:
     """κ, α und der Anteil gleicher Antworten für eine Frage; ``None`` heißt „nicht gestellt"."""
+    if question.scale == "spans":
+        return mark_agreement(question, first, second)
     first = [compare_key(question, v) for v in first]
     second = [compare_key(question, v) for v in second]
     units = [(a, b) for a, b in zip(first, second, strict=True) if a is not None or b is not None]
@@ -244,6 +266,52 @@ def same(codebook: Codebook, question: str, first: str | None, second: str | Non
     """Zwei Antworten auf eine Frage sind gleich, wenn ihre Vergleichsschlüssel gleich sind."""
     q = codebook.question(question)
     return compare_key(q, first) == compare_key(q, second)
+
+
+def _marks(value: str | None) -> set[str]:
+    """Die Markierungen einer Antwort als Menge von Schlüsseln aus Text und Vorkommen."""
+    if value is None or value == "null":
+        return set()
+    marks = json.loads(value)
+    if not isinstance(marks, list):
+        raise CodingError(f"Markierungen sind eine Liste, nicht {value[:60]!r}")
+    return {
+        json.dumps([m.get("text"), m.get("vorkommen")], ensure_ascii=False)
+        if isinstance(m, dict)
+        else json.dumps(m, ensure_ascii=False)
+        for m in marks
+    }
+
+
+def mark_agreement(
+    question: Question, first: Sequence[str | None], second: Sequence[str | None]
+) -> Reliability:
+    """Zwei Markierungen je Einheit: gemeinsam, nur bei einem, F1 (Vorhaben 12: 502, 14, 0,986).
+
+    Eine Markierung ist gleich, wenn Text und Vorkommen gleich sind; Art, Norm und Rolle sind
+    Fragen an die markierte Stelle und gehören nicht zum Abgleich der Stellen.
+    """
+    pairs = [(a, b) for a, b in zip(first, second, strict=True) if a is not None or b is not None]
+    common = single = agreed = 0
+    for a, b in pairs:
+        left, right = _marks(a), _marks(b)
+        common += len(left & right)
+        single += len(left ^ right)
+        agreed += left == right
+    return Reliability(
+        question=question.id,
+        scale=question.scale,
+        n=len(pairs),
+        both=len(pairs),
+        agreed=agreed,
+        share=agreed / len(pairs) if pairs else None,
+        interval=wilson_interval(agreed, len(pairs)) if pairs else None,
+        kappa=None,
+        alpha_nominal=None,
+        alpha_scale=None,
+        marks_common=common,
+        marks_single=single,
+    )
 
 
 def format_number(value: float | None, digits: int = 3) -> str:
