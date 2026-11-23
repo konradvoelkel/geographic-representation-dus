@@ -20,6 +20,7 @@ import deal
 
 from georep.analysis.ols import MODELS_SCHEMA
 from georep.crosswalk import UNIT, UNIT_NAME, WEIGHT
+from georep.errors import SchemaError
 from georep.layout import Layout
 from georep.prep.context import MISSING_SUFFIX
 from georep.prep.voters import (
@@ -719,6 +720,24 @@ def _wanted(table: PublishedTable, layout: Layout, settings: Settings | None) ->
     return not table.optional or table.path(layout).exists()
 
 
+def all_tables() -> list[PublishedTable]:
+    """Das ganze Register: die Tabellen des Kerns, dahinter die der Beiträge in Registerfolge.
+
+    Fundament F2 (docs/plan-vorverarbeitung-2026-11.md, § 7): ein Vorhaben trägt seine Tabellen
+    über ``georep.enrich.CONTRIBUTIONS`` bei, statt ``TABLES`` zu ändern. Ein Name darf nur
+    einmal vorkommen (``SchemaError`` mit dem Namen), denn er ist Dateiname im Download-Ordner.
+    Import in der Funktion: die Beiträge bauen ``PublishedTable`` aus diesem Modul.
+    """
+    from georep.enrich import CONTRIBUTIONS
+
+    result = [*TABLES, *(t for c in CONTRIBUTIONS for t in c.tables)]
+    names = [t.name for t in result]
+    twice = sorted({name for name in names if names.count(name) > 1})
+    if twice:
+        raise SchemaError(f"Tabellen doppelt im Register: {', '.join(twice)}")
+    return result
+
+
 @deal.post(_unique_names, message="jede Tabelle hat einen eigenen Namen")
 def published(layout: Layout, settings: Settings | None = None) -> list[PublishedTable]:
     """Die Tabellen der Seite in Reihenfolge; optionale nur, wenn ihre Datei vorliegt.
@@ -726,9 +745,9 @@ def published(layout: Layout, settings: Settings | None = None) -> list[Publishe
     ``settings`` schaltet Tabellen ab, deren Stufe abgeschaltet ist (``enabled``); ohne Settings
     entscheidet allein die Datei, wie bisher.
     """
-    return [t for t in TABLES if _wanted(t, layout, settings)]
+    return [t for t in all_tables() if _wanted(t, layout, settings)]
 
 
 def csv_plan(layout: Layout) -> list[tuple[Path, dict[str, str], str]]:
     """(Parquet-Datei, Listen-Spalte -> Trenner, Spaltentrenner) je Tabelle, wie der Altcode."""
-    return [(t.path(layout), dict(t.joins), t.separator) for t in (*TABLES, *EXPORT_ONLY)]
+    return [(t.path(layout), dict(t.joins), t.separator) for t in (*all_tables(), *EXPORT_ONLY)]

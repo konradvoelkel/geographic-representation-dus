@@ -70,7 +70,7 @@ from georep.report.model import (
     summary_payload,
 )
 from georep.report.render import Visuals, render_map, render_report
-from georep.report.tables import GEOJSON_TABLE, TABLES, PublishedTable, published
+from georep.report.tables import GEOJSON_TABLE, PublishedTable, all_tables, published
 from georep.report.terms import pairs, terms_payload
 from georep.settings import Settings
 
@@ -149,7 +149,7 @@ def _remove_unpublished(layout: Layout, wanted: list[PublishedTable]) -> None:
     auf der Seite, aber mit im Pages-Paket. Fremde Dateien bleiben unberührt.
     """
     keep = {t.path(layout).name for t in wanted} | {f"{t.name}.csv" for t in wanted}
-    for table in TABLES:
+    for table in all_tables():
         for name in (table.path(layout).name, f"{table.name}.csv"):
             stale = layout.site_data / name
             if name not in keep and stale.is_file():
