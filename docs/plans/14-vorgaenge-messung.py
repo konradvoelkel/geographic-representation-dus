@@ -61,6 +61,7 @@ AUFGABEN = MESSDATEN / "kodierung" / "14-vorgaenge" / "aufgaben.jsonl"
 STICHPROBE = REPO / "validierung" / "14-vorgaenge" / "stichprobe.csv"
 CODEBUCH = REPO / "validierung" / "14-vorgaenge" / "codebuch.toml"
 LABELS = REPO / "validierung" / "14-vorgaenge" / "labels.csv"
+LABELS_2 = REPO / "validierung" / "14-vorgaenge" / "labels-2.csv"
 STICHPROBE_2 = REPO / "validierung" / "14-vorgaenge" / "stichprobe-2.csv"
 AUFGABEN_2 = MESSDATEN / "kodierung" / "14-vorgaenge" / "aufgaben-2.jsonl"
 SEED_2 = "14-2"
@@ -1462,9 +1463,10 @@ def umbau(  # noqa: C901, PLR0915 -- Messung liest sich von oben nach unten
         ("bezug_titel", 5, (pl.col("typ2") == "bezug") & pl.col("felder").str.contains("titel")),
         ("bezug_text", 14, pl.col("typ2") == "bezug"),
     )
-    picks, tab = [], []
+    picks, tab, zuteilung = [], [], []
     for name, n, cond in schichten:
         pool = rest.filter(cond).sort("kante")
+        zuteilung.append(pool.select("kante", pl.lit(name).alias("schicht_2")))
         rest = rest.join(pool.select("kante"), on="kante", how="anti")
         rng = random.Random(f"{SEED_2}-{name}")
         idx = sorted(rng.sample(range(pool.height), min(n, pool.height)))
@@ -1508,6 +1510,207 @@ def umbau(  # noqa: C901, PLR0915 -- Messung liest sich von oben nach unten
             "gespeicherte Stichprobe 2:",
             "unverändert" if saved == [tuple(r) for r in rows] else "ABWEICHUNG",
         )
+    rueckfall(docs, a2, e2.join(pl.concat(zuteilung), on="kante", how="left"))
+
+
+def rueckfall(  # noqa: C901, PLR0915 -- Messung liest sich von oben nach unten
+    docs: pl.DataFrame, a2: pl.DataFrame, e2: pl.DataFrame
+) -> None:
+    """Abschnitt 13: die Rückfallregel an beiden Stichproben und was sie übrig lässt.
+
+    Die Regel (stark nur aus Titel, Anlagenname, Nachtragsnummer, Sammelbericht) stand vor beiden
+    Kodierungen fest (Messdokument § 5, Frage 9.16); ihre Präzision an den Labels ist darum eine
+    Messung, keine Entwurfsschätzung.
+    """
+    titel(
+        "13 Rückfallregel an beiden Stichproben (stark: Titel, Anlage, Nachtragsnummer, Sammelbericht)"
+    )
+    e3 = e2.with_columns(rf=pl.col("felder").str.contains("titel|anlage|nummer") | pl.col("sammel"))
+
+    def auswerten(name: str, stich: Path, labels: Path, schicht_pop: str) -> pl.DataFrame:
+        lab = pl.read_csv(labels).pivot(on="frage", index="kante", values="label")
+        x = (
+            pl.read_csv(stich)
+            .select("kante", "schicht")
+            .join(lab, on="kante")
+            .join(e3.select("kante", "rf", "typ2", "stadt", "felder", "sammel"), on="kante")
+        )
+        r = x.filter(pl.col("rf") & pl.col("selbe_sache").is_in(["ja", "nein"])).with_columns(
+            ok=pl.col("selbe_sache") == "ja"
+        )
+        k, n = r.filter("ok").height, r.height
+        lo, hi = wilson(k, n)
+        je = (
+            r.group_by("schicht")
+            .agg(pl.len().alias("n"), pl.col("ok").sum().alias("richtig"))
+            .join(
+                e3.filter(pl.col("rf") & pl.col(schicht_pop).is_not_null())
+                .group_by(schicht_pop)
+                .len()
+                .rename({schicht_pop: "schicht", "len": "N"}),
+                on="schicht",
+            )
+            .sort("schicht")
+        )
+        gew = (je["N"] * je["richtig"] / je["n"]).sum() / je["N"].sum()
+        print(
+            f"{name}: nach der Rückfallregel stark {x.filter('rf').height} von {x.height} gezogenen "
+            f"(unklar: {x.filter(pl.col('rf') & ~pl.col('selbe_sache').is_in(['ja', 'nein'])).height}); "
+            f"richtig {k} von {n} = {k / n:.3f} (Wilson {lo:.3f}–{hi:.3f}), gewichtet mit den "
+            f"Rückfall-Kanten je Schicht {gew:.3f}"
+        )
+        print("  je Schicht (n, richtig, N in der Grundgesamtheit):", je.rows())
+        print(
+            "  falsch:", r.filter(~pl.col("ok")).select("kante", "schicht", "felder", "typ2").rows()
+        )
+        print(
+            "  Quelle der Stärke:",
+            dict(
+                r.with_columns(
+                    q=pl.when(pl.col("felder").str.contains("titel"))
+                    .then(pl.lit("titel"))
+                    .when(pl.col("felder").str.contains("nummer"))
+                    .then(pl.lit("nummer"))
+                    .when(pl.col("felder").str.contains("anlage"))
+                    .then(pl.lit("anlage"))
+                    .otherwise(pl.lit("sammelbericht"))
+                )
+                .group_by("q")
+                .len()
+                .rows()
+            ),
+        )
+        return r
+
+    r1 = auswerten("Stichprobe 1 (Codebuch .1)", STICHPROBE, LABELS, "schicht_alt")
+    r2 = auswerten("Stichprobe 2 (Codebuch .2)", STICHPROBE_2, LABELS_2, "schicht_2")
+    erw = tomllib.loads(CODEBUCH.read_text(encoding="utf-8"))["auswertung"]["erwartet"]
+    rr = r2.filter("ok").with_columns(
+        rolle_ok=pl.struct("typ2", "beziehung").map_elements(
+            lambda r: r["beziehung"] in erw[r["typ2"]], return_dtype=pl.Boolean
+        )
+    )
+    print(
+        f"  Rollen der Rückfall-Kanten in Stichprobe 2 (Codebuch .2): "
+        f"{rr.filter('rolle_ok').height} von {rr.height}; falsch:",
+        rr.filter(~pl.col("rolle_ok")).select("kante", "typ2", "beziehung").rows(),
+    )
+    beide = pl.concat([r1.select("kante", "typ2", "ok"), r2.select("kante", "typ2", "ok")])
+    k, n = beide.filter("ok").height, beide.height
+    lo, hi = wilson(k, n)
+    pop = e3.filter("rf").group_by("typ2").len().rename({"len": "N"})
+    je = (
+        beide.group_by("typ2")
+        .agg(pl.len().alias("n"), pl.col("ok").sum().alias("richtig"))
+        .join(pop, on="typ2")
+        .sort("typ2")
+    )
+    gew = (je["N"] * je["richtig"] / je["n"]).sum() / je["N"].filter(je["n"] > 0).sum()
+    abgedeckt = je["N"].sum() / pop["N"].sum()
+    print(
+        f"Beide zusammen: richtig {k} von {n} = {k / n:.3f} (Wilson {lo:.3f}–{hi:.3f}); "
+        f"nachgeschichtet nach Kantentyp .2 {gew:.3f} (die Typen in den Stichproben decken "
+        f"{abgedeckt:.1%} der Rückfall-Kanten)"
+    )
+    print("  je Typ (n, richtig, N):", je.rows())
+    for label, cond in (
+        ("typisiert", pl.col("typ2") != "bezug"),
+        ("bezug", pl.col("typ2") == "bezug"),
+    ):
+        x = beide.filter(cond)
+        lo_, hi_ = wilson(x.filter("ok").height, x.height)
+        print(
+            f"  {label} (nachträglich geteilt, kein Kriterium): {x.filter('ok').height} von "
+            f"{x.height} (Wilson {lo_:.3f}–{hi_:.3f})"
+        )
+
+    # Was die Rückfallregel übrig lässt
+    rf = e3.filter("rf")
+    print(
+        "Rückfall-Kanten:",
+        rf.height,
+        "von",
+        e3.height,
+        dict(rf.group_by("stadt").len().sort("stadt").rows()),
+        "; je Typ:",
+        rf.group_by("typ2").len().sort("len", descending=True).rows(),
+    )
+    print("  davon über eine Periodengrenze:", rf.filter("quer").height)
+    for stadt in ("dus", "mg"):
+        ids = docs.filter(pl.col("stadt") == stadt)["id"].to_list()
+        t = rf.filter(
+            (pl.col("stadt") == stadt) & pl.col("typ2").is_in(TYPISIERT_2) & (pl.col("tage") >= 0)
+        )
+        par: dict[str, str] = dict(
+            t.sort("von", "nach_date", "nach")
+            .unique("von", keep="first")
+            .select("von", "nach")
+            .rows()
+        )
+        baum = Counter(wurzel(i, par) for i in ids)
+        bs = Counter(baum.values())
+        print(
+            f"  Vorgänge {stadt}: {sum(c for s_, c in bs.items() if s_ > 1)} mit "
+            f"{pct(sum(s_ * c for s_, c in bs.items() if s_ > 1), len(ids))};",
+            verteilung(bs),
+            "; größte:",
+            [n_ for _, n_ in baum.most_common(3)],
+        )
+    anf = docs.join(a2.select("id", "art2"), on="id").filter(
+        (pl.col("stadt") == "dus") & (pl.col("art2") == "anfrage")
+    )
+    aux = (
+        anf.select("id", "date", "anlage_name", "anlage_datum")
+        .explode("anlage_name", "anlage_datum")
+        .drop_nulls("anlage_name")
+        .with_columns(low=pl.col("anlage_name").str.to_lowercase())
+        .filter(
+            pl.col("low").str.contains(ANTWORT_ANLAGE.pattern)
+            & ~pl.col("low").str.contains(ZWISCHEN.pattern)
+        )
+        .with_columns(adatum=pl.col("anlage_datum").str.to_date(strict=False))
+        .group_by("id")
+        .agg(
+            pl.col("adatum").filter(pl.col("adatum") != MIGRATION).min().alias("d_anlage"),
+            pl.len().alias("n_anlage"),
+        )
+    )
+    vor = (
+        rf.filter((pl.col("typ2") == "antwort") & (pl.col("tage") >= 0))
+        .group_by("nach")
+        .agg(pl.col("von_date").min().alias("d_vorlage"))
+        .rename({"nach": "id"})
+    )
+    vor_all = (
+        e3.filter(pl.col("stark") & (pl.col("typ2") == "antwort") & (pl.col("tage") >= 0))
+        .select(pl.col("nach").alias("id"))
+        .unique()
+    )
+    a = (
+        anf.select("id", "datensatz", "date")
+        .join(aux, on="id", how="left")
+        .join(vor, on="id", how="left")
+        .with_columns(
+            hat_anlage=pl.col("n_anlage").fill_null(0) > 0,
+            hat_vorlage=pl.col("d_vorlage").is_not_null(),
+        )
+        .with_columns(
+            beantwortet=pl.col("hat_anlage") | pl.col("hat_vorlage"),
+            tage=(pl.min_horizontal("d_anlage", "d_vorlage") - pl.col("date")).dt.total_days(),
+        )
+    )
+    b = a.filter("beantwortet").height
+    print(
+        f"Anfragen (Düsseldorf, Art .2): {a.height}; mit Antwort nach der Rückfallregel "
+        f"{pct(b, a.height)}; davon an der Anlage {a.filter('hat_anlage').height}, nur über eine "
+        f"eigene Drucksache {a.filter(~pl.col('hat_anlage') & pl.col('hat_vorlage')).height} "
+        f"(Fassung .2 hatte {a.join(vor_all, on='id').filter(~pl.col('hat_anlage')).height} solche)"
+    )
+    for ds in ("2014-2020", "2020-2025", "2025-"):
+        x = a.filter(pl.col("datensatz") == ds)
+        print(f"  {ds}: {pct(x.filter('beantwortet').height, x.height)}")
+    t = a.filter(pl.col("tage") >= 0)["tage"]
+    print("  Antwortzeiten nach der Rückfallregel:", tage_stats(t))
 
 
 STOPWORTE = frozenset(

@@ -5,9 +5,10 @@ Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/14-vorgaenge`. Briefing:
 Messskript: [14-vorgaenge-messung.py](14-vorgaenge-messung.py) (`uv run python
 docs/plans/14-vorgaenge-messung.py`, rechnet jede Zahl dieses Dokuments nach; `--stichprobe` schreibt
 Stichprobe und Kodieraufgaben der Runde 1, `--stichprobe-2` die der Bestätigung). Codebuch und
-Stichproben: `validierung/14-vorgaenge/`. **Urteil nach der Runde Umbauen (§ 3.9, § 5): bauen,
-vorläufig — die Regelfassung .2 wartet auf ihre Bestätigungsstichprobe** (100 Kanten, kodiert nach
-Codebuch .2); die Kodierung der Runde 1 ergab 0,927 (§ 4.1).
+Stichproben: `validierung/14-vorgaenge/`. **Endgültiges Urteil der Stufe 1 (§ 5): bauen, mit der
+Rückfallregel** — stark sind nur Kanten aus Titel, Anlagenname, Nachtragsnummer und Sammelbericht;
+an beiden kodierten Stichproben 104 von 106 richtig (0,981). Fassung .1 ergab 0,927 (§ 4.1), die
+Regelfassung .2 an der Bestätigungsstichprobe 0,850 (§ 4.2); beide sind verworfen.
 
 Die drei Zahlen, auf die es ankommt:
 
@@ -595,6 +596,73 @@ steht in § 5.
 
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
 
+### 5.1 Endgültiges Urteil (Abschluss der Stufe 1, 2026-11-23): bauen, mit der Rückfallregel
+
+Die Regelfassung .2 verfehlt an der Bestätigungsstichprobe das vorab festgelegte Kriterium (0,850,
+§ 4.2). Darum gilt, wie vor beiden Kodierungen festgelegt (unten und Frage 9.16), **ohne weitere Runde
+die Rückfallregel: stark ist eine Kante nur, wenn B die Nummer von A im Titel oder im Namen einer
+Anlage nennt, wenn B ein Nachtrag zu A über die Nummer ist oder wenn B ein Sammelbericht ist**
+(Beschlusskontrolle und die übrigen Titel aus R3). Jeder reine Textverweis ist schwach. Weil die Regel
+vor beiden Kodierungen feststand, ist ihre Präzision an den Labels eine **Messung**, keine
+Entwurfsschätzung (Messskript, Abschnitt 13; letzter Lauf um 19:37 Uhr, 39,0 s bei Lastmittel 35 → 27):
+
+| Stichprobe | gezogen | davon nach der Rückfallregel stark | richtig | Präzision | Wilson 95 % | gewichtet |
+|---|---|---|---|---|---|---|
+| 1 (Codebuch .1, Seed 14) | 150 | 65 (Titel 51, Nummer 10, Sammelbericht 3, Anlage 1) | 65 | **1,000** | 0,944–1,000 | 1,000 |
+| 2 (Codebuch .2, Seed 14-2) | 100 | 41 (Titel 29, Sammelbericht 7, Nummer 3, Anlage 2) | 39 | **0,951** | 0,839–0,987 | 0,968 |
+| zusammen | 250 | 106 | 104 | **0,981** | 0,934–0,995 | 0,989 (nach Typ nachgeschichtet) |
+
+„Gewichtet" heißt je Stichprobe: Präzision je Schicht, gewichtet mit der Zahl der Rückfall-Kanten in
+der Schicht der Grundgesamtheit; zusammen nach Kantentyp .2 nachgeschichtet (die Typen der beiden
+Stichproben decken alle 3 563 Rückfall-Kanten). Die zwei Fehler sind beide vom Typ `bezug`:
+`e7a023ba6de0` (ein Bauantrag führt den Bauantrag des Nachbargrundstücks als Anlage, als Vergleichsfall)
+und `883a584c6d63` (der Titel nennt den Mittelbeschluss `BV6/196/2022` nur als Finanzierungsquelle).
+Nachträglich geteilt — **kein Kriterium, weil nach dem Blick auf die Labels**: die typisierten
+Rückfall-Kanten sind 89 von 89 richtig (Wilson 0,959–1,000), die `bezug`-Kanten 15 von 17 (0,657–0,967).
+
+**Reicht das?** Der Punktwert erfüllt das Kriterium in jeder Stichprobe und zusammen; die untere
+Wilson-Grenze liegt zusammen bei 0,934, also unter 0,95. Das liegt an der Zahl: die Rückfallregel war
+nicht das Ziel der Ziehung, sie bekommt aus Stichprobe 1 nur 65 und aus Stichprobe 2 nur 41 Kanten,
+zusammen 106 statt der 150 des Briefings, und die beiden Stichproben sind nach verschiedenen
+Codebuchfassungen kodiert (.2 ist die strengere: die beiden Fehler stammen aus ihr). Je Typ sind die
+Zahlen klein (Antwort 5, Nachfrage 2, Fortsetzung 3). Für ein Urteil „bauen" genügt das, weil die
+Regel vorab feststand und keine Stichprobe sie verfehlt; für eine Kennzahl auf der Seite nennt die Seite
+104 / 106 mit Intervall und sagt, dass zwei KI-Kodierer geprüft haben. Eine eigene Stichprobe nur aus
+Rückfall-Kanten (etwa 50, geschichtet nach Typ) würde das Intervall schließen; sie ist **keine weitere
+Umbau-Runde**, weil sie keine Regel ändert, und kann mit Stufe 2 laufen (Frage 9.18).
+
+**Was die Rückfallregel übrig lässt** (Abschnitt 13):
+
+- **Kanten**: 3 563 von 14 870 stark (Düsseldorf 3 392, Mönchengladbach 171), 254 davon über eine
+  Periodengrenze. Je Typ: `umsetzung` 1 500, `aenderung` 593, `kontrolle` 566, `nachtrag` 337, `bezug`
+  322, `fortsetzung` 105, `nachfrage` 73, `antwort` 67. Die übrigen 11 307 Textkanten bleiben als
+  schwache Kanten in den Daten.
+- **Vorgänge** (Baum über starke typisierte Kanten): Düsseldorf 2 169 Vorgänge mit 4 643 Dokumenten
+  (10,2 %), davon 1 937 aus zwei Dokumenten, größter 7; Mönchengladbach 99 mit 217 Dokumenten (7,5 %),
+  größter 4. Ein Vorgang ist damit meist ein Paar: Vorlage und Änderungsantrag, Antrag und
+  Umsetzungsvorlage, Original und Nachtrag — der Weg von einem Treffer zum unmittelbaren Nachbarn, keine
+  lange Akte.
+- **Anfragen mit Antwort**: 3 237 von 8 168 (39,6 %); 2014-2020 55,8 %, Hauptperiode 31,4 %, laufende
+  23,0 %. **3 213 dieser Antworten hängen an der Anlage** und sind von der Rückfallregel unberührt, nur
+  24 kommen über eine eigene Drucksache, deren Nummer im Titel steht (Fassung .2 hatte 117 solche über
+  Textverweise). Das Kriterium „30 % der Anfragen" bleibt erfüllt, in der Hauptperiode knapp.
+- **Antwortzeiten**: n = 1 948 gültig datiert, Median 18 Tage, Q1 13, Q3 69, P90 119 — praktisch die
+  Zahlen der Anlagen (§ 3.7).
+
+**Was das für die Seite heißt.** Die Antwortzeiten und die Praxis je Gremium (§ 3.7, § 3.8) tragen
+unverändert, denn sie hängen an den Anlagen, nicht an Textverweisen. Der Dokumentdialog zeigt je
+Dokument nur seine starken Nachbarn mit Rolle (in Beschlusskontrolle genannt, Änderungsantrag,
+Umsetzung, Nachtrag, Antwort); Textverweise erscheinen nicht, auch nicht als „ungeprüft". Die
+Vorgangsstatistik der Unterseite wird klein und ehrlich: rund 2 200 Vorgänge, fast alle Paare. Was
+Textverweise wert sind, bleibt eine Frage für eine Fassung .3 mit eigener Messung (Frage 9.17).
+
+**Antwortanteil**: erfüllt (39,6 %). **Kantenpräzision der gebauten Regel**: 0,981 an 106 Kanten, der
+Punktwert erfüllt 0,95. **Urteil: bauen, mit der Rückfallregel**; die drei Änderungen am Briefing unten
+gelten weiter (Vorgang als Baum, Antwort aus der Anlage, keine „unbeantworteten Anfragen" und keine rohe
+Quote je Fraktion).
+
+### 5.2 Verlauf
+
 **Nachtrag 2026-11-23 (Supervisor): Urteil umbauen.** Die Kodierung (§ 4.1) ergibt eine
 Kantenpräzision von 0,927, das Kriterium verlangt 0,95. Nach § 8 des Meta-Plans folgt eine Runde
 Umbauen; was unten steht, ist der Stand vor der Kodierung.
@@ -674,20 +742,24 @@ offline, nach `bodies` und `parties` (liest deren Ausgaben):
 
 | Datei | Spalten | Schlüssel, Ordnung |
 |---|---|---|
-| `vorgang_kanten.parquet` | `von` str, `nach` str, `typ` str (Fassung .2: `antwort`, `kontrolle`, `nachfrage`, `umsetzung`, `aenderung`, `fortsetzung`, `nachtrag`, `bau`, `bezug`), `felder` list[str] (`titel`, `text`, `anlage`, `nummer`), `stark` bool, `grund` str (`stark`, `aufzaehlung`, `verweiszeichen`), `tage` i32, `nach_periode` str (Profil der Nachbarperiode oder leer) | eindeutig (`von`, `nach`), sortiert danach |
+| `vorgang_kanten.parquet` | `von` str, `nach` str, `typ` str (Typen .2: `antwort`, `kontrolle`, `nachfrage`, `umsetzung`, `aenderung`, `fortsetzung`, `nachtrag`, `bau`, `bezug`), `felder` list[str] (`titel`, `text`, `anlage`, `nummer`), `stark` bool, `quelle` str (`titel`, `anlage`, `nummer`, `sammelbericht`, `text`; die stärkste Fundstelle), `tage` i32, `nach_periode` str (Profil der Nachbarperiode oder leer) | eindeutig (`von`, `nach`), sortiert danach |
 | `vorgaenge.parquet` | `id` str, `vorgang` str (ID der Wurzel), `rolle` str (`wurzel`, Kantentyp, `ohne`), `tiefe` i16, `groesse` i32 | eine Zeile je Korpus-ID, sortiert nach `id` |
 | `antwortzeiten.parquet` | `id` str, `quelle` str (`anlage`, `drucksache`, `beide`, `keine`), `antwort_datum` date (null, wenn nur Umstellungsdatum), `tage` i32, `antwort_id` str, `alter_am_abruf` i32, `gremium` str, `praxis_gremium` f64 (Anteil mit Antwort im Gremium und in der Periode) | eine Zeile je Anfrage, sortiert nach `id` |
 
-**Regelfassung .2 im Schritt** (§ 3.9): je Fundstelle im Text der Abstand zur nächsten Nummer mit
-anderer Grundnummer und das Verweiszeichen davor; die Kante ist stark, wenn eine Fundstelle stark ist,
-und `vorgaenge` und `antwortzeiten` lesen nur starke Kanten. Die Spannen (`verweise.parquet`) tragen die
-beiden Merkmale mit, damit der Dokumentdialog „genannt in einer Aufzählung" zeigen kann.
+**Die Rückfallregel im Schritt** (§ 5.1): `stark` genau dann, wenn eine Fundstelle im Titel oder in
+einem Anlagennamen liegt, die Kante ein Nachtrag über die Nummer ist oder B ein Sammelbericht
+(`collective_titles`) ist. Reine Textkanten werden geschrieben, aber `stark = false`; `vorgaenge` und
+`antwortzeiten` lesen nur starke Kanten. Die Merkmale der Fassung .2 (Aufzählung, Verweiszeichen) baut
+Stufe 2 **nicht**: sie haben an der Bestätigung nicht getragen. Die Typen .2 (`kantentyp2`,
+Änderungszeichen, Titel schlägt Dokumentart) bleiben: unter den Rückfall-Kanten waren die typisierten 89
+von 89 dieselbe Sache, und ihre Rollen stimmten in Stichprobe 2 (Codebuch .2) 37 von 39-mal; die beiden
+Abweichungen sind `fortsetzung`, die die Kodierer als `aenderung` lasen (Regel b in § 9.1).
 
 **Verträge** (an den Batch-Grenzen, Prädikate in `georep.contracts`): `von != nach`; jede `nach` ist im
 Nummernverzeichnis; `typ` aus der Aufzählung; genau eine Zeile je Korpus-ID in `vorgaenge`; `vorgang`
 zeigt auf eine ID derselben Tabelle, eine Wurzel zeigt auf sich, `tiefe = 0` genau bei der Wurzel; kein
 Kreis (die Baumregel nimmt den ältesten typisierten Vorgänger, ein Kreis bricht ab und ist ein Fehler);
-`grund = stark` genau bei `stark`; `typ = nachtrag` impliziert `stark`; `tage >= 0` oder null; `quelle = keine` genau dann, wenn `antwort_datum` und `antwort_id` null sind und
+`stark` genau bei `quelle` ≠ `text`; `typ = nachtrag` impliziert `stark`; `tage >= 0` oder null; `quelle = keine` genau dann, wenn `antwort_datum` und `antwort_id` null sind und
 keine Anlage zählt; Summe der `groesse` über die Wurzeln = Zeilenzahl. Nach jedem Join sortieren.
 
 **Settings** (Anhängeregel aus F2: Modell `Procedures` vor `class Settings`, Feld am Ende, Block am Ende
@@ -705,12 +777,10 @@ attachment_dates_invalid = []   # Düsseldorf: [2019-07-03], Umstellung des Rats
 [procedures.kinds]              # paper_type -> Rolle; was fehlt, ist "sonst"
 [procedures.title_kinds]        # für Sammelarten wie "Vorlage aus der Politik": Titelwort -> Rolle
 [procedures.edge_types]         # "rolle_von>rolle_nach" -> Kantentyp; Rest "bezug"
-# Fassung .2 (§ 3.9); Sprache in den Defaults, Titel der Sammelberichte im Stadtprofil
-list_distance = 150             # Zeichen bis zur nächsten anderen Nummer: darunter Aufzählung (R1)
-list_kinds = ["vorlage", "information"]   # nur in Verwaltungsvorlagen
-reference_markers = '…'         # R2: vgl., siehe, s., z. B., Fußnote, Quelle(n): in den 30 Zeichen davor
-amendment_markers = '…'         # Änderungs-, Ergänzungsantrag, zur Vorlage, zu TOP
-collective_titles = '…'         # R3, Stadtprofil: Beschlusskontrolle, Veränderungsverzeichnis, …
+# Rückfallregel (§ 5.1): stark nur aus Titel, Anlage, Nachtragsnummer, Sammelbericht
+text_edges_strong = false       # reine Textverweise sind schwach (Bestätigung der Fassung .2: 0,850)
+amendment_markers = '…'         # Typ aenderung: Änderungs-, Ergänzungsantrag, zur Vorlage, zu TOP (Defaults)
+collective_titles = '…'         # Stadtprofil: Beschlusskontrolle, Veränderungsverzeichnis, Ergebnis der Haushaltsberatungen, …
 title_overrides_kind = true     # „Antrag …" als Anfrage eingestellt -> Antrag
 ```
 
@@ -719,13 +789,14 @@ Kürzen geklebter Wörter kommen aus den Nummern selbst (oder aus `[bodies]`), n
 
 **Tests.** Beispiele: je Form Nummer → Schlüssel (mit führenden Nullen, Leerzeichen, Nachtrag `/1`, ` - 1`,
 `-1/X`), geklebte Kürzel (`vorlagebv6/002/2023`), alte Form hinter einem Wort, Datumsform, Bebauungsplan in
-Mönchengladbach; die Umstellungsregel des Anlagendatums; die elf Kanten aus § 3.9 als Beispiele
-(neun schwach, zwei als bekannte Grenze stark), R1 nur in Verwaltungsvorlagen, R3 vor R1. **hypothesis**: Schlüssel(Formatieren(x)) = x
+Mönchengladbach; die Umstellungsregel des Anlagendatums; die Rückfallregel (Titel, Anlage, Nummer,
+Sammelbericht stark, Text schwach) und die beiden bekannten Fehler `e7a023ba6de0` und `883a584c6d63` als
+dokumentierte Grenze. **hypothesis**: Schlüssel(Formatieren(x)) = x
 für erzeugte Nummern jeder Form; die Baumregel erzeugt für jeden Zufallsgraphen einen Wald (jede Wurzel
 zeigt auf sich, keine Kreise, Größen summieren sich); Kanten sind unabhängig von der Zeilenfolge der
 Eingabe. Mini-Fixture: ein Dutzend Dokumente mit bekannten Kanten aller Typen. **slow**, Golden auf der
-Hauptperiode: 14 483 Düsseldorfer Kanten über drei Perioden, davon 12 429 stark, 4 015 Vorgänge
-(Fassung .2; neu einfrieren, wenn die Bestätigung Regeln ändert). Kein Netz, kein Modell.
+Hauptperiode: 14 483 Düsseldorfer Kanten über drei Perioden, davon 3 392 stark, 2 169 Vorgänge,
+3 237 Anfragen mit Antwort (Rückfallregel, § 5.1). Kein Netz, kein Modell.
 
 **Berührte Dateien.** Neu: `src/georep/enrich/procedures.py`, `src/georep/prep/references.py` (Muster,
 Schlüssel, Spannen), `src/georep/analysis/procedures.py` (Typen, Baum, Antwortzeiten),
@@ -735,7 +806,7 @@ Geändert mit einer angehängten Zeile oder einem Block: `src/georep/enrich/__in
 `src/georep/profiles/moenchengladbach.toml`, `src/georep/pack.py` (`--attachments`),
 `src/georep/bootstrap.py`, `docs/architecture.md` (Schrittabelle, Datenhaltung), `docs/decisions.md`
 (Punkt ohne Nummer: „ein Vorgang ist ein Baum", „Antworten aus Anlagen", „keine Antwortquote je
-Fraktion"). Mit F6: `src/georep/oparl.py`, `src/georep/records.py`.
+Fraktion", „Textverweise sind schwach: Fassung .2 an der Bestätigung 0,850, Rückfallregel 104 / 106"). Mit F6: `src/georep/oparl.py`, `src/georep/records.py`.
 
 **Laufzeit**: das ganze Messskript braucht für alle vier Datensätze samt Graph und Gruppierungen 36 bis
 73 s unter Fremdlast; der Regexlauf über Titel und Texte der Hauptperiode allein kostete in der Erkundung
@@ -753,14 +824,18 @@ Fraktion"). Mit F6: `src/georep/oparl.py`, `src/georep/records.py`.
    „explorativ" überschrieben — keine rohe Quote (Frage 9.4).
 3. *Ohne gefundene Antwort*: Nummer, Datum, Gremium, Urheber, Tage — nur Gremien mit Praxis ≥ 0,7 in der
    Periode, älter als P90, als „Kandidaten" benannt, mit Link ins Ratsinformationssystem.
-4. *Vorgänge*: Zahl und Größen, Typen der Kanten, Beispiel.
+4. *Vorgänge*: Zahl und Größen nach der Rückfallregel (Düsseldorf rund 2 200, fast alle Paare), Typen
+   der starken Kanten, ein Satz, dass Textverweise nicht zählen und warum (§ 5.1).
 
-Größe geschätzt unter 60 KB (vier Tabellen, keine Grafik außer einer Größenverteilung). **Vorgang im
-Dokumentdialog**: eine nachgeladene `vorgaenge.json` (Wurzel, Mitglieder mit Nummer und Rolle; 2 911
-Vorgänge, geschätzt 150 KB) statt einer Erweiterung von `dokumente.json` (heute 2,26 MB). **Tabellen im
-Register**: `vorgang_kanten`, `vorgaenge`, `antwortzeiten` als Parquet und CSV. **Validierung auf der
-Seite**: „Kanten geprüft von zwei KI-Kodierern an 150 Kanten, nicht von Menschen", Präzision mit
-Intervall, α; „Antwortanlagen erkannt am Namen der Anlage" mit der Zahl der Namen. **Vorhaben 26**
+Größe geschätzt unter 50 KB (vier Tabellen, keine Grafik außer einer Größenverteilung). **Vorgang im
+Dokumentdialog**: eine nachgeladene `vorgaenge.json` mit den starken Nachbarn je Dokument (Nummer, Rolle;
+rund 3 400 Kanten in Düsseldorf, geschätzt unter 100 KB) statt einer Erweiterung von `dokumente.json`
+(heute 2,26 MB); keine Textverweise, auch nicht als „ungeprüft". **Tabellen im Register**:
+`vorgang_kanten` (mit `stark`), `vorgaenge`, `antwortzeiten` als Parquet und CSV. **Validierung auf der
+Seite**: „Verbindungen aus Titel, Anlage, Nachtragsnummer und Sammelbericht: 104 von 106 von zwei
+KI-Kodierern als dieselbe Sache bestätigt (Intervall 0,934–0,995), nicht von Menschen; Verweise im
+Text sind nicht berücksichtigt, weil sie an 100 geprüften Kanten nur zu 85 % trugen"; „Antwortanlagen
+erkannt am Namen der Anlage" mit der Zahl der Namen. **Vorhaben 26**
 erweitert die Seite um das Ergebnis je Tagesordnungspunkt und um die Antworten aus den Niederschriften —
 erst dann wird aus „Kandidat" eine Aussage, und für den Rat gibt es überhaupt erst eine Antwortquote.
 
@@ -790,7 +865,32 @@ der Antwortquote als Maß.
 | 9.13 | Verteilervorlagen über gleichen Titel als Kantenart (Vorschlag aus Vorhaben 13)? | gleiche Vorlage an zehn Bezirksvertretungen ist ein Vorgang ohne Verweis | zurückgestellt; in Stufe 2 nur als eigener Typ `verteiler` nach einer eigenen kleinen Prüfung, wegen Formeltiteln |
 | 9.14 | Ein Finanzierungszeichen („finanziert über", „Haushaltsposition") als vierte Regel? | ein Fehler der Runde 1 (`25b8500b0bd4`) | nein: aus einem Fall eine Regel wäre an die Stichprobe angepasst; die Stichprobe 2 zeigt, ob es häufiger ist |
 | 9.15 | Zeigt der Dokumentdialog schwache Kanten? | 2 126 Kanten, darunter richtige (Entwurf: 6 von 15 verworfenen) | nein im Vorgang; höchstens als „genannt in einer Aufzählung" ohne Rolle |
-| 9.16 | Was, wenn die Stichprobe 2 das Kriterium verfehlt? | § 8 des Meta-Plans erlaubt eine Runde | Rückfallregel aus § 5 (nur Titel, Anlage, Nummer, Sammelbericht), vorab festgelegt |
+| 9.16 | Was, wenn die Stichprobe 2 das Kriterium verfehlt? | § 8 des Meta-Plans erlaubt eine Runde | Rückfallregel aus § 5 (nur Titel, Anlage, Nummer, Sammelbericht), vorab festgelegt — **eingetreten** (0,850, § 4.2; Rückfallregel 104 / 106, § 5.1) |
+| 9.17 | Eine spätere Fassung .3 für Textverweise, mit den Regeln des Schlichters der Bestätigung? | 11 307 Textkanten liegen schwach in den Daten; .2 trug zu 85 % | **Vorschlag, keine Runde jetzt** (§ 9.1 unten); nur mit neuer Ziehung und vorab festgelegtem Kriterium |
+| 9.18 | Eine eigene Stichprobe nur aus Rückfall-Kanten (rund 50, nach Typ geschichtet), um das Intervall über 0,95 zu heben? | die Präzision 0,981 ruht auf 106 Kanten aus zwei Ziehungen, die untere Grenze ist 0,934 | ja, als Prüfung neben Stufe 2, keine Umbau-Runde (sie ändert keine Regel) |
+
+### 9.1 Vorschlag für eine Fassung .3 (nicht begonnen)
+
+Aus der Schlichtung der Bestätigungsstichprobe (`messdaten/kodierung/14-vorgaenge/schlichtung-2.jsonl`)
+und den Rückmeldungen beider Kodierer. Die Datei enthält die Regeln a, b, d, e, f und g; eine Regel c
+steht nicht darin — an ihrer Stelle die Lücke, die beide Kodierer nennen (Finanzierungsquelle gegen
+Sammelantrag), die auch einen der beiden Rückfall-Fehler erklärt.
+
+| Regel | Inhalt | was sie für eine Fassung .3 hieße |
+|---|---|---|
+| a | Antwort der Verwaltung auf Fragen aus der Beratung einer Vorlage, die keine Anfrage ist: selbe Sache, `bezug`; `antwort` nur, wenn A eine Anfrage ist; `aenderung` nur, wenn B Beschlussvorschlag, Sachdarstellung oder Zahlen von A ändert | Codebuch; im Verfahren Information → Vorlage bleibt `bezug` |
+| b | aktualisierte Fassung oder Fortschreibung desselben Dokuments, die A ablöst: `aenderung`; ein neuer Bericht neben A: `fortsetzung` | Typregel über Titelwörter („aktualisiert", „fortgeschrieben", „Neufassung") |
+| c (Kodierer) | Finanzierungsquelle gegen Sammelantrag: nein, wenn B A nur als Mittelquelle nennt, auch im Titel (`883a584c6d63`, „Bauunterhaltungsmittel … Teil B"); ja, wenn B genau einen Punkt von A umsetzt | ein Finanzierungszeichen auch für Titelverweise; vorher messen, wie oft Mittelbeschlüsse im Titel stehen |
+| d | Folgeanfrage auf eine Antwort: `nachfrage`, auch bei neuem Aspekt, wenn B an A oder die Antwort anknüpft; `bezug`, wenn B A nur als Vorgeschichte nennt | Codebuch; das Verfahren typisiert Anfrage → Anfrage schon als `nachfrage` |
+| e | Stellenplan, Haushalt oder Sammelvorlage mit eigenem Abschnitt zu A: ja, `umsetzung`; nur Aufzählung oder Rahmen: nein | erweitert R3 um Stellenpläne; Abschnittserkennung erst mit F1 (Rohtext) und Vorhaben 11 |
+| f | Querverweis auf eine parallele Drucksache zum selben Thema („ebenfalls", „siehe auch", „es wird verwiesen auf"): nein | ein drittes Verweiszeichen zu R2, an einer neuen Ziehung zu messen |
+| g | Antrag, der ein mit A beschlossenes Vorgehen vorzieht oder abweichend festlegt: `aenderung`; der nächste Schritt im Rahmen von A: `fortsetzung` | Codebuch; im Verfahren nicht erkennbar |
+
+Dazu aus den Rückmeldungen: Mönchengladbacher Fraktionsanträge ohne Text sind nur aus dem Titel als
+`aenderung` kodierbar (Kodierer A), und Anlagen, die einen Nachbarfall belegen (`e7a023ba6de0`), sind
+keine selbe Sache. Eine Fassung .3 hieße: neue Regeln für **Textverweise**, neue Ziehung, neues
+vorab festgelegtes Kriterium — ein eigenes Vorhaben nach Stufe 2, nicht eine weitere Runde dieser
+Stufe 1.
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
