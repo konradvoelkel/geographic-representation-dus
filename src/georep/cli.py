@@ -59,19 +59,22 @@ def build_parser() -> argparse.ArgumentParser:
 
     fetch = sub.add_parser(
         "fetch",
-        help="Netzschritte ausführen (opendata, papers, pdfs, streets_osm, pois_wiki), "
-        "dazu shapes und texts",
+        help="Netzschritte ausführen (opendata, papers, organizations, meetings, consultations, "
+        "persons, pdfs, streets_osm, pois_wiki), dazu shapes und texts",
     )
     fetch.add_argument(
         "steps", nargs="*", help="Namen (Standard: alle Netzschritte, shapes und texts)"
     )
     fetch.add_argument("--force", action="store_true", help="auch aktuelle Schritte ausführen")
+    # Fundament F6: der Plan eines Abrufs, ohne eine Anfrage; wie `run --dry-run --online`
+    fetch.add_argument("--dry-run", action="store_true", help="nur zeigen, was liefe")
     fetch.add_argument("--limit", type=int, help="höchstens so viele neue PDFs in diesem Lauf")
     fetch.add_argument(
         "--max-pages",
         type=int,
-        help="höchstens so viele Metadatenseiten; `fetch papers --max-pages 1` ist die Probe, "
-        "ob der Server Urheberfelder liefert (rund 90 s)",
+        help="höchstens so viele Seiten je Liste; `fetch papers --max-pages 1` ist die Probe, "
+        "ob der Server Urheberfelder liefert (rund 90 s), `fetch meetings --max-pages 1` die "
+        "Probe der Sitzungsliste (rund 20 s)",
     )
 
     sub.add_parser("steps", help="Schritte mit Eingaben und Ausgaben")
