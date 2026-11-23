@@ -1,0 +1,145 @@
+# Codebuch Vorhaben 16 „Ortsbezug verfeinern" (Stufe 1, Fassung 2026-11-23.1, vor jeder Kodierung).
+#
+# Messdokument: docs/plans/16-ortsbezug.md, § 4. Format vorläufig: Fundament F4 baut den Rahmen
+# (georep validate); was hier steht, übernimmt F4 oder bildet es ab. Die Regel, die geprüft wird,
+# steht im Messskript (REGEL_HANDELT_VON) und in regel.jsonl; beides sehen die Kodierer nicht.
+
+[meta]
+vorhaben = "16-ortsbezug"
+version = "2026-11-23.1"
+stand = 2026-11-23
+einheit = """Ein Paar (Dokument, Wahlbezirk): ein Ratsdokument der Hauptperiode und ein Kommunalwahlbezirk, \
+für den der Index der Arbeit mindestens einen Begriff aus dem Wörterbuch des Bezirks im Dokument findet \
+(Straßennamen aus OpenStreetMap, Orte aus Wikidata und Wikipedia, je mit ihrer Lage im Bezirk)."""
+stichprobe = "validierung/16-ortsbezug/stichprobe.csv: 200 Paare aus 200 verschiedenen Dokumenten, geschichtet nach der besten Stelle des Treffers (drei Schichten), Seed 20261123"
+aufgaben = "/media/konrad/xtraspace/georep/messdaten/kodierung/16-ortsbezug/aufgaben.jsonl"   # lokal, nie im Repo
+regelausgabe = "/media/konrad/xtraspace/georep/messdaten/kodierung/16-ortsbezug/regel.jsonl"  # den Kodierern nicht zeigen
+kodierer = """Zwei unabhängige Kodier-Agenten, die einander nicht sehen, und ein Schlicht-Agent nur für \
+die Uneinigkeiten (plan-vorverarbeitung-2026-11.md, § 2.6 und F4). Kein menschlicher Goldstandard."""
+blind = true   # die Kodierer sehen weder die Ausgabe der Regel noch die Schicht noch einander
+material = """Je Aufgabe: Drucksache, Dokumentart, Datum, Titel, Nummer und Name des Wahlbezirks, die \
+Begriffe des Bezirks, die im Dokument stehen, je mit Art (Straße oder Ort) und den Zeilen, in denen \
+sie stehen; der Rohtext als Liste von Zeilen (höchstens 600; Zeilen mit Begriffen weiter hinten \
+kommen mit sechs Zeilen Rand als `auszug`)."""
+nicht_gezeigt = "Die Ausgabe der Regel (handelt von / erwähnt), die Stelle, nach der sie entscheidet, und die Schicht."
+
+[anweisung]
+text = """
+Jede Aufgabe ist ein Paar aus einem Ratsdokument und einem Wahlbezirk. `begriffe` nennt die
+Ortsnamen des Wörterbuchs dieses Bezirks, die im Dokument stehen, und die Zeilen (1-basiert,
+`zeilen[0]` ist Zeile 1), in denen sie stehen; `im_titel` sagt, ob der Begriff auch im Titel
+steht. Lies den Titel, den Betreff und die genannten Zeilen mit ihrem Zusammenhang; lies so viel
+vom übrigen Text, wie du brauchst, um zu sagen, worum es dem Dokument an dieser Stelle geht.
+
+Frage: Handelt das Dokument von einem Ort in diesem Wahlbezirk, oder erwähnt es ihn nur?
+
+Ein Begriff gehört für diese Kodierung zum Bezirk, weil das Wörterbuch es so sagt. Läuft eine
+Straße durch mehrere Bezirke, prüfe nicht, welcher Abschnitt gemeint ist; nur wenn der Text den
+Gegenstand ausdrücklich an einen Ort außerhalb legt (eine andere Stadt, ein Stadtteil weit weg mit
+Namen), zählt das als kein Bezug. Es genügt ein Begriff: steht einer der Begriffe für einen Ort,
+von dem das Dokument handelt, ist die Antwort handelt_von, auch wenn andere nur erwähnt sind.
+
+Datenschutz: Schreibe nie einen Personennamen und nie eine Anschrift in eine Antwort, auch nicht in
+die Bemerkung; nenne statt dessen die Zeilennummer.
+"""
+
+[antwortformat]
+datei = "antworten-<kodierer>.jsonl"   # eine Zeile je Aufgabe, neben aufgaben.jsonl
+felder = """
+aufgabe: die ID aus der Aufgabe, unverändert.
+bezug: genau einer der Werte "handelt_von", "erwaehnt", "kein_bezug".
+begriffe_kein_bezug: Liste der Begriffe aus `begriffe`, die im Dokument keinen Ort im Bezirk meinen
+  (leer, wenn alle einen Ort meinen); bei bezug = "kein_bezug" alle Begriffe der Aufgabe.
+beleg_zeile: die Zeilennummer der Stelle, die das Urteil am stärksten trägt (bei handelt_von die
+  Zeile, in der das Dokument etwas über den Ort sagt), sonst die eines Begriffs; null nur, wenn der
+  Begriff nur im Titel steht.
+unsicher: true oder false.
+bemerkung: leer, oder ein Satz, warum unsicher (ohne Namen und Anschriften).
+"""
+beispiel = '''{"aufgabe": "16-ortsbezug-001", "bezug": "erwaehnt", "begriffe_kein_bezug": [], "beleg_zeile": 41, "unsicher": false, "bemerkung": ""}'''
+
+[[frage]]
+id = "bezug"
+typ = "auswahl"
+optionen = ["handelt_von", "erwaehnt", "kein_bezug"]
+text = "Handelt das Dokument von einem Ort in diesem Wahlbezirk, oder erwähnt es ihn nur?"
+handelt_von = """
+Das Dokument sagt etwas Eigenes über den Ort oder über etwas, das dort liegt: es beantragt,
+beschließt, fragt, berichtet, plant oder bewertet eine Maßnahme, einen Zustand, ein Problem, ein
+Vorhaben oder eine Einrichtung dort. Das gilt
+- wenn der Ort der Hauptgegenstand ist („Zebrastreifen auf der …straße", „Sanierung der Schule an
+  der …straße");
+- wenn er einer von mehreren Punkten einer Liste ist und der Punkt ihn betrifft: Maßnahmenlisten,
+  Bauunterhaltung, Förderlisten, Baumfällungen, Standorte von Stationen, Ergebnisse einer
+  Kommission, Zuschüsse je Vorhaben;
+- wenn der Ort einen Gegenstand verortet oder begrenzt: „Querungshilfe auf dem … Höhe …straße" (die
+  Stelle der Querung), „Plangebiet zwischen A-Straße und B-Straße", „im Kreuzungsbereich …";
+- wenn eine Einrichtung, um die es geht, nach dem Ort heißt oder dort liegt („Gemeinschafts-
+  grundschule …straße" als Schule, über die berichtet wird);
+- wenn der Ort als erwogener oder gewählter Standort einer Maßnahme besprochen wird.
+"""
+erwaehnt = """
+Der Ort steht im Dokument, aber über ihn wird nichts Eigenes gesagt:
+- Anschrift einer Dienststelle, eines Absenders, einer Fraktion, einer Person („Auslegung im
+  Katasteramt, …straße 5"), Sitzungs- oder Veranstaltungsort, um den es nicht geht;
+- Richtung, Strecke oder Bezugspunkt für etwas, das woanders liegt („Busse in Richtung …",
+  „von der … kommend");
+- Beispiel oder Vergleich für etwas Allgemeines („wie in der Testphase …allee", „etwa im Bereich
+  … gibt es Beschwerden" in einer Anfrage zu einem stadtweiten Thema);
+- früherer Vorgang an anderem Ort, abgelehnte Alternative ohne eigene Aussage, Name einer
+  Veranstaltung, Ausstellung oder Organisation, wenn es nicht um den Ort geht;
+- Liste ohne ortsbezogene Aussage (Verteiler, Adressliste, Aufzählung aller Straßen eines Gebiets
+  ohne Maßnahme je Straße).
+"""
+kein_bezug = """
+Kein Begriff der Aufgabe meint einen Ort in diesem Bezirk: ein gewöhnliches Wort („Schulweg" in
+„sicherer Schulweg", „Hellweg" als Teil eines Firmennamens), ein Personen- oder Firmenname, ein
+gleichnamiger Ort in einer anderen Stadt, ein Treffer mitten in einem anderen Namen, ein Begriff,
+der nur in einer Seitenkopfzeile oder einem Aktenzeichen steht.
+"""
+grenzfaelle = """
+- Titel und Betreff zählen wie jeder andere Text: steht der Ort im Titel, handelt das Dokument meist
+  von ihm, aber nicht immer (ein Titel kann eine Anschrift oder einen Veranstaltungsnamen tragen).
+- Ein Bericht über eine Einrichtung, die dort liegt (Ausstellungsprogramm eines Museums im
+  Hofgarten), handelt vom Ort nur, wenn er etwas über den Ort oder die Einrichtung an diesem Ort
+  sagt (Bau, Betrieb, Nutzung des Ortes); ein Programm, das nur dort stattfindet, erwähnt ihn.
+- Ist das Dokument leer oder unlesbar an der Stelle (Text fehlt, nur Seitenkopf), antworte nach dem,
+  was lesbar ist, und setze unsicher = true.
+"""
+
+[[frage]]
+id = "begriffe_kein_bezug"
+typ = "liste"
+text = "Welche Begriffe der Aufgabe meinen im Dokument keinen Ort im Bezirk (siehe kein_bezug)?"
+
+[[frage]]
+id = "beleg_zeile"
+typ = "zeile"
+text = "Zeile, die das Urteil am stärksten trägt."
+
+[[frage]]
+id = "unsicher"
+typ = "ja_nein"
+text = "Ist die Antwort unsicher? Dann in `bemerkung` sagen, warum (ohne Namen und Anschriften)."
+
+[mass]
+# Kriterium aus plan-vorverarbeitung-2026-11.md, § 11, Vorhaben 16 (unverändert): F1 der Regel ≥ 0,8.
+kriterium_f1 = 0.80
+hauptmass = """
+F1 der Klasse handelt_von für die Regel (REGEL_HANDELT_VON im Messskript: ein Begriff des Bezirks im
+Titel, im Betreff, im Beschlussvorschlag oder in den Fragen einer Anfrage). erwaehnt und kein_bezug
+sind für die Regel beide „nicht handelt von". Hochgerechnet mit den Schichtgewichten aus
+stichprobe.csv (Spalte gewicht = Paare der Schicht durch Stichprobe der Schicht); Intervall aus
+einem geschichteten Bootstrap mit 2000 Ziehungen (Seed 20261123).
+"""
+nebenmasse = """
+Ohne Einfluss auf das Kriterium, vorab festgelegt: der ungewichtete Wert; F1 der Gegenklasse
+(erwähnt oder kein Bezug); Cohens κ zwischen Regel und Label mit Bootstrap-Intervall (die Regel
+schlägt die triviale „alles handelt von", wenn es über 0 liegt; Annahme 9.2 des Messdokuments
+für das Urteil); dieselben Maße für die Nebenregeln
+A, B, C (Messskript) und für die triviale Regel „alles handelt von"; Anteil kein_bezug je Schicht
+und hochgerechnet (Fehltreffer des Wörterbuchs); Anteil handelt_von je Schicht mit
+Wilson-Intervall.
+"""
+uebereinstimmung = "Krippendorffs α (nominal, drei Klassen) zwischen Kodierer A und B; Stufe 3 verlangt α ≥ 0,8 (§ 2.6)."
+labels = "validierung/16-ortsbezug/labels.csv: aufgabe, frage, kodierer_a, kodierer_b, schlichtung, label (wie 11 und 14); das Messskript liest die Zeilen mit frage = bezug."
