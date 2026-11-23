@@ -6,7 +6,7 @@ from pathlib import Path
 
 import polars as pl
 
-from georep.bootstrap import REFERENCE_EXTRACTOR, seed_stores_from_legacy
+from georep.bootstrap import seed_stores_from_legacy
 from georep.io import write_parquet
 from georep.layout import Layout
 from georep.prep.papers import (
@@ -16,7 +16,7 @@ from georep.prep.papers import (
     build_corpus,
     documents_with_text,
 )
-from georep.stores import PaperStore, TextStore
+from georep.stores import REFERENCE_EXTRACTOR, PaperStore, TextStore
 
 
 def test_corpus_from_stores_matches_the_legacy_file(mini_root: Path, tmp_path: Path) -> None:

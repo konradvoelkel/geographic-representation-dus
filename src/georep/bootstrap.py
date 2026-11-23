@@ -27,9 +27,7 @@ from georep.layout import Layout
 from georep.records import PaperRecord
 from georep.settings import Settings
 from georep.sources.pdfs import PdfStore
-from georep.stores import PaperStore, TextMeta, TextStore
-
-REFERENCE_EXTRACTOR = "pypdf (Arbeit, Januar 2026)"
+from georep.stores import REFERENCE_EXTRACTOR, PaperStore, TextMeta, TextStore
 
 
 @dataclass

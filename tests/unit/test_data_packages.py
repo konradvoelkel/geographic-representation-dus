@@ -303,8 +303,8 @@ def test_the_text_package_carries_exactly_the_files_of_the_thesis_corpus() -> No
     PDFs haben keine Textschicht (dieselben 75 Dokumente ohne Text wie in der Arbeit, mit den 16
     ohne Hauptdatei), und eines weist pypdf 7.1.0 ab: es behält den Text der Arbeit.
     """
-    from georep.bootstrap import REFERENCE_EXTRACTOR
     from georep.records import PaperRecord
+    from georep.stores import REFERENCE_EXTRACTOR
 
     items = json.loads(
         (REPO / "reference" / "interim" / "paper_with_text.json").read_text(encoding="utf-8")

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from georep.bootstrap import REFERENCE_EXTRACTOR, bootstrap, bootstrap_from_settings
+from georep.bootstrap import bootstrap, bootstrap_from_settings
 from georep.layout import Layout
 from georep.settings import Bootstrap, Settings
-from georep.stores import PaperStore, RawTextStore, TextMeta, TextStore
+from georep.stores import REFERENCE_EXTRACTOR, PaperStore, RawTextStore, TextMeta, TextStore
 
 
 def _layout(tmp_path: Path, mini_root: Path) -> Layout:

@@ -111,6 +111,11 @@ class TextMeta(BaseModel):
     chars: int = 0
 
 
+# Der Extraktorname der Texte, die ``bootstrap`` aus dem Korpus der Arbeit übernimmt. Er steht hier
+# und nicht in ``bootstrap``, weil auch die Berichtsseite ihn liest (wie viele Texte aus der Arbeit
+# stammen), und ``report`` soll nicht von ``bootstrap`` abhängen.
+REFERENCE_EXTRACTOR = "pypdf (Arbeit, Januar 2026)"
+
 TEXT_SCHEMA = {
     "name": pl.String,
     "text": pl.String,

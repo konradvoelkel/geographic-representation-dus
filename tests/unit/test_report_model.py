@@ -854,8 +854,7 @@ def test_the_mini_fixture_reads_the_texts_of_the_thesis(mini_model: ReportModel)
 
 
 def test_the_extraction_counts_come_from_the_extractor_column(tmp_path: Path) -> None:
-    from georep.bootstrap import REFERENCE_EXTRACTOR
-    from georep.stores import RawTextStore, TextMeta, TextStore
+    from georep.stores import REFERENCE_EXTRACTOR, RawTextStore, TextMeta, TextStore
 
     layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "p")
     assert extraction_figures(layout) is None  # ohne Textstore kein Satz

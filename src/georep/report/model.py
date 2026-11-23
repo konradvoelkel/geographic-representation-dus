@@ -55,7 +55,6 @@ from georep.analysis.weights import (
     WEIGHTED_RATE,
     topic_variant,
 )
-from georep.bootstrap import REFERENCE_EXTRACTOR
 from georep.contracts import has_columns
 
 # ``crosswalk.UNIT`` ist die Spalte der Raumeinheit (Option 03), ``weights.UNIT`` der Name der
@@ -87,6 +86,7 @@ from georep.settings import (
     Settings,
     Weights,
 )
+from georep.stores import REFERENCE_EXTRACTOR
 
 NARROW_NBSP = "\u202f"  # schmales geschütztes Leerzeichen: Tausender und vor dem Prozentzeichen
 TOP_TERMS = 5  # Begriffe je Wahlbezirk in Karte und Tabelle
