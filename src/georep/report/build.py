@@ -69,6 +69,7 @@ from georep.report.model import (
     format_de,
     summary_payload,
 )
+from georep.report.pages import page_links
 from georep.report.render import Visuals, render_map, render_report
 from georep.report.tables import GEOJSON_TABLE, PublishedTable, all_tables, published
 from georep.report.terms import pairs, terms_payload
@@ -429,6 +430,8 @@ def build_site(
     )
     shapes = district_shapes(precincts, SIMPLIFY_M)
     model = build_report_model(layout, settings, now=now, commit=commit)
+    # Fundament F2: der Abschnitt „Weitere Auswertungen" nennt die Unterseiten der Beiträge
+    model = replace(model, pages=page_links(settings))
     downloads.append(write_documents(layout, model, settings))
     downloads.append(write_terms(layout, model))  # Punkt 49
 

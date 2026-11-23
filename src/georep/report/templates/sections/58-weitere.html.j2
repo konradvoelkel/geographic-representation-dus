@@ -1,0 +1,12 @@
+{% if model.pages %}
+<section id="weitere">
+<h2>Weitere Auswertungen</h2>
+<p>Diese Auswertungen stehen auf eigenen Seiten neben dieser; jede nennt ihre Methode und wie sie
+geprüft ist.</p>
+<ul class="weitere">
+{% for item in model.pages %}
+<li><a href="{{ item.href }}">{{ item.title }}</a>: {{ item.lead }}</li>
+{% endfor %}
+</ul>
+</section>
+{% endif %}

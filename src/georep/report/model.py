@@ -745,6 +745,18 @@ class ReportModel:
     # Punkt 48: so viele Zeilen zeigt eine lange Tabelle; 0 klappt nichts ein. Die Vorlage baut
     # daraus die CSS-Regel der Vorschau und die Schaltfläche (docs/seitengroesse-2026-10.md, § 3).
     preview_rows: int = 3
+    # Fundament F2 der Vorverarbeitung 2026-11: die Unterseiten der Beiträge; leer heißt „kein
+    # Abschnitt Weitere Auswertungen" ({% if model.pages %}), und die Seite bleibt bytegleich.
+    pages: tuple[PageLink, ...] = ()
+
+
+@dataclass(frozen=True)
+class PageLink:
+    """Ein Eintrag im Abschnitt „Weitere Auswertungen": relativer Link, Titel, ein Satz dazu."""
+
+    href: str  # ``<name>.html`` neben ``index.html``
+    title: str
+    lead: str
 
 
 # --- Zahlenformat -----------------------------------------------------------------------------

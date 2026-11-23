@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.title }} · {{ model.city.name }}, {{ model.period.title }}</title>
+<meta name="description" content="{{ page.lead }}">
+<style>
+{% include "frame/style.css.j2" +%}
+{{ page_css|safe }}</style>
+{% if model.preview_rows %}
+<noscript><style>table.preview tbody tr { display: table-row !important; } p.more { display: none !important; }</style></noscript>
+{% endif %}
+</head>
+<body>
+<header>
+<h1>{{ page.title }}</h1>
+<p class="lead">{{ page.lead }}</p>
+<p class="meta"><a href="index.html">Zur Hauptseite: Ratsdokumente {{ model.city.genitive }}, {{ model.period.title }}</a>. Gebaut mit georep {{ model.version }}; Quelltext und Daten im <a href="{{ links.repository }}">Repository</a>.</p>
+</header>
+<main>
+{% include page.template %}
+</main>
+<footer>
+<p>Ergebnisse: <a href="{{ links.cc0 }}">CC0 1.0</a>; Quelltext: <a href="{{ links.gpl }}">GPL-3.0-or-later</a>. Quellen und Lizenzen der Daten nennt die <a href="index.html">Hauptseite</a>.</p>
+<p>Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}.</p>
+</footer>
+<dialog id="docs" aria-labelledby="docs-title"><form method="dialog"><button type="submit">Schließen</button></form><h3 id="docs-title"></h3><p class="note"></p><ol></ol></dialog>
+<div id="tooltip" role="tooltip" hidden></div>
+<script>
+{% include "frame/script.js.j2" +%}
+</script>
+{% if page_js %}
+<script>
+{{ page_js|safe }}
+</script>
+{% endif %}
+</body>
+</html>

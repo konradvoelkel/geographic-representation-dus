@@ -32,6 +32,7 @@ from georep.errors import GeorepError
 if TYPE_CHECKING:
     from georep.layout import Layout
     from georep.pipeline import Step
+    from georep.report.pages import Page
     from georep.report.tables import PublishedTable
     from georep.settings import Settings
 
@@ -52,6 +53,7 @@ class Contribution:
     name: str  # das Vorhaben, etwa ``14-vorgaenge``; steht in Fehlermeldungen
     steps: Callable[[Settings, Layout], list[Step]] = no_steps
     tables: tuple[PublishedTable, ...] = ()
+    pages: tuple[Page, ...] = ()
 
 
 # Je Vorhaben eine Zeile, in der Reihenfolge der Abhängigkeiten (Plan, § 3).

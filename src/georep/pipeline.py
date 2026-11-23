@@ -107,6 +107,7 @@ from georep.report.build import (
     report_fingerprint,
 )
 from georep.report.geometry import district_shapes
+from georep.report.pages import Page, build_page, pages_for
 
 # Punkt 45: nur die zwei Zahlen, nicht die Modelle -- ``analysis.topics`` und
 # ``analysis.committees`` bringen sklearn mit und werden erst im Schritt importiert.
@@ -957,6 +958,24 @@ def build_steps(
 
     contributed = contributed_steps(settings, layout)
 
+    def page_step(page: Page) -> Step:
+        """Fundament F2: eine Unterseite, gebaut hinter ``report`` mit demselben Vorlagen-Hash."""
+
+        def run() -> str:
+            return build_page(
+                layout, settings, page, now=dt.datetime.now(dt.UTC), commit=current_commit()
+            )
+
+        return Step(
+            f"page_{page.name}",
+            page.inputs(layout, settings),
+            (page.output(layout),),
+            run,
+            extra=report_fingerprint(settings),
+        )
+
+    pages = [page_step(page) for page in pages_for(settings)]
+
     # --- Option 02: ein Periodenprofil holt zusätzlich den Zuschnitt seiner Wahlbezirke
     opendata_outputs = [layout.results_csv, layout.districts_geojson]
     if settings.sources.opendata.district_shapes_url:
@@ -1325,6 +1344,8 @@ def build_steps(
             # Vorlage oder Klassengrenze gültig.
             extra=report_fingerprint(settings),
         ),
+        # --- Fundament F2: die Unterseiten der Beiträge
+        *pages,
     ]
     # Fundament F2: ein Beitrag darf keinen Namen eines anderen Schritts tragen
     check_unique_names(steps)
