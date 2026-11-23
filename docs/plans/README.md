@@ -10,7 +10,7 @@ der Supervisor führt sie bei jedem Start, Urteil und Merge nach.
 
 | Nr. | Vorhaben | Branch | Stufe | Stand |
 |---|---|---|---|---|
-| F1 | Rohtext | `fund/F1-rohtext` | Fundament | Messdatei liegt (2026-11-23); Schritt in Arbeit |
+| F1 | Rohtext | `fund/F1-rohtext` | Fundament | gebaut (7 Commits: Schritt `raw_texts`, Paket der Hauptperiode 17,0 MB, Methodensatz zum Extraktor, `docs/todo.md` Punkt 7 erledigt); Plättung gleich bis auf 9 PDFs mit `\f` im Seitentext; Review läuft |
 | F2 | Register | `main` | Fundament | auf `main` seit 2026-11-23 (`v0.17.0`, Punkt 69) |
 | F3 | Spannen | `main` | Fundament | auf `main` seit 2026-11-23 (`v0.17.0`, Punkt 69) |
 | F4 | Validierung | `fund/F4-validierung` | Fundament | gebaut (9 Commits), auf `main` rebast, Review läuft; danach Erweiterung um mehrere Fragen je Einheit und Paare mit Fundstelle, die Codebücher von 13 und 14 werden übertragen |
