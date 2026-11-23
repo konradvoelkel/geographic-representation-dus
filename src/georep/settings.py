@@ -32,6 +32,7 @@ from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, Settings
 
 from georep.contracts import is_district_code, one_threshold
 from georep.errors import GeorepError, SchemaError
+from georep.http import is_loopback_url
 
 LOG_LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
 PROFILE_NAME = re.compile(r"[a-z0-9][a-z0-9-]*")  # ein Ordnername unter data_root, kein Pfad
@@ -1499,6 +1500,7 @@ class Ml(_Strict):
     """Der lokale Modellserver: Ort und Laufzeit (nicht im Fingerprint), Modelle und ``limit`` (darin)."""
 
     base_url: str = Field(default="http://localhost:11434", pattern=r"^https?://")
+    allow_remote: bool = False  # ein Server, der nicht auf diesem Rechner läuft, nur ausdrücklich
     timeout_s: float = Field(default=300.0, gt=0)
     retries: int = Field(default=2, ge=0, le=10)
     backoff_s: float = Field(default=2.0, ge=0)
@@ -1507,6 +1509,16 @@ class Ml(_Strict):
     limit: int = Field(default=0, ge=0)
     embedding: EmbeddingModel = EmbeddingModel()
     generation: GenerationModel = GenerationModel()
+
+    @model_validator(mode="after")
+    def _local_unless_allowed(self) -> Ml:
+        """Die Dokumente verlassen den Rechner nicht (Plan § 2.8), es sei denn, jemand sagt es."""
+        if not self.allow_remote and not is_loopback_url(self.base_url):
+            raise ValueError(
+                f"ml.base_url = {self.base_url} zeigt nicht auf diesen Rechner; "
+                "ml.allow_remote = true schaltet einen anderen Server ausdrücklich frei"
+            )
+        return self
 
 
 class Settings(BaseSettings):

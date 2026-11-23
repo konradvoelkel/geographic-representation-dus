@@ -26,7 +26,7 @@ import requests
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from georep.errors import ModelError, ModelUnreachableError
-from georep.http import TimeoutSession, Transport
+from georep.http import TimeoutSession, Transport, is_loopback_url
 from georep.ml.base import (
     Call,
     EmbeddingOptions,
@@ -136,8 +136,15 @@ class OllamaClient:
         retries: int = 2,
         backoff_s: float = 2.0,
         keep_alive: str = "10m",
+        allow_remote: bool = False,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
+        if not allow_remote and not is_loopback_url(base_url):
+            raise ModelError(
+                f"{base_url} ist kein Server auf diesem Rechner; die Dokumente bleiben hier, "
+                "außer ml.allow_remote = true"
+            )
+        self.allow_remote = allow_remote
         self.base_url = base_url.rstrip("/")
         self.timeout_s = timeout_s
         self.retries = retries
@@ -155,7 +162,11 @@ class OllamaClient:
     @property
     def transport(self) -> Transport:
         if self._transport is None:
-            self._transport = TimeoutSession(self.timeout_s)
+            session = TimeoutSession(self.timeout_s)
+            # Keine Proxys und kein netrc aus der Umgebung: ein HTTP_PROXY leitete sonst auch
+            # Anfragen an localhost über einen anderen Rechner (Review 2026-11-23, Befund 11).
+            session.trust_env = False
+            self._transport = session
         return self._transport
 
     def _call(
@@ -429,6 +440,7 @@ def client_from_settings(ml: Ml, *, transport: Transport | None = None) -> Ollam
         retries=ml.retries,
         backoff_s=ml.backoff_s,
         keep_alive=ml.keep_alive,
+        allow_remote=ml.allow_remote,
     )
     if transport is None:
         _SHARED[ml.model_dump_json()] = client

@@ -17,6 +17,7 @@ from georep.ml.base import (
 )
 from georep.ml.ollama import OllamaClient, OllamaEmbedder, OllamaGenerator
 from tests.fakes import (
+    FAKE_URL,
     FakeOllama,
     FakeSession,
     SequenceSession,
@@ -25,7 +26,7 @@ from tests.fakes import (
     response,
 )
 
-URL = "http://ollama.test"
+URL = FAKE_URL
 
 
 def _client(
@@ -295,3 +296,15 @@ def test_another_request_error_is_a_model_error_at_once() -> None:
     with pytest.raises(ModelError, match=r"zu viele") as caught:
         client.info("fake-embed")
     assert type(caught.value) is ModelError and len(session.calls) == 2
+
+
+def test_the_client_refuses_a_server_elsewhere_unless_allowed() -> None:
+    """Befund 11 des Reviews: auch ein Client von Hand schickt nichts an einen fremden Rechner."""
+    with pytest.raises(ModelError, match=r"kein Server auf diesem Rechner.*allow_remote"):
+        OllamaClient("http://anderer-rechner:11434", transport=FakeOllama())
+    assert OllamaClient("http://anderer-rechner:11434", allow_remote=True).allow_remote
+
+
+def test_the_session_ignores_proxies_and_netrc_from_the_environment() -> None:
+    """Ein ``HTTP_PROXY`` aus der Umgebung leitete sonst auch localhost über einen Proxy."""
+    assert OllamaClient(URL).transport.trust_env is False  # type: ignore[attr-defined]

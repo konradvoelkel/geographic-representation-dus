@@ -17,7 +17,7 @@ from georep.ml.ollama import (
     generator_from_settings,
 )
 from georep.settings import load_settings
-from tests.fakes import FakeOllama
+from tests.fakes import FAKE_URL, FakeOllama
 
 
 def _with(tmp_path: Path, block: str) -> str:
@@ -87,14 +87,14 @@ def test_wrong_values_are_refused(tmp_path: Path, block: str) -> None:
 
 def test_the_factories_build_without_asking_the_server(tmp_path: Path) -> None:
     (tmp_path / "settings.toml").write_text(
-        '[ml]\nbase_url = "http://ollama.test"\nretries = 4\nkeep_alive = "2m"\n'
+        f'[ml]\nbase_url = "{FAKE_URL}"\nretries = 4\nkeep_alive = "2m"\n'
         "[ml.generation]\nnum_predict = 120\nseed = 9\n",
         encoding="utf-8",
     )
     ml = load_settings(cwd=tmp_path).ml
     server = FakeOllama()
     client = client_from_settings(ml, transport=server)
-    assert (client.base_url, client.retries, client.keep_alive) == ("http://ollama.test", 4, "2m")
+    assert (client.base_url, client.retries, client.keep_alive) == (FAKE_URL, 4, "2m")
     embedder = embedder_from_settings(ml, client)
     generator = generator_from_settings(ml, client)
     other = generator_from_settings(ml, client, model="gemma4")
@@ -120,3 +120,38 @@ def test_the_model_cache_lies_under_cache_root_shared_by_all_profiles() -> None:
     layout = Layout.from_settings(settings)
     assert layout.ml_cache == layout.cache_root / "ml"
     assert layout.for_profile("andere-periode").ml_cache == layout.ml_cache
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://localhost:11434",
+        "http://127.0.0.1:11434",
+        "http://127.0.0.2:8080",
+        "http://[::1]:11434",
+    ],
+)
+def test_a_loopback_server_needs_no_permission(tmp_path: Path, url: str) -> None:
+    (tmp_path / "settings.toml").write_text(f'[ml]\nbase_url = "{url}"\n', encoding="utf-8")
+    assert load_settings(cwd=tmp_path).ml.base_url == url
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://anderer-rechner:11434",
+        "http://192.168.1.5:11434",
+        "http://localhost.example.com:11434",
+        "https://api.example.com",
+    ],
+)
+def test_a_server_elsewhere_needs_allow_remote(tmp_path: Path, url: str) -> None:
+    """Befund 11 des Reviews: „die Dokumente verlassen den Rechner nicht" stand nur in der Doku."""
+    (tmp_path / "settings.toml").write_text(f'[ml]\nbase_url = "{url}"\n', encoding="utf-8")
+    with pytest.raises(ValidationError, match=r"allow_remote"):
+        load_settings(cwd=tmp_path)
+    (tmp_path / "settings.toml").write_text(
+        f'[ml]\nbase_url = "{url}"\nallow_remote = true\n', encoding="utf-8"
+    )
+    ml = load_settings(cwd=tmp_path).ml
+    assert ml.allow_remote and client_from_settings(ml, transport=FakeOllama()).allow_remote

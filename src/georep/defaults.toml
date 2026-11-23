@@ -230,7 +230,8 @@ min_alpha = 0.8                # Krippendorffs alpha zwischen den beiden Kodier-
 
 # --- Fundament F5: Modelle (docs/plan-vorverarbeitung-2026-11.md, § 7; docs/decisions.md, Modellnaht)
 [ml]                           # lokale Modelle ueber einen ollama-Server; Schritte mit Modell laufen nur mit `georep run --models`, sonst kommt ihr Ergebnis aus einem Paket
-base_url = "http://localhost:11434"  # der lokale Server (`ollama serve`); ein Ort, kein Parameter, darum nicht im Fingerprint. Kein externer Dienst: die Dokumente verlassen den Rechner nicht (Plan § 2.8)
+base_url = "http://localhost:11434"  # der lokale Server (`ollama serve`). Kein externer Dienst: die Dokumente verlassen den Rechner nicht (Plan § 2.8); ein Host, der nicht localhost oder eine Loopback-Adresse ist, braucht allow_remote. Die Session des Backends liest keine Proxys aus der Umgebung
+allow_remote = false           # true schaltet einen Modellserver auf einem anderen Rechner frei; nur ausdruecklich und nur fuer Daten, die den Rechner verlassen duerfen
 timeout_s = 300.0              # je Anfrage; ein 27-B-Modell braucht beim ersten Aufruf rund 10 s zum Laden, eine Antwort mit 512 Token bei 13 Token/s rund 40 s. Laufzeit, nicht im Fingerprint
 retries = 2                    # Wiederholungen bei 429, 5xx und nicht erreichbarem Server, Pause backoff_s, dann das Doppelte; ein 4xx kommt sofort heraus. Laufzeit
 backoff_s = 2.0

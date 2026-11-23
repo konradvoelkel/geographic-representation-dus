@@ -14,9 +14,9 @@ from georep.ml import commands
 from georep.ml.cache import CacheKey, ModelCache
 from georep.ml.ollama import OllamaClient
 from georep.settings import load_settings
-from tests.fakes import FakeOllama, FakeSession, response
+from tests.fakes import FAKE_URL, FakeOllama, FakeSession, response
 
-URL = "http://ollama.test"
+URL = FAKE_URL
 
 
 class Clock:

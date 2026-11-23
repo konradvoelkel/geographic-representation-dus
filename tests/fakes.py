@@ -151,7 +151,9 @@ class FakeGenerator:
         return Reply(" ".join(words[:limit] if cut else words), truncated=cut)
 
 
-FAKE_URL = "http://ollama.test"  # nie ein echter Server: FakeOllama ist der Transport
+# Loopback wie der echte Server, aber ein Port ohne Dienst: ginge ein Test doch ins Netz, bekäme er
+# eine abgelehnte Verbindung und nie eine Antwort. FakeOllama ist der Transport, nicht dieser Port.
+FAKE_URL = "http://127.0.0.1:11999"
 
 FAKE_MODELS: dict[str, dict[str, Any]] = {
     "fake-embed:latest": {"digest": "e" * 64, "capabilities": ["embedding"], "size": 1000},
