@@ -277,8 +277,10 @@ Modell, Eingabe, Ausgabe und geschätzter Dauer (aus einer gemessenen Stichprobe
 liegt im Modellcache von F5 und ist damit fortsetzbar. Zwei Modelle gleichzeitig nur, wenn sie zusammen
 in 24 GB passen. Gemessen am 2026-11-23 (F5): `qwen3.6:27b` belegt mit `num_ctx` 8192 allein 22,9 GB und
 verdrängt das Einbettungsmodell; Einbettung und 27-B-Modell laufen darum nacheinander. `gemma4` (10,8 GB)
-und Einbettung passen rechnerisch zusammen, gemessen ist das nicht. **Seit dem 2026-11-23 ist ollama
-auf Konrads Wunsch angehalten; Modellläufe warten auf sein Signal.**
+und Einbettung passen rechnerisch zusammen, gemessen ist das nicht. Am 2026-11-23 war ollama auf Konrads
+Wunsch einige Stunden angehalten; am Abend desselben Tages hat er die GPU wieder freigegeben. Seitdem
+nutzen Agenten die GPU nur unter der Sperre `/media/konrad/xtraspace/georep/gpu-queue/gpu.lock`
+(`flock` um jeden Modelllauf, je Lauf höchstens rund 30 Minuten, damit andere dazwischen kommen).
 
 ## 6. Umgebung
 
