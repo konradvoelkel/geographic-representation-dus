@@ -2705,7 +2705,7 @@ die Größe je Modell ohne Abfrage kennt und ein ausgedientes Modell mit einer D
 11, Zerteilung bei mehr als 512 Token), welche Prompts es schreibt und mit welcher Version, und ob
 ein Ergebnis ins Repo darf (Kurzfassungen nicht, Plan § 10, Frage 6).
 
-## NN. Der Rohtext bekommt einen zweiten Store; der Textstore bleibt, wie die Arbeit ihn verlangt (Fundament F1, 2026-11-23)
+## 73. Der Rohtext bekommt einen zweiten Store; der Textstore bleibt, wie die Arbeit ihn verlangt (Fundament F1, 2026-11-23)
 
 Der Textstore (`cache_root/<profil>/text/texts.parquet`) hält den Text so, wie die Arbeit ihn las:
 kleingeschrieben, ohne Zeilenumbrüche, erst ab dem Marker (`search.text_split_marker`). Das bleibt

@@ -3,8 +3,8 @@
 **Vorverarbeitung 2026-11 läuft** (`docs/plan-vorverarbeitung-2026-11.md`, Stand je Vorhaben in
 `docs/plans/README.md`): am 2026-11-23 sind die Fundamente F2 und F3 (`v0.17.0`, Punkt 69) F6 (`v0.18.0`, Punkt 70:
 OParl-Sitzungen, Beratungen, Personen, hinter einem Schalter) F4 (`v0.19.0` und `v0.20.0`, Punkt 71: `georep validate`)
-und F5 (`v0.21.0`, Punkt 72: lokale Modelle über ollama, hinter `--models`) auf `main`; F1 bessert nach
-seinem Review nach. Abgeschlossen sind die Messungen 11, 14, 15 und 22 (bauen), 12 (teils bauen,
+F5 (`v0.21.0`, Punkt 72: lokale Modelle über ollama, hinter `--models`) und F1 (`v0.22.0`, Punkt 73:
+Rohtext je PDF neben dem Textstore, Paket der Hauptperiode) auf `main`; alle sechs Fundamente stehen. Abgeschlossen sind die Messungen 11, 14, 15 und 22 (bauen), 12 (teils bauen,
 teils umbauen), 13 (verworfen); Stand je Vorhaben in `docs/plans/README.md`. Keine Zahl der Seite
 hat sich bewegt.
 
@@ -685,7 +685,7 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 - **Alle vier Datensätze sind mit pypdf 7.1.0 gelesen, bis auf 16 Texte** (seit dem 2026-11-18,
   Punkt 68; die drei anderen seit dem 2026-11-16, Punkt 67): 15 der Periode 2014 bis 2020 tragen
   `pypdf-6.20.0` (unten), einer der Hauptperiode den Text der Arbeit (unten). Die Seite nennt den
-  Extraktor nicht (`docs/todo.md`, Punkt 7).
+  Extraktor seit `v0.22.0` im Methodenteil (Punkt 73).
 - **Ein PDF der Hauptperiode ist mit AES verschlüsselt** (2026-11-18, Punkt 68): `00403713.pdf`.
   pypdf braucht dafür `cryptography`, das nicht im Lock steht, meldet `CorruptPdfError:
   cryptography>=3.1 is required for AES algorithm`, und der Store behält den Text der Arbeit
@@ -936,8 +936,8 @@ in `CLAUDE.md` unter „Arbeitsweise", wo sie beim nächsten Handgriff gelesen w
 
 **Stand 2026-11-18:** alle vier Datensätze sind mit pypdf 7.1.0 gelesen (Punkte 67 und 68), die
 Hauptperiode aus dem Textpaket `snapshots/duesseldorf-texte/`; ihre 19 092 PDFs liegen lokal
-(`cache_root/duesseldorf/pdf/`, 2,7 GB). Offen: der **Satz auf der Seite**, der den Extraktor nennt
-(`docs/todo.md`, Punkt 7); ob `cryptography` ins Lock kommt, damit auch das eine AES-verschlüsselte
+(`cache_root/duesseldorf/pdf/`, 2,7 GB). Der Satz auf der Seite, der den Extraktor nennt, kam mit
+`v0.22.0` (Punkt 73). Offen: ob `cryptography` ins Lock kommt, damit auch das eine AES-verschlüsselte
 PDF der Hauptperiode neu gelesen wird (Konrads Entscheidung, siehe „Bekannt"). Aus der
 Abhängigkeitsrunde bleiben numpy 2.5.5 (am 2026-11-15 abends erschienen, nicht gemessen) und
 crosshair-tool über 0.0.111 hinaus, sobald eine Version den Absturz nicht mehr zeigt.

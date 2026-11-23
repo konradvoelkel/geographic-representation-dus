@@ -2,6 +2,20 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.22.0 (2026-11-23), Rohtext je PDF
+
+- **Rohtextstore** (`docs/decisions.md`, Punkt 73): neben dem kleingeschriebenen Textstore, den die
+  Arbeit verlangt, liegt je PDF der Rohtext mit Groß- und Kleinschreibung, Seitenwechseln und Kopf
+  (Schritt `raw_texts`, `text/rohtexte.parquet` im Cache des Profils). Aus ihm ergibt `flatten` für jedes
+  Dokument genau den Text des Textstores; die Vorhaben der Vorverarbeitung lesen Abschnitte, Kennungen
+  und Orte daraus.
+- **Paket** `snapshots/duesseldorf-rohtexte/` (14,2 MB) für die Hauptperiode; `georep bootstrap` legt es
+  über einen fehlenden oder halben Store, `georep pack --raw-texts` schreibt es neu. Die anderen Perioden
+  rechnen ihren Rohtext lokal aus den PDFs (Frage 18 an Konrad: die Grenze von 180 MiB).
+- `georep run report` läuft auch ohne Rohtextstore; der Store ist eine optionale Eingabe, die Seite
+  nennt den Extraktor im Methodenteil und, wo der Rohtext vollständig ist, auch ihn. Keine Zahl der Seite
+  ändert sich.
+
 ## 0.21.0 (2026-11-23), Modellnaht für lokale Modelle
 
 - **`georep.ml`** (`docs/decisions.md`, Punkt 72; Abschnitt „Modelle" in `docs/architecture.md`):

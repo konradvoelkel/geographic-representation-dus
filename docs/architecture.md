@@ -287,7 +287,7 @@ der Arbeit wird für alle 1996 Orte reproduziert.
   (Seitenwechsel zu Zeilenumbruch, die `\f` aus dem Text einer Seite an den Offsets in
   `form_feeds` zurück, dann `normalise_text`, dann `after_marker`) ergibt den Text des
   Textstores. Ein Ersatz des Extraktors muss sie für beide Stores zugleich erfüllen
-  (`decisions.md`, Punkt NN).
+  (`decisions.md`, Punkt 73).
 
 Gemessen (2026-10-11): der Matcher kostet 4,1 s für 5841 Begriffe über 19 108 Dokumente, 3,8 s davon reines
 Python in FlashText; die Extraktion 38 ms je PDF, 17 ms je Seite. Kein Flaschenhals rechtfertigt derzeit

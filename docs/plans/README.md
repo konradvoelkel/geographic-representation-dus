@@ -10,7 +10,7 @@ der Supervisor führt sie bei jedem Start, Urteil und Merge nach.
 
 | Nr. | Vorhaben | Branch | Stufe | Stand |
 |---|---|---|---|---|
-| F1 | Rohtext | `fund/F1-rohtext` | Fundament | Nachprüfung der zweiten Runde (2026-11-23): Befunde behoben, keine Zahl der Seite und kein Stamp eines Kernschritts ändert sich; Paket mit zstd 19 und Schema-Version 2 (14,2 MB, Offsets der inneren Seitenwechsel); dritte Runde, damit nur eine Fassung des Pakets in die Historie kommt, und drei kleine Befunde; danach Merge |
+| F1 | Rohtext | `main` | Fundament | auf `main` (`v0.22.0`, Punkt 73, 2026-11-23) nach drei Runden mit Review; Paket der Hauptperiode (14,2 MB) nur einmal in der Historie; die anderen Perioden lesen ihren Rohtext lokal (Frage 18) |
 | F2 | Register | `main` | Fundament | auf `main` seit 2026-11-23 (`v0.17.0`, Punkt 69) |
 | F3 | Spannen | `main` | Fundament | auf `main` seit 2026-11-23 (`v0.17.0`, Punkt 69) |
 | F4 | Validierung | `main` | Fundament | auf `main` (`v0.19.0`, Punkt 71; vierte Runde `v0.20.0`, 2026-11-23); 11, 12, 14, 15, 17 im neuen Format (`-f4`); offen: Endlabels je Markierung und Recall gegen die Spannen eines Verfahrens (kommt mit dem Bau von 12), ein Maß für „Kategorie im Thema-Set" (17) |
