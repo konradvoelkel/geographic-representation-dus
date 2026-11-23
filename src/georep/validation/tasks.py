@@ -181,7 +181,9 @@ def questions(codebook: Codebook) -> list[dict[str, Any]]:
             item["anleitung"] = q.instructions
         if q.options:
             item["optionen"] = [
-                {"wert": o.value, "definition": o.definition, "beispiel": o.example}
+                {"wert": o.value}
+                | ({"name": o.name} if o.name else {})
+                | {"definition": o.definition, "beispiel": o.example}
                 for o in q.options
             ]
         if q.only_if is not None:
@@ -278,7 +280,8 @@ def brief(codebook: Codebook, who: Role) -> str:
         if q.instructions:
             lines += [q.instructions.strip(), ""]
         for option in q.options:
-            lines.append(f"- `{option.value}`: {option.definition}".rstrip(": "))
+            name = f" ({option.name})" if option.name else ""
+            lines.append(f"- `{option.value}`{name}: {option.definition}".rstrip(": "))
             if option.example:
                 lines.append(f"  Beispiel: {option.example}")
         if q.options:

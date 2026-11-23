@@ -247,3 +247,40 @@ def test_a_conditional_question_is_merged_where_it_is_asked(
     )
     assert quality["fragen"]["zeile"]["n"] == 6 and quality["fragen"]["zeile"]["beide"] == 5
     assert quality["fragen"]["zeile"]["krippendorff_alpha_skala"] is not None
+
+
+META = CODEBOOK.replace(
+    "[sample]",
+    """[[questions]]
+id = "unsicher"
+question = "Ist eine der Antworten unsicher?"
+scale = "binary"
+positive = ["ja"]
+adjudicate = false
+
+[[questions.options]]
+value = "ja"
+
+[[questions.options]]
+value = "nein"
+
+[sample]""",
+)
+
+
+def test_a_question_without_adjudication_keeps_its_disagreement_unlabelled(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Vorhaben 11: Meta-Fragen wie „unsicher" gehen nicht an die Schlichtung (adjudicate = false)."""
+    make_project(tmp_path, META)
+    monkeypatch.chdir(tmp_path / "repo")
+    assert main(["validate", "sample", PROJECT]) == 0
+    for coder in ("A", "B"):
+        assert main(["validate", "tasks", PROJECT, "--coder", coder]) == 0
+    ids = _ids(tmp_path)
+    fill(tmp_path, "A", lambda u: {"bv": "ja", "unsicher": "nein"})
+    fill(tmp_path, "B", lambda u: {"bv": "ja", "unsicher": "ja" if u == ids[0] else "nein"})
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    assert not (tmp_path / "lokal" / PROJECT / "schlichtung").exists()
+    row = _labels(tmp_path).filter((pl.col("id") == ids[0]) & (pl.col("frage") == "unsicher"))
+    assert row.row(0, named=True)["label"] == "" and row.row(0, named=True)["kodierer_b"] == "ja"

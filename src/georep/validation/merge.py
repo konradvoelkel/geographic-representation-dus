@@ -441,15 +441,22 @@ def merge_project(
         reliability(q, [a[u].values[q.id] for u in ids], [b[u].values[q.id] for u in ids])
         for q in codebook.questions
     )
+    adjudicable = [q.id for q in codebook.questions if q.adjudicate]
     disputes = {
-        unit: [q for q in codebook.question_ids if a[unit].values[q] != b[unit].values[q]]
-        for unit in ids
+        unit: [q for q in adjudicable if a[unit].values[q] != b[unit].values[q]] for unit in ids
     }
     disputes = {unit: qs for unit, qs in disputes.items() if qs}
     count = sum(len(qs) for qs in disputes.values())
     if force:
         reset_adjudication(paths)
-    final: dict[str, Values] = {unit: dict(a[unit].values) for unit in ids}
+    # Fragen ohne Schlichtung: das gemeinsame Label, bei Uneinigkeit keines
+    final: dict[str, Values] = {
+        unit: {
+            q: value if q in adjudicable or value == b[unit].values[q] else None
+            for q, value in a[unit].values.items()
+        }
+        for unit in ids
+    }
     if disputes:
         asked = {u: t.get("strittig") for u, t in _tasks_of(paths.tasks(ADJUDICATION)).items()}
         started = answers_started(paths.answers(ADJUDICATION))
@@ -468,9 +475,7 @@ def merge_project(
             return MergeReport(
                 results, count, len(disputes) - started, None, paths.role(ADJUDICATION)
             )
-        agreed = {
-            u: {q: v for q, v in a[u].values.items() if q not in disputes[u]} for u in disputes
-        }
+        agreed = {u: {q: v for q, v in final[u].items() if q not in disputes[u]} for u in disputes}
         final |= read_adjudication(paths.answers(ADJUDICATION), codebook, disputes, agreed)
     write_labels(paths, codebook, ids, a, b, disputes, final)
     meta = sample_meta(paths)

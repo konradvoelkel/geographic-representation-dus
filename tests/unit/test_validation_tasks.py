@@ -331,3 +331,18 @@ def test_a_pair_with_span_shows_a_window_in_the_second_document() -> None:
     assert second["markiert"] == "x" * 10 + "⟦AUS/008/2026⟧" + "y" * 10
     task, _ = build_task(row | {"start": None, "end": None}, codebook, documents, {})
     assert "markiert" not in task["dokumente"][1] and task["dokumente"][1]["ausschnitt_start"] == 0
+
+
+def test_an_option_name_is_shown_next_to_its_label(project: Layout, tmp_path: Path) -> None:
+    """Vorhaben 13: Labels sind Kürzel (``fast_gleich``), der Name steht daneben."""
+    named = CODEBOOK.replace(
+        'value = "nein"\n', 'value = "nein"\nname = "kein Beschlussvorschlag"\n'
+    )
+    (tmp_path / "repo" / "validierung" / PROJECT / "codebuch.toml").write_text(
+        named, encoding="utf-8"
+    )
+    assert main(["validate", "tasks", PROJECT, "--coder", "A"]) == 0
+    task = _lines(tmp_path / "lokal" / PROJECT / "A" / "auftrag.jsonl")[0]
+    assert task["fragen"][0]["optionen"][1]["name"] == "kein Beschlussvorschlag"
+    brief = (tmp_path / "lokal" / PROJECT / "A" / "codebuch.md").read_text(encoding="utf-8")
+    assert "`nein` (kein Beschlussvorschlag): Kein Beschlussvorschlag" in brief

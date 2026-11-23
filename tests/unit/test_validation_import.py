@@ -105,3 +105,34 @@ def test_a_row_without_the_key_field_is_a_schema_error(
     _write(source / "antworten-B.jsonl", [{"beschluss": True}])
     assert main(["validate", "import", PROJECT, "--from", str(source)]) == 1
     assert "ohne Schlüsselfeld 'aufgabe'" in capsys.readouterr().err
+
+
+def test_a_long_adjudication_file_is_pivoted_per_unit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Vorhaben 11 schlichtet je Feld eine Zeile: ``{"aufgabe", "feld", "wert", "begruendung"}``."""
+    codebook = PROVISIONAL + 'adjudication_question = "feld"\nadjudication_value = "wert"\n'
+    make_project(tmp_path, codebook)
+    monkeypatch.chdir(tmp_path / "repo")
+    assert main(["validate", "sample", PROJECT]) == 0
+    ids = (
+        pl.read_csv(tmp_path / "repo" / "validierung" / PROJECT / "stichprobe.csv")
+        .get_column("id")
+        .to_list()
+    )
+    source = tmp_path / "vorlaeufig"
+    source.mkdir()
+    _write(source / "antworten-A.jsonl", [{"aufgabe": u, "beschluss": True} for u in ids])
+    _write(source / "antworten-B.jsonl", [{"aufgabe": u, "beschluss": u != ids[0]} for u in ids])
+    _write(
+        source / "schlichtung.jsonl",
+        [{"aufgabe": ids[0], "feld": "bv", "wert": "nein", "begruendung": "S"}],
+    )
+    assert main(["validate", "import", PROJECT, "--from", str(source)]) == 0
+    adjudicated = json.loads(
+        (tmp_path / "lokal" / PROJECT / "schlichtung" / "antworten.jsonl")
+        .read_text()
+        .splitlines()[0]
+    )
+    assert adjudicated == {"id": ids[0], "codebuch_version": "1", "bv": "nein", "begruendung": "S"}
+    assert main(["validate", "merge", PROJECT, "--model", "claude-opus-5-5"]) == 0

@@ -46,6 +46,19 @@ def convert(
     return converted
 
 
+def pivot(records: list[dict[str, Any]], rules: ProvisionalRules) -> list[dict[str, Any]]:
+    """Eine Schlichtung in langer Form (eine Zeile je Einheit und Frage) als eine Zeile je Einheit."""
+    units: dict[str, dict[str, Any]] = {}
+    for record in records:
+        unit = units.setdefault(str(record[rules.key]), {rules.key: record[rules.key]})
+        unit[str(record[rules.adjudication_question])] = record.get(rules.adjudication_value)
+        reasons = [str(record[f]) for f in rules.reason if record.get(f)]
+        if reasons:
+            previous = unit.get(rules.reason[0])
+            unit[rules.reason[0]] = " / ".join([*([previous] if previous else []), *reasons])
+    return list(units.values())
+
+
 @dataclass(frozen=True)
 class ImportReport:
     written: dict[str, int]  # Rolle -> übernommene Einheiten
@@ -96,6 +109,8 @@ def import_project(
         missing = [r for r in records if rules.key not in r]
         if missing:
             raise SchemaError(f"{path}: {len(missing)} Zeilen ohne Schlüsselfeld {rules.key!r}")
+        if role == "schlichtung" and rules.adjudication_question:
+            records = pivot(records, rules)
         kept = [convert(r, codebook, rules) for r in records if str(r[rules.key]) in units]
         write_text(paths.answers(role), jsonl(kept))
         written[role] = len(kept)

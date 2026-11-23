@@ -77,6 +77,7 @@ class Option(_Strict):
     """Eine Antwort: das Label, was es bedeutet, und ein Beispiel aus der Ratsarbeit."""
 
     value: str  # das Label, wie es in den Antworten und in labels.csv steht
+    name: str = ""  # Anzeigename, wo das Label ein Kürzel ist („fast_gleich" -> „fast gleich, gleiche Sache")
     definition: str = ""
     example: str = ""
 
@@ -116,6 +117,9 @@ class Question(_Strict):
     # (etwa „unklar"). Binär: genau ein Label in ``positive``.
     positive: list[str] = []
     ignore: list[str] = []
+    # false: eine Uneinigkeit geht nicht an die Schlichtung, das Label bleibt dort leer (für
+    # Meta-Fragen wie „unsicher" bei Vorhaben 11, die nichts messen)
+    adjudicate: bool = True
 
     @property
     def labels(self) -> tuple[str, ...]:
@@ -252,6 +256,10 @@ class ProvisionalRules(_Strict):
     # Frage -> {Wert als JSON-Text -> Label}, etwa {"true" = "ja", "false" = "nein"}
     values: dict[str, dict[str, str]] = {}
     reason: list[str] = ["begruendung"]  # Felder der Begründung, nicht leere mit „ / " verbunden
+    # Eine Schlichtungsdatei in langer Form, eine Zeile je strittiger Frage (Vorhaben 11): das Feld
+    # mit der Frage und das mit der Antwort. Leer: eine Zeile je Einheit wie bei den Kodierern.
+    adjudication_question: str = ""
+    adjudication_value: str = ""
 
 
 class Codebook(_Strict):
