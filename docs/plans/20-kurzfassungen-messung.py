@@ -1197,6 +1197,8 @@ def zeige_treue(
             + f"; je Unterart unbelegt: {dict(sorted(bad_art.items()))}"
         )
         mean_n = statistics.mean(len(c.angaben) for c in present)
+        persons = sum(any(a.art == "person" for a in c.angaben) for c in present)
+        print(f"  Kurzfassungen mit Person nach Anrede (gegen Regel 5): {persons}")
         print(
             f"  Angaben je Kurzfassung im Mittel {mean_n:.1f}; ohne jede Angabe {sum(not c.angaben for c in present)}"
         )
@@ -1268,6 +1270,90 @@ def zeige_treue(
     print(
         f"  beide bestanden {pairs[(True, True)]}, nur {a} {pairs[(True, False)]}, nur {b} {pairs[(False, True)]}, keines {pairs[(False, False)]}"
     )
+
+
+# Nachträglich, nach der Durchsicht (§ 3.2), nicht Teil der Festlegung: Klasse e in Fassung 2. Ein
+# seltenes Wort bleibt nur beanstandet, wenn es keine Endung eines Abstraktums trägt und sich nicht
+# in Wörter des Korpus zerlegen lässt; bei Bindestrichen zählt jeder Teil für sich. An dieser
+# Stichprobe ist das explorativ (die Regel ist an ihren Fehlalarmen entstanden); bestätigen kann
+# sie nur eine frische Stichprobe (§ 5.2).
+ABSTRAKTUM = re.compile(r"(ung|heit|keit|schaft|ität|ion|nis|tum|ismus)(en|e|s|es|n|ses|sen)?$")
+
+
+def bekannte_woerter(corpus_lower: pl.Series, mindestens: int = 3) -> frozenset[str]:
+    words = (
+        corpus_lower.str.extract_all(r"[a-zäöüß]{3,}").list.unique().explode().drop_nulls()
+    ).value_counts()
+    return frozenset(words.filter(pl.col(words.columns[1]) >= mindestens)[words.columns[0]])
+
+
+def zerlegbar(word: str, known: frozenset[str], depth: int = 0) -> bool:
+    w = word.lower()
+    if w in known and depth:
+        return True
+    if depth > 3:
+        return False
+    for i in range(3, len(w) - 2):
+        head, tail = w[:i], w[i:]
+        for link in ("", "s", "es", "n", "en"):
+            stem = head[: len(head) - len(link)] if link and head.endswith(link) else head
+            if (link and not head.endswith(link)) or len(stem) < 3 or stem not in known:
+                continue
+            if tail in known or zerlegbar(tail, known, depth + 1):
+                return True
+    return False
+
+
+def kategorie(a: Angabe, b: Belege, known: frozenset[str]) -> str:
+    """Warum Fassung 2 eine Beanstandung der Klasse e fallen lässt, oder ``bleibt``."""
+    if a.art != "selten":
+        return "bleibt"
+    parts = [p for p in a.text.split("-") if len(p) >= 4] if "-" in a.text else [a.text]
+    reasons = []
+    for part in parts:
+        if len(parts) > 1 and _stamm_in_text(part, b):
+            reasons.append("bindestrich_teil_belegt")
+        elif ABSTRAKTUM.search(part.lower()):
+            reasons.append("abstraktum")
+        elif part.lower() in known:
+            reasons.append("korpuswort")
+        elif zerlegbar(part, known):
+            reasons.append("zusammensetzung")
+        else:
+            return "bleibt"
+    return reasons[0]
+
+
+def bleibt_fassung2(a: Angabe, b: Belege, known: frozenset[str]) -> bool:
+    """Bleibt eine unbelegte Angabe nach Fassung 2 der Klasse e beanstandet?"""
+    return kategorie(a, b, known) == "bleibt"
+
+
+def zeige_fassung2(
+    checks: list[Pruefung], inputs: dict[str, Eingabe], known: frozenset[str]
+) -> None:
+    print("\n## Nachträglich, explorativ: Klasse e in Fassung 2 (nicht das Kriterium)")
+    for modell in MODELLE:
+        name = full_name(modell)
+        mine = [c for c in checks if c.modell == name and not c.leer]
+        if not mine:
+            continue
+        left = Counter()
+        why: Counter[str] = Counter()
+        ok = 0
+        no_e = 0
+        for c in mine:
+            b = belege(inputs[c.id].text)
+            why.update(kategorie(a, b, known) for a in c.unbelegt if a.art == "selten")
+            rest = [a for a in c.unbelegt if bleibt_fassung2(a, b, known)]
+            left.update(a.art for a in rest)
+            ok += not rest and not c.abgeschnitten
+            no_e += not [a for a in c.unbelegt if a.art != "selten"] and not c.abgeschnitten
+        print(
+            f"{name}: ohne Klasse e {no_e} von {len(mine)} ohne unbelegte Angabe; mit Klasse e in "
+            f"Fassung 2 {ok} von {len(mine)}; verbleibend je Unterart {dict(left)}"
+        )
+        print(f"  Beanstandungen der Klasse e nach Grund: {dict(why.most_common())}")
 
 
 def lies_laeufe() -> pl.DataFrame:
@@ -1371,6 +1457,19 @@ def zeige_durchsatz(runs: pl.DataFrame) -> dict[str, tuple[float, float]]:
         in_rate = r["prompt_tokens"].sum() / max(r["eingabe_s"].sum(), 1e-9)
         a, b = fit(r["eingabe_zeichen"].cast(pl.Float64).to_list(), per)
         models[name] = (a, b)
+        # Nachträglich: ollama meldet auch bei geladenem Modell je Aufruf eine „load_duration"
+        # (Median 0,28 s bei qwen, 0,39 s bei gemma); sie ist Wanduhr, die jeder Stapellauf zahlt.
+        # Die Gerade „Wanduhr warm" nimmt jeden Aufruf außer dem, der das Modell wirklich lud.
+        warm = r.filter(pl.col("laden") < 5.0)
+        wall = (warm["je_dokument"] + warm["laden"]).to_list()
+        a2, b2 = fit(warm["eingabe_zeichen"].cast(pl.Float64).to_list(), wall)
+        models[f"{name} (Wanduhr warm)"] = (a2, b2)
+        warm_line = (
+            f"  Wanduhr warm: Mittel {statistics.mean(wall):.2f} s, Median "
+            f"{statistics.median(wall):.2f} s; je Aufruf gemeldetes Laden Median "
+            f"{statistics.median(warm['laden'].to_list()):.2f} s; Gerade {a2:.2f} s + "
+            f"{1000 * b2:.3f} s je 1000 Zeichen"
+        )
         print(
             f"{name}: n {r.height}, je Dokument Mittel {statistics.mean(per):.2f} s, Median "
             f"{statistics.median(per):.2f} s, P90 {statistics.quantiles(per, n=10)[-1]:.2f} s; "
@@ -1379,6 +1478,7 @@ def zeige_durchsatz(runs: pl.DataFrame) -> dict[str, tuple[float, float]]:
             f"Zeichen je Eingabetoken {r['eingabe_zeichen'].sum() / r['prompt_tokens'].sum():.2f}; "
             f"Gerade: {a:.2f} s + {1000 * b:.3f} s je 1000 Zeichen"
         )
+        print(warm_line)
     return models
 
 
@@ -1589,8 +1689,11 @@ def vorgaenge_waehlen(frame: pl.DataFrame) -> tuple[list[list[str]], list[tuple[
         comps[root(doc)].append(doc)
     eligible = [sorted(c) for c in comps.values() if 2 <= len(c) <= 4]
     eligible.sort(key=lambda c: rank(SEED + 4, c[0]))
+    # die Hälfte aus Vorgängen mit drei oder vier Dokumenten, sonst wären es nur Paare (14, § 5.1)
+    longer = [c for c in eligible if len(c) >= 3][: VORGAENGE // 2]
+    pairs = [c for c in eligible if len(c) == 2][: VORGAENGE - len(longer)]
     nachtrag.sort(key=lambda p: rank(SEED + 5, f"{p[0]}|{p[1]}"))
-    return eligible[:VORGAENGE], nachtrag[:NEU_PAARE]
+    return longer + pairs, nachtrag[:NEU_PAARE]
 
 
 def cmd_vorgaenge(modell: str) -> int:
@@ -1774,6 +1877,7 @@ def cmd_alles(mit_perioden: bool) -> int:
     zeige_stichprobe(sample, inputs)
     checks, texts = treue(sample, inputs, lex)
     zeige_treue(sample, checks, texts, inputs)
+    zeige_fassung2(checks, inputs, bekannte_woerter(corpus_lower))
     runs = durchsatz(sample, inputs)
     models = zeige_durchsatz(runs)
     if mit_perioden and models:
