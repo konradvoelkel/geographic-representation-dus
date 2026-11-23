@@ -168,10 +168,11 @@ class Step:
     # bleibt es leer, und ein alter Stamp ohne das Feld bleibt damit gültig.
     extra: str = ""
     # Fundament F5: ein Schritt mit lokalem Modell läuft nur mit ``--models``, wie ein Netzschritt
-    # nur mit ``--online``; ohne Schalter kommt sein Ergebnis aus einem Paket. Der Wert ist die
-    # Kennung seiner Modelle (Name, Digest, Prompt-Version; ``georep.ml.base.model_stamp``) und
-    # wird erst gefragt, wenn der Schritt laufen darf, denn den Digest kennt nur der Server. Sie
-    # steht lesbar im Stamp, und eine andere macht den Schritt veraltet.
+    # nur mit ``--online``; ohne Schalter kommt sein Ergebnis aus einem Paket. Der Wert ist das
+    # Modell im Schritt (``georep.ml.base.ModelUse``): seine Kennung (Name, Digest, Prompt-Version,
+    # Optionen) wird erst gefragt, wenn der Schritt laufen darf, denn den Digest kennt nur der
+    # Server. Sie steht lesbar im Stamp samt den offenen Eingaben des Laufs; eine andere Kennung
+    # oder ein Teillauf macht den Schritt veraltet.
     models: ModelStamp | None = None
 
     @property
@@ -209,7 +210,7 @@ def expected_stamp(step: Step, settings: Settings) -> dict[str, object]:
         "code": __version__,
         "inputs": input_digests(step),
         "outputs": [p.name for p in step.outputs],
-    } | ({"models": step.models()} if step.models is not None else {})
+    } | ({"models": step.models.stamp()} if step.models is not None else {})
 
 
 def freshness(step: Step, settings: Settings) -> tuple[bool, str]:
@@ -252,9 +253,16 @@ def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -
         return (
             "Regeln des Abrufs geändert" if step.network else "Paketdateien oder Anzeige geändert"
         )
-    # F5: nur ein Schritt mit Modell hat den Schlüssel; jeder andere Stamp bleibt gültig.
-    if step.models is not None and stamped.get("models") != step.models():
-        return "Modell oder Prompt geändert"
+    # F5: nur ein Schritt mit Modell hat den Schlüssel; jeder andere Stamp bleibt gültig. Ein
+    # Teillauf (``limit``) ist nicht aktuell, auch wenn Modell und Prompt gleich blieben.
+    if step.models is not None:
+        found = stamped.get("models")
+        recorded = found if isinstance(found, dict) else {}
+        identity = step.models.identity()
+        if {key: recorded.get(key) for key in identity} != identity:
+            return "Modell oder Prompt geändert"
+        if recorded.get("open"):
+            return f"offen: {recorded['open']} Eingaben"
     if stamped.get("code") != __version__:
         return f"Code-Version {stamped.get('code')} -> {__version__}"
     stamped_inputs = stamped.get("inputs")

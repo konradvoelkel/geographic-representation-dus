@@ -1702,9 +1702,9 @@ class Settings(BaseSettings):
         denn es entscheidet, ob die Seite den Vergleich trägt.
         Option 07: ``bootstrap`` sagt, was kopiert wird, und ``report`` ist Anzeige; kein
         Parquet-Ergebnis hängt an einem der beiden.
-        Fundament F5: ``ml.base_url`` ist ein Ort, Timeout, Wiederholungen, ``keep_alive`` und
-        ``batch_size`` sind Laufzeit (ein Stapel kann die letzten Bits einer Einbettung ändern,
-        doch was im Modellcache liegt, wird nicht neu gerechnet).
+        Fundament F5: ``[ml]`` steht ganz draußen. Was davon ein Ergebnis bestimmt (Modell,
+        Optionen, Fenster), steht als Kennung im Stamp des Modellschritts, und ``limit`` als Zahl
+        der offenen Eingaben; der Rest ist Ort und Laufzeit.
         """
         payload = self.model_dump(
             mode="json",
@@ -1744,9 +1744,10 @@ class Settings(BaseSettings):
                 "period": {"label"},
                 "sources": {"opendata": {"districts_file"}},
                 "crosswalk": {"target_file"},
-                # Fundament F5: Ort und Laufzeit des Modellservers ändern kein Ergebnis; Modelle,
-                # Optionen und ``limit`` (wie ``pdf_limit``) zählen. Der Digest steht im Stamp.
-                "ml": {"base_url", "timeout_s", "retries", "backoff_s", "keep_alive", "batch_size"},
+                # Fundament F5: nichts aus ``[ml]``. Modell, Digest, Prompt-Version, Optionen und
+                # die offenen Eingaben eines Teillaufs stehen im Stamp des Modellschritts
+                # (``ModelUse``); hier ließen sie jeden Schritt neu laufen (Review 2026-11-23).
+                "ml": True,
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

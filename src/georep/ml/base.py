@@ -2,16 +2,18 @@
 
 Zwei Protokolle wie ``KeywordMatcher`` und ``PdfTextExtractor`` (docs/architecture.md, „Nähte"):
 ``Embedder`` macht aus Texten Vektoren, ``Generator`` aus einem Prompt einen Text. Beide nennen
-``name`` und ``digest``; zusammen mit einer Prompt-Version ist das die Kennung, die im Stamp eines
-Schritts steht (``model_stamp``) und den Cache adressiert (``georep.ml.cache``). Ein anderes Modell,
-ein neu gezogenes mit demselben Namen oder ein geänderter Prompt machen den Schritt damit veraltet.
+``name`` und ``digest``. ``ModelUse`` ist ein Modell in einem Schritt: mit der Prompt-Version und
+dem Schlüssel der Optionen ist das die Kennung, die im Stamp des Schritts steht (``Step.models``) und
+den Cache adressiert (``georep.ml.cache``); dazu hält sie, wie viele Eingaben der letzte Lauf offen
+ließ. Ein anderes Modell, ein neu gezogenes mit demselben Namen, ein geänderter Prompt oder ein
+Teillauf machen den Schritt damit veraltet.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from typing import Protocol
 
@@ -20,7 +22,6 @@ import numpy as np
 import numpy.typing as npt
 
 Vectors = npt.NDArray[np.float32]
-ModelStamp = Callable[[], dict[str, str]]
 
 
 @dataclass(frozen=True)
@@ -128,18 +129,68 @@ def full_name(name: str) -> str:
     return name if ":" in last else f"{name}:latest"
 
 
-def model_stamp(
-    model: Embedder | Generator, prompt: str, options: GenerationOptions | None = None
-) -> ModelStamp:
-    """Die Kennung für ``Step.models``: Modellname, Digest, Prompt-Version, bei Generatoren die Optionen.
+class ModelStamp(Protocol):
+    """Was ``Step.models`` vom Modell eines Schritts braucht: Kennung und Stamp.
 
-    Erst der Aufruf fragt den Digest ab (beim ollama-Backend über ``/api/tags``), also erst, wenn
-    der Schritt mit ``--models`` laufen darf; ``georep steps`` und ein Lauf ohne Schalter fragen
-    nichts.
+    ``identity`` ist, was den Schritt veraltet macht, wenn es sich ändert (Modell, Digest,
+    Prompt-Version, Optionen); ``stamp`` ist ``identity`` plus das Ergebnis des letzten Laufs
+    (``limit``, ``open``). Beide fragen den Server erst beim Aufruf.
     """
 
-    def stamp() -> dict[str, str]:
-        found = {"model": model.name, "digest": model.digest, "prompt": prompt}
-        return found | ({"options": options.key()} if options is not None else {})
+    def identity(self) -> dict[str, str]: ...
 
-    return stamp
+    def stamp(self) -> dict[str, object]: ...
+
+
+class ModelUse:
+    """Ein Modell in einem Schritt: die eine Quelle für Stamp, Cache-Schlüssel und offene Eingaben.
+
+    Der Schritt baut sie einmal (``EmbeddingUse``, ``GenerationUse``) und reicht dieselbe an
+    ``Step.models`` und an ``embed_texts`` oder ``generate_texts``; so können Kennung im Stamp und
+    Schlüssel im Cache nicht auseinanderlaufen. Der Stapellauf trägt mit ``record`` ein, wie viele
+    Eingaben offen blieben und unter welchem ``limit``; ``stamp`` schreibt beides in den Stamp, und
+    ``stamp_mismatch`` meldet einen Teillauf als „offen: n Eingaben" (Review 2026-11-23, Befund 3).
+    """
+
+    def __init__(self, model: Embedder | Generator, prompt: str, options_key: str = "") -> None:
+        self.model = model
+        self.prompt = prompt
+        self.options_key = options_key
+        self.limit = 0
+        self.open = 0
+
+    @property
+    def name(self) -> str:
+        return full_name(self.model.name)
+
+    def prompt_key(self) -> str:
+        """Die Prompt-Version im Cache-Schlüssel: mit dem Schlüssel der Optionen, wo es welche gibt."""
+        return f"{self.prompt}+{self.options_key}" if self.options_key else self.prompt
+
+    def identity(self) -> dict[str, str]:
+        found = {"model": self.name, "digest": self.model.digest, "prompt": self.prompt}
+        return found | ({"options": self.options_key} if self.options_key else {})
+
+    def stamp(self) -> dict[str, object]:
+        return {**self.identity(), "limit": self.limit, "open": self.open}
+
+    def record(self, *, open: int, limit: int) -> None:
+        self.open = open
+        self.limit = limit
+
+
+class EmbeddingUse(ModelUse):
+    """Ein Einbettungsmodell in einem Schritt; ``prompt`` sagt, wie der Text vorbereitet ist."""
+
+    def __init__(self, embedder: Embedder, prompt: str) -> None:
+        super().__init__(embedder, prompt)
+        self.embedder = embedder
+
+
+class GenerationUse(ModelUse):
+    """Ein Generator in einem Schritt, mit den Optionen, unter denen er rechnet."""
+
+    def __init__(self, generator: Generator, prompt: str, options: GenerationOptions) -> None:
+        super().__init__(generator, prompt, options.key())
+        self.generator = generator
+        self.options = options

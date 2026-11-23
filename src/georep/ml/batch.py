@@ -23,7 +23,7 @@ import numpy.typing as npt
 from loguru import logger
 
 from georep.errors import ModelError, SchemaError
-from georep.ml.base import Embedder, GenerationOptions, Generator, Vectors, full_name
+from georep.ml.base import EmbeddingUse, GenerationUse, Vectors, full_name
 from georep.ml.cache import CacheKey, ModelCache, decode_vectors, encode_vector, input_sha256
 
 
@@ -203,11 +203,10 @@ class Embedded:
 
 
 def embed_texts(
-    embedder: Embedder,
+    use: EmbeddingUse,
     cache: ModelCache,
     texts: Sequence[str],
     *,
-    prompt: str,
     batch_size: int = 32,
     limit: int = 0,
     progress: Callable[[Progress], None] | None = None,
@@ -215,11 +214,12 @@ def embed_texts(
 ) -> Embedded:
     """Einbettungen für ``texts`` aus dem Cache und, was fehlt, vom Modell.
 
-    ``prompt`` ist die Prompt-Version: bei Einbettungen sagt sie, wie der Text vorbereitet ist
-    (Präfix, Zuschnitt). Der Text selbst geht so an das Modell, wie er hier steht.
+    Die Prompt-Version von ``use`` sagt, wie der Text vorbereitet ist (Präfix, Zuschnitt); der Text
+    selbst geht so an das Modell, wie er hier steht. ``use`` erfährt danach, wie viel offen blieb.
     """
+    embedder = use.embedder
     _check_cache(cache, embedder.name)
-    key = CacheKey(full_name(embedder.name), embedder.digest, prompt)
+    key = CacheKey(use.name, embedder.digest, use.prompt_key())
     shas = [input_sha256(text) for text in texts]
 
     def compute(indices: Sequence[int]) -> list[bytes]:
@@ -232,10 +232,11 @@ def embed_texts(
         key,
         batch_size=batch_size,
         limit=limit,
-        label=embedder.name,
+        label=use.name,
         progress=progress,
         clock=clock,
     )
+    use.record(open=report.left, limit=limit)
     found = cache.get_many(key, sorted(set(shas)))
     present = np.asarray([sha in found for sha in shas], dtype=np.bool_)
     zero = bytes(4 * embedder.dimension)
@@ -252,12 +253,10 @@ class Generated:
 
 
 def generate_texts(
-    generator: Generator,
+    use: GenerationUse,
     cache: ModelCache,
     prompts: Sequence[str],
     *,
-    prompt: str,
-    options: GenerationOptions,
     system: str = "",
     limit: int = 0,
     progress: Callable[[Progress], None] | None = None,
@@ -266,10 +265,12 @@ def generate_texts(
     """Antworten auf ``prompts`` (je ein fertiger Prompt) mit gemeinsamer Systemnachricht.
 
     Die Eingabe im Schlüssel ist System und Prompt zusammen, die Prompt-Version im Schlüssel trägt
-    den Hash der Optionen: eine andere Ausgabelänge oder ein anderer Seed treffen nichts Altes.
+    den Hash der Optionen von ``use``: eine andere Ausgabelänge oder ein anderer Seed treffen nichts
+    Altes. ``use`` erfährt danach, wie viel offen blieb.
     """
+    generator, options = use.generator, use.options
     _check_cache(cache, generator.name)
-    key = CacheKey(full_name(generator.name), generator.digest, f"{prompt}+{options.key()}")
+    key = CacheKey(use.name, generator.digest, use.prompt_key())
     shas = [input_sha256(f"{system}\x00{text}") for text in prompts]
 
     def compute(indices: Sequence[int]) -> list[bytes]:
@@ -285,10 +286,11 @@ def generate_texts(
         key,
         batch_size=1,
         limit=limit,
-        label=generator.name,
+        label=use.name,
         progress=progress,
         clock=clock,
     )
+    use.record(open=report.left, limit=limit)
     found = cache.get_many(key, sorted(set(shas)))
     texts = [found[sha].decode("utf-8") if sha in found else None for sha in shas]
     return Generated(texts, report)

@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from georep.ml.base import EmbeddingUse
 from georep.ml.batch import embed_texts
 from georep.ml.cache import ModelCache
 from georep.ml.ollama import (
@@ -39,8 +40,9 @@ def test_the_configured_models_answer_and_the_cache_holds(tmp_path: Path) -> Non
     assert np.allclose(np.linalg.norm(vectors, axis=1), 1.0, atol=1e-3)
     assert len(embedder.digest) == 64
     with ModelCache(tmp_path, embedder.name) as cache:
-        first = embed_texts(embedder, cache, TEXTS, prompt="rauchtest")
-        again = embed_texts(embedder, cache, TEXTS, prompt="rauchtest")
+        use = EmbeddingUse(embedder, "rauchtest")
+        first = embed_texts(use, cache, TEXTS)
+        again = embed_texts(use, cache, TEXTS)
     assert (first.report.computed, again.report.computed) == (2, 0)
     assert np.allclose(first.vectors, vectors, atol=1e-4)
 

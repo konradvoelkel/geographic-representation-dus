@@ -38,22 +38,12 @@ def test_the_defaults_name_the_local_models_and_deterministic_options() -> None:
 @pytest.mark.parametrize(
     "block",
     [
-        '[ml]\nbase_url = "http://anderer-rechner:11434"\n',
+        '[ml]\nbase_url = "http://127.0.0.1:11434"\n',
         "[ml]\ntimeout_s = 30.0\n",
         "[ml]\nretries = 0\n",
         "[ml]\nbackoff_s = 0.5\n",
         '[ml]\nkeep_alive = "1h"\n',
         "[ml]\nbatch_size = 8\n",
-    ],
-)
-def test_place_and_running_values_stay_out_of_the_fingerprint(tmp_path: Path, block: str) -> None:
-    base = load_settings(cwd=Path("/nonexistent")).fingerprint()
-    assert _with(tmp_path, block) == base
-
-
-@pytest.mark.parametrize(
-    "block",
-    [
         "[ml]\nlimit = 500\n",
         '[ml.embedding]\nmodel = "nomic-embed-text"\n',
         "[ml.embedding]\nnum_ctx = 256\n",
@@ -65,9 +55,14 @@ def test_place_and_running_values_stay_out_of_the_fingerprint(tmp_path: Path, bl
         "[ml.generation]\nthink = true\n",
     ],
 )
-def test_models_and_options_change_the_fingerprint(tmp_path: Path, block: str) -> None:
+def test_no_ml_value_changes_the_global_fingerprint(tmp_path: Path, block: str) -> None:
+    """Befund 3 des Reviews: Modell, Optionen und ``limit`` stehen im Stamp des Modellschritts.
+
+    Im globalen Fingerprint ließen sie jeden Schritt neu laufen, auch die ohne Modell, und der
+    Merge von F5 hätte die ganze Kette einmal neu gerechnet.
+    """
     base = load_settings(cwd=Path("/nonexistent")).fingerprint()
-    assert _with(tmp_path, block) != base
+    assert _with(tmp_path, block) == base
 
 
 @pytest.mark.parametrize(

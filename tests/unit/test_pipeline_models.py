@@ -17,18 +17,41 @@ from georep.settings import Settings, load_settings
 IDENTITY = {"model": "fake-embed:latest", "digest": "e" * 64, "prompt": "dok-1"}
 
 
+class Use:
+    """Ein ``ModelStamp`` als Tabelle: ``identity`` zählt die Fragen, ``open`` setzt der Lauf."""
+
+    def __init__(
+        self, identity: Callable[[], dict[str, str]], asked: list[int] | None = None
+    ) -> None:
+        self._identity = identity
+        self.asked = [] if asked is None else asked
+        self.limit = 0
+        self.open = 0
+
+    def identity(self) -> dict[str, str]:
+        self.asked.append(1)
+        return self._identity()
+
+    def stamp(self) -> dict[str, object]:
+        return {**self.identity(), "limit": self.limit, "open": self.open}
+
+
 def _model_step(
-    out: Path, identity: dict[str, str], asked: list[int], *, name: str = "modell"
+    out: Path,
+    identity: dict[str, str],
+    asked: list[int],
+    *,
+    name: str = "modell",
+    leaves_open: int = 0,
 ) -> Step:
+    use = Use(lambda: dict(identity), asked)
+
     def run() -> str:
         out.write_text("ergebnis", encoding="utf-8")
+        use.limit, use.open = (2 if leaves_open else 0), leaves_open
         return "1 Ergebnis"
 
-    def stamp() -> dict[str, str]:
-        asked.append(1)
-        return dict(identity)
-
-    return Step(name, (), (out,), run, models=stamp)
+    return Step(name, (), (out,), run, models=use)
 
 
 @pytest.fixture
@@ -49,8 +72,21 @@ def test_with_the_switch_it_runs_and_stamps_the_model(tmp_path: Path, settings: 
     step = _model_step(tmp_path / "out.txt", IDENTITY, [])
     assert run_step(step, settings, models=True).status == "ausgeführt"
     stamp = json.loads(step.stamp_path.read_text(encoding="utf-8"))
-    assert stamp["models"] == IDENTITY
+    assert stamp["models"] == IDENTITY | {"limit": 0, "open": 0}
     assert run_step(step, settings, models=True).reason == "aktuell"
+
+
+def test_a_partial_run_is_not_current(tmp_path: Path, settings: Settings) -> None:
+    """Befund 3 des Reviews: ein Lauf mit ``limit`` ließ Eingaben offen und galt danach als aktuell."""
+    out = tmp_path / "out.txt"
+    partial = _model_step(out, IDENTITY, [], leaves_open=3)
+    run_step(partial, settings, models=True)
+    stamp = json.loads(partial.stamp_path.read_text(encoding="utf-8"))
+    assert stamp["models"]["open"] == 3 and stamp["models"]["limit"] == 2
+    assert freshness(partial, settings) == (False, "offen: 3 Eingaben")
+    complete = _model_step(out, IDENTITY, [])
+    assert run_step(complete, settings, models=True).reason.startswith("offen: 3 Eingaben")
+    assert freshness(complete, settings) == (True, "aktuell")
 
 
 def test_another_digest_or_prompt_makes_the_step_stale(tmp_path: Path, settings: Settings) -> None:
@@ -93,7 +129,7 @@ def project(tmp_path: Path, mini_root: Path, monkeypatch: pytest.MonkeyPatch) ->
 
 
 def _only_model_steps(
-    monkeypatch: pytest.MonkeyPatch, stamp: Callable[[], dict[str, str]], seen: list[Settings]
+    monkeypatch: pytest.MonkeyPatch, identity: Callable[[], dict[str, str]], seen: list[Settings]
 ) -> None:
     """``build_steps`` der CLI liefert nur einen Modellschritt; ``seen`` hält die Settings fest."""
 
@@ -105,7 +141,7 @@ def _only_model_steps(
             out.write_text("x", encoding="utf-8")
             return "1 Ergebnis"
 
-        return [Step("modell", (), (out,), run, models=stamp)]
+        return [Step("modell", (), (out,), run, models=Use(identity))]
 
     monkeypatch.setattr(cli, "build_steps", build)
 

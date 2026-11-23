@@ -136,6 +136,8 @@ class FakeGenerator:
         return fake_answer(system, prompt)
 
 
+FAKE_URL = "http://ollama.test"  # nie ein echter Server: FakeOllama ist der Transport
+
 FAKE_MODELS: dict[str, dict[str, Any]] = {
     "fake-embed:latest": {"digest": "e" * 64, "capabilities": ["embedding"], "size": 1000},
     "fake-chat:latest": {
@@ -160,7 +162,7 @@ class FakeOllama:
         self,
         models: dict[str, dict[str, Any]] | None = None,
         *,
-        base_url: str = "http://ollama.test",
+        base_url: str = FAKE_URL,
         dimension: int = 8,
         down: bool = False,
         failures: Sequence[int] = (),

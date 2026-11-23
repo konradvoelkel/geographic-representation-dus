@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from georep.errors import ModelError, SchemaError
-from georep.ml.base import GenerationOptions
+from georep.ml.base import EmbeddingUse, GenerationOptions, GenerationUse
 from georep.ml.batch import (
     BatchReport,
     Progress,
@@ -131,10 +131,11 @@ def test_progress_log_speaks_at_most_every_so_many_seconds() -> None:
 
 def test_embed_texts_returns_vectors_in_input_order_and_reuses_the_cache(tmp_path: Path) -> None:
     embedder = FakeEmbedder(dimension=4)
+    use = EmbeddingUse(embedder, "dok-1")
     texts = ["eins", "zwei", "eins", "drei"]
     with ModelCache(tmp_path, embedder.name) as cache:
-        first = embed_texts(embedder, cache, texts, prompt="dok-1", batch_size=2)
-        again = embed_texts(embedder, cache, texts, prompt="dok-1", batch_size=2)
+        first = embed_texts(use, cache, texts, batch_size=2)
+        again = embed_texts(use, cache, texts, batch_size=2)
     assert first.present.all() and first.vectors.shape == (4, 4)
     assert np.allclose(first.vectors[2], fake_vector("eins", 4), atol=1e-7)
     assert np.array_equal(first.vectors, again.vectors)
@@ -142,55 +143,50 @@ def test_embed_texts_returns_vectors_in_input_order_and_reuses_the_cache(tmp_pat
     assert (again.report.cached, again.report.computed) == (3, 0)
 
 
-def test_embed_texts_with_limit_marks_what_is_missing(tmp_path: Path) -> None:
+def test_embed_texts_with_limit_marks_what_is_missing_and_tells_the_use(tmp_path: Path) -> None:
     embedder = FakeEmbedder(dimension=4)
+    use = EmbeddingUse(embedder, "dok-1")
     with ModelCache(tmp_path, embedder.name) as cache:
-        partial = embed_texts(embedder, cache, ["a", "b", "c"], prompt="dok-1", limit=2)
+        partial = embed_texts(use, cache, ["a", "b", "c"], limit=2)
+        assert (use.open, use.limit) == (1, 2)
+        embed_texts(use, cache, ["a", "b", "c"])
     assert partial.present.tolist() == [True, True, False]
     assert not partial.vectors[2].any() and partial.report.left == 1
+    # Der zweite Lauf ohne Grenze schließt ab: nichts mehr offen.
+    assert (use.open, use.limit) == (0, 0)
 
 
 def test_embed_texts_refuses_the_cache_of_another_model(tmp_path: Path) -> None:
+    use = EmbeddingUse(FakeEmbedder(), "dok-1")
     with ModelCache(tmp_path, "anderes-modell") as cache, pytest.raises(SchemaError, match="Datei"):
-        embed_texts(FakeEmbedder(), cache, ["a"], prompt="dok-1")
+        embed_texts(use, cache, ["a"])
 
 
 def test_generate_texts_keys_on_system_prompt_and_options(tmp_path: Path) -> None:
     generator = FakeGenerator()
     options = GenerationOptions(num_predict=120)
+    use = GenerationUse(generator, "kurz-1", options)
+    shorter = GenerationUse(generator, "kurz-1", GenerationOptions(num_predict=60))
     with ModelCache(tmp_path, generator.name) as cache:
-        first = generate_texts(
-            generator, cache, ["Text A", "Text B"], system="S", prompt="kurz-1", options=options
-        )
+        first = generate_texts(use, cache, ["Text A", "Text B"], system="S")
         assert first.texts == [fake_answer("S", "Text A"), fake_answer("S", "Text B")]
         # Anderes System oder andere Optionen: neue Einträge, kein Treffer.
-        generate_texts(generator, cache, ["Text A"], system="T", prompt="kurz-1", options=options)
-        generate_texts(
-            generator,
-            cache,
-            ["Text A"],
-            system="S",
-            prompt="kurz-1",
-            options=GenerationOptions(num_predict=60),
-        )
-        again = generate_texts(
-            generator, cache, ["Text A", "Text B"], system="S", prompt="kurz-1", options=options
-        )
+        generate_texts(use, cache, ["Text A"], system="T")
+        generate_texts(shorter, cache, ["Text A"], system="S")
+        again = generate_texts(use, cache, ["Text A", "Text B"], system="S")
         prompts = {s.prompt for s in cache.stats()}
     assert len(generator.calls) == 4 and again.report.computed == 0
-    assert prompts == {
-        f"kurz-1+{options.key()}",
-        f"kurz-1+{GenerationOptions(num_predict=60).key()}",
-    }
+    assert prompts == {use.prompt_key(), shorter.prompt_key()}
+    assert use.prompt_key() == f"kurz-1+{options.key()}"
 
 
 def test_generate_texts_with_limit_leaves_none(tmp_path: Path) -> None:
     generator = FakeGenerator()
+    use = GenerationUse(generator, "kurz-1", GenerationOptions())
     with ModelCache(tmp_path, generator.name) as cache:
-        partial = generate_texts(
-            generator, cache, ["a", "b"], prompt="kurz-1", options=GenerationOptions(), limit=1
-        )
+        partial = generate_texts(use, cache, ["a", "b"], limit=1)
     assert partial.texts[0] is not None and partial.texts[1] is None
+    assert (use.open, use.limit) == (1, 1)
 
 
 @pytest.mark.parametrize(

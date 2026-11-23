@@ -7,7 +7,7 @@ import pytest
 import requests
 
 from georep.errors import ModelError
-from georep.ml.base import Embedder, GenerationOptions, Generator, full_name, model_stamp
+from georep.ml.base import Embedder, GenerationOptions, Generator, full_name
 from georep.ml.ollama import OllamaClient, OllamaEmbedder, OllamaGenerator
 from tests.fakes import FakeOllama, FakeSession, fake_answer, fake_vector, response
 
@@ -203,22 +203,6 @@ def test_loaded_lists_the_models_in_memory() -> None:
     client, _ = _client(FakeOllama(loaded=["fake-chat:latest"]))
     (running,) = client.loaded()
     assert running.name == "fake-chat:latest" and running.size_vram == 123_000_000
-
-
-def test_model_stamp_asks_the_server_only_when_called() -> None:
-    server = FakeOllama()
-    client, _ = _client(server)
-    generator = OllamaGenerator(client, "fake-chat", options=GenerationOptions(seed=3))
-    stamp = model_stamp(generator, "kurzfassung-1", generator.options)
-    assert server.requests == []
-    assert stamp() == {
-        "model": "fake-chat:latest",
-        "digest": "c" * 64,
-        "prompt": "kurzfassung-1",
-        "options": GenerationOptions(seed=3).key(),
-    }
-    stamp()
-    assert server.paths == ["/api/tags"]
 
 
 def test_options_key_changes_with_every_option() -> None:
