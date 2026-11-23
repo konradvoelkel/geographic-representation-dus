@@ -2,6 +2,21 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.18.0 (2026-11-23), OParl-Sitzungen, Beratungen und Personen
+
+- **Drei neue Netzschritte** `meetings`, `consultations` und `persons` (`docs/decisions.md`, Punkt 70;
+  Runbook `docs/runbook-sitzungen.md`): Sitzungen mit Tagesordnung und Ergebnis je Punkt, Beratungen,
+  die Paper und Tagesordnungspunkt verbinden, ohne die Paper neu abzurufen, und Personen mit ihren
+  Mitgliedschaften — ohne Telefon, E-Mail und Anschrift. Sie stehen hinter dem Schalter
+  `council.enabled` (Vorgabe aus); ein bloßes `georep fetch` nimmt sie nicht mit.
+- **Abrufe sind fortsetzbar und sicher**: jede Seite geht sofort in eine Teildatei, ein Fortschritt
+  hält die nächste Seite, die Löschungen und einen Schlüssel der Einstellungen; erst ein vollständiger
+  Abruf ersetzt die Ausgabe. Eine Probe mit `--max-pages` ist der Anfang des Abrufs, ein zweiter
+  gleichzeitiger Lauf hält an einer Sperre an, und `georep status` zeigt „Abruf unvollständig".
+- **`georep fetch --dry-run`** zeigt den Plan der Netzschritte.
+- Keine Zahl der Seite ändert sich; der Server füllt das Ergebnis je Tagesordnungspunkt, nie den
+  Beschlusstext (Stichprobe vom 2026-11-23).
+
 ## 0.17.0 (2026-11-23), Fundament der Vorverarbeitung: Register und Spannen
 
 - **Vorhaben tragen bei, statt den Kern zu ändern** (`docs/decisions.md`, Punkt 69; Plan

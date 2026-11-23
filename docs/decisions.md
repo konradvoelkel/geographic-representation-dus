@@ -2414,7 +2414,7 @@ auf `index.html` mit größerem Budget (das Budget ist eine Zusage an die Leser,
 Unterseiten ohne den Rahmen der Hauptseite, wie `vergleich.html` (eine zweite Kopie der Farben, die
 auseinanderläuft).
 
-## NN. Sitzungen, Beratungen und Personen sind drei Netzschritte, und der Server bestimmt, wie sie nachholen (Fundament F6, 2026-11-23)
+## 70. Sitzungen, Beratungen und Personen sind drei Netzschritte, und der Server bestimmt, wie sie nachholen (Fundament F6, 2026-11-23)
 
 Fundament F6 (`docs/plan-vorverarbeitung-2026-11.md`, § 7) holt, was die Vorhaben 26 bis 28 brauchen:
 Sitzungen mit Tagesordnung und Ergebnis, die Beratungen, die ein Paper mit ihnen verbinden, und

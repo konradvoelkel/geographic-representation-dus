@@ -1,10 +1,11 @@
 # Status
 
 **Vorverarbeitung 2026-11 läuft** (`docs/plan-vorverarbeitung-2026-11.md`, Stand je Vorhaben in
-`docs/plans/README.md`): am 2026-11-23 sind die Fundamente F2 und F3 auf `main` (`v0.17.0`,
-`docs/decisions.md`, Punkt 69: Register für Schritte, Tabellen und Unterseiten, Spannen); F1, F4,
-F5, F6 und die Messungen 11 bis 14 arbeiten auf eigenen Branches in Worktrees. Keine Zahl der
-Seite hat sich bewegt.
+`docs/plans/README.md`): am 2026-11-23 sind die Fundamente F2 und F3 (`v0.17.0`, Punkt 69) und F6 (`v0.18.0`, Punkt 70:
+OParl-Sitzungen, Beratungen, Personen, hinter einem Schalter) auf `main`; F1, F4 und F5 bessern nach
+ihren Reviews nach. Abgeschlossen sind die Messungen 11, 14, 15 und 22 (bauen), 12 (teils bauen,
+teils umbauen), 13 (verworfen); Stand je Vorhaben in `docs/plans/README.md`. Keine Zahl der Seite
+hat sich bewegt.
 
 Stand 2026-11-18, `main` auf `v0.16.0`: die Abhängigkeitsrunde vom 2026-11-15
 (Punkt 66; keine Zahl der Seite bewegt sich), pypdf 7.1.0 als Extraktor (Punkt 67; drei Datensätze
