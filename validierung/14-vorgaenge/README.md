@@ -10,4 +10,6 @@
   menschlicher Goldstandard (`docs/plan-vorverarbeitung-2026-11.md`, § 2.6).
 - Die Aufgaben mit Textausschnitten, die Antworten und die Rückmeldungen der Kodierer liegen nur lokal
   unter `/media/konrad/xtraspace/georep/messdaten/kodierung/14-vorgaenge/`.
-- Ergebnis: `docs/plans/14-vorgaenge.md`, § 4.1.
+- `labels-2.csv`: dasselbe für `stichprobe-2.csv` (zwei neue Kodier-Agenten, Schlichtung, 2026-11-23).
+- Ergebnis: `docs/plans/14-vorgaenge.md`, § 4.1 (Runde 1), § 4.2 (Bestätigung), § 5.1 (Rückfallregel an
+  beiden Stichproben, endgültiges Urteil).
