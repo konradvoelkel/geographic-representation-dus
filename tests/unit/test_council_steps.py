@@ -32,7 +32,14 @@ LAST = {"data": [], "pagination": {"elementsPerPage": 200}, "links": {}}
 
 @pytest.fixture(scope="module")
 def settings() -> Settings:
-    return load_settings(cwd=Path("/nonexistent"))
+    """Das Stadtprofil mit eingeschaltetem ``[council]``; die Vorgabe ist aus (Befund 6)."""
+    return enabled(load_settings(cwd=Path("/nonexistent")))
+
+
+def enabled(settings: Settings) -> Settings:
+    return settings.model_copy(
+        update={"council": settings.council.model_copy(update={"enabled": True})}
+    )
 
 
 def _layout(tmp_path: Path) -> Layout:
@@ -87,6 +94,17 @@ def test_the_defaults_name_no_endpoint_and_the_profiles_name_their_body() -> Non
         assert council.consultations_endpoint.endswith(f"/bodies/{body}/consultations")
         assert council.persons_endpoint.endswith(f"/bodies/{body}/people")  # nicht „persons"
         assert council.incremental == ("consultations",) and council.stop_when_older
+        assert council.enabled is False  # volle Abrufe sind Konrads Läufe (Plan, § 4 und § 7)
+
+
+def test_the_steps_wait_for_the_switch(tmp_path: Path) -> None:
+    """Review 2026-11-23, Befund 6: mit den Endpunkten im Profil standen die drei Schritte sofort
+    im Register, und ein bloßes ``georep fetch`` nahm sie mit."""
+    plain = load_settings(cwd=Path("/nonexistent"))
+    names = {s.name for s in build_steps(plain, _layout(tmp_path))}
+    assert not names & set(STEPS)
+    names = {s.name for s in build_steps(enabled(plain), _layout(tmp_path))}
+    assert names >= set(STEPS)
 
 
 def test_incremental_names_only_the_three_steps(tmp_path: Path) -> None:

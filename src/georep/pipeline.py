@@ -1047,8 +1047,9 @@ def build_steps(
         Step("papers", (), (layout.papers,), papers, network=True),
         # --- Option 04: eine Seite, rund eine halbe Sekunde; liefert die Abbildung URL zu Partei
         Step("organizations", (), (layout.organizations,), organizations, network=True),
-        # --- Fundament F6: Sitzungen mit Tagesordnung, Beratungen, Personen; ohne Endpunkt im
-        # Profil fehlt der Schritt (georep.council, docs/runbook-sitzungen.md)
+        # --- Fundament F6: Sitzungen mit Tagesordnung, Beratungen, Personen; ohne den Schalter
+        # ``council.enabled`` oder ohne Endpunkt im Profil fehlt der Schritt (georep.council,
+        # docs/runbook-sitzungen.md)
         *(
             [
                 Step(
@@ -1060,7 +1061,7 @@ def build_steps(
                     network=True,
                 )
             ]
-            if council.meetings_endpoint
+            if council.enabled and council.meetings_endpoint
             else []
         ),
         *(
@@ -1074,7 +1075,7 @@ def build_steps(
                     network=True,
                 )
             ]
-            if council.consultations_endpoint
+            if council.enabled and council.consultations_endpoint
             else []
         ),
         *(
@@ -1088,7 +1089,7 @@ def build_steps(
                     network=True,
                 )
             ]
-            if council.persons_endpoint
+            if council.enabled and council.persons_endpoint
             else []
         ),
         Step("pdfs", (layout.papers,), (layout.pdf_manifest,), pdfs, network=True),

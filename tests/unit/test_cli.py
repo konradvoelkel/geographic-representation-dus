@@ -501,6 +501,13 @@ def test_fetch_dry_run_plans_the_council_steps_without_a_session(
         raise AssertionError("Trockenlauf mit Netz")
 
     monkeypatch.setattr("georep.pipeline.cached_session", no_session)
+    assert main(["fetch", "--dry-run"]) == 0  # ohne Schalter nimmt ein bloßes fetch sie nicht mit
+    out = capsys.readouterr().out
+    assert not {"meetings", "consultations", "persons"} & {
+        line.split()[0] for line in out.splitlines()
+    }
+    with (project / "settings.toml").open("a", encoding="utf-8") as settings_file:
+        settings_file.write("council.enabled = true\n")
     assert main(["fetch", "--dry-run", "meetings", "consultations", "persons"]) == 0
     out = capsys.readouterr().out
     assert out.rstrip().endswith("3 geplant") and "Netz aus" not in out

@@ -11,12 +11,6 @@
                -> papers.jsonl
   organizations <- (nichts) [Netz]
                -> organizations.json
-  meetings     <- (nichts) [Netz]
-               -> meetings.jsonl, agenda_items.jsonl
-  consultations <- (nichts) [Netz]
-               -> consultations.jsonl
-  persons      <- (nichts) [Netz]
-               -> persons.jsonl, memberships.jsonl
   pdfs         <- papers.jsonl [Netz]
                -> manifest.jsonl
   streets_osm  <- stimmbezirke.geojson [Netz]

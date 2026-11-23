@@ -1437,6 +1437,10 @@ class Council(_Strict):
     ``modified_since`` nachholen (docs/runbook-sitzungen.md, § 2).
     """
 
+    # Review 2026-11-23, Befund 6: volle Abrufe sind Konrads Läufe (Plan 2026-11, § 4), und ein
+    # neuer Schritt steht hinter einem Schalter, der zunächst aus ist (§ 7). Ohne ihn fehlen die
+    # drei Schritte, und ein bloßes ``georep fetch`` nimmt sie nicht mit.
+    enabled: bool = False
     meetings_endpoint: str = ""
     consultations_endpoint: str = ""
     persons_endpoint: str = ""

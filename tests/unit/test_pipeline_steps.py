@@ -65,7 +65,10 @@ VERSIONS = {
 @pytest.fixture
 def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
     layout = _layout(tmp_path)
-    return {s.name: s.schema_version for s in build_steps(default_settings, layout)}
+    # Fundament F6: die drei Netzschritte stehen nur mit ``council.enabled`` im Register
+    council = default_settings.council.model_copy(update={"enabled": True})
+    settings = default_settings.model_copy(update={"council": council})
+    return {s.name: s.schema_version for s in build_steps(settings, layout)}
 
 
 def test_each_step_carries_the_schema_version_of_its_module(steps: dict[str, int]) -> None:

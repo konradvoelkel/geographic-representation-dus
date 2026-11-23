@@ -213,6 +213,7 @@ party_ratio = [0.5, 0.8, 1.25, 2.0]            # Verhaeltnis zum Mittel, log-sym
 
 # --- Fundament F6: OParl Sitzungen und Personen (docs/runbook-sitzungen.md) -------------------------
 [council]                      # drei Listen des OParl-Bodys, je ein Netzschritt; Ausgaben unter raw/ (meetings, agenda_items, consultations, persons, memberships als JSONL)
+enabled = false                # Schalter der drei Schritte: aus, bis Konrad den vollen Abruf startet (docs/runbook-sitzungen.md, § 5; in settings.local.toml oder als GEOREP_COUNCIL__ENABLED=true). Ohne ihn fehlen die Schritte, auch in einem bloßen georep fetch
 meetings_endpoint = ""         # Liste der Sitzungen mit eingebetteter Tagesordnung (Schritt meetings); leer = der Schritt fehlt. Stadtneutral leer, das Profil nennt den Endpunkt
 consultations_endpoint = ""    # Liste der Beratungen (Schritt consultations): Paper, Sitzung, Tagesordnungspunkt, Rolle. Damit verbindet sich ein Paper mit seinem Ergebnis, ohne die Paper neu abzurufen
 persons_endpoint = ""          # Liste der Personen mit eingebetteten Mitgliedschaften (Schritt persons); Kontaktdaten liest das Modell nicht. Die Liste memberships braucht es nicht, ihre Objekte sind dieselben
