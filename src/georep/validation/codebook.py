@@ -124,6 +124,8 @@ class Question(_Strict):
     # ignore entfernt ihn ganz (pypdf setzt ihn verschieden: „66 - Amt" und „66-Amt", Vorhaben 11
     # und 12). Gespeichert wird die Antwort selbst; nur der Vergleich sieht den Schlüssel.
     whitespace: Literal["squeeze", "ignore"] = "squeeze"
+    # Eine Liste als Menge: die Einträge sortiert, die Folge zählt nicht (Mehrfachauswahl, Vorhaben 15)
+    unordered: bool = False
 
     @property
     def labels(self) -> tuple[str, ...]:
@@ -192,6 +194,8 @@ class Question(_Strict):
             return (
                 "null"  # ein leerer Text ist „nichts da", wie null (Vorhaben 12: „leer bei keine")
             )
+        if self.unordered and isinstance(value, list):
+            value = sorted(_squeeze(value), key=lambda item: json.dumps(item, sort_keys=True))
         return json.dumps(_squeeze(value), ensure_ascii=False, sort_keys=True)
 
 

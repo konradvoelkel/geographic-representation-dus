@@ -1,0 +1,52 @@
+{
+  "vorhaben": "15-funktion-f4",
+  "codebuch_version": "2026-11-23.1",
+  "profil": "duesseldorf, duesseldorf-2014, duesseldorf-2025",
+  "einheit": "document",
+  "uebernommen": "validierung/15-funktion/stichprobe.csv vom Mess-Agenten; Schichtgrößen aus dem Messdokument § 4",
+  "einheiten": 45418,
+  "groesse": 150,
+  "seed": "15",
+  "schicht": "schicht",
+  "aufteilung": "feste Zahl je Schicht (Messdokument)",
+  "selbstgewichtend": false,
+  "schichten": {
+    "abweichung_ab": {
+      "grundgesamtheit": 257,
+      "stichprobe": 10
+    },
+    "gemeinsam": {
+      "grundgesamtheit": 2734,
+      "stichprobe": 20
+    },
+    "information": {
+      "grundgesamtheit": 5968,
+      "stichprobe": 15
+    },
+    "initiative": {
+      "grundgesamtheit": 6021,
+      "stichprobe": 20
+    },
+    "kontrolle": {
+      "grundgesamtheit": 5490,
+      "stichprobe": 20
+    },
+    "rest": {
+      "grundgesamtheit": 1231,
+      "stichprobe": 15
+    },
+    "sammelart": {
+      "grundgesamtheit": 15404,
+      "stichprobe": 15
+    },
+    "symbol": {
+      "grundgesamtheit": 39,
+      "stichprobe": 15
+    },
+    "vollzug": {
+      "grundgesamtheit": 8274,
+      "stichprobe": 20
+    }
+  },
+  "gezogen": "2026-11-23"
+}

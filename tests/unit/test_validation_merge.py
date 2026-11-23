@@ -363,3 +363,63 @@ def test_markings_agree_by_text_and_occurrence() -> None:
     result = mark_agreement(question, first, second)
     assert (result.marks_common, result.marks_single) == (3, 1)
     assert result.alpha() == pytest.approx(6 / 7) and result.agreed == 1
+
+
+def test_an_adjudication_can_name_who_decided(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Vorhaben 12: vier Entscheide traf der Auswerter nach den Regeln des Schlichters, nicht der
+    Schlichter; ``herkunft`` in der Antwortzeile sagt das, README und guete.json zählen es."""
+    ids = _ids(project)
+    fill(project, "A", lambda unit: "ja")
+    fill(project, "B", lambda unit: "nein" if unit in ids[:2] else "ja")
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    path = project / "lokal" / PROJECT / "schlichtung" / "antworten.jsonl"
+    rows = _lines(path)
+    for row in rows:
+        row["bv"] = "ja"
+        if row["id"] == ids[0]:
+            row["herkunft"] = "Auswerter nach den Regeln des Schlichters, Runde 1"
+    path.write_text(
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8"
+    )
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    folder = project / "repo" / "validierung" / PROJECT
+    readme = (folder / "README.md").read_text(encoding="utf-8")
+    assert "davon 1 Einheit: Auswerter nach den Regeln des Schlichters, Runde 1" in readme
+    quality = json.loads((folder / "guete.json").read_text(encoding="utf-8"))
+    assert quality["schlichtung_herkunft"] == {
+        "Auswerter nach den Regeln des Schlichters, Runde 1": 1
+    }
+
+
+def test_an_adjudication_of_an_agreed_unit_is_passed_over(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Vorhaben 12: die vorläufige Schlichtung entschied drei Einheiten, die nach F4 einig sind
+    (ein leerer Text gilt wie null); sie stören nicht, sie werden genannt."""
+    ids = _ids(project)
+    fill(project, "A", lambda unit: "ja")
+    fill(project, "B", lambda unit: "nein" if unit == ids[0] else "ja")
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    path = project / "lokal" / PROJECT / "schlichtung" / "antworten.jsonl"
+    rows = [r | {"bv": "ja"} for r in _lines(path)]
+    rows.append({"id": ids[1], "codebuch_version": "1", "bv": "ja", "begruendung": "überzählig"})
+    path.write_text(
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8"
+    )
+    capsys.readouterr()
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    assert "1 Schlichtungen ohne Uneinigkeit übergangen" in capsys.readouterr().out
+
+
+def test_an_unordered_list_compares_as_a_set() -> None:
+    """Vorhaben 15: urheber ist eine Mehrfachauswahl; die Folge der Einträge zählt nicht."""
+    question = Question(id="urheber", question="?", scale="open", unordered=True)
+    assert (
+        question.canonical(["SPD", "CDU"]) == question.canonical(["CDU", "SPD"]) == '["CDU", "SPD"]'
+    )
+    assert (
+        Question(id="liste", question="?", scale="open").canonical(["SPD", "CDU"])
+        == '["SPD", "CDU"]'
+    )

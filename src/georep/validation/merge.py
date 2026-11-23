@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -351,8 +352,13 @@ def readme(
     model: str,
     today: dt.date,
     min_alpha: float,
+    origins: Mapping[str, int] | None = None,
 ) -> str:
     stratum = meta.get("schicht") or ""
+    other = "".join(
+        f"; davon {n} Einheit{'en' if n != 1 else ''}: {_cell(who)}"
+        for who, n in (origins or {}).items()
+    )
     rows = [
         f"| `{_cell(r.question)}` | {r.scale} | {r.n} | {r.agreed} von {r.both} "
         f"({format_percent(r.share)}) | {format_number(r.kappa)} | {format_number(r.alpha())} | "
@@ -374,7 +380,7 @@ def readme(
             + ("selbstgewichtend" if meta.get("selbstgewichtend") else "gewichtet mit N_h/n_h")
             + " (`stichprobe.csv`, `stichprobe.json`).",
             f"- **Kodierer**: zwei KI-Kodierer, Modell `{_cell(model)}`, unabhängig voneinander und "
-            f"ohne die Ausgabe des geprüften Verfahrens; {_adjudicated(disputed)}. **Kein "
+            f"ohne die Ausgabe des geprüften Verfahrens; {_adjudicated(disputed)}{other}. **Kein "
             "menschlicher Goldstandard**: die Labels messen Übereinstimmung mit einem "
             "stärkeren Modell, nicht mit Menschen.",
             f"- **Datum**: {today.isoformat()}.",
@@ -408,6 +414,7 @@ class MergeReport:
     open: int  # Einheiten, die die Schlichtung noch nicht entschieden hat
     labels: Path | None  # None, solange die Schlichtung offen ist
     adjudication: Path | None
+    passed: int = 0  # Schlichtungen von Einheiten, die nach F4 einig sind
 
     def lines(self) -> list[str]:
         out = [
@@ -416,6 +423,8 @@ class MergeReport:
             for r in self.results
         ]
         out.append(f"{self.disputed} Uneinigkeiten")
+        if self.passed:
+            out.append(f"{self.passed} Schlichtungen ohne Uneinigkeit übergangen")
         if self.labels is not None:
             return [*out, f"Labels -> {self.labels}"]
         return [*out, f"Schlichtung offen: {self.open} Einheiten -> {self.adjudication}"]
@@ -479,13 +488,22 @@ def read_adjudication(
     codebook: Codebook,
     disputes: Mapping[str, list[str]],
     agreed: Mapping[str, Values],
-) -> dict[str, Values]:
-    """Die Endantworten der strittigen Einheiten: Einigkeit plus Schlichtung, Bedingungen in Folge."""
+    known: frozenset[str] = frozenset(),
+) -> tuple[dict[str, Values], dict[str, str], list[str]]:
+    """Die Endantworten der strittigen Einheiten: Einigkeit plus Schlichtung, Bedingungen in Folge.
+
+    Dazu je Einheit die ``herkunft`` der Antwortzeile, wo eine dasteht: wer entschied, wenn es
+    nicht der Schlichter war (Vorhaben 12: der Auswerter nach den Regeln des Schlichters)."""
     problems = _Problems()
     seen: set[str] = set()
     final: dict[str, Values] = {}
+    origins: dict[str, str] = {}  # Einheit -> wer entschied, wo nicht der Schlichter
+    passed: list[str] = []
     for record in _records(path, problems):
         unit = record.get("id")
+        if isinstance(unit, str) and unit in known and unit not in disputes:
+            passed.append(unit)  # einig nach F4 (etwa ein leerer Text wie null): übergangen
+            continue
         if not isinstance(unit, str) or unit not in disputes:
             problems.note("unbekannte id", repr(unit))
             continue
@@ -500,10 +518,12 @@ def read_adjudication(
             )
             continue
         final[unit] = _fill(codebook, record, disputes[unit], agreed[unit], problems, unit)
+        if isinstance(record.get("herkunft"), str) and record["herkunft"]:
+            origins[unit] = record["herkunft"]
     for unit in sorted(set(disputes) - seen):
         problems.note("fehlt", unit)
     problems.raise_if_any(path)
-    return final
+    return final, origins, passed
 
 
 def merge_project(
@@ -537,6 +557,8 @@ def merge_project(
     if force:
         reset_adjudication(paths)
     # Fragen ohne Schlichtung: das gemeinsame Label, bei Uneinigkeit keines
+    origins: dict[str, str] = {}
+    passed: list[str] = []
     final: dict[str, Values] = {
         unit: {
             q: value if q in adjudicable or same(codebook, q, value, b[unit].values[q]) else None
@@ -563,12 +585,17 @@ def merge_project(
                 results, count, len(disputes) - started, None, paths.role(ADJUDICATION)
             )
         agreed = {u: {q: v for q, v in final[u].items() if q not in disputes[u]} for u in disputes}
-        final |= read_adjudication(paths.answers(ADJUDICATION), codebook, disputes, agreed)
+        decided, origins, passed = read_adjudication(
+            paths.answers(ADJUDICATION), codebook, disputes, agreed, frozenset(ids)
+        )
+        final |= decided
     write_labels(paths, codebook, ids, a, b, disputes, final)
+    by_origin = dict(sorted(Counter(origins.values()).items()))
     meta = sample_meta(paths)
     min_alpha = settings.validation.min_alpha
     write_text(
-        paths.readme, readme(codebook, meta, results, len(ids), count, model, today, min_alpha)
+        paths.readme,
+        readme(codebook, meta, results, len(ids), count, model, today, min_alpha, by_origin),
     )
     write_json(
         paths.quality,
@@ -580,6 +607,7 @@ def merge_project(
             "datum": today.isoformat(),
             "einheiten": len(ids),
             "uneinig": count,
+            "schlichtung_herkunft": by_origin,
             "alpha_mindestens": min_alpha,
             "fragen": {
                 r.question: r.as_json() | {"alpha_genuegt": alpha_suffices(r, min_alpha)}
@@ -589,7 +617,7 @@ def merge_project(
             f"{UNIT_PLURAL[codebook.unit]}, nicht von Menschen",
         },
     )
-    return MergeReport(results, count, 0, paths.labels, None)
+    return MergeReport(results, count, 0, paths.labels, None, len(passed))
 
 
 def write_labels(

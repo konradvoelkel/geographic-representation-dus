@@ -1,0 +1,114 @@
+{
+  "vorhaben": "15-funktion-f4",
+  "codebuch_version": "2026-11-23.1",
+  "einheit": "document",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-23",
+  "einheiten": 150,
+  "uneinig": 3,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "funktion": {
+      "n": 150,
+      "beide": 150,
+      "einig": 149,
+      "anteil": 0.9933333333333333,
+      "anteil_wilson95": [
+        0.9632071602251817,
+        0.9988221986649826
+      ],
+      "cohen_kappa": 0.9915989918790254,
+      "krippendorff_alpha_nominal": 0.9916267607605925,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9916267607605925,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "kontrolle": 39,
+        "information": 24,
+        "initiative": 37,
+        "symbol": 19,
+        "vollzug": 29,
+        "rest": 0,
+        "unklar": 2
+      },
+      "treffer": null
+    },
+    "urheber": {
+      "n": 150,
+      "beide": 150,
+      "einig": 150,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9750297556319235,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "[\"AfD\"]": 1,
+        "[\"CDU\", \"Die_Linke\", \"FDP\", \"GRUENE\", \"PARTEI\", \"SPD+VOLT\"]": 1,
+        "[\"CDU\", \"Die_Linke\", \"FDP\", \"GRUENE\", \"SPD+VOLT\"]": 1,
+        "[\"CDU\", \"FDP\", \"GRUENE\", \"SPD\", \"andere\"]": 1,
+        "[\"CDU\", \"FDP\", \"GRUENE\", \"SPD\"]": 1,
+        "[\"CDU\", \"FDP\", \"GRUENE\", \"SPD+VOLT\"]": 2,
+        "[\"CDU\", \"FDP\"]": 3,
+        "[\"CDU\", \"GRUENE\", \"SPD+VOLT\"]": 2,
+        "[\"CDU\", \"GRUENE\"]": 12,
+        "[\"CDU\", \"SPD+VOLT\"]": 2,
+        "[\"CDU\"]": 13,
+        "[\"Die_Linke\", \"GRUENE\", \"SPD+VOLT\"]": 1,
+        "[\"Die_Linke\"]": 17,
+        "[\"FDP\", \"GRUENE\", \"SPD\"]": 1,
+        "[\"FDP\", \"GRUENE\", \"SPD+VOLT\"]": 1,
+        "[\"FDP\", \"SPD+VOLT\"]": 1,
+        "[\"FDP\"]": 3,
+        "[\"GRUENE\", \"SPD+VOLT\"]": 1,
+        "[\"GRUENE\"]": 9,
+        "[\"PARTEI\"]": 1,
+        "[\"SPD\"]": 3,
+        "[\"SPD+VOLT\", \"einzelmitglied\"]": 1,
+        "[\"SPD+VOLT\"]": 5,
+        "[\"T_FW\"]": 4,
+        "[\"T_FW+PARTEI\"]": 1,
+        "[\"andere\"]": 2,
+        "[\"beirat_oder_sondergremium\"]": 2,
+        "[\"buerger\"]": 2,
+        "[\"einzelmitglied\"]": 1,
+        "[\"verwaltung\"]": 55
+      },
+      "treffer": null
+    },
+    "adressat": {
+      "n": 150,
+      "beide": 150,
+      "einig": 148,
+      "anteil": 0.9866666666666667,
+      "anteil_wilson95": [
+        0.9526930912996325,
+        0.9963358708487731
+      ],
+      "cohen_kappa": 0.9695740365111561,
+      "krippendorff_alpha_nominal": 0.9696708424202465,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9696708424202465,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "stadt": 109,
+        "dritte": 5,
+        "beide": 4,
+        "keiner": 29,
+        "unklar": 3
+      },
+      "treffer": null
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 150 Dokumenten, nicht von Menschen",
+  "selbstgewichtend": false
+}

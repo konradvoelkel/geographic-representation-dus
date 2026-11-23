@@ -64,6 +64,7 @@ scale = "binary"                 # nominal | ordinal (aufsteigend) | binary (gen
 positive = ["ja"]                # was als Treffer zählt (Präzision, Anteil); binär genau eines
 ignore = []                      # Labels, die aus dem Nenner fallen (etwa "unklar")
 whitespace = "squeeze"           # offene Antworten: Leerraum zusammenziehen, oder "ignore": ganz entfernen
+unordered = false                # offene Liste als Menge (Mehrfachauswahl): die Folge zählt nicht
 instructions = "Ein Text, über den abgestimmt werden soll ..."
 
 [[questions.options]]
@@ -207,7 +208,10 @@ uv run georep validate score $V [--pred <ausgabe.parquet>]  # 7. Treffer und Gü
 wie ihre Dateien zu lesen sind (Schlüsselfeld; Felder, die anders heißen; Werte, die ein Label
 werden; Schlichtung je Feld in langer Form oder verschachtelt). `georep validate import <V> --from
 <ordner>` schreibt daraus die Antworten im Format von F4, ohne die Quelldateien zu ändern; danach
-geht es mit `merge` weiter. Für Vorhaben 14 rechnet das die Zahlen des Messdokuments nach
+geht es mit `merge` weiter. Eine Schlichtungszeile kann `herkunft` tragen, wenn nicht der
+Schlichter entschied (Vorhaben 12: vier Entscheide des Auswerters nach den Regeln des Schlichters);
+README und `guete.json` zählen sie. Eine vorläufige Schlichtung einer Einheit, die nach F4 einig ist,
+übergeht `merge` und nennt die Zahl. Für Vorhaben 14 rechnet das die Zahlen des Messdokuments nach
 (`tests/unit/test_validation_projects.py`).
 
 **Wo die übertragenen Vorhaben liegen.** Die Messskripte der Vorhaben 11 bis 14
@@ -312,14 +316,16 @@ zieht es im Messskript per Bootstrap über die Einheiten.
   `whitespace = "ignore"` an der Frage ohne jeden Leerraum (pypdf setzt ihn verschieden: „66 -
   Amt" und „66-Amt"). Vorhaben 11 setzt das für `amt`, wie seine Messung verglich. Vorhaben 12
   verglich `norm` mit Leerraum (555 von 597, α 0,929) und ließ vier Uneinigkeiten, die der
-  Schlichtung nicht vorlagen, vom Auswerter entscheiden; `merge` wartet dort auf diese vier
-  (12-0092, -0377, -0470, -0650).
+  Schlichtung nicht vorlagen, vom Auswerter entscheiden; `12-kennungen-f4` übernimmt diese vier
+  mit `herkunft`.
 - Die Einheit `marking` (Recall, Vorhaben 12): `merge` gleicht die Markierungen beider Kodierer
   über Text und Vorkommen ab (gemeinsam, nur bei einem, F1; an 12 Runde 1: 502, 14, 0,986 wie
   im Messdokument) und misst Stufe 3 an diesem F1. Offen sind die Endlabels (eine Schlichtung je
   Markierung statt je Liste) und der Recall gegen die Spannen des Verfahrens mit strenger (gleiche
   Grenzen und Art) und milder Grenze (Überlappung und Art).
-- Die Vorhaben 15 und 17 kamen nach der zweiten Runde von F4 und sind noch im vorläufigen Format.
+- Übertragen sind 11 bis 15 und 17 (je `<NN-name>-f4`); 12 Runde 2 und 16 sind noch in Kodierung. Die
+  Präzision des Lexikons von 17 (Kategorie im Thema, 94/100) rechnet F4 nicht; sie vergleicht die
+  Ausgabe des Verfahrens mit einer Menge, nicht mit einem Label.
 - Der Ausschnitt ist der Anfang des Textes (`text.chars`); was dahinter steht, sehen die Kodierer
   nicht.
 - Eine HTML-Ansicht für Menschen gibt es nicht, solange niemand von Hand kodiert (Plan, § 7).
