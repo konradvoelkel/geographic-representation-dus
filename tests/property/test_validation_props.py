@@ -10,13 +10,16 @@ from __future__ import annotations
 
 import math
 import random
+import tomllib
 import warnings
 
 import deal
+import polars as pl
 from hypothesis import assume, given
 from hypothesis import strategies as st
 from sklearn.metrics import cohen_kappa_score, ndcg_score, precision_recall_fscore_support
 
+from georep.validation.codebook import Codebook
 from georep.validation.measures import (
     LEVELS,
     Level,
@@ -27,6 +30,7 @@ from georep.validation.measures import (
     ndcg_at_k,
     wilson_interval,
 )
+from georep.validation.sample import Allocation, allocate, draw_sample
 
 CATEGORIES = ["1", "2", "3", "4", "5"]
 labels = st.sampled_from(CATEGORIES)
@@ -215,4 +219,107 @@ def test_ndcg_contract(case: deal.TestCase) -> None:
     kwargs={"units": coded_units, "level": levels, "categories": st.just(CATEGORIES)},
 )
 def test_krippendorff_alpha_contract(case: deal.TestCase) -> None:
+    case()
+
+
+# --- Stichprobe: Aufteilung und Ziehen ------------------------------------------------------------
+
+strata_sizes = st.dictionaries(
+    st.text(alphabet="abcdefgh", min_size=1, max_size=3), st.integers(1, 60), min_size=1, max_size=8
+)
+
+
+@given(strata_sizes, st.data(), st.sampled_from(["proportional", "equal"]))
+def test_allocation_sums_to_n_and_fills_every_stratum(
+    sizes: dict[str, int], data: st.DataObject, allocation: Allocation
+) -> None:
+    n = data.draw(st.integers(len(sizes), sum(sizes.values())))
+    quota = allocate(sizes, n, allocation)
+    assert sum(quota.values()) == n
+    assert all(1 <= quota[name] <= sizes[name] for name in sizes)
+
+
+@given(strata_sizes, st.data(), st.sampled_from(["proportional", "equal"]))
+def test_a_larger_stratum_never_gets_fewer(
+    sizes: dict[str, int], data: st.DataObject, allocation: Allocation
+) -> None:
+    n = data.draw(st.integers(len(sizes), sum(sizes.values())))
+    quota = allocate(sizes, n, allocation)
+    for a in sizes:
+        for b in sizes:
+            if sizes[a] > sizes[b]:
+                assert quota[a] >= quota[b]
+
+
+def _population(ids: list[str], strata: list[str]) -> pl.DataFrame:
+    return pl.DataFrame({"id": ids, "art": strata})
+
+
+SAMPLE_CODEBOOK = """\
+project = "p"
+version = "1"
+unit = "document"
+question = "?"
+scale = "nominal"
+instructions = "-"
+[[options]]
+value = "x"
+definition = "-"
+[[options]]
+value = "y"
+definition = "-"
+[sample]
+size = {size}
+seed = {seed}
+stratum = "{stratum}"
+require_text = false
+"""
+
+ids = st.lists(
+    st.text(alphabet="abcdef0123", min_size=1, max_size=6), min_size=2, max_size=40, unique=True
+)
+
+
+@given(ids, st.data(), st.integers(0, 2**31))
+def test_adding_a_unit_replaces_at_most_one(
+    units: list[str], data: st.DataObject, seed: int
+) -> None:
+    """bottom-k: eine neue Einheit verdrängt höchstens eine, sie mischt nicht alle neu."""
+    old, new = units[:-1], units
+    size = data.draw(st.integers(1, len(old)))
+    codebook = Codebook.model_validate(
+        tomllib.loads(SAMPLE_CODEBOOK.format(size=size, seed=seed, stratum=""))
+    )
+    before = set(draw_sample(_population(old, ["s"] * len(old)), codebook).frame.get_column("id"))
+    after = set(draw_sample(_population(new, ["s"] * len(new)), codebook).frame.get_column("id"))
+    assert len(before - after) <= 1 and len(after - before) <= 1
+
+
+@given(ids, st.data(), st.integers(0, 2**31), st.randoms(use_true_random=False))
+def test_the_sample_is_the_same_in_any_row_order(
+    units: list[str], data: st.DataObject, seed: int, rng: random.Random
+) -> None:
+    strata = data.draw(st.lists(st.sampled_from("pqr"), min_size=len(units), max_size=len(units)))
+    population = _population(units, strata)
+    size = data.draw(st.integers(len(set(strata)), len(units)))
+    codebook = Codebook.model_validate(
+        tomllib.loads(SAMPLE_CODEBOOK.format(size=size, seed=seed, stratum="art"))
+    )
+    order = rng.sample(range(len(units)), len(units))
+    first = draw_sample(population, codebook).frame
+    second = draw_sample(population[order], codebook).frame
+    assert first.equals(second) and first.height == size
+
+
+@deal.cases(
+    allocate,
+    count=COUNT,
+    check_types=False,
+    kwargs={
+        "sizes": strata_sizes,
+        "n": st.integers(1, 120),
+        "allocation": st.sampled_from(["proportional", "equal"]),
+    },
+)
+def test_allocate_contract(case: deal.TestCase) -> None:
     case()

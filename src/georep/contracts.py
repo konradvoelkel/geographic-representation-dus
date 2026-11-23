@@ -13,7 +13,7 @@ bleibt (``sorted_unique(result, DISTRICT)``) und dieselbe Eigenschaft überall d
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import date
 from typing import Literal
 
@@ -187,7 +187,7 @@ def is_district_code(code: str, district_body: str) -> bool:
 
 
 # --- Fundament F4: Validierung (georep.validation, docs/validierung.md). Die Maße rechnen auf
-# Labels als Strings; diese drei Prädikate halten ihre Eingaben und Ausgaben zusammen.
+# Labels als Strings, die Stichprobe auf Schichten; die Prädikate halten beides zusammen.
 def labels_known(values: Iterable[str], labels: Sequence[str]) -> bool:
     """Jeder Wert ist eines der Labels: ein Kodierer vergibt nur, was das Codebuch kennt."""
     return set(values) <= set(labels)
@@ -196,6 +196,12 @@ def labels_known(values: Iterable[str], labels: Sequence[str]) -> bool:
 def proportion_or_none(result: float | None) -> bool:
     """Ein Anteil in [0, 1], oder ``None`` für „nicht definiert" (keine Einheit, nichts zu teilen)."""
     return result is None or 0.0 <= result <= 1.0
+
+
+def strata_filled(frame: pl.DataFrame, column: str, counts: Mapping[str, int]) -> bool:
+    """Jede Schicht ist mit genau ihrer Zahl belegt und keine ist leer: die Stichprobe deckt alle."""
+    found = {str(name): int(n) for name, n in frame.group_by(column).len().iter_rows()}
+    return found == dict(counts) and all(n >= 1 for n in counts.values())
 
 
 def is_number(text: str) -> bool:
