@@ -175,6 +175,12 @@ class Step:
     # Server. Sie steht lesbar im Stamp samt den offenen Eingaben des Laufs; eine andere Kennung
     # oder ein Teillauf macht den Schritt veraltet.
     models: ModelStamp | None = None
+    # Fundament F1, Review M1: Eingaben, die fehlen dürfen. Ihr Hash steht im Stamp wie der jeder
+    # Eingabe, eine fehlende als ``MISSING``; taucht sie auf oder verschwindet sie, ist der Stamp
+    # veraltet. Eine Bedingung beim Bauen des Registers (``if path.exists()``) ginge nicht: legt ein
+    # früherer Schritt die Datei im selben Lauf an, fehlte sie im Stamp, und der zweite Lauf
+    # rechnete den Schritt noch einmal.
+    optional: tuple[Path, ...] = ()
 
     @property
     def stamp_path(self) -> Path:
@@ -198,8 +204,12 @@ class UnknownStepError(GeorepError):
     """Ein angeforderter Schrittname existiert nicht."""
 
 
+MISSING = "fehlt"  # der Eintrag einer fehlenden optionalen Eingabe im Stamp
+
+
 def input_digests(step: Step) -> dict[str, str]:
-    return {p.name: digest(p) for p in step.inputs}
+    required = {p.name: digest(p) for p in step.inputs}
+    return required | {p.name: digest(p) if p.exists() else MISSING for p in step.optional}
 
 
 def expected_stamp(step: Step, settings: Settings) -> dict[str, object]:
@@ -1473,8 +1483,8 @@ def build_steps(
                 else ()
             )
             # --- docs/todo.md, Punkt 7, und Fundament F1: „Methode und Grenzen" nennt den
-            # Extraktor je Text und die Zahl der Rohtexte
-            + (layout.texts, layout.raw_texts),
+            # Extraktor je Text (der Rohtextstore steht unten unter ``optional``)
+            + (layout.texts,),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
             # Punkt 53: der eine Schritt mit einem Zusatz im Stamp. Die Vorlagen des Pakets und
@@ -1482,6 +1492,9 @@ def build_steps(
             # keinem Settings-Fingerprint; ohne diesen Hash blieb der Stamp nach einer geänderten
             # Vorlage oder Klassengrenze gültig.
             extra=report_fingerprint(settings),
+            # Fundament F1, Review M1: eine Datenwurzel von vor F1 hat keinen Rohtextstore, und
+            # ``report`` brach dort als harte Eingabe ab; der Satz über den Rohtext fehlt dann
+            optional=(layout.raw_texts,),
         ),
         # --- Fundament F2: die Unterseiten der Beiträge
         *pages,

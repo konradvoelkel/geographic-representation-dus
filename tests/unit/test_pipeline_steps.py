@@ -11,6 +11,8 @@ die Kette rechnet mit einer Datei weiter, deren Spalten sich geändert haben.
 from __future__ import annotations
 
 import ast
+import json
+import shutil
 from dataclasses import replace
 from pathlib import Path
 
@@ -22,9 +24,11 @@ from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.layout import Layout
 from georep.pipeline import (
     METRICS_SCHEMA,
+    MISSING,
     PARTIES_SCHEMA,
     Step,
     build_steps,
+    run_pipeline,
     stamp_mismatch,
 )
 from georep.prep.bodies import BODIES_SCHEMA_VERSION
@@ -356,3 +360,38 @@ def test_every_schema_constant_of_the_package_belongs_to_a_step() -> None:
         if short not in used and name not in SCHEMA_CONSTANTS_WITHOUT_A_STEP
     }
     assert not missing, f"Schema-Konstanten, die kein Schritt nennt: {sorted(missing)}"
+
+
+# --- Review F1, Befund M1: der Bericht ohne Rohtextstore ----------------------------------------
+
+
+def test_the_report_runs_on_a_data_root_without_a_raw_text_store(
+    mini_run: Layout, default_settings: Settings, tmp_path: Path
+) -> None:
+    """Eine Datenwurzel von vor Fundament F1 hat keinen ``rohtexte.parquet``.
+
+    ``georep run report`` brach dort ab, weil der Store eine harte Eingabe von ``report`` war, und
+    der Hinweis „hilft `georep bootstrap`" stimmte nur für die Hauptperiode. Der Store ist nur
+    Eingabe, wenn es ihn gibt; die Seite sagt dann nichts über den Rohtext.
+    """
+    data, cache = tmp_path / "data", tmp_path / "cache"
+    shutil.copytree(mini_run.data_root, data)
+    shutil.copytree(mini_run.cache_root, cache)
+    layout = Layout(
+        data, cache, mini_run.reference_root, mini_run.profile, context_root=mini_run.context_root
+    )
+    layout.raw_texts.unlink()
+    # ``--force`` wie im Befund: ohne die Eingabe bleibt der alte Stamp gültig
+    steps = build_steps(default_settings, layout)
+    outcomes = run_pipeline(steps, default_settings, ["report"], force=True)
+    assert [(o.step, o.status) for o in outcomes] == [("report", "ausgeführt")]
+    report = next(s for s in steps if s.name == "report")
+    assert report.optional == (layout.raw_texts,) and layout.texts in report.inputs
+    # Die fehlende Datei steht im Stamp; kommt sie dazu, ist der Stamp veraltet
+    stamped = json.loads(report.stamp_path.read_text(encoding="utf-8"))
+    assert stamped["inputs"][layout.raw_texts.name] == MISSING
+    assert stamp_mismatch(stamped, report, default_settings) is None
+    shutil.copyfile(mini_run.raw_texts, layout.raw_texts)
+    assert stamp_mismatch(stamped, report, default_settings) == (
+        f"Eingabe geändert: {layout.raw_texts.name}"
+    )

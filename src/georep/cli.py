@@ -278,7 +278,8 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
 def _cmd_steps(settings: Settings, layout: Layout) -> int:
     for step in build_steps(settings, layout):
         tag = " [Netz]" if step.network else " [Modell]" if step.models is not None else ""
-        print(f"{step.name:<12} <- {', '.join(p.name for p in step.inputs) or '(nichts)'}{tag}")
+        names = [p.name for p in step.inputs] + [f"{p.name} (optional)" for p in step.optional]
+        print(f"{step.name:<12} <- {', '.join(names) or '(nichts)'}{tag}")
         print(f"{'':<12} -> {', '.join(p.name for p in step.outputs)}")
     return 0
 
