@@ -147,3 +147,12 @@ Die Kodierung von Vorhaben 15 (2026-11-23, `docs/plans/15-funktion.md` § 4.2) b
 nennt zweimal eine falsche Fraktion (AfD aus dem Gegenstand, SPD aus dem Briefkopf-Fenster); 19 Fraktionen
 fehlen, davon 10 in Dokumenten der Urheberklasse „unbekannt", 7 in interfraktionellen Anträgen, deren
 Fraktionen nur im Text stehen (Frage 9.15 dort).
+
+## 10. Textübernahme neu messen, wenn die Vorgänge gebaut sind
+
+Aufgenommen am 2026-11-23 aus Vorhaben 23 (`docs/plans/23-textuebernahme.md`, § 4.1 und § 5), das
+nach seiner vorab festgelegten Regel verworfen ist: Musteranträge gewichtet 0,889, Übernahmen über
+Fraktionsgrenzen 0,296, Schwelle 0,9 je Art. Die Fehler sind vor allem Zitate im selben Verfahren
+und Bausteine; beides könnten die Kanten aus Vorhaben 14 (Stufe 2) und die Abschnitte aus 11
+abfangen. Eine neue Messung wäre ein eigenes Vorhaben mit neuer Regel, neuem Codebuch (die Vorschläge
+des Schlichters stehen in § 9 dort) und frischer Stichprobe, nicht eine zweite Runde an diesen Labels.
