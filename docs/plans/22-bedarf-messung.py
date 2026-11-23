@@ -1,6 +1,6 @@
 """Rechnet die Zahlen von `22-bedarf.md` nach (Vorhaben 22 „Bedarf und Aufmerksamkeit", Stufe 1).
 
-    uv run python docs/plans/22-bedarf-messung.py [--teil bestand|bedarf|aufmerksamkeit|hypothesen|explorativ|alle]
+    uv run python -I docs/plans/22-bedarf-messung.py [--teil bestand|bedarf|aufmerksamkeit|hypothesen|explorativ|alle]
 
 Liest, was `georep run` für das Profil `duesseldorf` schreibt (Stimmbezirke aus `interim/`,
 `processed/wahlbezirke_auswertung.parquet`, `papers_ausschuss.parquet`,
@@ -12,11 +12,12 @@ Prüfsummen, bevor es etwas liest, und führt nichts aus, was es geladen hat. Di
 Düsseldorf (Unfälle, Zensus-Gitter, Gebäudereferenzen) legt es beim ersten Lauf unter
 `$GEOREP_MESSDATEN/22-bedarf/` ab und liest danach nur sie.
 
-Die Teile: `bestand` (Dateien und Prüfsummen), `bedarf` (Bedarf je Wahlbezirk mit Abdeckung und
-Unsicherheit), `aufmerksamkeit` (Dokumente je Wahlbezirk und Klasse), `hypothesen` (die drei vorab
-festgelegten Tests aus § 8, Commit vor dem ersten Lauf dieses Teils), `explorativ` (alles andere).
-Laufzeit rund eine Minute beim ersten Lauf (Auszüge), danach wenige Sekunden; Polars auf vier
-Threads.
+Die Teile: `bestand` (Dateien und Prüfsummen, Unfälle Mönchengladbach), `bedarf` (Bedarf je
+Wahlbezirk mit Abdeckung und Unsicherheit), `aufmerksamkeit` (Dokumente je Wahlbezirk und Klasse),
+`hypothesen` (die drei vorab festgelegten Tests aus § 8, festgelegt in Commit 9da9fe1, bevor dieser
+Teil zum ersten Mal lief), `explorativ` (alles andere, darunter Moran's I und die Rechnung innerhalb
+der Stadtbezirke, nachgetragen nach dem ersten Lauf). Laufzeit rund eine Minute mehr beim ersten Lauf
+(Auszüge aus den bundesweiten Archiven), danach 10 bis 40 s je nach Last; Polars auf vier Threads.
 """
 
 from __future__ import annotations
@@ -176,6 +177,14 @@ class Stimmbezirke:
         self.flaeche_km2 = {
             d: u.area / 1e6 for d, u in zip(sorted(set(self.wb)), unions, strict=True)
         }
+        # Nachbarschaft (gemeinsame Grenze, nicht nur ein Punkt) für Moran's I in `explorativ`.
+        self.nachbarn = np.array(
+            [
+                [a is not b and a.buffer(1.0).intersection(b).length > 50.0 for b in unions]
+                for a in unions
+            ],
+            dtype=float,
+        )
 
     def wahlbezirk(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Wahlbezirk je Punkt (Arbeits-CRS), 0 außerhalb aller Stimmbezirke."""
@@ -605,8 +614,17 @@ def bedarf(root: Path, sb: Stimmbezirke) -> pl.DataFrame:
         .agg(pl.col("sozialindex").mean().alias("sozialindex_gs"), pl.len().alias("grundschulen"))
     )
 
+    stadtbezirk = (
+        pl.read_parquet(proc / "wahlbezirke_stadtbezirke.parquet")
+        .sort("wahlkreis_id", "gewicht", "stadtbezirk", descending=[False, True, False])
+        .group_by("wahlkreis_id", maintain_order=True)
+        .first()
+        .select("wahlkreis_id", "stadtbezirk")
+    )
+
     df = (
         basis.join(auswertung, on="wahlkreis_id", how="left")
+        .join(stadtbezirk, on="wahlkreis_id", how="left")
         .join(zensus, on="wahlkreis_id", how="left")
         .join(qa_ew, on="wahlkreis_id", how="left")
         .join(kontext, on="wahlkreis_id", how="left")
@@ -801,6 +819,16 @@ def hypothesen(df: pl.DataFrame) -> None:
             f"  {name}: ρ = {fmt(rho)} [{fmt(ci[0])}; {fmt(ci[1])}], p = {fmt(p, 4)} "
             f"({'einseitig' if h[3] else 'zweiseitig'}), Holm {fmt(p_holm, 4)} -> {urteil}"
         )
+    # Kontrolle, nachgetragen nach dem ersten Lauf (entscheidet nicht): der Monte-Carlo-Fehler der
+    # Permutations-p und das asymptotische p von scipy für denselben Test.
+    for (name, _, p, _), h in zip(ergebnisse, HYPOTHESEN, strict=True):
+        asym = stats.spearmanr(
+            df[h[1]], df[h[2]], alternative="greater" if h[3] else "two-sided"
+        ).pvalue
+        se = math.sqrt(p * (1 - p) / PERMUTATIONEN)
+        print(
+            f"  Kontrolle {name.split()[0]}: p asymptotisch {fmt(asym, 4)}, Monte-Carlo-Fehler ± {fmt(se, 4)}"
+        )
     n = df.height
     # Kleinstes ρ, das ein Test mit 80 % Power fände (Fisher-z, Varianz der Spearman-z 1,06/(n-3)).
     for a, text in [
@@ -830,8 +858,71 @@ def hypothesen(df: pl.DataFrame) -> None:
     )
 
 
-def explorativ(df: pl.DataFrame) -> None:
+def morans_i(werte: np.ndarray, w: np.ndarray, rng: np.random.Generator) -> tuple[float, float]:
+    """Moran's I mit zeilennormierten Gewichten, p aus 9 999 Permutationen (einseitig, I > E[I])."""
+    w = w / w.sum(axis=1, keepdims=True)
+    z = werte - werte.mean()
+
+    def i_von(v: np.ndarray) -> float:
+        return float(len(v) * (v @ w @ v) / (w.sum() * (v @ v)))
+
+    i = i_von(z)
+    perm = np.array([i_von(rng.permutation(z)) for _ in range(9_999)])
+    return i, (1 + int((perm >= i).sum())) / 10_000
+
+
+def explorativ(df: pl.DataFrame, sb: Stimmbezirke) -> None:
     print("\n## Explorativ (nicht vorab festgelegt)")
+    rng = np.random.default_rng(SEED + 1)
+    print(
+        f"  Nachbarschaft: {int(sb.nachbarn.sum() / 2)} Paare, je Wahlbezirk "
+        f"{int(sb.nachbarn.sum(axis=1).min())} bis {int(sb.nachbarn.sum(axis=1).max())} Nachbarn"
+    )
+    # Innerhalb der Stadtbezirke: Ränge von x und y je Stadtbezirk (der mit den meisten
+    # Wahlberechtigten des Wahlbezirks) um den Mittelwert bereinigt, dann korreliert. Fragt, ob der
+    # Zusammenhang auch zwischen Nachbarn derselben Bezirksvertretung gilt.
+    sbz = df.get_column("stadtbezirk").to_numpy()
+    dummies = np.column_stack([(sbz == k).astype(float) for k in np.unique(sbz)])
+    je_bezirk = (
+        df.group_by("stadtbezirk")
+        .agg(
+            pl.len().alias("wb"),
+            pl.col("unfaelle_je_1000").median(),
+            pl.col("anteil_verkehr").median(),
+            pl.col("anteil_u18").median(),
+            pl.col("anteil_jugend").median(),
+        )
+        .sort("stadtbezirk")
+    )
+    print(
+        "  je Stadtbezirk (Mediane der Wahlbezirke): Stadtbezirk, Wahlbezirke, Unfälle je 1 000, Anteil Verkehr, Anteil u18, Anteil Jugend"
+    )
+    for row in je_bezirk.iter_rows():
+        print("   ", row[0], row[1], *(fmt(v) for v in row[2:]))
+    for name, x_spalte, y_spalte, _, _ in HYPOTHESEN:
+        rx = stats.rankdata(df[x_spalte].to_numpy())
+        ry = stats.rankdata(df[y_spalte].to_numpy())
+        ex = rx - dummies @ np.linalg.lstsq(dummies, rx, rcond=None)[0]
+        ey = ry - dummies @ np.linalg.lstsq(dummies, ry, rcond=None)[0]
+        r = float(np.corrcoef(ex, ey)[0, 1])
+        perm = np.array([np.corrcoef(ex, rng.permutation(ey))[0, 1] for _ in range(9_999)])
+        pp = (1 + int((np.abs(perm) >= abs(r)).sum())) / 10_000
+        print(
+            f"  innerhalb der {dummies.shape[1]} Stadtbezirke {name.split()[0]}: ρ = {fmt(r)} "
+            f"(zweiseitig p = {fmt(pp, 4)})"
+        )
+    for name, x_spalte, y_spalte, _, _ in HYPOTHESEN:
+        rx = stats.rankdata(df[x_spalte].to_numpy())
+        ry = stats.rankdata(df[y_spalte].to_numpy())
+        a = np.column_stack([np.ones_like(rx), rx])
+        resid = ry - a @ np.linalg.lstsq(a, ry, rcond=None)[0]
+        i, p = morans_i(resid, sb.nachbarn, rng)
+        ix, px = morans_i(rx, sb.nachbarn, rng)
+        iy, py = morans_i(ry, sb.nachbarn, rng)
+        print(
+            f"  Moran's I {name.split()[0]}: Residuen der Ränge I = {fmt(i)} (p = {fmt(p, 4)}); "
+            f"x I = {fmt(ix)} (p = {fmt(px, 4)}), y I = {fmt(iy)} (p = {fmt(py, 4)}); E[I] = {fmt(-1 / (df.height - 1))}"
+        )
     paare = [
         ("anteil_laerm_tag", "anteil_verkehr"),
         ("anteil_laerm_nacht", "anteil_verkehr"),
@@ -887,8 +978,17 @@ def main() -> None:
     if df is not None and teil in ("hypothesen", "alle"):
         hypothesen(df)
     if df is not None and teil in ("explorativ", "alle"):
-        explorativ(df)
+        explorativ(df, sb)
     if df is not None and teil == "alle":
+        # Größen der Auszüge (§ 2.3): so viel müsste ein Paket unter context/ tragen.
+        for name in ["unfaelle_duesseldorf", "zensus2022_duesseldorf", "gebref_duesseldorf"]:
+            f = AUSZUG / f"{name}.parquet"
+            puffer = io.BytesIO()
+            pl.read_parquet(f).write_csv(puffer)
+            print(
+                f"  Auszug {name}: {fmt(pl.read_parquet(f).height, 0)} Zeilen, Parquet "
+                f"{fmt(f.stat().st_size / 1000, 0)} KB, als CSV {fmt(len(puffer.getvalue()) / 1000, 0)} KB"
+            )
         ziel = AUSZUG / "wahlbezirke_bedarf.parquet"
         df.drop("suchbegriffe", strict=False).write_parquet(ziel)
         print(f"\nTabelle je Wahlbezirk: {ziel}")

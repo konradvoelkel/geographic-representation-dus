@@ -6,8 +6,16 @@ Aufmerksamkeit". Messskript: [22-bedarf-messung.py](22-bedarf-messung.py) (`uv r
 docs/plans/22-bedarf-messung.py [--teil …]`, rechnet jede Zahl dieses Dokuments nach). Die Fremddaten
 liegen nicht im Repo, sondern unter `/media/konrad/xtraspace/georep/fremddaten/opendata/` mit README
 (Quelle, Abrufdatum, Bytes, SHA-256, Lizenz wörtlich); das Skript prüft die Prüfsummen, bevor es liest.
-**Urteil: bauen** (§ 5). Die Hypothesen in § 8 stehen in diesem Commit fest, **bevor** der Teil
-`hypothesen` des Skripts zum ersten Mal lief; ihr Ergebnis kommt im nächsten Commit (§ 3.4).
+**Urteil: bauen** (§ 5). Die Hypothesen in § 8 wurden in Commit `9da9fe1` festgelegt, **bevor** der
+Teil `hypothesen` des Skripts zum ersten Mal lief; ihr Ergebnis steht in § 3.4.
+
+**Die Hypothesen, kurz** (§ 3.4): **H1** (Unfälle je Einwohner → Anteil Verkehrsdokumente) nach der
+vorab festgelegten Regel **bestätigt**, ρ = 0,343, p_Holm = 0,043 — aber der Zusammenhang liegt ganz
+zwischen den Stadtbezirken (innerhalb von ihnen ρ = −0,06), und die Residuen sind räumlich korreliert
+(Moran's I 0,34), der p-Wert ist darum zu optimistisch. **H2** (Handlungsbedarf → Nennungen je
+Einwohner) **nicht bestätigt**, ρ = −0,336, p_Holm = 0,069; die Richtung ist die der ungleichen
+Aufmerksamkeit, der Nachweis fehlt. **H3** (Anteil unter 18 → Anteil Jugend und Schule) **nicht
+bestätigt**, ρ = −0,059; explorativ zeigt er sich innerhalb der Stadtbezirke (ρ = 0,465).
 
 Die drei Zahlen, auf die es ankommt:
 
@@ -57,9 +65,10 @@ Unterordner unter `fremddaten/opendata/` (README dort; 16 Dateien, 201 MB).
 
 ### 2.1 Bestand für Düsseldorf
 
-Gesucht im Open-Data-Portal der Stadt (DKAN-API `package_list`: 383 Datensätze, davon 187 mit einem
-Bedarfswort im Namen; `package_show` für 38 Kandidaten), bei open.nrw (CKAN-API), bei Destatis und dem
-Schulministerium NRW. „Frei" heißt hier: Datenlizenz Deutschland (Zero oder Namensnennung) oder
+Gesucht am 2026-11-23 im Open-Data-Portal der Stadt (DKAN-API `package_list`: 383 Datensätze, davon
+187 mit einem Bedarfswort im Namen; `package_show` für 38 Kandidaten), bei open.nrw (CKAN-API), bei
+Destatis und dem Schulministerium NRW. Diese Zählungen der Recherche rechnet das Skript nicht nach (sie
+brauchen das Netz); alle Zahlen ab § 2.3 rechnet es nach. „Frei" heißt hier: Datenlizenz Deutschland (Zero oder Namensnennung) oder
 CC BY; „passend" heißt: Punkt, Gitter, Gebäude oder eine Gliederung feiner als die 41 Wahlbezirke mit
 Geometrie.
 
@@ -113,16 +122,19 @@ Ausschusskürzel tragen (§ 9, Frage 22.6).
 
 Das Skript legt beim ersten Lauf die Düsseldorfer Auszüge unter
 `/media/konrad/xtraspace/georep/messdaten/22-bedarf/` ab und liest danach nur sie:
-`unfaelle_duesseldorf.parquet` (13 507 Unfälle 2020–2025, 97 KB zstd, als CSV 435 KB),
-`zensus2022_duesseldorf.parquet` (14 400 Zellen im Rechteck um die Stadt, 70 KB), `gebref_duesseldorf.parquet`
-(84 193 Hausnummern, 821 KB), `unfaelle_moenchengladbach.parquet`. Das sind die Größenordnungen, mit
+`unfaelle_duesseldorf.parquet` (13 507 Unfälle 2020–2025, Parquet 161 KB, als CSV 638 KB),
+`zensus2022_duesseldorf.parquet` (14 400 Zellen im Rechteck um die Stadt, 70 KB, als CSV 816 KB),
+`gebref_duesseldorf.parquet` (84 193 Hausnummern, 821 KB, als CSV 4 196 KB),
+`unfaelle_moenchengladbach.parquet`; dazu die Tabelle je Wahlbezirk `wahlbezirke_bedarf.parquet`. Das sind die Größenordnungen, mit
 denen Stufe 2 ein Paket unter `context/` rechnen muss (§ 6).
 
 ## 3. Messung (Vorgehen, Stichprobe mit Seed, Zahlen mit Datum)
 
 Alle Zahlen vom 2026-11-23. Keine Stichprobe: jede Quelle wird ganz gerechnet. Seed 22 nur für
-Permutationen und Bootstrap in § 3.4. Laufzeit des Teils `bedarf` 5,9 s mit vorhandenen Auszügen,
-rund 60 s beim ersten Lauf (die bundesweiten Archive), `nice -n 10`, Polars auf vier Threads.
+Permutationen und Bootstrap in § 3.4 (Seed 23 für § 3.5). Laufzeit des ganzen Skripts (`--teil
+alle`) 35,6 s mit vorhandenen Auszügen bei Lastmittel 40 → 35 (`uptime` davor und danach; 7,6 s bei
+Lastmittel 29 vor dem Nachtrag in § 3.5), rund 60 s mehr beim ersten Lauf (die bundesweiten Archive),
+`nice -n 10`, Polars auf vier Threads.
 
 ### 3.1 Umrechnung je Quelle auf die 41 Wahlbezirke
 
@@ -182,11 +194,98 @@ ist darum die Zahl der Dokumente mit Treffer.
 
 ### 3.4 Ergebnis der vorab festgelegten Hypothesen
 
-Noch nicht gerechnet. Der Teil `hypothesen` des Skripts läuft erst nach dem Commit, der § 8 festlegt.
+Erster Lauf des Teils `hypothesen` am 2026-11-23 um 19:40 Uhr, nach Commit `9da9fe1` (§ 8); jeder
+weitere Lauf ergibt dieselben Zahlen (Seed 22, geprüft mit `diff` zweier Läufe).
+
+| Nr. | ρ | 95-%-Intervall (Bootstrap) | p (Permutation) | p_Holm | Urteil nach § 8 |
+|---|---|---|---|---|---|
+| H1 Unfälle je 1 000 Einwohner → Anteil Verkehr | **0,343** | 0,051 bis 0,593 | 0,0143 (einseitig) | **0,0429** | **bestätigt** |
+| H2 Handlungsbedarf → Dokumente je 1 000 Einwohner | **−0,336** | −0,620 bis −0,031 | 0,0346 (zweiseitig) | 0,0692 | nicht bestätigt (kein Zusammenhang nachweisbar) |
+| H3 Anteil unter 18 → Anteil Jugend und Schule | −0,059 | −0,408 bis 0,312 | 0,6474 (einseitig) | 0,6474 | nicht bestätigt (kein Zusammenhang nachweisbar) |
+
+Mit 80 % Power erkennbar wären |ρ| ≥ 0,39 (α = 0,05 einseitig) beziehungsweise 0,46 (α/3, erster
+Holm-Schritt): H1 und H2 liegen darunter. H1 ist trotzdem bestätigt, H2 knapp nicht; beide Urteile
+hängen an einer Schwelle, an der sie dicht liegen.
+
+**Robustheit (vorab genannt, entscheidet nicht).**
+
+| Rechnung | H1 | H2 | H3 |
+|---|---|---|---|
+| Haupttest | 0,343 | −0,336 | −0,059 |
+| ohne Wahlbezirke 1 und 10 (n = 39) | 0,417 | −0,411 | −0,144 |
+| H1 scharf zugeordnet (Punkt in Fläche) | 0,350 | | |
+| H1 mit absoluten Unfällen / je km² | 0,225 / 0,413 | | |
+| H2 partiell bei festem log(Zahl der Begriffe) | | −0,276 | |
+| H2 mit der Trefferquote der Seite (je Wahlberechtigtem) | | −0,264 | |
+
+Die Robustheit bestätigt die Richtung von H1 und H2. H1 hängt am Nenner: absolute Unfälle tragen ihn
+schwächer (0,225), je Fläche stärker (0,413). H2 wird mit der Kontrolle für die Wörterbuchgröße
+schwächer (−0,276), bleibt aber negativ.
+
+**Nachgetragen nach dem ersten Lauf** (Kontrollen, entscheiden nicht): das asymptotische p von
+`scipy.stats.spearmanr` für denselben Test ist 0,0141 (H1), 0,0316 (H2), 0,6439 (H3); der
+Monte-Carlo-Fehler der Permutations-p ist ± 0,0012, ± 0,0018, ± 0,0048. p_Holm von H1 liegt also
+rund 0,007 unter der Schwelle, rund zwei Monte-Carlo-Fehler des dreifachen p.
 
 ### 3.5 Explorativ
 
-Noch nicht gerechnet (nach § 3.4).
+Alles hier ist nach dem ersten Lauf von § 3.4 gerechnet und heißt **explorativ**; p-Werte ohne
+Korrektur, nur zur Orientierung.
+
+**Räumliche Abhängigkeit.** Nachbarschaft = gemeinsame Grenze über 50 m (95 Paare, 1 bis 9 Nachbarn je
+Wahlbezirk); Moran's I mit zeilennormierten Gewichten, 9 999 Permutationen, Seed 23; E[I] = −0,025.
+
+| | x | y | Residuen der Rangregression y ~ x |
+|---|---|---|---|
+| H1 | 0,167 (p 0,038) | **0,504** (p 0,0001) | **0,341** (p 0,0008) |
+| H2 | 0,234 (p 0,010) | 0,061 (p 0,19) | 0,050 (p 0,22) |
+| H3 | 0,498 (p 0,0001) | 0,281 (p 0,003) | 0,262 (p 0,005) |
+
+Der Anteil der Verkehrsdokumente ist stark räumlich geklumpt, und nach H1 bleibt ein Rest, der es
+auch ist: der Permutationstest von § 8 nimmt Austauschbarkeit an, die hier nicht gilt; **p von H1 ist
+darum zu klein**, um wie viel, sagt diese Messung nicht. H2 hat dieses Problem nicht.
+
+**Innerhalb der Stadtbezirke.** Ränge je Stadtbezirk (der mit den meisten Wahlberechtigten des
+Wahlbezirks; 10 Stadtbezirke mit 1 bis 8 Wahlbezirken) um ihren Mittelwert bereinigt, dann korreliert,
+p aus 9 999 Permutationen der Reste (zweiseitig):
+
+| | ρ innerhalb | p |
+|---|---|---|
+| H1 | −0,062 | 0,70 |
+| H2 | −0,204 | 0,20 |
+| H3 | **0,465** | 0,002 |
+
+Der Zusammenhang von H1 liegt also **ganz zwischen den Stadtbezirken**: Stadtbezirk 1 (Mediane:
+26,1 Unfälle je 1 000 Einwohner, Anteil Verkehr 0,238) und 3 (23,0; 0,257) liegen oben, Stadtbezirk
+10 (9,5; 0,118, ein Wahlbezirk) unten; innerhalb eines Stadtbezirks bekommt der Wahlbezirk mit mehr
+Unfällen keinen größeren Anteil. Weil die Bezirksvertretungen den größten Teil der Dokumente stellen
+(57,6 %, statistik.md, § 10) und jede ihre eigene Praxis hat, kann das ebenso die Praxis der
+Bezirksvertretung sein wie der Bedarf. Umgekehrt H3: zwischen den Stadtbezirken verdeckt die
+Innenstadt (Stadtbezirk 1: Anteil unter 18 nur 11,9 %, Anteil Jugend 0,056; Stadtbezirk 3: 12,5 %,
+0,091) einen Zusammenhang, der innerhalb der Stadtbezirke deutlich ist. Beides ist eine Lesart nach
+Ansehen der Daten und als These erst an neuen Daten zu prüfen (§ 9, Frage 22.10).
+
+**Weitere Paare** (Spearman, n = 41):
+
+| Bedarf | Aufmerksamkeit oder Bezug | ρ | p | Lesart |
+|---|---|---|---|---|
+| Wohngebäude ≥ 65 dB(A) Tag | Anteil Verkehr | 0,367 | 0,018 | wie H1, zweite Verkehrsgröße (Stand 2018) |
+| Wohngebäude ≥ 55 dB(A) Nacht | Anteil Verkehr | 0,336 | 0,032 | dito |
+| Unfälle mit Rad- oder Fußbeteiligung | Anteil Verkehr | 0,354 | 0,023 | dito |
+| Unfälle je 1 000 Einwohner | Verkehrsdokumente je 1 000 Einwohner | 0,575 | < 0,001 | **gemeinsamer Nenner**, zum Teil mechanisch |
+| Mindestsicherungsquote | Dokumente je 1 000 Einwohner | −0,419 | 0,006 | wie H2, stärker |
+| Schulsozialindex der Grundschulen | Dokumente je 1 000 Einwohner | −0,347 | 0,026 | wie H2, mit dem Maß des Landes |
+| Nettokaltmiete je m² | Dokumente je 1 000 Einwohner | 0,470 | 0,002 | Innenstadtlage: hohe Mieten, viele Straßen im Wörterbuch |
+| Kitas je 1 000 Kinder unter 6 | Anteil Jugend und Schule | −0,159 | 0,32 | kein Bezug |
+| Handlungsbedarf | Anteil Verkehr | −0,175 | 0,28 | kein Bezug |
+| Unfälle je 1 000 Einwohner | Handlungsbedarf | 0,056 | 0,73 | die Bedarfe sind verschieden |
+| Handlungsbedarf | **Schulsozialindex der Grundschulen** | **0,772** | < 0,001 | zwei unabhängige Bedarfsmaße stimmen überein (§ 4) |
+| Handlungsbedarf | Wahlbeteiligung | −0,941 | < 0,001 | der Befund von Option 03 als Rangkorrelation |
+
+Die drei Bedarfsmaße der sozialen Lage (Handlungsbedarf, Mindestsicherung, Schulsozialindex) zeigen
+alle in dieselbe Richtung: **je mehr Bedarf, desto weniger Nennungen je Einwohner**. Keins übersteht
+eine Korrektur für drei Tests, und die Wörterbuchgröße erklärt einen Teil (H2 partiell −0,276). Für
+die Seite heißt das: Richtung zeigen, Nachweis nicht behaupten.
 
 ## 4. Validierung (Codebuch, Kodierer, Maße mit Intervall)
 
@@ -198,8 +297,10 @@ Prüfungen:
 - **Summentreue**: Zensus-Einwohner der Stadt 611 134 in 7 658 Zellen; Unfälle 11 501 im Zeitraum, 2
   ohne Wahlbezirk im Band.
 - **Zwei Wege zur selben Größe**: Einwohner je Wahlbezirk aus Gitter und aus Crosswalk (r = 0,947);
-  Unfälle scharf und unscharf (Spearman 0,980). Der Vergleich des städtischen Handlungsbedarfs mit dem
-  Schulsozialindex des Landes (zwei unabhängige Bedarfsmaße) steht in § 3.5.
+  Unfälle scharf und unscharf (Spearman 0,980).
+- **Zwei unabhängige Bedarfsmaße**: der Handlungsbedarf der Stadt (Sozialräume 2021, über den
+  Crosswalk) und der Schulsozialindex des Landes (Grundschulen 2025/26, über Punkte) stimmen je
+  Wahlbezirk mit ρ = 0,772 überein (§ 3.5). Das prüft Quelle und Umrechnung zugleich.
 - **Verortung**: Lärm 96,3 % der Gebäude über Straßenschlüssel und Hausnummer.
 
 Nicht validiert ist die **Klasse der Dokumente außerhalb der Ausschüsse**: 1 084 der 1 827
@@ -230,6 +331,11 @@ Grenzen: 28,4 % der Unfälle liegen in einem Band, in dem die Seite der Straße 
    die Anteile „Verkehr" und „Jugend und Schule" nicht, solange es dort keinen
    Ausschussklassifikator gibt.
 
+Die Hypothesen ändern das Urteil nicht (das Kriterium fragt nach Daten, nicht nach Befunden), aber den
+Bau: **der Stadtbezirk gehört als Schicht in jede Rechnung** (§ 3.5: H1 liegt ganz zwischen den
+Stadtbezirken, H3 nur innerhalb), und die Seite zeigt H1 nicht ohne Moran's I und die Rechnung
+innerhalb der Stadtbezirke.
+
 ## 6. Bauplan Stufe 2 (Beiträge, Ausgaben mit Schema, Verträge, Tests, berührte Dateien, Settings, Paket)
 
 **Beitrag** `22-bedarf` in `georep.enrich.CONTRIBUTIONS` (Punkt 69) mit zwei Schritten und zwei
@@ -249,6 +355,8 @@ Tabellen; Ebene 0, einziger Eigentümer von `prep/context.py`.
   index, ags, schulform)` (Codepage 850, „ohne" als null), `need_table(...)` (je Wahlbezirk eine
   Zeile). Schema-Version `NEED_SCHEMA_VERSION = 1` als Modulkonstante.
 - `georep/enrich/need.py` (neu): `CONTRIBUTION = Contribution("22-bedarf", steps=…, tables=…)`;
+  liest zusätzlich `processed/wahlbezirke_stadtbezirke.parquet` (Schicht für § 3.5) und die
+  Wahlbezirksflächen für die Nachbarschaft;
   Schritte `need_data` (Netz: lädt die Archive in den Cache und schreibt die Stadtauszüge nach
   `data_root/external/bedarf/`) und `need` (offline: `processed/wahlbezirke_bedarf.parquet`,
   `processed/bedarf_hypothesen.parquet`).
@@ -262,8 +370,9 @@ Tabellen; Ebene 0, einziger Eigentümer von `prep/context.py`.
   `anteil_verkehr`, `anteil_jugend`, `dok_je_1000_ew` (Float64).
 - `bedarf_hypothesen.parquet`: eine Zeile je Hypothese aus § 8 (`name`, `bedarf`, `aufmerksamkeit`,
   `rho`, `ci_lo`, `ci_hi`, `p`, `p_holm`, `urteil`, `n`, `seed`); dazu die explorativen Paare in einer
-  zweiten Tabelle mit `explorativ = true`. Die Permutationen mit festem Seed machen die Datei
-  byteidentisch über Läufe.
+  zweiten Tabelle mit `explorativ = true`, darunter die Rechnung innerhalb der Stadtbezirke und Moran's
+  I der Residuen (Nachbarschaft aus den Wahlbezirksflächen, gemeinsame Grenze über 50 m). Die
+  Permutationen mit festem Seed machen die Datei byteidentisch über Läufe.
 
 **Settings** (Anhängeregel, `docs/plans/00-synergien.md`, § 2): neuer Block `[context.need]` in
 `defaults.toml` mit `band_m = 20.0` (Kommentar: Straßenachse, § 3.1), `period_months` aus der Periode des
@@ -273,9 +382,10 @@ Profils, `permutations = 10000`, `bootstrap = 2000`, `seed = 22`, `[context.need
 "05116000"`, Klassen leer (die Anteile fehlen dann, der Rest rechnet).
 
 **Paket.** Nach dem Muster von `context/` (Punkt 26): `context/bedarf/` mit
-`unfaelle_<stadt>_2020_2025.csv` (rund 435 KB für Düsseldorf, 7 Spalten), `zensus2022_<stadt>.csv`
-(nur Zellen mit Mittelpunkt in der Stadt, rund 430 KB), `schulen_<stadt>.csv` (Schulnummer, Schulform,
-Koordinate, Stufe; rund 10 KB), README mit Quelle, Lizenz, Namensnennung, SHA-256. Die Gebäudereferenzen
+`unfaelle_<stadt>_2020_2025.csv` (7 Spalten; 638 KB für Düsseldorf mit vollen Koordinaten, auf
+Dezimeter gerundet weniger), `zensus2022_<stadt>.csv` (nur Zellen mit Mittelpunkt in der Stadt; das
+Rechteck um die Stadt sind 816 KB, die Stadt etwa die Hälfte der Zellen), `schulen_<stadt>.csv`
+(Schulnummer, Schulform, Koordinate, Stufe; wenige KB), README mit Quelle, Lizenz, Namensnennung, SHA-256. Die Gebäudereferenzen
 (90 MB) und der Lärm kommen **nicht** ins Repo; der Lärm kommt höchstens als Aggregat je Stimmbezirk
 (306 Zeilen), erzeugt mit `georep pack --need` (Frage 22.2). `bootstrap` kopiert `context/bedarf/` nach
 `external/bedarf/`; `need_data` holt frisch.
@@ -312,8 +422,11 @@ ohne Nummer. Nicht berührt: `report/model.py`, `pipeline.build_steps` (Register
 2. *Bedarf je Wahlbezirk*: drei kleine Karten (Unfälle je 1 000 Einwohner, sozialer Handlungsbedarf,
    Anteil unter 18), daneben dieselbe Tabelle sortierbar; der Satz zum Randband.
 3. *Bedarf und Nennung*: die drei vorab festgelegten Tests als Tabelle (ρ mit Intervall, p, Holm, Urteil,
-   „vorab festgelegt am 2026-11-23, Commit …") und je ein Streudiagramm; darunter die explorativen
-   Paare unter dieser Überschrift.
+   „vorab festgelegt am 2026-11-23, Commit `9da9fe1`") und je ein Streudiagramm mit den Stadtbezirken
+   als Farbe — dann sieht man, dass H1 zwischen den Farben liegt; darunter Moran's I, die Rechnung
+   innerhalb der Stadtbezirke und die explorativen Paare unter dieser Überschrift. Der Satz zu H1 nennt
+   beides: „nach der vorab festgelegten Regel bestätigt; der Zusammenhang besteht zwischen den
+   Stadtbezirken, nicht innerhalb, und der p-Wert unterschätzt die räumliche Abhängigkeit".
 4. *Was das nicht sagt*: ökologischer Fehlschluss, n = 41 (nur |ρ| ≳ 0,4 ist mit 80 % Power
    erkennbar), Stand der Daten, Klassifikator auf Bezirksvertretungsdokumenten ungeprüft, keine
    Kausalität, keine Rangliste „vernachlässigter" Bezirke.
@@ -368,19 +481,25 @@ Rangkorrelation bei festem log(Zahl der Begriffe) und mit der Trefferquote der S
 Wahlberechtigtem). Weichen sie vom Haupttest ab, sagt die Seite das; das Urteil bleibt das des
 Haupttests.
 
+Das Ergebnis steht in § 3.4; was nach dem ersten Lauf dazukam (asymptotisches p, Monte-Carlo-Fehler,
+Moran's I, die Rechnung innerhalb der Stadtbezirke), ist dort und in § 3.5 als Nachtrag markiert und
+ändert kein Urteil.
+
 ## 9. Risiken und offene Fragen (Nummer, Frage, warum sie zählt, Annahme ohne Antwort)
 
 | Nr. | Frage | warum sie zählt | Annahme ohne Antwort |
 |---|---|---|---|
-| 22.1 | Dürfen Auszüge aus Unfallatlas, Zensus-Gitter und Schuldaten unter `context/bedarf/` ins Repo (zusammen rund 0,9 MB, dl-de/by-2-0)? | Pages baut ohne Netz nur, was im Repo liegt | ja, nach dem Muster des Quartiersatlas (Punkt 26), mit Namensnennung auf der Seite |
+| 22.1 | Dürfen Auszüge aus Unfallatlas, Zensus-Gitter und Schuldaten unter `context/bedarf/` ins Repo (zusammen rund 1 MB als CSV für Düsseldorf, dl-de/by-2-0)? | Pages baut ohne Netz nur, was im Repo liegt | ja, nach dem Muster des Quartiersatlas (Punkt 26), mit Namensnennung auf der Seite |
 | 22.2 | Kommt der Lärm 2018 in Stufe 2 mit (braucht die 90-MB-Gebäudereferenzen zum Verorten)? | eine zweite Verkehrsgröße, aber Stand 2018 und Gebäude statt Einwohner | nein in Stufe 2; nur explorativ hier; wenn ja, dann als Aggregat je Stimmbezirk aus `georep pack --need` |
 | 22.3 | Soll die Klasse `OVA` an 100 Dokumenten der Bezirksvertretungen kodiert werden (F4, zwei Kodier-Agenten)? | H1 hängt an 1 084 Verkehrsdokumenten ohne Ausschussberatung, auf denen der Klassifikator ungeprüft ist | nein für Stufe 2; für Stufe 3 ja, wenn H1 auf die Seite soll |
 | 22.4 | Gilt das Band von 20 m auch für andere Punkte (Kitas, Schulen, Orte aus Vorhaben 16)? | eine Schule an einer Grenzstraße liegt auch auf beiden Seiten | nein: das Band ist für Punkte auf Straßenachsen; Gebäude und Einrichtungen werden scharf zugeordnet |
 | 22.5 | Soll die Seite die Hypothesen auch für die Periode 2014–2020 rechnen? | Unfallatlas NRW erst ab 2019, Quartiersatlas 2021, Zensus 2022 | nein: die Bedarfsdaten passen nur zur Hauptperiode und zur laufenden |
 | 22.6 | Mönchengladbach ohne Klassen: reicht „Bedarf je Wahlbezirk" ohne die Anteile? | Stadtneutralität; dort gibt es keinen Ausschussklassifikator | ja; die Anteile fehlen sichtbar, mit Grund |
 | 22.7 | Zensus-Miete gewogen mit Einwohnern statt Wohnungen? | das Gitter hat die Wohnungen in einer eigenen Datei | Einwohner reichen für eine Beschreibung; die Wohnungsdatei erst, wenn die Miete in einen Test geht |
-| 22.8 | Räumliche Autokorrelation: benachbarte Wahlbezirke sind sich ähnlich, der Permutationstest nimmt Austauschbarkeit an | p-Werte zu klein | die Seite nennt es; Moran's I der Residuen als Prüfung in Stufe 2, kein anderes Verfahren |
+| 22.8 | Räumliche Autokorrelation: der Permutationstest nimmt Austauschbarkeit an; gemessen sind Moran's I der Residuen 0,341 (H1), 0,050 (H2), 0,262 (H3) | p von H1 und H3 zu klein | die Seite nennt Moran's I neben jedem Test; ein räumliches Modell (etwa ein Permutationstest innerhalb der Stadtbezirke) erst, wenn Konrad es will |
 | 22.9 | Die Fremddaten unter `fremddaten/opendata/` sind älter als die Auszüge im Repo, wenn eine Quelle neu veröffentlicht (Unfallatlas jährlich im Juli) | Stand der Seite | `need_data` holt neu, der Stamp trägt die SHA-256 der Archive |
+| 22.10 | Sollen die beiden explorativen Lesarten (H1 zwischen, H3 innerhalb der Stadtbezirke) **vorab festgelegt** an neuen Daten geprüft werden — an den Dokumenten der laufenden Periode (`duesseldorf-2025`, 4 095 Dokumente) mit den Unfällen ab 2025-09? | sonst bleiben sie Erzählung nach Ansehen der Daten (Plan § 2.11) | ja: Stufe 2 legt H1′ und H3′ mit Stadtbezirk als Schicht in diesem Dokument fest, gerechnet wird, wenn die laufende Periode zwölf Monate Unfälle hat (Unfallatlas 2026, Juli 2027) |
+| 22.11 | Ist die Klasse `OVA` „Verkehr"? Der Ausschuss heißt Ordnungs- und Verkehrsausschuss; Ordnungsthemen (Altstadt, Sondernutzung) zählen mit | H1 misst dann „Ordnung und Verkehr" | ja, unter diesem Namen auf der Seite; als zweites Maß der Anteil des gesäten Themas 0 (OVA) aus `themen_dokumente.parquet` |
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
