@@ -251,14 +251,33 @@ class ModelCache:
 
 
 def cache_stats(root: Path) -> list[CacheStat]:
-    """Einträge und Bytes je Modell, Digest und Prompt-Version über alle Dateien unter ``root``."""
+    """Einträge und Bytes je Modell, Digest und Prompt-Version über alle Dateien unter ``root``.
+
+    Nur lesend (``mode=ro``): ``georep ml status`` legt keine Tabelle an und schreibt keine Zeile,
+    auch nicht in eine Datei, die gerade ein Lauf füllt. Eine Datei ohne ``meta`` oder ohne
+    ``entries`` gehört nicht zum Modellcache und wird übersprungen (Review 2026-11-23, Befund 8).
+    """
     found: list[CacheStat] = []
     for path in sorted(root.glob("*.sqlite")) if root.is_dir() else []:
-        conn = sqlite3.connect(path, timeout=30.0)
-        try:
-            (model,) = conn.execute("SELECT value FROM meta WHERE key = 'model'").fetchone()
-        finally:
-            conn.close()
-        with ModelCache(root, model) as cache:
-            found.extend(cache.stats())
+        found.extend(_file_stats(path))
     return sorted(found, key=lambda s: (s.model, s.digest, s.prompt))
+
+
+def _file_stats(path: Path) -> list[CacheStat]:
+    try:
+        conn = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True, timeout=30.0)
+    except sqlite3.Error:
+        return []
+    try:
+        row = conn.execute("SELECT value FROM meta WHERE key = 'model'").fetchone()
+        if row is None:
+            return []
+        rows = conn.execute(
+            "SELECT digest, prompt, COUNT(*), SUM(LENGTH(value)) FROM entries "
+            "GROUP BY digest, prompt ORDER BY digest, prompt"
+        ).fetchall()
+    except sqlite3.Error:
+        return []
+    finally:
+        conn.close()
+    return [CacheStat(row[0], d, p, n, size) for d, p, n, size in rows]

@@ -184,3 +184,24 @@ def test_processes_opening_a_new_cache_file_together_all_get_in(tmp_path: Path) 
         assert answers == ["ok"] * workers_per_round, answers
         with ModelCache(root, KEY.model) as cache:
             assert len(cache.known(KEY)) == workers_per_round * BATCHES * 32
+
+
+def test_stats_skip_files_that_are_not_model_caches_and_change_nothing(tmp_path: Path) -> None:
+    """Befund 8 des Reviews (Probe 6): eine fremde SQLite-Datei brach ``cache_stats`` ab."""
+    with ModelCache(tmp_path, KEY.model) as cache:
+        cache.put_many(KEY, [("a" * 64, b"1234")])
+    foreign = sqlite3.connect(tmp_path / "fremd.sqlite")
+    foreign.execute("CREATE TABLE x (a)")
+    foreign.commit()
+    foreign.close()
+    empty_meta = sqlite3.connect(tmp_path / "leer.sqlite")
+    empty_meta.execute("CREATE TABLE meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+    empty_meta.commit()
+    empty_meta.close()
+    before = {p.name: p.read_bytes() for p in tmp_path.glob("*.sqlite")}
+    assert [(s.model, s.entries) for s in cache_stats(tmp_path)] == [(KEY.model, 1)]
+    # nur gelesen: keine Datei bekam Tabellen oder Zeilen. Neben der WAL-Datei des Caches legt
+    # SQLite beim Lesen seine Begleitdateien an (-shm, -wal); die fremden bleiben allein.
+    assert {p.name: p.read_bytes() for p in tmp_path.glob("*.sqlite")} == before
+    extra = {p.name for p in tmp_path.iterdir()} - set(before)
+    assert extra <= {"fake-embed_latest.sqlite-shm", "fake-embed_latest.sqlite-wal"}

@@ -73,13 +73,10 @@ def status_lines(client: OllamaClient, ml: Ml, cache_root: Path) -> tuple[list[s
     """Die Zeilen von ``georep ml status`` und der Exit-Code (1: Server oder Modell fehlt)."""
     lines: list[str] = []
     code = 0
+    # Der ganze Serverblock im ``try``: eine kaputte Antwort nach der Version soll die Zeilen
+    # davor und den Cache nicht kosten (Review 2026-11-23, Befund 8).
     try:
-        version = client.version()
-    except ModelError as error:
-        lines.append(str(error))
-        code = 1
-    else:
-        lines.append(f"ollama {version} unter {client.base_url}")
+        lines.append(f"ollama {client.version()} unter {client.base_url}")
         everything = client.models()
         for role, model in (
             ("Einbettung", ml.embedding.model),
@@ -98,6 +95,9 @@ def status_lines(client: OllamaClient, ml: Ml, cache_root: Path) -> tuple[list[s
         memory = ", ".join(f"{r.name} ({_size(r.size_vram)} Grafikspeicher)" for r in running)
         lines.append(f"im Speicher: {memory or 'nichts'}")
         lines.append(f"auf dem Server: {len(everything)} Modelle")
+    except ModelError as error:
+        lines.append(str(error))
+        code = 1
     stats = cache_stats(cache_root)
     lines.append(f"Cache {cache_root}: {'leer' if not stats else ''}".rstrip())
     for model in sorted({s.model for s in stats}):

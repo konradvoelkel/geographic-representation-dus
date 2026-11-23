@@ -14,7 +14,7 @@ from georep.ml import commands
 from georep.ml.cache import CacheKey, ModelCache
 from georep.ml.ollama import OllamaClient
 from georep.settings import load_settings
-from tests.fakes import FakeOllama
+from tests.fakes import FakeOllama, FakeSession, response
 
 URL = "http://ollama.test"
 
@@ -171,3 +171,19 @@ def test_bench_without_corpus_is_a_missing_input(
 )
 def test_sizes_read_in_the_largest_fitting_unit(count: int, expected: str) -> None:
     assert commands._size(count) == expected
+
+
+def test_status_reports_a_broken_answer_after_the_version_and_still_shows_the_cache(
+    project: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Befund 8 des Reviews: nur ``version`` stand im ``try``, eine kaputte Tag-Liste brach ab."""
+    session = FakeSession(
+        {
+            f"{URL}/api/version": response(f"{URL}/api/version", payload={"version": "0.0-fake"}),
+            f"{URL}/api/tags": response(f"{URL}/api/tags", content=b"<html>kein JSON</html>"),
+        }
+    )
+    monkeypatch.setattr(commands, "make_transport", lambda: session)
+    assert cli.main(["ml", "status"]) == 1
+    out = capsys.readouterr().out
+    assert "unbrauchbar" in out and "Cache" in out
