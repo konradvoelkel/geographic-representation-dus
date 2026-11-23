@@ -791,3 +791,83 @@ valid_from = 2025-11-01
 agreement = "Gemeinsam für Düsseldorf: Verantwortung übernehmen, Fortschritt gestalten. Koalitionsvertrag zwischen CDU Düsseldorf und Bündnis 90/Die Grünen Düsseldorf"
 agreement_date = "2025-12"     # „Düsseldorf, Dezember 2025" (Datei vom 2025-11-30); zusammen 51 von 92 Sitzen
 evidence = ["RAT/073/2026", "RAT/120/2026"]  # 4 Dokumente mit „Ratsmehrheit aus CDU und Grünen" oder „schwarz-grüne Ratsmehrheit", dazu 56 der Dokumentarten „… CDU/Grüne"
+
+# --- Vorhaben 14: Vorgänge (docs/plans/14-vorgaenge.md; Rückfallregel, § 5.1)
+[procedures]
+enabled = false
+# Messdokument § 2: „Stellungnahme" allein ist zu breit (IHK, ver.di, Abwägung nach BauGB: 663
+# Anlagen über alle Dokumentarten), darum nur die der Verwaltung; „anrwort" ist ein Tippfehler der
+# Verwaltung, der 2014 bis 2020 vorkommt. Häufigste Namen an Anfragen: „Antwort der Verwaltung"
+# 1 293, „Beantwortung" 156, „Antworten der Verwaltung zu NN/ NN/NNNN" 88 (§ 3.6).
+answer_attachment = '(^|[^a-zäöü])(be)?antwort|verwaltungsantwort|anrwort|stellungnahme (der |des )?(verwaltung|dezernat|amt)'
+# Am 2019-07-03 bekamen alle Anlagen älterer Drucksachen dieses Datum: 28 451 Anlagen, die
+# Umstellung des Ratsinformationssystems; es ist kein Antwortdatum (§ 3.6).
+attachment_dates_invalid = [2019-07-03]
+attachments = "snapshots/duesseldorf-anlagen/raw/anlagen.parquet"  # alle drei Perioden; je Profil zählen die eigenen Drucksachen
+
+# Die Formen der Drucksachennummer (§ 3.1); jede der 45 418 Düsseldorfer Nummern trifft genau eine.
+[[procedures.forms]]
+name = "heute"                 # KÜRZEL[NR]/laufende Nummer/Jahr[/Nachtrag], etwa BV6/108/2023, OVA/117/2023/1
+reference = '(?P<code>[A-ZÄÖÜ]+)(?P<number>\d{1,2})?/(?P<serial>\d+)/(?P<year>\d{4})(?:\s*[/-]+\s*(?P<suffix>\d+))?'
+text = '(?<![a-zäöüß])(?P<code>[a-zäöüß]+)\s?(?P<number>\d{0,2})\s?/\s?(?P<serial>\d{1,4})\s?/\s?(?P<year>\d{4})(?!\d)(?:\s?/\s?(?P<suffix>\d{1,2})(?![\d.,]))?'
+key = "{code}{number}/{serial}/{year}"
+glued = true                   # pypdf klebt Wörter: „vorlagebv6/002/2023" (169 Verweise im Text, 1 im Titel)
+[[procedures.forms]]
+name = "bis 2019"              # Punkt 57: <Amt>/ <laufende Nummer>/<Jahr>[ - Nachtrag], etwa 61/ 12/2014
+reference = '(?P<head>\d{2,3})/\s*(?P<serial>\d+)/(?P<year>\d{4})(?:\s*[-/]\s*(?P<suffix>\d+))?'
+text = '(?<![\d.,/])(?P<head>\d{2,3})/\s{0,2}(?P<serial>\d{1,4})/(?P<year>\d{4})(?!\d)(?:\s?-\s?(?P<suffix>\d{1,2})(?![\d.,]))?'
+key = "{head}/{serial}/{year}"
+
+# Dokumentart -> Rolle im Vorgang (§ 2, Tabelle „Dokumentarten"); die erste passende Regel gilt,
+# der Rest ist „sonst". Gelesen wird die getrimmte, kleingeschriebene Dokumentart.
+[[procedures.kinds]]
+role = "anfrage"
+paper_type = '^(anfrage|zanfrage)'
+[[procedures.kinds]]
+role = "antrag"
+paper_type = '^(antrag|zantrag|haushaltsantrag)|fraktionsantrag|mitgliederantrag'
+[[procedures.kinds]]               # bis 2019 waren Antrag und Anfrage eine Art; der Titel trennt sie
+role = "anfrage"
+paper_type = '^vorlage aus der politik$'
+title = 'anfrage'
+title_not = 'antrag'
+[[procedures.kinds]]
+role = "antrag"
+paper_type = '^vorlage aus der politik$'
+title = 'antrag'
+[[procedures.kinds]]               # ohne „Anfrage" und „Antrag" im Titel (5 239 Dokumente, Frage 9.6)
+role = "politik"
+paper_type = '^vorlage aus der politik$'
+[[procedures.kinds]]
+role = "bedarf"
+paper_type = '^bedarfsbeschluss$'
+[[procedures.kinds]]               # Ausführungs- und Finanzierungsbeschluss eines Bauvorhabens, keine Antwort (§ 2)
+role = "af"
+paper_type = '^a\+f beschluss$'
+[[procedures.kinds]]
+role = "information"
+paper_type = 'informationsvorlage|berichtsvorlage'
+[[procedures.kinds]]
+role = "vorlage"
+paper_type = 'änderungsvorlage|beschlussvorlage|beratungsvorlage|^verwaltungsvorlage$'
+[[procedures.kinds]]
+role = "eingabe"
+paper_type = '^eingabe|eingabe nach'
+
+# Die Nachbarperioden derselben Stadt, aus ihren Paketen: eine Kante darf über die Wahl gehen
+# (2 599 der Düsseldorfer Kanten, Messdokument § 3.3, Frage 9.2). Jedes Profil liest die anderen;
+# die eigenen Drucksachen kommen aus dem eigenen Korpus. Die Hauptperiode als Nachbar liest die
+# Metadaten aus paper_objects.json, dem Altformat ohne Texte: dieselben 19 108 Paper mit denselben
+# Feldern wie paper_with_text.json (geprüft am 2026-11-24), in einem Zehntel der Zeit.
+[[procedures.related]]
+profile = "duesseldorf-2014"
+papers = "snapshots/2014-2020/raw/papers.jsonl"
+texts = "snapshots/2014-2020/cache/text/texts.parquet"
+[[procedures.related]]
+profile = "duesseldorf"
+papers = "reference/raw/paper_objects.json"
+texts = "snapshots/duesseldorf-texte/cache/text/texts.parquet"
+[[procedures.related]]
+profile = "duesseldorf-2025"
+papers = "snapshots/2025/raw/papers.jsonl"
+texts = "snapshots/2025/cache/text/texts.parquet"
