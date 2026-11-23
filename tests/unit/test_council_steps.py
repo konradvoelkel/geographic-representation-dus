@@ -692,3 +692,30 @@ def test_the_fetch_of_meetings_stops_by_creation_not_by_start(
     assert session.urls == urls[:3]
     assert "Rest älter als der Periodenbeginn" in outcome.reason
     assert [m["id"] for m in _lines(council_files(layout).meetings)] == [pages[1][0]["id"]]
+
+
+def test_the_council_block_is_the_extra_of_its_steps_not_part_of_the_fingerprint(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """Review 2026-11-23 (klein): ``[council]`` betrifft nur die drei Netzschritte. Im globalen
+    Fingerprint ließ jede Änderung dort -- auch das Einschalten -- die ganze Kette neu rechnen;
+    als ``extra`` (Muster Punkt 53) macht sie nur die drei Stamps ungültig."""
+    from georep.pipeline import stamp_mismatch
+
+    plain = load_settings(cwd=Path("/nonexistent"))
+    wider = settings.model_copy(
+        update={"council": settings.council.model_copy(update={"created_margin_days": 600})}
+    )
+    assert plain.fingerprint() == settings.fingerprint() == wider.fingerprint()
+    layout = _layout(tmp_path)
+    before = {s.name: s for s in build_steps(settings, layout)}
+    after = {s.name: s for s in build_steps(wider, layout)}
+    for name in STEPS:
+        assert len(before[name].extra) == 16 and before[name].extra != after[name].extra
+        stamped = {
+            "schema_version": before[name].schema_version,
+            "settings": settings.fingerprint(),
+            "extra": before[name].extra,
+        }
+        assert stamp_mismatch(stamped, after[name], wider) == "Regeln des Abrufs geändert"
+    assert before["report"].extra == after["report"].extra

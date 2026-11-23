@@ -36,6 +36,7 @@ from georep.analysis.scaling import summary as metrics_summary
 from georep.analysis.timeline import WITH_TEXT, district_months, monthly_series
 from georep.council import (
     COUNCIL_SCHEMA_VERSION,
+    council_digest,
     council_files,
     run_consultations,
     run_meetings,
@@ -240,7 +241,10 @@ def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -
         # Der Text deckt beide Zusätze: die Vorlagen und Anzeigewerte der Seite (``report``) und
         # die Stoppwortliste des Pakets (``topics``). „Vorlagen oder Anzeige" allein beschrieb die
         # zweite nicht (2026-10-13).
-        return "Paketdateien oder Anzeige geändert"
+        # Fundament F6: bei einem Netzschritt ist der Zusatz der Hash seiner Abrufregeln
+        return (
+            "Regeln des Abrufs geändert" if step.network else "Paketdateien oder Anzeige geändert"
+        )
     if stamped.get("code") != __version__:
         return f"Code-Version {stamped.get('code')} -> {__version__}"
     stamped_inputs = stamped.get("inputs")
@@ -1059,6 +1063,7 @@ def build_steps(
                     lambda: run_meetings(settings, layout, transport(), sleep=sleep),
                     COUNCIL_SCHEMA_VERSION,
                     network=True,
+                    extra=council_digest(settings),
                 )
             ]
             if council.enabled and council.meetings_endpoint
@@ -1073,6 +1078,7 @@ def build_steps(
                     lambda: run_consultations(settings, layout, transport(), sleep=sleep),
                     COUNCIL_SCHEMA_VERSION,
                     network=True,
+                    extra=council_digest(settings),
                 )
             ]
             if council.enabled and council.consultations_endpoint
@@ -1087,6 +1093,7 @@ def build_steps(
                     lambda: run_persons(settings, layout, transport(), sleep=sleep),
                     COUNCIL_SCHEMA_VERSION,
                     network=True,
+                    extra=council_digest(settings),
                 )
             ]
             if council.enabled and council.persons_endpoint

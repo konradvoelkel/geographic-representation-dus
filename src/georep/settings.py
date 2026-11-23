@@ -1660,6 +1660,9 @@ class Settings(BaseSettings):
                 "log_level": True,
                 "cache": True,
                 "contracts": True,
+                # Fundament F6: ``[council]`` betrifft nur drei Netzschritte; ihr Stamp trägt den
+                # Hash als ``extra`` (``georep.council.council_digest``, Muster Punkt 53)
+                "council": True,
                 # Punkt 58: ``consultations`` ist ein Pfad (sein Inhalt steht im Stamp des
                 # Schritts ``bodies``), ``district_body_names`` sind reine Anzeigenamen.
                 "bodies": {"names_as_of", "consultations", "district_body_names"},

@@ -180,17 +180,27 @@ class CouncilFetchError(GeorepError):
 SINCE_MARGIN = dt.timedelta(days=1)
 
 
+def council_digest(settings: Settings) -> str:
+    """Ein kurzer Hash des Blocks ``[council]``: der Zusatz (``extra``) im Stamp der drei Schritte.
+
+    ``[council]`` steht nicht im globalen Fingerprint (``Settings.fingerprint``), denn es betrifft
+    nur diese drei Netzschritte; wie bei Punkt 53 trägt der Stamp den Hash darum selbst, und eine
+    Änderung macht nur ihre Stamps ungültig, nicht die ganze Kette (Review 2026-11-23).
+    """
+    rules = json.dumps(settings.council.model_dump(mode="json"), sort_keys=True)
+    return hashlib.sha256(rules.encode()).hexdigest()[:16]
+
+
 def fetch_key(settings: Settings, endpoint: str) -> dict[str, str]:
-    """Wofür ein Fortschritt gilt: Endpunkt, Periodenbeginn und ein Hash der Regeln ``[council]``.
+    """Wofür ein Fortschritt gilt: Endpunkt, Periodenbeginn und der Hash der Regeln ``[council]``.
 
     Weicht eines ab, wird er verworfen; eine Fortsetzung mit anderem Endpunkt oder Beginn mischte
     zwei Abrufe in eine Ausgabe.
     """
-    rules = json.dumps(settings.council.model_dump(mode="json"), sort_keys=True)
     return {
         "endpoint": endpoint,
         "period_start": settings.period.start.isoformat(),
-        "rules": hashlib.sha256(rules.encode()).hexdigest()[:16],
+        "rules": council_digest(settings),
     }
 
 
