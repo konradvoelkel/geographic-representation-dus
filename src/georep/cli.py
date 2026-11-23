@@ -19,7 +19,7 @@ from georep import __version__
 from georep.analysis.regression import regress
 from georep.bootstrap import bootstrap_from_settings
 from georep.contracts import configure as configure_contracts
-from georep.errors import GeorepError, MissingInputError
+from georep.errors import GeorepError, MissingInputError, ModelError
 from georep.export import export_csv
 from georep.layout import Layout
 from georep.learn import learn_bodies
@@ -58,6 +58,15 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--force", action="store_true", help="auch aktuelle Schritte ausführen")
     run.add_argument("--dry-run", action="store_true", help="nur zeigen, was liefe")
     run.add_argument("--online", action="store_true", help="Netzschritte mitlaufen lassen")
+    # Fundament F5: Schritte mit lokalem Modell (ollama) laufen nur mit diesem Schalter
+    run.add_argument(
+        "--models", action="store_true", help="Schritte mit lokalem Modell mitlaufen lassen"
+    )
+    run.add_argument(
+        "--limit",
+        type=int,
+        help="mit --models: höchstens so viele neue Modellaufrufe je Schritt (ml.limit)",
+    )
 
     fetch = sub.add_parser(
         "fetch",
@@ -180,12 +189,25 @@ def _with_fetch_limits(settings: Settings, limit: int | None, max_pages: int | N
     return settings.model_copy(update={"sources": sources})
 
 
+def _with_model_limit(settings: Settings, limit: int) -> Settings:
+    """``--limit`` eines Modelllaufs als ``ml.limit``; zählt wie ``pdf_limit`` zum Fingerprint."""
+    ml = settings.ml.model_copy(update={"limit": limit})
+    return settings.model_copy(update={"ml": ml})
+
+
 def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
+    fetching = args.command == "fetch"
+    models = getattr(args, "models", False)
+    if not fetching and args.limit is not None and not models:
+        # Ohne Modellschritt hieße es nur: neuer Fingerprint, alle Schritte neu, nichts begrenzt.
+        print("Fehler: --limit gilt nur mit --models (bei `fetch`: PDFs)", file=sys.stderr)
+        return 2
     layout.ensure_dirs()
     PdfStore(layout.pdf_dir).ensure()
-    fetching = args.command == "fetch"
     if fetching:
         settings = _with_fetch_limits(settings, args.limit, args.max_pages)
+    elif args.limit is not None:
+        settings = _with_model_limit(settings, args.limit)
     steps = build_steps(settings, layout)
     # `fetch` ohne Namen heißt: alle Netzschritte, dazu die beiden Offline-Schritte, ohne die sie
     # nicht laufen (`shapes` liefert die Flächen für streets_osm und pois_wiki) oder deren
@@ -200,6 +222,7 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
         force=args.force,
         dry_run=getattr(args, "dry_run", False),
         online=fetching or args.online,
+        models=models,
     )
     for outcome in outcomes:
         print(outcome.line())
@@ -213,7 +236,7 @@ def _cmd_run(args: argparse.Namespace, settings: Settings, layout: Layout) -> in
 
 def _cmd_steps(settings: Settings, layout: Layout) -> int:
     for step in build_steps(settings, layout):
-        tag = " [Netz]" if step.network else ""
+        tag = " [Netz]" if step.network else " [Modell]" if step.models is not None else ""
         print(f"{step.name:<12} <- {', '.join(p.name for p in step.inputs) or '(nichts)'}{tag}")
         print(f"{'':<12} -> {', '.join(p.name for p in step.outputs)}")
     return 0
@@ -252,8 +275,13 @@ def _cmd_status(args: argparse.Namespace, settings: Settings, layout: Layout) ->
     )
     print(f"Stores:     {papers} Paper, {pdfs} PDFs, {texts} Texte; Korpus: {corpus} Dokumente")
     for step in build_steps(settings, layout):
-        fresh, reason = freshness(step, settings)
-        tag = " [Netz]" if step.network else ""
+        try:
+            fresh, reason = freshness(step, settings)
+        except ModelError as error:
+            # F5: ob ein Modellschritt aktuell ist, weiß nur der Server (Digest); fehlt er, sagt
+            # die Zeile das, statt den ganzen Status abzubrechen.
+            fresh, reason = False, str(error)
+        tag = " [Netz]" if step.network else " [Modell]" if step.models is not None else ""
         print(f"{step.name:<12} {'aktuell' if fresh else 'offen':<8} {reason}{tag}")
     return 0
 
@@ -367,7 +395,7 @@ def _cmd_profile(args: argparse.Namespace, settings: Settings, layout: Layout) -
     layout.ensure_dirs()
     PdfStore(layout.pdf_dir).ensure()
     steps = build_steps(settings, layout)
-    names = args.steps or [s.name for s in steps if not s.network]
+    names = args.steps or [s.name for s in steps if not s.network and s.models is None]
     for step in select_steps(steps, names):
         result = profile_step(
             step, settings, args.out, online=args.online, top=args.top, sort=args.sort

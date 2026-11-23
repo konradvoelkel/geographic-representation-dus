@@ -64,6 +64,7 @@ from georep.geo import (
 from georep.http import Transport
 from georep.io import digest, write_bytes, write_json, write_parquet
 from georep.layout import Layout
+from georep.ml.base import ModelStamp
 from georep.prep.bodies import (
     BODIES_SCHEMA_VERSION,
     CONSULTATION,
@@ -166,6 +167,12 @@ class Step:
     # Schritt ``report`` füllt das Feld (``report.build.report_fingerprint``); für jeden anderen
     # bleibt es leer, und ein alter Stamp ohne das Feld bleibt damit gültig.
     extra: str = ""
+    # Fundament F5: ein Schritt mit lokalem Modell läuft nur mit ``--models``, wie ein Netzschritt
+    # nur mit ``--online``; ohne Schalter kommt sein Ergebnis aus einem Paket. Der Wert ist die
+    # Kennung seiner Modelle (Name, Digest, Prompt-Version; ``georep.ml.base.model_stamp``) und
+    # wird erst gefragt, wenn der Schritt laufen darf, denn den Digest kennt nur der Server. Sie
+    # steht lesbar im Stamp, und eine andere macht den Schritt veraltet.
+    models: ModelStamp | None = None
 
     @property
     def stamp_path(self) -> Path:
@@ -202,7 +209,7 @@ def expected_stamp(step: Step, settings: Settings) -> dict[str, object]:
         "code": __version__,
         "inputs": input_digests(step),
         "outputs": [p.name for p in step.outputs],
-    }
+    } | ({"models": step.models()} if step.models is not None else {})
 
 
 def freshness(step: Step, settings: Settings) -> tuple[bool, str]:
@@ -245,6 +252,9 @@ def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -
         return (
             "Regeln des Abrufs geändert" if step.network else "Paketdateien oder Anzeige geändert"
         )
+    # F5: nur ein Schritt mit Modell hat den Schlüssel; jeder andere Stamp bleibt gültig.
+    if step.models is not None and stamped.get("models") != step.models():
+        return "Modell oder Prompt geändert"
     if stamped.get("code") != __version__:
         return f"Code-Version {stamped.get('code')} -> {__version__}"
     stamped_inputs = stamped.get("inputs")
@@ -262,9 +272,12 @@ def run_step(
     force: bool = False,
     dry_run: bool = False,
     online: bool = False,
+    models: bool = False,
 ) -> Outcome:
     if step.network and not online:
         return Outcome(step.name, "übersprungen", "Netz aus; `--online` oder `georep fetch`")
+    if step.models is not None and not models:
+        return Outcome(step.name, "übersprungen", "Modelle aus; `--models`")
     fresh, reason = freshness(step, settings)
     if fresh and not force:
         return Outcome(step.name, "übersprungen", reason)
@@ -308,9 +321,10 @@ def run_pipeline(
     force: bool = False,
     dry_run: bool = False,
     online: bool = False,
+    models: bool = False,
 ) -> list[Outcome]:
     return [
-        run_step(s, settings, force=force, dry_run=dry_run, online=online)
+        run_step(s, settings, force=force, dry_run=dry_run, online=online, models=models)
         for s in select_steps(steps, names)
     ]
 
