@@ -2,6 +2,19 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.19.0 (2026-11-23), Validierung mit zwei KI-Kodierern
+
+- **`georep validate`** (`docs/decisions.md`, Punkt 71; Handbuch `docs/validierung.md`): `sample` zieht
+  eine geschichtete Stichprobe ohne Zufallsgenerator, `tasks` schreibt den Kodierauftrag je Kodierer,
+  `merge` führt zwei Kodierungen und die Schlichtung zu Labels zusammen, `score` misst ein Verfahren
+  gegen die Labels, `import` übernimmt Antworten im vorläufigen Format der Messungen. Die Maße
+  (Wilson-Intervall, Cohens κ, Krippendorffs α, F1, nDCG) sind reines Python.
+- Ein Codebuch je Vorhaben mit mehreren Fragen, Gewichten je Schicht, Fragen ohne Schlichtung und der
+  Einstellung `whitespace = "ignore"` für Freitext; Markierungen zweier Kodierer werden je Einheit
+  abgeglichen (gemeinsam, nur bei einem, F1).
+- Die Labels der Vorhaben 11 und 14 liegen im neuen Format neben den alten Dateien
+  (`validierung/*-f4/`); die Zahlen der Messdokumente rechnen nach. Keine Zahl der Seite ändert sich.
+
 ## 0.18.0 (2026-11-23), OParl-Sitzungen, Beratungen und Personen
 
 - **Drei neue Netzschritte** `meetings`, `consultations` und `persons` (`docs/decisions.md`, Punkt 70;

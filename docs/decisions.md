@@ -2504,7 +2504,7 @@ für die Fortsetzung, und `http.sqlite` wüchse um rund 70 MB je Abruf der Sitzu
 Korpus und gehört zu Vorhaben 14 oder 26; Empfehlung im Runbook, § 3); Niederschriften jetzt holen
 (Vorhaben 26 braucht sie nicht, `result` trägt das Ergebnis; erst Vorhaben 28 entscheidet nach einer
 Stichprobe, Runbook, § 7).
-## NN. Validierung mit zwei KI-Kodierern: Codebuch je Vorhaben, Stichprobe ohne Zufallsgenerator, Maße in reinem Python (2026-11-23)
+## 71. Validierung mit zwei KI-Kodierern: Codebuch je Vorhaben, Stichprobe ohne Zufallsgenerator, Maße in reinem Python (2026-11-23)
 
 Fundament F4 des Plans [plan-vorverarbeitung-2026-11.md](plan-vorverarbeitung-2026-11.md) (§ 2.6,
 § 7). Konrad kodiert nicht selbst; jede Messung der neunzehn Vorhaben braucht trotzdem eine geprüfte
