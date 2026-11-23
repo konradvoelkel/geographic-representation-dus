@@ -20,8 +20,10 @@ Eine Zeile ist eine Spanne:
   Rohtexts) und welches Verfahren die Spanne fand, damit Positionen nie auf den falschen Text
   zeigen.
 
-Die Folge ist fest: sortiert nach ``id``, ``start``, ``end``, ``kind`` (CLAUDE.md: die Zeilenfolge
-nach einem Join nie dem Zufall überlassen).
+Die Folge ist fest: sortiert nach ``id``, ``start``, ``end``, ``kind`` und bei Gleichstand nach den
+übrigen vier (CLAUDE.md: die Zeilenfolge nach einem Join nie dem Zufall überlassen). Zwei Spannen
+an derselben Stelle, etwa aus zwei Extraktoren, stehen so in derselben Folge, wie auch immer sie
+kamen (Review F7, N2).
 
 Ein Vorhaben darf **hinter** den acht weitere Spalten tragen (Nachzug F3, Entscheidung des
 Supervisors vom 2026-11-23, ``docs/plans/00-synergien-2026-11.md``, Konflikt 3): Vorhaben 12 etwa
@@ -53,7 +55,8 @@ SPAN_SCHEMA: dict[str, pl.DataType] = {
     "section": pl.String(),
     "extractor": pl.String(),
 }
-ORDER = ("id", "start", "end", "kind")
+# Review F7, N2: alle acht, die ersten vier vorn; die Folge hängt nicht an der Eingabe
+ORDER = ("id", "start", "end", "kind", "value", "norm", "section", "extractor")
 
 
 def empty_spans() -> pl.DataFrame:
@@ -107,7 +110,10 @@ def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
             f"Textlänge={first['length']} kind={first['kind']!r}"
         )
     if not spans.equals(sort_spans(spans)):
-        raise SchemaError(f"Spannen: nicht nach {', '.join(ORDER)} sortiert")
+        raise SchemaError(
+            f"Spannen: nicht nach {', '.join(ORDER[:4])} sortiert (bei Gleichstand nach "
+            f"{', '.join(ORDER[4:])})"
+        )
 
 
 def _within_text(text: str, start: int, end: int, context: int = 200) -> bool:

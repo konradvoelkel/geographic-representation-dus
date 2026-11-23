@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from random import Random
+
 import polars as pl
 from hypothesis import given
 from hypothesis import strategies as st
@@ -50,8 +52,8 @@ def span_rows(draw: st.DrawFn) -> dict[str, object]:
         "kind": draw(st.sampled_from(["betrag", "abschnitt", "ort"])),
         "value": "",
         "norm": draw(st.sampled_from(["", "1.5"])),
-        "section": "",
-        "extractor": "probe",
+        "section": draw(st.sampled_from(["", "kopf"])),
+        "extractor": draw(st.sampled_from(["probe", "roh"])),
         "attr": draw(st.one_of(st.none(), st.sampled_from(["kopf", "dezimal"]))),
         "zeile": draw(st.integers(0, 3)),
         "ja": draw(st.booleans()),
@@ -89,3 +91,19 @@ def test_zusatzspalten_stehen_hinter_den_acht_und_aendern_die_folge_nicht(
         map(repr, frame.select(ordered.columns).rows())
     )
     check_spans(ordered, LENGTHS)
+
+
+@given(st.lists(span_rows(), max_size=12), st.randoms(use_true_random=False))
+def test_die_folge_haengt_nicht_an_der_folge_der_eingabe(
+    rows: list[dict[str, object]], random: Random
+) -> None:
+    """Review F7, N2: zwei Spannen mit gleichem ``id, start, end, kind`` (etwa aus zwei
+    Extraktoren) stehen nach ``sort_spans`` in derselben Folge, wie auch immer sie kamen."""
+    frame = pl.DataFrame(
+        [{name: row[name] for name in SPAN_SCHEMA} for row in rows],
+        schema=SPAN_SCHEMA,
+        orient="row",
+    )
+    shuffled = list(range(frame.height))
+    random.shuffle(shuffled)
+    assert sort_spans(frame[shuffled]).equals(sort_spans(frame))
