@@ -275,7 +275,10 @@ mit weniger Parallelität wiederholt, bevor er als Befund zählt.
 Modell, Eingabe, Ausgabe und geschätzter Dauer (aus einer gemessenen Stichprobe). Der Supervisor startet
 `ollama serve` (Frage 3) und arbeitet die Aufträge nacheinander ab, lange bevorzugt nachts; die Ausgabe
 liegt im Modellcache von F5 und ist damit fortsetzbar. Zwei Modelle gleichzeitig nur, wenn sie zusammen
-in 24 GB passen (Einbettung plus ein LLM tun es).
+in 24 GB passen. Gemessen am 2026-11-23 (F5): `qwen3.6:27b` belegt mit `num_ctx` 8192 allein 22,9 GB und
+verdrängt das Einbettungsmodell; Einbettung und 27-B-Modell laufen darum nacheinander. `gemma4` (10,8 GB)
+und Einbettung passen rechnerisch zusammen, gemessen ist das nicht. **Seit dem 2026-11-23 ist ollama
+auf Konrads Wunsch angehalten; Modellläufe warten auf sein Signal.**
 
 ## 6. Umgebung
 
