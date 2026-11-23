@@ -66,6 +66,7 @@ from georep.layout import Layout
 from georep.prep import bodies as prep_bodies
 from georep.prep.bodies import BodyRules
 from georep.prep.context import read_indicators
+from georep.prep.raw_texts import RAW_SUFFIX
 from georep.prep.streets import Agreement, directory_agreement
 from georep.prep.voters import ELIGIBLE_TOTAL, PRECINCT, TURNOUT, VOTERS
 from georep.report.literature import literature
@@ -86,7 +87,11 @@ from georep.settings import (
     Settings,
     Weights,
 )
-from georep.stores import REFERENCE_EXTRACTOR
+from georep.stores import (
+    RAW_TEXT_SCHEMA_VERSION,
+    REFERENCE_EXTRACTOR,
+    stored_schema_version,
+)
 
 NARROW_NBSP = "\u202f"  # schmales geschütztes Leerzeichen: Tausender und vor dem Prozentzeichen
 TOP_TERMS = 5  # Begriffe je Wahlbezirk in Karte und Tabelle
@@ -666,13 +671,16 @@ class Extraction:
     Aus der Spalte ``extractor`` des Textstores, je Dokument: ``extractors`` nennt jeden Extraktor,
     der hier selbst gelesen hat, mit der Zahl seiner Texte (die meisten zuerst), ``thesis`` die
     Texte, die ``bootstrap`` aus dem Korpus der Arbeit übernommen hat (``REFERENCE_EXTRACTOR``).
-    ``raw_texts`` zählt die Zeilen des Rohtextstores; keine Zahl der Seite rechnet mit ihnen.
+    ``raw_texts`` zählt die Rohtexte, aber nur, wenn der Rohtextstore **vollständig** ist: jeder
+    Text, den ``raw_extractor`` gelesen hat, hat auch seinen Rohtext (Review F1, N1). Sonst ist es
+    0, und die Seite sagt nichts über den Rohtext; keine Zahl der Seite rechnet mit ihm.
     """
 
     texts: int
     extractors: tuple[tuple[str, int], ...]
     thesis: int
     raw_texts: int
+    raw_extractor: str = ""  # der Extraktor der Rohtexte ohne ``+roh``, aus den Daten (N7)
 
 
 @dataclass(frozen=True)
@@ -2000,17 +2008,44 @@ def extraction_figures(layout: Layout) -> Extraction | None:
         ((str(name), int(n)) for name, n in column.value_counts().iter_rows()),
         key=lambda pair: (-pair[1], pair[0]),
     )
-    raw_texts = (
-        int(pl.scan_parquet(layout.raw_texts).select(pl.len()).collect().item())
-        if layout.raw_texts.is_file()
-        else 0
-    )
+    raw_texts, raw_extractor = complete_raw_texts(layout)
     return Extraction(
         texts=column.len(),
         extractors=tuple(pair for pair in counts if pair[0] != REFERENCE_EXTRACTOR),
         thesis=sum(n for name, n in counts if name == REFERENCE_EXTRACTOR),
         raw_texts=raw_texts,
+        raw_extractor=raw_extractor,
     )
+
+
+def complete_raw_texts(layout: Layout) -> tuple[int, str]:
+    """(Zahl der Rohtexte, ihr Extraktor ohne ``+roh``), wenn der Rohtextstore vollständig ist.
+
+    Review F1, N1: der Satz über den Rohtext stand auf jeder Seite, deren Rechner zufällig einen
+    Store hatte, auch einen halben (etwa 200 lokal gecachte PDFs einer Periode). Jetzt nur, wenn
+    der Store die aktuelle Schema-Version trägt, einen einzigen Extraktor hat und jeder Text, den
+    derselbe Extraktor gelesen hat, auch seinen Rohtext hat -- aus einem Paket oder einem Lauf über
+    alle PDFs. Dann ist die Zahl die der Texte dieses Extraktors, und der Satz stimmt auf jedem
+    Rechner, der ihn zeigt. Sonst ``(0, "")``.
+    """
+    if not layout.raw_texts.is_file() or not layout.texts.is_file():
+        return 0, ""
+    if stored_schema_version(layout.raw_texts) != str(RAW_TEXT_SCHEMA_VERSION):
+        return 0, ""
+    raw = pl.read_parquet(layout.raw_texts, columns=["name", "extractor"])
+    labels = set(raw.get_column("extractor").to_list())
+    if len(labels) != 1:
+        return 0, ""
+    label = next(iter(labels))
+    if not label.endswith(RAW_SUFFIX):
+        return 0, ""
+    base = label.removesuffix(RAW_SUFFIX)
+    texts = pl.read_parquet(layout.texts, columns=["name", "extractor"])
+    wanted = set(texts.filter(pl.col("extractor") == base).get_column("name").to_list())
+    have = set(raw.get_column("name").to_list())
+    if not wanted or not wanted <= have:
+        return 0, ""
+    return len(have), base
 
 
 def _per_term_regression(

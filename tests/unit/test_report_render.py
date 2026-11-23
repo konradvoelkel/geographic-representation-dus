@@ -891,12 +891,20 @@ def test_the_method_names_the_extractor_and_how_many_texts_differ_from_the_thesi
     model: ReportModel, visuals: Visuals
 ) -> None:
     """Die Hauptperiode seit Punkt 68: eigene Texte, einer aus der Arbeit, und der Rohtext."""
-    main = Extraction(texts=19092, extractors=(("pypdf-7.1.0", 19091),), thesis=1, raw_texts=19091)
+    main = Extraction(
+        texts=19092,
+        extractors=(("pypdf-7.1.0", 19091),),
+        thesis=1,
+        raw_texts=19091,
+        raw_extractor="pypdf-7.1.0",
+    )
     method = _method(render_report(replace(model, extraction=main), visuals))
     assert "Gelesen sind die Texte mit pypdf 7.1.0 (19\u202f091 von 19\u202f092 PDFs)." in method
     assert "Ein Text stammt aus dem Korpus der Arbeit; die übrigen 19\u202f091" in method
     assert "Punkt 68" in method
-    assert "liegt für 19\u202f091 Dokumente der Rohtext" in method
+    assert (
+        "liegt für alle 19\u202f091 mit pypdf 7.1.0 gelesenen Dokumente auch der Rohtext" in method
+    )
     assert "keine Zahl dieser Seite rechnet mit ihm" in method
 
 
@@ -921,6 +929,15 @@ def test_the_mini_page_says_its_texts_come_from_the_thesis(page: str) -> None:
     method = _method(page)
     assert "Die 200 Texte stammen aus dem Korpus der Arbeit." in method
     assert "Gelesen sind" not in method and "Rohtext" not in method
+
+
+def test_a_single_text_of_the_thesis_is_named_in_the_singular(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    """Review F1, N7: „Die 1 Texte stammen" stand im Zweig ohne eigenen Extraktor."""
+    one = Extraction(texts=1, extractors=(), thesis=1, raw_texts=0)
+    method = _method(render_report(replace(model, extraction=one), visuals))
+    assert "Der eine Text stammt aus dem Korpus der Arbeit." in method
 
 
 def test_without_a_text_store_the_method_has_no_extraction_sentence(

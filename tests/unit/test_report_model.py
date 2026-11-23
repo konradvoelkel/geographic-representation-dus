@@ -866,11 +866,23 @@ def test_the_extraction_counts_come_from_the_extractor_column(tmp_path: Path) ->
     assert extraction_figures(layout) == Extraction(
         texts=5, extractors=(("pypdf-7.1.0", 3), ("pypdf-6.20.0", 1)), thesis=1, raw_texts=0
     )
+    # Review F1, N1: ein halber Rohtextstore (einer von drei Texten aus pypdf 7.1.0) gibt keinen Satz
     raw = RawTextStore(layout.raw_texts)
     raw.put("0.pdf", "Text", pages=1, extractor="pypdf-7.1.0+roh", pdf_sha256="0")
     raw.save()
+    half = extraction_figures(layout)
+    assert half is not None and (half.raw_texts, half.raw_extractor) == (0, "")
+    # vollständig: jeder Text dieses Extraktors hat seinen Rohtext; die anderen zählen nicht
+    for name in ("1.pdf", "2.pdf"):
+        raw.put(name, "Text", pages=1, extractor="pypdf-7.1.0+roh", pdf_sha256="0")
+    raw.save()
     found = extraction_figures(layout)
-    assert found is not None and found.raw_texts == 1
+    assert found is not None and (found.raw_texts, found.raw_extractor) == (3, "pypdf-7.1.0")
+    # eine Datei in einer anderen Schema-Version zählt nicht, wie im Store selbst (N3)
+    frame = pl.read_parquet(layout.raw_texts).drop("form_feeds")
+    write_parquet(frame, layout.raw_texts, schema_version=1)
+    old = extraction_figures(layout)
+    assert old is not None and old.raw_texts == 0
     # Ein leerer Store (eine laufende Periode vor ihrem ersten Abruf) gibt keinen Satz
     empty = Layout(tmp_path / "d", tmp_path / "c", tmp_path / "r", "p")
     empty.texts.parent.mkdir(parents=True)
