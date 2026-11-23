@@ -284,3 +284,37 @@ def test_a_question_without_adjudication_keeps_its_disagreement_unlabelled(
     assert not (tmp_path / "lokal" / PROJECT / "schlichtung").exists()
     row = _labels(tmp_path).filter((pl.col("id") == ids[0]) & (pl.col("frage") == "unsicher"))
     assert row.row(0, named=True)["label"] == "" and row.row(0, named=True)["kodierer_b"] == "ja"
+
+
+def test_an_empty_text_counts_as_no_answer(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Vorhaben 12: „norm: leer bei keine" -- ein leerer Text ist keine Antwort, auch wo die Frage
+    nicht gestellt ist, und bei einer offenen Frage dasselbe wie ``null``."""
+    codebook = CODEBOOK.replace(
+        "[sample]",
+        """[[questions]]
+id = "norm"
+question = "Normalisierter Wert."
+scale = "open"
+only_if = { question = "bv", values = ["ja"] }
+
+[sample]""",
+    )
+    make_project(tmp_path, codebook)
+    monkeypatch.chdir(tmp_path / "repo")
+    assert main(["validate", "sample", PROJECT]) == 0
+    for coder in ("A", "B"):
+        assert main(["validate", "tasks", PROJECT, "--coder", coder]) == 0
+    ids = _ids(tmp_path)
+    fill(
+        tmp_path,
+        "A",
+        lambda u: {"bv": "nein", "norm": ""} if u == ids[0] else {"bv": "ja", "norm": ""},
+    )
+    fill(
+        tmp_path,
+        "B",
+        lambda u: {"bv": "nein", "norm": None} if u == ids[0] else {"bv": "ja", "norm": None},
+    )
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    norms = _labels(tmp_path).filter(pl.col("frage") == "norm")
+    assert norms.height == 8 and set(norms.get_column("label")) == {"null"}

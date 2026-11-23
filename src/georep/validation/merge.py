@@ -36,7 +36,14 @@ from georep.io import atomic_path, write_json, write_text
 from georep.layout import Layout
 from georep.settings import Settings
 from georep.validation import CodingError
-from georep.validation.codebook import OPTION_SCALES, Codebook, Question, applies, load_codebook
+from georep.validation.codebook import (
+    OPTION_SCALES,
+    Codebook,
+    Question,
+    applies,
+    blank,
+    load_codebook,
+)
 from georep.validation.measures import agreement, cohen_kappa, krippendorff_alpha, wilson_interval
 from georep.validation.paths import ADJUDICATION, ValidationPaths, validation_paths
 from georep.validation.sample import ID, rank, read_sample, sample_meta
@@ -117,7 +124,7 @@ def _fill(
             continue
         raw = record.get(question.id)
         if not applies(question, values):
-            if raw is not None:
+            if not blank(raw):
                 problems.note("beantwortet, obwohl nicht gestellt", f"{unit}: {question.id}")
             values[question.id] = None
             continue

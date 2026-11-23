@@ -182,7 +182,16 @@ class Question(_Strict):
             if not math.isfinite(value):
                 raise ValueError(f"{self.id}: {value!r} ist keine endliche Zahl")
             return str(int(value)) if float(value).is_integer() else repr(float(value))
+        if blank(value):
+            return (
+                "null"  # ein leerer Text ist „nichts da", wie null (Vorhaben 12: „leer bei keine")
+            )
         return json.dumps(_squeeze(value), ensure_ascii=False, sort_keys=True)
+
+
+def blank(value: object) -> bool:
+    """Keine Antwort: ``null`` oder ein Text aus Leerraum."""
+    return value is None or (isinstance(value, str) and not value.strip())
 
 
 def _squeeze(value: Any) -> Any:
