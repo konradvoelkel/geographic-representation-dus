@@ -197,6 +197,9 @@ class ModelUse:
         self.open = 0  # offen nach dem Lauf: wegen ``limit`` oder gescheitert (Zeit, 5xx)
         self.failed = 0  # davon gescheitert; beim nächsten Lauf zuletzt
         self.rejected = 0  # vom Modell abgewiesen: erledigt, nicht offen, aber im Status genannt
+        self.stopped = (
+            ""  # warum ein Stapellauf vor dem Ende anhielt; dann schlägt der Schritt fehl
+        )
 
     @property
     def name(self) -> str:
@@ -217,19 +220,24 @@ class ModelUse:
             "open": self.open,
             "failed": self.failed,
             "rejected": self.rejected,
+            "stopped": self.stopped,
         }
 
-    def record(self, *, open: int, limit: int, failed: int = 0, rejected: int = 0) -> None:
+    def record(
+        self, *, open: int, limit: int, failed: int = 0, rejected: int = 0, stopped: str = ""
+    ) -> None:
         """Ein Stapellauf trägt ein. Mehrere im selben Schritt summieren sich (Review F5, N3);
         ``limit`` ist das größte, unter dem einer lief."""
         self.open += open
         self.failed += failed
         self.rejected += rejected
         self.limit = max(self.limit, limit)
+        self.stopped = self.stopped or stopped
 
     def reset(self) -> None:
         """Vor jedem Lauf des Schritts (``run_step``): die Zahlen gelten je Lauf, nicht je Prozess."""
         self.open = self.failed = self.rejected = self.limit = 0
+        self.stopped = ""
 
 
 class EmbeddingUse(ModelUse):

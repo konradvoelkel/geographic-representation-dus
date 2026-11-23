@@ -226,7 +226,7 @@ def test_the_estimate_reads_in_seconds_minutes_or_hours(elapsed: float, expected
 
 def test_the_report_names_what_is_left() -> None:
     report = BatchReport(total=10, cached=4, computed=3, left=3, seconds=12.34)
-    assert report.line() == "10 Eingaben: 4 aus dem Cache, 3 neu, 3 offen (limit) in 12.3 s"
+    assert report.line() == "10 Eingaben: 4 aus dem Cache, 3 neu, 3 offen in 12.3 s"
     done = BatchReport(total=2, cached=2, computed=0, left=0, seconds=0.0)
     assert done.line() == "2 Eingaben: 2 aus dem Cache, 0 neu in 0.0 s"
 
@@ -272,12 +272,14 @@ def test_a_missing_server_still_stops_the_run(cache: ModelCache) -> None:
     assert cache.known(KEY) == set(keys[:4])
 
 
-def test_ten_failures_in_a_row_stop_the_run(cache: ModelCache) -> None:
+def test_ten_new_failures_in_a_row_stop_the_run_without_losing_anything(cache: ModelCache) -> None:
+    """Review F5, vierte Runde, M1: der Lauf hält an und berichtet, statt abzubrechen."""
     keys = [input_sha256(str(i)) for i in range(30)]
     computed: list[list[int]] = []
-    with pytest.raises(ModelError, match=r"10 Fehlschläge in Folge"):
-        run_batch(keys, _poisoned(computed, set(range(30))), cache, KEY, batch_size=1)
-    assert len(computed) == 10
+    report = run_batch(keys, _poisoned(computed, set(range(30))), cache, KEY, batch_size=1)
+    assert len(computed) == 10 and "10 Fehlschläge in Folge" in report.stopped
+    assert (report.computed, report.failed, report.left) == (0, 10, 20)
+    assert "abgebrochen" in report.line()
 
 
 def test_embed_texts_marks_a_rejected_text_and_settles_it(tmp_path: Path) -> None:
@@ -333,10 +335,10 @@ def test_ten_rejections_in_front_stop_one_run_but_not_the_next(tmp_path: Path) -
     embedder = FakeEmbedder(dimension=4, rejects=set(texts[:10]))
     use = EmbeddingUse(embedder, "dok-1")
     with ModelCache(tmp_path, embedder.name) as cache:
-        with pytest.raises(ModelError, match=r"10 Fehlschläge in Folge"):
-            embed_texts(use, cache, texts, batch_size=1)
+        first = embed_texts(use, cache, texts, batch_size=1)
         again = embed_texts(use, cache, texts, batch_size=1)
-    assert again.present.tolist() == [False] * 10 + [True]
+    assert "10 Fehlschläge in Folge" in first.report.stopped and first.report.left == 1
+    assert again.report.stopped == "" and again.present.tolist() == [False] * 10 + [True]
     assert len(again.report.rejected) == 10 and again.report.computed == 1
 
 
@@ -382,3 +384,17 @@ def test_a_failed_input_that_succeeds_later_is_forgotten(cache: ModelCache) -> N
     assert set(cache.failures(KEY)) == {keys[1]}
     report = run_batch(keys, _poisoned([], set()), cache, KEY)
     assert report.computed == 1 and cache.failures(KEY) == {}
+
+
+def test_known_failures_do_not_count_towards_ten_in_a_row(tmp_path: Path) -> None:
+    """Review F5, vierte Runde, M1 (Probe c): zwölf bekannte Fehlschläge am Ende hielten jeden Lauf an."""
+    texts = [f"s{i}" if i % 2 else f"ok{i}" for i in range(24)]
+    failing = {t for t in texts if t.startswith("s")}
+    computed: list[list[int]] = []
+    keys = [input_sha256(t) for t in texts]
+    poison = {i for i, t in enumerate(texts) if t in failing}
+    with ModelCache(tmp_path, KEY.model) as cache:
+        first = run_batch(keys, _poisoned(computed, poison), cache, KEY, batch_size=4)
+        second = run_batch(keys, _poisoned(computed, poison), cache, KEY, batch_size=4)
+    assert (first.computed, first.failed, first.stopped) == (12, 12, "")
+    assert (second.cached, second.failed, second.stopped) == (12, 12, "")

@@ -94,6 +94,7 @@ class BatchReport:
     failures: tuple[tuple[int, str], ...] = ()
     rejected: tuple[tuple[int, str], ...] = ()
     skipped: int = 0  # davon aus früheren Läufen, in diesem nicht gefragt
+    stopped: str = ""  # warum der Lauf vor dem Ende anhielt (zehn neue Fehlschläge in Folge)
 
     @property
     def failed(self) -> int:
@@ -103,10 +104,11 @@ class BatchReport:
         cut = f", {self.truncated} abgeschnitten" if self.truncated else ""
         rejected = f", {len(self.rejected)} abgewiesen" if self.rejected else ""
         failed = f", {self.failed} gescheitert" if self.failed else ""
-        left = f", {self.left} offen (limit)" if self.left else ""
+        left = f", {self.left} offen" if self.left else ""
+        stopped = f", abgebrochen: {self.stopped}" if self.stopped else ""
         return (
             f"{self.total} Eingaben: {self.cached} aus dem Cache, {self.computed} neu{cut}"
-            f"{rejected}{failed}{left} in {self.seconds:.1f} s"
+            f"{rejected}{failed}{left} in {self.seconds:.1f} s{stopped}"
         )
 
 
@@ -208,9 +210,13 @@ def run_batch(
     Eine Abweisung (``ModelRejectedError``) merkt sich der Cache mit Grund: sie ist erledigt, und
     spätere Läufe fragen sie nicht wieder, außer mit ``retry_rejected`` (dritte Runde, N1). Jeder
     andere Fehlschlag bleibt offen; auch ihn merkt sich der Cache, und spätere Läufe fragen ihn
-    zuletzt, hinter allem Neuen (N2). Ein fehlender Server (``ModelUnreachableError``) und
-    ``MAX_FAILURES_IN_ROW`` neue Fehlschläge in Folge brechen ab: dann liegt es nicht an einem Text.
-    Was bis dahin abgewiesen wurde, ist gemerkt; der nächste Lauf kommt also weiter.
+    zuletzt, hinter allem Neuen (N2). Ein fehlender Server (``ModelUnreachableError``) bricht ab.
+    ``MAX_FAILURES_IN_ROW`` Eingaben in Folge, die in diesem Lauf **zum ersten Mal** scheitern,
+    halten den Lauf an (vierte Runde, M1): dann liegt es wohl nicht an einem Text. Er endet dann
+    ohne Ausnahme, mit dem Grund in ``stopped`` und dem Rest als offen; was bis dahin gerechnet
+    ist, liegt im Cache, und der Schritt schreibt es (``run_step`` meldet ihn trotzdem als
+    fehlgeschlagen). Schon bekannte Fehlschläge zählen nicht, sonst hielten sie, ans Ende sortiert,
+    jeden späteren Lauf an.
     """
     started = clock()
     first: dict[str, int] = {}
@@ -237,6 +243,7 @@ def run_batch(
     failures: list[tuple[int, str]] = []
     rejected = [(i, noted[keys[i]][1]) for i in skipped]
     in_row = 0
+    stopped = ""
     for start in range(0, len(todo), batch_size):
         chunk = todo[start : start + batch_size]
         outcome = _attempt(compute, chunk)
@@ -255,11 +262,10 @@ def run_batch(
                     cache.put_failure(key, keys[index], FAILED, str(result))
                     failures.append((index, str(result)))
                 logger.warning(f"{name}: Eingabe {index} gescheitert: {result}")
-                in_row += 1
-                if in_row >= MAX_FAILURES_IN_ROW:
-                    raise ModelError(
-                        f"{name}: {in_row} Fehlschläge in Folge, zuletzt: {result}"
-                    ) from result
+                if keys[index] not in noted:
+                    in_row += 1
+                if in_row >= MAX_FAILURES_IN_ROW and not stopped:
+                    stopped = f"{in_row} Fehlschläge in Folge, zuletzt: {result}"
                 continue
             in_row = 0
             if len(result) != len(indices):
@@ -275,6 +281,10 @@ def run_batch(
         if progress is not None:
             tried = done + len(failures) + len(rejected) - len(skipped)
             progress(Progress(label, tried, len(todo), len(known), len(first), clock() - started))
+        if stopped:
+            # Die Ergebnisse dieses Stapels sind gespeichert; der Rest bleibt offen.
+            logger.warning(f"{name}: angehalten nach {stopped}")
+            break
     return BatchReport(
         total=len(first),
         cached=len(known),
@@ -285,6 +295,7 @@ def run_batch(
         failures=tuple(failures),
         rejected=tuple(sorted(rejected)),
         skipped=len(skipped),
+        stopped=stopped,
     )
 
 
@@ -353,6 +364,7 @@ def embed_texts(
         failed=report.failed,
         rejected=len(report.rejected),
         limit=limit,
+        stopped=report.stopped,
     )
     found = cache.get_many(key, sorted(set(shas)))
     present = np.asarray([sha in found for sha in shas], dtype=np.bool_)
@@ -417,6 +429,7 @@ def generate_texts(
         failed=report.failed,
         rejected=len(report.rejected),
         limit=limit,
+        stopped=report.stopped,
     )
     distinct = sorted(set(shas))
     found = cache.get_many(key, distinct)

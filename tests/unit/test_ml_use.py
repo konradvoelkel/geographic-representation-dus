@@ -43,9 +43,16 @@ def test_a_generation_use_carries_the_key_of_its_options() -> None:
 
 def test_the_stamp_adds_limit_and_what_stayed_open() -> None:
     use = GenerationUse(FakeGenerator(), "kurz-1", GenerationOptions())
-    assert use.stamp() == use.identity() | {"limit": 0, "open": 0, "failed": 0, "rejected": 0}
-    use.record(open=3, failed=1, rejected=2, limit=2)
-    assert use.stamp() == use.identity() | {"limit": 2, "open": 3, "failed": 1, "rejected": 2}
+    empty = {"limit": 0, "open": 0, "failed": 0, "rejected": 0, "stopped": ""}
+    assert use.stamp() == use.identity() | empty
+    use.record(open=3, failed=1, rejected=2, limit=2, stopped="10 Fehlschläge in Folge")
+    assert use.stamp() == use.identity() | {
+        "limit": 2,
+        "open": 3,
+        "failed": 1,
+        "rejected": 2,
+        "stopped": "10 Fehlschläge in Folge",
+    }
 
 
 def test_the_identity_asks_the_server_only_when_called() -> None:

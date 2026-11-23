@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
@@ -338,3 +339,39 @@ def test_a_step_with_two_batch_runs_stays_open_until_both_are_done(
     limit[0] = 0
     run_step(step, settings, models=True)
     assert freshness(step, settings) == (True, "aktuell")
+
+
+# --- Abbruch nach zehn neuen Fehlschlägen (Review F5, vierte Runde, M1) ------------------------
+
+
+def test_a_stopped_step_writes_what_it_has_stays_open_and_fails_visibly(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """Probe p_tail: neue Dokumente gerechnet und gecacht, aber die Ausgabe blieb alt."""
+    texts = [f"neu{i}" for i in range(5)] + [f"kaputt{i}" for i in range(10)] + ["danach"]
+
+    class Crashing(FakeEmbedder):
+        """Wie der Fake, aber ein Text mit „kaputt" endet mit 500, ohne Abweisung."""
+
+        def embed(self, texts: Sequence[str]) -> Any:
+            if any(t.startswith("kaputt") for t in texts):
+                raise ModelError("500 runner crashed")
+            return super().embed(texts)
+
+    use = EmbeddingUse(Crashing(dimension=4), "dok-1")
+    out = tmp_path / "out.json"
+
+    def run() -> str:
+        with ModelCache(tmp_path / "ml", use.name) as cache:
+            found = embed_texts(use, cache, texts, batch_size=1)
+        out.write_text(json.dumps(int(found.present.sum())), encoding="utf-8")
+        return found.report.line()
+
+    step = Step("modell", (), (out,), run, models=use)
+    first = run_step(step, settings, models=True)
+    assert first.status == "fehlgeschlagen" and "10 Fehlschläge in Folge" in first.reason
+    assert out.read_text(encoding="utf-8") == "5"  # geschrieben, was gerechnet war
+    assert freshness(step, settings) == (False, "offen: 11 Eingaben, davon 10 gescheitert")
+    second = run_step(step, settings, models=True)  # die zehn sind bekannt und zählen nicht
+    assert second.status == "ausgeführt" and out.read_text(encoding="utf-8") == "6"
+    assert freshness(step, settings) == (False, "offen: 10 Eingaben, davon 10 gescheitert")

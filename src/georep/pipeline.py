@@ -328,9 +328,12 @@ def run_step(
         return Outcome(step.name, "fehlgeschlagen", str(error), time.perf_counter() - started)
     stamp = expected_stamp(step, settings) | {"written": dt.datetime.now(dt.UTC).isoformat()}
     write_json(step.stamp_path, stamp)
-    outcome = Outcome(
-        step.name, "ausgeführt", f"{reason}; {summary}", time.perf_counter() - started
-    )
+    # F5: hielt ein Stapellauf nach zehn neuen Fehlschlägen in Folge an, ist geschrieben, was er
+    # hatte, und der Stamp nennt den Rest offen; der Schritt scheitert trotzdem sichtbar.
+    recorded = stamp.get("models")
+    stopped = recorded.get("stopped") if isinstance(recorded, dict) else ""
+    status: Status = "fehlgeschlagen" if stopped else "ausgeführt"
+    outcome = Outcome(step.name, status, f"{reason}; {summary}", time.perf_counter() - started)
     return outcome
 
 
