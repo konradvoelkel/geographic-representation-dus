@@ -61,7 +61,7 @@ from georep.geo import (
     read_canonical_precincts,
     read_precincts,
 )
-from georep.http import Transport
+from georep.http import DeferredTransport, Transport
 from georep.io import digest, write_bytes, write_json, write_parquet
 from georep.layout import Layout
 from georep.ml.base import ModelStamp
@@ -1049,10 +1049,13 @@ def build_steps(
 
     # Fundament F2 (docs/plan-vorverarbeitung-2026-11.md, § 7): die Beiträge der Vorhaben stehen
     # unmittelbar vor ``report``. Import hier, nicht oben: die Beiträge bauen ``Step`` aus diesem
-    # Modul, ein Import auf Modulebene wäre ein Kreis.
+    # Modul, ein Import auf Modulebene wäre ein Kreis. Nachzug (Synergien 2026-11, Konflikt 7):
+    # sie bekommen ``http``; ohne Angabe eine Session, die erst beim ersten Aufruf entsteht, wie
+    # ``transport()`` für die Netzschritte des Kerns.
     from georep.enrich import check_unique_names, contributed_steps
 
-    contributed = contributed_steps(settings, layout)
+    contributed_http = http if http is not None else DeferredTransport(transport)
+    contributed = contributed_steps(settings, layout, contributed_http)
 
     def page_step(page: Page) -> Step:
         """Fundament F2: eine Unterseite, gebaut hinter ``report`` mit demselben Vorlagen-Hash."""

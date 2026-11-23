@@ -11,7 +11,10 @@ Abhängigkeiten (ein Schritt, der die Ausgabe eines anderen Beitrags liest, steh
 Wo die Beiträge landen:
 
 * ``steps`` — die Schritte stehen in ``build_steps`` unmittelbar vor ``report``, also nach allen
-  Kernschritten; ``run`` plant sie in der Reihenfolge des Registers.
+  Kernschritten; ``run`` plant sie in der Reihenfolge des Registers. Die Fabrik bekommt
+  ``(settings, layout, http)``: ``http`` ist der ``Transport`` aus ``build_steps``, in Tests die
+  Fake-Session, sonst eine Session, die erst beim ersten Aufruf entsteht
+  (``georep.http.DeferredTransport``). Ein Netzschritt nimmt ihn statt einer eigenen Session.
 * ``tables`` — veröffentlichte Tabellen, hinter denen des Kerns (``report.tables.published``).
 * ``pages`` — Unterseiten neben ``index.html`` (``report.pages``), je ein Schritt nach ``report``.
 
@@ -30,6 +33,7 @@ from typing import TYPE_CHECKING
 from georep.errors import GeorepError
 
 if TYPE_CHECKING:
+    from georep.http import Transport
     from georep.layout import Layout
     from georep.pipeline import Step
     from georep.report.pages import Page
@@ -41,7 +45,7 @@ class DuplicateStepError(GeorepError):
     """Zwei Schritte tragen denselben Namen; ``run`` und ``status`` könnten sie nicht trennen."""
 
 
-def no_steps(settings: Settings, layout: Layout) -> list[Step]:
+def no_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
     """Ein Beitrag ohne eigene Schritte, etwa einer, der nur eine Unterseite zeigt."""
     return []
 
@@ -51,7 +55,7 @@ class Contribution:
     """Was ein Vorhaben beiträgt; jedes Feld darf leer bleiben."""
 
     name: str  # das Vorhaben, etwa ``14-vorgaenge``; steht in Fehlermeldungen
-    steps: Callable[[Settings, Layout], list[Step]] = no_steps
+    steps: Callable[[Settings, Layout, Transport], list[Step]] = no_steps
     tables: tuple[PublishedTable, ...] = ()
     pages: tuple[Page, ...] = ()
 
@@ -60,9 +64,13 @@ class Contribution:
 CONTRIBUTIONS: tuple[Contribution, ...] = ()
 
 
-def contributed_steps(settings: Settings, layout: Layout) -> list[Step]:
+def contributed_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
     """Die Schritte aller Beiträge in Registerfolge."""
-    return [step for contribution in CONTRIBUTIONS for step in contribution.steps(settings, layout)]
+    return [
+        step
+        for contribution in CONTRIBUTIONS
+        for step in contribution.steps(settings, layout, http)
+    ]
 
 
 def check_unique_names(steps: Sequence[Step]) -> None:

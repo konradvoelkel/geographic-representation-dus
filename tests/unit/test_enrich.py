@@ -13,18 +13,21 @@ import polars as pl
 import pytest
 
 import georep.enrich
-from georep.enrich import Contribution
+from georep.enrich import Contribution, DuplicateStepError
+from georep.http import Transport
+from georep.io import write_bytes
 from georep.layout import Layout
-from georep.pipeline import Step, build_steps
+from georep.pipeline import Step, build_steps, run_pipeline
 from georep.report.tables import PublishedTable, all_tables, csv_plan, published
 from georep.settings import Settings
+from tests.fakes import FakeSession, response
 
 
 def _layout(tmp_path: Path) -> Layout:
     return Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
 
 
-def _probe_steps(settings: Settings, layout: Layout) -> list[Step]:
+def _probe_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
     target = layout.processed / "probe.parquet"
     return [Step("probe", (layout.corpus,), (target,), lambda: "nichts")]
 
@@ -53,8 +56,57 @@ def test_zwei_beitraege_mit_demselben_schritt_sind_ein_fehler(
 ) -> None:
     twice = (Contribution("a", steps=_probe_steps), Contribution("b", steps=_probe_steps))
     monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", twice)
-    with pytest.raises(Exception, match="probe"):
+    # Der Typ, nicht nur der Name: ein TypeError aus einem Beitrag nennt ``_probe_steps`` auch
+    with pytest.raises(DuplicateStepError, match="probe"):
         build_steps(default_settings, _layout(tmp_path))
+
+
+# --- Nachzug F2: der Transport an den Beiträgen (Synergien 2026-11, Konflikt 7) -------------
+
+PROBE_URL = "https://example.org/probe.json"
+
+
+def _network_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
+    target = layout.raw / "probe.json"
+
+    def run() -> str:
+        write_bytes(target, http.get(PROBE_URL).content)
+        return "geholt"
+
+    return [Step("probe_netz", (), (target,), run, network=True)]
+
+
+def test_ein_netzschritt_eines_beitrags_laeuft_ueber_die_session_aus_build_steps(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Die Naht für Tests mit der Fake-Session (CLAUDE.md, „Nie": Netz in Unit-Tests)."""
+    layout = _layout(tmp_path)
+    monkeypatch.setattr(
+        georep.enrich, "CONTRIBUTIONS", (Contribution("probe", steps=_network_steps),)
+    )
+    session = FakeSession({PROBE_URL: response(PROBE_URL, payload={"ok": 1})})
+    steps = build_steps(default_settings, layout, session)
+    [outcome] = run_pipeline(steps, default_settings, ["probe_netz"], online=True)
+    assert outcome.status == "ausgeführt", outcome
+    assert session.urls == [PROBE_URL]
+    assert (layout.raw / "probe.json").read_bytes() == b'{"ok": 1}'
+
+
+def test_ohne_netzschritt_entsteht_keine_session(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ohne ``http`` bekommt ein Beitrag eine Session, die erst beim ersten Aufruf entsteht.
+
+    Wie bei den Netzschritten des Kerns: ``georep steps`` oder ein Lauf ohne ``--online`` legt
+    keinen HTTP-Cache an.
+    """
+    layout = _layout(tmp_path)
+    monkeypatch.setattr(
+        georep.enrich, "CONTRIBUTIONS", (Contribution("probe", steps=_network_steps),)
+    )
+    steps = build_steps(default_settings, layout)
+    run_pipeline(steps, default_settings, ["probe_netz"])  # ohne --online übersprungen
+    assert not layout.http_cache.exists()
 
 
 def _probe_table() -> PublishedTable:

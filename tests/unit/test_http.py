@@ -152,3 +152,25 @@ def test_a_url_with_a_query_string_still_gets_its_cache_rule(
     for _ in range(2):
         session.get(andere)
     assert sent.count(andere) == 2
+
+
+def test_a_deferred_transport_builds_its_session_on_the_first_call() -> None:
+    """Fundament F2, Nachzug: die Beiträge bekommen ``http``, ohne dass ``build_steps`` dafür eine
+    Session (und damit ``http.sqlite``) anlegt; gebaut wird erst beim ersten ``get`` oder ``post``."""
+    from georep.http import DeferredTransport
+    from tests.fakes import FakeSession, response
+
+    url = "https://api.invalid/x"
+    session = FakeSession({url: response(url, payload={"ok": True})})
+    built: list[int] = []
+
+    def make() -> FakeSession:
+        built.append(1)
+        return session
+
+    deferred = DeferredTransport(make)
+    assert built == []
+    assert deferred.get(url, params={"a": 1}).json() == {"ok": True}
+    assert deferred.post(url, data="b").json() == {"ok": True}
+    assert session.calls == [(url, {"a": 1}), (url, "b")]
+    assert built == [1, 1]  # je Aufruf gefragt; die Fabrik in build_steps hält die Session

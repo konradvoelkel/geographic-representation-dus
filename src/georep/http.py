@@ -10,7 +10,7 @@ kommen aber per Redirect von https.
 from __future__ import annotations
 
 import ipaddress
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Protocol
@@ -42,6 +42,26 @@ class Transport(Protocol):
     def get(self, url: str, *, params: Any = None, headers: Any = None) -> requests.Response: ...
 
     def post(self, url: str, *, data: Any = None, headers: Any = None) -> requests.Response: ...
+
+
+class DeferredTransport:
+    """Ein ``Transport``, der seine Session erst beim ersten ``get`` oder ``post`` von ``make`` holt.
+
+    Fundament F2, Nachzug (``docs/plans/00-synergien-2026-11.md``, Konflikt 7): ``build_steps``
+    reicht ``http`` an die Beiträge weiter, damit ein Netzschritt eines Vorhabens mit der
+    Fake-Session testbar ist. Ohne Angabe entsteht die gecachte Session dort erst, wenn ein
+    Netzschritt sie braucht; so bleibt es auch für die Beiträge, und ``georep steps`` legt keinen
+    HTTP-Cache an. ``make`` wird je Aufruf gefragt und hält die Session selbst.
+    """
+
+    def __init__(self, make: Callable[[], Transport]) -> None:
+        self._make = make
+
+    def get(self, url: str, *, params: Any = None, headers: Any = None) -> requests.Response:
+        return self._make().get(url, params=params, headers=headers)
+
+    def post(self, url: str, *, data: Any = None, headers: Any = None) -> requests.Response:
+        return self._make().post(url, data=data, headers=headers)
 
 
 class TimeoutSession(requests.Session):
