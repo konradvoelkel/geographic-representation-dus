@@ -124,16 +124,16 @@ def raw_from_pages(pages: Sequence[str]) -> tuple[str, tuple[int, ...]]:
 
 # Benannte Validatoren vor dem ganzen Stapel, weil ``form_feeds`` optional ist: das mypy-Plugin von
 # deal modelliert ``result`` als positionalen Parameter hinter den Argumenten (CLAUDE.md, deal).
-def _flatten_has_a_marker(raw: str, marker: str, form_feeds: Sequence[int] = ()) -> bool:
+def _flatten_has_a_marker(raw: str, marker: str, form_feeds: Sequence[int]) -> bool:
     return marker != ""
 
 
-def _flatten_feeds_are_valid(raw: str, marker: str, form_feeds: Sequence[int] = ()) -> bool:
+def _flatten_feeds_are_valid(raw: str, marker: str, form_feeds: Sequence[int]) -> bool:
     return _feeds_point_at_standins(raw, form_feeds)
 
 
 def _flattened_like_the_store(
-    raw: str, marker: str, form_feeds: Sequence[int] = (), result: str = ""
+    raw: str, marker: str, form_feeds: Sequence[int], result: str = ""
 ) -> bool:
     return "\n" not in result and result == result.lower()
 
@@ -146,12 +146,14 @@ def _flattened_like_the_store(
     _flattened_like_the_store, message="geplättet wie der Textstore: kleingeschrieben, eine Zeile"
 )
 @deal.safe
-def flatten(raw: str, marker: str, form_feeds: Sequence[int] = ()) -> str:
+def flatten(raw: str, marker: str, form_feeds: Sequence[int]) -> str:
     """Rohtext zum Text des Textstores: Seitenwechsel zu Zeilenumbrüchen, die ``\\f`` der Seiten
     zurück, dann wie ``prep.extract`` (``normalise_text``, ``after_marker``).
 
     Erst die Seitenwechsel, dann die inneren ``\\f``: beide Ersetzungen behalten die Länge, die
-    Offsets bleiben gültig, und kein inneres ``\\f`` wird zum Zeilenumbruch.
+    Offsets bleiben gültig, und kein inneres ``\\f`` wird zum Zeilenumbruch. ``form_feeds`` ist
+    Pflicht (Review F1, dritte Runde): eine Vorgabe ``()`` plättete einen Aufruf ohne Offsets still
+    wie Schema-Version 1; aus dem Store kommen sie mit ``RawTextStore.form_feeds(name)``.
     """
     lines = raw.replace(PAGE_BREAK, "\n")
     return after_marker(normalise_text(restore_form_feeds(lines, form_feeds)), marker)

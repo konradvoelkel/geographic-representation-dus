@@ -55,8 +55,10 @@ def test_the_raw_text_keeps_case_lines_pages_and_the_head(pdf_fixtures: Path, na
     assert len(pages) >= 1 and raw.count(PAGE_BREAK) == len(pages) - 1
     assert "\n" in raw and raw != raw.lower()
     # Der Vorlagenkopf vor „betrifft" ist da, der Textstore schneidet ihn ab.
-    assert flatten(raw, "betrifft") != normalise_all(raw)
-    assert flatten(raw, "betrifft") == after_marker(extract_text(pdf_fixtures / name), "betrifft")
+    assert flatten(raw, "betrifft", feeds) != normalise_all(raw)
+    assert flatten(raw, "betrifft", feeds) == after_marker(
+        extract_text(pdf_fixtures / name), "betrifft"
+    )
 
 
 def normalise_all(raw: str) -> str:
@@ -100,7 +102,8 @@ def test_the_four_fixture_pdfs_flatten_to_the_text_store(
     extract_missing(pdfs, texts, FILES, "betrifft")
     extract_raw_missing(pdfs, raw, FILES)
     for name in FILES:
-        assert flatten(RawTextStore(raw.path).get(name) or "", "betrifft") == TextStore(
+        stored = RawTextStore(raw.path)
+        assert flatten(stored.get(name) or "", "betrifft", stored.form_feeds(name)) == TextStore(
             texts.path
         ).get(name)
 
@@ -192,5 +195,14 @@ def test_a_store_of_another_schema_version_reads_as_empty_and_is_rewritten(
 
 def test_flatten_needs_a_marker() -> None:
     with pytest.raises(deal.PreContractError):
-        flatten("Kopf\nBetrifft: Rest", "")
-    assert flatten("Kopf\fBetrifft: Rest", "betrifft") == ": rest"
+        flatten("Kopf\nBetrifft: Rest", "", ())
+    assert flatten("Kopf\fBetrifft: Rest", "betrifft", ()) == ": rest"
+
+
+def test_flatten_needs_the_offsets_of_the_form_feeds() -> None:
+    """Review F1, dritte Runde: mit der Vorgabe ``form_feeds=()`` plättete ein Aufruf ohne Offsets
+    still wie Schema-Version 1 -- an einem Dokument mit Formfeeds im Seitentext falsch. Wer keine
+    Offsets hat, sagt es jetzt mit ``()``; wer aus dem Store liest, nimmt ``form_feeds(name)``."""
+    with pytest.raises(TypeError):
+        flatten("Kopf\fBetrifft: Rest", "betrifft")  # type: ignore[call-arg]
+    assert flatten("Kopf A\fBetrifft: Rest", "betrifft", (4,)) == ": rest"

@@ -2790,7 +2790,9 @@ Spalte `form_feeds` nennt die Offsets; jede Seite behält ihre Länge, und `flat
 zurück, bevor es normalisiert und schneidet. Die erste Fassung (Schema-Version 1) ließ die Offsets
 weg und nahm die Abweichung an diesen Stellen hin; der Review vom 2026-11-23 fand dazu einen Marker,
 den das Leerzeichen erst erzeugt („a\fb" wird „a b"), und die Entscheidung war: die Plättung bleibt
-genau.
+genau. Darum ist `form_feeds` ein Pflichtargument von `flatten(raw, marker, form_feeds)`: eine
+Vorgabe `()` plättete einen Aufruf ohne Offsets still wie Version 1 (Review, dritte Runde); aus dem
+Store kommen sie mit `RawTextStore.form_feeds(name)`.
 
 **Laufzeit** des Schritts beim ersten Lauf je Profil, seriell wie `texts`, am 2026-11-23 unter
 starker Fremdlast (Lastmittel bis 144 auf 16 Kernen), mit `nice -n 10`, in Schema-Version 1; die
