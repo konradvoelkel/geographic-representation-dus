@@ -82,6 +82,8 @@ PROJEKT = "20-kurzfassungen"
 PROMPT_VERSION = "20-kurzfassung-1"  # Fassung 1; Teil des Cache-Schlüssels von F5
 MODELLE = ("qwen3.6:27b", "gemma4:latest")
 SEED = 2026112320  # Tag der Festlegung und Nummer des Vorhabens
+# Umbaurunde (Messdokument § 5.2, Frage 35: umbauen): frische 200 ohne die der ersten Runde
+SEED_RUNDE2 = 2026112330
 STICHPROBE = 200
 KODIERT = 50
 BUDGET_ZEICHEN = 8000  # Abschnittstext je Eingabe; darüber wird gekürzt (Feld gekuerzt)
@@ -741,10 +743,38 @@ def ziehen(frame: pl.DataFrame, stratum: str, n: int, seed: int) -> pl.DataFrame
     )
 
 
-def stichprobe200() -> pl.DataFrame:
-    return pl.read_csv(VALIDIERUNG / "stichprobe200.csv", infer_schema=False).with_columns(
-        pl.col("schicht_n").cast(pl.Int64)
+def endung(runde: int) -> str:
+    """Dateinamen der Umbaurunde tragen „-2"; die erste Runde bleibt, wie sie geschrieben ist."""
+    return "" if runde == 1 else f"-{runde}"
+
+
+def stichprobe200(runde: int = 1) -> pl.DataFrame:
+    path = VALIDIERUNG / f"stichprobe200{endung(runde)}.csv"
+    return pl.read_csv(path, infer_schema=False).with_columns(pl.col("schicht_n").cast(pl.Int64))
+
+
+def cmd_stichprobe2() -> int:
+    """Die frischen 200 der Umbaurunde: dieselbe Schichtung, ohne die 200 der ersten Runde."""
+    settings = settings_dus()
+    struktur = load_struktur()
+    full = schichten(korpus(settings), struktur)
+    first = stichprobe200(1)["id"].to_list()
+    rest = full.filter(~pl.col("id").is_in(first))
+    sizes = full.group_by("schicht").len().rename({"len": "schicht_n"})
+    sample = (
+        ziehen(rest, "schicht", STICHPROBE, SEED_RUNDE2)
+        .drop("schicht_n")
+        .join(sizes, on="schicht", how="left")
+        .sort("rang")
     )
+    assert not set(sample["id"].to_list()) & set(first)
+    sample.select("id", "art", "laenge", "schicht", "schicht_n").write_csv(
+        VALIDIERUNG / "stichprobe200-2.csv"
+    )
+    print(
+        f"Runde 2: {sample.height} Dokumente aus {rest.height}, {sample['schicht'].n_unique()} Schichten"
+    )
+    return 0
 
 
 def cmd_stichprobe() -> int:
@@ -861,11 +891,17 @@ def ausgewaehlte_eingaben(ids: Sequence[str]) -> dict[str, Eingabe]:
 
 
 def exportieren(
-    modell: str, digest: str, ids: Sequence[str], texts: Sequence[str | None], cut: Sequence[bool]
+    modell: str,
+    digest: str,
+    ids: Sequence[str],
+    texts: Sequence[str | None],
+    cut: Sequence[bool],
+    runde: int = 1,
 ) -> None:
     """Die Kurzfassungen aus dem Cache als lokaler Auszug (nie ins Repo)."""
     LOKAL.mkdir(parents=True, exist_ok=True)
-    path = LOKAL / f"kurzfassungen-{full_name(modell).replace(':', '_').replace('/', '_')}.jsonl"
+    name = full_name(modell).replace(":", "_").replace("/", "_")
+    path = LOKAL / f"kurzfassungen-{name}{endung(runde)}.jsonl"
     rows = [
         {
             "id": i,
@@ -883,10 +919,12 @@ def exportieren(
     )
 
 
-def cmd_erzeugen(modell: str, minuten: float, block: int, ids: Sequence[str] | None = None) -> int:
+def cmd_erzeugen(
+    modell: str, minuten: float, block: int, ids: Sequence[str] | None = None, runde: int = 1
+) -> int:
     settings = settings_dus()
     layout = Layout.from_settings(settings)
-    sample = stichprobe200()
+    sample = stichprobe200(runde)
     order = (
         ids if ids is not None else sample["id"].to_list()
     )  # nach Rang: ein Teillauf ist zufällig
@@ -945,7 +983,7 @@ def cmd_erzeugen(modell: str, minuten: float, block: int, ids: Sequence[str] | N
             )
             + "\n"
         )
-    exportieren(modell, timed.digest, order, out.texts, out.truncated)
+    exportieren(modell, timed.digest, order, out.texts, out.truncated, runde)
     return 0
 
 
@@ -1019,8 +1057,9 @@ def lies_massstab() -> dict[str, str]:
     }
 
 
-def lies_kurzfassungen(modell: str) -> dict[str, tuple[str, bool]]:
-    path = LOKAL / f"kurzfassungen-{full_name(modell).replace(':', '_').replace('/', '_')}.jsonl"
+def lies_kurzfassungen(modell: str, runde: int = 1) -> dict[str, tuple[str, bool]]:
+    name = full_name(modell).replace(":", "_").replace("/", "_")
+    path = LOKAL / f"kurzfassungen-{name}{endung(runde)}.jsonl"
     if not path.is_file():
         return {}
     out: dict[str, tuple[str, bool]] = {}
@@ -1144,12 +1183,12 @@ def gerundet(summary: str, a: Angabe, b: Belege) -> bool:
 
 
 def treue(
-    sample: pl.DataFrame, inputs: dict[str, Eingabe], lex: Lexikon
+    sample: pl.DataFrame, inputs: dict[str, Eingabe], lex: Lexikon, runde: int = 1
 ) -> tuple[list[Pruefung], dict[str, str]]:
     found: list[Pruefung] = []
     texts: dict[str, str] = {}
     for modell in MODELLE:
-        summaries = lies_kurzfassungen(modell)
+        summaries = lies_kurzfassungen(modell, runde)
         for doc in sample["id"].to_list():
             text, cut = summaries.get(doc, (None, False))
             b = belege(inputs[doc].text)
@@ -1160,7 +1199,11 @@ def treue(
 
 
 def zeige_treue(
-    sample: pl.DataFrame, checks: list[Pruefung], texts: dict[str, str], inputs: dict[str, Eingabe]
+    sample: pl.DataFrame,
+    checks: list[Pruefung],
+    texts: dict[str, str],
+    inputs: dict[str, Eingabe],
+    runde: int = 1,
 ) -> None:
     print("\n## Treueprüfung (deterministisch, Kriterium ≥ 98 % ohne unbelegte Angabe)")
     strata = dict(sample.select("id", "schicht").iter_rows())
@@ -1256,9 +1299,11 @@ def zeige_treue(
             for a in c.unbelegt:
                 details.append({"id": c.id, "modell": name, **asdict(a)})
     if rows_out:
-        pl.DataFrame(rows_out).sort("modell", "id").write_csv(VALIDIERUNG / "treue.csv")
+        pl.DataFrame(rows_out).sort("modell", "id").write_csv(
+            VALIDIERUNG / f"treue{endung(runde)}.csv"
+        )
         LOKAL.mkdir(parents=True, exist_ok=True)
-        (LOKAL / "treue_unbelegt.jsonl").write_text(
+        (LOKAL / f"treue_unbelegt{endung(runde)}.jsonl").write_text(
             "".join(json.dumps(d, ensure_ascii=False) + "\n" for d in details), encoding="utf-8"
         )
     # beide Modelle an denselben Dokumenten
@@ -1356,6 +1401,69 @@ def zeige_fassung2(
         print(f"  Beanstandungen der Klasse e nach Grund: {dict(why.most_common())}")
 
 
+def zeige_bestaetigung(
+    sample: pl.DataFrame, checks: list[Pruefung], inputs: dict[str, Eingabe], known: frozenset[str]
+) -> dict[str, float]:
+    """Umbaurunde (§ 5.2): das Kriterium mit Klasse e in Fassung 2, sonst wie festgelegt."""
+    print("\n## Bestätigung: Kriterium mit Klasse e in Fassung 2 (§ 5.2, vorab festgelegt)")
+    strata = dict(sample.select("id", "schicht").iter_rows())
+    sizes = dict(sample.select("schicht", "schicht_n").unique().iter_rows())
+    flags: dict[tuple[str, str], int] = {}
+    shares: dict[str, float] = {}
+    for modell in MODELLE:
+        name = full_name(modell)
+        mine = [c for c in checks if c.modell == name]
+        if not mine or all(c.leer for c in mine):
+            continue
+        left: Counter[str] = Counter()
+        why: Counter[str] = Counter()
+        oks: list[tuple[str, int, bool]] = []
+        for c in mine:
+            b = belege(inputs[c.id].text)
+            rest = [a for a in c.unbelegt if bleibt_fassung2(a, b, known)]
+            why.update(kategorie(a, b, known) for a in c.unbelegt if a.art == "selten")
+            left.update(f"{a.klasse}/{a.art}" for a in rest)
+            ok = not rest and not c.abgeschnitten and not c.leer
+            flags[(name, c.id)] = len(rest)
+            oks.append((strata[c.id], sizes[strata[c.id]], ok))
+        n_ok = sum(ok for _, _, ok in oks)
+        lo, hi = wilson(n_ok, len(oks))
+        est, wlo, whi, n_eff = geschichtet(oks)
+        shares[name] = est
+        verdict = "besteht" if est >= KRITERIUM_TREUE else "besteht nicht"
+        print(
+            f"{name}: ohne unbelegte Angabe {n_ok} / {len(oks)} = {100 * n_ok / len(oks):.1f} % "
+            f"(Wilson {100 * lo:.1f}–{100 * hi:.1f}); geschichtet {100 * est:.1f} % "
+            f"({100 * wlo:.1f}–{100 * whi:.1f}, n_eff {n_eff:.0f}) -> Teil 1 {verdict}"
+        )
+        print(f"  verbleibende unbelegte Angaben je Klasse/Art: {dict(left.most_common())}")
+        print(f"  Klasse e nach Grund: {dict(why.most_common())}")
+    path = VALIDIERUNG / "treue-2.csv"
+    if path.is_file() and flags:
+        frame = pl.read_csv(path).with_columns(
+            pl.struct("modell", "id")
+            .map_elements(lambda r: flags.get((r["modell"], r["id"]), 0), return_dtype=pl.Int64)
+            .alias("unbelegt_fassung2")
+        )
+        frame = frame.with_columns(
+            (
+                (pl.col("unbelegt_fassung2") == 0)
+                & (pl.col("abgeschnitten") == 0)
+                & (pl.col("leer") == 0)
+            )
+            .cast(pl.Int64)
+            .alias("ok_fassung2")
+        )
+        frame.write_csv(path)
+    if len(shares) == 2:
+        q, g = (shares[full_name(m)] for m in MODELLE)
+        print(
+            f"Modellwahl, falls Teil 2 für beide besteht: qwen − gemma = {100 * (q - g):+.1f} "
+            f"Prozentpunkte (qwen nur ab +2,0, sonst gemma)"
+        )
+    return shares
+
+
 def lies_laeufe() -> pl.DataFrame:
     rows: list[dict[str, Any]] = []
     for path in sorted((LOKAL / "laeufe").glob("*.jsonl")):
@@ -1399,10 +1507,10 @@ def lauf_lasten() -> list[str]:
     return out
 
 
-def durchsatz(sample: pl.DataFrame, inputs: dict[str, Eingabe]) -> pl.DataFrame:
+def durchsatz(sample: pl.DataFrame, inputs: dict[str, Eingabe], runde: int = 1) -> pl.DataFrame:
     """Je Modell und Dokument der letzte Aufruf (Fassung 1); ins Repo nur Zahlen."""
     runs = lies_laeufe()
-    path = VALIDIERUNG / "durchsatz.csv"
+    path = VALIDIERUNG / f"durchsatz{endung(runde)}.csv"
     if runs.height:
         runs = (
             runs.filter(
@@ -1862,11 +1970,11 @@ def cmd_selbsttest() -> int:
 # --------------------------------------------------------------------------------------------
 
 
-def cmd_alles(mit_perioden: bool) -> int:
+def cmd_alles(mit_perioden: bool, runde: int = 1) -> int:
     settings = settings_dus()
     struktur = load_struktur()
     frame = korpus(settings)
-    sample = stichprobe200()
+    sample = stichprobe200(runde)
     inputs = eingaben(
         frame.filter(pl.col("id").is_in(sample["id"].to_list())), struktur, "duesseldorf"
     )
@@ -1878,15 +1986,20 @@ def cmd_alles(mit_perioden: bool) -> int:
         f"Lexikon: {len(lex.orte)} Ortsnamen, {len(lex.gremien)} Gremien, {len(lex.haeufig)} häufige Wörter (≥ {100 * SELTEN_ANTEIL:g} % von {corpus_lower.len()} Dokumenten)"
     )
     zeige_stichprobe(sample, inputs)
-    checks, texts = treue(sample, inputs, lex)
-    zeige_treue(sample, checks, texts, inputs)
-    zeige_fassung2(checks, inputs, bekannte_woerter(corpus_lower))
-    runs = durchsatz(sample, inputs)
+    known = bekannte_woerter(corpus_lower)
+    checks, texts = treue(sample, inputs, lex, runde)
+    zeige_treue(sample, checks, texts, inputs, runde)
+    if runde == 1:
+        zeige_fassung2(checks, inputs, known)
+    else:
+        zeige_bestaetigung(sample, checks, inputs, known)
+    runs = durchsatz(sample, inputs, runde)
     models = zeige_durchsatz(runs)
     if mit_perioden and models:
         zeige_hochrechnung(models, periode_eingaben(struktur))
-    zeige_bewertung(lex, bekannte_woerter(corpus_lower))
-    zeige_vorgaenge(lex)
+    if runde == 1:
+        zeige_bewertung(lex, known)
+        zeige_vorgaenge(lex)
     return 0
 
 
@@ -1896,8 +2009,10 @@ def main(argv: Sequence[str]) -> int:
     )
     sub = parser.add_subparsers(dest="befehl")
     sub.add_parser("selbsttest")
-    sub.add_parser("stichprobe")
+    st = sub.add_parser("stichprobe")
+    st.add_argument("--runde", type=int, default=1, choices=(1, 2))
     run = sub.add_parser("erzeugen")
+    run.add_argument("--runde", type=int, default=1, choices=(1, 2))
     run.add_argument("--modell", required=True)
     run.add_argument("--minuten", type=float, default=28.0)
     run.add_argument("--block", type=int, default=20)
@@ -1908,20 +2023,21 @@ def main(argv: Sequence[str]) -> int:
     v.add_argument("--modell", required=True)
     alles = sub.add_parser("alles")
     alles.add_argument("--ohne-perioden", action="store_true")
+    alles.add_argument("--runde", type=int, default=1, choices=(1, 2))
     args = parser.parse_args(argv)
     if args.befehl == "selbsttest":
         return cmd_selbsttest()
     if args.befehl == "stichprobe":
-        return cmd_stichprobe()
+        return cmd_stichprobe() if args.runde == 1 else cmd_stichprobe2()
     if args.befehl == "erzeugen":
-        return cmd_erzeugen(args.modell, args.minuten, args.block)
+        return cmd_erzeugen(args.modell, args.minuten, args.block, runde=args.runde)
     if args.befehl == "massstab":
         return cmd_massstab(args.force)
     if args.befehl == "kodierung":
         return cmd_kodierung(args.force)
     if args.befehl == "vorgaenge":
         return cmd_vorgaenge(args.modell)
-    return cmd_alles(not getattr(args, "ohne_perioden", False))
+    return cmd_alles(not getattr(args, "ohne_perioden", False), getattr(args, "runde", 1))
 
 
 if __name__ == "__main__":
