@@ -13,7 +13,9 @@ from pathlib import Path
 
 from georep.layout import Layout
 from georep.settings import Settings
+from georep.validation.paths import CODERS
 from georep.validation.sample import sample_project
+from georep.validation.tasks import task_project
 
 PROJECT_HELP = "Ordner unter validation.root mit codebuch.toml, etwa 11-struktur"
 
@@ -39,6 +41,26 @@ def add_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None
         "--force", action="store_true", help="eine vorhandene Stichprobe neu ziehen"
     )
 
+    tasks = actions.add_parser(
+        "tasks",
+        help="Kodierauftrag, leere Antworten und Codebuch eines Kodierers schreiben "
+        "(lokal unter validation.coding_root, nie im Repo)",
+    )
+    tasks.add_argument("project", metavar="vorhaben", help=PROJECT_HELP)
+    tasks.add_argument("--coder", choices=CODERS, required=True, help="Kodierer A oder B")
+    tasks.add_argument(
+        "--texts",
+        type=Path,
+        help="Rohtextstore (Spalten name, text) statt rohtexte.parquet neben dem Textstore; "
+        'nur bei text.source = "raw"',
+    )
+    tasks.add_argument(
+        "--spans", type=Path, help="Spannen nach F3 als Parquet statt text.spans aus dem Codebuch"
+    )
+    tasks.add_argument(
+        "--force", action="store_true", help="auch über begonnene Antworten schreiben"
+    )
+
 
 def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
     """Einen Unterbefehl ausführen; Domänenfehler fängt ``cli.main``."""
@@ -54,5 +76,17 @@ def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
         print(report.line())
         for name, (total, drawn) in report.sample.strata.items():
             print(f"  {name or '(ohne Schicht)'}: {drawn} von {total}")
+        return 0
+    if args.action == "tasks":
+        written = task_project(
+            settings,
+            layout,
+            args.project,
+            args.coder,
+            texts=args.texts,
+            spans=args.spans,
+            force=args.force,
+        )
+        print(written.line())
         return 0
     return 2

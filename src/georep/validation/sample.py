@@ -230,11 +230,6 @@ def draw_sample(
     )
 
 
-def doc_columns_present(frame: pl.DataFrame, unit: Unit) -> bool:
-    """Die Stichprobe trägt die Spalten, aus denen ``tasks`` ihre Dokumente liest."""
-    return has_columns(frame, ID, STRATUM, *(target for _, target in SAMPLE_COLUMNS[unit]))
-
-
 @dataclass(frozen=True)
 class SampleReport:
     path: Path
