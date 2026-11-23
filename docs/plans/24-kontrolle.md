@@ -8,20 +8,23 @@ Die Hypothesen (§ 8) sind im Commit `a0cc89e` festgelegt, **bevor** eine Anfrag
 zugeordnet oder eine Zelle gezählt war (§ 2.11 des Meta-Plans); sie sind danach nicht geändert. Codebuch
 und Stichprobe: `validierung/24-kontrolle/`.
 
-**Urteil, vorläufig: bauen, wenn die Kodierung die Präzision bestätigt** (§ 5). Die drei Zahlen, auf die es
-ankommt:
+**Urteil nach der Kodierung (Abschluss der Stufe 1, 2026-11-23): umbauen.** Die Zuordnung Anfrage →
+Dezernat wird in dieser Form **nicht** gebaut; H1 bleibt ungerechnet (§ 5.1). Die drei Zahlen:
 
-1. **79,3 % der 3 476 Anfragen** von Fraktionen in Rat und Ausschüssen im Zeitraum der Kooperationen
-   bekommen ein Dezernat, mehr als die Hälfte (1 873) über den **Fachausschuss**, in dem sie gestellt sind;
-   die Antwort als eigene Drucksache trägt auf der Stadtebene fast nichts (8), weil der Rat mündlich und die
-   Ausschüsse als Anlage antworten (§ 3.3).
-2. **Teststärke 1,00** für den vorab genannten Effekt (Partner-Dezernate bekommen 1,5-mal so viele
-   Anfragen wie eigene) über 887 Anfragen der Mehrheitsfraktionen in 566 Zellen; 0,8 erreicht das Modell
-   ab IRR 1,3 (§ 3.5). Das Fallzahlkriterium ist erfüllt; die laufende Periode allein trägt es nicht.
-3. **Präzision offen**: 100 Anfragen, geschichtet nach dem Weg, liegen als Kodieraufgaben bereit
-   (`/media/konrad/xtraspace/georep/messdaten/kodierung/24-kontrolle/aufgaben.jsonl`). In den Daten stimmen
-   Fachausschuss und sicherer Klassifikator (p ≥ 0,7) zu 97,0 % überein, „Amt im Text" mit keinem anderen
-   Weg zu mehr als 56 % (§ 4).
+1. **Keine Schicht erreicht die Präzision 0,9** (§ 4.1): Antwort 7/8 und Amt im Text 14/16 (je 0,875),
+   Klassifikator hoch 12/14 (0,857), mittel 11/14 (0,786), **Fachausschuss 17/22 (0,773, Wilson
+   0,566–0,899)**, Klassifikator niedrig 5/14 (0,357). Hochgerechnet auf die 2 757 zugeordneten Anfragen
+   **0,721** (0,596–0,847). Nach der vorab festgelegten Regel (§ 4) bleibt kein Weg im Verfahren.
+2. **Die Frage selbst ist kodierbar**: zwei Kodierer einig bei 96 von 100 (Krippendorffs α 0,954), nur 4
+   Schlichtungen. Es scheitert das Verfahren, nicht das Konstrukt: der Fachausschuss ist bei fast jeder
+   vierten Anfrage nicht das adressierte Dezernat, und der Klassifikator schiebt Rat-Anfragen dem
+   Oberbürgermeister zu.
+3. **Die Fallzahl hätte getragen** (Teststärke 0,99 bis 1,00 bei IRR 1,5, § 3.5): ein neuer Weg, der 0,9
+   erreicht und rund die Hälfte der Anfragen zuordnet, reicht für die Prüfung.
+
+*Vorläufiges Urteil vor der Kodierung (Stand des Commits `2cddab5`): „bauen, wenn die Kodierung die
+Präzision bestätigt", mit 79,3 % Abdeckung und der Erwartung, Fachausschuss und sicherer Klassifikator
+trügen. Die Erwartung war falsch; § 4.1 sagt, warum.*
 
 Die Tabelle der Dezernate, ihrer Ämter und der vorschlagenden Fraktionen 2014–2026 steht mit Quellen in
 § 2.2; die Köpfe der Vorlagen bestätigen sie zu 97,9 % (§ 3.2).
@@ -322,14 +325,139 @@ Präzision (Punktschätzer) ≥ 0,9 ist; das Kriterium gilt für die hochgerechn
 verbleibenden Wege. Die Teststärke wird danach mit den verbleibenden Wegen neu gerechnet (§ 3.5 zeigt sie
 schon für vier Varianten).
 
-**Stand**: nicht kodiert. Die Kodier-Agenten laufen nach Plan § 2.6 beim Supervisor.
+**Stand**: kodiert am 2026-11-23, Ergebnis in § 4.1.
 
 **Was die Daten selbst schon sagen** (Labels aus den Daten, Plan § 2.6 (2); kein Ersatz für die
 Kodierung): Fachausschuss und Klassifikator ab p 0,7 stimmen zu 97,0 % überein (129 von 133, zwei
 unabhängige Wege); Amt im Text stimmt mit keinem anderen Weg zu mehr als 56 %. Die Erwartung ist darum:
 Fachausschuss und Klassifikator hoch erreichen 0,9, Amt im Text und Klassifikator niedrig nicht.
 
+### 4.1 Ergebnis der Kodierung (2026-11-23)
+
+Kodiert von zwei Kodier-Agenten unabhängig nach Codebuch 2026-11-23.1, Uneinigkeiten von einem
+Schlicht-Agenten entschieden; alle drei sind dasselbe Modell (Frage 19 von `fragen-2026-11.md`): die
+Übereinstimmung ist ein schwacher Beleg, kein menschlicher Goldstandard. Endlabels in
+`validierung/24-kontrolle/labels.csv` (Aufgabe, Frage `dezernat`, `weitere`, `amt`; Kodierer A, B,
+Schlichtung, Endlabel als JSON; Einigkeit gibt das Label, sonst die Schlichtung, ohne Schlichtung bei
+Uneinigkeit `null`). `amt` ist bei 6 Aufgaben `null`: dreimal von beiden Kodierern leer gelassen, zweimal
+entschied die Schlichtung ohne Amt, einmal blieben die Kodierer uneins ohne Schlichtung (das Dezernat war
+gleich). Gebildet und ausgewertet mit
+`docs/plans/24-kontrolle-messung.py --labels` (Abschnitt 8 der Ausgabe; der Lauf bestätigt, dass die
+Zuordnung die gespeicherte Stichprobe unverändert reproduziert).
+
+**Übereinstimmung**: Dezernat 96 von 100, **Krippendorffs α (nominal) 0,954**; Amt 95 von 100. Die vier
+Schlichtungen: `RAT/186/2024` → `mehrere` (07, 02; Unwetter: Feuerwehr und Stadtentwässerung),
+`OVA/020/2025` → 05 (Amt 66), `RAT/165/2025` → `unklar` (öffentliche Toiletten: zuständiges Amt weder im
+Text noch in der Liste), `RAT/096/2023` → 09 (Amt 54). Endlabels: 05 20, 06 18, 03 15, 04 10, 09 9, 01 7,
+07 6, 08 6, 02 4, `mehrere` 4, `unklar` 1.
+
+**`unklar` und `mehrere`** zählen, wie das Codebuch es vorab regelt (`[mass]`): streng falsch, wenn das
+Verfahren ein Dezernat vergibt; `mehrere` mild richtig, wenn das Dezernat des Verfahrens unter den
+genannten ist. Das einzige `unklar` (`RAT/165/2025`) liegt in der Schicht ohne Zuordnung und geht darum
+in keine Präzision ein; von den vier `mehrere` liegen drei in zugeordneten Schichten (zwei Klassifikator
+hoch, eines niedrig).
+
+**Präzision je Schicht** (streng; Kriterium), mild daneben, Wilson-Intervall 95 %:
+
+| Schicht (Weg) | Grundgesamtheit | Stichprobe | richtig streng | Präzision | Wilson 95 % | mild |
+|---|---|---|---|---|---|---|
+| Antwort als eigene Drucksache | 8 | 8 | 7 | 0,875 | 0,529–0,978 | 7 |
+| Fachausschuss | 1 873 | 22 | 17 | **0,773** | 0,566–0,899 | 17 |
+| Amt im Text | 276 | 16 | 14 | 0,875 | 0,640–0,965 | 14 |
+| Klassifikator hoch (p ≥ 0,7) | 30 | 14 | 12 | 0,857 | 0,601–0,960 | 13 |
+| Klassifikator mittel (0,5–0,7) | 149 | 14 | 11 | 0,786 | 0,524–0,924 | 11 |
+| Klassifikator niedrig (0,3–0,5) | 421 | 14 | 5 | 0,357 | 0,163–0,612 | 5 |
+| **hochgerechnet (Schichtgewichte)** | 2 757 | 88 | | **0,721** | 0,596–0,847 (normal) | |
+| ohne Zuordnung | 719 | 12 | — | — | — | — |
+
+**Je Periode** (alle zugeordneten Schichten, ungewichtet): 2014–2020 22/32 = 0,688 (Wilson 0,514–0,820),
+2020–2025 35/44 = 0,795 (0,655–0,888), 2025- 9/12 = 0,750 (0,468–0,911). Keine Periode erreicht 0,9.
+
+**Die vorab festgelegte Regel** (§ 4: eine Schicht bleibt, wenn ihr Punktschätzer ≥ 0,9 ist) **behält
+keine Schicht.** Damit gibt es kein Verfahren, dessen Präzision hochzurechnen wäre, und keine Teststärke
+„mit den verbleibenden Wegen". Nachträglich und ohne Wirkung auf das Urteil: auch keine Kombination der
+Schichten erreicht 0,9, die besten einzelnen Schichten (Antwort, Amt im Text) liegen bei 0,875 und
+decken zusammen 8 % der Grundgesamtheit.
+
+**Fehlerbilder** (22 Fehler in den zugeordneten Schichten; die Liste mit Drucksachennummern druckt das
+Skript):
+
+- **Fachausschuss ≠ adressiertes Dezernat** (5 von 22): im Umweltausschuss nach Planung und Bau gefragt
+  (`AUS/011/2020`, `AUS/007/2024` → 03), im Sportausschuss nach dem Bau einer Sportstätte
+  (`SPOA/031/2021` → 03), im Personal- und Organisationsausschuss nach einer Sache des OB
+  (`POA/008/2020` → 01), im Ordnungs- und Verkehrsausschuss 2018 mit Amt 66 als Geschäftsführung, aber
+  einer Ordnungsfrage (`66/ 34/2018` → 07). Ein Ausschuss mit eindeutigem Dezernat seiner **Vorlagen**
+  (Anteil ≥ 0,8) hat damit noch kein eindeutiges Dezernat seiner **Anfragen**: Fraktionen fragen im
+  Fachausschuss quer.
+- **Der Klassifikator schiebt Rat-Anfragen dem OB zu** (4 der 9 Fehler der niedrigen Schicht:
+  `01/ 23/2015`, `01/ 268/2016`, `01/ 125/2019`, `001/ 26/2015` → 03, 04, 08, 02; dazu `01/ 131/2015` in
+  der mittleren Schicht): Vorlagen des Amtes 01 (Ratsbüro) teilen das Vokabular des Rates, nicht den
+  Gegenstand.
+- **Das Gesundheitsamt wandert** (4 Fehler im Ausschuss für Gesundheit und Soziales): vakantes Dezernat 04
+  bis 2021-06, Dezernat 07 bis 2025, Dezernat 09 ab 2026; der Klassifikator wählt Soziales (06), weil AGS-
+  Vorlagen meist aus dem Sozialamt kommen (`AGS/029/2021`, `AGS/033/2021` → 04, `AGS/005/2023` → 07,
+  `AGS/040/2026` → 09).
+- **`mehrere`** (3): Querschnittsfragen (`AGS/012/2024`, `OVA/009/2024`, `RAT/186/2024`), die das Verfahren
+  mit genau einem Dezernat nicht treffen kann.
+- **Warum die Erwartung aus den Daten falsch war**: Fachausschuss und sicherer Klassifikator stimmten zu
+  97 % überein (§ 4, „Was die Daten selbst schon sagen"), aber beide folgen dem Vokabular des Gremiums und
+  der Vorlagen, nicht dem Gegenstand der Fragen; zwei Wege mit demselben Fehler bestätigen einander. Die
+  Lehre gilt für jedes Vorhaben, das Labels aus den Daten als Gegenprobe nimmt (Plan § 2.6 (2)): nur
+  Wege mit **verschiedener** Fehlerquelle prüfen einander.
+
+**Die Schicht ohne Zuordnung** (12 Anfragen, fast alle im Rat): die Kodierer geben 10 davon ein einziges
+Dezernat, das beste Dezernat des Klassifikators (p < 0,3) trifft keines. Dort fehlt dem Verfahren der
+Gegenstand, nicht dem Material.
+
+**Anträge in der Grundgesamtheit**: der Supervisor meldet drei der 100 Aufgaben, die keine Anfragen sind,
+obwohl der Server sie als „Anfrage" führt; die Kodierer begründen es bei `OVA/152/2021` (Antrag) und
+`OVA/196/2023` (Änderungsantrag). Die Regel des Skripts (Titel oder Briefkopf nennt einen Antrag) findet in
+der Stichprobe drei: diese beiden und `01/ 61/2015` (Titel „Anfrage", Briefkopf „Antrag der
+CDU-Ratsfraktion"). In der ganzen
+Grundgesamtheit nennen 16 Titel einen Antrag, 20 Briefköpfe beginnen mit „Antrag" oder
+„Änderungsantrag", zusammen **26 von 3 476 (0,7 %)**, davon 13 über den Fachausschuss zugeordnet. Für
+die Zuordnung ist das ohne Gewicht; für H1 würde Stufe 2 sie über die Funktion aus Vorhaben 15
+(`initiative`) ausschließen.
+
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
+
+### 5.1 Urteil nach der Kodierung (Abschluss der Stufe 1, 2026-11-23): umbauen
+
+Maßgeblich ist der Wortlaut des Absatzes „Was entscheidet" unten (§ 5.2, vor der Kodierung geschrieben):
+
+- „erreicht die hochgerechnete Präzision der verbleibenden Wege 0,9 … ist das Urteil bauen": **nicht
+  erfüllt**, es bleibt kein Weg (§ 4.1).
+- „Erreicht auch der Fachausschuss allein 0,9 nicht, heißt es **umbauen**": **erfüllt** (0,773, obere
+  Wilson-Grenze 0,899).
+- „**Verwerfen** nur, wenn kein Weg 0,9 erreicht": die Bedingung ist **ebenfalls erfüllt**; der Satz nennt
+  eine notwendige Bedingung für Verwerfen, keine hinreichende.
+
+Die beiden letzten Sätze überschneiden sich genau in diesem Fall, und das Dokument hat die Überschneidung
+nicht geregelt. Der Mess-Agent liest den bestimmenden Satz („heißt es umbauen") vor dem einschränkenden
+(„nur, wenn") und urteilt **umbauen**; ob stattdessen verworfen wird, entscheiden Supervisor und Konrad
+(Frage 9.17). Für umbauen spricht in der Sache: die Frage ist kodierbar (α 0,954), die Fallzahl trägt,
+und die Fehler haben benennbare Ursachen, für die es Zulieferer gibt.
+
+**Was das heißt**:
+
+- **Kein Stufe-2-Bau** der Zuordnung, kein Beitrag `oversight` (§ 6 und § 7 ruhen). **H1 bleibt
+  ungerechnet**; sie bleibt wie vorab festgelegt (§ 8) und wird erst geprüft, wenn ein neues Verfahren das
+  Kriterium erfüllt. Gerechnet mit dem heutigen Verfahren wäre sie nach § 8 „nicht entscheidbar".
+- **Die Umbau-Runde** (höchstens eine, Meta-Plan § 8) misst neu, sobald mindestens einer der Zulieferer da
+  ist, mit einer neuen Stichprobe von 100 Anfragen nach einem Codebuch .2 (Frage 9.13):
+  1. **Antwortendes Amt aus den Antwortanlagen** (Frage 9.3; braucht Konrads Netzlauf): die einzige
+     Quelle, deren Fehler nicht am Vokabular hängt; heute 7/8 richtig an den eigenen Drucksachen.
+  2. **Politikfeld je Dokument (Vorhaben 19)** und daraus das Dezernat über die Zuständigkeiten, wie Block
+     (2024) es über CAP-Themen tut — an den **Fragen** gemessen, nicht am Gremium.
+  3. **Ergebnis im Rat und Niederschrift (Vorhaben 26)**: wer antwortet mündlich (die Schicht ohne
+     Zuordnung ist fast nur Rat).
+  4. Ein Klassifikator, der an **Anfragen** lernt (Labels der beiden Kodierungen) statt an Vorlagen, ohne die
+     Klasse Ratsbüro; der Fachausschuss nur noch als Merkmal, nicht als Regel.
+- **Was bleibt verwendbar**: die Dezernatstabelle 2014–2026 mit Quellen (§ 2.2, an den Köpfen zu 97,9 %
+  bestätigt), das Codebuch, die 100 Labels (als Trainings- oder Prüfmaterial der Umbau-Runde, nicht als
+  ihre Stichprobe) und der Schätzer mit Teststärke (§ 3.5).
+
+### 5.2 Vorläufiges Urteil vor der Kodierung (unverändert, Stand `2cddab5`)
 
 **Vorläufig: bauen, sobald die Kodierung die Präzision bestätigt.** Das Kriterium hat zwei Teile.
 
@@ -563,6 +691,11 @@ steht auf der Seite als „explorativ".
 | 9.10 | Quasi-Poisson oder Standardfehler geclustert nach Fraktion × Dezernat? | Wenige Cluster (rund 30 Paare der Mehrheit) machen geclusterte Fehler unzuverlässig | wie festgelegt quasi-Poisson; φ ist in den Daten nahe 1 (§ 3.5) |
 | 9.11 | Prüfen an den vorhandenen Daten oder nur prospektiv (wie 15, § 8, für H15.1 vorschlägt)? | 15 hat seine Zahlen schon gesehen; hier ist keine Zelle nach Status gezählt | an den vorhandenen Daten nach der Validierung, weil der Vergleich Partner gegen eigen noch von niemandem gerechnet ist; dazu prospektiv bis zum Periodenende |
 | 9.12 | Gemeinsame Anfragen von CDU und Grünen (129 in der Hauptperiode) zählen für beide, einmal als Partner, einmal als eigen | Das verdünnt den Kontrast, verzerrt ihn aber nicht | wie festgelegt; R1 rechnet ohne sie |
+| 9.13 | Codebuch .2 nach den Lücken der Kodierung (Vorschläge des Schlicht-Agenten, **nicht** auf das gemessene Verfahren angewandt): (a) Querschnittsfragen an das koordinierende Amt, `mehrere` nur bei getrennten Fachsachen; (b) Amt nicht im Material: Amtsbezeichnung, Weltwissen nur bei einheitlicher Zuständigkeit, sonst dasselbe Dezernat aller Kandidaten, sonst `unklar` — dazu den Aufgabengliederungsplan der Stadt ins Material; (c) Beteiligungen an die Beteiligungsverwaltung (02); (d) ÖPNV nach Bus, Schiene und Bau trennen; (e) Präfixe der Drucksachennummer und zitierte Pressemitteilungen zählen nicht; (f) Schadensereignisse: Einsatz und Schadensbild an 37, Ursachen an einer Einrichtung an deren Amt; dazu den **Fragenblock** zeigen statt der ersten 3 000 Zeichen | Die Umbau-Runde braucht ein schärferes Codebuch; (e) zeigt, dass das alte Präfix (Punkt 57) selbst die Kodierer verleiten kann | Fassung .2 mit (a) bis (f) und Fragenblock (Abschnitt `fragen` aus 11) für die Umbau-Runde |
+| 9.14 | Kodierer und Schlichter sind dasselbe Modell (Frage 19) | α 0,954 kann geteilte Fehler verdecken | die Umbau-Runde mit einem zweiten Modell, wenn Frage 19 so beantwortet wird |
+| 9.15 | „Anfragen", die Anträge sind (26 von 3 476, 0,7 %; 3 in der Stichprobe) | in H1 zählt nur Kontrolle | Stufe 2 schließt sie über die Funktion aus 15 aus (`kontrolle`), nicht über die Dokumentart |
+| 9.16 | Labels aus den Daten als Gegenprobe: Fachausschuss und Klassifikator stimmten zu 97 % überein und lagen beide bei rund 0,77 bis 0,86 Präzision | Zwei Wege mit derselben Fehlerquelle bestätigen einander (§ 4.1) | Befund für `00-synergien-2026-11.md` und Plan § 2.6 (2): eine Gegenprobe aus den Daten zählt nur zwischen Wegen mit verschiedener Fehlerquelle |
+| 9.17 | Umbauen oder verwerfen? § 5 regelt den Fall „kein Weg erreicht 0,9" doppelt (§ 5.1) | Das Urteil hängt an der Lesart | umbauen (der bestimmende Satz vor dem einschränkenden); Supervisor und Konrad können verwerfen |
 
 **Was Vorhaben 27 ergänzt**: die Fragestellerin oder den Fragesteller als Person (Mitgliedschaften aus
 F6), damit (a) die Mehrheiten der Bezirksvertretungen und damit R2, (b) die Frage, ob Mitglieder des

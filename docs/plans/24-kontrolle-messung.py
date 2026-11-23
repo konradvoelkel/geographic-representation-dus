@@ -1,6 +1,6 @@
 """Rechnet die Zahlen von `24-kontrolle.md` nach (Vorhaben 24 „Anfragen als Kontrolle in der Kooperation").
 
-    uv run python docs/plans/24-kontrolle-messung.py [--stichprobe] [--sim N]
+    uv run python docs/plans/24-kontrolle-messung.py [--stichprobe] [--labels] [--sim N]
 
 Liest nur, was `georep run` je Düsseldorfer Profil schreibt (`interim/papers.parquet`,
 `processed/papers_gremien.parquet`, `processed/dokumente_urheber.parquet`; Pfade aus
@@ -30,6 +30,11 @@ Ausgabe des Verfahrens nach `$GEOREP_MESSDATEN/kodierung/24-kontrolle/aufgaben.j
 dazu leere Antwortdateien für zwei Kodierer. Ohne den Schalter prüft es nur, ob die gespeicherte
 Stichprobe noch dieselbe ist. Das Codebuch (`validierung/24-kontrolle/codebuch.toml`) ist von Hand
 geschrieben und wird nur gelesen.
+
+Mit `--labels` bildet es aus den Antworten der beiden Kodierer und der Schlichtung (lokal unter
+`$GEOREP_MESSDATEN/kodierung/24-kontrolle/`) die Endlabels `validierung/24-kontrolle/labels.csv`; liegt
+diese Datei, misst Abschnitt 8 die Präzision je Schicht und je Periode dagegen und wendet die vorab
+festgelegte Regel an (Messdokument § 4 und § 4.1). Die Auswertung braucht nur `labels.csv`.
 
 Die Hypothese H1 wird **nicht** gerechnet (Messdokument § 8: erst nach der Validierung der
 Zuordnung). Laufzeit rund zwei Minuten mit 400 Wiederholungen je Effektgröße.
@@ -67,6 +72,12 @@ AUFGABEN = KODIERUNG / "aufgaben.jsonl"
 STICHPROBE = REPO / "validierung" / "24-kontrolle" / "stichprobe.csv"
 CODEBUCH = REPO / "validierung" / "24-kontrolle" / "codebuch.toml"
 SEED = 24
+LABELS = REPO / "validierung" / "24-kontrolle" / "labels.csv"
+ANTWORTEN = {"a": KODIERUNG / "antworten-A.jsonl", "b": KODIERUNG / "antworten-B.jsonl"}
+SCHLICHTUNG = KODIERUNG / "schlichtung.jsonl"
+FRAGEN = ("dezernat", "weitere", "amt")
+# Schichten mit Zuordnung (die Präzision zählt nur dort); "keins" zeigt, was dem Verfahren entgeht.
+ZUGEORDNET = ("antwort", "ausschuss", "amt_im_text", "klass_hoch", "klass_mittel", "klass_niedrig")
 TEXTANFANG = 3000  # Zeichen Rohtext je Kodieraufgabe
 
 # Die drei Düsseldorfer Datensätze: (Profil, Name der Periode)
@@ -718,8 +729,15 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
     ap.add_argument(
         "--sim", type=int, default=400, help="Wiederholungen je Effektgröße (Teststärke)"
     )
+    ap.add_argument(
+        "--labels",
+        action="store_true",
+        help="labels.csv aus den Antworten der Kodierer und der Schlichtung bilden",
+    )
     args = ap.parse_args()
     t0 = time.time()
+    if args.labels:
+        bilde_labels()
     pruefe_tabelle()
 
     titel("1 Daten")
@@ -1070,6 +1088,19 @@ def main() -> None:  # noqa: C901, PLR0912, PLR0915
 
     titel("7 Stichprobe und Kodieraufgaben")
     stichprobe(h1pop, args.stichprobe)
+
+    titel("8 Validierung der Zuordnung (Labels der Kodierung)")
+    antraege(h1pop)
+    if LABELS.exists():
+        behalten = bewerte(h1pop)
+        if not behalten:
+            print(f"\nLaufzeit {time.time() - t0:.1f} s")
+            return
+        titel("8b Teststärke mit den Wegen, die das Kriterium tragen")
+        pop = h1pop.filter(pl.col("weg").is_in(behalten))
+        simuliere(f"Wege {', '.join(behalten)}", pop, args.sim, np.random.default_rng(SEED + 8))
+    else:
+        print(f"  {LABELS} fehlt: erst --labels")
     print(f"\nLaufzeit {time.time() - t0:.1f} s")
 
 
@@ -1114,6 +1145,236 @@ def aufbau_zellen(
     gd = np.array([f"{z['periode']}|{z['einheit']}|{z['halbjahr']}" for z in zellen])
     x = np.array([1.0 if z["status"] == "partner" else 0.0 for z in zellen])
     return zellen, y, gf, gd, x, [z["status"] for z in zellen]
+
+
+# --- Validierung ---------------------------------------------------------------------------------
+def _jsonl(path: Path) -> dict[str, dict[str, Any]]:
+    return {r["id"]: r for r in (json.loads(z) for z in path.read_text().splitlines() if z.strip())}
+
+
+def _wert(antwort: dict[str, Any], frage: str) -> Any:
+    v = antwort.get(frage)
+    if frage == "weitere":
+        return sorted(v or [])
+    return v if v != "" else None
+
+
+def bilde_labels() -> None:
+    """labels.csv aus Kodierer A, B und Schlichtung: je Aufgabe und Frage die drei Werte und das
+    Endlabel (Einigkeit, sonst Schlichtung; ohne Schlichtung bei Uneinigkeit null). Werte als JSON;
+    keine Begründungen, keine Ausschnitte."""
+    a, b = _jsonl(ANTWORTEN["a"]), _jsonl(ANTWORTEN["b"])
+    sch = (
+        {i: r["entscheid"] for i, r in _jsonl(SCHLICHTUNG).items()} if SCHLICHTUNG.exists() else {}
+    )
+    ids = [r["id"] for r in csv.DictReader(STICHPROBE.open())]
+    assert set(ids) == set(a) == set(b), "Antworten passen nicht zur Stichprobe"
+    with LABELS.open("w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["aufgabe", "frage", "kodierer_a", "kodierer_b", "schlichtung", "label"])
+        for i in sorted(ids):
+            for f in FRAGEN:
+                va, vb = _wert(a[i], f), _wert(b[i], f)
+                vs = _wert(sch[i], f) if i in sch else None
+                if i in sch:
+                    label = vs
+                elif va == vb:
+                    label = va
+                else:
+                    label = None
+                w.writerow(
+                    [i, f, *(json.dumps(v, ensure_ascii=False) for v in (va, vb, vs, label))]
+                )
+    print(f"  geschrieben: {LABELS} ({len(ids)} Aufgaben, {len(sch)} geschlichtet)")
+
+
+def lese_labels() -> dict[str, dict[str, dict[str, Any]]]:
+    out: dict[str, dict[str, dict[str, Any]]] = defaultdict(dict)
+    for r in csv.DictReader(LABELS.open()):
+        out[r["aufgabe"]][r["frage"]] = {
+            k: json.loads(r[k]) for k in ("kodierer_a", "kodierer_b", "schlichtung", "label")
+        }
+    return out
+
+
+def krippendorff_nominal(paare: list[tuple[str, str]]) -> float:
+    """Krippendorffs α (nominal) für zwei Kodierer ohne fehlende Werte."""
+    o: Counter[tuple[str, str]] = Counter()
+    for x, y in paare:
+        o[(x, y)] += 1
+        o[(y, x)] += 1
+    n_c: Counter[str] = Counter()
+    for (x, _), k in o.items():
+        n_c[x] += k
+    n = sum(n_c.values())
+    d_o = sum(k for (x, y), k in o.items() if x != y) / n
+    d_e = sum(n_c[x] * n_c[y] for x in n_c for y in n_c if x != y) / (n * (n - 1))
+    return 1 - d_o / d_e
+
+
+def bewerte(h1pop: pl.DataFrame) -> list[str]:
+    """Präzision des Verfahrens je Schicht und je Periode gegen die Endlabels (streng: das Endlabel ist
+    genau das Dezernat des Verfahrens; mild: `mehrere` mit dem Dezernat des Verfahrens darunter zählt
+    richtig; `keins` und `unklar` sind falsch, Codebuch [mass]). Gibt die Schichten zurück, die nach
+    der vorab festgelegten Regel (Messdokument § 4) im Verfahren bleiben: Punktschätzer ≥ 0,9."""
+    lab = lese_labels()
+    schicht = {r["id"]: r["schicht"] for r in csv.DictReader(STICHPROBE.open())}
+    a = [lab[i]["dezernat"]["kodierer_a"] for i in sorted(lab)]
+    b = [lab[i]["dezernat"]["kodierer_b"] for i in sorted(lab)]
+    print(
+        f"  Kodierer A = B (Dezernat): {sum(x == y for x, y in zip(a, b, strict=True))} von {len(a)}, "
+        f"Krippendorffs α (nominal) {krippendorff_nominal(list(zip(a, b, strict=True))):.3f}; "
+        f"Amt gleich: {sum(lab[i]['amt']['kodierer_a'] == lab[i]['amt']['kodierer_b'] for i in lab)}"
+    )
+    print("  Endlabels:", dict(Counter(lab[i]["dezernat"]["label"] for i in lab).most_common()))
+    zeilen = []
+    for r in h1pop.filter(pl.col("id").is_in(list(schicht))).iter_rows(named=True):
+        l_d = lab[r["id"]]["dezernat"]["label"]
+        l_w = lab[r["id"]]["weitere"]["label"] or []
+        proc = r["dezernat"]
+        streng = proc is not None and l_d == proc
+        mild = streng or (proc is not None and l_d == "mehrere" and proc in l_w)
+        klass = (r["klass"] or "").split("|")[0] or None
+        zeilen.append(
+            {
+                "id": r["id"],
+                "schicht": schicht[r["id"]],
+                "periode": r["periode"],
+                "label": l_d,
+                "streng": streng,
+                "mild": mild,
+                "klass_gleich": klass is not None and klass == l_d,
+            }
+        )
+    z = pl.DataFrame(zeilen)
+    assert z.height == len(schicht), "Stichprobe nicht vollständig in der Grundgesamtheit"
+    grund = Counter(h1pop["weg"].to_list())
+    print("  Präzision je Schicht (streng; mild in Klammern), Wilson 95 %:")
+    p_s: dict[str, tuple[int, int, int]] = {}
+    for s_ in (*ZUGEORDNET, "keins"):
+        t = z.filter(pl.col("schicht") == s_)
+        k, km, n = int(t["streng"].sum()), int(t["mild"].sum()), t.height
+        lo, hi = wilson(k, n)
+        p_s[s_] = (k, km, n)
+        if s_ == "keins":
+            eindeutig = t.filter(~pl.col("label").is_in(["mehrere", "keins", "unklar"])).height
+            print(
+                f"    keins: {n} ohne Zuordnung; Kodierer geben {eindeutig} ein einziges Dezernat, "
+                f"der Klassifikator (bestes Dezernat, p < 0,3) trifft es bei {int(t['klass_gleich'].sum())}"
+            )
+            continue
+        print(
+            f"    {s_}: {k}/{n} = {k / n:.3f} ({km}/{n}), Wilson {lo:.3f}–{hi:.3f}; Grundgesamtheit {grund.get(s_, 0)}"
+        )
+    zug = z.filter(pl.col("schicht").is_in(list(ZUGEORDNET)))
+    print("  Präzision je Periode (alle zugeordneten Schichten, ungewichtet):")
+    for per in ("2014-2020", "2020-2025", "2025-"):
+        t = zug.filter(pl.col("periode") == per)
+        k, n = int(t["streng"].sum()), t.height
+        lo, hi = wilson(k, n)
+        print(f"    {per}: {k}/{n} = {k / n:.3f}, Wilson {lo:.3f}–{hi:.3f}")
+
+    def hochgerechnet(schichten: list[str]) -> tuple[float, float, float]:
+        n_ges = sum(grund[s_] for s_ in schichten)
+        p = sum(grund[s_] * p_s[s_][0] / p_s[s_][2] for s_ in schichten) / n_ges
+        var = sum(
+            (grund[s_] / n_ges) ** 2
+            * (p_s[s_][0] / p_s[s_][2])
+            * (1 - p_s[s_][0] / p_s[s_][2])
+            / p_s[s_][2]
+            * (1 - p_s[s_][2] / grund[s_])
+            for s_ in schichten
+        )
+        return p, p - 1.96 * math.sqrt(var), p + 1.96 * math.sqrt(var)
+
+    p, lo, hi = hochgerechnet(list(ZUGEORDNET))
+    print(
+        f"  hochgerechnet über alle zugeordneten Schichten: {p:.3f} (normal 95 % {lo:.3f}–{hi:.3f})"
+    )
+    print("  Fehler der zugeordneten Schichten (Schicht, Periode, Gremium, Verfahren -> Endlabel):")
+    fehler = z.filter(pl.col("schicht").is_in(list(ZUGEORDNET)) & ~pl.col("streng")).join(
+        h1pop.select("id", "reference", "gremium", "dezernat", "amt_text", "ausschuss"),
+        on="id",
+        how="left",
+    )
+    for r in fehler.sort("schicht", "reference").iter_rows(named=True):
+        print(
+            f"    {r['schicht']}, {r['periode']}, {r['reference']}, {r['gremium']}: {r['dezernat']} -> {r['label']}"
+        )
+    behalten = [s_ for s_ in ZUGEORDNET if p_s[s_][2] and p_s[s_][0] / p_s[s_][2] >= 0.9]
+    if not behalten:
+        print("  Regel § 4 (Punktschätzer ≥ 0,9): keine Schicht bleibt im Verfahren")
+        return behalten
+    p, lo, hi = hochgerechnet(behalten)
+    n_beh = sum(grund[s_] for s_ in behalten)
+    print(
+        f"  Regel § 4 (Punktschätzer ≥ 0,9) behält: {', '.join(behalten)}; hochgerechnete Präzision "
+        f"{p:.3f} (normal 95 % {lo:.3f}–{hi:.3f}); zugeordnet {pct(n_beh, h1pop.height)} der Grundgesamtheit"
+    )
+    for per in ("2014-2020", "2020-2025", "2025-"):
+        t = zug.filter((pl.col("periode") == per) & pl.col("schicht").is_in(behalten))
+        k, n = int(t["streng"].sum()), t.height
+        lo2, hi2 = wilson(k, n)
+        print(f"    behaltene Wege, {per}: {k}/{n} = {k / n:.3f}, Wilson {lo2:.3f}–{hi2:.3f}")
+    return behalten
+
+
+ANTRAG_KOPF = re.compile(
+    r"(?im)^\s*(änderungsantrag|ergänzungsantrag|antrag)\b\s*(?::|der\b|zu\b|von\b)"
+)
+
+
+def antraege(h1pop: pl.DataFrame) -> None:
+    """Wie viele „Anfragen" der Grundgesamtheit sind dem Titel oder dem Briefkopf nach Anträge?"""
+    titel_antrag = h1pop.filter(pl.col("name").str.to_lowercase().str.contains("antrag"))
+    kopf = [bool(ANTRAG_KOPF.search((r or "")[:2000])) for r in h1pop["roh"].to_list()]
+    beides = h1pop.with_columns(pl.Series("kopf_antrag", kopf)).filter(
+        pl.col("kopf_antrag") | pl.col("name").str.to_lowercase().str.contains("antrag")
+    )
+    print(
+        f"  Grundgesamtheit {h1pop.height}: Titel nennt einen Antrag {titel_antrag.height}, "
+        f"Briefkopf beginnt mit Antrag/Änderungsantrag {sum(kopf)}, eins von beiden {pct(beides.height, h1pop.height)}; "
+        f"je Weg: {dict(Counter(beides['weg'].to_list()).most_common())}"
+    )
+    sp = {r["id"] for r in csv.DictReader(STICHPROBE.open())} if STICHPROBE.exists() else set()
+    print(f"  davon in der Stichprobe: {beides.filter(pl.col('id').is_in(list(sp))).height}")
+
+
+def simuliere(name: str, pop: pl.DataFrame, sim: int, rng: np.random.Generator) -> None:
+    """Teststärke wie in Abschnitt 6, für eine Teilmenge der Wege."""
+    _, yv, gfv, gdv, xv, _ = aufbau_zellen(pop)
+    m = ohne_leere_gruppen(yv, [gfv, gdv])
+    yv, gfv, gdv, xv = yv[m], gfv[m], gdv[m], xv[m]
+    mu0, _, _, phi0 = ppml(yv, gfv, gdv)
+    print(
+        f"{name}: {len(yv)} Zellen, {int(yv.sum())} Anfragen, {int(xv.sum())} Zellen partner, φ {phi0:.2f}"
+    )
+    teile = [("alle Perioden", np.ones(len(yv), dtype=bool))] + [
+        (per, np.array([g.split("|")[0] == per for g in gfv]))
+        for per in ("2014-2020", "2020-2025", "2025-")
+    ]
+    for teil, mp in teile:
+        irrs = (1.0, 1.25, 1.3, 1.4, 1.5) if teil == "alle Perioden" else (1.5,)
+        erg = []
+        for irr in irrs:
+            treffer = 0
+            for _ in range(sim):
+                ys = rng.poisson(mu0[mp] * np.exp(np.log(irr) * xv[mp])).astype(float)
+                ms = ohne_leere_gruppen(ys, [gfv[mp], gdv[mp]])
+                if (
+                    ms.sum() < 10
+                    or ys[ms][xv[mp][ms] == 1].sum() == 0
+                    or ys[ms][xv[mp][ms] == 0].sum() == 0
+                ):
+                    continue
+                _, b, se, _ = ppml(ys[ms], gfv[mp][ms], gdv[mp][ms], xv[mp][ms])
+                if b is not None and se and b / se > 1.6449:
+                    treffer += 1
+            erg.append((irr, treffer / sim))
+        print(
+            f"  {teil} ({int(mp.sum())} Zellen, {int(yv[mp].sum())} Anfragen): "
+            + ", ".join(f"IRR {i}: {p:.2f}" for i, p in erg)
+        )
 
 
 # --- Stichprobe ----------------------------------------------------------------------------------
