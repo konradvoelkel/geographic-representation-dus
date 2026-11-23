@@ -6,6 +6,9 @@ Paper vor 2020. ``modified_since`` (OParl 1.1, ISO-8601) holt nur Geändertes; o
 beachtet, zeigt ``georep status`` nach einem Lauf, nicht diese Funktion. Zu ``modified_since``
 liefert der Server auch gelöschte Paper (``deleted: true``, ohne ``date``); sie landen nicht in den
 Records, sondern als IDs im Bericht, und der ``PaperStore`` nimmt sie dann aus dem Store.
+
+Fundament F6: ``fetch_objects`` liest jede andere Liste des Bodys (Sitzungen, Beratungen,
+Personen) mit derselben Mechanik, typisiert über das Modell der Objektart.
 """
 
 from __future__ import annotations
@@ -22,7 +25,7 @@ import deal
 from georep.errors import FetchError, NetworkError
 from georep.http import Transport, network_errors
 from georep.io import write_json
-from georep.oparl import OparlOrganization, OrganizationPage, PaperPage
+from georep.oparl import ListPage, OparlObject, OparlOrganization, OrganizationPage, PaperPage
 from georep.records import PaperRecord
 from georep.settings import Period
 
@@ -211,3 +214,116 @@ def read_progress(path: Path) -> str | None:
         return None
     url = saved.get("next_url") if isinstance(saved, dict) else None
     return url if isinstance(url, str) and url else None
+
+
+# --- Fundament F6: die Listen der Sitzungen, Beratungen und Personen ---------------------------
+
+
+@dataclass(frozen=True)
+class ListReport:
+    """Was ein Listenabruf gesehen hat; wo er begann und wo er weiterginge (wie ``FetchReport``)."""
+
+    pages: int
+    seen: int
+    kept: int
+    stopped_early: bool
+    first_url: str
+    next_url: str | None = None
+    deleted_ids: tuple[str, ...] = ()
+
+    def summary(self) -> str:
+        deleted = f", {len(self.deleted_ids)} gelöscht" if self.deleted_ids else ""
+        tail = "; Rest älter als der Periodenbeginn" if self.stopped_early else ""
+        more = f"; weiter bei {self.next_url}" if self.next_url else ""
+        return (
+            f"{self.pages} Seite(n), {self.seen} gesehen, {self.kept} behalten{deleted}{tail}{more}"
+        )
+
+
+def _keep_all(_: object) -> bool:
+    return True
+
+
+def _each_id_once(result: tuple[list[OparlObject], ListReport]) -> bool:
+    found, report = result
+    ids = {o.id for o in found}
+    deleted = set(report.deleted_ids)
+    return (
+        len(ids) == len(found)
+        and len(deleted) == len(report.deleted_ids)
+        and not ids & deleted
+        and report.kept == len(found) <= report.seen
+    )
+
+
+@deal.raises(FetchError, NetworkError)
+@deal.post(_each_id_once, message="jedes Objekt einmal, keine gelöschte ID unter den Objekten")
+def fetch_objects[O: OparlObject](
+    http: Transport,
+    endpoint: str,
+    model: type[O],
+    *,
+    keep: Callable[[O], bool] = _keep_all,
+    older: Callable[[list[O]], bool] | None = None,
+    delay_s: float = 0.0,
+    modified_since: dt.datetime | None = None,
+    max_pages: int | None = None,
+    resume_from: str | None = None,
+    on_page: Callable[[list[O], str | None], None] | None = None,
+    sleep: Callable[[float], None] = time.sleep,
+) -> tuple[list[O], ListReport]:
+    """Eine OParl-Liste seitenweise lesen, jedes Objekt gegen ``model`` geprüft.
+
+    Dieselbe Mechanik wie ``fetch_papers``, für jede Objektart: ``keep`` entscheidet je Objekt,
+    ``older`` je Seite, ob danach Schluss ist (die Listen dieses Servers sind neueste zuerst, nach
+    ID absteigend); ``modified_since`` steht nur auf der ersten Anfrage, die ``next``-Links tragen
+    ihn weiter. Gelöschte Objekte kommen als IDs in den Bericht, nie in das Ergebnis, auch wenn
+    eine frühere Seite sie noch lebend zeigte. Ein Objekt auf zwei Seiten (die Liste rutscht,
+    während neue Sitzungen vorn dazukommen) zählt einmal. ``on_page`` bekommt nach jeder Seite
+    die behaltenen Objekte und die URL der nächsten, damit ein Abbruch nur die laufende Seite
+    kostet.
+    """
+    found: list[O] = []
+    known: set[str] = set()
+    deleted: dict[str, None] = {}  # Menge mit Reihenfolge, damit der Bericht lesbar bleibt
+    pages = seen = 0
+    stopped = False
+    first = resume_from or endpoint
+    url: str | None = first
+    params = {"modified_since": modified_since.isoformat()} if modified_since else None
+    while url is not None and (max_pages is None or pages < max_pages):
+        with network_errors(url):
+            response = http.get(url, params=params)
+            response.raise_for_status()
+        params = None
+        try:
+            # pydantics ValidationError ist ein ValueError, wie der JSON-Fehler
+            page = ListPage.model_validate(response.json())
+            objects = [model.model_validate(item) for item in page.data]
+        except ValueError as error:
+            raise FetchError(
+                f"OParl {url}: keine gültige Seite der Liste ({model.__name__}: {error})"
+            ) from error
+        pages += 1
+        seen += len(objects)
+        kept: list[O] = []
+        for obj in objects:
+            if obj.deleted:
+                deleted[obj.id] = None
+            elif obj.id not in known and keep(obj):
+                known.add(obj.id)
+                kept.append(obj)
+        found.extend(kept)
+        if older is not None and older(objects):
+            stopped, url = True, None  # der Rest ist älter: es gibt nichts fortzusetzen
+            if on_page is not None:
+                on_page(kept, None)
+            break
+        url = page.links.next
+        if on_page is not None:
+            on_page(kept, url)
+        if url is not None and delay_s > 0:
+            sleep(delay_s)
+    found = [o for o in found if o.id not in deleted]
+    report = ListReport(pages, seen, len(found), stopped, first, url, tuple(deleted))
+    return found, report
