@@ -41,7 +41,7 @@ class Use:
         self.asked.append(1)
         return self._identity()
 
-    def reset(self) -> None:
+    def reset(self, *, retry_rejected: bool = False) -> None:
         """Wie ``ModelUse``: ``run_step`` setzt vor jedem Lauf zurück; die Tabelle setzt ``run``."""
 
     def stamp(self) -> dict[str, object]:
@@ -375,3 +375,33 @@ def test_a_stopped_step_writes_what_it_has_stays_open_and_fails_visibly(
     second = run_step(step, settings, models=True)  # die zehn sind bekannt und zählen nicht
     assert second.status == "ausgeführt" and out.read_text(encoding="utf-8") == "6"
     assert freshness(step, settings) == (False, "offen: 10 Eingaben, davon 10 gescheitert")
+
+
+def test_retry_rejected_reaches_a_step_built_like_the_template(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """Review F5, vierte Runde, M2 (Probe b3): der Schalter kam bei der Vorlage nie an."""
+    embedder = FakeEmbedder(dimension=4, rejects={"r0"})
+    use = EmbeddingUse(embedder, "dok-1")
+    out = tmp_path / "out.json"
+
+    def run() -> str:  # wie das Gerüst in docs/architecture.md: ohne eigenen Schalter
+        with ModelCache(tmp_path / "ml", use.name) as cache:
+            found = embed_texts(use, cache, ["r0", "a", "b"])
+        out.write_text(json.dumps(int(found.present.sum())), encoding="utf-8")
+        return found.report.line()
+
+    step = Step("modell", (), (out,), run, models=use)
+    run_step(step, settings, models=True)
+    assert freshness(step, settings) == (True, "aktuell, 1 Eingaben abgewiesen")
+    embedder.rejects = frozenset()  # etwa ein größeres Fenster: jetzt ginge es
+    retry = settings.model_copy(
+        update={"ml": settings.ml.model_copy(update={"retry_rejected": True})}
+    )
+    calls = len(embedder.calls)
+    run_step(step, retry, models=True)
+    assert len(embedder.calls) == calls + 1 and out.read_text(encoding="utf-8") == "3"
+    assert freshness(step, retry) == (True, "aktuell")
+    # ohne den Schalter fragt der nächste Lauf nichts erneut
+    use.reset()
+    assert use.retry_rejected is False

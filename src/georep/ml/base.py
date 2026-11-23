@@ -169,14 +169,15 @@ class ModelStamp(Protocol):
     ``identity`` ist, was den Schritt veraltet macht, wenn es sich ändert (Modell, Digest,
     Prompt-Version, Optionen); ``stamp`` ist ``identity`` plus das Ergebnis des letzten Laufs
     (``limit``, ``open``, ``failed``, ``rejected``). Beide fragen den Server erst beim Aufruf.
-    ``reset`` setzt das Ergebnis vor einem Lauf auf null; die Stapelläufe summieren hinein.
+    ``reset`` setzt das Ergebnis vor einem Lauf auf null und nimmt den Schalter
+    ``retry_rejected`` aus den Settings; die Stapelläufe summieren hinein und lesen ihn dort.
     """
 
     def identity(self) -> dict[str, str]: ...
 
     def stamp(self) -> dict[str, object]: ...
 
-    def reset(self) -> None: ...
+    def reset(self, *, retry_rejected: bool = False) -> None: ...
 
 
 class ModelUse:
@@ -197,9 +198,11 @@ class ModelUse:
         self.open = 0  # offen nach dem Lauf: wegen ``limit`` oder gescheitert (Zeit, 5xx)
         self.failed = 0  # davon gescheitert; beim nächsten Lauf zuletzt
         self.rejected = 0  # vom Modell abgewiesen: erledigt, nicht offen, aber im Status genannt
-        self.stopped = (
-            ""  # warum ein Stapellauf vor dem Ende anhielt; dann schlägt der Schritt fehl
-        )
+        # warum ein Stapellauf vor dem Ende anhielt; dann schlägt der Schritt fehl
+        self.stopped = ""
+        # Review F5, vierte Runde, M2: abgewiesene Eingaben erneut fragen. ``run_step`` setzt es aus
+        # ``ml.retry_rejected``, die Stapelläufe lesen es hier: eine Quelle wie Kennung und Schlüssel.
+        self.retry_rejected = False
 
     @property
     def name(self) -> str:
@@ -234,10 +237,12 @@ class ModelUse:
         self.limit = max(self.limit, limit)
         self.stopped = self.stopped or stopped
 
-    def reset(self) -> None:
-        """Vor jedem Lauf des Schritts (``run_step``): die Zahlen gelten je Lauf, nicht je Prozess."""
+    def reset(self, *, retry_rejected: bool = False) -> None:
+        """Vor jedem Lauf des Schritts (``run_step``): die Zahlen gelten je Lauf, nicht je Prozess,
+        und ``retry_rejected`` kommt aus den Settings dieses Laufs."""
         self.open = self.failed = self.rejected = self.limit = 0
         self.stopped = ""
+        self.retry_rejected = retry_rejected
 
 
 class EmbeddingUse(ModelUse):

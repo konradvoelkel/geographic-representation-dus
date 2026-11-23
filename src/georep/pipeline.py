@@ -319,7 +319,9 @@ def run_step(
         )
     started = time.perf_counter()
     if step.models is not None:
-        step.models.reset()  # F5: die offenen Eingaben gelten je Lauf und summieren sich in ihm
+        # F5: die offenen Eingaben gelten je Lauf und summieren sich in ihm; der Schalter für
+        # abgewiesene Eingaben kommt aus den Settings dieses Laufs in die ModelUse.
+        step.models.reset(retry_rejected=settings.ml.retry_rejected)
     try:
         summary = step.run()
     except ModelError as error:

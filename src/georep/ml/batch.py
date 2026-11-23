@@ -332,7 +332,6 @@ def embed_texts(
     limit: int = 0,
     progress: Callable[[Progress], None] | None = None,
     clock: Callable[[], float] = time.perf_counter,
-    retry_rejected: bool = False,
 ) -> Embedded:
     """Einbettungen für ``texts`` aus dem Cache und, was fehlt, vom Modell.
 
@@ -357,7 +356,7 @@ def embed_texts(
         label=use.name,
         progress=progress,
         clock=clock,
-        retry_rejected=retry_rejected,
+        retry_rejected=use.retry_rejected,
     )
     use.record(
         open=report.left + report.failed,
@@ -395,7 +394,6 @@ def generate_texts(
     limit: int = 0,
     progress: Callable[[Progress], None] | None = None,
     clock: Callable[[], float] = time.perf_counter,
-    retry_rejected: bool = False,
 ) -> Generated:
     """Antworten auf ``prompts`` (je ein fertiger Prompt) mit gemeinsamer Systemnachricht.
 
@@ -422,7 +420,7 @@ def generate_texts(
         label=use.name,
         progress=progress,
         clock=clock,
-        retry_rejected=retry_rejected,
+        retry_rejected=use.retry_rejected,
     )
     use.record(
         open=report.left + report.failed,

@@ -349,7 +349,9 @@ def test_retry_rejected_asks_again_and_forgets_a_rejection_that_passes(tmp_path:
         embed_texts(use, cache, ["kurz", "lang"])
         embedder.rejects = frozenset()
         skipped = embed_texts(use, cache, ["kurz", "lang"])
-        retried = embed_texts(use, cache, ["kurz", "lang"], retry_rejected=True)
+        use.reset(retry_rejected=True)  # wie run_step mit ml.retry_rejected
+        retried = embed_texts(use, cache, ["kurz", "lang"])
+        use.reset()
         settled = embed_texts(use, cache, ["kurz", "lang"])
     assert len(skipped.report.rejected) == 1 and skipped.report.computed == 0
     assert retried.report.computed == 1 and retried.report.rejected == ()
