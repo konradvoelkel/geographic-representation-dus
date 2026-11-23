@@ -184,6 +184,7 @@ class FakeOllama:
         down: bool = False,
         failures: Sequence[int] = (),
         loaded: Sequence[str] = (),
+        slow: Sequence[str] = (),
     ) -> None:
         self.models = dict(FAKE_MODELS if models is None else models)
         self.base_url = base_url
@@ -191,6 +192,7 @@ class FakeOllama:
         self.down = down
         self.failures = list(failures)
         self.loaded = list(loaded)
+        self.slow = set(slow)  # Texte, bei denen /api/embed in den Lese-Timeout läuft
         self.requests: list[tuple[str, Any]] = []
 
     @property
@@ -260,6 +262,8 @@ class FakeOllama:
             return response(url, payload={"capabilities": spec["capabilities"], "model_info": info})
         if path == "/api/embed":
             texts = payload["input"]
+            if self.slow & set(texts):
+                raise requests.ReadTimeout(f"read timed out: {url}")
             return response(
                 url,
                 payload={

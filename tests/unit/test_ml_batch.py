@@ -19,7 +19,8 @@ from georep.ml.batch import (
     run_batch,
 )
 from georep.ml.cache import CacheKey, ModelCache, input_sha256
-from tests.fakes import FakeEmbedder, FakeGenerator, fake_answer, fake_vector
+from georep.ml.ollama import OllamaClient, OllamaEmbedder
+from tests.fakes import FAKE_URL, FakeEmbedder, FakeGenerator, FakeOllama, fake_answer, fake_vector
 
 KEY = CacheKey("fake-embed:latest", "e" * 64, "p-1")
 
@@ -287,3 +288,14 @@ def test_embed_texts_marks_a_rejected_text_and_leaves_it_open(tmp_path: Path) ->
     assert found.report.failures[0][0] == 1
     assert (use.open, use.failed) == (1, 1)
     assert use.stamp()["failed"] == 1
+
+
+def test_a_text_that_times_out_fails_alone_and_the_run_goes_on(tmp_path: Path) -> None:
+    """Review F5, N4: ein Lese-Timeout bei einem Text brach den ganzen Lauf ab."""
+    server = FakeOllama(dimension=4, slow=["langsam"])
+    client = OllamaClient(FAKE_URL, transport=server, sleep=lambda s: None)
+    use = EmbeddingUse(OllamaEmbedder(client, "fake-embed", dimension=4), "dok-1")
+    with ModelCache(tmp_path, use.name) as cache:
+        found = embed_texts(use, cache, ["eins", "langsam", "zwei"], batch_size=3)
+    assert found.present.tolist() == [True, False, True]
+    assert found.report.failures[0][0] == 1 and "Zeitüberschreitung" in found.report.failures[0][1]

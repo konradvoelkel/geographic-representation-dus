@@ -5,10 +5,10 @@ Sechs Endpunkte genügen: ``/api/version`` (läuft der Server?), ``/api/tags`` (
 Speicher liegt), ``/api/embed`` und ``/api/chat``. Gesprochen wird über das ``Transport``-Protokoll
 aus ``georep.http``, also mit derselben Testnaht wie jede Quelle; die Antworten prüft pydantic an
 der Grenze, wie OParl in ``georep.oparl``. Jeder Fehler ist ein ``ModelError``: ein fehlendes
-Modell, eine abgewiesene Anfrage, eine unbrauchbare Antwort; ein Server, der nicht erreichbar ist
-oder nicht innerhalb von ``timeout_s`` antwortet, ist die Unterklasse ``ModelUnreachableError``.
-Wiederholt werden, mit Backoff und begrenzt, eine abgelehnte Verbindung und 429 und 5xx; ein
-Lese-Timeout nicht (er käme beim selben Text wieder), ein 4xx auch nicht.
+Modell, eine abgewiesene Anfrage, eine unbrauchbare Antwort, eine Anfrage, die nicht innerhalb von
+``timeout_s`` fertig wird; ein Server, der die Verbindung nicht annimmt, ist die Unterklasse
+``ModelUnreachableError``. Wiederholt werden, mit Backoff und begrenzt, eine abgelehnte Verbindung
+und 429 und 5xx; ein Lese-Timeout nicht (er käme beim selben Text wieder), ein 4xx auch nicht.
 Die Retry-Regel der Session aus ``make_session`` hilft hier nicht: sie wiederholt nur GET und HEAD,
 und ``embed`` wie ``chat`` sind POST (docs/decisions.md, „Modelle lokal über ollama").
 """
@@ -196,7 +196,10 @@ class OllamaClient:
                 problem = f"nicht erreichbar ({error}); läuft `ollama serve`?"
                 continue
             except requests.Timeout as error:
-                raise ModelUnreachableError(
+                # Kein ModelUnreachableError: die Probe hat den Server erreicht, die Zeit lief bei
+                # dieser Anfrage ab. Der Stapellauf wertet das als Fehlschlag dieses Texts und
+                # läuft weiter (Review F5, dritte Runde, N4).
+                raise ModelError(
                     f"{url}: Zeitüberschreitung nach {self.timeout_s:g} s (ml.timeout_s)"
                 ) from error
             except requests.RequestException as error:

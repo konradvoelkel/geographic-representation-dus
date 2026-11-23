@@ -42,7 +42,9 @@ class ModelError(GeorepError):
 
 
 class ModelUnreachableError(ModelError):
-    """Der Modellserver antwortete nicht: nicht erreichbar oder nicht innerhalb von ``ml.timeout_s``.
+    """Der Modellserver war nicht erreichbar: er nahm die Verbindung nicht an.
+
+    Ein Lese-Timeout gehört nicht hierher: dann lief der Server, nur dieser Text dauerte zu lange.
 
     Eine Unterklasse, weil der Stapellauf daran unterscheidet: ein abgewiesener Text ist ein
     Fehlschlag dieses Texts, ein fehlender Server bricht den Lauf ab (Review 2026-11-23).

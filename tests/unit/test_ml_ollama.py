@@ -262,9 +262,12 @@ def test_a_read_timeout_is_not_retried_and_says_what_it_is() -> None:
     session = SequenceSession(f"{URL}/api/chat", [version, requests.ReadTimeout("read timed out")])
     pauses: list[float] = []
     client = OllamaClient(URL, transport=session, timeout_s=300.0, sleep=pauses.append)
-    with pytest.raises(ModelUnreachableError, match=r"Zeitüberschreitung nach 300 s"):
+    with pytest.raises(ModelError, match=r"Zeitüberschreitung nach 300 s") as caught:
         client.chat({"model": "fake-chat:latest"})
     assert len(session.calls) == 2 and pauses == []
+    # Review F5, N4: der Server antwortete auf die Probe, er ist erreichbar; die Zeit lief bei
+    # diesem Text ab. Darum kein ModelUnreachableError, der den ganzen Lauf abbräche.
+    assert type(caught.value) is ModelError
 
 
 def test_a_server_that_goes_away_mid_run_is_retried_then_unreachable() -> None:
