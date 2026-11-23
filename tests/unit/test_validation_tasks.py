@@ -116,13 +116,15 @@ def test_raw_texts_come_from_the_raw_store_by_file_name(project: Layout, tmp_pat
 def test_spans_of_a_document_are_highlighted_inside_the_excerpt(
     project: Layout, tmp_path: Path
 ) -> None:
+    texts = dict(corpus_frame().select("id", "text").iter_rows())
     spans = pl.DataFrame(
         {
             "id": ["d00", "d00", "d01"],
             "start": [0, 100, 4],
             "end": [4, 104, 7],
             "kind": ["wort", "wort", "wort"],
-            "value": ["x", "x", "x"],
+            "value": [texts["d00"][0:4], texts["d00"][100:104], texts["d01"][4:7]],
+            "norm": ["n1", "n2", "n3"],
         }
     )
     spans.write_parquet(tmp_path / "spannen.parquet")
@@ -149,7 +151,38 @@ def test_spans_of_a_document_are_highlighted_inside_the_excerpt(
     assert shown == [
         {"start": 0, "end": 4, "art": "wort", "text": "text"}
     ]  # 100..104 liegt hinter 60
-    assert "value" not in json.dumps(tasks["d00"])
+    assert "value" not in json.dumps(tasks["d00"]) and "n1" not in json.dumps(tasks["d00"])
+
+
+def test_a_span_whose_value_is_not_its_text_names_both(
+    project: Layout, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """F3: ``value`` ist der Text an der Stelle, wörtlich; weicht er ab, zeigen die Positionen auf
+    einen anderen Text (etwa Spannen aus dem Rohtext in einem Auftrag aus dem Korpus)."""
+    sample = pl.read_csv(tmp_path / "validierung" / PROJECT / "stichprobe.csv")
+    first = sample.get_column("id")[0]
+    pl.DataFrame(
+        {
+            "id": [first],
+            "start": [0],
+            "end": [4],
+            "kind": ["wort"],
+            "value": ["TEXT"],
+            "extractor": ["roh"],
+        }
+    ).write_parquet(tmp_path / "spannen.parquet")
+    args = [
+        "validate",
+        "tasks",
+        PROJECT,
+        "--coder",
+        "A",
+        "--spans",
+        str(tmp_path / "spannen.parquet"),
+    ]
+    assert main(args) == 1
+    err = capsys.readouterr().err
+    assert "'TEXT'" in err and "'text'" in err and "roh" in err
 
 
 # --- Einheiten als Funktion --------------------------------------------------------------------

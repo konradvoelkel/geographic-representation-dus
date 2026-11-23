@@ -110,6 +110,19 @@ def _check_span(document: Document, start: int, end: int, source: str) -> None:
         )
 
 
+def _check_value(document: Document, span: Mapping[str, Any], source: str) -> None:
+    """F3: ``value`` ist der Text an der Stelle, wörtlich. Weicht er ab, zeigen die Positionen auf
+    einen anderen Text als den des Auftrags, und jede Hervorhebung säße an der falschen Stelle."""
+    value = span.get("value")
+    found = document.text[int(span["start"]) : int(span["end"])]
+    if value is not None and value != found:
+        raise SchemaError(
+            f"Spanne {span['start']}..{span['end']} in {document.id!r}: dort steht {found!r}, die "
+            f"Spanne sagt {value!r}; sie kommt aus einem anderen Text (extractor "
+            f"{span.get('extractor')!r}, text.source {source!r})"
+        )
+
+
 def excerpt(
     document: Document,
     codebook: Codebook,
@@ -133,6 +146,7 @@ def excerpt(
     for span in spans:
         start, end = int(span["start"]), int(span["end"])
         _check_span(document, start, end, rules.source)
+        _check_value(document, span, rules.source)
         if start >= begin and end <= stop:
             shown.append(
                 {
