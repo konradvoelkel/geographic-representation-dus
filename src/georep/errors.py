@@ -35,3 +35,7 @@ class FetchError(GeorepError):
 
 class NetworkError(GeorepError):
     """Eine Quelle war nicht erreichbar oder antwortete nach allen Wiederholungen mit einem Fehlerstatus."""
+
+
+class ModelError(GeorepError):
+    """Ein lokales Modell war nicht erreichbar, fehlt auf dem Server oder antwortete unbrauchbar (F5)."""
