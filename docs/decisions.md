@@ -2754,7 +2754,8 @@ abschneidet. Darum kommt ein zweiter Store dazu, kein Umbau des ersten.
 - „Methode und Grenzen" nennt jetzt aus dem Modell, womit die Texte gelesen sind und wie viele aus
   der Arbeit stammen (`docs/todo.md`, Punkt 7, damit erledigt), und den Rohtext in einem Satz --
   aber nur, wenn der Rohtextstore vollständig ist: aktuelle Schema-Version, ein Extraktor, und
-  jeder Text, den derselbe Extraktor gelesen hat, hat seinen Rohtext (`complete_raw_texts`). Dann
+  jeder Text, den derselbe Extraktor gelesen hat, hat seinen Rohtext zu demselben PDF-Hash
+  (`complete_raw_texts`; gezählt werden diese Texte, nicht die Zeilen des Rohtextstores). Dann
   stimmt der Satz auf jedem Rechner, der ihn zeigt; rechnerabhängig bleibt nur, ob er erscheint
   (eine Periode ohne Paket zeigt ihn lokal mit PDFs, auf Pages nicht). Keine Zahl der Seite ändert
   sich. Der Rohtextstore ist eine **optionale** Eingabe von `report` (`Step.optional`): ihr Hash

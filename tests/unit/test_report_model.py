@@ -861,7 +861,7 @@ def test_the_extraction_counts_come_from_the_extractor_column(tmp_path: Path) ->
     layout.texts.parent.mkdir(parents=True)
     texts = TextStore(layout.texts)
     for i, extractor in enumerate(["pypdf-7.1.0"] * 3 + ["pypdf-6.20.0", REFERENCE_EXTRACTOR]):
-        texts.put(f"{i}.pdf", "text", TextMeta(extractor=extractor))
+        texts.put(f"{i}.pdf", "text", TextMeta(extractor=extractor, pdf_sha256="0"))
     texts.save()
     assert extraction_figures(layout) == Extraction(
         texts=5, extractors=(("pypdf-7.1.0", 3), ("pypdf-6.20.0", 1)), thesis=1, raw_texts=0
@@ -888,3 +888,29 @@ def test_the_extraction_counts_come_from_the_extractor_column(tmp_path: Path) ->
     empty.texts.parent.mkdir(parents=True)
     TextStore(empty.texts).save()
     assert extraction_figures(empty) is None
+
+
+def test_the_raw_sentence_counts_the_texts_and_checks_their_pdf_hash(tmp_path: Path) -> None:
+    """Review F1, dritte Runde: ``complete_raw_texts`` zählte die Zeilen des Rohtextstores.
+
+    Mit einer Zeile mehr -- einem Rohtext, dessen Text ein anderer Extraktor gelesen hat -- sagte
+    der Satz 19 092 statt 19 091. Und ein Rohtext zu einem anderen PDF als dem des Textes zählte
+    mit; jetzt ist der Store nur vollständig, wenn je Text derselbe PDF-Hash dasteht.
+    """
+    from georep.report.model import complete_raw_texts
+    from georep.stores import RawTextStore, TextMeta, TextStore
+
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "p")
+    layout.texts.parent.mkdir(parents=True)
+    texts = TextStore(layout.texts)
+    for i, extractor in enumerate(["pypdf-7.1.0"] * 3 + ["pypdf-6.20.0"]):
+        texts.put(f"{i}.pdf", "text", TextMeta(extractor=extractor, pdf_sha256="0"))
+    texts.save()
+    raw = RawTextStore(layout.raw_texts)
+    for i in range(4):  # 3.pdf: Rohtext da, sein Text aber aus einem anderen Extraktor
+        raw.put(f"{i}.pdf", "Text", pages=1, extractor="pypdf-7.1.0+roh", pdf_sha256="0")
+    raw.save()
+    assert complete_raw_texts(layout) == (3, "pypdf-7.1.0")
+    raw.put("2.pdf", "Text", pages=1, extractor="pypdf-7.1.0+roh", pdf_sha256="1")
+    raw.save()
+    assert complete_raw_texts(layout) == (0, "")

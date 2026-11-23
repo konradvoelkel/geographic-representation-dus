@@ -2032,7 +2032,7 @@ def complete_raw_texts(layout: Layout) -> tuple[int, str]:
         return 0, ""
     if stored_schema_version(layout.raw_texts) != str(RAW_TEXT_SCHEMA_VERSION):
         return 0, ""
-    raw = pl.read_parquet(layout.raw_texts, columns=["name", "extractor"])
+    raw = pl.read_parquet(layout.raw_texts, columns=["name", "extractor", "pdf_sha256"])
     labels = set(raw.get_column("extractor").to_list())
     if len(labels) != 1:
         return 0, ""
@@ -2040,12 +2040,15 @@ def complete_raw_texts(layout: Layout) -> tuple[int, str]:
     if not label.endswith(RAW_SUFFIX):
         return 0, ""
     base = label.removesuffix(RAW_SUFFIX)
-    texts = pl.read_parquet(layout.texts, columns=["name", "extractor"])
-    wanted = set(texts.filter(pl.col("extractor") == base).get_column("name").to_list())
-    have = set(raw.get_column("name").to_list())
-    if not wanted or not wanted <= have:
+    texts = pl.read_parquet(layout.texts, columns=["name", "extractor", "pdf_sha256"])
+    # Review F1, dritte Runde: gezählt werden die Texte dieses Extraktors, nicht die Zeilen des
+    # Rohtextstores (eine Zeile mehr machte aus 19 091 sonst 19 092), und je Text muss der Rohtext
+    # zu demselben PDF gehören -- dieselbe Brücke, die ``pack.check_raw_bridge`` beim Packen prüft.
+    wanted = dict(texts.filter(pl.col("extractor") == base).select("name", "pdf_sha256").rows())
+    have = dict(raw.select("name", "pdf_sha256").rows())
+    if not wanted or any(name not in have or have[name] != sha for name, sha in wanted.items()):
         return 0, ""
-    return len(have), base
+    return len(wanted), base
 
 
 def _per_term_regression(
