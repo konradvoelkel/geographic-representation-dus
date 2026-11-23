@@ -97,7 +97,9 @@ def test_sort_spans_stellt_zusatzspalten_hinter_die_acht() -> None:
 def test_eine_zusatzspalte_darf_leer_sein() -> None:
     """Was eine Zusatzspalte bedeutet, weiß ihr Vorhaben; null ist dort kein Schemafehler."""
     spans = _spans([("a", 0, 3, "abschnitt")]).with_columns(attr=pl.lit(None, dtype=pl.String))
-    check_spans(sort_spans(spans), LENGTHS)
+    checked = sort_spans(spans)
+    check_spans(checked, LENGTHS)
+    assert "attr" in checked.columns
 
 
 def test_eine_zusatzspalte_darf_wie_eine_hilfsspalte_der_pruefung_heissen() -> None:
@@ -105,7 +107,9 @@ def test_eine_zusatzspalte_darf_wie_eine_hilfsspalte_der_pruefung_heissen() -> N
     spans = _spans([("a", 0, 3, "abschnitt")]).with_columns(
         zeile=pl.lit(7, dtype=pl.UInt32), length=pl.lit(-1)
     )
-    check_spans(sort_spans(spans), LENGTHS)
+    checked = sort_spans(spans)
+    check_spans(checked, LENGTHS)
+    assert checked.columns[-2:] == ["zeile", "length"]
 
 
 def test_eine_spalte_zwischen_den_acht_ist_ein_fehler() -> None:
@@ -118,4 +122,22 @@ def test_eine_spalte_zwischen_den_acht_ist_ein_fehler() -> None:
 def test_eine_fehlende_spalte_der_acht_ist_ein_fehler() -> None:
     spans = sort_spans(_spans([("a", 0, 3, "abschnitt")])).drop("norm")
     with pytest.raises(SchemaError, match="Schema"):
+        check_spans(spans, LENGTHS)
+
+
+def test_die_acht_in_anderer_folge_sind_ein_schemafehler() -> None:
+    """Review F7, K1: die Folge der acht ist Teil des Schemas, nicht nur die Menge."""
+    spans = sort_spans(_spans([("a", 0, 3, "abschnitt")]))
+    swapped = spans.select("id", "end", "start", *list(SPAN_SCHEMA)[3:])
+    with pytest.raises(SchemaError, match="Schema"):
+        check_spans(swapped, LENGTHS)
+
+
+@pytest.mark.parametrize("column", ["norm", "section", "value", "extractor"])
+def test_ein_nullwert_in_den_acht_ist_ein_fehler(column: str) -> None:
+    """Review F7, K2: ``norm`` und ``section`` sind leere Zeichenketten, nie null."""
+    spans = sort_spans(_spans([("a", 0, 3, "abschnitt")])).with_columns(
+        pl.lit(None, dtype=pl.String).alias(column)
+    )
+    with pytest.raises(SchemaError, match="leere Werte"):
         check_spans(spans, LENGTHS)

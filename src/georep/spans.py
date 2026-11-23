@@ -76,8 +76,10 @@ def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
     len(text)``, eine bekannte ID je Zeile, kein leeres ``kind`` und die feste Folge. Spalten
     dahinter gehören dem Vorhaben und sind frei. Die Meldung nennt die erste verletzende Zeile.
     """
-    head = dict(list(spans.schema.items())[: len(SPAN_SCHEMA)])
-    if head != SPAN_SCHEMA:
+    # als Liste, nicht als dict: zwei dicts sind gleich, auch wenn ihre Schlüssel anders stehen
+    # (Review F7, K1)
+    head = list(spans.schema.items())[: len(SPAN_SCHEMA)]
+    if head != list(SPAN_SCHEMA.items()):
         raise SchemaError(f"Spannen: Schema {dict(spans.schema)} beginnt nicht mit {SPAN_SCHEMA}")
     core = spans.select(list(SPAN_SCHEMA))
     if core.select(pl.all().is_null().any()).select(pl.any_horizontal(pl.all())).item():
