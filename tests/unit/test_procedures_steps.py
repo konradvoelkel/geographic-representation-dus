@@ -27,7 +27,7 @@ from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus
 from georep.records import PaperRecord
-from georep.settings import RelatedPeriod, Settings
+from georep.settings import RelatedPeriod, Settings, load_settings
 from georep.spans import SPAN_SCHEMA
 from georep.stores import PaperStore, TextMeta, TextStore
 from tests.fakes import FakeSession
@@ -166,5 +166,14 @@ def test_bootstrap_copies_the_attachment_package(
     assert target.read_bytes() == package.read_bytes()
     assert target.name in report.copied
     switched_off = Layout(tmp_path / "data2", tmp_path / "cache2", mini_root)
-    bootstrap_from_settings(switched_off, default_settings)
+    off = default_settings.procedures.model_copy(update={"enabled": False})
+    bootstrap_from_settings(switched_off, default_settings.model_copy(update={"procedures": off}))
     assert not procedure_files(switched_off).attachments.exists()
+
+
+def test_the_city_profiles_switch_the_steps_on(tmp_path: Path, default_settings: Settings) -> None:
+    """Düsseldorf (alle drei Perioden erben es) und Mönchengladbach; die Schritte vor ``report``."""
+    names = [s.name for s in build_steps(default_settings, Layout(tmp_path, tmp_path, tmp_path))]
+    assert names[names.index("references") :][:3] == ["references", "procedures", "report"]
+    for profile in ("duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
+        assert load_settings(profile=profile, cwd=Path("/nonexistent")).procedures.enabled

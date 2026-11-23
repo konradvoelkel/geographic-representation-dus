@@ -428,7 +428,7 @@ valid_from = 2025-11-01
 
 # --- Vorhaben 14: Vorgänge (docs/plans/14-vorgaenge.md; Rückfallregel, § 5.1)
 [procedures]                   # keine Anfragen im Datensatz (§ 2), also keine Antwortanlagen und keine Antwortzeiten; Kanten und Vorgänge ja
-enabled = false
+enabled = true
 attachments = "snapshots/moenchengladbach-anlagen/raw/anlagen.parquet"
 
 [[procedures.forms]]

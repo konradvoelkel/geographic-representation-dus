@@ -3020,3 +3020,100 @@ Unterseite rechnet sie, Bauplan § 6); `parties.py` nachziehen (Frage 25); eine 
 für Dokumente ohne Fraktion (der Bauplan hat sieben, und der Filter auf die Urheberklasse genügt);
 `classify_function` und `cosponsors` in `VERIFY_TARGETS` (ihre Regeln tragen `re.Pattern`, dasselbe
 Werkzeugartefakt wie bei `parse_reference`; geprüft wird `camp`, die übrigen über hypothesis).
+
+## NN. Vorgänge: nur starke Kanten, ein Wald statt Komponenten, Antworten aus den Anlagen, Nachbarperioden aus ihren Paketen (Vorhaben 14, 2026-11-24)
+
+Vorhaben 14 der Vorverarbeitung (`docs/plans/14-vorgaenge.md`, Stufe 2) verbindet Drucksachen, die
+zusammengehören: Anfrage und Antwort, Antrag und Umsetzung, Vorlage und Änderungsantrag, Original
+und Nachtrag, Bedarfs- und Ausführungsbeschluss. Gebaut ist ein Beitrag nach F2 (Punkt 69) mit
+zwei Schritten hinter `procedures.enabled`: `references` schreibt jede Drucksachennummer im Text
+als Spanne nach F3 (`processed/verweise.parquet`) und jede Kante, deren nennende Drucksache zum
+eigenen Korpus gehört (`processed/vorgang_kanten.parquet`); `procedures` setzt daraus die Vorgänge
+(`processed/dokumente_vorgang.parquet`, eine Zeile je Korpus-ID) und die Antworten auf Anfragen
+(`processed/antwortzeiten.parquet`) zusammen. Die Rechnung liegt in `prep.references` (Nummern,
+Fundstellen, Rollen, Typen) und `analysis.procedures` (Kanten, Wald, Antworten); Formen der Nummer,
+Dokumentarten, Antwortanlagen und Pakete stehen im Stadtprofil.
+
+**Nur starke Kanten zählen (Rückfallregel).** Die Regel war vorab festgelegt (Messdokument § 5.2,
+Frage 9.16): verfehlt die Regelfassung .2 an einer frischen Stichprobe 0,95, gilt ohne weitere
+Runde, dass eine Kante nur stark ist, wenn die nennende Drucksache die Nummer im Titel oder im
+Namen einer Anlage trägt, ein Nachtrag über die Nummer ist oder ein Sammelbericht
+(Beschlusskontrolle, Umsetzungsstand …). Fassung .2 kam an 100 Kanten auf 0,850; die Rückfallregel
+an beiden Stichproben auf 104 von 106 (0,981, Wilson 0,934 bis 0,995), geprüft von zwei
+KI-Kodierern desselben Modells, nicht von Menschen. Reine Textverweise bleiben als schwache Kanten
+in den Daten (`stark = false`, `quelle = text`) und zählen nicht für Vorgang und Antwort. Die
+Merkmale der Fassung .2 (Aufzählung, Verweiszeichen) sind nicht gebaut, die Typen .2 schon: unter
+den Rückfall-Kanten waren die typisierten 89 von 89 dieselbe Sache.
+
+**Ein Vorgang ist ein Baum, keine Zusammenhangskomponente.** Über alle Kanten hingen 4 619
+Düsseldorfer Drucksachen in einer Komponente, weil Grundsatzbeschlüsse viele Folgen sammeln und ein
+drittes Dokument zwei Vorgänge verschmilzt (§ 3.5). Jede Drucksache hängt darum am ältesten
+Dokument, das sie über eine starke typisierte Kante nennt; die Wurzel ist der Vorgang. Ein
+Sammelbericht (`kontrolle`) und ein bloßer `bezug` lassen keinen Vorgang wachsen. Neu gegen das
+Messskript: ein Vorgänger vom selben Tag muss die kleinere ID haben. Dann fällt jede Kette in
+(Datum, ID) streng, und ein Kreis ist unmöglich, statt dass ihn das Messskript still abbrach; auf
+den Daten vom 2026-11-23 zeigt keiner der sieben Vorgänger vom selben Tag auf eine größere ID, und
+die Zahlen bleiben dieselben. Ein Kreis wäre trotzdem ein `CycleError`, kein stilles Ende.
+
+**Antworten kommen aus den Anlagen.** Die Antwort der Verwaltung auf eine Anfrage steht fast immer
+als Anlage an der Anfrage selbst („Antwort der Verwaltung"), selten als eigene Drucksache (24 von
+3 237 nach der Rückfallregel). Die Anlagen stehen weder im Korpus noch in einem Paket, nur in den
+OParl-Objekten des HTTP-Caches; `georep pack --attachments` zieht sie in ein Paket je Stadt
+(`snapshots/duesseldorf-anlagen/`, alle drei Perioden, 303 455 Bytes; `snapshots/moenchengladbach-anlagen/`,
+63 909 Bytes), `bootstrap` kopiert es nach `raw/anlagen.parquet`. Eine Zeile je Drucksache mit dem
+Abruftag und der Liste der Anlagen (Name, Datum): so ist eine Drucksache ohne Anlage (leere Liste)
+von einer unbekannten (keine Zeile) zu trennen, und das Alter beim Abruf ist rechenbar. Ein
+Anlagendatum vom Umstellungstag des Ratsinformationssystems (2019-07-03, 26 542 Anlagen) zählt als
+Antwort ohne Datum. `praxis_gremium` steht an jeder Anfrage, weil „keine Antwort im Datensatz"
+Praxis des Gremiums ist und nicht „unbeantwortet" heißt (§ 3.8: der Rat antwortet in der Sitzung,
+0,2 % mit Anlage, BV 7 zu 93 %); eine rohe Antwortquote je Fraktion rechnet der Schritt nicht.
+
+**Nachbarperioden aus ihren Paketen, und jedes Profil rechnet dieselbe Stadt.** 2 599 Düsseldorfer
+Kanten gehen über eine Wahl, 254 davon stark; ein Vorgang endet nicht an der Periodengrenze. Jedes
+Profil liest darum die Nummern, Titel und Dokumentarten seiner Nachbarperioden aus deren Paketen
+(`[[procedures.related]]`: `raw/papers.jsonl` und Textstore; die Hauptperiode als Nachbar aus
+`reference/raw/paper_objects.json`, dieselben 19 108 Paper mit denselben Feldern wie
+`paper_with_text.json`, in einem Zehntel der Zeit), und ihre Hashes stehen im Stamp. Für den Wald
+braucht ein Profil auch die starken Kanten der Nachbarn; nach der Rückfallregel hat die nur, wer eine
+Nummer im Titel oder in einer Anlage trägt, ein Nachtrag oder ein Sammelbericht ist. Nur deren Texte
+liest der Schritt `procedures` aus den Nachbarpaketen (`strong_candidates`), denn der Text
+entscheidet über Felder und Änderungszeichen derselben Kante. So hat jede Drucksache in ihrem
+Profil denselben Vorgang wie in der Rechnung über die ganze Stadt; `vorgang` darf auf eine ID einer
+Nachbarperiode zeigen, und `groesse` zählt alle Mitglieder. Ein `slow`-Test rechnet beides aus den
+Paketen nach: die Zahlen des Messdokuments (14 483 und 387 Kanten, 3 392 und 171 stark, 2 169
+Vorgänge mit 4 643 Dokumenten, 99 mit 217, 3 237 von 8 168 Anfragen mit Antwort, Median 18 Tage
+bei n = 1 948) und, je Düsseldorfer Periode, dass die eigenen Kanten der drei Profile zusammen die
+Stadt ergeben und jeder Vorgang und jede Antwort gleich ist.
+
+**Spannen auf dem Textstore.** Titel- und Anlagentreffer sind keine Stellen im Text und stehen nur
+in den Kanten (`felder`, `quelle`; Synergie, Konflikt 1). Die Spannen zeigen auf den
+kleingeschriebenen Textstore mit `section = ""`, bis der Nachzug F7 (`flatten_with_offsets`) sie auf
+den Rohtext legen kann; `extractor` nennt den Extraktor des Textstores und das Verfahren
+(`…/drucksachen-1`).
+
+**Laufzeit** im ersten Lauf je Profil am 2026-11-24 (Worktree, `nice -n 10`, Lastmittel 9 bis 25
+durch andere Läufe auf demselben Rechner): `references` 13,3 s in der Hauptperiode, 11,9 s in 2014
+bis 2020, 2,3 s in der laufenden Periode, 0,3 s in Mönchengladbach; `procedures` 4,8 s, 3,2 s,
+3,7 s und 0,1 s, davon das Lesen der Nachbarpakete und von 1 090, 2 309 und 2 707 Nachbartexten.
+Beide bleiben unter dem Ziel von 20 s je Profil (§ 6). Die Summen der drei Düsseldorfer Läufe sind
+die Zahlen der Messung: 7 310 + 5 704 + 1 469 = 14 483 eigene Kanten, 1 960 + 1 093 + 339 = 3 392
+starke, 1 239 + 1 750 + 248 = 3 237 Anfragen mit Antwort.
+
+**Abweichungen vom Bauplan** (§ 6 des Messdokuments, § 10 nach der Synergie):
+`dokumente_vorgang.parquet` statt `vorgaenge.parquet`; das Anlagenpaket mit einer Zeile je
+Drucksache statt je Anlage (303 KB statt der geschätzten 519, zstd auf Stufe 19); die Typen .2 im
+Code als Vokabular des Codebuchs statt einer Tabelle `edge_types` im Profil (sie hängen an
+Änderungszeichen und Sammelbericht, nicht nur an den Rollen); die Titel der Sammelberichte und die
+Änderungszeichen in `defaults.toml`, weil sie Verwaltungsdeutsch sind und in beiden Städten gelten
+(Mönchengladbach hat 17 Sammelberichte, ohne sie fehlte eine seiner 171 starken Kanten); kein
+Schalter `text_edges_strong`; `tage` einer Kante darf negativ sein (1,2 % zeigen nach vorn, § 3.3),
+nur die Antwortzeit nicht.
+
+**Verworfen.** Die Nachbarperioden aus ihren Läufen lesen (`data_root/<profil>/interim/`): Pages
+baut die Hauptperiode zuerst, und die Kanten hingen an der Reihenfolge der Läufe. Ein eigenes
+Nummernverzeichnis als Paket (eine zweite Kopie der Metadaten dreier Perioden, die mit jeder
+Korrektur am Korpus veraltet). Alle Texte der Nachbarn lesen (dreimal der Regexlauf je Profil, für
+Kanten, die nach der Rückfallregel ohnehin schwach sind). Bäume je Periode (der Vorgang endete an
+der Wahl, gegen § 3.3). `PaperRecord` um die Anlagen erweitern (ein Schemasprung des Korpus mit
+Golden-Master-Risiko; das Paket genügt, Synergie § 4); für die laufende Periode ist das der Weg
+danach, denn das Paket veraltet mit jedem Tag (Frage 9.1).

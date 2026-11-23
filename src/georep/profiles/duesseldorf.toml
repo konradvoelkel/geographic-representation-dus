@@ -794,11 +794,11 @@ evidence = ["RAT/073/2026", "RAT/120/2026"]  # 4 Dokumente mit „Ratsmehrheit a
 
 # --- Vorhaben 14: Vorgänge (docs/plans/14-vorgaenge.md; Rückfallregel, § 5.1)
 [procedures]
-enabled = false
-# Messdokument § 2: „Stellungnahme" allein ist zu breit (IHK, ver.di, Abwägung nach BauGB: 663
-# Anlagen über alle Dokumentarten), darum nur die der Verwaltung; „anrwort" ist ein Tippfehler der
-# Verwaltung, der 2014 bis 2020 vorkommt. Häufigste Namen an Anfragen: „Antwort der Verwaltung"
-# 1 293, „Beantwortung" 156, „Antworten der Verwaltung zu NN/ NN/NNNN" 88 (§ 3.6).
+enabled = true                 # die Schritte references und procedures; erben alle drei Perioden
+# Messdokument § 3.6: „Stellungnahme" allein ist zu breit (IHK, ver.di, Abwägung nach BauGB: 663
+# Anlagen über alle Dokumentarten), darum nur die der Verwaltung; „anrwort" steht siebenmal als
+# „Anrwort der Verwaltung" an alten Drucksachen. Häufigste Namen an Anfragen: „Antwort der
+# Verwaltung" 1 293, „Beantwortung" 156, „Antworten der Verwaltung zu NN/ NN/NNNN" 88.
 answer_attachment = '(^|[^a-zäöü])(be)?antwort|verwaltungsantwort|anrwort|stellungnahme (der |des )?(verwaltung|dezernat|amt)'
 # Am 2019-07-03 bekamen alle Anlagen älterer Drucksachen dieses Datum: 28 451 Anlagen, die
 # Umstellung des Ratsinformationssystems; es ist kein Antwortdatum (§ 3.6).
