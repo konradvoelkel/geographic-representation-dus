@@ -26,6 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from georep.errors import ModelError
 from georep.http import TimeoutSession, Transport
 from georep.ml.base import Call, GenerationOptions, ModelInfo, Vectors, full_name
+from georep.settings import Ml
 
 DEFAULT_URL = "http://localhost:11434"
 RETRY_STATUSES = (429, 500, 502, 503, 504)
@@ -338,3 +339,43 @@ class OllamaGenerator:
             )
         )
         return reply.message.content
+
+
+# --- aus den Settings -----------------------------------------------------------------------
+# Die einzige Stelle, an der ``[ml]`` zu Objekten wird; ein Schritt in ``build_steps`` baut so
+# Client und Modell, ohne mit dem Server zu sprechen (das tut erst ``Step.models`` oder ``run``).
+
+
+def client_from_settings(ml: Ml, *, transport: Transport | None = None) -> OllamaClient:
+    return OllamaClient(
+        ml.base_url,
+        transport=transport,
+        timeout_s=ml.timeout_s,
+        retries=ml.retries,
+        backoff_s=ml.backoff_s,
+        keep_alive=ml.keep_alive,
+    )
+
+
+def generation_options(ml: Ml) -> GenerationOptions:
+    gen = ml.generation
+    return GenerationOptions(
+        temperature=gen.temperature,
+        seed=gen.seed,
+        num_ctx=gen.num_ctx,
+        num_predict=gen.num_predict,
+        think=gen.think,
+    )
+
+
+def embedder_from_settings(ml: Ml, client: OllamaClient) -> OllamaEmbedder:
+    emb = ml.embedding
+    return OllamaEmbedder(client, emb.model, dimension=emb.dimension, num_ctx=emb.num_ctx)
+
+
+def generator_from_settings(
+    ml: Ml, client: OllamaClient, *, model: str | None = None
+) -> OllamaGenerator:
+    """Der Generator aus ``[ml.generation]``; ``model`` nimmt ein anderes Modell mit denselben Optionen."""
+    chosen = model if model is not None else ml.generation.model
+    return OllamaGenerator(client, chosen, options=generation_options(ml))

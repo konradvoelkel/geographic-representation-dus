@@ -1474,6 +1474,40 @@ class Validation(_Strict):
         return None if value in ("", None) else value
 
 
+# --- Fundament F5: Modelle (docs/plan-vorverarbeitung-2026-11.md, § 7)
+class EmbeddingModel(_Strict):
+    """Das Einbettungsmodell auf dem ollama-Server; ``dimension`` prüft jede Antwort."""
+
+    model: str = "nomic-embed-text-v2-moe"
+    dimension: int = Field(default=768, ge=1)
+    num_ctx: int = Field(default=512, ge=0)  # Fenster in Token; 0 = was das Modell mitbringt
+
+
+class GenerationModel(_Strict):
+    """Das Sprachmodell und seine Optionen; der Standard ist deterministisch (Temperatur 0, Seed)."""
+
+    model: str = "qwen3.6:27b"
+    temperature: float = Field(default=0.0, ge=0.0)
+    seed: int = 0
+    num_ctx: int = Field(default=8192, ge=1)
+    num_predict: int = Field(default=512, ge=1)
+    think: bool = False
+
+
+class Ml(_Strict):
+    """Der lokale Modellserver: Ort und Laufzeit (nicht im Fingerprint), Modelle und ``limit`` (darin)."""
+
+    base_url: str = Field(default="http://localhost:11434", pattern=r"^https?://")
+    timeout_s: float = Field(default=300.0, gt=0)
+    retries: int = Field(default=2, ge=0, le=10)
+    backoff_s: float = Field(default=2.0, ge=0)
+    keep_alive: str = "10m"
+    batch_size: int = Field(default=32, ge=1)
+    limit: int = Field(default=0, ge=0)
+    embedding: EmbeddingModel = EmbeddingModel()
+    generation: GenerationModel = GenerationModel()
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -1523,6 +1557,7 @@ class Settings(BaseSettings):
     classify: Classify = Classify()  # Punkt 45: passender Ausschuss je Dokument
     council: Council = Council()  # Fundament F6: Sitzungen, Beratungen, Personen
     validation: Validation = Validation()  # Fundament F4
+    ml: Ml = Ml()  # Fundament F5: lokale Modelle über ollama
 
     @property
     def base_profile(self) -> str:
@@ -1667,6 +1702,9 @@ class Settings(BaseSettings):
         denn es entscheidet, ob die Seite den Vergleich trägt.
         Option 07: ``bootstrap`` sagt, was kopiert wird, und ``report`` ist Anzeige; kein
         Parquet-Ergebnis hängt an einem der beiden.
+        Fundament F5: ``ml.base_url`` ist ein Ort, Timeout, Wiederholungen, ``keep_alive`` und
+        ``batch_size`` sind Laufzeit (ein Stapel kann die letzten Bits einer Einbettung ändern,
+        doch was im Modellcache liegt, wird nicht neu gerechnet).
         """
         payload = self.model_dump(
             mode="json",
@@ -1706,6 +1744,9 @@ class Settings(BaseSettings):
                 "period": {"label"},
                 "sources": {"opendata": {"districts_file"}},
                 "crosswalk": {"target_file"},
+                # Fundament F5: Ort und Laufzeit des Modellservers ändern kein Ergebnis; Modelle,
+                # Optionen und ``limit`` (wie ``pdf_limit``) zählen. Der Digest steht im Stamp.
+                "ml": {"base_url", "timeout_s", "retries", "backoff_s", "keep_alive", "batch_size"},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]
