@@ -58,7 +58,8 @@ anders entschieden ist.
 
 ## 4. Was du tun kannst
 
-**Eine Handlung**: den Netzlauf für Sitzungen, Beratungen und Personen starten
+**Nachtrag 2026-11-23, 23:30**: Konrad hat den Supervisor gebeten, den Netzlauf zu starten (läuft), und
+entschieden, dass bei offenen Fragen die Annahme gilt. Ursprünglich stand hier: **Eine Handlung**: den Netzlauf für Sitzungen, Beratungen und Personen starten
 ([../runbook-sitzungen.md](../runbook-sitzungen.md), § 5). Er ist Voraussetzung für 26, 27, 28 und für die
 zweite Runde von 24.
 
