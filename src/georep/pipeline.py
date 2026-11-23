@@ -262,7 +262,8 @@ def stamp_mismatch(stamped: dict[str, object], step: Step, settings: Settings) -
         if {key: recorded.get(key) for key in identity} != identity:
             return "Modell oder Prompt geändert"
         if recorded.get("open"):
-            return f"offen: {recorded['open']} Eingaben"
+            failed = f", davon {recorded['failed']} gescheitert" if recorded.get("failed") else ""
+            return f"offen: {recorded['open']} Eingaben{failed}"
     if stamped.get("code") != __version__:
         return f"Code-Version {stamped.get('code')} -> {__version__}"
     stamped_inputs = stamped.get("inputs")

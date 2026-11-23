@@ -27,13 +27,14 @@ class Use:
         self.asked = [] if asked is None else asked
         self.limit = 0
         self.open = 0
+        self.failed = 0
 
     def identity(self) -> dict[str, str]:
         self.asked.append(1)
         return self._identity()
 
     def stamp(self) -> dict[str, object]:
-        return {**self.identity(), "limit": self.limit, "open": self.open}
+        return {**self.identity(), "limit": self.limit, "open": self.open, "failed": self.failed}
 
 
 def _model_step(
@@ -43,12 +44,13 @@ def _model_step(
     *,
     name: str = "modell",
     leaves_open: int = 0,
+    failed: int = 0,
 ) -> Step:
     use = Use(lambda: dict(identity), asked)
 
     def run() -> str:
         out.write_text("ergebnis", encoding="utf-8")
-        use.limit, use.open = (2 if leaves_open else 0), leaves_open
+        use.limit, use.open, use.failed = (2 if leaves_open else 0), leaves_open, failed
         return "1 Ergebnis"
 
     return Step(name, (), (out,), run, models=use)
@@ -72,7 +74,7 @@ def test_with_the_switch_it_runs_and_stamps_the_model(tmp_path: Path, settings: 
     step = _model_step(tmp_path / "out.txt", IDENTITY, [])
     assert run_step(step, settings, models=True).status == "ausgeführt"
     stamp = json.loads(step.stamp_path.read_text(encoding="utf-8"))
-    assert stamp["models"] == IDENTITY | {"limit": 0, "open": 0}
+    assert stamp["models"] == IDENTITY | {"limit": 0, "open": 0, "failed": 0}
     assert run_step(step, settings, models=True).reason == "aktuell"
 
 
@@ -87,6 +89,13 @@ def test_a_partial_run_is_not_current(tmp_path: Path, settings: Settings) -> Non
     complete = _model_step(out, IDENTITY, [])
     assert run_step(complete, settings, models=True).reason.startswith("offen: 3 Eingaben")
     assert freshness(complete, settings) == (True, "aktuell")
+
+
+def test_a_run_with_failed_inputs_says_how_many_failed(tmp_path: Path, settings: Settings) -> None:
+    out = tmp_path / "out.txt"
+    step = _model_step(out, IDENTITY, [], leaves_open=2, failed=1)
+    run_step(step, settings, models=True)
+    assert freshness(step, settings) == (False, "offen: 2 Eingaben, davon 1 gescheitert")
 
 
 def test_another_digest_or_prompt_makes_the_step_stale(tmp_path: Path, settings: Settings) -> None:

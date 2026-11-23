@@ -13,6 +13,7 @@ import numpy as np
 import numpy.typing as npt
 import requests
 
+from georep.errors import ModelError
 from georep.ml.base import EmbeddingOptions, GenerationOptions, Reply
 
 
@@ -113,15 +114,20 @@ class FakeEmbedder:
         dimension: int = 8,
         digest: str = "e" * 64,
         options: EmbeddingOptions | None = None,
+        rejects: frozenset[str] | set[str] = frozenset(),
     ) -> None:
         self.name = name
         self.dimension = dimension
         self.digest = digest
         self.options = options if options is not None else EmbeddingOptions()
+        self.rejects = frozenset(rejects)
         self.calls: list[list[str]] = []
 
     def embed(self, texts: Sequence[str]) -> npt.NDArray[np.float32]:
+        """Ein Stapel mit einem Text aus ``rejects`` wird ganz abgewiesen, wie vom Server (400)."""
         self.calls.append(list(texts))
+        if self.rejects & set(texts):
+            raise ModelError("400 input rejected")
         rows = [fake_vector(t, self.dimension) for t in texts]
         return np.asarray(rows, dtype=np.float32).reshape(len(rows), self.dimension)
 

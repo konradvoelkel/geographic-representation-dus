@@ -191,7 +191,8 @@ class ModelUse:
         self.prompt = prompt
         self.options_key = options_key
         self.limit = 0
-        self.open = 0
+        self.open = 0  # offen nach dem letzten Lauf: wegen ``limit`` oder gescheitert
+        self.failed = 0  # davon vom Modell abgewiesen
 
     @property
     def name(self) -> str:
@@ -206,10 +207,11 @@ class ModelUse:
         return found | ({"options": self.options_key} if self.options_key else {})
 
     def stamp(self) -> dict[str, object]:
-        return {**self.identity(), "limit": self.limit, "open": self.open}
+        return {**self.identity(), "limit": self.limit, "open": self.open, "failed": self.failed}
 
-    def record(self, *, open: int, limit: int) -> None:
+    def record(self, *, open: int, limit: int, failed: int = 0) -> None:
         self.open = open
+        self.failed = failed
         self.limit = limit
 
 

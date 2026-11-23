@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from georep.errors import ModelError, SchemaError
+from georep.errors import ModelError, ModelUnreachableError, SchemaError
 from georep.ml.base import EmbeddingOptions, EmbeddingUse, GenerationOptions, GenerationUse
 from georep.ml.batch import (
     BatchReport,
@@ -227,3 +227,63 @@ def test_the_report_names_what_is_left() -> None:
     assert report.line() == "10 Eingaben: 4 aus dem Cache, 3 neu, 3 offen (limit) in 12.3 s"
     done = BatchReport(total=2, cached=2, computed=0, left=0, seconds=0.0)
     assert done.line() == "2 Eingaben: 2 aus dem Cache, 0 neu in 0.0 s"
+
+
+def _poisoned(
+    computed: list[list[int]], poison: set[int]
+) -> Callable[[Sequence[int]], list[bytes]]:
+    """Wie ``_values``, aber ein Stapel mit einem Index aus ``poison`` wird abgewiesen."""
+
+    def compute(indices: Sequence[int]) -> list[bytes]:
+        computed.append(list(indices))
+        if poison & set(indices):
+            raise ModelError("400 input rejected")
+        return [f"wert {i}".encode() for i in indices]
+
+    return compute
+
+
+def test_a_rejected_text_fails_alone_and_the_run_goes_on(cache: ModelCache) -> None:
+    """Befund 7 des Reviews (Probe 9): ein dauerhaft abgewiesener Text hielt den Lauf an."""
+    keys = [input_sha256(str(i)) for i in range(10)]
+    computed: list[list[int]] = []
+    report = run_batch(keys, _poisoned(computed, {3}), cache, KEY, batch_size=2)
+    # Der Stapel [2, 3] scheitert und wird in Einzeltexte zerlegt; danach geht es weiter.
+    assert computed == [[0, 1], [2, 3], [2], [3], [4, 5], [6, 7], [8, 9]]
+    assert (report.computed, report.failed, report.left) == (9, 1, 0)
+    assert report.failures == ((3, "400 input rejected"),)
+    assert "1 gescheitert" in report.line()
+    again = run_batch(keys, _poisoned(computed, {3}), cache, KEY, batch_size=2)
+    assert (again.cached, again.computed, again.failed) == (9, 0, 1)
+
+
+def test_a_missing_server_still_stops_the_run(cache: ModelCache) -> None:
+    keys = [input_sha256(str(i)) for i in range(6)]
+
+    def compute(indices: Sequence[int]) -> list[bytes]:
+        if 4 in indices:
+            raise ModelUnreachableError("ollama nicht erreichbar")
+        return [b"x" for _ in indices]
+
+    with pytest.raises(ModelUnreachableError):
+        run_batch(keys, compute, cache, KEY, batch_size=2)
+    assert cache.known(KEY) == set(keys[:4])
+
+
+def test_ten_failures_in_a_row_stop_the_run(cache: ModelCache) -> None:
+    keys = [input_sha256(str(i)) for i in range(30)]
+    computed: list[list[int]] = []
+    with pytest.raises(ModelError, match=r"10 Fehlschläge in Folge"):
+        run_batch(keys, _poisoned(computed, set(range(30))), cache, KEY, batch_size=1)
+    assert len(computed) == 10
+
+
+def test_embed_texts_marks_a_rejected_text_and_leaves_it_open(tmp_path: Path) -> None:
+    embedder = FakeEmbedder(dimension=4, rejects={"kaputt"})
+    use = EmbeddingUse(embedder, "dok-1")
+    with ModelCache(tmp_path, embedder.name) as cache:
+        found = embed_texts(use, cache, ["eins", "kaputt", "zwei"], batch_size=3)
+    assert found.present.tolist() == [True, False, True]
+    assert found.report.failures[0][0] == 1
+    assert (use.open, use.failed) == (1, 1)
+    assert use.stamp()["failed"] == 1

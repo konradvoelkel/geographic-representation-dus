@@ -23,7 +23,7 @@ import numpy as np
 import numpy.typing as npt
 from loguru import logger
 
-from georep.errors import ModelError, SchemaError
+from georep.errors import ModelError, ModelUnreachableError, SchemaError
 from georep.ml.base import EmbeddingUse, GenerationUse, Vectors, full_name
 from georep.ml.cache import CacheKey, ModelCache, decode_vectors, encode_vector, input_sha256
 
@@ -78,13 +78,20 @@ class BatchReport:
     left: int
     seconds: float
     truncated: int = 0  # davon in diesem Lauf neu und abgeschnitten (an ``num_predict``)
+    # (Index in ``keys``, Grund) je Eingabe, die das Modell abwies; sie bleibt offen
+    failures: tuple[tuple[int, str], ...] = ()
+
+    @property
+    def failed(self) -> int:
+        return len(self.failures)
 
     def line(self) -> str:
         cut = f", {self.truncated} abgeschnitten" if self.truncated else ""
+        failed = f", {self.failed} gescheitert" if self.failed else ""
         left = f", {self.left} offen (limit)" if self.left else ""
         return (
-            f"{self.total} Eingaben: {self.cached} aus dem Cache, {self.computed} neu{cut}{left} "
-            f"in {self.seconds:.1f} s"
+            f"{self.total} Eingaben: {self.cached} aus dem Cache, {self.computed} neu{cut}"
+            f"{failed}{left} in {self.seconds:.1f} s"
         )
 
 
@@ -114,6 +121,9 @@ class CacheValue(NamedTuple):
 
 
 Compute = Callable[[Sequence[int]], Sequence[bytes | CacheValue]]
+# So viele abgewiesene Eingaben hintereinander heißen: es liegt am Server oder am Modell, nicht an
+# den Texten. Dann bricht der Lauf ab, statt den ganzen Korpus als gescheitert zu markieren.
+MAX_FAILURES_IN_ROW = 10
 
 
 # Benannte Validatoren mit der ganzen Signatur: deal bindet Schlüsselwortparameter samt Vorgaben
@@ -146,14 +156,16 @@ def _every_input_accounted_for(
     progress: Callable[[Progress], None] | None = None,
     clock: Callable[[], float] = time.perf_counter,
 ) -> bool:
-    accounted = result.cached + result.computed + result.left
-    return accounted == result.total == len(set(keys)) and (not limit or result.computed <= limit)
+    accounted = result.cached + result.computed + result.failed + result.left
+    tried = result.computed + result.failed
+    return accounted == result.total == len(set(keys)) and (not limit or tried <= limit)
 
 
 @deal.pre(_valid_sizes, message="batch_size mindestens 1, limit nicht negativ")
 @deal.ensure(
     _every_input_accounted_for,
-    message="jede verschiedene Eingabe ist aus dem Cache, neu oder offen; neu höchstens limit",
+    message="jede verschiedene Eingabe ist aus dem Cache, neu, gescheitert oder offen; "
+    "versucht höchstens limit",
 )
 def run_batch(
     keys: Sequence[str],
@@ -171,6 +183,11 @@ def run_batch(
 
     ``keys`` ist je Eingabe ihr SHA-256 (``input_sha256``); doppelte werden einmal gerechnet, an
     ihrer ersten Stelle. ``compute`` liefert je Index einen Wert, in derselben Reihenfolge.
+
+    Weist das Modell einen Stapel ab (``ModelError``), wird er in Einzeltexte zerlegt; was dann
+    noch scheitert, steht mit Index und Grund in ``failures``, bleibt offen, und der Lauf geht
+    weiter (Review 2026-11-23, Befund 7). Ein fehlender Server (``ModelUnreachableError``) und
+    ``MAX_FAILURES_IN_ROW`` Fehlschläge in Folge brechen ab: dann liegt es nicht an einem Text.
     """
     started = clock()
     first: dict[str, int] = {}
@@ -179,31 +196,62 @@ def run_batch(
     known = cache.known(key) & first.keys()
     missing = [index for sha, index in first.items() if sha not in known]
     todo = missing[:limit] if limit else missing
+    name = label or key.model
     done = 0
     cut = 0
+    failures: list[tuple[int, str]] = []
+    in_row = 0
     for start in range(0, len(todo), batch_size):
         chunk = todo[start : start + batch_size]
-        values = [v if isinstance(v, CacheValue) else CacheValue(v) for v in compute(chunk)]
-        if len(values) != len(chunk):
-            raise ModelError(f"{label or key.model}: {len(values)} Werte für {len(chunk)} Eingaben")
-        pairs = list(zip(chunk, values, strict=True))
-        cache.put_many(
-            key,
-            [(keys[i], v.value) for i, v in pairs],
-            truncated=[keys[i] for i, v in pairs if v.truncated],
+        outcome = _attempt(compute, chunk)
+        groups = (
+            [([i], _attempt(compute, [i])) for i in chunk]
+            if isinstance(outcome, ModelError) and len(chunk) > 1
+            else [(chunk, outcome)]
         )
-        done += len(chunk)
-        cut += sum(v.truncated for v in values)
+        for indices, result in groups:
+            if isinstance(result, ModelError):
+                failures.append((indices[0], str(result)))
+                logger.warning(f"{name}: Eingabe {indices[0]} gescheitert: {result}")
+                in_row += 1
+                if in_row >= MAX_FAILURES_IN_ROW:
+                    raise ModelError(
+                        f"{name}: {in_row} Fehlschläge in Folge, zuletzt: {result}"
+                    ) from result
+                continue
+            in_row = 0
+            if len(result) != len(indices):
+                raise ModelError(f"{name}: {len(result)} Werte für {len(indices)} Eingaben")
+            pairs = list(zip(indices, result, strict=True))
+            cache.put_many(
+                key,
+                [(keys[i], v.value) for i, v in pairs],
+                truncated=[keys[i] for i, v in pairs if v.truncated],
+            )
+            done += len(indices)
+            cut += sum(v.truncated for v in result)
         if progress is not None:
-            progress(Progress(label, done, len(todo), len(known), len(first), clock() - started))
+            tried = done + len(failures)
+            progress(Progress(label, tried, len(todo), len(known), len(first), clock() - started))
     return BatchReport(
         total=len(first),
         cached=len(known),
         computed=done,
-        left=len(missing) - done,
+        left=len(missing) - done - len(failures),
         seconds=clock() - started,
         truncated=cut,
+        failures=tuple(failures),
     )
+
+
+def _attempt(compute: Compute, indices: Sequence[int]) -> list[CacheValue] | ModelError:
+    """Ein Aufruf von ``compute``; eine Abweisung wird zum Wert, ein fehlender Server nicht."""
+    try:
+        return [v if isinstance(v, CacheValue) else CacheValue(v) for v in compute(indices)]
+    except ModelUnreachableError:
+        raise
+    except ModelError as error:
+        return error
 
 
 def _check_cache(cache: ModelCache, model: str) -> None:
@@ -254,7 +302,7 @@ def embed_texts(
         progress=progress,
         clock=clock,
     )
-    use.record(open=report.left, limit=limit)
+    use.record(open=report.left + report.failed, failed=report.failed, limit=limit)
     found = cache.get_many(key, sorted(set(shas)))
     present = np.asarray([sha in found for sha in shas], dtype=np.bool_)
     zero = bytes(4 * embedder.dimension)
@@ -311,7 +359,7 @@ def generate_texts(
         progress=progress,
         clock=clock,
     )
-    use.record(open=report.left, limit=limit)
+    use.record(open=report.left + report.failed, failed=report.failed, limit=limit)
     distinct = sorted(set(shas))
     found = cache.get_many(key, distinct)
     cut = cache.truncated(key, distinct)
