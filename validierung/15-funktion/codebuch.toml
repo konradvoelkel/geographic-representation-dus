@@ -1,0 +1,131 @@
+# Codebuch Vorhaben 15 „Dokumentfunktion und gemeinsame Anträge", Stufe 1 (2026-11-23). Vorläufiges
+# Format wie validierung/14-vorgaenge/codebuch.toml: F4 baut den Rahmen (`georep validate`)
+# parallel; wenn er steht, wird dieses Codebuch in sein Format übertragen, die Fragen bleiben.
+# Messdokument: docs/plans/15-funktion.md, § 4. Stichprobe: stichprobe.csv (nur IDs und Schicht),
+# Kodieraufgaben mit Textanfang lokal unter messdaten/kodierung/15-funktion/aufgaben.jsonl.
+
+[meta]
+vorhaben = "15-funktion"
+version = "2026-11-23.1"
+einheit = """Ein Dokument (eine Drucksache des Ratsinformationssystems) aus einer der drei \
+Düsseldorfer Wahlperioden 2014-2020, 2020-2025 und ab 2025."""
+stichprobe = """150 Dokumente, geschichtet nach der Funktion, die das Regelwerk vergibt, und nach den \
+schwierigen Fällen (Abweichung der beiden Varianten, Restklasse, Symbolpolitik, gemeinsame Dokumente, \
+Sammelarten der Periode 2014-2020), Seed 15 (stichprobe.csv)."""
+kodierer = """Zwei unabhängige Kodier-Agenten, die einander nicht sehen, und ein Schlicht-Agent nur für \
+die Uneinigkeiten (plan-vorverarbeitung-2026-11.md, § 2.6 und F4). Kein menschlicher Goldstandard."""
+material = """Je Dokument: Drucksachennummer, Titel, Dokumentart, Datum, Gremium und der Textanfang (bis \
+1 500 Zeichen, mit Groß- und Kleinschreibung aus dem Rohtext; wo es keinen gibt, aus dem \
+kleingeschriebenen Textstore, dann steht textquelle = "klein"). Dazu die Liste der Fraktionen und \
+Gruppen der Periode für die Frage urheber."""
+nicht_gezeigt = """Die Funktion und die Antragsteller, die das Regelwerk vergibt, und die Schicht der \
+Stichprobe (sie verrät die Funktion); F4: ohne die Ausgabe des zu prüfenden Verfahrens."""
+grundsatz = """Maßgeblich ist, was das Gremium mit dem Dokument tun soll — eine Frage beantworten \
+lassen, etwas zur Kenntnis nehmen, einen Vorschlag beschließen, eine Haltung erklären, eine Vorlage \
+der Verwaltung beschließen —, nicht das Thema und nicht, wie die Dokumentart heißt. Die Dokumentart \
+ist ein Hinweis, kein Urteil: ein „Antrag", der nur einen Bericht verlangt, ist Kontrolle; eine \
+„Informationsvorlage", die über eine Resolution berichtet, ist Information."""
+
+[[fragen]]
+id = "funktion"
+frage = "Welche Funktion hat das Dokument? Genau eine Option."
+optionen = ["kontrolle", "information", "initiative", "symbol", "vollzug", "rest", "unklar"]
+anleitung = """Lies Titel, Dokumentart und den Beschlussvorschlag oder die Fragen im Textanfang. Passen \
+zwei Optionen, entscheidet der Beschlusstext (der Satz, über den abgestimmt würde, bei mehreren \
+Punkten der erste): fordert er nur Auskunft, ist es kontrolle; erklärt er nur eine Haltung oder \
+fordert Dritte außerhalb der Stadt auf, ist es symbol; verlangt er eine Sachentscheidung der Stadt, \
+ist es initiative (aus der Politik) oder vollzug (von der Verwaltung). Ein Änderungs- oder \
+Ergänzungsantrag hat die Funktion seines eigenen Beschlusstexts. Eine Antwort der Verwaltung auf \
+eine Anfrage ist information. unklar nur, wenn das Material für keine Option reicht; nicht raten."""
+
+[fragen.definitionen]
+kontrolle = """Das Dokument verlangt von der Verwaltung oder einem städtischen Unternehmen Auskunft, \
+Rechenschaft oder einen Bericht, ohne selbst eine Sachentscheidung herbeizuführen. Beispiele: \
+„Anfrage der SPD-Fraktion: Sachstand Hallenbad Ulmenstraße" mit nummerierten Fragen; Nachfrage zu \
+einer Antwort; ein Antrag „Die Verwaltung wird gebeten, im Ausschuss über den Stand von X zu \
+berichten" (Berichtsantrag)."""
+information = """Die Verwaltung teilt etwas mit, das Gremium nimmt es zur Kenntnis und entscheidet \
+nichts. Beispiele: Informationsvorlage, Berichtsvorlage, „Mitteilungen der Verwaltung", \
+Controlling- oder Zwischenbericht, die schriftliche Antwort auf eine Anfrage, Sitzungstermine."""
+initiative = """Eine Fraktion, ein Mitglied, ein Beirat oder Bürgerinnen und Bürger schlagen eine \
+Sachentscheidung vor, die die Stadt selbst treffen kann. Beispiele: Antrag („Die Bezirksvertretung \
+beschließt, 3 000 Euro aus bezirklichen Mitteln …"), Prüfauftrag („Die Verwaltung wird beauftragt zu \
+prüfen, ob …"), Änderungs- oder Ergänzungsantrag zu einer Vorlage, Haushaltsantrag, Eingabe nach \
+§ 24 GO NRW."""
+symbol = """Das Gremium soll eine Haltung erklären oder Dritte außerhalb seiner Zuständigkeit \
+auffordern, ohne dass die Stadt selbst etwas Bestimmtes tut. Beispiele: Resolution („Der Rat \
+verurteilt …", „erklärt seine Solidarität mit …"), Appell an Land, Bund, EU, Unternehmen oder \
+Tarifparteien („Der Rat fordert die Landesregierung auf …"), Beitritt zu einem Bündnis oder einer \
+Erklärung (Sichere Häfen, Mayors for Peace) und der Antrag, ihn zu beenden. Verlangt der \
+Beschlusstext daneben eine konkrete Maßnahme der Stadt, entscheidet sein erster Punkt."""
+vollzug = """Die Verwaltung legt eine Entscheidung zur Beschlussfassung vor. Beispiele: \
+Beschlussvorlage, Satzung und Satzungsänderung, Haushaltsplan, Jahresabschluss, Bebauungs- oder \
+Flächennutzungsplan, Vergabe, Wahl, Bestellung oder Entsendung, Genehmigung einer \
+Dringlichkeitsentscheidung, Bedarfs- und Ausführungsbeschluss eines Bauvorhabens."""
+rest = """Das Dokument hat erkennbar keine der fünf Funktionen (etwa eine Tagesordnung, eine \
+Niederschrift, eine Anlage ohne erkennbaren Zweck)."""
+unklar = "Titel, Art und Textanfang reichen für keine Option (etwa ein leerer Textanfang und ein Titel ohne Hinweis)."
+
+[[fragen]]
+id = "urheber"
+frage = "Wer stellt das Dokument? Mehrfachauswahl."
+optionen = ["fraktionen_der_periode", "verwaltung", "einzelmitglied", "beirat_oder_sondergremium", "buerger", "interfraktionell_ohne_namen", "andere", "unklar"]
+anleitung = """Nur die Verfasser, nicht wer im Gegenstand vorkommt („Antrag der Linken: AfD keine \
+Plattform geben" stellt nur die Linke) und nicht die Verfasser eines Antrags, auf den sich das \
+Dokument bezieht („Änderungsantrag der SPD zum Antrag von CDU und Grünen" stellt nur die SPD). Wähle \
+jede Fraktion oder Gruppe aus der Liste der Periode, die im Briefkopf, in der Zeile „Antrag der \
+Ratsfraktionen von …" oder in der Dokumentart als Antragsteller genannt ist. Eine Fraktion aus \
+mehreren Parteien (etwa SPD/Volt) ist ein Eintrag. einzelmitglied: ein Rats- oder \
+Bezirksvertretungsmitglied ohne genannte Fraktion. interfraktionell_ohne_namen: „Interfraktioneller \
+Antrag" ohne Nennung der Fraktionen. andere: eine Fraktion oder Liste, die nicht in der Liste steht \
+(etwa eine Liste des Integrationsrats); dann den Namen in notiz."""
+
+[[fragen]]
+id = "adressat"
+frage = "An wen richtet sich der Beschlusstext oder die Frage?"
+optionen = ["stadt", "dritte", "beide", "keiner", "unklar"]
+anleitung = """stadt: Verwaltung, Oberbürgermeister, städtische Gesellschaften, das Gremium selbst. \
+dritte: Land, Bund, EU, andere Behörden, Unternehmen, Verbände, Tarifparteien, die Öffentlichkeit. \
+beide: beides im Beschlusstext. keiner: kein Adressat (eine reine Kenntnisnahme, eine Erklärung ohne \
+Aufforderung). Diese Frage trennt Initiative von Symbolpolitik; sie wird nicht selbst gewertet."""
+
+# Fraktionen und Gruppen je Periode für die Frage urheber; Schlüssel wie im Messskript
+# (FRAKTION_EINHEIT): eine Fraktion aus mehreren Parteien ist ein Eintrag.
+[fraktionen]
+"2014-2020" = [
+    { id = "CDU", name = "CDU" },
+    { id = "SPD", name = "SPD" },
+    { id = "GRUENE", name = "Bündnis 90/Die Grünen" },
+    { id = "FDP", name = "FDP" },
+    { id = "Die_Linke", name = "Die Linke" },
+    { id = "T_FW", name = "Tierschutz/Freie Wähler" },
+    { id = "AfD", name = "AfD" },
+]
+"2020-2025" = [
+    { id = "CDU", name = "CDU" },
+    { id = "GRUENE", name = "Bündnis 90/Die Grünen" },
+    { id = "SPD+VOLT", name = "SPD/Volt (auch nur SPD oder nur Volt genannt)" },
+    { id = "FDP", name = "FDP" },
+    { id = "Die_Linke", name = "Die Linke" },
+    { id = "T_FW", name = "Tierschutz/Freie Wähler" },
+    { id = "PARTEI", name = "Die PARTEI-Klima-Fraktion" },
+    { id = "AfD", name = "AfD" },
+]
+"2025-" = [
+    { id = "CDU", name = "CDU" },
+    { id = "GRUENE", name = "Bündnis 90/Die Grünen" },
+    { id = "SPD+VOLT", name = "SPD/Volt (auch nur SPD oder nur Volt genannt)" },
+    { id = "FDP", name = "FDP" },
+    { id = "Die_Linke", name = "Die Linke" },
+    { id = "T_FW+PARTEI", name = "Freie Wähler Tierschutz PARTEI (auch einzeln genannt)" },
+    { id = "AfD", name = "AfD" },
+    { id = "BSW", name = "Bündnis Sahra Wagenknecht" },
+]
+
+# Nur für die Auswertung (F4, `score`); steht nicht in den Kodieraufgaben.
+[auswertung]
+kriterium = "Cohens kappa zwischen Regelwerk (Variante A und B getrennt) und Endlabel funktion an den 150, ungewichtet; Kriterium kappa >= 0,7 und Restklasse <= 10 % (Briefing)."
+funktion = "kappa ungewichtet (Kriterium) und mit den Schichtgrößen aus stichprobe.csv gewichtet; Präzision und Recall je Funktion mit Wilson-Intervall; unklar wird gezählt und berichtet, nicht gewertet."
+varianten = "Die Schicht abweichung_ab entscheidet zwischen A und B: Berichtsantrag (A initiative, B kontrolle) und Symbolpolitik aus dem Beschlusstext (A initiative, B symbol)."
+urheber = "Nur Dokumente mit Urheberklasse Fraktion: Anteil exakt gleicher Mengen von Fraktionen (Regelwerk gegen Endlabel), Präzision und Recall je Fraktion, und für die Schicht gemeinsam die Präzision von 'mindestens zwei Fraktionen'."
+uebereinstimmung = "Krippendorffs alpha zwischen den beiden Kodierern je Frage (funktion nominal, urheber als MASI-Distanz, adressat nominal); Stufe 3 verlangt alpha >= 0,8."
