@@ -4,9 +4,11 @@ Sechs Endpunkte genügen: ``/api/version`` (läuft der Server?), ``/api/tags`` (
 ``/api/show`` (Fähigkeiten: ``embedding``, ``completion``, ``thinking``), ``/api/ps`` (was im
 Speicher liegt), ``/api/embed`` und ``/api/chat``. Gesprochen wird über das ``Transport``-Protokoll
 aus ``georep.http``, also mit derselben Testnaht wie jede Quelle; die Antworten prüft pydantic an
-der Grenze, wie OParl in ``georep.oparl``. Jeder Fehler ist ein ``ModelError``: ein nicht
-erreichbarer Server, ein fehlendes Modell, eine unbrauchbare Antwort. 429 und 5xx werden mit
-Backoff wiederholt, begrenzt; ein 4xx sagt, dass die Anfrage falsch ist, und kommt sofort heraus.
+der Grenze, wie OParl in ``georep.oparl``. Jeder Fehler ist ein ``ModelError``: ein fehlendes
+Modell, eine abgewiesene Anfrage, eine unbrauchbare Antwort; ein Server, der nicht erreichbar ist
+oder nicht innerhalb von ``timeout_s`` antwortet, ist die Unterklasse ``ModelUnreachableError``.
+Wiederholt werden, mit Backoff und begrenzt, eine abgelehnte Verbindung und 429 und 5xx; ein
+Lese-Timeout nicht (er käme beim selben Text wieder), ein 4xx auch nicht.
 Die Retry-Regel der Session aus ``make_session`` hilft hier nicht: sie wiederholt nur GET und HEAD,
 und ``embed`` wie ``chat`` sind POST (docs/decisions.md, „Modelle lokal über ollama").
 """
@@ -23,7 +25,7 @@ import numpy as np
 import requests
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from georep.errors import ModelError
+from georep.errors import ModelError, ModelUnreachableError
 from georep.http import TimeoutSession, Transport
 from georep.ml.base import (
     Call,
@@ -171,9 +173,17 @@ class OllamaClient:
                     resp = self.transport.get(url)
                 else:
                     resp = self.transport.post(url, data=json.dumps(payload), headers=_JSON)
-            except requests.RequestException as error:
+            except requests.ConnectionError as error:
+                # Auch ConnectTimeout: der Server nahm die Verbindung nicht an. Nur das wird
+                # wiederholt, ein Lese-Timeout nicht (Review 2026-11-23, Befund 4).
                 problem = f"nicht erreichbar ({error}); läuft `ollama serve`?"
                 continue
+            except requests.Timeout as error:
+                raise ModelUnreachableError(
+                    f"{url}: Zeitüberschreitung nach {self.timeout_s:g} s (ml.timeout_s)"
+                ) from error
+            except requests.RequestException as error:
+                raise ModelError(f"{url}: {error}") from error
             if resp.status_code < 400:
                 try:
                     return resp.json()
@@ -182,6 +192,8 @@ class OllamaClient:
             problem = f"antwortete {resp.status_code}: {_error_text(resp)}"
             if resp.status_code not in RETRY_STATUSES:
                 raise ModelError(f"{url} {problem}")
+        if problem.startswith("nicht erreichbar"):
+            raise ModelUnreachableError(f"ollama unter {self.base_url} {problem}")
         raise ModelError(f"ollama unter {self.base_url} {problem}")
 
     @staticmethod
@@ -191,13 +203,13 @@ class OllamaClient:
         except ValidationError as error:
             raise ModelError(f"{path}: Antwort unbrauchbar: {error}") from error
 
-    @deal.raises(ModelError)
+    @deal.raises(ModelError, ModelUnreachableError)
     def version(self) -> str:
         """Die Version des Servers. Eine Probe, darum ohne Wiederholung: fehlt er, sofort Bescheid."""
         data = self._call("GET", "/api/version", retries=0)
         return self._parse(_Version, data, "/api/version").version
 
-    @deal.raises(ModelError)
+    @deal.raises(ModelError, ModelUnreachableError)
     def models(self) -> list[ModelInfo]:
         """Alle Modelle des Servers mit Digest, nach Namen sortiert; füllt den Speicher für ``info``."""
         tags = self._parse(_Tags, self._call("GET", "/api/tags"), "/api/tags")
@@ -216,7 +228,7 @@ class OllamaClient:
         self._infos = {info.name: info for info in found}
         return sorted(found, key=lambda info: info.name)
 
-    @deal.raises(ModelError)
+    @deal.raises(ModelError, ModelUnreachableError)
     def info(self, name: str) -> ModelInfo:
         """Ein Modell mit Digest; fehlt es, sagt der Fehler, wie man es holt."""
         wanted = full_name(name)
@@ -235,12 +247,12 @@ class OllamaClient:
             self._shows[wanted] = self._parse(_Show, data, "/api/show")
         return self._shows[wanted]
 
-    @deal.raises(ModelError)
+    @deal.raises(ModelError, ModelUnreachableError)
     def capabilities(self, name: str) -> tuple[str, ...]:
         """Was ein Modell kann (``embedding``, ``completion``, ``thinking`` …), aus ``/api/show``."""
         return self._show(name).capabilities
 
-    @deal.raises(ModelError)
+    @deal.raises(ModelError, ModelUnreachableError)
     def dimension(self, name: str) -> int:
         """Die Vektorlänge eines Einbettungsmodells (``<familie>.embedding_length`` in ``/api/show``)."""
         show = self._show(name)
@@ -249,17 +261,17 @@ class OllamaClient:
             raise ModelError(f"{full_name(name)} ist kein Einbettungsmodell mit einer Vektorlänge")
         return int(lengths[0])
 
-    @deal.raises(ModelError)
+    @deal.raises(ModelError, ModelUnreachableError)
     def loaded(self) -> list[Running]:
         """Die Modelle im Speicher des Servers; eine Probe ohne Wiederholung."""
         data = self._call("GET", "/api/ps", retries=0)
         return self._parse(_Ps, data, "/api/ps").models
 
-    @deal.raises(ModelError)
+    @deal.raises(ModelError, ModelUnreachableError)
     def embed(self, payload: dict[str, Any]) -> _Embed:
         return self._parse(_Embed, self._call("POST", "/api/embed", payload), "/api/embed")
 
-    @deal.raises(ModelError)
+    @deal.raises(ModelError, ModelUnreachableError)
     def chat(self, payload: dict[str, Any]) -> _Chat:
         return self._parse(_Chat, self._call("POST", "/api/chat", payload), "/api/chat")
 
@@ -290,7 +302,7 @@ class OllamaEmbedder:
     def digest(self) -> str:
         return self.client.info(self.name).digest
 
-    @deal.raises(ModelError)
+    @deal.raises(ModelError, ModelUnreachableError)
     @deal.ensure(lambda self, texts, result: result.shape == (len(texts), self.dimension))
     def embed(self, texts: Sequence[str]) -> Vectors:
         if not texts:
@@ -343,7 +355,7 @@ class OllamaGenerator:
     def digest(self) -> str:
         return self.client.info(self.name).digest
 
-    @deal.raises(ModelError)
+    @deal.raises(ModelError, ModelUnreachableError)
     def generate(
         self, prompt: str, *, system: str = "", options: GenerationOptions | None = None
     ) -> Reply:

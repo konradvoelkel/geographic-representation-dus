@@ -39,3 +39,11 @@ class NetworkError(GeorepError):
 
 class ModelError(GeorepError):
     """Ein lokales Modell war nicht erreichbar, fehlt auf dem Server oder antwortete unbrauchbar (F5)."""
+
+
+class ModelUnreachableError(ModelError):
+    """Der Modellserver antwortete nicht: nicht erreichbar oder nicht innerhalb von ``ml.timeout_s``.
+
+    Eine Unterklasse, weil der Stapellauf daran unterscheidet: ein abgewiesener Text ist ein
+    Fehlschlag dieses Texts, ein fehlender Server bricht den Lauf ab (Review 2026-11-23).
+    """

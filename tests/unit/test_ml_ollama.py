@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import requests
 
-from georep.errors import ModelError
+from georep.errors import ModelError, ModelUnreachableError
 from georep.ml.base import (
     Embedder,
     EmbeddingOptions,
@@ -16,7 +16,14 @@ from georep.ml.base import (
     full_name,
 )
 from georep.ml.ollama import OllamaClient, OllamaEmbedder, OllamaGenerator
-from tests.fakes import FakeOllama, FakeSession, fake_answer, fake_vector, response
+from tests.fakes import (
+    FakeOllama,
+    FakeSession,
+    SequenceSession,
+    fake_answer,
+    fake_vector,
+    response,
+)
 
 URL = "http://ollama.test"
 
@@ -244,3 +251,29 @@ def test_dimension_comes_from_the_model_info_of_an_embedding_model() -> None:
     assert client.dimension("fake-embed") == 8
     with pytest.raises(ModelError, match=r"kein Einbettungsmodell"):
         client.dimension("fake-chat")
+
+
+def test_a_read_timeout_is_not_retried_and_says_what_it_is() -> None:
+    """Befund 4 des Reviews (Probe 3): ein Lese-Timeout lief dreimal und hieß „nicht erreichbar"."""
+    session = SequenceSession(f"{URL}/api/chat", [requests.ReadTimeout("read timed out")])
+    pauses: list[float] = []
+    client = OllamaClient(URL, transport=session, timeout_s=300.0, sleep=pauses.append)
+    with pytest.raises(ModelUnreachableError, match=r"Zeitüberschreitung nach 300 s"):
+        client.chat({"model": "fake-chat:latest"})
+    assert len(session.calls) == 1 and pauses == []
+
+
+def test_a_server_that_stays_away_is_unreachable_after_the_retries() -> None:
+    server = FakeOllama(down=True)
+    client, pauses = _client(server, retries=2, backoff_s=1.0)
+    with pytest.raises(ModelUnreachableError, match=r"nicht erreichbar"):
+        client.info("fake-embed")
+    assert len(server.requests) == 3 and pauses == [1.0, 2.0]
+
+
+def test_another_request_error_is_a_model_error_at_once() -> None:
+    session = SequenceSession(f"{URL}/api/tags", [requests.TooManyRedirects("zu viele")])
+    client = OllamaClient(URL, transport=session)
+    with pytest.raises(ModelError, match=r"zu viele") as caught:
+        client.info("fake-embed")
+    assert type(caught.value) is ModelError and len(session.calls) == 1
