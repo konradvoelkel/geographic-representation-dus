@@ -61,12 +61,17 @@ PACKAGES = (
     # auf Stufe 19 (14 183 802 Bytes; mit der Vorgabe von Polars waren es 17 044 579)
     Package("snapshots/duesseldorf-rohtexte", limit=20 * MIB, native=False, readme=True),
     Package("context", limit=4 * MIB, native=False, readme=True),  # 2 242 316
+    # Vorhaben 14: die Anlagen je Drucksache aller drei Perioden, aus dem HTTP-Cache (303 455)
+    Package("snapshots/duesseldorf-anlagen", limit=1 * MIB, native=False, readme=True),
+    # Vorhaben 14: dasselbe für die zweite Stadt, neben reference/moenchengladbach/ (63 909)
+    Package("snapshots/moenchengladbach-anlagen", limit=1 * MIB, native=False, readme=True),
 )
 # Alle zusammen, als zweite grobe Schranke: 174 580 489 Bytes = 166,49 MiB am 2026-11-23 (92,5 %
 # der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, die drei Textstores sind seit
 # Punkt 67 zusammen 266 295 Bytes kleiner, das Textpaket der Hauptperiode kam mit Punkt 68 dazu und
-# das Rohtextpaket mit Fundament F1). Ein einziger PDF-Ordner einer Periode (585 MB bis 3,9 GB)
-# reißt sie um ein Mehrfaches, und genau davor schützt sie.
+# das Rohtextpaket mit Fundament F1); mit den beiden Anlagenpaketen von Vorhaben 14 174 947 853
+# Bytes = 166,84 MiB (92,7 %, 2026-11-24). Ein einziger PDF-Ordner einer Periode (585 MB bis
+# 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 
 # Was in keinem Paket liegen darf, mit dem Grund. Endungen werden gegen das Suffix geprüft, Namen
@@ -456,3 +461,24 @@ def test_the_packed_areas_are_the_whole_second_city() -> None:
         for ring in entry["geometry"]["rings"]
     )
     assert punkte == 25_187  # maxAllowableOffset=0; mit =1 wären es 17 326
+
+
+# --- Vorhaben 14: die Anlagenpakete -----------------------------------------------------------
+
+
+def test_each_city_reads_its_own_attachment_package() -> None:
+    """Die drei Düsseldorfer Perioden teilen ein Paket, Mönchengladbach hat seins neben
+    ``reference/moenchengladbach/`` (Synergie 2026-11, Konflikt 11: nichts nach ``reference/``)."""
+    from georep.settings import load_settings
+
+    nowhere = Path("/nonexistent")
+    expected = {
+        "duesseldorf": "snapshots/duesseldorf-anlagen",
+        "duesseldorf-2014": "snapshots/duesseldorf-anlagen",
+        "duesseldorf-2025": "snapshots/duesseldorf-anlagen",
+        "moenchengladbach": "snapshots/moenchengladbach-anlagen",
+    }
+    for profile, package in expected.items():
+        found = load_settings(profile=profile, cwd=nowhere).procedures.attachments
+        assert found is not None and found.parent.parent == Path(package), profile
+        assert (REPO / found).is_file(), profile

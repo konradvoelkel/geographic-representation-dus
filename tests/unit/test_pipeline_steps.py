@@ -345,6 +345,9 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # Ausgabe; der Cache prüft sie selbst beim Öffnen (``ModelCache._open``), und die Ausgabe
     # eines Modellschritts trägt die Version ihres eigenen Moduls.
     "georep.ml.cache.CACHE_SCHEMA_VERSION",
+    # Vorhaben 14: wie die Beratungsfolge die Version der Datei, die ``georep pack --attachments``
+    # schreibt; die Schritte ``references`` und ``procedures`` lesen sie nur.
+    "georep.pack.ATTACHMENTS_SCHEMA_VERSION",
 }
 
 
