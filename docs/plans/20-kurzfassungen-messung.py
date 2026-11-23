@@ -1553,7 +1553,7 @@ def zeige_stichprobe(sample: pl.DataFrame, inputs: dict[str, Eingabe]) -> None:
 DIMENSIONEN = ("treue", "vollstaendigkeit", "verstaendlichkeit")
 
 
-def zeige_bewertung(lex: Lexikon) -> None:
+def zeige_bewertung(lex: Lexikon, known: frozenset[str]) -> None:
     labels_path = VALIDIERUNG / "labels.csv"
     mapping_path = LOKAL / "zuordnung.json"
     print("\n## Bewertung der 50 (zwei Kodier-Agenten, geschlichtet; Kriterium Median ≥ 4)")
@@ -1600,19 +1600,22 @@ def zeige_bewertung(lex: Lexikon) -> None:
     reference = lies_massstab()
     texts = {"qwen": lies_kurzfassungen(MODELLE[0]), "gemma": lies_kurzfassungen(MODELLE[1])}
     table: Counter[tuple[bool, bool]] = Counter()
+    table2: Counter[tuple[bool, bool]] = Counter()
     for (source, doc), coder_bad in coder_unbelegt.items():
         text = (
             reference.get(doc) if source == "massstab" else texts[source].get(doc, ("", False))[0]
         )
-        check = pruefe(doc, source, text, False, belege(inputs[doc].text), lex)
+        b = belege(inputs[doc].text)
+        check = pruefe(doc, source, text, False, b, lex)
         table[(not check.ok, coder_bad)] += 1
-        if source == "massstab":
-            table[("massstab", not check.ok)] += 0
-    print(
-        "Prüfung gegen Kodierer (alle drei Quellen): beide unbelegt "
-        f"{table[(True, True)]}, nur Prüfung {table[(True, False)]}, nur Kodierer "
-        f"{table[(False, True)]}, beide belegt {table[(False, False)]}"
-    )
+        flagged2 = check.leer or any(bleibt_fassung2(a, b, known) for a in check.unbelegt)
+        table2[(flagged2, coder_bad)] += 1
+    for name, t in (("Fassung 1 (festgelegt)", table), ("Klasse e in Fassung 2", table2)):
+        print(
+            f"Prüfung {name} gegen Kodierer (alle drei Quellen): beide unbelegt "
+            f"{t[(True, True)]}, nur Prüfung {t[(True, False)]}, nur Kodierer "
+            f"{t[(False, True)]}, beide belegt {t[(False, False)]}"
+        )
     massstab_flagged = sum(
         1
         for doc, text in reference.items()
@@ -1882,7 +1885,7 @@ def cmd_alles(mit_perioden: bool) -> int:
     models = zeige_durchsatz(runs)
     if mit_perioden and models:
         zeige_hochrechnung(models, periode_eingaben(struktur))
-    zeige_bewertung(lex)
+    zeige_bewertung(lex, bekannte_woerter(corpus_lower))
     zeige_vorgaenge(lex)
     return 0
 

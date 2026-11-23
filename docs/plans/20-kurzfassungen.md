@@ -401,7 +401,8 @@ darum hier nichts Belastbares; die Versuche sind beschrieben, nicht gemessen.
    die drei Skalen, nominal für `unbelegt`).
 5. `uv run python docs/plans/20-kurzfassungen-messung.py` rechnet danach je Quelle (qwen, gemma,
    Maßstab) Median und Verteilung je Dimension, den Anteil „ohne unbelegte Angabe" laut Kodierern
-   mit Wilson-Intervall und die Vierfeldertafel deterministische Prüfung gegen Kodierer.
+   mit Wilson-Intervall und die Vierfeldertafel deterministische Prüfung gegen Kodierer (Fassung 1
+   wie festgelegt und Klasse e in Fassung 2).
 
 **Codebuch** (`validierung/20-kurzfassungen/codebuch.toml`, Fassung 1, Einheit `document`): je
 Kurzfassung K1 bis K3 vier Fragen in fester Folge: `kN_unbelegt` (binär: mindestens eine Angabe, die
