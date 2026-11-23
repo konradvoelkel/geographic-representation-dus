@@ -13,13 +13,13 @@ der Supervisor führt sie bei jedem Start, Urteil und Merge nach.
 | F1 | Rohtext | `fund/F1-rohtext` | Fundament | Messdatei liegt (2026-11-23); Schritt in Arbeit |
 | F2 | Register | `main` | Fundament | auf `main` seit 2026-11-23 (`v0.17.0`, Punkt 69) |
 | F3 | Spannen | `main` | Fundament | auf `main` seit 2026-11-23 (`v0.17.0`, Punkt 69) |
-| F4 | Validierung | `fund/F4-validierung` | Fundament | in Arbeit |
+| F4 | Validierung | `fund/F4-validierung` | Fundament | gebaut (9 Commits), auf `main` rebast, Review läuft; danach Erweiterung um mehrere Fragen je Einheit und Paare mit Fundstelle, die Codebücher von 13 und 14 werden übertragen |
 | F5 | Modellnaht | `fund/F5-modelle` | Fundament | in Arbeit |
 | F6 | OParl: Sitzungen, Tagesordnung, Personen | `fund/F6-oparl` | Fundament | in Arbeit |
-| 11 | Struktur der Dokumente | `feat/11-struktur` | 1 | Messung läuft |
-| 12 | Kennungen und Beträge | `feat/12-kennungen` | 1 | Messung läuft |
+| 11 | Struktur der Dokumente | `feat/11-struktur` | 1 | Messdokument auf `main` (2026-11-23): vorläufig bauen (Beschlussvorschlag in 97,4 % gefunden, Kopfgremien zu 95,7 % in OParl); Kodierung der 200 Dokumente läuft |
+| 12 | Kennungen und Beträge | `feat/12-kennungen` | 1 | Messdokument auf `main` (2026-11-23): vorläufig bauen je Art, Rolle eines Betrags offen, Dezernate über eine Tabelle im Profil; Kodierung der 650 Aufgaben läuft |
 | 13 | Dubletten und Dokumentfamilien | `feat/13-dubletten` | 1 | Messdokument auf `main` (2026-11-23): vorläufig verwerfen (bei τ = 0,9 nur 0,5 % der Dokumente in Familien, höchstens 1,4 % Trefferverlust je Wahlbezirk, Tabelle 5 ändert sich in der dritten Stelle); Kodierung der 200 Paare zurückgestellt, sie läuft nur auf freien Plätzen, weil sie allein zwischen verwerfen und einer Variante mit höchstens rund 5 % Wirkung entscheidet; MinHash geht an 23, Fortschreibungen an 14 |
-| 14 | Vorgänge | `feat/14-vorgaenge` | 1 | Messdokument auf `main` (2026-11-23, `45d7f50`): vorläufig bauen, mit drei Änderungen am Briefing; Kodierung der 150 Kanten läuft (zwei Kodier-Agenten); Stufe 2 wartet auf F6 (Frage 9.1) und Haltepunkt A |
+| 14 | Vorgänge | `feat/14-vorgaenge` | 1 | Messdokument auf `main` (2026-11-23, `45d7f50`): vorläufig bauen, mit drei Änderungen am Briefing; Kodierung: Präzision 0,927 < 0,95, Urteil umbauen (§ 4.1); Umbau-Runde läuft, danach Bestätigungsstichprobe von 100 Kanten; Stufe 2 wartet auf F6 (Frage 9.1) und Haltepunkt A |
 | 15 | Dokumentfunktion und gemeinsame Anträge | `feat/15-funktion` | 1 | Messung läuft |
 | 16 | Ortsbezug verfeinern | `feat/16-ortsbezug` | – | wartet auf 11 |
 | 17 | Zeit und Neuigkeiten | `feat/17-zeit` | – | offen |
