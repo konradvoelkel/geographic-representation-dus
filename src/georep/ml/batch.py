@@ -26,6 +26,7 @@ from loguru import logger
 from georep.errors import ModelError, ModelRejectedError, ModelUnreachableError, SchemaError
 from georep.ml.base import EmbeddingUse, GenerationUse, Vectors, full_name
 from georep.ml.cache import (
+    FAILED,
     REJECTED,
     CacheKey,
     ModelCache,
@@ -206,7 +207,8 @@ def run_batch(
     scheitert, steht mit Index und Grund im Bericht, und der Lauf geht weiter (Review F5, Befund 7).
     Eine Abweisung (``ModelRejectedError``) merkt sich der Cache mit Grund: sie ist erledigt, und
     spätere Läufe fragen sie nicht wieder, außer mit ``retry_rejected`` (dritte Runde, N1). Jeder
-    andere Fehlschlag bleibt offen. Ein fehlender Server (``ModelUnreachableError``) und
+    andere Fehlschlag bleibt offen; auch ihn merkt sich der Cache, und spätere Läufe fragen ihn
+    zuletzt, hinter allem Neuen (N2). Ein fehlender Server (``ModelUnreachableError``) und
     ``MAX_FAILURES_IN_ROW`` neue Fehlschläge in Folge brechen ab: dann liegt es nicht an einem Text.
     Was bis dahin abgewiesen wurde, ist gemerkt; der nächste Lauf kommt also weiter.
     """
@@ -223,7 +225,11 @@ def run_batch(
         else [i for i in missing if noted.get(keys[i], ("", ""))[0] == REJECTED]
     )
     skip = set(skipped)
-    candidates = [i for i in missing if i not in skip]
+    # Review F5, N2: was in einem früheren Lauf scheiterte, kommt zuletzt, sonst verbrauchte es
+    # bei jedem Lauf zuerst ``limit``, und hinter ihm käme nichts voran.
+    candidates = [i for i in missing if i not in skip and keys[i] not in noted] + [
+        i for i in missing if i not in skip and keys[i] in noted
+    ]
     todo = candidates[:limit] if limit else candidates
     name = label or key.model
     done = 0
@@ -246,6 +252,7 @@ def run_batch(
                     cache.put_failure(key, keys[index], REJECTED, str(result))
                     rejected.append((index, str(result)))
                 else:
+                    cache.put_failure(key, keys[index], FAILED, str(result))
                     failures.append((index, str(result)))
                 logger.warning(f"{name}: Eingabe {index} gescheitert: {result}")
                 in_row += 1

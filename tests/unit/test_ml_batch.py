@@ -18,7 +18,7 @@ from georep.ml.batch import (
     progress_log,
     run_batch,
 )
-from georep.ml.cache import CacheKey, ModelCache, input_sha256
+from georep.ml.cache import FAILED, CacheKey, ModelCache, input_sha256
 from georep.ml.ollama import OllamaClient, OllamaEmbedder
 from tests.fakes import FAKE_URL, FakeEmbedder, FakeGenerator, FakeOllama, fake_answer, fake_vector
 
@@ -361,3 +361,22 @@ def test_a_rejection_from_the_server_is_recorded_with_its_reason(tmp_path: Path)
     ((index, reason),) = found.report.rejected
     assert index == 1 and "input length exceeds context" in reason
     assert found.report.failures == ()
+
+
+def test_failed_inputs_go_last_and_do_not_use_up_the_limit(cache: ModelCache) -> None:
+    """Review F5, dritte Runde, N2: drei Fehlschläge vorne, ``--limit 3``, und kein Lauf kam weiter."""
+    keys = [input_sha256(str(i)) for i in range(9)]
+    computed: list[list[int]] = []
+    runs = [run_batch(keys, _poisoned(computed, {0, 1, 2}), cache, KEY, limit=3) for _ in range(4)]
+    assert [(r.computed, r.failed) for r in runs] == [(0, 3), (3, 0), (3, 0), (0, 3)]
+    assert [i for batch in computed[3:9] for i in batch] == [3, 4, 5, 6, 7, 8]
+    assert {kind for kind, _ in cache.failures(KEY).values()} == {FAILED}
+    assert set(cache.failures(KEY)) == set(keys[:3])
+
+
+def test_a_failed_input_that_succeeds_later_is_forgotten(cache: ModelCache) -> None:
+    keys = [input_sha256(str(i)) for i in range(3)]
+    run_batch(keys, _poisoned([], {1}), cache, KEY)
+    assert set(cache.failures(KEY)) == {keys[1]}
+    report = run_batch(keys, _poisoned([], set()), cache, KEY)
+    assert report.computed == 1 and cache.failures(KEY) == {}
