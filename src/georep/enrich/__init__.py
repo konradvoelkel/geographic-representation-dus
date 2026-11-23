@@ -21,7 +21,8 @@ Wo die Beiträge landen:
   gebaut wird). Ein früher Schritt kann keine Ausgabe eines späten lesen, auch nicht aus einem
   Beitrag, der weiter vorn im Register steht: ``run`` plant alle späten danach. Ein Vorhaben mit
   beiden Arten bleibt **ein** Beitrag. ``check_unique_names`` gilt über alle Schritte, früh,
-  spät und Kern.
+  spät und Kern; ``check_step_order`` bricht ab, wenn ein Schritt eine Ausgabe liest, die erst ein
+  späterer schreibt, oder wenn zwei Schritte dieselbe Datei schreiben.
 * ``tables`` — veröffentlichte Tabellen, hinter denen des Kerns (``report.tables.published``).
 * ``pages`` — Unterseiten neben ``index.html`` (``report.pages``), je ein Schritt nach ``report``.
 
@@ -40,6 +41,8 @@ from typing import TYPE_CHECKING
 from georep.errors import GeorepError
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from georep.http import Transport
     from georep.layout import Layout
     from georep.pipeline import Step
@@ -50,6 +53,14 @@ if TYPE_CHECKING:
 
 class DuplicateStepError(GeorepError):
     """Zwei Schritte tragen denselben Namen; ``run`` und ``status`` könnten sie nicht trennen."""
+
+
+class DuplicateOutputError(GeorepError):
+    """Zwei Schritte schreiben dieselbe Datei; der zweite überschriebe die Datei und ihren Stamp."""
+
+
+class StepOrderError(GeorepError):
+    """Ein Schritt liest eine Ausgabe, die erst ein späterer Schritt derselben Liste schreibt."""
 
 
 def no_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
@@ -98,3 +109,33 @@ def check_unique_names(steps: Sequence[Step]) -> None:
     twice = sorted(name for name, count in counts.items() if count > 1)
     if twice:
         raise DuplicateStepError(f"Schritte doppelt im Register: {', '.join(twice)}")
+
+
+def check_step_order(steps: Sequence[Step]) -> None:
+    """Jede Datei hat höchstens einen Schreiber, und kein Schritt liest eine spätere Ausgabe.
+
+    ``run`` plant in Listenfolge. Liest ein Schritt, was erst ein späterer schreibt, findet er im
+    ersten Lauf nichts und im zweiten einen alten Stand; das kann ein früher Beitrag (vor
+    ``weights``) leicht tun, der eine Ausgabe eines späten liest (Review F7, M1). Gezählt werden
+    die Eingaben und die optionalen (``Step.optional``, Fundament F1): beider Hash steht im
+    Stamp. Eine Datei, die kein Schritt schreibt, ist kein Fall dieser Prüfung. Die Meldungen
+    nennen Schritte und Datei.
+    """
+    writer: dict[Path, tuple[int, str]] = {}
+    twice: list[str] = []
+    for position, step in enumerate(steps):
+        for path in step.outputs:
+            if path in writer:
+                twice.append(f"{path.name} ({writer[path][1]}, {step.name})")
+            else:
+                writer[path] = (position, step.name)
+    if twice:
+        raise DuplicateOutputError(f"Ausgaben doppelt im Register: {'; '.join(twice)}")
+    backward = [
+        f"{step.name} liest {path.name}, das erst {writer[path][1]} schreibt"
+        for position, step in enumerate(steps)
+        for path in (*step.inputs, *step.optional)
+        if path in writer and writer[path][0] > position
+    ]
+    if backward:
+        raise StepOrderError(f"Schritte lesen eine spätere Ausgabe: {'; '.join(backward)}")

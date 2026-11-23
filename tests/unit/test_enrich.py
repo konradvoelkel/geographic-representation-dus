@@ -13,13 +13,19 @@ import polars as pl
 import pytest
 
 import georep.enrich
-from georep.enrich import Contribution, DuplicateStepError
+from georep.enrich import (
+    Contribution,
+    DuplicateOutputError,
+    DuplicateStepError,
+    StepOrderError,
+    check_step_order,
+)
 from georep.http import Transport
 from georep.io import write_bytes
 from georep.layout import Layout
 from georep.pipeline import Step, build_steps, run_pipeline
 from georep.report.tables import PublishedTable, all_tables, csv_plan, published
-from georep.settings import Settings
+from georep.settings import Settings, available_profiles, load_settings
 from tests.fakes import FakeSession, response
 
 
@@ -109,6 +115,82 @@ def test_ein_frueher_schritt_mit_dem_namen_eines_kernschritts_ist_ein_fehler(
     monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", (Contribution("a", early_steps=weights),))
     with pytest.raises(DuplicateStepError, match="weights"):
         build_steps(default_settings, _layout(tmp_path))
+
+
+# --- Review F7, M1: kein Schritt liest eine spätere Ausgabe, keine Datei hat zwei Schreiber -----
+
+
+def _reads(name: str, *inputs: Path, optional: tuple[Path, ...] = ()) -> Step:
+    return Step(
+        name, inputs, (Path("/x") / f"{name}.parquet",), lambda: "nichts", optional=optional
+    )
+
+
+def test_ein_frueher_schritt_der_eine_spaete_ausgabe_liest_ist_ein_fehler(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Die Regel aus dem Docstring von ``georep.enrich``, jetzt geprüft: früh liest nie spät."""
+
+    def early(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
+        late_output = layout.processed / "spaet.parquet"
+        return [Step("frueh", (late_output,), (layout.processed / "f.parquet",), lambda: "")]
+
+    both = Contribution("probe", early_steps=early, steps=_late_steps)
+    monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", (both,))
+    with pytest.raises(
+        StepOrderError, match=r"frueh liest spaet\.parquet, das erst spaet schreibt"
+    ):
+        build_steps(default_settings, _layout(tmp_path))
+
+
+def test_ein_frueher_schritt_der_die_gewichte_liest_ist_ein_fehler(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Auch eine optionale Eingabe (Fundament F1) zählt: ihr Hash steht im Stamp."""
+
+    def early(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
+        target = layout.processed / "f.parquet"
+        return [Step("frueh", (), (target,), lambda: "", optional=(layout.weighted,))]
+
+    monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", (Contribution("a", early_steps=early),))
+    with pytest.raises(StepOrderError, match="frueh liest .*, das erst weights schreibt"):
+        build_steps(default_settings, _layout(tmp_path))
+
+
+def test_zwei_schritte_mit_derselben_ausgabe_sind_ein_fehler(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Zwei Schreiber einer Datei: der zweite überschriebe den ersten, und sein Stamp den Stamp."""
+
+    def index_again(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
+        return [Step("noch_ein_index", (layout.corpus,), (layout.index,), lambda: "")]
+
+    monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", (Contribution("a", steps=index_again),))
+    with pytest.raises(DuplicateOutputError, match="index, noch_ein_index"):
+        build_steps(default_settings, _layout(tmp_path))
+
+
+def test_die_reihenfolge_pruefen_kennt_alle_drei_faelle() -> None:
+    a, b = _reads("a"), _reads("b", Path("/x/a.parquet"))
+    check_step_order([a, b])
+    with pytest.raises(StepOrderError, match="a liest b.parquet"):
+        check_step_order([_reads("a", Path("/x/b.parquet")), _reads("b")])
+    with pytest.raises(StepOrderError, match="a liest b.parquet"):
+        check_step_order([_reads("a", optional=(Path("/x/b.parquet"),)), _reads("b")])
+    with pytest.raises(DuplicateOutputError, match="a.parquet"):
+        check_step_order([a, a])
+
+
+@pytest.mark.parametrize("profile", available_profiles())
+def test_der_kern_liest_in_keinem_paketprofil_rueckwaerts(tmp_path: Path, profile: str) -> None:
+    """Der Kern erfüllt beide Regeln in jedem Profil des Pakets (Probe des Reviews: 0 und 0)."""
+    settings = load_settings(profile=profile, cwd=Path("/nonexistent")).model_copy(
+        update={"data_root": tmp_path / "data", "cache_root": tmp_path / "cache"}
+    )
+    steps = build_steps(settings, Layout.from_settings(settings))
+    check_step_order(steps)
+    outputs = [path for step in steps for path in step.outputs]
+    assert len(outputs) == len(set(outputs))
 
 
 # --- Nachzug F2: der Transport an den Beiträgen (Synergien 2026-11, Konflikt 7) -------------

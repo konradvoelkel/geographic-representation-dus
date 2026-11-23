@@ -1053,7 +1053,12 @@ def build_steps(
     # Modul, ein Import auf Modulebene wäre ein Kreis. Nachzug (Konflikt 7): sie bekommen
     # ``http``; ohne Angabe eine Session, die erst beim ersten Aufruf entsteht, wie
     # ``transport()`` für die Netzschritte des Kerns.
-    from georep.enrich import check_unique_names, contributed_early_steps, contributed_steps
+    from georep.enrich import (
+        check_step_order,
+        check_unique_names,
+        contributed_early_steps,
+        contributed_steps,
+    )
 
     contributed_http = http if http is not None else DeferredTransport(transport)
     contributed_early = contributed_early_steps(settings, layout, contributed_http)
@@ -1512,6 +1517,8 @@ def build_steps(
         # --- Fundament F2: die Unterseiten der Beiträge
         *pages,
     ]
-    # Fundament F2: ein Beitrag darf keinen Namen eines anderen Schritts tragen
+    # Fundament F2: ein Beitrag darf keinen Namen eines anderen Schritts tragen; Review F7, M1:
+    # und keine Ausgabe lesen, die erst ein späterer Schritt schreibt, oder eine Datei zweimal
     check_unique_names(steps)
+    check_step_order(steps)
     return steps
