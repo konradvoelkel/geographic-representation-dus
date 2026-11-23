@@ -45,7 +45,10 @@ def _usable(frame: pl.DataFrame, columns: tuple[str, ...] = ("y", "a", "b")) -> 
 def test_the_bivariate_fit_is_linregress(rows: list[tuple[float, float, float]]) -> None:
     frame = _frame(rows)
     assume(_usable(frame, ("y", "a")))
-    fit = fit_ols(frame, "y", ["a"])
+    try:
+        fit = fit_ols(frame, "y", ["a"])
+    except EmptyResultError:
+        return  # exakte Anpassung: ohne Reststreuung gibt es nichts mit linregress zu vergleichen
     # Bei einer fast exakten Anpassung ist die Residuenquadratsumme die Differenz zweier fast
     # gleicher grosser Zahlen; Standardfehler und p haengen dann an der Ausloeschung, und zwei
     # richtige Formeln (Normalgleichung hier, Kovarianz in linregress) weichen in der sechsten
@@ -62,12 +65,27 @@ def test_the_bivariate_fit_is_linregress(rows: list[tuple[float, float, float]])
 
 
 @given(rows=triples)
+# Gegenbeispiel vom 2026-11-23 (im Worktree von F1 gefunden): y trifft a bis auf Werte unter 1e-283,
+# schon das kleine Modell passt exakt, und fit_ols meldet das zu Recht (R² = 1).
+@example(
+    rows=[
+        (0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0),
+        (0.0, 0.0, 0.0),
+        (0.0, 0.0, 5.0),
+        (1.0, 8027.0, 0.0),
+        (1.376261824990547e-284, 6.103515625e-05, 1.0),
+    ]
+)
 def test_r_squared_never_falls_when_a_term_is_added(
     rows: list[tuple[float, float, float]],
 ) -> None:
     frame = _frame(rows)
     assume(_usable(frame))
-    small = fit_ols(frame, "y", ["a"])
+    try:
+        small = fit_ols(frame, "y", ["a"])
+    except EmptyResultError:
+        return  # exakte Anpassung: R² ist schon 1 und kann nicht steigen
     try:
         large = fit_ols(frame, "y", ["a", "b"])
     except EmptyResultError:
