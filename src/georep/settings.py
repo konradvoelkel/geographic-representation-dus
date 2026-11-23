@@ -1442,6 +1442,10 @@ class Council(_Strict):
     persons_endpoint: str = ""
     incremental: tuple[Literal["meetings", "consultations", "persons"], ...] = ("consultations",)
     stop_when_older: bool = True
+    # Review 2026-11-23, Befund 3: die Sitzungsliste ist nach Anlage sortiert, nicht nach Beginn;
+    # ``start - created`` reichte in 400 Sitzungen von -418 bis +447 Tagen. Erst eine Seite, deren
+    # jüngstes ``created`` mehr als so viele Tage vor ``period.start`` liegt, beendet den Abruf.
+    created_margin_days: int = Field(default=500, ge=0)
 
 
 class Settings(BaseSettings):

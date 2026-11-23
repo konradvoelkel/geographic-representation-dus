@@ -5,8 +5,9 @@ mit ``--online`` oder ``georep fetch`` (docs/runbook-sitzungen.md):
 
 - ``meetings``: die Sitzungen ab dem Periodenbeginn, **ohne** Obergrenze, mit ihrer
   Tagesordnung. Ohne Obergrenze, weil eine Vorlage vom Ende einer Periode oft erst in der nächsten
-  beraten wird. Die Liste ist neueste zuerst; der Abruf endet nach der ersten Seite, die ganz vor
-  dem Beginn liegt (``council.stop_when_older``).
+  beraten wird. Die Liste ist nach Anlage sortiert (ID absteigend), nicht nach Beginn; der Abruf
+  endet nach der ersten Seite, deren jüngste Sitzung mehr als ``council.created_margin_days`` vor
+  dem Beginn angelegt wurde (``council.stop_when_older``).
 - ``consultations``: alle Beratungen des Bodys, die Verbindung Paper -- Sitzung --
   Tagesordnungspunkt, ohne die Paper neu abzurufen.
 - ``persons``: alle Personen des Bodys mit ihren Mitgliedschaften, ohne Kontaktdaten (das Modell
@@ -393,12 +394,20 @@ def _share(part: int, whole: int) -> str:
     return f"{part / whole:.0%}" if whole else "0%"
 
 
-def _all_before(day: dt.date) -> Callable[[list[OparlMeeting]], bool]:
-    """Liegt eine ganze Seite vor ``day``? Eine Seite ohne Beginn zählt nicht als älter."""
+def _created_before(day: dt.date) -> Callable[[list[OparlMeeting]], bool]:
+    """Wurde jede Sitzung der Seite vor ``day`` angelegt? Eine Seite ohne ``created`` nicht.
+
+    Die Liste ist nach ID absteigend, also nach Anlage (Review 2026-11-23, Befund 3): liegt die
+    jüngste Sitzung einer Seite mehr als ``council.created_margin_days`` vor dem Periodenbeginn,
+    beginnt keine ihrer Sitzungen und keine einer späteren Seite in der Periode, solange keine
+    Sitzung länger als diese Marge im Voraus angelegt wird (gemessen höchstens 447 Tage). Nach dem
+    Beginn zu fragen, wie bei den Papers, verlöre eine früh angelegte Sitzung hinter einer
+    nachgetragenen alten.
+    """
 
     def older(page: list[OparlMeeting]) -> bool:
-        starts = [m.start.date() for m in page if m.start is not None]
-        return bool(starts) and max(starts) < day
+        created = [m.created.date() for m in page if m.created is not None]
+        return bool(created) and max(created) < day
 
     return older
 
@@ -463,7 +472,11 @@ def _meetings(
         council.meetings_endpoint,
         OparlMeeting,
         keep=lambda meeting: meeting.starts_on_or_after(start),
-        older=_all_before(start) if council.stop_when_older else None,
+        older=(
+            _created_before(start - dt.timedelta(days=council.created_margin_days))
+            if council.stop_when_older
+            else None
+        ),
         delay_s=oparl.delay_s,
         modified_since=run.request_since,
         max_pages=oparl.max_pages or None,  # `fetch meetings --max-pages N` als Probe

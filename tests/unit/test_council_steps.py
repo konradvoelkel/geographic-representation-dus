@@ -621,3 +621,56 @@ def test_an_open_progress_makes_the_step_open_and_the_next_fetch_resumes(
     )[0]
     assert outcome.status == "ausgeführt" and "(fortgesetzt)" in outcome.reason
     assert freshness(step, settings) == (True, "aktuell")
+
+
+# --- Review 2026-11-23, Befund 3: die Liste ist nach Anlage sortiert, nicht nach Datum ---------
+
+
+def _meeting(i: int, start: str, created: str) -> dict[str, Any]:
+    return {
+        "id": f"https://ris.invalid/meetings/{i}",
+        "start": f"{start}T15:00:00+01:00",
+        "created": f"{created}T09:00:00+01:00",
+        "agendaItem": [],
+    }
+
+
+def test_the_fetch_of_meetings_stops_by_creation_not_by_start(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """Die Sitzungsliste ist nach ID absteigend, also nach Anlage; ``start − created`` reicht in
+    der Stichprobe von −418 bis +447 Tagen. Seite 1 hält eine nachgetragene alte Sitzung, Seite 2
+    eine, die lange vorher für die Periode angelegt wurde. Die alte Regel (ganze Seite vor dem
+    Beginn) hörte nach Seite 1 auf und verlor sie; die neue hört erst auf, wenn das jüngste
+    ``created`` einer Seite um ``council.created_margin_days`` vor dem Beginn liegt."""
+    assert settings.council.created_margin_days == 500
+    start = settings.period.start  # 2020-09-13
+    assert start.isoformat() == "2020-09-13"
+    endpoint = settings.council.meetings_endpoint
+    pages = [
+        [_meeting(30, "2019-01-01", "2021-06-01")],  # nachgetragen, vor der Periode
+        [_meeting(20, "2020-10-01", "2019-09-01")],  # früh angelegt, in der Periode
+        [_meeting(10, "2017-03-01", "2017-02-01")],  # alt angelegt: danach ist Schluss
+        [_meeting(5, "2016-01-01", "2015-12-01")],
+    ]
+    urls = [endpoint] + [f"{endpoint}?page={n}" for n in range(2, 5)]
+    session = FakeSession(
+        {
+            url: response(
+                url,
+                payload={"data": data} | ({"links": {"next": urls[i + 1]}} if i < 3 else {}),
+            )
+            for i, (url, data) in enumerate(zip(urls, pages, strict=True))
+        }
+    )
+    layout = _layout(tmp_path)
+    layout.ensure_dirs()
+    outcome = run_pipeline(
+        build_steps(settings, layout, session, sleep=lambda _: None),
+        settings,
+        ["meetings"],
+        online=True,
+    )[0]
+    assert session.urls == urls[:3]
+    assert "Rest älter als der Periodenbeginn" in outcome.reason
+    assert [m["id"] for m in _lines(council_files(layout).meetings)] == [pages[1][0]["id"]]
