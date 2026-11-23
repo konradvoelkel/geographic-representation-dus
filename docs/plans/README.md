@@ -27,7 +27,7 @@ der Supervisor führt sie bei jedem Start, Urteil und Merge nach.
 | 19 | Politikfelder (CAP) | `feat/19-politikfelder` | – | wartet auf F5 |
 | 20 | Kurzfassungen (lokal) | `feat/20-kurzfassungen` | – | wartet auf F5 |
 | 21 | Geld auf der Karte | `feat/21-geld` | – | wartet auf 11, 12, 16 |
-| 22 | Bedarf und Aufmerksamkeit | `feat/22-bedarf` | – | offen |
+| 22 | Bedarf und Aufmerksamkeit | `feat/22-bedarf` | 1 → 2 | **Urteil bauen** (2026-11-23): vier offene Quellen plus Lärm; H1 (Unfälle → Verkehrsdokumente) bestätigt, aber nur zwischen Stadtbezirken; H2 zeigt in Richtung ungleicher Aufmerksamkeit ohne Nachweis; Stadtbezirk als Schicht in jede Rechnung; Stufe 2 wartet auf Haltepunkt A |
 | 23 | Textübernahme | `feat/23-textuebernahme` | – | wartet auf 13, 18 |
 | 24 | Anfragen als Kontrolle | `feat/24-kontrolle` | – | wartet auf 11, 12 |
 | 25 | Wahlprogramme und Versprechen | `feat/25-versprechen` | – | Sammlung der Programme offen |
