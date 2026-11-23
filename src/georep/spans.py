@@ -1,0 +1,123 @@
+"""Spannen: eine Stelle im Text eines Dokuments, für alle Vorhaben in derselben Form.
+
+Fundament F3 der Vorverarbeitung 2026-11 (``docs/plan-vorverarbeitung-2026-11.md``, § 7). Abschnitte
+(Vorhaben 11), Kennungen und Beträge (12), Verweise auf Drucksachen (14), Ortsbezüge (16) und
+Abstimmungsformeln (28) bezeichnen je eine Stelle im Text. Sie teilen ein Schema, damit die
+Kodieraufträge von F4 jede Spanne gleich anzeigen und ein Vorhaben die Spannen eines anderen lesen
+kann, ohne dessen Code zu kennen.
+
+Eine Zeile ist eine Spanne:
+
+* ``id`` -- die Korpus-ID des Dokuments (wie in ``interim/papers.parquet``);
+* ``start``, ``end`` -- Zeichenpositionen im Text, halboffen (``text[start:end]``);
+* ``kind`` -- die Art, etwa ``abschnitt``, ``betrag``, ``drucksache``;
+* ``value`` -- der Text an der Stelle, wörtlich;
+* ``norm`` -- der normalisierte Wert als Text (Betrag in Euro als Dezimalzahl mit Punkt, Datum
+  ISO, Drucksachennummer kanonisch); leer, wo die Art keinen kennt;
+* ``section`` -- der Abschnitt aus Vorhaben 11, in dem die Spanne liegt; leer, solange es ihn
+  nicht gibt;
+* ``extractor`` -- welcher Text gemeint ist (der Extraktorname aus dem Textstore, etwa der des
+  Rohtexts) und welches Verfahren die Spanne fand, damit Positionen nie auf den falschen Text
+  zeigen.
+
+Die Folge ist fest: sortiert nach ``id``, ``start``, ``end``, ``kind`` (CLAUDE.md: die Zeilenfolge
+nach einem Join nie dem Zufall überlassen).
+
+Eine Schema-Version steht hier nicht: sie gehört dem Modul, das eine Spannen-Datei schreibt, und
+steht an dessen Schritt (CLAUDE.md, „Jeder ``Step`` bekommt seine Schema-Version aus der Konstante
+des Moduls, das die Datei schreibt").
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+
+import deal
+import polars as pl
+
+from georep.errors import SchemaError
+
+SPAN_SCHEMA: dict[str, pl.DataType] = {
+    "id": pl.String(),
+    "start": pl.Int64(),
+    "end": pl.Int64(),
+    "kind": pl.String(),
+    "value": pl.String(),
+    "norm": pl.String(),
+    "section": pl.String(),
+    "extractor": pl.String(),
+}
+ORDER = ("id", "start", "end", "kind")
+
+
+def empty_spans() -> pl.DataFrame:
+    """Ein leerer Frame im Schema der Spannen."""
+    return pl.DataFrame(schema=SPAN_SCHEMA)
+
+
+def sort_spans(spans: pl.DataFrame) -> pl.DataFrame:
+    """Spalten in Schemafolge, Zeilen in der festen Folge."""
+    return spans.select(list(SPAN_SCHEMA)).sort(list(ORDER), maintain_order=True)
+
+
+def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
+    """``SchemaError``, wenn eine Spanne das Schema, die Folge oder ihren Text verletzt.
+
+    ``lengths`` nennt je Dokument-ID die Länge des Texts, auf den die Positionen zeigen. Geprüft
+    werden Spalten und Typen, ``0 <= start < end <= len(text)``, eine bekannte ID je Zeile, kein
+    leeres ``kind`` und die feste Folge. Die Meldung nennt die erste verletzende Zeile.
+    """
+    schema = dict(spans.schema)
+    if schema != SPAN_SCHEMA:
+        raise SchemaError(f"Spannen: Schema {schema} statt {SPAN_SCHEMA}")
+    if spans.select(pl.all().is_null().any()).select(pl.any_horizontal(pl.all())).item():
+        raise SchemaError(
+            "Spannen: leere Werte; norm und section sind leere Zeichenketten, nie null"
+        )
+    known = pl.DataFrame(
+        {"id": list(lengths), "length": list(lengths.values())},
+        schema={"id": pl.String(), "length": pl.Int64()},
+    )
+    checked = spans.with_row_index("zeile").join(known, on="id", how="left")
+    bad = checked.filter(
+        pl.col("length").is_null()
+        | (pl.col("start") < 0)
+        | (pl.col("start") >= pl.col("end"))
+        | (pl.col("end") > pl.col("length"))
+        | (pl.col("kind") == "")
+    ).sort("zeile")
+    if bad.height:
+        first = bad.row(0, named=True)
+        raise SchemaError(
+            f"Spannen: {bad.height} Zeilen außerhalb ihres Texts, erste Zeile {first['zeile']}: "
+            f"id={first['id']!r} start={first['start']} end={first['end']} "
+            f"Textlänge={first['length']} kind={first['kind']!r}"
+        )
+    if not spans.equals(sort_spans(spans)):
+        raise SchemaError(f"Spannen: nicht nach {', '.join(ORDER)} sortiert")
+
+
+def _within_text(text: str, start: int, end: int, context: int = 200) -> bool:
+    return 0 <= start < end <= len(text) and context >= 0
+
+
+def _middle_is_the_span(
+    text: str, start: int, end: int, context: int = 200, result: tuple[str, str, str] = ("", "", "")
+) -> bool:
+    return result[1] == text[start:end] and "".join(result) in text
+
+
+# Benannte Validatoren vor dem Stapel: das deal-Plugin für mypy kennt keine Lambdas mit Vorgaben
+# (CLAUDE.md, „Arbeitsweise", deal).
+@deal.ensure(
+    _middle_is_the_span, message="die Mitte ist die Spanne, alle drei Teile am Stück im Text"
+)
+@deal.pre(_within_text, message="0 <= start < end <= len(text), context >= 0")
+@deal.pure
+def excerpt(text: str, start: int, end: int, context: int = 200) -> tuple[str, str, str]:
+    """Die Spanne mit Kontext: (davor, die Spanne selbst, danach), je höchstens ``context`` Zeichen.
+
+    Für die Kodieraufträge (F4) und für Beispiele in Messdokumenten; die Mitte ist genau
+    ``text[start:end]``.
+    """
+    return text[max(0, start - context) : start], text[start:end], text[end : end + context]
