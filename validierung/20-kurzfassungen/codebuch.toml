@@ -1,0 +1,364 @@
+# Codebuch Vorhaben 20 (Kurzfassungen), Fassung 1, vorab festgelegt am 2026-11-23 vor der ersten
+# Kurzfassung (docs/plans/20-kurzfassungen.md, § 3.1 und § 4). Die Aufträge baut nicht
+# `georep validate tasks`, sondern das Messskript (`20-kurzfassungen-messung.py kodierung`): es legt
+# je Einheit den Text, den die Verfasser gesehen haben, und drei Kurzfassungen K1 bis K3 dazu (zwei
+# lokale Modelle und eine Maßstab-Kurzfassung eines Opus-Agenten, je Dokument in fester, zufälliger
+# Folge; die Zuordnung liegt nur lokal und nie bei den Kodierern). Zusammenführen, Schlichten und
+# Übereinstimmung gehen wie immer über `georep validate merge`.
+project = "20-kurzfassungen"
+version = "1"
+unit = "document"
+instructions = """
+Du bewertest Kurzfassungen von Ratsdokumenten. Jede Einheit ist ein Dokument. Unter `dokumente`
+steht im Feld `ausschnitt` der Text, den die Verfasser der Kurzfassungen gesehen haben: Dokumentart,
+Drucksache, Datum, Titel und die Abschnitte des Dokuments (lange Abschnitte sind mit „[…]" gekürzt).
+Unter `kurzfassungen` stehen drei Kurzfassungen mit den Kennungen K1, K2 und K3. Wer sie geschrieben
+hat, weißt du nicht und sollst du nicht erraten; die Reihenfolge ist zufällig.
+
+Die Verfasser hatten diese Aufgabe: zwei bis drei Sätze, zusammen höchstens 80 Wörter; der erste
+Satz sagt, wer was will oder mitteilt und worum es geht; dann der Kern des Beschlussvorschlags, der
+Fragen oder der Mitteilung, dazu Ort, Betrag und Frist, wenn das Dokument sie nennt; Zahlen, Daten,
+Drucksachennummern und Namen nur, wenn sie im Dokument stehen; nichts hinzufügen; keine
+Personennamen; Fließtext ohne Überschrift.
+
+Beurteile jede Kurzfassung für sich gegen den Ausschnitt, nicht gegen die anderen Kurzfassungen und
+nicht nach Wissen von außen. Was im Ausschnitt nicht steht, gilt als nicht belegt, auch wenn es
+stimmen mag. Lies zuerst den Ausschnitt ganz, dann jede Kurzfassung, dann beantworte die vier Fragen
+je Kurzfassung (unbelegt, Treue, Vollständigkeit, Verständlichkeit). Im Zweifel zwischen zwei Stufen
+nimm die niedrigere, wenn du einen konkreten Mangel benennen kannst, sonst die höhere. In
+`begruendung` nennst du je Kurzfassung mit Mängeln den wichtigsten in wenigen Wörtern, etwa
+„K2: Betrag fehlt; K3: Datum falsch", ohne längere Zitate.
+"""
+
+[[questions]]
+id = "k1_unbelegt"
+question = "Enthält K1 mindestens eine Angabe, die der Ausschnitt nicht stützt oder der er widerspricht?"
+scale = "binary"
+positive = ["ja"]
+instructions = """
+Angabe heißt: eine Zahl, ein Betrag, ein Datum, eine Drucksachennummer, ein Name, ein Ort, ein
+Akteur (wer beantragt, fragt, entscheidet, berichtet) oder ein Sachverhalt. Gestützt ist, was im
+Ausschnitt so oder sinngemäß steht; eine Zusammenfassung mehrerer Punkte in eigenen Worten ist
+gestützt, wenn sie sinngemäß stimmt, eine erkennbare Rundung („rund 1,5 Millionen Euro" für
+1.487.000 €) auch. Nicht gestützt sind: ein Wert, der so nicht dasteht; eine falsche Rolle (ein
+Antrag einer Fraktion als Vorschlag der Verwaltung, eine Anfrage als Beschluss); eine Folge oder
+Wirkung, die das Dokument nicht nennt; ein Ort, ein Gremium oder ein Name, der nicht vorkommt.
+"""
+
+[[questions.options]]
+value = "ja"
+definition = "Mindestens eine Angabe ist nicht gestützt oder widerspricht dem Ausschnitt."
+example = "Die Kurzfassung nennt 2 Mio. Euro, der Ausschnitt 1,2 Mio. Euro."
+
+[[questions.options]]
+value = "nein"
+definition = "Jede Angabe steht so oder sinngemäß im Ausschnitt."
+
+[[questions]]
+id = "k1_treue"
+question = "Wie treu gibt K1 den Ausschnitt wieder?"
+scale = "ordinal"
+instructions = "Fehlendes zählt hier nicht (das ist Vollständigkeit), nur was dasteht."
+
+[[questions.options]]
+value = "1"
+definition = "Mehrere falsche Kernangaben, oder die Kurzfassung handelt von etwas anderem als das Dokument."
+
+[[questions.options]]
+value = "2"
+definition = "Eine nicht belegte oder falsche Angabe im Kern: wer etwas will, was beschlossen, gefragt oder mitgeteilt wird, ein Betrag oder Datum, auf das es ankommt."
+
+[[questions.options]]
+value = "3"
+definition = "Eine nicht belegte oder falsche Angabe in einem Nebenpunkt, oder eine Gewichtung, die einen falschen Eindruck vom Dokument gibt."
+
+[[questions.options]]
+value = "4"
+definition = "Gedeckt bis auf eine kleine Ungenauigkeit ohne Folgen für das Verständnis (eine verkürzte Gremienbezeichnung, eine erkennbare Rundung, eine etwas zu starke Formulierung)."
+
+[[questions.options]]
+value = "5"
+definition = "Alles in der Kurzfassung ist durch den Ausschnitt gedeckt; keine falsche oder schiefe Angabe."
+
+[[questions]]
+id = "k1_vollstaendigkeit"
+question = "Wie vollständig gibt K1 das Wesentliche wieder?"
+scale = "ordinal"
+instructions = """
+Das Wesentliche: (a) Art und Absicht (wer beantragt, fragt, berichtet oder beschließen lassen will),
+(b) der Gegenstand, (c) der Kern des Beschlussvorschlags, der Fragen oder der Mitteilung, (d) Betrag,
+Ort oder Frist, wenn der Ausschnitt sie nennt und sie für den Kern zählen. Falsches zählt hier nicht
+(das ist Treue). Eine leere Kurzfassung ist 1.
+"""
+
+[[questions.options]]
+value = "1"
+definition = "Das Wesentliche fehlt, oder die Kurzfassung ist leer."
+
+[[questions.options]]
+value = "2"
+definition = "Nur der Gegenstand, ohne den Kern."
+
+[[questions.options]]
+value = "3"
+definition = "Ein zentraler Teil fehlt oder bleibt vage (der Kern des Beschlussvorschlags nur angedeutet, die Art des Dokuments unklar)."
+
+[[questions.options]]
+value = "4"
+definition = "Ein nachrangiger Teil fehlt (eine von mehreren Fragen, ein Nebenbetrag, die Frist)."
+
+[[questions.options]]
+value = "5"
+definition = "(a) bis (d) sind da, soweit der Ausschnitt sie hergibt."
+
+[[questions]]
+id = "k1_verstaendlichkeit"
+question = "Wie verständlich ist K1 für ein Ratsmitglied, das das Dokument nicht kennt?"
+scale = "ordinal"
+instructions = "Mehr als drei Sätze oder mehr als 80 Wörter: höchstens 4; eine Aufzählung statt Fließtext: höchstens 3."
+
+[[questions.options]]
+value = "1"
+definition = "Unverständlich oder leer."
+
+[[questions.options]]
+value = "2"
+definition = "In Teilen unverständlich, sprachlich fehlerhaft oder in einer anderen Sprache."
+
+[[questions.options]]
+value = "3"
+definition = "Nur mit erneutem Lesen verständlich, deutlich zu lang, oder Aufzählung statt Fließtext."
+
+[[questions.options]]
+value = "4"
+definition = "Verständlich mit kleinen Mängeln: ein unerklärtes Kürzel, ein holpriger Satz, etwas zu lang."
+
+[[questions.options]]
+value = "5"
+definition = "Auf Anhieb verständlich, korrektes und flüssiges Deutsch, Kürzel geläufig oder erklärt, höchstens drei Sätze."
+
+[[questions]]
+id = "k2_unbelegt"
+question = "Enthält K2 mindestens eine Angabe, die der Ausschnitt nicht stützt oder der er widerspricht?"
+scale = "binary"
+positive = ["ja"]
+instructions = """
+Angabe heißt: eine Zahl, ein Betrag, ein Datum, eine Drucksachennummer, ein Name, ein Ort, ein
+Akteur (wer beantragt, fragt, entscheidet, berichtet) oder ein Sachverhalt. Gestützt ist, was im
+Ausschnitt so oder sinngemäß steht; eine Zusammenfassung mehrerer Punkte in eigenen Worten ist
+gestützt, wenn sie sinngemäß stimmt, eine erkennbare Rundung („rund 1,5 Millionen Euro" für
+1.487.000 €) auch. Nicht gestützt sind: ein Wert, der so nicht dasteht; eine falsche Rolle (ein
+Antrag einer Fraktion als Vorschlag der Verwaltung, eine Anfrage als Beschluss); eine Folge oder
+Wirkung, die das Dokument nicht nennt; ein Ort, ein Gremium oder ein Name, der nicht vorkommt.
+"""
+
+[[questions.options]]
+value = "ja"
+definition = "Mindestens eine Angabe ist nicht gestützt oder widerspricht dem Ausschnitt."
+example = "Die Kurzfassung nennt 2 Mio. Euro, der Ausschnitt 1,2 Mio. Euro."
+
+[[questions.options]]
+value = "nein"
+definition = "Jede Angabe steht so oder sinngemäß im Ausschnitt."
+
+[[questions]]
+id = "k2_treue"
+question = "Wie treu gibt K2 den Ausschnitt wieder?"
+scale = "ordinal"
+instructions = "Fehlendes zählt hier nicht (das ist Vollständigkeit), nur was dasteht."
+
+[[questions.options]]
+value = "1"
+definition = "Mehrere falsche Kernangaben, oder die Kurzfassung handelt von etwas anderem als das Dokument."
+
+[[questions.options]]
+value = "2"
+definition = "Eine nicht belegte oder falsche Angabe im Kern: wer etwas will, was beschlossen, gefragt oder mitgeteilt wird, ein Betrag oder Datum, auf das es ankommt."
+
+[[questions.options]]
+value = "3"
+definition = "Eine nicht belegte oder falsche Angabe in einem Nebenpunkt, oder eine Gewichtung, die einen falschen Eindruck vom Dokument gibt."
+
+[[questions.options]]
+value = "4"
+definition = "Gedeckt bis auf eine kleine Ungenauigkeit ohne Folgen für das Verständnis (eine verkürzte Gremienbezeichnung, eine erkennbare Rundung, eine etwas zu starke Formulierung)."
+
+[[questions.options]]
+value = "5"
+definition = "Alles in der Kurzfassung ist durch den Ausschnitt gedeckt; keine falsche oder schiefe Angabe."
+
+[[questions]]
+id = "k2_vollstaendigkeit"
+question = "Wie vollständig gibt K2 das Wesentliche wieder?"
+scale = "ordinal"
+instructions = """
+Das Wesentliche: (a) Art und Absicht (wer beantragt, fragt, berichtet oder beschließen lassen will),
+(b) der Gegenstand, (c) der Kern des Beschlussvorschlags, der Fragen oder der Mitteilung, (d) Betrag,
+Ort oder Frist, wenn der Ausschnitt sie nennt und sie für den Kern zählen. Falsches zählt hier nicht
+(das ist Treue). Eine leere Kurzfassung ist 1.
+"""
+
+[[questions.options]]
+value = "1"
+definition = "Das Wesentliche fehlt, oder die Kurzfassung ist leer."
+
+[[questions.options]]
+value = "2"
+definition = "Nur der Gegenstand, ohne den Kern."
+
+[[questions.options]]
+value = "3"
+definition = "Ein zentraler Teil fehlt oder bleibt vage (der Kern des Beschlussvorschlags nur angedeutet, die Art des Dokuments unklar)."
+
+[[questions.options]]
+value = "4"
+definition = "Ein nachrangiger Teil fehlt (eine von mehreren Fragen, ein Nebenbetrag, die Frist)."
+
+[[questions.options]]
+value = "5"
+definition = "(a) bis (d) sind da, soweit der Ausschnitt sie hergibt."
+
+[[questions]]
+id = "k2_verstaendlichkeit"
+question = "Wie verständlich ist K2 für ein Ratsmitglied, das das Dokument nicht kennt?"
+scale = "ordinal"
+instructions = "Mehr als drei Sätze oder mehr als 80 Wörter: höchstens 4; eine Aufzählung statt Fließtext: höchstens 3."
+
+[[questions.options]]
+value = "1"
+definition = "Unverständlich oder leer."
+
+[[questions.options]]
+value = "2"
+definition = "In Teilen unverständlich, sprachlich fehlerhaft oder in einer anderen Sprache."
+
+[[questions.options]]
+value = "3"
+definition = "Nur mit erneutem Lesen verständlich, deutlich zu lang, oder Aufzählung statt Fließtext."
+
+[[questions.options]]
+value = "4"
+definition = "Verständlich mit kleinen Mängeln: ein unerklärtes Kürzel, ein holpriger Satz, etwas zu lang."
+
+[[questions.options]]
+value = "5"
+definition = "Auf Anhieb verständlich, korrektes und flüssiges Deutsch, Kürzel geläufig oder erklärt, höchstens drei Sätze."
+
+[[questions]]
+id = "k3_unbelegt"
+question = "Enthält K3 mindestens eine Angabe, die der Ausschnitt nicht stützt oder der er widerspricht?"
+scale = "binary"
+positive = ["ja"]
+instructions = """
+Angabe heißt: eine Zahl, ein Betrag, ein Datum, eine Drucksachennummer, ein Name, ein Ort, ein
+Akteur (wer beantragt, fragt, entscheidet, berichtet) oder ein Sachverhalt. Gestützt ist, was im
+Ausschnitt so oder sinngemäß steht; eine Zusammenfassung mehrerer Punkte in eigenen Worten ist
+gestützt, wenn sie sinngemäß stimmt, eine erkennbare Rundung („rund 1,5 Millionen Euro" für
+1.487.000 €) auch. Nicht gestützt sind: ein Wert, der so nicht dasteht; eine falsche Rolle (ein
+Antrag einer Fraktion als Vorschlag der Verwaltung, eine Anfrage als Beschluss); eine Folge oder
+Wirkung, die das Dokument nicht nennt; ein Ort, ein Gremium oder ein Name, der nicht vorkommt.
+"""
+
+[[questions.options]]
+value = "ja"
+definition = "Mindestens eine Angabe ist nicht gestützt oder widerspricht dem Ausschnitt."
+example = "Die Kurzfassung nennt 2 Mio. Euro, der Ausschnitt 1,2 Mio. Euro."
+
+[[questions.options]]
+value = "nein"
+definition = "Jede Angabe steht so oder sinngemäß im Ausschnitt."
+
+[[questions]]
+id = "k3_treue"
+question = "Wie treu gibt K3 den Ausschnitt wieder?"
+scale = "ordinal"
+instructions = "Fehlendes zählt hier nicht (das ist Vollständigkeit), nur was dasteht."
+
+[[questions.options]]
+value = "1"
+definition = "Mehrere falsche Kernangaben, oder die Kurzfassung handelt von etwas anderem als das Dokument."
+
+[[questions.options]]
+value = "2"
+definition = "Eine nicht belegte oder falsche Angabe im Kern: wer etwas will, was beschlossen, gefragt oder mitgeteilt wird, ein Betrag oder Datum, auf das es ankommt."
+
+[[questions.options]]
+value = "3"
+definition = "Eine nicht belegte oder falsche Angabe in einem Nebenpunkt, oder eine Gewichtung, die einen falschen Eindruck vom Dokument gibt."
+
+[[questions.options]]
+value = "4"
+definition = "Gedeckt bis auf eine kleine Ungenauigkeit ohne Folgen für das Verständnis (eine verkürzte Gremienbezeichnung, eine erkennbare Rundung, eine etwas zu starke Formulierung)."
+
+[[questions.options]]
+value = "5"
+definition = "Alles in der Kurzfassung ist durch den Ausschnitt gedeckt; keine falsche oder schiefe Angabe."
+
+[[questions]]
+id = "k3_vollstaendigkeit"
+question = "Wie vollständig gibt K3 das Wesentliche wieder?"
+scale = "ordinal"
+instructions = """
+Das Wesentliche: (a) Art und Absicht (wer beantragt, fragt, berichtet oder beschließen lassen will),
+(b) der Gegenstand, (c) der Kern des Beschlussvorschlags, der Fragen oder der Mitteilung, (d) Betrag,
+Ort oder Frist, wenn der Ausschnitt sie nennt und sie für den Kern zählen. Falsches zählt hier nicht
+(das ist Treue). Eine leere Kurzfassung ist 1.
+"""
+
+[[questions.options]]
+value = "1"
+definition = "Das Wesentliche fehlt, oder die Kurzfassung ist leer."
+
+[[questions.options]]
+value = "2"
+definition = "Nur der Gegenstand, ohne den Kern."
+
+[[questions.options]]
+value = "3"
+definition = "Ein zentraler Teil fehlt oder bleibt vage (der Kern des Beschlussvorschlags nur angedeutet, die Art des Dokuments unklar)."
+
+[[questions.options]]
+value = "4"
+definition = "Ein nachrangiger Teil fehlt (eine von mehreren Fragen, ein Nebenbetrag, die Frist)."
+
+[[questions.options]]
+value = "5"
+definition = "(a) bis (d) sind da, soweit der Ausschnitt sie hergibt."
+
+[[questions]]
+id = "k3_verstaendlichkeit"
+question = "Wie verständlich ist K3 für ein Ratsmitglied, das das Dokument nicht kennt?"
+scale = "ordinal"
+instructions = "Mehr als drei Sätze oder mehr als 80 Wörter: höchstens 4; eine Aufzählung statt Fließtext: höchstens 3."
+
+[[questions.options]]
+value = "1"
+definition = "Unverständlich oder leer."
+
+[[questions.options]]
+value = "2"
+definition = "In Teilen unverständlich, sprachlich fehlerhaft oder in einer anderen Sprache."
+
+[[questions.options]]
+value = "3"
+definition = "Nur mit erneutem Lesen verständlich, deutlich zu lang, oder Aufzählung statt Fließtext."
+
+[[questions.options]]
+value = "4"
+definition = "Verständlich mit kleinen Mängeln: ein unerklärtes Kürzel, ein holpriger Satz, etwas zu lang."
+
+[[questions.options]]
+value = "5"
+definition = "Auf Anhieb verständlich, korrektes und flüssiges Deutsch, Kürzel geläufig oder erklärt, höchstens drei Sätze."
+
+[sample]
+size = 50
+seed = 2026112321              # SEED + 1 des Messskripts; gezogen aus den 200 der Messung (stichprobe200.csv)
+stratum = "art"
+allocation = "proportional"
+require_text = true
+
+[text]
+source = "raw"                 # der Ausschnitt ist die Eingabe der Modelle aus dem Rohtext (Abschnitte aus Vorhaben 11)
+chars = 8500                   # Abschnittstext höchstens 8 000 Zeichen und vier Kopfzeilen
+title = true
