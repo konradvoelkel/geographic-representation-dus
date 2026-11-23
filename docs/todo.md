@@ -112,18 +112,6 @@ Heute CC0 1.0 wie das Original (README, „Lizenz"). Konrad möchte den Code nac
 stellen (2026-10-12). CC0 des Ursprungs lässt das zu; Daten, Fremddaten und Fixtures behalten ihre eigenen
 Lizenzen (DL-DE BY 2.0, ODbL, CC BY-SA), die Seite nennt sie weiter je Quelle.
 
-## 7. Die Seite nennt den Extraktor nicht
-
-Aufgenommen am 2026-11-16 mit `docs/decisions.md`, Punkt 67. Seit dem 2026-11-18 (Punkt 68) sind
-alle vier Datensätze mit pypdf 7.1.0 gelesen, bis auf 16 Texte (15 der Periode 2014 bis 2020 aus
-pypdf 6.20.0, einer der Hauptperiode aus der Arbeit). „Methode und Grenzen" schreibt nur „der Text
-jedes PDFs wird extrahiert". Der Absatz „Zwei Regeln weichen bewusst von der Arbeit ab" nennt die
-beiden eigenen Regeln (Punkt 44), aber nicht, dass die Hauptseite seit Punkt 68 auch eigene Texte
-liest (rund ein Prozent mehr Treffer, Tabelle 5 ohne 1 und 10 p = 0,036 statt 0,037). Die Angabe
-liegt schon in den Daten: die Spalte `extractor` des Textstores nennt sie je Dokument. Zu prüfen
-wäre ein Satz aus dem Modell im Methodenabschnitt (welcher Extraktor, wie viele Texte, wie viele
-anders als in der Arbeit), neben den beiden Regeln.
-
 ## 8. Eine Probe mit `fetch papers --max-pages` verdirbt den folgenden vollen Abruf
 
 Aufgenommen am 2026-11-23, gefunden vom Agenten des Fundaments F6 der Vorverarbeitung 2026-11

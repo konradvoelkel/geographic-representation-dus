@@ -28,6 +28,7 @@ from georep.report.charts import (
 from georep.report.geometry import SIMPLIFY_M, bounds_of, district_shapes, fit
 from georep.report.model import (
     Download,
+    Extraction,
     MonthRow,
     PeriodComparison,
     ReportModel,
@@ -876,3 +877,54 @@ def test_documents_without_text_appear_in_the_head_and_the_tile(
     # Ohne fehlende Texte sagt die Seite nichts dazu (Mini-Fixture: jedes Paper hat Text)
     whole = render_report(model, visuals)
     assert "ohne Text" not in whole and "mit Text, " not in whole
+
+
+# --- todo Punkt 7, Fundament F1: Extraktor und Rohtext in „Methode und Grenzen" -----------------
+
+
+def _method(page: str) -> str:
+    start = page.index('<section id="methode">')
+    return page[start : page.index("</section>", start)]
+
+
+def test_the_method_names_the_extractor_and_how_many_texts_differ_from_the_thesis(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    """Die Hauptperiode seit Punkt 68: eigene Texte, einer aus der Arbeit, und der Rohtext."""
+    main = Extraction(texts=19092, extractors=(("pypdf-7.1.0", 19091),), thesis=1, raw_texts=19091)
+    method = _method(render_report(replace(model, extraction=main), visuals))
+    assert "Gelesen sind die Texte mit pypdf 7.1.0 (19\u202f091 von 19\u202f092 PDFs)." in method
+    assert "Ein Text stammt aus dem Korpus der Arbeit; die übrigen 19\u202f091" in method
+    assert "Punkt 68" in method
+    assert "liegt für 19\u202f091 Dokumente der Rohtext" in method
+    assert "keine Zahl dieser Seite rechnet mit ihm" in method
+
+
+def test_a_period_with_two_extractors_names_both_and_no_thesis(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    older = Extraction(
+        texts=22116,
+        extractors=(("pypdf-7.1.0", 22101), ("pypdf-6.20.0", 15)),
+        thesis=0,
+        raw_texts=0,
+    )
+    method = _method(render_report(replace(model, extraction=older), visuals))
+    assert (
+        "mit pypdf 7.1.0 (22\u202f101 von 22\u202f116 PDFs) und pypdf 6.20.0 (15 von "
+        "22\u202f116 PDFs)."
+    ) in method
+    assert "Korpus der Arbeit" not in method and "Rohtext" not in method
+
+
+def test_the_mini_page_says_its_texts_come_from_the_thesis(page: str) -> None:
+    method = _method(page)
+    assert "Die 200 Texte stammen aus dem Korpus der Arbeit." in method
+    assert "Gelesen sind" not in method and "Rohtext" not in method
+
+
+def test_without_a_text_store_the_method_has_no_extraction_sentence(
+    model: ReportModel, visuals: Visuals
+) -> None:
+    method = _method(render_report(replace(model, extraction=None), visuals))
+    assert "Korpus der Arbeit" not in method and "Gelesen sind" not in method

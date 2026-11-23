@@ -55,6 +55,7 @@ from georep.analysis.weights import (
     WEIGHTED_RATE,
     topic_variant,
 )
+from georep.bootstrap import REFERENCE_EXTRACTOR
 from georep.contracts import has_columns
 
 # ``crosswalk.UNIT`` ist die Spalte der Raumeinheit (Option 03), ``weights.UNIT`` der Name der
@@ -659,6 +660,22 @@ class PeriodComparison:
 
 
 @dataclass(frozen=True)
+class Extraction:
+    """Womit die Texte gelesen sind (docs/todo.md, Punkt 7) und wie viele einen Rohtext haben (F1).
+
+    Aus der Spalte ``extractor`` des Textstores, je Dokument: ``extractors`` nennt jeden Extraktor,
+    der hier selbst gelesen hat, mit der Zahl seiner Texte (die meisten zuerst), ``thesis`` die
+    Texte, die ``bootstrap`` aus dem Korpus der Arbeit übernommen hat (``REFERENCE_EXTRACTOR``).
+    ``raw_texts`` zählt die Zeilen des Rohtextstores; keine Zahl der Seite rechnet mit ihnen.
+    """
+
+    texts: int
+    extractors: tuple[tuple[str, int], ...]
+    thesis: int
+    raw_texts: int
+
+
+@dataclass(frozen=True)
 class ReportModel:
     generated_at: dt.datetime
     version: str
@@ -748,6 +765,9 @@ class ReportModel:
     # Fundament F2 der Vorverarbeitung 2026-11: die Unterseiten der Beiträge; leer heißt „kein
     # Abschnitt Weitere Auswertungen" ({% if model.pages %}), und die Seite bleibt bytegleich.
     pages: tuple[PageLink, ...] = ()
+    # docs/todo.md, Punkt 7, und Fundament F1: Extraktor je Text und die Zahl der Rohtexte für
+    # „Methode und Grenzen"; None ohne Textstore oder mit einem leeren
+    extraction: Extraction | None = None
 
 
 @dataclass(frozen=True)
@@ -1962,6 +1982,34 @@ def build_report_model(
         # entscheidet, wo die Seite landet (Punkt 52, ``Settings.base_profile``).
         parent_url="../" if settings.profile != settings.base_profile else "",
         preview_rows=settings.report.table_preview_rows,  # Punkt 48
+        extraction=extraction_figures(layout),  # docs/todo.md, Punkt 7; Fundament F1
+    )
+
+
+def extraction_figures(layout: Layout) -> Extraction | None:
+    """Texte je Extraktor aus dem Textstore und die Zahl der Rohtexte; gelesen wird nur je eine Spalte.
+
+    Nach Zahl absteigend, bei Gleichstand nach Name, damit zwei Läufe denselben Satz schreiben.
+    """
+    if not layout.texts.is_file():
+        return None
+    column = pl.read_parquet(layout.texts, columns=["extractor"]).get_column("extractor")
+    if column.is_empty():
+        return None
+    counts = sorted(
+        ((str(name), int(n)) for name, n in column.value_counts().iter_rows()),
+        key=lambda pair: (-pair[1], pair[0]),
+    )
+    raw_texts = (
+        int(pl.scan_parquet(layout.raw_texts).select(pl.len()).collect().item())
+        if layout.raw_texts.is_file()
+        else 0
+    )
+    return Extraction(
+        texts=column.len(),
+        extractors=tuple(pair for pair in counts if pair[0] != REFERENCE_EXTRACTOR),
+        thesis=sum(n for name, n in counts if name == REFERENCE_EXTRACTOR),
+        raw_texts=raw_texts,
     )
 
 

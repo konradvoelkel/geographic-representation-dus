@@ -69,7 +69,8 @@ Vier Lücken sind groß genug, um jede Deutung zu tragen:
   Wort weg, die der Extraktor der Arbeit setzte, und findet rund ein Prozent mehr Treffer. Die
   Hauptseite rechnet damit nicht mehr mit den Texten der Arbeit (Treffer 29 010 → 29 330, Tabelle 5
   ohne 1 und 10 p 0,037 → 0,036), und alle vier Datensätze sind mit demselben Extraktor gelesen,
-  bis auf 16 Texte. Die Seiten sagen den Extraktor noch nicht ([todo.md](todo.md), Punkt 7).
+  bis auf 16 Texte. „Methode und Grenzen" nennt den Extraktor jeder Seite mit der Zahl seiner
+  Texte und, auf der Hauptseite, wie viele davon nicht aus der Arbeit stammen (seit F1, 2026-11-23).
 - **Mönchengladbachs 404.** Von 2 871 Dokumenten mit Hauptdatei liefert das Ratsinformationssystem
   658 aus; die übrigen 2 213 antworten mit `404`, und warum, sagt der Server nicht. Die Seiten sagen
   es selbst: der Städtevergleich führt die Spalte „davon mit Text", und die Kachel „Dokumente mit

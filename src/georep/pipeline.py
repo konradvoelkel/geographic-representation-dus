@@ -1471,7 +1471,10 @@ def build_steps(
                 )
                 if settings.compare.period
                 else ()
-            ),
+            )
+            # --- docs/todo.md, Punkt 7, und Fundament F1: „Methode und Grenzen" nennt den
+            # Extraktor je Text und die Zahl der Rohtexte
+            + (layout.texts, layout.raw_texts),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
             # Punkt 53: der eine Schritt mit einem Zusatz im Stamp. Die Vorlagen des Pakets und

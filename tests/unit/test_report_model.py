@@ -22,12 +22,14 @@ from georep.report.model import (
     ColumnDoc,
     ControlModel,
     ControlTerm,
+    Extraction,
     ReportModel,
     _verdict,
     build_report_model,
     column_docs,
     district_names,
     district_rows,
+    extraction_figures,
     format_de,
     percent_de,
     period_comparison,
@@ -841,3 +843,37 @@ def test_the_page_names_both_rules(mini_page: str) -> None:
     assert "Zwei Regeln weichen bewusst von der Arbeit ab" in mini_page
     assert "Einrichtung mit stadtweiter Bedeutung" in mini_page
     assert "Straßen sind nie betroffen" in mini_page
+
+
+# --- todo Punkt 7, Fundament F1: die Seite nennt ihren Extraktor und den Rohtext ----------------
+
+
+def test_the_mini_fixture_reads_the_texts_of_the_thesis(mini_model: ReportModel) -> None:
+    """200 Texte aus dem Korpus der Arbeit, kein PDF gelesen, darum auch kein Rohtext."""
+    assert mini_model.extraction == Extraction(texts=200, extractors=(), thesis=200, raw_texts=0)
+
+
+def test_the_extraction_counts_come_from_the_extractor_column(tmp_path: Path) -> None:
+    from georep.bootstrap import REFERENCE_EXTRACTOR
+    from georep.stores import RawTextStore, TextMeta, TextStore
+
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "p")
+    assert extraction_figures(layout) is None  # ohne Textstore kein Satz
+    layout.texts.parent.mkdir(parents=True)
+    texts = TextStore(layout.texts)
+    for i, extractor in enumerate(["pypdf-7.1.0"] * 3 + ["pypdf-6.20.0", REFERENCE_EXTRACTOR]):
+        texts.put(f"{i}.pdf", "text", TextMeta(extractor=extractor))
+    texts.save()
+    assert extraction_figures(layout) == Extraction(
+        texts=5, extractors=(("pypdf-7.1.0", 3), ("pypdf-6.20.0", 1)), thesis=1, raw_texts=0
+    )
+    raw = RawTextStore(layout.raw_texts)
+    raw.put("0.pdf", "Text", pages=1, extractor="pypdf-7.1.0+roh", pdf_sha256="0")
+    raw.save()
+    found = extraction_figures(layout)
+    assert found is not None and found.raw_texts == 1
+    # Ein leerer Store (eine laufende Periode vor ihrem ersten Abruf) gibt keinen Satz
+    empty = Layout(tmp_path / "d", tmp_path / "c", tmp_path / "r", "p")
+    empty.texts.parent.mkdir(parents=True)
+    TextStore(empty.texts).save()
+    assert extraction_figures(empty) is None
