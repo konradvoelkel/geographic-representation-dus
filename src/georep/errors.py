@@ -50,7 +50,8 @@ class ModelRejectedError(ModelError):
 
 
 class ModelUnreachableError(ModelError):
-    """Der Modellserver war nicht erreichbar: er nahm die Verbindung nicht an.
+    """Der Modellserver ist für diesen Lauf nicht zu gebrauchen: er nahm die Verbindung nicht an
+    oder verweigerte den Zugriff (401, 403). Beides liegt nicht am Text; der Lauf bricht ab.
 
     Ein Lese-Timeout gehört nicht hierher: dann lief der Server, nur dieser Text dauerte zu lange.
 

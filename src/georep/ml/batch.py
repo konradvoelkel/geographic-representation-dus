@@ -243,6 +243,7 @@ def run_batch(
     failures: list[tuple[int, str]] = []
     rejected = [(i, noted[keys[i]][1]) for i in skipped]
     in_row = 0
+    series: list[int] = []  # neue Abweisungen seit dem letzten Erfolg (Review F5, M3)
     stopped = ""
     for start in range(0, len(todo), batch_size):
         chunk = todo[start : start + batch_size]
@@ -254,20 +255,31 @@ def run_batch(
         )
         for indices, result in groups:
             if isinstance(result, ModelError):
-                index = indices[0]
-                if isinstance(result, ModelRejectedError):
-                    cache.put_failure(key, keys[index], REJECTED, str(result))
-                    rejected.append((index, str(result)))
-                else:
-                    cache.put_failure(key, keys[index], FAILED, str(result))
-                    failures.append((index, str(result)))
+                index, reason = indices[0], str(result)
+                # Nach dem Anhalten ist auch eine Abweisung nur noch „gescheitert": sie gehört zur
+                # Serie, die den Lauf anhielt.
+                rejection = isinstance(result, ModelRejectedError) and not stopped
+                cache.put_failure(key, keys[index], REJECTED if rejection else FAILED, reason)
+                (rejected if rejection else failures).append((index, reason))
                 logger.warning(f"{name}: Eingabe {index} gescheitert: {result}")
                 if keys[index] not in noted:
                     in_row += 1
+                    if rejection:
+                        series.append(index)
                 if in_row >= MAX_FAILURES_IN_ROW and not stopped:
                     stopped = f"{in_row} Fehlschläge in Folge, zuletzt: {result}"
+                    # Review F5, vierte Runde, M3: zehn Abweisungen in Folge sagen eher etwas über
+                    # die Anfrage (eine falsche Option) als über die Texte. Die Serie bleibt darum
+                    # offen („gescheitert") statt dauerhaft abgewiesen.
+                    for demoted in series:
+                        why = dict(rejected)[demoted]
+                        cache.put_failure(key, keys[demoted], FAILED, why)
+                        rejected.remove((demoted, why))
+                        failures.append((demoted, why))
+                    series.clear()
                 continue
             in_row = 0
+            series.clear()
             if len(result) != len(indices):
                 raise ModelError(f"{name}: {len(result)} Werte für {len(indices)} Eingaben")
             pairs = list(zip(indices, result, strict=True))

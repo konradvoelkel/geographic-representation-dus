@@ -7,10 +7,10 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 
-from georep.errors import ModelError, ModelRejectedError
+from georep.errors import ModelRejectedError
 from georep.ml.batch import run_batch
 from georep.ml.cache import CacheKey, ModelCache, decode_vectors, encode_vector
 from tests.fakes import fake_vector
@@ -65,19 +65,27 @@ def test_fake_vectors_are_unit_length_and_stable(text: str, dimension: int) -> N
     assert abs(sum(v * v for v in vector) - 1.0) < 1e-9
 
 
+@example(
+    keys=[f"{i:064x}" for i in range(12)],
+    poison={f"{i:064x}" for i in range(11)},
+    batch_size=1,
+    limits=[0],
+)
 @given(
     keys=keys,
     poison=st.sets(st.sampled_from([f"{i:064x}" for i in range(12)])),
     batch_size=st.integers(1, 5),
     limits=st.lists(st.integers(0, 6), min_size=1, max_size=4),
 )
-def test_every_input_is_computed_or_rejected_once_and_never_asked_again(
+def test_every_input_ends_computed_or_rejected_and_is_asked_at_most_twice(
     keys: list[str], poison: set[str], batch_size: int, limits: list[int]
 ) -> None:
-    """Review F5, dritte Runde, N1: eine Abweisung ist erledigt, kein Lauf fragt sie ein zweites Mal.
+    """Review F5, dritte Runde, N1: eine Abweisung ist erledigt, kein Lauf fragt sie erneut.
 
-    Die Grenze ``MAX_FAILURES_IN_ROW`` darf einen Lauf beenden; der nächste kommt dann weiter,
-    weil die Abweisungen bis dahin gemerkt sind. Am Ende ist jede Eingabe gerechnet oder abgewiesen.
+    Ausnahme seit der vierten Runde (M3): zehn neue Fehlschläge in Folge halten einen Lauf an, und
+    die Abweisungen dieser Serie bleiben „gescheitert"; der nächste Lauf fragt sie ein zweites Mal,
+    dann zählen sie nicht mehr in die Serie und bleiben abgewiesen. Am Ende ist jede Eingabe
+    gerechnet oder abgewiesen, und keine wurde öfter als zweimal einzeln gefragt.
     """
     asked: list[str] = []
 
@@ -90,13 +98,10 @@ def test_every_input_is_computed_or_rejected_once_and_never_asked_again(
 
     with tempfile.TemporaryDirectory() as tmp, ModelCache(Path(tmp), KEY.model) as cache:
         for limit in [*limits, 0, 0, 0]:
-            try:
-                report = run_batch(keys, compute, cache, KEY, batch_size=batch_size, limit=limit)
-            except ModelError:
-                continue  # zehn in Folge: der nächste Lauf fängt hinter ihnen an
+            report = run_batch(keys, compute, cache, KEY, batch_size=batch_size, limit=limit)
         distinct = set(keys)
         assert report.left == 0 and report.failed == 0
         assert {keys[i] for i, _ in report.rejected} == distinct & poison
         assert set(cache.known(KEY)) == distinct - poison
-        # einzeln gefragt wird jede abgewiesene Eingabe genau einmal
-        assert sorted(a for a in asked if a in poison) == sorted(distinct & poison)
+        assert {a for a in asked if a in poison} == distinct & poison
+        assert all(asked.count(a) <= 2 for a in distinct & poison)

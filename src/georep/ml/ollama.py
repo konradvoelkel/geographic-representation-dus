@@ -39,7 +39,11 @@ from georep.ml.base import (
 from georep.settings import Ml
 
 DEFAULT_URL = "http://localhost:11434"
-RETRY_STATUSES = (429, 500, 502, 503, 504)
+# Review F5, vierte Runde, M3: 408, 409, 425 sind vorübergehend wie 429; dauerhaft abgewiesen ist
+# eine Eingabe nur mit 400, 413, 422; 401 und 403 sind die Konfiguration, nicht der Text.
+RETRY_STATUSES = (408, 409, 425, 429, 500, 502, 503, 504)
+REJECT_STATUSES = (400, 413, 422)
+FORBIDDEN_STATUSES = (401, 403)
 NANOSECONDS = 1e9
 _JSON = {"Content-Type": "application/json"}
 
@@ -210,12 +214,14 @@ class OllamaClient:
                 except ValueError as error:
                     raise ModelError(f"{url}: Antwort unbrauchbar, kein JSON") from error
             problem = f"antwortete {resp.status_code}: {_error_text(resp)}"
-            if resp.status_code == 404:
-                raise ModelError(f"{url} {problem}")  # ein fehlendes Modell, kein Fehler des Texts
-            if resp.status_code < 500 and resp.status_code not in RETRY_STATUSES:
+            if resp.status_code in REJECT_STATUSES:
                 raise ModelRejectedError(f"{url} {problem}")
+            if resp.status_code in FORBIDDEN_STATUSES:
+                # Zugriff verweigert: eine Frage der Konfiguration, für jeden Text gleich. Wie ein
+                # fehlender Server bricht das den Lauf ab, und der Cache merkt sich nichts.
+                raise ModelUnreachableError(f"{url} verweigert den Zugriff: {problem}")
             if resp.status_code not in RETRY_STATUSES:
-                raise ModelError(f"{url} {problem}")
+                raise ModelError(f"{url} {problem}")  # etwa 404: ein fehlendes Modell
         if problem.startswith("nicht erreichbar"):
             raise ModelUnreachableError(f"ollama unter {self.base_url} {problem}")
         raise ModelError(f"ollama unter {self.base_url} {problem}")

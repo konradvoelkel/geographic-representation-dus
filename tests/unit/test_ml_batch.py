@@ -18,7 +18,7 @@ from georep.ml.batch import (
     progress_log,
     run_batch,
 )
-from georep.ml.cache import FAILED, CacheKey, ModelCache, input_sha256
+from georep.ml.cache import FAILED, REJECTED, CacheKey, ModelCache, input_sha256
 from georep.ml.ollama import OllamaClient, OllamaEmbedder
 from tests.fakes import FAKE_URL, FakeEmbedder, FakeGenerator, FakeOllama, fake_answer, fake_vector
 
@@ -400,3 +400,38 @@ def test_known_failures_do_not_count_towards_ten_in_a_row(tmp_path: Path) -> Non
         second = run_batch(keys, _poisoned(computed, poison), cache, KEY, batch_size=4)
     assert (first.computed, first.failed, first.stopped) == (12, 12, "")
     assert (second.cached, second.failed, second.stopped) == (12, 12, "")
+
+
+def test_a_series_that_stops_the_run_is_not_remembered_as_rejected(tmp_path: Path) -> None:
+    """Review F5, vierte Runde, M3 (Probe b2): ein systematischer 400 (etwa eine falsche Option
+    außerhalb des Schlüssels) ließ ein Drittel der Texte dauerhaft „abgewiesen" liegen."""
+    texts = [f"t{i}" for i in range(30)]
+    broken = FakeEmbedder(dimension=4, rejects=set(texts))
+    use = EmbeddingUse(broken, "dok-1")
+    with ModelCache(tmp_path, broken.name) as cache:
+        first = embed_texts(use, cache, texts, batch_size=1)
+        assert first.report.stopped and first.report.rejected == ()
+        assert first.report.failed == 10
+        assert {kind for kind, _ in cache.failures(use_key(use)).values()} == {FAILED}
+        broken.rejects = frozenset()  # die Konfiguration ist berichtigt, derselbe Schlüssel
+        use.reset()
+        fixed = embed_texts(use, cache, texts, batch_size=1)
+    assert fixed.present.all() and fixed.report.rejected == ()
+
+
+def test_rejections_before_a_success_stay_rejected_when_a_later_series_stops(
+    tmp_path: Path,
+) -> None:
+    texts = ["einzeln", "gut"] + [f"serie{i}" for i in range(10)]
+    embedder = FakeEmbedder(dimension=4, rejects={"einzeln"} | {t for t in texts if "serie" in t})
+    use = EmbeddingUse(embedder, "dok-1")
+    with ModelCache(tmp_path, embedder.name) as cache:
+        found = embed_texts(use, cache, texts, batch_size=1)
+        kinds = {sha: kind for sha, (kind, _) in cache.failures(use_key(use)).items()}
+    assert found.report.stopped and [i for i, _ in found.report.rejected] == [0]
+    assert kinds[input_sha256("einzeln")] == REJECTED
+    assert kinds[input_sha256("serie0")] == FAILED
+
+
+def use_key(use: EmbeddingUse) -> CacheKey:
+    return CacheKey(use.name, use.embedder.digest, use.prompt_key())

@@ -323,3 +323,35 @@ def test_a_rejected_input_is_its_own_error_and_a_missing_model_is_not() -> None:
     with pytest.raises(ModelError, match=r"not found") as caught:
         client.capabilities("gibt-es-nicht")
     assert type(caught.value) is ModelError
+
+
+@pytest.mark.parametrize(
+    ("status", "kind", "tries"),
+    [
+        (400, ModelRejectedError, 1),
+        (413, ModelRejectedError, 1),
+        (422, ModelRejectedError, 1),
+        (401, ModelUnreachableError, 1),
+        (403, ModelUnreachableError, 1),
+        (404, ModelError, 1),
+        (408, ModelError, 3),
+        (409, ModelError, 3),
+        (425, ModelError, 3),
+        (429, ModelError, 3),
+        (500, ModelError, 3),
+        (503, ModelError, 3),
+    ],
+)
+def test_each_status_has_its_meaning(status: int, kind: type[ModelError], tries: int) -> None:
+    """Review F5, vierte Runde, M3: nur 400, 413, 422 sind eine Abweisung der Eingabe.
+
+    408, 409, 425 sind vorübergehend wie 429 (wiederholt, dann „gescheitert"); 401 und 403 sind
+    die Konfiguration, kein Fehler des Texts: der Lauf bricht ab und merkt sich nichts.
+    """
+    version = response(f"{URL}/api/version", payload={"version": "0.0-fake"})
+    answer = response(f"{URL}/api/embed", status=status, payload={"error": f"e{status}"})
+    session = SequenceSession(f"{URL}/api/embed", [version, *[answer] * tries])
+    client = OllamaClient(URL, transport=session, retries=2, sleep=lambda s: None)
+    with pytest.raises(ModelError) as caught:
+        client.embed({"model": "fake-embed:latest", "input": ["t"]})
+    assert type(caught.value) is kind and len(session.calls) == 1 + tries
