@@ -116,6 +116,7 @@ VERIFY_TARGETS = [
     "georep.prep.precincts.district_from_id",  # Option 01
     "georep.prep.pois.is_city_facility",  # Regel 1, decisions.md Punkt 44
     "georep.ml.base.full_name",  # Fundament F5: der Name, unter dem ollama ein Modell führt
+    "georep.ml.cache.cache_filename",  # Fundament F5: eine Datei je Modell, ohne / und :
     # --- Punkt 53 (2026-10-13): neun Kandidaten aus den Modulen des Ausbaus, je einzeln mit
     # ``uv run crosshair check <ziel> --analysis_kind deal --per_condition_timeout 20`` geprüft.
     # **Vier** fanden ein Gegenbeispiel, und alle vier waren echt -- eine Annahme über die
