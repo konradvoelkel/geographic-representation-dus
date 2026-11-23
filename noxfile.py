@@ -161,6 +161,9 @@ VERIFY_TARGETS = [
     # einzeln mit crosshair geprüft, kein Gegenbeispiel. ``allocate`` bleibt draußen („Unable to
     # meet precondition").
     "georep.validation.measures.stratified_share",
+    # Nachzug F1 (docs/plans/00-synergien-2026-11.md, Konflikt 1): die Stelle im Rohtext je Zeichen
+    # des geplätteten Texts. Einzeln geprüft am 2026-11-23, Exit 0 nach 44 s, „Not confirmed"
+    "georep.prep.raw_texts.flatten_with_offsets",
 ]
 
 
