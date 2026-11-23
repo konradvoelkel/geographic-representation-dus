@@ -18,9 +18,9 @@ der Supervisor führt sie bei jedem Start, Urteil und Merge nach.
 | F6 | OParl: Sitzungen, Tagesordnung, Personen | `fund/F6-oparl` | Fundament | in Arbeit |
 | 11 | Struktur der Dokumente | `feat/11-struktur` | 1 | Messung läuft |
 | 12 | Kennungen und Beträge | `feat/12-kennungen` | 1 | Messung läuft |
-| 13 | Dubletten und Dokumentfamilien | `feat/13-dubletten` | 1 | Messung läuft |
-| 14 | Vorgänge | `feat/14-vorgaenge` | 1 | Messung läuft |
-| 15 | Dokumentfunktion und gemeinsame Anträge | `feat/15-funktion` | – | offen |
+| 13 | Dubletten und Dokumentfamilien | `feat/13-dubletten` | 1 | Messdokument auf `main` (2026-11-23): vorläufig verwerfen (bei τ = 0,9 nur 0,5 % der Dokumente in Familien, höchstens 1,4 % Trefferverlust je Wahlbezirk, Tabelle 5 ändert sich in der dritten Stelle); Kodierung der 200 Paare zurückgestellt, sie läuft nur auf freien Plätzen, weil sie allein zwischen verwerfen und einer Variante mit höchstens rund 5 % Wirkung entscheidet; MinHash geht an 23, Fortschreibungen an 14 |
+| 14 | Vorgänge | `feat/14-vorgaenge` | 1 | Messdokument auf `main` (2026-11-23, `45d7f50`): vorläufig bauen, mit drei Änderungen am Briefing; Kodierung der 150 Kanten läuft (zwei Kodier-Agenten); Stufe 2 wartet auf F6 (Frage 9.1) und Haltepunkt A |
+| 15 | Dokumentfunktion und gemeinsame Anträge | `feat/15-funktion` | 1 | Messung läuft |
 | 16 | Ortsbezug verfeinern | `feat/16-ortsbezug` | – | wartet auf 11 |
 | 17 | Zeit und Neuigkeiten | `feat/17-zeit` | – | offen |
 | 18 | Einbettungen, Ähnlichkeit, Suche | `feat/18-einbettungen` | – | wartet auf F5 |
