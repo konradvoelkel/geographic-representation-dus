@@ -209,6 +209,12 @@ def freshness(step: Step, settings: Settings) -> tuple[bool, str]:
     missing_out = [p.name for p in step.outputs if not p.exists()]
     if missing_out:
         return False, f"Ausgabe fehlt: {', '.join(missing_out)}"
+    # Fundament F6, Review 2026-11-23: ein Netzschritt mit offenem Fortschritt neben seiner
+    # ersten Ausgabe (``raw/<schritt>.progress.json``, so halten es ``papers`` und die Listen von
+    # F6) ist mitten in einem Abruf und nicht aktuell, auch wenn sein Stamp passt.
+    pending = step.outputs[0].with_name(f"{step.name}.progress.json")
+    if step.network and pending.exists():
+        return False, f"Abruf unvollständig: {pending.name}"
     if not step.stamp_path.exists():
         return False, "kein Stamp"
     missing_in = [p.name for p in step.inputs if not p.exists()]

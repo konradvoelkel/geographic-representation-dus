@@ -580,3 +580,44 @@ def test_a_second_run_of_the_same_step_stops_instead_of_cutting_the_output(
     # Die Sperre ist danach frei, auch für denselben Prozess
     run_meetings(settings, layout, two_pages(), sleep=lambda _: None)
     assert len(_lines(files.meetings)) == 4
+
+
+def test_an_open_progress_makes_the_step_open_and_the_next_fetch_resumes(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """Review 2026-11-23, Befund 2: nach einer Probe auf vollständigem Bestand stand der Schritt
+    in ``georep status`` als „aktuell", und ein ``fetch`` ohne ``--force`` übersprang ihn."""
+    from georep.pipeline import freshness
+
+    layout = _layout(tmp_path)
+    layout.ensure_dirs()
+    run_pipeline(
+        build_steps(settings, layout, _session(settings), sleep=lambda _: None),
+        settings,
+        ["meetings"],
+        online=True,
+    )
+    probing = _probing(settings)
+    run_pipeline(
+        build_steps(probing, layout, _session(settings), sleep=lambda _: None),
+        probing,
+        ["meetings"],
+        online=True,
+        force=True,
+    )
+    # der Stamp mit den Settings des vollständigen Laufs: nur der Fortschritt macht ihn offen
+    step = next(s for s in build_steps(settings, layout) if s.name == "meetings")
+    stamp = json.loads(step.stamp_path.read_text(encoding="utf-8"))
+    step.stamp_path.write_text(
+        json.dumps(stamp | {"settings": settings.fingerprint()}), encoding="utf-8"
+    )
+    assert freshness(step, settings) == (False, "Abruf unvollständig: meetings.progress.json")
+    session = _session(settings)
+    outcome = run_pipeline(
+        build_steps(settings, layout, session, sleep=lambda _: None),
+        settings,
+        ["meetings"],
+        online=True,
+    )[0]
+    assert outcome.status == "ausgeführt" and "(fortgesetzt)" in outcome.reason
+    assert freshness(step, settings) == (True, "aktuell")
