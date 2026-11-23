@@ -16,6 +16,7 @@ from georep.settings import Settings
 from georep.validation.merge import merge_project
 from georep.validation.paths import CODERS
 from georep.validation.sample import sample_project
+from georep.validation.score import score_project
 from georep.validation.tasks import task_project
 
 PROJECT_HELP = "Ordner unter validation.root mit codebuch.toml, etwa 11-struktur"
@@ -75,6 +76,18 @@ def add_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None
     )
     merge.add_argument("--force", action="store_true", help="vorhandene Labels neu schreiben")
 
+    score = actions.add_parser(
+        "score",
+        help="Übereinstimmung der Kodierer und, mit --pred, die Güte eines Verfahrens gegen die "
+        "Labels (guete.json)",
+    )
+    score.add_argument("project", metavar="vorhaben", help=PROJECT_HELP)
+    score.add_argument(
+        "--pred",
+        type=Path,
+        help="Ausgabe des Verfahrens als Parquet: id und label, bei query_document query, id, score",
+    )
+
 
 def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
     """Einen Unterbefehl ausführen; Domänenfehler fängt ``cli.main``."""
@@ -113,5 +126,9 @@ def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
             force=args.force,
         )
         print("\n".join(merged.lines()))
+        return 0
+    if args.action == "score":
+        scored = score_project(settings, layout, args.project, pred=args.pred)
+        print("\n".join(scored.lines()))
         return 0
     return 2

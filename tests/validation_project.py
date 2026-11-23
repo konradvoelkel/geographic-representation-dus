@@ -7,6 +7,8 @@ die Mini-Fixture steht in ``tests/unit/test_validation_flow.py``.
 
 from __future__ import annotations
 
+import json
+from collections.abc import Callable
 from pathlib import Path
 
 import polars as pl
@@ -82,3 +84,17 @@ def make_project(tmp_path: Path, codebook: str = CODEBOOK, project: str = PROJEC
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "codebuch.toml").write_text(codebook, encoding="utf-8")
     return layout
+
+
+def fill_answers(
+    coding_root: Path, project: str, who: str, label: Callable[[str], str | None]
+) -> None:
+    """Eine Antwortdatei füllen, wie ein Agent es täte: je Zeile ein Label und ein kurzer Satz."""
+    path = coding_root / project / who / "antworten.jsonl"
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    for row in rows:
+        row["label"] = label(row["id"])
+        row["begruendung"] = f"{who} meint {row['label']}"
+    path.write_text(
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8"
+    )

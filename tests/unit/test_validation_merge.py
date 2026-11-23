@@ -11,7 +11,7 @@ import polars as pl
 import pytest
 
 from georep.cli import main
-from tests.validation_project import PROJECT, make_project
+from tests.validation_project import PROJECT, fill_answers, make_project
 
 MODEL = "claude-opus-5-5"
 
@@ -31,15 +31,7 @@ def _lines(path: Path) -> list[dict[str, Any]]:
 
 
 def fill(project: Path, who: str, label: Callable[[str], str | None]) -> None:
-    """Die Antwortdatei eines Agenten füllen, wie er es täte: Label und ein kurzer Satz."""
-    path = project / "lokal" / PROJECT / who / "antworten.jsonl"
-    rows = _lines(path)
-    for row in rows:
-        row["label"] = label(row["id"])
-        row["begruendung"] = f"{who} meint {row['label']}"
-    path.write_text(
-        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8"
-    )
+    fill_answers(project / "lokal", PROJECT, who, label)
 
 
 def _ids(project: Path) -> list[str]:
