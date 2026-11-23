@@ -62,6 +62,7 @@ from georep.ml.ollama import (
 )
 from georep.settings import Settings, load_settings
 from georep.validation.codebook import load_codebook
+from georep.validation.measures import krippendorff_alpha
 from georep.validation.paths import ValidationPaths
 from georep.validation.sample import allocate, rank, write_sample
 from georep.validation.tasks import questions, write_assignment
@@ -1522,7 +1523,7 @@ def durchsatz(sample: pl.DataFrame, inputs: dict[str, Eingabe], runde: int = 1) 
                 pl.col("id")
                 .map_elements(lambda i: inputs[i].zeichen, return_dtype=pl.Int64)
                 .alias("eingabe_zeichen"),
-                (pl.col("wand") - pl.col("laden")).alias("je_dokument"),
+                (pl.col("wand") - pl.col("laden")).round(4).alias("je_dokument"),
             )
             .select(
                 "id",
@@ -1683,6 +1684,34 @@ def zeige_bewertung(lex: Lexikon, known: frozenset[str]) -> None:
             coder_unbelegt[(source, row["id"])] = row["label"] == "ja"
         else:
             values[(source, dim)].append(int(row["label"]))
+    # α der Kodierer je Dimension: über alle 150 Kurzfassungen (die Fragen k1 bis k3 mischen die
+    # Quellen, weil die Zuordnung je Dokument wechselt) und je Quelle; ordinal, „unbelegt" nominal
+    pairs: dict[tuple[str, str], list[list[str | None]]] = defaultdict(list)
+    for row in labels.iter_rows(named=True):
+        k, _, dim = row["frage"].partition("_")
+        source = mapping[row["id"]][k.upper()]
+        pair: list[str | None] = [row["kodierer_a"], row["kodierer_b"]]
+        pairs[(source, dim)].append(pair)
+        pairs[("alle", dim)].append(pair)
+    alpha: dict[tuple[str, str], float | None] = {}
+    for (source, dim), units in pairs.items():
+        level = "nominal" if dim == "unbelegt" else "ordinal"
+        cats = ["ja", "nein"] if dim == "unbelegt" else ["1", "2", "3", "4", "5"]
+        alpha[(source, dim)] = krippendorff_alpha(units, level, cats)
+
+    def fmt(value: float | None) -> str:
+        return "–" if value is None else f"{value:.3f}"
+
+    for dim in (*DIMENSIONEN, "unbelegt"):
+        print(
+            f"α {dim}: alle 150 {fmt(alpha.get(('alle', dim)))}; "
+            + ", ".join(f"{q} {fmt(alpha.get((q, dim)))}" for q in QUELLEN)
+            + (
+                " -> zählt"
+                if (alpha.get(("alle", dim)) or 0) >= 0.8
+                else " -> zählt nicht (α < 0,8)"
+            )
+        )
     for source in QUELLEN:
         cells = []
         for dim in DIMENSIONEN:
