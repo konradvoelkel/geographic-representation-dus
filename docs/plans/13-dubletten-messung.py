@@ -1,10 +1,14 @@
 """Rechnet die Zahlen von `13-dubletten.md` nach (Vorhaben 13, Stufe 1: Dubletten und Familien).
 
     uv run python docs/plans/13-dubletten-messung.py [--kurven] [--familien] [--empfindlichkeit]
-        [--perioden] [--stichprobe] [--schreiben] [--messdaten PFAD]
+        [--perioden] [--stichprobe] [--kodierung] [--schreiben] [--labels-schreiben]
+        [--messdaten PFAD]
 
-Ohne Schalter läuft alles außer dem Schreiben: 1:52 min, höchster Speicher 1,3 GB (gemessen am
-2026-11-23 mit `nice -n 10`, `POLARS_MAX_THREADS=4`, `OMP_NUM_THREADS=2` bei Lastmittel 20).
+Ohne Schalter läuft alles außer dem Schreiben: 1:26 min, höchster Speicher 1,3 GB (gemessen am
+2026-11-23 mit `nice -n 10`, `POLARS_MAX_THREADS=4`, `OMP_NUM_THREADS=2` bei Lastmittel 10).
+`--kodierung` wertet `validierung/13-dubletten/labels.csv` aus (§ 4.1); `--labels-schreiben`
+baut diese Datei aus den Antworten der Kodierer und der Schlichtung unter
+`<messdaten>/kodierung/13-dubletten/`.
 Liest je Profil, was `georep run` geschrieben hat: den Korpus (`interim/papers.parquet`, Spalte `text`, kleingeschrieben, ohne
 Zeilenumbrüche), die Gremien je Dokument und die Auswertung je Wahlbezirk (`paper_ids`, die
 Wahlberechtigten, Tabelle 5). Die Wurzeln kommen aus `georep --profile <p> paths`, die
@@ -54,6 +58,7 @@ from georep.layout import Layout
 from georep.prep.voters import ELIGIBLE_TOTAL
 from georep.search.index import HITS, PAPER_IDS
 from georep.settings import Settings, load_settings
+from georep.validation.measures import krippendorff_alpha, wilson_interval
 
 U64 = npt.NDArray[np.uint64]
 U32 = npt.NDArray[np.uint32]
@@ -90,6 +95,11 @@ MESSDATEN = Path("/media/konrad/xtraspace/georep/messdaten")  # Plan § 6, gemei
 REPO = Path(__file__).resolve().parents[2]
 SAMPLE_CSV = REPO / "validierung" / "13-dubletten" / "stichprobe.csv"
 CODEBOOK = REPO / "validierung" / "13-dubletten" / "codebuch.toml"
+LABELS_CSV = REPO / "validierung" / "13-dubletten" / "labels.csv"
+CODES = ("gleich", "fast_gleich", "aehnlich_andere_sache", "verschieden")
+SAME = ("gleich", "fast_gleich")  # „richtig" nach dem Codebuch; streng nur „gleich"
+BOUNDS = (0.70, 0.80, 0.85, 0.90, 0.95)  # die Grenzen der Schwellenregel (Codebuch, § 5)
+MIN_PRECISION = 0.95
 MAIN, EARLIER, LATER = "duesseldorf", "duesseldorf-2014", "duesseldorf-2025"
 TOKEN = re.compile(r"\w+")
 PERIODIC = re.compile(
@@ -514,7 +524,7 @@ def describe_families(m: Measured, tau: float, examples: int) -> pl.DataFrame:
     summary = (
         kinds.group_by("art")
         .agg(pl.len().alias("familien"), pl.col("n").sum())
-        .sort("familien", descending=True)
+        .sort(["familien", "art"], descending=[True, False])
     )
     for row in summary.iter_rows(named=True):
         print(f"  {row['familien']:4d} Familien, {row['n']:4d} Dokumente: {row['art']}")
@@ -944,23 +954,305 @@ def stichprobe(profile: Profile, m: Measured, write: bool, messdaten: Path) -> N
         print("  keine Stichprobe im Repo; mit --schreiben anlegen")
 
 
+# --- § 4.1 Kodierung -------------------------------------------------------------------------
+
+
+def write_labels(messdaten: Path) -> None:
+    """``labels.csv`` aus den Antworten der Kodierer und der Schlichtung, Werte als JSON.
+
+    Keine Ausschnitte, keine Begründungen; die Schlichtung steht nur, wo A und B abweichen, und
+    ``uneinig.jsonl`` muss genau diese Paare nennen.
+    """
+    folder = messdaten / "kodierung" / "13-dubletten"
+
+    def codes(name: str) -> dict[str, str]:
+        with (folder / name).open(encoding="utf-8") as handle:
+            return {(r := json.loads(line))["paar"]: str(r["code"]) for line in handle}
+
+    a, b = codes("antworten-A.jsonl"), codes("antworten-B.jsonl")
+    with (folder / "schlichtung.jsonl").open(encoding="utf-8") as handle:
+        settled = {(r := json.loads(line))["paar"]: str(r["entscheid"]["code"]) for line in handle}
+    with (folder / "uneinig.jsonl").open(encoding="utf-8") as handle:
+        open_pairs = {json.loads(line)["aufgabe"]["paar"] for line in handle}
+    disagree = {p for p in a if a[p] != b[p]}
+    if set(a) != set(b) or disagree != open_pairs or set(settled) != disagree:
+        raise SystemExit("Antworten, uneinig.jsonl und Schlichtung passen nicht zusammen")
+    if not set(a.values()) | set(b.values()) | set(settled.values()) <= set(CODES):
+        raise SystemExit("ein Code steht nicht im Codebuch")
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, lineterminator="\n")
+    writer.writerow(["aufgabe", "frage", "kodierer_a", "kodierer_b", "schlichtung", "label"])
+    for pair in sorted(a):
+        final = settled.get(pair, a[pair])
+        writer.writerow(
+            [
+                pair,
+                "code",
+                json.dumps(a[pair]),
+                json.dumps(b[pair]),
+                json.dumps(settled[pair]) if pair in settled else "",
+                json.dumps(final),
+            ]
+        )
+    LABELS_CSV.write_text(buffer.getvalue(), encoding="utf-8")
+    print(f"  geschrieben: {LABELS_CSV} ({len(a)} Paare, {len(settled)} geschlichtet)")
+
+
+def read_labels() -> dict[str, dict[str, str | None]]:
+    with LABELS_CSV.open(encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    return {
+        r["aufgabe"]: {
+            k: (json.loads(r[k]) if r[k] else None)
+            for k in ("kodierer_a", "kodierer_b", "schlichtung", "label")
+        }
+        for r in rows
+        if r["frage"] == "code"
+    }
+
+
+@dataclass(frozen=True)
+class Stratum:
+    label: str  # wie in stichprobe.csv, etwa „0.90-0.95"
+    low: float
+    population: int
+    n: int
+    same: int
+    strict: int
+
+
+def strata_from(labels: dict[str, dict[str, str | None]]) -> list[Stratum]:
+    with SAMPLE_CSV.open(encoding="utf-8") as handle:
+        sample = list(csv.DictReader(handle))
+    grouped: dict[str, list[str]] = {}
+    population: dict[str, int] = {}
+    for row in sample:
+        grouped.setdefault(row["stufe"], []).append(str(labels[row["paar"]]["label"]))
+        population[row["stufe"]] = int(row["grundgesamtheit"])
+    return [
+        Stratum(
+            label=name,
+            low=float(name.split("-")[0]),
+            population=population[name],
+            n=len(codes),
+            same=sum(c in SAME for c in codes),
+            strict=sum(c == "gleich" for c in codes),
+        )
+        for name, codes in sorted(grouped.items(), key=lambda kv: -float(kv[0].split("-")[0]))
+    ]
+
+
+def weighted_precision(
+    strata: Sequence[Stratum], tau: float, strict: bool = False
+) -> tuple[float, float, float]:
+    """Präzision über alle Paare mit J ≥ τ: Mittel der Stufen, gewichtet mit ihrer Grundgesamtheit.
+
+    Das Intervall überträgt die Wilson-Grenzen jeder Stufe mit denselben Gewichten; eine ganz
+    gezogene Stufe (n = Grundgesamtheit) trägt keine Unsicherheit. Das ist konservativ (die
+    Grenzen addieren sich, statt sich wie Varianzen zu mitteln).
+    """
+    chosen = [s for s in strata if s.low >= tau - 1e-9]
+    total = sum(s.population for s in chosen)
+    point = low = high = 0.0
+    for s in chosen:
+        hits = s.strict if strict else s.same
+        share = hits / s.n
+        lo, hi = (share, share) if s.n == s.population else wilson_interval(hits, s.n)
+        weight = s.population / total
+        point += weight * share
+        low += weight * lo
+        high += weight * hi
+    return point, low, high
+
+
+def kodierung(profile: Profile, m: Measured) -> None:
+    print("\n=== § 4.1 Kodierung")
+    if not LABELS_CSV.exists():
+        print("  noch nicht kodiert: validierung/13-dubletten/labels.csv fehlt")
+        return
+    labels = read_labels()
+    pairs = sorted(labels)
+    a = [str(labels[p]["kodierer_a"]) for p in pairs]
+    b = [str(labels[p]["kodierer_b"]) for p in pairs]
+    final = Counter(str(labels[p]["label"]) for p in pairs)
+    alpha4 = krippendorff_alpha([[x, y] for x, y in zip(a, b, strict=True)], "nominal", CODES)
+    alpha2 = krippendorff_alpha(
+        [[str(x in SAME), str(y in SAME)] for x, y in zip(a, b, strict=True)],
+        "nominal",
+        ("True", "False"),
+    )
+    agree4 = sum(x == y for x, y in zip(a, b, strict=True))
+    agree2 = sum((x in SAME) == (y in SAME) for x, y in zip(a, b, strict=True))
+    print(
+        f"  {len(pairs)} Paare; Übereinstimmung Code {agree4}/{len(pairs)}, α {num(alpha4 or 0)}; "
+        f"Familie ja/nein {agree2}/{len(pairs)}, α {num(alpha2 or 0)}; geschlichtet "
+        f"{sum(1 for p in pairs if labels[p]['schlichtung'])}"
+    )
+    print(f"  A: {dict(Counter(a))}; B: {dict(Counter(b))}; Label: {dict(final)}")
+    strata = strata_from(labels)
+    print("  Präzision je Stufe (gleich oder fast gleich; streng: nur gleich), Wilson 95 %:")
+    for s in strata:
+        lo, hi = wilson_interval(s.same, s.n)
+        census = " (ganz gezogen)" if s.n == s.population else ""
+        print(
+            f"    [{s.label}] N={s.population:5d} n={s.n:3d}{census}: {s.same}/{s.n} = "
+            f"{num(s.same / s.n)} [{num(lo)}, {num(hi)}]; streng {s.strict}/{s.n} = "
+            f"{num(s.strict / s.n)}; geschätzt gleiche Sache in der Stufe {num(s.population * s.same / s.n, 0)}"
+        )
+    print("  Präzision ab τ (gewichtet mit der Grundgesamtheit je Stufe):")
+    chosen: float | None = None
+    for tau in BOUNDS:
+        point, low, high = weighted_precision(strata, tau)
+        strict, _, _ = weighted_precision(strata, tau, strict=True)
+        reached = point >= MIN_PRECISION
+        print(
+            f"    τ = {num(tau, 2)}: {num(point, 4)} [{num(low)}, {num(high)}], streng {num(strict, 4)}"
+            f" — {'erreicht' if reached else 'nicht erreicht'} (≥ {num(MIN_PRECISION, 2)})"
+        )
+        if reached and chosen is None:
+            chosen = tau
+    print(
+        "  τ* nach der vorab festgelegten Regel: "
+        + (
+            num(chosen, 2)
+            if chosen is not None
+            else "keine Grenze erreicht 0,95 → Kriterium verfehlt"
+        )
+    )
+    # Die falschen Paare ab 0,9, mit Nummer: was die Präzision dort drückt
+    with SAMPLE_CSV.open(encoding="utf-8") as handle:
+        sample = {r["paar"]: r for r in csv.DictReader(handle)}
+    refs = dict(m.meta.select("id", "reference").iter_rows())
+    names = dict(m.meta.select("id", "name").iter_rows())
+    print("  falsch ab 0,9:")
+    for pair in pairs:
+        row = sample[pair]
+        if float(row["jaccard"]) >= TAU and labels[pair]["label"] not in SAME:
+            print(
+                f"    {pair} J={row['jaccard']} {refs.get(row['id_a'])} ~ {refs.get(row['id_b'])}: "
+                f"{labels[pair]['label']}, „{(names.get(row['id_a']) or '')[:60]}“"
+            )
+    # Was die Metadaten über die Labels sagen (ab 0,7, ungewichtet): Hinweise für eine Fassung 2
+    print("  Labels ab 0,7 nach Merkmalen der Metadaten (ungewichtet, gleiche Sache / Paare):")
+    dates = dict(m.meta.select("id", "date").iter_rows())
+    groups: dict[str, list[bool]] = {}
+    for pair in pairs:
+        row = sample[pair]
+        if float(row["jaccard"]) < 0.7:
+            continue
+        ra, rb = refs.get(row["id_a"]), refs.get(row["id_b"])
+        ta, tb = norm_title(names.get(row["id_a"])), norm_title(names.get(row["id_b"]))
+        da, db = dates.get(row["id_a"]), dates.get(row["id_b"])
+        same = labels[pair]["label"] in SAME
+        keys = [
+            "gleiche Grundnummer"
+            if base_reference(ra) == base_reference(rb)
+            else "andere Grundnummer",
+            "Titel gleich" if ta == tb else "Titel verschieden",
+            "Berichtswort in beiden Titeln"
+            if PERIODIC.search(ta) and PERIODIC.search(tb)
+            else "kein gemeinsames Berichtswort",
+            "Abstand ≤ 31 Tage"
+            if da is not None and db is not None and abs((da - db).days) <= 31
+            else "Abstand > 31 Tage",
+        ]
+        for key in keys:
+            groups.setdefault(key, []).append(same)
+    for key in sorted(groups):
+        values = groups[key]
+        print(f"    {key}: {sum(values)}/{len(values)} = {num(sum(values) / len(values))}")
+    # Wirkung auf die Zählung: bei der besten Grenze und als Obergrenze über alle Kanten ab 0,5
+    sensitivity(profile, m, (TAU, 0.5))
+    for lowest in (0.5, 0.3):
+        expected_effect(profile, m, strata, lowest)
+
+
+DRAWS = 200  # Ziehungen der ausgedünnten Kanten in expected_effect
+
+
+def expected_effect(
+    profile: Profile, m: Measured, strata: Sequence[Stratum], lowest: float
+) -> None:
+    """Wirkung, wenn nur die Kanten zählen, die dieselbe Sache sind: geschätzt durch Ausdünnen.
+
+    Jede Kante ab ``lowest`` (Produktion und Gegenprobe zusammen) bleibt mit der Präzision ihrer
+    Stufe stehen, unabhängig von den anderen; je Ziehung die Familien und die Treffer je
+    Wahlbezirk. Das unterstellt, dass richtige und falsche Kanten sich nicht nach Wahlbezirk
+    unterscheiden; es ist eine Größenordnung, keine Messung je Bezirk.
+    """
+    found: dict[tuple[int, int], float] = {}
+    for pairs, sims in ((m.wide_pairs, m.wide_sim), (m.pairs, m.sim)):
+        for (i, j), sim in zip(pairs.tolist(), sims.tolist(), strict=True):
+            if sim >= lowest:
+                found[(i, j)] = sim
+    edges = np.array(sorted(found), dtype=np.int64)
+    sims = np.array([found[(int(i), int(j))] for i, j in edges])
+    share = np.zeros(len(sims))
+    assigned = np.zeros(len(sims), dtype=bool)
+    for stratum in sorted(strata, key=lambda s: -s.low):  # die höchste passende Stufe gilt
+        hit = (sims >= stratum.low - 1e-12) & ~assigned
+        share[hit] = stratum.same / stratum.n
+        assigned |= hit
+    results = pl.read_parquet(profile.layout.results)
+    ids = m.meta.get_column("id")
+    rng = np.random.default_rng(SEED)
+    totals: list[float] = []
+    worst: list[float] = []
+    over: list[int] = []
+    in_families: list[float] = []
+    for _ in range(DRAWS):
+        keep = rng.random(len(edges)) < share
+        labels = components(m.meta.height, edges, keep)
+        sizes = np.bincount(labels)
+        in_families.append(float(sizes[sizes > 1].sum()) / m.n_corpus)
+        frame = pl.DataFrame({"id": ids, "familie": labels})
+        counted = family_hits(results, frame)
+        lost = 1 - counted.get_column("familien") / counted.get_column("dokumente")
+        families = int(counted.get_column("familien").sum())
+        documents = int(counted.get_column("dokumente").sum())
+        totals.append(1 - families / documents)
+        worst.append(float(lost.max() or 0.0))  # type: ignore[arg-type]
+        over.append(int((lost >= 0.05).sum()))
+
+    def spread(values: Sequence[float]) -> str:
+        ordered = sorted(values)
+        return (
+            f"{pct(float(np.mean(ordered)), 2)} "
+            f"[{pct(ordered[int(0.025 * len(ordered))], 2)}, {pct(ordered[int(0.975 * len(ordered)) - 1], 2)}]"
+        )
+
+    print(
+        f"\n  Ausgedünnt ab J = {num(lowest, 1)} ({len(edges)} Kanten, im Mittel "
+        f"{num(float(share.sum()), 0)} stehen; {DRAWS} Ziehungen, Seed {SEED}): Dokumente in "
+        f"Familien {spread(in_families)}; Treffer weniger {spread(totals)}; größter Verlust eines Wahlbezirks {spread(worst)}; Bezirke mit ≥ 5 %: "
+        f"im Mittel {num(float(np.mean(over)), 2)}, höchstens {max(over)}"
+    )
+
+
 # --- Hauptprogramm ----------------------------------------------------------------------------
 
 
 def main(argv: Sequence[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    for flag in ("kurven", "familien", "empfindlichkeit", "perioden", "stichprobe"):
+    for flag in ("kurven", "familien", "empfindlichkeit", "perioden", "stichprobe", "kodierung"):
         parser.add_argument(f"--{flag}", action="store_true")
     parser.add_argument("--schreiben", action="store_true")
+    parser.add_argument(
+        "--labels-schreiben",
+        action="store_true",
+        help="labels.csv aus den Antworten unter <messdaten>/kodierung/13-dubletten/ anlegen",
+    )
     parser.add_argument("--messdaten", type=Path, default=MESSDATEN)
     args = parser.parse_args(argv)
     chosen = {
         f
-        for f in ("kurven", "familien", "empfindlichkeit", "perioden", "stichprobe")
+        for f in ("kurven", "familien", "empfindlichkeit", "perioden", "stichprobe", "kodierung")
         if getattr(args, f)
     }
     everything = not chosen
     started = time.perf_counter()
+    if args.labels_schreiben:
+        write_labels(args.messdaten)
     main_profile = open_profile(MAIN)
     if main_profile is None:
         raise SystemExit("Hauptperiode nicht gelaufen: uv run georep run")
@@ -981,6 +1273,8 @@ def main(argv: Sequence[str]) -> int:
         periods(main_profile)
     if everything or "stichprobe" in chosen or args.schreiben:
         stichprobe(main_profile, m, args.schreiben, args.messdaten)
+    if everything or "kodierung" in chosen:
+        kodierung(main_profile, m)
     print(f"\nLaufzeit insgesamt {num(time.perf_counter() - started, 1)} s")
     return 0
 

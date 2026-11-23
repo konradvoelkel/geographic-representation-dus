@@ -1,18 +1,20 @@
 # Vorhaben 13: Dubletten und Dokumentfamilien
 
-Stand 2026-11-23, Stufe 1. Briefing: [plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md),
-§ 11, Vorhaben 13. Messskript: [13-dubletten-messung.py](13-dubletten-messung.py). Codebuch und
-Stichprobe: [`validierung/13-dubletten/`](../../validierung/13-dubletten/).
+Stand 2026-11-23, Stufe 1, abgeschlossen mit der Kodierung der 200 Paare (§ 4.1). Briefing:
+[plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11, Vorhaben 13.
+Messskript: [13-dubletten-messung.py](13-dubletten-messung.py). Codebuch, Stichprobe und Labels:
+[`validierung/13-dubletten/`](../../validierung/13-dubletten/).
 
-**Urteil, vorläufig (Validierung ausstehend): verwerfen. Befund: „es gibt kaum Dubletten".** Bei
-einer Schwelle, die nach allem, was sich ohne Kodierung sagen lässt, die geforderte Präzision halten
-kann (Jaccard τ ≥ 0,85 bis 0,9 über Fünf-Wort-Folgen), liegen **0,5 bis 0,9 % der Dokumente** in
-Familien, und kein Wahlbezirk verliert mehr als **1,4 %** seiner Treffer (τ = 0,9). Tabelle 5 rückt
-erst in der dritten Stelle (p ohne 1 und 10: 0,036 → 0,033; ρ = 0,9993). Erst bei τ = 0,7 wären beide
-Schwellen des Kriteriums knapp erreicht (3,5 % der Dokumente, Wahlbezirk 13 verliert 5,05 %), doch
-dort ist ein Drittel der Familien (93 von 270) ein wiederkehrender Bericht oder ein Formular — nach
-Codebuch „ähnlich, andere Sache". Das Urteil kippt nur, wenn die Kodierung schon ab τ = 0,7 eine
-Präzision von 0,95 ergibt; die Regel dafür steht vorab in § 5.
+**Urteil (nach der Kodierung): verwerfen. Befund: „es gibt kaum Dubletten".** Keine Grenze der
+vorab festgelegten Schwellenregel erreicht die Präzision 0,95: am nächsten liegt τ = 0,9 mit
+**0,948** [0,866; 0,964] (gewichtet, 58 kodierte Paare), darunter fällt sie auf 0,745 (ab 0,85), 0,538
+(ab 0,8) und 0,411 (ab 0,7); ab 0,95 ist sie 0,812, weil drei wortgleiche Förderanträge
+verschiedener Jahre dort liegen. Damit ist das Kriterium nach § 5 verfehlt, und es gibt keine
+Variante. Das Urteil hinge auch nicht an der dritten Nachkommastelle: selbst bei τ = 0,9 lägen nur
+**0,5 %** der Dokumente in Familien, und kein Wahlbezirk verlöre mehr als **1,4 %** seiner Treffer
+(Schwellen des Kriteriums: 3 % und 5 %); Tabelle 5 rückt dort in der dritten Stelle (p ohne 1 und
+10: 0,036 → 0,033; ρ = 0,9993). Die Kodierer waren sich einig (α = 0,941 über die vier Codes, 0,970
+für „Familie ja oder nein").
 
 Alle Zahlen sind am 2026-11-23 im Worktree `feat/13-dubletten` gemessen, Daten nach
 `uv run georep bootstrap` und den Schritten bis `results` je Profil, mit `POLARS_MAX_THREADS=4`,
@@ -26,12 +28,15 @@ uv run georep --profile duesseldorf-2025 bootstrap && uv run georep --profile du
 uv run python docs/plans/13-dubletten-messung.py                # alle Zahlen hier, knapp zwei Minuten
 uv run python docs/plans/13-dubletten-messung.py --kurven       # nur § 3.2 und § 3.3
 uv run python docs/plans/13-dubletten-messung.py --stichprobe --schreiben   # § 4: Stichprobe und Kodieraufgaben neu
+uv run python docs/plans/13-dubletten-messung.py --kodierung    # § 4.1 aus labels.csv; --labels-schreiben baut sie aus den lokalen Antworten
 ```
 
 Für die Messung genügen die Schritte bis `results` (`georep run voters streets pois dictionary
 corpus bodies index results`, für 2014 bis 2020 dazu `precincts`, für ab 2025 dazu `shapes`); der
 volle Lauf prüft vorher die Hashes aller lokalen PDFs, was unter dieser Last über 20 Minuten dauerte
-und für die Messung nichts ändert. Laufzeit des Messskripts: 1:52 min (Lastmittel 19,7 → 19,2).
+und für die Messung nichts ändert. Laufzeit des Messskripts: 1:52 min (Lastmittel 19,7 → 19,2) vor
+der Kodierung, 1:26 min (Lastmittel 10,0 → 8,4) mit der Auswertung der Kodierung (§ 4.1, am Abend
+des 2026-11-23 nach dem Rebase auf `v0.20.0`; die Treffer sind dieselben, 29 330).
 
 ## 1. Frage und Nutzen (Literatur, Ratsarbeit)
 
@@ -356,6 +361,89 @@ Ein Beispiel aus der Stichprobe: RAT/554/2021 und RAT/555/2021, Ersatzwahl in de
 Düsseldorf Tourismus GmbH und der Düsseldorf Marketing GmbH, wortgleich bis auf den Namen der
 Gesellschaft.
 
+### 4.1 Kodierung und Präzision (2026-11-23)
+
+Zwei Kodier-Agenten (A, B) haben die 200 Paare unabhängig nach dem Codebuch kodiert, ohne Jaccard
+und Stufe zu sehen; die 7 Uneinigkeiten hat ein Schlicht-Agent entschieden. Kodierer und Schlichter
+sind dasselbe Modell (Frage 19 an Konrad, offen): das ist kein menschlicher Goldstandard, sondern
+die Übereinstimmung mit einem stärkeren Modell (Plan § 2.6). Labels:
+[`labels.csv`](../../validierung/13-dubletten/labels.csv) (Werte als JSON, ohne Ausschnitte und
+Begründungen); Antworten, Uneinigkeiten und Schlichtung mit Begründung liegen lokal unter
+`messdaten/kodierung/13-dubletten/`.
+
+**Übereinstimmung.** Code: 193 von 200, Krippendorffs α = **0,941** (nominal, vier Codes); „Familie"
+(`gleich` oder `fast_gleich`) ja oder nein: 197 von 200, α = **0,970**. Beides liegt über 0,8, der
+Grenze aus Plan § 2.6; das Codebuch ist scharf genug. A vergab 108 × `aehnlich_andere_sache`,
+63 × `gleich`, 29 × `fast_gleich`, B 105 / 65 / 30; `verschieden` vergab keiner (die Stichprobe
+beginnt bei J = 0,3). Geschlichtet: p013, p048 und p052 zu `aehnlich_andere_sache` (ein an ein
+Haushaltsjahr gebundener Antrag oder Zuschuss ist je Haushaltsjahr eine eigene Sache, Regel R-a),
+p025, p041 und p157 zu `gleich`, p105 zu `fast_gleich`. Endlabels: 108 `aehnlich_andere_sache`,
+64 `gleich`, 28 `fast_gleich`.
+
+**Präzision je Stufe** (richtig: `gleich` oder `fast_gleich`; streng: nur `gleich`; Wilson 95 %):
+
+| Stufe (exakte Jaccard) | Paare (N) | kodiert (n) | richtig | Präzision [Wilson] | streng | gleiche Sache, hochgerechnet |
+|---|---|---|---|---|---|---|
+| 0,95 bis 1 | 16 | 16 (alle) | 13 | 0,812 [0,570; 0,934] | 0,688 | 13 |
+| 0,90 bis 0,95 | 77 | 42 | 41 | **0,976** [0,877; 0,996] | 0,857 | 75 |
+| 0,85 bis 0,90 | 47 | 38 | 13 | 0,342 [0,212; 0,501] | 0,211 | 16 |
+| 0,80 bis 0,85 | 116 | 38 | 11 | 0,289 [0,170; 0,448] | 0,132 | 34 |
+| 0,70 bis 0,80 | 372 | 34 | 11 | 0,324 [0,191; 0,492] | 0,088 | 120 |
+| 0,50 bis 0,70 | 1 400 | 20 | 2 | 0,100 [0,028; 0,301] | 0,050 | 140 |
+| 0,30 bis 0,50 | 7 111 | 12 | 1 | 0,083 [0,015; 0,354] | 0 | 593 |
+
+**Präzision ab τ** (Mittel der Stufen ab τ, gewichtet mit N; das Intervall überträgt die
+Wilson-Grenzen der Stufen mit denselben Gewichten, eine ganz gezogene Stufe ohne Unsicherheit —
+konservativ):
+
+| τ | Präzision | Intervall | streng | ≥ 0,95? |
+|---|---|---|---|---|
+| 0,70 | 0,411 | [0,289; 0,554] | 0,215 | nein |
+| 0,80 | 0,538 | [0,430; 0,645] | 0,399 | nein |
+| 0,85 | 0,745 | [0,646; 0,809] | 0,621 | nein |
+| 0,90 | **0,948** | [0,866; 0,964] | 0,828 | nein, knapp |
+| 0,95 | 0,812 | (alle kodiert) | 0,688 | nein |
+
+**Was die Labels zeigen.**
+
+- **Eine scharfe Kante bei 0,9**, wie die Hinweistabelle in § 3.3 sie erwarten ließ: zwischen 0,90
+  und 0,95 sind 41 von 42 Paaren dieselbe Sache, darunter ist es etwa eines von drei, unter 0,7
+  eines von zehn.
+- **Wortgleich ist nicht gleich.** Die Stufe ab 0,95 ist schlechter als die darunter: drei ihrer 16
+  Paare sind die Jugendfonds-Anträge JURAT/034/2024, JURAT/058/2024 und JURAT/026/2025 (J = 1,000),
+  deren Hauptdatei dasselbe Deckblatt ist; der Antrag selbst steht anderswo, und beide Kodierer
+  sahen drei verschiedene Anträge. Das vierte falsche Paar ab 0,9 ist ein Jahresbericht
+  (OVA/099/2020 und OVA/052/2021, „Qualitätsbericht der Rheinbahn", 0,901).
+- **Was über die Metadaten trägt** (ab 0,7, ungewichtet, 168 Paare; ein Hinweis für eine Fassung
+  2, keine Messung eines Verfahrens): gleiche Grundnummer 25 von 25 richtig; gleicher Titel 82 von
+  115, verschiedener Titel 7 von 53; ein Berichtswort in beiden Titeln 1 von 30; Abstand bis 31 Tage
+  55 von 85, darüber 34 von 83.
+
+**Wirkung auf die Zählung je Wahlbezirk danach.** Eine validierte Schwelle gibt es nicht; die Zahlen
+unten ordnen ein, wie groß der Unterschied wäre.
+
+- **An der besten Grenze, τ = 0,9** (Präzision 0,948): Treffer 29 330 → 29 118 (−0,7 %), größter
+  Verlust 1,4 % (WB 13, 555 → 547), kein Wahlbezirk mit 5 %, ρ = 0,9993, p ohne 1 und 10 0,033
+  (§ 3.5). Etwa jede zwanzigste Kante dort ist falsch, die wahre Wirkung also etwas kleiner.
+- **Obergrenze über alle Kanten ab 0,5**, vier von fünf davon falsch: −3,7 %, größter Verlust
+  6,13 % (WB 24 und WB 13), 5 Wahlbezirke mit mindestens 5 %, p ohne 1 und 10 0,027, ρ = 0,9984. Die
+  richtigen Kanten allein sind eine Teilmenge und wirken höchstens so stark.
+- **Geschätzt, wenn nur die richtigen Kanten zählten**: jede Kante bleibt mit der Präzision ihrer
+  Stufe stehen, 200 Ziehungen, Seed 13; das unterstellt, dass richtige und falsche Kanten sich nicht
+  nach Wahlbezirk unterscheiden, und ist darum eine Größenordnung. Ab 0,5: 2,81 % der Dokumente in
+  Familien [2,58; 3,04], Treffer −1,60 % [1,35; 1,88], größter Verlust 3,38 % [2,80; 4,19], ein
+  Wahlbezirk mit 5 % nur in einzelnen Ziehungen (im Mittel 0,01). Ab 0,3: 5,99 % der Dokumente,
+  Treffer −2,87 %
+  [2,49; 3,26], größter Verlust 5,60 % [4,80; 6,67], im Mittel 1,7 Wahlbezirke mit 5 %; das hängt
+  an einem richtigen von 12 kodierten Paaren der Stufe 0,3 bis 0,5 (Wilson 0,015 bis 0,354), die
+  Intervalle in Klammern enthalten diese Unsicherheit nicht.
+
+Dieselbe Sache gibt es also auch unter 0,9 — hochgerechnet rund 900 Paare zwischen 0,3 und 0,9,
+mit großer Unsicherheit —, aber die Textähnlichkeit trennt sie dort nicht von Formularen und
+wiederkehrenden Berichten (Präzision 0,29 bis 0,34 zwischen 0,7 und 0,9). Eine Familienvariante über
+J ≥ τ kann sie nicht tragen; was sie mit der geforderten Präzision trägt (ab 0,9), ändert die
+Zählung um weniger als anderthalb Prozent je Wahlbezirk.
+
 ## 5. Urteil gegen das Kriterium
 
 **Kriterium (Briefing, unverändert):** Präzision ≥ 0,95; weiter, wenn mindestens 3 % der Dokumente in
@@ -367,30 +455,31 @@ Dubletten" der Befund.
 0,95 ist. Erreicht keine Grenze 0,95, ist das Kriterium verfehlt. Das Kriterium wird dann bei τ*
 geprüft:
 
-| τ* | Dokumente in Familien | größter Verlust eines Wahlbezirks | „weiter"? |
-|---|---|---|---|
-| 0,70 | 3,5 % | 5,05 % (WB 13) | ja, knapp beides |
-| 0,80 | 1,7 % | 3,2 % | nein |
-| 0,85 | 0,9 % | ≤ 3,2 % | nein |
-| 0,90 | 0,5 % | 1,4 % | nein |
-| 0,95 | 0,2 % | ≤ 1,4 % | nein |
+| τ* | Präzision (§ 4.1) | Dokumente in Familien | größter Verlust eines Wahlbezirks | „weiter"? |
+|---|---|---|---|---|
+| 0,70 | 0,411 | 3,5 % | 5,05 % (WB 13) | ja, knapp beides |
+| 0,80 | 0,538 | 1,7 % | 3,2 % | nein |
+| 0,85 | 0,745 | 0,9 % | ≤ 3,2 % | nein |
+| 0,90 | 0,948 | 0,5 % | 1,4 % | nein |
+| 0,95 | 0,812 | 0,2 % | ≤ 1,4 % | nein |
 
-**Vorläufiges Urteil: verwerfen.** Nur τ* = 0,70 führte zu „weiter", und dafür müssten mindestens
-95 % aller Paare ab 0,7 dieselbe Sache sein. Die Typen sprechen dagegen: bei τ = 0,7 gehören 255 von
-667 Dokumenten in Familien wiederkehrender Berichte oder Formulare, die das Codebuch als „ähnlich,
-andere Sache" zählt, und die Hinweise aus den Metadaten fallen unter 0,85 deutlich ab (gleicher Titel
-bei 92 bis 94 % der Paare ab 0,9, bei 37 % zwischen 0,7 und 0,8). Unsicher bleibt, wie hoch die
-Präzision genau ist — das liefert die Kodierung; für das Urteil zählt nur, ob sie schon ab 0,7 über
-0,95 liegt.
+**Urteil nach der Kodierung: verwerfen.** Keine der fünf Grenzen erreicht die Präzision 0,95; die
+beste ist τ = 0,9 mit 0,948 [0,866; 0,964]. Nach der Regel ist das Kriterium damit verfehlt, ein
+τ* gibt es nicht, und die Gewichtsvariante `familie` entsteht nicht. Das Urteil hängt nicht an der
+knappen Zahl bei 0,9: läge die Präzision dort über 0,95, wäre τ* = 0,9, und dort liegen 0,5 % der
+Dokumente in Familien und kein Wahlbezirk verliert mehr als 1,4 % — beide Schwellen für „weiter"
+(3 % und 5 %) sind verfehlt. Nur τ* = 0,7 hätte zu „weiter" geführt, und dort ist die Präzision
+0,411. Der Befund ist „es gibt kaum Dubletten": genauer, kaum Dubletten, die sich am Text mit der
+geforderten Sicherheit erkennen lassen, und ihre Wirkung auf die Zählung liegt unter dem Wechsel des
+Extraktors (Punkt 68, 29 010 → 29 330 Treffer). Die vorläufige Einschätzung vor der Kodierung
+(verwerfen, weil ab 0,7 wiederkehrende Berichte die Familien füllen) hat die Kodierung bestätigt.
 
-Auch wenn das Urteil kippte, wäre der Ertrag klein: im Median 2,1 %, höchstens 5,05 % weniger
-Treffer je Bezirk, ρ = 0,998, Tabelle 5 in der dritten Stelle. Das ist dieselbe Größenordnung wie
-der Wechsel des Extraktors (Punkt 68, 29 010 → 29 330 Treffer).
+**Was bleibt:**
 
-**Was bleibt, auch bei „verwerfen":**
-
-- der Befund für die Seite und `decisions.md`: die Trefferquote zählt kaum Dubletten (0,5 % der
-  Dokumente bei τ = 0,9; in beiden Perioden gleich);
+- der Befund für `decisions.md` (Zeile für ein verworfenes Vorhaben, Plan § 8): die Trefferquote
+  zählt kaum Dubletten (0,5 % der Dokumente bei τ = 0,9, Präzision 0,948; in beiden Perioden
+  gleich); geschätzt verschiebt auch die Dublette in der Sache die Treffer je Bezirk nur um einige
+  Prozent (§ 4.1);
 - der MinHash-Prototyp im Messskript als Ausgangspunkt für Vorhaben 23 (Textübernahme), das ihn mit
   niedrigerer Schwelle und lokaler Ausrichtung braucht; die Zahlen hier (Kandidaten 32 × 4 gegen
   64 × 2, k gegen τ) ersparen dort die Parametersuche;
@@ -401,6 +490,10 @@ der Wechsel des Extraktors (Punkt 68, 29 010 → 29 330 Treffer).
   (§ 10).
 
 ## 6. Bauplan Stufe 2 (falls das Urteil nach der Kodierung „bauen" lautet)
+
+Das Urteil lautet „verwerfen" (§ 5). Der Bauplan bleibt als Dokumentation stehen, für den Fall, dass
+eine Fassung 2 (§ 9, 13.7) neu gemessen wird, und als Vorlage für den Kandidatenschritt von
+Vorhaben 23.
 
 **Beitrag `families`** nach F2 (`georep/enrich/families.py`), reine Funktionen in
 `georep/analysis/families.py`: `Shingler` (Token-Hash BLAKE2b, splitmix64, 32 Bit), `signatures`,
@@ -508,6 +601,20 @@ der Seite wie diese nicht „Test". Vorab festgelegt sind nur die Schwellenregel
 | 13.3 | Reicht die Hauptdatei, oder sollen Anlagen zählen? | Verteilervorlagen können sich nur in Anlagen unterscheiden; der Korpus trägt nur die Hauptdatei | Hauptdatei, wie die Trefferquote |
 | 13.4 | Reichen 1 500 Zeichen Ausschnitt für die Kodierer? | Bei langen Dokumenten mit gleichem Anfang liegt der Unterschied später; die Präzision würde dann überschätzt | ja, zusammen mit Titel, Datum und `zeichen`; F4 kann den Ausschnitt erweitern |
 | 13.5 | Soll die Familie im Dokumentdialog gezeigt werden, auch wenn die Variante verworfen wird? | Nutzen für die Ratsarbeit („an wen ging das noch?") | nein als eigener Schritt; Vorhaben 14 übernimmt Fortschreibungen und Verteiler über Nummern und Titel |
+| 13.6 | Gelten Kodierer und Schlichter als unabhängig, obwohl sie dasselbe Modell sind? | α = 0,941 kann gemeinsame Vorlieben eines Modells messen statt Klarheit des Codebuchs | ja für Stufe 1, wie bei den anderen Vorhaben; Frage 19 an Konrad ist offen |
+| 13.7 | Soll ein Codebuch in Fassung 2 die Regeln des Schlichters übernehmen? | Sie verschieben Paare zwischen `gleich`, `fast_gleich` und `aehnlich_andere_sache` und damit die Präzision | nur notiert, auf dieses Verfahren nicht angewandt (siehe unten) |
+
+**Regeln des Schlichters für eine Fassung 2 des Codebuchs** (aus `schlichtung.jsonl`, 2026-11-23;
+nicht auf die Messung angewandt, die Labels oben folgen nur Fassung 1 und den sieben Entscheiden).
+Prüffrage: „Hätten beide Dokumente zusammen mehr bewirkt als eines?" (a) Ein an ein Haushaltsjahr
+gebundener Antrag oder Zuschuss ist je Haushaltsjahr eine eigene Sache, auch wortgleich; dieselbe
+Sache nur bei erneuter Einbringung zum selben Haushaltsjahr. (b) Die Endung `/1` ist ein Hinweis,
+kein Kriterium; ein ungeklärter Längenrest bis rund 2 % gilt als `gleich`. (c) Dieselbe Vorlage an
+mehrere Bezirksvertretungen ist ebenso `gleich`. (d) Eine Wahl mit getauschter Person zur selben
+Besetzung ist `fast_gleich`. **Die Grenze von 2 % in (b) hat der Schlichter selbst gesetzt; sie war
+nicht vorab festgelegt** und steht weder im Codebuch noch in diesem Dokument vor der Kodierung. Regel
+(d) widerspräche dem Beispiel „andere Person bei einer Ersatzwahl" in Fassung 1 nur, wo dieselbe
+Besetzung gemeint ist; RAT/554/2021 und RAT/555/2021 (zwei Gesellschaften) blieben „andere Sache".
 
 **Risiken.** Ändert sich der Extraktor, ändern sich die Familien (der Stamp hängt am Textstore, das ist
 gewollt). Die Typen in § 3.4 sind eine Regel über Metadaten und können einzelne Familien falsch
