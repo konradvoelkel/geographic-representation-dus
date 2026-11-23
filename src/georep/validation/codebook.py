@@ -241,6 +241,19 @@ class ScoreRules(_Strict):
     relevance: str = ""  # die Frage mit den Relevanzstufen für nDCG; leer = die erste mit Optionen
 
 
+class ProvisionalRules(_Strict):
+    """Wie vorläufige Antwortdateien zu lesen sind (``georep validate import``, ``importer``)."""
+
+    key: str  # Feld der Antwortzeilen mit dem Schlüssel der Einheit (kante, aufgabe, paar)
+    coder_a: str = "antworten-A.jsonl"
+    coder_b: str = "antworten-B.jsonl"
+    adjudication: str = "schlichtung.jsonl"
+    fields: dict[str, str] = {}  # Feld der Antworten -> Frage, wo sie anders heißen
+    # Frage -> {Wert als JSON-Text -> Label}, etwa {"true" = "ja", "false" = "nein"}
+    values: dict[str, dict[str, str]] = {}
+    reason: list[str] = ["begruendung"]  # Felder der Begründung, nicht leere mit „ / " verbunden
+
+
 class Codebook(_Strict):
     """Das ganze Codebuch; die Fragen stehen in der Folge, in der die Kodierer sie beantworten."""
 
@@ -252,6 +265,9 @@ class Codebook(_Strict):
     sample: SampleRules
     text: TextRules = TextRules()
     score: ScoreRules = ScoreRules()
+    provisional: ProvisionalRules | None = (
+        None  # vorläufige Antworten übernehmen (Vorhaben 11 bis 14)
+    )
 
     @property
     def key_columns(self) -> tuple[str, ...]:
@@ -295,6 +311,11 @@ class Codebook(_Strict):
         clash = sorted(set(self.text.context) & {*self.key_columns, "schicht", "schicht_n"})
         if clash:
             raise ValueError(f"text.context {clash}: Schlüsselspalten stehen ohnehin im Auftrag")
+        rules = self.provisional
+        if rules is not None:
+            unknown = sorted((set(rules.fields.values()) | set(rules.values)) - set(ids))
+            if unknown:
+                raise ValueError(f"provisional: {unknown} sind keine Fragen")
         if self.score.relevance and self.score.relevance not in ids:
             raise ValueError(f"score.relevance {self.score.relevance!r} ist keine Frage")
         return self

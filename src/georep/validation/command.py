@@ -1,4 +1,4 @@
-"""``georep validate sample|tasks|merge|score <vorhaben>``: die Befehlszeile von F4.
+"""``georep validate sample|tasks|import|merge|score <vorhaben>``: die Befehlszeile von F4.
 
 Unterbefehle und Ausgabe stehen hier; ``cli.py`` hängt den Parser ein und ruft ``run``. So berührt
 das Fundament die gemeinsame Datei nur mit drei Zeilen (plan-vorverarbeitung-2026-11.md, § 2.3).
@@ -13,6 +13,7 @@ from pathlib import Path
 
 from georep.layout import Layout
 from georep.settings import Settings
+from georep.validation.importer import import_project
 from georep.validation.merge import merge_project
 from georep.validation.paths import CODERS
 from georep.validation.sample import sample_project
@@ -81,6 +82,17 @@ def add_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None
     )
     merge.add_argument("--force", action="store_true", help="vorhandene Labels neu schreiben")
 
+    imported = actions.add_parser(
+        "import",
+        help="vorläufige Antwortdateien (antworten-A.jsonl, antworten-B.jsonl, schlichtung.jsonl) "
+        "nach [provisional] im Codebuch übernehmen",
+    )
+    imported.add_argument("project", metavar="vorhaben", help=PROJECT_HELP)
+    imported.add_argument(
+        "--from", dest="source", type=Path, required=True, help="Ordner mit den Antwortdateien"
+    )
+    imported.add_argument("--force", action="store_true", help="vorhandene Antworten ersetzen")
+
     score = actions.add_parser(
         "score",
         help="Übereinstimmung der Kodierer und, mit --pred, die Güte eines Verfahrens gegen die "
@@ -132,6 +144,10 @@ def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
             force=args.force,
         )
         print("\n".join(merged.lines()))
+        return 0
+    if args.action == "import":
+        taken = import_project(settings, layout, args.project, args.source, force=args.force)
+        print("\n".join(taken.lines()))
         return 0
     if args.action == "score":
         scored = score_project(settings, layout, args.project, pred=args.pred)
