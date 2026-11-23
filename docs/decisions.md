@@ -2556,3 +2556,21 @@ sehen (sie messen dann Zustimmung statt Güte); Wald-Intervalle (über 1 und nul
 Rändern, wo die Präzisionen der Kriterien liegen); ein Wilson-Intervall für F1 und Makromittel (sie
 sind keine Anteile; ein Bootstrap gehört, wo nötig, ins Messskript); eine HTML-Ansicht für Menschen
 (niemand kodiert von Hand, Plan § 7); die Aufträge im Repo (Ratstext, Plan § 4).
+
+**Zweite Runde nach dem Review (2026-11-23).** Die Vorhaben 11 bis 14 stellen je Einheit mehrere
+Fragen, teils bedingt; das Codebuch trägt darum `[[questions]]` mit eigener Skala (dazu `interval`
+für Zeilennummern, `open` für freie JSON-Werte, `spans` für Markierungen), `only_if` und
+`adjudicate`, und Übereinstimmung, Schlichtung und Labels (`id, frage, kodierer_a, kodierer_b,
+schlichtung, label`) gibt es je Frage. Eine geschichtete Stichprobe wird nicht mehr wie eine
+einfache ausgezählt: jede Zeile trägt N_h (`schicht_n`), `score` gibt je Schicht, in der Stichprobe
+und für die Grundgesamtheit (Σ W_h·p_h mit Wilson bei Kishs effektivem n; verworfen: geschichteter
+Bootstrap und geschichtete Normalnäherung, beide null breit, wenn Schichten nur Treffer haben), und
+`allocate` teilt proportional ohne vorab gesetzte Mindesteinheit. Eine zweite Kodierrunde mit
+neuem Codebuch ist ein eigener Ordner (`14-vorgaenge-2`), nicht eine zweite Datei im selben:
+Codebuch, Stichprobe und Labels gehören zusammen. Vorläufige Antworten von vor F4 übernimmt
+`georep validate import` nach `[provisional]` im Codebuch, ohne die Quelldateien zu ändern; für
+Vorhaben 14 rechnet das die Zahlen des Messdokuments nach (α 1,000 / 0,819 / 0,935,
+Kantenpräzision 139/150 = 0,927, gewichtet 0,922; Runde 2: 85/100 = 0,850, gewichtet 0,840).
+Verworfen: den Leerraum in offenen Antworten ganz zu entfernen, wie es die vorläufigen Auswertungen
+von 11 und 12 taten („66 - Amt" gleich „66-Amt"): das ist eine Entscheidung über die Frage, nicht
+über die Form, und gehört, wenn überhaupt, als Einstellung je Frage ins Codebuch.
