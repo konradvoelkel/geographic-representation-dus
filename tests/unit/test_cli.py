@@ -395,7 +395,9 @@ def test_paths_prints_the_layout_for_scripts(
     assert profile["papers"] == str(project / "data" / "2025" / "raw" / "papers.jsonl")
     assert profile["pdf_dir"].endswith("/2025/pdf")
     assert profile["text_store"].endswith("/2025/text/texts.parquet")
-    assert set(profile) == set(main_profile) and len(profile) == 12
+    # Fundament F1: der Rohtextstore, damit Messskripte ihn nicht von Hand zusammensetzen
+    assert profile["raw_text_store"].endswith("/2025/text/rohtexte.parquet")
+    assert set(profile) == set(main_profile) and len(profile) == 13
     # Jeder Wert ohne Leerzeichen am Rand: das Skript liest sie als key=wert
     assert all(v == v.strip() for v in profile.values())
 
@@ -487,6 +489,22 @@ def test_pack_takes_one_kind_of_small_package_at_a_time(
     with pytest.raises(SystemExit) as stop:
         main(["pack", "--texts", "--consultations", str(tmp_path / "paket")])
     assert stop.value.code == 2 and "not allowed with argument" in capsys.readouterr().err
+    with pytest.raises(SystemExit) as stop:
+        main(["pack", "--raw-texts", "--texts", str(tmp_path / "paket")])
+    assert stop.value.code == 2 and "not allowed with argument" in capsys.readouterr().err
+
+
+def test_pack_raw_texts_refuses_a_run_without_pdfs(
+    project: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Fundament F1: ohne PDFs schreibt raw_texts einen leeren Store, und der ist kein Paket."""
+    assert main(["bootstrap"]) == 0
+    assert main(["run", "raw_texts"]) == 0
+    assert "raw_texts    ausgeführt" in capsys.readouterr().out
+    target = tmp_path / "paket-rohtexte"
+    assert main(["pack", "--raw-texts", str(target)]) == 1
+    assert "kein einziger Rohtext" in capsys.readouterr().err
+    assert not target.exists()
 
 
 # --- Fundament F6: der Trockenlauf eines Abrufs -------------------------------------------------

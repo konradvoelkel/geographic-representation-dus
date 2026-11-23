@@ -24,12 +24,13 @@ from georep.pack import (
     check_text_store,
     pack,
     pack_consultations,
+    pack_raw_texts,
     pack_texts,
     package_files,
     paper_file_names,
 )
 from georep.settings import Settings
-from georep.stores import TextMeta, TextStore
+from georep.stores import RawTextStore, TextMeta, TextStore
 
 
 @pytest.fixture
@@ -349,3 +350,78 @@ def test_pack_consultations_says_when_the_metadata_are_missing(
     _papers_jsonl(layout.papers, [{"id": "p1", "consultation_organizations": []}])
     with pytest.raises(PackError, match="gehört daneben"):
         pack_consultations(layout, default_settings, layout.root / "paket")
+
+
+# --- Fundament F1: ein Paket, das nur den Rohtextstore trägt -------------------------------------
+
+
+def _raw_run(tmp_path: Path) -> Layout:
+    """Ein Lauf mit zwei Hauptdateien, von denen eine einen Rohtext hat (die andere war defekt)."""
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
+    _papers_jsonl(
+        layout.papers,
+        [{"id": "p1", "file_name": "a.pdf"}, {"id": "p2", "file_name": "b.pdf"}, {"id": "p3"}],
+    )
+    layout.raw_texts.parent.mkdir(parents=True, exist_ok=True)
+    store = RawTextStore(layout.raw_texts)
+    store.put("a.pdf", "Kopf\nBetrifft: A\fSeite 2", pages=2, extractor="x+roh", pdf_sha256="0")
+    store.save()
+    return layout
+
+
+def test_pack_raw_texts_writes_only_the_raw_store(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout = _raw_run(tmp_path)
+    target = tmp_path / "rohtexte"
+    report = pack_raw_texts(layout, default_settings, target, today=dt.date(2026, 11, 23))
+    assert {str(p.relative_to(target)) for p in target.rglob("*") if p.is_file()} == {
+        README_NAME,
+        "cache/text/rohtexte.parquet",
+    }
+    packed = target / "cache" / "text" / "rohtexte.parquet"
+    assert packed.read_bytes() == layout.raw_texts.read_bytes()
+    assert report.figures == (("Rohtexte", 1), ("Seiten", 2), ("Hauptdateien ohne Rohtext", 1))
+    assert "1 Rohtexte, 2 Seiten, 1 Hauptdateien ohne Rohtext" in report.line()
+    assert "pack --raw-texts" in (target / README_NAME).read_text(encoding="utf-8")
+
+
+def test_pack_raw_texts_keeps_what_is_there_without_force(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout = _raw_run(tmp_path)
+    target = tmp_path / "rohtexte"
+    pack_raw_texts(layout, default_settings, target, today=dt.date(2026, 11, 23))
+    again = pack_raw_texts(layout, default_settings, target, today=dt.date(2026, 11, 23))
+    assert again.skipped == ("cache/text/rohtexte.parquet",) and not again.readme_written
+    assert not pack_raw_texts(layout, default_settings, target, force=True).skipped
+
+
+def test_pack_raw_texts_refuses_an_empty_store(
+    tmp_path: Path, mini_run: Layout, default_settings: Settings
+) -> None:
+    """Ohne PDFs schreibt der Schritt einen leeren Store; als Paket hieße er „so sah der Lauf aus"."""
+    with pytest.raises(PackError, match="kein einziger Rohtext"):
+        pack_raw_texts(mini_run, default_settings, tmp_path / "rohtexte")
+    assert not (tmp_path / "rohtexte").exists()
+
+
+def test_pack_raw_texts_refuses_a_text_without_a_paper_and_a_target_inside(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout = _raw_run(tmp_path)
+    store = RawTextStore(layout.raw_texts)
+    store.put("c.pdf", "ohne Paper", pages=1, extractor="x+roh", pdf_sha256="1")
+    store.save()
+    with pytest.raises(PackError, match="haben kein Paper"):
+        pack_raw_texts(layout, default_settings, tmp_path / "rohtexte")
+    with pytest.raises(PackError, match="gehört daneben"):
+        pack_raw_texts(layout, default_settings, layout.root / "rohtexte")
+
+
+def test_pack_raw_texts_says_when_the_store_is_missing(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout = Layout(tmp_path / "leer", tmp_path / "cache", tmp_path / "ref", "duesseldorf")
+    with pytest.raises(PackError, match="fehlen; lief"):
+        pack_raw_texts(layout, default_settings, tmp_path / "rohtexte")

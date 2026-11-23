@@ -41,7 +41,7 @@ from georep.io import atomic_path, write_parquet, write_text
 from georep.layout import Layout
 from georep.prep.bodies import CONSULTATION
 from georep.settings import Settings
-from georep.stores import TextStore
+from georep.stores import RawTextStore, TextStore
 
 README_NAME = "README.md"
 # Herkünfte, die ein Lauf wirklich erzeugt: ``pdf`` ist eine eigene Extraktion, ``reference`` die
@@ -451,3 +451,70 @@ def pack_texts(
         readme_written=not (target / README_NAME).exists(),
     )
     return _with_readme(report, settings, today, command="pack --texts")
+
+
+# --- Fundament F1: ein Paket, das nur den Rohtextstore trägt -------------------------------------
+
+RAW_TEXTS_NAME = "cache/text/rohtexte.parquet"
+
+
+def pack_raw_texts(
+    layout: Layout,
+    settings: Settings,
+    target: Path,
+    *,
+    force: bool = False,
+    today: dt.date | None = None,
+) -> PackReport:
+    """Nur den Rohtextstore packen: ``cache/text/rohtexte.parquet`` (Fundament F1).
+
+    Wie ``pack_texts`` für den zweiten Store: GitHub Pages hat keine PDFs, also kommt der Rohtext
+    dorthin nur als Paket, und ``[bootstrap].raw_texts`` legt es an. Geprüft wird, dass jeder Name
+    ein Paper dieser Periode ist und dass es überhaupt einen Rohtext gibt -- ohne PDFs schreibt
+    der Schritt ``raw_texts`` einen leeren Store, und der wäre kein Paket, sondern ein Irrtum.
+    Ein Name ohne Rohtext ist dagegen erlaubt (ein defektes PDF); die Zahl steht im README.
+    """
+    claim_target(layout, target)
+    missing = [str(path) for path in (layout.papers, layout.raw_texts) if not path.is_file()]
+    if missing:
+        raise PackError(f"{missing} fehlen; lief `georep run raw_texts` für dieses Profil?")
+    store = RawTextStore(layout.raw_texts)
+    if not len(store):
+        raise PackError(
+            f"{layout.raw_texts}: kein einziger Rohtext; der Schritt raw_texts lief ohne PDFs. "
+            "Gepackt wird nach einem Lauf mit den PDFs der Periode."
+        )
+    known = paper_file_names(layout.papers)
+    orphans = sorted(name for name in store.rows if name not in known)
+    if orphans:
+        raise PackError(
+            f"{layout.raw_texts}: {len(orphans)} Rohtexte haben kein Paper in "
+            f"{layout.papers.name} ({', '.join(orphans[:EXAMPLES])})"
+        )
+    destination = target / RAW_TEXTS_NAME
+    skipped: list[str] = []
+    if destination.exists() and not force:
+        skipped.append(RAW_TEXTS_NAME)
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        with atomic_path(destination) as tmp:
+            shutil.copyfile(layout.raw_texts, tmp)
+    pages = sum(int(row["pages"]) for row in store.rows.values())  # type: ignore[call-overload]
+    report = PackReport(
+        target=target,
+        files=(
+            PackedFile(
+                name=RAW_TEXTS_NAME,
+                bytes=destination.stat().st_size,
+                sha256=sha256_of(destination),
+            ),
+        ),
+        skipped=tuple(skipped),
+        figures=(
+            ("Rohtexte", len(store)),
+            ("Seiten", pages),
+            ("Hauptdateien ohne Rohtext", len(known - set(store.rows))),
+        ),
+        readme_written=not (target / README_NAME).exists(),
+    )
+    return _with_readme(report, settings, today, command="pack --raw-texts")

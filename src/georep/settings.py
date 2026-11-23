@@ -1422,8 +1422,11 @@ class Bootstrap(_Strict):
     # Punkt 68: ein Textpaket (``georep pack --texts``), dessen Store den der Referenz ersetzt,
     # wenn er genau ihre Dateien trägt; ``None`` = die Texte der Referenz.
     texts: Path | None = None
+    # Fundament F1: ein Rohtextpaket (``georep pack --raw-texts``), das den Rohtextstore anlegt;
+    # ``None`` = kein Paket, der Schritt ``raw_texts`` liest die PDFs, wo es sie gibt.
+    raw_texts: Path | None = None
 
-    @field_validator("texts", mode="before")
+    @field_validator("texts", "raw_texts", mode="before")
     @classmethod
     def _empty_is_none(cls, value: object) -> object:
         return None if value in ("", None) else value
