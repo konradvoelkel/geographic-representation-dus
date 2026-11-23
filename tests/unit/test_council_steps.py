@@ -261,15 +261,66 @@ def test_an_aborted_fetch_keeps_the_old_file_and_resumes(
     assert not files.progress("meetings").exists()
 
 
-def test_max_pages_is_a_probe_of_the_first_page(tmp_path: Path, settings: Settings) -> None:
+def _probing(settings: Settings) -> Settings:
     probe = settings.sources.oparl.model_copy(update={"max_pages": 1})
-    probing = settings.model_copy(
+    return settings.model_copy(
         update={"sources": settings.sources.model_copy(update={"oparl": probe})}
     )
+
+
+def test_max_pages_is_a_probe_and_the_next_run_goes_on_from_there(
+    tmp_path: Path, settings: Settings
+) -> None:
+    """``fetch persons --max-pages 1`` ist der Anfang des Abrufs, nicht ein kleiner ganzer: die
+    Ausgabe zeigt die erste Seite, der Fortschritt bleibt, und der nächste Lauf ohne Grenze setzt
+    bei Seite 2 fort, statt den Bestand der Probe für vollständig zu halten."""
     layout = _layout(tmp_path)
     layout.ensure_dirs()
+    files = council_files(layout)
     session = _session(settings)
+    probing = _probing(settings)
     steps = build_steps(probing, layout, session, sleep=lambda _: None)
     outcome = run_pipeline(steps, probing, ["persons"], online=True)[0]
     assert "1 Seite(n)" in outcome.reason and "weiter bei" in outcome.reason
     assert session.urls == [settings.council.persons_endpoint]
+    assert len(_lines(files.persons)) == 3
+    following = json.loads((HTTP / "oparl_people_0015.json").read_text(encoding="utf-8"))
+    progress = json.loads(files.progress("persons").read_text(encoding="utf-8"))
+    assert progress["next_url"] == following["links"]["next"]
+
+    rest = _session(settings)
+    full = build_steps(settings, layout, rest, sleep=lambda _: None)
+    outcome = run_pipeline(full, settings, ["persons"], online=True)[0]
+    assert outcome.reason.startswith("Settings geändert; vollständig (fortgesetzt):")
+    assert rest.urls == [following["links"]["next"]] and rest.calls[0][1] is None
+    assert len(_lines(files.persons)) == 3 and not files.progress("persons").exists()
+
+
+def test_a_probe_does_not_make_the_next_run_incremental(tmp_path: Path, settings: Settings) -> None:
+    """Beratungen holen bei vorhandenem Bestand nur Geändertes; der Bestand einer Probe zählt
+    nicht als Bestand, sonst fehlte nach Probe und vollem Lauf alles außer Seite 1."""
+    layout = _layout(tmp_path)
+    layout.ensure_dirs()
+    endpoint = settings.council.consultations_endpoint
+    following = "https://ris.invalid/consultations?page=2"
+    first = _consultation_page() | {"links": {"next": following}}
+    second: dict[str, Any] = {"data": [], "links": {}}
+    routes: dict[str, requests.Response | Exception] = {
+        endpoint: response(endpoint, payload=first),
+        following: response(following, payload=second),
+    }
+    probing = _probing(settings)
+    run_pipeline(
+        build_steps(probing, layout, FakeSession(routes), sleep=lambda _: None),
+        probing,
+        ["consultations"],
+        online=True,
+    )
+    session = FakeSession(routes)
+    run_pipeline(
+        build_steps(settings, layout, session, sleep=lambda _: None),
+        settings,
+        ["consultations"],
+        online=True,
+    )
+    assert session.calls == [(following, None)]  # fortgesetzt, ohne modified_since

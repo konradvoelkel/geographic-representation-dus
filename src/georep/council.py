@@ -28,6 +28,7 @@ fallen heraus.
 from __future__ import annotations
 
 import datetime as dt
+import json
 import time
 from collections.abc import Callable, Collection, Iterable, Mapping
 from dataclasses import dataclass
@@ -36,7 +37,7 @@ from pathlib import Path
 import deal
 
 from georep.http import Transport
-from georep.io import atomic_path
+from georep.io import atomic_path, write_json
 from georep.layout import Layout
 from georep.oparl import (
     OparlAgendaItem,
@@ -47,7 +48,7 @@ from georep.oparl import (
     OparlPerson,
 )
 from georep.settings import Settings
-from georep.sources.oparl import fetch_objects, read_progress, write_progress
+from georep.sources.oparl import fetch_objects
 
 # Die Version der fünf JSONL-Dateien; die drei Schritte nennen sie (tests/unit/test_pipeline_steps.py).
 COUNCIL_SCHEMA_VERSION = 1
@@ -159,11 +160,17 @@ def merge[O: OparlObject](
 
 @dataclass(frozen=True)
 class _Run:
-    """Was ein Schritt vor dem Abruf weiß: ab wann, ob er fortsetzt, wo sein Fortschritt steht."""
+    """Was ein Schritt vor dem Abruf weiß: ab wann, ob er fortsetzt, wo sein Fortschritt steht.
+
+    ``since`` gehört zum ganzen Abruf, auch über eine Unterbrechung hinweg: der Fortschritt hält
+    es fest, und eine Fortsetzung fragt ohne ``modified_since`` (der ``next``-Link des Servers
+    trägt den Filter schon) und legt das Ergebnis trotzdem richtig über den Bestand.
+    """
 
     since: dt.datetime | None
     resume: str | None
     progress: Path
+    pages: int = 0
 
     @property
     def mode(self) -> str:
@@ -171,31 +178,61 @@ class _Run:
         return mode + (" (fortgesetzt)" if self.resume else "")
 
 
+def _saved(progress: Path) -> tuple[str | None, dt.datetime | None, int]:
+    """URL, ``since`` und Seitenzahl eines unvollständigen Abrufs; eine kaputte Datei ist keiner."""
+    try:
+        saved = json.loads(progress.read_text(encoding="utf-8"))
+        url, since, pages = saved["next_url"], saved.get("since"), int(saved.get("pages", 0))
+        if not isinstance(url, str) or not url:
+            return None, None, 0
+        return url, dt.datetime.fromisoformat(since) if isinstance(since, str) else None, pages
+    except OSError, ValueError, KeyError, TypeError:
+        return None, None, 0
+
+
 def _start(progress: Path, since: dt.datetime | None, *partials: Path) -> _Run:
-    """Ohne Fortschritt beginnen die Teildateien leer; mit ihm macht der Abruf dort weiter."""
-    resume = read_progress(progress)
-    if resume is None:
-        for partial in partials:
-            partial.unlink(missing_ok=True)
-    return _Run(since, resume, progress)
+    """Mit Fortschritt macht der Abruf dort weiter, mit dessen ``since``; ohne ihn beginnen die
+    Teildateien leer und ``since`` kommt aus dem Bestand.
+
+    Darum ist eine Probe mit ``--max-pages`` der Anfang des Abrufs und nicht ein kleiner ganzer:
+    ihr Bestand gälte sonst beim nächsten Lauf als vollständig, und ``modified_since`` holte nur
+    noch, was sich seitdem geändert hat (2026-11-23, Test vor der Änderung).
+    """
+    resume, saved_since, pages = _saved(progress)
+    if resume is not None:
+        return _Run(saved_since, resume, progress, pages)
+    for partial in partials:
+        partial.unlink(missing_ok=True)
+    return _Run(since, None, progress)
 
 
 def _page_writer[O: OparlObject](
-    progress: Path, write: Callable[[list[O]], None]
+    run: _Run, write: Callable[[list[O]], None]
 ) -> Callable[[list[O], str | None], None]:
     """Nach jeder Seite: die Objekte in die Teildatei, dann die URL der nächsten Seite."""
-    done = 0
+    done = run.pages
 
     def page_done(kept: list[O], next_url: str | None) -> None:
         nonlocal done
         write(kept)
         done += 1
-        write_progress(progress, next_url, done)
+        write_json(
+            run.progress,
+            {
+                "next_url": next_url,
+                "pages": done,
+                "since": run.since.isoformat() if run.since else None,
+                "written": dt.datetime.now(dt.UTC).isoformat(),
+            },
+        )
 
     return page_done
 
 
-def _finish(run: _Run, *partials: Path) -> None:
+def _finish(run: _Run, next_url: str | None, *partials: Path) -> None:
+    """Nach dem letzten Blatt weg mit Teildateien und Fortschritt; nach einer Probe bleiben sie."""
+    if next_url is not None:
+        return
     for partial in partials:
         partial.unlink(missing_ok=True)
     run.progress.unlink(missing_ok=True)
@@ -265,10 +302,10 @@ def run_meetings(
         keep=lambda meeting: meeting.starts_on_or_after(start),
         older=_all_before(start) if council.stop_when_older else None,
         delay_s=oparl.delay_s,
-        modified_since=run.since,
+        modified_since=None if run.resume else run.since,
         max_pages=oparl.max_pages or None,  # `fetch meetings --max-pages N` als Probe
         resume_from=run.resume,
-        on_page=_page_writer(run.progress, write),
+        on_page=_page_writer(run, write),
         sleep=sleep,
     )
     fetched = new_meetings.load()
@@ -284,7 +321,7 @@ def run_meetings(
     )
     meetings.save(all_meetings.values())
     items.save(all_items.values())
-    _finish(run, new_meetings.path, new_items.path)
+    _finish(run, report.next_url, new_meetings.path, new_items.path)
     result = sum(1 for item in all_items.values() if item.result)
     consulted = sum(1 for item in all_items.values() if item.consultation)
     return (
@@ -314,15 +351,15 @@ def run_consultations(
         council.consultations_endpoint,
         OparlConsultation,
         delay_s=oparl.delay_s,
-        modified_since=run.since,
+        modified_since=None if run.resume else run.since,
         max_pages=oparl.max_pages or None,
         resume_from=run.resume,
-        on_page=_page_writer(run.progress, new.append),
+        on_page=_page_writer(run, new.append),
         sleep=sleep,
     )
     merged = merge(known if run.since else {}, new.load(), report.deleted_ids)
     store.save(merged.values())
-    _finish(run, new.path)
+    _finish(run, report.next_url, new.path)
     linked = sum(1 for c in merged.values() if c.meeting and c.agenda_item)
     return (
         f"{run.mode}: {report.summary()}; {len(merged)} Beratungen, "
@@ -360,10 +397,10 @@ def run_persons(
         council.persons_endpoint,
         OparlPerson,
         delay_s=oparl.delay_s,
-        modified_since=run.since,
+        modified_since=None if run.resume else run.since,
         max_pages=oparl.max_pages or None,
         resume_from=run.resume,
-        on_page=_page_writer(run.progress, write),
+        on_page=_page_writer(run, write),
         sleep=sleep,
     )
     fetched = new_persons.load()
@@ -378,7 +415,7 @@ def run_persons(
     )
     persons.save(all_persons.values())
     memberships.save(all_memberships.values())
-    _finish(run, new_persons.path, new_memberships.path)
+    _finish(run, report.next_url, new_persons.path, new_memberships.path)
     voting = sum(1 for m in all_memberships.values() if m.voting_right)
     ended = sum(1 for m in all_memberships.values() if m.end_date is not None)
     return (
