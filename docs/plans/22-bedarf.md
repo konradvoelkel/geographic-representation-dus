@@ -348,7 +348,7 @@ Tabellen; Ebene 0, einziger Eigentümer von `prep/context.py`.
   Band fehlen) und `cells_to_districts(cells, precincts)` (Mittelpunkt in Fläche, scharf). Verträge an
   der Batch-Grenze: Anteile in (0, 1], Summe je Punkt 1, sortiert nach `punkt, wahlkreis_id`;
   Bandbreite ≥ 0 (0 = scharf). Nicht `PrecinctIndex.locate` je Punkt: `STRtree.query` mit
-  `predicate="dwithin"` über das ganze Feld (13 507 Punkte in Millisekunden).
+  `predicate="dwithin"` über das ganze Feld, wie im Messskript (`Stimmbezirke.anteile`).
 - `georep/prep/context.py`: neu `read_accidents(paths, ags) -> pl.DataFrame` (die Jahrgänge heißen
   verschieden: `csv/…_LinRef.csv`, `…/Unfallorte_2021_LinRef.txt`, `…_LR_BasisDLM.csv`; Spalten mit
   BOM; Dezimalkomma), `read_grid(path, bbox)` (Zensus, EPSG:3035), `read_school_index(schools,
