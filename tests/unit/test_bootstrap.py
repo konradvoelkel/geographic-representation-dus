@@ -307,3 +307,21 @@ def test_the_settings_wire_the_raw_text_package_into_bootstrap(
     layout = _layout(tmp_path / "neu", mini_root)
     assert bootstrap_from_settings(layout, settings).raw_texts == 200
     assert layout.raw_texts.read_bytes() == package.read_bytes()
+
+
+def test_an_empty_raw_text_store_does_not_block_the_package(
+    tmp_path: Path, mini_root: Path
+) -> None:
+    """Review F1, M2: ``raw_texts`` ohne PDFs legt einen Store mit 0 Zeilen an.
+
+    Der stand danach als „vorhanden" da, und ``bootstrap`` übersprang das Paket für immer; ohne
+    ``--force`` kam der Rohtext nie mehr an. Ein leerer Store zählt wie ein fehlender.
+    """
+    probe = _layout(tmp_path / "probe", mini_root)
+    bootstrap(probe)
+    package = _raw_package(tmp_path, _file_names(probe)[:5])
+    layout = _layout(tmp_path / "neu", mini_root)
+    bootstrap(layout)
+    RawTextStore(layout.raw_texts).save()  # wie der Schritt raw_texts ohne PDFs
+    report = bootstrap(layout, raw_texts=package)
+    assert report.raw_texts == 5 and layout.raw_texts.read_bytes() == package.read_bytes()

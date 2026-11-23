@@ -145,6 +145,11 @@ def overlay_texts(layout: Layout, package: Path, report: BootstrapReport) -> Non
     report.texts_package = package
 
 
+def _holds_rows(store: Path) -> bool:
+    """Ob ein Rohtextstore da ist und mindestens eine Zeile trägt; gelesen wird nur die Zeilenzahl."""
+    return store.is_file() and int(pl.scan_parquet(store).select(pl.len()).collect().item()) > 0
+
+
 def overlay_raw_texts(
     layout: Layout, package: Path, report: BootstrapReport, *, force: bool
 ) -> None:
@@ -155,13 +160,15 @@ def overlay_raw_texts(
     den Text der Arbeit (Punkt 68). Es darf aber keinen Namen tragen, der keine Hauptdatei dieser
     Paper ist -- dann ist es das Paket eines anderen Datensatzes (die Mini-Fixture bootstrappt mit
     den Settings der Hauptperiode). Ein vorhandener Rohtextstore bleibt ohne ``force`` stehen, wie
-    jede andere Eingabe. Gelesen wird für die Prüfung nur die Spalte ``name``.
+    jede andere Eingabe -- außer er ist leer: den legt der Schritt ``raw_texts`` ohne PDFs an, und
+    zählte er als vorhanden, käme das Paket ohne ``--force`` nie mehr an (Review F1, M2). Gelesen
+    wird für die Prüfung nur die Spalte ``name``.
     """
     if not package.is_file():
         report.missing.append(package.name)
         return
     target = layout.guard_writable(layout.raw_texts)
-    if target.exists() and not force:
+    if not force and _holds_rows(target):
         report.skipped.append(target.name)
         return
     names = set(pl.read_parquet(package, columns=["name"]).get_column("name").to_list())
