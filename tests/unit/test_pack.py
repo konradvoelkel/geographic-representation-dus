@@ -511,3 +511,18 @@ def test_pack_raw_texts_writes_the_same_rows_with_a_stronger_compression(
     assert (default / "cache/text/rohtexte.parquet").read_bytes() == (
         tmp_path / "stufe-19" / "cache/text/rohtexte.parquet"
     ).read_bytes()
+
+
+def test_pack_raw_texts_names_an_old_schema_version(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    """Review F1, dritte Runde: ein Store in Version 1 hieß bisher „lief ohne PDFs"."""
+    from georep.io import write_parquet
+
+    layout = _raw_run(tmp_path)
+    write_parquet(
+        pl.read_parquet(layout.raw_texts).drop("form_feeds"), layout.raw_texts, schema_version=1
+    )
+    with pytest.raises(PackError, match="Schema-Version 1") as refused:
+        pack_raw_texts(layout, default_settings, tmp_path / "rohtexte")
+    assert "ohne PDFs" not in str(refused.value)

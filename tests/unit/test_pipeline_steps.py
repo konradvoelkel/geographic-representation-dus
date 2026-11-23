@@ -395,3 +395,38 @@ def test_the_report_runs_on_a_data_root_without_a_raw_text_store(
     assert stamp_mismatch(stamped, report, default_settings) == (
         f"Eingabe geändert: {layout.raw_texts.name}"
     )
+
+
+def _old_raw_store(path: Path) -> None:
+    """Ein Rohtextstore in Schema-Version 1: ohne ``form_feeds``, mit Version 1 in den Metadaten."""
+    from georep.io import write_parquet
+    from georep.stores import RAW_TEXT_SCHEMA
+
+    columns = {k: v for k, v in RAW_TEXT_SCHEMA.items() if k != "form_feeds"}
+    row = {"name": "a.pdf", "text": "alt", "pages": 1, "chars": 3, "extractor": "x+roh"}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_parquet(pl.DataFrame([row | {"pdf_sha256": "0"}], schema=columns), path, schema_version=1)
+
+
+def test_raw_texts_says_it_wrote_an_old_store_empty_when_there_are_no_pdfs(
+    default_settings: Settings, tmp_path: Path
+) -> None:
+    """Review F1, dritte Runde: der Schritt meldete „neu gelesen", auch wenn kein PDF da war."""
+    import datetime as dt
+
+    from georep.records import PaperRecord
+    from georep.sources.pdfs import PdfStore
+    from georep.stores import PaperStore, RawTextStore
+
+    layout = _layout(tmp_path)
+    record = PaperRecord(id="p1", name="A", date=dt.date(2024, 1, 1), file_name="a.pdf")
+    PaperStore(layout.papers).save([record])
+    PdfStore(layout.pdf_dir).ensure()
+    _old_raw_store(layout.raw_texts)
+    steps = build_steps(default_settings, layout)
+    [outcome] = run_pipeline(steps, default_settings, ["raw_texts"])
+    assert "ohne PDFs leer neu geschrieben, weil rohtexte.parquet trägt Schema-Version 1" in (
+        outcome.reason
+    )
+    assert "neu gelesen" not in outcome.reason
+    assert len(RawTextStore(layout.raw_texts)) == 0 and RawTextStore(layout.raw_texts).stale == ""

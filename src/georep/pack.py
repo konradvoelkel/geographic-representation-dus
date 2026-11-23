@@ -520,6 +520,11 @@ def pack_raw_texts(
     if missing:
         raise PackError(f"{missing} fehlen; lief `georep run raw_texts` für dieses Profil?")
     store = RawTextStore(layout.raw_texts)
+    if store.stale:  # Review F1, dritte Runde: eine alte Version liest der Store als leer
+        raise PackError(
+            f"{layout.raw_texts}: {store.stale}; erst `georep run raw_texts` mit den PDFs der "
+            "Periode, dann packen"
+        )
     if not len(store):
         raise PackError(
             f"{layout.raw_texts}: kein einziger Rohtext; der Schritt raw_texts lief ohne PDFs. "

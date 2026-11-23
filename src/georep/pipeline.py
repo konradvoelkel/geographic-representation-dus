@@ -601,7 +601,9 @@ def build_steps(
         # darüberlegen kann und niemand die alten Zeilen zählt.
         if not layout.raw_texts.exists() or (store.stale and not report.extracted):
             store.save()
-        stale = f"; neu gelesen, weil {store.stale}" if store.stale else ""
+        # Review F1, dritte Runde: ohne PDFs ist nichts neu gelesen, nur die Datei geleert
+        done = "neu gelesen" if report.extracted else "ohne PDFs leer neu geschrieben"
+        stale = f"; {done}, weil {store.stale}" if store.stale else ""
         return report.summary() + stale
 
     def voters() -> str:
