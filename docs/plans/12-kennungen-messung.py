@@ -1,12 +1,20 @@
 """Rechnet die Zahlen von `12-kennungen.md` nach (Vorhaben 12, Stufe 1: Kennungen und Beträge).
 
     uv run python docs/plans/12-kennungen-messung.py [--profil duesseldorf] [--alle] [--stichprobe]
+    uv run python docs/plans/12-kennungen-messung.py --auswertung
 
 Ohne Schalter misst es die Hauptperiode (rund eine Minute auf vier Kernen); `--alle` misst dazu
-2014-2020, 2025 und Mönchengladbach (Übertragbarkeit, § 3.8 des Dokuments); `--stichprobe` zieht
+2014-2020, 2025 und Mönchengladbach (Übertragbarkeit, § 3.4 des Dokuments); `--stichprobe` zieht
 die Validierungsstichprobe (Seed fest) und schreibt `validierung/12-kennungen/stichprobe.csv`
 (nur IDs und Spannengrenzen) sowie die Kodieraufgaben mit Textausschnitten nach
 `messdaten/kodierung/12-kennungen/aufgaben.jsonl` auf xtraspace (nie ins Repo, Plan § 4).
+
+`--auswertung` (nach der Kodierung, § 4.1 und § 4.2 des Dokuments) liest dort die Antworten der
+Kodierer A und B und die Schlichtung, bildet die Endlabels, schreibt `validierung/12-kennungen/
+labels.csv` (Werte als JSON, Offsets statt Textausschnitten) und misst den Extraktor dagegen:
+Präzision streng und mild, Recall streng und mild, Normwert, Rolle, Funktion, je mit Wilson-Intervall
+und, wo die Stichprobe geschichtet ist, mit `schicht_n` gewichtet; dazu Krippendorffs α der Kodierer
+und eine Fehlerliste mit Kontext (lokal, `fehler-extraktor.jsonl`).
 
 Liest nur: den Rohtext unter `messdaten/rohtext/<profil>.parquet` (pypdf 7.1.0, Groß- und
 Kleinschreibung, Zeilenumbrüche, Seitenwechsel als `\\f`; vom Supervisor am 2026-11-23
@@ -40,6 +48,7 @@ from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
+from typing import Any
 
 import polars as pl
 
@@ -1426,12 +1435,580 @@ def stichprobe(df: pl.DataFrame, sp: pl.DataFrame, meta: pl.DataFrame) -> None:
     print(f"  SHA-256 stichprobe.csv {sha}")
 
 
+# --------------------------------------------------------------------------------------------
+# Auswertung der Kodierung (2026-11-23, zweiter Auftrag): Endlabels, Maße, Fehlerbilder
+# --------------------------------------------------------------------------------------------
+
+FRAGEN = ("art", "grenzen", "text_korrigiert", "norm", "rolle", "frist")
+# Vier Unterschiede, die der Schlicht-Agent nicht entschieden hat; alle nur Schreibung. Entschieden
+# vom Auswerter nach den Regeln des Schlichters (R3: „i. V. m.“ mit Leerzeichen; Spannenregel:
+# der Gesetzesname gehört ganz zur Spanne).
+AUSWERTER: dict[tuple[str, str], tuple[str, str]] = {
+    ("12-0092", "text_korrigiert"): ("B", "Spannenregel: der ganze Name der Bestimmungen"),
+    ("12-0377", "norm"): ("B", "R3: i. V. m. mit Leerzeichen"),
+    ("12-0470", "norm"): ("B", "R3: i. V. m. mit Leerzeichen"),
+    ("12-0650", "norm"): ("A", "R3/R5: Spezifizierer ohne Leerzeichen vor dem Buchstaben"),
+}
+# Zwei Feldunterschiede gemeinsamer Recall-Spannen, die der Schlichter nicht vorgelegt bekam
+RECALL_AUSWERTER: dict[tuple[str, str], tuple[str, str]] = {
+    ("12-0123", "23.09.2020"): ("B", "R17: Datum einer Vorlage ist sonst"),
+    ("12-0257", "01.03.2021"): ("A", "R18: „ab dem …“ beginnt einen Zeitraum"),
+}
+KIND_ART = {**ART_VON, "keine": "keine"}
+
+
+def leer_zu_null(v: object) -> object:
+    """R2: „leer bei keine“ ist null; leere Zeichenfolgen und leere Listen auch."""
+    return None if v in ("", []) else v
+
+
+def finde(text: str, gesucht: str, vorkommen: int) -> tuple[int, int] | None:
+    """Offsets des n-ten Vorkommens; erst wörtlich, dann mit beliebigem Leerraum dazwischen."""
+    pos, gefunden = 0, 0
+    while True:
+        i = text.find(gesucht, pos)
+        if i < 0:
+            break
+        gefunden += 1
+        if gefunden == vorkommen:
+            return i, i + len(gesucht)
+        pos = i + 1
+    teile = [re.escape(t) for t in gesucht.split()]
+    if not teile:
+        return None
+    treffer = list(re.finditer(r"\s+".join(teile), text))
+    if len(treffer) >= vorkommen:
+        m = treffer[vorkommen - 1]
+        return m.start(), m.end()
+    return None
+
+
+def spanne_offsets(
+    text: str, s: dict[str, object], fehlend: list[str], aufgabe: str
+) -> dict[str, object] | None:
+    o = finde(text, str(s["text"]), int(str(s.get("vorkommen") or 1)))
+    if o is None:
+        fehlend.append(f"{aufgabe}: {str(s['text'])[:30]!r}")
+        return None
+    return {
+        "start": o[0],
+        "end": o[1],
+        "art": s.get("art"),
+        "norm": leer_zu_null(s.get("norm")),
+        "rolle": leer_zu_null(s.get("rolle")),
+        "frist": leer_zu_null(s.get("frist")),
+        "tabelle": bool(s.get("tabelle")),
+    }
+
+
+def korrektur_offsets(text: str, korrigiert: str, start: int, end: int) -> list[int] | None:
+    """Die korrigierte Spanne liegt an der markierten Stelle: das Vorkommen, das sie überlappt."""
+    teile = [re.escape(t) for t in korrigiert.split()]
+    beste = None
+    for m in re.finditer(r"\s+".join(teile), text):
+        if m.start() < end and start < m.end():
+            return [m.start(), m.end()]
+        abstand = abs(m.start() - start)
+        if beste is None or abstand < beste[0]:
+            beste = (abstand, [m.start(), m.end()])
+    return beste[1] if beste else None
+
+
+def ohne_text(text: str, ent: dict[str, Any]) -> dict[str, Any]:
+    """Entscheid der Schlichtung mit Offsets statt Textausschnitten (Plan § 4: keine Ausschnitte im Repo)."""
+    aus: dict[str, Any] = {}
+    for k, v in ent.items():
+        if isinstance(v, list):
+            neu = []
+            for s in v:
+                if isinstance(s, dict) and "text" in s:
+                    o = finde(text, str(s["text"]), int(s.get("vorkommen") or 1))
+                    s = {
+                        "start": o[0] if o else None,
+                        "end": o[1] if o else None,
+                        **{f: w for f, w in s.items() if f not in ("text", "vorkommen")},
+                    }
+                neu.append(s)
+            aus[k] = neu
+        else:
+            aus[k] = v
+    return aus
+
+
+@dataclass
+class Labels:
+    praezision: dict[str, dict[str, object]]  # aufgabe -> frage -> Endlabel
+    recall: dict[str, list[dict[str, object]]]  # aufgabe -> Spannen mit Offsets
+    zeilen: list[dict[str, str]]  # für labels.csv
+    fehlend: list[str]
+    quellen: Counter[str]
+    paare: dict[str, list[tuple[object, object]]]  # Frage -> (A, B) je Aufgabe, für α
+
+
+def endlabels(aufgaben: dict[str, dict[str, object]]) -> Labels:
+    """Einig, sonst Schlichtung, sonst Auswerter; Recall: gemeinsame Spannen, dann Schlichtung."""
+
+    def lies(name: str) -> dict[str, dict[str, Any]]:
+        zeilen_ = (KODIERUNG / name).read_text(encoding="utf-8").splitlines()
+        return {z["aufgabe"]: z for z in (json.loads(t) for t in zeilen_ if t)}
+
+    a_all, b_all, sch = (
+        lies("antworten-A.jsonl"),
+        lies("antworten-B.jsonl"),
+        lies("schlichtung.jsonl"),
+    )
+    praez: dict[str, dict[str, object]] = {}
+    recall: dict[str, list[dict[str, object]]] = {}
+    zeilen: list[dict[str, str]] = []
+    fehlend: list[str] = []
+    quellen: Counter[str] = Counter()
+    j = lambda v: json.dumps(v, ensure_ascii=False)  # noqa: E731
+    for nr in sorted(aufgaben):
+        auf = aufgaben[nr]
+        a, b = a_all[nr], b_all[nr]
+        ent = sch.get(nr, {}).get("entscheid", {})
+        if auf["typ"] == "praezision":
+            text = str(auf["_text"])
+            mk = auf["markierung"]
+            assert isinstance(mk, dict)
+            praez[nr] = {}
+            for f in FRAGEN:
+                va, vb = leer_zu_null(a.get(f)), leer_zu_null(b.get(f))
+                schl: object = None
+                if va == vb:
+                    label, quelle = va, "einig"
+                elif f in ent:
+                    schl = leer_zu_null(ent[f])
+                    label, quelle = schl, "schlichtung"
+                else:
+                    wer, grund = AUSWERTER[(nr, f)]
+                    label, quelle = (va if wer == "A" else vb), "auswerter"
+                    schl = {"auswerter": wer, "regel": grund}
+                quellen[f"{f}:{quelle}"] += 1
+                if f == "text_korrigiert":  # keine Textausschnitte ins Repo: Offsets statt Text
+                    s0, e0 = int(mk["start"]), int(mk["end"])
+                    va = korrektur_offsets(text, va, s0, e0) if va else None
+                    vb = korrektur_offsets(text, vb, s0, e0) if vb else None
+                    label = korrektur_offsets(text, str(label), s0, e0) if label else None
+                    f = "grenzen_korrigiert"
+                    if isinstance(schl, dict):
+                        schl = {**schl, "wahl": label}
+                praez[nr][f] = label
+                zeilen.append(
+                    {
+                        "aufgabe": nr,
+                        "frage": f,
+                        "kodierer_a": j(va),
+                        "kodierer_b": j(vb),
+                        "schlichtung": j(schl) if schl is not None else "",
+                        "label": j(label),
+                    }
+                )
+            continue
+        text = str(auf["text"])
+        sa = [x for s in a["spannen"] if (x := spanne_offsets(text, s, fehlend, nr + "/A"))]
+        sb = [x for s in b["spannen"] if (x := spanne_offsets(text, s, fehlend, nr + "/B"))]
+        ka = {(int(str(s["start"])), int(str(s["end"]))): s for s in sa}
+        kb = {(int(str(s["start"])), int(str(s["end"]))): s for s in sb}
+        final = {k: dict(ka[k]) for k in ka if k in kb}
+        abweichend = [k for k in final if ka[k] != kb[k]]
+        for aend in ent.get("spannen_aendern", []):  # 12-0101: Feld einer gemeinsamen Spanne
+            o = finde(text, aend["text"], int(aend.get("vorkommen") or 1))
+            assert o is not None
+            for feld, wert in aend.items():
+                if feld not in ("text", "vorkommen"):
+                    final[o][feld] = wert
+            if o in abweichend:
+                abweichend.remove(o)
+        entscheide_auswerter = []
+        for k in abweichend:  # Feldunterschiede gemeinsamer Spannen, die der Schlichter nicht sah
+            wer, regel = RECALL_AUSWERTER.get((nr, text[k[0] : k[1]]), ("", ""))
+            if not wer and ka[k]["art"] in ("amt", "recht"):
+                wer, regel = "B", "R1: Name ohne Nummer" if ka[k]["art"] == "amt" else "R3: Satz"
+            assert wer, (nr, k, ka[k], kb[k])
+            final[k] = dict(ka[k] if wer == "A" else kb[k])
+            entscheide_auswerter.append(
+                {"start": k[0], "end": k[1], "auswerter": wer, "regel": regel}
+            )
+            quellen["spannen_feld:auswerter"] += 1
+        if entscheide_auswerter:
+            ent = {**ent, "auswerter": entscheide_auswerter}
+        for s in ent.get("spannen_weg", []):
+            o = finde(text, s["text"], int(s.get("vorkommen") or 1))
+            if o in final:
+                del final[o]
+        for s in ent.get("spannen_hinzu", []):
+            x = spanne_offsets(text, s, fehlend, nr + "/S")
+            if x:
+                final[(int(str(x["start"])), int(str(x["end"])))] = x
+        nur = len(set(ka) ^ set(kb))
+        quellen["spannen:einig"] += len([k for k in ka if k in kb])
+        quellen["spannen:nur_einer"] += nur
+        recall[nr] = sorted(
+            final.values(), key=lambda s: (int(str(s["start"])), int(str(s["end"])))
+        )
+        zeilen.append(
+            {
+                "aufgabe": nr,
+                "frage": "spannen",
+                "kodierer_a": j(sorted(sa, key=lambda s: str(s["start"]))),
+                "kodierer_b": j(sorted(sb, key=lambda s: str(s["start"]))),
+                "schlichtung": j(ohne_text(text, ent)) if ent else "",
+                "label": j(recall[nr]),
+            }
+        )
+    paare: dict[str, list[tuple[object, object]]] = defaultdict(list)
+    for nr, auf in aufgaben.items():
+        if auf["typ"] == "praezision":
+            for f in ("art", "grenzen", "norm", "rolle", "frist"):
+                va, vb = leer_zu_null(a_all[nr].get(f)), leer_zu_null(b_all[nr].get(f))
+                if va is not None or vb is not None:
+                    paare[f].append((va, vb))
+    return Labels(praez, recall, zeilen, fehlend, quellen, paare)
+
+
+def alpha_nominal(paare: Sequence[tuple[object, object]]) -> float:
+    """Krippendorffs α (nominal) für zwei Kodierer; Einheiten mit einem fehlenden Wert fallen weg."""
+    werte = [(str(a), str(b)) for a, b in paare if a is not None and b is not None]
+    o: Counter[tuple[str, str]] = Counter()
+    for a, b in werte:
+        o[(a, b)] += 1
+        o[(b, a)] += 1
+    n_c: Counter[str] = Counter()
+    for (a, _), v in o.items():
+        n_c[a] += v
+    n = sum(n_c.values())
+    d_o = sum(v for (a, b), v in o.items() if a != b) / n
+    d_e = sum(n_c[a] * n_c[b] for a in n_c for b in n_c if a != b) / (n * (n - 1))
+    return 1.0 - d_o / d_e if d_e else float("nan")
+
+
+def wilson(k: float, n: float, z: float = 1.96) -> tuple[float, float]:
+    if n <= 0:
+        return float("nan"), float("nan")
+    p = k / n
+    nenner = 1 + z * z / n
+    mitte = (p + z * z / (2 * n)) / nenner
+    halb = z * ((p * (1 - p) / n + z * z / (4 * n * n)) ** 0.5) / nenner
+    return max(0.0, mitte - halb), min(1.0, mitte + halb)
+
+
+def gewichtet(werte: Sequence[tuple[bool, float]]) -> tuple[float, int, float, float, float]:
+    """(Anteil gewichtet, n, n_eff nach Kish, Wilson unten, oben); Gewicht = schicht_n / Quote."""
+    n = len(werte)
+    if n == 0:
+        return float("nan"), 0, 0.0, float("nan"), float("nan")
+    sw = sum(w for _, w in werte)
+    p = sum(w for y, w in werte if y) / sw
+    n_eff = sw * sw / sum(w * w for _, w in werte)
+    lo, hi = wilson(p * n_eff, n_eff)
+    return p, n, n_eff, lo, hi
+
+
+def fmt(r: tuple[float, int, float, float, float]) -> str:
+    p, n, n_eff, lo, hi = r
+    if n == 0:
+        return "–"
+    return f"{p:.3f} [{lo:.3f}, {hi:.3f}] n={n} (n_eff {n_eff:.0f})"
+
+
+def norm_aequivalent(kind: str, x: object, label: object, aemter: dict[str, str]) -> bool:
+    """Gleich bis auf Schreibung, die das Codebuch .1 offen ließ (Diagnose, nicht das Maß)."""
+    if x == label:
+        return True
+    if x is None or label is None:
+        return False
+    a, b = str(x), str(label)
+
+    def recht(s: str) -> str:
+        s = re.sub(r"\bSatz\b", "S.", s)
+        s = re.sub(r"i\.\s*V\.\s*m(?:\.|it)", "i. V. m.", s)
+        s = re.sub(r"\((\d+[a-z]?)\)", r"Abs. \1", s)
+        s = re.sub(r"(\d)\s+([a-z])\b", r"\1\2", s)
+        return re.sub(r"\s+", " ", s).strip()
+
+    if kind == "recht":
+        return recht(a) == recht(b)
+    if kind == "investition":
+        return re.sub(r"\.[A-Z]\d$", "", a) == re.sub(r"\.[A-Z]\d$", "", b)
+    if kind == "amt":
+        return a == aemter.get(re.sub(r"\s+", " ", b), b)
+    if kind == "betrag":
+        try:
+            return Decimal(a) == Decimal(b)
+        except InvalidOperation:
+            return False
+    return re.sub(r"\s+", "", a) == re.sub(r"\s+", "", b)
+
+
+def auswertung(df: pl.DataFrame, sp: pl.DataFrame, aemter: dict[str, str]) -> None:
+    texte = dict(zip(df["name"].to_list(), df["text"].to_list(), strict=True))
+    aufgaben: dict[str, dict[str, object]] = {}
+    for x in (KODIERUNG / "aufgaben.jsonl").read_text(encoding="utf-8").splitlines():
+        auf = json.loads(x)
+        auf["_text"] = texte[auf["datei"]]
+        aufgaben[auf["aufgabe"]] = auf
+    with (VALIDIERUNG / "stichprobe.csv").open(encoding="utf-8") as f:
+        stich = {z["aufgabe"]: z for z in csv.DictReader(f)}
+    lab = endlabels(aufgaben)
+    print(
+        f"\n=== Auswertung der Kodierung: {len(lab.praezision)} Präzisions-, {len(lab.recall)} Recall-Aufgaben"
+    )
+    print("  Quellen der Endlabels:", dict(sorted(lab.quellen.items())))
+    for f, pp in sorted(lab.paare.items()):
+        beide = [(a, b) for a, b in pp if a is not None and b is not None]
+        gleich = sum(a == b for a, b in beide)
+        print(f"  Kodierer A/B {f:<8} gleich {gleich}/{len(beide)}, α {alpha_nominal(pp):.3f}")
+    ein = lab.quellen["spannen:einig"]
+    print(
+        f"  Recall-Spannen A/B: gemeinsam {ein}, nur einer {lab.quellen['spannen:nur_einer']}, "
+        f"F1 {2 * ein / (2 * ein + lab.quellen['spannen:nur_einer']):.3f}"
+    )
+    print(f"  Spannen ohne Fundstelle im Text: {len(lab.fehlend)}", lab.fehlend[:5])
+    with (VALIDIERUNG / "labels.csv").open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(
+            f,
+            fieldnames=["aufgabe", "frage", "kodierer_a", "kodierer_b", "schlichtung", "label"],
+            lineterminator="\n",
+        )
+        w.writeheader()
+        w.writerows(lab.zeilen)
+    print(f"  geschrieben: {VALIDIERUNG / 'labels.csv'} ({len(lab.zeilen)} Zeilen)")
+
+    # Extraktor je Aufgabe: die Spanne mit denselben Grenzen in derselben Art
+    je_dok: dict[str, list[dict[str, object]]] = defaultdict(list)
+    for r in sp.rows(named=True):
+        je_dok[r["name"]].append(r)
+    quote = Counter(z["schicht"] for z in stich.values() if z["typ"] == "praezision")
+    zeilen = []
+    for nr, lb in sorted(lab.praezision.items()):
+        z = stich[nr]
+        kand = [
+            r
+            for r in je_dok[z["datei"]]
+            if r["start"] == int(z["start"]) and r["end"] == int(z["end"]) and r["art"] == z["art"]
+        ]
+        assert len(kand) >= 1, nr
+        x = kand[0]
+        rolle_x = str(x["attr"]).split(";")[0] if x["kind"] == "betrag" else None
+        frist_x = str(x["attr"]).split(";")[0] if x["kind"] == "termin" else None
+        kind_l = str(lb["art"])
+        zeilen.append(
+            {
+                "aufgabe": nr,
+                "art": z["art"],
+                "schicht": z["schicht"],
+                "gewicht": int(z["schicht_n"]) / quote[z["schicht"]],
+                "kind_x": x["kind"],
+                "kind_l": kind_l,
+                "norm_x": x["norm"],
+                "norm_l": lb["norm"],
+                "attr_x": x["attr"],
+                "rolle_x": rolle_x,
+                "rolle_l": lb["rolle"],
+                "frist_x": frist_x,
+                "frist_l": lb["frist"],
+                "grenzen": lb["grenzen"],
+                "mild": KIND_ART[kind_l] == z["art"],
+                "streng": KIND_ART[kind_l] == z["art"] and lb["grenzen"] == "richtig",
+            }
+        )
+    for z in zeilen:
+        z["norm_gleich"] = bool(z["streng"]) and z["norm_x"] == z["norm_l"]
+        z["norm_aequiv"] = bool(z["streng"]) and norm_aequivalent(
+            str(z["kind_x"]), z["norm_x"], z["norm_l"], aemter
+        )
+    print("\nPräzision je Art (gewichtet mit schicht_n, Wilson 95 % mit n_eff):")
+    ergebnis: dict[str, dict[str, tuple[float, int, float, float, float]]] = {}
+    for art in ARTEN:
+        t = [z for z in zeilen if z["art"] == art]
+        g = lambda k, t=t: gewichtet([(bool(z[k]), float(z["gewicht"])) for z in t])  # noqa: E731
+        streng = [z for z in t if z["streng"]]
+        ng = gewichtet([(bool(z["norm_gleich"]), float(z["gewicht"])) for z in streng])
+        na = gewichtet([(bool(z["norm_aequiv"]), float(z["gewicht"])) for z in streng])
+        ergebnis[art] = {"streng": g("streng"), "mild": g("mild"), "norm": ng, "norm_aequiv": na}
+        print(f"  {art}")
+        print(f"    streng (Art + Grenzen) {fmt(g('streng'))}")
+        print(f"    mild (Art)             {fmt(g('mild'))}")
+        print(f"    Norm gleich | streng   {fmt(ng)}")
+        print(f"    Norm äquivalent        {fmt(na)}")
+        for kind in ARTEN[art]:
+            tk = [z for z in t if z["kind_x"] == kind]
+            if tk:
+                s_ = sum(bool(z["streng"]) for z in tk)
+                n_ = sum(bool(z["norm_gleich"]) for z in tk)
+                print(f"      {kind:<12} n={len(tk):>3} streng {s_:>3}  Norm gleich {n_:>3}")
+    # Rolle und Frist
+    bet = [z for z in zeilen if z["art"] == "3 Betrag" and z["kind_l"] == "betrag"]
+    rolle = gewichtet([(z["rolle_x"] == z["rolle_l"], float(z["gewicht"])) for z in bet])
+    print(f"\nRolle der Beträge (Extraktor = Endlabel): {fmt(rolle)}")
+    print("  je Rolle des Endlabels: gefunden/alle (Recall der Klasse), ungewichtet:")
+    for r_ in sorted({str(z["rolle_l"]) for z in bet}):
+        alle = [z for z in bet if z["rolle_l"] == r_]
+        print(f"    {r_:<18} {sum(z['rolle_x'] == r_ for z in alle)}/{len(alle)}")
+    print("  je Rolle des Extraktors (ungewichtet): ", end="")
+    print(
+        ", ".join(
+            f"{r} {sum(z['rolle_x'] == z['rolle_l'] for z in bet if z['rolle_x'] == r)}/"
+            f"{sum(1 for z in bet if z['rolle_x'] == r)}"
+            for r in sorted({str(z["rolle_x"]) for z in bet})
+        )
+    )
+    print(
+        "  Verwechslungen (Extraktor -> Endlabel):",
+        Counter(
+            (z["rolle_x"], z["rolle_l"]) for z in bet if z["rolle_x"] != z["rolle_l"]
+        ).most_common(12),
+    )
+    ter = [z for z in zeilen if z["art"] == "4 Termin" and z["kind_l"] == "termin"]
+    frist = gewichtet([(z["frist_x"] == z["frist_l"], float(z["gewicht"])) for z in ter])
+    fx = [z for z in ter if z["frist_x"] == "frist"]
+    print(f"\nFunktion der Termine (vier Klassen, Extraktor = Endlabel): {fmt(frist)}")
+    print(
+        f"  Präzision von frist (ungewichtet): {sum(z['frist_l'] == 'frist' for z in fx)}/{len(fx)}"
+    )
+    print(
+        "  Verwechslungen:",
+        Counter(
+            (z["frist_x"], z["frist_l"]) for z in ter if z["frist_x"] != z["frist_l"]
+        ).most_common(10),
+    )
+
+    # Recall an den 50 Dokumenten
+    print("\nRecall je Art an den 50 Dokumenten (Spannen der Kodierer gegen die des Extraktors):")
+    print(
+        "  ungewichtet und gewichtet mit Pool/10 je Dokument; streng = gleiche Grenzen, mild = Überlappung"
+    )
+    recall_zeilen = []
+    for nr, spannen in lab.recall.items():
+        z = stich[nr]
+        gew = int(z["schicht_n"]) / 10
+        xs = je_dok[z["datei"]]
+        for s in spannen:
+            art = KIND_ART[str(s["art"])]
+            gleich = [x for x in xs if x["art"] == art]
+            s0, e0 = int(str(s["start"])), int(str(s["end"]))
+            streng_ = any(x["start"] == s0 and x["end"] == e0 for x in gleich)
+            mild_ = any(x["start"] < e0 and s0 < x["end"] for x in gleich)
+            treffer = [x for x in gleich if x["start"] < e0 and s0 < x["end"]]
+            recall_zeilen.append(
+                {
+                    "aufgabe": nr,
+                    "schicht": z["schicht"],
+                    "gewicht": gew,
+                    "art": art,
+                    "kind": s["art"],
+                    "tabelle": bool(s["tabelle"]),
+                    "streng": streng_,
+                    "mild": mild_,
+                    "norm": bool(treffer)
+                    and any(
+                        norm_aequivalent(str(x["kind"]), x["norm"], s["norm"], aemter)
+                        for x in treffer
+                    ),
+                    "frist_l": s.get("frist"),
+                    "frist_x": next(
+                        (str(x["attr"]).split(";")[0] for x in treffer if x["kind"] == "termin"),
+                        None,
+                    ),
+                }
+            )
+    ergebnis_r: dict[str, dict[str, tuple[float, int, float, float, float]]] = {}
+    for art in ARTEN:
+        t = [z for z in recall_zeilen if z["art"] == art and not z["tabelle"]]
+        ung = lambda k, t=t: gewichtet([(bool(z[k]), 1.0) for z in t])  # noqa: E731
+        gew_ = lambda k, t=t: gewichtet([(bool(z[k]), float(z["gewicht"])) for z in t])  # noqa: E731
+        ergebnis_r[art] = {
+            "streng": ung("streng"),
+            "mild": ung("mild"),
+            "streng_w": gew_("streng"),
+            "mild_w": gew_("mild"),
+        }
+        print(f"  {art}: {len(t)} Spannen in {len({z['aufgabe'] for z in t})} Dokumenten")
+        print(f"    streng {fmt(ung('streng'))}; gewichtet {fmt(gew_('streng'))}")
+        print(f"    mild   {fmt(ung('mild'))}; gewichtet {fmt(gew_('mild'))}")
+        je_kind = Counter(str(z["kind"]) for z in t)
+        print(
+            "    je kind (mild gefunden/alle):",
+            ", ".join(
+                f"{k} {sum(bool(z['mild']) for z in t if z['kind'] == k)}/{v}"
+                for k, v in sorted(je_kind.items())
+            ),
+        )
+    tab = [z for z in recall_zeilen if z["tabelle"]]
+    print(
+        f"  Tabellenbeträge ohne eigene Einheit (getrennt): {len(tab)}, davon gefunden {sum(z['mild'] for z in tab)}"
+    )
+    print("  Recall (streng) je Schicht der Recall-Dokumente:")
+    for art in ARTEN:
+        teile = []
+        for sch_ in ("planung", "haushalt", "bezirk", "fraktion", "zufall"):
+            t = [
+                z
+                for z in recall_zeilen
+                if z["art"] == art and z["schicht"] == sch_ and not z["tabelle"]
+            ]
+            if t:
+                teile.append(f"{sch_} {sum(bool(z['streng']) for z in t)}/{len(t)}")
+        print(f"    {art}: " + ", ".join(teile))
+    fl = [z for z in recall_zeilen if z["kind"] == "termin" and z["frist_l"] == "frist"]
+    print(
+        f"  Recall der Funktion frist: {sum(z['frist_x'] == 'frist' for z in fl)}/{len(fl)} "
+        f"(Termin gefunden: {sum(z['mild'] for z in fl)})"
+    )
+
+    # Fehlerliste für die Ursachenanalyse (lokal, mit Kontext; nie ins Repo)
+    with (KODIERUNG / "fehler-extraktor.jsonl").open("w", encoding="utf-8") as f:
+        for z in zeilen:
+            if (
+                not (z["streng"] and z["norm_gleich"])
+                or (z["rolle_x"] != z["rolle_l"] and z["kind_l"] == "betrag")
+                or (z["frist_x"] != z["frist_l"] and z["kind_l"] == "termin")
+            ):
+                auf = aufgaben[str(z["aufgabe"])]
+                f.write(
+                    json.dumps(
+                        {**{k: v for k, v in z.items()}, "markierung": auf["markierung"]},
+                        ensure_ascii=False,
+                        default=str,
+                    )
+                    + "\n"
+                )
+        for nr, spannen in lab.recall.items():
+            text = str(aufgaben[nr]["text"])
+            for s, zr in zip(
+                spannen, [z for z in recall_zeilen if z["aufgabe"] == nr], strict=True
+            ):
+                if not zr["streng"]:
+                    s0, e0 = int(str(s["start"])), int(str(s["end"]))
+                    f.write(
+                        json.dumps(
+                            {
+                                "aufgabe": nr,
+                                "recall": True,
+                                **zr,
+                                "kontext": text[max(0, s0 - 60) : s0]
+                                + "⟦"
+                                + text[s0:e0]
+                                + "⟧"
+                                + text[e0 : e0 + 30],
+                            },
+                            ensure_ascii=False,
+                        )
+                        + "\n"
+                    )
+    print(f"  Fehlerliste mit Kontext (lokal): {KODIERUNG / 'fehler-extraktor.jsonl'}")
+
+
 def main(argv: Sequence[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
     ap.add_argument("--profil", default="duesseldorf", choices=sorted(PROFILE))
     ap.add_argument("--alle", action="store_true", help="dazu die drei übrigen Datensätze")
     ap.add_argument(
         "--stichprobe", action="store_true", help="Stichprobe und Kodieraufgaben schreiben"
+    )
+    ap.add_argument(
+        "--auswertung", action="store_true", help="Kodierung gegen den Extraktor messen"
     )
     ap.add_argument("--einzelprozess", action="store_true", help="Laufzeit in einem Prozess messen")
     ap.add_argument("--beispiele", default="", help="kind: zufällige Beispiele mit Kontext zeigen")
@@ -1470,6 +2047,8 @@ def main(argv: Sequence[str]) -> int:
                 print(f"  {r['norm']:<28} {r['attr']:<22} {ctx}")
         if args.stichprobe and i == 0:
             stichprobe(df, sp, meta)
+        if args.auswertung and i == 0:
+            auswertung(df, sp, aemter)
     return 0
 
 
