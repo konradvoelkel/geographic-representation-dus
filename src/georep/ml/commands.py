@@ -25,7 +25,7 @@ from georep.errors import MissingInputError, ModelError
 from georep.http import Transport
 from georep.layout import Layout
 from georep.ml.base import Call, full_name
-from georep.ml.cache import cache_filename, cache_stats
+from georep.ml.cache import cache_stats
 from georep.ml.ollama import (
     OllamaClient,
     OllamaEmbedder,
@@ -100,13 +100,14 @@ def status_lines(client: OllamaClient, ml: Ml, cache_root: Path) -> tuple[list[s
         code = 1
     stats = cache_stats(cache_root)
     lines.append(f"Cache {cache_root}: {'leer' if not stats else ''}".rstrip())
-    for model in sorted({s.model for s in stats}):
-        size = (cache_root / cache_filename(model)).stat().st_size
-        lines.append(f"  {model}  Datei {_size(size)}")
+    # Je Datei, nicht je Modellname: eine umbenannte Datei hat einen anderen Namen als ihr Modell
+    # (Review F5, dritte Runde, N6).
+    for path in sorted({s.path for s in stats}):
+        here = [s for s in stats if s.path == path]
+        lines.append(f"  {here[0].model}  Datei {path.name}, {_size(path.stat().st_size)}")
         lines.extend(
             f"    Digest {s.digest[:12]}  {s.prompt}  {s.entries} Einträge, {_size(s.bytes)}"
-            for s in stats
-            if s.model == model
+            for s in here
         )
     return lines, code
 

@@ -11,7 +11,7 @@ from georep import cli
 from georep.errors import ModelError
 from georep.layout import Layout
 from georep.ml import commands
-from georep.ml.cache import CacheKey, ModelCache
+from georep.ml.cache import CacheKey, ModelCache, cache_stats
 from georep.ml.ollama import OllamaClient
 from georep.settings import load_settings
 from tests.fakes import FAKE_URL, FakeOllama, FakeSession, response
@@ -187,3 +187,19 @@ def test_status_reports_a_broken_answer_after_the_version_and_still_shows_the_ca
     assert cli.main(["ml", "status"]) == 1
     out = capsys.readouterr().out
     assert "unbrauchbar" in out and "Cache" in out
+
+
+def test_status_reads_a_cache_file_that_is_named_differently_from_its_model(
+    project: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Review F5, dritte Runde, N6: der Dateiname kam aus dem Modell, und es gab ihn nicht."""
+    layout = Layout.from_settings(load_settings(cwd=project))
+    with ModelCache(layout.ml_cache, "fake-embed") as cache:
+        cache.put_many(CacheKey("fake-embed:latest", "e" * 64, "dok-1"), [("a" * 64, b"1234")])
+    (layout.ml_cache / "fake-embed_latest.sqlite").rename(layout.ml_cache / "umbenannt.sqlite")
+    _serve(monkeypatch, FakeOllama())
+    assert cli.main(["ml", "status"]) == 0
+    out = capsys.readouterr().out
+    assert "fake-embed:latest" in out and "umbenannt.sqlite" in out and "1 Einträge" in out
+    (stat,) = cache_stats(layout.ml_cache)
+    assert stat.path == layout.ml_cache / "umbenannt.sqlite"

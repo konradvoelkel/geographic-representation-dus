@@ -105,6 +105,7 @@ class CacheStat:
     prompt: str
     entries: int
     bytes: int
+    path: Path  # die Datei, aus der die Zahlen stammen; ihr Name muss nicht zum Modell passen
 
 
 def input_sha256(text: str) -> str:
@@ -282,7 +283,7 @@ class ModelCache:
             "SELECT digest, prompt, COUNT(*), SUM(LENGTH(value)) FROM entries "
             "GROUP BY digest, prompt ORDER BY digest, prompt"
         )
-        return [CacheStat(self.model, d, p, n, size) for d, p, n, size in rows]
+        return [CacheStat(self.model, d, p, n, size, self.path) for d, p, n, size in rows]
 
 
 def cache_stats(root: Path) -> list[CacheStat]:
@@ -315,4 +316,4 @@ def _file_stats(path: Path) -> list[CacheStat]:
         return []
     finally:
         conn.close()
-    return [CacheStat(row[0], d, p, n, size) for d, p, n, size in rows]
+    return [CacheStat(row[0], d, p, n, size, path) for d, p, n, size in rows]
