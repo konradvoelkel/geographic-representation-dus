@@ -24,6 +24,7 @@ from georep import __version__
 from georep.analysis.cosponsors import COSPONSORS_SCHEMA_VERSION
 from georep.analysis.functions import FUNCTIONS_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
+from georep.enrich.procedures import PROCEDURES_SCHEMA_VERSION
 from georep.layout import Layout
 from georep.pipeline import (
     METRICS_SCHEMA,
@@ -73,6 +74,9 @@ VERSIONS = {
     # Vorhaben 15: zwei Schritte eines Beitrags (``georep.enrich.functions``)
     "functions": FUNCTIONS_SCHEMA_VERSION,
     "cosponsors": COSPONSORS_SCHEMA_VERSION,
+    # Vorhaben 14: zwei Schritte eines Beitrags (F2), beide aus dem Modul, das die Dateien schreibt
+    "references": PROCEDURES_SCHEMA_VERSION,
+    "procedures": PROCEDURES_SCHEMA_VERSION,
 }
 
 
@@ -81,7 +85,9 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
     layout = _layout(tmp_path)
     # Fundament F6: die drei Netzschritte stehen nur mit ``council.enabled`` im Register
     council = default_settings.council.model_copy(update={"enabled": True})
-    settings = default_settings.model_copy(update={"council": council})
+    # Vorhaben 14: die Schritte eines Beitrags stehen nur mit ihrem Schalter im Register
+    procedures = default_settings.procedures.model_copy(update={"enabled": True})
+    settings = default_settings.model_copy(update={"council": council, "procedures": procedures})
     return {s.name: s.schema_version for s in build_steps(settings, layout)}
 
 
@@ -294,7 +300,7 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
 
 
 def _step_versions_in_source() -> dict[str, str]:
-    """Schrittname -> Ausdruck, den ``pipeline.py`` als ``schema_version`` übergibt.
+    """Schrittname -> Ausdruck, den ``pipeline.py`` oder ein Beitrag als ``schema_version`` übergibt.
 
     Gelesen wird der **Quelltext**, nicht der Laufzeitwert: nur so fällt auf, wenn jemand eine Zahl
     hinschreibt statt die Konstante seines Moduls zu nennen. Ein Wertvergleich sähe das nie, denn
