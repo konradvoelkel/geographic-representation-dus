@@ -1,29 +1,29 @@
 # Vorhaben 23: Textübernahme über Perioden, Parteien und Städte
 
-Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/23-textuebernahme`. Briefing:
+Stand 2026-11-23, Stufe 1 (Messen) mit Kodierung abgeschlossen, Branch `feat/23-textuebernahme`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „23 Textübernahme".
 Messskript: [23-textuebernahme-messung.py](23-textuebernahme-messung.py). Codebuch und Stichprobe:
 [`validierung/23-textuebernahme/`](../../validierung/23-textuebernahme/). Fremddaten:
 `/media/konrad/xtraspace/georep/fremddaten/cherif/` (README dort).
 
-**Urteil, vorläufig (Kodierung ausstehend): umbauen.** Gemeinsamer Text ist leicht zu finden und
-sicher vom Zufall zu trennen; schwer ist allein die **Art**. Von 115 299 Dokumentpaaren mit
-gemeinsamer Stelle (mindestens 30 Wörter, Wert über der Zufallsgrenze) sind nach der Regel des
-Verfahrens nur **913 politische Übernahmen**: **837 Musteranträge** (gleicher Text derselben Partei in
-einem anderen Gremium, 423, oder einer anderen Periode, 411; über Stadtgrenzen 3) und **76
-Übernahmen über Fraktionsgrenzen** (32 im selben Gremium, 24 über Gremien, 17 über Perioden, 3 über
-Stadtgrenzen). Der Rest sind Bausteine und Formulare (68 125), eigene Wiederholungen (24 398),
-Rechtszitate (14 352), Zitate im selben Verfahren (4 193) und andere Quellen (2 494). **Über
-Stadtgrenzen gibt es fast nichts Politisches**: zwischen Düsseldorf und den fünf anderen Städten
-(Mönchengladbach, Leipzig, Osnabrück, Dresden, Freiburg) 573 Paare über der Grenze, davon 424
-Rechtszitate und 133 andere Quellen, und nur **6 politische Paare** (ein CDU-Antrag zur Ehrung von
-Knochenmarkspendern in Düsseldorf und Osnabrück, die Nachtbürgermeister-Idee, eine TTIP-Resolution,
-eine Städteinitiative zu Tempo 30, dazu ein Gesetzes- und ein Pressezitat). Die eigene Sichtung
-(keine Validierung, § 3.5) lässt erwarten, dass die Musteranträge die Präzision von 0,9 erreichen
-(18 von 20 plausibel), die Übernahmen über Fraktionsgrenzen nicht (9 bis 12 von 16). Daraus der
-Vorschlag: Musteranträge bauen und zeigen, wenn die Kodierung sie bestätigt; Übernahmen über
-Fraktionsgrenzen erst nach einer zweiten Runde mit den Vorgängen aus 14 und den Abschnitten aus 11
-(§ 5). Die Regel für das endgültige Urteil steht vorab in § 5.
+**Urteil nach der Kodierung (2026-11-23): verwerfen** (§ 4.1, § 5). Gemeinsamen Text findet das
+Verfahren sicher (alle 92 kodierten Paare über der Zufallsgrenze sind gemeinsamer Text, Recall der
+Kandidatensuche 91,3 %), aber die **Art** trägt nicht: das Kriterium (Präzision ≥ 0,9 je politischer
+Art) verfehlen die **Musteranträge knapp mit 0,889** (26 von 30 kodierten Paaren richtig, gewichtet;
+Intervall 0,633 bis 0,972) und die **Übernahmen über Fraktionsgrenzen deutlich mit 0,296** (9 von
+30). Familien über Partei- und Stadtgrenzen gibt es (9 bestätigte Paare über Fraktionsgrenzen, 3
+über Stadtgrenzen), aber nach der vorab festgelegten Regel entscheidet die Präzision der
+Musteranträge.
+
+Nach der Regel des Verfahrens sind von 115 299 Dokumentpaaren mit gemeinsamer Stelle (mindestens 30
+Wörter) nur 913 politische Übernahmen: 837 Musteranträge (gleicher Text derselben Partei in einem
+anderen Gremium, 423, oder einer anderen Periode, 411; über Stadtgrenzen 3) und 76 Übernahmen über
+Fraktionsgrenzen. Der Rest sind Bausteine und Formulare (68 125), eigene Wiederholungen (24 398),
+Rechtszitate (14 352), Zitate im selben Verfahren (4 193) und andere Quellen (2 494). Zwischen
+Düsseldorf und Mönchengladbach, Leipzig, Osnabrück, Dresden und Freiburg liegen 573 Paare, davon 424
+Rechtszitate, 133 andere Quellen und 6 politische, von denen die Kodierung 3 bestätigt (ein
+CDU-Antrag zur Ehrung von Knochenmarkspendern in Düsseldorf und Osnabrück, die
+Nachtbürgermeister-Idee, eine TTIP-Resolution).
 
 Alle Zahlen sind am 2026-11-23 im Worktree `feat/23-textuebernahme` gemessen, unter Fremdlast
 (Lastmittel 10 bis 19 statt höchstens 13; Laufzeiten darum mit `uptime`), mit
@@ -37,6 +37,7 @@ done
 uv run python -I docs/plans/23-textuebernahme-messung.py --neu   # alle Zahlen, rund 19 Minuten
 uv run python -I docs/plans/23-textuebernahme-messung.py         # aus der Zwischenablage, rund 3 Minuten
 uv run python -I docs/plans/23-textuebernahme-messung.py --schreiben   # § 4: Stichprobe und Kodieraufgaben neu
+uv run python -I docs/plans/23-textuebernahme-messung.py --labels      # § 4.1: Labels und Auswertung, Sekunden
 ```
 
 Das Skript braucht das Cherif-Korpus unter `--cherif` (Vorgabe: der Pfad oben) und legt eine
@@ -435,6 +436,68 @@ zwischen zwei Fraktionen eine Übernahme ist oder ein Formular, ein Zitat im Ver
 Verweisregel nicht erkennt, oder eine gemeinsame dritte Quelle. Die Sichtung in § 3.5 zeigt alle
 drei Fehlerarten.
 
+### 4.1 Ergebnis der Kodierung (2026-11-23)
+
+Zwei Kodier-Agenten (dasselbe Modell, Opus) haben die 100 Paare unabhängig nach `codebuch.toml`
+(Fassung 1) kodiert, ein Schlicht-Agent hat die 4 Uneinigkeiten entschieden (p055
+`eigene_wiederholung`, p065 `andere_quelle`, p079 `verfahrenszitat`, p099 `baustein`). Kein
+menschlicher Goldstandard; weil beide Kodierer dasselbe Modell sind, ist ihre Übereinstimmung ein
+schwacher Beleg (Frage 19). Labels je Paar und Frage:
+[`validierung/23-textuebernahme/labels.csv`](../../validierung/23-textuebernahme/labels.csv)
+(`uv run python -I docs/plans/23-textuebernahme-messung.py --labels` bildet sie aus den lokalen
+Antworten und rechnet alles hier nach, in wenigen Sekunden).
+
+| Frage | gleich kodiert | Krippendorffs α (nominal) |
+|---|---|---|
+| `uebernahme` | 100 / 100 (alle „ja") | 1,000 (trivial) |
+| `art` | 96 / 100 | 0,950 |
+| politisch (Musterantrag / über Fraktionsgrenzen / sonst) | 99 / 100 | 0,981 |
+
+**Präzision je politischer Art** (richtig = Endlabel ist genau die Art des Verfahrens; gewichtet mit
+den Schichtgrößen, das Intervall überträgt die Wilson-Grenzen der Schichten mit denselben Gewichten,
+eine ganz gezogene Schicht ohne Unsicherheit, wie in 13):
+
+| Art | ungewichtet [Wilson 95 %] | **gewichtet** [übertragen] | je Schicht: richtig / gezogen von N [Wilson] |
+|---|---|---|---|
+| `musterantrag` | 26/30 = 0,867 [0,703; 0,947] | **0,889** [0,633; 0,972] | Gremium 12/14 von 423 [0,601; 0,960]; Periode 12/13 von 411 [0,667; 0,986]; Stadt 2/3 von 3 (ganz) |
+| `fraktionsuebergreifend` | 9/30 = 0,300 [0,167; 0,479] | **0,296** [0,117; 0,595] | keine 3/12 von 32 [0,089; 0,532]; Gremium 4/9 von 24 [0,189; 0,733]; Periode 1/6 von 17 [0,030; 0,564]; Stadt 1/3 von 3 (ganz) |
+
+Die falschen Musteranträge: p015 und p087 `baustein` (Anschreiben und Antragsformel der
+CDU-Ratsfraktion zu verschiedenen Änderungen; Antragsformel und Erläuterung einer Förderrichtlinie
+in wiederkehrenden Anträgen zu verschiedenen Themen), p095 `verfahrenszitat` (beide geben einen
+Ratsbeschluss wieder), p044 `andere_quelle` (die Erklärung der Städteinitiative Tempo 30). Die 21
+falschen Übernahmen über Fraktionsgrenzen: 6 `rechtszitat` (4 davon in der Schicht Gremium), 6
+`andere_quelle`, 5 `verfahrenszitat`, 4 `baustein` — genau die Fehlerarten der Sichtung (§ 3.5), nur
+häufiger, als sie erwarten ließ (9 bis 12 von 16 gegen 9 von 30).
+
+**Empfindlichkeit der Musteranträge.** Beide Kodierer lasen denselben Grenzfall nach dem Wortlaut
+des Codebuchs als `musterantrag`: dieselbe Fraktion, dieselbe Periode, ein anderes Gremium, oft im
+selben Beratungsgang (Ausschuss, dann Rat; A nennt p001, p003, p011, p024, p038, p070, p100, B p001,
+p024, p038, p100). Der Schlichter schlägt für eine Fassung 2 vor, das sei `eigene_wiederholung`.
+Weil beide Kodierer dasselbe Modell sind, ist ihre Einigkeit hier kein unabhängiger Beleg. Über die
+Metadaten (beide Dokumente in Rat oder Ausschuss derselben Periode, keines in einer
+Bezirksvertretung) gehören 8 der 14 gezogenen Paare der Schicht Gremium zu diesem Fall: die sieben
+von A und p015 (`baustein`).
+
+| Lesart | ungewichtet | gewichtet [übertragen] |
+|---|---|---|
+| Hauptwert (Codebuch, Fassung 1) | 26/30 = 0,867 | **0,889** [0,633; 0,972] |
+| ohne den Grenzfall (die Schicht Gremium schrumpft auf 6 von 14) | 19/22 = 0,864 | 0,894 [0,597; 0,980] |
+| Grenzfall als falsch | 19/30 = 0,633 | 0,636 [0,412; 0,796] |
+
+**Weitere Maße.** P0: alle 92 Paare über der Zufallsgrenze sind gemeinsamer Text (`uebernahme` =
+„ja", Wilson-Untergrenze 0,960). Unter der Grenze sind es ebenfalls 8 von 8, nach der vorab
+genannten Prüfung ist S\* also für „gemeinsamer Text" zu hoch — aber alle acht sind Bausteine (7)
+oder eigene Wiederholung (1), keine politische Übernahme. Aus den ausgeschlossenen Schichten nennt
+die Kodierung **kein** Paar politisch (0 von 28); von `politisch_ohne_partei` sind 2 von 4
+Musteranträge. Die Ausschlussarten selbst stimmen nur teilweise (`baustein` 5/6, `verfahrenszitat`
+2/6, `eigene_wiederholung` 2/6, `rechtszitat` 0/6 — die Regel über Rechtsmarken trifft Formulare,
+die eine Norm nennen, etwa die Zulassung nach § 58 GO NRW —, `andere_quelle` 0/4, alle vier Zitate
+im selben Verfahren); für die politischen Arten zählt nur, dass nichts Politisches darin liegt.
+Bestätigt sind **9 Übernahmen über Fraktionsgrenzen** und **3 politische Paare über Stadtgrenzen**
+(p002 Nachtbürgermeister, p090 Knochenmarkspender, beide Musterantrag; p066 TTIP, über
+Fraktionsgrenzen, der Text stammt wahrscheinlich aus einem gemeinsamen Muster).
+
 ## 5. Urteil gegen das Kriterium
 
 **Kriterium (Briefing, unverändert):** Präzision ≥ 0,9; weiter nur, wenn es Familien über Partei-
@@ -454,32 +517,40 @@ oder Stadtgrenzen gibt.
    aus 14 (Zitate im selben Verfahren) und den Abschnitten aus 11 (Briefkopf, Unterschrift).
    **verwerfen**: auch `musterantrag` < 0,9 oder Bedingung 2 nicht erfüllt.
 
-**Vorläufiges Urteil: umbauen.**
+**Endgültiges Urteil (nach der Kodierung, 2026-11-23): verwerfen.** Das Kriterium gilt je
+politischer Art (Frage 32, vom Supervisor vor der Kodierung entschieden).
 
-- **Gemeinsamer Text ist sicher gefunden.** Die Zufallsgrenze trennt gemeinsamen Text von Zufall
-  ohne einen einzigen zufälligen Treffer über ihr (§ 3.3), die Kandidatensuche findet 91,3 % dessen,
-  was eine erschöpfende Suche findet, und alle politischen Paare (§ 3.4).
-- **Musteranträge** (837 Paare, fast alle in Düsseldorf über Gremien und Perioden): die Sichtung hält
-  18 von 20 für plausibel; es sind vor allem Fraktionen, die ihren eigenen Text nach der Wahl oder in
-  einer anderen Bezirksvertretung wieder einbringen (Frage 23.1). Ob 0,9 hält, entscheidet die
-  Kodierung; ein Rest an Briefköpfen der Periode 2014–2020 ist die wahrscheinlichste Fehlerquelle.
-- **Übernahmen über Fraktionsgrenzen** (76 Paare): es gibt sie, auch über Perioden (17) und Gremien
-  (24), und sie sind das, was die Frage meint — aber die Sichtung findet 9 bis 12 von 16 richtig. Die
-  Fehler sind Zitate im selben Verfahren, die keine Nummer tragen, und Rechtstexte ohne Rechtsmarke.
-  Beides kann eine zweite Runde mit 14 und 11 beheben, diese Stufe nicht.
-- **Über Stadtgrenzen** trägt das Vorhaben nicht: 573 gemeinsame Stellen zwischen Düsseldorf und fünf
-  Städten, davon 424 Rechtszitate und 133 andere Quellen, und sechs politische, von denen zwei
-  Musteranträge sind. Das Cherif-Korpus liegt außerhalb von NRW; Musteranträge der NRW-Vereinigungen
-  ließen sich nur mit deren eigenen Texten finden (Frage 23.2). Ein eigener Städteteil auf der Seite
-  lohnt nicht; die sechs Paare können als Beispiele dienen.
+- **Regel 1, Präzision je Art:** `musterantrag` **0,889** (gewichtet; Intervall 0,633 bis 0,972),
+  knapp unter 0,9; `fraktionsuebergreifend` **0,296** (0,117 bis 0,595), weit darunter. Keine Art
+  erreicht 0,9.
+- **Regel 2, Familien über Grenzen:** erfüllt — 9 bestätigte Übernahmen über Fraktionsgrenzen und 3
+  bestätigte politische Paare über Stadtgrenzen.
+- **Regel 3:** `musterantrag` < 0,9, also **verwerfen**. Für „umbauen" hätte `musterantrag` allein
+  0,9 erreichen müssen.
 
-**Was bleibt, auch ohne Seite:** der Smith-Waterman auf Wörtern und die Fensterkandidaten sind ein
+Die Entscheidung ist knapp und unsicher: 0,889 liegt 0,011 unter der Schwelle, das Intervall reicht
+von 0,63 bis 0,97, und die Empfindlichkeit zeigt, dass schon die Lesart eines einzigen Grenzfalls
+den Wert zwischen 0,64 und 0,89 bewegt. Eine Runde „umbauen" (Plan § 8, höchstens eine) müsste
+zugleich das Codebuch ändern (Fassung 2: dieselbe Fraktion im selben Beratungsgang ist eigene
+Wiederholung) und die Regel (dieser Fall wird `eigene_wiederholung`, ein Baustein-Test für
+Anschreiben und Antragsformel, Zitate eines Ratsbeschlusses als Verfahrenszitat); ohne den Grenzfall
+liegt der gemessene Wert bei 0,894, auch das unter 0,9. Darauf ist keine Seite zu bauen; ob es die
+Runde trotzdem gibt, entscheidet der Supervisor.
+
+**Der Befund** für `decisions.md` und die Seite: Textübernahme zwischen Ratsdokumenten ist vor allem
+Wiederholung derselben Urheber (24 398 Paare), Formular (68 125) und Zitat (Recht 14 352, Verfahren
+4 193). Politische Übernahme im Sinn der Frage ist selten: Musteranträge derselben Partei über
+Gremien und Perioden gibt es zu Hunderten (837 nach der Regel, rund 0,89 davon bestätigt), Übernahmen
+über Fraktionsgrenzen nur wenige Dutzend (76 nach der Regel, rund 0,3 davon bestätigt, also in der
+Größenordnung von 20 bis 25), und zwischen Düsseldorf und fünf anderen Städten drei bestätigte.
+
+**Was bleibt:** der Smith-Waterman auf Wörtern und die Fensterkandidaten sind ein
 Werkzeug für 25 (Versprechen der Wahlprogramme in Anträgen wiederfinden) und 29 („gab es das schon,
 mit welchen Worten?"); die Art `verfahrenszitat` ist eine zweite Quelle für die Kanten von 14; die
 Zahl der Bausteine (68 125 Paare) misst, wie viel Formulartext die Dokumente tragen, und ist für 11
 eine Liste der Floskeln.
 
-## 6. Bauplan Stufe 2 (nach „bauen" oder „umbauen" aus der Kodierung)
+## 6. Bauplan Stufe 2 (nicht ausgeführt: das Urteil ist „verwerfen"; für eine Runde „umbauen" oder später)
 
 **Beitrag `reuse`** nach F2 (Punkt 69): `src/georep/enrich/reuse.py` mit
 `CONTRIBUTION = Contribution(name="23-textuebernahme", steps=reuse_steps, tables=(...))`, eine
@@ -642,8 +713,23 @@ Urteilsregel (§ 5).
 | 23.5 | Darf die Seite Paare aus dem Cherif-Korpus (Leipzig, Osnabrück, Dresden, Freiburg) mit ID und Link nennen? | CC BY 4.0 verlangt die Nennung der Städte; Dresden DL-DE/Zero, Freiburg DL-DE/BY | ja mit Quellenangabe je Stadt, nur IDs und Links auf das jeweilige Ratsinformationssystem, kein Text |
 | 23.6 | Gilt die Kappung bei 3 000 Wörtern je Dokument auch in Stufe 2? | Sie schneidet 1 % der Düsseldorfer Dokumente und viele lange Vorlagen der Fremdstädte ab; Anträge sind kürzer | ja; ein Schalter erlaubt mehr, wenn Anlagen (F6) dazukommen |
 | 23.7 | Ist der Antragsteller einer Fraktion „unbekannt" (Partei fehlt), soll das Paar dennoch politisch zählen? | 824 Paare `politisch_ohne_partei` (§ 3.5), vor allem Einzelmandate und die Sammelart der Periode 2014–2020 | nein; die Seite zählt nur Paare mit Partei auf beiden Seiten |
-| 23.8 | Darf das Kriterium (Präzision ≥ 0,9) je politischer Art gelesen werden statt über beide zusammen? | Über beide zusammen könnten 837 gute Musteranträge 76 schwache Übernahmen über Fraktionsgrenzen tragen; die Seite zeigte dann eine Art, die die Schwelle nicht hält | ja, je Art (§ 5, Regel 1); das ist eine Lesart des Kriteriums, keine Änderung, und steht vor der Kodierung fest |
+| 23.8 | Darf das Kriterium (Präzision ≥ 0,9) je politischer Art gelesen werden statt über beide zusammen? | Über beide zusammen könnten 837 gute Musteranträge 76 schwache Übernahmen über Fraktionsgrenzen tragen; die Seite zeigte dann eine Art, die die Schwelle nicht hält | **entschieden** vom Supervisor vor der Kodierung (Frage 32 in `fragen-2026-11.md`): je Art (§ 5, Regel 1) |
 | 23.9 | Wann kommen die Einbettungen aus 18 dazu? | ollama ist angehalten; ohne sie fehlen umformulierte Übernahmen | nach Konrads Signal und dem Merge von 18, als zweite Kandidatenquelle (§ 6.1) mit eigener Schicht in einer zweiten Stichprobe |
+
+**Vorschläge des Schlichters für eine Fassung 2 des Codebuchs** (2026-11-23, notiert, nicht
+angewandt; lokal unter `messdaten/kodierung/23-textuebernahme/schlichtung.jsonl`):
+
+- (a) `musterantrag` nur zwischen Gliederungen derselben Partei (Ratsfraktion und Bezirksfraktion,
+  zwei Bezirksfraktionen, Städte); dieselbe Fraktion in Ausschuss und Rat derselben Periode ist
+  `eigene_wiederholung` — der Urheber entscheidet, nicht das Gremium (§ 4.1, Empfindlichkeit).
+- (b) Baustein-Test: „Könnte der Absatz unverändert in eine Vorlage derselben Reihe zu einer anderen
+  Sache?" — dann `baustein`.
+- (c) Dritte Quelle: geben beide Dokumente denselben dritten Text wieder, wird das Paar so kodiert,
+  wie jedes Dokument mit dieser Quelle kodiert würde (ein ausdrücklich wiedergegebener Beschluss der
+  Stadt macht `verfahrenszitat`); städtische Geschäftsanweisungen sind `rechtszitat`, Projektaufrufe
+  `andere_quelle`; `rechtszitat` nur bei einer benannten Norm.
+- (d) Gleiche Forderung zum gleichen Haushaltsgegenstand: nur bei geteiltem Wortlaut jenseits von
+  Formular, Haushaltsformel und Bezeichnung des Postens `fraktionsuebergreifend`, sonst `baustein`.
 
 **Risiken.** Die Art hängt an Regeln über Metadaten (Urheber, Parteien, Gremium, Verweis) und an
 einer Floskelliste, die aus Düsseldorfer Formularen stammt; in Mönchengladbach und den Fremdstädten

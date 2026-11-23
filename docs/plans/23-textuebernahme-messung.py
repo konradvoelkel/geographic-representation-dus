@@ -1,6 +1,7 @@
 """Rechnet die Zahlen von `23-textuebernahme.md` nach (Vorhaben 23, Stufe 1: Textübernahme).
 
     uv run python -I docs/plans/23-textuebernahme-messung.py [--schreiben] [--neu] [--ohne-gegenprobe]
+    uv run python -I docs/plans/23-textuebernahme-messung.py --labels   # § 4.1, wenige Sekunden
         [--cherif PFAD] [--messdaten PFAD]
 
 Liest je Düsseldorfer Profil und für Mönchengladbach, was `georep run` geschrieben hat
@@ -1907,6 +1908,216 @@ def section_sample(
         print("  keine Stichprobe im Repo; mit --schreiben anlegen")
 
 
+# ================================================================================================
+# § 4.1 Labels und Auswertung
+# ================================================================================================
+LABELS = REPO / "validierung" / "23-textuebernahme" / "labels.csv"
+FRAGEN = ("uebernahme", "art")
+
+
+def write_labels(messdaten: Path) -> None:
+    """Endlabels aus den Antworten der beiden Kodierer und der Schlichtung (alles lokal) ins Repo:
+    je Paar und Frage die Werte als JSON, keine Ausschnitte, keine Begründungen."""
+    folder = messdaten / "kodierung" / "23-textuebernahme"
+    answers = {}
+    for who in ("A", "B"):
+        path = folder / f"antworten-{who}.jsonl"
+        answers[who] = {
+            j["paar"]: j for j in map(json.loads, path.read_text(encoding="utf-8").splitlines())
+        }
+    path = folder / "schlichtung.jsonl"
+    decided = {
+        j["paar"]: j["entscheid"]
+        for j in map(json.loads, path.read_text(encoding="utf-8").splitlines())
+    }
+    pairs = sorted(answers["A"])
+    if sorted(answers["B"]) != pairs:
+        raise SystemExit("die Antworten von A und B decken nicht dieselben Paare")
+    buffer = io.StringIO()
+    writer = csv.writer(buffer, lineterminator="\n")
+    writer.writerow(["aufgabe", "frage", "kodierer_a", "kodierer_b", "schlichtung", "label"])
+    for paar in pairs:
+        for frage in FRAGEN:
+            a, b = answers["A"][paar][frage], answers["B"][paar][frage]
+            entscheid = decided.get(paar, {}).get(frage) if a != b else None
+            if a != b and entscheid is None:
+                raise SystemExit(f"{paar}/{frage}: uneinig und nicht geschlichtet")
+            label = a if a == b else entscheid
+            writer.writerow(
+                [
+                    paar,
+                    frage,
+                    json.dumps(a, ensure_ascii=False),
+                    json.dumps(b, ensure_ascii=False),
+                    "" if entscheid is None else json.dumps(entscheid, ensure_ascii=False),
+                    json.dumps(label, ensure_ascii=False),
+                ]
+            )
+    LABELS.write_text(buffer.getvalue(), encoding="utf-8")
+    print(f"  geschrieben: {LABELS} ({len(pairs)} Paare)")
+
+
+def city_level_pairs(sample: pl.DataFrame) -> set[str]:
+    """Paare derselben Stadt und Periode, deren beide Dokumente in keiner Bezirksvertretung liegen:
+    dieselbe Ratsfraktion in Rat und Ausschüssen (der Grenzfall der Kodierer, § 4.1)."""
+    gremien = []
+    for _code, profile, _stadt, periode in DUS_PROFILES:
+        root = Path(georep_paths(profile)["root"])
+        gremien.append(
+            pl.read_parquet(
+                root / "processed" / "papers_gremien.parquet", columns=["id", "gremium_art"]
+            ).with_columns(pl.lit(periode).alias("periode"))
+        )
+    g = pl.concat(gremien)
+    out = sample
+    for side in ("a", "b"):
+        out = out.join(
+            g.rename({"id": f"id_{side}", "gremium_art": f"art_{side}", "periode": f"per_{side}"}),
+            on=f"id_{side}",
+            how="left",
+        )
+    hit = out.filter(
+        pl.col("per_a").is_not_null()
+        & (pl.col("per_a") == pl.col("per_b"))
+        & (pl.col("art_a").fill_null("") != "bezirksvertretung")
+        & (pl.col("art_b").fill_null("") != "bezirksvertretung")
+    )
+    return set(hit.get_column("paar").to_list())
+
+
+def weighted(strata: pl.DataFrame) -> tuple[float, float, float]:
+    """Gewichtete Präzision über Schichten (N, n, k): Punkt und die mit denselben Gewichten
+    übertragenen Wilson-Grenzen der Schichten; eine ganz gezogene Schicht ohne Unsicherheit."""
+    total = float(strata["N"].sum())
+    point = lo = hi = 0.0
+    for row in strata.iter_rows(named=True):
+        share = row["k"] / row["n"]
+        low, high = (share, share) if row["n"] >= row["N"] else wilson(row["k"], row["n"])
+        point += row["N"] * share
+        lo += row["N"] * low
+        hi += row["N"] * high
+    return point / total, lo / total, hi / total
+
+
+def evaluate_labels() -> None:
+    print("\n=== § 4.1 Auswertung gegen die Labels")
+    sample = pl.read_csv(SAMPLE_CSV)
+    labels = pl.read_csv(LABELS).with_columns(pl.col("label").str.json_decode(pl.String))
+    lab = labels.pivot(on="frage", index="aufgabe", values="label").rename({"aufgabe": "paar"})
+    data = sample.join(lab, on="paar", how="left").with_columns(
+        pl.col("schicht").str.split("|").list.first().alias("verfahren"),
+        pl.col("schicht").str.split("|").list.get(1, null_on_oob=True).alias("grenze"),
+    )
+    if data["art"].null_count():
+        raise SystemExit("Labels fehlen für einige Paare")
+    data = data.with_columns((pl.col("art") == pl.col("verfahren")).alias("richtig"))
+    print("  Endlabel je Schicht des Verfahrens:")
+    show(
+        data.group_by("schicht", "art")
+        .len()
+        .pivot(on="art", index="schicht", values="len")
+        .fill_null(0)
+        .sort("schicht")
+    )
+    for art in ART_POLITISCH:
+        part = data.filter(pl.col("verfahren") == art)
+        strata = (
+            part.group_by("grenze")
+            .agg(
+                pl.col("grundgesamtheit").first().alias("N"),
+                pl.len().alias("n"),
+                pl.col("richtig").sum().alias("k"),
+            )
+            .sort("grenze")
+        )
+        point, lo, hi = weighted(strata)
+        k, n = int(part["richtig"].sum()), part.height
+        wl, wh = wilson(k, n)
+        print(
+            f"  {art}: ungewichtet {k}/{n} = {num(k / n)} [{num(wl)}; {num(wh)}];"
+            f" gewichtet {num(point)} [{num(lo)}; {num(hi)}]"
+        )
+        for r in strata.iter_rows(named=True):
+            sl, sh = wilson(r["k"], r["n"])
+            full = " (ganz gezogen)" if r["n"] >= r["N"] else ""
+            print(
+                f"    {r['grenze']}: {r['k']}/{r['n']} von N = {r['N']}{full},"
+                f" Wilson [{num(sl)}; {num(sh)}]"
+            )
+        wrong = part.filter(~pl.col("richtig")).sort("paar")
+        print(
+            "    falsch: "
+            + ", ".join(f"{p} ({a})" for p, a in zip(wrong["paar"], wrong["art"], strict=True))
+        )
+    # Empfindlichkeit: dieselbe Ratsfraktion in Rat und Ausschüssen derselben Periode
+    muster = data.filter(pl.col("verfahren") == "musterantrag")
+    same = city_level_pairs(muster.filter(pl.col("grenze") == "Gremium"))
+    print(f"  Grenzfall dieselbe Fraktion, dieselbe Periode, Rat und Ausschüsse: {sorted(same)}")
+    flagged = muster.with_columns(pl.col("paar").is_in(sorted(same)).alias("grenzfall"))
+    for label, frame in (
+        ("ohne die Grenzfälle", flagged.filter(~pl.col("grenzfall"))),
+        (
+            "Grenzfälle als falsch",
+            flagged.with_columns((pl.col("richtig") & ~pl.col("grenzfall")).alias("richtig")),
+        ),
+    ):
+        strata = frame.group_by("grenze").agg(
+            pl.col("grundgesamtheit").first().alias("N0"),
+            pl.len().alias("n"),
+            pl.col("richtig").sum().alias("k"),
+        )
+        # ohne die Fälle schrumpft die Grundgesamtheit der Schicht im Verhältnis der Ziehung
+        drawn = flagged.group_by("grenze").agg(pl.len().alias("n0"))
+        strata = (
+            strata.join(drawn, on="grenze")
+            .with_columns(
+                (pl.col("N0") * pl.col("n") / pl.col("n0")).alias("N")
+                if label.startswith("ohne")
+                else pl.col("N0").cast(pl.Float64).alias("N")
+            )
+            .sort("grenze")
+        )
+        point, lo, hi = weighted(strata)
+        k, n = int(frame["richtig"].sum()), frame.height
+        print(
+            f"  musterantrag {label}: ungewichtet {k}/{n} = {num(k / n)};"
+            f" gewichtet {num(point)} [{num(lo)}; {num(hi)}]"
+        )
+    above = data.filter(pl.col("verfahren") != "unter_schwelle")
+    below = data.filter(pl.col("verfahren") == "unter_schwelle")
+    yes = int((above["uebernahme"] == "ja").sum())
+    lo0, _hi0 = wilson(yes, above.height)
+    print(
+        f"  P0: uebernahme = ja bei {yes}/{above.height} über der Grenze (Wilson-Untergrenze"
+        f" {num(lo0)}); unter der Grenze {int((below['uebernahme'] == 'ja').sum())}/{below.height}"
+    )
+    excluded = data.filter(
+        pl.col("verfahren").is_in(
+            ["baustein", "rechtszitat", "verfahrenszitat", "eigene_wiederholung", "andere_quelle"]
+        )
+    )
+    leak = int(excluded["art"].is_in(list(ART_POLITISCH)).sum())
+    print(
+        f"  ausgeschlossene Schichten, die die Kodierung politisch nennt: {leak}/{excluded.height}"
+    )
+    for art in (
+        "baustein",
+        "rechtszitat",
+        "verfahrenszitat",
+        "eigene_wiederholung",
+        "andere_quelle",
+    ):
+        part = data.filter(pl.col("verfahren") == art)
+        print(f"    {art}: bestätigt {int(part['richtig'].sum())}/{part.height}")
+    pol = data.filter(pl.col("art").is_in(list(ART_POLITISCH)))
+    print(
+        f"  bestätigte politische Paare: über Fraktionsgrenzen"
+        f" {pol.filter(pl.col('art') == 'fraktionsuebergreifend').height},"
+        f" politisch über Stadtgrenzen {pol.filter(pl.col('grenze') == 'Stadt').height}"
+        f" ({', '.join(sorted(pol.filter(pl.col('grenze') == 'Stadt')['paar']))})"
+    )
+
+
 def main(argv: Sequence[str]) -> int:
     parser = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
     parser.add_argument("--schreiben", action="store_true")
@@ -1914,8 +2125,15 @@ def main(argv: Sequence[str]) -> int:
     parser.add_argument("--ohne-gegenprobe", action="store_true")
     parser.add_argument("--cherif", type=Path, default=CHERIF)
     parser.add_argument("--messdaten", type=Path, default=MESSDATEN)
+    parser.add_argument("--labels", action="store_true")
     args = parser.parse_args(argv)
     started = time.perf_counter()
+    if args.labels:
+        # § 4.1: aus den lokalen Antworten die Labels bilden (falls da), dann nur auswerten
+        if (args.messdaten / "kodierung" / "23-textuebernahme" / "antworten-A.jsonl").exists():
+            write_labels(args.messdaten)
+        evaluate_labels()
+        return 0
     cache = args.messdaten / "23-textuebernahme" / "cache"
     prepared = prepare(cache, args.cherif, args.neu)
     section_data(prepared, args.cherif)
