@@ -1,0 +1,177 @@
+# Codebuch für Vorhaben 23 „Textübernahme über Perioden, Parteien und Städte" (Stufe 1, Format bis F4).
+# Messdokument: docs/plans/23-textuebernahme.md, § 4. Stichprobe: stichprobe.csv (IDs, Schicht, Größe der
+# Schicht, Wert und Länge der Ausrichtung; kein Text). Kodieraufgaben mit den Textstellen lokal unter
+# messdaten/kodierung/23-textuebernahme/aufgaben.jsonl, nie im Repo.
+
+vorhaben = "23-textuebernahme"
+version = 1
+datum = "2026-11-23"
+einheit = "Textpaar mit ausgerichteter Stelle"
+frage = """
+Steht in beiden Dokumenten derselbe Text aus einer gemeinsamen Herkunft, und wenn ja: welcher Art ist
+diese Übernahme?
+"""
+anleitung = """
+Jede Aufgabe zeigt zwei Ratsdokumente (a und b) mit Stadt, Periode, Drucksachennummer, Titel, Datum,
+Dokumentart, Gremium, dem Anfang des Dokuments (`kopf`, dort steht meist, wer es einreicht) und der
+Stelle, die das Verfahren in beiden gefunden hat (`stelle`; die gefundene Stelle steht in ⟦…⟧,
+davor und dahinter etwas Kontext). Die Texte aus Düsseldorf und Mönchengladbach sind kleingeschrieben,
+das ist kein Fehler.
+
+Beantworte zwei Fragen:
+
+1. `uebernahme`: „ja", wenn die markierte Stelle in beiden Dokumenten derselbe Text ist (wörtlich
+   oder mit kleinen Änderungen wie anderem Ort, anderem Datum, anderem Gremium), der eine gemeinsame
+   Herkunft hat: der eine hat vom anderen abgeschrieben, oder beide haben aus derselben Quelle
+   abgeschrieben. „nein", wenn die Gemeinsamkeit Zufall ist: allgemeine Wendungen, die jeder so
+   schreiben würde, oder nur eine Kette kurzer Floskeln ohne gemeinsamen Gedanken.
+2. `art`: genau eine der Optionen unten. Bei `uebernahme` = „nein" ist `art` immer `zufall`, bei „ja"
+   nie. Passen mehrere Arten, gilt dieser Vorrang: `verfahrenszitat`, dann `rechtszitat`, dann
+   `baustein`, dann `andere_quelle`, erst dann `musterantrag`, `fraktionsuebergreifend` und
+   `eigene_wiederholung`. Beispiel: zitiert ein Änderungsantrag der SPD den Antrag der Grünen, den er
+   ändern will, ist das `verfahrenszitat`, nicht `fraktionsuebergreifend`.
+
+Wer ein Dokument einreicht, liest du aus Kopf, Titel und Dokumentart (Fraktion, Partei, Einzelmitglied,
+Verwaltung, Bürgerin oder Bürger). Entscheide nach dem, was die Aufgabe zeigt; wenn sie nicht reicht,
+nach dem Wahrscheinlichsten, und sage es in der Begründung. Du siehst keine Zahl und keine Einordnung
+des Verfahrens, und du sollst keine suchen.
+"""
+# Antwort je Paar, eine JSON-Zeile:
+# {"paar": "p001", "uebernahme": "ja" | "nein", "art": "<code>", "begruendung": "<ein Satz>"}
+antwort_felder = ["paar", "uebernahme", "art", "begruendung"]
+
+[[fragen]]
+name = "uebernahme"
+optionen = ["ja", "nein"]
+
+[[fragen]]
+name = "art"
+optionen = [
+    "musterantrag",
+    "fraktionsuebergreifend",
+    "eigene_wiederholung",
+    "verfahrenszitat",
+    "baustein",
+    "rechtszitat",
+    "andere_quelle",
+    "zufall",
+]
+
+[[optionen]]
+code = "musterantrag"
+name = "Musterantrag derselben Partei"
+definition = """
+Derselbe politische Text (Antrag, Anfrage, Begründung, Haushaltsantrag) steht in Dokumenten derselben
+Partei, aber in einer anderen Stadt, einer anderen Wahlperiode oder einem anderen Gremium (Rat,
+Ausschuss, Bezirksvertretung): eine Vorlage der Partei oder ihrer kommunalpolitischen Vereinigung,
+ein Antrag, den die Fraktion nach der Wahl oder in einer anderen Bezirksvertretung wieder einbringt,
+derselbe Text der Ratsfraktion und einer Bezirksfraktion. Beide Dokumente reichen Fraktionen,
+Gruppen oder Mitglieder derselben Partei ein; gemeinsame Anträge zählen, wenn die Partei auf beiden
+Seiten dabei ist.
+"""
+beispiel = """
+Die SPD-Ratsfraktion fragt im Ausschuss nach der Pflegeplanung, ein Jahr später stellt die
+SPD-Fraktion einer Bezirksvertretung dieselbe Begründung über fehlende Pflegeplätze in ihre Anfrage.
+Ein Antrag „Verkehrsspiegel Bottroper Straße" der CDU in der Bezirksvertretung, nach der Wahl
+wortgleich wieder eingebracht.
+"""
+
+[[optionen]]
+code = "fraktionsuebergreifend"
+name = "Übernahme über Fraktionsgrenzen"
+definition = """
+Text einer Fraktion oder Partei steht in einem Dokument einer anderen Fraktion oder Partei, die nicht
+mit ihr gemeinsam einreicht, und das zweite Dokument zitiert das erste nicht als Gegenstand desselben
+Verfahrens (kein Änderungsantrag zu genau diesem Antrag, keine Anfrage zu genau diesem Beschluss).
+Die andere Fraktion macht sich den Text zu eigen: dieselbe Forderung, dieselbe Begründung.
+"""
+beispiel = """
+Die Grünen beantragen in einer Bezirksvertretung, Blumenkübel an den Fahrbahnrand zu versetzen; sechs
+Wochen später beantragen CDU und SPD dasselbe mit fast denselben Worten in einem eigenen Antrag.
+"""
+
+[[optionen]]
+code = "eigene_wiederholung"
+name = "eigene Wiederholung"
+definition = """
+Dieselben Urheber wiederholen ihren eigenen Text im selben Gremium und in derselben Wahlperiode, oder
+die Verwaltung verwendet ihren eigenen Sachtext wieder: Wiedervorlage, erneut eingebrachter Antrag,
+Nachfrage mit derselben Begründung, ein Haushaltsantrag mit dem Text eines früheren Antrags,
+dieselbe Vorlage der Verwaltung an mehrere Gremien, Fortschreibung eines Berichts mit gleichen
+Absätzen zur selben Sache.
+"""
+beispiel = """
+Die Linke stellt in derselben Periode zweimal eine Anfrage zum Verkauf städtischer Grundstücke mit
+demselben Absatz über steigende Mieten. Dieselbe Informationsvorlage der Verwaltung an zehn
+Bezirksvertretungen.
+"""
+
+[[optionen]]
+code = "verfahrenszitat"
+name = "Zitat im selben Verfahren"
+definition = """
+Ein Dokument gibt das andere wieder, weil es sich im selben Vorgang darauf bezieht: ein
+Änderungs- oder Ergänzungsantrag zitiert den Antrag oder die Vorlage, die er ändert; eine Antwort
+oder Stellungnahme der Verwaltung wiederholt die Fragen oder den Antrag; eine Vorlage gibt einen
+Beschluss oder einen Antrag wieder, den sie umsetzt; eine Neufassung ersetzt die alte Fassung
+desselben Dokuments. Das gilt auch, wenn die Dokumente von verschiedenen Fraktionen stammen.
+"""
+beispiel = """
+Die SPD stellt einen Änderungsantrag „zur Vorlage RAT/248/2023" und übernimmt dabei den
+Beschlussvorschlag des Antrags von CDU und Grünen, den sie ändern will.
+"""
+
+[[optionen]]
+code = "baustein"
+name = "Textbaustein oder Formular"
+definition = """
+Standardtext, der zu einem Formular oder einer Vorlage gehört und nichts über die Sache sagt:
+Briefkopf, Anrede, Bitte um Aufnahme in die Tagesordnung, Gruß und Unterschriften, Beratungsfolge,
+Formulartext einer Fraktion oder einer Bezirksvertretung, Standardabschnitte der Verwaltung
+(Finanzierung, Klimarelevanz, Beteiligung, Hinweise zum Verfahren), gleichlautende Absätze
+wiederkehrender Mitteilungen zu verschiedenen Sachen.
+"""
+beispiel = """
+Zwei Anfragen verschiedener Fraktionen derselben Bezirksvertretung, die denselben Satz „durch ein
+ausführliches Vorgespräch mit allen Schulleiterinnen und Schulleitern …" als Formular teilen, aber
+nach verschiedenen Schulen fragen.
+"""
+
+[[optionen]]
+code = "rechtszitat"
+name = "Zitat aus Gesetz oder Landesvorgabe"
+definition = """
+Die Stelle gibt Text aus einem Gesetz, einer Verordnung, einer Satzung, einer Richtlinie (auch
+Förderrichtlinie), einem Erlass oder einer anderen Vorgabe von Bund, Land oder EU wieder, oder aus
+einer Gerichtsentscheidung, in beiden Dokumenten aus derselben Rechtsquelle.
+"""
+beispiel = """
+Zwei Beschlussvorlagen aus Düsseldorf und Osnabrück zitieren die Voraussetzungen für die Anerkennung
+als Träger der freien Jugendhilfe nach § 75 SGB VIII („… die auf dem Gebiet der Jugendhilfe tätig
+sind, gemeinnützige Ziele verfolgen …").
+"""
+
+[[optionen]]
+code = "andere_quelle"
+name = "andere gemeinsame Quelle"
+definition = """
+Echte Übernahme aus einer gemeinsamen Quelle, die keine der Arten oben ist: Pressemitteilung, Studie,
+Text eines Verbands, eines Bundesprogramms oder einer anderen Behörde, Text der Verwaltung, den eine
+Fraktion außerhalb eines Verfahrens übernimmt, Text einer Bürgereingabe, Text eines Beirats.
+"""
+beispiel = """
+Ein Antrag in Düsseldorf und ein Antrag des Integrationsrats in Mönchengladbach übernehmen denselben
+Absatz zur UN-Dekade für Menschen afrikanischer Herkunft.
+"""
+
+[[optionen]]
+code = "zufall"
+name = "keine Übernahme"
+definition = """
+Die Gemeinsamkeit ist Zufall: allgemeine Wendungen („die Verwaltung wird gebeten …"), eine Kette von
+Floskeln, Aufzählungen oder Zahlen, die sich zufällig gleichen, ohne gemeinsamen Gedanken.
+"""
+beispiel = """
+Zwei Anfragen, die nur „wir bitten die Verwaltung um Beantwortung der folgenden Fragen" und
+ähnliche Wendungen gemeinsam haben.
+"""
