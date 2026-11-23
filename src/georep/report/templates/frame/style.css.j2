@@ -1,0 +1,170 @@
+/* Punkt 48, Review 2026-10-13: --accent trägt Links und die Schaltfläche der Vorschau, beides
+   0,9rem = 14,4 px, also normaler Text mit 4,5:1 nach WCAG AA. Nachgerechnet gegen die beiden
+   Flächen der Seite (--bg und --surface):
+     hell   #1f68c0: 5,24 und 5,38   (vorher #2a78d6: 4,19 und 4,30, beides unter AA)
+     dunkel #3987e5: 5,34 und 4,79
+   Ein Test rechnet es nach (tests/unit/test_report_render.py), damit die Zahlen nicht allein im
+   Kommentar stehen. --q2 bleibt #2a78d6: die Farbskala der Karte trägt keinen Text. */
+:root {
+  color-scheme: light dark;
+  --bg: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11, 11, 11, 0.10); --accent: #1f68c0;
+  --selected: #eb6834;
+  --q0: #86b6ef; --q1: #5598e7; --q2: #2a78d6; --q3: #1c5cab; --q4: #0d366b;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --border: rgba(255, 255, 255, 0.10); --accent: #3987e5;
+    --selected: #d95926;
+    --q0: #184f95; --q1: #256abf; --q2: #3987e5; --q3: #6da7ec; --q4: #b7d3f6;
+  }
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+body { margin: 0 auto; padding: 1.5rem 1rem 3rem; max-width: 72em; }
+h1 { font-size: 1.75rem; line-height: 1.25; margin: 0 0 .5rem; }
+h2 { font-size: 1.3rem; margin: 2.5rem 0 .75rem; }
+h3 { font-size: 1.05rem; margin: 1.5rem 0 .5rem; }
+p, li { max-width: 48em; }
+a { color: var(--accent); }
+.meta, .note, .footnote, footer { color: var(--ink-2); font-size: .9rem; }
+p[lang="en"] { border-left: 3px solid var(--grid); padding-left: .75rem; color: var(--ink-2); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5em, 1fr)); gap: .75rem; margin: 1rem 0; }
+.tile { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: .75rem .9rem; }
+.tile .label { color: var(--ink-2); font-size: .85rem; }
+.tile .value { font-size: 1.6rem; font-weight: 600; line-height: 1.2; }
+.tile .sub { color: var(--muted); font-size: .8rem; }
+.controls { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; margin: .5rem 0 1rem; }
+fieldset { border: 0; padding: 0; margin: 0; display: inline-flex; flex-wrap: wrap; gap: 1rem; }
+legend { color: var(--ink-2); font-size: .85rem; padding: 0; }
+.map-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 14em; gap: 1rem; align-items: start; }
+@media (max-width: 40em) { .map-wrap { grid-template-columns: 1fr; } }
+svg.map { width: 100%; height: auto; background: var(--surface); border-radius: 6px; }
+svg.scatter { width: 100%; max-width: 40em; height: auto; background: var(--surface); border-radius: 6px; }
+.district { stroke: var(--surface); stroke-width: 1.5px; vector-effect: non-scaling-stroke; cursor: pointer; transition: filter .1s; }
+.district:hover, .district:focus { filter: brightness(1.15); outline: none; }
+.district.selected { stroke: var(--selected); stroke-width: 2.5px; }
+.q0 { fill: var(--q0); } .q1 { fill: var(--q1); } .q2 { fill: var(--q2); } .q3 { fill: var(--q3); } .q4 { fill: var(--q4); }
+/* Punkt 46: die divergierende Rampe für die Varianten „Abweichung vom Mittel" und „Verhältnis zum
+   Mittel". Orange heißt unter dem Mittel, blau darüber, die Mitte ist ein neutrales Grau. Beide
+   Enden entstehen mit color-mix aus Variablen, die je Modus definiert sind, also folgt die Rampe
+   Hell und Dunkel ohne zweiten @media-Block -- dasselbe Verfahren wie die Tönung darunter.
+   Eine Rampe für Flächen und für Tabellenzellen: die Zellen tragen Zahlen, darum sind die Stufen
+   gemischt und nicht voll gesättigt.
+   Nachgerechnet am 2026-10-13 (WCAG-Kontrast der normalen Schriftfarbe auf jeder Stufe):
+     hell   #ef8960 7,89 | #f6cab7 13,17 | #d0d0cd 12,73 | #b5cfee 12,30 | #5895de 6,34
+     dunkel #af4b23 5,45 | #5b2f1d 11,23 | #444341  9,88 | #253f5e 10,76 | #326fb8 5,12
+   Minimum 6,34 hell und 5,12 dunkel, also überall über 4,5. Die Mitte ist mit 38 % Grau
+   bewusst sichtbar und nicht fast --surface: auf der Karte liegt der Flächenrand in --surface,
+   und eine Fläche in Hintergrundfarbe wäre dort verschwunden. */
+:root {
+  --d0: color-mix(in srgb, var(--selected) 78%, var(--surface));
+  --d1: color-mix(in srgb, var(--selected) 34%, var(--surface));
+  --d2: color-mix(in srgb, var(--muted) 38%, var(--surface));
+  --d3: color-mix(in srgb, var(--q2) 34%, var(--surface));
+  --d4: color-mix(in srgb, var(--q2) 78%, var(--surface));
+}
+.d0 { fill: var(--d0); } .d1 { fill: var(--d1); } .d2 { fill: var(--d2); } .d3 { fill: var(--d3); } .d4 { fill: var(--d4); }
+/* Dieselbe Klasse, zwei Flächen: auf einer SVG-Fläche liegt kein Text, in einer Tabellenzelle
+   steht eine Zahl. Darum ist die sequenzielle Rampe als Zellenhintergrund nicht --q0 bis --q4,
+   sondern eine Tönung aus einer einzigen Farbe (fünf Stufen von --q2 in --surface, Option 04,
+   Punkt 46). So trägt ein Umschalter eine Skala und nicht zwei.
+   Nachgerechnet am 2026-10-12 (WCAG-Kontrast der normalen Schriftfarbe auf jeder Stufe):
+     hell   --ink  #0b0b0b: 16,95 / 14,09 / 11,29 / 8,65 / 6,34  (Minimum 6,34)
+     dunkel --ink  #ffffff: 15,50 / 12,69 /  9,67 / 7,16 / 5,12  (Minimum 5,12)
+   Beide Reihen sind monoton und überall über 4,5. Die volle Rampe hätte das nicht geschafft:
+   --q2 hell trägt nur 4,46 mit dunkler und 4,30 mit heller Schrift, also in keiner Richtung AA. */
+:root {
+  --p0: color-mix(in srgb, var(--q2) 10%, var(--surface));
+  --p1: color-mix(in srgb, var(--q2) 24%, var(--surface));
+  --p2: color-mix(in srgb, var(--q2) 40%, var(--surface));
+  --p3: color-mix(in srgb, var(--q2) 58%, var(--surface));
+  --p4: color-mix(in srgb, var(--q2) 78%, var(--surface));
+}
+td.q0 { background: var(--p0); } td.q1 { background: var(--p1); } td.q2 { background: var(--p2); }
+td.q3 { background: var(--p3); } td.q4 { background: var(--p4); }
+.swatch.d0 { background: var(--d0); } .swatch.d1 { background: var(--d1); } .swatch.d2 { background: var(--d2); }
+.swatch.d3 { background: var(--d3); } .swatch.d4 { background: var(--d4); }
+td.d0 { background: var(--d0); } td.d1 { background: var(--d1); } td.d2 { background: var(--d2); }
+td.d3 { background: var(--d3); } td.d4 { background: var(--d4); }
+.map-labels text { font-size: 11px; fill: var(--ink); text-anchor: middle; dominant-baseline: middle; pointer-events: none; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.pois { display: none; } .pois.on { display: initial; } .pois circle { fill: var(--ink-2); opacity: .7; pointer-events: none; }
+.legend { font-size: .85rem; }
+.legend ul, .line-legend ul { list-style: none; padding: 0; margin: 0; }
+.legend li, .line-legend li { display: flex; align-items: center; gap: .5rem; margin: .25rem 0; }
+.swatch { display: inline-block; width: 1.1em; height: 1.1em; border-radius: 3px; flex: none; }
+.swatch.q0 { background: var(--q0); } .swatch.q1 { background: var(--q1); } .swatch.q2 { background: var(--q2); } .swatch.q3 { background: var(--q3); } .swatch.q4 { background: var(--q4); }
+.line-legend { display: flex; gap: 1.5rem; font-size: .85rem; margin: .5rem 0; }
+.key { display: inline-block; width: 2em; border-top: 2px solid var(--ink-2); }
+.key.dashed { border-top-style: dashed; }
+.grid line { stroke: var(--grid); stroke-width: 1; }
+.axis line { stroke: var(--axis); stroke-width: 1; }
+.ticks text, .axis-label { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.fit { stroke: var(--ink-2); stroke-width: 2; fill: none; stroke-linecap: round; }
+.fit-without { stroke-dasharray: 6 4; }
+.hit { fill: transparent; cursor: pointer; }
+.dot { fill: var(--accent); stroke: var(--surface); stroke-width: 2; pointer-events: none; }
+.dot-label { font-size: 10px; fill: var(--muted); pointer-events: none; }
+.point:focus { outline: none; }
+.point:hover .dot, .point:focus .dot, .point.selected .dot { fill: var(--selected); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; background: var(--surface); }
+th, td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; }
+th[data-sort] { cursor: pointer; user-select: none; }
+th[data-sort]::after { content: " ↕"; color: var(--muted); }
+th[aria-sort="ascending"]::after { content: " ↑"; color: var(--ink); }
+th[aria-sort="descending"]::after { content: " ↓"; color: var(--ink); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.selected td { background: color-mix(in srgb, var(--selected) 18%, var(--surface)); }
+.scroll { overflow-x: auto; }
+/* Punkt 48: lange Tabellen zeigen Kopf und die ersten Zeilen, die Schaltfläche darunter klappt den
+   Rest auf. Die Vorschau ist eine Regel und kein Attribut je Zeile, damit drei Dinge ohne eine
+   Zeile JavaScript stimmen: nach dem Sortieren zählt nth-child die neue Folge, eine markierte
+   Zeile klappt von allein auf (georep.select setzt .selected), eine Zeile, auf die die Adresse
+   zielt, ebenso (:target, also index.html#bezirk-17 aus einer geteilten Adresse -- niemand muss
+   dafür location.hash lesen), und die Druckansicht ist vollständig.
+   docs/seitengroesse-2026-10.md, § 3.2. */
+{% if model.preview_rows %}
+table.preview tbody tr:nth-child(n+{{ model.preview_rows + 1 }}) { display: none; }
+table.preview.open tbody tr, table.preview tbody tr.selected, table.preview tbody tr:target { display: table-row; }
+{% endif %}
+/* Der Aufklapper steht vor seiner Tabelle (WAI-ARIA Authoring Practices: das Bedienelement vor
+   dem Inhalt) -- hinter 41 Zeilen rutschte er beim Aufklappen mit dem Fokus aus dem Bild. Das
+   Dreieck kommt aus aria-expanded und nicht aus JavaScript: so kann es nicht lügen, und die Zeile
+   sieht nach Bedienelement aus und nicht nach Link. */
+p.more { margin: .3rem 0 .2rem; }
+p.more button { font: inherit; font-size: .9rem; color: var(--accent); background: none; border: 0; padding: .2rem 0; cursor: pointer; }
+p.more button::before { content: "▸ "; }
+p.more button[aria-expanded="true"]::before { content: "▾ "; }
+p.more button:hover, p.more button:focus { text-decoration: underline; }
+@media print {
+  /* Alles offen, nichts zum Klicken: !important, weil die Vorschauregel über :nth-child
+     spezifischer ist als diese hier. */
+  table.preview tbody tr { display: table-row !important; }
+  p.more, #tooltip { display: none !important; }
+}
+.small { font-size: .85rem; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8em; overflow-wrap: anywhere; }
+details { margin: .4rem 0; }
+summary { cursor: pointer; }
+ol.terms { columns: 3; column-gap: 1.5rem; padding-left: 1.4em; font-size: .85rem; max-width: none; }
+@media (max-width: 40em) { ol.terms { columns: 1; } }
+ol.terms li { break-inside: avoid; }
+.count { color: var(--muted); }
+button.term { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+button.term:hover, button.term:focus { text-decoration: underline; }
+.pois.on circle { pointer-events: all; cursor: pointer; }
+.pois circle:hover { fill: var(--selected); opacity: 1; }
+dialog#docs { max-width: 46em; width: calc(100% - 2rem); border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--ink); padding: 1rem 1.25rem; }
+dialog#docs::backdrop { background: rgba(0, 0, 0, .4); }
+dialog#docs h3 { margin: 0 2.5em .25rem 0; }
+dialog#docs form { position: absolute; right: .75rem; top: .75rem; }
+dialog#docs ol { padding-left: 1.4em; max-width: none; font-size: .9rem; }
+dialog#docs li { margin: .3rem 0; }
+dialog#docs .when { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: .4em; }
+dialog#docs .ref { color: var(--ink-2); font-size: .85em; }
+#tooltip { position: absolute; z-index: 10; background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .7rem; font-size: .85rem; max-width: 20em; box-shadow: 0 2px 8px rgba(0, 0, 0, .15); pointer-events: none; }
+#tooltip strong { display: block; font-size: 1rem; }
+#tooltip .terms { color: var(--ink-2); }
+footer { margin-top: 3rem; border-top: 1px solid var(--grid); padding-top: 1rem; }

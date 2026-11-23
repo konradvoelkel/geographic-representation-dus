@@ -1,0 +1,263 @@
+(function () {
+  "use strict";
+  var DOCUMENTS = "data/dokumente.json";
+  var tooltip = document.getElementById("tooltip");
+  var rows = {};
+  document.querySelectorAll("#districts tbody tr").forEach(function (tr) { rows[tr.dataset.id] = tr; });
+
+  function line(parent, text, cls) {
+    var el = document.createElement(cls === "strong" ? "strong" : "div");
+    if (cls && cls !== "strong") el.className = cls;
+    el.textContent = text;
+    parent.appendChild(el);
+  }
+  function showTooltip(el, x, y) {
+    var d = el.dataset;
+    tooltip.textContent = "";
+    if (d.district !== undefined) {
+      line(tooltip, d.name, "strong");
+      var row = rows[d.district];
+      line(tooltip, "Wahlbezirk " + d.district + (row ? " " + row.cells[1].textContent : ""));
+    } else {
+      line(tooltip, d.id + " " + d.name, "strong");
+      line(tooltip, d.hits + " Dokumente, " + d.eligible + " Wahlberechtigte");
+      line(tooltip, "Trefferquote " + d.rate + ", Wahlbeteiligung " + d.turnout);
+      if (d.own) line(tooltip, "eigene Bezirksvertretung: " + d.own);  /* Option 05 */
+      if (d.terms) line(tooltip, d.terms, "terms");
+    }
+    tooltip.hidden = false;
+    var w = tooltip.offsetWidth, h = tooltip.offsetHeight;
+    var left = x + 14, top = y + 14;
+    if (left + w > window.scrollX + document.documentElement.clientWidth - 8) left = x - w - 14;
+    if (top + h > window.scrollY + document.documentElement.clientHeight - 8) top = y - h - 14;
+    tooltip.style.left = Math.max(window.scrollX + 4, left) + "px";
+    tooltip.style.top = Math.max(window.scrollY + 4, top) + "px";
+  }
+  function hideTooltip() { tooltip.hidden = true; }
+  /* Markiert einen Bezirk (Zahl oder Text), mehrere (Array) oder keinen (null) in Karte, Tabelle und
+     Streudiagramm; scroll (Standard: wahr) holt die erste Tabellenzeile ins Bild. */
+  function select(ids, scroll) {
+    document.querySelectorAll(".selected").forEach(function (el) { el.classList.remove("selected"); });
+    if (ids === null || ids === undefined) return;
+    var list = Array.isArray(ids) ? ids : [ids];
+    list.forEach(function (id) {
+      document.querySelectorAll('[data-id="' + id + '"]').forEach(function (el) {
+        el.classList.add("selected");
+        if (el.classList.contains("district")) el.parentNode.appendChild(el);
+      });
+    });
+    if (scroll !== false && list.length && rows[list[0]]) rows[list[0]].scrollIntoView({ block: "nearest" });
+  }
+  var marks = document.querySelectorAll(".district, .point");
+  marks.forEach(function (el) {
+    el.addEventListener("pointermove", function (e) { showTooltip(el, e.pageX, e.pageY); });
+    el.addEventListener("pointerleave", hideTooltip);
+    el.addEventListener("focus", function () {
+      var r = el.getBoundingClientRect();
+      showTooltip(el, r.left + window.scrollX + r.width / 2, r.top + window.scrollY + r.height / 2);
+    });
+    el.addEventListener("blur", hideTooltip);
+    el.addEventListener("click", function () {
+      select(el.classList.contains("selected") ? null : el.dataset.id);
+    });
+    el.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); }
+    });
+  });
+  Object.keys(rows).forEach(function (id) {
+    rows[id].addEventListener("click", function () { select(rows[id].classList.contains("selected") ? null : id); });
+  });
+
+  /* Umschalter einer Kennzahl (Punkt 46): ein fieldset.switcher mit einem Radio je Variante.
+     Jedes Element, das die Variante kennt, traegt sie als data-class-<value> (Stufe der
+     Farbskala), data-text-<value> (angezeigte Zahl) oder data-value-<value> (Sortierwert); die
+     Legenden heissen #legend-<value>, und die Skala steht als data-scale am Radio (Standard q,
+     sequenziell; d ist die divergierende um das Mittel). Eine neue Variante ist damit ein Radio,
+     ein Attribut je Element und eine Legende -- kein neues JavaScript.
+     Gesucht wird im ganzen Dokument, nicht im Abschnitt: der Umschalter der Karte faerbt auch die
+     Spalte der Tabelle je Wahlbezirk, die in einem anderen <section> steht. Getrennt halten die
+     Gruppen sich dadurch, dass kein value zweimal vorkommt (ein Test haelt das fest). */
+  var STEP = /^[qd][0-9]$/;  /* die beiden Farbrampen; nur diese Klasse tauscht ein Umschalter */
+  function setStep(el, token) {
+    Array.prototype.slice.call(el.classList).forEach(function (name) {
+      if (STEP.test(name)) el.classList.remove(name);
+    });
+    el.classList.add(token);
+  }
+  /* Die Standardvariante braucht keine Attribute: sie ist der Zustand, in dem die Seite
+     ausgeliefert wird. Beim Aufbau merkt sich der Umschalter je Element Klasse, Text und
+     Sortierwert, und wer auf eine Variante schaltet, die ein Element nicht kennt, bekommt genau
+     diesen Zustand zurueck. Das spart die Haelfte der Attribute und macht die Vorlagen kuerzer. */
+  function membersOf(values) {
+    var parts = [];
+    values.forEach(function (value) {
+      parts.push("[data-class-" + value + "]", "[data-text-" + value + "]", "[data-value-" + value + "]");
+    });
+    var found = [];
+    document.querySelectorAll(parts.join(",")).forEach(function (el) {
+      found.push({
+        el: el,
+        klass: el.getAttribute("class"),
+        text: el.textContent,
+        value: el.getAttribute("data-value"),
+      });
+    });
+    return found;
+  }
+  function showVariant(value, scale, values, members) {
+    members.forEach(function (member) {
+      var el = member.el;
+      var klass = el.getAttribute("data-class-" + value);
+      var text = el.getAttribute("data-text-" + value);
+      var sort = el.getAttribute("data-value-" + value);
+      if (klass !== null) setStep(el, scale + klass);
+      else if (member.klass !== null) el.setAttribute("class", member.klass);
+      if (text !== null) el.textContent = text;
+      else el.textContent = member.text;
+      if (sort !== null) el.setAttribute("data-value", sort);
+      else if (member.value !== null) el.setAttribute("data-value", member.value);
+    });
+    values.forEach(function (other) {
+      var legend = document.getElementById("legend-" + other);
+      if (legend) legend.hidden = other !== value;
+    });
+  }
+  document.querySelectorAll("fieldset.switcher").forEach(function (fieldset) {
+    var radios = Array.prototype.slice.call(fieldset.querySelectorAll('input[type="radio"]'));
+    var values = radios.map(function (radio) { return radio.value; });
+    var members = membersOf(values);
+    radios.forEach(function (radio) {
+      radio.addEventListener("change", function () {
+        showVariant(radio.value, radio.dataset.scale || "q", values, members);
+      });
+    });
+  });
+  var pois = document.getElementById("show-pois");
+  if (pois) pois.addEventListener("change", function () {
+    document.querySelectorAll(".pois").forEach(function (g) { g.classList.toggle("on", pois.checked); });
+  });
+  document.querySelectorAll(".pois circle").forEach(function (el) {
+    el.addEventListener("pointermove", function (e) { showTooltip(el, e.pageX, e.pageY); });
+    el.addEventListener("pointerleave", hideTooltip);
+  });
+
+  var dialog = document.getElementById("docs");
+  /* Punkt 49: eine Datei wird einmal geholt und dann aus dem Versprechen gelesen -- fuer
+     dokumente.json (der Dialog) und begriffe.json (der Abschnitt "Begriffe", sections/50-begriffe.js).
+     Scheitert es, sagt offlineNote denselben Satz fuer jede Datei: aus dem Dateisystem geoeffnet
+     verbietet der Browser fetch, ueber einen Webserver geht es. */
+  var pending = {};
+  function loadJson(path) {
+    if (!pending[path]) {
+      pending[path] = fetch(path).then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      });
+    }
+    return pending[path];
+  }
+  function forget(path) { delete pending[path]; }
+  /* Der Grund haengt am Protokoll: aus dem Dateisystem verbietet der Browser fetch, ueber http ist
+     es ein 404 oder eine halbe Datei. Beides mit demselben Satz zu erklaeren schickte den Leser auf
+     eine falsche Faehrte (Review 2026-10-13). */
+  function offlineNote(what, path) {
+    var note = what + " (" + path + ") ließ sich nicht nachladen.";
+    if (location.protocol === "file:") {
+      return note + " Aus dem Dateisystem geöffnet erlaubt der Browser das nicht; über einen Webserver oder unter der veröffentlichten Adresse funktioniert es.";
+    }
+    return note + " Die Datei fehlt neben der Seite oder ist unvollständig; ein neuer Lauf von georep legt sie dorthin.";
+  }
+  function germanDate(iso) {
+    var p = iso.split("-");
+    return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso;
+  }
+  /* Zeigt die Dokumente eines oder mehrerer Begriffe (Array) im Dialog; die Indizes werden vereinigt
+     und aufsteigend sortiert, die Liste ist neueste zuerst. title ist die Ueberschrift des Dialogs. */
+  function showDocuments(terms, title) {
+    var list = Array.isArray(terms) ? terms : [terms];
+    var heading = dialog.querySelector("h3"), note = dialog.querySelector("p"), ol = dialog.querySelector("ol");
+    heading.textContent = title !== undefined ? title : list.join(", ");
+    note.textContent = "Lade data/dokumente.json …";
+    ol.textContent = "";
+    if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "");
+    loadJson(DOCUMENTS).then(function (data) {
+      var seen = {}, ids = [];
+      list.forEach(function (term) {
+        (data.terms[term] || []).forEach(function (i) { if (!seen[i]) { seen[i] = true; ids.push(i); } });
+      });
+      ids.sort(function (a, b) { return a - b; });
+      note.textContent = ids.length + " Dokumente mit " + (list.length > 1 ? "diesen Begriffen" : "diesem Begriff") + ", neueste zuerst.";
+      ids.forEach(function (i) {
+        var doc = data.documents[i];
+        var li = document.createElement("li");
+        var when = document.createElement("span");
+        when.className = "when";
+        when.textContent = germanDate(doc[1]);
+        var a = document.createElement("a");
+        a.href = doc[0].indexOf("http") === 0 ? doc[0] : data.base + doc[0];
+        a.textContent = doc[3];
+        var ref = document.createElement("div");
+        ref.className = "ref";
+        /* Option 04: hinter Drucksache und Art steht der Urheber, wenn dokumente.json ihn traegt. */
+        ref.textContent = doc[2] + (doc[4] ? ", " + doc[4] : "") + (doc[5] ? " \u2014 " + doc[5] : "");
+        li.appendChild(when); li.appendChild(a); li.appendChild(ref);
+        ol.appendChild(li);
+      });
+    }).catch(function () {
+      forget(DOCUMENTS);  /* ein zweiter Klick darf es noch einmal versuchen */
+      note.textContent = offlineNote("Die Dokumentliste", DOCUMENTS);
+    });
+  }
+  /* Ein Zuhoerer am Dokument statt einer je Schaltflaeche: die Begriffe eines Wahlbezirks entstehen
+     erst beim Aufklappen (Punkt 49), und ihre Schaltflaechen sollen ohne weitere Verdrahtung
+     wirken. Nebenbei sind das rund viertausend Zuhoerer weniger. */
+  document.addEventListener("click", function (event) {
+    var button = event.target.closest ? event.target.closest("button.term") : null;
+    if (button) showDocuments([button.textContent], button.textContent);
+  });
+
+  document.querySelectorAll("th[data-sort]").forEach(function (th) {
+    th.addEventListener("click", function () {
+      var table = th.closest("table"), tbody = table.tBodies[0];
+      var index = Array.prototype.indexOf.call(th.parentNode.children, th);
+      var ascending = th.getAttribute("aria-sort") !== "ascending";
+      var numeric = th.dataset.sort === "num";
+      var list = Array.prototype.slice.call(tbody.rows);
+      list.sort(function (a, b) {
+        var ca = a.cells[index], cb = b.cells[index];
+        if (numeric) return (parseFloat(ca.dataset.value) - parseFloat(cb.dataset.value)) * (ascending ? 1 : -1);
+        return ca.textContent.localeCompare(cb.textContent, "de") * (ascending ? 1 : -1);
+      });
+      list.forEach(function (tr) { tbody.appendChild(tr); });
+      table.querySelectorAll("th[data-sort]").forEach(function (other) { other.removeAttribute("aria-sort"); });
+      th.setAttribute("aria-sort", ascending ? "ascending" : "descending");
+    });
+  });
+
+  /* Punkt 48: die Vorschau langer Tabellen. Welche Zeilen sichtbar sind, entscheidet die Regel im
+     Rahmen (table.preview tbody tr:nth-child(n+N)); hier haengt nur die Schaltflaeche daran, die
+     die Klasse "open" setzt. Darum stimmt die Vorschau nach dem Sortieren, und eine markierte
+     Zeile klappt ohne Zutun auf -- select setzt und raeumt die Klasse "selected" auf.
+     Die Beschriftungen stehen in der Vorlage (Makro "more"), nicht hier. */
+  document.querySelectorAll("p.more button").forEach(function (button) {
+    var table = document.getElementById(button.getAttribute("aria-controls"));
+    if (!table) return;
+    var collapsed = button.textContent;
+    button.addEventListener("click", function () {
+      var open = !table.classList.contains("open");
+      table.classList.toggle("open", open);
+      button.setAttribute("aria-expanded", open ? "true" : "false");
+      button.textContent = open ? button.dataset.less : collapsed;
+    });
+  });
+
+  /* Schnittstelle fuer die Skripte der Abschnitte (templates/sections/NN-name.js). */
+  window.georep = {
+    select: select,
+    showDocuments: showDocuments,
+    rows: rows,
+    loadJson: loadJson,  /* Punkt 49 */
+    forget: forget,
+    offlineNote: offlineNote,
+  };
+})();

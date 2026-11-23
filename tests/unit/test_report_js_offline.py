@@ -26,8 +26,8 @@ console.log(offlineNote("Die Begriffsliste", "data/begriffe.json"));
 
 
 def _offline_note_source() -> str:
-    """Nur ``function offlineNote`` aus dem Rahmen, ohne den Rest des Skripts."""
-    frame = (resources.files("georep.report") / "templates" / "report.html.j2").read_text(
+    """Nur ``function offlineNote`` aus dem Rahmen (``frame/script.js.j2``), ohne den Rest."""
+    frame = (resources.files("georep.report") / "templates" / "frame" / "script.js.j2").read_text(
         encoding="utf-8"
     )
     start = frame.index("  function offlineNote(")
@@ -63,7 +63,7 @@ def test_a_web_server_gets_an_explanation_that_can_be_true(tmp_path: Path) -> No
 
 def test_both_sentences_stand_in_the_frame_once() -> None:
     """Eine Formulierung je Fall, und keine zweite Kopie in einem Abschnitts-Skript."""
-    frame = (resources.files("georep.report") / "templates" / "report.html.j2").read_text(
+    frame = (resources.files("georep.report") / "templates" / "frame" / "script.js.j2").read_text(
         encoding="utf-8"
     )
     assert frame.count("ließ sich nicht nachladen.") == 1
