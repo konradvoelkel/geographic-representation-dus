@@ -3021,7 +3021,7 @@ für Dokumente ohne Fraktion (der Bauplan hat sieben, und der Filter auf die Urh
 `classify_function` und `cosponsors` in `VERIFY_TARGETS` (ihre Regeln tragen `re.Pattern`, dasselbe
 Werkzeugartefakt wie bei `parse_reference`; geprüft wird `camp`, die übrigen über hypothesis).
 
-## NN. Vorgänge: nur starke Kanten, ein Wald statt Komponenten, Antworten aus den Anlagen, Nachbarperioden aus ihren Paketen (Vorhaben 14, 2026-11-24)
+## 76. Vorgänge: nur starke Kanten, ein Wald statt Komponenten, Antworten aus den Anlagen, Nachbarperioden aus ihren Paketen (Vorhaben 14, 2026-11-24)
 
 Vorhaben 14 der Vorverarbeitung (`docs/plans/14-vorgaenge.md`, Stufe 2) verbindet Drucksachen, die
 zusammengehören: Anfrage und Antwort, Antrag und Umsetzung, Vorlage und Änderungsantrag, Original

@@ -158,3 +158,15 @@ setzen. Zu klären, wenn die ersten Modellschritte (18 bis 20) gebaut werden.
 rechnete ollama still auf der CPU, während `ollama ps` „100% GPU" sagte (2026-11-23, 22:42,
 `ggml_cuda_init` im Log; Vorhaben 18, Frage 9.5). Bis dahin prüft jeder Lauf das Log und das Tempo von
 Hand.
+
+## 12. Vorgänge: Rückstand aus der Nachprüfung von Vorhaben 14
+
+Aufgenommen am 2026-11-24 aus der Nachprüfung der Runde 2 (Punkt 76); keiner verfälscht ein Ergebnis.
+(a) `references` braucht unter Last mehr als die angestrebten 20 s (21,3 s bei Last 16), rund 7 s davon
+`flatten_with_offsets`. (b) Die Mini-Läufe lesen die echten Nachbarpakete relativ zum
+Arbeitsverzeichnis. (c) Das README-Gerüst von `pack --attachments` ist das allgemeine. (d) Die
+Stamp-Schlüssel von `compare` sind absolute Pfade unter `data_root`; relativ zu `data_root` liefe
+`compare` nach einem Umzug nicht neu (0,1 s, Kür). (e) `verweise.parquet` hängt vom Rechner ab: lokal
+liegen die Spannen aller Profile auf dem Rohtext, auf Pages nur die der Hauptperiode (die Spalte
+`extractor` sagt es); vor Stufe 3 klären, ob die Tabelle so veröffentlicht wird. (f) Die Maske nimmt
+einmal ein Sachwort mit („Anfrage Dr. …" statt „… Hitzeschutz"); das README des Pakets sagt es.
