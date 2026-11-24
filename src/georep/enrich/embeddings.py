@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Sequence
 from pathlib import Path
 from typing import NamedTuple
 
@@ -38,10 +39,10 @@ from georep.errors import SchemaError
 from georep.http import Transport
 from georep.io import write_parquet
 from georep.layout import Layout
-from georep.ml.base import Embedder, EmbeddingUse
+from georep.ml.base import Embedder, EmbeddingOptions, EmbeddingUse, Vectors, full_name
 from georep.ml.batch import embed_texts, progress_log
 from georep.ml.cache import ModelCache
-from georep.ml.ollama import client_from_settings, embedder_from_settings
+from georep.ml.ollama import OllamaEmbedder, client_from_settings, embedder_from_settings
 from georep.pipeline import Step
 from georep.search.units import build_units, raw_frame, unit_chunks
 from georep.search.vectors import (
@@ -54,7 +55,7 @@ from georep.search.vectors import (
     neighbor_table,
     normalise,
 )
-from georep.settings import Settings
+from georep.settings import Ml, Settings
 from georep.stores import RawTextStore
 
 CHUNK_PROMPT = "18-stuecke-1"
@@ -113,16 +114,47 @@ def query_prompt(settings: Settings) -> str:
     return _versioned(QUERY_PROMPT, values, dict(QUERY_VERSION_1))
 
 
+class DeferredEmbedder:
+    """Der Einbetter aus ``[ml]``, dessen Client erst beim ersten ``digest`` oder ``embed`` entsteht.
+
+    Review Runde 1, N5, wie ``http.DeferredTransport`` für das Netz: ``build_steps`` (also
+    ``run``, ``steps`` und ``status``) baut den Schritt, fragt das Modell aber nie, und ein
+    ``ml.base_url``, das der Client verweigert, wird erst ein ``ModelError``, wenn ein Lauf mit
+    ``--models`` oder ``georep search`` das Modell wirklich braucht. Name, Dimension und Optionen
+    kommen aus den Settings, so wie ``embedder_from_settings`` sie setzt.
+    """
+
+    def __init__(self, ml: Ml) -> None:
+        self.ml = ml
+        self.name = full_name(ml.embedding.model)
+        self.dimension = ml.embedding.dimension
+        self.options = EmbeddingOptions(
+            num_ctx=ml.embedding.num_ctx, truncate=ml.embedding.truncate
+        )
+        self._inner: OllamaEmbedder | None = None
+
+    def _embedder(self) -> OllamaEmbedder:
+        if self._inner is None:
+            self._inner = embedder_from_settings(self.ml, client_from_settings(self.ml))
+        return self._inner
+
+    @property
+    def digest(self) -> str:
+        return self._embedder().digest
+
+    def embed(self, texts: Sequence[str]) -> Vectors:
+        return self._embedder().embed(texts)
+
+
 def embeddings_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
     """Die Schritte ``embeddings`` und ``neighbors``, wenn das Profil sie einschaltet.
 
     Das Modell kommt aus ``[ml]``; gefragt wird der Server erst, wenn ``embeddings`` laufen darf
-    (Fundament F5). ``http`` (Fundament F7) bleibt ungenutzt: ollama spricht seine eigene Naht.
+    (Fundament F5), und erst dann entsteht der Client (``DeferredEmbedder``). ``http`` (Fundament F7) bleibt ungenutzt: ollama spricht seine eigene Naht.
     """
     if not settings.embeddings.enabled:
         return []
-    embedder = embedder_from_settings(settings.ml, client_from_settings(settings.ml))
-    return model_steps(settings, layout, embedder)
+    return model_steps(settings, layout, DeferredEmbedder(settings.ml))
 
 
 def model_steps(settings: Settings, layout: Layout, embedder: Embedder) -> list[Step]:

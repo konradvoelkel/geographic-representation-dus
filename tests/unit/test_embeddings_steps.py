@@ -257,3 +257,22 @@ def test_a_rejected_chunk_leaves_its_document_without_a_vector(
     assert "id2" not in set(neighbors.get_column("id")) | set(neighbors.get_column("nachbar"))
     again = run_pipeline([steps["embeddings"]], settings, models=True)[0]
     assert again.status == "übersprungen" and again.reason == "aktuell, 1 Eingaben abgewiesen"
+
+
+def test_a_server_that_is_not_allowed_only_fails_the_model_step(
+    settings: Settings, layout: Layout
+) -> None:
+    """Review Runde 1, N5: der Client entsteht erst, wenn der Schritt das Modell fragt.
+
+    Ein ``ml.base_url`` außerhalb dieses Rechners ohne ``allow_remote`` (hier ohne Prüfung gesetzt,
+    wie es eine Schicht über den Settings könnte) darf ``steps``, ``status`` und einen Lauf ohne
+    ``--models`` nicht abbrechen; mit ``--models`` scheitert nur ``embeddings``. Kein Abruf.
+    """
+    ml = settings.ml.model_copy(update={"base_url": "http://ollama.example:11434"})
+    remote = settings.model_copy(update={"ml": ml})
+    steps = build_steps(remote, layout, HTTP)  # baute vorher den Client und brach hier ab
+    mine = [s for s in steps if s.name in ("embeddings", "neighbors")]
+    assert [s.name for s in mine] == ["embeddings", "neighbors"]
+    assert [o.status for o in run_pipeline(mine, remote)] == ["übersprungen", "ausgeführt"]
+    failed = run_pipeline(mine[:1], remote, models=True)[0]
+    assert failed.status == "fehlgeschlagen" and "ollama.example" in failed.reason

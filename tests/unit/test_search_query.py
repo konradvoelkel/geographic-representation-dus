@@ -192,7 +192,7 @@ def test_the_command_searches_and_says_when_it_falls_back(
     )  # die Stücke sind da, der Server für die Frage nicht
     monkeypatch.setattr(cli, "load_settings", lambda **_: settings)
     monkeypatch.setattr(Layout, "from_settings", staticmethod(lambda _: layout))
-    monkeypatch.setattr(search_command, "embedder_from_settings", lambda *_: Down())
+    monkeypatch.setattr(search_command, "DeferredEmbedder", lambda _: Down())
     assert cli.main(["search", "Radweg", "--method", "bm25", "--n", "1"]) == 0
     out = capsys.readouterr().out
     assert "mit BM25: 1 Treffer" in out and "Hinweis" not in out and "R/0" in out
@@ -203,3 +203,20 @@ def test_the_command_searches_and_says_when_it_falls_back(
     assert "leer" in capsys.readouterr().err
     with pytest.raises(SystemExit):
         cli.main(["search", "Radweg", "--n", "0"])
+
+
+def test_a_server_that_is_not_allowed_makes_the_command_search_with_bm25(
+    settings: Settings,
+    layout: Layout,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Review Runde 1, N5: der Einbetter entsteht im ``try`` der Suche, nicht davor."""
+    _embedded(settings, layout, FakeEmbedder())
+    ml = settings.ml.model_copy(update={"base_url": "http://ollama.example:11434"})
+    remote = settings.model_copy(update={"ml": ml})
+    monkeypatch.setattr(cli, "load_settings", lambda **_: remote)
+    monkeypatch.setattr(Layout, "from_settings", staticmethod(lambda _: layout))
+    assert cli.main(["search", "Radweg"]) == 0
+    out = capsys.readouterr().out
+    assert out.startswith("Hinweis: ") and "ollama.example" in out and "mit BM25" in out

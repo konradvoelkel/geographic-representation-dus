@@ -13,8 +13,8 @@ import sys
 
 import polars as pl
 
+from georep.enrich.embeddings import DeferredEmbedder
 from georep.layout import Layout
-from georep.ml.ollama import client_from_settings, embedder_from_settings
 from georep.search.query import METHODS, describe, search
 from georep.settings import Settings
 
@@ -51,11 +51,8 @@ def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
     if not query:
         print("Fehler: die Frage ist leer", file=sys.stderr)
         return 2
-    embedder = (
-        embedder_from_settings(settings.ml, client_from_settings(settings.ml))
-        if args.method != "bm25"
-        else None
-    )
+    # Review Runde 1, N5: der Client entsteht erst in der Suche, in ihrem ``try`` mit Rückfall
+    embedder = DeferredEmbedder(settings.ml) if args.method != "bm25" else None
     result = search(layout, settings, query, args.method, args.n, embedder)
     corpus = pl.read_parquet(
         layout.corpus, columns=["id", "reference", "date", "name", "download_url"]
