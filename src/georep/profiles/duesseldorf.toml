@@ -871,3 +871,37 @@ texts = "snapshots/duesseldorf-texte/cache/text/texts.parquet"
 profile = "duesseldorf-2025"
 papers = "snapshots/2025/raw/papers.jsonl"
 texts = "snapshots/2025/cache/text/texts.parquet"
+
+# --- Vorhaben 26: Beschlusslage und Antragserfolg (docs/plans/26-beschluesse.md) ------------------
+# Der Wortschatz, den die Sitzungsleitung in OParl `result` einträgt: 21 Werte in allen drei
+# Netzläufen vom 2026-11-23, je mit Stufe und Klasse wie vorab festgelegt (Messdokument § 3.1,
+# Commit c94ae31). Die Zahl hinter jedem Wert: Tagesordnungspunkte der Sitzungsliste der
+# Hauptperiode mit diesem Eintrag (9 932 tragen keinen). `resolutionText` und `resolutionFile` füllt
+# der Server nie (§ 3.2). Ein Wert, der hier fehlt, bricht den Schritt council_results mit seinem
+# Wortlaut ab. Die Zuordnung ist an 150 Anträgen von zwei KI-Kodierern geprüft, 150 von 150 gleich
+# (§ 4.1); ob der Eintrag selbst stimmt, zeigt nur die Niederschrift (Frage 9.1).
+[outcomes]
+package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-duesseldorf.parquet"  # Netzlauf vom 2026-11-23 (README dort); ein Periodenprofil nennt seine eigene Datei
+
+[outcomes.results]
+"einstimmig beschlossen" = ["sache", "beschlossen"]               # 10 433
+"mehrheitlich beschlossen" = ["sache", "beschlossen"]             # 2 070
+"beschlossen" = ["sache", "beschlossen"]                          # 139
+"Empfehlung einstimmig beschlossen" = ["sache", "beschlossen"]    # 1 684; Empfehlung eines vorberatenden Gremiums, eine spätere Entscheidung ersetzt sie
+"Empfehlung mehrheitlich beschlossen" = ["sache", "beschlossen"]  # 449
+"abweichend beschlossen" = ["sache", "geaendert"]                 # 1 487
+"Empfehlung abweichend beschlossen" = ["sache", "geaendert"]      # 172
+"einstimmig abgelehnt" = ["sache", "abgelehnt"]                   # 56
+"mehrheitlich abgelehnt" = ["sache", "abgelehnt"]                 # 1 462
+"abgelehnt aufgrund Stimmengleichheit" = ["sache", "abgelehnt"]   # 3
+"zurückgewiesen" = ["sache", "abgelehnt"]                         # 30; förmlich zurückgewiesen, meist eine Anfrage im Rat
+"Empfehlung einstimmig abgelehnt" = ["sache", "abgelehnt"]        # 11
+"Empfehlung mehrheitlich abgelehnt" = ["sache", "abgelehnt"]      # 37
+"zurückgezogen" = ["sache", "zurueckgezogen"]                     # 688
+"zur Kenntnis genommen" = ["stand", "erledigt"]                   # 9 148
+"passieren lassen" = ["stand", "erledigt"]                        # 563; bei Haushaltsanträgen der Weg in die Haushaltssitzung (Frage 9.16)
+"beantwortet" = ["stand", "erledigt"]                             # 1 853
+"schriftlich beantwortet" = ["stand", "erledigt"]                 # 1 744
+"vertagt" = ["stand", "vertagt"]                                  # 2 084
+"zurückgestellt" = ["stand", "vertagt"]                           # 92
+"verwiesen" = ["stand", "offen"]                                  # 94

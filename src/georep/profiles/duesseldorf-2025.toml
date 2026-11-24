@@ -55,3 +55,7 @@ k = 0                          # ohne Regression zeigt die Seite keine Sensitivi
 # Dokumente, die schon die Nummer nicht auflöst: docs/befunde-2026-10-14.md, § 5).
 [bodies]
 consultations = ""
+
+# --- Vorhaben 26: Beschlusslage (docs/plans/26-beschluesse.md); der Wortschatz kommt aus dem Stadtprofil
+[outcomes]
+package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-2025.parquet"

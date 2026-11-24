@@ -108,3 +108,7 @@ consultations = ""
 [bootstrap]
 texts = ""                     # Punkt 68: das Textpaket der Hauptperiode gehört nicht hierher; der Schnappschuss trägt seine eigenen Texte
 raw_texts = ""                 # Fundament F1: ebenso das Rohtextpaket der Hauptperiode; ihren Rohtext liest der Schritt raw_texts aus den PDFs
+
+# --- Vorhaben 26: Beschlusslage (docs/plans/26-beschluesse.md); der Wortschatz kommt aus dem Stadtprofil
+[outcomes]
+package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-2014-2020.parquet"  # aus dem eigenen Abruf der Beratungen (Frage 9.10), nicht aus der Kopie der Hauptperiode
