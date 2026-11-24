@@ -173,6 +173,13 @@ VERIFY_TARGETS = [
     # 5 s am 2026-11-24. Die übrigen Funktionen von prep.references nehmen vorkompilierte Muster
     # (``re.Pattern`` in ``ReferenceRules``) und stehen darum nicht hier.
     "georep.prep.references.edge_type",
+    # Vorhaben 18 (2026-11-24): die Stücke für das Einbettungsmodell, je einzeln geprüft, Exit 0,
+    # „Not confirmed" nach 20 bis 41 s, kein Gegenbeispiel. Die Treue zur Messung prüft
+    # tests/property/test_chunks_props.py gegen das Orakel ``oracle_chunks.zerteile``.
+    "georep.prep.chunks.chunk_title",
+    "georep.prep.chunks.chunk_lines",
+    "georep.prep.chunks.split_chunks",
+    "georep.prep.chunks.chunk_text",
 ]
 
 
@@ -376,6 +383,11 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "procedures": (
         ("src/georep/analysis/procedures.py",),
         ("tests/unit/test_procedures.py", "tests/property/test_procedures_props.py"),
+    ),
+    # Vorhaben 18: die Stücke für das Einbettungsmodell; nicht gemessen
+    "chunks": (
+        ("src/georep/prep/chunks.py",),
+        ("tests/unit/test_chunks.py", "tests/property/test_chunks_props.py"),
     ),
 }
 # Die acht Module, die am 2026-10-13 unter 90 s brauchten; der wöchentliche Qualitätslauf nimmt
