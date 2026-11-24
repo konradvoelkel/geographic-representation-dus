@@ -10,6 +10,7 @@
     uv run python docs/plans/20-kurzfassungen-messung.py auswertung      # nach `georep validate merge`
     flock … uv run python docs/plans/20-kurzfassungen-messung.py vorgaenge --modell gemma4  # Versuch § 3.6
     uv run python docs/plans/20-kurzfassungen-messung.py nachmessung stichprobe  # Stufe 2, § 5.4
+    uv run python docs/plans/20-kurzfassungen-messung.py nachmessung auswertung  # nach validate merge
 
 Liest: den Rohtext der Messdatei (`messdaten/rohtext/<profil>.parquet`, pypdf 7.1.0, Groß- und
 Kleinschreibung, Zeilen, Seiten mit `\\f`), den Korpus der Hauptperiode aus `data_root` (nach
@@ -2073,6 +2074,48 @@ def cmd_nachmessung_stichprobe(force: bool) -> int:
     return 0
 
 
+NACHMESSUNG_GRENZE = 2  # § 5.4: höchstens so viele `unbelegt = ja` unter den 50 (Maßstab 0 plus 2)
+
+
+def cmd_nachmessung_auswertung(ordner: str = NACHMESSUNG) -> int:
+    """Das Urteil der Nachmessung nach § 5.4, aus ``labels.csv`` und ``guete.json`` von F4.
+
+    Gezählt wird ungewichtet über die 50; daneben der geschichtete Anteil (Wilson bei Kishs n_eff)
+    und α. Liegt α unter 0,8 und läge die Zahl mit den Labels eines einzelnen Kodierers auf der
+    anderen Seite der Grenze, sagt das Skript „Supervisor entscheidet".
+    """
+    folder = ROOT / "validierung" / ordner
+    labels = pl.read_csv(folder / "labels.csv", infer_schema=False).filter(
+        pl.col("frage") == "unbelegt"
+    )
+    sample = pl.read_csv(folder / "stichprobe.csv", infer_schema=False).with_columns(
+        pl.col("schicht_n").cast(pl.Int64)
+    )
+    if labels.height != sample.height or set(labels["id"]) != set(sample["id"]):
+        print(f"{folder}: {labels.height} Labels für {sample.height} Einheiten; erst merge")
+        return 1
+    ja = int((labels["label"] == "ja").sum())
+    by_coder = {c: int((labels[c] == "ja").sum()) for c in ("kodierer_a", "kodierer_b")}
+    rows = sample.join(labels.select("id", "label"), on="id", how="left")
+    est, lo, hi, n_eff = geschichtet(
+        (s, n, label == "ja")
+        for s, n, label in rows.select("schicht", "schicht_n", "label").iter_rows()
+    )
+    guete = json.loads((folder / "guete.json").read_text(encoding="utf-8"))
+    alpha = guete["fragen"]["unbelegt"].get("krippendorff_alpha")
+    holds = ja <= NACHMESSUNG_GRENZE
+    sides = {c: n <= NACHMESSUNG_GRENZE for c, n in by_coder.items()}
+    unsure = (alpha is None or alpha < 0.8) and any(side != holds for side in sides.values())
+    verdict = "Supervisor entscheidet" if unsure else ("hält" if holds else "hält nicht")
+    print(
+        f"{ordner}: unbelegt = ja in {ja} von {labels.height} (Grenze {NACHMESSUNG_GRENZE}); "
+        f"Kodierer A {by_coder['kodierer_a']}, B {by_coder['kodierer_b']}; α {alpha}; "
+        f"geschichtet {100 * est:.1f} % ({100 * lo:.1f}–{100 * hi:.1f}, n_eff {n_eff:.0f}) "
+        f"-> {verdict}"
+    )
+    return 0
+
+
 # --------------------------------------------------------------------------------------------
 # Alle Zahlen
 # --------------------------------------------------------------------------------------------
@@ -2133,6 +2176,8 @@ def main(argv: Sequence[str]) -> int:
     nach_sub = nach.add_subparsers(dest="schritt", required=True)
     nach_st = nach_sub.add_parser("stichprobe")
     nach_st.add_argument("--force", action="store_true")
+    nach_aus = nach_sub.add_parser("auswertung")
+    nach_aus.add_argument("--ordner", default=NACHMESSUNG)
     alles = sub.add_parser("alles")
     alles.add_argument("--ohne-perioden", action="store_true")
     alles.add_argument("--runde", type=int, default=1, choices=(1, 2))
@@ -2151,6 +2196,8 @@ def main(argv: Sequence[str]) -> int:
         return cmd_vorgaenge(args.modell)
     if args.befehl == "nachmessung" and args.schritt == "stichprobe":
         return cmd_nachmessung_stichprobe(args.force)
+    if args.befehl == "nachmessung" and args.schritt == "auswertung":
+        return cmd_nachmessung_auswertung(args.ordner)
     return cmd_alles(not getattr(args, "ohne_perioden", False), getattr(args, "runde", 1))
 
 
