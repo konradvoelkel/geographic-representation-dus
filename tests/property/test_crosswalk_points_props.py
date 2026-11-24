@@ -25,10 +25,14 @@ GRID = [
     for row in range(3)
 ]  # fmt: skip
 
-# Koordinaten auf einem 10-m-Raster treffen Grenzen und Ecken oft; dazu beliebige Fließkommazahlen.
+# Koordinaten auf einem 10-m-Raster treffen Grenzen und Ecken oft; dazu beliebige auf Millimeter.
+# Auf Millimeter, weil das Orakel ``distance`` bei 1e-188 unterläuft (das Quadrat wird 0, der
+# Abstand 0), während ``intersects`` exakt rechnet: hypothesis fand am 2026-11-24 den Punkt
+# (0, -1,2e-188), den das Orakel in Wahlbezirk 1 sah und die Funktion zu Recht nicht. Karten haben
+# keine Koordinaten unter einem Millimeter.
 coordinate = st.one_of(
     st.integers(min_value=-5, max_value=35).map(lambda k: 10.0 * k),
-    st.floats(min_value=-50.0, max_value=350.0, allow_nan=False),
+    st.floats(min_value=-50.0, max_value=350.0, allow_nan=False).map(lambda v: round(v, 3)),
 )
 points = st.lists(st.tuples(coordinate, coordinate), max_size=30)
 bands = st.sampled_from([0.0, 0.5, 5.0, 20.0, 60.0])
