@@ -3130,3 +3130,112 @@ Kanten, die nach der Rückfallregel ohnehin schwach sind). Bäume je Periode (de
 der Wahl, gegen § 3.3). `PaperRecord` um die Anlagen erweitern (ein Schemasprung des Korpus mit
 Golden-Master-Risiko; das Paket genügt, Synergie § 4); für die laufende Periode ist das der Weg
 danach, denn das Paket veraltet mit jedem Tag (Frage 9.1).
+
+## NN. Kennungen und Beträge als Spannen: vier Arten in der validierten Fassung, Rolle und Fristfunktion verworfen, Haushalt und Rechtsgrundlage gefallen (Vorhaben 12, 2026-11-24)
+
+Vorhaben 12 der Vorverarbeitung (`docs/plans/12-kennungen.md`, § 4 bis § 6 und § 10), Stufe 2.
+Die Messung hat sechs Arten von Kennungen mit regulären Ausdrücken gezogen und gegen zwei
+KI-Kodierer und einen Schlichter geprüft (kein menschlicher Goldstandard; in Runde 2 waren Kodierer
+und Schlichter dasselbe Modell, Frage 19). Kriterium je Art: Präzision ≥ 0,95 und Recall ≥ 0,85,
+streng; die Rolle eines Betrags und die Funktion `frist` eines Termins je ≥ 0,8.
+
+**Was gebaut ist**, genau in der Fassung, die bestanden hat, ohne nachgeschärfte Regel:
+
+- **Bauleitplanung** (`bplan`, `fnp`), Fassung 1: Präzision 1,000 (n 100), Recall 64/71.
+- **Betrag** (`betrag`), Fassung 1, ohne Rolle: Präzision 0,962, Recall 84/88. Die Korrekturen der
+  Fassung 2 („+" in der Spanne, „Euro" vorn, kein Jahr im Tabellenkopf) bestanden die Bestätigung
+  nicht (Schicht neu 18/20, verlangt höchstens ein Fehler) und fehlen mit Absicht; „2021 Mio. EUR"
+  bleibt ein Betrag, „Euro 172.000" bleibt unerkannt (Tests halten beides fest).
+- **Termin** (`termin`), Fassung 2, ohne Funktion: an der Bestätigung 30 von 30.
+- **Verwaltungseinheit** (`amt`, `dezernat`), Fassung 2: Präzision 0,956, Recall 71/80; knapp, die
+  untere Intervallgrenze liegt bei 0,85.
+
+**Verworfen nach der Messung** (die Messungen bleiben im Messdokument): die **Rolle** eines Betrags
+(Kosten, Zuschuss, Ertrag, Verfügungsmittel …; Übereinstimmung 0,508 [0,389; 0,626], n 98 — die
+Regeln der Kodierer brauchen Wissen über Dokument und Tabelle, das Schlüsselwörter im Satz nicht
+tragen), die **Funktion** `frist` eines Termins (Präzision der Klasse 15/30, Übereinstimmung über vier
+Klassen 0,613), der **Haushalt** (Produkt, Sachkonto, PSP-Element, Investition; Fassung 2 mit
+Präzision 1,000, aber Recall 0,716 an der Bestätigung) und die **Rechtsgrundlage** (Fassung 2 mit
+Präzision 0,861; auch die vorab festgelegte Rückfallregel „nur Gesetz und erster Paragraph" verfehlte
+das Gesetz im Normwert mit 0,805). Wer Rolle oder Frist für 21 oder 29 braucht, misst neu, mit einem
+Modell über F5 an frischen Labels; die Vorschläge S1 bis S10 des Schlichters liegen für eine Fassung 3
+bereit (Messdokument § 9).
+
+**Ausgabe.** Der Beitrag `12-kennungen` (`georep.enrich.identifiers`) bringt einen Offline-Schritt
+`identifiers` vor `report`, nur mit `identifiers.enabled` (beide Stadtprofile, die Perioden erben).
+Er schreibt `processed/kennungen.parquet`: Spannen nach F3 auf dem Rohtext aus F1, dahinter `attr`
+mit der **Form**, nie einer Deutung (Punkt 74): `je` und `spanne` bei Beträgen, `tag`, `monat`,
+`quartal`, `jahr`, `relativ` bei Terminen, `kopf`, `name`, `nummer`, `text`, `wort` bei Ämtern.
+`extractor` ist `kennungen-1/` vor dem Extraktor des Rohtexts. **Jede** Korpus-ID, deren Paper die
+Datei trägt, bekommt ihre Spannen (Synergien 2026-11, § 1, Konflikt 4), nicht nur die kleinste wie in
+der Messung. `section` bleibt leer, bis Vorhaben 11 gemerged ist und `section_of` mitbringt; dann
+zieht 12 nach. Ohne Rohtext (ein Profil ohne PDFs und ohne Rohtextpaket, auf Pages alle außer der
+Hauptperiode) schreibt der Schritt dieselbe Tabelle leer und sagt es, statt den Lauf scheitern zu
+lassen (Konflikt 14). Kein Paket: der Schritt rechnet aus dem Rohtextpaket in unter einer Minute.
+
+**Die Sprache in `defaults.toml`, die Stadt im Profil.** Schlüsselwörter der Bauleitplanung,
+Einheiten, Faktoren und Spannenwörter der Beträge, Monate, Zusätze und relative Termine, Amtswörter
+und die Schwellen des Ämterverzeichnisses stehen stadtneutral in `[identifiers.plans]`, `.amounts`,
+`.dates` und `.offices`; das Nummernformat der Bebauungspläne mit seinen Normalformen
+(`[[identifiers.plans.norms]]`: Muster und Vorlage, die erste passende gilt), das Kopffeld des
+federführenden Amts, eine zweite Nummernform („FB 64") und Einheiten, die eine Stadt ohne
+Verzeichnis nennt („Bezirksverwaltungsstelle 10"), im Stadtprofil. Im Code steht nur, wie Ziffern,
+Leerraum und die Teile zusammengesetzt sind; ein leerer Teil trifft nie. Die Muster aus dem
+Messskript stehen wörtlich in den Settings, jedes Teil in eine nicht fangende Gruppe gesetzt, was
+nichts an der Bedeutung ändert. Das **Ämterverzeichnis** (Name → Nummer) entsteht je Lauf aus den
+Kopffeldern des Korpus, wie in der Messung; die Synergie nennt dafür `dokumente_kopf` von 11. Ob
+dessen Verzeichnis gleich ist, prüft 12 nach dem Merge von 11, zusammen mit dem slow-Test, der das
+Kopf-Amt beider vergleicht (Konflikt 5). Ein Dezernat kommt nur aus dem Text („Dezernat 06"), keine
+Profiltabelle (sammelt 24).
+
+**Verträge.** `identifier_spans` ist die Batch-Grenze: F3 mit `attr` dahinter (`check_spans`), ein
+Betrag als Dezimalzahl mit zwei Stellen, ein Termin in einer Normform des Codebuchs .2, jede Form zu
+ihrer Art, und innerhalb einer Art keine zwei überlappenden Spannen eines Dokuments — **außer bei
+Ämtern**: Fassung 2 nimmt die Nummer vor einem Namen in die Spanne („10 – Hauptamt"), und eine
+Nummernnennung direkt davor („Amt 10") bleibt eine eigene Spanne. So validiert, gezählt am
+2026-11-24: 3 Paare in der Hauptperiode, 8 in 2014 bis 2020, 111 in Mönchengladbach (Ämterlisten in
+sechs Dokumenten). `find_identifiers` prüft je Text, dass jede Spanne im Text liegt und die Folge
+stimmt (`deal.safe`, kein `deal.pure`: die Funktion läuft je Dokument). `iso_date` steht in
+`VERIFY_TARGETS` (ein Datum genau dann, wenn der Kalender den Tag zwischen 1950 und 2040 kennt;
+crosshair einzeln 23 s, „Not confirmed"). Eine Zahl mit mehr Stellen, als `Decimal` hält, ist kein
+Betrag statt eines Absturzes; im Korpus kommt sie nicht vor.
+
+**Geprüft gegen die Messung.** Dieselben Spannen wie das Messskript (Bauleitplanung und Betrag aus
+`kennungen-messung-v1`, Termin und Verwaltungseinheit aus `-v2`, Form wie oben abgebildet), Dokument
+für Dokument auf den Rohtextstores vom 2026-11-24: **0 Abweichungen** unter 116 349 Spannen der
+Hauptperiode, 151 205 von 2014 bis 2020, 22 357 ab 2025 und 7 428 in Mönchengladbach; die
+Ämterverzeichnisse gleich, auch in der Folge (55, 35, 29 und 14 Namen). Ein slow-Test
+(`tests/golden/test_identifiers_labels.py`) rechnet aus dem Rohtextpaket die Zahlen nach, auf denen
+das Urteil steht: Bauleitplanung 1,000 und 64/71, Betrag 0,962 und 84/88 an Runde 1, Termin 30/30
+und Verwaltungseinheit 0,956 und 71/80 an Runde 2, dazu die Entwurfsschätzung der Fassung 2 an
+Runde 1 (Termin 1,000 und 200/200, Verwaltungseinheit 0,976 und 51/52). Ein Umbau, der eine davon
+ändert, ist kein Refactoring. Nebenbefund: die Quote einer Schicht zählt im Messskript über alle
+Arten der Stichprobe, und „neu" steht in Runde 2 in fünf Arten; je Art gerechnet wäre die Präzision
+der Verwaltungseinheit 0,962 statt 0,956. Das Urteil ändert sich nicht.
+
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
+(`ab/ab_bau.sh`, `ab/ab_vergleich.py`), `main` bei `098d556` (nach Vorhaben 14) gegen den Branch
+darauf, beide mit `POLARS_MAX_THREADS=4` und `OMP_NUM_THREADS=2`: unter `site/` 194 Dateien in
+beiden, 0 Abweichungen. Über die ganzen Datenwurzeln 721 gegen 729 Dateien: neu sind nur die vier
+`kennungen.parquet` mit ihren Stamps; an den 87 übrigen Stamps, die abweichen, ändern sich allein
+der Settings-Fingerprint (ein neuer Schlüssel) und die Zeit `written`, am Stamp des Vergleichs dazu
+die Pfade der Datenwurzel in den Schlüsseln der Eingaben (Punkt 76), nicht ihre Hashes. Aus den
+Paketen rechnet nur die Hauptperiode Spannen; 2014 bis 2020, ab 2025 und Mönchengladbach haben dort
+keinen Rohtext und schreiben die Tabelle leer.
+
+**Laufzeit.** Der Schritt braucht für die Hauptperiode 36 bis 60 s, für 2014 bis 2020 51 bis 74 s,
+ab 2025 6 bis 14 s, für Mönchengladbach 3 bis 4 s, in einem Prozess und unter Fremdlast
+(Lastmittel 8 bis 50 am 2026-11-24); das Ämterverzeichnis davon unter einer Sekunde. Auf Pages
+läuft er in der Hauptperiode zweimal, im Profil `duesseldorf-vergleich` noch einmal wie jeder Schritt
+dort (im A/B-Bau 46,9 und 46,7 s). `nox -s bench` hat eine Stufe über 200 Rohtexte der
+Hauptperiode (`test_identifiers_over_200_raw_texts`).
+
+**Verworfen.** Ein früher Schritt vor `weights` (keiner der Kernschritte und kein früher Beitrag liest
+die Spannen; 16 hat die Plannummern verworfen, § 3 seines Messdokuments); `pack --identifiers`
+(Konflikt 12); eine Liste der Ämter im Profil (die Synergie will sie je Lauf aus den Kopffeldern);
+eine Profiltabelle Amt → Dezernat (24 sammelt sie); die Fassung 2 auch für Beträge (bestand nicht);
+die Rolle als Schalter, der aus ist (eine Regel unter dem Kriterium gehört nicht in den Code, sondern
+ins Messdokument); `;r10` und `;iso` als eigene Formen in `attr` (der Bauplan nennt fünf Formen eines
+Termins; eine vervollständigte erste Angabe ist ein Tag); die Extraktoren in `VERIFY_TARGETS` (ihre
+Regeln tragen `re.Pattern`, dasselbe Werkzeugartefakt wie bei `parse_reference`; ihre Eigenschaften
+prüft `tests/property/test_identifiers_props.py`).
