@@ -131,3 +131,35 @@ def test_both_blocks_are_settings_fields_and_count_in_the_fingerprint() -> None:
         update={"functions": settings.functions.model_copy(update={"variant": "A"})}
     )
     assert other.fingerprint() != settings.fingerprint()
+
+
+def _defaults_block() -> dict[str, Any]:
+    text = resources.files("georep").joinpath("defaults.toml").read_text(encoding="utf-8")
+    block: dict[str, Any] = tomllib.loads(text)["functions"]
+    return block
+
+
+def test_the_defaults_carry_no_word_of_one_city_or_one_state() -> None:
+    """Review 2026-11-24, M3: der Tippfehler einer Quelle und § 60 GO NRW gehören ins Stadtprofil."""
+    block = _defaults_block()
+    words = [
+        *block["review_title"],
+        *(p for rule in block["enforcement"] for p in rule["patterns"]),
+    ]
+    assert "pürfantrag" not in words
+    assert not [w for w in words if "60er" in w]
+
+
+def test_the_city_adds_its_words_to_the_language_and_keeps_the_rest() -> None:
+    """deep_merge ersetzt Listen: das Stadtprofil wiederholt die Liste und hängt seine Wörter an.
+    Läuft die Sprache in ``defaults.toml`` weiter, fällt die Kopie hier auf."""
+    block = _defaults_block()
+    city = load_settings(cwd=NOWHERE).functions
+    assert city.review_title == [*block["review_title"], "pürfantrag"]
+    defaults = {rule["instrument"]: rule["patterns"] for rule in block["enforcement"]}
+    found = {rule.instrument: rule.patterns for rule in city.enforcement}
+    assert list(found) == list(defaults)
+    assert found == defaults | {"dringlichkeit": [*defaults["dringlichkeit"], "60er-beschluss"]}
+    second = load_settings(profile="moenchengladbach", cwd=NOWHERE).functions
+    assert second.review_title == block["review_title"]
+    assert {rule.instrument: rule.patterns for rule in second.enforcement} == defaults

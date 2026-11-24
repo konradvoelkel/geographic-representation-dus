@@ -943,3 +943,13 @@ dieser Abschnitt.
    an den Labels gewählte Variante B nennt A als Untergrenze.
 9. **Reihenfolge** (§ 3): Welle 1, Merge an Position 4 nach 11, 12 und 14; 15 braucht weder F1 noch
    den Netzlauf noch ein Modell.
+10. **Abweichung vom Bauplan in Stufe 2: die Ratssprache steht in `defaults.toml`** (Supervisor,
+    2026-11-24, nach dem Review). § 6 sah alle Muster leer in `defaults.toml` und gefüllt im
+    Stadtprofil vor. Die Wörter für Symbol, Antrag, Anfrage, Änderungs-, Haushalts-, Prüf- und
+    Berichtsantrag, die Instrumente des Vollzugs, den Autorenteil des Titels und den Beschlusstext
+    der Variante B nutzt Mönchengladbach aber unverändert (§ 3.3); doppelt stünden sie in zwei
+    Dateien, die auseinanderlaufen (Präzedenzfall `weights.rules`). Im Stadtprofil steht, was nur
+    eine Stadt oder ein Land kennt: die Dokumentarten, Präfixe, Sammelarten mit ihren Textregeln,
+    Briefkopf, Fraktionen und Mehrheiten, und zwei Wörter Düsseldorfs, der Schreibfehler
+    „pürfantrag" der Quelle und der „60er-Beschluss" nach § 60 GO NRW (dafür wiederholt das Profil
+    die beiden Listen, ein Test hält sie gleich der Vorgabe plus diesen Wörtern).

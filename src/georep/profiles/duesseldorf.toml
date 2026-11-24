@@ -700,6 +700,19 @@ persons_endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/people"
 enabled = true                 # Schritte functions und cosponsors (Vorhaben 15, Stufe 2)
 types = { "Beschlussvorlage" = "vollzug/beschlussvorlage", "Bezirksvertretung Beschlussvorlage" = "vollzug/beschlussvorlage", "Beschlussvorlage RPA" = "vollzug/rechnungspruefung", "Bedarfsbeschluss" = "vollzug/bau", "A+F Beschluss" = "vollzug/bau", "Informationsvorlage" = "information/informationsvorlage", "Bezirksvertretung Informationsvorlage" = "information/informationsvorlage", "Berichtsvorlage" = "information/berichtsvorlage", "Eingabe nach 24GO" = "initiative/eingabe", "Eingabe nach 24 GO" = "initiative/eingabe", "Bezirksvertretung Eingabe nach 24Go" = "initiative/eingabe" }  # die Vorlagen der Verwaltung und die Eingaben nach § 24 GO NRW; „A+F Beschluss" ist der Ausführungs- und Finanzierungsbeschluss eines Bauvorhabens
 type_prefixes = { "haushaltsantrag" = "initiative/haushaltsantrag", "zanfrage" = "kontrolle/anfrage", "zantrag" = "initiative/antrag", "anfrage" = "kontrolle/anfrage", "antrag" = "initiative/antrag" }  # „Antrag CDU/Grüne", „Haushaltsantrag Die Linke", „zAnfrage REP"; nach 2020 hat damit jede Dokumentart eine Zeile, die Restklasse ist dort 0
+# Zwei Wörter dieser Stadt zur Ratssprache aus defaults.toml (Review 2026-11-24, M3): der
+# Schreibfehler „pürfantrag" der Quelle und der Dringlichkeitsbeschluss nach § 60 GO NRW, der in
+# 6 Titeln von 2014 bis 2020 „60er-Beschluss" heißt. deep_merge ersetzt Listen, darum steht die ganze
+# Liste hier; dass sie die aus defaults.toml plus diese Wörter bleibt, prüft
+# tests/unit/test_functions_settings.py.
+review_title = ['prüfauftrag', 'prüf-?antrag', '(?<![a-zäöüß])prüfung (der|des|von|einer|eines|ob)', 'zu prüfen', 'pürfantrag']
+enforcement = [
+    { instrument = "haushalt", patterns = ['haushaltssatzung', 'haushaltsplan', 'nachtragshaushalt', 'jahresabschluss', 'gesamtabschluss', 'wirtschaftsplan', 'stellenplan'] },
+    { instrument = "satzung", patterns = ['satzung', 'ordnung der', 'gebührenordnung', 'verordnung'] },
+    { instrument = "bauleitplanung", patterns = ['bebauungsplan', 'flächennutzungsplan', '(?<![a-zäöüß])plan nr', 'vorhabenbezogene'] },
+    { instrument = "besetzung", patterns = ['(?<![a-zäöüß])(neu|nach|um)?wahl (von|der|des|eines|einer|zum|zur)', 'bestellung (von|eines|einer|der|des)', 'benennung', 'entsendung', 'abberufung', 'besetzung'] },
+    { instrument = "dringlichkeit", patterns = ['dringlichkeitsentscheidung', 'dringliche[rn]? entscheidung', 'dringlichkeitsbeschluss', '60er-beschluss'] },
+]
 # Die beiden Sammelarten der Periode 2014 bis 2020: ihre Art nennt die Funktion nicht (9 601 und
 # 8 337 Dokumente). Aus der Politik zuerst das Titelwort, dann das erste Instrumentwort im Textkopf
 # hinter dem Briefkopf; aus der Verwaltung der Briefkopf der Politik, sonst das erste Merkmal im

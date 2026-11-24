@@ -2993,8 +2993,12 @@ Instrumente des Vollzugs, der Autorenteil des Titels und der Beschlusstext der V
 Mönchengladbach ohne Änderung (§ 3.3); doppelt stünden rund zwanzig gleiche Zeilen in zwei
 Dateien, die auseinanderlaufen. Was nur eine Stadt kennt, steht im Stadtprofil: die
 Dokumentarten als „funktion/instrument" (beim Laden gegen `FUNCTION_INSTRUMENTS` geprüft), die
-Präfixe, die Sammelarten mit ihren Textregeln und dem Briefkopf, die Fraktionen, die Mehrheiten.
-Kein Stadtwort im Code.
+Präfixe, die Sammelarten mit ihren Textregeln und dem Briefkopf, die Fraktionen, die Mehrheiten,
+dazu zwei Wörter Düsseldorfs (der Schreibfehler „pürfantrag" der Quelle und der „60er-Beschluss"
+nach § 60 GO NRW; Review 2026-11-24). Für sie wiederholt das Profil die Listen `review_title` und
+`enforcement`, weil `deep_merge` Listen ersetzt; ein Test hält sie gleich der Vorgabe plus diesen
+Wörtern. Der Supervisor hat die Abweichung abgenommen (Messdokument § 10, Punkt 10). Kein
+Stadtwort im Code.
 
 **Ein Befund am Messskript.** Beobachtet gegen erwartet ergibt für 2020 bis 2025 und ab 2025 die
 Zahlen der Messung (CDU 0,74, AfD 1,75, Tierschutz/FW 1,67 …), für 2014 bis 2020 aber CDU 0,98

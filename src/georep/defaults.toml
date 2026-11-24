@@ -280,7 +280,7 @@ motion_title = ['(?<![a-zäöüß])(änderungs-?|ergänzungs-?|haushalts-?|haush
 followup_title = ['nachfrage', 'rückfrage', 'zusatzfrage', 'folgeanfrage']  # Instrument Nachfrage statt Anfrage
 amendment_title = ['änderungs-?\s?antrag', 'ergänzungs-?\s?antrag', 'zusatzantrag', 'änderungs- und ergänzungsantrag']
 budget_motion_title = ['haushalts(begleit)?-?antrag']
-review_title = ['prüfauftrag', 'prüf-?antrag', 'pürfantrag', '(?<![a-zäöüß])prüfung (der|des|von|einer|eines|ob)', 'zu prüfen']  # „pürfantrag" ist eine Schreibweise der Quelle
+review_title = ['prüfauftrag', 'prüf-?antrag', '(?<![a-zäöüß])prüfung (der|des|von|einer|eines|ob)', 'zu prüfen']  # Schreibfehler einer Quelle ergänzt das Stadtprofil
 # Berichtsantrag: ein Antrag, der nur Auskunft verlangt. Variante B zählt ihn als Kontrolle; die
 # Kodierung las sieben von zehn so (Messdokument § 4.1).
 report_title = ['sachstand', '(?<![a-zäöüß])bericht(?!s?vorlage)(?!igung)', 'berichterstattung']
@@ -323,7 +323,7 @@ instrument = "besetzung"
 patterns = ['(?<![a-zäöüß])(neu|nach|um)?wahl (von|der|des|eines|einer|zum|zur)', 'bestellung (von|eines|einer|der|des)', 'benennung', 'entsendung', 'abberufung', 'besetzung']
 [[functions.enforcement]]
 instrument = "dringlichkeit"
-patterns = ['dringlichkeitsentscheidung', 'dringliche[rn]? entscheidung', 'dringlichkeitsbeschluss', '60er-beschluss']  # § 60 GO NRW
+patterns = ['dringlichkeitsentscheidung', 'dringliche[rn]? entscheidung', 'dringlichkeitsbeschluss']  # was ein Land eigens nennt (in NRW der Beschluss nach § 60 GO), ergänzt das Stadtprofil
 
 # --- Vorhaben 15: Ratsmehrheiten, stadtweit (docs/plans/15-funktion.md, § 3.9 und § 10) ----------
 [majorities]                   # die Mehrheit im Rat je Zeitraum, mit Vereinbarung (Vorhaben 25) und Belegen im Korpus; eine Annahme, die das Lager eines Fraktionsdokuments trägt (Schritt cosponsors) und die 24 und 28 mitlesen. Stadtneutral leer: ohne Zeile hat kein Dokument ein Lager
