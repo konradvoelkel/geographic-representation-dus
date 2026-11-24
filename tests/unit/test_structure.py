@@ -368,3 +368,37 @@ def test_the_office_directory_takes_the_most_frequent_name() -> None:
         }
     )
     assert office_directory(head).rows() == [("52", "Sportamt", 3), ("66", "Amt", 1)]
+
+
+def test_the_body_before_a_late_consultation_table_is_not_empty() -> None:
+    """Die alte Vorlagenform (2014 bis 2020) setzt die Beratungsfolge ans Ende der ersten Seite:
+    der Text davor ist der Rumpf, und ``rumpf_leer`` darf ihn nicht übersehen (``georep run``
+    2026-11-24: sonst 7 773 von 22 101 Dokumenten „leer")."""
+    settings = load_settings(profile="duesseldorf-2014", cwd=NOWHERE)
+    rules = StructureRules.from_settings(settings)
+    text = (
+        "Beschlussvorlage\nNeubau einer Kita\n\n"
+        "Die Verwaltung schlägt vor, an der Schule eine Kita zu bauen, weil Plätze fehlen und\n"
+        "der Bedarf im Stadtteil seit Jahren steigt.\n"
+        "Beratungsfolge:\nGremium Sitzungsdatum Ergebnis\nRat 01.02.2016 -/-\n"
+    )
+    found = analyse(text, rules, "Verwaltungsvorlage")
+    assert [s.norm for s in found.sections if s.norm == s.section] == [
+        "betreff",
+        "rumpf",
+        "kopf_beratungsfolge",
+    ]
+    assert head_row(found, rules, BodyNames.from_settings(settings))["rumpf_leer"] is False
+
+
+def test_a_letter_with_nothing_after_the_subject_has_an_empty_body(
+    settings: Settings, rules: StructureRules, names: BodyNames
+) -> None:
+    """Der Brief, dessen Text nach dem Betreff nicht in der Textebene des PDFs steht (§ 3.4: nur
+    „Seite 2", „Seite 3"); Briefkopf und Seitenzahlen zählen nicht."""
+    text = (
+        f"Fraktion im Rat\n{settings.city.name}, 12.03.2024\nAn den Oberbürgermeister\n"
+        "Antrag zur Sitzung der Bezirksvertretung 8 am 24.06.2024\n"
+        "Betrifft: Mehr Bänke im Park\n\fSeite 2\n\fSeite 3\n"
+    )
+    assert head_row(analyse(text, rules, "Antrag"), rules, names)["rumpf_leer"] is True

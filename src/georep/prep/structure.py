@@ -680,12 +680,18 @@ def _add_body(text: str, rules: StructureRules, result: Structure) -> None:
         [*level1_after, *(_enclosed(span, level1_after) for span in level2)],
         key=lambda s: (s.start, s.end),
     )
-    head_stop = max(
-        (s.end for s in level1_after if s.norm.startswith(HEAD_PREFIX) or s.norm == BETREFF),
-        default=0,
+    # rumpf_leer: was hinter dem Betreff steht, ohne die Abschnitte und Felder des Kopfs und ohne
+    # Seitenkopfzeilen. Nicht „was hinter dem Kopf steht": die alte Vorlagenform setzt die
+    # Beratungsfolge ans Ende der ersten Seite, hinter den Text (in 2014 bis 2020 sonst 7 773
+    # von 22 101 Dokumenten „leer")
+    head = sorted(
+        [(s.start, s.end) for s in level1_after if s.norm.startswith(HEAD_PREFIX)]
+        + [(f.start, f.end) for f in result.head if f.kind in HEAD_END_FIELDS]
     )
-    head_stop = max(head_stop, head_end)
-    rest = read_span(text, min(head_stop, len(text)), len(text), rules.page_noise)
+    rest = "".join(
+        read_span(text, start, stop, rules.page_noise)
+        for start, stop in _outside(betreff_end, len(text), head)
+    )
     result.body_empty = len(_SPACE.sub("", rest)) < rules.min_body_chars
 
 

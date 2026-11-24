@@ -376,7 +376,7 @@ labels = {}                    # Label wie geschrieben -> Abschnittsart; [struct
 leads = []                     # [[structure.leads]] kind, pattern: Einleitungssätze mit Doppelpunkt; im Stadtprofil
 page_noise = []                # Seitenkopf- und -fußzeilen, die read_span beim Lesen einer Spanne überspringt (Frage 9.6); im Stadtprofil
 months = ["januar", "februar", "märz", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "dezember"]  # Monatsnamen eines ausgeschriebenen Datums („24. Juni 2025"), klein; Sprache, keine Stadt
-min_body_chars = 80            # rumpf_leer: weniger Zeichen ohne Leerraum und Seitenkopfzeilen nach dem Kopf (§ 3.4: 104 Dokumente der Hauptperiode, deren Rumpf nicht in der Textebene des PDFs steht)
+min_body_chars = 80            # rumpf_leer: weniger Zeichen hinter dem Betreff, ohne Kopf, Leerraum und Seitenkopfzeilen (wie § 3.4; Hauptperiode 2026-11-24: 132 Dokumente, 59 davon ohne jeden Text)
 
 [structure.fallback]           # der Beschlusssatz ohne Überschrift („Der Rat beschließt …"), § 3.2, Punkt 5
 kind = "beschlussvorschlag"
