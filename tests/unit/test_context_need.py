@@ -334,3 +334,11 @@ def test_a_school_without_a_crs_is_read_in_the_declared_one(tmp_path: Path) -> N
     assert '"null"' in schools.read_text(encoding="utf-8")
     frame = read_schools(schools, index, AGS, crs="EPSG:25832")
     assert frame.get_column("schulnummer").to_list() == ["100020", "100030"]
+
+
+def test_a_key_with_digits_of_another_script_breaks_the_contract() -> None:
+    """crosshair fand am 2026-11-24 ``'0൦4۰𑃰9০6'``: ``str.isdigit`` nimmt Ziffern jeder Schrift."""
+    import deal
+
+    with pytest.raises(deal.PreContractError):
+        ags_parts("0൦4۰\U000110f09০6")

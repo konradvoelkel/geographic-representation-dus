@@ -22,7 +22,7 @@ from pathlib import Path
 import deal
 import polars as pl
 
-from georep.contracts import has_columns, keys_sorted_unique, sorted_unique
+from georep.contracts import has_columns, is_municipality_key, keys_sorted_unique, sorted_unique
 from georep.crosswalk import (
     DISTRICT,
     ELIGIBLE,
@@ -420,7 +420,7 @@ UNSPECIFIED_CRS = "null"  # so stehen Schulen ohne CRS-Angabe in den Schuldaten
 
 
 @deal.pure
-@deal.pre(lambda ags: len(ags) == 8 and ags.isdigit(), message="achtstelliger Gemeindeschlüssel")
+@deal.pre(lambda ags: is_municipality_key(ags), message="acht ASCII-Ziffern")
 @deal.ensure(
     lambda ags, result: f"{result[0]:02d}{result[1]}{result[2]:02d}{result[3]:03d}" == ags,
     message="die Teile ergeben den Schlüssel",
@@ -480,7 +480,7 @@ def _open_zip(path: Path) -> zipfile.ZipFile:
         raise SchemaError(f"{path.name}: kein Zip ({error})") from error
 
 
-@deal.pre(lambda path, ags: len(ags) == 8 and ags.isdigit())
+@deal.pre(lambda path, ags: is_municipality_key(ags), message="acht ASCII-Ziffern")
 @deal.post(lambda result: result.schema == pl.Schema(ACCIDENTS_SCHEMA))
 @deal.raises(SchemaError)
 def read_accidents(path: Path, ags: str) -> pl.DataFrame:
@@ -574,7 +574,10 @@ def _csv_text(path: Path, encoding: str) -> pl.DataFrame:
     )
 
 
-@deal.pre(lambda schools, index, ags, *, crs, index_encoding="cp850": len(ags) == 8)
+@deal.pre(
+    lambda schools, index, ags, *, crs, index_encoding="cp850": is_municipality_key(ags),
+    message="acht ASCII-Ziffern",
+)
 @deal.post(lambda result: result.schema == pl.Schema(SCHOOLS_SCHEMA))
 @deal.post(lambda result: sorted_unique(result, "schulnummer"), message="eine Zeile je Schule")
 @deal.raises(SchemaError)

@@ -210,3 +210,12 @@ def is_number(text: str) -> bool:
         return math.isfinite(float(text))
     except ValueError:
         return False
+
+
+def is_municipality_key(ags: str) -> bool:
+    """Ein amtlicher Gemeindeschlüssel: genau acht ASCII-Ziffern (Vorhaben 22).
+
+    ``str.isdigit`` allein nimmt Ziffern jeder Schrift, und ``int`` liest sie; crosshair fand am
+    2026-11-24 ``'0൦4۰𑃰9০6'``, aus dem ``ags_parts`` einen anderen Schlüssel machte.
+    """
+    return len(ags) == 8 and ags.isascii() and ags.isdigit()
