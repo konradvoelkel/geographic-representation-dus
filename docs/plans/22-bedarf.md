@@ -503,7 +503,46 @@ Moran's I, die Rechnung innerhalb der Stadtbezirke), ist dort und in § 3.5 als 
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
-—
+Übertragen am 2026-11-24 aus [00-synergien-2026-11.md](00-synergien-2026-11.md), § 4 „22 Bedarf",
+mit den Bausteinen aus § 1 und den Konflikten 7, 11 und 12 aus § 2.2; Fragen 26 und 29 aus
+[fragen-2026-11.md](fragen-2026-11.md). Wo dieser Abschnitt § 6 oder § 7 widerspricht, gilt er.
+
+1. **Paket unter `snapshots/`, nicht unter `context/`** (Konflikt 11). `context/` hält nach
+   CLAUDE.md Portaldateien **unverändert**; die Stadtauszüge aus Unfallatlas, Zensus-Gitter und
+   Schuldaten sind abgeleitet. Sie kommen nur über `georep pack --need` nach
+   `snapshots/duesseldorf-bedarf/` (für Mönchengladbach später `snapshots/moenchengladbach-bedarf/`),
+   mit README (Quelle, Lizenz, Namensnennung, Größe, SHA-256). `bootstrap` kopiert das Paket nach
+   `external/bedarf/`, `need_data` holt frisch. § 6, Absatz „Paket", und Frage 22.1 sind damit so
+   beantwortet.
+2. **Netzschritt mit `http`** (Konflikt 7). `need_data` nimmt den Transport, den die Fabrik des
+   Beitrags bekommt (`steps(settings, layout, http)`, Fundament-Nachzug F7, `decisions.md`, Punkt
+   74), und baut keine eigene Session; Tests laufen mit der Fake-Session. Die Archive fallen unter
+   keine Cache-Regel der Session (`docs/architecture.md`, „Netz"); wer sie behält, legt sie selbst ab.
+3. **Pfade im Modul, nicht in `layout.py`** (Synergien § 2.1): `need_files(layout)` im Beitragsmodul,
+   wie `functions_files` (Punkt 75) und `council_files` (Punkt 70). § 6, „Berührte Dateien:
+   `layout.py` (zwei Pfade)", entfällt.
+4. **`crosswalk.point_shares` gehört 22** (Synergien § 1, „Punkte und Adressen → Wahlbezirk"): mit
+   Band, **Band 0 ist die scharfe Zuordnung** (Punkt in Fläche). 16 baut sein Adresspaket damit, 21
+   ruft es auf; keiner baut eine eigene Punkt-in-Fläche-Logik. `crosswalk.py` und `prep/context.py`
+   ändert nur 22.
+5. **Hypothesentabelle mit dem Kern aus 17** (Synergien § 1, „Vorab festgelegte Hypothesen"):
+   `hypothese`, `p`, `p_holm`, `ergebnis` (`bestätigt`, `nicht bestätigt`, `vorläufig`), `n`,
+   `festgelegt` (Commit), Zusatzspalten je Vorhaben. `urteil` aus § 6 heißt `ergebnis`. `holm` und
+   die Wortwahl kommen aus `analysis/hypotheses.py` von 17; ist 17 noch nicht gemerged, eine dünne
+   Übergangsfunktion, die nach dem Merge von 17 ersetzt wird.
+6. **H1′ und H3′ vorab festlegen** (Frage 22.10), solange die Daten der laufenden Periode fehlen:
+   die beiden Lesarten aus § 3.5 als prospektive Hypothesen mit dem Stadtbezirk als Schicht, in § 8
+   dieses Dokuments, gerechnet erst, wenn `duesseldorf-2025` zwölf Monate Unfälle hat.
+7. **Die Klassen `OVA`, `JHA`, `SCHUA`** bleiben die des Ausschussklassifikators (Option 05); sie
+   kommen später aus Vorhaben 19, wenn 19 gebaut wird. Bis dahin stehen sie im Stadtprofil.
+8. **Paketbudget** (Konflikt 12, Frage 26): die drei kleinen Pakete der Stufe 2 (Anlagen, Adressen,
+   Bedarf) sind mit der Annahme freigegeben; die Summe aller Pakete bleibt unter `TOTAL_LIMIT`
+   (180 MiB, `tests/unit/test_data_packages.py`). Der Lärm (Frage 22.2) kommt nicht mit.
+9. **Kein räumliches Modell** (Frage 29, Annahme gilt): Moran's I der Residuen und die Rechnung
+   innerhalb der Stadtbezirke stehen neben jedem Test; der Stadtbezirk geht als Schicht in jede
+   Rechnung (§ 5).
+10. **Merge-Position 6** (Synergien § 3.4): nach 17, dessen `hypotheses.py` 22 nutzt; vor 16, das
+    `point_shares` braucht.
 
 ---
 
