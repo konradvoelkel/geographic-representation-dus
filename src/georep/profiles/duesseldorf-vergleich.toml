@@ -1,6 +1,7 @@
 # Profil „Hauptperiode mit Periodenvergleich" (Option 02), als Paketprofil derselben Stadt:
 #
 #   uv run georep --profile duesseldorf-2014 run        # erst die alte Periode rechnen
+#   uv run georep --profile duesseldorf-2025 run        # und die laufende (cycle_tests, Vorhaben 17, unten)
 #   uv run georep --profile duesseldorf-vergleich run
 #
 # ``base`` setzt auf dem Stadtprofil auf; hier steht nur der Vergleich. Ohne dieses Profil ist die
