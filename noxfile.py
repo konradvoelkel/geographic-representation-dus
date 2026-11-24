@@ -406,6 +406,7 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
         ("src/georep/search/vectors.py", "src/georep/search/units.py"),
         ("tests/unit/test_embeddings_steps.py", "tests/property/test_vectors_props.py"),
     ),
+    "query": (("src/georep/search/query.py",), ("tests/unit/test_search_query.py",)),
 }
 # Die acht Module, die am 2026-10-13 unter 90 s brauchten; der wöchentliche Qualitätslauf nimmt
 # genau diese (.github/workflows/quality.yml).
