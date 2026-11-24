@@ -341,7 +341,7 @@ def test_need_data_pauses_between_two_archives_it_fetches(
     assert pauses == []  # nichts geladen, nichts abzuwarten
 
 
-def test_without_context_data_the_hypotheses_on_its_variables_are_left_out(
+def test_without_context_data_the_rows_of_its_hypotheses_stay_without_p(
     world: tuple[Layout, Routes, dict[str, int]],
     mini_run: Layout,
     default_settings: Settings,
@@ -349,8 +349,9 @@ def test_without_context_data_the_hypotheses_on_its_variables_are_left_out(
 ) -> None:
     """Das Stadtprofil nennt H2 und H3 über Variablen des Quartiersatlas; ohne ``context.root`` fehlen sie.
 
-    Statt eines ``SchemaError`` rechnet der Schritt, was ohne Fremddaten geht (H1), und sagt in seiner
-    Zeile, was wegfiel; die Kontexttabelle ist dann keine Eingabe.
+    Review 2026-11-24, N2: die Zeilen bleiben, mit ``p`` null und ohne Ergebnis und Deutung, und Holm
+    rechnet über alle drei vorab festgelegten (m = 3), nicht über den Rest. Die Zeile des Laufs sagt,
+    was ohne Werte blieb; die Kontexttabelle ist dann keine Eingabe.
     """
     layout, routes, _ = world
     copy = Layout(tmp_path / "kette", layout.cache_root, mini_run.reference_root, mini_run.profile)
@@ -361,9 +362,23 @@ def test_without_context_data_the_hypotheses_on_its_variables_are_left_out(
     assert copy.context_table not in steps[1].inputs
     assert run_step(steps[0], settings, online=True).status == "ausgeführt"
     outcome = run_step(steps[1], settings)
+    assert outcome.status == "ausgeführt", outcome.reason
     assert "ohne Fremddaten oder Klassen nicht gerechnet: H2, H3" in outcome.reason
     tests = pl.read_parquet(need_files(copy).tests)
-    assert set(tests.drop_nulls("hypothese").get_column("hypothese")) == {"H1"}
+    main = {
+        row["hypothese"]: row for row in tests.filter(pl.col("rechnung") == "haupttest").to_dicts()
+    }
+    assert list(main) == ["H1", "H2", "H3"]
+    for name in ("H2", "H3"):
+        row = main[name]
+        assert (row["p"], row["p_holm"], row["ergebnis"], row["deutung"]) == (
+            None,
+            None,
+            None,
+            None,
+        )
+        assert row["n"] == 0 and row["festgelegt"] == "67f7250"
+    assert main["H1"]["n"] > 0  # H1 hat Werte; m = 3 prüft test_need_hypotheses.py am Handbeispiel
 
 
 def test_without_classes_the_hypotheses_on_the_shares_are_left_out(

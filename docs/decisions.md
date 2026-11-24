@@ -3209,11 +3209,13 @@ Paket nach.
   erklärten CRS; ein anderes, genanntes CRS bleibt ein Fehler. Der erste echte Lauf brach daran ab.
 - *Neun Gitterzellen nur in der Mietdatei* bleiben mit null Einwohnern im Auszug und haben kein
   Gewicht; das Messskript verlor sie beim Verbinden (7 658 statt 7 667 Zellen, dieselben Zahlen).
-- *Ohne Fremddaten oder Klassen fällt weg, was sie nennt*: eine Hypothese oder ein Paar über eine
-  Variable des Quartiersatlas oder einen Anteil der Klassen wird in einem Lauf ohne `context.root`
-  oder ohne Klassifikator nicht gerechnet, und die Zeile des Laufs nennt sie; Holm rechnet über den
-  Rest. Ein Test ohne Werte stünde sonst als „nicht bestätigt" da. Im Lauf der Hauptperiode fehlt
-  nichts; die Tests der Kette laufen auch ohne Fremddaten.
+- *Ohne Fremddaten oder Klassen bleibt die Zeile ohne p*: eine Hypothese über eine Variable des
+  Quartiersatlas oder einen Anteil der Klassen hat in einem Lauf ohne `context.root` oder ohne
+  Klassifikator keine Werte. Ihre Zeile bleibt, mit `p` null und ohne `p_holm`, Ergebnis und
+  Deutung (ein Test ohne Werte stünde sonst als „nicht bestätigt" da), und Holm rechnet weiter über
+  alle vorab festgelegten, m = 3 (Review 2026-11-24, N2; vorher fiel die Hypothese weg, und Holm
+  rechnete über den Rest). Die Zeile des Laufs nennt sie. Im Lauf der Hauptperiode fehlt nichts;
+  die Tests der Kette laufen auch ohne Fremddaten.
 - *`holm` und `verdict` liegen vorerst in `analysis/need.py`*: Vorhaben 17 bringt
   `analysis/hypotheses.py` mit dem gemeinsamen Kern; nach dessen Merge werden sie von dort genommen
   (auch das Ziel in `VERIFY_TARGETS` zieht mit).

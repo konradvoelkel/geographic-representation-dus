@@ -295,6 +295,30 @@ def test_a_missing_value_leaves_the_district_out_and_n_says_so() -> None:
     assert table.filter(pl.col("rechnung") == "haupttest").get_column("n").to_list() == [11, 12]
 
 
+def test_a_test_without_values_keeps_its_row_and_its_place_in_holm() -> None:
+    """Review 2026-11-24, N2: ohne Werte bleibt die Zeile mit ``p`` null, ohne Ergebnis und Deutung;
+    Holm rechnet über alle drei vorab festgelegten Tests (m = 3), nicht über die zwei mit p."""
+    third = NeedHypothesis(
+        name="H3", need="x2", attention="y", alternative="greater", fixed="abc1234"
+    )
+    frame = _frame().with_columns(pl.lit(None, dtype=pl.Float64).alias("z"))
+    settings = _settings(hypotheses=[H1, H2, third])
+    table = hypothesis_table(frame, settings, weights=_line(frame.height))
+    h1, h2, h3 = table.filter(pl.col("rechnung") == "haupttest").to_dicts()
+    assert (h2["p"], h2["p_holm"], h2["ergebnis"], h2["deutung"], h2["n"]) == (
+        None,
+        None,
+        None,
+        None,
+        0,
+    )
+    assert [h1["p_holm"], h3["p_holm"]] == pytest.approx(
+        [holm([h1["p"], 1.0, h3["p"]])[i] for i in (0, 2)]
+    )
+    assert h1["p_holm"] != pytest.approx(holm([h1["p"], h3["p"]])[0])  # nicht m = 2
+    assert table.filter(pl.col("hypothese") == "H2").get_column("wert").null_count() == 6
+
+
 def test_a_column_the_hypotheses_name_must_exist() -> None:
     frame = _frame().drop("z")
     with pytest.raises(SchemaError, match="'z'"):

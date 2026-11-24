@@ -142,25 +142,17 @@ CLASS_COLUMNS = frozenset(
 )  # fmt: skip
 
 
-def _computable(need: NeedSettings, unavailable: set[str]) -> tuple[NeedSettings, list[str]]:
-    """Die Hypothesen und Paare, die dieser Lauf rechnen kann, und die Namen der übrigen.
+def _without_values(need: NeedSettings, unavailable: set[str]) -> list[str]:
+    """Die Hypothesen und Paare, deren Spalten in diesem Lauf keine Werte tragen.
 
     Ein Profil mit Hypothesen über Variablen der Fremddaten (``hb_score``) oder über Anteile der
     Klassen kann ohne ``context.root`` oder ohne Klassifikator laufen (die Tests der Kette tun das).
-    Dann trüge die Spalte keinen Wert, und ein Test ohne Werte hieße auf der Seite „nicht bestätigt";
-    statt dessen fällt weg, was sie nennt, und die Zeile des Laufs sagt es. Holm rechnet über den
-    Rest. Im Lauf eines Profils mit allem bleibt alles, wie es festgelegt ist.
+    Dann bleiben ihre Zeilen in der Tabelle, mit ``p`` null, ohne Ergebnis und Deutung, und Holm
+    rechnet weiter über alle vorab festgelegten (Review 2026-11-24, N2); die Zeile des Laufs nennt
+    sie. Im Lauf eines Profils mit allem fehlt nichts.
     """
-    hypotheses = [
-        h
-        for h in need.hypotheses
-        if not unavailable
-        & {h.need, h.attention, *h.robust_need, *h.robust_attention, h.robust_control}
-    ]
-    pairs = [pair for pair in need.explore if not unavailable & set(pair)]
-    skipped = [h.name for h in need.hypotheses if h not in hypotheses]
-    skipped += [f"{a}~{b}" for a, b in need.explore if (a, b) not in pairs]
-    return need.model_copy(update={"hypotheses": hypotheses, "explore": pairs}), skipped
+    names = [h.name for h in need.hypotheses if unavailable & {h.need, h.attention}]
+    return names + [f"{a}~{b}" for a, b in need.explore if unavailable & {a, b}]
 
 
 def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
@@ -175,8 +167,8 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
     with_context = layout.context_root is not None
     unavailable = set() if with_context else {v.name for v in settings.context.variables}
     unavailable |= set() if with_classes else set(CLASS_COLUMNS)
-    tested, skipped = _computable(need, unavailable)
-    with_tests = bool(tested.hypotheses or tested.explore)
+    skipped = _without_values(need, unavailable)
+    with_tests = bool(need.hypotheses or need.explore)
 
     def precincts() -> list[Precinct]:
         return read_canonical_precincts(layout.precincts_geojson, working)
@@ -297,19 +289,20 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
             f"{float(table.get_column('einwohner_zensus').sum()):.0f} Einwohner"
         )
         if not with_tests:
-            return (
-                f"{done}; ohne Fremddaten oder Klassen nicht gerechnet: {', '.join(skipped)}"
-                if skipped
-                else done
-            )
+            return done
         frame = table.join(
             results.select(DISTRICT, "trefferquote", "wahlbeteiligung"), on=DISTRICT, how="left"
         ).with_columns(pl.col("begriffe").cast(pl.Float64).log().alias("log_begriffe"))
         if with_context:
             frame = frame.join(pl.read_parquet(layout.context_table), on=DISTRICT, how="left")
+        # Was dieser Lauf nicht hat, steht als Spalte ohne Werte da: die Zeile bleibt, p ist null (N2).
+        frame = frame.with_columns(
+            pl.lit(None, dtype=pl.Float64).alias(name)
+            for name in sorted(unavailable - set(frame.columns))
+        )
         tests = hypothesis_table(
             frame.sort(DISTRICT),
-            tested,
+            need,
             weights=neighbours(unions, need.neighbour_m),
             exclude=settings.analysis.exclude_districts,
         )

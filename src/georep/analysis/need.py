@@ -253,6 +253,8 @@ def morans_i(
     Eine Zeile ohne Nachbarn bleibt null. Ohne Streuung oder ohne eine einzige Nachbarschaft ist I
     unbestimmt, und es wird nichts gezogen.
     """
+    if not len(values):
+        return None, None  # eine Hypothese ohne Werte (N2); der Mittelwert wäre eine Warnung
     sums = weights.sum(axis=1, keepdims=True)
     normed = np.divide(weights, sums, out=np.zeros_like(weights), where=sums > 0)
     centred = values - values.mean()
@@ -455,14 +457,16 @@ def _table_holds(result: pl.DataFrame, alpha: float) -> bool:
         if not bool(((values >= 0) & (values <= 1)).all()):
             return False
     main = result.filter(pl.col("rechnung") == MAIN)
-    for p, p_holm, ergebnis in main.select("p", "p_holm", "ergebnis").rows():
-        if p is not None and (p_holm is None or p_holm < p):
-            return False
-        if ergebnis != verdict(p_holm, alpha):
-            return False
-    for alternative, rho, p_holm, deutung in main.select(
-        "alternative", "wert", "p_holm", "deutung"
+    for p, p_holm, ergebnis, deutung, alternative, rho in main.select(
+        "p", "p_holm", "ergebnis", "deutung", "alternative", "wert"
     ).rows():
+        if p is None:
+            # ohne Test keine Familie: weder Holm noch Wort (Review 2026-11-24, N2)
+            if (p_holm, ergebnis, deutung) != (None, None, None):
+                return False
+            continue
+        if p_holm is None or p_holm < p or ergebnis != verdict(p_holm, alpha):
+            return False
         if deutung != interpretation(alternative, rho, p_holm, alpha):
             return False
     others = result.filter(pl.col("rechnung") != MAIN)
@@ -522,6 +526,12 @@ def hypothesis_table(
     Robustheitsrechnung „ohne Ausreißer" (``analysis.exclude_districts``). Eine Zeile ohne Wert
     in x oder y fällt aus der jeweiligen Rechnung, und ``n`` sagt, wie viele blieben.
 
+    Bleibt einer Hypothese kein Test (eine Spalte ohne Werte, weil ihre Eingabe im Lauf fehlt, oder
+    keine Streuung), bleibt ihre Zeile mit ``p`` null, ohne ``p_holm``, Ergebnis und Deutung, und
+    sie zieht keine Zufallszahl. Holm rechnet trotzdem über alle vorab festgelegten Hypothesen (m ist
+    ihre Zahl, die fehlende zählt wie p = 1): die Familie ist vorab festgelegt, und ohne die
+    fehlende fiele die Schwelle der übrigen (Review 2026-11-24, N2).
+
     Folge der Zeilen: je Hypothese der Haupttest und ihre Robustheit, dann explorativ je Hypothese
     die Rechnung innerhalb der Stadtbezirke, dann je Hypothese Moran's I der Residuen, des Bedarfs
     und der Aufmerksamkeit, dann die Paare.
@@ -567,7 +577,7 @@ def hypothesis_table(
     for (h, row, rho, p), p_holm in zip(main, adjusted, strict=True):
         family_p = None if p is None else p_holm
         row["p_holm"] = family_p
-        row["ergebnis"] = verdict(family_p, need.alpha)
+        row["ergebnis"] = None if family_p is None else verdict(family_p, need.alpha)
         row["deutung"] = interpretation(h.alternative, rho, family_p, need.alpha)
         rows.append(row)
         rows += _robust_rows(frame, h, exclude)
