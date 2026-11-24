@@ -707,3 +707,35 @@ vorab festgelegt ist (Verfahren, Kriterium, Rückfall, explorative Zusätze), st
 | 9.12 | Soll `georep suche` die Mischung statt der Einbettung als Vorgabe nehmen? | Bei Stichwörtern im Amtswortlaut war die Mischung am besten (0,979), insgesamt die Einbettung (0,883 gegen 0,846) | Vorgabe nach der Regel: Einbettung; `--verfahren mischung` als Option. Eine andere Vorgabe nur nach einer neuen Messung mit neuen Fragen |
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
+
+Geschrieben am 2026-11-24 nach dem Urteil (§ 5.1), vor dem Start der Stufe 2. Die Synergie
+([00-synergien-2026-11.md](00-synergien-2026-11.md)) entstand vor dieser Messung und hat für 18 keinen
+Eintrag in § 4; was sie trotzdem festlegt, steht hier.
+
+1. **Fundamente seit dem Bauplan.** F7 (Punkt 74) gibt jeder Fabrik `http`; 18 braucht es nicht. Der
+   Beitrag hängt in `CONTRIBUTIONS`, nicht in `early_steps`: kein Schritt vor `weights` liest Nachbarn.
+   Der Rohtext kommt aus F1 (Punkt 73) nach Dateiname; geteilte Dateien bekommen eine Zeile je
+   Korpus-ID (Synergie § 1).
+2. **Befehl und Namen.** Die Befehle der CLI sind englisch (`run`, `pack`, `regress`, `validate`):
+   der Suchbefehl heißt **`georep search "<frage>" [--method embedding|hybrid|bm25] [--n 10]`**, das
+   Profil kommt über das globale `--profile`. Die Logik liegt in `src/georep/search/` (`bm25.py`,
+   `stem.py`, `query.py`), `cli.py` hängt nur den Befehl an; kein `src/georep/suche.py`. Dateinamen
+   der Daten bleiben deutsch (`einbettungen_*.parquet`, `aehnliche_dokumente.parquet`), wie im Bauplan.
+3. **Paket.** Nur die Nachbartabelle der Hauptperiode (`snapshots/duesseldorf-aehnlich/`, rund
+   0,9 MiB) über `georep pack --neighbors`, unter `TOTAL_LIMIT` in `tests/unit/test_data_packages.py`
+   (Annahme zu Frage 26: kleine Pakete ja, Vektoren nein). Anhängeregel aus Synergie § 2.1 für
+   `pack.py`, `bootstrap.py`, `cli.py`, `test_data_packages.py`; 14 und 22 bauen dort parallel.
+4. **Stemmer-Prüfliste.** Die Beispielliste von snowballstem.org (Vokabular und Ausgabe, BSD) darf
+   einmal abgerufen werden (Fremddaten, Konrads Antwort 8). Ins Repo kommt eine feste Teilmenge
+   (jedes n-te Wort, rund 2 000 Paare) mit Quelle, Datum, Lizenz und SHA-256 der vollen Dateien in
+   einem README daneben; die volle Liste bleibt lokal unter `/media/konrad/xtraspace/georep/fremddaten/`.
+5. **GPU.** `georep run --models` nur unter `flock /media/konrad/xtraspace/georep/gpu-queue/gpu.lock`,
+   höchstens 30 Minuten je gesperrtem Lauf (Meta-Plan § 5); vorher und nachher im ollama-Log
+   „offloaded n/n layers" und das Tempo prüfen (Frage 9.5). Die Vektoren der Messung liegen im
+   Modellcache; ein Lauf mit derselben Prompt-Version `18-stuecke-1` trifft ihn.
+6. **Tempo-Probe (Frage 9.5).** Entschieden vom Supervisor: keine eigene Probe in 18. Eine Probe vor
+   dem ersten Stapel gehört nach F5 und geht als Rückstand nach `docs/todo.md`; 18 prüft im Bau von
+   Hand wie oben.
+7. **Merge.** 18 hängt an keinem Vorhaben der Welle 1 und wird gemerged, sobald es fertig ist (Synergie
+   § 3.4: ein fertiger Branch wartet nicht auf einen langsameren, von dem er nicht abhängt); es rebast
+   auf den Stand, den `main` dann hat. Stufe 3 (ähnliche Dokumente im Dialog) wartet auf den Haken von 14.

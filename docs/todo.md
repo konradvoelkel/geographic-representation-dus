@@ -154,3 +154,7 @@ Wartezeiten, ohne anzuhalten, weil sie nicht mehr in die Serie zählen; das kost
 der Rückweg ist `--retry-rejected`. (c) Wer `embed_texts` oder `generate_texts` außerhalb von
 `run_step` aufruft (etwa ein Skript der GPU-Warteschlange), muss `use.reset(retry_rejected=…)` selbst
 setzen. Zu klären, wenn die ersten Modellschritte (18 bis 20) gebaut werden.
+(d) Eine Tempo-Probe vor dem ersten Stapel eines Modellschritts (oder in `georep ml status`): zweimal
+rechnete ollama still auf der CPU, während `ollama ps` „100% GPU" sagte (2026-11-23, 22:42,
+`ggml_cuda_init` im Log; Vorhaben 18, Frage 9.5). Bis dahin prüft jeder Lauf das Log und das Tempo von
+Hand.
