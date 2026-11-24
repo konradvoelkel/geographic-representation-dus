@@ -88,6 +88,12 @@ def test_the_three_hypotheses_come_out_as_measured(
         "H2": (-0.336, -0.620, -0.031, 0.0346, 0.0692, "nicht bestätigt"),
         "H3": (-0.059, -0.408, 0.312, 0.6474, 0.6474, "nicht bestätigt"),
     }
+    # § 8: H2 ist zweiseitig; p_Holm 0,0692 liegt über 0,05, also keine der beiden Richtungen
+    readings = {
+        "H1": "Aufmerksamkeit folgt dem Bedarf",
+        "H2": "kein Zusammenhang nachweisbar",
+        "H3": "kein Zusammenhang nachweisbar",
+    }
     for name, (rho, low, high, p, p_holm, result) in expected.items():
         row = main[name]
         assert (row["wert"], row["ci_lo"], row["ci_hi"]) == pytest.approx(
@@ -95,6 +101,7 @@ def test_the_three_hypotheses_come_out_as_measured(
         )
         assert (row["p"], row["p_holm"]) == pytest.approx((p, p_holm), abs=5e-5)
         assert row["ergebnis"] == result and row["festgelegt"] == "67f7250" and row["n"] == 41
+        assert row["deutung"] == readings[name]
 
 
 def test_the_explorative_rows_come_out_as_measured(

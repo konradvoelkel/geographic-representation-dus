@@ -3189,7 +3189,10 @@ Paket nach.
 - *Die Hypothesentabelle* trägt den Kern der Synergie vorn (`hypothese`, `p`, `p_holm`, `ergebnis`,
   `n`, `festgelegt`) und ist lang: je Zeile eine Rechnung (`haupttest`, `robustheit`, `innerhalb`,
   `moran_*`, `paar`) mit `mass` und `wert`, weil Moran's I kein ρ ist. Die Robustheit trägt nur ρ, wie
-  in § 3.4. `ergebnis` steht nur am Haupttest.
+  in § 3.4. `ergebnis` steht nur am Haupttest, dahinter `deutung` mit den drei Wörtern aus § 8
+  („Aufmerksamkeit folgt dem Bedarf", „ungleiche Aufmerksamkeit", „kein Zusammenhang nachweisbar"):
+  `ergebnis` sagte bei der zweiseitigen H2 nicht, in welche Richtung Holm verwirft (Review
+  2026-11-24, K1). Die einseitigen H1 und H3 haben nur den ersten und den letzten Ausgang.
 - *Die Hypothesen stehen im Stadtprofil* mit dem Commit ihrer Festlegung (`fixed`): sie nennen
   Variablen des Quartiersatlas. Der Commit ist `67f7250`; das Messdokument nannte `9da9fe1`, den Hash
   vor dem Rebase, den es in keinem Zweig gibt (berichtigt).

@@ -274,7 +274,9 @@ def test_need_on_the_mini_chain_writes_a_row_per_district_and_the_tests(
     assert tests.filter(pl.col("rechnung") == "haupttest").get_column("festgelegt").to_list() == [
         "abc1234"
     ]
-    assert "H1" in outcome.reason
+    # die Zeile des Laufs sagt Ergebnis und Deutung (Review 2026-11-24, K1)
+    main = tests.filter(pl.col("rechnung") == "haupttest").row(0, named=True)
+    assert f"H1 {main['ergebnis']} ({main['deutung']})" in outcome.reason
     # ein zweiter Lauf auf denselben Eingaben schreibt dieselben Dateien
     before = {path: digest(path) for path in (files.table, files.tests)}
     run_step(steps[1], settings, force=True)

@@ -29,7 +29,7 @@ import numpy as np
 import polars as pl
 import shapely
 
-from georep.analysis.need import CONFIRMED, MAIN, STRATUM, hypothesis_table, neighbours
+from georep.analysis.need import MAIN, STRATUM, hypothesis_table, neighbours
 from georep.crosswalk import DISTRICT, POINT, POINT_SHARE, point_shares
 from georep.enrich import Contribution
 from georep.geo import Precinct, read_canonical_precincts, transformer
@@ -316,8 +316,8 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
         write_parquet(tests, files.tests, schema_version=NEED_SCHEMA_VERSION)
         main = tests.filter(pl.col("rechnung") == MAIN)
         verdicts = ", ".join(
-            f"{name} {'bestätigt' if result == CONFIRMED else 'nicht bestätigt'}"
-            for name, result in main.select("hypothese", "ergebnis").rows()
+            f"{name} {result} ({reading})"
+            for name, result, reading in main.select("hypothese", "ergebnis", "deutung").rows()
         )
         without = (
             f"; ohne Fremddaten oder Klassen nicht gerechnet: {', '.join(skipped)}"

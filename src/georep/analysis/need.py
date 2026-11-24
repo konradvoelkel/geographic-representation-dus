@@ -48,6 +48,11 @@ STRATUM = "stadtbezirk"
 TIE = 1e-12
 CONFIRMED = "bestätigt"
 NOT_CONFIRMED = "nicht bestätigt"
+# Die Deutung eines Haupttests mit den Wörtern aus § 8 des Messdokuments (Review 2026-11-24, K1):
+# ``ergebnis`` sagt nur, ob Holm verwirft, bei der zweiseitigen H2 aber nicht, in welche Richtung.
+FOLLOWS = "Aufmerksamkeit folgt dem Bedarf"
+UNEQUAL = "ungleiche Aufmerksamkeit"
+NO_LINK = "kein Zusammenhang nachweisbar"
 
 # Rechnungen je Zeile, in der Folge der Datei.
 MAIN = "haupttest"
@@ -58,7 +63,8 @@ MORAN_NEED = "moran_bedarf"
 MORAN_ATTENTION = "moran_aufmerksamkeit"
 PAIR = "paar"
 
-# Der Kern der Hypothesentabellen (Synergien 2026-11, § 1) vorn, dann die Spalten von 22.
+# Der Kern der Hypothesentabellen (Synergien 2026-11, § 1) vorn, dann die Spalten von 22, zuerst
+# die Deutung des Haupttests.
 HYPOTHESES_SCHEMA: dict[str, pl.DataType] = {
     "hypothese": pl.String(),
     "p": pl.Float64(),
@@ -66,6 +72,7 @@ HYPOTHESES_SCHEMA: dict[str, pl.DataType] = {
     "ergebnis": pl.String(),
     "n": pl.Int64(),
     "festgelegt": pl.String(),
+    "deutung": pl.String(),
     "rechnung": pl.String(),
     "explorativ": pl.Boolean(),
     "bedarf": pl.String(),
@@ -309,6 +316,30 @@ def verdict(p_holm: float | None, alpha: float) -> str:
     return CONFIRMED if p_holm is not None and p_holm < alpha else NOT_CONFIRMED
 
 
+@deal.pre(
+    lambda alternative, rho, p_holm, alpha: alternative in ("greater", "two-sided"),
+    message="bekannte Alternative",
+)
+@deal.post(lambda result: result in (FOLLOWS, UNEQUAL, NO_LINK, None))
+def interpretation(
+    alternative: str, rho: float | None, p_holm: float | None, alpha: float
+) -> str | None:
+    """Was ein Haupttest sagt, mit den Wörtern aus § 8; ohne rho oder ohne Holm nichts.
+
+    Verwirft Holm (``p_holm < alpha``) und ist rho positiv: „Aufmerksamkeit folgt dem Bedarf"; ist
+    rho negativ und der Test zweiseitig: „ungleiche Aufmerksamkeit"; sonst „kein Zusammenhang
+    nachweisbar". Ein einseitiger Test (rho > 0) prüft die andere Richtung nicht und hat nur die
+    beiden Ausgänge, die § 8 für ihn erlaubt.
+    """
+    if rho is None or p_holm is None:
+        return None
+    if p_holm < alpha and rho > 0:
+        return FOLLOWS
+    if p_holm < alpha and rho < 0 and alternative == "two-sided":
+        return UNEQUAL
+    return NO_LINK
+
+
 # --- Nachbarschaft und die Tabelle ---------------------------------------------------------------
 
 
@@ -429,8 +460,16 @@ def _table_holds(result: pl.DataFrame, alpha: float) -> bool:
             return False
         if ergebnis != verdict(p_holm, alpha):
             return False
+    for alternative, rho, p_holm, deutung in main.select(
+        "alternative", "wert", "p_holm", "deutung"
+    ).rows():
+        if deutung != interpretation(alternative, rho, p_holm, alpha):
+            return False
     others = result.filter(pl.col("rechnung") != MAIN)
-    return others.get_column("ergebnis").null_count() == others.height
+    return all(
+        others.get_column(column).null_count() == others.height
+        for column in ("ergebnis", "deutung")
+    )
 
 
 def _arguments_fit(
@@ -464,7 +503,8 @@ def _result_holds(
     _arguments_fit, message="eine Zeile je Wahlbezirk, sortiert, mit Schicht und Nachbarschaft"
 )
 @deal.ensure(
-    _result_holds, message="Schema, p in [0, 1], p_holm >= p, Ergebnis genau bei Holm unter alpha"
+    _result_holds,
+    message="Schema, p in [0, 1], p_holm >= p, Ergebnis genau bei Holm unter alpha, Deutung aus § 8",
 )
 @deal.raises(SchemaError)
 def hypothesis_table(
@@ -493,7 +533,7 @@ def hypothesis_table(
 
     # Vorab festgelegt: ein Generator, je Hypothese erst Permutationen, dann Bootstrap (§ 8).
     rng = np.random.default_rng(need.seed)
-    main: list[dict[str, object]] = []
+    main: list[tuple[NeedHypothesis, dict[str, object], float | None, float | None]] = []
     for h in need.hypotheses:
         x, y, sub = _pairs(frame, h.need, h.attention)
         rho, p = permutation_test(
@@ -504,30 +544,31 @@ def hypothesis_table(
             if rho is not None
             else (None, None)
         )
-        main.append(
-            _row(
-                hypothese=h.name,
-                p=p,
-                n=sub.height,
-                festgelegt=h.fixed,
-                rechnung=MAIN,
-                explorativ=False,
-                bedarf=h.need,
-                aufmerksamkeit=h.attention,
-                mass="spearman",
-                wert=rho,
-                ci_lo=low,
-                ci_hi=high,
-                test="permutation",
-                alternative=h.alternative,
-                permutationen=need.permutations,
-                seed=need.seed,
-            )
+        row = _row(
+            hypothese=h.name,
+            p=p,
+            n=sub.height,
+            festgelegt=h.fixed,
+            rechnung=MAIN,
+            explorativ=False,
+            bedarf=h.need,
+            aufmerksamkeit=h.attention,
+            mass="spearman",
+            wert=rho,
+            ci_lo=low,
+            ci_hi=high,
+            test="permutation",
+            alternative=h.alternative,
+            permutationen=need.permutations,
+            seed=need.seed,
         )
-    adjusted = holm([1.0 if r["p"] is None else float(r["p"]) for r in main])  # type: ignore[arg-type]
-    for h, row, p_holm in zip(need.hypotheses, main, adjusted, strict=True):
-        row["p_holm"] = None if row["p"] is None else p_holm
-        row["ergebnis"] = verdict(row["p_holm"], need.alpha)  # type: ignore[arg-type]
+        main.append((h, row, rho, p))
+    adjusted = holm([1.0 if p is None else p for *_, p in main])
+    for (h, row, rho, p), p_holm in zip(main, adjusted, strict=True):
+        family_p = None if p is None else p_holm
+        row["p_holm"] = family_p
+        row["ergebnis"] = verdict(family_p, need.alpha)
+        row["deutung"] = interpretation(h.alternative, rho, family_p, need.alpha)
         rows.append(row)
         rows += _robust_rows(frame, h, exclude)
 

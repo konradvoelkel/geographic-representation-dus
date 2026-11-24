@@ -360,7 +360,7 @@ def district_variables(voters: pl.DataFrame, context: ContextSettings) -> pl.Dat
 # Erhöhen, wenn sich Spalten, Typen oder die Zeilenfolge der Stadtauszüge unter external/bedarf/
 # (need_data) oder von wahlbezirke_bedarf.parquet und bedarf_hypothesen.parquet (need) ändern
 # (CLAUDE.md: die Schema-Version aus der Konstante des Moduls).
-NEED_SCHEMA_VERSION = 1  # Schritt need: wahlbezirke_bedarf und bedarf_hypothesen
+NEED_SCHEMA_VERSION = 2  # Schritt need; 2: Spalte deutung in bedarf_hypothesen (K1, 2026-11-24)
 NEED_DATA_SCHEMA_VERSION = 1  # Schritt need_data: die Stadtauszüge unter external/bedarf/
 NEED_DIR = "bedarf"  # unter external/ im Lauf und im Paket
 ACCIDENTS_FILE = "unfaelle.parquet"

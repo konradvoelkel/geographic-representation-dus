@@ -15,11 +15,15 @@ from shapely.geometry import box
 
 from georep.analysis.need import (
     CONFIRMED,
+    FOLLOWS,
     HYPOTHESES_SCHEMA,
+    NO_LINK,
     NOT_CONFIRMED,
+    UNEQUAL,
     bootstrap_interval,
     holm,
     hypothesis_table,
+    interpretation,
     morans_i,
     neighbours,
     partial_spearman,
@@ -96,6 +100,30 @@ def test_the_verdict_is_holm_against_alpha() -> None:
     assert verdict(0.0429, 0.05) == CONFIRMED
     assert verdict(0.05, 0.05) == NOT_CONFIRMED
     assert verdict(None, 0.05) == NOT_CONFIRMED
+
+
+@pytest.mark.parametrize(
+    ("alternative", "rho", "p_holm", "expected"),
+    [
+        # § 8, H2: zweiseitig, drei Ausgänge
+        ("two-sided", 0.3, 0.01, FOLLOWS),
+        ("two-sided", -0.3, 0.01, UNEQUAL),
+        ("two-sided", -0.336, 0.0692, NO_LINK),  # die Messung (§ 3.4)
+        ("two-sided", 0.3, 0.05, NO_LINK),  # Holm verwirft erst unter alpha
+        # einseitig (rho > 0) gibt es nur zwei: ein negatives rho prüft der Test nicht
+        ("greater", 0.343, 0.0429, FOLLOWS),
+        ("greater", -0.9, 0.01, NO_LINK),
+        ("greater", 0.1, 0.6, NO_LINK),
+        # ohne Test keine Deutung
+        ("two-sided", None, None, None),
+        ("greater", 0.2, None, None),
+    ],
+)
+def test_the_reading_has_the_words_of_section_8(
+    alternative: str, rho: float | None, p_holm: float | None, expected: str | None
+) -> None:
+    """Review 2026-11-24, K1: ``ergebnis`` sagte bei H2 nicht, in welche Richtung Holm verwirft."""
+    assert interpretation(alternative, rho, p_holm, 0.05) == expected
 
 
 def test_within_strata_removes_a_pure_stratum_effect() -> None:
@@ -221,6 +249,7 @@ def test_the_table_has_the_core_first_and_rows_in_their_order() -> None:
     table = hypothesis_table(frame, _settings(), weights=_line(frame.height), exclude=[1])
     assert table.schema == pl.Schema(HYPOTHESES_SCHEMA)
     assert table.columns[:6] == ["hypothese", "p", "p_holm", "ergebnis", "n", "festgelegt"]
+    assert table.columns[6] == "deutung"  # die erste Spalte hinter dem Kern
     assert table.select("hypothese", "rechnung").rows() == [
         ("H1", "haupttest"),
         ("H1", "robustheit"),
@@ -240,6 +269,8 @@ def test_the_table_has_the_core_first_and_rows_in_their_order() -> None:
     ]
     main = table.filter(pl.col("rechnung") == "haupttest")
     assert main.get_column("ergebnis").to_list()[0] == CONFIRMED  # y hängt stark an x
+    assert main.get_column("deutung").to_list()[0] == FOLLOWS
+    assert table.filter(pl.col("rechnung") != "haupttest").get_column("deutung").null_count() == 13
     assert table.filter(pl.col("explorativ")).get_column("festgelegt").null_count() == 9
     robust = table.filter(pl.col("rechnung") == "robustheit")
     assert robust.get_column("ohne").to_list() == [[1], [], [1], []]
