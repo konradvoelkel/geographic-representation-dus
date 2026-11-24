@@ -3176,9 +3176,17 @@ Lücke im Messskript schloss. Ein Abschnitt `kopf_*` endet dann am letzten Kopff
 sind vorher gelesen. In der Hauptperiode haben 7 664 Dokumente einen Rumpf (7 857 Spannen), darunter
 1 303 Informationsvorlagen der Bezirksvertretungen (Text unter der Beratungsfolge) und die meisten
 Anfragen (die Einleitung vor den Fragen). (2) **Kein
-Abschnitt der Ebene 1 beginnt in einem anderen**: im Entwurf stand der Beschlusssatz ohne Überschrift
-mitten im letzten Abschnitt des Kopfs, wenn danach keine Überschrift kam (hypothesis fand es, in der
-Hauptperiode zwei Dokumente); der vordere endet jetzt davor. (3) **Gremiennamen über `[bodies]`**,
+Abschnitt der Ebene 1 beginnt in einem anderen**, und **der Beschlussvorschlag bleibt, wie der
+Entwurf ihn fand.** Im Entwurf beginnt ein Abschnitt in einem anderen, wo das Regelwerk ihn
+nachträglich anfügt: in der Hauptperiode zweimal der Beschlusssatz ohne Überschrift im letzten
+Abschnitt des Kopfs (hypothesis fand es), in 2014 bis 2020 305-mal, fast immer ein Betreff unter dem
+Formulartitel, der über die nächste Überschrift reicht (275-mal in einen Beschlussvorschlag, 12 in
+eine Sachdarstellung, 8 in Fragen). Der vordere Abschnitt endet dann vor dem hinteren -- außer, er
+ist der Beschlussvorschlag: in acht Dokumenten von 2014 bis 2020 begann der Betreff unter dem
+Formulartitel in einem Beschlussvorschlag aus Überschrift, und die erste Fassung kürzte den
+Vorschlag auf „Antrag" (Review K2). Jetzt beginnt, was in einem Beschlussvorschlag beginnt, erst
+hinter ihm oder entfällt (hier der Betreff). Geprüft in allen vier Datensätzen: jeder
+Beschlussvorschlag gleich dem des Entwurfs, keine Überlappung mehr. (3) **Gremiennamen über `[bodies]`**,
 keine zweite Tabelle: `BodyNames` vergleicht einen geschriebenen Namen mit den Namen und Kürzeln aus
 `BodyRules` über einen Schlüssel ohne Groß- und Kleinschreibung, Satzzeichen und Genitivendung
 („Ausschusses für Gesundheit und Soziales", „Rates", „Stadtrates" über `city.council`,

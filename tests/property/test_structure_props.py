@@ -186,7 +186,8 @@ DOCUMENTS = st.tuples(
     st.lists(LINES, max_size=24),
     st.lists(st.sampled_from(["\n", PAGE_BREAK]), min_size=24, max_size=24),
 )
-PAPER_TYPES = st.sampled_from(["Beschlussvorlage", "Antrag SPD", "Anfrage", "Informationsvorlage"])
+PAPER_TYPES_LIST = ["Beschlussvorlage", "Antrag SPD", "Anfrage", "Informationsvorlage"]
+PAPER_TYPES = st.sampled_from(PAPER_TYPES_LIST)
 
 
 def _join(lines: list[str], breaks: list[str]) -> str:
@@ -311,3 +312,50 @@ def test_the_name_key_takes_every_text(name: str) -> None:
     """Der Schlüssel eines Gremiumsnamens ist für jeden Text definiert und ändert sich nicht mehr."""
     key = name_key(name)
     assert name_key(key) == key
+
+
+@functools.cache
+def _rules_of(profile: str) -> StructureRules:
+    return StructureRules.from_settings(load_settings(profile=profile, cwd=Path("/x")))
+
+
+@settings(deadline=None)
+@given(
+    document=DOCUMENTS,
+    paper_type=st.sampled_from([*PAPER_TYPES_LIST, "Vorlage aus der Politik"]),
+    profile=st.sampled_from(["duesseldorf", "duesseldorf-2014"]),
+)
+# Review 11, K2 (2026-11-24): in 2014 bis 2020 kürzte die Nachbearbeitung acht
+# Beschlussvorschläge auf „Antrag", weil der Betreff unter dem Formulartitel in ihnen begann
+@example(
+    document=(
+        [
+            "Fraktion im Rat",
+            "Antrag:",
+            "Antrag",
+            "Mehr Bänke im Park",
+            "",
+            "Die Verwaltung wird beauftragt, im Park zehn Bänke aufzustellen.",
+            "",
+            "Begründung:",
+            "Man will sitzen.",
+        ],
+        ["\n"] * 24,
+    ),
+    paper_type="Vorlage aus der Politik",
+    profile="duesseldorf-2014",
+)
+def test_the_decision_proposal_stays_as_the_draft_found_it(
+    document: tuple[list[str], list[str]], paper_type: str, profile: str
+) -> None:
+    """Die Nachbearbeitung (Rumpf, Überlappung) ändert keinen Beschlussvorschlag des Entwurfs:
+    gerade er ist an den Labels geprüft (188 von 200)."""
+    text = _join(*document)
+    rules = _rules_of(profile)
+
+    def decisions(found: Structure) -> list[tuple[int, int]]:
+        return [(s.start, s.end) for s in found.sections if s.norm == "beschlussvorschlag"]
+
+    assert decisions(analyse(text, rules, paper_type)) == decisions(
+        analyse_draft(text, rules, paper_type)
+    )

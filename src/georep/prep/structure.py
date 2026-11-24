@@ -635,9 +635,8 @@ def _add_body(text: str, rules: StructureRules, result: Structure) -> None:
     Ebene 2 steht wie in jedem Abschnitt in ihm und teilt ihn nicht). Der Abschnitt ``kopf_*``
     endet dann am letzten Kopffeld; seine Felder sind schon gelesen, also ändert sich keines.
 
-    Vorher endet ein Abschnitt der Ebene 1, wo der nächste beginnt: der Beschlusssatz ohne
-    Überschrift steht im Entwurf mitten im letzten Abschnitt des Kopfs, wenn danach keine
-    Überschrift kommt (in der Hauptperiode zwei Dokumente, einmal im Amt, einmal im Betreff).
+    Vorher endet ein Abschnitt der Ebene 1, wo der nächste beginnt (``_without_overlap``); der
+    Beschlussvorschlag bleibt dabei, wie der Entwurf ihn fand.
     """
     head_end = max((f.end for f in result.head if f.kind in HEAD_END_FIELDS), default=0)
     betreff = [s for s in result.sections if s.norm == BETREFF]
@@ -696,9 +695,23 @@ def _add_body(text: str, rules: StructureRules, result: Structure) -> None:
 
 
 def _without_overlap(text: str, spans: Sequence[Found]) -> list[Found]:
-    """Die Abschnitte nach ihrem Anfang; einer, in dem der nächste beginnt, endet davor."""
+    """Die Abschnitte nach ihrem Anfang; einer, in dem der nächste beginnt, endet davor -- außer
+    dem Beschlussvorschlag: er bleibt, wie der Entwurf ihn fand, und was in ihm beginnt, beginnt
+    erst hinter ihm oder entfällt.
+
+    Im Entwurf beginnt ein Abschnitt in einem anderen nur, wo das Regelwerk ihn nachträglich
+    anfügt: den Beschlusssatz ohne Überschrift im letzten Abschnitt des Kopfs (dann endet der
+    Kopf davor) oder den Betreff unter dem Formulartitel (Quelle „formular") in einem
+    Beschlussvorschlag aus Überschrift, Einleitung oder Beschlusssatz (Review 11, K2: acht
+    Dokumente in 2014 bis 2020; dann entfällt der Betreff).
+    """
     out: list[Found] = []
     for span in sorted(spans, key=lambda s: (s.start, s.end)):
+        if out and out[-1].end > span.start and out[-1].norm == DECISION:
+            start, stop = _trim(text, out[-1].end, span.end)
+            if stop <= start:
+                continue
+            span = span._replace(start=start, end=stop)
         if out and out[-1].end > span.start:
             before = out.pop()
             start, stop = _trim(text, before.start, span.start)
