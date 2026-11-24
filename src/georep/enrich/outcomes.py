@@ -26,6 +26,7 @@ import polars as pl
 
 from georep.analysis.outcomes import (
     AGENDA_NAME,
+    AGENDA_SCHEMA_VERSION,
     ANGENOMMEN,
     MOTION,
     OUTCOMES_SCHEMA_VERSION,
@@ -45,7 +46,7 @@ from georep.council import JsonlStore, council_files
 from georep.enrich import Contribution
 from georep.enrich.functions import functions_files
 from georep.enrich.procedures import procedure_files
-from georep.errors import MissingInputError
+from georep.errors import MissingInputError, SchemaError
 from georep.http import Transport
 from georep.io import write_parquet
 from georep.layout import Layout
@@ -53,6 +54,7 @@ from georep.oparl import OparlAgendaItem, OparlConsultation, OparlMeeting
 from georep.pipeline import Step
 from georep.prep.references import ReferenceRules, role_of
 from georep.settings import Settings
+from georep.stores import stored_schema_version
 
 
 class OutcomeFiles(NamedTuple):
@@ -122,6 +124,12 @@ def read_agenda(layout: Layout, papers: list[str]) -> tuple[pl.DataFrame, str]:
         return agenda_from_network(layout, papers), "Netzlauf"
     package = outcome_files(layout).agenda
     if package.is_file():
+        version = stored_schema_version(package)
+        if version != str(AGENDA_SCHEMA_VERSION):  # Review 2026-11-24, N10
+            raise SchemaError(
+                f"{package}: Schema-Version {version}, gelesen wird {AGENDA_SCHEMA_VERSION}; das "
+                "Paket braucht ein neues `georep pack --outcomes`"
+            )
         frame = check_agenda(pl.read_parquet(package), str(package))
         return frame.filter(pl.col("id").is_in(papers)), "Paket"
     missing = [str(path) for path in (*network, package) if not path.is_file()]

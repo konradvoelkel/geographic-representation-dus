@@ -386,3 +386,15 @@ def test_an_unfinished_fetch_is_in_the_stamp(tmp_path: Path, default_settings: S
     council = council_files(layout)
     step = _steps(default_settings, layout)["council_results"]
     assert {council.progress("meetings"), council.progress("consultations")} <= set(step.optional)
+
+
+def test_a_package_of_another_schema_version_is_refused(tmp_path: Path) -> None:
+    """Review 2026-11-24, N10: die Version in den Metadaten des Pakets wird geprüft."""
+    from georep.errors import SchemaError
+    from georep.io import write_parquet
+
+    layout = _layout(tmp_path, network=False)
+    frame = pl.read_parquet(PACKAGE / "tagesordnungspunkte-duesseldorf.parquet")
+    write_parquet(frame, outcome_files(layout).agenda, schema_version=AGENDA_SCHEMA_VERSION + 1)
+    with pytest.raises(SchemaError, match="Schema-Version 2"):
+        read_agenda(layout, IDS)
