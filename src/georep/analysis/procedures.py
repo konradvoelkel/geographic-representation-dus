@@ -37,7 +37,7 @@ from dataclasses import dataclass
 import deal
 import polars as pl
 
-from georep.contracts import has_columns, sorted_unique
+from georep.contracts import has_columns, one_row_per_document, sorted_unique
 from georep.prep.references import (
     ATTACHMENT,
     ATTACHMENT_SEPARATOR,
@@ -469,8 +469,12 @@ def parents(edges: pl.DataFrame, roles: pl.DataFrame) -> dict[str, tuple[str, st
 @deal.post(_forest_columns_hold, message="Spalten und Typen von dokumente_vorgang")
 @deal.post(lambda result: sorted_unique(result, "id"), message="eine Zeile je ID, sortiert")
 @deal.post(_roots_point_to_themselves, message="Wurzel genau bei tiefe 0, ohne genau bei groesse 1")
+@deal.ensure(
+    lambda parent, members, rows, result: one_row_per_document(result, rows),
+    message="genau eine Zeile je ID in rows (Vertrag der dokumente_<attribut>, Review K2)",
+)
 def forest(
-    parent: Mapping[str, tuple[str, str]], members: Iterable[str], rows: Iterable[str]
+    parent: Mapping[str, tuple[str, str]], members: Iterable[str], rows: Sequence[str]
 ) -> pl.DataFrame:
     """Je ID in ``rows`` ihr Vorgang (die Wurzel), ihre Rolle, Tiefe und die Größe des Vorgangs.
 

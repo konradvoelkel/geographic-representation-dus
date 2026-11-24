@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime as dt
 from pathlib import Path
 
+import deal
 import polars as pl
 import pytest
 
@@ -240,3 +241,12 @@ def test_a_document_without_raw_text_keeps_its_store_spans() -> None:
         docs, directory, RULES, {doc_id: "probe/drucksachen-1" for doc_id in OWN_IDS}
     ).spans
     assert onto_raw(store, {}).equals(store)
+
+
+def test_the_forest_has_one_row_per_document_and_refuses_a_twin() -> None:
+    """Review K2: ``dokumente_vorgang`` folgt dem Vertrag aller ``dokumente_<attribut>``
+    (``contracts.one_row_per_document``); eine doppelte ID ist ein Programmierfehler, kein Fall
+    zum stillen Zusammenlegen."""
+    assert forest({}, ["a", "b"], ["b", "a"]).get_column("id").to_list() == ["a", "b"]
+    with pytest.raises(deal.ContractError):
+        forest({}, ["a"], ["a", "a"])

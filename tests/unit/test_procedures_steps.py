@@ -19,6 +19,8 @@ from georep.bootstrap import bootstrap, bootstrap_from_settings
 from georep.enrich import CONTRIBUTIONS
 from georep.enrich.procedures import (
     PROCEDURES_SCHEMA_VERSION,
+    City,
+    neighbour_texts,
     procedure_files,
     procedure_steps,
 )
@@ -237,3 +239,21 @@ def test_every_profile_builds_its_register_in_order(tmp_path: Path) -> None:
         if settings.procedures.enabled:
             assert names.index("bodies") < names.index("references") < names.index("procedures")
             assert names.index("procedures") < names.index("report"), profile
+
+
+def test_two_neighbour_papers_of_one_file_both_get_its_text(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    """Review, Nit (Synergie § 1, „Dokument je PDF-Datei"): mehrere IDs teilen eine Datei; jede
+    bekommt den Text, nicht nur die letzte."""
+    store = TextStore(tmp_path / "texts.parquet")
+    store.put("f.pdf", "der text", TextMeta(extractor="probe-1"))
+    store.save()
+    period = RelatedPeriod(profile=NEIGHBOUR, papers=tmp_path / "p.jsonl", texts=store.path)
+    settings = default_settings.model_copy(
+        update={"procedures": default_settings.procedures.model_copy(update={"related": [period]})}
+    )
+    city = City(
+        pl.DataFrame(), {"x1": (NEIGHBOUR, "f.pdf"), "x2": (NEIGHBOUR, "f.pdf")}, own_ids=[]
+    )
+    assert neighbour_texts(settings, city, {"x1", "x2"}) == {"x1": "der text", "x2": "der text"}

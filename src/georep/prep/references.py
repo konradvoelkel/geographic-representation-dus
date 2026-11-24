@@ -28,23 +28,15 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from typing import get_args
 
 import deal
 
-from georep.settings import Procedures
+from georep.settings import ProcedureRole, Procedures
 
-# Die Rollen, die die Typregel kennt (``settings.ProcedureRole``); ``sonst`` trifft keine Regel.
-ROLES = (
-    "anfrage",
-    "antrag",
-    "vorlage",
-    "information",
-    "bedarf",
-    "af",
-    "eingabe",
-    "politik",
-    "sonst",
-)
+# Die Rollen, die die Typregel kennt, an einer Stelle: ``settings.ProcedureRole`` (Review, Nit);
+# ``sonst`` trifft keine Regel.
+ROLES: tuple[str, ...] = get_args(ProcedureRole)
 QUESTION, MOTION, PROPOSAL, INFORMATION = "anfrage", "antrag", "vorlage", "information"
 POLITICAL = (
     "antrag",

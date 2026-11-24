@@ -190,12 +190,16 @@ def load_city(settings: Settings, layout: Layout, attachments: pl.DataFrame) -> 
 
 
 def neighbour_texts(settings: Settings, city: City, wanted: set[str]) -> dict[str, str]:
-    """Die Texte der Nachbardrucksachen in ``wanted`` aus den Textstores ihrer Pakete."""
-    by_profile: dict[str, dict[str, str]] = {}
-    for doc_id in wanted:
+    """Die Texte der Nachbardrucksachen in ``wanted`` aus den Textstores ihrer Pakete.
+
+    Mehrere IDs können eine Datei teilen (Synergie § 1, „Dokument je PDF-Datei"); jede bekommt
+    den Text, darum ``Dateiname -> IDs``.
+    """
+    by_profile: dict[str, dict[str, list[str]]] = {}
+    for doc_id in sorted(wanted):
         profile, name = city.file_names[doc_id]
         if name:
-            by_profile.setdefault(profile, {})[name] = doc_id
+            by_profile.setdefault(profile, {}).setdefault(name, []).append(doc_id)
     found: dict[str, str] = {}
     for period in neighbours(settings):
         names = by_profile.get(period.profile)
@@ -205,7 +209,8 @@ def neighbour_texts(settings: Settings, city: City, wanted: set[str]) -> dict[st
             pl.col("name").is_in(list(names))
         )
         for name, text in store.iter_rows():
-            found[names[name]] = text or ""
+            for doc_id in names[name]:
+                found[doc_id] = text or ""
     return found
 
 
