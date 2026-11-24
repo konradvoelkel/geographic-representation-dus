@@ -158,6 +158,9 @@ setzen. Zu klären, wenn die Modellschritte von 19 und 20 gebaut werden.
 rechnete ollama still auf der CPU, während `ollama ps` „100% GPU" sagte (2026-11-23, 22:42,
 `ggml_cuda_init` im Log; Vorhaben 18, Frage 9.5). Bis dahin prüft jeder Lauf das Log und das Tempo von
 Hand.
+(e) Die Zahl der Korpus-IDs ohne Rohtext, für die `embeddings` keinen Vektor schreibt, steht nur in
+der Laufzeile, nicht im Stamp und nicht in `status` (Review von Vorhaben 18, N9; braucht eine Stelle im
+Stamp für Zählungen eines Schritts).
 
 ## 12. Vorgänge: Rückstand aus der Nachprüfung von Vorhaben 14
 

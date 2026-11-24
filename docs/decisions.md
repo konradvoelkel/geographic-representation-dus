@@ -3131,7 +3131,7 @@ der Wahl, gegen § 3.3). `PaperRecord` um die Anlagen erweitern (ein Schemasprun
 Golden-Master-Risiko; das Paket genügt, Synergie § 4); für die laufende Periode ist das der Weg
 danach, denn das Paket veraltet mit jedem Tag (Frage 9.1).
 
-## NN. Einbettungen über Stücke, ähnliche Dokumente als Paket, Suche mit der Einbettung als Vorgabe (Vorhaben 18, 2026-11-24)
+## 77. Einbettungen über Stücke, ähnliche Dokumente als Paket, Suche mit der Einbettung als Vorgabe (Vorhaben 18, 2026-11-24)
 
 Vorhaben 18 der Vorverarbeitung (`docs/plans/18-einbettungen.md`, § 5 bis § 7 und § 10), Stufe 2.
 Die Messung hat zwei Fragen gegen zwei KI-Kodierer entschieden: die Suche nach Bedeutung schlägt die
