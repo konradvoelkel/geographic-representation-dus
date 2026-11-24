@@ -173,6 +173,18 @@ VERIFY_TARGETS = [
     # 5 s am 2026-11-24. Die übrigen Funktionen von prep.references nehmen vorkompilierte Muster
     # (``re.Pattern`` in ``ReferenceRules``) und stehen darum nicht hier.
     "georep.prep.references.edge_type",
+    # Vorhaben 18 (2026-11-24): die Stücke für das Einbettungsmodell, je einzeln geprüft, Exit 0,
+    # „Not confirmed" nach 20 bis 41 s, kein Gegenbeispiel. Die Treue zur Messung prüft
+    # tests/property/test_chunks_props.py gegen das Orakel ``oracle_chunks.zerteile``.
+    "georep.prep.chunks.chunk_title",
+    "georep.prep.chunks.chunk_lines",
+    "georep.prep.chunks.split_chunks",
+    "georep.prep.chunks.chunk_text",
+    # Vorhaben 18: Stemmer und Mischung der Suche, je einzeln geprüft, Exit 0, „Not confirmed"
+    # nach 40 und 22 s. Nicht dabei: ``bm25_scores``, ``ranking`` und ``build_index`` (NumPy und
+    # SciPy in der Signatur); ihre Eigenschaften prüft tests/property/test_bm25_props.py.
+    "georep.search.stem.stem",
+    "georep.search.bm25.rrf",
 ]
 
 
@@ -377,6 +389,24 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
         ("src/georep/analysis/procedures.py",),
         ("tests/unit/test_procedures.py", "tests/property/test_procedures_props.py"),
     ),
+    # Vorhaben 18: die Stücke für das Einbettungsmodell; nicht gemessen
+    "chunks": (
+        ("src/georep/prep/chunks.py",),
+        ("tests/unit/test_chunks.py", "tests/property/test_chunks_props.py"),
+    ),
+    "stem": (
+        ("src/georep/search/stem.py",),
+        ("tests/unit/test_search_stem.py", "tests/property/test_bm25_props.py"),
+    ),
+    "bm25": (
+        ("src/georep/search/bm25.py",),
+        ("tests/unit/test_search_bm25.py", "tests/property/test_bm25_props.py"),
+    ),
+    "vectors": (
+        ("src/georep/search/vectors.py", "src/georep/search/units.py"),
+        ("tests/unit/test_embeddings_steps.py", "tests/property/test_vectors_props.py"),
+    ),
+    "query": (("src/georep/search/query.py",), ("tests/unit/test_search_query.py",)),
 }
 # Die acht Module, die am 2026-10-13 unter 90 s brauchten; der wöchentliche Qualitätslauf nimmt
 # genau diese (.github/workflows/quality.yml).
