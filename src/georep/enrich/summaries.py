@@ -23,6 +23,7 @@ von F5 (``cache_root/ml/``).
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
@@ -163,12 +164,27 @@ def cut(body: str, room: int) -> str:
     return body[:end].rstrip() + MARK
 
 
+# Benannte Validatoren mit der ganzen Signatur: deal bindet Schlüsselwortparameter samt Vorgaben
+# nur an Validatoren, die sie nennen (CLAUDE.md, deal; wie ``ml.batch``).
+def _budget_positive(
+    meta: SummaryMeta,
+    sections: Sequence[SectionText],
+    fallback: str,
+    budget: int,
+    *,
+    body_empty: bool = False,
+) -> bool:
+    return budget > 0
+
+
 def _input_fits(
     meta: SummaryMeta,
     sections: Sequence[SectionText],
     fallback: str,
     budget: int,
     result: SummaryInput,
+    *,
+    body_empty: bool = False,
 ) -> bool:
     return (
         result.source in SOURCES
@@ -178,10 +194,15 @@ def _input_fits(
     )
 
 
-@deal.pre(lambda meta, sections, fallback, budget: budget > 0)
+@deal.pre(_budget_positive, message="das Budget ist positiv")
 @deal.ensure(_input_fits, message="Quelle bekannt, Budget gehalten, leer genau ohne Text")
 def summary_input(
-    meta: SummaryMeta, sections: Sequence[SectionText], fallback: str, budget: int
+    meta: SummaryMeta,
+    sections: Sequence[SectionText],
+    fallback: str,
+    budget: int,
+    *,
+    body_empty: bool = False,
 ) -> SummaryInput:
     """Die Eingabe eines Dokuments: Kopfzeilen, dann die Abschnitte in fester Folge im Budget.
 
@@ -191,9 +212,10 @@ def summary_input(
     1), wird übersprungen; ein leerer auch. Der Abschnitt, der das Budget sprengt, endet mit
     ``cut``, danach kommt nichts mehr (so beschreibt es § 3.1; das Messskript nahm nach einer
     Kürzung am Zeilenende noch Abschnitte, solange Platz blieb). Ohne einen Kernabschnitt (CORE) steht nach dem Betreff der
-    Rückfall unter „Text" im verbliebenen Budget; ist er kürzer als MIN_FALLBACK_CHARS, gibt es
-    keine Eingabe (``ohne_text``, Frage 20.6). Abschnitte gleichen Titels hintereinander stehen
-    unter einer Überschrift.
+    Rückfall unter „Text" im verbliebenen Budget; ist er kürzer als MIN_FALLBACK_CHARS oder sagt der
+    Kopf von 11, dass nach ihm kein Text steht (``body_empty``, ``rumpf_leer``), gibt es keine
+    Eingabe (``ohne_text``, Frage 20.6). Abschnitte gleichen Titels hintereinander stehen unter
+    einer Überschrift.
     """
     order = {kind: i for i, (kind, _) in enumerate(SECTIONS)}
     titles = dict(SECTIONS)
@@ -223,7 +245,7 @@ def summary_input(
     if not any(kind in CORE for kind, _ in parts):
         parts = [(kind, body) for kind, body in parts if kind == "betreff"]
         rest = fallback.strip()
-        if len(rest) < MIN_FALLBACK_CHARS:
+        if body_empty or len(rest) < MIN_FALLBACK_CHARS:
             return SummaryInput(meta.id, "", "ohne_text", (), False, 0)
         source = "rohtext"
         room = budget - sum(len(body) for _, body in parts)
@@ -296,13 +318,53 @@ def body_label(code: str, rules: BodyRules) -> str:
     return rules.names.get(code) or code
 
 
-@deal.ensure(lambda organizations, own, rules, result: bool(result))
-def deliberation(organizations: Sequence[str], own: str | None, rules: BodyRules) -> str:
-    """Die Gremien der Beratung: die Beratungsfolge (sortiert, Punkt 58), sonst das Gremium der Nummer.
+def _deliberation_named(
+    organizations: Sequence[str],
+    own: str | None,
+    rules: BodyRules,
+    result: str,
+    *,
+    head: Sequence[Mapping[str, object]] = (),
+) -> bool:
+    return bool(result)
 
-    Die Folge trägt keine Reihenfolge (Punkt 58), darum nennt die Zeile die Gremien nach Kürzel
-    geordnet und sagt nicht, welches entscheidet.
+
+def _quality(value: object) -> str:
+    """Die Qualität einer Zeile der Beratungsfolge; ein Platzhalter („-", „-/-") ist keine."""
+    text = " ".join(str(value or "").split())
+    return "" if re.fullmatch(r"[-/ ]*", text) else text
+
+
+@deal.ensure(_deliberation_named, message='die Zeile nennt Gremien oder „nicht angegeben"')
+def deliberation(
+    organizations: Sequence[str],
+    own: str | None,
+    rules: BodyRules,
+    *,
+    head: Sequence[Mapping[str, object]] = (),
+) -> str:
+    """Die Gremien der Beratung, in dieser Folge der Quellen:
+
+    1. die Zeilen der Beratungsfolge aus dem Kopf des Dokuments (Vorhaben 11, ``beratungsfolge``
+       in ``dokumente_kopf.parquet``), in ihrer Folge und mit ihrer Qualität („Rat
+       (Entscheidung)"). Geprüft in 11: Gremium, Datum und Qualität je Zeile 160 von 168 (168 mit
+       dem Platzhalter „-" als keine), die Folge 27 von 27 Dokumenten mit zwei und mehr Zeilen
+       gegen dieselben Labels (Bau-Agent 20, 2026-11-24). Das Gremium heißt wie in ``[bodies]``,
+       wo der Kopf ein Kürzel kennt, sonst wie geschrieben;
+    2. sonst die OParl-Beratungsfolge (Punkt 58), nach Kürzel geordnet, weil OParl keine Folge
+       kennt, und darum ohne Qualität;
+    3. sonst das Gremium der Nummer.
     """
+    rows: list[str] = []
+    for row in head:
+        code = row.get("gremium_kuerzel")
+        name = body_label(code, rules) if isinstance(code, str) and code else ""
+        name = name or " ".join(str(row.get("gremium") or "").split())
+        if name:
+            quality = _quality(row.get("qualitaet"))
+            rows.append(f"{name} ({quality})" if quality else name)
+    if rows:
+        return ", ".join(dict.fromkeys(rows))
     codes = list(resolve_organizations(organizations, rules.organizations))
     if not codes and own:
         codes = [own]
@@ -317,24 +379,29 @@ def role_frame(
     bodies: pl.DataFrame | None,
     consultations: pl.DataFrame | None,
     settings: Settings,
+    *,
+    head: pl.DataFrame | None = None,
 ) -> pl.DataFrame:
     """Je ID ``absender`` und ``beratung``; jede Quelle darf fehlen (``None``).
 
     ``originators``: ``id``, ``urheber_art`` (Option 04); ``fractions``: ``id``, ``fraktionen``
     (Vorhaben 15); ``bodies``: ``id``, ``gremium`` (Option 05); ``consultations``: ``id``,
-    ``consultation_organizations`` (Punkt 58, Korpus und Paket schon zusammengeführt).
+    ``consultation_organizations`` (Punkt 58, Korpus und Paket schon zusammengeführt); ``head``:
+    ``id``, ``beratungsfolge`` (Vorhaben 11, Liste mit ``gremium``, ``gremium_kuerzel``,
+    ``qualitaet``).
     """
     kinds = _texts(originators, "urheber_art")
     own = _texts(bodies, "gremium")
     groups = _lists(fractions, "fraktionen")
     folge = _lists(consultations, "consultation_organizations")
+    heads = _structs(head, "beratungsfolge")
     labels = party_labels(settings.originators)
     rules = BodyRules.from_settings(settings.bodies)
     rows = [
         (
             doc,
             sender(kinds.get(doc), groups.get(doc) or [], labels),
-            deliberation(folge.get(doc) or [], own.get(doc), rules),
+            deliberation(folge.get(doc) or [], own.get(doc), rules, head=heads.get(doc) or []),
         )
         for doc in sorted(set(ids))
     ]
@@ -349,6 +416,14 @@ def _texts(frame: pl.DataFrame | None, column: str) -> dict[str, str]:
         return {}
     pairs = frame.select("id", column).drop_nulls().iter_rows()
     return {str(doc): str(value) for doc, value in pairs}
+
+
+def _structs(frame: pl.DataFrame | None, column: str) -> dict[str, list[dict[str, object]]]:
+    """ID -> Liste von Strukturen (die Beratungsfolge des Kopfs); leer, wo sie fehlt."""
+    if frame is None or column not in frame.columns:
+        return {}
+    pairs = frame.select("id", column).drop_nulls().iter_rows()
+    return {str(doc): [dict(row) for row in rows] for doc, rows in pairs}
 
 
 def _lists(frame: pl.DataFrame | None, column: str) -> dict[str, list[str]]:

@@ -305,3 +305,64 @@ def test_the_settings_default_to_off_with_gemma(settings: Settings) -> None:
 def test_the_settings_refuse_impossible_values(bad: dict[str, object]) -> None:
     with pytest.raises(ValidationError):
         Summaries.model_validate(bad)
+
+
+# --- Beratung aus dem Kopf von 11 und rumpf_leer (Antworten des Supervisors, 2026-11-24) ---------
+
+HEAD_ROWS = [
+    {"gremium": "Bauausschuss", "gremium_kuerzel": None, "datum": None, "qualitaet": "Vorberatung"},
+    {
+        "gremium": "Rat der Stadt",
+        "gremium_kuerzel": "RAT",
+        "datum": None,
+        "qualitaet": "Entscheidung",
+    },
+    {"gremium": "Bezirksvertretung 3", "gremium_kuerzel": "BV3", "datum": None, "qualitaet": "-/-"},
+]
+
+
+def test_deliberation_takes_the_head_rows_in_order_with_their_quality(settings: Settings) -> None:
+    """Der Kopf trägt Folge und Qualität (11: Tripel 160/168, Folge 27/27 gegen die Labels)."""
+    rules = BodyRules.from_settings(settings.bodies)
+    base = "https://example.org/oparl/bodies/1/organizations/"
+    assert deliberation([f"{base}gr/6"], None, rules, head=HEAD_ROWS) == (
+        "Bauausschuss (Vorberatung), Rat (Entscheidung), Bezirksvertretung 3"
+    )
+    # ohne Zeile im Kopf die OParl-Folge (Punkt 58), wie bisher
+    assert deliberation([f"{base}gr/6"], None, rules, head=[]) == "Rat"
+
+
+def test_the_role_frame_reads_the_head(settings: Settings) -> None:
+    head = pl.DataFrame(
+        {"id": ["a", "b"], "beratungsfolge": [HEAD_ROWS[:2], []]},
+        schema={
+            "id": pl.String,
+            "beratungsfolge": pl.List(
+                pl.Struct(
+                    {
+                        "gremium": pl.String,
+                        "gremium_kuerzel": pl.String,
+                        "datum": pl.Date,
+                        "qualitaet": pl.String,
+                    }
+                )
+            ),
+        },
+    )
+    bodies = pl.DataFrame({"id": ["a", "b"], "gremium": ["BV2", "BV2"]})
+    frame = role_frame(["a", "b"], None, None, bodies, None, settings, head=head)
+    assert frame.get_column("beratung").to_list() == [
+        "Bauausschuss (Vorberatung), Rat (Entscheidung)",
+        "Bezirksvertretung 2",
+    ]
+
+
+def test_an_empty_body_gives_no_input_even_with_a_long_fallback() -> None:
+    """Frage 20.6: ``rumpf_leer`` aus dem Kopf von 11, zusätzlich zur Grenze von 50 Zeichen."""
+    head_only = [section("betreff", 0, 10, "Bänke")]
+    found = summary_input(META, head_only, "x" * 500, 8000, body_empty=True)
+    assert found.source == "ohne_text"
+    kept = summary_input(
+        META, [section("fragen", 0, 20, "Wann kommen die Bänke?")], "", 8000, body_empty=True
+    )
+    assert kept.source == "abschnitte"  # ein Kernabschnitt trägt, der Schalter gilt im Rückfall
