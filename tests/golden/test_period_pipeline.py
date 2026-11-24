@@ -204,12 +204,16 @@ class ComparedRun:
 def compared(period_run: PeriodRun, mini_root: Path, default_settings: Settings) -> ComparedRun:
     """Die Hauptperiode noch einmal, diesmal mit das Profil ``duesseldorf-vergleich``."""
     base, base_settings = period_run.base, default_settings
-    settings = load_settings(profile=COMPARE_PROFILE, cwd=NOWHERE).model_copy(
+    loaded = load_settings(profile=COMPARE_PROFILE, cwd=NOWHERE)
+    settings = loaded.model_copy(
         update={
             "data_root": base.data_root,
             "cache_root": base.cache_root,
             "reference_root": mini_root,
             "context": base_settings.context.model_copy(update={"root": mini_root / "context"}),
+            # Vorhaben 17: die Tests über drei Perioden brauchen die laufende Periode, die es zur
+            # Mini-Fixture nicht gibt; tests/unit/test_cycles_steps.py prüft den Schritt
+            "cycles": loaded.cycles.model_copy(update={"periods": []}),
         }
     )
     layout = Layout.from_settings(settings)

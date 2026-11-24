@@ -44,6 +44,8 @@ from georep.analysis.lexicon import EVENT, MIN_PRECISION, STRUCTURE, Lexicon, va
 
 __all__ = [
     "BUDGET_SCHEMA",
+    "CYCLES_SCHEMA_VERSION",
+    "CYCLE_TESTS_SCHEMA_VERSION",
     "HYPOTHESES_EXTRA",
     "MONTH_SCHEMA",
     "PREREGISTERED",
@@ -59,11 +61,15 @@ __all__ = [
     "election_year",
     "jonckheere",
     "month_table",
+    "months_match_timeline",
     "multiset_permutations",
     "pre_election_test",
     "pre_election_years",
 ]
 
+
+CYCLES_SCHEMA_VERSION = 1  # zeit_monate.parquet und haushaltsmonate.parquet
+CYCLE_TESTS_SCHEMA_VERSION = 1  # zeit_hypothesen.parquet
 
 # Die Urheberklassen aus Option 04 (``analysis.parties.URHEBER_ARTEN``), wie § 8.0 sie nennt
 FRACTION = "Fraktion"
@@ -191,7 +197,11 @@ def complete_years(first: date, last: date, start_month: int) -> tuple[int, ...]
     if last < first:
         return ()
     month_of_first = date(first.year, first.month, 1)
-    candidates = range(election_year(first, start_month), election_year(last, start_month) + 1)
+    # ein Wahljahr braucht seinen Beginn und den Tag vor dem nächsten im Kalender (crosshair fand
+    # date(1, 5, 1): das Wahljahr 0 gibt es nicht)
+    candidates = range(
+        max(1, election_year(first, start_month)), min(9998, election_year(last, start_month)) + 1
+    )
     return tuple(
         w
         for w in candidates
@@ -338,6 +348,26 @@ def month_table(
         .cast(MONTH_SCHEMA)  # type: ignore[arg-type]
         .sort(list(MONTH_KEY), nulls_last=True, maintain_order=True)
     )
+
+
+def months_match_timeline(months: pl.DataFrame, timeline: pl.DataFrame) -> bool:
+    """Je Monat dieselben Dokumente und Dokumente mit Text wie die Monatsreihe aus ``timeline``.
+
+    Beide zählen denselben Korpus nach Vorlagendatum, beide lückenlos vom ersten bis zum letzten
+    Monat, Dokumente ohne Datum in einer Zeile ohne Monat; eine Abweichung hieße, dass die Seite
+    und dieses Vorhaben verschiedene Monate zeigen (Messdokument 17, § 6, Verträge).
+    """
+    columns = {"monat": pl.Date(), "dokumente": pl.Int64(), "mit_text": pl.Int64()}
+    ours = (
+        months.group_by("monat")
+        .agg(pl.col("dokumente").sum(), pl.col("mit_text").sum())
+        .cast(columns)  # type: ignore[arg-type]
+        .sort("monat", nulls_last=True)
+    )
+    theirs = (
+        timeline.select(list(columns)).cast(columns).sort("monat", nulls_last=True)  # type: ignore[arg-type]
+    )
+    return ours.equals(theirs)
 
 
 def _budget_is_sound(

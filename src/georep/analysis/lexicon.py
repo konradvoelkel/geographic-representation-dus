@@ -24,7 +24,7 @@ from __future__ import annotations
 import hashlib
 import re
 import tomllib
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from importlib import resources
 
@@ -33,6 +33,8 @@ import polars as pl
 
 from georep.contracts import one_row_per_document
 from georep.errors import SchemaError
+from georep.prep.raw_texts import flatten_with_offsets
+from georep.spans import SPAN_SCHEMA, empty_spans
 
 __all__ = [
     "EVENT",
@@ -40,7 +42,9 @@ __all__ = [
     "MIN_PRECISION",
     "STRUCTURE",
     "VALIDATED",
+    "SPAN_KIND",
     "VOCABULARY_SCHEMA",
+    "VOCABULARY_SCHEMA_VERSION",
     "Category",
     "Lexicon",
     "document_categories",
@@ -48,8 +52,11 @@ __all__ = [
     "load_lexicon",
     "parse_lexicon",
     "validated_precision",
+    "vocabulary_spans",
 ]
 
+VOCABULARY_SCHEMA_VERSION = 1  # dokumente_bundesvokabular.parquet und die Spannen dazu
+SPAN_KIND = "bundesvokabular"  # ``kind`` der Spannen; ``norm`` ist die Kategorie
 STRUCTURE = "struktur"
 EVENT = "ereignis"
 LOCAL = "lokal"
@@ -251,3 +258,59 @@ def find_in_text(text: str, categories: Sequence[Category]) -> list[tuple[int, i
         if m.end() > m.start()
     ]
     return sorted(found)
+
+
+def vocabulary_spans(
+    documents: pl.DataFrame,
+    raw_rows: Mapping[str, Mapping[str, object]],
+    marker: str,
+    lexicon: Lexicon,
+) -> tuple[pl.DataFrame, dict[str, int], int]:
+    """Die Treffer des Lexikons im Text als Spannen nach F3, mit Stellen im **Rohtext**.
+
+    ``documents`` trägt je Korpus-ID ``file_name``, ``text`` (den des Textstores) und
+    ``kategorien``; ``raw_rows`` ist der Rohtextstore je Dateiname (``RawTextStore.rows``). Gesucht
+    wird wie gemessen im kleingeschriebenen Text, je Kategorie des Dokuments; über
+    ``flatten_with_offsets`` (Punkt 74) wird eine Stelle ``[i, j)`` dort zu
+    ``[offsets[i], offsets[j - 1] + 1)`` im Rohtext, und ``value`` ist der Rohtext an dieser Stelle,
+    mit Groß- und Kleinschreibung und einem Zeilenumbruch, wo das Wort über eine Zeile lief.
+    ``extractor`` nennt den Rohtext und die Lexikonversion, ``section`` bleibt leer, bis Vorhaben 11
+    die Abschnitte bringt. Ein Treffer im Titel ist keine Stelle im Text und keine Spanne.
+
+    Gibt die Spannen, je Dokument mit Spannen die Länge seines Rohtexts (für ``check_spans``) und
+    die Zahl der Dokumente mit Kategorie, aber ohne passenden Rohtext (kein Rohtext, oder die
+    Plättung ergibt nicht den Text des Textstores, etwa bei einem veralteten Store).
+    """
+    by_id = {c.id: c for c in lexicon.categories}
+    rows: list[tuple[str, int, int, str, str, str, str, str]] = []
+    lengths: dict[str, int] = {}
+    without = 0
+    bridges: dict[str, tuple[int, ...] | None] = {}
+    for ident, file_name, text, categories in documents.select(
+        "id", "file_name", "text", "kategorien"
+    ).iter_rows():
+        if not categories or not text:
+            continue
+        raw_row = raw_rows.get(file_name or "")
+        if raw_row is None:
+            without += 1
+            continue
+        raw = str(raw_row["text"])
+        if file_name not in bridges:
+            stored = raw_row.get("form_feeds")
+            feeds = tuple(int(f) for f in stored) if isinstance(stored, list | tuple) else ()
+            flat, offsets = flatten_with_offsets(raw, marker, feeds)
+            bridges[file_name] = offsets if flat == text else None
+        bridge = bridges[file_name]
+        if bridge is None:
+            without += 1
+            continue
+        extractor = f"{raw_row['extractor']}; {lexicon.label}"
+        for start, end, category in find_in_text(
+            text, [by_id[c] for c in categories if c in by_id]
+        ):
+            first, last = bridge[start], bridge[end - 1] + 1
+            rows.append((ident, first, last, SPAN_KIND, raw[first:last], category, "", extractor))
+        lengths[ident] = len(raw)
+    frame = pl.DataFrame(rows, schema=SPAN_SCHEMA, orient="row") if rows else empty_spans()
+    return frame, lengths, without

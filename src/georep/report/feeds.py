@@ -40,9 +40,14 @@ from dataclasses import dataclass
 from xml.sax.saxutils import escape
 from zoneinfo import ZoneInfo
 
+import polars as pl
+
 __all__ = [
     "ATOM",
     "EMPTY_UPDATED",
+    "FEEDS_SCHEMA",
+    "FEEDS_SCHEMA_VERSION",
+    "SUBTITLE",
     "FeedDocument",
     "FeedEntry",
     "FeedHead",
@@ -56,6 +61,21 @@ __all__ = [
 ]
 
 ATOM = "http://www.w3.org/2005/Atom"
+SUBTITLE = (
+    "Neue Dokumente, in denen ein Straßen- oder Ortsname des Wahlbezirks vorkommt: Drucksache, "
+    "Titel, Datum und Link ins Ratsinformationssystem, keine Texte."
+)
+# Die Liste der Feeds je Wahlbezirk (``processed/wahlbezirke_feeds.parquet``), für die Unterseite
+FEEDS_SCHEMA_VERSION = 1
+FEEDS_SCHEMA: dict[str, pl.DataType] = {
+    "wahlkreis_id": pl.Int64(),
+    "datei": pl.String(),  # relativ zur Seite: ``feeds/wahlbezirk-01.xml``
+    "eintraege": pl.Int64(),  # im Feed, höchstens ``feeds.entries``
+    "dokumente": pl.Int64(),  # mit Treffer im Wahlbezirk und Datum, in der ganzen Periode
+    "neu_30_tage": pl.Int64(),  # davon in den 30 Tagen bis zum letzten Datum des Korpus
+    "aktualisiert": pl.String(),  # feed/updated; leer ohne Eintrag
+    "bytes": pl.Int64(),
+}
 EMPTY_UPDATED = (
     "1970-01-01T00:00:00+00:00"  # ein Feed ohne Einträge: ein festes Datum, keine Laufzeit
 )

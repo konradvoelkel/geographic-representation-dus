@@ -79,6 +79,8 @@ def test_the_election_year_turns_on_the_first_of_september() -> None:
         # das letzte Wahljahr muss bis zu seinem letzten Tag reichen
         (date(2020, 9, 1), date(2021, 8, 30), ()),
         (date(2021, 1, 1), date(2020, 1, 1), ()),
+        # am Rand des Kalenders: das Wahljahr 0 gibt es nicht (crosshair, 2026-11-24)
+        (date(1, 5, 1), date(3, 9, 1), (1, 2)),
     ],
 )
 def test_complete_years_of_a_period(first: date, last: date, years: tuple[int, ...]) -> None:

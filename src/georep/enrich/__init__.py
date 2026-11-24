@@ -83,9 +83,10 @@ class Contribution:
 
 # Je Vorhaben eine Zeile, in der Reihenfolge der Abhängigkeiten (Plan, § 3). Die Importe stehen hier
 # und nicht oben: jedes Beitragsmodul baut ein ``Contribution`` aus diesem Modul.
+from georep.enrich.cycles import CONTRIBUTION as CYCLES  # noqa: E402  (Vorhaben 17)
 from georep.enrich.functions import CONTRIBUTION as FUNCTIONS  # noqa: E402  (Vorhaben 15)
 
-CONTRIBUTIONS: tuple[Contribution, ...] = (FUNCTIONS,)
+CONTRIBUTIONS: tuple[Contribution, ...] = (FUNCTIONS, CYCLES)
 
 
 def contributed_early_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:

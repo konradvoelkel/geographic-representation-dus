@@ -127,6 +127,10 @@ def test_pipeline_runs_skips_and_reruns(
         # parties schreibt dieselben Urheber noch einmal, also bleibt ihr Hash, wie er war
         "functions": "übersprungen",
         "cosponsors": "übersprungen",
+        # Vorhaben 17: die Monate lesen Korpus, Urheber, Gremien und Monatsreihe, das Vokabular
+        # den Korpus; die Orte ändern keines davon
+        "cycles": "übersprungen",
+        "vocabulary": "übersprungen",
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")

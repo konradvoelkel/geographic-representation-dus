@@ -22,7 +22,9 @@ import pytest
 import georep.enrich
 from georep import __version__
 from georep.analysis.cosponsors import COSPONSORS_SCHEMA_VERSION
+from georep.analysis.cycles import CYCLE_TESTS_SCHEMA_VERSION, CYCLES_SCHEMA_VERSION
 from georep.analysis.functions import FUNCTIONS_SCHEMA_VERSION
+from georep.analysis.lexicon import VOCABULARY_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.layout import Layout
 from georep.pipeline import (
@@ -38,6 +40,7 @@ from georep.prep.bodies import BODIES_SCHEMA_VERSION
 from georep.prep.context import CONTEXT_SCHEMA_VERSION
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
+from georep.report.feeds import FEEDS_SCHEMA_VERSION
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION, stop_words_digest
 from georep.settings import Settings
 from georep.stores import RAW_TEXT_SCHEMA_VERSION
@@ -73,6 +76,11 @@ VERSIONS = {
     # Vorhaben 15: zwei Schritte eines Beitrags (``georep.enrich.functions``)
     "functions": FUNCTIONS_SCHEMA_VERSION,
     "cosponsors": COSPONSORS_SCHEMA_VERSION,
+    # Vorhaben 17: vier Schritte eines Beitrags (``georep.enrich.cycles``)
+    "cycles": CYCLES_SCHEMA_VERSION,
+    "vocabulary": VOCABULARY_SCHEMA_VERSION,
+    "cycle_tests": CYCLE_TESTS_SCHEMA_VERSION,
+    "feeds": FEEDS_SCHEMA_VERSION,
 }
 
 
@@ -81,7 +89,12 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
     layout = _layout(tmp_path)
     # Fundament F6: die drei Netzschritte stehen nur mit ``council.enabled`` im Register
     council = default_settings.council.model_copy(update={"enabled": True})
-    settings = default_settings.model_copy(update={"council": council})
+    # Vorhaben 17: die Tests über Perioden und die Feeds stehen nur mit ihren Schaltern im Register
+    cycles = default_settings.cycles.model_copy(update={"periods": ["2014-2020", "duesseldorf"]})
+    feeds = default_settings.feeds.model_copy(update={"enabled": True})
+    settings = default_settings.model_copy(
+        update={"council": council, "cycles": cycles, "feeds": feeds}
+    )
     return {s.name: s.schema_version for s in build_steps(settings, layout)}
 
 
@@ -183,15 +196,23 @@ def test_the_topics_step_carries_the_hash_of_its_stop_word_list(
     assert stop_words_digest("gibtsnicht", folder) == ""
 
 
-def test_only_the_report_and_topics_steps_carry_an_extra(
+def test_only_the_report_topics_and_vocabulary_steps_carry_an_extra(
     default_settings: Settings, tmp_path: Path
 ) -> None:
-    """Der Zusatz ist die Ausnahme, nicht die Regel: ein alter Stamp bleibt sonst gültig."""
+    """Der Zusatz ist die Ausnahme, nicht die Regel: ein alter Stamp bleibt sonst gültig.
+
+    ``vocabulary`` (Vorhaben 17) trägt wie ``topics`` eine Paketdatei, die in keinem Eingabe-Hash
+    steht: Name, Version und Prüfsumme des Lexikons.
+    """
     layout = _layout(tmp_path)
     found = {s.name: s.extra for s in build_steps(default_settings, layout)}
     assert found["report"] == report_fingerprint(default_settings)
     assert len(found["report"]) == 16
-    assert sorted(name for name, extra in found.items() if extra) == ["report", "topics"]
+    assert sorted(name for name, extra in found.items() if extra) == [
+        "report",
+        "topics",
+        "vocabulary",
+    ]
 
 
 def test_a_changed_extra_makes_the_stamp_stale(default_settings: Settings, tmp_path: Path) -> None:
