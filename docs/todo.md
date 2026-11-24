@@ -170,3 +170,15 @@ Stamp-Schlüssel von `compare` sind absolute Pfade unter `data_root`; relativ zu
 liegen die Spannen aller Profile auf dem Rohtext, auf Pages nur die der Hauptperiode (die Spalte
 `extractor` sagt es); vor Stufe 3 klären, ob die Tabelle so veröffentlicht wird. (f) Die Maske nimmt
 einmal ein Sachwort mit („Anfrage Dr. …" statt „… Hitzeschutz"); das README des Pakets sagt es.
+
+## 13. Struktur der Dokumente: Kandidaten für `struktur-2`
+
+Aufgenommen am 2026-11-24 beim Bau von Vorhaben 11 (`struktur-1` ist der validierte Entwurf
+unverändert, Punkt NN); jede Änderung hier braucht eine frische Bestätigungsstichprobe. (a) Der
+Beschlusssatz ohne Überschrift wird erst hinter dem **Ende des Abschnitts** `kopf_beratungsfolge`
+gesucht, und der reicht bis zur nächsten Überschrift. Von den 278 Dokumenten der Hauptperiode, deren
+Art einen Beschlussvorschlag erwarten lässt und in denen die Regel keinen findet, haben 70 Text ohne
+Überschrift unter der Beratungsfolge (60 Beschlussvorlagen einer Bezirksvertretung, 58 davon BV 8),
+und in 65 davon steht dort ein Beschlusssatz wie „Bezirksvertretung 8 beschließt …". Gesucht werden
+müsste hinter dem letzten Kopffeld. Die Messung (§ 3.4) zählte diese 70 als „Rumpf leer"; leer sind
+34. (b) Die zwölf Fehler am Ende des Beschlussvorschlags (Messdokument § 4.1).

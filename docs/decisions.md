@@ -3130,3 +3130,105 @@ Kanten, die nach der Rückfallregel ohnehin schwach sind). Bäume je Periode (de
 der Wahl, gegen § 3.3). `PaperRecord` um die Anlagen erweitern (ein Schemasprung des Korpus mit
 Golden-Master-Risiko; das Paket genügt, Synergie § 4); für die laufende Periode ist das der Weg
 danach, denn das Paket veraltet mit jedem Tag (Frage 9.1).
+
+## NN. Abschnitte und Kopf aus dem Rohtext: der validierte Entwurf unverändert, Rumpf und Gremiennamen als Nachbearbeitung, ein früher Schritt (Vorhaben 11, 2026-11-24)
+
+Vorhaben 11 der Vorverarbeitung (`docs/plans/11-struktur.md`, § 5 bis § 7 und § 10), Stufe 2. Die
+Messung hat das Regelwerk `struktur-entwurf-1` gegen zwei KI-Kodierer an 200 Dokumenten der
+Hauptperiode geprüft: Beschlussvorschlag zeilengenau 188 von 200 (Kriterium 180), Amt 125/125,
+Amtsbezeichnung 69/69, Zeilen der Beratungsfolge 160/168, α ≥ 0,99 zwischen den Kodierern.
+
+**Regeln statt Modell, und genau die validierten.** `prep/structure.py` trägt das Regelwerk als
+`struktur-1`; `analyse_draft` folgt `analyse` des Messskripts Zeile für Zeile, die Muster stehen
+unverändert im Profil (`[structure]`; ein Test vergleicht jedes Muster mit `ENTWURF` im
+Messskript). Gegen das Messskript auf allen 19 091 Rohtexten der Hauptperiode: **0 Dokumente
+verschieden** in Abschnitten, Kopffeldern und Quellen (slow-Test), ebenso in 2014 bis 2020 (Block
+`duesseldorf-2014`, 22 101 Rohtexte), in der laufenden Periode (4 088) und in Mönchengladbach (658),
+geprüft mit einem Messskript gegen die Stores im Cache. Der slow-Test rechnet
+die Zahlen der Kodierung aus `validierung/11-struktur-f4/labels.csv` nach (188 und 190 von 200,
+125/125, 69/69, 160/168, 73/73, 48/48) und die der Messung (Beschlussvorschlag in 10 506 von 10 784
+Dokumenten der Arten, die einen erwarten; Quellen 9 236 / 927 / 343). Die zwölf Fehler am Ende des
+Beschlussvorschlags bleiben: eine Schärfung an denselben Labels wäre eine Entwurfsschätzung
+(Synergien 2026-11, Konflikt 8); sie kommt nur als `struktur-2` mit frischer Stichprobe. Drei Muster,
+die im Entwurf im Code standen, stehen jetzt im Profil, unverändert: die Grußformel des
+Unterschriftsblocks (`head.closing`), die Nummernform eines Amts (`head.office`), die Monatsnamen
+(`months`, als Sprache in `defaults.toml`).
+
+**Spannen auf dem Rohtext, nicht auf dem Textstore.** Der Textstore ist kleingeschrieben, ohne
+Zeilen und erst ab „betrifft"; Überschriften, Zeilen und der Kopf stehen nur im Rohtext (F1,
+Punkt 73). Die Spannen tragen `extractor = "struktur-1/pypdf-7.1.0+roh"`, damit keine Position auf
+den falschen Text zeigt; ein Vorhaben, das im Textstore sucht, kommt über `flatten_with_offsets`
+(Punkt 74) herüber und liest den Abschnitt mit `spans.section_of`. Ebene 1 heißt `kind = "abschnitt"`
+und `section == norm`; eine Spanne der Ebene 2 (Finanzen, Klima) nennt in `section` den Abschnitt
+um sie herum, die Kopffelder `kopf`.
+
+**Was nach dem Entwurf kommt, berührt keine validierte Frage.** (1) Der **Rumpf** (Synergien § 4):
+Text im Abschnitt `kopf_*` hinter dem letzten Kopffeld und Text außerhalb jedes Abschnitts zwischen
+Betreff und Grußformel, ohne die Zeilen der Überschriften der Ebene 1 -- die Regel, mit der 16 die
+Lücke im Messskript schloss. Ein Abschnitt `kopf_*` endet dann am letzten Kopffeld; die Kopffelder
+sind vorher gelesen. In der Hauptperiode haben 7 664 Dokumente einen Rumpf (7 857 Spannen), darunter
+1 303 Informationsvorlagen der Bezirksvertretungen (Text unter der Beratungsfolge) und die meisten
+Anfragen (die Einleitung vor den Fragen). (2) **Kein
+Abschnitt der Ebene 1 beginnt in einem anderen**: im Entwurf stand der Beschlusssatz ohne Überschrift
+mitten im letzten Abschnitt des Kopfs, wenn danach keine Überschrift kam (hypothesis fand es, in der
+Hauptperiode zwei Dokumente); der vordere endet jetzt davor. (3) **Gremiennamen über `[bodies]`**,
+keine zweite Tabelle: `BodyNames` vergleicht einen geschriebenen Namen mit den Namen und Kürzeln aus
+`BodyRules` über einen Schlüssel ohne Groß- und Kleinschreibung, Satzzeichen und Genitivendung
+(„Ausschusses für Gesundheit und Soziales", „Rates", „Stadtrates" über `city.council`,
+„Bezirksvertretung10", „AÖE"); ein Schlüssel für zwei Kürzel fällt weg. Die Sitzung eines Briefs
+trägt danach Kürzel und Namen im Nominativ, ohne den Ort dahinter (`head.session_suffix`): 48 von 48
+gegen die Kodierung, wörtlich waren es im Entwurf 27. Gegen die OParl-Beratungsfolge desselben
+Dokuments stehen 12 763 von 13 232 Kopfzeilen mit Kürzel (96,5 %; die Messung zählte 95,7 % mit den
+Namen allein), über `resolve_organizations` wie im Schritt `bodies`. (4) **Sechs Ausschussnamen**
+aus dem Kopf (Frage 15, eigener Commit; KUA, JHA, SCHUA, AGS, HFA, AWM, je n von n Dokumenten mit
+genau einer Kopfzeile und genau einem OParl-Gremium): sie ändern Text der Seite und die Zahl der
+Kürzel ohne gesicherten Namen, sonst keine Zahl (unten, A/B-Bau).
+(5) **`rumpf_leer`** zählt den Text hinter dem ersten Betreff ohne die Abschnitte und Felder des
+Kopfs, ohne Seitenkopfzeilen und Leerraum; unter 80 Zeichen ist der Rumpf leer. „Was hinter dem Kopf
+steht" ging nicht: die alte Vorlagenform setzt die Beratungsfolge ans Ende der ersten Seite, hinter den
+Text, und 2014 bis 2020 hatte so 7 773 leere Rümpfe; jetzt 518, davon 387 ohne jeden Text. In der
+Hauptperiode 132 (59 ohne Text). Die Messung zählte unter den 278 Dokumenten ohne gefundenen
+Beschlussvorschlag 104 mit leerem Rumpf; leer sind 34, die übrigen 70 haben Text ohne Überschrift
+unter der Beratungsfolge, in 65 davon einen Beschlusssatz („Bezirksvertretung 8 beschließt …", 58 aus
+BV 8). Den sieht der Entwurf nicht, weil er den Beschlusssatz erst hinter dem ganzen Abschnitt
+`kopf_beratungsfolge` sucht -- ein Kandidat für `struktur-2` (`docs/todo.md`, Punkt 13), nicht für
+diesen Bau.
+
+**Je Korpus-ID eine Zeile, auch ohne Rohtext.** `dokumente_kopf` hat genau die IDs des Korpus
+(`one_row_per_document`), zwei IDs mit derselben PDF-Datei bekommen beide Spannen und Zeile
+(Synergien § 1). Ohne Rohtext -- auf Pages für jedes Profil außer der Hauptperiode, Konflikt 14 --
+läuft der Schritt und schreibt keine Spanne und leere Zeilen; `extractor` ist dann null.
+Amtsbezeichnung und Unterzeichnerrolle stammen aus den Listen des Profils (Nachbedingung), kein Feld
+trägt einen Namen.
+
+**Ein früher Schritt.** `sections` steht als `early_steps` unmittelbar vor `weights` (Punkt 74),
+weil 16 die Stelle eines Treffers aus den Abschnitten rechnet und `weights` sie liest; er liest
+Korpus, Rohtextstore und die Beratungsfolge und besteht `check_step_order` in jedem Paketprofil.
+Laufzeit beim ersten Lauf je Profil am 2026-11-24 (Worktree, `nice -n 10`, Lastmittel 17 bis 19
+durch andere Läufe): Hauptperiode 30,0 s (19 108 Dokumente, 19 091 mit Rohtext, 145 269 Spannen),
+mit Vergleich 37,1 s, 2014 bis 2020 20,4 s (22 215, 22 101, 162 306), laufende Periode 9,6 s (4 095,
+4 088, 30 093), Mönchengladbach 1,3 s (2 895, 658, 5 805). Der erste Lauf über 2014 bis 2020 brach ab:
+`name_key` nahm „²" als Zahl (`isdigit` statt `isdecimal`); seitdem prüft eine hypothesis-Eigenschaft
+den Schlüssel für jeden Text.
+
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
+(`ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace, je `POLARS_MAX_THREADS=4`,
+`OMP_NUM_THREADS=2`), `main` (`098d556`, v0.25.0) gegen den Branch: unter `site/` 194 Dateien in
+beiden, 3 Abweichungen, alle aus Frage 15 -- `index.html` der Hauptperiode, von 2014 bis 2020 und der
+laufenden Periode nennen die sechs Ausschüsse mit Namen statt Kürzel (Themen, Gremientabelle, Legende),
+und der Satz zur Gremientabelle zählt die Kürzel ohne gesicherten Namen (5 statt 11, in den Perioden 3
+statt 9). Sonst ändert sich keine Zahl; Mönchengladbach und `vergleich.html` sind gleich. Über die ganzen
+Datenwurzeln 721 gegen 733 Dateien: neu sind je Profil die beiden Dateien von `sections` mit Stamp
+(in den drei Profilen ohne Rohtextpaket ohne Spannen und mit leeren Zeilen), anders sonst nur die drei
+Seiten und Stamps (der Fingerprint trägt jetzt `[structure]`). Keine Datei unter `site/` stammt aus
+`sections`; die Kopftabelle kommt erst mit Stufe 3 als Download. Die Hauptperiode schreibt 0,92 MB
+Abschnitte und 0,21 MB Kopf.
+
+**Verworfen.** Das Ende des Beschlussvorschlags an den Labels nachschärfen (Konflikt 8); eine
+Zusatzspalte `quelle` an den Spannen (die Quelle steht in `dokumente_kopf`, Frage 9.3); `start` und
+`end` als UInt32 und die Folge `id, start` aus dem Bauplan (F3 hat Int64 und `id, start, end, kind`,
+Konflikt 2); den Rumpf in `analyse_draft` (dann wäre der Vergleich mit dem Messskript nicht mehr
+Zeile für Zeile); eine Tabelle der Gremiennamen im Profil neben `[bodies]`; den Gremiennamen der
+Sitzung aus der OParl-Folge raten, wo der Text ihn nicht trifft (die Folge hält die tatsächliche
+Beratung, der Brief die geplante); ein eigenes Paket (die Ausgaben rechnen in rund 20 s aus dem
+Rohtextpaket); `split_lines` ohne regulären Ausdruck für crosshair (es geht auch mit ihm, Exit 0).
