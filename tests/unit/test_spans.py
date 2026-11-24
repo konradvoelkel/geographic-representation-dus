@@ -6,7 +6,7 @@ import polars as pl
 import pytest
 
 from georep.errors import SchemaError
-from georep.spans import SPAN_SCHEMA, check_spans, empty_spans, sort_spans
+from georep.spans import SPAN_SCHEMA, check_spans, empty_spans, read_span, section_of, sort_spans
 
 TEXTS = {"a": "Betreff: Radweg an der Benrather Straße", "b": "12.345,67 €"}
 
@@ -155,3 +155,55 @@ def test_eine_leere_tabelle_mit_zusatzspalten() -> None:
 def test_eine_zusatzspalte_darf_keine_der_acht_ueberschreiben() -> None:
     with pytest.raises(SchemaError, match="norm"):
         empty_spans({"norm": pl.Int64()})
+
+
+# --- Vorhaben 11: section_of und read_span (docs/plans/11-struktur.md, § 10, Punkt 3) -------------
+
+
+def _section(doc: str, start: int, end: int, norm: str, section: str) -> dict[str, object]:
+    return {
+        "id": doc,
+        "start": start,
+        "end": end,
+        "kind": "abschnitt",
+        "value": "",
+        "norm": norm,
+        "section": section,
+        "extractor": "struktur-1",
+    }
+
+
+def test_section_of_names_the_level_one_section_of_each_span() -> None:
+    """Ebene 1 ist ``section == norm``; Finanzen (Ebene 2) im Beschlussvorschlag bestimmt nichts."""
+    sections = sort_spans(
+        pl.DataFrame(
+            [
+                _section("a", 0, 9, "betreff", "betreff"),
+                _section("a", 10, 30, "beschlussvorschlag", "beschlussvorschlag"),
+                _section("a", 20, 30, "finanzen", "beschlussvorschlag"),
+                _section("b", 0, 5, "rumpf", "rumpf"),
+            ],
+            schema=SPAN_SCHEMA,
+        )
+    )
+    spans = sort_spans(
+        _spans([("a", 0, 3, "x"), ("a", 9, 10, "x"), ("a", 25, 27, "x"), ("b", 4, 6, "x")])
+    )
+    found = section_of(spans, sections)
+    assert found["section"].to_list() == ["betreff", "", "beschlussvorschlag", "rumpf"]
+    assert found.drop("section").equals(spans.drop("section"))
+
+
+def test_section_of_keeps_extra_columns_and_an_id_without_sections() -> None:
+    spans = sort_spans(_spans([("c", 0, 1, "x")])).with_columns(pl.lit("form").alias("attr"))
+    empty = empty_spans()
+    found = section_of(spans, empty)
+    assert found.columns == [*SPAN_SCHEMA, "attr"]
+    assert found["section"].to_list() == [""]
+
+
+def test_read_span_skips_page_headers_but_keeps_the_offsets_raw() -> None:
+    text = "Der Rat beschließt:\fSeite 2\n  Sitzung des APS am 01.02.2024  \n1. den Plan"
+    noise = [r"Seite \d+", r"Sitzung des .{1,40} am \d{2}\.\d{2}\.\d{4}"]
+    assert read_span(text, 0, len(text), noise) == "Der Rat beschließt:\n1. den Plan"
+    assert read_span(text, 4, 7, noise) == "Rat"

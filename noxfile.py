@@ -176,6 +176,10 @@ VERIFY_TARGETS = [
     # Vorhaben 11 (2026-11-24): die Zeilen des Rohtexts mit Positionen; einzeln geprüft, 25 s,
     # Exit 0, „Not confirmed"
     "georep.prep.raw_texts.split_lines",
+    # dito das Lesen einer Spanne ohne Seitenkopfzeilen; einzeln 22 s, Exit 0, „Not confirmed".
+    # Nicht dabei: ``spans.section_of`` (``pl.DataFrame`` in der Signatur; hypothesis in
+    # tests/property/test_structure_props.py)
+    "georep.spans.read_span",
 ]
 
 

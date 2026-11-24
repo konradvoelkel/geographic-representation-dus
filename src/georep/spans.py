@@ -38,7 +38,8 @@ des Moduls, das die Datei schreibt").
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import re
+from collections.abc import Mapping, Sequence
 
 import deal
 import polars as pl
@@ -147,3 +148,103 @@ def excerpt(text: str, start: int, end: int, context: int = 200) -> tuple[str, s
     ``text[start:end]``.
     """
     return text[max(0, start - context) : start], text[start:end], text[end : end + context]
+
+
+# --- Vorhaben 11 (docs/plans/11-struktur.md, § 10, Punkt 3): der Abschnitt einer Spanne und das
+# Lesen einer Spanne ohne Seitenkopfzeilen. Beide für alle, die Spannen auf dem Rohtext schreiben
+# oder lesen (12, 16, 17, 20), statt eines eigenen Joins oder einer eigenen Lesefunktion je Vorhaben.
+
+SECTION_KIND = "abschnitt"  # ``kind`` der Abschnittsspannen aus Vorhaben 11
+_PAGE_BREAK = "\f"  # stores.PAGE_BREAK; hier literal, damit dieses Modul nichts aus den Stores lädt
+
+
+def _section_rows(spans: pl.DataFrame, sections: pl.DataFrame, result: pl.DataFrame) -> bool:
+    return result.height == spans.height and result.columns == spans.columns
+
+
+@deal.ensure(_section_rows, message="dieselben Zeilen und Spalten, nur section neu")
+def section_of(spans: pl.DataFrame, sections: pl.DataFrame) -> pl.DataFrame:
+    """Je Spanne der Abschnitt der Ebene 1, in dem ihr **Anfang** liegt, in ``section``; sonst leer.
+
+    ``sections`` sind die Abschnittsspannen aus Vorhaben 11 (``dokumente_abschnitte.parquet``):
+    eine Zeile der Ebene 1 hat ``kind == "abschnitt"`` und ``section == norm`` (Betreff,
+    Beschlussvorschlag, Sachdarstellung, Rumpf, ``kopf_amt`` …). Eine Zeile der Ebene 2 (Finanzen,
+    Klima) nennt in ``section`` den Abschnitt der Ebene 1 um sie herum und bestimmt hier nichts:
+    die Abschnitte der Ebene 1 überlappen sich nicht, also gibt es je Stelle höchstens einen.
+    Die Kopffelder (``kind`` = ``amt``, ``beratung`` …) zählen ebenfalls nicht.
+
+    Zeilen, Folge und alle anderen Spalten, auch Zusatzspalten hinter den acht (Punkt 74), bleiben,
+    wie sie sind; ein ``section`` der Eingabe wird überschrieben. Beide Tabellen müssen ihre
+    Positionen auf **denselben** Text beziehen (den Rohtext aus F1; ``extractor`` sagt es).
+    """
+    level1 = sections.filter(
+        (pl.col("kind") == SECTION_KIND)
+        & (pl.col("section") == pl.col("norm"))
+        & (pl.col("norm") != "")
+    ).select(
+        "id",
+        pl.col("start").alias("_von"),
+        pl.col("end").alias("_bis"),
+        pl.col("norm").alias("_abschnitt"),
+    )
+    rows = spans.select("id", "start").with_row_index("_zeile")
+    # je Spanne die Abschnitte desselben Dokuments, dann der eine, in dem der Anfang liegt; eine
+    # Eingabe mit überlappenden Abschnitten nähme den vordersten (Folge nach dem Anfang, fest)
+    found = (
+        rows.join(level1, on="id", how="inner")
+        .filter((pl.col("start") >= pl.col("_von")) & (pl.col("start") < pl.col("_bis")))
+        .sort("_zeile", "_von")
+        .unique("_zeile", keep="first", maintain_order=True)
+        .select("_zeile", "_abschnitt")
+    )
+    named = (
+        rows.join(found, on="_zeile", how="left")
+        .sort("_zeile")
+        .get_column("_abschnitt")
+        .fill_null("")
+    )
+    return spans.with_columns(named.alias("section"))
+
+
+def _span_within_text(text: str, start: int, end: int, noise: Sequence[str] = ()) -> bool:
+    return 0 <= start <= end <= len(text)
+
+
+def _read_without_page_breaks(
+    text: str, start: int, end: int, noise: Sequence[str] = (), result: str = ""
+) -> bool:
+    return (
+        _PAGE_BREAK not in result
+        and len(result) <= end - start
+        and (bool(noise) or result == text[start:end].replace(_PAGE_BREAK, "\n"))
+    )
+
+
+# Benannte Validatoren vor dem Stapel: das deal-Plugin für mypy kennt keine Lambdas mit Vorgaben
+# (CLAUDE.md, „Arbeitsweise", deal). ``deal.safe``, nicht ``deal.pure``: die Funktion läuft je
+# Abschnitt und Dokument (CLAUDE.md, „Nie").
+@deal.pre(_span_within_text, message="0 <= start <= end <= len(text)")
+@deal.ensure(
+    _read_without_page_breaks,
+    message="ohne Seitenwechsel, nie länger als die Spanne; ohne Muster genau die Spanne",
+)
+@deal.safe
+def read_span(text: str, start: int, end: int, noise: Sequence[str] = ()) -> str:
+    """Der Text der Spanne ``text[start:end]``, ohne die Zeilen, die ein Muster aus ``noise`` ganz
+    trifft (Seitenkopfzeilen wie „Seite 2" oder „Sitzung des … am … Vorlage …", Frage 9.6).
+
+    Die Spannen behalten die rohen Offsets; wer ihren Text liest (16, 20), liest ihn hier. Eine
+    Zeile zählt als Rauschen, wenn ein Muster sie ohne Leerraum an den Rändern ganz trifft
+    (``re.fullmatch``); Zeilen sind durch Zeilenumbruch und Seitenwechsel getrennt, wie
+    ``prep.raw_texts.split_lines``, und kommen mit ``\\n`` verbunden zurück. Eine Zeile, die
+    die Spanne nur zum Teil trifft, wird nach dem Teil in der Spanne beurteilt. Die Muster
+    stehen im Profil (``structure.page_noise``).
+    """
+    piece = text[start:end].replace(_PAGE_BREAK, "\n")
+    if not noise:
+        return piece
+    return "\n".join(
+        line
+        for line in piece.split("\n")
+        if not any(re.fullmatch(pattern, line.strip()) for pattern in noise)
+    )
