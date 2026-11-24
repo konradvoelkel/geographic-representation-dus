@@ -80,3 +80,80 @@ def test_the_mini_run_writes_one_row_per_corpus_id(mini_run: Layout) -> None:
     originators = pl.read_parquet(mini_run.document_originators, columns=["id", "urheber_art"])
     named = cosponsors.join(originators, on="id").filter(pl.col("antragsteller").list.len() > 0)
     assert named.height > 0 and set(named.get_column("urheber_art").to_list()) == {"Fraktion"}
+
+
+# --- Review 2026-11-24, K3: ein Dutzend Dokumente der Mini-Fixture, festgeschrieben -------------
+# Je Dokument von Hand am Titel nachgesehen: Funktion, Instrument, Antragsteller, Fraktionen,
+# Lager. Die Mehrheit ist CDU und Grüne (Hauptperiode, ab 2020-11-01); in Bezirksvertretungen gibt
+# es kein Lager, und ohne Fraktion heißt es ohne_partei.
+PINNED = {
+    # Änderungsantrag der Ratsfraktionen von CDU und Grünen
+    "RAT/272/2023": (
+        "initiative",
+        "aenderungsantrag",
+        ["CDU", "GRUENE"],
+        ["CDU", "GRUENE"],
+        "gemeinsam_mehrheit",
+    ),
+    # Haushaltsantrag der Ratsfraktionen von CDU und Grünen: „Kunstkauf"
+    "RAT/493/2023": (
+        "initiative",
+        "haushaltsantrag",
+        ["CDU", "GRUENE"],
+        ["CDU", "GRUENE"],
+        "gemeinsam_mehrheit",
+    ),
+    # Haushaltsantrag der Ratsfraktion DIE LINKE: Sozialtarif
+    "RAT/394/2024": (
+        "initiative",
+        "haushaltsantrag",
+        ["Die_Linke"],
+        ["Die_Linke"],
+        "allein_opposition",
+    ),
+    # Anfrage SPD (einer Ratsfrau): die Partei wird die Fraktion SPD/Volt
+    "RAT/368/2024": ("kontrolle", "anfrage", ["SPD"], ["SPD+VOLT"], "allein_opposition"),
+    # Anfrage der PARTEI-Klima-Fraktion im Ordnungs- und Verkehrsausschuss
+    "OVA/107/2024": ("kontrolle", "anfrage", ["PARTEI"], ["PARTEI"], "allein_opposition"),
+    # Anfrage der SPD-Fraktion in der Bezirksvertretung 1
+    "BV1/081/2021": ("kontrolle", "anfrage", ["SPD"], ["SPD+VOLT"], "ohne_lager"),
+    # Anfrage einer Bezirksvertreterin (Person, keine Fraktion), Bezirksvertretung 2
+    "BV2/175/2020": ("kontrolle", "anfrage", [], [], "ohne_lager"),
+    # Eingabe nach § 24 GO NRW
+    "ABA/010/2023": ("initiative", "eingabe", [], [], "ohne_partei"),
+    # Umbesetzung von Ausschüssen
+    "RAT/273/2023": ("vollzug", "besetzung", [], [], "ohne_partei"),
+    # Gebührensatzung für die Friedhöfe
+    "AÖE/050/2023": ("vollzug", "satzung", [], [], "ohne_partei"),
+    # Genehmigung einer Dringlichkeitsentscheidung, Bezirksvertretung 8
+    "BV8/068/2024": ("vollzug", "dringlichkeit", [], [], "ohne_lager"),
+    # Bebauungsplan Nr. 03/018, Grundsatzbeschluss
+    "APS/098/2025": ("vollzug", "bauleitplanung", [], [], "ohne_partei"),
+    # Bericht aus der Kleinen Kommission
+    "RAT/214/2025": ("information", "berichtsvorlage", [], [], "ohne_partei"),
+}
+
+
+def test_a_dozen_documents_of_the_mini_fixture_keep_their_function_and_cosponsors(
+    mini_run: Layout,
+) -> None:
+    files = functions_files(mini_run)
+    found = (
+        pl.read_parquet(mini_run.corpus, columns=["id", "reference"])
+        .join(pl.read_parquet(files.functions), on="id")
+        .join(pl.read_parquet(files.cosponsors), on="id")
+        .filter(pl.col("reference").is_in(list(PINNED)))
+    )
+    assert found.height == len(PINNED)  # jede Nummer genau einmal in der Fixture
+    got = {
+        r["reference"]: (
+            r["funktion"],
+            r["instrument"],
+            r["antragsteller"],
+            r["fraktionen"],
+            r["lager"],
+        )
+        for r in found.iter_rows(named=True)
+    }
+    assert got == PINNED
+    assert set(found.get_column("quelle").to_list()) == {"art"}

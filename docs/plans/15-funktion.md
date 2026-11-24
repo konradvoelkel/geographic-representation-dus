@@ -448,6 +448,14 @@ Partei. Drei Anteile:
 | | 2020-2025 | 4 383 | 231 / 401 (57,6 %) | 9,3 % | 231 / 979 (23,6 %; 21,0–26,4) | 16,0 % |
 | | 2025- | 889 | 103 / 105 (98,1 %) | 24,0 % | 103 / 220 (46,8 %; 40,3–53,4) | 28,1 % |
 
+**Nachtrag aus Stufe 2 (2026-11-24).** Gebaut gilt die Mehrheit je Wahlperiode des Rates, die nach den
+Wahlen 2020 und 2025 am 1. November begann, nicht je Datensatz wie in dieser Messung. Die Dokumente
+der Hauptperiode vor dem 2020-11-01 stammen vom alten Rat mit der Ampel als Mehrheit; zwei Anträge vom
+September 2020, die hier „über die Grenze" zählen, sind dann Anträge der Mehrheit. K3 der
+Hauptperiode (Variante B) ist gebaut **41 / 1 333 statt 43 / 1 336**; 2014-2020 (49 / 653) und ab
+2025 (0 / 312) bleiben (`docs/decisions.md`, Punkt zu Vorhaben 15; slow-Test
+`tests/golden/test_functions_numbers.py`).
+
 **Was über die Grenze geht, ist meist ein Allparteienantrag.** Von den Dokumenten über die Grenze in Rat
 und Ausschüssen haben 42 von 50 (2014-2020) und 27 von 43 (2020-2025) mindestens vier Fraktionen:
 „Resolution gegen Fremdenfeindlichkeit" (`01/ 17/2015`), „Resolution gegen Antisemitismus"
@@ -891,7 +899,7 @@ schon (32,4 % gegen 51,4 %); H15.2 galt in allen drei Perioden. Wer eine These �
 | 9.6 | Ist die Eingabe nach § 24 GO eine Initiative? | 207 Dokumente | ja; die Urheberklasse Eingabe trennt sie von der Politik |
 | 9.7 | Soll die Restklasse von 2014-2020 (1 231) weiter schrumpfen? | 5,5 %, unter dem Kriterium | nein; mit Rohtext (F1) und Abschnitten (11) später, nicht für dieses Kriterium |
 | 9.8 | Zeigt die Seite Symbolpolitik je Fraktion? | kleine Zahlen, politisch heikel | nur die Liste der Dokumente, keine Rangfolge |
-| 9.9 | Gilt die Mehrheit die ganze Periode? | ein Wechsel würde K3 verschieben | ja, bis ein Beleg anderes sagt; das Profil trägt Datumsgrenzen |
+| 9.9 | Gilt die Mehrheit die ganze Periode? | ein Wechsel würde K3 verschieben | ja, bis ein Beleg anderes sagt; das Profil trägt Datumsgrenzen. **Stufe 2 (2026-11-24)**: die Grenzen sind die Wahlperioden des Rates (ab dem 1. November nach der Wahl), nicht die Datensätze; das macht zwei Ampel-Anträge vom September 2020 zu Anträgen der Mehrheit, K3 der Hauptperiode 41 / 1 333 statt 43 / 1 336 (Nachtrag bei § 3.11) |
 | 9.10 | Mönchengladbach: keine Mehrheit, keine Anfragen | der Abschnitt Konkordanz hätte keine Grundlage | Abschnitt entfällt ohne `[[functions.majorities]]`; Funktionen und Netz bleiben (73 Fraktionsanträge mit mindestens zwei Parteien) |
 | 9.11 | Die laufende Periode ist 13 Monate alt: ist K3 = 0 ein Befund? | die Seite könnte eine junge Periode als Bruch lesen | die Seite nennt n und „laufend"; H15.2 prüft prospektiv |
 | 9.12 | Schließt das Kriterium die Schicht `rest` ein? | 15 Dokumente, die das Regelwerk absichtlich offen lässt, kosten fast die Hälfte der erlaubten Abweichungen | **entschieden vor der Kodierung (Frage 17): nein**; mit der Restklasse wäre κ 0,806 (B) und 0,739 (A), auch das über 0,7 |

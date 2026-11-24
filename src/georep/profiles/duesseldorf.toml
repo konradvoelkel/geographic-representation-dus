@@ -761,15 +761,17 @@ valid_from = 2025-11-01
 # Eine Annahme mit Quelle (Messdokument § 3.9 und Frage 9.2): die Vereinbarung der Partner, gesammelt
 # von Vorhaben 25 (docs/plans/25-quellen.md, § 2; die Texte liegen nur lokal), und Drucksachen, in
 # denen der Korpus die Mehrheit selbst nennt. Nicht aus den gemeinsamen Anträgen abgeleitet.
-# Gültig je Wahlperiode des Rates: sie beginnt am 1. November nach der Wahl (die Ratsfraktion
-# SPD/Volt und die Ratsgruppe der laufenden Periode beginnen an diesem Tag, das Einzelmandat der AfD
-# und die Gruppe T_FW enden am 31. Oktober davor, [originators] oben). Dokumente zwischen Wahl und
-# 31. Oktober stammen also noch vom alten Rat und seiner Mehrheit. Ein Wechsel innerhalb einer
-# Wahlperiode ist nicht geprüft (Frage 9.9).
+# Gültig je Wahlperiode des Rates. Nach den Wahlen 2020 und 2025 begann sie am 1. November (die
+# Ratsfraktion SPD/Volt und die Ratsgruppe der laufenden Periode beginnen an diesem Tag, das
+# Einzelmandat der AfD und die Gruppe T_FW enden am 31. Oktober davor, [originators] oben);
+# Dokumente zwischen Wahl und 31. Oktober stammen also noch vom alten Rat und seiner Mehrheit. Für
+# 2014 ist der Tag nicht nachgesehen: die erste Zeile beginnt mit dem Profil duesseldorf-2014 am
+# Wahltag, und bis Ende Juni 2014 steht dort kein Fraktionsdokument in Rat oder Ausschuss (nachgezählt
+# 2026-11-24, 204 Dokumente). Ein Wechsel innerhalb einer Wahlperiode ist nicht geprüft (Frage 9.9).
 [[majorities.terms]]
 period = "2014-2020"
 parties = ["SPD", "GRUENE", "FDP"]
-valid_from = 2014-05-25        # Beginn des Profils duesseldorf-2014 (Ratswahl 2014); der Tag, an dem der neue Rat zusammentrat, ist nicht nachgesehen
+valid_from = 2014-05-25        # Beginn des Profils duesseldorf-2014 (Ratswahl 2014), nicht der Beginn der Wahlperiode, siehe oben
 valid_to = 2020-10-31
 agreement = "Kooperationsvereinbarung 2014 – 2020 für die Landeshauptstadt Düsseldorf von SPD, Bündnis 90/Die Grünen und FDP („Ampel“)"
 agreement_date = "2014"        # ohne Tag; 174/ 112/2014 vom 2014-10-20 zitiert sie schon
