@@ -91,7 +91,7 @@ PROFILE = (
 HAUPT = "2020-2025"
 
 # ================================================================================================
-# Vorab festgelegt (Messdokument § 3.1, Commit d68962e, 2026-11-24 00:41): Wert von `result` ->
+# Vorab festgelegt (Messdokument § 3.1, Commit c94ae31, vor dem Rebase d68962e, 2026-11-24 00:41): Wert von `result` ->
 # (Stufe, Klasse). Stufe "sache" ist eine Entscheidung in der Sache, "stand" alles andere.
 # Ein Wert, der hier fehlt, bricht die Messung ab: der Server hätte seinen Wortschatz geändert.
 # ================================================================================================
@@ -155,7 +155,7 @@ AUFTEILUNG = {
 
 # ================================================================================================
 # Regel für den Prüfauftrag (nach der Vorab-Festlegung, vor dem Ziehen der Stichprobe committet,
-# e2b3545). Gelesen wird der Beschlusstext eines Antrags im kleingeschriebenen Korpus: vom letzten
+# 94da91f, vor dem Rebase e2b3545). Gelesen wird der Beschlusstext eines Antrags im kleingeschriebenen Korpus: vom letzten
 # Marker („antrag:", „folgendes zu beschließen:", „beschlussvorschlag" …) vor der Begründung bis zu
 # ihr. Ein Satz ist eine Prüfung, wenn er ein Prüfwort trägt; er trägt zusätzlich eine Maßnahme, wenn
 # vor dem Prüfwort eine steht („einzurichten und zu berichten") oder danach eine folgt, die nicht in
@@ -1460,7 +1460,7 @@ def geschichtet(rows: Iterable[tuple[str, int, bool]]) -> tuple[float, float, fl
     return est, lo, hi, n_eff
 
 
-def auswertung(df: pl.DataFrame) -> None:
+def auswertung(df: pl.DataFrame, profile: Sequence[Profil]) -> None:  # noqa: C901, PLR0912, PLR0915
     titel("§ 4.1 Auswertung gegen die Labels (Stufen der Vorab-Festlegung)")
     if not LABELS.is_file():
         print(
@@ -1470,6 +1470,9 @@ def auswertung(df: pl.DataFrame) -> None:
     labels = lies_labels()
     sample = pl.read_csv(STICHPROBE, schema_overrides={"schicht_n": pl.Int64})
     regel = {r["id"]: r for r in df.iter_rows(named=True)}
+    folge: dict[str, list[Schritt]] = {}
+    for p in profile:
+        folge.update(p.folge)
     stufen = {
         "voll": lambda k, a, lk, la: k == lk and (k not in ANGENOMMEN or a == la),
         "rueckfall_1": lambda k, a, lk, la: k == lk,
@@ -1477,8 +1480,12 @@ def auswertung(df: pl.DataFrame) -> None:
     }
     unklar = 0
     werte: dict[str, list[tuple[str, int, bool]]] = defaultdict(list)
-    je_klasse: dict[str, Counter[str]] = defaultdict(Counter)
-    fehler: list[str] = []
+    je_schicht: dict[str, dict[str, Counter[str]]] = defaultdict(lambda: defaultdict(Counter))
+    je_klasse: dict[str, dict[str, Counter[str]]] = defaultdict(lambda: defaultdict(Counter))
+    fehler: dict[str, list[str]] = defaultdict(list)
+    auftrag: Counter[tuple[str, str]] = Counter()
+    art: Counter[str] = Counter()
+    art_ok: Counter[str] = Counter()
     for r in sample.iter_rows(named=True):
         lab = labels.get(r["id"], {})
         lk, la = lab.get("ergebnis"), lab.get("auftrag")
@@ -1490,12 +1497,46 @@ def auswertung(df: pl.DataFrame) -> None:
             unklar += 1
             continue
         for name, f in stufen.items():
-            werte[name].append((r["schicht"], r["schicht_n"], bool(f(k, a, lk, la))))
-        ok = stufen["voll"](k, a, lk, la)
-        je_klasse[r["schicht"]]["n"] += 1
-        je_klasse[r["schicht"]]["ok"] += ok
-        if not ok:
-            fehler.append(f"{regel[r['id']]['reference']}: Regel {k}/{a}, Label {lk}/{la}")
+            ok = bool(f(k, a, lk, la))
+            werte[name].append((r["schicht"], r["schicht_n"], ok))
+            je_schicht[name][r["schicht"]]["n"] += 1
+            je_schicht[name][r["schicht"]]["ok"] += ok
+            je_klasse[name][k]["n"] += 1
+            je_klasse[name][k]["ok"] += ok
+            if not ok:
+                fehler[name].append(
+                    f"{regel[r['id']]['reference']}: Regel {k}/{a}, Label {lk}/{la}"
+                )
+        if lk in ANGENOMMEN and la:
+            auftrag[(a, la)] += 1
+        # Was verlangte der Fall über den festen Wortschatz hinaus?
+        steps = folge.get(r["id"], [])
+        mit = [x for x in steps if x.result]
+        merkmale = set()
+        if len(mit) >= 2:
+            merkmale.add("mehrstufig")
+        if len({x.beratung for x in steps}) >= 2:
+            merkmale.add("mehrere Beratungen")
+        if any(x.result == "verwiesen" for x in mit):
+            merkmale.add("Verweisung")
+        if any((x.result or "").startswith("Empfehlung") for x in mit):
+            merkmale.add("Empfehlung")
+        if any(x.result in ("vertagt", "zurückgestellt") for x in mit) and len(mit) >= 2:
+            merkmale.add("Vertagung mit späterem Eintrag")
+        if mit:
+            letzter = max(mit, key=Schritt.schluessel)
+            if RESULT[letzter.result or ""][1] != k:
+                merkmale.add("maßgeblich ist nicht der letzte Eintrag")
+        if lk in ANGENOMMEN:
+            merkmale.add("Prüfauftrag zu beurteilen")
+        if not merkmale:
+            merkmale.add("mechanisch")
+        for m in merkmale:
+            art[m] += 1
+            art_ok[m] += stufen["rueckfall_1"](k, a, lk, la)
+        if merkmale - {"mechanisch", "Prüfauftrag zu beurteilen"}:
+            art["Folge mit Entscheidung über den Wortschatz hinaus"] += 1
+            art_ok["Folge mit Entscheidung über den Wortschatz hinaus"] += k == lk
     print(f"  gewertet {len(werte['voll'])}, unklar {unklar} (Grenze 15)")
     urteil = None
     for name in ("voll", "rueckfall_1", "rueckfall_2"):
@@ -1508,17 +1549,39 @@ def auswertung(df: pl.DataFrame) -> None:
             f"  {name:12s} ungewichtet {k}/{len(v)} = {k / len(v):.3f} (Wilson {lo:.3f}–{hi:.3f}); "
             f"gewichtet {est:.3f} ({glo:.3f}–{ghi:.3f}, n_eff {neff:.1f}) -> {'erfüllt' if erfuellt else 'verfehlt'}"
         )
+        print(
+            "      je Schicht: "
+            + "; ".join(f"{s} {c['ok']}/{c['n']}" for s, c in sorted(je_schicht[name].items()))
+        )
+        if fehler[name]:
+            print("      Fehler: " + "; ".join(fehler[name]))
         if erfuellt and urteil is None:
             urteil = name
     print(f"  Urteil nach der Vorab-Festlegung: {urteil or 'umbauen oder verwerfen'}")
+    if urteil:
+        for kl, c in sorted(je_klasse[urteil].items()):
+            unter = c["n"] >= 10 and c["ok"] / c["n"] < 0.8
+            print(
+                f"    Klasse {kl:15s} {c['ok']}/{c['n']}"
+                + (" unter 0,80 -> nur in ihrer groben Klasse" if unter else "")
+            )
+    print("\n  Prüfauftrag (Regel x Label, angenommene Anträge mit Label):")
+    for (a, la), n in sorted(auftrag.items()):
+        print(f"    Regel {a:13s} Label {la:13s} {n:3d}")
+    tp = auftrag[("pruefauftrag", "pruefauftrag")]
+    fp = auftrag[("pruefauftrag", "sachbeschluss")]
+    fn = auftrag[("sachbeschluss", "pruefauftrag")]
+    tn = auftrag[("sachbeschluss", "sachbeschluss")]
+    n = tp + fp + fn + tn
     print(
-        "  je Schicht (volle Klasse): "
-        + "; ".join(f"{s} {c['ok']}/{c['n']}" for s, c in sorted(je_klasse.items()))
+        f"    richtig {tp + tn}/{n}; Präzision Prüfauftrag {tp}/{tp + fp}, Recall {tp}/{tp + fn}; "
+        f"Präzision Sachbeschluss {tn}/{tn + fn}"
     )
-    for s, c in sorted(je_klasse.items()):
-        if c["n"] >= 10 and c["ok"] / c["n"] < 0.8:
-            print(f"  Schicht {s}: {c['ok']}/{c['n']} unter 0,80 -> nur in ihrer groben Klasse")
-    print("  Fehler: " + "; ".join(fehler))
+    print(
+        "\n  Was die Fälle verlangten (ein Fall kann mehrere Merkmale tragen; richtig = `ergebnis`):"
+    )
+    for m, c in art.most_common():
+        print(f"    {m:52s} {c:4d}  richtig {art_ok[m]}")
 
 
 # ================================================================================================
@@ -1562,7 +1625,7 @@ def main() -> None:
     else:
         pruefe_stichprobe(df)
     if args.auswertung:
-        auswertung(df)
+        auswertung(df, profile)
     print(f"\nLaufzeit {time.time() - t0:.1f} s")
 
 

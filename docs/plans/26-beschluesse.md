@@ -5,13 +5,21 @@ Stand 2026-11-24, Stufe 1 (Messen), Branch `feat/26-beschluesse`. Briefing:
 Antragserfolg". Messskript: [26-beschluesse-messung.py](26-beschluesse-messung.py) (`uv run python
 docs/plans/26-beschluesse-messung.py`, rechnet jede Zahl dieses Dokuments nach; `--stichprobe` schreibt
 Stichprobe und Kodieraufträge, `--auswertung` wertet die Regel gegen die Labels aus). Codebuch und
-Stichprobe: `validierung/26-beschluesse/`. Vorab festgelegt in Commit `d68962e` (2026-11-24, 00:41 Uhr),
-Regel und Codebuch in `e2b3545`, Stichprobe in `e9e9bcb`. § 3.1 steht wörtlich, wie er vorab
+Stichprobe, Labels und Güte: `validierung/26-beschluesse/`. Vorab festgelegt in Commit `c94ae31`
+(Autordatum 2026-11-24, 00:41:48), Regel und Codebuch in `94da91f` (00:54), Stichprobe in `f797535`
+(00:56) — die Namen nach dem Rebase auf `main` 0.23.0 um 01:14; vorher hießen sie `d68962e`, `e2b3545`,
+`e9e9bcb`, und so nennt das Codebuch im Kopfkommentar den ersten. § 3.1 steht wörtlich, wie er vorab
 committet wurde; gesehen war bis dahin nur Beschreibendes (die 22 Werte von `result` und ihre
 Häufigkeit je Dokumentart, die Abdeckung der Beratungen, rund 70 Beratungsfolgen als Beispiele).
 
-**Urteil der Stufe 1 (§ 5): bauen, vorläufig — die Kodierung steht aus.** Der zweite Teil des Kriteriums
-ist erfüllt, der erste wartet auf die beiden Kodier-Agenten, die der Supervisor startet.
+**Urteil der Stufe 1 (§ 5): bauen, mit Rückfall 1 — die Beschlusslage ohne den Prüfauftrag.** Nach der
+vorab festgelegten Regel, ohne Anpassung an die Labels: die volle Klasse verfehlt das Kriterium
+(142 / 150 = 0,947, gewichtet 0,894), weil die Regel für den Prüfauftrag 8 von 65 angenommenen Anträgen
+anders liest als die Kodierer; `ergebnis` allein trifft 150 / 150 (Wilson 0,975–1,000, gewichtet
+1,000), und 94,3 % der Anträge der Hauptperiode haben ein Ergebnis. **Der Beleg ist schwach**: beide
+Kodierer sind dasselbe Modell (Frage 19), sie waren sich in allen 215 Antworten einig (α 1,0), und
+69 der 150 Fälle sind die Abbildung eines einzigen Eintrags aus einem festen Wortschatz; nur 17 Fälle
+verlangten eine Entscheidung über mehrere Einträge (17 / 17 richtig, Wilson 0,816–1,000; § 4.1).
 
 Die drei Zahlen, auf die es ankommt:
 
@@ -264,7 +272,7 @@ Sitzungen steht nur in der Niederschrift.
 
 ### 3.4 Klassen der Beschlusslage
 
-Anträge, nach der Regel aus § 3.1 (Commit `e2b3545`):
+Anträge, nach der Regel aus § 3.1 (Commit `94da91f`, vor dem Rebase `e2b3545`):
 
 | Klasse | 2014-2020 | 2020-2025 | 2025- |
 |---|---|---|---|
@@ -287,8 +295,9 @@ abgelehnt aufgrund Stimmengleichheit 3, zur Kenntnis genommen 2. Die Empfehlung 
 Gremiums ist in 19 von 5 099 Fällen die letzte Entscheidung — der Sonderfall, an dem die Regel am
 meisten entscheidet, ist selten.
 
-**Prüfaufträge** unter den angenommenen Anträgen: 390 von 1 922 (20,3 %), 739 von 3 245 (22,8 %),
-125 von 516 (24,2 %). Die Regel (`pruefauftrag()` im Skript, vor der Stichprobe committet) liest den
+**Prüfaufträge** unter den angenommenen Anträgen (nach der Kodierung **nicht tragfähig**, § 4.1: die
+Regel übersieht rund ein Viertel der Prüfaufträge, die Zahlen sind Untergrenzen): 390 von 1 922
+(20,3 %), 739 von 3 245 (22,8 %), 125 von 516 (24,2 %). Die Regel (`pruefauftrag()` im Skript, vor der Stichprobe committet) liest den
 Beschlusstext im kleingeschriebenen Korpus vom letzten Marker („antrag:", „folgendes zu beschließen:",
 „beschlussvorschlag" …) bis zur Begründung und zerlegt ihn in Sätze. Ein Satz mit Prüfwort (prüf…,
 untersuch…, Bericht, Konzept, vorlegen, vorstellen, darstellen …) ist eine Prüfung; er trägt zusätzlich
@@ -376,6 +385,9 @@ der Beratungen. Längste: `BV6/125/2021`, `BV6/136/2021`, `BV6/138/2021` mit 266
 für die Seite taugt sie nur für Anträge mit mehr als einer Beratung (verwiesen, vertagt, vorberaten).
 
 ### 3.7 Prüfaufträge und Folgevorlagen (mit Vorhaben 14)
+
+*Nach der Kodierung gilt Rückfall 1 (§ 4.1, § 5): die Zahlen zum Prüfauftrag in diesem Abschnitt sind
+beschreibend und kommen nicht auf die Seite; die Folgevorlagen je Klasse gelten weiter.*
 
 Eine Folgevorlage ist eine Drucksache der Verwaltung (Vorlage, Information, Bedarfs- oder A+F-Beschluss),
 die den Antrag über eine **starke** Kante von 14 nennt (Titel, Anlage, Nachtrag, Sammelbericht; 3 563
@@ -560,7 +572,79 @@ aus `georep validate merge`. Bei 150 gewerteten Einheiten liegt der Punktwert be
 Fehlern bei mindestens 0,953. Erwartung, ausdrücklich keine Messung: `ergebnis` ist eine Abbildung eines
 festen Wortschatzes und sollte fast fehlerfrei sein; `auftrag` ist eine Heuristik über den Beschlusstext
 (beim Entwickeln gesehene Fehler: Passiv ohne Liste, gemischte Sätze, Mittel für eine Untersuchung) und
-das Risiko. Verfehlt sie, greift Rückfall 1, wie vorab festgelegt.
+das Risiko. Verfehlt sie, greift Rückfall 1, wie vorab festgelegt. (So geschrieben vor der Kodierung.)
+
+### 4.1 Ergebnis der Kodierung (2026-11-24)
+
+Zwei Kodier-Agenten (Opus, `claude-opus-5-5`) haben die 150 Anträge unabhängig nach Codebuch 1 kodiert;
+`georep validate merge` fand keine Uneinigkeit, eine Schlichtung war nicht nötig. Labels:
+`validierung/26-beschluesse/labels.csv`, Übereinstimmung und Satz für die Seite: `README.md`,
+`guete.json`. Ausgewertet mit `26-beschluesse-messung.py --auswertung` um 01:16 Uhr (20,5 s, Lastmittel
+20 → 17), nach der Regel aus § 3.1, ohne sie an die Labels anzupassen.
+
+| Frage | gestellt | gleich | κ | α |
+|---|---|---|---|---|
+| `ergebnis` | 150 | 150 (100 %) | 1,000 | 1,000 |
+| `auftrag` | 65 | 65 (100 %) | 1,000 | 1,000 |
+
+Kein Label `unklar` (Grenze 15).
+
+| Stufe (§ 3.1) | ungewichtet | Wilson 95 % | gewichtet | Intervall (n_eff 96,9) | Kriterium |
+|---|---|---|---|---|---|
+| voll (`ergebnis` und `auftrag`) | 142 / 150 = 0,947 | 0,898–0,973 | 0,894 | 0,817–0,941 | **verfehlt** |
+| Rückfall 1 (`ergebnis`) | 150 / 150 = 1,000 | 0,975–1,000 | 1,000 | 0,962–1,000 | **erfüllt** |
+| Rückfall 2 (grobe Klassen) | 150 / 150 = 1,000 | 0,975–1,000 | 1,000 | 0,962–1,000 | erfüllt |
+
+Je Schicht, volle Klasse: beschlossen 19 / 25, geaendert 19 / 20, pruefauftrag 19 / 20, alle übrigen voll.
+Nach Rückfall 1 ist jede Klasse voll richtig (beschlossen 42 / 42, geaendert 23 / 23, abgelehnt 20 / 20,
+zurueckgezogen, erledigt, vertagt je 15 / 15, offen und ohne_ergebnis je 10 / 10); die Zusatzregel
+(Klasse unter 0,80) trifft keine. Gewichtet liegt die volle Klasse unter der ungewichteten, weil die
+große Schicht `beschlossen` (3 668 Anträge) sechs der acht Fehler trägt.
+
+**Die acht Fehler liegen alle beim Prüfauftrag.** Regel gegen Label:
+
+| | Label Prüfauftrag | Label Sachbeschluss |
+|---|---|---|
+| Regel Prüfauftrag | 19 | 1 (`BV1/009/2022`) |
+| Regel Sachbeschluss | 7 | 38 |
+
+57 / 65 richtig (0,877, Wilson 0,775–0,936). Was die Regel Prüfauftrag nennt, stimmt zu 19 / 20
+(0,95); sie findet aber nur 19 der 26 Prüfaufträge (Recall 0,731, Wilson 0,539–0,863): `BV5/053/2024`,
+`JURAT/032/2024`, `BV5/077/2025`, `BV1/111/2025`, `176/ 85/2016`, `BV8/190/2022`, `BV1/188/2022`. Die
+Anteile der Prüfaufträge in § 3.4 und § 3.7 sind darum Untergrenzen.
+
+**Was die Fälle verlangten** (ein Fall kann mehrere Merkmale tragen):
+
+| Merkmal | Fälle | `ergebnis` richtig |
+|---|---|---|
+| mechanisch: ein einziger Eintrag oder keiner, nach der Tabelle in § 3.1 | 69 | 69 |
+| Prüfauftrag zu beurteilen (angenommen) | 65 | 65 (`auftrag` 57) |
+| Folge mit Entscheidung über mehrere Einträge | **17** | 17 |
+| … darin Verweisung | 13 | 13 |
+| … mehrere Beratungen | 9 | 9 |
+| … mindestens zwei Einträge mit Ergebnis | 7 | 7 |
+| … Vertagung mit späterem Eintrag | 3 | 3 |
+| … maßgeblich ist nicht der letzte Eintrag | 1 | 1 |
+| … Empfehlung eines vorberatenden Gremiums | 1 | 1 |
+
+81 Fälle verlangten mehr als das Nachschlagen eines Eintrags: 65 den Prüfauftrag, 17 eine Folge (einer
+beides). Für die Frage, die über den Wortschatz hinausgeht, stehen damit 17 / 17 (Wilson 0,816–1,000),
+nicht 150 / 150.
+
+**Wie viel das belegt.** Wenig über die Schärfe der Klassen hinaus. Die Klassen folgen fast mechanisch
+aus `result`; zwei Kodierer desselben Modells, die dieselbe Tabelle im Codebuch lesen, müssen sich dort
+einig sein, und ihre Einigkeit zeigt vor allem, dass Codebuch und Regel dieselbe Abbildung beschreiben
+(Frage 19 des Supervisors: Kodierer B ein anderes Modell). Was die Kodierung tatsächlich prüft: dass die
+Verbindung Antrag → Beratung → Tagesordnungspunkt in keinem der 150 Fälle einen fremden Punkt
+erwischt, dass der Grundsatz „letzte Entscheidung in der Sache" an 17 Folgen so gelesen wird wie
+verabredet, und dass der Prüfauftrag eine echte Lesefrage ist, an der die Regel scheitert. Was sie nicht
+prüft: ob der Eintrag der Sitzungsleitung stimmt (§ 3.4 Praxiszellen, § 3.8, Frage 9.1).
+
+**Lücken, die die Kodierer nennen** (Rückmeldung an den Supervisor; nicht angewandt, Codebuch 1 bleibt):
+Planung mit Bürgerdialog für eine festgelegte Maßnahme; Machbarkeitsstudie als Mittelvergabe;
+Verfahrensbeteiligung als Maßnahme; „Vorarbeiten durchführen"; mehrstufige Beratung mit „passieren
+lassen"; Gremienkürzel `gr/400224` und `gr/65` ohne Namen; Verweisung ohne Zeile des Zielgremiums
+(Fragen 9.12 bis 9.18).
 
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
 
@@ -573,12 +657,18 @@ mindestens 80 % der Anträge.
   einzigen Sitzung, und in den Praxiszellen (BV9 2014 bis 2016, Rat 2016) ist bei 240 Anträgen ein
   Ergebnis eingetragen, das keines ist. Zählt man diese als ohne Ergebnis, bleibt 2014-2020 bei 86,0 %
   (2 750 von 3 198).
-- **Präzision an 150: ausstehend.** Stichprobe und Aufträge liegen; die Kodierer startet der Supervisor.
-  Das Urteil rechnet `--auswertung` nach den Stufen aus § 3.1, ohne Spielraum.
+- **Präzision an 150: erfüllt in Rückfall 1, verfehlt in der vollen Klasse** (§ 4.1). Volle Klasse
+  142 / 150 = 0,947 (Wilson 0,898–0,973), gewichtet 0,894 (0,817–0,941): beide unter 0,95. `ergebnis`
+  allein 150 / 150 = 1,000 (Wilson 0,975–1,000), gewichtet 1,000 (0,962–1,000): beide ≥ 0,95. Keine
+  Klasse unter 0,80. α 1,0 bei beiden Fragen (Stufe 3 verlangt 0,8).
 
-**Urteil: bauen, vorläufig** — endgültig nach der Auswertung in dieser Reihenfolge: volle Klasse,
-sonst Rückfall 1 (ohne Prüfauftrag), sonst Rückfall 2 (grobe Klassen), sonst umbauen. Dazu vier
-Änderungen am Briefing, die nicht an der Kodierung hängen:
+**Urteil (2026-11-24, nach der Kodierung): bauen, mit Rückfall 1** — so, wie § 3.1 es vor der Kodierung
+festlegt: die acht Klassen von `ergebnis` gelten; der Prüfauftrag kommt nicht als Klasse auf die Seite,
+„offene Prüfaufträge" entfallen, der beantragte Prüfauftrag bleibt eine beschreibende Spalte ohne
+Anzeige. Unsicherheit: der Punktwert 1,000 ruht für den Teil, der über den Wortschatz hinausgeht, auf 17
+Fällen (untere Grenze 0,816), und die Kodierer sind dasselbe Modell wie der Agent, der die Regel schrieb (§ 4.1). Eine
+Fassung .2 des Prüfauftrags wäre ein eigenes Vorhaben mit neuer Stichprobe (Frage 9.8), keine Runde
+dieser Stufe 1. Dazu drei Änderungen am Briefing, die nicht an der Kodierung hängen:
 
 1. **Angenommen statt beschlossen/geändert auf der Seite.** Die Unterscheidung ist ein Eintrag der
    Sitzungsleitung, der bei Vorlagen nachweislich uneinheitlich ist (§ 3.8); sie bleibt in den Daten,
@@ -591,9 +681,9 @@ sonst Rückfall 1 (ohne Prüfauftrag), sonst Rückfall 2 (grobe Klassen), sonst 
    Variante, die die Kodierung nicht misst).
 3. **Erfolg je Fraktion nur standardisiert, getrennt nach Gremienart, explorativ** (§ 3.10, Frage 14
    des Supervisors). Keine rohe Quote, keine Rangfolge.
-4. **„Offene Prüfaufträge" nur als Kandidaten**, wie 14 die Anfragen: beschlossen, ohne Folgevorlage,
-   älter als P90 der Folgezeit, und nur in Gremien, in denen Prüfaufträge überhaupt mit Vorlagen
-   beantwortet werden (Rat: nie). Nur, wenn die volle Klasse das Kriterium erfüllt (sonst Rückfall 1).
+
+(Die vierte Änderung der vorläufigen Fassung, „offene Prüfaufträge nur als Kandidaten", entfällt mit
+Rückfall 1.)
 
 ## 6. Bauplan Stufe 2 (Beiträge, Ausgaben mit Schema, Verträge, Tests, berührte Dateien, Settings, Paket)
 
@@ -610,25 +700,25 @@ und Prüfsumme wie Punkt 58; `bootstrap` kopiert es nach `raw/`.
 
 1. `council_results`: aus den Netzlauf-Dateien (oder dem Paket) die Folge je Drucksache →
    `processed/beratungsfolge.parquet`.
-2. `outcomes`: Klasse, Prüfauftrag, Dauer, Folgevorlage, Praxiszellen → `processed/beschlusslage.parquet`
-   und `processed/antragserfolg.parquet`.
+2. `outcomes`: Klasse, Dauer, Folgevorlage, Praxiszellen, dazu der beantragte Prüfauftrag als Spalte
+   ohne Anzeige (Rückfall 1) → `processed/beschlusslage.parquet` und `processed/antragserfolg.parquet`.
 
 **Ausgaben** (Schema-Version aus der Modulkonstante `OUTCOMES_SCHEMA_VERSION = 1`):
 
 | Datei | Spalten | Schlüssel, Ordnung |
 |---|---|---|
 | `beratungsfolge.parquet` | `id` str, `beratung` str, `top` str, `gremium` str, `rolle` str, `sitzung` date, `nummer` str, `ordnung` i32, `result` str (null erlaubt), `stufe` str (`sache`, `stand`, null) | eindeutig (`id`, `top`), sortiert nach `id`, `sitzung`, `ordnung`, `top` |
-| `beschlusslage.parquet` | `id` str, `rolle` str (14), `klasse` str (acht Klassen), `grob` str, `result` str, `entscheidung_top` str, `entscheidung_gremium` str, `entscheidung_datum` date, `tage` i32, `beratungen` i16, `pruefauftrag` bool (nur Anträge, sonst null), `folgevorlage` str (erste starke, sonst null), `eintrag_tragfaehig` bool | eine Zeile je Korpus-ID, sortiert nach `id` |
+| `beschlusslage.parquet` | `id` str, `rolle` str (14), `klasse` str (acht Klassen), `grob` str, `result` str, `entscheidung_top` str, `entscheidung_gremium` str, `entscheidung_datum` date, `tage` i32, `beratungen` i16, `pruefauftrag_beantragt` bool (nur Anträge, sonst null; Rückfall 1: beschreibend, nicht auf der Seite, Recall 0,73), `folgevorlage` str (erste starke, sonst null), `eintrag_tragfaehig` bool | eine Zeile je Korpus-ID, sortiert nach `id` |
 | `antragserfolg.parquet` | `periode` str, `gremium_art` str, `fraktion` str, `n` i32, `angenommen` i32, `erwartet` f64, `beob_erw` f64 | eindeutig (`periode`, `gremium_art`, `fraktion`), sortiert danach |
 
-**Die Regel** (Messskript, Commit `e2b3545`, unverändert übernehmen; § 3.1): letzte Entscheidung in der
-Sache, sonst letzter Stand, sonst `ohne_ergebnis`; Prüfauftrag wie `pruefauftrag()` im Skript — oder, bei
-Rückfall 1, nur als Spalte ohne Anzeige. `klasse` ist eine **Funktion der Folge**, unabhängig von der
+**Die Regel** (Messskript, Commit `94da91f`, vor dem Rebase `e2b3545`, unverändert übernehmen; § 3.1):
+letzte Entscheidung in der Sache, sonst letzter Stand, sonst `ohne_ergebnis`; der Prüfauftrag wie
+`pruefauftrag()` im Skript, nach Rückfall 1 nur als Spalte ohne Anzeige. `klasse` ist eine **Funktion der Folge**, unabhängig von der
 Zeilenfolge der Eingabe.
 
 **Verträge** (Batch-Grenzen, Prädikate in `georep.contracts`): `klasse` aus der Aufzählung; genau eine
 Zeile je Korpus-ID; `entscheidung_top` null genau bei `ohne_ergebnis`; jeder `entscheidung_top` ist ein
-`top` derselben `id` in `beratungsfolge`; `tage >= 0` oder null; `pruefauftrag` null außer bei Rolle
+`top` derselben `id` in `beratungsfolge`; `tage >= 0` oder null; `pruefauftrag_beantragt` null außer bei Rolle
 `antrag` und Klasse `beschlossen`/`geaendert`; jeder `result` im Wortschatz des Profils, sonst
 `SchemaError` mit dem Wert; nach jedem Join sortieren; `n >= angenommen >= 0` in `antragserfolg`.
 
@@ -653,7 +743,7 @@ Netzlauf, und ein fremder Wert bricht ab, statt still `ohne_ergebnis` zu werden.
 zurückgezogen → zurueckgezogen; Empfehlung beschlossen, dann im Ausschuss abgelehnt → abgelehnt;
 beschlossen, danach zur Kenntnis genommen in einem anderen Gremium → beschlossen; nur vertagt → vertagt;
 nur Punkte ohne Ergebnis → ohne_ergebnis; gleiche Sitzung, verschiedene `order`. Der Prüfauftrag an den
-Beispielen des Codebuchs und den Fehlern aus der Kodierung als dokumentierte Grenze. **hypothesis**: die
+Beispielen des Codebuchs und den acht Fehlern aus der Kodierung (§ 4.1) als dokumentierte Grenze. **hypothesis**: die
 Klasse ist unabhängig von der Reihenfolge der Eingabe; ein angehängter späterer Schritt der Stufe `sache`
 bestimmt die Klasse; ein angehängter späterer Schritt der Stufe `stand` ändert eine Klasse aus `sache`
 nie; die Praxiszellen hängen nur von Gremium, Jahr und Klasse ab. Mini-Fixture: ein Dutzend Paper mit
@@ -667,14 +757,16 @@ Prüfauftrag, Erfolg), `tests/unit/test_outcomes.py`, `tests/property/test_outco
 Block: `src/georep/enrich/__init__.py`, `src/georep/settings.py`, `src/georep/defaults.toml`,
 `src/georep/profiles/duesseldorf.toml` (Wortschatz), `src/georep/pack.py` (`--outcomes`),
 `src/georep/bootstrap.py`, `docs/architecture.md`, `docs/decisions.md` (Punkt ohne Nummer: „die letzte
-Entscheidung in der Sache", „Praxiszellen", „angenommen statt beschlossen/geändert auf der Seite").
+Entscheidung in der Sache", „Prüfauftrag nach der Kodierung nicht auf der Seite (Rückfall 1, Recall
+0,73)", „Praxiszellen", „angenommen statt beschlossen/geändert auf der Seite"). Die Kürzel `gr/400224`
+und `gr/65` (Frage 9.17) gehören vor Stufe 3 in `[bodies.organizations]`, mit Beleg.
 
 **Laufzeit**: das Messskript braucht für drei Perioden 15 s, davon 8 s Laden der JSONL-Dateien über
 pydantic; der Schritt sollte unter 10 s je Profil bleiben.
 
 ## 7. Bauplan Stufe 3 (Unterseite oder Variante, Größe in KB, Tabellen im Register, Texte)
 
-**Erweitert `vorgaenge.html`** (14) um vier Abschnitte, je Profil mit Netzlauf; dafür braucht F2
+**Erweitert `vorgaenge.html`** (14) um drei Abschnitte, je Profil mit Netzlauf; dafür braucht F2
 Abschnitte aus fremden Beiträgen (Synergie § 3.1, „später"):
 
 1. *Beschlusslage je Gremium*: Anträge, Anteil angenommen (davon mit Änderungen), abgelehnt,
@@ -683,17 +775,17 @@ Abschnitte aus fremden Beiträgen (Synergie § 3.1, „später"):
    2021), und die Praxiszellen als Fußnote.
 2. *Erfolg je Fraktion, explorativ*: beobachtet/erwartet und n, getrennt nach Rat und Ausschüssen und
    nach Bezirksvertretungen, ohne Rangfolge; der Satz, dass im Rat Erfolg fast nur Mehrheit heißt.
-3. *Prüfaufträge*: Anteil an den angenommenen, mit Folgevorlage, Folgezeit; „Kandidaten ohne
-   Folgevorlage" nur für Gremien mit Folgevorlagen-Praxis (nicht bei Rückfall 1).
-4. *Anfragen*: „in der Sitzung beantwortet" je Gremium neben 14s Antwortanlagen; für den Rat ersetzt
+3. *Anfragen*: „in der Sitzung beantwortet" je Gremium neben 14s Antwortanlagen; für den Rat ersetzt
    das den Hinweis „Antworten stehen in der Niederschrift".
 
-Größe geschätzt unter 40 KB (vier Tabellen). **Im Dokumentdialog** an 14s Haken: je Antrag Klasse,
+Kein Abschnitt zu Prüfaufträgen (Rückfall 1). Größe geschätzt unter 30 KB (drei Tabellen). **Im Dokumentdialog** an 14s Haken: je Antrag Klasse,
 Gremium und Datum der Entscheidung, nachgeladen in `beschluesse.json` (rund 9 200 Anträge × rund 30 Bytes,
 unter 300 KB) statt einer Erweiterung von `dokumente.json`. **Tabellen im Register**: `beschlusslage`,
 `antragserfolg`, `beratungsfolge` als Parquet und CSV. **Validierung auf der Seite**: „Beschlusslage aus
-dem Eintrag der Sitzungsleitung im Ratsinformationssystem; die Zuordnung zu Klassen an *n* Anträgen von
-zwei KI-Kodierern geprüft, nicht von Menschen; ob der Eintrag stimmt, zeigt nur die Niederschrift".
+dem Eintrag der Sitzungsleitung im Ratsinformationssystem; die Zuordnung zu Klassen an 150 Anträgen von
+zwei KI-Kodierern desselben Modells geprüft, nicht von Menschen (150 von 150 gleich; nur 17 Fälle
+verlangten mehr als das Nachschlagen eines Eintrags); ob der Eintrag stimmt, zeigt nur die
+Niederschrift".
 
 ## 8. Vorab festgelegte Hypothesen (nur Analysen: Hypothese, Maß, Test, Schwelle)
 
@@ -713,10 +805,17 @@ als Maß, und dort mit der Schwelle der WZB-Studien für die AfD.
 | 9.5 | Erfolg je Fraktion auf der Seite, und wie? | AfD und Tierschutz/FW 0 von 46 und 71; rohe Quoten wären parteipolitisch irreführend | nur beobachtet/erwartet mit n, nach Gremienart getrennt, „explorativ", keine Rangfolge (Annahme zu Frage 14) |
 | 9.6 | Gilt der Wortschatz für Mönchengladbach? | derselbe Server (Body 0011), aber andere Sitzungsleitung | Messung nach seinem Netzlauf; ein fremder Wert bricht ab |
 | 9.7 | Darf das Paket der Beratungsfolge (649 KB, drei Perioden) ins Repo? | ohne es baut Pages die Abschnitte nicht | ja, unter Frage 18/26 des Supervisors (kleine Pakete ja) |
-| 9.8 | Was, wenn der Prüfauftrag die 0,95 verfehlt? | die Regel ist eine Heuristik | Rückfall 1 wie vorab festgelegt; eine Fassung .2 nur mit neuer Stichprobe |
+| 9.8 | Was, wenn der Prüfauftrag die 0,95 verfehlt? | die Regel ist eine Heuristik | **eingetreten** (57 / 65, Recall 0,73, § 4.1): Rückfall 1 wie vorab festgelegt; eine Fassung .2 nur als eigenes Vorhaben mit neuer Stichprobe und anderem Modell für Kodierer B |
 | 9.9 | Beschlusslage auch für Vorlagen und Anfragen auf der Seite? | sie ist gerechnet (§ 3.4), aber nicht kodiert | nein, nur Anträge (validiert) und für Anfragen die Zahl „in der Sitzung beantwortet" je Gremium (Wortlaut, keine Klasse) |
 | 9.10 | Die Beratungen für 2014-2020 aus der eigenen Datei des Profils statt der Kopie? | sein Abruf lief beim Messen noch | ja in Stufe 2; die Liste ist je Body dieselbe, die Zahlen ändern sich höchstens um Nachträge |
 | 9.11 | Die Rolle der Beratung („Entscheidung") für die Regel nutzen? | sie ist zu 69 % „-" | nein; die Regel braucht sie nicht, das Codebuch nennt sie nur |
+| 9.12 | Planung mit Bürgerdialog für eine festgelegte Maßnahme: Sachbeschluss oder Prüfauftrag? | Lücke im Codebuch, von den Kodierern genannt | nicht angewandt; nach Rückfall 1 ohne Folge für die Seite; in einer Fassung .2 Sachbeschluss, wenn die Maßnahme selbst festgelegt ist |
+| 9.13 | Machbarkeitsstudie als Mittelvergabe? | Grenzfall zwischen „Mittel vergeben" und „untersuchen" | nicht angewandt; Codebuch 1 sagt Sachbeschluss, wenn Haushaltsmittel zugesagt werden |
+| 9.14 | Verfahrensbeteiligung (Anhörung, Beteiligung eines Gremiums) als Maßnahme? | Lücke im Codebuch | nicht angewandt; für eine Fassung .2 |
+| 9.15 | „Vorarbeiten durchführen": Maßnahme oder Prüfung? | Lücke im Codebuch, auch in der Regel (`durchzuführen` ist neutral) | nicht angewandt; für eine Fassung .2 |
+| 9.16 | Mehrstufige Beratung mit „passieren lassen" (Haushaltsanträge) | „passieren lassen" ist dort der Weg in die Haushaltssitzung, kein Ergebnis (§ 3.7) | nicht angewandt; Stufe 2 zeigt solche Anträge als `erledigt` mit Fußnote; eine eigene Klasse „weitergegeben" nur mit neuer Messung |
+| 9.17 | Die Kürzel `gr/400224` und `gr/65` fehlen in `[bodies.organizations]` | die Kodierer sahen Rohkürzel; die Seite zeigte sie | vor Stufe 3 mit Beleg ins Profil (`gr/400224`: 260 Punkte in 2020-2025, alle mit Ergebnis; `gr/65`: 346 Punkte in 2014-2020) |
+| 9.18 | Verweisung ohne Zeile des Zielgremiums | die Klasse `offen` sagt dann nicht, wohin | nicht angewandt; Stufe 2 nennt das Zielgremium nur, wo eine Beratung es nennt |
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
