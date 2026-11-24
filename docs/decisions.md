@@ -3157,7 +3157,8 @@ Netzschritt über `http` (Punkt 74).
 - Beitrag `22-bedarf` (`enrich/need.py`): `need_data` (Netz) legt die zehn Archive unter
   `cache_root/bedarf/` ab und schneidet die Gemeinde heraus (`external/bedarf/`, mit
   `quellen.json`); `need` schreibt `wahlbezirke_bedarf.parquet` und, wo das Profil Hypothesen nennt,
-  `bedarf_hypothesen.parquet`. Pfade in `need_files`, keine Property in `layout.py`.
+  `bedarf_hypothesen.parquet` (ohne Hypothesen und Paare entfernt es eine alte aus einem früheren
+  Lauf, Review 2026-11-24, N9). Pfade in `need_files`, keine Property in `layout.py`.
 - Pakete `snapshots/duesseldorf-bedarf/` (198 018 Bytes) und `snapshots/moenchengladbach-bedarf/`
   (91 866 Bytes) über `georep pack --need`; `bootstrap` kopiert sie nach `external/bedarf/`, die
   eigenen eines Datensatzes zuerst (die Mini-Fixture).

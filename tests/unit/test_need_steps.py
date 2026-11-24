@@ -335,6 +335,33 @@ def test_need_on_the_mini_chain_writes_a_row_per_district_and_the_tests(
     assert {path: digest(path) for path in (files.table, files.tests)} == before
 
 
+def test_without_hypotheses_an_old_test_table_does_not_stay(
+    world: tuple[Layout, Routes, dict[str, int]],
+    mini_run: Layout,
+    default_settings: Settings,
+    tmp_path: Path,
+) -> None:
+    """Review 2026-11-24, N9: fallen Hypothesen und Paare aus dem Profil, ist die Tabelle keine
+    Ausgabe mehr; eine alte aus einem früheren Lauf läge sonst ohne Stamp und veraltet da."""
+    layout, routes, _ = world
+    copy = Layout(
+        tmp_path / "kette",
+        layout.cache_root,
+        mini_run.reference_root,
+        mini_run.profile,
+        context_root=mini_run.context_root,
+    )
+    shutil.copytree(mini_run.root, copy.root)
+    settings = _enabled(default_settings, hypotheses=[], explore=[])
+    steps = need_steps(settings, copy, FakeSession(routes))
+    assert run_step(steps[0], settings, online=True).status == "ausgeführt"
+    stale = need_files(copy).tests
+    stale.write_bytes(b"aus einem frueheren Lauf")
+    outcome = run_step(steps[1], settings)
+    assert outcome.status == "ausgeführt", outcome.reason
+    assert not stale.exists() and "alte bedarf_hypothesen.parquet entfernt" in outcome.reason
+
+
 def test_need_data_pauses_between_two_archives_it_fetches(
     world: tuple[Layout, Routes, dict[str, int]],
     default_settings: Settings,

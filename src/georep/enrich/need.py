@@ -291,6 +291,11 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
             f"{float(table.get_column('einwohner_zensus').sum()):.0f} Einwohner"
         )
         if not with_tests:
+            # Review 2026-11-24, N9: ohne Hypothesen und Paare ist die Tabelle keine Ausgabe; eine
+            # alte aus einem früheren Lauf bliebe sonst ohne Stamp und veraltet liegen.
+            if files.tests.exists():
+                files.tests.unlink()
+                return f"{done}; alte {files.tests.name} entfernt"
             return done
         frame = table.join(
             results.select(DISTRICT, "trefferquote", "wahlbeteiligung"), on=DISTRICT, how="left"
