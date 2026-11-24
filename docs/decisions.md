@@ -3020,3 +3020,127 @@ Unterseite rechnet sie, Bauplan § 6); `parties.py` nachziehen (Frage 25); eine 
 für Dokumente ohne Fraktion (der Bauplan hat sieben, und der Filter auf die Urheberklasse genügt);
 `classify_function` und `cosponsors` in `VERIFY_TARGETS` (ihre Regeln tragen `re.Pattern`, dasselbe
 Werkzeugartefakt wie bei `parse_reference`; geprüft wird `camp`, die übrigen über hypothesis).
+
+## NN. Zeit und Neuigkeiten: Wahljahre statt Monate, ein Lexikon als Paketdatei, Spannen auf dem Rohtext, Feeds aus den Daten (Vorhaben 17, 2026-11-24)
+
+Vorhaben 17 der Vorverarbeitung (`docs/plans/17-zeit.md`, § 5 bis § 8 und § 10), Stufe 2. Die
+Messung hat drei Hypothesen vor dem ersten Lauf festgelegt (Commit `9c7b3d6`, 2026-11-23 19:45),
+das Lexikon bundespolitischer Begriffe an 100 Treffern kodieren lassen (94 richtig, α 0,957 und
+0,928) und 41 Feeds gegen RFC 4287 geprüft. Gebaut ist genau das, als zweiter Beitrag nach Punkt 69
+mit der Fabrik aus Punkt 74; alle vier Schritte sind offline und fragen den Transport nie.
+
+**Was gebaut ist.** Der Beitrag `17-zeit` (`georep.enrich.cycles`, die Rechnung rein in
+`analysis/cycles.py`, `analysis/lexicon.py`, `analysis/hypotheses.py` und `report/feeds.py`):
+
+- `cycles` schreibt `processed/zeit_monate.parquet` (Dokumente je Monat, Gremienart, Urheberklasse
+  und Instrument, mit Wahljahr, Dokumenten mit Text und Haushaltsanträgen; jede Kombination, die
+  vorkommt, steht in jedem Monat) und `processed/haushaltsmonate.parquet`. Je Monat summiert die
+  Tabelle zur Monatsreihe aus `timeline`, sonst bricht der Schritt ab.
+- `vocabulary` schreibt `processed/dokumente_bundesvokabular.parquet` (eine Zeile je Korpus-ID, die
+  Kategorien in Titel und Text und in Titel und den ersten 2 000 Zeichen, die Lexikonversion) und
+  die Treffer im Text als Spannen nach F3 (`processed/bundesvokabular_spannen.parquet`).
+- `cycle_tests` schreibt `processed/zeit_hypothesen.parquet`: die drei Haupttests mit Holm und ihre
+  Sensitivitäten aus § 8 als eigene Zeilen.
+- `feeds` schreibt je Wahlbezirk `site/feeds/wahlbezirk-NN.xml` und als erste Ausgabe die Liste
+  `processed/wahlbezirke_feeds.parquet`; Feeds von Wahlbezirken, die es nicht mehr gibt, nimmt er weg.
+
+Gegen das Messskript `docs/plans/17-zeit-messung.py` auf den Läufen vom 2026-11-24: jede Zahl aus
+§ 3.1 bis § 3.3 und § 8.5 gleich, auf die gedruckte Stelle (H17.1 −4,9 %, p = 0,847; H17.2
++83,1 %, p = 1/27 720, Holm 0,0001; H17.3 5,98 / 3,16 / 3,47 %, p = 0,987; alle 25 Zeilen), und
+die 41 Feeds der laufenden Periode bytegleich mit dem Prototyp des Messskripts (beide mit Version
+0.24.0 im Kopf). Ein
+slow-Test rechnet die Zahlen und die Präzision 94 von 100 aus `validierung/17-zeit/labels.csv` gegen
+die gebaute Ausgabe nach (`tests/golden/test_cycles_numbers.py`).
+
+**Wahljahr und Vorwahljahr aus Periode und Wahltagen, nicht aus einer Liste.** Das Messskript nannte
+die vollständigen Wahljahre je Datensatz von Hand. Gebaut ist die Regel dahinter: ein Wahljahr ist
+vollständig, wenn die Periode (`period.start` bis `period.end`, offen bis zum letzten Datum des
+Korpus) es abdeckt und nur sein erster Monat um die Tage vor dem Beginn gekürzt ist; die
+Hauptperiode beginnt am 13. September 2020 und hat das Wahljahr 2020/21, Juni bis August 2014 und
+der 1. bis 12. September 2020 der alten Periode gehören zu keinem. Sie ergibt dieselben zwölf
+Wahljahre. Das Vorwahljahr einer Wahl ist das letzte vollständige Wahljahr, das vor dem Wahltag
+endet, wenn es unmittelbar vor dem Wahljahr der Wahl liegt; die Wahltage stehen in
+`cycles.elections` im Stadtprofil mit Quelle (Synergien 2026-11, Konflikt 16: `period.election` ist
+die Wahl für Nenner und Zuschnitt). Das Anlaufjahr ist das erste vollständige Wahljahr einer
+Periode; H17.1 nimmt die Perioden, die ein Vorwahljahr haben.
+
+**H17.2 über Zellsummen.** Das Messskript zentrierte je Zuordnung die Indikatormatrix doppelt.
+Weil jede Zeile genau eine Eins trägt, ist der Nenner Σ TT² für jede Anordnung derselben Multimenge
+gleich (er hängt nur an der Zahl der Jahre je Haushaltsmonat), und der Zähler Σ TT·YT ist die Summe
+der zentrierten Zellen der Zuordnung, weil YT doppelt zentriert ist. So rechnet der Test die 27 720
+Zuordnungen in einem Schritt; ein hypothesis-Test hält ihn gegen die wörtliche Rechnung des
+Messskripts fest.
+
+**Der Kern der Hypothesentabellen** (Synergien 2026-11, § 1): `hypothese`, `p`, `p_holm`,
+`ergebnis`, `n`, `festgelegt`, Zusatzspalten dahinter. `p_holm` und `ergebnis` stehen nur in der
+Familie der Haupttests; eine Sensitivität in derselben Tabelle hat keines, damit niemand sie als
+bestätigt liest. `check_hypotheses` rechnet Holm über die Familie nach, wie sie in der Tabelle steht.
+`vorläufig` heißt: Holm hätte entschieden, aber das Maß ist nicht validiert; H17.3 ist es, solange
+`analysis.lexicon.VALIDATED` für die Lexikonversion keine Präzision von mindestens 0,9 nennt.
+
+**Das Lexikon als Paketdatei, Version 1 unverändert.** `src/georep/lexika/bundespolitik.toml` hat
+denselben Blob wie `docs/plans/17-zeit-lexikon.toml` im Commit der Festlegung; ein Test hält den
+SHA-256 gleich, ein anderer die bekannten Fehler von Version 1 fest (Energiesicherungsstelle,
+genderneutrale Toiletten, eine Webadresse, ukrainische Musik). Name, Version und Hash stehen im
+Stamp von `vocabulary` und `cycle_tests`; eine Version 2 bräuchte eine neue Stichprobe (Frage 9.16).
+Jedes Muster wird beim Laden mit Python `re` und mit Polars übersetzt: Polars zählt die Dokumente,
+Python findet die Stellen, und ein Muster, das nur eines kann (Lookbehind), wäre still verschieden.
+`pyproject.toml` bleibt, wie es ist: `uv_build` nimmt die Datei ins Rad.
+
+**Spannen auf dem Rohtext** (Konflikt 1, Punkt 74). Gesucht wird wie gemessen im
+kleingeschriebenen Text; `flatten_with_offsets` macht eine Stelle dort zu einer im Rohtext, mit Groß-
+und Kleinschreibung und einem Zeilenumbruch, wo das Wort über eine Zeile lief. `extractor` nennt den
+Rohtext und die Lexikonversion, `section` bleibt leer, bis Vorhaben 11 die Abschnitte bringt. Ein
+Treffer im Titel ist keine Stelle im Text und keine Spanne. Ein Dokument ohne Rohtext, oder mit einem,
+der nicht zu seinem Text plättet, hat keine Spannen und zählt in der Meldung des Schritts; seine
+Kategorien hat es trotzdem. Hauptperiode: 6 506 Spannen in 1 997 Dokumenten (36 über einen Zeilenumbruch), ohne Rohtext nur das
+verschlüsselte `00403713.pdf` (Punkt 73); 2014 bis 2020: 6 466, laufende Periode 555,
+Mönchengladbach 407 (dort tragen 81 der 161 Dokumente mit Treffer ihn nur im Titel).
+
+**`cycle_tests` im Profil `duesseldorf-vergleich`** (Konflikt 13). Die Tests lesen die Ausgaben von
+drei Perioden; das Profil, das schon `compare` über zwei rechnet und auf Pages die Hauptseite
+zuletzt baut, nennt sie (`cycles.periods`). Fehlt eine Periode, bricht `run` mit dem Pfad der
+Datei ab, wie bei `compare`. Damit muss `.github/workflows/pages.yml` die laufende Periode **vor**
+`duesseldorf-vergleich` rechnen; die Änderung macht der Supervisor (das gh-Token hat keinen
+`workflow`-Scope). Der Stamp führt Eingaben nach Dateinamen (`pipeline.input_digests`), und die
+Perioden tragen dieselben Namen: je Name zählte nur die letzte. Darum stehen die Dateien des eigenen
+Ordners, die derselbe Lauf schreibt, zuletzt, und die der anderen Perioden gehen mit einem Hash über
+Ort und Inhalt in `extra`; ein Test ändert eine andere Periode und sieht den Schritt veraltet.
+`compare` hat dieselbe Namensgleichheit (zweimal `wahlbezirke_auswertung.parquet` und
+`combined_searchdict.parquet`); das ist ein Befund für den Kern, hier nicht geändert.
+
+**Feeds aus den Daten.** `feed/id` ist `urn:uuid:` aus Stadt, Ordner und Wahlbezirk, `feed/updated`
+das jüngste `updated` der Einträge und nie die Laufzeit, `entry/updated` OParls `modified`, nie vor
+dem Vorlagendatum (00:00 Ortszeit, `feeds.timezone`): dieselben Daten geben dieselben Bytes, ein Lauf
+ohne neues Dokument schreibt keinen Feed neu. Kein `category` und kein `rel="self"` (Fragen 27 und
+28, Annahme). Ein Titel verliert nur, was XML 1.0 verbietet. Die Feeds sind keine Ausgaben des
+Registers (ihre Zahl kennt der Schritt erst beim Lauf); die Liste ist es. `atom_problems` prüft jeden
+Feed beim Schreiben ohne Netz und ohne lxml (normative Regeln, Form nach Anhang B, Projektregeln);
+gegen das RELAX-NG-Schema aus RFC 4287 sind die gebauten Feeds einmal mit lxml des System-Pythons
+geprüft (41 von 41 gültig, die Gegenprobe des Messdokuments fällt durch; 2026-11-24). lxml kommt nicht in die Entwicklungsgruppe (Frage 9.8): die Tests brauchen es nicht.
+
+**Abweichungen vom Bauplan** (§ 6 des Messdokuments). `zeit_monate` trägt zusätzlich das
+`instrument` im Schlüssel: S1.5 ist vorab festgelegt und braucht Anfragen und Anträge je Wahljahr;
+die Regel (Dokumentart, sonst Titelwort) steht in `defaults.toml`, die Arten `zAnfrage` und `zAntrag`
+im Stadtprofil. `zeit_hypothesen` trägt den Kern, dazu `rolle`, `effekt_unten`, `effekt_oben`
+(90 %, H17.1), `einheit`, `p_randomisierung`, `zuordnungen` und `anteile` (gepoolt je Periode,
+H17.3); die beschreibenden S1.6 und S2.3 sind keine Tests und stehen nicht darin, die Unterseite
+rechnet sie aus `zeit_monate`. Neu sind `cycles.head_chars` (S3.1), `cycles.instrument_types` und
+`instrument_titles` (S1.5) und `feeds.timezone`; `feeds` schreibt zusätzlich die Liste
+`wahlbezirke_feeds.parquet` (je Wahlbezirk Datei, Einträge, Dokumente, neue der letzten 30 Tage,
+Stand, Bytes), die Stufe 3 für die Linkliste liest.
+
+**Laufzeit** am 2026-11-24 unter Fremdlast (Lastmittel 18 bis 38, `nice -n 10`, Polars auf vier
+Threads): `cycles` 0,1 bis 0,6 s, `vocabulary` 0,4 s (Mönchengladbach) bis 7,2 s (2014 bis 2020),
+`cycle_tests` 0,9 s, `feeds` 0,7 s.
+
+**Verworfen.** Zwei Beiträge `cycles` und `feeds` (Synergien 2026-11, § 2.1: ein Beitrag je
+Vorhaben); `cycle_tests` im Hauptprofil (der erste `georep run` auf Pages und der Lauf des Monitors
+brächen ab, solange die anderen Perioden fehlen); ein eigenes Profil nur für die Tests (ein drittes
+Profil im Ordner der Hauptperiode mit eigenem Fingerprint: jeder Wechsel rechnete die Kette neu, und
+die Hauptseite käme von dem, das zuletzt lief); die Wahljahre je Datensatz als Liste im Profil
+(die Regel ergibt sie aus der Periode); das Instrument für S1.5 aus `dokumente_funktion` von
+Vorhaben 15 (validiert, aber nicht die vorab festgelegte Regel; S1.5 bleibt „nicht deutbar", § 3.1);
+S3.5 „ohne Migration" in der Tabelle (nachträglich und an eine Kategorie des Lexikons gebunden; die
+Unterseite kann es aus den Spalten rechnen); eine Datei je Feed als Ausgabe des Schritts (die
+Wahlbezirke kennt erst das Wörterbuch); lxml für den Test des Schemas.
