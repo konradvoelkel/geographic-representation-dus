@@ -137,3 +137,10 @@ def test_a_followup_role_is_a_role_of_the_procedures() -> None:
     gs.Outcomes(followup_roles=["vorlage", "information"])
     with pytest.raises(ValidationError):
         gs.Outcomes.model_validate({"followup_roles": ["verwaltungsvorlage"]})
+
+
+@pytest.mark.parametrize("field", ["separable", "not_verb"])
+def test_the_word_lists_of_the_infinitive_compile_when_loading(field: str) -> None:
+    """Review 2026-11-24, N6: auch diese beiden Listen werden Teil eines Musters."""
+    with pytest.raises(ValidationError, match="kein gültiger regulärer Ausdruck"):
+        gs.OutcomeReview.model_validate({field: ["ab("]})

@@ -2038,6 +2038,8 @@ class OutcomeReview(_Strict):
         "reason",
         "review",
         "not_review",
+        "separable",
+        "not_verb",
         "measure",
         "proviso",
         "question",
