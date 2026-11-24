@@ -366,3 +366,24 @@ und extrahierte den Text wie `texts`.
 - `fetch papers --max-pages 1` auf einem leeren Store, danach `fetch papers`: der zweite Lauf holt
   inkrementell nur, was sich seit dem jüngsten `modified` der Probe geändert hat (`docs/todo.md`).
   Die drei neuen Schritte schreiben nach einer Probe keine Ausgabe und setzen fort, `papers` nicht.
+
+## 9. Der erste volle Lauf (2026-11-23/24)
+
+Gestartet vom Supervisor auf Konrads Wunsch am 2026-11-23 um 23:29, fertig am 2026-11-24 um 00:49;
+alle vier Profile danach „aktuell". Die Probe von `consultations` dauerte 1,4 s je Seite, also lief der
+volle Abruf (§ 3, Weg 2).
+
+| Profil | Sitzungen | Tagesordnungspunkte | mit Ergebnis | Beratungen | mit Sitzung und Punkt | Personen | Mitgliedschaften |
+|---|---|---|---|---|---|---|---|
+| `duesseldorf` | 1 672 | 44 231 | 78 % | 97 112 | 94 % | 632 | 4 615 |
+| `duesseldorf-2025` | 390 | 8 719 | 74 % | 97 112 | 94 % | 632 | 4 615 |
+| `duesseldorf-2014` | 3 172 | 81 139 | 82 % | 97 112 | 94 % | 632 | 4 615 |
+| `moenchengladbach` | 967 | 10 366 | 80 % | 25 619 | 97 % | 1 687 | 10 030 |
+
+Beratungen und Personen sind je Body dieselbe Liste (§ 5.3); die Schätzung von rund 61 000 Beratungen
+(§ 4) lag zu niedrig. Die Prüfung aus § 5.3: in `duesseldorf` und `duesseldorf-2025` fehlt keine Sitzung
+mit Papern der Periode; in `duesseldorf-2014` fehlen 7 von 1 474, in `moenchengladbach` 5 von 551.
+Auch ein voller Abruf ohne frühen Abbruch (`GEOREP_COUNCIL__STOP_WHEN_OLDER=false fetch meetings
+--force`, 600 s und 15 s) fand sie nicht: der Server führt diese Sitzungen nicht in seiner Liste, obwohl
+Beratungen auf sie zeigen (vermutlich nicht öffentlich oder gelöscht). Die Abbruchregel verliert also
+nichts; die zwölf Sitzungen fehlen am Server.
