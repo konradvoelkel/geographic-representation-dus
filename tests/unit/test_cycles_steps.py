@@ -31,7 +31,7 @@ from georep.contracts import one_row_per_document
 from georep.enrich.cycles import feed_dir, time_files, time_steps
 from georep.errors import MissingInputError, SchemaError
 from georep.layout import Layout
-from georep.pipeline import build_steps, run_step
+from georep.pipeline import build_steps, input_digests, run_step
 from georep.prep.raw_texts import flatten
 from georep.report.feeds import FEEDS_SCHEMA, atom_problems
 from georep.settings import Originators, Settings, load_settings
@@ -235,25 +235,21 @@ def test_the_tests_run_over_three_periods_from_their_folders(
     ):
         _write_period(layout.for_profile(name), name, first, last, month)
     (step,) = [s for s in time_steps(settings, layout, HTTP) if s.name == "cycle_tests"]
-    # die Dateien des eigenen Ordners stehen zuletzt, die der anderen tragen ihren Hash in extra
-    assert step.inputs[-5:] == (
-        time_files(layout).months,
-        time_files(layout).budget,
-        time_files(layout).vocabulary,
-        layout.corpus,
-        layout.document_originators,
-    )
+    # gleichnamige Eingaben der drei Perioden stehen mit ihrem Pfad im Stamp (Punkt 76)
+    keys = input_digests(step)
+    assert len(keys) == len(step.inputs) == 15
+    assert str(time_files(layout.for_profile("p1")).budget) in keys
     outcome = run_step(step, settings)
     assert outcome.status == "ausgeführt", outcome.line()
     table = pl.read_parquet(time_files(layout).hypotheses)
     check_hypotheses(table)
     assert dict(table.select("hypothese", "ergebnis").rows())["H17.2"] == CONFIRMED
     assert run_step(step, settings).status == "übersprungen"
-    # eine andere Periode ändert sich: ihr Hash steht in extra, der Schritt ist veraltet
+    # eine andere Periode ändert sich: der Schritt ist veraltet und nennt ihre Datei
     other = time_files(layout.for_profile("p1")).budget
     pl.read_parquet(other).with_columns(pl.col("haushaltsantraege") + 1).write_parquet(other)
-    rebuilt = next(s for s in time_steps(settings, layout, HTTP) if s.name == "cycle_tests")
-    assert run_step(rebuilt, settings).status == "ausgeführt"
+    again = run_step(step, settings)
+    assert again.status == "ausgeführt" and str(other) in again.reason
 
 
 def test_the_tests_refuse_a_period_counted_with_another_lexicon(

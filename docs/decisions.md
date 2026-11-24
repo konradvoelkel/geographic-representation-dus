@@ -3212,12 +3212,9 @@ drei Perioden; das Profil, das schon `compare` über zwei rechnet und auf Pages 
 zuletzt baut, nennt sie (`cycles.periods`). Fehlt eine Periode, bricht `run` mit dem Pfad der
 Datei ab, wie bei `compare`. Damit muss `.github/workflows/pages.yml` die laufende Periode **vor**
 `duesseldorf-vergleich` rechnen; die Änderung macht der Supervisor (das gh-Token hat keinen
-`workflow`-Scope). Der Stamp führt Eingaben nach Dateinamen (`pipeline.input_digests`), und die
-Perioden tragen dieselben Namen: je Name zählte nur die letzte. Darum stehen die Dateien des eigenen
-Ordners, die derselbe Lauf schreibt, zuletzt, und die der anderen Perioden gehen mit einem Hash über
-Ort und Inhalt in `extra`; ein Test ändert eine andere Periode und sieht den Schritt veraltet.
-`compare` hat dieselbe Namensgleichheit (zweimal `wahlbezirke_auswertung.parquet` und
-`combined_searchdict.parquet`); das ist ein Befund für den Kern, hier nicht geändert.
+`workflow`-Scope). Die Perioden tragen Dateien gleichen Namens; seit Punkt 76
+(`pipeline.input_key`) stehen gleichnamige Eingaben mit ihrem Pfad im Stamp, und eine Änderung in
+jeder Periode macht den Schritt veraltet (ein Test ändert eine andere Periode und sieht das).
 
 **Feeds aus den Daten.** `feed/id` ist `urn:uuid:` aus Stadt, Ordner und Wahlbezirk, `feed/updated`
 das jüngste `updated` der Einträge und nie die Laufzeit, `entry/updated` OParls `modified`, nie vor

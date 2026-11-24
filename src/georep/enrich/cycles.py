@@ -27,8 +27,6 @@ Die Pfade gehören diesem Modul (Synergien 2026-11, § 2.1): wer die Tabellen li
 
 from __future__ import annotations
 
-import hashlib
-from collections.abc import Sequence
 from pathlib import Path
 from typing import NamedTuple
 from zoneinfo import ZoneInfo
@@ -60,9 +58,9 @@ from georep.analysis.lexicon import (
 from georep.enrich import Contribution
 from georep.errors import SchemaError
 from georep.http import Transport
-from georep.io import digest, write_parquet, write_text
+from georep.io import write_parquet, write_text
 from georep.layout import Layout
-from georep.pipeline import MISSING, Step
+from georep.pipeline import Step
 from georep.report.feeds import (
     FEEDS_SCHEMA,
     FEEDS_SCHEMA_VERSION,
@@ -125,17 +123,6 @@ def cycle_rules(settings: Settings) -> CycleRules:
 def _lexicon_stamp(lexicon: Lexicon) -> str:
     """Name, Version, Prüfsumme und validierte Präzision: ändert sich eines, rechnet der Schritt neu."""
     return f"{lexicon.label} {lexicon.digest[:16]} {validated_precision(lexicon)}"
-
-
-def _period_digest(layout: Layout, paths: Sequence[Path]) -> str:
-    """Ein Hash über die Eingaben aus anderen Ordnern, mit ihrem Ort unter ``data_root``."""
-    sha = hashlib.sha256()
-    for path in paths:
-        where = (
-            path.relative_to(layout.data_root) if path.is_relative_to(layout.data_root) else path
-        )
-        sha.update(f"{where}={digest(path) if path.exists() else MISSING}\n".encode())
-    return sha.hexdigest()[:16]
 
 
 def _wahljahr(year: int, start_month: int) -> str:
@@ -376,21 +363,16 @@ def time_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
             )
         )
         if settings.cycles.periods and with_originators:
-            # Die Perioden tragen Dateien gleichen Namens, und der Stamp führt Eingaben nach Namen
-            # (``pipeline.input_digests``): je Name zählte nur die letzte. Darum stehen die Dateien
-            # des eigenen Ordners, die derselbe Lauf schreibt, zuletzt, und die der anderen
-            # Perioden, die ihr eigener Lauf schreibt, gehen mit ihrem Hash in ``extra``.
-            own = [f for f in settings.cycles.periods if layout.for_profile(f).root == layout.root]
-            others = [f for f in settings.cycles.periods if f not in own]
-            theirs = [p for folder in others for p in period_inputs(folder)]
+            # Die Perioden tragen Dateien gleichen Namens; der Stamp führt sie mit ihrem Pfad
+            # (``pipeline.input_key``, Punkt 76), eine Änderung in jeder macht den Schritt veraltet.
             steps.append(
                 Step(
                     "cycle_tests",
-                    (*theirs, *(p for folder in own for p in period_inputs(folder))),
+                    tuple(p for folder in settings.cycles.periods for p in period_inputs(folder)),
                     (files.hypotheses,),
                     cycle_tests,
                     CYCLE_TESTS_SCHEMA_VERSION,
-                    extra=f"{_lexicon_stamp(lexicon)} {_period_digest(layout, theirs)}",
+                    extra=_lexicon_stamp(lexicon),
                 )
             )
     if settings.feeds.enabled:
