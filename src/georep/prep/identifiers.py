@@ -793,7 +793,27 @@ def _spans_hold(
         check_spans(result, _lengths(texts, documents))
     except SchemaError:
         return False
-    return True
+    return values_are_the_text(result, texts, documents)
+
+
+def values_are_the_text(spans: pl.DataFrame, texts: pl.DataFrame, documents: pl.DataFrame) -> bool:
+    """``value`` jeder Spanne ist wörtlich ``text[start:end]`` des Rohtexts ihrer Korpus-ID.
+
+    Polars schneidet wie Python nach Zeichen (Codepunkten); der Join kopiert keine Texte, er
+    zeigt auf sie. Rund 0,6 s für die 116 349 Spannen der Hauptperiode (2026-11-24, Review N2).
+    Eine Spanne ohne Text ihrer ID ist ein Fehler.
+    """
+    by_id = (
+        documents.select(*DOCUMENT_COLUMNS)
+        .drop_nulls()
+        .join(texts.select("name", "text"), left_on="file_name", right_on="name", how="inner")
+        .select("id", "text")
+    )
+    checked = spans.select("id", "start", "end", "value").join(by_id, on="id", how="left")
+    same = pl.col("text").str.slice(pl.col("start"), pl.col("end") - pl.col("start")) == pl.col(
+        "value"
+    )
+    return bool(checked.select(same.fill_null(False).all()).item())
 
 
 def _norms_and_forms_hold(
