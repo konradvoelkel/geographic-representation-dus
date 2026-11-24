@@ -402,3 +402,35 @@ def test_a_letter_with_nothing_after_the_subject_has_an_empty_body(
         "Betrifft: Mehr Bänke im Park\n\fSeite 2\n\fSeite 3\n"
     )
     assert head_row(analyse(text, rules, "Antrag"), rules, names)["rumpf_leer"] is True
+
+
+def test_head_values_are_literal_and_sections_are_position_spans(
+    settings: Settings, rules: StructureRules, names: BodyNames
+) -> None:
+    """F3, 2026-11-24: ein Kopffeld trägt den Text an der Stelle wörtlich (die bearbeitete Form in
+    ``norm``), ein Abschnitt keinen (Positionsspanne, gelesen über ``read_span``); die
+    Amtsbezeichnung im Unterschriftsblock steht, wie sie geschrieben ist."""
+    text = (
+        FORM.replace(
+            "Gremium Sitzungsdatum Beratungsqualität\nOrdnungs- und",
+            "Gremium Sitzungsdatum Beratungsqualität\nOrdnungs- und\n",
+        )
+        + "Mit freundlichen Grüßen\n"
+        + PERSON
+        + "\nfraktionsvorsitzende\n"
+    )
+    documents = pl.DataFrame(
+        {"id": ["a"], "paper_type": ["Beschlussvorlage"], "text": [text], "extractor": ["x"]}
+    )
+    spans, head = structure_tables(documents, rules, names)
+    for row in spans.iter_rows(named=True):
+        if row["kind"] == "abschnitt":
+            assert row["value"] == "", row
+        else:
+            assert row["value"] == text[row["start"] : row["end"]], row
+    signer = spans.filter(pl.col("kind") == "unterzeichner").row(0, named=True)
+    assert signer["value"] == signer["norm"] == "fraktionsvorsitzende"
+    assert head.get_column("unterzeichner_rolle").to_list() == ["fraktionsvorsitzende"]
+    row = head.row(0, named=True)
+    assert (row["amt_nr"], row["amt_name"]) == ("66", "Amt für Verkehrsmanagement")
+    assert row["beratungsfolge"][0]["gremium"] == "Ordnungs- und Verkehrsausschuss"

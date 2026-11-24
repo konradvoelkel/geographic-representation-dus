@@ -755,13 +755,15 @@ def head_row(structure: Structure, rules: StructureRules, names: BodyNames) -> d
         return next((f for f in structure.head if f.kind == kind), None)
 
     amt = first("amt")
-    office = rules.office.match(amt.value) if amt and rules.office else None
+    # ``norm_ws``: der Wert ist im Entwurf schon so, nach ``literal`` wörtlich (F3)
+    written = norm_ws(amt.value) if amt else ""
+    office = rules.office.match(written) if amt and rules.office else None
     if amt is None:
         amt_nr = amt_name = None
     elif office is not None:
         amt_nr, amt_name = office.group("nr"), office.group("name").strip() or None
     else:
-        amt_nr, amt_name = None, amt.value
+        amt_nr, amt_name = None, written
     dezernat = first("dezernat")
     rows: list[dict[str, object]] = []
     for found in structure.head:
@@ -804,6 +806,37 @@ def head_row(structure: Structure, rules: StructureRules, names: BodyNames) -> d
         "beschlussvorschlag_quelle": structure.sources.get(DECISION),
         "rumpf_leer": structure.body_empty,
     }
+
+
+def literal(structure: Structure, text: str) -> Structure:
+    """Die Spannen nach F3 (Entscheidung vom 2026-11-24): ``value`` wörtlich oder leer.
+
+    Ein Kopffeld trägt den Text an seiner Stelle wörtlich, die bearbeitete Form steht weiter in
+    ``norm``; die Amtsbezeichnung im Unterschriftsblock steht in beiden, wie sie geschrieben ist
+    (der Entwurf schrieb den ersten Buchstaben groß). Ein Abschnitt ist eine Positionsspanne mit
+    leerem ``value`` -- das Label wie geschrieben fällt weg, die Art steht in ``norm``; gelesen
+    wird er über ``spans.read_span``. Die Amtsbezeichnung ohne erkannten Titel bleibt leer: die
+    Spanne von einem Zeichen nennt nur die Stelle. ``analyse_draft`` bleibt der Entwurf, damit er
+    sich Zeile für Zeile mit dem Messskript vergleichen lässt; erst ``structure_tables`` schreibt
+    die Spannen so.
+    """
+
+    def head(found: Found) -> Found:
+        if found.kind == "dezernat" and not found.value:
+            return found
+        written = text[found.start : found.end]
+        if found.kind == "unterzeichner":
+            return found._replace(value=written, norm=written)
+        return found._replace(value=written)
+
+    return Structure(
+        sections=[found._replace(value="") for found in structure.sections],
+        head=[head(found) for found in structure.head],
+        sources=structure.sources,
+        lines=structure.lines,
+        headings=structure.headings,
+        body_empty=structure.body_empty,
+    )
 
 
 def _documents_ok(documents: pl.DataFrame) -> bool:
@@ -860,6 +893,7 @@ def structure_tables(
     die Länge jedes Rohtexts; Folge und Schema nach F3.
     """
     span_rows: list[tuple[str, int, int, str, str, str, str, str]] = []
+    texts: dict[str, str] = {}
     head_rows: list[dict[str, object]] = []
     lengths: dict[str, int] = {}
     for doc_id, paper_type, text, raw_extractor in (
@@ -871,15 +905,16 @@ def structure_tables(
             head_rows.append(empty)
             continue
         extractor = f"{STRUCTURE_RULES}/{raw_extractor}"
-        found = analyse(text, rules, paper_type or "")
+        found = literal(analyse(text, rules, paper_type or ""), text)
         lengths[doc_id] = len(text)
+        texts[doc_id] = text
         span_rows.extend(
             (doc_id, f.start, f.end, f.kind, f.value, f.norm, f.section, extractor)
             for f in (*found.sections, *found.head)
         )
         head_rows.append({"id": doc_id, **head_row(found, rules, names), "extractor": extractor})
     spans = sort_spans(pl.DataFrame(span_rows, schema=SPAN_SCHEMA, orient="row"))
-    check_spans(spans, lengths)
+    check_spans(spans, lengths, texts=texts)
     head = pl.DataFrame(head_rows, schema=HEAD_SCHEMA)
     return spans, head
 

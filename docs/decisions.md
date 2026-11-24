@@ -3160,7 +3160,14 @@ Punkt 73). Die Spannen tragen `extractor = "struktur-1/pypdf-7.1.0+roh"`, damit 
 den falschen Text zeigt; ein Vorhaben, das im Textstore sucht, kommt über `flatten_with_offsets`
 (Punkt 74) herüber und liest den Abschnitt mit `spans.section_of`. Ebene 1 heißt `kind = "abschnitt"`
 und `section == norm`; eine Spanne der Ebene 2 (Finanzen, Klima) nennt in `section` den Abschnitt
-um sie herum, die Kopffelder `kopf`.
+um sie herum, die Kopffelder `kopf`. **`value` folgt der Regel von F3** (Entscheidung des
+Eigentümers vom 2026-11-24, Review K1): ein Kopffeld trägt den Text an seiner Stelle wörtlich, die
+bearbeitete Form (Amt als „Nummer Name", Zeile der Beratungsfolge als „Gremium|Datum|Qualität")
+steht in `norm`; ein Abschnitt ist eine Positionsspanne mit leerem `value`, gelesen über
+`read_span`, und das Label wie geschrieben fällt weg. Die Amtsbezeichnung im Unterschriftsblock
+steht, wie sie geschrieben ist (der Entwurf schrieb den ersten Buchstaben groß). `structure_tables`
+schreibt die Spannen so (`literal`) und prüft sie mit `check_spans(..., texts=...)`; `analyse_draft`
+bleibt der Entwurf, damit der Vergleich mit dem Messskript Zeile für Zeile bleibt.
 
 **Was nach dem Entwurf kommt, berührt keine validierte Frage.** (1) Der **Rumpf** (Synergien § 4):
 Text im Abschnitt `kopf_*` hinter dem letzten Kopffeld und Text außerhalb jedes Abschnitts zwischen
