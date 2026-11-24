@@ -39,12 +39,12 @@ HEAD = FeedHead(
 
 
 def _entry(number: int, day: dt.date, title: str = "Antrag", modified: str = "") -> FeedEntry:
-    published = timestamp(dt.datetime.combine(day, dt.time(0, 0), tzinfo=BERLIN))
+    published = dt.datetime.combine(day, dt.time(0, 0), tzinfo=BERLIN)
     return FeedEntry(
         id=f"https://ris.example/papers/{number}",
         title=f"A/{number:03d}/2025: {title}",
         published=published,
-        updated=modified or published,
+        updated=dt.datetime.fromisoformat(modified) if modified else published,
         link=f"https://ris.example/files/{number}.pdf",
     )
 
@@ -72,7 +72,7 @@ def test_the_feed_updates_with_its_newest_entry_not_with_the_run() -> None:
     root = ET.fromstring(render_feed(HEAD, entries).encode("utf-8"))
     assert root.findtext(f"{{{ATOM}}}updated") == "2025-12-24T00:00:00+01:00"  # Winterzeit
     summer = _entry(3, dt.date(2025, 7, 1)).published
-    assert summer == "2025-07-01T00:00:00+02:00"  # Sommerzeit
+    assert timestamp(summer) == "2025-07-01T00:00:00+02:00"  # Sommerzeit
 
 
 def test_a_feed_without_entries_is_valid_and_has_a_fixed_date() -> None:
@@ -183,7 +183,7 @@ def test_the_newest_come_first_and_ties_go_by_update_then_id() -> None:
     ]
     entries = newest_entries(documents, 3, BERLIN)
     assert [e.id.rsplit("/", 1)[1] for e in entries] == ["2", "4", "1"]
-    assert entries[0].updated == "2025-10-02T08:00:00+02:00"
+    assert timestamp(entries[0].updated) == "2025-10-02T08:00:00+02:00"
     assert newest_entries(documents[::-1], 3, BERLIN) == entries
 
 
@@ -191,7 +191,8 @@ def test_an_entry_links_the_pdf_by_https_and_never_updates_before_it_was_publish
     early = dt.datetime(2025, 9, 1, 12, 0, tzinfo=BERLIN)
     (entry,) = newest_entries([_document(5, dt.date(2025, 10, 1), modified=early)], 50, BERLIN)
     assert entry.link == "https://ris.example/files/5.pdf"
-    assert entry.updated == entry.published == "2025-10-01T00:00:00+02:00"
+    assert entry.updated == entry.published
+    assert timestamp(entry.published) == "2025-10-01T00:00:00+02:00"
     assert entry.title == "A/005/2025: Antrag"
 
 
@@ -207,3 +208,22 @@ def test_without_pdf_the_entry_links_the_oparl_object_or_the_page() -> None:
 
 def test_the_file_name_pads_the_district() -> None:
     assert feed_name(1) == "wahlbezirk-01.xml" and feed_name(41) == "wahlbezirk-41.xml"
+
+
+def test_updated_and_order_go_by_instant_not_by_string() -> None:
+    """Review N3: zwei Zeitpunkte mit verschiedenem Versatz ordnen sich als Text falsch.
+
+    A ist 2025-10-01 23:00 UTC (als 01:00+02:00), B 23:30 UTC (als 23:30+00:00): als Text käme A
+    nach B, in der Zeit ist B das jüngere. Beide stehen danach in der Zeitzone des Profils.
+    """
+    a = dt.datetime(2025, 10, 2, 1, 0, tzinfo=dt.timezone(dt.timedelta(hours=2)))
+    b = dt.datetime(2025, 10, 1, 23, 30, tzinfo=dt.UTC)
+    documents = [
+        _document(1, dt.date(2025, 10, 1), modified=a),
+        _document(2, dt.date(2025, 10, 1), modified=b),
+    ]
+    entries = newest_entries(documents, 50, BERLIN)
+    assert [e.id.rsplit("/", 1)[1] for e in entries] == ["2", "1"]
+    text = render_feed(HEAD, entries)
+    assert "<updated>2025-10-02T01:30:00+02:00</updated>\n  <author>" in text  # feed/updated: B
+    assert "<updated>2025-10-02T01:00:00+02:00</updated>" in text  # A in Ortszeit

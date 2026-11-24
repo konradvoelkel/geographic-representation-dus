@@ -339,7 +339,9 @@ def time_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
                     "neu_30_tage": sum(
                         1 for d in chosen if stand is not None and (stand - d.day).days < 30
                     ),
-                    "aktualisiert": max((e.updated for e in entries), default=empty_updated),
+                    "aktualisiert": timestamp(max(e.updated for e in entries))
+                    if entries
+                    else empty_updated,
                     "bytes": len(text.encode("utf-8")),
                 }
             )

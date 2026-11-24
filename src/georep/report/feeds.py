@@ -118,8 +118,8 @@ class FeedHead:
 class FeedEntry:
     id: str  # absolut: die OParl-URL des Dokuments
     title: str
-    published: str  # RFC 3339
-    updated: str  # RFC 3339, nie vor published
+    published: dt.datetime  # mit Zeitzone: das Vorlagendatum um 00:00 Ortszeit
+    updated: dt.datetime  # mit Zeitzone, in der des Profils; nie vor published
     link: str
     link_type: str = "application/pdf"
 
@@ -143,7 +143,9 @@ def feed_name(district: int) -> str:
 
 def _entry(document: FeedDocument, zone: ZoneInfo) -> FeedEntry:
     published = dt.datetime.combine(document.day, dt.time(0, 0), tzinfo=zone)
-    updated = max(document.modified or published, published)
+    # Review N3: der Zeitpunkt in der Zone des Profils; verglichen wird als Zeitpunkt
+    changed = document.modified.astimezone(zone) if document.modified is not None else published
+    updated = max(changed, published)
     link, kind = document.link, "application/pdf"
     if link.startswith("http://"):
         link = "https://" + link[len("http://") :]
@@ -156,13 +158,14 @@ def _entry(document: FeedDocument, zone: ZoneInfo) -> FeedEntry:
             link, kind = "../index.html", "text/html"
     ident = document.id if _ABSOLUTE.match(document.id) else feed_id("dokument", document.id)
     title = f"{document.reference}: {document.name}" if document.reference else document.name
-    return FeedEntry(ident, title, timestamp(published), timestamp(updated), link, kind)
+    return FeedEntry(ident, title, published, updated, link, kind)
 
 
 def newest_entries(
     documents: Iterable[FeedDocument], limit: int, zone: ZoneInfo
 ) -> list[FeedEntry]:
-    """Die ``limit`` neuesten Einträge, neueste zuerst: nach Datum, dann ``updated``, dann id.
+    """Die ``limit`` neuesten Einträge, neueste zuerst: nach Datum, dann dem Zeitpunkt von
+    ``updated`` (nicht seinem Text, Review N3), dann id.
 
     Die Folge hängt nur an den Dokumenten, nicht an ihrer Reihenfolge: derselbe Korpus gibt
     dieselben Bytes (der Monitor schriebe sonst täglich neu).
@@ -204,7 +207,8 @@ def render_feed(
     Ein Feed ohne Einträge trägt ``empty_updated``; der Schritt ``feeds`` gibt den Stand der Daten
     (Review N2), ``EMPTY_UPDATED`` bleibt nur, wo es keinen gibt.
     """
-    updated = max((e.updated for e in entries), default=empty_updated)
+    newest = max((e.updated for e in entries), default=None)  # Zeitpunkte, nicht Text (N3)
+    updated = timestamp(newest) if newest is not None else empty_updated
     lines = [
         '<?xml version="1.0" encoding="utf-8"?>',
         f'<feed xmlns="{ATOM}" xml:lang="de">',
@@ -221,8 +225,8 @@ def render_feed(
             "  <entry>",
             f"    <id>{escape(clean_text(e.id))}</id>",
             f"    <title>{escape(clean_text(e.title))}</title>",
-            f"    <published>{e.published}</published>",
-            f"    <updated>{e.updated}</updated>",
+            f"    <published>{timestamp(e.published)}</published>",
+            f"    <updated>{timestamp(e.updated)}</updated>",
             f'    <link rel="alternate" type="{_attribute(e.link_type)}" href="{_attribute(e.link)}"/>',
             "  </entry>",
         ]
