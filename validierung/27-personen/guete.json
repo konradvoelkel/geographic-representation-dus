@@ -1,0 +1,46 @@
+{
+  "vorhaben": "27-personen",
+  "codebuch_version": "2026-11-24.1",
+  "einheit": "document",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-24",
+  "einheiten": 150,
+  "uneinig": 0,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "fragesteller": {
+      "n": 150,
+      "beide": 150,
+      "einig": 150,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9750297556319235,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "unsicher": {
+      "n": 150,
+      "beide": 150,
+      "einig": 148,
+      "anteil": 0.9866666666666667,
+      "anteil_wilson95": [
+        0.9526930912996325,
+        0.9963358708487731
+      ],
+      "cohen_kappa": 0.7435897435897436,
+      "krippendorff_alpha_nominal": 0.7440068493150684,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.7440068493150684,
+      "markierungen": null,
+      "alpha_genuegt": false
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 150 Dokumenten, nicht von Menschen"
+}

@@ -15,21 +15,32 @@ diesem Dokument, im Messskript und unter `validierung/27-personen/` stehen nur O
 Wahlbezirksnummern, Rollen, Codes und Zählungen. Die Endlabels der Kodierer sind Nachnamen und darum
 gitignored (`validierung/27-personen/.gitignore`); ins Repo geht `labels-kennungen.csv` (§ 4).
 
-**Vorläufiges Urteil (vor der Kodierung): umbauen.** Die Zuordnung Dokument → Person und der Mandatstyp
-taugen als Daten für 24, 26 und 28 und für Rollen und Zählungen auf `akteure.html`; die Hypothese H1
-ist mit diesen Daten **nicht entscheidbar**, gleich wie die Kodierung ausgeht (§ 5). Die drei Zahlen:
+**Urteil nach der Kodierung (Abschluss der Stufe 1, 2026-11-24): bauen, eingeschränkt.** Gebaut wird
+der Beitrag `persons` als Datengrundlage (Mandatsträger, Dokument → Person, Mandatstyp); der
+Mandatstyp gilt nur in der laufenden Periode als bekannt, die Hauptperiode trägt ihre Lücke sichtbar;
+H1 bleibt ungerechnet und heißt „nicht entscheidbar" (§ 5). Die drei Zahlen:
 
-1. **Mandatstyp**: in der laufenden Periode für **92 von 93** Ratsmitgliedern bekannt (0,989), in der
+1. **Präzision der Zuordnung Dokument → Person: 194 von 194 Paaren** bestätigt (gewichtet 1,000,
+   Wilson 0,980–1,000), getrennt **Rat und Ausschüsse 96/96** (0,962–1,000) und **Bezirksvertretungen
+   98/98** (0,962–1,000); alle 150 Dokumente ganz richtig. Kriterium 0,95 erreicht. Schwacher Beleg:
+   zwei Kodierer desselben Modells, voll einig (α 1,0, § 4.1).
+2. **Mandatstyp**: in der laufenden Periode für **92 von 93** Ratsmitgliedern bekannt (0,989), in der
    Hauptperiode nur für **62 von 94** Sitzen (0,660): der OParl-Server nennt Ratsmitglieder, die 2025
-   ausgeschieden sind, nicht mehr (§ 3.2). Das Kriterium (≥ 90 %) hält also nur die laufende Periode.
-2. **Zuordnung Dokument → Person**: 90,1 % der Anfragen in Rat und Ausschüssen der laufenden Periode
-   und 62,1 % der Hauptperiode bekommen mindestens ein Ratsmitglied; die Präzision misst die Kodierung
-   an 150 Dokumenten (vorbereitet, § 4).
+   ausgeschieden sind, nicht mehr (§ 3.2). Das Kriterium (≥ 90 %) hält nur die laufende Periode.
 3. **Fallzahl**: Mandatstyp und Partei sind fast deckungsgleich (die CDU gewann 2020 alle 30 und 2025
    alle 31 Sitze direkt, die SPD je einen von 16 und 14; vergleichen lässt sich nur innerhalb der
    Grünen). Das vorab festgelegte Modell erreicht in der Simulation nur eine **Teststärke von 0,466**
    bei OR 1,5 und verwirft unter H0 in **38,5 %** statt 5 % der Läufe (§ 3.6): H1 ist nach § 8.3 und
    § 8.4 nicht entscheidbar.
+
+Abdeckung: 90,1 % der Anfragen in Rat und Ausschüssen der laufenden Periode und 62,1 % der
+Hauptperiode bekommen mindestens ein Ratsmitglied (§ 3.4); in den geprüften Dokumenten findet die
+Regel 99,0 % (Rat, Ausschüsse) und 91,2 % (Bezirksvertretungen) der gelabelten Personen, die eindeutig
+ein Mandatsträger aus OParl sind (§ 4.1).
+
+*Vorläufiges Urteil vor der Kodierung (Commit `07bfcee`): „umbauen", mit der Regel „gebaut wird der
+Beitrag `persons`, wenn die Kodierung die Präzision 0,95 bestätigt; H1 nicht". Die Kodierung hat sie
+bestätigt; das Urteil heißt darum jetzt „bauen, eingeschränkt", ohne andere Regel.*
 
 ## 1. Frage und Nutzen (Literatur, Ratsarbeit)
 
@@ -296,6 +307,41 @@ schreibt `labels-kennungen.csv` (`id`, `schicht`, Kennungen des Verfahrens, Kenn
 Personen, soweit am Datum eindeutig, Zahl der Labels ohne Kennung, bestätigte Paare); diese Datei,
 `README.md` und `guete.json` aus `merge` dürfen ins Repo.
 
+### 4.1 Ergebnis der Kodierung (2026-11-24)
+
+Zwei Kodier-Agenten (`claude-opus-5-5`), unabhängig und ohne die Ausgabe des Verfahrens, je 150
+Dokumente; `georep validate merge 27-personen` (Supervisor), dann `--labels` (Messskript).
+
+**Übereinstimmung**: `fragesteller` 150 von 150 gleich (Cohens κ 1,0, Krippendorffs α 1,0), also keine
+Schlichtung; `unsicher` 148 von 150 (α 0,744, Meta-Frage, ohne Schlichtung und ohne Gewicht).
+
+| Schicht | Paare bestätigt (Präzision) | Dokumente ganz richtig | Recall in den Dokumenten | Recall gegen eindeutige Mandatsträger |
+|---|---|---|---|---|
+| Rat und Ausschüsse | **96 / 96 = 1,000** (0,962–1,000) | 75 / 75 (0,951–1,000) | 96 / 148 = 0,649 | 96 / 97 = 0,990 (0,944–0,998) |
+| Bezirksvertretungen | **98 / 98 = 1,000** (0,962–1,000) | 75 / 75 (0,951–1,000) | 98 / 134 = 0,731 | 73 / 80 = 0,912 (0,830–0,957) |
+| gewichtet (Kish) | **1,000** (0,980–1,000 bei n_eff 192,6) | 1,000 (0,975–1,000) | 0,694 (0,639–0,747) | |
+
+**Kriterium Präzision ≥ 0,95: erreicht**, in beiden Schichten auch an der unteren Grenze (0,962). Der
+Recall in den Dokumenten ist niedriger, weil die Kodierer auch Personen nennen, die kein Mandatsträger
+aus OParl sein können (105 gelabelte Personen ohne eindeutigen Mandatsträger am Datum: sachkundige
+Bürger, Mitglieder des Integrationsrats, Ratsmitglieder, die OParl nicht mehr kennt, Fraktionspersonal);
+gegen die Personen, die eindeutig ein Mandatsträger aus OParl sind, findet die Regel fast alle.
+
+**Wie viel das belegt.** Volle Einigkeit zweier Kodierer **desselben Modells** ist ein schwacher Beleg
+(Frage 19 in `fragen-2026-11.md`; `docs/validierung.md`, § 1): ihre Fehler sind korreliert, α 1,0 heißt
+„das Codebuch ist für dieses Modell eindeutig", nicht „die Labels stimmen". Zwei Dinge sprechen
+dafür, dass die Kodierer nicht nur das Offensichtliche abgeschrieben haben: sie nennen deutlich mehr
+Personen als die Regel (282 gegen 194), und die Aufgabe ist nahe am Ablesen (wer steht unter dem
+Gruß). Dagegen spricht nichts in den Zahlen, aber die Grenzen unten sind nicht kodiert.
+
+**Grenzen des Vergleichs über Nachnamen.** Verglichen wird der normierte Nachname, nicht die Person.
+Bei 25 der 194 bestätigten Paare trägt am Datum mehr als ein Mandatsträger denselben Nachnamen
+(Unterschrift 22, Briefkopf 2, Titel 1); dort kann der Vergleich zwei Personen nicht trennen. Die 24 aus
+Unterschrift und Briefkopf hat die Regel über Vor- **und** Nachname im Text gefunden, nur das eine
+Titel-Paar über den Nachnamen allein (im Gremium des Dokuments). Zählt man dieses eine als ungeprüft,
+liegt die Präzision bei 193/194 = 0,995. Die Lücken des Codebuchs, die der Supervisor beim Zusammenführen
+gesehen hat, stehen in § 9 (27.11 bis 27.15); sie sind hier nicht nachträglich angewandt.
+
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
 
 Kriterium (Briefing): Zuordnung Dokument → Person mit Präzision ≥ 0,95 an 150 **und** Mandatstyp für
@@ -303,18 +349,26 @@ Kriterium (Briefing): Zuordnung Dokument → Person mit Präzision ≥ 0,95 an 1
 
 | Teil | Stand | erfüllt? |
 |---|---|---|
-| Präzision der Zuordnung | Kodierung vorbereitet, 150 Dokumente | offen |
+| Präzision der Zuordnung | 194/194 Paare; Rat und Ausschüsse 96/96, Bezirksvertretungen 98/98 (je 0,962–1,000) | **ja** (schwacher Beleg, § 4.1) |
 | Mandatstyp ≥ 90 % | laufende Periode 0,989; Hauptperiode 0,660 | nur laufende Periode |
 | Hypothese vorab festgelegt | Commit `038699e` | ja |
 | Fallzahl | Teststärke 0,466, Fehler erster Art 0,385 | nein |
 
-**Vorläufiges Urteil: umbauen.** Die Hypothese H1 ist **nicht entscheidbar** (§ 8.3: Teststärke unter
-0,8; in der Hauptperiode zudem Mandatstyp unter 90 %); das steht so auf der Seite, wenn überhaupt, und
-nicht als „kein Unterschied". Daran ändert die Kodierung nichts. Gebaut wird, **wenn die Kodierung die
-Präzision 0,95 bestätigt**, der Beitrag `persons` als Datengrundlage: Mandatsträger mit Zeiträumen und
-Fraktion, Dokument → Person, Mandatstyp und eigener Wahlbezirk je Ratsmitglied, und auf `akteure.html`
-nur Rollen und Zählungen (§ 6, § 7). Verfehlt die Kodierung 0,95, geht die Regel in die eine
-Umbau-Runde (Kandidaten: Titelweg ohne „Herr/Frau", Unterschrift nur bis zur ersten Leerzeile).
+**Urteil (2026-11-24): bauen, eingeschränkt**, nach der Regel, die vor der Kodierung hier stand
+(`07bfcee`): „gebaut wird, wenn die Kodierung die Präzision 0,95 bestätigt, der Beitrag `persons` als
+Datengrundlage; H1 nicht".
+
+- **Gebaut** (§ 6): Mandatsträger mit Zeiträumen und Fraktion, Dokument → Person für alle Profile mit
+  OParl-Personen, Mandatstyp und eigener Wahlbezirk je Ratsmitglied. Der Mandatstyp heißt nur in der
+  laufenden Periode „bekannt"; in der Hauptperiode trägt jede Zahl die Lücke (62 von 94 Sitzen), und
+  nichts wird über die Hauptperiode als Ganzes gesagt, solange 27.1 offen ist.
+- **Nicht gebaut**: die Prüfung von H1. Sie ist **nicht entscheidbar** (§ 8.3: Teststärke unter 0,8;
+  in der Hauptperiode zudem Mandatstyp unter 90 %); auf der Seite steht das als solches, mit der
+  Festlegung, nie als „kein Unterschied".
+- **Auf der Seite** (§ 7): nur Rollen und Zählungen, Zellen unter fünf Personen werden nicht gezeigt,
+  mit dem Satz aus `guete.json` („geprüft von zwei KI-Kodierern an 150 Dokumenten, nicht von
+  Menschen") und der Präzision mit Intervall.
+
 Verwerfen wäre falsch: 24 wartet auf den Fragesteller als Person, 26 und 28 auf Antragsteller und
 Mandatsträger.
 
@@ -520,5 +574,10 @@ zweite Zahl entscheidet.
 | 27.8 | Fraktion am Datum aus OParl, sonst die Partei der Kandidatur (Volt zur SPD, Klimaliste zur PARTEI) | feste Effekte in § 8.3 | so |
 | 27.9 | `labels.csv` dieses Vorhabens trägt Nachnamen und ist gitignored; der Supervisor committet nach `merge` nur `README.md`, `guete.json` und, nach `--labels`, `labels-kennungen.csv` | Personendaten bleiben lokal | so |
 | 27.10 | Der Worktree teilt `cache_root` mit dem Hauptklon (`settings.local.toml`): `bootstrap` hat am 2026-11-24 `texts.parquet` der Hauptperiode und der laufenden Periode neu geschrieben (bytegleich mit den Snapshots, nur die Stamps sind neu) | Seiteneffekt außerhalb des Worktrees | harmlos; gemeldet |
+| 27.11 | Kodier-Lücke: „F.d.R." über zwei nebeneinanderstehenden Namen (Spaltenbild der Extraktion): gilt es für beide oder nur für den darunter? | Die Regel schneidet die Unterschrift am „F.d.R." ab; steht es über zwei Spalten, fehlt dort eine einbringende Person oder zählt eine Geschäftsstelle | nicht angewandt; im Codebuch .2 klären |
+| 27.12 | Kodier-Lücke: die angeschriebene Bezirksbürgermeisterin zeichnet selbst | Die Regel nimmt Empfänger im Kopf nie, Unterzeichner im Gruß immer; das Codebuch sagt nicht, was gilt, wenn beides dieselbe Person ist | nicht angewandt; Unterschrift zählt |
+| 27.13 | Kodier-Lücke: sachkundige Bürger und Mitglieder des Integrationsrats als Einbringer, keine Mandatsträger — zählen sie? | Recall (§ 4.1: 105 gelabelte Personen ohne eindeutigen Mandatsträger); Plan § 1 nennt Mandatsträger | zählen nicht (27.7) |
+| 27.14 | Kodier-Lücke: dieselbe Person in zwei Schreibweisen (Doppelname mit und ohne Bindestrich, oder nur ein Teil) | Der Vergleich normiert den Bindestrich weg, einen fehlenden Namensteil nicht | nicht angewandt; keine Präzision ging daran verloren |
+| 27.15 | Kodier-Lücke: gleiche Nachnamen verschiedener Personen (auch in verschiedenen Bezirksvertretungen); nur Nachnamen zu erheben reicht nicht | 25 der 194 bestätigten Paare sind über den Nachnamen allein nicht von einer zweiten Person zu trennen (§ 4.1) | im Codebuch .2 Vor- und Nachname erheben, lokal |
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
