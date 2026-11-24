@@ -43,13 +43,17 @@ def _late_steps(settings: Settings, layout: Layout, http: Transport) -> list[Ste
     return [Step("spaet", (layout.corpus,), (target,), lambda: "nichts")]
 
 
-def test_ohne_beitraege_bleibt_das_register_wie_es_war(
+def test_ohne_beitraege_fehlen_genau_ihre_schritte(
     tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """Die Beiträge nehmen dem Kern nichts weg und stellen nichts um (seit Vorhaben 15 gibt es einen)."""
     layout = _layout(tmp_path)
     before = [s.name for s in build_steps(default_settings, layout)]
+    http = FakeSession({})
+    contributed = {s.name for s in georep.enrich.contributed_steps(default_settings, layout, http)}
     monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", ())
-    assert [s.name for s in build_steps(default_settings, layout)] == before
+    core = [s.name for s in build_steps(default_settings, layout)]
+    assert core == [name for name in before if name not in contributed]
 
 
 def test_ein_beitrag_steht_unmittelbar_vor_dem_bericht(
