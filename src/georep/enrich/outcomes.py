@@ -177,7 +177,7 @@ def outcome_steps(settings: Settings, layout: Layout, http: Transport) -> list[S
         review = pl.DataFrame(
             [
                 (doc_id, review_only(name, text, rules.review)[0])
-                for doc_id, name, text in corpus.filter(pl.col("id").is_in(accepted))
+                for doc_id, name, text in corpus.filter(pl.col("id").is_in(accepted.implode()))
                 .select("id", "name", "text")
                 .iter_rows()
             ],

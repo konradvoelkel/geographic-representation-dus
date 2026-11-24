@@ -335,3 +335,23 @@ def test_the_package_path_equals_the_network_path_for_the_same_rows(
         pl.col("id").is_in(IDS)
     )
     assert progress(packed, organizations, results).equals(network)
+
+
+def test_the_outcomes_step_raises_no_deprecation_warning(
+    tmp_path: Path, mini_run: Layout, default_settings: Settings
+) -> None:
+    """Review 2026-11-24, K1: ``is_in`` mit einer Series ist in Polars veraltet (``implode``)."""
+    import warnings
+
+    shutil.copytree(mini_run.data_root, tmp_path / "data")
+    layout = Layout(
+        tmp_path / "data",
+        tmp_path / "cache",
+        mini_run.reference_root,
+        default_settings.profile,
+    )
+    step = _steps(default_settings, layout)["outcomes"]
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        step.run()
+    assert [str(w.message)[:60] for w in caught if issubclass(w.category, DeprecationWarning)] == []
