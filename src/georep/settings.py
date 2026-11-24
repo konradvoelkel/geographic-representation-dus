@@ -24,6 +24,7 @@ from datetime import date
 from importlib import resources
 from importlib.resources.abc import Traversable
 from pathlib import Path
+from string import Formatter
 from typing import Any, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -1839,6 +1840,162 @@ class Majorities(_Strict):
         return next((term for term in self.terms if term.holds_on(day)), None)
 
 
+# --- Vorhaben 14: Vorgänge (docs/plans/14-vorgaenge.md, § 6 und § 10) ----------------------------
+# Die Rollen sind das Vokabular des Verfahrens (Codebuch .2), kein Stadtwort: welche Dokumentart
+# welche Rolle spielt, sagt das Stadtprofil in ``[[procedures.kinds]]``; was keine Regel trifft,
+# ist ``sonst``.
+ProcedureRole = Literal[
+    "anfrage", "antrag", "vorlage", "information", "bedarf", "af", "eingabe", "politik", "sonst"
+]
+# Die Gruppen, aus denen ein Schlüssel entsteht: Kürzel und Nummer dahinter (``BV6``), ein Kopf
+# aus Ziffern (alte Form ``61/12/2014``), laufende Nummer, Jahr, Wahlperiode (römisch) und der
+# Nachtrag; Gruppen, die mit ``suffix`` beginnen, sind Nachtragsstellen (die erste gefüllte zählt).
+REFERENCE_GROUPS = frozenset({"code", "number", "head", "serial", "year", "period"})
+
+
+def _groups_of(pattern: str, field: str) -> set[str]:
+    try:
+        return set(re.compile(pattern).groupindex)
+    except re.error as error:
+        raise ValueError(f"{field}: {pattern!r} ist kein Muster ({error})") from error
+
+
+class ReferenceForm(_Strict):
+    """Eine Form der Drucksachennummer: ein Muster für die eigene Nummer, eines für den Text.
+
+    ``key`` baut den Schlüssel aus den Gruppen (``str.format``): Kürzel groß, ``number`` ohne
+    führende Nullen oder leer, ``serial`` als Zahl (``{serial:04d}`` füllt auf), ``period`` groß;
+    ein Nachtrag hängt als ``/k`` an. ``glued`` heißt: die Gruppe ``code`` im Text ist eine ganze
+    Buchstabenfolge, und gilt wird das längste bekannte Kürzel an ihrem Ende, weil pypdf Wörter
+    zusammenklebt („vorlagebv6/002/2023", Messdokument § 3.1).
+    """
+
+    name: str
+    reference: str  # trifft die ganze eigene Nummer (``reference``, getrimmt)
+    text: str  # sucht in Titel, Text und Anlagennamen, alle kleingeschrieben
+    key: str
+    glued: bool = False
+
+    @model_validator(mode="after")
+    def _groups_fit(self) -> ReferenceForm:
+        own = _groups_of(self.reference, "procedures.forms[].reference")
+        found = _groups_of(self.text, "procedures.forms[].text")
+        for groups, field in ((own, "reference"), (found, "text")):
+            strange = sorted(g for g in groups - REFERENCE_GROUPS if not g.startswith("suffix"))
+            if strange:
+                raise ValueError(
+                    f"procedures.forms {self.name!r}: unbekannte Gruppen {strange} in {field}"
+                )
+        try:
+            needed = {name for _, name, _, _ in Formatter().parse(self.key) if name}
+        except ValueError as error:
+            raise ValueError(
+                f"procedures.forms {self.name!r}: key {self.key!r} ({error})"
+            ) from error
+        missing = sorted(needed - (own & found))
+        if missing or "serial" not in needed:
+            raise ValueError(
+                f"procedures.forms {self.name!r}: key {self.key!r} braucht serial und nur Gruppen "
+                f"beider Muster; fehlt in einem: {missing}"
+            )
+        if self.glued and "code" not in found:
+            raise ValueError(
+                f"procedures.forms {self.name!r}: glued braucht die Gruppe code im Text"
+            )
+        return self
+
+
+class KindRule(_Strict):
+    """Dokumentart -> Rolle; die erste Regel, deren Muster trifft, gilt (Messdokument § 2)."""
+
+    role: ProcedureRole
+    paper_type: str  # sucht in der getrimmten, kleingeschriebenen Dokumentart
+    title: str = ""  # dazu muss es im kleingeschriebenen Titel stehen; leer = gleich
+    title_not: str = ""  # und darf dort nicht stehen; leer = gleich
+
+    @field_validator("paper_type", "title", "title_not")
+    @classmethod
+    def _compiles(cls, value: str) -> str:
+        return _compiles([value], "procedures.kinds[]")[0]
+
+
+class TitleOverride(_Strict):
+    """Der Titel schlägt die Dokumentart, wo beide sich widersprechen (Messdokument § 3.9, S1)."""
+
+    role: ProcedureRole
+    title: (
+        str  # am Anfang des kleingeschriebenen Titels, ohne führende Leerzeichen und Doppelpunkte
+    )
+    to: ProcedureRole
+
+    @field_validator("title")
+    @classmethod
+    def _compiles(cls, value: str) -> str:
+        return _compiles([value], "procedures.title_overrides[].title")[0]
+
+
+class RelatedPeriod(_Strict):
+    """Eine Nachbarperiode derselben Stadt, gelesen aus ihrem Paket (Messdokument, Frage 9.2).
+
+    ``papers`` ist ``raw/papers.jsonl`` oder das Altformat der Arbeit (eine JSON-Liste),
+    ``texts`` der Textstore desselben Datensatzes. Gelesen wird nur; beide Hashes stehen im Stamp.
+    """
+
+    profile: str  # das Profil der Periode; steht als ``nach_periode`` an jeder Kante dorthin
+    papers: Path
+    texts: Path
+
+
+class Procedures(_Strict):
+    """Vorgänge aus Drucksachennummern (Vorhaben 14): Formen, Rollen, Regeln, Pakete.
+
+    Gebaut ist die Rückfallregel (Messdokument § 5.1): stark ist eine Kante nur aus Titel,
+    Anlagenname, Nachtragsnummer oder Sammelbericht; reine Textverweise bleiben schwach in den
+    Daten. Muster und Tabellen der Stadt stehen im Stadtprofil, kein Stadtwort im Code.
+    """
+
+    enabled: bool = False
+    forms: list[ReferenceForm] = []
+    max_code_length: int = Field(default=6, ge=1)
+    kinds: list[KindRule] = []
+    title_overrides: list[TitleOverride] = []
+    collective_titles: str = ""
+    amendment_markers: str = ""
+    amendment_window: int = Field(default=120, ge=0)
+    answer_attachment: str = ""
+    interim_attachment: str = ""
+    attachment_dates_invalid: list[date] = []
+    attachments: Path | None = None
+    related: list[RelatedPeriod] = []
+    # Review K1: Anrede oder Titel vor einem Namen; ``pack --attachments`` ersetzt den Namen dahinter
+    person_titles: str = ""
+
+    @field_validator(
+        "collective_titles",
+        "amendment_markers",
+        "answer_attachment",
+        "interim_attachment",
+        "person_titles",
+    )
+    @classmethod
+    def _compiles(cls, value: str) -> str:
+        return _compiles([value], "procedures")[0]
+
+    @field_validator("attachments", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+    @model_validator(mode="after")
+    def _forms_when_enabled(self) -> Procedures:
+        if self.enabled and not self.forms:
+            raise ValueError("procedures.enabled braucht mindestens eine Form in procedures.forms")
+        names = [form.name for form in self.forms]
+        if len(set(names)) != len(names):
+            raise ValueError(f"procedures.forms: doppelte Namen {names}")
+        return self
+
+
 class InstrumentTitle(_Strict):
     """Ein Muster im Titel (klein), das ein Dokument einem Instrument zuordnet (Vorhaben 17, S1.5)."""
 
@@ -1972,6 +2129,7 @@ class Settings(BaseSettings):
     majorities: Majorities = (
         Majorities()
     )  # Vorhaben 15: Ratsmehrheiten, stadtweit (24, 28 lesen sie)
+    procedures: Procedures = Procedures()  # Vorhaben 14: Vorgänge
     cycles: Cycles = Cycles()  # Vorhaben 17: Rhythmus, Vokabular, Tests über Perioden
     feeds: Feeds = Feeds()  # Vorhaben 17: Atom-Feed je Wahlbezirk
 
@@ -2328,3 +2486,13 @@ def _selected_profile(base: dict[str, Any], files: list[tuple[Path, dict[str, An
         if "default_profile" in layer:
             name = str(layer["default_profile"])
     return name
+
+
+def profile_folder(name: str, folder: Traversable | None = None) -> str:
+    """Der Ordner eines Paketprofils unter ``data_root``: sein ``profile``, wie es die Kette setzt.
+
+    Vorhaben 14, Review K3: ``duesseldorf-vergleich`` heißt anders als die Hauptperiode, rechnet
+    aber in ihrem Ordner. Wer wissen will, ob ein anderes Profil dieselben Daten meint, vergleicht
+    den Ordner, nicht den Namen. Gelesen werden nur die Profile im Paket, keine lokalen Dateien.
+    """
+    return str(_profile_layer(name, folder).get("profile", ""))

@@ -2,6 +2,21 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.25.0 (2026-11-24), Vorgänge
+
+- **Vorgänge** (Vorhaben 14, `docs/decisions.md`, Punkt 76): `references` findet Verweise zwischen
+  Drucksachen (als Spannen auf dem Rohtext, wo er da ist), `procedures` verbindet sie nur über starke
+  Kanten (Titel, Anlage, Nachtrag, Sammelbericht; 104 von 106 richtig) zu Vorgängen und erkennt
+  Antworten auf Anfragen an ihren Anlagen. Die Anlagennamen kommen als Paket unter `snapshots/`; Namen
+  von Personen hinter einer Anrede sind dort maskiert.
+- **Stamp**: zwei Eingaben mit demselben Dateinamen (Pakete zweier Perioden, die Ergebnisse beider
+  Perioden in `compare`) bekommen ihren Pfad als Schlüssel; bisher blieb eine Änderung an einer der
+  beiden unbemerkt.
+- **Nach dem Update einmal `georep bootstrap` je Profil**: es legt `raw/anlagen.parquet` an, ohne
+  die `run` bei `references` abbricht. `--force` ist nicht nötig und legte auch die Stores neu an; nur
+  wer den Branch von 14 vor der Maske gerechnet hat, löscht `raw/anlagen.parquet` vorher. Die Seite
+  zeigt noch nichts davon (Stufe 3); keine Zahl der Seite ändert sich.
+
 ## 0.24.0 (2026-11-24), Dokumentfunktion und Antragsteller
 
 - **Erster Beitrag eines Vorhabens** (Vorhaben 15, `docs/decisions.md`, Punkt 75): die Schritte

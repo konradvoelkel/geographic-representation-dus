@@ -22,6 +22,7 @@ Ohne Teil rechnet es aus dem, was liegt, alle Zahlen des Messdokuments nach (Dat
   der GPU-Sperre aufrufen (`flock …/gpu-queue/gpu.lock`). Antworten liegen im Modellcache und sind
   fortsetzbar; die Ausgabe ist eine Parquet-Datei je Menge und Modell unter `$GEOREP_MESSDATEN`.
 - `prompt`: druckt Prompt-Version, Länge und SHA-256 des Systemprompts (für das Einfrieren).
+- `vorhersage --weg W`: schreibt die Testvorhersage eines Wegs für `georep validate score --pred`.
 
 Alles, was ein Verfahren ausgibt, liegt unter `$GEOREP_MESSDATEN/19-politikfelder/` (nie im Repo);
 ins Repo kommen nur IDs (Stichprobe, Entwicklungsmenge) und später die Labels (F4). Die Werte, die
@@ -843,6 +844,10 @@ def urteil(wege: dict[str, dict[str, str]], test: list[str]) -> None:
         .iter_rows(named=True)
     }
     kopf = kopf_mit_ausschuss(umgebung()[1], ids)
+    print(
+        f"Gold ({len(gold)}): {Counter(gold).most_common()}; unsicher bei einem der beiden: "
+        f"{sum(v == 'ja' for v in unsicher.values())}; Ausschusskürzel im Kopf: {len(kopf)}"
+    )
     st = pl.read_csv(STICHPROBE, infer_schema_length=0)
     schicht = dict(st.select("id", "schicht").iter_rows())
     for k, v in vorhersagen.items():
@@ -876,14 +881,30 @@ def urteil(wege: dict[str, dict[str, str]], test: list[str]) -> None:
         erfuellt.sort(key=lambda k: -makro_f1(gold, vorhersagen[k]))
         if len(erfuellt) > 1:
             diff = [x - y for x, y in zip(werte[erfuellt[0]], werte[erfuellt[1]], strict=True)]
+            print(f"Vorsprung {erfuellt[0]} vor {erfuellt[1]}: 2,5 % {perzentil(diff, 0.025):+.3f}")
             if perzentil(diff, 0.025) <= 0:
                 billig = [k for k in erfuellt[:2] if k.startswith("weg3")]
                 erfuellt = billig + [k for k in erfuellt if k not in billig]
         print(f"Entscheidung: bauen mit {erfuellt[0]}")
+        rueckfall(wege, ids, gold, vorhersagen, ref, nur_zur_information=True)
         return
+    rueckfall(wege, ids, gold, vorhersagen, ref, nur_zur_information=False)
+
+
+def rueckfall(
+    wege: dict[str, dict[str, str]],
+    ids: list[str],
+    gold: list[str],
+    vorhersagen: dict[str, list[str]],
+    ref: str,
+    *,
+    nur_zur_information: bool,
+) -> None:
+    """Die Einigkeitsregel (§ 8.6); greift nur, wenn kein Weg das Kriterium erfüllt."""
     paar = einigkeit(wege, ids)
     if paar is None:
-        print("Entscheidung: verwerfen (kein Weg erfüllt das Kriterium, keine Einigkeitsregel)")
+        if not nur_zur_information:
+            print("Entscheidung: verwerfen (kein Weg erfüllt das Kriterium, keine Einigkeitsregel)")
         return
     x, y = paar
     einig = [i for i, d in enumerate(ids) if wege[x].get(d) == wege[y].get(d)]
@@ -896,11 +917,25 @@ def urteil(wege: dict[str, dict[str, str]], test: list[str]) -> None:
     diff = [p - q for p, q in zip(bw["regel"], bw["ref"], strict=True)]
     ok = makro_f1(g, v) >= KRITERIUM_F1 and perzentil(diff, 0.025) > 0
     ok = ok and abdeckung >= ABDECKUNG_RUECKFALL
+    vorspann = "nur zur Information, greift nicht: " if nur_zur_information else ""
     print(
-        f"Rückfall (Einigkeit {x} ∩ {y}): {len(einig)} Dokumente, Abdeckung gewichtet "
-        f"{abdeckung:.3f}, {guete(g, v)}, gegen {ref} 2,5 % {perzentil(diff, 0.025):+.3f}"
+        f"{vorspann}Rückfall (Einigkeit {x} ∩ {y}): {len(einig)} Dokumente, Abdeckung gewichtet "
+        f"{abdeckung:.3f}, {guete(g, v)}, Intervall "
+        f"{perzentil(bw['regel'], 0.025):.3f}–{perzentil(bw['regel'], 0.975):.3f}, "
+        f"gegen {ref} 2,5 % {perzentil(diff, 0.025):+.3f}; Regel {'erfüllt' if ok else 'nicht'}"
     )
-    print(f"Entscheidung: {'bauen mit der Einigkeitsregel' if ok else 'verwerfen'}")
+    if not nur_zur_information:
+        print(f"Entscheidung: {'bauen mit der Einigkeitsregel' if ok else 'verwerfen'}")
+
+
+def schreibe_vorhersage(weg: str) -> None:
+    """Die Vorhersage eines Wegs auf der Testmenge im Format von `georep validate score --pred`."""
+    quelle = {"qwen3.6-27b": "weg1_test_qwen3.6-27b.parquet"}.get(weg, f"{weg}.parquet")
+    ziel = AUSGABE / f"pred_{weg}.parquet"
+    pl.read_parquet(AUSGABE / quelle).select(
+        "id", pl.lit("politikfeld").alias("frage"), "label"
+    ).sort("id").write_parquet(ziel)
+    print(f"{ziel}: `georep validate score {VORHABEN} --pred {ziel}`")
 
 
 def main() -> None:
@@ -909,13 +944,14 @@ def main() -> None:
         "teil",
         nargs="*",
         choices=["grundgesamtheit", "entwicklung", "silber", "eingabe", "ausschuss", "cap", "tfidf"]
-        + ["llm", "prompt"],
+        + ["llm", "prompt", "vorhersage"],
     )
     ap.add_argument(
         "--menge", choices=["test", "entwicklung", "silber", "cap"], default="entwicklung"
     )
     ap.add_argument("--modell", default=MODELL)
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--weg", default="qwen3.6-27b", help="für `vorhersage`: weg3a_test, weg3b_test")
     args = ap.parse_args()
     settings, layout = umgebung()
     if not args.teil:
@@ -941,6 +977,8 @@ def main() -> None:
             tfidf(layout)
         elif teil == "llm":
             weg1(settings, layout, args.menge, args.modell, args.limit)
+        elif teil == "vorhersage":
+            schreibe_vorhersage(args.weg)
         elif teil == "prompt":
             s = systemprompt(codebuch())
             print(

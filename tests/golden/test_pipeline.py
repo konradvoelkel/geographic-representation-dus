@@ -127,6 +127,9 @@ def test_pipeline_runs_skips_and_reruns(
         # parties schreibt dieselben Urheber noch einmal, also bleibt ihr Hash, wie er war
         "functions": "übersprungen",
         "cosponsors": "übersprungen",
+        # Vorhaben 14: Kanten, Vorgänge und Antworten hängen am Korpus, nicht an den Orten
+        "references": "übersprungen",
+        "procedures": "übersprungen",
         # Vorhaben 17: die Monate lesen Korpus, Urheber, Gremien und Monatsreihe, das Vokabular
         # den Korpus; die Orte ändern keines davon
         "cycles": "übersprungen",

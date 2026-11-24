@@ -1,0 +1,1221 @@
+{
+  "vorhaben": "19-politikfelder",
+  "codebuch_version": "2026-11-23.1",
+  "einheit": "document",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-24",
+  "einheiten": 300,
+  "uneinig": 15,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "politikfeld": {
+      "n": 300,
+      "beide": 300,
+      "einig": 285,
+      "anteil": 0.95,
+      "anteil_wilson95": [
+        0.9191529665272558,
+        0.9694683593706526
+      ],
+      "cohen_kappa": 0.9428694757957012,
+      "krippendorff_alpha_nominal": 0.9429614346929058,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9429614346929058,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "1": 3,
+        "2": 7,
+        "3": 7,
+        "4": 1,
+        "5": 1,
+        "6": 12,
+        "7": 29,
+        "8": 8,
+        "9": 1,
+        "10": 78,
+        "12": 8,
+        "13": 32,
+        "14": 31,
+        "15": 8,
+        "16": 0,
+        "17": 4,
+        "18": 0,
+        "19": 1,
+        "20": 33,
+        "21": 9,
+        "23": 27,
+        "99": 0
+      },
+      "treffer": null,
+      "verfahren": {
+        "n": 300,
+        "genauigkeit": 0.8366666666666667,
+        "genauigkeit_wilson95": [
+          0.7906268325698749,
+          0.8741935668055973
+        ],
+        "mikro": {
+          "praezision": 0.8366666666666667,
+          "recall": 0.8366666666666667,
+          "f1": 0.8366666666666667
+        },
+        "makro": {
+          "praezision": 0.7299517346692191,
+          "recall": 0.7046756885265315,
+          "f1": 0.7042320446882422
+        },
+        "klassen": [
+          {
+            "label": "1",
+            "gold": 3,
+            "vorhergesagt": 3,
+            "richtig": 2,
+            "praezision": 0.6666666666666666,
+            "praezision_wilson95": [
+              0.2076596008020477,
+              0.9385080552796037
+            ],
+            "recall": 0.6666666666666666,
+            "recall_wilson95": [
+              0.2076596008020477,
+              0.9385080552796037
+            ],
+            "f1": 0.6666666666666666
+          },
+          {
+            "label": "2",
+            "gold": 7,
+            "vorhergesagt": 5,
+            "richtig": 5,
+            "praezision": 1.0,
+            "praezision_wilson95": [
+              0.5655175352168251,
+              1.0
+            ],
+            "recall": 0.7142857142857143,
+            "recall_wilson95": [
+              0.35893445183261935,
+              0.9177810759959433
+            ],
+            "f1": 0.8333333333333333
+          },
+          {
+            "label": "3",
+            "gold": 7,
+            "vorhergesagt": 8,
+            "richtig": 4,
+            "praezision": 0.5,
+            "praezision_wilson95": [
+              0.21521606221387757,
+              0.7847839377861224
+            ],
+            "recall": 0.5714285714285714,
+            "recall_wilson95": [
+              0.2504583645276572,
+              0.8417801447485302
+            ],
+            "f1": 0.5333333333333333
+          },
+          {
+            "label": "4",
+            "gold": 1,
+            "vorhergesagt": 1,
+            "richtig": 1,
+            "praezision": 1.0,
+            "praezision_wilson95": [
+              0.20654931437723745,
+              1.0
+            ],
+            "recall": 1.0,
+            "recall_wilson95": [
+              0.20654931437723745,
+              1.0
+            ],
+            "f1": 1.0
+          },
+          {
+            "label": "5",
+            "gold": 1,
+            "vorhergesagt": 0,
+            "richtig": 0,
+            "praezision": null,
+            "praezision_wilson95": null,
+            "recall": 0.0,
+            "recall_wilson95": [
+              0.0,
+              0.7934506856227626
+            ],
+            "f1": null
+          },
+          {
+            "label": "6",
+            "gold": 12,
+            "vorhergesagt": 18,
+            "richtig": 12,
+            "praezision": 0.6666666666666666,
+            "praezision_wilson95": [
+              0.43749467295945105,
+              0.837212252491663
+            ],
+            "recall": 1.0,
+            "recall_wilson95": [
+              0.7575059933447592,
+              1.0
+            ],
+            "f1": 0.8
+          },
+          {
+            "label": "7",
+            "gold": 29,
+            "vorhergesagt": 29,
+            "richtig": 25,
+            "praezision": 0.8620689655172413,
+            "praezision_wilson95": [
+              0.6944100627964798,
+              0.9450256003588804
+            ],
+            "recall": 0.8620689655172413,
+            "recall_wilson95": [
+              0.6944100627964798,
+              0.9450256003588804
+            ],
+            "f1": 0.8620689655172413
+          },
+          {
+            "label": "8",
+            "gold": 8,
+            "vorhergesagt": 7,
+            "richtig": 6,
+            "praezision": 0.8571428571428571,
+            "praezision_wilson95": [
+              0.4868721707256811,
+              0.9743203756552565
+            ],
+            "recall": 0.75,
+            "recall_wilson95": [
+              0.40927543031016883,
+              0.9285207872478909
+            ],
+            "f1": 0.7999999999999999
+          },
+          {
+            "label": "9",
+            "gold": 1,
+            "vorhergesagt": 1,
+            "richtig": 1,
+            "praezision": 1.0,
+            "praezision_wilson95": [
+              0.20654931437723745,
+              1.0
+            ],
+            "recall": 1.0,
+            "recall_wilson95": [
+              0.20654931437723745,
+              1.0
+            ],
+            "f1": 1.0
+          },
+          {
+            "label": "10",
+            "gold": 78,
+            "vorhergesagt": 81,
+            "richtig": 76,
+            "praezision": 0.9382716049382716,
+            "praezision_wilson95": [
+              0.8635075236315787,
+              0.9733474879029708
+            ],
+            "recall": 0.9743589743589743,
+            "recall_wilson95": [
+              0.9112472996432415,
+              0.9929399065272408
+            ],
+            "f1": 0.9559748427672956
+          },
+          {
+            "label": "12",
+            "gold": 8,
+            "vorhergesagt": 3,
+            "richtig": 3,
+            "praezision": 1.0,
+            "praezision_wilson95": [
+              0.4385029682449546,
+              1.0
+            ],
+            "recall": 0.375,
+            "recall_wilson95": [
+              0.13684428582359742,
+              0.6942576053973727
+            ],
+            "f1": 0.5454545454545454
+          },
+          {
+            "label": "13",
+            "gold": 32,
+            "vorhergesagt": 32,
+            "richtig": 25,
+            "praezision": 0.78125,
+            "praezision_wilson95": [
+              0.6124500635075647,
+              0.8897616374739581
+            ],
+            "recall": 0.78125,
+            "recall_wilson95": [
+              0.6124500635075647,
+              0.8897616374739581
+            ],
+            "f1": 0.78125
+          },
+          {
+            "label": "14",
+            "gold": 31,
+            "vorhergesagt": 30,
+            "richtig": 27,
+            "praezision": 0.9,
+            "praezision_wilson95": [
+              0.7437891742081593,
+              0.9654001112526658
+            ],
+            "recall": 0.8709677419354839,
+            "recall_wilson95": [
+              0.7114759374369357,
+              0.9486571562537085
+            ],
+            "f1": 0.8852459016393444
+          },
+          {
+            "label": "15",
+            "gold": 8,
+            "vorhergesagt": 10,
+            "richtig": 7,
+            "praezision": 0.7,
+            "praezision_wilson95": [
+              0.39677814746114537,
+              0.8922087325936989
+            ],
+            "recall": 0.875,
+            "recall_wilson95": [
+              0.5291118177871464,
+              0.9775825085499433
+            ],
+            "f1": 0.7777777777777777
+          },
+          {
+            "label": "16",
+            "gold": 0,
+            "vorhergesagt": 0,
+            "richtig": 0,
+            "praezision": null,
+            "praezision_wilson95": null,
+            "recall": null,
+            "recall_wilson95": null,
+            "f1": null
+          },
+          {
+            "label": "17",
+            "gold": 4,
+            "vorhergesagt": 3,
+            "richtig": 2,
+            "praezision": 0.6666666666666666,
+            "praezision_wilson95": [
+              0.2076596008020477,
+              0.9385080552796037
+            ],
+            "recall": 0.5,
+            "recall_wilson95": [
+              0.15003898915214947,
+              0.8499610108478506
+            ],
+            "f1": 0.5714285714285715
+          },
+          {
+            "label": "18",
+            "gold": 0,
+            "vorhergesagt": 0,
+            "richtig": 0,
+            "praezision": null,
+            "praezision_wilson95": null,
+            "recall": null,
+            "recall_wilson95": null,
+            "f1": null
+          },
+          {
+            "label": "19",
+            "gold": 1,
+            "vorhergesagt": 0,
+            "richtig": 0,
+            "praezision": null,
+            "praezision_wilson95": null,
+            "recall": 0.0,
+            "recall_wilson95": [
+              0.0,
+              0.7934506856227626
+            ],
+            "f1": null
+          },
+          {
+            "label": "20",
+            "gold": 33,
+            "vorhergesagt": 34,
+            "richtig": 27,
+            "praezision": 0.7941176470588235,
+            "praezision_wilson95": [
+              0.632016119488364,
+              0.8965047310096808
+            ],
+            "recall": 0.8181818181818182,
+            "recall_wilson95": [
+              0.6561176836533009,
+              0.9138923179105933
+            ],
+            "f1": 0.8059701492537314
+          },
+          {
+            "label": "21",
+            "gold": 9,
+            "vorhergesagt": 12,
+            "richtig": 8,
+            "praezision": 0.6666666666666666,
+            "praezision_wilson95": [
+              0.39062208887279953,
+              0.8618799089087867
+            ],
+            "recall": 0.8888888888888888,
+            "recall_wilson95": [
+              0.5650002944233439,
+              0.9801091123614551
+            ],
+            "f1": 0.761904761904762
+          },
+          {
+            "label": "23",
+            "gold": 27,
+            "vorhergesagt": 23,
+            "richtig": 20,
+            "praezision": 0.8695652173913043,
+            "praezision_wilson95": [
+              0.6787251772990404,
+              0.9546234090636876
+            ],
+            "recall": 0.7407407407407407,
+            "recall_wilson95": [
+              0.5532142868544692,
+              0.8682962543809281
+            ],
+            "f1": 0.7999999999999999
+          },
+          {
+            "label": "99",
+            "gold": 0,
+            "vorhergesagt": 0,
+            "richtig": 0,
+            "praezision": null,
+            "praezision_wilson95": null,
+            "recall": null,
+            "recall_wilson95": null,
+            "f1": null
+          }
+        ],
+        "konfusion": {
+          "labels": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "20",
+            "21",
+            "23",
+            "99"
+          ],
+          "zeilen_gold": [
+            [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              5,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              4,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              12,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              25,
+              0,
+              0,
+              1,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              6,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              76,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0,
+              0,
+              1,
+              3,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              2,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1,
+              0,
+              25,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              2,
+              27,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              7,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              0,
+              1,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              27,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              8,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              3,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              2,
+              0,
+              20,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "genauigkeit_grundgesamtheit": {
+          "schaetzer": 0.83611857255739,
+          "wilson95_kish": [
+            0.7899284761565601,
+            0.8737753669977582
+          ],
+          "n_eff": 298.7812917469801
+        }
+      }
+    },
+    "unsicher": {
+      "n": 300,
+      "beide": 300,
+      "einig": 286,
+      "anteil": 0.9533333333333334,
+      "anteil_wilson95": [
+        0.923202639772079,
+        0.9720010663176659
+      ],
+      "cohen_kappa": 0.8896769109535066,
+      "krippendorff_alpha_nominal": 0.8897681266102319,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.8897681266102319,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "ja": 84,
+        "nein": 202
+      },
+      "treffer": {
+        "positiv": [
+          "ja"
+        ],
+        "stichprobe": {
+          "treffer": 84,
+          "gewertet": 286,
+          "ignoriert": 0,
+          "anteil": 0.2937062937062937,
+          "wilson95": [
+            0.2439347029811348,
+            0.34894617582716964
+          ]
+        },
+        "grundgesamtheit": {
+          "schaetzer": 0.2957658207478359,
+          "wilson95_kish": [
+            0.24568747489167825,
+            0.3512978072914667
+          ],
+          "n_eff": 283.87723565712577,
+          "n": 19032,
+          "selbstgewichtend": false
+        },
+        "je_schicht": {
+          "ausschuss|anfrage": {
+            "treffer": 5,
+            "gewertet": 16,
+            "schicht_n": 1001,
+            "anteil": 0.3125,
+            "wilson95": [
+              0.14164643854782039,
+              0.5559564416525933
+            ]
+          },
+          "ausschuss|antrag": {
+            "treffer": 3,
+            "gewertet": 10,
+            "schicht_n": 754,
+            "anteil": 0.3,
+            "wilson95": [
+              0.10779126740630099,
+              0.6032218525388546
+            ]
+          },
+          "ausschuss|beschluss": {
+            "treffer": 8,
+            "gewertet": 36,
+            "schicht_n": 2327,
+            "anteil": 0.2222222222222222,
+            "wilson95": [
+              0.11716331975796462,
+              0.3808470294611818
+            ]
+          },
+          "ausschuss|eingabe": {
+            "treffer": 0,
+            "gewertet": 1,
+            "schicht_n": 113,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.7934506856227626
+            ]
+          },
+          "ausschuss|information": {
+            "treffer": 8,
+            "gewertet": 17,
+            "schicht_n": 1156,
+            "anteil": 0.47058823529411764,
+            "wilson95": [
+              0.26165106442409436,
+              0.6903676493999558
+            ]
+          },
+          "beirat|anfrage": {
+            "treffer": 0,
+            "gewertet": 2,
+            "schicht_n": 114,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.6576197724933469
+            ]
+          },
+          "beirat|antrag": {
+            "treffer": 1,
+            "gewertet": 3,
+            "schicht_n": 186,
+            "anteil": 0.3333333333333333,
+            "wilson95": [
+              0.06149194472039621,
+              0.7923403991979522
+            ]
+          },
+          "beirat|beschluss": {
+            "treffer": 0,
+            "gewertet": 1,
+            "schicht_n": 98,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.7934506856227626
+            ]
+          },
+          "beirat|information": {
+            "treffer": 0,
+            "gewertet": 1,
+            "schicht_n": 43,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.7934506856227626
+            ]
+          },
+          "bezirksvertretung|anfrage": {
+            "treffer": 14,
+            "gewertet": 32,
+            "schicht_n": 2200,
+            "anteil": 0.4375,
+            "wilson95": [
+              0.2816533111504036,
+              0.6067440886314801
+            ]
+          },
+          "bezirksvertretung|antrag": {
+            "treffer": 11,
+            "gewertet": 47,
+            "schicht_n": 3090,
+            "anteil": 0.23404255319148937,
+            "wilson95": [
+              0.13603274586227188,
+              0.37224257550155593
+            ]
+          },
+          "bezirksvertretung|beschluss": {
+            "treffer": 15,
+            "gewertet": 45,
+            "schicht_n": 2893,
+            "anteil": 0.3333333333333333,
+            "wilson95": [
+              0.21358874934330035,
+              0.47929511690099585
+            ]
+          },
+          "bezirksvertretung|eingabe": {
+            "treffer": 0,
+            "gewertet": 1,
+            "schicht_n": 11,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.7934506856227626
+            ]
+          },
+          "bezirksvertretung|information": {
+            "treffer": 7,
+            "gewertet": 42,
+            "schicht_n": 2803,
+            "anteil": 0.16666666666666666,
+            "wilson95": [
+              0.08315916646398075,
+              0.3060400274464885
+            ]
+          },
+          "rat|anfrage": {
+            "treffer": 4,
+            "gewertet": 8,
+            "schicht_n": 609,
+            "anteil": 0.5,
+            "wilson95": [
+              0.21521606221387757,
+              0.7847839377861224
+            ]
+          },
+          "rat|antrag": {
+            "treffer": 6,
+            "gewertet": 15,
+            "schicht_n": 1033,
+            "anteil": 0.4,
+            "wilson95": [
+              0.1982449614134158,
+              0.6425316987937539
+            ]
+          },
+          "rat|beschluss": {
+            "treffer": 0,
+            "gewertet": 6,
+            "schicht_n": 403,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.3903342879021653
+            ]
+          },
+          "rat|information": {
+            "treffer": 2,
+            "gewertet": 3,
+            "schicht_n": 198,
+            "anteil": 0.6666666666666666,
+            "wilson95": [
+              0.2076596008020477,
+              0.9385080552796037
+            ]
+          }
+        }
+      }
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 300 Dokumenten, nicht von Menschen",
+  "selbstgewichtend": false,
+  "vorhersage": {
+    "datei": "pred_weg3b_test.parquet",
+    "sha256": "797b3daa0e8c7f476a4505cf7943ce3e4d1d586b81649ae87811e64f4fe5f3a2"
+  }
+}
