@@ -13,8 +13,11 @@ die Bootstrap-Ziehungen; ``seed + 1`` erst die Rechnung innerhalb der Stadtbezir
 Hypothesen, dann Moran's I je Hypothese für Residuen, x und y. Dann ergibt derselbe Lauf dieselben
 Zahlen wie die Messung, und zwei Läufe schreiben dieselbe Datei. Die Permutationen werden einzeln
 gezogen (``rng.permutation(n)`` zieht dasselbe wie ``rng.permutation(y)``), die Korrelationen aber
-für alle zugleich berechnet; beobachteter und permutierter Wert entstehen aus derselben Formel, damit
-ein gleicher Wert auch bitgleich ist.
+für alle zugleich berechnet (``_row_correlations``). Im Haupttest kommt das beobachtete rho wie im
+Messskript aus ``np.corrcoef``, die permutierten aus der Zeilenformel; beide weichen oft im letzten
+Bit ab (bei 41 Werten in neun von zehn Fällen), darum zählt ein permutiertes rho bis ``TIE`` unter
+dem beobachteten als mindestens so extrem, wie im Messskript. Innerhalb der Stadtbezirke und bei
+Moran's I entstehen beobachteter und permutierte Werte aus derselben Formel und brauchen das nicht.
 
 Rein und ohne Netz; die Spalten und Parameter nennt der Aufrufer über ``NeedSettings``. ``holm``
 und die Wortwahl ``bestätigt``/``nicht bestätigt`` sind eine **Übergangslösung**, bis Vorhaben 17
@@ -44,7 +47,8 @@ from georep.settings import NeedHypothesis, NeedSettings
 DISTRICT = "wahlkreis_id"
 STRATUM = "stadtbezirk"
 # Der Haupttest zählt ein permutiertes rho, das dem beobachteten bis auf Fließkomma gleicht, als
-# mindestens so extrem (Messskript, ``spearman_test``); die explorativen Rechnungen tun das nicht.
+# mindestens so extrem (Messskript, ``spearman_test``): das beobachtete kommt aus ``np.corrcoef``, die
+# permutierten aus ``_row_correlations``. Die explorativen Rechnungen brauchen das nicht.
 TIE = 1e-12
 CONFIRMED = "bestätigt"
 NOT_CONFIRMED = "nicht bestätigt"
