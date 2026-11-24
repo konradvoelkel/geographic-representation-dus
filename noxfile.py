@@ -286,6 +286,8 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
             "tests/property/test_crosswalk_props.py",
             "tests/golden/test_crosswalk_geometry.py",
             "tests/golden/test_crosswalk_methods.py",
+            "tests/unit/test_crosswalk_points.py",  # Vorhaben 22: point_shares
+            "tests/property/test_crosswalk_points_props.py",  # Vorhaben 22
         ),
     ),
     "comparison": (
