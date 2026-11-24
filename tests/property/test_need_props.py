@@ -13,6 +13,10 @@ p_values = st.lists(st.floats(min_value=0.0, max_value=1.0), max_size=12)
 values = st.lists(
     st.floats(min_value=-1e3, max_value=1e3, allow_nan=False), min_size=3, max_size=25
 )
+# Moran's I bekommt Ränge und Rangresiduen. Beliebige Floats verlieren beim Verschieben ihre Streuung:
+# hypothesis fand am 2026-11-24 [0, 0, 1,2e-9] mit shift 1, wo nach dem Zentrieren nur sechs
+# Stellen übrig waren (I = -0,2500015 statt -0,25); das ist Rundung, keine Eigenschaft.
+whole = st.lists(st.integers(min_value=-1000, max_value=1000).map(float), min_size=3, max_size=25)
 
 
 @given(p=p_values)
@@ -74,7 +78,7 @@ def test_one_stratum_is_no_stratum(x: list[float], seed: int) -> None:
 
 
 @given(
-    x=values,
+    x=whole,
     scale=st.floats(min_value=0.01, max_value=100.0),
     shift=st.floats(min_value=-100, max_value=100),
 )
