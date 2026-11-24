@@ -377,6 +377,11 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
         ("src/georep/analysis/procedures.py",),
         ("tests/unit/test_procedures.py", "tests/property/test_procedures_props.py"),
     ),
+    # Vorhaben 26: Beschlusslage, Prüfauftrag, Praxiszellen, Antragserfolg; Zeit nicht gemessen
+    "outcomes": (
+        ("src/georep/analysis/outcomes.py",),
+        ("tests/unit/test_outcomes.py", "tests/property/test_outcomes_props.py"),
+    ),
 }
 # Die acht Module, die am 2026-10-13 unter 90 s brauchten; der wöchentliche Qualitätslauf nimmt
 # genau diese (.github/workflows/quality.yml).

@@ -210,3 +210,48 @@ def is_number(text: str) -> bool:
         return math.isfinite(float(text))
     except ValueError:
         return False
+
+
+# --- Vorhaben 26: Beschlusslage (georep.analysis.outcomes). Ein Schlüssel aus mehreren Spalten, von
+# denen eine leer sein darf (die Beratung ohne Tagesordnungspunkt), und die Bindung der Klasse an den
+# Punkt, der sie trägt.
+def rows_unique(frame: pl.DataFrame, *columns: str) -> bool:
+    """Die Spalten bilden zusammen einen Schlüssel: keine Kombination steht zweimal da.
+
+    Ohne Anspruch an die Folge, und ``null`` ist ein Wert wie jeder andere: zwei Zeilen, die sich
+    nur in einer leeren Spalte gleichen, sind dieselbe.
+    """
+    return frame.select(*columns).is_unique().all() if frame.height else True
+
+
+def values_known(frame: pl.DataFrame, column: str, known: Iterable[str]) -> bool:
+    """Jeder Wert der Spalte, außer ``null``, ist einer der bekannten."""
+    return set(frame.get_column(column).drop_nulls().unique().to_list()) <= set(known)
+
+
+def entries_decide_exactly(frame: pl.DataFrame) -> bool:
+    """Ein maßgeblicher Punkt (``entscheidung_top``) steht genau dort, wo die Klasse nicht ``ohne_ergebnis`` ist.
+
+    Und mit ihm der Eintrag (``result``): eine Klasse ohne Punkt wäre erfunden, ein Punkt ohne
+    Klasse verloren.
+    """
+    without = frame.get_column("klasse") == "ohne_ergebnis"
+    return bool(
+        (frame.get_column("entscheidung_top").is_null() == without).all()
+        and (frame.get_column("result").is_null() == without).all()
+    )
+
+
+def decisions_in_progress(outcomes: pl.DataFrame, progress: pl.DataFrame) -> bool:
+    """Jeder maßgebliche Punkt ist ein Punkt desselben Dokuments im Beratungsverlauf."""
+    chosen = outcomes.filter(pl.col("entscheidung_top").is_not_null()).select(
+        "id", pl.col("entscheidung_top").alias("top")
+    )
+    return chosen.join(progress.select("id", "top"), on=["id", "top"], how="anti").height == 0
+
+
+def shares_bounded(frame: pl.DataFrame, total: str, part: str) -> bool:
+    """``total >= part >= 0`` in jeder Zeile: ein Teil zählt nie mehr als sein Ganzes."""
+    return bool(
+        ((frame.get_column(part) >= 0) & (frame.get_column(total) >= frame.get_column(part))).all()
+    )

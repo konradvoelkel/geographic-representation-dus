@@ -351,6 +351,10 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # Vorhaben 14: wie die Beratungsfolge die Version der Datei, die ``georep pack --attachments``
     # schreibt; die Schritte ``references`` und ``procedures`` lesen sie nur.
     "georep.pack.ATTACHMENTS_SCHEMA_VERSION",
+    # Vorhaben 26: die Version der Tabelle „Paper × Tagesordnungspunkt", die ``georep pack
+    # --outcomes`` schreibt; wie bei Punkt 58 gehört sie zu einem Befehl, und der Schritt, der das
+    # Paket liest, nennt die Version seiner eigenen Ausgabe.
+    "georep.analysis.outcomes.AGENDA_SCHEMA_VERSION",
 }
 
 
