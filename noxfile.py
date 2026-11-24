@@ -173,6 +173,9 @@ VERIFY_TARGETS = [
     # 5 s am 2026-11-24. Die übrigen Funktionen von prep.references nehmen vorkompilierte Muster
     # (``re.Pattern`` in ``ReferenceRules``) und stehen darum nicht hier.
     "georep.prep.references.edge_type",
+    # Vorhaben 11 (2026-11-24): die Zeilen des Rohtexts mit Positionen; einzeln geprüft, 25 s,
+    # Exit 0, „Not confirmed"
+    "georep.prep.raw_texts.split_lines",
 ]
 
 
