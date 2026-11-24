@@ -169,6 +169,10 @@ VERIFY_TARGETS = [
     # ``re.Pattern`` tragen (dasselbe Werkzeugartefakt wie bei ``parse_reference`` oben); ihre
     # Eigenschaften prüft tests/property/test_functions_props.py.
     "georep.analysis.cosponsors.camp",
+    # Vorhaben 22 (2026-11-24): Holm über die vorab festgelegten Tests, rein; einzeln geprüft, 22 s,
+    # kein Gegenbeispiel. Übergang, bis Vorhaben 17 ``analysis/hypotheses.py`` bringt; dann geht
+    # das Ziel mit der Funktion dorthin.
+    "georep.analysis.need.holm",
 ]
 
 
@@ -365,6 +369,11 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
             "tests/property/test_functions_props.py",
             "tests/property/test_practice_props.py",
         ),
+    ),
+    # Vorhaben 22: die Tests der vorab festgelegten Hypothesen
+    "need": (
+        ("src/georep/analysis/need.py",),
+        ("tests/unit/test_need_hypotheses.py", "tests/property/test_need_props.py"),
     ),
 }
 # Die acht Module, die am 2026-10-13 unter 90 s brauchten; der wöchentliche Qualitätslauf nimmt
