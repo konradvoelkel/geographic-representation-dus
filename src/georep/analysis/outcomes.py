@@ -673,11 +673,17 @@ def _success_fits(
     result: pl.DataFrame | None = None,
 ) -> bool:
     assert result is not None
+    sums = result.group_by("gremium_art").agg(pl.col("angenommen").sum(), pl.col("erwartet").sum())
     return (
         result.schema == pl.Schema(SUCCESS_SCHEMA)
         and rows_unique(result, "periode", "gremium_art", "fraktion")
         and shares_bounded(result, "n", "angenommen")
         and result.equals(result.sort("periode", "gremium_art", "fraktion", nulls_last=True))
+        # Review 2026-11-24, N2: die Standardisierung verteilt nur um, je Gremienart (und damit je
+        # Schicht darin) sind beobachtet und erwartet gleich
+        and bool(
+            ((sums["angenommen"] - sums["erwartet"]).abs() <= 1e-6 * (1 + sums["angenommen"])).all()
+        )
     )
 
 
@@ -688,17 +694,25 @@ def _success_fits(
         and has_columns(bodies, "id", "gremium", "gremium_art")
     )
 )
-@deal.ensure(_success_fits, message="je Gremienart und Fraktion eine Zeile, n >= angenommen >= 0")
+@deal.ensure(
+    _success_fits,
+    message="je Gremienart und Fraktion eine Zeile, n >= angenommen >= 0, Σ beobachtet = Σ erwartet",
+)
 def motion_success(
     outcomes: pl.DataFrame, cosponsors: pl.DataFrame, bodies: pl.DataFrame, period: str
 ) -> pl.DataFrame:
     """Antragserfolg je Fraktion und Gremienart, beobachtet gegen erwartet (explorativ, § 3.10).
 
-    Gezählt werden die Anträge mit Sachentscheidung (angenommen oder abgelehnt) und tragfähigem
-    Eintrag. Erwartet ist die Summe der Annahmequoten der Gremien der Drucksache über die Anträge
-    der Fraktion (indirekte Standardisierung, ``analysis.practice``); ein gemeinsamer Antrag
-    zählt für jede beteiligte Fraktion, ein Antrag ohne Fraktion nur für die Quote seines
-    Gremiums. Getrennt nach Gremienart, weil im Rat Erfolg fast nur Mehrheit heißt (§ 3.10).
+    Gezählt werden die Anträge mit Sachentscheidung (angenommen oder abgelehnt). Je Antrag und
+    beteiligter Fraktion eine Zeile: ein gemeinsamer Antrag zählt für jede, ein Antrag ohne
+    Fraktion gar nicht. Erwartet ist die Summe der Annahmequoten der Gremien der Drucksache über
+    die Zeilen der Fraktion (indirekte Standardisierung, ``analysis.practice``), und die Quote
+    einer Schicht zählt **dieselben Zeilen** (Review 2026-11-24, N2): so ist je Schicht Σ
+    beobachtet = Σ erwartet, die Standardisierung verteilt nur um. Das weicht vom Messskript ab,
+    das die Quote je Antrag einmal zählte, Anträge ohne Fraktion eingeschlossen; dort kam der Rat
+    seit 2025 für die CDU auf 18 von 18 bei erwartet 1,5. Getrennt nach Gremienart, weil im Rat
+    Erfolg fast nur Mehrheit heißt (§ 3.10). Der Filter auf ``eintrag_tragfaehig`` ändert heute
+    nichts: false steht nur bei „erledigt", und das ist keine Sachentscheidung.
     """
     decided = (
         outcomes.filter(
@@ -709,11 +723,15 @@ def motion_success(
         .select("id", pl.col("klasse").is_in(list(ANGENOMMEN)).alias("angenommen"))
         .join(cosponsors.select("id", "fraktionen"), on="id", how="left")
         .join(bodies.select("id", "gremium", "gremium_art"), on="id", how="left")
-        .sort("id")
+        .with_columns(pl.col("fraktionen").list.unique().alias("fraktion"))
+        .explode("fraktion")
+        .filter(pl.col("fraktion").is_not_null())
+        .select("id", "fraktion", "angenommen", "gremium", "gremium_art")
+        .sort("id", "fraktion")
     )
     ratios = observed_expected(
         decided,
-        unit="fraktionen",
+        unit="fraktion",
         outcome="angenommen",
         strata=["gremium_art", "gremium"],
         by=["gremium_art"],
@@ -721,7 +739,7 @@ def motion_success(
     return ratios.select(
         pl.lit(period, dtype=pl.String).alias("periode"),
         "gremium_art",
-        pl.col("fraktionen").alias("fraktion"),
+        "fraktion",
         pl.col(N).cast(pl.Int32).alias("n"),
         pl.col(OBSERVED).cast(pl.Int32).alias("angenommen"),
         pl.col(EXPECTED).alias("erwartet"),

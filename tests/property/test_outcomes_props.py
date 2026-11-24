@@ -239,3 +239,49 @@ def test_practice_cells_depend_only_on_body_year_and_class(
     assert oc.practice_cells(moved, 0.4, minimum).equals(first)
     for row in first.iter_rows(named=True):
         assert row["erledigt"] >= minimum and row["erledigt"] >= 0.4 * row["n"]
+
+
+# --- Antragserfolg ------------------------------------------------------------------------------
+
+motions = st.lists(
+    st.tuples(
+        st.sampled_from(("RAT", "AUS", "BV1")),
+        st.sampled_from(("beschlossen", "geaendert", "abgelehnt", "erledigt", "vertagt")),
+        st.lists(st.sampled_from(("A", "B", "C")), max_size=3),
+    ),
+    min_size=1,
+    max_size=40,
+)
+
+
+@given(motions)
+def test_success_spreads_the_observed_over_each_stratum(
+    found: list[tuple[str, str, list[str]]],
+) -> None:
+    """Review 2026-11-24, N2: je Gremium (Schicht) Σ angenommen = Σ erwartet über die Fraktionen."""
+    ids = [f"{i:03d}" for i in range(len(found))]
+    kinds = {"RAT": "rat", "AUS": "ausschuss", "BV1": "bezirksvertretung"}
+    outcomes = pl.DataFrame(
+        {
+            "id": ids,
+            "rolle": ["antrag"] * len(ids),
+            "klasse": [name for _, name, _ in found],
+            "eintrag_tragfaehig": [True] * len(ids),
+        }
+    )
+    cosponsors = pl.DataFrame(
+        {"id": ids, "fraktionen": [fractions for *_, fractions in found]},
+        schema={"id": pl.String, "fraktionen": pl.List(pl.String)},
+    )
+    for body, kind in kinds.items():
+        keep = [i for i, (b, *_) in zip(ids, found, strict=True) if b == body]
+        bodies = pl.DataFrame(
+            {"id": keep, "gremium": [body] * len(keep), "gremium_art": [kind] * len(keep)},
+            schema={"id": pl.String, "gremium": pl.String, "gremium_art": pl.String},
+        )
+        success = oc.motion_success(
+            outcomes.filter(pl.col("id").is_in(keep)), cosponsors, bodies, "p"
+        )
+        expected = float(success.get_column("erwartet").sum())
+        observed = int(success.get_column("angenommen").sum())
+        assert abs(expected - observed) < 1e-9

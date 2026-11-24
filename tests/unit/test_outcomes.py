@@ -532,8 +532,9 @@ def test_success_is_observed_against_the_practice_of_the_bodies() -> None:
     assert rows[("rat", "A")]["erwartet"] == pytest.approx(0.5)
     assert rows[("rat", "A")]["beob_erw"] == pytest.approx(2.0)
     assert rows[("rat", "B")]["beob_erw"] == pytest.approx(0.0)
-    # BV1: Quote 1/2 aus Antrag 3 (A und B) und 4 (ohne Fraktion); 5 ist erledigt und zählt nicht
-    assert rows[("bezirksvertretung", "B")]["erwartet"] == pytest.approx(0.5)
+    # BV1: die Quote zählt die Zeilen je Fraktion (Review 2026-11-24, N2): Antrag 3 (A und B,
+    # angenommen) zweimal, Antrag 4 ohne Fraktion gar nicht; 5 ist erledigt und zählt nicht
+    assert rows[("bezirksvertretung", "B")]["erwartet"] == pytest.approx(1.0)
     assert set(rows) == {
         ("rat", "A"),
         ("rat", "B"),
@@ -584,3 +585,31 @@ def test_an_empty_entry_is_no_entry() -> None:
     assert agenda.get_column("result").to_list() == [None]
     verlauf = oc.progress(agenda, ORGS, RESULTS)
     assert verlauf.get_column("stufe").to_list() == [None]
+
+
+def test_success_spreads_exactly_the_observed_over_the_fractions() -> None:
+    """Review 2026-11-24, N2: je Schicht ist die Summe der Erwartungen die der Beobachtungen.
+
+    Die Quote einer Schicht zählt dieselben Zeilen wie die Beobachtung: einen gemeinsamen Antrag
+    je Fraktion, einen Antrag ohne Fraktion gar nicht. Sonst verteilte die Standardisierung mehr
+    oder weniger Annahmen, als es gab (der Rat seit 2025: CDU 18 von 18 bei erwartet 1,5).
+    """
+    outcomes = pl.DataFrame(
+        {
+            "id": ["1", "2", "3", "4", "5"],
+            "rolle": ["antrag"] * 5,
+            "klasse": ["beschlossen", "beschlossen", "abgelehnt", "abgelehnt", "abgelehnt"],
+            "eintrag_tragfaehig": [True] * 5,
+        }
+    )
+    cosponsors = pl.DataFrame(
+        {"id": ["1", "2", "3", "4", "5"], "fraktionen": [["A", "B"], ["A"], ["C"], [], []]},
+        schema={"id": pl.String, "fraktionen": pl.List(pl.String)},
+    )
+    bodies = pl.DataFrame(
+        {"id": ["1", "2", "3", "4", "5"], "gremium": ["RAT"] * 5, "gremium_art": ["rat"] * 5}
+    )
+    success = oc.motion_success(outcomes, cosponsors, bodies, "2025-")
+    assert success.get_column("angenommen").sum() == 3  # A zweimal, B einmal
+    assert success.get_column("erwartet").sum() == pytest.approx(3.0)
+    assert dict(success.select("fraktion", "n").iter_rows()) == {"A": 2, "B": 1, "C": 1}

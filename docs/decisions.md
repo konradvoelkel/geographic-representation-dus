@@ -3209,10 +3209,23 @@ bleibt in `klasse`, die Seite zeigt sie in Stufe 3 nur als Unterzahl.
   631 944 Bytes, zstd auf Stufe 19) unter dem Namen aus `outcomes.package`; es trägt die Schlüssel
   der Organisationen, nicht die Kürzel, damit die Kürzel aus Frage 9.17 kein neues Paket brauchen.
   Wo der Netzlauf liegt, gilt er; aus denselben Dateien geben beide Wege denselben Verlauf.
-- *Antragserfolg* ist je Gremienart getrennt (`by`), standardisiert je Gremium der Drucksache, und
-  zählt nur Anträge mit tragfähigem Eintrag; ein Antrag ohne Fraktion zählt nur für die Quote seines
-  Gremiums. Die Fraktionen kommen aus 15 (mit Zeitraum, Punkt 75), nicht aus der Einheit des
-  Messskripts.
+- *Antragserfolg* ist je Gremienart getrennt (`by`) und standardisiert je Gremium der Drucksache.
+  Die Fraktionen kommen aus 15 (mit Zeitraum, Punkt 75), nicht aus der Einheit des Messskripts;
+  „SPD" (Dokumente vor dem 2020-11-01) und „SPD+VOLT" bleiben darum getrennte Zeilen, wie 15 sie
+  liefert. Der Filter auf `eintrag_tragfaehig` ändert heute nichts: false steht nur bei „erledigt",
+  und das ist keine Sachentscheidung.
+- *Die Quote einer Schicht zählt dieselben Zeilen wie die Beobachtung* (Review 2026-11-24, N2,
+  Entscheidung des Supervisors): je Antrag und beteiligter Fraktion eine Zeile, ein Antrag ohne
+  Fraktion gar nicht. Das Messskript zählte die Quote je Antrag einmal, Anträge ohne Fraktion
+  eingeschlossen; dann verteilte die Standardisierung im Rat der Hauptperiode 361,3 erwartete
+  Annahmen auf 524 beobachtete, und beobachtet/erwartet lag für die Mehrheit fast überall über 1.
+  Jetzt gilt je Schicht Σ beobachtet = Σ erwartet, als Nachbedingung von `motion_success` und als
+  hypothesis-Eigenschaft. Eine bewusste Abweichung vom Messskript in einer explorativen Größe; die
+  Werte (Hauptperiode, alt → neu): Rat CDU 2,83 → 1,95, Grüne 2,77 → 1,91, SPD/Volt 1,14 → 0,79,
+  FDP 0,75 → 0,52, Linke 0,29 → 0,20, AfD und T_FW 0 → 0; Ausschüsse CDU 1,93 → 1,55, Grüne
+  1,90 → 1,53; in den Bezirksvertretungen ändert sich kaum etwas (CDU 1,03 → 1,02, Grüne 1,00 →
+  0,98); die Reihenfolge der Fraktionen bleibt dort in jeder Gremienart dieselbe. Im Rat seit
+  2025 (18 und 19 Anträge, alle angenommen) CDU und Grüne 11,65 → 6,45.
 - *Gremium ohne Organisation* ist null, nicht „?".
 
 **Folgevorlage je Profil, eine Untergrenze.** `folgevorlage` ist die früheste Drucksache der

@@ -59,6 +59,8 @@ class Period:
     progress: pl.DataFrame
     outcomes: pl.DataFrame  # mit Rolle, Prüfauftrag und Praxiszelle; ohne Folgevorlage
     success: pl.DataFrame
+    cosponsors: pl.DataFrame  # die Antragsteller von 15, gegen die der Erfolg gezählt wird
+    bodies: pl.DataFrame
 
 
 def _period(profile: str, root: Path) -> Period:
@@ -104,7 +106,7 @@ def _period(profile: str, root: Path) -> Period:
     success = motion_success(
         outcomes, cosponsors, bodies, period_key(settings.period.start, settings.period.end)
     )
-    return Period(settings, corpus, verlauf, outcomes, success)
+    return Period(settings, corpus, verlauf, outcomes, success, cosponsors, bodies)
 
 
 @pytest.fixture(scope="module")
@@ -194,17 +196,43 @@ def test_the_requested_review_is_a_lower_bound_of_the_measurement(
 def test_success_counts_every_decided_motion_of_a_fraction_once_per_fraction(
     periods: dict[str, Period],
 ) -> None:
-    for period in periods.values():
-        success = period.success
-        assert success.get_column("periode").n_unique() == 1
-        assert bool((success.get_column("angenommen") <= success.get_column("n")).all())
-        assert set(success.get_column("gremium_art").to_list()) <= {
-            "rat",
-            "ausschuss",
-            "bezirksvertretung",
-            "beirat",
-            "unbekannt",
-        }
+    """Review 2026-11-24, N2: ``n`` und ``angenommen`` je Gremienart und Fraktion, unabhängig gezählt.
+
+    Jeder Antrag mit Sachentscheidung zählt einmal für jede Fraktion, die ihn stellt (auch wenn
+    15 sie zweimal nennte), keiner ohne Fraktion; je Gremienart verteilt die Standardisierung
+    genau die Annahmen, die es gab. „SPD" (vor dem 2020-11-01) und „SPD+VOLT" bleiben getrennt,
+    wie 15 die Fraktionen liefert.
+    """
+    for profile, period in periods.items():
+        decided = period.outcomes.filter(
+            (pl.col("rolle") == "antrag")
+            & pl.col("klasse").is_in(["beschlossen", "geaendert", "abgelehnt"])
+        )
+        counted = (
+            decided.join(period.cosponsors.select("id", "fraktionen"), on="id")
+            .join(period.bodies.select("id", "gremium_art"), on="id", how="left")
+            .with_columns(pl.col("fraktionen").list.unique().alias("fraktion"))
+            .explode("fraktion")
+            .filter(pl.col("fraktion").is_not_null())
+            .group_by("gremium_art", "fraktion")
+            .agg(
+                pl.len().cast(pl.Int32).alias("n"),
+                pl.col("klasse")
+                .is_in(["beschlossen", "geaendert"])
+                .sum()
+                .cast(pl.Int32)
+                .alias("angenommen"),
+            )
+            .sort("gremium_art", "fraktion")
+        )
+        success = period.success.sort("gremium_art", "fraktion")
+        assert success.select("gremium_art", "fraktion", "n", "angenommen").equals(counted), profile
+        sums = success.group_by("gremium_art").agg(
+            pl.col("angenommen").sum(), pl.col("erwartet").sum()
+        )
+        assert sums.get_column("angenommen").to_list() == pytest.approx(
+            sums.get_column("erwartet").to_list()
+        ), profile
 
 
 # --- Validierung als Regressionstest (§ 4.1) ------------------------------------------------------
