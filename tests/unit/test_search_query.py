@@ -220,3 +220,24 @@ def test_a_server_that_is_not_allowed_makes_the_command_search_with_bm25(
     assert cli.main(["search", "Radweg"]) == 0
     out = capsys.readouterr().out
     assert out.startswith("Hinweis: ") and "ollama.example" in out and "mit BM25" in out
+
+
+@pytest.mark.parametrize("change", ["prompt", "options"])
+def test_chunks_with_another_prompt_or_window_make_the_search_fall_back(
+    settings: Settings, layout: Layout, change: str
+) -> None:
+    """Review Runde 1, N2: Frage und Stücke passen nur mit gleichem Modell, Digest, Prompt-Version
+    der Stücke und Fenster zusammen; sonst ``ModelError`` und Rückfall auf BM25."""
+    import json
+
+    _embedded(settings, layout, FakeEmbedder())
+    embedder = FakeEmbedder()
+    stamp = embedding_files(layout).chunks.with_name("einbettungen_stuecke.parquet.stamp.json")
+    if change == "prompt":
+        recorded = json.loads(stamp.read_text(encoding="utf-8"))
+        recorded["models"]["prompt"] = "18-stuecke-1+00000000"
+        stamp.write_text(json.dumps(recorded), encoding="utf-8")
+    else:
+        embedder = FakeEmbedder(options=EmbeddingOptions(num_ctx=64))
+    result = search(layout, settings, "Radweg", "embedding", 5, embedder)
+    assert result.method == "bm25" and change in result.note

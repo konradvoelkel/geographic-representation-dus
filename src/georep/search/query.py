@@ -32,7 +32,7 @@ import numpy as np
 import numpy.typing as npt
 import polars as pl
 
-from georep.enrich.embeddings import embedding_files, query_prompt
+from georep.enrich.embeddings import chunk_prompt, embedding_files, query_prompt
 from georep.errors import MissingInputError, ModelError
 from georep.io import atomic_path, digest
 from georep.layout import Layout
@@ -177,19 +177,30 @@ def query_vector(
     return vector
 
 
-def _check_model(layout: Layout, embedder: Embedder) -> None:
-    """Frage und Stücke müssen aus demselben Modell kommen; der Stamp von ``embeddings`` sagt, woher."""
-    stamp_path = embedding_files(layout).chunks.with_name(
-        embedding_files(layout).chunks.name + ".stamp.json"
-    )
+def _check_model(layout: Layout, settings: Settings, embedder: Embedder) -> None:
+    """Frage und Stücke passen nur aus demselben Modell, Digest, Prompt-Version und Fenster.
+
+    Der Stamp von ``embeddings`` sagt, womit die Stücke entstanden. Verglichen werden Modell und
+    Digest, die Prompt-Version der Stücke mit der, die diese Settings ergäben (``chunk_prompt``),
+    und der Schlüssel der Optionen (Fenster, Abschneiden) mit dem des Einbetters der Frage (Review
+    Runde 1, N2). Weicht eines ab, ist das ein ``ModelError``, und die Suche fällt auf BM25 zurück.
+    """
+    files = embedding_files(layout)
+    stamp_path = files.chunks.with_name(files.chunks.name + ".stamp.json")
     if not stamp_path.is_file():
         return
     found = json.loads(stamp_path.read_text(encoding="utf-8")).get("models", {})
-    model = EmbeddingUse(embedder, "").name
-    if (found.get("model"), found.get("digest")) != (model, embedder.digest):
+    wanted = {
+        "model": EmbeddingUse(embedder, "").name,
+        "digest": embedder.digest,
+        "prompt": chunk_prompt(settings),
+        "options": embedder.options.key(),
+    }
+    differ = [key for key, value in wanted.items() if found.get(key) != value]
+    if differ:
+        said = ", ".join(f"{key} {found.get(key)} statt {wanted[key]}" for key in differ)
         raise ModelError(
-            f"die Stückvektoren kommen von {found.get('model')} ({str(found.get('digest'))[:12]}), "
-            f"die Frage von {model} ({embedder.digest[:12]}); erst `georep run --models "
+            f"die Stückvektoren passen nicht zur Frage ({said}); erst `georep run --models "
             "embeddings`"
         )
 
@@ -203,7 +214,7 @@ def embedding_ranking(
         raise MissingInputError(
             f"{path.name} fehlt; die Stückvektoren rechnet `georep run --models embeddings`"
         )
-    _check_model(layout, embedder)
+    _check_model(layout, settings, embedder)
     chunks = pl.read_parquet(path, columns=["datei", "vektor"])
     corpus = pl.read_parquet(layout.corpus, columns=["id", "file_name"])
     units = (
