@@ -61,7 +61,7 @@ from georep.geo import (
     read_canonical_precincts,
     read_precincts,
 )
-from georep.http import Transport
+from georep.http import DeferredTransport, Transport
 from georep.io import digest, write_bytes, write_json, write_parquet
 from georep.layout import Layout
 from georep.ml.base import ModelStamp
@@ -1048,11 +1048,21 @@ def build_steps(
         ).line()
 
     # Fundament F2 (docs/plan-vorverarbeitung-2026-11.md, § 7): die Beiträge der Vorhaben stehen
-    # unmittelbar vor ``report``. Import hier, nicht oben: die Beiträge bauen ``Step`` aus diesem
-    # Modul, ein Import auf Modulebene wäre ein Kreis.
-    from georep.enrich import check_unique_names, contributed_steps
+    # unmittelbar vor ``report``, die frühen unmittelbar vor ``weights`` (Nachzug, Synergien
+    # 2026-11, Konflikt 6). Import hier, nicht oben: die Beiträge bauen ``Step`` aus diesem
+    # Modul, ein Import auf Modulebene wäre ein Kreis. Nachzug (Konflikt 7): sie bekommen
+    # ``http``; ohne Angabe eine Session, die erst beim ersten Aufruf entsteht, wie
+    # ``transport()`` für die Netzschritte des Kerns.
+    from georep.enrich import (
+        check_step_order,
+        check_unique_names,
+        contributed_early_steps,
+        contributed_steps,
+    )
 
-    contributed = contributed_steps(settings, layout)
+    contributed_http = http if http is not None else DeferredTransport(transport)
+    contributed_early = contributed_early_steps(settings, layout, contributed_http)
+    contributed = contributed_steps(settings, layout, contributed_http)
 
     def page_step(page: Page) -> Step:
         """Fundament F2: eine Unterseite, gebaut hinter ``report`` mit demselben Vorlagen-Hash."""
@@ -1358,6 +1368,8 @@ def build_steps(
             (layout.district_bodies, layout.bodies_table),
             body_hits,
         ),
+        # --- Fundament F2, Nachzug: frühe Beiträge, deren Ausgaben ``weights`` liest
+        *contributed_early,
         # --- Option 06
         Step(
             "weights",
@@ -1505,6 +1517,8 @@ def build_steps(
         # --- Fundament F2: die Unterseiten der Beiträge
         *pages,
     ]
-    # Fundament F2: ein Beitrag darf keinen Namen eines anderen Schritts tragen
+    # Fundament F2: ein Beitrag darf keinen Namen eines anderen Schritts tragen; Review F7, M1:
+    # und keine Ausgabe lesen, die erst ein späterer Schritt schreibt, oder eine Datei zweimal
     check_unique_names(steps)
+    check_step_order(steps)
     return steps

@@ -384,6 +384,44 @@ def test_the_raw_text_package_flattens_to_the_text_package() -> None:
     assert by_name["00532917.pdf"][1].count(PAGE_BREAK) == 41
 
 
+@pytest.mark.slow
+def test_the_raw_text_package_places_every_character_of_the_text_package() -> None:
+    """Nachzug F1 (Synergien 2026-11, Konflikt 1): ``flatten_with_offsets`` über die Hauptperiode.
+
+    Für jeden Rohtext ist der Text genau der des Textpakets, ohne Abweichung wie bei ``flatten``,
+    und jedes Zeichen hat seine Stelle im Rohtext: aufsteigend, und das Rohtextzeichen dort ergibt
+    kleingeschrieben das Zeichen. Die 41 ``\\f`` aus dem Seitentext von ``00532917.pdf`` zeigen
+    auf genau die gespeicherten Offsets (``form_feeds``).
+    """
+    from georep.prep.raw_texts import PAGE_BREAK, flatten_with_offsets, restore_form_feeds
+    from tests.property.test_raw_text_props import each_character_is_its_source_lowercased
+
+    texts = pl.read_parquet(REPO / "snapshots" / "duesseldorf-texte" / "cache/text/texts.parquet")
+    by_name = dict(texts.select("name", "text").rows())
+    raw = pl.read_parquet(
+        REPO / "snapshots" / "duesseldorf-rohtexte" / "cache/text/rohtexte.parquet"
+    )
+    deviations, inner = [], {}
+    for name, text, stored in raw.select("name", "text", "form_feeds").rows():
+        feeds = tuple(stored or ())
+        flat, offsets = flatten_with_offsets(text, "betrifft", feeds)
+        if (
+            flat != by_name[name]
+            or list(offsets) != sorted(offsets)
+            or not each_character_is_its_source_lowercased(
+                flat, offsets, restore_form_feeds(text, feeds)
+            )
+        ):
+            deviations.append(name)
+        if feeds:
+            inner[name] = (feeds, [offsets[i] for i, c in enumerate(flat) if c == PAGE_BREAK])
+    assert raw.height == 19091
+    assert deviations == []
+    assert list(inner) == ["00532917.pdf"]
+    feeds, mapped = inner["00532917.pdf"]
+    assert len(feeds) == 41 and mapped == list(feeds)
+
+
 # --- M1: die Flächen im Paket sind die der Stadt -----------------------------------------------
 
 

@@ -13,7 +13,9 @@ Hauptperiode in ``tests/unit/test_data_packages.py``). Ein ``\\f`` im Text einer
 defekte Schriftkodierung liefert Steuerzeichen statt Buchstaben -- steht im Rohtext als Leerzeichen
 (``stores.PAGE_BREAK_STANDIN``), damit ``\\f`` nur den Seitenwechsel bedeutet; seine Offsets stehen
 in der Spalte ``form_feeds``, und ``flatten`` setzt es dort zurück (Review F1, M3). So bleibt die
-Seitenstruktur eindeutig, und die Plättung ist trotzdem genau.
+Seitenstruktur eindeutig, und die Plättung ist trotzdem genau. ``flatten_with_offsets`` gibt zum
+selben Text je Zeichen seine Stelle im Rohtext; über sie kommen Spannen aus dem kleingeschriebenen
+Text auf den Rohtext (Nachzug F1, ``docs/plans/00-synergien-2026-11.md``, Konflikt 1).
 
 Dieselbe Bibliothek in derselben Version wie der Textstore (``pypdf==7.1.0``, Punkt 67), dieselbe
 Fehlerbehandlung (``CorruptPdfError`` zählt als fehlerhaft, ein alter Text bleibt stehen), dieselbe
@@ -41,6 +43,7 @@ __all__ = [
     "PdfPageExtractor",
     "extract_raw_missing",
     "flatten",
+    "flatten_with_offsets",
     "raw_extractor_name",
     "raw_from_pages",
     "restore_form_feeds",
@@ -194,3 +197,66 @@ def extract_raw_missing(
     if report.extracted:
         store.save()
     return report
+
+
+# --- Nachzug F1 (docs/plans/00-synergien-2026-11.md, Konflikt 1): die Stelle im Rohtext je Zeichen
+
+
+def _same_text_as_flatten(
+    raw: str, marker: str, form_feeds: Sequence[int], result: tuple[str, Sequence[int]] = ("", ())
+) -> bool:
+    return result[0] == flatten(raw, marker, form_feeds)
+
+
+def _a_place_for_each_character(
+    raw: str, marker: str, form_feeds: Sequence[int], result: tuple[str, Sequence[int]] = ("", ())
+) -> bool:
+    text, offsets = result
+    if len(offsets) != len(text):
+        return False
+    # aufsteigend (``sorted`` statt einer Schleife je Zeichen: der Vertrag läuft je Dokument),
+    # dann genügen die beiden Enden für die Grenzen
+    return not offsets or (
+        list(offsets) == sorted(offsets) and 0 <= offsets[0] and offsets[-1] < len(raw)
+    )
+
+
+@deal.pre(_flatten_has_a_marker, message="leerer Marker: str.split braucht einen Trenner")
+@deal.pre(
+    _flatten_feeds_are_valid, message="ein Offset in form_feeds zeigt nicht auf ein Ersatzzeichen"
+)
+@deal.ensure(_same_text_as_flatten, message="der Text ist genau der von flatten")
+@deal.ensure(_a_place_for_each_character, message="je Zeichen eine Stelle im Rohtext, aufsteigend")
+@deal.safe
+def flatten_with_offsets(
+    raw: str, marker: str, form_feeds: Sequence[int]
+) -> tuple[str, tuple[int, ...]]:
+    """``flatten`` und je Zeichen seine Stelle im Rohtext: Zeichen ``i`` des geplätteten Texts
+    entstand aus ``raw[offsets[i]]``.
+
+    Die Brücke für Spannen zwischen den beiden Stores: ein Verfahren, das im kleingeschriebenen
+    Text sucht (Vorhaben 14, 17, 16), schreibt seine Treffer über die Offsets auf den Rohtext, wo
+    die Abschnitte von Vorhaben 11 liegen. Eine Spanne ``[i, j)`` im geplätteten Text ist im
+    Rohtext ``[offsets[i], offsets[j - 1] + 1)``.
+
+    Die Offsets sind so viele wie Zeichen und aufsteigend. Zwei gleiche nebeneinander gibt es nur,
+    wo die Kleinschreibung eines Zeichens mehrere Zeichen ist (``"İ".lower()``). Seitenwechsel und
+    Zeilenumbrüche fallen weg wie in ``flatten``, kein Offset zeigt auf sie; ein ``\\f`` aus dem
+    Text einer Seite zeigt auf sein Ersatzzeichen, also auf die Stelle aus ``form_feeds``.
+    """
+    restored = restore_form_feeds(raw.replace(PAGE_BREAK, "\n"), form_feeds)
+    # je Zeile ein ``range``: die Schleife läuft je Zeilenumbruch, nicht je Zeichen
+    offsets: list[int] = []
+    start = 0
+    while (stop := restored.find("\n", start)) != -1:
+        offsets.extend(range(start, stop))
+        start = stop + 1
+    offsets.extend(range(start, len(restored)))
+    lowered = normalise_text(restored)
+    if len(lowered) != len(offsets):
+        # Ein Zeichen wurde klein zu mehreren; jedes davon bekommt die Stelle seines Ursprungs.
+        # ``str.lower`` arbeitet je Zeichen, bis auf das Schluss-Sigma, das eines bleibt.
+        kept = restored.replace("\n", "")
+        offsets = [at for char, at in zip(kept, offsets, strict=True) for _ in char.lower()]
+    text = after_marker(lowered, marker)
+    return text, tuple(offsets[len(lowered) - len(text) :])

@@ -2830,3 +2830,91 @@ beim Bauen des Registers existiert (legt `raw_texts` ihn im selben Lauf an, fehl
 der zweite Lauf rechnete die Seite neu); der Satz über den Rohtext mit der bloßen Zeilenzahl (stand
 auch bei einem halben Store); die Schema-Version des Textstores beim Laden prüfen wie hier (dasselbe
 Muster, aber ein eigener Eingriff in einen Store, an dem jede Zahl hängt; notiert, nicht gebaut).
+
+## NN. Fundament-Nachzug F7: frühe Beiträge, `http` an den Beiträgen, Zusatzspalten an Spannen, Stelle im Rohtext je Zeichen (2026-11-23)
+
+Die Synergien der Stufe 1 (`docs/plans/00-synergien-2026-11.md`, § 2.2, Konflikte 1, 3, 6 und 7;
+§ 3.1, Punkt 2) fanden vier Stellen, an denen F1 bis F3 (Punkte 69 und 73) für Stufe 2 nicht
+reichten. Alle vier sind vor dem ersten Merge einer Stufe 2 nachgezogen, ohne dass sich eine Zahl
+der Seite bewegt.
+
+**Frühe Beiträge (Konflikt 6).** Die Schritte eines Beitrags standen nur unmittelbar vor `report`,
+also hinter `weights`. Vorhaben 16 (`places`) erweitert `document_weights` um einen Faktor und
+braucht dafür die Abschnitte von 11 (`sections`); 13 (`families`) plant eine Variante. `weights`
+liefe dann vor der Ausgabe, die es liest. `Contribution.early_steps` ist eine zweite Fabrik mit
+derselben Signatur wie `steps`; `build_steps` setzt ihre Schritte unmittelbar vor `weights`, hinter
+`index`, `results`, `metrics` und `body_hits`, sodass ein früher Schritt alles lesen kann, was der
+Kern vor `weights` schreibt. `check_unique_names` prüft wie bisher die ganze Liste, früh, spät und
+Kern. Das Feld steht am Ende der Dataclass, damit kein Aufruf mit Positionen seine Bedeutung ändert.
+Dass ein früher Schritt keine Ausgabe eines späten liest, stand zuerst nur im Docstring; seit dem
+Review (2026-11-24, M1) prüft es `check_step_order` am Ende von `build_steps` für jeden Schritt:
+`StepOrderError`, wenn er eine Eingabe oder eine optionale Eingabe liest, die erst ein späterer
+schreibt, und `DuplicateOutputError`, wenn zwei Schritte dieselbe Datei schreiben. Der Kern erfüllt
+beides in allen fünf Paketprofilen (ein Test je Profil).
+
+*Warum ein zweites Feld und nicht `stage`.* Mit einem Feld `stage = "early" | "late"` landete ein
+Beitrag ganz vorn oder ganz hinten; ein Vorhaben mit beiden Arten (ein Schritt, den `weights` liest,
+und einer, der die Gewichte oder die Urheber aus `parties` liest) bräuchte dann zwei Beiträge, gegen
+die Regel „ein Beitrag je Vorhaben, mit allen Schritten" (§ 2.1 der Synergien). Ein Feld je Schritt
+hätte `Step` geändert, an dem gerade andere Branches Felder anhängen (Punkt 69, „Verworfen"). Zwei
+Fabriken halten beides: ein Eintrag im Register, und die Stelle steht am Namen des Felds.
+
+**`http` an den Beiträgen (Konflikt 7).** `Contribution.steps` bekam `(settings, layout)`; ein
+Netzschritt eines Vorhabens (22 `need_data`) hätte eine eigene Session bauen müssen und wäre ohne
+Fake-Session nicht testbar (CLAUDE.md, „Nie"). Jetzt bekommen beide Fabriken `(settings, layout,
+http)`. `build_steps` reicht die übergebene Session durch; ohne Angabe ein `http.DeferredTransport`,
+der die gecachte Session erst beim ersten `get` oder `post` über dieselbe Fabrik holt wie die
+Netzschritte des Kerns. So legt `georep steps` oder ein Lauf ohne `--online` weiter kein
+`http.sqlite` an (Test `test_ohne_netzschritt_entsteht_keine_session`).
+
+**Zusatzspalten an Spannen (Konflikt 3, Entscheidung des Supervisors).** `check_spans` prüft die
+acht Spalten von `SPAN_SCHEMA` vorn, in Folge und mit ihren Typen, Nullwerte nur dort; Spalten
+dahinter gehören dem Vorhaben (12: `attr`) und sind frei, auch leer. `sort_spans` stellt sie in
+ihrer Folge hinter die acht und ordnet die Zeilen wie ohne sie (hypothesis,
+`tests/property/test_spans.py`). Die Grenzprüfung rechnet nur über die acht, damit eine Zusatzspalte
+auch `zeile` oder `length` heißen darf. Die Kodieraufträge von F4 lesen weiter nur `start`, `end`,
+`kind` und den Text; eine Zusatzspalte erreicht die Kodierer nicht. Verworfen: `attr` in einer
+Nebentabelle (ein Join mehr für jeden Leser, ohne dass F3 einfacher würde). Nach dem Review
+(2026-11-24): der Kopf wird als Liste verglichen, nicht als dict, sonst bestanden acht vertauschte
+Spalten die Schemaprüfung (K1); `sort_spans` sortiert bei Gleichstand von `id, start, end, kind`
+nach den übrigen vier, damit zwei Spannen an derselben Stelle, etwa aus zwei Extraktoren, nicht in
+der Folge der Eingabe stehen (N2, hypothesis über vertauschte Zeilen); `empty_spans(extra)` legt
+die Zusatzspalten leer an, damit ein Vorhaben ohne Treffer dasselbe Schema schreibt wie mit (N3).
+
+**Stelle im Rohtext je Zeichen (Konflikt 1).** `prep.raw_texts.flatten_with_offsets(raw, marker,
+form_feeds) -> (text, offsets)`: `text` ist genau `flatten(...)`, `offsets[i]` der Index im Rohtext
+des Zeichens, aus dem Zeichen `i` entstand. Gleich lang und aufsteigend; zwei gleiche nebeneinander
+nur, wo ein Zeichen klein zu mehreren wird (`"İ".lower()`), und ein `\f` aus dem Text einer Seite
+zeigt auf seinen Offset aus `form_feeds`. Eine Spanne `[i, j)` im Textstore ist im Rohtext
+`[offsets[i], offsets[j - 1] + 1)`. Damit können 14 und 17 ihre Spannen auf den Rohtext schreiben,
+wo die Abschnitte von 11 liegen, und 16 kann sie statt seines Nachbaus `store_view` nehmen. Die
+Offsets entstehen je Zeile als `range`, nicht je Zeichen; die Verträge prüfen Gleichheit mit
+`flatten`, Länge und Folge (`sorted` statt einer Schleife, weil sie je Dokument laufen), crosshair
+einzeln mit Exit 0 nach 44 s („Not confirmed"), das Ziel steht in `VERIFY_TARGETS`.
+
+Geprüft als hypothesis-Eigenschaft über Zufallsseiten, auch mit eigenen `\f`, İ und Σ: der Text ist
+der von `flatten`, und jedes Zeichen ist die Kleinschreibung des Rohtextzeichens an seiner Stelle
+(die einzige Kontextregel von `str.lower` ist das Schluss-Sigma). Über die Hauptperiode als
+`slow`-Test aus dem Paket: 19 091 von 19 091 Rohtexten ohne Abweichung, kein Zeichen falsch
+verortet, die 41 inneren `\f` von `00532917.pdf` auf genau ihren gespeicherten Offsets (6,6 s).
+Gegen die Stores im Cache (Messskript, nur lesend, 2026-11-24, alle vier in Schema-Version 2):
+2014 bis 2020 22 101, Mönchengladbach 658 und die laufende Periode 4 088 Rohtexte ohne Abweichung,
+kein Zeichen falsch verortet, und in den acht PDFs mit eigenen `\f` in 2014 bis 2020 (2 bis 525)
+zeigt jedes auf seinen gespeicherten Offset. Eine erste Messung am 2026-11-23 traf den Store von
+2014 bis 2020 noch in Version 1 ohne `form_feeds` und fand dort genau diese acht abweichend, wie
+`flatten` auf demselben Store.
+
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
+(Skripte `ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace), vor dem Nachzug (`main`, `444a611`)
+und danach, je in eigener Datenwurzel: die fünf Profile mit `bootstrap` und `run`, dann `publish
+--strict-budget`. Unter `site/` 194 Dateien in beiden, 0 Abweichungen (Parquet als Frame, JSON ohne
+`generated_at`, HTML ohne „Erzeugt am“ und Prüfsummen). Über die ganzen Datenwurzeln 677 Dateien in
+beiden; abweichend sind nur 71 Stamps, und an ihnen allein die Zeit `written`. `CONTRIBUTIONS` ist
+leer; ändern kann sich erst etwas, wenn ein Vorhaben einträgt.
+
+**Verworfen.** `weights` hinter die Beiträge schieben (verschiebt den Kern, Konflikt 6 der
+Synergien); eine eigene Gewichtstabelle für 16 (dann liest `report/model.py` sie, genau die Stelle,
+die F2 schützen soll); `stage` statt einer zweiten Fabrik (oben); eine Session, die `build_steps`
+immer baut (legte `http.sqlite` in jedem Lauf an, auch ohne Netz); eine Prüfung je Zeichen als
+Vertrag von `flatten_with_offsets` (rund 55 Millionen Zeichen in der Hauptperiode, je Lauf; sie
+steht in den Tests).

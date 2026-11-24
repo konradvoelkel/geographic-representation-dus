@@ -20,8 +20,16 @@ Eine Zeile ist eine Spanne:
   Rohtexts) und welches Verfahren die Spanne fand, damit Positionen nie auf den falschen Text
   zeigen.
 
-Die Folge ist fest: sortiert nach ``id``, ``start``, ``end``, ``kind`` (CLAUDE.md: die Zeilenfolge
-nach einem Join nie dem Zufall überlassen).
+Die Folge ist fest: sortiert nach ``id``, ``start``, ``end``, ``kind`` und bei Gleichstand nach den
+übrigen vier (CLAUDE.md: die Zeilenfolge nach einem Join nie dem Zufall überlassen). Zwei Spannen
+an derselben Stelle, etwa aus zwei Extraktoren, stehen so in derselben Folge, wie auch immer sie
+kamen (Review F7, N2).
+
+Ein Vorhaben darf **hinter** den acht weitere Spalten tragen (Nachzug F3, Entscheidung des
+Supervisors vom 2026-11-23, ``docs/plans/00-synergien-2026-11.md``, Konflikt 3): Vorhaben 12 etwa
+``attr``, die Form eines Betrags oder Termins. ``check_spans`` prüft die acht in ihrer Folge und mit
+ihren Typen und lässt die weiteren unberührt -- was sie bedeuten und ob sie leer sein dürfen, weiß
+ihr Vorhaben. ``sort_spans`` behält sie, in ihrer Folge, hinter den acht.
 
 Eine Schema-Version steht hier nicht: sie gehört dem Modul, das eine Spannen-Datei schreibt, und
 steht an dessen Schritt (CLAUDE.md, „Jeder ``Step`` bekommt seine Schema-Version aus der Konstante
@@ -47,30 +55,44 @@ SPAN_SCHEMA: dict[str, pl.DataType] = {
     "section": pl.String(),
     "extractor": pl.String(),
 }
-ORDER = ("id", "start", "end", "kind")
+# Review F7, N2: alle acht, die ersten vier vorn; die Folge hängt nicht an der Eingabe
+ORDER = ("id", "start", "end", "kind", "value", "norm", "section", "extractor")
 
 
-def empty_spans() -> pl.DataFrame:
-    """Ein leerer Frame im Schema der Spannen."""
-    return pl.DataFrame(schema=SPAN_SCHEMA)
+def empty_spans(extra: Mapping[str, pl.DataType] | None = None) -> pl.DataFrame:
+    """Ein leerer Frame im Schema der Spannen, mit den Zusatzspalten ``extra`` dahinter.
+
+    Ein Vorhaben mit Zusatzspalte (12: ``attr``) schreibt ohne Treffer dasselbe Schema wie mit
+    (Review F7, N3). Eine Zusatzspalte mit dem Namen einer der acht ist ein ``SchemaError``.
+    """
+    clash = sorted(set(extra or {}) & set(SPAN_SCHEMA))
+    if clash:
+        raise SchemaError(f"Spannen: Zusatzspalten tragen Namen der acht: {', '.join(clash)}")
+    return pl.DataFrame(schema={**SPAN_SCHEMA, **(extra or {})})
 
 
 def sort_spans(spans: pl.DataFrame) -> pl.DataFrame:
-    """Spalten in Schemafolge, Zeilen in der festen Folge."""
-    return spans.select(list(SPAN_SCHEMA)).sort(list(ORDER), maintain_order=True)
+    """Die acht Spalten in Schemafolge, dahinter die weiteren in ihrer Folge; Zeilen in der festen
+    Folge."""
+    extra = [name for name in spans.columns if name not in SPAN_SCHEMA]
+    return spans.select([*SPAN_SCHEMA, *extra]).sort(list(ORDER), maintain_order=True)
 
 
 def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
     """``SchemaError``, wenn eine Spanne das Schema, die Folge oder ihren Text verletzt.
 
     ``lengths`` nennt je Dokument-ID die Länge des Texts, auf den die Positionen zeigen. Geprüft
-    werden Spalten und Typen, ``0 <= start < end <= len(text)``, eine bekannte ID je Zeile, kein
-    leeres ``kind`` und die feste Folge. Die Meldung nennt die erste verletzende Zeile.
+    werden die acht Spalten vorn in ihrer Folge und mit ihren Typen, ``0 <= start < end <=
+    len(text)``, eine bekannte ID je Zeile, kein leeres ``kind`` und die feste Folge. Spalten
+    dahinter gehören dem Vorhaben und sind frei. Die Meldung nennt die erste verletzende Zeile.
     """
-    schema = dict(spans.schema)
-    if schema != SPAN_SCHEMA:
-        raise SchemaError(f"Spannen: Schema {schema} statt {SPAN_SCHEMA}")
-    if spans.select(pl.all().is_null().any()).select(pl.any_horizontal(pl.all())).item():
+    # als Liste, nicht als dict: zwei dicts sind gleich, auch wenn ihre Schlüssel anders stehen
+    # (Review F7, K1)
+    head = list(spans.schema.items())[: len(SPAN_SCHEMA)]
+    if head != list(SPAN_SCHEMA.items()):
+        raise SchemaError(f"Spannen: Schema {dict(spans.schema)} beginnt nicht mit {SPAN_SCHEMA}")
+    core = spans.select(list(SPAN_SCHEMA))
+    if core.select(pl.all().is_null().any()).select(pl.any_horizontal(pl.all())).item():
         raise SchemaError(
             "Spannen: leere Werte; norm und section sind leere Zeichenketten, nie null"
         )
@@ -78,7 +100,8 @@ def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
         {"id": list(lengths), "length": list(lengths.values())},
         schema={"id": pl.String(), "length": pl.Int64()},
     )
-    checked = spans.with_row_index("zeile").join(known, on="id", how="left")
+    # über die acht allein: eine Zusatzspalte darf ``zeile`` oder ``length`` heißen
+    checked = core.with_row_index("zeile").join(known, on="id", how="left")
     bad = checked.filter(
         pl.col("length").is_null()
         | (pl.col("start") < 0)
@@ -94,7 +117,10 @@ def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
             f"Textlänge={first['length']} kind={first['kind']!r}"
         )
     if not spans.equals(sort_spans(spans)):
-        raise SchemaError(f"Spannen: nicht nach {', '.join(ORDER)} sortiert")
+        raise SchemaError(
+            f"Spannen: nicht nach {', '.join(ORDER[:4])} sortiert (bei Gleichstand nach "
+            f"{', '.join(ORDER[4:])})"
+        )
 
 
 def _within_text(text: str, start: int, end: int, context: int = 200) -> bool:

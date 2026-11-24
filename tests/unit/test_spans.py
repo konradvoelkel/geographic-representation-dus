@@ -69,3 +69,89 @@ def test_ein_falscher_typ_ist_ein_fehler() -> None:
     )
     with pytest.raises(SchemaError, match="Schema"):
         check_spans(frame, LENGTHS)
+
+
+# --- Nachzug F3: Zusatzspalten hinter den acht (Synergien 2026-11, Konflikt 3) ------------------
+
+
+def test_eine_zusatzspalte_hinter_den_acht_besteht() -> None:
+    """Vorhaben 12 trägt ``attr`` (die Form eines Betrags); F3 prüft die acht, nicht mehr."""
+    spans = _spans([("b", 0, 9, "betrag"), ("a", 9, 15, "abschnitt")]).with_columns(
+        attr=pl.Series(["dezimal", "kopf"])
+    )
+    checked = sort_spans(spans)
+    check_spans(checked, LENGTHS)
+    assert checked.columns == [*SPAN_SCHEMA, "attr"]
+    assert checked.select("id", "attr").rows() == [("a", "kopf"), ("b", "dezimal")]
+
+
+def test_sort_spans_stellt_zusatzspalten_hinter_die_acht() -> None:
+    spans = _spans([("a", 0, 3, "abschnitt")]).with_columns(
+        attr=pl.lit("x"), zeile=pl.lit(1, dtype=pl.UInt32)
+    )
+    front = ["attr", "extractor", "id", "zeile"]
+    shuffled = spans.select(*front, *(name for name in SPAN_SCHEMA if name not in front))
+    assert sort_spans(shuffled).columns == [*SPAN_SCHEMA, "attr", "zeile"]
+
+
+def test_eine_zusatzspalte_darf_leer_sein() -> None:
+    """Was eine Zusatzspalte bedeutet, weiß ihr Vorhaben; null ist dort kein Schemafehler."""
+    spans = _spans([("a", 0, 3, "abschnitt")]).with_columns(attr=pl.lit(None, dtype=pl.String))
+    checked = sort_spans(spans)
+    check_spans(checked, LENGTHS)
+    assert "attr" in checked.columns
+
+
+def test_eine_zusatzspalte_darf_wie_eine_hilfsspalte_der_pruefung_heissen() -> None:
+    """``check_spans`` nummeriert die Zeilen (``zeile``) und joint die Längen (``length``)."""
+    spans = _spans([("a", 0, 3, "abschnitt")]).with_columns(
+        zeile=pl.lit(7, dtype=pl.UInt32), length=pl.lit(-1)
+    )
+    checked = sort_spans(spans)
+    check_spans(checked, LENGTHS)
+    assert checked.columns[-2:] == ["zeile", "length"]
+
+
+def test_eine_spalte_zwischen_den_acht_ist_ein_fehler() -> None:
+    spans = _spans([("a", 0, 3, "abschnitt")]).with_columns(attr=pl.lit("x"))
+    between = spans.select("id", "start", "attr", *list(SPAN_SCHEMA)[2:])
+    with pytest.raises(SchemaError, match="Schema"):
+        check_spans(between, LENGTHS)
+
+
+def test_eine_fehlende_spalte_der_acht_ist_ein_fehler() -> None:
+    spans = sort_spans(_spans([("a", 0, 3, "abschnitt")])).drop("norm")
+    with pytest.raises(SchemaError, match="Schema"):
+        check_spans(spans, LENGTHS)
+
+
+def test_die_acht_in_anderer_folge_sind_ein_schemafehler() -> None:
+    """Review F7, K1: die Folge der acht ist Teil des Schemas, nicht nur die Menge."""
+    spans = sort_spans(_spans([("a", 0, 3, "abschnitt")]))
+    swapped = spans.select("id", "end", "start", *list(SPAN_SCHEMA)[3:])
+    with pytest.raises(SchemaError, match="Schema"):
+        check_spans(swapped, LENGTHS)
+
+
+@pytest.mark.parametrize("column", ["norm", "section", "value", "extractor"])
+def test_ein_nullwert_in_den_acht_ist_ein_fehler(column: str) -> None:
+    """Review F7, K2: ``norm`` und ``section`` sind leere Zeichenketten, nie null."""
+    spans = sort_spans(_spans([("a", 0, 3, "abschnitt")])).with_columns(
+        pl.lit(None, dtype=pl.String).alias(column)
+    )
+    with pytest.raises(SchemaError, match="leere Werte"):
+        check_spans(spans, LENGTHS)
+
+
+def test_eine_leere_tabelle_mit_zusatzspalten() -> None:
+    """Review F7, N3: ein Vorhaben ohne Treffer schreibt dasselbe Schema wie eines mit."""
+    empty = empty_spans({"attr": pl.String(), "zeile": pl.UInt32()})
+    assert dict(empty.schema) == {**SPAN_SCHEMA, "attr": pl.String(), "zeile": pl.UInt32()}
+    assert list(empty.columns) == [*SPAN_SCHEMA, "attr", "zeile"]
+    check_spans(empty, LENGTHS)
+    assert empty_spans().columns == list(SPAN_SCHEMA)
+
+
+def test_eine_zusatzspalte_darf_keine_der_acht_ueberschreiben() -> None:
+    with pytest.raises(SchemaError, match="norm"):
+        empty_spans({"norm": pl.Int64()})
