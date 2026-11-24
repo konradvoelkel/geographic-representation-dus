@@ -207,3 +207,20 @@ def test_read_span_skips_page_headers_but_keeps_the_offsets_raw() -> None:
     noise = [r"Seite \d+", r"Sitzung des .{1,40} am \d{2}\.\d{2}\.\d{4}"]
     assert read_span(text, 0, len(text), noise) == "Der Rat beschließt:\n1. den Plan"
     assert read_span(text, 4, 7, noise) == "Rat"
+
+
+# --- F3, Entscheidung vom 2026-11-24 (Review 11, K1): ``value`` wörtlich oder leer ----------------
+
+
+def test_value_is_the_text_at_the_place_or_empty_for_a_position_span() -> None:
+    """``value`` ist der Text an der Stelle, wörtlich, oder leer bei einer Positionsspanne;
+    ``check_spans`` prüft das, wo die Texte zur Hand sind."""
+    texts = {"a": "Betreff: Radweg an der Benrather Straße"}
+    literal = sort_spans(_spans([("a", 9, 15, "abschnitt")]))  # value = texts["a"][9:15]
+    check_spans(literal, LENGTHS, texts=texts)
+    position = literal.with_columns(pl.lit("").alias("value"))
+    check_spans(position, LENGTHS, texts=texts)
+    normalised = literal.with_columns(pl.lit("radweg").alias("value"))
+    check_spans(normalised, LENGTHS)  # ohne Texte keine Prüfung des Werts
+    with pytest.raises(SchemaError, match="nicht wörtlich.*Zeile 0"):
+        check_spans(normalised, LENGTHS, texts=texts)

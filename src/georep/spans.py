@@ -11,7 +11,10 @@ Eine Zeile ist eine Spanne:
 * ``id`` -- die Korpus-ID des Dokuments (wie in ``interim/papers.parquet``);
 * ``start``, ``end`` -- Zeichenpositionen im Text, halboffen (``text[start:end]``);
 * ``kind`` -- die Art, etwa ``abschnitt``, ``betrag``, ``drucksache``;
-* ``value`` -- der Text an der Stelle, wörtlich;
+* ``value`` -- der Text an der Stelle, wörtlich (``text[start:end]``), oder leer bei einer
+  **Positionsspanne**: einer Stelle, deren Text man über ``read_span`` liest, etwa einem Abschnitt
+  aus Vorhaben 11. Nie eine bearbeitete Form -- die steht in ``norm`` (Entscheidung des Eigentümers
+  von F3, 2026-11-24, Review von Vorhaben 11, K1);
 * ``norm`` -- der normalisierte Wert als Text (Betrag in Euro als Dezimalzahl mit Punkt, Datum
   ISO, Drucksachennummer kanonisch); leer, wo die Art keinen kennt;
 * ``section`` -- der Abschnitt aus Vorhaben 11, in dem die Spanne liegt; leer, solange es ihn
@@ -79,13 +82,17 @@ def sort_spans(spans: pl.DataFrame) -> pl.DataFrame:
     return spans.select([*SPAN_SCHEMA, *extra]).sort(list(ORDER), maintain_order=True)
 
 
-def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
+def check_spans(
+    spans: pl.DataFrame, lengths: Mapping[str, int], *, texts: Mapping[str, str] | None = None
+) -> None:
     """``SchemaError``, wenn eine Spanne das Schema, die Folge oder ihren Text verletzt.
 
     ``lengths`` nennt je Dokument-ID die Länge des Texts, auf den die Positionen zeigen. Geprüft
     werden die acht Spalten vorn in ihrer Folge und mit ihren Typen, ``0 <= start < end <=
     len(text)``, eine bekannte ID je Zeile, kein leeres ``kind`` und die feste Folge. Spalten
-    dahinter gehören dem Vorhaben und sind frei. Die Meldung nennt die erste verletzende Zeile.
+    dahinter gehören dem Vorhaben und sind frei. Wer die Texte selbst zur Hand hat, gibt sie als
+    ``texts`` mit; dann ist jedes ``value`` wörtlich ``text[start:end]`` oder leer (eine
+    Positionsspanne). Die Meldung nennt die erste verletzende Zeile.
     """
     # als Liste, nicht als dict: zwei dicts sind gleich, auch wenn ihre Schlüssel anders stehen
     # (Review F7, K1)
@@ -122,6 +129,22 @@ def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
             f"Spannen: nicht nach {', '.join(ORDER[:4])} sortiert (bei Gleichstand nach "
             f"{', '.join(ORDER[4:])})"
         )
+    if texts is not None:
+        _check_values(core, texts)
+
+
+def _check_values(core: pl.DataFrame, texts: Mapping[str, str]) -> None:
+    """Jedes ``value`` ist wörtlich der Text an der Stelle oder leer (F3, 2026-11-24); eine ID ohne
+    Text in ``texts`` bleibt ungeprüft."""
+    # je Zeile in Python, nicht als Join: der Join trüge jeden Text einmal je Spanne
+    rows = core.select("id", "start", "end", "value").iter_rows()
+    for row, (doc_id, start, end, value) in enumerate(rows):
+        text = texts.get(doc_id)
+        if value and text is not None and text[start:end] != value:
+            raise SchemaError(
+                f"Spannen: value nicht wörtlich und nicht leer, erste Zeile {row}: "
+                f"id={doc_id!r} start={start} end={end} value={value[:40]!r}"
+            )
 
 
 def _within_text(text: str, start: int, end: int, context: int = 200) -> bool:
