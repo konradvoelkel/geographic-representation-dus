@@ -25,6 +25,7 @@ from importlib import resources
 from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Any, Literal
+from urllib.parse import unquote, urlsplit
 
 import deal
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -851,6 +852,158 @@ class ContextModels(_Strict):
         return value
 
 
+# --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 6 und § 10) -----------
+#
+# Bedarfsquellen mit Punkten oder Gitterzellen statt Raumeinheiten: Unfallatlas, Zensus-Gitter,
+# Schuldaten mit Schulsozialindex. Die Quellen sind bundes- oder landesweit und stehen darum in
+# ``defaults.toml`` (wie die Sprache der Ratsdokumente bei Vorhaben 15, Punkt 75); das Stadtprofil
+# schaltet ein und nennt Paket, Klassen und die vorab festgelegten Hypothesen. Die Gemeinde ist
+# ``city.ags``.
+
+NEED_ALTERNATIVES = ("greater", "two-sided")
+
+
+class NeedAttribution(_Strict):
+    """Namensnennung einer Bedarfsquelle; nur Anzeige, nicht im Fingerprint."""
+
+    title: str = ""
+    publisher: str = ""
+    url: str = ""  # Datensatzseite, nicht das Archiv
+    license: str = ""
+    license_url: str = ""
+    stand: str = ""  # so genau, wie die Quelle es sagt („2025, veröffentlicht 2026-07")
+
+
+class NeedAccidents(_Strict):
+    """Unfälle mit Personenschaden, je Jahr ein Zip mit einer CSV (Punkte auf der Straßenachse)."""
+
+    archives: list[str] = []
+    crs: str = "EPSG:25832"
+    attribution: NeedAttribution = NeedAttribution()
+
+
+class NeedGrid(_Strict):
+    """Gitterzellen (Einwohner, Miete): zwei Zips mit je einer CSV des 100-m-Gitters."""
+
+    population_url: str = ""
+    population_member: str = ""
+    rent_url: str = ""
+    rent_member: str = ""
+    crs: str = "EPSG:3035"
+    margin_m: float = Field(default=200.0, ge=0.0)  # Rand um die Stadt beim Vorfiltern
+    attribution: NeedAttribution = NeedAttribution()
+
+
+class NeedSchools(_Strict):
+    """Schulen mit Koordinate (eine CSV) und ihr Sozialindex (eine zweite CSV, über die Nummer)."""
+
+    schools_url: str = ""
+    index_url: str = ""
+    index_encoding: str = "cp850"
+    crs: str = "EPSG:25832"
+    forms: list[str] = []  # Schulformen, die in den Index je Wahlbezirk gehen
+    attribution: NeedAttribution = NeedAttribution()
+
+
+class NeedClasses(_Strict):
+    """Klassen des passenden Ausschusses (Schritt ``committees``), die die Anteile zählen."""
+
+    traffic: list[str] = []
+    youth: list[str] = []
+
+
+class NeedHypothesis(_Strict):
+    """Eine vorab festgelegte Hypothese: Bedarf (x) gegen Aufmerksamkeit (y), Spearman, Holm.
+
+    ``need`` und ``attention`` sind Spalten der Analysetabelle des Schritts ``need``
+    (``wahlbezirke_bedarf`` mit den Kontrollvariablen, ``trefferquote`` und ``log_begriffe``).
+    ``fixed`` ist der Commit, in dem die Hypothese vor der ersten Rechnung festgelegt wurde; er
+    steht auf der Seite. Die Robustheitsrechnungen sind vorab genannt und entscheiden nicht.
+    """
+
+    name: str
+    need: str
+    attention: str
+    alternative: Literal["greater", "two-sided"]
+    fixed: str
+    robust_need: list[str] = []  # dieselbe Rechnung mit einer anderen Bedarfsspalte
+    robust_attention: list[str] = []  # dito Aufmerksamkeit
+    robust_control: str = ""  # partielle Rangkorrelation bei fester Spalte; "" = keine
+
+
+class NeedSettings(_Strict):
+    """Vorhaben 22: Schalter, Paket, Quellen, Band, Tests. Ohne ``enabled`` fehlen beide Schritte."""
+
+    enabled: bool = False
+    package: Path | None = None  # Paket mit den Stadtauszügen; ein Pfad, nicht im Fingerprint
+    band_m: float = Field(default=20.0, ge=0.0)
+    neighbour_m: float = Field(default=50.0, gt=0.0)
+    permutations: int = Field(default=10_000, ge=1)
+    explore_permutations: int = Field(default=9_999, ge=1)
+    bootstrap: int = Field(default=2_000, ge=1)
+    seed: int = 22
+    alpha: float = Field(default=0.05, gt=0.0, lt=1.0)
+    accidents: NeedAccidents = NeedAccidents()
+    grid: NeedGrid = NeedGrid()
+    schools: NeedSchools = NeedSchools()
+    classes: NeedClasses = NeedClasses()
+    hypotheses: list[NeedHypothesis] = []
+    explore: list[tuple[str, str]] = []  # weitere Paare (Bedarf, Aufmerksamkeit), explorativ
+
+    @field_validator("package", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+    @model_validator(mode="after")
+    def _complete_when_enabled(self) -> NeedSettings:
+        names = [h.name for h in self.hypotheses]
+        if len(names) != len(set(names)):
+            raise ValueError(f"context.need.hypotheses: Namen doppelt: {names}")
+        if not self.enabled:
+            return self
+        missing = [
+            f"context.need.{name}"
+            for name, value in (
+                ("accidents.archives", self.accidents.archives),
+                ("grid.population_url", self.grid.population_url),
+                ("grid.population_member", self.grid.population_member),
+                ("grid.rent_url", self.grid.rent_url),
+                ("grid.rent_member", self.grid.rent_member),
+                ("schools.schools_url", self.schools.schools_url),
+                ("schools.index_url", self.schools.index_url),
+                ("schools.forms", self.schools.forms),
+            )
+            if not value
+        ]
+        if missing:
+            raise ValueError(f"context.need.enabled: es fehlen {', '.join(missing)}")
+        files = [archive_name(url) for url in self.archive_urls()]
+        if len(files) != len(set(files)) or not all(files):
+            raise ValueError(
+                f"context.need: die Archive brauchen verschiedene Dateinamen in der URL: {files}"
+            )
+        return self
+
+    def archive_urls(self) -> tuple[str, ...]:
+        """Alle Archive in fester Folge: Unfälle je Jahr, Einwohner, Miete, Schulen, Index."""
+        return (
+            *self.accidents.archives,
+            self.grid.population_url,
+            self.grid.rent_url,
+            self.schools.schools_url,
+            self.schools.index_url,
+        )
+
+    def with_classes(self) -> bool:
+        return bool(self.classes.traffic or self.classes.youth)
+
+
+def archive_name(url: str) -> str:
+    """Der Dateiname eines Archivs: der letzte Pfadteil der URL, dekodiert (``schuldaten.csv``)."""
+    return unquote(urlsplit(url).path).rsplit("/", 1)[-1]
+
+
 class ContextSettings(_Strict):
     # None = keine Kontextdaten: die Schritte context_data, context und controls fehlen dann
     root: Path | None = None
@@ -863,6 +1016,7 @@ class ContextSettings(_Strict):
     scales: dict[str, dict[str, int]] = {}
     variables: list[ContextVariable] = []
     models: ContextModels = ContextModels()
+    need: NeedSettings = NeedSettings()  # Vorhaben 22: Bedarf und Aufmerksamkeit
 
     @field_validator("root", mode="before")
     @classmethod
@@ -2039,6 +2193,8 @@ class Settings(BaseSettings):
         Fundament F5: ``[ml]`` steht ganz draußen. Was davon ein Ergebnis bestimmt (Modell,
         Optionen, Fenster), steht als Kennung im Stamp des Modellschritts, und ``limit`` als Zahl
         der offenen Eingaben; der Rest ist Ort und Laufzeit.
+        Vorhaben 22: ``context.need.package`` ist ein Pfad, die Namensnennungen der Bedarfsquellen
+        sind Anzeige; Archive, Band, Klassen und Hypothesen zählen.
         """
         payload = self.model_dump(
             mode="json",
@@ -2073,6 +2229,14 @@ class Settings(BaseSettings):
                         "table": {"file"},
                         "units": {"file"},
                         "indicators": {"file"},
+                    },
+                    # Vorhaben 22: das Paket ist ein Pfad, die Namensnennungen sind Anzeige;
+                    # URLs, Band, Klassen und Hypothesen zählen.
+                    "need": {
+                        "package": True,
+                        "accidents": {"attribution"},
+                        "grid": {"attribution"},
+                        "schools": {"attribution"},
                     },
                 },
                 "period": {"label"},

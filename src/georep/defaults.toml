@@ -329,3 +329,75 @@ patterns = ['dringlichkeitsentscheidung', 'dringliche[rn]? entscheidung', 'dring
 [majorities]                   # die Mehrheit im Rat je Zeitraum, mit Vereinbarung (Vorhaben 25) und Belegen im Korpus; eine Annahme, die das Lager eines Fraktionsdokuments trägt (Schritt cosponsors) und die 24 und 28 mitlesen. Stadtneutral leer: ohne Zeile hat kein Dokument ein Lager
 body_kinds = ["rat", "ausschuss"]  # Gremienarten (gremium_art), in denen die Mehrheit des Rates gilt; die Bezirksvertretungen haben eigene Mehrheiten, die im Datensatz nicht stehen (Vorhaben 27)
 terms = []                     # [[majorities.terms]] im Stadtprofil: period, parties, valid_from, valid_to, agreement, agreement_date, evidence
+
+# --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 6 und § 10) ------------
+# Bedarf aus Quellen mit Punkten und Gitterzellen statt Raumeinheiten. Die Quellen sind bundes- oder
+# landesweit (Unfallatlas, Zensus 2022, Schuldaten NRW) und stehen darum hier und nicht in jedem
+# Stadtprofil, wie die Sprache der Ratsdokumente (Punkt 75); die Gemeinde ist city.ags. Das
+# Stadtprofil schaltet ein und nennt Paket, Klassen und die vorab festgelegten Hypothesen.
+[context.need]
+enabled = false                # Schalter: die Schritte need_data (Netz) und need fehlen ohne ihn
+package = ""                   # Paket mit den Stadtauszügen (snapshots/<stadt>-bedarf); bootstrap kopiert nach external/bedarf/, need_data holt frisch. Ein Pfad, nicht im Fingerprint
+band_m = 20.0                  # Randband in Metern: ein Unfall so nah an Wahlbezirken geht zu gleichen Teilen an jeden. Der Unfallatlas legt Unfälle auf die Straßenachse, Wahlbezirksgrenzen laufen oft auf Straßenmitten; halbe Straßenbreite plus Digitalisierungsabstand liegen bei Hauptstraßen um 10 bis 20 m (Messdokument § 3.1). Gitterzellen und Schulen gehen scharf zu (Band 0, Frage 22.4)
+neighbour_m = 50.0             # Nachbarn für Moran's I: Umfang des Schnitts eines 1-m-Puffers um den einen Wahlbezirk mit dem anderen über diesem Wert, also rund 25 m gemeinsame Grenze (so rechnet das Messskript, § 3.5)
+permutations = 10000           # Permutationen je vorab festgelegtem Test (Messdokument § 8)
+explore_permutations = 9999    # Permutationen der explorativen Rechnungen: innerhalb der Stadtbezirke, Moran's I (§ 3.5)
+bootstrap = 2000               # Ziehungen für das 95-%-Perzentil-Intervall von rho (§ 8)
+seed = 22                      # ein Generator für die Haupttests in der Folge der Hypothesen; die explorativen Rechnungen nehmen seed + 1 (§ 3.4, § 3.5)
+alpha = 0.05                   # Schwelle nach Holm über die vorab festgelegten Tests
+hypotheses = []                # [[context.need.hypotheses]] im Stadtprofil: vorab festgelegt, mit Commit
+explore = []                   # weitere Paare (Bedarf, Aufmerksamkeit), explorativ, im Stadtprofil
+
+[context.need.accidents]       # Unfallatlas: Unfälle mit Personenschaden, je Jahr ein Zip mit einer CSV; die CSV heißt je Jahrgang anders, gelesen wird die größte Datei neben schema.ini
+archives = [
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2020_EPSG25832_CSV.zip",
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2021_EPSG25832_CSV.zip",
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2022_EPSG25832_CSV.zip",
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2023_EPSG25832_CSV.zip",
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2024_EPSG25832_CSV.zip",
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2025_EPSG25832_CSV.zip",
+]                              # NRW erst ab 2019 im Atlas; ein neuer Jahrgang erscheint im Juli (Frage 22.9)
+crs = "EPSG:25832"             # LINREFX, LINREFY: Punkt auf der Straßenachse
+
+[context.need.accidents.attribution]   # dl-de/by-2-0 verlangt Bereitsteller, Lizenz und Verweis auf den Datensatz
+title = "Unfallatlas: Straßenverkehrsunfälle mit Personenschaden"
+publisher = "Statistische Ämter des Bundes und der Länder"
+url = "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/"
+license = "Datenlizenz Deutschland – Namensnennung – Version 2.0"
+license_url = "https://www.govdata.de/dl-de/by-2-0"
+stand = "Unfälle 2020 bis 2025, Jahrgang 2025 veröffentlicht am 2026-07-07"
+
+[context.need.grid]            # Zensus 2022, 100-m-Gitter: Einwohner und durchschnittliche Nettokaltmiete je m²
+population_url = "https://www.destatis.de/static/DE/zensus/gitterdaten/Zensus2022_Bevoelkerungszahl.zip"
+population_member = "Zensus2022_Bevoelkerungszahl_100m-Gitter.csv"
+rent_url = "https://www.destatis.de/static/DE/zensus/gitterdaten/Zensus2022_Durchschn_Nettokaltmiete.zip"
+rent_member = "Zensus2022_Durchschn_Nettokaltmiete_100m-Gitter.csv"
+crs = "EPSG:3035"              # x_mp_100m, y_mp_100m: Mittelpunkt der Zelle
+margin_m = 200.0               # Rand um die Stadt beim Vorfiltern des bundesweiten Gitters; behalten werden danach nur Zellen mit Mittelpunkt in einem Stimmbezirk
+
+[context.need.grid.attribution]
+title = "Zensus 2022, Gitterdaten: Bevölkerungszahl und durchschnittliche Nettokaltmiete (100 m)"
+publisher = "Statistisches Bundesamt (Destatis)"
+url = "https://www.destatis.de/static/DE/zensus/gitterdaten/Zensus2022_Bevoelkerungszahl.zip"
+license = "Datenlizenz Deutschland – Namensnennung – Version 2.0"
+license_url = "https://www.govdata.de/dl-de/by-2-0"
+stand = "Stichtag 2022-05-15"
+
+[context.need.schools]         # amtliche Schuldaten NRW (Schulnummer, Schulform, Koordinate) und der Schulsozialindex des Landes (Stufe 1 bis 9 je Schule)
+schools_url = "https://apps.schulministerium.nrw.de/BiPo/OpenData/Schuldaten/schuldaten.csv"
+index_url = "https://www.schulministerium.nrw/system/files/media/document/file/schulliste_sj_25_26_open_data.csv"
+index_encoding = "cp850"       # die Liste des Sozialindex ist in Codepage 850 gespeichert (ß als 0xE1); „ohne" heißt: keine Stufe
+crs = "EPSG:25832"             # UTMRechtswert, UTMHochwert; die Datei nennt das CRS je Zeile, gelesen wird nur diese Angabe
+forms = ["02"]                 # Schulformen im Index je Wahlbezirk: 02 sind die Grundschulen (ihr Einzugsgebiet liegt am nächsten am Wohnort)
+
+[context.need.schools.attribution]
+title = "Amtliche Schuldaten (Eckdaten) und Schulsozialindex, Schuljahr 2025/26"
+publisher = "Ministerium für Schule und Bildung des Landes Nordrhein-Westfalen"
+url = "https://apps.schulministerium.nrw.de/BiPo/OpenData/Schuldaten/schuldaten.csv"
+license = "Datenlizenz Deutschland – Namensnennung – Version 2.0"
+license_url = "https://www.govdata.de/dl-de/by-2-0"
+stand = "Schuljahr 2025/26"
+
+[context.need.classes]         # Klassen des passenden Ausschusses (Schritt committees), deren Anteil an den Dokumenten je Wahlbezirk zählt; im Stadtprofil. Leer: die Anteile fehlen, der Rest rechnet
+traffic = []
+youth = []
