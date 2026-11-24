@@ -180,6 +180,11 @@ VERIFY_TARGETS = [
     "georep.prep.chunks.chunk_lines",
     "georep.prep.chunks.split_chunks",
     "georep.prep.chunks.chunk_text",
+    # Vorhaben 18: Stemmer und Mischung der Suche, je einzeln geprüft, Exit 0, „Not confirmed"
+    # nach 40 und 22 s. Nicht dabei: ``bm25_scores``, ``ranking`` und ``build_index`` (NumPy und
+    # SciPy in der Signatur); ihre Eigenschaften prüft tests/property/test_bm25_props.py.
+    "georep.search.stem.stem",
+    "georep.search.bm25.rrf",
 ]
 
 
@@ -388,6 +393,14 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "chunks": (
         ("src/georep/prep/chunks.py",),
         ("tests/unit/test_chunks.py", "tests/property/test_chunks_props.py"),
+    ),
+    "stem": (
+        ("src/georep/search/stem.py",),
+        ("tests/unit/test_search_stem.py", "tests/property/test_bm25_props.py"),
+    ),
+    "bm25": (
+        ("src/georep/search/bm25.py",),
+        ("tests/unit/test_search_bm25.py", "tests/property/test_bm25_props.py"),
     ),
 }
 # Die acht Module, die am 2026-10-13 unter 90 s brauchten; der wöchentliche Qualitätslauf nimmt
