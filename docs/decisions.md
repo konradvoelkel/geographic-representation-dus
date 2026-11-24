@@ -3204,7 +3204,15 @@ Betrag statt eines Absturzes; im Korpus kommt sie nicht vor.
 `kennungen-messung-v1`, Termin und Verwaltungseinheit aus `-v2`, Form wie oben abgebildet), Dokument
 für Dokument auf den Rohtextstores vom 2026-11-24: **0 Abweichungen** unter 116 349 Spannen der
 Hauptperiode, 151 205 von 2014 bis 2020, 22 357 ab 2025 und 7 428 in Mönchengladbach; die
-Ämterverzeichnisse gleich, auch in der Folge (55, 35, 29 und 14 Namen). Ein slow-Test
+Ämterverzeichnisse gleich, auch in der Folge (55, 35, 29 und 14 Namen). **Mit einer Ausnahme seit dem
+Review** (K1, 2026-11-24): die Nummer vor einem Namen („64 - Amt für Wohnungswesen") nahm die
+Messfassung um die Länge des Treffers nach vorn; trifft das `$` des Musters vor einem Zeilenwechsel
+am Ende des Fensters („Amt 19 - ⏎Amt für …"), ist der Treffer ein Zeichen kürzer, und die Spanne
+begann mitten in der Nummer. Der Bau beginnt sie an der Fundstelle. Das ist ein Fehler der Grenzen,
+nicht der Regel, und er ändert genau acht Spannen um ein Zeichen, bei gleicher Norm: eine in der
+Hauptperiode (`00472505.pdf`), eine von 2014 bis 2020 (`00300693.pdf`), sechs in zwei Dokumenten in
+Mönchengladbach; keine lag in einer Aufgabe der Stichprobe. Der Vergleich gegen das Messskript zählt
+diese acht als erwartete Abweichung, sonst 0. Ein slow-Test
 (`tests/golden/test_identifiers_labels.py`) rechnet aus dem Rohtextpaket die Zahlen nach, auf denen
 das Urteil steht: Bauleitplanung 1,000 und 64/71, Betrag 0,962 und 84/88 an Runde 1, Termin 30/30
 und Verwaltungseinheit 0,956 und 71/80 an Runde 2, dazu die Entwurfsschätzung der Fassung 2 an

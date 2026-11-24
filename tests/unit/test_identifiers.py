@@ -260,6 +260,19 @@ def test_aemter_aus_kopf_und_text(rules: IdentifierRules) -> None:
     ]
 
 
+def test_die_nummer_vor_einem_namen_ueber_den_zeilenwechsel(rules: IdentifierRules) -> None:
+    """Review K1 (2026-11-24): „Amt 19 - ⏎Amt für …" beginnt bei „19", nicht mitten in der Nummer.
+
+    ``$`` trifft auch vor dem Zeilenwechsel am Ende des Fensters; die Spanne beginnt darum an der
+    Fundstelle, nicht um die Länge des Treffers vor dem Namen.
+    """
+    text = "Das Amt 19 - \nAmt für Wohnungswesen nimmt Stellung."
+    names = [h for h in find_identifiers(text, rules) if h.attr == "name"]
+    assert [(text[h.start : h.end], h.norm) for h in names] == [
+        ("19 - \nAmt für Wohnungswesen", "19")
+    ]
+
+
 @pytest.mark.parametrize(
     ("text", "expected"),
     [

@@ -694,7 +694,9 @@ def offices(text: str, rules: IdentifierRules) -> Iterator[Hit]:
             code = rules.code_before.search(text[low : hit.start])
             if code:
                 norm = code.group(0).split("-")[0].split("–")[0].strip()
-                hit = hit._replace(start=hit.start - len(code.group(0)), norm=norm)
+                # an der Fundstelle beginnen, nicht um die Länge des Treffers vor dem Namen: ``$``
+                # trifft auch vor einem Zeilenwechsel am Ende des Fensters (Review K1, 2026-11-24)
+                hit = hit._replace(start=low + code.start(), norm=norm)
         hits.append(hit)
     taken = [(h.start, h.end) for h in hits if h.kind == "amt"]
     if rules.head is not None and rules.head_code is not None:
