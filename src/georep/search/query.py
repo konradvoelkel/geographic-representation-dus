@@ -59,6 +59,10 @@ from georep.stores import SCHEMA_KEY, RawTextStore
 
 Method = Literal["embedding", "hybrid", "bm25"]
 METHODS: tuple[Method, ...] = ("embedding", "hybrid", "bm25")
+# nDCG@10 an den 50 Suchfragen der Hauptperiode (Messdokument § 4.4); die Hinweiszeile nennt sie,
+# wenn die Suche auf BM25 zurückfällt. Für andere Perioden und Städte ist nichts gemessen.
+MEASURED = {"embedding": "0,883", "hybrid": "0,846", "bm25": "0,709"}
+NAMES = {"embedding": "Einbettung", "hybrid": "Mischung (RRF)", "bm25": "BM25"}
 WORD_INDEX_SCHEMA_VERSION = 1
 KEY = "georep.key"  # der Schlüssel der Wortmatrix in ihren Parquet-Metadaten
 WORD_INDEX_SCHEMA: dict[str, pl.DataType] = {
@@ -88,11 +92,16 @@ def word_index_path(layout: Layout) -> Path:
     return layout.processed / "suche_wortmatrix.parquet"
 
 
-def search_units(layout: Layout, settings: Settings) -> pl.DataFrame:
-    """Die Einheiten aus Korpus und Rohtextstore, wie der Schritt ``embeddings`` sie bildet."""
-    for path in (layout.corpus, layout.raw_texts):
+def require(*paths: Path) -> None:
+    """``MissingInputError`` mit dem Handgriff, wenn eine Eingabe des Befehls fehlt (Review, N6)."""
+    for path in paths:
         if not path.is_file():
             raise MissingInputError(f"{path} fehlt; erst `georep run` für dieses Profil")
+
+
+def search_units(layout: Layout, settings: Settings) -> pl.DataFrame:
+    """Die Einheiten aus Korpus und Rohtextstore, wie der Schritt ``embeddings`` sie bildet."""
+    require(layout.corpus, layout.raw_texts)
     corpus = pl.read_parquet(layout.corpus, columns=["id", "name", "file_name"])
     store = RawTextStore(layout.raw_texts)
     raw = raw_frame(
@@ -118,6 +127,7 @@ def word_index(layout: Layout, settings: Settings) -> tuple[Bm25Index, bool]:
     Liefert die Matrix und ob sie neu gebaut ist. Der Text einer Einheit ist Titel, Leerzeile und
     Rohtext, wie in der Messung (Seitenwechsel als Zeilenwechsel; für ``\\w+`` gleich).
     """
+    require(layout.corpus, layout.raw_texts)
     path = word_index_path(layout)
     key = index_key(layout, settings)
     if path.is_file():
@@ -275,6 +285,7 @@ def search(
     bei gehaltener GPU-Sperre sucht ``embedding`` und ``hybrid`` mit BM25 und sagt in ``note``,
     warum."""
     cfg = settings.embeddings
+    require(layout.corpus)
     note = ""
     if method != "bm25":
         try:
@@ -287,7 +298,10 @@ def search(
                     layout, settings, embedder, query, max(n, cfg.fusion_depth)
                 )
         except (ModelError, MissingInputError) as error:
-            note = f"{error}; gesucht wird mit BM25 (nDCG@10 0,709 statt 0,883)"
+            note = (
+                f"{error}; gesucht wird mit BM25 statt {NAMES[method]} (nDCG@10 an 50 Fragen der "
+                f"Hauptperiode: {NAMES[method]} {MEASURED[method]}, BM25 {MEASURED['bm25']})"
+            )
             method = "bm25"
     words: list[tuple[str, float]] = []
     if method != "embedding":
@@ -307,7 +321,6 @@ def search(
 
 def describe(result: Result, corpus: pl.DataFrame, query: str) -> str:
     """Die Trefferliste als Text: Rang, Punktzahl, Drucksache, Datum, Titel, darunter der Link."""
-    names = {"embedding": "Einbettung", "hybrid": "Mischung (RRF)", "bm25": "BM25"}
     rows = {
         row[0]: row
         for row in corpus.filter(pl.col("id").is_in([h.id for h in result.hits]))
@@ -315,7 +328,7 @@ def describe(result: Result, corpus: pl.DataFrame, query: str) -> str:
         .iter_rows()
     }
     lines = [f"Hinweis: {result.note}"] if result.note else []
-    lines.append(f'„{query}" mit {names[result.method]}: {len(result.hits)} Treffer')
+    lines.append(f'„{query}" mit {NAMES[result.method]}: {len(result.hits)} Treffer')
     for hit in result.hits:
         _, reference, day, name, url = rows.get(hit.id, (hit.id, None, None, None, None))
         title = " ".join((name or "").split())

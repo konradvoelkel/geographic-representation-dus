@@ -264,3 +264,29 @@ def test_a_held_gpu_lock_makes_the_search_fall_back_without_waiting(
     with lock.open("a") as again:  # zurückgegeben: ein zweiter Halter bekommt sie sofort
         fcntl.flock(again, fcntl.LOCK_EX | fcntl.LOCK_NB)
     assert settings.ml.gpu_lock is None  # Vorgabe: keine Prüfung, kein Rechnerpfad
+
+
+def test_without_a_corpus_the_command_says_to_run_first(
+    settings: Settings,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Review Runde 1, N6: eine frische Datenwurzel nennt den Handgriff, nicht ``[Errno 2]``."""
+    empty = Layout(tmp_path / "leer" / "data", tmp_path / "leer" / "cache", tmp_path / "ref")
+    monkeypatch.setattr(cli, "load_settings", lambda **_: settings)
+    monkeypatch.setattr(Layout, "from_settings", staticmethod(lambda _: empty))
+    for method in ("bm25", "embedding"):
+        assert cli.main(["search", "Radweg", "--method", method]) == 1
+        err = capsys.readouterr().err
+        assert "erst `georep run`" in err and "Errno" not in err, err
+
+
+@pytest.mark.parametrize(("method", "score"), [("embedding", "0,883"), ("hybrid", "0,846")])
+def test_the_hint_names_the_measured_score_of_the_chosen_method(
+    settings: Settings, layout: Layout, method: str, score: str
+) -> None:
+    """Review Runde 1, N6: die Zeile nennt die Zahl des gewählten Verfahrens und wo sie gemessen ist."""
+    result = search(layout, settings, "Radweg", method, 5, None)  # type: ignore[arg-type]
+    assert result.method == "bm25"
+    assert score in result.note and "0,709" in result.note and "Hauptperiode" in result.note
