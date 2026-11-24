@@ -241,3 +241,26 @@ def test_chunks_with_another_prompt_or_window_make_the_search_fall_back(
         embedder = FakeEmbedder(options=EmbeddingOptions(num_ctx=64))
     result = search(layout, settings, "Radweg", "embedding", 5, embedder)
     assert result.method == "bm25" and change in result.note
+
+
+def test_a_held_gpu_lock_makes_the_search_fall_back_without_waiting(
+    settings: Settings, layout: Layout, tmp_path: Path
+) -> None:
+    """Review Runde 1, N1: die Suche fragt die GPU-Sperre nicht blockierend; ist sie gehalten,
+    sucht sie mit BM25 und sagt es. Frei nimmt sie die Sperre für die Frage und gibt sie zurück."""
+    import fcntl
+
+    _embedded(settings, layout, FakeEmbedder())
+    lock = tmp_path / "gpu.lock"
+    locked = settings.model_copy(update={"ml": settings.ml.model_copy(update={"gpu_lock": lock})})
+    with lock.open("a") as held:
+        fcntl.flock(held, fcntl.LOCK_EX)
+        for method in ("embedding", "hybrid"):
+            busy = search(layout, locked, "Radweg", method, 5, FakeEmbedder())
+            assert busy.method == "bm25" and "GPU" in busy.note and str(lock) in busy.note
+        fcntl.flock(held, fcntl.LOCK_UN)
+    free = search(layout, locked, "Radweg", "embedding", 5, FakeEmbedder())
+    assert free.method == "embedding" and not free.note
+    with lock.open("a") as again:  # zurückgegeben: ein zweiter Halter bekommt sie sofort
+        fcntl.flock(again, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    assert settings.ml.gpu_lock is None  # Vorgabe: keine Prüfung, kein Rechnerpfad

@@ -21,9 +21,12 @@ nennt diese ID mit Drucksache, Datum, Titel und Link der Hauptdatei.
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 from collections import Counter
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -232,6 +235,34 @@ def embedding_ranking(
     return [(ids[i], float(scores[i])) for i in ranking(scores, depth)]
 
 
+@contextmanager
+def gpu_slot(lock: Path | None) -> Iterator[bool]:
+    """Die GPU-Sperre nicht blockierend nehmen: ``True`` und gehalten bis zum Ende des Blocks, wenn
+    sie frei ist oder keine eingestellt ist (``ml.gpu_lock``); ``False``, wenn ein anderer sie hält.
+
+    Dieselbe Sperre wie ``flock <pfad>`` der GPU-Warteschlange (``flock(2)`` über ``fcntl``); ohne
+    ``LOCK_NB`` wartete eine Suche, bis ein langer Lauf fertig ist (Review Runde 1, N1). Lässt sich
+    die Datei nicht öffnen, ist das ein ``ModelError``.
+    """
+    if lock is None:
+        yield True
+        return
+    try:
+        handle = lock.open("a")
+    except OSError as error:
+        raise ModelError(f"die GPU-Sperre {lock} lässt sich nicht öffnen ({error})") from error
+    with handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            yield False
+            return
+        try:
+            yield True
+        finally:
+            fcntl.flock(handle, fcntl.LOCK_UN)
+
+
 def search(
     layout: Layout,
     settings: Settings,
@@ -240,17 +271,21 @@ def search(
     n: int,
     embedder: Embedder | None,
 ) -> Result:
-    """Die ersten ``n`` Treffer. Ohne Einbetter, ohne Stückvektoren oder ohne erreichbares Modell
-    sucht ``embedding`` und ``hybrid`` mit BM25 und sagt in ``note``, warum."""
+    """Die ersten ``n`` Treffer. Ohne Einbetter, ohne Stückvektoren, ohne erreichbares Modell oder
+    bei gehaltener GPU-Sperre sucht ``embedding`` und ``hybrid`` mit BM25 und sagt in ``note``,
+    warum."""
     cfg = settings.embeddings
     note = ""
     if method != "bm25":
         try:
             if embedder is None:
                 raise ModelError("kein Einbettungsmodell")
-            semantic = embedding_ranking(
-                layout, settings, embedder, query, max(n, cfg.fusion_depth)
-            )
+            with gpu_slot(settings.ml.gpu_lock) as free:
+                if not free:
+                    raise ModelError(f"die GPU ist belegt (Sperre {settings.ml.gpu_lock})")
+                semantic = embedding_ranking(
+                    layout, settings, embedder, query, max(n, cfg.fusion_depth)
+                )
         except (ModelError, MissingInputError) as error:
             note = f"{error}; gesucht wird mit BM25 (nDCG@10 0,709 statt 0,883)"
             method = "bm25"

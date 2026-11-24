@@ -1523,6 +1523,15 @@ class Ml(_Strict):
     retry_rejected: bool = False  # abgewiesene Eingaben erneut fragen statt überspringen
     embedding: EmbeddingModel = EmbeddingModel()
     generation: GenerationModel = GenerationModel()
+    # Vorhaben 18 (Review Runde 1, N1): die flock-Sperre der GPU, die ``georep search`` nicht
+    # blockierend prüft; ist sie gehalten, sucht es mit BM25. ``None`` = keine Prüfung. Der Pfad
+    # ist rechnerspezifisch und gehört in ``settings.local.toml``, nie in die Defaults.
+    gpu_lock: Path | None = None
+
+    @field_validator("gpu_lock", mode="before")
+    @classmethod
+    def _no_lock(cls, value: object) -> object:
+        return None if value in ("", None) else value
 
     @model_validator(mode="after")
     def _local_unless_allowed(self) -> Ml:
