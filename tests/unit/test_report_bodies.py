@@ -101,7 +101,8 @@ def test_body_table_names_come_from_the_settings(model: ReportModel) -> None:
     assert by_code["BV1"].city_district == 1
     assert by_code["OVA"].name == "Ordnungs- und Verkehrsausschuss"
     # Ein Kürzel ohne gesicherten Namen zeigt das Kürzel (Entscheidung 9).
-    assert by_code["KUA"].name == "" and by_code["KUA"].label == "KUA"
+    assert by_code["SEBD"].name == "" and by_code["SEBD"].label == "SEBD"
+    assert by_code["KUA"].name == "Kulturausschuss"  # Frage 15, Messdokument 11, § 3.7
     kinds = [r.kind for r in model.bodies]
     assert kinds == sorted(kinds, key=prep_bodies.KINDS.index)  # nach Klasse, dann Dokumente
     for group in (prep_bodies.DISTRICT_BODY, prep_bodies.COMMITTEE):

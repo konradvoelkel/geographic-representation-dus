@@ -78,7 +78,9 @@ def test_kinds_and_names(rules: BodyRules) -> None:
     assert rules.name_of(parse_reference("BV6/108/2023", rules)) == "Bezirksvertretung 6"
     assert rules.name_of(parse_reference("RAT/270/2023", rules)) == "Rat"
     assert rules.name_of(parse_reference("OVA/1/2023", rules)) == "Ordnungs- und Verkehrsausschuss"
-    assert rules.name_of(parse_reference("KUA/1/2023", rules)) == ""  # nicht gesichert
+    assert rules.name_of(parse_reference("SEBD/1/2023", rules)) == ""  # nicht gesichert
+    # Frage 15 (2026-11-24): aus dem Kopf der Vorlagen, Messdokument 11, § 3.7
+    assert rules.name_of(parse_reference("KUA/1/2023", rules)) == "Kulturausschuss"
     assert rules.name_of(parse_reference("XYZ/1/2023", rules)) == ""
     assert rules.name_of(parse_reference("kaputt", rules)) == ""
 

@@ -265,14 +265,21 @@ RPAU = "Rechnungsprüfungsausschuss"
 # stehen durften (ein Alias ins Nichts ist ein Settings-Fehler). Beide Namen sind belegt:
 POA = "Personal- und Organisationsausschuss"  # 51 Nummern der Periode 2014 bis 2020; der Name steht 19-mal in den Texten dieser Dokumente ("Sitzungstermine des Personal- und Organisationsausschusses"), Organisation gr/26
 ACI = "Ausschuss für Chancengerechtigkeit und Integration"  # 55 Nummern der laufenden Periode; der Name steht im Titel von ACI/003/2025 ("Wahl einer / eines Vorsitzenden des Ausschusses für Chancengerechtigkeit und Integration"), Organisation gr/400237
-# Kürzel ohne gesicherten Namen (nur plausibel; nach dem Merge von Option 4 aus raw/organizations.json, fragen.md 5.2):
-KUA = ""
-JHA = ""
-SCHUA = ""
-AGS = ""
-AWM = ""
+# Frage 15 (docs/plans/fragen-2026-11.md, Annahme „ja", 2026-11-24): sechs Namen aus dem Kopf der
+# Vorlagen. Wo ein Dokument der Hauptperiode genau eine Zeile der Beratungsfolge im Kopf und genau ein
+# Gremium in der OParl-Beratungsfolge hat, stehen dieser Name und dieses Kürzel ohne Ausnahme
+# zusammen (docs/plans/11-struktur.md, § 3.7, gezählt am 2026-11-23; daneben: Dokumente mit diesem
+# Kürzel in OParl, von allen mit genau dieser Kopfzeile und genau einem OParl-Gremium). Damit ist
+# fragen.md 5.2 für diese sechs beantwortet.
+KUA = "Kulturausschuss"        # 298 von 298
+JHA = "Jugendhilfeausschuss"   # 310 von 310
+SCHUA = "Schulausschuss"       # 137 von 137
+AGS = "Ausschuss für Gesundheit und Soziales"  # 96 von 96
+AWM = "Ausschuss für Wohnungswesen und Modernisierung"  # 36 von 36
+HFA = "Haupt- und Finanzausschuss"  # 69 von 69
+# Kürzel ohne gesicherten Namen (nur plausibel; nach dem Merge von Option 4 aus raw/organizations.json, fragen.md 5.2).
+# SEBD steht 142-mal mit „Bauausschuss", das das Profil schon BAU nennt (dieselbe Organisation gr/17): bleibt.
 SEBD = ""
-HFA = ""
 WALTW = ""
 WABTW = ""
 WPA = ""
