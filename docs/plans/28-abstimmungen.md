@@ -224,7 +224,7 @@ Beschlüsse je Art; Beiräte und Gremien ohne Zuordnung (479 Beschlüsse) zähle
 | **gesamt** | | | **8 807 / 12 570 = 0,701** |
 
 Die Zahl setzt den vollen Abruf voraus (§ 5). Sie überschätzt, wenn die Stichprobe der Ausschüsse
-günstig lag (17 von 19 Ausschüssen mit ein bis zwei Sitzungen), und unterschätzt, weil Scans und
+günstig lag (17 Ausschüsse mit je ein bis zwei Sitzungen), und unterschätzt, weil Scans und
 Beiräte mit 0 zählen.
 
 ### 3.7 Prüfbarkeit der Hypothesen (nur n, nicht ihr Ausgang)
@@ -265,7 +265,7 @@ baut das Skript die Aufträge mit den Bausteinen von F4 (`build_task`, `write_as
 eigener Folge, unter `/media/konrad/xtraspace/georep/messdaten/kodierung/28-abstimmungen/{A,B}/`
 (`auftrag.jsonl`, `antworten.jsonl`, `codebuch.md`). Ausschnitt: Median 2 818 Zeichen, höchstens 11 404;
 nach dem Handbuch (§ 3, Schritt 3) teilt der Supervisor die Kodierer in Läufe (etwa drei zu 50 Zeilen).
-`georep validate merge` und die Schlichtung laufen wie gewohnt.
+`georep validate merge` und die Schlichtung laufen wie gewohnt; **`georep validate tasks` nicht aufrufen**: es läse den Text der Drucksache statt der Niederschrift und schriebe die Aufträge damit neu.
 
 **Eingefroren**: die Ausgabe des Verfahrens für alle 1 774 Punkte,
 `messdaten/28-abstimmungen/vorhersage.parquet`, SHA-256
