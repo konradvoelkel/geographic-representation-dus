@@ -218,7 +218,7 @@ def _row(
         start.replace(tzinfo=None) if start else None,
         item.number if item else None,
         item.order if item else None,
-        item.result if item else None,
+        (item.result or None) if item else None,  # "" ist kein Eintrag (Review, N4)
     )
 
 

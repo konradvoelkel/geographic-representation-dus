@@ -570,3 +570,17 @@ def test_a_point_named_by_two_consultations_decides_the_same_in_any_order() -> N
     backward = oc.decisions(verlauf.reverse(), RESULTS)
     assert forward.equals(backward)
     assert forward.row(0, named=True)["entscheidung_gremium"] == "AUS"  # die Beratung b2
+
+
+def test_an_empty_entry_is_no_entry() -> None:
+    """Review 2026-11-24, N4: ``result = ""`` ist kein Eintrag, wie im Messskript (``if s.result``)."""
+    meetings = {"m1": _meeting("m1", "2021-02-01T17:00:00+01:00", "gr/1")}
+    items = {
+        "i1": OparlAgendaItem.model_validate(
+            {"id": "i1", "meeting": "m1", "consultation": "c1", "result": ""}
+        )
+    }
+    agenda = oc.agenda_rows(meetings, items, [_consultation("c1", "p1")], {"p1"})
+    assert agenda.get_column("result").to_list() == [None]
+    verlauf = oc.progress(agenda, ORGS, RESULTS)
+    assert verlauf.get_column("stufe").to_list() == [None]
