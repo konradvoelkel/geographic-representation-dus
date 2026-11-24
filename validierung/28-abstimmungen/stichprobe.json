@@ -1,0 +1,30 @@
+{
+  "vorhaben": "28-abstimmungen",
+  "codebuch_version": "2026-11-24.1",
+  "profil": "duesseldorf",
+  "einheit": "document",
+  "grundgesamtheit": "validierung-28/population.parquet",
+  "grundgesamtheit_sha256": "2030e3d7a8766ec62128e8ae0785ba6d2e503a47c7e355655266b1666a563641",
+  "einheiten": 926,
+  "ohne_text": 0,
+  "groesse": 150,
+  "seed": 20261124,
+  "schicht": "schicht",
+  "aufteilung": "equal",
+  "selbstgewichtend": false,
+  "schichten": {
+    "einstimmig": {
+      "grundgesamtheit": 486,
+      "stichprobe": 50
+    },
+    "mehrheitlich": {
+      "grundgesamtheit": 361,
+      "stichprobe": 50
+    },
+    "ohne_angabe": {
+      "grundgesamtheit": 79,
+      "stichprobe": 50
+    }
+  },
+  "gezogen": "2026-11-24"
+}
