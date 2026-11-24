@@ -949,6 +949,7 @@ class NeedSettings(_Strict):
     classes: NeedClasses = NeedClasses()
     hypotheses: list[NeedHypothesis] = []
     explore: list[tuple[str, str]] = []  # weitere Paare (Bedarf, Aufmerksamkeit), explorativ
+    delay_s: float = Field(default=2.0, ge=0.0)  # Pause zwischen zwei geladenen Archiven
 
     @field_validator("package", mode="before")
     @classmethod

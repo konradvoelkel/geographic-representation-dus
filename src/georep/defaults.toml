@@ -347,6 +347,7 @@ seed = 22                      # ein Generator für die Haupttests in der Folge 
 alpha = 0.05                   # Schwelle nach Holm über die vorab festgelegten Tests
 hypotheses = []                # [[context.need.hypotheses]] im Stadtprofil: vorab festgelegt, mit Commit
 explore = []                   # weitere Paare (Bedarf, Aufmerksamkeit), explorativ, im Stadtprofil
+delay_s = 2.0                  # Pause in Sekunden zwischen zwei Archiven, die need_data lädt: eine Anfrage nach der anderen, wie die Fremddaten der Messung geladen wurden
 
 [context.need.accidents]       # Unfallatlas: Unfälle mit Personenschaden, je Jahr ein Zip mit einer CSV; die CSV heißt je Jahrgang anders, gelesen wird die größte Datei neben schema.ini
 archives = [

@@ -54,7 +54,14 @@ def _enabled(settings: Settings, **update: object) -> Settings:
     )
     accidents = need.accidents.model_copy(update={"archives": ARCHIVES})
     changed = need.model_copy(
-        update={"enabled": True, "accidents": accidents, "grid": grid, "schools": schools, **update}
+        update={
+            "enabled": True,
+            "accidents": accidents,
+            "grid": grid,
+            "schools": schools,
+            "delay_s": 0.0,
+            **update,
+        }
     )
     return settings.model_copy(
         update={"context": settings.context.model_copy(update={"need": changed})}
@@ -270,3 +277,27 @@ def test_need_on_the_mini_chain_writes_a_row_per_district_and_the_tests(
     before = {path: digest(path) for path in (files.table, files.tests)}
     run_step(steps[1], settings, force=True)
     assert {path: digest(path) for path in (files.table, files.tests)} == before
+
+
+def test_need_data_pauses_between_two_archives_it_fetches(
+    world: tuple[Layout, Routes, dict[str, int]],
+    default_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Eine Anfrage nach der anderen, mit Pause dazwischen (wie die Fremddaten geladen wurden)."""
+    layout, routes, _ = world
+    pauses: list[float] = []
+    monkeypatch.setattr("georep.enrich.need.time.sleep", pauses.append)
+    settings = _enabled(default_settings, delay_s=0.5)
+    run_step(
+        _step(need_steps(settings, layout, FakeSession(routes)), "need_data"), settings, online=True
+    )
+    assert pauses == [0.5] * (len(routes) - 1)
+    pauses.clear()
+    run_step(
+        _step(need_steps(settings, layout, FakeSession(routes)), "need_data"),
+        settings,
+        online=True,
+        force=True,
+    )
+    assert pauses == []  # nichts geladen, nichts abzuwarten

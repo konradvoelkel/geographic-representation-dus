@@ -83,16 +83,16 @@ def need_files(layout: Layout) -> NeedFiles:
     )
 
 
-def _archive(
-    http: Transport, url: str, folder: Path, *, max_age_s: int, now: float
-) -> tuple[Path, bool]:
-    """Das Archiv unter ``folder``; geladen nur, wenn es fehlt oder älter ist als ``max_age_s``."""
-    target = folder / archive_name(url)
-    if target.is_file() and now - target.stat().st_mtime < max_age_s:
-        return target, False
+def _fresh(target: Path, *, max_age_s: int, now: float) -> bool:
+    """Liegt das Archiv da und ist jünger als ``max_age_s``? Dann wird es nicht geladen."""
+    return target.is_file() and now - target.stat().st_mtime < max_age_s
+
+
+def _fetch_archive(http: Transport, url: str, target: Path) -> Path:
+    """Ein Archiv laden, prüfen (Zip oder CSV) und atomar unter ``target`` ablegen."""
     content = fetch_zip(http, url) if target.suffix.lower() == ".zip" else fetch_csv(http, url)
     write_bytes(target, content)
-    return target, True
+    return target
 
 
 def _described(path: Path, url: str) -> dict[str, object]:
@@ -155,10 +155,14 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
         fetched = 0
         paths: dict[str, Path] = {}
         for url in need.archive_urls():
-            paths[url], new = _archive(
-                http, url, files.archives, max_age_s=settings.cache.opendata_s, now=now
-            )
-            fetched += new
+            target = files.archives / archive_name(url)
+            if _fresh(target, max_age_s=settings.cache.opendata_s, now=now):
+                paths[url] = target
+                continue
+            if fetched and need.delay_s:
+                time.sleep(need.delay_s)  # eine Anfrage nach der anderen, mit Pause
+            paths[url] = _fetch_archive(http, url, target)
+            fetched += 1
         accidents = pl.concat(
             [read_accidents(paths[url], ags) for url in need.accidents.archives]
         ).sort("jahr", "monat", "x", "y")
