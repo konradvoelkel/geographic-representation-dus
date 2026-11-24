@@ -8,14 +8,14 @@ Konflikt 11). Die kleinen Pakete der Stufe 2 sind mit der Annahme zu Frage 26 fr
 
 Das Paket gibt es, weil GitHub Pages ohne Netz baut: ohne es hätte der Schritt `need` dort keine
 Eingaben. `profiles/duesseldorf.toml` nennt den Ordner als `[context.need].package`; `bootstrap`
-kopiert die vier Dateien nach `external/bedarf/`, der Netzschritt `need_data` schreibt sie aus den
-Archiven neu. Der Ordner wird **nur gelesen**; die pre-commit-Hooks lassen `snapshots/` aus, und
+kopiert die vier Dateien nach `external/bedarf/`, der Netzschritt `need_data` (nur mit dem Schalter
+`context.need.fetch`) schreibt sie aus den Archiven neu. Der Ordner wird **nur gelesen**; die pre-commit-Hooks lassen `snapshots/` aus, und
 `.gitattributes` hält die Bytes unverändert.
 
 Erzeugt mit
 
 ```bash
-georep fetch need_data          # die Archive nach cache_root/bedarf/, die Auszüge nach external/bedarf/
+GEOREP_CONTEXT__NEED__FETCH=true georep fetch need_data   # Schalter für diese Shell; Archive nach cache_root/bedarf/, Auszüge nach external/bedarf/
 georep pack --need snapshots/duesseldorf-bedarf
 ```
 
@@ -51,12 +51,18 @@ die der Messung unter `fremddaten/opendata/` (geladen am 2026-11-23). Am 2026-11
 Quelle eine Datei frisch von der Quelle geladen (Unfälle 2025, Zensus-Einwohner, Schuldaten,
 Sozialindex), mit gleicher Prüfsumme; die übrigen sechs kamen aus der Ablage der Messung.
 
+Die Auszüge sind **verändert** im Sinn der dl-de/by-2-0 (ausgeschnitten, Spalten gewählt, verbunden,
+als Parquet); darum trägt jede Namensnennung den Hinweis. Neu gepackt am 2026-11-24 nach Runde 2 des
+Reviews (`georep pack --need --force`), aus Auszügen, die `need_data` mit den Lesern dieser Runde aus
+denselben Archiven neu geschnitten hat (ohne Abruf, 0 Zeilen ohne Koordinate): Bytes und SHA-256
+oben sind unverändert.
+
 | Quelle | Archive | Herausgeber | Lizenz | Namensnennung |
 |---|---|---|---|---|
-| Unfallatlas, Straßenverkehrsunfälle mit Personenschaden | `Unfallorte2020_EPSG25832_CSV.zip` bis `Unfallorte2025_EPSG25832_CSV.zip` von <https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/> | Statistische Ämter des Bundes und der Länder | Datenlizenz Deutschland – Namensnennung – Version 2.0, <https://www.govdata.de/dl-de/by-2-0> | „Statistische Ämter des Bundes und der Länder, Unfallatlas, dl-de/by-2-0" |
-| Zensus 2022, Gitterdaten 100 m | `Zensus2022_Bevoelkerungszahl.zip`, `Zensus2022_Durchschn_Nettokaltmiete.zip` von <https://www.destatis.de/static/DE/zensus/gitterdaten/> | Statistisches Bundesamt (Destatis) | Datenlizenz Deutschland – Namensnennung – Version 2.0 (open.nrw; Destatis: „zur freien Nutzung (mit Namensnennung)") | „Statistisches Bundesamt (Destatis), Zensus 2022, dl-de/by-2-0" |
-| Amtliche Schuldaten (Eckdaten) | `schuldaten.csv` von <https://apps.schulministerium.nrw.de/BiPo/OpenData/Schuldaten/schuldaten.csv> | Ministerium für Schule und Bildung des Landes Nordrhein-Westfalen | Datenlizenz Deutschland – Namensnennung – Version 2.0 | „Ministerium für Schule und Bildung NRW, Schuldaten, dl-de/by-2-0" |
-| Schulsozialindex, Schuljahr 2025/26 | `schulliste_sj_25_26_open_data.csv` von <https://www.schulministerium.nrw/system/files/media/document/file/schulliste_sj_25_26_open_data.csv> | Ministerium für Schule und Bildung des Landes Nordrhein-Westfalen | Datenlizenz Deutschland – Namensnennung – Version 2.0 | „Ministerium für Schule und Bildung NRW, Schulsozialindex, dl-de/by-2-0" |
+| Unfallatlas, Straßenverkehrsunfälle mit Personenschaden | `Unfallorte2020_EPSG25832_CSV.zip` bis `Unfallorte2025_EPSG25832_CSV.zip` von <https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/> | Statistische Ämter des Bundes und der Länder | Datenlizenz Deutschland – Namensnennung – Version 2.0, <https://www.govdata.de/dl-de/by-2-0> | „Statistische Ämter des Bundes und der Länder, Unfallatlas, dl-de/by-2-0 (verändert: Unfälle der Gemeinde, sieben Spalten, als Parquet)" |
+| Zensus 2022, Gitterdaten 100 m | `Zensus2022_Bevoelkerungszahl.zip`, `Zensus2022_Durchschn_Nettokaltmiete.zip` von <https://www.destatis.de/static/DE/zensus/gitterdaten/> | Statistisches Bundesamt (Destatis) | Datenlizenz Deutschland – Namensnennung – Version 2.0 (open.nrw; Destatis: „zur freien Nutzung (mit Namensnennung)") | „Statistisches Bundesamt (Destatis), Zensus 2022, dl-de/by-2-0 (verändert: Zellen mit Mittelpunkt in einem Stimmbezirk, Einwohner und Miete verbunden, als Parquet)" |
+| Amtliche Schuldaten (Eckdaten) | `schuldaten.csv` von <https://apps.schulministerium.nrw.de/BiPo/OpenData/Schuldaten/schuldaten.csv> | Ministerium für Schule und Bildung des Landes Nordrhein-Westfalen | Datenlizenz Deutschland – Namensnennung – Version 2.0 | „Ministerium für Schule und Bildung NRW, Schuldaten, dl-de/by-2-0 (verändert: Schulen der Gemeinde, vier Spalten, als Parquet)" |
+| Schulsozialindex, Schuljahr 2025/26 | `schulliste_sj_25_26_open_data.csv` von <https://www.schulministerium.nrw/system/files/media/document/file/schulliste_sj_25_26_open_data.csv> | Ministerium für Schule und Bildung des Landes Nordrhein-Westfalen | Datenlizenz Deutschland – Namensnennung – Version 2.0 | „Ministerium für Schule und Bildung NRW, Schulsozialindex, dl-de/by-2-0 (verändert: die Stufe je Schulnummer an die Schuldaten gehängt)" |
 
 ## Was am Lauf auffiel
 

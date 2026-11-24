@@ -10,7 +10,7 @@ Miete und Schulsozialindex je Wahlbezirk, aber keine Anteile der Klassen und kei
 Erzeugt mit
 
 ```bash
-georep --profile moenchengladbach fetch need_data
+GEOREP_CONTEXT__NEED__FETCH=true georep --profile moenchengladbach fetch need_data   # Schalter für diese Shell
 georep --profile moenchengladbach pack --need snapshots/moenchengladbach-bedarf
 ```
 
@@ -41,8 +41,18 @@ Wahlbezirk; 33 Wahlbezirke, fünf ohne Grundschule.
 
 ## Herkunft und Lizenz
 
-Wie `snapshots/duesseldorf-bedarf/README.md`, „Herkunft und Lizenz": Unfallatlas (Statistische Ämter
-des Bundes und der Länder), Zensus 2022 (Destatis), amtliche Schuldaten und Schulsozialindex
-(Ministerium für Schule und Bildung NRW), alle unter der Datenlizenz Deutschland – Namensnennung –
-Version 2.0, <https://www.govdata.de/dl-de/by-2-0>, mit denselben Namensnennungen. Am 2026-11-24 aus
-den Archiven in `cache_root/bedarf/` geschnitten, ohne neuen Abruf.
+Wie `snapshots/duesseldorf-bedarf/README.md`, „Herkunft und Lizenz": dieselben zehn Archive, alle
+unter der Datenlizenz Deutschland – Namensnennung – Version 2.0, <https://www.govdata.de/dl-de/by-2-0>.
+Am 2026-11-24 aus den Archiven in `cache_root/bedarf/` geschnitten, ohne neuen Abruf. Die Auszüge
+sind **verändert** im Sinn der Lizenz, darum trägt jede Namensnennung den Hinweis:
+
+| Quelle | Herausgeber | Namensnennung |
+|---|---|---|
+| Unfallatlas, Straßenverkehrsunfälle mit Personenschaden | Statistische Ämter des Bundes und der Länder | „Statistische Ämter des Bundes und der Länder, Unfallatlas, dl-de/by-2-0 (verändert: Unfälle der Gemeinde, sieben Spalten, als Parquet)" |
+| Zensus 2022, Gitterdaten 100 m | Statistisches Bundesamt (Destatis) | „Statistisches Bundesamt (Destatis), Zensus 2022, dl-de/by-2-0 (verändert: Zellen mit Mittelpunkt in einem Stimmbezirk, Einwohner und Miete verbunden, als Parquet)" |
+| Amtliche Schuldaten (Eckdaten) | Ministerium für Schule und Bildung des Landes Nordrhein-Westfalen | „Ministerium für Schule und Bildung NRW, Schuldaten, dl-de/by-2-0 (verändert: Schulen der Gemeinde, vier Spalten, als Parquet)" |
+| Schulsozialindex, Schuljahr 2025/26 | Ministerium für Schule und Bildung des Landes Nordrhein-Westfalen | „Ministerium für Schule und Bildung NRW, Schulsozialindex, dl-de/by-2-0 (verändert: die Stufe je Schulnummer an die Schuldaten gehängt)" |
+
+Neu gepackt am 2026-11-24 nach Runde 2 des Reviews (`georep pack --need --force`), aus Auszügen, die
+`need_data` mit den Lesern dieser Runde aus denselben Archiven neu geschnitten hat (0 Zeilen ohne
+Koordinate): Bytes und SHA-256 oben sind unverändert.
