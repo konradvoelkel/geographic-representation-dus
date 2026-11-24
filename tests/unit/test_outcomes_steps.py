@@ -94,9 +94,12 @@ def test_the_contribution_stands_behind_fourteen_and_fifteen(
     assert names.index("26-beschluesse") > names.index("14-vorgaenge") > -1
     assert names.index("26-beschluesse") > names.index("15-funktion")
     steps = [s.name for s in build_steps(default_settings, _layout(tmp_path, network=False))]
-    assert steps.index("outcomes") == steps.index("council_results") + 1
-    assert steps.index("council_results") > steps.index("procedures") > steps.index("cosponsors")
-    assert steps.index("report") > steps.index("outcomes")
+    pos = {name: index for index, name in enumerate(steps)}
+    # Review 2026-11-24, N8: nur die Folge, die die Eingaben verlangen, nicht die Nachbarn; jeder
+    # weitere Beitrag stünde sonst dazwischen
+    assert pos["references"] < pos["procedures"] < pos["outcomes"]
+    assert pos["cosponsors"] < pos["outcomes"]
+    assert pos["council_results"] < pos["outcomes"] < pos["report"]
 
 
 def test_the_switch_and_the_neighbours_decide_which_steps_exist(
