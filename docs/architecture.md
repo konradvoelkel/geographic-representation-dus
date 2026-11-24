@@ -477,8 +477,15 @@ Dinge fest, die andere Modellschritte übernehmen können:
   als optionale Eingabe.
 - **Ein Aufruf außerhalb von `run_step`** (`georep search` bettet die Frage ein) setzt
   `use.reset(retry_rejected=…)` selbst (`docs/todo.md`, Punkt 11 c) und prüft, dass Frage und
-  Stücke aus demselben Modell und Digest kommen (Stamp von `embeddings`). Ohne Server oder ohne
-  Stückvektoren sucht `georep search` mit BM25 und sagt es in einer Zeile.
+  Stücke zusammenpassen: Modell, Digest, Prompt-Version der Stücke und Schlüssel der Optionen
+  (Stamp von `embeddings`). Ist `ml.gpu_lock` gesetzt, nimmt die Suche die GPU-Sperre nicht
+  blockierend (`fcntl.flock` mit `LOCK_NB`) und hält sie für die Frage. Ohne Server, ohne
+  Stückvektoren, bei anderem Modell oder gehaltener Sperre sucht `georep search` mit BM25 und sagt
+  es in einer Zeile, mit der an der Hauptperiode gemessenen Zahl beider Verfahren.
+- **Der Client entsteht erst bei Bedarf** (`enrich.embeddings.DeferredEmbedder`, wie
+  `http.DeferredTransport`): `build_steps`, also `run`, `steps` und `status`, baut den Schritt,
+  ohne einen `OllamaClient` anzulegen; ein `ml.base_url`, das er verweigert, wird erst ein
+  `ModelError`, wenn ein Lauf mit `--models` oder die Suche das Modell wirklich fragt.
 
 `georep search "<frage>" [--method embedding|hybrid|bm25] [--n 10]` (`search/query.py`) sucht
 über die Einheiten eines Profils: `embedding` (Vorgabe) nach dem besten Stück, `bm25` über eine
