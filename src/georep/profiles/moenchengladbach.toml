@@ -412,13 +412,16 @@ enabled = true                 # Schritte functions und cosponsors (Vorhaben 15,
 types = { "1.1 - Beratungsvorlage" = "vollzug/beschlussvorlage", "1.2 - Beratungsvorlage BV" = "vollzug/beschlussvorlage", "6.3 - Beratungsvorlage Sondergremien" = "vollzug/beschlussvorlage", "6.5 - Beratungsvorlage Nat. Beirat" = "vollzug/beschlussvorlage", "8.1 - GMMG Beratungsvorlage" = "vollzug/beschlussvorlage", "8.2 - GMMG Beratungsvorlage BetrA" = "vollzug/beschlussvorlage", "7.1 - EWMG Beratungsvorlage" = "vollzug/beschlussvorlage", "4 - Änderungsvorlage" = "vollzug/beschlussvorlage", "2.1 - Berichtsvorlage" = "information/berichtsvorlage", "2.2 - Berichtsvorlage BV" = "information/berichtsvorlage", "6.2 - Berichtsvorlage Sondergremien" = "information/berichtsvorlage", "8.3 - GMMG Berichtsvorlage" = "information/berichtsvorlage", "8.4 - GMMG Berichtsvorlage BetrA" = "information/berichtsvorlage", "7.2 - EWMG Berichtsvorlage" = "information/berichtsvorlage", "3 - Fraktionsantrag" = "initiative/antrag", "6.1 - Mitgliederantrag" = "initiative/antrag" }
 # Zwei Fraktionen aus zwei Parteischlüsseln, wie raw/organizations.json sie nennt (Abruf vom
 # 2026-10-14, Tabelle bei [originators] oben): „FDP / VOLT" (gr/106) und „DIE LINKE / DIE PARTEI"
-# (gr/127). Seit wann sie so heißen, sagt der Server nicht (startDate ist das der alten Fraktion);
-# die Zeilen gelten darum ab dem Beginn dieses Datensatzes.
+# (gr/127). Sie gehören zum Rat ab 2025, nicht zu diesem Datensatz: in keinem Text von 2020 bis 2025
+# steht „volt" oder „linke / partei", und die Briefköpfe von 2024 und 2025 nennen DIE LINKE und DIE
+# PARTEI je für sich (Review 2026-11-24, M2; das Datum der Organisation ist das der alten
+# Fraktion). Die Zeilen gelten darum erst ab der Wahlperiode des Rates, die am 2025-11-01 begann,
+# und ändern in diesem Datensatz kein Dokument.
 [[functions.fractions]]
 key = "FDP+VOLT"
 parties = ["FDP", "VOLT"]
-valid_from = 2020-09-13
+valid_from = 2025-11-01
 [[functions.fractions]]
 key = "Die_Linke+PARTEI"
 parties = ["Die_Linke", "PARTEI"]
-valid_from = 2020-09-13
+valid_from = 2025-11-01

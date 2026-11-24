@@ -2961,10 +2961,11 @@ Verfasserblock des Briefkopfs der alten Vorlagenform; nennt keiner eine Partei, 
 
 **Fraktionen mit Zeitraum.** `[[functions.fractions]]` fasst Parteischlüssel zu einer Fraktion,
 solange sie besteht: in Düsseldorf SPD+VOLT ab 2020-11-01 und T_FW+PARTEI ab 2025-11-01, in
-Mönchengladbach die Fraktionen „FDP / VOLT" und „DIE LINKE / DIE PARTEI", wie
-`raw/organizations.json` sie nennt (die Messung hatte Mönchengladbach nicht zusammengefasst; ohne
-die Zeilen wäre ein Antrag einer Fraktion dort ein gemeinsamer). Eine Partei gehört an keinem Tag
-zu zwei Fraktionen; das prüft der Validator.
+Mönchengladbach „FDP / VOLT" und „DIE LINKE / DIE PARTEI", wie `raw/organizations.json` sie nennt,
+erst ab dem 2025-11-01: sie gehören zum Rat ab 2025, im Datensatz 2020 bis 2025 steht „volt" in
+keinem Text, und die Briefköpfe von 2024 und 2025 nennen Linke und PARTEI getrennt (Review
+2026-11-24). In diesem Datensatz ändern die beiden Zeilen also kein Dokument, auch keines der 70
+gemeinsamen. Eine Partei gehört an keinem Tag zu zwei Fraktionen; das prüft der Validator.
 
 **Ein stadtweiter Mehrheitenblock, je Wahlperiode des Rates.** `[majorities]` steht im Stadtprofil,
 weder unter `[functions]` noch unter `[council]` (Synergien 2026-11, § 1): je Zeile Wahlperiode,

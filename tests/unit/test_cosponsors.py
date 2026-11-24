@@ -224,3 +224,18 @@ def test_without_majorities_no_document_has_a_camp(city: Settings) -> None:
     bodies = pl.DataFrame({"id": ["a"], "gremium_art": ["rat"]})
     frame = classify_cosponsors(corpus, originators, bodies, rules)
     assert frame.get_column("lager").to_list() == ["ohne_lager"]
+
+
+def test_the_second_city_keeps_its_fractions_apart_until_its_new_council() -> None:
+    """Review 2026-11-24, M2: „FDP / VOLT" und „DIE LINKE / DIE PARTEI" gibt es erst im Rat ab
+    2025; in den Texten 2020 bis 2025 steht „volt" nie, und die Briefköpfe nennen Linke und PARTEI
+    getrennt."""
+    settings = load_settings(profile="moenchengladbach", cwd=NOWHERE)
+    rules = CosponsorRules.from_settings(settings)
+    fractions = settings.functions.fractions
+    assert fractions_on(("FDP",), date(2024, 6, 1), fractions, rules.order) == ("FDP",)
+    assert fractions_on(("Die_Linke", "PARTEI"), date(2025, 8, 19), fractions, rules.order) == (
+        "Die_Linke",
+        "PARTEI",
+    )
+    assert fractions_on(("FDP", "VOLT"), date(2025, 11, 1), fractions, rules.order) == ("FDP+VOLT",)
