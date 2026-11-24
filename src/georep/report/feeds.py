@@ -132,7 +132,9 @@ class FeedDocument:
     reference: str  # Drucksache, leer ohne
     name: str  # Titel
     day: dt.date  # Vorlagendatum
-    modified: dt.datetime | None  # OParl ``modified``, mit Zeitzone; ohne: das Vorlagendatum
+    modified: (
+        dt.datetime | None
+    )  # OParl ``modified``; ohne Zone gilt die des Profils; ohne: das Vorlagendatum
     link: str  # das PDF; leer ohne
 
 
@@ -143,8 +145,14 @@ def feed_name(district: int) -> str:
 
 def _entry(document: FeedDocument, zone: ZoneInfo) -> FeedEntry:
     published = dt.datetime.combine(document.day, dt.time(0, 0), tzinfo=zone)
-    # Review N3: der Zeitpunkt in der Zone des Profils; verglichen wird als Zeitpunkt
-    changed = document.modified.astimezone(zone) if document.modified is not None else published
+    # Review N3: der Zeitpunkt in der Zone des Profils; verglichen wird als Zeitpunkt. Review N4:
+    # eine Zeit ohne Zone gilt in der Zone des Profils, nicht in der des Rechners
+    changed = published
+    if document.modified is not None:
+        modified = document.modified
+        if modified.tzinfo is None or modified.utcoffset() is None:
+            modified = modified.replace(tzinfo=zone)
+        changed = modified.astimezone(zone)
     updated = max(changed, published)
     link, kind = document.link, "application/pdf"
     if link.startswith("http://"):

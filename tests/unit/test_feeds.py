@@ -227,3 +227,13 @@ def test_updated_and_order_go_by_instant_not_by_string() -> None:
     text = render_feed(HEAD, entries)
     assert "<updated>2025-10-02T01:30:00+02:00</updated>\n  <author>" in text  # feed/updated: B
     assert "<updated>2025-10-02T01:00:00+02:00</updated>" in text  # A in Ortszeit
+
+
+def test_a_naive_time_counts_in_the_zone_of_the_profile() -> None:
+    """Review N4: OParl ``modified`` ohne Zeitzone gilt in ``feeds.timezone``, nicht in der des
+    Rechners, und ist kein ``TypeError``. Tokio statt Berlin, damit der Rechner nicht mitspielt."""
+    tokyo = ZoneInfo("Asia/Tokyo")
+    naive = dt.datetime(2025, 10, 2, 8, 0)
+    (entry,) = newest_entries([_document(9, dt.date(2025, 10, 1), modified=naive)], 1, tokyo)
+    assert timestamp(entry.updated) == "2025-10-02T08:00:00+09:00"
+    assert atom_problems(render_feed(HEAD, [entry])) == []
