@@ -3210,6 +3210,15 @@ Paket nach.
   `analysis/hypotheses.py` mit dem gemeinsamen Kern; nach dessen Merge werden sie von dort genommen
   (auch das Ziel in `VERIFY_TARGETS` zieht mit).
 
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
+(`ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace), beide mit `POLARS_MAX_THREADS=4` und
+`OMP_NUM_THREADS=2`: zuerst `main` `61fcdd5` gegen den Branch vor dem Merge (`9520f86`), dann `main`
+`098d556` (mit Vorhaben 14) gegen den zusammengeführten Branch. Beide Male unter `site/` 194
+Dateien in A und B, 0 Abweichungen. Über die Datenwurzeln weichen nur Stamps ab (79 und 87 Stück),
+und in B liegen 13 Dateien mehr: die acht Auszüge unter `external/bedarf/` beider Städte, die drei
+Tabellen unter `processed/` und ihre zwei Stamps. Im Bau aus den Paketen (ohne Netz) rechnet `need`
+dieselben Zahlen wie im Lauf mit `need_data`.
+
 **H1′ und H3′** (Frage 22.10) sind in § 8.1 des Messdokuments prospektiv festgelegt, an der laufenden
 Periode, gerechnet erst mit zwölf Monaten Unfällen (Unfallatlas 2026, Juli 2027); gebaut ist dafür
 nichts.
