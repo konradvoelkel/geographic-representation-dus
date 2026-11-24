@@ -27,7 +27,7 @@ Mit `--auswertung` wertet es die Regel gegen `validierung/26-beschluesse/labels.
 Schlichtung), in den Stufen der Vorab-Festlegung (§ 3.1 des Messdokuments): volle Klasse, Rückfall 1
 ohne Prüfauftrag, Rückfall 2 grobe Klassen.
 
-Laufzeit rund eine Minute.
+Laufzeit rund 15 Sekunden (drei Netzläufe laden rund 8 s).
 """
 
 from __future__ import annotations
@@ -154,12 +154,13 @@ AUFTEILUNG = {
 }
 
 # ================================================================================================
-# Regel für den Prüfauftrag (nach der Vorab-Festlegung, vor dem Ziehen der Stichprobe committet).
-# Gelesen wird der Beschlusstext eines Antrags im kleingeschriebenen Korpus: vom letzten Marker
-# („antrag:", „folgendes zu beschließen:", „beschlussvorschlag" …) vor der Begründung bis zu ihr.
-# Ein Satz ist eine Prüfung, wenn er ein Prüfwort trägt; eine Maßnahme, wenn er ohne Prüfwort
-# eine Handlung festlegt, oder wenn vor seinem ersten Prüfwort eine steht („einzurichten und zu
-# berichten"). Prüfauftrag heißt: mindestens ein Prüfsatz und kein Maßnahmesatz.
+# Regel für den Prüfauftrag (nach der Vorab-Festlegung, vor dem Ziehen der Stichprobe committet,
+# e2b3545). Gelesen wird der Beschlusstext eines Antrags im kleingeschriebenen Korpus: vom letzten
+# Marker („antrag:", „folgendes zu beschließen:", „beschlussvorschlag" …) vor der Begründung bis zu
+# ihr. Ein Satz ist eine Prüfung, wenn er ein Prüfwort trägt; er trägt zusätzlich eine Maßnahme, wenn
+# vor dem Prüfwort eine steht („einzurichten und zu berichten") oder danach eine folgt, die nicht in
+# einer Frage („prüfen, ob …") oder unter Vorbehalt steht. Ein Satz ohne Prüfwort ist eine Maßnahme,
+# wenn er eine Handlung festlegt. Prüfauftrag heißt: mindestens ein Prüfsatz und kein Maßnahmesatz.
 # ================================================================================================
 MARKER = re.compile(
     r"(?:(?:änderungs|ergänzungs|haushalts|zusatz)?-?antrag\s*:"
@@ -743,6 +744,34 @@ def klassen_je_periode(df: pl.DataFrame) -> None:
         )
         res = Counter(a.filter(pl.col("result").is_not_null()).get_column("result").to_list())
         print(f"    maßgeblicher Wert: {res.most_common()}")
+    print("\n  Haushaltsanträge (Dokumentart oder Titel mit „Haushalt“), Klassen je Periode:")
+    for ds in ("2014-2020", "2020-2025", "2025-"):
+        h = df.filter(
+            (pl.col("datensatz") == ds) & (pl.col("rolle") == "antrag") & pl.col("haushalt")
+        )
+        c = Counter(h.get_column("klasse").to_list())
+        print(f"    {ds:10s} n {h.height:5d}: " + ", ".join(f"{k} {c[k]}" for k in KLASSEN if c[k]))
+        rat = h.filter(pl.col("gremium") == "RAT")
+        cr = Counter(rat.get_column("klasse").to_list())
+        print(
+            f"      davon im Rat n {rat.height}: "
+            + ", ".join(f"{k} {cr[k]}" for k in KLASSEN if cr[k])
+        )
+    print(
+        "\n  Wo „erledigt“ bei Anträgen gehäuft vorkommt (Gremium und Jahr der Entscheidung, mindestens 10):"
+    )
+    e = (
+        df.filter((pl.col("rolle") == "antrag") & pl.col("entscheidung_datum").is_not_null())
+        .with_columns(pl.col("entscheidung_datum").dt.year().alias("jahr"))
+        .group_by("entscheidung_gremium", "jahr")
+        .agg(pl.len().alias("n"), (pl.col("klasse") == "erledigt").sum().alias("erledigt"))
+        .filter(pl.col("erledigt") >= 10)
+        .sort("erledigt", descending=True)
+    )
+    for r in e.iter_rows(named=True):
+        print(
+            f"    {r['entscheidung_gremium']:8s} {r['jahr']}  {r['erledigt']:4d} von {r['n']:4d} ({p1(r['erledigt'], r['n'])})"
+        )
     titel("§ 3.4b Beschlussvorlagen der Verwaltung und Anfragen, dieselbe Abbildung (beschreibend)")
     for rolle in ("vorlage", "anfrage"):
         for ds in df.get_column("datensatz").unique(maintain_order=True).to_list():
@@ -1034,6 +1063,110 @@ def gegenproben(df: pl.DataFrame, profile: Sequence[Profil], kanten: pl.DataFram
                     f"       {ds:10s} {art:10s} Vorlage geändert {pct(geaendert, geaendert + unv)}"
                 )
     del klasse_von
+
+
+def nachtraege(df: pl.DataFrame, profile: Sequence[Profil], kanten: pl.DataFrame | None) -> None:
+    """Zahlen, die das Messdokument zu den Lücken nennt (§ 3.3, § 3.5, § 3.7, § 5, Paket in § 2)."""
+    titel("§ 3.3/3.5/3.7/5 Lücken: Sitzungen ohne Eintrag, Praxiszellen, Paketgröße")
+    folge: dict[str, list[Schritt]] = {}
+    for p in profile:
+        folge.update(p.folge)
+    a = df.filter((pl.col("rolle") == "antrag") & (pl.col("stadt") == "dus"))
+    for ds in ("2014-2020", "2020-2025", "2025-"):
+        o = a.filter((pl.col("datensatz") == ds) & (pl.col("klasse") == "ohne_ergebnis"))
+        c: Counter[tuple[str, str]] = Counter()
+        for i in o.get_column("id").to_list():
+            for x in {
+                (s.gremium, s.sitzung.date().isoformat() if s.sitzung else "")
+                for s in folge.get(i, [])
+            }:
+                c[x] += 1
+        print(f"  {ds}: Sitzungen mit den meisten Anträgen ohne Ergebnis: {c.most_common(5)}")
+        if not c:
+            continue
+        (g, d), _n = c.most_common(1)[0]
+        in_s = {
+            i
+            for i in o.get_column("id").to_list()
+            if any(
+                s.gremium == g and s.sitzung and s.sitzung.date().isoformat() == d
+                for s in folge.get(i, [])
+            )
+        }
+        rat = a.filter((pl.col("datensatz") == ds) & (pl.col("gremium_art") == "rat"))
+        rest = rat.filter(~pl.col("id").is_in(list(in_s)))
+        mit = rest.filter(pl.col("klasse") != "ohne_ergebnis").height
+        print(f"    Rat ohne die Anträge dieser Sitzung: mit Ergebnis {pct(mit, rest.height)}")
+        e = a.filter(pl.col("datensatz") == ds).explode("fraktionen")
+        for f in sorted({x for x in e.get_column("fraktionen").to_list() if x}):
+            ef = e.filter(pl.col("fraktionen") == f)
+            oe = ef.filter(pl.col("klasse") == "ohne_ergebnis").get_column("id").to_list()
+            hier = sum(1 for i in oe if i in in_s)
+            if hier >= 10:
+                print(
+                    f"    {f}: {ef.height} Anträge, ohne Ergebnis {len(oe)}, davon in dieser Sitzung {hier}"
+                )
+    # Praxiszellen mit Schwelle 0,4 (Vorschlag für Stufe 2, § 5)
+    z = (
+        a.filter(pl.col("entscheidung_datum").is_not_null())
+        .with_columns(pl.col("entscheidung_datum").dt.year().alias("jahr"))
+        .group_by("entscheidung_gremium", "jahr")
+        .agg(pl.len().alias("n"), (pl.col("klasse") == "erledigt").sum().alias("erl"))
+        .filter((pl.col("erl") >= 10) & (pl.col("erl") / pl.col("n") >= 0.4))
+    )
+    zellen = {(r["entscheidung_gremium"], r["jahr"]) for r in z.iter_rows(named=True)}
+    betroffen = a.filter(pl.col("klasse") == "erledigt").with_columns(
+        pl.col("entscheidung_datum").dt.year().alias("jahr")
+    )
+    ids = [
+        r["id"]
+        for r in betroffen.iter_rows(named=True)
+        if (r["entscheidung_gremium"], r["jahr"]) in zellen
+    ]
+    print(
+        f"  Praxiszellen (Anteil erledigt >= 0,4, mindestens 10 erledigt): {sorted(zellen)}; Anträge erledigt darin: {len(ids)}"
+    )
+    alt = a.filter(pl.col("datensatz") == "2014-2020")
+    mit = alt.filter((pl.col("klasse") != "ohne_ergebnis") & ~pl.col("id").is_in(ids)).height
+    print(f"    2014-2020 mit Ergebnis, Praxiszellen als ohne Ergebnis: {pct(mit, alt.height)}")
+    if kanten is not None:
+        rollen = dict(df.select("id", "rolle").iter_rows())
+        typ: dict[str, set[str]] = defaultdict(set)
+        for r in kanten.filter(pl.col("stark")).iter_rows(named=True):
+            if rollen.get(r["von"]) in ("vorlage", "information", "bedarf", "af"):
+                typ[r["nach"]].add(r["typ"])
+        e2 = a.filter((pl.col("klasse") == "erledigt") & pl.col("id").is_in(list(typ)))
+        print(
+            f"  erledigt mit Folgevorlage: {e2.height}; result {Counter(e2.get_column('result').to_list()).most_common()}; "
+            f"Haushaltsanträge {e2.filter(pl.col('haushalt')).height}; Kantentypen "
+            f"{Counter(t for i in e2.get_column('id').to_list() for t in typ[i]).most_common()}"
+        )
+    # Paket: Paper x Tagesordnungspunkt, drei Düsseldorfer Perioden
+    rows = []
+    for p in profile:
+        if p.stadt != "dus":
+            continue
+        for pid, steps in p.folge.items():
+            for st in steps:
+                rows.append(
+                    {
+                        "id": pid,
+                        "beratung": st.beratung,
+                        "top": st.top,
+                        "gremium": st.gremium,
+                        "rolle": st.rolle,
+                        "sitzung": st.sitzung.date() if st.sitzung else None,
+                        "nummer": st.nummer,
+                        "result": st.result,
+                    }
+                )
+    paket = pl.DataFrame(rows).unique().sort("id", "sitzung", "top")
+    EIGENE.mkdir(parents=True, exist_ok=True)
+    ziel = EIGENE / "beratungsfolge-probe.parquet"
+    paket.write_parquet(ziel, compression="zstd")
+    print(
+        f"  Paket Paper x Tagesordnungspunkt: {paket.height} Zeilen, {ziel.stat().st_size} Bytes (zstd)"
+    )
 
 
 def anfragen(df: pl.DataFrame) -> None:
@@ -1421,6 +1554,7 @@ def main() -> None:
     kanten = lade_kanten()
     pruefauftraege(df, kanten)
     gegenproben(df, profile, kanten)
+    nachtraege(df, profile, kanten)
     anfragen(df)
     erfolg(df)
     if args.stichprobe:
