@@ -173,6 +173,10 @@ VERIFY_TARGETS = [
     # 5 s am 2026-11-24. Die übrigen Funktionen von prep.references nehmen vorkompilierte Muster
     # (``re.Pattern`` in ``ReferenceRules``) und stehen darum nicht hier.
     "georep.prep.references.edge_type",
+    # Vorhaben 12 (2026-11-24): ein Datum genau dann, wenn der Kalender den Tag kennt. Nicht dabei:
+    # die Extraktoren in prep/identifiers.py, deren Regeln ``re.Pattern`` tragen (wie oben); ihre
+    # Eigenschaften prüft tests/property/test_identifiers_props.py.
+    "georep.prep.identifiers.iso_date",
 ]
 
 
@@ -376,6 +380,14 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "procedures": (
         ("src/georep/analysis/procedures.py",),
         ("tests/unit/test_procedures.py", "tests/property/test_procedures_props.py"),
+    ),
+    # Vorhaben 12: Kennungen und Beträge; Zeit nicht gemessen
+    "identifiers": (
+        ("src/georep/prep/identifiers.py",),
+        (
+            "tests/unit/test_identifiers.py",
+            "tests/property/test_identifiers_props.py",
+        ),
     ),
 }
 # Die acht Module, die am 2026-10-13 unter 90 s brauchten; der wöchentliche Qualitätslauf nimmt

@@ -130,6 +130,8 @@ def test_pipeline_runs_skips_and_reruns(
         # Vorhaben 14: Kanten, Vorgänge und Antworten hängen am Korpus, nicht an den Orten
         "references": "übersprungen",
         "procedures": "übersprungen",
+        # Vorhaben 12: liest Rohtexte und Korpus, beide unverändert
+        "identifiers": "übersprungen",
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")
