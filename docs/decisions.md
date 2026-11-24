@@ -3181,6 +3181,11 @@ in der Hauptperiode still eine leere Tabelle, wo es keine Dokumentvektoren gibt;
 sagt es („keine Dokumentvektoren und kein Paket: leere Tabelle"). Kein Schritt der Seite liest die
 Tabelle vor Stufe 3, darum ist das kein Abbruch.
 
+**Die Zahl der IDs ohne Rohtext steht in der Laufzeile** von `embeddings` („… 76 ohne Rohtext …"),
+nicht im Stamp. Der Stamp trägt außer der Kennung des Modells kein Feld, das `georep status`
+zeigt, und `extra` ginge in den Vergleich des Stamps ein (er wäre nach jedem Lauf veraltet); sie
+dort zu zeigen, bräuchte eine Änderung am Kern (Review Runde 1, N9).
+
 **Gegen die Messung geprüft** (2026-11-24, Hauptperiode): alle 47 407 Stücktexte samt Präfix und
 Titel sind die des Messskripts, darum kamen alle 47 312 verschiedenen aus dem Modellcache (0 neu
 gerechnet); alle 190 320 Zeilen der Nachbartabelle (Nachbar und Ähnlichkeit) sind die der Probe
