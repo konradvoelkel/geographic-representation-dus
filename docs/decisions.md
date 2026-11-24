@@ -3224,7 +3224,8 @@ und Verwaltungseinheit 0,956 und 71/80 an Runde 2, dazu die Entwurfsschätzung d
 Runde 1 (Termin 1,000 und 200/200, Verwaltungseinheit 0,976 und 51/52). Ein Umbau, der eine davon
 ändert, ist kein Refactoring. Nebenbefund: die Quote einer Schicht zählt im Messskript über alle
 Arten der Stichprobe, und „neu" steht in Runde 2 in fünf Arten; je Art gerechnet wäre die Präzision
-der Verwaltungseinheit 0,962 statt 0,956. Das Urteil ändert sich nicht.
+der Verwaltungseinheit 0,962 statt 0,956, die der Rechtsgrundlage 0,859 statt 0,861. Kein Urteil
+ändert sich (Nachtrag in § 4.4 des Messdokuments).
 
 **Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
 (`ab/ab_bau.sh`, `ab/ab_vergleich.py`), `main` bei `098d556` (nach Vorhaben 14) gegen den Branch

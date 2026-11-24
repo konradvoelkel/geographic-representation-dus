@@ -529,6 +529,25 @@ Gewichteter Recall (Gegenprobe): Haushalt 0,706, Recht 0,784 (n 6), Amt 0,920.
   die Klammer, im Recall gebeugte Vollnamen („des Amtes für Soziales und Jugend“), „Amt für
   Verbraucherschutz“ (nicht im Verzeichnis) und das Kürzel „RPA“.
 
+**Nachtrag zur Gewichtung** (Stufe 2, Review am 2026-11-24). Das Messskript teilt `schicht_n` durch
+die Zahl der Aufgaben einer Schicht **über alle Arten der Stichprobe** (`quote` in `auswertung_2`).
+In Runde 1 trägt jede Schicht den Namen ihrer Art, das ist gleichgültig. In Runde 2 stehen die
+Schichten „neu“ und „alt“ in mehreren Arten („neu“ in allen fünf), und ihr Gewicht wird mit der
+Zahl aller Aufgaben dieser Schicht gerechnet, nicht mit der der Art. Je Art gerechnet ergibt sich:
+
+| Art | Präzision streng, wie oben | je Art gerechnet |
+|---|---:|---:|
+| 2 Haushalt | 1,000 | 1,000 |
+| 3 Betrag (30) | 1,000 | 0,999 |
+| 4 Termin (30) | 1,000 | 1,000 |
+| 5 Rechtsgrundlage | 0,861 | 0,859 |
+| 6 Verwaltungseinheit | 0,956 | 0,962 |
+
+Kein Urteil ändert sich: die Rechtsgrundlage bleibt unter 0,95, die Verwaltungseinheit darüber,
+und Betrag und Termin entscheidet die Schicht „neu“ (18/20, 20/20), nicht die gewichtete Zahl. Die
+Zahlen oben bleiben die des Messskripts, weil das Urteil in § 5 auf ihnen steht und der slow-Test
+`tests/golden/test_identifiers_labels.py` sie so nachrechnet.
+
 ## 5. Urteil gegen das Kriterium
 
 **Kriterium** (Briefing, unverändert): Präzision ≥ 0,95 und Recall ≥ 0,85 je Art, streng; die Rolle eines
