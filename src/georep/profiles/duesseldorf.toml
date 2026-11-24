@@ -871,3 +871,132 @@ texts = "snapshots/duesseldorf-texte/cache/text/texts.parquet"
 profile = "duesseldorf-2025"
 papers = "snapshots/2025/raw/papers.jsonl"
 texts = "snapshots/2025/cache/text/texts.parquet"
+# --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.1 bis § 3.5 und § 10) ----
+# struktur-1 ist der Entwurf struktur-entwurf-1 aus dem Messskript (ENTWURF, Block duesseldorf)
+# unverändert: an 200 Dokumenten der Hauptperiode gegen zwei KI-Kodierer 188 von 200
+# Beschlussvorschlägen zeilengenau richtig, Amt 125/125, Amtsbezeichnung 69/69, Zeilen der
+# Beratungsfolge 160/168 (die acht übrigen: Platzhalter „-" gegen „keine"), Briefdatum 73/73.
+# Ein Muster hier zu ändern ist kein Refactoring: eine geschärfte Fassung heißt struktur-2 und
+# braucht eine frische Stichprobe (§ 10, Punkt 1). Die Erläuterungen je Zeile stehen in § 3.
+[structure]
+enabled = true
+heading = '^[ \t]*(?P<label>[A-ZÄÖÜ][^:\n]{0,60}?)[ \t]*:[ \t]*(?P<rest>[^\n]*)$'
+heading_nocolon = ''
+betreff_after_form = false
+lead_blocked_in = ["beschlusslage", "stellungnahme"]   # „… fasste folgenden Beschluss: … zu beschließen:" zitiert, schlägt nicht vor (BV7/007/2025, BV7/008/2025)
+level2 = ["finanzen", "klima"]  # die Kosten eines Ausführungsbeschlusses stehen im Beschlussvorschlag
+end_markers = ['^\s*(Mit\s+)?[Ff]reundliche[n]?\s+Grü(ß|ss)e', '^\s*[Gg]ez\.', '^\s*Sehr\s+geehrte']
+betreff_max_lines = 4
+art = [
+  ['^Haushaltsantrag', 'Haushaltsantrag'],
+  ['^Antrag', 'Antrag'],
+  ['^z?Anfrage', 'Anfrage'],
+  ['^(Bezirksvertretung )?Eingabe', 'Eingabe'],
+  ['^Vorlage aus der Politik$', 'Vorlage aus der Politik'],
+]
+# Eingaben nach § 24 GO tragen nur zum Teil einen Beschlussvorschlag (Kurzdarstellung ohne ihn):
+# sie stehen in keiner der beiden Listen und werden getrennt gezählt (23 von 124, § 3.4).
+decision_expected = ["Beschlussvorlage", "Bezirksvertretung Beschlussvorlage", "A+F Beschluss",
+  "Bedarfsbeschluss", "Beschlussvorlage RPA", "Antrag", "Haushaltsantrag"]
+decision_not_expected = ["Informationsvorlage", "Bezirksvertretung Informationsvorlage", "Anfrage",
+  "Berichtsvorlage"]
+# Seitenkopf- und -fußzeilen, die read_span überspringt (Frage 9.6); gezählt am 2026-11-24 über die
+# Rohtexte der Hauptperiode, je Zeile ganz getroffen: „Seite 2" 20 134 Zeilen in 12 424 Dokumenten,
+# „- 2 -" 48, die Drucksachennummer allein 19 361 (in 18 997 Dokumenten, meist im Kopf der ersten
+# Seite), „Sitzung des APS am … Vorlage Nr. …" 586.
+page_noise = [
+  'Seite\s*\d+(\s*(von|/)\s*\d+)?',
+  '-\s*\d+\s*-',
+  '[A-ZÄÖÜ]+\d{0,2}/\s?\d+/\d{4}(/\d+)?',
+  '(Sitzung\s+de[rs]\s+.{1,80}?\s+am\s+\d{1,2}\.\d{1,2}\.\d{4}\s+)?Vorlage\s+Nr\.\s*\S+',
+]
+
+[structure.labels]             # Label wie geschrieben -> Abschnittsart; Katalog § 3.1
+"Betrifft" = "betreff"
+"Fachbereich" = "kopf_amt"
+"Amt / Institut" = "kopf_amt"
+"Amt" = "kopf_amt"
+"Amtsleitung" = "kopf_amtsleitung"
+"Dezernentin / Dezernent" = "kopf_dezernat"
+"Beratungsfolge" = "kopf_beratungsfolge"
+"Beschlussdarstellung" = "beschlussvorschlag"
+"Beschlussvorschlag" = "beschlussvorschlag"
+"Beschlussentwurf" = "beschlussvorschlag"
+"Beschlussempfehlung" = "beschlussvorschlag"
+"Antrag" = "beschlussvorschlag"
+"Änderungsantrag" = "beschlussvorschlag"
+"Ergänzungsantrag" = "beschlussvorschlag"
+"Prüfantrag" = "beschlussvorschlag"
+"Haushaltsantrag" = "beschlussvorschlag"
+"Sachdarstellung" = "sachdarstellung"
+"Sachdarstellung / Maßnahmenbeschreibung" = "sachdarstellung"
+"Kurzdarstellung" = "sachdarstellung"
+"Sachlage" = "sachdarstellung"
+"Sachverhalt" = "sachdarstellung"
+"Stellungnahme der Verwaltung" = "stellungnahme"
+"Hierzu teilt die Verwaltung mit" = "stellungnahme"
+"Begründung" = "begruendung"
+"Alternative" = "alternative"
+"Anfrage" = "fragen"
+"Fragen" = "fragen"
+"Beschluss" = "beschlusslage"
+"Beschlusslage" = "beschlusslage"
+"Anlagen" = "anlagen"
+"Anlage" = "anlagen"
+"Nachrichtlich" = "nachrichtlich"
+"Finanzielle Auswirkungen" = "finanzen"
+"Finanzierung" = "finanzen"
+"Finanzierungsart" = "finanzen"
+"Kosten" = "finanzen"
+"Kosten und Finanzierung" = "finanzen"
+"Gesamtkosten" = "finanzen"
+"Gesamtkosten und Refinanzierung" = "finanzen"
+"Finanzierung des Projektes" = "finanzen"
+"Investive Kosten" = "finanzen"
+"Konsumtive Kosten" = "finanzen"
+"Klimarelevanz" = "klima"
+"Auswirkungen auf den Klimaschutz" = "klima"
+"Klimaschutz" = "klima"
+"Klimaanpassung" = "klima"
+
+# Einleitungssätze: eine Zeile, die mit Doppelpunkt endet und (mit den zwei Zeilen davor) so
+# lautet, öffnet den Abschnitt ab der nächsten Zeile (§ 3.2, Punkt 4; 927 Beschlussvorschläge, 8,8 %)
+[[structure.leads]]
+kind = "beschlussvorschlag"
+pattern = '(?i)\bbeschlie(ß|ss)(en|t)\b[^:]{0,40}:\s*$'
+[[structure.leads]]
+kind = "beschlussvorschlag"
+pattern = '(?i)\bzur\s+Abstimmung\s+(zu\s+)?(bringen|stellen)\s*:\s*$'
+[[structure.leads]]
+kind = "beschlussvorschlag"
+pattern = '(?i)\bfolgenden\s+\w*antrag\b[^:]{0,160}:\s*$'
+[[structure.leads]]
+kind = "beschlussvorschlag"
+pattern = '(?i)\bbeantrag(t|en)\s*:\s*$'
+[[structure.leads]]
+kind = "fragen"
+pattern = '(?i)(folgende[n]?\s+(\w+\s+)?Fragen|Fragen\b[^:]{0,60}\bbeantworten|beantworten(\s+zu\s+lassen)?|\bfrag(t|en)\s+an|um\s+(die\s+)?Beantwortung)[^:]{0,80}:\s*$'
+
+[structure.fallback]           # der Beschlusssatz ohne Überschrift (343 Beschlussvorschläge, 3,3 %)
+kind = "beschlussvorschlag"
+pattern = '^\s*((Der|Die|Das)\s+)?[A-ZÄÖÜ][^\n]{0,120}?\b(beschließt|beschliesst|empfiehlt|beauftragt|genehmigt|bewilligt|stimmt|bittet|fordert|ersucht|möge|wird\s+gebeten|wird\s+beauftragt|wird\s+aufgefordert)\b'
+max_lines_after_head = 12
+only_expected = true           # nur für Arten mit erwartetem Beschlussvorschlag (sonst „Die Verwaltung wird gebeten, folgende Fragen …")
+
+[structure.head]
+consultation_header = 'Gremium\s+Sitzungsdatum(\s+Beratungsqualität)?'
+quality = ["Entscheidung", "Kenntnisnahme", "Vorberatung", "Anhörung", "Empfehlung"]
+quality_placeholders = ["-/-", "-"]   # Eingaben: „Anregungs- und Beschwerdeausschuss 01.02.2024 -"
+quality_required = true
+titles = '^\s*(Oberbürgermeister(in)?|Bürgermeister(in)?|Stadtdirektor(in)?|Stadtkämmer(er|in)|Beigeordnete[r]?)'
+signer_roles = '(?i)\b(Fraktionsvorsitzende[r]?|Vorsitzende[r]?|Sprecher(in)?|Ratsherr|Ratsfrau|Ratsmitglied|Bezirksvertreter(in)?|Bürgermitglied|Geschäftsführer(in)?|Oberbürgermeister(in)?|Beigeordnete[r]?)\b'
+signer_window = 8
+closing = '^\s*((Mit\s+)?[Ff]reundliche[n]?\s+Grü(ß|ss)e|[Gg]ez\.)'  # im Entwurf im Code (signer_role); dasselbe Muster
+session = '(?i)zur\s+Sitzung\s+(der|des)\s+(?P<gremium>[^\n]{3,120}?)\s+am\s+(?P<datum>\d{1,2}\.\s?(\d{1,2}\.|[A-Za-zäÄ]+)\s?\d{4})'
+# „zur Sitzung des Rates der Landeshauptstadt Düsseldorf": der Ort gehört nicht zum Namen des
+# Gremiums (206 + 12 + 3 + 1 Briefe der Hauptperiode, gezählt am 2026-11-24)
+session_suffix = '\s+de[rs]\s+(Landeshauptstadt|Stadt)\s+{city}\s*$'
+date_line = '^\s*{city},?\s*(den\s+)?(?P<datum>\d{1,2}\.\s?\d{1,2}\.\s?\d{2,4})'
+form_titles = ["Beschlussvorlage", "Informationsvorlage", "Bericht", "Berichtsvorlage",
+  "Eingabe nach § 24 Gemeindeordnung NRW", "Antrag", "Anfrage"]
+head_lines = 30

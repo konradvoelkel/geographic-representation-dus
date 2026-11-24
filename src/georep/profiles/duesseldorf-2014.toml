@@ -108,3 +108,16 @@ consultations = ""
 [bootstrap]
 texts = ""                     # Punkt 68: das Textpaket der Hauptperiode gehört nicht hierher; der Schnappschuss trägt seine eigenen Texte
 raw_texts = ""                 # Fundament F1: ebenso das Rohtextpaket der Hauptperiode; ihren Rohtext liest der Schritt raw_texts aus den PDFs
+
+# --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.6) ------------------------
+# Erbt alles vom Stadtprofil und ändert nur, was das Vorlagenformular dieser Periode anders macht
+# (Block duesseldorf-2014 des Entwurfs): die Beratungsfolge steht am Ende der ersten Seite und hat
+# die Spalte „Ergebnis" statt „Beratungsqualität" (11 678 Dokumente gegen 2 288, in 62,3 % davon
+# „-/-" hinter dem Datum), und die Vorlagen aus der Politik tragen den Betreff ohne „Betrifft:" unter
+# dem Formulartitel. Betreff 46,4 → 78,9 %, Zeilen der Beratungsfolge 43,3 → 60,0 %.
+[structure]
+betreff_after_form = true
+
+[structure.head]
+consultation_header = 'Gremium\s+Sitzungsdatum(\s+(Beratungsqualität|Ergebnis))?'
+quality_required = false

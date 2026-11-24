@@ -1995,6 +1995,167 @@ class Procedures(_Strict):
         return self
 
 
+# --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.2, § 6 und § 10) ----------
+
+
+def _compiles_one(pattern: str, field: str) -> str:
+    return _compiles([pattern], field)[0] if pattern else pattern
+
+
+def _names_groups(pattern: str, groups: tuple[str, ...], field: str) -> str:
+    """Ein Muster, dessen Treffer der Code nach Gruppen liest, muss diese Gruppen tragen."""
+    if pattern:
+        missing = [g for g in groups if g not in re.compile(pattern).groupindex]
+        if missing:
+            raise ValueError(f"{field}: {pattern!r} braucht die Gruppen {', '.join(missing)}")
+    return pattern
+
+
+CITY_PLACEHOLDER = "{city}"  # in ``structure.head`` steht der Ort der Datumszeile nur so
+
+
+class StructureLead(_Strict):
+    """Ein Einleitungssatz, der mit Doppelpunkt endet und einen Abschnitt ab der nächsten Zeile
+    öffnet („… beschließen zu lassen:", „… folgende Fragen zu beantworten:")."""
+
+    kind: str
+    pattern: str
+
+    @field_validator("pattern")
+    @classmethod
+    def _compiles(cls, value: str) -> str:
+        return _compiles_one(value, "structure.leads")
+
+
+class StructureFallback(_Strict):
+    """Der Beschlusssatz einer Vorlage ohne Überschrift („Der Rat beschließt …"); er gehört selbst
+    zum Abschnitt und wird nur in den Zeilen nach dem Kopf gesucht."""
+
+    kind: str = "beschlussvorschlag"
+    pattern: str = ""  # leer: kein Beschlusssatz
+    max_lines_after_head: int = Field(default=12, ge=0)
+    only_expected: bool = True  # nur in Arten mit erwartetem Beschlussvorschlag
+
+    @field_validator("pattern")
+    @classmethod
+    def _compiles(cls, value: str) -> str:
+        return _compiles_one(value, "structure.fallback")
+
+
+class StructureHead(_Strict):
+    """Die Felder des Kopfs: Beratungsfolge, Amtsbezeichnungen, Sitzung, Datumszeile, Formular."""
+
+    consultation_header: str = ""
+    quality: list[str] = []
+    quality_placeholders: list[str] = []
+    quality_required: bool = False
+    titles: str = ""
+    signer_roles: str = ""
+    signer_window: int = Field(default=8, ge=0)
+    closing: str = ""
+    session: str = ""
+    session_suffix: str = ""
+    date_line: str = ""
+    form_titles: list[str] = []
+    head_lines: int = Field(default=30, ge=0)
+
+    @field_validator("consultation_header", "titles", "signer_roles", "closing")
+    @classmethod
+    def _compiles(cls, value: str) -> str:
+        return _compiles_one(value, "structure.head")
+
+    @field_validator("session")
+    @classmethod
+    def _session_names_body_and_date(cls, value: str) -> str:
+        return _names_groups(
+            _compiles_one(value, "structure.head.session"),
+            ("gremium", "datum"),
+            "structure.head.session",
+        )
+
+    @field_validator("session_suffix", "date_line")
+    @classmethod
+    def _city_patterns_compile(cls, value: str) -> str:
+        _compiles_one(value.replace(CITY_PLACEHOLDER, "Ort"), "structure.head")
+        return value
+
+    @field_validator("date_line")
+    @classmethod
+    def _date_line_names_the_date(cls, value: str) -> str:
+        _names_groups(
+            value.replace(CITY_PLACEHOLDER, "Ort"), ("datum",), "structure.head.date_line"
+        )
+        return value
+
+
+class StructureSettings(_Strict):
+    """Abschnitte und Kopf je Ratsdokument (Vorhaben 11): die Muster des validierten Regelwerks.
+
+    ``struktur-1`` ist ``struktur-entwurf-1`` aus dem Messskript unverändert (Messdokument 11,
+    § 10, Punkt 1); die Stadt trägt ihre Muster im Profil, der Code kennt kein Stadtwort. Ein
+    Label (``labels``) öffnet einen Abschnitt seiner Art; Arten in ``level2`` öffnen eine eigene
+    Spanne, ohne den Abschnitt um sie herum zu schließen. Die Monatsnamen sind Sprache und stehen
+    in ``defaults.toml``.
+    """
+
+    enabled: bool = False
+    heading: str = ""
+    heading_nocolon: str = ""
+    betreff_after_form: bool = False
+    betreff_max_lines: int = Field(default=4, ge=1)
+    lead_blocked_in: list[str] = []
+    level2: list[str] = []
+    end_markers: list[str] = []
+    art: list[tuple[str, str]] = []  # (Muster über paper_type, zusammengefasste Art), erste gewinnt
+    decision_expected: list[str] = []
+    decision_not_expected: list[str] = []
+    labels: dict[str, str] = {}
+    leads: list[StructureLead] = []
+    fallback: StructureFallback = StructureFallback()
+    head: StructureHead = StructureHead()
+    page_noise: list[str] = []
+    months: list[str] = []
+    min_body_chars: int = Field(default=80, ge=0)
+
+    @field_validator("heading", "heading_nocolon")
+    @classmethod
+    def _heading_names_label_and_rest(cls, value: str) -> str:
+        return _names_groups(
+            _compiles_one(value, "structure.heading"), ("label", "rest"), "structure.heading"
+        )
+
+    @field_validator("end_markers", "page_noise")
+    @classmethod
+    def _patterns_compile(cls, value: list[str]) -> list[str]:
+        return _compiles(value, "structure patterns")
+
+    @field_validator("art")
+    @classmethod
+    def _type_patterns_compile(cls, value: list[tuple[str, str]]) -> list[tuple[str, str]]:
+        _compiles([pattern for pattern, _ in value], "structure.art")
+        return value
+
+    @model_validator(mode="after")
+    def _kinds_are_label_kinds(self) -> StructureSettings:
+        """Jede Art, die der Code öffnet oder sperrt, kommt aus den Labels oder einem Satz."""
+        kinds = set(self.labels.values())
+        opened = kinds | {lead.kind for lead in self.leads} | {self.fallback.kind}
+        wrong = sorted(set(self.level2) - kinds) + sorted(set(self.lead_blocked_in) - opened)
+        if wrong:
+            raise ValueError(f"structure: Arten ohne Label: {', '.join(wrong)}")
+        return self
+
+    @model_validator(mode="after")
+    def _enabled_needs_its_patterns(self) -> StructureSettings:
+        if not self.enabled:
+            return self
+        if not self.heading:
+            raise ValueError("structure.enabled braucht ein Muster in structure.heading")
+        if len(self.months) != 12:
+            raise ValueError(f"structure.months: zwölf Monatsnamen, nicht {len(self.months)}")
+        return self
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -2050,6 +2211,7 @@ class Settings(BaseSettings):
         Majorities()
     )  # Vorhaben 15: Ratsmehrheiten, stadtweit (24, 28 lesen sie)
     procedures: Procedures = Procedures()  # Vorhaben 14: Vorgänge
+    structure: StructureSettings = StructureSettings()  # Vorhaben 11: Struktur der Dokumente
 
     @property
     def base_profile(self) -> str:
