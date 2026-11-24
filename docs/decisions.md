@@ -2924,7 +2924,9 @@ steht in den Tests).
 Vorhaben 15 der Vorverarbeitung (`docs/plans/15-funktion.md`, § 5 bis § 7 und § 10), Stufe 2. Die
 Messung hat das Regelwerk gegen zwei KI-Kodierer an 150 Dokumenten geprüft: κ = 0,905 für
 Variante B (Bootstrap-95-% 0,840–0,960), 0,829 für Variante A, Antragsteller mit Präzision 119/119
-und Recall 119/138. Gebaut ist genau dieses Regelwerk, als erster Beitrag nach Punkt 69.
+und Recall 119/138. Gebaut ist genau dieses Regelwerk, als erster Beitrag nach Punkt 69; die
+Fabrik der Schritte hat die Signatur aus Punkt 74 (`settings, layout, http`), beide Schritte sind
+offline und fragen den Transport nie, und beide bestehen `check_step_order` in jedem Paketprofil.
 
 **Was gebaut ist.** Der Beitrag `15-funktion` (`georep.enrich.functions`) bringt zwei
 Offline-Schritte hinter `bodies` und `parties`, nur mit `functions.enabled` (in beiden
