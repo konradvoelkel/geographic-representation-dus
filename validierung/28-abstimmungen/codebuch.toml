@@ -1,0 +1,145 @@
+# Codebuch Vorhaben 28 „Abstimmungen und Kooperation", Stufe 1 (2026-11-24), Format von F4
+# (georep validate). Messdokument: docs/plans/28-abstimmungen.md, § 4; Klassen und Kriterium vorab
+# festgelegt in § 8 (Commit 97ebb52).
+#
+# Die Einheit ist ein Tagesordnungspunkt (Schlüssel: die Nummer des OParl-AgendaItem) in einer der 50
+# Niederschriften der Netzstichprobe. Die Niederschriften stehen nicht im Korpus; die Aufträge baut darum
+# das Messskript (`28-abstimmungen-messung.py auftraege`) mit den Bausteinen von F4 (build_task,
+# write_assignment), Stichprobe, merge und score laufen wie gewohnt über `georep validate`. Der Ausschnitt
+# ist der Abschnitt des Punktes in der Niederschrift (bei über 9 000 Zeichen Anfang und Ende), davor
+# gekürzt die Anwesenheitsliste der Sitzung. Nicht gezeigt: `result` aus OParl, die Schicht (sie ist die
+# Mehrheitsform aus `result`), und was das Verfahren liest.
+
+project = "28-abstimmungen"
+version = "2026-11-24.1"
+unit = "document"
+instructions = """
+Einheit: Ein Tagesordnungspunkt einer Sitzung des Rates, eines Ausschusses oder einer Bezirksvertretung der Stadt Düsseldorf (Wahlperiode 2020 bis 2025). Der Titel nennt Nummer, Namen des Punktes, Gremium und Datum. Der Ausschnitt ist der Teil der Niederschrift, der diesen Punkt behandelt (bei langen Debatten Anfang und Ende, die Mitte ausgelassen), davor gekürzt die Anwesenheitsliste der Sitzung, wo es eine gibt.
+
+Grundsatz: Kodiert wird die **letzte Abstimmung über den Gegenstand dieses Punktes**. Ist der Punkt ein Änderungs- oder Ergänzungsantrag, ist es die Abstimmung über diesen Änderungsantrag; sonst die Abstimmung über die Vorlage oder den Antrag des Punktes (bei vorherigen Abstimmungen über Änderungsanträge: die Schlussabstimmung). Steht im Ausschnitt eine Abstimmung, die nach dem Text zu einem anderen Punkt gehört, zählt sie nicht. Urteile nur nach dem Ausschnitt.
+
+Positionen beziehen sich auf den Gegenstand der Abstimmung (den Antrag, die Vorlage), nicht auf das Ergebnis: „Der Antrag wird gegen die Stimmen der Linken abgelehnt" heißt LINKE ja.
+
+Parteischlüssel: CDU, GRUENE, SPD, VOLT, FDP, LINKE, AFD, PARTEI, KLIMA, TIERSCHUTZ, FW, BSW, ANDERE. Eine Fraktion oder Gruppe aus mehreren Parteien gibt jeder ihrer Parteien dieselbe Position: „SPD/Volt" oder „SPD-Ratsfraktion" in Rat und Ausschüssen ab November 2020 → SPD und VOLT; „Die PARTEI-Klima-Fraktion", „Partei-Klima" → PARTEI und KLIMA; „Tierschutz/Freie Wähler", „TS/FW" → TIERSCHUTZ und FW; „Klimaliste" → KLIMA. In Bezirksvertretungen gilt nur, was genannt ist (dort sind SPD und Volt getrennt). Der Oberbürgermeister, Bezirksbürgermeister ohne Parteiangabe und Personen ohne Partei zählen für keine Partei. Eine einzeln genannte Person gibt die Position ihrer Partei, wenn der Ausschnitt (auch die Anwesenheitsliste) ihre Partei nennt.
+
+Datenschutz: Schreibe nie einen Personennamen in eine Antwort, auch nicht in begruendung.
+"""
+
+[[questions]]
+id = "abschnitt"
+question = "Behandelt der Ausschnitt diesen Tagesordnungspunkt (Nummer oder Titel stimmen, die Behandlung steht darin)?"
+scale = "binary"
+positive = ["ja"]
+instructions = "ja, wenn der Ausschnitt erkennbar diesen Punkt behandelt (auch wenn keine Abstimmung darin steht). nein, wenn er nur einen anderen Punkt, nur die Überschrift ohne Behandlung oder nichts Erkennbares enthält."
+
+[[questions.options]]
+value = "ja"
+definition = "Der Ausschnitt behandelt diesen Punkt."
+
+[[questions.options]]
+value = "nein"
+definition = "Der Ausschnitt behandelt einen anderen Punkt oder ist leer."
+
+[[questions]]
+id = "ergebnis"
+question = "Was hat das Gremium zu diesem Punkt entschieden?"
+scale = "nominal"
+only_if = { question = "abschnitt", values = ["ja"] }
+instructions = '''Nach der letzten Abstimmung über den Gegenstand des Punktes (Grundsatz). Ein Gremium, das einem anderen etwas empfiehlt („empfiehlt dem Rat einstimmig …"), hat angenommen. „Passieren lassen", „vorlagegemäß zugestimmt" ist angenommen; ein geänderter Beschluss auch.'''
+
+[[questions.options]]
+value = "angenommen"
+definition = "Beschlossen, zugestimmt, empfohlen, auch geändert oder ergänzt."
+example = "Abstimmungsergebnis: einstimmig beschlossen"
+
+[[questions.options]]
+value = "abgelehnt"
+definition = "Der Antrag oder die Vorlage ist abgelehnt."
+example = "Damit ist der Antrag mehrheitlich abgelehnt."
+
+[[questions.options]]
+value = "kenntnis"
+definition = "Zur Kenntnis genommen, beantwortet, berichtet; keine Abstimmung in der Sache."
+
+[[questions.options]]
+value = "vertagt"
+definition = "Vertagt, zurückgestellt, abgesetzt."
+
+[[questions.options]]
+value = "verwiesen"
+definition = "An ein anderes Gremium oder eine Kommission verwiesen, ohne Entscheidung in der Sache."
+
+[[questions.options]]
+value = "zurueckgezogen"
+definition = "Der Antrag ist zurückgezogen."
+
+[[questions.options]]
+value = "erledigt"
+definition = "Für erledigt erklärt, etwa weil ein anderer Beschluss ihn überholt hat."
+
+[[questions.options]]
+value = "sonstiges"
+definition = "Eine andere Entscheidung (Wahl, Benennung ohne Abstimmung, Verfahrensbeschluss)."
+
+[[questions.options]]
+value = "nicht_erkennbar"
+definition = "Der Ausschnitt sagt nicht, was entschieden wurde."
+
+[[questions]]
+id = "form"
+question = "Mit welcher Mehrheit wurde entschieden?"
+scale = "nominal"
+only_if = { question = "ergebnis", values = ["angenommen", "abgelehnt"] }
+instructions = '''einstimmig heißt: keine Gegenstimme; Enthaltungen sind erlaubt („einstimmig bei Enthaltung der AfD"). Sagt der Text „mit Mehrheit", nennt aber keine Gegenstimme und fragt nach Gegenstimmen ohne Antwort, ist es einstimmig. ohne_angabe nur, wenn der Ausschnitt weder die Form nennt noch Stimmen, aus denen sie folgt.'''
+
+[[questions.options]]
+value = "einstimmig"
+definition = "Keine Gegenstimme."
+example = "Gegenstimmen? – Enthaltungen? – AfD. Dann haben wir das im Übrigen einstimmig so beschlossen."
+
+[[questions.options]]
+value = "mehrheitlich"
+definition = "Mindestens eine Gegenstimme."
+example = "Ja: 11 (5 Bü 90/Grüne, 3 SPD, 2 FDP, 1 Linke) Nein: 6 (6 CDU)"
+
+[[questions.options]]
+value = "ohne_angabe"
+definition = "Entschieden, aber Form und Stimmen stehen nicht im Ausschnitt."
+
+[[questions]]
+id = "stimmen"
+question = "Welche Parteien nennt der Ausschnitt mit welcher Position? Ein JSON-Objekt."
+scale = "open"
+only_if = { question = "form", values = ["einstimmig", "mehrheitlich"] }
+instructions = """
+Ein JSON-Objekt aus Parteischlüssel → Position, nur für Parteien, die der Ausschnitt bei dieser Abstimmung **nennt** (als Fraktion, mit Zahl oder über eine Person mit Partei); {} wenn keine genannt ist. Positionen: "ja" (für den Gegenstand), "nein" (dagegen), "enthaltung", "geteilt" (Mitglieder derselben Partei stimmten verschieden, etwa „Ja: … 2 Bü 90/Grüne … Nein: 3 Bü 90/Grüne"). Schlüssel nur aus der Liste in den Anweisungen; eine Fraktion aus mehreren Parteien gibt jeder ihrer Parteien einen Eintrag. Parteien, die nur über „der Rest", „alle übrigen" oder eine Zahl ohne Namen erfasst sind, gehören nicht hierher, sondern in die Frage uebrige.
+Beispiel: „Gegenstimmen? – AfD und Tierschutz/Freie Wähler. Enthaltungen? – Die Linke." → {"AFD": "nein", "TIERSCHUTZ": "nein", "FW": "nein", "LINKE": "enthaltung"}
+"""
+
+[[questions]]
+id = "uebrige"
+question = "Was sagt der Ausschnitt über die Parteien des Gremiums, die er bei dieser Abstimmung nicht nennt?"
+scale = "nominal"
+only_if = { question = "form", values = ["einstimmig", "mehrheitlich"] }
+instructions = '''mit_mehrheit, wenn die Formel nur die Abweichenden nennt und die übrigen damit mit der Mehrheit stimmten („gegen die Stimmen der …", „Gegenstimmen? – X … im Übrigen mit Mehrheit", „einstimmig", „der gesamte Rest des Rates", „15 NEIN" ohne Namen), oder wenn alle Parteien genannt sind. unbekannt, wenn der Ausschnitt nur einen Teil nennt und offen lässt, wie die anderen stimmten („mit den Stimmen von CDU und Grünen beschlossen").'''
+
+[[questions.options]]
+value = "mit_mehrheit"
+definition = "Die nicht genannten stimmten mit der Mehrheit, oder es bleibt niemand übrig."
+
+[[questions.options]]
+value = "unbekannt"
+definition = "Wie die nicht genannten stimmten, sagt der Ausschnitt nicht."
+
+[sample]
+size = 150
+seed = 20261124
+stratum = "schicht"
+allocation = "equal"
+population = "validierung-28/population.parquet"
+require_text = false
+
+[text]
+source = "raw"
+chars = 12000
+title = true
