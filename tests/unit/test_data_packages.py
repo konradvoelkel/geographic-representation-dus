@@ -61,12 +61,16 @@ PACKAGES = (
     # auf Stufe 19 (14 183 802 Bytes; mit der Vorgabe von Polars waren es 17 044 579)
     Package("snapshots/duesseldorf-rohtexte", limit=20 * MIB, native=False, readme=True),
     Package("context", limit=4 * MIB, native=False, readme=True),  # 2 242 316
+    # Vorhaben 22: die Stadtauszüge der Bedarfsquellen (198 018 und 91 866 Bytes, 2026-11-24)
+    Package("snapshots/duesseldorf-bedarf", limit=1 * MIB, native=False, readme=True),
+    Package("snapshots/moenchengladbach-bedarf", limit=1 * MIB, native=False, readme=True),
 )
 # Alle zusammen, als zweite grobe Schranke: 174 580 489 Bytes = 166,49 MiB am 2026-11-23 (92,5 %
 # der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, die drei Textstores sind seit
 # Punkt 67 zusammen 266 295 Bytes kleiner, das Textpaket der Hauptperiode kam mit Punkt 68 dazu und
-# das Rohtextpaket mit Fundament F1). Ein einziger PDF-Ordner einer Periode (585 MB bis 3,9 GB)
-# reißt sie um ein Mehrfaches, und genau davor schützt sie.
+# das Rohtextpaket mit Fundament F1). Mit den beiden Bedarfspaketen von Vorhaben 22 sind es
+# 174 870 373 Bytes = 166,77 MiB (2026-11-24, 92,6 %). Ein einziger PDF-Ordner einer Periode (585 MB
+# bis 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 
 # Was in keinem Paket liegen darf, mit dem Grund. Endungen werden gegen das Suffix geprüft, Namen
@@ -256,6 +260,29 @@ def test_the_raw_text_package_is_read_by_the_main_period_alone() -> None:
     assert load_settings(profile="duesseldorf-vergleich", cwd=nowhere).bootstrap.raw_texts == main
     for profile in ("duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
         assert load_settings(profile=profile, cwd=nowhere).bootstrap.raw_texts is None, profile
+
+
+def test_the_need_packages_are_read_by_the_two_cities_alone() -> None:
+    """Vorhaben 22: Düsseldorf (mit dem Vergleich) und Mönchengladbach je ihr Paket, die Perioden keins.
+
+    Die Bedarfsdaten passen nur zur Hauptperiode (Frage 22.5); die laufende Periode rechnet ihre
+    prospektiven Hypothesen erst mit zwölf Monaten Unfällen (Messdokument § 8.1).
+    """
+    from georep.prep.context import NEED_DIR, NEED_FILES
+    from georep.settings import load_settings
+
+    nowhere = Path("/nonexistent")
+    for profile, folder in (
+        ("duesseldorf", "duesseldorf-bedarf"),
+        ("duesseldorf-vergleich", "duesseldorf-bedarf"),
+        ("moenchengladbach", "moenchengladbach-bedarf"),
+    ):
+        need = load_settings(profile=profile, cwd=nowhere).context.need
+        assert need.enabled and need.package == Path("snapshots") / folder, profile
+        assert all((REPO / need.package / "external" / NEED_DIR / n).is_file() for n in NEED_FILES)
+    for profile in ("duesseldorf-2014", "duesseldorf-2025"):
+        need = load_settings(profile=profile, cwd=nowhere).context.need
+        assert not need.enabled and need.package is None, profile
 
 
 def test_the_text_package_is_read_by_the_main_period_alone() -> None:

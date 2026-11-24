@@ -791,3 +791,51 @@ valid_from = 2025-11-01
 agreement = "Gemeinsam für Düsseldorf: Verantwortung übernehmen, Fortschritt gestalten. Koalitionsvertrag zwischen CDU Düsseldorf und Bündnis 90/Die Grünen Düsseldorf"
 agreement_date = "2025-12"     # „Düsseldorf, Dezember 2025" (Datei vom 2025-11-30); zusammen 51 von 92 Sitzen
 evidence = ["RAT/073/2026", "RAT/120/2026"]  # 4 Dokumente mit „Ratsmehrheit aus CDU und Grünen" oder „schwarz-grüne Ratsmehrheit", dazu 56 der Dokumentarten „… CDU/Grüne"
+
+# --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 6, § 8 und § 10) ----------
+# Die Quellen stehen in defaults.toml (bundes- und landesweit, Gemeinde = city.ags); hier schaltet die
+# Stadt ein und nennt das Paket mit ihren Auszügen, die Klassen des passenden Ausschusses und die
+# Hypothesen, die vor der ersten Rechnung festgelegt wurden (Commit 67f7250, 2026-11-23). hb_score,
+# anteil_u18 und mindestsicherung sind Variablen des Quartiersatlas oben ([[context.variables]]).
+[context.need]
+enabled = true                 # Schritte need_data (Netz) und need
+package = "snapshots/duesseldorf-bedarf"  # georep pack --need; bootstrap kopiert nach external/bedarf/
+explore = [                    # weitere Paare aus § 3.5, explorativ; Lärm und Kitas kommen in Stufe 2 nicht mit (Frage 22.2)
+  ["unfaelle_rad_fuss", "anteil_verkehr"],
+  ["unfaelle_je_1000", "dok_verkehr_je_1000_ew"],
+  ["mindestsicherung", "dok_je_1000_ew"],
+  ["miete_qm", "dok_je_1000_ew"],
+  ["hb_score", "wahlbeteiligung"],
+  ["hb_score", "anteil_verkehr"],
+  ["hb_score", "sozialindex_schulen"],
+  ["sozialindex_schulen", "dok_je_1000_ew"],
+  ["unfaelle_je_1000", "hb_score"],
+]
+
+[context.need.classes]         # Klassen des Ausschussklassifikators (Option 05); später aus Vorhaben 19, wenn es gebaut wird
+traffic = ["OVA"]              # Ordnungs- und Verkehrsausschuss; auf der Seite „Ordnung und Verkehr" (Frage 22.11)
+youth = ["JHA", "SCHUA"]       # Jugendhilfeausschuss, Schulausschuss
+
+[[context.need.hypotheses]]    # Messdokument § 8: einseitig, rho > 0
+name = "H1"
+need = "unfaelle_je_1000"
+attention = "anteil_verkehr"
+alternative = "greater"
+fixed = "67f7250"
+robust_need = ["unfaelle_scharf_je_1000", "unfaelle", "unfaelle_je_km2"]  # scharf zugeordnet, absolut, je km²
+
+[[context.need.hypotheses]]    # zweiseitig: rho > 0 „Aufmerksamkeit folgt dem Bedarf", rho < 0 „ungleiche Aufmerksamkeit"
+name = "H2"
+need = "hb_score"
+attention = "dok_je_1000_ew"
+alternative = "two-sided"
+fixed = "67f7250"
+robust_attention = ["trefferquote"]  # die Kennzahl der Seite, je Wahlberechtigtem
+robust_control = "log_begriffe"      # partiell bei fester Wörterbuchgröße
+
+[[context.need.hypotheses]]    # einseitig, rho > 0
+name = "H3"
+need = "anteil_u18"
+attention = "anteil_jugend"
+alternative = "greater"
+fixed = "67f7250"

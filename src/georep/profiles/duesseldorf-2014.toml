@@ -108,3 +108,8 @@ consultations = ""
 [bootstrap]
 texts = ""                     # Punkt 68: das Textpaket der Hauptperiode gehört nicht hierher; der Schnappschuss trägt seine eigenen Texte
 raw_texts = ""                 # Fundament F1: ebenso das Rohtextpaket der Hauptperiode; ihren Rohtext liest der Schritt raw_texts aus den PDFs
+
+# --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, Frage 22.5) ---------------------
+[context.need]                 # Unfallatlas NRW ab 2019, Quartiersatlas 2021, Zensus 2022: die Bedarfsdaten passen nicht zu dieser Periode
+enabled = false
+package = ""

@@ -611,8 +611,9 @@ def read_schools(
             _decimal("UTMHochwert").alias("y"),
         )
         .join(stufen, on="schulnummer", how="left")
+        # Ein Join legt die Folge nicht fest; erst sortieren, dann je Nummer die erste Zeile.
+        .sort("schulnummer", "schulform", "x", "y", nulls_last=True)
         .unique("schulnummer", keep="first", maintain_order=True)
-        .sort("schulnummer")
     )
 
 

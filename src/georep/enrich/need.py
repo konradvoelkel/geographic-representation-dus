@@ -55,7 +55,7 @@ from georep.prep.context import (
     read_schools,
     schools_by_district,
 )
-from georep.settings import Settings, archive_name
+from georep.settings import NeedSettings, Settings, archive_name
 from georep.sources.opendata import fetch_csv, fetch_zip
 
 
@@ -135,6 +135,34 @@ def _grid_box(
     )
 
 
+# Spalten von wahlbezirke_bedarf, die nur mit Klassen des passenden Ausschusses Werte tragen.
+CLASS_COLUMNS = frozenset(
+    {"dok_mit_text", "dok_verkehr", "dok_jugend", "anteil_verkehr", "anteil_jugend",
+     "dok_verkehr_je_1000_ew"}
+)  # fmt: skip
+
+
+def _computable(need: NeedSettings, unavailable: set[str]) -> tuple[NeedSettings, list[str]]:
+    """Die Hypothesen und Paare, die dieser Lauf rechnen kann, und die Namen der übrigen.
+
+    Ein Profil mit Hypothesen über Variablen der Fremddaten (``hb_score``) oder über Anteile der
+    Klassen kann ohne ``context.root`` oder ohne Klassifikator laufen (die Tests der Kette tun das).
+    Dann trüge die Spalte keinen Wert, und ein Test ohne Werte hieße auf der Seite „nicht bestätigt";
+    statt dessen fällt weg, was sie nennt, und die Zeile des Laufs sagt es. Holm rechnet über den
+    Rest. Im Lauf eines Profils mit allem bleibt alles, wie es festgelegt ist.
+    """
+    hypotheses = [
+        h
+        for h in need.hypotheses
+        if not unavailable
+        & {h.need, h.attention, *h.robust_need, *h.robust_attention, h.robust_control}
+    ]
+    pairs = [pair for pair in need.explore if not unavailable & set(pair)]
+    skipped = [h.name for h in need.hypotheses if h not in hypotheses]
+    skipped += [f"{a}~{b}" for a, b in need.explore if (a, b) not in pairs]
+    return need.model_copy(update={"hypotheses": hypotheses, "explore": pairs}), skipped
+
+
 def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
     """Die Schritte ``need_data`` und ``need``, wenn ``context.need.enabled``."""
     need = settings.context.need
@@ -145,7 +173,10 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
     ags = settings.city.ags
     with_classes = need.with_classes() and settings.classify.enabled
     with_context = layout.context_root is not None
-    with_tests = bool(need.hypotheses or need.explore)
+    unavailable = set() if with_context else {v.name for v in settings.context.variables}
+    unavailable |= set() if with_classes else set(CLASS_COLUMNS)
+    tested, skipped = _computable(need, unavailable)
+    with_tests = bool(tested.hypotheses or tested.explore)
 
     def precincts() -> list[Precinct]:
         return read_canonical_precincts(layout.precincts_geojson, working)
@@ -222,10 +253,15 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
             .first()
             .select(DISTRICT, STRATUM)
         )
-        base = pl.DataFrame(
-            {DISTRICT: districts, "flaeche_km2": [u.area / 1e6 for u in unions]},
-            schema={DISTRICT: pl.Int64, "flaeche_km2": pl.Float64},
-        ).join(strata, on=DISTRICT, how="left")
+        # Nach dem Join sortieren: auch ein linker legt die Zeilenfolge nicht fest (CLAUDE.md).
+        base = (
+            pl.DataFrame(
+                {DISTRICT: districts, "flaeche_km2": [u.area / 1e6 for u in unions]},
+                schema={DISTRICT: pl.Int64, "flaeche_km2": pl.Float64},
+            )
+            .join(strata, on=DISTRICT, how="left")
+            .sort(DISTRICT)
+        )
         accidents = in_period(
             pl.read_parquet(files.accidents), settings.period.start, settings.period.end
         )
@@ -261,7 +297,11 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
             f"{float(table.get_column('einwohner_zensus').sum()):.0f} Einwohner"
         )
         if not with_tests:
-            return done
+            return (
+                f"{done}; ohne Fremddaten oder Klassen nicht gerechnet: {', '.join(skipped)}"
+                if skipped
+                else done
+            )
         frame = table.join(
             results.select(DISTRICT, "trefferquote", "wahlbeteiligung"), on=DISTRICT, how="left"
         ).with_columns(pl.col("begriffe").cast(pl.Float64).log().alias("log_begriffe"))
@@ -269,7 +309,7 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
             frame = frame.join(pl.read_parquet(layout.context_table), on=DISTRICT, how="left")
         tests = hypothesis_table(
             frame.sort(DISTRICT),
-            need,
+            tested,
             weights=neighbours(unions, need.neighbour_m),
             exclude=settings.analysis.exclude_districts,
         )
@@ -279,7 +319,12 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
             f"{name} {'bestätigt' if result == CONFIRMED else 'nicht bestätigt'}"
             for name, result in main.select("hypothese", "ergebnis").rows()
         )
-        return f"{done}; {verdicts or 'keine Hypothese'}, {tests.height} Zeilen"
+        without = (
+            f"; ohne Fremddaten oder Klassen nicht gerechnet: {', '.join(skipped)}"
+            if skipped
+            else ""
+        )
+        return f"{done}; {verdicts or 'keine Hypothese'}, {tests.height} Zeilen{without}"
 
     extracts = (files.accidents, files.grid, files.schools)
     inputs = (

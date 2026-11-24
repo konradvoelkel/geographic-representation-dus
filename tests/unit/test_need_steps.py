@@ -134,7 +134,9 @@ def test_the_two_steps_stand_before_report_and_only_need_data_uses_the_network(
     tmp_path: Path, default_settings: Settings
 ) -> None:
     layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
-    steps = build_steps(_enabled(default_settings), layout, FakeSession({}))
+    steps = build_steps(
+        _enabled(default_settings, hypotheses=[], explore=[]), layout, FakeSession({})
+    )
     names = [s.name for s in steps]
     assert names.index("need") == names.index("need_data") + 1
     assert names.index("report") > names.index("need") > names.index("results")
@@ -301,3 +303,42 @@ def test_need_data_pauses_between_two_archives_it_fetches(
         force=True,
     )
     assert pauses == []  # nichts geladen, nichts abzuwarten
+
+
+def test_without_context_data_the_hypotheses_on_its_variables_are_left_out(
+    world: tuple[Layout, Routes, dict[str, int]],
+    mini_run: Layout,
+    default_settings: Settings,
+    tmp_path: Path,
+) -> None:
+    """Das Stadtprofil nennt H2 und H3 über Variablen des Quartiersatlas; ohne ``context.root`` fehlen sie.
+
+    Statt eines ``SchemaError`` rechnet der Schritt, was ohne Fremddaten geht (H1), und sagt in seiner
+    Zeile, was wegfiel; die Kontexttabelle ist dann keine Eingabe.
+    """
+    layout, routes, _ = world
+    copy = Layout(tmp_path / "kette", layout.cache_root, mini_run.reference_root, mini_run.profile)
+    shutil.copytree(mini_run.root, copy.root)
+    settings = _enabled(default_settings, permutations=99, explore_permutations=99, bootstrap=99)
+    assert [h.name for h in settings.context.need.hypotheses] == ["H1", "H2", "H3"]
+    steps = need_steps(settings, copy, FakeSession(routes))
+    assert copy.context_table not in steps[1].inputs
+    assert run_step(steps[0], settings, online=True).status == "ausgeführt"
+    outcome = run_step(steps[1], settings)
+    assert "ohne Fremddaten oder Klassen nicht gerechnet: H2, H3" in outcome.reason
+    tests = pl.read_parquet(need_files(copy).tests)
+    assert set(tests.drop_nulls("hypothese").get_column("hypothese")) == {"H1"}
+
+
+def test_without_classes_the_hypotheses_on_the_shares_are_left_out(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    """Ohne Klassifikator trügen ``anteil_verkehr`` und ``anteil_jugend`` keinen Wert: H1 und H3 fallen weg."""
+    layout = Layout(
+        tmp_path / "data", tmp_path / "cache", tmp_path / "reference", context_root=tmp_path
+    )
+    off = default_settings.classify.model_copy(update={"enabled": False})
+    settings = _enabled(default_settings).model_copy(update={"classify": off})
+    need = _step(need_steps(settings, layout, FakeSession({})), "need")
+    assert layout.papers_committee not in need.inputs
+    assert need_files(layout).tests in need.outputs  # H2 und Paare ohne Klassen bleiben

@@ -298,7 +298,7 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
     contributed = [
         s
         for s in georep.enrich.contributed_steps(default_settings, mini_run, FakeSession({}))
-        if s.outputs[0].suffix == ".parquet"
+        if s.outputs[0].suffix == ".parquet" and not s.network  # Vorhaben 22: need_data ist Netz
     ]
     assert checked == 19 + len(contributed), checked
 

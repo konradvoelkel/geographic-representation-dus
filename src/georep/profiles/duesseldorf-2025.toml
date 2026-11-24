@@ -55,3 +55,8 @@ k = 0                          # ohne Regression zeigt die Seite keine Sensitivi
 # Dokumente, die schon die Nummer nicht auflöst: docs/befunde-2026-10-14.md, § 5).
 [bodies]
 consultations = ""
+
+# --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 8.1) --------------------------
+[context.need]                 # H1′ und H3′ rechnen erst mit zwölf Monaten Unfällen dieser Periode (Unfallatlas 2026, erwartet im Juli 2027); bis dahin aus
+enabled = false
+package = ""
