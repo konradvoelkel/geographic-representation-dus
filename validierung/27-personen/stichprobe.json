@@ -1,0 +1,26 @@
+{
+  "vorhaben": "27-personen",
+  "codebuch_version": "2026-11-24.1",
+  "profil": "duesseldorf",
+  "einheit": "document",
+  "grundgesamtheit": "messung/27-personen-grundgesamtheit.parquet",
+  "grundgesamtheit_sha256": "0f05251cb3b8125929bf84c7f7e1331e7399788ca161198d8e11d0468fca1759",
+  "einheiten": 5173,
+  "ohne_text": 5,
+  "groesse": 150,
+  "seed": 20261124,
+  "schicht": "schicht",
+  "aufteilung": "equal",
+  "selbstgewichtend": false,
+  "schichten": {
+    "bezirksvertretung": {
+      "grundgesamtheit": 2835,
+      "stichprobe": 75
+    },
+    "rat_ausschuss": {
+      "grundgesamtheit": 2338,
+      "stichprobe": 75
+    }
+  },
+  "gezogen": "2026-11-24"
+}

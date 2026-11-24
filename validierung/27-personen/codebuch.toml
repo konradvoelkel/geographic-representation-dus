@@ -1,0 +1,60 @@
+# Codebuch Vorhaben 27 „Personen und Mandatstyp", Fassung 2026-11-24.1 (Mess-Agent Vorhaben 27), im
+# Format von F4 (docs/validierung.md, § 2). Messdokument: docs/plans/27-personen.md, § 4.
+# Geprüft wird die Zuordnung Dokument -> Person (Titel, Absender im Briefkopf, Unterschrift) an 150
+# politischen Dokumenten der Hauptperiode, denen das Verfahren mindestens eine Person gibt, je 75 aus
+# Rat und Ausschüssen und aus den Bezirksvertretungen. Die Kodierer sehen nicht, welche Personen das
+# Verfahren nennt; sie schreiben selbst alle Fragesteller, Antragsteller und Unterzeichner auf.
+# Präzision (Messskript, --labels): Anteil der Paare Dokument–Person des Verfahrens, deren Nachname
+# im Endlabel steht, gewichtet nach den Schichtgrößen; Kriterium >= 0,95 (Briefing).
+project = "27-personen"
+version = "2026-11-24.1"
+unit = "document"
+instructions = """
+Einheit: Ein Antrag oder eine Anfrage aus dem Rat, einem Ausschuss oder einer Bezirksvertretung der Stadt Düsseldorf, 2020 bis 2025.
+Material: Titel und Textanfang (bis 6 000 Zeichen, mit Groß- und Kleinschreibung und Zeilen, so wie das Programm den Text aus dem PDF gelesen hat; manchmal fehlen Leerzeichen, etwa „MitfreundlichenGrüßen").
+Aufgabe: Schreibe die Nachnamen aller Personen auf, die das Dokument einbringen: als Fragestellerin, Antragsteller oder Unterzeichnerin. Es geht um Mitglieder von Rat und Bezirksvertretungen in ihrer Rolle; was du aufschreibst, bleibt lokal und wird nur mit einer Namensliste verglichen.
+Grundsatz: Eine Person bringt das Dokument ein, wenn sie (a) im Titel als Fragesteller oder Antragstellerin genannt ist („Anfrage des Ratsherrn X", „Antrag von Frau Y (SPD-Fraktion)"), (b) im Briefkopf als Absender über oder neben der Anschrift steht („Herr X, FDP in der Bezirksvertretung 8"), oder (c) unter dem Text unterschreibt, meist nach „Mit freundlichen Grüßen" oder „gez." — jede Person, die dort steht, auch mehrere nebeneinander, auch mit Funktionsangabe („Fraktionsvorsitzende").
+Keine Einbringer sind: die Empfänger und die Anrede (Oberbürgermeister, Vorsitzende eines Ausschusses, Bezirksbürgermeisterin, „Sehr geehrter Herr X"), wer „f. d. R.", „F.d.R." oder „für die Richtigkeit" zeichnet (das ist die Geschäftsstelle), Personen, über die gefragt wird oder die im Text oder in Zitaten vorkommen, die Verwaltung und wer ein anderes Dokument eingebracht hat, auf das sich dieses bezieht. Eine Fraktion ohne Personennamen ist keine Person.
+"""
+
+[[questions]]
+id = "fragesteller"
+question = "Nachnamen aller Personen, die das Dokument einbringen (Titel, Absender, Unterschrift)."
+scale = "open"
+unordered = true  # eine Menge: die Folge der Einträge zählt nicht
+whitespace = "ignore"  # „von beispiel" und „vonbeispiel" gelten gleich; pypdf setzt Leerzeichen verschieden
+instructions = """
+Antworte mit einer Liste von Nachnamen als JSON-Liste, etwa ["mustermann", "von beispiel", "muster-beispiel"]: nur der Nachname, in Kleinbuchstaben, ohne Titel (Dr., Prof.) und ohne Vornamen; Namenszusätze (von, de, van) und Bindestriche gehören zum Nachnamen, Umlaute und ß wie im Text. Steht ein Name zusammengeklebt („MaxBeispiel"), trenne Vor- und Nachname nach deinem besten Urteil. Jede Person einmal. Leere Liste [], wenn das Dokument keine Person als Einbringer nennt (etwa nur „CDU-Fraktion" oder „AfD-Ratsfraktion" als Unterschrift). Was nicht im Ausschnitt steht, gibt es nicht; ist der Ausschnitt abgeschnitten, bevor eine Unterschrift kommt, zählt nur, was zu sehen ist.
+"""
+
+[[questions]]
+id = "unsicher"
+question = "Ist die Antwort unsicher (Name unleserlich, Rolle einer Person unklar)?"
+scale = "binary"
+positive = ["ja"]
+adjudicate = false  # Meta-Frage: eine Uneinigkeit geht nicht an die Schlichtung
+instructions = """
+ja, wenn du bei mindestens einer Person nicht sicher bist, ob sie einbringt oder nur genannt ist, oder ein Name im Text verstümmelt ist; sonst nein.
+"""
+
+[[questions.options]]
+value = "ja"
+definition = "Mindestens eine Person ist unsicher."
+
+[[questions.options]]
+value = "nein"
+definition = "Alle Personen sind klar."
+
+[sample]
+size = 150
+seed = 20261124
+stratum = "schicht"
+allocation = "equal"
+population = "messung/27-personen-grundgesamtheit.parquet"
+strata = ["rat_ausschuss", "bezirksvertretung"]
+require_text = true
+
+[text]
+source = "raw"
+chars = 6000
+title = true
