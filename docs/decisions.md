@@ -3204,8 +3204,10 @@ Rohtext und die Lexikonversion, `section` bleibt leer, bis Vorhaben 11 die Absch
 Treffer im Titel ist keine Stelle im Text und keine Spanne. Ein Dokument ohne Rohtext, oder mit einem,
 der nicht zu seinem Text plättet, hat keine Spannen und zählt in der Meldung des Schritts; seine
 Kategorien hat es trotzdem. Hauptperiode: 6 506 Spannen in 1 997 Dokumenten (36 über einen Zeilenumbruch), ohne Rohtext nur das
-verschlüsselte `00403713.pdf` (Punkt 73); 2014 bis 2020: 6 466, laufende Periode 555,
-Mönchengladbach 407 (dort tragen 81 der 161 Dokumente mit Treffer ihn nur im Titel).
+verschlüsselte `00403713.pdf` (Punkt 73); 2014 bis 2020: 6 466 in 1 512 Dokumenten, ohne Rohtext nur
+`61/ 141/2016` (`00278070.pdf`), eines der 15 PDFs, die pypdf seit 6.21 an einer Schutzgrenze
+abweist und deren Text der Textstore aus pypdf 6.20.0 behält (Punkte 66 und 73); laufende Periode
+555, Mönchengladbach 407 (dort tragen 81 der 161 Dokumente mit Treffer ihn nur im Titel).
 
 **`cycle_tests` im Profil `duesseldorf-vergleich`** (Konflikt 13). Die Tests lesen die Ausgaben von
 drei Perioden; das Profil, das schon `compare` über zwei rechnet und auf Pages die Hauptseite
