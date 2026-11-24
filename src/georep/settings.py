@@ -1995,6 +1995,23 @@ class Procedures(_Strict):
         return self
 
 
+# --- Vorhaben 20: Kurzfassungen (docs/plans/20-kurzfassungen.md, § 6 und § 10) -------------------
+class Summaries(_Strict):
+    """Kurzfassungen je Dokument mit einem lokalen Modell (Vorhaben 20); nie veröffentlicht.
+
+    Das Modell steht hier und nicht in ``[ml.generation]``, weil Vorhaben 19 dort ein anderes nennen
+    darf; die Optionen (Temperatur, Seed, Fenster, Antwortlänge) kommen von dort. Was die Eingabe
+    bestimmt (``budget_chars``) und was die Treueprüfung (``rare_share``, ``known_documents``),
+    zählt zum Fingerprint; das Modell steht zusätzlich als Kennung im Stamp des Schritts.
+    """
+
+    enabled: bool = False
+    model: str = "gemma4"
+    budget_chars: int = Field(default=8000, ge=1)
+    rare_share: float = Field(default=0.01, gt=0.0, lt=1.0)
+    known_documents: int = Field(default=3, ge=1)
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -2050,6 +2067,7 @@ class Settings(BaseSettings):
         Majorities()
     )  # Vorhaben 15: Ratsmehrheiten, stadtweit (24, 28 lesen sie)
     procedures: Procedures = Procedures()  # Vorhaben 14: Vorgänge
+    summaries: Summaries = Summaries()  # Vorhaben 20: Kurzfassungen, nie veröffentlicht
 
     @property
     def base_profile(self) -> str:
