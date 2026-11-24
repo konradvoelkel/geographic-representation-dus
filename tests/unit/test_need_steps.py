@@ -19,7 +19,7 @@ from georep.analysis.need import HYPOTHESES_SCHEMA
 from georep.cli import main
 from georep.crosswalk import DISTRICT
 from georep.enrich.need import need_files, need_steps
-from georep.errors import FetchError
+from georep.errors import FetchError, NetworkError
 from georep.geo import read_canonical_precincts, transformer
 from georep.io import digest
 from georep.layout import Layout
@@ -267,6 +267,27 @@ def test_an_answer_that_is_no_zip_stops_the_step_before_anything_is_written(
         )
     assert not need_files(layout).accidents.exists()
     assert not (need_files(layout).archives / ARCHIVES[1].rsplit("/", 1)[1]).exists()
+
+
+def test_a_missing_archive_stops_the_step_with_its_url_and_writes_nothing(
+    world: tuple[Layout, Routes, dict[str, int]], default_settings: Settings
+) -> None:
+    """Review 2026-11-24, N12: eine Quelle, die ein Archiv nicht mehr hat (404), ist ein
+    ``NetworkError`` mit der URL; kein Auszug entsteht, und das fehlende Archiv liegt nicht im Cache.
+    Was davor geladen wurde, bleibt dort: es ist geprüft und gilt beim nächsten Lauf als frisch."""
+    layout, routes, _ = world
+    settings = _enabled(default_settings)
+    gone = dict(routes)
+    gone[ARCHIVES[1]] = response(ARCHIVES[1], status=404, content=b"Not Found")
+    http = FakeSession(gone)
+    with pytest.raises(NetworkError, match=ARCHIVES[1].replace(".", r"\.")):
+        run_step(_step(need_steps(settings, layout, http), "need_data"), settings, online=True)
+    files = need_files(layout)
+    assert not any(path.exists() for path in (files.accidents, files.grid, files.schools))
+    assert not files.sources.exists()
+    assert not (files.archives / ARCHIVES[1].rsplit("/", 1)[1]).exists()
+    assert (files.archives / ARCHIVES[0].rsplit("/", 1)[1]).is_file()
+    assert http.urls == ARCHIVES[:2]  # nach dem Fehler keine weitere Anfrage
 
 
 H = NeedHypothesis(
