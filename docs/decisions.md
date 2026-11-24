@@ -3148,7 +3148,9 @@ Netzschritt über `http` (Punkt 74).
 - `prep/context.py` liest die Quellen, wie sie kommen (`read_accidents` in den drei Namensformen der
   Jahrgänge, mit BOM und Dezimalkomma; `read_grid`; `read_schools` mit der Zeile `sep=;` und dem
   Sozialindex in Codepage 850) und rechnet je Wahlbezirk (`need_table`); ein Verhältnis ohne Nenner
-  ist null, nie NaN.
+  ist null, nie NaN. Einen Unfall oder eine Schule ohne Koordinate verwirft der Leser und zählt sie
+  für die Zeile von `need_data` (`Located`); vorher hielt erst `point_shares` mit einem
+  `PreContractError` an (Review 2026-11-24, N3). Heute hat keine Quelle eine solche Zeile.
 - `analysis/need.py` rechnet die Tests: Spearman, Permutationen, Bootstrap, Holm, Robustheit,
   explorativ innerhalb der Stadtbezirke und Moran's I. Die Zufallszahlen kommen in der Folge des
   Messskripts, die Korrelationen für alle Permutationen zugleich.

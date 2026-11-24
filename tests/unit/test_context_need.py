@@ -73,12 +73,45 @@ def test_each_form_of_the_accident_archives_reads_the_same(tmp_path: Path, form:
         },
     ]
     path = write_accident_archive(tmp_path / f"a{form}.zip", form, rows)
-    frame = read_accidents(path, AGS)
+    frame = read_accidents(path, AGS).frame
     assert frame.schema == pl.Schema(ACCIDENTS_SCHEMA)
     assert frame.height == 2  # die dritte Zeile ist eine andere Gemeinde
     assert frame.select("monat", "kategorie", "rad", "fuss").rows() == [(1, 3, 0, 1), (9, 2, 1, 0)]
     assert frame.get_column("x").to_list() == [345000.0, 344000.5]  # Dezimalkomma gelesen
     assert frame.get_column("y").to_list() == [5677000.0, 5676000.25]
+
+
+def test_an_accident_without_a_coordinate_is_dropped_and_counted(tmp_path: Path) -> None:
+    """Review 2026-11-24, N3: eine Zeile ohne Koordinate brach erst in ``point_shares`` ab
+    (``PreContractError``); der Leser verwirft sie und zählt sie für die Zeile des Laufs."""
+    rows = [
+        {
+            "ags": AGS,
+            "month": 9,
+            "category": 2,
+            "bike": 0,
+            "foot": 0,
+            "x": 344000.0,
+            "y": 5676000.0,
+        },
+        {"ags": AGS, "month": 9, "category": 3, "bike": 0, "foot": 0, "x": None, "y": 5676000.0},
+        {"ags": AGS, "month": 9, "category": 3, "bike": 0, "foot": 0, "x": 344000.0, "y": None},
+    ]
+    read = read_accidents(write_accident_archive(tmp_path / "a.zip", 0, rows), AGS)
+    assert read.frame.get_column("x").to_list() == [344000.0] and read.dropped == 2
+
+
+def test_a_school_without_a_coordinate_is_dropped_and_counted(tmp_path: Path) -> None:
+    schools, index = write_school_files(
+        tmp_path,
+        [
+            ("100020", "02", AGS, 344000, 5676000, "7"),
+            ("100010", "02", AGS, None, None, "5"),
+            ("100040", "02", "05911000", None, None, "9"),  # andere Gemeinde: zählt nicht
+        ],
+    )
+    read = read_schools(schools, index, AGS, crs="EPSG:25832")
+    assert read.frame.get_column("schulnummer").to_list() == ["100020"] and read.dropped == 1
 
 
 def test_an_archive_that_is_no_zip_is_a_schema_error(tmp_path: Path) -> None:
@@ -139,7 +172,7 @@ def test_schools_of_the_municipality_with_their_index_from_codepage_850(tmp_path
             ("100040", "02", "05911000", 1, 2, "9"),  # andere Gemeinde
         ],
     )
-    frame = read_schools(schools, index, AGS, crs="EPSG:25832")
+    frame = read_schools(schools, index, AGS, crs="EPSG:25832").frame
     assert frame.schema == pl.Schema(SCHOOLS_SCHEMA)
     assert frame.rows() == [
         ("100010", "02", 345000.0, 5677000.0, None),
@@ -332,7 +365,7 @@ def test_a_school_without_a_crs_is_read_in_the_declared_one(tmp_path: Path) -> N
     text = schools.read_text(encoding="utf-8")
     schools.write_text(text.replace('"EPSG:25832";"1";"2"', '"null";"1";"2"'), encoding="utf-8")
     assert '"null"' in schools.read_text(encoding="utf-8")
-    frame = read_schools(schools, index, AGS, crs="EPSG:25832")
+    frame = read_schools(schools, index, AGS, crs="EPSG:25832").frame
     assert frame.get_column("schulnummer").to_list() == ["100020", "100030"]
 
 

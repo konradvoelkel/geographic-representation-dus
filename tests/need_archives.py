@@ -59,11 +59,14 @@ def accident_row(
     category: int,
     bike: int,
     foot: int,
-    x: float,
-    y: float,
+    x: float | None,
+    y: float | None,
     leading_zero: bool = True,
 ) -> str:
-    """Eine Zeile zum Kopf ``header``; die Schlüssel mit oder ohne führende Null wie im Jahrgang."""
+    """Eine Zeile zum Kopf ``header``; die Schlüssel mit oder ohne führende Null wie im Jahrgang.
+
+    ``None`` als Koordinate lässt das Feld leer.
+    """
     land = ags[:2] if leading_zero else str(int(ags[:2]))
     values = {
         "ULAND": land,
@@ -75,8 +78,8 @@ def accident_row(
         "UKATEGORIE": str(category),
         "IstRad": str(bike),
         "IstFuss": str(foot),
-        "LINREFX": _comma(x),
-        "LINREFY": _comma(y),
+        "LINREFX": "" if x is None else _comma(x),
+        "LINREFY": "" if y is None else _comma(y),
     }
     return ";".join(values.get(column, "0") for column in header.split(";"))
 
@@ -148,9 +151,12 @@ SCHOOLS_HEADER = (
 
 
 def write_school_files(
-    folder: Path, schools: Sequence[tuple[str, str, str, int, int, str]]
+    folder: Path, schools: Sequence[tuple[str, str, str, int | None, int | None, str]]
 ) -> tuple[Path, Path]:
-    """Schuldaten (Nummer, Form, Gemeinde, x, y, Stufe) und die Liste des Sozialindex in cp850."""
+    """Schuldaten (Nummer, Form, Gemeinde, x, y, Stufe) und die Liste des Sozialindex in cp850.
+
+    ``None`` als Koordinate lässt das Feld leer.
+    """
     rows = []
     for number, form, ags, x, y, _ in schools:
         values = [
@@ -169,7 +175,8 @@ def write_school_files(
             "",
             "",
         ]
-        values += ["", "", "1", "100", ags, "1", "01.08.1970", "EPSG:25832", str(x), str(y)]
+        values += ["", "", "1", "100", ags, "1", "01.08.1970", "EPSG:25832"]
+        values += ["" if x is None else str(x), "" if y is None else str(y)]
         rows.append(";".join(f'"{v}"' for v in values))
     schools_csv = folder / "schuldaten.csv"
     schools_csv.write_bytes(

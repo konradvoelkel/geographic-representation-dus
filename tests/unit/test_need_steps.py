@@ -212,6 +212,24 @@ def test_need_data_fetches_cuts_out_the_municipality_and_describes_the_archives(
     assert "7 Archive, 7 davon geladen" in outcome.reason
 
 
+def test_need_data_counts_the_rows_without_a_coordinate_and_goes_on(
+    world: tuple[Layout, Routes, dict[str, int]], default_settings: Settings, tmp_path: Path
+) -> None:
+    """Review 2026-11-24, N3: ein Unfall ohne Koordinate hielt den Schritt mit einem
+    ``PreContractError`` aus ``point_shares`` an; jetzt fällt er im Leser weg und steht in der Zeile."""
+    layout, routes, _ = world
+    settings = _enabled(default_settings)
+    blank = {"ags": settings.city.ags, "month": 10, "category": 3, "bike": 0, "foot": 0}
+    path = write_accident_archive(tmp_path / "ohne.zip", 0, [{**blank, "x": None, "y": None}])
+    changed = dict(routes)
+    changed[ARCHIVES[0]] = response(ARCHIVES[0], content=path.read_bytes())
+    step = _step(need_steps(settings, layout, FakeSession(changed)), "need_data")
+    outcome = run_step(step, settings, online=True)
+    assert outcome.status == "ausgeführt", outcome.reason
+    assert "ohne Koordinate verworfen: 1 Unfälle, 0 Schulen" in outcome.reason
+    assert pl.read_parquet(need_files(layout).accidents).height == 6  # 2021 und 2025 je drei
+
+
 def test_a_fresh_archive_is_not_fetched_twice_and_an_old_one_is(
     world: tuple[Layout, Routes, dict[str, int]], default_settings: Settings
 ) -> None:

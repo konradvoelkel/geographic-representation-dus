@@ -18,6 +18,7 @@ import zipfile
 from collections.abc import Mapping, Sequence
 from datetime import date
 from pathlib import Path
+from typing import NamedTuple
 
 import deal
 import polars as pl
@@ -419,6 +420,30 @@ _INDEX_COLUMNS = ("Schulnummer", "Sozialindexstufe")
 UNSPECIFIED_CRS = "null"  # so stehen Schulen ohne CRS-Angabe in den Schuldaten
 
 
+class Located(NamedTuple):
+    """Ein Auszug, dessen Zeilen alle eine endliche Koordinate tragen, und wie viele keine hatten."""
+
+    frame: pl.DataFrame
+    dropped: int  # Zeilen der Gemeinde ohne Koordinate, verworfen
+
+
+def _located(frame: pl.DataFrame) -> Located:
+    """Zeilen ohne endliche Koordinate verwerfen und zählen (Review 2026-11-24, N3).
+
+    ``crosswalk.point_shares`` verlangt endliche ``x`` und ``y``; eine Zeile ohne hielte den
+    Schritt ``need`` mit einem ``PreContractError`` an. Die Quellen haben heute keine (2026-11-24:
+    0 von 13 507 Unfällen, 0 von 185 Schulen der Hauptstadt), ein neuer Jahrgang kann eine bringen;
+    die Zeile des Laufs nennt die Zahl.
+    """
+    kept = frame.filter(pl.col("x").is_finite() & pl.col("y").is_finite())
+    return Located(kept, frame.height - kept.height)
+
+
+def _all_located(result: Located) -> bool:
+    finite = pl.col("x").is_finite().fill_null(False) & pl.col("y").is_finite().fill_null(False)
+    return result.dropped >= 0 and bool(result.frame.select(finite.all()).item())
+
+
 @deal.pure
 @deal.pre(lambda ags: is_municipality_key(ags), message="acht ASCII-Ziffern")
 @deal.ensure(
@@ -481,20 +506,22 @@ def _open_zip(path: Path) -> zipfile.ZipFile:
 
 
 @deal.pre(lambda path, ags: is_municipality_key(ags), message="acht ASCII-Ziffern")
-@deal.post(lambda result: result.schema == pl.Schema(ACCIDENTS_SCHEMA))
+@deal.post(lambda result: result.frame.schema == pl.Schema(ACCIDENTS_SCHEMA))
+@deal.post(_all_located, message="jede Zeile mit endlicher Koordinate")
 @deal.raises(SchemaError)
-def read_accidents(path: Path, ags: str) -> pl.DataFrame:
+def read_accidents(path: Path, ags: str) -> Located:
     """Die Unfälle einer Gemeinde aus einem Jahresarchiv des Unfallatlas, sortiert.
 
     Gelesen wird alles als Text: die Schlüssel tragen führende Nullen oder nicht, die Koordinaten
-    ein Dezimalkomma, und der Kopf manches Jahrgangs ein BOM vor der ersten Spalte.
+    ein Dezimalkomma, und der Kopf manches Jahrgangs ein BOM vor der ersten Spalte. Ein Unfall ohne
+    lesbare Koordinate fällt weg und wird gezählt (``Located``).
     """
     with _open_zip(path) as archive:
         member = _table_member(archive, path)
         raw = _strip_bom(pl.read_csv(archive.read(member), separator=";", infer_schema=False))
     _require(raw, _ACCIDENT_COLUMNS, f"{path.name}/{member}")
     keys = [_integer(c) == v for c, v in zip(_ACCIDENT_KEYS, ags_parts(ags), strict=True)]
-    return (
+    return _located(
         raw.filter(*keys)
         .select(
             _integer("UJAHR").alias("jahr"),
@@ -578,18 +605,22 @@ def _csv_text(path: Path, encoding: str) -> pl.DataFrame:
     lambda schools, index, ags, *, crs, index_encoding="cp850": is_municipality_key(ags),
     message="acht ASCII-Ziffern",
 )
-@deal.post(lambda result: result.schema == pl.Schema(SCHOOLS_SCHEMA))
-@deal.post(lambda result: sorted_unique(result, "schulnummer"), message="eine Zeile je Schule")
+@deal.post(lambda result: result.frame.schema == pl.Schema(SCHOOLS_SCHEMA))
+@deal.post(
+    lambda result: sorted_unique(result.frame, "schulnummer"), message="eine Zeile je Schule"
+)
+@deal.post(_all_located, message="jede Schule mit endlicher Koordinate")
 @deal.raises(SchemaError)
 def read_schools(
     schools: Path, index: Path, ags: str, *, crs: str, index_encoding: str = "cp850"
-) -> pl.DataFrame:
+) -> Located:
     """Die Schulen einer Gemeinde mit Koordinate und Sozialindexstufe, nach Schulnummer sortiert.
 
     Die Schuldaten nennen das CRS je Zeile; nennt eine Schule der Gemeinde ein anderes als ``crs``,
     ist das ein ``SchemaError`` und keine stille Umrechnung. ``null`` oder leer heißt „nicht
     angegeben" und gilt als ``crs``. Die Liste des Sozialindex ist in
-    ``index_encoding`` gespeichert und nennt Schulen ohne Stufe „ohne"; die werden null.
+    ``index_encoding`` gespeichert und nennt Schulen ohne Stufe „ohne"; die werden null. Eine
+    Schule ohne lesbare Koordinate fällt weg und wird gezählt (``Located``).
     """
     frame = _csv_text(schools, "utf-8")
     _require(frame, _SCHOOL_COLUMNS, schools.name)
@@ -606,7 +637,7 @@ def read_schools(
         pl.col("Schulnummer").str.strip_chars().alias("schulnummer"),
         _integer("Sozialindexstufe").alias("sozialindex"),
     ).unique("schulnummer", keep="first", maintain_order=True)
-    return (
+    return _located(
         own.select(
             pl.col("Schulnummer").str.strip_chars().alias("schulnummer"),
             pl.col("Schulform").str.strip_chars().alias("schulform"),

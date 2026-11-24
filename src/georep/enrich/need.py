@@ -186,9 +186,8 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
                 time.sleep(need.delay_s)  # eine Anfrage nach der anderen, mit Pause
             paths[url] = _fetch_archive(http, url, target)
             fetched += 1
-        accidents = pl.concat(
-            [read_accidents(paths[url], ags) for url in need.accidents.archives]
-        ).sort("jahr", "monat", "x", "y")
+        years = [read_accidents(paths[url], ags) for url in need.accidents.archives]
+        accidents = pl.concat([year.frame for year in years]).sort("jahr", "monat", "x", "y")
         areas = precincts()
         grid = need.grid
         cells = read_grid(
@@ -208,13 +207,14 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
             .filter(pl.col(POINT).cast(pl.Int64).is_in(inside.to_list()))
             .drop(POINT)
         )
-        schools = read_schools(
+        located = read_schools(
             paths[need.schools.schools_url],
             paths[need.schools.index_url],
             ags,
             crs=need.schools.crs,
             index_encoding=need.schools.index_encoding,
         )
+        schools = located.frame
         for frame, target in (
             (accidents, files.accidents),
             (cells, files.grid),
@@ -229,7 +229,9 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
         )
         return (
             f"{len(paths)} Archive, {fetched} davon geladen; {accidents.height} Unfälle, "
-            f"{cells.height} Gitterzellen, {schools.height} Schulen der Gemeinde {ags}"
+            f"{cells.height} Gitterzellen, {schools.height} Schulen der Gemeinde {ags}; ohne "
+            f"Koordinate verworfen: {sum(year.dropped for year in years)} Unfälle, "
+            f"{located.dropped} Schulen"
         )
 
     def need_step() -> str:
