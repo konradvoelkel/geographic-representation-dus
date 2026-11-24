@@ -58,8 +58,16 @@ class PublishedRun:
 @pytest.fixture(scope="module")
 def published(tmp_path_factory: pytest.TempPathFactory) -> PublishedRun:
     root = tmp_path_factory.mktemp("veroeffentlicht")
-    compare = load_settings(profile=COMPARE_PROFILE, cwd=NOWHERE).model_copy(
-        update={"data_root": root / "data", "cache_root": root / "cache"}
+    loaded = load_settings(profile=COMPARE_PROFILE, cwd=NOWHERE)
+    compare = loaded.model_copy(
+        update={
+            "data_root": root / "data",
+            "cache_root": root / "cache",
+            # Vorhaben 17: die Tests über drei Perioden (cycle_tests) bräuchten auch die laufende
+            # Periode; sie schreiben keine Seite, die hier gemessen wird. Ihren Lauf über die
+            # Pakete prüft tests/golden/test_cycles_numbers.py
+            "cycles": loaded.cycles.model_copy(update={"periods": []}),
+        }
     )
     base = Layout.from_settings(compare)
     assert bootstrap_from_settings(base, compare).missing == []
