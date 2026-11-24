@@ -23,17 +23,20 @@ from georep.analysis.procedures import (
     build_directory,
     document_roles,
     forest,
+    onto_raw,
     parents,
     questions_of,
     scan,
     strong_candidates,
     supplement_pairs,
 )
+from georep.prep.raw_texts import flatten_with_offsets
 from georep.prep.references import ReferenceRules
 from georep.settings import load_settings
 from georep.spans import SPAN_SCHEMA, check_spans
 from tests.procedures_city import (
     ANSWERS,
+    DOCUMENTS,
     EDGES,
     FOREST,
     OWN_IDS,
@@ -200,3 +203,40 @@ def test_the_two_known_errors_stay_strong(title: str, attachment: str, case: str
     assert edges.select("von", "nach", "typ", "stark", "quelle").rows() == [
         ("z99", "p02", "bezug", True, case)
     ]
+
+
+# --- Nachzug F7: die Spannen liegen auf dem Rohtext ---------------------------------------------
+
+
+def test_spans_move_onto_the_raw_text_where_it_flattens_to_the_store() -> None:
+    """Über ``flatten_with_offsets`` (Punkt 74): dieselbe Stelle, im Rohtext gezählt, wörtlich.
+
+    Eine Nummer über einen Zeilenumbruch ist im Rohtext eine Spanne mit dem Umbruch darin; der
+    Kopf vor dem Marker und die Großschreibung stehen nur dort.
+    """
+    raw = "Vorlagenkopf RAT/0/2000\fBetrifft: Antrag zu RAT/1/\n2021 und\nOVA/2/2021"
+    text, offsets = flatten_with_offsets(raw, "betrifft", ())
+    doc_id, period, number, kind, title, day, _text, _files = DOCUMENTS[4]  # p05
+    files: list[str] = []
+    row = (doc_id, period, number, title, kind, day, text, files)  # Folge von DOCUMENT_SCHEMA
+    docs = pl.DataFrame([row], schema=documents().schema, orient="row")
+    directory = build_directory(documents(), RULES)
+    store = scan(docs, directory, RULES, {"p05": "probe/drucksachen-1"}).spans
+    assert store.get_column("value").to_list() == ["rat/1/2021", "ova/2/2021"]
+    moved = onto_raw(store, {"p05": (raw, offsets, "probe+roh")})
+    assert moved.get_column("value").to_list() == ["RAT/1/\n2021", "OVA/2/2021"]
+    assert set(moved.get_column("extractor")) == {"probe+roh/drucksachen-1"}
+    for start, end, value in moved.select("start", "end", "value").iter_rows():
+        assert raw[start:end] == value
+    check_spans(moved, {"p05": len(raw)})
+
+
+def test_a_document_without_raw_text_keeps_its_store_spans() -> None:
+    """Ohne Rohtext (Pages hat ihn nur für die Hauptperiode) bleibt die Spanne auf dem Textstore,
+    und ``extractor`` sagt es."""
+    docs = documents().filter(pl.col("periode") == OWN)
+    directory = build_directory(documents(), RULES)
+    store = scan(
+        docs, directory, RULES, {doc_id: "probe/drucksachen-1" for doc_id in OWN_IDS}
+    ).spans
+    assert onto_raw(store, {}).equals(store)

@@ -176,8 +176,13 @@ def test_the_answers_of_the_measurement(dus: City) -> None:
 
 
 def test_each_period_computes_the_same_city(dus: City, tmp_path: Path) -> None:
-    """Die Schritte je Profil, mit den anderen Perioden aus ihren Paketen (Frage 9.2)."""
-    edges, forests, answers = [], [], []
+    """Die Schritte je Profil, mit den anderen Perioden aus ihren Paketen (Frage 9.2).
+
+    Die Hauptperiode bekommt ihr Rohtextpaket wie bei ``bootstrap``: ihre Spannen liegen dann
+    auf dem Rohtext (Nachzug F7), und an Kanten, Vorgängen und Antworten ändert das nichts. Die
+    beiden anderen Perioden haben kein Rohtextpaket; ihre Spannen bleiben auf dem Textstore.
+    """
+    edges, forests, answers, spans = [], [], [], {}
     for profile in DUS_PROFILES:
         settings = load_settings(profile=profile, cwd=NOWHERE)
         layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", profile)
@@ -186,6 +191,8 @@ def test_each_period_computes_the_same_city(dus: City, tmp_path: Path) -> None:
         corpus = build_corpus(read_papers(own.papers), TextStore(own.texts))
         write_parquet(corpus, layout.corpus, schema_version=CORPUS_SCHEMA_VERSION)
         layout.texts.write_bytes(own.texts.read_bytes())  # der Extraktor der Spannen
+        if settings.bootstrap.raw_texts is not None:
+            layout.raw_texts.write_bytes(settings.bootstrap.raw_texts.read_bytes())
         pl.DataFrame(
             {
                 "id": corpus.get_column("id"),
@@ -200,6 +207,7 @@ def test_each_period_computes_the_same_city(dus: City, tmp_path: Path) -> None:
         edges.append(pl.read_parquet(files.edges))
         forests.append(pl.read_parquet(files.documents))
         answers.append(pl.read_parquet(files.answers))
+        spans[profile] = pl.read_parquet(files.spans)
     # ``nach_periode`` ist je Profil leer für die eigenen Drucksachen, in der Stadt deren Periode
     union = pl.concat(edges).sort("von", "nach")
     columns = [c for c in union.columns if c != "nach_periode"]
@@ -210,3 +218,9 @@ def test_each_period_computes_the_same_city(dus: City, tmp_path: Path) -> None:
     assert pl.concat(forests).sort("id").equals(dus.forest)
     keys = ["id", "quelle", "antwort_datum", "tage", "antwort_id", "alter_am_abruf"]
     assert pl.concat(answers).sort("id").select(keys).equals(dus.answers.select(keys))
+    # Die Spannen: 10 214 Nummern im Text der Hauptperiode, jede auf dem Rohtext (F1 verspricht
+    # die Brücke für jedes Dokument, das verschlüsselte PDF nennt keine Nummer im Text)
+    main = spans["duesseldorf"].get_column("extractor").value_counts().rows()
+    assert main == [("pypdf-7.1.0+roh/drucksachen-1", 10_214)]
+    for profile in ("duesseldorf-2014", "duesseldorf-2025"):
+        assert not spans[profile].get_column("extractor").str.contains(r"\+roh/").any()

@@ -239,6 +239,61 @@ def scan(
     )
 
 
+# Rohtext je Dokument: Text, Stelle im Rohtext je Zeichen des geplätteten Texts
+# (``prep.raw_texts.flatten_with_offsets``) und der Extraktorname des Rohtextstores.
+RawBridge = tuple[str, Sequence[int], str]
+
+
+def _bridged(spans: pl.DataFrame, raw: Mapping[str, RawBridge]) -> bool:
+    return all(
+        0 <= start < end <= len(raw[doc_id][0])
+        for doc_id, start, end in spans.select("id", "start", "end").iter_rows()
+        if doc_id in raw
+    )
+
+
+@deal.post(lambda result: result.schema == pl.Schema(SPAN_SCHEMA), message="Schema von F3")
+@deal.ensure(
+    lambda spans, raw, result: result.height == spans.height and _bridged(result, raw),
+    message="jede Spanne bleibt, und jede auf dem Rohtext liegt in ihm",
+)
+def onto_raw(spans: pl.DataFrame, raw: Mapping[str, RawBridge]) -> pl.DataFrame:
+    """Die Spannen des Textstores auf den Rohtext legen, wo ein Dokument ihn hat (Nachzug F7).
+
+    ``raw`` nennt je ID den Rohtext, dessen Plättung genau der Text des Textstores ist, mit der
+    Stelle jedes Zeichens im Rohtext (Punkt 74). Eine Spanne ``[i, j)`` ist dort
+    ``[offsets[i], offsets[j - 1] + 1)``; ``value`` ist der Rohtext an dieser Stelle, wörtlich
+    (groß geschrieben, mit einem Zeilenumbruch, über den die Nummer läuft), ``extractor`` der des
+    Rohtexts mit dem Verfahren. Eine ID ohne Rohtext behält ihre Spannen auf dem Textstore; welche
+    Art eine Zeile ist, sagt ihr ``extractor`` (F3).
+    """
+    method = {
+        doc_id: extractor.rsplit("/", 1)[-1]
+        for doc_id, extractor in spans.select("id", "extractor").iter_rows()
+    }
+    rows = []
+    for doc_id, start, end, kind, value, norm, section, extractor in spans.iter_rows():
+        bridge = raw.get(doc_id)
+        if bridge is None:
+            rows.append((doc_id, start, end, kind, value, norm, section, extractor))
+            continue
+        text, offsets, raw_extractor = bridge
+        begin, stop = offsets[start], offsets[end - 1] + 1
+        rows.append(
+            (
+                doc_id,
+                begin,
+                stop,
+                kind,
+                text[begin:stop],
+                norm,
+                section,
+                f"{raw_extractor}/{method[doc_id]}",
+            )
+        )
+    return sort_spans(pl.DataFrame(rows, schema=SPAN_SCHEMA, orient="row"))
+
+
 def document_roles(documents: pl.DataFrame, rules: ReferenceRules) -> pl.DataFrame:
     """``id``, ``periode``, ``date``, ``rolle`` und ``sammelbericht`` je Drucksache der Stadt."""
     rows = [

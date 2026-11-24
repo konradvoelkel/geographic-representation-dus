@@ -3085,17 +3085,27 @@ Vorgänge mit 4 643 Dokumenten, 99 mit 217, 3 237 von 8 168 Anfragen mit Antwort
 bei n = 1 948) und, je Düsseldorfer Periode, dass die eigenen Kanten der drei Profile zusammen die
 Stadt ergeben und jeder Vorgang und jede Antwort gleich ist.
 
-**Spannen auf dem Textstore.** Titel- und Anlagentreffer sind keine Stellen im Text und stehen nur
-in den Kanten (`felder`, `quelle`; Synergie, Konflikt 1). Die Spannen zeigen auf den
-kleingeschriebenen Textstore mit `section = ""`, bis der Nachzug F7 (`flatten_with_offsets`) sie auf
-den Rohtext legen kann; `extractor` nennt den Extraktor des Textstores und das Verfahren
-(`…/drucksachen-1`).
+**Spannen auf dem Rohtext.** Titel- und Anlagentreffer sind keine Stellen im Text und stehen nur
+in den Kanten (`felder`, `quelle`; Synergie, Konflikt 1). Gesucht wird im kleingeschriebenen
+Textstore, denn dort hat die Messung gezählt; die Stellen legt `references` danach über
+`flatten_with_offsets` (Punkt 74) auf den Rohtext, wo ihn der Rohtextstore hat und er geplättet
+**genau** den Text ergibt, in dem die Nummer gefunden wurde. `value` ist dann der Rohtext an der
+Stelle, wörtlich (groß geschrieben; 59 der 10 214 Spannen der Hauptperiode laufen über einen
+Zeilenumbruch), und `extractor` nennt den Rohtext (`pypdf-7.1.0+roh/drucksachen-1`). In der
+Hauptperiode liegen so alle 10 214 Spannen aus 5 135 Dokumenten auf dem Rohtext. Wo es keinen
+Rohtext gibt -- auf Pages tragen nur die Hauptperiode und ihr Paket einen (Synergie, Konflikt 14)
+--, bleibt die Spanne auf dem Textstore, und `extractor` nennt den. Der Rohtextstore ist darum eine
+optionale Eingabe des Schritts (`Step.optional`, wie bei `report`). `section` bleibt leer, bis
+Vorhaben 11 die Abschnitte bringt. Kanten, Vorgänge und Antworten hängen nicht daran; der
+`slow`-Test hält sie mit dem Rohtext der Hauptperiode gleich.
 
 **Laufzeit** im ersten Lauf je Profil am 2026-11-24 (Worktree, `nice -n 10`, Lastmittel 9 bis 25
 durch andere Läufe auf demselben Rechner): `references` 13,3 s in der Hauptperiode, 11,9 s in 2014
 bis 2020, 2,3 s in der laufenden Periode, 0,3 s in Mönchengladbach; `procedures` 4,8 s, 3,2 s,
 3,7 s und 0,1 s, davon das Lesen der Nachbarpakete und von 1 090, 2 309 und 2 707 Nachbartexten.
-Beide bleiben unter dem Ziel von 20 s je Profil (§ 6). Die Summen der drei Düsseldorfer Läufe sind
+Beide bleiben unter dem Ziel von 20 s je Profil (§ 6). Seit die Spannen auf den Rohtext
+gehen, kostet `references` in der Hauptperiode 21,3 s (Lastmittel 16): rund 7 s rechnet
+`flatten_with_offsets` die Stellen der 5 135 Dokumente mit einer Nummer im Text. Die Summen der drei Düsseldorfer Läufe sind
 die Zahlen der Messung: 7 310 + 5 704 + 1 469 = 14 483 eigene Kanten, 1 960 + 1 093 + 339 = 3 392
 starke, 1 239 + 1 750 + 248 = 3 237 Anfragen mit Antwort.
 

@@ -16,8 +16,10 @@ Nachbardrucksachen, die eine starke Kante haben können (``strong_candidates``).
 Profil dieselben Vorgänge wie die Messung über die ganze Stadt, ohne auf den Lauf eines anderen
 Profils zu warten.
 
-Die Spannen zeigen auf den kleingeschriebenen Textstore (``section`` leer), bis der Nachzug F7
-(``flatten_with_offsets``) sie auf den Rohtext legen kann (Synergie, Konflikt 1).
+Gesucht wird im kleingeschriebenen Textstore, wie in der Messung; die Spannen legt ``references``
+danach über ``flatten_with_offsets`` (Nachzug F7, Punkt 74) auf den Rohtext, wo es ihn gibt
+(``raw_bridges``), sonst bleiben sie auf dem Textstore (Synergie, Konflikt 1); ``section`` bleibt
+leer bis Vorhaben 11.
 """
 
 from __future__ import annotations
@@ -34,11 +36,13 @@ from georep.analysis.procedures import (
     DOCUMENT_SCHEMA,
     EDGE_SCHEMA,
     OWN,
+    RawBridge,
     answer_times,
     assemble_edges,
     build_directory,
     document_roles,
     forest,
+    onto_raw,
     parents,
     questions_of,
     scan,
@@ -49,10 +53,11 @@ from georep.enrich import Contribution
 from georep.errors import SchemaError
 from georep.io import write_parquet
 from georep.prep.bodies import BODY
+from georep.prep.raw_texts import flatten_with_offsets
 from georep.prep.references import ReferenceRules
 from georep.records import PaperRecord
 from georep.spans import check_spans
-from georep.stores import PaperStore
+from georep.stores import PaperStore, RawTextStore
 
 if TYPE_CHECKING:
     from georep.http import Transport
@@ -212,6 +217,46 @@ def text_extractors(layout: Layout) -> dict[str, str]:
     }
 
 
+def raw_bridges(
+    settings: Settings, layout: Layout, own: pl.DataFrame, wanted: set[str]
+) -> dict[str, RawBridge]:
+    """Je ID in ``wanted`` der Rohtext mit der Stelle je Zeichen, wo er genau zum Text plättet.
+
+    Nachzug F7 (Punkt 74, Synergie Konflikt 1): die Spannen liegen auf dem Rohtext, wo die
+    Abschnitte von Vorhaben 11 liegen und die Kodierbögen von F4 lesen. Geprüft wird die Brücke
+    selbst: der geplättete Rohtext muss **genau** der Text sein, in dem die Nummer gefunden wurde
+    (F1 verspricht das für jedes Dokument; das verschlüsselte PDF hat keinen Rohtext). Ohne
+    Rohtextstore -- auf Pages tragen nur die Hauptperiode und ihr Paket einen -- bleibt jede
+    Spanne auf dem Textstore. Mehrere IDs einer Datei teilen eine Rechnung.
+    """
+    store = RawTextStore(layout.raw_texts)
+    if not wanted or not layout.raw_texts.is_file() or not len(store):
+        return {}
+    names = dict(
+        pl.read_parquet(layout.corpus, columns=["id", "file_name"])
+        .filter(pl.col("id").is_in(list(wanted)))
+        .iter_rows()
+    )
+    texts = dict(own.filter(pl.col("id").is_in(list(wanted))).select("id", "text").iter_rows())
+    marker = settings.search.text_split_marker
+    flattened: dict[str, tuple[RawBridge, str] | None] = {}  # Dateiname -> (Brücke, Text)
+    found: dict[str, RawBridge] = {}
+    for doc_id in sorted(wanted):
+        name = names.get(doc_id) or ""
+        if name not in flattened:
+            raw = store.get(name)
+            if raw is None:
+                flattened[name] = None
+            else:
+                flat, offsets = flatten_with_offsets(raw, marker, store.form_feeds(name))
+                extractor = str(store.rows[name]["extractor"])
+                flattened[name] = ((raw, offsets, extractor), flat)
+        known = flattened[name]
+        if known is not None and known[1] == texts.get(doc_id):
+            found[doc_id] = known[0]
+    return found
+
+
 def run_references(settings: Settings, layout: Layout) -> str:
     files = procedure_files(layout)
     rules = ReferenceRules.from_settings(settings.procedures)
@@ -220,18 +265,24 @@ def run_references(settings: Settings, layout: Layout) -> str:
     directory = build_directory(city.documents, rules)
     own = city.documents.filter(pl.col("periode") == OWN)
     found = scan(own, directory, rules, text_extractors(layout))
-    lengths = dict(own.select("id", pl.col("text").str.len_chars().cast(pl.Int64)).iter_rows())
-    check_spans(found.spans, lengths)
+    bridges = raw_bridges(settings, layout, own, set(found.spans.get_column("id").to_list()))
+    spans = onto_raw(found.spans, bridges)
+    lengths = {
+        doc_id: len(bridges[doc_id][0]) if doc_id in bridges else len(text)
+        for doc_id, text in own.select("id", "text").iter_rows()
+    }
+    check_spans(spans, lengths)
     own_ids = set(city.own_ids)
     supplements = [pair for pair in supplement_pairs(directory) if pair[0] in own_ids]
     edges = assemble_edges(found.occurrences, supplements, document_roles(city.documents, rules))
-    write_parquet(found.spans, files.spans, schema_version=PROCEDURES_SCHEMA_VERSION)
+    write_parquet(spans, files.spans, schema_version=PROCEDURES_SCHEMA_VERSION)
     write_parquet(edges, files.edges, schema_version=PROCEDURES_SCHEMA_VERSION)
     strong = edges.filter("stark")
     across = edges.filter(pl.col("nach_periode") != OWN).height
+    on_raw = len(set(spans.get_column("id").to_list()) & set(bridges))
     return (
-        f"{found.spans.height} Nummern im Text, {edges.height} Kanten, davon {strong.height} "
-        f"stark und {across} in eine Nachbarperiode"
+        f"{spans.height} Nummern im Text ({on_raw} Dokumente auf dem Rohtext), {edges.height} "
+        f"Kanten, davon {strong.height} stark und {across} in eine Nachbarperiode"
     )
 
 
@@ -303,6 +354,9 @@ def procedure_steps(settings: Settings, layout: Layout, http: Transport) -> list
             (files.spans, files.edges),
             lambda: run_references(settings, layout),
             PROCEDURES_SCHEMA_VERSION,
+            # Nachzug F7: die Spannen liegen auf dem Rohtext, wo es ihn gibt; ohne Store bleiben
+            # sie auf dem Textstore, und ihr Fehlen bricht nichts ab (wie bei ``report``, F1)
+            optional=(layout.raw_texts,),
         ),
         Step(
             "procedures",

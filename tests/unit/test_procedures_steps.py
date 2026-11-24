@@ -29,7 +29,7 @@ from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus
 from georep.records import PaperRecord
 from georep.settings import RelatedPeriod, Settings, load_settings
 from georep.spans import SPAN_SCHEMA
-from georep.stores import PaperStore, TextMeta, TextStore
+from georep.stores import PAGE_BREAK, PaperStore, RawTextStore, TextMeta, TextStore
 from tests.fakes import FakeSession
 from tests.procedures_city import (
     ANSWERS,
@@ -42,6 +42,7 @@ from tests.procedures_city import (
 
 # Beide Schritte sind offline; eine Session ohne Routen fiele bei jedem Aufruf auf.
 OFFLINE = FakeSession({})
+RAW_IDS = ("p05", "p14")  # eigene Drucksachen mit Rohtext; p06 hat keinen
 
 
 def _records(own: bool) -> list[PaperRecord]:
@@ -71,6 +72,19 @@ def city_run(tmp_path: Path, default_settings: Settings) -> tuple[Layout, Settin
         layout.papers_bodies
     )
     attachments().write_parquet(procedure_files(layout).attachments)
+    # Rohtext für zwei eigene Drucksachen: Kopf mit einer Nummer vor dem Marker, eine Seite, dann
+    # der Text groß geschrieben. Geplättet ist er genau der Text des Textstores (F1).
+    raw = RawTextStore(layout.raw_texts)
+    for doc_id in RAW_IDS:
+        text = next(row[6] for row in DOCUMENTS if row[0] == doc_id)
+        raw.put(
+            f"{doc_id}.pdf",
+            f"KOPF RAT/0/2000 BETRIFFT{PAGE_BREAK}{text.upper()}",
+            pages=2,
+            extractor="probe-1+roh",
+            pdf_sha256="",
+        )
+    raw.save()
     neighbour = tmp_path / "nachbar"
     PaperStore(neighbour / "raw" / "papers.jsonl").save(_records(own=False))
     _texts(neighbour / "texts.parquet", own=False)
@@ -108,7 +122,16 @@ def test_the_steps_write_the_known_city(city_run: tuple[Layout, Settings]) -> No
     assert pl.read_parquet(files.answers).rows() == ANSWERS
     spans = pl.read_parquet(files.spans)
     assert spans.schema == pl.Schema(SPAN_SCHEMA)
-    assert set(spans.get_column("extractor")) == {"probe-1/drucksachen-1"}
+    # Nachzug F7: auf dem Rohtext, wo es ihn gibt, sonst auf dem Textstore; extractor sagt welcher
+    assert spans.select("id", "value", "extractor").rows() == [
+        ("p05", "OVA/2/2021", "probe-1+roh/drucksachen-1"),
+        ("p06", "rat/1/2021", "probe-1/drucksachen-1"),
+        ("p14", "RAT/13/2021", "probe-1+roh/drucksachen-1"),
+    ]
+    raw = RawTextStore(layout.raw_texts)
+    for doc_id, start, end, value in spans.select("id", "start", "end", "value").iter_rows():
+        if doc_id in RAW_IDS:
+            assert (raw.get(f"{doc_id}.pdf") or "")[start:end] == value
     again = run_pipeline(steps, settings)
     assert [o.status for o in again] == ["übersprungen", "übersprungen"]
 
