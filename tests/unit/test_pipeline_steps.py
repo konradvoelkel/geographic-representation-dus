@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 import shutil
 from dataclasses import replace
 from pathlib import Path
@@ -25,6 +26,7 @@ from georep.analysis.cosponsors import COSPONSORS_SCHEMA_VERSION
 from georep.analysis.functions import FUNCTIONS_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.enrich.procedures import PROCEDURES_SCHEMA_VERSION
+from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.pipeline import (
     METRICS_SCHEMA,
@@ -32,6 +34,7 @@ from georep.pipeline import (
     PARTIES_SCHEMA,
     Step,
     build_steps,
+    input_digests,
     run_pipeline,
     stamp_mismatch,
 )
@@ -458,3 +461,57 @@ def test_raw_texts_says_it_wrote_an_old_store_empty_when_there_are_no_pdfs(
     )
     assert "neu gelesen" not in outcome.reason
     assert len(RawTextStore(layout.raw_texts)) == 0 and RawTextStore(layout.raw_texts).stale == ""
+
+
+# --- Vorhaben 14: Eingaben gleichen Namens aus verschiedenen Ordnern ----------------------------
+
+
+def _twins(tmp_path: Path) -> tuple[Step, Path, Path]:
+    """Ein Schritt mit zwei Eingaben gleichen Namens, wie die Pakete zweier Nachbarperioden."""
+    first, second = tmp_path / "a" / "papers.jsonl", tmp_path / "b" / "papers.jsonl"
+    for path in (first, second):
+        path.parent.mkdir(parents=True)
+        path.write_text("{}\n", encoding="utf-8")
+    out = tmp_path / "out.parquet"
+    return Step("probe", (first, second), (out,), lambda: "nichts"), first, second
+
+
+def test_two_inputs_with_the_same_name_both_reach_the_stamp(
+    default_settings: Settings, tmp_path: Path
+) -> None:
+    """Der Stamp schlüsselte die Eingaben nach Dateinamen; zwei ``papers.jsonl`` (die Pakete von
+    2014 bis 2020 und der laufenden Periode) teilten einen Schlüssel, und eine Änderung am ersten
+    blieb unbemerkt (Vorhaben 14, 2026-11-24). ``compare`` hat dasselbe mit den Ergebnissen beider
+    Perioden."""
+    step, first, second = _twins(tmp_path)
+    stamped: dict[str, object] = {
+        "schema_version": step.schema_version,
+        "settings": default_settings.fingerprint(),
+        "extra": "",
+        "code": __version__,
+        "inputs": input_digests(step),
+    }
+    assert stamp_mismatch(stamped, step, default_settings) is None
+    first.write_text('{"neu": 1}\n', encoding="utf-8")
+    reason = stamp_mismatch(stamped, step, default_settings)
+    assert reason is not None and str(first) in reason
+
+
+def test_a_unique_name_keeps_its_key(tmp_path: Path) -> None:
+    """Nur gleichnamige Eingaben bekommen den Pfad als Schlüssel; jeder andere Stamp bleibt gültig."""
+    step, first, second = _twins(tmp_path)
+    unique = replace(step, inputs=(first,))
+    assert set(input_digests(unique)) == {"papers.jsonl"}
+    assert set(input_digests(step)) == {str(first), str(second)}
+
+
+def test_a_missing_input_is_named_with_its_full_path(
+    default_settings: Settings, tmp_path: Path
+) -> None:
+    """Ein fehlendes Paket aus dem Repo heißt mit vollem Pfad, und der Hinweis auf ``bootstrap``
+    gilt nur für die Datenwurzel (Review von Vorhaben 14, 2026-11-24)."""
+    missing = Path("snapshots") / "fehlt" / "papers.jsonl"
+    step = Step("probe", (missing,), (tmp_path / "out.parquet",), lambda: "nichts")
+    with pytest.raises(MissingInputError, match=re.escape(str(missing.resolve()))) as found:
+        run_pipeline([step], default_settings)
+    assert "Arbeitsverzeichnis" in str(found.value)
