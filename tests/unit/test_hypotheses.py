@@ -7,6 +7,9 @@ Hypothesentabelle: Vorhaben 17 baut den Kern, Vorhaben 22 und später 21, 24, 27
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import polars as pl
 import pytest
 
@@ -176,4 +179,97 @@ def test_not_confirmed_needs_holm_to_keep() -> None:
     rows = _rows()
     rows[0]["ergebnis"] = NOT_CONFIRMED  # p_holm 0,002 verwirft
     with pytest.raises(SchemaError, match="obwohl Holm verwirft"):
+        check_hypotheses(hypothesis_frame(rows, {"rolle": pl.String()}))
+
+
+# --- Review K2 (2026-11-24): der Kern, den 22 übernimmt ------------------------------------------
+
+FIXTURE_22 = (
+    Path(__file__).resolve().parents[1] / "fixtures" / "hypotheses" / "bedarf_hypothesen_22.json"
+)
+
+
+def test_outside_the_family_p_and_festgelegt_may_be_empty() -> None:
+    """Explorativ, Robustheit, beschreibend: keine Familie, darum weder p noch Festlegung nötig."""
+    rows = _rows()
+    rows[2]["p"] = None
+    rows[2]["festgelegt"] = None
+    rows[2]["n"] = None
+    check_hypotheses(hypothesis_frame(rows, {"rolle": pl.String()}))
+
+
+def test_in_the_family_festgelegt_and_p_are_required() -> None:
+    rows = _rows()
+    rows[0]["festgelegt"] = None
+    with pytest.raises(SchemaError, match="festgelegt"):
+        check_hypotheses(hypothesis_frame(rows, {"rolle": pl.String()}))
+    rows = _rows()
+    rows[0]["p"] = None
+    with pytest.raises(SchemaError, match="p fehlt"):
+        check_hypotheses(hypothesis_frame(rows, {"rolle": pl.String()}))
+
+
+def test_the_caller_names_the_unique_key() -> None:
+    """22 trägt je Hypothese mehrere Zeilen (Haupttest, Robustheit, explorativ)."""
+    rows = _rows()
+    rows[2]["hypothese"] = "H1"
+    frame = hypothesis_frame(rows, {"rolle": pl.String()})
+    check_hypotheses(frame, key=("hypothese", "rolle"))
+    with pytest.raises(SchemaError, match="doppelt"):
+        check_hypotheses(frame)  # Vorgabe: die Kennung allein
+    with pytest.raises(SchemaError, match="Schlüssel"):
+        check_hypotheses(frame, key=("hypothese", "gibtsnicht"))
+
+
+def test_the_threshold_is_inclusive_unless_strict() -> None:
+    """17 hat ``p_Holm <= 0,05`` festgelegt, 22 ``p_Holm < 0,05``: beides muss gehen."""
+    assert holm({"a": 0.05})["a"].rejected
+    assert not holm({"a": 0.05}, strict=True)["a"].rejected
+    assert family({"a": 0.05}, strict=True)["a"][1] == NOT_CONFIRMED
+    rows = [
+        {
+            "hypothese": "a",
+            "p": 0.05,
+            "p_holm": 0.05,
+            "ergebnis": CONFIRMED,
+            "n": 1,
+            "festgelegt": "x",
+        }
+    ]
+    check_hypotheses(hypothesis_frame(rows))
+    with pytest.raises(SchemaError, match="bestätigt"):
+        check_hypotheses(hypothesis_frame(rows), strict=True)
+
+
+def test_the_table_of_vorhaben_22_passes_the_core() -> None:
+    """Die Tabelle von ``feat/22-bedarf`` (``analysis/need.py``), wie sie heute gebaut wird.
+
+    32 Zeilen: drei Haupttests in der Familie, Robustheit ohne p, explorative Zeilen ohne
+    Festlegung und Paare ohne Kennung; eindeutig über Kennung, Rechnung und Spalten, Holm streng.
+    """
+    doc = json.loads(FIXTURE_22.read_text(encoding="utf-8"))
+    extra = {
+        "rechnung": pl.String(),
+        "explorativ": pl.Boolean(),
+        "bedarf": pl.String(),
+        "aufmerksamkeit": pl.String(),
+        "kontrolle": pl.String(),
+        "ohne": pl.List(pl.Int64()),
+        "alternative": pl.String(),
+    }
+    frame = hypothesis_frame(doc["zeilen"], extra)
+    assert frame.height == 32 and frame.filter(pl.col("p_holm").is_not_null()).height == 3
+    check_hypotheses(frame, alpha=doc["alpha"], key=tuple(doc["schluessel"]), strict=doc["streng"])
+    with pytest.raises(SchemaError, match="doppelt"):
+        check_hypotheses(frame, alpha=doc["alpha"], strict=True)
+
+
+def test_a_hypothesis_stands_once_in_the_family_and_n_is_never_negative() -> None:
+    rows = _rows()
+    rows[1]["hypothese"] = "H1"  # zweimal H1 mit p_holm, auch wenn der Schlüssel sie trennt
+    with pytest.raises(SchemaError, match="zweimal in der Familie"):
+        check_hypotheses(hypothesis_frame(rows, {"rolle": pl.String()}), key=("hypothese", "p"))
+    rows = _rows()
+    rows[2]["n"] = -1
+    with pytest.raises(SchemaError, match="negativ"):
         check_hypotheses(hypothesis_frame(rows, {"rolle": pl.String()}))
