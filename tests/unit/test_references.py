@@ -22,6 +22,7 @@ from georep.prep.references import (
     is_answer_attachment,
     is_collective,
     known_codes,
+    mask_person_names,
     parse_reference,
     role_of,
 )
@@ -293,3 +294,53 @@ def test_switching_on_needs_a_form() -> None:
     with pytest.raises(ValidationError, match="mindestens eine Form"):
         Procedures(enabled=True)
     assert Procedures(enabled=True, forms=[ReferenceForm.model_validate(_form())]).enabled
+
+
+# --- Review K1: Namen hinter einer Anrede oder einem Titel kommen nicht ins Paket ----------------
+
+
+@pytest.mark.parametrize(
+    ("name", "masked"),
+    [
+        ("Schreiben von Herrn Seeler vom 21.08.2018", "Schreiben von Herrn … vom 21.08.2018"),
+        (
+            "Beantwortung der Anfrage von Frau Seidel SCHUA-005-2019",
+            "Beantwortung der Anfrage von Frau … SCHUA-005-2019",
+        ),
+        ("an Herrn Oberbürgermeister Geisel", "an Herrn Oberbürgermeister …"),
+        ("Anschreiben an Oberbürgermeister Geisel", "Anschreiben an Oberbürgermeister …"),
+        ("Biografie Dr. Svenja Caspers", "Biografie Dr. …"),
+        ("Stellungnahme Prof. Dr. Joachim Windolf", "Stellungnahme Prof. Dr. …"),
+        ("5.19 - Antwort Missbrauch - Rh Dr. Wlecke", "5.19 - Antwort Missbrauch - Rh Dr. …"),
+        (
+            "Stellungnahme zur Anfrage Frau Lange 25.5.2023",
+            "Stellungnahme zur Anfrage Frau … 25.5.2023",
+        ),
+        # kein Name dahinter: bleibt, wie es ist
+        ("Beanstandung Oberbürgermeister", "Beanstandung Oberbürgermeister"),
+        (
+            "Warum gewährt der Oberbürgermeister keine Akteneinsicht",
+            "Warum gewährt der Oberbürgermeister keine Akteneinsicht",
+        ),
+        (
+            "Beanstandungsschreiben OB Graf-Engelbert-Straße 29-33",
+            "Beanstandungsschreiben OB Graf-Engelbert-Straße 29-33",
+        ),
+        ("Anlage 1 zu Dr. Nr. 172/ 100/2015", "Anlage 1 zu Dr. Nr. 172/ 100/2015"),
+        ("Dr.-Hans-Mosler-Weg", "Dr.-Hans-Mosler-Weg"),
+        ("Frauenhaus Antwort der Verwaltung", "Frauenhaus Antwort der Verwaltung"),
+    ],
+)
+def test_names_after_a_salutation_or_title_are_masked(
+    dus: ReferenceRules, name: str, masked: str
+) -> None:
+    assert mask_person_names(name, dus) == masked
+
+
+def test_masking_keeps_numbers_and_answer_markers(dus: ReferenceRules) -> None:
+    """Das Paket darf keine Kante und keine Antwort verlieren: Nummern und Antwortwörter bleiben."""
+    name = "Antwort der Verwaltung an Frau Seidel zu RAT/1/2021 und 61/ 12/2014"
+    masked = mask_person_names(name, dus)
+    assert masked == "Antwort der Verwaltung an Frau … zu RAT/1/2021 und 61/ 12/2014"
+    assert _keys(masked.lower(), dus) == _keys(name.lower(), dus)
+    assert is_answer_attachment(masked, dus)

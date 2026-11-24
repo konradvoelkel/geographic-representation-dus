@@ -65,6 +65,16 @@ TITLE, TEXT, ATTACHMENT, NUMBER = "titel", "text", "anlage", "nummer"
 ATTACHMENT_SEPARATOR = " | "  # zwischen den Namen der Anlagen einer Drucksache, wie im Messskript
 
 
+# Review K1: ein Name hinter einer Anrede oder einem Titel aus dem Profil (``person_titles``), auch
+# hinter mehreren („Herrn Oberbürgermeister …", „Prof. Dr. …"): ein oder zwei groß geschriebene
+# Wörter, mit Bindestrich, mit Initiale davor. Ein Wort mit Punkt dahinter ist eine Abkürzung
+# („Dr. Nr. 172/ 100/2015"), kein Name; ohne Leerraum hinter dem Titel ist es eine Straße
+# („Dr.-Hans-Mosler-Weg"). Zahlen gehören nie zu einem Namen, eine Drucksachennummer bleibt also.
+_NAME = r"(?:[A-ZÄÖÜ]\.\s?)?[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*(?![.\w-])"
+PERSON = r"(?<![\w-])((?:{titles})(?:\s+(?:{titles}))*\s+)" + f"({_NAME}(?:\\s+{_NAME})?)"
+MASK = "…"
+
+
 @dataclass(frozen=True)
 class CompiledForm:
     name: str
@@ -102,6 +112,7 @@ class ReferenceRules:
     amendment_window: int
     answer: re.Pattern[str] | None
     interim: re.Pattern[str] | None
+    person: re.Pattern[str] | None = None  # Review K1: Anrede oder Titel und der Name dahinter
 
     @classmethod
     def from_settings(cls, procedures: Procedures) -> ReferenceRules:
@@ -138,6 +149,11 @@ class ReferenceRules:
             amendment_window=procedures.amendment_window,
             answer=optional(procedures.answer_attachment),
             interim=optional(procedures.interim_attachment),
+            person=(
+                re.compile(PERSON.format(titles=procedures.person_titles))
+                if procedures.person_titles
+                else None
+            ),
         )
 
 
@@ -354,3 +370,20 @@ def edge_type(citing: str, cited: str, amendment: bool, collective: bool) -> str
     if citing == INFORMATION and cited == INFORMATION:
         return "fortsetzung"
     return "bezug"
+
+
+@deal.safe
+@deal.ensure(
+    lambda name, rules, result: rules.person is not None or result == name,
+    message="ohne Muster bleibt der Name, wie er ist",
+)
+def mask_person_names(name: str, rules: ReferenceRules) -> str:
+    """Den Namen hinter einer Anrede oder einem Titel durch „…" ersetzen (Review K1, 2026-11-24).
+
+    Für das Anlagenpaket: ein Anlagenname nennt manchmal, wer geschrieben hat („Schreiben von
+    Herrn … vom 21.08.2018"). Anrede und Titel bleiben, damit der Name der Anlage lesbar bleibt;
+    Nummern und Antwortwörter berührt die Ersetzung nicht.
+    """
+    if rules.person is None:
+        return name
+    return rules.person.sub(lambda m: f"{m.group(1)}{MASK}", name)

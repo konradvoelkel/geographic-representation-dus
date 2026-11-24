@@ -341,6 +341,7 @@ collective_titles = 'beschlusskontrolle|veränderungsverzeichnis|ergebnis der ha
 answer_attachment = ''         # Stadtprofil: Muster im Namen einer Anlage, die die Antwort auf eine Anfrage ist; leer = keine Antwortanlagen
 attachment_dates_invalid = []  # Stadtprofil: Anlagendaten, die kein Antwortdatum sind (der Umstellungstag eines Ratsinformationssystems)
 attachments = ''               # Paket mit den Anlagen je Drucksache (`georep pack --attachments`); bootstrap kopiert es nach raw/anlagen.parquet. Leer = keine Anlagen: dann gibt es weder Anlagenkanten noch Antwortanlagen
+person_titles = 'Herrn?|Frau|Ratsherrn?|Ratsfrau|(?:Ober|Bezirks)?[Bb]ürgermeister(?:in)?|Dr\.|Prof\.'  # Review K1 (2026-11-24): Anrede oder Titel vor einem Namen. `pack --attachments` ersetzt den Namen dahinter (ein, zwei groß geschriebene Wörter) durch „…“, damit das Paket keine Namen trägt, die der Name einer Anlage nennt („Schreiben von Herrn … vom …“). „OB“ steht nicht darin: in den Anlagennamen folgt ihm nie ein Name, sondern ein Gegenstand oder eine Anschrift („OB Graf-Engelbert-Straße 29-33“). Leer = nichts maskieren
 
 # Der Titel schlägt die Dokumentart, wo beide sich widersprechen („Antrag der Ratsfraktionen …" als
 # Anfrage eingestellt: 8 Dokumente, umgekehrt 19; Messdokument § 3.9). Gelesen am Anfang des

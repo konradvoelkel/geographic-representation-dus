@@ -1966,9 +1966,15 @@ class Procedures(_Strict):
     attachment_dates_invalid: list[date] = []
     attachments: Path | None = None
     related: list[RelatedPeriod] = []
+    # Review K1: Anrede oder Titel vor einem Namen; ``pack --attachments`` ersetzt den Namen dahinter
+    person_titles: str = ""
 
     @field_validator(
-        "collective_titles", "amendment_markers", "answer_attachment", "interim_attachment"
+        "collective_titles",
+        "amendment_markers",
+        "answer_attachment",
+        "interim_attachment",
+        "person_titles",
     )
     @classmethod
     def _compiles(cls, value: str) -> str:

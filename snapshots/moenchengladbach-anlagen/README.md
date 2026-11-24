@@ -21,9 +21,9 @@ Seiten von `…/bodies/0011/papers`). `profiles/moenchengladbach.toml` nennt die
 
 | Datei | Bytes | SHA-256 |
 |---|---|---|
-| `raw/anlagen.parquet` | 63 909 | `ec4e8b2aa44e7c24641b9802506abbb67346b49204128bc5e43cb0fea29a2b5e` |
+| `raw/anlagen.parquet` | 63 910 | `5177d618d7f69c9d5bbfbacd83ab818ad904c91e5a6809fe3105c2480cae1be4` |
 
-Zusammen 63 909 Bytes. `tests/unit/test_data_packages.py` hält diese Tabelle gegen die Datei im
+Zusammen 63 910 Bytes. `tests/unit/test_data_packages.py` hält diese Tabelle gegen die Datei im
 Repo. Spalten wie im Düsseldorfer Paket (`snapshots/duesseldorf-anlagen/README.md`): `id`,
 `abgerufen`, `anlagen` (Name und Datum je Anlage, in der Folge des Servers).
 
@@ -35,6 +35,7 @@ Repo. Spalten wie im Düsseldorfer Paket (`snapshots/duesseldorf-anlagen/README.
 | davon mit Anlage | 1 929 |
 | Anlagen | 4 710, mit 3 595 verschiedenen Namen |
 | nicht im Cache | 0 |
+| Anlagennamen mit maskiertem Personennamen | 1 |
 | Abrufdatum | 2026-10-13 |
 
 Gegengerechnet am 2026-11-23 mit dem Auszug des Messskripts aus demselben Cache: keine Abweichung.
@@ -50,5 +51,8 @@ Gegengerechnet am 2026-11-23 mit dem Auszug des Messskripts aus demselben Cache:
 | Lizenz | auf den Seiten des Anbieters nicht angegeben (wie bei den übrigen Ratsdokumenten) |
 
 Das Paket trägt keine Dateien und keine Texte, nur die Namen der Anlagen, wie das
-Ratsinformationssystem sie öffentlich zeigt; ein Name nennt eine Person, ein Mitglied eines
-Gremiums, deren Anfrage in einer Sitzung beantwortet wurde.
+Ratsinformationssystem sie öffentlich zeigt -- bis auf Personennamen hinter einer Anrede oder
+einem Titel, die `pack --attachments` durch „…" ersetzt (Review 2026-11-24, wie im Düsseldorfer
+Paket): hier eine Anlage („Stellungnahme zur Anfrage Frau … 25.5.2023"). Was das Paket noch an
+Personenbezug trägt, steht im README des Düsseldorfer Pakets; zwei Anlagen hat die Verwaltung
+selbst geschwärzt („Antrag Petent, geschwärzt", „Ankreuzformular der Petentin …, anonymisiert").

@@ -3059,12 +3059,15 @@ die Zahlen bleiben dieselben. Ein Kreis wäre trotzdem ein `CycleError`, kein st
 als Anlage an der Anfrage selbst („Antwort der Verwaltung"), selten als eigene Drucksache (24 von
 3 237 nach der Rückfallregel). Die Anlagen stehen weder im Korpus noch in einem Paket, nur in den
 OParl-Objekten des HTTP-Caches; `georep pack --attachments` zieht sie in ein Paket je Stadt
-(`snapshots/duesseldorf-anlagen/`, alle drei Perioden, 303 455 Bytes; `snapshots/moenchengladbach-anlagen/`,
-63 909 Bytes), `bootstrap` kopiert es nach `raw/anlagen.parquet`. Eine Zeile je Drucksache mit dem
+(`snapshots/duesseldorf-anlagen/`, alle drei Perioden, 303 400 Bytes; `snapshots/moenchengladbach-anlagen/`,
+63 910 Bytes), `bootstrap` kopiert es nach `raw/anlagen.parquet`. Eine Zeile je Drucksache mit dem
 Abruftag und der Liste der Anlagen (Name, Datum): so ist eine Drucksache ohne Anlage (leere Liste)
 von einer unbekannten (keine Zeile) zu trennen, und das Alter beim Abruf ist rechenbar. Ein
 Anlagendatum vom Umstellungstag des Ratsinformationssystems (2019-07-03, 26 542 Anlagen) zählt als
-Antwort ohne Datum. `praxis_gremium` steht an jeder Anfrage, weil „keine Antwort im Datensatz"
+Antwort ohne Datum. Personennamen hinter einer Anrede oder einem Titel ersetzt `pack` durch „…"
+(Review 2026-11-24, Entscheidung des Supervisors; `procedures.person_titles`): 15 Anlagennamen in
+Düsseldorf, einer in Mönchengladbach, keine Nummer und keine Antwort ändert sich dadurch, und was
+das Paket noch an Personenbezug trägt, steht in seinem README. `praxis_gremium` steht an jeder Anfrage, weil „keine Antwort im Datensatz"
 Praxis des Gremiums ist und nicht „unbeantwortet" heißt (§ 3.8: der Rat antwortet in der Sitzung,
 0,2 % mit Anlage, BV 7 zu 93 %); eine rohe Antwortquote je Fraktion rechnet der Schritt nicht.
 

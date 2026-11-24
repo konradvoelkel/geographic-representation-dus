@@ -34,7 +34,8 @@ from georep.pack import (
     package_files,
     paper_file_names,
 )
-from georep.settings import Settings
+from georep.prep.references import ReferenceRules
+from georep.settings import Settings, load_settings
 from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextMeta, TextStore
 
 
@@ -536,6 +537,7 @@ def test_pack_raw_texts_names_an_old_schema_version(
 # --- Vorhaben 14: das Anlagenpaket aus dem HTTP-Cache -------------------------------------------
 
 ENDPOINT = "https://ris.test/Oparl/bodies/0015/papers"
+MASK = ReferenceRules.from_settings(load_settings(cwd=Path("/nonexistent")).procedures)
 
 
 def _file(name: str, day: str | None, created: str | None = None) -> dict[str, object]:
@@ -597,7 +599,7 @@ def test_attachment_rows_keep_the_newest_object_in_the_server_order(tmp_path: Pa
         "p1",
         "2026-03-02T10:00:00+01:00",
         _file("Antwort der Verwaltung", None, "2026-02-01T09:00:00+01:00"),
-        _file("Fotos", "2026-02-02"),
+        _file("Schreiben von Herrn Seeler", "2026-02-02"),  # Review K1: der Name bleibt draußen
     )
     pages = [
         (
@@ -610,7 +612,7 @@ def test_attachment_rows_keep_the_newest_object_in_the_server_order(tmp_path: Pa
         ),
         (SECOND.date(), json.dumps({"data": [old]}).encode()),  # älter: bleibt draußen
     ]
-    rows = attachment_rows(pages, {"p1", "p2"})
+    rows = attachment_rows(pages, {"p1", "p2"}, MASK)
     assert rows.schema == pl.Schema(ATTACHMENT_SCHEMA)
     assert rows.rows() == [
         (
@@ -618,7 +620,7 @@ def test_attachment_rows_keep_the_newest_object_in_the_server_order(tmp_path: Pa
             SECOND.date(),
             [
                 {"name": "Antwort der Verwaltung", "datum": dt.date(2026, 2, 1)},
-                {"name": "Fotos", "datum": dt.date(2026, 2, 2)},
+                {"name": "Schreiben von Herrn …", "datum": dt.date(2026, 2, 2)},
             ],
         ),
         ("p2", FIRST.date(), []),
@@ -669,6 +671,7 @@ def test_pack_attachments_writes_one_row_per_paper_the_cache_knows(
         "mit Anlage": 1,
         "Anlagen": 1,
         "nicht im Cache": 1,
+        "Anlagennamen mit maskiertem Personennamen": 0,
     }
     assert report.readme_written and "pack --attachments" in (target / README_NAME).read_text(
         encoding="utf-8"

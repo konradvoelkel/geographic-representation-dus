@@ -199,7 +199,7 @@ Pakete tragen je nur eine Datei der Hauptperiode, die ihr Altformat nicht hat:
 Profil sie unter `[bodies]` oder `[bootstrap]` nennt, die beiden Textpakete nur, wenn ihre Namen zu
 den Dateien der Referenz passen. Zwei Anlagenpakete tragen je Stadt die Anlagen je Drucksache, die
 weder ein Korpus noch ein anderes Paket hat (Vorhaben 14): `snapshots/duesseldorf-anlagen/`
-(303 455 Bytes, alle drei Perioden) und `snapshots/moenchengladbach-anlagen/` (63 909 Bytes);
+(303 400 Bytes, alle drei Perioden) und `snapshots/moenchengladbach-anlagen/` (63 910 Bytes);
 alle Pakete zusammen 166,84 MiB am 2026-11-24. Die Schritte von Vorhaben 14 lesen außerdem die
 Pakete der Nachbarperioden (`raw/papers.jsonl` und Textstore, für die Hauptperiode
 `reference/raw/paper_objects.json`) nur lesend, ihr Hash steht im Stamp.

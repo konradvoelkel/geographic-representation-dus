@@ -61,15 +61,15 @@ PACKAGES = (
     # auf Stufe 19 (14 183 802 Bytes; mit der Vorgabe von Polars waren es 17 044 579)
     Package("snapshots/duesseldorf-rohtexte", limit=20 * MIB, native=False, readme=True),
     Package("context", limit=4 * MIB, native=False, readme=True),  # 2 242 316
-    # Vorhaben 14: die Anlagen je Drucksache aller drei Perioden, aus dem HTTP-Cache (303 455)
+    # Vorhaben 14: die Anlagen je Drucksache aller drei Perioden, aus dem HTTP-Cache, Personennamen maskiert (303 400)
     Package("snapshots/duesseldorf-anlagen", limit=1 * MIB, native=False, readme=True),
-    # Vorhaben 14: dasselbe für die zweite Stadt, neben reference/moenchengladbach/ (63 909)
+    # Vorhaben 14: dasselbe für die zweite Stadt, neben reference/moenchengladbach/ (63 910)
     Package("snapshots/moenchengladbach-anlagen", limit=1 * MIB, native=False, readme=True),
 )
 # Alle zusammen, als zweite grobe Schranke: 174 580 489 Bytes = 166,49 MiB am 2026-11-23 (92,5 %
 # der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, die drei Textstores sind seit
 # Punkt 67 zusammen 266 295 Bytes kleiner, das Textpaket der Hauptperiode kam mit Punkt 68 dazu und
-# das Rohtextpaket mit Fundament F1); mit den beiden Anlagenpaketen von Vorhaben 14 174 947 853
+# das Rohtextpaket mit Fundament F1); mit den beiden Anlagenpaketen von Vorhaben 14 174 947 799
 # Bytes = 166,84 MiB (92,7 %, 2026-11-24). Ein einziger PDF-Ordner einer Periode (585 MB bis
 # 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB

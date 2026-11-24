@@ -41,6 +41,7 @@ from georep.io import atomic_path, write_parquet, write_text
 from georep.layout import Layout
 from georep.prep.bodies import CONSULTATION
 from georep.prep.raw_texts import RAW_SUFFIX
+from georep.prep.references import MASK, ReferenceRules, mask_person_names
 from georep.settings import Settings
 from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextStore
 
@@ -606,12 +607,16 @@ def cached_pages(cache: Path, endpoint: str) -> list[tuple[dt.date, bytes]]:
     return pages
 
 
-def attachment_rows(pages: list[tuple[dt.date, bytes]], ids: set[str]) -> pl.DataFrame:
+def attachment_rows(
+    pages: list[tuple[dt.date, bytes]], ids: set[str], rules: ReferenceRules
+) -> pl.DataFrame:
     """Je Drucksache in ``ids`` ihre Anlagen (Name, Datum) aus dem jüngsten Stand im Cache.
 
     Eine Drucksache kann auf mehreren Seiten stehen (zwei Abrufe, ``modified_since``); es gilt
     das Objekt mit dem jüngsten ``modified``, bei Gleichstand das zuerst gespeicherte. Das Datum
     einer Anlage ist ihr ``date``, sonst der Tag von ``created``; die Folge ist die des Servers.
+    Ein Name hinter einer Anrede oder einem Titel wird zu „…" (Review K1,
+    ``prep.references.mask_person_names``): das Paket liegt im Repo.
     """
     from georep.analysis.procedures import ATTACHMENT_SCHEMA
     from georep.oparl import PaperPage
@@ -628,7 +633,7 @@ def attachment_rows(pages: list[tuple[dt.date, bytes]], ids: set[str]) -> pl.Dat
                 continue
             files: list[dict[str, object]] = [
                 {
-                    "name": f.name or "",
+                    "name": mask_person_names(f.name or "", rules),
                     "datum": f.date or (f.created.date() if f.created else None),
                 }
                 for f in paper.auxiliary_file
@@ -663,7 +668,15 @@ def pack_attachments(
     ids = set(pl.read_parquet(layout.corpus, columns=["id"]).get_column("id").to_list())
     for period in neighbours(settings):
         ids |= {record.id for record in read_papers(period.papers)}
-    frame = attachment_rows(cached_pages(layout.http_cache, settings.sources.oparl.endpoint), ids)
+    rules = ReferenceRules.from_settings(settings.procedures)
+    pages = cached_pages(layout.http_cache, settings.sources.oparl.endpoint)
+    frame = attachment_rows(pages, ids, rules)
+    masked = int(
+        frame.get_column("anlagen")
+        .list.eval(pl.element().struct.field("name").str.contains(MASK, literal=True))
+        .list.sum()
+        .sum()
+    )
     if not frame.height:
         raise PackError(
             f"{layout.http_cache}: keine der {len(ids)} Drucksachen steht auf einer Seite von "
@@ -697,6 +710,7 @@ def pack_attachments(
             ("mit Anlage", int((counts > 0).sum())),
             ("Anlagen", int(counts.sum())),
             ("nicht im Cache", len(ids) - frame.height),
+            ("Anlagennamen mit maskiertem Personennamen", masked),
         ),
         readme_written=not (target / README_NAME).exists(),
     )
