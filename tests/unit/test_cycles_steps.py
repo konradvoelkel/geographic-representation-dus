@@ -9,6 +9,7 @@ Die Zahlen der Messung prüft ``tests/golden/test_cycles_numbers.py`` an den ech
 
 from __future__ import annotations
 
+import re
 import shutil
 from datetime import date
 from pathlib import Path
@@ -307,3 +308,68 @@ def test_the_feeds_of_the_mini_fixture(
     again = run_step(step, settings, force=True)
     assert "0 geändert" in again.reason
     assert {p.name: p.read_bytes() for p in sorted(feed_dir(layout).glob("*.xml"))} == before
+
+
+# --- Feeds an einem kleinen Korpus (Review N1 bis N4, 2026-11-24) ---------------------------------
+
+
+def _feed_run(
+    tmp_path: Path,
+    default_settings: Settings,
+    dictionary: dict[int, list[str]],
+    index: dict[str, list[str]],
+    hidden: list[str],
+) -> tuple[Settings, Layout]:
+    """Korpus, Wörterbuch und Index von Hand; ``hidden`` ist ``search.hide_in_display``."""
+    layout = Layout(tmp_path / "data", tmp_path / "cache", NOWHERE, default_settings.profile)
+    layout.interim.mkdir(parents=True)
+    layout.processed.mkdir(parents=True)
+    ids = sorted({p for papers in index.values() for p in papers})
+    pl.DataFrame(
+        {
+            "id": [f"https://ris.example/papers/{p}" for p in ids],
+            "name": [f"Titel {p}" for p in ids],
+            "reference": [f"A/{p}/2025" for p in ids],
+            "date": [date(2025, 10, int(p)) for p in ids],
+            "download_url": [f"https://ris.example/files/{p}.pdf" for p in ids],
+        }
+    ).write_parquet(layout.corpus)
+    pl.DataFrame(
+        {"wahlkreis_id": list(dictionary), "suchbegriffe": list(dictionary.values())},
+        schema={"wahlkreis_id": pl.Int64, "suchbegriffe": pl.List(pl.String)},
+    ).write_parquet(layout.dictionary)
+    pl.DataFrame(
+        {
+            "suchbegriffe": list(index),
+            "paper_ids": [[f"https://ris.example/papers/{p}" for p in v] for v in index.values()],
+            "anzahl_treffer": [len(v) for v in index.values()],
+        }
+    ).write_parquet(layout.index)
+    feeds = default_settings.feeds.model_copy(update={"enabled": True})
+    off = default_settings.cycles.model_copy(update={"enabled": False})
+    search = default_settings.search.model_copy(update={"hide_in_display": hidden})
+    settings = default_settings.model_copy(update={"feeds": feeds, "cycles": off, "search": search})
+    return settings, layout
+
+
+def _entries(layout: Layout, district: int) -> list[str]:
+    text = (feed_dir(layout) / f"wahlbezirk-{district:02d}.xml").read_text(encoding="utf-8")
+    return re.findall(r"<id>https://ris\.example/papers/(\d+)</id>", text)
+
+
+def test_a_feed_shows_only_documents_the_page_shows(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    """Review N1: ein Begriff aus ``hide_in_display`` zählt auf der Seite, zeigt aber kein Dokument
+    (``report.documents``); der Feed eines Wahlbezirks nennt darum nur Dokumente sichtbarer Begriffe."""
+    settings, layout = _feed_run(
+        tmp_path,
+        default_settings,
+        {1: ["rathausplatz", "schulweg"], 2: ["schulweg", "parkallee"]},
+        {"rathausplatz": ["1"], "schulweg": ["2", "3"], "parkallee": ["4"]},
+        hidden=["schulweg"],
+    )
+    (step,) = time_steps(settings, layout, HTTP)
+    assert run_step(step, settings).status == "ausgeführt"
+    assert _entries(layout, 1) == ["1"]
+    assert _entries(layout, 2) == ["4"]

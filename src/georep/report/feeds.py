@@ -1,7 +1,8 @@
 """Atom-Feeds je Wahlbezirk (Vorhaben 17): der Text eines Feeds und seine Prüfung, rein und ohne Dateien.
 
 Ein Feed nennt die neuesten Dokumente, in denen ein Name aus dem Wörterbuch eines Wahlbezirks
-vorkommt (dieselbe Zuordnung wie die Zahl auf der Seite), und je Dokument nur, was
+vorkommt (dieselbe Zuordnung wie die Dokumente der Seite: ohne die Begriffe aus
+``search.hide_in_display``, die zählen, aber kein Dokument zeigen), und je Dokument nur, was
 ``site/data/dokumente.json`` schon veröffentlicht: Kennung, Drucksache und Titel, Datum, Link aufs
 PDF. Keine Texte, keine Kategorien, keine Personen (Messdokument 17, § 3.6; Fragen 27 und 28 mit
 ihrer Annahme: keine Straßennamen als ``category``, kein ``rel="self"``).

@@ -73,7 +73,7 @@ from georep.report.feeds import (
     newest_entries,
     render_feed,
 )
-from georep.search.index import PAPER_IDS
+from georep.search.index import PAPER_IDS, TERM
 from georep.settings import Settings
 from georep.spans import check_spans, sort_spans
 from georep.stores import PaperStore, RawTextStore
@@ -281,9 +281,12 @@ def time_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
             if row["date"] is not None
         }
         stand = max((d.day for d in documents.values()), default=None)
-        districts = hits_by_district(
-            pl.read_parquet(layout.dictionary), pl.read_parquet(layout.index)
-        ).sort(DISTRICT)
+        # Review N1: ein Begriff aus ``hide_in_display`` zählt auf der Seite, zeigt aber kein
+        # Dokument (``report.documents``); der Feed nennt nur, was die Seite zeigt
+        visible = pl.read_parquet(layout.index).filter(
+            ~pl.col(TERM).is_in(list(settings.search.hide_in_display))
+        )
+        districts = hits_by_district(pl.read_parquet(layout.dictionary), visible).sort(DISTRICT)
         target = layout.guard_writable(feed_dir(layout))
         target.mkdir(parents=True, exist_ok=True)
         slug = f"{settings.city.slug}/{layout.root.name}"
