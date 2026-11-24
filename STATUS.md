@@ -5,7 +5,7 @@
 OParl-Sitzungen, Beratungen, Personen, hinter einem Schalter) F4 (`v0.19.0` und `v0.20.0`, Punkt 71: `georep validate`)
 F5 (`v0.21.0`, Punkt 72: lokale Modelle über ollama, hinter `--models`) F1 (`v0.22.0`, Punkt 73:
 Rohtext je PDF neben dem Textstore, Paket der Hauptperiode) und der Nachzug F7 (`v0.23.0`, Punkt 74) auf `main`;
-alle Fundamente stehen. Abgeschlossen sind die Messungen 11, 14, 15 und 22 (bauen), 12 (teils bauen,
+alle Fundamente stehen. Als erster Bau der Stufe 2 ist Vorhaben 15 auf `main` (`v0.24.0`, Punkt 75). Abgeschlossen sind die Messungen 11, 14, 15 und 22 (bauen), 12 (teils bauen,
 teils umbauen), 13 (verworfen); Stand je Vorhaben in `docs/plans/README.md`. Keine Zahl der Seite
 hat sich bewegt.
 

@@ -2,6 +2,17 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.24.0 (2026-11-24), Dokumentfunktion und Antragsteller
+
+- **Erster Beitrag eines Vorhabens** (Vorhaben 15, `docs/decisions.md`, Punkt 75): die Schritte
+  `functions` und `cosponsors` schreiben je Korpus-ID die Funktion eines Dokuments (Initiative,
+  Kontrolle, Vollzug, Symbol, …; Variante B, an zwei KI-Kodierern geprüft, κ 0,905) und seine
+  Antragsteller mit Fraktionen und Lager (`processed/dokumente_funktion.parquet`,
+  `processed/dokumente_antragsteller.parquet`). Die Ratsmehrheiten stehen je Wahlperiode des Rates
+  als belegter Block im Stadtprofil.
+- Noch zeigt die Seite nichts davon (Stufe 3 folgt); keine Zahl der Seite ändert sich. Die neuen
+  Einstellungen ändern den Fingerprint: der erste Lauf nach dem Update rechnet die Kette einmal neu.
+
 ## 0.23.0 (2026-11-24), Nachzug der Fundamente für die Vorhaben
 
 - **Frühe Beiträge** (`docs/decisions.md`, Punkt 74): `Contribution.early_steps` hängt Schritte eines

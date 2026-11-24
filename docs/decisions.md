@@ -2919,7 +2919,7 @@ immer baut (legte `http.sqlite` in jedem Lauf an, auch ohne Netz); eine Prüfung
 Vertrag von `flatten_with_offsets` (rund 55 Millionen Zeichen in der Hauptperiode, je Lauf; sie
 steht in den Tests).
 
-## NN. Funktion und Antragsteller je Dokument: Variante B, drei Quellen für die Antragsteller, Ratsmehrheiten stadtweit je Wahlperiode des Rates (Vorhaben 15, 2026-11-24)
+## 75. Funktion und Antragsteller je Dokument: Variante B, drei Quellen für die Antragsteller, Ratsmehrheiten stadtweit je Wahlperiode des Rates (Vorhaben 15, 2026-11-24)
 
 Vorhaben 15 der Vorverarbeitung (`docs/plans/15-funktion.md`, § 5 bis § 7 und § 10), Stufe 2. Die
 Messung hat das Regelwerk gegen zwei KI-Kodierer an 150 Dokumenten geprüft: κ = 0,905 für
