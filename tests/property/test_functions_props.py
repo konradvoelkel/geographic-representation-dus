@@ -18,7 +18,7 @@ from hypothesis import strategies as st
 
 from georep.analysis.cosponsors import CAMPS, CosponsorRules, camp, classify_cosponsors, cosponsors
 from georep.analysis.functions import FunctionRules, classify_function, is_consistent
-from georep.settings import load_settings
+from georep.settings import FUNCTION_INSTRUMENTS, load_settings
 
 NOWHERE = Path("/nonexistent")
 CITY = load_settings(cwd=NOWHERE)
@@ -193,3 +193,45 @@ def test_the_camp_is_one_of_seven_and_ignores_the_order(
     assert camp(other, majority) == found
     if majority is not None and len(set(fractions)) >= 2:
         assert found.startswith("gemeinsam") or found == "ueber_grenze"
+
+
+pairs = st.sampled_from(
+    [
+        f"{f}/{i}"
+        for f, instruments in FUNCTION_INSTRUMENTS.items()
+        if f != "rest"
+        for i in instruments
+    ]
+)
+
+
+@given(
+    st.dictionaries(
+        st.sampled_from(("antrag", "anfrage", "vorlage", "beratungs")), pairs, max_size=4
+    ),
+    st.dictionaries(st.sampled_from(("Antrag", "Vorlage", "Beratungsvorlage")), pairs, max_size=3),
+    st.sampled_from(("Antrag X", "Anfrage Y", "Vorlage Z", "Beratungsvorlage BV", "Vorlage")),
+    phrases,
+    st.sampled_from(ORIGINATORS),
+    st.sampled_from("AB"),
+)
+def test_any_table_of_types_and_prefixes_keeps_the_contract(
+    prefixes: dict[str, str],
+    types: dict[str, str],
+    paper_type: str,
+    name: str,
+    origin: str | None,
+    variant: str,
+) -> None:
+    """Review 2026-11-24, K1: jede Tabelle, die die Settings zulassen, gibt ein gültiges Ergebnis."""
+    functions = CITY.functions.model_copy(
+        update={
+            "type_prefixes": prefixes,
+            "types": types,
+            "collection_political": [],
+            "collection_admin": [],
+            "variant": variant,
+        }
+    )
+    found = classify_function(paper_type, name, "", origin, FunctionRules.from_settings(functions))
+    assert is_consistent(found)

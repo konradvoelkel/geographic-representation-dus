@@ -260,23 +260,33 @@ def _administration(text: str, title: str, rules: FunctionRules) -> DocumentFunc
     )
 
 
+def _refined(function: str, instrument: str, title: str, rules: FunctionRules) -> str:
+    """Das Instrument der Tabelle, vom Titel verfeinert; es bleibt eines seiner Funktion.
+
+    Vollzug nach ``enforcement`` (Satzung, Bauleitplanung …), Initiative nach den Antragsarten
+    (nicht die Eingabe), eine Anfrage wird zur Nachfrage. Review 2026-11-24, K1: das gilt für die
+    ganze Dokumentart und ihr Präfix gleich; vorher wurde über ein Präfix jede andere Funktion als
+    Initiative mit „Nachfrage" im Titel zur „nachfrage" und brach den Vertrag.
+    """
+    if function == "vollzug":
+        return _enforcement_instrument(title, instrument, rules)
+    if function == "initiative" and instrument != ELIGIBLE:
+        return _initiative_instrument(title, instrument, rules)
+    if function == "kontrolle" and instrument == "anfrage" and _hit(rules.followup_title, title):
+        return "nachfrage"
+    return instrument
+
+
 def _from_type(typ: str, title: str, rules: FunctionRules) -> DocumentFunction:
     """Dokumentart als ganzer Wert, dann über ihr Präfix; sonst die Restklasse „art_unbekannt"."""
     if typ in rules.types:
         function, instrument = rules.types[typ]
-        if function == "vollzug":
-            instrument = _enforcement_instrument(title, instrument, rules)
-        elif function == "initiative" and instrument != ELIGIBLE:
-            instrument = _initiative_instrument(title, instrument, rules)
-        return DocumentFunction(function, instrument, FROM_TYPE)
+        return DocumentFunction(function, _refined(function, instrument, title, rules), FROM_TYPE)
     low = typ.lower()
     for prefix, function, instrument in rules.prefixes:
         if low.startswith(prefix):
-            if function == "initiative":
-                instrument = _initiative_instrument(title, instrument, rules)
-            elif _hit(rules.followup_title, title):
-                instrument = "nachfrage"
-            return DocumentFunction(function, instrument, FROM_TYPE)
+            refined = _refined(function, instrument, title, rules)
+            return DocumentFunction(function, refined, FROM_TYPE)
     return DocumentFunction(REST, "art_unbekannt", NOWHERE)
 
 

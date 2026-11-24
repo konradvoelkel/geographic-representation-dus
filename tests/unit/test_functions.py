@@ -260,3 +260,17 @@ def test_consistency_names_the_three_conditions() -> None:
     assert not is_consistent(_f("vollzug", "anfrage", "art"))  # fremdes Instrument
     assert not is_consistent(_f("rest", "art_unbekannt", "art"))  # Rest mit Quelle
     assert not is_consistent(_f("kontrolle", "anfrage", ""))  # Funktion ohne Quelle
+
+
+# --- Review 2026-11-24, K1: ein Präfix darf auf jede Funktion zeigen -------------------------------
+def test_a_prefix_for_enforcement_gets_its_instrument_and_no_follow_up(city: Settings) -> None:
+    """Mit „Nachfrage" im Titel wurde ein Vollzug zur „nachfrage" und brach den Vertrag; ein Vollzug
+    über ein Präfix bekam kein Instrument aus ``enforcement``."""
+    functions = city.functions.model_copy(
+        update={"type_prefixes": {"beratungsvorlage": "vollzug/beschlussvorlage"}}
+    )
+    rules = FunctionRules.from_settings(functions)
+    satzung = classify_function("Beratungsvorlage BV", "Satzung über Gebühren", "", None, rules)
+    assert satzung == _f("vollzug", "satzung", "art")
+    follow_up = classify_function("Beratungsvorlage BV", "Nachfrage zur Kita", "", None, rules)
+    assert follow_up == _f("vollzug", "beschlussvorlage", "art")
