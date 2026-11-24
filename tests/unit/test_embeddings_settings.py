@@ -60,3 +60,21 @@ def test_both_cities_switch_the_steps_on() -> None:
     """Die Hauptperiode und ihre Perioden erben den Schalter; Mönchengladbach prüft die Neutralität."""
     for profile in ("duesseldorf", "duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
         assert load_settings(profile=profile, cwd=NOWHERE).embeddings.enabled, profile
+
+
+def test_what_only_the_search_command_reads_stays_out_of_the_fingerprint(
+    default_settings: Settings,
+) -> None:
+    """Review Runde 1, N4: BM25, ``rrf_k`` und ``fusion_depth`` liest nur ``georep search``.
+
+    Kein Schritt hängt an ihnen; im Fingerprint ließe jede Änderung die ganze Kette neu laufen.
+    """
+    base = default_settings.fingerprint()
+    cfg = default_settings.embeddings
+    for change in (
+        {"bm25": cfg.bm25.model_copy(update={"k1": 1.5, "b": 0.5})},
+        {"rrf_k": 10},
+        {"fusion_depth": 20},
+    ):
+        other = default_settings.model_copy(update={"embeddings": cfg.model_copy(update=change)})
+        assert other.fingerprint() == base, change

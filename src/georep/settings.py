@@ -2013,7 +2013,8 @@ class Embeddings(_Strict):
 
     ``chunk_chars``, ``title_chars`` und ``overlap_chars`` sind die Fassung ``18-stuecke-1``;
     ``document_chunks`` macht den Dokumentvektor (``18-dokvektor-1``), ``neighbors`` die Zahl der
-    ähnlichen Dokumente. ``rrf_k`` und ``fusion_depth`` sind die Mischung (``18-rrf-1``).
+    ähnlichen Dokumente. ``rrf_k`` und ``fusion_depth`` sind die Mischung (``18-rrf-1``); sie und
+    ``bm25`` liest nur ``georep search`` und stehen darum nicht im Fingerprint.
     ``neighbors_package`` ist ein Pfad (nicht im Fingerprint): das Paket mit der Nachbartabelle,
     das ``bootstrap`` nach ``raw/`` legt, für eine Kette ohne Dokumentvektoren.
     """
@@ -2293,8 +2294,9 @@ class Settings(BaseSettings):
                 # die offenen Eingaben eines Teillaufs stehen im Stamp des Modellschritts
                 # (``ModelUse``); hier ließen sie jeden Schritt neu laufen (Review 2026-11-23).
                 "ml": True,
-                # Vorhaben 18: der Pfad des Nachbarpakets; sein Inhalt steht im Stamp von neighbors
-                "embeddings": {"neighbors_package"},
+                # Vorhaben 18: der Pfad des Nachbarpakets (sein Inhalt steht im Stamp von
+                # neighbors) und was nur ``georep search`` liest, kein Schritt (Review, N4)
+                "embeddings": {"neighbors_package", "bm25", "rrf_k", "fusion_depth"},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

@@ -365,7 +365,7 @@ title_chars = 200              # OParl `name`, Leerraum zusammengezogen, höchst
 overlap_chars = 200            # das nächste Stück beginnt mit den letzten Zeilen des vorigen, zusammen höchstens so viele Zeichen
 document_chunks = 3            # Dokumentvektor = Mittel der ersten so vielen Stückvektoren, normiert (18-dokvektor-1)
 neighbors = 10                 # ähnliche Dokumente je Korpus-ID in processed/aehnliche_dokumente.parquet
-bm25 = { k1 = 1.2, b = 0.75 }  # Okapi BM25 der Wortsuche (18-bm25-1), wie Lucene
+bm25 = { k1 = 1.2, b = 0.75 }  # Okapi BM25 der Wortsuche (18-bm25-1), wie Lucene; dieser und die zwei folgenden Werte liest nur `georep search`, darum stehen sie nicht im Fingerprint
 rrf_k = 60                     # Mischung (`georep search --method hybrid`): Reciprocal Rank Fusion, s = Σ 1 / (rrf_k + Rang)
 fusion_depth = 100             # so viele Treffer jeder Liste gehen in die Mischung
 neighbors_package = ""         # Pfad des Pakets aus `georep pack --neighbors`; bootstrap legt es nach raw/, und neighbors nimmt es, wo es keine Dokumentvektoren gibt (GitHub Pages, CI). Stadtneutral leer = kein Paket
