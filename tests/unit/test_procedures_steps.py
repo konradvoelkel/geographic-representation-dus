@@ -27,7 +27,13 @@ from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
 from georep.prep.papers import CORPUS_SCHEMA_VERSION, build_corpus
 from georep.records import PaperRecord
-from georep.settings import RelatedPeriod, Settings, load_settings
+from georep.settings import (
+    RelatedPeriod,
+    Settings,
+    available_profiles,
+    load_settings,
+    profile_folder,
+)
 from georep.spans import SPAN_SCHEMA
 from georep.stores import PAGE_BREAK, PaperStore, RawTextStore, TextMeta, TextStore
 from tests.fakes import FakeSession
@@ -200,3 +206,34 @@ def test_the_city_profiles_switch_the_steps_on(tmp_path: Path, default_settings:
     assert names[names.index("references") :][:3] == ["references", "procedures", "report"]
     for profile in ("duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
         assert load_settings(profile=profile, cwd=Path("/nonexistent")).procedures.enabled
+
+
+def test_the_comparison_profile_does_not_read_its_own_period_as_a_neighbour(
+    tmp_path: Path,
+) -> None:
+    """Review K3: ``duesseldorf-vergleich`` rechnet im Ordner der Hauptperiode, heißt aber anders.
+
+    Der Abgleich über den Profilnamen hielt die Hauptperiode dort für einen Nachbarn und las ihr
+    Paket; über den Ordner ist sie das eigene Profil, in jedem Profil der Stadt.
+    """
+    layout = Layout(tmp_path, tmp_path, tmp_path)
+    for profile in ("duesseldorf", "duesseldorf-vergleich", "duesseldorf-2014", "duesseldorf-2025"):
+        settings = load_settings(profile=profile, cwd=Path("/nonexistent"))
+        own = [
+            p for p in settings.procedures.related if profile_folder(p.profile) == settings.profile
+        ]
+        assert len(own) == 1, profile
+        inputs = set(procedure_steps(settings, layout, OFFLINE)[1].inputs)
+        assert own[0].papers not in inputs and own[0].texts not in inputs, profile
+        assert len(inputs & {p.papers for p in settings.procedures.related}) == 2, profile
+
+
+def test_every_profile_builds_its_register_in_order(tmp_path: Path) -> None:
+    """Review B1: ``build_steps`` prüft die Folge (``check_step_order``, F7) in jedem Paketprofil;
+    die beiden Schritte lesen nichts, was erst ein späterer schreibt."""
+    for profile in available_profiles():
+        settings = load_settings(profile=profile, cwd=Path("/nonexistent"))
+        names = [s.name for s in build_steps(settings, Layout(tmp_path, tmp_path, tmp_path))]
+        if settings.procedures.enabled:
+            assert names.index("bodies") < names.index("references") < names.index("procedures")
+            assert names.index("procedures") < names.index("report"), profile

@@ -56,6 +56,7 @@ from georep.prep.bodies import BODY
 from georep.prep.raw_texts import flatten_with_offsets
 from georep.prep.references import ReferenceRules
 from georep.records import PaperRecord
+from georep.settings import profile_folder
 from georep.spans import check_spans
 from georep.stores import PaperStore, RawTextStore
 
@@ -93,8 +94,12 @@ def procedure_files(layout: Layout) -> ProcedureFiles:
 
 
 def neighbours(settings: Settings) -> list[RelatedPeriod]:
-    """Die Nachbarperioden ohne das eigene Profil (das liest seinen Korpus)."""
-    return [p for p in settings.procedures.related if p.profile != settings.default_profile]
+    """Die Nachbarperioden ohne die eigene (die liest ihren Korpus).
+
+    Verglichen wird der Ordner, nicht der Name (Review K3): ``duesseldorf-vergleich`` rechnet im
+    Ordner der Hauptperiode und las sie sonst als Nachbarn.
+    """
+    return [p for p in settings.procedures.related if profile_folder(p.profile) != settings.profile]
 
 
 def related_inputs(settings: Settings, *, texts: bool) -> tuple[Path, ...]:

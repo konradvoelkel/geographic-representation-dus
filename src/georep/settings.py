@@ -2398,3 +2398,13 @@ def _selected_profile(base: dict[str, Any], files: list[tuple[Path, dict[str, An
         if "default_profile" in layer:
             name = str(layer["default_profile"])
     return name
+
+
+def profile_folder(name: str, folder: Traversable | None = None) -> str:
+    """Der Ordner eines Paketprofils unter ``data_root``: sein ``profile``, wie es die Kette setzt.
+
+    Vorhaben 14, Review K3: ``duesseldorf-vergleich`` heißt anders als die Hauptperiode, rechnet
+    aber in ihrem Ordner. Wer wissen will, ob ein anderes Profil dieselben Daten meint, vergleicht
+    den Ordner, nicht den Namen. Gelesen werden nur die Profile im Paket, keine lokalen Dateien.
+    """
+    return str(_profile_layer(name, folder).get("profile", ""))
