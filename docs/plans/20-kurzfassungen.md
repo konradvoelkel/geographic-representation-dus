@@ -695,4 +695,38 @@ Keine: Vorhaben 20 ist kein Analysevorhaben. Was vorab festgelegt war, ist das K
 
 ## 10. Änderungen durch die Synergie
 
-(füllt der Supervisor)
+Geschrieben vom Supervisor am 2026-11-24 nach dem Urteil (§ 5.3), vor dem Start der Stufe 2; geht § 6
+vor. Die Synergie ([00-synergien-2026-11.md](00-synergien-2026-11.md), § 4 „18 bis 20") sagt für 20
+nur: Abschnitte über `read_span` aus 11.
+
+1. **Name.** `Contribution.name` ist `20-kurzfassungen` (Synergie § 2.1); Modul und Schritt bleiben
+   `enrich/summaries.py` und `summaries`. Der Schritt steht in `CONTRIBUTIONS` (nicht `early_steps`);
+   `check_step_order` (Punkt 74) prüft, dass `raw_texts` und die Abschnitte aus 11 vor ihm stehen.
+2. **Abhängigkeit von 11.** 11 baut parallel (`feat/11-struktur`: `processed/dokumente_abschnitte.parquet`,
+   `section_of`, `read_span` in `georep.spans`, `split_lines`) und wird als Nächstes gemerged. Bis
+   dahin baut 20 alles, was nicht daran hängt (`fidelity.py` mit den drei Korrekturen aus Frage 20.12,
+   Settings, CLI, Verträge, Tests mit einer Abschnitts-Fixture), und verdrahtet `summary_input` nach
+   dem Merge von 11; der Supervisor meldet ihn. Keine eigene Säuberung und kein Nachbau von `read_span`.
+3. **Rolle in der Eingabe (Eingabe Fassung 2).** Absender aus Dokumentart und Urheber (Option 4) und
+   den Antragstellern aus 15 (`functions_files(layout)`, gemerged in `v0.24.0`, Punkt 75);
+   beschließendes Gremium aus der Beratungsfolge, die es auf `main` schon gibt (`raw/beratungsfolge.parquet`,
+   Punkt 58). Die Rollen und Kanten aus 14 (gemerged in `v0.25.0`, Punkt 76) dürfen dazukommen, wo sie
+   die Dokumentart schärfen. Nicht auf 26 warten (`beratungsverlauf.parquet` baut parallel).
+4. **Nachmessung `unbelegt` (Frage 20.13, Frage 38).** Vor jedem Stapellauf: Kriterium **höchstens
+   2 von 50** (Maßstab plus 2, § 5.3) in einem eigenen Commit festlegen, bevor eine Kurzfassung der
+   neuen Stichprobe entsteht; 50 frische Dokumente nach derselben Schichtung, ohne die 400 der beiden
+   Runden; Eingabe und Prompt Fassung 2, `gemma4`. Kodierauftrag über `georep validate` (F4, Punkt 71)
+   nur für die Frage `unbelegt`; die Kodierer und den Schlichter startet der Supervisor. Hält gemma das
+   Kriterium nicht, misst der Bau-Agent `qwen3.6:27b` an denselben 50 (Annahme zu Frage 38); hält es
+   keines, kein Stapellauf, und der Supervisor entscheidet.
+5. **Befehle englisch** wie die übrigen (`run`, `pack`, `regress`, `validate`): `georep summary
+   <drucksache|id>` und eine Liste mit `--body <kürzel> --since <datum>`; die Ausgabe nur unter
+   `cache_root/<profil>/summaries/`.
+6. **GPU.** Jeder Modelllauf unter `flock /media/konrad/xtraspace/georep/gpu-queue/gpu.lock`, höchstens
+   30 Minuten je gesperrtem Block (Meta-Plan § 5); vorher und nachher im ollama-Log „offloaded n/n
+   layers" und das Tempo prüfen (Rückstand 11 (d) in `docs/todo.md`). Der Stapellauf der Hauptperiode
+   (5 bis 8 GPU-Stunden) läuft als Auftrag der Warteschlange in Blöcken, vorzugsweise nachts; Vorhaben 18
+   braucht die GPU in derselben Zeit nur für rund 17 Minuten.
+7. **Nie veröffentlicht** (Konrads Antwort 6): kein Pfad unter `data_root`, kein Paket, nichts unter
+   `site/`, kein Text in einer Datei im Repo, auch nicht in Tests (synthetische Texte). Vorbehalt 1
+   (Vollständigkeit, Codebuch Fassung 2) steht vor jeder Nutzung in 29, nicht vor dem Bau.
