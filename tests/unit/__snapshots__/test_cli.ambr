@@ -49,6 +49,8 @@
                -> wahlbezirke_kennzahlen.parquet
   body_hits    <- wahlbezirke_auswertung.parquet, papers_gremien.parquet, wahlbezirke_stadtbezirke.parquet
                -> wahlbezirke_gremien.parquet, gremien.parquet
+  sections     <- papers.parquet, rohtexte.parquet, beratungsfolge.parquet
+               -> dokumente_abschnitte.parquet, dokumente_kopf.parquet
   weights      <- combined_searchdict.parquet, inverted_index.parquet, papers.parquet, wahlbezirke_waehler.parquet, themen_anteile.parquet
                -> wahlbezirke_gewichtet.parquet, gewichte_begriffe.parquet
   controls     <- wahlbezirke_auswertung.parquet, wahlbezirke_kontext.parquet

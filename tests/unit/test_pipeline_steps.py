@@ -41,6 +41,7 @@ from georep.pipeline import (
 from georep.prep.bodies import BODIES_SCHEMA_VERSION
 from georep.prep.context import CONTEXT_SCHEMA_VERSION
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
+from georep.prep.structure import STRUCTURE_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION, stop_words_digest
 from georep.settings import Settings
@@ -80,6 +81,8 @@ VERSIONS = {
     # Vorhaben 14: zwei Schritte eines Beitrags (F2), beide aus dem Modul, das die Dateien schreibt
     "references": PROCEDURES_SCHEMA_VERSION,
     "procedures": PROCEDURES_SCHEMA_VERSION,
+    # Vorhaben 11: ein früher Schritt (``georep.enrich.sections``), zwei Dateien
+    "sections": STRUCTURE_SCHEMA_VERSION,
 }
 
 
@@ -293,10 +296,15 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
         checked += 1
     # Heute 19 im Kern: texts, raw_texts, voters, context, streets, pois, dictionary, corpus,
     # bodies, topics, committees, index, timeline, results, metrics, body_hits, weights, controls,
-    # parties; dazu je ein Parquet-Schritt der Beiträge aus dem Register (Vorhaben 15: zwei).
+    # parties; dazu je ein Parquet-Schritt der Beiträge aus dem Register (Vorhaben 15: zwei,
+    # Vorhaben 11: einer, früh).
+    http = FakeSession({})
     contributed = [
         s
-        for s in georep.enrich.contributed_steps(default_settings, mini_run, FakeSession({}))
+        for s in (
+            *georep.enrich.contributed_early_steps(default_settings, mini_run, http),
+            *georep.enrich.contributed_steps(default_settings, mini_run, http),
+        )
         if s.outputs[0].suffix == ".parquet"
     ]
     assert checked == 19 + len(contributed), checked

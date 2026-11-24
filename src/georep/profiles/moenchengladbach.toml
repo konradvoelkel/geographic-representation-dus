@@ -446,6 +446,7 @@ paper_type = 'berichtsvorlage'
 [[procedures.kinds]]
 role = "vorlage"
 paper_type = 'änderungsvorlage|beratungsvorlage'
+
 # --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.6) ------------------------
 # Ein anderes Formular als Düsseldorf: mit dessen Mustern trifft die Regel hier nichts. Der Block
 # moenchengladbach des Entwurfs (19 Labels, zwei Muster), unverändert: `TOP:` oder
@@ -515,5 +516,6 @@ closing = '^\s*((Mit\s+)?[Ff]reundliche[n]?\s+Grü(ß|ss)e|[Gg]ez\.)'
 session = ''
 session_suffix = ''
 date_line = '^\s*{city},?\s*(den\s+)?(?P<datum>\d{1,2}\.\s?\d{1,2}\.\s?\d{2,4})'
+office = '(?P<nr>\d{2}(?:/\d{1,3})?)\s*-?\s*(?P<name>.*)$'  # wie im Entwurf (dort im Code); „FB 50 …" trifft es nicht, dann ist der ganze Wert der Name
 form_titles = []
 head_lines = 30

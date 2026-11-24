@@ -2056,6 +2056,7 @@ class StructureHead(_Strict):
     session: str = ""
     session_suffix: str = ""
     date_line: str = ""
+    office: str = ""
     form_titles: list[str] = []
     head_lines: int = Field(default=30, ge=0)
 
@@ -2078,6 +2079,13 @@ class StructureHead(_Strict):
     def _city_patterns_compile(cls, value: str) -> str:
         _compiles_one(value.replace(CITY_PLACEHOLDER, "Ort"), "structure.head")
         return value
+
+    @field_validator("office")
+    @classmethod
+    def _office_names_number_and_name(cls, value: str) -> str:
+        return _names_groups(
+            _compiles_one(value, "structure.head.office"), ("nr", "name"), "structure.head.office"
+        )
 
     @field_validator("date_line")
     @classmethod

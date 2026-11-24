@@ -354,6 +354,7 @@ to = "antrag"
 role = "antrag"
 title = 'anfrage'
 to = "anfrage"
+
 # --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.2, § 6 und § 10) --------
 # Abschnitte (Betreff, Beschlussvorschlag, Sachdarstellung, Rumpf …) als Spannen auf dem Rohtext
 # und je Korpus-ID der Kopf (Amt, Amtsbezeichnung, Beratungsfolge, Sitzung, Briefdatum). Die Muster
@@ -395,5 +396,6 @@ closing = ''                   # Grußformel oder „gez.": Beginn des Unterschr
 session = ''                   # „zur Sitzung der … am …" in Briefen, Gruppen gremium und datum; im Stadtprofil
 session_suffix = ''            # was hinter dem Gremium der Sitzung steht und nicht zu seinem Namen gehört (der Ort als {city}); im Stadtprofil
 date_line = ''                 # „<Ort>, <Datum>" im Briefkopf, Gruppe datum, der Ort als {city}; im Stadtprofil
+office = ''                    # Nummer und Name eines Amts im Feld „Fachbereich", Gruppen nr und name; ohne Muster ist der ganze Wert der Name
 form_titles = []               # Formulartitel im Kopf („Beschlussvorlage"), als ganze Zeile
 head_lines = 30                # so viele Zeilen gelten als Kopf für Sitzung, Datumszeile und Formulartitel

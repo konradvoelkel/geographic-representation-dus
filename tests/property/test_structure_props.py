@@ -6,13 +6,21 @@ Die Bausteine, die 11 für andere Vorhaben mitbringt (``docs/plans/11-struktur.m
 
 from __future__ import annotations
 
+import functools
+import importlib.util
 import re
+import sys
+from pathlib import Path
+from types import ModuleType
+from typing import Any
 
 import polars as pl
-from hypothesis import example, given
+from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
 from georep.prep.raw_texts import PAGE_BREAK, split_lines
+from georep.prep.structure import Found, Structure, StructureRules, analyse, analyse_draft
+from georep.settings import load_settings
 from georep.spans import SPAN_SCHEMA, read_span, section_of, sort_spans
 
 # Text aus Zeilen, Seitenwechseln und den Zeichen, an denen eine Zeilenregel stolpern könnte
@@ -129,3 +137,154 @@ def test_each_span_gets_the_level_one_section_it_starts_in(
     for row, found in zip(spans.iter_rows(named=True), result["section"], strict=True):
         expected = [n for d, s, e, n in level1 if d == row["id"] and s <= row["start"] < e]
         assert found == (expected[0] if expected else "")
+
+
+# --- Das Regelwerk: struktur-1 ist der Entwurf unverändert, und der Rumpf hält die Abschnitte -----
+
+# Zeilen eines Ratsdokuments aus dem Katalog (Messdokument § 3.1), dazu Leerzeilen und Seitenköpfe
+LINES = st.sampled_from(
+    [
+        "Betrifft: Radweg am Kanal",
+        "Fachbereich: 66 - Amt für Verkehrsmanagement",
+        "Amt / Institut: Bezirksverwaltungsstelle 8",
+        "Dezernentin / Dezernent: Beigeordneter Erika Beispiel",
+        "Beratungsfolge:",
+        "Gremium Sitzungsdatum Beratungsqualität",
+        "Rat 09.11.2023 Entscheidung",
+        "Bezirksvertretung 8 12.05.2022 Kenntnisnahme",
+        "Beschlussdarstellung:",
+        "Antrag:",
+        "Der Rat beschließt den Neubau.",
+        "Die Verwaltung wird beauftragt, zu prüfen.",
+        "wir bitten Sie, folgenden Antrag zu beschließen:",
+        "Die Verwaltung wird gebeten, folgende Fragen zu beantworten:",
+        "Sachdarstellung:",
+        "Begründung:",
+        "Beschluss:",
+        "Kosten: 5 EUR",
+        "Finanzierung:",
+        "Anlagen:",
+        "Sehr geehrte Damen und Herren,",
+        "Mit freundlichen Grüßen",
+        "Fraktionsvorsitzender",
+        "Text ohne Überschrift.",
+        "zur Sitzung des Rates am 03.02.2022",
+        "Beschlussvorlage",
+        "Seite 2",
+        "",
+        "  ",
+    ]
+)
+DOCUMENTS = st.tuples(
+    st.lists(LINES, max_size=24),
+    st.lists(st.sampled_from(["\n", PAGE_BREAK]), min_size=24, max_size=24),
+)
+PAPER_TYPES = st.sampled_from(["Beschlussvorlage", "Antrag SPD", "Anfrage", "Informationsvorlage"])
+
+
+def _join(lines: list[str], breaks: list[str]) -> str:
+    return "".join(line + brk for line, brk in zip(lines, breaks, strict=False))
+
+
+@functools.cache
+def _measurement() -> ModuleType:
+    spec = importlib.util.spec_from_file_location(
+        "struktur_messung",
+        Path(__file__).resolve().parents[2] / "docs/plans/11-struktur-messung.py",
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules.setdefault("struktur_messung", module)
+    spec.loader.exec_module(module)
+    return module
+
+
+@functools.cache
+def _rules() -> StructureRules:
+    return StructureRules.from_settings(load_settings(profile="duesseldorf", cwd=Path("/x")))
+
+
+@settings(deadline=None)
+@given(document=DOCUMENTS, paper_type=PAPER_TYPES)
+def test_struktur_1_is_the_draft_of_the_measurement(
+    document: tuple[list[str], list[str]], paper_type: str
+) -> None:
+    """Abschnitte, Kopffelder und Quellen wie ``analyse`` im Messskript, für jedes Dokument."""
+    text = _join(*document)
+    module = _measurement()
+    old = module.analyse("d", text, module.Rules.load("duesseldorf"), paper_type)
+    new = analyse_draft(text, _rules(), paper_type)
+
+    def plain(spans: list[Any]) -> list[tuple[Any, ...]]:
+        return [(s.start, s.end, s.kind, s.value, s.norm, s.section) for s in spans]
+
+    assert [tuple(s) for s in new.sections] == plain(old.sections)
+    assert [tuple(s) for s in new.head] == plain(old.head)
+    assert new.sources == old.sources
+
+
+@settings(deadline=None)
+@given(document=DOCUMENTS, paper_type=PAPER_TYPES)
+def test_the_level_one_sections_never_overlap_and_stay_in_the_text(
+    document: tuple[list[str], list[str]], paper_type: str
+) -> None:
+    text = _join(*document)
+    found = analyse(text, _rules(), paper_type)
+    level1 = [s for s in found.sections if s.norm == s.section]
+    for span in (*found.sections, *found.head):
+        assert 0 <= span.start < span.end <= len(text)
+    for before, after in zip(level1, level1[1:], strict=False):
+        assert before.end <= after.start
+    for span in found.sections:
+        if (
+            span.norm != span.section
+        ):  # Ebene 2: liegt in ihrem Abschnitt der Ebene 1 oder in keinem
+            around = [s for s in level1 if s.start <= span.start < s.end]
+            assert span.section == (around[0].norm if around else "")
+
+
+@settings(deadline=None)
+@given(document=DOCUMENTS, paper_type=PAPER_TYPES)
+def test_page_breaks_and_line_breaks_separate_alike(
+    document: tuple[list[str], list[str]], paper_type: str
+) -> None:
+    """Ob zwei Zeilen ein Zeilenumbruch oder ein Seitenwechsel trennt, ändert keinen Abschnitt."""
+    lines, breaks = document
+    with_pages = analyse(_join(lines, breaks), _rules(), paper_type)
+    flat = analyse(_join(lines, ["\n"] * len(breaks)), _rules(), paper_type)
+    assert with_pages.sections == flat.sections
+
+
+# Für die Ebene 2 nur Zeilen ohne Fenster: Einleitungssätze und Beschlusssätze lesen die Zeilen
+# davor oder die ersten Zeilen nach dem Kopf, und eine eingefügte Zeile verschöbe das Fenster.
+PLAIN_LINES = LINES.filter(
+    lambda line: (
+        not line.startswith(("wir bitten", "Die Verwaltung", "Der Rat", "Kosten", "Finanz"))
+    )
+)
+
+
+@settings(deadline=None)
+@given(lines=st.lists(PLAIN_LINES, max_size=24), at=st.integers(0, 24))
+def test_a_level_two_heading_splits_no_level_one_section(lines: list[str], at: int) -> None:
+    """Eine Überschrift der Ebene 2 („Finanzierung:") teilt keinen Abschnitt der Ebene 1
+    (Messdokument § 6, Tests): gegen dieselbe Zeile als Text („Finanzierung.", gleich lang) sind
+    die Abschnitte der Ebene 1 dieselben, Rumpf eingeschlossen."""
+    rules = _rules()
+    heading = analyse("\n".join([*lines[:at], "Finanzierung:", *lines[at:]]), rules, "Anfrage")
+    text = analyse("\n".join([*lines[:at], "Finanzierung.", *lines[at:]]), rules, "Anfrage")
+
+    def level1(found: Structure) -> list[Found]:
+        return [s for s in found.sections if s.norm == s.section]
+
+    assert level1(heading) == level1(text)
+    assert not any(s.norm == "finanzen" for s in text.sections)
+
+
+@settings(deadline=None)
+@given(document=DOCUMENTS, paper_type=PAPER_TYPES)
+def test_the_analysis_is_the_same_on_a_second_run(
+    document: tuple[list[str], list[str]], paper_type: str
+) -> None:
+    text = _join(*document)
+    assert analyse(text, _rules(), paper_type) == analyse(text, _rules(), paper_type)
