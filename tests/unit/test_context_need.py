@@ -318,3 +318,19 @@ def test_the_need_table_has_one_row_per_district_and_no_nan() -> None:
     # ohne Einwohner kein Verhältnis: null, nicht NaN und nicht unendlich
     assert second["unfaelle"] == 0.0 and second["unfaelle_je_1000"] is None
     assert second["dok_je_1000_ew"] is None
+
+
+def test_a_school_without_a_crs_is_read_in_the_declared_one(tmp_path: Path) -> None:
+    """Die Schuldaten NRW nennen bei zehn Schulen der Hauptstadt ``null`` statt eines CRS (2026-11-24).
+
+    Ihre Koordinaten liegen im selben Bereich wie die übrigen; ``null`` heißt „nicht angegeben", nicht
+    „anders". Ein anderes CRS bleibt ein Fehler (Test oben).
+    """
+    schools, index = write_school_files(
+        tmp_path, [("100020", "02", AGS, 344000, 5676000, "7"), ("100030", "20", AGS, 1, 2, "4")]
+    )
+    text = schools.read_text(encoding="utf-8")
+    schools.write_text(text.replace('"EPSG:25832";"1";"2"', '"null";"1";"2"'), encoding="utf-8")
+    assert '"null"' in schools.read_text(encoding="utf-8")
+    frame = read_schools(schools, index, AGS, crs="EPSG:25832")
+    assert frame.get_column("schulnummer").to_list() == ["100020", "100030"]

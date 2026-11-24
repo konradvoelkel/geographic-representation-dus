@@ -416,6 +416,7 @@ _SCHOOL_COLUMNS = (
     "UTMHochwert",
 )
 _INDEX_COLUMNS = ("Schulnummer", "Sozialindexstufe")
+UNSPECIFIED_CRS = "null"  # so stehen Schulen ohne CRS-Angabe in den Schuldaten
 
 
 @deal.pure
@@ -582,14 +583,18 @@ def read_schools(
 ) -> pl.DataFrame:
     """Die Schulen einer Gemeinde mit Koordinate und Sozialindexstufe, nach Schulnummer sortiert.
 
-    Die Schuldaten nennen das CRS je Zeile; weicht eine Schule der Gemeinde von ``crs`` ab, ist das
-    ein ``SchemaError`` und keine stille Umrechnung. Die Liste des Sozialindex ist in
+    Die Schuldaten nennen das CRS je Zeile; nennt eine Schule der Gemeinde ein anderes als ``crs``,
+    ist das ein ``SchemaError`` und keine stille Umrechnung. ``null`` oder leer heißt „nicht
+    angegeben" und gilt als ``crs``. Die Liste des Sozialindex ist in
     ``index_encoding`` gespeichert und nennt Schulen ohne Stufe „ohne"; die werden null.
     """
     frame = _csv_text(schools, "utf-8")
     _require(frame, _SCHOOL_COLUMNS, schools.name)
     own = frame.filter(pl.col("Gemeindeschluessel").str.strip_chars() == ags)
-    other = sorted(set(own.get_column("EPSG").str.strip_chars().to_list()) - {crs})
+    # ``null`` (und leer) heißt „nicht angegeben", nicht „anders": bei zehn Schulen der Hauptstadt
+    # (Seminare, neue Schulen) liegen die Koordinaten im selben Bereich wie die übrigen (2026-11-24).
+    named = {str(value) for value in own.get_column("EPSG").str.strip_chars().to_list() if value}
+    other = sorted(named - {crs, UNSPECIFIED_CRS})
     if other:
         raise SchemaError(f"{schools.name}: Schulen der Gemeinde {ags} in {other}, erwartet {crs}")
     stufen = _csv_text(index, index_encoding)
