@@ -791,3 +791,14 @@ valid_from = 2025-11-01
 agreement = "Gemeinsam für Düsseldorf: Verantwortung übernehmen, Fortschritt gestalten. Koalitionsvertrag zwischen CDU Düsseldorf und Bündnis 90/Die Grünen Düsseldorf"
 agreement_date = "2025-12"     # „Düsseldorf, Dezember 2025" (Datei vom 2025-11-30); zusammen 51 von 92 Sitzen
 evidence = ["RAT/073/2026", "RAT/120/2026"]  # 4 Dokumente mit „Ratsmehrheit aus CDU und Grünen" oder „schwarz-grüne Ratsmehrheit", dazu 56 der Dokumentarten „… CDU/Grüne"
+
+# --- Vorhaben 17: Zeit und Neuigkeiten (docs/plans/17-zeit.md) ---------------------------------
+# Die Wahltage der Kommunalwahlen in NRW (Landeswahlleiterin NRW: Kommunalwahlen am 25. Mai 2014,
+# 13. September 2020 und 14. September 2025). Sie trennen die drei Datensätze der Stadt
+# (duesseldorf-2014 beginnt am Wahltag 2014, die Hauptperiode am Wahltag 2020, duesseldorf-2025 am
+# Tag danach) und machen 2019/20 und 2024/25 zu Vorwahljahren (H17.1). Die Periodenprofile erben
+# den Block; die Tests über alle drei rechnet duesseldorf-vergleich.
+[cycles]
+enabled = true                 # Schritte cycles und vocabulary in jedem Profil der Stadt
+elections = [2014-05-25, 2020-09-13, 2025-09-14]
+instrument_types = { zanfrage = "anfrage", zantrag = "antrag" }  # S1.5: die Dokumentarten „zAnfrage …" und „zAntrag …" dieser Stadt (2014 bis 2020, vereinzelt danach), zu den Präfixen aus defaults.toml

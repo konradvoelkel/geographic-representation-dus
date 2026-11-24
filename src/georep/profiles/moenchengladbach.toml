@@ -425,3 +425,10 @@ valid_from = 2025-11-01
 key = "Die_Linke+PARTEI"
 parties = ["Die_Linke", "PARTEI"]
 valid_from = 2025-11-01
+
+# --- Vorhaben 17: Zeit und Neuigkeiten (docs/plans/17-zeit.md) ---------------------------------
+# Rhythmus und Vokabular dieses Datensatzes; keine Tests über Perioden (es gibt einen Datensatz)
+# und keine Feeds (keine laufende Periode).
+[cycles]
+enabled = true                 # Schritte cycles und vocabulary
+elections = [2014-05-25, 2020-09-13, 2025-09-14]  # Kommunalwahlen in NRW (Landeswahlleiterin NRW), dieselben Tage wie in jeder Gemeinde des Landes
