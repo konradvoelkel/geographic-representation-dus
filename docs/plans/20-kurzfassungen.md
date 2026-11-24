@@ -631,7 +631,10 @@ von Vorhaben 11, weil die Eingabe dessen Abschnitte liest.
   Supervisor entscheidet (Frage 38).
 - **Daneben berichtet, nicht Kriterium**: die deterministische Treueprüfung (`enrich.fidelity`) an
   den 50, die Zahl der Rollenfehler unter den Beanstandungen (aus den Begründungen, vom Bau-Agenten
-  gezählt), Länge in Sätzen und Wörtern.
+  gezählt), Länge in Sätzen und Wörtern, und **Personennamen gegen Regel 5** (`person_names`,
+  Spalte `personennamen`; Nachtrag vor jeder Kurzfassung nach dem Hinweis des Supervisors vom
+  2026-11-24, Frage 20.14). Ein abgeschriebener Name ist trotzdem belegt; er zählt darum weder für
+  `unbelegt` noch für das Kriterium.
 
 ## 6. Bauplan Stufe 2
 
@@ -752,6 +755,7 @@ Keine: Vorhaben 20 ist kein Analysevorhaben. Was vorab festgelegt war, ist das K
 | 20.11 | Regeln des Schlicht-Agenten für eine Fassung 2 des Codebuchs (2026-11-24, nicht angewendet): Gremium als Antragsteller einer Verwaltungsvorlage ist Treue 2; Indikativ ohne falschen Akteur ist Treue 4; ein falsch besetztes Element zählt in der Vollständigkeit als vorhanden (der Fehler zählt nur in der Treue); woraus das Wesentliche kommt; Beschlussbetrag gegen Nebenbeträge; Verkürzung mit falschem Eindruck; geläufige Kürzel; Sprachstufen; Personennamen als eigene Frage; Kopplung von `unbelegt` und Treue | Mit ihnen wäre Vollständigkeit vermutlich über α 0,8; ohne sie entscheidet sie das Kriterium nicht | in Fassung 2 des Codebuchs übernehmen, an frischen 50 messen (F4), bevor 29 Kurzfassungen nutzt |
 | 20.12 | Drei Mängel der Prüfung, gefunden in der Umbaurunde: ein „ca." vor „Monat Jahr" in der Eingabe löst den Ausschluss für „Tag. Monat Jahr" aus; von pypdf zusammengeklebtes „Monat2022" wird nicht erkannt; unregelmäßige Plurale (Votum, Voten) fallen durch die Endungsliste. Dazu die Frage, ob selbst gezählte oder gerechnete, richtige Zahlen unbelegt sind | Alle drei Mängel sind Fehlalarme; die Zahlen sind nach Regel 3 unbelegt, aber nicht falsch | die drei Mängel in `enrich/fidelity.py` beheben, je mit einem Test aus diesen Fällen; abgeleitete Zahlen bleiben unbelegt, und Regel 3 des Prompts bekommt in Fassung 2 „keine selbst gezählten oder gerechneten Zahlen" |
 | 20.13 | Eingabe Fassung 2 mit Rolle (Absender aus Dokumentart und Urheber, beschließendes Gremium aus der Beratungsfolge) und eine Nachmessung von `unbelegt` an frischen 50, bevor der Stapellauf startet; wenn gemma dort mehr als 2 von 50 hat, qwen? | Rollenfehler in einer von vier Kurzfassungen machen sie für den Vorlagenspiegel unbrauchbar | ja; das Kriterium der Nachmessung legt der Bau-Agent vorab fest, Vorschlag in § 5.3; **festgelegt in § 5.4** (Bau-Agent, 2026-11-24): höchstens 2 von 50, sonst qwen an denselben 50 (Frage 38) |
+| 20.14 | Der Rumpf aus 11 beginnt in 2014–2020 bei rund 4 095 Dokumenten (Hauptperiode 8, 2025 1) mit dem Namen aus der Kopfzeile des Dezernats, meist mit dem Amt davor („Beigeordnete …"; Review von 11, Hinweis des Supervisors 2026-11-24); 11 lässt das in `struktur-1` so. Hält Regel 5 (keine Personennamen) dagegen? | Ein abgeschriebener Name ist belegt; weder die Treueprüfung noch `unbelegt` sieht ihn | die Treueprüfung zählt Personennamen daneben (`person_names`, Spalte `personennamen`: ein Name hinter Anrede, Titel oder Amt aus `summaries.person_titles`, und ein mehrteiliger Name, der in der Eingabe dahinter steht); an den 800 Kurzfassungen der Messung hatten qwen 7 und 6, gemma 6 und 3 einen (Runde 1 und 2). Die Nachmessung (Hauptperiode, 8 betroffene Dokumente) prüft das kaum; vor einer Nutzung von 2014–2020 in 29 die Zahl je Periode aus dem Stapellauf lesen |
 
 ## 10. Änderungen durch die Synergie
 

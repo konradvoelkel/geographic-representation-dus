@@ -84,10 +84,11 @@ def _fidelity_line(row: dict[str, object]) -> str:
         return "Treue: nicht geprüft"
     parts = [f"{cls} {row[f'unbelegt_{cls}']}" for cls in CLASSES if row.get(f"unbelegt_{cls}")]
     found = f"{row['angaben']} Angaben"
+    names = f"; Personennamen {row['personennamen']} (Regel 5)" if row.get("personennamen") else ""
     if not parts:
         ok = "ohne unbelegte Angabe" if row.get("ok") else "nicht bestanden (abgeschnitten)"
-        return f"Treue: {found}, {ok}"
-    return f"Treue: {found}, unbelegt: {', '.join(parts)}"
+        return f"Treue: {found}, {ok}{names}"
+    return f"Treue: {found}, unbelegt: {', '.join(parts)}{names}"
 
 
 def _summary_text(row: dict[str, object]) -> str:

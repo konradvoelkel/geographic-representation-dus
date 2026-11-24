@@ -36,6 +36,14 @@ hielt das Muster für „Tag. Monat Jahr" und verwarf die Monatsangabe; ein von 
 „Monat2022" fehlte; unregelmäßige Plurale (Votum, Voten; Thema, Themen; Gremium, Gremien) fielen
 durch die Endungsliste.
 
+**Regel 5, daneben gezählt** (Hinweis des Supervisors nach dem Review von 11, 2026-11-24): in
+2014–2020 beginnt der Rumpf bei rund 4 095 Dokumenten mit dem Namen aus der Kopfzeile des
+Dezernats, meist mit dem Amt davor („Beigeordnete …"). Schreibt eine Kurzfassung ihn ab, ist er
+belegt und verletzt trotzdem Regel 5 (keine Personennamen). ``person_names`` zählt darum jeden
+Namen hinter einer Anrede, einem Titel oder einem Amt (``summaries.person_titles``) und jeden
+mehrteiligen Namen, der in der Eingabe hinter einem solchen Wort steht, auch ohne es; die Zahl
+steht neben ``ok`` (``personennamen``), nicht darin. Ein Nachname allein ohne Amt bleibt ungezählt.
+
 Was die Prüfung nicht sieht: Sachverhalte ohne Zahl und Namen, eine falsche Rolle, eine erfundene
 Wirkung, Namen, die zugleich Wörter des Korpus sind. Das misst die Bewertung (Frage ``unbelegt``
 des Codebuchs), nicht diese Funktionen.
@@ -159,6 +167,10 @@ ABSTRACT = re.compile(r"(ung|heit|keit|schaft|ität|ion|nis|tum|ismus)(en|e|s|es
 JOINTS = ("", "s", "es", "n", "en")  # Fugen einer Zusammensetzung (Klasse e, Fassung 2)
 TOKEN = r"[a-zäöüß][a-zäöüß0-9]*(?:-[a-zäöüß0-9]+)*"  # Wort des Korpus für die Verbreitung
 KNOWN_TOKEN = r"[a-zäöüß]{3,}"  # Wort des Korpus für Fassung 2 (Teile ab drei Zeichen)
+# Regel 5: ein Name ist ein großgeschriebenes Wort ab drei Buchstaben (nicht „Nr."), mit
+# Bindestrich und Initiale; der zweite Teil steht in derselben Zeile. Ohne Leerraum hinter dem
+# Titel ist es ein Straßenname („Dr.-Hans-…-Weg"), kein Personenname (Regel 5, Fassung 2).
+NAME = r"(?:[A-ZÄÖÜ]\.[ \t]?)?[A-ZÄÖÜ][a-zäöüß]{2,}(?:-[A-ZÄÖÜ][a-zäöüß]+)*(?![\w-])"
 
 
 @dataclass(frozen=True)
@@ -192,6 +204,8 @@ class Lexicon:
     known: frozenset[str] = frozenset()
     references: ReferenceRules | None = None
     codes: frozenset[str] = frozenset()
+    # Regel 5: Anrede, Titel oder Amt vor einem Personennamen; ohne Muster zählt nichts
+    person_titles: re.Pattern[str] | None = None
 
 
 @dataclass(frozen=True)
@@ -206,6 +220,7 @@ class Evidence:
     times: frozenset[tuple[int, int]]
     numbers: frozenset[str]
     references: frozenset[str]
+    persons: frozenset[str] = frozenset()  # Namen hinter Anrede, Titel oder Amt (Regel 5)
 
 
 def _year(text: str | None) -> int | None:
@@ -247,6 +262,18 @@ def normalize_text(text: str) -> str:
     # vor dem Kleinschreiben: „Verwal-\ntung" ist Silbentrennung, „Löbe-\nStraße" ein Bindestrich
     text = re.sub(r"(?<=[a-zäöüß])-\s*\n\s*(?=[a-zäöüß])", "", text)
     return re.sub(r"\s+", " ", text.lower())
+
+
+def _titled_names(text: str, titles: re.Pattern[str]) -> list[tuple[int, int, str]]:
+    """Namen hinter einer Kette aus Anrede, Titel und Amt: (Anfang, Ende, Name mit einem Leerzeichen)."""
+    pattern = re.compile(
+        rf"(?<![\w-])(?:{titles.pattern})(?:\s+(?:{titles.pattern}))*\s+"
+        rf"(?P<name>{NAME}(?:[ \t]+{NAME})?)"
+    )
+    return [
+        (m.start("name"), m.end("name"), " ".join(m.group("name").split()))
+        for m in pattern.finditer(text)
+    ]
 
 
 def _reference_keys(text: str, lexicon: Lexicon) -> list[tuple[int, int, str]]:
@@ -296,6 +323,8 @@ def evidence(text: str, lexicon: Lexicon) -> Evidence:
     numbers.update(str(int(run)) for run in re.findall(r"\d+", text))
     numbers.update(str(NUMBER_WORDS[word.lower()]) for word in NUMBER_WORD.findall(text))
     references = {key for _, _, key in _reference_keys(text, lexicon)}
+    titles = lexicon.person_titles
+    persons = {name for _, _, name in _titled_names(text, titles)} if titles else set()
     return Evidence(
         lower,
         re.sub(r"\s+", "", lower),
@@ -305,6 +334,7 @@ def evidence(text: str, lexicon: Lexicon) -> Evidence:
         frozenset(times),
         frozenset(numbers),
         frozenset(references),
+        frozenset(persons),
     )
 
 
@@ -504,6 +534,26 @@ def claims(summary: str, ev: Evidence, lexicon: Lexicon) -> list[Claim]:
     return out
 
 
+def person_names(summary: str, ev: Evidence, lexicon: Lexicon) -> list[str]:
+    """Regel 5: die Personennamen einer Kurzfassung, in ihrer Folge; belegt oder nicht.
+
+    Gezählt wird ein Name hinter Anrede, Titel oder Amt (``lexicon.person_titles``) und ein
+    mehrteiliger Name, der in der Eingabe hinter einem solchen Wort steht, auch wenn die
+    Kurzfassung das Wort weglässt („… legt vor" statt „die Beigeordnete … legt vor"). Ohne Muster
+    zählt nichts.
+    """
+    titles = lexicon.person_titles
+    if titles is None:
+        return []
+    found = _titled_names(summary, titles)
+    for name in sorted(n for n in ev.persons if " " in n):
+        words = r"[ \t]+".join(re.escape(part) for part in name.split())
+        for m in re.finditer(rf"(?<![\w-]){words}(?![\w-])", summary):
+            if not _overlaps(m.start(), m.end(), [(a, z) for a, z, _ in found]):
+                found.append((m.start(), m.end(), name))
+    return [name for _, _, name in sorted(found)]
+
+
 @dataclass(frozen=True)
 class Check:
     """Das Ergebnis einer Kurzfassung: ihre Angaben und ob sie leer oder abgeschnitten ist."""
@@ -511,6 +561,7 @@ class Check:
     claims: tuple[Claim, ...]
     truncated: bool
     empty: bool
+    persons: tuple[str, ...] = ()  # Regel 5, neben ``ok``
 
     @property
     def unsupported(self) -> tuple[Claim, ...]:
@@ -526,12 +577,14 @@ def check(summary: str | None, truncated: bool, ev: Evidence, lexicon: Lexicon) 
     """Die Prüfung einer Kurzfassung; ``None`` und Leerraum sind leer."""
     if summary is None or not summary.strip():
         return Check((), truncated, True)
-    return Check(tuple(claims(summary, ev, lexicon)), truncated, False)
+    found = tuple(claims(summary, ev, lexicon))
+    return Check(found, truncated, False, tuple(person_names(summary, ev, lexicon)))
 
 
 FIDELITY_COLUMNS: dict[str, pl.DataType] = {
     "angaben": pl.Int32(),
     **{f"unbelegt_{cls}": pl.Int32() for cls in CLASSES},
+    "personennamen": pl.Int32(),  # Regel 5, zählt nicht für ``ok``
     "ok": pl.Boolean(),
 }
 
@@ -547,6 +600,7 @@ def fidelity_row(outcome: Check) -> dict[str, int | bool]:
     row: dict[str, int | bool] = {"angaben": len(outcome.claims)}
     for cls in CLASSES:
         row[f"unbelegt_{cls}"] = sum(1 for c in outcome.unsupported if c.cls == cls)
+    row["personennamen"] = len(outcome.persons)
     row["ok"] = outcome.ok
     return row
 
@@ -575,6 +629,7 @@ def lexicon_from(
     known_documents: int,
     references: ReferenceRules | None = None,
     codes: frozenset[str] = frozenset(),
+    person_titles: str = "",
 ) -> Lexicon:
     """Das Lexikon eines Profils aus dem kleingeschriebenen Korpus und den Werten des Profils.
 
@@ -597,4 +652,5 @@ def lexicon_from(
         known=frozenset(known.get_column("wort").to_list()),
         references=references,
         codes=codes,
+        person_titles=re.compile(person_titles) if person_titles else None,
     )

@@ -2010,6 +2010,14 @@ class Summaries(_Strict):
     budget_chars: int = Field(default=8000, ge=1)
     rare_share: float = Field(default=0.01, gt=0.0, lt=1.0)
     known_documents: int = Field(default=3, ge=1)
+    # Regel 5 (Review von 11, 2026-11-24): Anrede, Titel oder Amt vor einem Personennamen; die
+    # Treueprüfung zählt Namen dahinter neben ``ok``. Leer: keine Zählung
+    person_titles: str = ""
+
+    @field_validator("person_titles")
+    @classmethod
+    def _compiles(cls, value: str) -> str:
+        return _compiles([value], "summaries.person_titles")[0]
 
 
 class Settings(BaseSettings):

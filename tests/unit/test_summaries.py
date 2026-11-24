@@ -7,6 +7,7 @@ mit ``read_span`` liest.
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from pathlib import Path
 
@@ -288,11 +289,18 @@ def test_the_settings_default_to_off_with_gemma(settings: Settings) -> None:
     block = settings.summaries
     assert (block.enabled, block.model, block.budget_chars) == (False, "gemma4", 8000)
     assert (block.rare_share, block.known_documents) == (0.01, 3)
+    assert re.fullmatch(block.person_titles, "Beigeordnete")  # Regel 5, Review von 11
 
 
 @pytest.mark.parametrize(
     "bad",
-    [{"budget_chars": 0}, {"rare_share": 0.0}, {"rare_share": 1.0}, {"known_documents": 0}],
+    [
+        {"budget_chars": 0},
+        {"rare_share": 0.0},
+        {"rare_share": 1.0},
+        {"known_documents": 0},
+        {"person_titles": "Herr("},
+    ],
 )
 def test_the_settings_refuse_impossible_values(bad: dict[str, object]) -> None:
     with pytest.raises(ValidationError):

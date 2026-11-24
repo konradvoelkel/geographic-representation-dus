@@ -10,6 +10,7 @@ aus Frage 20.12. Die Drucksachennummern liest die Prüfung mit den Formen des St
 
 from __future__ import annotations
 
+import re
 from dataclasses import replace
 from pathlib import Path
 
@@ -24,6 +25,7 @@ from georep.enrich.fidelity import (
     decomposable,
     evidence,
     fidelity_row,
+    person_names,
 )
 from georep.prep.references import ReferenceRules
 from georep.settings import load_settings
@@ -246,3 +248,50 @@ def test_a_hyphen_at_line_end_before_a_capital_stays(lex: Lexicon) -> None:
         ("ort", True),
         ("ort", True),
     ]
+
+
+# --- Regel 5: Personennamen (Hinweis des Supervisors nach dem Review von 11, 2026-11-24) ---------
+# In 2014-2020 beginnt der Rumpf bei rund 4 095 Dokumenten mit dem Namen aus der Kopfzeile des
+# Dezernats, meist mit dem Amt davor. Eine Kurzfassung, die ihn abschreibt, ist belegt und verletzt
+# trotzdem Regel 5; die Zählung steht darum neben ``ok``, nicht darin.
+
+TITLES = (
+    r"Herrn?|Frau|Ratsherrn?|Ratsfrau|(?:Ober|Bezirks)?[Bb]ürgermeister(?:in)?|Beigeordnete[rn]?"
+    r"|Stadtdirektor(?:in)?|Stadtkämmerer(?:in)?|Dezernent(?:in)?|Dr\.|Prof\."
+)
+RUMPF = "## Text\nBeigeordnete Hanna Kranich\nDie Verwaltung legt den Bericht zum Kanalufer vor."
+
+
+@pytest.fixture(scope="module")
+def named(lex: Lexicon) -> Lexicon:
+    return replace(lex, person_titles=re.compile(TITLES))
+
+
+@pytest.mark.parametrize(
+    ("summary", "found"),
+    [
+        ("Die Beigeordnete Hanna Kranich legt den Bericht vor.", ["Hanna Kranich"]),
+        ("Hanna Kranich legt den Bericht zum Kanalufer vor.", ["Hanna Kranich"]),  # ohne Amt
+        ("Der Bericht kommt von Stadtdirektor Elster.", ["Elster"]),  # Name am Satzende
+        ("Herr Oberbürgermeister Dr. Wiesel berichtet.", ["Wiesel"]),
+        ("Die Beigeordnete legt den Bericht zum Kanalufer vor.", []),  # nur die Rolle: richtig
+        ("Der Weg heißt Dr.-Hans-Kranich-Weg.", []),  # Straßenname, Regel 5 Fassung 2
+    ],
+)
+def test_person_names_in_a_summary_are_counted(
+    summary: str, found: list[str], named: Lexicon
+) -> None:
+    assert person_names(summary, evidence(RUMPF, named), named) == found
+
+
+def test_person_names_stay_outside_ok_but_reach_the_row(named: Lexicon) -> None:
+    ev = evidence(RUMPF, named)
+    result = check("Hanna Kranich legt den Bericht zum Kanalufer vor.", False, ev, named)
+    assert result.ok  # der Name steht in der Eingabe: belegt
+    assert result.persons == ("Hanna Kranich",)
+    assert fidelity_row(result)["personennamen"] == 1
+
+
+def test_without_titles_no_person_names_are_counted(lex: Lexicon) -> None:
+    assert lex.person_titles is None
+    assert person_names("Herr Müller berichtet.", evidence(TEXT, lex), lex) == []

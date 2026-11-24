@@ -77,6 +77,7 @@ def write_outputs(layout: Layout) -> None:
             "unbelegt_datum": [0, 0],
             "unbelegt_drucksache": [0, 0],
             "unbelegt_name": [0, 0],
+            "personennamen": [1, 0],
             "ok": [True, False],
         },
         schema={"id": pl.String, **FIDELITY_COLUMNS},
@@ -92,7 +93,7 @@ def test_one_document_by_reference(layout: Layout, capsys: pytest.CaptureFixture
         "Modell fake-chat:latest, Digest cccccccccccc, Prompt 20-kurzfassung-2"
     )
     assert out[2] == "Die Verwaltung schlägt neue Bänke vor."
-    assert out[3] == "Treue: 3 Angaben, ohne unbelegte Angabe"
+    assert out[3] == "Treue: 3 Angaben, ohne unbelegte Angabe; Personennamen 1 (Regel 5)"
 
 
 def test_one_document_by_id_with_flags(layout: Layout, capsys: pytest.CaptureFixture[str]) -> None:
