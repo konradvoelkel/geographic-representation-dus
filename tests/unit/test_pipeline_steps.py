@@ -35,7 +35,11 @@ from georep.pipeline import (
     stamp_mismatch,
 )
 from georep.prep.bodies import BODIES_SCHEMA_VERSION
-from georep.prep.context import CONTEXT_SCHEMA_VERSION
+from georep.prep.context import (
+    CONTEXT_SCHEMA_VERSION,
+    NEED_DATA_SCHEMA_VERSION,
+    NEED_SCHEMA_VERSION,
+)
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION, stop_words_digest
@@ -73,6 +77,9 @@ VERSIONS = {
     # Vorhaben 15: zwei Schritte eines Beitrags (``georep.enrich.functions``)
     "functions": FUNCTIONS_SCHEMA_VERSION,
     "cosponsors": COSPONSORS_SCHEMA_VERSION,
+    # Vorhaben 22: die Auszüge (Netz) und die Tabellen je Wahlbezirk (``georep.enrich.need``)
+    "need_data": NEED_DATA_SCHEMA_VERSION,
+    "need": NEED_SCHEMA_VERSION,
 }
 
 
@@ -81,7 +88,10 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
     layout = _layout(tmp_path)
     # Fundament F6: die drei Netzschritte stehen nur mit ``council.enabled`` im Register
     council = default_settings.council.model_copy(update={"enabled": True})
-    settings = default_settings.model_copy(update={"council": council})
+    # Vorhaben 22: die zwei Schritte stehen nur mit ``context.need.enabled`` im Register
+    need = default_settings.context.need.model_copy(update={"enabled": True})
+    context = default_settings.context.model_copy(update={"need": need})
+    settings = default_settings.model_copy(update={"council": council, "context": context})
     return {s.name: s.schema_version for s in build_steps(settings, layout)}
 
 

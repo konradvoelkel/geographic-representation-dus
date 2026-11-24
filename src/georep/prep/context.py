@@ -357,6 +357,11 @@ def district_variables(voters: pl.DataFrame, context: ContextSettings) -> pl.Dat
 # Schulen scharf (Band 0, Frage 22.4). Alles Frame zu Frame, sortiert, mit Verträgen hier an der
 # Batch-Grenze und nicht in den Schleifen.
 
+# Erhöhen, wenn sich Spalten, Typen oder die Zeilenfolge der Stadtauszüge unter external/bedarf/
+# (need_data) oder von wahlbezirke_bedarf.parquet und bedarf_hypothesen.parquet (need) ändern
+# (CLAUDE.md: die Schema-Version aus der Konstante des Moduls).
+NEED_SCHEMA_VERSION = 1  # Schritt need: wahlbezirke_bedarf und bedarf_hypothesen
+NEED_DATA_SCHEMA_VERSION = 1  # Schritt need_data: die Stadtauszüge unter external/bedarf/
 NEED_DIR = "bedarf"  # unter external/ im Lauf und im Paket
 ACCIDENTS_FILE = "unfaelle.parquet"
 GRID_FILE = "zensus2022.parquet"

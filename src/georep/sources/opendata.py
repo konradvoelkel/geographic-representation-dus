@@ -174,3 +174,28 @@ def _check_shapefile_zip(url: str, content: bytes) -> None:
             f"Stimmbezirke von {url}: kein Shapefile mit {list(SHAPEFILE_MEMBERS)} im Zip "
             f"({len(names)} Mitglieder)"
         )
+
+
+# --- Vorhaben 22: Archive der Bedarfsquellen ----------------------------------------------------
+
+
+@deal.raises(FetchError, NetworkError)
+def fetch_zip(http: Transport, url: str) -> bytes:
+    """Ein Zip-Archiv als Bytes, geprüft, dass es eines ist und eine Datei trägt.
+
+    Die Bedarfsquellen von Vorhaben 22 (Unfallatlas je Jahr, Zensus-Gitter) liefern Zips mit einer
+    CSV; was darin gelesen wird, entscheidet ``prep.context``. Eine Fehlerseite mit Status 200 oder
+    ein leeres Archiv ist ein ``FetchError`` mit der URL, bevor jemand es speichert.
+    """
+    with network_errors(url):
+        response = http.get(url)
+        response.raise_for_status()
+        content = response.content
+    try:
+        with zipfile.ZipFile(io.BytesIO(content)) as archive:
+            files = [info for info in archive.infolist() if not info.is_dir()]
+    except zipfile.BadZipFile as error:
+        raise FetchError(f"Archiv von {url}: kein Zip ({len(content)} Bytes, {error})") from error
+    if not files:
+        raise FetchError(f"Archiv von {url}: keine Datei im Zip")
+    return content

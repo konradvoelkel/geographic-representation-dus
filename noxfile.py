@@ -375,6 +375,16 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
         ("src/georep/analysis/need.py",),
         ("tests/unit/test_need_hypotheses.py", "tests/property/test_need_props.py"),
     ),
+    # Vorhaben 22: Leser, Aggregate und die zwei Schritte des Beitrags
+    "need_steps": (
+        ("src/georep/prep/context.py", "src/georep/enrich/need.py"),
+        (
+            "tests/unit/test_prep_context.py",
+            "tests/property/test_context_props.py",
+            "tests/unit/test_context_need.py",
+            "tests/unit/test_need_steps.py",
+        ),
+    ),
 }
 # Die acht Module, die am 2026-10-13 unter 90 s brauchten; der wöchentliche Qualitätslauf nimmt
 # genau diese (.github/workflows/quality.yml).
