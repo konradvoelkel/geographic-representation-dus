@@ -78,6 +78,24 @@ def network_inputs(layout: Layout) -> tuple[Path, Path, Path]:
     return (council.meetings, council.agenda_items, council.consultations)
 
 
+def unfinished_fetches(layout: Layout) -> list[Path]:
+    """Die Fortschrittsdateien offener Abrufe von ``meetings`` und ``consultations`` (Punkt 70).
+
+    Solange eine liegt, ist der Abruf nicht zu Ende; die JSONL-Datei daneben ist dann die eines
+    früheren Laufs, und ``pack --outcomes`` verweigert sie aus demselben Grund (Review 2026-11-24, K2).
+    """
+    council = council_files(layout)
+    return [
+        council.progress(s) for s in ("meetings", "consultations") if council.progress(s).is_file()
+    ]
+
+
+def progress_inputs(layout: Layout) -> tuple[Path, Path]:
+    """Die beiden Fortschrittsdateien als optionale Eingaben: kommt eine dazu, ist der Verlauf veraltet."""
+    council = council_files(layout)
+    return (council.progress("meetings"), council.progress("consultations"))
+
+
 def agenda_from_network(layout: Layout, papers: list[str]) -> pl.DataFrame:
     """Die Tabelle „Paper × Tagesordnungspunkt" aus dem Netzlauf, für die Dokumente ``papers``."""
     council = council_files(layout)
@@ -90,24 +108,33 @@ def agenda_from_network(layout: Layout, papers: list[str]) -> pl.DataFrame:
 
 
 def read_agenda(layout: Layout, papers: list[str]) -> tuple[pl.DataFrame, str]:
-    """(Tabelle, Quelle): der Netzlauf, wenn alle drei Dateien da sind, sonst das Paket.
+    """(Tabelle, Quelle): der Netzlauf, wenn alle drei Dateien da sind und kein Abruf offen ist,
+    sonst das Paket.
 
-    Der Netzlauf gilt vor dem Paket: er ist die Quelle des Pakets und wo er liegt, jünger. Fehlt
-    beides, ist das ein ``MissingInputError`` mit beiden Wegen, kein leerer Verlauf, der jedes
-    Dokument still ``ohne_ergebnis`` machte.
+    Der Netzlauf gilt vor dem Paket: er ist die Quelle des Pakets und wo er liegt, jünger. Ein
+    offener Abruf (``unfinished_fetches``) zählt nicht als Netzlauf. Fehlt beides, ist das ein
+    ``MissingInputError`` mit beiden Wegen, kein leerer Verlauf, der jedes Dokument still
+    ``ohne_ergebnis`` machte.
     """
     network = network_inputs(layout)
-    if all(path.is_file() for path in network):
+    unfinished = unfinished_fetches(layout)
+    if all(path.is_file() for path in network) and not unfinished:
         return agenda_from_network(layout, papers), "Netzlauf"
     package = outcome_files(layout).agenda
     if package.is_file():
         frame = check_agenda(pl.read_parquet(package), str(package))
         return frame.filter(pl.col("id").is_in(papers)), "Paket"
     missing = [str(path) for path in (*network, package) if not path.is_file()]
+    open_fetches = (
+        f"; Abruf unvollständig: {', '.join(str(path) for path in unfinished)}"
+        if unfinished
+        else ""
+    )
     raise MissingInputError(
         "Schritt council_results: weder der Netzlauf (`georep fetch meetings consultations`, "
-        "Fundament F6) noch das Paket ([outcomes].package, `georep bootstrap`) liegt vor; fehlt: "
-        + ", ".join(missing)
+        "Fundament F6) noch das Paket ([outcomes].package, `georep bootstrap`) liegt vor"
+        + (f"; fehlt: {', '.join(missing)}" if missing else "")
+        + open_fetches
     )
 
 
@@ -142,7 +169,7 @@ def outcome_steps(settings: Settings, layout: Layout, http: Transport) -> list[S
             (files.progress,),
             council_results,
             OUTCOMES_SCHEMA_VERSION,
-            optional=(*network_inputs(layout), files.agenda),
+            optional=(*network_inputs(layout), files.agenda, *progress_inputs(layout)),
         )
     ]
     with_procedures = settings.procedures.enabled

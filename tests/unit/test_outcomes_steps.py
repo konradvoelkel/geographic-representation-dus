@@ -130,6 +130,8 @@ def test_the_steps_read_what_they_need_and_write_under_processed(
         council.agenda_items,
         council.consultations,
         files.agenda,
+        council.progress("meetings"),
+        council.progress("consultations"),
     )
     assert steps["outcomes"].outputs == (files.outcomes, files.success)
     assert files.progress in steps["outcomes"].inputs
@@ -355,3 +357,32 @@ def test_the_outcomes_step_raises_no_deprecation_warning(
         warnings.simplefilter("always")
         step.run()
     assert [str(w.message)[:60] for w in caught if issubclass(w.category, DeprecationWarning)] == []
+
+
+def test_an_unfinished_fetch_is_not_read(tmp_path: Path) -> None:
+    """Review 2026-11-24, K2: ein offener Abruf (``raw/<schritt>.progress.json``) ist kein Netzlauf.
+
+    Dieselbe Prüfung wie ``pack --outcomes``: dann gilt das Paket, und ohne Paket ein
+    ``MissingInputError``, der die Datei des offenen Abrufs nennt.
+    """
+    layout = _layout(tmp_path)
+    progress_file = council_files(layout).progress("consultations")
+    progress_file.write_text("{}", encoding="utf-8")
+    with pytest.raises(MissingInputError, match=r"consultations\.progress\.json"):
+        read_agenda(layout, IDS)
+    shutil.copyfile(
+        PACKAGE / "tagesordnungspunkte-duesseldorf.parquet", outcome_files(layout).agenda
+    )
+    _, source = read_agenda(layout, IDS)
+    assert source == "Paket"
+    progress_file.unlink()
+    _, source = read_agenda(layout, IDS)
+    assert source == "Netzlauf"
+
+
+def test_an_unfinished_fetch_is_in_the_stamp(tmp_path: Path, default_settings: Settings) -> None:
+    """Kommt ein offener Abruf dazu oder fällt er weg, ist der Verlauf veraltet."""
+    layout = _layout(tmp_path, network=False)
+    council = council_files(layout)
+    step = _steps(default_settings, layout)["council_results"]
+    assert {council.progress("meetings"), council.progress("consultations")} <= set(step.optional)

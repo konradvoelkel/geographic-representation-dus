@@ -745,22 +745,16 @@ def pack_outcomes(
     # Im Aufruf importiert wie das Register in ``pipeline``: ``enrich.outcomes`` baut Schritte und
     # zieht die Kette nach; ``georep pack`` ohne diese Option soll sie nicht laden.
     from georep.analysis.outcomes import AGENDA_SCHEMA_VERSION, progress
-    from georep.council import council_files
-    from georep.enrich.outcomes import agenda_from_network, network_inputs
+    from georep.enrich.outcomes import agenda_from_network, network_inputs, unfinished_fetches
 
     claim_target(layout, target)
-    council = council_files(layout)
     missing = [str(p) for p in (*network_inputs(layout), layout.corpus) if not p.is_file()]
     if missing:
         raise PackError(
             f"{missing} fehlen; lief der Netzlauf (`georep fetch meetings consultations`) und "
             "`georep run` für dieses Profil?"
         )
-    unfinished = [
-        str(council.progress(step))
-        for step in ("meetings", "consultations")
-        if council.progress(step).is_file()
-    ]
+    unfinished = [str(path) for path in unfinished_fetches(layout)]
     if unfinished:
         raise PackError(f"Abruf unvollständig ({', '.join(unfinished)}); erst zu Ende abrufen")
     papers = pl.read_parquet(layout.corpus, columns=["id"]).get_column("id").to_list()
