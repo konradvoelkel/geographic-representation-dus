@@ -20,6 +20,7 @@ import pytest
 
 from georep.analysis.periods import D_TURNOUT, comparison_columns
 from georep.bootstrap import bootstrap_from_settings
+from georep.enrich import contributed_steps
 from georep.errors import SchemaError
 from georep.layout import Layout
 from georep.pipeline import Outcome, build_steps, run_pipeline
@@ -32,6 +33,7 @@ from georep.prep.voters import (
 )
 from georep.settings import Settings, load_settings
 from tests.conftest import within_budget, without_literature
+from tests.fakes import FakeSession
 
 REPO = Path(__file__).resolve().parents[2]
 MINI_2014 = REPO / "tests" / "fixtures" / "mini-2014"
@@ -220,7 +222,10 @@ def test_the_comparison_runs_only_with_the_compare_profile(
     without = [s.name for s in build_steps(period_run.settings, period_run.base)]
     assert "compare" not in without
     steps = [s.name for s in build_steps(compared.settings, compared.layout)]
-    assert steps.index("compare") == steps.index("report") - 1
+    # Fundament F2: zwischen dem Vergleich und dem Bericht stehen nur die Beiträge der Vorhaben
+    http = FakeSession({})
+    contributed = [s.name for s in contributed_steps(compared.settings, compared.layout, http)]
+    assert steps[steps.index("compare") + 1 : steps.index("report")] == contributed
     done = {o.step: o.status for o in compared.outcomes}
     assert done["compare"] == "ausgeführt", done
     assert "Wahlbezirke in beiden Perioden" in next(

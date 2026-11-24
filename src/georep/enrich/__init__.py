@@ -81,8 +81,11 @@ class Contribution:
     early_steps: Callable[[Settings, Layout, Transport], list[Step]] = no_steps
 
 
-# Je Vorhaben eine Zeile, in der Reihenfolge der Abhängigkeiten (Plan, § 3).
-CONTRIBUTIONS: tuple[Contribution, ...] = ()
+# Je Vorhaben eine Zeile, in der Reihenfolge der Abhängigkeiten (Plan, § 3). Die Importe stehen hier
+# und nicht oben: jedes Beitragsmodul baut ein ``Contribution`` aus diesem Modul.
+from georep.enrich.functions import CONTRIBUTION as FUNCTIONS  # noqa: E402  (Vorhaben 15)
+
+CONTRIBUTIONS: tuple[Contribution, ...] = (FUNCTIONS,)
 
 
 def contributed_early_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:

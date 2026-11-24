@@ -254,3 +254,78 @@ seed = 0
 num_ctx = 8192                 # Fenster in Token (Prompt und Antwort); qwen3.6 koennte 262 144, aber der Speicher je Token waechst mit
 num_predict = 512              # hoechstens so viele Token Antwort; eine Antwort, die daran stoesst, liegt markiert im Modellcache (truncated), der Stapellauf zaehlt sie, und der Schritt entscheidet, ob er sie verwirft
 think = false                  # die Denkspur von qwen3.6 und gemma4 aus: sie kostet Token und steht nicht in der Antwort. Nur Modelle mit der Faehigkeit "thinking" bekommen den Schalter; true bei einem anderen ist ein Fehler
+
+# --- Vorhaben 15: Dokumentfunktion und gemeinsame Anträge (docs/plans/15-funktion.md) -------------
+[functions]                    # Funktion je Ratsdokument (Schritt functions) und Antragsteller je Fraktionsdokument (Schritt cosponsors). Hier steht nur die Sprache der Ratsdokumente, an beiden Stadtprofilen ohne Änderung gemessen (Messdokument § 3.3); Dokumentarten, Sammelarten mit ihren Textregeln, Briefkopf und Fraktionen aus mehreren Parteien stehen im Stadtprofil. Alle Muster kleingeschrieben, eine Liste ist eine Alternative
+enabled = false                # Schalter beider Schritte; ein Stadtprofil schaltet ihn ein, wenn es die Tabellen trägt. Ohne Urheber (Option 04, [originators]) fehlen beide Schritte ohnehin
+variant = "B"                  # B liest den Beschlusstext eines Antrags (Erklärung -> symbol) und zählt den Berichtsantrag als Kontrolle; gewählt nach der Kodierung (kappa 0,905 gegen A 0,829, Messdokument § 5). A bleibt als Schalter
+head_chars = 700               # Textkopf, in dem die Regeln der Sammelarten suchen (Instrumentwort, Kenntnis gegen Beschluss, Briefkopf)
+wide_chars = 3000              # zweiter Blick in eine Sammelart der Verwaltung, wenn Kopf und Titel nichts sagen
+decision_chars = 1200          # Variante B: so viel Beschlusstext eines Antrags wird gelesen
+letterhead_chars = 240         # Fenster hinter dem Briefkopf, in dem der Verfasserblock steht (dahinter folgt der Betreff)
+types = {}                     # paperType (ganzer Wert) -> "funktion/instrument"; im Stadtprofil
+type_prefixes = {}             # Präfix der Dokumentart (klein) -> "funktion/instrument", längstes zuerst; im Stadtprofil
+collection_political = []      # Sammelarten der Politik: Titel, dann das erste Instrumentwort im Textkopf; im Stadtprofil
+collection_admin = []          # Sammelarten der Verwaltung: Kenntnisnahme gegen Entscheidung; im Stadtprofil
+# Symbolpolitik: eine Erklärung des Gremiums, die keine Sache der Stadt entscheidet (Resolution,
+# Appell, Solidarität, Verurteilung, Bündnisbeitritt). Macht nur eine Initiative aus der Politik
+# zum Symbol; eine Informationsvorlage „Resolution zur Stärkung der Kommunalfinanzen" bleibt
+# Information, eine Anfrage zu einer Resolution Kontrolle (Messdokument § 3.1, Schritt 4).
+symbol_title = [
+    'resolution', '(?<![a-zäöüß])appell', 'solidarität mit', 'verurteil', 'bekennt sich', 'gegen hass',
+    'sichere[rn]? häfen?', 'seebrücke', 'mayors for peace', 'städtebündnis', 'städte-?koalition',
+]
+request_title = ['(?<![a-zäöüß])(z?anfrage|nachfrage|rückfrage)']  # Anfrage im Titel einer Sammelart: Kontrolle, wenn kein Antrag daneben steht
+motion_title = ['(?<![a-zäöüß])(änderungs-?|ergänzungs-?|haushalts-?|haushaltsbegleit|prüf|dringlichkeits-?|zusatz-?)?antrag']
+followup_title = ['nachfrage', 'rückfrage', 'zusatzfrage', 'folgeanfrage']  # Instrument Nachfrage statt Anfrage
+amendment_title = ['änderungs-?\s?antrag', 'ergänzungs-?\s?antrag', 'zusatzantrag', 'änderungs- und ergänzungsantrag']
+budget_motion_title = ['haushalts(begleit)?-?antrag']
+review_title = ['prüfauftrag', 'prüf-?antrag', '(?<![a-zäöüß])prüfung (der|des|von|einer|eines|ob)', 'zu prüfen']  # Schreibfehler einer Quelle ergänzt das Stadtprofil
+# Berichtsantrag: ein Antrag, der nur Auskunft verlangt. Variante B zählt ihn als Kontrolle; die
+# Kodierung las sieben von zehn so (Messdokument § 4.1).
+report_title = ['sachstand', '(?<![a-zäöüß])bericht(?!s?vorlage)(?!igung)', 'berichterstattung']
+not_instruments = ['bauantrag', 'bauvoranfrage', 'voranfrage', 'zuwendungsantrag', 'förderantrag', 'förderungsantrag', 'bürgerantrag']  # Wörter auf -antrag/-anfrage, die kein Instrument des Gremiums sind
+# Variante B: der Beschlusstext eines Antrags erklärt eine Haltung oder fordert Bund und Land auf
+# (Symbol), oder er verlangt nur einen Bericht (Kontrolle).
+symbol_text = [
+    '(rat|bezirksvertretung|ausschuss|integrationsrat)[^.]{0,80}?(verurteilt|appelliert|bekräftigt|bekennt sich|solidarisiert sich|erklärt (seine|ihre) (volle )?solidarität|fordert [^.]{0,40}?(bundes|landes)regierung|fordert [^.]{0,30}?(den bund|den bundestag|den landtag|das land))',
+]
+report_text = ['(gebeten|beauftragt|aufgefordert)[^.]{0,120}?(zu berichten|bericht zu erstatten|sachstandsbericht|einen bericht)']
+# Autorenteil eines Titels: vom ersten Instrumentwort bis zum ersten Trenner. Was davor oder dahinter
+# steht, ist Gegenstand oder Bezug („Änderungsantrag der SPD-Ratsfraktion zum Antrag der
+# Ratsfraktionen von CDU und Grünen" stellt nur die SPD, Messdokument § 3.8).
+author_start = ['(?<![a-zäöüß])(?:[a-zäöüß]*antrag|[a-zäöüß]*anfrage|resolution|äa)(?![a-zäöüß])']
+author_stop = [':', ';', ' zu[mr]? ', ' zu der ', ' hier', ' vom ', ' betr', ' bzgl', ' wegen ', ' - ', ' – ']
+text_instrument = []           # Instrumentwörter im Textkopf einer Sammelart der Politik; im Stadtprofil
+text_words = []                # erstes passendes Instrumentwort -> "funktion/instrument"; im Stadtprofil
+text_notice = []               # Kenntnisnahme im Textkopf einer Sammelart der Verwaltung; im Stadtprofil
+text_decision = []             # Entscheidung im Textkopf; das erste Merkmal gewinnt; im Stadtprofil
+text_decision_head = []        # eine Überschrift, die eine Entscheidung ankündigt; im Stadtprofil
+title_information = []         # Titel einer Sammelart der Verwaltung, der eine Information nennt; im Stadtprofil
+title_decision = []            # dito eine Entscheidung; im Stadtprofil
+letterhead = []                # Briefkopf eines Dokuments aus der Politik in einer alten Vorlagenform; im Stadtprofil
+letterhead_end = []            # Ende des Verfasserblocks dahinter (Gremium, Anrede, Datum); im Stadtprofil
+fractions = []                 # [[functions.fractions]]: eine Fraktion aus mehreren Parteien mit Zeitraum; im Stadtprofil
+
+# Vollzug: was eine Beschlussvorlage entscheidet, nur als Instrument (Unterart); die erste Regel
+# mit Treffer im Titel gewinnt, sonst das Instrument der Tabelle.
+[[functions.enforcement]]
+instrument = "haushalt"
+patterns = ['haushaltssatzung', 'haushaltsplan', 'nachtragshaushalt', 'jahresabschluss', 'gesamtabschluss', 'wirtschaftsplan', 'stellenplan']
+[[functions.enforcement]]
+instrument = "satzung"
+patterns = ['satzung', 'ordnung der', 'gebührenordnung', 'verordnung']
+[[functions.enforcement]]
+instrument = "bauleitplanung"
+patterns = ['bebauungsplan', 'flächennutzungsplan', '(?<![a-zäöüß])plan nr', 'vorhabenbezogene']
+[[functions.enforcement]]
+instrument = "besetzung"
+patterns = ['(?<![a-zäöüß])(neu|nach|um)?wahl (von|der|des|eines|einer|zum|zur)', 'bestellung (von|eines|einer|der|des)', 'benennung', 'entsendung', 'abberufung', 'besetzung']
+[[functions.enforcement]]
+instrument = "dringlichkeit"
+patterns = ['dringlichkeitsentscheidung', 'dringliche[rn]? entscheidung', 'dringlichkeitsbeschluss']  # was ein Land eigens nennt (in NRW der Beschluss nach § 60 GO), ergänzt das Stadtprofil
+
+# --- Vorhaben 15: Ratsmehrheiten, stadtweit (docs/plans/15-funktion.md, § 3.9 und § 10) ----------
+[majorities]                   # die Mehrheit im Rat je Zeitraum, mit Vereinbarung (Vorhaben 25) und Belegen im Korpus; eine Annahme, die das Lager eines Fraktionsdokuments trägt (Schritt cosponsors) und die 24 und 28 mitlesen. Stadtneutral leer: ohne Zeile hat kein Dokument ein Lager
+body_kinds = ["rat", "ausschuss"]  # Gremienarten (gremium_art), in denen die Mehrheit des Rates gilt; die Bezirksvertretungen haben eigene Mehrheiten, die im Datensatz nicht stehen (Vorhaben 27)
+terms = []                     # [[majorities.terms]] im Stadtprofil: period, parties, valid_from, valid_to, agreement, agreement_date, evidence

@@ -2918,3 +2918,105 @@ die F2 schützen soll); `stage` statt einer zweiten Fabrik (oben); eine Session,
 immer baut (legte `http.sqlite` in jedem Lauf an, auch ohne Netz); eine Prüfung je Zeichen als
 Vertrag von `flatten_with_offsets` (rund 55 Millionen Zeichen in der Hauptperiode, je Lauf; sie
 steht in den Tests).
+
+## NN. Funktion und Antragsteller je Dokument: Variante B, drei Quellen für die Antragsteller, Ratsmehrheiten stadtweit je Wahlperiode des Rates (Vorhaben 15, 2026-11-24)
+
+Vorhaben 15 der Vorverarbeitung (`docs/plans/15-funktion.md`, § 5 bis § 7 und § 10), Stufe 2. Die
+Messung hat das Regelwerk gegen zwei KI-Kodierer an 150 Dokumenten geprüft: κ = 0,905 für
+Variante B (Bootstrap-95-% 0,840–0,960), 0,829 für Variante A, Antragsteller mit Präzision 119/119
+und Recall 119/138. Gebaut ist genau dieses Regelwerk, als erster Beitrag nach Punkt 69; die
+Fabrik der Schritte hat die Signatur aus Punkt 74 (`settings, layout, http`), beide Schritte sind
+offline und fragen den Transport nie, und beide bestehen `check_step_order` in jedem Paketprofil.
+
+**Was gebaut ist.** Der Beitrag `15-funktion` (`georep.enrich.functions`) bringt zwei
+Offline-Schritte hinter `bodies` und `parties`, nur mit `functions.enabled` (in beiden
+Stadtprofilen an) und mit Urhebern im Profil:
+
+- `functions` schreibt `processed/dokumente_funktion.parquet`: je Korpus-ID `funktion` (Kontrolle,
+  Information, Initiative, Symbol, Vollzug oder `rest`, auf der Seite „Funktion nicht erkannt"),
+  `instrument`, `quelle` (`art`, `titel`, `text`, leer genau bei `rest`) und `variante`. Die Regeln
+  stehen rein in `analysis/functions.py`: Dokumentart als ganzer Wert, dann ihr Präfix; die
+  Sammelarten einer alten Vorlagenform über Titel und Textkopf; Symbolpolitik aus dem Titel nur für
+  Initiativen aus der Politik; Variante B liest den Beschlusstext eines Antrags (Erklärung →
+  Symbol, Berichtswunsch → Kontrolle). Variante A bleibt als Schalter.
+- `cosponsors` schreibt `processed/dokumente_antragsteller.parquet` (nach der Konvention
+  `dokumente_<attribut>`, nicht `mitantraege`): je Korpus-ID `antragsteller`, `fraktionen`, `quelle`,
+  `gemeinsam` und `lager`, rein in `analysis/cosponsors.py`.
+- Beide Tabellen haben eine Zeile je Korpus-ID (`one_row_per_document`) und ihre Schema-Version aus
+  der Konstante des Moduls; `functions_files(layout)` nennt die Pfade für 14, 24 und 28.
+- `analysis/practice.observed_expected` rechnet beobachtet gegen erwartet gegen die Praxis der
+  Schichten (indirekte Standardisierung, Schicht Gremium und Periode), ohne Settings; 15 nimmt sie
+  für die Kontrolle je Fraktion, 14 in Stufe 3 für die Antworten je Fraktion.
+
+Gegen das Messskript Dokument für Dokument auf den Läufen vom 2026-11-23: Funktion (beide
+Varianten) und Antragsteller in **0 von 48 313 Dokumenten** verschieden (vier Datensätze). Ein
+slow-Test rechnet κ, die Treffer und die Präzision der Fraktionen aus
+`validierung/15-funktion/labels.csv` nach; ein Umbau, der sie senkt, ist kein Refactoring.
+
+**Antragsteller aus drei Quellen, nicht aus `parteien`.** Option 04 nimmt die erste Quelle mit
+Treffer und übersieht bei 281 Dokumenten Mitantragsteller. Die Antragsteller sind die Vereinigung
+aus der Dokumentart hinter dem Antragspräfix (`originators.motion_prefixes`, wie die Synergie
+verlangt), dem Autorenteil des Titels (vom ersten Instrumentwort bis zum ersten Trenner) und dem
+Verfasserblock des Briefkopfs der alten Vorlagenform; nennt keiner eine Partei, bleibt `parteien`.
+`analysis/parties.py` ist unverändert; ob Option 04 nachzieht und damit „Dokumente je Partei" auf
+`index.html` ändert, ist Frage 25 an Konrad.
+
+**Fraktionen mit Zeitraum.** `[[functions.fractions]]` fasst Parteischlüssel zu einer Fraktion,
+solange sie besteht: in Düsseldorf SPD+VOLT ab 2020-11-01 und T_FW+PARTEI ab 2025-11-01, in
+Mönchengladbach „FDP / VOLT" und „DIE LINKE / DIE PARTEI", wie `raw/organizations.json` sie nennt,
+erst ab dem 2025-11-01: sie gehören zum Rat ab 2025, im Datensatz 2020 bis 2025 steht „volt" in
+keinem Text, und die Briefköpfe von 2024 und 2025 nennen Linke und PARTEI getrennt (Review
+2026-11-24). In diesem Datensatz ändern die beiden Zeilen also kein Dokument, auch keines der 70
+gemeinsamen. Eine Partei gehört an keinem Tag zu zwei Fraktionen; das prüft der Validator.
+
+**Ein stadtweiter Mehrheitenblock, je Wahlperiode des Rates.** `[majorities]` steht im Stadtprofil,
+weder unter `[functions]` noch unter `[council]` (Synergien 2026-11, § 1): je Zeile Wahlperiode,
+Parteien, Gültigkeit, die Vereinbarung aus Vorhaben 25 mit Datum, so genau die Quelle es sagt, und
+Drucksachen, die die Mehrheit im Korpus nennen. `body_kinds` sagt, wo die Mehrheit des Rates gilt
+(Rat und Ausschüsse); in den Bezirksvertretungen ist das Lager `ohne_lager`, dort gibt es keine
+Konkordanz zu messen, bis Vorhaben 27 deren Mehrheiten kennt. **Anders als die Messung** gilt eine
+Mehrheit nicht für einen Datensatz, sondern für die Wahlperiode des Rates, die am 1. November nach
+der Wahl beginnt (an diesem Tag beginnen die Ratsfraktion SPD/Volt und die Ratsgruppe der laufenden
+Periode, das Einzelmandat der AfD und die Gruppe T_FW enden am 31. Oktober davor). Die 437
+Dokumente der Hauptperiode vor dem 2020-11-01 stammen vom alten Rat, seine Mehrheit war die Ampel,
+und ein Antrag der SPD vom Oktober 2020 ist ein Antrag der Mehrheit. K3 der Hauptperiode (Variante
+B) wird dadurch **41 / 1 333 statt 43 / 1 336**; 2014 bis 2020 (49 / 653) und ab 2025 (0 / 312)
+bleiben, die gemeinsamen Dokumente (1 397, 1 202, 204) auch. Wer die Mehrheit je Datensatz will,
+setzt die Grenzen auf die Profile; das Ergebnis ist dann wieder das der Messung (nachgerechnet).
+
+**Das Lager eines Dokuments ohne Fraktion** heißt `ohne_partei`, auch bei einer Vorlage der
+Verwaltung: die sieben Klassen des Bauplans bleiben, und wer K1 bis K3 rechnet, filtert ohnehin auf
+die Urheberklasse Fraktion. `ohne_lager` steht genau dort, wo das Gremium nicht auf der Stadtebene
+liegt oder das Profil keine Mehrheit für das Datum kennt (Mönchengladbach überall).
+
+**Die Wörter der Ratssprache stehen in `defaults.toml`**, nicht in beiden Stadtprofilen, abweichend
+von § 6 des Bauplans: Symbol, Antrag, Anfrage, Änderungs-, Haushalts-, Prüf- und Berichtsantrag, die
+Instrumente des Vollzugs, der Autorenteil des Titels und der Beschlusstext der Variante B greifen in
+Mönchengladbach ohne Änderung (§ 3.3); doppelt stünden rund zwanzig gleiche Zeilen in zwei
+Dateien, die auseinanderlaufen. Was nur eine Stadt kennt, steht im Stadtprofil: die
+Dokumentarten als „funktion/instrument" (beim Laden gegen `FUNCTION_INSTRUMENTS` geprüft), die
+Präfixe, die Sammelarten mit ihren Textregeln und dem Briefkopf, die Fraktionen, die Mehrheiten,
+dazu zwei Wörter Düsseldorfs (der Schreibfehler „pürfantrag" der Quelle und der „60er-Beschluss"
+nach § 60 GO NRW; Review 2026-11-24). Für sie wiederholt das Profil die Listen `review_title` und
+`enforcement`, weil `deep_merge` Listen ersetzt; ein Test hält sie gleich der Vorgabe plus diesen
+Wörtern. Der Supervisor hat die Abweichung abgenommen (Messdokument § 10, Punkt 10). Kein
+Stadtwort im Code.
+
+**Ein Befund am Messskript.** Beobachtet gegen erwartet ergibt für 2020 bis 2025 und ab 2025 die
+Zahlen der Messung (CDU 0,74, AfD 1,75, Tierschutz/FW 1,67 …), für 2014 bis 2020 aber CDU 0,98
+statt 0,99, SPD 0,78 statt 0,79, Tierschutz/FW 1,45 statt 1,53. Dort haben 105 Fraktionsdokumente
+kein Gremium, und das Messskript gab ihnen beim Join ohne null-Schlüssel keine Erwartung, zählte
+sie aber beobachtet mit; `observed_expected` führt sie als eigene Schicht. Das Muster aus § 3.7
+(Tierschutz/FW und AfD fragen mehr, die Mehrheit weniger) bleibt.
+
+**Verworfen.** `[[functions.majorities]]` (die Synergie macht den Block stadtweit, 24 und 28 lesen
+ihn); die Mehrheit je Datensatz (die Messung; ein Antrag des alten Rates bekäme die Mehrheit des
+neuen); Gültigkeit erst ab der Unterzeichnung der Vereinbarung (Januar 2021, Dezember 2025: die
+Wahlperiode ist eine belegte Grenze; ob und ab wann die Partner vor der Unterzeichnung gemeinsam
+handelten, ist nicht geprüft, und Wochen ohne Lager mitten in einer Periode wären die größere
+Verzerrung); die Mehrheit aus den gemeinsamen Anträgen ableiten (für K3 zirkulär); eine
+dritte Datei mit den Kanten des Netzes (eine Gruppierung über `dokumente_antragsteller`, die
+Unterseite rechnet sie, Bauplan § 6); `parties.py` nachziehen (Frage 25); eine achte Lagerklasse
+für Dokumente ohne Fraktion (der Bauplan hat sieben, und der Filter auf die Urheberklasse genügt);
+`classify_function` und `cosponsors` in `VERIFY_TARGETS` (ihre Regeln tragen `re.Pattern`, dasselbe
+Werkzeugartefakt wie bei `parse_reference`; geprüft wird `camp`, die übrigen über hypothesis).

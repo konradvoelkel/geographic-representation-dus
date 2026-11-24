@@ -123,6 +123,10 @@ def test_pipeline_runs_skips_and_reruns(
         "body_hits": "ausgeführt",
         "weights": "ausgeführt",
         "parties": "ausgeführt",  # Option 04: haengt an results
+        # Vorhaben 15: Funktion und Antragsteller lesen Korpus, Urheber und Gremien; der Schritt
+        # parties schreibt dieselben Urheber noch einmal, also bleibt ihr Hash, wie er war
+        "functions": "übersprungen",
+        "cosponsors": "übersprungen",
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")

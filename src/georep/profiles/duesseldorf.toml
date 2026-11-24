@@ -690,3 +690,104 @@ organizations = []             # Volt sitzt in der Ratsfraktion SPD/Volt, hat al
 meetings_endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/meetings"
 consultations_endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/consultations"
 persons_endpoint = "https://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/people"  # der Server nennt die Liste people, nicht persons
+
+# --- Vorhaben 15: Dokumentfunktion und gemeinsame Anträge (docs/plans/15-funktion.md) -------------
+# Die Tabellen der Dokumentarten aller drei Perioden stehen hier im Stadtprofil, nicht in den
+# Periodenprofilen: die Vorlagenform gehört der Stadt (wie Punkt 57 und 60), und deep_merge ersetzt
+# Listen. Die Wörter der Ratssprache (Antrag, Anfrage, Resolution …) kommen aus defaults.toml.
+# Zahlen vom 2026-11-23 über alle drei Perioden (Messdokument § 3.2 und § 3.3).
+[functions]
+enabled = true                 # Schritte functions und cosponsors (Vorhaben 15, Stufe 2)
+types = { "Beschlussvorlage" = "vollzug/beschlussvorlage", "Bezirksvertretung Beschlussvorlage" = "vollzug/beschlussvorlage", "Beschlussvorlage RPA" = "vollzug/rechnungspruefung", "Bedarfsbeschluss" = "vollzug/bau", "A+F Beschluss" = "vollzug/bau", "Informationsvorlage" = "information/informationsvorlage", "Bezirksvertretung Informationsvorlage" = "information/informationsvorlage", "Berichtsvorlage" = "information/berichtsvorlage", "Eingabe nach 24GO" = "initiative/eingabe", "Eingabe nach 24 GO" = "initiative/eingabe", "Bezirksvertretung Eingabe nach 24Go" = "initiative/eingabe" }  # die Vorlagen der Verwaltung und die Eingaben nach § 24 GO NRW; „A+F Beschluss" ist der Ausführungs- und Finanzierungsbeschluss eines Bauvorhabens
+type_prefixes = { "haushaltsantrag" = "initiative/haushaltsantrag", "zanfrage" = "kontrolle/anfrage", "zantrag" = "initiative/antrag", "anfrage" = "kontrolle/anfrage", "antrag" = "initiative/antrag" }  # „Antrag CDU/Grüne", „Haushaltsantrag Die Linke", „zAnfrage REP"; nach 2020 hat damit jede Dokumentart eine Zeile, die Restklasse ist dort 0
+# Zwei Wörter dieser Stadt zur Ratssprache aus defaults.toml (Review 2026-11-24, M3): der
+# Schreibfehler „pürfantrag" der Quelle und der Dringlichkeitsbeschluss nach § 60 GO NRW, der in
+# 6 Titeln von 2014 bis 2020 „60er-Beschluss" heißt. deep_merge ersetzt Listen, darum steht die ganze
+# Liste hier; dass sie die aus defaults.toml plus diese Wörter bleibt, prüft
+# tests/unit/test_functions_settings.py.
+review_title = ['prüfauftrag', 'prüf-?antrag', '(?<![a-zäöüß])prüfung (der|des|von|einer|eines|ob)', 'zu prüfen', 'pürfantrag']
+enforcement = [
+    { instrument = "haushalt", patterns = ['haushaltssatzung', 'haushaltsplan', 'nachtragshaushalt', 'jahresabschluss', 'gesamtabschluss', 'wirtschaftsplan', 'stellenplan'] },
+    { instrument = "satzung", patterns = ['satzung', 'ordnung der', 'gebührenordnung', 'verordnung'] },
+    { instrument = "bauleitplanung", patterns = ['bebauungsplan', 'flächennutzungsplan', '(?<![a-zäöüß])plan nr', 'vorhabenbezogene'] },
+    { instrument = "besetzung", patterns = ['(?<![a-zäöüß])(neu|nach|um)?wahl (von|der|des|eines|einer|zum|zur)', 'bestellung (von|eines|einer|der|des)', 'benennung', 'entsendung', 'abberufung', 'besetzung'] },
+    { instrument = "dringlichkeit", patterns = ['dringlichkeitsentscheidung', 'dringliche[rn]? entscheidung', 'dringlichkeitsbeschluss', '60er-beschluss'] },
+]
+# Die beiden Sammelarten der Periode 2014 bis 2020: ihre Art nennt die Funktion nicht (9 601 und
+# 8 337 Dokumente). Aus der Politik zuerst das Titelwort, dann das erste Instrumentwort im Textkopf
+# hinter dem Briefkopf; aus der Verwaltung der Briefkopf der Politik, sonst das erste Merkmal im
+# Textkopf (Kenntnisnahme gegen Entscheidung), sonst Titelwörter, sonst die ersten 3 000 Zeichen.
+# Die Restklasse (1 231 Dokumente, 5,5 % jener Periode) liegt ganz hier: 269 ohne Text, 145 mit
+# einer Anlage am Anfang (§ 3.4).
+collection_political = ["Vorlage aus der Politik"]
+collection_admin = ["Verwaltungsvorlage"]
+text_instrument = [
+    '(?<![a-zäöüß])((?:[a-zäöüß]*-?)?(?:antrag|anfrage)|resolution|informationsvorlage|mitteilung|beschlussdarstellung|dringlichkeitsbeschluss)(?![a-zäöüß])',
+]  # „… an den bezirksvorsteher … 11.09.2014  antrag quartier rund um den bilker bahnhof"; das Instrumentwort im Text trifft das im Titel in 3 974 von 3 995 Dokumenten (99,5 %, § 3.5)
+text_words = [
+    { pattern = '.*anfrage', function = "kontrolle/anfrage" },
+    { pattern = '.*antrag', function = "initiative/antrag" },  # Änderungs-, Haushalts-, Prüfantrag verfeinern die Titelmuster aus defaults.toml
+    { pattern = 'resolution', function = "symbol/resolution" },
+    { pattern = 'informationsvorlage|mitteilung', function = "information/informationsvorlage" },
+    { pattern = 'beschlussdarstellung|dringlichkeitsbeschluss', function = "vollzug/beschlussvorlage" },
+]
+text_notice = ['informationsvorlage', 'zur kenntnis', 'kenntnis ?nahme', 'nimmt [^.]{0,200}?kenntnis', 'teilt (die verwaltung )?(wie folgt )?mit', 'hierzu teilt', 'berichtsvorlage', 'sachstandsbericht']
+text_decision = [
+    'beschließt', 'beschliesst', 'beschlossen', 'empfiehlt', 'genehmigt', 'stimmt [^.]{0,80}?zu', '(?<![a-zäöüß])wählt', 'bestellt', 'benennt', 'entsendet', 'ermächtigt', 'beauftragt', 'bewilligt',
+    'beschlussvorschlag', 'beschlussempfehlung', 'stellt [^.]{0,80}?fest', 'erteilt', 'setzt [^.]{0,60}?fest',
+]  # an den 11 657 Beschluss-, Informations- und Berichtsvorlagen nach 2020, deren Art die Funktion nennt, trifft die Regel 95,9 % (§ 3.5); der häufigste Fehler ist eine Beschlussvorlage, deren Text zuerst „zur Kenntnis" sagt
+text_decision_head = ['beschlussdarstellung']
+title_information = ['informationsvorlage', 'mitteilung', '(?<![a-zäöüß])mdv(?![a-zäöüß])', 'sachstand', 'bericht(?!igung)', 'sitzungstermine', 'stellungnahmen', 'beschlusskontrolle', '(?<![a-zäöüß])ergebnisse', '(?<![a-zäöüß])information']
+title_decision = ['beschluss(?!kontrolle)', 'satzung', 'bebauungsplan', 'flächennutzungsplan', '(?<![a-zäöüß])plan nr', 'genehmigung', 'vergabe', 'bestellung', 'wahl (der|des|von)']
+# Der Briefkopf einer Vorlage aus der Politik in der Form von 2014 bis 2020 (Punkt 60 und 62): der
+# Verfasserblock steht zwischen „nicht öffentlich" und dem Gremium, der Anrede oder dem Datum
+# („… nicht öffentlich  spd - fraktion  cdu - fraktion  der bezirksvertretung 8  an den
+# bezirksbürgermeister …"). Hier ohne das Wort „fraktion", anders als in letterhead_markers oben:
+# die Funktion fragt nur, ob ein Dokument aus der Politik kommt.
+letterhead = ['rsd\s*vorlage\s*x?\s*öffentlich\s*nicht\s*öffentlich']
+letterhead_end = ['(der|des) (bezirksvertretung|rates|ausschuss|integrationsrat|jugendrat)', '(?<![a-zäöüß])an (den|die|das|herrn|frau)(?![a-zäöüß])', '\d{1,2}\.\s?\d{1,2}\.\s?\d{4}']
+# Fraktionen aus mehreren Parteischlüsseln (Frage 9.3: aus raw/organizations.json, sobald F6 sie für
+# diese Stadt abruft). Die Daten stehen an den Organisationen in [originators] oben.
+[[functions.fractions]]
+key = "SPD+VOLT"               # Ratsfraktion SPD/Volt (gr/400204), ab 2020-11-01; ohne die Zeile wäre „SPD – Volt" die stärkste Kante ab 2025
+parties = ["SPD", "VOLT"]
+valid_from = 2020-11-01
+[[functions.fractions]]
+key = "T_FW+PARTEI"            # Ratsgruppe Freie Wähler Tierschutz PARTEI (gr/400238), nach der Gruppe T_FW bis 2025-10-31
+parties = ["T_FW", "PARTEI"]
+valid_from = 2025-11-01
+
+# --- Vorhaben 15: Ratsmehrheiten der Stadt (stadtweit; 24 und 28 lesen sie mit) -----------------
+# Eine Annahme mit Quelle (Messdokument § 3.9 und Frage 9.2): die Vereinbarung der Partner, gesammelt
+# von Vorhaben 25 (docs/plans/25-quellen.md, § 2; die Texte liegen nur lokal), und Drucksachen, in
+# denen der Korpus die Mehrheit selbst nennt. Nicht aus den gemeinsamen Anträgen abgeleitet.
+# Gültig je Wahlperiode des Rates. Nach den Wahlen 2020 und 2025 begann sie am 1. November (die
+# Ratsfraktion SPD/Volt und die Ratsgruppe der laufenden Periode beginnen an diesem Tag, das
+# Einzelmandat der AfD und die Gruppe T_FW enden am 31. Oktober davor, [originators] oben);
+# Dokumente zwischen Wahl und 31. Oktober stammen also noch vom alten Rat und seiner Mehrheit. Für
+# 2014 ist der Tag nicht nachgesehen: die erste Zeile beginnt mit dem Profil duesseldorf-2014 am
+# Wahltag, und bis Ende Juni 2014 steht dort kein Fraktionsdokument in Rat oder Ausschuss (nachgezählt
+# 2026-11-24, 204 Dokumente). Ein Wechsel innerhalb einer Wahlperiode ist nicht geprüft (Frage 9.9).
+[[majorities.terms]]
+period = "2014-2020"
+parties = ["SPD", "GRUENE", "FDP"]
+valid_from = 2014-05-25        # Beginn des Profils duesseldorf-2014 (Ratswahl 2014), nicht der Beginn der Wahlperiode, siehe oben
+valid_to = 2020-10-31
+agreement = "Kooperationsvereinbarung 2014 – 2020 für die Landeshauptstadt Düsseldorf von SPD, Bündnis 90/Die Grünen und FDP („Ampel“)"
+agreement_date = "2014"        # ohne Tag; 174/ 112/2014 vom 2014-10-20 zitiert sie schon
+evidence = ["174/ 112/2014", "01/ 2/2015", "BV7/263/2020"]  # 48 Dokumente nennen Ampelmehrheit oder Ampel-Kooperation; die Ampel sind genau diese drei, wie die drei stärksten Kanten in Rat und Ausschüssen zeigen (§ 3.10)
+[[majorities.terms]]
+period = "2020-2025"
+parties = ["CDU", "GRUENE"]
+valid_from = 2020-11-01
+valid_to = 2025-10-31
+agreement = "Gestaltungsbündnis für ein zukunftsfestes Düsseldorf: Kooperationsvereinbarung zwischen CDU Düsseldorf und Bündnis 90/Die Grünen Düsseldorf"
+agreement_date = "2021-01"     # „Düsseldorf, Januar 2021"; die Unterzeichnung meldet die Rheinische Post am 2021-01-19
+evidence = ["RAT/241/2021", "AWM/046/2021", "RAT/324/2023"]  # 18 Dokumente mit „schwarz-grüne Ratsmehrheit" oder „Kooperation von CDU und Grünen", dazu 520 der Dokumentarten „… CDU/Grüne"
+[[majorities.terms]]
+period = "2025-"
+parties = ["CDU", "GRUENE"]
+valid_from = 2025-11-01
+agreement = "Gemeinsam für Düsseldorf: Verantwortung übernehmen, Fortschritt gestalten. Koalitionsvertrag zwischen CDU Düsseldorf und Bündnis 90/Die Grünen Düsseldorf"
+agreement_date = "2025-12"     # „Düsseldorf, Dezember 2025" (Datei vom 2025-11-30); zusammen 51 von 92 Sitzen
+evidence = ["RAT/073/2026", "RAT/120/2026"]  # 4 Dokumente mit „Ratsmehrheit aus CDU und Grünen" oder „schwarz-grüne Ratsmehrheit", dazu 56 der Dokumentarten „… CDU/Grüne"

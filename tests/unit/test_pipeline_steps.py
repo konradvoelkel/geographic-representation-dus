@@ -19,7 +19,10 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+import georep.enrich
 from georep import __version__
+from georep.analysis.cosponsors import COSPONSORS_SCHEMA_VERSION
+from georep.analysis.functions import FUNCTIONS_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.layout import Layout
 from georep.pipeline import (
@@ -38,6 +41,7 @@ from georep.report.build import report_fingerprint
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION, stop_words_digest
 from georep.settings import Settings
 from georep.stores import RAW_TEXT_SCHEMA_VERSION
+from tests.fakes import FakeSession
 
 
 def _layout(tmp_path: Path) -> Layout:
@@ -66,6 +70,9 @@ VERSIONS = {
     "persons": COUNCIL_SCHEMA_VERSION,
     # Fundament F1: der Rohtextstore schreibt seine Datei selbst, der Schritt nennt seine Version
     "raw_texts": RAW_TEXT_SCHEMA_VERSION,
+    # Vorhaben 15: zwei Schritte eines Beitrags (``georep.enrich.functions``)
+    "functions": FUNCTIONS_SCHEMA_VERSION,
+    "cosponsors": COSPONSORS_SCHEMA_VERSION,
 }
 
 
@@ -275,9 +282,15 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
         stored = pl.read_parquet_metadata(first)["georep.schema_version"]
         assert stored == str(step.schema_version), (step.name, first.name, stored)
         checked += 1
-    # Heute 19: texts, raw_texts, voters, context, streets, pois, dictionary, corpus, bodies,
-    # topics, committees, index, timeline, results, metrics, body_hits, weights, controls, parties.
-    assert checked == 19, checked
+    # Heute 19 im Kern: texts, raw_texts, voters, context, streets, pois, dictionary, corpus,
+    # bodies, topics, committees, index, timeline, results, metrics, body_hits, weights, controls,
+    # parties; dazu je ein Parquet-Schritt der Beiträge aus dem Register (Vorhaben 15: zwei).
+    contributed = [
+        s
+        for s in georep.enrich.contributed_steps(default_settings, mini_run, FakeSession({}))
+        if s.outputs[0].suffix == ".parquet"
+    ]
+    assert checked == 19 + len(contributed), checked
 
 
 def _step_versions_in_source() -> dict[str, str]:
@@ -287,9 +300,15 @@ def _step_versions_in_source() -> dict[str, str]:
     hinschreibt statt die Konstante seines Moduls zu nennen. Ein Wertvergleich sähe das nie, denn
     die meisten Versionen sind 1 (Review-Befund 3, 2026-10-13).
     """
-    tree = ast.parse(Path("src/georep/pipeline.py").read_text(encoding="utf-8"))
+    # Fundament F2: die Schritte der Vorhaben stehen in ``georep/enrich/``, nicht in ``pipeline.py``
+    sources = [Path("src/georep/pipeline.py"), *sorted(Path("src/georep/enrich").glob("*.py"))]
+    nodes = [
+        node
+        for source in sources
+        for node in ast.walk(ast.parse(source.read_text(encoding="utf-8")))
+    ]
     found: dict[str, str] = {}
-    for node in ast.walk(tree):
+    for node in nodes:
         if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)):
             continue
         if node.func.id != "Step" or not node.args:
