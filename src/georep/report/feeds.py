@@ -77,9 +77,9 @@ FEEDS_SCHEMA: dict[str, pl.DataType] = {
     "aktualisiert": pl.String(),  # feed/updated; leer ohne Eintrag
     "bytes": pl.Int64(),
 }
-EMPTY_UPDATED = (
-    "1970-01-01T00:00:00+00:00"  # ein Feed ohne Einträge: ein festes Datum, keine Laufzeit
-)
+# Ein Feed ohne Einträge trägt den Stand der Daten (Review N2); dieses feste Datum nur, wo es kein
+# datiertes Dokument gibt, und nie die Laufzeit.
+EMPTY_UPDATED = "1970-01-01T00:00:00+00:00"
 AUTHOR = "georep, aus dem Ratsinformationssystem (OParl)"
 _DATETIME = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$")
 _ABSOLUTE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
@@ -196,9 +196,15 @@ def _attribute(value: str) -> str:
     return escape(clean_text(value), {'"': "&quot;"})
 
 
-def render_feed(head: FeedHead, entries: Sequence[FeedEntry]) -> str:
-    """Der Feed als Text, in der Folge der Einträge; ``updated`` ist das jüngste der Einträge."""
-    updated = max((e.updated for e in entries), default=EMPTY_UPDATED)
+def render_feed(
+    head: FeedHead, entries: Sequence[FeedEntry], *, empty_updated: str = EMPTY_UPDATED
+) -> str:
+    """Der Feed als Text, in der Folge der Einträge; ``updated`` ist das jüngste der Einträge.
+
+    Ein Feed ohne Einträge trägt ``empty_updated``; der Schritt ``feeds`` gibt den Stand der Daten
+    (Review N2), ``EMPTY_UPDATED`` bleibt nur, wo es keinen gibt.
+    """
+    updated = max((e.updated for e in entries), default=empty_updated)
     lines = [
         '<?xml version="1.0" encoding="utf-8"?>',
         f'<feed xmlns="{ATOM}" xml:lang="de">',

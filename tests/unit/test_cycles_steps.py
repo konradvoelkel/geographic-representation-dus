@@ -19,7 +19,6 @@ import pytest
 
 import georep.enrich
 from georep.analysis.cycles import MONTH_SCHEMA, months_match_timeline
-from georep.analysis.hits import hits_by_district
 from georep.analysis.hypotheses import CONFIRMED, check_hypotheses
 from georep.analysis.lexicon import (
     SPAN_KIND,
@@ -295,8 +294,9 @@ def test_the_feeds_of_the_mini_fixture(
     assert outcome.status == "ausgeführt", outcome.line()
     manifest = pl.read_parquet(time_files(layout).feeds)
     assert manifest.schema == pl.Schema(FEEDS_SCHEMA)
-    districts = hits_by_district(pl.read_parquet(layout.dictionary), pl.read_parquet(layout.index))
-    assert manifest.height == districts.height
+    # jeder Wahlbezirk des Wörterbuchs, mit Treffer oder ohne (Review N2)
+    districts = pl.read_parquet(layout.dictionary).get_column("wahlkreis_id").n_unique()
+    assert manifest.height == districts
     assert not stale.exists()  # einen Wahlbezirk 99 gibt es nicht
     written = sorted(feed_dir(layout).glob("*.xml"))
     assert [f"feeds/{p.name}" for p in written] == manifest.get_column("datei").to_list()
@@ -373,3 +373,31 @@ def test_a_feed_shows_only_documents_the_page_shows(
     assert run_step(step, settings).status == "ausgeführt"
     assert _entries(layout, 1) == ["1"]
     assert _entries(layout, 2) == ["4"]
+
+
+def test_every_district_of_the_dictionary_gets_a_feed(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    """Review N2: ein Wahlbezirk ohne Treffer bekommt einen gültigen leeren Feed, Stand der Daten
+    statt 1970, und keiner wird als veraltet gelöscht; nur Bezirke außerhalb des Wörterbuchs gehen."""
+    settings, layout = _feed_run(
+        tmp_path,
+        default_settings,
+        {1: ["rathausplatz"], 2: ["parkallee"], 3: ["leerweg"]},
+        {"rathausplatz": ["1"], "parkallee": ["7"]},
+        hidden=[],
+    )
+    feed_dir(layout).mkdir(parents=True)
+    (feed_dir(layout) / "wahlbezirk-03.xml").write_text("alt", encoding="utf-8")
+    (feed_dir(layout) / "wahlbezirk-99.xml").write_text("alt", encoding="utf-8")
+    (step,) = time_steps(settings, layout, HTTP)
+    assert run_step(step, settings).status == "ausgeführt"
+    names = sorted(p.name for p in feed_dir(layout).glob("*.xml"))
+    assert names == ["wahlbezirk-01.xml", "wahlbezirk-02.xml", "wahlbezirk-03.xml"]
+    empty = (feed_dir(layout) / "wahlbezirk-03.xml").read_text(encoding="utf-8")
+    assert atom_problems(empty) == [] and "<entry>" not in empty
+    # der Stand ist das letzte Vorlagendatum des Korpus, 00:00 Ortszeit
+    assert "<updated>2025-10-07T00:00:00+02:00</updated>" in empty
+    manifest = pl.read_parquet(time_files(layout).feeds)
+    assert manifest.get_column("wahlkreis_id").to_list() == [1, 2, 3]
+    assert manifest.get_column("eintraege").to_list() == [1, 1, 0]

@@ -27,6 +27,7 @@ Die Pfade gehören diesem Modul (Synergien 2026-11, § 2.1): wer die Tabellen li
 
 from __future__ import annotations
 
+import datetime as dt
 from pathlib import Path
 from typing import NamedTuple
 from zoneinfo import ZoneInfo
@@ -56,12 +57,13 @@ from georep.analysis.lexicon import (
     vocabulary_spans,
 )
 from georep.enrich import Contribution
-from georep.errors import SchemaError
+from georep.errors import EmptyResultError, SchemaError
 from georep.http import Transport
 from georep.io import write_parquet, write_text
 from georep.layout import Layout
 from georep.pipeline import Step
 from georep.report.feeds import (
+    EMPTY_UPDATED,
     FEEDS_SCHEMA,
     FEEDS_SCHEMA_VERSION,
     SUBTITLE,
@@ -72,6 +74,7 @@ from georep.report.feeds import (
     feed_name,
     newest_entries,
     render_feed,
+    timestamp,
 )
 from georep.search.index import PAPER_IDS, TERM
 from georep.settings import Settings
@@ -286,14 +289,28 @@ def time_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
         visible = pl.read_parquet(layout.index).filter(
             ~pl.col(TERM).is_in(list(settings.search.hide_in_display))
         )
-        districts = hits_by_district(pl.read_parquet(layout.dictionary), visible).sort(DISTRICT)
+        dictionary = pl.read_parquet(layout.dictionary)
+        try:
+            hits = dict(
+                hits_by_district(dictionary, visible).select(DISTRICT, PAPER_IDS).iter_rows()
+            )
+        except EmptyResultError:
+            hits = {}
+        # Review N2: jeder Wahlbezirk des Wörterbuchs bekommt einen Feed, auch ohne Treffer; ein
+        # leerer trägt den Stand der Daten (das letzte Vorlagendatum, 00:00 Ortszeit)
+        districts = sorted(int(d) for d in dictionary.get_column(DISTRICT).drop_nulls().unique())
+        empty_updated = (
+            timestamp(dt.datetime.combine(stand, dt.time(0, 0), tzinfo=zone))
+            if stand is not None
+            else EMPTY_UPDATED
+        )
         target = layout.guard_writable(feed_dir(layout))
         target.mkdir(parents=True, exist_ok=True)
         slug = f"{settings.city.slug}/{layout.root.name}"
         rows: list[dict[str, object]] = []
         changed = 0
-        for district, paper_ids in districts.select(DISTRICT, PAPER_IDS).iter_rows():
-            chosen = [documents[p] for p in paper_ids if p in documents]
+        for district in districts:
+            chosen = [documents[p] for p in hits.get(district, []) if p in documents]
             entries = newest_entries(chosen, settings.feeds.entries, zone)
             name = feed_name(int(district))
             head = FeedHead(
@@ -303,7 +320,7 @@ def time_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
                 subtitle=SUBTITLE,
                 generator_version=__version__,
             )
-            text = render_feed(head, entries)
+            text = render_feed(head, entries, empty_updated=empty_updated)
             problems = atom_problems(text)
             if problems:
                 raise SchemaError(
@@ -322,7 +339,7 @@ def time_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
                     "neu_30_tage": sum(
                         1 for d in chosen if stand is not None and (stand - d.day).days < 30
                     ),
-                    "aktualisiert": max((e.updated for e in entries), default=""),
+                    "aktualisiert": max((e.updated for e in entries), default=empty_updated),
                     "bytes": len(text.encode("utf-8")),
                 }
             )
