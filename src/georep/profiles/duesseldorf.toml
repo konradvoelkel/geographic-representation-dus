@@ -877,3 +877,4 @@ texts = "snapshots/2025/cache/text/texts.parquet"
 # stadtneutral in defaults.toml, die Präfixe des Modells unter [ml.embedding].
 [embeddings]
 enabled = true                 # Schritte embeddings (nur `georep run --models`) und neighbors
+neighbors_package = "snapshots/duesseldorf-aehnlich/raw/aehnliche_dokumente_paket.parquet"  # die zehn ähnlichen Dokumente je Korpus-ID, ohne Vektoren (snapshots/duesseldorf-aehnlich/README.md); bootstrap legt sie nach raw/, neighbors nimmt sie, wo es keine Dokumentvektoren gibt (Pages)
