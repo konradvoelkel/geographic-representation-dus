@@ -231,3 +231,29 @@ def test_a_package_with_other_columns_is_a_schema_error(settings: Settings, layo
     steps = _steps(settings, layout, FakeEmbedder())
     with pytest.raises(SchemaError, match="aehnliche_dokumente"):
         run_pipeline([steps["neighbors"]], settings)
+
+
+def test_a_rejected_chunk_leaves_its_document_without_a_vector(
+    settings: Settings, layout: Layout
+) -> None:
+    """2014 bis 2020: ein Dokument mit Zeichensalat (Steuerzeichen) hat Stücke über 512 Token, und
+    ollama weist sie trotz ``truncate`` ab (400). Abgewiesen ist erledigt (F5): der Schritt ist
+    aktuell, das Dokument hat keinen Dokumentvektor und keine Nachbarn, die übrigen schon."""
+    from georep.search.units import build_units, raw_frame, unit_chunks
+
+    corpus = pl.read_parquet(layout.corpus)
+    store = RawTextStore(layout.raw_texts)
+    raw = raw_frame((n, str(r["text"]), store.form_feeds(n)) for n, r in store.rows.items())
+    chunks = unit_chunks(build_units(corpus, raw, 10), 40, 5, "search_document: ")
+    first = chunks.filter(pl.col("datei") == "f2.pdf").get_column("text")[0]
+    steps = _steps(settings, layout, FakeEmbedder(rejects={first}))
+    outcomes = run_pipeline(list(steps.values()), settings, models=True)
+    assert [o.status for o in outcomes] == ["ausgeführt", "ausgeführt"]
+    assert "1 abgewiesen" in outcomes[0].reason
+    assert "1 ohne eines der ersten 3 Stücke" in outcomes[0].reason
+    files = embedding_files(layout)
+    assert "id2" not in pl.read_parquet(files.documents).get_column("id").to_list()
+    neighbors = pl.read_parquet(files.neighbors)
+    assert "id2" not in set(neighbors.get_column("id")) | set(neighbors.get_column("nachbar"))
+    again = run_pipeline([steps["embeddings"]], settings, models=True)[0]
+    assert again.status == "übersprungen" and again.reason == "aktuell, 1 Eingaben abgewiesen"

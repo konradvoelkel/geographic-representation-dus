@@ -180,7 +180,8 @@ def model_steps(settings: Settings, layout: Layout, embedder: Embedder) -> list[
         return (
             f"{units.height} Dateien, {chunks.height} Stücke ({got.report.line()}); "
             f"Dokumentvektoren für {documents.height} von {ids} Korpus-IDs, {without} ohne "
-            f"Rohtext, {missing} offen (Prompt {use.prompt})"
+            f"Rohtext, {missing} ohne eines der ersten {cfg.document_chunks} Stücke (offen oder "
+            f"abgewiesen; Prompt {use.prompt})"
         )
 
     def neighbors() -> str:
