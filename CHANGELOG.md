@@ -2,6 +2,19 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.23.0 (2026-11-24), Nachzug der Fundamente für die Vorhaben
+
+- **Frühe Beiträge** (`docs/decisions.md`, Punkt 74): `Contribution.early_steps` hängt Schritte eines
+  Vorhabens vor `weights` ein, damit eine Gewichtsvariante (16) ihre Eingabe vor dem Kern hat.
+- **Netz für Beiträge**: die Fabriken bekommen `(settings, layout, http)`; die Session entsteht erst beim
+  ersten Abruf, `georep steps`, `status`, `paths` und `--dry-run` legen weiter kein `http.sqlite` an.
+- **Spannen mit Zusatzspalten** hinter den acht von F3; `check_spans` prüft Folge und Typ der acht,
+  `sort_spans` sortiert über alle acht, `empty_spans(extra)`.
+- **`flatten_with_offsets`**: je Zeichen des geplätteten Texts die Stelle im Rohtext (0 Abweichungen
+  über alle vier Stores).
+- **Schrittfolge geprüft**: kein Schritt liest eine Ausgabe, die erst ein späterer schreibt; keine
+  Ausgabe doppelt. Keine Zahl der Seite ändert sich.
+
 ## 0.22.0 (2026-11-23), Rohtext je PDF
 
 - **Rohtextstore** (`docs/decisions.md`, Punkt 73): neben dem kleingeschriebenen Textstore, den die

@@ -2831,7 +2831,7 @@ der zweite Lauf rechnete die Seite neu); der Satz über den Rohtext mit der blo�
 auch bei einem halben Store); die Schema-Version des Textstores beim Laden prüfen wie hier (dasselbe
 Muster, aber ein eigener Eingriff in einen Store, an dem jede Zahl hängt; notiert, nicht gebaut).
 
-## NN. Fundament-Nachzug F7: frühe Beiträge, `http` an den Beiträgen, Zusatzspalten an Spannen, Stelle im Rohtext je Zeichen (2026-11-23)
+## 74. Fundament-Nachzug F7: frühe Beiträge, `http` an den Beiträgen, Zusatzspalten an Spannen, Stelle im Rohtext je Zeichen (2026-11-23)
 
 Die Synergien der Stufe 1 (`docs/plans/00-synergien-2026-11.md`, § 2.2, Konflikte 1, 3, 6 und 7;
 § 3.1, Punkt 2) fanden vier Stellen, an denen F1 bis F3 (Punkte 69 und 73) für Stufe 2 nicht
