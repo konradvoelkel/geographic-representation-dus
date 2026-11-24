@@ -43,6 +43,7 @@ from georep.prep.context import CONTEXT_SCHEMA_VERSION
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION, stop_words_digest
+from georep.search.vectors import EMBEDDINGS_SCHEMA_VERSION, NEIGHBORS_SCHEMA_VERSION
 from georep.settings import Settings
 from georep.stores import RAW_TEXT_SCHEMA_VERSION
 from tests.fakes import FakeSession
@@ -80,6 +81,9 @@ VERSIONS = {
     # Vorhaben 14: zwei Schritte eines Beitrags (F2), beide aus dem Modul, das die Dateien schreibt
     "references": PROCEDURES_SCHEMA_VERSION,
     "procedures": PROCEDURES_SCHEMA_VERSION,
+    # Vorhaben 18: zwei Schritte eines Beitrags (``georep.enrich.embeddings``)
+    "embeddings": EMBEDDINGS_SCHEMA_VERSION,
+    "neighbors": NEIGHBORS_SCHEMA_VERSION,
 }
 
 
@@ -294,10 +298,11 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
     # Heute 19 im Kern: texts, raw_texts, voters, context, streets, pois, dictionary, corpus,
     # bodies, topics, committees, index, timeline, results, metrics, body_hits, weights, controls,
     # parties; dazu je ein Parquet-Schritt der Beiträge aus dem Register (Vorhaben 15: zwei).
+    # Ohne ``--models`` läuft ein Modellschritt nicht (Vorhaben 18: ``embeddings``), seine Datei fehlt
     contributed = [
         s
         for s in georep.enrich.contributed_steps(default_settings, mini_run, FakeSession({}))
-        if s.outputs[0].suffix == ".parquet"
+        if s.outputs[0].suffix == ".parquet" and s.models is None
     ]
     assert checked == 19 + len(contributed), checked
 
@@ -351,6 +356,10 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # Vorhaben 14: wie die Beratungsfolge die Version der Datei, die ``georep pack --attachments``
     # schreibt; die Schritte ``references`` und ``procedures`` lesen sie nur.
     "georep.pack.ATTACHMENTS_SCHEMA_VERSION",
+    # Vorhaben 18: die Wortmatrix, die ``georep search`` beim ersten Aufruf baut und neben die
+    # Vektoren legt. Sie gehört zu einem Befehl wie die Beratungsfolge oben; ihr Schlüssel (Fassung,
+    # Korpus, Rohtextstore) steht in ihren Metadaten, und der Befehl baut sie neu, wenn er abweicht.
+    "georep.search.query.WORD_INDEX_SCHEMA_VERSION",
 }
 
 

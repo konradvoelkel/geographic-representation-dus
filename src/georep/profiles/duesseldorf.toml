@@ -871,3 +871,9 @@ texts = "snapshots/duesseldorf-texte/cache/text/texts.parquet"
 profile = "duesseldorf-2025"
 papers = "snapshots/2025/raw/papers.jsonl"
 texts = "snapshots/2025/cache/text/texts.parquet"
+
+# --- Vorhaben 18: Einbettungen, Ähnlichkeit, Suche (docs/plans/18-einbettungen.md) --------------
+# Gemessen an dieser Periode; die Perioden erben den Schalter. Was die Stücke bestimmt, steht
+# stadtneutral in defaults.toml, die Präfixe des Modells unter [ml.embedding].
+[embeddings]
+enabled = true                 # Schritte embeddings (nur `georep run --models`) und neighbors
