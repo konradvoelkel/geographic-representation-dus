@@ -23,6 +23,14 @@ Fixture an einer Datei außerhalb dieses Ordners hängt. `expected/` kennt sie n
 Gremienzahlen der Fixture ändert sie nichts: dort trifft jede Drucksachennummer, und die Nummer
 entscheidet.
 
+`raw/tagesordnungspunkte.parquet` (seit 2026-11-24, Vorhaben 26): die Tabelle „Paper ×
+Tagesordnungspunkt“ genau dieser 200 Dokumente, aus
+`snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-duesseldorf.parquet` gefiltert
+(`make_mini.write_agenda`; 317 Zeilen). Wie die Beratungsfolge gilt sie vor dem Paket aus
+`outcomes.package`, und so liest der Schritt `council_results` dieselben Zeilen auch aus einem
+Arbeitsverzeichnis, von dem aus der relative Pfad des Pakets nicht trägt (`tests/unit/test_cli.py`).
+`expected/` kennt sie nicht.
+
 `expected/`: die sieben Ausgaben des Altcodes der Arbeit (pandas, FlashText) auf genau diesen
 Eingaben, erzeugt am 2026-10-11 auf dem Stand des Tags `v0.2.0`. Sie sind der Golden Master für
 die Polars-Kette und werden nicht neu erzeugt.

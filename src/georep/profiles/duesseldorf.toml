@@ -881,6 +881,7 @@ texts = "snapshots/2025/cache/text/texts.parquet"
 # Wortlaut ab. Die Zuordnung ist an 150 Anträgen von zwei KI-Kodierern geprüft, 150 von 150 gleich
 # (§ 4.1); ob der Eintrag selbst stimmt, zeigt nur die Niederschrift (Frage 9.1).
 [outcomes]
+enabled = true                 # alle drei Perioden; der Wortschatz ist derselbe (21 Werte in jedem Netzlauf, die laufende Periode kennt 20)
 package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-duesseldorf.parquet"  # Netzlauf vom 2026-11-23 (README dort); ein Periodenprofil nennt seine eigene Datei
 
 [outcomes.results]

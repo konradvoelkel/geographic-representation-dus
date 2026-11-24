@@ -635,17 +635,19 @@ def test_without_the_parties_step_the_section_stays_empty(
 ) -> None:
     """Ein Lauf ohne den Schritt ``parties`` lässt die vier Modellfelder leer; die Vorlage
     blendet den Abschnitt dann aus. Ohne ihn fehlen auch die Schritte, die seine Urheber lesen
-    (Vorhaben 15)."""
+    (Vorhaben 15), und die, die deren Ausgaben lesen (Vorhaben 26 liest die Antragsteller)."""
     from georep.bootstrap import bootstrap_from_settings
     from georep.pipeline import build_steps, run_pipeline
 
     layout = Layout(tmp_path / "data", tmp_path / "cache", mini_root)
     bootstrap_from_settings(layout, default_settings)
-    steps = [
-        s
-        for s in build_steps(default_settings, layout)
-        if s.name not in ("parties", "report") and layout.document_originators not in s.inputs
-    ]
+    missing = {layout.document_originators}
+    steps = []
+    for s in build_steps(default_settings, layout):
+        if s.name in ("parties", "report") or missing & set(s.inputs):
+            missing |= set(s.outputs)
+        else:
+            steps.append(s)
     run_pipeline(steps, default_settings, [s.name for s in steps if not s.network])
     assert not layout.party_results.exists()
     model = build_report_model(

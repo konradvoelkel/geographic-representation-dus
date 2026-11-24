@@ -65,13 +65,16 @@ PACKAGES = (
     Package("snapshots/duesseldorf-anlagen", limit=1 * MIB, native=False, readme=True),
     # Vorhaben 14: dasselbe für die zweite Stadt, neben reference/moenchengladbach/ (63 910)
     Package("snapshots/moenchengladbach-anlagen", limit=1 * MIB, native=False, readme=True),
+    # Vorhaben 26: die Tabelle Paper x Tagesordnungspunkt der drei Perioden, je eine Datei (631 944)
+    Package("snapshots/duesseldorf-beschluesse", limit=2 * MIB, native=False, readme=True),
 )
 # Alle zusammen, als zweite grobe Schranke: 174 580 489 Bytes = 166,49 MiB am 2026-11-23 (92,5 %
 # der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, die drei Textstores sind seit
 # Punkt 67 zusammen 266 295 Bytes kleiner, das Textpaket der Hauptperiode kam mit Punkt 68 dazu und
 # das Rohtextpaket mit Fundament F1); mit den beiden Anlagenpaketen von Vorhaben 14 174 947 799
 # Bytes = 166,84 MiB (92,7 %, 2026-11-24). Ein einziger PDF-Ordner einer Periode (585 MB bis
-# 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
+# 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie. Mit dem Beschlusspaket von
+# Vorhaben 26 175 579 743 Bytes = 167,45 MiB (93,0 %, 2026-11-24).
 TOTAL_LIMIT = 180 * MIB
 
 # Was in keinem Paket liegen darf, mit dem Grund. Endungen werden gegen das Suffix geprüft, Namen
@@ -482,3 +485,19 @@ def test_each_city_reads_its_own_attachment_package() -> None:
         found = load_settings(profile=profile, cwd=nowhere).procedures.attachments
         assert found is not None and found.parent.parent == Path(package), profile
         assert (REPO / found).is_file(), profile
+
+
+def test_each_period_reads_its_own_table_of_the_outcomes_package() -> None:
+    """Vorhaben 26: jede Düsseldorfer Periode nennt ihre Datei, und sie liegt im Repo."""
+    from georep.settings import load_settings
+
+    nowhere = Path("/nonexistent")
+    found = {}
+    for profile in ("duesseldorf", "duesseldorf-2014", "duesseldorf-2025", "duesseldorf-vergleich"):
+        package = load_settings(profile=profile, cwd=nowhere).outcomes.package
+        assert package is not None and (REPO / package).is_file(), (profile, package)
+        assert package.parts[:2] == ("snapshots", "duesseldorf-beschluesse"), profile
+        found[profile] = package.name
+    assert len(set(found.values())) == 3  # der Vergleich ist die Hauptperiode (Punkt 52)
+    assert found["duesseldorf-vergleich"] == found["duesseldorf"]
+    assert load_settings(profile="moenchengladbach", cwd=nowhere).outcomes.package is None

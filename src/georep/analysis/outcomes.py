@@ -54,9 +54,14 @@ from georep.oparl import OparlAgendaItem, OparlConsultation, OparlMeeting
 from georep.prep.bodies import organization_key
 from georep.settings import OUTCOME_STAGES, OutcomeReview, Outcomes
 
+# Version 1: die drei Ausgaben aus dem Bauplan (Messdokument § 6, § 10): beratungsverlauf,
+# beschlusslage, antragserfolg. Erhöhen, wenn sich eine Spalte oder ein Typ ändert.
+OUTCOMES_SCHEMA_VERSION = 1
 # Version 1 der Tabelle „Paper × Tagesordnungspunkt" im Paket (``georep pack --outcomes``). Eigene
 # Konstante wie bei Punkt 58: das Paket ist eine Eingabe, kein Ergebnis eines Schritts.
 AGENDA_SCHEMA_VERSION = 1
+# Der Name der Tabelle unter ``raw/``, wohin ``bootstrap`` das Paket legt (``enrich.outcomes``).
+AGENDA_NAME = "tagesordnungspunkte.parquet"
 
 SACHE, STAND = "sache", "stand"
 ANGENOMMEN = ("beschlossen", "geaendert")

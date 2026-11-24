@@ -130,6 +130,9 @@ def test_pipeline_runs_skips_and_reruns(
         # Vorhaben 14: Kanten, Vorgänge und Antworten hängen am Korpus, nicht an den Orten
         "references": "übersprungen",
         "procedures": "übersprungen",
+        # Vorhaben 26: Beratungsverlauf und Beschlusslage hängen an Korpus, Paket, 14 und 15
+        "council_results": "übersprungen",
+        "outcomes": "übersprungen",
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")

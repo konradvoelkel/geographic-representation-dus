@@ -24,6 +24,7 @@ import georep.enrich
 from georep import __version__
 from georep.analysis.cosponsors import COSPONSORS_SCHEMA_VERSION
 from georep.analysis.functions import FUNCTIONS_SCHEMA_VERSION
+from georep.analysis.outcomes import OUTCOMES_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.enrich.procedures import PROCEDURES_SCHEMA_VERSION
 from georep.errors import MissingInputError
@@ -80,6 +81,9 @@ VERSIONS = {
     # Vorhaben 14: zwei Schritte eines Beitrags (F2), beide aus dem Modul, das die Dateien schreibt
     "references": PROCEDURES_SCHEMA_VERSION,
     "procedures": PROCEDURES_SCHEMA_VERSION,
+    # Vorhaben 26: der Beratungsverlauf und die Beschlusslage, ein Modul für drei Dateien
+    "council_results": OUTCOMES_SCHEMA_VERSION,
+    "outcomes": OUTCOMES_SCHEMA_VERSION,
 }
 
 

@@ -22,6 +22,7 @@ from typing import Any
 import polars as pl
 from loguru import logger
 
+from georep.enrich.outcomes import outcome_files
 from georep.enrich.procedures import procedure_files
 from georep.io import atomic_path
 from georep.layout import Layout
@@ -299,6 +300,8 @@ def bootstrap_from_settings(
         raw_texts=settings.bootstrap.raw_texts,
         # Vorhaben 14: nur mit eingeschalteten Schritten, sonst läge eine Kopie ohne Leser in raw/
         attachments=settings.procedures.attachments if settings.procedures.enabled else None,
+        # Vorhaben 26: ebenso nur mit eingeschalteten Schritten
+        outcomes=settings.outcomes.package if settings.outcomes.enabled else None,
     )
 
 
@@ -313,6 +316,7 @@ def bootstrap(
     texts: Path | None = None,
     raw_texts: Path | None = None,
     attachments: Path | None = None,
+    outcomes: Path | None = None,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
 
@@ -334,6 +338,9 @@ def bootstrap(
     gilt, und nur, wenn jeder seiner Namen eine Datei dieses Datensatzes ist
     (``overlay_raw_texts``). ``attachments`` ist die Naht von Vorhaben 14: das Anlagenpaket, das
     nach ``raw/anlagen.parquet`` kommt, wo die Schritte ``references`` und ``procedures`` es lesen.
+    ``outcomes`` ist die Naht von Vorhaben 26: die Tabelle „Paper × Tagesordnungspunkt" für
+    ``raw/tagesordnungspunkte.parquet``, die der Schritt ``council_results`` liest, wo kein Netzlauf
+    liegt; bringt der eingefrorene Datensatz eine eigene mit, gilt seine (wie bei Punkt 58).
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -368,6 +375,10 @@ def bootstrap(
         pairs += [(layout.context_source(name), layout.external / name) for name in context_files]
     if attachments is not None:  # Vorhaben 14
         pairs.append((attachments, procedure_files(layout).attachments))
+    if outcomes is not None:  # Vorhaben 26
+        agenda = outcome_files(layout).agenda
+        own = outcome_files(reference).agenda
+        pairs.append((own if own.is_file() else outcomes, agenda))
     for source, target in pairs:
         _copy_input(layout, source, target, report, force=force)
     # Option 02: die zwei Eingaben des Crosswalks, wenn der Schnappschuss sie mitbringt

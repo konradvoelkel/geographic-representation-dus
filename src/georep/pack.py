@@ -715,3 +715,89 @@ def pack_attachments(
         readme_written=not (target / README_NAME).exists(),
     )
     return _with_readme(report, settings, today, command="pack --attachments")
+
+
+# --- Vorhaben 26: die Tabelle „Paper × Tagesordnungspunkt" für die Beschlusslage ---------------
+
+# Wie beim Rohtextpaket (Review F1, M4): das Paket liegt im Repo, also zstd auf Stufe 19.
+OUTCOMES_ZSTD_LEVEL = RAW_TEXTS_ZSTD_LEVEL
+
+
+def pack_outcomes(
+    layout: Layout,
+    settings: Settings,
+    target: Path,
+    *,
+    force: bool = False,
+    today: dt.date | None = None,
+) -> PackReport:
+    """Nur die Tabelle „Paper × Tagesordnungspunkt" packen (Vorhaben 26).
+
+    GitHub Pages hat kein Netz und damit keinen Netzlauf von Fundament F6; die Beschlusslage
+    braucht aus ihm nur diese Tabelle (Messdokument ``docs/plans/26-beschluesse.md``, § 6 und
+    § 10). Gepackt wird aus ``raw/*.jsonl`` dieses Laufs für die Korpus-IDs dieses Laufs, unter dem
+    Dateinamen aus ``[outcomes].package`` (sonst ``tagesordnungspunkte-<profil>.parquet``), damit
+    Profil und Paket zusammenpassen. Geprüft wird: der Netzlauf ist vollständig (kein offener
+    Abruf), jeder Eintrag steht im Wortschatz des Profils, und mindestens ein Punkt trägt einen
+    -- sonst wäre das Paket eine Liste von IDs. Namen von Personen trägt die Tabelle keine: nur
+    IDs, Schlüssel der Organisationen, Rolle, Beginn, Nummer, Folge und den Eintrag.
+    """
+    # Im Aufruf importiert wie das Register in ``pipeline``: ``enrich.outcomes`` baut Schritte und
+    # zieht die Kette nach; ``georep pack`` ohne diese Option soll sie nicht laden.
+    from georep.analysis.outcomes import AGENDA_SCHEMA_VERSION, progress
+    from georep.council import council_files
+    from georep.enrich.outcomes import agenda_from_network, network_inputs
+
+    claim_target(layout, target)
+    council = council_files(layout)
+    missing = [str(p) for p in (*network_inputs(layout), layout.corpus) if not p.is_file()]
+    if missing:
+        raise PackError(
+            f"{missing} fehlen; lief der Netzlauf (`georep fetch meetings consultations`) und "
+            "`georep run` für dieses Profil?"
+        )
+    unfinished = [
+        str(council.progress(step))
+        for step in ("meetings", "consultations")
+        if council.progress(step).is_file()
+    ]
+    if unfinished:
+        raise PackError(f"Abruf unvollständig ({', '.join(unfinished)}); erst zu Ende abrufen")
+    papers = pl.read_parquet(layout.corpus, columns=["id"]).get_column("id").to_list()
+    frame = agenda_from_network(layout, papers)
+    progress(frame, dict(settings.bodies.organizations), dict(settings.outcomes.results))
+    entered = int(frame.get_column("result").is_not_null().sum())
+    if not entered:
+        raise PackError(
+            f"{layout.raw}: kein Tagesordnungspunkt der {len(papers)} Dokumente trägt einen "
+            "Eintrag; das Paket wäre leer"
+        )
+    package = settings.outcomes.package
+    name = f"raw/{package.name if package else f'tagesordnungspunkte-{settings.profile}.parquet'}"
+    destination = target / name
+    skipped: list[str] = []
+    if destination.exists() and not force:
+        skipped.append(name)
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        write_parquet(
+            frame,
+            destination,
+            schema_version=AGENDA_SCHEMA_VERSION,
+            compression_level=OUTCOMES_ZSTD_LEVEL,
+        )
+    report = PackReport(
+        target=target,
+        files=(
+            PackedFile(name=name, bytes=destination.stat().st_size, sha256=sha256_of(destination)),
+        ),
+        skipped=tuple(skipped),
+        figures=(
+            ("Dokumente mit Beratung", frame.get_column("id").n_unique()),
+            ("Zeilen", frame.height),
+            ("Tagesordnungspunkte", int(frame.get_column("top").is_not_null().sum())),
+            ("mit Eintrag", entered),
+        ),
+        readme_written=not (target / README_NAME).exists(),
+    )
+    return _with_readme(report, settings, today, command="pack --outcomes")

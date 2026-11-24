@@ -24,7 +24,14 @@ from georep.export import export_csv
 from georep.layout import Layout
 from georep.learn import learn_bodies
 from georep.ml import commands as ml_commands
-from georep.pack import pack, pack_attachments, pack_consultations, pack_raw_texts, pack_texts
+from georep.pack import (
+    pack,
+    pack_attachments,
+    pack_consultations,
+    pack_outcomes,
+    pack_raw_texts,
+    pack_texts,
+)
 from georep.pipeline import Outcome, build_steps, freshness, run_step, select_steps
 from georep.profiling import profile_step
 from georep.report.build import current_commit
@@ -164,6 +171,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="nur die Anlagen je Drucksache packen (raw/anlagen.parquet), aus dem HTTP-Cache, für "
         "dieses Profil und seine Nachbarperioden",
+    )
+    # Vorhaben 26: die Tabelle Paper x Tagesordnungspunkt aus dem Netzlauf, für Läufe ohne Netz
+    only.add_argument(
+        "--outcomes",
+        action="store_true",
+        help="nur die Tabelle Paper x Tagesordnungspunkt packen (raw/tagesordnungspunkte-*.parquet), "
+        "aus dem Netzlauf der Sitzungen und Beratungen",
     )
 
     # Punkt 58: die Abbildung Organisation -> Gremium aus den Daten lernen, nicht raten
@@ -416,7 +430,8 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
     dann gehört sie von Hand hinein, und nur dort weiß ein Mensch, wo. Mit ``--consultations``
     entsteht statt der Eingaben eines Laufs nur die Beratungsfolge je Dokument (Punkt 58), mit
     ``--texts`` nur der Textstore (Punkt 68), mit ``--raw-texts`` nur der Rohtextstore
-    (Fundament F1), mit ``--attachments`` nur die Anlagen je Drucksache (Vorhaben 14).
+    (Fundament F1), mit ``--attachments`` nur die Anlagen je Drucksache (Vorhaben 14), mit
+    ``--outcomes`` nur die Tabelle Paper × Tagesordnungspunkt (Vorhaben 26).
     """
     write = (
         pack_consultations
@@ -427,6 +442,8 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
         if args.raw_texts
         else pack_attachments  # Vorhaben 14
         if args.attachments
+        else pack_outcomes  # Vorhaben 26
+        if args.outcomes
         else pack
     )
     report = write(layout, settings, args.target, force=args.force)
