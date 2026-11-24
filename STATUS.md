@@ -11,13 +11,7 @@ hat sich bewegt. Vorhaben 14 (Vorgänge) ist in Stufe 2 gebaut (`docs/decisions.
 76): die Schritte `references` und `procedures` in Düsseldorf und Mönchengladbach, nur
 starke Kanten nach der Rückfallregel, dazu die Anlagenpakete unter `snapshots/`; die Seite zeigt
 davon noch nichts (Stufe 3). Eine Datenwurzel von vor `v0.25.0` braucht einmal `georep bootstrap`
-je Profil, sonst fehlt `raw/anlagen.parquet` (ohne `--force`, das auch die Stores neu anlegte). Vorhaben 18
-(Einbettungen) ist in Stufe 2 gebaut (`docs/decisions.md`, Punkt „Einbettungen über Stücke"): der
-erste Schritt mit Modell, `embeddings` (nur `georep run --models`, Vektoren nur lokal), `neighbors`
-(zehn ähnliche Dokumente je Korpus-ID; ohne Vektoren aus `snapshots/duesseldorf-aehnlich/`) und
-`georep search` (lokal, Einbettung als Vorgabe, ohne ollama BM25); die Seite zeigt davon noch nichts
-(Stufe 3 wartet auf den Dialog-Haken). Auch dafür braucht eine ältere Datenwurzel einmal `georep
-bootstrap` je Profil, sonst fehlt `raw/aehnliche_dokumente_paket.parquet`.
+je Profil, sonst fehlt `raw/anlagen.parquet` (ohne `--force`, das auch die Stores neu anlegte).
 
 Stand 2026-11-18, `main` auf `v0.16.0`: die Abhängigkeitsrunde vom 2026-11-15
 (Punkt 66; keine Zahl der Seite bewegt sich), pypdf 7.1.0 als Extraktor (Punkt 67; drei Datensätze

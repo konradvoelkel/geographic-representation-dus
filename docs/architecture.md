@@ -458,9 +458,9 @@ Text wird hinten abgeschnitten (Vorhaben 18 zerteilt vorher); `qwen3.6:27b` bele
 beide passen **nicht** zusammen in 24 GB (`gemma4` belegt 10,8 GB). Durchsatz und Hochrechnung je
 Modell stehen in [profiling/README.md](profiling/README.md), „Lokale Modelle auf der RTX 4090".
 
-**Der erste Modellschritt ist `embeddings`** (Vorhaben 18, `enrich/embeddings.py`, Messdokument
+**Ein Modellschritt: `embeddings`** (Vorhaben 18, `enrich/embeddings.py`, Messdokument
 [plans/18-einbettungen.md](plans/18-einbettungen.md)). Er folgt dem Gerüst oben und legt drei
-Dinge fest, die spätere Modellschritte übernehmen können:
+Dinge fest, die andere Modellschritte übernehmen können:
 
 - **Was das Modell sieht, steht in der Prompt-Version.** Die Präfixe `search_document: ` und
   `search_query: ` gehören zum Modell und stehen darum in `[ml.embedding]`, also außerhalb des

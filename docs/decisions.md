@@ -3143,7 +3143,7 @@ Nachbarn überholt, für Cluster nicht (§ 3.5 der Messung: nicht bauen).
 **Was gebaut ist.** Der Beitrag `18-einbettungen` (`georep.enrich.embeddings`) hinter 15 und 14,
 mit zwei Schritten hinter `embeddings.enabled` (beide Stadtprofile, die Perioden erben):
 
-- `embeddings` ist der **erste Schritt mit Modell** (F5, Punkt 72) und läuft nur mit
+- `embeddings` ist ein **Schritt mit Modell** (F5, Punkt 72) und läuft nur mit
   `georep run --models`. Je PDF-Datei mit Rohtext eine Einheit unter der kleinsten Korpus-ID
   (`search.units`), der Rohtext mit den Formfeeds der Seiten zurück (`restore_form_feeds`), wie
   die Messdatei ihn trug. Stücke nach `18-stuecke-1` (`prep.chunks.split_chunks`, das `zerteile`
@@ -3168,6 +3168,15 @@ mit zwei Schritten hinter `embeddings.enabled` (beide Stadtprofile, die Perioden
   Schlüssel `neighbors_package` zurück.
 - `georep search "<frage>" [--method embedding|hybrid|bm25] [--n 10]` (`search/query.py`,
   `search/command.py`), lokal; ohne Server oder ohne Stückvektoren BM25 mit einer Zeile dazu.
+
+**Wo die Nachbarn herkommen.** Ein Paket gibt es nur für die Hauptperiode; der Vergleich
+(`duesseldorf-vergleich`) rechnet in ihrem Ordner und erbt es. In 2014 bis 2020, der laufenden
+Periode und Mönchengladbach entsteht die Tabelle nur lokal aus den Vektoren eines Laufs mit
+`--models`; auf Pages und in CI bleibt sie dort leer. Eine Datenwurzel von vor diesem Stand bekommt
+die Paketkopie nur mit einem `georep bootstrap` (ohne `--force`). Ohne ihn schreibt `neighbors` auch
+in der Hauptperiode still eine leere Tabelle, wo es keine Dokumentvektoren gibt; nur die Laufzeile
+sagt es („keine Dokumentvektoren und kein Paket: leere Tabelle"). Kein Schritt der Seite liest die
+Tabelle vor Stufe 3, darum ist das kein Abbruch.
 
 **Gegen die Messung geprüft** (2026-11-24, Hauptperiode): alle 47 407 Stücktexte samt Präfix und
 Titel sind die des Messskripts, darum kamen alle 47 312 verschiedenen aus dem Modellcache (0 neu
