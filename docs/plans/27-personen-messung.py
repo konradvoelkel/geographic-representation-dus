@@ -799,6 +799,16 @@ def auswerten_labels(
     with datei.open(encoding="utf-8") as f:
         labels = {r["id"]: r["label"] for r in csv.DictReader(f) if r["frage"] == "fragesteller"}
     vh = {r["id"]: (r["personen"], r["nachnamen"]) for r in vorhersage.iter_rows(named=True)}
+    wege_je = {
+        r["id"]: dict(zip(r["personen"], r["wege"], strict=True))
+        for r in vorhersage.iter_rows(named=True)
+    }
+    # Grenzen des Vergleichs über Nachnamen: Paare, deren Nachname am Datum mehrere Mandatsträger
+    # tragen (der Vergleich kann sie nicht trennen), und der Recall nur gegen gelabelte Personen,
+    # die genau ein Mandatsträger aus OParl sein können
+    mehrfach: Counter[str] = Counter()
+    gegen_oparl: dict[str, list[int]] = defaultdict(lambda: [0, 0])
+    ohne_oparl: Counter[str] = Counter()
     schicht = dict(gg.select("id", "schicht").iter_rows())
     datum = dict(d.select("id", "date").iter_rows())
     N = Counter(schicht.values())
@@ -822,8 +832,19 @@ def auswerten_labels(
             hits = [m.person for m in mand.values() if m.nachname == g and aktiv(m, datum[i], None)]
             if len(hits) == 1:
                 kennungen.append(hits[0])
+                gegen_oparl[s][0] += g in pred
+                gegen_oparl[s][1] += 1
             else:
                 ohne += 1
+                ohne_oparl[s] += 1
+        for q in ids:
+            gleich = [
+                m
+                for m in mand.values()
+                if m.nachname == mand[q].nachname and aktiv(m, datum[i], None)
+            ]
+            if len(gleich) > 1:
+                mehrfach[wege_je[i][q]] += 1
         zeilen.append(
             {
                 "id": i,
@@ -845,6 +866,12 @@ def auswerten_labels(
             f"  {s}: Paare {pct(*paare[s])}; Dokumente ganz richtig {pct(*doks[s])}; "
             f"Recall der Paare {pct(*recall[s])}"
         )
+    for s in SCHICHTEN[:2]:
+        print(
+            f"  {s}: Recall gegen eindeutige Mandatsträger {pct(*gegen_oparl[s])}; gelabelte "
+            f"Personen ohne eindeutigen Mandatsträger am Datum {ohne_oparl[s]}"
+        )
+    print(f"  Paare mit am Datum mehrfach vergebenem Nachnamen, je Weg: {dict(mehrfach)}")
     for name, tab in (
         ("Präzision der Paare", paare),
         ("Dokumente ganz richtig", doks),
