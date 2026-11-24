@@ -19,7 +19,14 @@ from hypothesis import example, given, settings
 from hypothesis import strategies as st
 
 from georep.prep.raw_texts import PAGE_BREAK, split_lines
-from georep.prep.structure import Found, Structure, StructureRules, analyse, analyse_draft
+from georep.prep.structure import (
+    Found,
+    Structure,
+    StructureRules,
+    analyse,
+    analyse_draft,
+    name_key,
+)
 from georep.settings import load_settings
 from georep.spans import SPAN_SCHEMA, read_span, section_of, sort_spans
 
@@ -296,3 +303,11 @@ def test_the_analysis_is_the_same_on_a_second_run(
 ) -> None:
     text = _join(*document)
     assert analyse(text, _rules(), paper_type) == analyse(text, _rules(), paper_type)
+
+
+@given(name=st.text())
+@example(name="Fläche in m²")  # georep run 2026-11-24, Profil 2014 bis 2020: int("²") warf
+def test_the_name_key_takes_every_text(name: str) -> None:
+    """Der Schlüssel eines Gremiumsnamens ist für jeden Text definiert und ändert sich nicht mehr."""
+    key = name_key(name)
+    assert name_key(key) == key

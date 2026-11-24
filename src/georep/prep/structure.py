@@ -220,10 +220,11 @@ def name_key(name: str) -> str:
     „Ausschusses für Gesundheit und Soziales" und „Ausschuss für Gesundheit und Soziales" haben
     denselben Schlüssel, ebenso „Rates" und „Rat": je Wort fallen ``e`` und ``s`` am Ende weg, auf
     beiden Seiten gleich, also unterscheidet der Schlüssel zwei Namen nur, wo sie sich in mehr als
-    der Endung unterscheiden. Ziffern zählen ohne führende Null.
+    der Endung unterscheiden. Zahlen zählen ohne führende Null.
     """
     words = re.findall(r"\w+", name.casefold())
-    return " ".join(str(int(w)) if w.isdigit() else (w.rstrip("es") or w) for w in words)
+    # ``isdecimal``, nicht ``isdigit``: „²" ist eine Ziffer, aber keine Zahl für ``int``
+    return " ".join(str(int(w)) if w.isdecimal() else (w.rstrip("es") or w) for w in words)
 
 
 @dataclass(frozen=True)
