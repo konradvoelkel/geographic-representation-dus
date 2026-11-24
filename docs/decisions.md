@@ -3183,8 +3183,10 @@ Paket nach.
   Unfälle, Einwohner, Miete und Schulsozialindex je Wahlbezirk, ohne Klassen und Hypothesen
   (Frage 22.6). Die Periodenprofile schalten ab (Frage 22.5).
 - *`cells_to_districts` gibt es nicht*: `point_shares` mit Band 0 ist genau das.
-- *Spalten*: `sozialindex_schulen`, `schulen`, `schulen_mit_index` statt `sozialindex_gs`,
-  `grundschulen` (die Schulformen stehen in den Settings); `unfaelle_geteilt` (Anteile aus Unfällen,
+- *Spalten*: `sozialindex_schulen` statt `sozialindex_gs` und `schulen_mit_index` statt
+  `grundschulen` (das Messskript zählte nur Grundschulen mit Stufe; die Schulformen stehen jetzt in
+  den Settings), dazu `schulen` mit allen Schulen dieser Formen, auch ohne Stufe (88 gegen 87); so
+  ist auch der Abgleich oben gerechnet (Review 2026-11-24, N6). `unfaelle_geteilt` (Anteile aus Unfällen,
   die auf mehrere Wahlbezirke gehen) statt `unfaelle_am_rand`, das im Messskript auch die Stadtgrenze
   zählte (3 268 gegen 3 170); Zählungen aus Anteilen sind Float64, weil ein Punkt auf einer Grenze
   geteilt wird.
