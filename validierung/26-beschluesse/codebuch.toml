@@ -1,0 +1,155 @@
+# Codebuch Vorhaben 26 (Beschlusslage und Antragserfolg), Fassung 1, geschrieben am 2026-11-24 vor dem
+# Ziehen der Stichprobe; Klassen und Kriterium sind vorab festgelegt (docs/plans/26-beschluesse.md,
+# § 3.1, Commit d68962e). Die Aufträge baut nicht `georep validate tasks`, sondern das Messskript
+# (`26-beschluesse-messung.py --stichprobe`): je Antrag die Beratungsfolge über alle Gremien und drei
+# Perioden, die `tasks` nicht kennt. Zusammenführen, Schlichten und Übereinstimmung gehen wie immer über
+# `georep validate merge 26-beschluesse`; die Güte der Regel rechnet das Messskript (`--auswertung`).
+project = "26-beschluesse"
+version = "1"
+unit = "document"
+instructions = """
+Du bestimmst für einen Antrag aus dem Ratsinformationssystem der Stadt Düsseldorf, was aus ihm
+geworden ist (Beschlusslage), und ob er, wenn er angenommen wurde, nur einen Prüf- oder
+Berichtsauftrag an die Verwaltung enthält.
+
+Jede Einheit ist ein Antrag. Unter `dokumente` stehen Titel, Drucksachennummer, Datum, Dokumentart
+und der Anfang des Textes (`ausschnitt`, höchstens 2 500 Zeichen; `textquelle` = "klein" heißt:
+kleingeschrieben und ohne Zeilenumbrüche). Unter `beratungsfolge` steht, wie das
+Ratsinformationssystem den Antrag beraten hat, nach Sitzungsdatum geordnet: je Zeile das Gremium
+(Kürzel: RAT Rat, BV1 bis BV10 Bezirksvertretungen, OVA, KUA, AGS, SCHUA, JHA … Ausschüsse, JURAT
+Jugendrat, SENR Seniorenrat, INTR Integrationsrat), die Rolle der Beratung („Entscheidung",
+„Vorberatung", „Kenntnisnahme", „Anhörung", „-" heißt: nicht angegeben), das Sitzungsdatum, Nummer
+und Bezeichnung des Tagesordnungspunkts und `ergebnis`, wie die Sitzungsleitung es eingetragen hat.
+Eine Zeile mit `hinweis` ist eine Beratung ohne Tagesordnungspunkt im Datensatz (geplant oder nicht
+eingetragen); sie hat kein Ergebnis.
+
+Bedeutung der Ergebnisse: „einstimmig / mehrheitlich beschlossen", „beschlossen" = angenommen, wie
+gestellt; „abweichend beschlossen" = mit Änderungen angenommen; „… abgelehnt", „abgelehnt aufgrund
+Stimmengleichheit" = nicht angenommen; „zurückgewiesen" = förmlich nicht zugelassen; „zurückgezogen"
+= der Antragsteller hat ihn zurückgenommen; „Empfehlung … beschlossen / abgelehnt" = ein
+vorberatendes Gremium hat eine Empfehlung beschlossen; „zur Kenntnis genommen", „passieren lassen"
+(ohne Abstimmung durchgelassen, bei Haushaltsanträgen oft: an den Rat weitergegeben), „beantwortet",
+„schriftlich beantwortet" = behandelt, ohne über den Antrag abzustimmen; „vertagt",
+„zurückgestellt" = auf eine spätere Sitzung verschoben; „verwiesen" = an ein anderes Gremium
+abgegeben.
+
+Grundsatz für die Frage `ergebnis`: maßgeblich ist die **letzte Entscheidung in der Sache** über alle
+Zeilen, nach Sitzungsdatum (bei gleichem Datum die spätere Zeile). Entscheidungen in der Sache sind:
+beschlossen, abweichend beschlossen, abgelehnt, zurückgewiesen, zurückgezogen, auch als Empfehlung.
+Eine spätere Entscheidung in der Sache ersetzt eine frühere, auch in einem anderen Gremium (die
+Bezirksvertretung beschließt ihren Antrag an den Rat, der Rat lehnt ihn ab: abgelehnt).
+Kenntnisnahme, Vertagung und Verweisung ersetzen keine Entscheidung in der Sache (ein Ausschuss
+beschließt, ein anderer nimmt danach zur Kenntnis: beschlossen). Nur wenn es keine Entscheidung in
+der Sache gibt, zählt das letzte andere Ergebnis. Gibt es gar kein Ergebnis, ist es `ohne_ergebnis`.
+
+Prüfe bei jeder Zeile, ob ihr Tagesordnungspunkt diesen Antrag behandelt. Meist trägt er denselben
+Titel; abweichende Bezeichnungen derselben Sache („Antrag der FDP-Ratsfraktion, Eingang am …, hier:
+…") gehören dazu. Behandelt ein Tagesordnungspunkt erkennbar eine andere Sache, lass die Zeile
+weg und sag es in der Begründung.
+
+Urteile nur nach Codebuch, Beratungsfolge und Ausschnitt. Was dort nicht steht, gibt es für dich
+nicht; den Wortlaut einer Änderung kennt der Datensatz nicht. In `begruendung` ein kurzer Satz: welche
+Zeile maßgeblich ist und, bei `auftrag`, welcher Satz des Antrags es entscheidet.
+"""
+
+[[questions]]
+id = "ergebnis"
+question = "Welche Beschlusslage hat der Antrag nach der letzten Entscheidung in der Sache?"
+scale = "nominal"
+ignore = ["unklar"]
+instructions = """
+Genau eine Antwort nach dem Grundsatz oben. `unklar` nur, wenn die Beratungsfolge widersprüchlich
+ist und der Grundsatz nicht entscheidet (etwa zwei Entscheidungen derselben Sitzung mit
+verschiedenem Ergebnis); nicht, weil eine Zeile fehlt.
+"""
+
+[[questions.options]]
+value = "beschlossen"
+definition = "Die letzte Entscheidung in der Sache nimmt den Antrag an, wie gestellt (einstimmig, mehrheitlich, ohne Angabe; auch als Empfehlung)."
+example = "BV beschließt einstimmig; danach nichts mehr."
+
+[[questions.options]]
+value = "geaendert"
+definition = "Die letzte Entscheidung in der Sache nimmt den Antrag mit Änderungen an („abweichend beschlossen“, auch als Empfehlung)."
+example = "Ausschuss: abweichend beschlossen."
+
+[[questions.options]]
+value = "abgelehnt"
+definition = "Die letzte Entscheidung in der Sache nimmt den Antrag nicht an, einschließlich „zurückgewiesen“ und abgelehnter Empfehlung."
+example = "Rat: mehrheitlich abgelehnt."
+
+[[questions.options]]
+value = "zurueckgezogen"
+name = "zurückgezogen"
+definition = "Die letzte Entscheidung in der Sache ist die Rücknahme durch den Antragsteller."
+example = "Erst vertagt, in der nächsten Sitzung zurückgezogen."
+
+[[questions.options]]
+value = "erledigt"
+definition = "Keine Entscheidung in der Sache; das letzte Ergebnis ist eine Behandlung ohne Abstimmung: zur Kenntnis genommen, passieren lassen, beantwortet, schriftlich beantwortet."
+example = "Ein Begleitantrag zu einem Bericht: zur Kenntnis genommen."
+
+[[questions.options]]
+value = "vertagt"
+definition = "Keine Entscheidung in der Sache; das letzte Ergebnis ist vertagt oder zurückgestellt."
+example = "Ausschuss: vertagt; danach keine Zeile mit Ergebnis."
+
+[[questions.options]]
+value = "offen"
+definition = "Keine Entscheidung in der Sache; das letzte Ergebnis ist eine Verweisung an ein anderes Gremium, dort ist nichts eingetragen."
+example = "Rat: verwiesen; Ausschuss: Zeile ohne Ergebnis."
+
+[[questions.options]]
+value = "ohne_ergebnis"
+name = "ohne Ergebnis"
+definition = "Keine Zeile trägt ein Ergebnis (oder nur Zeilen, die eine andere Sache behandeln)."
+example = "Rat, Haushaltssitzung: Tagesordnungspunkt ohne Ergebnis."
+
+[[questions.options]]
+value = "unklar"
+definition = "Der Grundsatz entscheidet nicht (nur bei widersprüchlicher Beratungsfolge)."
+
+[[questions]]
+id = "auftrag"
+question = "Verlangt der angenommene Antrag von der Verwaltung nur eine Prüfung oder einen Bericht?"
+scale = "nominal"
+ignore = ["unklar"]
+only_if = { question = "ergebnis", values = ["beschlossen", "geaendert"] }
+instructions = """
+Lies den Antrag, wie er gestellt ist (Beschlussvorschlag, meist hinter „Antrag:" oder „… zu
+beschließen:" und vor „Begründung"), nicht die Begründung. Den geänderten Wortlaut kennt der
+Datensatz nicht; beurteile den gestellten. Eine Maßnahme unter dem Vorbehalt der Prüfung („prüfen,
+ob … eingerichtet werden kann, und es gegebenenfalls umsetzen") ist ein Prüfauftrag; eine Maßnahme
+neben einem Bericht („einrichten und bis Jahresende berichten") nicht. Ein Bericht oder Vortrag
+Dritter, zu dem die Verwaltung einladen soll, zählt wie ein Bericht der Verwaltung. Die Zusage von
+Haushaltsmitteln ist eine Maßnahme, auch wenn die Mittel für eine Untersuchung sind.
+"""
+
+[[questions.options]]
+value = "pruefauftrag"
+name = "Prüf- oder Berichtsauftrag"
+definition = "Der Antrag verlangt von der Verwaltung nur, etwas zu prüfen, zu untersuchen, zu berichten, darzustellen oder ein Konzept, eine Stellungnahme, einen Vorschlag vorzulegen; nichts davon legt eine Sache selbst fest."
+example = "„Die Verwaltung wird gebeten zu prüfen, ob an der Einmündung ein Zebrastreifen eingerichtet werden kann.“"
+
+[[questions.options]]
+value = "sachbeschluss"
+name = "Sachbeschluss"
+definition = "Der Antrag legt mindestens eine Sache selbst fest oder gibt eine Maßnahme in Auftrag (auch mit Bericht), vergibt Mittel, ändert eine Vorlage, gibt eine Erklärung ab oder fordert Dritte auf."
+example = "„Die Bezirksvertretung bittet die Verwaltung, am Pilgerweg ein Hinweisschild anzubringen.“"
+
+[[questions.options]]
+value = "unklar"
+definition = "Der Ausschnitt enthält den Beschlussvorschlag nicht oder nur so verstümmelt, dass sich nicht sagen lässt, was verlangt wird."
+
+[sample]
+size = 150
+seed = 26
+stratum = "schicht"            # Klasse der Regel, angenommen mit Prüfauftrag als eigene Schicht
+allocation = "proportional"    # gezogen wird mit der festen Aufteilung aus § 3.1 im Messskript, nicht mit `allocate`
+population = ""
+require_text = false           # Mönchengladbach fehlt; alle Düsseldorfer Anträge haben Text bis auf wenige
+
+[text]
+source = "raw"                 # Rohtext aus Phase 0 (messdaten/rohtext), sonst der kleingeschriebene Korpus
+chars = 2500
+title = true

@@ -1,0 +1,46 @@
+{
+  "vorhaben": "26-beschluesse",
+  "codebuch_version": "1",
+  "einheit": "document",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-24",
+  "einheiten": 150,
+  "uneinig": 0,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "ergebnis": {
+      "n": 150,
+      "beide": 150,
+      "einig": 150,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9750297556319235,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "auftrag": {
+      "n": 65,
+      "beide": 65,
+      "einig": 65,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9441984686771432,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "markierungen": null,
+      "alpha_genuegt": true
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 150 Dokumenten, nicht von Menschen"
+}
