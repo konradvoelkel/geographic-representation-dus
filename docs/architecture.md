@@ -238,8 +238,8 @@ Profilen geteilt, und lädt eines erst wieder, wenn es älter ist als `cache.ope
 eine Datei nach der anderen mit `context.need.delay_s` Pause. Ein Zip prüft
 `sources.opendata.fetch_zip`, eine CSV `fetch_csv`; `quellen.json` neben den Auszügen nennt je
 Archiv URL, Bytes, SHA-256 und Abrufdatum. Gemessen am 2026-11-24: vier Archive (je Quelle eines)
-frisch geladen, gleiche Prüfsummen wie die der Messung; der Schritt schneidet beide Städte in je
-rund 3,5 s aus den Archiven.
+frisch geladen, gleiche Prüfsummen wie die der Messung; der Schritt schneidet eine Stadt in 3,0
+bis 3,6 s aus den Archiven (9,8 s unter Fremdlast), der Schritt `need` rechnet in rund 1 s.
 
 - OParl: Paper-Seiten neueste zuerst, Abbruch, sobald eine Seite nur noch Paper vor dem Periodenbeginn trägt
   (spart 270 von 365 Seiten); beim zweiten Lauf `modified_since` (letztes `modified` minus ein Tag). Nur mit

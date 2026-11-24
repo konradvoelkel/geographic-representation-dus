@@ -3051,12 +3051,13 @@ ist genau diese Rechnung, als zweiter Beitrag nach Punkt 69, mit dem Netzschritt
   eigenen eines Datensatzes zuerst (die Mini-Fixture).
 
 **Gleich mit der Messung.** Auf dem Lauf vom 2026-11-24 ist jede Spalte von
-`wahlbezirke_bedarf` gleich der Tabelle des Messskripts (größte Abweichung 1e-13, Summenfolge), und
-`bedarf_hypothesen` trägt jede Zahl aus § 3.4 und § 3.5: H1 ρ = 0,343 (95 % 0,051 bis 0,593), p =
-0,0143, p_Holm = 0,0429, bestätigt; H2 −0,336, p_Holm 0,0692; H3 −0,059; innerhalb der Stadtbezirke
-−0,062, −0,204, 0,465; Moran's I der Residuen 0,341, 0,050, 0,262. 11 501 Unfälle im Zeitraum, 3 170
-im Band geteilt, 611 134 Einwohner. Ein `slow`-Test (`tests/golden/test_need_numbers.py`) rechnet die
-Hypothesen aus dem Paket nach.
+`wahlbezirke_bedarf`, die auch die Tabelle des Messskripts hat (22 der 25 neben dem Schlüssel, mit
+den Namen unten), gleich (größte Abweichung 1e-13, Summenfolge), und `bedarf_hypothesen` trägt jede
+Zahl aus § 3.4 und § 3.5: H1 ρ = 0,343 (95 % 0,051 bis 0,593), p = 0,0143, p_Holm = 0,0429,
+bestätigt; H2 −0,336, p_Holm 0,0692; H3 −0,059; innerhalb der Stadtbezirke −0,062, −0,204, 0,465;
+Moran's I der Residuen 0,341, 0,050, 0,262. 11 501 Unfälle im Zeitraum, 3 170 im Band geteilt,
+611 134 Einwohner. Ein `slow`-Test (`tests/golden/test_need_numbers.py`) rechnet die Zahlen aus dem
+Paket nach.
 
 **Anders als der Bauplan, mit Grund.**
 
