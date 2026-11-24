@@ -3240,9 +3240,13 @@ keinen Rohtext und schreiben die Tabelle leer.
 **Laufzeit.** Der Schritt braucht für die Hauptperiode 36 bis 60 s, für 2014 bis 2020 51 bis 74 s,
 ab 2025 6 bis 14 s, für Mönchengladbach 3 bis 4 s, in einem Prozess und unter Fremdlast
 (Lastmittel 8 bis 50 am 2026-11-24); das Ämterverzeichnis davon unter einer Sekunde. Auf Pages
-läuft er in der Hauptperiode zweimal, im Profil `duesseldorf-vergleich` noch einmal wie jeder Schritt
-dort (im A/B-Bau 46,9 und 46,7 s). `nox -s bench` hat eine Stufe über 200 Rohtexte der
-Hauptperiode (`test_identifiers_over_200_raw_texts`).
+läuft er für die Hauptperiode zweimal: im Profil `duesseldorf` und im Profil
+`duesseldorf-vergleich`, das im selben Ordner rechnet (im A/B-Bau 46,9 und 46,7 s). Den zweiten Lauf
+verursacht nicht 12: `compare.period` steht im globalen Settings-Fingerprint, darum gilt im
+Vergleichsprofil jeder Stamp des Ordners als veraltet, und jeder Schritt der Hauptperiode rechnet
+dort noch einmal (im A/B-Bau 27 ausgeführt, übersprungen nur die sieben Netzschritte).
+`nox -s bench` hat eine Stufe über 200 Rohtexte der Hauptperiode
+(`test_identifiers_over_200_raw_texts`).
 
 **Verworfen.** Ein früher Schritt vor `weights` (keiner der Kernschritte und kein früher Beitrag liest
 die Spannen; 16 hat die Plannummern verworfen, § 3 seines Messdokuments); `pack --identifiers`
