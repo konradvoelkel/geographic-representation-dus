@@ -92,7 +92,9 @@ AGENDA_SCHEMA: dict[str, PolarsDataType] = {
     "beratung": pl.String,  # OParl Consultation
     "top": pl.String,  # OParl AgendaItem; null = Beratung ohne Tagesordnungspunkt im Datensatz
     "organisationen": pl.List(pl.String),  # der Sitzung, sonst der Beratung (``organization_key``)
-    "rolle": pl.String,  # Rolle der Beratung (OParl ``role``), etwa „Entscheidung"
+    # ``rolle`` ist hier die Rolle der **Beratung** (OParl ``role``: „Entscheidung", „-" …), nicht die
+    # des Dokuments; die steht in ``OUTCOME_SCHEMA`` (Review 2026-11-24, N9)
+    "rolle": pl.String,
     "sitzung": pl.Datetime("us"),  # Beginn der Sitzung, Ortszeit des Servers ohne Zone
     "nummer": pl.String,  # Nummer des Punkts auf der Tagesordnung, etwa „Ö 5.1"
     "ordnung": pl.Int32,  # Folge des Punkts in der Sitzung (OParl ``order``)
@@ -103,7 +105,7 @@ PROGRESS_SCHEMA: dict[str, PolarsDataType] = {
     "beratung": pl.String,
     "top": pl.String,
     "gremium": pl.String,  # Kürzel aus ``[bodies.organizations]``, mehrere mit „+"; sonst der Schlüssel
-    "rolle": pl.String,
+    "rolle": pl.String,  # Rolle der Beratung wie in ``AGENDA_SCHEMA``, nicht die des Dokuments
     "sitzung": pl.Datetime("us"),
     "nummer": pl.String,
     "ordnung": pl.Int32,
@@ -111,11 +113,14 @@ PROGRESS_SCHEMA: dict[str, PolarsDataType] = {
     "stufe": pl.String,  # sache, stand; null genau ohne Eintrag
 }
 # Die Folge, in der die Regel liest und in der die Tabellen stehen: Sitzung (ohne Datum zuerst),
-# Punkt in der Sitzung, ID des Punkts. Die Beratung trennt nur Zeilen ohne Punkt.
+# Punkt in der Sitzung, ID des Punkts. Die Beratung trennt Zeilen ohne Punkt und zwei Beratungen
+# desselben Punkts.
 PROGRESS_ORDER = ("id", "sitzung", "ordnung", "top", "beratung")
 OUTCOME_SCHEMA: dict[str, PolarsDataType] = {
     "id": pl.String,
-    "rolle": pl.String,  # Rolle des Dokuments (Vorhaben 14): antrag, vorlage, anfrage …
+    # Rolle des **Dokuments** aus Vorhaben 14 (antrag, vorlage, anfrage …), nicht die der Beratung im
+    # Beratungsverlauf (Review 2026-11-24, N9)
+    "rolle": pl.String,
     "klasse": pl.String,  # eine aus ``CLASSES``
     "grob": pl.String,  # ``COARSE[klasse]``
     "result": pl.String,  # der maßgebliche Eintrag; null genau bei ohne_ergebnis
