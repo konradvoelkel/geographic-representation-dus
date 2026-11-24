@@ -293,8 +293,9 @@ def decisions(progress: pl.DataFrame, results: Mapping[str, tuple[str, str]]) ->
     """Je Dokument mit mindestens einem Eintrag der maßgebliche Punkt und seine Klasse.
 
     Gewählt wird der späteste Punkt der Stufe ``sache``, sonst der späteste überhaupt; „spätest"
-    nach Sitzungsbeginn (ohne Datum zuerst), Folge in der Sitzung (ohne Folge wie 0) und ID des
-    Punkts. Das Ergebnis hängt nur von der Menge der Punkte ab, nicht von ihrer Zeilenfolge.
+    nach Sitzungsbeginn (ohne Datum zuerst), Folge in der Sitzung (ohne Folge wie 0), ID des
+    Punkts und, wo zwei Beratungen denselben Punkt nennen, ID der Beratung (Review 2026-11-24, N3).
+    Das Ergebnis hängt nur von der Menge der Zeilen ab, nicht von ihrer Folge.
     """
     klasse = {value: klasse for value, (_, klasse) in results.items()}
     return (
@@ -303,7 +304,7 @@ def decisions(progress: pl.DataFrame, results: Mapping[str, tuple[str, str]]) ->
             (pl.col("stufe") == SACHE).cast(pl.Int8).alias("__rang"),
             pl.col("ordnung").fill_null(0).alias("__ordnung"),
         )
-        .sort(["id", "__rang", "sitzung", "__ordnung", "top"], nulls_last=False)
+        .sort(["id", "__rang", "sitzung", "__ordnung", "top", "beratung"], nulls_last=False)
         .group_by("id", maintain_order=True)
         .last()
         .select(

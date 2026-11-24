@@ -546,3 +546,27 @@ def test_success_is_observed_against_the_practice_of_the_bodies() -> None:
 def test_the_period_key() -> None:
     assert oc.period_key(dt.date(2020, 9, 13), dt.date(2025, 9, 14)) == "2020-2025"
     assert oc.period_key(dt.date(2025, 9, 15), None) == "2025-"
+
+
+def test_a_point_named_by_two_consultations_decides_the_same_in_any_order() -> None:
+    """Review 2026-11-24, N3: die Beratung ist der letzte Schlüssel, nicht die Zeilenfolge.
+
+    Nennen zwei Beratungen denselben Punkt einer Sitzung ohne Organisation, kommt das Gremium aus
+    der Beratung; welche Zeile gilt, darf nicht an der Folge der Eingabe hängen.
+    """
+    rows = [
+        {
+            **_step("d", "t1", "2021-02-01T17:00", "vertagt", consultation="b1"),
+            "organisationen": [],
+        },
+        {
+            **_step("d", "t1", "2021-02-01T17:00", "vertagt", consultation="b2"),
+            "organisationen": [],
+        },
+    ]
+    rows[0]["organisationen"], rows[1]["organisationen"] = ["gr/1"], ["gr/2"]
+    verlauf = oc.progress(_agenda(*rows), ORGS, RESULTS)
+    forward = oc.decisions(verlauf, RESULTS)
+    backward = oc.decisions(verlauf.reverse(), RESULTS)
+    assert forward.equals(backward)
+    assert forward.row(0, named=True)["entscheidung_gremium"] == "AUS"  # die Beratung b2
