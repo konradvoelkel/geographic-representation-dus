@@ -40,6 +40,14 @@ from georep.errors import GeorepError
 from georep.io import atomic_path, write_parquet, write_text
 from georep.layout import Layout
 from georep.prep.bodies import CONSULTATION
+from georep.prep.context import (
+    ACCIDENTS_FILE,
+    GRID_FILE,
+    NEED_DIR,
+    NEED_FILES,
+    SCHOOLS_FILE,
+    SOURCES_FILE,
+)
 from georep.prep.raw_texts import RAW_SUFFIX
 from georep.settings import Settings
 from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextStore
@@ -569,3 +577,75 @@ def pack_raw_texts(
         readme_written=not (target / README_NAME).exists(),
     )
     return _with_readme(report, settings, today, command="pack --raw-texts")
+
+
+# --- Vorhaben 22: ein Paket mit den Stadtauszügen der Bedarfsquellen ----------------------------
+
+
+def pack_need(
+    layout: Layout,
+    settings: Settings,
+    target: Path,
+    *,
+    force: bool = False,
+    today: dt.date | None = None,
+) -> PackReport:
+    """Die Stadtauszüge unter ``external/bedarf/`` packen (Vorhaben 22, Synergie 2026-11, Konflikt 11).
+
+    Abgeleitete Auszüge aus bundes- und landesweiten Archiven gehören nicht nach ``context/`` (dort
+    liegen Portaldateien unverändert), sondern als Paket nach ``snapshots/<stadt>-bedarf/``;
+    ``[context.need].package`` nennt es, und ``bootstrap`` legt es nach ``external/bedarf/``.
+    Gepackt wird nur, was ``need_data`` für **diese** Settings geschrieben hat: ``quellen.json``
+    nennt die Gemeinde und dieselben Archive wie ``[context.need]``, und jeder Auszug hat Zeilen.
+    """
+    claim_target(layout, target)
+    need = settings.context.need
+    if not need.enabled:
+        raise PackError("context.need.enabled ist aus; dieses Profil hat keine Bedarfsdaten")
+    folder = layout.external / NEED_DIR
+    sources = [folder / name for name in NEED_FILES]
+    missing = [str(path) for path in sources if not path.is_file()]
+    if missing:
+        raise PackError(f"{missing} fehlen; lief `georep fetch need_data` für dieses Profil?")
+    described = json.loads((folder / SOURCES_FILE).read_text(encoding="utf-8"))
+    urls = [entry.get("url") for entry in described.get("archive", [])]
+    if described.get("ags") != settings.city.ags or urls != list(need.archive_urls()):
+        raise PackError(
+            f"{folder / SOURCES_FILE}: die Auszüge stammen aus anderen Archiven oder einer anderen "
+            f"Gemeinde ({described.get('ags')}) als [context.need] und city.ags "
+            f"({settings.city.ags}); erst `georep fetch need_data --force`, dann packen"
+        )
+    rows = {
+        name: int(pl.scan_parquet(folder / name).select(pl.len()).collect().item())
+        for name in (ACCIDENTS_FILE, GRID_FILE, SCHOOLS_FILE)
+    }
+    empty = sorted(name for name, count in rows.items() if not count)
+    if empty:
+        raise PackError(f"{folder}: {empty} ohne Zeile; das Paket wäre leer")
+    files: list[PackedFile] = []
+    skipped: list[str] = []
+    for source in sources:
+        name = f"external/{NEED_DIR}/{source.name}"
+        destination = target / name
+        if destination.exists() and not force:
+            skipped.append(name)
+        else:
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            with atomic_path(destination) as tmp:
+                shutil.copyfile(source, tmp)
+        files.append(
+            PackedFile(name=name, bytes=destination.stat().st_size, sha256=sha256_of(destination))
+        )
+    report = PackReport(
+        target=target,
+        files=tuple(files),
+        skipped=tuple(skipped),
+        figures=(
+            ("Archive", len(urls)),
+            ("Unfälle", rows[ACCIDENTS_FILE]),
+            ("Gitterzellen", rows[GRID_FILE]),
+            ("Schulen", rows[SCHOOLS_FILE]),
+        ),
+        readme_written=not (target / README_NAME).exists(),
+    )
+    return _with_readme(report, settings, today, command="pack --need")
