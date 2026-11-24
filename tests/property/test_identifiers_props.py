@@ -112,15 +112,19 @@ TEXTS = st.lists(TOKENS, max_size=40).map(" ".join)
 def test_jede_spanne_liegt_im_text_sortiert_und_ohne_ueberlappung(
     text: str, rules: IdentifierRules
 ) -> None:
-    """Ämter ausgenommen: „Amt 10 – Hauptamt" sind zwei Spannen, wie validiert (``MAY_OVERLAP``)."""
+    """Überlappen dürfen nur eine Nummer und der Name dahinter, der sie nach vorn in seine Spanne
+    nimmt („Amt 10 – Hauptamt", ``MAY_OVERLAP``, Review N1)."""
     hits = find_identifiers(text, rules)
     assert hits == sorted(hits, key=lambda h: (h.start, h.end, h.kind))
-    ends: dict[str, int] = {}
-    for hit in hits:
+    kind, first, second = MAY_OVERLAP
+    for i, hit in enumerate(hits):
         assert 0 <= hit.start < hit.end <= len(text)
-        if hit.kind not in MAY_OVERLAP:
-            assert hit.start >= ends.get(hit.kind, 0), (hit, text)
-        ends[hit.kind] = max(ends.get(hit.kind, 0), hit.end)
+        for earlier in hits[:i]:
+            if earlier.kind != hit.kind or earlier.end <= hit.start:
+                continue
+            assert (hit.kind, earlier.attr, hit.attr) == (kind, first, second), (earlier, hit, text)
+            assert earlier.start < hit.start and earlier.end <= hit.end, (earlier, hit, text)
+            assert text[hit.start].isdigit() and not text[hit.start - 1].isdigit(), (hit, text)
 
 
 def test_aemter_duerfen_sich_ueberlappen() -> None:

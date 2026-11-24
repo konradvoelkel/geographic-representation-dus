@@ -29,10 +29,11 @@ from georep.prep.identifiers import (
     identifier_spans,
     iso_date,
     office_directory,
+    overlaps_are_allowed,
     plan_norm,
 )
 from georep.settings import IdentifierOffices, Identifiers, PlanNorm, Settings, load_settings
-from georep.spans import SPAN_SCHEMA, empty_spans
+from georep.spans import SPAN_SCHEMA, empty_spans, sort_spans
 
 NOWHERE = Path("/nonexistent")
 DIRECTORY = {
@@ -409,3 +410,41 @@ def test_eine_datei_ohne_korpus_id_faellt_weg(rules: IdentifierRules) -> None:
         rules,
     )
     assert spans.height == 0
+
+
+def _amt_spans(*rows: tuple[int, int, str, str]) -> pl.DataFrame:
+    """Spannen der Art amt in einem Dokument: (start, end, value, attr)."""
+    frame = pl.DataFrame(
+        {
+            "id": ["p"] * len(rows),
+            "start": [r[0] for r in rows],
+            "end": [r[1] for r in rows],
+            "kind": ["amt"] * len(rows),
+            "value": [r[2] for r in rows],
+            "norm": ["10"] * len(rows),
+            "section": [""] * len(rows),
+            "extractor": [f"{METHOD}/x"] * len(rows),
+            ATTR: [r[3] for r in rows],
+        },
+        schema={**SPAN_SCHEMA, **EXTRA},
+    )
+    return sort_spans(frame)
+
+
+def test_nur_die_nummer_und_der_nach_vorn_verlaengerte_name_ueberlappen() -> None:
+    """Review N1 (2026-11-24): der Vertrag erlaubt das eine Paar aus Fassung 2, nicht die ganze Art.
+
+    „Amt 10 – Hauptamt": die Nummer „Amt 10" und der Name „10 – Hauptamt", der sie nach vorn in
+    seine Spanne nimmt. Zwei Namen, ein Wort statt des Namens, ein Name, der nicht mit der Nummer
+    beginnt, oder eine Nummer hinter dem Namen sind ein Fehler.
+    """
+    assert overlaps_are_allowed(
+        _amt_spans((0, 6, "Amt 10", "nummer"), (4, 17, "10 – Hauptamt", "name"))
+    )
+    for rows in (
+        ((0, 6, "Amt 10", "name"), (4, 17, "10 – Hauptamt", "name")),
+        ((0, 6, "Amt 10", "nummer"), (4, 17, "10 – Hauptamt", "wort")),
+        ((0, 6, "Amt 10", "nummer"), (5, 17, "0 – Hauptamt", "name")),
+        ((0, 17, "Amt 10 – Hauptamt", "nummer"), (4, 6, "10", "name")),
+    ):
+        assert not overlaps_are_allowed(_amt_spans(*rows)), rows

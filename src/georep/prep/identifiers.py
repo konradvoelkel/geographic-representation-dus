@@ -71,11 +71,12 @@ FORMS: dict[str, frozenset[str | None]] = {
     "amt": frozenset({"kopf", "name", "nummer", "text", "wort"}),
     "dezernat": frozenset({"nummer"}),
 }
-# Ämter dürfen sich überlappen, so wie Fassung 2 sie validiert hat: eine Nummer („Amt 10",
-# „Fachbereich 20") direkt vor „10 – Hauptamt" bleibt eine Spanne, und der Name nimmt die Nummer
-# davor in seine Spanne (``offices.code_before``). Gezählt am 2026-11-24: 3 Paare in der
-# Hauptperiode, 8 in 2014 bis 2020, 111 in Mönchengladbach (Ämterlisten in sechs Dokumenten).
-MAY_OVERLAP = frozenset({"amt"})
+# Die eine Überlappung, die Fassung 2 so validiert hat: eine Nummer („Amt 10", „Fachbereich 20")
+# direkt vor „10 – Hauptamt" bleibt eine Spanne, und der Name nimmt die Nummer davor in seine Spanne
+# (``offices.code_before``). Art, Form der früheren und Form der späteren Spanne. Gezählt am
+# 2026-11-24: 3 Paare in der Hauptperiode, 8 in 2014 bis 2020, 111 in Mönchengladbach (Ämterlisten
+# in sechs Dokumenten); sonst überlappen keine zwei Spannen einer Art (Review N1).
+MAY_OVERLAP = ("amt", "nummer", "name")
 
 # Leerraum ohne Zeilenwechsel, und mit höchstens einem
 WS = r"[ \t\u00a0\u202f]*"
@@ -802,8 +803,8 @@ def _norms_and_forms_hold(
     result: pl.DataFrame | None = None,
 ) -> bool:
     """Ein Betrag ist eine Dezimalzahl, ein Termin hat eine Normform des Codebuchs .2, jede Form
-    gehört zu ihrer Art, und innerhalb einer Art überlappen keine zwei Spannen eines Dokuments,
-    außer bei Ämtern (``MAY_OVERLAP``)."""
+    gehört zu ihrer Art, und innerhalb einer Art überlappen zwei Spannen eines Dokuments nur als das
+    Paar aus ``MAY_OVERLAP`` (``overlaps_are_allowed``)."""
     assert result is not None
     relative = {norm for norm, _ in rules.relative}
     for kind, norm, attr in result.select("kind", "norm", ATTR).unique().iter_rows():
@@ -813,14 +814,47 @@ def _norms_and_forms_hold(
             return False
         if kind == "termin" and not (norm in relative or DATE_NORM.fullmatch(norm)):
             return False
-    # das späteste Ende aller früheren Spannen derselben Art im selben Dokument
-    following = (
-        result.select("id", "kind", "start", "end")
-        .filter(~pl.col("kind").is_in(list(MAY_OVERLAP)))
-        .sort("id", "kind", "start", "end")
+    return overlaps_are_allowed(result)
+
+
+def overlaps_are_allowed(spans: pl.DataFrame) -> bool:
+    """Zwei Spannen derselben Art eines Dokuments überlappen nur als das Paar aus ``MAY_OVERLAP``.
+
+    Die frühere trägt die Form ``nummer``, die spätere ``name``, beginnt hinter ihr, endet nicht vor
+    ihr und beginnt mit einer Ziffer, vor der in der Nummer keine Ziffer steht: der Name hat die
+    Nummer nach vorn in seine Spanne genommen („Amt 10" und „10 – Hauptamt"), nicht mitten in ihr
+    begonnen. Jedes andere Paar ist ein Fehler. Erst die Spannen, die eine
+    frühere überlappen (das späteste Ende davor über ``cum_max``), dann je solche Spanne jede
+    frühere, die sie überlappt; das sind wenige.
+    """
+    kind, first, second = MAY_OVERLAP
+    rows = spans.select("id", "kind", "start", "end", "value", ATTR).with_row_index("zeile")
+    later = (
+        rows.sort("id", "kind", "start", "end")
         .with_columns(pl.col("end").cum_max().shift(1).over("id", "kind").alias("before"))
+        .filter(pl.col("start") < pl.col("before"))
+        .drop("before")
     )
-    return following.filter(pl.col("start") < pl.col("before")).height == 0
+    if later.height == 0:
+        return True
+    pairs = later.join(rows, on=["id", "kind"], suffix="_frueh").filter(
+        (pl.col("zeile_frueh") != pl.col("zeile"))
+        & (pl.col("start_frueh") <= pl.col("start"))
+        & (pl.col("end_frueh") > pl.col("start"))
+    )
+    allowed = (
+        (pl.col("kind") == kind)
+        & (pl.col(f"{ATTR}_frueh") == first)
+        & (pl.col(ATTR) == second)
+        & (pl.col("start_frueh") < pl.col("start"))
+        & (pl.col("end_frueh") <= pl.col("end"))
+        & pl.col("value").str.contains(r"^\d")
+        # die Nummer beginnt dort, wo der Name beginnt, nicht mitten in ihr (Review K1)
+        & ~pl.col("value_frueh")
+        .str.slice(pl.col("start") - pl.col("start_frueh") - 1, 1)
+        .str.contains(r"\d")
+    )
+    return pairs.filter(~allowed.fill_null(False)).height == 0
 
 
 # Normformen eines Termins nach Codebuch .2: Tag, Monat (mit Zusatz), Quartal, Halbjahr, Jahr mit

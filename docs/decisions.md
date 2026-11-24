@@ -3190,11 +3190,14 @@ Profiltabelle (sammelt 24).
 
 **Verträge.** `identifier_spans` ist die Batch-Grenze: F3 mit `attr` dahinter (`check_spans`), ein
 Betrag als Dezimalzahl mit zwei Stellen, ein Termin in einer Normform des Codebuchs .2, jede Form zu
-ihrer Art, und innerhalb einer Art keine zwei überlappenden Spannen eines Dokuments — **außer bei
-Ämtern**: Fassung 2 nimmt die Nummer vor einem Namen in die Spanne („10 – Hauptamt"), und eine
-Nummernnennung direkt davor („Amt 10") bleibt eine eigene Spanne. So validiert, gezählt am
+ihrer Art, und innerhalb einer Art keine zwei überlappenden Spannen eines Dokuments — **außer einem
+Paar bei Ämtern**: Fassung 2 nimmt die Nummer vor einem Namen in die Spanne („10 – Hauptamt"), und
+eine Nummernnennung direkt davor („Amt 10") bleibt eine eigene Spanne. So validiert, gezählt am
 2026-11-24: 3 Paare in der Hauptperiode, 8 in 2014 bis 2020, 111 in Mönchengladbach (Ämterlisten in
-sechs Dokumenten). `find_identifiers` prüft je Text, dass jede Spanne im Text liegt und die Folge
+sechs Dokumenten). Erlaubt ist genau dieses Paar (`MAY_OVERLAP`, `overlaps_are_allowed`; Review N1):
+die frühere Spanne mit der Form `nummer`, die spätere mit `name`, die hinter ihr beginnt, nicht vor
+ihr endet und mit einer Ziffer anfängt, vor der in der Nummer keine Ziffer steht; nicht die ganze
+Art. `find_identifiers` prüft je Text, dass jede Spanne im Text liegt und die Folge
 stimmt (`deal.safe`, kein `deal.pure`: die Funktion läuft je Dokument). `iso_date` steht in
 `VERIFY_TARGETS` (ein Datum genau dann, wenn der Kalender den Tag zwischen 1950 und 2040 kennt;
 crosshair einzeln 23 s, „Not confirmed"). Eine Zahl mit mehr Stellen, als `Decimal` hält, ist kein
