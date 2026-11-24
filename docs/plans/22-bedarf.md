@@ -1,6 +1,8 @@
 # Vorhaben 22: Bedarf und Aufmerksamkeit
 
-Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/22-bedarf`. Briefing:
+Stand 2026-11-24, Stufe 2 (Bauen) mit Runde 2 des Reviews, Branch `feat/22-bedarf`; Stufe 1 (Messen)
+abgeschlossen am 2026-11-23, gebaut nach § 6 mit den Änderungen aus § 10 (`docs/decisions.md`, Eintrag
+„Bedarf und Aufmerksamkeit je Wahlbezirk"). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „22 Bedarf und
 Aufmerksamkeit". Messskript: [22-bedarf-messung.py](22-bedarf-messung.py) (`uv run python -I
 docs/plans/22-bedarf-messung.py [--teil …]`, rechnet jede Zahl dieses Dokuments nach). Die Fremddaten
@@ -232,8 +234,9 @@ rund 0,007 unter der Schwelle, rund zwei Monte-Carlo-Fehler des dreifachen p.
 Alles hier ist nach dem ersten Lauf von § 3.4 gerechnet und heißt **explorativ**; p-Werte ohne
 Korrektur, nur zur Orientierung.
 
-**Räumliche Abhängigkeit.** Nachbarschaft = gemeinsame Grenze über 50 m (95 Paare, 1 bis 9 Nachbarn je
-Wahlbezirk); Moran's I mit zeilennormierten Gewichten, 9 999 Permutationen, Seed 23; E[I] = −0,025.
+**Räumliche Abhängigkeit.** Nachbarschaft = gemeinsame Grenze über rund 25 m (der Schnitt des um 1 m
+gepufferten Wahlbezirks mit dem Nachbarn hat einen Umfang über 50 m, rund das Doppelte der gemeinsamen
+Grenze; 95 Paare, 1 bis 9 Nachbarn je Wahlbezirk); Moran's I mit zeilennormierten Gewichten, 9 999 Permutationen, Seed 23; E[I] = −0,025.
 
 | | x | y | Residuen der Rangregression y ~ x |
 |---|---|---|---|
@@ -371,7 +374,7 @@ Tabellen; Ebene 0, einziger Eigentümer von `prep/context.py`.
 - `bedarf_hypothesen.parquet`: eine Zeile je Hypothese aus § 8 (`name`, `bedarf`, `aufmerksamkeit`,
   `rho`, `ci_lo`, `ci_hi`, `p`, `p_holm`, `urteil`, `n`, `seed`); dazu die explorativen Paare in einer
   zweiten Tabelle mit `explorativ = true`, darunter die Rechnung innerhalb der Stadtbezirke und Moran's
-  I der Residuen (Nachbarschaft aus den Wahlbezirksflächen, gemeinsame Grenze über 50 m). Die
+  I der Residuen (Nachbarschaft aus den Wahlbezirksflächen, gemeinsame Grenze über rund 25 m). Die
   Permutationen mit festem Seed machen die Datei byteidentisch über Läufe.
 
 **Settings** (Anhängeregel, `docs/plans/00-synergien.md`, § 2): neuer Block `[context.need]` in
