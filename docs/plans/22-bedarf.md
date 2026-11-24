@@ -6,7 +6,7 @@ Aufmerksamkeit". Messskript: [22-bedarf-messung.py](22-bedarf-messung.py) (`uv r
 docs/plans/22-bedarf-messung.py [--teil …]`, rechnet jede Zahl dieses Dokuments nach). Die Fremddaten
 liegen nicht im Repo, sondern unter `/media/konrad/xtraspace/georep/fremddaten/opendata/` mit README
 (Quelle, Abrufdatum, Bytes, SHA-256, Lizenz wörtlich); das Skript prüft die Prüfsummen, bevor es liest.
-**Urteil: bauen** (§ 5). Die Hypothesen in § 8 wurden in Commit `9da9fe1` festgelegt, **bevor** der
+**Urteil: bauen** (§ 5). Die Hypothesen in § 8 wurden in Commit `67f7250` festgelegt, **bevor** der
 Teil `hypothesen` des Skripts zum ersten Mal lief; ihr Ergebnis steht in § 3.4.
 
 **Die Hypothesen, kurz** (§ 3.4): **H1** (Unfälle je Einwohner → Anteil Verkehrsdokumente) nach der
@@ -194,7 +194,7 @@ ist darum die Zahl der Dokumente mit Treffer.
 
 ### 3.4 Ergebnis der vorab festgelegten Hypothesen
 
-Erster Lauf des Teils `hypothesen` am 2026-11-23 um 19:40 Uhr, nach Commit `9da9fe1` (§ 8); jeder
+Erster Lauf des Teils `hypothesen` am 2026-11-23 um 19:40 Uhr, nach Commit `67f7250` (§ 8); jeder
 weitere Lauf ergibt dieselben Zahlen (Seed 22, geprüft mit `diff` zweier Läufe).
 
 | Nr. | ρ | 95-%-Intervall (Bootstrap) | p (Permutation) | p_Holm | Urteil nach § 8 |
@@ -422,7 +422,7 @@ ohne Nummer. Nicht berührt: `report/model.py`, `pipeline.build_steps` (Register
 2. *Bedarf je Wahlbezirk*: drei kleine Karten (Unfälle je 1 000 Einwohner, sozialer Handlungsbedarf,
    Anteil unter 18), daneben dieselbe Tabelle sortierbar; der Satz zum Randband.
 3. *Bedarf und Nennung*: die drei vorab festgelegten Tests als Tabelle (ρ mit Intervall, p, Holm, Urteil,
-   „vorab festgelegt am 2026-11-23, Commit `9da9fe1`") und je ein Streudiagramm mit den Stadtbezirken
+   „vorab festgelegt am 2026-11-23, Commit `67f7250`") und je ein Streudiagramm mit den Stadtbezirken
    als Farbe — dann sieht man, dass H1 zwischen den Farben liegt; darunter Moran's I, die Rechnung
    innerhalb der Stadtbezirke und die explorativen Paare unter dieser Überschrift. Der Satz zu H1 nennt
    beides: „nach der vorab festgelegten Regel bestätigt; der Zusammenhang besteht zwischen den
