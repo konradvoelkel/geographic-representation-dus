@@ -596,14 +596,28 @@ von Vorhaben 11, weil die Eingabe dessen Abschnitte liest.
   Berichtsvorlage, Eingabe.
 - **Eingabe Fassung 2** (`georep.enrich.summaries`: `header`, `role_frame`, `summary_input`, Stand
   von Commit `68ed4f7`): sechs Kopfzeilen `Dokumentart`, `Absender` (Urheberklasse aus Option 04, bei
-  Fraktionen deren Namen aus Vorhaben 15, sonst „nicht angegeben"), `Beratung` (die Gremien der
-  Beratungsfolge nach Kürzel, Punkt 58, sonst das Gremium der Nummer, sonst „nicht angegeben"),
-  `Drucksache`, `Datum`, `Titel`; dann die Abschnitte aus Vorhaben 11 in der Folge von § 3.1 im
-  Budget von 8 000 Zeichen, gelesen mit `read_span` und den Seitenmustern von 11 (dieses Lesen
-  kommt mit dem Merge von 11 dazu; sonst ändert sich nichts); nach einem gekürzten Abschnitt folgt
-  nichts mehr; Rückfall wie § 3.1; ohne Text nach dem Kopf keine Eingabe (Frage 20.6). Die Rollen
-  und Kanten aus 14 kommen nicht hinein (§ 10, Punkt 3: sie dürfen, schärfen die Dokumentart aber
-  nicht, wo Absender und Beratung schon stehen).
+  Fraktionen deren Namen aus Vorhaben 15, sonst „nicht angegeben"), `Beratung`, `Drucksache`,
+  `Datum`, `Titel`; dann die Abschnitte aus Vorhaben 11 in der Folge von § 3.1 im Budget von 8 000
+  Zeichen, gelesen mit `read_span` und den Seitenmustern von 11 (dieses Lesen kommt mit dem Merge
+  von 11 dazu; sonst ändert sich nichts); nach einem gekürzten Abschnitt folgt nichts mehr;
+  Rückfall wie § 3.1; ohne Text nach dem Kopf keine Eingabe (Frage 20.6: weniger als 50 Zeichen
+  oder `rumpf_leer` im Kopf von 11). Die Rollen und Kanten aus 14 kommen nicht hinein (§ 10,
+  Punkt 3: sie dürfen, schärfen die Dokumentart aber nicht, wo Absender und Beratung schon stehen).
+- **`Beratung`, geändert am 2026-11-24 vor jeder Kurzfassung** (Antwort des Supervisors auf die
+  Frage des Bau-Agenten; Code in Commit `a424eb4`): zuerst die Zeilen der Beratungsfolge aus dem
+  Kopf des Dokuments (Vorhaben 11, `beratungsfolge` in `dokumente_kopf.parquet`) in ihrer Folge
+  und mit ihrer Qualität, etwa „Bauausschuss (Vorberatung), Rat (Entscheidung)"; das Gremium heißt
+  wie in `[bodies]`, wo der Kopf ein Kürzel kennt, sonst wie geschrieben; ein Platzhalter („-",
+  „-/-") ist keine Qualität. Wo der Kopf keine Zeile trägt, die OParl-Beratungsfolge nach Kürzel
+  (Punkt 58, wie zuerst festgelegt), sonst das Gremium der Nummer, sonst „nicht angegeben".
+  **Bedingung des Supervisors**: Folge und Qualität sind in der Validierung von 11 geprüft. Die
+  Qualität ist Teil des Tripels je Zeile (Gremium, Datum, Qualität: 160 von 168, 0,952, Wilson
+  0,909–0,976; mit dem Platzhalter „-" als „keine" 168 von 168; Kodierer 200 von 200 einig). Die
+  Folge zählt das Maß von 11 als Menge; gegen dieselben Labels, die die Folge des Dokuments tragen,
+  stimmt sie mit dem Regelwerk von 11 in **27 von 27** Dokumenten mit zwei und mehr gemeinsamen
+  Zeilen (nachgesehen vom Bau-Agenten am 2026-11-24). Geprüft ist das an der Hauptperiode; in
+  2014–2020 trägt der Kopf meist die Spalte „Ergebnis" statt der Qualität (62 % „-/-"), in
+  Mönchengladbach keine Qualität, dort steht die Zeile ohne Klammer.
 - **Prompt Fassung 2** (`PROMPT_VERSION = "20-kurzfassung-2"`; `SYSTEM` wortgleich mit Fassung 1):
   Regel 1 nennt die Kopfzeilen der Rolle („Wer das Dokument einbringt, steht unter „Absender"; die
   Gremien unter „Beratung" beraten oder entscheiden darüber, sie beantragen es nicht."), Regel 3
