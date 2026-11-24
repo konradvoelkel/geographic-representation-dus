@@ -123,18 +123,24 @@ def holm(
     """Holm-Bonferroni über eine Familie: je Hypothese der angepasste Wert und ob sie fällt.
 
     Aufsteigend nach p (bei Gleichstand nach Kennung, damit die Folge der Eingabe nichts ändert)
-    ist der angepasste Wert das laufende Maximum von ``(m - i) · p``, gekappt bei 1. Eine Hypothese
-    fällt, wenn ihr angepasster Wert höchstens ``alpha`` ist (mit ``strict`` kleiner als
-    ``alpha``); das ist gleichbedeutend mit Holms Schrittregel ``p_(j) <= alpha / (m - j + 1)`` für
-    sie und alle vor ihr. Das Ergebnis steht in der Folge der Eingabe.
+    fällt H_(k) nach Holms Schrittregel genau dann, wenn ``p_(j) <= alpha / (m - j + 1)`` für sie
+    und alle vor ihr gilt (mit ``strict`` ``<``), wie im Messskript von Vorhaben 17. Der angepasste
+    Wert ist das laufende Maximum von ``(m - j + 1) · p_(j)``, gekappt bei 1. Mathematisch fällt eine
+    Hypothese genau dann, wenn er höchstens ``alpha`` ist; in Gleitkommazahlen nicht immer (m = 11,
+    p = 0,05/11: 11 · p = 0,05000000000000001), darum entscheidet die Schrittregel und nicht der
+    Vergleich des angepassten Werts (Review N7, 2026-11-24). Das Ergebnis steht in der Folge der
+    Eingabe.
     """
     order = sorted(p, key=lambda key: (p[key], key))
     m = len(order)
     running = 0.0
+    still = True
     adjusted: dict[str, Adjusted] = {}
     for i, key in enumerate(order):
         running = max(running, min(1.0, (m - i) * p[key]))
-        adjusted[key] = Adjusted(running, running < alpha if strict else running <= alpha)
+        bound = alpha / (m - i)
+        still = still and (p[key] < bound if strict else p[key] <= bound)
+        adjusted[key] = Adjusted(running, still)
     return {key: adjusted[key] for key in p}
 
 
