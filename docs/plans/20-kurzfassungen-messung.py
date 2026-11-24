@@ -9,6 +9,7 @@
     uv run python docs/plans/20-kurzfassungen-messung.py kodierung       # Aufträge A und B (nach dem Maßstab)
     uv run python docs/plans/20-kurzfassungen-messung.py auswertung      # nach `georep validate merge`
     flock … uv run python docs/plans/20-kurzfassungen-messung.py vorgaenge --modell gemma4  # Versuch § 3.6
+    uv run python docs/plans/20-kurzfassungen-messung.py nachmessung stichprobe  # Stufe 2, § 5.4
 
 Liest: den Rohtext der Messdatei (`messdaten/rohtext/<profil>.parquet`, pypdf 7.1.0, Groß- und
 Kleinschreibung, Zeilen, Seiten mit `\\f`), den Korpus der Hauptperiode aus `data_root` (nach
@@ -73,6 +74,8 @@ ROHTEXT = MESSDATEN / "rohtext"
 LOKAL = MESSDATEN / "20-kurzfassungen"  # Kurzfassungen, Läufe, Zuordnung: nie ins Repo
 KODIERUNG = MESSDATEN / "kodierung" / "20-kurzfassungen"
 VALIDIERUNG = ROOT / "validierung" / "20-kurzfassungen"
+VALIDIERUNG_NACH = ROOT / "validierung" / "20-kurzfassungen-nachmessung"
+KODIERUNG_NACH = MESSDATEN / "kodierung" / "20-kurzfassungen-nachmessung"
 STRUKTUR = ROOT / "docs" / "plans" / "11-struktur-messung.py"
 PROJEKT = "20-kurzfassungen"
 
@@ -85,6 +88,11 @@ MODELLE = ("qwen3.6:27b", "gemma4:latest")
 SEED = 2026112320  # Tag der Festlegung und Nummer des Vorhabens
 # Umbaurunde (Messdokument § 5.2, Frage 35: umbauen): frische 200 ohne die der ersten Runde
 SEED_RUNDE2 = 2026112330
+# Nachmessung in Stufe 2 (Messdokument § 5.4, Frage 20.13 und 38): frische 50 ohne die 400 beider
+# Runden, Eingabe und Prompt Fassung 2 aus dem Paket (georep.enrich.summaries), nur `unbelegt`
+SEED_NACHMESSUNG = 2026112420
+NACHMESSUNG = "20-kurzfassungen-nachmessung"
+NACHMESSUNG_N = 50
 STICHPROBE = 200
 KODIERT = 50
 BUDGET_ZEICHEN = 8000  # Abschnittstext je Eingabe; darüber wird gekürzt (Feld gekuerzt)
@@ -1995,6 +2003,77 @@ def cmd_selbsttest() -> int:
 
 
 # --------------------------------------------------------------------------------------------
+# Nachmessung in Stufe 2 (§ 5.4): frische 50, Eingabe und Prompt Fassung 2, nur `unbelegt`
+# --------------------------------------------------------------------------------------------
+
+
+def nachmessung_grundgesamtheit() -> tuple[pl.DataFrame, pl.DataFrame]:
+    """(alle Dokumente mit Rohtext und Schicht, dieselben ohne die 400 beider Runden)."""
+    settings = settings_dus()
+    full = schichten(korpus(settings), load_struktur())
+    frueher = set(stichprobe200(1)["id"].to_list()) | set(stichprobe200(2)["id"].to_list())
+    return full, full.filter(~pl.col("id").is_in(sorted(frueher)))
+
+
+def cmd_nachmessung_stichprobe(force: bool) -> int:
+    """Die 50 der Nachmessung (§ 5.4): dieselbe Schichtung wie die 200, Seed SEED_NACHMESSUNG.
+
+    Die Schichtgröße ``schicht_n`` ist die der ganzen Grundgesamtheit (wie in Runde 2): die 50
+    stehen für alle Dokumente, über die der Stapellauf geht.
+    """
+    paths = ValidationPaths(NACHMESSUNG, VALIDIERUNG_NACH, KODIERUNG_NACH)
+    if paths.sample.exists() and not force:
+        print(f"{paths.sample} gibt es schon; eine Stichprobe zieht man einmal (--force)")
+        return 1
+    full, rest = nachmessung_grundgesamtheit()
+    sizes = full.group_by("schicht").len().rename({"len": "schicht_n"})
+    sample = (
+        ziehen(rest, "schicht", NACHMESSUNG_N, SEED_NACHMESSUNG)
+        .drop("schicht_n")
+        .join(sizes, on="schicht", how="left")
+        .sort("rang")
+    )
+    frueher = set(full["id"].to_list()) - set(rest["id"].to_list())
+    assert not set(sample["id"].to_list()) & frueher
+    drawn = dict(sample.group_by("schicht").len().iter_rows())
+    population = dict(sizes.iter_rows())
+    ids = "\n".join(sorted(rest["id"].to_list())).encode()
+    write_sample(
+        paths,
+        sample.select("id", "schicht", "schicht_n").sort("id"),
+        {
+            "vorhaben": NACHMESSUNG,
+            "codebuch_version": load_codebook(paths.codebook, NACHMESSUNG).version,
+            "profil": "duesseldorf",
+            "einheit": "document",
+            "grundgesamtheit": (
+                "Hauptperiode mit nicht leerem Rohtext (interim/papers.parquet über file_name an "
+                "messdaten/rohtext/duesseldorf.parquet) ohne stichprobe200.csv und "
+                "stichprobe200-2.csv; Prüfsumme über die sortierten IDs, je Zeile eine"
+            ),
+            "grundgesamtheit_sha256": hashlib.sha256(ids).hexdigest(),
+            "einheiten": rest.height,
+            "ohne_text": 0,
+            "groesse": NACHMESSUNG_N,
+            "seed": SEED_NACHMESSUNG,
+            "schicht": "schicht",
+            "aufteilung": "proportional",
+            "selbstgewichtend": False,
+            "schichten": {
+                k: {"grundgesamtheit": population[k], "stichprobe": drawn.get(k, 0)}
+                for k in sorted(population)
+            },
+            "gezogen": date.today().isoformat(),
+        },
+    )
+    print(
+        f"Nachmessung: {sample.height} Dokumente aus {rest.height} (ohne {len(frueher)} der beiden "
+        f"Runden), {sample['schicht'].n_unique()} Schichten -> {paths.sample}"
+    )
+    return 0
+
+
+# --------------------------------------------------------------------------------------------
 # Alle Zahlen
 # --------------------------------------------------------------------------------------------
 
@@ -2050,6 +2129,10 @@ def main(argv: Sequence[str]) -> int:
         p.add_argument("--force", action="store_true")
     v = sub.add_parser("vorgaenge")
     v.add_argument("--modell", required=True)
+    nach = sub.add_parser("nachmessung")
+    nach_sub = nach.add_subparsers(dest="schritt", required=True)
+    nach_st = nach_sub.add_parser("stichprobe")
+    nach_st.add_argument("--force", action="store_true")
     alles = sub.add_parser("alles")
     alles.add_argument("--ohne-perioden", action="store_true")
     alles.add_argument("--runde", type=int, default=1, choices=(1, 2))
@@ -2066,6 +2149,8 @@ def main(argv: Sequence[str]) -> int:
         return cmd_kodierung(args.force)
     if args.befehl == "vorgaenge":
         return cmd_vorgaenge(args.modell)
+    if args.befehl == "nachmessung" and args.schritt == "stichprobe":
+        return cmd_nachmessung_stichprobe(args.force)
     return cmd_alles(not getattr(args, "ohne_perioden", False), getattr(args, "runde", 1))
 
 

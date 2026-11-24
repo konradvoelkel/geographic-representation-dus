@@ -589,7 +589,11 @@ von Vorhaben 11, weil die Eingabe dessen Abschnitte liest.
   gezogen mit `uv run python docs/plans/20-kurzfassungen-messung.py nachmessung stichprobe`.
   **Ersatz**: gibt der Schritt für ein gezogenes Dokument keine Eingabe (`ohne_text`, Frage 20.6),
   tritt das Dokument mit dem nächsten Rang derselben Schicht an seine Stelle; ein Tausch steht
-  hier mit ID.
+  hier mit ID. **Gezogen** am 2026-11-24 (Commit nach diesem Abschnitt): 50 aus 18 632 in 32 von 33
+  Schichten (das einzige Dokument der Schicht „A+F Beschluss, kurz" gehört zu den 400), Antrag 10,
+  Anfrage 8, Beschlussvorlage 7, BV-Beschlussvorlage 4, BV-Informationsvorlage 4, je 3
+  Beschlussvorlage RPA, Haushaltsantrag, Informationsvorlage, je 2 A+F, Bedarfsbeschluss,
+  Berichtsvorlage, Eingabe.
 - **Eingabe Fassung 2** (`georep.enrich.summaries`: `header`, `role_frame`, `summary_input`, Stand
   von Commit `68ed4f7`): sechs Kopfzeilen `Dokumentart`, `Absender` (Urheberklasse aus Option 04, bei
   Fraktionen deren Namen aus Vorhaben 15, sonst „nicht angegeben"), `Beratung` (die Gremien der

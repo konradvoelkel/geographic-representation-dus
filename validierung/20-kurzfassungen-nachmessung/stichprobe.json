@@ -1,0 +1,150 @@
+{
+  "vorhaben": "20-kurzfassungen-nachmessung",
+  "codebuch_version": "1",
+  "profil": "duesseldorf",
+  "einheit": "document",
+  "grundgesamtheit": "Hauptperiode mit nicht leerem Rohtext (interim/papers.parquet über file_name an messdaten/rohtext/duesseldorf.parquet) ohne stichprobe200.csv und stichprobe200-2.csv; Prüfsumme über die sortierten IDs, je Zeile eine",
+  "grundgesamtheit_sha256": "e484a2f0f1f51dc2e7896c1cc8744ecd20f0261124e80d2eafeaacfde863771e",
+  "einheiten": 18632,
+  "ohne_text": 0,
+  "groesse": 50,
+  "seed": 2026112420,
+  "schicht": "schicht",
+  "aufteilung": "proportional",
+  "selbstgewichtend": false,
+  "schichten": {
+    "A+F Beschluss|kurz": {
+      "grundgesamtheit": 1,
+      "stichprobe": 0
+    },
+    "A+F Beschluss|lang": {
+      "grundgesamtheit": 110,
+      "stichprobe": 1
+    },
+    "A+F Beschluss|mittel": {
+      "grundgesamtheit": 34,
+      "stichprobe": 1
+    },
+    "Anfrage|kurz": {
+      "grundgesamtheit": 1358,
+      "stichprobe": 2
+    },
+    "Anfrage|lang": {
+      "grundgesamtheit": 58,
+      "stichprobe": 1
+    },
+    "Anfrage|mittel": {
+      "grundgesamtheit": 2508,
+      "stichprobe": 5
+    },
+    "Antrag|kurz": {
+      "grundgesamtheit": 2009,
+      "stichprobe": 4
+    },
+    "Antrag|lang": {
+      "grundgesamtheit": 108,
+      "stichprobe": 1
+    },
+    "Antrag|mittel": {
+      "grundgesamtheit": 2608,
+      "stichprobe": 5
+    },
+    "Bedarfsbeschluss|lang": {
+      "grundgesamtheit": 59,
+      "stichprobe": 1
+    },
+    "Bedarfsbeschluss|mittel": {
+      "grundgesamtheit": 19,
+      "stichprobe": 1
+    },
+    "Berichtsvorlage|lang": {
+      "grundgesamtheit": 75,
+      "stichprobe": 1
+    },
+    "Berichtsvorlage|mittel": {
+      "grundgesamtheit": 102,
+      "stichprobe": 1
+    },
+    "Beschlussvorlage RPA|kurz": {
+      "grundgesamtheit": 18,
+      "stichprobe": 1
+    },
+    "Beschlussvorlage RPA|lang": {
+      "grundgesamtheit": 11,
+      "stichprobe": 1
+    },
+    "Beschlussvorlage RPA|mittel": {
+      "grundgesamtheit": 3,
+      "stichprobe": 1
+    },
+    "Beschlussvorlage|kurz": {
+      "grundgesamtheit": 530,
+      "stichprobe": 1
+    },
+    "Beschlussvorlage|lang": {
+      "grundgesamtheit": 934,
+      "stichprobe": 1
+    },
+    "Beschlussvorlage|mittel": {
+      "grundgesamtheit": 2529,
+      "stichprobe": 5
+    },
+    "Bezirksvertretung Beschlussvorlage|kurz": {
+      "grundgesamtheit": 1179,
+      "stichprobe": 2
+    },
+    "Bezirksvertretung Beschlussvorlage|lang": {
+      "grundgesamtheit": 19,
+      "stichprobe": 1
+    },
+    "Bezirksvertretung Beschlussvorlage|mittel": {
+      "grundgesamtheit": 275,
+      "stichprobe": 1
+    },
+    "Bezirksvertretung Informationsvorlage|kurz": {
+      "grundgesamtheit": 1139,
+      "stichprobe": 1
+    },
+    "Bezirksvertretung Informationsvorlage|lang": {
+      "grundgesamtheit": 147,
+      "stichprobe": 1
+    },
+    "Bezirksvertretung Informationsvorlage|mittel": {
+      "grundgesamtheit": 1413,
+      "stichprobe": 2
+    },
+    "Eingabe|kurz": {
+      "grundgesamtheit": 117,
+      "stichprobe": 1
+    },
+    "Eingabe|mittel": {
+      "grundgesamtheit": 7,
+      "stichprobe": 1
+    },
+    "Haushaltsantrag|kurz": {
+      "grundgesamtheit": 11,
+      "stichprobe": 1
+    },
+    "Haushaltsantrag|lang": {
+      "grundgesamtheit": 25,
+      "stichprobe": 1
+    },
+    "Haushaltsantrag|mittel": {
+      "grundgesamtheit": 302,
+      "stichprobe": 1
+    },
+    "Informationsvorlage|kurz": {
+      "grundgesamtheit": 367,
+      "stichprobe": 1
+    },
+    "Informationsvorlage|lang": {
+      "grundgesamtheit": 464,
+      "stichprobe": 1
+    },
+    "Informationsvorlage|mittel": {
+      "grundgesamtheit": 493,
+      "stichprobe": 1
+    }
+  },
+  "gezogen": "2026-11-24"
+}
