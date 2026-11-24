@@ -15,6 +15,7 @@ sagt der Aufrufer. Die Seite nennt das Verhältnis „explorativ" (§ 5).
 
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 
 import deal
@@ -26,7 +27,9 @@ N = "n"
 OBSERVED = "beobachtet"
 EXPECTED = "erwartet"
 RATIO = "verhaeltnis"
-_RATE = "__anteil_der_schicht"
+_LAYER_N = "__dokumente_der_schicht"
+_LAYER_Y = "__treffer_der_schicht"
+_PART = "__erwartet_je_schicht"
 
 
 def _arguments_fit(
@@ -45,7 +48,7 @@ def _arguments_fit(
         and len(strata) > 0
         and set(by) <= set(strata)
         and len(names) == 2 + len(set(strata))
-        and _RATE not in frame.columns
+        and not {_LAYER_N, _LAYER_Y, _PART} & set(frame.columns)
     )
 
 
@@ -91,23 +94,38 @@ def observed_expected(
     jedes einmal. ``by`` sind Spalten, nach denen das Ergebnis getrennt bleibt (etwa die Periode);
     sie müssen Schichten sein, damit eine Einheit nur gegen ihre eigene Gruppe gemessen wird.
     ``verhaeltnis`` ist ``null``, wo ``erwartet`` 0 ist (die Gremien der Einheit kennen das
-    Ergebnis gar nicht). Sortiert nach ``by`` und Einheit.
+    Ergebnis gar nicht). Sortiert nach ``by`` und Einheit. Gerechnet wird mit ganzen Zahlen je
+    Einheit und Schicht und einer exakt gerundeten Summe: dieselben Dokumente geben dieselben Bits,
+    in jeder Zeilenfolge und mit jeder Zahl von Threads.
     """
     strata = list(strata)
     keys = [*by, unit]
-    rates = frame.group_by(strata).agg(pl.col(outcome).cast(pl.Float64).mean().alias(_RATE))
+    rest = [s for s in strata if s not in by]  # Schichten innerhalb einer Gruppe ``by``
+    # Der Anteil je Schicht aus ganzen Zahlen: Treffer durch Dokumente, jedes Dokument einmal.
+    layers = frame.group_by(strata).agg(
+        pl.len().cast(pl.Int64).alias(_LAYER_N),
+        pl.col(outcome).cast(pl.Int64).sum().alias(_LAYER_Y),
+    )
     rows = frame.select(*strata, unit, outcome)
     if isinstance(frame.schema[unit], pl.List):
-        rows = rows.explode(unit)
+        # Review 2026-11-24, K2: eine Einheit, die eine Liste zweimal nennt, zählt einmal
+        rows = rows.with_columns(pl.col(unit).list.unique()).explode(unit)
     rows = rows.filter(pl.col(unit).is_not_null())
-    joined = rows.join(rates, on=strata, how="left", nulls_equal=True)
-    return (
-        joined.group_by(keys)
-        .agg(
-            pl.len().alias(N),
-            pl.col(outcome).sum().alias(OBSERVED),
-            pl.col(_RATE).sum().alias(EXPECTED),
+    # Review 2026-11-24, M1: je Einheit und Schicht ganze Zahlen, dann je Einheit die exakt
+    # gerundete Summe (``math.fsum``) aus Anteil mal Zahl. Eine Fließkommasumme in der Folge, in der
+    # Join und ``group_by`` die Zeilen liefern, war nicht bitgleich reproduzierbar.
+    counts = (
+        rows.group_by([*keys, *rest])
+        .agg(pl.len().cast(pl.Int64).alias(N), pl.col(outcome).cast(pl.Int64).sum().alias(OBSERVED))
+        .join(layers, on=strata, how="left", nulls_equal=True)
+        .with_columns(
+            (pl.col(_LAYER_Y) / pl.col(_LAYER_N) * pl.col(N)).alias(_PART),
         )
+    )
+    grouped = counts.group_by(keys).agg(pl.col(N).sum(), pl.col(OBSERVED).sum(), pl.col(_PART))
+    expected = [math.fsum(parts) for parts in grouped.get_column(_PART).to_list()]
+    return (
+        grouped.with_columns(pl.Series(EXPECTED, expected, dtype=pl.Float64))
         .with_columns(
             pl.when(pl.col(EXPECTED) > 0)
             .then(pl.col(OBSERVED) / pl.col(EXPECTED))

@@ -59,8 +59,7 @@ def test_the_row_order_does_not_matter(
     other = list(found)
     rnd.shuffle(other)
     first, second = _oe(_frame(found)), _oe(_frame(other))
-    assert first.drop(EXPECTED, "verhaeltnis").equals(second.drop(EXPECTED, "verhaeltnis"))
-    assert first[EXPECTED].to_list() == pytest.approx(second[EXPECTED].to_list())
+    assert first.equals(second)  # bitgleich, auch erwartet und Verhältnis (Review M1)
 
 
 @given(rows, st.booleans())

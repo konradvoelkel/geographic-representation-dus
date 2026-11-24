@@ -8,6 +8,8 @@ ihrer Gremien gerechnet nicht.
 
 from __future__ import annotations
 
+import random
+
 import polars as pl
 import pytest
 
@@ -59,3 +61,64 @@ def test_by_must_be_a_stratum() -> None:
         observed_expected(
             _frame(), unit="fraktionen", outcome="kontrolle", strata=("gremium",), by=("periode",)
         )
+
+
+def _large(rows: int = 100_000) -> pl.DataFrame:
+    """Viele Zeilen, viele Schichten, gemeinsame Dokumente: genug, dass Polars parallel rechnet."""
+    rnd = random.Random(15)
+    units = [
+        sorted({f"F{rnd.randrange(8)}", *([f"F{rnd.randrange(8)}"] if rnd.random() < 0.2 else [])})
+        for _ in range(rows)
+    ]
+    return pl.DataFrame(
+        {
+            "gremium": [f"G{rnd.randrange(300)}" for _ in range(rows)],
+            "fraktionen": units,
+            "kontrolle": [rnd.random() < 0.37 for _ in range(rows)],
+        }
+    )
+
+
+def test_the_expectation_is_the_same_to_the_last_bit_on_every_run() -> None:
+    """Review 2026-11-24, M1: ein Join ohne Folge und eine Fließkommasumme im ``group_by`` gaben an
+    5 000 Zeilen 17 verschiedene Vektoren in 30 Läufen. Eine Zahl der Seite darf das nicht."""
+    frame = _large()
+    seen = {
+        tuple(
+            float(x).hex()
+            for x in observed_expected(
+                frame, unit="fraktionen", outcome="kontrolle", strata=("gremium",)
+            )[EXPECTED]
+        )
+        for _ in range(20)
+    }
+    assert len(seen) == 1
+
+
+def test_the_expectation_does_not_depend_on_the_row_order_to_the_last_bit() -> None:
+    """Dieselbe Eigenschaft, ohne auf den Zufall der Threads zu warten: andere Zeilenfolge,
+    dieselben Bits. Eine Summe in der Folge der Zeilen hängt an ihr; eine exakt gerundete nicht."""
+    frame = _large(20_000)
+    rnd = random.Random(24)
+
+    def bits(rows: pl.DataFrame) -> tuple[str, ...]:
+        found = observed_expected(rows, unit="fraktionen", outcome="kontrolle", strata=("gremium",))
+        return tuple(float(x).hex() for x in found[EXPECTED])
+
+    first = bits(frame)
+    for _ in range(3):
+        order = list(range(frame.height))
+        rnd.shuffle(order)
+        assert bits(frame[order]) == first
+
+
+def test_a_unit_named_twice_in_one_document_counts_once() -> None:
+    """Review 2026-11-24, K2: ein Dokument zählt für jede Einheit darin einmal, auch wenn die Liste
+    sie doppelt nennt (Vorhaben 14 übergibt eigene Listen)."""
+    frame = pl.DataFrame(
+        {"gremium": ["X", "X"], "fraktionen": [["A", "A"], ["B"]], "kontrolle": [True, False]}
+    )
+    found = observed_expected(frame, unit="fraktionen", outcome="kontrolle", strata=("gremium",))
+    rows = {r["fraktionen"]: r for r in found.iter_rows(named=True)}
+    assert (rows["A"][N], rows["A"][OBSERVED]) == (1, 1)
+    assert rows["A"][EXPECTED] == pytest.approx(0.5)
