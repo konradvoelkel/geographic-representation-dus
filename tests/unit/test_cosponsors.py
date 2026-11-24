@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path
 
+import deal
 import polars as pl
 import pytest
 
@@ -239,3 +240,45 @@ def test_the_second_city_keeps_its_fractions_apart_until_its_new_council() -> No
         "PARTEI",
     )
     assert fractions_on(("FDP", "VOLT"), date(2025, 11, 1), fractions, rules.order) == ("FDP+VOLT",)
+
+
+# --- Review 2026-11-24, Nit: die zwei Verträge an der Batch-Grenze aus § 6 -------------------------
+def _one_document(rules: CosponsorRules) -> pl.DataFrame:
+    corpus = pl.DataFrame(
+        {
+            "id": ["a", "b"],
+            "date": [date(2021, 5, 1), date(2021, 5, 1)],
+            "paper_type": ["Antrag SPD", "Antrag CDU"],
+            "name": ["x", "y"],
+            "text": ["", ""],
+        }
+    )
+    originators = pl.DataFrame(
+        {"id": ["a", "b"], "urheber_art": ["Fraktion", "Fraktion"], "parteien": [["SPD"], ["CDU"]]}
+    )
+    bodies = pl.DataFrame({"id": ["a", "b"], "gremium_art": ["rat", "bezirksvertretung"]})
+    return classify_cosponsors(corpus, originators, bodies, rules)
+
+
+def test_the_fractions_must_be_the_image_of_the_cosponsors(
+    rules: CosponsorRules, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import georep.analysis.cosponsors as module
+
+    assert _one_document(rules).get_column("fraktionen").to_list() == [["SPD+VOLT"], ["CDU"]]
+    monkeypatch.setattr(
+        module, "fractions_on", lambda parties, day, fractions, order: tuple(parties)
+    )
+    with pytest.raises(deal.PostContractError, match="Bild"):
+        _one_document(rules)
+
+
+def test_a_camp_exactly_where_a_majority_holds(
+    rules: CosponsorRules, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import georep.analysis.cosponsors as module
+
+    assert _one_document(rules).get_column("lager").to_list() == ["allein_opposition", "ohne_lager"]
+    monkeypatch.setattr(module, "camp", lambda fractions, majority: "allein_mehrheit")
+    with pytest.raises(deal.PostContractError, match="ohne_lager"):
+        _one_document(rules)

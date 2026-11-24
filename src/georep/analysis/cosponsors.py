@@ -321,6 +321,49 @@ def _rows_are_consistent(
     )
 
 
+def _fractions_are_the_image(
+    corpus: pl.DataFrame,
+    originators: pl.DataFrame,
+    bodies: pl.DataFrame,
+    rules: CosponsorRules,
+    result: pl.DataFrame | None = None,
+) -> bool:
+    """``fraktionen`` ist das Bild von ``antragsteller`` unter der Fraktionstabelle am Datum.
+
+    Unabhängig von ``fractions_on`` gerechnet, sonst prüfte der Vertrag die Funktion mit sich
+    selbst (Bauplan § 6, Review 2026-11-24).
+    """
+    assert result is not None
+    days = dict(corpus.select("id", "date").iter_rows())
+    for doc_id, keys, fractions in result.select("id", ANTRAGSTELLER, FRAKTIONEN).iter_rows():
+        day = days.get(doc_id)
+        held = [f for f in rules.fractions if day is not None and f.holds_on(day)]
+        image = {next((f.key for f in held if key in f.parties), key) for key in keys}
+        if len(fractions) != len(set(fractions)) or set(fractions) != image:
+            return False
+    return True
+
+
+def _camp_only_where_a_majority_holds(
+    corpus: pl.DataFrame,
+    originators: pl.DataFrame,
+    bodies: pl.DataFrame,
+    rules: CosponsorRules,
+    result: pl.DataFrame | None = None,
+) -> bool:
+    """``ohne_lager`` genau dort, wo das Gremium nicht auf der Stadtebene liegt oder das Profil
+    für das Datum keine Mehrheit kennt (Bauplan § 6, Review 2026-11-24)."""
+    assert result is not None
+    days = dict(corpus.select("id", "date").iter_rows())
+    kinds = dict(bodies.select("id", "gremium_art").iter_rows())
+    levels = set(rules.majorities.body_kinds)
+    return all(
+        (lager == NO_CAMP)
+        != (kinds.get(doc_id) in levels and rules.majorities.on(days.get(doc_id)) is not None)
+        for doc_id, lager in result.select("id", LAGER).iter_rows()
+    )
+
+
 @deal.pre(
     lambda corpus, originators, bodies, rules: (
         has_columns(corpus, "id", "date", "paper_type", "name", "text")
@@ -330,6 +373,11 @@ def _rows_are_consistent(
 )
 @deal.ensure(_one_row_per_corpus_id, message="eine Zeile je Korpus-ID, nach id sortiert")
 @deal.ensure(_rows_are_consistent, message="Schema, gemeinsam, Lager, nur Fraktionen")
+@deal.ensure(_fractions_are_the_image, message="fraktionen ist das Bild der Antragsteller am Datum")
+@deal.ensure(
+    _camp_only_where_a_majority_holds,
+    message="ohne_lager genau dort, wo keine Mehrheit des Rates gilt",
+)
 def classify_cosponsors(
     corpus: pl.DataFrame,
     originators: pl.DataFrame,
