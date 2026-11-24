@@ -399,3 +399,7 @@ date_line = ''                 # „<Ort>, <Datum>" im Briefkopf, Gruppe datum, 
 office = ''                    # Nummer und Name eines Amts im Feld „Fachbereich", Gruppen nr und name; ohne Muster ist der ganze Wert der Name
 form_titles = []               # Formulartitel im Kopf („Beschlussvorlage"), als ganze Zeile
 head_lines = 30                # so viele Zeilen gelten als Kopf für Sitzung, Datumszeile und Formulartitel
+
+# --- Vorhaben 11, Review K3: Quelle der Gremiennamen auf der Seite (Option 05, nur Anzeige) -------
+[bodies]
+names_source = "die Organisationen des Ratsinformationssystems und Dokumenttitel"  # Satzglied im Satz zur Gremientabelle („Quelle sind …"); eine Stadt, deren Namen anders gesichert sind, sagt es im Profil

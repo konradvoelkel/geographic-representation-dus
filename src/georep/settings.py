@@ -432,6 +432,9 @@ class Bodies(_Strict):
     # sondern in ``report.build.report_fingerprint``; ohne Eintrag gilt ``district_body_name``.
     district_body_names: dict[str, str] = {}
     names_as_of: date | None = None  # Stand der Namen; nur Anzeige, nicht im Fingerprint
+    # Review 11, K3: woher die Namen stammen, als Satzglied der Seite („Quelle sind …"); nur
+    # Anzeige wie ``names_as_of``. Die Vorgabe ist der Satz, den die Seite bis 2026-11-24 fest trug.
+    names_source: str = "die Organisationen des Ratsinformationssystems und Dokumenttitel"
     council: dict[str, str] = {}
     committees: dict[str, str] = {}
     advisory: dict[str, str] = {}
@@ -2391,7 +2394,7 @@ class Settings(BaseSettings):
                 "validation": True,
                 # Punkt 58: ``consultations`` ist ein Pfad (sein Inhalt steht im Stamp des
                 # Schritts ``bodies``), ``district_body_names`` sind reine Anzeigenamen.
-                "bodies": {"names_as_of", "consultations", "district_body_names"},
+                "bodies": {"names_as_of", "names_source", "consultations", "district_body_names"},
                 # Nur Anzeige: die Beschriftung eines Regelsatzes auf der Berichtsseite.
                 "weights": {"paper_type": {"__all__": {"label"}}},
                 "context": {

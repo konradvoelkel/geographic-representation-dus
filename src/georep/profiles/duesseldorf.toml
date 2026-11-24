@@ -233,7 +233,8 @@ postal_marker = ""             # Option 02: Namensbestandteil der Briefwahlbezir
 reference_pattern = '^(?P<code>[A-ZÄÖÜ]+?)(?P<number>\d{1,2})?/\d+/\d{4}(?:[/-].*)?$'
 district_body = "BV"           # Kürzel der Bezirksvertretungen; die Nummer dahinter ist der Stadtbezirk (GO NRW: eine Bezirksvertretung je Stadtbezirk)
 district_body_name = "Bezirksvertretung {n}"  # Anzeigename, {n} ist der Stadtbezirk
-names_as_of = 2026-10-14       # Stand der Namen unten (OParl-organizations-Seite des Bodys, Sitzungstitel und, seit dem 2026-10-14, die Texte der POA- und ACI-Dokumente); nur Anzeige, nicht im Fingerprint
+names_as_of = 2026-11-24       # Stand der Namen unten (OParl-organizations-Seite des Bodys, Sitzungstitel, seit dem 2026-10-14 die Texte der POA- und ACI-Dokumente und seit dem 2026-11-24 der Kopf der Vorlagen für sechs Ausschüsse, Frage 15); nur Anzeige, nicht im Fingerprint
+names_source = "die Organisationen des Ratsinformationssystems, Dokumenttitel und, für sechs Ausschüsse, der Kopf der Vorlagen"  # Satzglied der Seite („Quelle sind …"), Frage 15; nur Anzeige
 # Punkt 58: die Beratungsfolge je Dokument als zweite Quelle des Gremiums. Der Korpus der
 # Hauptperiode kommt aus dem Altformat der Arbeit und trägt sie nicht; der Vollabruf der Metadaten
 # vom 2026-10-14 (122 Seiten, 35 Minuten) hat sie geholt, und das Paket im Repo friert sie ein

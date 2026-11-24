@@ -3197,7 +3197,11 @@ Dokuments stehen 12 763 von 13 232 Kopfzeilen mit Kürzel (96,5 %; die Messung z
 Namen allein), über `resolve_organizations` wie im Schritt `bodies`. (4) **Sechs Ausschussnamen**
 aus dem Kopf (Frage 15, eigener Commit; KUA, JHA, SCHUA, AGS, HFA, AWM, je n von n Dokumenten mit
 genau einer Kopfzeile und genau einem OParl-Gremium): sie ändern Text der Seite und die Zahl der
-Kürzel ohne gesicherten Namen, sonst keine Zahl (unten, A/B-Bau).
+Kürzel ohne gesicherten Namen, sonst keine Zahl (unten, A/B-Bau). Der Stand der Namen
+(`bodies.names_as_of`) ist seitdem der 2026-11-24, und die Quelle im Satz zur Gremientabelle kommt
+aus dem Profil (`bodies.names_source`, Review K3): die Vorgabe in `defaults.toml` ist der Satz, den
+die Seite fest trug (Mönchengladbach bleibt gleich), Düsseldorf nennt dazu den Kopf der Vorlagen.
+Beides ist Anzeige, nicht im Fingerprint, aber im Vorlagen-Hash des Schritts `report` (Punkt 53).
 (5) **`rumpf_leer`** zählt den Text hinter dem ersten Betreff ohne die Abschnitte und Felder des
 Kopfs, ohne Seitenkopfzeilen und Leerraum; unter 80 Zeichen ist der Rumpf leer. „Was hinter dem Kopf
 steht" ging nicht: die alte Vorlagenform setzt die Beratungsfolge ans Ende der ersten Seite, hinter den

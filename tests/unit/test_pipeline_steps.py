@@ -139,6 +139,14 @@ def test_the_display_values_outside_the_fingerprint_are_in_the_report_hash(
         default_settings.model_copy(
             update={"period": default_settings.period.model_copy(update={"label": "anders"})}
         ),
+        # Review 11, K3: die Quelle der Gremiennamen steht im Satz zur Gremientabelle
+        default_settings.model_copy(
+            update={
+                "bodies": default_settings.bodies.model_copy(
+                    update={"names_source": "eine andere Quelle"}
+                )
+            }
+        ),
         default_settings.model_copy(
             update={
                 "context": default_settings.context.model_copy(
