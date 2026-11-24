@@ -59,12 +59,12 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 Neununddreißig Schritte stehen im Register (die drei der Sitzungen, Beratungen und Personen,
 `meetings`, `consultations` und `persons`, nur mit `council.enabled`, Fundament F6; je zwei der
-Beiträge von Vorhaben 15, 14 und 22), jeder mit
+Beiträge von Vorhaben 15, 14 und 22, davon `need_data` nur mit `context.need.fetch`), jeder mit
 Eingaben, Ausgaben und einer
 Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps` zeigt es
-(nachgezählt am 2026-11-24 mit `georep steps`: vierunddreißig für Düsseldorf, fünfunddreißig mit
+(nachgezählt am 2026-11-24 mit `georep steps`: dreiunddreißig für Düsseldorf, vierunddreißig mit
 Vergleich, siebenundzwanzig im Periodenprofil 2014 bis 2020, sechsundzwanzig in der laufenden
-Periode, dreißig für Mönchengladbach). Netzschritte laufen nur mit `--online` oder über
+Periode, neunundzwanzig für Mönchengladbach; mit `context.need.fetch` je einer mehr). Netzschritte laufen nur mit `--online` oder über
 `georep fetch`, Schritte mit lokalem Modell (`Step.models`, Fundament F5) nur mit `--models`; `georep fetch` führt `shapes`, `texts` und `raw_texts` mit, weil die Netzschritte die Flächen
 brauchen und die Texte sonst im Cache liegen blieben. Mit
 `topics.k = 0` fehlt der Schritt `topics`, und `weights` rechnet ohne Themenvarianten; `bodies` steht
@@ -84,6 +84,10 @@ Urhebern im Profil (beide Stadtprofile schalten sie ein); Vorhaben 14 dahinter `
 `procedures`, nur mit `procedures.enabled` (beide Stadtprofile, alle drei Düsseldorfer Perioden).
 Vorhaben 22 bringt zwei weitere dahinter, den Netzschritt `need_data` und `need`, nur mit
 `context.need.enabled` (beide Stadtprofile; die Periodenprofile schalten ihn aus, Frage 22.5).
+`need_data` steht wie die Ratsschritte zusätzlich hinter einem eigenen Schalter,
+`context.need.fetch` (Vorgabe aus, nicht im Fingerprint; für eine Shell
+`GEOREP_CONTEXT__NEED__FETCH=true`): ohne ihn lädt ein bloßes `georep fetch` die zehn Archive
+nicht, und `need` rechnet aus dem Paket (Review 2026-11-24, N1).
 
 | Schritt | Netz | liest | schreibt |
 |---|---|---|---|

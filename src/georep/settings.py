@@ -933,7 +933,8 @@ class NeedHypothesis(_Strict):
 
 
 class NeedSettings(_Strict):
-    """Vorhaben 22: Schalter, Paket, Quellen, Band, Tests. Ohne ``enabled`` fehlen beide Schritte."""
+    """Vorhaben 22: Schalter, Paket, Quellen, Band, Tests. Ohne ``enabled`` fehlen beide Schritte,
+    ohne ``fetch`` der Netzschritt ``need_data``."""
 
     enabled: bool = False
     package: Path | None = None  # Paket mit den Stadtauszügen; ein Pfad, nicht im Fingerprint
@@ -951,6 +952,10 @@ class NeedSettings(_Strict):
     hypotheses: list[NeedHypothesis] = []
     explore: list[tuple[str, str]] = []  # weitere Paare (Bedarf, Aufmerksamkeit), explorativ
     delay_s: float = Field(default=2.0, ge=0.0)  # Pause zwischen zwei geladenen Archiven
+    # Review 2026-11-24, N1, wie ``council.enabled`` (Review F6 2026-11-23, Befund 6): volle Abrufe
+    # sind Konrads Läufe. Ohne den Schalter fehlt ``need_data``, ein bloßes ``georep fetch`` lädt
+    # die zehn Archive nicht, und ``need`` rechnet aus dem Paket. Nicht im Fingerprint.
+    fetch: bool = False
 
     @field_validator("package", mode="before")
     @classmethod
@@ -2353,7 +2358,8 @@ class Settings(BaseSettings):
         Optionen, Fenster), steht als Kennung im Stamp des Modellschritts, und ``limit`` als Zahl
         der offenen Eingaben; der Rest ist Ort und Laufzeit.
         Vorhaben 22: ``context.need.package`` ist ein Pfad, die Namensnennungen der Bedarfsquellen
-        sind Anzeige; Archive, Band, Klassen und Hypothesen zählen.
+        sind Anzeige, ``context.need.fetch`` schaltet nur den Netzschritt ein; Archive, Band,
+        Klassen und Hypothesen zählen.
         """
         payload = self.model_dump(
             mode="json",
@@ -2393,6 +2399,7 @@ class Settings(BaseSettings):
                     # URLs, Band, Klassen und Hypothesen zählen.
                     "need": {
                         "package": True,
+                        "fetch": True,  # N1: ob need_data im Register steht, nicht was es schreibt
                         "accidents": {"attribution"},
                         "grid": {"attribution"},
                         "schools": {"attribution"},

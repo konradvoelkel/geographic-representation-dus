@@ -97,8 +97,9 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
     council = default_settings.council.model_copy(update={"enabled": True})
     # Vorhaben 14: die Schritte eines Beitrags stehen nur mit ihrem Schalter im Register
     procedures = default_settings.procedures.model_copy(update={"enabled": True})
-    # Vorhaben 22: die zwei Schritte stehen nur mit ``context.need.enabled`` im Register
-    need = default_settings.context.need.model_copy(update={"enabled": True})
+    # Vorhaben 22: die zwei Schritte stehen nur mit ``context.need.enabled`` im Register, der
+    # Netzschritt nur mit ``fetch`` dazu (Review 2026-11-24, N1)
+    need = default_settings.context.need.model_copy(update={"enabled": True, "fetch": True})
     context = default_settings.context.model_copy(update={"need": need})
     settings = default_settings.model_copy(
         update={"council": council, "procedures": procedures, "context": context}

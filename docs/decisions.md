@@ -3196,6 +3196,11 @@ Paket nach.
 - *Die Hypothesen stehen im Stadtprofil* mit dem Commit ihrer Festlegung (`fixed`): sie nennen
   Variablen des Quartiersatlas. Der Commit ist `67f7250`; das Messdokument nannte `9da9fe1`, den Hash
   vor dem Rebase, den es in keinem Zweig gibt (berichtigt).
+- *Der Netzschritt hinter einem eigenen Schalter*: `need_data` gibt es nur mit
+  `context.need.fetch` (Vorgabe aus, auch in den Stadtprofilen, nicht im Fingerprint), derselbe
+  Mechanismus wie `council.enabled` (Review F6 2026-11-23, Befund 6): volle Abrufe sind Konrads
+  Läufe, und mit `enabled` allein lud ein bloßes `georep fetch` die zehn Archive (Review
+  2026-11-24, N1). Abgerufen wird mit `GEOREP_CONTEXT__NEED__FETCH=true georep fetch need_data`.
 - *Archive mit Lebensdauer*: `need_data` lädt ein Archiv erst wieder, wenn es älter ist als
   `cache.opendata_s` (dieselbe Lebensdauer wie die übrigen Portaldateien), eine Datei nach der
   anderen mit `context.need.delay_s` Pause. Ein Neuladen bei jedem Lauf hieße 105 MB je Stadt und

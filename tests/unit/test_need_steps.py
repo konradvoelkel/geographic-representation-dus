@@ -16,6 +16,7 @@ import pytest
 import requests
 
 from georep.analysis.need import HYPOTHESES_SCHEMA
+from georep.cli import main
 from georep.crosswalk import DISTRICT
 from georep.enrich.need import need_files, need_steps
 from georep.errors import FetchError
@@ -60,6 +61,7 @@ def _enabled(settings: Settings, **update: object) -> Settings:
             "grid": grid,
             "schools": schools,
             "delay_s": 0.0,
+            "fetch": True,  # der Schalter des Netzschritts (Review 2026-11-24, N1)
             **update,
         }
     )
@@ -128,6 +130,38 @@ def test_without_the_switch_there_is_no_step(tmp_path: Path, default_settings: S
         update={"context": default_settings.context.model_copy(update={"need": off})}
     )
     assert need_steps(settings, layout, FakeSession({})) == []
+
+
+def test_need_data_waits_for_its_own_switch(tmp_path: Path, default_settings: Settings) -> None:
+    """Review 2026-11-24, N1: mit ``enabled`` stand der Netzschritt im Register, und ein bloßes
+    ``georep fetch`` lud die zehn Archive. Wie die Ratsschritte (Review F6 2026-11-23, Befund 6)
+    fehlt er ohne seinen Schalter; ``need`` rechnet dann aus dem Paket."""
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    off = _enabled(default_settings, fetch=False)
+    assert [s.name for s in need_steps(off, layout, FakeSession({}))] == ["need"]
+    on = _enabled(default_settings)
+    assert [s.name for s in need_steps(on, layout, FakeSession({}))] == ["need_data", "need"]
+
+
+def test_a_bare_fetch_leaves_need_data_out(
+    tmp_path: Path,
+    mini_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Ohne Schalter plant ``georep fetch`` den Netzschritt nicht; mit ihm, für eine Shell, beim Namen."""
+    (tmp_path / "settings.toml").write_text(
+        f'data_root = "{tmp_path / "data"}"\nreference_root = "{mini_root}"\n', encoding="utf-8"
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("GEOREP_CONTEXT__NEED__FETCH", raising=False)
+    assert main(["fetch", "--dry-run"]) == 0
+    planned = {line.split()[0] for line in capsys.readouterr().out.splitlines() if line.strip()}
+    assert "opendata" in planned and "need_data" not in planned
+    monkeypatch.setenv("GEOREP_CONTEXT__NEED__FETCH", "true")
+    assert main(["fetch", "--dry-run", "need_data"]) == 0
+    out = capsys.readouterr().out
+    assert out.startswith("need_data") and out.rstrip().endswith("1 geplant")
 
 
 def test_the_two_steps_stand_before_report_and_only_need_data_uses_the_network(

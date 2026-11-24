@@ -752,7 +752,10 @@ def pack_need(
     sources = [folder / name for name in NEED_FILES]
     missing = [str(path) for path in sources if not path.is_file()]
     if missing:
-        raise PackError(f"{missing} fehlen; lief `georep fetch need_data` für dieses Profil?")
+        raise PackError(
+            f"{missing} fehlen; lief `georep fetch need_data` (mit GEOREP_CONTEXT__NEED__FETCH=true) "
+            "für dieses Profil?"
+        )
     described = json.loads((folder / SOURCES_FILE).read_text(encoding="utf-8"))
     urls = [entry.get("url") for entry in described.get("archive", [])]
     if described.get("ags") != settings.city.ags or urls != list(need.archive_urls()):

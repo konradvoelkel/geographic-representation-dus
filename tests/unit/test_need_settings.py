@@ -35,6 +35,25 @@ def test_the_switch_is_off_and_the_block_sits_at_the_end_of_context() -> None:
     assert list(gs.ContextSettings.model_fields)[-1] == "need"
 
 
+def test_need_data_has_its_own_switch_outside_the_fingerprint(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Review 2026-11-24, N1: der Netzschritt hat einen eigenen Schalter wie ``council.enabled``.
+
+    Er ist aus, auch im Stadtprofil; er steht nicht im Fingerprint, damit ein Abruf die Kette nicht
+    neu rechnen lässt, und eine Umgebungsvariable schaltet ihn für eine Shell ein.
+    """
+    monkeypatch.delenv("GEOREP_CONTEXT__NEED__FETCH", raising=False)
+    assert gs.NeedSettings().fetch is False
+    settings = load_settings(cwd=NOWHERE)
+    assert settings.context.need.enabled and settings.context.need.fetch is False
+    assert _need(settings, fetch=True).fingerprint() == settings.fingerprint()
+    monkeypatch.setenv("GEOREP_CONTEXT__NEED__FETCH", "true")
+    switched = load_settings(cwd=NOWHERE)
+    assert switched.context.need.fetch is True
+    assert switched.context.need.hypotheses == settings.context.need.hypotheses
+
+
 def test_the_defaults_name_the_sources_but_no_city() -> None:
     text = resources.files("georep").joinpath("defaults.toml").read_text(encoding="utf-8")
     block = tomllib.loads(text)["context"]["need"]

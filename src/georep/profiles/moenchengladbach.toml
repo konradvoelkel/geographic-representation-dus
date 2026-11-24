@@ -452,5 +452,5 @@ paper_type = 'änderungsvorlage|beratungsvorlage'
 # ohne Ausschussklassifikator (classify.enabled = false oben): Unfälle, Einwohner, Miete und
 # Schulsozialindex je Wahlbezirk, aber keine Anteile der Klassen und keine Hypothesen (Frage 22.6).
 [context.need]
-enabled = true                 # Schritte need_data (Netz) und need
+enabled = true                 # Schritte need und, mit context.need.fetch, need_data (Netz)
 package = "snapshots/moenchengladbach-bedarf"  # georep pack --need; bootstrap kopiert nach external/bedarf/

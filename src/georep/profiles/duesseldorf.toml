@@ -878,7 +878,7 @@ texts = "snapshots/2025/cache/text/texts.parquet"
 # Hypothesen, die vor der ersten Rechnung festgelegt wurden (Commit 67f7250, 2026-11-23). hb_score,
 # anteil_u18 und mindestsicherung sind Variablen des Quartiersatlas oben ([[context.variables]]).
 [context.need]
-enabled = true                 # Schritte need_data (Netz) und need
+enabled = true                 # Schritte need und, mit context.need.fetch, need_data (Netz)
 package = "snapshots/duesseldorf-bedarf"  # georep pack --need; bootstrap kopiert nach external/bedarf/
 explore = [                    # weitere Paare aus § 3.5, explorativ; Lärm und Kitas kommen in Stufe 2 nicht mit (Frage 22.2)
   ["unfaelle_rad_fuss", "anteil_verkehr"],

@@ -361,7 +361,7 @@ to = "anfrage"
 # Stadtprofil, wie die Sprache der Ratsdokumente (Punkt 75); die Gemeinde ist city.ags. Das
 # Stadtprofil schaltet ein und nennt Paket, Klassen und die vorab festgelegten Hypothesen.
 [context.need]
-enabled = false                # Schalter: die Schritte need_data (Netz) und need fehlen ohne ihn
+enabled = false                # Schalter: die Schritte need_data (Netz, nur mit fetch) und need fehlen ohne ihn
 package = ""                   # Paket mit den Stadtauszügen (snapshots/<stadt>-bedarf); bootstrap kopiert nach external/bedarf/, need_data holt frisch. Ein Pfad, nicht im Fingerprint
 band_m = 20.0                  # Randband in Metern: ein Unfall so nah an Wahlbezirken geht zu gleichen Teilen an jeden. Der Unfallatlas legt Unfälle auf die Straßenachse, Wahlbezirksgrenzen laufen oft auf Straßenmitten; halbe Straßenbreite plus Digitalisierungsabstand liegen bei Hauptstraßen um 10 bis 20 m (Messdokument § 3.1). Gitterzellen und Schulen gehen scharf zu (Band 0, Frage 22.4)
 neighbour_m = 50.0             # Nachbarn für Moran's I: Umfang des Schnitts eines 1-m-Puffers um den einen Wahlbezirk mit dem anderen über diesem Wert, also rund 25 m gemeinsame Grenze (so rechnet das Messskript, § 3.5)
@@ -373,6 +373,7 @@ alpha = 0.05                   # Schwelle nach Holm über die vorab festgelegten
 hypotheses = []                # [[context.need.hypotheses]] im Stadtprofil: vorab festgelegt, mit Commit
 explore = []                   # weitere Paare (Bedarf, Aufmerksamkeit), explorativ, im Stadtprofil
 delay_s = 2.0                  # Pause in Sekunden zwischen zwei Archiven, die need_data lädt: eine Anfrage nach der anderen, wie die Fremddaten der Messung geladen wurden
+fetch = false                  # Schalter für den Netzschritt need_data, wie council.enabled: ohne ihn fehlt er, und ein bloßes `georep fetch` lädt die Archive nicht (Review 2026-11-24, N1); für eine Shell GEOREP_CONTEXT__NEED__FETCH=true. Nicht im Fingerprint
 
 [context.need.accidents]       # Unfallatlas: Unfälle mit Personenschaden, je Jahr ein Zip mit einer CSV; die CSV heißt je Jahrgang anders, gelesen wird die größte Datei neben schema.ini
 archives = [

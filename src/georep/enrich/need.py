@@ -2,7 +2,7 @@
 
 Zwei Schritte hinter dem Kern (``docs/plans/22-bedarf.md``, § 6 und § 10):
 
-* ``need_data`` (Netz) holt die Archive der Bedarfsquellen aus ``[context.need]`` nach
+* ``need_data`` (Netz, nur mit dem Schalter ``context.need.fetch``) holt die Archive der Bedarfsquellen aus ``[context.need]`` nach
   ``cache_root/bedarf/`` und schneidet die Gemeinde heraus: Unfälle, Zellen des Zensus-Gitters mit
   Mittelpunkt in einem Stimmbezirk, Schulen mit Sozialindex, dazu ``quellen.json`` mit URL, Größe,
   SHA-256 und Abrufdatum je Archiv. Alles unter ``external/bedarf/``; ohne Netz legt ``bootstrap``
@@ -164,7 +164,7 @@ def _computable(need: NeedSettings, unavailable: set[str]) -> tuple[NeedSettings
 
 
 def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
-    """Die Schritte ``need_data`` und ``need``, wenn ``context.need.enabled``."""
+    """Die Schritte ``need_data`` (nur mit ``context.need.fetch``) und ``need``, wenn ``enabled``."""
     need = settings.context.need
     if not need.enabled:
         return []
@@ -336,7 +336,7 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
         *((layout.papers_committee,) if with_classes else ()),
         *((layout.context_table,) if with_context and with_tests else ()),
     )
-    return [
+    fetching = [
         Step(
             "need_data",
             (layout.precincts_geojson,),
@@ -344,7 +344,11 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
             need_data,
             NEED_DATA_SCHEMA_VERSION,
             network=True,
-        ),
+        )
+    ]
+    # Review 2026-11-24, N1: der Netzschritt nur mit seinem Schalter, wie die Ratsschritte.
+    return [
+        *(fetching if need.fetch else []),
         Step(
             "need",
             inputs,
