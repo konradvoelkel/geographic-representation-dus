@@ -207,7 +207,13 @@ def test_partial_spearman_removes_a_common_driver() -> None:
 # --- die Tabelle ---------------------------------------------------------------------------------
 
 H1 = NeedHypothesis(
-    name="H1", need="x", attention="y", alternative="greater", fixed="abc1234", robust_need=["x2"]
+    name="H1",
+    need="x",
+    attention="y",
+    alternative="greater",
+    fixed="abc1234",
+    robust_need=["x2"],
+    robust_without=[1],
 )
 H2 = NeedHypothesis(
     name="H2",
@@ -216,6 +222,7 @@ H2 = NeedHypothesis(
     alternative="two-sided",
     fixed="abc1234",
     robust_control="x2",
+    robust_without=[1],
 )
 
 
@@ -246,7 +253,7 @@ def _settings(**update: object) -> NeedSettings:
 
 def test_the_table_has_the_core_first_and_rows_in_their_order() -> None:
     frame = _frame()
-    table = hypothesis_table(frame, _settings(), weights=_line(frame.height), exclude=[1])
+    table = hypothesis_table(frame, _settings(), weights=_line(frame.height))
     assert table.schema == pl.Schema(HYPOTHESES_SCHEMA)
     assert table.columns[:6] == ["hypothese", "p", "p_holm", "ergebnis", "n", "festgelegt"]
     assert table.columns[6] == "deutung"  # die erste Spalte hinter dem Kern
@@ -277,6 +284,18 @@ def test_the_table_has_the_core_first_and_rows_in_their_order() -> None:
     assert robust.get_column("kontrolle").to_list() == ["", "", "", "x2"]
     # x2 ist eine streng monotone Funktion von x: dieselben Ränge, dasselbe rho
     assert robust.row(1, named=True)["wert"] == pytest.approx(main.row(0, named=True)["wert"])
+
+
+def test_the_districts_left_out_belong_to_each_hypothesis() -> None:
+    """Review 2026-11-24, N8: die Liste der Robustheit ist vorab festgelegt und steht in der
+    Hypothese, nicht in ``analysis.exclude_districts``, das eine andere Rechnung steuert."""
+    frame = _frame()
+    h1 = H1.model_copy(update={"robust_without": [3, 2]})
+    h2 = H2.model_copy(update={"robust_without": []})
+    table = hypothesis_table(frame, _settings(hypotheses=[h1, h2]), weights=_line(frame.height))
+    robust = table.filter(pl.col("rechnung") == "robustheit")
+    assert robust.get_column("ohne").to_list() == [[2, 3], [], []]
+    assert robust.get_column("n").to_list()[0] == frame.height - 2
 
 
 def test_the_same_seed_writes_the_same_table() -> None:
@@ -316,7 +335,8 @@ def test_a_test_without_values_keeps_its_row_and_its_place_in_holm() -> None:
         [holm([h1["p"], 1.0, h3["p"]])[i] for i in (0, 2)]
     )
     assert h1["p_holm"] != pytest.approx(holm([h1["p"], h3["p"]])[0])  # nicht m = 2
-    assert table.filter(pl.col("hypothese") == "H2").get_column("wert").null_count() == 6
+    # Haupttest, zweimal Robustheit, innerhalb, dreimal Moran: alle ohne Wert
+    assert table.filter(pl.col("hypothese") == "H2").get_column("wert").null_count() == 7
 
 
 def test_a_column_the_hypotheses_name_must_exist() -> None:

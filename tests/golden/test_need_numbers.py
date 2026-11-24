@@ -104,6 +104,26 @@ def test_the_three_hypotheses_come_out_as_measured(
         assert row["deutung"] == readings[name]
 
 
+def test_the_robustness_without_districts_1_and_10_comes_out_as_measured(
+    need_run: tuple[pl.DataFrame, pl.DataFrame],
+) -> None:
+    """§ 3.4, Zeile „ohne Wahlbezirke 1 und 10 (n = 39)": 0,417, −0,411, −0,144.
+
+    Die Liste steht seit Review 2026-11-24, N8, in der Hypothese des Profils (``robust_without``)
+    und nicht mehr in ``analysis.exclude_districts``; die Zahlen bleiben.
+    """
+    _, tests = need_run
+    rows = {
+        row["hypothese"]: row
+        for row in tests.filter(pl.col("rechnung") == "robustheit").to_dicts()
+        if row["ohne"]
+    }
+    assert list(rows) == ["H1", "H2", "H3"]
+    for name, rho in (("H1", 0.417), ("H2", -0.411), ("H3", -0.144)):
+        assert rows[name]["ohne"] == [1, 10] and rows[name]["n"] == 39
+        assert rows[name]["wert"] == pytest.approx(rho, abs=5e-4)
+
+
 def test_the_explorative_rows_come_out_as_measured(
     need_run: tuple[pl.DataFrame, pl.DataFrame],
 ) -> None:

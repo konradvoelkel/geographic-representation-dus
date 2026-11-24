@@ -395,23 +395,21 @@ def _pairs(frame: pl.DataFrame, a: str, b: str) -> tuple[Floats, Floats, pl.Data
     )
 
 
-def _robust_rows(
-    frame: pl.DataFrame, h: NeedHypothesis, exclude: Sequence[int]
-) -> list[dict[str, object]]:
+def _robust_rows(frame: pl.DataFrame, h: NeedHypothesis) -> list[dict[str, object]]:
     """Die vorab genannten Robustheitsrechnungen (rho ohne p; sie entscheiden nicht)."""
     rows: list[dict[str, object]] = []
     common = {"hypothese": h.name, "festgelegt": h.fixed, "rechnung": ROBUST, "explorativ": False}
     common |= {"mass": "spearman"}
-    if exclude:
+    if h.robust_without:
         x, y, sub = _pairs(
-            frame.filter(~pl.col(DISTRICT).is_in(list(exclude))), h.need, h.attention
+            frame.filter(~pl.col(DISTRICT).is_in(h.robust_without)), h.need, h.attention
         )
         rows.append(
             _row(
                 **common,
                 bedarf=h.need,
                 aufmerksamkeit=h.attention,
-                ohne=sorted(exclude),
+                ohne=sorted(h.robust_without),
                 wert=spearman(x, y),
                 n=sub.height,
             )
@@ -480,13 +478,7 @@ def _table_holds(result: pl.DataFrame, alpha: float) -> bool:
     )
 
 
-def _arguments_fit(
-    frame: pl.DataFrame,
-    need: NeedSettings,
-    *,
-    weights: Floats,
-    exclude: Sequence[int] = (),
-) -> bool:
+def _arguments_fit(frame: pl.DataFrame, need: NeedSettings, *, weights: Floats) -> bool:
     return (
         has_columns(frame, DISTRICT, STRATUM)
         and bool(frame.get_column(DISTRICT).is_sorted())
@@ -500,7 +492,6 @@ def _result_holds(
     need: NeedSettings,
     *,
     weights: Floats,
-    exclude: Sequence[int] = (),
     result: pl.DataFrame | None = None,
 ) -> bool:
     assert result is not None
@@ -515,20 +506,14 @@ def _result_holds(
     message="Schema, p in [0, 1], p_holm >= p, Ergebnis genau bei Holm unter alpha, Deutung aus § 8",
 )
 @deal.raises(SchemaError)
-def hypothesis_table(
-    frame: pl.DataFrame,
-    need: NeedSettings,
-    *,
-    weights: Floats,
-    exclude: Sequence[int] = (),
-) -> pl.DataFrame:
+def hypothesis_table(frame: pl.DataFrame, need: NeedSettings, *, weights: Floats) -> pl.DataFrame:
     """Alle Zeilen von ``bedarf_hypothesen.parquet`` für eine Analysetabelle je Wahlbezirk.
 
     ``frame`` ist nach ``wahlkreis_id`` sortiert und trägt ``stadtbezirk`` und jede Spalte, die die
     Hypothesen und Paare nennen (sonst ``SchemaError`` mit den Namen); ``weights`` ist die
-    Nachbarschaft in derselben Folge (``neighbours``), ``exclude`` die Wahlbezirke der
-    Robustheitsrechnung „ohne Ausreißer" (``analysis.exclude_districts``). Eine Zeile ohne Wert
-    in x oder y fällt aus der jeweiligen Rechnung, und ``n`` sagt, wie viele blieben.
+    Nachbarschaft in derselben Folge (``neighbours``). Die Wahlbezirke der Robustheitsrechnung
+    „ohne Ausreißer" nennt jede Hypothese selbst (``robust_without``). Eine Zeile ohne Wert in x
+    oder y fällt aus der jeweiligen Rechnung, und ``n`` sagt, wie viele blieben.
 
     Bleibt einer Hypothese kein Test (eine Spalte ohne Werte, weil ihre Eingabe im Lauf fehlt, oder
     keine Streuung), bleibt ihre Zeile mit ``p`` null, ohne ``p_holm``, Ergebnis und Deutung, und
@@ -584,7 +569,7 @@ def hypothesis_table(
         row["ergebnis"] = None if family_p is None else verdict(family_p, need.alpha)
         row["deutung"] = interpretation(h.alternative, rho, family_p, need.alpha)
         rows.append(row)
-        rows += _robust_rows(frame, h, exclude)
+        rows += _robust_rows(frame, h)
 
     # Explorativ (§ 3.5): ein zweiter Generator, erst innerhalb der Stadtbezirke, dann Moran's I.
     explore_rng = np.random.default_rng(need.seed + 1)

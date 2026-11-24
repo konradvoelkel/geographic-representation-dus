@@ -930,6 +930,10 @@ class NeedHypothesis(_Strict):
     robust_need: list[str] = []  # dieselbe Rechnung mit einer anderen Bedarfsspalte
     robust_attention: list[str] = []  # dito Aufmerksamkeit
     robust_control: str = ""  # partielle Rangkorrelation bei fester Spalte; "" = keine
+    # Review 2026-11-24, N8: die Wahlbezirke, ohne die dieselbe Rechnung noch einmal läuft (§ 8:
+    # ohne 1 und 10). Vorab festgelegt wie die Hypothese, darum hier und nicht aus
+    # ``analysis.exclude_districts``, das die Regression der Seite steuert und sich ändern darf.
+    robust_without: list[int] = []
 
 
 class NeedSettings(_Strict):

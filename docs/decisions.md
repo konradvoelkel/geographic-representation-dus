@@ -3198,7 +3198,10 @@ Paket nach.
   `ergebnis` sagte bei der zweiseitigen H2 nicht, in welche Richtung Holm verwirft (Review
   2026-11-24, K1). Die einseitigen H1 und H3 haben nur den ersten und den letzten Ausgang.
 - *Die Hypothesen stehen im Stadtprofil* mit dem Commit ihrer Festlegung (`fixed`): sie nennen
-  Variablen des Quartiersatlas. Der Commit ist `67f7250`; das Messdokument nannte `9da9fe1`, den Hash
+  Variablen des Quartiersatlas. Auch die Wahlbezirke der Robustheit „ohne 1 und 10" stehen in jeder
+  Hypothese (`robust_without`), nicht in `analysis.exclude_districts`, das die Regression der Seite
+  steuert und sich ändern darf, ohne dass sich eine vorab festgelegte Rechnung mitändert (Review
+  2026-11-24, N8; die Zahlen 0,417, −0,411, −0,144 bleiben, ein `slow`-Test hält sie). Der Commit ist `67f7250`; das Messdokument nannte `9da9fe1`, den Hash
   vor dem Rebase, den es in keinem Zweig gibt (berichtigt).
 - *Der Netzschritt hinter einem eigenen Schalter*: `need_data` gibt es nur mit
   `context.need.fetch` (Vorgabe aus, auch in den Stadtprofilen, nicht im Fingerprint), derselbe

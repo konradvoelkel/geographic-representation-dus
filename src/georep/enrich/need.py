@@ -306,7 +306,6 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
             frame.sort(DISTRICT),
             need,
             weights=neighbours(unions, need.neighbour_m),
-            exclude=settings.analysis.exclude_districts,
         )
         write_parquet(tests, files.tests, schema_version=NEED_SCHEMA_VERSION)
         main = tests.filter(pl.col("rechnung") == MAIN)

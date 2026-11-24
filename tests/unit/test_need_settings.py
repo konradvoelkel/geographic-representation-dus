@@ -54,6 +54,16 @@ def test_need_data_has_its_own_switch_outside_the_fingerprint(
     assert switched.context.need.hypotheses == settings.context.need.hypotheses
 
 
+def test_the_profile_names_the_districts_of_the_robustness_in_each_hypothesis() -> None:
+    """§ 8: alle drei auch ohne die Wahlbezirke 1 und 10, vorab festgelegt (Review 2026-11-24, N8)."""
+    settings = load_settings(cwd=NOWHERE)
+    assert [h.robust_without for h in settings.context.need.hypotheses] == [[1, 10]] * 3
+    changed = settings.model_copy(
+        update={"analysis": settings.analysis.model_copy(update={"exclude_districts": [2]})}
+    )
+    assert changed.context.need.hypotheses == settings.context.need.hypotheses
+
+
 def test_the_defaults_name_the_sources_but_no_city() -> None:
     text = resources.files("georep").joinpath("defaults.toml").read_text(encoding="utf-8")
     block = tomllib.loads(text)["context"]["need"]
