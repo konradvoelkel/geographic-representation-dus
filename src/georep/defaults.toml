@@ -329,3 +329,28 @@ patterns = ['dringlichkeitsentscheidung', 'dringliche[rn]? entscheidung', 'dring
 [majorities]                   # die Mehrheit im Rat je Zeitraum, mit Vereinbarung (Vorhaben 25) und Belegen im Korpus; eine Annahme, die das Lager eines Fraktionsdokuments trägt (Schritt cosponsors) und die 24 und 28 mitlesen. Stadtneutral leer: ohne Zeile hat kein Dokument ein Lager
 body_kinds = ["rat", "ausschuss"]  # Gremienarten (gremium_art), in denen die Mehrheit des Rates gilt; die Bezirksvertretungen haben eigene Mehrheiten, die im Datensatz nicht stehen (Vorhaben 27)
 terms = []                     # [[majorities.terms]] im Stadtprofil: period, parties, valid_from, valid_to, agreement, agreement_date, evidence
+
+# --- Vorhaben 14: Vorgänge (docs/plans/14-vorgaenge.md, § 6 und § 10)
+[procedures]                   # Kanten zwischen Drucksachen, Vorgänge als Baum, Antworten auf Anfragen; gebaut ist die Rückfallregel (Messdokument § 5.1): stark nur aus Titel, Anlagenname, Nachtragsnummer und Sammelbericht, reine Textverweise bleiben schwach (die Regelfassung .2 trug an der Bestätigung nur 0,850, die Rückfallregel 104 von 106). Formen der Nummer, Dokumentarten, Antwortanlagen und Pakete stehen im Stadtprofil, kein Stadtwort im Code
+enabled = false                # ein Stadtprofil schaltet ein, wenn es Formen und Dokumentarten nennt; ohne Schalter fehlen die Schritte references und procedures
+max_code_length = 6            # ein unbekanntes Kürzel vor einer Nummer ist höchstens so lang; länger ist es ein Wort („vorlage 61/ 12/2014"), sonst standen 6 801 Scheintreffer „ORLAGE" unter den unbekannten (Messdokument § 3.1)
+amendment_markers = 'änderungsantrag|ergänzungsantrag|zur vorlage|zu vorlage|zur drucksache|zur beratungsvorlage|zu beratungsvorlage|zu top|zum tagesordnungspunkt'  # Typ aenderung nur mit einem Änderungszeichen im Titel der nennenden Drucksache oder kurz vor einer Fundstelle (Typen .2, Messdokument § 3.9); ohne Zeichen ist dieselbe Kante bezug
+amendment_window = 120         # so viele Zeichen vor einer Fundstelle in Text oder Anlagennamen zählen für das Änderungszeichen (§ 3.9)
+interim_attachment = 'zwischen'  # eine Zwischennachricht ist keine Antwort (fünf unter den Anlagen der Anfragen, § 3.6)
+collective_titles = 'beschlusskontrolle|veränderungsverzeichnis|ergebnis der haushaltsberatungen|stand der umsetzung|umsetzungsstand|erledigung'  # Sammelberichte (R3, Messdokument § 3.9): eine Verwaltungsvorlage mit einem dieser Titelwörter hält jeden Verweis stark, als Typ kontrolle. Verwaltungsdeutsch und keine Stadt: so heißen sie in Düsseldorf (Beschlusskontrolle) und in Mönchengladbach („Nachweis deren Erledigung", „Umsetzungsstand der im Rat beschlossenen Fraktionsanträge"), und die Rückfallregel ist an beiden gemessen
+answer_attachment = ''         # Stadtprofil: Muster im Namen einer Anlage, die die Antwort auf eine Anfrage ist; leer = keine Antwortanlagen
+attachment_dates_invalid = []  # Stadtprofil: Anlagendaten, die kein Antwortdatum sind (der Umstellungstag eines Ratsinformationssystems)
+attachments = ''               # Paket mit den Anlagen je Drucksache (`georep pack --attachments`); bootstrap kopiert es nach raw/anlagen.parquet. Leer = keine Anlagen: dann gibt es weder Anlagenkanten noch Antwortanlagen
+person_titles = 'Herrn?|Frau|Ratsherrn?|Ratsfrau|(?:Ober|Bezirks)?[Bb]ürgermeister(?:in)?|Dr\.|Prof\.'  # Review K1 (2026-11-24): Anrede oder Titel vor einem Namen. `pack --attachments` ersetzt den Namen dahinter (ein, zwei groß geschriebene Wörter) durch „…“, damit das Paket keine Namen trägt, die der Name einer Anlage nennt („Schreiben von Herrn … vom …“). „OB“ steht nicht darin: in den Anlagennamen folgt ihm nie ein Name, sondern ein Gegenstand oder eine Anschrift („OB Graf-Engelbert-Straße 29-33“). Leer = nichts maskieren
+
+# Der Titel schlägt die Dokumentart, wo beide sich widersprechen („Antrag der Ratsfraktionen …" als
+# Anfrage eingestellt: 8 Dokumente, umgekehrt 19; Messdokument § 3.9). Gelesen am Anfang des
+# kleingeschriebenen Titels ohne führende Leerzeichen und Doppelpunkte; die erste Regel gilt.
+[[procedures.title_overrides]]
+role = "anfrage"
+title = '(antrag|änderungsantrag|ergänzungsantrag)'
+to = "antrag"
+[[procedures.title_overrides]]
+role = "antrag"
+title = 'anfrage'
+to = "anfrage"

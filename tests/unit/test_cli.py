@@ -20,7 +20,10 @@ def project(tmp_path: Path, mini_root: Path, monkeypatch: pytest.MonkeyPatch) ->
         # Punktschlüssel statt einer [context]-Tabelle: Tests hängen weitere Schlüssel an, und die
         # landeten nach einer Tabellenkopfzeile in ihr.
         f'data_root = "{tmp_path / "data"}"\nreference_root = "{mini_root}"\n'
-        f'context.root = "{mini_root / "context"}"\n',
+        f'context.root = "{mini_root / "context"}"\n'
+        # Vorhaben 14: die Pakete der Nachbarperioden und der Anlagen liegen relativ zum Repo; von
+        # hier aus gibt es sie nicht, die Schritte laufen also nur über den eigenen Korpus.
+        'procedures.related = []\nprocedures.attachments = ""\n',
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)

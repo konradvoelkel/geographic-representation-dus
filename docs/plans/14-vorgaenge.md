@@ -894,4 +894,61 @@ Stufe 1.
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
-—
+Übertragen am 2026-11-24 aus [00-synergien-2026-11.md](00-synergien-2026-11.md) (§ 1, § 2.1,
+§ 2.2 Konflikte 1, 10, 11, 12, § 3 und § 4 „14 Vorgänge"), als Auftrag an Stufe 2. Wo dieser
+Abschnitt § 6 und § 7 widerspricht, gilt dieser Abschnitt.
+
+**Stufe 2 (Bauen).**
+
+- **Nur die Rückfallregel** (§ 5.1): stark nur aus Titel, Anlagenname, Nachtragsnummer und
+  Sammelbericht; reine Textkanten bleiben schwach in den Daten. Merkmale der Fassung .2
+  (Aufzählung, Verweiszeichen) werden nicht gebaut, die Typen .2 schon (§ 6).
+- **Spannen nur für Stellen im Text** (Konflikt 1). `verweise.parquet` trägt keine Titel- und
+  Anlagentreffer: die stehen nur in `vorgang_kanten` (`felder`, `quelle`), denn `check_spans` prüft
+  gegen die Länge eines Texts je Dokument. Die Spannen liegen auf dem Rohtext über
+  `flatten_with_offsets` (Fundament-Nachzug F7, `extractor` nennt den Rohtext, `section` aus 11);
+  ist der Nachzug nicht rechtzeitig da, bleiben sie auf dem Textstore mit `section = ""`,
+  F3-konform. Schema, Folge und Prüfung unverändert aus F3 (`sort_spans`, `check_spans`, Int64,
+  Folge `id, start, end, kind`).
+- **Dateiname** der Attribute je Dokument: `dokumente_vorgang.parquet` statt `vorgaenge.parquet`
+  (Konvention `dokumente_<attribut>.parquet`, Vertrag `contracts.one_row_per_document`).
+- **Fundstellen außerhalb des Texts** heißen wie bei den anderen Vorhaben: `titel`, `anlage`,
+  `nummer` (dazu hier `sammelbericht` und `text` in `quelle`).
+- **Anlagen nur als Paket** über `georep pack`: `snapshots/duesseldorf-anlagen/` (alle drei
+  Düsseldorfer Perioden) und `snapshots/moenchengladbach-anlagen/`. **Nichts nach `reference/`
+  oder `context/`** (Konflikt 11): `reference/moenchengladbach/` bleibt, wie es ist.
+- **`PaperRecord` wird in Stufe 2 nicht erweitert** (§ 2.1, `oparl.py`, `records.py`): F6 hat die
+  Felder 14 überlassen, aber es ist ein Schema-Sprung des Korpus mit Golden-Master-Risiko, und das
+  Anlagenpaket genügt. „Mit F6 abzustimmen" in § 6 entfällt.
+- **Paketbudget** (Konflikt 12): mit dem Rohtext der Hauptperiode liegen alle Pakete bei rund
+  166,5 von 180 MiB (`TOTAL_LIMIT`); die Anlagen (rund 0,5 MB und Mönchengladbach) passen. Frage 26
+  an Konrad: Annahme „die drei kleinen Pakete ja". Die Größe steht im Commit.
+- **Gemeinsame Dateien nach der Anhängeregel** (§ 2.1): in `enrich/__init__.py` eine Importzeile
+  und ein Eintrag am Ende von `CONTRIBUTIONS`, ein Beitrag `14-vorgaenge` mit allen Schritten;
+  in `settings.py` ein Modell vor `class Settings` und ein Feld am Ende, in `defaults.toml` ein
+  Block am Ende mit `# --- Vorhaben 14: Vorgänge`, Schalter aus; in den Stadtprofilen je ein Block
+  am Ende, Listen im Stadtprofil (`deep_merge` ersetzt Listen); **keine neuen Properties in
+  `layout.py`**, die Pfade gehören dem Modul; in `pack.py`, `cli.py` (`pack`), `bootstrap.py` und
+  `tests/unit/test_data_packages.py` je eine Funktion, Option oder Zeile am Ende mit
+  `# Vorhaben 14`; in `noxfile.py` Einträge am Ende; den Snapshot von `georep steps`
+  (`tests/unit/__snapshots__/test_cli.ambr`) bewusst erneuern.
+- **Dokumentart-Tabellen** (`procedures.kinds`) bleiben je Vorhaben, so sind sie validiert; ein
+  gemeinsamer Test prüft später für jedes Profil jede vorkommende Dokumentart gegen jede Tabelle
+  (abgebildet oder ausdrücklich „sonst").
+- **Reihenfolge**: Welle 1 (14, 11, 12, 15, 22); Merge an Position 3, nach 11 und 12. 14 wartet
+  auf nichts außer der Paketentscheidung; F1 nur, wenn die Spannen auf dem Rohtext liegen.
+
+**Stufe 3 (Zeigen), zur Kenntnis.**
+
+- **Fraktion aus 15** (`fraktionen`), nicht aus `parteien` (Konflikt 10); beobachtet/erwartet
+  über die Funktion, die 15 in `analysis/` baut.
+- **Dokumentdialog über einen eigenen Haken** in `templates/frame/script.js.j2` (Datei
+  `data/<name>.json`, Zeilen je Dokument), an den sich 18 und 26 hängen; `dokumente.json` wächst
+  nicht.
+- **Validierung auf der Seite nur aus `guete.json`** (F4). Dort steht heute die Präzision der
+  ganzen Regel (0,927 und 0,850), nicht die der Rückfallregel (104 / 106); bis zum F4-Nachzug (die
+  Rückfallregel als Verfahren in `score` oder die Prüfstichprobe aus Frage 9.18 als
+  `14-vorgaenge-3-f4`) kommt keine dieser Zahlen auf die Seite. Die Prüfstichprobe läuft parallel
+  zu Stufe 2.
+- `vorgaenge.html` füllt später auch Vorhaben 26; dafür braucht F2 Abschnitte aus fremden
+  Beiträgen, für Stufe 3 von 14 nicht.

@@ -207,9 +207,23 @@ class UnknownStepError(GeorepError):
 MISSING = "fehlt"  # der Eintrag einer fehlenden optionalen Eingabe im Stamp
 
 
+def input_key(step: Step, path: Path) -> str:
+    """Der Schlüssel einer Eingabe im Stamp: ihr Dateiname, bei zwei gleichnamigen der Pfad.
+
+    Vorhaben 14 (2026-11-24): die Pakete zweier Nachbarperioden heißen beide ``papers.jsonl``,
+    und ``compare`` liest zweimal ``wahlbezirke_auswertung.parquet``. Unter einem Schlüssel stand
+    nur der Hash der letzten, und eine Änderung an der ersten blieb unbemerkt. Ein eindeutiger
+    Name behält seinen Schlüssel, damit jeder andere Stamp gültig bleibt.
+    """
+    names = [p.name for p in (*step.inputs, *step.optional)]
+    return path.name if names.count(path.name) == 1 else str(path)
+
+
 def input_digests(step: Step) -> dict[str, str]:
-    required = {p.name: digest(p) for p in step.inputs}
-    return required | {p.name: digest(p) if p.exists() else MISSING for p in step.optional}
+    required = {input_key(step, p): digest(p) for p in step.inputs}
+    return required | {
+        input_key(step, p): digest(p) if p.exists() else MISSING for p in step.optional
+    }
 
 
 def expected_stamp(step: Step, settings: Settings) -> dict[str, object]:
@@ -322,11 +336,14 @@ def run_step(
     if dry_run:
         # Frühere geplante Schritte erzeugen ihre Ausgaben erst im echten Lauf.
         return Outcome(step.name, "geplant", reason)
-    missing = [str(p) for p in step.inputs if not p.exists()]
+    missing = [str(p.resolve()) for p in step.inputs if not p.exists()]
     if missing:
+        # Review von Vorhaben 14: ein Paket aus dem Repo (snapshots/, reference/) holt kein
+        # bootstrap; es wird relativ zum Arbeitsverzeichnis gelesen, darum der volle Pfad
         raise MissingInputError(
             f"Schritt {step.name}: Eingaben fehlen: {', '.join(missing)}. "
-            "Fehlt der Korpus oder die Rohdaten, hilft `georep bootstrap`."
+            "Fehlt der Korpus oder die Rohdaten unter data_root, hilft `georep bootstrap`; "
+            "ein Paket aus dem Repo liest das Programm relativ zum Arbeitsverzeichnis."
         )
     started = time.perf_counter()
     if step.models is not None:

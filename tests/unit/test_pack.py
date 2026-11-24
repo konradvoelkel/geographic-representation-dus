@@ -15,21 +15,27 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from georep.analysis.procedures import ATTACHMENT_SCHEMA
 from georep.bootstrap import bootstrap
 from georep.layout import Layout
 from georep.pack import (
+    ATTACHMENTS_NAME,
     README_NAME,
     RUN_SOURCES,
     PackError,
+    attachment_rows,
+    cached_pages,
     check_text_store,
     pack,
+    pack_attachments,
     pack_consultations,
     pack_raw_texts,
     pack_texts,
     package_files,
     paper_file_names,
 )
-from georep.settings import Settings
+from georep.prep.references import ReferenceRules
+from georep.settings import Settings, load_settings
 from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextMeta, TextStore
 
 
@@ -526,3 +532,164 @@ def test_pack_raw_texts_names_an_old_schema_version(
     with pytest.raises(PackError, match="Schema-Version 1") as refused:
         pack_raw_texts(layout, default_settings, tmp_path / "rohtexte")
     assert "ohne PDFs" not in str(refused.value)
+
+
+# --- Vorhaben 14: das Anlagenpaket aus dem HTTP-Cache -------------------------------------------
+
+ENDPOINT = "https://ris.test/Oparl/bodies/0015/papers"
+MASK = ReferenceRules.from_settings(load_settings(cwd=Path("/nonexistent")).procedures)
+
+
+def _file(name: str, day: str | None, created: str | None = None) -> dict[str, object]:
+    found: dict[str, object] = {"id": f"https://ris.test/files/{name}", "name": name}
+    if day is not None:
+        found["date"] = day
+    if created is not None:
+        found["created"] = created
+    return found
+
+
+def _paper(paper_id: str, modified: str, *files: dict[str, object]) -> dict[str, object]:
+    return {"id": paper_id, "modified": modified, "auxiliaryFile": list(files)}
+
+
+def _cache(path: Path, pages: list[tuple[str, dt.datetime, list[dict[str, object]]]]) -> Path:
+    """Ein HTTP-Cache im Format von requests-cache: Tabelle ``responses``, gepickelte Antworten."""
+    import sqlite3
+    from contextlib import closing
+
+    from requests_cache.models.response import CachedResponse
+    from requests_cache.serializers import SERIALIZERS
+
+    with closing(sqlite3.connect(path)) as connection, connection:
+        connection.execute("create table responses (key PRIMARY KEY, value)")
+        for number, (url, created, papers) in enumerate(pages):
+            response = CachedResponse(
+                url=url,
+                status_code=200,
+                content=json.dumps({"data": papers}).encode(),
+                created_at=created,
+            )
+            connection.execute(
+                "insert into responses values (?, ?)",
+                (f"k{number}", SERIALIZERS["pickle"].dumps(response)),
+            )
+    return path
+
+
+FIRST = dt.datetime(2026, 10, 13, 12, tzinfo=dt.UTC)
+SECOND = dt.datetime(2026, 10, 14, 1, tzinfo=dt.UTC)
+
+
+def test_cached_pages_reads_only_the_paper_list_of_the_endpoint(tmp_path: Path) -> None:
+    cache = _cache(
+        tmp_path / "http.sqlite",
+        [
+            (f"{ENDPOINT}?page=2", FIRST, []),
+            ("https://ris.test/Oparl/bodies/0011/papers", FIRST, []),
+            (f"{ENDPOINT}/vo/1", FIRST, []),
+        ],
+    )
+    assert cached_pages(cache, ENDPOINT) == [(FIRST.date(), b'{"data": []}')]
+
+
+def test_attachment_rows_keep_the_newest_object_in_the_server_order(tmp_path: Path) -> None:
+    old = _paper("p1", "2026-03-01T10:00:00+01:00", _file("Vorlage", "2019-07-03"))
+    new = _paper(
+        "p1",
+        "2026-03-02T10:00:00+01:00",
+        _file("Antwort der Verwaltung", None, "2026-02-01T09:00:00+01:00"),
+        _file("Schreiben von Herrn Seeler", "2026-02-02"),  # Review K1: der Name bleibt draußen
+    )
+    pages = [
+        (
+            FIRST.date(),
+            json.dumps({"data": [old, _paper("p2", "2026-01-01T00:00:00+01:00")]}).encode(),
+        ),
+        (
+            SECOND.date(),
+            json.dumps({"data": [new, _paper("p9", "2026-01-01T00:00:00+01:00")]}).encode(),
+        ),
+        (SECOND.date(), json.dumps({"data": [old]}).encode()),  # älter: bleibt draußen
+    ]
+    rows = attachment_rows(pages, {"p1", "p2"}, MASK)
+    assert rows.schema == pl.Schema(ATTACHMENT_SCHEMA)
+    assert rows.rows() == [
+        (
+            "p1",
+            SECOND.date(),
+            [
+                {"name": "Antwort der Verwaltung", "datum": dt.date(2026, 2, 1)},
+                {"name": "Schreiben von Herrn …", "datum": dt.date(2026, 2, 2)},
+            ],
+        ),
+        ("p2", FIRST.date(), []),
+    ]
+
+
+def _attachment_run(tmp_path: Path, settings: Settings) -> tuple[Layout, Settings]:
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref")
+    layout.ensure_dirs()
+    pl.DataFrame({"id": ["p1", "p2", "p3"]}).write_parquet(layout.corpus)
+    _cache(
+        layout.http_cache,
+        [
+            (
+                f"{ENDPOINT}?page=1",
+                FIRST,
+                [
+                    _paper("p1", "2026-01-01T00:00:00+01:00", _file("Antwort", "2026-02-01")),
+                    _paper("p2", "2026-01-01T00:00:00+01:00"),
+                    _paper("x9", "2026-01-01T00:00:00+01:00"),
+                ],
+            )
+        ],
+    )
+    oparl = settings.sources.oparl.model_copy(update={"endpoint": ENDPOINT})
+    procedures = settings.procedures.model_copy(update={"related": []})
+    return layout, settings.model_copy(
+        update={
+            "sources": settings.sources.model_copy(update={"oparl": oparl}),
+            "procedures": procedures,
+        }
+    )
+
+
+def test_pack_attachments_writes_one_row_per_paper_the_cache_knows(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout, settings = _attachment_run(tmp_path, default_settings)
+    target = tmp_path / "paket"
+    report = pack_attachments(layout, settings, target, today=dt.date(2026, 11, 24))
+    frame = pl.read_parquet(target / ATTACHMENTS_NAME)
+    assert frame.get_column("id").to_list() == [
+        "p1",
+        "p2",
+    ]  # p3 kennt der Cache nicht, x9 ist fremd
+    assert dict(report.figures) == {
+        "Drucksachen": 2,
+        "mit Anlage": 1,
+        "Anlagen": 1,
+        "nicht im Cache": 1,
+        "Anlagennamen mit maskiertem Personennamen": 0,
+    }
+    assert report.readme_written and "pack --attachments" in (target / README_NAME).read_text(
+        encoding="utf-8"
+    )
+    again = pack_attachments(layout, settings, target)
+    assert again.skipped == (ATTACHMENTS_NAME,)
+
+
+def test_pack_attachments_refuses_without_cache_or_without_a_known_paper(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    layout, settings = _attachment_run(tmp_path, default_settings)
+    elsewhere = settings.sources.oparl.model_copy(update={"endpoint": f"{ENDPOINT}/anders"})
+    other = settings.model_copy(
+        update={"sources": settings.sources.model_copy(update={"oparl": elsewhere})}
+    )
+    with pytest.raises(PackError, match="das Paket wäre leer"):
+        pack_attachments(layout, other, tmp_path / "paket")
+    layout.http_cache.unlink()
+    with pytest.raises(PackError, match="HTTP-Cache"):
+        pack_attachments(layout, settings, tmp_path / "paket")
