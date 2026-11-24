@@ -47,7 +47,9 @@ def test_der_schritt_steht_hinter_den_schritten_von_15_und_vor_dem_bericht(
 ) -> None:
     step = next(s for s in identifiers_steps(default_settings, _layout(tmp_path), HTTP))
     names = [s.name for s in build_steps(default_settings, _layout(tmp_path))]
-    assert names.index("cosponsors") < names.index("identifiers") == names.index("report") - 1
+    # hinter den Beiträgen, die vor ihm im Register stehen, und irgendwo vor dem Bericht: ein
+    # späterer Beitrag darf sich dazwischen hängen (Review N3)
+    assert names.index("cosponsors") < names.index("identifiers") < names.index("report")
     assert step.inputs == (_layout(tmp_path).raw_texts, _layout(tmp_path).corpus)
     assert step.outputs == (identifiers_files(_layout(tmp_path)).spans,)
     assert step.schema_version == IDENTIFIERS_SCHEMA_VERSION
