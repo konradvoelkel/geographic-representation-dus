@@ -85,8 +85,9 @@ class Contribution:
 # und nicht oben: jedes Beitragsmodul baut ein ``Contribution`` aus diesem Modul.
 from georep.enrich.functions import CONTRIBUTION as FUNCTIONS  # noqa: E402  (Vorhaben 15)
 from georep.enrich.need import CONTRIBUTION as NEED  # noqa: E402  (Vorhaben 22)
+from georep.enrich.procedures import CONTRIBUTION as PROCEDURES  # noqa: E402  (Vorhaben 14)
 
-CONTRIBUTIONS: tuple[Contribution, ...] = (FUNCTIONS, NEED)
+CONTRIBUTIONS: tuple[Contribution, ...] = (FUNCTIONS, PROCEDURES, NEED)
 
 
 def contributed_early_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:

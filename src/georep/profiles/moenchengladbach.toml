@@ -426,6 +426,27 @@ key = "Die_Linke+PARTEI"
 parties = ["Die_Linke", "PARTEI"]
 valid_from = 2025-11-01
 
+# --- Vorhaben 14: Vorgänge (docs/plans/14-vorgaenge.md; Rückfallregel, § 5.1)
+[procedures]                   # keine Anfragen im Datensatz (§ 2), also keine Antwortanlagen und keine Antwortzeiten; Kanten und Vorgänge ja
+enabled = true
+attachments = "snapshots/moenchengladbach-anlagen/raw/anlagen.parquet"
+
+[[procedures.forms]]
+name = "laufende Nummer/Wahlperiode"  # 0302/X, Nachtrag als -k vor oder hinter der Periode (0302-1/X, 0302/X-1); trifft 2 895 von 2 895
+reference = '(?P<serial>\d{3,4})(?:-(?P<suffix>\d+))?/(?P<period>[IVX]+)(?:[-/](?P<suffix2>\d+))?'
+text = '(?<![\d/.,])(?P<serial>\d{3,4})(?:\s?-\s?(?P<suffix>\d{1,2}))?\s?/\s?(?P<period>[ivx]{1,4})(?![a-zäöüß])(?:\s?-\s?(?P<suffix2>\d{1,2})(?![\d.,]))?'
+key = "{serial:04d}/{period}"
+
+[[procedures.kinds]]
+role = "antrag"
+paper_type = 'fraktionsantrag|mitgliederantrag'
+[[procedures.kinds]]
+role = "information"
+paper_type = 'berichtsvorlage'
+[[procedures.kinds]]
+role = "vorlage"
+paper_type = 'änderungsvorlage|beratungsvorlage'
+
 # --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 6 und § 10) ----------------
 # Dieselben bundes- und landesweiten Quellen wie in jeder Stadt (defaults.toml). Ohne Quartiersatlas und
 # ohne Ausschussklassifikator (classify.enabled = false oben): Unfälle, Einwohner, Miete und

@@ -169,6 +169,10 @@ VERIFY_TARGETS = [
     # ``re.Pattern`` tragen (dasselbe Werkzeugartefakt wie bei ``parse_reference`` oben); ihre
     # Eigenschaften prüft tests/property/test_functions_props.py.
     "georep.analysis.cosponsors.camp",
+    # Vorhaben 14: die Typregel .2 über Rollen und zwei Schalter; „Confirmed over all paths",
+    # 5 s am 2026-11-24. Die übrigen Funktionen von prep.references nehmen vorkompilierte Muster
+    # (``re.Pattern`` in ``ReferenceRules``) und stehen darum nicht hier.
+    "georep.prep.references.edge_type",
     # Vorhaben 22 (2026-11-24): Holm über die vorab festgelegten Tests, rein; einzeln geprüft, 22 s,
     # kein Gegenbeispiel. Übergang, bis Vorhaben 17 ``analysis/hypotheses.py`` bringt; dann geht
     # das Ziel mit der Funktion dorthin.
@@ -373,6 +377,15 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
             "tests/property/test_functions_props.py",
             "tests/property/test_practice_props.py",
         ),
+    ),
+    # Vorhaben 14: Nummern und Fundstellen, Kanten, Wald und Antworten; nicht gemessen
+    "references": (
+        ("src/georep/prep/references.py",),
+        ("tests/unit/test_references.py", "tests/property/test_references_props.py"),
+    ),
+    "procedures": (
+        ("src/georep/analysis/procedures.py",),
+        ("tests/unit/test_procedures.py", "tests/property/test_procedures_props.py"),
     ),
     # Vorhaben 22: die Tests der vorab festgelegten Hypothesen
     "need": (

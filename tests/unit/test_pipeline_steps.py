@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 import shutil
 from dataclasses import replace
 from pathlib import Path
@@ -24,6 +25,8 @@ from georep import __version__
 from georep.analysis.cosponsors import COSPONSORS_SCHEMA_VERSION
 from georep.analysis.functions import FUNCTIONS_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
+from georep.enrich.procedures import PROCEDURES_SCHEMA_VERSION
+from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.pipeline import (
     METRICS_SCHEMA,
@@ -31,6 +34,7 @@ from georep.pipeline import (
     PARTIES_SCHEMA,
     Step,
     build_steps,
+    input_digests,
     run_pipeline,
     stamp_mismatch,
 )
@@ -77,6 +81,9 @@ VERSIONS = {
     # Vorhaben 15: zwei Schritte eines Beitrags (``georep.enrich.functions``)
     "functions": FUNCTIONS_SCHEMA_VERSION,
     "cosponsors": COSPONSORS_SCHEMA_VERSION,
+    # Vorhaben 14: zwei Schritte eines Beitrags (F2), beide aus dem Modul, das die Dateien schreibt
+    "references": PROCEDURES_SCHEMA_VERSION,
+    "procedures": PROCEDURES_SCHEMA_VERSION,
     # Vorhaben 22: die Auszüge (Netz) und die Tabellen je Wahlbezirk (``georep.enrich.need``)
     "need_data": NEED_DATA_SCHEMA_VERSION,
     "need": NEED_SCHEMA_VERSION,
@@ -88,10 +95,14 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
     layout = _layout(tmp_path)
     # Fundament F6: die drei Netzschritte stehen nur mit ``council.enabled`` im Register
     council = default_settings.council.model_copy(update={"enabled": True})
+    # Vorhaben 14: die Schritte eines Beitrags stehen nur mit ihrem Schalter im Register
+    procedures = default_settings.procedures.model_copy(update={"enabled": True})
     # Vorhaben 22: die zwei Schritte stehen nur mit ``context.need.enabled`` im Register
     need = default_settings.context.need.model_copy(update={"enabled": True})
     context = default_settings.context.model_copy(update={"need": need})
-    settings = default_settings.model_copy(update={"council": council, "context": context})
+    settings = default_settings.model_copy(
+        update={"council": council, "procedures": procedures, "context": context}
+    )
     return {s.name: s.schema_version for s in build_steps(settings, layout)}
 
 
@@ -304,7 +315,7 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
 
 
 def _step_versions_in_source() -> dict[str, str]:
-    """Schrittname -> Ausdruck, den ``pipeline.py`` als ``schema_version`` übergibt.
+    """Schrittname -> Ausdruck, den ``pipeline.py`` oder ein Beitrag als ``schema_version`` übergibt.
 
     Gelesen wird der **Quelltext**, nicht der Laufzeitwert: nur so fällt auf, wenn jemand eine Zahl
     hinschreibt statt die Konstante seines Moduls zu nennen. Ein Wertvergleich sähe das nie, denn
@@ -349,6 +360,9 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # Ausgabe; der Cache prüft sie selbst beim Öffnen (``ModelCache._open``), und die Ausgabe
     # eines Modellschritts trägt die Version ihres eigenen Moduls.
     "georep.ml.cache.CACHE_SCHEMA_VERSION",
+    # Vorhaben 14: wie die Beratungsfolge die Version der Datei, die ``georep pack --attachments``
+    # schreibt; die Schritte ``references`` und ``procedures`` lesen sie nur.
+    "georep.pack.ATTACHMENTS_SCHEMA_VERSION",
 }
 
 
@@ -459,3 +473,57 @@ def test_raw_texts_says_it_wrote_an_old_store_empty_when_there_are_no_pdfs(
     )
     assert "neu gelesen" not in outcome.reason
     assert len(RawTextStore(layout.raw_texts)) == 0 and RawTextStore(layout.raw_texts).stale == ""
+
+
+# --- Vorhaben 14: Eingaben gleichen Namens aus verschiedenen Ordnern ----------------------------
+
+
+def _twins(tmp_path: Path) -> tuple[Step, Path, Path]:
+    """Ein Schritt mit zwei Eingaben gleichen Namens, wie die Pakete zweier Nachbarperioden."""
+    first, second = tmp_path / "a" / "papers.jsonl", tmp_path / "b" / "papers.jsonl"
+    for path in (first, second):
+        path.parent.mkdir(parents=True)
+        path.write_text("{}\n", encoding="utf-8")
+    out = tmp_path / "out.parquet"
+    return Step("probe", (first, second), (out,), lambda: "nichts"), first, second
+
+
+def test_two_inputs_with_the_same_name_both_reach_the_stamp(
+    default_settings: Settings, tmp_path: Path
+) -> None:
+    """Der Stamp schlüsselte die Eingaben nach Dateinamen; zwei ``papers.jsonl`` (die Pakete von
+    2014 bis 2020 und der laufenden Periode) teilten einen Schlüssel, und eine Änderung am ersten
+    blieb unbemerkt (Vorhaben 14, 2026-11-24). ``compare`` hat dasselbe mit den Ergebnissen beider
+    Perioden."""
+    step, first, second = _twins(tmp_path)
+    stamped: dict[str, object] = {
+        "schema_version": step.schema_version,
+        "settings": default_settings.fingerprint(),
+        "extra": "",
+        "code": __version__,
+        "inputs": input_digests(step),
+    }
+    assert stamp_mismatch(stamped, step, default_settings) is None
+    first.write_text('{"neu": 1}\n', encoding="utf-8")
+    reason = stamp_mismatch(stamped, step, default_settings)
+    assert reason is not None and str(first) in reason
+
+
+def test_a_unique_name_keeps_its_key(tmp_path: Path) -> None:
+    """Nur gleichnamige Eingaben bekommen den Pfad als Schlüssel; jeder andere Stamp bleibt gültig."""
+    step, first, second = _twins(tmp_path)
+    unique = replace(step, inputs=(first,))
+    assert set(input_digests(unique)) == {"papers.jsonl"}
+    assert set(input_digests(step)) == {str(first), str(second)}
+
+
+def test_a_missing_input_is_named_with_its_full_path(
+    default_settings: Settings, tmp_path: Path
+) -> None:
+    """Ein fehlendes Paket aus dem Repo heißt mit vollem Pfad, und der Hinweis auf ``bootstrap``
+    gilt nur für die Datenwurzel (Review von Vorhaben 14, 2026-11-24)."""
+    missing = Path("snapshots") / "fehlt" / "papers.jsonl"
+    step = Step("probe", (missing,), (tmp_path / "out.parquet",), lambda: "nichts")
+    with pytest.raises(MissingInputError, match=re.escape(str(missing.resolve()))) as found:
+        run_pipeline([step], default_settings)
+    assert "Arbeitsverzeichnis" in str(found.value)

@@ -22,6 +22,7 @@ from typing import Any
 import polars as pl
 from loguru import logger
 
+from georep.enrich.procedures import procedure_files
 from georep.io import atomic_path
 from georep.layout import Layout
 from georep.prep.context import NEED_DIR, NEED_FILES
@@ -297,6 +298,8 @@ def bootstrap_from_settings(
         consultations=settings.bodies.consultations,
         texts=settings.bootstrap.texts,
         raw_texts=settings.bootstrap.raw_texts,
+        # Vorhaben 14: nur mit eingeschalteten Schritten, sonst läge eine Kopie ohne Leser in raw/
+        attachments=settings.procedures.attachments if settings.procedures.enabled else None,
         need=settings.context.need.package if settings.context.need.enabled else None,
     )
 
@@ -311,6 +314,7 @@ def bootstrap(
     consultations: Path | None = None,
     texts: Path | None = None,
     raw_texts: Path | None = None,
+    attachments: Path | None = None,
     need: Path | None = None,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
@@ -331,10 +335,11 @@ def bootstrap(
     genau die Dateien dieses Datensatzes trägt (``overlay_texts``). ``raw_texts`` ist die Naht von
     Fundament F1: ein Rohtextpaket, das den Rohtextstore anlegt, wenn keiner da ist oder ``force``
     gilt, und nur, wenn jeder seiner Namen eine Datei dieses Datensatzes ist
-    (``overlay_raw_texts``). ``need`` ist die Naht von Vorhaben 22: das Paket mit den
-    Stadtauszügen der Bedarfsquellen (``[context.need].package``), kopiert nach
-    ``external/bedarf/``; bringt der eingefrorene Datensatz eigene mit (die Mini-Fixture), gelten
-    seine, wie bei der Beratungsfolge.
+    (``overlay_raw_texts``). ``attachments`` ist die Naht von Vorhaben 14: das Anlagenpaket, das
+    nach ``raw/anlagen.parquet`` kommt, wo die Schritte ``references`` und ``procedures`` es lesen.
+    ``need`` ist die Naht von Vorhaben 22: das Paket mit den Stadtauszügen der Bedarfsquellen
+    (``[context.need].package``), kopiert nach ``external/bedarf/``; bringt der eingefrorene
+    Datensatz eigene mit (die Mini-Fixture), gelten seine, wie bei der Beratungsfolge.
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -367,6 +372,8 @@ def bootstrap(
     if layout.context_root is not None:
         # Option 03: dieselbe Mechanik für die Fremddaten; der Netzschritt context_data holt sie frisch.
         pairs += [(layout.context_source(name), layout.external / name) for name in context_files]
+    if attachments is not None:  # Vorhaben 14
+        pairs.append((attachments, procedure_files(layout).attachments))
     # Vorhaben 22: die Stadtauszüge der Bedarfsquellen, nur wenn das Profil sie einschaltet; der
     # Netzschritt need_data holt sie frisch.
     if need is not None:

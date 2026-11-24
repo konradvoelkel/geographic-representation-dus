@@ -49,6 +49,7 @@ from georep.prep.context import (
     SOURCES_FILE,
 )
 from georep.prep.raw_texts import RAW_SUFFIX
+from georep.prep.references import MASK, ReferenceRules, mask_person_names
 from georep.settings import Settings
 from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextStore
 
@@ -577,6 +578,151 @@ def pack_raw_texts(
         readme_written=not (target / README_NAME).exists(),
     )
     return _with_readme(report, settings, today, command="pack --raw-texts")
+
+
+# --- Vorhaben 14: ein Paket mit den Anlagen je Drucksache ----------------------------------------
+
+ATTACHMENTS_NAME = "raw/anlagen.parquet"
+# Die Schema-Version des Pakets, eigen wie ``CONSULTATIONS_SCHEMA_VERSION``: die Ausgaben des
+# Vorhabens zählen ``PROCEDURES_SCHEMA_VERSION`` hoch, das Paket nicht mit.
+ATTACHMENTS_SCHEMA_VERSION = 1
+
+
+def cached_pages(cache: Path, endpoint: str) -> list[tuple[dt.date, bytes]]:
+    """Die Seiten der Paper-Liste im HTTP-Cache, nur lesend: (Abrufdatum, Antwort), in Speicherfolge.
+
+    Gelesen wird die SQLite-Datei von requests-cache direkt und ohne Schreibrecht
+    (``mode=ro``), nicht über eine Session: eine Session legte Tabellen an und räumte
+    abgelaufene Einträge weg, und genau die alten Seiten eines abgeschlossenen Abrufs sind hier
+    die Quelle. Gezählt wird jede Antwort 200, deren Pfad der Endpunkt ist (mit jeder Abfrage
+    dahinter: Seite, ``modified_since``).
+    """
+    import sqlite3
+    from contextlib import closing
+
+    from requests_cache.serializers import SERIALIZERS
+
+    if not cache.is_file():
+        raise PackError(f"{cache} fehlt; die Anlagen kommen aus dem HTTP-Cache eines Abrufs")
+    serializer = SERIALIZERS["pickle"]
+    pages: list[tuple[dt.date, bytes]] = []
+    # ``closing``: der Kontext einer sqlite3-Verbindung beendet nur die Transaktion, nicht sie
+    with closing(sqlite3.connect(f"file:{cache}?mode=ro", uri=True)) as connection:
+        for (value,) in connection.execute("select value from responses order by rowid"):
+            response = serializer.loads(value)
+            if response.status_code == 200 and response.url.split("?", 1)[0] == endpoint:
+                pages.append((response.created_at.date(), response.content))
+    return pages
+
+
+def attachment_rows(
+    pages: list[tuple[dt.date, bytes]], ids: set[str], rules: ReferenceRules
+) -> pl.DataFrame:
+    """Je Drucksache in ``ids`` ihre Anlagen (Name, Datum) aus dem jüngsten Stand im Cache.
+
+    Eine Drucksache kann auf mehreren Seiten stehen (zwei Abrufe, ``modified_since``); es gilt
+    das Objekt mit dem jüngsten ``modified``, bei Gleichstand das zuerst gespeicherte. Das Datum
+    einer Anlage ist ihr ``date``, sonst der Tag von ``created``; die Folge ist die des Servers.
+    Ein Name hinter einer Anrede oder einem Titel wird zu „…" (Review K1,
+    ``prep.references.mask_person_names``): das Paket liegt im Repo.
+    """
+    from georep.analysis.procedures import ATTACHMENT_SCHEMA
+    from georep.oparl import PaperPage
+
+    newest: dict[str, tuple[dt.datetime | None, dt.date, list[dict[str, object]]]] = {}
+    for fetched, content in pages:
+        for paper in PaperPage.model_validate_json(content).data:
+            if paper.id not in ids:
+                continue
+            seen = newest.get(paper.id)
+            if seen is not None and (
+                paper.modified is None or (seen[0] and seen[0] >= paper.modified)
+            ):
+                continue
+            files: list[dict[str, object]] = [
+                {
+                    "name": mask_person_names(f.name or "", rules),
+                    "datum": f.date or (f.created.date() if f.created else None),
+                }
+                for f in paper.auxiliary_file
+            ]
+            newest[paper.id] = (paper.modified, fetched, files)
+    rows = [(doc_id, fetched, files) for doc_id, (_, fetched, files) in sorted(newest.items())]
+    return pl.DataFrame(rows, schema=ATTACHMENT_SCHEMA, orient="row")
+
+
+def pack_attachments(
+    layout: Layout,
+    settings: Settings,
+    target: Path,
+    *,
+    force: bool = False,
+    today: dt.date | None = None,
+) -> PackReport:
+    """Nur die Anlagen je Drucksache packen: ``raw/anlagen.parquet`` (Vorhaben 14).
+
+    Die Anlagen stehen weder im Korpus noch in einem Paket, nur in den OParl-Objekten, die ein
+    Metadatenabruf im HTTP-Cache hinterlässt (``auxiliaryFile``: Name und Datum; darin die
+    „Antwort der Verwaltung" auf eine Anfrage, Messdokument § 3.6). Gepackt werden die
+    Drucksachen des eigenen Korpus und der Nachbarperioden aus ``procedures.related``, damit ein
+    Paket alle Perioden einer Stadt trägt. Eine Drucksache, die der Cache nicht kennt, fehlt im
+    Paket (unbekannt); eine mit leerer Liste hat keine Anlage.
+    """
+    from georep.enrich.procedures import neighbours, read_papers
+
+    claim_target(layout, target)
+    if not layout.corpus.is_file():
+        raise PackError(f"{layout.corpus} fehlt; lief `georep run corpus` für dieses Profil?")
+    ids = set(pl.read_parquet(layout.corpus, columns=["id"]).get_column("id").to_list())
+    for period in neighbours(settings):
+        ids |= {record.id for record in read_papers(period.papers)}
+    rules = ReferenceRules.from_settings(settings.procedures)
+    pages = cached_pages(layout.http_cache, settings.sources.oparl.endpoint)
+    frame = attachment_rows(pages, ids, rules)
+    masked = int(
+        frame.get_column("anlagen")
+        .list.eval(pl.element().struct.field("name").str.contains(MASK, literal=True))
+        .list.sum()
+        .sum()
+    )
+    if not frame.height:
+        raise PackError(
+            f"{layout.http_cache}: keine der {len(ids)} Drucksachen steht auf einer Seite von "
+            f"{settings.sources.oparl.endpoint}; das Paket wäre leer"
+        )
+    destination = target / ATTACHMENTS_NAME
+    skipped: list[str] = []
+    if destination.exists() and not force:
+        skipped.append(ATTACHMENTS_NAME)
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        write_parquet(
+            frame,
+            destination,
+            schema_version=ATTACHMENTS_SCHEMA_VERSION,
+            compression_level=RAW_TEXTS_ZSTD_LEVEL,
+        )
+    counts = frame.get_column("anlagen").list.len()
+    report = PackReport(
+        target=target,
+        files=(
+            PackedFile(
+                name=ATTACHMENTS_NAME,
+                bytes=destination.stat().st_size,
+                sha256=sha256_of(destination),
+            ),
+        ),
+        skipped=tuple(skipped),
+        figures=(
+            ("Drucksachen", frame.height),
+            ("mit Anlage", int((counts > 0).sum())),
+            ("Anlagen", int(counts.sum())),
+            ("nicht im Cache", len(ids) - frame.height),
+            ("Anlagennamen mit maskiertem Personennamen", masked),
+        ),
+        readme_written=not (target / README_NAME).exists(),
+    )
+    return _with_readme(report, settings, today, command="pack --attachments")
 
 
 # --- Vorhaben 22: ein Paket mit den Stadtauszügen der Bedarfsquellen ----------------------------

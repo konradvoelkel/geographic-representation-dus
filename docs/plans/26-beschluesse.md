@@ -819,4 +819,37 @@ als Maß, und dort mit der Schwelle der WZB-Studien für die AfD.
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
-—
+Geschrieben am 2026-11-24 nach dem Urteil (§ 5), vor dem Start der Stufe 2. Die Synergie
+([00-synergien-2026-11.md](00-synergien-2026-11.md)) entstand vor dieser Messung; was sie trotzdem
+festlegt und was seither auf `main` kam, steht hier und geht dem Bauplan (§ 6) vor.
+
+1. **Name des Beitrags.** `Contribution.name` ist `26-beschluesse` (Synergie § 2.1, Docstring von
+   `Contribution`), nicht `outcomes`; Modul und Schrittnamen bleiben englisch (`enrich/outcomes.py`,
+   `council_results`, `outcomes`).
+2. **Dateiname.** `raw/beratungsfolge.parquet` gibt es schon (Punkt 58: Dokument → beratende Gremien,
+   Paket `snapshots/duesseldorf-beratungsfolge/`, gelesen vom Schritt `bodies`). Die Tabelle aus § 6
+   heißt darum **`processed/beratungsverlauf.parquet`**; Punkt 58, sein Paket und `pack
+   --consultations` bleiben unverändert.
+3. **Abhängigkeit von 14.** `rolle` und `folgevorlage` kommen aus Vorhaben 14 (Rollen,
+   `vorgang_kanten.parquet`, nur starke Kanten), das in Runde 2 der Stufe 2 steht und vor 26 gemerged
+   wird (Synergie § 3.4: 14 ist Zulieferer für 26). Bis dahin baut 26 alles, was nicht an 14 hängt
+   (Beratungsverlauf, Regel, Praxiszellen, Paket, Settings, Tests mit einer Rollen-Fixture), und zieht
+   die Verdrahtung nach dem Merge von 14 nach; der Supervisor meldet den Merge. Kein Nachbau der Rollen
+   aus 14 in 26.
+4. **Antragsteller aus 15.** Vorhaben 15 ist gemerged (`v0.24.0`, Punkt 75): Antragsteller aus
+   `functions_files(layout)` (`processed/dokumente_antragsteller.parquet`), nicht aus dem Messskript.
+5. **Eingaben des Netzlaufs.** Lokal liegen sie unter `data_root/<profil>/raw/` (`council_files`,
+   Netzlauf vom 2026-11-23, `docs/runbook-sitzungen.md` § 9); auf Pages und in CI kommt die Tabelle
+   „Paper × Tagesordnungspunkt" aus dem Paket `snapshots/duesseldorf-beschluesse/` über `georep pack
+   --outcomes`. Das Paket ist klein (rund 0,65 MB für drei Perioden) und fällt unter die Annahme zu
+   Frage 26 (kleine Pakete ja); `TOTAL_LIMIT` in `tests/unit/test_data_packages.py` bleibt die Grenze.
+   18 und 22 bauen parallel eigene kleine Pakete; Anhängeregel aus Synergie § 2.1 für `pack.py`,
+   `bootstrap.py`, `cli.py`, `test_data_packages.py`.
+6. **Mönchengladbach.** Der Netzlauf hat es geholt (967 Sitzungen, 25 619 Beratungen). Der Schritt
+   läuft dort mit; fehlt ein Wert von `result` im Wortschatz, kommt er mit Zählung und Beleg in
+   `profiles/moenchengladbach.toml` (Daten, kein Code). Ist ein Wert nicht eindeutig einer Klasse
+   zuzuordnen, bleibt `outcomes.enabled` dort aus, und der Bericht nennt die Werte.
+7. **Kürzel aus Frage 9.17** (`gr/400224`, `gr/65`): erst vor Stufe 3, in einem eigenen Commit mit
+   A/B-Bau, weil sie die Gremienzuordnung und damit Zahlen der Seite berühren können.
+8. **Merge.** Nach 14; Stufe 3 (Abschnitte auf `vorgaenge.html`, Dialog) wartet auf den F2-Nachzug für
+   Abschnitte aus fremden Beiträgen und auf den Haken von 14 (Synergie § 1).
