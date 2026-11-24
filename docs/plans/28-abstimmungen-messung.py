@@ -1208,6 +1208,10 @@ def guete(d: Daten) -> None:
             ok = passt and pr["ergebnis_a2"] == erg and pr["form_a2"] == form
             if ok:
                 genannt = json.loads(lab.get("stimmen") or "{}")
+                # Kodierer schrieben `stimmen` teils als JSON-String, die Schlichtung als Objekt:
+                # beides heißt dasselbe (Hinweis des Schlichters, 2026-11-24).
+                while isinstance(genannt, str):
+                    genannt = json.loads(genannt or "{}")
                 genannt.pop("ANDERE", None)
                 seite = "ja" if erg == "angenommen" else "nein"
                 gremium = set(json.loads(pr["gremium_parteien"])) | set(genannt)

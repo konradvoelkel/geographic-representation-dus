@@ -10,25 +10,39 @@ Klassen, Kriterium, Rückfallregel und drei Hypothesen (§ 8) sind im Commit `97
 sind danach nicht geändert. Das Verfahren für die Niederschriften ist danach entstanden und vor der
 Kodierung eingefroren (§ 4: Ausgabe mit SHA-256).
 
-**Vorläufiges Urteil vor der Kodierung: bauen, in zwei Ebenen, wenn die Kodierung die Präzision
-bestätigt.** Ebene A (Ergebnis und Mehrheitsform aus OParl `result`) braucht kein Netz mehr; Ebene B
-(wer wie gestimmt hat) braucht die Niederschriften und damit einen vollen Abruf durch Konrad (§ 5).
-Die drei wichtigsten Zahlen:
+**Urteil nach der Kodierung (Abschluss der Stufe 1, 2026-11-24), nach der vorab festgelegten Regel
+(§ 8.2, Commit `97ebb52`), ohne Anpassung an die Labels:**
 
-1. **`result` nennt die Mehrheitsform bei 86,4 % der Beschlüsse** der Hauptperiode (10 856 von 12 570;
-   Rat 93,3 %, Ausschüsse 82,7 %, Bezirksvertretungen 86,5 %). `resolutionText` ist bei keinem der
-   44 231 Tagesordnungspunkte gefüllt. Wer wie gestimmt hat, steht nur in den Niederschriften.
-2. **Die Niederschriften nennen die Stimmen je Fraktion, und das Verfahren liest sie bei 82,3 % der
-   Beschlüsse vollständig** (778 von 945 in der Stichprobe; Rat 81,9 %, Ausschüsse 73,0 %,
-   Bezirksvertretungen 87,9 %). Hochgerechnet auf alle Beschlüsse der Hauptperiode, wenn alle
-   vorhandenen Niederschriften geladen werden: **70,1 %** (Kriterium: 50 %).
-3. **Die WZB-Schwelle ist prüfbar**: 76 Anträge der AfD mit einem Ratsbeschluss (39 in 2020–2025, 37 ab
-   2025), alle 13 der Stichprobe mit vollständigen Positionen. Ebenso H28.1 (882 strittige
-   Ratsbeschlüsse, 711 mit Niederschrift, in der Stichprobe bei 75,4 % beide Mehrheitsfraktionen
-   bekannt) und H28.2 (389 Anträge allein der Opposition, nur Ebene A nötig).
+- **Ebene A (Ergebnis und Mehrheitsform aus OParl `result`): bauen.** Präzision **0,982** (Wilson
+  0,928–0,995, roh 90/92), Abdeckung **86,4 %** der Beschlüsse der Hauptperiode (10 856 von 12 570).
+  Braucht kein Netz.
+- **Ebene B (Positionen aller Parteien aus den Niederschriften): verwerfen in dieser Form.** Präzision
+  **0,765** (Wilson 0,671–0,838, roh 88/118) unter dem Kriterium 0,9, obwohl die Abdeckung reichte
+  (82,3 % in den Niederschriften, hochgerechnet 70,1 %). Die Fehler liegen fast nur in den Positionen
+  (26 von 30): übersehene Enthaltungen, geteilte Fraktionen, einzeln genannte Mitglieder (§ 4.1). Eine
+  Umbau-Runde (Meta-Plan § 8, höchstens eine) bräuchte Codebuch Fassung 2 und eine frische Stichprobe;
+  das entscheidet der Supervisor.
+- **Hypothesen**: ungerechnet. Nach § 8.6 sind H28.1 und H28.3 ohne Ebene B `nicht entscheidbar`; H28.2
+  braucht nur Ebene A und kann in Stufe 2 gerechnet werden.
+- **Geprüft von KI-Kodierern**: zwei Kodierer und ein Schlichter, alle **dasselbe Modell**
+  (`claude-opus-5-5`, Frage 19), kein menschlicher Goldstandard; α je Frage 0,885 bis 1,000.
 
-Offen ist die Präzision (Kriterium 0,9 an 150): die 150 Aufträge liegen für zwei Kodier-Agenten bereit
-(§ 4). Netzstichprobe: 50 Niederschriften, 60 147 372 Bytes, 75 s.
+Die drei wichtigsten Zahlen der Messung:
+
+1. **`result` nennt die Mehrheitsform bei 86,4 % der Beschlüsse** der Hauptperiode (Rat 93,3 %,
+   Ausschüsse 82,7 %, Bezirksvertretungen 86,5 %), und sie stimmt mit der Niederschrift überein
+   (0,982). `resolutionText` ist bei keinem der 44 231 Tagesordnungspunkte gefüllt. Wer wie gestimmt
+   hat, steht nur in den Niederschriften.
+2. **Die Niederschriften nennen die Stimmen je Fraktion**, das Verfahren liest sie bei 82,3 % der
+   Beschlüsse vollständig (778 von 945), aber nur zu 0,765 richtig. Die Mehrheitsform aus der
+   Niederschrift (A2) ist dagegen genau (0,979).
+3. **Die WZB-Schwelle wäre prüfbar**: 76 Anträge der AfD mit einem Ratsbeschluss (39 in 2020–2025, 37
+   ab 2025), alle 13 der Stichprobe mit vollständigen Positionen; mit verworfener Ebene B bleibt H28.3
+   aber nicht entscheidbar.
+
+Netzstichprobe: 50 Niederschriften, 60 147 372 Bytes, 75 s. *Vorläufiges Urteil vor der Kodierung
+(Stand `bf207d1`): „bauen, in zwei Ebenen, wenn die Kodierung die Präzision bestätigt"; für Ebene B
+hat sie es nicht.*
 
 ## 1. Frage und Nutzen (Literatur, Ratsarbeit)
 
@@ -283,9 +297,77 @@ Fehler, für A1 ein Ausfall. Übereinstimmung der Kodierer je Frage aus `georep 
 und B je 1,000 und für A1 0,966, wie erwartet: die Rechnung läuft. Bei einer Präzision um 0,95 und
 n_eff rund 100 ist das Intervall etwa ±0,05 breit.
 
-**Ergebnis der Kodierung**: folgt (der Supervisor startet die Kodierer).
+### 4.1 Ergebnis der Kodierung (2026-11-24)
+
+Zwei Kodier-Agenten (je drei Läufe zu 50 Einheiten), ein Schlicht-Agent für 7 Einheiten mit 13
+strittigen Fragen (6-mal Kodierung 1, 7-mal Kodierung 2), zusammengeführt mit `georep validate merge`
+(`validierung/28-abstimmungen/labels.csv`, `README.md`, `guete.json`). **Alle drei sind dasselbe Modell
+(`claude-opus-5-5`)**; α ist darum eine obere Schätzung der Schärfe des Codebuchs, nicht der
+Richtigkeit (Frage 19, `docs/validierung.md` § 1).
+
+| Frage | gestellt | gleich | Krippendorffs α |
+|---|---|---|---|
+| `abschnitt` | 150 | 150 | 1,000 |
+| `ergebnis` | 132 | 129 | 0,908 |
+| `form` | 131 | 128 von 129 | 0,985 |
+| `stimmen` | 124 | 119 von 123 | 0,961 |
+| `uebrige` | 124 | 122 von 123 | 0,885 |
+
+Alle Fragen erreichen α ≥ 0,8. `stimmen` steht in `labels.csv` bei allen 124 Einheiten als JSON-Objekt;
+`guete` liest einen JSON-String ebenso (Hinweis des Schlichters).
+
+**Präzision** (`28-abstimmungen-messung.py guete`, Ausgabe des Verfahrens vom Stand vor der Kodierung,
+SHA-256 oben; gewichtet mit N_h/n_h, Wilson bei Kishs n_eff):
+
+| Ebene | Präzision | Wilson 95 % | n_eff | roh | Kriterium 0,9 |
+|---|---|---|---|---|---|
+| A1, Ergebnis und Form aus `result` | **0,982** | 0,928–0,995 | 90,1 | 90/92 | erfüllt |
+| A2, Form aus der Niederschrift mit Rückfall | 0,979 | 0,928–0,994 | 99,5 | 118/122 | erfüllt |
+| B, Positionen aller Parteien | **0,765** | 0,671–0,838 | 96,3 | 88/118 | **verfehlt** |
+
+**Wo es scheitert** (Fehleranalyse, ändert nichts am Urteil):
+
+- 18 der 150 Ausschnitte gehören nach den Kodierern nicht zum Punkt (Rat 13, Ausschüsse 4, BV 1;
+  meist Punkte, die der Rat gemeinsam mit anderen behandelt oder nur aufruft). Keiner davon ist eine
+  Einheit, für die das Verfahren B beansprucht; für A1 fallen 8 als Ausfall heraus.
+- A1: 2 Fehler, beide im Rat: `result` sagt „mehrheitlich beschlossen", die Niederschrift nennt keine
+  Gegenstimme (nach der Definition einstimmig).
+- B: 30 Fehler bei 118 Einheiten, 26 davon in den Positionen (Ergebnis 2, Form 2); je Art richtig: Rat
+  38/51, Ausschüsse 12/17, Bezirksvertretungen 38/50. Häufigste Muster: eine Enthaltung, die das
+  Verfahren der Mehrheit zuschlägt (LINKE 3, AFD 2), geteilte Fraktionen, die es als geschlossen liest
+  (CDU 2, GRÜNE 2) oder umgekehrt (FDP, SPD, LINKE je 2), Parteien, deren Stimmen die Labels offen
+  lassen (`uebrige` unbekannt, 4). Die Ergänzungsregel trägt also, aber das Lesen der Fächer, der
+  Personen und der Zahlen je Partei nicht genau genug.
+
 
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
+
+### 5.1 Urteil nach der Kodierung (2026-11-24)
+
+Nach der Regel aus § 8.2, unverändert angewendet:
+
+| Ebene | Abdeckung (≥ 50 %) | Präzision (≥ 0,9) | Urteil |
+|---|---|---|---|
+| A (A1 aus `result`) | 86,4 % der Beschlüsse | 0,982 (0,928–0,995) | **bauen** |
+| A2 (Form aus der Niederschrift, Rückfall `result`) | 96,8 % in den Niederschriften | 0,979 (0,928–0,994) | erfüllt; hebt die Abdeckung von A nur mit dem Abruf und ist für Stufe 2 nicht nötig |
+| B (Positionen aller Parteien) | 70,1 % hochgerechnet | 0,765 (0,671–0,838) | **verwerfen in dieser Form** |
+
+Unsicherheit: die obere Grenze von B (0,838) liegt unter 0,9; auch eine günstigere Gewichtung brächte
+B nicht ans Kriterium. Für A liegt die untere Grenze (0,928) über 0,9.
+
+**Folgen.** Stufe 2 baut nur Ebene A (Beitrag `votes` ohne Niederschriften, § 6, Reihenfolge erster
+Schritt). H28.2 ist mit Ebene A prüfbar; H28.1 und H28.3 bleiben nach § 8.6 `nicht entscheidbar`, bis
+eine Ebene B das Kriterium erfüllt. Die Seite (§ 7) zeigt Einstimmigkeit je Gremium und H28.2, nicht
+die Positionen je Fraktion.
+
+**Empfehlung zum vollen Abruf der Niederschriften: jetzt nicht.** Ebene A braucht ihn nicht. Er lohnt
+sich erst, wenn der Supervisor eine Umbau-Runde für B freigibt; dann zuerst nur die Ratsniederschriften
+(47 Dateien, rund 50 MB, ein bis zwei Minuten), weil H28.1 und H28.3 im Rat gelten und das Wortprotokoll
+des Rates die gleichmäßigste Form hat, danach die Hauptperiode (966 Dateien, rund 1,2 GB, rund 24 min
+Abruf und rund 74 min Text auf einem Kern) und alle Düsseldorfer Perioden (1 359, rund 1,7 GB, rund
+34 min). Eine Umbau-Runde misst an einer frischen Stichprobe mit Codebuch Fassung 2 (Regeln in § 9).
+
+### 5.2 Vorläufiges Urteil vor der Kodierung (unverändert, Stand `bf207d1`)
 
 **Vorläufig, vor der Kodierung**:
 
@@ -361,7 +443,9 @@ der Niederschriften nicht ins Repo.
 `docs/architecture.md`, `docs/decisions.md` (Nummer beim Merge), `docs/runbook-sitzungen.md` § 7.
 
 **Reihenfolge**: zuerst nur Ebene A (`votes` ohne Niederschriften, sofort baubar), dann `minutes` und
-Ebene B nach Konrads Abruf. Personen ohne Partei über die Mitgliedschaften von 27 statt der
+Ebene B nach Konrads Abruf. **Nach der Kodierung (§ 5.1) baut Stufe 2 nur Ebene A**: Schritt `votes`
+mit `ergebnis`, `geaendert`, `form`, `form_quelle = result`; `positionen` und `vollstaendig` und die
+Schritte `minutes` und `minutes_text` entfallen, bis eine Umbau-Runde B bestätigt. Personen ohne Partei über die Mitgliedschaften von 27 statt der
 Anwesenheitsliste, sobald 27 gebaut ist.
 
 ## 7. Bauplan Stufe 3 (Unterseite oder Variante, Größe in KB, Tabellen im Register, Texte)
@@ -379,6 +463,10 @@ Beiträgen, Synergien § 1). Inhalt, für alle Fraktionen gleich:
 Größe: vier kleine Tabellen, rund 15 bis 25 KB. Tabellen im Register: `abstimmungen_gremien`,
 `abstimmungen_hypothesen`, `abstimmungen_matrix` (CSV und Parquet). Keine Personennamen, keine
 Ausschnitte aus Niederschriften.
+
+**Nach der Kodierung (§ 5.1)**: ohne Ebene B entfallen Punkt 3 (Zustimmung nach der WZB-Schwelle)
+und Punkt 4 (Matrix); Punkt 2 zeigt H28.2 mit Ergebnis und H28.1, H28.3 als „nicht entscheidbar".
+Es bleiben Punkt 1 und 2, rund 10 KB.
 
 ## 8. Vorab festgelegte Hypothesen (nur Analysen: Hypothese, Maß, Test, Schwelle)
 
@@ -640,6 +728,21 @@ Keine Hypothese ist gerechnet, auch keine Probe davon.
 | 9.10 | Besetzung von Ausschüssen und Bezirksvertretungen für die Ergänzungsregel | nur Parteien, die die Niederschrift nennt, bekommen eine Position; eine nie genannte fehlt still | Näherung aus Anwesenheitsliste und Abstimmungen; mit 27 die wirkliche Besetzung |
 | 9.11 | Vergleichswert der WZB-Schwelle: 18,8 % gepoolt oder rund 16 % für kreisfreie Städte? | die Entscheidung von H28.3 hängt an der Schwelle | 18,8 % wie vorab festgelegt; 16 % als Nebenrechnung R3 |
 | 9.12 | Abstimmungen über verbundene Punkte (der Rat berät zwei Anträge gemeinsam und stimmt am Ende des zweiten über beide ab) | die Abstimmung des ersten steht im Abschnitt des zweiten | nicht gelöst; der erste fällt auf Ebene A zurück (ein Teil der 14 % ungelesenen Ratsabstimmungen) |
+| 9.13 | Wird Ebene B in einer Umbau-Runde neu gemessen? | B verfehlt 0,9 (0,765); H28.1 und H28.3 hängen daran | nein, bis der Supervisor sie freigibt; dann Codebuch Fassung 2 (unten), frische Stichprobe, zuerst nur Ratsniederschriften |
+
+**Regeln des Schlichters für eine Fassung 2 des Codebuchs** (2026-11-24; nur notiert, in Fassung 1
+nicht angewendet, die Labels oben gelten unverändert):
+
+1. Teilabstimmungen: es zählt die Gesamtabstimmung; gibt es nur Abstimmungen über Teile, folgt das
+   Ergebnis dem Beschlusstext.
+2. „geteilt" wird über die Anwesenheitsliste bestimmt (Mitglieder einer Partei in verschiedenen Fächern).
+3. Tierschutz/Freie Wähler ausdrücklich als Gruppe aus zwei Parteien.
+4. Offene Wahlen sind `angenommen` oder `abgelehnt`.
+5. „Empfehlung abweichend beschlossen" nach dem Inhalt der Empfehlung.
+6. Steht nur eine Ja-Zeile da, gilt sie wie ein vollständiges Fach.
+7. „mehrheitlich" ohne Namen: Form `mehrheitlich`, `uebrige` unbekannt.
+8. „SPD" allein gilt nur dann als SPD und Volt, wenn die Niederschrift die Fraktion SPD/Volt sichtbar
+   nennt; der Zeitraum der gemeinsamen Fraktion gehört ins Codebuch.
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 

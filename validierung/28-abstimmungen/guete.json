@@ -1,0 +1,94 @@
+{
+  "vorhaben": "28-abstimmungen",
+  "codebuch_version": "2026-11-24.1",
+  "einheit": "document",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-24",
+  "einheiten": 150,
+  "uneinig": 13,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "abschnitt": {
+      "n": 150,
+      "beide": 150,
+      "einig": 150,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9750297556319235,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "ergebnis": {
+      "n": 132,
+      "beide": 132,
+      "einig": 129,
+      "anteil": 0.9772727272727273,
+      "anteil_wilson95": [
+        0.9353108604232109,
+        0.9922410158144811
+      ],
+      "cohen_kappa": 0.9072816670568954,
+      "krippendorff_alpha_nominal": 0.9075679475164011,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9075679475164011,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "form": {
+      "n": 131,
+      "beide": 129,
+      "einig": 128,
+      "anteil": 0.9922480620155039,
+      "anteil_wilson95": [
+        0.9573965598582397,
+        0.9986302794090196
+      ],
+      "cohen_kappa": 0.9852621958185764,
+      "krippendorff_alpha_nominal": 0.9853184804341617,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9853184804341617,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "stimmen": {
+      "n": 124,
+      "beide": 123,
+      "einig": 119,
+      "anteil": 0.967479674796748,
+      "anteil_wilson95": [
+        0.9193613832985165,
+        0.9872822415005843
+      ],
+      "cohen_kappa": 0.9608436132113012,
+      "krippendorff_alpha_nominal": 0.9609965772506567,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9609965772506567,
+      "markierungen": null,
+      "alpha_genuegt": true
+    },
+    "uebrige": {
+      "n": 124,
+      "beide": 123,
+      "einig": 122,
+      "anteil": 0.991869918699187,
+      "anteil_wilson95": [
+        0.9553833739906696,
+        0.9985633964501233
+      ],
+      "cohen_kappa": 0.8847235238987816,
+      "krippendorff_alpha_nominal": 0.8851383028598219,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.8851383028598219,
+      "markierungen": null,
+      "alpha_genuegt": true
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 150 Dokumenten, nicht von Menschen"
+}

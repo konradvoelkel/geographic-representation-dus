@@ -1,0 +1,662 @@
+id,frage,kodierer_a,kodierer_b,schlichtung,label
+286708,abschnitt,ja,ja,"",ja
+286708,ergebnis,angenommen,angenommen,"",angenommen
+286708,form,ohne_angabe,ohne_angabe,"",ohne_angabe
+287149,abschnitt,ja,ja,"",ja
+287149,ergebnis,angenommen,angenommen,"",angenommen
+287149,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+287149,stimmen,"{""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""nein"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja""}","{""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""nein"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja""}","","{""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""nein"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja""}"
+287149,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+287696,abschnitt,ja,ja,"",ja
+287696,ergebnis,angenommen,angenommen,"",angenommen
+287696,form,einstimmig,einstimmig,"",einstimmig
+287696,stimmen,{},{},"",{}
+287696,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+287700,abschnitt,ja,ja,"",ja
+287700,ergebnis,angenommen,angenommen,"",angenommen
+287700,form,einstimmig,einstimmig,"",einstimmig
+287700,stimmen,{},{},"",{}
+287700,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+287701,abschnitt,ja,ja,"",ja
+287701,ergebnis,angenommen,angenommen,"",angenommen
+287701,form,einstimmig,einstimmig,"",einstimmig
+287701,stimmen,"{""CDU"": ""geteilt"", ""LINKE"": ""enthaltung""}","{""CDU"": ""enthaltung"", ""LINKE"": ""enthaltung""}","{""CDU"": ""geteilt"", ""LINKE"": ""enthaltung""}","{""CDU"": ""geteilt"", ""LINKE"": ""enthaltung""}"
+287701,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+287712,abschnitt,ja,ja,"",ja
+287712,ergebnis,angenommen,angenommen,"",angenommen
+287712,form,einstimmig,einstimmig,"",einstimmig
+287712,stimmen,{},{},"",{}
+287712,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+287714,abschnitt,ja,ja,"",ja
+287714,ergebnis,angenommen,angenommen,"",angenommen
+287714,form,einstimmig,einstimmig,"",einstimmig
+287714,stimmen,"{""LINKE"": ""enthaltung""}","{""LINKE"": ""enthaltung""}","","{""LINKE"": ""enthaltung""}"
+287714,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+287717,abschnitt,ja,ja,"",ja
+287717,ergebnis,angenommen,angenommen,"",angenommen
+287717,form,ohne_angabe,ohne_angabe,"",ohne_angabe
+287877,abschnitt,ja,ja,"",ja
+287877,ergebnis,angenommen,angenommen,"",angenommen
+287877,form,einstimmig,einstimmig,"",einstimmig
+287877,stimmen,{},{},"",{}
+287877,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+289527,abschnitt,ja,ja,"",ja
+289527,ergebnis,nicht_erkennbar,nicht_erkennbar,"",nicht_erkennbar
+292523,abschnitt,ja,ja,"",ja
+292523,ergebnis,angenommen,angenommen,"",angenommen
+292523,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+292523,stimmen,"{""LINKE"": ""enthaltung"", ""SPD"": ""nein""}","{""LINKE"": ""enthaltung"", ""SPD"": ""nein""}","","{""LINKE"": ""enthaltung"", ""SPD"": ""nein""}"
+292523,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+292555,abschnitt,ja,ja,"",ja
+292555,ergebnis,angenommen,angenommen,"",angenommen
+292555,form,einstimmig,einstimmig,"",einstimmig
+292555,stimmen,"{""AFD"": ""enthaltung""}","{""AFD"": ""enthaltung""}","","{""AFD"": ""enthaltung""}"
+292555,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+292633,abschnitt,ja,ja,"",ja
+292633,ergebnis,angenommen,angenommen,"",angenommen
+292633,form,einstimmig,einstimmig,"",einstimmig
+292633,stimmen,{},{},"",{}
+292633,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+292786,abschnitt,ja,ja,"",ja
+292786,ergebnis,angenommen,angenommen,"",angenommen
+292786,form,einstimmig,einstimmig,"",einstimmig
+292786,stimmen,"{""CDU"": ""geteilt""}","{""CDU"": ""enthaltung""}","{""CDU"": ""geteilt""}","{""CDU"": ""geteilt""}"
+292786,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+292850,abschnitt,ja,ja,"",ja
+292850,ergebnis,angenommen,angenommen,"",angenommen
+292850,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+292850,stimmen,{},{},"",{}
+292850,uebrige,unbekannt,unbekannt,"",unbekannt
+292851,abschnitt,ja,ja,"",ja
+292851,ergebnis,angenommen,angenommen,"",angenommen
+292851,form,einstimmig,einstimmig,"",einstimmig
+292851,stimmen,{},{},"",{}
+292851,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+293581,abschnitt,ja,ja,"",ja
+293581,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+293581,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+293581,stimmen,{},{},"",{}
+293581,uebrige,unbekannt,unbekannt,"",unbekannt
+294740,abschnitt,ja,ja,"",ja
+294740,ergebnis,angenommen,angenommen,"",angenommen
+294740,form,einstimmig,einstimmig,"",einstimmig
+294740,stimmen,{},{},"",{}
+294740,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+295740,abschnitt,ja,ja,"",ja
+295740,ergebnis,angenommen,verwiesen,verwiesen,verwiesen
+295740,form,ohne_angabe,"","",""
+299155,abschnitt,ja,ja,"",ja
+299155,ergebnis,angenommen,angenommen,"",angenommen
+299155,form,einstimmig,einstimmig,"",einstimmig
+299155,stimmen,{},{},"",{}
+299155,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+299157,abschnitt,nein,nein,"",nein
+299161,abschnitt,ja,ja,"",ja
+299161,ergebnis,angenommen,angenommen,"",angenommen
+299161,form,einstimmig,einstimmig,"",einstimmig
+299161,stimmen,{},{},"",{}
+299161,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+299166,abschnitt,ja,ja,"",ja
+299166,ergebnis,angenommen,angenommen,"",angenommen
+299166,form,einstimmig,einstimmig,"",einstimmig
+299166,stimmen,"{""LINKE"": ""enthaltung""}","{""LINKE"": ""enthaltung""}","","{""LINKE"": ""enthaltung""}"
+299166,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+299177,abschnitt,ja,ja,"",ja
+299177,ergebnis,angenommen,angenommen,"",angenommen
+299177,form,einstimmig,einstimmig,"",einstimmig
+299177,stimmen,"{""GRUENE"": ""geteilt""}","{""GRUENE"": ""enthaltung""}","{""GRUENE"": ""geteilt""}","{""GRUENE"": ""geteilt""}"
+299177,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+300855,abschnitt,ja,ja,"",ja
+300855,ergebnis,angenommen,angenommen,"",angenommen
+300855,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+300855,stimmen,"{""AFD"": ""enthaltung"", ""FW"": ""nein"", ""KLIMA"": ""enthaltung"", ""PARTEI"": ""enthaltung"", ""TIERSCHUTZ"": ""nein""}","{""AFD"": ""enthaltung"", ""FW"": ""nein"", ""KLIMA"": ""enthaltung"", ""PARTEI"": ""enthaltung"", ""TIERSCHUTZ"": ""nein""}","","{""AFD"": ""enthaltung"", ""FW"": ""nein"", ""KLIMA"": ""enthaltung"", ""PARTEI"": ""enthaltung"", ""TIERSCHUTZ"": ""nein""}"
+300855,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+300866,abschnitt,ja,ja,"",ja
+300866,ergebnis,angenommen,angenommen,"",angenommen
+300866,form,einstimmig,einstimmig,"",einstimmig
+300866,stimmen,{},{},"",{}
+300866,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+301709,abschnitt,nein,nein,"",nein
+304536,abschnitt,ja,ja,"",ja
+304536,ergebnis,angenommen,abgelehnt,abgelehnt,abgelehnt
+304536,form,einstimmig,mehrheitlich,mehrheitlich,mehrheitlich
+304536,stimmen,{},"{""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","{""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","{""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}"
+304536,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+304538,abschnitt,ja,ja,"",ja
+304538,ergebnis,angenommen,angenommen,"",angenommen
+304538,form,einstimmig,einstimmig,"",einstimmig
+304538,stimmen,{},{},"",{}
+304538,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+304539,abschnitt,ja,ja,"",ja
+304539,ergebnis,angenommen,angenommen,"",angenommen
+304539,form,einstimmig,einstimmig,"",einstimmig
+304539,stimmen,{},{},"",{}
+304539,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+304543,abschnitt,ja,ja,"",ja
+304543,ergebnis,angenommen,angenommen,"",angenommen
+304543,form,einstimmig,einstimmig,"",einstimmig
+304543,stimmen,{},{},"",{}
+304543,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+304557,abschnitt,ja,ja,"",ja
+304557,ergebnis,angenommen,angenommen,"",angenommen
+304557,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+304557,stimmen,"{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""SPD"": ""nein""}","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""SPD"": ""nein""}","","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""SPD"": ""nein""}"
+304557,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+307887,abschnitt,ja,ja,"",ja
+307887,ergebnis,angenommen,angenommen,"",angenommen
+307887,form,einstimmig,einstimmig,"",einstimmig
+307887,stimmen,{},{},"",{}
+307887,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+307901,abschnitt,ja,ja,"",ja
+307901,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+307901,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+307901,stimmen,"{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""nein"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""nein"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""nein"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}"
+307901,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+307906,abschnitt,ja,ja,"",ja
+307906,ergebnis,angenommen,angenommen,"",angenommen
+307906,form,einstimmig,einstimmig,"",einstimmig
+307906,stimmen,"{""AFD"": ""enthaltung"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""enthaltung"", ""LINKE"": ""enthaltung"", ""PARTEI"": ""enthaltung"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""enthaltung"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""enthaltung"", ""LINKE"": ""enthaltung"", ""PARTEI"": ""enthaltung"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""enthaltung"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""enthaltung"", ""LINKE"": ""enthaltung"", ""PARTEI"": ""enthaltung"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}"
+307906,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+307917,abschnitt,nein,nein,"",nein
+307984,abschnitt,ja,ja,"",ja
+307984,ergebnis,angenommen,angenommen,"",angenommen
+307984,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+307984,stimmen,"{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""enthaltung"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""nein"", ""LINKE"": ""geteilt"", ""PARTEI"": ""nein"", ""SPD"": ""nein"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""nein""}","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""enthaltung"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""nein"", ""LINKE"": ""geteilt"", ""PARTEI"": ""nein"", ""SPD"": ""nein"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""nein""}","","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""enthaltung"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""nein"", ""LINKE"": ""geteilt"", ""PARTEI"": ""nein"", ""SPD"": ""nein"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""nein""}"
+307984,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+308668,abschnitt,ja,ja,"",ja
+308668,ergebnis,angenommen,angenommen,"",angenommen
+308668,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+308668,stimmen,"{""AFD"": ""nein"", ""LINKE"": ""nein""}","{""AFD"": ""nein"", ""LINKE"": ""nein""}","","{""AFD"": ""nein"", ""LINKE"": ""nein""}"
+308668,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+309399,abschnitt,ja,ja,"",ja
+309399,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+309399,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+309399,stimmen,"{""AFD"": ""ja""}","{""AFD"": ""ja""}","","{""AFD"": ""ja""}"
+309399,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+318776,abschnitt,nein,nein,"",nein
+318778,abschnitt,ja,ja,"",ja
+318778,ergebnis,angenommen,angenommen,"",angenommen
+318778,form,einstimmig,einstimmig,"",einstimmig
+318778,stimmen,{},{},"",{}
+318778,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+318862,abschnitt,ja,ja,"",ja
+318862,ergebnis,angenommen,angenommen,"",angenommen
+318862,form,einstimmig,einstimmig,"",einstimmig
+318862,stimmen,"{""AFD"": ""enthaltung""}","{""AFD"": ""enthaltung""}","","{""AFD"": ""enthaltung""}"
+318862,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+319329,abschnitt,nein,nein,"",nein
+319675,abschnitt,ja,ja,"",ja
+319675,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+319675,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+319675,stimmen,"{""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja""}","{""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja""}","","{""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja""}"
+319675,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+320393,abschnitt,ja,ja,"",ja
+320393,ergebnis,angenommen,angenommen,"",angenommen
+320393,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+320393,stimmen,"{""AFD"": ""nein""}","{""AFD"": ""nein""}","","{""AFD"": ""nein""}"
+320393,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+320623,abschnitt,nein,nein,"",nein
+320624,abschnitt,ja,ja,"",ja
+320624,ergebnis,angenommen,angenommen,"",angenommen
+320624,form,einstimmig,einstimmig,"",einstimmig
+320624,stimmen,"{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}"
+320624,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+321094,abschnitt,ja,ja,"",ja
+321094,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+321094,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+321094,stimmen,"{""FW"": ""ja"", ""TIERSCHUTZ"": ""ja""}","{""FW"": ""ja"", ""TIERSCHUTZ"": ""ja""}","","{""FW"": ""ja"", ""TIERSCHUTZ"": ""ja""}"
+321094,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+326138,abschnitt,ja,ja,"",ja
+326138,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+326138,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+326138,stimmen,"{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""nein"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""nein"", ""VOLT"": ""nein""}","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""nein"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""nein"", ""VOLT"": ""nein""}","","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""nein"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""nein"", ""VOLT"": ""nein""}"
+326138,uebrige,unbekannt,unbekannt,"",unbekannt
+326150,abschnitt,ja,ja,"",ja
+326150,ergebnis,angenommen,angenommen,"",angenommen
+326150,form,einstimmig,einstimmig,"",einstimmig
+326150,stimmen,{},{},"",{}
+326150,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+326316,abschnitt,nein,nein,"",nein
+326712,abschnitt,ja,ja,"",ja
+326712,ergebnis,angenommen,angenommen,"",angenommen
+326712,form,einstimmig,einstimmig,"",einstimmig
+326712,stimmen,"{""AFD"": ""enthaltung""}","{""AFD"": ""enthaltung""}","","{""AFD"": ""enthaltung""}"
+326712,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+326879,abschnitt,ja,ja,"",ja
+326879,ergebnis,angenommen,angenommen,"",angenommen
+326879,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+326879,stimmen,"{""AFD"": ""nein"", ""FW"": ""nein"", ""LINKE"": ""nein"", ""TIERSCHUTZ"": ""nein""}","{""AFD"": ""nein"", ""FW"": ""nein"", ""LINKE"": ""nein"", ""TIERSCHUTZ"": ""nein""}","","{""AFD"": ""nein"", ""FW"": ""nein"", ""LINKE"": ""nein"", ""TIERSCHUTZ"": ""nein""}"
+326879,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+327451,abschnitt,ja,ja,"",ja
+327451,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+327451,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+327451,stimmen,"{""AFD"": ""enthaltung"", ""FDP"": ""enthaltung"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""enthaltung"", ""VOLT"": ""enthaltung""}","{""AFD"": ""enthaltung"", ""FDP"": ""enthaltung"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""enthaltung"", ""VOLT"": ""enthaltung""}","","{""AFD"": ""enthaltung"", ""FDP"": ""enthaltung"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""enthaltung"", ""VOLT"": ""enthaltung""}"
+327451,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+328059,abschnitt,nein,nein,"",nein
+328196,abschnitt,ja,ja,"",ja
+328196,ergebnis,angenommen,angenommen,"",angenommen
+328196,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+328196,stimmen,"{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}"
+328196,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+329518,abschnitt,ja,ja,"",ja
+329518,ergebnis,angenommen,angenommen,"",angenommen
+329518,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+329518,stimmen,"{""LINKE"": ""nein""}","{""LINKE"": ""nein""}","","{""LINKE"": ""nein""}"
+329518,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+329522,abschnitt,ja,ja,"",ja
+329522,ergebnis,angenommen,angenommen,"",angenommen
+329522,form,einstimmig,einstimmig,"",einstimmig
+329522,stimmen,{},{},"",{}
+329522,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+329525,abschnitt,nein,nein,"",nein
+329526,abschnitt,nein,nein,"",nein
+329528,abschnitt,nein,nein,"",nein
+329535,abschnitt,ja,ja,"",ja
+329535,ergebnis,angenommen,angenommen,"",angenommen
+329535,form,ohne_angabe,ohne_angabe,"",ohne_angabe
+329536,abschnitt,ja,ja,"",ja
+329536,ergebnis,angenommen,angenommen,"",angenommen
+329536,form,ohne_angabe,ohne_angabe,"",ohne_angabe
+329541,abschnitt,ja,ja,"",ja
+329541,ergebnis,angenommen,angenommen,"",angenommen
+329541,form,einstimmig,einstimmig,"",einstimmig
+329541,stimmen,{},{},"",{}
+329541,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+331491,abschnitt,ja,ja,"",ja
+331491,ergebnis,angenommen,angenommen,"",angenommen
+331491,form,einstimmig,einstimmig,"",einstimmig
+331491,stimmen,{},{},"",{}
+331491,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+335040,abschnitt,ja,ja,"",ja
+335040,ergebnis,angenommen,angenommen,"",angenommen
+335040,form,einstimmig,einstimmig,"",einstimmig
+335040,stimmen,{},{},"",{}
+335040,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+336086,abschnitt,ja,ja,"",ja
+336086,ergebnis,angenommen,angenommen,"",angenommen
+336086,form,einstimmig,einstimmig,"",einstimmig
+336086,stimmen,{},{},"",{}
+336086,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+336087,abschnitt,ja,ja,"",ja
+336087,ergebnis,angenommen,angenommen,"",angenommen
+336087,form,einstimmig,einstimmig,"",einstimmig
+336087,stimmen,{},{},"",{}
+336087,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+336719,abschnitt,ja,ja,"",ja
+336719,ergebnis,angenommen,angenommen,"",angenommen
+336719,form,einstimmig,einstimmig,"",einstimmig
+336719,stimmen,{},{},"",{}
+336719,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+339530,abschnitt,ja,ja,"",ja
+339530,ergebnis,angenommen,angenommen,"",angenommen
+339530,form,einstimmig,einstimmig,"",einstimmig
+339530,stimmen,{},{},"",{}
+339530,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+339543,abschnitt,ja,ja,"",ja
+339543,ergebnis,angenommen,angenommen,"",angenommen
+339543,form,einstimmig,einstimmig,"",einstimmig
+339543,stimmen,{},{},"",{}
+339543,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+339662,abschnitt,ja,ja,"",ja
+339662,ergebnis,angenommen,angenommen,"",angenommen
+339662,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+339662,stimmen,"{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""nein"", ""SPD"": ""geteilt""}","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""nein"", ""SPD"": ""geteilt""}","","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""nein"", ""SPD"": ""geteilt""}"
+339662,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+339667,abschnitt,ja,ja,"",ja
+339667,ergebnis,angenommen,angenommen,"",angenommen
+339667,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+339667,stimmen,"{""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""ja"", ""LINKE"": ""nein"", ""SPD"": ""ja""}","{""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""ja"", ""LINKE"": ""nein"", ""SPD"": ""ja""}","","{""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""ja"", ""LINKE"": ""nein"", ""SPD"": ""ja""}"
+339667,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+339685,abschnitt,ja,ja,"",ja
+339685,ergebnis,angenommen,angenommen,"",angenommen
+339685,form,einstimmig,einstimmig,"",einstimmig
+339685,stimmen,{},{},"",{}
+339685,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+339691,abschnitt,ja,ja,"",ja
+339691,ergebnis,angenommen,angenommen,"",angenommen
+339691,form,einstimmig,einstimmig,"",einstimmig
+339691,stimmen,{},{},"",{}
+339691,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+339692,abschnitt,ja,ja,"",ja
+339692,ergebnis,angenommen,angenommen,"",angenommen
+339692,form,einstimmig,einstimmig,"",einstimmig
+339692,stimmen,"{""CDU"": ""ja"", ""FDP"": ""enthaltung"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","{""CDU"": ""ja"", ""FDP"": ""enthaltung"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","","{""CDU"": ""ja"", ""FDP"": ""enthaltung"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}"
+339692,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+339699,abschnitt,ja,ja,"",ja
+339699,ergebnis,angenommen,angenommen,"",angenommen
+339699,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+339699,stimmen,"{""CDU"": ""nein"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","{""CDU"": ""nein"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","","{""CDU"": ""nein"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}"
+339699,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+339702,abschnitt,ja,ja,"",ja
+339702,ergebnis,angenommen,angenommen,"",angenommen
+339702,form,einstimmig,einstimmig,"",einstimmig
+339702,stimmen,{},{},"",{}
+339702,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+339703,abschnitt,ja,ja,"",ja
+339703,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+339703,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+339703,stimmen,"{""CDU"": ""enthaltung"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""SPD"": ""nein""}","{""CDU"": ""enthaltung"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""SPD"": ""nein""}","","{""CDU"": ""enthaltung"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""SPD"": ""nein""}"
+339703,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+339751,abschnitt,nein,nein,"",nein
+340597,abschnitt,nein,nein,"",nein
+340622,abschnitt,ja,ja,"",ja
+340622,ergebnis,angenommen,angenommen,"",angenommen
+340622,form,einstimmig,einstimmig,"",einstimmig
+340622,stimmen,"{""AFD"": ""enthaltung"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""enthaltung"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""enthaltung"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}"
+340622,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+340631,abschnitt,ja,ja,"",ja
+340631,ergebnis,angenommen,angenommen,"",angenommen
+340631,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+340631,stimmen,"{""AFD"": ""nein"", ""CDU"": ""ja"", ""FDP"": ""nein"", ""FW"": ""nein"", ""GRUENE"": ""ja"", ""KLIMA"": ""nein"", ""LINKE"": ""enthaltung"", ""PARTEI"": ""nein"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""nein"", ""VOLT"": ""ja""}","{""AFD"": ""nein"", ""CDU"": ""ja"", ""FDP"": ""nein"", ""FW"": ""nein"", ""GRUENE"": ""ja"", ""KLIMA"": ""nein"", ""LINKE"": ""enthaltung"", ""PARTEI"": ""nein"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""nein"", ""VOLT"": ""ja""}","","{""AFD"": ""nein"", ""CDU"": ""ja"", ""FDP"": ""nein"", ""FW"": ""nein"", ""GRUENE"": ""ja"", ""KLIMA"": ""nein"", ""LINKE"": ""enthaltung"", ""PARTEI"": ""nein"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""nein"", ""VOLT"": ""ja""}"
+340631,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+345245,abschnitt,ja,ja,"",ja
+345245,ergebnis,angenommen,angenommen,"",angenommen
+345245,form,einstimmig,einstimmig,"",einstimmig
+345245,stimmen,{},{},"",{}
+345245,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+345247,abschnitt,ja,ja,"",ja
+345247,ergebnis,angenommen,angenommen,"",angenommen
+345247,form,einstimmig,einstimmig,"",einstimmig
+345247,stimmen,"{""LINKE"": ""enthaltung""}","{""LINKE"": ""enthaltung""}","","{""LINKE"": ""enthaltung""}"
+345247,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+345273,abschnitt,ja,ja,"",ja
+345273,ergebnis,angenommen,angenommen,"",angenommen
+345273,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+345273,stimmen,"{""AFD"": ""nein"", ""FW"": ""enthaltung"", ""KLIMA"": ""enthaltung"", ""PARTEI"": ""enthaltung"", ""TIERSCHUTZ"": ""enthaltung""}","{""AFD"": ""nein"", ""FW"": ""enthaltung"", ""KLIMA"": ""enthaltung"", ""PARTEI"": ""enthaltung"", ""TIERSCHUTZ"": ""enthaltung""}","","{""AFD"": ""nein"", ""FW"": ""enthaltung"", ""KLIMA"": ""enthaltung"", ""PARTEI"": ""enthaltung"", ""TIERSCHUTZ"": ""enthaltung""}"
+345273,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+345276,abschnitt,ja,ja,"",ja
+345276,ergebnis,angenommen,angenommen,"",angenommen
+345276,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+345276,stimmen,"{""AFD"": ""nein""}","{""AFD"": ""nein""}","","{""AFD"": ""nein""}"
+345276,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+345325,abschnitt,nein,nein,"",nein
+345334,abschnitt,ja,ja,"",ja
+345334,ergebnis,angenommen,angenommen,"",angenommen
+345334,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+345334,stimmen,"{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}"
+345334,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+345336,abschnitt,ja,ja,"",ja
+345336,ergebnis,angenommen,angenommen,"",angenommen
+345336,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+345336,stimmen,"{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}"
+345336,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+345553,abschnitt,ja,ja,"",ja
+345553,ergebnis,angenommen,angenommen,"",angenommen
+345553,form,einstimmig,einstimmig,"",einstimmig
+345553,stimmen,{},{},"",{}
+345553,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+346606,abschnitt,ja,ja,"",ja
+346606,ergebnis,angenommen,angenommen,"",angenommen
+346606,form,einstimmig,einstimmig,"",einstimmig
+346606,stimmen,"{""LINKE"": ""enthaltung""}","{""LINKE"": ""enthaltung""}","","{""LINKE"": ""enthaltung""}"
+346606,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+347254,abschnitt,ja,ja,"",ja
+347254,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+347254,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+347254,stimmen,"{""AFD"": ""ja"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""nein"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""ja"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""nein"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""ja"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""nein"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}"
+347254,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+353055,abschnitt,ja,ja,"",ja
+353055,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+353055,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+353055,stimmen,"{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""nein"", ""LINKE"": ""nein"", ""PARTEI"": ""enthaltung"", ""SPD"": ""ja""}","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""nein"", ""LINKE"": ""nein"", ""PARTEI"": ""enthaltung"", ""SPD"": ""ja""}","","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""GRUENE"": ""nein"", ""LINKE"": ""nein"", ""PARTEI"": ""enthaltung"", ""SPD"": ""ja""}"
+353055,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+353056,abschnitt,ja,ja,"",ja
+353056,ergebnis,angenommen,angenommen,"",angenommen
+353056,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+353056,stimmen,"{""AFD"": ""nein"", ""CDU"": ""geteilt"", ""FDP"": ""enthaltung"", ""GRUENE"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""nein"", ""SPD"": ""ja""}","{""AFD"": ""nein"", ""CDU"": ""geteilt"", ""FDP"": ""enthaltung"", ""GRUENE"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""nein"", ""SPD"": ""ja""}","","{""AFD"": ""nein"", ""CDU"": ""geteilt"", ""FDP"": ""enthaltung"", ""GRUENE"": ""ja"", ""LINKE"": ""nein"", ""PARTEI"": ""nein"", ""SPD"": ""ja""}"
+353056,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+353059,abschnitt,ja,ja,"",ja
+353059,ergebnis,angenommen,angenommen,"",angenommen
+353059,form,einstimmig,einstimmig,"",einstimmig
+353059,stimmen,{},{},"",{}
+353059,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+353962,abschnitt,ja,ja,"",ja
+353962,ergebnis,angenommen,angenommen,"",angenommen
+353962,form,einstimmig,einstimmig,"",einstimmig
+353962,stimmen,"{""FW"": ""enthaltung"", ""TIERSCHUTZ"": ""enthaltung""}","{""FW"": ""enthaltung"", ""TIERSCHUTZ"": ""enthaltung""}","","{""FW"": ""enthaltung"", ""TIERSCHUTZ"": ""enthaltung""}"
+353962,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+353966,abschnitt,ja,ja,"",ja
+353966,ergebnis,angenommen,angenommen,"",angenommen
+353966,form,einstimmig,einstimmig,"",einstimmig
+353966,stimmen,{},{},"",{}
+353966,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+353979,abschnitt,ja,ja,"",ja
+353979,ergebnis,angenommen,angenommen,"",angenommen
+353979,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+353979,stimmen,"{""CDU"": ""geteilt"", ""FW"": ""geteilt"", ""TIERSCHUTZ"": ""geteilt""}","{""CDU"": ""geteilt"", ""FW"": ""geteilt"", ""TIERSCHUTZ"": ""geteilt""}","","{""CDU"": ""geteilt"", ""FW"": ""geteilt"", ""TIERSCHUTZ"": ""geteilt""}"
+353979,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+355545,abschnitt,ja,ja,"",ja
+355545,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+355545,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+355545,stimmen,"{""FW"": ""geteilt"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""geteilt"", ""VOLT"": ""ja""}","{""FW"": ""geteilt"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""geteilt"", ""VOLT"": ""ja""}","","{""FW"": ""geteilt"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""geteilt"", ""VOLT"": ""ja""}"
+355545,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+355759,abschnitt,ja,ja,"",ja
+355759,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+355759,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+355759,stimmen,"{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""FW"": ""geteilt"", ""GRUENE"": ""enthaltung"", ""KLIMA"": ""ja"", ""LINKE"": ""geteilt"", ""PARTEI"": ""ja"", ""SPD"": ""nein"", ""TIERSCHUTZ"": ""geteilt"", ""VOLT"": ""nein""}","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""FW"": ""geteilt"", ""GRUENE"": ""enthaltung"", ""KLIMA"": ""ja"", ""LINKE"": ""geteilt"", ""PARTEI"": ""ja"", ""SPD"": ""nein"", ""TIERSCHUTZ"": ""geteilt"", ""VOLT"": ""nein""}","","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""FW"": ""geteilt"", ""GRUENE"": ""enthaltung"", ""KLIMA"": ""ja"", ""LINKE"": ""geteilt"", ""PARTEI"": ""ja"", ""SPD"": ""nein"", ""TIERSCHUTZ"": ""geteilt"", ""VOLT"": ""nein""}"
+355759,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+356054,abschnitt,ja,ja,"",ja
+356054,ergebnis,angenommen,angenommen,"",angenommen
+356054,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+356054,stimmen,"{""AFD"": ""nein"", ""KLIMA"": ""enthaltung"", ""LINKE"": ""enthaltung"", ""PARTEI"": ""enthaltung""}","{""AFD"": ""nein"", ""KLIMA"": ""enthaltung"", ""LINKE"": ""enthaltung"", ""PARTEI"": ""enthaltung""}","","{""AFD"": ""nein"", ""KLIMA"": ""enthaltung"", ""LINKE"": ""enthaltung"", ""PARTEI"": ""enthaltung""}"
+356054,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+357667,abschnitt,ja,ja,"",ja
+357667,ergebnis,angenommen,angenommen,"",angenommen
+357667,form,einstimmig,einstimmig,"",einstimmig
+357667,stimmen,{},{},"",{}
+357667,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+357698,abschnitt,ja,ja,"",ja
+357698,ergebnis,angenommen,angenommen,"",angenommen
+357698,form,einstimmig,einstimmig,"",einstimmig
+357698,stimmen,{},{},"",{}
+357698,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+358239,abschnitt,ja,ja,"",ja
+358239,ergebnis,angenommen,angenommen,"",angenommen
+358239,form,einstimmig,einstimmig,"",einstimmig
+358239,stimmen,{},{},"",{}
+358239,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+358248,abschnitt,ja,ja,"",ja
+358248,ergebnis,angenommen,angenommen,"",angenommen
+358248,form,einstimmig,einstimmig,"",einstimmig
+358248,stimmen,{},{},"",{}
+358248,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+358278,abschnitt,ja,ja,"",ja
+358278,ergebnis,angenommen,angenommen,"",angenommen
+358278,form,einstimmig,einstimmig,"",einstimmig
+358278,stimmen,{},{},"",{}
+358278,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+358669,abschnitt,ja,ja,"",ja
+358669,ergebnis,angenommen,angenommen,"",angenommen
+358669,form,einstimmig,einstimmig,"",einstimmig
+358669,stimmen,{},{},"",{}
+358669,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+358805,abschnitt,ja,ja,"",ja
+358805,ergebnis,angenommen,angenommen,"",angenommen
+358805,form,einstimmig,einstimmig,"",einstimmig
+358805,stimmen,{},{},"",{}
+358805,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+361119,abschnitt,ja,ja,"",ja
+361119,ergebnis,angenommen,angenommen,"",angenommen
+361119,form,einstimmig,einstimmig,"",einstimmig
+361119,stimmen,"{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""geteilt"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja""}","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""geteilt"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja""}","","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""geteilt"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja""}"
+361119,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+361136,abschnitt,ja,ja,"",ja
+361136,ergebnis,angenommen,angenommen,"",angenommen
+361136,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+361136,stimmen,"{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja""}","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja""}","","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja""}"
+361136,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+361137,abschnitt,ja,ja,"",ja
+361137,ergebnis,angenommen,angenommen,"",angenommen
+361137,form,einstimmig,einstimmig,"",einstimmig
+361137,stimmen,"{""AFD"": ""enthaltung"", ""CDU"": ""ja"", ""FDP"": ""enthaltung"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja""}","{""AFD"": ""enthaltung"", ""CDU"": ""ja"", ""FDP"": ""enthaltung"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja""}","","{""AFD"": ""enthaltung"", ""CDU"": ""ja"", ""FDP"": ""enthaltung"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja""}"
+361137,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+362081,abschnitt,ja,ja,"",ja
+362081,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+362081,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+362081,stimmen,{},{},"",{}
+362081,uebrige,unbekannt,unbekannt,"",unbekannt
+362083,abschnitt,ja,ja,"",ja
+362083,ergebnis,angenommen,angenommen,"",angenommen
+362083,form,einstimmig,einstimmig,"",einstimmig
+362083,stimmen,{},{},"",{}
+362083,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+362131,abschnitt,ja,ja,"",ja
+362131,ergebnis,angenommen,angenommen,"",angenommen
+362131,form,einstimmig,einstimmig,"",einstimmig
+362131,stimmen,"{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja""}","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja""}","","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja""}"
+362131,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+365911,abschnitt,ja,ja,"",ja
+365911,ergebnis,angenommen,angenommen,"",angenommen
+365911,form,einstimmig,einstimmig,"",einstimmig
+365911,stimmen,{},{},"",{}
+365911,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+365916,abschnitt,ja,ja,"",ja
+365916,ergebnis,angenommen,angenommen,"",angenommen
+365916,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+365916,stimmen,"{""FW"": ""enthaltung"", ""LINKE"": ""nein"", ""TIERSCHUTZ"": ""enthaltung""}","{""FW"": ""enthaltung"", ""LINKE"": ""nein"", ""TIERSCHUTZ"": ""enthaltung""}","","{""FW"": ""enthaltung"", ""LINKE"": ""nein"", ""TIERSCHUTZ"": ""enthaltung""}"
+365916,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+365918,abschnitt,ja,ja,"",ja
+365918,ergebnis,angenommen,angenommen,"",angenommen
+365918,form,einstimmig,einstimmig,"",einstimmig
+365918,stimmen,{},{},"",{}
+365918,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+365924,abschnitt,nein,nein,"",nein
+365934,abschnitt,ja,ja,"",ja
+365934,ergebnis,angenommen,angenommen,"",angenommen
+365934,form,einstimmig,einstimmig,"",einstimmig
+365934,stimmen,{},{},"",{}
+365934,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+366755,abschnitt,ja,ja,"",ja
+366755,ergebnis,angenommen,angenommen,"",angenommen
+366755,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+366755,stimmen,"{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""nein"", ""GRUENE"": ""ja"", ""KLIMA"": ""enthaltung"", ""LINKE"": ""nein"", ""PARTEI"": ""enthaltung"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""nein"", ""VOLT"": ""ja""}","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""nein"", ""GRUENE"": ""ja"", ""KLIMA"": ""enthaltung"", ""LINKE"": ""nein"", ""PARTEI"": ""enthaltung"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""nein"", ""VOLT"": ""ja""}","","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""nein"", ""GRUENE"": ""ja"", ""KLIMA"": ""enthaltung"", ""LINKE"": ""nein"", ""PARTEI"": ""enthaltung"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""nein"", ""VOLT"": ""ja""}"
+366755,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+367444,abschnitt,ja,ja,"",ja
+367444,ergebnis,angenommen,angenommen,"",angenommen
+367444,form,einstimmig,einstimmig,"",einstimmig
+367444,stimmen,"{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}"
+367444,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+367447,abschnitt,ja,ja,"",ja
+367447,ergebnis,angenommen,angenommen,"",angenommen
+367447,form,einstimmig,einstimmig,"",einstimmig
+367447,stimmen,"{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}"
+367447,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+367448,abschnitt,ja,ja,"",ja
+367448,ergebnis,angenommen,angenommen,"",angenommen
+367448,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+367448,stimmen,"{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""SPD"": ""ja""}","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""SPD"": ""ja""}","","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""SPD"": ""ja""}"
+367448,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+367452,abschnitt,ja,ja,"",ja
+367452,ergebnis,angenommen,angenommen,"",angenommen
+367452,form,einstimmig,einstimmig,"",einstimmig
+367452,stimmen,"{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","","{""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}"
+367452,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+369964,abschnitt,nein,nein,"",nein
+371194,abschnitt,ja,ja,"",ja
+371194,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+371194,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+371194,stimmen,"{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""geteilt"", ""LINKE"": ""nein"", ""SPD"": ""nein"", ""VOLT"": ""enthaltung""}","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""geteilt"", ""LINKE"": ""nein"", ""SPD"": ""nein"", ""VOLT"": ""enthaltung""}","","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""geteilt"", ""LINKE"": ""nein"", ""SPD"": ""nein"", ""VOLT"": ""enthaltung""}"
+371194,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+371197,abschnitt,ja,ja,"",ja
+371197,ergebnis,angenommen,angenommen,"",angenommen
+371197,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+371197,stimmen,"{""AFD"": ""nein"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""nein"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""nein"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}"
+371197,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+371327,abschnitt,ja,ja,"",ja
+371327,ergebnis,angenommen,angenommen,"",angenommen
+371327,form,einstimmig,einstimmig,"",einstimmig
+371327,stimmen,"{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}"
+371327,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+371557,abschnitt,ja,ja,"",ja
+371557,ergebnis,angenommen,angenommen,"",angenommen
+371557,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+371557,stimmen,"{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}"
+371557,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+371560,abschnitt,ja,ja,"",ja
+371560,ergebnis,angenommen,angenommen,"",angenommen
+371560,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+371560,stimmen,"{""AFD"": ""nein"", ""CDU"": ""enthaltung"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""nein"", ""CDU"": ""enthaltung"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""nein"", ""CDU"": ""enthaltung"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}"
+371560,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+371676,abschnitt,ja,ja,"",ja
+371676,ergebnis,angenommen,angenommen,"",angenommen
+371676,form,einstimmig,einstimmig,"",einstimmig
+371676,stimmen,"{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""ja"", ""LINKE"": ""ja"", ""SPD"": ""ja"", ""VOLT"": ""ja""}"
+371676,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+371681,abschnitt,ja,ja,"",ja
+371681,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+371681,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+371681,stimmen,"{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""LINKE"": ""enthaltung"", ""SPD"": ""nein"", ""VOLT"": ""nein""}","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""LINKE"": ""enthaltung"", ""SPD"": ""nein"", ""VOLT"": ""nein""}","","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""GRUENE"": ""nein"", ""LINKE"": ""enthaltung"", ""SPD"": ""nein"", ""VOLT"": ""nein""}"
+371681,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+372303,abschnitt,ja,ja,"",ja
+372303,ergebnis,angenommen,angenommen,"",angenommen
+372303,form,einstimmig,einstimmig,"",einstimmig
+372303,stimmen,{},{},"",{}
+372303,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+372551,abschnitt,ja,ja,"",ja
+372551,ergebnis,angenommen,angenommen,"",angenommen
+372551,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+372551,stimmen,"{""GRUENE"": ""enthaltung"", ""LINKE"": ""nein""}","{""GRUENE"": ""enthaltung"", ""LINKE"": ""nein""}","","{""GRUENE"": ""enthaltung"", ""LINKE"": ""nein""}"
+372551,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+372557,abschnitt,ja,ja,"",ja
+372557,ergebnis,angenommen,angenommen,"",angenommen
+372557,form,ohne_angabe,ohne_angabe,"",ohne_angabe
+372561,abschnitt,ja,ja,"",ja
+372561,ergebnis,angenommen,angenommen,"",angenommen
+372561,form,ohne_angabe,ohne_angabe,"",ohne_angabe
+372647,abschnitt,ja,ja,"",ja
+372647,ergebnis,angenommen,angenommen,"",angenommen
+372647,form,einstimmig,einstimmig,"",einstimmig
+372647,stimmen,{},{},"",{}
+372647,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+373297,abschnitt,nein,nein,"",nein
+373544,abschnitt,ja,ja,"",ja
+373544,ergebnis,angenommen,angenommen,"",angenommen
+373544,form,einstimmig,einstimmig,"",einstimmig
+373544,stimmen,"{""CDU"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","{""CDU"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","","{""CDU"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}"
+373544,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+373664,abschnitt,ja,ja,"",ja
+373664,ergebnis,angenommen,angenommen,"",angenommen
+373664,form,einstimmig,einstimmig,"",einstimmig
+373664,stimmen,"{""CDU"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","{""CDU"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}","","{""CDU"": ""ja"", ""GRUENE"": ""ja"", ""SPD"": ""ja""}"
+373664,uebrige,unbekannt,mit_mehrheit,unbekannt,unbekannt
+374028,abschnitt,ja,ja,"",ja
+374028,ergebnis,angenommen,angenommen,"",angenommen
+374028,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+374028,stimmen,"{""AFD"": ""nein""}","{""AFD"": ""nein""}","","{""AFD"": ""nein""}"
+374028,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+374334,abschnitt,ja,ja,"",ja
+374334,ergebnis,abgelehnt,abgelehnt,"",abgelehnt
+374334,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+374334,stimmen,"{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""FW"": ""geteilt"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""nein"", ""TIERSCHUTZ"": ""geteilt"", ""VOLT"": ""nein""}","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""FW"": ""geteilt"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""nein"", ""TIERSCHUTZ"": ""geteilt"", ""VOLT"": ""nein""}","","{""AFD"": ""nein"", ""CDU"": ""nein"", ""FDP"": ""nein"", ""FW"": ""geteilt"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""nein"", ""TIERSCHUTZ"": ""geteilt"", ""VOLT"": ""nein""}"
+374334,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+374654,abschnitt,ja,ja,"",ja
+374654,ergebnis,angenommen,sonstiges,angenommen,angenommen
+374654,form,mehrheitlich,"",mehrheitlich,mehrheitlich
+374654,stimmen,"{""AFD"": ""nein"", ""KLIMA"": ""enthaltung"", ""PARTEI"": ""enthaltung""}","","{""AFD"": ""nein"", ""KLIMA"": ""enthaltung"", ""PARTEI"": ""enthaltung""}","{""AFD"": ""nein"", ""KLIMA"": ""enthaltung"", ""PARTEI"": ""enthaltung""}"
+374654,uebrige,mit_mehrheit,"",mit_mehrheit,mit_mehrheit
+375410,abschnitt,ja,ja,"",ja
+375410,ergebnis,angenommen,angenommen,"",angenommen
+375410,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+375410,stimmen,"{""AFD"": ""nein""}","{""AFD"": ""nein""}","","{""AFD"": ""nein""}"
+375410,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+375414,abschnitt,ja,ja,"",ja
+375414,ergebnis,angenommen,angenommen,"",angenommen
+375414,form,mehrheitlich,mehrheitlich,"",mehrheitlich
+375414,stimmen,"{""FW"": ""nein"", ""TIERSCHUTZ"": ""nein""}","{""FW"": ""nein"", ""TIERSCHUTZ"": ""nein""}","","{""FW"": ""nein"", ""TIERSCHUTZ"": ""nein""}"
+375414,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+375438,abschnitt,ja,ja,"",ja
+375438,ergebnis,angenommen,angenommen,"",angenommen
+375438,form,einstimmig,einstimmig,"",einstimmig
+375438,stimmen,{},{},"",{}
+375438,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+375720,abschnitt,ja,ja,"",ja
+375720,ergebnis,angenommen,angenommen,"",angenommen
+375720,form,einstimmig,einstimmig,"",einstimmig
+375720,stimmen,"{""FW"": ""enthaltung"", ""TIERSCHUTZ"": ""enthaltung""}","{""FW"": ""enthaltung"", ""TIERSCHUTZ"": ""enthaltung""}","","{""FW"": ""enthaltung"", ""TIERSCHUTZ"": ""enthaltung""}"
+375720,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
+377115,abschnitt,nein,nein,"",nein
+377299,abschnitt,ja,ja,"",ja
+377299,ergebnis,angenommen,angenommen,"",angenommen
+377299,form,einstimmig,einstimmig,"",einstimmig
+377299,stimmen,"{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}","","{""AFD"": ""ja"", ""CDU"": ""ja"", ""FDP"": ""ja"", ""FW"": ""ja"", ""GRUENE"": ""ja"", ""KLIMA"": ""ja"", ""LINKE"": ""ja"", ""PARTEI"": ""ja"", ""SPD"": ""ja"", ""TIERSCHUTZ"": ""ja"", ""VOLT"": ""ja""}"
+377299,uebrige,mit_mehrheit,mit_mehrheit,"",mit_mehrheit
