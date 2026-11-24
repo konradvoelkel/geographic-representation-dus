@@ -3157,8 +3157,10 @@ mit der Fabrik aus Punkt 74; alle vier Schritte sind offline und fragen den Tran
 Gegen das Messskript `docs/plans/17-zeit-messung.py` auf den Läufen vom 2026-11-24: jede Zahl aus
 § 3.1 bis § 3.3 und § 8.5 gleich, auf die gedruckte Stelle (H17.1 −4,9 %, p = 0,847; H17.2
 +83,1 %, p = 1/27 720, Holm 0,0001; H17.3 5,98 / 3,16 / 3,47 %, p = 0,987; alle 25 Zeilen), und
-die 41 Feeds der laufenden Periode bytegleich mit dem Prototyp des Messskripts (beide mit Version
-0.24.0 im Kopf). Ein
+die Feeds der laufenden Periode bis auf die Version im Kopf bytegleich mit dem Prototyp des
+Messskripts, 40 von 41; der Feed von Wahlbezirk 22 nennt sieben der neuesten 50 Dokumente nicht
+mehr, die nur über „schulweg" trafen, einen Begriff, den die Seite zählt, aber nicht zeigt
+(`search.hide_in_display`, Review N1). Ein
 slow-Test rechnet die Zahlen und die Präzision 94 von 100 aus `validierung/17-zeit/labels.csv` gegen
 die gebaute Ausgabe nach (`tests/golden/test_cycles_numbers.py`).
 
@@ -3181,12 +3183,23 @@ der zentrierten Zellen der Zuordnung, weil YT doppelt zentriert ist. So rechnet 
 Zuordnungen in einem Schritt; ein hypothesis-Test hält ihn gegen die wörtliche Rechnung des
 Messskripts fest.
 
-**Der Kern der Hypothesentabellen** (Synergien 2026-11, § 1): `hypothese`, `p`, `p_holm`,
-`ergebnis`, `n`, `festgelegt`, Zusatzspalten dahinter. `p_holm` und `ergebnis` stehen nur in der
-Familie der Haupttests; eine Sensitivität in derselben Tabelle hat keines, damit niemand sie als
-bestätigt liest. `check_hypotheses` rechnet Holm über die Familie nach, wie sie in der Tabelle steht.
-`vorläufig` heißt: Holm hätte entschieden, aber das Maß ist nicht validiert; H17.3 ist es, solange
-`analysis.lexicon.VALIDATED` für die Lexikonversion keine Präzision von mindestens 0,9 nennt.
+**Der Kern der Hypothesentabellen** (Synergien 2026-11, § 1; nach dem Review vom 2026-11-24, K2
+und N7, so festgelegt, wie 22 ihn übernimmt): `hypothese`, `p`, `p_holm`, `ergebnis`, `n`,
+`festgelegt`, Zusatzspalten dahinter. **Die Familie sind die Zeilen mit `p_holm`**: dort sind
+Kennung, `p` in [0, 1], `n` und `festgelegt` Pflicht, jede Kennung steht einmal darin, und `p_holm`
+und `ergebnis` sind Holm über die Familie, wie sie in der Tabelle steht (`check_hypotheses` rechnet
+nach). Außerhalb -- Sensitivität, Robustheit, explorativ, beschreibend -- stehen `p_holm` und
+`ergebnis` leer, damit niemand eine solche Zeile als bestätigt liest, und `p`, `n`, `festgelegt` und
+die Kennung dürfen leer sein (22 trägt Robustheit ohne p und Paare ohne Kennung). Eindeutig ist
+eine Zeile über einen Schlüssel, den der Aufrufer nennt (`key`, Vorgabe die Kennung). Die Schwelle
+ist ein Parameter: `strict=False` verwirft bei `p <= alpha / (m - j + 1)` (17), `strict=True` bei
+`<` (22, „p_Holm < 0,05"). Entschieden wird nach Holms Schrittregel, nicht über den Vergleich des
+angepassten Werts mit alpha: beides ist mathematisch gleich, in Gleitkommazahlen nicht (m = 11,
+p = 0,05/11 gibt 11 · p = 0,05000000000000001); ein hypothesis-Orakel hält die Schrittregel fest.
+Die Tabelle von `feat/22-bedarf` (32 Zeilen) geht so durch `check_hypotheses`
+(`tests/fixtures/hypotheses/bedarf_hypothesen_22.json`). `vorläufig` heißt: Holm hätte
+entschieden, aber das Maß ist nicht validiert; H17.3 ist es, solange `analysis.lexicon.VALIDATED`
+für die Lexikonversion keine Präzision von mindestens 0,9 nennt.
 
 **Das Lexikon als Paketdatei, Version 1 unverändert.** `src/georep/lexika/bundespolitik.toml` hat
 denselben Blob wie `docs/plans/17-zeit-lexikon.toml` im Commit der Festlegung; ein Test hält den
@@ -3219,9 +3232,14 @@ Datei ab, wie bei `compare`. Damit muss `.github/workflows/pages.yml` die laufen
 jeder Periode macht den Schritt veraltet (ein Test ändert eine andere Periode und sieht das).
 
 **Feeds aus den Daten.** `feed/id` ist `urn:uuid:` aus Stadt, Ordner und Wahlbezirk, `feed/updated`
-das jüngste `updated` der Einträge und nie die Laufzeit, `entry/updated` OParls `modified`, nie vor
-dem Vorlagendatum (00:00 Ortszeit, `feeds.timezone`): dieselben Daten geben dieselben Bytes, ein Lauf
-ohne neues Dokument schreibt keinen Feed neu. Kein `category` und kein `rel="self"` (Fragen 27 und
+das jüngste `updated` der Einträge und nie die Laufzeit, `entry/updated` OParls `modified` in der
+Zone des Profils, nie vor dem Vorlagendatum (00:00 Ortszeit, `feeds.timezone`); eine Zeit ohne Zone
+gilt in dieser Zone (Review N4), und sortiert und verglichen wird als Zeitpunkt, nicht als Text
+(N3). Dieselben Daten geben dieselben Bytes, ein Lauf ohne neues Dokument schreibt keinen Feed neu.
+Jeder Wahlbezirk des Wörterbuchs hat einen Feed, auch ohne Treffer: dann leer, mit dem Stand der
+Daten (letztes Vorlagendatum, 00:00 Ortszeit) als `updated`; weg kommt nur der Feed eines Bezirks,
+den das Wörterbuch nicht mehr kennt (N2). Ein Feed nennt nur Dokumente, die die Seite zeigt: ohne
+die Begriffe aus `search.hide_in_display`, die zählen, aber kein Dokument zeigen (N1). Kein `category` und kein `rel="self"` (Fragen 27 und
 28, Annahme). Ein Titel verliert nur, was XML 1.0 verbietet. Die Feeds sind keine Ausgaben des
 Registers (ihre Zahl kennt der Schritt erst beim Lauf); die Liste ist es. `atom_problems` prüft jeden
 Feed beim Schreiben ohne Netz und ohne lxml (normative Regeln, Form nach Anhang B, Projektregeln);

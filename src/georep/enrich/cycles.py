@@ -17,9 +17,11 @@ den übrigen Beiträgen vor ``report``. ``http`` (Fundament F7) bleibt ungenutzt
   Stadt, ``processed/zeit_hypothesen.parquet``. Liest die Ausgaben der Perioden über
   ``layout.for_profile`` wie ``compare``; fehlt eine, bricht ``run`` mit ihrem Pfad ab, also laufen
   die anderen Perioden vorher (Synergien 2026-11, Konflikt 13).
-* ``feeds`` (mit ``feeds.enabled``): ein Atom-Feed je Wahlbezirk unter ``site/feeds/`` und deren
-  Liste ``processed/wahlbezirke_feeds.parquet`` (die erste Ausgabe des Schritts, darum der Stamp
-  dort). Feeds von Wahlbezirken, die es nicht mehr gibt, nimmt der Schritt weg.
+* ``feeds`` (mit ``feeds.enabled``): ein Atom-Feed je Wahlbezirk des Wörterbuchs unter
+  ``site/feeds/``, ohne Treffer leer, mit den Dokumenten, die die Seite zeigt (ohne
+  ``search.hide_in_display``), und deren Liste ``processed/wahlbezirke_feeds.parquet`` (die erste
+  Ausgabe des Schritts, darum der Stamp dort). Feeds von Wahlbezirken, die das Wörterbuch nicht
+  mehr kennt, nimmt der Schritt weg.
 
 Die Pfade gehören diesem Modul (Synergien 2026-11, § 2.1): wer die Tabellen liest, nimmt sie aus
 ``time_files``; die Wahltage liest jedes Vorhaben aus ``cycles.elections`` (Konflikt 16).
