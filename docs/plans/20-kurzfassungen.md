@@ -573,6 +573,62 @@ halb so viele Fehler, 5 gegen 4 in der Treue), trotz Teil 1 von Runde 2: dessen 
 aus drei richtigen, selbst gerechneten Zahlen und zwei Fehlalarmen (§ 4.2). Das entscheidet der
 Supervisor.
 
+### 5.4 Vorab festgelegt für die Nachmessung (Stufe 2, 2026-11-24, vor jeder Kurzfassung der Stichprobe)
+
+Frage 20.13 und Frage 38, § 10, Punkt 4. Gemessen wird vor dem Stapellauf nur, ob die Rolle in der
+Eingabe die Rollenfehler von gemma senkt (§ 5.3, Vorbehalt 2). Festgelegt vom Bau-Agenten, bevor
+eine Kurzfassung der neuen Stichprobe entsteht; die Kurzfassungen entstehen erst nach dem Merge
+von Vorhaben 11, weil die Eingabe dessen Abschnitte liest.
+
+- **Stichprobe**: 50 Dokumente der Hauptperiode. Grundgesamtheit wie § 3.1 (nicht leerer Rohtext,
+  19 032) ohne die 400 der beiden Runden (`stichprobe200.csv`, `stichprobe200-2.csv`); dieselbe
+  Schichtung (Dokumentart nach `Rules.art` aus Vorhaben 11 × Länge des Rohtexts), proportional mit
+  größtem Rest und mindestens einem je Schicht (`allocate` aus F4), je Schicht die kleinsten Ränge
+  SHA-256 über Seed **2026112420** und ID (`rank` aus F4). Dateien:
+  `validierung/20-kurzfassungen-nachmessung/stichprobe.csv` und `stichprobe.json` (Format F4),
+  gezogen mit `uv run python docs/plans/20-kurzfassungen-messung.py nachmessung stichprobe`.
+  **Ersatz**: gibt der Schritt für ein gezogenes Dokument keine Eingabe (`ohne_text`, Frage 20.6),
+  tritt das Dokument mit dem nächsten Rang derselben Schicht an seine Stelle; ein Tausch steht
+  hier mit ID.
+- **Eingabe Fassung 2** (`georep.enrich.summaries`: `header`, `role_frame`, `summary_input`, Stand
+  von Commit `68ed4f7`): sechs Kopfzeilen `Dokumentart`, `Absender` (Urheberklasse aus Option 04, bei
+  Fraktionen deren Namen aus Vorhaben 15, sonst „nicht angegeben"), `Beratung` (die Gremien der
+  Beratungsfolge nach Kürzel, Punkt 58, sonst das Gremium der Nummer, sonst „nicht angegeben"),
+  `Drucksache`, `Datum`, `Titel`; dann die Abschnitte aus Vorhaben 11 in der Folge von § 3.1 im
+  Budget von 8 000 Zeichen, gelesen mit `read_span` und den Seitenmustern von 11 (dieses Lesen
+  kommt mit dem Merge von 11 dazu; sonst ändert sich nichts); nach einem gekürzten Abschnitt folgt
+  nichts mehr; Rückfall wie § 3.1; ohne Text nach dem Kopf keine Eingabe (Frage 20.6). Die Rollen
+  und Kanten aus 14 kommen nicht hinein (§ 10, Punkt 3: sie dürfen, schärfen die Dokumentart aber
+  nicht, wo Absender und Beratung schon stehen).
+- **Prompt Fassung 2** (`PROMPT_VERSION = "20-kurzfassung-2"`; `SYSTEM` wortgleich mit Fassung 1):
+  Regel 1 nennt die Kopfzeilen der Rolle („Wer das Dokument einbringt, steht unter „Absender"; die
+  Gremien unter „Beratung" beraten oder entscheiden darüber, sie beantragen es nicht."), Regel 3
+  bekommt „Zähle und rechne nicht selbst: keine Summe, keine Anzahl aufgezählter Punkte, die das
+  Dokument nicht nennt." (Frage 20.12), Regel 5 „Straßen-, Platz- und Einrichtungsnamen sind keine
+  Personennamen; nenne sie, wie sie im Dokument stehen." (Frage 20.8); Regeln 2, 4 und 6 bleiben.
+- **Modell**: `gemma4:latest`, Optionen aus `[ml.generation]` wie § 3.1 (Temperatur 0, Seed 0,
+  `num_ctx` 8192, `num_predict` 512, `think` aus); der Digest des Laufs steht im Protokoll. Ein Lauf
+  unter der Sperre der Warteschlange, vorher und nachher Schichten im ollama-Log, `nvidia-smi` und
+  Tempo (§ 10, Punkt 6).
+- **Bewertung**: zwei Kodier-Agenten und ein Schlicht-Agent nach F4 (`docs/validierung.md`), die
+  der Supervisor startet; Codebuch `validierung/20-kurzfassungen-nachmessung/codebuch.toml` mit der
+  einen Frage `unbelegt`, deren Frage, Anleitung und Optionen wörtlich die der Frage `kN_unbelegt`
+  der ersten Bewertung sind; je Einheit die Eingabe als Ausschnitt und die eine Kurzfassung als K1,
+  ohne Modellnamen; `georep validate merge 20-kurzfassungen-nachmessung`.
+- **Kriterium**: gemma hält, wenn **höchstens 2 der 50** geschlichteten Labels `unbelegt = ja` sind
+  (Maßstab der ersten Bewertung 0 von 50, plus 2; § 5.3, § 10). Gezählt wird ungewichtet über die
+  50; daneben stehen der geschichtete Anteil mit Wilson bei Kishs n_eff und α der Frage. Liegt α
+  unter 0,8 und läge die Zahl mit den Labels eines einzelnen Kodierers auf der anderen Seite der
+  Grenze, entscheidet der Supervisor; sonst die Zahl.
+- **Danach**: hält gemma, läuft der Stapel mit gemma (§ 6, „Stapellauf"). Hält gemma nicht, misst
+  der Bau-Agent `qwen3.6:27b` an denselben 50 mit derselben Eingabe, demselben Prompt und demselben
+  Codebuch in einem eigenen Ordner (`20-kurzfassungen-nachmessung-qwen`) und nimmt nach demselben
+  Kriterium das Modell, das hält; halten beide, gemma; hält keines, kein Stapellauf, und der
+  Supervisor entscheidet (Frage 38).
+- **Daneben berichtet, nicht Kriterium**: die deterministische Treueprüfung (`enrich.fidelity`) an
+  den 50, die Zahl der Rollenfehler unter den Beanstandungen (aus den Begründungen, vom Bau-Agenten
+  gezählt), Länge in Sätzen und Wörtern.
+
 ## 6. Bauplan Stufe 2
 
 **Beitrag** `summaries` im Register `georep.enrich.CONTRIBUTIONS` (F2), ein Schritt `summaries` mit
@@ -691,7 +747,7 @@ Keine: Vorhaben 20 ist kein Analysevorhaben. Was vorab festgelegt war, ist das K
 | 20.10 | Lücken des Codebuchs Fassung 1, gemeldet von den Kodier-Agenten (2026-11-23): Rollenfehler, die das Codebuch nicht nennt (ein Gremium „beantragt" bei einer Verwaltungsvorlage, ein Beschlussvorschlag im Indikativ ohne Antragsteller); eine Verkürzung ohne falsche Einzelangabe, die einen falschen Eindruck macht; ein Haushaltsansatz als Fördersumme; eine aus dem Ausschnitt nachzurechnende Summe; was ein „geläufiges" Kürzel ist; Grammatik gegen holprig (Stufe 2 der Verständlichkeit nie vergeben); Regel 5 (keine Personennamen) fragt keine Frage ab | Vollständigkeit erreicht α ≥ 0,8 bei keiner Kennung (0,505 bis 0,775), Verständlichkeit und `unbelegt` bei einer nicht; ein unscharfes Codebuch kann das Kriterium nicht entscheiden | Fassung 2 des Codebuchs mit diesen Fällen als Beispiele, eine Frage `personenname` je Kurzfassung, „nachgerechnete Zahl" ausdrücklich als unbelegt (wie Regel 3), Vollständigkeit mit einer Liste der Elemente a bis d statt einer Gesamtstufe; nach F4 an einer frischen Stichprobe |
 | 20.11 | Regeln des Schlicht-Agenten für eine Fassung 2 des Codebuchs (2026-11-24, nicht angewendet): Gremium als Antragsteller einer Verwaltungsvorlage ist Treue 2; Indikativ ohne falschen Akteur ist Treue 4; ein falsch besetztes Element zählt in der Vollständigkeit als vorhanden (der Fehler zählt nur in der Treue); woraus das Wesentliche kommt; Beschlussbetrag gegen Nebenbeträge; Verkürzung mit falschem Eindruck; geläufige Kürzel; Sprachstufen; Personennamen als eigene Frage; Kopplung von `unbelegt` und Treue | Mit ihnen wäre Vollständigkeit vermutlich über α 0,8; ohne sie entscheidet sie das Kriterium nicht | in Fassung 2 des Codebuchs übernehmen, an frischen 50 messen (F4), bevor 29 Kurzfassungen nutzt |
 | 20.12 | Drei Mängel der Prüfung, gefunden in der Umbaurunde: ein „ca." vor „Monat Jahr" in der Eingabe löst den Ausschluss für „Tag. Monat Jahr" aus; von pypdf zusammengeklebtes „Monat2022" wird nicht erkannt; unregelmäßige Plurale (Votum, Voten) fallen durch die Endungsliste. Dazu die Frage, ob selbst gezählte oder gerechnete, richtige Zahlen unbelegt sind | Alle drei Mängel sind Fehlalarme; die Zahlen sind nach Regel 3 unbelegt, aber nicht falsch | die drei Mängel in `enrich/fidelity.py` beheben, je mit einem Test aus diesen Fällen; abgeleitete Zahlen bleiben unbelegt, und Regel 3 des Prompts bekommt in Fassung 2 „keine selbst gezählten oder gerechneten Zahlen" |
-| 20.13 | Eingabe Fassung 2 mit Rolle (Absender aus Dokumentart und Urheber, beschließendes Gremium aus der Beratungsfolge) und eine Nachmessung von `unbelegt` an frischen 50, bevor der Stapellauf startet; wenn gemma dort mehr als 2 von 50 hat, qwen? | Rollenfehler in einer von vier Kurzfassungen machen sie für den Vorlagenspiegel unbrauchbar | ja; das Kriterium der Nachmessung legt der Bau-Agent vorab fest, Vorschlag in § 5.3 |
+| 20.13 | Eingabe Fassung 2 mit Rolle (Absender aus Dokumentart und Urheber, beschließendes Gremium aus der Beratungsfolge) und eine Nachmessung von `unbelegt` an frischen 50, bevor der Stapellauf startet; wenn gemma dort mehr als 2 von 50 hat, qwen? | Rollenfehler in einer von vier Kurzfassungen machen sie für den Vorlagenspiegel unbrauchbar | ja; das Kriterium der Nachmessung legt der Bau-Agent vorab fest, Vorschlag in § 5.3; **festgelegt in § 5.4** (Bau-Agent, 2026-11-24): höchstens 2 von 50, sonst qwen an denselben 50 (Frage 38) |
 
 ## 10. Änderungen durch die Synergie
 
