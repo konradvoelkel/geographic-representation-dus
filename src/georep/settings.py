@@ -2303,6 +2303,8 @@ class Settings(BaseSettings):
         Fundament F5: ``[ml]`` steht ganz draußen. Was davon ein Ergebnis bestimmt (Modell,
         Optionen, Fenster), steht als Kennung im Stamp des Modellschritts, und ``limit`` als Zahl
         der offenen Eingaben; der Rest ist Ort und Laufzeit.
+        Vorhaben 14 und 26: ``procedures.attachments`` und ``outcomes.package`` sind Pfade; der
+        Inhalt der Pakete steht als Eingabe im Stamp der Schritte, die ihre Kopie in ``raw/`` lesen.
         """
         payload = self.model_dump(
             mode="json",
@@ -2346,6 +2348,13 @@ class Settings(BaseSettings):
                 # die offenen Eingaben eines Teillaufs stehen im Stamp des Modellschritts
                 # (``ModelUse``); hier ließen sie jeden Schritt neu laufen (Review 2026-11-23).
                 "ml": True,
+                # Vorhaben 14 und 26 (Review von 26, N5): die Pakete sind Pfade wie
+                # ``bodies.consultations``; ``bootstrap`` kopiert sie nach ``raw/``, und die Kopie
+                # steht mit ihrem SHA-256 als Eingabe im Stamp von ``references``, ``procedures``
+                # und ``council_results``. Ob es ein Anlagenpaket gibt, entscheidet dort die
+                # Liste der Eingaben, nicht der Fingerprint.
+                "procedures": {"attachments"},
+                "outcomes": {"package"},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

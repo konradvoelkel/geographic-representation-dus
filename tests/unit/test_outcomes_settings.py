@@ -144,3 +144,28 @@ def test_the_word_lists_of_the_infinitive_compile_when_loading(field: str) -> No
     """Review 2026-11-24, N6: auch diese beiden Listen werden Teil eines Musters."""
     with pytest.raises(ValidationError, match="kein gültiger regulärer Ausdruck"):
         gs.OutcomeReview.model_validate({field: ["ab("]})
+
+
+def test_the_package_paths_are_not_in_the_fingerprint() -> None:
+    """Review 2026-11-24, N5: ein Pfad ist kein Ergebnisparameter; sein Inhalt steht im Stamp.
+
+    ``bootstrap`` kopiert das Paket nach ``raw/``, und die Kopie ist eine Eingabe von
+    ``council_results`` (beziehungsweise ``references`` und ``procedures`` bei Vorhaben 14) mit
+    ihrem SHA-256 im Stamp. Der Wortschatz dagegen bestimmt das Ergebnis und zählt.
+    """
+    settings = load_settings(profile="duesseldorf", cwd=NOWHERE)
+    moved = settings.model_copy(
+        update={
+            "outcomes": settings.outcomes.model_copy(update={"package": Path("anderswo.parquet")}),
+            "procedures": settings.procedures.model_copy(
+                update={"attachments": Path("anderswo/anlagen.parquet")}
+            ),
+        }
+    )
+    assert moved.fingerprint() == settings.fingerprint()
+    fewer = dict(settings.outcomes.results)
+    del fewer["vertagt"]
+    changed = settings.model_copy(
+        update={"outcomes": settings.outcomes.model_copy(update={"results": fewer})}
+    )
+    assert changed.fingerprint() != settings.fingerprint()
