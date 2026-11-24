@@ -130,7 +130,9 @@ OUTCOME_SCHEMA: dict[str, PolarsDataType] = {
     "tage": pl.Int32,  # vom Datum des Dokuments bis zur Sitzung; null ohne Sitzung oder davor
     "beratungen": pl.Int16,  # Beratungen des Dokuments im Datensatz, mit und ohne Punkt
     "pruefauftrag_beantragt": pl.Boolean,  # nur angenommene Anträge; beschreibend (Rückfall 1)
-    "folgevorlage": pl.String,  # erste Vorlage der Verwaltung mit starker Kante (Vorhaben 14)
+    # erste Vorlage der Verwaltung mit starker Kante (Vorhaben 14); je Profil eine Untergrenze
+    # (Kanten nur im eigenen Korpus, Review 2026-11-24, N1)
+    "folgevorlage": pl.String,
     "eintrag_tragfaehig": pl.Boolean,  # nur Anträge mit Ergebnis; false in einer Praxiszelle
 }
 SUCCESS_SCHEMA: dict[str, PolarsDataType] = {
@@ -556,7 +558,9 @@ def first_followups(
 
     ``edges`` sind die Kanten aus Vorhaben 14 (``von`` nennt ``nach``, ``stark``), ``roles`` die
     Rollen (``id``, ``rolle``), ``dates`` die Daten der nennenden Drucksachen. „Erste" heißt:
-    frühestes Datum, dann kleinste ID. ``id``, ``folgevorlage``, sortiert nach ``id``.
+    frühestes Datum, dann kleinste ID. ``id``, ``folgevorlage``, sortiert nach ``id``. Je Profil
+    eine Untergrenze (Kanten nur im eigenen Korpus): eine Folgevorlage der nächsten Periode nennt
+    keine Kante dieses Profils, über die drei Düsseldorfer Perioden fehlen so 114 von 1 508.
     """
     followers = roles.filter(pl.col("rolle").is_in(list(followup_roles))).select(
         pl.col("id").alias("von")
