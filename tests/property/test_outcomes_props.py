@@ -102,6 +102,62 @@ def test_the_row_order_does_not_matter(found: list[Row], rnd: random.Random) -> 
     assert _classify(shuffled).equals(_classify(agenda))
 
 
+# Review 2026-11-24, N7: auch den Verlauf selbst mischen, nicht nur die Eingabe von ``progress``,
+# die ihn ohnehin sortiert. Ein Punkt darf dabei von zwei Beratungen genannt werden (dieselbe
+# Sitzung, dasselbe Ergebnis, aber das Gremium der Beratung): dort entscheidet sonst die Zeilenfolge.
+shared = st.lists(
+    st.tuples(
+        st.sampled_from(DOCS),
+        st.integers(0, 3),  # der Punkt
+        starts,
+        st.one_of(st.none(), st.integers(0, 3)),
+        st.one_of(st.none(), st.sampled_from(SACHE + STAND)),
+        st.lists(st.sampled_from(BODIES), min_size=1, max_size=2, unique=True),  # je Beratung
+    ),
+    max_size=10,
+)
+
+
+def _shared_progress(
+    found: list[tuple[str, int, dt.datetime | None, int | None, str | None, list[str]]],
+) -> pl.DataFrame:
+    rows: dict[tuple[str, str, str], dict[str, object]] = {}
+    for doc, point, start, order, result, bodies in found:
+        for number, body in enumerate(bodies):
+            key = (doc, f"{doc}/b{number}", f"{doc}/t{point}")
+            rows.setdefault(
+                key,
+                {
+                    "id": doc,
+                    "beratung": key[1],
+                    "top": key[2],
+                    "organisationen": [body],
+                    "rolle": None,
+                    "sitzung": start,
+                    "nummer": None,
+                    "ordnung": order,
+                    "result": result,
+                },
+            )
+    # derselbe Punkt trägt in jeder Zeile dieselbe Sitzung, Folge und denselben Eintrag
+    first: dict[tuple[object, object], dict[str, object]] = {}
+    for row in rows.values():
+        owner = first.setdefault((row["id"], row["top"]), row)
+        row.update({k: owner[k] for k in ("sitzung", "ordnung", "result")})
+    agenda = pl.DataFrame(list(rows.values()), schema=oc.AGENDA_SCHEMA)
+    return oc.progress(agenda.sort(oc.PROGRESS_ORDER, nulls_last=False), {}, RESULTS)
+
+
+@given(shared, st.randoms(use_true_random=False))
+def test_the_order_of_the_progress_itself_does_not_matter(
+    found: list[tuple[str, int, dt.datetime | None, int | None, str | None, list[str]]],
+    rnd: random.Random,
+) -> None:
+    verlauf = _shared_progress(found)
+    shuffled = verlauf.sample(fraction=1.0, shuffle=True, seed=rnd.randrange(2**32))
+    assert oc.decisions(shuffled, RESULTS).equals(oc.decisions(verlauf, RESULTS))
+
+
 LATE = dt.datetime(2030, 1, 1, 12)  # nach jeder Sitzung der Strategie
 
 
