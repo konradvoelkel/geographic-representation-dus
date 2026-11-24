@@ -3154,8 +3154,11 @@ mit zwei Schritten hinter `embeddings.enabled` (beide Stadtprofile, die Perioden
   Rohtext). Eine Datei, deren erste drei Stücke nicht alle da sind (Teillauf, Abweisung), bekommt
   keinen Dokumentvektor: das Mittel über die übrigen wäre ein anderer Vektor.
 - `neighbors` (offline) schreibt `processed/aehnliche_dokumente.parquet`, zehn Nachbarn je
-  Korpus-ID, nie die eigene Datei, Gleichstände nach ID auch an der Grenze zum zehnten Platz
-  (`search.vectors._top` nimmt alle Werte gleich dem zehnten und sortiert sie). Ohne
+  Korpus-ID, nie die eigene Datei. Der Rang folgt der ungerundeten Ähnlichkeit (float32);
+  Gleichstände der ungerundeten Ähnlichkeit stehen nach ID, auch an der Grenze zum zehnten Platz
+  (`search.vectors._top` nimmt alle Werte gleich dem zehnten und sortiert sie). Die Spalte
+  `aehnlichkeit` ist auf vier Stellen gerundet; gleich gerundete Nachbarn stehen darum nicht immer
+  nach ID (in der Hauptperiode 647 von 1 300 solchen Paaren). Ohne
   Dokumentvektoren nimmt er die Kopie des Pakets, die `bootstrap` nach
   `raw/aehnliche_dokumente_paket.parquet` legt, ohne beides schreibt er eine leere Tabelle mit
   demselben Schema. Beide Eingaben sind **optional** (`Step.optional`): so steht ihr Hash im Stamp,

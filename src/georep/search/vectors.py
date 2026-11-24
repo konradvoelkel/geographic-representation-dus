@@ -5,7 +5,9 @@ Messdokument ``docs/plans/18-einbettungen.md``, § 3.1 und § 6. Vektoren werden
 ihre Stücke. Der Dokumentvektor (Fassung ``18-dokvektor-1``) ist das Mittel der normierten Vektoren
 der ersten ``document_chunks`` Stücke, wieder normiert. Die Nachbarn einer Einheit sind die
 ``k`` Einheiten mit dem größten Skalarprodukt ihrer Dokumentvektoren, ohne die eigene Datei;
-Gleichstände nach ID aufsteigend, auch an der Grenze zum ``k``-ten Platz.
+Gleichstände der ungerundeten Ähnlichkeit (float32) nach ID aufsteigend, auch an der Grenze zum
+``k``-ten Platz. Geschrieben wird die Ähnlichkeit auf vier Stellen gerundet; gleich gerundete
+Nachbarn stehen darum nicht immer nach ID.
 
 Die Tabellen, die der Beitrag ``18-einbettungen`` schreibt, haben ihre Schemata und
 Schema-Versionen hier; die Vektoren liegen als ``Array(Float32, dimension)``.

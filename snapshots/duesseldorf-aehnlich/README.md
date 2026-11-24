@@ -45,9 +45,14 @@ und, als `slow`-Test, die Invarianten der Tabelle.
 | `id` | String | Korpus-ID (OParl `id` des Papers) |
 | `rang` | Int64 | 1 bis 10, lückenlos |
 | `nachbar` | String | die kleinste Korpus-ID der Nachbardatei; nie dieselbe Datei wie `id` |
-| `aehnlichkeit` | Float32 | Skalarprodukt der normierten Dokumentvektoren, auf vier Stellen; je `id` fallend |
+| `aehnlichkeit` | Float32 | Skalarprodukt der normierten Dokumentvektoren, auf vier Stellen gerundet; je `id` fallend |
 
-Sortiert nach `id, rang`; Gleichstände nach ID, auch an der Grenze zum zehnten Platz.
+Sortiert nach `id, rang`. Der Rang folgt der **ungerundeten** Ähnlichkeit (float32), fallend;
+Gleichstände der ungerundeten Ähnlichkeit stehen nach ID, auch an der Grenze zum zehnten Platz.
+Gerundet können zwei Nachbarn gleich aussehen und trotzdem nicht nach ID stehen: von den 1 300
+Paaren benachbarter Ränge mit gleicher gerundeter Ähnlichkeit stehen 647 nicht nach ID. Mit
+`georep pack --neighbors` am 2026-11-24 nach Runde 1 des Reviews neu gepackt: die Datei ist
+bytegleich (SHA-256 unten unverändert).
 
 ## Zahlen des Laufs
 
