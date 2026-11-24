@@ -205,9 +205,9 @@ def test_bootstrap_copies_the_attachment_package(
 def test_the_city_profiles_switch_the_steps_on(tmp_path: Path, default_settings: Settings) -> None:
     """Düsseldorf (alle drei Perioden erben es) und Mönchengladbach; die Schritte vor ``report``."""
     names = [s.name for s in build_steps(default_settings, Layout(tmp_path, tmp_path, tmp_path))]
-    # hinter den Beiträgen weiter hinten im Register (17) und vor ``report``
-    after = names[names.index("references") :]
-    assert after[:2] == ["references", "procedures"] and "report" in after
+    assert names[names.index("references") :][:2] == ["references", "procedures"]
+    # Vorhaben 18 hängt seine Schritte dahinter, vor ``report``
+    assert names.index("procedures") < names.index("report")
     for profile in ("duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
         assert load_settings(profile=profile, cwd=Path("/nonexistent")).procedures.enabled
 

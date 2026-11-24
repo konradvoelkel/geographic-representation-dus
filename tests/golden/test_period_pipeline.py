@@ -90,7 +90,7 @@ def test_the_profile_runs_every_offline_step_and_skips_them_on_the_second_run(
 ) -> None:
     steps = build_steps(period_run.settings, period_run.layout)
     names = [s.name for s in steps]
-    offline = {s.name for s in steps if not s.network}
+    offline = {s.name for s in steps if not s.network and s.models is None}  # Vorhaben 18
     # Das Wörterbuch kommt von der Basis, darum fehlen die beiden Netzschritte
     assert not set(WITHOUT) & set(names)
     # Die Zuordnung steht unmittelbar vor den Wählern, die sie braucht

@@ -1488,6 +1488,11 @@ class EmbeddingModel(_Strict):
     dimension: int = Field(default=768, ge=1)
     num_ctx: int = Field(default=512, ge=0)  # Fenster in Token; 0 = was das Modell mitbringt
     truncate: bool = True  # längere Texte hinten abschneiden; false: ein Fehler je solchem Text
+    # Vorhaben 18: die Präfixe gehören zum Modell (nomic-embed-text), nicht in den Code. Sie stehen
+    # nicht im Fingerprint (``[ml]``), aber in der Prompt-Version des Schritts, sobald sie von der
+    # gemessenen Fassung abweichen (``enrich.embeddings.chunk_prompt``).
+    document_prefix: str = "search_document: "
+    query_prefix: str = "search_query: "
 
 
 class GenerationModel(_Strict):
@@ -1519,6 +1524,15 @@ class Ml(_Strict):
     retry_rejected: bool = False  # abgewiesene Eingaben erneut fragen statt überspringen
     embedding: EmbeddingModel = EmbeddingModel()
     generation: GenerationModel = GenerationModel()
+    # Vorhaben 18 (Review Runde 1, N1): die flock-Sperre der GPU, die ``georep search`` nicht
+    # blockierend prüft; ist sie gehalten, sucht es mit BM25. ``None`` = keine Prüfung. Der Pfad
+    # ist rechnerspezifisch und gehört in ``settings.local.toml``, nie in die Defaults.
+    gpu_lock: Path | None = None
+
+    @field_validator("gpu_lock", mode="before")
+    @classmethod
+    def _no_lock(cls, value: object) -> object:
+        return None if value in ("", None) else value
 
     @model_validator(mode="after")
     def _local_unless_allowed(self) -> Ml:
@@ -1996,6 +2010,54 @@ class Procedures(_Strict):
         return self
 
 
+# --- Vorhaben 18: Einbettungen, Ähnlichkeit, Suche (docs/plans/18-einbettungen.md)
+class Bm25(_Strict):
+    """Okapi BM25 der Wortsuche (Fassung ``18-bm25-1``): Sättigung ``k1`` und Längennorm ``b``."""
+
+    k1: float = Field(default=1.2, gt=0)
+    b: float = Field(default=0.75, ge=0, le=1)
+
+
+class Embeddings(_Strict):
+    """Stücke, Dokumentvektoren, Nachbarn und die Suche über sie (Vorhaben 18).
+
+    ``chunk_chars``, ``title_chars`` und ``overlap_chars`` sind die Fassung ``18-stuecke-1``;
+    ``document_chunks`` macht den Dokumentvektor (``18-dokvektor-1``), ``neighbors`` die Zahl der
+    ähnlichen Dokumente. ``rrf_k`` und ``fusion_depth`` sind die Mischung (``18-rrf-1``); sie und
+    ``bm25`` liest nur ``georep search`` und stehen darum nicht im Fingerprint.
+    ``neighbors_package`` ist ein Pfad (nicht im Fingerprint): das Paket mit der Nachbartabelle,
+    das ``bootstrap`` nach ``raw/`` legt, für eine Kette ohne Dokumentvektoren.
+    """
+
+    enabled: bool = False
+    chunk_chars: int = Field(default=1600, ge=1)
+    title_chars: int = Field(default=200, ge=0)
+    overlap_chars: int = Field(default=200, ge=0)
+    document_chunks: int = Field(default=3, ge=1)
+    neighbors: int = Field(default=10, ge=1)
+    bm25: Bm25 = Bm25()
+    rrf_k: int = Field(default=60, ge=0)
+    fusion_depth: int = Field(default=100, ge=1)
+    neighbors_package: Path | None = None
+
+    @model_validator(mode="after")
+    def _a_title_leaves_room_for_the_body(self) -> Embeddings:
+        """Der längste Titel samt Leerzeile lässt dem Rumpf eines Stücks Platz, mehr als die Überlappung."""
+        room = self.chunk_chars - self.title_chars - 2
+        if room < 1 or self.overlap_chars >= room:
+            raise ValueError(
+                f"embeddings: chunk_chars {self.chunk_chars} lässt nach title_chars "
+                f"{self.title_chars} und der Leerzeile {room} Zeichen für den Rumpf; es braucht "
+                f"mindestens eines und mehr als overlap_chars ({self.overlap_chars})"
+            )
+        return self
+
+    @field_validator("neighbors_package", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+
 class InstrumentTitle(_Strict):
     """Ein Muster im Titel (klein), das ein Dokument einem Instrument zuordnet (Vorhaben 17, S1.5)."""
 
@@ -2130,6 +2192,7 @@ class Settings(BaseSettings):
         Majorities()
     )  # Vorhaben 15: Ratsmehrheiten, stadtweit (24, 28 lesen sie)
     procedures: Procedures = Procedures()  # Vorhaben 14: Vorgänge
+    embeddings: Embeddings = Embeddings()  # Vorhaben 18: Einbettungen, Ähnlichkeit, Suche
     cycles: Cycles = Cycles()  # Vorhaben 17: Rhythmus, Vokabular, Tests über Perioden
     feeds: Feeds = Feeds()  # Vorhaben 17: Atom-Feed je Wahlbezirk
 
@@ -2322,6 +2385,9 @@ class Settings(BaseSettings):
                 # die offenen Eingaben eines Teillaufs stehen im Stamp des Modellschritts
                 # (``ModelUse``); hier ließen sie jeden Schritt neu laufen (Review 2026-11-23).
                 "ml": True,
+                # Vorhaben 18: der Pfad des Nachbarpakets (sein Inhalt steht im Stamp von
+                # neighbors) und was nur ``georep search`` liest, kein Schritt (Review, N4)
+                "embeddings": {"neighbors_package", "bm25", "rrf_k", "fusion_depth"},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

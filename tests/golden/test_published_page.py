@@ -86,7 +86,8 @@ def published(tmp_path_factory: pytest.TempPathFactory) -> PublishedRun:
     # ihre Stadtbezirke, Option 05), dann die alte Periode, dann der Vergleich und die Seite. Ein
     # früherer Lauf mit ``compare`` bräche mit MissingInputError ab, und das wäre richtig so.
     steps = build_steps(compare, base)
-    network = {s.name for s in steps if s.network}
+    # Vorhaben 18: ein Schritt mit Modell läuft ohne ``--models`` so wenig wie ein Netzschritt
+    network = {s.name for s in steps if s.network or s.models is not None}
     LAST = ("compare", "report")
     before = [s.name for s in steps if s.name not in LAST]
     _check(run_pipeline(steps, compare, before), network)

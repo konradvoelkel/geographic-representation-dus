@@ -1,6 +1,8 @@
 # Vorhaben 18: Einbettungen, Ähnlichkeit, semantische Suche
 
-Stand 2026-11-24, Stufe 1 (Messen) abgeschlossen, Branch `feat/18-einbettungen`. Briefing:
+Stand 2026-11-24, Stufe 1 (Messen) abgeschlossen, Stufe 2 (Bauen) gebaut auf `feat/18-einbettungen`
+(was vom Bauplan abweicht, steht im Entscheidungspunkt „Einbettungen über Stücke" in
+[../decisions.md](../decisions.md)). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „18 Einbettungen,
 Ähnlichkeit, semantische Suche". Messskript: [18-einbettungen-messung.py](18-einbettungen-messung.py).
 Suchfragen: [18-einbettungen-anfragen.toml](18-einbettungen-anfragen.toml). Codebücher, Stichproben
