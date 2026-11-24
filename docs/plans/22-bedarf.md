@@ -485,6 +485,39 @@ Das Ergebnis steht in § 3.4; was nach dem ersten Lauf dazukam (asymptotisches p
 Moran's I, die Rechnung innerhalb der Stadtbezirke), ist dort und in § 3.5 als Nachtrag markiert und
 ändert kein Urteil.
 
+### 8.1 H1′ und H3′: prospektiv, an Daten, die es noch nicht gibt
+
+Festgelegt am 2026-11-24 in Stufe 2 (Frage 22.10, Synergie § 10, Punkt 6), **bevor** eine Größe der
+laufenden Periode gegen eine andere gerechnet wurde; die beiden Lesarten aus § 3.5 sind dort nach
+Ansehen der Daten entstanden und werden hier zu Thesen, die neue Daten bestätigen oder nicht.
+
+- **Daten**: das Profil `duesseldorf-2025` (Dokumente ab dem Periodenbeginn 2025-09-15, Zuschnitt
+  der Hauptperiode, also dieselben 41 Wahlbezirke und 10 Stadtbezirke); Unfälle der Monate ab
+  2025-09 bis zum Ende des letzten veröffentlichten Jahrgangs, **gerechnet erst, wenn das mindestens
+  zwölf Monate sind** (Unfallatlas 2026, erwartet im Juli 2027). Einwohner aus dem Zensus 2022 wie
+  in § 8, `anteil_u18` aus dem Quartiersatlas wie in § 8 (das Periodenprofil hat keinen eigenen
+  Kontext; gelesen wird die Tabelle der Hauptperiode, gleicher Zuschnitt). Die Klassen kommen aus
+  dem Ausschussklassifikator des Periodenprofils (oder aus Vorhaben 19, wenn es dann gebaut ist;
+  dann mit dieser Änderung auf der Seite).
+- **Schicht**: der Stadtbezirk mit den meisten Wahlberechtigten des Wahlbezirks, wie in § 3.5.
+- **H1′** (zwischen den Stadtbezirken): Wo im Mittel eines Stadtbezirks mehr Unfälle mit
+  Personenschaden je 1 000 Einwohner geschehen, ist im Mittel ein größerer Teil der Dokumente ein
+  Verkehrsdokument. Maß: Spearmans ρ zwischen den Mittelwerten der Ränge je Stadtbezirk (Ränge über
+  die 41 Wahlbezirke, dann je Stadtbezirk gemittelt; n = 10). Test: einseitig, ρ > 0, p aus 10 000
+  Permutationen der Stadtbezirke, Seed 22.
+- **H3′** (innerhalb der Stadtbezirke): Innerhalb eines Stadtbezirks ist der Anteil der Dokumente der
+  Jugendhilfe und der Schule größer, wo der Anteil der unter 18-Jährigen größer ist. Maß: ρ der um
+  den Mittelwert ihres Stadtbezirks bereinigten Ränge (n = 41), wie die Rechnung „innerhalb" in
+  § 3.5. Test: einseitig, ρ > 0, p aus 10 000 Permutationen der Reste, derselbe Generator nach H1′.
+- **Schwelle**: α = 0,05 nach Holm über H1′ und H3′. Bei n = 10 erkennt H1′ mit 80 % Power nur
+  ρ ≥ rund 0,7; „nicht bestätigt" heißt auch hier „nicht nachgewiesen".
+- **Was nicht zählt**: eine Wiederholung von H1 und H3 auf den neuen Daten ist eine Replikation und
+  steht daneben, entscheidet aber nicht über H1′ und H3′.
+
+Gebaut wird die Rechnung erst mit den Daten (Stufe 2 trägt nur die Settings für H1 bis H3); bis dahin
+ist dieser Abschnitt die Festlegung, und ein späterer Commit, der ihn ändert, macht aus ihr eine
+Erzählung (Plan § 2.11).
+
 ## 9. Risiken und offene Fragen (Nummer, Frage, warum sie zählt, Annahme ohne Antwort)
 
 | Nr. | Frage | warum sie zählt | Annahme ohne Antwort |
