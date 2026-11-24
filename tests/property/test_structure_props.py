@@ -225,6 +225,14 @@ def test_struktur_1_is_the_draft_of_the_measurement(
 
 @settings(deadline=None)
 @given(document=DOCUMENTS, paper_type=PAPER_TYPES)
+# hypothesis, 2026-11-24: der Beschlusssatz ohne Überschrift lag im Entwurf im Abschnitt des Amts
+@example(
+    document=(
+        ["Fachbereich: 66 - Amt für Verkehrsmanagement", "Der Rat beschließt den Neubau."],
+        ["\n"] * 24,
+    ),
+    paper_type="Beschlussvorlage",
+)
 def test_the_level_one_sections_never_overlap_and_stay_in_the_text(
     document: tuple[list[str], list[str]], paper_type: str
 ) -> None:

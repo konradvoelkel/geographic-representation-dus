@@ -633,6 +633,10 @@ def _add_body(text: str, rules: StructureRules, result: Structure) -> None:
     Überschriften der Ebene 1 („Sachdarstellung:" allein ist kein Text; eine Überschrift der
     Ebene 2 steht wie in jedem Abschnitt in ihm und teilt ihn nicht). Der Abschnitt ``kopf_*``
     endet dann am letzten Kopffeld; seine Felder sind schon gelesen, also ändert sich keines.
+
+    Vorher endet ein Abschnitt der Ebene 1, wo der nächste beginnt: der Beschlusssatz ohne
+    Überschrift steht im Entwurf mitten im letzten Abschnitt des Kopfs, wenn danach keine
+    Überschrift kommt (in der Hauptperiode zwei Dokumente, einmal im Amt, einmal im Betreff).
     """
     head_end = max((f.end for f in result.head if f.kind in HEAD_END_FIELDS), default=0)
     betreff = [s for s in result.sections if s.norm == BETREFF]
@@ -643,7 +647,7 @@ def _add_body(text: str, rules: StructureRules, result: Structure) -> None:
             if s >= betreff_end and rules.closing.match(text[s:e]):
                 closing = s
                 break
-    level1 = [s for s in result.sections if s.norm not in rules.level2]
+    level1 = _without_overlap(text, [s for s in result.sections if s.norm not in rules.level2])
     level2 = [s for s in result.sections if s.norm in rules.level2]
     body: list[tuple[int, int]] = []
     kept: list[Found] = []
@@ -682,6 +686,19 @@ def _add_body(text: str, rules: StructureRules, result: Structure) -> None:
     head_stop = max(head_stop, head_end)
     rest = read_span(text, min(head_stop, len(text)), len(text), rules.page_noise)
     result.body_empty = len(_SPACE.sub("", rest)) < rules.min_body_chars
+
+
+def _without_overlap(text: str, spans: Sequence[Found]) -> list[Found]:
+    """Die Abschnitte nach ihrem Anfang; einer, in dem der nächste beginnt, endet davor."""
+    out: list[Found] = []
+    for span in sorted(spans, key=lambda s: (s.start, s.end)):
+        if out and out[-1].end > span.start:
+            before = out.pop()
+            start, stop = _trim(text, before.start, span.start)
+            if stop > start:
+                out.append(before._replace(start=start, end=stop))
+        out.append(span)
+    return out
 
 
 def _merge(ranges: Sequence[tuple[int, int]]) -> list[tuple[int, int]]:
