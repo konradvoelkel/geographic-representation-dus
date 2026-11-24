@@ -233,6 +233,15 @@ def _span_within_text(text: str, start: int, end: int, noise: Sequence[str] = ()
     return 0 <= start <= end <= len(text)
 
 
+def _noise_compiles(text: str, start: int, end: int, noise: Sequence[str] = ()) -> bool:
+    try:
+        for pattern in noise:
+            re.compile(pattern)
+    except re.error:
+        return False
+    return True
+
+
 def _read_without_page_breaks(
     text: str, start: int, end: int, noise: Sequence[str] = (), result: str = ""
 ) -> bool:
@@ -247,6 +256,7 @@ def _read_without_page_breaks(
 # (CLAUDE.md, „Arbeitsweise", deal). ``deal.safe``, nicht ``deal.pure``: die Funktion läuft je
 # Abschnitt und Dokument (CLAUDE.md, „Nie").
 @deal.pre(_span_within_text, message="0 <= start <= end <= len(text)")
+@deal.pre(_noise_compiles, message="jedes Muster in noise ist ein gültiger regulärer Ausdruck")
 @deal.ensure(
     _read_without_page_breaks,
     message="ohne Seitenwechsel, nie länger als die Spanne; ohne Muster genau die Spanne",

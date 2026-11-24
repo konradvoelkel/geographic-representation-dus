@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import deal
 import polars as pl
 import pytest
 
@@ -224,3 +225,10 @@ def test_value_is_the_text_at_the_place_or_empty_for_a_position_span() -> None:
     check_spans(normalised, LENGTHS)  # ohne Texte keine Prüfung des Werts
     with pytest.raises(SchemaError, match="nicht wörtlich.*Zeile 0"):
         check_spans(normalised, LENGTHS, texts=texts)
+
+
+def test_read_span_wants_valid_patterns() -> None:
+    """Review 11, N3: ein ungültiges Muster ist eine verletzte Vorbedingung, kein ``re.error`` mitten
+    im Lesen; die Settings prüfen ``page_noise`` schon beim Laden."""
+    with pytest.raises(deal.PreContractError):
+        read_span("Seite 2\nText", 0, 12, ["(unclosed"])
