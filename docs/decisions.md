@@ -3970,3 +3970,71 @@ ins Messdokument); `;r10` und `;iso` als eigene Formen in `attr` (der Bauplan ne
 Termins; eine vervollständigte erste Angabe ist ein Tag); die Extraktoren in `VERIFY_TARGETS` (ihre
 Regeln tragen `re.Pattern`, dasselbe Werkzeugartefakt wie bei `parse_reference`; ihre Eigenschaften
 prüft `tests/property/test_identifiers_props.py`).
+
+## Kurzfassungen: gebaut, validiert, aber aus; nur lokal, Treue deterministisch, die Rolle in der Eingabe (Vorhaben 20, 2026-11-26)
+
+**Ergebnis zuerst.** Gebaut und an der Messung validiert sind die Eingabe Fassung 2 und die
+deterministische Treueprüfung. Die Nachmessung von `unbelegt` vor dem Stapellauf (Messdokument
+§ 5.4, Grenze 2 von 50) hat **beide Modelle verworfen**: `gemma4` 4 von 50 (in der ersten
+Bewertung ohne Rolle 12 von 50), `qwen3.6:27b` 5 von 50 (Entscheidung des Supervisors, weil α
+0,544 und ein Kodierer allein unter der Grenze; die Zahl liegt mehr als doppelt darüber, das
+geschichtete Intervall ganz). **Darum gibt es keinen Stapellauf, und der Schritt ist in allen
+Profilen aus** (`summaries.enabled = false`; an, startete jedes `georep run --models`, etwa für die
+Einbettungen von 18, einen Stapel von 5 bis 8 GPU-Stunden). Er bleibt im Paket und lässt sich für
+eine spätere Messung mit `GEOREP_SUMMARIES__ENABLED=true` einschalten; `summaries.model` bleibt
+`gemma4` (weniger Beanstandungen als qwen, 2,7-mal schneller). Weiter ginge es nur mit einem
+Codebuch Fassung 2 (Fragen 20.10, 20.11, 20.15: Rollen, Verallgemeinerung, Modalität, Kopfdaten,
+gestrichene Einschränkungen) an einer frischen Stichprobe, als eigenes Vorhaben. Die
+deterministische Prüfung und die Kodierer fanden in beiden Nachmessungen **disjunkte** Fehler (0
+und 2 gegen 4 und 5): die Prüfung ersetzt die Bewertung nicht.
+
+Vorhaben 20 der Vorverarbeitung (`docs/plans/20-kurzfassungen.md`: Urteil § 5.3, Bauplan § 6,
+Nachmessung § 5.4, Synergie § 10), Stufe 2. Zwei, drei Sätze je Dokument mit einem lokalen Modell,
+für den Vorlagenspiegel einer Fraktion (Vorhaben 29). Die Nummer bekommt der Eintrag beim Merge.
+
+**Nie veröffentlicht, darum nie unter `data_root`.** Konrads Antwort auf Frage 6 (2026-11-23):
+Kurzfassungen nein. Beide Tabellen des Schritts `summaries` liegen unter
+`cache_root/<profil>/summaries/` (`summaries_files`), die Antworten selbst im Modellcache von F5.
+`report`, `publish` und `pack` lesen nur unter `data_root` und aus `package_files`; ein Test hält
+beides fest. `georep summary` liest lokal und schreibt eine HTML-Liste nur in denselben Ordner
+(Frage 20.3). Ohne `--models` wird der Schritt übersprungen, und kein Paket ersetzt ihn. Verworfen:
+die Tabellen unter `processed/` mit einer Ausnahme in `publish` und `pack` (eine Ausnahme mehr, die
+der nächste Umbau vergisst); ein Paket wie bei den Nachbarn von Vorhaben 18 (Frage 6).
+
+**Die Treue prüft eine reine Funktion, die Rolle prüfen Kodierer.** `enrich.fidelity` sucht in jeder
+Kurzfassung Zahlen, Daten, Drucksachennummern und Namen und sieht nach, ob ihre Eingabe sie trägt
+(Messdokument § 3.1), mit Klasse e in Fassung 2 (§ 5.2: ein seltenes großgeschriebenes Wort ist nur
+ein Name, wenn es kein Abstraktum, kein Wort und keine Zusammensetzung des Korpus ist) und den drei
+Korrekturen aus Frage 20.12 („ca. März 2022", „Dezember2022", Votum/Voten). Gegen das Messskript
+Dokument für Dokument an den 800 Kurzfassungen beider Runden: dasselbe Lexikon, dieselben Urteile
+bis auf genau diese Korrekturen. Drucksachennummern liest sie mit den Formen des Stadtprofils aus
+Vorhaben 14 statt mit einem eigenen Muster (kein Stadtwort im Code; an den 800 ohne Folge).
+Personennamen (Regel 5) zählt sie daneben (`personennamen`, nicht in `ok`): in 2014 bis 2020
+beginnt der Rumpf bei rund 4 095 Dokumenten mit dem Namen aus der Kopfzeile des Dezernats (Review
+von 11), und ein abgeschriebener Name ist belegt. Was sie nicht sieht, ist der wichtigste Fehler:
+eine falsche Rolle (Rat oder Bezirksvertretung als Antragsteller einer Vorlage der Verwaltung,
+§ 4.1); den misst die Frage `unbelegt` der Kodier-Agenten, vor dem Stapellauf an frischen 50
+(§ 5.4). Verworfen: die beanstandeten Angaben als Datei (sie sind Text der Kurzfassung; `georep
+summary` rechnet sie nach); eine Rundungsregel (Regel 3 verlangt die Zahl, wie sie dasteht).
+
+**gemma4 als Modell des Schalters, und es steht unter `[summaries]`.** Nach dem Kriterium aus § 3.1 bestand nur
+gemma Teil 1 (0,984 an frischen 200), und es rechnet ein Drittel der Zeit von `qwen3.6:27b`. Das
+Modell steht nicht in `[ml.generation]`, weil Vorhaben 19 dort ein anderes nennen darf; die
+Optionen kommen von dort. Der Client entsteht erst bei Bedarf (`DeferredGenerator`, wie
+`DeferredEmbedder` in Punkt 77).
+
+**Eingabe und Prompt Fassung 2: die Rolle steht in der Eingabe.** Eine von vier Kurzfassungen von
+gemma sagte in der Bewertung falsch, wer etwas will (§ 5.3, Vorbehalt 2). Statt die Rolle raten zu
+lassen, nennt die Eingabe sie: `Absender` aus der Urheberklasse (Option 04) und den Fraktionen aus
+Vorhaben 15; `Beratung` aus der Beratungsfolge im Kopf (Vorhaben 11) in ihrer Folge und mit
+Qualität („Rat (Entscheidung)"), sonst aus der OParl-Folge (Punkt 58) und dem Gremium der Nummer.
+Die Qualität ist in 11 validiert (Tripel je Zeile 160 von 168, mit dem Platzhalter „-" 168 von
+168), die Folge gegen dieselben Labels 27 von 27; OParl kennt keine Folge. Regel 1 sagt, wie die
+Zeilen zu lesen sind, Regel 3 verbietet selbst gezählte und gerechnete Zahlen (Frage 20.12),
+Regel 5 nimmt Straßennamen aus (Frage 20.8). Die Abschnitte sind Positionsspannen von 11; ihren
+Text liest nur `read_span` mit den Seitenmustern des Profils, keine eigene Säuberung. Nach einer
+Kürzung folgt nichts mehr (wie § 3.1 es beschreibt; das Messskript nahm danach noch Abschnitte),
+ohne Text nach dem Kopf (`rumpf_leer` oder weniger als 50 Zeichen) gibt es keine Eingabe (Frage
+20.6). Weil `read_span` anders liest als die Messung, trifft der Bau deren Cache nicht; das ist
+hingenommen. Verworfen: die Rollen aus 14 (sie sagen, wie ein Dokument zu einem anderen steht,
+nicht wer es einbringt); eine Zeile „beschließt" aus OParl (die Folge fehlt dort).

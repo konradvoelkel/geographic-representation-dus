@@ -691,3 +691,12 @@ directory_min_count = 3        # ein Name kommt ins Verzeichnis, wenn ihn mindes
 directory_min_chars = 8        # kürzere Namen („Umwelt") sind zu allgemein und wären Fehltreffer im Text ...
 directory_word = 'amt'         # ... außer sie enthalten dieses Wort („Sportamt")
 department = '\bDezernat(?:es|s)?[ \t]+(?P<n>\d{1,2})(?![\d/.])'  # „Dezernat 06" (12 von 12 richtig, § 4.4); Norm zweistellig
+
+# --- Vorhaben 20: Kurzfassungen (docs/plans/20-kurzfassungen.md, § 6 und § 10)
+[summaries]                    # zwei, drei Sätze je Dokument mit einem lokalen Modell (Schritt summaries, nur mit `georep run --models`); NIE veröffentlicht (Konrad, 2026-11-23, Frage 6): beide Tabellen liegen unter cache_root/<profil>/summaries/, kein Paket, nichts unter site/
+enabled = false                # ein Stadtprofil schaltet ein, wenn es Rohtext und Abschnitte (Vorhaben 11) hat; ohne Schalter fehlt der Schritt
+model = "gemma4"               # Urteil § 5.3: bestand Teil 1 (0,984 an frischen 200) und rechnet 1,0 s je Dokument gegen 3,0 s mit qwen3.6:27b; Optionen aus [ml.generation]. Vorbehalt 2 (Rollen) misst die Nachmessung vor dem Stapellauf
+budget_chars = 8000            # Abschnittstext je Eingabe (§ 3.1); darüber endet der Abschnitt am letzten Zeilenende davor mit „[…]", und nichts folgt. Kopfzeilen zählen nicht mit
+rare_share = 0.01              # Treueprüfung Klasse e: ein großgeschriebenes Wort in weniger als 1 % der Korpusdokumente gilt als möglicher Name (§ 3.1)
+known_documents = 3            # Klasse e, Fassung 2 (§ 5.2): ein Wort in mindestens drei Korpusdokumenten ist ein Wort des Korpus und kein Name, ebenso eine Zusammensetzung aus solchen Wörtern
+person_titles = 'Herrn?|Frau|Ratsherrn?|Ratsfrau|(?:Ober|Bezirks)?[Bb]ürgermeister(?:in)?|Beigeordnete[rn]?|Stadtdirektor(?:in)?|Stadtkämmerer(?:in)?|Dezernent(?:in)?|Dr\.|Prof\.'  # Regel 5 (keine Personennamen), daneben gezählt: ein Name hinter diesen Wörtern, und ein mehrteiliger Name, der in der Eingabe dahinter steht. Anlass: in 2014-2020 beginnt der Rumpf bei rund 4 095 Dokumenten mit der Zeile des Dezernats („Beigeordnete …", Review von 11, 2026-11-24). Verwaltungsdeutsch, keine Stadt; die Anreden wie procedures.person_titles, dazu die Ämter der Kopfzeile

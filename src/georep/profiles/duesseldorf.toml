@@ -1141,3 +1141,7 @@ head = '(?m)^[ \t]*(?:Fachbereich|Amt[ \t]*/[ \t]*Institut)[ \t]*:[ \t]*\n?[ \t]
 head_code = '^(?P<code>\d{2}(?:/\d{1,2})?)[ \t]*[-–][ \t]*(?P<name>.+)$'  # „66 - Amt für Verkehrsmanagement", „01/17 - Büro für …"
 text = '(?<![\w-])Bezirksverwaltungsstellen?(?:[ \t]+(?P<n>\d{1,2})(?![\d.]))?(?![\w])'  # „Bezirksverwaltungsstelle 10" im Text, mit und ohne Nummer (Fassung 2)
 text_norm = "Bezirksverwaltungsstelle"
+
+# --- Vorhaben 20: Kurzfassungen (docs/plans/20-kurzfassungen.md, § 6 und § 10) -------------------
+[summaries]
+enabled = false                # aus: die Nachmessung (Messdokument § 5.4, 2026-11-26) hat gemma4 (4 von 50) und qwen3.6:27b (5 von 50) verworfen, kein Stapellauf; an, liefe jedes `georep run --models` den Stapel mit 5 bis 8 GPU-Stunden. Der Schritt bleibt gebaut; für eine spätere Messung GEOREP_SUMMARIES__ENABLED=true. Ausgaben nur unter cache_root/<profil>/summaries/, nie veröffentlicht (Frage 6)

@@ -29,6 +29,7 @@ from georep.analysis.lexicon import VOCABULARY_SCHEMA_VERSION
 from georep.analysis.outcomes import OUTCOMES_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.enrich.procedures import PROCEDURES_SCHEMA_VERSION
+from georep.enrich.summaries import SUMMARIES_SCHEMA_VERSION
 from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.pipeline import (
@@ -109,6 +110,8 @@ VERSIONS = {
     "sections": STRUCTURE_SCHEMA_VERSION,
     # Vorhaben 12: die Spannen der Kennungen (``georep.enrich.identifiers``)
     "identifiers": IDENTIFIERS_SCHEMA_VERSION,
+    # Vorhaben 20: ein Modellschritt (``georep.enrich.summaries``), zwei Dateien unter cache_root
+    "summaries": SUMMARIES_SCHEMA_VERSION,
 }
 
 
@@ -126,6 +129,8 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
     # Netzschritt nur mit ``fetch`` dazu (Review 2026-11-24, N1)
     need = default_settings.context.need.model_copy(update={"enabled": True, "fetch": True})
     context = default_settings.context.model_copy(update={"need": need})
+    # Vorhaben 20: der Modellschritt ist in allen Profilen aus (Nachmessung § 5.4)
+    summaries = default_settings.summaries.model_copy(update={"enabled": True})
     settings = default_settings.model_copy(
         update={
             "council": council,
@@ -133,6 +138,7 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
             "cycles": cycles,
             "feeds": feeds,
             "context": context,
+            "summaries": summaries,
         }
     )
     return {s.name: s.schema_version for s in build_steps(settings, layout)}

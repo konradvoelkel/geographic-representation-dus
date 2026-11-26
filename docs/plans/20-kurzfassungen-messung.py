@@ -9,6 +9,11 @@
     uv run python docs/plans/20-kurzfassungen-messung.py kodierung       # Aufträge A und B (nach dem Maßstab)
     uv run python docs/plans/20-kurzfassungen-messung.py auswertung      # nach `georep validate merge`
     flock … uv run python docs/plans/20-kurzfassungen-messung.py vorgaenge --modell gemma4  # Versuch § 3.6
+    uv run python docs/plans/20-kurzfassungen-messung.py nachmessung stichprobe  # Stufe 2, § 5.4
+    flock /media/konrad/xtraspace/georep/gpu-queue/gpu.lock \\
+      uv run python docs/plans/20-kurzfassungen-messung.py nachmessung erzeugen --modell gemma4
+    uv run python docs/plans/20-kurzfassungen-messung.py nachmessung kodierung   # Aufträge A und B
+    uv run python docs/plans/20-kurzfassungen-messung.py nachmessung auswertung  # nach validate merge
 
 Liest: den Rohtext der Messdatei (`messdaten/rohtext/<profil>.parquet`, pypdf 7.1.0, Groß- und
 Kleinschreibung, Zeilen, Seiten mit `\\f`), den Korpus der Hauptperiode aus `data_root` (nach
@@ -73,6 +78,8 @@ ROHTEXT = MESSDATEN / "rohtext"
 LOKAL = MESSDATEN / "20-kurzfassungen"  # Kurzfassungen, Läufe, Zuordnung: nie ins Repo
 KODIERUNG = MESSDATEN / "kodierung" / "20-kurzfassungen"
 VALIDIERUNG = ROOT / "validierung" / "20-kurzfassungen"
+VALIDIERUNG_NACH = ROOT / "validierung" / "20-kurzfassungen-nachmessung"
+KODIERUNG_NACH = MESSDATEN / "kodierung" / "20-kurzfassungen-nachmessung"
 STRUKTUR = ROOT / "docs" / "plans" / "11-struktur-messung.py"
 PROJEKT = "20-kurzfassungen"
 
@@ -85,6 +92,11 @@ MODELLE = ("qwen3.6:27b", "gemma4:latest")
 SEED = 2026112320  # Tag der Festlegung und Nummer des Vorhabens
 # Umbaurunde (Messdokument § 5.2, Frage 35: umbauen): frische 200 ohne die der ersten Runde
 SEED_RUNDE2 = 2026112330
+# Nachmessung in Stufe 2 (Messdokument § 5.4, Frage 20.13 und 38): frische 50 ohne die 400 beider
+# Runden, Eingabe und Prompt Fassung 2 aus dem Paket (georep.enrich.summaries), nur `unbelegt`
+SEED_NACHMESSUNG = 2026112420
+NACHMESSUNG = "20-kurzfassungen-nachmessung"
+NACHMESSUNG_N = 50
 STICHPROBE = 200
 KODIERT = 50
 BUDGET_ZEICHEN = 8000  # Abschnittstext je Eingabe; darüber wird gekürzt (Feld gekuerzt)
@@ -1995,6 +2007,297 @@ def cmd_selbsttest() -> int:
 
 
 # --------------------------------------------------------------------------------------------
+# Nachmessung in Stufe 2 (§ 5.4): frische 50, Eingabe und Prompt Fassung 2, nur `unbelegt`
+# --------------------------------------------------------------------------------------------
+
+
+def nachmessung_grundgesamtheit() -> tuple[pl.DataFrame, pl.DataFrame]:
+    """(alle Dokumente mit Rohtext und Schicht, dieselben ohne die 400 beider Runden)."""
+    settings = settings_dus()
+    full = schichten(korpus(settings), load_struktur())
+    frueher = set(stichprobe200(1)["id"].to_list()) | set(stichprobe200(2)["id"].to_list())
+    return full, full.filter(~pl.col("id").is_in(sorted(frueher)))
+
+
+def cmd_nachmessung_stichprobe(force: bool) -> int:
+    """Die 50 der Nachmessung (§ 5.4): dieselbe Schichtung wie die 200, Seed SEED_NACHMESSUNG.
+
+    Die Schichtgröße ``schicht_n`` ist die der ganzen Grundgesamtheit (wie in Runde 2): die 50
+    stehen für alle Dokumente, über die der Stapellauf geht.
+    """
+    paths = ValidationPaths(NACHMESSUNG, VALIDIERUNG_NACH, KODIERUNG_NACH)
+    if paths.sample.exists() and not force:
+        print(f"{paths.sample} gibt es schon; eine Stichprobe zieht man einmal (--force)")
+        return 1
+    full, rest = nachmessung_grundgesamtheit()
+    sizes = full.group_by("schicht").len().rename({"len": "schicht_n"})
+    sample = (
+        ziehen(rest, "schicht", NACHMESSUNG_N, SEED_NACHMESSUNG)
+        .drop("schicht_n")
+        .join(sizes, on="schicht", how="left")
+        .sort("rang")
+    )
+    frueher = set(full["id"].to_list()) - set(rest["id"].to_list())
+    assert not set(sample["id"].to_list()) & frueher
+    drawn = dict(sample.group_by("schicht").len().iter_rows())
+    population = dict(sizes.iter_rows())
+    ids = "\n".join(sorted(rest["id"].to_list())).encode()
+    write_sample(
+        paths,
+        sample.select("id", "schicht", "schicht_n").sort("id"),
+        {
+            "vorhaben": NACHMESSUNG,
+            "codebuch_version": load_codebook(paths.codebook, NACHMESSUNG).version,
+            "profil": "duesseldorf",
+            "einheit": "document",
+            "grundgesamtheit": (
+                "Hauptperiode mit nicht leerem Rohtext (interim/papers.parquet über file_name an "
+                "messdaten/rohtext/duesseldorf.parquet) ohne stichprobe200.csv und "
+                "stichprobe200-2.csv; Prüfsumme über die sortierten IDs, je Zeile eine"
+            ),
+            "grundgesamtheit_sha256": hashlib.sha256(ids).hexdigest(),
+            "einheiten": rest.height,
+            "ohne_text": 0,
+            "groesse": NACHMESSUNG_N,
+            "seed": SEED_NACHMESSUNG,
+            "schicht": "schicht",
+            "aufteilung": "proportional",
+            "selbstgewichtend": False,
+            "schichten": {
+                k: {"grundgesamtheit": population[k], "stichprobe": drawn.get(k, 0)}
+                for k in sorted(population)
+            },
+            "gezogen": date.today().isoformat(),
+        },
+    )
+    print(
+        f"Nachmessung: {sample.height} Dokumente aus {rest.height} (ohne {len(frueher)} der beiden "
+        f"Runden), {sample['schicht'].n_unique()} Schichten -> {paths.sample}"
+    )
+    return 0
+
+
+def nachmessung_ids(ordner: str = NACHMESSUNG) -> list[str]:
+    path = ROOT / "validierung" / ordner / "stichprobe.csv"
+    return sorted(pl.read_csv(path, infer_schema=False)["id"].to_list())
+
+
+def nachmessung_auszug(modell: str) -> Path:
+    """Der lokale Auszug der Kurzfassungen der Nachmessung (nie im Repo)."""
+    name = full_name(modell).replace(":", "_").replace("/", "_")
+    return LOKAL / f"kurzfassungen-{name}-nachmessung.jsonl"
+
+
+def cmd_nachmessung_erzeugen(modell: str, minuten: float, block: int) -> int:
+    """Die 50 Kurzfassungen der Nachmessung (§ 5.4) mit Eingabe und Prompt Fassung 2 aus dem Paket.
+
+    Eingabe, Prompt und Modellcache sind die des Schritts ``summaries`` (``summary_inputs``,
+    ``prompt``, ``SYSTEM``, ``PROMPT_VERSION``); ein späterer Stapellauf trifft diese 50 im Cache.
+    ``generate_texts`` läuft hier außerhalb von ``run_step``, darum setzt der Aufruf
+    ``use.reset(retry_rejected=…)`` selbst (docs/todo.md, Punkt 11 c).
+    """
+    from georep.enrich import summaries as s
+
+    settings = settings_dus()
+    layout = Layout.from_settings(settings)
+    ids = nachmessung_ids()
+    inputs = s.summary_inputs(settings, layout, ids)
+    ohne = [i for i in ids if i not in inputs or inputs[i].source == "ohne_text"]
+    if ohne:
+        print(f"ohne Eingabe (Ersatzregel § 5.4 anwenden): {ohne}")
+        return 1
+    prompts = [s.prompt(inputs[i]) for i in ids]
+    sha_to_id = {input_sha256(f"{s.SYSTEM}\x00{p}"): i for i, p in zip(ids, prompts, strict=True)}
+    client = client_from_settings(settings.ml)
+    timed = Gemessen(generator_from_settings(settings.ml, client, model=modell))
+    use = GenerationUse(timed, s.PROMPT_VERSION, generation_options(settings.ml))
+    use.reset(retry_rejected=settings.ml.retry_rejected)
+    (LOKAL / "laeufe").mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y-%m-%dT%H%M%S")
+    log_path = LOKAL / "laeufe" / f"{full_name(modell).replace(':', '_')}-nachmessung-{stamp}.jsonl"
+    head = {
+        "art": "beginn",
+        "zeit": datetime.now().isoformat(timespec="seconds"),
+        "last": last(),
+        "gpu": gpu_speicher(),
+        "modell": use.name,
+        "digest": timed.digest,
+        "prompt": s.PROMPT_VERSION,
+        "optionen": asdict(use.options),
+    }
+    started = time.monotonic()
+    with (
+        ModelCache(layout.ml_cache, use.name) as cache,
+        log_path.open("w", encoding="utf-8") as log,
+    ):
+        log.write(json.dumps(head) + "\n")
+        while True:
+            out = generate_texts(
+                use, cache, prompts, system=s.SYSTEM, limit=block, progress=progress_log()
+            )
+            for entry in timed.log:
+                entry["id"] = sha_to_id.get(entry["sha"], "")
+                entry["art"] = "aufruf"
+                log.write(json.dumps(entry) + "\n")
+            timed.log.clear()
+            log.flush()
+            print(out.report.line(), flush=True)
+            if out.report.left == 0 or out.report.computed == 0:
+                break
+            if time.monotonic() - started > minuten * 60:
+                print("Zeit des Blocks um; der nächste Lauf rechnet weiter")
+                break
+        log.write(
+            json.dumps(
+                {
+                    "art": "ende",
+                    "zeit": datetime.now().isoformat(timespec="seconds"),
+                    "last": last(),
+                    "gpu": gpu_speicher(),
+                    "offen": out.report.left,
+                    "gescheitert": out.report.failed,
+                }
+            )
+            + "\n"
+        )
+    rows = [
+        {"id": i, "modell": use.name, "digest": timed.digest, "prompt": s.PROMPT_VERSION}
+        | {"text": t, "abgeschnitten": c}
+        for i, t, c in zip(ids, out.texts, out.truncated, strict=True)
+        if t is not None
+    ]
+    target = nachmessung_auszug(modell)
+    target.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), "utf-8")
+    print(f"{len(rows)} von {len(ids)} Kurzfassungen -> {target}; Protokoll {log_path}")
+    zeige_nachmessung_treue(settings, layout, inputs, rows)
+    return 0
+
+
+def zeige_nachmessung_treue(
+    settings: Settings,
+    layout: Layout,
+    inputs: dict[str, Any],
+    rows: Sequence[dict[str, Any]],
+) -> None:
+    """Daneben berichtet (§ 5.4): Treueprüfung, Personennamen, Länge; keine Kurzfassung im Druck."""
+    from georep.enrich.fidelity import check, evidence
+    from georep.enrich.summaries import lexicon_for
+
+    lex = lexicon_for(settings, layout)
+    ok = names = 0
+    classes: Counter[str] = Counter()
+    words: list[int] = []
+    sentences: list[int] = []
+    for row in rows:
+        result = check(
+            row["text"], row["abgeschnitten"], evidence(inputs[row["id"]].text, lex), lex
+        )
+        ok += result.ok
+        names += bool(result.persons)
+        classes.update(f"{c.cls}/{c.kind}" for c in result.unsupported)
+        words.append(len(row["text"].split()))
+        sentences.append(len(SATZ.split(row["text"].strip())))
+    print(
+        f"Treueprüfung (daneben): ohne unbelegte Angabe {ok} von {len(rows)}; unbelegt je "
+        f"Klasse {dict(classes.most_common())}; mit Personennamen {names}; Wörter Median "
+        f"{statistics.median(words) if words else 0}, höchstens {max(words, default=0)}; "
+        f"mehr als drei Sätze {sum(n > 3 for n in sentences)}"
+    )
+
+
+def cmd_nachmessung_kodierung(modell: str, ordner: str, force: bool) -> int:
+    """Die Aufträge A und B für die Frage `unbelegt` (§ 5.4): je Einheit die Eingabe und K1."""
+    from georep.enrich import summaries as s
+
+    settings = settings_dus()
+    layout = Layout.from_settings(settings)
+    ids = nachmessung_ids(ordner)
+    source = nachmessung_auszug(modell)
+    if not source.is_file():
+        print(f"{source} fehlt; erst `nachmessung erzeugen --modell {modell}`")
+        return 1
+    found = {r["id"]: r for r in map(json.loads, source.read_text(encoding="utf-8").splitlines())}
+    gaps = [i for i in ids if i not in found]
+    if gaps:
+        print(f"{len(gaps)} von {len(ids)} Kurzfassungen fehlen: {gaps[:3]} …")
+        return 1
+    inputs = s.summary_inputs(settings, layout, ids)
+    titles = dict(
+        pl.read_parquet(layout.corpus, columns=["id", "name"])
+        .filter(pl.col("id").is_in(ids))
+        .iter_rows()
+    )
+    paths = ValidationPaths(ordner, ROOT / "validierung" / ordner, MESSDATEN / "kodierung" / ordner)
+    codebook = load_codebook(paths.codebook, ordner)
+    shown = questions(codebook)
+    tasks = [
+        {
+            "id": doc,
+            "vorhaben": ordner,
+            "codebuch_version": codebook.version,
+            "dokumente": [
+                {"id": doc, "titel": titles.get(doc, ""), "ausschnitt": inputs[doc].text}
+            ],
+            "kurzfassungen": [{"kennung": "K1", "text": found[doc]["text"]}],
+            "fragen": shown,
+            "antwort": None,
+        }
+        for doc in ids
+    ]
+    for coder in ("A", "B"):
+        ordered = sorted(tasks, key=lambda t: rank(codebook.sample.seed, f"{coder}|{t['id']}"))
+        write_assignment(paths, coder, ordered, codebook, force=force)
+    longest = max(len(inputs[doc].text) for doc in ids)
+    print(
+        f"Kodierung: {len(tasks)} Einheiten je Kodierer -> {paths.coding}/A, /B "
+        f"(längster Ausschnitt {longest} Zeichen)"
+    )
+    return 0
+
+
+NACHMESSUNG_GRENZE = 2  # § 5.4: höchstens so viele `unbelegt = ja` unter den 50 (Maßstab 0 plus 2)
+
+
+def cmd_nachmessung_auswertung(ordner: str = NACHMESSUNG) -> int:
+    """Das Urteil der Nachmessung nach § 5.4, aus ``labels.csv`` und ``guete.json`` von F4.
+
+    Gezählt wird ungewichtet über die 50; daneben der geschichtete Anteil (Wilson bei Kishs n_eff)
+    und α. Liegt α unter 0,8 und läge die Zahl mit den Labels eines einzelnen Kodierers auf der
+    anderen Seite der Grenze, sagt das Skript „Supervisor entscheidet".
+    """
+    folder = ROOT / "validierung" / ordner
+    labels = pl.read_csv(folder / "labels.csv", infer_schema=False).filter(
+        pl.col("frage") == "unbelegt"
+    )
+    sample = pl.read_csv(folder / "stichprobe.csv", infer_schema=False).with_columns(
+        pl.col("schicht_n").cast(pl.Int64)
+    )
+    if labels.height != sample.height or set(labels["id"]) != set(sample["id"]):
+        print(f"{folder}: {labels.height} Labels für {sample.height} Einheiten; erst merge")
+        return 1
+    ja = int((labels["label"] == "ja").sum())
+    by_coder = {c: int((labels[c] == "ja").sum()) for c in ("kodierer_a", "kodierer_b")}
+    rows = sample.join(labels.select("id", "label"), on="id", how="left")
+    est, lo, hi, n_eff = geschichtet(
+        (s, n, label == "ja")
+        for s, n, label in rows.select("schicht", "schicht_n", "label").iter_rows()
+    )
+    guete = json.loads((folder / "guete.json").read_text(encoding="utf-8"))
+    alpha = guete["fragen"]["unbelegt"].get("krippendorff_alpha")
+    holds = ja <= NACHMESSUNG_GRENZE
+    sides = {c: n <= NACHMESSUNG_GRENZE for c, n in by_coder.items()}
+    unsure = (alpha is None or alpha < 0.8) and any(side != holds for side in sides.values())
+    verdict = "Supervisor entscheidet" if unsure else ("hält" if holds else "hält nicht")
+    print(
+        f"{ordner}: unbelegt = ja in {ja} von {labels.height} (Grenze {NACHMESSUNG_GRENZE}); "
+        f"Kodierer A {by_coder['kodierer_a']}, B {by_coder['kodierer_b']}; α {alpha}; "
+        f"geschichtet {100 * est:.1f} % ({100 * lo:.1f}–{100 * hi:.1f}, n_eff {n_eff:.0f}) "
+        f"-> {verdict}"
+    )
+    return 0
+
+
+# --------------------------------------------------------------------------------------------
 # Alle Zahlen
 # --------------------------------------------------------------------------------------------
 
@@ -2050,6 +2353,20 @@ def main(argv: Sequence[str]) -> int:
         p.add_argument("--force", action="store_true")
     v = sub.add_parser("vorgaenge")
     v.add_argument("--modell", required=True)
+    nach = sub.add_parser("nachmessung")
+    nach_sub = nach.add_subparsers(dest="schritt", required=True)
+    nach_st = nach_sub.add_parser("stichprobe")
+    nach_st.add_argument("--force", action="store_true")
+    nach_er = nach_sub.add_parser("erzeugen")
+    nach_er.add_argument("--modell", default="gemma4")
+    nach_er.add_argument("--minuten", type=float, default=28.0)
+    nach_er.add_argument("--block", type=int, default=10)
+    nach_ko = nach_sub.add_parser("kodierung")
+    nach_ko.add_argument("--modell", default="gemma4")
+    nach_ko.add_argument("--ordner", default=NACHMESSUNG)
+    nach_ko.add_argument("--force", action="store_true")
+    nach_aus = nach_sub.add_parser("auswertung")
+    nach_aus.add_argument("--ordner", default=NACHMESSUNG)
     alles = sub.add_parser("alles")
     alles.add_argument("--ohne-perioden", action="store_true")
     alles.add_argument("--runde", type=int, default=1, choices=(1, 2))
@@ -2066,6 +2383,14 @@ def main(argv: Sequence[str]) -> int:
         return cmd_kodierung(args.force)
     if args.befehl == "vorgaenge":
         return cmd_vorgaenge(args.modell)
+    if args.befehl == "nachmessung" and args.schritt == "stichprobe":
+        return cmd_nachmessung_stichprobe(args.force)
+    if args.befehl == "nachmessung" and args.schritt == "erzeugen":
+        return cmd_nachmessung_erzeugen(args.modell, args.minuten, args.block)
+    if args.befehl == "nachmessung" and args.schritt == "kodierung":
+        return cmd_nachmessung_kodierung(args.modell, args.ordner, args.force)
+    if args.befehl == "nachmessung" and args.schritt == "auswertung":
+        return cmd_nachmessung_auswertung(args.ordner)
     return cmd_alles(not getattr(args, "ohne_perioden", False), getattr(args, "runde", 1))
 
 

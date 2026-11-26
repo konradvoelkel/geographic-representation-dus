@@ -1,0 +1,74 @@
+# Zweite Messung der Nachmessung von Vorhaben 20 an denselben 50 Dokumenten (Messdokument § 5.4,
+# „Danach"; Frage 38): wörtlich das Codebuch von validierung/20-kurzfassungen-nachmessung/
+# (Fassung 1), nur `project` heißt nach diesem Ordner, weil eine Kodierung je Ordner abgelegt wird
+# (F4). Der Ordnername nennt kein Modell, damit die Kodierer es nicht erfahren; welches Modell die
+# Kurzfassungen schrieb, steht nur im Messdokument und im Laufprotokoll.
+# Codebuch der Nachmessung von Vorhaben 20 (Kurzfassungen, Stufe 2), Fassung 1, vorab festgelegt am
+# 2026-11-24 vor der ersten Kurzfassung der Stichprobe (docs/plans/20-kurzfassungen.md, § 5.4;
+# § 10, Punkt 4; Frage 20.13 und Frage 38). Gemessen wird nur, ob eine Kurzfassung mit Eingabe und
+# Prompt Fassung 2 eine Angabe trägt, die der Ausschnitt nicht stützt; die Frage ist wörtlich die
+# Frage `kN_unbelegt` aus Fassung 1 des Codebuchs der Messung (validierung/20-kurzfassungen/), auf
+# eine Kurzfassung je Einheit umgestellt, damit die Zahl neben die der ersten Bewertung passt
+# (gemma4 12 von 50, Maßstab 0 von 50). Die Aufträge baut das Messskript
+# (`20-kurzfassungen-messung.py nachmessung kodierung`): je Einheit der Text, den das Modell sah, als
+# Ausschnitt und die eine Kurzfassung als K1, ohne Modellnamen. Zusammenführen, Schlichten und
+# Übereinstimmung gehen über `georep validate merge 20-kurzfassungen-nachmessung`.
+project = "20-kurzfassungen-nachmessung-2"
+version = "1"
+unit = "document"
+instructions = """
+Du prüfst Kurzfassungen von Ratsdokumenten. Jede Einheit ist ein Dokument. Unter `dokumente` steht
+im Feld `ausschnitt` der Text, den der Verfasser der Kurzfassung gesehen hat: Dokumentart,
+Absender, Beratung, Drucksache, Datum, Titel und die Abschnitte des Dokuments (lange Abschnitte sind
+mit „[…]" gekürzt). „Absender" ist, wer das Dokument einbringt; „Beratung" nennt die Gremien, die
+es beraten oder darüber entscheiden. Unter `kurzfassungen` steht eine Kurzfassung mit der Kennung
+K1. Wer sie geschrieben hat, weißt du nicht und sollst du nicht erraten.
+
+Der Verfasser hatte diese Aufgabe: zwei bis drei Sätze, zusammen höchstens 80 Wörter; der erste
+Satz sagt, wer was will oder mitteilt und worum es geht; dann der Kern des Beschlussvorschlags, der
+Fragen oder der Mitteilung, dazu Ort, Betrag und Frist, wenn das Dokument sie nennt; Zahlen, Daten,
+Drucksachennummern und Namen nur, wenn sie im Dokument stehen; nichts hinzufügen; keine
+Personennamen; Fließtext ohne Überschrift.
+
+Beurteile die Kurzfassung gegen den Ausschnitt, nicht nach Wissen von außen. Was im Ausschnitt nicht
+steht, gilt als nicht belegt, auch wenn es stimmen mag. Lies zuerst den Ausschnitt ganz, dann die
+Kurzfassung, dann beantworte die Frage. In `begruendung` nennst du bei „ja" die Angabe, die nicht
+gestützt ist, in wenigen Wörtern, etwa „Betrag falsch" oder „Rat als Antragsteller", ohne längere
+Zitate; bei „nein" genügt ein Wort.
+"""
+
+[[questions]]
+id = "unbelegt"
+question = "Enthält K1 mindestens eine Angabe, die der Ausschnitt nicht stützt oder der er widerspricht?"
+scale = "binary"
+positive = ["ja"]
+instructions = """
+Angabe heißt: eine Zahl, ein Betrag, ein Datum, eine Drucksachennummer, ein Name, ein Ort, ein
+Akteur (wer beantragt, fragt, entscheidet, berichtet) oder ein Sachverhalt. Gestützt ist, was im
+Ausschnitt so oder sinngemäß steht; eine Zusammenfassung mehrerer Punkte in eigenen Worten ist
+gestützt, wenn sie sinngemäß stimmt, eine erkennbare Rundung („rund 1,5 Millionen Euro" für
+1.487.000 €) auch. Nicht gestützt sind: ein Wert, der so nicht dasteht; eine falsche Rolle (ein
+Antrag einer Fraktion als Vorschlag der Verwaltung, eine Anfrage als Beschluss); eine Folge oder
+Wirkung, die das Dokument nicht nennt; ein Ort, ein Gremium oder ein Name, der nicht vorkommt.
+"""
+
+[[questions.options]]
+value = "ja"
+definition = "Mindestens eine Angabe ist nicht gestützt oder widerspricht dem Ausschnitt."
+example = "Die Kurzfassung nennt 2 Mio. Euro, der Ausschnitt 1,2 Mio. Euro."
+
+[[questions.options]]
+value = "nein"
+definition = "Jede Angabe steht so oder sinngemäß im Ausschnitt."
+
+[sample]
+size = 50
+seed = 2026112420              # Tag der Festlegung und Nummer des Vorhabens; gezogen vom Messskript (`nachmessung stichprobe`)
+stratum = "schicht"            # Dokumentart nach Rules.art aus Vorhaben 11 x Länge des Rohtexts, wie die 200 der Messung (§ 3.1)
+allocation = "proportional"
+require_text = true
+
+[text]
+source = "raw"                 # der Ausschnitt ist die Eingabe Fassung 2 aus dem Rohtext (Abschnitte aus Vorhaben 11)
+chars = 8600                   # Abschnittstext höchstens 8 000 Zeichen und sechs Kopfzeilen
+title = true

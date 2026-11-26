@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies|validate|ml|search``.
+"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies|validate|ml|search|summary``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
@@ -19,6 +19,7 @@ from georep import __version__
 from georep.analysis.regression import regress
 from georep.bootstrap import bootstrap_from_settings
 from georep.contracts import configure as configure_contracts
+from georep.enrich import summary_command  # Vorhaben 20
 from georep.errors import GeorepError, MissingInputError, ModelError
 from georep.export import export_csv
 from georep.layout import Layout
@@ -239,6 +240,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_validate_parser(sub)  # Fundament F4
     ml_commands.add_parser(sub)  # Fundament F5: `georep ml status|bench`
     search_command.add_parser(sub)  # Vorhaben 18: `georep search`
+    summary_command.add_parser(sub)  # Vorhaben 20: `georep summary`, nur lokal
     return parser
 
 
@@ -612,6 +614,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return ml_commands.run(args, settings, layout)  # Fundament F5
         if args.command == "search":
             return search_command.run(args, settings, layout)  # Vorhaben 18
+        if args.command == "summary":
+            return summary_command.run(args, settings, layout)  # Vorhaben 20
     except (GeorepError, FileNotFoundError) as error:
         print(f"Fehler: {error}", file=sys.stderr)
         return 1

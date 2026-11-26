@@ -2803,6 +2803,31 @@ class Identifiers(_Strict):
         return value
 
 
+# --- Vorhaben 20: Kurzfassungen (docs/plans/20-kurzfassungen.md, § 6 und § 10) -------------------
+class Summaries(_Strict):
+    """Kurzfassungen je Dokument mit einem lokalen Modell (Vorhaben 20); nie veröffentlicht.
+
+    Das Modell steht hier und nicht in ``[ml.generation]``, weil Vorhaben 19 dort ein anderes nennen
+    darf; die Optionen (Temperatur, Seed, Fenster, Antwortlänge) kommen von dort. Was die Eingabe
+    bestimmt (``budget_chars``) und was die Treueprüfung (``rare_share``, ``known_documents``),
+    zählt zum Fingerprint; das Modell steht zusätzlich als Kennung im Stamp des Schritts.
+    """
+
+    enabled: bool = False
+    model: str = "gemma4"
+    budget_chars: int = Field(default=8000, ge=1)
+    rare_share: float = Field(default=0.01, gt=0.0, lt=1.0)
+    known_documents: int = Field(default=3, ge=1)
+    # Regel 5 (Review von 11, 2026-11-24): Anrede, Titel oder Amt vor einem Personennamen; die
+    # Treueprüfung zählt Namen dahinter neben ``ok``. Leer: keine Zählung
+    person_titles: str = ""
+
+    @field_validator("person_titles")
+    @classmethod
+    def _compiles(cls, value: str) -> str:
+        return _compiles([value], "summaries.person_titles")[0]
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -2864,6 +2889,7 @@ class Settings(BaseSettings):
     feeds: Feeds = Feeds()  # Vorhaben 17: Atom-Feed je Wahlbezirk
     structure: StructureSettings = StructureSettings()  # Vorhaben 11: Struktur der Dokumente
     identifiers: Identifiers = Identifiers()  # Vorhaben 12: Kennungen und Beträge
+    summaries: Summaries = Summaries()  # Vorhaben 20: Kurzfassungen, nie veröffentlicht
 
     @property
     def base_profile(self) -> str:
