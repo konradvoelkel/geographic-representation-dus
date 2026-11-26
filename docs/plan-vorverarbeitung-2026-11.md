@@ -1,6 +1,18 @@
 # Meta-Plan: Vorverarbeitung der Ratsdokumente, in Stufen, mit bis zu zehn Agenten
 
-Stand 2026-11-23, Auftrag von Konrad am selben Tag: die Vorverarbeitungsideen aus dem Gespräch
+**Stand 2026-11-26, `main` auf `v0.32.0`.** Die Fundamente F1 bis F7 liegen auf `main` (F7 kam nach
+Haltepunkt A dazu, § 7). Stufe 2 liegt auf `main` für 11, 12, 14, 15, 17, 18, 22, 26 und 20 (gebaut,
+aber in allen Profilen aus, weil die Nachmessung beide Modelle verwarf). Gemessen mit Urteil „bauen",
+aber nicht gebaut sind 16, 19 (Weg 3b), 27 (eingeschränkt) und 28 (Ebene A); verworfen sind 13 und 23;
+24 heißt „umbauen", eine Runde steht aus; für 25 sind nur Quellen gesammelt; 21 und 29 sind nicht
+gemessen. Keine Stufe 3 ist begonnen. Der Ablauf folgte der Warteschlange nach Abhängigkeiten, nicht
+den Phasen in § 9; die Haltepunkte B bis D sind nicht geschrieben, nur Haltepunkt A
+([plans/haltepunkt-a-2026-11.md](plans/haltepunkt-a-2026-11.md), historisch). Der Stand je Vorhaben
+steht in [plans/README.md](plans/README.md), die Fragen in
+[plans/fragen-2026-11.md](plans/fragen-2026-11.md). Die Ausgangslage in § 1 und die Schätzungen in
+§ 13 sind der Stand vom 2026-11-23. Die nächste Phase bekommt einen eigenen Plan.
+
+Auftrag von Konrad am 2026-11-23: die Vorverarbeitungsideen aus dem Gespräch
 dieses Tages (Struktur, Kennungen, Dubletten, Vorgänge, Ortsbezug, Zeit, Einbettungen, Politikfelder,
 Zusammenfassungen, Geld, Bedarf, Textübernahme, Akteure, Beschlüsse, Abstimmungen, Anwendungen für die
 Ratsarbeit) **ausprobieren, inkrementell und teilweise parallel, mit bis zu zehn gleichzeitigen
@@ -23,7 +35,8 @@ neue Inhalte kommen auf **Unterseiten** statt auf `index.html`. Projektregeln st
 genau eine von zwei Arten: als **gemessene Ablehnung** (ein Dokument mit Zahlen, warum es nicht trägt,
 wie die Einbettungen in [themenmodell-2026-10.md](themenmodell-2026-10.md), § 5) oder als **Schritt der
 Pipeline** mit Tests, Verträgen, Datenpaket und, wo es sich lohnt, einer Unterseite. Sechs
-Fundamentbausteine (F1 bis F6, § 7) gehen voran.
+Fundamentbausteine (F1 bis F6, § 7) gehen voran; ein siebter, der Nachzug F7, kam nach Haltepunkt A
+dazu (§ 7).
 
 **Nicht-Ziele.**
 
@@ -369,6 +382,16 @@ Stichprobe unter `tests/fixtures/http/` (Frage 2a); ein Runbook mit der Hochrech
 und mit dem, was der Server **füllt** (je Feld der Anteil, wie bei den Urheberfeldern, die er nicht
 füllt). **Abnahme**: alle aufgezeichneten Seiten parsen, Hochrechnung steht, Konrad kann starten.
 
+**F7 Fundament-Nachzug** (Supervisor, auf `main` als `v0.23.0` am 2026-11-24, Punkt 74; nachgetragen
+am 2026-11-26, war nicht Teil der ersten Fassung). Er löst die Konflikte 1, 3, 6 und 7 der Synergie
+([plans/00-synergien-2026-11.md](plans/00-synergien-2026-11.md), § 2.2 und § 3.1): ein zweiter
+Einhängepunkt `early_steps` vor `weights` (für 11 und 16), die Fabrik `steps(settings, layout, http)`
+für jeden Beitrag (für den Netzschritt von 22), Zusatzspalten an Spannen hinter den acht von F3 (für
+`attr` in 12), `flatten_with_offsets` neben `flatten` (Spannen von 14 und 17 auf dem Rohtext) und die
+Prüfung der Schrittfolge (`check_step_order`). Offen geblieben, vor Stufe 3: Abschnitte aus fremden
+Beiträgen auf einer Unterseite (F2; für 24, 26, 27, 28) und der Nachzug von F4
+([plans/README.md](plans/README.md)).
+
 ## 8. Die drei Stufen eines Vorhabens
 
 **Stufe 1, Messen.** Eingabe: Briefing, Daten unter `messdaten/` und `data_root`. Ausgabe:
@@ -570,7 +593,7 @@ Seite kommt, prüft der Agent nach den Regeln in `report/literatur.toml`.
   BM25 und beide gemischt; Präzision@5 der ähnlichen Dokumente an 50 Ankern; Laufzeit je Dokument.
   **Kriterium**: Einbettung oder Mischung schlägt BM25 um mindestens 0,05 nDCG@10, Präzision@5 ≥ 0,7.
 - **Bau**: Beiträge `embeddings` (`models=True`, Ausgabe float16 als Paket) und `neighbors` →
-  `processed/aehnliche_dokumente.parquet` (zehn IDs je Dokument); CLI `georep suche "<frage>"` lokal.
+  `processed/aehnliche_dokumente.parquet` (zehn IDs je Dokument); CLI `georep search "<frage>"` lokal.
 - **Anzeige**: „ähnliche Dokumente" im Dokumentdialog, nachgeladen. Eine freie semantische Suche auf
   der statischen Seite bräuchte ein Modell im Browser oder einen Server; das Messdokument beziffert beides.
 
@@ -617,6 +640,12 @@ Seite kommt, prüft der Agent nach den Regeln in `report/literatur.toml`.
   Haushalt. **Kriterium**: Präzision ≥ 0,9.
 - **Bau**: Beitrag `money` → `processed/betraege_wahlbezirke.parquet`.
 - **Anzeige**: Unterseite `geld.html` mit Karte.
+- **Briefing überholt (Stand 2026-11-26)**: Beträge tragen keine Rolle (12: Präzision der Rolle 0,508,
+  sie fällt), und den Abschnitt „Finanzielle Auswirkungen" gibt es nur in 0,6 % der Düsseldorfer
+  Dokumente (11, § 3.1). Beträge kommen aus Beschlussvorschlag und Sachdarstellung über 12; ein Merker
+  „aus bezirklichen Mitteln" bräuchte eigene Labels (12, Frage 11); ein Vorgang ist meist ein Paar
+  (14). 11, 12 und 14 liegen auf `main`, 16 nicht
+  ([plans/00-synergien-2026-11.md](plans/00-synergien-2026-11.md), § 2.2 Konflikt 17 und § 4).
 
 ### 22 Bedarf und Aufmerksamkeit (`feat/22-bedarf`, Ebene 0, CPU, kleiner Open-Data-Abruf)
 
@@ -652,6 +681,13 @@ Seite kommt, prüft der Agent nach den Regeln in `report/literatur.toml`.
   Halbjahr), Abschätzung der Fallzahl; Zuordnung Anfrage → Dezernat an 100. **Kriterium**:
   Präzision ≥ 0,9 und eine Fallzahl, die den vorab genannten Effekt sehen kann.
 - **Bau**: Beitrag `oversight`. **Anzeige**: Abschnitt auf `akteure.html`.
+- **Briefing überholt (Stand 2026-11-26)**: Anfragen tragen kein Amtsfeld (11: Amt im Kopf bei 0 % der
+  Anfragen; 12: Amt im Text bei 6 %). Die Zuordnung über Fachausschuss, Amt im Text und Klassifikator
+  verfehlte 0,9 (hochgerechnet 0,721), das Urteil ist „umbauen"
+  ([plans/24-kontrolle.md](plans/24-kontrolle.md), § 5.1). Die eine Umbaurunde braucht das antwortende
+  Amt aus den Antwortanlagen (ein eigener Stichprobenabruf ihrer PDFs; der Netzlauf von F6 brachte nur
+  Metadaten), das Politikfeld aus 19 (nicht gebaut) oder das Ergebnis aus 26 (gebaut). Die
+  Dezernatsverteilung sammelt 24 selbst, die Mehrheiten stehen im stadtweiten Block von 15.
 
 ### 25 Wahlprogramme, Kooperationsvereinbarung und Anträge (`feat/25-versprechen`, Ebene 2, CPU)
 
@@ -666,6 +702,11 @@ Seite kommt, prüft der Agent nach den Regeln in `report/literatur.toml`.
 - **Messung**: Versprechen extrahieren (Modell plus Hand), Zuordnung an 100 Paaren, Codebuch der Erfüllung
   nach Thomson u. a. **Kriterium**: Präzision der Zuordnung ≥ 0,8.
 - **Bau**: Beitrag `pledges`. **Anzeige**: Unterseite `versprechen.html`, für alle Parteien gleich.
+- **Briefing überholt (Stand 2026-11-26)**: Das Local Manifesto Project ist offline, seine beiden
+  ZIP-Archive sind nicht geladen (Frage 21); es fehlen vor allem Programme von 2014 und der Opposition,
+  und 25 rechnet mit dem Bestand (Frage 22; [plans/25-quellen.md](plans/25-quellen.md), § 5 und § 8.4).
+  Die Eingaben 14, 18 und 26 liegen auf `main`. Die lokale Ausrichtung aus 23 gibt es nur im Messskript
+  des verworfenen Vorhabens 23, nicht als Schritt.
 
 ### 26 Beschlusslage und Antragserfolg (`feat/26-beschluesse`, Ebene 2, Netz durch Konrad)
 
@@ -709,6 +750,11 @@ Seite kommt, prüft der Agent nach den Regeln in `report/literatur.toml`.
   Think-aloud-Test mit Personas (Skill `better-ux`); Schritte und Zeit gegen heute. **Kriterium**: jede
   Sicht verkürzt ihr Szenario messbar.
 - **Bau und Anzeige**: CLI-Befehle und Unterseiten; neutral für alle Fraktionen.
+- **Briefing überholt (Stand 2026-11-26)**: Vorhaben 20 ist gebaut, aber aus; die Nachmessung
+  verwarf beide Modelle, es gibt keinen Stapellauf und darum keine Kurzfassungen (Frage 38). Der
+  Vorlagenspiegel muss ohne Kurzfassung auskommen. Fristen liefert 12 nicht (die Fristfunktion fiel,
+  Frage 20), offene Prüfaufträge liefert 26 nicht (Rückfall 1); die Wiedervorlage braucht für beides
+  einen anderen Weg. 14, 18 und 26 liegen auf `main`, 16 und 19 nicht.
 
 ## 12. Vorlagen
 
