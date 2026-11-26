@@ -2,50 +2,65 @@
 
 ## Vorverarbeitung 2026-11
 
-Meta-Plan: [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md). Je Vorhaben ein
-Messdokument `NN-name.md` mit Messskript `NN-name-messung.py` (Stufe 1, Vorlage § 12.1), geschrieben vom
-Mess-Agenten auf seinem Branch; `00-synergien-2026-11.md` schreibt der Supervisor; `fragen-2026-11.md`
-sammelt die Fragen an Konrad. Stufen: 1 Messen, 2 Bauen, 3 Zeigen (§ 8). Diese Tabelle ist der Stand;
-der Supervisor führt sie bei jedem Start, Urteil und Merge nach.
+Stand 2026-11-26, `main` auf `v0.32.0`. Meta-Plan:
+[../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md). Je Vorhaben ein Messdokument
+`NN-name.md` mit Messskript `NN-name-messung.py` (Stufe 1, Vorlage § 12.1); die Änderungen der Synergie
+stehen in § 10 des jeweiligen Messdokuments ([00-synergien-2026-11.md](00-synergien-2026-11.md) ist der
+Stand von Haltepunkt A und historisch); [fragen-2026-11.md](fragen-2026-11.md) sammelt die Fragen an
+Konrad. Stufen: 1 Messen, 2 Bauen, 3 Zeigen (Meta-Plan § 8). Alle Branches `feat/NN-name` und
+`fund/FN-name` sind gemerged, Worktrees und Branches am 2026-11-26 entfernt. Diese Tabelle ist der
+Stand; der Supervisor führt sie bei jedem Urteil und Merge nach.
 
-| Nr. | Vorhaben | Branch | Stufe | Stand |
-|---|---|---|---|---|
-| F1 | Rohtext | `main` | Fundament | auf `main` (`v0.22.0`, Punkt 73, 2026-11-23) nach drei Runden mit Review; Paket der Hauptperiode (14,2 MB) nur einmal in der Historie; die anderen Perioden lesen ihren Rohtext lokal (Frage 18) |
-| F2 | Register | `main` | Fundament | auf `main` seit 2026-11-23 (`v0.17.0`, Punkt 69) |
-| F3 | Spannen | `main` | Fundament | auf `main` seit 2026-11-23 (`v0.17.0`, Punkt 69) |
-| F4 | Validierung | `main` | Fundament | auf `main` (`v0.19.0`, Punkt 71; vierte Runde `v0.20.0`, 2026-11-23); 11, 12, 14, 15, 17 im neuen Format (`-f4`); offen: Endlabels je Markierung und Recall gegen die Spannen eines Verfahrens (kommt mit dem Bau von 12), ein Maß für „Kategorie im Thema-Set" (17) |
-| F5 | Modellnaht | `main` | Fundament | auf `main` (`v0.21.0`, Punkt 72, 2026-11-23) nach vier Runden mit Review; ollama war am 2026-11-23 einige Stunden angehalten, seit dem Abend ist die GPU wieder frei (Sperre `gpu-queue/gpu.lock`) |
-| F6 | OParl: Sitzungen, Tagesordnung, Personen | `main` | Fundament | auf `main` seit 2026-11-23 (`v0.18.0`, Punkt 70), nach zwei Review-Runden; **Netzlauf am 2026-11-23/24 für alle vier Profile durch** (`docs/runbook-sitzungen.md` § 9): Hauptperiode 1 672 Sitzungen, 44 231 Tagesordnungspunkte, 97 112 Beratungen, 632 Personen |
-| F7 | Fundament-Nachzug | `main` | Fundament | auf `main` (`v0.23.0`, Punkt 74, 2026-11-24) nach zwei Runden mit Review: `early_steps`, `http` an den Beiträgen, Zusatzspalten an Spannen, `flatten_with_offsets`, Prüfung der Schrittfolge |
-| 11 | Struktur der Dokumente | `feat/11-struktur` | 1 → 2 | Kodierung bestätigt (§ 4.1): Beschlussvorschlag 188/200 = 0,94 streng, Kopffelder 0,95 bis 1,0, α ≥ 0,99; **Urteil bauen**, **Stufe 2 auf `main`** (`v0.30.0`, Punkt 81: `struktur-1` unverändert, früher Schritt vor `weights`) |
-| 12 | Kennungen und Beträge | `feat/12-kennungen` | 1 → 2 | Bestätigung ausgewertet (2026-11-23, frische Stichprobe, 410 Aufgaben): **bauen** Bauleitplanung (Fassung 1), Betrag (Fassung 1, ohne Rolle), Termin (Fassung 2, ohne Fristfunktion), Verwaltungseinheit (Fassung 2: Präzision 0,956, Recall 0,887); **fällt** Haushalt (Recall 0,716), Rechtsgrundlage (Präzision 0,861, Gesetz im Normwert 0,805), Rolle eines Betrags, Fristfunktion (Frage 20); **Stufe 2 auf `main`** (`v0.31.0`, Punkt 82) |
-| 13 | Dubletten und Dokumentfamilien | `feat/13-dubletten` | 1 | **verworfen** (2026-11-23, nach der Kodierung von 200 Paaren, α 0,941): keine Grenze erreicht die gewichtete Präzision 0,95 (bei τ = 0,9: 0,948), und selbst dort lägen nur 0,5 % der Dokumente in Familien, höchstens 1,4 % Verlust je Wahlbezirk; Befund „es gibt kaum Dubletten"; MinHash geht an 23, Fortschreibungen an 14 |
-| 14 | Vorgänge | `feat/14-vorgaenge` | 1 → 2 | **Urteil bauen, mit der Rückfallregel** (2026-11-23): stark nur Kanten aus Titel, Anlage, Nachtragsnummer, Sammelbericht; 104/106 = 0,981 (Wilson 0,934–0,995); 3 563 starke Kanten, 2 169 Vorgänge, 39,6 % der Anfragen mit Antwort; Stufe 2 läuft seit 2026-11-23 (nach Haltepunkt A), mit einer eigenen Stichprobe von rund 50 Rückfall-Kanten daneben (Frage 9.18); **Stufe 2 auf `main`** (`v0.25.0`, Punkt 76) |
-| 15 | Dokumentfunktion und gemeinsame Anträge | `main` | 2 → 3 | **Stufe 2 auf `main`** (`v0.24.0`, Punkt 75, 2026-11-24) nach zwei Runden mit Review: `functions`, `cosponsors`, Mehrheitenblock, `observed_expected`; gegen das Messskript 0 von 48 313 Dokumenten verschieden; Stufe 3 (`akteure.html`) folgt |
-| 16 | Ortsbezug verfeinern | `feat/16-ortsbezug` | 1 → 2 | **Urteil bauen** (2026-11-23): Stelle je Treffer (explorativ) und Hausnummern (92,3 % verortbar); Nebenregel C an einer frischen Stichprobe bestätigt (100 Paare: F1 0,828 mit Intervall 0,769–0,882, κ 0,249, Kodierer α 0,974) und wird die Gewichtsvariante `ortsbezug`, nicht die Standardzählung, weil die triviale Regel „alles handelt von" mit 0,878 darüber liegt; die Verzerrung durch die Wörterbuchgröße bleibt; Stufe 2 wartet auf F1, 11 und Haltepunkt A |
-| 17 | Zeit und Neuigkeiten | `feat/17-zeit` | 1 → 2 | Kodierung ausgewertet (2026-11-23): **bauen**, Lexikon 2026-11-23.1 mit Präzision 94/100 (Wilson 0,875–0,972), α 0,957 / 0,928; H17.2 bestätigt, H17.1 und H17.3 nicht (gewichtet 55,5 % der Strukturtreffer nennen die Bundesebene, meist Umsetzung); Lexikon Version 2 nur Vorschlag; **Stufe 2 auf `main`** (`v0.27.0`, Punkt 78) |
-| 18 | Einbettungen, Ähnlichkeit, Suche | `feat/18-einbettungen` | 1 → 2 | **Urteil bauen** (2026-11-24): nDCG@10 Einbettung 0,883 gegen BM25 0,709 (+0,175), bei Fragesätzen +0,35, bei Stichwörtern +0,03 (nicht gesichert, dort ist die Mischung am besten); ähnliche Dokumente Präzision@5 0,832; Cluster tragen nicht; Vektoren nicht ins Repo (Frage 26), nur die Nachbartabelle; Kodierer α 0,975 / 0,943; **Stufe 2 auf `main`** (`v0.26.0`, Punkt 77) |
-| 19 | Politikfelder (CAP) | `feat/19-politikfelder` | 1 → 2 | **Urteil bauen mit Weg 3b** (2026-11-24): Nachbau der Babel Machine (`xlm-roberta-large` auf den menschlich kodierten deutschen CAP-Daten und 4 200 Silberlabels von Weg 1) Makro-F1 0,704 (0,620–0,807), Weg 1 (qwen) 0,753 ohne gesicherten Vorsprung (2,5-%-Perzentil −0,047), darum nach § 8.5 der billigere Weg: unter 15 GPU-Minuten für alle Perioden statt 11 bis 14 GPU-Stunden; 3b ist weitgehend eine Destillation von Weg 1 (einig 270/300); Gewichte nur lokal unter `messdaten/19-politikfelder/training-3b/`; α 0,943; Kodierer und Schlichter dasselbe Modell |
-| 20 | Kurzfassungen (lokal) | `feat/20-kurzfassungen` | 1 → 2 | **Urteil bauen mit gemma4** (2026-11-24): Treue nach der Umbau-Runde 196/200 (qwen 194/200, verfehlt knapp); Bewertung: Median Treue gemma 4, qwen 5, Maßstab 5; Vollständigkeit nicht entscheidbar (α 0,66); Rolle in die Eingabe, vor dem Stapellauf `unbelegt` an 50 frischen messen (Frage 38); Hauptperiode 5 bis 8 GPU-Stunden; Kurzfassungen werden nie veröffentlicht; **Stufe 2 auf `main`** (`v0.32.0`, Punkt 83): die Nachmessung an 50 frischen Dokumenten verwarf gemma4 (4/50) und qwen3.6:27b (5/50, Grenze 2), kein Stapellauf, Schritt überall aus |
-| 21 | Geld auf der Karte | `feat/21-geld` | – | wartet auf 11, 12, 16 |
-| 22 | Bedarf und Aufmerksamkeit | `feat/22-bedarf` | 1 → 2 | **Urteil bauen** (2026-11-23): vier offene Quellen plus Lärm; H1 (Unfälle → Verkehrsdokumente) bestätigt, aber nur zwischen Stadtbezirken; H2 zeigt in Richtung ungleicher Aufmerksamkeit ohne Nachweis; Stadtbezirk als Schicht in jede Rechnung; **Stufe 2 auf `main`** (`v0.29.0`, Punkt 80) |
-| 23 | Textübernahme | `feat/23-textuebernahme` | 1 | **verworfen** (2026-11-23, nach der Kodierung von 100 Paaren, α 0,950): keine politische Art erreicht Präzision 0,9 (Musteranträge 0,889, über Fraktionsgrenzen 0,296); gemeinsamen Text findet das Verfahren zuverlässig (92/92), die Verwechslung liegt bei Bausteinen und Zitaten im selben Verfahren; eine neue Messung mit den Kanten aus 14 und frischer Stichprobe wäre ein eigenes Vorhaben (`docs/todo.md`) |
-| 24 | Anfragen als Kontrolle | `feat/24-kontrolle` | 1 | **umbauen** (2026-11-23, nach der Kodierung von 100 Zuordnungen, α 0,954): keine Schicht erreicht Präzision 0,9 (Fachausschuss 0,773, hochgerechnet 0,721); H1 vorab festgelegt und ungerechnet; die eine Umbau-Runde wartet auf eine bessere Quelle des antwortenden Amts (Antwortanlagen nach dem Netzlauf, 19 oder 26), mit neuer Stichprobe nach Codebuch .2; Dezernatstabelle lokal |
-| 25 | Wahlprogramme und Versprechen | `feat/25-versprechen` | Quellen | Sammlung auf `main` (2026-11-23, `docs/plans/25-quellen.md`): 24 Programme und 3 Vereinbarungen, Hauptperiode 83/90 Sitze; Texte lokal; Stufe 1 wartet auf 18 (Einbettungen, misst seit dem 2026-11-23) und 26 (Beschlusslage, Netzlauf) |
-| 26 | Beschlusslage und Antragserfolg | `feat/26-beschluesse` | 1 → 2 | **bauen mit Rückfall 1** (2026-11-24): acht Klassen der Beschlusslage, Ergebnis für 94,3 % der Anträge; Präzision 150/150 (schwacher Beleg: dasselbe Modell, 69 Fälle mechanisch); der Prüfauftrag fällt (Recall 0,73); im Rat Anträge der Mehrheit zu 98 % angenommen, der übrigen zu 19 %, in den Bezirken beide rund 93 % (explorativ); **Stufe 2 auf `main`** (`v0.28.0`, Punkt 79) |
-| 27 | Personen und Mandatstyp | `feat/27-personen` | 1 → 2 | **bauen, eingeschränkt** (2026-11-24): Zuordnung Dokument → Person 194/194 (schwacher Beleg: dasselbe Modell), Recall 0,69; Mandatstyp nur in der laufenden Periode bekannt (92/93), Hauptperiode 62/94; `persons` als Daten, H1 nicht entscheidbar und ungerechnet; auf der Seite nur Rollen und Zählungen ab fünf Personen; Namen bleiben lokal |
-| 28 | Abstimmungen und Kooperation | `feat/28-abstimmungen` | 1 → 2 | **Ebene A bauen, Ebene B verwerfen** (2026-11-24): Ergebnis und Mehrheitsform aus dem Eintrag der Sitzung 0,982 bei 86,4 % Abdeckung; Positionen je Fraktion aus Niederschriften nur 0,765; H28.2 rechenbar, H28.1 und H28.3 nicht entscheidbar; kein voller Abruf der Niederschriften (Frage 40) |
-| 29 | Anwendungen für die Ratsarbeit | `feat/29-ratsarbeit` | – | wartet auf 14, 18, 20, 26 |
+**Fundamente, alle auf `main`**: F2 Register und F3 Spannen (`v0.17.0`, Punkt 69); F6 OParl-Sitzungen,
+Tagesordnung, Personen (`v0.18.0`, Punkt 70; Netzlauf für alle vier Profile am 2026-11-23/24,
+[../runbook-sitzungen.md](../runbook-sitzungen.md) § 9: Hauptperiode 1 672 Sitzungen, 44 231
+Tagesordnungspunkte, 97 112 Beratungen, 632 Personen); F4 Validierung (`v0.19.0`, `v0.20.0`, Punkt 71);
+F5 Modellnaht (`v0.21.0`, Punkt 72; jeder Modelllauf unter `gpu-queue/gpu.lock`); F1 Rohtext
+(`v0.22.0`, Punkt 73; Paket nur für die Hauptperiode, Frage 18); F7 Fundament-Nachzug (`v0.23.0`,
+Punkt 74: `early_steps`, `http` an den Beiträgen, Zusatzspalten an Spannen, `flatten_with_offsets`,
+Prüfung der Schrittfolge).
 
-## Ausbau 2026-10 (abgeschlossen)
+**Offen als Nachzug vor Stufe 3**: in F2 Abschnitte aus fremden Beiträgen auf einer Unterseite
+(`report.pages.Page` kennt nur die Seite eines Beitrags; nötig für 26 auf `vorgaenge.html` und für 24,
+27, 28 auf `akteure.html`); in F4 die Ordner `12-kennungen-2-f4` (Runde 2 liegt nur als
+`validierung/12-kennungen/labels-2.csv` vor), die Rückfallregel von 14 als Verfahren in `score` oder
+die Prüfstichprobe als `14-vorgaenge-3-f4`, `16-ortsbezug-f4`, die Labels von
+`12-kennungen-recall-f4` und ein Maß für „Kategorie im Thema-Set" (17). Der Satz in `guete.json`
+nennt „desselben Modells" nicht, die Seite soll es sagen, solange Frage 19 offen ist. Keine Stufe 3
+ist begonnen.
+
+| Nr. | Vorhaben | Urteil (Stufe 1) | Stufe 2 | Stufe 3 | Endzustand oder wartet auf |
+|---|---|---|---|---|---|
+| 11 | Struktur der Dokumente | **bauen** (2026-11-23): Beschlussvorschlag 188/200 streng, Kopffelder 0,95 bis 1,0, α ≥ 0,99 | `main`, `v0.30.0`, Punkt 81 (`struktur-1` unverändert, früher Schritt vor `weights`) | offen: Downloadzeile `dokumente_kopf` | Stufe 3, mit 12 in einer Version |
+| 12 | Kennungen und Beträge | **bauen** in vier Arten (2026-11-23, Bestätigung an frischer Stichprobe): Bauleitplanung (Fassung 1), Betrag (Fassung 1, ohne Rolle), Termin (Fassung 2, ohne Fristfunktion), Verwaltungseinheit (Fassung 2: Präzision 0,956, Recall 0,887); fallen: Haushalt, Rechtsgrundlage, Rolle eines Betrags, Fristfunktion (Frage 20) | `main`, `v0.31.0`, Punkt 82 | offen: Download `kennungen.parquet` | Stufe 3, nach dem F4-Nachzug `12-kennungen-2-f4` |
+| 13 | Dubletten und Dokumentfamilien | **verworfen** (2026-11-23, 200 Paare, α 0,941): keine Grenze erreicht die gewichtete Präzision 0,95 (τ = 0,9: 0,948); dort lägen 0,5 % der Dokumente in Familien, höchstens 1,4 % Verlust je Wahlbezirk | – | – | **Endzustand verworfen**; MinHash an 23, Fortschreibungen an 14 |
+| 14 | Vorgänge | **bauen, mit der Rückfallregel** (2026-11-23): stark nur Kanten aus Titel, Anlage, Nachtragsnummer, Sammelbericht; 104/106 = 0,981 (Wilson 0,934–0,995); 3 563 starke Kanten, 2 169 Vorgänge | `main`, `v0.25.0`, Punkt 76 | offen: `vorgaenge.html` und der allgemeine Haken des Dokumentdialogs, an den sich 18 und 26 hängen | Stufe 3, nach dem F4-Nachzug (104/106 steht nicht in `guete.json`) |
+| 15 | Dokumentfunktion und gemeinsame Anträge | **bauen, Variante B** (2026-11-23): κ 0,905; Antragsteller 119/119, Recall 0,86 | `main`, `v0.24.0`, Punkt 75 | offen: `akteure.html`, Grundseite für 24, 27, 28 | Stufe 3 |
+| 16 | Ortsbezug verfeinern | **bauen** (2026-11-23): Stelle je Treffer (explorativ), Hausnummern (92,3 % verortbar), Nebenregel C als Gewichtsvariante `ortsbezug` (frische 100 Paare: F1 0,828, κ 0,249), nicht als Standardzählung | **nicht gebaut**; seine Voraussetzungen (F1, F7, 11, `point_shares` aus 22) liegen auf `main` | Gewichtungszeilen auf `index.html`; Radio auf der Karte nur auf Konrads Wunsch (Frage 45) | Stufe 2; vorher § 10 durch den Supervisor (§ 6 ist durch die Synergie überholt) |
+| 17 | Zeit und Neuigkeiten | **bauen** (2026-11-23): Lexikon 2026-11-23.1 mit Präzision 94/100, 41 von 41 Feeds gültig; H17.2 bestätigt, H17.1 und H17.3 nicht | `main`, `v0.27.0`, Punkt 78 | offen: `zeit.html`, Feed-Liste der laufenden Periode | Stufe 3 |
+| 18 | Einbettungen, Ähnlichkeit, Suche | **bauen** (2026-11-24): nDCG@10 Einbettung 0,883 gegen BM25 0,709; ähnliche Dokumente Präzision@5 0,832; keine Cluster; Vektoren nicht ins Repo (Frage 26) | `main`, `v0.26.0`, Punkt 77 (`georep search`, Nachbartabelle als Paket) | offen: „ähnliche Dokumente" im Dokumentdialog | Stufe 3, nach dem Dialog-Haken von 14; Lizenz der Modellgewichte (Frage 47) |
+| 19 | Politikfelder (CAP) | **bauen mit Weg 3b** (2026-11-24): Nachbau der Babel Machine, Makro-F1 0,704 (0,620–0,807), unter 15 GPU-Minuten für alle Perioden; Gewichte nur lokal | **nicht gebaut** | `themen.html` | Stufe 2 (GPU unter 15 min); Frage 37 (Lizenz der CAP-Codes) vor jeder Veröffentlichung; vorher § 10 durch den Supervisor |
+| 20 | Kurzfassungen (lokal) | **bauen mit gemma4** (2026-11-24, zwei Vorbehalte); die vorab festgelegte Nachmessung an 50 frischen Dokumenten (2026-11-26) verwarf gemma4 (4/50) und qwen3.6:27b (5/50, Grenze 2) | `main`, `v0.32.0`, Punkt 83: gebaut, in allen Profilen aus, kein Stapellauf (Frage 38) | keine: Kurzfassungen werden nie veröffentlicht | **Endzustand gebaut und aus**; weiter nur mit einem Codebuch Fassung 2 als eigenes Vorhaben |
+| 21 | Geld auf der Karte | nicht gemessen | – | – | Stufe 1, nach Stufe 2 von 16 (11 und 12 liegen vor); Briefing überholt (Meta-Plan § 11) |
+| 22 | Bedarf und Aufmerksamkeit | **bauen** (2026-11-23): vier offene Quellen plus Lärm; H1 bestätigt, aber nur zwischen Stadtbezirken; H2, H3 nicht | `main`, `v0.29.0`, Punkt 80 | offen: `bedarf.html` | Stufe 3 |
+| 23 | Textübernahme | **verworfen** (2026-11-23, 100 Paare, α 0,950): keine politische Art erreicht Präzision 0,9 (Musteranträge 0,889, über Fraktionsgrenzen 0,296); gemeinsamen Text findet das Verfahren zuverlässig | – | – | **Endzustand verworfen**; eine Neumessung mit den Kanten aus 14 wäre ein eigenes Vorhaben (`docs/todo.md`) |
+| 24 | Anfragen als Kontrolle | **umbauen** (2026-11-23, 100 Zuordnungen, α 0,954): keine Schicht erreicht 0,9 (Fachausschuss 0,773, hochgerechnet 0,721); H1 ungerechnet | – | – | eine Umbaurunde (neue Stichprobe, Codebuch .2): Zulieferer 26 liegt vor, 19 nicht; die Antwortanlagen brauchen einen eigenen Stichprobenabruf ihrer PDFs (der Netzlauf von F6 brachte keine PDFs); umbauen oder verwerfen ist Frage 41 |
+| 25 | Wahlprogramme und Versprechen | nicht gemessen; Quellen gesammelt (2026-11-23, [25-quellen.md](25-quellen.md)): 24 Programme und 3 Vereinbarungen, Hauptperiode 83/90 Sitze; Texte lokal | – | – | Stufe 1; die Eingaben 14, 18 und 26 liegen vor; Briefing teils überholt (Meta-Plan § 11) |
+| 26 | Beschlusslage und Antragserfolg | **bauen mit Rückfall 1** (2026-11-24): acht Klassen der Beschlusslage, Ergebnis für 94,3 % der Anträge; 150/150 (schwacher Beleg: dasselbe Modell, 69 Fälle mechanisch); der Prüfauftrag fällt | `main`, `v0.28.0`, Punkt 79 | offen: Abschnitte auf `vorgaenge.html`, Beschluss im Dokumentdialog | Stufe 3, nach dem F2-Nachzug, dem Dialog-Haken von 14 und den Kürzeln `gr/400224`, `gr/65` mit A/B-Bau |
+| 27 | Personen und Mandatstyp | **bauen, eingeschränkt** (2026-11-24): Dokument → Person 194/194 (schwacher Beleg), Recall 0,69; Mandatstyp nur in der laufenden Periode bekannt (92/93; Hauptperiode 62/94); H1 nicht entscheidbar | **nicht gebaut** | Abschnitt auf `akteure.html`, nur Rollen und Zählungen ab fünf Personen | Stufe 2 (Fragen 43 und 44: Wahlpaket, Kennungen); vorher § 10 durch den Supervisor |
+| 28 | Abstimmungen und Kooperation | **Ebene A bauen, Ebene B verwerfen** (2026-11-24): Ergebnis und Mehrheitsform aus `result` 0,982 bei 86,4 % Abdeckung; Positionen je Fraktion aus Niederschriften 0,765 | **nicht gebaut** (Ebene A braucht kein Netz) | Abschnitt auf `akteure.html` | Stufe 2 Ebene A; Ebene B nur mit Frage 40; vorher § 10 durch den Supervisor |
+| 29 | Anwendungen für die Ratsarbeit | nicht gemessen | – | – | Stufe 1, zuletzt; 14, 18 und 26 liegen vor, 20 ist aus (kein Vorlagenspiegel mit Kurzfassungen); Briefing überholt (Meta-Plan § 11) |
+
+## Ausbau 2026-10 (abgeschlossen am 2026-10-12, historisch)
 
 Meta-Plan: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md). Je Option ein Plan nach dessen § 8.3,
-geschrieben vom jeweiligen Unteragenten auf seinem Branch; `00-synergien.md` schreibt der Supervisor;
-`fragen.md` sammelt die Fragen an Konrad (§ 6).
+geschrieben vom jeweiligen Unteragenten auf seinem Branch; `00-synergien.md` schrieb der Supervisor;
+`fragen.md` sammelte die Fragen an Konrad (§ 6). Alle Pläne sind historisch; gültig sind
+[../architecture.md](../architecture.md) und [../decisions.md](../decisions.md).
 
 | Nr. | Plan | Branch | Status |
 |---|---|---|---|
-| 00 | `00-synergien.md` | `main` | geschrieben 2026-10-12 |
+| 00 | `00-synergien.md` | `main` | geschrieben 2026-10-12, historisch |
 | 01 | `01-staedte.md` | `feat/01-staedte` | gemerged 2026-10-12 |
 | 02 | `02-zeitreihe.md` | `feat/02-zeitreihe` | gemerged 2026-10-12 |
 | 03 | `03-kontrollvariablen.md` | `feat/03-kontrollvariablen` | gemerged 2026-10-12 |
