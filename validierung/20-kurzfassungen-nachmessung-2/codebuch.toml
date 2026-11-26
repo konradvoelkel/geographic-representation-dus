@@ -1,8 +1,8 @@
-# Codebuch der Nachmessung von Vorhaben 20 mit qwen3.6:27b (Messdokument § 5.4, „Danach";
-# Frage 38): wörtlich das Codebuch von validierung/20-kurzfassungen-nachmessung/ (Fassung 1), nur
-# `project` heißt nach diesem Ordner, weil eine Kodierung je Ordner abgelegt wird (F4). Dieselben 50
-# Dokumente (stichprobe.csv unverändert kopiert), dieselbe Eingabe, derselbe Prompt; gemma4 hielt
-# das Kriterium nicht (4 von 50, Grenze 2).
+# Zweite Messung der Nachmessung von Vorhaben 20 an denselben 50 Dokumenten (Messdokument § 5.4,
+# „Danach"; Frage 38): wörtlich das Codebuch von validierung/20-kurzfassungen-nachmessung/
+# (Fassung 1), nur `project` heißt nach diesem Ordner, weil eine Kodierung je Ordner abgelegt wird
+# (F4). Der Ordnername nennt kein Modell, damit die Kodierer es nicht erfahren; welches Modell die
+# Kurzfassungen schrieb, steht nur im Messdokument und im Laufprotokoll.
 # Codebuch der Nachmessung von Vorhaben 20 (Kurzfassungen, Stufe 2), Fassung 1, vorab festgelegt am
 # 2026-11-24 vor der ersten Kurzfassung der Stichprobe (docs/plans/20-kurzfassungen.md, § 5.4;
 # § 10, Punkt 4; Frage 20.13 und Frage 38). Gemessen wird nur, ob eine Kurzfassung mit Eingabe und
@@ -13,7 +13,7 @@
 # (`20-kurzfassungen-messung.py nachmessung kodierung`): je Einheit der Text, den das Modell sah, als
 # Ausschnitt und die eine Kurzfassung als K1, ohne Modellnamen. Zusammenführen, Schlichten und
 # Übereinstimmung gehen über `georep validate merge 20-kurzfassungen-nachmessung`.
-project = "20-kurzfassungen-nachmessung-qwen"
+project = "20-kurzfassungen-nachmessung-2"
 version = "1"
 unit = "document"
 instructions = """

@@ -640,7 +640,8 @@ von Vorhaben 11, weil die Eingabe dessen Abschnitte liest.
   Grenze, entscheidet der Supervisor; sonst die Zahl.
 - **Danach**: hält gemma, läuft der Stapel mit gemma (§ 6, „Stapellauf"). Hält gemma nicht, misst
   der Bau-Agent `qwen3.6:27b` an denselben 50 mit derselben Eingabe, demselben Prompt und demselben
-  Codebuch in einem eigenen Ordner (`20-kurzfassungen-nachmessung-qwen`) und nimmt nach demselben
+  Codebuch in einem eigenen Ordner (festgelegt `20-kurzfassungen-nachmessung-qwen`, angelegt als
+  `20-kurzfassungen-nachmessung-2`) und nimmt nach demselben
   Kriterium das Modell, das hält; halten beide, gemma; hält keines, kein Stapellauf, und der
   Supervisor entscheidet (Frage 38).
 - **Daneben berichtet, nicht Kriterium**: die deterministische Treueprüfung (`enrich.fidelity`) an
@@ -670,7 +671,7 @@ von Vorhaben 11, weil die Eingabe dessen Abschnitte liest.
   Rolle; die Grenze hält gemma trotzdem nicht. Die deterministische Prüfung sah keine der vier
   (50 von 50 ohne unbelegte Angabe). `labels.csv`, `README.md` und `guete.json` liegen in
   `validierung/20-kurzfassungen-nachmessung/`. **Danach**, wie festgelegt: `qwen3.6:27b` an
-  denselben 50 im Ordner `20-kurzfassungen-nachmessung-qwen`.
+  denselben 50 im Ordner `20-kurzfassungen-nachmessung-2` (festgelegt war `…-qwen`, siehe unten).
 - **Erzeugt mit `qwen3.6:27b`** am 2026-11-26 (Digest `a50eda8ed977`, wie § 3.1): dieselben 50
   Eingaben, derselbe Prompt, ein Lauf unter der Sperre von 22:02:59 bis 22:05:54 (175 s;
   ollama-Log „offloaded 65/65 layers to GPU", 15,5 GiB Gewichte auf CUDA0, `nvidia-smi` 503 MiB
@@ -678,10 +679,12 @@ von Vorhaben 11, weil die Eingabe dessen Abschnitte liest.
   3,12, ohne Laden 3,01), Ausgabe 100 Token bei 42,0 Token/s; keine Antwort abgeschnitten.
   Daneben (nicht Kriterium): Treueprüfung 48 von 50 ohne unbelegte Angabe (ein Datum, ein seltenes
   Wort), zwei mit Personennamen, Wörter Median 51, höchstens 66. Kodierauftrag A und B unter
-  `messdaten/kodierung/20-kurzfassungen-nachmessung-qwen/`, dieselben Ausschnitte wie bei gemma;
-  Codebuch und Stichprobe in `validierung/20-kurzfassungen-nachmessung-qwen/`. Der Ordnername
-  nennt das Modell (im Feld `vorhaben` und im Kopf von `codebuch.md`); die Kurzfassung selbst
-  trägt keinen Modellnamen.
+  `messdaten/kodierung/20-kurzfassungen-nachmessung-2/`, dieselben Ausschnitte wie bei gemma;
+  Codebuch und Stichprobe in `validierung/20-kurzfassungen-nachmessung-2/`. **Der Ordnername
+  weicht vom festgelegten (`20-kurzfassungen-nachmessung-qwen`) ab, damit die Kodierer das Modell
+  nicht erfahren** (Supervisor, 2026-11-26; der erste Auftrag nannte es im Feld `vorhaben` und im
+  Kopf von `codebuch.md` und ist vor jeder Antwort gelöscht); welches Modell dahintersteht, steht
+  nur in diesem Messdokument und im Laufprotokoll.
 
 ## 6. Bauplan Stufe 2
 
