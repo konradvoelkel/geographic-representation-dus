@@ -32,7 +32,7 @@ sichtbar, ohne die Hauptseite über ihr Budget zu treiben.
 | Was | Stand |
 |---|---|
 | Stufe 3 | keine begonnen. Kein Beitrag registriert `tables` oder `pages`; der Dokumentdialog lädt nur `dokumente.json` und `begriffe.json` (`report/templates/frame/script.js.j2`) |
-| `index.html` | 892 894 Byte im lokalen Bau vom 2026-11-24, Budget 1 000 000 (`report.page_budget_bytes`, Punkt 50; `publish --strict-budget`) |
+| `index.html` | 937 528 Byte veröffentlicht (Pages, `v0.32.0`, abgerufen am 2026-11-26; `STATUS.md`, „Zahlen“), Budget 1 000 000 (`report.page_budget_bytes`, Punkt 50; `publish --strict-budget`), also rund 62 KB Luft |
 | Pakete | 168,6 von 180 MiB (`TOTAL_LIMIT`, `tests/unit/test_data_packages.py`) |
 | Pages | Bau bei jedem Push auf `main`, unabhängig von `ci.yml`. Fünf grüne Läufe am 2026-11-26 dauerten 4 bis 6 Minuten vom Start bis zum Deploy |
 | Validierung | Die Labels aller Vorhaben stammen von zwei Kodierern und einem Schlichter desselben Modells (`claude-opus-5-5`). Der `satz` in `guete.json` lautet nur „geprüft von zwei KI-Kodierern an *n* …, nicht von Menschen" (`validation/merge.py`) |
