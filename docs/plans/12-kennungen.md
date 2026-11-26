@@ -1,6 +1,10 @@
 # Vorhaben 12: Kennungen und Beträge
 
-Stand 2026-11-23, Stufe 1 mit Kodierung. Briefing: [plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md),
+**Stand 2026-11-26: Urteil bauen in vier Arten (§ 5), Stufe 2 auf `main` (`v0.31.0`, Punkt 82);
+Stufe 3 (Download) wartet auf den F4-Nachzug `12-kennungen-2-f4` (§ 10, Punkt 8).** Der Branch
+`feat/12-kennungen` ist gemerged und entfernt.
+
+Stufe 1 vom 2026-11-23 mit Kodierung. Briefing: [plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md),
 § 11. Messskript: [12-kennungen-messung.py](12-kennungen-messung.py). Codebuch, Stichprobe und Labels:
 `validierung/12-kennungen/`. **Urteil nach der Kodierung** (§ 4.1, § 5): Bauleitplanung, Betrag und
 Termin **bauen**; die Rolle eines Betrags und die Funktion eines Termins **fallen** (Supervisor,

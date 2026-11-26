@@ -1,6 +1,9 @@
 # Vorhaben 15: Dokumentfunktion und gemeinsame Anträge
 
-Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/15-funktion`. Briefing:
+**Stand 2026-11-26: Urteil bauen mit Variante B (§ 5), Stufe 2 auf `main` (`v0.24.0`, Punkt 75);
+Stufe 3 (`akteure.html`) offen.** Der Branch ist gemerged und entfernt.
+
+Stufe 1 (Messen) vom 2026-11-23 auf dem Branch `feat/15-funktion`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „15 Dokumentfunktion und gemeinsame
 Anträge". Messskript: [15-funktion-messung.py](15-funktion-messung.py) (`uv run python
 docs/plans/15-funktion-messung.py`, rechnet jede Zahl dieses Dokuments nach; `--stichprobe` schreibt

@@ -1,6 +1,11 @@
 # Vorhaben 24: Anfragen als Kontrolle in der Kooperation
 
-Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/24-kontrolle`. Briefing:
+**Stand 2026-11-26: Urteil umbauen (§ 5.1), gemessen, nicht gebaut.** Die eine Umbaurunde steht aus:
+Zulieferer 26 liegt vor, 19 nicht; die Antwortanlagen brauchen einen eigenen Stichprobenabruf ihrer
+PDFs. Umbauen oder verwerfen ist Frage 41 in `fragen-2026-11.md`. **§ 10 vor dem Bau durch den
+Supervisor.**
+
+Stufe 1 (Messen) vom 2026-11-23 auf dem Branch `feat/24-kontrolle` (gemerged, entfernt). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „24 Anfragen als Kontrolle
 in der Kooperation". Messskript: [24-kontrolle-messung.py](24-kontrolle-messung.py).
 

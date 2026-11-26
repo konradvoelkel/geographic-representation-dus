@@ -1,6 +1,9 @@
 # Vorhaben 17: Zeit und Neuigkeiten
 
-Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/17-zeit`. Briefing:
+**Stand 2026-11-26: Urteil bauen (§ 5), Stufe 2 auf `main` (`v0.27.0`, Punkt 78); Stufe 3
+(`zeit.html`, Feed-Liste der laufenden Periode) offen.** Der Branch ist gemerged und entfernt.
+
+Stufe 1 (Messen) vom 2026-11-23 auf dem Branch `feat/17-zeit`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „17 Zeit und Neuigkeiten".
 Messskript: [17-zeit-messung.py](17-zeit-messung.py) (`uv run python docs/plans/17-zeit-messung.py
 --feeds <ordner>`, rechnet jede Zahl dieses Dokuments nach und schreibt den Feed-Prototyp;

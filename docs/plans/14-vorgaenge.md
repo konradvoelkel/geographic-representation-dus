@@ -1,6 +1,10 @@
 # Vorhaben 14: Vorgänge
 
-Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/14-vorgaenge`. Briefing:
+**Stand 2026-11-26: Urteil bauen mit der Rückfallregel (§ 5.1), Stufe 2 auf `main` (`v0.25.0`,
+Punkt 76); Stufe 3 (`vorgaenge.html`, Haken des Dokumentdialogs) offen, die Zahl 104/106 erst nach dem
+F4-Nachzug (§ 10).** Der Branch ist gemerged und entfernt.
+
+Stufe 1 (Messen) vom 2026-11-23 auf dem Branch `feat/14-vorgaenge`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „14 Vorgänge".
 Messskript: [14-vorgaenge-messung.py](14-vorgaenge-messung.py) (`uv run python
 docs/plans/14-vorgaenge-messung.py`, rechnet jede Zahl dieses Dokuments nach; `--stichprobe` schreibt

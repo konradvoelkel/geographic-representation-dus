@@ -1,7 +1,12 @@
 # Vorhaben 19: Politikfelder nach dem Comparative Agendas Project
 
-Stand 2026-11-24 (Messung 2026-11-23, 22:26 Uhr, bis 2026-11-24, 00:11 Uhr), Stufe 1 (Messen),
-Branch `feat/19-politikfelder`. Briefing:
+**Stand 2026-11-26: Urteil bauen mit Weg 3b (§ 5), gemessen, nicht gebaut.** Stufe 2 braucht die
+GPU unter 15 Minuten (Gewichte lokal unter `messdaten/19-politikfelder/training-3b/`); Paket und Seite
+erst nach Frage 37 (Lizenz der CAP-Codes, `fragen-2026-11.md`). **§ 10 vor dem Bau durch den
+Supervisor.**
+
+Stufe 1 (Messen) vom 2026-11-24 (Messung 2026-11-23, 22:26 Uhr, bis 2026-11-24, 00:11 Uhr) auf dem
+Branch `feat/19-politikfelder` (gemerged, entfernt). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „19 Politikfelder nach
 dem Comparative Agendas Project", dazu § 10, Frage 5 (Babel Machine nicht benutzen, aber nachbauen).
 Messskript: [19-politikfelder-messung.py](19-politikfelder-messung.py) (`uv run python

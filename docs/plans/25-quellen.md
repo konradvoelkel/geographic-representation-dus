@@ -1,5 +1,8 @@
 # Vorhaben 25: Quellen der Wahlprogramme und Ratsvereinbarungen
 
+**Stand 2026-11-26: nur Quellen gesammelt; Stufe 1 (Messen) nicht begonnen.** Ihre Eingaben 14, 18
+und 26 liegen auf `main`; das Briefing ist teils überholt (Meta-Plan § 11 „25").
+
 Bestandsaufnahme vom 2026-11-23, Sammel-Agent für Vorhaben 25
 ([plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „25“; Freigabe für
 Fremddaten: § 10, Frage 8). Nur Sammlung, noch keine Auswertung. Die Dateien und ihre Textauszüge

@@ -1,6 +1,11 @@
 # Vorhaben 20: Kurzfassungen
 
-Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/20-kurzfassungen`. Briefing:
+**Stand 2026-11-26: Urteil der Stufe 1 bauen mit `gemma4`; Stufe 2 auf `main` (`v0.32.0`,
+Punkt 83), in allen Profilen aus, weil die Nachmessung beide Modelle verwarf (§ 5.4); kein Stapellauf
+(Frage 38), keine Stufe 3.**
+
+Stufe 1 (Messen) vom 2026-11-23 und 2026-11-24 auf dem Branch `feat/20-kurzfassungen`, gemerged mit
+Stufe 2 und entfernt. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „20 Kurzfassungen".
 Messskript: [20-kurzfassungen-messung.py](20-kurzfassungen-messung.py). Codebuch und Stichproben
 (nur IDs): [../../validierung/20-kurzfassungen/](../../validierung/20-kurzfassungen/).

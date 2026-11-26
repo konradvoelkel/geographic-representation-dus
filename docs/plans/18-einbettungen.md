@@ -1,7 +1,10 @@
 # Vorhaben 18: Einbettungen, Ähnlichkeit, semantische Suche
 
-Stand 2026-11-24, Stufe 1 (Messen) abgeschlossen, Stufe 2 (Bauen) gebaut auf `feat/18-einbettungen`
-(was vom Bauplan abweicht, steht im Entscheidungspunkt „Einbettungen über Stücke" in
+**Stand 2026-11-26: Urteil bauen (§ 5.1), Stufe 2 auf `main` (`v0.26.0`, Punkt 77); Stufe 3
+(„ähnliche Dokumente" im Dokumentdialog) wartet auf den Haken aus Stufe 3 von 14 (§ 10, Punkt 7).**
+
+Stufe 1 (Messen) abgeschlossen am 2026-11-24; Stufe 2 gebaut auf `feat/18-einbettungen`, gemerged und
+entfernt (was vom Bauplan abweicht, steht im Entscheidungspunkt „Einbettungen über Stücke" in
 [../decisions.md](../decisions.md)). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „18 Einbettungen,
 Ähnlichkeit, semantische Suche". Messskript: [18-einbettungen-messung.py](18-einbettungen-messung.py).

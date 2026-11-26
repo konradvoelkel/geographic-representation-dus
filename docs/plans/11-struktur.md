@@ -1,10 +1,15 @@
 # Vorhaben 11: Struktur der Dokumente
 
-Stand 2026-11-23, Stufe 1. Briefing: [plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md),
-§ 11. Messskript: [11-struktur-messung.py](11-struktur-messung.py). Branch `feat/11-struktur`.
+**Stand 2026-11-26: Urteil bauen (nach der Kodierung, § 4.1, § 5), Stufe 2 auf `main` (`v0.30.0`,
+Punkt 81: `struktur-1` unverändert, früher Schritt vor `weights`); Stufe 3 (Downloadzeile) offen.** Wo
+§ 5 bis § 7 von § 10 abweichen, gilt § 10.
 
-**Urteil, vorläufig: bauen.** Validierung ausstehend: die 200 Dokumente der Stichprobe sind gezogen, das
-Codebuch steht, die Kodieraufgaben liegen lokal; kodiert haben die Kodier-Agenten noch nicht (§ 4, § 5).
+Stufe 1 (Messen) vom 2026-11-23 auf dem Branch `feat/11-struktur` (gemerged, entfernt). Briefing:
+[plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11. Messskript:
+[11-struktur-messung.py](11-struktur-messung.py).
+
+*Vorläufiges Urteil vor der Kodierung (2026-11-23): bauen; die Kodierung der 200 Dokumente hat es
+bestätigt (§ 4.1).*
 
 Alle Zahlen sind am 2026-11-23 gemessen, an der Rohtext-Messdatei (pypdf 7.1.0, Groß- und
 Kleinschreibung, Zeilen, Seitenwechsel als `\f`, Vorlagenkopf nicht abgeschnitten) und am Korpus nach
@@ -388,7 +393,7 @@ Informations-, Berichts- und BV-Beschlussvorlagen. Der Gremienname der Sitzung m
 die Gremien des Profils normalisiert werden (Nominativ, Kürzel ausgeschrieben), wie es die
 Kodierer und der Schlichter als Lücke des Codebuchs gemeldet haben.
 
-## 5. Urteil gegen das Kriterium: **bauen** (vorläufig, Validierung ausstehend)
+## 5. Urteil gegen das Kriterium: **bauen** (nach der Kodierung bestätigt, § 4.1)
 
 **Nachtrag 2026-11-23 (Supervisor): Urteil bauen.** Die Kodierung (§ 4.1) bestätigt das Kriterium;
 Stufe 2 schärft das Ende des Beschlussvorschlags und normalisiert die Gremiennamen.

@@ -1,7 +1,10 @@
 # Vorhaben 22: Bedarf und Aufmerksamkeit
 
-Stand 2026-11-24, Stufe 2 (Bauen) mit Runde 2 des Reviews, Branch `feat/22-bedarf`; Stufe 1 (Messen)
-abgeschlossen am 2026-11-23, gebaut nach § 6 mit den Änderungen aus § 10 (`docs/decisions.md`, Eintrag
+**Stand 2026-11-26: Urteil bauen (§ 5), Stufe 2 auf `main` (`v0.29.0`, Punkt 80); Stufe 3
+(`bedarf.html`) offen.**
+
+Stufe 1 (Messen) abgeschlossen am 2026-11-23; Stufe 2 auf dem Branch `feat/22-bedarf` (gemerged,
+entfernt), gebaut nach § 6 mit den Änderungen aus § 10 (`docs/decisions.md`, Eintrag
 „Bedarf und Aufmerksamkeit je Wahlbezirk"). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „22 Bedarf und
 Aufmerksamkeit". Messskript: [22-bedarf-messung.py](22-bedarf-messung.py) (`uv run python -I

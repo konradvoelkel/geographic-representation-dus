@@ -1,6 +1,11 @@
 # Vorhaben 28: Abstimmungen und Kooperation
 
-Stand 2026-11-24, Stufe 1 (Messen), Branch `feat/28-abstimmungen`. Briefing:
+**Stand 2026-11-26: Urteil Ebene A bauen, Ebene B verwerfen (§ 5.1), gemessen, nicht gebaut.**
+Ebene A braucht kein Netz; Ebene B nur mit Frage 40. Mönchengladbach ist seit dem Netzlauf vom
+2026-11-23/24 abgerufen (anders als in Frage 9.9 notiert), seine Niederschriften sind nicht gemessen.
+**§ 10 vor dem Bau durch den Supervisor.**
+
+Stufe 1 (Messen) vom 2026-11-24 auf dem Branch `feat/28-abstimmungen` (gemerged, entfernt). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „28 Abstimmungen und
 Kooperation". Messskript: [28-abstimmungen-messung.py](28-abstimmungen-messung.py). Codebuch und
 Stichprobe: `validierung/28-abstimmungen/`.

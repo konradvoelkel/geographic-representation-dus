@@ -1,6 +1,13 @@
 # Vorhaben 16: Ortsbezug verfeinern
 
-Stand 2026-11-23, Stufe 1 (Messen) mit einer Runde Umbau abgeschlossen, Branch `feat/16-ortsbezug`. Briefing:
+**Stand 2026-11-26: Urteil bauen (§ 5.5), gemessen, nicht gebaut. § 10 vor dem Bau durch den
+Supervisor**: § 6 ist durch die Synergie überholt (`flatten_with_offsets` aus F1 statt `store_view`,
+Spannen nach F3 mit Int64, Rumpf aus 11, Adressen über `point_shares` aus 22;
+[00-synergien-2026-11.md](00-synergien-2026-11.md), § 4 „16 Ortsbezug"). Alle Voraussetzungen liegen auf
+`main`.
+
+Stufe 1 (Messen) mit einer Runde Umbau, abgeschlossen am 2026-11-23 auf dem Branch `feat/16-ortsbezug`
+(gemerged, entfernt). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „16 Ortsbezug
 verfeinern". Messskript: [16-ortsbezug-messung.py](16-ortsbezug-messung.py). Codebuch, Stichprobe und
 Labels: [../../validierung/16-ortsbezug/](../../validierung/16-ortsbezug/).

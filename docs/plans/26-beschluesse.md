@@ -1,6 +1,11 @@
 # Vorhaben 26: Beschlusslage und Antragserfolg
 
-Stand 2026-11-24, Stufe 1 (Messen), Branch `feat/26-beschluesse`. Briefing:
+**Stand 2026-11-26: Urteil bauen mit Rückfall 1 (§ 5), Stufe 2 auf `main` (`v0.28.0`, Punkt 79);
+Stufe 3 (Abschnitte auf `vorgaenge.html`, Beschluss im Dokumentdialog) wartet auf den F2-Nachzug für
+Abschnitte aus fremden Beiträgen, den Haken von 14 und die Kürzel aus Frage 9.17 (§ 10, Punkte 7 und
+8).**
+
+Stufe 1 (Messen) vom 2026-11-24 auf dem Branch `feat/26-beschluesse` (gemerged, entfernt). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „26 Beschlusslage und
 Antragserfolg". Messskript: [26-beschluesse-messung.py](26-beschluesse-messung.py) (`uv run python
 docs/plans/26-beschluesse-messung.py`, rechnet jede Zahl dieses Dokuments nach; `--stichprobe` schreibt

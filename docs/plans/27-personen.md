@@ -1,6 +1,10 @@
 # Vorhaben 27: Personen und Mandatstyp
 
-Stand 2026-11-24, Stufe 1 (Messen), Branch `feat/27-personen`. Briefing:
+**Stand 2026-11-26: Urteil bauen, eingeschränkt (§ 5), gemessen, nicht gebaut.** Offen dafür: das
+Wahlpaket und die Kennungen (Fragen 43 und 44 in `fragen-2026-11.md`). **§ 10 vor dem Bau durch den
+Supervisor.**
+
+Stufe 1 (Messen) vom 2026-11-24 auf dem Branch `feat/27-personen` (gemerged, entfernt). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „27 Personen und
 Mandatstyp". Messskript: [27-personen-messung.py](27-personen-messung.py). Codebuch und Stichprobe:
 `validierung/27-personen/`.
