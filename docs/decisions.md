@@ -3971,7 +3971,7 @@ Termins; eine vervollständigte erste Angabe ist ein Tag); die Extraktoren in `V
 Regeln tragen `re.Pattern`, dasselbe Werkzeugartefakt wie bei `parse_reference`; ihre Eigenschaften
 prüft `tests/property/test_identifiers_props.py`).
 
-## Kurzfassungen: gebaut, validiert, aber aus; nur lokal, Treue deterministisch, die Rolle in der Eingabe (Vorhaben 20, 2026-11-26)
+## 83. Kurzfassungen: gebaut, validiert, aber aus; nur lokal, Treue deterministisch, die Rolle in der Eingabe (Vorhaben 20, 2026-11-26)
 
 **Ergebnis zuerst.** Gebaut und an der Messung validiert sind die Eingabe Fassung 2 und die
 deterministische Treueprüfung. Die Nachmessung von `unbelegt` vor dem Stapellauf (Messdokument

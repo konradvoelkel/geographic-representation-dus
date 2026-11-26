@@ -2,6 +2,18 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.32.0 (2026-11-26), Kurzfassungen, gebaut und ausgeschaltet
+
+- **Kurzfassungen** (Vorhaben 20, `docs/decisions.md`, Punkt 83): der Schritt `summaries` schreibt mit
+  einem lokalen Modell zwei, drei Sätze je Dokument, nur unter `cache_root/<profil>/summaries/` und nie
+  auf die Seite; die Eingabe nennt Absender und Beratungsfolge, eine deterministische Treueprüfung
+  zählt unbelegte Angaben und Personennamen; `georep summary <drucksache|id>` zeigt eine Kurzfassung
+  lokal.
+- **Ausgeschaltet**: an 50 frischen Dokumenten fanden zwei KI-Kodierer mit Schlichtung bei gemma4 4,
+  bei qwen3.6:27b 5 Kurzfassungen mit einer unbelegten Angabe, vorab festgelegt waren höchstens 2. Es
+  gibt keinen Stapellauf; der Schritt ist in allen Profilen aus und lässt sich für eine spätere Messung
+  mit `GEOREP_SUMMARIES__ENABLED=true` einschalten. Keine Zahl der Seite ändert sich.
+
 ## 0.31.1 (2026-11-26), Zahlentest von Vorhaben 22
 
 - Der Zahlentest von Vorhaben 22 prüft die vorab festgelegten Urteile genau und die Zahlen von H1 und H3

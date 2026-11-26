@@ -255,7 +255,9 @@ Platzhalter in spitzen Klammern; `<ordner>` ist `<coding_root>/<NN-name>/<A|B|sc
 > Wörtern oder einer Regel über viele Zeilen.
 >
 > Lies keine anderen Dateien: nicht das Repository, nicht `docs/`, nicht die Ordner anderer
-> Kodierer, keine Ausgabe des Verfahrens, nichts im Netz. Du weißt nicht, was das geprüfte
+> Kodierer, keine Ausgabe des Verfahrens, nichts im Netz. Hilfsdateien nur in deinem eigenen Ordner
+> `<scratch>/kodierer-<A|B>-<NN-name>/` (ein geteiltes Scratchpad ließ am 2026-11-26 einen Kodierer
+> das Hilfsskript des anderen überschreiben). Du weißt nicht, was das geprüfte
 > Verfahren sagt, und sollst es nicht wissen.
 >
 > Melde am Ende: Zahl der kodierten Einheiten, Verteilung der Antworten je Frage, und jede `id`,

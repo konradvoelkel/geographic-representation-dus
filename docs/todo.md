@@ -252,3 +252,13 @@ an; dazwischen und einer engen Toleranz (1e-10, 132 Iterationen) liegen die Wahr
 Klassen rechnerfest, verschöbe aber die Ausschusszuordnung auf der Seite und die Zahlen von H1 und H3 aus
 22 (H1 ρ 0,3427 → 0,3470, Urteil gleich): eigene Entscheidung mit A/B-Bau aller Seiten.
 
+## 19. Kurzfassungen: vor jedem Einschalten
+
+Aufgenommen am 2026-11-26 mit dem Merge von Vorhaben 20 (Punkt 83). (a) Der Code von 20 hatte kein
+unabhängiges Review wie die übrigen Bauten der Stufe 2; der Supervisor hat nur geprüft, dass keine
+Kurzfassung ins Repo gelangt und der Schritt in allen Profilen aus ist. Vor dem ersten Einschalten ein
+Review. (b) Weiter ginge es nur mit einem Codebuch Fassung 2 (Fragen 20.10, 20.11, 20.15 im Messdokument:
+gestrichene Einschränkungen, Verallgemeinerungen, eine Möglichkeit als Pflicht, Kopfdaten gegen
+Betreff, Adressat einer Anfrage) an einer frischen Stichprobe, als eigenes Vorhaben; erst danach ein
+Stapellauf (5 bis 8 GPU-Stunden mit gemma4 für die Hauptperiode).
+
