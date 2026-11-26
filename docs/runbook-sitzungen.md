@@ -340,32 +340,12 @@ und extrahierte den Text wie `texts`.
 
 ## 8. Offen
 
-- **`modified_since` bei `consultations` ist plausibel, aber nicht belegt.** Bei den Papers liefert
-  der Server mit dem Filter Geändertes und Gelöschte (Option 07); für die Liste der Beratungen ist
-  das nicht gemessen. Prüfung nach dem ersten vollen Lauf, frühestens einen Tag später:
-
-  ```bash
-  raw=$(uv run georep paths | sed -n 's/^root=//p')/raw
-  uv run georep fetch consultations --force            # inkrementell: "seit <datum>"
-  cp "$raw/consultations.jsonl" /media/konrad/xtraspace/georep/consultations-inkrementell.jsonl
-  rm "$raw/consultations.jsonl"                        # ohne Bestand ist der nächste Lauf voll
-  uv run georep fetch consultations
-  diff <(sort /media/konrad/xtraspace/georep/consultations-inkrementell.jsonl) <(sort "$raw/consultations.jsonl") | head
-  ```
-
-  Gleich: der Filter trägt, `council.incremental` bleibt. Fehlen im inkrementellen Bestand Zeilen
-  oder stehen Gelöschte darin: `incremental = []` im Stadtprofil, und `consultations` holt wie die
-  anderen beiden jedes Mal alles.
-- Die Liste `consultations` ist nicht gemessen (die Freigabe galt für Einzelobjekte). Die Probe in
-  § 5.2 ist die Messung.
-- Die Zahl der Personen und die Dauer von `people` über mehr als eine Seite sind geschätzt.
-- Die Endpunkte von Mönchengladbach (Body 0011) stehen nach dem Muster von Body 0015 im Profil; ihr
-  Body-Objekt ist nicht abgerufen.
-- Die Abbruchregel der Sitzungen stützt sich auf `start − created` zwischen −418 und +447 Tagen in
-  400 Sitzungen; die Prüfung in § 5.3 ist ihre Probe an einer ganzen Periode.
-- `fetch papers --max-pages 1` auf einem leeren Store, danach `fetch papers`: der zweite Lauf holt
-  inkrementell nur, was sich seit dem jüngsten `modified` der Probe geändert hat (`docs/todo.md`).
-  Die drei neuen Schritte schreiben nach einer Probe keine Ausgabe und setzen fort, `papers` nicht.
+Offen ist nur noch, ob `modified_since` bei der Liste `consultations` trägt; die Prüfung steht mit
+ihren Befehlen in `docs/todo.md`, Punkt 31. Dass eine Probe mit `--max-pages` bei `papers` den
+folgenden vollen Abruf verdirbt (die drei Schritte hier setzen nach einer Probe fort, `papers`
+nicht), ist `docs/todo.md`, Punkt 8. Die übrigen Fragen dieses Abschnitts hat der volle Lauf in § 9
+beantwortet: die Liste `consultations` kam mit 1,4 s je Seite, die Endpunkte Mönchengladbachs tragen,
+und die Abbruchregel der Sitzungen verliert keine Sitzung, die der Server führt.
 
 ## 9. Der erste volle Lauf (2026-11-23/24)
 

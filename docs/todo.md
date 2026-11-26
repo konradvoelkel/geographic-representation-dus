@@ -1,116 +1,17 @@
-# Rückstand nach dem Ausbau
+# Rückstand
 
-Stand 2026-10-12, Code auf `v0.11.0`. Konrads Beobachtungen vom 2026-10-12, aufgenommen nach dem Abschluss des
-Ausbaus in acht Optionen und bewusst noch nicht bearbeitet. Jeder Punkt nennt den heutigen Stand und Wege, die
-zu prüfen wären; Entscheidungen fallen erst mit einem Plan (`docs/decisions.md`, Punkt 20: Pläne werden durch
-Beschreibungen ersetzt).
+Stand 2026-11-26, `v0.32.0`. Hier stehen nur **offene** Aufgaben; was erledigt ist, fliegt raus, und
+wichtige Änderungen stehen datiert in `CHANGELOG.md`. Jeder Punkt nennt, was offen ist und wo es
+herkommt; Entscheidungen fallen mit einem Plan oder einem Punkt in `docs/decisions.md`.
 
-## 1. Themenmodell: die 20 Themen tragen nicht
+Die Nummern bleiben, damit Verweise aus `docs/decisions.md`, `docs/architecture.md`, den
+Messdokumenten und dem Code halten; freie Nummern bleiben frei. Die Punkte 1 bis 7 sind erledigt
+(Themenmodell, Seitengröße, Skalierung, Methodik-Review, Literatur, Lizenz, Extraktor im
+Methodenteil); ihr Verlauf steht in `CHANGELOG.md` (0.12.0 und 0.22.0) und in den Dokumenten, auf die
+sie verweisen.
 
-**Erledigt am 2026-10-12, siehe `docs/themenmodell-2026-10.md`** (Entscheidungen in
-`docs/decisions.md`, Punkt 45; Messskript `docs/themenmodell-2026-10-messung.py`). Alle vier Wege
-sind abgearbeitet und gemessen: die Stoppwörter kommen aus dem Profil und aus dem Korpus, jeder
-größere Ausschuss hat ein gesätes Thema mit Namen, ein Klassifikator ordnet jedem Dokument einen
-passenden Ausschuss zu (Genauigkeit 0,941, Makro-F1 0,878; vier von fünf BV-Dokumenten bleiben
-aber in der Restklasse), und Einbettungen sind mit Zahlen begründet **nicht** gebaut. Offene
-Annahmen stehen in § 7 des Dokuments. Der Auftrag stand so:
-
-Heute: TF-IDF und NMF mit 20 Themen (`analysis/topics.py`, Option 06), Wörter je Thema als Label. Konrads
-Blick auf die Themen der Referenz: Thema 0 ist „Kosten/Geld", Thema 2 „Bauen", aber Thema 3 ist CDU vermischt
-mit anderem, Thema 16 ein seltsamer Linke-Block; vermutlich prägen die Fraktionsnamen aus Kopf und Betreff der
-Anträge die Themen. Zu prüfen, in dieser Reihenfolge, weil die Kosten steigen:
-
-- Stoppwörter um Parteien, Fraktionen, Personen und Gremienkürzel erweitern (Option 04 kennt die Muster) und
-  dasselbe Modell neu rechnen; billig, zeigt, wie viel davon Rauschen war.
-- Gesäte Themen statt freier NMF: je Ausschuss ein Thema mit Startwörtern (Ordnung und Verkehr, Sport, Bauen,
-  Schule, Kultur, Jugendhilfe), etwa anchored CorEx oder NMF mit initialisierter Wortmatrix; die Startwörter für
-  Ausschüsse wie KUA oder JHA aus den Dokumenten gewinnen, die nachweislich dort beraten wurden (OParl
-  `consultation`, Sitzungszuordnung).
-- Überwachte Zuordnung statt Themenmodell: die Beratungsfolge aus OParl als Label, ein leichter Klassifikator
-  (TF-IDF plus logistische Regression) ordnet dann jedes Dokument dem „passenden" Ausschuss zu, auch eines,
-  das nur im Rat war. Konrads Frage, ob das für jedes Schriftstück geht: für die meisten ja; querschnittliche
-  Vorlagen (Haushalt, Jahresabschlüsse, Personal) brauchen eine Restklasse. Voraussetzung ist der Vollabruf
-  mit `consultation` (STATUS.md, „Nächster Schritt", Lauf 4).
-- Einbettungen (Satz- oder Wortvektoren) mit Clustering: teuer auf 19 108 Dokumenten; nur, wenn die
-  billigeren Wege nicht reichen, und dann einmal offline mit gespeicherten Vektoren.
-
-## 2. Die Seite ist zu groß
-
-**Erledigt am 2026-10-13, siehe `docs/seitengroesse-2026-10.md`** (Messskript daneben,
-Entscheidungen in `docs/decisions.md`, Punkte 48, 49 und 50; offene Annahmen in § 8 des
-Dokuments). Gemessen wurde zuerst je Abschnitt, je Tabelle, je SVG und je Skript; daraus zwei
-Änderungen und acht Posten, die mit gemessenen Bytes liegen bleiben. Elf lange Tabellen zeigen
-Kopf und drei Zeilen und klappen über „alle *n* Zeilen zeigen" auf (die Kernzahlen und die
-Tabellen 5, 6 und 6b bleiben offen, sie sind der Befund); die 41 Begriffslisten je Wahlbezirk
-stehen als `data/begriffe.json` daneben und kommen beim Aufklappen. `index.html` 1 281 464 →
-958 527 Byte (−25,2 %), Budget jetzt 1,0 MB in den Settings. Der Auftrag stand so:
-
-Heute: `index.html` 1,17 MB bei einem Budget von 1,5 MB, 38 Tabellen und alle Abschnitte ausgeklappt. Konrad
-wünscht eine kompaktere Darstellung: Tabellen zu, nur zwei bis drei Zeilen sichtbar, der Rest auf Bedarf.
-Wege: `<details>` je Tabelle mit sichtbarem Kopf und Vorschauzeilen, lange Tabellen wie `dokumente.json`
-nachladen (`data/` liegt ohnehin daneben), Abschnitte mit Zahlen als Unterseiten; danach das Budget neu
-setzen. Die Reihenfolge der Abschnitte (`docs/plans/00-synergien.md`, § 5.1) bleibt.
-
-## 3. Skalierung der Kennzahlen
-
-**Erledigt am 2026-10-13, siehe `docs/skalierung-2026-10.md`** (Entscheidungen in
-`docs/decisions.md`, Punkt 46; offene Annahmen in § 8 des Konzepts). Das Konzept nimmt alle 35
-Kennzahlen der Seite mit Zähler und Nenner auf und entscheidet je Kennzahl, welche Normierung
-etwas ändert: gebaut sind der Umschalter der Parteikarten (Anteil / Abweichung vom Mittel aller
-Parteien / Verhältnis zum Mittel), drei neue Einfärbungen der Karte (Treffer absolut, Treffer je
-Begriff im Wörterbuch, Abweichung vom Stadtmittel) mit der Kennzahlspalte der Bezirkstabelle, und
-die zweite Regression neben Tabelle 5; Gremien, Monate, Gewichtung, Kontrollvariablen und Begriffe
-bekommen keinen, je mit Grund. Der Auftrag stand so:
-
-Heute: Parteikarten und Tabellen zeigen je Partei den Anteil ihrer Dokumente mit Bezug auf einen Wahlbezirk,
-andere Kennzahlen absolute Treffer oder Quoten je Wahlberechtigte (Bartzsch normiert auf Wahlberechtigte).
-Konrad will nicht sehen, wo SPD oder AfD viel reden, sondern wie viel mehr oder weniger als der Durchschnitt
-aller Parteien. Zu konzipieren: je Kennzahl eine Auswahl „absolut / je Wahlberechtigte / relativ zum
-Durchschnitt aller Parteien" (Differenz in Prozentpunkten oder Log-Verhältnis), mit gemeinsamen Klassengrenzen
-und Legende; der Kartenumschalter über `data-class-<metric>` ist der vorhandene Mechanismus dafür.
-
-## 4. Bartzschs Methodik kritisch prüfen
-
-**Erledigt am 2026-10-12, siehe `docs/methodik-review-2026-10.md`** (Regeln und Wirkung in
-`docs/decisions.md`, Punkt 44; offene Empfehlungen in § 6 des Reviews, die stärkste: „Treffer je Begriff im
-Wörterbuch" als zweite Kennzahl, siehe Punkt 3 hier). Der Auftrag stand so:
-
-Heute reproduziert `v0.11.0` die Zahlen der Arbeit exakt (Tabelle 5 mit Einheitsgewichten, Golden Master
-`tests/fixtures/mini/expected/`, slow-Test über die volle Referenz); pragmatische Regeln aus der Arbeit sind
-übernommen, etwa `hide_in_display = ["schulweg"]` (zählt, wird nicht angezeigt). Konrad will die Vorgabe
-lockern: ungefähre Reproduktion genügt. Vorgehen: vor der ersten bewussten Abweichung einen Tag setzen, der den
-letzten exakt reproduzierenden Stand markiert (heute ist das `v0.11.0`), in `docs/decisions.md` und im README
-dokumentieren, die Golden-Master-Tests danach gegen die eigene Referenz statt gegen die Arbeit messen. Zu
-hinterfragen: die Behandlung der Stadtwerke (heute keine Sonderregel; gesucht ist eine programmatische Regel
-für Einrichtungen, die den Stadtnamen tragen und überall treffen, übertragbar auf andere Städte), der
-Schulweg-Fall (vielleicht ist die pragmatische Lösung richtig), die Ausschlussliste der Stadtteilnamen, die
-Ausreißer 1 und 10.
-
-## 5. Literaturübersicht auf der Seite
-
-**Erledigt am 2026-10-13, siehe Abschnitt Literatur** auf der Berichtsseite („Literatur und verwandte
-Arbeiten", `#literatur`) und im README; die Einträge stehen als Daten in
-`src/georep/report/literatur.toml` (stadtneutral) und als `[[report.literature]]` im Profil der Stadt
-(Entscheidungen in `docs/decisions.md`, Punkt 47). Der Auftrag stand so:
-
-Heute nennt die Seite nur die Arbeit als Ursprung. Gewünscht ist ein kurzer Abschnitt mit sauberer Zitation:
-Bartzsch (Bachelorarbeit, HHU Düsseldorf, Januar 2026); die Kölner Untersuchung zu Parteien in
-Ratsdokumenten, die Bartzsch zitiert (im Literaturverzeichnis der Arbeit nachschlagen); OParl als Standard
-und seine Werkzeuge; die Akteure um „Politik bei uns" und „Politik bei uns 2" samt dem Blogbeitrag, der
-erklärt, warum das zweite Projekt eingeschlafen ist; weitere verwandte Arbeiten, soweit es sie gibt.
-
-## 6. Lizenz des Codes
-
-**Erledigt am 2026-10-12, siehe `docs/decisions.md`, Punkt 42** (Commit 079725e). Der Quelltext steht seit
-dem Tag `v0.11.0` unter GPL-3.0-or-later: `LICENSE` trägt den GPL-Text, `pyproject.toml` das Feld
-`license = "GPL-3.0-or-later"`, der README-Abschnitt „Lizenz" nennt beides mit Datum, und der Fuß der
-Berichtsseite trennt Quelltext (GPL) von Ergebnissen (CC0). Verworfen sind MIT, Apache-2.0 und AGPL, je mit
-Grund in Punkt 42. Daten, Fremddaten und Fixtures behalten die Lizenz ihrer Quelle (DL-DE BY 2.0,
-DL-DE Zero 2.0, ODbL, CC BY-SA, CC BY 4.0); die Seite nennt sie je Quelle. Der Auftrag stand so:
-
-Heute CC0 1.0 wie das Original (README, „Lizenz"). Konrad möchte den Code nach einem Tag auf GPL-3.0-or-later
-stellen (2026-10-12). CC0 des Ursprungs lässt das zu; Daten, Fremddaten und Fixtures behalten ihre eigenen
-Lizenzen (DL-DE BY 2.0, ODbL, CC BY-SA), die Seite nennt sie weiter je Quelle.
+Was die Vorhaben der Vorverarbeitung 2026-11 noch brauchen — Stufe 3 aller gebauten Vorhaben, Stufe 2
+von 16, 19, 27 und 28 —, steht in `docs/plans/README.md`, nicht hier.
 
 ## 8. Eine Probe mit `fetch papers --max-pages` verdirbt den folgenden vollen Abruf
 
@@ -135,6 +36,9 @@ Die Kodierung von Vorhaben 15 (2026-11-23, `docs/plans/15-funktion.md` § 4.2) b
 nennt zweimal eine falsche Fraktion (AfD aus dem Gegenstand, SPD aus dem Briefkopf-Fenster); 19 Fraktionen
 fehlen, davon 10 in Dokumenten der Urheberklasse „unbekannt", 7 in interfraktionellen Anträgen, deren
 Fraktionen nur im Text stehen (Frage 9.15 dort).
+Stand 2026-11-26: Vorhaben 15 vereinigt die Antragsteller aus drei Quellen im eigenen Schritt
+`cosponsors` (`dokumente_antragsteller.parquet`, `docs/decisions.md`, Punkt 75); `analysis/parties.py`
+selbst ist unverändert, und das BSW steht weiter nicht in `profiles/duesseldorf.toml`.
 
 ## 10. Textübernahme neu messen, wenn die Vorgänge gebaut sind
 
@@ -224,7 +128,8 @@ mit Beleg und A/B-Bau (Frage 9.17 dort).
 
 ## 16. Fingerprint je Schritt statt global
 
-Aufgenommen am 2026-11-26 aus den Reviews von 12 und 22 (Punkte 80 und folgende). Der Settings-Fingerprint
+Aufgenommen am 2026-11-26 aus den Reviews von 12 und 22 (Punkte 80 und folgende); zurückgestellt war
+es schon in `docs/plans/00-synergien.md`, § 8. Der Settings-Fingerprint
 ist global: `duesseldorf-vergleich` rechnet auf Pages jeden Schritt neu, weil `compare.period` ihn ändert
 (12: `identifiers` zweimal je rund 47 s), und die Periodenprofile rechnen ganz neu, wenn sich geerbte
 Hypothesen von `need` ändern, obwohl `need` dort aus ist (22, `robust_without`). Ein Fingerprint je Schritt
@@ -238,7 +143,6 @@ Aufgenommen am 2026-11-26 aus dem Review der Stufe 2 (Punkt 82); keiner verfäls
 (a) `identifiers` braucht für die Hauptperiode rund 27 s in einem Prozess, verteilt auf rund 25
 Regex-Durchläufe über 55 Mio. Zeichen (am teuersten `month_year`, `plan`, `amount_after`); billige
 Vorfilter je Muster oder ein Prozesspool über Textblöcke, je mit dem Vergleich gegen das Messskript.
-(b) Zwei Commits auf `feat/12-kennungen` (1d6a6a4, 1d2cc71) haben keinen Betreff im Imperativ.
 (c) In 37 Dokumenten nimmt 12 bei dreistelliger Unternummer oder ohne Bindestrich den ganzen Wert als
 Norm des Amts, 11 nur die Nummer (`tests/golden/test_identifiers_heads.py`); Nutzer des federführenden
 Amts lesen es aus 11. (d) Der Eintrag in `MUTATION_SCOPE` ist ungemessen.
@@ -262,3 +166,137 @@ gestrichene Einschränkungen, Verallgemeinerungen, eine Möglichkeit als Pflicht
 Betreff, Adressat einer Anfrage) an einer frischen Stichprobe, als eigenes Vorhaben; erst danach ein
 Stapellauf (5 bis 8 GPU-Stunden mit gemma4 für die Hauptperiode).
 
+## 20. `cryptography` ins Lock?
+
+Aufgenommen am 2026-11-26 aus `STATUS.md` (seit dem 2026-11-18 offen, Punkt 68). Ein PDF der
+Hauptperiode, `00403713.pdf`, ist mit AES verschlüsselt; pypdf braucht dafür `cryptography`, das nicht
+im Lock steht, meldet `CorruptPdfError: cryptography>=3.1 is required for AES algorithm`, und der Store
+behält den Text der Arbeit. Jeder Lauf mit PDFs zählt es als fehlerhaft und versucht es erneut. Zu
+entscheiden: `cryptography` aufnehmen (eine Abhängigkeit mehr, danach das Textpaket neu packen) oder
+den einen Text der Arbeit so lassen.
+
+## 21. Abhängigkeitsrunde: numpy und crosshair
+
+Aufgenommen am 2026-11-26 aus `STATUS.md` (Abhängigkeitsrunde vom 2026-11-15, Punkt 66). numpy steht
+im Lock auf 2.5.4; 2.5.5 erschien am 2026-11-15 abends und ist nicht gemessen (A/B-Bau aller Seiten
+nach `CLAUDE.md`, „Commits"). `crosshair-tool` steht fest auf 0.0.111, weil 0.0.113 in einem von vier
+vollen Läufen von `nox -s verify` selbst abstürzte; anheben, sobald eine Version das nicht mehr zeigt,
+und `verify` von Hand fahren (der Push-CI sieht es nicht).
+
+## 22. Monitor, VPS und Domain
+
+Aufgenommen am 2026-11-26 aus `STATUS.md` und `docs/technik.md`, § 5. Der Timer, der die laufende
+Periode fortschreibt (`deploy/README.md`: Installation, Trockenlauf und Erstabruf beschrieben, der
+Trockenlauf ist am 2026-10-13 gelaufen), ist nirgends installiert; bis dahin zeigt `2025/` den
+Schnappschuss vom 2026-10-13. VPS und Domain kommen später, ein R2-Bucket nicht (Antworten vom
+2026-10-13 auf die Fragen 7.1 und 7.4 in `docs/plans/fragen.md`).
+
+## 23. Aufräumen auf dem Rechner
+
+Aufgenommen am 2026-11-26; ein Handgriff des Eigentümers, kein Agent löscht hier etwas.
+(a) Die alte venv `/media/konrad/xtraspace/venvs/geographic-representation-dus` (Python 3.12,
+pip-Pins der Arbeit) wird nicht mehr gebraucht (vorher in `FORK-NOTES.md`). (b) Die Datenwurzel
+`…/xtraspace/georep/data-vollabruf/` des Vollabrufs der Metadaten vom 2026-10-14; seine Befunde stehen
+in `docs/befunde-2026-10-14.md`. (c) Der lokale Branch `backup/04-vor-rebase` (2026-10-12) aus dem
+Ausbau. (d) Logs und `anlegen.sh` unter `…/xtraspace/georep/worktrees/`; die Worktrees selbst sind
+seit dem 2026-11-26 entfernt.
+
+## 24. Titel der Arbeit und die Kölner Untersuchung
+
+Aufgenommen am 2026-11-26 aus `STATUS.md` (Punkt 47, seit dem 2026-10-13 offen). In der
+Literaturübersicht der Seite und im README stehen zwei Lücken sichtbar als „nachzutragen"
+(`pending = true` in `[[report.literature]]` des Stadtprofils): Titel, Monat der Einreichung und
+Betreuung der Arbeit, die ihr Repositorium nicht nennt, und die Kölner Untersuchung zu Parteien und
+Ratsdokumenten, die die Arbeit zitiert und die am 2026-10-13 in OpenAlex, Crossref, arXiv,
+Hochschulrepositorien und auf GitHub nicht auffindbar war. Beides ist nur beim Autor der Arbeit zu
+erfragen.
+
+## 25. Tabelle 5, Spalte „ohne Ausreißer", mit dem Autor der Arbeit klären
+
+Aufgenommen am 2026-11-26 aus `STATUS.md`. Die Spalte der Arbeit weicht von der Neuberechnung ab
+(`docs/baseline-2026-10-10.md`); die Tests frieren die Neuberechnung ein. Seit Punkt 61 heißt die
+Spalte auf der Seite „explorativ". Zu klären bleiben die Abweichung und die Wahl der beiden Bezirke.
+
+## 26. Die Grenze von 90 % im Runbook der Städte
+
+Aufgenommen am 2026-11-26 aus `STATUS.md` (seit dem 2026-10-15 offen, Punkt 65). Mönchengladbachs
+Straßen stimmen mit den Flächen des Wahltags zu 88,8 % je Wahlbezirk mit dem amtlichen Verzeichnis
+überein; alle 300 Abweichungen sitzen an Bezirksgrenzen, weil das Verzeichnis über Adressen und
+Overpass über Straßenzüge zuordnet. Zu entscheiden: ob die Grenze in `docs/runbook-stadt.md`, § 4,
+für Städte mit einem solchen Verzeichnis bleibt, anders gerechnet wird oder fällt.
+
+## 27. Die Eigenheiten von deal upstream melden
+
+Aufgenommen am 2026-11-26 aus `STATUS.md`. deal 4.24.6: `deal.raises` vergleicht exakte Typen, keine
+Unterklassen, und `deal.has()`/`deal.pure` sind nicht reentrant (der Patch bleibt nach einer Rekursion
+stehen). Beides ist umschifft (`docs/architecture.md`, „Verträge"), gemeldet ist es nicht.
+
+## 28. Mehrdeutige Beratungsfolgen über die Beratungen von F6 auflösen
+
+Aufgenommen am 2026-11-26. 1 535 Dokumente der Periode 2014 bis 2020 und 1 275 Mönchengladbachs bleiben
+„Gremium unbekannt", weil ihre Beratungsfolge mehrere Organisationen nennt und
+`OparlPaper.consultation_organizations` die Liste sortiert und entdoppelt liest; welches Gremium
+federführend war, steht darin nicht (Punkt 58; fünf Auswahlregeln gemessen, die beste trifft 59,9 %).
+Der Netzlauf von F6 vom 2026-11-23/24 (`docs/runbook-sitzungen.md`, § 9) hat die Beratungen selbst mit
+Sitzung und Tagesordnungspunkt geholt; damit wäre die Reihenfolge bestimmbar. Eine eigene Messung,
+Wirkung auf die Gremientabellen mit A/B-Bau.
+
+## 29. Overpass: der Wiederholungsweg über alle Stimmbezirke Düsseldorfs
+
+Aufgenommen am 2026-11-26 aus `STATUS.md`. Seit Punkt 55 wiederholt `fetch_street_names` bei 504 und
+429 selbst, je Stimmbezirk. Gelaufen ist das an Mönchengladbach (179 Stimmbezirke, 2026-10-15), über
+die 306 Stimmbezirke Düsseldorfs nicht: gemessen ist die Ursache, nicht die Heilung. Beim nächsten
+Abruf von `streets_osm` nichts am Cache-Schlüssel ändern (`docs/technik.md`, § 2).
+
+## 30. Offene Auswertungen
+
+Aufgenommen am 2026-11-26 aus `docs/statistik.md`, § 13 (dort steht jetzt ein Verweis hierher).
+(a) Ein Ausschussklassifikator, der auf der Beratungsfolge statt auf der Drucksachennummer trainiert
+und bewertet wird; er mäße die Zuordenbarkeit der BV- und Ratsdokumente an einem Label, das nicht im
+Text steht (`docs/befunde-2026-10-14.md`, § 6, Punkt 1; `docs/statistik.md`, § 10). (b) Umlaute sind
+Wortgrenzen im Matcher („Köölberg" trifft „ölberg"); die Seite sagt es nicht
+(`docs/methodik-review-2026-10.md`, § 6). (c) Ein Konfidenzintervall oder ein Permutationstest neben
+dem p-Wert von Tabelle 5; bei n = 41 billig. (d) Typfilterung der Wikidata-Orte (`P31` auf Straße,
+Platz, Park, Gebäude, Gewässer) statt der Namensregel; braucht eine SPARQL-Änderung und einen neuen
+Abruf, und die Typhierarchie ist für Kommunalobjekte lückenhaft.
+
+## 31. `modified_since` bei den Beratungen prüfen
+
+Aufgenommen am 2026-11-26 aus `docs/runbook-sitzungen.md`, § 8 (dort steht jetzt ein Verweis
+hierher). Bei den Papern liefert der Server mit dem Filter Geändertes und Gelöschte (Option 07); für
+die Liste `consultations` ist das plausibel, aber nicht belegt. Prüfung nach dem ersten vollen Lauf
+(2026-11-24), frühestens einen Tag später:
+
+```bash
+raw=$(uv run georep paths | sed -n 's/^root=//p')/raw
+uv run georep fetch consultations --force            # inkrementell: "seit <datum>"
+cp "$raw/consultations.jsonl" /media/konrad/xtraspace/georep/consultations-inkrementell.jsonl
+rm "$raw/consultations.jsonl"                        # ohne Bestand ist der nächste Lauf voll
+uv run georep fetch consultations
+diff <(sort /media/konrad/xtraspace/georep/consultations-inkrementell.jsonl) <(sort "$raw/consultations.jsonl") | head
+```
+
+Gleich: der Filter trägt, `council.incremental` bleibt. Fehlen im inkrementellen Bestand Zeilen oder
+stehen Gelöschte darin: `incremental = []` im Stadtprofil, und `consultations` holt wie die anderen
+beiden jedes Mal alles.
+
+## 32. Der wöchentliche Qualitätslauf ist rot
+
+Aufgenommen am 2026-11-26. `.github/workflows/quality.yml` scheitert seit dem 2026-11-16 (auch am
+2026-11-23) im Schritt „Reihenfolgeunabhaengigkeit der Tests", also `nox -s alone`; bis zum 2026-11-09
+war er grün. Die Ursache ist nicht untersucht.
+
+## 33. Lokale Datenwurzeln neu rechnen
+
+Aufgenommen am 2026-11-26. Im Hauptklon meldet `georep status` fast jeden Schritt als offen
+(„Settings geändert", „Ausgabe fehlt"), weil die Läufe der Vorverarbeitung in den Worktrees unter
+eigenen Datenwurzeln liefen. Zu tun, ohne Netz: `georep bootstrap` und `georep run` je Profil, zuerst
+`duesseldorf` (die Perioden lesen sein Wörterbuch), dann `duesseldorf-2014`, `duesseldorf-2025`,
+`duesseldorf-vergleich` und `moenchengladbach`. Die Netzschritte Mönchengladbachs bleiben danach
+„offen: Settings geändert", bis ein Abruf ohnehin ansteht.
+
+## 34. Mutationstest der Berichtsseite
+
+Aufgenommen am 2026-11-26 aus `STATUS.md` (Absicherung vom 2026-10-13, `docs/absicherung-2026-10.md`).
+`report/model.py`, `report/charts.py` und `report/build.py` (rund 3 500 Zeilen) sind nie mit
+`nox -s mutate` gemessen worden.

@@ -513,7 +513,7 @@ obwohl ihre Folge Gremien nennt.
    die Zuordenbarkeit**. Die Beratungsfolge **ist** inzwischen gebaut (Punkt 58), aber nur als Quelle
    des beratenden Gremiums — der Klassifikator lernt und wird weiter an der Nummer gemessen. Dass die
    Folge auch das Label geben könnte, das *nicht* im Text steht, ist der offene Teil des Vorschlags
-   aus dem Befundbericht (§ 13 unten).
+   aus dem Befundbericht ([todo.md](todo.md), Punkt 30 a).
 2. **Die 145 Widersprüche der Hauptperiode sind keine Parserfehler**, und sie zerfallen in zwei
    Klassen, die beide für die Nummer sprechen (gemessen 2026-10-14, eingefroren in
    `tests/golden/test_bodies_reference.py`): bei **88** Dokumenten hat das Kürzel der Nummer *keine
@@ -620,54 +620,13 @@ nicht mehr.
 
 ## 13. Was als nächste Auswertung offen ist
 
-Vier der fünf Punkte des Befundberichts sind am 2026-10-14 umgesetzt worden; sie stehen
-durchgestrichen mit dem, was von ihnen offen blieb. Entschieden wird hier nichts.
-
-**Aus dem Befundbericht** ([befunde-2026-10-14.md](befunde-2026-10-14.md), § 6):
-
-1. ~~**Die Beratungsfolge als zweite Quelle des Gremiums.**~~ **Umgesetzt am 2026-10-14**
-   ([decisions.md](decisions.md), Punkt 58; die Zahlen in § 10 oben). „Unbekannt" fällt in der
-   Periode 2014 bis 2020 auf 7,4 %, in der laufenden auf 0 % und in Mönchengladbach auf 44,0 % —
-   **nicht** auf die 1,6 %, die der Befund schätzte: er zählte die mehrdeutigen Folgen mit, und die
-   entscheiden nicht. (Der Befundbericht nennt an dieser Stelle 8,5 % und 1 896 Dokumente; das ist
-   der Stand vor dem Nachtrag von `POA` und `ACI`, siehe § 10.)
-   **Offen bleibt der zweite Nutzen des Vorschlags:** ein Ausschuss-Klassifikator, der auf der
-   Beratungsfolge statt auf der Drucksachennummer *trainiert und bewertet* wird, würde die
-   Zuordenbarkeit der BV- und Ratsdokumente an einem Label messen, das nicht im Text steht, statt
-   sie an einer Untergrenze zu schätzen (§ 10, Einwand 1). Gebaut ist davon nichts.
-2. ~~**Die Spalte „ohne Ausreißer" von Tabelle 5.**~~ **Umgesetzt am 2026-10-14**
-   ([decisions.md](decisions.md), Punkt 61): die Spalte bleibt — sie ist die Tabelle der Arbeit —,
-   heißt im Kopf „explorativ", und darunter stehen zwei Sätze, die den Grund und beide p-Werte
-   nennen (0,083 in der alten Periode gegen 0,036 hier, mit den Texten der Arbeit 0,037). Mit Lukas
-   zu klären bleibt sie trotzdem, zusammen mit der Abweichung aus
-   [baseline-2026-10-10.md](baseline-2026-10-10.md).
-3. ~~**Urheberklassen für Mönchengladbach.**~~ **Umgesetzt am 2026-10-14**
-   ([decisions.md](decisions.md), Punkt 59): `fraction_types = ["3 - Fraktionsantrag"]` (581
-   Dokumente) und `person_types = ["6.1 - Mitgliederantrag"]` (36) entscheiden die Klasse aus der
-   Dokumentart, die Partei kommt aus Titel und Briefkopf. „Urheber unbekannt" 100 % → **0,0 %**.
-   Offen bleibt eine Ebene tiefer: 339 der 581 Fraktionsanträge nennen keine Partei, 390 von ihnen
-   tragen gar keinen Text.
-4. ~~**Eigene Urhebermuster für die Periode 2014 bis 2020.**~~ **Umgesetzt am 2026-10-14**
-   ([decisions.md](decisions.md), Punkt 60): `Verwaltungsvorlage` ist die Verwaltung, und der
-   Briefkopf der damaligen Vorlagenform nennt die Fraktion. „Unbekannt" 55,9 % → **10,6 %**; die
-   Hauptperiode und die laufende Periode sind byteidentisch unberührt (ein `slow`-Test hält das
-   fest). Offen bleiben die 2 122 Vorlagen aus der Politik, deren Kopf das Wort „fraktion" nicht
-   trägt; ein Personenmarker schließt sie **nicht**, weil er in 776 von 1 503 Fällen die Anrede
-   trifft statt des Urhebers.
-5. **Die Anfrage an Mönchengladbach** nach den Stimmbezirksflächen von 2025 — der einzige Punkt aus
-   § 6, der noch offen ist (Konrads Handgriff).
-
-**Aus dem Methodik-Review** ([methodik-review-2026-10.md](methodik-review-2026-10.md), § 6):
-
-6. **Zwei der drei Sätze stehen inzwischen da.** Die Wörterbuchgröße seit dem 2026-10-13 in
-   „Methode und Grenzen", und dass die zweite Spalte von Tabelle 5 nach Ansehen der Daten
-   entstanden ist, seit Punkt 61 unter der Tabelle. Offen bleibt der dritte: **Umlaute sind
-   Wortgrenzen** im Matcher („Köölberg" trifft „ölberg"), und das erwartet niemand.
-7. **Konfidenzintervall oder Permutationstest** neben dem p-Wert von Tabelle 5. Bei n = 41 ist das
-   billig und die ehrlichere Darstellung.
-8. **Typfilterung der Wikidata-Orte** (`P31` auf Straße, Platz, Park, Gebäude, Gewässer) statt der
-   Namensregel. Genauer, braucht aber eine SPARQL-Änderung und einen neuen Abruf von Stunden, und die
-   Typhierarchie ist für Kommunalobjekte lückenhaft.
+Die offenen Auswertungen stehen als Aufgaben in [todo.md](todo.md), Punkt 30: ein
+Ausschussklassifikator auf der Beratungsfolge statt auf der Drucksachennummer, ein Satz dazu, dass
+Umlaute im Matcher Wortgrenzen sind, ein Konfidenzintervall oder Permutationstest neben dem p-Wert von
+Tabelle 5 und eine Typfilterung der Wikidata-Orte. Die vier Vorschläge des Befundberichts
+([befunde-2026-10-14.md](befunde-2026-10-14.md), § 6, Punkte 1 bis 4) sind am 2026-10-14 umgesetzt
+(Punkte 58 bis 61), sein fünfter, die Flächen Mönchengladbachs zum Stand der Wahl, am 2026-10-15
+(Punkt 65); was davon an Zahlen offen bleibt, steht in den §§ 8 bis 10 oben.
 
 **Bewusst nicht gemacht**, je mit Grund im Review: „schulweg" aus der Zählung nehmen (§ 2.3), die
 Ausreißer automatisch bestimmen (§ 2.7), Erwähnungen statt Dokumente zählen (§ 2.5), die
@@ -675,5 +634,3 @@ Ausschlussliste programmatisch erzeugen (§ 2.2), Einbettungen für das Themenmo
 ([themenmodell-2026-10.md](themenmodell-2026-10.md), § 5), ein Umschalter „je 1000 Wahlberechtigte"
 als eigenes Radio und fünf weitere Normierungen
 ([skalierung-2026-10.md](skalierung-2026-10.md), § 5).
-
-`docs/todo.md` ist abgearbeitet; alle sechs Punkte sind erledigt und je mit ihrem Dokument verlinkt.

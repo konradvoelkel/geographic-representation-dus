@@ -26,8 +26,8 @@ data_root = "/media/konrad/xtraspace/georep/data"
 cache_root = "/media/konrad/xtraspace/georep/cache"
 ```
 
-Die alte venv `/media/konrad/xtraspace/venvs/geographic-representation-dus` (Python 3.12, pip-Pins der
-Arbeit) wird nicht mehr gebraucht und kann gelöscht werden.
+Was auf diesem Rechner noch aufzuräumen ist (die alte venv der Arbeit und anderes), steht in
+`docs/todo.md`, Punkt 23.
 
 ## Push
 

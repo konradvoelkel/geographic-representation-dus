@@ -388,5 +388,5 @@ Erwartungen vom Mini-Paket auf das echte umstellen.
    der Wurzel liegt).
 4. Dieses Runbook von § 1 an.
 
-Was dabei auffällt, gehört in `docs/decisions.md`; was offen bleibt, in § 8 des Plans
-`docs/plans/01-staedte.md`.
+Was dabei auffällt, gehört in `docs/decisions.md`; was offen bleibt, in `docs/todo.md` (die
+Grenze von 90 % aus § 4 steht dort als Punkt 26).
