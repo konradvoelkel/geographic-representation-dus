@@ -389,6 +389,84 @@ enabled = false
 entries = 50                   # neueste Dokumente je Feed; 50 reichen im Median 140 Tage zurück, rund 25 KB je Feed (Messdokument § 3.6)
 timezone = "Europe/Berlin"     # Zeitzone des Vorlagendatums: published ist 00:00 Ortszeit des Tages
 
+# --- Vorhaben 26: Beschlusslage und Antragserfolg (docs/plans/26-beschluesse.md, § 3.1, § 6, § 10) ----
+[outcomes]                     # Beschlusslage je Ratsdokument aus dem Eintrag der Sitzungsleitung (OParl result am Tagesordnungspunkt) und Antragserfolg je Fraktion. Aus, bis ein Stadtprofil den Wortschatz nennt; die Sprache der Einträge ist je Stadt eine andere (Mönchengladbach, § 10)
+enabled = false                # Schalter beider Schritte (council_results, outcomes); ein Stadtprofil schaltet ihn mit [outcomes.results] ein
+package = ""                   # die Tabelle „Paper x Tagesordnungspunkt" aus `georep pack --outcomes` für Läufe ohne Netz (GitHub Pages); im Profil je Periode. Leer: nur der Netzlauf aus raw/ (Fundament F6)
+practice_share = 0.4           # ein Gremium-Jahr, in dem mindestens dieser Anteil der Anträge mit Ergebnis „erledigt" ist, trägt eine Praxis der Sitzungsleitung, kein Ergebnis: dort ist „erledigt" nicht tragfähig (§ 3.4, § 5; gemessen lag zwischen 16 % und 47 % keine Zelle)
+practice_min = 10              # und mindestens so viele „erledigt"; sonst träfe die Regel ein Gremium mit fünf Anträgen im Jahr
+followup_roles = ["vorlage", "information", "bedarf", "af"]  # Rollen der Drucksachen (Vorhaben 14), die als Folgevorlage der Verwaltung zählen, wenn sie den Antrag über eine starke Kante nennen (§ 3.7)
+results = {}                   # Wert von result -> [stufe, klasse]: stufe "sache" (beschlossen, geaendert, abgelehnt, zurueckgezogen) oder "stand" (erledigt, vertagt, offen); im Stadtprofil. Ein Wert, der fehlt, bricht den Schritt mit seinem Wortlaut ab
+
+# Der beantragte Prüfauftrag (§ 3.4): verlangt ein Antrag von der Verwaltung **nur**, etwas zu prüfen,
+# zu berichten oder vorzulegen? Gelesen wird der Beschlusstext im kleingeschriebenen Textstore vom
+# letzten Marker bis zur Begründung, Satz für Satz: ein Satz mit Prüfwort ist eine Prüfung und trägt
+# zusätzlich eine Maßnahme, wenn vor dem Prüfwort eine steht oder danach eine folgt, die nicht in einer
+# Frage oder unter Vorbehalt steht; ein Satz ohne Prüfwort und ohne Fragezeichen ist eine Maßnahme, wenn
+# er eine Handlung festlegt. Prüfauftrag heißt: mindestens eine Prüfung, keine Maßnahme. Die Regel ist
+# die vor der Stichprobe festgeschriebene (Commit 94da91f), unverändert; die Kodierung fand mit ihr 19
+# der 26 Prüfaufträge (Recall 0,73), darum steht sie nur als beschreibende Spalte da (Rückfall 1, § 5).
+# Muster der deutschen Sprache, keine Stadt; kleingeschrieben, eine Liste ist eine Alternative.
+[outcomes.review]
+marker = [
+    '(?:änderungs|ergänzungs|haushalts|zusatz)?-?antrag\s*:',
+    'beschlussvorschlag\s*:?', 'beschlussentwurf\s*:?', 'beschlusstext\s*:?',
+    '(?:folgendes|nachstehendes|wie folgt|folgenden beschluss)\s+zu\s+(?:beschließen|fassen)\s*:?',
+    'möge\s+(?:folgendes\s+|wie folgt\s+)?beschließen\s*:?',
+    '(?:beschließen|abstimmen) zu lassen\s*:?', 'zur abstimmung zu (?:bringen|stellen)\s*:?',
+]
+reason = ['begründung', 'sachdarstellung', 'erläuterung\s*:', 'mit freundlichen grüßen']
+reason_from = 40               # eine Überschrift „Begründung" ganz am Anfang ist ein Titel, kein Ende des Beschlusstexts
+window = 2000                  # in so vielen Zeichen vom Anfang steht der Marker, wenn es einen gibt
+max_chars = 1500               # höchstens so viel Beschlusstext; dahinter steht fast immer schon die Begründung
+review = [
+    'prüf', 'untersuch', 'evaluier', 'machbarkeit', 'bericht', 'sachstand', 'darzustellen', 'darstellung',
+    'aufzuzeigen', 'zu informieren', 'informier', 'konzept', 'vorzulegen', 'vorlegen', 'zu erarbeiten',
+    'erarbeit', 'zu klären', 'zu ermitteln', 'stellung zu nehmen', 'stellungnahme', 'auskunft',
+    'zu erläutern', 'eruier', 'auszuloten', 'sondier', 'bewert', 'analys', 'gutacht', 'studie', 'erhebung',
+    'zählung', 'vorzustellen', 'vorstellung', 'zu präsentieren', 'präsentation', 'zu unterrichten',
+    'unterricht',
+]
+not_review = ['beschluss\s?darstellung', 'darstellung des beschlusses', 'prüfstand', 'prüfungsamt']
+separable = [
+    'an', 'auf', 'aus', 'ab', 'ein', 'um', 'her', 'hin', 'vor', 'zu', 'bei', 'mit', 'nach', 'dar', 'fest',
+    'frei', 'bereit', 'durch', 'weg', 'zurück', 'wieder', 'hinzu', 'herbei', 'instand', 'sicher', 'statt',
+    'teil', 'still', 'weiter', 'fort', 'offen', 'bekannt',
+]
+not_verb = [
+    'den', 'dem', 'der', 'denen', 'diesen', 'einen', 'ihnen', 'ihren', 'seinen', 'allen', 'unseren',
+    'welchen', 'jenen', 'eigenen', 'anderen', 'beiden', 'neuen', 'folgenden', 'lasten', 'gunsten',
+    'zeiten', 'seiten', 'zwecken', 'ehren', 'beginn', 'kosten', 'fragen', 'themen',
+]
+# Eine Handlung, die der Antrag festlegt; vor diesen stehen die beiden Formen des „zu"-Infinitivs
+# (trennbar wie „einzurichten" und frei wie „zu beschaffen"), gebaut aus separable und not_verb.
+measure = [
+    '\b(?:die stadt|der rat|die bezirksvertretung|die bv ?\d*|der ausschuss|die verwaltung|der oberbürgermeister|der jugendrat|der beirat)\b[^.,]{0,40}?\b(?:führt|beteiligt|richtet|schafft|setzt|nimmt|gibt|errichtet|übernimmt|benennt|fördert|startet|veranstaltet|baut|pflanzt|sorgt|tritt|schließt|ändert|verzichtet|beschafft|erhöht|senkt|stattet)\b',
+    '\bbeschließt\b(?!\W+(?:dass|,)?\s*(?:die |der )?(?:verwaltung|oberbürgermeister))',
+    '\bbewilligt\b', '\bgewährt\b', '\bvergibt\b', '\bstellt\b[^.]{0,80}\b(?:bereit|ein)\b',
+    '\b(?:haushalts|finanz|sach|personal|eigen)?mittel\b[^.]{0,120}\b(?:bereit\w*|ein\b|eingestellt|zur verfügung)',
+    '\b(?:euro|haushalt\w*)\b[^.]{0,80}\b(?:eingestellt|bereitgestellt|zur verfügung gestellt|einzustellen)',
+    '\bwird wie folgt (?:geändert|ergänzt|gefasst)', '\bwird (?:ersetzt|gestrichen|ergänzt)\b',
+    '\blehnt\b[^.]{0,60}\bab\b', '\bunterstützt\b', '\bbegrüßt\b', '\bsetzt sich\b', '\bverurteilt\b',
+    '\bbekennt sich\b', '\bspricht sich\b', '\bstimmt\b[^.]{0,60}\bzu\b',
+    '\bsoll(?:en)?\b[^.]{0,100}\bwerden\b',
+    '\b(?:wird|werden)\b[^.]{0,120}?\b(?:festgesetzt|eingerichtet|eingeführt|umgesetzt|aufgestellt|angebracht|errichtet|ausgewiesen|bereitgestellt|eingestellt|gestrichen|ausgesetzt|durchgeführt|angelegt|erhöht|gesenkt|gekürzt|verlängert|vergeben|zurückgenommen|fortgeschrieben|benannt|umbenannt|saniert|gepflanzt|installiert|geschaffen|freigegeben|aufgehoben|verkauft|erworben)\b',
+]
+proviso = ['\b(?:wenn|sofern|falls|soweit|sollte)\b[^.]{0,60}\b(?:prüf|möglich|machbar)']  # „wenn die Prüfung positiv ausfällt, …": die Maßnahme gehört zur Prüfung (Codebuch, Frage auftrag)
+neutral = [
+    'vorzulegen', 'vorzustellen', 'darzustellen', 'darzulegen', 'aufzuzeigen', 'mitzuteilen', 'aufzulisten',
+    'auszuarbeiten', 'einzuholen', 'anzufertigen', 'durchzuführen', 'vorzunehmen', 'nachzugehen',
+    'auszuwerten', 'berichten', 'informieren', 'erläutern', 'ermitteln', 'klären', 'erarbeiten',
+    'untersuchen', 'evaluieren', 'prüfen', 'überprüfen', 'bewerten', 'analysieren', 'erheben', 'entwickeln',
+    'erstellen', 'beauftragen', 'vergeben', 'erwarten', 'beantworten', 'werden', 'lassen', 'nehmen',
+    'setzen', 'bringen', 'stellen', 'beraten', 'erfahren', 'wissen', 'einzuladen',
+]
+question = ['^\W{0,4}(?:[a-zäöüß]+\W+){0,3}?(?:ob|wie|inwieweit|inwiefern|welche\w*|wann|wo\w*|dass|weshalb|warum|unter welchen|in welche\w*|mit welche\w*)\b']
+question_chars = 60            # so weit hinter dem Prüfwort steht das Fragewort („prüfen, ob …")
+sentence = ['(?<=[.;!?])\s+', '\s(?=\d{1,2}[.)]\s)', '\s•\s', '\s[-–]\s(?=[a-zäöü])']
+title = ['prüfauftrag', 'prüfantrag', '\bprüfen\b', '\bprüfung\b', 'sachstand', 'bericht(?!s?vorlage)']  # nur für ein Dokument ohne Text
+frame = ['tagesordnung', 'bitte[nt]? (?:ich|wir) sie', 'zur abstimmung']
+
 # --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.2, § 6 und § 10) --------
 # Abschnitte (Betreff, Beschlussvorschlag, Sachdarstellung, Rumpf …) als Spannen auf dem Rohtext
 # und je Korpus-ID der Kopf (Amt, Amtsbezeichnung, Beratungsfolge, Sitzung, Briefdatum). Die Muster

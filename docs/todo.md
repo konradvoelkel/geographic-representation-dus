@@ -202,3 +202,15 @@ Amtsbezeichnung (Review von Vorhaben 11, N1, 2026-11-24): ohne Zeilen der Beratu
 endet der Kopf am Ende der Amtsbezeichnung, und der Abschnitt `kopf_dezernat` wird dort geteilt.
 Schneiden müsste er am Ende der Zeile des letzten Kopffelds. Nicht jetzt, weil Vorhaben 16 genau
 diese Grenze vermessen hat; mit `struktur-2` und 16 zusammen.
+
+## 15. Beschlusslage: Rückstand aus dem Review von Vorhaben 26
+
+Aufgenommen am 2026-11-26 aus dem Review der Stufe 2 (Punkt 79). (a) Die Folgevorlage ist je Profil
+eine Untergrenze: die Kanten von 14 tragen nur Drucksachen des eigenen Korpus, 114 von 1 508 Anträgen
+haben ihre Folgevorlage nur in der Nachbarperiode — soll 14 Kanten aus den Nachbarperioden
+mitschreiben? (b) Ein Wortschatz für Mönchengladbach ist eine eigene Messung (48 Werte, darunter
+„Siehe Niederschrift", „Ohne Abstimmung", „Die Bezirksvertretung wurde angehört"). (c) Das Messskript
+von 26 bricht ab, sobald Dateien Mönchengladbachs im Datenordner liegen. (d) `rolle` bedeutet in
+`beratungsverlauf`, `beschlusslage` und `dokumente_vorgang` dreierlei; vor Stufe 3 umbenennen oder in
+`schema.json` sagen. (e) `[bodies.organizations]` braucht vor Stufe 3 die Kürzel `gr/400224` und `gr/65`
+mit Beleg und A/B-Bau (Frage 9.17 dort).

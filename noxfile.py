@@ -439,6 +439,11 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
             "tests/property/test_feeds_props.py",
         ),
     ),
+    # Vorhaben 26: Beschlusslage, Prüfauftrag, Praxiszellen, Antragserfolg; Zeit nicht gemessen
+    "outcomes": (
+        ("src/georep/analysis/outcomes.py",),
+        ("tests/unit/test_outcomes.py", "tests/property/test_outcomes_props.py"),
+    ),
     # Vorhaben 11: das Regelwerk der Dokumentstruktur; Zeit nicht gemessen
     "structure": (
         ("src/georep/prep/structure.py",),

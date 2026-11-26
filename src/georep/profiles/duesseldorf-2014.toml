@@ -113,6 +113,10 @@ raw_texts = ""                 # Fundament F1: ebenso das Rohtextpaket der Haupt
 [embeddings]
 neighbors_package = ""         # das Nachbarpaket gehört zur Hauptperiode; die Nachbarn dieser Periode rechnet `georep run --models` lokal, auf Pages bleibt die Tabelle leer
 
+# --- Vorhaben 26: Beschlusslage (docs/plans/26-beschluesse.md); der Wortschatz kommt aus dem Stadtprofil
+[outcomes]
+package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-2014-2020.parquet"  # aus dem eigenen Abruf der Beratungen (Frage 9.10), nicht aus der Kopie der Hauptperiode
+
 # --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.6) ------------------------
 # Erbt alles vom Stadtprofil und ändert nur, was das Vorlagenformular dieser Periode anders macht
 # (Block duesseldorf-2014 des Entwurfs): die Beratungsfolge steht am Ende der ersten Seite und hat
