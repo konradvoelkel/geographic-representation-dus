@@ -3,7 +3,9 @@
 ## Vorverarbeitung 2026-11
 
 Stand 2026-11-26, `main` auf `v0.32.0`. Meta-Plan:
-[../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md). Je Vorhaben ein Messdokument
+[../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md). **Fortsetzung:
+[../plan-zeigen-2026-11.md](../plan-zeigen-2026-11.md)** (Konrad, 2026-11-26: zuerst Stufe 3 der
+gebauten Vorhaben, dazu 16 und 28 Ebene A parallel und 19 Stufe 2). Je Vorhaben ein Messdokument
 `NN-name.md` mit Messskript `NN-name-messung.py` (Stufe 1, Vorlage § 12.1); die Änderungen der Synergie
 stehen in § 10 des jeweiligen Messdokuments ([00-synergien-2026-11.md](00-synergien-2026-11.md) ist der
 Stand von Haltepunkt A und historisch); [fragen-2026-11.md](fragen-2026-11.md) sammelt die Fragen an
@@ -26,7 +28,8 @@ Prüfung der Schrittfolge).
 `validierung/12-kennungen/labels-2.csv` vor), die Rückfallregel von 14 als Verfahren in `score` oder
 die Prüfstichprobe als `14-vorgaenge-3-f4`, `16-ortsbezug-f4`, die Labels von
 `12-kennungen-recall-f4` und ein Maß für „Kategorie im Thema-Set" (17). Der Satz in `guete.json`
-nennt „desselben Modells" nicht, die Seite soll es sagen, solange Frage 19 offen ist. Keine Stufe 3
+nennt keine Modelle; nach Frage 19 (beantwortet 2026-11-26) nennt jede Seite, wie geprüft wurde, und
+der F4-Nachzug bringt den Satz mit den Modellen je Rolle (Plan der Fortsetzung, V3). Keine Stufe 3
 ist begonnen.
 
 | Nr. | Vorhaben | Urteil (Stufe 1) | Stufe 2 | Stufe 3 | Endzustand oder wartet auf |
@@ -39,7 +42,7 @@ ist begonnen.
 | 16 | Ortsbezug verfeinern | **bauen** (2026-11-23): Stelle je Treffer (explorativ), Hausnummern (92,3 % verortbar), Nebenregel C als Gewichtsvariante `ortsbezug` (frische 100 Paare: F1 0,828, κ 0,249), nicht als Standardzählung | **nicht gebaut**; seine Voraussetzungen (F1, F7, 11, `point_shares` aus 22) liegen auf `main` | Gewichtungszeilen auf `index.html`; Radio auf der Karte nur auf Konrads Wunsch (Frage 45) | Stufe 2; vorher § 10 durch den Supervisor (§ 6 ist durch die Synergie überholt) |
 | 17 | Zeit und Neuigkeiten | **bauen** (2026-11-23): Lexikon 2026-11-23.1 mit Präzision 94/100, 41 von 41 Feeds gültig; H17.2 bestätigt, H17.1 und H17.3 nicht | `main`, `v0.27.0`, Punkt 78 | offen: `zeit.html`, Feed-Liste der laufenden Periode | Stufe 3 |
 | 18 | Einbettungen, Ähnlichkeit, Suche | **bauen** (2026-11-24): nDCG@10 Einbettung 0,883 gegen BM25 0,709; ähnliche Dokumente Präzision@5 0,832; keine Cluster; Vektoren nicht ins Repo (Frage 26) | `main`, `v0.26.0`, Punkt 77 (`georep search`, Nachbartabelle als Paket) | offen: „ähnliche Dokumente" im Dokumentdialog | Stufe 3, nach dem Dialog-Haken von 14; Lizenz der Modellgewichte (Frage 47) |
-| 19 | Politikfelder (CAP) | **bauen mit Weg 3b** (2026-11-24): Nachbau der Babel Machine, Makro-F1 0,704 (0,620–0,807), unter 15 GPU-Minuten für alle Perioden; Gewichte nur lokal | **nicht gebaut** | `themen.html` | Stufe 2 (GPU unter 15 min); Frage 37 (Lizenz der CAP-Codes) vor jeder Veröffentlichung; vorher § 10 durch den Supervisor |
+| 19 | Politikfelder (CAP) | **bauen mit Weg 3b** (2026-11-24): Nachbau der Babel Machine, Makro-F1 0,704 (0,620–0,807), unter 15 GPU-Minuten für alle Perioden; Gewichte nur lokal | **nicht gebaut** | `themen.html` | Stufe 2 (GPU unter 15 min), Paket und Tabelle getrennt unter CC BY-NC-SA 4.0 (Frage 37, beantwortet 2026-11-26); vorher § 10 durch den Supervisor |
 | 20 | Kurzfassungen (lokal) | **bauen mit gemma4** (2026-11-24, zwei Vorbehalte); die vorab festgelegte Nachmessung an 50 frischen Dokumenten (2026-11-26) verwarf gemma4 (4/50) und qwen3.6:27b (5/50, Grenze 2) | `main`, `v0.32.0`, Punkt 83: gebaut, in allen Profilen aus, kein Stapellauf (Frage 38) | keine: Kurzfassungen werden nie veröffentlicht | **Endzustand gebaut und aus**; weiter nur mit einem Codebuch Fassung 2 als eigenes Vorhaben |
 | 21 | Geld auf der Karte | nicht gemessen | – | – | Stufe 1, nach Stufe 2 von 16 (11 und 12 liegen vor); Briefing überholt (Meta-Plan § 11) |
 | 22 | Bedarf und Aufmerksamkeit | **bauen** (2026-11-23): vier offene Quellen plus Lärm; H1 bestätigt, aber nur zwischen Stadtbezirken; H2, H3 nicht | `main`, `v0.29.0`, Punkt 80 | offen: `bedarf.html` | Stufe 3 |

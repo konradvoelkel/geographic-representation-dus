@@ -4,7 +4,9 @@ Aufbau: `docs/architecture.md`. Gründe und verworfene Alternativen: `docs/decis
 `STATUS.md` (STATUS trägt nur den Stand; Verlauf ins CHANGELOG). Der Ausbau in acht Optionen ist
 abgeschlossen (`docs/plan-ausbau-2026-10.md`, Supervisor und Unteragenten, 2026-10-12; Pläne und Abnahmen
 unter `docs/plans/`, Fragen an Konrad in `docs/plans/fragen.md`, für die Vorverarbeitung 2026-11 in
-`docs/plans/fragen-2026-11.md`). Rückstand für das nächste Vorhaben: `docs/todo.md`. Die Berichtsseite ist gebaut und über
+`docs/plans/fragen-2026-11.md`). Es gilt die Vorverarbeitung 2026-11 (`docs/plan-vorverarbeitung-2026-11.md`),
+fortgesetzt nach `docs/plan-zeigen-2026-11.md` (Konrad, 2026-11-26: zuerst Stufe 3 der gebauten Vorhaben);
+Stand je Vorhaben in `docs/plans/README.md`. Rückstand für das nächste Vorhaben: `docs/todo.md`. Die Berichtsseite ist gebaut und über
 GitHub Pages veröffentlicht (`docs/plan-report-2026-10.md`, abgeschlossen am 2026-10-11). Der Umbau 2026-10 ist
 abgeschlossen; sein
 Plan liegt historisch unter `docs/development-plan-2026-10.md`, der Befund davor in `docs/baseline-2026-10-10.md`.

@@ -10,7 +10,9 @@ den Phasen in § 9; die Haltepunkte B bis D sind nicht geschrieben, nur Haltepun
 ([plans/haltepunkt-a-2026-11.md](plans/haltepunkt-a-2026-11.md), historisch). Der Stand je Vorhaben
 steht in [plans/README.md](plans/README.md), die Fragen in
 [plans/fragen-2026-11.md](plans/fragen-2026-11.md). Die Ausgangslage in § 1 und die Schätzungen in
-§ 13 sind der Stand vom 2026-11-23. Die nächste Phase bekommt einen eigenen Plan.
+§ 13 sind der Stand vom 2026-11-23. **Fortsetzung: [plan-zeigen-2026-11.md](plan-zeigen-2026-11.md)**
+(Konrad, 2026-11-26: zuerst Stufe 3 der gebauten Vorhaben); dort stehen auch das Abschlusskriterium
+dieses Plans und die Regeln für Rückbau und Gültigkeit (§ 8).
 
 Auftrag von Konrad am 2026-11-23: die Vorverarbeitungsideen aus dem Gespräch
 dieses Tages (Struktur, Kennungen, Dubletten, Vorgänge, Ortsbezug, Zeit, Einbettungen, Politikfelder,

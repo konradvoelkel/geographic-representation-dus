@@ -22,7 +22,8 @@ Stand 2026-11-26, `main` auf `v0.32.0`.
   12 (`v0.31.0`, 82) und 20 (`v0.32.0`, 83; gebaut und in allen Profilen aus, kein Stapellauf).
   Gemessen mit dem Urteil „bauen", aber noch nicht gebaut: 16, 19, 27, 28; verworfen: 13, 23; 24
   wartet auf eine Umbaurunde; 21, 25 und 29 sind nicht gemessen. Stufe 3 (zeigen) steht für alle
-  aus: die Seite zeigt von den neuen Tabellen nichts.
+  aus: die Seite zeigt von den neuen Tabellen nichts. Weiter geht es nach
+  `docs/plan-zeigen-2026-11.md` (Konrad, 2026-11-26: zuerst Stufe 3 der gebauten Vorhaben).
 - **Die Zahlen der Seite** sind seit `v0.16.0` dieselben, bis auf eine Änderung in `v0.30.0`: sechs
   Ausschüsse tragen ihren Namen aus dem Kopf der Vorlagen, die Kürzel ohne gesicherten Namen sinken
   in der Hauptperiode von 11 auf 5, in den Perioden von 9 auf 3.
