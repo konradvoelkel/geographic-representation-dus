@@ -529,6 +529,25 @@ Gewichteter Recall (Gegenprobe): Haushalt 0,706, Recht 0,784 (n 6), Amt 0,920.
   die Klammer, im Recall gebeugte Vollnamen („des Amtes für Soziales und Jugend“), „Amt für
   Verbraucherschutz“ (nicht im Verzeichnis) und das Kürzel „RPA“.
 
+**Nachtrag zur Gewichtung** (Stufe 2, Review am 2026-11-24). Das Messskript teilt `schicht_n` durch
+die Zahl der Aufgaben einer Schicht **über alle Arten der Stichprobe** (`quote` in `auswertung_2`).
+In Runde 1 trägt jede Schicht den Namen ihrer Art, das ist gleichgültig. In Runde 2 stehen die
+Schichten „neu“ und „alt“ in mehreren Arten („neu“ in allen fünf), und ihr Gewicht wird mit der
+Zahl aller Aufgaben dieser Schicht gerechnet, nicht mit der der Art. Je Art gerechnet ergibt sich:
+
+| Art | Präzision streng, wie oben | je Art gerechnet |
+|---|---:|---:|
+| 2 Haushalt | 1,000 | 1,000 |
+| 3 Betrag (30) | 1,000 | 0,999 |
+| 4 Termin (30) | 1,000 | 1,000 |
+| 5 Rechtsgrundlage | 0,861 | 0,859 |
+| 6 Verwaltungseinheit | 0,956 | 0,962 |
+
+Kein Urteil ändert sich: die Rechtsgrundlage bleibt unter 0,95, die Verwaltungseinheit darüber,
+und Betrag und Termin entscheidet die Schicht „neu“ (18/20, 20/20), nicht die gewichtete Zahl. Die
+Zahlen oben bleiben die des Messskripts, weil das Urteil in § 5 auf ihnen steht und der slow-Test
+`tests/golden/test_identifiers_labels.py` sie so nachrechnet.
+
 ## 5. Urteil gegen das Kriterium
 
 **Kriterium** (Briefing, unverändert): Präzision ≥ 0,95 und Recall ≥ 0,85 je Art, streng; die Rolle eines
@@ -732,3 +751,41 @@ demselben Modell kodiert und geschlichtet; das Recall-Intervall der Bauleitplanu
 Hauptperiode, die Übertragbarkeit nur nach den Zählungen in § 3.4.
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
+
+Übertragen am 2026-11-24 aus [00-synergien-2026-11.md](00-synergien-2026-11.md) (§ 1, § 2.2
+Konflikte 3, 4 und 5, § 4 „12 Kennungen"), bevor die Stufe 2 beginnt. Wo das § 6 und § 7 ändert, gilt
+dieser Abschnitt.
+
+1. **Jede Korpus-ID der Datei** (§ 1, „Dokument je PDF-Datei"; Konflikt 4): nicht „je Datei die
+   kleinste ID" wie in der Messung (§ 2, § 6), sondern **jede** Korpus-ID, deren Paper die Datei trägt,
+   bekommt die Spannen der Datei; sonst fehlt eine ID in jedem Join auf `id`. Der Rohtextstore aus F1
+   ist nach Dateiname geschlüsselt, nicht nach Korpus-ID.
+2. **Module** (§ 4 „12"): die reinen Funktionen kommen nach **`src/georep/prep/identifiers.py`** (wie
+   11 und 14), der Beitrag dünn nach `src/georep/enrich/`; das Paket `enrich/identifiers/` mit
+   `patterns.py` und `extract.py` aus § 6 entfällt. Muster im Profil, kein Stadtwort im Code.
+3. **`section` aus 11** (§ 1, „Abschnitte"; § 4 „12"): der grobe Abschnittsersatz aus § 3.1 entfällt.
+   11 besitzt die Abschnitte und bringt `section_of(spans, sections)` nach `georep.spans`; 12 ruft sie,
+   statt einen eigenen Intervall-Join zu bauen. 11 wird vor 12 gemerged (§ 3.4 der Synergien); bis
+   dahin bleibt `section` leer, wie F3 es erlaubt.
+4. **`attr` hinter den acht Spalten** (Konflikt 3, Entscheidung des Supervisors vom 2026-11-23,
+   Punkt 74): F3 erlaubt Zusatzspalten hinter `id, start, end, kind, value, norm, section,
+   extractor`; `check_spans` prüft die acht in Folge und mit ihren Typen, `empty_spans(extra)` legt
+   die Zusatzspalten auch ohne Treffer an. Frage 1 (§ 9) ist damit beantwortet: `attr` trägt nur die
+   Form, keine Deutung.
+5. **Ämter und Dezernate** (§ 1; Konflikt 5): das **federführende Amt aus dem Kopf und die Termine
+   der Beratungsfolge liest jeder Nutzer aus 11** (`dokumente_kopf`: `amt_nr`, `amt_name`,
+   `beratungsfolge`); 12 liefert die **Nennungen im Text**. Beide bauen, wie validiert: 11 das Kopf-Amt
+   (125 / 125), 12 die Verwaltungseinheit nach Fassung 2 (0,956 über Kopf und Text) und die Termine aus
+   Kopf und Beratungsfolge (Frage 7). Ein slow-Test vergleicht das Kopf-Amt beider; eine Abweichung ist
+   ein Befund, kein Umbau. Das **Ämterverzeichnis** (Nummer → Name) entsteht je Lauf aus den
+   Kopffeldern, nicht aus einer Liste im Profil; die Synergie nennt dafür `dokumente_kopf` von 11.
+6. **Dezernat nur aus dem Text** (§ 1, § 4 „12"): **keine Profiltabelle Amt → Dezernat** in 12 (anders
+   als § 5, § 6 und Frage 2). Die Dezernatsverteilung mit Beigeordneten, Partei, Gültigkeit und Quelle
+   sammelt 24; 12 baut keine und wartet nicht darauf. `dezernat` kommt nur aus Nennungen „Dezernat NN"
+   im Text (12 von 12 richtig, § 4.4).
+7. **Kein Paket** (§ 4 „12"; Konflikt 12): `kennungen.parquet` rechnet aus dem Rohtextpaket (F1) in
+   unter einer Minute; `georep pack --identifiers` entfällt.
+8. **Stufe 3 erst mit `12-kennungen-2-f4`** (§ 4 „12"; § 1, „Validierung über F4"): die Seite liest
+   nur `guete.json` aus einem `-f4`-Ordner; Runde 2 (`labels-2.csv`) liegt bisher nur im alten Ordner
+   `validierung/12-kennungen/`. Bis zum F4-Nachzug kommt keine Zahl der Verwaltungseinheit und der
+   Termine (Fassung 2) auf die Seite.

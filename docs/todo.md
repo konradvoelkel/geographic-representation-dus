@@ -232,3 +232,14 @@ aus den Schlüsseln, die er liest, behöbe beides; das ist eine Kernänderung mi
 Stufe 3 von 22: die Namensnennung auf der Seite braucht den Hinweis „verändert" (`NeedAttribution` hat
 dafür noch kein Feld).
 
+## 17. Kennungen: Rückstand aus dem Review von Vorhaben 12
+
+Aufgenommen am 2026-11-26 aus dem Review der Stufe 2 (Punkt 82); keiner verfälscht ein Ergebnis.
+(a) `identifiers` braucht für die Hauptperiode rund 27 s in einem Prozess, verteilt auf rund 25
+Regex-Durchläufe über 55 Mio. Zeichen (am teuersten `month_year`, `plan`, `amount_after`); billige
+Vorfilter je Muster oder ein Prozesspool über Textblöcke, je mit dem Vergleich gegen das Messskript.
+(b) Zwei Commits auf `feat/12-kennungen` (1d6a6a4, 1d2cc71) haben keinen Betreff im Imperativ.
+(c) In 37 Dokumenten nimmt 12 bei dreistelliger Unternummer oder ohne Bindestrich den ganzen Wert als
+Norm des Amts, 11 nur die Nummer (`tests/golden/test_identifiers_heads.py`); Nutzer des federführenden
+Amts lesen es aus 11. (d) Der Eintrag in `MUTATION_SCOPE` ist ungemessen.
+

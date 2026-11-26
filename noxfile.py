@@ -203,6 +203,10 @@ VERIFY_TARGETS = [
     # Nicht dabei: ``spans.section_of`` (``pl.DataFrame`` in der Signatur; hypothesis in
     # tests/property/test_structure_props.py)
     "georep.spans.read_span",
+    # Vorhaben 12 (2026-11-24): ein Datum genau dann, wenn der Kalender den Tag kennt. Nicht dabei:
+    # die Extraktoren in prep/identifiers.py, deren Regeln ``re.Pattern`` tragen (wie oben); ihre
+    # Eigenschaften prüft tests/property/test_identifiers_props.py.
+    "georep.prep.identifiers.iso_date",
 ]
 
 
@@ -471,6 +475,14 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
         (
             "tests/unit/test_structure.py",
             "tests/property/test_structure_props.py",
+        ),
+    ),
+    # Vorhaben 12: Kennungen und Beträge; Zeit nicht gemessen
+    "identifiers": (
+        ("src/georep/prep/identifiers.py",),
+        (
+            "tests/unit/test_identifiers.py",
+            "tests/property/test_identifiers_props.py",
         ),
     ),
 }

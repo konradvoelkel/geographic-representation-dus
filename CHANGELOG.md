@@ -2,6 +2,16 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.31.0 (2026-11-26), Kennungen und Beträge
+
+- **Kennungen im Text** (Vorhaben 12, `docs/decisions.md`, Punkt 82): der Schritt `identifiers` findet
+  Bebauungspläne, Beträge, Termine und Verwaltungseinheiten als Spannen auf dem Rohtext, mit ihrem
+  Abschnitt aus 0.30.0 (`processed/kennungen.parquet`; Präzision und Recall je Art an zwei frischen
+  Stichproben geprüft, von zwei KI-Kodierern desselben Modells). Haushaltsstellen, Rechtsgrundlagen, die
+  Rolle eines Betrags und die Funktion einer Frist sind verworfen.
+- Ohne Rohtext (auf Pages alle Profile außer der Hauptperiode) bleibt die Tabelle leer. Keine Zahl der
+  Seite ändert sich.
+
 ## 0.30.0 (2026-11-26), Struktur der Dokumente
 
 - **Abschnitte und Kopf je Dokument** (Vorhaben 11, `docs/decisions.md`, Punkt 81): der frühe Schritt

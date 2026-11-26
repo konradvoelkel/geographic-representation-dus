@@ -538,6 +538,22 @@ office = '(?P<nr>\d{2}(?:/\d{1,3})?)\s*-?\s*(?P<name>.*)$'  # wie im Entwurf (do
 form_titles = []
 head_lines = 30
 
+# --- Vorhaben 12: Kennungen und Beträge (docs/plans/12-kennungen.md, § 6 und § 10) ---------------
+# Eigene Formate dieser Stadt (§ 3.4 des Messdokuments): Plannummern „809/N", „517/III", das
+# Kopffeld „Fachbereich FB 64 Umwelt" (in 444 von 658 Dokumenten) und Nummern „FB 64". Betrag und
+# Termin laufen mit der Sprache aus defaults.toml unverändert. Nicht kodiert: die Güte gilt für die
+# Hauptperiode Düsseldorfs, hier nur nach den Zählungen in § 3.4.
+[identifiers]
+enabled = true                 # Schritt identifiers (Vorhaben 12, Stufe 2): processed/kennungen.parquet
+
+[identifiers.plans]
+number = '\d{1,4}/(?:[NOSW]|[IVX]{1,4})(?![\w])'  # Nummer/Stadtbezirk („809/N", „793/O") oder Nummer/römische Ziffer („517/III"); Norm ohne Leerraum, groß
+
+[identifiers.offices]
+head = '(?m)^[ \t]*Fachbereich[ \t]+(?P<v>[^\n]*?\S)[ \t]*$'  # „Fachbereich FB 64 Umwelt"
+head_code = '^(?:FB[ \t]*)?(?P<code>\d{1,2}(?:\.\d{1,2})?)[ \t]+(?P<name>.+)$'
+number_extra = '\b(?:FB|Fachbereich(?:es|s)?)[ \t]+(?P<n>\d{1,2}(?:\.\d{1,2})?)(?![\d])'  # „FB 64", „Fachbereich 20.1" im Text
+
 # --- Vorhaben 20: Kurzfassungen (docs/plans/20-kurzfassungen.md, § 6 und § 10) -------------------
 [summaries]
 enabled = false                # aus: die Nachmessung (Messdokument § 5.4, 2026-11-26) hat gemma4 (4 von 50) und qwen3.6:27b (5 von 50) verworfen, kein Stapellauf; an, liefe jedes `georep run --models` den Stapel mit 5 bis 8 GPU-Stunden. Der Schritt bleibt gebaut; für eine spätere Messung GEOREP_SUMMARIES__ENABLED=true. Ausgaben nur unter cache_root/<profil>/summaries/, nie veröffentlicht (Frage 6)
