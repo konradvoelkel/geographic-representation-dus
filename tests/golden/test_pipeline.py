@@ -141,6 +141,9 @@ def test_pipeline_runs_skips_and_reruns(
         # den Korpus; die Orte ändern keines davon
         "cycles": "übersprungen",
         "vocabulary": "übersprungen",
+        # Vorhaben 26: Beratungsverlauf und Beschlusslage hängen an Korpus, Paket, 14 und 15
+        "council_results": "übersprungen",
+        "outcomes": "übersprungen",
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")

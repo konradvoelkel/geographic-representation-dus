@@ -2137,6 +2137,111 @@ class Feeds(_Strict):
         return value
 
 
+# --- Vorhaben 26: Beschlusslage und Antragserfolg (docs/plans/26-beschluesse.md) -----------------
+# Die Klassen, die ein Wert von ``result`` tragen kann, je Stufe (Messdokument § 3.1, vorab
+# festgelegt): ``sache`` ist eine Entscheidung in der Sache und ersetzt jede frühere, ``stand`` ist
+# alles andere und zählt nur, wo es keine Entscheidung in der Sache gibt. ``ohne_ergebnis`` trägt
+# kein Wert; es ist die Klasse eines Dokuments, für das der Datensatz keinen Eintrag hat.
+OUTCOME_STAGES: dict[str, tuple[str, ...]] = {
+    "sache": ("beschlossen", "geaendert", "abgelehnt", "zurueckgezogen"),
+    "stand": ("erledigt", "vertagt", "offen"),
+}
+
+
+class OutcomeReview(_Strict):
+    """Der beantragte Prüfauftrag im Beschlusstext eines Antrags (Messdokument § 3.4, Rückfall 1).
+
+    Muster der deutschen Sprache der Ratsdokumente, keine Stadt; alle kleingeschrieben, eine Liste
+    wird zu einer Alternative in ihrer Folge. Die Regel ist die vor der Stichprobe festgeschriebene
+    (Commit ``94da91f``); sie fand 19 der 26 Prüfaufträge der Stichprobe (Recall 0,73) und steht
+    darum nur als beschreibende Spalte da, nie auf der Seite.
+    """
+
+    marker: list[str] = []  # Beginn des Beschlusstexts; der letzte Treffer im Fenster gilt
+    reason: list[str] = []  # Ende des Beschlusstexts (Begründung, Grußformel)
+    reason_from: int = Field(default=40, ge=0)  # ab diesem Zeichen wird das Ende gesucht
+    window: int = Field(default=2000, ge=1)  # in so vielen Zeichen vom Anfang steht der Marker
+    max_chars: int = Field(default=1500, ge=1)  # höchstens so viel Beschlusstext
+    review: list[str] = []  # Prüfwörter: ein Satz damit ist eine Prüfung
+    not_review: list[str] = []  # Wörter mit einem Prüfwort darin, die keine Prüfung verlangen
+    separable: list[str] = []  # trennbare Vorsilben eines „zu"-Infinitivs („einzurichten")
+    not_verb: list[str] = []  # Wörter hinter „zu", die kein Verb sind („zu den", „zu Lasten")
+    measure: list[str] = []  # weitere Formen einer festgelegten Handlung
+    proviso: list[str] = []  # eine Maßnahme unter Vorbehalt der Prüfung gehört zur Prüfung
+    neutral: list[str] = []  # Verben einer Prüfung oder eines Berichts: keine Maßnahme
+    question: list[str] = []  # „prüfen, ob …": eine Maßnahme dahinter ist Teil der Frage
+    question_chars: int = Field(default=60, ge=1)  # so weit hinter dem Prüfwort steht die Frage
+    sentence: list[str] = []  # Satzgrenzen im Beschlusstext
+    title: list[str] = []  # Prüfwort im Titel, wenn das Dokument keinen Text hat
+    frame: list[str] = []  # Rahmensätze („bitten wir Sie"), die nichts beantragen
+
+    @field_validator(
+        "marker",
+        "reason",
+        "review",
+        "not_review",
+        "separable",
+        "not_verb",
+        "measure",
+        "proviso",
+        "question",
+        "sentence",
+        "title",
+        "frame",
+    )
+    @classmethod
+    def _patterns_compile(cls, value: list[str]) -> list[str]:
+        return _compiles(value, "outcomes.review")
+
+
+class Outcomes(_Strict):
+    """Beschlusslage je Ratsdokument und Antragserfolg je Fraktion (Vorhaben 26).
+
+    ``results`` ist der Wortschatz, den die Sitzungsleitung in ``result`` einträgt, mit Stufe und
+    Klasse je Wert; er steht im Stadtprofil, und ein Wert, der fehlt, bricht den Schritt mit seinem
+    Wortlaut ab, statt still ``ohne_ergebnis`` zu werden (Messdokument § 3.2). ``package`` ist die
+    Tabelle „Paper × Tagesordnungspunkt" aus ``georep pack --outcomes`` für Läufe ohne Netz.
+    """
+
+    enabled: bool = False
+    results: dict[str, tuple[Literal["sache", "stand"], str]] = {}
+    package: Path | None = None
+    practice_share: float = Field(default=0.4, gt=0.0, le=1.0)
+    practice_min: int = Field(default=10, ge=1)
+    followup_roles: list[ProcedureRole] = []  # Rollen aus Vorhaben 14
+    review: OutcomeReview = OutcomeReview()
+
+    @field_validator("package", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+    @field_validator("results")
+    @classmethod
+    def _class_fits_stage(cls, value: dict[str, tuple[str, str]]) -> dict[str, tuple[str, str]]:
+        wrong = sorted(
+            f"{result!r} = [{stage!r}, {klasse!r}]"
+            for result, (stage, klasse) in value.items()
+            if klasse not in OUTCOME_STAGES[stage]
+        )
+        if wrong:
+            raise ValueError(
+                f"outcomes.results: Klasse passt nicht zur Stufe in {wrong}; erlaubt sind "
+                + "; ".join(f"{s}: {', '.join(k)}" for s, k in OUTCOME_STAGES.items())
+            )
+        if any(not result.strip() for result in value):
+            raise ValueError("outcomes.results: ein leerer Wert ist kein Eintrag, sondern keiner")
+        return value
+
+    @model_validator(mode="after")
+    def _enabled_needs_a_vocabulary(self) -> Outcomes:
+        if self.enabled and not self.results:
+            raise ValueError(
+                "outcomes.enabled braucht den Wortschatz [outcomes.results] im Stadtprofil"
+            )
+        return self
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -2194,6 +2299,7 @@ class Settings(BaseSettings):
     procedures: Procedures = Procedures()  # Vorhaben 14: Vorgänge
     embeddings: Embeddings = Embeddings()  # Vorhaben 18: Einbettungen, Ähnlichkeit, Suche
     cycles: Cycles = Cycles()  # Vorhaben 17: Rhythmus, Vokabular, Tests über Perioden
+    outcomes: Outcomes = Outcomes()  # Vorhaben 26: Beschlusslage und Antragserfolg
     feeds: Feeds = Feeds()  # Vorhaben 17: Atom-Feed je Wahlbezirk
 
     @property
@@ -2342,6 +2448,8 @@ class Settings(BaseSettings):
         Fundament F5: ``[ml]`` steht ganz draußen. Was davon ein Ergebnis bestimmt (Modell,
         Optionen, Fenster), steht als Kennung im Stamp des Modellschritts, und ``limit`` als Zahl
         der offenen Eingaben; der Rest ist Ort und Laufzeit.
+        Vorhaben 14 und 26: ``procedures.attachments`` und ``outcomes.package`` sind Pfade; der
+        Inhalt der Pakete steht als Eingabe im Stamp der Schritte, die ihre Kopie in ``raw/`` lesen.
         """
         payload = self.model_dump(
             mode="json",
@@ -2388,6 +2496,13 @@ class Settings(BaseSettings):
                 # Vorhaben 18: der Pfad des Nachbarpakets (sein Inhalt steht im Stamp von
                 # neighbors) und was nur ``georep search`` liest, kein Schritt (Review, N4)
                 "embeddings": {"neighbors_package", "bm25", "rrf_k", "fusion_depth"},
+                # Vorhaben 14 und 26 (Review von 26, N5): die Pakete sind Pfade wie
+                # ``bodies.consultations``; ``bootstrap`` kopiert sie nach ``raw/``, und die Kopie
+                # steht mit ihrem SHA-256 als Eingabe im Stamp von ``references``, ``procedures``
+                # und ``council_results``. Ob es ein Anlagenpaket gibt, entscheidet dort die
+                # Liste der Eingaben, nicht der Fingerprint.
+                "procedures": {"attachments"},
+                "outcomes": {"package"},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

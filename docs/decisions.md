@@ -3415,3 +3415,135 @@ Vorhaben 15 (validiert, aber nicht die vorab festgelegte Regel; S1.5 bleibt „n
 S3.5 „ohne Migration" in der Tabelle (nachträglich und an eine Kategorie des Lexikons gebunden; die
 Unterseite kann es aus den Spalten rechnen); eine Datei je Feed als Ausgabe des Schritts (die
 Wahlbezirke kennt erst das Wörterbuch); lxml für den Test des Schemas.
+
+## NN. Die Beschlusslage ist die letzte Entscheidung in der Sache; der Prüfauftrag bleibt eine Spalte (Vorhaben 26, 2026-11-24)
+
+Vorhaben 26 der Vorverarbeitung (`docs/plans/26-beschluesse.md`, § 5, § 6 und § 10), Stufe 2. Die
+Messung hat die Abbildung der Einträge der Sitzungsleitung auf Klassen an 150 Anträgen gegen zwei
+KI-Kodierer geprüft: `ergebnis` 150 von 150 (Wilson 0,975–1,000), der beantragte Prüfauftrag 57 von
+65 (Recall 0,73) -- das Urteil war „bauen, mit Rückfall 1". Gebaut ist genau diese Regel, als dritter
+Beitrag nach Punkt 69, hinter 15 und 14.
+
+**Was gebaut ist.** Der Beitrag `26-beschluesse` (`georep.enrich.outcomes`) bringt zwei
+Offline-Schritte vor `report`, nur mit `outcomes.enabled` (in allen drei Düsseldorfer Perioden an):
+
+- `council_results` schreibt den Beratungsverlauf `processed/beratungsverlauf.parquet`: je Beratung
+  einer Drucksache jeder Tagesordnungspunkt mit Gremium (Kürzel aus `[bodies.organizations]`, sonst
+  der Schlüssel `gr/NN`), Beginn der Sitzung, Nummer, Folge, dem Eintrag `result` und seiner Stufe.
+  Die Quelle ist der Netzlauf von Fundament F6 (die drei JSONL-Dateien unter `raw/`, gelesen mit den
+  Modellen aus `georep.oparl`), sonst das Paket `snapshots/duesseldorf-beschluesse/` aus `georep
+  pack --outcomes`, das `bootstrap` nach `raw/tagesordnungspunkte.parquet` legt; ohne beides ein
+  `MissingInputError`. Der Name ist nicht `beratungsfolge` (Punkt 58 behält ihn, Messdokument § 10).
+- `outcomes` schreibt die Beschlusslage je Korpus-ID (`processed/beschlusslage.parquet`) und den
+  Antragserfolg je Fraktion und Gremienart (`processed/antragserfolg.parquet`). Er liest die Rollen
+  über `prep.references.role_of` und die starken Kanten (`vorgang_kanten`) von Vorhaben 14 und die
+  Antragsteller von Vorhaben 15; ohne deren Schritte fehlt er, der Beratungsverlauf bleibt.
+- Die Regeln stehen rein in `analysis/outcomes.py`, mit Verträgen an den Batch-Grenzen (eine Zeile je
+  Korpus-ID, Klasse aus der Aufzählung, maßgeblicher Punkt genau bei einem Eintrag und im Verlauf
+  desselben Dokuments, Prüfauftrag nur bei angenommenen Anträgen, `n >= angenommen >= 0`); die
+  Prädikate in `georep.contracts`. Schema-Version aus `OUTCOMES_SCHEMA_VERSION`, die des Pakets aus
+  `AGENDA_SCHEMA_VERSION`.
+
+**Die letzte Entscheidung in der Sache.** Maßgeblich ist der späteste Tagesordnungspunkt der Stufe
+`sache` (beschlossen, geändert, abgelehnt, zurückgezogen, auch als Empfehlung), sonst der späteste
+überhaupt (Kenntnisnahme, Vertagung, Verweisung), sonst `ohne_ergebnis`; „spätest" nach Beginn der
+Sitzung, Folge auf der Tagesordnung und ID des Punkts. Welche Stufe und Klasse ein Wert trägt, sagt
+der Wortschatz `[outcomes.results]` im Stadtprofil (21 Werte in Düsseldorf), geprüft gegen
+`OUTCOME_STAGES`; ein Wert, den er nicht kennt, ist ein `UnknownResultError` mit Wortlaut, Zahl und
+Beleg, nie still `ohne_ergebnis`. Gegen das Messskript Dokument für Dokument auf den Netzläufen vom
+2026-11-23: Klasse, maßgeblicher Punkt, Gremium, Datum und Zahl der Beratungen in **0 von 45 418**
+Dokumenten der drei Perioden verschieden, die Klassen der Anträge gleich der Tabelle in § 3.4 (auch
+für 2014 bis 2020 mit dem eigenen Abruf der Beratungen, Frage 9.10). Die Regel des Messskripts steht
+wörtlich in `tests/property/oracle_outcomes.py`, und hypothesis vergleicht beide; ein Mutant ohne
+den Rang der Stufe fällt dort durch.
+
+**Der Prüfauftrag nach der Kodierung nicht auf der Seite (Rückfall 1, Recall 0,73).** Die Regel des
+Messskripts (Commit `94da91f`) steht unverändert als `review_only`, ihre Muster als Listen in
+`[outcomes.review]` von `defaults.toml` (Sprache der Ratsdokumente, keine Stadt): 0 von 45 418
+Dokumenten verschieden. Sie füllt nur die beschreibende Spalte `pruefauftrag_beantragt`, und nur
+bei angenommenen Anträgen; „offene Prüfaufträge" entfallen. Der slow-Test hält die 57 von 65 und
+die acht Fehler aus § 4.1 als dokumentierte Grenze fest: eine bessere Regel wäre eine neue Messung
+(Frage 9.8), kein Refactoring.
+
+**Praxiszellen.** In einem Gremium-Jahr, in dem mindestens 40 % der Anträge mit Ergebnis „erledigt"
+sind und mindestens zehn (`practice_share`, `practice_min`), ist „erledigt" eine Praxis der
+Sitzungsleitung und kein Ergebnis: `eintrag_tragfaehig` ist dort false. Gezählt wird je Profil
+über das Jahr der maßgeblichen Sitzung; es trifft BV9 2014, 2015 und 2016 und den Rat 2016, 240
+Anträge, alle in 2014 bis 2020 -- wie in § 5. Die Spalte steht nur bei Anträgen mit Ergebnis
+(sonst null): eine Informationsvorlage „zur Kenntnis genommen" ist ihr richtiger Eintrag. Die
+Schwelle ist nach dem Blick auf die Daten gesetzt (Lücke zwischen 16 % und 47 %), also eine
+Variante, die die Kodierung nicht misst.
+
+**Angenommen statt beschlossen/geändert auf der Seite.** `grob` fasst beschlossen und geändert zu
+`angenommen` zusammen (dazu `abgelehnt`, `ohne_sachbeschluss`, `offen`, `ohne_ergebnis`, wie
+Rückfall 2). Bei Vorlagen ist „abweichend" uneinheitlich eingetragen (§ 3.8); die Unterscheidung
+bleibt in `klasse`, die Seite zeigt sie in Stufe 3 nur als Unterzahl.
+
+**Was vom Bauplan abweicht.**
+
+- *Schlüssel des Verlaufs* ist (`id`, `beratung`, `top`), nicht (`id`, `top`): eine Beratung, deren
+  Tagesordnungspunkt nicht in der Sitzungsliste der Periode steht, behält eine Zeile mit `top` null
+  (276 in der Hauptperiode). So zählt `beratungen` jede Beratung, wie im Messskript; doppelte
+  Punkte je Dokument gibt es in keinem der drei Abrufe.
+- *`sitzung` ist der Beginn mit Uhrzeit* (Ortszeit des Servers, ohne Zone), nicht das Datum: die
+  Regel ordnet nach Beginn, und zwei Sitzungen desselben Tages ordnete das Datum allein nach der
+  Folge der Punkte. `entscheidung_datum` ist das Datum.
+- *Die Rolle* kommt aus der Regel von 14 (`role_of`), weil 14 sie nicht als Spalte schreibt; kein
+  Nachbau.
+- *Das Paket* hat eine Datei je Periode (`raw/tagesordnungspunkte-<ordner>.parquet`, zusammen
+  631 944 Bytes, zstd auf Stufe 19) unter dem Namen aus `outcomes.package`; es trägt die Schlüssel
+  der Organisationen, nicht die Kürzel, damit die Kürzel aus Frage 9.17 kein neues Paket brauchen.
+  Wo der Netzlauf liegt, gilt er; aus denselben Dateien geben beide Wege denselben Verlauf.
+- *Antragserfolg* ist je Gremienart getrennt (`by`) und standardisiert je Gremium der Drucksache.
+  Die Fraktionen kommen aus 15 (mit Zeitraum, Punkt 75), nicht aus der Einheit des Messskripts;
+  „SPD" (Dokumente vor dem 2020-11-01) und „SPD+VOLT" bleiben darum getrennte Zeilen, wie 15 sie
+  liefert. Der Filter auf `eintrag_tragfaehig` ändert heute nichts: false steht nur bei „erledigt",
+  und das ist keine Sachentscheidung.
+- *Die Quote einer Schicht zählt dieselben Zeilen wie die Beobachtung* (Review 2026-11-24, N2,
+  Entscheidung des Supervisors): je Antrag und beteiligter Fraktion eine Zeile, ein Antrag ohne
+  Fraktion gar nicht. Das Messskript zählte die Quote je Antrag einmal, Anträge ohne Fraktion
+  eingeschlossen; dann verteilte die Standardisierung im Rat der Hauptperiode 361,3 erwartete
+  Annahmen auf 524 beobachtete, und beobachtet/erwartet lag für die Mehrheit fast überall über 1.
+  Jetzt gilt je Schicht Σ beobachtet = Σ erwartet, als Nachbedingung von `motion_success` und als
+  hypothesis-Eigenschaft. Eine bewusste Abweichung vom Messskript in einer explorativen Größe; die
+  Werte (Hauptperiode, alt → neu): Rat CDU 2,83 → 1,95, Grüne 2,77 → 1,91, SPD/Volt 1,14 → 0,79,
+  FDP 0,75 → 0,52, Linke 0,29 → 0,20, AfD und T_FW 0 → 0; Ausschüsse CDU 1,93 → 1,55, Grüne
+  1,90 → 1,53; in den Bezirksvertretungen ändert sich kaum etwas (CDU 1,03 → 1,02, Grüne 1,00 →
+  0,98); die Reihenfolge der Fraktionen bleibt dort in jeder Gremienart dieselbe. Im Rat seit
+  2025 (18 und 19 Anträge, alle angenommen) CDU und Grüne 11,65 → 6,45.
+- *Gremium ohne Organisation* ist null, nicht „?".
+
+**Folgevorlage je Profil, eine Untergrenze.** `folgevorlage` ist die früheste Drucksache der
+Verwaltung (Rollen aus `followup_roles`), die den Antrag über eine starke Kante nennt. Die Kanten von
+14 tragen nur nennende Drucksachen des eigenen Korpus; eine Folgevorlage der nächsten Periode sieht
+ein Profil darum nicht. Über alle drei Perioden zusammen sind es 1 508 Anträge mit Folgevorlage
+(gleich der Messung, § 3.7), je Profil 1 394: 114 fehlen, fast alle Anträge vom Ende einer
+Periode. Ob 14 die Kanten aus den Nachbarperioden in den eigenen Korpus mitschreibt, ist eine Frage
+an den Supervisor; bis dahin ist die Spalte eine Untergrenze, wie § 3.7 sie ohnehin nennt.
+
+**Mönchengladbach bleibt aus** (§ 10, Punkt 6). Sein Netzlauf trägt an den Punkten seiner 2 895
+Dokumente 48 andere Werte, darunter mehrere ohne eindeutige Klasse: „Siehe Niederschrift" (40),
+„Getrennte Abstimmung (s. Niederschrift)" (32), „Ohne Abstimmung" (43), „Geheime Abstimmung" (3),
+„-" (3), „In den nächsten Ratszug geschoben" (70), „Die Bezirksvertretung wurde angehört" (211).
+`outcomes.enabled` bleibt dort aus; ein Wortschatz für Mönchengladbach wäre eine eigene Messung.
+
+**Laufzeit** (2026-11-24, Lastmittel um 20, `nice -n 10`, Polars auf vier Threads):
+`council_results` aus dem Netzlauf 3,2 s in der Hauptperiode (davon 2,2 s Laden der JSONL über
+pydantic), 3,5 s in 2014 bis 2020, 1,7 s seit 2025; aus dem Paket 0,1 bis 0,2 s; `outcomes` 1,3 s,
+0,9 s, 0,2 s (aus dem Paket 1,2 s).
+
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
+(`ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace; A `main` 098d556, B dieser Branch, beide mit
+`POLARS_MAX_THREADS=4`, `OMP_NUM_THREADS=2`): unter `site/` 194 Dateien in beiden, **0
+Abweichungen**. Über die Datenwurzeln 721 Dateien in A, 739 in B: dazu kommen genau die 18 Dateien
+dieses Vorhabens (je Periode das Paket in `raw/`, drei Tabellen unter `processed/` und zwei Stamps),
+und abweichend sind nur 87 Stamps (der Settings-Fingerprint hat neue Schlüssel). B rechnet ohne
+Netzlauf aus dem Paket, wie Pages, und kommt auf dieselben Klassen wie der Netzlauf im Worktree.
+
+**Verworfen.** Die Rollen aus dem Messskript von 14 (`art2`; § 10: kein Nachbau); eine eigene Klasse
+für Einträge, die keine sind (die Praxiszellen sind eine Spalte neben der Klasse, Frage 9.2); der
+Prüfauftrag als Klasse oder auf der Seite (Rückfall 1); die Kürzel `gr/400224` und `gr/65` jetzt
+eintragen (§ 10, Punkt 7: vor Stufe 3, mit A/B-Bau); die Tabelle des Pakets mit Kürzeln oder
+Klassen (ein neues Profil brauchte ein neues Paket); ein Paket für alle drei Perioden in einer
+Datei (jedes Profil packt seine eigene, der Name steht im Profil); den Wortschatz in
+`defaults.toml` (er ist der einer Sitzungsleitung, Mönchengladbach hat einen anderen).

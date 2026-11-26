@@ -71,6 +71,10 @@
                -> zeit_monate.parquet, haushaltsmonate.parquet
   vocabulary   <- papers.parquet, rohtexte.parquet (optional)
                -> dokumente_bundesvokabular.parquet, bundesvokabular_spannen.parquet
+  council_results <- papers.parquet, meetings.jsonl (optional), agenda_items.jsonl (optional), consultations.jsonl (optional), tagesordnungspunkte.parquet (optional), meetings.progress.json (optional), consultations.progress.json (optional)
+               -> beratungsverlauf.parquet
+  outcomes     <- beratungsverlauf.parquet, papers.parquet, vorgang_kanten.parquet, dokumente_antragsteller.parquet, papers_gremien.parquet
+               -> beschlusslage.parquet, antragserfolg.parquet
   report       <- wahlbezirke_auswertung.parquet, combined_searchdict.parquet, inverted_index.parquet, wahlbezirke_waehler.parquet, wikidata_vis.parquet, wahlbezirke_strassen.parquet, papers.parquet, stimmbezirke.geojson, wahlbezirke_gremien.parquet, gremien.parquet, papers_gremien.parquet, wahlbezirke_stadtbezirke.parquet, wahlbezirke_gewichtet.parquet, gewichte_begriffe.parquet, wahlbezirke_kontext.parquet, wahlbezirke_crosswalk.parquet, regression_kontrollen.parquet, quartiersatlas_2024_indikatoren.csv, dokumente_urheber.parquet, wahlbezirke_urheber.parquet, wahlbezirke_parteien.parquet, monatsreihe.parquet, wahlbezirke_monate.parquet, wahlbezirke_kennzahlen.parquet, themen.parquet, themen_dokumente.parquet, ausschuss_zuordnung.parquet, texts.parquet, rohtexte.parquet (optional)
                -> index.html, schema.json, karte.html
   
