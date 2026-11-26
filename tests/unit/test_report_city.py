@@ -96,9 +96,13 @@ def test_no_city_word_in_the_packaged_data() -> None:
 
 
 def test_the_packaged_data_check_sees_more_than_the_two_exceptions() -> None:
-    """Sonst wäre der Test oben leer, sobald jemand die Ausnahmen weiter fasst."""
+    """Sonst wäre der Test oben leer, sobald jemand die Ausnahmen weiter fasst.
+
+    Vorhaben 17 bringt das Lexikon ``lexika/bundespolitik.toml``: es gilt für jede deutsche Kommune
+    und wird darum geprüft wie die Literatur.
+    """
     checked = [p for p in PACKAGE.rglob("*.toml") if p != DEFAULTS and p.parent != PROFILES]
-    assert [p.name for p in checked] == ["literatur.toml"]
+    assert sorted(p.name for p in checked) == ["bundespolitik.toml", "literatur.toml"]
 
 
 def test_only_the_selector_names_a_city_in_the_defaults() -> None:

@@ -1,6 +1,7 @@
 # Profil „Hauptperiode mit Periodenvergleich" (Option 02), als Paketprofil derselben Stadt:
 #
 #   uv run georep --profile duesseldorf-2014 run        # erst die alte Periode rechnen
+#   uv run georep --profile duesseldorf-2025 run        # und die laufende (cycle_tests, Vorhaben 17, unten)
 #   uv run georep --profile duesseldorf-vergleich run
 #
 # ``base`` setzt auf dem Stadtprofil auf; hier steht nur der Vergleich. Ohne dieses Profil ist die
@@ -15,3 +16,15 @@ base = "duesseldorf"
 [compare]
 period = "2014-2020"           # Profil der älteren Periode; ihre Ergebnisse liegen unter data_root/2014-2020/processed/
 label = "Wahlperiode 2014 bis 2020"  # wie period.label in profiles/duesseldorf-2014.toml; der Vergleich kennt die Settings des anderen Profils nicht
+
+# --- Vorhaben 17: die vorab festgelegten Tests über die drei Perioden (docs/plans/17-zeit.md, § 8)
+# Der Schritt cycle_tests liest zeit_monate, haushaltsmonate, dokumente_bundesvokabular, Korpus und
+# Urheber aus jedem der drei Ordner; die beiden anderen Perioden laufen also vorher, wie für compare:
+#
+#   uv run georep --profile duesseldorf-2014 run
+#   uv run georep --profile duesseldorf-2025 run
+#   uv run georep --profile duesseldorf-vergleich run
+#
+# Fehlt eine Eingabe, bricht der Schritt mit ihrem Pfad ab (docs/architecture.md, Regel 3).
+[cycles]
+periods = ["2014-2020", "duesseldorf", "2025"]  # Ordner unter data_root in zeitlicher Folge; der mittlere ist der dieses Profils

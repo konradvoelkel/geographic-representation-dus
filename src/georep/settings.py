@@ -26,6 +26,7 @@ from importlib.resources.abc import Traversable
 from pathlib import Path
 from string import Formatter
 from typing import Any, Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import deal
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -2057,6 +2058,85 @@ class Embeddings(_Strict):
         return None if value in ("", None) else value
 
 
+class InstrumentTitle(_Strict):
+    """Ein Muster im Titel (klein), das ein Dokument einem Instrument zuordnet (Vorhaben 17, S1.5)."""
+
+    pattern: str
+    instrument: Literal["anfrage", "antrag"]
+
+    @field_validator("pattern")
+    @classmethod
+    def _pattern_compiles(cls, value: str) -> str:
+        return _compiles([value], "cycles.instrument_titles[].pattern")[0]
+
+
+class Cycles(_Strict):
+    """Rhythmus der Ratsarbeit und bundespolitisches Vokabular (Vorhaben 17, docs/plans/17-zeit.md).
+
+    Stadtneutral sind das Wahljahr, das Muster der Haushaltsanträge, die Wörter der Instrumente und
+    das Lexikon; die Wahltage stehen im Stadtprofil (``elections``, mit Quelle), die Perioden, über
+    die die vorab festgelegten Tests rechnen, im Profil, das sie rechnet (``periods``). Ohne
+    ``enabled`` fehlen die Schritte ``cycles``, ``vocabulary`` und ``cycle_tests``.
+    """
+
+    enabled: bool = False
+    year_start_month: int = Field(default=9, ge=1, le=12)
+    elections: list[date] = []
+    budget_pattern: str = r"haushalts(begleit)?-?antrag"
+    budget_minimum: int = Field(default=5, ge=1)
+    instrument_types: dict[str, Literal["anfrage", "antrag"]] = {}  # Präfix (klein) -> Instrument
+    instrument_titles: list[InstrumentTitle] = []
+    lexicon: str = Field(default="bundespolitik", pattern=r"^[a-z0-9][a-z0-9_-]*$")
+    head_chars: int = Field(default=2000, ge=1)
+    periods: list[str] = []  # Ordner der Profile der Stadt, in zeitlicher Folge
+
+    @field_validator("budget_pattern")
+    @classmethod
+    def _budget_compiles(cls, value: str) -> str:
+        return _compiles([value], "cycles.budget_pattern")[0]
+
+    @field_validator("elections")
+    @classmethod
+    def _elections_ordered(cls, value: list[date]) -> list[date]:
+        if value != sorted(set(value)):
+            raise ValueError("cycles.elections: Wahltage aufsteigend und ohne Doppel")
+        return value
+
+    @field_validator("periods")
+    @classmethod
+    def _periods_are_folders(cls, value: list[str]) -> list[str]:
+        for name in value:
+            _plain_name(name, "cycles.periods")
+        if len(set(value)) != len(value):
+            raise ValueError("cycles.periods: ein Profil steht zweimal")
+        return value
+
+    @model_validator(mode="after")
+    def _tests_need_elections(self) -> Cycles:
+        if self.periods and not self.elections:
+            raise ValueError(
+                "cycles.periods braucht cycles.elections: ohne Wahltag kein Vorwahljahr"
+            )
+        return self
+
+
+class Feeds(_Strict):
+    """Atom-Feed je Wahlbezirk (Vorhaben 17); nur für eine laufende Periode sinnvoll."""
+
+    enabled: bool = False
+    entries: int = Field(default=50, ge=1, le=500)
+    timezone: str = "Europe/Berlin"  # Zeitzone des Vorlagendatums: published um 00:00 Ortszeit
+
+    @field_validator("timezone")
+    @classmethod
+    def _known_zone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError) as error:
+            raise ValueError(f"feeds.timezone {value!r} ist keine bekannte Zeitzone") from error
+        return value
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -2113,6 +2193,8 @@ class Settings(BaseSettings):
     )  # Vorhaben 15: Ratsmehrheiten, stadtweit (24, 28 lesen sie)
     procedures: Procedures = Procedures()  # Vorhaben 14: Vorgänge
     embeddings: Embeddings = Embeddings()  # Vorhaben 18: Einbettungen, Ähnlichkeit, Suche
+    cycles: Cycles = Cycles()  # Vorhaben 17: Rhythmus, Vokabular, Tests über Perioden
+    feeds: Feeds = Feeds()  # Vorhaben 17: Atom-Feed je Wahlbezirk
 
     @property
     def base_profile(self) -> str:

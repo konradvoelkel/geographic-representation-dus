@@ -185,6 +185,12 @@ VERIFY_TARGETS = [
     # SciPy in der Signatur); ihre Eigenschaften prüft tests/property/test_bm25_props.py.
     "georep.search.stem.stem",
     "georep.search.bm25.rrf",
+    # Vorhaben 17 (2026-11-24): die vollständigen Wahljahre einer Periode und Holm. Einzeln geprüft;
+    # crosshair fand date(1, 5, 1) (das Wahljahr 0 gibt es nicht, behoben), danach kein
+    # Gegenbeispiel. Die exakten Tests rechnen mit numpy und stehen in
+    # tests/property/test_cycles_props.py.
+    "georep.analysis.cycles.complete_years",
+    "georep.analysis.hypotheses.holm",
 ]
 
 
@@ -407,6 +413,24 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
         ("tests/unit/test_embeddings_steps.py", "tests/property/test_vectors_props.py"),
     ),
     "query": (("src/georep/search/query.py",), ("tests/unit/test_search_query.py",)),
+    # Vorhaben 17: Wahljahre, exakte Tests, Holm, Lexikon und Feeds; Zeit nicht gemessen
+    "cycles": (
+        (
+            "src/georep/analysis/cycles.py",
+            "src/georep/analysis/hypotheses.py",
+            "src/georep/analysis/lexicon.py",
+            "src/georep/report/feeds.py",
+        ),
+        (
+            "tests/unit/test_cycles.py",
+            "tests/unit/test_hypotheses.py",
+            "tests/unit/test_lexicon.py",
+            "tests/unit/test_feeds.py",
+            "tests/property/test_cycles_props.py",
+            "tests/property/test_hypotheses_props.py",
+            "tests/property/test_feeds_props.py",
+        ),
+    ),
 }
 # Die acht Module, die am 2026-10-13 unter 90 s brauchten; der wöchentliche Qualitätslauf nimmt
 # genau diese (.github/workflows/quality.yml).
