@@ -24,7 +24,7 @@ Vier Sichten auf dasselbe Vorhaben, je eine Datei; dieses README ist der Einstie
 |---|---|
 | [docs/technik.md](docs/technik.md) | Mit welchen Schnittstellen und Datenplattformen arbeitet das Programm (Endpunkt, Format, Lizenz, Abrufverhalten), was liegt lokal, wie läuft die Kette, wie wird veröffentlicht, was braucht eine neue Stadt. |
 | [docs/inhalt.md](docs/inhalt.md) | Welche Daten es gibt (vier Datensätze mit ihren Lücken) und was die veröffentlichte Seite kann: Suche, Dokumentdialog, Karten und Umschalter, die siebzehn Abschnitte, die Downloads, die Unterseiten. |
-| [docs/statistik.md](docs/statistik.md) | Zehn Auswertungen, je mit Frage, Rechnung, heutigen Zahlen, Interpretationsspielraum und Einwänden — dazu, welche Einwände die Seite selbst nennt und welche Auswertung offen ist. |
+| [docs/statistik.md](docs/statistik.md) | Elf Auswertungen, je mit Frage, Rechnung, heutigen Zahlen, Interpretationsspielraum und Einwänden — dazu, welche Einwände die Seite selbst nennt und welche Auswertung offen ist. |
 | [docs/workflow-ratsmitglied.md](docs/workflow-ratsmitglied.md) | Ein exemplarischer Arbeitsablauf: neu im Rat, ein Gebiet oder ein Thema einarbeiten — Schritt für Schritt über die Seite, ein zweiter Pfad über die Kommandozeile, und was die Seite nicht kann. |
 
 Dazu, unverändert: **Aufbau** des Codes in [docs/architecture.md](docs/architecture.md),
@@ -49,8 +49,8 @@ uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 uv run georep regress --controls        # Tabelle 6 mit den Kontrollvariablen
 ```
 
-Geprüft am 2026-10-11 aus einem frischen Klon, die Kontrollvariablen am 2026-10-12, `bootstrap`, `run` und
-`publish` nach dem Umzug in den Stadtordner am 2026-10-13, die ganze Kette aus den Datenpaketen am 2026-10-14.
+Geprüft am 2026-10-11 aus einem frischen Klon; seitdem läuft dieselbe Folge aus einem frischen
+Checkout bei jedem Push auf `main` in `.github/workflows/pages.yml`.
 Die Seite aus diesen zwei Befehlen trägt **einen** Link, der noch ins Leere zeigt: `2025/`, die Unterseite
 der laufenden Wahlperiode (`report.monitoring_url` im Stadtprofil). Der Abschnitt „Zwei Wahlperioden" und
 sein Link auf `2014-2020/` entstehen erst mit `georep --profile duesseldorf-vergleich run`, und das Profil
@@ -90,27 +90,47 @@ veröffentlicht sie über GitHub Pages unter
 <https://konradvoelkel.github.io/geographic-representation-dus/> mit den Unterseiten `2014-2020/`,
 `2025/`, `moenchengladbach/` und `vergleich.html`.
 
+### Gerechnet, noch nicht gezeigt
+
+Seit der Vorverarbeitung 2026-11 (`docs/plan-vorverarbeitung-2026-11.md`, Stand je Vorhaben in
+`docs/plans/README.md`) schreibt die Kette weitere Tabellen unter `data/<profil>/processed/`, die die
+Seite noch nicht zeigt: die Abschnitte und den Kopf jedes Dokuments (`sections`), Kennungen und
+Beträge im Text (`identifiers`), Verweise zwischen Drucksachen und Vorgänge (`references`,
+`procedures`), Funktion und Antragsteller je Dokument (`functions`, `cosponsors`), ähnliche Dokumente
+(`neighbors`), Dokumente je Monat und Wahljahr samt bundespolitischem Vokabular (`cycles`,
+`vocabulary`), Beratungsverlauf und Beschlusslage (`council_results`, `outcomes`) und den Bedarf je
+Wahlbezirk aus offenen Quellen (`need`). Was jeder Schritt liest und schreibt, steht in
+[docs/architecture.md](docs/architecture.md), „Pipeline"; die Gründe in den Punkten 75 bis 82 von
+[docs/decisions.md](docs/decisions.md).
+
+Nur lokal laufen, was einen Modellserver (ollama auf diesem Rechner) braucht: die Einbettungen
+(`georep run --models`), die Suche nach Bedeutung (`georep search`; ohne Modell sucht sie nach Wörtern)
+und die Kurzfassungen (`georep summary`, der Schritt ist in allen Profilen aus und wird nie
+veröffentlicht).
+
 ## Befehle
 
 | Befehl | Was er tut |
 |---|---|
 | `georep run [SCHRITT …] [--force] [--dry-run] [--online] [--models [--limit N] [--retry-rejected]]` | führt die Schritte aus und überspringt, was aktuell ist; Netzschritte nur mit `--online`, Schritte mit lokalem Modell nur mit `--models` (`--limit` begrenzt dann die neuen Eingaben je Stapellauf; was offen bleibt, zeigt `georep status`; `--retry-rejected` fragt Eingaben erneut, die das Modell abwies); scheitert ein Modellschritt, endet der Lauf mit Exit 1 |
-| `georep fetch [SCHRITT …] [--force] [--dry-run] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `meetings`, `consultations`, `persons`, `pdfs`, `streets_osm`, `pois_wiki`, danach `shapes` und `texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Seiten je Liste, `--dry-run` zeigt nur den Plan |
+| `georep fetch [SCHRITT …] [--force] [--dry-run] [--limit N] [--max-pages N]` | die Netzschritte `opendata`, `context_data`, `papers`, `organizations`, `meetings`, `consultations`, `persons` (diese drei nur mit `council.enabled`), `pdfs`, `streets_osm`, `pois_wiki`, `need_data` (nur mit `context.need.fetch`), danach `shapes`, `texts` und `raw_texts`; `--limit` begrenzt neue PDF-Downloads, `--max-pages` die Seiten je Liste, `--dry-run` zeigt nur den Plan |
 | `georep steps` | Schritte mit Eingaben und Ausgaben |
 | `georep status` | Settings, Pfade, Stores, Frische jedes Schritts mit Grund |
 | `georep paths` | Profil und Pfade des Layouts als `key=wert`, eine Zeile je Wert (das lesen `pages.yml` und das Monitor-Skript) |
 | `georep profiles` | die Profile im Paket mit Stadt und amtlichem Gemeindeschlüssel |
 | `georep publish [--out DIR]` | die Stadtseiten nach `data/site/` zusammentragen und `vergleich.html` bauen |
 | `georep bootstrap [--force]` | den eingefrorenen Datensatz (`reference_root`) in den Ordner des Profils unter `data_root` übernehmen |
-| `georep pack ZIEL [--force] [--consultations \| --texts \| --raw-texts]` | die Gegenrichtung: aus dem gelaufenen Profil ein Datenpaket für das Repo schreiben (genau die Eingaben, ohne PDFs, Stamps und Caches), mit Prüfsummentabelle und README-Gerüst; bricht ab, wenn eine Eingabe fehlt oder der Textstore Zeilen trägt, die nicht aus einem Lauf kommen. `--consultations` packt stattdessen nur die Beratungsfolge je Dokument, `--texts` nur den Textstore (Punkt 68), `--raw-texts` nur den Rohtextstore (Fundament F1) |
+| `georep pack ZIEL [--force] [--consultations \| --texts \| --raw-texts \| --attachments \| --neighbors \| --outcomes \| --need]` | die Gegenrichtung: aus dem gelaufenen Profil ein Datenpaket für das Repo schreiben (genau die Eingaben, ohne PDFs, Stamps und Caches), mit Prüfsummentabelle und README-Gerüst; bricht ab, wenn eine Eingabe fehlt oder der Textstore Zeilen trägt, die nicht aus einem Lauf kommen. `--consultations` packt stattdessen nur die Beratungsfolge je Dokument, `--texts` nur den Textstore (Punkt 68), `--raw-texts` nur den Rohtextstore (Fundament F1), `--attachments`, `--neighbors`, `--outcomes` und `--need` die Pakete der Vorhaben 14, 18, 26 und 22 ([docs/technik.md](docs/technik.md), § 3) |
 | `georep learn-bodies [--min-documents N]` | die Abbildung OParl-Organisation → Gremiumskürzel aus den Daten lernen und als `[bodies.organizations]` drucken, dazu den Katalog der Organisationen und die Gegenprobe mit der Tabelle im Profil; schreibt nichts |
 | `georep export` | die Parquet-Ergebnisse als CSV daneben schreiben |
 | `georep regress [--exclude …] [--varianten]` | lineare Regression Trefferquote gegen Wahlbeteiligung; `--varianten` dieselbe Rechnung je Gewichtungsvariante aus `wahlbezirke_gewichtet.parquet` |
 | `georep regress --controls` | Tabelle 6: dieselbe Regression mit Kontrollvariablen, je Modell und Stichprobe |
 | `georep profile [SCHRITT …] [--top N] [--sort tottime] [--models]` | einen echten Schritt unter cProfile, `.prof` für snakeviz; mit `--models` auch Schritte mit Modell |
-| `georep validate sample\|tasks\|merge\|score VORHABEN` | Validierung einer Messung mit zwei KI-Kodierern (Fundament F4, [docs/validierung.md](docs/validierung.md)): Stichprobe nach dem Codebuch `validierung/VORHABEN/codebuch.toml`, Kodierauftrag je Kodierer (`--coder A\|B`, lokal unter `validation.coding_root`), Zusammenführen mit Schlichtung (`--model`), Übereinstimmung und Güte eines Verfahrens (`--pred`) |
+| `georep validate sample\|tasks\|import\|merge\|score VORHABEN` | Validierung einer Messung mit zwei KI-Kodierern (Fundament F4, [docs/validierung.md](docs/validierung.md)): Stichprobe nach dem Codebuch `validierung/VORHABEN/codebuch.toml`, Kodierauftrag je Kodierer (`--coder A\|B`, lokal unter `validation.coding_root`), vorläufige Antworten übernehmen (`import --from`), Zusammenführen mit Schlichtung (`--model`), Übereinstimmung und Güte eines Verfahrens (`--pred`) |
 | `georep ml status` | der lokale Modellserver (ollama, nur auf diesem Rechner): erreichbar, die Modelle aus `[ml]` mit Digest, was im Grafikspeicher liegt, der Modellcache je Modell (nur gelesen); Exit 1, wenn etwas fehlt |
 | `georep ml bench MODELL [--n 20] [--chars 8000] [--max-tokens 120]` | misst ein Modell an n Dokumenten des Korpus: Sekunden je Dokument, Token je Sekunde, Hochrechnung auf den Korpus |
+| `georep search "FRAGE" [--method embedding\|hybrid\|bm25] [--n 10]` | die Ratsdokumente des Profils lokal suchen: nach Bedeutung über die Einbettungen (Vorgabe), gemischt oder nach Wörtern (BM25); ohne Modellserver, ohne Vektoren oder bei belegter GPU-Sperre (`ml.gpu_lock`) mit BM25, und es sagt das (Vorhaben 18) |
+| `georep summary [DRUCKSACHE\|ID] [--body KÜRZEL --since DATUM [--html]]` | Kurzfassungen lokal lesen: eines Dokuments mit Treueprüfung, oder als Liste je Gremium; nur unter `cache_root`, nie veröffentlicht, und nur nach einem eigens eingeschalteten Lauf (Vorhaben 20) |
 
 `--profile SLUG` wählt die Stadt (`georep profiles` listet sie; sonst gilt `GEOREP_PROFILE`, sonst
 `default_profile` aus den Settings). `--settings DATEI` legt eine weitere TOML-Schicht über die
@@ -321,10 +341,11 @@ dieselbe Tabelle ist.
 
 ## Daten und Herkunft
 
-Sieben Hosts, alle öffentlich und ohne Zugangsdaten: OParl 1.1 am Ratsinformationssystem der ITK Rheinland
+Sieben Hosts für die Seite, alle öffentlich und ohne Zugangsdaten: OParl 1.1 am Ratsinformationssystem der ITK Rheinland
 (Düsseldorf Body 0015, Mönchengladbach Body 0011), das Open-Data-Portal Düsseldorf (Wahlergebnis, Stimmbezirke,
 Quartiersatlas), der votemanager der ITK Rheinland und das Geoportal Mönchengladbach, dazu Overpass/
-OpenStreetMap, Wikidata-SPARQL und die Wikipedia-GeoSearch. Das Gremium je Dokument hat seit Punkt 58 zwei
+OpenStreetMap, Wikidata-SPARQL und die Wikipedia-GeoSearch; dazu drei Hosts der Bedarfsquellen
+(Unfallatlas, Zensus, Schuldaten), die nur der Netzschritt `need_data` hinter einem Schalter liest. Das Gremium je Dokument hat seit Punkt 58 zwei
 Quellen: die Drucksachennummer und, wo die kein bekanntes Gremium nennt, die Beratungsfolge aus OParl
 (`consultation`). **Jeder Endpunkt mit Format, Lizenz und
 Abrufverhalten steht in [docs/technik.md](docs/technik.md), § 1 und § 2**; die Lizenzen in einer Übersicht in
