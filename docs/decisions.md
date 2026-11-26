@@ -3416,7 +3416,7 @@ S3.5 „ohne Migration" in der Tabelle (nachträglich und an eine Kategorie des 
 Unterseite kann es aus den Spalten rechnen); eine Datei je Feed als Ausgabe des Schritts (die
 Wahlbezirke kennt erst das Wörterbuch); lxml für den Test des Schemas.
 
-## NN. Die Beschlusslage ist die letzte Entscheidung in der Sache; der Prüfauftrag bleibt eine Spalte (Vorhaben 26, 2026-11-24)
+## 79. Die Beschlusslage ist die letzte Entscheidung in der Sache; der Prüfauftrag bleibt eine Spalte (Vorhaben 26, 2026-11-24)
 
 Vorhaben 26 der Vorverarbeitung (`docs/plans/26-beschluesse.md`, § 5, § 6 und § 10), Stufe 2. Die
 Messung hat die Abbildung der Einträge der Sitzungsleitung auf Klassen an 150 Anträgen gegen zwei

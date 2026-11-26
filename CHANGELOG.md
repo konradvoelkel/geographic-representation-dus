@@ -2,6 +2,20 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.28.0 (2026-11-26), Beschlusslage
+
+- **Beschlusslage je Drucksache** (Vorhaben 26, `docs/decisions.md`, Punkt 79): `council_results`
+  schreibt den Beratungsverlauf (aus dem Netzlauf, sonst aus dem Paket `snapshots/duesseldorf-beschluesse/`),
+  `outcomes` die Klasse der Beschlusslage nach der letzten Entscheidung in der Sache (acht Klassen; ein
+  Ergebnis für 94,3 % der Anträge der Hauptperiode; 150 von 150 richtig, geprüft von zwei KI-Kodierern
+  desselben Modells) und den Antragserfolg je Fraktion, standardisiert und explorativ. Der beantragte
+  Prüfauftrag ist nur eine beschreibende Spalte (Recall 0,73).
+- Ein offener Abruf (`raw/<schritt>.progress.json`) gilt nicht als Netzlauf. Paketpfade stehen nicht
+  mehr im Settings-Fingerprint (auch der des Anlagenpakets aus 0.25.0).
+- Mönchengladbach bleibt ohne Beschlusslage: sein Server trägt 48 andere Ergebniswerte, einige ohne
+  eindeutige Klasse. Nach dem Update einmal `georep bootstrap` je Profil. Die Seite zeigt noch nichts
+  davon (Stufe 3); keine Zahl der Seite ändert sich.
+
 ## 0.27.0 (2026-11-26), Zeit und Neuigkeiten
 
 - **Zyklen und Bundesvokabular** (Vorhaben 17, `docs/decisions.md`, Punkt 78): `cycles` zählt die
