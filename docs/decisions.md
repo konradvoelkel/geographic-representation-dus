@@ -3547,7 +3547,7 @@ eintragen (§ 10, Punkt 7: vor Stufe 3, mit A/B-Bau); die Tabelle des Pakets mit
 Klassen (ein neues Profil brauchte ein neues Paket); ein Paket für alle drei Perioden in einer
 Datei (jedes Profil packt seine eigene, der Name steht im Profil); den Wortschatz in
 `defaults.toml` (er ist der einer Sitzungsleitung, Mönchengladbach hat einen anderen).
-## NN. Bedarf und Aufmerksamkeit je Wahlbezirk: Punkte mit Randband, Auszüge als Paket, die Tests der Messung (Vorhaben 22, 2026-11-24)
+## 80. Bedarf und Aufmerksamkeit je Wahlbezirk: Punkte mit Randband, Auszüge als Paket, die Tests der Messung (Vorhaben 22, 2026-11-24)
 
 Vorhaben 22 der Vorverarbeitung (`docs/plans/22-bedarf.md`, § 5 bis § 8 und § 10), Stufe 2. Die
 Messung fand vier Bedarfsquellen mit freier Lizenz und passender Raumeinheit (Quartiersatlas,

@@ -198,3 +198,13 @@ von 26 bricht ab, sobald Dateien Mönchengladbachs im Datenordner liegen. (d) `r
 `schema.json` sagen. (e) `[bodies.organizations]` braucht vor Stufe 3 die Kürzel `gr/400224` und `gr/65`
 mit Beleg und A/B-Bau (Frage 9.17 dort).
 
+## 16. Fingerprint je Schritt statt global
+
+Aufgenommen am 2026-11-26 aus den Reviews von 12 und 22 (Punkte 80 und folgende). Der Settings-Fingerprint
+ist global: `duesseldorf-vergleich` rechnet auf Pages jeden Schritt neu, weil `compare.period` ihn ändert
+(12: `identifiers` zweimal je rund 47 s), und die Periodenprofile rechnen ganz neu, wenn sich geerbte
+Hypothesen von `need` ändern, obwohl `need` dort aus ist (22, `robust_without`). Ein Fingerprint je Schritt
+aus den Schlüsseln, die er liest, behöbe beides; das ist eine Kernänderung mit eigenem A/B-Bau. Dazu für
+Stufe 3 von 22: die Namensnennung auf der Seite braucht den Hinweis „verändert" (`NeedAttribution` hat
+dafür noch kein Feld).
+

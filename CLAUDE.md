@@ -44,6 +44,7 @@ uv run georep profiles       # Stadtprofile im Paket; --profile <slug> waehlt ei
 uv run georep publish        # Stadtseiten nach data/site/ zusammentragen (erste Stadt an die Wurzel), vergleich.html bauen
 uv run georep paths          # Profil und Pfade als key=wert; Skripte und Workflows lesen sie hier, nie von Hand
 uv run georep fetch opendata # der einzige schnelle Netzschritt; alles andere dauert Stunden
+GEOREP_CONTEXT__NEED__FETCH=true uv run georep fetch need_data   # Bedarfsdaten (Vorhaben 22, Punkt 80), rund 105 MB, nur mit dem Schalter; sonst kommen sie aus snapshots/*-bedarf/
 uv run georep run --models    # Modellschritte über ollama (Punkt 72); ohne den Schalter heißen sie „Modelle aus"; `georep ml status` zeigt Modelle und Caches. Die GPU ist geteilt: jeder Modelllauf unter `flock /media/konrad/xtraspace/georep/gpu-queue/gpu.lock`
 uv run georep search "<frage>"  # lokale Suche (Vorhaben 18, Punkt 77): --method embedding|hybrid|bm25; prüft `ml.gpu_lock` aus settings.local.toml nicht blockierend, bei belegter GPU BM25
 uv run georep --profile <p> pack <ziel>   # Gegenrichtung von bootstrap: aus dem gelaufenen Profil ein Datenpaket ins Repo (Punkt 56); bricht ab, wenn eine Eingabe fehlt oder der Textstore Fremdzeilen traegt; `--consultations`, `--texts` und `--raw-texts` packen nur die Beratungsfolge, den Textstore beziehungsweise den Rohtextstore (Punkte 58, 68, 73)
