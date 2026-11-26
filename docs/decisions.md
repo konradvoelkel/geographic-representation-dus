@@ -3520,14 +3520,15 @@ den Schlüssel für jeden Text.
 
 **Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
 (`ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace, je `POLARS_MAX_THREADS=4`,
-`OMP_NUM_THREADS=2`), `main` (`42f125a`, v0.26.0) gegen den Branch nach Runde 2 des Reviews
-(2026-11-26): unter `site/` 194 Dateien in beiden, 3 Abweichungen, alle aus Frage 15 und K3 --
+`OMP_NUM_THREADS=2`, in der Reihenfolge von `pages.yml` seit Punkt 78), `main` (`00e1791`, v0.27.0)
+gegen den Branch nach Runde 2 des Reviews (2026-11-26): unter `site/` 235 Dateien in beiden, 3
+Abweichungen, alle aus Frage 15 und K3 --
 `index.html` der Hauptperiode, von 2014 bis 2020 und der laufenden Periode nennen die sechs
 Ausschüsse mit Namen statt Kürzel (Themen, Gremientabelle, Legende), und der Satz zur Gremientabelle
 trägt den neuen Stand (24.11.2026 statt 14.10.2026), die Quelle mit dem Kopf der Vorlagen und die
 Zahl der Kürzel ohne gesicherten Namen (5 statt 11, in den Perioden 3 statt 9). Sonst ändert sich
-keine Zahl; Mönchengladbach und `vergleich.html` sind gleich. Über die ganzen Datenwurzeln 730 gegen
-742 Dateien: neu sind je Profil die beiden Dateien von `sections` mit Stamp (in den drei Profilen
+keine Zahl; Mönchengladbach, `vergleich.html` und die Feeds sind gleich. Über die ganzen Datenwurzeln
+881 gegen 893 Dateien: neu sind je Profil die beiden Dateien von `sections` mit Stamp (in den drei Profilen
 ohne Rohtextpaket ohne Spannen und mit leeren Zeilen), anders sonst nur die drei Seiten (und ihre
 Kopien unter den Profilordnern) und Stamps (der Fingerprint trägt jetzt `[structure]`). Keine Datei
 unter `site/` stammt aus `sections`; die Kopftabelle kommt erst mit Stufe 3 als Download. Die
