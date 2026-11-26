@@ -671,6 +671,17 @@ von Vorhaben 11, weil die Eingabe dessen Abschnitte liest.
   (50 von 50 ohne unbelegte Angabe). `labels.csv`, `README.md` und `guete.json` liegen in
   `validierung/20-kurzfassungen-nachmessung/`. **Danach**, wie festgelegt: `qwen3.6:27b` an
   denselben 50 im Ordner `20-kurzfassungen-nachmessung-qwen`.
+- **Erzeugt mit `qwen3.6:27b`** am 2026-11-26 (Digest `a50eda8ed977`, wie § 3.1): dieselben 50
+  Eingaben, derselbe Prompt, ein Lauf unter der Sperre von 22:02:59 bis 22:05:54 (175 s;
+  ollama-Log „offloaded 65/65 layers to GPU", 15,5 GiB Gewichte auf CUDA0, `nvidia-smi` 503 MiB
+  vor und 23 420 MiB nach dem Lauf, Lastmittel 4,7 bis 5,8). Je Dokument 3,36 s Wanduhr (Median
+  3,12, ohne Laden 3,01), Ausgabe 100 Token bei 42,0 Token/s; keine Antwort abgeschnitten.
+  Daneben (nicht Kriterium): Treueprüfung 48 von 50 ohne unbelegte Angabe (ein Datum, ein seltenes
+  Wort), zwei mit Personennamen, Wörter Median 51, höchstens 66. Kodierauftrag A und B unter
+  `messdaten/kodierung/20-kurzfassungen-nachmessung-qwen/`, dieselben Ausschnitte wie bei gemma;
+  Codebuch und Stichprobe in `validierung/20-kurzfassungen-nachmessung-qwen/`. Der Ordnername
+  nennt das Modell (im Feld `vorhaben` und im Kopf von `codebuch.md`); die Kurzfassung selbst
+  trägt keinen Modellnamen.
 
 ## 6. Bauplan Stufe 2
 
