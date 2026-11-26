@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import argparse
 import json
+import re
 from pathlib import Path
 
 import polars as pl
 import pytest
 from syrupy.assertion import SnapshotAssertion
 
-from georep.cli import main
+from georep.cli import build_parser, main
 from georep.layout import Layout
 from georep.pipeline import build_steps
 from georep.report.tables import csv_plan
@@ -554,3 +556,16 @@ def test_fetch_dry_run_plans_the_council_steps_without_a_session(
     out = capsys.readouterr().out
     assert out.rstrip().endswith("3 geplant") and "Netz aus" not in out
     assert "meetings     geplant" in out
+
+
+def test_the_description_of_help_names_every_subcommand() -> None:
+    """``georep --help`` beschreibt sich mit der ersten Docstring-Zeile; sie nennt jeden Befehl.
+
+    Bis 2026-11-26 fehlte ``paths`` darin, obwohl CLAUDE.md und die Workflows es aufrufen.
+    """
+    parser = build_parser()
+    commands = next(a for a in parser._actions if isinstance(a, argparse._SubParsersAction))
+    assert parser.description is not None
+    listed = re.search(r"``georep ([a-z|-]+)``", parser.description)
+    assert listed is not None, parser.description
+    assert sorted(listed.group(1).split("|")) == sorted(commands.choices)

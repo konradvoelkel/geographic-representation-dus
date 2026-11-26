@@ -83,10 +83,14 @@ EMPTY_UPDATED = "1970-01-01T00:00:00+00:00"
 AUTHOR = "georep, aus dem Ratsinformationssystem (OParl)"
 _DATETIME = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$")
 _ABSOLUTE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
-# XML 1.0, § 2.2: erlaubt sind Tabulator, Zeilenumbruch, Wagenrücklauf und ab U+0020, ohne
-# Surrogate und ohne U+FFFE, U+FFFF. Der Wagenrücklauf wird beim Lesen zum Zeilenumbruch und kommt
-# darum nicht unverändert zurück; er fällt mit weg.
-_FORBIDDEN = re.compile("[\x00-\x08\x0b\x0c\x0d\x0e-\x1f\ud800-\udfff￾￿]")
+# XML 1.0, § 2.2, Produktion Char: #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] |
+# [#x10000-#x10FFFF]. Verboten ist das Komplement, also C0 ohne Tabulator und Zeilenumbruch, die
+# Surrogate und U+FFFE, U+FFFF. Der Wagenrücklauf wird beim Lesen zum Zeilenumbruch und kommt darum
+# nicht unverändert zurück; er fällt mit weg und fehlt unten. Als Komplement der erlaubten Zeichen
+# geschrieben, nicht als Liste verbotener Bereiche: CodeQL meldete den Bereich \x0e-\x1f als
+# py/overly-large-range (2026-11-26). Die Menge ist dieselbe; tests/unit/test_feeds.py prüft sie
+# über alle Codepunkte.
+_FORBIDDEN = re.compile(r"[^\t\n\x20-퟿-�\U00010000-\U0010ffff]")
 _FEED_CHILDREN = {
     "author",
     "category",

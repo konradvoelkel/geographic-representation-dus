@@ -103,6 +103,27 @@ def test_clean_text_drops_only_what_xml_forbids() -> None:
     assert clean_text("￾￿") == "  "
 
 
+def _xml_char(cp: int) -> bool:
+    """XML 1.0, § 2.2: ``#x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]``."""
+    return (
+        cp in (0x09, 0x0A, 0x0D) or 0x20 <= cp <= 0xD7FF or 0xE000 <= cp <= 0xFFFD or cp >= 0x10000
+    )
+
+
+def test_clean_text_replaces_exactly_what_xml_forbids_and_the_carriage_return() -> None:
+    """Über alle Codepunkte: ersetzt wird genau, was XML 1.0 verbietet, dazu ``\\r``, je ein Zeichen.
+
+    Hält die Menge fest, seit ``_FORBIDDEN`` als Komplement der erlaubten Zeichen geschrieben ist
+    (CodeQL ``py/overly-large-range``, 2026-11-26): ein Tippfehler in einer Grenze fiele hier auf.
+    """
+    everything = "".join(map(chr, range(0x110000)))
+    cleaned = clean_text(everything)
+    assert len(cleaned) == len(everything)
+    replaced = [cp for cp, (a, b) in enumerate(zip(everything, cleaned, strict=True)) if a != b]
+    assert replaced == [cp for cp in range(0x110000) if not _xml_char(cp) or cp == 0x0D]
+    assert {cleaned[cp] for cp in replaced} == {" "}
+
+
 def test_a_moment_without_zone_is_no_atom_date() -> None:
     with pytest.raises(ValueError, match="Zeitzone"):
         timestamp(dt.datetime(2025, 1, 1))
