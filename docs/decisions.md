@@ -3131,6 +3131,145 @@ der Wahl, gegen § 3.3). `PaperRecord` um die Anlagen erweitern (ein Schemasprun
 Golden-Master-Risiko; das Paket genügt, Synergie § 4); für die laufende Periode ist das der Weg
 danach, denn das Paket veraltet mit jedem Tag (Frage 9.1).
 
+## 77. Einbettungen über Stücke, ähnliche Dokumente als Paket, Suche mit der Einbettung als Vorgabe (Vorhaben 18, 2026-11-24)
+
+Vorhaben 18 der Vorverarbeitung (`docs/plans/18-einbettungen.md`, § 5 bis § 7 und § 10), Stufe 2.
+Die Messung hat zwei Fragen gegen zwei KI-Kodierer entschieden: die Suche nach Bedeutung schlägt die
+Wortsuche (nDCG@10 an 50 Fragen: Einbettung 0,883, Mischung 0,846, BM25 0,709), und die ähnlichen
+Dokumente tragen (Präzision@5 0,832 an 50 Ankern, TF-IDF 0,652 verfehlt die Schwelle). Gebaut ist
+genau das gemessene Verfahren; Punkt 45c (Einbettungen verworfen, Oktober) ist damit für Suche und
+Nachbarn überholt, für Cluster nicht (§ 3.5 der Messung: nicht bauen).
+
+**Was gebaut ist.** Der Beitrag `18-einbettungen` (`georep.enrich.embeddings`) hinter 15 und 14,
+mit zwei Schritten hinter `embeddings.enabled` (beide Stadtprofile, die Perioden erben):
+
+- `embeddings` ist ein **Schritt mit Modell** (F5, Punkt 72) und läuft nur mit
+  `georep run --models`. Je PDF-Datei mit Rohtext eine Einheit unter der kleinsten Korpus-ID
+  (`search.units`), der Rohtext mit den Formfeeds der Seiten zurück (`restore_form_feeds`), wie
+  die Messdatei ihn trug. Stücke nach `18-stuecke-1` (`prep.chunks.split_chunks`, das `zerteile`
+  der Messung mit denselben Schleifen und der Stelle jedes Stücks im Rohtext), Präfix aus
+  `[ml.embedding]`, `embed_texts` über den Modellcache. Nur lokal geschrieben:
+  `processed/einbettungen_stuecke.parquet` und `processed/einbettungen_dokumente.parquet`
+  (Mittel der ersten drei normierten Stückvektoren, normiert; eine Zeile je Korpus-ID mit
+  Rohtext). Eine Datei, deren erste drei Stücke nicht alle da sind (Teillauf, Abweisung), bekommt
+  keinen Dokumentvektor: das Mittel über die übrigen wäre ein anderer Vektor.
+- `neighbors` (offline) schreibt `processed/aehnliche_dokumente.parquet`, zehn Nachbarn je
+  Korpus-ID, nie die eigene Datei. Der Rang folgt der ungerundeten Ähnlichkeit (float32);
+  Gleichstände der ungerundeten Ähnlichkeit stehen nach ID, auch an der Grenze zum zehnten Platz
+  (`search.vectors._top` nimmt alle Werte gleich dem zehnten und sortiert sie). Die Spalte
+  `aehnlichkeit` ist auf vier Stellen gerundet; gleich gerundete Nachbarn stehen darum nicht immer
+  nach ID (in der Hauptperiode 647 von 1 300 solchen Paaren). Ohne
+  Dokumentvektoren nimmt er die Kopie des Pakets, die `bootstrap` nach
+  `raw/aehnliche_dokumente_paket.parquet` legt, ohne beides schreibt er eine leere Tabelle mit
+  demselben Schema. Beide Eingaben sind **optional** (`Step.optional`): so steht ihr Hash im Stamp,
+  und ein Modellschritt, der ohne `--models` nicht läuft, bricht die Kette nicht ab.
+- `georep pack --neighbors` packt nur die Nachbartabelle (`snapshots/duesseldorf-aehnlich/`,
+  905 998 Bytes), und nur, wenn sie aus den Dokumentvektoren daneben stammt (deren Hash im Stamp
+  von `neighbors`) und diese aus einem vollständigen Lauf (`open` 0 im Stamp von `embeddings`);
+  das README nennt Modell, Digest, Prompt-Version und Optionen. `bootstrap` übernimmt das Paket
+  nur, wenn jede ID und jeder Nachbar ein Paper des Datensatzes ist; die Perioden nehmen den
+  Schlüssel `neighbors_package` zurück.
+- `georep search "<frage>" [--method embedding|hybrid|bm25] [--n 10]` (`search/query.py`,
+  `search/command.py`), lokal; ohne Server oder ohne Stückvektoren BM25 mit einer Zeile dazu.
+
+**Wo die Nachbarn herkommen.** Ein Paket gibt es nur für die Hauptperiode; der Vergleich
+(`duesseldorf-vergleich`) rechnet in ihrem Ordner und erbt es. In 2014 bis 2020, der laufenden
+Periode und Mönchengladbach entsteht die Tabelle nur lokal aus den Vektoren eines Laufs mit
+`--models`; auf Pages und in CI bleibt sie dort leer. Eine Datenwurzel von vor diesem Stand bekommt
+die Paketkopie nur mit einem `georep bootstrap` (ohne `--force`). Ohne ihn schreibt `neighbors` auch
+in der Hauptperiode still eine leere Tabelle, wo es keine Dokumentvektoren gibt; nur die Laufzeile
+sagt es („keine Dokumentvektoren und kein Paket: leere Tabelle"). Kein Schritt der Seite liest die
+Tabelle vor Stufe 3, darum ist das kein Abbruch.
+
+**Die Zahl der IDs ohne Rohtext steht in der Laufzeile** von `embeddings` („… 76 ohne Rohtext …"),
+nicht im Stamp. Der Stamp trägt außer der Kennung des Modells kein Feld, das `georep status`
+zeigt, und `extra` ginge in den Vergleich des Stamps ein (er wäre nach jedem Lauf veraltet); sie
+dort zu zeigen, bräuchte eine Änderung am Kern (Review Runde 1, N9).
+
+**Gegen die Messung geprüft** (2026-11-24, Hauptperiode): alle 47 407 Stücktexte samt Präfix und
+Titel sind die des Messskripts, darum kamen alle 47 312 verschiedenen aus dem Modellcache (0 neu
+gerechnet); alle 190 320 Zeilen der Nachbartabelle (Nachbar und Ähnlichkeit) sind die der Probe
+`groessen/aehnliche_dokumente.parquet`; die Rangfolgen der 50 Suchfragen sind für Einbettung,
+Mischung und BM25 je 50 von 50 gleich `rangfolgen.parquet`. Ein `slow`-Test hält die Zahl der
+Stücke und die BM25-Rangfolgen aus den Paketen fest (`tests/unit/test_search_slow.py`), für die
+Einbettung nur Invarianten (das Paket in `test_data_packages.py`): die GPU rundet je Rechner anders.
+
+**Was das Modell sieht, steht in der Prompt-Version.** Die Präfixe `search_document: ` und
+`search_query: ` gehören zum Modell und stehen in `[ml.embedding]`, also außerhalb des
+Fingerprints (Punkt 72). Damit eine Änderung dort die Kennung im Stamp nicht verfehlt, hängt
+`chunk_prompt` an `18-stuecke-1` einen Hash, sobald Präfix oder Zuschnitt von der gemessenen Fassung
+abweichen (ebenso `query_prompt` an `18-anfrage-1`). Mit den gemessenen Werten trifft ein Lauf die
+Vektoren der Messung; der Cache-Schlüssel hängt ohnehin am SHA-256 des Texts samt Präfix.
+
+**Der Stemmer ist der klassische.** Die Messung hat den Snowball-Stemmer für Deutsch vor Snowball
+3.0 benutzt; 3.0 hat ihn 2023 bis 2025 geändert (ae/oe/ue, -erin, -ln, -et, Apostroph). Die
+Prüfliste kommt darum aus dem Datenrepositorium von snowballstem.org am letzten Stand vor der
+Änderung (Commit `8d35251e4561`), einmal abgerufen am 2026-11-24 (§ 10, Punkt 4 des
+Messdokuments); `search.stem.stem` trifft alle 35 033 Paare, im Repo liegt jedes 17.
+(`tests/fixtures/snowball/`, BSD-3-Clause, mit Prüfsummen). Eine eigene Umsetzung statt
+`snowballstemmer` (Frage 9.4), wie `krippendorff` in F4.
+
+**Ein Modellschritt zählt in den Tests wie ein Netzschritt.** Zehn bestehende Testdateien ließen
+„alle Schritte außer den Netzschritten" laufen oder zählten sie und verlangten „ausgeführt";
+`embeddings` ist ohne `--models` übersprungen. Sie nehmen ihn jetzt aus wie einen Netzschritt
+(`s.models is not None`).
+
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt
+66 (`ab/ab_bau.sh`, `ab/ab_vergleich.py`), `main` (`v0.25.0`) gegen diesen Branch, je in eigener
+Datenwurzel und mit `POLARS_MAX_THREADS=4`, `OMP_NUM_THREADS=2`: unter `site/` 194 Dateien in beiden,
+0 Abweichungen. Auf der B-Seite kam die Nachbartabelle der Hauptperiode (und des Vergleichs) aus dem
+Paket, die übrigen Profile schrieben eine leere; kein Schritt der Seite liest sie bis Stufe 3.
+
+**Laufzeit** (2026-11-24, Worktree, `nice -n 10`, Lastmittel 11 bis 18): `embeddings` in der
+Hauptperiode 7,4 s ohne neue Einbettung (alle aus dem Cache), `neighbors` 4,2 s. Die übrigen Profile unter der GPU-Sperre, je ein Lauf `georep run --models
+embeddings neighbors`, das ollama-Log mit „offloaded 13/13 layers to GPU", 1,5 GB Grafikspeicher:
+Mönchengladbach 2 931 Stücke in 49 s (650 Dateien), die laufende Periode 9 590 neue Stücke in
+150 s, 2014 bis 2020 59 750 neue in 908 s, je rund 65 Stücke je Sekunde unter einem Lastmittel
+von 13 bis 31 (ohne Fremdlast rund 90, Messdokument § 3.3). Zusammen rund 19 Minuten unter der
+Sperre, davon rund 18 GPU-Minuten Rechnung; die Hochrechnung der Messung lag bei 17.
+
+**Bekannt: Zeichensalat sprengt das Fenster.** In 2014 bis 2020 hat ein Dokument
+(`00330474.pdf`, eine defekte Schriftkodierung mit Steuerzeichen statt Buchstaben) neun Stücke über
+512 Token, und ollama 0.24.0 weist sie trotz `truncate` ab (400, „the input length exceeds the
+context length"). Die Annahme der Zerteilung, mindestens 3,47 Zeichen je Token, gilt für solchen
+Text nicht. Nach F5 sind die neun abgewiesen und erledigt (der Schritt sagt „aktuell, 9 Eingaben
+abgewiesen"); das Dokument hat keinen Dokumentvektor und keine Nachbarn, 21 713 von 21 714 Dateien
+haben einen. In der Hauptperiode, der laufenden Periode und Mönchengladbach kommt es nicht vor.
+`georep search` braucht beim ersten Aufruf 9,7 s für die Wortmatrix (danach 2,8 s zum Laden),
+die Einbettung 0,64 s je Frage aus dem Cache.
+
+**Abweichungen vom Bauplan** (§ 6 und § 10 des Messdokuments): `zerteile` heißt `split_chunks`
+(die Namen im Paket sind englisch) und hat dieselben Schleifen; geprüft gegen eine wörtliche Kopie
+als Orakel (`tests/property/oracle_chunks.py`, hypothesis) und über die Hauptperiode. Die
+Dokumentvektoren tragen zusätzlich `datei`, damit `neighbors` die Einheiten ohne den Korpus bildet.
+Die Paketkopie in `raw/` heißt `aehnliche_dokumente_paket.parquet` (siehe unten). Die
+Settings-Klassen heißen `Bm25` und `Embeddings` wie die übrigen Blöcke. Mönchengladbach schaltet
+die Schritte auch ein (Prüfstein der Stadtneutralität, § 6 „Profile"); ohne Paket bleibt seine
+Nachbartabelle auf Pages leer. Die Wortmatrix des Befehls ist `processed/suche_wortmatrix.parquet`,
+eine Zeile je Einheit mit Stämmen und Anzahlen.
+
+**Was das Review (Runde 1, 2026-11-24) geändert hat**, je ein Commit: `bm25`, `rrf_k` und
+`fusion_depth` stehen nicht mehr im Fingerprint, denn nur `georep search` liest sie (N4); der
+Client des Einbetters entsteht erst bei Bedarf (`DeferredEmbedder`), sodass ein verweigertes
+`ml.base_url` nur `embeddings` mit `--models` scheitern lässt und die Suche auf BM25 zurückfällt
+(N5); die Suche prüft neben Modell und Digest auch Prompt-Version und Fenster der Stücke (N2) und
+nimmt die GPU-Sperre aus `ml.gpu_lock` nicht blockierend, sonst BM25 (N1; die Vorgabe ist leer,
+der Pfad gehört in `settings.local.toml`); ohne Korpus nennt sie den Handgriff statt `[Errno 2]`,
+und die Hinweiszeile nennt die Zahl des gewählten Verfahrens und dass sie für die Hauptperiode gilt
+(N6). Dazu die Wortlaute oben zu Gleichständen (N3), Herkunft des Pakets (K1) und Stamp (N9).
+
+**Verworfen.** Vektoren ins Repo (Dokumentvektoren 7,5 bis 25,7 MiB, Stückvektoren 64 MiB für die
+Hauptperiode allein; die Seite braucht nur die IDs, und aus Einbettungen lässt sich Text teilweise
+zurückgewinnen, Fragen 9.1 und 9.7). Die Wortmatrix als Schritt der Kette (sie kostete jede Kette,
+auch auf Pages, 6 bis 10 s je Profil, und nur der lokale Befehl liest sie; sie liegt darum mit ihrem
+Schlüssel neben den Vektoren). Die Mischung als Vorgabe der Suche (bei Stichwörtern im Amtswortlaut
+war sie am besten, insgesamt die Einbettung; eine andere Vorgabe wäre eine neue Messung mit neuen
+Fragen, Frage 9.12). Der Stemmer von Snowball 3.0 (eine neue Fassung der Wortsuche, nicht gemessen).
+Die Paketkopie unter demselben Namen wie die Ausgabe (`georep steps` zeigte dann
+`aehnliche_dokumente.parquet -> aehnliche_dokumente.parquet`). Die Tempo-Probe vor dem ersten
+Stapel (Frage 9.5) in diesem Schritt: sie gehört nach F5 (`docs/todo.md`, Punkt 11 d); im Bau ist
+das Tempo von Hand geprüft. Cluster über Einbettungen (Messung § 3.5).
+
 ## NN. Abschnitte und Kopf aus dem Rohtext: der validierte Entwurf unverändert, Rumpf und Gremiennamen als Nachbearbeitung, ein früher Schritt (Vorhaben 11, 2026-11-24)
 
 Vorhaben 11 der Vorverarbeitung (`docs/plans/11-struktur.md`, § 5 bis § 7 und § 10), Stufe 2. Die

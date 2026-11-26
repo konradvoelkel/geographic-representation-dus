@@ -43,10 +43,14 @@ def test_steps_lists_the_chain(project: Path, capsys: pytest.CaptureFixture[str]
 
 
 def _step_counts(project: Path) -> tuple[int, int]:
-    """(Offline-Schritte, Netzschritte) aus dem Register, damit neue Schritte keine Literale brechen."""
+    """(Offline-Schritte, Netz- und Modellschritte) aus dem Register, ohne Literale.
+
+    Ein Schritt mit Modell (Vorhaben 18) läuft ohne ``--models`` so wenig wie ein Netzschritt ohne
+    ``--online``; beide stehen als „übersprungen" in der Zeile.
+    """
     settings = load_settings(cwd=project)
     steps = build_steps(settings, Layout.from_settings(settings))
-    network = sum(1 for s in steps if s.network)
+    network = sum(1 for s in steps if s.network or s.models is not None)
     return len(steps) - network, network
 
 

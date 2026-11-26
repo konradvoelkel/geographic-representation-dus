@@ -239,6 +239,7 @@ backoff_s = 2.0
 keep_alive = "10m"             # so lange haelt ollama ein Modell nach dem letzten Aufruf im Grafikspeicher; Laufzeit
 batch_size = 32                # Texte je Einbettungsaufruf und je Transaktion im Modellcache. Laufzeit: ein anderer Stapel kann die letzten Bits einer Einbettung aendern, doch was im Cache liegt, wird nicht neu gerechnet
 limit = 0                      # hoechstens so viele neue Eingaben je Stapellauf, also je Aufruf von embed_texts oder generate_texts (ein Schritt mit zwei Stapellaeufen rechnet bis zu zweimal so viele); 0 = alle. `georep run --models --limit N` setzt es fuer einen Lauf; was offen bleibt, steht im Stamp des Schritts, und `georep status` zeigt ihn danach als offen
+gpu_lock = ""                  # Vorhaben 18: Pfad der flock-Sperre der GPU, die `georep search` nicht blockierend prueft (gehalten: Suche mit BM25 statt Einbettung, mit einer Zeile dazu); leer = keine Pruefung. Rechnerspezifisch, gehoert in settings.local.toml
 retry_rejected = false         # true: Eingaben, die das Modell einmal abwies (4xx, Grund im Modellcache), erneut fragen; sonst ueberspringt jeder Lauf sie, und der Schritt gilt mit ihnen als aktuell ("aktuell, n Eingaben abgewiesen"). `georep run --models --retry-rejected` setzt es fuer einen Lauf
 
 [ml.embedding]                 # Vorhaben 18
@@ -246,6 +247,8 @@ model = "nomic-embed-text-v2-moe"  # mehrsprachig, 475 M Parameter, F16, 958 MB;
 dimension = 768                # Laenge jedes Vektors; eine Antwort mit anderer Laenge ist ein Fehler
 num_ctx = 512                  # Fenster in Token: das Modell liest hoechstens 512 (context_length laut /api/show), laengere Texte schneidet ollama hinten ab. Wer mehr braucht, zerteilt den Text vorher. Fenster und truncate stehen im Cache-Schluessel und in der Kennung des Schritts
 truncate = true                # false: ein Text ueber dem Fenster ist ein Fehler des Servers statt still abgeschnitten (der Stapellauf merkt ihn sich als abgewiesen und fragt ihn nicht wieder, ausser mit retry_rejected)
+document_prefix = "search_document: "  # Vorhaben 18: so will nomic-embed-text ein Dokument (ein Stueck) sehen; gehoert zum Modell, nicht in den Code. Weicht es von der gemessenen Fassung ab, bekommt die Prompt-Version des Schritts embeddings einen Hash dazu
+query_prefix = "search_query: "        # Vorhaben 18: dito fuer eine Suchfrage (`georep search`)
 
 [ml.generation]                # Vorhaben 19 und 20; ein Vorhaben darf in seinem Block ein anderes Modell nennen, die Optionen kommen von hier
 model = "qwen3.6:27b"          # 27,8 B Parameter, Q4_K_M, 17,4 GB auf der Platte, mit num_ctx = 8192 aber 22,9 GB Grafikspeicher (/api/ps, 2026-11-23): das Einbettungsmodell passt NICHT daneben in 24 GB, ollama laedt um. Einbettung und qwen nacheinander, nicht zugleich
@@ -354,6 +357,19 @@ to = "antrag"
 role = "antrag"
 title = 'anfrage'
 to = "anfrage"
+
+# --- Vorhaben 18: Einbettungen, Ähnlichkeit, Suche (docs/plans/18-einbettungen.md) --------------
+[embeddings]                   # Schritte embeddings (mit Modell, nur `georep run --models`) und neighbors (offline), Befehl `georep search`. Gemessen an der Hauptperiode (Messdokument § 3 bis § 5): nDCG@10 der Suche Einbettung 0,883, BM25 0,709; Präzision@5 der Nachbarn 0,832
+enabled = false                # Schalter beider Schritte; ein Stadtprofil schaltet ihn ein
+chunk_chars = 1600             # Titel, Leerzeile und Rumpf eines Stücks, in Zeichen (Fassung 18-stuecke-1): beim kleinsten gemessenen Verhältnis von 3,47 Zeichen je Token bleiben samt Präfix 466 Token, unter dem Fenster von 512 (§ 3.2)
+title_chars = 200              # OParl `name`, Leerraum zusammengezogen, höchstens so viele Zeichen; steht vor jedem Stück
+overlap_chars = 200            # das nächste Stück beginnt mit den letzten Zeilen des vorigen, zusammen höchstens so viele Zeichen
+document_chunks = 3            # Dokumentvektor = Mittel der ersten so vielen Stückvektoren, normiert (18-dokvektor-1)
+neighbors = 10                 # ähnliche Dokumente je Korpus-ID in processed/aehnliche_dokumente.parquet
+bm25 = { k1 = 1.2, b = 0.75 }  # Okapi BM25 der Wortsuche (18-bm25-1), wie Lucene; dieser und die zwei folgenden Werte liest nur `georep search`, darum stehen sie nicht im Fingerprint
+rrf_k = 60                     # Mischung (`georep search --method hybrid`): Reciprocal Rank Fusion, s = Σ 1 / (rrf_k + Rang)
+fusion_depth = 100             # so viele Treffer jeder Liste gehen in die Mischung
+neighbors_package = ""         # Pfad des Pakets aus `georep pack --neighbors`; bootstrap legt es nach raw/, und neighbors nimmt es, wo es keine Dokumentvektoren gibt (GitHub Pages, CI). Stadtneutral leer = kein Paket
 
 # --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.2, § 6 und § 10) --------
 # Abschnitte (Betreff, Beschlussvorschlag, Sachdarstellung, Rumpf …) als Spannen auf dem Rohtext

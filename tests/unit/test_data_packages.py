@@ -65,13 +65,16 @@ PACKAGES = (
     Package("snapshots/duesseldorf-anlagen", limit=1 * MIB, native=False, readme=True),
     # Vorhaben 14: dasselbe für die zweite Stadt, neben reference/moenchengladbach/ (63 910)
     Package("snapshots/moenchengladbach-anlagen", limit=1 * MIB, native=False, readme=True),
+    # Vorhaben 18: die zehn ähnlichen Dokumente je Korpus-ID der Hauptperiode, keine Vektoren (905 998)
+    Package("snapshots/duesseldorf-aehnlich", limit=2 * MIB, native=False, readme=True),
 )
 # Alle zusammen, als zweite grobe Schranke: 174 580 489 Bytes = 166,49 MiB am 2026-11-23 (92,5 %
 # der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, die drei Textstores sind seit
 # Punkt 67 zusammen 266 295 Bytes kleiner, das Textpaket der Hauptperiode kam mit Punkt 68 dazu und
 # das Rohtextpaket mit Fundament F1); mit den beiden Anlagenpaketen von Vorhaben 14 174 947 799
-# Bytes = 166,84 MiB (92,7 %, 2026-11-24). Ein einziger PDF-Ordner einer Periode (585 MB bis
-# 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
+# Bytes = 166,84 MiB (92,7 %, 2026-11-24); mit dem Nachbarpaket von Vorhaben 18 175 853 797 Bytes
+# = 167,71 MiB (93,2 %, 2026-11-24). Ein einziger PDF-Ordner einer Periode (585 MB bis 3,9 GB)
+# reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 
 # Was in keinem Paket liegen darf, mit dem Grund. Endungen werden gegen das Suffix geprüft, Namen
@@ -482,3 +485,50 @@ def test_each_city_reads_its_own_attachment_package() -> None:
         found = load_settings(profile=profile, cwd=nowhere).procedures.attachments
         assert found is not None and found.parent.parent == Path(package), profile
         assert (REPO / found).is_file(), profile
+
+
+# --- Vorhaben 18: das Nachbarpaket -------------------------------------------------------------
+
+NEIGHBORS_PACKAGE = (
+    REPO / "snapshots" / "duesseldorf-aehnlich" / "raw" / "aehnliche_dokumente_paket.parquet"
+)
+
+
+def test_the_neighbor_package_is_read_by_the_main_period_alone() -> None:
+    """Dieselbe Regel wie für das Rohtextpaket: die Perioden nehmen den Schlüssel zurück."""
+    from georep.settings import load_settings
+
+    nowhere = Path("/nonexistent")
+    main = load_settings(profile="duesseldorf", cwd=nowhere).embeddings.neighbors_package
+    assert main is not None and (REPO / main).resolve() == NEIGHBORS_PACKAGE.resolve()
+    compare = load_settings(profile="duesseldorf-vergleich", cwd=nowhere).embeddings
+    assert compare.neighbors_package == main
+    for profile in ("duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
+        found = load_settings(profile=profile, cwd=nowhere).embeddings.neighbors_package
+        assert found is None, profile
+
+
+@pytest.mark.slow
+def test_the_neighbor_package_keeps_its_invariants() -> None:
+    """Zehn Zeilen je Korpus-ID, Rang lückenlos, nie die eigene Datei, Ähnlichkeit fallend.
+
+    Für die Einbettung gibt es nur Invarianten, keine Zahlen: die GPU rundet je Rechner anders.
+    Jede ID und jeder Nachbar ist ein Paper der Hauptperiode mit Rohtext (19 032 von 19 108).
+    """
+    from georep.search.vectors import NEIGHBORS_SCHEMA, NEIGHBORS_SCHEMA_VERSION
+    from georep.stores import stored_schema_version
+
+    assert stored_schema_version(NEIGHBORS_PACKAGE) == str(NEIGHBORS_SCHEMA_VERSION)
+    frame = pl.read_parquet(NEIGHBORS_PACKAGE)
+    assert dict(frame.schema) == NEIGHBORS_SCHEMA
+    assert frame.height == 190_320 and frame.get_column("id").n_unique() == 19_032
+    assert frame.equals(frame.sort("id", "rang"))
+    items = json.loads((REPO / "reference/interim/paper_with_text.json").read_text("utf-8"))
+    file_of = {str(i["id"]): (i.get("download_url") or "").rsplit("/", 1)[-1] for i in items}
+    assert set(frame.get_column("id")) | set(frame.get_column("nachbar")) <= set(file_of)
+    per = frame.group_by("id").agg(pl.col("rang"), pl.col("aehnlichkeit"), pl.col("nachbar"))
+    for unit, ranks, sims, neighbors in per.iter_rows():
+        assert ranks == list(range(1, 11)), unit
+        assert all(a >= b for a, b in zip(sims, sims[1:], strict=False)), unit
+        assert all(file_of[n] != file_of[unit] and n != unit for n in neighbors), unit
+    assert frame.get_column("aehnlichkeit").is_between(-1.0, 1.0).all()

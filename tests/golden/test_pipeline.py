@@ -70,11 +70,15 @@ def test_pipeline_runs_skips_and_reruns(
     bootstrap_from_settings(layout, settings)
     steps = build_steps(settings, layout)
 
+    # Vorhaben 18: ein Schritt mit Modell läuft ohne ``--models`` so wenig wie ein Netzschritt
+    # ohne ``--online``; er zählt hier wie einer
+    outside = NETWORK | {s.name for s in steps if s.models is not None}
+
     def offline(outcomes: list[Outcome]) -> dict[str, str]:
-        return {o.step: o.status for o in outcomes if o.step not in NETWORK}
+        return {o.step: o.status for o in outcomes if o.step not in outside}
 
     planned = run_pipeline(steps, settings, dry_run=True)
-    n_offline = sum(1 for s in steps if not s.network)
+    n_offline = sum(1 for s in steps if s.name not in outside)
     assert set(offline(planned).values()) == {"geplant"} and len(offline(planned)) == n_offline
     assert all(
         o.status == "übersprungen" and "Netz aus" in o.reason for o in planned if o.step in NETWORK
@@ -83,14 +87,14 @@ def test_pipeline_runs_skips_and_reruns(
 
     first = run_pipeline(steps, settings)
     assert set(offline(first).values()) == {"ausgeführt"}
-    assert all(s.stamp_path.exists() for s in steps if s.name not in NETWORK)
+    assert all(s.stamp_path.exists() for s in steps if s.name not in outside)
     _compare_results(
         _results_as_legacy(layout.results), mini_root / "expected" / "wahlbezirke_auswertung.csv"
     )
 
     second = run_pipeline(steps, settings)
     assert set(offline(second).values()) == {"übersprungen"}
-    assert all(o.reason == "aktuell" for o in second if o.step not in NETWORK)
+    assert all(o.reason == "aktuell" for o in second if o.step not in outside)
 
     forced = run_pipeline(steps, settings, ["results"], force=True)
     assert [(o.step, o.status) for o in forced] == [("results", "ausgeführt")]
@@ -132,6 +136,9 @@ def test_pipeline_runs_skips_and_reruns(
         # Vorhaben 14: Kanten, Vorgänge und Antworten hängen am Korpus, nicht an den Orten
         "references": "übersprungen",
         "procedures": "übersprungen",
+        # Vorhaben 18: ohne Dokumentvektoren und ohne Paket ist die Nachbartabelle leer, ihre
+        # optionalen Eingaben fehlen weiter
+        "neighbors": "übersprungen",
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")
@@ -263,8 +270,11 @@ def test_pipeline_reproduces_the_thesis_results(
 ) -> None:
     layout = _layout(tmp_path, reference_root, settings.profile)
     bootstrap_from_settings(layout, settings)
-    outcomes = run_pipeline(build_steps(settings, layout), settings)
-    assert all(o.status == "ausgeführt" for o in outcomes if o.step not in NETWORK)
+    steps = build_steps(settings, layout)
+    outcomes = run_pipeline(steps, settings)
+    # Vorhaben 18: ein Schritt mit Modell läuft ohne ``--models`` nicht
+    models = {s.name for s in steps if s.models is not None}
+    assert all(o.status == "ausgeführt" for o in outcomes if o.step not in NETWORK | models)
     page = layout.site_index.read_text(encoding="utf-8")
     assert "41 Kommunalwahlbezirke" in page and page.count('id="bezirk-') == 41
     # Budget der Seite: eine Zahl, in den Settings (Punkt 50, docs/seitengroesse-2026-10.md, § 7)

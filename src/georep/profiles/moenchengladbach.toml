@@ -447,6 +447,10 @@ paper_type = 'berichtsvorlage'
 role = "vorlage"
 paper_type = 'änderungsvorlage|beratungsvorlage'
 
+# --- Vorhaben 18: Einbettungen, Ähnlichkeit, Suche (docs/plans/18-einbettungen.md) --------------
+[embeddings]
+enabled = true                 # der Prüfstein für Stadtneutralität (Messdokument § 6, „Profile"); ohne Paket schreibt neighbors auf Pages eine leere Tabelle
+
 # --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.6) ------------------------
 # Ein anderes Formular als Düsseldorf: mit dessen Mustern trifft die Regel hier nichts. Der Block
 # moenchengladbach des Entwurfs (19 Labels, zwei Muster), unverändert: `TOP:` oder
