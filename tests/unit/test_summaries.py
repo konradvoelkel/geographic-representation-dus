@@ -8,6 +8,7 @@ mit ``read_span`` liest.
 from __future__ import annotations
 
 import re
+import tomllib
 from datetime import date
 from pathlib import Path
 
@@ -44,6 +45,7 @@ from georep.prep.bodies import BodyRules
 from georep.settings import Settings, Summaries, load_settings
 
 NOWHERE = Path("/nonexistent")
+DEFAULTS = Path(__file__).resolve().parents[2] / "src" / "georep" / "defaults.toml"
 META = SummaryMeta(
     "d1",
     "Beschlussvorlage",
@@ -286,8 +288,10 @@ def test_the_outputs_live_under_the_cache_never_under_the_data_root(
 
 def test_the_settings_default_to_off_with_gemma(settings: Settings) -> None:
     """Urteil § 5.3: gebaut wird mit gemma4; der Schalter ist aus, bis ein Profil ihn setzt."""
+    defaults = tomllib.loads(DEFAULTS.read_text(encoding="utf-8"))["summaries"]
+    assert defaults["enabled"] is False and Summaries().enabled is False
     block = settings.summaries
-    assert (block.enabled, block.model, block.budget_chars) == (False, "gemma4", 8000)
+    assert (block.enabled, block.model, block.budget_chars) == (True, "gemma4", 8000)
     assert (block.rare_share, block.known_documents) == (0.01, 3)
     assert re.fullmatch(block.person_titles, "Beigeordnete")  # Regel 5, Review von 11
 
@@ -366,3 +370,20 @@ def test_an_empty_body_gives_no_input_even_with_a_long_fallback() -> None:
         META, [section("fragen", 0, 20, "Wann kommen die Bänke?")], "", 8000, body_empty=True
     )
     assert kept.source == "abschnitte"  # ein Kernabschnitt trägt, der Schalter gilt im Rückfall
+
+
+def test_a_code_without_a_secured_name_keeps_the_written_name(settings: Settings) -> None:
+    """Ein Kürzel ohne gesicherten Namen in ``[bodies]`` (``""``) zeigt den Namen des Kopfs."""
+    rules = BodyRules.from_settings(settings.bodies)
+    unnamed = next(code for code, name in settings.bodies.committees.items() if not name)
+    row = {"gremium": "Ausschuss wie geschrieben", "gremium_kuerzel": unnamed, "qualitaet": ""}
+    assert deliberation([], None, rules, head=[row]) == "Ausschuss wie geschrieben"
+    bare = {"gremium": "", "gremium_kuerzel": unnamed, "qualitaet": "Vorberatung"}
+    assert deliberation([], None, rules, head=[bare]) == f"{unnamed} (Vorberatung)"
+
+
+def test_both_city_profiles_switch_the_step_on(settings: Settings) -> None:
+    """Aus in den Defaults, an in den Stadtprofilen; die Perioden Düsseldorfs erben."""
+    for profile in ("duesseldorf", "duesseldorf-2025", "duesseldorf-2014", "moenchengladbach"):
+        found = load_settings(profile=profile, cwd=NOWHERE)
+        assert found.summaries.enabled and found.structure.enabled, profile

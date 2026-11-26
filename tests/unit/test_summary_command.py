@@ -39,8 +39,9 @@ def layout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Layout:
             "name": ["Bänke am Kanal", "Haushalt", "Ampel an der Schule"],
             "paper_type": ["Bezirksvertretung Beschlussvorlage", "Beschlussvorlage", "Antrag"],
             "consultation_organizations": [[f"{ORG}gr/33"], [f"{ORG}gr/6"], [f"{ORG}gr/33"]],
+            "file_name": [None, None, None],
         },
-        schema_overrides={"consultation_organizations": pl.List(pl.String)},
+        schema_overrides={"consultation_organizations": pl.List(pl.String), "file_name": pl.String},
     ).write_parquet(found.corpus)
     pl.DataFrame({"id": ["a", "b", "c"], "gremium": ["BV2", "RAT", "OVA"]}).write_parquet(
         found.papers_bodies
@@ -94,6 +95,7 @@ def test_one_document_by_reference(layout: Layout, capsys: pytest.CaptureFixture
     )
     assert out[2] == "Die Verwaltung schlägt neue Bänke vor."
     assert out[3] == "Treue: 3 Angaben, ohne unbelegte Angabe; Personennamen 1 (Regel 5)"
+    assert out[4].startswith("  Angaben nicht nachrechenbar: ")  # ohne Abschnitte von 11
 
 
 def test_one_document_by_id_with_flags(layout: Layout, capsys: pytest.CaptureFixture[str]) -> None:

@@ -33,12 +33,39 @@ from typing import NamedTuple
 import deal
 import polars as pl
 
-from georep.contracts import is_district_code
+from georep.contracts import is_district_code, one_row_per_document
+from georep.enrich import Contribution
+from georep.enrich.fidelity import (
+    FIDELITY_COLUMNS,
+    Lexicon,
+    check,
+    evidence,
+    fidelity_row,
+    lexicon_from,
+)
+from georep.enrich.functions import functions_files
+from georep.enrich.sections import raw_text_frame, sections_files
+from georep.http import Transport
+from georep.io import write_parquet
 from georep.layout import Layout
-from georep.prep.bodies import BodyRules, resolve_organizations
-from georep.settings import Originators, Settings
+from georep.ml.base import GenerationOptions, GenerationUse, Generator, Reply, full_name
+from georep.ml.batch import Generated, generate_texts, progress_log
+from georep.ml.cache import ModelCache, input_sha256
+from georep.ml.ollama import (
+    OllamaGenerator,
+    client_from_settings,
+    generation_options,
+    generator_from_settings,
+)
+from georep.pipeline import Step
+from georep.prep.bodies import BodyRules, merge_consultations, resolve_organizations
+from georep.prep.references import ReferenceRules, known_codes, parse_reference
+from georep.prep.structure import BETREFF, HEAD_PREFIX, StructureRules
+from georep.settings import Ml, Originators, Settings
+from georep.spans import SECTION_KIND, check_spans, read_span
 
 PROMPT_VERSION = "20-kurzfassung-2"  # Eingabe und Prompt Fassung 2; Teil des Cache-Schlüssels
+SUMMARIES_SCHEMA_VERSION = 1  # kurzfassungen.parquet und kurzfassungen_treue.parquet
 
 # Wortgleich mit Fassung 1 (Messdokument § 3.1).
 SYSTEM = (
@@ -87,6 +114,7 @@ MARK = " […]"  # hinter einem gekürzten Abschnitt; danach kommt nichts mehr
 # des Messskripts, unter der es den ganzen Rohtext samt Kopf nahm.
 MIN_FALLBACK_CHARS = 50
 UNKNOWN = "nicht angegeben"
+CONSULTATION = "consultation_organizations"
 
 SOURCES = ("abschnitte", "rohtext", "ohne_text")  # woher die Eingabe kommt
 REASONS = ("ohne_text", "offen", "abgewiesen")  # warum ``text`` null ist
@@ -310,6 +338,14 @@ def sender(kind: str | None, fractions: Sequence[str], labels: Mapping[str, str]
     return SENDERS.get(kind or "", UNKNOWN)
 
 
+def known_body_name(code: str, rules: BodyRules) -> str:
+    """Der gesicherte Name eines Kürzels aus ``[bodies]``; leer, wo keiner gesichert ist."""
+    if is_district_code(code, rules.district_body):
+        named = rules.district_body_names.get(code)
+        return named or rules.district_body_name.format(n=int(code[len(rules.district_body) :]))
+    return rules.names.get(code) or ""
+
+
 def body_label(code: str, rules: BodyRules) -> str:
     """Der Name eines Gremienkürzels, wie die Seite ihn zeigt; ohne gesicherten Namen das Kürzel."""
     if is_district_code(code, rules.district_body):
@@ -350,7 +386,7 @@ def deliberation(
        (Entscheidung)"). Geprüft in 11: Gremium, Datum und Qualität je Zeile 160 von 168 (168 mit
        dem Platzhalter „-" als keine), die Folge 27 von 27 Dokumenten mit zwei und mehr Zeilen
        gegen dieselben Labels (Bau-Agent 20, 2026-11-24). Das Gremium heißt wie in ``[bodies]``,
-       wo der Kopf ein Kürzel kennt, sonst wie geschrieben;
+       wo der Kopf ein Kürzel mit gesichertem Namen kennt, sonst wie geschrieben;
     2. sonst die OParl-Beratungsfolge (Punkt 58), nach Kürzel geordnet, weil OParl keine Folge
        kennt, und darum ohne Qualität;
     3. sonst das Gremium der Nummer.
@@ -358,8 +394,9 @@ def deliberation(
     rows: list[str] = []
     for row in head:
         code = row.get("gremium_kuerzel")
-        name = body_label(code, rules) if isinstance(code, str) and code else ""
-        name = name or " ".join(str(row.get("gremium") or "").split())
+        known = known_body_name(code, rules) if isinstance(code, str) and code else ""
+        written = " ".join(str(row.get("gremium") or "").split())
+        name = known or written or (code if isinstance(code, str) else "")
         if name:
             quality = _quality(row.get("qualitaet"))
             rows.append(f"{name} ({quality})" if quality else name)
@@ -464,3 +501,275 @@ SUMMARY_SCHEMA: dict[str, pl.DataType] = {
     "eingabe_quelle": pl.String(),  # eines aus SOURCES
     "eingabe_gekuerzt": pl.Boolean(),
 }
+
+
+def _summaries_hold(
+    inputs: Mapping[str, SummaryInput], got: Generated, use: GenerationUse, result: pl.DataFrame
+) -> bool:
+    texts = result.get_column("text").is_null()
+    reasons = result.get_column("grund")
+    return (
+        one_row_per_document(result, inputs)
+        and (texts == reasons.is_not_null()).all()
+        and reasons.drop_nulls().is_in(list(REASONS)).all()
+    )
+
+
+@deal.ensure(_summaries_hold, message="eine Zeile je ID mit Rohtext; text null genau mit grund")
+def summary_frame(
+    inputs: Mapping[str, SummaryInput], got: Generated, use: GenerationUse
+) -> pl.DataFrame:
+    """``kurzfassungen.parquet``: je ID mit Rohtext die Kurzfassung oder der Grund, warum keine.
+
+    ``got`` sind die Antworten auf die Prompts der Eingaben mit Text, in der Folge der sortierten
+    IDs. Fehlt eine Antwort, ist sie abgewiesen (der Cache hat sie als Abweisung gemerkt) oder offen
+    (noch nicht gefragt, gescheitert).
+    """
+    asked = [doc for doc in sorted(inputs) if inputs[doc].source != "ohne_text"]
+    answers = dict(zip(asked, zip(got.texts, got.truncated, strict=True), strict=True))
+    rejected = {asked[index] for index, _ in got.report.rejected}
+    shas = {doc: input_sha256(f"{SYSTEM}\x00{prompt(inputs[doc])}") for doc in asked}
+    rejected_shas = {shas[doc] for doc in rejected}
+    rows = []
+    for doc in sorted(inputs):
+        entry = inputs[doc]
+        text, cut_off = answers.get(doc, (None, False))
+        if entry.source == "ohne_text":
+            reason: str | None = "ohne_text"
+        elif text is not None:
+            reason = None
+        else:
+            reason = "abgewiesen" if shas[doc] in rejected_shas else "offen"
+        rows.append(
+            (
+                doc,
+                text,
+                reason,
+                use.name,
+                use.generator.digest,
+                use.prompt,
+                bool(cut_off) if text is not None else False,
+                entry.source,
+                entry.truncated,
+            )
+        )
+    return pl.DataFrame(rows, schema=SUMMARY_SCHEMA, orient="row")
+
+
+def fidelity_frame(
+    summaries: pl.DataFrame, inputs: Mapping[str, SummaryInput], lexicon: Lexicon
+) -> pl.DataFrame:
+    """``kurzfassungen_treue.parquet``: je Kurzfassung die Zählung der Treueprüfung, ohne Text."""
+    rows = []
+    for doc, text, cut_off in (
+        summaries.filter(pl.col("text").is_not_null())
+        .select("id", "text", "abgeschnitten")
+        .iter_rows()
+    ):
+        result = check(text, bool(cut_off), evidence(inputs[doc].text, lexicon), lexicon)
+        rows.append({"id": doc, **fidelity_row(result)})
+    return pl.DataFrame(rows, schema={"id": pl.String(), **FIDELITY_COLUMNS})
+
+
+def _optional(path: Path) -> pl.DataFrame | None:
+    return pl.read_parquet(path) if path.is_file() else None
+
+
+def summary_inputs(
+    settings: Settings, layout: Layout, ids: Iterable[str] | None = None
+) -> dict[str, SummaryInput]:
+    """Die Eingaben (Fassung 2) je Korpus-ID mit Rohtext; mit ``ids`` nur für diese.
+
+    Die Abschnitte kommen aus Vorhaben 11 als Positionsspannen; gelesen wird ihr Text nur mit
+    ``read_span`` und den Seitenmustern des Profils (``structure.page_noise``), keine eigene
+    Säuberung. Der Rückfall ist der Rohtext ab dem Ende des Kopfs (Betreff und Kopffelder), wie
+    § 3.1; ``rumpf_leer`` aus dem Kopf von 11 und die Rolle kommen aus ``role_frame``.
+    """
+    wanted = None if ids is None else set(ids)
+    corpus = pl.read_parquet(
+        layout.corpus,
+        columns=["id", "name", "reference", "date", "paper_type", "file_name", CONSULTATION],
+    )
+    if wanted is not None:
+        corpus = corpus.filter(pl.col("id").is_in(sorted(wanted)))
+    raw = raw_text_frame(layout.raw_texts).select("name", "text")
+    docs = (
+        corpus.join(raw, left_on="file_name", right_on="name", how="inner")
+        .filter(pl.col("text").fill_null("") != "")
+        .sort("id")
+    )
+    texts = dict(docs.select("id", "text").iter_rows())
+    files = sections_files(layout)
+    spans = pl.read_parquet(files.sections).filter(
+        (pl.col("kind") == SECTION_KIND) & pl.col("id").is_in(sorted(texts))
+    )
+    check_spans(spans, {doc: len(text) for doc, text in texts.items()}, positions={SECTION_KIND})
+    by_doc: dict[str, list[tuple[str, int, int]]] = {}
+    for doc, start, end, norm in spans.select("id", "start", "end", "norm").iter_rows():
+        by_doc.setdefault(doc, []).append((norm, start, end))
+    head = pl.read_parquet(files.head, columns=["id", "beratungsfolge", "rumpf_leer"])
+    empty = dict(head.select("id", "rumpf_leer").drop_nulls().iter_rows())
+    extra = _optional(layout.consultations) if settings.bodies.consultations is not None else None
+    roles = role_frame(
+        texts,
+        _optional(layout.document_originators),
+        _optional(functions_files(layout).cosponsors),
+        _optional(layout.papers_bodies),
+        merge_consultations(
+            corpus.select("id", CONSULTATION),
+            extra.select("id", CONSULTATION) if extra is not None else None,
+        ),
+        settings,
+        head=head,
+    )
+    role = {doc: (who, where) for doc, who, where in roles.iter_rows()}
+    noise = StructureRules.from_settings(settings).page_noise
+    kinds = {kind for kind, _ in SECTIONS}
+    budget = settings.summaries.budget_chars
+    out: dict[str, SummaryInput] = {}
+    for row in docs.iter_rows(named=True):
+        doc, raw_text = row["id"], row["text"]
+        found = by_doc.get(doc, [])
+        sections = [
+            SectionText(norm, start, end, read_span(raw_text, start, end, noise))
+            for norm, start, end in found
+            if norm in kinds
+        ]
+        fallback = ""
+        if not any(s.kind in CORE and s.text.strip() for s in sections):
+            head_end = max(
+                (end for norm, _, end in found if norm == BETREFF or norm.startswith(HEAD_PREFIX)),
+                default=0,
+            )
+            fallback = read_span(raw_text, head_end, len(raw_text), noise)
+        who, where = role.get(doc, (UNKNOWN, UNKNOWN))
+        meta = SummaryMeta(
+            doc,
+            row["paper_type"] or "",
+            row["reference"] or "",
+            row["date"],
+            row["name"] or "",
+            who,
+            where,
+        )
+        out[doc] = summary_input(
+            meta, sections, fallback, budget, body_empty=bool(empty.get(doc, False))
+        )
+    return out
+
+
+def lexicon_for(settings: Settings, layout: Layout) -> Lexicon:
+    """Das Lexikon der Treueprüfung für ein Profil: Korpus, Wörterbuch, Gremien, Nummern, Ämter."""
+    corpus = pl.read_parquet(layout.corpus, columns=["reference", "text"])
+    places: list[str] = []
+    if layout.dictionary.is_file():
+        terms = pl.read_parquet(layout.dictionary, columns=["suchbegriffe"])
+        places = [str(t) for t in terms.get_column("suchbegriffe").explode().drop_nulls()]
+    rules = ReferenceRules.from_settings(settings.procedures)
+    bodies = settings.bodies
+    block = settings.summaries
+    return lexicon_from(
+        corpus.get_column("text"),
+        places,
+        {**bodies.council, **bodies.committees},
+        district_code=bodies.district_body,
+        district_name=bodies.district_body_name,
+        rare_share=block.rare_share,
+        known_documents=block.known_documents,
+        references=rules if rules.forms else None,
+        codes=known_codes(parse_reference(r, rules) for r in corpus.get_column("reference")),
+        person_titles=block.person_titles,
+    )
+
+
+class DeferredGenerator:
+    """Der Generator aus ``[ml]`` mit dem Modell aus ``[summaries]``; der Client entsteht erst beim
+    ersten ``digest`` oder ``generate`` (wie ``enrich.embeddings.DeferredEmbedder``, Review 18, N5):
+    ``build_steps``, ``steps`` und ``status`` fragen den Server nie, und ein unerlaubtes
+    ``ml.base_url`` ist erst mit ``--models`` ein ``ModelError``."""
+
+    def __init__(self, ml: Ml, model: str) -> None:
+        self.ml = ml
+        self.name = full_name(model)
+        self._model = model
+        self._inner: OllamaGenerator | None = None
+
+    def _generator(self) -> OllamaGenerator:
+        if self._inner is None:
+            self._inner = generator_from_settings(
+                self.ml, client_from_settings(self.ml), model=self._model
+            )
+        return self._inner
+
+    @property
+    def digest(self) -> str:
+        return self._generator().digest
+
+    def generate(
+        self, prompt: str, *, system: str = "", options: GenerationOptions | None = None
+    ) -> Reply:
+        return self._generator().generate(prompt, system=system, options=options)
+
+
+def summaries_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step]:
+    """Der Schritt ``summaries``, wenn das Profil ihn und die Abschnitte von 11 einschaltet.
+
+    Er läuft nur mit ``georep run --models`` (Fundament F5); ``http`` bleibt ungenutzt.
+    """
+    if not settings.summaries.enabled or not settings.structure.enabled:
+        return []
+    return model_steps(settings, layout, DeferredGenerator(settings.ml, settings.summaries.model))
+
+
+def model_steps(settings: Settings, layout: Layout, generator: Generator) -> list[Step]:
+    """Der Schritt mit einem gegebenen Generator; Tests geben ``FakeGenerator``."""
+    files = summaries_files(layout)
+    sections = sections_files(layout)
+    use = GenerationUse(generator, PROMPT_VERSION, generation_options(settings.ml))
+    optional = (
+        layout.document_originators,
+        functions_files(layout).cosponsors,
+        layout.papers_bodies,
+        layout.dictionary,
+    ) + ((layout.consultations,) if settings.bodies.consultations is not None else ())
+
+    def summaries() -> str:
+        inputs = summary_inputs(settings, layout)
+        asked = [inputs[doc] for doc in sorted(inputs) if inputs[doc].source != "ohne_text"]
+        with ModelCache(layout.ml_cache, use.name) as cache:
+            got = generate_texts(
+                use,
+                cache,
+                [prompt(entry) for entry in asked],
+                system=SYSTEM,
+                limit=settings.ml.limit,
+                progress=progress_log(),
+            )
+        frame = summary_frame(inputs, got, use)
+        fidelity = fidelity_frame(frame, inputs, lexicon_for(settings, layout))
+        write_parquet(frame, files.summaries, schema_version=SUMMARIES_SCHEMA_VERSION)
+        write_parquet(fidelity, files.fidelity, schema_version=SUMMARIES_SCHEMA_VERSION)
+        reasons = frame.get_column("grund").value_counts()
+        missing = ", ".join(f"{n} {r}" for r, n in reasons.drop_nulls().sort("grund").iter_rows())
+        names = int(fidelity.get_column("personennamen").sum()) if fidelity.height else 0
+        ok = int(fidelity.get_column("ok").sum()) if fidelity.height else 0
+        return (
+            f"{frame.height} Dokumente mit Rohtext ({got.report.line()}); ohne Kurzfassung: "
+            f"{missing or 'keine'}; Treue ohne unbelegte Angabe {ok} von {fidelity.height}, "
+            f"Personennamen {names} (Prompt {use.prompt})"
+        )
+
+    return [
+        Step(
+            "summaries",
+            (layout.corpus, layout.raw_texts, sections.sections, sections.head),
+            (files.summaries, files.fidelity),
+            summaries,
+            SUMMARIES_SCHEMA_VERSION,
+            models=use,
+            optional=optional,
+        )
+    ]
+
+
+CONTRIBUTION = Contribution("20-kurzfassungen", steps=summaries_steps)

@@ -537,3 +537,7 @@ date_line = '^\s*{city},?\s*(den\s+)?(?P<datum>\d{1,2}\.\s?\d{1,2}\.\s?\d{2,4})'
 office = '(?P<nr>\d{2}(?:/\d{1,3})?)\s*-?\s*(?P<name>.*)$'  # wie im Entwurf (dort im Code); „FB 50 …" trifft es nicht, dann ist der ganze Wert der Name
 form_titles = []
 head_lines = 30
+
+# --- Vorhaben 20: Kurzfassungen (docs/plans/20-kurzfassungen.md, § 6 und § 10) -------------------
+[summaries]
+enabled = true                 # der Schritt summaries; er läuft nur mit `georep run --models` und braucht die Abschnitte von 11 (structure.enabled). Ausgaben nur unter cache_root/<profil>/summaries/, nie veröffentlicht (Frage 6)

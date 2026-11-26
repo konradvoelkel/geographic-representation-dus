@@ -23,8 +23,8 @@ from pathlib import Path
 
 import polars as pl
 
-from georep.enrich.fidelity import CLASSES
-from georep.enrich.summaries import summaries_dir, summaries_files
+from georep.enrich.fidelity import CLASSES, check, evidence
+from georep.enrich.summaries import lexicon_for, summaries_dir, summaries_files, summary_inputs
 from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.prep.bodies import BodyRules, merge_consultations, resolve_organizations
@@ -104,7 +104,31 @@ def _head(row: dict[str, object]) -> str:
     return f"{row.get('reference') or row['id']} vom {when}: {row.get('name') or 'ohne Titel'}"
 
 
-def one_document(key: str, layout: Layout) -> list[str]:
+def flagged_lines(
+    doc: str, row: dict[str, object], settings: Settings, layout: Layout
+) -> list[str]:
+    """Die beanstandeten Angaben und Personennamen, nachgerechnet aus Eingabe und Kurzfassung.
+
+    Sie liegen in keiner Datei (sie sind Text der Kurzfassung, Messdokument § 6); die Eingabe
+    entsteht wie im Schritt neu, das Lexikon aus dem Korpus (einige Sekunden).
+    """
+    text = row.get("text")
+    flagged = any(row.get(f"unbelegt_{cls}") for cls in CLASSES) or row.get("personennamen")
+    if not isinstance(text, str) or not flagged:
+        return []
+    try:
+        entry = summary_inputs(settings, layout, [doc]).get(doc)
+        lexicon = lexicon_for(settings, layout)
+    except (FileNotFoundError, MissingInputError) as error:
+        return [f"  Angaben nicht nachrechenbar: {error}"]
+    if entry is None:
+        return ["  Angaben nicht nachrechenbar: keine Eingabe"]
+    result = check(text, bool(row.get("abgeschnitten")), evidence(entry.text, lexicon), lexicon)
+    lines = [f"  unbelegt ({c.cls}/{c.kind}): {c.text}" for c in result.unsupported]
+    return lines + [f"  Personenname (Regel 5): {name}" for name in result.persons]
+
+
+def one_document(key: str, layout: Layout, settings: Settings) -> list[str]:
     """Die Zeilen zu einem Dokument, gefunden über die ID oder die Drucksachennummer."""
     corpus = _corpus(layout)
     wanted = key.strip()
@@ -125,6 +149,7 @@ def one_document(key: str, layout: Layout) -> list[str]:
             )
         lines.append(_summary_text(row))
         lines.append(_fidelity_line(row))
+        lines += flagged_lines(row["id"], row, settings, layout)
         lines.append("")
     return lines[:-1]
 
@@ -193,7 +218,7 @@ def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
         print("Fehler: entweder <drucksache|id> oder --body", file=sys.stderr)
         return 2
     if args.key is not None:
-        print("\n".join(one_document(args.key, layout)))
+        print("\n".join(one_document(args.key, layout, settings)))
         return 0
     frame = body_documents(args.body, args.since, layout, settings)
     lines: Sequence[str] = list_lines(frame)
