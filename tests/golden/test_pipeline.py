@@ -125,6 +125,8 @@ def test_pipeline_runs_skips_and_reruns(
         "results": "ausgeführt",
         "metrics": "ausgeführt",  # Punkt 46: haengt an results und Woerterbuch
         "body_hits": "ausgeführt",
+        # Vorhaben 11: die Abschnitte lesen Korpus und Rohtext, beide unverändert
+        "sections": "übersprungen",
         "weights": "ausgeführt",
         "parties": "ausgeführt",  # Option 04: haengt an results
         # Vorhaben 15: Funktion und Antragsteller lesen Korpus, Urheber und Gremien; der Schritt

@@ -540,3 +540,52 @@ stand = "Schuljahr 2025/26"
 [context.need.classes]         # Klassen des passenden Ausschusses (Schritt committees), deren Anteil an den Dokumenten je Wahlbezirk zählt; im Stadtprofil. Leer: die Anteile fehlen, der Rest rechnet
 traffic = []
 youth = []
+
+# --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.2, § 6 und § 10) --------
+# Abschnitte (Betreff, Beschlussvorschlag, Sachdarstellung, Rumpf …) als Spannen auf dem Rohtext
+# und je Korpus-ID der Kopf (Amt, Amtsbezeichnung, Beratungsfolge, Sitzung, Briefdatum). Die Muster
+# sind je Stadt neu zu schreiben (§ 3.6: Mönchengladbach trifft mit den Düsseldorfer Mustern
+# nichts); sie stehen im Stadtprofil, hier steht nur, was keine Stadt kennt.
+[structure]
+enabled = false                # der frühe Schritt sections; im Stadtprofil an, wo die Muster stehen
+heading = ''                   # eine Überschriftzeile „Label: Rest" mit den Gruppen label und rest; im Stadtprofil
+heading_nocolon = ''           # dito ohne Doppelpunkt, für Labels, die eine Stadt ohne ihn schreibt; im Stadtprofil
+betreff_after_form = false     # der Betreff steht ohne Label unter dem Formulartitel (eine alte Vorlagenform)
+betreff_max_lines = 4          # ein Betreff endet an der ersten Leerzeile nach Text oder nach so vielen Zeilen (§ 3.2, Punkt 7)
+lead_blocked_in = []           # Abschnittsarten, in denen ein Einleitungssatz nichts öffnet (zitierter Beschluss); im Stadtprofil
+level2 = []                    # Abschnittsarten der Ebene 2: eigene Spanne, ohne den umgebenden Abschnitt zu schließen; im Stadtprofil
+end_markers = []               # Zeilen, die jeden offenen Abschnitt schließen (Grußformel, „gez.", Anrede); im Stadtprofil
+art = []                       # [Muster über paper_type, Art]: fasst Fraktionsvarianten zusammen, erste gewinnt; im Stadtprofil
+decision_expected = []         # Arten mit erwartetem Beschlussvorschlag (zusammengefasst über art); im Stadtprofil
+decision_not_expected = []     # Arten ohne; was in keiner Liste steht, zählt getrennt (Eingaben)
+labels = {}                    # Label wie geschrieben -> Abschnittsart; [structure.labels] im Stadtprofil
+leads = []                     # [[structure.leads]] kind, pattern: Einleitungssätze mit Doppelpunkt; im Stadtprofil
+page_noise = []                # Seitenkopf- und -fußzeilen, die read_span beim Lesen einer Spanne überspringt (Frage 9.6); im Stadtprofil
+months = ["januar", "februar", "märz", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "dezember"]  # Monatsnamen eines ausgeschriebenen Datums („24. Juni 2025"), klein; Sprache, keine Stadt
+min_body_chars = 80            # rumpf_leer: weniger Zeichen hinter dem Betreff, ohne Kopf, Leerraum und Seitenkopfzeilen (wie § 3.4; Hauptperiode 2026-11-24: 132 Dokumente, 59 davon ohne jeden Text)
+
+[structure.fallback]           # der Beschlusssatz ohne Überschrift („Der Rat beschließt …"), § 3.2, Punkt 5
+kind = "beschlussvorschlag"
+pattern = ''                   # leer: kein Beschlusssatz; im Stadtprofil
+max_lines_after_head = 12      # gesucht wird nur in so vielen Zeilen nach dem Kopf
+only_expected = true           # nur in Arten mit erwartetem Beschlussvorschlag (sonst „Die Verwaltung wird gebeten, folgende Fragen …")
+
+[structure.head]               # die Felder des Kopfs, § 3.2, Punkt 8; kein Feld liest einen Personennamen
+consultation_header = ''       # Kopfzeile der Tabelle „Beratungsfolge"; im Stadtprofil
+quality = []                   # Beratungsqualität, ein geschlossener Katalog; im Stadtprofil
+quality_placeholders = []      # Platzhalter statt einer Qualität („-"), gelesen als keine
+quality_required = false       # eine Zeile der Beratungsfolge braucht eine Qualität
+titles = ''                    # Amtsbezeichnungen im Feld der Dezernentin oder des Dezernenten; die Spanne deckt nur sie
+signer_roles = ''              # Amtsbezeichnungen im Unterschriftsblock, nie ein Name
+signer_window = 8              # so viele Zeilen ab der Grußformel
+closing = ''                   # Grußformel oder „gez.": Beginn des Unterschriftsblocks und Ende des Rumpfs; im Stadtprofil
+session = ''                   # „zur Sitzung der … am …" in Briefen, Gruppen gremium und datum; im Stadtprofil
+session_suffix = ''            # was hinter dem Gremium der Sitzung steht und nicht zu seinem Namen gehört (der Ort als {city}); im Stadtprofil
+date_line = ''                 # „<Ort>, <Datum>" im Briefkopf, Gruppe datum, der Ort als {city}; im Stadtprofil
+office = ''                    # Nummer und Name eines Amts im Feld „Fachbereich", Gruppen nr und name; ohne Muster ist der ganze Wert der Name
+form_titles = []               # Formulartitel im Kopf („Beschlussvorlage"), als ganze Zeile
+head_lines = 30                # so viele Zeilen gelten als Kopf für Sitzung, Datumszeile und Formulartitel
+
+# --- Vorhaben 11, Review K3: Quelle der Gremiennamen auf der Seite (Option 05, nur Anzeige) -------
+[bodies]
+names_source = "die Organisationen des Ratsinformationssystems und Dokumenttitel"  # Satzglied im Satz zur Gremientabelle („Quelle sind …"); eine Stadt, deren Namen anders gesichert sind, sagt es im Profil

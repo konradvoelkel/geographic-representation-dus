@@ -274,6 +274,7 @@ class BodyFigures:
     hits: int  # Dokument-Bezirk-Paare über alle Wahlbezirke
     own_hits: int
     names_as_of: dt.date | None  # Stand der Namen aus den Settings
+    names_source: str  # woher die Namen stammen, als Satzglied (``bodies.names_source``)
     # Punkt 58: woher das Gremium kommt, (Quelle, Label, Dokumente, Anteil) in der Reihenfolge von
     # ``prep.bodies.SOURCES``, dazu die drei Zahlen über das Verhältnis der beiden Quellen. Ohne
     # den Schritt ``bodies`` neu gerechnet gibt es sie nicht, und die Vorlage lässt den Satz weg.
@@ -1182,6 +1183,7 @@ def body_figures(
         hits=sum(d.hits for d in districts),
         own_hits=own,
         names_as_of=settings.names_as_of,
+        names_source=settings.names_source,
         by_source=(
             ()
             if sources is None

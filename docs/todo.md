@@ -186,6 +186,24 @@ den Periodenvergleich (Kopplung von Option 02 an 17). (d) Mönchengladbach hat i
 Haushaltsmonat; die Unterseite in Stufe 3 sagt das. (e) `cycle_tests` prüft die Schema-Version der
 fremden Ordner nicht (wie `compare`).
 
+## 14. Struktur der Dokumente: Kandidaten für `struktur-2`
+
+Aufgenommen am 2026-11-24 beim Bau von Vorhaben 11 (`struktur-1` ist der validierte Entwurf
+unverändert, Punkt NN); jede Änderung hier braucht eine frische Bestätigungsstichprobe. (a) Der
+Beschlusssatz ohne Überschrift wird erst hinter dem **Ende des Abschnitts** `kopf_beratungsfolge`
+gesucht, und der reicht bis zur nächsten Überschrift. Von den 278 Dokumenten der Hauptperiode, deren
+Art einen Beschlussvorschlag erwarten lässt und in denen die Regel keinen findet, haben 70 Text ohne
+Überschrift unter der Beratungsfolge (60 Beschlussvorlagen einer Bezirksvertretung, 58 davon BV 8),
+und in 65 davon steht dort ein Beschlusssatz wie „Bezirksvertretung 8 beschließt …". Gesucht werden
+müsste hinter dem letzten Kopffeld. Die Messung (§ 3.4) zählte diese 70 als „Rumpf leer"; leer sind
+34. (b) Die zwölf Fehler am Ende des Beschlussvorschlags (Messdokument § 4.1). (c) Der Rumpf beginnt
+in 2014 bis 2020 bei 4 095 Dokumenten mitten in der Kopfzeile, mit dem Namen hinter der
+Amtsbezeichnung (Review von Vorhaben 11, N1, 2026-11-24; Begründung berichtigt in Runde 3): in
+diesem Formular ist die Amtsbezeichnung das letzte Kopffeld -- 3 599 der 4 095 haben Zeilen der
+Beratungsfolge, aber davor --, also endet der Kopf am Ende des Titels, und der Abschnitt
+`kopf_dezernat` wird dort geteilt. Schneiden müsste er am Ende der Zeile des letzten Kopffelds. Nicht jetzt, weil Vorhaben 16 genau
+diese Grenze vermessen hat; mit `struktur-2` und 16 zusammen.
+
 ## 15. Beschlusslage: Rückstand aus dem Review von Vorhaben 26
 
 Aufgenommen am 2026-11-26 aus dem Review der Stufe 2 (Punkt 79). (a) Die Folgevorlage ist je Profil

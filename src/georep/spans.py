@@ -11,7 +11,10 @@ Eine Zeile ist eine Spanne:
 * ``id`` -- die Korpus-ID des Dokuments (wie in ``interim/papers.parquet``);
 * ``start``, ``end`` -- Zeichenpositionen im Text, halboffen (``text[start:end]``);
 * ``kind`` -- die Art, etwa ``abschnitt``, ``betrag``, ``drucksache``;
-* ``value`` -- der Text an der Stelle, wörtlich;
+* ``value`` -- der Text an der Stelle, wörtlich (``text[start:end]``), oder leer bei einer
+  **Positionsspanne**: einer Stelle, deren Text man über ``read_span`` liest, etwa einem Abschnitt
+  aus Vorhaben 11. Nie eine bearbeitete Form -- die steht in ``norm`` (Entscheidung des Eigentümers
+  von F3, 2026-11-24, Review von Vorhaben 11, K1);
 * ``norm`` -- der normalisierte Wert als Text (Betrag in Euro als Dezimalzahl mit Punkt, Datum
   ISO, Drucksachennummer kanonisch); leer, wo die Art keinen kennt;
 * ``section`` -- der Abschnitt aus Vorhaben 11, in dem die Spanne liegt; leer, solange es ihn
@@ -38,7 +41,8 @@ des Moduls, das die Datei schreibt").
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import re
+from collections.abc import Collection, Mapping, Sequence
 
 import deal
 import polars as pl
@@ -78,13 +82,22 @@ def sort_spans(spans: pl.DataFrame) -> pl.DataFrame:
     return spans.select([*SPAN_SCHEMA, *extra]).sort(list(ORDER), maintain_order=True)
 
 
-def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
+def check_spans(
+    spans: pl.DataFrame,
+    lengths: Mapping[str, int],
+    *,
+    texts: Mapping[str, str] | None = None,
+    positions: Collection[str] | None = None,
+) -> None:
     """``SchemaError``, wenn eine Spanne das Schema, die Folge oder ihren Text verletzt.
 
     ``lengths`` nennt je Dokument-ID die Länge des Texts, auf den die Positionen zeigen. Geprüft
     werden die acht Spalten vorn in ihrer Folge und mit ihren Typen, ``0 <= start < end <=
     len(text)``, eine bekannte ID je Zeile, kein leeres ``kind`` und die feste Folge. Spalten
-    dahinter gehören dem Vorhaben und sind frei. Die Meldung nennt die erste verletzende Zeile.
+    dahinter gehören dem Vorhaben und sind frei. Wer die Texte selbst zur Hand hat, gibt sie als
+    ``texts`` mit; dann ist jedes ``value`` wörtlich ``text[start:end]`` oder leer (eine
+    Positionsspanne), und wer ``positions`` nennt, erlaubt das leere ``value`` nur diesen Arten
+    (Vorhaben 11: nur den Abschnitten). Die Meldung nennt die erste verletzende Zeile.
     """
     # als Liste, nicht als dict: zwei dicts sind gleich, auch wenn ihre Schlüssel anders stehen
     # (Review F7, K1)
@@ -121,6 +134,29 @@ def check_spans(spans: pl.DataFrame, lengths: Mapping[str, int]) -> None:
             f"Spannen: nicht nach {', '.join(ORDER[:4])} sortiert (bei Gleichstand nach "
             f"{', '.join(ORDER[4:])})"
         )
+    if texts is not None:
+        _check_values(core, texts, positions)
+
+
+def _check_values(
+    core: pl.DataFrame, texts: Mapping[str, str], positions: Collection[str] | None
+) -> None:
+    """Jedes ``value`` ist wörtlich der Text an der Stelle oder leer (F3, 2026-11-24); eine ID ohne
+    Text in ``texts`` bleibt ungeprüft. Mit ``positions`` ist leer nur bei diesen Arten erlaubt."""
+    # je Zeile in Python, nicht als Join: der Join trüge jeden Text einmal je Spanne
+    rows = core.select("id", "start", "end", "kind", "value").iter_rows()
+    for row, (doc_id, start, end, kind, value) in enumerate(rows):
+        if not value and positions is not None and kind not in positions:
+            raise SchemaError(
+                f"Spannen: value leer, aber {kind!r} ist keine Positionsspanne, erste Zeile {row}: "
+                f"id={doc_id!r} start={start} end={end}"
+            )
+        text = texts.get(doc_id)
+        if value and text is not None and text[start:end] != value:
+            raise SchemaError(
+                f"Spannen: value nicht wörtlich und nicht leer, erste Zeile {row}: "
+                f"id={doc_id!r} start={start} end={end} value={value[:40]!r}"
+            )
 
 
 def _within_text(text: str, start: int, end: int, context: int = 200) -> bool:
@@ -147,3 +183,113 @@ def excerpt(text: str, start: int, end: int, context: int = 200) -> tuple[str, s
     ``text[start:end]``.
     """
     return text[max(0, start - context) : start], text[start:end], text[end : end + context]
+
+
+# --- Vorhaben 11 (docs/plans/11-struktur.md, § 10, Punkt 3): der Abschnitt einer Spanne und das
+# Lesen einer Spanne ohne Seitenkopfzeilen. Beide für alle, die Spannen auf dem Rohtext schreiben
+# oder lesen (12, 16, 17, 20), statt eines eigenen Joins oder einer eigenen Lesefunktion je Vorhaben.
+
+SECTION_KIND = "abschnitt"  # ``kind`` der Abschnittsspannen aus Vorhaben 11
+_PAGE_BREAK = "\f"  # stores.PAGE_BREAK; hier literal, damit dieses Modul nichts aus den Stores lädt
+
+
+def _section_rows(spans: pl.DataFrame, sections: pl.DataFrame, result: pl.DataFrame) -> bool:
+    return result.height == spans.height and result.columns == spans.columns
+
+
+@deal.ensure(_section_rows, message="dieselben Zeilen und Spalten, nur section neu")
+def section_of(spans: pl.DataFrame, sections: pl.DataFrame) -> pl.DataFrame:
+    """Je Spanne der Abschnitt der Ebene 1, in dem ihr **Anfang** liegt, in ``section``; sonst leer.
+
+    ``sections`` sind die Abschnittsspannen aus Vorhaben 11 (``dokumente_abschnitte.parquet``):
+    eine Zeile der Ebene 1 hat ``kind == "abschnitt"`` und ``section == norm`` (Betreff,
+    Beschlussvorschlag, Sachdarstellung, Rumpf, ``kopf_amt`` …). Eine Zeile der Ebene 2 (Finanzen,
+    Klima) nennt in ``section`` den Abschnitt der Ebene 1 um sie herum und bestimmt hier nichts:
+    die Abschnitte der Ebene 1 überlappen sich nicht, also gibt es je Stelle höchstens einen.
+    Die Kopffelder (``kind`` = ``amt``, ``beratung`` …) zählen ebenfalls nicht.
+
+    Zeilen, Folge und alle anderen Spalten, auch Zusatzspalten hinter den acht (Punkt 74), bleiben,
+    wie sie sind; ein ``section`` der Eingabe wird überschrieben. Beide Tabellen müssen ihre
+    Positionen auf **denselben** Text beziehen (den Rohtext aus F1; ``extractor`` sagt es).
+    """
+    level1 = sections.filter(
+        (pl.col("kind") == SECTION_KIND)
+        & (pl.col("section") == pl.col("norm"))
+        & (pl.col("norm") != "")
+    ).select(
+        "id",
+        pl.col("start").alias("_von"),
+        pl.col("end").alias("_bis"),
+        pl.col("norm").alias("_abschnitt"),
+    )
+    rows = spans.select("id", "start").with_row_index("_zeile")
+    # je Spanne die Abschnitte desselben Dokuments, dann der eine, in dem der Anfang liegt; eine
+    # Eingabe mit überlappenden Abschnitten nähme den vordersten (Folge nach dem Anfang, fest)
+    found = (
+        rows.join(level1, on="id", how="inner")
+        .filter((pl.col("start") >= pl.col("_von")) & (pl.col("start") < pl.col("_bis")))
+        .sort("_zeile", "_von")
+        .unique("_zeile", keep="first", maintain_order=True)
+        .select("_zeile", "_abschnitt")
+    )
+    named = (
+        rows.join(found, on="_zeile", how="left")
+        .sort("_zeile")
+        .get_column("_abschnitt")
+        .fill_null("")
+    )
+    return spans.with_columns(named.alias("section"))
+
+
+def _span_within_text(text: str, start: int, end: int, noise: Sequence[str] = ()) -> bool:
+    return 0 <= start <= end <= len(text)
+
+
+def _noise_compiles(text: str, start: int, end: int, noise: Sequence[str] = ()) -> bool:
+    try:
+        for pattern in noise:
+            re.compile(pattern)
+    except re.error:
+        return False
+    return True
+
+
+def _read_without_page_breaks(
+    text: str, start: int, end: int, noise: Sequence[str] = (), result: str = ""
+) -> bool:
+    return (
+        _PAGE_BREAK not in result
+        and len(result) <= end - start
+        and (bool(noise) or result == text[start:end].replace(_PAGE_BREAK, "\n"))
+    )
+
+
+# Benannte Validatoren vor dem Stapel: das deal-Plugin für mypy kennt keine Lambdas mit Vorgaben
+# (CLAUDE.md, „Arbeitsweise", deal). ``deal.safe``, nicht ``deal.pure``: die Funktion läuft je
+# Abschnitt und Dokument (CLAUDE.md, „Nie").
+@deal.pre(_span_within_text, message="0 <= start <= end <= len(text)")
+@deal.pre(_noise_compiles, message="jedes Muster in noise ist ein gültiger regulärer Ausdruck")
+@deal.ensure(
+    _read_without_page_breaks,
+    message="ohne Seitenwechsel, nie länger als die Spanne; ohne Muster genau die Spanne",
+)
+@deal.safe
+def read_span(text: str, start: int, end: int, noise: Sequence[str] = ()) -> str:
+    """Der Text der Spanne ``text[start:end]``, ohne die Zeilen, die ein Muster aus ``noise`` ganz
+    trifft (Seitenkopfzeilen wie „Seite 2" oder „Sitzung des … am … Vorlage …", Frage 9.6).
+
+    Die Spannen behalten die rohen Offsets; wer ihren Text liest (16, 20), liest ihn hier. Eine
+    Zeile zählt als Rauschen, wenn ein Muster sie ohne Leerraum an den Rändern ganz trifft
+    (``re.fullmatch``); Zeilen sind durch Zeilenumbruch und Seitenwechsel getrennt, wie
+    ``prep.raw_texts.split_lines``, und kommen mit ``\\n`` verbunden zurück. Eine Zeile, die
+    die Spanne nur zum Teil trifft, wird nach dem Teil in der Spanne beurteilt. Die Muster
+    stehen im Profil (``structure.page_noise``).
+    """
+    piece = text[start:end].replace(_PAGE_BREAK, "\n")
+    if not noise:
+        return piece
+    return "\n".join(
+        line
+        for line in piece.split("\n")
+        if not any(re.fullmatch(pattern, line.strip()) for pattern in noise)
+    )

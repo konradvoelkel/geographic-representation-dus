@@ -48,6 +48,7 @@ from georep.prep.context import (
     NEED_SCHEMA_VERSION,
 )
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
+from georep.prep.structure import STRUCTURE_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
 from georep.report.feeds import FEEDS_SCHEMA_VERSION
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION, stop_words_digest
@@ -103,6 +104,8 @@ VERSIONS = {
     # Vorhaben 22: die Auszüge (Netz) und die Tabellen je Wahlbezirk (``georep.enrich.need``)
     "need_data": NEED_DATA_SCHEMA_VERSION,
     "need": NEED_SCHEMA_VERSION,
+    # Vorhaben 11: ein früher Schritt (``georep.enrich.sections``), zwei Dateien
+    "sections": STRUCTURE_SCHEMA_VERSION,
 }
 
 
@@ -173,6 +176,14 @@ def test_the_display_values_outside_the_fingerprint_are_in_the_report_hash(
         ),
         default_settings.model_copy(
             update={"period": default_settings.period.model_copy(update={"label": "anders"})}
+        ),
+        # Review 11, K3: die Quelle der Gremiennamen steht im Satz zur Gremientabelle
+        default_settings.model_copy(
+            update={
+                "bodies": default_settings.bodies.model_copy(
+                    update={"names_source": "eine andere Quelle"}
+                )
+            }
         ),
         default_settings.model_copy(
             update={
@@ -339,11 +350,16 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
         checked += 1
     # Heute 19 im Kern: texts, raw_texts, voters, context, streets, pois, dictionary, corpus,
     # bodies, topics, committees, index, timeline, results, metrics, body_hits, weights, controls,
-    # parties; dazu je ein Parquet-Schritt der Beiträge aus dem Register (Vorhaben 15: zwei).
-    # Ohne ``--models`` läuft ein Modellschritt nicht (Vorhaben 18: ``embeddings``), seine Datei fehlt
+    # parties; dazu je ein Parquet-Schritt der Beiträge aus dem Register (Vorhaben 15: zwei,
+    # Vorhaben 11: einer, früh). Ohne ``--models`` läuft ein Modellschritt nicht (Vorhaben 18:
+    # ``embeddings``), seine Datei fehlt
+    http = FakeSession({})
     contributed = [
         s
-        for s in georep.enrich.contributed_steps(default_settings, mini_run, FakeSession({}))
+        for s in (
+            *georep.enrich.contributed_early_steps(default_settings, mini_run, http),
+            *georep.enrich.contributed_steps(default_settings, mini_run, http),
+        )
         # Vorhaben 18: ohne Modell kein Lauf; Vorhaben 22: need_data ist Netz
         if s.outputs[0].suffix == ".parquet" and s.models is None and not s.network
     ]

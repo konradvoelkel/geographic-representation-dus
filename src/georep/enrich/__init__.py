@@ -89,6 +89,7 @@ from georep.enrich.functions import CONTRIBUTION as FUNCTIONS  # noqa: E402  (Vo
 from georep.enrich.need import CONTRIBUTION as NEED  # noqa: E402  (Vorhaben 22)
 from georep.enrich.outcomes import CONTRIBUTION as OUTCOMES  # noqa: E402  (Vorhaben 26)
 from georep.enrich.procedures import CONTRIBUTION as PROCEDURES  # noqa: E402  (Vorhaben 14)
+from georep.enrich.sections import CONTRIBUTION as SECTIONS  # noqa: E402  (Vorhaben 11)
 
 CONTRIBUTIONS: tuple[Contribution, ...] = (
     FUNCTIONS,
@@ -97,6 +98,7 @@ CONTRIBUTIONS: tuple[Contribution, ...] = (
     CYCLES,
     OUTCOMES,
     NEED,
+    SECTIONS,
 )
 
 
