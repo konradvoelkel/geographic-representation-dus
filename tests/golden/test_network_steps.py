@@ -233,7 +233,7 @@ def test_organizations_step_feeds_the_party_attribution(tmp_path: Path, settings
     assert len(found) == 12 and {o.short_name for o in found} >= {"FDP", "AfD"}
 
     # Die Offline-Kette einmal rechnen, damit parties seine Eingaben hat
-    offline = [s.name for s in steps if not s.network]
+    offline = [s.name for s in steps if not s.network and s.models is None]  # Vorhaben 18
     assert all(o.status == "ausgeführt" for o in run_pipeline(steps, settings, offline))
 
     # Ein Paper mit Urheberfeld in den Store schieben und die Kette ab corpus neu rechnen
@@ -268,7 +268,8 @@ def test_the_parties_step_runs_without_the_organizations_file(
     steps = build_steps(settings, layout)
     parties_step = next(s for s in steps if s.name == "parties")
     assert layout.organizations not in parties_step.inputs and not layout.organizations.exists()
-    outcomes = run_pipeline(steps, settings, [s.name for s in steps if not s.network])
+    offline = [s.name for s in steps if not s.network and s.models is None]  # Vorhaben 18
+    outcomes = run_pipeline(steps, settings, offline)
     assert all(o.status == "ausgeführt" for o in outcomes)
     assert "Organisationen" not in next(o for o in outcomes if o.step == "parties").reason
     assert pl.read_parquet(layout.document_originators).height == 200

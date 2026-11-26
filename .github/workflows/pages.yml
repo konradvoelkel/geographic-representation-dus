@@ -8,7 +8,7 @@
 # Actions per SHA gepinnt wie in ci.yml; Push per SSH, das gh-Token hat keinen workflow-Scope.
 # Seit die Datenpakete im Repo liegen (Punkt 56), bricht ein Fehler in **irgendeinem** Block den
 # ganzen Deploy ab, und das ist Absicht: die Daten sind da, also ist ein fehlgeschlagener Teil ein
-# Fehler und keine fehlende Eingabe. Die drei `if [ ! -d … ]`-Wachen bleiben trotzdem stehen --
+# Fehler und keine fehlende Eingabe. Die vier `if [ ! -d … ]`-Wachen bleiben trotzdem stehen --
 # sie sind die Zusage, dass ein Klon ohne ein Paket die uebrigen Seiten weiter baut.
 name: pages
 
@@ -38,10 +38,11 @@ jobs:
       - run: uv sync --locked
       - run: uv run georep bootstrap
       - run: uv run georep run
-      # Option 02: die zweite Wahlperiode und der Vergleich, sobald ihr Schnappschuss im Repo
-      # liegt (docs/plans/02-zeitreihe.md, Stufe H). Ohne ihn baut der Workflow wie bisher nur
-      # die Hauptperiode; der Abschnitt „Zwei Wahlperioden" fehlt dann einfach.
-      - name: Zweite Periode und Vergleich, wenn der Schnappschuss da ist
+      # Option 02: die zweite Wahlperiode, sobald ihr Schnappschuss im Repo liegt
+      # (docs/plans/02-zeitreihe.md, Stufe H). Ohne ihn baut der Workflow wie bisher nur die
+      # Hauptperiode; der Abschnitt „Zwei Wahlperioden" fehlt dann einfach. Den Vergleich rechnet
+      # der Block nach der laufenden Periode, weil das Profil auch deren Ausgaben liest.
+      - name: Zweite Periode, wenn ihr Schnappschuss da ist
         run: |
           if [ ! -d snapshots/2014-2020 ]; then
             echo "snapshots/2014-2020 fehlt: nur die Hauptperiode"
@@ -49,7 +50,6 @@ jobs:
           fi
           uv run georep --profile duesseldorf-2014 bootstrap || exit 1
           uv run georep --profile duesseldorf-2014 run || exit 1
-          uv run georep --profile duesseldorf-vergleich run || exit 1
           # Der Abschnitt „Zwei Wahlperioden" verlinkt <profil>/ relativ zur Stadtseite, also
           # gehört die Unterseite in deren Ordner; publish nimmt sie mit.
           # Die Ausgabe von `paths` geht in RUNNER_TEMP, nicht in den Klon: dort raeumt der
@@ -83,6 +83,18 @@ jobs:
           [ -n "$MAIN" ] && [ -n "$PERIOD" ] && [ -n "$PROFILE" ] || exit 1
           rm -rf "$MAIN/$PROFILE" || exit 1
           cp -r "$PERIOD" "$MAIN/$PROFILE" || exit 1
+      # Option 02 und Vorhaben 17: das Profil duesseldorf-vergleich rechnet den Vergleich (compare,
+      # liest 2014-2020) und die vorab festgelegten Tests über drei Perioden (cycle_tests, liest
+      # 2014-2020 und 2025). Es baut die Hauptseite darum erst, wenn beide Perioden gerechnet
+      # sind; fehlt eine Eingabe, bricht es mit ihrem Pfad ab (docs/decisions.md, Vorhaben 17).
+      # Die beiden Unterseiten liegen dann schon im Ordner der Stadtseite; report lässt sie stehen.
+      - name: Vergleich und Tests über die Perioden, wenn beide Schnappschüsse da sind
+        run: |
+          if [ ! -d snapshots/2014-2020 ] || [ ! -d snapshots/2025 ]; then
+            echo "snapshots/2014-2020 oder snapshots/2025 fehlt: kein Vergleich"
+            exit 0
+          fi
+          uv run georep --profile duesseldorf-vergleich run || exit 1
       # Option 01: die zweite Stadt baut nur mit, wenn ihr Paket unter reference/<slug>/ liegt;
       # sonst meldet publish sie als "kein Lauf" und die Vergleichsseite entfällt (Exit 0).
       - name: Zweite Stadt, wenn ihr Paket da ist

@@ -206,8 +206,8 @@ def test_the_city_profiles_switch_the_steps_on(tmp_path: Path, default_settings:
     """Düsseldorf (alle drei Perioden erben es) und Mönchengladbach; die Schritte vor ``report``."""
     names = [s.name for s in build_steps(default_settings, Layout(tmp_path, tmp_path, tmp_path))]
     assert names[names.index("references") :][:2] == ["references", "procedures"]
-    # Vorhaben 22 hängt seine Schritte dahinter (Register in Merge-Folge); report bleibt hinten
-    assert names.index("report") > names.index("procedures")
+    # Vorhaben 18 und 22 hängen ihre Schritte dahinter, vor ``report``
+    assert names.index("procedures") < names.index("report")
     for profile in ("duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
         assert load_settings(profile=profile, cwd=Path("/nonexistent")).procedures.enabled
 

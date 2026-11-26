@@ -872,6 +872,23 @@ profile = "duesseldorf-2025"
 papers = "snapshots/2025/raw/papers.jsonl"
 texts = "snapshots/2025/cache/text/texts.parquet"
 
+# --- Vorhaben 18: Einbettungen, Ähnlichkeit, Suche (docs/plans/18-einbettungen.md) --------------
+# Gemessen an dieser Periode; die Perioden erben den Schalter. Was die Stücke bestimmt, steht
+# stadtneutral in defaults.toml, die Präfixe des Modells unter [ml.embedding].
+[embeddings]
+enabled = true                 # Schritte embeddings (nur `georep run --models`) und neighbors
+neighbors_package = "snapshots/duesseldorf-aehnlich/raw/aehnliche_dokumente_paket.parquet"  # die zehn ähnlichen Dokumente je Korpus-ID, ohne Vektoren (snapshots/duesseldorf-aehnlich/README.md); bootstrap legt sie nach raw/, neighbors nimmt sie, wo es keine Dokumentvektoren gibt (Pages)
+
+# --- Vorhaben 17: Zeit und Neuigkeiten (docs/plans/17-zeit.md) ---------------------------------
+# Die Wahltage der Kommunalwahlen in NRW (Landeswahlleiterin NRW: Kommunalwahlen am 25. Mai 2014,
+# 13. September 2020 und 14. September 2025). Sie trennen die drei Datensätze der Stadt
+# (duesseldorf-2014 beginnt am Wahltag 2014, die Hauptperiode am Wahltag 2020, duesseldorf-2025 am
+# Tag danach) und machen 2019/20 und 2024/25 zu Vorwahljahren (H17.1). Die Periodenprofile erben
+# den Block; die Tests über alle drei rechnet duesseldorf-vergleich.
+[cycles]
+enabled = true                 # Schritte cycles und vocabulary in jedem Profil der Stadt
+elections = [2014-05-25, 2020-09-13, 2025-09-14]
+instrument_types = { zanfrage = "anfrage", zantrag = "antrag" }  # S1.5: die Dokumentarten „zAnfrage …" und „zAntrag …" dieser Stadt (2014 bis 2020, vereinzelt danach), zu den Präfixen aus defaults.toml
 # --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 6, § 8 und § 10) ----------
 # Die Quellen stehen in defaults.toml (bundes- und landesweit, Gemeinde = city.ags); hier schaltet die
 # Stadt ein und nennt das Paket mit ihren Auszügen, die Klassen des passenden Ausschusses und die

@@ -173,6 +173,24 @@ VERIFY_TARGETS = [
     # 5 s am 2026-11-24. Die übrigen Funktionen von prep.references nehmen vorkompilierte Muster
     # (``re.Pattern`` in ``ReferenceRules``) und stehen darum nicht hier.
     "georep.prep.references.edge_type",
+    # Vorhaben 18 (2026-11-24): die Stücke für das Einbettungsmodell, je einzeln geprüft, Exit 0,
+    # „Not confirmed" nach 20 bis 41 s, kein Gegenbeispiel. Die Treue zur Messung prüft
+    # tests/property/test_chunks_props.py gegen das Orakel ``oracle_chunks.zerteile``.
+    "georep.prep.chunks.chunk_title",
+    "georep.prep.chunks.chunk_lines",
+    "georep.prep.chunks.split_chunks",
+    "georep.prep.chunks.chunk_text",
+    # Vorhaben 18: Stemmer und Mischung der Suche, je einzeln geprüft, Exit 0, „Not confirmed"
+    # nach 40 und 22 s. Nicht dabei: ``bm25_scores``, ``ranking`` und ``build_index`` (NumPy und
+    # SciPy in der Signatur); ihre Eigenschaften prüft tests/property/test_bm25_props.py.
+    "georep.search.stem.stem",
+    "georep.search.bm25.rrf",
+    # Vorhaben 17 (2026-11-24): die vollständigen Wahljahre einer Periode und Holm. Einzeln geprüft;
+    # crosshair fand date(1, 5, 1) (das Wahljahr 0 gibt es nicht, behoben), danach kein
+    # Gegenbeispiel. Die exakten Tests rechnen mit numpy und stehen in
+    # tests/property/test_cycles_props.py.
+    "georep.analysis.cycles.complete_years",
+    "georep.analysis.hypotheses.holm",
     # Vorhaben 22 (2026-11-24): Holm über die vorab festgelegten Tests, rein; einzeln geprüft, 22 s,
     # kein Gegenbeispiel. Übergang, bis Vorhaben 17 ``analysis/hypotheses.py`` bringt; dann geht
     # das Ziel mit der Funktion dorthin.
@@ -386,6 +404,42 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "procedures": (
         ("src/georep/analysis/procedures.py",),
         ("tests/unit/test_procedures.py", "tests/property/test_procedures_props.py"),
+    ),
+    # Vorhaben 18: die Stücke für das Einbettungsmodell; nicht gemessen
+    "chunks": (
+        ("src/georep/prep/chunks.py",),
+        ("tests/unit/test_chunks.py", "tests/property/test_chunks_props.py"),
+    ),
+    "stem": (
+        ("src/georep/search/stem.py",),
+        ("tests/unit/test_search_stem.py", "tests/property/test_bm25_props.py"),
+    ),
+    "bm25": (
+        ("src/georep/search/bm25.py",),
+        ("tests/unit/test_search_bm25.py", "tests/property/test_bm25_props.py"),
+    ),
+    "vectors": (
+        ("src/georep/search/vectors.py", "src/georep/search/units.py"),
+        ("tests/unit/test_embeddings_steps.py", "tests/property/test_vectors_props.py"),
+    ),
+    "query": (("src/georep/search/query.py",), ("tests/unit/test_search_query.py",)),
+    # Vorhaben 17: Wahljahre, exakte Tests, Holm, Lexikon und Feeds; Zeit nicht gemessen
+    "cycles": (
+        (
+            "src/georep/analysis/cycles.py",
+            "src/georep/analysis/hypotheses.py",
+            "src/georep/analysis/lexicon.py",
+            "src/georep/report/feeds.py",
+        ),
+        (
+            "tests/unit/test_cycles.py",
+            "tests/unit/test_hypotheses.py",
+            "tests/unit/test_lexicon.py",
+            "tests/unit/test_feeds.py",
+            "tests/property/test_cycles_props.py",
+            "tests/property/test_hypotheses_props.py",
+            "tests/property/test_feeds_props.py",
+        ),
     ),
     # Vorhaben 22: die Tests der vorab festgelegten Hypothesen
     "need": (

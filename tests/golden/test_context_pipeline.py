@@ -107,10 +107,12 @@ def test_the_whole_chain_on_the_reference_publishes_both_sections(
     bootstrap_from_settings(layout, settings)
     steps = build_steps(settings, layout)
     outcomes = run_pipeline(steps, settings)
-    offline = [o for o in outcomes if o.step not in {s.name for s in steps if s.network}]
+    # Vorhaben 18: ein Schritt mit Modell läuft ohne ``--models`` nicht, wie ein Netzschritt
+    outside = {s.name for s in steps if s.network or s.models is not None}
+    offline = [o for o in outcomes if o.step not in outside]
     # Zahl aus dem Register, nicht als Literal (00-synergien.md, F6): die Schritte der anderen
     # Optionen zählen mit, sobald dieser Branch über sie rebased ist.
-    assert len(offline) == sum(1 for s in steps if not s.network)
+    assert len(offline) == sum(1 for s in steps if s.name not in outside)
     assert all(o.status == "ausgeführt" for o in offline)
     assert "171 Sozialräume, 13 Variablen" in next(o for o in offline if o.step == "context").reason
     assert "32 von 32 Modellen" in next(o for o in offline if o.step == "controls").reason

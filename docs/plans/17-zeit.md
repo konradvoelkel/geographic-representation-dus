@@ -904,4 +904,50 @@ dessen Notizen), mit vorgeschlagener Regel:
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
-—
+Übertragen am 2026-11-24 aus [00-synergien-2026-11.md](00-synergien-2026-11.md) (§ 1, § 2.1, § 2.2
+Konflikte 1, 13 und 16, § 3 und § 4 „17 Zeit") und dem Auftrag des Supervisors an die Stufe 2, bevor
+sie beginnt. Wo das § 6 und § 7 ändert, gilt dieser Abschnitt.
+
+1. **Ein Beitrag** (§ 2.1, `src/georep/enrich/__init__.py`): nicht zwei Beiträge `cycles` und `feeds`,
+   sondern **ein** Beitrag `17-zeit` mit allen vier Schritten `cycles`, `vocabulary`, `cycle_tests` und
+   `feeds`; eine Importzeile und ein Eintrag am Ende von `CONTRIBUTIONS`. Die Fabrik hat die Signatur
+   aus Punkt 74 (`settings, layout, http`); alle vier Schritte sind offline und fragen den Transport
+   nie, und alle bestehen `check_step_order`.
+2. **Dateiname** (§ 1, „Attribute je Dokument"): `bundesvokabular.parquet` heißt
+   **`dokumente_bundesvokabular.parquet`**, nach der Konvention `dokumente_<attribut>.parquet`;
+   Spalten wie in § 6, eine Zeile je Korpus-ID (auch wo mehrere IDs eine PDF-Datei teilen), Vertrag
+   `one_row_per_document`.
+3. **Spannen auf dem Rohtext** (§ 2.2, Konflikt 1; Punkt 74): die Treffer des Lexikons im Text werden
+   im kleingeschriebenen Text gefunden, wie gemessen, und über `prep.raw_texts.flatten_with_offsets`
+   auf den Rohtext geschrieben; `extractor` nennt den Rohtext (`pypdf-7.1.0+roh`) und die
+   Lexikonversion, `section` kommt aus Vorhaben 11 und bleibt leer, bis 11 gemerged ist. Spannen gibt es
+   nur für Stellen im Text: ein Treffer im Titel steht in `kategorien` und `kopf`, nicht als Spanne.
+   Ohne Rohtext eines Dokuments (verschlüsselte oder abgewiesene PDFs, Profile ohne Rohtextpaket auf
+   Pages, Frage 18) fehlen seine Spannen, ohne dass der Lauf scheitert (§ 2.2, Konflikt 14).
+4. **Gemeinsamer Kern der Hypothesentabellen** (§ 1): `src/georep/analysis/hypotheses.py`, gebaut von
+   17, genutzt von 22 und später 21, 24, 27: `holm` und die Wortwahl (`bestätigt`, `nicht bestätigt`,
+   `vorläufig`) und die Spalten `hypothese`, `p`, `p_holm`, `ergebnis`, `n`, `festgelegt` (Commit der
+   Festlegung); Zusatzspalten je Vorhaben dahinter. `zeit_hypothesen.parquet` trägt den Kern und die
+   Spalten aus § 6.
+5. **`cycle_tests` und die Folge der Profile** (§ 2.2, Konflikt 13): der Schritt liest die Ausgaben von
+   `duesseldorf-2014` und `duesseldorf-2025`, `pages.yml` baut die Hauptperiode zuerst. Die Lösung
+   wählt die Stufe 2, ohne `.github/workflows/pages.yml` selbst zu ändern (das gh-Token hat keinen
+   `workflow`-Scope; die Änderung macht der Supervisor): entweder ein eigenes Profil wie `compare`,
+   oder der Schritt bricht mit Namen ab, wenn eine Eingabe fehlt, und der Bericht nennt die nötige
+   Änderung an `pages.yml` genau.
+6. **Wahltage** (§ 2.2, Konflikt 16): `period.election` heißt „die Wahl, deren Ergebnis Nenner und
+   Zuschnitt liefert", nicht der Wahltag am Beginn. 17 führt darum eine eigene Liste
+   `cycles.elections` im Stadtprofil, mit Quelle; 21, 24 und 27 lesen Wahltage dort.
+7. **Paketdaten und lxml** (§ 2.1, `pyproject.toml`): das Lexikon kommt als Paketdatei
+   `src/georep/lexika/bundespolitik.toml` in einem eigenen Commit, Version 2026-11-23.1 unverändert
+   (Version 2 bleibt Vorschlag, Frage 9.16). lxml nur, wenn es wirklich gebraucht wird, dann in der
+   Entwicklungsgruppe mit `uv lock --upgrade-package lxml` in eigenem Commit (Frage 9.8, Entscheidung
+   des Supervisors offen); ohne lxml prüfen die Tests die Feeds mit einem eigenen Validator ohne Netz.
+8. **Fragen 27 und 28** (`fragen-2026-11.md`, hier 9.6 und 9.4) gelten mit ihrer Annahme: keine
+   Straßennamen als `category` in den Feed-Einträgen, kein `rel="self"`.
+9. **Seite** (§ 4 „17", § 5): Stufe 3 liest `validierung/17-zeit-f4/guete.json` und die Labels dort
+   für „richtig: k von 10" je Kategorie, mit dem Satz „desselben Modells", bis Frage 19 beantwortet
+   ist. Ein slow-Test der Stufe 2 rechnet die Präzision 94 von 100 aus
+   `validierung/17-zeit/labels.csv` gegen die gebaute Ausgabe nach.
+10. **Reihenfolge** (§ 3): Welle 2, Merge an Position 5 nach 11, 12, 14 und 15; 17 braucht weder F1
+    noch den Netzlauf noch ein Modell und bringt `analysis/hypotheses.py` vor 22.
