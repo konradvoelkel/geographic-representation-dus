@@ -1,5 +1,9 @@
 # Vorhaben 23: Textübernahme über Perioden, Parteien und Städte
 
+**Abgeschlossen am 2026-11-23: verworfen; nur noch historisch. Gültig ist der Entscheidungseintrag
+„Vorhaben 23 verworfen" in [../decisions.md](../decisions.md); eine Neumessung wäre ein eigenes Vorhaben
+(`docs/todo.md`).** Der Branch `feat/23-textuebernahme` ist gemerged und entfernt.
+
 Stand 2026-11-23, Stufe 1 (Messen) mit Kodierung abgeschlossen, Branch `feat/23-textuebernahme`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „23 Textübernahme".
 Messskript: [23-textuebernahme-messung.py](23-textuebernahme-messung.py). Codebuch und Stichprobe:

@@ -1,5 +1,8 @@
 # Plan 04: Parteien
 
+**Abgeschlossen am 2026-10-12 (gemerged, `v0.11.0`); nur noch historisch, gültig sind
+[../architecture.md](../architecture.md) und [../decisions.md](../decisions.md).**
+
 Stand 2026-10-12, Branch `feat/04-parteien`. Status: gemerged am 2026-10-12.
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.4; Vorlage § 8.3; Regeln § 2.

@@ -1,5 +1,8 @@
 # Plan 02: Zeitreihe
 
+**Abgeschlossen am 2026-10-12 (gemerged, `v0.11.0`); nur noch historisch, gültig sind
+[../architecture.md](../architecture.md) und [../decisions.md](../decisions.md).**
+
 Stand 2026-10-12, Branch `feat/02-zeitreihe`. Status: **gemerged am 2026-10-12** (Stufen A bis G umgesetzt; Stufe H ist Konrads Lauf).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.2; Regeln: § 2 dort und [../../CLAUDE.md](../../CLAUDE.md);

@@ -1,5 +1,9 @@
 # Fragen an Konrad, gesammelt vom Supervisor
 
+**Abgeschlossen am 2026-10-13 mit den Antworten auf die acht wichtigsten Fragen; nur noch historisch.**
+Offen sind nur VPS und Domain (Fragen 5, 7.1 und 7.2: „später"); gültig für die Vorverarbeitung 2026-11
+ist [fragen-2026-11.md](fragen-2026-11.md).
+
 Protokoll: § 6 des Meta-Plans. Je Frage: Nummer, Option, Datum, Frage, warum sie zählt, Annahme ohne
 Antwort, Status. Die sieben Fragen aus § 9 des Meta-Plans stehen zuerst (beantwortet); danach die Fragen der
 acht Pläne aus der Synergiephase (2026-10-12). Wo der Supervisor entscheiden konnte, steht die Entscheidung im
@@ -71,9 +75,9 @@ Nummern verweisen auf die Tabellen unten.
 
 | Nr. | Datum | Frage | Warum | Annahme | Status |
 |---|---|---|---|---|---|
-| 1.1 | 2026-10-11 | Mönchengladbach als erste zweite Stadt statt Neuss? | nur Mönchengladbach hat Stimmbezirksflächen als Open Data | Mönchengladbach | offen |
+| 1.1 | 2026-10-11 | Mönchengladbach als erste zweite Stadt statt Neuss? | nur Mönchengladbach hat Stimmbezirksflächen als Open Data | Mönchengladbach | beantwortet 2026-10-13: Mönchengladbach |
 | 1.2 | 2026-10-11 | Paket des vollen Laufs (10 bis 20 MB) nach `reference/moenchengladbach/` ins Repo? | CI baut nur aus dem Repo | ja | beantwortet 2026-10-13: ins Repo; **umgesetzt 2026-10-14** (3 980 958 Bytes, `reference/moenchengladbach/README.md`, `docs/decisions.md` Punkt 56) |
-| 1.3 | 2026-10-11 | Die Stadt nach den Flächen der Kommunalwahl 2025 fragen? | 4 bzw. 5 Stimmbezirke weichen zwischen 2022 und 2025 ab | Flächen von 2022 mit gemessener Übereinstimmung | offen (Konrads Satz an `gdi@moenchengladbach.de`) |
+| 1.3 | 2026-10-11 | Die Stadt nach den Flächen der Kommunalwahl 2025 fragen? | 4 bzw. 5 Stimmbezirke weichen zwischen 2022 und 2025 ab | Flächen von 2022 mit gemessener Übereinstimmung | erledigt 2026-10-15 ohne Anfrage: die Flächen des Wahltags sind öffentlich (`docs/decisions.md`, Punkt 65) |
 | 1.4 | 2026-10-11 | Lizenz der votemanager-CSVs der ITK Rheinland? | die Seite nennt Lizenzen wörtlich | Quelle nennen, Lizenz „nicht angegeben" | beantwortet 2026-10-13: Quelle ist die Open-Data-Seite der votemanager-Wahlpräsentation; Lizenzfeld bleibt wie es ist, keine Anfrage jetzt |
 | 1.5 | 2026-10-11 | Marker des Vorlagenkopfs in Mönchengladbach? | ohne Marker zählen Treffer im Kopf | `betrifft`, Stichprobe misst | Supervisor: Annahme gilt, der Plan misst |
 | 1.6 | 2026-10-11 | Ausreißer der zweiten Regression für Mönchengladbach? | Tabelle 5 nennt 1 und 10 für Düsseldorf | leer bis zum Lauf, dann die zwei höchsten | Supervisor: Annahme gilt (`analysis.exclude_districts` je Profil, F3) |

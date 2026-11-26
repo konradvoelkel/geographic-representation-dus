@@ -1,6 +1,9 @@
 # Plan 05: Gremien
 
-Stand 2026-10-12, Branch `feat/05-gremien`. Status: im Review (umgesetzt am 2026-10-12).
+**Abgeschlossen am 2026-10-12 (gemerged, `v0.11.0`); nur noch historisch, gültig sind
+[../architecture.md](../architecture.md) und [../decisions.md](../decisions.md).**
+
+Stand 2026-10-12, Branch `feat/05-gremien`. Status: gemerged am 2026-10-12 (umgesetzt am 2026-10-12).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.5; Regeln § 2; Vorlage § 8.3. Dieser
 Plan ist so geschrieben, dass ein frischer Agent ihn nach der Synergiephase ohne Rückfragen umsetzen kann:

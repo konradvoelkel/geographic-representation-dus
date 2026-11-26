@@ -1,5 +1,9 @@
 # Haltepunkt A der Vorverarbeitung 2026-11
 
+**Momentaufnahme vom 2026-11-23; nur noch historisch, gültig sind der Stand je Vorhaben in
+[README.md](README.md) und die Fragen in [fragen-2026-11.md](fragen-2026-11.md).** Seither kam F7 dazu,
+und 18, 19, 20, 26, 27, 28 sind gemessen.
+
 Stand 2026-11-23, spät abends, `main` auf `v0.22.0`. Meta-Plan:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 9. Gemeinsame Bausteine,
 Konflikte und Reihenfolge: [00-synergien-2026-11.md](00-synergien-2026-11.md). Stand je Vorhaben:

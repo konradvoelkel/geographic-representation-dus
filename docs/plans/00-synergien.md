@@ -1,5 +1,8 @@
 # Synergien der acht Pläne
 
+**Abgeschlossen am 2026-10-12 mit dem Merge aller acht Optionen (`v0.11.0`); nur noch historisch, gültig
+sind [../architecture.md](../architecture.md) und [../decisions.md](../decisions.md).**
+
 Stand 2026-10-12, geschrieben vom Supervisor nach Lesen aller acht Pläne (`01-staedte.md` bis `08-suche.md`,
 je auf dem Branch `feat/NN-name`). Meta-Plan: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 5
 Phase 2. Dieses Dokument nennt die gemeinsamen Bausteine, die Konflikte und ihre Auflösung, das Fundament, das

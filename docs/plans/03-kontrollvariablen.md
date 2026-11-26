@@ -1,5 +1,8 @@
 # Plan 03: Kontrollvariablen
 
+**Abgeschlossen am 2026-10-12 (gemerged, `v0.11.0`); nur noch historisch, gültig sind
+[../architecture.md](../architecture.md) und [../decisions.md](../decisions.md).**
+
 Stand 2026-10-12, Branch `feat/03-kontrollvariablen`. Status: gemerged am 2026-10-12 (Stufen A bis F umgesetzt am 2026-10-12).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.3 mit Konrads Antworten vom 2026-10-11

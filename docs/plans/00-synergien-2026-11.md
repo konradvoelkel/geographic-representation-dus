@@ -1,5 +1,13 @@
 # Synergien der Vorverarbeitung 2026-11
 
+**Stand Haltepunkt A (2026-11-23); nur noch historisch. Fortgeschrieben ist es in § 10 der Messdokumente,
+der Stand je Vorhaben steht in [README.md](README.md).** Überholt sind die Wellen und die
+Merge-Reihenfolge (§ 3.3, § 3.4; gemerged wurden 15, 14, 18, 17, 26, 22, 11, 12, 20, und 16 ist nicht
+gebaut), die Statusspalte in § 6 (es gilt die Annahme, `fragen-2026-11.md`) und die Schätzung in § 7.
+Für 18, 19, 20 und 26 bis 28 hat dieses Dokument keinen Abschnitt. Zwei Regeln stimmen mit dem Stand
+nicht überein: die Validierungsordner von 18, 19, 20 und 26 bis 28 heißen ohne `-f4` (§ 1, „Validierung
+über F4"), und der Satz in `guete.json` nennt „desselben Modells" nicht (§ 5).
+
 Stand 2026-11-23, geschrieben für den Supervisor nach Lesen der Messdokumente
 [11-struktur.md](11-struktur.md), [12-kennungen.md](12-kennungen.md),
 [13-dubletten.md](13-dubletten.md), [14-vorgaenge.md](14-vorgaenge.md),

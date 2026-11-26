@@ -1,5 +1,9 @@
 # Vorhaben 13: Dubletten und Dokumentfamilien
 
+**Abgeschlossen am 2026-11-23: verworfen; nur noch historisch. Gültig ist der Entscheidungseintrag
+„Vorhaben 13 verworfen" in [../decisions.md](../decisions.md).** Der Branch `feat/13-dubletten` ist
+gemerged und entfernt.
+
 Stand 2026-11-23, Stufe 1, abgeschlossen mit der Kodierung der 200 Paare (§ 4.1). Briefing:
 [plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11, Vorhaben 13.
 Messskript: [13-dubletten-messung.py](13-dubletten-messung.py). Codebuch, Stichprobe und Labels:

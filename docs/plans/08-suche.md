@@ -1,6 +1,9 @@
 # Plan 08: Suche
 
-Stand 2026-10-11, Branch `feat/08-suche`. Status: im Review (umgesetzt am 2026-10-12, § 11).
+**Abgeschlossen am 2026-10-12 (gemerged, `v0.11.0`); nur noch historisch, gültig sind
+[../architecture.md](../architecture.md) und [../decisions.md](../decisions.md).**
+
+Stand 2026-10-11, Branch `feat/08-suche`. Status: gemerged am 2026-10-12 (umgesetzt am 2026-10-12, § 11).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.8; Regeln § 2; Vorlage § 8.3; Seite ansehen
 § 8.4. Der Plan ist so geschrieben, dass ein frischer Agent ihn ohne Rückfragen umsetzt. Alle Zahlen sind am

@@ -1,6 +1,9 @@
 # Plan 06: Gewichtung
 
-Stand 2026-10-11, Branch `feat/06-gewichtung`. Status: im Review (umgesetzt am 2026-10-12; was anders kam als geplant, steht in § 11).
+**Abgeschlossen am 2026-10-12 (gemerged, `v0.11.0`); nur noch historisch, gültig sind
+[../architecture.md](../architecture.md) und [../decisions.md](../decisions.md).**
+
+Stand 2026-10-11, Branch `feat/06-gewichtung`. Status: gemerged am 2026-10-12 (umgesetzt am 2026-10-12; was anders kam als geplant, steht in § 11).
 
 Briefing: [../plan-ausbau-2026-10.md](../plan-ausbau-2026-10.md), § 7.6; Regeln in [../../CLAUDE.md](../../CLAUDE.md)
 und § 2 des Meta-Plans; Aufbau in [../architecture.md](../architecture.md). Alle Zahlen hier sind am 2026-10-11 auf
