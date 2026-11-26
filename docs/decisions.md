@@ -4041,7 +4041,7 @@ ohne Text nach dem Kopf (`rumpf_leer` oder weniger als 50 Zeichen) gibt es keine
 hingenommen. Verworfen: die Rollen aus 14 (sie sagen, wie ein Dokument zu einem anderen steht,
 nicht wer es einbringt); eine Zeile „beschließt" aus OParl (die Folge fehlt dort).
 
-## NN. Dubletten und Dokumentfamilien: verworfen, es gibt kaum Dubletten (Vorhaben 13, 2026-11-23)
+## 84. Dubletten und Dokumentfamilien: verworfen, es gibt kaum Dubletten (Vorhaben 13, 2026-11-23)
 
 **Ergebnis zuerst.** Vorhaben 13 der Vorverarbeitung ist nach seiner vorab festgelegten Regel
 **verworfen**; es gibt keinen Schritt `families`, keine Datei `dokumentfamilien.parquet`, keine
@@ -4079,7 +4079,7 @@ selbst gesetzt), eine frische Stichprobe und ein vorab festgelegtes Kriterium. L
 nur, wenn sich die Lage ändert, etwa wenn Anlagen in den Korpus kommen (Verteilervorlagen
 unterscheiden sich oft nur dort, Messdokument Frage 13.3).
 
-## NN. Textübernahme: verworfen, die Art der Übernahme trägt nicht (Vorhaben 23, 2026-11-23)
+## 85. Textübernahme: verworfen, die Art der Übernahme trägt nicht (Vorhaben 23, 2026-11-23)
 
 **Ergebnis zuerst.** Vorhaben 23 der Vorverarbeitung ist nach seiner vorab festgelegten Regel
 **verworfen**; es gibt keinen Schritt `reuse`, keine Datei `textuebernahmen.parquet` und keinen
