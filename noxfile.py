@@ -596,9 +596,18 @@ def alone(session: nox.Session) -> None:
     session.log("und einmal rückwärts")
     # Kein zusaetzliches ``-q``: ``addopts`` traegt schon eines, und ``-qq`` druckt statt der
     # Test-IDs nur eine Zeile je Datei (2026-10-13 genau darauf gelaufen).
-    collected = subprocess.run([*base[:-1], "--co"], capture_output=True, text=True, check=False)
+    # ``--snapshot-warn-unused``: beim reinen Sammeln läuft kein Test, also ist jeder syrupy-Snapshot
+    # "unused", und syrupy 7 macht daraus Exit 1 (2026-11-23 im Qualitätslauf, seit 279a621). Die
+    # Meldung zeigt stdout und stderr: pytest schreibt seine Fehler nach stdout, darum stand dort
+    # bisher nur "Sammeln misslang (Exit 1): " ohne Text.
+    collected = subprocess.run(
+        [*base[:-1], "--co", "--snapshot-warn-unused"], capture_output=True, text=True, check=False
+    )
     if collected.returncode != 0:
-        session.error(f"Sammeln misslang (Exit {collected.returncode}): {collected.stderr[-500:]}")
+        session.error(
+            f"Sammeln misslang (Exit {collected.returncode}):\n"
+            f"stdout: {collected.stdout[-1500:]}\nstderr: {collected.stderr[-500:]}"
+        )
     nodes = [line for line in collected.stdout.splitlines() if "::" in line]
     if not nodes:
         session.error("Sammeln lieferte keine Test-IDs")
