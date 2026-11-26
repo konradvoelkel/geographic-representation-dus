@@ -232,3 +232,16 @@ def test_read_span_wants_valid_patterns() -> None:
     im Lesen; die Settings prüfen ``page_noise`` schon beim Laden."""
     with pytest.raises(deal.PreContractError):
         read_span("Seite 2\nText", 0, 12, ["(unclosed"])
+
+
+def test_an_empty_value_can_be_limited_to_position_kinds() -> None:
+    """Wer ``positions`` nennt, erlaubt ein leeres ``value`` nur diesen Arten (Review 11, Runde 3)."""
+    texts = {"a": "Betreff: Radweg an der Benrather Straße"}
+    empty = sort_spans(_spans([("a", 9, 15, "abschnitt"), ("a", 16, 19, "amt")])).with_columns(
+        pl.lit("").alias("value")
+    )
+    check_spans(empty, LENGTHS, texts=texts)
+    with pytest.raises(SchemaError, match="leer.*amt"):
+        check_spans(empty, LENGTHS, texts=texts, positions={"abschnitt"})
+    only_sections = empty.filter(pl.col("kind") == "abschnitt")
+    check_spans(only_sections, LENGTHS, texts=texts, positions={"abschnitt"})

@@ -3582,9 +3582,13 @@ Eigentümers vom 2026-11-24, Review K1): ein Kopffeld trägt den Text an seiner 
 bearbeitete Form (Amt als „Nummer Name", Zeile der Beratungsfolge als „Gremium|Datum|Qualität")
 steht in `norm`; ein Abschnitt ist eine Positionsspanne mit leerem `value`, gelesen über
 `read_span`, und das Label wie geschrieben fällt weg. Die Amtsbezeichnung im Unterschriftsblock
-steht, wie sie geschrieben ist (der Entwurf schrieb den ersten Buchstaben groß). `structure_tables`
-schreibt die Spannen so (`literal`) und prüft sie mit `check_spans(..., texts=...)`; `analyse_draft`
-bleibt der Entwurf, damit der Vergleich mit dem Messskript Zeile für Zeile bleibt.
+steht, wie sie geschrieben ist (der Entwurf schrieb den ersten Buchstaben groß). Die Stellenmarke
+des Entwurfs für eine Amtsbezeichnung ohne erkannten Titel (eine Spanne von einem Zeichen; gelesen
+ergäbe sie das erste Zeichen eines Namens; 702 in 2014 bis 2020, in den anderen Datensätzen keine)
+wird nicht geschrieben (Review, Runde 3); `dokumente_kopf` hat dort wie zuvor keine
+Amtsbezeichnung. Ein leeres `value` gibt es damit nur bei Abschnitten. `structure_tables` schreibt
+die Spannen so (`literal`) und prüft sie mit `check_spans(..., texts=..., positions={"abschnitt"})`;
+`analyse_draft` bleibt der Entwurf, damit der Vergleich mit dem Messskript Zeile für Zeile bleibt.
 
 **Was nach dem Entwurf kommt, berührt keine validierte Frage.** (1) Der **Rumpf** (Synergien § 4):
 Text im Abschnitt `kopf_*` hinter dem letzten Kopffeld und Text außerhalb jedes Abschnitts zwischen

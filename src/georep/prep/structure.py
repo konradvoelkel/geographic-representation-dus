@@ -842,15 +842,14 @@ def literal(structure: Structure, text: str) -> Structure:
     ``norm``; die Amtsbezeichnung im Unterschriftsblock steht in beiden, wie sie geschrieben ist
     (der Entwurf schrieb den ersten Buchstaben groß). Ein Abschnitt ist eine Positionsspanne mit
     leerem ``value`` -- das Label wie geschrieben fällt weg, die Art steht in ``norm``; gelesen
-    wird er über ``spans.read_span``. Die Amtsbezeichnung ohne erkannten Titel bleibt leer: die
-    Spanne von einem Zeichen nennt nur die Stelle. ``analyse_draft`` bleibt der Entwurf, damit er
+    wird er über ``spans.read_span``. Die Stellenmarke einer Amtsbezeichnung ohne erkannten Titel
+    (eine Spanne von einem Zeichen; gelesen ergäbe sie das erste Zeichen eines Namens) wird nicht
+    geschrieben, ``dokumente_kopf`` hat dort wie zuvor keine Amtsbezeichnung. ``analyse_draft`` bleibt der Entwurf, damit er
     sich Zeile für Zeile mit dem Messskript vergleichen lässt; erst ``structure_tables`` schreibt
     die Spannen so.
     """
 
     def head(found: Found) -> Found:
-        if found.kind == "dezernat" and not found.value:
-            return found
         written = text[found.start : found.end]
         if found.kind == "unterzeichner":
             return found._replace(value=written, norm=written)
@@ -858,7 +857,8 @@ def literal(structure: Structure, text: str) -> Structure:
 
     return Structure(
         sections=[found._replace(value="") for found in structure.sections],
-        head=[head(found) for found in structure.head],
+        # ohne die Stellenmarke einer Amtsbezeichnung ohne Titel (Review 11, Runde 3)
+        head=[head(f) for f in structure.head if f.kind != "dezernat" or f.value],
         sources=structure.sources,
         lines=structure.lines,
         headings=structure.headings,
@@ -941,7 +941,7 @@ def structure_tables(
         )
         head_rows.append({"id": doc_id, **head_row(found, rules, names), "extractor": extractor})
     spans = sort_spans(pl.DataFrame(span_rows, schema=SPAN_SCHEMA, orient="row"))
-    check_spans(spans, lengths, texts=texts)
+    check_spans(spans, lengths, texts=texts, positions={SECTION_KIND})
     head = pl.DataFrame(head_rows, schema=HEAD_SCHEMA)
     return spans, head
 

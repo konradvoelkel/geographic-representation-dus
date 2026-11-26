@@ -436,3 +436,19 @@ def test_head_values_are_literal_and_sections_are_position_spans(
     row = head.row(0, named=True)
     assert (row["amt_nr"], row["amt_name"]) == ("66", "Amt für Verkehrsmanagement")
     assert row["beratungsfolge"][0]["gremium"] == "Ordnungs- und Verkehrsausschuss"
+
+
+def test_a_dezernat_field_without_title_writes_no_span(
+    rules: StructureRules, names: BodyNames
+) -> None:
+    """Review 11, Runde 3: ohne erkannte Amtsbezeichnung setzte der Entwurf eine Stellenmarke von
+    einem Zeichen; gelesen ergäbe sie das erste Zeichen eines Namens. Sie wird nicht geschrieben,
+    und ``dokumente_kopf`` bleibt, wie es war (keine Amtsbezeichnung)."""
+    text = FORM.replace(f"Beigeordneter {PERSON}", PERSON)
+    assert any(f.kind == "dezernat" and not f.value for f in analyse(text, rules).head)
+    documents = pl.DataFrame(
+        {"id": ["a"], "paper_type": ["Beschlussvorlage"], "text": [text], "extractor": ["x"]}
+    )
+    spans, head = structure_tables(documents, rules, names)
+    assert spans.filter(pl.col("kind") == "dezernat").height == 0
+    assert head.get_column("dezernat_titel").to_list() == [None]

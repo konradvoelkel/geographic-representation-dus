@@ -42,7 +42,7 @@ des Moduls, das die Datei schreibt").
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 
 import deal
 import polars as pl
@@ -83,7 +83,11 @@ def sort_spans(spans: pl.DataFrame) -> pl.DataFrame:
 
 
 def check_spans(
-    spans: pl.DataFrame, lengths: Mapping[str, int], *, texts: Mapping[str, str] | None = None
+    spans: pl.DataFrame,
+    lengths: Mapping[str, int],
+    *,
+    texts: Mapping[str, str] | None = None,
+    positions: Collection[str] | None = None,
 ) -> None:
     """``SchemaError``, wenn eine Spanne das Schema, die Folge oder ihren Text verletzt.
 
@@ -92,7 +96,8 @@ def check_spans(
     len(text)``, eine bekannte ID je Zeile, kein leeres ``kind`` und die feste Folge. Spalten
     dahinter gehören dem Vorhaben und sind frei. Wer die Texte selbst zur Hand hat, gibt sie als
     ``texts`` mit; dann ist jedes ``value`` wörtlich ``text[start:end]`` oder leer (eine
-    Positionsspanne). Die Meldung nennt die erste verletzende Zeile.
+    Positionsspanne), und wer ``positions`` nennt, erlaubt das leere ``value`` nur diesen Arten
+    (Vorhaben 11: nur den Abschnitten). Die Meldung nennt die erste verletzende Zeile.
     """
     # als Liste, nicht als dict: zwei dicts sind gleich, auch wenn ihre Schlüssel anders stehen
     # (Review F7, K1)
@@ -130,15 +135,22 @@ def check_spans(
             f"{', '.join(ORDER[4:])})"
         )
     if texts is not None:
-        _check_values(core, texts)
+        _check_values(core, texts, positions)
 
 
-def _check_values(core: pl.DataFrame, texts: Mapping[str, str]) -> None:
+def _check_values(
+    core: pl.DataFrame, texts: Mapping[str, str], positions: Collection[str] | None
+) -> None:
     """Jedes ``value`` ist wörtlich der Text an der Stelle oder leer (F3, 2026-11-24); eine ID ohne
-    Text in ``texts`` bleibt ungeprüft."""
+    Text in ``texts`` bleibt ungeprüft. Mit ``positions`` ist leer nur bei diesen Arten erlaubt."""
     # je Zeile in Python, nicht als Join: der Join trüge jeden Text einmal je Spanne
-    rows = core.select("id", "start", "end", "value").iter_rows()
-    for row, (doc_id, start, end, value) in enumerate(rows):
+    rows = core.select("id", "start", "end", "kind", "value").iter_rows()
+    for row, (doc_id, start, end, kind, value) in enumerate(rows):
+        if not value and positions is not None and kind not in positions:
+            raise SchemaError(
+                f"Spannen: value leer, aber {kind!r} ist keine Positionsspanne, erste Zeile {row}: "
+                f"id={doc_id!r} start={start} end={end}"
+            )
         text = texts.get(doc_id)
         if value and text is not None and text[start:end] != value:
             raise SchemaError(
