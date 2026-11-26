@@ -21,7 +21,10 @@ Contract des eipy-Skripts.
    Venvs und Branches sind entfernt. Die zweite Ausnahme (Konrad, 2026-11-23: Unteragenten auf `feat/NN-name`
    und `fund/FN-name` in Worktrees unter `/media/konrad/xtraspace/georep/worktrees/` für die Vorverarbeitung
    nach `docs/plan-vorverarbeitung-2026-11.md`) ist **am 2026-11-26 beendet**; Worktrees, Venvs und Branches
-   sind entfernt. Eine neue Ausnahme braucht wieder eine Anweisung, je Vorhaben. Stand je Vorhaben:
+   sind entfernt. **Dritte Ausnahme (Konrad, 2026-11-27)**: für die Phase „Zeigen“ nach
+   `docs/plan-zeigen-2026-11.md` arbeiten Bau-Agenten wieder auf `feat/NN-name` und `fund/VN-name` in Worktrees
+   (`scripts/worktree_anlegen.sh`, Wurzel `/media/konrad/xtraspace/georep/worktrees/`), je mit eigenem Venv;
+   nur der Supervisor merged nach `main`, und mit dem Ende der Phase endet die Ausnahme. Stand je Vorhaben:
    `docs/plans/README.md`.
 2. Auf Konrads Rechner vor allem anderen, weil die Primärplatte voll ist:
    `export UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep UV_CACHE_DIR=/media/konrad/xtraspace/uv-cache`;
