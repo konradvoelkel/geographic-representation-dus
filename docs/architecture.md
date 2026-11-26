@@ -57,15 +57,24 @@ shapely und pyproj für Geometrie, Parquet für alles Abgeleitete.
 
 ## Pipeline
 
-Achtundvierzig Schritte stehen im Register (die drei der Sitzungen, Beratungen und Personen,
-`meetings`, `consultations` und `persons`, nur mit `council.enabled`, Fundament F6; je zwei der
-Beiträge von Vorhaben 15, 14, 18, 26 und 22, davon `need_data` nur mit `context.need.fetch`,
-vier von 17, einer von 11), jeder mit
-Eingaben, Ausgaben und einer
-Schema-Version; welche ein Lauf hat, entscheiden die Settings, und `georep steps` zeigt es
-(nachgezählt am 2026-11-26 mit `georep steps`: vierzig für Düsseldorf, zweiundvierzig mit
-Vergleich, vierunddreißig im Periodenprofil 2014 bis 2020, vierunddreißig in der laufenden Periode,
-vierunddreißig für Mönchengladbach; mit `context.need.fetch` je einer mehr, wo `need` läuft). Netzschritte laufen nur mit `--online` oder über
+Fünfzig Schritte stehen im Register: dreißig im Kern, die drei der Sitzungen, Beratungen und
+Personen (`meetings`, `consultations` und `persons`, nur mit `council.enabled`, Fundament F6), je
+zwei der Beiträge von Vorhaben 15, 14, 18, 26 und 22 (davon `need_data` nur mit
+`context.need.fetch`), vier von 17 und je einer von 11, 12 und 20 (`summaries` nur mit
+`summaries.enabled`). Jeder hat Eingaben, Ausgaben und eine Schema-Version; welche ein Lauf hat,
+entscheiden die Settings, und `georep steps` zeigt es. Dies ist die eine Stelle für die Zahl je
+Profil, nachgezählt am 2026-11-26 mit `georep steps` auf `v0.32.0`:
+
+| Profil | Schritte | davon Netz | Modell |
+|---|---|---|---|
+| `duesseldorf` | 41 | 7 | 1 (`embeddings`) |
+| `duesseldorf-vergleich` | 43 (dazu `compare`, `cycle_tests`) | 7 | 1 |
+| `duesseldorf-2014` | 35 (`precincts` statt `shapes`, ohne `streets_osm`, `pois_wiki`, Fremddaten und `need`) | 4 | 1 |
+| `duesseldorf-2025` | 35 (mit `feeds`, ohne `streets_osm`, `pois_wiki`, Fremddaten, `topics` und `need`) | 4 | 1 |
+| `moenchengladbach` | 35 (ohne Fremddaten, `committees`, `council_results` und `outcomes`) | 6 | 1 |
+
+Mit `council.enabled` kommen die drei Ratsschritte dazu (wo das Profil Endpunkte nennt), mit
+`context.need.fetch` `need_data` (wo `need` läuft), mit `summaries.enabled` `summaries`. Netzschritte laufen nur mit `--online` oder über
 `georep fetch`, Schritte mit lokalem Modell (`Step.models`, Fundament F5) nur mit `--models`; `georep fetch` führt `shapes`, `texts` und `raw_texts` mit, weil die Netzschritte die Flächen
 brauchen und die Texte sonst im Cache liegen blieben. Mit
 `topics.k = 0` fehlt der Schritt `topics`, und `weights` rechnet ohne Themenvarianten; `bodies` steht
@@ -165,10 +174,8 @@ Settings-Fingerprint, der Code-Version, der Schema-Version und einem Zusatz, den
 `settings.report` — beides steht in keinem Eingabe-Hash und nicht im globalen Fingerprint). Stimmt alles, ist der Schritt aktuell und wird
 übersprungen; sonst läuft er und sagt, warum („Eingabe geändert: texts.parquet", „Code-Version 0.6.0 ->
 0.7.0"). `--force` erzwingt, `--dry-run` plant nur. Jeder Lauf druckt je Schritt eine Zeile mit der Anzahl,
-auf die er gewirkt hat, und die Sekunden. Der volle Offline-Lauf auf der Referenz dauert rund 23 s, davon
-7,4 s das Themenmodell, 6,5 s der passende Ausschuss, 4,2 s der Index, je unter 1 s die Gewichtung, die
-Kontrollvariablen (`context` 0,4 s, `controls` unter 0,1 s) und 1,5 s die Berichtsseite (2026-10-12, nach
-Punkt 45; ohne Themenmodell und Klassifikator rund 9 s).
+auf die er gewirkt hat, und die Sekunden. Laufzeiten je Schritt stehen datiert in
+[profiling/README.md](profiling/README.md) und in den Messdokumenten der Vorhaben unter `plans/`.
 
 ## Datenhaltung
 
@@ -235,29 +242,20 @@ cache_root/                Standard data_root/cache
                            wieder, wenn es älter ist als cache.opendata_s
 ```
 
-**Ein Datenpaket ist ein `reference_root`**: `Layout.reference_view()` liest es als Datenwurzel mit
-`cache_root = <reference_root>/cache`, darum liegt der Textstore eines Pakets unter `cache/text/`. Fünf
-Pakete gibt es (Punkt 56): `reference/` (81,8 MiB, der Datensatz der Arbeit, Altformat
-`interim/paper_with_text.json`), `reference/moenchengladbach/` (3,8 MiB), `snapshots/2014-2020/` (36,1 MiB)
-und `snapshots/2025/` (13,2 MiB) im eigenen Format (`raw/papers.jsonl`, `cache/text/texts.parquet`), dazu
-`context/` (2,1 MiB) für die Fremddaten — zusammen 137,11 MiB, gezählt ohne die READMEs. Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, den Zahlen
-des Laufs und der SHA-256 jeder Datei; `tests/unit/test_data_packages.py` hält beides zusammen und lässt
-keine PDFs, Stamps, Manifeste und Caches hinein. Die PDFs liegen in keinem Paket. Drei weitere
-Pakete tragen je nur eine Datei der Hauptperiode, die ihr Altformat nicht hat:
-`snapshots/duesseldorf-beratungsfolge/` (Punkt 58), `snapshots/duesseldorf-texte/` (Punkt 68) und
-`snapshots/duesseldorf-rohtexte/` (13,5 MiB, Fundament F1); `bootstrap` übernimmt sie, wo das
-Profil sie unter `[bodies]` oder `[bootstrap]` nennt, die beiden Textpakete nur, wenn ihre Namen zu
-den Dateien der Referenz passen. Zwei Anlagenpakete tragen je Stadt die Anlagen je Drucksache, die
-weder ein Korpus noch ein anderes Paket hat (Vorhaben 14): `snapshots/duesseldorf-anlagen/`
-(303 400 Bytes, alle drei Perioden) und `snapshots/moenchengladbach-anlagen/` (63 910 Bytes);
-Vorhaben 18 bringt die Nachbartabelle der Hauptperiode als `snapshots/duesseldorf-aehnlich/`
-(905 998 Bytes, keine Vektoren), Vorhaben 26 die Tabelle „Paper × Tagesordnungspunkt“ je
-Düsseldorfer Periode aus dem Netzlauf von F6 als `snapshots/duesseldorf-beschluesse/` (631 944
-Bytes, ohne Namen von Personen), Vorhaben 22 zwei kleine Pakete aus abgeleiteten Auszügen,
-`snapshots/duesseldorf-bedarf/` (198 018 Bytes) und `snapshots/moenchengladbach-bedarf/` (91 866
-Bytes), geschrieben von `georep pack --need` und gelesen über `[context.need].package`; alle Pakete
-zusammen 168,59 MiB am 2026-11-26. Die Schritte von Vorhaben 14 lesen außerdem die
-Pakete der Nachbarperioden (`raw/papers.jsonl` und Textstore, für die Hauptperiode
+**Ein Datenpaket ist ein `reference_root`** oder eine einzelne Datei, die ein Profil nennt:
+`Layout.reference_view()` liest ein `reference_root` als Datenwurzel mit `cache_root =
+<reference_root>/cache`, darum liegt der Textstore eines Pakets unter `cache/text/`. `reference/` ist
+der Datensatz der Arbeit im Altformat (`interim/paper_with_text.json`), `reference/moenchengladbach/`,
+`snapshots/2014-2020/` und `snapshots/2025/` tragen das eigene Format (`raw/papers.jsonl`,
+`cache/text/texts.parquet`), `context/` die Fremddaten; die übrigen Pakete tragen je eine Datei, die
+ein Korpus nicht hat (Beratungsfolge, Texte und Rohtext der Hauptperiode, Anlagen, ähnliche
+Dokumente, Tagesordnungspunkte, Auszüge der Bedarfsquellen). `bootstrap` übernimmt sie, wo das Profil
+sie unter `[bodies]`, `[bootstrap]` oder dem Block seines Vorhabens nennt, die beiden Textpakete nur,
+wenn ihre Namen zu den Dateien der Referenz passen. Jedes Paket trägt ein README mit Herkunft,
+Lizenz, Abrufdatum, den Zahlen des Laufs und der SHA-256 jeder Datei; `tests/unit/test_data_packages.py`
+hält beides zusammen und lässt keine PDFs, Stamps, Manifeste und Caches hinein. Die Liste aller Pakete
+mit Größen steht an einer Stelle, in [technik.md](technik.md), § 3. Die Schritte von Vorhaben 14 lesen
+außerdem die Pakete der Nachbarperioden (`raw/papers.jsonl` und Textstore, für die Hauptperiode
 `reference/raw/paper_objects.json`) nur lesend, ihr Hash steht im Stamp.
 
 Eingaben behalten die Formate der Quellen, weil sie Rohdaten sind; alles Abgeleitete ist Parquet und trägt
@@ -640,8 +638,9 @@ dieselbe Rechnung über deren `results`). Das Urteil dazu hat vier Zweige aus de
 der Abschnitt „Zwei Wahlperioden" sagt dasselbe als Satz je Periode über beide Spalten (ein
 Jinja-Makro `verdict` mit fünf Zweigen). Die veröffentlichten Tabellen stehen im Register
 `report/tables.py` (Datei, Beschreibung, Spaltendoku, CSV-Regeln, `optional` für profilabhängige Tabellen);
-daraus entstehen Downloads, `schema.json`, CSV-Dateien und die Spaltentabelle. Die Seite bleibt unter 1,5 MB
-(slow-Test); mit allen Abschnitten sind es 1,27 MB. Die beiden Abschnitte der Kontrollvariablen
+daraus entstehen Downloads, `schema.json`, CSV-Dateien und die Spaltentabelle. Die Seite bleibt unter
+`report.page_budget_bytes` (ein slow-Test und `georep publish --strict-budget` prüfen es); ihre
+Größe steht datiert in [../STATUS.md](../STATUS.md), „Zahlen". Die beiden Abschnitte der Kontrollvariablen
 (`32-kontrollvariablen`, `65-abgeleitete-daten`) stehen in `{% if model.controls %}` beziehungsweise
 `{% if model.derived %}` und fehlen ohne sie ganz; ihre Zahlen kommen aus
 `processed/regression_kontrollen.parquet`, der Satz zur Deutung entsteht aus p, Vorzeichen, R²-Zuwachs und dem
@@ -704,13 +703,8 @@ Zahlen wie Tabelle 5 (ein Test vergleicht sie); eine Variante ohne Streuung zeig
 Tabelle die zweite Regression, entfällt die Spaltengruppe. Mit gesäten Themen (Punkt 45) trägt eine
 Themenzeile den Namen ihres Ausschusses aus dem Profil, und die Themen-Tabelle eine Spalte „Gremium"; der
 Abschnitt „Gremien" bekommt daneben die Tabelle „Dokumente je passendem Ausschuss" mit der Spalte „davon
-ohne Ausschussberatung". Auf der Referenz: 41 Wahlbezirke, 53 Dateien
-(mit `summary.json`, Option 01, `ausschuss_zuordnung`, Punkt 45, `wahlbezirke_kennzahlen`, Punkt 46,
-und `begriffe.json`, Punkt 49),
-13,1 MB, davon `index.html` 0,89 MB (135 KB Suchdaten, 110 KB die beiden Umschalter, 63 KB die
-Parteikarten, 33 KB die Gewichtung, 30 KB die Monatsreihe), `karte.html` 232 KB, `dokumente.json` 2,3 MB,
-`begriffe.json` 96 KB; 1,6 s (2026-10-13, nach Punkt 50). Die Zerlegung der Seite in ihre Posten steht
-in `docs/seitengroesse-2026-10.md`.
+ohne Ausschussberatung". Die Zerlegung der Seite in ihre Posten steht gemessen in
+`docs/seitengroesse-2026-10.md` (2026-10-13).
 
 Die Stadtseite kennt ihre Nachbarn nicht: wo die Zeile „Weitere Städte" steht, hinterlässt der Rahmen nur die
 Marke `<!--georep:weitere-staedte-->`. Erst `georep publish` (`report.publish`) weiß, welche Stadtseiten es
@@ -778,7 +772,7 @@ auf dem rekursiven `deep_merge`).
 | Schicht | Inhalt |
 |---|---|
 | `tests/unit/` | eine Funktion, ein Verhalten; Vertragsverletzungen je mit Gegenbeispiel |
-| `tests/property/` | hypothesis-Invarianten (darunter: Einheitsgewichte reproduzieren die Zählung exakt, Gewichte in [0, 1], Monotonie, Themenzerlegung, die Stoppwörter aus dem Profil sind Token des Modells), das Matcher-Orakel (400 Zufallsfälle), `deal.cases` auf achtzehn reinen Funktionen |
+| `tests/property/` | hypothesis-Invarianten (darunter: Einheitsgewichte reproduzieren die Zählung exakt, Gewichte in [0, 1], Monotonie, Themenzerlegung, die Stoppwörter aus dem Profil sind Token des Modells), das Matcher-Orakel (400 Zufallsfälle), `deal.cases` auf reinen Funktionen (`test_contract_cases.py`) |
 | Messskripte unter `docs/` | was kein Test tragen kann, weil es am Rechner hängt: die Methodikkennzahlen (`methodik-review-2026-10-messung.py`) und die Kohärenz, Saattreue und Kreuzvalidierung des Themenmodells (`themenmodell-2026-10-messung.py`) |
 | `tests/golden/` | Mini-Fixture (3 Wahlbezirke, 200 Dokumente, Erwartung aus dem Altcode `v0.2.0`) und die volle Referenz (`slow`) gegen die Ergebnisse der Arbeit; beide mit `as_in_the_thesis(...)`, also mit abgeschalteten eigenen Regeln (decisions.md, Punkte 43 und 44), und beide unter dem Profil der Settings, nicht flach (Punkt 52) |
 | `tests/bench/` | pytest-benchmark, nur in `nox -s bench` |
@@ -794,15 +788,14 @@ Netz kommt in Tests nie von echten Endpunkten; Zeit (`today`), Zufall (hypothesi
 | `golden` | die volle Referenz | CI, lokal `uv run pytest -m slow` |
 | `bench` | heiße Pfade gegen den letzten gespeicherten Lauf, rot ab 20 % langsamer im Minimum | lokal |
 | `profile -- SCHRITT` | ein echter Schritt unter cProfile | lokal |
-| `verify` | crosshair über die reinen Funktionen mit Verträgen (37 Ziele), rund zehn Minuten (580 s am 2026-10-13); zwei Ziele sind mit Begründung ausgenommen (`parse_reference`: crosshair baut für `re.Pattern \| None` einen symbolischen Regex und bricht ab; `bars`: sein Gegenbeispiel ist eine Zahl mit 300 Stellen) | lokal, und wöchentlich in Actions (`quality.yml`) |
+| `verify` | crosshair über die reinen Funktionen mit Verträgen (`VERIFY_TARGETS`); zwei Ziele sind mit Begründung ausgenommen (`parse_reference`: crosshair baut für `re.Pattern \| None` einen symbolischen Regex und bricht ab; `bars`: sein Gegenbeispiel ist eine Zahl mit 300 Stellen) | lokal, und wöchentlich in Actions (`quality.yml`) |
 | `alone` | Reihenfolgeunabhängigkeit: jede Testdatei einmal allein (drei parallel), dann die ganze schnelle Suite rückwärts | lokal |
 | `mutate` | pytest-gremlins, **eine Sitzung je Modul** mit genau seinen Testdateien (`MUTATION_SCOPE` im `noxfile.py`), drei Arbeiter, einmal pro größerer Änderung; `analysis/topics.py` ist ausgenommen (jeder Mutant rechnet NMF). Der Zuschnitt ist Pflicht, nicht Bequemlichkeit: ohne Abdeckungsdaten läuft jeder Mutant gegen alle übergebenen Tests | lokal, und wöchentlich in Actions (`quality.yml`) mit `-- fast` |
 
-Stand 2026-11-18: 1299 schnelle Tests in rund 55 s, Abdeckung 98,5 %; Mutationsquote 81 % über die
-dreizehn Module des Ausbaus ([mutation-2026-10-13.md](mutation-2026-10-13.md): 882 Mutanten, 717
-getötet, 165 Überlebende, davon 100 in Vertragsgrenzen), 79 % über `search/` und `analysis/`
-([mutation-2026-10-11.md](mutation-2026-10-11.md)), 83 % über `analysis/weights.py`
-([mutation-2026-10-12.md](mutation-2026-10-12.md)).
+Wie viele Tests es gibt, wie viele Ziele `verify` hat und die letzte Mutationsquote stehen datiert in
+[../STATUS.md](../STATUS.md), „Zahlen"; die Mutationsläufe selbst in
+[mutation-2026-10-13.md](mutation-2026-10-13.md), [mutation-2026-10-12.md](mutation-2026-10-12.md) und
+[mutation-2026-10-11.md](mutation-2026-10-11.md).
 
 ## Bekannte Grenzen
 

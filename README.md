@@ -43,7 +43,7 @@ git clone git@github.com:konradvoelkel/geographic-representation-dus.git
 cd geographic-representation-dus
 uv sync --locked                        # Umgebung aus dem Lockfile
 uv run georep bootstrap                 # Datensatz der Arbeit nach ./data/duesseldorf/ übernehmen
-uv run georep run                       # zwanzig Offline-Schritte, rund 23 s; schreibt auch die Berichtsseite data/duesseldorf/site/index.html
+uv run georep run                       # alle Offline-Schritte (georep steps zeigt sie); schreibt auch die Berichtsseite data/duesseldorf/site/index.html
 uv run georep publish                   # dieselbe Seite nach data/site/, der veröffentlichten Wurzel
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 uv run georep regress --controls        # Tabelle 6 mit den Kontrollvariablen
@@ -64,8 +64,9 @@ und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
 ## Berichtsseite
 
 `georep run` endet mit dem Schritt `report`: `data/duesseldorf/site/index.html` ist **eine** in sich
-geschlossene Seite (am 2026-10-14 veröffentlicht 932 839 Byte bei einem Budget von 1 000 000, kein
-externes JavaScript, keine Kartenkacheln, offline aus dem Dateisystem zu öffnen) mit siebzehn
+geschlossene Seite (unter dem Budget von 1 000 000 Byte, die heutige Größe steht in
+[STATUS.md](STATUS.md), „Zahlen"; kein externes JavaScript, keine Kartenkacheln, offline aus dem
+Dateisystem zu öffnen) mit siebzehn
 Abschnitten — Kernzahlen, Suche über Straßen und Orte, Karte der 41 Wahlbezirke mit sechs
 Einfärbungen, Regression (die Spalte „ohne Ausreißer" heißt im Kopf „explorativ", und darunter
 steht, warum: sie ist nach dem Ansehen der Daten entstanden, und in der Wahlperiode 2014 bis 2020
@@ -138,7 +139,7 @@ der Server inzwischen Urheberfelder liefert:
 ```bash
 uv run georep fetch organizations         # eine Seite, Sekunden; schreibt raw/organizations.json
 uv run georep fetch papers --max-pages 1  # Probe, rund 90 s: "1 Seiten, 200 Paper gesehen, …, davon N mit Urheberfeld"
-uv run georep run                         # corpus bis report neu, rund 7 s
+uv run georep run                         # corpus bis report neu
 ```
 
 Sitzungen mit Tagesordnung und Ergebnis, Beratungen und Personen mit Mitgliedschaften holen drei
@@ -331,27 +332,16 @@ Abrufverhalten steht in [docs/technik.md](docs/technik.md), § 1 und § 2**; die
 [docs/architecture.md](docs/architecture.md). Namensnennung nach Lizenz: Landeshauptstadt Düsseldorf, Amt für
 Statistik und Wahlen: Quartiersatlas Düsseldorf 2024 (Open-Data-Portal), dl-de/by-2-0.
 
-**Die sieben Datenpakete im Repo** sind die eingefrorenen Eingaben der Läufe, aus denen GitHub Pages jede Seite
-ohne Netz baut (Konrads Entscheidung vom 2026-10-13, `docs/decisions.md`, Punkt 56):
-
-| Paket | Größe | Inhalt |
-|---|---|---|
-| [`reference/`](reference/) | 81,8 MiB | der Datensatz der Arbeit (Wahlergebnis, Stimmbezirke, Straßen, Orte, Dokumente mit Text) |
-| [`reference/moenchengladbach/`](reference/moenchengladbach/README.md) | 5,0 MiB | der Lauf Mönchengladbachs vom 2026-10-13, seit Punkt 58 mit `raw/organizations.json`, seit Punkt 65 mit den Flächen der Wahl |
-| [`snapshots/2014-2020/`](snapshots/2014-2020/README.md) | 35,9 MiB | die Wahlperiode 2014 bis 2020, Abruf 2026-10-13 |
-| [`snapshots/2025/`](snapshots/2025/README.md) | 13,2 MiB | der Erstabruf der laufenden Periode, 2026-10-13 |
-| [`snapshots/duesseldorf-beratungsfolge/`](snapshots/duesseldorf-beratungsfolge/README.md) | 88 KiB | die Beratungsfolge je Dokument der Hauptperiode (Punkt 58) |
-| [`snapshots/duesseldorf-texte/`](snapshots/duesseldorf-texte/README.md) | 14,8 MiB | die Texte der Hauptperiode, gelesen mit pypdf 7.1.0 (Punkt 68) |
-| [`snapshots/duesseldorf-rohtexte/`](snapshots/duesseldorf-rohtexte/README.md) | 13,5 MiB | der Rohtext derselben PDFs, mit Groß- und Kleinschreibung, Zeilen, Seiten und Vorlagenkopf (Fundament F1) |
-| [`context/`](context/README.md) | 2,1 MiB | Quartiersatlas 2024 für die Kontrollvariablen |
-
-Zusammen 166,49 MiB; die Texte der drei Laufpakete sind seit dem 2026-11-16 mit pypdf 7.1.0 extrahiert
-(`docs/decisions.md`, Punkt 67), die der Hauptperiode seit dem 2026-11-18 (Punkt 68), ihr Rohtext seit dem
-2026-11-23 (Fundament F1). Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, Zahlen und der SHA-256 jeder
-Datei; `tests/unit/test_data_packages.py` hält diese Angaben gegen die Dateien und lässt keine PDFs, Stamps
+**Die Datenpakete im Repo** sind die eingefrorenen Eingaben der Läufe, aus denen GitHub Pages jede
+Seite ohne Netz baut (`docs/decisions.md`, Punkt 56): der Datensatz der Arbeit unter `reference/`, der
+Lauf Mönchengladbachs unter `reference/moenchengladbach/`, die beiden weiteren Düsseldorfer Perioden
+und die Dateien der Vorhaben unter `snapshots/`, der Quartiersatlas unter `context/`. Welche Pakete es
+gibt, was sie tragen und wie groß sie sind, steht an einer Stelle: [docs/technik.md](docs/technik.md),
+§ 3. Jedes trägt ein README mit Herkunft, Lizenz, Abrufdatum, Zahlen und der SHA-256 jeder Datei;
+`tests/unit/test_data_packages.py` hält diese Angaben gegen die Dateien und lässt keine PDFs, Stamps
 oder Caches hinein. Die PDFs selbst liegen in **keinem** Paket, nur die Texte daraus.
 
-**Was die Daten dieser vier Netzläufe zeigen**, steht mit Zahlen, Deutung und Grenze in
+**Was die Daten der Netzläufe vom 2026-10-13 und 2026-10-14 zeigen**, steht mit Zahlen, Deutung und Grenze in
 [docs/befunde-2026-10-14.md](docs/befunde-2026-10-14.md); jede Zahl dort rechnet
 `uv run python docs/befunde-2026-10-14-messung.py` nach. Was die Daten **sind**, steht in
 [docs/inhalt.md](docs/inhalt.md), § 1, was sie **belegen** in [docs/statistik.md](docs/statistik.md).

@@ -100,9 +100,8 @@ Vier Lücken sind groß genug, um jede Deutung zu tragen:
   (14 Arten mit 2 278 Dokumenten sind Verwaltung, `3 - Fraktionsantrag` mit 581 die Fraktion,
   `6.1 - Mitgliederantrag` mit 36 die Person), **„Urheber unbekannt" ist 0,0 %** — die offene Zahl
   liegt eine Ebene tiefer: nur **242 der 581 Fraktionsanträge (41,7 %) nennen ihre Partei**, weil 390
-  von ihnen keinen Text tragen. Die Stadtseite wächst dadurch um 169 567 auf **819 288 Byte** — der
-  Abschnitt mit sechs Parteikarten über 33 Flächen ist der größte Posten, den diese Seite je bekommen
-  hat (lokal gemessen, `STATUS.md`).
+  von ihnen keinen Text tragen. Der Abschnitt mit sechs Parteikarten über 33 Flächen ist der größte
+  Posten, den diese Seite je bekommen hat.
   **Die veröffentlichte Seite hat den Abschnitt „Urheber und Parteien" noch nicht.**
 
 „Unbekannt" heißt auf diesen Seiten überall **„von dieser Konfiguration nicht erkannt"**, nie „im
@@ -110,8 +109,9 @@ Dokument nicht vorhanden".
 
 ## 2. Was die Seite kann
 
-Die Stadtseite ist **eine Datei** ohne externe Ressourcen (`index.html`, veröffentlicht 932 839 Byte
-bei einem Budget von 1 000 000, also 6,7 % Luft): CSS, JavaScript und alle SVGs
+Die Stadtseite ist **eine Datei** ohne externe Ressourcen (`index.html` unter einem Budget von
+1 000 000 Byte; die Größe jeder veröffentlichten Seite steht in `STATUS.md`, „Zahlen"): CSS,
+JavaScript und alle SVGs
 inline, nur relative
 Pfade, Deutsch mit englischer Kurzfassung, hell und dunkel über `prefers-color-scheme`. Daneben liegt
 `karte.html` mit Leaflet und OpenStreetMap-Kacheln — die einzige Datei mit Fremdressourcen und die
@@ -223,7 +223,7 @@ Die 24 Tabellen, nach Thema: **Auswertung** (`wahlbezirke_auswertung`, `wahlbezi
 (`monatsreihe`, `wahlbezirke_monate`, `wahlbezirke_vergleich`).
 
 Welche Tabelle eine Seite hat, hängt daran, welche Schritte ihr Profil hat — die Schritte je Profil
-stehen in [technik.md](technik.md), § 4. Praktisch heißt das: Mönchengladbach hat keine
+stehen in [architecture.md](architecture.md), „Pipeline". Praktisch heißt das: Mönchengladbach hat keine
 Kontrollvariablen, die laufende Periode keine Regression, und `stimmbezirke_zuordnung` (die
 Umrechnung der Wahlzahlen von 2020) liegt nur unter
 [`2014-2020/data/`](https://konradvoelkel.github.io/geographic-representation-dus/2014-2020/data/stimmbezirke_zuordnung.parquet),
@@ -237,14 +237,9 @@ nicht an der Wurzel.
 | [`2014-2020/`](https://konradvoelkel.github.io/geographic-representation-dus/2014-2020/) | 13: kernzahlen, suche, karte, zusammenhang, gewichtung, parteien, wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | kein `kontrollvariablen` und `abgeleitete-daten` (die Fremddaten liegen auf dem Zuschnitt 2021 der Hauptperiode), kein `perioden` (eine Periode verglicht sich nicht mit sich selbst), kein `laufend` |
 | [`2025/`](https://konradvoelkel.github.io/geographic-representation-dus/2025/) | 11: kernzahlen, suche, karte, parteien, wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | **kein `zusammenhang`**: zu einer laufenden Periode gibt es keine Wahlbeteiligung, also keine Regression, kein Streudiagramm, keinen Umschalter darauf — Kopf und Kurzfassung sagen, warum; auch keine Gewichtungstabelle |
 | [`moenchengladbach/`](https://konradvoelkel.github.io/geographic-representation-dus/moenchengladbach/) | 12, seit Punkt 59 auf `main` 13: kernzahlen, suche, karte, zusammenhang, gewichtung, (parteien), wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | keine Kontrollvariablen (die Stadt hat keine Fremddaten im Profil), **keine „Dokumente je passendem Ausschuss"** (`classify.enabled = false`: nur 650 von 2 895 Dokumenten tragen Text). `parteien` fehlt der **veröffentlichten** Seite noch und kommt mit Punkt 59 |
-| [`vergleich.html`](https://konradvoelkel.github.io/geographic-representation-dus/vergleich.html) | vier: Die Städte nebeneinander, Trefferquote je Wahlbezirk, Trefferquote und Wahlbeteiligung, Vergleichbarkeit | eine eigene Seite, 89 597 Byte; sie rechnet nichts selbst, sondern liest die `summary.json` der Stadtseiten; kein Suchfeld und keine Downloads |
+| [`vergleich.html`](https://konradvoelkel.github.io/geographic-representation-dus/vergleich.html) | vier: Die Städte nebeneinander, Trefferquote je Wahlbezirk, Trefferquote und Wahlbeteiligung, Vergleichbarkeit | eine eigene Seite; sie rechnet nichts selbst, sondern liest die `summary.json` der Stadtseiten; kein Suchfeld und keine Downloads |
 
-Größen der **veröffentlichten** Dateien (am 2026-10-14 abgerufen, Commit `813827e`): Hauptseite
-932 839, `2014-2020/` 820 071, `2025/` 718 207, `moenchengladbach/` 649 612, `vergleich.html`
-89 597 Byte. (`STATUS.md` nennt für dieselben Seiten Zahlen, die um wenige Byte abweichen: dort sind
-sie lokal vor dem Hochladen gemessen, und Commit und Zeitstempel im Fuß unterscheiden sich.)
-Mönchengladbach wuchs mit Punkt 58 um 8 056 Byte, weil seine Gremientabelle jetzt 27 Zeilen hat
-statt einer, und schrumpfte wieder um 1 294, als seine Themen ihre Ausschussnamen verloren.
+Die Größen der veröffentlichten Seiten stehen datiert in `STATUS.md`, „Zahlen".
 
 **Mönchengladbach sät seit Punkt 58 keine Themen** (`topics.seed = "none"`): mit der Saat bekamen acht
 Ausschüsse ein eigenes Thema, gesät aus 11 bis 21 Dokumenten mit Text, und ihre Namen standen danach

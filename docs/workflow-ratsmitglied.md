@@ -203,7 +203,7 @@ git clone git@github.com:konradvoelkel/geographic-representation-dus.git   # das
 cd geographic-representation-dus
 uv sync --locked            # Python und alle Pakete genau in den Versionen aus uv.lock
 uv run georep bootstrap     # den Datensatz aus reference/ übernehmen
-uv run georep run           # 27 Offline-Schritte, rund 23 s
+uv run georep run           # alle Offline-Schritte, ohne Netz
 uv run georep export        # die Parquet-Ergebnisse zusätzlich als CSV
 ```
 

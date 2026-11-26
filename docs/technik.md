@@ -121,27 +121,37 @@ cache_root/                 Standard data_root/cache
   http.sqlite               requests-cache, von allen Profilen geteilt
 ```
 
-**Die sechs Datenpakete im Repo** sind die eingefrorenen *Eingaben* der Läufe; GitHub Pages baut
+**Die vierzehn Datenpakete im Repo** sind die eingefrorenen *Eingaben* der Läufe; GitHub Pages baut
 damit jede Seite ohne einen einzigen Netzaufruf (decisions.md, Punkt 56). Ein Paket ist ein
-`reference_root`: `Layout.reference_view()` liest es als Datenwurzel mit `cache_root =
-<reference_root>/cache`, darum liegt sein Textstore unter `cache/text/`.
+`reference_root` oder eine einzelne Datei, die ein Profil unter `[bootstrap]`, `[bodies]` oder dem
+Block seines Vorhabens nennt; `Layout.reference_view()` liest ein `reference_root` als Datenwurzel mit
+`cache_root = <reference_root>/cache`, darum liegt sein Textstore unter `cache/text/`. Diese Tabelle
+ist die eine Stelle für Pakete und Größen; die anderen Dokumente verweisen hierher.
 
 | Paket | Bytes | Inhalt | Profil |
 |---|---|---|---|
 | `reference/` | 85 771 896 (81,80 MiB) | Altformat `interim/paper_with_text.json`, `external/`, `raw/`, dazu `processed/` mit den Golden-Master-CSVs der Arbeit | `duesseldorf` |
 | `reference/moenchengladbach/` | 5 213 942 (4,97 MiB) | `external/` (4), `raw/` (4, seit Punkt 58 mit `organizations.json`), `cache/text/texts.parquet` | `moenchengladbach` |
-| `snapshots/2014-2020/` | 37 625 770 (35,9 MiB) | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
-| `snapshots/2025/` | 13 889 015 (13,2 MiB) | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
+| `snapshots/2014-2020/` | 37 625 770 (35,88 MiB) | `external/` (4), `raw/papers.jsonl`, Textstore | `duesseldorf-2014` |
+| `snapshots/2025/` | 13 889 015 (13,25 MiB) | `external/` (2), `raw/papers.jsonl`, Textstore | `duesseldorf-2025` |
 | `snapshots/duesseldorf-beratungsfolge/` | 90 455 (88 KiB) | `raw/beratungsfolge.parquet`: `id`, `consultation_organizations`, `modified` (Punkt 58) | `duesseldorf` |
-| `snapshots/duesseldorf-texte/` | 15 563 293 (14,8 MiB) | `cache/text/texts.parquet`: die Texte der Hauptperiode aus pypdf 7.1.0 (Punkt 68) | `duesseldorf` |
+| `snapshots/duesseldorf-texte/` | 15 563 293 (14,84 MiB) | `cache/text/texts.parquet`: die Texte der Hauptperiode aus pypdf 7.1.0 (Punkt 68) | `duesseldorf` |
+| `snapshots/duesseldorf-rohtexte/` | 14 183 802 (13,53 MiB) | `cache/text/rohtexte.parquet`: der Rohtext der Hauptperiode (Fundament F1, Punkt 73) | `duesseldorf` |
+| `snapshots/duesseldorf-anlagen/` | 303 400 (296 KiB) | `raw/anlagen.parquet`: die Anlagen je Drucksache aller drei Perioden, Namen von Personen maskiert (Vorhaben 14, Punkt 76) | alle Düsseldorf-Profile |
+| `snapshots/moenchengladbach-anlagen/` | 63 910 (62 KiB) | `raw/anlagen.parquet` (Vorhaben 14) | `moenchengladbach` |
+| `snapshots/duesseldorf-aehnlich/` | 905 998 (885 KiB) | `raw/aehnliche_dokumente_paket.parquet`: die zehn ähnlichen Dokumente je Korpus-ID, ohne Vektoren (Vorhaben 18, Punkt 77) | `duesseldorf` |
+| `snapshots/duesseldorf-beschluesse/` | 631 944 (617 KiB) | `raw/tagesordnungspunkte-<periode>.parquet`: je Periode die Tabelle Paper × Tagesordnungspunkt aus dem Netzlauf von F6, ohne Namen von Personen (Vorhaben 26, Punkt 79) | die drei Düsseldorfer Perioden |
+| `snapshots/duesseldorf-bedarf/` | 198 018 (193 KiB) | `external/bedarf/`: Stadtauszüge aus Unfallatlas, Zensus-Gitter und Schuldaten, `quellen.json` (Vorhaben 22, Punkt 80) | `duesseldorf` |
+| `snapshots/moenchengladbach-bedarf/` | 91 866 (90 KiB) | dasselbe für Mönchengladbach | `moenchengladbach` |
 | `context/` | 2 242 316 (2,14 MiB) | drei Dateien des Quartiersatlas | alle Düsseldorf-Profile |
 
-Zusammen **160 396 687 Bytes, 152,97 MiB** (Stand 2026-11-18, alle Texte aus pypdf 7.1.0), 85 % der Grenze von 180 MiB im Test; gezählt sind die
-Datendateien ohne die READMEs. Jedes Paket trägt ein README mit Herkunft, Lizenz, Abrufdatum, den
-Zahlen des Laufs und der SHA-256 jeder Datei; `tests/unit/test_data_packages.py` hält Dateiliste,
-Größe und Prüfsumme dagegen und lässt keine PDFs, Stamps, Manifeste und Caches hinein. **Die PDFs
-liegen in keinem Paket** (233 MB Mönchengladbach, 3,9 GB Periode 2014 bis 2020, 585 MB laufende
-Periode) — nur die Texte daraus.
+Zusammen **176 775 625 Bytes, 168,59 MiB** (nachgerechnet am 2026-11-26), 94 % der Grenze von
+180 MiB im Test; gezählt sind die Datendateien ohne die READMEs. Jedes Paket trägt ein README mit
+Herkunft, Lizenz, Abrufdatum, den Zahlen des Laufs und der SHA-256 jeder Datei;
+`tests/unit/test_data_packages.py` hält Dateiliste, Größe und Prüfsumme dagegen und lässt keine
+PDFs, Stamps, Manifeste und Caches hinein. **Die PDFs liegen in keinem Paket** (233 MB
+Mönchengladbach, 3,9 GB Periode 2014 bis 2020, 585 MB laufende Periode, 2,7 GB Hauptperiode) — nur
+die Texte daraus. Vektoren, Personendaten und Kurzfassungen kommen nie in ein Paket.
 
 Das Paket der Beratungsfolge gibt es nur, weil der Korpus der Hauptperiode aus dem **Altformat der
 Arbeit** stammt und dieses Format die Folge nicht führt; jede andere Periode trägt sie in ihrem
@@ -155,7 +165,8 @@ genau die Dateien, die `bootstrap` später sucht, mit Prüfsummentabelle und REA
 ab, statt ein halbes Paket zu schreiben, wenn eine Eingabe fehlt, wenn der Textstore Zeilen trägt,
 die nicht aus einem Lauf kommen, oder wenn ein Text kein Paper hat. `georep pack --consultations`
 packt stattdessen nur die Beratungsfolge je Dokument, `georep pack --texts` nur den Textstore
-(Punkt 68).
+(Punkt 68), `--raw-texts` nur den Rohtextstore, `--attachments`, `--neighbors`, `--outcomes` und
+`--need` die Pakete der Vorhaben 14, 18, 26 und 22.
 
 Das **Textpaket der Hauptperiode** (`snapshots/duesseldorf-texte/`, 15 563 293 Bytes) gibt es aus
 demselben Grund wie das der Beratungsfolge: die Paper kommen aus dem Altformat der Arbeit, die Texte
@@ -167,18 +178,12 @@ der Hauptperiode bootstrappt, keine fremden Texte. Die Periodenprofile setzen de
 
 ## 4. Wie die Kette läuft
 
-**Neunundzwanzig Schritte** stehen im Register; welche ein Lauf hat, entscheiden die Settings, und
-`georep steps` zeigt es. Jeder Schritt nennt Eingaben, Ausgaben und eine Schema-Version; die
-Schritt-für-Schritt-Tabelle mit Netzflagge steht in [architecture.md](architecture.md), Abschnitt
-„Pipeline".
-
-| Profil | Schritte | was fehlt oder dazukommt |
-|---|---|---|
-| `duesseldorf` | 27 | der Standard |
-| `duesseldorf-vergleich` | 28 | zusätzlich `compare` |
-| `duesseldorf-2014` | 22 | `crosswalk.enabled` bringt `precincts`; `period.dictionary = "base"` nimmt `streets_osm` und `pois_wiki` |
-| `duesseldorf-2025` | 21 | keine Regression, keine Kontrollvariablen, Wörterbuch der Hauptperiode |
-| `moenchengladbach` | 23 | keine Fremddaten (`context.root` leer); seit Punkt 58 kein `committees` (`classify.enabled = false`), dafür `organizations` als Netzschritt; seit Punkt 59 **mit** `parties` |
+Welche Schritte ein Lauf hat, entscheiden die Settings des Profils, und `georep steps` zeigt es.
+Jeder Schritt nennt Eingaben, Ausgaben und eine Schema-Version; die Tabelle aller Schritte mit
+Netzflagge und die Zahl je Profil stehen in [architecture.md](architecture.md), Abschnitt
+„Pipeline". Profile, die die Ausgaben anderer lesen, laufen nach ihnen: `duesseldorf-2014` und
+`duesseldorf-2025` vor `duesseldorf-vergleich` (`compare`, `cycle_tests`), und beide Perioden nach
+`duesseldorf`, dessen Wörterbuch sie lesen.
 
 Der Schritt `bodies` liest seit Punkt 58 zwei Quellen: den Korpus (`id`, `reference`,
 `consultation_organizations`) und, wo das Profil eines nennt, `raw/beratungsfolge.parquet`. Seine
@@ -201,11 +206,9 @@ auf. Seine Daten liegen unter `data_root/<profil>/`, seine PDFs und Texte unter
 die Hauptperiode einer Stadt; von dort liest ein Periodenprofil mit `period.dictionary = "base"` sein
 Wörterbuch, damit sich zwischen zwei Perioden nur die Dokumente unterscheiden.
 
-**Zeiten** (voller Offline-Lauf auf der Referenz, rund 23 s): Themenmodell 7,4 s, passender Ausschuss
-6,5 s, Index 4,1 s, Berichtsseite 1,7 s, Gremien 0,3 s (seit Punkt 58), Kennzahlen 0,1 s. Der Index
-ist der einzige heiße Pfad der Offline-Kette: 3,78 s seiner 4,1 s sind FlashTexts
-`extract_keywords` über die **19 033 Texte** des Korpus, gemessen am 2026-10-11 mit 5 841 Begriffen
-(vor Regel 1); die Zerlegung steht in [profiling/README.md](profiling/README.md).
+**Zeiten**: Messungen je Schritt stehen datiert in [profiling/README.md](profiling/README.md); der
+Index ist dort der heiße Pfad der ursprünglichen Kette (FlashTexts `extract_keywords` über die Texte
+des Korpus), die Schritte der Vorverarbeitung messen ihre Messdokumente unter `docs/plans/`.
 
 **Reproduzierbarkeit.** Zwei Läufe auf denselben Eingaben schreiben byteidentische Parquet-Dateien:
 alle Ausgaben sind sortiert, Mengen werden zu sortierten Listen. Eingaben behalten das Format ihrer
@@ -221,7 +224,7 @@ Stellen; Labels und Kennzahlen bleiben gleich).
 
 | Weg | wer | was | Netz |
 |---|---|---|---|
-| GitHub Pages | `.github/workflows/pages.yml` bei jedem Push auf `main` | alle Seiten aus den sechs Paketen | keines |
+| GitHub Pages | `.github/workflows/pages.yml` bei jedem Push auf `main` | alle Seiten aus den Paketen (§ 3) | keines |
 | von Hand | `georep run` plus `georep publish` | die Stadtseiten, die lokal gerechnet sind | keines |
 | Betrieb | `deploy/bin/georep-monitor.sh` hinter einem systemd-Timer | laufende Periode fortschreiben, Hauptseite dazu | OParl und PDFs |
 
@@ -305,14 +308,17 @@ Nach dem Lauf macht **ein Befehl** das Paket für das Repo:
 
 | Befehl | Was |
 |---|---|
-| `uv run nox` | Ruff, mypy strict, Lockfile ohne pandas/geopandas/osmnx, schnelle Suite parallel (1 186 Tests, rund 58 s, Abdeckung 98,5 %, Untergrenze 90 %) |
-| `uv run pytest -m slow` | 36 Tests über die volle Referenz, die sechs Datenpakete, das Paket der Periode 2014 bis 2020 und die veröffentlichte Seite, rund 4 min |
-| `uv run pytest -m network` | 4 Netztests, nur von Hand; in CI läuft kein Netz |
-| `uv run nox -s bench` | 18 heiße Pfade gegen die gespeicherte Baseline, rot ab 20 % langsamer im Minimum |
-| `uv run nox -s verify` | crosshair über die reinen Funktionen mit Verträgen, rund zehn Minuten (33 Ziele „Not confirmed" am 2026-10-14) |
-| `uv run nox -s mutate` | pytest-gremlins, eine Sitzung je Modul mit genau seinen Testdateien; 81,3 % getötet über die dreizehn Module des Ausbaus |
+| `uv run nox` | Ruff, mypy strict, Lockfile ohne pandas/geopandas/osmnx, schnelle Suite parallel mit Abdeckung (Untergrenze 90 %) |
+| `uv run pytest -m slow` | Tests über die volle Referenz, die Datenpakete und die veröffentlichte Seite |
+| `uv run pytest -m network` | Netztests, nur von Hand; in CI läuft kein Netz |
+| `uv run nox -s bench` | heiße Pfade gegen die gespeicherte Baseline, rot ab 20 % langsamer im Minimum |
+| `uv run nox -s verify` | crosshair über die reinen Funktionen mit Verträgen (`VERIFY_TARGETS` im `noxfile.py`) |
+| `uv run nox -s mutate` | pytest-gremlins, eine Sitzung je Modul mit genau seinen Testdateien |
 | `uv run nox -s alone` | Reihenfolgeunabhängigkeit: jede Testdatei einmal allein, dann die Suite rückwärts |
 | `uv run georep profile index` | ein echter Schritt unter cProfile, `.prof` nach `docs/profiling/` |
+
+Wie viele Tests es gibt und wie viele Ziele `verify` hat, steht datiert in
+[../STATUS.md](../STATUS.md), „Zahlen".
 
 `verify` und die gezielte Mutationssitzung laufen zusätzlich wöchentlich in
 `.github/workflows/quality.yml`. Netz kommt in Tests nie von echten Endpunkten: es geht über das
