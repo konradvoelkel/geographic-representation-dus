@@ -3917,14 +3917,16 @@ der Verwaltungseinheit 0,962 statt 0,956, die der Rechtsgrundlage 0,859 statt 0,
 ändert sich (Nachtrag in § 4.4 des Messdokuments).
 
 **Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
-(`ab/ab_bau.sh`, `ab/ab_vergleich.py`), `main` bei `098d556` (nach Vorhaben 14) gegen den Branch
-darauf, beide mit `POLARS_MAX_THREADS=4` und `OMP_NUM_THREADS=2`: unter `site/` 194 Dateien in
-beiden, 0 Abweichungen. Über die ganzen Datenwurzeln 721 gegen 729 Dateien: neu sind nur die vier
-`kennungen.parquet` mit ihren Stamps; an den 87 übrigen Stamps, die abweichen, ändern sich allein
-der Settings-Fingerprint (ein neuer Schlüssel) und die Zeit `written`, am Stamp des Vergleichs dazu
+(`ab/ab_bau.sh`, `ab/ab_vergleich.py`), `main` bei `62ea8eb` (v0.30.0, nach Vorhaben 11) gegen den
+Branch darauf, beide mit `POLARS_MAX_THREADS=4` und `OMP_NUM_THREADS=2` (2026-11-26): unter `site/`
+235 Dateien in beiden, 0 Abweichungen. Über die ganzen Datenwurzeln 924 gegen 932 Dateien: neu sind
+nur die vier `kennungen.parquet` mit ihren Stamps; an den 113 übrigen Stamps, die abweichen, ändern
+sich allein der Settings-Fingerprint (ein neuer Schlüssel) und die Zeit `written`, an zweien dazu
 die Pfade der Datenwurzel in den Schlüsseln der Eingaben (Punkt 76), nicht ihre Hashes. Aus den
 Paketen rechnet nur die Hauptperiode Spannen; 2014 bis 2020, ab 2025 und Mönchengladbach haben dort
-keinen Rohtext und schreiben die Tabelle leer.
+keinen Rohtext und schreiben die Tabelle leer. Lokal, mit Rohtext für alle Profile, tragen 100 665
+von 116 349 Spannen der Hauptperiode einen Abschnitt, 141 381 von 151 205 von 2014 bis 2020,
+18 946 von 22 357 ab 2025 und 6 471 von 7 428 in Mönchengladbach.
 
 **Laufzeit.** Der Schritt braucht für die Hauptperiode 36 bis 60 s, für 2014 bis 2020 51 bis 74 s,
 ab 2025 6 bis 14 s, für Mönchengladbach 3 bis 4 s, in einem Prozess und unter Fremdlast
