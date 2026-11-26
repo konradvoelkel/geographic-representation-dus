@@ -23,6 +23,7 @@ import polars as pl
 from loguru import logger
 
 from georep.enrich.embeddings import embedding_files
+from georep.enrich.outcomes import outcome_files
 from georep.enrich.procedures import procedure_files
 from georep.io import atomic_path
 from georep.layout import Layout
@@ -307,6 +308,8 @@ def bootstrap_from_settings(
         attachments=settings.procedures.attachments if settings.procedures.enabled else None,
         # Vorhaben 18: dito; das Paket liest der Schritt neighbors, wo es keine Vektoren gibt
         neighbors=settings.embeddings.neighbors_package if settings.embeddings.enabled else None,
+        # Vorhaben 26: ebenso nur mit eingeschalteten Schritten
+        outcomes=settings.outcomes.package if settings.outcomes.enabled else None,
         need=settings.context.need.package if settings.context.need.enabled else None,
     )
 
@@ -323,6 +326,7 @@ def bootstrap(
     raw_texts: Path | None = None,
     attachments: Path | None = None,
     neighbors: Path | None = None,
+    outcomes: Path | None = None,
     need: Path | None = None,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
@@ -349,6 +353,9 @@ def bootstrap(
     ``raw/aehnliche_dokumente_paket.parquet`` kommt, wenn jede seiner IDs ein Paper dieses
     Datensatzes ist (``overlay_neighbors``); dort liest der Schritt ``neighbors`` es, wo es keine
     Dokumentvektoren gibt.
+    ``outcomes`` ist die Naht von Vorhaben 26: die Tabelle „Paper × Tagesordnungspunkt" für
+    ``raw/tagesordnungspunkte.parquet``, die der Schritt ``council_results`` liest, wo kein Netzlauf
+    liegt; bringt der eingefrorene Datensatz eine eigene mit, gilt seine (wie bei Punkt 58).
     ``need`` ist die Naht von Vorhaben 22: das Paket mit den Stadtauszügen der Bedarfsquellen
     (``[context.need].package``), kopiert nach ``external/bedarf/``; bringt der eingefrorene
     Datensatz eigene mit (die Mini-Fixture), gelten seine, wie bei der Beratungsfolge.
@@ -386,6 +393,10 @@ def bootstrap(
         pairs += [(layout.context_source(name), layout.external / name) for name in context_files]
     if attachments is not None:  # Vorhaben 14
         pairs.append((attachments, procedure_files(layout).attachments))
+    if outcomes is not None:  # Vorhaben 26
+        agenda = outcome_files(layout).agenda
+        own = outcome_files(reference).agenda
+        pairs.append((own if own.is_file() else outcomes, agenda))
     # Vorhaben 22: die Stadtauszüge der Bedarfsquellen, nur wenn das Profil sie einschaltet; der
     # Netzschritt need_data holt sie frisch.
     if need is not None:

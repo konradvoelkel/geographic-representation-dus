@@ -26,6 +26,7 @@ from georep.analysis.cosponsors import COSPONSORS_SCHEMA_VERSION
 from georep.analysis.cycles import CYCLE_TESTS_SCHEMA_VERSION, CYCLES_SCHEMA_VERSION
 from georep.analysis.functions import FUNCTIONS_SCHEMA_VERSION
 from georep.analysis.lexicon import VOCABULARY_SCHEMA_VERSION
+from georep.analysis.outcomes import OUTCOMES_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.enrich.procedures import PROCEDURES_SCHEMA_VERSION
 from georep.errors import MissingInputError
@@ -96,6 +97,9 @@ VERSIONS = {
     "vocabulary": VOCABULARY_SCHEMA_VERSION,
     "cycle_tests": CYCLE_TESTS_SCHEMA_VERSION,
     "feeds": FEEDS_SCHEMA_VERSION,
+    # Vorhaben 26: der Beratungsverlauf und die Beschlusslage, ein Modul für drei Dateien
+    "council_results": OUTCOMES_SCHEMA_VERSION,
+    "outcomes": OUTCOMES_SCHEMA_VERSION,
     # Vorhaben 22: die Auszüge (Netz) und die Tabellen je Wahlbezirk (``georep.enrich.need``)
     "need_data": NEED_DATA_SCHEMA_VERSION,
     "need": NEED_SCHEMA_VERSION,
@@ -399,6 +403,10 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # Vektoren legt. Sie gehört zu einem Befehl wie die Beratungsfolge oben; ihr Schlüssel (Fassung,
     # Korpus, Rohtextstore) steht in ihren Metadaten, und der Befehl baut sie neu, wenn er abweicht.
     "georep.search.query.WORD_INDEX_SCHEMA_VERSION",
+    # Vorhaben 26: die Version der Tabelle „Paper × Tagesordnungspunkt", die ``georep pack
+    # --outcomes`` schreibt; wie bei Punkt 58 gehört sie zu einem Befehl, und der Schritt, der das
+    # Paket liest, nennt die Version seiner eigenen Ausgabe.
+    "georep.analysis.outcomes.AGENDA_SCHEMA_VERSION",
 }
 
 

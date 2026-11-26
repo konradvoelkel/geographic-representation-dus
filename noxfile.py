@@ -437,6 +437,11 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
             "tests/property/test_feeds_props.py",
         ),
     ),
+    # Vorhaben 26: Beschlusslage, Prüfauftrag, Praxiszellen, Antragserfolg; Zeit nicht gemessen
+    "outcomes": (
+        ("src/georep/analysis/outcomes.py",),
+        ("tests/unit/test_outcomes.py", "tests/property/test_outcomes_props.py"),
+    ),
     # Vorhaben 22: die Tests der vorab festgelegten Hypothesen
     "need": (
         ("src/georep/analysis/need.py",),

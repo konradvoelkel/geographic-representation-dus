@@ -114,6 +114,7 @@ def write_inputs() -> None:
     write_geojson()
     write_context()
     write_consultations(keep)
+    write_agenda(keep)
     write_need()
 
 
@@ -182,6 +183,35 @@ def write_consultations(keep: set[str]) -> int:
     package = REPO / "snapshots" / "duesseldorf-beratungsfolge" / "raw" / "beratungsfolge.parquet"
     frame = pl.read_parquet(package).filter(pl.col("id").is_in(sorted(keep))).sort("id")
     write_parquet(frame, MINI / "raw" / "beratungsfolge.parquet", schema_version=2)
+    return frame.height
+
+
+def write_agenda(keep: set[str]) -> int:
+    """Vorhaben 26: die Tabelle „Paper × Tagesordnungspunkt" dieser 200 Dokumente aus ihrem Paket.
+
+    Wie die Beratungsfolge: ``bootstrap`` nimmt die Tabelle des eingefrorenen Datensatzes vor dem
+    Paket aus ``outcomes.package``, und so liest ``council_results`` in jedem Test dieselben
+    Zeilen, auch aus einem Arbeitsverzeichnis, von dem aus der relative Pfad des Pakets nicht
+    trägt. Liefert die Zahl der Zeilen.
+    """
+    import polars as pl
+
+    from georep.analysis.outcomes import AGENDA_NAME, AGENDA_SCHEMA_VERSION, PROGRESS_ORDER
+    from georep.io import write_parquet
+
+    package = (
+        REPO
+        / "snapshots"
+        / "duesseldorf-beschluesse"
+        / "raw"
+        / "tagesordnungspunkte-duesseldorf.parquet"
+    )
+    frame = (
+        pl.read_parquet(package)
+        .filter(pl.col("id").is_in(sorted(keep)))
+        .sort(PROGRESS_ORDER, nulls_last=False)
+    )
+    write_parquet(frame, MINI / "raw" / AGENDA_NAME, schema_version=AGENDA_SCHEMA_VERSION)
     return frame.height
 
 

@@ -23,6 +23,14 @@ Fixture an einer Datei außerhalb dieses Ordners hängt. `expected/` kennt sie n
 Gremienzahlen der Fixture ändert sie nichts: dort trifft jede Drucksachennummer, und die Nummer
 entscheidet.
 
+`raw/tagesordnungspunkte.parquet` (seit 2026-11-24, Vorhaben 26): die Tabelle „Paper ×
+Tagesordnungspunkt“ genau dieser 200 Dokumente, aus
+`snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-duesseldorf.parquet` gefiltert
+(`make_mini.write_agenda`; 317 Zeilen). Wie die Beratungsfolge gilt sie vor dem Paket aus
+`outcomes.package`, und so liest der Schritt `council_results` dieselben Zeilen auch aus einem
+Arbeitsverzeichnis, von dem aus der relative Pfad des Pakets nicht trägt (`tests/unit/test_cli.py`).
+`expected/` kennt sie nicht.
+
 `external/bedarf/` (seit 2026-11-24, Vorhaben 22): die Auszüge der Bedarfsquellen für diese drei
 Wahlbezirke, aus `snapshots/duesseldorf-bedarf/` gefiltert (`make_mini.write_need`): 2 237 Unfälle im
 Band von 20 m um die 22 Stimmbezirke, 463 Gitterzellen und 14 Schulen mit Punkt in einem, dazu

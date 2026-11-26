@@ -66,6 +66,11 @@ neighbors_package = ""         # das Nachbarpaket gehört zur Hauptperiode; die 
 # Schritt 7), GitHub Pages bekommt sie über die Kopie dieser Seite und `georep publish`.
 [feeds]
 enabled = true
+
+# --- Vorhaben 26: Beschlusslage (docs/plans/26-beschluesse.md); der Wortschatz kommt aus dem Stadtprofil
+[outcomes]
+package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-2025.parquet"
+
 # --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 8.1) --------------------------
 [context.need]                 # H1′ und H3′ rechnen erst mit zwölf Monaten Unfällen dieser Periode (Unfallatlas 2026, erwartet im Juli 2027); bis dahin aus
 enabled = false

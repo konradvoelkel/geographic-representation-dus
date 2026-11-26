@@ -30,6 +30,7 @@ from georep.pack import (
     pack_consultations,
     pack_need,
     pack_neighbors,
+    pack_outcomes,
     pack_raw_texts,
     pack_texts,
 )
@@ -180,6 +181,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="nur die ähnlichen Dokumente packen (raw/aehnliche_dokumente_paket.parquet), nach "
         "einem Lauf mit --models; die Vektoren bleiben lokal",
+    )
+    # Vorhaben 26: die Tabelle Paper x Tagesordnungspunkt aus dem Netzlauf, für Läufe ohne Netz
+    only.add_argument(
+        "--outcomes",
+        action="store_true",
+        help="nur die Tabelle Paper x Tagesordnungspunkt packen (raw/tagesordnungspunkte-*.parquet), "
+        "aus dem Netzlauf der Sitzungen und Beratungen",
     )
     # Vorhaben 22: die Stadtauszüge der Bedarfsquellen (Synergien 2026-11, Konflikt 11)
     only.add_argument(
@@ -441,7 +449,9 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
     entsteht statt der Eingaben eines Laufs nur die Beratungsfolge je Dokument (Punkt 58), mit
     ``--texts`` nur der Textstore (Punkt 68), mit ``--raw-texts`` nur der Rohtextstore
     (Fundament F1), mit ``--attachments`` nur die Anlagen je Drucksache (Vorhaben 14), mit ``--neighbors`` nur die
-    ähnlichen Dokumente (Vorhaben 18), mit ``--need`` nur die Stadtauszüge der Bedarfsquellen (Vorhaben 22).
+    ähnlichen Dokumente (Vorhaben 18), mit ``--outcomes`` nur die Tabelle Paper ×
+    Tagesordnungspunkt (Vorhaben 26), mit ``--need`` nur die Stadtauszüge der Bedarfsquellen
+    (Vorhaben 22).
     """
     write = (
         pack_consultations
@@ -454,6 +464,8 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
         if args.attachments
         else pack_neighbors  # Vorhaben 18
         if args.neighbors
+        else pack_outcomes  # Vorhaben 26
+        if args.outcomes
         else pack_need
         if args.need
         else pack

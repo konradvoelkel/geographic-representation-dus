@@ -67,6 +67,8 @@ PACKAGES = (
     Package("snapshots/moenchengladbach-anlagen", limit=1 * MIB, native=False, readme=True),
     # Vorhaben 18: die zehn ähnlichen Dokumente je Korpus-ID der Hauptperiode, keine Vektoren (905 998)
     Package("snapshots/duesseldorf-aehnlich", limit=2 * MIB, native=False, readme=True),
+    # Vorhaben 26: die Tabelle Paper x Tagesordnungspunkt der drei Perioden, je eine Datei (631 944)
+    Package("snapshots/duesseldorf-beschluesse", limit=2 * MIB, native=False, readme=True),
     # Vorhaben 22: die Stadtauszüge der Bedarfsquellen (198 018 und 91 866 Bytes, 2026-11-24)
     Package("snapshots/duesseldorf-bedarf", limit=1 * MIB, native=False, readme=True),
     Package("snapshots/moenchengladbach-bedarf", limit=1 * MIB, native=False, readme=True),
@@ -76,8 +78,9 @@ PACKAGES = (
 # Punkt 67 zusammen 266 295 Bytes kleiner, das Textpaket der Hauptperiode kam mit Punkt 68 dazu und
 # das Rohtextpaket mit Fundament F1); mit den beiden Anlagenpaketen von Vorhaben 14 174 947 799
 # Bytes = 166,84 MiB (92,7 %, 2026-11-24); mit dem Nachbarpaket von Vorhaben 18 175 853 797 Bytes
-# = 167,71 MiB (93,2 %, 2026-11-24), mit den beiden Bedarfspaketen von Vorhaben 22 176 143 681
-# Bytes = 167,98 MiB (93,3 %, 2026-11-26). Ein einziger PDF-Ordner einer Periode (585 MB bis
+# = 167,71 MiB (93,2 %, 2026-11-24), mit dem Beschlusspaket von Vorhaben 26 176 485 741 Bytes =
+# 168,31 MiB (93,5 %, 2026-11-26), mit den beiden Bedarfspaketen von Vorhaben 22 176 775 625
+# Bytes = 168,59 MiB (93,7 %, 2026-11-26). Ein einziger PDF-Ordner einer Periode (585 MB bis
 # 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 
@@ -559,3 +562,19 @@ def test_the_neighbor_package_keeps_its_invariants() -> None:
         assert all(a >= b for a, b in zip(sims, sims[1:], strict=False)), unit
         assert all(file_of[n] != file_of[unit] and n != unit for n in neighbors), unit
     assert frame.get_column("aehnlichkeit").is_between(-1.0, 1.0).all()
+
+
+def test_each_period_reads_its_own_table_of_the_outcomes_package() -> None:
+    """Vorhaben 26: jede Düsseldorfer Periode nennt ihre Datei, und sie liegt im Repo."""
+    from georep.settings import load_settings
+
+    nowhere = Path("/nonexistent")
+    found = {}
+    for profile in ("duesseldorf", "duesseldorf-2014", "duesseldorf-2025", "duesseldorf-vergleich"):
+        package = load_settings(profile=profile, cwd=nowhere).outcomes.package
+        assert package is not None and (REPO / package).is_file(), (profile, package)
+        assert package.parts[:2] == ("snapshots", "duesseldorf-beschluesse"), profile
+        found[profile] = package.name
+    assert len(set(found.values())) == 3  # der Vergleich ist die Hauptperiode (Punkt 52)
+    assert found["duesseldorf-vergleich"] == found["duesseldorf"]
+    assert load_settings(profile="moenchengladbach", cwd=nowhere).outcomes.package is None
