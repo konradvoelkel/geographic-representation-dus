@@ -3805,7 +3805,7 @@ Sitzung aus der OParl-Folge raten, wo der Text ihn nicht trifft (die Folge hält
 Beratung, der Brief die geplante); ein eigenes Paket (die Ausgaben rechnen in rund 20 s aus dem
 Rohtextpaket); `split_lines` ohne regulären Ausdruck für crosshair (es geht auch mit ihm, Exit 0).
 
-## NN. Kennungen und Beträge als Spannen: vier Arten in der validierten Fassung, Rolle und Fristfunktion verworfen, Haushalt und Rechtsgrundlage gefallen (Vorhaben 12, 2026-11-24)
+## 82. Kennungen und Beträge als Spannen: vier Arten in der validierten Fassung, Rolle und Fristfunktion verworfen, Haushalt und Rechtsgrundlage gefallen (Vorhaben 12, 2026-11-24)
 
 Vorhaben 12 der Vorverarbeitung (`docs/plans/12-kennungen.md`, § 4 bis § 6 und § 10), Stufe 2.
 Die Messung hat sechs Arten von Kennungen mit regulären Ausdrücken gezogen und gegen zwei
