@@ -3374,16 +3374,18 @@ den Schlüssel für jeden Text.
 
 **Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
 (`ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace, je `POLARS_MAX_THREADS=4`,
-`OMP_NUM_THREADS=2`), `main` (`098d556`, v0.25.0) gegen den Branch: unter `site/` 194 Dateien in
-beiden, 3 Abweichungen, alle aus Frage 15 -- `index.html` der Hauptperiode, von 2014 bis 2020 und der
-laufenden Periode nennen die sechs Ausschüsse mit Namen statt Kürzel (Themen, Gremientabelle, Legende),
-und der Satz zur Gremientabelle zählt die Kürzel ohne gesicherten Namen (5 statt 11, in den Perioden 3
-statt 9). Sonst ändert sich keine Zahl; Mönchengladbach und `vergleich.html` sind gleich. Über die ganzen
-Datenwurzeln 721 gegen 733 Dateien: neu sind je Profil die beiden Dateien von `sections` mit Stamp
-(in den drei Profilen ohne Rohtextpaket ohne Spannen und mit leeren Zeilen), anders sonst nur die drei
-Seiten und Stamps (der Fingerprint trägt jetzt `[structure]`). Keine Datei unter `site/` stammt aus
-`sections`; die Kopftabelle kommt erst mit Stufe 3 als Download. Die Hauptperiode schreibt 0,92 MB
-Abschnitte und 0,21 MB Kopf.
+`OMP_NUM_THREADS=2`), `main` (`42f125a`, v0.26.0) gegen den Branch nach Runde 2 des Reviews
+(2026-11-26): unter `site/` 194 Dateien in beiden, 3 Abweichungen, alle aus Frage 15 und K3 --
+`index.html` der Hauptperiode, von 2014 bis 2020 und der laufenden Periode nennen die sechs
+Ausschüsse mit Namen statt Kürzel (Themen, Gremientabelle, Legende), und der Satz zur Gremientabelle
+trägt den neuen Stand (24.11.2026 statt 14.10.2026), die Quelle mit dem Kopf der Vorlagen und die
+Zahl der Kürzel ohne gesicherten Namen (5 statt 11, in den Perioden 3 statt 9). Sonst ändert sich
+keine Zahl; Mönchengladbach und `vergleich.html` sind gleich. Über die ganzen Datenwurzeln 730 gegen
+742 Dateien: neu sind je Profil die beiden Dateien von `sections` mit Stamp (in den drei Profilen
+ohne Rohtextpaket ohne Spannen und mit leeren Zeilen), anders sonst nur die drei Seiten (und ihre
+Kopien unter den Profilordnern) und Stamps (der Fingerprint trägt jetzt `[structure]`). Keine Datei
+unter `site/` stammt aus `sections`; die Kopftabelle kommt erst mit Stufe 3 als Download. Die
+Hauptperiode schreibt 0,92 MB Abschnitte und 0,21 MB Kopf.
 
 **Verworfen.** Das Ende des Beschlussvorschlags an den Labels nachschärfen (Konflikt 8); eine
 Zusatzspalte `quelle` an den Spannen (die Quelle steht in `dokumente_kopf`, Frage 9.3); `start` und
