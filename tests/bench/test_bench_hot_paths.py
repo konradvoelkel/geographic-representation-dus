@@ -43,6 +43,7 @@ from georep.prep.bodies import (
     merge_consultations,
 )
 from georep.prep.extract import extract_text
+from georep.prep.identifiers import IdentifierRules, identifier_spans, office_directory
 from georep.prep.voters import ELIGIBLE_TOTAL, aggregate_voters, read_results_csv
 from georep.search.dictionary import all_terms, build_dictionary
 from georep.search.index import build_index, total_hits
@@ -290,3 +291,35 @@ def test_transfer_counts_to_41_districts(
     )
     frame = benchmark(transfer_counts, counts, shares, ["wahlberechtigte", "waehler"])
     assert int(frame.get_column("waehler").sum()) == int(counts.get_column("waehler").sum())
+
+
+# --- Vorhaben 12: Kennungen und Beträge über 200 Rohtexte der Hauptperiode -----------------------
+
+RAW_PACKAGE = (
+    Path(__file__).resolve().parents[2]
+    / "snapshots"
+    / "duesseldorf-rohtexte"
+    / "cache"
+    / "text"
+    / "rohtexte.parquet"
+)
+
+
+@pytest.fixture(scope="module")
+def raw_200() -> tuple[pl.DataFrame, pl.DataFrame, IdentifierRules]:
+    """Jeder 95. Rohtext des Pakets nach Dateiname (200 Texte über die ganze Periode), die Datei als
+    Korpus-ID, und die Regeln mit dem Ämterverzeichnis aus allen Kopffeldern des Pakets."""
+    every = pl.read_parquet(RAW_PACKAGE, columns=["name", "text", "extractor"]).sort("name")
+    texts = every.gather_every(95).head(200)
+    documents = texts.select(pl.col("name").alias("id"), pl.col("name").alias("file_name"))
+    settings = load_settings(cwd=Path("/nonexistent"))
+    rules = IdentifierRules.from_settings(settings.identifiers)
+    return texts, documents, rules.with_directory(office_directory(every.get_column("text"), rules))
+
+
+def test_identifiers_over_200_raw_texts(
+    benchmark: BenchmarkFixture, raw_200: tuple[pl.DataFrame, pl.DataFrame, IdentifierRules]
+) -> None:
+    texts, documents, rules = raw_200
+    spans = benchmark(identifier_spans, texts, documents, rules)
+    assert spans.get_column("id").n_unique() > 150

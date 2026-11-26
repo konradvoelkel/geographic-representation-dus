@@ -537,3 +537,19 @@ date_line = '^\s*{city},?\s*(den\s+)?(?P<datum>\d{1,2}\.\s?\d{1,2}\.\s?\d{2,4})'
 office = '(?P<nr>\d{2}(?:/\d{1,3})?)\s*-?\s*(?P<name>.*)$'  # wie im Entwurf (dort im Code); „FB 50 …" trifft es nicht, dann ist der ganze Wert der Name
 form_titles = []
 head_lines = 30
+
+# --- Vorhaben 12: Kennungen und Beträge (docs/plans/12-kennungen.md, § 6 und § 10) ---------------
+# Eigene Formate dieser Stadt (§ 3.4 des Messdokuments): Plannummern „809/N", „517/III", das
+# Kopffeld „Fachbereich FB 64 Umwelt" (in 444 von 658 Dokumenten) und Nummern „FB 64". Betrag und
+# Termin laufen mit der Sprache aus defaults.toml unverändert. Nicht kodiert: die Güte gilt für die
+# Hauptperiode Düsseldorfs, hier nur nach den Zählungen in § 3.4.
+[identifiers]
+enabled = true                 # Schritt identifiers (Vorhaben 12, Stufe 2): processed/kennungen.parquet
+
+[identifiers.plans]
+number = '\d{1,4}/(?:[NOSW]|[IVX]{1,4})(?![\w])'  # Nummer/Stadtbezirk („809/N", „793/O") oder Nummer/römische Ziffer („517/III"); Norm ohne Leerraum, groß
+
+[identifiers.offices]
+head = '(?m)^[ \t]*Fachbereich[ \t]+(?P<v>[^\n]*?\S)[ \t]*$'  # „Fachbereich FB 64 Umwelt"
+head_code = '^(?:FB[ \t]*)?(?P<code>\d{1,2}(?:\.\d{1,2})?)[ \t]+(?P<name>.+)$'
+number_extra = '\b(?:FB|Fachbereich(?:es|s)?)[ \t]+(?P<n>\d{1,2}(?:\.\d{1,2})?)(?![\d])'  # „FB 64", „Fachbereich 20.1" im Text

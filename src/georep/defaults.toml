@@ -589,3 +589,105 @@ head_lines = 30                # so viele Zeilen gelten als Kopf für Sitzung, D
 # --- Vorhaben 11, Review K3: Quelle der Gremiennamen auf der Seite (Option 05, nur Anzeige) -------
 [bodies]
 names_source = "die Organisationen des Ratsinformationssystems und Dokumenttitel"  # Satzglied im Satz zur Gremientabelle („Quelle sind …"); eine Stadt, deren Namen anders gesichert sind, sagt es im Profil
+
+# --- Vorhaben 12: Kennungen und Beträge (docs/plans/12-kennungen.md, § 6 und § 10) ---------------
+[identifiers]                  # Spannen im Rohtext (F1, F3): Bauleitplanung und Betrag in Fassung 1, Termin und Verwaltungseinheit in Fassung 2 der Messung, so wie validiert (Messdokument § 4 und § 5). Hier steht die Sprache der Ratsdokumente, an beiden Stadtprofilen gemessen (§ 3.4); Nummernformate und Kopffelder stehen im Stadtprofil. Muster sind reguläre Ausdrücke mit Groß- und Kleinschreibung, eine Liste ist eine Alternative
+enabled = false                # Schalter des Schritts identifiers; ein Stadtprofil schaltet ihn ein
+kinds = ["bplan", "fnp", "betrag", "termin", "amt", "dezernat"]  # die Arten, die das Kriterium erreicht haben (§ 5); Haushalt und Rechtsgrundlage fielen
+
+[identifiers.plans]            # Art 1: „Bebauungsplan Nr. 03/017", „Flächennutzungsplanänderung Nr. 178"; die Spanne ist nur die Nummer. Präzision 1,000 (n 100), Recall 64/71 (§ 4.1)
+keyword = '(?:[Vv]orhabenbezogene[nrs]?[ \t]+)?(?:Bebauungspl(?:an|äne)\w*|B-?Pl(?:an|äne)\w*|(?:Fluchtlinien|Durchführungs)pl(?:an|äne)\w*)(?:[ \t]*[-–]?[ \t]*(?:Vor)?[Ee]ntwurf(?:s|es)?|[ \t]*[-–]?[ \t]*Vorentwurf(?:s|es)?)?'  # Schlüsselwort eines Bebauungsplans; „vorhabenbezogener Bebauungsplan-Vorentwurf"
+number = ""                    # Nummernformat der Stadt; im Stadtprofil. Leer: keine Bebauungspläne
+norms = []                     # [[identifiers.plans.norms]] im Stadtprofil: Schreibweise -> Normalform; ohne passende Regel ohne Leerraum und groß
+list_words = ',|und|sowie|bzw\.|oder'  # Liste nach einer Nummer: „Nr. 5481/006 und 5481/007" sind zwei Pläne
+number_word = '(?:Nr\.?|Nrn\.|Nummer|No\.)[ \t]*:?'  # „Nr.", „Nummer:" zwischen Schlüsselwort und Nummer
+fnp_keyword = '(?:Flächennutzungsplan(?:es|s)?[ \t]*[-–]?[ \t]*[Ää]nderung(?:en|s)?|Flächennutzungsplanänderung(?:en)?|FNP[ \t]*[-–]?[ \t]*[Ää]nderung(?:en)?|FNP)'  # „FNP-Änderung 138", in Anlagenlisten „FNP 194"
+fnp_draft = '\((?:Vor)?[Ee]ntwurf\)'  # „Flächennutzungsplanänderung (Entwurf) Nr. 188"
+fnp_ordinal = '(?P<n>\d{1,3})\.[ \t]*[Ää]nderung[ \t]+des[ \t]+Flächennutzungsplan(?:es|s)?'  # „die 188. Änderung des Flächennutzungsplans"
+
+[identifiers.amounts]          # Art 3: Euro-Beträge ohne Rolle (die Rolle fiel, Übereinstimmung 0,508, § 4.1); Norm in Euro mit zwei Nachkommastellen. Präzision 0,962, Recall 84/88 (§ 4.1)
+units_after = ['€', '(?i:euro?)\b', 'TEUR\b', 'T€', 'T[ \t]?EUR\b']  # „5.000 Euro", „82.000 EUR", „300 T€"
+units_before = ['€', 'EUR\b']  # „EUR 2.700", „€ 40.000" (Fassung 1: „Euro" vorn und über den Zeilenwechsel kamen erst mit Fassung 2, die nicht bestand)
+thousand_units = ['T€', 'TEUR']  # Einheiten in Tausend Euro, ohne Leerzeichen und groß verglichen: „300 T EUR" = 300 000 €
+range_words = 'bis(?:[ \t]+zu)?|und|-|–'  # „5.000 bis 10.000 Euro": die erste Zahl erbt Einheit und Faktor der zweiten
+per_words = '/|pro|je'         # „12,50 €/m²", „150 Euro je Kind": Preis je Einheit, attr = je
+per_units = ['m²', 'm2', 'qm', 'Quadratmeter', 'Monat', 'Jahr', 'Stunde', 'Std\.', 'Tag', 'Woche', 'Person', 'Kopf', 'Einwohner\w*', 'Kind', 'Platz', 'Teilnehm\w*', 'Nacht', 'Stück', 'Fahrt', 'Ticket', 'Kilometer', 'km', 'Meter', 'Haushalt', 'Schüler\w*', 'Fall', 'Mitglied', 'Wohnung', 'Einheit', 'Monatskarte', 'Abo', 'Termin']
+
+[[identifiers.amounts.multipliers]]  # Faktor zwischen Zahl und Einheit; die Folge ist die der Alternative
+pattern = 'Mio\.?|Millionen|Million'   # „2,5 Mio. €"
+factor = 1000000
+[[identifiers.amounts.multipliers]]
+pattern = 'Mrd\.?|Milliarden|Milliarde'  # „1,2 Mrd. Euro"
+factor = 1000000000
+[[identifiers.amounts.multipliers]]
+pattern = 'Tsd\.?|Tausend'     # „40 Tsd. €"
+factor = 1000
+
+[identifiers.dates]            # Art 4: Zeitangaben ohne Funktion (die Funktion frist fiel, Präzision 15/30, § 5). Norm nach Codebuch .2: 2024-03-31, 2024-03, 2024-Q3, 2024-H1, 2024~ende, 2021-02~ende, relativ:naechste_sitzung. Präzision 1,000 an 30 Treffern der Runde 2 (§ 4.4)
+quarter = 'Quartal'            # „3. Quartal 2024", „III. Quartal 2024"
+half_year = 'Halbjahr'         # „1. Halbjahr 2024"
+month_qualifiers = ['Anfang', 'Mitte', 'Ende']  # „Ende Februar 2021" -> 2021-02~ende
+year_qualifiers = ['Anfang', 'Mitte', 'Ende', 'Frühjahr', 'Frühling', 'Sommer', 'Herbst', 'Winter', 'Jahresende', 'Jahresmitte']  # „Ende 2024" -> 2024~ende, „Frühjahr 2023" -> 2023~fruehjahr
+qualifier_norms = { jahresende = "ende", jahresmitte = "mitte", fruehling = "fruehjahr" }  # Umschrift (ä -> ae) eines Zusatzes, der dasselbe meint wie ein anderer
+of_the_year = 'des[ \t\n]+Jahres'  # „Ende des Jahres 2023"
+range_words = 'und|bis(?:[ \t]+(?:zum|einschließlich))?|-|–'  # „10. und 11. Juni 2023", „22. April bis einschließlich 2. Mai 2025": die erste Angabe ist eine eigene Spanne und erbt Monat und Jahr (R10)
+
+[identifiers.dates.months]     # Monatsname als Muster -> Monat; die Folge ist die der Alternative
+"Januar" = 1
+"Februar" = 2
+"März" = 3
+"April" = 4
+"Mai" = 5
+"Juni" = 6
+"Juli" = 7
+"August" = 8
+"September" = 9
+"Oktober" = 10
+"November" = 11
+"Dezember" = 12
+'Jan\.' = 1
+'Feb\.' = 2
+'Mär\.' = 3
+'Apr\.' = 4
+'Jun\.' = 6
+'Jul\.' = 7
+'Aug\.' = 8
+'Sept?\.' = 9
+'Okt\.' = 10
+'Nov\.' = 11
+'Dez\.' = 12
+
+[[identifiers.dates.relative]] # eine Zeitangabe ohne Datum; die Folge zählt: eine frühere Regel belegt die Stelle
+norm = "relativ:naechste_sitzung"  # „in der nächsten Sitzung", „bis zur nächsten Sitzung" (Spanne ohne „bis zur")
+pattern = '(?:(?:in|zu|auf)[ \t\n]+(?:der|einer|den)[ \t\n]+(?:der[ \t\n]+)?|(?<=zur[ \t])|(?<=zur\n))(?:nächsten|kommenden|folgenden|übernächsten)[ \t\n]+Sitzung(?:en)?'
+[[identifiers.dates.relative]]
+norm = "relativ:nach_sommerpause"
+pattern = 'nach[ \t]+der[ \t]+Sommerpause(?:[ \t]+(?:19|20)\d{2})?'
+[[identifiers.dates.relative]]
+norm = "relativ:vor_sommerpause"
+pattern = 'vor[ \t]+der[ \t]+Sommerpause(?:[ \t]+(?:19|20)\d{2})?'
+[[identifiers.dates.relative]]
+norm = "relativ:frist"         # eine Dauer („innerhalb von drei Monaten", „nach einem Jahr"); der Name ist die Form des Codebuchs, keine Fristfunktion
+pattern = '(?:innerhalb[ \t]+(?:von[ \t]+)?|nach[ \t]+)(?:\d+|eines|einem|zwei|drei|vier|sechs|zwölf)[ \t]+(?:Tag|Woche|Monat|Jahr)(?:es|en|e|s)?\b'
+[[identifiers.dates.relative]]
+norm = "relativ:jahresende"
+pattern = 'bis[ \t]+(?:zum[ \t]+)?(?:Jahresende|Ende[ \t]+des[ \t]+Jahres)'
+
+[identifiers.offices]          # Art 6: Ämter aus Kopffeld und Text, „Dezernat NN" aus dem Text (kein Dezernat aus einer Profiltabelle, Synergien § 1). Norm die Amtsnummer aus dem Verzeichnis, sonst der Name. Präzision 0,956, Recall 71/80 (§ 4.4)
+head_chars = 6000              # so weit vom Textanfang sucht das Kopffeld
+head = ""                      # Kopffeld des federführenden Amts, Gruppe v; im Stadtprofil
+head_code = ""                 # Nummer und Name im Kopffeld, Gruppen code und name; im Stadtprofil. Aus ihnen entsteht je Lauf das Ämterverzeichnis
+number = '\bAmt(?:es)?[ \t]+(?P<n>\d{2})(?:/(?P<u>\d{1,2}))?(?![\d/])'  # „Amt 66", „Amt 01/17"
+number_extra = ""              # eine zweite Nummernform der Stadt, Gruppe n; im Stadtprofil
+text = ""                      # eine Einheit, die die Stadt ohne Verzeichnis nennt, Gruppe n; im Stadtprofil
+text_norm = ""
+word = '(?<![\w-])(?P<name>[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜa-zäöüß][a-zäöüß]+)*amt)(?P<flex>e?s)?(?![\w-])'  # „Gartenamt", „Umweltamts": jedes Wort auf -amt; Norm die Nummer aus dem Verzeichnis, sonst das Wort
+word_not = '^(?:Gesamt|Insgesamt|Fachamt|Ehrenamt|Finanzamt|Schulamt|Schiedsamt)$|^(?:Bundes|Landes)\w*amt$|bundesamt$'  # Wörter auf -amt, die kein Amt der Stadt nennen
+bracket = '\((?:Amt[ \t]*)?\d{2}(?:/\d{1,2})?\)'  # „Umweltamt (Amt 19)": die Klammer gehört zur Spanne
+committee_before = '(?:Ausschuss(?:es)?|Beirat(?:s|es)?)[ \t\n]+für[ \t\n]+(?:die[ \t]+|den[ \t]+)?$'  # „Ausschuss für Umwelt" nennt ein Gremium, kein Amt
+committee_words = '(?i:ausschuss|beirat|rat\b|kommission|vertretung|konferenz|versammlung)'  # Kopffelder, die ein Gremium nennen („Jugendhilfeausschuss"), kommen nicht ins Verzeichnis
+code_before = '(?<![\d\w])\d{2}(?:/\d{1,2})?[ \t]*[-–][ \t]*$'  # „64 - Amt für Wohnungswesen" außerhalb des Kopffelds: die Nummer davor kommt in die Spanne und ist die Norm
+directory_min_count = 3        # ein Name kommt ins Verzeichnis, wenn ihn mindestens drei Kopffelder tragen
+directory_min_chars = 8        # kürzere Namen („Umwelt") sind zu allgemein und wären Fehltreffer im Text ...
+directory_word = 'amt'         # ... außer sie enthalten dieses Wort („Sportamt")
+department = '\bDezernat(?:es|s)?[ \t]+(?P<n>\d{1,2})(?![\d/.])'  # „Dezernat 06" (12 von 12 richtig, § 4.4); Norm zweistellig

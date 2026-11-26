@@ -147,6 +147,8 @@ def test_pipeline_runs_skips_and_reruns(
         "council_results": "übersprungen",
         "outcomes": "übersprungen",
         "need": "ausgeführt",  # Vorhaben 22: liest die Auswertung (Dokumente je Wahlbezirk)
+        # Vorhaben 12: liest Rohtexte und Korpus, beide unverändert
+        "identifiers": "übersprungen",
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")

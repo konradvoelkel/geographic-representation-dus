@@ -1114,3 +1114,30 @@ office = '(?P<nr>\d{2}(?:/\d{1,3})?)\s*-?\s*(?P<name>.*)$'  # „52 - Sportamt",
 form_titles = ["Beschlussvorlage", "Informationsvorlage", "Bericht", "Berichtsvorlage",
   "Eingabe nach § 24 Gemeindeordnung NRW", "Antrag", "Anfrage"]
 head_lines = 30
+
+# --- Vorhaben 12: Kennungen und Beträge (docs/plans/12-kennungen.md, § 6 und § 10) ---------------
+# Was nur diese Stadt schreibt: das Nummernformat der Bebauungspläne, das Kopffeld des federführenden
+# Amts und die Bezirksverwaltungsstellen. Die Sprache steht in defaults.toml; die Perioden 2014 bis
+# 2020 und ab 2025 erben den Block (die Muster tragen dort, § 3.4 des Messdokuments).
+[identifiers]
+enabled = true                 # Schritt identifiers (Vorhaben 12, Stufe 2): processed/kennungen.parquet
+
+[identifiers.plans]
+number = '\d{4}[ \t]?[/-][ \t]?\d{2,3}|\d{4} \d{3}|\d{2}[/-]\d{3}'  # alte Nummern Kartenblatt/lfd. Nr. („5674/26", „5374-027", „5872 011"), neue Bezirk/lfd. Nr. („03/017", „06-018")
+# Normalformen (Frage 3 des Messdokuments: „5674/26" ist derselbe Plan wie „5674/026"): hinten
+# dreistellig, Schrägstrich; die Kodierer schrieben jede Norm so (Normwert 1,000, § 4.1).
+[[identifiers.plans.norms]]
+pattern = '(\d{4})[ /-]?(\d{3})'  # „5872 011", „5374-027" -> 5872/011, 5374/027
+replace = '\1/\2'
+[[identifiers.plans.norms]]
+pattern = '(\d{4})[ /-]?(\d{2})'  # „5674/26" -> 5674/026
+replace = '\1/0\2'
+[[identifiers.plans.norms]]
+pattern = '(\d{2})[/-](\d{3})'    # „06-018" -> 06/018
+replace = '\1/\2'
+
+[identifiers.offices]
+head = '(?m)^[ \t]*(?:Fachbereich|Amt[ \t]*/[ \t]*Institut)[ \t]*:[ \t]*\n?[ \t]*(?P<v>[^\n]*?\S)[ \t]*$'  # Kopffeld der Vorlagen „Fachbereich: 66 - Amt für Verkehrsmanagement", „Amt / Institut:"; in 98,8 bis 100 % der Vorlagen, in keinem Antrag (§ 3.3)
+head_code = '^(?P<code>\d{2}(?:/\d{1,2})?)[ \t]*[-–][ \t]*(?P<name>.+)$'  # „66 - Amt für Verkehrsmanagement", „01/17 - Büro für …"
+text = '(?<![\w-])Bezirksverwaltungsstellen?(?:[ \t]+(?P<n>\d{1,2})(?![\d.]))?(?![\w])'  # „Bezirksverwaltungsstelle 10" im Text, mit und ohne Nummer (Fassung 2)
+text_norm = "Bezirksverwaltungsstelle"

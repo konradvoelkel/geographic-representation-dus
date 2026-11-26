@@ -47,6 +47,7 @@ from georep.prep.context import (
     NEED_DATA_SCHEMA_VERSION,
     NEED_SCHEMA_VERSION,
 )
+from georep.prep.identifiers import IDENTIFIERS_SCHEMA_VERSION
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.prep.structure import STRUCTURE_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
@@ -106,6 +107,8 @@ VERSIONS = {
     "need": NEED_SCHEMA_VERSION,
     # Vorhaben 11: ein früher Schritt (``georep.enrich.sections``), zwei Dateien
     "sections": STRUCTURE_SCHEMA_VERSION,
+    # Vorhaben 12: die Spannen der Kennungen (``georep.enrich.identifiers``)
+    "identifiers": IDENTIFIERS_SCHEMA_VERSION,
 }
 
 

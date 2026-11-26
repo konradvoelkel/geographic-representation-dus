@@ -2578,6 +2578,231 @@ class StructureSettings(_Strict):
         return self
 
 
+# --- Vorhaben 12: Kennungen und Beträge (docs/plans/12-kennungen.md, § 6 und § 10)
+
+# Die Arten, die das Kriterium erreicht haben (Messdokument § 5): Bauleitplanung, Betrag, Termin,
+# Verwaltungseinheit. Haushalt und Rechtsgrundlage fielen und sind keine Wahl.
+IdentifierKind = Literal["bplan", "fnp", "betrag", "termin", "amt", "dezernat"]
+IDENTIFIER_KINDS: tuple[IdentifierKind, ...] = (
+    "bplan",
+    "fnp",
+    "betrag",
+    "termin",
+    "amt",
+    "dezernat",
+)
+
+
+def _pattern_with_groups(value: str, field: str, groups: tuple[str, ...]) -> str:
+    """Ein Muster, das übersetzt und die benannten Gruppen trägt, die der Code liest; leer heißt aus."""
+    if not value:
+        return value
+    compiled = re.compile(_compiles([value], field)[0])
+    missing = [group for group in groups if group not in compiled.groupindex]
+    if missing:
+        raise ValueError(f"{field}: {value!r} braucht die Gruppen {missing}")
+    return value
+
+
+class PlanNorm(_Strict):
+    """Eine Schreibweise einer Plannummer und ihre Normalform (``re.fullmatch``, dann ``expand``).
+
+    Beispiel: ``(\\d{4})[ /-]?(\\d{2})`` mit ``\\1/0\\2`` macht aus „5674/26" „5674/026".
+    """
+
+    pattern: str
+    replace: str
+
+    @model_validator(mode="after")
+    def _expands(self) -> PlanNorm:
+        compiled = re.compile(_compiles([self.pattern], "identifiers.plans.norms[].pattern")[0])
+        try:
+            compiled.sub(self.replace, "")  # übersetzt die Vorlage und prüft ihre Rückverweise
+        except (re.error, IndexError) as error:
+            raise ValueError(
+                f"identifiers.plans.norms: {self.replace!r} passt nicht zu {self.pattern!r}"
+            ) from error
+        return self
+
+
+class IdentifierPlans(_Strict):
+    """Art 1, Bauleitplanung (Fassung 1 der Messung): Nummern von Bebauungsplänen und FNP-Änderungen.
+
+    Die Schlüsselwörter sind die der Sprache (``defaults.toml``), das Nummernformat und seine
+    Normalformen die der Stadt (Profil). Ohne ``number`` gibt es keine Bebauungspläne, ohne
+    ``fnp_keyword`` keine FNP-Änderungen.
+    """
+
+    keyword: str = ""  # Bebauungsplan, B-Plan, Fluchtlinien-, Durchführungsplan
+    number: str = ""  # Nummernformat der Stadt; im Profil
+    norms: list[PlanNorm] = []  # die erste, die passt, gilt; sonst ohne Leerraum, groß
+    list_words: str = ""  # Verbinder einer Liste von Nummern („Nr. 5481/006 und 5481/007")
+    number_word: str = ""  # „Nr.", „Nummer" vor der Nummer
+    fnp_keyword: str = ""  # Flächennutzungsplanänderung, FNP-Änderung, FNP
+    fnp_draft: str = ""  # „(Entwurf)" zwischen Schlüsselwort und Nummer
+    fnp_ordinal: str = ""  # „die 188. Änderung des Flächennutzungsplans"; Gruppe n
+
+    @field_validator("keyword", "number", "list_words", "number_word", "fnp_keyword", "fnp_draft")
+    @classmethod
+    def _compile(cls, value: str) -> str:
+        return _compiles([value], "identifiers.plans")[0] if value else value
+
+    @field_validator("fnp_ordinal")
+    @classmethod
+    def _ordinal(cls, value: str) -> str:
+        return _pattern_with_groups(value, "identifiers.plans.fnp_ordinal", ("n",))
+
+
+class AmountMultiplier(_Strict):
+    """Ein Faktor hinter der Zahl („2,5 Mio. €"); ``pattern`` passt auf das ganze Wort."""
+
+    pattern: str
+    factor: int = Field(ge=1)
+
+    @field_validator("pattern")
+    @classmethod
+    def _compile(cls, value: str) -> str:
+        return _compiles([value], "identifiers.amounts.multipliers[].pattern")[0]
+
+
+class IdentifierAmounts(_Strict):
+    """Art 3, Betrag (Fassung 1 der Messung, ohne Rolle): Zahl mit Einheit, Faktor, Einheit vorn."""
+
+    units_after: list[str] = []  # Einheit hinter der Zahl („5.000 Euro", „300 T€")
+    units_before: list[str] = []  # Einheit vor der Zahl („EUR 2.700")
+    thousand_units: list[str] = []  # Einheiten in Tausend, ohne Leerzeichen und groß verglichen
+    multipliers: list[AmountMultiplier] = []
+    range_words: str = ""  # „5.000 bis 10.000 Euro": die erste Zahl erbt Einheit und Faktor
+    per_words: str = ""  # „12,50 €/m²", „je Monat": der Betrag ist ein Preis je Einheit
+    per_units: list[str] = []
+
+    @field_validator("units_after", "units_before", "per_units")
+    @classmethod
+    def _compile_list(cls, value: list[str]) -> list[str]:
+        return _compiles(value, "identifiers.amounts")
+
+    @field_validator("range_words", "per_words")
+    @classmethod
+    def _compile(cls, value: str) -> str:
+        return _compiles([value], "identifiers.amounts")[0] if value else value
+
+
+class RelativeDate(_Strict):
+    """Eine Zeitangabe ohne Datum („in der nächsten Sitzung"); ``norm`` ist ihr Normwert."""
+
+    norm: str
+    pattern: str
+
+    @field_validator("pattern")
+    @classmethod
+    def _compile(cls, value: str) -> str:
+        return _compiles([value], "identifiers.dates.relative[].pattern")[0]
+
+
+class IdentifierDates(_Strict):
+    """Art 4, Termin (Fassung 2 der Messung, ohne Funktion): Datum, Monat, Quartal, Jahr, relativ."""
+
+    months: dict[str, int] = {}  # Muster -> Monat, in der Folge der Alternative
+    quarter: str = ""  # „3. Quartal 2024" -> 2024-Q3
+    half_year: str = ""  # „1. Halbjahr 2024" -> 2024-H1
+    month_qualifiers: list[str] = []  # „Ende Februar 2021" -> 2021-02~ende
+    year_qualifiers: list[str] = []  # „Ende 2024" -> 2024~ende
+    qualifier_norms: dict[str, str] = {}  # Umschrift eines Zusatzes -> Normwert
+    of_the_year: str = ""  # „Ende des Jahres 2023"
+    range_words: str = ""  # „10. und 11. Juni 2023": die erste Angabe erbt Monat und Jahr
+    relative: list[RelativeDate] = []
+
+    @field_validator("months")
+    @classmethod
+    def _months(cls, value: dict[str, int]) -> dict[str, int]:
+        _compiles(list(value), "identifiers.dates.months")
+        wrong = sorted(name for name, month in value.items() if not 1 <= month <= 12)
+        if wrong:
+            raise ValueError(f"identifiers.dates.months: kein Monat 1 bis 12 für {wrong}")
+        return value
+
+    @field_validator("month_qualifiers", "year_qualifiers")
+    @classmethod
+    def _compile_list(cls, value: list[str]) -> list[str]:
+        return _compiles(value, "identifiers.dates")
+
+    @field_validator("quarter", "half_year", "of_the_year", "range_words")
+    @classmethod
+    def _compile(cls, value: str) -> str:
+        return _compiles([value], "identifiers.dates")[0] if value else value
+
+
+class IdentifierOffices(_Strict):
+    """Art 6, Verwaltungseinheit (Fassung 2 der Messung): Ämter aus Kopf und Text, „Dezernat NN".
+
+    Das Kopffeld und seine Form (Nummer und Name) sind die der Stadt (Profil); das
+    Ämterverzeichnis (Name -> Nummer) entsteht je Lauf aus den Kopffeldern des Korpus, keine Liste
+    im Profil (Synergien 2026-11, § 1). Ein Dezernat kommt nur aus dem Text.
+    """
+
+    head_chars: int = Field(default=6000, ge=1)  # so weit liest das Kopffeld
+    head: str = ""  # Kopffeld des federführenden Amts; Gruppe v; im Profil
+    head_code: str = ""  # Wert des Kopffelds als Nummer und Name; Gruppen code, name; im Profil
+    number: str = ""  # „Amt 66", „Amt 01/17"; Gruppen n und u
+    number_extra: str = ""  # eine zweite Nummernform der Stadt („FB 64"); Gruppe n; im Profil
+    text: str = ""  # eine Einheit, die die Stadt ohne Verzeichnis nennt; Gruppe n; im Profil
+    text_norm: str = ""  # ihr Normwert, mit der Nummer aus Gruppe n dahinter, wenn es eine gibt
+    word: str = ""  # jedes Wort auf -amt; Gruppe name
+    word_not: str = ""  # Wörter auf -amt, die kein Amt der Stadt nennen
+    bracket: str = ""  # Nummer in Klammern hinter einem Namen aus dem Verzeichnis
+    committee_before: str = ""  # „Ausschuss für" vor einem Namen: ein Gremium, kein Amt
+    committee_words: str = ""  # ein Kopffeld mit diesen Wörtern nennt ein Gremium
+    code_before: str = ""  # „64 - Amt für Wohnungswesen" im Text: die Nummer davor gehört dazu
+    directory_min_count: int = Field(default=3, ge=1)  # so oft muss ein Name im Kopf stehen
+    directory_min_chars: int = Field(default=8, ge=1)  # kürzere Namen nur mit directory_word
+    directory_word: str = ""  # ein Name mit diesem Wort darf kürzer sein („Sportamt")
+    department: str = ""  # „Dezernat 06"; Gruppe n
+
+    @field_validator("word_not", "bracket", "committee_before", "committee_words", "code_before")
+    @classmethod
+    def _compile(cls, value: str) -> str:
+        return _compiles([value], "identifiers.offices")[0] if value else value
+
+    @model_validator(mode="after")
+    def _groups(self) -> IdentifierOffices:
+        for field, groups in (
+            ("head", ("v",)),
+            ("head_code", ("code", "name")),
+            ("number", ("n", "u")),
+            ("number_extra", ("n",)),
+            ("text", ("n",)),
+            ("word", ("name",)),
+            ("department", ("n",)),
+        ):
+            _pattern_with_groups(getattr(self, field), f"identifiers.offices.{field}", groups)
+        if self.text and not self.text_norm:
+            raise ValueError("identifiers.offices.text braucht text_norm")
+        return self
+
+
+class Identifiers(_Strict):
+    """Kennungen und Beträge als Spannen im Rohtext (Vorhaben 12, Schritt ``identifiers``).
+
+    Gebaut sind genau die Arten und Fassungen, die die Validierung bestanden haben (Messdokument
+    § 5): Bauleitplanung und Betrag in Fassung 1, Termin und Verwaltungseinheit in Fassung 2. Die
+    Sprache steht in ``defaults.toml``, Nummernformate und Kopffelder im Stadtprofil.
+    """
+
+    enabled: bool = False
+    kinds: list[IdentifierKind] = list(IDENTIFIER_KINDS)
+    plans: IdentifierPlans = IdentifierPlans()
+    amounts: IdentifierAmounts = IdentifierAmounts()
+    dates: IdentifierDates = IdentifierDates()
+    offices: IdentifierOffices = IdentifierOffices()
+
+    @field_validator("kinds")
+    @classmethod
+    def _unique(cls, value: list[IdentifierKind]) -> list[IdentifierKind]:
+        if len(set(value)) != len(value):
+            raise ValueError(f"identifiers.kinds: doppelt in {value}")
+        return value
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="GEOREP_",
@@ -2638,6 +2863,7 @@ class Settings(BaseSettings):
     outcomes: Outcomes = Outcomes()  # Vorhaben 26: Beschlusslage und Antragserfolg
     feeds: Feeds = Feeds()  # Vorhaben 17: Atom-Feed je Wahlbezirk
     structure: StructureSettings = StructureSettings()  # Vorhaben 11: Struktur der Dokumente
+    identifiers: Identifiers = Identifiers()  # Vorhaben 12: Kennungen und Beträge
 
     @property
     def base_profile(self) -> str:
