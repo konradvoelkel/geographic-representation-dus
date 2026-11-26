@@ -113,6 +113,10 @@ neu gebaute Index ist byteidentisch mit dem vorherigen (31 024 Treffer, `results
 
 ### Was daraus folgt (Stand 2026-10-11, zur Entscheidung)
 
+Überholt für den Extraktor: seit dem 2026-11-16 liest pypdf 7.1.0 (decisions.md, Punkte 66 und 67),
+das nur noch 123 der 200 Texte der Arbeit zeichengleich reproduziert. Die Abwägung unten bleibt als
+Stand jenes Tages stehen.
+
 - **Extraktion:** Der Abruf ist dreißigmal teurer als die Extraktion, und die Pause ist Rücksicht auf den Server,
   nicht unsere Rechenzeit. Ein schnellerer Extraktor (pypdfium2, pymupdf) spart im vollen Lauf höchstens elf
   Minuten einmalig und riskiert andere Texte als die der Arbeit; pypdf reproduziert 197 von 200 zeichengleich.

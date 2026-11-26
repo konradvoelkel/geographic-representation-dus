@@ -9,10 +9,9 @@ getestet: die Modelle in `georep.oparl`, der Listenabruf `fetch_objects`, die dr
 HTTP-Cache liegen (nur lesend ausgewertet).
 
 **Kurz:** Die drei Schritte sind aus, bis der Schalter `council.enabled` sie einschaltet (§ 5.1).
-Hauptperiode zuerst, je Schritt erst eine Seite als Probe, dann der Rest. Geschätzt rund 4 min für
-`meetings`, rund 2,5 min für `persons`; `consultations` ist nicht gemessen (wenige Minuten, wenn die
-Liste so schnell ist wie die anderen flachen Listen, Stunden, wenn sie so langsam ist wie die
-Paper-Liste) — die Probe entscheidet.
+Hauptperiode zuerst, je Schritt erst eine Seite als Probe, dann der Rest. Der erste volle Lauf über
+alle vier Profile dauerte am 2026-11-23/24 rund 80 Minuten; die Probe von `consultations` kam mit
+1,4 s je Seite, also lief der volle Abruf (§ 9).
 
 Stand nach dem Review vom 2026-11-23: eine Probe schreibt keine Ausgabe mehr, eine Fortsetzung
 prüft Fortschritt und Teildateien, jeder Schritt läuft je Ordner `raw/` nur einmal, die Sitzungen
@@ -292,8 +291,10 @@ im Profil erhöhen (`[council]`, etwa 800) und `meetings` noch einmal holen, ode
 
 ## 6. Was danach offline läuft
 
-Heute nichts: kein Schritt der Kette liest die fünf Dateien, die Seite ändert sich nicht. Sie sind
-die Eingaben der Vorhaben 26 (Beschlusslage), 27 (Personen und Mandatstyp) und 28 (Abstimmungen), die
+Seit `v0.28.0` liest `council_results` (Vorhaben 26) die Sitzungen, Tagesordnungspunkte und
+Beratungen als optionale Eingaben und schreibt daraus den Beratungsverlauf; ohne sie nimmt er das
+Paket `snapshots/duesseldorf-beschluesse/`. Die Seite zeigt davon noch nichts. Die Dateien sind
+außerdem die Eingaben der Vorhaben 27 (Personen und Mandatstyp) und 28 (Abstimmungen), die
 sie über `georep.council.council_files(layout)` finden und mit den Modellen aus `georep.oparl` lesen
 (`JsonlStore(path, OparlAgendaItem).load()`). Eine Prüfung von Hand, wie viel der Server gefüllt hat:
 

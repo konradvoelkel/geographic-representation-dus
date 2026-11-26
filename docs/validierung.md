@@ -325,7 +325,8 @@ zieht es im Messskript per Bootstrap über die Einheiten.
   im Messdokument) und misst Stufe 3 an diesem F1. Offen sind die Endlabels (eine Schlichtung je
   Markierung statt je Liste) und der Recall gegen die Spannen des Verfahrens mit strenger (gleiche
   Grenzen und Art) und milder Grenze (Überlappung und Art).
-- Übertragen sind 11 bis 15 und 17 (je `<NN-name>-f4`); 12 Runde 2 und 16 sind noch in Kodierung. Die
+- Übertragen sind 11 bis 15 und 17 (je `<NN-name>-f4`); 12 Runde 2 und 16 sind seit dem 2026-11-23
+  ausgewertet (`docs/plans/README.md`). Die
   Präzision des Lexikons von 17 (Kategorie im Thema, 94/100) rechnet F4 nicht; sie vergleicht die
   Ausgabe des Verfahrens mit einer Menge, nicht mit einem Label.
 - Der Ausschnitt ist der Anfang des Textes (`text.chars`); was dahinter steht, sehen die Kodierer

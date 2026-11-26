@@ -2249,7 +2249,9 @@ die diese Abschnitte beschreiben (der Median der Trefferquote der Hauptperiode l
 dem der alten), ist das klein, aber nicht null — und die Seite nennt den Extraktor nicht
 (`docs/todo.md`, Punkt 7). Aufgelöst wird es mit dem Abruf der PDFs der Hauptperiode: dann lässt
 auch sie sich mit 7.1.0 lesen. Das ist eine eigene Entscheidung, denn sie löst die Zahlen der
-Hauptseite von den Texten der Arbeit; `bartzsch-exakt` bleibt der Anker (`docs/todo.md`, Punkt 8).
+Hauptseite von den Texten der Arbeit; `bartzsch-exakt` bleibt der Anker (`docs/todo.md`, Punkt 8;
+damals der Abruf der PDFs der Hauptperiode, erledigt am 2026-11-18; die Nummer trägt heute einen
+anderen Punkt).
 
 **Die 15 PDFs.** In 2014 bis 2020 tragen 15 Texte weiter `pypdf-6.20.0`: ihre PDFs weist pypdf seit
 6.21 an einer Schutzgrenze ab (Punkt 66), `extract_missing` lässt den alten Text stehen, und die

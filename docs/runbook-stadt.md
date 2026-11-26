@@ -1,6 +1,6 @@
 # Runbook: eine weitere Stadt abrufen und veröffentlichen
 
-Stand 2026-10-12 (Option 01, Stufe G). Dieses Runbook führt den einen Schritt aus, den kein Agent
+Stand 2026-10-12 (Option 01, Stufe G), Fakten nachgezogen am 2026-11-26. Dieses Runbook führt den einen Schritt aus, den kein Agent
 tun durfte: den vollen Abruf einer Stadt (Stunden Netz). Es ist für Mönchengladbach geschrieben,
 gilt aber für jedes Profil unter `src/georep/profiles/`; was eine *neue* Stadt braucht, steht in
 § 6.
@@ -16,7 +16,7 @@ cd ~/files/work/__drafts/geographic-representation-dus   # oder der Worktree
 export UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep
 export UV_CACHE_DIR=/media/konrad/xtraspace/uv-cache
 uv sync
-uv run georep profiles                      # zeigt duesseldorf und moenchengladbach
+uv run georep profiles                      # zeigt die fünf Profile, darunter moenchengladbach
 uv run georep --profile moenchengladbach status
 ```
 

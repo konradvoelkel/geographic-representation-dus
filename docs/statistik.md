@@ -1,9 +1,10 @@
 # Statistik: die Auswertungen, ihre Zahlen und ihre Einwände
 
-Stand 2026-10-14, `v0.13.0`. Die veröffentlichte Seite ist aus Commit `813827e` gebaut und zeigt
-alles bis **Punkt 58**; die **Punkte 59 bis 61** liegen seit dem 2026-10-14 auf `main` und sind in
-der veröffentlichten Seite noch nicht zu sehen — wo eine Zahl unten davon betroffen ist, steht es
-dabei. Die Zahlen der Hauptperiode in den §§ 1 bis 9 und 11 bis 13 und ihre Treffer in § 10 sind die
+Stand 2026-10-14, Kopf und Fakten nachgezogen am 2026-11-26 (`v0.32.0`). Die veröffentlichte Seite
+baut `pages.yml` bei jedem Push auf `main`; sie zeigt die Punkte 59 bis 61 seit dem 2026-10-15. Die
+Hypothesentests der Vorverarbeitung 2026-11 (Vorhaben 17, 22, 26) rechnet die Kette schon, die Seite
+zeigt sie noch nicht; ihre Zahlen stehen in den Messdokumenten unter `plans/` und in
+[decisions.md](decisions.md), Punkte 78 bis 80. Die Zahlen der Hauptperiode in den §§ 1 bis 9 und 11 bis 13 und ihre Treffer in § 10 sind die
 seit dem 2026-11-18, als ihre Texte mit pypdf 7.1.0 neu gelesen wurden ([decisions.md](decisions.md),
 Punkt 68), nachgerechnet am Bau aller Seiten aus diesen Texten; nicht nachgerechnet sind in § 10 das
 Themenmodell (NPMI, Saattreue, Reinheit) und der Klassifikator, die den Stand ihres Datums
@@ -62,11 +63,10 @@ kein Standardfehler ist kleiner als der Koeffizient geteilt durch 2,2.
    entfernt (seit dem 2026-11-18 genau genommen den höchsten und den dritthöchsten, § 2) und dann
    p = 0,036 berichtet, hat zwei Tests gerechnet und einen berichtet. Die Arbeit
    berichtet beide Spalten, das ist redlich; die Deutung der zweiten als „signifikant" stand bis zum
-   2026-10-14 ohne Korrektur da. **Punkt 61 beantwortet das**: der Spaltenkopf trägt auf `main` das
+   2026-10-14 ohne Korrektur da. **Punkt 61 beantwortet das**: der Spaltenkopf trägt das
    Wort „explorativ", und darunter stehen zwei Sätze — der erste nennt den Grund (ausgeschlossen sind
    die beiden Bezirke mit den höchsten Quoten, eine Entscheidung über diesen Datensatz), der zweite
-   beide p-Werte samt dem Urteil, und keine der Zahlen steht hart im Text. Die veröffentlichte Seite
-   zeigt das noch nicht.
+   beide p-Werte samt dem Urteil, und keine der Zahlen steht hart im Text.
 3. **Mit Kontrollvariablen bleibt nichts übrig** (§ 5): R² steigt von 0,036 auf 0,886, und der
    Koeffizient der Trefferquote fällt auf p = 0,163.
 4. **In der vorigen Wahlperiode verschwindet der Befund** (§ 6): dieselbe Methode, dieselbe Stadt,
@@ -414,9 +414,8 @@ setzen.
    unbekannt. Die Periode 2014 bis 2020 stand bei 44,1 % Deckung, bis Punkt 60 ihre beiden
    häufigsten Dokumentarten und den Briefkopf ihrer Vorlagenform las — jetzt sind es 89,4 %
    („unbekannt" 12 418 → 2 356). **Mönchengladbach** hat seit Punkt 59 überhaupt Urheber: seine 16
-   Dokumentarten sind eindeutig und entscheiden die Klasse, also 0,0 % unbekannt, aber nur 242 der
-   581 Fraktionsanträge (41,7 %) nennen auch eine **Partei**. Beides liegt auf `main` und ist in der
-   veröffentlichten Seite noch nicht zu sehen. Dass eine Zahl so stark an einer Profilzeile hängt,
+   Dokumentarten sind eindeutig und entscheiden die Klasse, also 0,0 % unbekannt, aber nur 239 der
+   581 Fraktionsanträge (41,1 %) nennen auch eine **Partei**. Dass eine Zahl so stark an einer Profilzeile hängt,
    ist selbst der Einwand: „unbekannt" misst die Konfiguration mit, nicht nur die Quelle.
 5. **Wahlbezirk 11**: Die Linke ist dort nicht angetreten (0 Stimmen), darum n = 40 — sonst läse sich
    „kein Wahlvorschlag" wie „keine Zustimmung".
@@ -600,7 +599,7 @@ nicht mehr.
 |---|---|---|
 | Wörterbuchgröße treibt die Trefferzahl (r = 0,76) | jede Kennzahl mit Treffern im Zähler | **ja**, Absatz in „Methode und Grenzen", plus Karteneinfärbung „Treffer je Begriff" |
 | Ausreißer 1 und 10 sind von Hand gewählt | Tabelle 5, zweite Spalte | seit Punkt 61 **ja**: der Absatz nennt sie als Entscheidung über diesen Datensatz, und seit dem 2026-11-18 mit ihren Plätzen, wenn sie nicht die höchsten Quoten haben (Hauptperiode 1 und 3, Periode 2014 bis 2020 2 und 9; § 2) |
-| Zweite Spalte nach Ansehen der Daten entstanden | Tabelle 5 | **ja, seit Punkt 61**: der Spaltenkopf sagt „explorativ", darunter zwei Sätze mit beiden p-Werten (auf `main`, noch nicht veröffentlicht) |
+| Zweite Spalte nach Ansehen der Daten entstanden | Tabelle 5 | **ja, seit Punkt 61**: der Spaltenkopf sagt „explorativ", darunter zwei Sätze mit beiden p-Werten |
 | n = 41 ist die Grundgesamtheit, kein p-Wert-Fall | alle Regressionen | nein |
 | Kein Konfidenzintervall neben dem p-Wert | alle Regressionen | nein — offene Empfehlung, § 6 Punkt 4 |
 | Umlaute sind Wortgrenzen im Matcher („Köölberg" trifft „ölberg") | jede Trefferzählung | **nein**, nur als Kommentar im Quelltext |

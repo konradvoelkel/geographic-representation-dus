@@ -1,6 +1,6 @@
 # Changelog
 
-Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
+Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
 ## 0.32.0 (2026-11-26), Kurzfassungen, gebaut und ausgeschaltet
 

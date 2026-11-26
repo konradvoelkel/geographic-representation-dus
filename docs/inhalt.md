@@ -1,11 +1,12 @@
 # Inhalt: welche Daten es gibt und was die Seite kann
 
-Stand 2026-10-14, `v0.13.0`. Diese Sicht beantwortet: **was steckt drin, und was kann man
-damit auf der Seite tun.** Jede Angabe unten ist an der veröffentlichten Seite
-<https://konradvoelkel.github.io/geographic-representation-dus/> nachgesehen; sie ist aus Commit
-`813827e` gebaut und zeigt alles bis **Punkt 58**. Die **Punkte 59 bis 61** liegen seit dem
-2026-10-14 auf `main` und sind in der veröffentlichten Seite noch nicht zu sehen — die Stellen, an
-denen das etwas ändert, sagen es.
+Stand der Seite 2026-10-14, Kopf und Fakten nachgezogen am 2026-11-26 (`v0.32.0`). Diese Sicht
+beantwortet: **was steckt drin, und was kann man damit auf der Seite tun.** Die Angaben unten sind am
+2026-10-14 an der veröffentlichten Seite
+<https://konradvoelkel.github.io/geographic-representation-dus/> nachgesehen; seitdem baut
+`pages.yml` die Seite bei jedem Push auf `main`, sie zeigt also auch die Punkte 59 bis 61. Die
+Tabellen der Vorverarbeitung 2026-11 (Vorgänge, Beschlusslage, Bedarf, Kennungen und weitere) rechnet
+die Kette schon, die Seite zeigt sie noch nicht (Stufe 3, `docs/plans/README.md`).
 Die drei anderen Sichten:
 [technik.md](technik.md) (Schnittstellen, Kette, Veröffentlichung), [statistik.md](statistik.md) (die
 Auswertungen), [workflow-ratsmitglied.md](workflow-ratsmitglied.md) (ein Arbeitsablauf). Aufbau des
@@ -90,7 +91,7 @@ Vier Lücken sind groß genug, um jede Deutung zu tragen:
   die Verwaltung, und der Briefkopf der damaligen Vorlagenform nennt die Fraktion. **„Unbekannt"
   liegt seitdem bei 2 356 (10,6 %)** — offen bleiben 2 122 Vorlagen aus der Politik ohne das Wort
   „fraktion" im Kopf (Jugendrat, Einzelmandate, Listen des Integrationsrats), 135 `Antrag`, 96
-  `Anfrage` und 3 `zAnfrage Piraten`. **Die veröffentlichte Seite zeigt noch die 55,9 %.**
+  `Anfrage` und 3 `zAnfrage Piraten`.
 - **Die Urheberfelder von OParl.** Der Server füllt `originatorPerson`, `originatorOrganization` und
   `underDirectionOf` nicht — über die ganze Hauptperiode gemessen: 0 von 19 109. Der Urheber ist
   darum aus Dokumentart, Titel und Textkopf abgeleitet und deckt 98,3 % ab.
@@ -99,10 +100,10 @@ Vier Lücken sind groß genug, um jede Deutung zu tragen:
   `parties` darum nicht lief. Punkt 59 füllt ihn: die 16 Dokumentarten der Periode sind eindeutig
   (14 Arten mit 2 278 Dokumenten sind Verwaltung, `3 - Fraktionsantrag` mit 581 die Fraktion,
   `6.1 - Mitgliederantrag` mit 36 die Person), **„Urheber unbekannt" ist 0,0 %** — die offene Zahl
-  liegt eine Ebene tiefer: nur **242 der 581 Fraktionsanträge (41,7 %) nennen ihre Partei**, weil 390
-  von ihnen keinen Text tragen. Der Abschnitt mit sechs Parteikarten über 33 Flächen ist der größte
+  liegt eine Ebene tiefer: nur **239 der 581 Fraktionsanträge (41,1 %) nennen ihre Partei** (seit
+  Punkt 63 zählt im Titel nur, was hinter dem letzten „hier:" steht), weil 314 der übrigen 342
+  keinen Text tragen. Der Abschnitt mit sechs Parteikarten über 33 Flächen ist der größte
   Posten, den diese Seite je bekommen hat.
-  **Die veröffentlichte Seite hat den Abschnitt „Urheber und Parteien" noch nicht.**
 
 „Unbekannt" heißt auf diesen Seiten überall **„von dieser Konfiguration nicht erkannt"**, nie „im
 Dokument nicht vorhanden".
@@ -178,7 +179,7 @@ Die Legenden liegen in einer `aria-live`-Region.
 | 1 | `#kernzahlen` | sieben Kacheln: Wahlbezirke, Dokumente, Suchbegriffe, Dokumente mit Treffer, Trefferquote, Treffer je Begriff, Wahlbeteiligung. Jede trägt eine zweite Zeile, und bei drei von ihnen ist das die Spannweite (Trefferquote, Treffer je Begriff, Wahlbeteiligung); die anderen nennen dort die Teilmenge (19 033 mit Text, 75 ohne) oder den Bezug. |
 | 2 | `#suche` | das Suchfeld über Straßen, Orte und Wahlbezirke (oben). |
 | 3 | `#karte` | die Karte der Wahlbezirke mit sechs Einfärbungen, Ortspunkten und Legende je Variante. |
-| 4 | `#zusammenhang` | Streudiagramm mit beiden Regressionsgeraden, Tabelle 5 der Arbeit und dieselbe Rechnung je Begriff im Wörterbuch. Seit Punkt 61 (auf `main`, noch nicht veröffentlicht) trägt die Spalte „ohne Ausreißer" im Kopf das Wort **„explorativ"**, und darunter steht in zwei Sätzen, dass sie nach dem Ansehen der Daten entstanden ist und in der Periode 2014 bis 2020 nicht signifikant ist. |
+| 4 | `#zusammenhang` | Streudiagramm mit beiden Regressionsgeraden, Tabelle 5 der Arbeit und dieselbe Rechnung je Begriff im Wörterbuch. Seit Punkt 61 trägt die Spalte „ohne Ausreißer" im Kopf das Wort **„explorativ"**, und darunter steht in zwei Sätzen, dass sie nach dem Ansehen der Daten entstanden ist und in der Periode 2014 bis 2020 nicht signifikant ist. |
 | 5 | `#kontrollvariablen` | Tabelle 6 in drei Modellen, partielle Streudiagramme je Term und Tabelle 6b mit je einer Kontrollvariable. |
 | 6 | `#gewichtung` | 26 Gewichtungsvarianten, je mit beiden Spalten von Tabelle 5 und der Rangkorrelation zur ungewichteten Quote, darunter die Themen mit ihren stärksten Wörtern. |
 | 7 | `#perioden` | die Wahlperiode 2014 bis 2020 daneben: Regression der Änderungen, Regression jener Periode, und wie belastbar die Umrechnung der alten Wahlzahlen ist. |
@@ -236,7 +237,7 @@ nicht an der Wurzel.
 | [Wurzel](https://konradvoelkel.github.io/geographic-representation-dus/) (Düsseldorf 2020–2025) | alle siebzehn | — |
 | [`2014-2020/`](https://konradvoelkel.github.io/geographic-representation-dus/2014-2020/) | 13: kernzahlen, suche, karte, zusammenhang, gewichtung, parteien, wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | kein `kontrollvariablen` und `abgeleitete-daten` (die Fremddaten liegen auf dem Zuschnitt 2021 der Hauptperiode), kein `perioden` (eine Periode verglicht sich nicht mit sich selbst), kein `laufend` |
 | [`2025/`](https://konradvoelkel.github.io/geographic-representation-dus/2025/) | 11: kernzahlen, suche, karte, parteien, wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | **kein `zusammenhang`**: zu einer laufenden Periode gibt es keine Wahlbeteiligung, also keine Regression, kein Streudiagramm, keinen Umschalter darauf — Kopf und Kurzfassung sagen, warum; auch keine Gewichtungstabelle |
-| [`moenchengladbach/`](https://konradvoelkel.github.io/geographic-representation-dus/moenchengladbach/) | 12, seit Punkt 59 auf `main` 13: kernzahlen, suche, karte, zusammenhang, gewichtung, (parteien), wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | keine Kontrollvariablen (die Stadt hat keine Fremddaten im Profil), **keine „Dokumente je passendem Ausschuss"** (`classify.enabled = false`: nur 650 von 2 895 Dokumenten tragen Text). `parteien` fehlt der **veröffentlichten** Seite noch und kommt mit Punkt 59 |
+| [`moenchengladbach/`](https://konradvoelkel.github.io/geographic-representation-dus/moenchengladbach/) | 13: kernzahlen, suche, karte, zusammenhang, gewichtung, parteien, wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | keine Kontrollvariablen (die Stadt hat keine Fremddaten im Profil), **keine „Dokumente je passendem Ausschuss"** (`classify.enabled = false`: nur 650 von 2 895 Dokumenten tragen Text) |
 | [`vergleich.html`](https://konradvoelkel.github.io/geographic-representation-dus/vergleich.html) | vier: Die Städte nebeneinander, Trefferquote je Wahlbezirk, Trefferquote und Wahlbeteiligung, Vergleichbarkeit | eine eigene Seite; sie rechnet nichts selbst, sondern liest die `summary.json` der Stadtseiten; kein Suchfeld und keine Downloads |
 
 Die Größen der veröffentlichten Seiten stehen datiert in `STATUS.md`, „Zahlen".

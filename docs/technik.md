@@ -1,11 +1,9 @@
 # Technik: Schnittstellen, Daten, Kette, Veröffentlichung
 
-Stand 2026-10-14, `v0.13.0`. Die veröffentlichte Seite ist aus Commit `813827e` gebaut und zeigt
-alles bis **Punkt 58** (die Beratungsfolge als zweite Quelle des Gremiums); die **Punkte 59 bis 61**
-(Urheber Mönchengladbachs, Urheber der Periode 2014 bis 2020, die Spalte „explorativ") liegen seit
-dem 2026-10-14 auf `main` und sind in der veröffentlichten Seite noch nicht zu sehen — wo eine
-Angabe unten davon betroffen ist, steht es dabei. Diese Sicht beantwortet: **womit spricht das Programm, was liegt wo, wie
-läuft es, wie kommt es ins Netz.** Sie beschreibt nicht, wie der Code gebaut ist (das ist
+Stand 2026-11-26, `v0.32.0`. Die veröffentlichte Seite baut `pages.yml` bei jedem Push auf `main`;
+sie zeigt also, was auf `main` liegt. Die Tabellen der Vorverarbeitung 2026-11 rechnet die Kette
+schon, die Seite zeigt sie noch nicht (Stufe 3, `docs/plans/README.md`). Diese Sicht beantwortet:
+**womit spricht das Programm, was liegt wo, wie läuft es, wie kommt es ins Netz.** Sie beschreibt nicht, wie der Code gebaut ist (das ist
 [architecture.md](architecture.md)) und nicht, warum er so gebaut ist (das ist
 [decisions.md](decisions.md)). Die drei anderen Sichten: [inhalt.md](inhalt.md) (was es gibt und was
 die Seite kann), [statistik.md](statistik.md) (die Auswertungen),
@@ -14,8 +12,11 @@ die Seite kann), [statistik.md](statistik.md) (die Auswertungen),
 ## 1. Schnittstellen und Datenplattformen
 
 Alle Quellen sind öffentlich lesbar, keine braucht Zugangsdaten. Gezählt nach **Host** sind es
-sieben (`ris-oparl.itk-rheinland.de`, `opendata.duesseldorf.de`, `wep.itk-rheinland.de`,
-`geoportal.moenchengladbach.de`, `overpass-api.de`, `query.wikidata.org`, `de.wikipedia.org`); die
+sieben für die Kette der Seite (`ris-oparl.itk-rheinland.de`, `opendata.duesseldorf.de`,
+`wep.itk-rheinland.de`, `geoportal.moenchengladbach.de`, `overpass-api.de`, `query.wikidata.org`,
+`de.wikipedia.org`) und drei weitere, die nur der Netzschritt `need_data` von Vorhaben 22 hinter dem
+Schalter `context.need.fetch` liest (`www.opengeodata.nrw.de`, `www.destatis.de`,
+`apps.schulministerium.nrw.de`); dazu kommt der lokale Modellserver (ollama, nur `localhost`). Die
 Tabelle führt sie je **Abruf** auf, weil derselbe Host mehrere Endpunkte mit verschiedenen Formaten
 und Abrufregeln hat. Die Endpunkte stehen nie im Code, sondern im Profil der Stadt (`src/georep/profiles/<slug>.toml`) oder stadtneutral in
 `src/georep/defaults.toml`.
@@ -27,6 +28,7 @@ und Abrufregeln hat. Die Endpunkte stehen nie im Code, sondern im Profil der Sta
 | OParl 1.1, Organisationen desselben Bodys | `…/bodies/0015/organizations` | JSON (OParl `Organization`) | wie oben | `raw/organizations.json` → Organisations-URL auf Parteikürzel |
 | OParl 1.1, Hauptdateien (PDF) | `…/bodies/0015/downloadfiles/<datei>.pdf` | PDF | wie oben | `cache_root/<profil>/pdf/` → Textstore |
 | OParl 1.1, Mönchengladbach (Body 0011) | `…/bodies/0011/papers` | JSON | wie oben | dieselbe Kette unter dem Slug `moenchengladbach` |
+| OParl 1.1, Sitzungen mit Tagesordnung, Beratungen, Personen mit Mitgliedschaften (Fundament F6) | `…/bodies/0015/meetings`, `…/consultations`, `…/people` (Mönchengladbach Body 0011), nur mit `council.enabled` | JSON (OParl `Meeting`, `AgendaItem`, `Consultation`, `Person`, `Membership`) | wie oben | `raw/meetings.jsonl`, `agenda_items.jsonl`, `consultations.jsonl`, `persons.jsonl`, `memberships.jsonl`; Abruf und Zahlen in [runbook-sitzungen.md](runbook-sitzungen.md) |
 | OParl 1.1, Organisationen Mönchengladbachs | `…/bodies/0011/organizations` | JSON | wie oben | `raw/organizations.json` im Paket der Stadt → Namen und Kürzel ihrer 27 Gremien (Punkt 58) und die Namen ihrer acht Fraktionen (`classification = "Fraktion"`, Punkt 59) |
 | Open-Data-Portal Düsseldorf, Wahlergebnis und Stimmbezirke | `https://opendata.duesseldorf.de/sites/default/files/…` | CSV (latin-1, `;`), GeoJSON in EPSG:4647 | Ergebnis dl-de/by-2-0, Geometrie dl-de/zero-2-0 | `external/` → Wähler, Zuschnitt |
 | Open-Data-Portal Düsseldorf, Quartiersatlas 2024 | `…/Daten_QA_2024.csv`, `…Sozialräume_QA_Daten_WGS84_EPSG_4326.geojson`, `…Erläuterung_Indikatoren_QA_0.csv` | CSV (utf-8, `;`, Dezimalkomma), GeoJSON in CRS84 | dl-de/by-2-0 (Namensnennung: Landeshauptstadt Düsseldorf, Amt für Statistik und Wahlen) | `context/` → Kontrollvariablen je Wahlbezirk |
@@ -35,6 +37,8 @@ und Abrufregeln hat. Die Endpunkte stehen nie im Code, sondern im Profil der Sta
 | Overpass-API / OpenStreetMap | `https://overpass-api.de/api/interpreter` (POST) | Overpass-JSON | ODbL, © OpenStreetMap-Mitwirkende | Straßennamen je Stimmbezirk |
 | Wikidata SPARQL | `https://query.wikidata.org/sparql` | SPARQL-JSON | CC0 | Orte mit Koordinate in der Verwaltungseinheit (`P131*`) |
 | Wikipedia GeoSearch | `https://de.wikipedia.org/w/api.php` | MediaWiki-JSON | Artikeltitel aus der deutschsprachigen Wikipedia | Orte je Stimmbezirks-Bounding-Box |
+| Bedarfsquellen (Vorhaben 22): Unfallatlas, Zensus-Gitter 2022, Schuldaten mit Sozialindex | die Archive aus `[context.need]` in `defaults.toml` | Zip und CSV, bundes- und landesweit | dl-de/by-2-0 (Namensnennung in `defaults.toml`) | `cache_root/bedarf/` (unverändert), daraus `external/bedarf/` je Stadt; auf Pages aus den Paketen `snapshots/<stadt>-bedarf/` |
+| ollama (lokal) | `ml.base_url`, nur `localhost` oder Loopback | JSON | — | Einbettungen (Vorhaben 18) und, ausgeschaltet, Kurzfassungen (Vorhaben 20); nur mit `georep run --models` |
 
 Die Entität je Stadt steht im Profil (`sources.wikidata.entity`: Düsseldorf `Q1718`, Mönchengladbach
 `Q2758`), der Body-Katalog unter `https://ris-oparl.itk-rheinland.de/Oparl/bodies`.
@@ -113,13 +117,20 @@ context/                    Fremddaten (Quartiersatlas), nur lesbar
 data_root/                  Standard ./data, gitignored
   <profil>/{external,raw,interim,processed,site}/
        raw/                 papers.jsonl, organizations.json, beratungsfolge.parquet,
-                            streets_per_district.json, wikipedia_dict.json
+                            streets_per_district.json, wikipedia_dict.json, dazu die Kopien der
+                            Pakete der Vorhaben und die Netzdaten von F6
   site/                     was georep publish zusammenträgt und Pages hochlädt
 cache_root/                 Standard data_root/cache
   <profil>/pdf/             PDFs plus manifest.jsonl (URL, SHA-256, Größe, Zeit)
   <profil>/text/texts.parquet   Texte mit Extraktorname, PDF-Hash, Herkunft, Zeichenzahl
+  <profil>/text/rohtexte.parquet   der Rohtext derselben PDFs (Fundament F1)
+  <profil>/summaries/       Kurzfassungen (Vorhaben 20, ausgeschaltet), nie veröffentlicht
+  ml/<modell>.sqlite        Modellcache von ollama, von allen Profilen geteilt
+  bedarf/                   die Archive der Bedarfsquellen (Vorhaben 22), geteilt
   http.sqlite               requests-cache, von allen Profilen geteilt
 ```
+
+Der genaue Baum mit allen Dateien steht in [architecture.md](architecture.md), „Datenhaltung".
 
 **Die vierzehn Datenpakete im Repo** sind die eingefrorenen *Eingaben* der Läufe; GitHub Pages baut
 damit jede Seite ohne einen einzigen Netzaufruf (decisions.md, Punkt 56). Ein Paket ist ein
@@ -256,7 +267,8 @@ Periode, `out/` zusammenstellen (beim ersten Lauf eines Monats zusätzlich
 und nennt den Schritt. `DRY_RUN=1` spricht mit nichts von außen. Details, Trockenlauf und Erstabruf
 in [../deploy/README.md](../deploy/README.md).
 
-**Stand 2026-10-14**: der Timer läuft noch nicht, VPS und Domain stehen aus. Bis dahin zeigt die
+**Stand 2026-11-26**: der Timer ist nirgends installiert, VPS und Domain stehen aus
+([todo.md](todo.md), Punkt 22). Bis dahin zeigt die
 veröffentlichte Unterseite `2025/` den Stand des Schnappschusses vom 2026-10-13, und die Seite nennt
 ihr Abrufdatum selbst.
 
@@ -281,8 +293,6 @@ plus ein Abruf. Der ausführliche Ablauf mit Prüfpunkten steht in
 | Fremddaten je Raumeinheit (`[context]`) | Portal der Stadt | nein — ohne sie fehlen die beiden Abschnitte der Kontrollvariablen |
 | Quellen mit Lizenz und Prüfdatum (`[[report.sources]]`) | Datensatzseiten | ja, für den Fuß der Seite |
 | `publish.cities` in **allen** Profilen um den Slug erweitern | — | ja, sonst baut `publish` die Stadt nicht |
-
-Drei Dinge, die der Mönchengladbach-Lauf gelehrt hat und die vor dem langen Teil zu prüfen sind:
 
 Drei Prüfwerte, die der Mönchengladbach-Lauf gelehrt hat; was sie für die Auswertung bedeuten,
 steht in [statistik.md](statistik.md).

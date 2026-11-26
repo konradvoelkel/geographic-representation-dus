@@ -1,6 +1,6 @@
 # Arbeitsablauf: neu im Rat, ein Gebiet oder ein Thema einarbeiten
 
-Stand 2026-10-14, `v0.13.0`; die veröffentlichte Seite ist aus Commit `813827e` gebaut. Diese Sicht
+Stand 2026-10-14, Kopf und Fakten nachgezogen am 2026-11-26 (`v0.32.0`). Diese Sicht
 ist ein **Beispiel**, kein Versprechen: sie zeigt Schritt für
 Schritt, wie jemand, der neu im Rat der Stadt Düsseldorf ist, mit der veröffentlichten Seite und den
 Schnittstellen schneller findet, was zu seinem Gebiet oder seinem Thema gehört — und § 4 sagt
@@ -288,12 +288,12 @@ uv run georep --profile duesseldorf-2025 run                     # Kette und Sei
 
 | Was | Stand |
 |---|---|
-| Ratsdokumente 2020 bis 2025 | Datensatz der Arbeit, November 2025 |
+| Ratsdokumente 2020 bis 2025 | Datensatz der Arbeit, November 2025; die Texte seit dem 2026-11-18 neu gelesen mit pypdf 7.1.0 |
 | Straßen und Orte (das Wörterbuch) | November 2025 — gilt auch für die beiden anderen Düsseldorfer Perioden |
 | Wahlergebnis und Zuschnitt | Kommunalwahl 14.09.2025 |
-| Laufende Periode (`2025/`) | Erstabruf 13.10.2026; der Timer läuft noch nicht |
+| Laufende Periode (`2025/`) | Erstabruf 13.10.2026; der Timer ist nicht installiert |
 | Sozialdaten der Kontrollvariablen | 31.12.2021 |
-| Namen der Gremien | 14.10.2026 (die Seite nennt den Stand selbst) |
+| Namen der Gremien | 24.11.2026 (die Seite nennt den Stand selbst) |
 
 Der Kopf jeder Seite nennt ihr Abrufdatum, das neueste Dokument und die Zahl der Dokumente ohne Text
 — alles aus dem Modell, nichts fest kodiert.
@@ -307,26 +307,31 @@ endet und nicht dort bleibt.
   und Datenschutzgründen werden nur abgeleitete Tabellen und Kennungen veröffentlicht. Die Suche
   findet **Namen von Straßen, Orten und Wahlbezirken**, keine Wörter im Dokument. Wer „Radverkehr"
   sucht, findet hier nichts; wer „Benrodestraße" sucht, findet 67 Dokumente. Volltext gibt es nach
-  einem lokalen Lauf (`interim/papers.parquet`, Spalte `text`) oder im Ratsinformationssystem selbst.
+  einem lokalen Lauf (`interim/papers.parquet`, Spalte `text`) oder im Ratsinformationssystem selbst;
+  lokal sucht `georep search "<frage>"` nach Bedeutung oder nach Wörtern, braucht für die Suche nach
+  Bedeutung aber den Modellserver ollama und die Einbettungen eines Laufs mit `--models`.
 - **Keine Themensuche.** Der passende Ausschuss und die 20 Themen sind Vorsortierungen mit
   ausgewiesener Unsicherheit: 62,4 % der Dokumente bleiben in der Restklasse, bei den Dokumenten der
   Bezirksvertretungen vier von fünf. Ein Dokument, das kein Thema trifft, ist deswegen nicht
   themenlos.
-- **Keine Benachrichtigung.** Es gibt kein Abonnement, keinen Alarm und keinen RSS-Feed. Die
-  laufende Periode wird fortgeschrieben, aber man muss nachsehen. Wer eine Benachrichtigung braucht,
-  baut sie selbst auf `2025/data/summary.json` oder auf dem Abrufdatum im Kopf der Seite — oder
-  benutzt die Abo-Funktion des Ratsinformationssystems, wenn es eine hat.
+- **Keine Benachrichtigung auf der Seite.** Seit `v0.27.0` gibt es je Wahlbezirk der laufenden
+  Periode einen Atom-Feed (`2025/feeds/wahlbezirk-NN.xml`, etwa
+  `2025/feeds/wahlbezirk-39.xml`), aber noch keinen Link darauf auf der Seite; er trägt den Stand
+  des Schnappschusses, solange kein Timer die Periode fortschreibt. Sonst bleibt die Abo-Funktion
+  des Ratsinformationssystems, wenn es eine hat.
 - **Keine Beschlusslage, keine Sitzungstermine, keine Beratungsfolge je Dokument.** Die Seite sagt,
   welches Gremium ein Dokument eingebracht hat, nicht was beschlossen wurde oder wann die nächste
   Sitzung ist. Die Beratungsfolge (`consultation`, bei 18 708 von 19 109 Dokumenten der
   Hauptperiode) wird seit Punkt 58 **gelesen**, aber nur als zweite Quelle des Gremiums und nur als
   Zahl: wie viele Dokumente ihr Gremium von ihr haben, wie oft sie der Nummer zustimmt oder
   widerspricht. Welche Stationen ein einzelnes Dokument durchlaufen hat, steht **nicht** auf der
-  Seite und in keiner veröffentlichten Datei — dafür ist das Ratsinformationssystem da. Mit
-  Reihenfolge gibt es sie dort auch nur über die `consultation`-Objekte selbst (je Dokument eines mit
-  `meeting` und `order`), und die sind nicht abgerufen.
-- **Keine Mandatsträger.** Wer in welchem Gremium sitzt, steht nicht auf der Seite; das OParl-Feld
-  `memberships` ist nicht abgerufen. Der Urheber eines Dokuments ist eine Fraktion oder eine Klasse,
+  Seite und in keiner veröffentlichten Datei — dafür ist das Ratsinformationssystem da. Die
+  Beratungen selbst, die Sitzungen mit Tagesordnung und Ergebnis sind seit dem 2026-11-24 lokal
+  abgerufen (Fundament F6, `docs/runbook-sitzungen.md`), und die Kette rechnet daraus den
+  Beratungsverlauf und die Beschlusslage je Drucksache (Vorhaben 26); auf der Seite steht davon
+  noch nichts.
+- **Keine Mandatsträger.** Wer in welchem Gremium sitzt, steht nicht auf der Seite; die Personen und
+  Mitgliedschaften aus OParl liegen seit dem 2026-11-24 nur lokal und bleiben dort. Der Urheber eines Dokuments ist eine Fraktion oder eine Klasse,
   keine Person — 865 Dokumente einzelner Mandatsträger bleiben ohne Partei.
 - **Keine Suche über mehrere Perioden oder Städte zugleich.** Jede Periode und jede Stadt ist eine
   eigene Seite mit eigener Suche; nur `vergleich.html` und der Abschnitt „Zwei Wahlperioden" stellen
