@@ -174,7 +174,19 @@ liegen die Spannen aller Profile auf dem Rohtext, auf Pages nur die der Hauptper
 `extractor` sagt es); vor Stufe 3 klären, ob die Tabelle so veröffentlicht wird. (f) Die Maske nimmt
 einmal ein Sachwort mit („Anfrage Dr. …" statt „… Hitzeschutz"); das README des Pakets sagt es.
 
-## 13. Struktur der Dokumente: Kandidaten für `struktur-2`
+## 13. Zeit und Feeds: Rückstand aus dem Review von Vorhaben 17
+
+Aufgenommen am 2026-11-26 aus dem Review der Stufe 2 (Punkt 78); keiner verfälscht ein Ergebnis heute.
+(a) `jonckheere` (`analysis/cycles.py`) legt Anzahl × n × n float64 an: bei Gruppengrößen (6, 5, 4)
+rund 1,1 GB, bei (6, 5, 5) rund 4,1 GB — das tritt ein, sobald das Paket 2025 bis August 2029 reicht,
+und droht auf dem Pages-Runner als Speicherabbruch; in Blöcken zählen oder die exakte Verteilung
+falten. (b) Die offene Periode endet am jüngsten Korpusdatum; ein falsch in die Zukunft datiertes
+Dokument macht ein Wahljahr vorzeitig vollständig. (c) Fehlt nur `snapshots/2025`, verliert die Seite
+den Periodenvergleich (Kopplung von Option 02 an 17). (d) Mönchengladbach hat in keinem Wahljahr einen
+Haushaltsmonat; die Unterseite in Stufe 3 sagt das. (e) `cycle_tests` prüft die Schema-Version der
+fremden Ordner nicht (wie `compare`).
+
+## 14. Struktur der Dokumente: Kandidaten für `struktur-2`
 
 Aufgenommen am 2026-11-24 beim Bau von Vorhaben 11 (`struktur-1` ist der validierte Entwurf
 unverändert, Punkt NN); jede Änderung hier braucht eine frische Bestätigungsstichprobe. (a) Der

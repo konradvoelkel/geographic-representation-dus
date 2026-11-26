@@ -2,6 +2,21 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.27.0 (2026-11-26), Zeit und Neuigkeiten
+
+- **Zyklen und Bundesvokabular** (Vorhaben 17, `docs/decisions.md`, Punkt 78): `cycles` zählt die
+  Dokumente je Monat und Wahljahr, `vocabulary` findet bundespolitische Begriffe nach dem Lexikon
+  2026-11-23.1 (94 von 100 richtig, geprüft von zwei KI-Kodierern desselben Modells) als Spannen auf dem
+  Rohtext, `cycle_tests` rechnet die drei vorab festgelegten Hypothesen über die drei Perioden mit Holm
+  (H17.2 bestätigt, H17.1 und H17.3 nicht).
+- **Feeds**: je Wahlbezirk der laufenden Periode ein Atom-Feed unter `2025/feeds/` (nur Begriffe, die
+  auch die Seite zeigt; noch ohne Link auf der Seite).
+- **`analysis/hypotheses.py`**: der gemeinsame Kern für vorab festgelegte Hypothesen (Holm nach der
+  Schrittregel, vorab festgelegte Familiengröße `m`, Schwelle `strict`).
+- **Reihenfolge der Profile**: der Vergleich rechnet jetzt nach der laufenden Periode
+  (`duesseldorf-2014`, `duesseldorf-2025`, dann `duesseldorf-vergleich`), auf Pages wie lokal; fehlt
+  eine Periode, bricht `cycle_tests` mit dem Pfad ab. Keine Zahl der Seite ändert sich.
+
 ## 0.26.0 (2026-11-24), Einbettungen und Suche
 
 - **Ähnliche Dokumente** (Vorhaben 18, `docs/decisions.md`, Punkt 77): der Schritt `embeddings` bettet

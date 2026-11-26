@@ -139,6 +139,10 @@ def test_pipeline_runs_skips_and_reruns(
         # Vorhaben 18: ohne Dokumentvektoren und ohne Paket ist die Nachbartabelle leer, ihre
         # optionalen Eingaben fehlen weiter
         "neighbors": "übersprungen",
+        # Vorhaben 17: die Monate lesen Korpus, Urheber, Gremien und Monatsreihe, das Vokabular
+        # den Korpus; die Orte ändern keines davon
+        "cycles": "übersprungen",
+        "vocabulary": "übersprungen",
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")

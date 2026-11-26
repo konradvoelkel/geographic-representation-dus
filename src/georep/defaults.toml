@@ -371,6 +371,24 @@ rrf_k = 60                     # Mischung (`georep search --method hybrid`): Rec
 fusion_depth = 100             # so viele Treffer jeder Liste gehen in die Mischung
 neighbors_package = ""         # Pfad des Pakets aus `georep pack --neighbors`; bootstrap legt es nach raw/, und neighbors nimmt es, wo es keine Dokumentvektoren gibt (GitHub Pages, CI). Stadtneutral leer = kein Paket
 
+# --- Vorhaben 17: Zeit und Neuigkeiten (docs/plans/17-zeit.md) ---------------------------------
+[cycles]                       # Rhythmus der Ratsarbeit je Monat und Haushaltsmonate (Schritt cycles), bundespolitisches Vokabular je Dokument (vocabulary) und die vorab festgelegten Tests über die Perioden einer Stadt (cycle_tests). Hier steht, was für jede Kommune gilt; die Wahltage stehen im Stadtprofil, die Perioden im Profil, das die Tests rechnet
+enabled = false                # Schalter der Schritte cycles, vocabulary und cycle_tests; ein Stadtprofil schaltet ihn ein. cycles braucht dazu Urheber (Option 04, [originators])
+year_start_month = 9           # Wahljahr ab September: die Kommunalwahlen in NRW lagen 2020 und 2025 im September, so beginnt jede Periode mit einem Wahljahr (Messdokument § 8.0). Vollständig ist ein Wahljahr, wenn die Periode es abdeckt; nur sein erster Monat darf um die Tage vor der Wahl gekürzt sein
+elections = []                 # Wahltage der Kommunalwahlen, im Stadtprofil mit Quelle. Das letzte vollständige Wahljahr, das vor einer Wahl endet, ist ihr Vorwahljahr (H17.1). Nicht period.election: das ist die Wahl, die Nenner und Zuschnitt liefert (Synergien 2026-11, Konflikt 16)
+budget_pattern = 'haushalts(begleit)?-?antrag'  # Haushaltsantrag: Dokumentart oder Titel, kleingeschrieben (Messdokument § 8.2); der Monat mit den meisten ist der Haushaltsmonat des Wahljahrs
+budget_minimum = 5             # so viele Haushaltsanträge braucht ein Wahljahr für einen Haushaltsmonat; darunter fällt es aus H17.2
+instrument_types = { anfrage = "anfrage", antrag = "antrag", haushaltsantrag = "antrag" }  # S1.5: Präfix der Dokumentart (klein) -> Instrument, das längste gewinnt; Arten, die nur eine Stadt kennt, ergänzt ihr Profil
+instrument_titles = [{ pattern = 'antrag', instrument = "antrag" }, { pattern = '\b(z?anfrage|nachfrage)', instrument = "anfrage" }]  # S1.5 ohne passende Art: das erste Muster mit Treffer im Titel (klein); ein Titel mit „antrag" ist ein Antrag, wie vorab festgelegt
+lexicon = "bundespolitik"      # Paketdatei georep/lexika/<name>.toml; ihre Version steht in der Datei, im Stamp und in jeder Ausgabe. Version 2026-11-23.1 hat 94 von 100 kodierten Treffern richtig (Messdokument § 4.1)
+head_chars = 2000              # S3.1: nur Titel und die ersten so vielen Zeichen des Texts (gegen längere Dokumente)
+periods = []                   # Ordner der Profile einer Stadt in zeitlicher Folge, über die cycle_tests rechnet; leer = keine Tests. Das Profil, das sie nennt, braucht deren Läufe vorher (wie compare)
+
+[feeds]                        # Vorhaben 17: ein Atom-Feed je Wahlbezirk unter site/feeds/ (Schritt feeds), nur Kennung, Titel, Datum und Link, keine Texte und keine Personen; nur für eine laufende Periode sinnvoll
+enabled = false
+entries = 50                   # neueste Dokumente je Feed; 50 reichen im Median 140 Tage zurück, rund 25 KB je Feed (Messdokument § 3.6)
+timezone = "Europe/Berlin"     # Zeitzone des Vorlagendatums: published ist 00:00 Ortszeit des Tages
+
 # --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.2, § 6 und § 10) --------
 # Abschnitte (Betreff, Beschlussvorschlag, Sachdarstellung, Rumpf …) als Spannen auf dem Rohtext
 # und je Korpus-ID der Kopf (Amt, Amtsbezeichnung, Beratungsfolge, Sitzung, Briefdatum). Die Muster

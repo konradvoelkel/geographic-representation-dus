@@ -86,7 +86,8 @@ def test_the_contribution_is_registered_and_switched_by_the_profile(
     assert embeddings_steps(off, layout, HTTP) == []
     every = [s.name for s in build_steps(settings, layout, HTTP)]
     assert every.index("cosponsors") < every.index("embeddings") < every.index("neighbors")
-    assert every.index("neighbors") == every.index("report") - 1
+    # vor ``report``; Beiträge weiter hinten im Register (17) stehen dazwischen
+    assert every.index("neighbors") < every.index("report")
 
 
 def test_the_steps_read_and_write_what_the_plan_names(settings: Settings, layout: Layout) -> None:
