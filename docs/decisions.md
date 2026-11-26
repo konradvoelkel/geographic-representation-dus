@@ -3863,8 +3863,9 @@ Kopf-Amt beider vergleicht (Konflikt 5). Ein Dezernat kommt nur aus dem Text (�
 Profiltabelle (sammelt 24).
 
 **Verträge.** `identifier_spans` ist die Batch-Grenze: F3 mit `attr` dahinter (`check_spans`),
-`value` wörtlich der Text an der Stelle (`values_are_the_text`, rund 0,6 s für die Hauptperiode;
-Review N2), ein Betrag als Dezimalzahl mit zwei Stellen, ein Termin in einer Normform des Codebuchs
+`value` wörtlich der Text an der Stelle (Review N2; seit Vorhaben 11 mit der Prüfung von F3,
+`check_spans(..., texts=..., positions=())`: 12 hat keine Positionsspanne, ein leeres `value` ist
+also ein Fehler), ein Betrag als Dezimalzahl mit zwei Stellen, ein Termin in einer Normform des Codebuchs
 .2, jede Form zu
 ihrer Art, und innerhalb einer Art keine zwei überlappenden Spannen eines Dokuments — **außer einem
 Paar bei Ämtern**: Fassung 2 nimmt die Nummer vor einem Namen in die Spanne („10 – Hauptamt"), und

@@ -23,6 +23,7 @@ from georep.prep.identifiers import (
     METHOD,
     Hit,
     IdentifierRules,
+    _spans_hold,
     amount_norm,
     find_identifiers,
     identifier_figures,
@@ -31,7 +32,6 @@ from georep.prep.identifiers import (
     office_directory,
     overlaps_are_allowed,
     plan_norm,
-    values_are_the_text,
 )
 from georep.settings import IdentifierOffices, Identifiers, PlanNorm, Settings, load_settings
 from georep.spans import SPAN_SCHEMA, empty_spans, sort_spans
@@ -451,14 +451,17 @@ def test_nur_die_nummer_und_der_nach_vorn_verlaengerte_name_ueberlappen() -> Non
         assert not overlaps_are_allowed(_amt_spans(*rows)), rows
 
 
-def test_value_ist_woertlich_der_text_der_spanne() -> None:
-    """Review N2 (2026-11-24): der Vertrag verspricht es, also prüft er es (auch hinter einem
-    Zeichen außerhalb der Basisebene, das Python wie Polars als ein Zeichen zählen)."""
+def test_value_ist_woertlich_der_text_der_spanne(rules: IdentifierRules) -> None:
+    """Review N2 (2026-11-24): der Vertrag verspricht es, also prüft er es, seit Vorhaben 11 mit
+    ``check_spans(..., texts=...)`` aus F3 (auch hinter einem Zeichen außerhalb der Basisebene).
+    12 kennt keine Positionsspanne: ein leeres ``value`` ist ein Fehler."""
     texts = _texts(("a.pdf", "𝔘 Amt 10 – Hauptamt"))
     documents = pl.DataFrame({"id": ["p", "q"], "file_name": ["a.pdf", "a.pdf"]})
     right = _amt_spans((2, 8, "Amt 10", "nummer"))
-    assert values_are_the_text(right, texts, documents)
-    wrong = _amt_spans((2, 8, "Amt 11", "nummer"))
-    assert not values_are_the_text(wrong, texts, documents)
-    unknown = right.with_columns(pl.lit("r").alias("id"))
-    assert not values_are_the_text(unknown, texts, documents)
+    assert _spans_hold(texts, documents, rules, result=right)
+    for wrong in (
+        _amt_spans((2, 8, "Amt 11", "nummer")),
+        _amt_spans((2, 8, "", "nummer")),
+        right.with_columns(pl.lit("r").alias("id")),
+    ):
+        assert not _spans_hold(texts, documents, rules, result=wrong)

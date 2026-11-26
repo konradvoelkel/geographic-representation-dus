@@ -768,15 +768,19 @@ TEXT_COLUMNS = ("name", "text", "extractor")  # aus dem Rohtextstore (F1)
 DOCUMENT_COLUMNS = ("id", "file_name")  # aus dem Korpus
 
 
-def _lengths(texts: pl.DataFrame, documents: pl.DataFrame) -> dict[str, int]:
-    """Je Korpus-ID die Länge des Rohtexts ihrer Datei."""
-    joined = documents.join(
-        texts.select("name", pl.col("text").str.len_chars().alias("length")),
-        left_on="file_name",
-        right_on="name",
-        how="inner",
+def _texts_by_id(texts: pl.DataFrame, documents: pl.DataFrame) -> dict[str, str]:
+    """Je Korpus-ID der Rohtext ihrer Datei."""
+    joined = (
+        documents.select(*DOCUMENT_COLUMNS)
+        .drop_nulls()
+        .join(
+            texts.select("name", "text").drop_nulls(),
+            left_on="file_name",
+            right_on="name",
+            how="inner",
+        )
     )
-    return dict(zip(joined.get_column("id").to_list(), joined.get_column("length"), strict=True))
+    return dict(zip(joined.get_column("id").to_list(), joined.get_column("text"), strict=True))
 
 
 def _spans_hold(
@@ -785,35 +789,22 @@ def _spans_hold(
     rules: IdentifierRules,
     result: pl.DataFrame | None = None,
 ) -> bool:
-    """F3 mit ``attr`` dahinter, jede Spanne in ihrem Text, ``value`` wörtlich der Text."""
+    """F3 mit ``attr`` dahinter, jede Spanne in ihrem Text, ``value`` wörtlich der Text.
+
+    Die Prüfung ist die von F3 (``check_spans`` mit ``texts``, Vorhaben 11): ``value`` ist
+    wörtlich ``text[start:end]`` oder leer bei einer Positionsspanne; 12 hat keine
+    Positionsspannen (``positions=()``), also ist leer ein Fehler.
+    """
     assert result is not None
     if result.columns != [*SPAN_SCHEMA, ATTR] or result.schema[ATTR] != pl.String():
         return False
+    by_id = _texts_by_id(texts, documents)
+    lengths = {doc_id: len(text) for doc_id, text in by_id.items()}
     try:
-        check_spans(result, _lengths(texts, documents))
+        check_spans(result, lengths, texts=by_id, positions=())
     except SchemaError:
         return False
-    return values_are_the_text(result, texts, documents)
-
-
-def values_are_the_text(spans: pl.DataFrame, texts: pl.DataFrame, documents: pl.DataFrame) -> bool:
-    """``value`` jeder Spanne ist wörtlich ``text[start:end]`` des Rohtexts ihrer Korpus-ID.
-
-    Polars schneidet wie Python nach Zeichen (Codepunkten); der Join kopiert keine Texte, er
-    zeigt auf sie. Rund 0,6 s für die 116 349 Spannen der Hauptperiode (2026-11-24, Review N2).
-    Eine Spanne ohne Text ihrer ID ist ein Fehler.
-    """
-    by_id = (
-        documents.select(*DOCUMENT_COLUMNS)
-        .drop_nulls()
-        .join(texts.select("name", "text"), left_on="file_name", right_on="name", how="inner")
-        .select("id", "text")
-    )
-    checked = spans.select("id", "start", "end", "value").join(by_id, on="id", how="left")
-    same = pl.col("text").str.slice(pl.col("start"), pl.col("end") - pl.col("start")) == pl.col(
-        "value"
-    )
-    return bool(checked.select(same.fill_null(False).all()).item())
+    return True
 
 
 def _norms_and_forms_hold(
