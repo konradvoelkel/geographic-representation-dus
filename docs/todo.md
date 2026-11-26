@@ -189,7 +189,7 @@ fremden Ordner nicht (wie `compare`).
 ## 14. Struktur der Dokumente: Kandidaten für `struktur-2`
 
 Aufgenommen am 2026-11-24 beim Bau von Vorhaben 11 (`struktur-1` ist der validierte Entwurf
-unverändert, Punkt NN); jede Änderung hier braucht eine frische Bestätigungsstichprobe. (a) Der
+unverändert, Punkt 81); jede Änderung hier braucht eine frische Bestätigungsstichprobe. (a) Der
 Beschlusssatz ohne Überschrift wird erst hinter dem **Ende des Abschnitts** `kopf_beratungsfolge`
 gesucht, und der reicht bis zur nächsten Überschrift. Von den 278 Dokumenten der Hauptperiode, deren
 Art einen Beschlussvorschlag erwarten lässt und in denen die Regel keinen findet, haben 70 Text ohne
@@ -203,6 +203,12 @@ diesem Formular ist die Amtsbezeichnung das letzte Kopffeld -- 3 599 der 4 095 h
 Beratungsfolge, aber davor --, also endet der Kopf am Ende des Titels, und der Abschnitt
 `kopf_dezernat` wird dort geteilt. Schneiden müsste er am Ende der Zeile des letzten Kopffelds. Nicht jetzt, weil Vorhaben 16 genau
 diese Grenze vermessen hat; mit `struktur-2` und 16 zusammen.
+(d) Vor der ersten Stichprobe auf Spannen von 11 (etwa der Bestätigung von `struktur-2`): F4 verlangt in
+`validation/tasks.py` (`_check_value`) streng `value == text[start:end]` und bräche an der ersten
+Positionsspanne (`value == ""`, Punkt 81); dort wie `check_spans(…, texts=…, positions=…)` prüfen (Nachprüfung
+von 11, 2026-11-26). (e) `sitzung_gremium` in `dokumente_kopf` mischt Profilnamen (dann ist
+`sitzung_kuerzel` gesetzt) und die wörtliche Form; das gehört in `schema.json` der Stufe 3.
+
 
 ## 15. Beschlusslage: Rückstand aus dem Review von Vorhaben 26
 

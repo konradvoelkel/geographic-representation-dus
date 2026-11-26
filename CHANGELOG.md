@@ -2,6 +2,21 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.30.0 (2026-11-26), Struktur der Dokumente
+
+- **Abschnitte und Kopf je Dokument** (Vorhaben 11, `docs/decisions.md`, Punkt 81): der frühe Schritt
+  `sections` schreibt die Abschnitte (Beschlussvorschlag, Begründung, Rumpf …) als Positionsspannen auf dem
+  Rohtext und je Korpus-ID den Dokumentkopf mit Amt, Dezernat, Beratungsfolge und Sitzung
+  (`processed/dokumente_abschnitte.parquet`, `processed/dokumente_kopf.parquet`). Die Regel ist der
+  validierte Entwurf unverändert (Beschlussvorschlag 188 von 200 richtig, Kopffelder 0,95 bis 1,0, geprüft
+  von zwei KI-Kodierern desselben Modells).
+- **Spannen**: `value` ist der Text an der Stelle, wörtlich, oder leer bei einer Positionsspanne;
+  `check_spans(…, texts=…, positions=…)` prüft das. Neue Bausteine `split_lines`, `section_of`, `read_span`.
+- **Eine Zahl der Seite ändert sich**: sechs Ausschüsse (KUA, JHA, SCHUA, AGS, HFA, AWM) tragen jetzt
+  ihren Namen aus dem Kopf der Vorlagen (Frage 15); die Zahl der Kürzel ohne gesicherten Namen sinkt in der
+  Hauptperiode von 11 auf 5, in den Perioden von 9 auf 3, und der Satz zur Gremientabelle nennt die neue
+  Quelle und den Stand 24.11.2026. Sonst ändert sich nichts auf der Seite.
+
 ## 0.29.0 (2026-11-26), Bedarf und Aufmerksamkeit
 
 - **Bedarf je Wahlbezirk** (Vorhaben 22, `docs/decisions.md`, Punkt 80): `need` verbindet Unfälle,

@@ -3671,7 +3671,7 @@ Tabellen auf der Seite schon in Stufe 2 (sie gehören zu `bedarf.html`, Stufe 3,
 `index.html`); der Lärm 2018 (braucht die 90 MB der Gebäudereferenzen, Frage 22.2); ein räumliches
 Modell (Frage 29: Moran's I und die Rechnung innerhalb der Stadtbezirke genügen).
 
-## NN. Abschnitte und Kopf aus dem Rohtext: der validierte Entwurf unverändert, Rumpf und Gremiennamen als Nachbearbeitung, ein früher Schritt (Vorhaben 11, 2026-11-24)
+## 81. Abschnitte und Kopf aus dem Rohtext: der validierte Entwurf unverändert, Rumpf und Gremiennamen als Nachbearbeitung, ein früher Schritt (Vorhaben 11, 2026-11-24)
 
 Vorhaben 11 der Vorverarbeitung (`docs/plans/11-struktur.md`, § 5 bis § 7 und § 10), Stufe 2. Die
 Messung hat das Regelwerk `struktur-entwurf-1` gegen zwei KI-Kodierer an 200 Dokumenten der
