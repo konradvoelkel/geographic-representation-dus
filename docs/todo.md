@@ -198,9 +198,10 @@ und in 65 davon steht dort ein Beschlusssatz wie „Bezirksvertretung 8 beschlie
 müsste hinter dem letzten Kopffeld. Die Messung (§ 3.4) zählte diese 70 als „Rumpf leer"; leer sind
 34. (b) Die zwölf Fehler am Ende des Beschlussvorschlags (Messdokument § 4.1). (c) Der Rumpf beginnt
 in 2014 bis 2020 bei 4 095 Dokumenten mitten in der Kopfzeile, mit dem Namen hinter der
-Amtsbezeichnung (Review von Vorhaben 11, N1, 2026-11-24): ohne Zeilen der Beratungsfolge im Kopf
-endet der Kopf am Ende der Amtsbezeichnung, und der Abschnitt `kopf_dezernat` wird dort geteilt.
-Schneiden müsste er am Ende der Zeile des letzten Kopffelds. Nicht jetzt, weil Vorhaben 16 genau
+Amtsbezeichnung (Review von Vorhaben 11, N1, 2026-11-24; Begründung berichtigt in Runde 3): in
+diesem Formular ist die Amtsbezeichnung das letzte Kopffeld -- 3 599 der 4 095 haben Zeilen der
+Beratungsfolge, aber davor --, also endet der Kopf am Ende des Titels, und der Abschnitt
+`kopf_dezernat` wird dort geteilt. Schneiden müsste er am Ende der Zeile des letzten Kopffelds. Nicht jetzt, weil Vorhaben 16 genau
 diese Grenze vermessen hat; mit `struktur-2` und 16 zusammen.
 
 ## 15. Beschlusslage: Rückstand aus dem Review von Vorhaben 26

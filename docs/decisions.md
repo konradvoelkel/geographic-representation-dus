@@ -3599,13 +3599,15 @@ sind vorher gelesen. In der Hauptperiode haben 7 664 Dokumente einen Rumpf (7 85
 Anfragen (die Einleitung vor den Fragen). (2) **Kein
 Abschnitt der Ebene 1 beginnt in einem anderen**, und **der Beschlussvorschlag bleibt, wie der
 Entwurf ihn fand.** Im Entwurf beginnt ein Abschnitt in einem anderen, wo das Regelwerk ihn
-nachträglich anfügt: in der Hauptperiode zweimal der Beschlusssatz ohne Überschrift im letzten
-Abschnitt des Kopfs (hypothesis fand es), in 2014 bis 2020 305-mal, fast immer ein Betreff unter dem
+nachträglich anfügt: in der Hauptperiode zweimal der Beschlusssatz ohne Überschrift (hypothesis
+fand es), einmal im Abschnitt des Amts und einmal im Betreff -- dort beginnen Betreff und
+Beschlusssatz an derselben Stelle, und das Dokument hat seit der ersten Fassung keinen Betreff --,
+in 2014 bis 2020 305-mal, fast immer ein Betreff unter dem
 Formulartitel, der über die nächste Überschrift reicht (275-mal in einen Beschlussvorschlag, 12 in
 eine Sachdarstellung, 8 in Fragen). Der vordere Abschnitt endet dann vor dem hinteren -- außer, er
 ist der Beschlussvorschlag: in acht Dokumenten von 2014 bis 2020 begann der Betreff unter dem
-Formulartitel in einem Beschlussvorschlag aus Überschrift, und die erste Fassung kürzte den
-Vorschlag auf „Antrag" (Review K2). Jetzt beginnt, was in einem Beschlussvorschlag beginnt, erst
+Formulartitel in einem Beschlussvorschlag (siebenmal aus einem Einleitungssatz, einmal aus einer
+Überschrift), und die erste Fassung kürzte den Vorschlag auf „Antrag" (Review K2). Jetzt beginnt, was in einem Beschlussvorschlag beginnt, erst
 hinter ihm oder entfällt (hier der Betreff). Geprüft in allen vier Datensätzen: jeder
 Beschlussvorschlag gleich dem des Entwurfs, keine Überlappung mehr. (3) **Gremiennamen über `[bodies]`**,
 keine zweite Tabelle: `BodyNames` vergleicht einen geschriebenen Namen mit den Namen und Kürzeln aus
@@ -3668,7 +3670,8 @@ keine Zahl; Mönchengladbach, `vergleich.html` und die Feeds sind gleich. Über 
 ohne Rohtextpaket ohne Spannen und mit leeren Zeilen), anders sonst nur die drei Seiten (und ihre
 Kopien unter den Profilordnern) und Stamps (der Fingerprint trägt jetzt `[structure]`). Keine Datei
 unter `site/` stammt aus `sections`; die Kopftabelle kommt erst mit Stufe 3 als Download. Die
-Hauptperiode schreibt 0,92 MB Abschnitte und 0,21 MB Kopf.
+Hauptperiode schreibt 0,89 MB Abschnitte (seit die Abschnitte kein Label mehr tragen) und 0,21 MB
+Kopf.
 
 **Verworfen.** Das Ende des Beschlussvorschlags an den Labels nachschärfen (Konflikt 8); eine
 Zusatzspalte `quelle` an den Spannen (die Quelle steht in `dokumente_kopf`, Frage 9.3); `start` und
