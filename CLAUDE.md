@@ -136,6 +136,9 @@ bleiben in `STATUS.md` und in den datierten Dokumenten unter `docs/`.
 - **Überlebende Mutanten in Vertrags-Lambdas werden nicht nachgezogen** (`docs/decisions.md`, Punkt 12); „äquivalent" dagegen will nachgerechnet werden — eine falsche Behauptung stand am 2026-10-12 schon in einer Notiz.
 - **Mutationsziele je Modul messen**, nie alles in einer Sitzung: `nox -s mutate -- <schlüssel>` nimmt die Testdateien des Moduls aus `MUTATION_SCOPE`, denn ohne Abdeckungsdaten läuft jeder Mutant gegen **alle** übergebenen Tests (`docs/mutation-2026-10-13.md`). `analysis/topics.py` bleibt draußen: NMF je Mutant.
 - **Golden-Master-Tests über das Themenmodell prüfen Invarianten, nicht Zahlen**: es ist nur je Rechner und je Thread-Zahl reproduzierbar (2026-10-12).
+  Dasselbe gilt für alles, was an den Klassen des Ausschussklassifikators hängt (Punkt 45): der Solver
+  hält je Rechner an anderer Stelle an, auf dem CI-Rechner lag ein Dokument in einem anderen Ausschuss,
+  und lokal war der Test in jeder Thread-Einstellung grün (2026-11-26, `test_need_numbers.py`, Punkt 80).
 - **`pytest.approx` über Zeilentupel ist kein Toleranzvergleich**: bis pytest 9.1 fiel es je Tupel still auf
   exakte Gleichheit zurück, seit 9.2 ist es ein TypeError. Schlüssel exakt, Zahlen als flache Liste unter
   `approx` (2026-11-15, `test_crosswalk_areas.py`).
