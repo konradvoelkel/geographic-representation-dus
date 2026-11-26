@@ -96,3 +96,45 @@ def test_das_aemterverzeichnis_von_12_steht_ganz_in_dem_aus_dem_kopf_von_11(
         "Stadtkämmerin",
     ]
     assert identifiers_files(layout).spans.exists()
+
+
+def test_das_kopf_amt_von_12_gegen_das_von_11(main_period: MainPeriod) -> None:
+    """Gemessen am 2026-11-26: in 9 994 Dokumenten nennen beide ein federführendes Amt, in 9 957 das
+    gleiche (die Nummer, ohne Nummer der Name). Die 37 übrigen sind Kopffelder mit dreistelliger
+    Unternummer oder ohne Bindestrich („40/603 - VHS", „02/0 Stadtkämmerin"): 11 liest die Nummer,
+    die Kopfform von 12 (zwei Ziffern, eine oder zwei dahinter, Bindestrich) trifft sie nicht, und
+    12 nimmt nach Fassung 2 den ganzen Wert als Norm. Ein Dokument hat nur bei 12 ein Kopf-Amt.
+    Nutzer des federführenden Amts lesen es aus 11 (Konflikt 5); 12 behält die validierte Regel."""
+    layout = main_period.layout
+    spans = pl.read_parquet(identifiers_files(layout).spans)
+    ours = (
+        spans.filter((pl.col("kind") == "amt") & (pl.col("attr") == "kopf"))
+        .sort("id", "start")
+        .group_by("id", maintain_order=True)
+        .agg(pl.col("norm").first().alias("amt_12"))
+    )
+    theirs = pl.read_parquet(sections_files(layout).head, columns=["id", "amt_nr", "amt_name"])
+    joined = theirs.join(ours, on="id", how="full", coalesce=True)
+    has_11 = pl.col("amt_nr").is_not_null() | pl.col("amt_name").is_not_null()
+    has_12 = pl.col("amt_12").is_not_null()
+    same = (pl.col("amt_12") == pl.col("amt_nr")) | (
+        pl.col("amt_nr").is_null() & (pl.col("amt_12") == pl.col("amt_name"))
+    )
+    both = joined.filter(has_11 & has_12)
+    differ = both.filter(~same.fill_null(False))
+    assert (
+        both.height,
+        both.height - differ.height,
+        joined.filter(has_11 & ~has_12).height,
+        joined.filter(~has_11 & has_12).height,
+    ) == (9994, 9957, 0, 1)
+    assert dict(differ.group_by("amt_nr").len().iter_rows()) == {
+        "02/0": 17,
+        "40/603": 17,
+        "41/202": 2,
+        "41/203": 1,
+    }
+    assert all(
+        amt_12.startswith(amt_nr)
+        for amt_nr, amt_12 in differ.select("amt_nr", "amt_12").iter_rows()
+    )

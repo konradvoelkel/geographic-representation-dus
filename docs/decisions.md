@@ -3868,8 +3868,13 @@ Kopffeldern des Korpus, wie in der Messung; die Synergie nennt dafür `dokumente
 Namen von 12 mit derselben Nummer und sieben mehr, und keiner davon ist ein Amt, das 12 im Text suchen
 sollte (zwei Ämter in einer Kopfzeile wie „Amt für Gebäudemanagement 67 - Stadtentwässerungsbetrieb",
 ein Verein hinter dem Sportamt, „Stadtkämmerin"). 12 bleibt darum beim validierten Verzeichnis aus
-den eigenen Kopffeldern; ein Wechsel auf das von 11 wäre eine neue Regel mit neuer Messung. Ein
-Dezernat kommt nur aus dem Text („Dezernat 06"), keine Profiltabelle (sammelt 24).
+den eigenen Kopffeldern; ein Wechsel auf das von 11 wäre eine neue Regel mit neuer Messung. Das
+**federführende Amt** selbst (die erste Kopfspanne von 12 gegen `amt_nr`, ohne Nummer `amt_name`
+von 11): in 9 994 Dokumenten nennen beide eines, in 9 957 dasselbe; die 37 übrigen sind Kopffelder
+mit dreistelliger Unternummer oder ohne Bindestrich („40/603 - VHS", „02/0 Stadtkämmerin"), deren
+Nummer die Kopfform von 12 nicht trifft, sodass Fassung 2 den ganzen Wert als Norm nimmt; ein
+Dokument hat nur bei 12 ein Kopf-Amt. Nutzer des federführenden Amts lesen es aus 11 (Konflikt 5).
+Ein Dezernat kommt nur aus dem Text („Dezernat 06"), keine Profiltabelle (sammelt 24).
 
 **Verträge.** `identifier_spans` ist die Batch-Grenze: F3 mit `attr` dahinter (`check_spans`),
 `value` wörtlich der Text an der Stelle (Review N2; seit Vorhaben 11 mit der Prüfung von F3,
