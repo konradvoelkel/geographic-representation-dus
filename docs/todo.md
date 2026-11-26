@@ -181,4 +181,9 @@ Art einen Beschlussvorschlag erwarten lässt und in denen die Regel keinen finde
 Überschrift unter der Beratungsfolge (60 Beschlussvorlagen einer Bezirksvertretung, 58 davon BV 8),
 und in 65 davon steht dort ein Beschlusssatz wie „Bezirksvertretung 8 beschließt …". Gesucht werden
 müsste hinter dem letzten Kopffeld. Die Messung (§ 3.4) zählte diese 70 als „Rumpf leer"; leer sind
-34. (b) Die zwölf Fehler am Ende des Beschlussvorschlags (Messdokument § 4.1).
+34. (b) Die zwölf Fehler am Ende des Beschlussvorschlags (Messdokument § 4.1). (c) Der Rumpf beginnt
+in 2014 bis 2020 bei 4 095 Dokumenten mitten in der Kopfzeile, mit dem Namen hinter der
+Amtsbezeichnung (Review von Vorhaben 11, N1, 2026-11-24): ohne Zeilen der Beratungsfolge im Kopf
+endet der Kopf am Ende der Amtsbezeichnung, und der Abschnitt `kopf_dezernat` wird dort geteilt.
+Schneiden müsste er am Ende der Zeile des letzten Kopffelds. Nicht jetzt, weil Vorhaben 16 genau
+diese Grenze vermessen hat; mit `struktur-2` und 16 zusammen.
