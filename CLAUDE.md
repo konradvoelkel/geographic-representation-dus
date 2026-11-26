@@ -1,9 +1,10 @@
 # Arbeitsregeln für dieses Repo
 
 Aufbau: `docs/architecture.md`. Gründe und verworfene Alternativen: `docs/decisions.md`. Stand und Bekanntes:
-`STATUS.md` (im selben Commit nachziehen, wenn sich der Stand ändert). Der Ausbau in acht Optionen ist
+`STATUS.md` (STATUS trägt nur den Stand; Verlauf ins CHANGELOG). Der Ausbau in acht Optionen ist
 abgeschlossen (`docs/plan-ausbau-2026-10.md`, Supervisor und Unteragenten, 2026-10-12; Pläne und Abnahmen
-unter `docs/plans/`, Fragen an Konrad in `docs/plans/fragen.md`). Rückstand für das nächste Vorhaben: `docs/todo.md`. Die Berichtsseite ist gebaut und über
+unter `docs/plans/`, Fragen an Konrad in `docs/plans/fragen.md`, für die Vorverarbeitung 2026-11 in
+`docs/plans/fragen-2026-11.md`). Rückstand für das nächste Vorhaben: `docs/todo.md`. Die Berichtsseite ist gebaut und über
 GitHub Pages veröffentlicht (`docs/plan-report-2026-10.md`, abgeschlossen am 2026-10-11). Der Umbau 2026-10 ist
 abgeschlossen; sein
 Plan liegt historisch unter `docs/development-plan-2026-10.md`, der Befund davor in `docs/baseline-2026-10-10.md`.
@@ -13,12 +14,12 @@ Contract des eipy-Skripts.
 ## Einstieg in eine neue Sitzung
 
 1. `git switch main && git pull`. Gearbeitet wird direkt auf `main`, keine Branches (Konrad, 2026-10-11);
-   `main` trägt den letzten Tag (`v0.16.0` am 2026-11-18). Die Ausnahme der acht Ausbau-Branches `feat/NN-name`
+   `main` trägt den letzten Tag (`v0.32.0` am 2026-11-26). Die Ausnahme der acht Ausbau-Branches `feat/NN-name`
    in Worktrees auf xtraspace (Konrad, 2026-10-11) ist mit dem Merge aller acht am 2026-10-12 beendet; Worktrees,
-   Venvs und Branches sind entfernt. **Neue Ausnahme seit 2026-11-23** (Konrad): für die Vorverarbeitung nach
-   `docs/plan-vorverarbeitung-2026-11.md` arbeiten Unteragenten auf `feat/NN-name` und `fund/FN-name` in
-   Worktrees unter `/media/konrad/xtraspace/georep/worktrees/`, je mit eigenem Venv und eigener
-   `settings.local.toml` (§ 6 des Plans); nur der Supervisor merged nach `main`. Stand je Vorhaben:
+   Venvs und Branches sind entfernt. Die zweite Ausnahme (Konrad, 2026-11-23: Unteragenten auf `feat/NN-name`
+   und `fund/FN-name` in Worktrees unter `/media/konrad/xtraspace/georep/worktrees/` für die Vorverarbeitung
+   nach `docs/plan-vorverarbeitung-2026-11.md`) ist **am 2026-11-26 beendet**; Worktrees, Venvs und Branches
+   sind entfernt. Eine neue Ausnahme braucht wieder eine Anweisung, je Vorhaben. Stand je Vorhaben:
    `docs/plans/README.md`.
 2. Auf Konrads Rechner vor allem anderen, weil die Primärplatte voll ist:
    `export UV_PROJECT_ENVIRONMENT=/media/konrad/xtraspace/venvs/georep UV_CACHE_DIR=/media/konrad/xtraspace/uv-cache`;
@@ -29,7 +30,8 @@ Contract des eipy-Skripts.
 3. `uv sync && uv run nox && uv run pytest -m slow`: alles grün ist der Ausgangspunkt, sonst zuerst das klären.
 4. Lesen: `STATUS.md` (Stand, Bekanntes), `docs/architecture.md` für den betroffenen Teil, `docs/decisions.md`,
    bevor eine Entscheidung dort umgestoßen wird. Für die Berichtsseite: `docs/plan-report-2026-10.md`, § 8 nennt
-   die Reihenfolge. Die Lehren aus dem Umbau stehen unten unter „Commits" und „Arbeitsweise".
+   die Reihenfolge; was die Vorhaben der Vorverarbeitung auf der Seite zeigen (Stufe 3), regelt
+   `docs/plan-vorverarbeitung-2026-11.md`, § 8. Die Lehren aus dem Umbau stehen unten unter „Commits" und „Arbeitsweise".
 5. Push geht per SSH; in nicht-interaktiven Sitzungen hält der Keyring-Agent den Schlüssel:
    `SSH_AUTH_SOCK=/run/user/1000/gcr/ssh git push`. Das gh-Token hat keinen `workflow`-Scope.
 
@@ -40,19 +42,24 @@ uv sync                      # Umgebung aus uv.lock
 uv run nox                   # lint, typecheck, deps, test
 uv run pytest -m slow        # Kette über die volle Referenz, Vergleich mit der Arbeit
 uv run georep bootstrap && uv run georep run && uv run georep status   # run endet mit der Berichtsseite data/duesseldorf/site/index.html
+# alle Profile in der Folge von pages.yml (seit 0.27.0): duesseldorf, duesseldorf-2014, duesseldorf-2025, dann duesseldorf-vergleich (liest beide Perioden), moenchengladbach; nach einem Update mit neuem Paket einmal `georep bootstrap` je Profil
 uv run georep profiles       # Stadtprofile im Paket; --profile <slug> waehlt eines (sonst GEOREP_PROFILE, sonst default_profile)
 uv run georep publish        # Stadtseiten nach data/site/ zusammentragen (erste Stadt an die Wurzel), vergleich.html bauen
 uv run georep paths          # Profil und Pfade als key=wert; Skripte und Workflows lesen sie hier, nie von Hand
 uv run georep fetch opendata # der einzige schnelle Netzschritt; alles andere dauert Stunden
+GEOREP_COUNCIL__ENABLED=true uv run georep fetch meetings consultations persons   # OParl-Sitzungen, Beratungen, Personen (Fundament F6, Punkt 70); Probe und Lauf in docs/runbook-sitzungen.md
 GEOREP_CONTEXT__NEED__FETCH=true uv run georep fetch need_data   # Bedarfsdaten (Vorhaben 22, Punkt 80), rund 105 MB, nur mit dem Schalter; sonst kommen sie aus snapshots/*-bedarf/
 uv run georep run --models    # Modellschritte über ollama (Punkt 72); ohne den Schalter heißen sie „Modelle aus"; `georep ml status` zeigt Modelle und Caches. Die GPU ist geteilt: jeder Modelllauf unter `flock /media/konrad/xtraspace/georep/gpu-queue/gpu.lock`
 uv run georep search "<frage>"  # lokale Suche (Vorhaben 18, Punkt 77): --method embedding|hybrid|bm25; prüft `ml.gpu_lock` aus settings.local.toml nicht blockierend, bei belegter GPU BM25
-uv run georep --profile <p> pack <ziel>   # Gegenrichtung von bootstrap: aus dem gelaufenen Profil ein Datenpaket ins Repo (Punkt 56); bricht ab, wenn eine Eingabe fehlt oder der Textstore Fremdzeilen traegt; `--consultations`, `--texts` und `--raw-texts` packen nur die Beratungsfolge, den Textstore beziehungsweise den Rohtextstore (Punkte 58, 68, 73)
+uv run georep ml bench <modell> --n 20   # Durchsatz eines Modells; Zahlen nach docs/profiling/README.md
+uv run georep summary <drucksache|id>   # Kurzfassung lokal lesen (Vorhaben 20, Punkt 83); der Schritt ist überall aus, einschalten nur für eine Messung mit GEOREP_SUMMARIES__ENABLED=true
+uv run georep validate sample|tasks|import|merge|score <vorhaben>   # Validierung mit zwei KI-Kodierern (Fundament F4, docs/validierung.md)
+uv run georep --profile <p> pack <ziel>   # Gegenrichtung von bootstrap: aus dem gelaufenen Profil ein Datenpaket ins Repo (Punkt 56); bricht ab, wenn eine Eingabe fehlt oder der Textstore Fremdzeilen traegt; `--consultations`, `--texts` und `--raw-texts` packen nur die Beratungsfolge, den Textstore beziehungsweise den Rohtextstore (Punkte 58, 68, 73), `--attachments`, `--neighbors`, `--outcomes` und `--need` die Pakete der Vorhaben 14, 18, 26 und 22; die Liste aller Pakete steht in docs/technik.md, § 3
 uv run ruff check . && uv run ruff format --check .
 uv run mypy                  # strict für alles
 uv run nox -s bench          # heiße Pfade gegen die gespeicherte Baseline; der erste Lauf legt sie nur an
 uv run georep profile index  # echter Schritt unter cProfile; .prof nach docs/profiling/, Zahlen ins README dort
-uv run nox -s verify         # crosshair über die reinen Funktionen mit Verträgen, rund zehn Minuten
+uv run nox -s verify         # crosshair über die reinen Funktionen mit Verträgen, mindestens zehn Minuten; wöchentlich auch in .github/workflows/quality.yml
 uv run nox -s mutate         # pytest-gremlins je Modul (MUTATION_SCOPE); `-- fast` sind die acht schnellen, kein Gate
 uv tree --frozen --outdated --depth 1 && uv audit --frozen   # was veraltet ist und was eine Sicherheitsmeldung hat; beides liest nur
 ```
@@ -116,7 +123,7 @@ setzen (siehe `FORK-NOTES.md`), sonst legt uv `.venv` im Repo an.
 - Messungen stehen datiert in `docs/profiling/README.md`, `.prof`-Dateien und `.benchmarks/` bleiben lokal. Ein Profil des echten Schritts (`georep profile`) vor jedem Nachbau; cProfile verdreifacht die Zeit reiner Python-Bibliotheken (pypdf), die Verteilung stimmt trotzdem.
 - `georep fetch pdfs --limit N` schreibt `pdf_limit` in den Settings-Fingerprint des Stamps; `status` zeigt `pdfs` danach als „offen: Settings geändert". Das ist richtig, nicht kaputt. Umgekehrt gilt ein zweiter Aufruf mit demselben `--limit` als aktuell und holt nichts: wer in Blöcken abruft, ruft jeden Block mit `--force` auf (`--limit` zählt neue PDFs je Lauf) und schließt ohne `--limit` ab (2026-11-17, ein Abrufskript lief ohne `--force` nach dem ersten Block in den Abschluss).
 - deal (Phase 6): `deal.raises` vergleicht exakte Typen, keine Unterklassen (`requests.RequestException` deckt `HTTPError` nicht ab); darum wandeln Fetcher Netzfehler in `NetworkError`. `deal.has()`/`deal.pure` patchen `socket.socket` und `sys.stdout` prozessweit und sind nicht reentrant: rekursive Funktionen bekommen `deal.safe`, sonst bleibt der Patch stehen (2026-10-11, `deep_merge`). Das mypy-Plugin `deal.mypy` modelliert `result` in `ensure` als positionalen Parameter; Validatoren mit optionalen Argumenten werden benannte Funktionen und stehen vor dem ganzen Decorator-Stapel, nie dazwischen. Prädikate für Verträge liegen in `georep.contracts`.
-- `deal.cases` läuft ohne Beispiel-Datenbank: ein Gegenbeispiel kann im nächsten Lauf fehlen, hypothesis druckt den Reproduktions-Blob. `check_types=False`, weil typeguard nicht installiert ist. `nox -s verify` (crosshair) braucht rund zehn Minuten (37 Ziele, elf Minuten gemessen 2026-10-15; drei Minuten waren es bei zehn Zielen); „Not confirmed" ist kein Befund.
+- `deal.cases` läuft ohne Beispiel-Datenbank: ein Gegenbeispiel kann im nächsten Lauf fehlen, hypothesis druckt den Reproduktions-Blob. `check_types=False`, weil typeguard nicht installiert ist. `nox -s verify` (crosshair) braucht mindestens zehn Minuten (37 Ziele, elf Minuten gemessen 2026-10-15; drei Minuten waren es bei zehn Zielen; am 2026-11-26 sind es 62 Ziele, die Laufzeit ist seitdem nicht gemessen); „Not confirmed" ist kein Befund.
 - `except OSError, TimeoutExpired:` ohne Klammern ist seit Python 3.14 gültig (PEP 758), und `ruff format` schreibt
   es so; das System-`python3` ist 3.12 und meldet dafür einen Syntaxfehler. Prüfungen laufen nur über `uv run`
   (am 2026-10-12 hielt ein Agent die Form für kaputt und „reparierte" sie).
