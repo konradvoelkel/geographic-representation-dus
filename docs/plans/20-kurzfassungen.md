@@ -649,6 +649,16 @@ von Vorhaben 11, weil die Eingabe dessen Abschnitte liest.
   Spalte `personennamen`; Nachtrag vor jeder Kurzfassung nach dem Hinweis des Supervisors vom
   2026-11-24, Frage 20.14). Ein abgeschriebener Name ist trotzdem belegt; er zählt darum weder für
   `unbelegt` noch für das Kriterium.
+- **Erzeugt am 2026-11-26** (nach dem Merge von 11, Code `6e98fce`, Messskript `19f3d37`): alle 50
+  mit Eingabe (44 aus Abschnitten, 6 aus dem Rückfall, 5 gekürzt), kein Ersatz; `gemma4:latest`,
+  Digest `c6eb396dbd59` (wie § 3.1), ein Lauf unter der Sperre von 21:49:47 bis 21:50:57 (70 s;
+  ollama-Log „offloaded 43/43 layers to GPU", 8,9 GiB Gewichte auf CUDA0, `nvidia-smi` 507 MiB vor
+  und 10 709 MiB nach dem Lauf, Lastmittel 2,3 bis 5,6). Je Dokument 1,28 s Wanduhr (Median 1,13,
+  ohne Laden 0,88), Ausgabe 118 Token bei 164,5 Token/s, Eingabe 1 307 Token; keine Antwort
+  abgeschnitten. Daneben (nicht Kriterium): Treueprüfung 50 von 50 ohne unbelegte Angabe, keine mit
+  Personennamen, Wörter Median 57,5, höchstens 80. Kodierauftrag A und B unter
+  `messdaten/kodierung/20-kurzfassungen-nachmessung/` (Ausschnitt Median 2 382 Zeichen, längster
+  8 526, acht über 6 000). Die Kurzfassungen liegen nur im Modellcache und im lokalen Auszug.
 
 ## 6. Bauplan Stufe 2
 
