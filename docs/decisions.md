@@ -3805,7 +3805,22 @@ Sitzung aus der OParl-Folge raten, wo der Text ihn nicht trifft (die Folge hält
 Beratung, der Brief die geplante); ein eigenes Paket (die Ausgaben rechnen in rund 20 s aus dem
 Rohtextpaket); `split_lines` ohne regulären Ausdruck für crosshair (es geht auch mit ihm, Exit 0).
 
-## Kurzfassungen: nur lokal, Treue deterministisch geprüft, gemma4, die Rolle in der Eingabe (Vorhaben 20, 2026-11-26)
+## Kurzfassungen: gebaut, validiert, aber aus; nur lokal, Treue deterministisch, die Rolle in der Eingabe (Vorhaben 20, 2026-11-26)
+
+**Ergebnis zuerst.** Gebaut und an der Messung validiert sind die Eingabe Fassung 2 und die
+deterministische Treueprüfung. Die Nachmessung von `unbelegt` vor dem Stapellauf (Messdokument
+§ 5.4, Grenze 2 von 50) hat **beide Modelle verworfen**: `gemma4` 4 von 50 (in der ersten
+Bewertung ohne Rolle 12 von 50), `qwen3.6:27b` 5 von 50 (Entscheidung des Supervisors, weil α
+0,544 und ein Kodierer allein unter der Grenze; die Zahl liegt mehr als doppelt darüber, das
+geschichtete Intervall ganz). **Darum gibt es keinen Stapellauf, und der Schritt ist in allen
+Profilen aus** (`summaries.enabled = false`; an, startete jedes `georep run --models`, etwa für die
+Einbettungen von 18, einen Stapel von 5 bis 8 GPU-Stunden). Er bleibt im Paket und lässt sich für
+eine spätere Messung mit `GEOREP_SUMMARIES__ENABLED=true` einschalten; `summaries.model` bleibt
+`gemma4` (weniger Beanstandungen als qwen, 2,7-mal schneller). Weiter ginge es nur mit einem
+Codebuch Fassung 2 (Fragen 20.10, 20.11, 20.15: Rollen, Verallgemeinerung, Modalität, Kopfdaten,
+gestrichene Einschränkungen) an einer frischen Stichprobe, als eigenes Vorhaben. Die
+deterministische Prüfung und die Kodierer fanden in beiden Nachmessungen **disjunkte** Fehler (0
+und 2 gegen 4 und 5): die Prüfung ersetzt die Bewertung nicht.
 
 Vorhaben 20 der Vorverarbeitung (`docs/plans/20-kurzfassungen.md`: Urteil § 5.3, Bauplan § 6,
 Nachmessung § 5.4, Synergie § 10), Stufe 2. Zwei, drei Sätze je Dokument mit einem lokalen Modell,
@@ -3836,7 +3851,7 @@ eine falsche Rolle (Rat oder Bezirksvertretung als Antragsteller einer Vorlage d
 (§ 5.4). Verworfen: die beanstandeten Angaben als Datei (sie sind Text der Kurzfassung; `georep
 summary` rechnet sie nach); eine Rundungsregel (Regel 3 verlangt die Zahl, wie sie dasteht).
 
-**gemma4, und das Modell steht unter `[summaries]`.** Nach dem Kriterium aus § 3.1 bestand nur
+**gemma4 als Modell des Schalters, und es steht unter `[summaries]`.** Nach dem Kriterium aus § 3.1 bestand nur
 gemma Teil 1 (0,984 an frischen 200), und es rechnet ein Drittel der Zeit von `qwen3.6:27b`. Das
 Modell steht nicht in `[ml.generation]`, weil Vorhaben 19 dort ein anderes nennen darf; die
 Optionen kommen von dort. Der Client entsteht erst bei Bedarf (`DeferredGenerator`, wie

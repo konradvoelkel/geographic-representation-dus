@@ -5,6 +5,13 @@ Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/20-kurzfassungen`. Briefing:
 Messskript: [20-kurzfassungen-messung.py](20-kurzfassungen-messung.py). Codebuch und Stichproben
 (nur IDs): [../../validierung/20-kurzfassungen/](../../validierung/20-kurzfassungen/).
 
+**Stufe 2 (gebaut 2026-11-26): der Schritt steht, ein Stapellauf nicht** (§ 5.4). Gebaut und
+validiert sind die Eingabe Fassung 2 mit der Rolle und die deterministische Treueprüfung. Die
+vorab festgelegte Nachmessung an frischen 50 (höchstens 2 mit unbelegter Angabe) hat beide Modelle
+verworfen: gemma4 4 von 50 (ohne Rolle in der Eingabe waren es 12), qwen3.6:27b 5 von 50. Darum
+ist der Schritt in allen Profilen aus; weiter ginge es nur mit einem Codebuch Fassung 2 (Fragen
+20.10, 20.11, 20.15) an einer frischen Stichprobe, als eigenes Vorhaben.
+
 **Urteil (Stufe 1, abgeschlossen 2026-11-24): bauen mit `gemma4`, unter zwei Vorbehalten** (§ 5.3).
 Nach der ersten Festlegung bestand kein Modell, weil die Treueprüfung fehlerhaft war (§ 5.1); nach
 der einen Umbaurunde mit der vorab festgelegten Klasse e in Fassung 2 (§ 5.2, Frage 35) besteht

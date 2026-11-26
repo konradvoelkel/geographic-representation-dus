@@ -546,7 +546,11 @@ Fragen der Hauptperiode: nDCG@10 0,883, 0,846 und 0,709 (Messdokument § 4.4).
 
 **Ein Generator-Schritt: `summaries`** (Vorhaben 20, `enrich/summaries.py`, Messdokument
 [plans/20-kurzfassungen.md](plans/20-kurzfassungen.md), Urteil § 5.3: `gemma4`). Zwei, drei Sätze je
-Dokument für den Vorlagenspiegel (Vorhaben 29), **nie veröffentlicht** (Konrad, Frage 6):
+Dokument für den Vorlagenspiegel (Vorhaben 29), **nie veröffentlicht** (Konrad, Frage 6). **In allen
+Profilen aus** (`summaries.enabled = false`): die Nachmessung vor dem Stapellauf (§ 5.4) hat
+`gemma4` (4 von 50 mit unbelegter Angabe) und `qwen3.6:27b` (5 von 50) bei einer Grenze von 2
+verworfen; es gibt keinen Stapellauf. Gebaut und validiert sind die Eingabe Fassung 2 und die
+Treueprüfung; für eine spätere Messung schaltet `GEOREP_SUMMARIES__ENABLED=true` den Schritt ein.
 
 - **Ausgaben nur unter `cache_root/<profil>/summaries/`** (`summaries_files`):
   `kurzfassungen.parquet` (je Korpus-ID mit Rohtext `text` oder, wo er fehlt, `grund`:
