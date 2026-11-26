@@ -3326,8 +3326,13 @@ Messskripts fest.
 und N7, so festgelegt, wie 22 ihn übernimmt): `hypothese`, `p`, `p_holm`, `ergebnis`, `n`,
 `festgelegt`, Zusatzspalten dahinter. **Die Familie sind die Zeilen mit `p_holm`**: dort sind
 Kennung, `p` in [0, 1], `n` und `festgelegt` Pflicht, jede Kennung steht einmal darin, und `p_holm`
-und `ergebnis` sind Holm über die Familie, wie sie in der Tabelle steht (`check_hypotheses` rechnet
-nach). Außerhalb -- Sensitivität, Robustheit, explorativ, beschreibend -- stehen `p_holm` und
+und `ergebnis` sind Holm über die Familie, wie sie in der Tabelle steht, bei der vorab festgelegten
+Familiengröße `m` (`check_hypotheses` rechnet nach). Fehlt einer festgelegten Hypothese die
+Eingabe, steht sie mit leerem `p`, `p_holm` und `ergebnis` außerhalb der Familie und zählt für Holm
+trotzdem mit: `holm`, `family` und `check_hypotheses` nehmen `m` (Vorgabe die Zahl der
+Familienzeilen, kleiner ist ein Vertragsbruch), und die fehlende Hypothese wirkt wie eine mit p = 1
+am Ende der Folge (Supervisor, 2026-11-26, der Fall von 22; bei 17 sind es drei Familienzeilen und
+m = 3). Außerhalb -- Sensitivität, Robustheit, explorativ, beschreibend -- stehen `p_holm` und
 `ergebnis` leer, damit niemand eine solche Zeile als bestätigt liest, und `p`, `n`, `festgelegt` und
 die Kennung dürfen leer sein (22 trägt Robustheit ohne p und Paare ohne Kennung). Eindeutig ist
 eine Zeile über einen Schlüssel, den der Aufrufer nennt (`key`, Vorgabe die Kennung). Die Schwelle

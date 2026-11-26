@@ -16,11 +16,15 @@ Unterseite sie gleich zeigt und niemand das Ergebnis anders benennt:
 **Die Familie sind die Zeilen mit ``p_holm``** (Review K2, 2026-11-24): die vorab festgelegten
 Haupttests eines Vorhabens. Für sie sind Kennung, ``p`` in [0, 1], ``n``, ``festgelegt`` und
 ``ergebnis`` Pflicht, die Kennungen sind in der Familie eindeutig, und ``p_holm`` und ``ergebnis``
-müssen Holm über die Familie sein, wie sie in der Tabelle steht. Außerhalb der Familie --
-Sensitivität, Robustheit, explorativ, beschreibend -- bestätigt und widerlegt eine Zeile nichts:
-``p_holm`` und ``ergebnis`` sind leer, ``p``, ``n``, ``festgelegt`` und sogar die Kennung dürfen es
-sein (ein ``p``, das dasteht, liegt in [0, 1]). Eindeutig ist eine Zeile über einen Schlüssel, den
-der Aufrufer nennt (Vorgabe: die Kennung allein; 22 trägt je Hypothese mehrere Rechnungen).
+müssen Holm über die Familie sein, wie sie in der Tabelle steht, bei der vorab festgelegten
+Familiengröße ``m`` (Vorgabe: die Zahl der Familienzeilen). Fehlt einer festgelegten Hypothese die
+Eingabe, steht sie mit leerem ``p``, ``p_holm`` und ``ergebnis`` außerhalb der Familie, zählt für
+Holm aber mit: der Aufrufer nennt ``m`` (Supervisor, 2026-11-26, der Fall von 22). Außerhalb der
+Familie -- Sensitivität, Robustheit, explorativ, beschreibend -- bestätigt und widerlegt eine Zeile
+nichts: ``p_holm`` und ``ergebnis`` sind leer, ``p``, ``n``, ``festgelegt`` und sogar die Kennung
+dürfen es sein (ein ``p``, das dasteht, liegt in [0, 1]). Eindeutig ist eine Zeile über einen
+Schlüssel, den der Aufrufer nennt (Vorgabe: die Kennung allein; 22 trägt je Hypothese mehrere
+Rechnungen).
 
 Was ein Vorhaben mehr braucht (Effekt, Intervall, Statistik, Rolle), steht in Spalten **hinter**
 dem Kern.
@@ -85,9 +89,15 @@ class Adjusted:
 
 
 def _p_values_and_alpha_valid(
-    p: Mapping[str, float], alpha: float = ALPHA, *, strict: bool = False
+    p: Mapping[str, float], alpha: float = ALPHA, *, strict: bool = False, m: int | None = None
 ) -> bool:
     return bool(p) and all(0.0 <= v <= 1.0 for v in p.values()) and 0.0 < alpha < 1.0
+
+
+def _m_covers_the_family(
+    p: Mapping[str, float], alpha: float = ALPHA, *, strict: bool = False, m: int | None = None
+) -> bool:
+    return m is None or m >= len(p)
 
 
 def _holm_keeps_its_promises(
@@ -95,6 +105,7 @@ def _holm_keeps_its_promises(
     alpha: float = ALPHA,
     *,
     strict: bool = False,
+    m: int | None = None,
     result: Mapping[str, Adjusted] | None = None,
 ) -> bool:
     return (
@@ -112,15 +123,24 @@ def _holm_keeps_its_promises(
     _p_values_and_alpha_valid,
     message="p-Werte in [0, 1], mindestens einer, und 0 < alpha < 1",
 )
+@deal.pre(
+    _m_covers_the_family,
+    message="die Familiengröße m ist mindestens die Zahl der p-Werte",
+)
 @deal.ensure(
     _holm_keeps_its_promises,
     message="Holm: p <= p_holm <= 1, verwirft nur, was unkorrigiert fällt, Folge der Eingabe",
 )
 @deal.pure
 def holm(
-    p: Mapping[str, float], alpha: float = ALPHA, *, strict: bool = False
+    p: Mapping[str, float], alpha: float = ALPHA, *, strict: bool = False, m: int | None = None
 ) -> dict[str, Adjusted]:
     """Holm-Bonferroni über eine Familie: je Hypothese der angepasste Wert und ob sie fällt.
+
+    ``m`` ist die vorab festgelegte Familiengröße, Vorgabe die Zahl der p-Werte. Ist sie größer,
+    fehlt den übrigen Hypothesen die Eingabe; sie zählen wie p = 1 am Ende der Folge, die Ränge
+    der vorhandenen bleiben, nur ihre Faktoren ``m - j + 1`` wachsen. Kleiner als die Zahl der
+    p-Werte ist ein Vertragsbruch.
 
     Aufsteigend nach p (bei Gleichstand nach Kennung, damit die Folge der Eingabe nichts ändert)
     fällt H_(k) nach Holms Schrittregel genau dann, wenn ``p_(j) <= alpha / (m - j + 1)`` für sie
@@ -132,13 +152,13 @@ def holm(
     Eingabe.
     """
     order = sorted(p, key=lambda key: (p[key], key))
-    m = len(order)
+    size = len(order) if m is None else m
     running = 0.0
     still = True
     adjusted: dict[str, Adjusted] = {}
     for i, key in enumerate(order):
-        running = max(running, min(1.0, (m - i) * p[key]))
-        bound = alpha / (m - i)
+        running = max(running, min(1.0, (size - i) * p[key]))
+        bound = alpha / (size - i)
         still = still and (p[key] < bound if strict else p[key] <= bound)
         adjusted[key] = Adjusted(running, still)
     return {key: adjusted[key] for key in p}
@@ -157,13 +177,15 @@ def family(
     valid: Mapping[str, bool] | None = None,
     alpha: float = ALPHA,
     strict: bool = False,
+    m: int | None = None,
 ) -> dict[str, tuple[float, str]]:
     """Je Hypothese der Familie ``(p_holm, ergebnis)``; ``valid`` nennt, was noch nicht gilt.
 
     Holm rechnet über die ganze Familie, auch über vorläufige Hypothesen: die Familie ist vorab
-    festgelegt, und eine noch nicht gültige Hypothese bleibt ihr Mitglied.
+    festgelegt, und eine noch nicht gültige Hypothese bleibt ihr Mitglied. Ebenso eine ohne
+    Eingabe: sie fehlt in ``p`` und zählt über ``m`` mit (siehe ``holm``).
     """
-    adjusted = holm(p, alpha, strict=strict)
+    adjusted = holm(p, alpha, strict=strict, m=m)
     allowed = valid or {}
     return {
         key: (a.p_holm, verdict(a, valid=allowed.get(key, True))) for key, a in adjusted.items()
@@ -181,7 +203,9 @@ def hypothesis_frame(
     return pl.DataFrame([{name: row.get(name) for name in schema} for row in rows], schema=schema)
 
 
-def _problems(frame: pl.DataFrame, alpha: float, key: Sequence[str], strict: bool) -> list[str]:
+def _problems(
+    frame: pl.DataFrame, alpha: float, key: Sequence[str], strict: bool, m: int | None
+) -> list[str]:
     head = list(frame.schema.items())[: len(CORE_SCHEMA)]
     if head != list(CORE_SCHEMA.items()):
         return [f"Schema {dict(frame.schema)} beginnt nicht mit {CORE_SCHEMA}"]
@@ -222,7 +246,7 @@ def _problems(frame: pl.DataFrame, alpha: float, key: Sequence[str], strict: boo
         in_family[name] = p
         stored[name] = (p_holm, word)
     if in_family and not found:
-        for name, adjusted in holm(in_family, alpha, strict=strict).items():
+        for name, adjusted in holm(in_family, alpha, strict=strict, m=m).items():
             p_holm, word = stored[name]
             if abs(adjusted.p_holm - p_holm) > _TOLERANCE:
                 found.append(f"{name}: p_holm = {p_holm} ist nicht Holm über die Familie")
@@ -233,12 +257,30 @@ def _problems(frame: pl.DataFrame, alpha: float, key: Sequence[str], strict: boo
     return found
 
 
+def _m_covers_the_table(
+    frame: pl.DataFrame,
+    alpha: float = ALPHA,
+    *,
+    key: Sequence[str] = ("hypothese",),
+    strict: bool = False,
+    m: int | None = None,
+) -> bool:
+    if m is None or "p_holm" not in frame.columns:
+        return True
+    return m >= frame.filter(pl.col("p_holm").is_not_null()).height
+
+
+@deal.pre(
+    _m_covers_the_table,
+    message="die Familiengröße m ist mindestens die Zahl der Zeilen mit p_holm",
+)
 def check_hypotheses(
     frame: pl.DataFrame,
     alpha: float = ALPHA,
     *,
     key: Sequence[str] = ("hypothese",),
     strict: bool = False,
+    m: int | None = None,
 ) -> None:
     """``SchemaError``, wenn eine Hypothesentabelle den Kern verletzt; die Meldung nennt alles.
 
@@ -247,8 +289,10 @@ def check_hypotheses(
     die Familie: dort sind Kennung, ``p``, ``n`` und ``festgelegt`` Pflicht, jede Kennung kommt
     einmal vor, ``p <= p_holm <= 1``, ``p_holm`` ist Holm über die Familie, wie sie in der Tabelle
     steht, und das Wort passt zu Holm bei ``alpha`` (``bestätigt`` genau dann, wenn Holm verwirft,
-    außer ``vorläufig``; ``strict`` verlangt ``p_holm < alpha`` statt ``<=``).
+    außer ``vorläufig``; ``strict`` verlangt ``p_holm < alpha`` statt ``<=``). ``m`` ist die vorab
+    festgelegte Familiengröße, Vorgabe die Zahl der Zeilen mit ``p_holm``; eine Hypothese ohne
+    Eingabe steht ohne ``p`` außerhalb und zählt nur über ``m`` mit.
     """
-    found = _problems(frame, alpha, key, strict)
+    found = _problems(frame, alpha, key, strict, m)
     if found:
         raise SchemaError("Hypothesen: " + "; ".join(found))

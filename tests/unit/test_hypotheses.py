@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import deal
 import polars as pl
 import pytest
 
@@ -273,3 +274,76 @@ def test_a_hypothesis_stands_once_in_the_family_and_n_is_never_negative() -> Non
     rows[2]["n"] = -1
     with pytest.raises(SchemaError, match="negativ"):
         check_hypotheses(hypothesis_frame(rows, {"rolle": pl.String()}))
+
+
+# --- die vorab festgelegte Familiengröße (Supervisor, 2026-11-26; der Fall von 22) ---------------
+
+
+def _two_of_three(m: int | None) -> list[dict[str, object]]:
+    """H1 und H2 in der Familie, über ``m`` korrigiert; H3 fehlt die Eingabe, sie steht ohne p."""
+    decided = family({"H1": 0.02, "H2": 0.03}, m=m)
+    rows: list[dict[str, object]] = [
+        {
+            "hypothese": key,
+            "p": p,
+            "p_holm": decided[key][0],
+            "ergebnis": decided[key][1],
+            "n": 41,
+            "festgelegt": "9c7b3d6",
+        }
+        for key, p in (("H1", 0.02), ("H2", 0.03))
+    ]
+    rows.append(
+        {
+            "hypothese": "H3",
+            "p": None,
+            "p_holm": None,
+            "ergebnis": None,
+            "n": None,
+            "festgelegt": "9c7b3d6",
+        }
+    )
+    return rows
+
+
+def test_holm_corrects_over_the_registered_family_size() -> None:
+    """Fehlt einer vorab festgelegten Hypothese die Eingabe, zählt sie für Holm trotzdem.
+
+    m = 3, α = 0,05: Schwellen 0,0167, 0,025, 0,05; p = 0,02 hält schon an der ersten. Über die
+    zwei p-Werte allein (Schwellen 0,025 und 0,05) fielen beide.
+    """
+    p = {"a": 0.02, "b": 0.03}
+    over_two, over_three = holm(p), holm(p, m=3)
+    assert [round(a.p_holm, 6) for a in over_two.values()] == [0.04, 0.04]
+    assert [a.rejected for a in over_two.values()] == [True, True]
+    assert [round(a.p_holm, 6) for a in over_three.values()] == [0.06, 0.06]
+    assert [a.rejected for a in over_three.values()] == [False, False]
+    # die fehlende Hypothese wirkt wie eine mit p = 1 am Ende der Folge
+    padded = holm({**p, "fehlt": 1.0})
+    assert {key: padded[key] for key in p} == over_three
+    assert holm(p, m=2) == over_two  # die Vorgabe ist die Zahl der p-Werte
+
+
+def test_the_table_is_checked_over_the_registered_family_size() -> None:
+    """``check_hypotheses(…, m=3)`` rechnet über drei nach, die Vorgabe über die zwei Zeilen."""
+    over_three = hypothesis_frame(_two_of_three(3))
+    assert over_three["ergebnis"].to_list() == [NOT_CONFIRMED, NOT_CONFIRMED, None]
+    check_hypotheses(over_three, m=3)
+    with pytest.raises(SchemaError, match="nicht Holm über die Familie"):
+        check_hypotheses(over_three)
+    over_two = hypothesis_frame(_two_of_three(None))
+    assert over_two["ergebnis"].to_list() == [CONFIRMED, CONFIRMED, None]
+    check_hypotheses(over_two)
+    with pytest.raises(SchemaError, match="bestätigt, obwohl Holm nicht verwirft"):
+        check_hypotheses(over_two, m=3)
+
+
+def test_a_family_size_below_the_family_breaks_the_contract() -> None:
+    p = {"H1": 0.02, "H2": 0.03}
+    with pytest.raises(deal.PreContractError, match="Familiengröße"):
+        holm(p, m=1)
+    with pytest.raises(deal.PreContractError, match="Familiengröße"):
+        family(p, m=1)
+    with pytest.raises(deal.PreContractError, match="Familiengröße"):
+        check_hypotheses(hypothesis_frame(_two_of_three(None)), m=1)
+    check_hypotheses(hypothesis_frame(_two_of_three(None)), m=2)  # genau die Familie geht
