@@ -685,6 +685,25 @@ von Vorhaben 11, weil die Eingabe dessen Abschnitte liest.
   nicht erfahren** (Supervisor, 2026-11-26; der erste Auftrag nannte es im Feld `vorhaben` und im
   Kopf von `codebuch.md` und ist vor jeder Antwort gelöscht); welches Modell dahintersteht, steht
   nur in diesem Messdokument und im Laufprotokoll.
+- **Ergebnis der zweiten Messung (2026-11-26): `unbelegt = ja` in 5 von 50** (Grenze 2); Kodierer
+  A allein 5, B allein 2, α **0,544** (45 einig „nein", 2 einig „ja", 3 geschlichtet, alle zu
+  „ja": eine Verallgemeinerung mit „jeweils", die Anzahl der Fragesteller gegen den Betreff, eine
+  Möglichkeit als Pflicht); geschichtet 14,1 % (Wilson 6,7–30,9, n_eff 33). Weil B allein unter der
+  Grenze läge und α unter 0,8, entscheidet nach dem Kriterium der Supervisor. **Entscheidung des
+  Supervisors (2026-11-26): `qwen3.6:27b` hält nicht.** Gründe: die geschlichtete Zahl liegt mehr
+  als doppelt über der Grenze; der Schlichter hat alle drei Streitfälle mit „ja" entschieden; B
+  schreibt selbst, bei strengerer Lesart der Grenzfälle wäre seine Zahl höher; das geschichtete
+  Intervall liegt ganz über 2 von 50. Die deterministische Prüfung beanstandete zwei andere Kurzfassungen
+  (disjunkt wie bei gemma, nachgerechnet). `labels.csv`, `README.md` und `guete.json` liegen in
+  `validierung/20-kurzfassungen-nachmessung-2/`.
+- **Damit hält keines der beiden Modelle, und nach dem Kriterium gibt es keinen Stapellauf**
+  (Frage 38 beantwortet: kein Wechsel auf qwen, kein Stapellauf). Gebaut und validiert bleiben die
+  Eingabe Fassung 2 (mit der Rolle senkt sie die Beanstandungen von gemma von 12 auf 4 von 50, die
+  Rollenfehler von neun auf einen) und die deterministische Treueprüfung. Der Schritt `summaries`
+  bleibt im Paket, ist in allen Profilen aus und lässt sich für eine spätere Messung mit
+  `GEOREP_SUMMARIES__ENABLED=true` einschalten; `summaries.model` bleibt `gemma4` (weniger
+  Beanstandungen als qwen, 2,7-mal schneller). Weiter ginge es nur mit einem Codebuch Fassung 2
+  (Fragen 20.10, 20.11, 20.15) an einer frischen Stichprobe, als eigenes Vorhaben.
 
 ## 6. Bauplan Stufe 2
 
@@ -806,7 +825,7 @@ Keine: Vorhaben 20 ist kein Analysevorhaben. Was vorab festgelegt war, ist das K
 | 20.12 | Drei Mängel der Prüfung, gefunden in der Umbaurunde: ein „ca." vor „Monat Jahr" in der Eingabe löst den Ausschluss für „Tag. Monat Jahr" aus; von pypdf zusammengeklebtes „Monat2022" wird nicht erkannt; unregelmäßige Plurale (Votum, Voten) fallen durch die Endungsliste. Dazu die Frage, ob selbst gezählte oder gerechnete, richtige Zahlen unbelegt sind | Alle drei Mängel sind Fehlalarme; die Zahlen sind nach Regel 3 unbelegt, aber nicht falsch | die drei Mängel in `enrich/fidelity.py` beheben, je mit einem Test aus diesen Fällen; abgeleitete Zahlen bleiben unbelegt, und Regel 3 des Prompts bekommt in Fassung 2 „keine selbst gezählten oder gerechneten Zahlen" |
 | 20.13 | Eingabe Fassung 2 mit Rolle (Absender aus Dokumentart und Urheber, beschließendes Gremium aus der Beratungsfolge) und eine Nachmessung von `unbelegt` an frischen 50, bevor der Stapellauf startet; wenn gemma dort mehr als 2 von 50 hat, qwen? | Rollenfehler in einer von vier Kurzfassungen machen sie für den Vorlagenspiegel unbrauchbar | ja; das Kriterium der Nachmessung legt der Bau-Agent vorab fest, Vorschlag in § 5.3; **festgelegt in § 5.4** (Bau-Agent, 2026-11-24): höchstens 2 von 50, sonst qwen an denselben 50 (Frage 38) |
 | 20.14 | Der Rumpf aus 11 beginnt in 2014–2020 bei rund 4 095 Dokumenten (Hauptperiode 8, 2025 1) mit dem Namen aus der Kopfzeile des Dezernats, meist mit dem Amt davor („Beigeordnete …"; Review von 11, Hinweis des Supervisors 2026-11-24); 11 lässt das in `struktur-1` so. Hält Regel 5 (keine Personennamen) dagegen? | Ein abgeschriebener Name ist belegt; weder die Treueprüfung noch `unbelegt` sieht ihn | die Treueprüfung zählt Personennamen daneben (`person_names`, Spalte `personennamen`: ein Name hinter Anrede, Titel oder Amt aus `summaries.person_titles`, und ein mehrteiliger Name, der in der Eingabe dahinter steht); an den 800 Kurzfassungen der Messung hatten qwen 7 und 6, gemma 6 und 3 einen (Runde 1 und 2). Die Nachmessung (Hauptperiode, 8 betroffene Dokumente) prüft das kaum; vor einer Nutzung von 2014–2020 in 29 die Zahl je Periode aus dem Stapellauf lesen |
-| 20.15 | Unschärfen des Codebuchs der Nachmessung, genannt vom Schlicht-Agenten (2026-11-26, nicht angewendet): was die Kopfdaten bedeuten (ein Datum der Eingabe als Tag der Einreichung gelesen), ob eine gestrichene Einschränkung („nahezu") unbelegt ist, nahe Sprechakte („beantragen" für eine Anregung), keine Schwelle für Geringfügiges | α 0,649 bei 48 von 50 gleich: die Frage `unbelegt` ist bei wenigen „ja" knapp, und zwei der vier „ja" hängen an diesen Grenzfällen | in eine Fassung 2 des Codebuchs aufnehmen (mit 20.10 und 20.11), an einer frischen Stichprobe nach F4; für die Messung mit qwen gilt das Codebuch Fassung 1 unverändert |
+| 20.15 | Unschärfen des Codebuchs der Nachmessung, genannt vom Schlicht-Agenten (2026-11-26, nicht angewendet): was die Kopfdaten bedeuten (ein Datum der Eingabe als Tag der Einreichung gelesen), ob eine gestrichene Einschränkung („nahezu") unbelegt ist, nahe Sprechakte („beantragen" für eine Anregung), keine Schwelle für Geringfügiges; **dazu aus der zweiten Messung** (Schlicht-Agent, 2026-11-26): Verallgemeinerungen („jeweils"), Modalität (eine Möglichkeit als Pflicht), Kopfdaten gegen den Betreff (Zahl der Fragesteller), der Adressat einer Anfrage, und Begründungen aus einem Wort bei „nein", die das Schlichten erschweren | α 0,649 bei 48 von 50 gleich (gemma) und 0,544 bei 47 von 50 (qwen): die Frage `unbelegt` ist bei wenigen „ja" knapp, und zwei der vier „ja" hängen an diesen Grenzfällen | in eine Fassung 2 des Codebuchs aufnehmen (mit 20.10 und 20.11), an einer frischen Stichprobe nach F4; für die Messung mit qwen gilt das Codebuch Fassung 1 unverändert |
 
 ## 10. Änderungen durch die Synergie
 
