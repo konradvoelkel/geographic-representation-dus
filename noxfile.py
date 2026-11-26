@@ -62,7 +62,14 @@ def test(session: nox.Session) -> None:
 
 @nox.session
 def golden(session: nox.Session) -> None:
-    """Volle Referenz, Sekunden."""
+    """Volle Referenz, seriell wie in CI; das dauert Minuten.
+
+    Gemessen am 2026-11-27 mit ``--durations=25``: 123 Tests in 18 min 19 s lokal, auf dem Runner
+    14 bis 19 min (2026-11-26; am 2026-11-23 waren es 4 min mit 42 Tests). Rund vier Fünftel tragen
+    acht Tests, die je die ganze Kette über die Referenz rechnen (je rund 85 s, einer zweimal), und
+    der Aufbau von ``test_published_page.py`` (93 s). Jeder schreibt nur unter ``tmp_path``; eine
+    Kette braucht rund 1,7 GB und im Mittel gut zwei Kerne.
+    """
     session.run("uv", "run", "pytest", "-m", "slow", *session.posargs)
 
 

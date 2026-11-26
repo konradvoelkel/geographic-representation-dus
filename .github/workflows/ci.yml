@@ -8,9 +8,21 @@ on:
 permissions:
   contents: read
 
+# Ein neuer Push auf denselben Ref bricht den laufenden Lauf ab: sein Stand ist im neuen enthalten,
+# und zwei Läufe zu je rund 20 Minuten nebeneinander prüfen dasselbe zweimal (am 2026-11-26 liefen
+# die Läufe von 696922a und a246a9e nebeneinander). Ein Pull Request bekommt je Lauf eine eigene
+# Gruppe, also weder Abbruch noch Warteschlange.
+concurrency:
+  group: ci-${{ github.event_name == 'push' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
 jobs:
   checks:
     runs-on: ubuntu-latest
+    # Gemessen auf dem Runner: am 2026-11-23 6 bis 10 Minuten je Lauf, am 2026-11-26 17 bis 23
+    # (die Session golden allein 14 bis 19, seriell). 45 Minuten lassen rund das Doppelte des
+    # längsten Laufs und brechen einen hängenden Lauf ab, statt die sechs Stunden der Vorgabe zu warten.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
