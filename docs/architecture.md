@@ -806,23 +806,22 @@ getötet, 165 Überlebende, davon 100 in Vertragsgrenzen), 79 % über `search/` 
 
 ## Bekannte Grenzen
 
-- Ein voller `georep fetch` von Grund auf lief noch nie; ob der OParl-Server `modified_since` beachtet, zeigt erst er.
-- Labels, die sich nur durch ein Komma unterscheiden, fallen in der POI-Bereinigung zusammen (Verhalten der Arbeit, durch das Wörterbuch harmlos).
+Hier stehen nur Grenzen des Entwurfs. Fakten über Daten, Quellen und Werkzeuge — dass ein voller
+Abruf nie in einem Zug lief, die Eigenheiten des Wörterbuchs, die Abweichung in Tabelle 5 der Arbeit
+— stehen datiert in [../STATUS.md](../STATUS.md), „Bekannt".
+
 - Die Regel „Einrichtung mit Stadtnamen" urteilt über den Namen, nicht über die Sache: sie trifft auch, was
   eine Stadt im Namen trägt und kein Ort ist (eine Zeitung, eine Ausstellung), und sie trifft nicht, was ohne
   Stadtnamen stadtweit vorkommt („Hofgarten", „Schulweg") — dafür steht die Liste der stadtweiten Begriffe,
   und die urteilt umgekehrt nur über die Häufigkeit, nicht über die Sache. Die Gattungswortliste ist
   deutschsprachig; eine Stadt in einem anderen Sprachraum ersetzt sie im Profil.
-- Tabelle 5 der Arbeit, Spalte „ohne Ausreißer", weicht von der Neuberechnung ab; die Tests frieren die Neuberechnung ein (baseline-2026-10-10.md).
 - crosshair prüft nur rein-pythonische Funktionen; Polars-Funktionen haben Laufzeitverträge und hypothesis.
 - Der passende Ausschuss ist eine Schätzung aus Wörtern, keine Aussage darüber, wo ein Dokument hätte
   beraten werden müssen; vier von fünf Dokumenten der Bezirksvertretungen bleiben in der Restklasse
-  (decisions.md, Punkt 45c). Sechs Personennamen überleben den Namensfilter, weil sie nie neben einer
-  Amtsbezeichnung stehen (ebenda, 45a).
-- Der OParl-Server liefert für Düsseldorf keine Urheberfelder (`originatorPerson`, `originatorOrganization`,
-  `underDirectionOf`): 0 von 19 108 Rohobjekten und keines der sechs Paper der Seite vom 2026-10-09, auch
-  der „Antrag FDP“ nicht. Der Urheber ist deshalb aus `paperType`, Titel und Textkopf abgeleitet und deckt
-  98,3 % der Dokumente ab; die Quelle `oparl` greift ohne Codeänderung, sobald der Server die Felder füllt.
+  (decisions.md, Punkt 45c).
+- Der OParl-Server füllt für Düsseldorf die Urheberfelder (`originatorPerson`, `originatorOrganization`,
+  `underDirectionOf`) nicht (STATUS, „Bekannt"). Der Urheber ist deshalb aus `paperType`, Titel und
+  Textkopf abgeleitet; die Quelle `oparl` greift ohne Codeänderung, sobald der Server die Felder füllt.
   Einzelne Mandatsträger (865 Dokumente) bleiben ohne Partei, auch wenn der Titel eine nennt; nennt erst der
   Textkopf den Mandatsträger, zählt das Dokument als unbekannt (die Anreden der Vorlagen würden sonst halbe
   Anträge zu Personen machen).
@@ -843,5 +842,5 @@ getötet, 165 Überlebende, davon 100 in Vertragsgrenzen), 79 % über `search/` 
   bleibt dort die Partei — 239 der 581 Fraktionsanträge (41,1 %) nennen eine, die übrigen 342 sind
   eine Fraktion ohne Namen (314 ohne Text, 28 mit Briefkopf ohne Namen). Vom Titel zählt dabei nur,
   was hinter seinem letzten Bezugsmarker steht (`title_split_markers`, Punkt 63).
-- Im Wahlbezirk 11 ist Die Linke nicht angetreten (0 Stimmen). Der Abgleich mit dem Stimmenanteil lässt
-  solche Bezirke je Partei aus (`angetreten`), sonst läse sich „kein Wahlvorschlag“ wie „keine Zustimmung“.
+- Der Abgleich mit dem Stimmenanteil lässt Bezirke, in denen eine Partei nicht angetreten ist, je
+  Partei aus (`angetreten`), sonst läse sich „kein Wahlvorschlag“ wie „keine Zustimmung“.

@@ -58,7 +58,7 @@ die URL beziehungsweise bei Overpass der POST-Body), PDFs **nie** — die gehör
 | Wikidata SPARQL | **eine** Abfrage für alle Objekte der Stadt | — | global | 30 Tage | — |
 | Wikipedia GeoSearch | eine Bounding-Box je Stimmbezirk, `geosearch_limit` = 500 | 1 s | global | 30 Tage | 179 Overpass- plus 179 GeoSearch-Abfragen Mönchengladbachs in rund 15 min |
 
-Drei Eigenheiten, die man nicht erwartet:
+Vier Eigenheiten, die man nicht erwartet:
 
 - **`[timeout:N]` ist nicht der Netz-Timeout**, sondern das Rechenbudget, das Overpass der Abfrage
   gibt. Der Server schätzt die Kosten vorab gegen sein Slot-Budget und weist ein großes Budget unter
@@ -68,6 +68,12 @@ Drei Eigenheiten, die man nicht erwartet:
 - **Die Session wiederholt den Overpass-POST nicht**: ihre Retry-Regel erlaubt GET und HEAD. Darum
   wiederholt `fetch_street_names` selbst, und zwar je Stimmbezirk — ein einzelner 504 soll nicht die
   Bezirke danach kosten (Punkt 55).
+- **Einen zähen Abruf sammelt der HTTP-Cache.** Vom 2026-10-14 15:58 bis zum 2026-10-15 09:13 wies
+  overpass-api.de fast jede Abfrage mit `504` ab, auch eine Trivialabfrage. Weil der Schlüssel des
+  Caches Host, Methode und Abfragetext ist, setzte jeder Durchlauf auf dem vorigen auf, bis Durchlauf
+  130 alle 179 Abfragen Mönchengladbachs beisammen hatte. Wer so etwas wieder fährt, ändert nichts,
+  was den Schlüssel ändert (Endpunkt, `query_timeout_s`, `simplify_m`), sonst beginnt das Sammeln
+  von vorn.
 - **Abbruchregeln statt Vollabruf.** `sources.oparl.stop_when_older` hält an, sobald eine Seite nur
   noch Paper vor `period.start` trägt (spart 270 von 365 Seiten); `incremental` holt beim zweiten Lauf
   nur `modified_since` (letztes `modified` minus ein Tag) und liefert dann auch gelöschte Paper;
