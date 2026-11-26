@@ -52,8 +52,12 @@ NOWHERE = Path("/nonexistent")
 DOCUMENTS_WITH_RAW_TEXT = 19_091  # das AES-verschlüsselte 00403713.pdf hat keinen (Punkt 73)
 EXPECTED_SHARE = (10_506, 10_784)  # § 3.4, wie gemessen
 # § 4.1 maß 10 404 von 10 867 (95,7 %) mit den Namen des Profils allein; dazu kommen die Kürzel
-# selbst, die Genitivformen und die sechs Namen aus Frage 15
-OPARL = (12_763, 13_232)
+# selbst, die Genitivformen und die sechs Namen aus Frage 15. Die sechs sind zum Teil zirkulär
+# (Review 11, N2): ihre Namen stammen aus derselben Paarung von Kopfzeile und OParl-Gremium, also
+# trägt nur die Zahl ohne ihre Zeilen das Kriterium
+OPARL = (12_763, 13_232)  # 96,5 %
+OPARL_WITHOUT_SIX = (10_454, 10_917)  # 95,8 %
+SIX = ("KUA", "JHA", "SCHUA", "AGS", "HFA", "AWM")  # Frage 15
 SESSION_BODIES = (48, 48)  # im Entwurf wörtlich 27 von 48
 SOURCES = {"ueberschrift": 9_236, "einleitung": 927, "beschlusssatz": 343}  # § 3.4, „Woher"
 
@@ -303,13 +307,21 @@ def test_the_decision_proposal_is_found_where_the_type_expects_one(period: Perio
 
 def test_the_head_bodies_stand_in_the_consultations_of_the_server(period: Period) -> None:
     """§ 4.1: 95,7 % der Kopfzeilen mit Gremium aus dem Profil stehen in der OParl-Folge desselben
-    Dokuments; eine untere Schranke der Präzision (OParl hält die tatsächliche Beratung)."""
+    Dokuments; eine untere Schranke der Präzision (OParl hält die tatsächliche Beratung). Gegen
+    das Kriterium zählt die Zahl ohne die sechs Ausschüsse aus Frage 15, deren Namen aus genau
+    dieser Paarung stammen (Review 11, N2)."""
     corpus = pl.read_parquet(period.layout.corpus, columns=["id", CONSULTATION])
     extra = pl.read_parquet(period.layout.consultations, columns=["id", CONSULTATION])
-    found, known = consultation_agreement(
-        period.head, merge_consultations(corpus, extra), period.settings.bodies.organizations
+    consultations = merge_consultations(corpus, extra)
+    organizations = period.settings.bodies.organizations
+    assert consultation_agreement(period.head, consultations, organizations) == OPARL
+    without = period.head.with_columns(
+        pl.col("beratungsfolge").list.eval(
+            pl.element().filter(~pl.element().struct.field("gremium_kuerzel").is_in(SIX))
+        )
     )
-    assert (found, known) == OPARL
+    found, known = consultation_agreement(without, consultations, organizations)
+    assert (found, known) == OPARL_WITHOUT_SIX
     assert found / known >= 0.95
 
 

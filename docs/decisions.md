@@ -3193,8 +3193,11 @@ keine zweite Tabelle: `BodyNames` vergleicht einen geschriebenen Namen mit den N
 „Bezirksvertretung10", „AÖE"); ein Schlüssel für zwei Kürzel fällt weg. Die Sitzung eines Briefs
 trägt danach Kürzel und Namen im Nominativ, ohne den Ort dahinter (`head.session_suffix`): 48 von 48
 gegen die Kodierung, wörtlich waren es im Entwurf 27. Gegen die OParl-Beratungsfolge desselben
-Dokuments stehen 12 763 von 13 232 Kopfzeilen mit Kürzel (96,5 %; die Messung zählte 95,7 % mit den
-Namen allein), über `resolve_organizations` wie im Schritt `bodies`. (4) **Sechs Ausschussnamen**
+Dokuments stehen 12 763 von 13 232 Kopfzeilen mit Kürzel (96,5 %), über `resolve_organizations` wie
+im Schritt `bodies`. Die Zahl ist zum Teil zirkulär (Review N2): die sechs Namen aus Frage 15
+stammen aus genau dieser Paarung von Kopfzeile und OParl-Gremium. Ohne ihre Zeilen sind es 10 454
+von 10 917 (95,8 %; die Messung zählte 95,7 % mit den Namen des Profils allein); nur diese Zahl
+misst die Präzision, und der slow-Test hält beide fest. (4) **Sechs Ausschussnamen**
 aus dem Kopf (Frage 15, eigener Commit; KUA, JHA, SCHUA, AGS, HFA, AWM, je n von n Dokumenten mit
 genau einer Kopfzeile und genau einem OParl-Gremium): sie ändern Text der Seite und die Zahl der
 Kürzel ohne gesicherten Namen, sonst keine Zahl (unten, A/B-Bau). Der Stand der Namen
