@@ -191,10 +191,6 @@ VERIFY_TARGETS = [
     # tests/property/test_cycles_props.py.
     "georep.analysis.cycles.complete_years",
     "georep.analysis.hypotheses.holm",
-    # Vorhaben 22 (2026-11-24): Holm über die vorab festgelegten Tests, rein; einzeln geprüft, 22 s,
-    # kein Gegenbeispiel. Übergang, bis Vorhaben 17 ``analysis/hypotheses.py`` bringt; dann geht
-    # das Ziel mit der Funktion dorthin.
-    "georep.analysis.need.holm",
     # Vorhaben 22: der Gemeindeschlüssel in seinen vier Teilen. Der erste Lauf fand ein echtes
     # Gegenbeispiel (Ziffern einer anderen Schrift, str.isdigit nahm sie); seit der Vorbedingung
     # über contracts.is_municipality_key einzeln Exit 0 nach 24 s.

@@ -19,10 +19,10 @@ Bit ab (bei 41 Werten in neun von zehn Fällen), darum zählt ein permutiertes r
 dem beobachteten als mindestens so extrem, wie im Messskript. Innerhalb der Stadtbezirke und bei
 Moran's I entstehen beobachteter und permutierte Werte aus derselben Formel und brauchen das nicht.
 
-Rein und ohne Netz; die Spalten und Parameter nennt der Aufrufer über ``NeedSettings``. ``holm``
-und die Wortwahl ``bestätigt``/``nicht bestätigt`` sind eine **Übergangslösung**, bis Vorhaben 17
-``analysis/hypotheses.py`` mit dem gemeinsamen Kern bringt (Synergien 2026-11, § 1); dann werden sie
-von dort genommen.
+Rein und ohne Netz; die Spalten und Parameter nennt der Aufrufer über ``NeedSettings``. Holm, die
+Wortwahl und der Spaltenkern kommen aus ``analysis.hypotheses`` (Vorhaben 17, Synergien 2026-11,
+§ 1): mit ``strict=True``, weil § 8 „p_Holm < 0,05" festlegt, und ``m`` gleich der Zahl der vorab
+festgelegten Hypothesen, damit eine ohne Eingabe für Holm mitzählt (Supervisor, 2026-11-26).
 """
 
 from __future__ import annotations
@@ -38,6 +38,7 @@ import shapely
 from scipy import stats
 from shapely.geometry.base import BaseGeometry
 
+from georep.analysis.hypotheses import CONFIRMED, CORE_SCHEMA, check_hypotheses, family
 from georep.contracts import has_columns
 from georep.errors import SchemaError
 from georep.settings import NeedHypothesis, NeedSettings
@@ -50,8 +51,6 @@ STRATUM = "stadtbezirk"
 # mindestens so extrem (Messskript, ``spearman_test``): das beobachtete kommt aus ``np.corrcoef``, die
 # permutierten aus ``_row_correlations``. Die explorativen Rechnungen brauchen das nicht.
 TIE = 1e-12
-CONFIRMED = "bestätigt"
-NOT_CONFIRMED = "nicht bestätigt"
 # Die Deutung eines Haupttests mit den Wörtern aus § 8 des Messdokuments (Review 2026-11-24, K1):
 # ``ergebnis`` sagt nur, ob Holm verwirft, bei der zweiseitigen H2 aber nicht, in welche Richtung.
 FOLLOWS = "Aufmerksamkeit folgt dem Bedarf"
@@ -67,15 +66,10 @@ MORAN_NEED = "moran_bedarf"
 MORAN_ATTENTION = "moran_aufmerksamkeit"
 PAIR = "paar"
 
-# Der Kern der Hypothesentabellen (Synergien 2026-11, § 1) vorn, dann die Spalten von 22, zuerst
-# die Deutung des Haupttests.
+# Der Kern der Hypothesentabellen (``analysis.hypotheses.CORE_SCHEMA``) vorn, dann die Spalten
+# von 22, zuerst die Deutung des Haupttests.
 HYPOTHESES_SCHEMA: dict[str, pl.DataType] = {
-    "hypothese": pl.String(),
-    "p": pl.Float64(),
-    "p_holm": pl.Float64(),
-    "ergebnis": pl.String(),
-    "n": pl.Int64(),
-    "festgelegt": pl.String(),
+    **CORE_SCHEMA,
     "deutung": pl.String(),
     "rechnung": pl.String(),
     "explorativ": pl.Boolean(),
@@ -92,6 +86,10 @@ HYPOTHESES_SCHEMA: dict[str, pl.DataType] = {
     "permutationen": pl.Int64(),
     "seed": pl.Int64(),
 }
+
+# Eine Zeile ist eindeutig über ihre Rechnung: je Hypothese Haupttest, Robustheit (andere Spalte,
+# Kontrolle oder Wahlbezirke ohne), innerhalb, Moran; die Paare über ihre beiden Spalten.
+ROW_KEY = ("hypothese", "rechnung", "bedarf", "aufmerksamkeit", "kontrolle", "ohne")
 
 Floats = npt.NDArray[np.float64]
 
@@ -292,56 +290,28 @@ def rank_residuals(x: Floats, y: Floats) -> Floats:
     return np.asarray(ry - design @ np.linalg.lstsq(design, ry, rcond=None)[0], dtype=np.float64)
 
 
-# --- Übergang bis Vorhaben 17 (analysis/hypotheses.py): Holm und die Wortwahl ----------------
-
-
-@deal.pure
-@deal.pre(lambda p_values: all(0.0 <= p <= 1.0 for p in p_values), message="p in [0, 1]")
-@deal.ensure(
-    lambda p_values, result: (
-        len(result) == len(p_values)
-        and all(a >= p for a, p in zip(result, p_values, strict=True))
-        and all(0.0 <= a <= 1.0 for a in result)
-    ),
-    message="je p ein angepasstes, nie kleiner, höchstens 1",
-)
-def holm(p_values: Sequence[float]) -> list[float]:
-    """Holm-angepasste p in der Folge der Eingabe (schrittweise, monoton, höchstens 1)."""
-    m = len(p_values)
-    order = sorted(range(m), key=lambda i: (p_values[i], i))
-    adjusted = [0.0] * m
-    running = 0.0
-    for rank, index in enumerate(order):
-        running = max(running, min(1.0, (m - rank) * p_values[index]))
-        adjusted[index] = running
-    return adjusted
-
-
-def verdict(p_holm: float | None, alpha: float) -> str:
-    """``bestätigt`` genau dann, wenn Holm bei ``alpha`` verwirft; sonst ``nicht bestätigt``."""
-    return CONFIRMED if p_holm is not None and p_holm < alpha else NOT_CONFIRMED
+# --- Die Deutung der Haupttests -------------------------------------------------------------
 
 
 @deal.pre(
-    lambda alternative, rho, p_holm, alpha: alternative in ("greater", "two-sided"),
+    lambda alternative, rho, result: alternative in ("greater", "two-sided"),
     message="bekannte Alternative",
 )
 @deal.post(lambda result: result in (FOLLOWS, UNEQUAL, NO_LINK, None))
-def interpretation(
-    alternative: str, rho: float | None, p_holm: float | None, alpha: float
-) -> str | None:
-    """Was ein Haupttest sagt, mit den Wörtern aus § 8; ohne rho oder ohne Holm nichts.
+def interpretation(alternative: str, rho: float | None, result: str | None) -> str | None:
+    """Was ein Haupttest sagt, mit den Wörtern aus § 8; ohne rho oder außerhalb der Familie nichts.
 
-    Verwirft Holm (``p_holm < alpha``) und ist rho positiv: „Aufmerksamkeit folgt dem Bedarf"; ist
-    rho negativ und der Test zweiseitig: „ungleiche Aufmerksamkeit"; sonst „kein Zusammenhang
-    nachweisbar". Ein einseitiger Test (rho > 0) prüft die andere Richtung nicht und hat nur die
-    beiden Ausgänge, die § 8 für ihn erlaubt.
+    ``result`` ist das Wort aus ``analysis.hypotheses.family``. Verwirft Holm (``bestätigt``) und
+    ist rho positiv: „Aufmerksamkeit folgt dem Bedarf"; ist rho negativ und der Test zweiseitig:
+    „ungleiche Aufmerksamkeit"; sonst „kein Zusammenhang nachweisbar". Ein einseitiger Test
+    (rho > 0) prüft die andere Richtung nicht und hat nur die beiden Ausgänge, die § 8 für ihn
+    erlaubt.
     """
-    if rho is None or p_holm is None:
+    if rho is None or result is None:
         return None
-    if p_holm < alpha and rho > 0:
+    if result == CONFIRMED and rho > 0:
         return FOLLOWS
-    if p_holm < alpha and rho < 0 and alternative == "two-sided":
+    if result == CONFIRMED and rho < 0 and alternative == "two-sided":
         return UNEQUAL
     return NO_LINK
 
@@ -451,30 +421,30 @@ def _robust_rows(frame: pl.DataFrame, h: NeedHypothesis) -> list[dict[str, objec
     return rows
 
 
-def _table_holds(result: pl.DataFrame, alpha: float) -> bool:
+def _table_holds(result: pl.DataFrame, need: NeedSettings) -> bool:
+    """Der Kern aus 17 (``check_hypotheses``) und was 22 dazu festlegt.
+
+    Die Familie sind genau die Haupttests mit p; ein Haupttest ohne p steht ohne ``p_holm``,
+    Ergebnis und Deutung da (Review 2026-11-24, N2), und die Deutung folgt aus dem Ergebnis.
+    """
     if result.schema != pl.Schema(HYPOTHESES_SCHEMA):
         return False
-    for column in ("p", "p_holm"):
-        values = result.get_column(column).drop_nulls()
-        if not bool(((values >= 0) & (values <= 1)).all()):
-            return False
+    try:
+        check_hypotheses(result, need.alpha, key=ROW_KEY, strict=True, m=len(need.hypotheses))
+    except SchemaError:
+        return False
     main = result.filter(pl.col("rechnung") == MAIN)
     for p, p_holm, ergebnis, deutung, alternative, rho in main.select(
         "p", "p_holm", "ergebnis", "deutung", "alternative", "wert"
     ).rows():
-        if p is None:
-            # ohne Test keine Familie: weder Holm noch Wort (Review 2026-11-24, N2)
-            if (p_holm, ergebnis, deutung) != (None, None, None):
-                return False
-            continue
-        if p_holm is None or p_holm < p or ergebnis != verdict(p_holm, alpha):
+        if (p is None) != (p_holm is None):
             return False
-        if deutung != interpretation(alternative, rho, p_holm, alpha):
+        if deutung != interpretation(alternative, rho, ergebnis):
             return False
     others = result.filter(pl.col("rechnung") != MAIN)
     return all(
         others.get_column(column).null_count() == others.height
-        for column in ("ergebnis", "deutung")
+        for column in ("p_holm", "ergebnis", "deutung")
     )
 
 
@@ -495,7 +465,7 @@ def _result_holds(
     result: pl.DataFrame | None = None,
 ) -> bool:
     assert result is not None
-    return _table_holds(result, need.alpha)
+    return _table_holds(result, need)
 
 
 @deal.pre(
@@ -503,7 +473,7 @@ def _result_holds(
 )
 @deal.ensure(
     _result_holds,
-    message="Schema, p in [0, 1], p_holm >= p, Ergebnis genau bei Holm unter alpha, Deutung aus § 8",
+    message="der Kern aus 17 mit strict und m, die Familie sind die Haupttests mit p, Deutung aus § 8",
 )
 @deal.raises(SchemaError)
 def hypothesis_table(frame: pl.DataFrame, need: NeedSettings, *, weights: Floats) -> pl.DataFrame:
@@ -562,12 +532,15 @@ def hypothesis_table(frame: pl.DataFrame, need: NeedSettings, *, weights: Floats
             seed=need.seed,
         )
         main.append((h, row, rho, p))
-    adjusted = holm([1.0 if p is None else p for *_, p in main])
-    for (h, row, rho, p), p_holm in zip(main, adjusted, strict=True):
-        family_p = None if p is None else p_holm
-        row["p_holm"] = family_p
-        row["ergebnis"] = None if family_p is None else verdict(family_p, need.alpha)
-        row["deutung"] = interpretation(h.alternative, rho, family_p, need.alpha)
+    # Holm aus dem Kern: die Familie sind die Haupttests mit p, gezählt werden alle vorab
+    # festgelegten (m), und § 8 verlangt p_Holm < alpha (strict).
+    tested = {h.name: p for h, _, _, p in main if p is not None}
+    judged = family(tested, alpha=need.alpha, strict=True, m=len(need.hypotheses)) if tested else {}
+    for h, row, rho, _ in main:
+        p_holm, result = judged.get(h.name, (None, None))
+        row["p_holm"] = p_holm
+        row["ergebnis"] = result
+        row["deutung"] = interpretation(h.alternative, rho, result)
         rows.append(row)
         rows += _robust_rows(frame, h)
 

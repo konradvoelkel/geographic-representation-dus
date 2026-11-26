@@ -3508,9 +3508,15 @@ Paket nach.
   alle vorab festgelegten, m = 3 (Review 2026-11-24, N2; vorher fiel die Hypothese weg, und Holm
   rechnete über den Rest). Die Zeile des Laufs nennt sie. Im Lauf der Hauptperiode fehlt nichts;
   die Tests der Kette laufen auch ohne Fremddaten.
-- *`holm` und `verdict` liegen vorerst in `analysis/need.py`*: Vorhaben 17 bringt
-  `analysis/hypotheses.py` mit dem gemeinsamen Kern; nach dessen Merge werden sie von dort genommen
-  (auch das Ziel in `VERIFY_TARGETS` zieht mit).
+- *Holm und die Wortwahl aus dem Kern von 17* (`analysis/hypotheses.py`, Punkt 78): `family` mit
+  `strict=True`, weil § 8 „p_Holm < 0,05" festlegt (die Vorgabe des Kerns ist `<=`), und `m` gleich
+  der Zahl der vorab festgelegten Hypothesen, damit eine ohne Eingabe außerhalb der Familie steht
+  und für Holm trotzdem zählt (Supervisor, 2026-11-26). Der Vertrag von `hypothesis_table` ruft
+  `check_hypotheses` mit dem Schlüssel `ROW_KEY` (Hypothese, Rechnung, Bedarf, Aufmerksamkeit,
+  Kontrolle, ohne), denn 22 trägt je Hypothese mehrere Rechnungen. Bis zum Merge von 17 lagen
+  `holm` und `verdict` als Übergang in `analysis/need.py`; ihr Ziel in `VERIFY_TARGETS` fiel mit
+  ihnen weg, `georep.analysis.hypotheses.holm` steht dort seit 17. Die Zahlen von H1 bis H3 sind
+  dieselben (der `slow`-Test).
 
 **Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
 (`ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace), beide mit `POLARS_MAX_THREADS=4` und

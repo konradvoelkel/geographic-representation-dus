@@ -13,15 +13,14 @@ import pytest
 from scipy import stats
 from shapely.geometry import box
 
+from georep.analysis.hypotheses import CONFIRMED, NOT_CONFIRMED, check_hypotheses, family, holm
 from georep.analysis.need import (
-    CONFIRMED,
     FOLLOWS,
     HYPOTHESES_SCHEMA,
     NO_LINK,
-    NOT_CONFIRMED,
+    ROW_KEY,
     UNEQUAL,
     bootstrap_interval,
-    holm,
     hypothesis_table,
     interpretation,
     morans_i,
@@ -29,7 +28,6 @@ from georep.analysis.need import (
     partial_spearman,
     permutation_test,
     spearman,
-    verdict,
     within_strata,
 )
 from georep.errors import SchemaError
@@ -87,43 +85,43 @@ def test_the_bootstrap_interval_brackets_rho_and_is_reproducible() -> None:
     assert bootstrap_interval(x[:2], y[:2], draws=5, rng=np.random.default_rng(0)) == (None, None)
 
 
-def test_holm_by_hand() -> None:
-    # sortiert 0,01 · 3 = 0,03; 0,03 · 2 = 0,06; 0,04 · 1 = 0,04 -> monoton 0,06
-    assert holm([0.01, 0.04, 0.03]) == pytest.approx([0.03, 0.06, 0.06])
-    # die Zahlen der Messung (§ 3.4)
-    assert holm([0.0143, 0.0346, 0.6474]) == pytest.approx([0.0429, 0.0692, 0.6474])
-    assert holm([0.5, 0.9]) == pytest.approx([1.0, 1.0])
-    assert holm([]) == []
+def test_holm_comes_from_the_core_with_the_strict_threshold_of_section_8() -> None:
+    """Holm und die Wortwahl aus ``analysis.hypotheses`` (Vorhaben 17), wie 22 sie aufruft.
 
-
-def test_the_verdict_is_holm_against_alpha() -> None:
-    assert verdict(0.0429, 0.05) == CONFIRMED
-    assert verdict(0.05, 0.05) == NOT_CONFIRMED
-    assert verdict(None, 0.05) == NOT_CONFIRMED
+    Die Zahlen der Messung (§ 3.4); und § 8 legt „p_Holm < 0,05" fest: auf der Schwelle selbst
+    verwirft 22 nicht (``strict=True``), die Vorgabe des Kerns (``<=``) täte es.
+    """
+    measured = family({"H1": 0.0143, "H2": 0.0346, "H3": 0.6474}, strict=True, m=3)
+    assert [p_holm for p_holm, _ in measured.values()] == pytest.approx([0.0429, 0.0692, 0.6474])
+    assert [word for _, word in measured.values()] == [CONFIRMED, NOT_CONFIRMED, NOT_CONFIRMED]
+    on_the_line = {"A": 0.025, "B": 0.5}  # 2 · 0,025 = 0,05 = alpha
+    p_holm, word = family(on_the_line, strict=True)["A"]
+    assert p_holm == pytest.approx(0.05) and word == NOT_CONFIRMED
+    assert family(on_the_line)["A"][1] == CONFIRMED
 
 
 @pytest.mark.parametrize(
-    ("alternative", "rho", "p_holm", "expected"),
+    ("alternative", "rho", "result", "expected"),
     [
         # § 8, H2: zweiseitig, drei Ausgänge
-        ("two-sided", 0.3, 0.01, FOLLOWS),
-        ("two-sided", -0.3, 0.01, UNEQUAL),
-        ("two-sided", -0.336, 0.0692, NO_LINK),  # die Messung (§ 3.4)
-        ("two-sided", 0.3, 0.05, NO_LINK),  # Holm verwirft erst unter alpha
+        ("two-sided", 0.3, CONFIRMED, FOLLOWS),
+        ("two-sided", -0.3, CONFIRMED, UNEQUAL),
+        ("two-sided", -0.336, NOT_CONFIRMED, NO_LINK),  # die Messung (§ 3.4)
+        ("two-sided", 0.3, NOT_CONFIRMED, NO_LINK),
         # einseitig (rho > 0) gibt es nur zwei: ein negatives rho prüft der Test nicht
-        ("greater", 0.343, 0.0429, FOLLOWS),
-        ("greater", -0.9, 0.01, NO_LINK),
-        ("greater", 0.1, 0.6, NO_LINK),
-        # ohne Test keine Deutung
+        ("greater", 0.343, CONFIRMED, FOLLOWS),
+        ("greater", -0.9, CONFIRMED, NO_LINK),
+        ("greater", 0.1, NOT_CONFIRMED, NO_LINK),
+        # außerhalb der Familie keine Deutung
         ("two-sided", None, None, None),
         ("greater", 0.2, None, None),
     ],
 )
 def test_the_reading_has_the_words_of_section_8(
-    alternative: str, rho: float | None, p_holm: float | None, expected: str | None
+    alternative: str, rho: float | None, result: str | None, expected: str | None
 ) -> None:
     """Review 2026-11-24, K1: ``ergebnis`` sagte bei H2 nicht, in welche Richtung Holm verwirft."""
-    assert interpretation(alternative, rho, p_holm, 0.05) == expected
+    assert interpretation(alternative, rho, result) == expected
 
 
 def test_within_strata_removes_a_pure_stratum_effect() -> None:
@@ -331,10 +329,14 @@ def test_a_test_without_values_keeps_its_row_and_its_place_in_holm() -> None:
         None,
         0,
     )
+    tested = {"H1": h1["p"], "H3": h3["p"]}
+    by_three = holm(tested, strict=True, m=3)
     assert [h1["p_holm"], h3["p_holm"]] == pytest.approx(
-        [holm([h1["p"], 1.0, h3["p"]])[i] for i in (0, 2)]
+        [by_three["H1"].p_holm, by_three["H3"].p_holm]
     )
-    assert h1["p_holm"] != pytest.approx(holm([h1["p"], h3["p"]])[0])  # nicht m = 2
+    assert h1["p_holm"] != pytest.approx(holm(tested, strict=True)["H1"].p_holm)  # nicht m = 2
+    # der Kern aus 17 nimmt die Tabelle so an: H2 außerhalb der Familie, m = 3
+    check_hypotheses(table, key=ROW_KEY, strict=True, m=3)
     # Haupttest, zweimal Robustheit, innerhalb, dreimal Moran: alle ohne Wert
     assert table.filter(pl.col("hypothese") == "H2").get_column("wert").null_count() == 7
 

@@ -565,7 +565,8 @@ mit den Bausteinen aus § 1 und den Konflikten 7, 11 und 12 aus § 2.2; Fragen 2
    `hypothese`, `p`, `p_holm`, `ergebnis` (`bestätigt`, `nicht bestätigt`, `vorläufig`), `n`,
    `festgelegt` (Commit), Zusatzspalten je Vorhaben. `urteil` aus § 6 heißt `ergebnis`. `holm` und
    die Wortwahl kommen aus `analysis/hypotheses.py` von 17; ist 17 noch nicht gemerged, eine dünne
-   Übergangsfunktion, die nach dem Merge von 17 ersetzt wird.
+   Übergangsfunktion, die nach dem Merge von 17 ersetzt wird (ersetzt am 2026-11-26: `family` mit
+   `strict=True` und `m` = 3, Supervisor).
 6. **H1′ und H3′ vorab festlegen** (Frage 22.10), solange die Daten der laufenden Periode fehlen:
    die beiden Lesarten aus § 3.5 als prospektive Hypothesen mit dem Stadtbezirk als Schicht, in § 8
    dieses Dokuments, gerechnet erst, wenn `duesseldorf-2025` zwölf Monate Unfälle hat.
