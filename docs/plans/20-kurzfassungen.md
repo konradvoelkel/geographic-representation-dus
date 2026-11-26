@@ -659,6 +659,18 @@ von Vorhaben 11, weil die Eingabe dessen Abschnitte liest.
   Personennamen, Wörter Median 57,5, höchstens 80. Kodierauftrag A und B unter
   `messdaten/kodierung/20-kurzfassungen-nachmessung/` (Ausschnitt Median 2 382 Zeichen, längster
   8 526, acht über 6 000). Die Kurzfassungen liegen nur im Modellcache und im lokalen Auszug.
+- **Ergebnis gemma4 (2026-11-26): hält nicht.** Zwei Kodier-Agenten und ein Schlicht-Agent (Opus,
+  gestartet vom Supervisor), `georep validate merge 20-kurzfassungen-nachmessung` zweimal,
+  ausgewertet mit `nachmessung auswertung`: `unbelegt = ja` in **4 von 50** (Grenze 2); Kodierer A
+  allein 3, B allein 3, beide auf derselben Seite der Grenze, darum entscheidet nach dem Kriterium
+  die Zahl, obwohl α **0,649** unter 0,8 liegt (48 von 50 gleich, κ 0,645); geschichtet 7,6 %
+  (Wilson 3,1–23,6, n_eff 33). Die vier: zweimal einig (eine vertauschte Rolle, ein verschobener
+  Sachverhalt), zweimal geschlichtet zu „ja" (ein Datum als Tag der Einreichung umgedeutet, ein
+  „nahezu" gestrichen). Gegen Runde 1 (12 von 50) sind es weniger Beanstandungen und nur noch eine
+  Rolle; die Grenze hält gemma trotzdem nicht. Die deterministische Prüfung sah keine der vier
+  (50 von 50 ohne unbelegte Angabe). `labels.csv`, `README.md` und `guete.json` liegen in
+  `validierung/20-kurzfassungen-nachmessung/`. **Danach**, wie festgelegt: `qwen3.6:27b` an
+  denselben 50 im Ordner `20-kurzfassungen-nachmessung-qwen`.
 
 ## 6. Bauplan Stufe 2
 
@@ -780,6 +792,7 @@ Keine: Vorhaben 20 ist kein Analysevorhaben. Was vorab festgelegt war, ist das K
 | 20.12 | Drei Mängel der Prüfung, gefunden in der Umbaurunde: ein „ca." vor „Monat Jahr" in der Eingabe löst den Ausschluss für „Tag. Monat Jahr" aus; von pypdf zusammengeklebtes „Monat2022" wird nicht erkannt; unregelmäßige Plurale (Votum, Voten) fallen durch die Endungsliste. Dazu die Frage, ob selbst gezählte oder gerechnete, richtige Zahlen unbelegt sind | Alle drei Mängel sind Fehlalarme; die Zahlen sind nach Regel 3 unbelegt, aber nicht falsch | die drei Mängel in `enrich/fidelity.py` beheben, je mit einem Test aus diesen Fällen; abgeleitete Zahlen bleiben unbelegt, und Regel 3 des Prompts bekommt in Fassung 2 „keine selbst gezählten oder gerechneten Zahlen" |
 | 20.13 | Eingabe Fassung 2 mit Rolle (Absender aus Dokumentart und Urheber, beschließendes Gremium aus der Beratungsfolge) und eine Nachmessung von `unbelegt` an frischen 50, bevor der Stapellauf startet; wenn gemma dort mehr als 2 von 50 hat, qwen? | Rollenfehler in einer von vier Kurzfassungen machen sie für den Vorlagenspiegel unbrauchbar | ja; das Kriterium der Nachmessung legt der Bau-Agent vorab fest, Vorschlag in § 5.3; **festgelegt in § 5.4** (Bau-Agent, 2026-11-24): höchstens 2 von 50, sonst qwen an denselben 50 (Frage 38) |
 | 20.14 | Der Rumpf aus 11 beginnt in 2014–2020 bei rund 4 095 Dokumenten (Hauptperiode 8, 2025 1) mit dem Namen aus der Kopfzeile des Dezernats, meist mit dem Amt davor („Beigeordnete …"; Review von 11, Hinweis des Supervisors 2026-11-24); 11 lässt das in `struktur-1` so. Hält Regel 5 (keine Personennamen) dagegen? | Ein abgeschriebener Name ist belegt; weder die Treueprüfung noch `unbelegt` sieht ihn | die Treueprüfung zählt Personennamen daneben (`person_names`, Spalte `personennamen`: ein Name hinter Anrede, Titel oder Amt aus `summaries.person_titles`, und ein mehrteiliger Name, der in der Eingabe dahinter steht); an den 800 Kurzfassungen der Messung hatten qwen 7 und 6, gemma 6 und 3 einen (Runde 1 und 2). Die Nachmessung (Hauptperiode, 8 betroffene Dokumente) prüft das kaum; vor einer Nutzung von 2014–2020 in 29 die Zahl je Periode aus dem Stapellauf lesen |
+| 20.15 | Unschärfen des Codebuchs der Nachmessung, genannt vom Schlicht-Agenten (2026-11-26, nicht angewendet): was die Kopfdaten bedeuten (ein Datum der Eingabe als Tag der Einreichung gelesen), ob eine gestrichene Einschränkung („nahezu") unbelegt ist, nahe Sprechakte („beantragen" für eine Anregung), keine Schwelle für Geringfügiges | α 0,649 bei 48 von 50 gleich: die Frage `unbelegt` ist bei wenigen „ja" knapp, und zwei der vier „ja" hängen an diesen Grenzfällen | in eine Fassung 2 des Codebuchs aufnehmen (mit 20.10 und 20.11), an einer frischen Stichprobe nach F4; für die Messung mit qwen gilt das Codebuch Fassung 1 unverändert |
 
 ## 10. Änderungen durch die Synergie
 

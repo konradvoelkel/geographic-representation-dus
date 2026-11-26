@@ -1,0 +1,30 @@
+{
+  "vorhaben": "20-kurzfassungen-nachmessung",
+  "codebuch_version": "1",
+  "einheit": "document",
+  "modell": "claude-opus-5-5",
+  "datum": "2026-11-26",
+  "einheiten": 50,
+  "uneinig": 2,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "unbelegt": {
+      "n": 50,
+      "beide": 50,
+      "einig": 48,
+      "anteil": 0.96,
+      "anteil_wilson95": [
+        0.8653990931249297,
+        0.9889611156723802
+      ],
+      "cohen_kappa": 0.6453900709219859,
+      "krippendorff_alpha_nominal": 0.648936170212766,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.648936170212766,
+      "markierungen": null,
+      "alpha_genuegt": false
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern an 50 Dokumenten, nicht von Menschen"
+}
