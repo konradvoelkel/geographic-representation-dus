@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies|validate|ml|search|summary``.
+"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|paths|bootstrap|pack|export|regress|profile|learn-bodies|validate|ml|search|summary``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
