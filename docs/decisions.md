@@ -3270,7 +3270,7 @@ Die Paketkopie unter demselben Namen wie die Ausgabe (`georep steps` zeigte dann
 Stapel (Frage 9.5) in diesem Schritt: sie gehört nach F5 (`docs/todo.md`, Punkt 11 d); im Bau ist
 das Tempo von Hand geprüft. Cluster über Einbettungen (Messung § 3.5).
 
-## NN. Zeit und Neuigkeiten: Wahljahre statt Monate, ein Lexikon als Paketdatei, Spannen auf dem Rohtext, Feeds aus den Daten (Vorhaben 17, 2026-11-24)
+## 78. Zeit und Neuigkeiten: Wahljahre statt Monate, ein Lexikon als Paketdatei, Spannen auf dem Rohtext, Feeds aus den Daten (Vorhaben 17, 2026-11-24)
 
 Vorhaben 17 der Vorverarbeitung (`docs/plans/17-zeit.md`, § 5 bis § 8 und § 10), Stufe 2. Die
 Messung hat drei Hypothesen vor dem ersten Lauf festgelegt (Commit `9c7b3d6`, 2026-11-23 19:45),
