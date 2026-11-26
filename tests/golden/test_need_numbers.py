@@ -2,8 +2,19 @@
 
 ``docs/plans/22-bedarf.md``, § 3.2 bis § 3.5: der Schritt ``need`` rechnet aus dem Paket
 ``snapshots/duesseldorf-bedarf`` und dem Datensatz der Arbeit (mit dem Textpaket, Punkt 68) dieselben
-Zahlen wie das Messskript. Ein Umbau, der eine davon bewegt, ist kein Refactoring; die drei Urteile
-über H1 bis H3 sind vorab festgelegt (Commit 67f7250) und dürfen sich nur mit den Daten ändern.
+Zahlen wie das Messskript. Die drei Urteile über H1 bis H3 sind vorab festgelegt (Commit 67f7250)
+und werden genau geprüft, ebenso alles, was nur an den Bedarfsquellen, den Treffern und dem
+Quartiersatlas hängt (H2, die Summen, die Paare).
+
+**Je Rechner** (Punkt 80, Nachtrag 2026-11-26): H1 und H3 lesen Anteile der Klassen des passenden
+Ausschusses (``anteil_verkehr``, ``anteil_jugend``), und die logistische Regression des Schritts
+``committees`` ist nur bis auf ihre Toleranz bestimmt (lbfgs, ``tol`` 1e-4: die Wahrscheinlichkeiten
+auf rund 1e-2). Auf einem anderen Rechner landen darum einige Dokumente in einer anderen Klasse; im
+CI-Lauf 45887973775 (2026-11-26) stand Wahlbezirk 18 eine Rangstelle höher, H1 hatte ρ = 0,3465
+statt 0,3427. Für diese Zahlen gilt deshalb ``CLASSIFIED``: die größte gesehene Abweichung war 0,009
+(innerhalb der Stadtbezirke, CI) und 0,005 (Toleranz 1e-10 statt 1e-4 hier); 0,02 sind rund vier
+solche Rangstellen. Das Urteil selbst bleibt genau, auch p_Holm < 0,05 für H1 (CI 0,0414, hier
+0,0429, mit Toleranz 1e-10 0,0411).
 """
 
 from __future__ import annotations
@@ -22,6 +33,9 @@ from georep.settings import load_settings
 pytestmark = pytest.mark.slow
 
 NOWHERE = Path("/nonexistent")
+# Zahlen, die an den Klassen des Ausschussklassifikators hängen (H1, H3): je Rechner, siehe oben.
+CLASSIFIED = 0.02  # Korrelationen, Intervallgrenzen, Moran's I
+CLASSIFIED_P = 0.01  # p aus Permutationen (CI-Lauf: H1 0,0138 statt 0,0143)
 STEPS = [
     "shapes",
     "voters",
@@ -72,7 +86,8 @@ def test_the_need_table_has_the_totals_of_the_measurement(
     assert table.get_column("einwohner_zensus").max() == 18_317
     assert table.get_column("unfaelle_je_1000").max() == pytest.approx(58.4, abs=0.05)
     assert table.get_column("miete_qm").median() == pytest.approx(9.21, abs=0.005)
-    assert table.get_column("anteil_verkehr").median() == pytest.approx(0.207, abs=0.0005)
+    # die Klassen je Rechner (Docstring): ein Dokument mehr oder weniger je Wahlbezirk
+    assert table.get_column("anteil_verkehr").median() == pytest.approx(0.207, abs=0.005)
 
 
 def test_the_three_hypotheses_come_out_as_measured(
@@ -83,25 +98,36 @@ def test_the_three_hypotheses_come_out_as_measured(
         row["hypothese"]: row for row in tests.filter(pl.col("rechnung") == "haupttest").to_dicts()
     }
     assert list(main) == ["H1", "H2", "H3"]
-    expected = {
-        "H1": (0.343, 0.051, 0.593, 0.0143, 0.0429, "bestätigt"),
-        "H2": (-0.336, -0.620, -0.031, 0.0346, 0.0692, "nicht bestätigt"),
-        "H3": (-0.059, -0.408, 0.312, 0.6474, 0.6474, "nicht bestätigt"),
+    # Die Urteile und ihre Deutung sind vorab festgelegt und gelten auf jedem Rechner (§ 8).
+    verdicts = {
+        "H1": ("bestätigt", "Aufmerksamkeit folgt dem Bedarf"),
+        "H2": ("nicht bestätigt", "kein Zusammenhang nachweisbar"),
+        "H3": ("nicht bestätigt", "kein Zusammenhang nachweisbar"),
     }
-    # § 8: H2 ist zweiseitig; p_Holm 0,0692 liegt über 0,05, also keine der beiden Richtungen
-    readings = {
-        "H1": "Aufmerksamkeit folgt dem Bedarf",
-        "H2": "kein Zusammenhang nachweisbar",
-        "H3": "kein Zusammenhang nachweisbar",
-    }
-    for name, (rho, low, high, p, p_holm, result) in expected.items():
+    for name, (result, reading) in verdicts.items():
         row = main[name]
-        assert (row["wert"], row["ci_lo"], row["ci_hi"]) == pytest.approx(
-            (rho, low, high), abs=5e-4
-        )
-        assert (row["p"], row["p_holm"]) == pytest.approx((p, p_holm), abs=5e-5)
-        assert row["ergebnis"] == result and row["festgelegt"] == "67f7250" and row["n"] == 41
-        assert row["deutung"] == readings[name]
+        assert (row["ergebnis"], row["deutung"]) == (result, reading), name
+        assert row["festgelegt"] == "67f7250" and row["n"] == 41
+    assert main["H1"]["p_holm"] < 0.05  # strict, wie § 8 es festlegt
+    # (rho, untere, obere Grenze, p, p_Holm) der Messung, § 3.4
+    measured = {
+        "H1": (0.343, 0.051, 0.593, 0.0143, 0.0429),
+        "H2": (-0.336, -0.620, -0.031, 0.0346, 0.0692),
+        "H3": (-0.059, -0.408, 0.312, 0.6474, 0.6474),
+    }
+    # H2 hängt an keiner Klasse (Handlungsbedarf, Dokumente je Einwohner): genau wie gemessen
+    rho, low, high, p, p_holm = measured["H2"]
+    row = main["H2"]
+    assert [row["wert"], row["ci_lo"], row["ci_hi"]] == pytest.approx([rho, low, high], abs=5e-4)
+    assert [row["p"], row["p_holm"]] == pytest.approx([p, p_holm], abs=5e-5)
+    # H1 und H3 lesen Anteile der Klassen: je Rechner (Docstring)
+    for name in ("H1", "H3"):
+        rho, low, high, p, p_holm = measured[name]
+        row = main[name]
+        assert [row["wert"], row["ci_lo"], row["ci_hi"]] == pytest.approx(
+            [rho, low, high], abs=CLASSIFIED
+        ), name
+        assert [row["p"], row["p_holm"]] == pytest.approx([p, p_holm], abs=CLASSIFIED_P), name
 
 
 def test_the_robustness_without_districts_1_and_10_comes_out_as_measured(
@@ -110,7 +136,8 @@ def test_the_robustness_without_districts_1_and_10_comes_out_as_measured(
     """§ 3.4, Zeile „ohne Wahlbezirke 1 und 10 (n = 39)": 0,417, −0,411, −0,144.
 
     Die Liste steht seit Review 2026-11-24, N8, in der Hypothese des Profils (``robust_without``)
-    und nicht mehr in ``analysis.exclude_districts``; die Zahlen bleiben.
+    und nicht mehr in ``analysis.exclude_districts``; die Zahlen bleiben, die von H1 und H3 je
+    Rechner (Docstring des Moduls).
     """
     _, tests = need_run
     rows = {
@@ -119,9 +146,13 @@ def test_the_robustness_without_districts_1_and_10_comes_out_as_measured(
         if row["ohne"]
     }
     assert list(rows) == ["H1", "H2", "H3"]
-    for name, rho in (("H1", 0.417), ("H2", -0.411), ("H3", -0.144)):
+    for name, rho, tolerance in (
+        ("H1", 0.417, CLASSIFIED),
+        ("H2", -0.411, 5e-4),
+        ("H3", -0.144, CLASSIFIED),
+    ):
         assert rows[name]["ohne"] == [1, 10] and rows[name]["n"] == 39
-        assert rows[name]["wert"] == pytest.approx(rho, abs=5e-4)
+        assert rows[name]["wert"] == pytest.approx(rho, abs=tolerance), name
 
 
 def test_the_explorative_rows_come_out_as_measured(
@@ -133,11 +164,14 @@ def test_the_explorative_rows_come_out_as_measured(
         for row in tests.filter(pl.col("explorativ")).to_dicts()
         if row["hypothese"] is not None
     }
-    assert values[("H1", "innerhalb")] == pytest.approx(-0.062, abs=5e-4)
-    assert values[("H3", "innerhalb")] == pytest.approx(0.465, abs=5e-4)
-    assert values[("H1", "moran_residuen")] == pytest.approx(0.341, abs=5e-4)
+    # H1 und H3 je Rechner (Docstring), H2 genau
+    assert values[("H1", "innerhalb")] == pytest.approx(-0.062, abs=CLASSIFIED)
+    assert values[("H2", "innerhalb")] == pytest.approx(-0.204, abs=5e-4)
+    assert values[("H3", "innerhalb")] == pytest.approx(0.465, abs=CLASSIFIED)
+    assert values[("H1", "moran_residuen")] == pytest.approx(0.341, abs=CLASSIFIED)
     assert values[("H2", "moran_residuen")] == pytest.approx(0.050, abs=5e-4)
-    assert values[("H3", "moran_residuen")] == pytest.approx(0.262, abs=5e-4)
+    assert values[("H3", "moran_residuen")] == pytest.approx(0.262, abs=CLASSIFIED)
+    # die beiden Paare ohne Klassen: Quartiersatlas, Schulen, Wahlbeteiligung
     pairs = {
         (row["bedarf"], row["aufmerksamkeit"]): row["wert"]
         for row in tests.filter(pl.col("rechnung") == "paar").to_dicts()

@@ -243,3 +243,12 @@ Vorfilter je Muster oder ein Prozesspool über Textblöcke, je mit dem Vergleich
 Norm des Amts, 11 nur die Nummer (`tests/golden/test_identifiers_heads.py`); Nutzer des federführenden
 Amts lesen es aus 11. (d) Der Eintrag in `MUTATION_SCOPE` ist ungemessen.
 
+## 18. Ausschussklassifikator rechnerfest machen?
+
+Aufgenommen am 2026-11-26 aus der Ursache des roten CI-Laufs von 0.29.0 (Punkt 80, Nachtrag). Die
+logistische Regression des Ausschussklassifikators (Punkt 45) hält mit `tol` 1e-4 nach 46 Iterationen
+an; dazwischen und einer engen Toleranz (1e-10, 132 Iterationen) liegen die Wahrscheinlichkeiten bis
+0,011 auseinander, und 18 von 19 033 Dokumenten wechseln die Klasse. Eine engere Toleranz machte die
+Klassen rechnerfest, verschöbe aber die Ausschusszuordnung auf der Seite und die Zahlen von H1 und H3 aus
+22 (H1 ρ 0,3427 → 0,3470, Urteil gleich): eigene Entscheidung mit A/B-Bau aller Seiten.
+

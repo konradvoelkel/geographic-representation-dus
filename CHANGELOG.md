@@ -2,6 +2,13 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.31.1 (2026-11-26), Zahlentest von Vorhaben 22
+
+- Der Zahlentest von Vorhaben 22 prüft die vorab festgelegten Urteile genau und die Zahlen von H1 und H3
+  mit Toleranz: sie hängen am Ausschussklassifikator, der nur bis auf die Toleranz seines Solvers
+  bestimmt ist und auf dem CI-Rechner ein Dokument anders zuordnet (CI war seit 0.29.0 rot). Die Urteile
+  bleiben auf allen Ständen gleich. Keine Zahl der Seite ändert sich.
+
 ## 0.31.0 (2026-11-26), Kennungen und Beträge
 
 - **Kennungen im Text** (Vorhaben 12, `docs/decisions.md`, Punkt 82): der Schritt `identifiers` findet
