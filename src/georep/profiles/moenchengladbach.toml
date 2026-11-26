@@ -457,6 +457,13 @@ enabled = true                 # der Prüfstein für Stadtneutralität (Messdoku
 [cycles]
 enabled = true                 # Schritte cycles und vocabulary
 elections = [2014-05-25, 2020-09-13, 2025-09-14]  # Kommunalwahlen in NRW (Landeswahlleiterin NRW), dieselben Tage wie in jeder Gemeinde des Landes
+# --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 6 und § 10) ----------------
+# Dieselben bundes- und landesweiten Quellen wie in jeder Stadt (defaults.toml). Ohne Quartiersatlas und
+# ohne Ausschussklassifikator (classify.enabled = false oben): Unfälle, Einwohner, Miete und
+# Schulsozialindex je Wahlbezirk, aber keine Anteile der Klassen und keine Hypothesen (Frage 22.6).
+[context.need]
+enabled = true                 # Schritte need und, mit context.need.fetch, need_data (Netz)
+package = "snapshots/moenchengladbach-bedarf"  # georep pack --need; bootstrap kopiert nach external/bedarf/
 
 # --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.6) ------------------------
 # Ein anderes Formular als Düsseldorf: mit dessen Mustern trifft die Regel hier nichts. Der Block

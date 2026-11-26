@@ -2,6 +2,17 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.29.0 (2026-11-26), Bedarf und Aufmerksamkeit
+
+- **Bedarf je Wahlbezirk** (Vorhaben 22, `docs/decisions.md`, Punkt 80): `need` verbindet Unfälle,
+  Zensus, Schulen und Sozialindex aus offenen Quellen (dl-de/by-2-0) über `crosswalk.point_shares` mit den
+  Wahlbezirken und rechnet die drei vorab festgelegten Hypothesen mit dem Kern aus 0.27.0: H1 (Unfälle
+  ziehen Verkehrsdokumente nach sich) bestätigt, aber nur zwischen den Stadtbezirken; H2 und H3 nicht.
+  Die Auszüge für Düsseldorf und Mönchengladbach kommen als Pakete unter `snapshots/*-bedarf/`.
+- **Abruf nur mit Schalter**: `GEOREP_CONTEXT__NEED__FETCH=true georep fetch need_data` lädt die Archive
+  (rund 105 MB); ein bloßes `georep fetch` nimmt sie nicht mit. Nach dem Update einmal `georep bootstrap`
+  je Profil. Die Seite zeigt noch nichts davon (Stufe 3); keine Zahl der Seite ändert sich.
+
 ## 0.28.0 (2026-11-26), Beschlusslage
 
 - **Beschlusslage je Drucksache** (Vorhaben 26, `docs/decisions.md`, Punkt 79): `council_results`

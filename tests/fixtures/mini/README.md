@@ -31,6 +31,12 @@ Tagesordnungspunkt“ genau dieser 200 Dokumente, aus
 Arbeitsverzeichnis, von dem aus der relative Pfad des Pakets nicht trägt (`tests/unit/test_cli.py`).
 `expected/` kennt sie nicht.
 
+`external/bedarf/` (seit 2026-11-24, Vorhaben 22): die Auszüge der Bedarfsquellen für diese drei
+Wahlbezirke, aus `snapshots/duesseldorf-bedarf/` gefiltert (`make_mini.write_need`): 2 237 Unfälle im
+Band von 20 m um die 22 Stimmbezirke, 463 Gitterzellen und 14 Schulen mit Punkt in einem, dazu
+`quellen.json` unverändert (Herkunft, Lizenz und Prüfsummen der Archive im README des Pakets). Die
+Mini-Kette liest sie statt des Pakets, wie die Beratungsfolge; `expected/` kennt sie nicht.
+
 `expected/`: die sieben Ausgaben des Altcodes der Arbeit (pandas, FlashText) auf genau diesen
 Eingaben, erzeugt am 2026-10-11 auf dem Stand des Tags `v0.2.0`. Sie sind der Golden Master für
 die Polars-Kette und werden nicht neu erzeugt.

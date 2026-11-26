@@ -42,7 +42,11 @@ from georep.pipeline import (
     stamp_mismatch,
 )
 from georep.prep.bodies import BODIES_SCHEMA_VERSION
-from georep.prep.context import CONTEXT_SCHEMA_VERSION
+from georep.prep.context import (
+    CONTEXT_SCHEMA_VERSION,
+    NEED_DATA_SCHEMA_VERSION,
+    NEED_SCHEMA_VERSION,
+)
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.prep.structure import STRUCTURE_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
@@ -97,6 +101,9 @@ VERSIONS = {
     # Vorhaben 26: der Beratungsverlauf und die Beschlusslage, ein Modul für drei Dateien
     "council_results": OUTCOMES_SCHEMA_VERSION,
     "outcomes": OUTCOMES_SCHEMA_VERSION,
+    # Vorhaben 22: die Auszüge (Netz) und die Tabellen je Wahlbezirk (``georep.enrich.need``)
+    "need_data": NEED_DATA_SCHEMA_VERSION,
+    "need": NEED_SCHEMA_VERSION,
     # Vorhaben 11: ein früher Schritt (``georep.enrich.sections``), zwei Dateien
     "sections": STRUCTURE_SCHEMA_VERSION,
 }
@@ -112,8 +119,18 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
     # Vorhaben 17: die Tests über Perioden und die Feeds stehen nur mit ihren Schaltern im Register
     cycles = default_settings.cycles.model_copy(update={"periods": ["2014-2020", "duesseldorf"]})
     feeds = default_settings.feeds.model_copy(update={"enabled": True})
+    # Vorhaben 22: die zwei Schritte stehen nur mit ``context.need.enabled`` im Register, der
+    # Netzschritt nur mit ``fetch`` dazu (Review 2026-11-24, N1)
+    need = default_settings.context.need.model_copy(update={"enabled": True, "fetch": True})
+    context = default_settings.context.model_copy(update={"need": need})
     settings = default_settings.model_copy(
-        update={"council": council, "procedures": procedures, "cycles": cycles, "feeds": feeds}
+        update={
+            "council": council,
+            "procedures": procedures,
+            "cycles": cycles,
+            "feeds": feeds,
+            "context": context,
+        }
     )
     return {s.name: s.schema_version for s in build_steps(settings, layout)}
 
@@ -343,7 +360,8 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
             *georep.enrich.contributed_early_steps(default_settings, mini_run, http),
             *georep.enrich.contributed_steps(default_settings, mini_run, http),
         )
-        if s.outputs[0].suffix == ".parquet" and s.models is None
+        # Vorhaben 18: ohne Modell kein Lauf; Vorhaben 22: need_data ist Netz
+        if s.outputs[0].suffix == ".parquet" and s.models is None and not s.network
     ]
     assert checked == 19 + len(contributed), checked
 

@@ -255,3 +255,12 @@ def shares_bounded(frame: pl.DataFrame, total: str, part: str) -> bool:
     return bool(
         ((frame.get_column(part) >= 0) & (frame.get_column(total) >= frame.get_column(part))).all()
     )
+
+
+def is_municipality_key(ags: str) -> bool:
+    """Ein amtlicher Gemeindeschlüssel: genau acht ASCII-Ziffern (Vorhaben 22).
+
+    ``str.isdigit`` allein nimmt Ziffern jeder Schrift, und ``int`` liest sie; crosshair fand am
+    2026-11-24 ``'0൦4۰𑃰9০6'``, aus dem ``ags_parts`` einen anderen Schlüssel machte.
+    """
+    return len(ags) == 8 and ags.isascii() and ags.isdigit()

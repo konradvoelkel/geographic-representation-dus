@@ -191,6 +191,10 @@ VERIFY_TARGETS = [
     # tests/property/test_cycles_props.py.
     "georep.analysis.cycles.complete_years",
     "georep.analysis.hypotheses.holm",
+    # Vorhaben 22: der Gemeindeschlüssel in seinen vier Teilen. Der erste Lauf fand ein echtes
+    # Gegenbeispiel (Ziffern einer anderen Schrift, str.isdigit nahm sie); seit der Vorbedingung
+    # über contracts.is_municipality_key einzeln Exit 0 nach 24 s.
+    "georep.prep.context.ags_parts",
     # Vorhaben 11 (2026-11-24): die Zeilen des Rohtexts mit Positionen; einzeln geprüft, 25 s,
     # Exit 0, „Not confirmed"
     "georep.prep.raw_texts.split_lines",
@@ -316,6 +320,8 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
             "tests/property/test_crosswalk_props.py",
             "tests/golden/test_crosswalk_geometry.py",
             "tests/golden/test_crosswalk_methods.py",
+            "tests/unit/test_crosswalk_points.py",  # Vorhaben 22: point_shares
+            "tests/property/test_crosswalk_points_props.py",  # Vorhaben 22
         ),
     ),
     "comparison": (
@@ -443,6 +449,21 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "outcomes": (
         ("src/georep/analysis/outcomes.py",),
         ("tests/unit/test_outcomes.py", "tests/property/test_outcomes_props.py"),
+    ),
+    # Vorhaben 22: die Tests der vorab festgelegten Hypothesen
+    "need": (
+        ("src/georep/analysis/need.py",),
+        ("tests/unit/test_need_hypotheses.py", "tests/property/test_need_props.py"),
+    ),
+    # Vorhaben 22: Leser, Aggregate und die zwei Schritte des Beitrags
+    "need_steps": (
+        ("src/georep/prep/context.py", "src/georep/enrich/need.py"),
+        (
+            "tests/unit/test_prep_context.py",
+            "tests/property/test_context_props.py",
+            "tests/unit/test_context_need.py",
+            "tests/unit/test_need_steps.py",
+        ),
     ),
     # Vorhaben 11: das Regelwerk der Dokumentstruktur; Zeit nicht gemessen
     "structure": (

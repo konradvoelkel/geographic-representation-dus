@@ -14,7 +14,7 @@ Düsseldorf (Unfälle, Zensus-Gitter, Gebäudereferenzen) legt es beim ersten La
 
 Die Teile: `bestand` (Dateien und Prüfsummen, Unfälle Mönchengladbach), `bedarf` (Bedarf je
 Wahlbezirk mit Abdeckung und Unsicherheit), `aufmerksamkeit` (Dokumente je Wahlbezirk und Klasse),
-`hypothesen` (die drei vorab festgelegten Tests aus § 8, festgelegt in Commit 9da9fe1, bevor dieser
+`hypothesen` (die drei vorab festgelegten Tests aus § 8, festgelegt in Commit 67f7250, bevor dieser
 Teil zum ersten Mal lief), `explorativ` (alles andere, darunter Moran's I und die Rechnung innerhalb
 der Stadtbezirke, nachgetragen nach dem ersten Lauf). Laufzeit rund eine Minute mehr beim ersten Lauf
 (Auszüge aus den bundesweiten Archiven), danach 10 bis 40 s je nach Last; Polars auf vier Threads.
