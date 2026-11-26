@@ -1,0 +1,75 @@
+{
+  "ags": "05111000",
+  "archive": [
+    {
+      "url": "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2020_EPSG25832_CSV.zip",
+      "datei": "Unfallorte2020_EPSG25832_CSV.zip",
+      "bytes": 12612904,
+      "sha256": "cc7133694fbe144d3e26fc724bea1e266a4f933ba85dcc410ac94aa1205e8f88",
+      "abgerufen": "2026-11-23"
+    },
+    {
+      "url": "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2021_EPSG25832_CSV.zip",
+      "datei": "Unfallorte2021_EPSG25832_CSV.zip",
+      "bytes": 12496020,
+      "sha256": "7133b8a0bb34e6b4b86db8b1bb3f5df801898b9dc4826bd94e46b4fccffde879",
+      "abgerufen": "2026-11-23"
+    },
+    {
+      "url": "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2022_EPSG25832_CSV.zip",
+      "datei": "Unfallorte2022_EPSG25832_CSV.zip",
+      "bytes": 13303418,
+      "sha256": "7f47e432db4d570a168152264178316974c87c51411338dcb95d0f664c298219",
+      "abgerufen": "2026-11-23"
+    },
+    {
+      "url": "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2023_EPSG25832_CSV.zip",
+      "datei": "Unfallorte2023_EPSG25832_CSV.zip",
+      "bytes": 12702950,
+      "sha256": "e8c7dccf343284f42c2bf3b8c5a23d62fe440f557082b17b7c0c788cc3b5bc65",
+      "abgerufen": "2026-11-23"
+    },
+    {
+      "url": "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2024_EPSG25832_CSV.zip",
+      "datei": "Unfallorte2024_EPSG25832_CSV.zip",
+      "bytes": 12681950,
+      "sha256": "4a321fbde7cac6344a6ee1f8926ceb2a585b2adb3bcf301ad4fb85bb9abb4813",
+      "abgerufen": "2026-11-23"
+    },
+    {
+      "url": "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2025_EPSG25832_CSV.zip",
+      "datei": "Unfallorte2025_EPSG25832_CSV.zip",
+      "bytes": 12598619,
+      "sha256": "f4b11dba79abaa8d14dd780a5e7f4e504454946f784d2236ef79607e2ec58dac",
+      "abgerufen": "2026-11-24"
+    },
+    {
+      "url": "https://www.destatis.de/static/DE/zensus/gitterdaten/Zensus2022_Bevoelkerungszahl.zip",
+      "datei": "Zensus2022_Bevoelkerungszahl.zip",
+      "bytes": 18501524,
+      "sha256": "1a8428d31eab264c8717bfdcbf40fbd66c217edb2e2a98d0e67741bd8a1a941a",
+      "abgerufen": "2026-11-24"
+    },
+    {
+      "url": "https://www.destatis.de/static/DE/zensus/gitterdaten/Zensus2022_Durchschn_Nettokaltmiete.zip",
+      "datei": "Zensus2022_Durchschn_Nettokaltmiete.zip",
+      "bytes": 9379249,
+      "sha256": "8b8f2f548e88fecb0d5aa47492fd9b64d683f9a3e4da9d89d0d0a172462482fd",
+      "abgerufen": "2026-11-23"
+    },
+    {
+      "url": "https://apps.schulministerium.nrw.de/BiPo/OpenData/Schuldaten/schuldaten.csv",
+      "datei": "schuldaten.csv",
+      "bytes": 1790359,
+      "sha256": "ecdf6f746e42c317d158aab81f66327d97d4ed238e4900d3bd669fb14f6a051f",
+      "abgerufen": "2026-11-24"
+    },
+    {
+      "url": "https://www.schulministerium.nrw/system/files/media/document/file/schulliste_sj_25_26_open_data.csv",
+      "datei": "schulliste_sj_25_26_open_data.csv",
+      "bytes": 311017,
+      "sha256": "49a25e0cf32d47bc71958cb3c914236b4319bec9703091324b395674db4ae32d",
+      "abgerufen": "2026-11-24"
+    }
+  ]
+}

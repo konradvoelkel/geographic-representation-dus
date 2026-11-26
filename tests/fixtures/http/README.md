@@ -121,3 +121,13 @@ f349e31d120e50c2b179e21c956faed65d2855ed29c218287ab1fdb1bab37782  oparl_file_541
 Die vollen Antworten (rund 7,5 MB) lagen nur für die Auswertung auf xtraspace; die Personenseite trug
 Kontaktdaten und ist danach gelöscht worden. Was die beiden Sitzungsseiten über die Füllgrade sagen,
 steht in `docs/runbook-sitzungen.md`, § 2.
+
+## Vorhaben 22: die Archive der Bedarfsquellen (2026-11-24)
+
+Keine Datei hier: die Archive sind 0,3 bis 18,5 MB groß (Unfallatlas je Jahr, Zensus-Gitter,
+Schuldaten, Sozialindex). Ihre **Form** ist aufgezeichnet, nicht ihr Inhalt: `tests/need_archives.py`
+baut winzige Archive mit den Kopfzeilen, Mitgliedsnamen, BOMs, Zeilenenden und Kodierungen der echten
+Dateien (abgelesen an den Archiven unter `fremddaten/opendata/`, deren Prüfsummen im README dort
+stehen), und `tests/unit/test_need_steps.py` liefert sie über die Fake-Session aus. Die Zeilen sind
+erfunden. Der echte Abruf je Quelle (eine Datei je Quelle, mit Pause) lief einmal am 2026-11-24 von
+Hand und ergab dieselben SHA-256 wie die Messung.

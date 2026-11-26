@@ -69,6 +69,9 @@ PACKAGES = (
     Package("snapshots/duesseldorf-aehnlich", limit=2 * MIB, native=False, readme=True),
     # Vorhaben 26: die Tabelle Paper x Tagesordnungspunkt der drei Perioden, je eine Datei (631 944)
     Package("snapshots/duesseldorf-beschluesse", limit=2 * MIB, native=False, readme=True),
+    # Vorhaben 22: die Stadtauszüge der Bedarfsquellen (198 018 und 91 866 Bytes, 2026-11-24)
+    Package("snapshots/duesseldorf-bedarf", limit=1 * MIB, native=False, readme=True),
+    Package("snapshots/moenchengladbach-bedarf", limit=1 * MIB, native=False, readme=True),
 )
 # Alle zusammen, als zweite grobe Schranke: 174 580 489 Bytes = 166,49 MiB am 2026-11-23 (92,5 %
 # der Grenze; Mönchengladbach wuchs mit Punkt 65 um 819 292 Bytes, die drei Textstores sind seit
@@ -76,8 +79,9 @@ PACKAGES = (
 # das Rohtextpaket mit Fundament F1); mit den beiden Anlagenpaketen von Vorhaben 14 174 947 799
 # Bytes = 166,84 MiB (92,7 %, 2026-11-24); mit dem Nachbarpaket von Vorhaben 18 175 853 797 Bytes
 # = 167,71 MiB (93,2 %, 2026-11-24), mit dem Beschlusspaket von Vorhaben 26 176 485 741 Bytes =
-# 168,31 MiB (93,5 %, 2026-11-26). Ein einziger PDF-Ordner einer Periode (585 MB bis 3,9 GB)
-# reißt sie um ein Mehrfaches, und genau davor schützt sie.
+# 168,31 MiB (93,5 %, 2026-11-26), mit den beiden Bedarfspaketen von Vorhaben 22 176 775 625
+# Bytes = 168,59 MiB (93,7 %, 2026-11-26). Ein einziger PDF-Ordner einer Periode (585 MB bis
+# 3,9 GB) reißt sie um ein Mehrfaches, und genau davor schützt sie.
 TOTAL_LIMIT = 180 * MIB
 
 # Was in keinem Paket liegen darf, mit dem Grund. Endungen werden gegen das Suffix geprüft, Namen
@@ -267,6 +271,29 @@ def test_the_raw_text_package_is_read_by_the_main_period_alone() -> None:
     assert load_settings(profile="duesseldorf-vergleich", cwd=nowhere).bootstrap.raw_texts == main
     for profile in ("duesseldorf-2014", "duesseldorf-2025", "moenchengladbach"):
         assert load_settings(profile=profile, cwd=nowhere).bootstrap.raw_texts is None, profile
+
+
+def test_the_need_packages_are_read_by_the_two_cities_alone() -> None:
+    """Vorhaben 22: Düsseldorf (mit dem Vergleich) und Mönchengladbach je ihr Paket, die Perioden keins.
+
+    Die Bedarfsdaten passen nur zur Hauptperiode (Frage 22.5); die laufende Periode rechnet ihre
+    prospektiven Hypothesen erst mit zwölf Monaten Unfällen (Messdokument § 8.1).
+    """
+    from georep.prep.context import NEED_DIR, NEED_FILES
+    from georep.settings import load_settings
+
+    nowhere = Path("/nonexistent")
+    for profile, folder in (
+        ("duesseldorf", "duesseldorf-bedarf"),
+        ("duesseldorf-vergleich", "duesseldorf-bedarf"),
+        ("moenchengladbach", "moenchengladbach-bedarf"),
+    ):
+        need = load_settings(profile=profile, cwd=nowhere).context.need
+        assert need.enabled and need.package == Path("snapshots") / folder, profile
+        assert all((REPO / need.package / "external" / NEED_DIR / n).is_file() for n in NEED_FILES)
+    for profile in ("duesseldorf-2014", "duesseldorf-2025"):
+        need = load_settings(profile=profile, cwd=nowhere).context.need
+        assert not need.enabled and need.package is None, profile
 
 
 def test_the_text_package_is_read_by_the_main_period_alone() -> None:

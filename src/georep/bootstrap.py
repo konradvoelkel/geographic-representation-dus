@@ -27,6 +27,7 @@ from georep.enrich.outcomes import outcome_files
 from georep.enrich.procedures import procedure_files
 from georep.io import atomic_path
 from georep.layout import Layout
+from georep.prep.context import NEED_DIR, NEED_FILES
 from georep.prep.raw_texts import RAW_SUFFIX
 from georep.records import PaperRecord
 from georep.search.vectors import NEIGHBORS_SCHEMA_VERSION
@@ -309,6 +310,7 @@ def bootstrap_from_settings(
         neighbors=settings.embeddings.neighbors_package if settings.embeddings.enabled else None,
         # Vorhaben 26: ebenso nur mit eingeschalteten Schritten
         outcomes=settings.outcomes.package if settings.outcomes.enabled else None,
+        need=settings.context.need.package if settings.context.need.enabled else None,
     )
 
 
@@ -325,6 +327,7 @@ def bootstrap(
     attachments: Path | None = None,
     neighbors: Path | None = None,
     outcomes: Path | None = None,
+    need: Path | None = None,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
 
@@ -353,6 +356,9 @@ def bootstrap(
     ``outcomes`` ist die Naht von Vorhaben 26: die Tabelle „Paper × Tagesordnungspunkt" für
     ``raw/tagesordnungspunkte.parquet``, die der Schritt ``council_results`` liest, wo kein Netzlauf
     liegt; bringt der eingefrorene Datensatz eine eigene mit, gilt seine (wie bei Punkt 58).
+    ``need`` ist die Naht von Vorhaben 22: das Paket mit den Stadtauszügen der Bedarfsquellen
+    (``[context.need].package``), kopiert nach ``external/bedarf/``; bringt der eingefrorene
+    Datensatz eigene mit (die Mini-Fixture), gelten seine, wie bei der Beratungsfolge.
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -391,6 +397,13 @@ def bootstrap(
         agenda = outcome_files(layout).agenda
         own = outcome_files(reference).agenda
         pairs.append((own if own.is_file() else outcomes, agenda))
+    # Vorhaben 22: die Stadtauszüge der Bedarfsquellen, nur wenn das Profil sie einschaltet; der
+    # Netzschritt need_data holt sie frisch.
+    if need is not None:
+        for name in NEED_FILES:
+            own = reference.external / NEED_DIR / name
+            source = own if own.is_file() else need / "external" / NEED_DIR / name
+            pairs.append((source, layout.external / NEED_DIR / name))
     for source, target in pairs:
         _copy_input(layout, source, target, report, force=force)
     # Option 02: die zwei Eingaben des Crosswalks, wenn der Schnappschuss sie mitbringt

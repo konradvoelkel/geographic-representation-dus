@@ -28,6 +28,7 @@ from georep.pack import (
     pack,
     pack_attachments,
     pack_consultations,
+    pack_need,
     pack_neighbors,
     pack_outcomes,
     pack_raw_texts,
@@ -187,6 +188,13 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="nur die Tabelle Paper x Tagesordnungspunkt packen (raw/tagesordnungspunkte-*.parquet), "
         "aus dem Netzlauf der Sitzungen und Beratungen",
+    )
+    # Vorhaben 22: die Stadtauszüge der Bedarfsquellen (Synergien 2026-11, Konflikt 11)
+    only.add_argument(
+        "--need",
+        action="store_true",
+        help="nur die Stadtauszüge der Bedarfsquellen packen (external/bedarf/) statt der Eingaben "
+        "eines Laufs",
     )
 
     # Punkt 58: die Abbildung Organisation -> Gremium aus den Daten lernen, nicht raten
@@ -442,7 +450,8 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
     ``--texts`` nur der Textstore (Punkt 68), mit ``--raw-texts`` nur der Rohtextstore
     (Fundament F1), mit ``--attachments`` nur die Anlagen je Drucksache (Vorhaben 14), mit ``--neighbors`` nur die
     ähnlichen Dokumente (Vorhaben 18), mit ``--outcomes`` nur die Tabelle Paper ×
-    Tagesordnungspunkt (Vorhaben 26).
+    Tagesordnungspunkt (Vorhaben 26), mit ``--need`` nur die Stadtauszüge der Bedarfsquellen
+    (Vorhaben 22).
     """
     write = (
         pack_consultations
@@ -457,6 +466,8 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
         if args.neighbors
         else pack_outcomes  # Vorhaben 26
         if args.outcomes
+        else pack_need
+        if args.need
         else pack
     )
     report = write(layout, settings, args.target, force=args.force)

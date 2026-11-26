@@ -144,6 +144,7 @@ def test_pipeline_runs_skips_and_reruns(
         # Vorhaben 26: Beratungsverlauf und Beschlusslage hängen an Korpus, Paket, 14 und 15
         "council_results": "übersprungen",
         "outcomes": "übersprungen",
+        "need": "ausgeführt",  # Vorhaben 22: liest die Auswertung (Dokumente je Wahlbezirk)
         "report": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")

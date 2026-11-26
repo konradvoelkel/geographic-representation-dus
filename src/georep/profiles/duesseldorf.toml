@@ -924,3 +924,54 @@ package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-duesseldorf
 "vertagt" = ["stand", "vertagt"]                                  # 2 084
 "zurückgestellt" = ["stand", "vertagt"]                           # 92
 "verwiesen" = ["stand", "offen"]                                  # 94
+
+# --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 6, § 8 und § 10) ----------
+# Die Quellen stehen in defaults.toml (bundes- und landesweit, Gemeinde = city.ags); hier schaltet die
+# Stadt ein und nennt das Paket mit ihren Auszügen, die Klassen des passenden Ausschusses und die
+# Hypothesen, die vor der ersten Rechnung festgelegt wurden (Commit 67f7250, 2026-11-23). hb_score,
+# anteil_u18 und mindestsicherung sind Variablen des Quartiersatlas oben ([[context.variables]]).
+[context.need]
+enabled = true                 # Schritte need und, mit context.need.fetch, need_data (Netz)
+package = "snapshots/duesseldorf-bedarf"  # georep pack --need; bootstrap kopiert nach external/bedarf/
+explore = [                    # weitere Paare aus § 3.5, explorativ; Lärm und Kitas kommen in Stufe 2 nicht mit (Frage 22.2)
+  ["unfaelle_rad_fuss", "anteil_verkehr"],
+  ["unfaelle_je_1000", "dok_verkehr_je_1000_ew"],
+  ["mindestsicherung", "dok_je_1000_ew"],
+  ["miete_qm", "dok_je_1000_ew"],
+  ["hb_score", "wahlbeteiligung"],
+  ["hb_score", "anteil_verkehr"],
+  ["hb_score", "sozialindex_schulen"],
+  ["sozialindex_schulen", "dok_je_1000_ew"],
+  ["unfaelle_je_1000", "hb_score"],
+]
+
+[context.need.classes]         # Klassen des Ausschussklassifikators (Option 05); später aus Vorhaben 19, wenn es gebaut wird
+traffic = ["OVA"]              # Ordnungs- und Verkehrsausschuss; auf der Seite „Ordnung und Verkehr" (Frage 22.11)
+youth = ["JHA", "SCHUA"]       # Jugendhilfeausschuss, Schulausschuss
+
+[[context.need.hypotheses]]    # Messdokument § 8: einseitig, rho > 0
+name = "H1"
+need = "unfaelle_je_1000"
+attention = "anteil_verkehr"
+alternative = "greater"
+fixed = "67f7250"
+robust_need = ["unfaelle_scharf_je_1000", "unfaelle", "unfaelle_je_km2"]  # scharf zugeordnet, absolut, je km²
+robust_without = [1, 10]       # § 8: alle drei auch ohne die Wahlbezirke 1 und 10, vorab festgelegt
+
+[[context.need.hypotheses]]    # zweiseitig: rho > 0 „Aufmerksamkeit folgt dem Bedarf", rho < 0 „ungleiche Aufmerksamkeit"
+name = "H2"
+need = "hb_score"
+attention = "dok_je_1000_ew"
+alternative = "two-sided"
+fixed = "67f7250"
+robust_attention = ["trefferquote"]  # die Kennzahl der Seite, je Wahlberechtigtem
+robust_control = "log_begriffe"      # partiell bei fester Wörterbuchgröße
+robust_without = [1, 10]
+
+[[context.need.hypotheses]]    # einseitig, rho > 0
+name = "H3"
+need = "anteil_u18"
+attention = "anteil_jugend"
+alternative = "greater"
+fixed = "67f7250"
+robust_without = [1, 10]

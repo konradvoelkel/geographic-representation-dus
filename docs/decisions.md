@@ -3547,3 +3547,126 @@ eintragen (§ 10, Punkt 7: vor Stufe 3, mit A/B-Bau); die Tabelle des Pakets mit
 Klassen (ein neues Profil brauchte ein neues Paket); ein Paket für alle drei Perioden in einer
 Datei (jedes Profil packt seine eigene, der Name steht im Profil); den Wortschatz in
 `defaults.toml` (er ist der einer Sitzungsleitung, Mönchengladbach hat einen anderen).
+## NN. Bedarf und Aufmerksamkeit je Wahlbezirk: Punkte mit Randband, Auszüge als Paket, die Tests der Messung (Vorhaben 22, 2026-11-24)
+
+Vorhaben 22 der Vorverarbeitung (`docs/plans/22-bedarf.md`, § 5 bis § 8 und § 10), Stufe 2. Die
+Messung fand vier Bedarfsquellen mit freier Lizenz und passender Raumeinheit (Quartiersatlas,
+Unfallatlas, Zensus-Gitter, Schulsozialindex) und rechnete drei vorab festgelegte Hypothesen; gebaut
+ist genau diese Rechnung, als sechster Beitrag nach Punkt 69 (hinter 15, 14, 18, 17 und 26), mit dem
+Netzschritt über `http` (Punkt 74).
+
+**Was gebaut ist.**
+
+- `crosswalk.point_shares`: je Punkt gleiche Anteile an jede Einheit (Wahlbezirk oder Stimmbezirk),
+  deren Fläche näher als `band_m` liegt; Band 0 ist Punkt in Fläche, ein Punkt auf einer Grenze liegt
+  in beiden geschlossenen Flächen und wird geteilt. Ein STRtree, eine Abfrage für alle Punkte. 16
+  (Hausnummern) und 21 (Beträge) rufen dieselbe Funktion (Synergien 2026-11, § 1).
+- `prep/context.py` liest die Quellen, wie sie kommen (`read_accidents` in den drei Namensformen der
+  Jahrgänge, mit BOM und Dezimalkomma; `read_grid`; `read_schools` mit der Zeile `sep=;` und dem
+  Sozialindex in Codepage 850) und rechnet je Wahlbezirk (`need_table`); ein Verhältnis ohne Nenner
+  ist null, nie NaN. Einen Unfall oder eine Schule ohne Koordinate verwirft der Leser und zählt sie
+  für die Zeile von `need_data` (`Located`); vorher hielt erst `point_shares` mit einem
+  `PreContractError` an (Review 2026-11-24, N3). Heute hat keine Quelle eine solche Zeile.
+- `analysis/need.py` rechnet die Tests: Spearman, Permutationen, Bootstrap, Holm, Robustheit,
+  explorativ innerhalb der Stadtbezirke und Moran's I. Die Zufallszahlen kommen in der Folge des
+  Messskripts, die Korrelationen für alle Permutationen zugleich.
+- Beitrag `22-bedarf` (`enrich/need.py`): `need_data` (Netz) legt die zehn Archive unter
+  `cache_root/bedarf/` ab und schneidet die Gemeinde heraus (`external/bedarf/`, mit
+  `quellen.json`); `need` schreibt `wahlbezirke_bedarf.parquet` und, wo das Profil Hypothesen nennt,
+  `bedarf_hypothesen.parquet` (ohne Hypothesen und Paare entfernt es eine alte aus einem früheren
+  Lauf, Review 2026-11-24, N9). Pfade in `need_files`, keine Property in `layout.py`.
+- Pakete `snapshots/duesseldorf-bedarf/` (198 018 Bytes) und `snapshots/moenchengladbach-bedarf/`
+  (91 866 Bytes) über `georep pack --need`; `bootstrap` kopiert sie nach `external/bedarf/`, die
+  eigenen eines Datensatzes zuerst (die Mini-Fixture).
+
+**Gleich mit der Messung.** Auf dem Lauf vom 2026-11-24 ist jede Spalte von
+`wahlbezirke_bedarf`, die auch die Tabelle des Messskripts hat (22 der 25 neben dem Schlüssel, mit
+den Namen unten), gleich (größte Abweichung 1e-13, Summenfolge), und `bedarf_hypothesen` trägt jede
+Zahl aus § 3.4 und § 3.5: H1 ρ = 0,343 (95 % 0,051 bis 0,593), p = 0,0143, p_Holm = 0,0429,
+bestätigt; H2 −0,336, p_Holm 0,0692; H3 −0,059; innerhalb der Stadtbezirke −0,062, −0,204, 0,465;
+Moran's I der Residuen 0,341, 0,050, 0,262. 11 501 Unfälle im Zeitraum, 3 170 im Band geteilt,
+611 134 Einwohner. Ein `slow`-Test (`tests/golden/test_need_numbers.py`) rechnet die Zahlen aus dem
+Paket nach.
+
+**Anders als der Bauplan, mit Grund.**
+
+- *Paket unter `snapshots/` als Parquet*, nicht CSV unter `context/` (Konflikt 11): `context/` hält
+  Portaldateien unverändert. Parquet hält die Typen und die vollen Koordinaten, und es sind 290 KB statt
+  der geschätzten rund 1 MB; alle Pakete zusammen 168,59 MiB von 180 (mit den Paketen von 14, 18 und 26).
+- *Die Quellen stehen in `defaults.toml`*, nicht in jedem Stadtprofil: sie sind bundes- oder
+  landesweit und für beide Städte dieselben zehn URLs, wie die Ratssprache in Punkt 75. Das Profil
+  schaltet ein und nennt Paket, Klassen, Hypothesen und Paare; die Gemeinde ist `city.ags`.
+- *Mönchengladbach bekommt sein Paket gleich mit* (Konflikt 11 nennt `moenchengladbach-bedarf`):
+  Unfälle, Einwohner, Miete und Schulsozialindex je Wahlbezirk, ohne Klassen und Hypothesen
+  (Frage 22.6). Die Periodenprofile schalten ab (Frage 22.5).
+- *`cells_to_districts` gibt es nicht*: `point_shares` mit Band 0 ist genau das.
+- *Spalten*: `sozialindex_schulen` statt `sozialindex_gs` und `schulen_mit_index` statt
+  `grundschulen` (das Messskript zählte nur Grundschulen mit Stufe; die Schulformen stehen jetzt in
+  den Settings), dazu `schulen` mit allen Schulen dieser Formen, auch ohne Stufe (88 gegen 87); so
+  ist auch der Abgleich oben gerechnet (Review 2026-11-24, N6). `unfaelle_geteilt` (Anteile aus Unfällen,
+  die auf mehrere Wahlbezirke gehen) statt `unfaelle_am_rand`, das im Messskript auch die Stadtgrenze
+  zählte (3 268 gegen 3 170); Zählungen aus Anteilen sind Float64, weil ein Punkt auf einer Grenze
+  geteilt wird.
+- *Die Hypothesentabelle* trägt den Kern der Synergie vorn (`hypothese`, `p`, `p_holm`, `ergebnis`,
+  `n`, `festgelegt`) und ist lang: je Zeile eine Rechnung (`haupttest`, `robustheit`, `innerhalb`,
+  `moran_*`, `paar`) mit `mass` und `wert`, weil Moran's I kein ρ ist. Die Robustheit trägt nur ρ, wie
+  in § 3.4. `ergebnis` steht nur am Haupttest, dahinter `deutung` mit den drei Wörtern aus § 8
+  („Aufmerksamkeit folgt dem Bedarf", „ungleiche Aufmerksamkeit", „kein Zusammenhang nachweisbar"):
+  `ergebnis` sagte bei der zweiseitigen H2 nicht, in welche Richtung Holm verwirft (Review
+  2026-11-24, K1). Die einseitigen H1 und H3 haben nur den ersten und den letzten Ausgang.
+- *Die Hypothesen stehen im Stadtprofil* mit dem Commit ihrer Festlegung (`fixed`): sie nennen
+  Variablen des Quartiersatlas. Auch die Wahlbezirke der Robustheit „ohne 1 und 10" stehen in jeder
+  Hypothese (`robust_without`), nicht in `analysis.exclude_districts`, das die Regression der Seite
+  steuert und sich ändern darf, ohne dass sich eine vorab festgelegte Rechnung mitändert (Review
+  2026-11-24, N8; die Zahlen 0,417, −0,411, −0,144 bleiben, ein `slow`-Test hält sie). Der Commit ist `67f7250`; das Messdokument nannte `9da9fe1`, den Hash
+  vor dem Rebase, den es in keinem Zweig gibt (berichtigt).
+- *Der Netzschritt hinter einem eigenen Schalter*: `need_data` gibt es nur mit
+  `context.need.fetch` (Vorgabe aus, auch in den Stadtprofilen, nicht im Fingerprint), derselbe
+  Mechanismus wie `council.enabled` (Review F6 2026-11-23, Befund 6): volle Abrufe sind Konrads
+  Läufe, und mit `enabled` allein lud ein bloßes `georep fetch` die zehn Archive (Review
+  2026-11-24, N1). Abgerufen wird mit `GEOREP_CONTEXT__NEED__FETCH=true georep fetch need_data`.
+- *Archive mit Lebensdauer*: `need_data` lädt ein Archiv erst wieder, wenn es älter ist als
+  `cache.opendata_s` (dieselbe Lebensdauer wie die übrigen Portaldateien), eine Datei nach der
+  anderen mit `context.need.delay_s` Pause. Ein Neuladen bei jedem Lauf hieße 105 MB je Stadt und
+  Lauf; eine Cache-Regel der Session legte sie in die geteilte `http.sqlite` (heute 800 MB).
+- *Zehn Schulen mit `null` als CRS* (Seminare, neue Schulen, keine Grundschule) gelten als im
+  erklärten CRS; ein anderes, genanntes CRS bleibt ein Fehler. Der erste echte Lauf brach daran ab.
+- *Neun Gitterzellen nur in der Mietdatei* bleiben mit null Einwohnern im Auszug und haben kein
+  Gewicht; das Messskript verlor sie beim Verbinden (7 658 statt 7 667 Zellen, dieselben Zahlen).
+- *Ohne Fremddaten oder Klassen bleibt die Zeile ohne p*: eine Hypothese über eine Variable des
+  Quartiersatlas oder einen Anteil der Klassen hat in einem Lauf ohne `context.root` oder ohne
+  Klassifikator keine Werte. Ihre Zeile bleibt, mit `p` null und ohne `p_holm`, Ergebnis und
+  Deutung (ein Test ohne Werte stünde sonst als „nicht bestätigt" da), und Holm rechnet weiter über
+  alle vorab festgelegten, m = 3 (Review 2026-11-24, N2; vorher fiel die Hypothese weg, und Holm
+  rechnete über den Rest). Die Zeile des Laufs nennt sie. Im Lauf der Hauptperiode fehlt nichts;
+  die Tests der Kette laufen auch ohne Fremddaten.
+- *Holm und die Wortwahl aus dem Kern von 17* (`analysis/hypotheses.py`, Punkt 78): `family` mit
+  `strict=True`, weil § 8 „p_Holm < 0,05" festlegt (die Vorgabe des Kerns ist `<=`), und `m` gleich
+  der Zahl der vorab festgelegten Hypothesen, damit eine ohne Eingabe außerhalb der Familie steht
+  und für Holm trotzdem zählt (Supervisor, 2026-11-26). Der Vertrag von `hypothesis_table` ruft
+  `check_hypotheses` mit dem Schlüssel `ROW_KEY` (Hypothese, Rechnung, Bedarf, Aufmerksamkeit,
+  Kontrolle, ohne), denn 22 trägt je Hypothese mehrere Rechnungen. Bis zum Merge von 17 lagen
+  `holm` und `verdict` als Übergang in `analysis/need.py`; ihr Ziel in `VERIFY_TARGETS` fiel mit
+  ihnen weg, `georep.analysis.hypotheses.holm` steht dort seit 17. Die Zahlen von H1 bis H3 sind
+  dieselben (der `slow`-Test).
+
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
+(`ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace), beide mit `POLARS_MAX_THREADS=4` und
+`OMP_NUM_THREADS=2`: zuerst `main` `61fcdd5` gegen den Branch vor dem Merge (`9520f86`), dann `main`
+`098d556` (mit Vorhaben 14) gegen den zusammengeführten Branch. Beide Male unter `site/` 194
+Dateien in A und B, 0 Abweichungen. Über die Datenwurzeln weichen nur Stamps ab (79 und 87 Stück),
+und in B liegen 13 Dateien mehr: die acht Auszüge unter `external/bedarf/` beider Städte, die drei
+Tabellen unter `processed/` und ihre zwei Stamps. Im Bau aus den Paketen (ohne Netz) rechnet `need`
+dieselben Zahlen wie im Lauf mit `need_data`.
+
+**H1′ und H3′** (Frage 22.10) sind in § 8.1 des Messdokuments prospektiv festgelegt, an der laufenden
+Periode, gerechnet erst mit zwölf Monaten Unfällen (Unfallatlas 2026, Juli 2027); gebaut ist dafür
+nichts.
+
+**Verworfen.** Die Auszüge als CSV unter `context/` (Konflikt 11); eine eigene Session für den
+Netzschritt (ohne Fake-Session nicht testbar, Punkt 74); die Archive in `http.sqlite` (oben); ein
+dritter Schritt nur für die Tests (eine Datei mehr im Register für eine Rechnung von einer Sekunde, die
+dieselben Eingaben liest); `PrecinctIndex.locate` je Punkt (13 500 Aufrufe statt einer Abfrage); die
+Tabellen auf der Seite schon in Stufe 2 (sie gehören zu `bedarf.html`, Stufe 3, und änderten sonst
+`index.html`); der Lärm 2018 (braucht die 90 MB der Gebäudereferenzen, Frage 22.2); ein räumliches
+Modell (Frage 29: Moran's I und die Rechnung innerhalb der Stadtbezirke genügen).
