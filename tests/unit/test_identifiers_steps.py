@@ -11,6 +11,7 @@ from pathlib import Path
 import polars as pl
 
 from georep.enrich.identifiers import identifiers_files, identifiers_steps, raw_text_frame
+from georep.enrich.sections import sections_files
 from georep.io import write_parquet
 from georep.layout import Layout
 from georep.pipeline import build_steps
@@ -102,3 +103,34 @@ def test_ein_rohtextstore_mit_alter_version_gilt_als_leer(tmp_path: Path) -> Non
     frame, stale = raw_text_frame(path)
     assert frame.height == 0
     assert stale == "rohtexte.parquet trägt Schema-Version 1, gelesen wird 2"
+
+
+def test_der_schritt_liest_die_abschnitte_von_11(
+    tmp_path: Path, default_settings: Settings
+) -> None:
+    """Mit ``dokumente_abschnitte.parquet`` füllt der Schritt ``section``; die Datei ist eine
+    optionale Eingabe, ihr Hash steht im Stamp (fehlt sie, bleibt ``section`` leer)."""
+    layout = _layout(tmp_path)
+    _inputs(layout, {"0.pdf": "Betreff: Turnhalle\nKosten 5.000 Euro."}, {"p0": "0.pdf"})
+    (step,) = identifiers_steps(default_settings, layout, HTTP)
+    assert step.optional == (sections_files(layout).sections,)
+    step.run()
+    assert pl.read_parquet(identifiers_files(layout).spans).get_column("section").to_list() == [""]
+    sections = pl.DataFrame(
+        {
+            "id": ["p0", "p0"],
+            "start": [0, 19],
+            "end": [19, 37],
+            "kind": ["abschnitt", "abschnitt"],
+            "value": ["", ""],
+            "norm": ["betreff", "rumpf"],
+            "section": ["betreff", "rumpf"],
+            "extractor": ["struktur-1/pypdf-7.1.0+roh"] * 2,
+        },
+        schema=SPAN_SCHEMA,
+    )
+    write_parquet(sections, sections_files(layout).sections, schema_version=1)
+    step.run()
+    assert pl.read_parquet(identifiers_files(layout).spans).get_column("section").to_list() == [
+        "rumpf"
+    ]

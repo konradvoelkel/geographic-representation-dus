@@ -465,3 +465,37 @@ def test_value_ist_woertlich_der_text_der_spanne(rules: IdentifierRules) -> None
         right.with_columns(pl.lit("r").alias("id")),
     ):
         assert not _spans_hold(texts, documents, rules, result=wrong)
+
+
+def _sections(*rows: tuple[str, int, int, str]) -> pl.DataFrame:
+    """Abschnitte der Ebene 1 aus Vorhaben 11: (id, start, end, Abschnitt)."""
+    frame = pl.DataFrame(
+        {
+            "id": [r[0] for r in rows],
+            "start": [r[1] for r in rows],
+            "end": [r[2] for r in rows],
+            "kind": ["abschnitt"] * len(rows),
+            "value": [""] * len(rows),
+            "norm": [r[3] for r in rows],
+            "section": [r[3] for r in rows],
+            "extractor": ["struktur-1/pypdf-7.1.0+roh"] * len(rows),
+        },
+        schema=SPAN_SCHEMA,
+    )
+    return sort_spans(frame)
+
+
+def test_section_kommt_aus_den_abschnitten_von_11(rules: IdentifierRules) -> None:
+    """Je Spanne der Abschnitt der Ebene 1, in dem ihr Anfang liegt (``section_of``, Vorhaben 11);
+    außerhalb jedes Abschnitts bleibt ``section`` leer."""
+    text = "Betreff: Turnhalle\nBeschlussvorschlag: 5.000 Euro bis zum 31.03.2024\nAnlage 7 Euro"
+    texts = _texts(("a.pdf", text))
+    documents = pl.DataFrame({"id": ["p"], "file_name": ["a.pdf"]})
+    sections = _sections(("p", 0, 19, "betreff"), ("p", 19, 69, "beschlussvorschlag"))
+    spans = identifier_spans(texts, documents, rules, sections)
+    assert spans.select("value", "section").rows() == [
+        ("5.000 Euro", "beschlussvorschlag"),
+        ("31.03.2024", "beschlussvorschlag"),
+        ("7 Euro", ""),
+    ]
+    assert identifier_spans(texts, documents, rules).get_column("section").to_list() == [""] * 3

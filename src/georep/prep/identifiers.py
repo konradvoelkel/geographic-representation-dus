@@ -30,7 +30,7 @@ Nummernformate und Kopffelder im Stadtprofil (``[identifiers]``); hier steht nur
 Leerraum und die Teile zusammengesetzt sind. Rein: keine Datei, kein Netz.
 
 Eine Spanne folgt Fundament F3 (``georep.spans``): Zeichenpositionen im Rohtext aus F1, ``value``
-wörtlich, ``section`` leer, bis Vorhaben 11 die Abschnitte liefert, dazu hinter den acht Spalten
+wörtlich, ``section`` aus den Abschnitten von Vorhaben 11 (``section_of``), dazu hinter den acht Spalten
 ``attr`` mit der **Form** (Punkt 74), nie einer Deutung: ``je`` und ``spanne`` bei Beträgen, ``tag``,
 ``monat``, ``quartal``, ``jahr``, ``relativ`` bei Terminen, ``kopf``, ``name``, ``nummer``,
 ``text``, ``wort`` bei Ämtern.
@@ -53,7 +53,7 @@ import polars as pl
 from georep.contracts import has_columns
 from georep.errors import SchemaError
 from georep.settings import Identifiers
-from georep.spans import SPAN_SCHEMA, check_spans, empty_spans, sort_spans
+from georep.spans import SPAN_SCHEMA, check_spans, empty_spans, section_of, sort_spans
 
 # Version 1: die acht Spalten von F3 und ``attr`` (Messdokument § 6 und § 10).
 IDENTIFIERS_SCHEMA_VERSION = 1  # erhöhen, wenn sich Spalten oder Typen von kennungen.parquet ändern
@@ -787,6 +787,7 @@ def _spans_hold(
     texts: pl.DataFrame,
     documents: pl.DataFrame,
     rules: IdentifierRules,
+    sections: pl.DataFrame | None = None,
     result: pl.DataFrame | None = None,
 ) -> bool:
     """F3 mit ``attr`` dahinter, jede Spanne in ihrem Text, ``value`` wörtlich der Text.
@@ -811,6 +812,7 @@ def _norms_and_forms_hold(
     texts: pl.DataFrame,
     documents: pl.DataFrame,
     rules: IdentifierRules,
+    sections: pl.DataFrame | None = None,
     result: pl.DataFrame | None = None,
 ) -> bool:
     """Ein Betrag ist eine Dezimalzahl, ein Termin hat eine Normform des Codebuchs .2, jede Form
@@ -873,16 +875,42 @@ def overlaps_are_allowed(spans: pl.DataFrame) -> bool:
 DATE_NORM = re.compile(r"\d{4}-\d{2}-\d{2}|\d{4}-\d{2}(?:~[a-z]+)?|\d{4}-[QH][1-4]|\d{4}~[a-z]+")
 
 
+def _inputs_have_columns(
+    texts: pl.DataFrame,
+    documents: pl.DataFrame,
+    rules: IdentifierRules,
+    sections: pl.DataFrame | None = None,
+) -> bool:
+    return has_columns(texts, *TEXT_COLUMNS) and has_columns(documents, *DOCUMENT_COLUMNS)
+
+
+def _sections_on_the_same_text(
+    texts: pl.DataFrame,
+    documents: pl.DataFrame,
+    rules: IdentifierRules,
+    sections: pl.DataFrame | None = None,
+) -> bool:
+    """Die Abschnitte zeigen auf denselben Rohtext: ihr ``extractor`` endet mit dem des Stores
+    (``struktur-1/pypdf-7.1.0+roh`` zu ``pypdf-7.1.0+roh``); sonst bedeuten ihre Positionen etwas
+    anderes."""
+    if sections is None or sections.height == 0:
+        return True
+    raw = set(texts.get_column("extractor").drop_nulls().unique().to_list())
+    named = sections.get_column("extractor").unique().to_list()
+    return all(name.partition("/")[2] in raw for name in named)
+
+
 @deal.pre(
-    lambda texts, documents, rules: (
-        has_columns(texts, *TEXT_COLUMNS) and has_columns(documents, *DOCUMENT_COLUMNS)
-    ),
-    message="Rohtexte mit name, text, extractor; Korpus mit id, file_name",
+    _inputs_have_columns, message="Rohtexte mit name, text, extractor; Korpus mit id, file_name"
 )
+@deal.pre(_sections_on_the_same_text, message="Abschnitte auf einem anderen Text als die Rohtexte")
 @deal.ensure(_spans_hold, message="Spannen nach F3 mit attr, jede in ihrem Text, sortiert")
 @deal.ensure(_norms_and_forms_hold, message="Normwerte und Formen je Art, keine Überlappung")
 def identifier_spans(
-    texts: pl.DataFrame, documents: pl.DataFrame, rules: IdentifierRules
+    texts: pl.DataFrame,
+    documents: pl.DataFrame,
+    rules: IdentifierRules,
+    sections: pl.DataFrame | None = None,
 ) -> pl.DataFrame:
     """Die Spannen aller Kennungen je Korpus-ID (``processed/kennungen.parquet``).
 
@@ -890,7 +918,10 @@ def identifier_spans(
     ``id`` und ``file_name``. **Jede** Korpus-ID, deren Paper die Datei trägt, bekommt die Spannen
     der Datei (Synergien 2026-11, § 1); eine Datei ohne Korpus-ID fällt weg, ein Dokument ohne
     Rohtext hat keine Spanne. ``extractor`` ist ``kennungen-1/`` vor dem Extraktor des Rohtexts.
-    ``rules`` trägt das Ämterverzeichnis schon (``with_directory``).
+    ``rules`` trägt das Ämterverzeichnis schon (``with_directory``). ``sections`` sind die
+    Abschnitte aus Vorhaben 11 (``dokumente_abschnitte.parquet``, auf demselben Rohtext); mit ihnen
+    trägt jede Spanne in ``section`` den Abschnitt der Ebene 1, in dem ihr Anfang liegt
+    (``spans.section_of``), ohne sie bleibt ``section`` leer.
     """
     files = documents.select("file_name").drop_nulls().unique()
     usable = (
@@ -927,7 +958,10 @@ def identifier_spans(
         .join(found, on="file_name", how="inner")
         .with_columns(pl.lit("").alias("section"))
     )
-    return sort_spans(spans.select(*SPAN_SCHEMA, ATTR))
+    ordered = sort_spans(spans.select(*SPAN_SCHEMA, ATTR))
+    if sections is None:
+        return ordered
+    return sort_spans(section_of(ordered, sections))
 
 
 def identifier_figures(spans: pl.DataFrame) -> dict[str, int]:

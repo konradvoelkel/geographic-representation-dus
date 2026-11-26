@@ -13,8 +13,9 @@ hier steht nur, welche Dateien gelesen und geschrieben werden. Die Pfade gehöre
 (Synergien 2026-11, § 2.1): wer die Spannen liest — 21 die Beträge, 24 die Ämter, 29 die
 Plannummern —, nimmt sie aus ``identifiers_files``.
 
-``section`` bleibt leer, bis Vorhaben 11 die Abschnitte liefert (``section_of``); das Ämterverzeichnis
-entsteht je Lauf aus den Kopffeldern des Korpus.
+``section`` kommt aus den Abschnitten von Vorhaben 11 (``dokumente_abschnitte.parquet``,
+``spans.section_of``), einer optionalen Eingabe; das Ämterverzeichnis entsteht je Lauf aus den
+Kopffeldern des Korpus.
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ from typing import NamedTuple
 import polars as pl
 
 from georep.enrich import Contribution
+from georep.enrich.sections import sections_files
 from georep.http import Transport
 from georep.io import write_parquet
 from georep.layout import Layout
@@ -39,6 +41,7 @@ from georep.prep.identifiers import (
     office_directory,
 )
 from georep.settings import Settings
+from georep.spans import SPAN_SCHEMA
 from georep.stores import RAW_TEXT_SCHEMA_VERSION, stored_schema_version
 
 
@@ -74,6 +77,10 @@ def identifiers_steps(settings: Settings, layout: Layout, http: Transport) -> li
     if not settings.identifiers.enabled:
         return []
     files = identifiers_files(layout)
+    # Vorhaben 11: die Abschnitte als optionale Eingabe (ihr Hash steht im Stamp, Fundament F1);
+    # ``sections`` ist ein früher Schritt und läuft vorher, ohne ``structure.enabled`` fehlt die
+    # Datei, und ``section`` bleibt leer
+    abschnitte = sections_files(layout).sections
 
     def identifiers() -> str:
         texts, stale = raw_text_frame(layout.raw_texts)
@@ -87,7 +94,10 @@ def identifiers_steps(settings: Settings, layout: Layout, http: Transport) -> li
             .get_column("text")
         )
         directory = office_directory(heads, rules)
-        spans = identifier_spans(texts, documents, rules.with_directory(directory))
+        sections = (
+            pl.read_parquet(abschnitte, columns=list(SPAN_SCHEMA)) if abschnitte.exists() else None
+        )
+        spans = identifier_spans(texts, documents, rules.with_directory(directory), sections)
         write_parquet(spans, files.spans, schema_version=IDENTIFIERS_SCHEMA_VERSION)
         if heads.len() == 0:
             reason = f" ({stale})" if stale else ""
@@ -106,6 +116,7 @@ def identifiers_steps(settings: Settings, layout: Layout, http: Transport) -> li
             (files.spans,),
             identifiers,
             IDENTIFIERS_SCHEMA_VERSION,
+            optional=(abschnitte,),
         )
     ]
 

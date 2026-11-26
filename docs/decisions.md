@@ -3842,8 +3842,13 @@ mit der **Form**, nie einer Deutung (Punkt 74): `je` und `spanne` bei Beträgen,
 `quartal`, `jahr`, `relativ` bei Terminen, `kopf`, `name`, `nummer`, `text`, `wort` bei Ämtern.
 `extractor` ist `kennungen-1/` vor dem Extraktor des Rohtexts. **Jede** Korpus-ID, deren Paper die
 Datei trägt, bekommt ihre Spannen (Synergien 2026-11, § 1, Konflikt 4), nicht nur die kleinste wie in
-der Messung. `section` bleibt leer, bis Vorhaben 11 gemerged ist und `section_of` mitbringt; dann
-zieht 12 nach. Ohne Rohtext (ein Profil ohne PDFs und ohne Rohtextpaket, auf Pages alle außer der
+der Messung. `section` kommt aus den Abschnitten von Vorhaben 11 (`dokumente_abschnitte.parquet`
+als optionale Eingabe, `spans.section_of`: der Abschnitt der Ebene 1, in dem der Anfang einer
+Spanne liegt; nachgezogen nach Punkt 81); ohne die Datei bleibt `section` leer. In der Hauptperiode
+tragen danach 100 665 von 116 349 Spannen einen Abschnitt (am häufigsten `sachdarstellung` 40 087,
+`kopf_beratungsfolge` 13 536, `beschlussvorschlag` 12 203, `rumpf` 11 593, `kopf_amt` 10 055;
+2026-11-26). Ein Vertrag prüft,
+dass die Abschnitte auf demselben Rohtext stehen (ihr `extractor` endet mit dem des Stores). Ohne Rohtext (ein Profil ohne PDFs und ohne Rohtextpaket, auf Pages alle außer der
 Hauptperiode) schreibt der Schritt dieselbe Tabelle leer und sagt es, statt den Lauf scheitern zu
 lassen (Konflikt 14). Kein Paket: der Schritt rechnet aus dem Rohtextpaket in unter einer Minute.
 
