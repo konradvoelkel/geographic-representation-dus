@@ -126,6 +126,8 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
     # Netzschritt nur mit ``fetch`` dazu (Review 2026-11-24, N1)
     need = default_settings.context.need.model_copy(update={"enabled": True, "fetch": True})
     context = default_settings.context.model_copy(update={"need": need})
+    # Vorhaben 20: der Modellschritt ist in allen Profilen aus (Nachmessung § 5.4)
+    summaries = default_settings.summaries.model_copy(update={"enabled": True})
     settings = default_settings.model_copy(
         update={
             "council": council,
@@ -133,6 +135,7 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
             "cycles": cycles,
             "feeds": feeds,
             "context": context,
+            "summaries": summaries,
         }
     )
     return {s.name: s.schema_version for s in build_steps(settings, layout)}

@@ -1117,4 +1117,4 @@ head_lines = 30
 
 # --- Vorhaben 20: Kurzfassungen (docs/plans/20-kurzfassungen.md, § 6 und § 10) -------------------
 [summaries]
-enabled = true                 # der Schritt summaries; er läuft nur mit `georep run --models` und braucht die Abschnitte von 11 (structure.enabled). Ausgaben nur unter cache_root/<profil>/summaries/, nie veröffentlicht (Frage 6)
+enabled = false                # aus: die Nachmessung (Messdokument § 5.4, 2026-11-26) hat gemma4 (4 von 50) und qwen3.6:27b (5 von 50) verworfen, kein Stapellauf; an, liefe jedes `georep run --models` den Stapel mit 5 bis 8 GPU-Stunden. Der Schritt bleibt gebaut; für eine spätere Messung GEOREP_SUMMARIES__ENABLED=true. Ausgaben nur unter cache_root/<profil>/summaries/, nie veröffentlicht (Frage 6)

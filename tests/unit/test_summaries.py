@@ -42,7 +42,7 @@ from georep.enrich.summaries import (
 from georep.layout import Layout
 from georep.pack import package_files
 from georep.prep.bodies import BodyRules
-from georep.settings import Settings, Summaries, load_settings
+from georep.settings import Settings, Summaries, available_profiles, load_settings
 
 NOWHERE = Path("/nonexistent")
 DEFAULTS = Path(__file__).resolve().parents[2] / "src" / "georep" / "defaults.toml"
@@ -291,7 +291,7 @@ def test_the_settings_default_to_off_with_gemma(settings: Settings) -> None:
     defaults = tomllib.loads(DEFAULTS.read_text(encoding="utf-8"))["summaries"]
     assert defaults["enabled"] is False and Summaries().enabled is False
     block = settings.summaries
-    assert (block.enabled, block.model, block.budget_chars) == (True, "gemma4", 8000)
+    assert (block.enabled, block.model, block.budget_chars) == (False, "gemma4", 8000)
     assert (block.rare_share, block.known_documents) == (0.01, 3)
     assert re.fullmatch(block.person_titles, "Beigeordnete")  # Regel 5, Review von 11
 
@@ -382,8 +382,20 @@ def test_a_code_without_a_secured_name_keeps_the_written_name(settings: Settings
     assert deliberation([], None, rules, head=[bare]) == f"{unnamed} (Vorberatung)"
 
 
-def test_both_city_profiles_switch_the_step_on(settings: Settings) -> None:
-    """Aus in den Defaults, an in den Stadtprofilen; die Perioden Düsseldorfs erben."""
-    for profile in ("duesseldorf", "duesseldorf-2025", "duesseldorf-2014", "moenchengladbach"):
+def test_no_package_profile_switches_the_step_on() -> None:
+    """Nachmessung § 5.4: keines der beiden Modelle hielt, kein Stapellauf. Der Schritt bleibt gebaut,
+    aber kein Profil des Pakets schaltet ihn ein; sonst startete jedes ``georep run --models`` (etwa
+    für die Einbettungen von 18) den Stapel mit 5 bis 8 GPU-Stunden. Für eine spätere Messung:
+    ``GEOREP_SUMMARIES__ENABLED=true``."""
+    for profile in available_profiles():
         found = load_settings(profile=profile, cwd=NOWHERE)
-        assert found.summaries.enabled and found.structure.enabled, profile
+        assert not found.summaries.enabled, profile
+        assert found.summaries.model == "gemma4", profile
+
+
+def test_the_environment_switches_the_step_on_for_a_later_measurement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GEOREP_SUMMARIES__ENABLED", "true")
+    found = load_settings(cwd=NOWHERE)
+    assert found.summaries.enabled and found.summaries.model == "gemma4"
