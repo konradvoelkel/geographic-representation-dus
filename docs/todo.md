@@ -153,11 +153,14 @@ Wartezeiten, ohne anzuhalten, weil sie nicht mehr in die Serie zählen; das kost
 (b) Weniger als zehn Abweisungen in Folge mit vorübergehender Ursache bleiben als abgewiesen gemerkt;
 der Rückweg ist `--retry-rejected`. (c) Wer `embed_texts` oder `generate_texts` außerhalb von
 `run_step` aufruft (etwa ein Skript der GPU-Warteschlange), muss `use.reset(retry_rejected=…)` selbst
-setzen. Zu klären, wenn die ersten Modellschritte (18 bis 20) gebaut werden.
+setzen. Zu klären, wenn die Modellschritte von 19 und 20 gebaut werden.
 (d) Eine Tempo-Probe vor dem ersten Stapel eines Modellschritts (oder in `georep ml status`): zweimal
 rechnete ollama still auf der CPU, während `ollama ps` „100% GPU" sagte (2026-11-23, 22:42,
 `ggml_cuda_init` im Log; Vorhaben 18, Frage 9.5). Bis dahin prüft jeder Lauf das Log und das Tempo von
 Hand.
+(e) Die Zahl der Korpus-IDs ohne Rohtext, für die `embeddings` keinen Vektor schreibt, steht nur in
+der Laufzeile, nicht im Stamp und nicht in `status` (Review von Vorhaben 18, N9; braucht eine Stelle im
+Stamp für Zählungen eines Schritts).
 
 ## 12. Vorgänge: Rückstand aus der Nachprüfung von Vorhaben 14
 
@@ -170,3 +173,62 @@ Stamp-Schlüssel von `compare` sind absolute Pfade unter `data_root`; relativ zu
 liegen die Spannen aller Profile auf dem Rohtext, auf Pages nur die der Hauptperiode (die Spalte
 `extractor` sagt es); vor Stufe 3 klären, ob die Tabelle so veröffentlicht wird. (f) Die Maske nimmt
 einmal ein Sachwort mit („Anfrage Dr. …" statt „… Hitzeschutz"); das README des Pakets sagt es.
+
+## 13. Zeit und Feeds: Rückstand aus dem Review von Vorhaben 17
+
+Aufgenommen am 2026-11-26 aus dem Review der Stufe 2 (Punkt 78); keiner verfälscht ein Ergebnis heute.
+(a) `jonckheere` (`analysis/cycles.py`) legt Anzahl × n × n float64 an: bei Gruppengrößen (6, 5, 4)
+rund 1,1 GB, bei (6, 5, 5) rund 4,1 GB — das tritt ein, sobald das Paket 2025 bis August 2029 reicht,
+und droht auf dem Pages-Runner als Speicherabbruch; in Blöcken zählen oder die exakte Verteilung
+falten. (b) Die offene Periode endet am jüngsten Korpusdatum; ein falsch in die Zukunft datiertes
+Dokument macht ein Wahljahr vorzeitig vollständig. (c) Fehlt nur `snapshots/2025`, verliert die Seite
+den Periodenvergleich (Kopplung von Option 02 an 17). (d) Mönchengladbach hat in keinem Wahljahr einen
+Haushaltsmonat; die Unterseite in Stufe 3 sagt das. (e) `cycle_tests` prüft die Schema-Version der
+fremden Ordner nicht (wie `compare`).
+
+## 14. Struktur der Dokumente: Kandidaten für `struktur-2`
+
+Aufgenommen am 2026-11-24 beim Bau von Vorhaben 11 (`struktur-1` ist der validierte Entwurf
+unverändert, Punkt 81); jede Änderung hier braucht eine frische Bestätigungsstichprobe. (a) Der
+Beschlusssatz ohne Überschrift wird erst hinter dem **Ende des Abschnitts** `kopf_beratungsfolge`
+gesucht, und der reicht bis zur nächsten Überschrift. Von den 278 Dokumenten der Hauptperiode, deren
+Art einen Beschlussvorschlag erwarten lässt und in denen die Regel keinen findet, haben 70 Text ohne
+Überschrift unter der Beratungsfolge (60 Beschlussvorlagen einer Bezirksvertretung, 58 davon BV 8),
+und in 65 davon steht dort ein Beschlusssatz wie „Bezirksvertretung 8 beschließt …". Gesucht werden
+müsste hinter dem letzten Kopffeld. Die Messung (§ 3.4) zählte diese 70 als „Rumpf leer"; leer sind
+34. (b) Die zwölf Fehler am Ende des Beschlussvorschlags (Messdokument § 4.1). (c) Der Rumpf beginnt
+in 2014 bis 2020 bei 4 095 Dokumenten mitten in der Kopfzeile, mit dem Namen hinter der
+Amtsbezeichnung (Review von Vorhaben 11, N1, 2026-11-24; Begründung berichtigt in Runde 3): in
+diesem Formular ist die Amtsbezeichnung das letzte Kopffeld -- 3 599 der 4 095 haben Zeilen der
+Beratungsfolge, aber davor --, also endet der Kopf am Ende des Titels, und der Abschnitt
+`kopf_dezernat` wird dort geteilt. Schneiden müsste er am Ende der Zeile des letzten Kopffelds. Nicht jetzt, weil Vorhaben 16 genau
+diese Grenze vermessen hat; mit `struktur-2` und 16 zusammen.
+(d) Vor der ersten Stichprobe auf Spannen von 11 (etwa der Bestätigung von `struktur-2`): F4 verlangt in
+`validation/tasks.py` (`_check_value`) streng `value == text[start:end]` und bräche an der ersten
+Positionsspanne (`value == ""`, Punkt 81); dort wie `check_spans(…, texts=…, positions=…)` prüfen (Nachprüfung
+von 11, 2026-11-26). (e) `sitzung_gremium` in `dokumente_kopf` mischt Profilnamen (dann ist
+`sitzung_kuerzel` gesetzt) und die wörtliche Form; das gehört in `schema.json` der Stufe 3.
+
+
+## 15. Beschlusslage: Rückstand aus dem Review von Vorhaben 26
+
+Aufgenommen am 2026-11-26 aus dem Review der Stufe 2 (Punkt 79). (a) Die Folgevorlage ist je Profil
+eine Untergrenze: die Kanten von 14 tragen nur Drucksachen des eigenen Korpus, 114 von 1 508 Anträgen
+haben ihre Folgevorlage nur in der Nachbarperiode — soll 14 Kanten aus den Nachbarperioden
+mitschreiben? (b) Ein Wortschatz für Mönchengladbach ist eine eigene Messung (48 Werte, darunter
+„Siehe Niederschrift", „Ohne Abstimmung", „Die Bezirksvertretung wurde angehört"). (c) Das Messskript
+von 26 bricht ab, sobald Dateien Mönchengladbachs im Datenordner liegen. (d) `rolle` bedeutet in
+`beratungsverlauf`, `beschlusslage` und `dokumente_vorgang` dreierlei; vor Stufe 3 umbenennen oder in
+`schema.json` sagen. (e) `[bodies.organizations]` braucht vor Stufe 3 die Kürzel `gr/400224` und `gr/65`
+mit Beleg und A/B-Bau (Frage 9.17 dort).
+
+## 16. Fingerprint je Schritt statt global
+
+Aufgenommen am 2026-11-26 aus den Reviews von 12 und 22 (Punkte 80 und folgende). Der Settings-Fingerprint
+ist global: `duesseldorf-vergleich` rechnet auf Pages jeden Schritt neu, weil `compare.period` ihn ändert
+(12: `identifiers` zweimal je rund 47 s), und die Periodenprofile rechnen ganz neu, wenn sich geerbte
+Hypothesen von `need` ändern, obwohl `need` dort aus ist (22, `robust_without`). Ein Fingerprint je Schritt
+aus den Schlüsseln, die er liest, behöbe beides; das ist eine Kernänderung mit eigenem A/B-Bau. Dazu für
+Stufe 3 von 22: die Namensnennung auf der Seite braucht den Hinweis „verändert" (`NeedAttribution` hat
+dafür noch kein Feld).
+

@@ -1,0 +1,242 @@
+# Lexikon bundespolitischer Begriffe, Vorhaben 17 „Zeit und Neuigkeiten" (Stufe 1)
+#
+# Vorab festgelegt am 2026-11-23, bevor das Messskript docs/plans/17-zeit-messung.py zum ersten Mal
+# lief; der Commit, der diese Datei anlegt, trägt nur sie und Abschnitt 8 des Messdokuments
+# (docs/plans/17-zeit.md). Jede Änderung bekommt eine neue Version und eine Zeile unter [[aenderungen]];
+# Zahlen nennen immer die Version, mit der sie gerechnet sind.
+#
+# Anwendung: jedes Muster ist ein regulärer Ausdruck in der gemeinsamen Teilmenge von Rust-regex
+# (Polars) und Python re (keine Lookarounds); er wird auf Titel und Text angewandt, beide
+# kleingeschrieben und ohne Zeilenumbrüche, wie der Textstore sie führt. \b ist die
+# Unicode-Wortgrenze (ä, ö, ü, ß sind Buchstaben). Ein Dokument trägt eine Kategorie, wenn eines
+# ihrer Muster vorkommt. Leerraum in einem Begriff steht als \s+.
+#
+# Bezug: Barari, Simko (2025): The Promise of Text, Audio, and Video Data for the Study of US Local
+# Politics and Federalism. Publius 55 (2), 223-252, doi:10.1093/publius/pjae046 — dort ein Lexikon
+# national markanter, parteipolitisch gefärbter Wendungen über die Protokolle von LocalView.
+#
+# art = "struktur": zählt für H17.3 (Messdokument § 8); art = "ereignis": nur für die
+# Ereignisspuren und die Sensitivität S3.2. Die Präzision (Kriterium >= 0,9 an 100 Treffern) gilt
+# für alle zehn Kategorien zusammen, je Kategorie zehn Treffer (validierung/17-zeit/).
+
+[meta]
+name = "bundespolitisches Vokabular"
+version = "2026-11-23.1"
+sprache = "de"
+einheit = "Dokument (Titel und Text)"
+
+[[kategorie]]
+id = "migration_asyl"
+name = "Migration und Asyl"
+art = "struktur"
+definition = """Flucht, Asyl, Abschiebung, Seenotrettung, Staatsangehörigkeit und Einwanderung als \
+Gegenstand von Bundesrecht oder bundesweiter Debatte, auch in ihrer örtlichen Folge (Unterbringung \
+Geflüchteter). Nicht: Wanderung im Sinne der Bevölkerungsstatistik, Partnerschaften, Tierasyl."""
+muster = [
+    "flüchtling",
+    "geflüchtete",
+    "\\basyl",
+    "kirchenasyl",
+    "abschiebung",
+    "abgeschoben",
+    "\\bmigrationspolitik",
+    "aufenthaltsgesetz",
+    "\\baufenthg\\b",
+    "schutzsuchende",
+    "sichere[nr]?\\s+herkunfts",
+    "seenotrettung",
+    "sichere[nr]?\\s+häfen",
+    "\\bseebrücke",
+    "remigration",
+    "fachkräfteeinwanderung",
+    "staatsangehörigkeitsrecht",
+    "doppelte[nr]?\\s+staats(bürgerschaft|angehörigkeit)",
+]
+
+[[kategorie]]
+id = "klima_energie"
+name = "Klima- und Energiepolitik des Bundes"
+art = "struktur"
+definition = """Gesetze, Ziele und Instrumente der Klima- und Energiepolitik des Bundes: \
+Klimaschutzgesetz, Gebäudeenergiegesetz („Heizungsgesetz"), EEG, Energiewende, Kohle- und \
+Atomausstieg, CO2-Preis, Wärmeplanungsgesetz. Nicht: Klimaschutz der Stadt ohne Bezug auf diese \
+Instrumente (er steht nicht im Lexikon)."""
+muster = [
+    "klimaschutzgesetz",
+    "gebäudeenergiegesetz",
+    "heizungsgesetz",
+    "erneuerbare[-\\s]+energien[-\\s]+gesetz",
+    "\\beeg-(umlage|novelle)",
+    "energiewende",
+    "kohleausstieg",
+    "atomausstieg",
+    "co(2|₂)-(preis|bepreisung)",
+    "brennstoffemissionshandel",
+    "\\bbehg\\b",
+    "wärmeplanungsgesetz",
+    "klimaschutzprogramm\\s+2030",
+    "klimaneutral(ität)?\\s+bis\\s+2045",
+]
+
+[[kategorie]]
+id = "sozialstaat"
+name = "Bürgergeld und Sozialstaat"
+art = "struktur"
+definition = """Leistungen und Reformen des Sozialstaats nach Bundesrecht: Bürgergeld und Hartz IV \
+(Arbeitslosengeld II), Kindergrundsicherung, Mindestlohn, Bildungs- und Teilhabepaket, Grundrente, \
+Elterngeld, Wohngeld, der Sozialstaat als Gegenstand."""
+muster = [
+    "bürgergeld",
+    "hartz[-\\s]?(iv|4)\\b",
+    "arbeitslosengeld\\s+ii\\b",
+    "kindergrundsicherung",
+    "\\bmindestlohn",
+    "bildungs-\\s*und\\s+teilhabe",
+    "\\bgrundrente",
+    "\\belterngeld",
+    "\\bwohngeld",
+    "sozialstaat",
+]
+
+[[kategorie]]
+id = "gendern"
+name = "Gendern und Geschlechterpolitik des Bundes"
+art = "struktur"
+definition = """Die bundesweite Debatte um geschlechtergerechte Sprache (Gendern, Gendersternchen, \
+Genderverbot) und das Geschlechtsrecht des Bundes (Selbstbestimmungsgesetz, Transsexuellengesetz, \
+drittes Geschlecht). Nicht: Gleichstellungsarbeit der Stadt ohne Bezug darauf."""
+muster = [
+    "\\bgendern",
+    "gender-?sternchen",
+    "\\bgenderstern",
+    "gender-?doppelpunkt",
+    "(geschlechter|gender)gerechte[nr]?\\s+sprache",
+    "(geschlechter|gender)sensible[nr]?\\s+sprache",
+    "genderverbot",
+    "gender-?ideologie",
+    "selbstbestimmungsgesetz",
+    "transsexuellengesetz",
+    "dritte[ns]?\\s+geschlecht",
+]
+
+[[kategorie]]
+id = "bundesverkehr"
+name = "Verkehrspolitik des Bundes"
+art = "struktur"
+definition = """Verkehrspolitik und -finanzierung des Bundes: Deutschlandticket, 9-Euro-Ticket, \
+Bundesverkehrswegeplan, Regionalisierungsmittel, GVFG, Diesel-Fahrverbote und Abgasskandal, \
+StVO-Novelle und Reform des Straßenverkehrsrechts, Pkw- und Lkw-Maut, das \
+Bundesverkehrsministerium."""
+muster = [
+    "deutschland-?ticket",
+    "\\bd-ticket",
+    "\\b(9|49|58|neun)[-\\s]?(euro|€)[-\\s]?ticket",
+    "bundesverkehrswegeplan",
+    "regionalisierungsmittel",
+    "gemeindeverkehrsfinanzierungsgesetz",
+    "\\bgvfg\\b",
+    "diesel-?fahrverbot",
+    "fahrverbote?\\s+für\\s+diesel",
+    "(diesel|abgas)-?skandal",
+    "stvo-novelle",
+    "novelle\\s+der\\s+stvo",
+    "straßenverkehrsrechts-?reform",
+    "reform\\s+des\\s+straßenverkehrsrechts",
+    "bundesverkehrsminist",
+    "\\b(pkw|lkw)-maut",
+]
+
+[[kategorie]]
+id = "wohnen_bund"
+name = "Wohnungs- und Bodenpolitik des Bundes"
+art = "struktur"
+definition = """Mietrecht und Bodenrecht des Bundes als Gegenstand: Mietpreisbremse, Mietendeckel, \
+Baulandmobilisierungsgesetz, „Bau-Turbo", neue Wohngemeinnützigkeit. Nicht: Wohnungsbau der Stadt \
+ohne Bezug darauf."""
+muster = [
+    "mietpreisbremse",
+    "mietendeckel",
+    "baulandmobilisierungsgesetz",
+    "bau-?turbo",
+    "wohngemeinnützigkeit",
+]
+
+[[kategorie]]
+id = "cannabis"
+name = "Cannabispolitik"
+art = "struktur"
+definition = """Legalisierung und Regulierung von Cannabis durch den Bund (Konsumcannabisgesetz, \
+Anbauvereinigungen, Modellprojekte, Konsumverbotszonen) und die Debatte darum. Nicht: Hanf als \
+Pflanze oder Rohstoff ohne Bezug auf Drogenpolitik."""
+muster = [
+    "cannabis",
+    "\\bkiffen",
+    "\\bkcang\\b",
+]
+
+[[kategorie]]
+id = "corona"
+name = "Corona-Pandemie"
+art = "ereignis"
+definition = """Die Covid-19-Pandemie seit 2020 und ihre Folgen (Schutzverordnungen, Lockdown, \
+Hilfen, Testzentren, Impfung). Ein Pandemieplan vor 2020 ohne Bezug auf Covid-19 gehört nicht dazu."""
+muster = [
+    "\\bcorona",
+    "\\bcovid",
+    "sars-cov",
+    "pandemie",
+    "\\blockdown",
+]
+
+[[kategorie]]
+id = "ukraine_krieg"
+name = "Krieg gegen die Ukraine"
+art = "ereignis"
+definition = """Russlands Krieg gegen die Ukraine (seit 2014, Vollinvasion seit dem 24.02.2022) und \
+seine Folgen: Geflüchtete aus der Ukraine, Hilfe, Solidarität, Sanktionen. Nicht: die Ukraine ohne \
+Bezug auf den Krieg (Kultur, Partnerschaften vor 2014)."""
+muster = [
+    "ukrain",
+    "angriffskrieg",
+    "\\bputin",
+    "russische[nr]?\\s+(angriff|invasion|überfall)",
+]
+
+[[kategorie]]
+id = "energiekrise"
+name = "Energiekrise 2022"
+art = "ereignis"
+definition = """Die Gas- und Energiepreiskrise 2022/23: Gasmangellage, Preisbremsen, \
+Gasumlage, Entlastungspakete, Energiesicherungsverordnungen."""
+muster = [
+    "energiekrise",
+    "energiepreiskrise",
+    "gaskrise",
+    "gasmangel",
+    "(energie|gas|strom)preisbremse",
+    "\\bgasumlage",
+    "\\bensikumav\\b",
+    "energiesicherungs",
+    "\\bentlastungspaket",
+]
+
+# Ortsereignis für die Ereignisspuren (§ 3 des Messdokuments), nicht bundespolitisch: zählt weder
+# für H17.3 noch für die Präzisionsstichprobe.
+[[lokal]]
+id = "hochwasser"
+name = "Hochwasser und Starkregen"
+definition = "Hochwasser, Starkregen, Überflutung, Unwetter; das Ereignis ist der Juli 2021."
+muster = [
+    "hochwasser",
+    "starkregen",
+    "überflutung",
+    "überschwemmung",
+    "\\bunwetter",
+    "flutkatastrophe",
+    "sturzflut",
+]
+
+[[aenderungen]]
+version = "2026-11-23.1"
+datum = 2026-11-23
+was = "angelegt, vor dem ersten Lauf"

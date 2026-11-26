@@ -1,0 +1,30 @@
+# serializer version: 1
+# name: test_a_small_feed_as_a_snapshot
+  '''
+  <?xml version="1.0" encoding="utf-8"?>
+  <feed xmlns="http://www.w3.org/2005/Atom" xml:lang="de">
+    <id>urn:uuid:b7cfb404-14f9-5360-a7c8-dbe659d7cb55</id>
+    <title>Ratsdokumente im Wahlbezirk 1 (Stadt, Wahlperiode seit 2025)</title>
+    <subtitle>Neue Dokumente, in denen ein Straßen- oder Ortsname des Wahlbezirks vorkommt.</subtitle>
+    <updated>2025-11-04T09:10:24+01:00</updated>
+    <author><name>georep, aus dem Ratsinformationssystem (OParl)</name></author>
+    <generator version="0.0.0">georep</generator>
+    <link rel="alternate" type="text/html" href="../index.html"/>
+    <entry>
+      <id>https://ris.example/papers/2</id>
+      <title>A/002/2025: Antrag</title>
+      <published>2025-11-03T00:00:00+01:00</published>
+      <updated>2025-11-04T09:10:24+01:00</updated>
+      <link rel="alternate" type="application/pdf" href="https://ris.example/files/2.pdf"/>
+    </entry>
+    <entry>
+      <id>https://ris.example/papers/1</id>
+      <title>A/001/2025: Antrag</title>
+      <published>2025-07-01T00:00:00+02:00</published>
+      <updated>2025-07-01T00:00:00+02:00</updated>
+      <link rel="alternate" type="application/pdf" href="https://ris.example/files/1.pdf"/>
+    </entry>
+  </feed>
+  
+  '''
+# ---

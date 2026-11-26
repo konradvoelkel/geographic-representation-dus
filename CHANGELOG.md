@@ -2,6 +2,75 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.30.0 (2026-11-26), Struktur der Dokumente
+
+- **Abschnitte und Kopf je Dokument** (Vorhaben 11, `docs/decisions.md`, Punkt 81): der frühe Schritt
+  `sections` schreibt die Abschnitte (Beschlussvorschlag, Begründung, Rumpf …) als Positionsspannen auf dem
+  Rohtext und je Korpus-ID den Dokumentkopf mit Amt, Dezernat, Beratungsfolge und Sitzung
+  (`processed/dokumente_abschnitte.parquet`, `processed/dokumente_kopf.parquet`). Die Regel ist der
+  validierte Entwurf unverändert (Beschlussvorschlag 188 von 200 richtig, Kopffelder 0,95 bis 1,0, geprüft
+  von zwei KI-Kodierern desselben Modells).
+- **Spannen**: `value` ist der Text an der Stelle, wörtlich, oder leer bei einer Positionsspanne;
+  `check_spans(…, texts=…, positions=…)` prüft das. Neue Bausteine `split_lines`, `section_of`, `read_span`.
+- **Eine Zahl der Seite ändert sich**: sechs Ausschüsse (KUA, JHA, SCHUA, AGS, HFA, AWM) tragen jetzt
+  ihren Namen aus dem Kopf der Vorlagen (Frage 15); die Zahl der Kürzel ohne gesicherten Namen sinkt in der
+  Hauptperiode von 11 auf 5, in den Perioden von 9 auf 3, und der Satz zur Gremientabelle nennt die neue
+  Quelle und den Stand 24.11.2026. Sonst ändert sich nichts auf der Seite.
+
+## 0.29.0 (2026-11-26), Bedarf und Aufmerksamkeit
+
+- **Bedarf je Wahlbezirk** (Vorhaben 22, `docs/decisions.md`, Punkt 80): `need` verbindet Unfälle,
+  Zensus, Schulen und Sozialindex aus offenen Quellen (dl-de/by-2-0) über `crosswalk.point_shares` mit den
+  Wahlbezirken und rechnet die drei vorab festgelegten Hypothesen mit dem Kern aus 0.27.0: H1 (Unfälle
+  ziehen Verkehrsdokumente nach sich) bestätigt, aber nur zwischen den Stadtbezirken; H2 und H3 nicht.
+  Die Auszüge für Düsseldorf und Mönchengladbach kommen als Pakete unter `snapshots/*-bedarf/`.
+- **Abruf nur mit Schalter**: `GEOREP_CONTEXT__NEED__FETCH=true georep fetch need_data` lädt die Archive
+  (rund 105 MB); ein bloßes `georep fetch` nimmt sie nicht mit. Nach dem Update einmal `georep bootstrap`
+  je Profil. Die Seite zeigt noch nichts davon (Stufe 3); keine Zahl der Seite ändert sich.
+
+## 0.28.0 (2026-11-26), Beschlusslage
+
+- **Beschlusslage je Drucksache** (Vorhaben 26, `docs/decisions.md`, Punkt 79): `council_results`
+  schreibt den Beratungsverlauf (aus dem Netzlauf, sonst aus dem Paket `snapshots/duesseldorf-beschluesse/`),
+  `outcomes` die Klasse der Beschlusslage nach der letzten Entscheidung in der Sache (acht Klassen; ein
+  Ergebnis für 94,3 % der Anträge der Hauptperiode; 150 von 150 richtig, geprüft von zwei KI-Kodierern
+  desselben Modells) und den Antragserfolg je Fraktion, standardisiert und explorativ. Der beantragte
+  Prüfauftrag ist nur eine beschreibende Spalte (Recall 0,73).
+- Ein offener Abruf (`raw/<schritt>.progress.json`) gilt nicht als Netzlauf. Paketpfade stehen nicht
+  mehr im Settings-Fingerprint (auch der des Anlagenpakets aus 0.25.0).
+- Mönchengladbach bleibt ohne Beschlusslage: sein Server trägt 48 andere Ergebniswerte, einige ohne
+  eindeutige Klasse. Nach dem Update einmal `georep bootstrap` je Profil. Die Seite zeigt noch nichts
+  davon (Stufe 3); keine Zahl der Seite ändert sich.
+
+## 0.27.0 (2026-11-26), Zeit und Neuigkeiten
+
+- **Zyklen und Bundesvokabular** (Vorhaben 17, `docs/decisions.md`, Punkt 78): `cycles` zählt die
+  Dokumente je Monat und Wahljahr, `vocabulary` findet bundespolitische Begriffe nach dem Lexikon
+  2026-11-23.1 (94 von 100 richtig, geprüft von zwei KI-Kodierern desselben Modells) als Spannen auf dem
+  Rohtext, `cycle_tests` rechnet die drei vorab festgelegten Hypothesen über die drei Perioden mit Holm
+  (H17.2 bestätigt, H17.1 und H17.3 nicht).
+- **Feeds**: je Wahlbezirk der laufenden Periode ein Atom-Feed unter `2025/feeds/` (nur Begriffe, die
+  auch die Seite zeigt; noch ohne Link auf der Seite).
+- **`analysis/hypotheses.py`**: der gemeinsame Kern für vorab festgelegte Hypothesen (Holm nach der
+  Schrittregel, vorab festgelegte Familiengröße `m`, Schwelle `strict`).
+- **Reihenfolge der Profile**: der Vergleich rechnet jetzt nach der laufenden Periode
+  (`duesseldorf-2014`, `duesseldorf-2025`, dann `duesseldorf-vergleich`), auf Pages wie lokal; fehlt
+  eine Periode, bricht `cycle_tests` mit dem Pfad ab. Keine Zahl der Seite ändert sich.
+
+## 0.26.0 (2026-11-24), Einbettungen und Suche
+
+- **Ähnliche Dokumente** (Vorhaben 18, `docs/decisions.md`, Punkt 77): der Schritt `embeddings` bettet
+  die Rohtexte in Stücken über ollama ein (nur mit `georep run --models`, nur lokal), `neighbors`
+  schreibt je Dokument die zehn ähnlichsten (`processed/aehnliche_dokumente.parquet`; Präzision@5 0,83,
+  geprüft von zwei KI-Kodierern desselben Modells). Ohne Vektoren, etwa auf Pages, kommt die Tabelle
+  der Hauptperiode aus dem Paket `snapshots/duesseldorf-aehnlich/`; Vektoren kommen nie ins Repo.
+- **`georep search "<frage>"`** mit `--method embedding|hybrid|bm25` (Vorgabe `embedding`, nDCG@10
+  0,883 gegen 0,709 für BM25): nur lokal; ohne ollama, ohne Vektoren oder bei belegter GPU-Sperre
+  (`ml.gpu_lock` in `settings.local.toml`) sucht es mit BM25 und sagt das.
+- **Nach dem Update einmal `georep bootstrap` je Profil** (legt das Nachbarpaket ab; ohne es schreibt
+  `neighbors` in der Hauptperiode still eine leere Tabelle). Die Seite zeigt noch nichts davon
+  (Stufe 3); keine Zahl der Seite ändert sich.
+
 ## 0.25.0 (2026-11-24), Vorgänge
 
 - **Vorgänge** (Vorhaben 14, `docs/decisions.md`, Punkt 76): `references` findet Verweise zwischen

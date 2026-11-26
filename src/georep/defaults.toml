@@ -239,6 +239,7 @@ backoff_s = 2.0
 keep_alive = "10m"             # so lange haelt ollama ein Modell nach dem letzten Aufruf im Grafikspeicher; Laufzeit
 batch_size = 32                # Texte je Einbettungsaufruf und je Transaktion im Modellcache. Laufzeit: ein anderer Stapel kann die letzten Bits einer Einbettung aendern, doch was im Cache liegt, wird nicht neu gerechnet
 limit = 0                      # hoechstens so viele neue Eingaben je Stapellauf, also je Aufruf von embed_texts oder generate_texts (ein Schritt mit zwei Stapellaeufen rechnet bis zu zweimal so viele); 0 = alle. `georep run --models --limit N` setzt es fuer einen Lauf; was offen bleibt, steht im Stamp des Schritts, und `georep status` zeigt ihn danach als offen
+gpu_lock = ""                  # Vorhaben 18: Pfad der flock-Sperre der GPU, die `georep search` nicht blockierend prueft (gehalten: Suche mit BM25 statt Einbettung, mit einer Zeile dazu); leer = keine Pruefung. Rechnerspezifisch, gehoert in settings.local.toml
 retry_rejected = false         # true: Eingaben, die das Modell einmal abwies (4xx, Grund im Modellcache), erneut fragen; sonst ueberspringt jeder Lauf sie, und der Schritt gilt mit ihnen als aktuell ("aktuell, n Eingaben abgewiesen"). `georep run --models --retry-rejected` setzt es fuer einen Lauf
 
 [ml.embedding]                 # Vorhaben 18
@@ -246,6 +247,8 @@ model = "nomic-embed-text-v2-moe"  # mehrsprachig, 475 M Parameter, F16, 958 MB;
 dimension = 768                # Laenge jedes Vektors; eine Antwort mit anderer Laenge ist ein Fehler
 num_ctx = 512                  # Fenster in Token: das Modell liest hoechstens 512 (context_length laut /api/show), laengere Texte schneidet ollama hinten ab. Wer mehr braucht, zerteilt den Text vorher. Fenster und truncate stehen im Cache-Schluessel und in der Kennung des Schritts
 truncate = true                # false: ein Text ueber dem Fenster ist ein Fehler des Servers statt still abgeschnitten (der Stapellauf merkt ihn sich als abgewiesen und fragt ihn nicht wieder, ausser mit retry_rejected)
+document_prefix = "search_document: "  # Vorhaben 18: so will nomic-embed-text ein Dokument (ein Stueck) sehen; gehoert zum Modell, nicht in den Code. Weicht es von der gemessenen Fassung ab, bekommt die Prompt-Version des Schritts embeddings einen Hash dazu
+query_prefix = "search_query: "        # Vorhaben 18: dito fuer eine Suchfrage (`georep search`)
 
 [ml.generation]                # Vorhaben 19 und 20; ein Vorhaben darf in seinem Block ein anderes Modell nennen, die Optionen kommen von hier
 model = "qwen3.6:27b"          # 27,8 B Parameter, Q4_K_M, 17,4 GB auf der Platte, mit num_ctx = 8192 aber 22,9 GB Grafikspeicher (/api/ps, 2026-11-23): das Einbettungsmodell passt NICHT daneben in 24 GB, ollama laedt um. Einbettung und qwen nacheinander, nicht zugleich
@@ -354,6 +357,238 @@ to = "antrag"
 role = "antrag"
 title = 'anfrage'
 to = "anfrage"
+
+# --- Vorhaben 18: Einbettungen, Ähnlichkeit, Suche (docs/plans/18-einbettungen.md) --------------
+[embeddings]                   # Schritte embeddings (mit Modell, nur `georep run --models`) und neighbors (offline), Befehl `georep search`. Gemessen an der Hauptperiode (Messdokument § 3 bis § 5): nDCG@10 der Suche Einbettung 0,883, BM25 0,709; Präzision@5 der Nachbarn 0,832
+enabled = false                # Schalter beider Schritte; ein Stadtprofil schaltet ihn ein
+chunk_chars = 1600             # Titel, Leerzeile und Rumpf eines Stücks, in Zeichen (Fassung 18-stuecke-1): beim kleinsten gemessenen Verhältnis von 3,47 Zeichen je Token bleiben samt Präfix 466 Token, unter dem Fenster von 512 (§ 3.2)
+title_chars = 200              # OParl `name`, Leerraum zusammengezogen, höchstens so viele Zeichen; steht vor jedem Stück
+overlap_chars = 200            # das nächste Stück beginnt mit den letzten Zeilen des vorigen, zusammen höchstens so viele Zeichen
+document_chunks = 3            # Dokumentvektor = Mittel der ersten so vielen Stückvektoren, normiert (18-dokvektor-1)
+neighbors = 10                 # ähnliche Dokumente je Korpus-ID in processed/aehnliche_dokumente.parquet
+bm25 = { k1 = 1.2, b = 0.75 }  # Okapi BM25 der Wortsuche (18-bm25-1), wie Lucene; dieser und die zwei folgenden Werte liest nur `georep search`, darum stehen sie nicht im Fingerprint
+rrf_k = 60                     # Mischung (`georep search --method hybrid`): Reciprocal Rank Fusion, s = Σ 1 / (rrf_k + Rang)
+fusion_depth = 100             # so viele Treffer jeder Liste gehen in die Mischung
+neighbors_package = ""         # Pfad des Pakets aus `georep pack --neighbors`; bootstrap legt es nach raw/, und neighbors nimmt es, wo es keine Dokumentvektoren gibt (GitHub Pages, CI). Stadtneutral leer = kein Paket
+
+# --- Vorhaben 17: Zeit und Neuigkeiten (docs/plans/17-zeit.md) ---------------------------------
+[cycles]                       # Rhythmus der Ratsarbeit je Monat und Haushaltsmonate (Schritt cycles), bundespolitisches Vokabular je Dokument (vocabulary) und die vorab festgelegten Tests über die Perioden einer Stadt (cycle_tests). Hier steht, was für jede Kommune gilt; die Wahltage stehen im Stadtprofil, die Perioden im Profil, das die Tests rechnet
+enabled = false                # Schalter der Schritte cycles, vocabulary und cycle_tests; ein Stadtprofil schaltet ihn ein. cycles braucht dazu Urheber (Option 04, [originators])
+year_start_month = 9           # Wahljahr ab September: die Kommunalwahlen in NRW lagen 2020 und 2025 im September, so beginnt jede Periode mit einem Wahljahr (Messdokument § 8.0). Vollständig ist ein Wahljahr, wenn die Periode es abdeckt; nur sein erster Monat darf um die Tage vor der Wahl gekürzt sein
+elections = []                 # Wahltage der Kommunalwahlen, im Stadtprofil mit Quelle. Das letzte vollständige Wahljahr, das vor einer Wahl endet, ist ihr Vorwahljahr (H17.1). Nicht period.election: das ist die Wahl, die Nenner und Zuschnitt liefert (Synergien 2026-11, Konflikt 16)
+budget_pattern = 'haushalts(begleit)?-?antrag'  # Haushaltsantrag: Dokumentart oder Titel, kleingeschrieben (Messdokument § 8.2); der Monat mit den meisten ist der Haushaltsmonat des Wahljahrs
+budget_minimum = 5             # so viele Haushaltsanträge braucht ein Wahljahr für einen Haushaltsmonat; darunter fällt es aus H17.2
+instrument_types = { anfrage = "anfrage", antrag = "antrag", haushaltsantrag = "antrag" }  # S1.5: Präfix der Dokumentart (klein) -> Instrument, das längste gewinnt; Arten, die nur eine Stadt kennt, ergänzt ihr Profil
+instrument_titles = [{ pattern = 'antrag', instrument = "antrag" }, { pattern = '\b(z?anfrage|nachfrage)', instrument = "anfrage" }]  # S1.5 ohne passende Art: das erste Muster mit Treffer im Titel (klein); ein Titel mit „antrag" ist ein Antrag, wie vorab festgelegt
+lexicon = "bundespolitik"      # Paketdatei georep/lexika/<name>.toml; ihre Version steht in der Datei, im Stamp und in jeder Ausgabe. Version 2026-11-23.1 hat 94 von 100 kodierten Treffern richtig (Messdokument § 4.1)
+head_chars = 2000              # S3.1: nur Titel und die ersten so vielen Zeichen des Texts (gegen längere Dokumente)
+periods = []                   # Ordner der Profile einer Stadt in zeitlicher Folge, über die cycle_tests rechnet; leer = keine Tests. Das Profil, das sie nennt, braucht deren Läufe vorher (wie compare)
+
+[feeds]                        # Vorhaben 17: ein Atom-Feed je Wahlbezirk unter site/feeds/ (Schritt feeds), nur Kennung, Titel, Datum und Link, keine Texte und keine Personen; nur für eine laufende Periode sinnvoll
+enabled = false
+entries = 50                   # neueste Dokumente je Feed; 50 reichen im Median 140 Tage zurück, rund 25 KB je Feed (Messdokument § 3.6)
+timezone = "Europe/Berlin"     # Zeitzone des Vorlagendatums: published ist 00:00 Ortszeit des Tages
+
+# --- Vorhaben 26: Beschlusslage und Antragserfolg (docs/plans/26-beschluesse.md, § 3.1, § 6, § 10) ----
+[outcomes]                     # Beschlusslage je Ratsdokument aus dem Eintrag der Sitzungsleitung (OParl result am Tagesordnungspunkt) und Antragserfolg je Fraktion. Aus, bis ein Stadtprofil den Wortschatz nennt; die Sprache der Einträge ist je Stadt eine andere (Mönchengladbach, § 10)
+enabled = false                # Schalter beider Schritte (council_results, outcomes); ein Stadtprofil schaltet ihn mit [outcomes.results] ein
+package = ""                   # die Tabelle „Paper x Tagesordnungspunkt" aus `georep pack --outcomes` für Läufe ohne Netz (GitHub Pages); im Profil je Periode. Leer: nur der Netzlauf aus raw/ (Fundament F6)
+practice_share = 0.4           # ein Gremium-Jahr, in dem mindestens dieser Anteil der Anträge mit Ergebnis „erledigt" ist, trägt eine Praxis der Sitzungsleitung, kein Ergebnis: dort ist „erledigt" nicht tragfähig (§ 3.4, § 5; gemessen lag zwischen 16 % und 47 % keine Zelle)
+practice_min = 10              # und mindestens so viele „erledigt"; sonst träfe die Regel ein Gremium mit fünf Anträgen im Jahr
+followup_roles = ["vorlage", "information", "bedarf", "af"]  # Rollen der Drucksachen (Vorhaben 14), die als Folgevorlage der Verwaltung zählen, wenn sie den Antrag über eine starke Kante nennen (§ 3.7)
+results = {}                   # Wert von result -> [stufe, klasse]: stufe "sache" (beschlossen, geaendert, abgelehnt, zurueckgezogen) oder "stand" (erledigt, vertagt, offen); im Stadtprofil. Ein Wert, der fehlt, bricht den Schritt mit seinem Wortlaut ab
+
+# Der beantragte Prüfauftrag (§ 3.4): verlangt ein Antrag von der Verwaltung **nur**, etwas zu prüfen,
+# zu berichten oder vorzulegen? Gelesen wird der Beschlusstext im kleingeschriebenen Textstore vom
+# letzten Marker bis zur Begründung, Satz für Satz: ein Satz mit Prüfwort ist eine Prüfung und trägt
+# zusätzlich eine Maßnahme, wenn vor dem Prüfwort eine steht oder danach eine folgt, die nicht in einer
+# Frage oder unter Vorbehalt steht; ein Satz ohne Prüfwort und ohne Fragezeichen ist eine Maßnahme, wenn
+# er eine Handlung festlegt. Prüfauftrag heißt: mindestens eine Prüfung, keine Maßnahme. Die Regel ist
+# die vor der Stichprobe festgeschriebene (Commit 94da91f), unverändert; die Kodierung fand mit ihr 19
+# der 26 Prüfaufträge (Recall 0,73), darum steht sie nur als beschreibende Spalte da (Rückfall 1, § 5).
+# Muster der deutschen Sprache, keine Stadt; kleingeschrieben, eine Liste ist eine Alternative.
+[outcomes.review]
+marker = [
+    '(?:änderungs|ergänzungs|haushalts|zusatz)?-?antrag\s*:',
+    'beschlussvorschlag\s*:?', 'beschlussentwurf\s*:?', 'beschlusstext\s*:?',
+    '(?:folgendes|nachstehendes|wie folgt|folgenden beschluss)\s+zu\s+(?:beschließen|fassen)\s*:?',
+    'möge\s+(?:folgendes\s+|wie folgt\s+)?beschließen\s*:?',
+    '(?:beschließen|abstimmen) zu lassen\s*:?', 'zur abstimmung zu (?:bringen|stellen)\s*:?',
+]
+reason = ['begründung', 'sachdarstellung', 'erläuterung\s*:', 'mit freundlichen grüßen']
+reason_from = 40               # eine Überschrift „Begründung" ganz am Anfang ist ein Titel, kein Ende des Beschlusstexts
+window = 2000                  # in so vielen Zeichen vom Anfang steht der Marker, wenn es einen gibt
+max_chars = 1500               # höchstens so viel Beschlusstext; dahinter steht fast immer schon die Begründung
+review = [
+    'prüf', 'untersuch', 'evaluier', 'machbarkeit', 'bericht', 'sachstand', 'darzustellen', 'darstellung',
+    'aufzuzeigen', 'zu informieren', 'informier', 'konzept', 'vorzulegen', 'vorlegen', 'zu erarbeiten',
+    'erarbeit', 'zu klären', 'zu ermitteln', 'stellung zu nehmen', 'stellungnahme', 'auskunft',
+    'zu erläutern', 'eruier', 'auszuloten', 'sondier', 'bewert', 'analys', 'gutacht', 'studie', 'erhebung',
+    'zählung', 'vorzustellen', 'vorstellung', 'zu präsentieren', 'präsentation', 'zu unterrichten',
+    'unterricht',
+]
+not_review = ['beschluss\s?darstellung', 'darstellung des beschlusses', 'prüfstand', 'prüfungsamt']
+separable = [
+    'an', 'auf', 'aus', 'ab', 'ein', 'um', 'her', 'hin', 'vor', 'zu', 'bei', 'mit', 'nach', 'dar', 'fest',
+    'frei', 'bereit', 'durch', 'weg', 'zurück', 'wieder', 'hinzu', 'herbei', 'instand', 'sicher', 'statt',
+    'teil', 'still', 'weiter', 'fort', 'offen', 'bekannt',
+]
+not_verb = [
+    'den', 'dem', 'der', 'denen', 'diesen', 'einen', 'ihnen', 'ihren', 'seinen', 'allen', 'unseren',
+    'welchen', 'jenen', 'eigenen', 'anderen', 'beiden', 'neuen', 'folgenden', 'lasten', 'gunsten',
+    'zeiten', 'seiten', 'zwecken', 'ehren', 'beginn', 'kosten', 'fragen', 'themen',
+]
+# Eine Handlung, die der Antrag festlegt; vor diesen stehen die beiden Formen des „zu"-Infinitivs
+# (trennbar wie „einzurichten" und frei wie „zu beschaffen"), gebaut aus separable und not_verb.
+measure = [
+    '\b(?:die stadt|der rat|die bezirksvertretung|die bv ?\d*|der ausschuss|die verwaltung|der oberbürgermeister|der jugendrat|der beirat)\b[^.,]{0,40}?\b(?:führt|beteiligt|richtet|schafft|setzt|nimmt|gibt|errichtet|übernimmt|benennt|fördert|startet|veranstaltet|baut|pflanzt|sorgt|tritt|schließt|ändert|verzichtet|beschafft|erhöht|senkt|stattet)\b',
+    '\bbeschließt\b(?!\W+(?:dass|,)?\s*(?:die |der )?(?:verwaltung|oberbürgermeister))',
+    '\bbewilligt\b', '\bgewährt\b', '\bvergibt\b', '\bstellt\b[^.]{0,80}\b(?:bereit|ein)\b',
+    '\b(?:haushalts|finanz|sach|personal|eigen)?mittel\b[^.]{0,120}\b(?:bereit\w*|ein\b|eingestellt|zur verfügung)',
+    '\b(?:euro|haushalt\w*)\b[^.]{0,80}\b(?:eingestellt|bereitgestellt|zur verfügung gestellt|einzustellen)',
+    '\bwird wie folgt (?:geändert|ergänzt|gefasst)', '\bwird (?:ersetzt|gestrichen|ergänzt)\b',
+    '\blehnt\b[^.]{0,60}\bab\b', '\bunterstützt\b', '\bbegrüßt\b', '\bsetzt sich\b', '\bverurteilt\b',
+    '\bbekennt sich\b', '\bspricht sich\b', '\bstimmt\b[^.]{0,60}\bzu\b',
+    '\bsoll(?:en)?\b[^.]{0,100}\bwerden\b',
+    '\b(?:wird|werden)\b[^.]{0,120}?\b(?:festgesetzt|eingerichtet|eingeführt|umgesetzt|aufgestellt|angebracht|errichtet|ausgewiesen|bereitgestellt|eingestellt|gestrichen|ausgesetzt|durchgeführt|angelegt|erhöht|gesenkt|gekürzt|verlängert|vergeben|zurückgenommen|fortgeschrieben|benannt|umbenannt|saniert|gepflanzt|installiert|geschaffen|freigegeben|aufgehoben|verkauft|erworben)\b',
+]
+proviso = ['\b(?:wenn|sofern|falls|soweit|sollte)\b[^.]{0,60}\b(?:prüf|möglich|machbar)']  # „wenn die Prüfung positiv ausfällt, …": die Maßnahme gehört zur Prüfung (Codebuch, Frage auftrag)
+neutral = [
+    'vorzulegen', 'vorzustellen', 'darzustellen', 'darzulegen', 'aufzuzeigen', 'mitzuteilen', 'aufzulisten',
+    'auszuarbeiten', 'einzuholen', 'anzufertigen', 'durchzuführen', 'vorzunehmen', 'nachzugehen',
+    'auszuwerten', 'berichten', 'informieren', 'erläutern', 'ermitteln', 'klären', 'erarbeiten',
+    'untersuchen', 'evaluieren', 'prüfen', 'überprüfen', 'bewerten', 'analysieren', 'erheben', 'entwickeln',
+    'erstellen', 'beauftragen', 'vergeben', 'erwarten', 'beantworten', 'werden', 'lassen', 'nehmen',
+    'setzen', 'bringen', 'stellen', 'beraten', 'erfahren', 'wissen', 'einzuladen',
+]
+question = ['^\W{0,4}(?:[a-zäöüß]+\W+){0,3}?(?:ob|wie|inwieweit|inwiefern|welche\w*|wann|wo\w*|dass|weshalb|warum|unter welchen|in welche\w*|mit welche\w*)\b']
+question_chars = 60            # so weit hinter dem Prüfwort steht das Fragewort („prüfen, ob …")
+sentence = ['(?<=[.;!?])\s+', '\s(?=\d{1,2}[.)]\s)', '\s•\s', '\s[-–]\s(?=[a-zäöü])']
+title = ['prüfauftrag', 'prüfantrag', '\bprüfen\b', '\bprüfung\b', 'sachstand', 'bericht(?!s?vorlage)']  # nur für ein Dokument ohne Text
+frame = ['tagesordnung', 'bitte[nt]? (?:ich|wir) sie', 'zur abstimmung']
+
+# --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 6 und § 10) ------------
+# Bedarf aus Quellen mit Punkten und Gitterzellen statt Raumeinheiten. Die Quellen sind bundes- oder
+# landesweit (Unfallatlas, Zensus 2022, Schuldaten NRW) und stehen darum hier und nicht in jedem
+# Stadtprofil, wie die Sprache der Ratsdokumente (Punkt 75); die Gemeinde ist city.ags. Das
+# Stadtprofil schaltet ein und nennt Paket, Klassen und die vorab festgelegten Hypothesen.
+[context.need]
+enabled = false                # Schalter: die Schritte need_data (Netz, nur mit fetch) und need fehlen ohne ihn
+package = ""                   # Paket mit den Stadtauszügen (snapshots/<stadt>-bedarf); bootstrap kopiert nach external/bedarf/, need_data holt frisch. Ein Pfad, nicht im Fingerprint
+band_m = 20.0                  # Randband in Metern: ein Unfall so nah an Wahlbezirken geht zu gleichen Teilen an jeden. Der Unfallatlas legt Unfälle auf die Straßenachse, Wahlbezirksgrenzen laufen oft auf Straßenmitten; halbe Straßenbreite plus Digitalisierungsabstand liegen bei Hauptstraßen um 10 bis 20 m (Messdokument § 3.1). Gitterzellen und Schulen gehen scharf zu (Band 0, Frage 22.4)
+neighbour_m = 50.0             # Nachbarn für Moran's I: Umfang des Schnitts eines 1-m-Puffers um den einen Wahlbezirk mit dem anderen über diesem Wert, also rund 25 m gemeinsame Grenze (so rechnet das Messskript, § 3.5)
+permutations = 10000           # Permutationen je vorab festgelegtem Test (Messdokument § 8)
+explore_permutations = 9999    # Permutationen der explorativen Rechnungen: innerhalb der Stadtbezirke, Moran's I (§ 3.5)
+bootstrap = 2000               # Ziehungen für das 95-%-Perzentil-Intervall von rho (§ 8)
+seed = 22                      # ein Generator für die Haupttests in der Folge der Hypothesen; die explorativen Rechnungen nehmen seed + 1 (§ 3.4, § 3.5)
+alpha = 0.05                   # Schwelle nach Holm über die vorab festgelegten Tests
+hypotheses = []                # [[context.need.hypotheses]] im Stadtprofil: vorab festgelegt, mit Commit
+explore = []                   # weitere Paare (Bedarf, Aufmerksamkeit), explorativ, im Stadtprofil
+delay_s = 2.0                  # Pause in Sekunden zwischen zwei Archiven, die need_data lädt: eine Anfrage nach der anderen, wie die Fremddaten der Messung geladen wurden
+fetch = false                  # Schalter für den Netzschritt need_data, wie council.enabled: ohne ihn fehlt er, und ein bloßes `georep fetch` lädt die Archive nicht (Review 2026-11-24, N1); für eine Shell GEOREP_CONTEXT__NEED__FETCH=true. Nicht im Fingerprint
+
+[context.need.accidents]       # Unfallatlas: Unfälle mit Personenschaden, je Jahr ein Zip mit einer CSV; die CSV heißt je Jahrgang anders, gelesen wird die größte Datei neben schema.ini
+archives = [
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2020_EPSG25832_CSV.zip",
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2021_EPSG25832_CSV.zip",
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2022_EPSG25832_CSV.zip",
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2023_EPSG25832_CSV.zip",
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2024_EPSG25832_CSV.zip",
+  "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/Unfallorte2025_EPSG25832_CSV.zip",
+]                              # NRW erst ab 2019 im Atlas; ein neuer Jahrgang erscheint im Juli (Frage 22.9)
+crs = "EPSG:25832"             # LINREFX, LINREFY: Punkt auf der Straßenachse
+
+[context.need.accidents.attribution]   # dl-de/by-2-0 verlangt Bereitsteller, Lizenz und Verweis auf den Datensatz
+title = "Unfallatlas: Straßenverkehrsunfälle mit Personenschaden"
+publisher = "Statistische Ämter des Bundes und der Länder"
+url = "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/"
+license = "Datenlizenz Deutschland – Namensnennung – Version 2.0"
+license_url = "https://www.govdata.de/dl-de/by-2-0"
+stand = "Unfälle 2020 bis 2025, Jahrgang 2025 veröffentlicht am 2026-07-07"
+
+[context.need.grid]            # Zensus 2022, 100-m-Gitter: Einwohner und durchschnittliche Nettokaltmiete je m²
+population_url = "https://www.destatis.de/static/DE/zensus/gitterdaten/Zensus2022_Bevoelkerungszahl.zip"
+population_member = "Zensus2022_Bevoelkerungszahl_100m-Gitter.csv"
+rent_url = "https://www.destatis.de/static/DE/zensus/gitterdaten/Zensus2022_Durchschn_Nettokaltmiete.zip"
+rent_member = "Zensus2022_Durchschn_Nettokaltmiete_100m-Gitter.csv"
+crs = "EPSG:3035"              # x_mp_100m, y_mp_100m: Mittelpunkt der Zelle
+margin_m = 200.0               # Rand um die Stadt beim Vorfiltern des bundesweiten Gitters; behalten werden danach nur Zellen mit Mittelpunkt in einem Stimmbezirk
+
+[context.need.grid.attribution]
+title = "Zensus 2022, Gitterdaten: Bevölkerungszahl und durchschnittliche Nettokaltmiete (100 m)"
+publisher = "Statistisches Bundesamt (Destatis)"
+url = "https://www.destatis.de/static/DE/zensus/gitterdaten/Zensus2022_Bevoelkerungszahl.zip"
+license = "Datenlizenz Deutschland – Namensnennung – Version 2.0"
+license_url = "https://www.govdata.de/dl-de/by-2-0"
+stand = "Stichtag 2022-05-15"
+
+[context.need.schools]         # amtliche Schuldaten NRW (Schulnummer, Schulform, Koordinate) und der Schulsozialindex des Landes (Stufe 1 bis 9 je Schule)
+schools_url = "https://apps.schulministerium.nrw.de/BiPo/OpenData/Schuldaten/schuldaten.csv"
+index_url = "https://www.schulministerium.nrw/system/files/media/document/file/schulliste_sj_25_26_open_data.csv"
+index_encoding = "cp850"       # die Liste des Sozialindex ist in Codepage 850 gespeichert (ß als 0xE1); „ohne" heißt: keine Stufe
+crs = "EPSG:25832"             # UTMRechtswert, UTMHochwert; die Datei nennt das CRS je Zeile, gelesen wird nur diese Angabe
+forms = ["02"]                 # Schulformen im Index je Wahlbezirk: 02 sind die Grundschulen (ihr Einzugsgebiet liegt am nächsten am Wohnort)
+
+[context.need.schools.attribution]
+title = "Amtliche Schuldaten (Eckdaten) und Schulsozialindex, Schuljahr 2025/26"
+publisher = "Ministerium für Schule und Bildung des Landes Nordrhein-Westfalen"
+url = "https://apps.schulministerium.nrw.de/BiPo/OpenData/Schuldaten/schuldaten.csv"
+license = "Datenlizenz Deutschland – Namensnennung – Version 2.0"
+license_url = "https://www.govdata.de/dl-de/by-2-0"
+stand = "Schuljahr 2025/26"
+
+[context.need.classes]         # Klassen des passenden Ausschusses (Schritt committees), deren Anteil an den Dokumenten je Wahlbezirk zählt; im Stadtprofil. Leer: die Anteile fehlen, der Rest rechnet
+traffic = []
+youth = []
+
+# --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.2, § 6 und § 10) --------
+# Abschnitte (Betreff, Beschlussvorschlag, Sachdarstellung, Rumpf …) als Spannen auf dem Rohtext
+# und je Korpus-ID der Kopf (Amt, Amtsbezeichnung, Beratungsfolge, Sitzung, Briefdatum). Die Muster
+# sind je Stadt neu zu schreiben (§ 3.6: Mönchengladbach trifft mit den Düsseldorfer Mustern
+# nichts); sie stehen im Stadtprofil, hier steht nur, was keine Stadt kennt.
+[structure]
+enabled = false                # der frühe Schritt sections; im Stadtprofil an, wo die Muster stehen
+heading = ''                   # eine Überschriftzeile „Label: Rest" mit den Gruppen label und rest; im Stadtprofil
+heading_nocolon = ''           # dito ohne Doppelpunkt, für Labels, die eine Stadt ohne ihn schreibt; im Stadtprofil
+betreff_after_form = false     # der Betreff steht ohne Label unter dem Formulartitel (eine alte Vorlagenform)
+betreff_max_lines = 4          # ein Betreff endet an der ersten Leerzeile nach Text oder nach so vielen Zeilen (§ 3.2, Punkt 7)
+lead_blocked_in = []           # Abschnittsarten, in denen ein Einleitungssatz nichts öffnet (zitierter Beschluss); im Stadtprofil
+level2 = []                    # Abschnittsarten der Ebene 2: eigene Spanne, ohne den umgebenden Abschnitt zu schließen; im Stadtprofil
+end_markers = []               # Zeilen, die jeden offenen Abschnitt schließen (Grußformel, „gez.", Anrede); im Stadtprofil
+art = []                       # [Muster über paper_type, Art]: fasst Fraktionsvarianten zusammen, erste gewinnt; im Stadtprofil
+decision_expected = []         # Arten mit erwartetem Beschlussvorschlag (zusammengefasst über art); im Stadtprofil
+decision_not_expected = []     # Arten ohne; was in keiner Liste steht, zählt getrennt (Eingaben)
+labels = {}                    # Label wie geschrieben -> Abschnittsart; [structure.labels] im Stadtprofil
+leads = []                     # [[structure.leads]] kind, pattern: Einleitungssätze mit Doppelpunkt; im Stadtprofil
+page_noise = []                # Seitenkopf- und -fußzeilen, die read_span beim Lesen einer Spanne überspringt (Frage 9.6); im Stadtprofil
+months = ["januar", "februar", "märz", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "dezember"]  # Monatsnamen eines ausgeschriebenen Datums („24. Juni 2025"), klein; Sprache, keine Stadt
+min_body_chars = 80            # rumpf_leer: weniger Zeichen hinter dem Betreff, ohne Kopf, Leerraum und Seitenkopfzeilen (wie § 3.4; Hauptperiode 2026-11-24: 132 Dokumente, 59 davon ohne jeden Text)
+
+[structure.fallback]           # der Beschlusssatz ohne Überschrift („Der Rat beschließt …"), § 3.2, Punkt 5
+kind = "beschlussvorschlag"
+pattern = ''                   # leer: kein Beschlusssatz; im Stadtprofil
+max_lines_after_head = 12      # gesucht wird nur in so vielen Zeilen nach dem Kopf
+only_expected = true           # nur in Arten mit erwartetem Beschlussvorschlag (sonst „Die Verwaltung wird gebeten, folgende Fragen …")
+
+[structure.head]               # die Felder des Kopfs, § 3.2, Punkt 8; kein Feld liest einen Personennamen
+consultation_header = ''       # Kopfzeile der Tabelle „Beratungsfolge"; im Stadtprofil
+quality = []                   # Beratungsqualität, ein geschlossener Katalog; im Stadtprofil
+quality_placeholders = []      # Platzhalter statt einer Qualität („-"), gelesen als keine
+quality_required = false       # eine Zeile der Beratungsfolge braucht eine Qualität
+titles = ''                    # Amtsbezeichnungen im Feld der Dezernentin oder des Dezernenten; die Spanne deckt nur sie
+signer_roles = ''              # Amtsbezeichnungen im Unterschriftsblock, nie ein Name
+signer_window = 8              # so viele Zeilen ab der Grußformel
+closing = ''                   # Grußformel oder „gez.": Beginn des Unterschriftsblocks und Ende des Rumpfs; im Stadtprofil
+session = ''                   # „zur Sitzung der … am …" in Briefen, Gruppen gremium und datum; im Stadtprofil
+session_suffix = ''            # was hinter dem Gremium der Sitzung steht und nicht zu seinem Namen gehört (der Ort als {city}); im Stadtprofil
+date_line = ''                 # „<Ort>, <Datum>" im Briefkopf, Gruppe datum, der Ort als {city}; im Stadtprofil
+office = ''                    # Nummer und Name eines Amts im Feld „Fachbereich", Gruppen nr und name; ohne Muster ist der ganze Wert der Name
+form_titles = []               # Formulartitel im Kopf („Beschlussvorlage"), als ganze Zeile
+head_lines = 30                # so viele Zeilen gelten als Kopf für Sitzung, Datumszeile und Formulartitel
+
+# --- Vorhaben 11, Review K3: Quelle der Gremiennamen auf der Seite (Option 05, nur Anzeige) -------
+[bodies]
+names_source = "die Organisationen des Ratsinformationssystems und Dokumenttitel"  # Satzglied im Satz zur Gremientabelle („Quelle sind …"); eine Stadt, deren Namen anders gesichert sind, sagt es im Profil
 
 # --- Vorhaben 12: Kennungen und Beträge (docs/plans/12-kennungen.md, § 6 und § 10) ---------------
 [identifiers]                  # Spannen im Rohtext (F1, F3): Bauleitplanung und Betrag in Fassung 1, Termin und Verwaltungseinheit in Fassung 2 der Messung, so wie validiert (Messdokument § 4 und § 5). Hier steht die Sprache der Ratsdokumente, an beiden Stadtprofilen gemessen (§ 3.4); Nummernformate und Kopffelder stehen im Stadtprofil. Muster sind reguläre Ausdrücke mit Groß- und Kleinschreibung, eine Liste ist eine Alternative

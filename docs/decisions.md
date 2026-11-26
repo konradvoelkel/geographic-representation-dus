@@ -3131,6 +3131,680 @@ der Wahl, gegen § 3.3). `PaperRecord` um die Anlagen erweitern (ein Schemasprun
 Golden-Master-Risiko; das Paket genügt, Synergie § 4); für die laufende Periode ist das der Weg
 danach, denn das Paket veraltet mit jedem Tag (Frage 9.1).
 
+## 77. Einbettungen über Stücke, ähnliche Dokumente als Paket, Suche mit der Einbettung als Vorgabe (Vorhaben 18, 2026-11-24)
+
+Vorhaben 18 der Vorverarbeitung (`docs/plans/18-einbettungen.md`, § 5 bis § 7 und § 10), Stufe 2.
+Die Messung hat zwei Fragen gegen zwei KI-Kodierer entschieden: die Suche nach Bedeutung schlägt die
+Wortsuche (nDCG@10 an 50 Fragen: Einbettung 0,883, Mischung 0,846, BM25 0,709), und die ähnlichen
+Dokumente tragen (Präzision@5 0,832 an 50 Ankern, TF-IDF 0,652 verfehlt die Schwelle). Gebaut ist
+genau das gemessene Verfahren; Punkt 45c (Einbettungen verworfen, Oktober) ist damit für Suche und
+Nachbarn überholt, für Cluster nicht (§ 3.5 der Messung: nicht bauen).
+
+**Was gebaut ist.** Der Beitrag `18-einbettungen` (`georep.enrich.embeddings`) hinter 15 und 14,
+mit zwei Schritten hinter `embeddings.enabled` (beide Stadtprofile, die Perioden erben):
+
+- `embeddings` ist ein **Schritt mit Modell** (F5, Punkt 72) und läuft nur mit
+  `georep run --models`. Je PDF-Datei mit Rohtext eine Einheit unter der kleinsten Korpus-ID
+  (`search.units`), der Rohtext mit den Formfeeds der Seiten zurück (`restore_form_feeds`), wie
+  die Messdatei ihn trug. Stücke nach `18-stuecke-1` (`prep.chunks.split_chunks`, das `zerteile`
+  der Messung mit denselben Schleifen und der Stelle jedes Stücks im Rohtext), Präfix aus
+  `[ml.embedding]`, `embed_texts` über den Modellcache. Nur lokal geschrieben:
+  `processed/einbettungen_stuecke.parquet` und `processed/einbettungen_dokumente.parquet`
+  (Mittel der ersten drei normierten Stückvektoren, normiert; eine Zeile je Korpus-ID mit
+  Rohtext). Eine Datei, deren erste drei Stücke nicht alle da sind (Teillauf, Abweisung), bekommt
+  keinen Dokumentvektor: das Mittel über die übrigen wäre ein anderer Vektor.
+- `neighbors` (offline) schreibt `processed/aehnliche_dokumente.parquet`, zehn Nachbarn je
+  Korpus-ID, nie die eigene Datei. Der Rang folgt der ungerundeten Ähnlichkeit (float32);
+  Gleichstände der ungerundeten Ähnlichkeit stehen nach ID, auch an der Grenze zum zehnten Platz
+  (`search.vectors._top` nimmt alle Werte gleich dem zehnten und sortiert sie). Die Spalte
+  `aehnlichkeit` ist auf vier Stellen gerundet; gleich gerundete Nachbarn stehen darum nicht immer
+  nach ID (in der Hauptperiode 647 von 1 300 solchen Paaren). Ohne
+  Dokumentvektoren nimmt er die Kopie des Pakets, die `bootstrap` nach
+  `raw/aehnliche_dokumente_paket.parquet` legt, ohne beides schreibt er eine leere Tabelle mit
+  demselben Schema. Beide Eingaben sind **optional** (`Step.optional`): so steht ihr Hash im Stamp,
+  und ein Modellschritt, der ohne `--models` nicht läuft, bricht die Kette nicht ab.
+- `georep pack --neighbors` packt nur die Nachbartabelle (`snapshots/duesseldorf-aehnlich/`,
+  905 998 Bytes), und nur, wenn sie aus den Dokumentvektoren daneben stammt (deren Hash im Stamp
+  von `neighbors`) und diese aus einem vollständigen Lauf (`open` 0 im Stamp von `embeddings`);
+  das README nennt Modell, Digest, Prompt-Version und Optionen. `bootstrap` übernimmt das Paket
+  nur, wenn jede ID und jeder Nachbar ein Paper des Datensatzes ist; die Perioden nehmen den
+  Schlüssel `neighbors_package` zurück.
+- `georep search "<frage>" [--method embedding|hybrid|bm25] [--n 10]` (`search/query.py`,
+  `search/command.py`), lokal; ohne Server oder ohne Stückvektoren BM25 mit einer Zeile dazu.
+
+**Wo die Nachbarn herkommen.** Ein Paket gibt es nur für die Hauptperiode; der Vergleich
+(`duesseldorf-vergleich`) rechnet in ihrem Ordner und erbt es. In 2014 bis 2020, der laufenden
+Periode und Mönchengladbach entsteht die Tabelle nur lokal aus den Vektoren eines Laufs mit
+`--models`; auf Pages und in CI bleibt sie dort leer. Eine Datenwurzel von vor diesem Stand bekommt
+die Paketkopie nur mit einem `georep bootstrap` (ohne `--force`). Ohne ihn schreibt `neighbors` auch
+in der Hauptperiode still eine leere Tabelle, wo es keine Dokumentvektoren gibt; nur die Laufzeile
+sagt es („keine Dokumentvektoren und kein Paket: leere Tabelle"). Kein Schritt der Seite liest die
+Tabelle vor Stufe 3, darum ist das kein Abbruch.
+
+**Die Zahl der IDs ohne Rohtext steht in der Laufzeile** von `embeddings` („… 76 ohne Rohtext …"),
+nicht im Stamp. Der Stamp trägt außer der Kennung des Modells kein Feld, das `georep status`
+zeigt, und `extra` ginge in den Vergleich des Stamps ein (er wäre nach jedem Lauf veraltet); sie
+dort zu zeigen, bräuchte eine Änderung am Kern (Review Runde 1, N9).
+
+**Gegen die Messung geprüft** (2026-11-24, Hauptperiode): alle 47 407 Stücktexte samt Präfix und
+Titel sind die des Messskripts, darum kamen alle 47 312 verschiedenen aus dem Modellcache (0 neu
+gerechnet); alle 190 320 Zeilen der Nachbartabelle (Nachbar und Ähnlichkeit) sind die der Probe
+`groessen/aehnliche_dokumente.parquet`; die Rangfolgen der 50 Suchfragen sind für Einbettung,
+Mischung und BM25 je 50 von 50 gleich `rangfolgen.parquet`. Ein `slow`-Test hält die Zahl der
+Stücke und die BM25-Rangfolgen aus den Paketen fest (`tests/unit/test_search_slow.py`), für die
+Einbettung nur Invarianten (das Paket in `test_data_packages.py`): die GPU rundet je Rechner anders.
+
+**Was das Modell sieht, steht in der Prompt-Version.** Die Präfixe `search_document: ` und
+`search_query: ` gehören zum Modell und stehen in `[ml.embedding]`, also außerhalb des
+Fingerprints (Punkt 72). Damit eine Änderung dort die Kennung im Stamp nicht verfehlt, hängt
+`chunk_prompt` an `18-stuecke-1` einen Hash, sobald Präfix oder Zuschnitt von der gemessenen Fassung
+abweichen (ebenso `query_prompt` an `18-anfrage-1`). Mit den gemessenen Werten trifft ein Lauf die
+Vektoren der Messung; der Cache-Schlüssel hängt ohnehin am SHA-256 des Texts samt Präfix.
+
+**Der Stemmer ist der klassische.** Die Messung hat den Snowball-Stemmer für Deutsch vor Snowball
+3.0 benutzt; 3.0 hat ihn 2023 bis 2025 geändert (ae/oe/ue, -erin, -ln, -et, Apostroph). Die
+Prüfliste kommt darum aus dem Datenrepositorium von snowballstem.org am letzten Stand vor der
+Änderung (Commit `8d35251e4561`), einmal abgerufen am 2026-11-24 (§ 10, Punkt 4 des
+Messdokuments); `search.stem.stem` trifft alle 35 033 Paare, im Repo liegt jedes 17.
+(`tests/fixtures/snowball/`, BSD-3-Clause, mit Prüfsummen). Eine eigene Umsetzung statt
+`snowballstemmer` (Frage 9.4), wie `krippendorff` in F4.
+
+**Ein Modellschritt zählt in den Tests wie ein Netzschritt.** Zehn bestehende Testdateien ließen
+„alle Schritte außer den Netzschritten" laufen oder zählten sie und verlangten „ausgeführt";
+`embeddings` ist ohne `--models` übersprungen. Sie nehmen ihn jetzt aus wie einen Netzschritt
+(`s.models is not None`).
+
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt
+66 (`ab/ab_bau.sh`, `ab/ab_vergleich.py`), `main` (`v0.25.0`) gegen diesen Branch, je in eigener
+Datenwurzel und mit `POLARS_MAX_THREADS=4`, `OMP_NUM_THREADS=2`: unter `site/` 194 Dateien in beiden,
+0 Abweichungen. Auf der B-Seite kam die Nachbartabelle der Hauptperiode (und des Vergleichs) aus dem
+Paket, die übrigen Profile schrieben eine leere; kein Schritt der Seite liest sie bis Stufe 3.
+
+**Laufzeit** (2026-11-24, Worktree, `nice -n 10`, Lastmittel 11 bis 18): `embeddings` in der
+Hauptperiode 7,4 s ohne neue Einbettung (alle aus dem Cache), `neighbors` 4,2 s. Die übrigen Profile unter der GPU-Sperre, je ein Lauf `georep run --models
+embeddings neighbors`, das ollama-Log mit „offloaded 13/13 layers to GPU", 1,5 GB Grafikspeicher:
+Mönchengladbach 2 931 Stücke in 49 s (650 Dateien), die laufende Periode 9 590 neue Stücke in
+150 s, 2014 bis 2020 59 750 neue in 908 s, je rund 65 Stücke je Sekunde unter einem Lastmittel
+von 13 bis 31 (ohne Fremdlast rund 90, Messdokument § 3.3). Zusammen rund 19 Minuten unter der
+Sperre, davon rund 18 GPU-Minuten Rechnung; die Hochrechnung der Messung lag bei 17.
+
+**Bekannt: Zeichensalat sprengt das Fenster.** In 2014 bis 2020 hat ein Dokument
+(`00330474.pdf`, eine defekte Schriftkodierung mit Steuerzeichen statt Buchstaben) neun Stücke über
+512 Token, und ollama 0.24.0 weist sie trotz `truncate` ab (400, „the input length exceeds the
+context length"). Die Annahme der Zerteilung, mindestens 3,47 Zeichen je Token, gilt für solchen
+Text nicht. Nach F5 sind die neun abgewiesen und erledigt (der Schritt sagt „aktuell, 9 Eingaben
+abgewiesen"); das Dokument hat keinen Dokumentvektor und keine Nachbarn, 21 713 von 21 714 Dateien
+haben einen. In der Hauptperiode, der laufenden Periode und Mönchengladbach kommt es nicht vor.
+`georep search` braucht beim ersten Aufruf 9,7 s für die Wortmatrix (danach 2,8 s zum Laden),
+die Einbettung 0,64 s je Frage aus dem Cache.
+
+**Abweichungen vom Bauplan** (§ 6 und § 10 des Messdokuments): `zerteile` heißt `split_chunks`
+(die Namen im Paket sind englisch) und hat dieselben Schleifen; geprüft gegen eine wörtliche Kopie
+als Orakel (`tests/property/oracle_chunks.py`, hypothesis) und über die Hauptperiode. Die
+Dokumentvektoren tragen zusätzlich `datei`, damit `neighbors` die Einheiten ohne den Korpus bildet.
+Die Paketkopie in `raw/` heißt `aehnliche_dokumente_paket.parquet` (siehe unten). Die
+Settings-Klassen heißen `Bm25` und `Embeddings` wie die übrigen Blöcke. Mönchengladbach schaltet
+die Schritte auch ein (Prüfstein der Stadtneutralität, § 6 „Profile"); ohne Paket bleibt seine
+Nachbartabelle auf Pages leer. Die Wortmatrix des Befehls ist `processed/suche_wortmatrix.parquet`,
+eine Zeile je Einheit mit Stämmen und Anzahlen.
+
+**Was das Review (Runde 1, 2026-11-24) geändert hat**, je ein Commit: `bm25`, `rrf_k` und
+`fusion_depth` stehen nicht mehr im Fingerprint, denn nur `georep search` liest sie (N4); der
+Client des Einbetters entsteht erst bei Bedarf (`DeferredEmbedder`), sodass ein verweigertes
+`ml.base_url` nur `embeddings` mit `--models` scheitern lässt und die Suche auf BM25 zurückfällt
+(N5); die Suche prüft neben Modell und Digest auch Prompt-Version und Fenster der Stücke (N2) und
+nimmt die GPU-Sperre aus `ml.gpu_lock` nicht blockierend, sonst BM25 (N1; die Vorgabe ist leer,
+der Pfad gehört in `settings.local.toml`); ohne Korpus nennt sie den Handgriff statt `[Errno 2]`,
+und die Hinweiszeile nennt die Zahl des gewählten Verfahrens und dass sie für die Hauptperiode gilt
+(N6). Dazu die Wortlaute oben zu Gleichständen (N3), Herkunft des Pakets (K1) und Stamp (N9).
+
+**Verworfen.** Vektoren ins Repo (Dokumentvektoren 7,5 bis 25,7 MiB, Stückvektoren 64 MiB für die
+Hauptperiode allein; die Seite braucht nur die IDs, und aus Einbettungen lässt sich Text teilweise
+zurückgewinnen, Fragen 9.1 und 9.7). Die Wortmatrix als Schritt der Kette (sie kostete jede Kette,
+auch auf Pages, 6 bis 10 s je Profil, und nur der lokale Befehl liest sie; sie liegt darum mit ihrem
+Schlüssel neben den Vektoren). Die Mischung als Vorgabe der Suche (bei Stichwörtern im Amtswortlaut
+war sie am besten, insgesamt die Einbettung; eine andere Vorgabe wäre eine neue Messung mit neuen
+Fragen, Frage 9.12). Der Stemmer von Snowball 3.0 (eine neue Fassung der Wortsuche, nicht gemessen).
+Die Paketkopie unter demselben Namen wie die Ausgabe (`georep steps` zeigte dann
+`aehnliche_dokumente.parquet -> aehnliche_dokumente.parquet`). Die Tempo-Probe vor dem ersten
+Stapel (Frage 9.5) in diesem Schritt: sie gehört nach F5 (`docs/todo.md`, Punkt 11 d); im Bau ist
+das Tempo von Hand geprüft. Cluster über Einbettungen (Messung § 3.5).
+
+## 78. Zeit und Neuigkeiten: Wahljahre statt Monate, ein Lexikon als Paketdatei, Spannen auf dem Rohtext, Feeds aus den Daten (Vorhaben 17, 2026-11-24)
+
+Vorhaben 17 der Vorverarbeitung (`docs/plans/17-zeit.md`, § 5 bis § 8 und § 10), Stufe 2. Die
+Messung hat drei Hypothesen vor dem ersten Lauf festgelegt (Commit `9c7b3d6`, 2026-11-23 19:45),
+das Lexikon bundespolitischer Begriffe an 100 Treffern kodieren lassen (94 richtig, α 0,957 und
+0,928) und 41 Feeds gegen RFC 4287 geprüft. Gebaut ist genau das, als zweiter Beitrag nach Punkt 69
+mit der Fabrik aus Punkt 74; alle vier Schritte sind offline und fragen den Transport nie.
+
+**Was gebaut ist.** Der Beitrag `17-zeit` (`georep.enrich.cycles`, die Rechnung rein in
+`analysis/cycles.py`, `analysis/lexicon.py`, `analysis/hypotheses.py` und `report/feeds.py`):
+
+- `cycles` schreibt `processed/zeit_monate.parquet` (Dokumente je Monat, Gremienart, Urheberklasse
+  und Instrument, mit Wahljahr, Dokumenten mit Text und Haushaltsanträgen; jede Kombination, die
+  vorkommt, steht in jedem Monat) und `processed/haushaltsmonate.parquet`. Je Monat summiert die
+  Tabelle zur Monatsreihe aus `timeline`, sonst bricht der Schritt ab.
+- `vocabulary` schreibt `processed/dokumente_bundesvokabular.parquet` (eine Zeile je Korpus-ID, die
+  Kategorien in Titel und Text und in Titel und den ersten 2 000 Zeichen, die Lexikonversion) und
+  die Treffer im Text als Spannen nach F3 (`processed/bundesvokabular_spannen.parquet`).
+- `cycle_tests` schreibt `processed/zeit_hypothesen.parquet`: die drei Haupttests mit Holm und ihre
+  Sensitivitäten aus § 8 als eigene Zeilen.
+- `feeds` schreibt je Wahlbezirk `site/feeds/wahlbezirk-NN.xml` und als erste Ausgabe die Liste
+  `processed/wahlbezirke_feeds.parquet`; Feeds von Wahlbezirken, die es nicht mehr gibt, nimmt er weg.
+
+Gegen das Messskript `docs/plans/17-zeit-messung.py` auf den Läufen vom 2026-11-24: jede Zahl aus
+§ 3.1 bis § 3.3 und § 8.5 gleich, auf die gedruckte Stelle (H17.1 −4,9 %, p = 0,847; H17.2
++83,1 %, p = 1/27 720, Holm 0,0001; H17.3 5,98 / 3,16 / 3,47 %, p = 0,987; alle 25 Zeilen), und
+die Feeds der laufenden Periode bis auf die Version im Kopf bytegleich mit dem Prototyp des
+Messskripts, 40 von 41; der Feed von Wahlbezirk 22 nennt sieben der neuesten 50 Dokumente nicht
+mehr, die nur über „schulweg" trafen, einen Begriff, den die Seite zählt, aber nicht zeigt
+(`search.hide_in_display`, Review N1). Ein
+slow-Test rechnet die Zahlen und die Präzision 94 von 100 aus `validierung/17-zeit/labels.csv` gegen
+die gebaute Ausgabe nach (`tests/golden/test_cycles_numbers.py`).
+
+**Wahljahr und Vorwahljahr aus Periode und Wahltagen, nicht aus einer Liste.** Das Messskript nannte
+die vollständigen Wahljahre je Datensatz von Hand. Gebaut ist die Regel dahinter: ein Wahljahr ist
+vollständig, wenn die Periode (`period.start` bis `period.end`, offen bis zum letzten Datum des
+Korpus) es abdeckt und nur sein erster Monat um die Tage vor dem Beginn gekürzt ist; die
+Hauptperiode beginnt am 13. September 2020 und hat das Wahljahr 2020/21, Juni bis August 2014 und
+der 1. bis 12. September 2020 der alten Periode gehören zu keinem. Sie ergibt dieselben zwölf
+Wahljahre. Das Vorwahljahr einer Wahl ist das letzte vollständige Wahljahr, das vor dem Wahltag
+endet, wenn es unmittelbar vor dem Wahljahr der Wahl liegt; die Wahltage stehen in
+`cycles.elections` im Stadtprofil mit Quelle (Synergien 2026-11, Konflikt 16: `period.election` ist
+die Wahl für Nenner und Zuschnitt). Das Anlaufjahr ist das erste vollständige Wahljahr einer
+Periode; H17.1 nimmt die Perioden, die ein Vorwahljahr haben.
+
+**H17.2 über Zellsummen.** Das Messskript zentrierte je Zuordnung die Indikatormatrix doppelt.
+Weil jede Zeile genau eine Eins trägt, ist der Nenner Σ TT² für jede Anordnung derselben Multimenge
+gleich (er hängt nur an der Zahl der Jahre je Haushaltsmonat), und der Zähler Σ TT·YT ist die Summe
+der zentrierten Zellen der Zuordnung, weil YT doppelt zentriert ist. So rechnet der Test die 27 720
+Zuordnungen in einem Schritt; ein hypothesis-Test hält ihn gegen die wörtliche Rechnung des
+Messskripts fest.
+
+**Der Kern der Hypothesentabellen** (Synergien 2026-11, § 1; nach dem Review vom 2026-11-24, K2
+und N7, so festgelegt, wie 22 ihn übernimmt): `hypothese`, `p`, `p_holm`, `ergebnis`, `n`,
+`festgelegt`, Zusatzspalten dahinter. **Die Familie sind die Zeilen mit `p_holm`**: dort sind
+Kennung, `p` in [0, 1], `n` und `festgelegt` Pflicht, jede Kennung steht einmal darin, und `p_holm`
+und `ergebnis` sind Holm über die Familie, wie sie in der Tabelle steht, bei der vorab festgelegten
+Familiengröße `m` (`check_hypotheses` rechnet nach). Fehlt einer festgelegten Hypothese die
+Eingabe, steht sie mit leerem `p`, `p_holm` und `ergebnis` außerhalb der Familie und zählt für Holm
+trotzdem mit: `holm`, `family` und `check_hypotheses` nehmen `m` (Vorgabe die Zahl der
+Familienzeilen, kleiner ist ein Vertragsbruch), und die fehlende Hypothese wirkt wie eine mit p = 1
+am Ende der Folge (Supervisor, 2026-11-26, der Fall von 22; bei 17 sind es drei Familienzeilen und
+m = 3). Außerhalb -- Sensitivität, Robustheit, explorativ, beschreibend -- stehen `p_holm` und
+`ergebnis` leer, damit niemand eine solche Zeile als bestätigt liest, und `p`, `n`, `festgelegt` und
+die Kennung dürfen leer sein (22 trägt Robustheit ohne p und Paare ohne Kennung). Eindeutig ist
+eine Zeile über einen Schlüssel, den der Aufrufer nennt (`key`, Vorgabe die Kennung). Die Schwelle
+ist ein Parameter: `strict=False` verwirft bei `p <= alpha / (m - j + 1)` (17), `strict=True` bei
+`<` (22, „p_Holm < 0,05"). Entschieden wird nach Holms Schrittregel, nicht über den Vergleich des
+angepassten Werts mit alpha: beides ist mathematisch gleich, in Gleitkommazahlen nicht (m = 11,
+p = 0,05/11 gibt 11 · p = 0,05000000000000001); ein hypothesis-Orakel hält die Schrittregel fest.
+Die Tabelle von `feat/22-bedarf` (32 Zeilen) geht so durch `check_hypotheses`
+(`tests/fixtures/hypotheses/bedarf_hypothesen_22.json`). `vorläufig` heißt: Holm hätte
+entschieden, aber das Maß ist nicht validiert; H17.3 ist es, solange `analysis.lexicon.VALIDATED`
+für die Lexikonversion keine Präzision von mindestens 0,9 nennt.
+
+**Das Lexikon als Paketdatei, Version 1 unverändert.** `src/georep/lexika/bundespolitik.toml` hat
+denselben Blob wie `docs/plans/17-zeit-lexikon.toml` im Commit der Festlegung; ein Test hält den
+SHA-256 gleich, ein anderer die bekannten Fehler von Version 1 fest (Energiesicherungsstelle,
+genderneutrale Toiletten, eine Webadresse, ukrainische Musik). Name, Version und Hash stehen im
+Stamp von `vocabulary` und `cycle_tests`; eine Version 2 bräuchte eine neue Stichprobe (Frage 9.16).
+Jedes Muster wird beim Laden mit Python `re` und mit Polars übersetzt: Polars zählt die Dokumente,
+Python findet die Stellen, und ein Muster, das nur eines kann (Lookbehind), wäre still verschieden.
+`pyproject.toml` bleibt, wie es ist: `uv_build` nimmt die Datei ins Rad.
+
+**Spannen auf dem Rohtext** (Konflikt 1, Punkt 74). Gesucht wird wie gemessen im
+kleingeschriebenen Text; `flatten_with_offsets` macht eine Stelle dort zu einer im Rohtext, mit Groß-
+und Kleinschreibung und einem Zeilenumbruch, wo das Wort über eine Zeile lief. `extractor` nennt den
+Rohtext und die Lexikonversion, `section` bleibt leer, bis Vorhaben 11 die Abschnitte bringt. Ein
+Treffer im Titel ist keine Stelle im Text und keine Spanne. Ein Dokument ohne Rohtext, oder mit einem,
+der nicht zu seinem Text plättet, hat keine Spannen und zählt in der Meldung des Schritts; seine
+Kategorien hat es trotzdem. Hauptperiode: 6 506 Spannen in 1 997 Dokumenten (36 über einen Zeilenumbruch), ohne Rohtext nur das
+verschlüsselte `00403713.pdf` (Punkt 73); 2014 bis 2020: 6 466 in 1 512 Dokumenten, ohne Rohtext nur
+`61/ 141/2016` (`00278070.pdf`), eines der 15 PDFs, die pypdf seit 6.21 an einer Schutzgrenze
+abweist und deren Text der Textstore aus pypdf 6.20.0 behält (Punkte 66 und 73); laufende Periode
+555, Mönchengladbach 407 (dort tragen 81 der 161 Dokumente mit Treffer ihn nur im Titel).
+
+**`cycle_tests` im Profil `duesseldorf-vergleich`** (Konflikt 13). Die Tests lesen die Ausgaben von
+drei Perioden; das Profil, das schon `compare` über zwei rechnet und auf Pages die Hauptseite
+zuletzt baut, nennt sie (`cycles.periods`). Fehlt eine Periode, bricht `run` mit dem Pfad der
+Datei ab, wie bei `compare`. Damit muss `.github/workflows/pages.yml` die laufende Periode **vor**
+`duesseldorf-vergleich` rechnen; die Änderung macht der Supervisor (das gh-Token hat keinen
+`workflow`-Scope). Die Perioden tragen Dateien gleichen Namens; seit Punkt 76
+(`pipeline.input_key`) stehen gleichnamige Eingaben mit ihrem Pfad im Stamp, und eine Änderung in
+jeder Periode macht den Schritt veraltet (ein Test ändert eine andere Periode und sieht das).
+
+**Feeds aus den Daten.** `feed/id` ist `urn:uuid:` aus Stadt, Ordner und Wahlbezirk, `feed/updated`
+das jüngste `updated` der Einträge und nie die Laufzeit, `entry/updated` OParls `modified` in der
+Zone des Profils, nie vor dem Vorlagendatum (00:00 Ortszeit, `feeds.timezone`); eine Zeit ohne Zone
+gilt in dieser Zone (Review N4), und sortiert und verglichen wird als Zeitpunkt, nicht als Text
+(N3). Dieselben Daten geben dieselben Bytes, ein Lauf ohne neues Dokument schreibt keinen Feed neu.
+Jeder Wahlbezirk des Wörterbuchs hat einen Feed, auch ohne Treffer: dann leer, mit dem Stand der
+Daten (letztes Vorlagendatum, 00:00 Ortszeit) als `updated`; weg kommt nur der Feed eines Bezirks,
+den das Wörterbuch nicht mehr kennt (N2). Ein Feed nennt nur Dokumente, die die Seite zeigt: ohne
+die Begriffe aus `search.hide_in_display`, die zählen, aber kein Dokument zeigen (N1). Kein `category` und kein `rel="self"` (Fragen 27 und
+28, Annahme). Ein Titel verliert nur, was XML 1.0 verbietet. Die Feeds sind keine Ausgaben des
+Registers (ihre Zahl kennt der Schritt erst beim Lauf); die Liste ist es. `atom_problems` prüft jeden
+Feed beim Schreiben ohne Netz und ohne lxml (normative Regeln, Form nach Anhang B, Projektregeln);
+gegen das RELAX-NG-Schema aus RFC 4287 sind die gebauten Feeds einmal mit lxml des System-Pythons
+geprüft (41 von 41 gültig, die Gegenprobe des Messdokuments fällt durch; 2026-11-24). lxml kommt nicht in die Entwicklungsgruppe (Frage 9.8): die Tests brauchen es nicht.
+
+**Abweichungen vom Bauplan** (§ 6 des Messdokuments). `zeit_monate` trägt zusätzlich das
+`instrument` im Schlüssel: S1.5 ist vorab festgelegt und braucht Anfragen und Anträge je Wahljahr;
+die Regel (Dokumentart, sonst Titelwort) steht in `defaults.toml`, die Arten `zAnfrage` und `zAntrag`
+im Stadtprofil. `zeit_hypothesen` trägt den Kern, dazu `rolle`, `effekt_unten`, `effekt_oben`
+(90 %, H17.1), `einheit`, `p_randomisierung`, `zuordnungen` und `anteile` (gepoolt je Periode,
+H17.3); die beschreibenden S1.6 und S2.3 sind keine Tests und stehen nicht darin, die Unterseite
+rechnet sie aus `zeit_monate`. Neu sind `cycles.head_chars` (S3.1), `cycles.instrument_types` und
+`instrument_titles` (S1.5) und `feeds.timezone`; `feeds` schreibt zusätzlich die Liste
+`wahlbezirke_feeds.parquet` (je Wahlbezirk Datei, Einträge, Dokumente, neue der letzten 30 Tage,
+Stand, Bytes), die Stufe 3 für die Linkliste liest.
+
+**Laufzeit** am 2026-11-24 unter Fremdlast (Lastmittel 18 bis 38, `nice -n 10`, Polars auf vier
+Threads): `cycles` 0,1 bis 0,6 s, `vocabulary` 0,4 s (Mönchengladbach) bis 7,2 s (2014 bis 2020),
+`cycle_tests` 0,9 s, `feeds` 0,7 s.
+
+**Verworfen.** Zwei Beiträge `cycles` und `feeds` (Synergien 2026-11, § 2.1: ein Beitrag je
+Vorhaben); `cycle_tests` im Hauptprofil (der erste `georep run` auf Pages und der Lauf des Monitors
+brächen ab, solange die anderen Perioden fehlen); ein eigenes Profil nur für die Tests (ein drittes
+Profil im Ordner der Hauptperiode mit eigenem Fingerprint: jeder Wechsel rechnete die Kette neu, und
+die Hauptseite käme von dem, das zuletzt lief); die Wahljahre je Datensatz als Liste im Profil
+(die Regel ergibt sie aus der Periode); das Instrument für S1.5 aus `dokumente_funktion` von
+Vorhaben 15 (validiert, aber nicht die vorab festgelegte Regel; S1.5 bleibt „nicht deutbar", § 3.1);
+S3.5 „ohne Migration" in der Tabelle (nachträglich und an eine Kategorie des Lexikons gebunden; die
+Unterseite kann es aus den Spalten rechnen); eine Datei je Feed als Ausgabe des Schritts (die
+Wahlbezirke kennt erst das Wörterbuch); lxml für den Test des Schemas.
+
+## 79. Die Beschlusslage ist die letzte Entscheidung in der Sache; der Prüfauftrag bleibt eine Spalte (Vorhaben 26, 2026-11-24)
+
+Vorhaben 26 der Vorverarbeitung (`docs/plans/26-beschluesse.md`, § 5, § 6 und § 10), Stufe 2. Die
+Messung hat die Abbildung der Einträge der Sitzungsleitung auf Klassen an 150 Anträgen gegen zwei
+KI-Kodierer geprüft: `ergebnis` 150 von 150 (Wilson 0,975–1,000), der beantragte Prüfauftrag 57 von
+65 (Recall 0,73) -- das Urteil war „bauen, mit Rückfall 1". Gebaut ist genau diese Regel, als dritter
+Beitrag nach Punkt 69, hinter 15 und 14.
+
+**Was gebaut ist.** Der Beitrag `26-beschluesse` (`georep.enrich.outcomes`) bringt zwei
+Offline-Schritte vor `report`, nur mit `outcomes.enabled` (in allen drei Düsseldorfer Perioden an):
+
+- `council_results` schreibt den Beratungsverlauf `processed/beratungsverlauf.parquet`: je Beratung
+  einer Drucksache jeder Tagesordnungspunkt mit Gremium (Kürzel aus `[bodies.organizations]`, sonst
+  der Schlüssel `gr/NN`), Beginn der Sitzung, Nummer, Folge, dem Eintrag `result` und seiner Stufe.
+  Die Quelle ist der Netzlauf von Fundament F6 (die drei JSONL-Dateien unter `raw/`, gelesen mit den
+  Modellen aus `georep.oparl`), sonst das Paket `snapshots/duesseldorf-beschluesse/` aus `georep
+  pack --outcomes`, das `bootstrap` nach `raw/tagesordnungspunkte.parquet` legt; ohne beides ein
+  `MissingInputError`. Der Name ist nicht `beratungsfolge` (Punkt 58 behält ihn, Messdokument § 10).
+- `outcomes` schreibt die Beschlusslage je Korpus-ID (`processed/beschlusslage.parquet`) und den
+  Antragserfolg je Fraktion und Gremienart (`processed/antragserfolg.parquet`). Er liest die Rollen
+  über `prep.references.role_of` und die starken Kanten (`vorgang_kanten`) von Vorhaben 14 und die
+  Antragsteller von Vorhaben 15; ohne deren Schritte fehlt er, der Beratungsverlauf bleibt.
+- Die Regeln stehen rein in `analysis/outcomes.py`, mit Verträgen an den Batch-Grenzen (eine Zeile je
+  Korpus-ID, Klasse aus der Aufzählung, maßgeblicher Punkt genau bei einem Eintrag und im Verlauf
+  desselben Dokuments, Prüfauftrag nur bei angenommenen Anträgen, `n >= angenommen >= 0`); die
+  Prädikate in `georep.contracts`. Schema-Version aus `OUTCOMES_SCHEMA_VERSION`, die des Pakets aus
+  `AGENDA_SCHEMA_VERSION`.
+
+**Die letzte Entscheidung in der Sache.** Maßgeblich ist der späteste Tagesordnungspunkt der Stufe
+`sache` (beschlossen, geändert, abgelehnt, zurückgezogen, auch als Empfehlung), sonst der späteste
+überhaupt (Kenntnisnahme, Vertagung, Verweisung), sonst `ohne_ergebnis`; „spätest" nach Beginn der
+Sitzung, Folge auf der Tagesordnung und ID des Punkts. Welche Stufe und Klasse ein Wert trägt, sagt
+der Wortschatz `[outcomes.results]` im Stadtprofil (21 Werte in Düsseldorf), geprüft gegen
+`OUTCOME_STAGES`; ein Wert, den er nicht kennt, ist ein `UnknownResultError` mit Wortlaut, Zahl und
+Beleg, nie still `ohne_ergebnis`. Gegen das Messskript Dokument für Dokument auf den Netzläufen vom
+2026-11-23: Klasse, maßgeblicher Punkt, Gremium, Datum und Zahl der Beratungen in **0 von 45 418**
+Dokumenten der drei Perioden verschieden, die Klassen der Anträge gleich der Tabelle in § 3.4 (auch
+für 2014 bis 2020 mit dem eigenen Abruf der Beratungen, Frage 9.10). Die Regel des Messskripts steht
+wörtlich in `tests/property/oracle_outcomes.py`, und hypothesis vergleicht beide; ein Mutant ohne
+den Rang der Stufe fällt dort durch.
+
+**Der Prüfauftrag nach der Kodierung nicht auf der Seite (Rückfall 1, Recall 0,73).** Die Regel des
+Messskripts (Commit `94da91f`) steht unverändert als `review_only`, ihre Muster als Listen in
+`[outcomes.review]` von `defaults.toml` (Sprache der Ratsdokumente, keine Stadt): 0 von 45 418
+Dokumenten verschieden. Sie füllt nur die beschreibende Spalte `pruefauftrag_beantragt`, und nur
+bei angenommenen Anträgen; „offene Prüfaufträge" entfallen. Der slow-Test hält die 57 von 65 und
+die acht Fehler aus § 4.1 als dokumentierte Grenze fest: eine bessere Regel wäre eine neue Messung
+(Frage 9.8), kein Refactoring.
+
+**Praxiszellen.** In einem Gremium-Jahr, in dem mindestens 40 % der Anträge mit Ergebnis „erledigt"
+sind und mindestens zehn (`practice_share`, `practice_min`), ist „erledigt" eine Praxis der
+Sitzungsleitung und kein Ergebnis: `eintrag_tragfaehig` ist dort false. Gezählt wird je Profil
+über das Jahr der maßgeblichen Sitzung; es trifft BV9 2014, 2015 und 2016 und den Rat 2016, 240
+Anträge, alle in 2014 bis 2020 -- wie in § 5. Die Spalte steht nur bei Anträgen mit Ergebnis
+(sonst null): eine Informationsvorlage „zur Kenntnis genommen" ist ihr richtiger Eintrag. Die
+Schwelle ist nach dem Blick auf die Daten gesetzt (Lücke zwischen 16 % und 47 %), also eine
+Variante, die die Kodierung nicht misst.
+
+**Angenommen statt beschlossen/geändert auf der Seite.** `grob` fasst beschlossen und geändert zu
+`angenommen` zusammen (dazu `abgelehnt`, `ohne_sachbeschluss`, `offen`, `ohne_ergebnis`, wie
+Rückfall 2). Bei Vorlagen ist „abweichend" uneinheitlich eingetragen (§ 3.8); die Unterscheidung
+bleibt in `klasse`, die Seite zeigt sie in Stufe 3 nur als Unterzahl.
+
+**Was vom Bauplan abweicht.**
+
+- *Schlüssel des Verlaufs* ist (`id`, `beratung`, `top`), nicht (`id`, `top`): eine Beratung, deren
+  Tagesordnungspunkt nicht in der Sitzungsliste der Periode steht, behält eine Zeile mit `top` null
+  (276 in der Hauptperiode). So zählt `beratungen` jede Beratung, wie im Messskript; doppelte
+  Punkte je Dokument gibt es in keinem der drei Abrufe.
+- *`sitzung` ist der Beginn mit Uhrzeit* (Ortszeit des Servers, ohne Zone), nicht das Datum: die
+  Regel ordnet nach Beginn, und zwei Sitzungen desselben Tages ordnete das Datum allein nach der
+  Folge der Punkte. `entscheidung_datum` ist das Datum.
+- *Die Rolle* kommt aus der Regel von 14 (`role_of`), weil 14 sie nicht als Spalte schreibt; kein
+  Nachbau.
+- *Das Paket* hat eine Datei je Periode (`raw/tagesordnungspunkte-<ordner>.parquet`, zusammen
+  631 944 Bytes, zstd auf Stufe 19) unter dem Namen aus `outcomes.package`; es trägt die Schlüssel
+  der Organisationen, nicht die Kürzel, damit die Kürzel aus Frage 9.17 kein neues Paket brauchen.
+  Wo der Netzlauf liegt, gilt er; aus denselben Dateien geben beide Wege denselben Verlauf.
+- *Antragserfolg* ist je Gremienart getrennt (`by`) und standardisiert je Gremium der Drucksache.
+  Die Fraktionen kommen aus 15 (mit Zeitraum, Punkt 75), nicht aus der Einheit des Messskripts;
+  „SPD" (Dokumente vor dem 2020-11-01) und „SPD+VOLT" bleiben darum getrennte Zeilen, wie 15 sie
+  liefert. Der Filter auf `eintrag_tragfaehig` ändert heute nichts: false steht nur bei „erledigt",
+  und das ist keine Sachentscheidung.
+- *Die Quote einer Schicht zählt dieselben Zeilen wie die Beobachtung* (Review 2026-11-24, N2,
+  Entscheidung des Supervisors): je Antrag und beteiligter Fraktion eine Zeile, ein Antrag ohne
+  Fraktion gar nicht. Das Messskript zählte die Quote je Antrag einmal, Anträge ohne Fraktion
+  eingeschlossen; dann verteilte die Standardisierung im Rat der Hauptperiode 361,3 erwartete
+  Annahmen auf 524 beobachtete, und beobachtet/erwartet lag für die Mehrheit fast überall über 1.
+  Jetzt gilt je Schicht Σ beobachtet = Σ erwartet, als Nachbedingung von `motion_success` und als
+  hypothesis-Eigenschaft. Eine bewusste Abweichung vom Messskript in einer explorativen Größe; die
+  Werte (Hauptperiode, alt → neu): Rat CDU 2,83 → 1,95, Grüne 2,77 → 1,91, SPD/Volt 1,14 → 0,79,
+  FDP 0,75 → 0,52, Linke 0,29 → 0,20, AfD und T_FW 0 → 0; Ausschüsse CDU 1,93 → 1,55, Grüne
+  1,90 → 1,53; in den Bezirksvertretungen ändert sich kaum etwas (CDU 1,03 → 1,02, Grüne 1,00 →
+  0,98); die Reihenfolge der Fraktionen bleibt dort in jeder Gremienart dieselbe. Im Rat seit
+  2025 (18 und 19 Anträge, alle angenommen) CDU und Grüne 11,65 → 6,45.
+- *Gremium ohne Organisation* ist null, nicht „?".
+
+**Folgevorlage je Profil, eine Untergrenze.** `folgevorlage` ist die früheste Drucksache der
+Verwaltung (Rollen aus `followup_roles`), die den Antrag über eine starke Kante nennt. Die Kanten von
+14 tragen nur nennende Drucksachen des eigenen Korpus; eine Folgevorlage der nächsten Periode sieht
+ein Profil darum nicht. Über alle drei Perioden zusammen sind es 1 508 Anträge mit Folgevorlage
+(gleich der Messung, § 3.7), je Profil 1 394: 114 fehlen, fast alle Anträge vom Ende einer
+Periode. Ob 14 die Kanten aus den Nachbarperioden in den eigenen Korpus mitschreibt, ist eine Frage
+an den Supervisor; bis dahin ist die Spalte eine Untergrenze, wie § 3.7 sie ohnehin nennt.
+
+**Mönchengladbach bleibt aus** (§ 10, Punkt 6). Sein Netzlauf trägt an den Punkten seiner 2 895
+Dokumente 48 andere Werte, darunter mehrere ohne eindeutige Klasse: „Siehe Niederschrift" (40),
+„Getrennte Abstimmung (s. Niederschrift)" (32), „Ohne Abstimmung" (43), „Geheime Abstimmung" (3),
+„-" (3), „In den nächsten Ratszug geschoben" (70), „Die Bezirksvertretung wurde angehört" (211).
+`outcomes.enabled` bleibt dort aus; ein Wortschatz für Mönchengladbach wäre eine eigene Messung.
+
+**Laufzeit** (2026-11-24, Lastmittel um 20, `nice -n 10`, Polars auf vier Threads):
+`council_results` aus dem Netzlauf 3,2 s in der Hauptperiode (davon 2,2 s Laden der JSONL über
+pydantic), 3,5 s in 2014 bis 2020, 1,7 s seit 2025; aus dem Paket 0,1 bis 0,2 s; `outcomes` 1,3 s,
+0,9 s, 0,2 s (aus dem Paket 1,2 s).
+
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
+(`ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace; A `main` 098d556, B dieser Branch, beide mit
+`POLARS_MAX_THREADS=4`, `OMP_NUM_THREADS=2`): unter `site/` 194 Dateien in beiden, **0
+Abweichungen**. Über die Datenwurzeln 721 Dateien in A, 739 in B: dazu kommen genau die 18 Dateien
+dieses Vorhabens (je Periode das Paket in `raw/`, drei Tabellen unter `processed/` und zwei Stamps),
+und abweichend sind nur 87 Stamps (der Settings-Fingerprint hat neue Schlüssel). B rechnet ohne
+Netzlauf aus dem Paket, wie Pages, und kommt auf dieselben Klassen wie der Netzlauf im Worktree.
+
+**Verworfen.** Die Rollen aus dem Messskript von 14 (`art2`; § 10: kein Nachbau); eine eigene Klasse
+für Einträge, die keine sind (die Praxiszellen sind eine Spalte neben der Klasse, Frage 9.2); der
+Prüfauftrag als Klasse oder auf der Seite (Rückfall 1); die Kürzel `gr/400224` und `gr/65` jetzt
+eintragen (§ 10, Punkt 7: vor Stufe 3, mit A/B-Bau); die Tabelle des Pakets mit Kürzeln oder
+Klassen (ein neues Profil brauchte ein neues Paket); ein Paket für alle drei Perioden in einer
+Datei (jedes Profil packt seine eigene, der Name steht im Profil); den Wortschatz in
+`defaults.toml` (er ist der einer Sitzungsleitung, Mönchengladbach hat einen anderen).
+## 80. Bedarf und Aufmerksamkeit je Wahlbezirk: Punkte mit Randband, Auszüge als Paket, die Tests der Messung (Vorhaben 22, 2026-11-24)
+
+Vorhaben 22 der Vorverarbeitung (`docs/plans/22-bedarf.md`, § 5 bis § 8 und § 10), Stufe 2. Die
+Messung fand vier Bedarfsquellen mit freier Lizenz und passender Raumeinheit (Quartiersatlas,
+Unfallatlas, Zensus-Gitter, Schulsozialindex) und rechnete drei vorab festgelegte Hypothesen; gebaut
+ist genau diese Rechnung, als sechster Beitrag nach Punkt 69 (hinter 15, 14, 18, 17 und 26), mit dem
+Netzschritt über `http` (Punkt 74).
+
+**Was gebaut ist.**
+
+- `crosswalk.point_shares`: je Punkt gleiche Anteile an jede Einheit (Wahlbezirk oder Stimmbezirk),
+  deren Fläche näher als `band_m` liegt; Band 0 ist Punkt in Fläche, ein Punkt auf einer Grenze liegt
+  in beiden geschlossenen Flächen und wird geteilt. Ein STRtree, eine Abfrage für alle Punkte. 16
+  (Hausnummern) und 21 (Beträge) rufen dieselbe Funktion (Synergien 2026-11, § 1).
+- `prep/context.py` liest die Quellen, wie sie kommen (`read_accidents` in den drei Namensformen der
+  Jahrgänge, mit BOM und Dezimalkomma; `read_grid`; `read_schools` mit der Zeile `sep=;` und dem
+  Sozialindex in Codepage 850) und rechnet je Wahlbezirk (`need_table`); ein Verhältnis ohne Nenner
+  ist null, nie NaN. Einen Unfall oder eine Schule ohne Koordinate verwirft der Leser und zählt sie
+  für die Zeile von `need_data` (`Located`); vorher hielt erst `point_shares` mit einem
+  `PreContractError` an (Review 2026-11-24, N3). Heute hat keine Quelle eine solche Zeile.
+- `analysis/need.py` rechnet die Tests: Spearman, Permutationen, Bootstrap, Holm, Robustheit,
+  explorativ innerhalb der Stadtbezirke und Moran's I. Die Zufallszahlen kommen in der Folge des
+  Messskripts, die Korrelationen für alle Permutationen zugleich.
+- Beitrag `22-bedarf` (`enrich/need.py`): `need_data` (Netz) legt die zehn Archive unter
+  `cache_root/bedarf/` ab und schneidet die Gemeinde heraus (`external/bedarf/`, mit
+  `quellen.json`); `need` schreibt `wahlbezirke_bedarf.parquet` und, wo das Profil Hypothesen nennt,
+  `bedarf_hypothesen.parquet` (ohne Hypothesen und Paare entfernt es eine alte aus einem früheren
+  Lauf, Review 2026-11-24, N9). Pfade in `need_files`, keine Property in `layout.py`.
+- Pakete `snapshots/duesseldorf-bedarf/` (198 018 Bytes) und `snapshots/moenchengladbach-bedarf/`
+  (91 866 Bytes) über `georep pack --need`; `bootstrap` kopiert sie nach `external/bedarf/`, die
+  eigenen eines Datensatzes zuerst (die Mini-Fixture).
+
+**Gleich mit der Messung.** Auf dem Lauf vom 2026-11-24 ist jede Spalte von
+`wahlbezirke_bedarf`, die auch die Tabelle des Messskripts hat (22 der 25 neben dem Schlüssel, mit
+den Namen unten), gleich (größte Abweichung 1e-13, Summenfolge), und `bedarf_hypothesen` trägt jede
+Zahl aus § 3.4 und § 3.5: H1 ρ = 0,343 (95 % 0,051 bis 0,593), p = 0,0143, p_Holm = 0,0429,
+bestätigt; H2 −0,336, p_Holm 0,0692; H3 −0,059; innerhalb der Stadtbezirke −0,062, −0,204, 0,465;
+Moran's I der Residuen 0,341, 0,050, 0,262. 11 501 Unfälle im Zeitraum, 3 170 im Band geteilt,
+611 134 Einwohner. Ein `slow`-Test (`tests/golden/test_need_numbers.py`) rechnet die Zahlen aus dem
+Paket nach.
+
+**Anders als der Bauplan, mit Grund.**
+
+- *Paket unter `snapshots/` als Parquet*, nicht CSV unter `context/` (Konflikt 11): `context/` hält
+  Portaldateien unverändert. Parquet hält die Typen und die vollen Koordinaten, und es sind 290 KB statt
+  der geschätzten rund 1 MB; alle Pakete zusammen 168,59 MiB von 180 (mit den Paketen von 14, 18 und 26).
+- *Die Quellen stehen in `defaults.toml`*, nicht in jedem Stadtprofil: sie sind bundes- oder
+  landesweit und für beide Städte dieselben zehn URLs, wie die Ratssprache in Punkt 75. Das Profil
+  schaltet ein und nennt Paket, Klassen, Hypothesen und Paare; die Gemeinde ist `city.ags`.
+- *Mönchengladbach bekommt sein Paket gleich mit* (Konflikt 11 nennt `moenchengladbach-bedarf`):
+  Unfälle, Einwohner, Miete und Schulsozialindex je Wahlbezirk, ohne Klassen und Hypothesen
+  (Frage 22.6). Die Periodenprofile schalten ab (Frage 22.5).
+- *`cells_to_districts` gibt es nicht*: `point_shares` mit Band 0 ist genau das.
+- *Spalten*: `sozialindex_schulen` statt `sozialindex_gs` und `schulen_mit_index` statt
+  `grundschulen` (das Messskript zählte nur Grundschulen mit Stufe; die Schulformen stehen jetzt in
+  den Settings), dazu `schulen` mit allen Schulen dieser Formen, auch ohne Stufe (88 gegen 87); so
+  ist auch der Abgleich oben gerechnet (Review 2026-11-24, N6). `unfaelle_geteilt` (Anteile aus Unfällen,
+  die auf mehrere Wahlbezirke gehen) statt `unfaelle_am_rand`, das im Messskript auch die Stadtgrenze
+  zählte (3 268 gegen 3 170); Zählungen aus Anteilen sind Float64, weil ein Punkt auf einer Grenze
+  geteilt wird.
+- *Die Hypothesentabelle* trägt den Kern der Synergie vorn (`hypothese`, `p`, `p_holm`, `ergebnis`,
+  `n`, `festgelegt`) und ist lang: je Zeile eine Rechnung (`haupttest`, `robustheit`, `innerhalb`,
+  `moran_*`, `paar`) mit `mass` und `wert`, weil Moran's I kein ρ ist. Die Robustheit trägt nur ρ, wie
+  in § 3.4. `ergebnis` steht nur am Haupttest, dahinter `deutung` mit den drei Wörtern aus § 8
+  („Aufmerksamkeit folgt dem Bedarf", „ungleiche Aufmerksamkeit", „kein Zusammenhang nachweisbar"):
+  `ergebnis` sagte bei der zweiseitigen H2 nicht, in welche Richtung Holm verwirft (Review
+  2026-11-24, K1). Die einseitigen H1 und H3 haben nur den ersten und den letzten Ausgang.
+- *Die Hypothesen stehen im Stadtprofil* mit dem Commit ihrer Festlegung (`fixed`): sie nennen
+  Variablen des Quartiersatlas. Auch die Wahlbezirke der Robustheit „ohne 1 und 10" stehen in jeder
+  Hypothese (`robust_without`), nicht in `analysis.exclude_districts`, das die Regression der Seite
+  steuert und sich ändern darf, ohne dass sich eine vorab festgelegte Rechnung mitändert (Review
+  2026-11-24, N8; die Zahlen 0,417, −0,411, −0,144 bleiben, ein `slow`-Test hält sie). Der Commit ist `67f7250`; das Messdokument nannte `9da9fe1`, den Hash
+  vor dem Rebase, den es in keinem Zweig gibt (berichtigt).
+- *Der Netzschritt hinter einem eigenen Schalter*: `need_data` gibt es nur mit
+  `context.need.fetch` (Vorgabe aus, auch in den Stadtprofilen, nicht im Fingerprint), derselbe
+  Mechanismus wie `council.enabled` (Review F6 2026-11-23, Befund 6): volle Abrufe sind Konrads
+  Läufe, und mit `enabled` allein lud ein bloßes `georep fetch` die zehn Archive (Review
+  2026-11-24, N1). Abgerufen wird mit `GEOREP_CONTEXT__NEED__FETCH=true georep fetch need_data`.
+- *Archive mit Lebensdauer*: `need_data` lädt ein Archiv erst wieder, wenn es älter ist als
+  `cache.opendata_s` (dieselbe Lebensdauer wie die übrigen Portaldateien), eine Datei nach der
+  anderen mit `context.need.delay_s` Pause. Ein Neuladen bei jedem Lauf hieße 105 MB je Stadt und
+  Lauf; eine Cache-Regel der Session legte sie in die geteilte `http.sqlite` (heute 800 MB).
+- *Zehn Schulen mit `null` als CRS* (Seminare, neue Schulen, keine Grundschule) gelten als im
+  erklärten CRS; ein anderes, genanntes CRS bleibt ein Fehler. Der erste echte Lauf brach daran ab.
+- *Neun Gitterzellen nur in der Mietdatei* bleiben mit null Einwohnern im Auszug und haben kein
+  Gewicht; das Messskript verlor sie beim Verbinden (7 658 statt 7 667 Zellen, dieselben Zahlen).
+- *Ohne Fremddaten oder Klassen bleibt die Zeile ohne p*: eine Hypothese über eine Variable des
+  Quartiersatlas oder einen Anteil der Klassen hat in einem Lauf ohne `context.root` oder ohne
+  Klassifikator keine Werte. Ihre Zeile bleibt, mit `p` null und ohne `p_holm`, Ergebnis und
+  Deutung (ein Test ohne Werte stünde sonst als „nicht bestätigt" da), und Holm rechnet weiter über
+  alle vorab festgelegten, m = 3 (Review 2026-11-24, N2; vorher fiel die Hypothese weg, und Holm
+  rechnete über den Rest). Die Zeile des Laufs nennt sie. Im Lauf der Hauptperiode fehlt nichts;
+  die Tests der Kette laufen auch ohne Fremddaten.
+- *Holm und die Wortwahl aus dem Kern von 17* (`analysis/hypotheses.py`, Punkt 78): `family` mit
+  `strict=True`, weil § 8 „p_Holm < 0,05" festlegt (die Vorgabe des Kerns ist `<=`), und `m` gleich
+  der Zahl der vorab festgelegten Hypothesen, damit eine ohne Eingabe außerhalb der Familie steht
+  und für Holm trotzdem zählt (Supervisor, 2026-11-26). Der Vertrag von `hypothesis_table` ruft
+  `check_hypotheses` mit dem Schlüssel `ROW_KEY` (Hypothese, Rechnung, Bedarf, Aufmerksamkeit,
+  Kontrolle, ohne), denn 22 trägt je Hypothese mehrere Rechnungen. Bis zum Merge von 17 lagen
+  `holm` und `verdict` als Übergang in `analysis/need.py`; ihr Ziel in `VERIFY_TARGETS` fiel mit
+  ihnen weg, `georep.analysis.hypotheses.holm` steht dort seit 17. Die Zahlen von H1 bis H3 sind
+  dieselben (der `slow`-Test).
+
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
+(`ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace), beide mit `POLARS_MAX_THREADS=4` und
+`OMP_NUM_THREADS=2`: zuerst `main` `61fcdd5` gegen den Branch vor dem Merge (`9520f86`), dann `main`
+`098d556` (mit Vorhaben 14) gegen den zusammengeführten Branch. Beide Male unter `site/` 194
+Dateien in A und B, 0 Abweichungen. Über die Datenwurzeln weichen nur Stamps ab (79 und 87 Stück),
+und in B liegen 13 Dateien mehr: die acht Auszüge unter `external/bedarf/` beider Städte, die drei
+Tabellen unter `processed/` und ihre zwei Stamps. Im Bau aus den Paketen (ohne Netz) rechnet `need`
+dieselben Zahlen wie im Lauf mit `need_data`.
+
+**H1′ und H3′** (Frage 22.10) sind in § 8.1 des Messdokuments prospektiv festgelegt, an der laufenden
+Periode, gerechnet erst mit zwölf Monaten Unfällen (Unfallatlas 2026, Juli 2027); gebaut ist dafür
+nichts.
+
+**Verworfen.** Die Auszüge als CSV unter `context/` (Konflikt 11); eine eigene Session für den
+Netzschritt (ohne Fake-Session nicht testbar, Punkt 74); die Archive in `http.sqlite` (oben); ein
+dritter Schritt nur für die Tests (eine Datei mehr im Register für eine Rechnung von einer Sekunde, die
+dieselben Eingaben liest); `PrecinctIndex.locate` je Punkt (13 500 Aufrufe statt einer Abfrage); die
+Tabellen auf der Seite schon in Stufe 2 (sie gehören zu `bedarf.html`, Stufe 3, und änderten sonst
+`index.html`); der Lärm 2018 (braucht die 90 MB der Gebäudereferenzen, Frage 22.2); ein räumliches
+Modell (Frage 29: Moran's I und die Rechnung innerhalb der Stadtbezirke genügen).
+
+## 81. Abschnitte und Kopf aus dem Rohtext: der validierte Entwurf unverändert, Rumpf und Gremiennamen als Nachbearbeitung, ein früher Schritt (Vorhaben 11, 2026-11-24)
+
+Vorhaben 11 der Vorverarbeitung (`docs/plans/11-struktur.md`, § 5 bis § 7 und § 10), Stufe 2. Die
+Messung hat das Regelwerk `struktur-entwurf-1` gegen zwei KI-Kodierer an 200 Dokumenten der
+Hauptperiode geprüft: Beschlussvorschlag zeilengenau 188 von 200 (Kriterium 180), Amt 125/125,
+Amtsbezeichnung 69/69, Zeilen der Beratungsfolge 160/168, α ≥ 0,99 zwischen den Kodierern.
+
+**Regeln statt Modell, und genau die validierten.** `prep/structure.py` trägt das Regelwerk als
+`struktur-1`; `analyse_draft` folgt `analyse` des Messskripts Zeile für Zeile, die Muster stehen
+unverändert im Profil (`[structure]`; ein Test vergleicht jedes Muster mit `ENTWURF` im
+Messskript). Gegen das Messskript auf allen 19 091 Rohtexten der Hauptperiode: **0 Dokumente
+verschieden** in Abschnitten, Kopffeldern und Quellen (slow-Test), ebenso in 2014 bis 2020 (Block
+`duesseldorf-2014`, 22 101 Rohtexte), in der laufenden Periode (4 088) und in Mönchengladbach (658),
+geprüft mit einem Messskript gegen die Stores im Cache. Der slow-Test rechnet
+die Zahlen der Kodierung aus `validierung/11-struktur-f4/labels.csv` nach (188 und 190 von 200,
+125/125, 69/69, 160/168, 73/73, 48/48) und die der Messung (Beschlussvorschlag in 10 506 von 10 784
+Dokumenten der Arten, die einen erwarten; Quellen 9 236 / 927 / 343). Die zwölf Fehler am Ende des
+Beschlussvorschlags bleiben: eine Schärfung an denselben Labels wäre eine Entwurfsschätzung
+(Synergien 2026-11, Konflikt 8); sie kommt nur als `struktur-2` mit frischer Stichprobe. Drei Muster,
+die im Entwurf im Code standen, stehen jetzt im Profil, unverändert: die Grußformel des
+Unterschriftsblocks (`head.closing`), die Nummernform eines Amts (`head.office`), die Monatsnamen
+(`months`, als Sprache in `defaults.toml`).
+
+**Spannen auf dem Rohtext, nicht auf dem Textstore.** Der Textstore ist kleingeschrieben, ohne
+Zeilen und erst ab „betrifft"; Überschriften, Zeilen und der Kopf stehen nur im Rohtext (F1,
+Punkt 73). Die Spannen tragen `extractor = "struktur-1/pypdf-7.1.0+roh"`, damit keine Position auf
+den falschen Text zeigt; ein Vorhaben, das im Textstore sucht, kommt über `flatten_with_offsets`
+(Punkt 74) herüber und liest den Abschnitt mit `spans.section_of`. Ebene 1 heißt `kind = "abschnitt"`
+und `section == norm`; eine Spanne der Ebene 2 (Finanzen, Klima) nennt in `section` den Abschnitt
+um sie herum, die Kopffelder `kopf`. **`value` folgt der Regel von F3** (Entscheidung des
+Eigentümers vom 2026-11-24, Review K1): ein Kopffeld trägt den Text an seiner Stelle wörtlich, die
+bearbeitete Form (Amt als „Nummer Name", Zeile der Beratungsfolge als „Gremium|Datum|Qualität")
+steht in `norm`; ein Abschnitt ist eine Positionsspanne mit leerem `value`, gelesen über
+`read_span`, und das Label wie geschrieben fällt weg. Die Amtsbezeichnung im Unterschriftsblock
+steht, wie sie geschrieben ist (der Entwurf schrieb den ersten Buchstaben groß). Die Stellenmarke
+des Entwurfs für eine Amtsbezeichnung ohne erkannten Titel (eine Spanne von einem Zeichen; gelesen
+ergäbe sie das erste Zeichen eines Namens; 702 in 2014 bis 2020, in den anderen Datensätzen keine)
+wird nicht geschrieben (Review, Runde 3); `dokumente_kopf` hat dort wie zuvor keine
+Amtsbezeichnung. Ein leeres `value` gibt es damit nur bei Abschnitten. `structure_tables` schreibt
+die Spannen so (`literal`) und prüft sie mit `check_spans(..., texts=..., positions={"abschnitt"})`;
+`analyse_draft` bleibt der Entwurf, damit der Vergleich mit dem Messskript Zeile für Zeile bleibt.
+
+**Was nach dem Entwurf kommt, berührt keine validierte Frage.** (1) Der **Rumpf** (Synergien § 4):
+Text im Abschnitt `kopf_*` hinter dem letzten Kopffeld und Text außerhalb jedes Abschnitts zwischen
+Betreff und Grußformel, ohne die Zeilen der Überschriften der Ebene 1 -- die Regel, mit der 16 die
+Lücke im Messskript schloss. Ein Abschnitt `kopf_*` endet dann am letzten Kopffeld; die Kopffelder
+sind vorher gelesen. In der Hauptperiode haben 7 664 Dokumente einen Rumpf (7 857 Spannen), darunter
+1 303 Informationsvorlagen der Bezirksvertretungen (Text unter der Beratungsfolge) und die meisten
+Anfragen (die Einleitung vor den Fragen). (2) **Kein
+Abschnitt der Ebene 1 beginnt in einem anderen**, und **der Beschlussvorschlag bleibt, wie der
+Entwurf ihn fand.** Im Entwurf beginnt ein Abschnitt in einem anderen, wo das Regelwerk ihn
+nachträglich anfügt: in der Hauptperiode zweimal der Beschlusssatz ohne Überschrift (hypothesis
+fand es), einmal im Abschnitt des Amts und einmal im Betreff -- dort beginnen Betreff und
+Beschlusssatz an derselben Stelle, und das Dokument hat seit der ersten Fassung keinen Betreff --,
+in 2014 bis 2020 305-mal, fast immer ein Betreff unter dem
+Formulartitel, der über die nächste Überschrift reicht (275-mal in einen Beschlussvorschlag, 12 in
+eine Sachdarstellung, 8 in Fragen). Der vordere Abschnitt endet dann vor dem hinteren -- außer, er
+ist der Beschlussvorschlag: in acht Dokumenten von 2014 bis 2020 begann der Betreff unter dem
+Formulartitel in einem Beschlussvorschlag (siebenmal aus einem Einleitungssatz, einmal aus einer
+Überschrift), und die erste Fassung kürzte den Vorschlag auf „Antrag" (Review K2). Jetzt beginnt, was in einem Beschlussvorschlag beginnt, erst
+hinter ihm oder entfällt (hier der Betreff). Geprüft in allen vier Datensätzen: jeder
+Beschlussvorschlag gleich dem des Entwurfs, keine Überlappung mehr. (3) **Gremiennamen über `[bodies]`**,
+keine zweite Tabelle: `BodyNames` vergleicht einen geschriebenen Namen mit den Namen und Kürzeln aus
+`BodyRules` über einen Schlüssel ohne Groß- und Kleinschreibung, Satzzeichen und Genitivendung
+(„Ausschusses für Gesundheit und Soziales", „Rates", „Stadtrates" über `city.council`,
+„Bezirksvertretung10", „AÖE"); ein Schlüssel für zwei Kürzel fällt weg. Die Sitzung eines Briefs
+trägt danach Kürzel und Namen im Nominativ, ohne den Ort dahinter (`head.session_suffix`): 48 von 48
+gegen die Kodierung, wörtlich waren es im Entwurf 27. Gegen die OParl-Beratungsfolge desselben
+Dokuments stehen 12 763 von 13 232 Kopfzeilen mit Kürzel (96,5 %), über `resolve_organizations` wie
+im Schritt `bodies`. Die Zahl ist zum Teil zirkulär (Review N2): die sechs Namen aus Frage 15
+stammen aus genau dieser Paarung von Kopfzeile und OParl-Gremium. Ohne ihre Zeilen sind es 10 454
+von 10 917 (95,8 %; die Messung zählte 95,7 % mit den Namen des Profils allein); nur diese Zahl
+misst die Präzision, und der slow-Test hält beide fest. (4) **Sechs Ausschussnamen**
+aus dem Kopf (Frage 15, eigener Commit; KUA, JHA, SCHUA, AGS, HFA, AWM, je n von n Dokumenten mit
+genau einer Kopfzeile und genau einem OParl-Gremium): sie ändern Text der Seite und die Zahl der
+Kürzel ohne gesicherten Namen, sonst keine Zahl (unten, A/B-Bau). Der Stand der Namen
+(`bodies.names_as_of`) ist seitdem der 2026-11-24, und die Quelle im Satz zur Gremientabelle kommt
+aus dem Profil (`bodies.names_source`, Review K3): die Vorgabe in `defaults.toml` ist der Satz, den
+die Seite fest trug (Mönchengladbach bleibt gleich), Düsseldorf nennt dazu den Kopf der Vorlagen.
+Beides ist Anzeige, nicht im Fingerprint, aber im Vorlagen-Hash des Schritts `report` (Punkt 53).
+(5) **`rumpf_leer`** zählt den Text hinter dem ersten Betreff ohne die Abschnitte und Felder des
+Kopfs, ohne Seitenkopfzeilen und Leerraum; unter 80 Zeichen ist der Rumpf leer. „Was hinter dem Kopf
+steht" ging nicht: die alte Vorlagenform setzt die Beratungsfolge ans Ende der ersten Seite, hinter den
+Text, und 2014 bis 2020 hatte so 7 773 leere Rümpfe; jetzt 518, davon 387 ohne jeden Text. In der
+Hauptperiode 132 (59 ohne Text). Die Messung zählte unter den 278 Dokumenten ohne gefundenen
+Beschlussvorschlag 104 mit leerem Rumpf; leer sind 34, die übrigen 70 haben Text ohne Überschrift
+unter der Beratungsfolge, in 65 davon einen Beschlusssatz („Bezirksvertretung 8 beschließt …", 58 aus
+BV 8). Den sieht der Entwurf nicht, weil er den Beschlusssatz erst hinter dem ganzen Abschnitt
+`kopf_beratungsfolge` sucht -- ein Kandidat für `struktur-2` (`docs/todo.md`, Punkt 14), nicht für
+diesen Bau.
+
+**Je Korpus-ID eine Zeile, auch ohne Rohtext.** `dokumente_kopf` hat genau die IDs des Korpus
+(`one_row_per_document`), zwei IDs mit derselben PDF-Datei bekommen beide Spannen und Zeile
+(Synergien § 1). Ohne Rohtext -- auf Pages für jedes Profil außer der Hauptperiode, Konflikt 14 --
+läuft der Schritt und schreibt keine Spanne und leere Zeilen; `extractor` ist dann null.
+Amtsbezeichnung und Unterzeichnerrolle stammen aus den Listen des Profils (Nachbedingung), kein Feld
+trägt einen Namen.
+
+**Ein früher Schritt.** `sections` steht als `early_steps` unmittelbar vor `weights` (Punkt 74),
+weil 16 die Stelle eines Treffers aus den Abschnitten rechnet und `weights` sie liest; er liest
+Korpus, Rohtextstore und die Beratungsfolge und besteht `check_step_order` in jedem Paketprofil.
+Laufzeit beim ersten Lauf je Profil am 2026-11-24 (Worktree, `nice -n 10`, Lastmittel 17 bis 19
+durch andere Läufe): Hauptperiode 30,0 s (19 108 Dokumente, 19 091 mit Rohtext, 145 269 Spannen),
+mit Vergleich 37,1 s, 2014 bis 2020 20,4 s (22 215, 22 101, 162 306), laufende Periode 9,6 s (4 095,
+4 088, 30 093), Mönchengladbach 1,3 s (2 895, 658, 5 805). Der erste Lauf über 2014 bis 2020 brach ab:
+`name_key` nahm „²" als Zahl (`isdigit` statt `isdecimal`); seitdem prüft eine hypothesis-Eigenschaft
+den Schlüssel für jeden Text.
+
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66
+(`ab/ab_bau.sh`, `ab/ab_vergleich.py` auf xtraspace, je `POLARS_MAX_THREADS=4`,
+`OMP_NUM_THREADS=2`, in der Reihenfolge von `pages.yml` seit Punkt 78), `main` (`00e1791`, v0.27.0)
+gegen den Branch nach Runde 2 des Reviews (2026-11-26): unter `site/` 235 Dateien in beiden, 3
+Abweichungen, alle aus Frage 15 und K3 --
+`index.html` der Hauptperiode, von 2014 bis 2020 und der laufenden Periode nennen die sechs
+Ausschüsse mit Namen statt Kürzel (Themen, Gremientabelle, Legende), und der Satz zur Gremientabelle
+trägt den neuen Stand (24.11.2026 statt 14.10.2026), die Quelle mit dem Kopf der Vorlagen und die
+Zahl der Kürzel ohne gesicherten Namen (5 statt 11, in den Perioden 3 statt 9). Sonst ändert sich
+keine Zahl; Mönchengladbach, `vergleich.html` und die Feeds sind gleich. Über die ganzen Datenwurzeln
+881 gegen 893 Dateien: neu sind je Profil die beiden Dateien von `sections` mit Stamp (in den drei Profilen
+ohne Rohtextpaket ohne Spannen und mit leeren Zeilen), anders sonst nur die drei Seiten (und ihre
+Kopien unter den Profilordnern) und Stamps (der Fingerprint trägt jetzt `[structure]`). Keine Datei
+unter `site/` stammt aus `sections`; die Kopftabelle kommt erst mit Stufe 3 als Download. Die
+Hauptperiode schreibt 0,89 MB Abschnitte (seit die Abschnitte kein Label mehr tragen) und 0,21 MB
+Kopf.
+
+**Verworfen.** Das Ende des Beschlussvorschlags an den Labels nachschärfen (Konflikt 8); eine
+Zusatzspalte `quelle` an den Spannen (die Quelle steht in `dokumente_kopf`, Frage 9.3); `start` und
+`end` als UInt32 und die Folge `id, start` aus dem Bauplan (F3 hat Int64 und `id, start, end, kind`,
+Konflikt 2); den Rumpf in `analyse_draft` (dann wäre der Vergleich mit dem Messskript nicht mehr
+Zeile für Zeile); eine Tabelle der Gremiennamen im Profil neben `[bodies]`; den Gremiennamen der
+Sitzung aus der OParl-Folge raten, wo der Text ihn nicht trifft (die Folge hält die tatsächliche
+Beratung, der Brief die geplante); ein eigenes Paket (die Ausgaben rechnen in rund 20 s aus dem
+Rohtextpaket); `split_lines` ohne regulären Ausdruck für crosshair (es geht auch mit ihm, Exit 0).
+
 ## NN. Kennungen und Beträge als Spannen: vier Arten in der validierten Fassung, Rolle und Fristfunktion verworfen, Haushalt und Rechtsgrundlage gefallen (Vorhaben 12, 2026-11-24)
 
 Vorhaben 12 der Vorverarbeitung (`docs/plans/12-kennungen.md`, § 4 bis § 6 und § 10), Stufe 2.

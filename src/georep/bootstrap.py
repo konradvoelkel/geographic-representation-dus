@@ -22,11 +22,15 @@ from typing import Any
 import polars as pl
 from loguru import logger
 
+from georep.enrich.embeddings import embedding_files
+from georep.enrich.outcomes import outcome_files
 from georep.enrich.procedures import procedure_files
 from georep.io import atomic_path
 from georep.layout import Layout
+from georep.prep.context import NEED_DIR, NEED_FILES
 from georep.prep.raw_texts import RAW_SUFFIX
 from georep.records import PaperRecord
+from georep.search.vectors import NEIGHBORS_SCHEMA_VERSION
 from georep.settings import Settings
 from georep.sources.pdfs import PdfStore
 from georep.stores import (
@@ -61,6 +65,8 @@ class BootstrapReport:
     # deren Text im Textstore einen anderen PDF-Hash oder Extraktor trägt.
     raw_texts_kept: int | None = None
     raw_texts_unbridged: int = 0
+    # Vorhaben 18: warum das Nachbarpaket nicht übernommen wurde (fremde IDs, andere Version)
+    neighbors_refused: str = ""
 
     def summary(self) -> str:
         if not self.seed_corpus:
@@ -89,10 +95,11 @@ class BootstrapReport:
         elif self.raw_texts is not None:
             raw = f"; {self.raw_texts} Rohtexte aus {self.raw_texts_package}"
         raw_refused = f"; {self.raw_texts_refused}" if self.raw_texts_refused else ""
+        neighbors = f"; {self.neighbors_refused}" if self.neighbors_refused else ""
         return (
             f"{len(self.copied)} Dateien kopiert, {len(self.skipped)} übersprungen, "
             f"{len(self.missing)} in Referenz oder Kontext nicht gefunden; "
-            f"{stores}{refused}{raw}{raw_refused}"
+            f"{stores}{refused}{raw}{raw_refused}{neighbors}"
         )
 
 
@@ -299,6 +306,11 @@ def bootstrap_from_settings(
         raw_texts=settings.bootstrap.raw_texts,
         # Vorhaben 14: nur mit eingeschalteten Schritten, sonst läge eine Kopie ohne Leser in raw/
         attachments=settings.procedures.attachments if settings.procedures.enabled else None,
+        # Vorhaben 18: dito; das Paket liest der Schritt neighbors, wo es keine Vektoren gibt
+        neighbors=settings.embeddings.neighbors_package if settings.embeddings.enabled else None,
+        # Vorhaben 26: ebenso nur mit eingeschalteten Schritten
+        outcomes=settings.outcomes.package if settings.outcomes.enabled else None,
+        need=settings.context.need.package if settings.context.need.enabled else None,
     )
 
 
@@ -313,6 +325,9 @@ def bootstrap(
     texts: Path | None = None,
     raw_texts: Path | None = None,
     attachments: Path | None = None,
+    neighbors: Path | None = None,
+    outcomes: Path | None = None,
+    need: Path | None = None,
 ) -> BootstrapReport:
     """Die Eingaben aus ``reference_root`` übernehmen.
 
@@ -334,6 +349,16 @@ def bootstrap(
     gilt, und nur, wenn jeder seiner Namen eine Datei dieses Datensatzes ist
     (``overlay_raw_texts``). ``attachments`` ist die Naht von Vorhaben 14: das Anlagenpaket, das
     nach ``raw/anlagen.parquet`` kommt, wo die Schritte ``references`` und ``procedures`` es lesen.
+    ``neighbors`` ist die Naht von Vorhaben 18: das Paket der ähnlichen Dokumente, das nach
+    ``raw/aehnliche_dokumente_paket.parquet`` kommt, wenn jede seiner IDs ein Paper dieses
+    Datensatzes ist (``overlay_neighbors``); dort liest der Schritt ``neighbors`` es, wo es keine
+    Dokumentvektoren gibt.
+    ``outcomes`` ist die Naht von Vorhaben 26: die Tabelle „Paper × Tagesordnungspunkt" für
+    ``raw/tagesordnungspunkte.parquet``, die der Schritt ``council_results`` liest, wo kein Netzlauf
+    liegt; bringt der eingefrorene Datensatz eine eigene mit, gilt seine (wie bei Punkt 58).
+    ``need`` ist die Naht von Vorhaben 22: das Paket mit den Stadtauszügen der Bedarfsquellen
+    (``[context.need].package``), kopiert nach ``external/bedarf/``; bringt der eingefrorene
+    Datensatz eigene mit (die Mini-Fixture), gelten seine, wie bei der Beratungsfolge.
     """
     reference = layout.reference_view()
     layout.ensure_dirs()
@@ -368,6 +393,17 @@ def bootstrap(
         pairs += [(layout.context_source(name), layout.external / name) for name in context_files]
     if attachments is not None:  # Vorhaben 14
         pairs.append((attachments, procedure_files(layout).attachments))
+    if outcomes is not None:  # Vorhaben 26
+        agenda = outcome_files(layout).agenda
+        own = outcome_files(reference).agenda
+        pairs.append((own if own.is_file() else outcomes, agenda))
+    # Vorhaben 22: die Stadtauszüge der Bedarfsquellen, nur wenn das Profil sie einschaltet; der
+    # Netzschritt need_data holt sie frisch.
+    if need is not None:
+        for name in NEED_FILES:
+            own = reference.external / NEED_DIR / name
+            source = own if own.is_file() else need / "external" / NEED_DIR / name
+            pairs.append((source, layout.external / NEED_DIR / name))
     for source, target in pairs:
         _copy_input(layout, source, target, report, force=force)
     # Option 02: die zwei Eingaben des Crosswalks, wenn der Schnappschuss sie mitbringt
@@ -393,5 +429,41 @@ def bootstrap(
         # Fundament F1: kein Netz, keine PDFs (Pages) -- der Rohtext kommt aus dem Paket
         if raw_texts is not None and layout.papers.is_file():
             overlay_raw_texts(layout, raw_texts, report, force=force)
+    if neighbors is not None and layout.papers.is_file():  # Vorhaben 18
+        overlay_neighbors(layout, neighbors, report, force=force)
     logger.success(f"Bootstrap aus {layout.reference_root}: {report.summary()}")
     return report
+
+
+def overlay_neighbors(
+    layout: Layout, package: Path, report: BootstrapReport, *, force: bool
+) -> None:
+    """Vorhaben 18: das Nachbarpaket nach ``raw/`` kopieren, wenn es zu diesem Datensatz gehört.
+
+    Gehört heißt: die aktuelle Schema-Version, und jede ``id`` und jeder ``nachbar`` ist ein Paper
+    dieser Periode. Sonst ist es das Paket eines anderen Datensatzes (die Mini-Fixture bootstrappt
+    mit den Settings der Hauptperiode), und es bleibt bei einer Zeile im Bericht. Vorhandenes bleibt
+    stehen, ``force`` überschreibt, wie bei jeder Eingabe.
+    """
+    if not package.is_file():
+        report.missing.append(package.name)
+        return
+    version = stored_schema_version(package)
+    if version != str(NEIGHBORS_SCHEMA_VERSION):
+        report.neighbors_refused = (
+            f"Nachbarpaket {package} nicht übernommen: Schema-Version {version}, gelesen wird "
+            f"{NEIGHBORS_SCHEMA_VERSION}; das Paket braucht ein neues `georep pack --neighbors`"
+        )
+        logger.warning(report.neighbors_refused)
+        return
+    frame = pl.read_parquet(package, columns=["id", "nachbar"])
+    ids = set(frame.get_column("id")) | set(frame.get_column("nachbar"))
+    papers = set(PaperStore(layout.papers).load())
+    if not ids <= papers:
+        report.neighbors_refused = (
+            f"Nachbarpaket {package} nicht übernommen: {len(ids - papers)} von {len(ids)} IDs "
+            f"sind keine der {len(papers)} Paper dieses Datensatzes"
+        )
+        logger.warning(report.neighbors_refused)
+        return
+    _copy_input(layout, package, embedding_files(layout).package, report, force=force)

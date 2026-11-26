@@ -25,9 +25,12 @@ from tests.conftest import MG, REPO, mg_settings
 
 _NOWHERE = Path("/nonexistent")
 # Die Netzschritte aus dem Register, nicht als Liste: Fundament F6 brachte drei dazu, und die
-# Liste hier wäre die zweite Stelle, die davon wissen muss (2026-11-23).
+# Liste hier wäre die zweite Stelle, die davon wissen muss (2026-11-23). Vorhaben 18: dazu die
+# Schritte mit Modell, die ohne ``--models`` so wenig laufen wie ein Netzschritt ohne Netz.
 NETWORK = {
-    s.name for s in build_steps(mg_settings(), Layout(_NOWHERE, _NOWHERE, _NOWHERE)) if s.network
+    s.name
+    for s in build_steps(mg_settings(), Layout(_NOWHERE, _NOWHERE, _NOWHERE))
+    if s.network or s.models is not None
 }
 
 

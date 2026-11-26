@@ -158,7 +158,7 @@ def test_the_partition_holds_in_all_41_districts_and_the_party_sums_match(
     root = tmp_path_factory.mktemp("parties_chain")
     layout = Layout(root / "data", root / "cache", reference_root)
     bootstrap_from_settings(layout, settings)
-    offline = [s.name for s in build_steps(settings, layout) if not s.network]
+    offline = [s.name for s in build_steps(settings, layout) if not s.network and s.models is None]
     outcomes = run_pipeline(build_steps(settings, layout), settings, offline)
     assert all(o.status == "ausgeführt" for o in outcomes)
 
@@ -204,7 +204,7 @@ def test_two_runs_write_the_same_party_tables(
         layout = Layout(root / "data", root / "cache", reference_root)
         bootstrap_from_settings(layout, settings)
         steps = build_steps(settings, layout)
-        run_pipeline(steps, settings, [s.name for s in steps if not s.network])
+        run_pipeline(steps, settings, [s.name for s in steps if not s.network and s.models is None])
         roots.append(layout)
     for attribute in ("document_originators", "district_originators", "party_results"):
         a, b = (getattr(layout, attribute) for layout in roots)
@@ -223,7 +223,7 @@ def test_the_page_carries_the_section_within_the_budget(
     layout = Layout(root / "data", root / "cache", reference_root)
     bootstrap_from_settings(layout, settings)
     steps = build_steps(settings, layout)
-    run_pipeline(steps, settings, [s.name for s in steps if not s.network])
+    run_pipeline(steps, settings, [s.name for s in steps if not s.network and s.models is None])
     page = layout.site_index.read_text(encoding="utf-8")
     assert '<section id="parteien">' in page
     assert page.count('<path id="pm-') == 41  # die Flächen einmal in <defs>

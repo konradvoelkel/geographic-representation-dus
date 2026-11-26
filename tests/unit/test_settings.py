@@ -214,6 +214,22 @@ def test_fingerprint_sees_body_codes_but_not_the_date_of_the_names(tmp_path: Pat
         "[bodies]\nnames_as_of = 2030-01-01\n", encoding="utf-8"
     )
     assert load_settings(cwd=tmp_path).fingerprint() == base.fingerprint()
+    # Review 11, K3: die Quelle der Namen ist ebenso nur Anzeige
+    (tmp_path / "settings.toml").write_text(
+        '[bodies]\nnames_source = "eine andere Quelle"\n', encoding="utf-8"
+    )
+    assert load_settings(cwd=tmp_path).fingerprint() == base.fingerprint()
+
+
+def test_the_source_of_the_body_names_defaults_to_the_sentence_of_the_page() -> None:
+    """Review 11, K3: die zweite Stadt behält den Satz, Düsseldorf nennt den Kopf der Vorlagen."""
+    nowhere = Path("/nonexistent")
+    default = "die Organisationen des Ratsinformationssystems und Dokumenttitel"
+    assert Bodies().names_source == default
+    assert load_settings(profile="moenchengladbach", cwd=nowhere).bodies.names_source == default
+    city = load_settings(profile="duesseldorf", cwd=nowhere).bodies
+    assert city.names_source.startswith("die Organisationen des Ratsinformationssystems")
+    assert "Kopf der Vorlagen" in city.names_source
 
 
 # --- Option 06: Gewichtung --------------------------------------------------------------------

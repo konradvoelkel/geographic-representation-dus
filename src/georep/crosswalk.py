@@ -29,11 +29,12 @@ from georep.contracts import (
     all_nonnegative,
     columns_preserved,
     has_columns,
+    keys_sorted_unique,
     sorted_unique,
     sums_to_one,
 )
 from georep.errors import SchemaError
-from georep.geo import Area
+from georep.geo import Area, Precinct
 
 DISTRICT = "wahlkreis_id"
 WEIGHT = "gewicht"
@@ -414,4 +415,113 @@ def transfer_counts(
             pl.Series(c, largest_remainder(summed.get_column(c).to_list()), dtype=pl.Int64)
             for c in columns
         ]
+    )
+
+
+# --- Vorhaben 22: Punkte auf Wahlbezirke, mit Randband --------------------------------------
+#
+# Die Flächen-Crosswalks oben rechnen Gebiete um; hier geht es um Punkte: Unfälle, Mittelpunkte
+# von Gitterzellen, Schulen, Hausnummern (Synergien 2026-11, § 1: 16 und 21 rufen dieselbe
+# Funktion). Ein Punkt geht zu gleichen Teilen an jede Einheit, deren Fläche näher als ``band_m``
+# liegt. Band 0 ist die scharfe Zuordnung, Punkt in Fläche; ein Punkt genau auf einer Grenze
+# liegt in beiden geschlossenen Flächen und wird geteilt. Ein breiteres Band ist für Punkte auf
+# Straßenachsen da (der Unfallatlas legt Unfälle dorthin, und Wahlbezirksgrenzen laufen oft auf
+# Straßenmitten; docs/plans/22-bedarf.md, § 3.1), nicht für Gebäude und Einrichtungen.
+
+POINT = "punkt"
+POINT_SHARE = "anteil"
+POINT_UNITS = {DISTRICT: pl.Int64, PRECINCT: pl.String}
+
+
+def _points_are_keyed(points: pl.DataFrame) -> bool:
+    if not has_columns(points, POINT, "x", "y"):
+        return False
+    coordinates = points.select("x", "y")
+    finite = coordinates.select(pl.all().is_finite().all()).row(0) if points.height else (True,)
+    return (
+        points.get_column(POINT).n_unique() == points.height
+        and points.get_column(POINT).null_count() == 0
+        and coordinates.null_count().row(0) == (0, 0)
+        and all(finite)
+    )
+
+
+def _shares_of_known_points(
+    points: pl.DataFrame,
+    precincts: Sequence[Precinct],
+    *,
+    band_m: float = 0.0,
+    unit: str = DISTRICT,
+    result: pl.DataFrame | None = None,
+) -> bool:
+    assert result is not None
+    return set(result.get_column(POINT)) <= set(points.get_column(POINT))
+
+
+@deal.pre(
+    lambda points, precincts, *, band_m=0.0, unit=DISTRICT: (
+        _points_are_keyed(points)
+        and len(precincts) > 0
+        and math.isfinite(band_m)
+        and band_m >= 0.0
+        and unit in POINT_UNITS
+    ),
+    message="Punkte mit eindeutigem Schlüssel und endlichen x, y; Band >= 0; Einheit bekannt",
+)
+@deal.post(
+    lambda result: result.height == 0 or _in_unit_interval(result, POINT_SHARE),
+    message="Anteile in (0, 1]",
+)
+@deal.post(
+    lambda result: sums_to_one(result, POINT, POINT_SHARE),
+    message="die Anteile je Punkt summieren zu 1",
+)
+@deal.post(
+    lambda result: (
+        result.columns[0] == POINT
+        and result.columns[2] == POINT_SHARE
+        and keys_sorted_unique(result, POINT, result.columns[1])
+    ),
+    message="eine Zeile je (Punkt, Einheit), sortiert",
+)
+@deal.ensure(_shares_of_known_points, message="nur Punkte der Eingabe")
+def point_shares(
+    points: pl.DataFrame,
+    precincts: Sequence[Precinct],
+    *,
+    band_m: float = 0.0,
+    unit: str = DISTRICT,
+) -> pl.DataFrame:
+    """Je Punkt die Einheiten im Band mit gleichem Anteil: ``punkt``, ``<unit>``, ``anteil``.
+
+    ``points`` trägt ``punkt`` (Schlüssel, eine Zeile je Punkt), ``x`` und ``y`` im Arbeits-CRS
+    der Stimmbezirke. ``unit`` ist ``wahlkreis_id`` (Int64, aus ``Precinct.district_id``) oder
+    ``stimmbezirk_id`` (Text). Gleiche Teile je **Einheit**, nicht je Fläche: ein Punkt auf der
+    inneren Grenze zweier Stimmbezirke desselben Wahlbezirks geht ganz an diesen. Ein Punkt ohne
+    Einheit im Band fehlt; wie viele das sind, sagt der Aufrufer. Sortiert nach ``punkt`` und
+    Einheit, damit zwei Läufe dieselbe Datei schreiben.
+
+    Ein STRtree über die Flächen und eine Abfrage über alle Punkte zugleich, nicht
+    ``PrecinctIndex.locate`` je Punkt: 13 500 Unfälle sind sonst 13 500 Aufrufe in Python.
+    """
+    keys = [p.district_id if unit == DISTRICT else p.precinct_id for p in precincts]
+    tree = shapely.STRtree([p.geometry for p in precincts])
+    geometries = shapely.points(
+        points.get_column("x").to_numpy(), points.get_column("y").to_numpy()
+    )
+    if band_m > 0.0:
+        found, areas = tree.query(geometries, predicate="dwithin", distance=band_m)
+    else:
+        found, areas = tree.query(geometries, predicate="intersects")
+    pairs = pl.DataFrame(
+        {
+            POINT: points.get_column(POINT).gather(pl.Series(found, dtype=pl.UInt32)),
+            unit: pl.Series([keys[int(i)] for i in areas], dtype=POINT_UNITS[unit]),
+        },
+        schema={POINT: points.schema[POINT], unit: POINT_UNITS[unit]},
+    )
+    return (
+        pairs.unique()
+        .sort([POINT, unit])
+        .with_columns((1.0 / pl.len().over(POINT)).cast(pl.Float64).alias(POINT_SHARE))
     )

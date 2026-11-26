@@ -58,8 +58,16 @@ class PublishedRun:
 @pytest.fixture(scope="module")
 def published(tmp_path_factory: pytest.TempPathFactory) -> PublishedRun:
     root = tmp_path_factory.mktemp("veroeffentlicht")
-    compare = load_settings(profile=COMPARE_PROFILE, cwd=NOWHERE).model_copy(
-        update={"data_root": root / "data", "cache_root": root / "cache"}
+    loaded = load_settings(profile=COMPARE_PROFILE, cwd=NOWHERE)
+    compare = loaded.model_copy(
+        update={
+            "data_root": root / "data",
+            "cache_root": root / "cache",
+            # Vorhaben 17: die Tests über drei Perioden (cycle_tests) bräuchten auch die laufende
+            # Periode; sie schreiben keine Seite, die hier gemessen wird. Ihren Lauf über die
+            # Pakete prüft tests/golden/test_cycles_numbers.py
+            "cycles": loaded.cycles.model_copy(update={"periods": []}),
+        }
     )
     base = Layout.from_settings(compare)
     assert bootstrap_from_settings(base, compare).missing == []
@@ -78,7 +86,8 @@ def published(tmp_path_factory: pytest.TempPathFactory) -> PublishedRun:
     # ihre Stadtbezirke, Option 05), dann die alte Periode, dann der Vergleich und die Seite. Ein
     # früherer Lauf mit ``compare`` bräche mit MissingInputError ab, und das wäre richtig so.
     steps = build_steps(compare, base)
-    network = {s.name for s in steps if s.network}
+    # Vorhaben 18: ein Schritt mit Modell läuft ohne ``--models`` so wenig wie ein Netzschritt
+    network = {s.name for s in steps if s.network or s.models is not None}
     LAST = ("compare", "report")
     before = [s.name for s in steps if s.name not in LAST]
     _check(run_pipeline(steps, compare, before), network)

@@ -1,12 +1,14 @@
 # Vorhaben 22: Bedarf und Aufmerksamkeit
 
-Stand 2026-11-23, Stufe 1 (Messen), Branch `feat/22-bedarf`. Briefing:
+Stand 2026-11-24, Stufe 2 (Bauen) mit Runde 2 des Reviews, Branch `feat/22-bedarf`; Stufe 1 (Messen)
+abgeschlossen am 2026-11-23, gebaut nach § 6 mit den Änderungen aus § 10 (`docs/decisions.md`, Eintrag
+„Bedarf und Aufmerksamkeit je Wahlbezirk"). Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „22 Bedarf und
 Aufmerksamkeit". Messskript: [22-bedarf-messung.py](22-bedarf-messung.py) (`uv run python -I
 docs/plans/22-bedarf-messung.py [--teil …]`, rechnet jede Zahl dieses Dokuments nach). Die Fremddaten
 liegen nicht im Repo, sondern unter `/media/konrad/xtraspace/georep/fremddaten/opendata/` mit README
 (Quelle, Abrufdatum, Bytes, SHA-256, Lizenz wörtlich); das Skript prüft die Prüfsummen, bevor es liest.
-**Urteil: bauen** (§ 5). Die Hypothesen in § 8 wurden in Commit `9da9fe1` festgelegt, **bevor** der
+**Urteil: bauen** (§ 5). Die Hypothesen in § 8 wurden in Commit `67f7250` festgelegt, **bevor** der
 Teil `hypothesen` des Skripts zum ersten Mal lief; ihr Ergebnis steht in § 3.4.
 
 **Die Hypothesen, kurz** (§ 3.4): **H1** (Unfälle je Einwohner → Anteil Verkehrsdokumente) nach der
@@ -194,7 +196,7 @@ ist darum die Zahl der Dokumente mit Treffer.
 
 ### 3.4 Ergebnis der vorab festgelegten Hypothesen
 
-Erster Lauf des Teils `hypothesen` am 2026-11-23 um 19:40 Uhr, nach Commit `9da9fe1` (§ 8); jeder
+Erster Lauf des Teils `hypothesen` am 2026-11-23 um 19:40 Uhr, nach Commit `67f7250` (§ 8); jeder
 weitere Lauf ergibt dieselben Zahlen (Seed 22, geprüft mit `diff` zweier Läufe).
 
 | Nr. | ρ | 95-%-Intervall (Bootstrap) | p (Permutation) | p_Holm | Urteil nach § 8 |
@@ -232,8 +234,9 @@ rund 0,007 unter der Schwelle, rund zwei Monte-Carlo-Fehler des dreifachen p.
 Alles hier ist nach dem ersten Lauf von § 3.4 gerechnet und heißt **explorativ**; p-Werte ohne
 Korrektur, nur zur Orientierung.
 
-**Räumliche Abhängigkeit.** Nachbarschaft = gemeinsame Grenze über 50 m (95 Paare, 1 bis 9 Nachbarn je
-Wahlbezirk); Moran's I mit zeilennormierten Gewichten, 9 999 Permutationen, Seed 23; E[I] = −0,025.
+**Räumliche Abhängigkeit.** Nachbarschaft = gemeinsame Grenze über rund 25 m (der Schnitt des um 1 m
+gepufferten Wahlbezirks mit dem Nachbarn hat einen Umfang über 50 m, rund das Doppelte der gemeinsamen
+Grenze; 95 Paare, 1 bis 9 Nachbarn je Wahlbezirk); Moran's I mit zeilennormierten Gewichten, 9 999 Permutationen, Seed 23; E[I] = −0,025.
 
 | | x | y | Residuen der Rangregression y ~ x |
 |---|---|---|---|
@@ -371,7 +374,7 @@ Tabellen; Ebene 0, einziger Eigentümer von `prep/context.py`.
 - `bedarf_hypothesen.parquet`: eine Zeile je Hypothese aus § 8 (`name`, `bedarf`, `aufmerksamkeit`,
   `rho`, `ci_lo`, `ci_hi`, `p`, `p_holm`, `urteil`, `n`, `seed`); dazu die explorativen Paare in einer
   zweiten Tabelle mit `explorativ = true`, darunter die Rechnung innerhalb der Stadtbezirke und Moran's
-  I der Residuen (Nachbarschaft aus den Wahlbezirksflächen, gemeinsame Grenze über 50 m). Die
+  I der Residuen (Nachbarschaft aus den Wahlbezirksflächen, gemeinsame Grenze über rund 25 m). Die
   Permutationen mit festem Seed machen die Datei byteidentisch über Läufe.
 
 **Settings** (Anhängeregel, `docs/plans/00-synergien.md`, § 2): neuer Block `[context.need]` in
@@ -422,7 +425,7 @@ ohne Nummer. Nicht berührt: `report/model.py`, `pipeline.build_steps` (Register
 2. *Bedarf je Wahlbezirk*: drei kleine Karten (Unfälle je 1 000 Einwohner, sozialer Handlungsbedarf,
    Anteil unter 18), daneben dieselbe Tabelle sortierbar; der Satz zum Randband.
 3. *Bedarf und Nennung*: die drei vorab festgelegten Tests als Tabelle (ρ mit Intervall, p, Holm, Urteil,
-   „vorab festgelegt am 2026-11-23, Commit `9da9fe1`") und je ein Streudiagramm mit den Stadtbezirken
+   „vorab festgelegt am 2026-11-23, Commit `67f7250`") und je ein Streudiagramm mit den Stadtbezirken
    als Farbe — dann sieht man, dass H1 zwischen den Farben liegt; darunter Moran's I, die Rechnung
    innerhalb der Stadtbezirke und die explorativen Paare unter dieser Überschrift. Der Satz zu H1 nennt
    beides: „nach der vorab festgelegten Regel bestätigt; der Zusammenhang besteht zwischen den
@@ -485,6 +488,39 @@ Das Ergebnis steht in § 3.4; was nach dem ersten Lauf dazukam (asymptotisches p
 Moran's I, die Rechnung innerhalb der Stadtbezirke), ist dort und in § 3.5 als Nachtrag markiert und
 ändert kein Urteil.
 
+### 8.1 H1′ und H3′: prospektiv, an Daten, die es noch nicht gibt
+
+Festgelegt am 2026-11-24 in Stufe 2 (Frage 22.10, Synergie § 10, Punkt 6), **bevor** eine Größe der
+laufenden Periode gegen eine andere gerechnet wurde; die beiden Lesarten aus § 3.5 sind dort nach
+Ansehen der Daten entstanden und werden hier zu Thesen, die neue Daten bestätigen oder nicht.
+
+- **Daten**: das Profil `duesseldorf-2025` (Dokumente ab dem Periodenbeginn 2025-09-15, Zuschnitt
+  der Hauptperiode, also dieselben 41 Wahlbezirke und 10 Stadtbezirke); Unfälle der Monate ab
+  2025-09 bis zum Ende des letzten veröffentlichten Jahrgangs, **gerechnet erst, wenn das mindestens
+  zwölf Monate sind** (Unfallatlas 2026, erwartet im Juli 2027). Einwohner aus dem Zensus 2022 wie
+  in § 8, `anteil_u18` aus dem Quartiersatlas wie in § 8 (das Periodenprofil hat keinen eigenen
+  Kontext; gelesen wird die Tabelle der Hauptperiode, gleicher Zuschnitt). Die Klassen kommen aus
+  dem Ausschussklassifikator des Periodenprofils (oder aus Vorhaben 19, wenn es dann gebaut ist;
+  dann mit dieser Änderung auf der Seite).
+- **Schicht**: der Stadtbezirk mit den meisten Wahlberechtigten des Wahlbezirks, wie in § 3.5.
+- **H1′** (zwischen den Stadtbezirken): Wo im Mittel eines Stadtbezirks mehr Unfälle mit
+  Personenschaden je 1 000 Einwohner geschehen, ist im Mittel ein größerer Teil der Dokumente ein
+  Verkehrsdokument. Maß: Spearmans ρ zwischen den Mittelwerten der Ränge je Stadtbezirk (Ränge über
+  die 41 Wahlbezirke, dann je Stadtbezirk gemittelt; n = 10). Test: einseitig, ρ > 0, p aus 10 000
+  Permutationen der Stadtbezirke, Seed 22.
+- **H3′** (innerhalb der Stadtbezirke): Innerhalb eines Stadtbezirks ist der Anteil der Dokumente der
+  Jugendhilfe und der Schule größer, wo der Anteil der unter 18-Jährigen größer ist. Maß: ρ der um
+  den Mittelwert ihres Stadtbezirks bereinigten Ränge (n = 41), wie die Rechnung „innerhalb" in
+  § 3.5. Test: einseitig, ρ > 0, p aus 10 000 Permutationen der Reste, derselbe Generator nach H1′.
+- **Schwelle**: α = 0,05 nach Holm über H1′ und H3′. Bei n = 10 erkennt H1′ mit 80 % Power nur
+  ρ ≥ rund 0,7; „nicht bestätigt" heißt auch hier „nicht nachgewiesen".
+- **Was nicht zählt**: eine Wiederholung von H1 und H3 auf den neuen Daten ist eine Replikation und
+  steht daneben, entscheidet aber nicht über H1′ und H3′.
+
+Gebaut wird die Rechnung erst mit den Daten (Stufe 2 trägt nur die Settings für H1 bis H3); bis dahin
+ist dieser Abschnitt die Festlegung, und ein späterer Commit, der ihn ändert, macht aus ihr eine
+Erzählung (Plan § 2.11).
+
 ## 9. Risiken und offene Fragen (Nummer, Frage, warum sie zählt, Annahme ohne Antwort)
 
 | Nr. | Frage | warum sie zählt | Annahme ohne Antwort |
@@ -497,13 +533,53 @@ Moran's I, die Rechnung innerhalb der Stadtbezirke), ist dort und in § 3.5 als 
 | 22.6 | Mönchengladbach ohne Klassen: reicht „Bedarf je Wahlbezirk" ohne die Anteile? | Stadtneutralität; dort gibt es keinen Ausschussklassifikator | ja; die Anteile fehlen sichtbar, mit Grund |
 | 22.7 | Zensus-Miete gewogen mit Einwohnern statt Wohnungen? | das Gitter hat die Wohnungen in einer eigenen Datei | Einwohner reichen für eine Beschreibung; die Wohnungsdatei erst, wenn die Miete in einen Test geht |
 | 22.8 | Räumliche Autokorrelation: der Permutationstest nimmt Austauschbarkeit an; gemessen sind Moran's I der Residuen 0,341 (H1), 0,050 (H2), 0,262 (H3) | p von H1 und H3 zu klein | die Seite nennt Moran's I neben jedem Test; ein räumliches Modell (etwa ein Permutationstest innerhalb der Stadtbezirke) erst, wenn Konrad es will |
-| 22.9 | Die Fremddaten unter `fremddaten/opendata/` sind älter als die Auszüge im Repo, wenn eine Quelle neu veröffentlicht (Unfallatlas jährlich im Juli) | Stand der Seite | `need_data` holt neu, der Stamp trägt die SHA-256 der Archive |
+| 22.9 | Die Fremddaten unter `fremddaten/opendata/` sind älter als die Auszüge im Repo, wenn eine Quelle neu veröffentlicht (Unfallatlas jährlich im Juli) | Stand der Seite | `need_data` (nur mit `context.need.fetch`) lädt ein Archiv erst wieder, wenn es älter als `cache.opendata_s` (30 Tage) ist; auch `--force` lädt ein jüngeres **nicht** neu, es schneidet nur die Auszüge aus den liegenden Archiven neu. Früher neu laden: das Archiv unter `cache_root/bedarf/` löschen oder für den einen Aufruf `GEOREP_CACHE__OPENDATA_S=0` setzen. Die SHA-256 je Archiv stehen in `quellen.json`, nicht im Stamp (seine einzige Eingabe sind die Stimmbezirke), und mit dem Paket verglichen wird nicht: ob ein neuer Jahrgang die Auszüge ändert, zeigt erst `georep pack --need --force` mit `git diff` auf dem Paket (Review 2026-11-24, N10) |
 | 22.10 | Sollen die beiden explorativen Lesarten (H1 zwischen, H3 innerhalb der Stadtbezirke) **vorab festgelegt** an neuen Daten geprüft werden — an den Dokumenten der laufenden Periode (`duesseldorf-2025`, 4 095 Dokumente) mit den Unfällen ab 2025-09? | sonst bleiben sie Erzählung nach Ansehen der Daten (Plan § 2.11) | ja: Stufe 2 legt H1′ und H3′ mit Stadtbezirk als Schicht in diesem Dokument fest, gerechnet wird, wenn die laufende Periode zwölf Monate Unfälle hat (Unfallatlas 2026, Juli 2027) |
 | 22.11 | Ist die Klasse `OVA` „Verkehr"? Der Ausschuss heißt Ordnungs- und Verkehrsausschuss; Ordnungsthemen (Altstadt, Sondernutzung) zählen mit | H1 misst dann „Ordnung und Verkehr" | ja, unter diesem Namen auf der Seite; als zweites Maß der Anteil des gesäten Themas 0 (OVA) aus `themen_dokumente.parquet` |
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
 
-—
+Übertragen am 2026-11-24 aus [00-synergien-2026-11.md](00-synergien-2026-11.md), § 4 „22 Bedarf",
+mit den Bausteinen aus § 1 und den Konflikten 7, 11 und 12 aus § 2.2; Fragen 26 und 29 aus
+[fragen-2026-11.md](fragen-2026-11.md). Wo dieser Abschnitt § 6 oder § 7 widerspricht, gilt er.
+
+1. **Paket unter `snapshots/`, nicht unter `context/`** (Konflikt 11). `context/` hält nach
+   CLAUDE.md Portaldateien **unverändert**; die Stadtauszüge aus Unfallatlas, Zensus-Gitter und
+   Schuldaten sind abgeleitet. Sie kommen nur über `georep pack --need` nach
+   `snapshots/duesseldorf-bedarf/` (für Mönchengladbach später `snapshots/moenchengladbach-bedarf/`),
+   mit README (Quelle, Lizenz, Namensnennung, Größe, SHA-256). `bootstrap` kopiert das Paket nach
+   `external/bedarf/`, `need_data` holt frisch. § 6, Absatz „Paket", und Frage 22.1 sind damit so
+   beantwortet.
+2. **Netzschritt mit `http`** (Konflikt 7). `need_data` nimmt den Transport, den die Fabrik des
+   Beitrags bekommt (`steps(settings, layout, http)`, Fundament-Nachzug F7, `decisions.md`, Punkt
+   74), und baut keine eigene Session; Tests laufen mit der Fake-Session. Die Archive fallen unter
+   keine Cache-Regel der Session (`docs/architecture.md`, „Netz"); wer sie behält, legt sie selbst ab.
+3. **Pfade im Modul, nicht in `layout.py`** (Synergien § 2.1): `need_files(layout)` im Beitragsmodul,
+   wie `functions_files` (Punkt 75) und `council_files` (Punkt 70). § 6, „Berührte Dateien:
+   `layout.py` (zwei Pfade)", entfällt.
+4. **`crosswalk.point_shares` gehört 22** (Synergien § 1, „Punkte und Adressen → Wahlbezirk"): mit
+   Band, **Band 0 ist die scharfe Zuordnung** (Punkt in Fläche). 16 baut sein Adresspaket damit, 21
+   ruft es auf; keiner baut eine eigene Punkt-in-Fläche-Logik. `crosswalk.py` und `prep/context.py`
+   ändert nur 22.
+5. **Hypothesentabelle mit dem Kern aus 17** (Synergien § 1, „Vorab festgelegte Hypothesen"):
+   `hypothese`, `p`, `p_holm`, `ergebnis` (`bestätigt`, `nicht bestätigt`, `vorläufig`), `n`,
+   `festgelegt` (Commit), Zusatzspalten je Vorhaben. `urteil` aus § 6 heißt `ergebnis`. `holm` und
+   die Wortwahl kommen aus `analysis/hypotheses.py` von 17; ist 17 noch nicht gemerged, eine dünne
+   Übergangsfunktion, die nach dem Merge von 17 ersetzt wird (ersetzt am 2026-11-26: `family` mit
+   `strict=True` und `m` = 3, Supervisor).
+6. **H1′ und H3′ vorab festlegen** (Frage 22.10), solange die Daten der laufenden Periode fehlen:
+   die beiden Lesarten aus § 3.5 als prospektive Hypothesen mit dem Stadtbezirk als Schicht, in § 8
+   dieses Dokuments, gerechnet erst, wenn `duesseldorf-2025` zwölf Monate Unfälle hat.
+7. **Die Klassen `OVA`, `JHA`, `SCHUA`** bleiben die des Ausschussklassifikators (Option 05); sie
+   kommen später aus Vorhaben 19, wenn 19 gebaut wird. Bis dahin stehen sie im Stadtprofil.
+8. **Paketbudget** (Konflikt 12, Frage 26): die drei kleinen Pakete der Stufe 2 (Anlagen, Adressen,
+   Bedarf) sind mit der Annahme freigegeben; die Summe aller Pakete bleibt unter `TOTAL_LIMIT`
+   (180 MiB, `tests/unit/test_data_packages.py`). Der Lärm (Frage 22.2) kommt nicht mit.
+9. **Kein räumliches Modell** (Frage 29, Annahme gilt): Moran's I der Residuen und die Rechnung
+   innerhalb der Stadtbezirke stehen neben jedem Test; der Stadtbezirk geht als Schicht in jede
+   Rechnung (§ 5).
+10. **Merge-Position 6** (Synergien § 3.4): nach 17, dessen `hypotheses.py` 22 nutzt; vor 16, das
+    `point_shares` braucht.
 
 ---
 

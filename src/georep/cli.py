@@ -1,4 +1,4 @@
-"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies|validate|ml``.
+"""Kommandozeile: ``georep run|fetch|steps|status|profiles|publish|bootstrap|pack|export|regress|profile|learn-bodies|validate|ml|search``.
 
 ``main(argv)`` ist testbar ohne Prozess; Exit-Codes: 0 gut, 1 Domänenfehler (eine Zeile auf
 stderr), 2 Bedienfehler (argparse).
@@ -24,12 +24,22 @@ from georep.export import export_csv
 from georep.layout import Layout
 from georep.learn import learn_bodies
 from georep.ml import commands as ml_commands
-from georep.pack import pack, pack_attachments, pack_consultations, pack_raw_texts, pack_texts
+from georep.pack import (
+    pack,
+    pack_attachments,
+    pack_consultations,
+    pack_need,
+    pack_neighbors,
+    pack_outcomes,
+    pack_raw_texts,
+    pack_texts,
+)
 from georep.pipeline import Outcome, build_steps, freshness, run_step, select_steps
 from georep.profiling import profile_step
 from georep.report.build import current_commit
 from georep.report.model import sensitivity_rows
 from georep.report.publish import publish_sites
+from georep.search import command as search_command
 from georep.settings import Ml, Settings, available_profiles, load_settings, settings_files
 from georep.sources.pdfs import PdfStore
 from georep.stores import PaperStore, TextStore
@@ -165,6 +175,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="nur die Anlagen je Drucksache packen (raw/anlagen.parquet), aus dem HTTP-Cache, für "
         "dieses Profil und seine Nachbarperioden",
     )
+    # Vorhaben 18: die ähnlichen Dokumente für eine Kette ohne Modell (Pages)
+    only.add_argument(
+        "--neighbors",
+        action="store_true",
+        help="nur die ähnlichen Dokumente packen (raw/aehnliche_dokumente_paket.parquet), nach "
+        "einem Lauf mit --models; die Vektoren bleiben lokal",
+    )
+    # Vorhaben 26: die Tabelle Paper x Tagesordnungspunkt aus dem Netzlauf, für Läufe ohne Netz
+    only.add_argument(
+        "--outcomes",
+        action="store_true",
+        help="nur die Tabelle Paper x Tagesordnungspunkt packen (raw/tagesordnungspunkte-*.parquet), "
+        "aus dem Netzlauf der Sitzungen und Beratungen",
+    )
+    # Vorhaben 22: die Stadtauszüge der Bedarfsquellen (Synergien 2026-11, Konflikt 11)
+    only.add_argument(
+        "--need",
+        action="store_true",
+        help="nur die Stadtauszüge der Bedarfsquellen packen (external/bedarf/) statt der Eingaben "
+        "eines Laufs",
+    )
 
     # Punkt 58: die Abbildung Organisation -> Gremium aus den Daten lernen, nicht raten
     learn = sub.add_parser(
@@ -207,6 +238,7 @@ def build_parser() -> argparse.ArgumentParser:
     prof.add_argument("--models", action="store_true", help="auch Modellschritte profilieren")
     add_validate_parser(sub)  # Fundament F4
     ml_commands.add_parser(sub)  # Fundament F5: `georep ml status|bench`
+    search_command.add_parser(sub)  # Vorhaben 18: `georep search`
     return parser
 
 
@@ -416,7 +448,10 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
     dann gehört sie von Hand hinein, und nur dort weiß ein Mensch, wo. Mit ``--consultations``
     entsteht statt der Eingaben eines Laufs nur die Beratungsfolge je Dokument (Punkt 58), mit
     ``--texts`` nur der Textstore (Punkt 68), mit ``--raw-texts`` nur der Rohtextstore
-    (Fundament F1), mit ``--attachments`` nur die Anlagen je Drucksache (Vorhaben 14).
+    (Fundament F1), mit ``--attachments`` nur die Anlagen je Drucksache (Vorhaben 14), mit ``--neighbors`` nur die
+    ähnlichen Dokumente (Vorhaben 18), mit ``--outcomes`` nur die Tabelle Paper ×
+    Tagesordnungspunkt (Vorhaben 26), mit ``--need`` nur die Stadtauszüge der Bedarfsquellen
+    (Vorhaben 22).
     """
     write = (
         pack_consultations
@@ -427,6 +462,12 @@ def _cmd_pack(args: argparse.Namespace, settings: Settings, layout: Layout) -> i
         if args.raw_texts
         else pack_attachments  # Vorhaben 14
         if args.attachments
+        else pack_neighbors  # Vorhaben 18
+        if args.neighbors
+        else pack_outcomes  # Vorhaben 26
+        if args.outcomes
+        else pack_need
+        if args.need
         else pack
     )
     report = write(layout, settings, args.target, force=args.force)
@@ -569,6 +610,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return run_validate(args, settings, layout)  # Fundament F4
         if args.command == "ml":
             return ml_commands.run(args, settings, layout)  # Fundament F5
+        if args.command == "search":
+            return search_command.run(args, settings, layout)  # Vorhaben 18
     except (GeorepError, FileNotFoundError) as error:
         print(f"Fehler: {error}", file=sys.stderr)
         return 1

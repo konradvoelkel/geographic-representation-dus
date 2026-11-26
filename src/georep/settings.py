@@ -26,6 +26,8 @@ from importlib.resources.abc import Traversable
 from pathlib import Path
 from string import Formatter
 from typing import Any, Literal
+from urllib.parse import unquote, urlsplit
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import deal
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -432,6 +434,9 @@ class Bodies(_Strict):
     # sondern in ``report.build.report_fingerprint``; ohne Eintrag gilt ``district_body_name``.
     district_body_names: dict[str, str] = {}
     names_as_of: date | None = None  # Stand der Namen; nur Anzeige, nicht im Fingerprint
+    # Review 11, K3: woher die Namen stammen, als Satzglied der Seite („Quelle sind …"); nur
+    # Anzeige wie ``names_as_of``. Die Vorgabe ist der Satz, den die Seite bis 2026-11-24 fest trug.
+    names_source: str = "die Organisationen des Ratsinformationssystems und Dokumenttitel"
     council: dict[str, str] = {}
     committees: dict[str, str] = {}
     advisory: dict[str, str] = {}
@@ -852,6 +857,168 @@ class ContextModels(_Strict):
         return value
 
 
+# --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 6 und § 10) -----------
+#
+# Bedarfsquellen mit Punkten oder Gitterzellen statt Raumeinheiten: Unfallatlas, Zensus-Gitter,
+# Schuldaten mit Schulsozialindex. Die Quellen sind bundes- oder landesweit und stehen darum in
+# ``defaults.toml`` (wie die Sprache der Ratsdokumente bei Vorhaben 15, Punkt 75); das Stadtprofil
+# schaltet ein und nennt Paket, Klassen und die vorab festgelegten Hypothesen. Die Gemeinde ist
+# ``city.ags``.
+
+NEED_ALTERNATIVES = ("greater", "two-sided")
+
+
+class NeedAttribution(_Strict):
+    """Namensnennung einer Bedarfsquelle; nur Anzeige, nicht im Fingerprint."""
+
+    title: str = ""
+    publisher: str = ""
+    url: str = ""  # Datensatzseite, nicht das Archiv
+    license: str = ""
+    license_url: str = ""
+    stand: str = ""  # so genau, wie die Quelle es sagt („2025, veröffentlicht 2026-07")
+
+
+class NeedAccidents(_Strict):
+    """Unfälle mit Personenschaden, je Jahr ein Zip mit einer CSV (Punkte auf der Straßenachse)."""
+
+    archives: list[str] = []
+    crs: str = "EPSG:25832"
+    attribution: NeedAttribution = NeedAttribution()
+
+
+class NeedGrid(_Strict):
+    """Gitterzellen (Einwohner, Miete): zwei Zips mit je einer CSV des 100-m-Gitters."""
+
+    population_url: str = ""
+    population_member: str = ""
+    rent_url: str = ""
+    rent_member: str = ""
+    crs: str = "EPSG:3035"
+    margin_m: float = Field(default=200.0, ge=0.0)  # Rand um die Stadt beim Vorfiltern
+    attribution: NeedAttribution = NeedAttribution()
+
+
+class NeedSchools(_Strict):
+    """Schulen mit Koordinate (eine CSV) und ihr Sozialindex (eine zweite CSV, über die Nummer)."""
+
+    schools_url: str = ""
+    index_url: str = ""
+    index_encoding: str = "cp850"
+    crs: str = "EPSG:25832"
+    forms: list[str] = []  # Schulformen, die in den Index je Wahlbezirk gehen
+    attribution: NeedAttribution = NeedAttribution()
+
+
+class NeedClasses(_Strict):
+    """Klassen des passenden Ausschusses (Schritt ``committees``), die die Anteile zählen."""
+
+    traffic: list[str] = []
+    youth: list[str] = []
+
+
+class NeedHypothesis(_Strict):
+    """Eine vorab festgelegte Hypothese: Bedarf (x) gegen Aufmerksamkeit (y), Spearman, Holm.
+
+    ``need`` und ``attention`` sind Spalten der Analysetabelle des Schritts ``need``
+    (``wahlbezirke_bedarf`` mit den Kontrollvariablen, ``trefferquote`` und ``log_begriffe``).
+    ``fixed`` ist der Commit, in dem die Hypothese vor der ersten Rechnung festgelegt wurde; er
+    steht auf der Seite. Die Robustheitsrechnungen sind vorab genannt und entscheiden nicht.
+    """
+
+    name: str
+    need: str
+    attention: str
+    alternative: Literal["greater", "two-sided"]
+    fixed: str
+    robust_need: list[str] = []  # dieselbe Rechnung mit einer anderen Bedarfsspalte
+    robust_attention: list[str] = []  # dito Aufmerksamkeit
+    robust_control: str = ""  # partielle Rangkorrelation bei fester Spalte; "" = keine
+    # Review 2026-11-24, N8: die Wahlbezirke, ohne die dieselbe Rechnung noch einmal läuft (§ 8:
+    # ohne 1 und 10). Vorab festgelegt wie die Hypothese, darum hier und nicht aus
+    # ``analysis.exclude_districts``, das die Regression der Seite steuert und sich ändern darf.
+    robust_without: list[int] = []
+
+
+class NeedSettings(_Strict):
+    """Vorhaben 22: Schalter, Paket, Quellen, Band, Tests. Ohne ``enabled`` fehlen beide Schritte,
+    ohne ``fetch`` der Netzschritt ``need_data``."""
+
+    enabled: bool = False
+    package: Path | None = None  # Paket mit den Stadtauszügen; ein Pfad, nicht im Fingerprint
+    band_m: float = Field(default=20.0, ge=0.0)
+    neighbour_m: float = Field(default=50.0, gt=0.0)
+    permutations: int = Field(default=10_000, ge=1)
+    explore_permutations: int = Field(default=9_999, ge=1)
+    bootstrap: int = Field(default=2_000, ge=1)
+    seed: int = 22
+    alpha: float = Field(default=0.05, gt=0.0, lt=1.0)
+    accidents: NeedAccidents = NeedAccidents()
+    grid: NeedGrid = NeedGrid()
+    schools: NeedSchools = NeedSchools()
+    classes: NeedClasses = NeedClasses()
+    hypotheses: list[NeedHypothesis] = []
+    explore: list[tuple[str, str]] = []  # weitere Paare (Bedarf, Aufmerksamkeit), explorativ
+    delay_s: float = Field(default=2.0, ge=0.0)  # Pause zwischen zwei geladenen Archiven
+    # Review 2026-11-24, N1, wie ``council.enabled`` (Review F6 2026-11-23, Befund 6): volle Abrufe
+    # sind Konrads Läufe. Ohne den Schalter fehlt ``need_data``, ein bloßes ``georep fetch`` lädt
+    # die zehn Archive nicht, und ``need`` rechnet aus dem Paket. Nicht im Fingerprint.
+    fetch: bool = False
+
+    @field_validator("package", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+    @model_validator(mode="after")
+    def _complete_when_enabled(self) -> NeedSettings:
+        names = [h.name for h in self.hypotheses]
+        if len(names) != len(set(names)):
+            raise ValueError(f"context.need.hypotheses: Namen doppelt: {names}")
+        if not self.enabled:
+            return self
+        missing = [
+            f"context.need.{name}"
+            for name, value in (
+                ("accidents.archives", self.accidents.archives),
+                ("grid.population_url", self.grid.population_url),
+                ("grid.population_member", self.grid.population_member),
+                ("grid.rent_url", self.grid.rent_url),
+                ("grid.rent_member", self.grid.rent_member),
+                ("schools.schools_url", self.schools.schools_url),
+                ("schools.index_url", self.schools.index_url),
+                ("schools.forms", self.schools.forms),
+            )
+            if not value
+        ]
+        if missing:
+            raise ValueError(f"context.need.enabled: es fehlen {', '.join(missing)}")
+        files = [archive_name(url) for url in self.archive_urls()]
+        if len(files) != len(set(files)) or not all(files):
+            raise ValueError(
+                f"context.need: die Archive brauchen verschiedene Dateinamen in der URL: {files}"
+            )
+        return self
+
+    def archive_urls(self) -> tuple[str, ...]:
+        """Alle Archive in fester Folge: Unfälle je Jahr, Einwohner, Miete, Schulen, Index."""
+        return (
+            *self.accidents.archives,
+            self.grid.population_url,
+            self.grid.rent_url,
+            self.schools.schools_url,
+            self.schools.index_url,
+        )
+
+    def with_classes(self) -> bool:
+        return bool(self.classes.traffic or self.classes.youth)
+
+
+def archive_name(url: str) -> str:
+    """Der Dateiname eines Archivs: der letzte Pfadteil der URL, dekodiert (``schuldaten.csv``)."""
+    return unquote(urlsplit(url).path).rsplit("/", 1)[-1]
+
+
 class ContextSettings(_Strict):
     # None = keine Kontextdaten: die Schritte context_data, context und controls fehlen dann
     root: Path | None = None
@@ -864,6 +1031,7 @@ class ContextSettings(_Strict):
     scales: dict[str, dict[str, int]] = {}
     variables: list[ContextVariable] = []
     models: ContextModels = ContextModels()
+    need: NeedSettings = NeedSettings()  # Vorhaben 22: Bedarf und Aufmerksamkeit
 
     @field_validator("root", mode="before")
     @classmethod
@@ -1487,6 +1655,11 @@ class EmbeddingModel(_Strict):
     dimension: int = Field(default=768, ge=1)
     num_ctx: int = Field(default=512, ge=0)  # Fenster in Token; 0 = was das Modell mitbringt
     truncate: bool = True  # längere Texte hinten abschneiden; false: ein Fehler je solchem Text
+    # Vorhaben 18: die Präfixe gehören zum Modell (nomic-embed-text), nicht in den Code. Sie stehen
+    # nicht im Fingerprint (``[ml]``), aber in der Prompt-Version des Schritts, sobald sie von der
+    # gemessenen Fassung abweichen (``enrich.embeddings.chunk_prompt``).
+    document_prefix: str = "search_document: "
+    query_prefix: str = "search_query: "
 
 
 class GenerationModel(_Strict):
@@ -1518,6 +1691,15 @@ class Ml(_Strict):
     retry_rejected: bool = False  # abgewiesene Eingaben erneut fragen statt überspringen
     embedding: EmbeddingModel = EmbeddingModel()
     generation: GenerationModel = GenerationModel()
+    # Vorhaben 18 (Review Runde 1, N1): die flock-Sperre der GPU, die ``georep search`` nicht
+    # blockierend prüft; ist sie gehalten, sucht es mit BM25. ``None`` = keine Prüfung. Der Pfad
+    # ist rechnerspezifisch und gehört in ``settings.local.toml``, nie in die Defaults.
+    gpu_lock: Path | None = None
+
+    @field_validator("gpu_lock", mode="before")
+    @classmethod
+    def _no_lock(cls, value: object) -> object:
+        return None if value in ("", None) else value
 
     @model_validator(mode="after")
     def _local_unless_allowed(self) -> Ml:
@@ -1995,6 +2177,407 @@ class Procedures(_Strict):
         return self
 
 
+# --- Vorhaben 18: Einbettungen, Ähnlichkeit, Suche (docs/plans/18-einbettungen.md)
+class Bm25(_Strict):
+    """Okapi BM25 der Wortsuche (Fassung ``18-bm25-1``): Sättigung ``k1`` und Längennorm ``b``."""
+
+    k1: float = Field(default=1.2, gt=0)
+    b: float = Field(default=0.75, ge=0, le=1)
+
+
+class Embeddings(_Strict):
+    """Stücke, Dokumentvektoren, Nachbarn und die Suche über sie (Vorhaben 18).
+
+    ``chunk_chars``, ``title_chars`` und ``overlap_chars`` sind die Fassung ``18-stuecke-1``;
+    ``document_chunks`` macht den Dokumentvektor (``18-dokvektor-1``), ``neighbors`` die Zahl der
+    ähnlichen Dokumente. ``rrf_k`` und ``fusion_depth`` sind die Mischung (``18-rrf-1``); sie und
+    ``bm25`` liest nur ``georep search`` und stehen darum nicht im Fingerprint.
+    ``neighbors_package`` ist ein Pfad (nicht im Fingerprint): das Paket mit der Nachbartabelle,
+    das ``bootstrap`` nach ``raw/`` legt, für eine Kette ohne Dokumentvektoren.
+    """
+
+    enabled: bool = False
+    chunk_chars: int = Field(default=1600, ge=1)
+    title_chars: int = Field(default=200, ge=0)
+    overlap_chars: int = Field(default=200, ge=0)
+    document_chunks: int = Field(default=3, ge=1)
+    neighbors: int = Field(default=10, ge=1)
+    bm25: Bm25 = Bm25()
+    rrf_k: int = Field(default=60, ge=0)
+    fusion_depth: int = Field(default=100, ge=1)
+    neighbors_package: Path | None = None
+
+    @model_validator(mode="after")
+    def _a_title_leaves_room_for_the_body(self) -> Embeddings:
+        """Der längste Titel samt Leerzeile lässt dem Rumpf eines Stücks Platz, mehr als die Überlappung."""
+        room = self.chunk_chars - self.title_chars - 2
+        if room < 1 or self.overlap_chars >= room:
+            raise ValueError(
+                f"embeddings: chunk_chars {self.chunk_chars} lässt nach title_chars "
+                f"{self.title_chars} und der Leerzeile {room} Zeichen für den Rumpf; es braucht "
+                f"mindestens eines und mehr als overlap_chars ({self.overlap_chars})"
+            )
+        return self
+
+    @field_validator("neighbors_package", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+
+class InstrumentTitle(_Strict):
+    """Ein Muster im Titel (klein), das ein Dokument einem Instrument zuordnet (Vorhaben 17, S1.5)."""
+
+    pattern: str
+    instrument: Literal["anfrage", "antrag"]
+
+    @field_validator("pattern")
+    @classmethod
+    def _pattern_compiles(cls, value: str) -> str:
+        return _compiles([value], "cycles.instrument_titles[].pattern")[0]
+
+
+class Cycles(_Strict):
+    """Rhythmus der Ratsarbeit und bundespolitisches Vokabular (Vorhaben 17, docs/plans/17-zeit.md).
+
+    Stadtneutral sind das Wahljahr, das Muster der Haushaltsanträge, die Wörter der Instrumente und
+    das Lexikon; die Wahltage stehen im Stadtprofil (``elections``, mit Quelle), die Perioden, über
+    die die vorab festgelegten Tests rechnen, im Profil, das sie rechnet (``periods``). Ohne
+    ``enabled`` fehlen die Schritte ``cycles``, ``vocabulary`` und ``cycle_tests``.
+    """
+
+    enabled: bool = False
+    year_start_month: int = Field(default=9, ge=1, le=12)
+    elections: list[date] = []
+    budget_pattern: str = r"haushalts(begleit)?-?antrag"
+    budget_minimum: int = Field(default=5, ge=1)
+    instrument_types: dict[str, Literal["anfrage", "antrag"]] = {}  # Präfix (klein) -> Instrument
+    instrument_titles: list[InstrumentTitle] = []
+    lexicon: str = Field(default="bundespolitik", pattern=r"^[a-z0-9][a-z0-9_-]*$")
+    head_chars: int = Field(default=2000, ge=1)
+    periods: list[str] = []  # Ordner der Profile der Stadt, in zeitlicher Folge
+
+    @field_validator("budget_pattern")
+    @classmethod
+    def _budget_compiles(cls, value: str) -> str:
+        return _compiles([value], "cycles.budget_pattern")[0]
+
+    @field_validator("elections")
+    @classmethod
+    def _elections_ordered(cls, value: list[date]) -> list[date]:
+        if value != sorted(set(value)):
+            raise ValueError("cycles.elections: Wahltage aufsteigend und ohne Doppel")
+        return value
+
+    @field_validator("periods")
+    @classmethod
+    def _periods_are_folders(cls, value: list[str]) -> list[str]:
+        for name in value:
+            _plain_name(name, "cycles.periods")
+        if len(set(value)) != len(value):
+            raise ValueError("cycles.periods: ein Profil steht zweimal")
+        return value
+
+    @model_validator(mode="after")
+    def _tests_need_elections(self) -> Cycles:
+        if self.periods and not self.elections:
+            raise ValueError(
+                "cycles.periods braucht cycles.elections: ohne Wahltag kein Vorwahljahr"
+            )
+        return self
+
+
+class Feeds(_Strict):
+    """Atom-Feed je Wahlbezirk (Vorhaben 17); nur für eine laufende Periode sinnvoll."""
+
+    enabled: bool = False
+    entries: int = Field(default=50, ge=1, le=500)
+    timezone: str = "Europe/Berlin"  # Zeitzone des Vorlagendatums: published um 00:00 Ortszeit
+
+    @field_validator("timezone")
+    @classmethod
+    def _known_zone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError) as error:
+            raise ValueError(f"feeds.timezone {value!r} ist keine bekannte Zeitzone") from error
+        return value
+
+
+# --- Vorhaben 26: Beschlusslage und Antragserfolg (docs/plans/26-beschluesse.md) -----------------
+# Die Klassen, die ein Wert von ``result`` tragen kann, je Stufe (Messdokument § 3.1, vorab
+# festgelegt): ``sache`` ist eine Entscheidung in der Sache und ersetzt jede frühere, ``stand`` ist
+# alles andere und zählt nur, wo es keine Entscheidung in der Sache gibt. ``ohne_ergebnis`` trägt
+# kein Wert; es ist die Klasse eines Dokuments, für das der Datensatz keinen Eintrag hat.
+OUTCOME_STAGES: dict[str, tuple[str, ...]] = {
+    "sache": ("beschlossen", "geaendert", "abgelehnt", "zurueckgezogen"),
+    "stand": ("erledigt", "vertagt", "offen"),
+}
+
+
+class OutcomeReview(_Strict):
+    """Der beantragte Prüfauftrag im Beschlusstext eines Antrags (Messdokument § 3.4, Rückfall 1).
+
+    Muster der deutschen Sprache der Ratsdokumente, keine Stadt; alle kleingeschrieben, eine Liste
+    wird zu einer Alternative in ihrer Folge. Die Regel ist die vor der Stichprobe festgeschriebene
+    (Commit ``94da91f``); sie fand 19 der 26 Prüfaufträge der Stichprobe (Recall 0,73) und steht
+    darum nur als beschreibende Spalte da, nie auf der Seite.
+    """
+
+    marker: list[str] = []  # Beginn des Beschlusstexts; der letzte Treffer im Fenster gilt
+    reason: list[str] = []  # Ende des Beschlusstexts (Begründung, Grußformel)
+    reason_from: int = Field(default=40, ge=0)  # ab diesem Zeichen wird das Ende gesucht
+    window: int = Field(default=2000, ge=1)  # in so vielen Zeichen vom Anfang steht der Marker
+    max_chars: int = Field(default=1500, ge=1)  # höchstens so viel Beschlusstext
+    review: list[str] = []  # Prüfwörter: ein Satz damit ist eine Prüfung
+    not_review: list[str] = []  # Wörter mit einem Prüfwort darin, die keine Prüfung verlangen
+    separable: list[str] = []  # trennbare Vorsilben eines „zu"-Infinitivs („einzurichten")
+    not_verb: list[str] = []  # Wörter hinter „zu", die kein Verb sind („zu den", „zu Lasten")
+    measure: list[str] = []  # weitere Formen einer festgelegten Handlung
+    proviso: list[str] = []  # eine Maßnahme unter Vorbehalt der Prüfung gehört zur Prüfung
+    neutral: list[str] = []  # Verben einer Prüfung oder eines Berichts: keine Maßnahme
+    question: list[str] = []  # „prüfen, ob …": eine Maßnahme dahinter ist Teil der Frage
+    question_chars: int = Field(default=60, ge=1)  # so weit hinter dem Prüfwort steht die Frage
+    sentence: list[str] = []  # Satzgrenzen im Beschlusstext
+    title: list[str] = []  # Prüfwort im Titel, wenn das Dokument keinen Text hat
+    frame: list[str] = []  # Rahmensätze („bitten wir Sie"), die nichts beantragen
+
+    @field_validator(
+        "marker",
+        "reason",
+        "review",
+        "not_review",
+        "separable",
+        "not_verb",
+        "measure",
+        "proviso",
+        "question",
+        "sentence",
+        "title",
+        "frame",
+    )
+    @classmethod
+    def _patterns_compile(cls, value: list[str]) -> list[str]:
+        return _compiles(value, "outcomes.review")
+
+
+class Outcomes(_Strict):
+    """Beschlusslage je Ratsdokument und Antragserfolg je Fraktion (Vorhaben 26).
+
+    ``results`` ist der Wortschatz, den die Sitzungsleitung in ``result`` einträgt, mit Stufe und
+    Klasse je Wert; er steht im Stadtprofil, und ein Wert, der fehlt, bricht den Schritt mit seinem
+    Wortlaut ab, statt still ``ohne_ergebnis`` zu werden (Messdokument § 3.2). ``package`` ist die
+    Tabelle „Paper × Tagesordnungspunkt" aus ``georep pack --outcomes`` für Läufe ohne Netz.
+    """
+
+    enabled: bool = False
+    results: dict[str, tuple[Literal["sache", "stand"], str]] = {}
+    package: Path | None = None
+    practice_share: float = Field(default=0.4, gt=0.0, le=1.0)
+    practice_min: int = Field(default=10, ge=1)
+    followup_roles: list[ProcedureRole] = []  # Rollen aus Vorhaben 14
+    review: OutcomeReview = OutcomeReview()
+
+    @field_validator("package", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+    @field_validator("results")
+    @classmethod
+    def _class_fits_stage(cls, value: dict[str, tuple[str, str]]) -> dict[str, tuple[str, str]]:
+        wrong = sorted(
+            f"{result!r} = [{stage!r}, {klasse!r}]"
+            for result, (stage, klasse) in value.items()
+            if klasse not in OUTCOME_STAGES[stage]
+        )
+        if wrong:
+            raise ValueError(
+                f"outcomes.results: Klasse passt nicht zur Stufe in {wrong}; erlaubt sind "
+                + "; ".join(f"{s}: {', '.join(k)}" for s, k in OUTCOME_STAGES.items())
+            )
+        if any(not result.strip() for result in value):
+            raise ValueError("outcomes.results: ein leerer Wert ist kein Eintrag, sondern keiner")
+        return value
+
+    @model_validator(mode="after")
+    def _enabled_needs_a_vocabulary(self) -> Outcomes:
+        if self.enabled and not self.results:
+            raise ValueError(
+                "outcomes.enabled braucht den Wortschatz [outcomes.results] im Stadtprofil"
+            )
+        return self
+
+
+# --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.2, § 6 und § 10) ----------
+
+
+def _compiles_one(pattern: str, field: str) -> str:
+    return _compiles([pattern], field)[0] if pattern else pattern
+
+
+def _names_groups(pattern: str, groups: tuple[str, ...], field: str) -> str:
+    """Ein Muster, dessen Treffer der Code nach Gruppen liest, muss diese Gruppen tragen."""
+    if pattern:
+        missing = [g for g in groups if g not in re.compile(pattern).groupindex]
+        if missing:
+            raise ValueError(f"{field}: {pattern!r} braucht die Gruppen {', '.join(missing)}")
+    return pattern
+
+
+CITY_PLACEHOLDER = "{city}"  # in ``structure.head`` steht der Ort der Datumszeile nur so
+
+
+class StructureLead(_Strict):
+    """Ein Einleitungssatz, der mit Doppelpunkt endet und einen Abschnitt ab der nächsten Zeile
+    öffnet („… beschließen zu lassen:", „… folgende Fragen zu beantworten:")."""
+
+    kind: str
+    pattern: str
+
+    @field_validator("pattern")
+    @classmethod
+    def _compiles(cls, value: str) -> str:
+        return _compiles_one(value, "structure.leads")
+
+
+class StructureFallback(_Strict):
+    """Der Beschlusssatz einer Vorlage ohne Überschrift („Der Rat beschließt …"); er gehört selbst
+    zum Abschnitt und wird nur in den Zeilen nach dem Kopf gesucht."""
+
+    kind: str = "beschlussvorschlag"
+    pattern: str = ""  # leer: kein Beschlusssatz
+    max_lines_after_head: int = Field(default=12, ge=0)
+    only_expected: bool = True  # nur in Arten mit erwartetem Beschlussvorschlag
+
+    @field_validator("pattern")
+    @classmethod
+    def _compiles(cls, value: str) -> str:
+        return _compiles_one(value, "structure.fallback")
+
+
+class StructureHead(_Strict):
+    """Die Felder des Kopfs: Beratungsfolge, Amtsbezeichnungen, Sitzung, Datumszeile, Formular."""
+
+    consultation_header: str = ""
+    quality: list[str] = []
+    quality_placeholders: list[str] = []
+    quality_required: bool = False
+    titles: str = ""
+    signer_roles: str = ""
+    signer_window: int = Field(default=8, ge=0)
+    closing: str = ""
+    session: str = ""
+    session_suffix: str = ""
+    date_line: str = ""
+    office: str = ""
+    form_titles: list[str] = []
+    head_lines: int = Field(default=30, ge=0)
+
+    @field_validator("consultation_header", "titles", "signer_roles", "closing")
+    @classmethod
+    def _compiles(cls, value: str) -> str:
+        return _compiles_one(value, "structure.head")
+
+    @field_validator("session")
+    @classmethod
+    def _session_names_body_and_date(cls, value: str) -> str:
+        return _names_groups(
+            _compiles_one(value, "structure.head.session"),
+            ("gremium", "datum"),
+            "structure.head.session",
+        )
+
+    @field_validator("session_suffix", "date_line")
+    @classmethod
+    def _city_patterns_compile(cls, value: str) -> str:
+        _compiles_one(value.replace(CITY_PLACEHOLDER, "Ort"), "structure.head")
+        return value
+
+    @field_validator("office")
+    @classmethod
+    def _office_names_number_and_name(cls, value: str) -> str:
+        return _names_groups(
+            _compiles_one(value, "structure.head.office"), ("nr", "name"), "structure.head.office"
+        )
+
+    @field_validator("date_line")
+    @classmethod
+    def _date_line_names_the_date(cls, value: str) -> str:
+        _names_groups(
+            value.replace(CITY_PLACEHOLDER, "Ort"), ("datum",), "structure.head.date_line"
+        )
+        return value
+
+
+class StructureSettings(_Strict):
+    """Abschnitte und Kopf je Ratsdokument (Vorhaben 11): die Muster des validierten Regelwerks.
+
+    ``struktur-1`` ist ``struktur-entwurf-1`` aus dem Messskript unverändert (Messdokument 11,
+    § 10, Punkt 1); die Stadt trägt ihre Muster im Profil, der Code kennt kein Stadtwort. Ein
+    Label (``labels``) öffnet einen Abschnitt seiner Art; Arten in ``level2`` öffnen eine eigene
+    Spanne, ohne den Abschnitt um sie herum zu schließen. Die Monatsnamen sind Sprache und stehen
+    in ``defaults.toml``.
+    """
+
+    enabled: bool = False
+    heading: str = ""
+    heading_nocolon: str = ""
+    betreff_after_form: bool = False
+    betreff_max_lines: int = Field(default=4, ge=1)
+    lead_blocked_in: list[str] = []
+    level2: list[str] = []
+    end_markers: list[str] = []
+    art: list[tuple[str, str]] = []  # (Muster über paper_type, zusammengefasste Art), erste gewinnt
+    decision_expected: list[str] = []
+    decision_not_expected: list[str] = []
+    labels: dict[str, str] = {}
+    leads: list[StructureLead] = []
+    fallback: StructureFallback = StructureFallback()
+    head: StructureHead = StructureHead()
+    page_noise: list[str] = []
+    months: list[str] = []
+    min_body_chars: int = Field(default=80, ge=0)
+
+    @field_validator("heading", "heading_nocolon")
+    @classmethod
+    def _heading_names_label_and_rest(cls, value: str) -> str:
+        return _names_groups(
+            _compiles_one(value, "structure.heading"), ("label", "rest"), "structure.heading"
+        )
+
+    @field_validator("end_markers", "page_noise")
+    @classmethod
+    def _patterns_compile(cls, value: list[str]) -> list[str]:
+        return _compiles(value, "structure patterns")
+
+    @field_validator("art")
+    @classmethod
+    def _type_patterns_compile(cls, value: list[tuple[str, str]]) -> list[tuple[str, str]]:
+        _compiles([pattern for pattern, _ in value], "structure.art")
+        return value
+
+    @model_validator(mode="after")
+    def _kinds_are_label_kinds(self) -> StructureSettings:
+        """Jede Art, die der Code öffnet oder sperrt, kommt aus den Labels oder einem Satz."""
+        kinds = set(self.labels.values())
+        opened = kinds | {lead.kind for lead in self.leads} | {self.fallback.kind}
+        wrong = sorted(set(self.level2) - kinds) + sorted(set(self.lead_blocked_in) - opened)
+        if wrong:
+            raise ValueError(f"structure: Arten ohne Label: {', '.join(wrong)}")
+        return self
+
+    @model_validator(mode="after")
+    def _enabled_needs_its_patterns(self) -> StructureSettings:
+        if not self.enabled:
+            return self
+        if not self.heading:
+            raise ValueError("structure.enabled braucht ein Muster in structure.heading")
+        if len(self.months) != 12:
+            raise ValueError(f"structure.months: zwölf Monatsnamen, nicht {len(self.months)}")
+        return self
+
+
 # --- Vorhaben 12: Kennungen und Beträge (docs/plans/12-kennungen.md, § 6 und § 10)
 
 # Die Arten, die das Kriterium erreicht haben (Messdokument § 5): Bauleitplanung, Betrag, Termin,
@@ -2275,6 +2858,11 @@ class Settings(BaseSettings):
         Majorities()
     )  # Vorhaben 15: Ratsmehrheiten, stadtweit (24, 28 lesen sie)
     procedures: Procedures = Procedures()  # Vorhaben 14: Vorgänge
+    embeddings: Embeddings = Embeddings()  # Vorhaben 18: Einbettungen, Ähnlichkeit, Suche
+    cycles: Cycles = Cycles()  # Vorhaben 17: Rhythmus, Vokabular, Tests über Perioden
+    outcomes: Outcomes = Outcomes()  # Vorhaben 26: Beschlusslage und Antragserfolg
+    feeds: Feeds = Feeds()  # Vorhaben 17: Atom-Feed je Wahlbezirk
+    structure: StructureSettings = StructureSettings()  # Vorhaben 11: Struktur der Dokumente
     identifiers: Identifiers = Identifiers()  # Vorhaben 12: Kennungen und Beträge
 
     @property
@@ -2423,6 +3011,11 @@ class Settings(BaseSettings):
         Fundament F5: ``[ml]`` steht ganz draußen. Was davon ein Ergebnis bestimmt (Modell,
         Optionen, Fenster), steht als Kennung im Stamp des Modellschritts, und ``limit`` als Zahl
         der offenen Eingaben; der Rest ist Ort und Laufzeit.
+        Vorhaben 14 und 26: ``procedures.attachments`` und ``outcomes.package`` sind Pfade; der
+        Inhalt der Pakete steht als Eingabe im Stamp der Schritte, die ihre Kopie in ``raw/`` lesen.
+        Vorhaben 22: ``context.need.package`` ist ein Pfad, die Namensnennungen der Bedarfsquellen
+        sind Anzeige, ``context.need.fetch`` schaltet nur den Netzschritt ein; Archive, Band,
+        Klassen und Hypothesen zählen.
         """
         payload = self.model_dump(
             mode="json",
@@ -2447,7 +3040,7 @@ class Settings(BaseSettings):
                 "validation": True,
                 # Punkt 58: ``consultations`` ist ein Pfad (sein Inhalt steht im Stamp des
                 # Schritts ``bodies``), ``district_body_names`` sind reine Anzeigenamen.
-                "bodies": {"names_as_of", "consultations", "district_body_names"},
+                "bodies": {"names_as_of", "names_source", "consultations", "district_body_names"},
                 # Nur Anzeige: die Beschriftung eines Regelsatzes auf der Berichtsseite.
                 "weights": {"paper_type": {"__all__": {"label"}}},
                 "context": {
@@ -2458,6 +3051,15 @@ class Settings(BaseSettings):
                         "units": {"file"},
                         "indicators": {"file"},
                     },
+                    # Vorhaben 22: das Paket ist ein Pfad, die Namensnennungen sind Anzeige;
+                    # URLs, Band, Klassen und Hypothesen zählen.
+                    "need": {
+                        "package": True,
+                        "fetch": True,  # N1: ob need_data im Register steht, nicht was es schreibt
+                        "accidents": {"attribution"},
+                        "grid": {"attribution"},
+                        "schools": {"attribution"},
+                    },
                 },
                 "period": {"label"},
                 "sources": {"opendata": {"districts_file"}},
@@ -2466,6 +3068,16 @@ class Settings(BaseSettings):
                 # die offenen Eingaben eines Teillaufs stehen im Stamp des Modellschritts
                 # (``ModelUse``); hier ließen sie jeden Schritt neu laufen (Review 2026-11-23).
                 "ml": True,
+                # Vorhaben 18: der Pfad des Nachbarpakets (sein Inhalt steht im Stamp von
+                # neighbors) und was nur ``georep search`` liest, kein Schritt (Review, N4)
+                "embeddings": {"neighbors_package", "bm25", "rrf_k", "fusion_depth"},
+                # Vorhaben 14 und 26 (Review von 26, N5): die Pakete sind Pfade wie
+                # ``bodies.consultations``; ``bootstrap`` kopiert sie nach ``raw/``, und die Kopie
+                # steht mit ihrem SHA-256 als Eingabe im Stamp von ``references``, ``procedures``
+                # und ``council_results``. Ob es ein Anlagenpaket gibt, entscheidet dort die
+                # Liste der Eingaben, nicht der Fingerprint.
+                "procedures": {"attachments"},
+                "outcomes": {"package"},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

@@ -108,3 +108,29 @@ consultations = ""
 [bootstrap]
 texts = ""                     # Punkt 68: das Textpaket der Hauptperiode gehört nicht hierher; der Schnappschuss trägt seine eigenen Texte
 raw_texts = ""                 # Fundament F1: ebenso das Rohtextpaket der Hauptperiode; ihren Rohtext liest der Schritt raw_texts aus den PDFs
+
+# --- Vorhaben 18: Einbettungen, Ähnlichkeit, Suche (docs/plans/18-einbettungen.md) --------------
+[embeddings]
+neighbors_package = ""         # das Nachbarpaket gehört zur Hauptperiode; die Nachbarn dieser Periode rechnet `georep run --models` lokal, auf Pages bleibt die Tabelle leer
+
+# --- Vorhaben 26: Beschlusslage (docs/plans/26-beschluesse.md); der Wortschatz kommt aus dem Stadtprofil
+[outcomes]
+package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-2014-2020.parquet"  # aus dem eigenen Abruf der Beratungen (Frage 9.10), nicht aus der Kopie der Hauptperiode
+
+# --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, Frage 22.5) ---------------------
+[context.need]                 # Unfallatlas NRW ab 2019, Quartiersatlas 2021, Zensus 2022: die Bedarfsdaten passen nicht zu dieser Periode
+enabled = false
+package = ""
+
+# --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.6) ------------------------
+# Erbt alles vom Stadtprofil und ändert nur, was das Vorlagenformular dieser Periode anders macht
+# (Block duesseldorf-2014 des Entwurfs): die Beratungsfolge steht am Ende der ersten Seite und hat
+# die Spalte „Ergebnis" statt „Beratungsqualität" (11 678 Dokumente gegen 2 288, in 62,3 % davon
+# „-/-" hinter dem Datum), und die Vorlagen aus der Politik tragen den Betreff ohne „Betrifft:" unter
+# dem Formulartitel. Betreff 46,4 → 78,9 %, Zeilen der Beratungsfolge 43,3 → 60,0 %.
+[structure]
+betreff_after_form = true
+
+[structure.head]
+consultation_header = 'Gremium\s+Sitzungsdatum(\s+(Beratungsqualität|Ergebnis))?'
+quality_required = false
