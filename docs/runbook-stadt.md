@@ -387,5 +387,29 @@ Erwartungen vom Mini-Paket auf das echte umstellen.
    der Wurzel liegt).
 4. Dieses Runbook von § 1 an.
 
+Die Blöcke der Vorverarbeitung 2026-11 kommen dazu, wenn der Korpus steht.
+Keiner ist Pflicht: ohne ihn oder mit `enabled = false` fehlt der Schritt, und die Seite bleibt, wie
+sie ist. Das Stadtneutrale (Wörter der Ratssprache, Schwellen, Muster) steht in `defaults.toml`; was
+je Stadt dazugehört, steht im jeweiligen Entscheidungspunkt in `docs/decisions.md`:
+
+- `[council]`: die Endpunkte von Sitzungen, Beratungen und Personen (Fundament F6, Punkt 70;
+  `docs/runbook-sitzungen.md`).
+- `[functions]` und `[majorities]`: Dokumentarten als Funktion und Instrument, Fraktionen aus mehreren
+  Parteien mit Zeitraum, die Ratsmehrheiten je Wahlperiode mit Beleg (Vorhaben 15, Punkt 75).
+- `[procedures]`: die Nummernformen der Drucksachen (`[[procedures.forms]]`), die Arten, das
+  Anlagenpaket und die Nachbarperioden (Vorhaben 14, Punkt 76).
+- `[embeddings]`: Schalter und Nachbarpaket (Vorhaben 18, Punkt 77).
+- `[cycles]` und, nur in einer laufenden Periode, `[feeds]`: die Wahltage mit Quelle (Vorhaben 17,
+  Punkt 78).
+- `[outcomes]`: der Wortschatz der Sitzungsleitung je Wert von `result` und das Paket je Periode
+  (Vorhaben 26, Punkt 79); ohne gemessenen Wortschatz bleibt der Block aus, wie in Mönchengladbach.
+- `[context.need]`: Paket, Klassen und die vorab festgelegten Hypothesen mit Commit (Vorhaben 22,
+  Punkt 80).
+- `[structure]`: die Muster der Abschnitte und Kopffelder des Vorlagenformulars (Vorhaben 11,
+  Punkt 81).
+- `[identifiers]`: das Nummernformat der Bebauungspläne, das Kopffeld des federführenden Amts,
+  Einheiten ohne Verzeichnis (Vorhaben 12, Punkt 82).
+- `[summaries]`: in jedem Profil aus (Vorhaben 20, Punkt 83).
+
 Was dabei auffällt, gehört in `docs/decisions.md`; was offen bleibt, in `docs/todo.md` (die
 Grenze von 90 % aus § 4 steht dort als Punkt 26).
