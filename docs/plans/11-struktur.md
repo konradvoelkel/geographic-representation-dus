@@ -509,3 +509,51 @@ Keine: Vorhaben 11 ist eine Vorverarbeitung, keine Analyse.
 | 9.10 | F4 ist noch nicht gemerged; Format der Aufgaben vorläufig. | Kodier-Agenten brauchen ein festes Format | F4 übernimmt `stichprobe.csv` und erzeugt die Aufgaben neu oder liest `aufgaben.jsonl` |
 
 ## 10. Änderungen durch die Synergie (füllt der Supervisor)
+
+Übertragen am 2026-11-24 aus [00-synergien-2026-11.md](00-synergien-2026-11.md) (§ 1, § 2.1, § 2.2
+Konflikte 2, 4, 5, 8 und 14, § 3 und § 4 „11 Struktur"), bevor die Stufe 2 beginnt. Wo das § 6 und
+§ 7 ändert, gilt dieser Abschnitt.
+
+1. **`struktur-1` ist `struktur-entwurf-1`, unverändert** (Konflikt 8, Entscheidung des Supervisors
+   vom 2026-11-23). Die 12 Fehler beim Beschlussvorschlag sind an den 200 Labels gefunden; eine
+   Nachschärfung daran wäre eine Entwurfsschätzung, und 16 hat Stelle und Stichprobe auf dem Entwurf
+   gerechnet. Der Nachtrag in § 5 („Stufe 2 schärft das Ende des Beschlussvorschlags") entfällt
+   damit. Eine geschärfte Fassung kommt nur als `struktur-2` mit frischer Bestätigungsstichprobe, wie
+   12 Runde 2. Die Normalisierung der Gremiennamen ist davon unberührt: das Feld `sitzung` ist nicht im
+   Kriterium.
+2. **Spannen nach F3, wie sie auf `main` liegen** (Konflikt 2): `start`, `end` als **Int64**, nicht
+   UInt32, Folge `id, start, end, kind` über `sort_spans`, geprüft mit `check_spans`. Die Quelle
+   eines Beschlussvorschlags bleibt in `dokumente_kopf` (Frage 9.3); die Zusatzspalten hinter den
+   acht (Punkt 74) braucht 11 nicht.
+3. **Zeilen, Abschnitte, Lesen** (§ 1, § 2.1): `split_lines` wandert aus dem Messskript nach
+   `prep/raw_texts.py` neben `flatten` (textneutral; 16 und 20 importieren von dort). Mit 11 kommen
+   nach `georep.spans` **`section_of(spans, sections)`** (Intervall-Join: der Abschnitt der Ebene 1 je
+   Spanne; 12, 16 und 17 rufen sie statt eigener Joins) und **`read_span(text, start, end, noise)`**,
+   das einen Ausschnitt ohne Seitenkopfzeilen liest (`page_noise` im Profil, Frage 9.6); die Spannen
+   behalten die rohen Offsets. Je in `VERIFY_TARGETS`, wenn rein.
+4. **Abschnittsart `rumpf`** (§ 4 „11"): Text nach dem Kopf ohne Überschrift — 55 % der
+   BV-Informationsvorlagen setzen ihren Text ohne „Sachdarstellung:" unter die Beratungsfolge, Anfragen
+   haben zwischen Betreff und Fragen eine Einleitung ohne Überschrift. 16 hat die Lücke im Messskript
+   selbst geschlossen ([16-ortsbezug.md](16-ortsbezug.md), § 3.0); mit `rumpf` kommt sie aus 11. Sie
+   berührt keine validierte Frage.
+5. **Eine Zeile je Korpus-ID, auch bei geteilter Datei** (§ 1, „Dokument je PDF-Datei"; Konflikt 4):
+   mehrere Korpus-IDs teilen eine PDF-Datei (19 108 Paper, 19 093 Dateien in der Hauptperiode); **jede**
+   ID bekommt die Spannen und die Zeile in `dokumente_kopf`, sonst fehlen IDs in jedem Join auf `id`.
+6. **Gremiennamen normalisieren** (§ 1): über die vorhandenen `prep/bodies` (`BodyRules`,
+   `organization_key`, `resolve_organizations`, Punkt 58) und `[bodies]`, keine zweite Normalisierung.
+   Frage 9.2 ist Frage 15 an Konrad; ihre Annahme („ja, als eigener Commit, mit Quelle") gilt.
+7. **Ämter und Dezernate** (§ 1): das **Ämterverzeichnis** (Nummer → Name) entsteht je Lauf aus
+   `dokumente_kopf`, keine Liste im Profil. Die Dezernatsverteilung (Amt → Dezernat, Beigeordnete mit
+   Partei) sammelt 24, nicht 11.
+8. **Doppelt geplant: Amt im Kopf und Termine der Beratungsfolge** (Konflikt 5): 11 und 12 bauen beide,
+   wie validiert; **Quelle für das federführende Amt und die Beratungsfolge ist 11**, 12 für Nennungen
+   im Text. Ein slow-Test vergleicht das Kopf-Amt beider, sobald 12 gemerged ist; eine Abweichung ist
+   ein Befund, kein Umbau.
+9. **Einhängepunkt** (Konflikt 6, Punkt 74): ein Beitrag `11-struktur` mit dem Schritt `sections` als
+   **früher Schritt** (`early_steps`, vor `weights`), weil 16 seine Abschnitte vor `weights` braucht.
+   Die Fabrik bekommt `(settings, layout, http)`; der Schritt ist offline.
+10. **Profile ohne Rohtext** (Konflikt 14): auf Pages liegt ein Rohtextpaket nur für die Hauptperiode.
+    Ohne Rohtext läuft der Schritt trotzdem und schreibt leere Spannen und je Korpus-ID eine leere Zeile;
+    der Lauf scheitert nicht.
+11. **Reihenfolge** (§ 3): Welle 1, Merge an Position 1 (Zulieferer für 12, 16, 20, 21, 24). Stufe 3
+    zeigt nur eine Downloadzeile und darf eine Version mit 12 teilen.

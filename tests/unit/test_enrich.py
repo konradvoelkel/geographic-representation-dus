@@ -50,7 +50,13 @@ def test_ohne_beitraege_fehlen_genau_ihre_schritte(
     layout = _layout(tmp_path)
     before = [s.name for s in build_steps(default_settings, layout)]
     http = FakeSession({})
-    contributed = {s.name for s in georep.enrich.contributed_steps(default_settings, layout, http)}
+    contributed = {
+        s.name
+        for s in (
+            *georep.enrich.contributed_early_steps(default_settings, layout, http),
+            *georep.enrich.contributed_steps(default_settings, layout, http),
+        )
+    }
     monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", ())
     core = [s.name for s in build_steps(default_settings, layout)]
     assert core == [name for name in before if name not in contributed]

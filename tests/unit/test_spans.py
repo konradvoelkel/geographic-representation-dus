@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import deal
 import polars as pl
 import pytest
 
 from georep.errors import SchemaError
-from georep.spans import SPAN_SCHEMA, check_spans, empty_spans, sort_spans
+from georep.spans import SPAN_SCHEMA, check_spans, empty_spans, read_span, section_of, sort_spans
 
 TEXTS = {"a": "Betreff: Radweg an der Benrather Straße", "b": "12.345,67 €"}
 
@@ -155,3 +156,92 @@ def test_eine_leere_tabelle_mit_zusatzspalten() -> None:
 def test_eine_zusatzspalte_darf_keine_der_acht_ueberschreiben() -> None:
     with pytest.raises(SchemaError, match="norm"):
         empty_spans({"norm": pl.Int64()})
+
+
+# --- Vorhaben 11: section_of und read_span (docs/plans/11-struktur.md, § 10, Punkt 3) -------------
+
+
+def _section(doc: str, start: int, end: int, norm: str, section: str) -> dict[str, object]:
+    return {
+        "id": doc,
+        "start": start,
+        "end": end,
+        "kind": "abschnitt",
+        "value": "",
+        "norm": norm,
+        "section": section,
+        "extractor": "struktur-1",
+    }
+
+
+def test_section_of_names_the_level_one_section_of_each_span() -> None:
+    """Ebene 1 ist ``section == norm``; Finanzen (Ebene 2) im Beschlussvorschlag bestimmt nichts."""
+    sections = sort_spans(
+        pl.DataFrame(
+            [
+                _section("a", 0, 9, "betreff", "betreff"),
+                _section("a", 10, 30, "beschlussvorschlag", "beschlussvorschlag"),
+                _section("a", 20, 30, "finanzen", "beschlussvorschlag"),
+                _section("b", 0, 5, "rumpf", "rumpf"),
+            ],
+            schema=SPAN_SCHEMA,
+        )
+    )
+    spans = sort_spans(
+        _spans([("a", 0, 3, "x"), ("a", 9, 10, "x"), ("a", 25, 27, "x"), ("b", 4, 6, "x")])
+    )
+    found = section_of(spans, sections)
+    assert found["section"].to_list() == ["betreff", "", "beschlussvorschlag", "rumpf"]
+    assert found.drop("section").equals(spans.drop("section"))
+
+
+def test_section_of_keeps_extra_columns_and_an_id_without_sections() -> None:
+    spans = sort_spans(_spans([("c", 0, 1, "x")])).with_columns(pl.lit("form").alias("attr"))
+    empty = empty_spans()
+    found = section_of(spans, empty)
+    assert found.columns == [*SPAN_SCHEMA, "attr"]
+    assert found["section"].to_list() == [""]
+
+
+def test_read_span_skips_page_headers_but_keeps_the_offsets_raw() -> None:
+    text = "Der Rat beschließt:\fSeite 2\n  Sitzung des APS am 01.02.2024  \n1. den Plan"
+    noise = [r"Seite \d+", r"Sitzung des .{1,40} am \d{2}\.\d{2}\.\d{4}"]
+    assert read_span(text, 0, len(text), noise) == "Der Rat beschließt:\n1. den Plan"
+    assert read_span(text, 4, 7, noise) == "Rat"
+
+
+# --- F3, Entscheidung vom 2026-11-24 (Review 11, K1): ``value`` wörtlich oder leer ----------------
+
+
+def test_value_is_the_text_at_the_place_or_empty_for_a_position_span() -> None:
+    """``value`` ist der Text an der Stelle, wörtlich, oder leer bei einer Positionsspanne;
+    ``check_spans`` prüft das, wo die Texte zur Hand sind."""
+    texts = {"a": "Betreff: Radweg an der Benrather Straße"}
+    literal = sort_spans(_spans([("a", 9, 15, "abschnitt")]))  # value = texts["a"][9:15]
+    check_spans(literal, LENGTHS, texts=texts)
+    position = literal.with_columns(pl.lit("").alias("value"))
+    check_spans(position, LENGTHS, texts=texts)
+    normalised = literal.with_columns(pl.lit("radweg").alias("value"))
+    check_spans(normalised, LENGTHS)  # ohne Texte keine Prüfung des Werts
+    with pytest.raises(SchemaError, match="nicht wörtlich.*Zeile 0"):
+        check_spans(normalised, LENGTHS, texts=texts)
+
+
+def test_read_span_wants_valid_patterns() -> None:
+    """Review 11, N3: ein ungültiges Muster ist eine verletzte Vorbedingung, kein ``re.error`` mitten
+    im Lesen; die Settings prüfen ``page_noise`` schon beim Laden."""
+    with pytest.raises(deal.PreContractError):
+        read_span("Seite 2\nText", 0, 12, ["(unclosed"])
+
+
+def test_an_empty_value_can_be_limited_to_position_kinds() -> None:
+    """Wer ``positions`` nennt, erlaubt ein leeres ``value`` nur diesen Arten (Review 11, Runde 3)."""
+    texts = {"a": "Betreff: Radweg an der Benrather Straße"}
+    empty = sort_spans(_spans([("a", 9, 15, "abschnitt"), ("a", 16, 19, "amt")])).with_columns(
+        pl.lit("").alias("value")
+    )
+    check_spans(empty, LENGTHS, texts=texts)
+    with pytest.raises(SchemaError, match="leer.*amt"):
+        check_spans(empty, LENGTHS, texts=texts, positions={"abschnitt"})
+    only_sections = empty.filter(pl.col("kind") == "abschnitt")
+    check_spans(only_sections, LENGTHS, texts=texts, positions={"abschnitt"})

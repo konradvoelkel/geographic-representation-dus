@@ -24,6 +24,7 @@ Regel für den Cache: neu gelesen wird nur, wenn PDF-Hash oder Extraktor sich ge
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Protocol
@@ -47,6 +48,7 @@ __all__ = [
     "raw_extractor_name",
     "raw_from_pages",
     "restore_form_feeds",
+    "split_lines",
 ]
 
 # Der Zusatz am Extraktornamen (``pypdf-7.1.0+roh``). Ohne ihn stünde derselbe Name an zwei
@@ -260,3 +262,42 @@ def flatten_with_offsets(
         offsets = [at for char, at in zip(kept, offsets, strict=True) for _ in char.lower()]
     text = after_marker(lowered, marker)
     return text, tuple(offsets[len(lowered) - len(text) :])
+
+
+# --- Vorhaben 11 (docs/plans/11-struktur.md, § 10, Punkt 3): Zeilen mit Positionen, textneutral
+# neben ``flatten``; 11 baut daraus Überschriften und Abschnitte, 16 und 20 lesen dieselben Zeilen.
+
+_LINE_BREAK = re.compile(r"[\n\f]")
+
+
+def _lines_cover_the_text(text: str, result: list[tuple[int, int]]) -> bool:
+    # je Zeile, nie je Zeichen: der Vertrag läuft je Dokument (rund 55 Millionen Zeichen je Lauf)
+    return (
+        len(result) == text.count("\n") + text.count(PAGE_BREAK) + 1
+        and result[0][0] == 0
+        and result[-1][1] == len(text)
+        and all(start <= end for start, end in result)
+        and all(nxt[0] == prev[1] + 1 for prev, nxt in zip(result, result[1:], strict=False))
+    )
+
+
+@deal.ensure(
+    _lines_cover_the_text,
+    message="je Trenner eine Zeile mehr, lückenlos vom Anfang bis zum Ende des Texts",
+)
+@deal.safe
+def split_lines(text: str) -> list[tuple[int, int]]:
+    """(Anfang, Ende) jeder Zeile des Rohtexts; Zeilenumbruch und Seitenwechsel trennen.
+
+    Das Ende steht vor dem Trenner, ``text[start:end]`` ist die Zeile ohne ihn. Ein leerer Text ist
+    eine leere Zeile, ein Trenner am Ende lässt eine leere Zeile dahinter; ``\\r`` bleibt in der
+    Zeile. Genau die Zeilen des Messskripts von Vorhaben 11 (``docs/plans/11-struktur-messung.py``)
+    und der Kodieraufgaben: Zeile *n* der Kodierer ist ``split_lines(text)[n - 1]``.
+    """
+    out: list[tuple[int, int]] = []
+    start = 0
+    for match in _LINE_BREAK.finditer(text):
+        out.append((start, match.start()))
+        start = match.end()
+    out.append((start, len(text)))
+    return out

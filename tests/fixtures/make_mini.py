@@ -114,6 +114,58 @@ def write_inputs() -> None:
     write_geojson()
     write_context()
     write_consultations(keep)
+    write_agenda(keep)
+    write_need()
+
+
+def write_need() -> tuple[int, int, int]:
+    """``mini/external/bedarf/``: die Auszüge der Bedarfsquellen für die drei Wahlbezirke (Vorhaben 22).
+
+    Gefiltert aus dem Paket der Hauptperiode (``[context.need].package``): Unfälle im Band um die 22
+    Stimmbezirke (so weit ordnet der Schritt ``need`` zu), Gitterzellen und Schulen mit Punkt in
+    einem; ``quellen.json`` unverändert. Liefert (Unfälle, Zellen, Schulen).
+    """
+    from georep.crosswalk import POINT, point_shares
+    from georep.geo import read_precincts
+    from georep.io import write_parquet
+    from georep.prep.context import (
+        ACCIDENTS_FILE,
+        GRID_FILE,
+        NEED_DATA_SCHEMA_VERSION,
+        NEED_DIR,
+        SCHOOLS_FILE,
+        SOURCES_FILE,
+    )
+
+    settings = load_settings(cwd=Path("/nonexistent"))
+    need, working = settings.context.need, settings.geo.working_crs
+    assert need.package is not None
+    source = REPO / need.package / "external" / NEED_DIR
+    precincts = read_precincts(
+        MINI / "external" / "Stimmbezirke_2025.geojson", settings.columns, working
+    )
+    target = MINI / "external" / NEED_DIR
+    target.mkdir(parents=True, exist_ok=True)
+    counts = []
+    for name, crs, band in (
+        (ACCIDENTS_FILE, need.accidents.crs, need.band_m),
+        (GRID_FILE, need.grid.crs, 0.0),
+        (SCHOOLS_FILE, need.schools.crs, 0.0),
+    ):
+        frame = pl.read_parquet(source / name).with_row_index(POINT)
+        xs, ys = transformer(crs, working).transform(
+            frame.get_column("x").cast(pl.Float64).to_numpy(),
+            frame.get_column("y").cast(pl.Float64).to_numpy(),
+        )
+        points = frame.select(pl.col(POINT).cast(pl.Int64)).with_columns(
+            pl.Series("x", xs), pl.Series("y", ys)
+        )
+        inside = point_shares(points, precincts, band_m=band).get_column(POINT).unique().to_list()
+        kept = frame.filter(pl.col(POINT).cast(pl.Int64).is_in(inside)).drop(POINT)
+        write_parquet(kept, target / name, schema_version=NEED_DATA_SCHEMA_VERSION)
+        counts.append(kept.height)
+    (target / SOURCES_FILE).write_bytes((source / SOURCES_FILE).read_bytes())
+    return counts[0], counts[1], counts[2]
 
 
 def write_consultations(keep: set[str]) -> int:
@@ -131,6 +183,35 @@ def write_consultations(keep: set[str]) -> int:
     package = REPO / "snapshots" / "duesseldorf-beratungsfolge" / "raw" / "beratungsfolge.parquet"
     frame = pl.read_parquet(package).filter(pl.col("id").is_in(sorted(keep))).sort("id")
     write_parquet(frame, MINI / "raw" / "beratungsfolge.parquet", schema_version=2)
+    return frame.height
+
+
+def write_agenda(keep: set[str]) -> int:
+    """Vorhaben 26: die Tabelle „Paper × Tagesordnungspunkt" dieser 200 Dokumente aus ihrem Paket.
+
+    Wie die Beratungsfolge: ``bootstrap`` nimmt die Tabelle des eingefrorenen Datensatzes vor dem
+    Paket aus ``outcomes.package``, und so liest ``council_results`` in jedem Test dieselben
+    Zeilen, auch aus einem Arbeitsverzeichnis, von dem aus der relative Pfad des Pakets nicht
+    trägt. Liefert die Zahl der Zeilen.
+    """
+    import polars as pl
+
+    from georep.analysis.outcomes import AGENDA_NAME, AGENDA_SCHEMA_VERSION, PROGRESS_ORDER
+    from georep.io import write_parquet
+
+    package = (
+        REPO
+        / "snapshots"
+        / "duesseldorf-beschluesse"
+        / "raw"
+        / "tagesordnungspunkte-duesseldorf.parquet"
+    )
+    frame = (
+        pl.read_parquet(package)
+        .filter(pl.col("id").is_in(sorted(keep)))
+        .sort(PROGRESS_ORDER, nulls_last=False)
+    )
+    write_parquet(frame, MINI / "raw" / AGENDA_NAME, schema_version=AGENDA_SCHEMA_VERSION)
     return frame.height
 
 

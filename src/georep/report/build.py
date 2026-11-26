@@ -409,6 +409,8 @@ def report_fingerprint(settings: Settings, folder: Traversable | None = None) ->
         "report": settings.report.model_dump(mode="json"),
         # Die vier Anzeigewerte, die ``Settings.fingerprint`` ausnimmt (siehe Docstring)
         "bodies.names_as_of": settings.bodies.names_as_of,
+        # Review 11, K3: die Quelle der Namen steht im selben Satz
+        "bodies.names_source": settings.bodies.names_source,
         # Punkt 58: die Namen der Bezirksvertretungen, wo sie keine Nummer tragen
         "bodies.district_body_names": settings.bodies.district_body_names,
         "period.label": settings.period.label,

@@ -173,6 +173,36 @@ VERIFY_TARGETS = [
     # 5 s am 2026-11-24. Die übrigen Funktionen von prep.references nehmen vorkompilierte Muster
     # (``re.Pattern`` in ``ReferenceRules``) und stehen darum nicht hier.
     "georep.prep.references.edge_type",
+    # Vorhaben 18 (2026-11-24): die Stücke für das Einbettungsmodell, je einzeln geprüft, Exit 0,
+    # „Not confirmed" nach 20 bis 41 s, kein Gegenbeispiel. Die Treue zur Messung prüft
+    # tests/property/test_chunks_props.py gegen das Orakel ``oracle_chunks.zerteile``.
+    "georep.prep.chunks.chunk_title",
+    "georep.prep.chunks.chunk_lines",
+    "georep.prep.chunks.split_chunks",
+    "georep.prep.chunks.chunk_text",
+    # Vorhaben 18: Stemmer und Mischung der Suche, je einzeln geprüft, Exit 0, „Not confirmed"
+    # nach 40 und 22 s. Nicht dabei: ``bm25_scores``, ``ranking`` und ``build_index`` (NumPy und
+    # SciPy in der Signatur); ihre Eigenschaften prüft tests/property/test_bm25_props.py.
+    "georep.search.stem.stem",
+    "georep.search.bm25.rrf",
+    # Vorhaben 17 (2026-11-24): die vollständigen Wahljahre einer Periode und Holm. Einzeln geprüft;
+    # crosshair fand date(1, 5, 1) (das Wahljahr 0 gibt es nicht, behoben), danach kein
+    # Gegenbeispiel. Die exakten Tests rechnen mit numpy und stehen in
+    # tests/property/test_cycles_props.py.
+    "georep.analysis.cycles.complete_years",
+    "georep.analysis.hypotheses.holm",
+    # Vorhaben 22: der Gemeindeschlüssel in seinen vier Teilen. Der erste Lauf fand ein echtes
+    # Gegenbeispiel (Ziffern einer anderen Schrift, str.isdigit nahm sie); seit der Vorbedingung
+    # über contracts.is_municipality_key einzeln Exit 0 nach 24 s.
+    "georep.prep.context.ags_parts",
+    # Vorhaben 11 (2026-11-24): die Zeilen des Rohtexts mit Positionen; einzeln geprüft, 25 s,
+    # Exit 0, „Not confirmed"
+    "georep.prep.raw_texts.split_lines",
+    # dito das Lesen einer Spanne ohne Seitenkopfzeilen; einzeln 22 s, Exit 0, „Not confirmed";
+    # mit der Vorbedingung für gültige Muster (Review 11, N3) erneut 21 s, Exit 0.
+    # Nicht dabei: ``spans.section_of`` (``pl.DataFrame`` in der Signatur; hypothesis in
+    # tests/property/test_structure_props.py)
+    "georep.spans.read_span",
 ]
 
 
@@ -290,6 +320,8 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
             "tests/property/test_crosswalk_props.py",
             "tests/golden/test_crosswalk_geometry.py",
             "tests/golden/test_crosswalk_methods.py",
+            "tests/unit/test_crosswalk_points.py",  # Vorhaben 22: point_shares
+            "tests/property/test_crosswalk_points_props.py",  # Vorhaben 22
         ),
     ),
     "comparison": (
@@ -376,6 +408,70 @@ MUTATION_SCOPE: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
     "procedures": (
         ("src/georep/analysis/procedures.py",),
         ("tests/unit/test_procedures.py", "tests/property/test_procedures_props.py"),
+    ),
+    # Vorhaben 18: die Stücke für das Einbettungsmodell; nicht gemessen
+    "chunks": (
+        ("src/georep/prep/chunks.py",),
+        ("tests/unit/test_chunks.py", "tests/property/test_chunks_props.py"),
+    ),
+    "stem": (
+        ("src/georep/search/stem.py",),
+        ("tests/unit/test_search_stem.py", "tests/property/test_bm25_props.py"),
+    ),
+    "bm25": (
+        ("src/georep/search/bm25.py",),
+        ("tests/unit/test_search_bm25.py", "tests/property/test_bm25_props.py"),
+    ),
+    "vectors": (
+        ("src/georep/search/vectors.py", "src/georep/search/units.py"),
+        ("tests/unit/test_embeddings_steps.py", "tests/property/test_vectors_props.py"),
+    ),
+    "query": (("src/georep/search/query.py",), ("tests/unit/test_search_query.py",)),
+    # Vorhaben 17: Wahljahre, exakte Tests, Holm, Lexikon und Feeds; Zeit nicht gemessen
+    "cycles": (
+        (
+            "src/georep/analysis/cycles.py",
+            "src/georep/analysis/hypotheses.py",
+            "src/georep/analysis/lexicon.py",
+            "src/georep/report/feeds.py",
+        ),
+        (
+            "tests/unit/test_cycles.py",
+            "tests/unit/test_hypotheses.py",
+            "tests/unit/test_lexicon.py",
+            "tests/unit/test_feeds.py",
+            "tests/property/test_cycles_props.py",
+            "tests/property/test_hypotheses_props.py",
+            "tests/property/test_feeds_props.py",
+        ),
+    ),
+    # Vorhaben 26: Beschlusslage, Prüfauftrag, Praxiszellen, Antragserfolg; Zeit nicht gemessen
+    "outcomes": (
+        ("src/georep/analysis/outcomes.py",),
+        ("tests/unit/test_outcomes.py", "tests/property/test_outcomes_props.py"),
+    ),
+    # Vorhaben 22: die Tests der vorab festgelegten Hypothesen
+    "need": (
+        ("src/georep/analysis/need.py",),
+        ("tests/unit/test_need_hypotheses.py", "tests/property/test_need_props.py"),
+    ),
+    # Vorhaben 22: Leser, Aggregate und die zwei Schritte des Beitrags
+    "need_steps": (
+        ("src/georep/prep/context.py", "src/georep/enrich/need.py"),
+        (
+            "tests/unit/test_prep_context.py",
+            "tests/property/test_context_props.py",
+            "tests/unit/test_context_need.py",
+            "tests/unit/test_need_steps.py",
+        ),
+    ),
+    # Vorhaben 11: das Regelwerk der Dokumentstruktur; Zeit nicht gemessen
+    "structure": (
+        ("src/georep/prep/structure.py",),
+        (
+            "tests/unit/test_structure.py",
+            "tests/property/test_structure_props.py",
+        ),
     ),
 }
 # Die acht Module, die am 2026-10-13 unter 90 s brauchten; der wöchentliche Qualitätslauf nimmt

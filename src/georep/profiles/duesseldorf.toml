@@ -233,7 +233,8 @@ postal_marker = ""             # Option 02: Namensbestandteil der Briefwahlbezir
 reference_pattern = '^(?P<code>[A-ZÄÖÜ]+?)(?P<number>\d{1,2})?/\d+/\d{4}(?:[/-].*)?$'
 district_body = "BV"           # Kürzel der Bezirksvertretungen; die Nummer dahinter ist der Stadtbezirk (GO NRW: eine Bezirksvertretung je Stadtbezirk)
 district_body_name = "Bezirksvertretung {n}"  # Anzeigename, {n} ist der Stadtbezirk
-names_as_of = 2026-10-14       # Stand der Namen unten (OParl-organizations-Seite des Bodys, Sitzungstitel und, seit dem 2026-10-14, die Texte der POA- und ACI-Dokumente); nur Anzeige, nicht im Fingerprint
+names_as_of = 2026-11-24       # Stand der Namen unten (OParl-organizations-Seite des Bodys, Sitzungstitel, seit dem 2026-10-14 die Texte der POA- und ACI-Dokumente und seit dem 2026-11-24 der Kopf der Vorlagen für sechs Ausschüsse, Frage 15); nur Anzeige, nicht im Fingerprint
+names_source = "die Organisationen des Ratsinformationssystems, Dokumenttitel und, für sechs Ausschüsse, der Kopf der Vorlagen"  # Satzglied der Seite („Quelle sind …"), Frage 15; nur Anzeige
 # Punkt 58: die Beratungsfolge je Dokument als zweite Quelle des Gremiums. Der Korpus der
 # Hauptperiode kommt aus dem Altformat der Arbeit und trägt sie nicht; der Vollabruf der Metadaten
 # vom 2026-10-14 (122 Seiten, 35 Minuten) hat sie geholt, und das Paket im Repo friert sie ein
@@ -265,14 +266,21 @@ RPAU = "Rechnungsprüfungsausschuss"
 # stehen durften (ein Alias ins Nichts ist ein Settings-Fehler). Beide Namen sind belegt:
 POA = "Personal- und Organisationsausschuss"  # 51 Nummern der Periode 2014 bis 2020; der Name steht 19-mal in den Texten dieser Dokumente ("Sitzungstermine des Personal- und Organisationsausschusses"), Organisation gr/26
 ACI = "Ausschuss für Chancengerechtigkeit und Integration"  # 55 Nummern der laufenden Periode; der Name steht im Titel von ACI/003/2025 ("Wahl einer / eines Vorsitzenden des Ausschusses für Chancengerechtigkeit und Integration"), Organisation gr/400237
-# Kürzel ohne gesicherten Namen (nur plausibel; nach dem Merge von Option 4 aus raw/organizations.json, fragen.md 5.2):
-KUA = ""
-JHA = ""
-SCHUA = ""
-AGS = ""
-AWM = ""
+# Frage 15 (docs/plans/fragen-2026-11.md, Annahme „ja", 2026-11-24): sechs Namen aus dem Kopf der
+# Vorlagen. Wo ein Dokument der Hauptperiode genau eine Zeile der Beratungsfolge im Kopf und genau ein
+# Gremium in der OParl-Beratungsfolge hat, stehen dieser Name und dieses Kürzel ohne Ausnahme
+# zusammen (docs/plans/11-struktur.md, § 3.7, gezählt am 2026-11-23; daneben: Dokumente mit diesem
+# Kürzel in OParl, von allen mit genau dieser Kopfzeile und genau einem OParl-Gremium). Damit ist
+# fragen.md 5.2 für diese sechs beantwortet.
+KUA = "Kulturausschuss"        # 298 von 298
+JHA = "Jugendhilfeausschuss"   # 310 von 310
+SCHUA = "Schulausschuss"       # 137 von 137
+AGS = "Ausschuss für Gesundheit und Soziales"  # 96 von 96
+AWM = "Ausschuss für Wohnungswesen und Modernisierung"  # 36 von 36
+HFA = "Haupt- und Finanzausschuss"  # 69 von 69
+# Kürzel ohne gesicherten Namen (nur plausibel; nach dem Merge von Option 4 aus raw/organizations.json, fragen.md 5.2).
+# SEBD steht 142-mal mit „Bauausschuss", das das Profil schon BAU nennt (dieselbe Organisation gr/17): bleibt.
 SEBD = ""
-HFA = ""
 WALTW = ""
 WABTW = ""
 WPA = ""
@@ -871,3 +879,238 @@ texts = "snapshots/duesseldorf-texte/cache/text/texts.parquet"
 profile = "duesseldorf-2025"
 papers = "snapshots/2025/raw/papers.jsonl"
 texts = "snapshots/2025/cache/text/texts.parquet"
+
+# --- Vorhaben 18: Einbettungen, Ähnlichkeit, Suche (docs/plans/18-einbettungen.md) --------------
+# Gemessen an dieser Periode; die Perioden erben den Schalter. Was die Stücke bestimmt, steht
+# stadtneutral in defaults.toml, die Präfixe des Modells unter [ml.embedding].
+[embeddings]
+enabled = true                 # Schritte embeddings (nur `georep run --models`) und neighbors
+neighbors_package = "snapshots/duesseldorf-aehnlich/raw/aehnliche_dokumente_paket.parquet"  # die zehn ähnlichen Dokumente je Korpus-ID, ohne Vektoren (snapshots/duesseldorf-aehnlich/README.md); bootstrap legt sie nach raw/, neighbors nimmt sie, wo es keine Dokumentvektoren gibt (Pages)
+
+# --- Vorhaben 17: Zeit und Neuigkeiten (docs/plans/17-zeit.md) ---------------------------------
+# Die Wahltage der Kommunalwahlen in NRW (Landeswahlleiterin NRW: Kommunalwahlen am 25. Mai 2014,
+# 13. September 2020 und 14. September 2025). Sie trennen die drei Datensätze der Stadt
+# (duesseldorf-2014 beginnt am Wahltag 2014, die Hauptperiode am Wahltag 2020, duesseldorf-2025 am
+# Tag danach) und machen 2019/20 und 2024/25 zu Vorwahljahren (H17.1). Die Periodenprofile erben
+# den Block; die Tests über alle drei rechnet duesseldorf-vergleich.
+[cycles]
+enabled = true                 # Schritte cycles und vocabulary in jedem Profil der Stadt
+elections = [2014-05-25, 2020-09-13, 2025-09-14]
+instrument_types = { zanfrage = "anfrage", zantrag = "antrag" }  # S1.5: die Dokumentarten „zAnfrage …" und „zAntrag …" dieser Stadt (2014 bis 2020, vereinzelt danach), zu den Präfixen aus defaults.toml
+
+# --- Vorhaben 26: Beschlusslage und Antragserfolg (docs/plans/26-beschluesse.md) ------------------
+# Der Wortschatz, den die Sitzungsleitung in OParl `result` einträgt: 21 Werte in allen drei
+# Netzläufen vom 2026-11-23, je mit Stufe und Klasse wie vorab festgelegt (Messdokument § 3.1,
+# Commit c94ae31). Die Zahl hinter jedem Wert: Tagesordnungspunkte der Sitzungsliste der
+# Hauptperiode mit diesem Eintrag (9 932 tragen keinen). `resolutionText` und `resolutionFile` füllt
+# der Server nie (§ 3.2). Ein Wert, der hier fehlt, bricht den Schritt council_results mit seinem
+# Wortlaut ab. Die Zuordnung ist an 150 Anträgen von zwei KI-Kodierern geprüft, 150 von 150 gleich
+# (§ 4.1); ob der Eintrag selbst stimmt, zeigt nur die Niederschrift (Frage 9.1).
+[outcomes]
+enabled = true                 # alle drei Perioden; der Wortschatz ist derselbe (21 Werte in jedem Netzlauf, die laufende Periode kennt 20)
+package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-duesseldorf.parquet"  # Netzlauf vom 2026-11-23 (README dort); ein Periodenprofil nennt seine eigene Datei
+
+[outcomes.results]
+"einstimmig beschlossen" = ["sache", "beschlossen"]               # 10 433
+"mehrheitlich beschlossen" = ["sache", "beschlossen"]             # 2 070
+"beschlossen" = ["sache", "beschlossen"]                          # 139
+"Empfehlung einstimmig beschlossen" = ["sache", "beschlossen"]    # 1 684; Empfehlung eines vorberatenden Gremiums, eine spätere Entscheidung ersetzt sie
+"Empfehlung mehrheitlich beschlossen" = ["sache", "beschlossen"]  # 449
+"abweichend beschlossen" = ["sache", "geaendert"]                 # 1 487
+"Empfehlung abweichend beschlossen" = ["sache", "geaendert"]      # 172
+"einstimmig abgelehnt" = ["sache", "abgelehnt"]                   # 56
+"mehrheitlich abgelehnt" = ["sache", "abgelehnt"]                 # 1 462
+"abgelehnt aufgrund Stimmengleichheit" = ["sache", "abgelehnt"]   # 3
+"zurückgewiesen" = ["sache", "abgelehnt"]                         # 30; förmlich zurückgewiesen, meist eine Anfrage im Rat
+"Empfehlung einstimmig abgelehnt" = ["sache", "abgelehnt"]        # 11
+"Empfehlung mehrheitlich abgelehnt" = ["sache", "abgelehnt"]      # 37
+"zurückgezogen" = ["sache", "zurueckgezogen"]                     # 688
+"zur Kenntnis genommen" = ["stand", "erledigt"]                   # 9 148
+"passieren lassen" = ["stand", "erledigt"]                        # 563; bei Haushaltsanträgen der Weg in die Haushaltssitzung (Frage 9.16)
+"beantwortet" = ["stand", "erledigt"]                             # 1 853
+"schriftlich beantwortet" = ["stand", "erledigt"]                 # 1 744
+"vertagt" = ["stand", "vertagt"]                                  # 2 084
+"zurückgestellt" = ["stand", "vertagt"]                           # 92
+"verwiesen" = ["stand", "offen"]                                  # 94
+
+# --- Vorhaben 22: Bedarf und Aufmerksamkeit (docs/plans/22-bedarf.md, § 6, § 8 und § 10) ----------
+# Die Quellen stehen in defaults.toml (bundes- und landesweit, Gemeinde = city.ags); hier schaltet die
+# Stadt ein und nennt das Paket mit ihren Auszügen, die Klassen des passenden Ausschusses und die
+# Hypothesen, die vor der ersten Rechnung festgelegt wurden (Commit 67f7250, 2026-11-23). hb_score,
+# anteil_u18 und mindestsicherung sind Variablen des Quartiersatlas oben ([[context.variables]]).
+[context.need]
+enabled = true                 # Schritte need und, mit context.need.fetch, need_data (Netz)
+package = "snapshots/duesseldorf-bedarf"  # georep pack --need; bootstrap kopiert nach external/bedarf/
+explore = [                    # weitere Paare aus § 3.5, explorativ; Lärm und Kitas kommen in Stufe 2 nicht mit (Frage 22.2)
+  ["unfaelle_rad_fuss", "anteil_verkehr"],
+  ["unfaelle_je_1000", "dok_verkehr_je_1000_ew"],
+  ["mindestsicherung", "dok_je_1000_ew"],
+  ["miete_qm", "dok_je_1000_ew"],
+  ["hb_score", "wahlbeteiligung"],
+  ["hb_score", "anteil_verkehr"],
+  ["hb_score", "sozialindex_schulen"],
+  ["sozialindex_schulen", "dok_je_1000_ew"],
+  ["unfaelle_je_1000", "hb_score"],
+]
+
+[context.need.classes]         # Klassen des Ausschussklassifikators (Option 05); später aus Vorhaben 19, wenn es gebaut wird
+traffic = ["OVA"]              # Ordnungs- und Verkehrsausschuss; auf der Seite „Ordnung und Verkehr" (Frage 22.11)
+youth = ["JHA", "SCHUA"]       # Jugendhilfeausschuss, Schulausschuss
+
+[[context.need.hypotheses]]    # Messdokument § 8: einseitig, rho > 0
+name = "H1"
+need = "unfaelle_je_1000"
+attention = "anteil_verkehr"
+alternative = "greater"
+fixed = "67f7250"
+robust_need = ["unfaelle_scharf_je_1000", "unfaelle", "unfaelle_je_km2"]  # scharf zugeordnet, absolut, je km²
+robust_without = [1, 10]       # § 8: alle drei auch ohne die Wahlbezirke 1 und 10, vorab festgelegt
+
+[[context.need.hypotheses]]    # zweiseitig: rho > 0 „Aufmerksamkeit folgt dem Bedarf", rho < 0 „ungleiche Aufmerksamkeit"
+name = "H2"
+need = "hb_score"
+attention = "dok_je_1000_ew"
+alternative = "two-sided"
+fixed = "67f7250"
+robust_attention = ["trefferquote"]  # die Kennzahl der Seite, je Wahlberechtigtem
+robust_control = "log_begriffe"      # partiell bei fester Wörterbuchgröße
+robust_without = [1, 10]
+
+[[context.need.hypotheses]]    # einseitig, rho > 0
+name = "H3"
+need = "anteil_u18"
+attention = "anteil_jugend"
+alternative = "greater"
+fixed = "67f7250"
+robust_without = [1, 10]
+
+# --- Vorhaben 11: Struktur der Dokumente (docs/plans/11-struktur.md, § 3.1 bis § 3.5 und § 10) ----
+# struktur-1 ist der Entwurf struktur-entwurf-1 aus dem Messskript (ENTWURF, Block duesseldorf)
+# unverändert: an 200 Dokumenten der Hauptperiode gegen zwei KI-Kodierer 188 von 200
+# Beschlussvorschlägen zeilengenau richtig, Amt 125/125, Amtsbezeichnung 69/69, Zeilen der
+# Beratungsfolge 160/168 (die acht übrigen: Platzhalter „-" gegen „keine"), Briefdatum 73/73.
+# Ein Muster hier zu ändern ist kein Refactoring: eine geschärfte Fassung heißt struktur-2 und
+# braucht eine frische Stichprobe (§ 10, Punkt 1). Die Erläuterungen je Zeile stehen in § 3.
+[structure]
+enabled = true
+heading = '^[ \t]*(?P<label>[A-ZÄÖÜ][^:\n]{0,60}?)[ \t]*:[ \t]*(?P<rest>[^\n]*)$'
+heading_nocolon = ''
+betreff_after_form = false
+lead_blocked_in = ["beschlusslage", "stellungnahme"]   # „… fasste folgenden Beschluss: … zu beschließen:" zitiert, schlägt nicht vor (BV7/007/2025, BV7/008/2025)
+level2 = ["finanzen", "klima"]  # die Kosten eines Ausführungsbeschlusses stehen im Beschlussvorschlag
+end_markers = ['^\s*(Mit\s+)?[Ff]reundliche[n]?\s+Grü(ß|ss)e', '^\s*[Gg]ez\.', '^\s*Sehr\s+geehrte']
+betreff_max_lines = 4
+art = [
+  ['^Haushaltsantrag', 'Haushaltsantrag'],
+  ['^Antrag', 'Antrag'],
+  ['^z?Anfrage', 'Anfrage'],
+  ['^(Bezirksvertretung )?Eingabe', 'Eingabe'],
+  ['^Vorlage aus der Politik$', 'Vorlage aus der Politik'],
+]
+# Eingaben nach § 24 GO tragen nur zum Teil einen Beschlussvorschlag (Kurzdarstellung ohne ihn):
+# sie stehen in keiner der beiden Listen und werden getrennt gezählt (23 von 124, § 3.4).
+decision_expected = ["Beschlussvorlage", "Bezirksvertretung Beschlussvorlage", "A+F Beschluss",
+  "Bedarfsbeschluss", "Beschlussvorlage RPA", "Antrag", "Haushaltsantrag"]
+decision_not_expected = ["Informationsvorlage", "Bezirksvertretung Informationsvorlage", "Anfrage",
+  "Berichtsvorlage"]
+# Seitenkopf- und -fußzeilen, die read_span überspringt (Frage 9.6); gezählt am 2026-11-24 über die
+# Rohtexte der Hauptperiode, je Zeile ganz getroffen: „Seite 2" 20 134 Zeilen in 12 424 Dokumenten,
+# „- 2 -" 48, die Drucksachennummer allein 19 361 (in 18 997 Dokumenten, meist im Kopf der ersten
+# Seite), „Sitzung des APS am … Vorlage Nr. …" 586.
+page_noise = [
+  'Seite\s*\d+(\s*(von|/)\s*\d+)?',
+  '-\s*\d+\s*-',
+  '[A-ZÄÖÜ]+\d{0,2}/\s?\d+/\d{4}(/\d+)?',
+  '(Sitzung\s+de[rs]\s+.{1,80}?\s+am\s+\d{1,2}\.\d{1,2}\.\d{4}\s+)?Vorlage\s+Nr\.\s*\S+',
+]
+
+[structure.labels]             # Label wie geschrieben -> Abschnittsart; Katalog § 3.1
+"Betrifft" = "betreff"
+"Fachbereich" = "kopf_amt"
+"Amt / Institut" = "kopf_amt"
+"Amt" = "kopf_amt"
+"Amtsleitung" = "kopf_amtsleitung"
+"Dezernentin / Dezernent" = "kopf_dezernat"
+"Beratungsfolge" = "kopf_beratungsfolge"
+"Beschlussdarstellung" = "beschlussvorschlag"
+"Beschlussvorschlag" = "beschlussvorschlag"
+"Beschlussentwurf" = "beschlussvorschlag"
+"Beschlussempfehlung" = "beschlussvorschlag"
+"Antrag" = "beschlussvorschlag"
+"Änderungsantrag" = "beschlussvorschlag"
+"Ergänzungsantrag" = "beschlussvorschlag"
+"Prüfantrag" = "beschlussvorschlag"
+"Haushaltsantrag" = "beschlussvorschlag"
+"Sachdarstellung" = "sachdarstellung"
+"Sachdarstellung / Maßnahmenbeschreibung" = "sachdarstellung"
+"Kurzdarstellung" = "sachdarstellung"
+"Sachlage" = "sachdarstellung"
+"Sachverhalt" = "sachdarstellung"
+"Stellungnahme der Verwaltung" = "stellungnahme"
+"Hierzu teilt die Verwaltung mit" = "stellungnahme"
+"Begründung" = "begruendung"
+"Alternative" = "alternative"
+"Anfrage" = "fragen"
+"Fragen" = "fragen"
+"Beschluss" = "beschlusslage"
+"Beschlusslage" = "beschlusslage"
+"Anlagen" = "anlagen"
+"Anlage" = "anlagen"
+"Nachrichtlich" = "nachrichtlich"
+"Finanzielle Auswirkungen" = "finanzen"
+"Finanzierung" = "finanzen"
+"Finanzierungsart" = "finanzen"
+"Kosten" = "finanzen"
+"Kosten und Finanzierung" = "finanzen"
+"Gesamtkosten" = "finanzen"
+"Gesamtkosten und Refinanzierung" = "finanzen"
+"Finanzierung des Projektes" = "finanzen"
+"Investive Kosten" = "finanzen"
+"Konsumtive Kosten" = "finanzen"
+"Klimarelevanz" = "klima"
+"Auswirkungen auf den Klimaschutz" = "klima"
+"Klimaschutz" = "klima"
+"Klimaanpassung" = "klima"
+
+# Einleitungssätze: eine Zeile, die mit Doppelpunkt endet und (mit den zwei Zeilen davor) so
+# lautet, öffnet den Abschnitt ab der nächsten Zeile (§ 3.2, Punkt 4; 927 Beschlussvorschläge, 8,8 %)
+[[structure.leads]]
+kind = "beschlussvorschlag"
+pattern = '(?i)\bbeschlie(ß|ss)(en|t)\b[^:]{0,40}:\s*$'
+[[structure.leads]]
+kind = "beschlussvorschlag"
+pattern = '(?i)\bzur\s+Abstimmung\s+(zu\s+)?(bringen|stellen)\s*:\s*$'
+[[structure.leads]]
+kind = "beschlussvorschlag"
+pattern = '(?i)\bfolgenden\s+\w*antrag\b[^:]{0,160}:\s*$'
+[[structure.leads]]
+kind = "beschlussvorschlag"
+pattern = '(?i)\bbeantrag(t|en)\s*:\s*$'
+[[structure.leads]]
+kind = "fragen"
+pattern = '(?i)(folgende[n]?\s+(\w+\s+)?Fragen|Fragen\b[^:]{0,60}\bbeantworten|beantworten(\s+zu\s+lassen)?|\bfrag(t|en)\s+an|um\s+(die\s+)?Beantwortung)[^:]{0,80}:\s*$'
+
+[structure.fallback]           # der Beschlusssatz ohne Überschrift (343 Beschlussvorschläge, 3,3 %)
+kind = "beschlussvorschlag"
+pattern = '^\s*((Der|Die|Das)\s+)?[A-ZÄÖÜ][^\n]{0,120}?\b(beschließt|beschliesst|empfiehlt|beauftragt|genehmigt|bewilligt|stimmt|bittet|fordert|ersucht|möge|wird\s+gebeten|wird\s+beauftragt|wird\s+aufgefordert)\b'
+max_lines_after_head = 12
+only_expected = true           # nur für Arten mit erwartetem Beschlussvorschlag (sonst „Die Verwaltung wird gebeten, folgende Fragen …")
+
+[structure.head]
+consultation_header = 'Gremium\s+Sitzungsdatum(\s+Beratungsqualität)?'
+quality = ["Entscheidung", "Kenntnisnahme", "Vorberatung", "Anhörung", "Empfehlung"]
+quality_placeholders = ["-/-", "-"]   # Eingaben: „Anregungs- und Beschwerdeausschuss 01.02.2024 -"
+quality_required = true
+titles = '^\s*(Oberbürgermeister(in)?|Bürgermeister(in)?|Stadtdirektor(in)?|Stadtkämmer(er|in)|Beigeordnete[r]?)'
+signer_roles = '(?i)\b(Fraktionsvorsitzende[r]?|Vorsitzende[r]?|Sprecher(in)?|Ratsherr|Ratsfrau|Ratsmitglied|Bezirksvertreter(in)?|Bürgermitglied|Geschäftsführer(in)?|Oberbürgermeister(in)?|Beigeordnete[r]?)\b'
+signer_window = 8
+closing = '^\s*((Mit\s+)?[Ff]reundliche[n]?\s+Grü(ß|ss)e|[Gg]ez\.)'  # im Entwurf im Code (signer_role); dasselbe Muster
+session = '(?i)zur\s+Sitzung\s+(der|des)\s+(?P<gremium>[^\n]{3,120}?)\s+am\s+(?P<datum>\d{1,2}\.\s?(\d{1,2}\.|[A-Za-zäÄ]+)\s?\d{4})'
+# „zur Sitzung des Rates der Landeshauptstadt Düsseldorf": der Ort gehört nicht zum Namen des
+# Gremiums (206 + 12 + 3 + 1 Briefe der Hauptperiode, gezählt am 2026-11-24)
+session_suffix = '\s+de[rs]\s+(Landeshauptstadt|Stadt)\s+{city}\s*$'
+date_line = '^\s*{city},?\s*(den\s+)?(?P<datum>\d{1,2}\.\s?\d{1,2}\.\s?\d{2,4})'
+office = '(?P<nr>\d{2}(?:/\d{1,3})?)\s*-?\s*(?P<name>.*)$'  # „52 - Sportamt", „01/17 - Büro für …"; im Entwurf im Code (head_fields), dasselbe Muster
+form_titles = ["Beschlussvorlage", "Informationsvorlage", "Bericht", "Berichtsvorlage",
+  "Eingabe nach § 24 Gemeindeordnung NRW", "Antrag", "Anfrage"]
+head_lines = 30
