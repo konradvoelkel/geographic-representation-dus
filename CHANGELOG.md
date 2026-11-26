@@ -2,6 +2,17 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.32.1 (2026-11-27), Konsolidierung und technischer Nachzug
+
+- **Dokumente konsolidiert**: `STATUS.md` trägt nur noch Stand und Bekanntes (157 statt 1 133 Zeilen),
+  `docs/todo.md` nur noch Offenes, jede Zahl steht an einer Stelle (Pakete in `docs/technik.md` § 3,
+  Schritte in `docs/architecture.md`, Tests und Seitengrößen in `STATUS.md`); Pläne und Messdokumente
+  sind auf dem Stand, abgeschlossene als historisch markiert. Neu: der Plan der nächsten Phase
+  `docs/plan-zeigen-2026-11.md`; Punkte 84 und 85 halten die verworfenen Vorhaben 13 und 23 fest.
+- **Technik**: der wöchentliche Qualitätslauf sammelt wieder (`nox -s alone`, rot seit 2026-11-16);
+  CI und Pages haben Zeitgrenzen; A/B-Bau und Worktree-Anlage liegen unter `scripts/`. Keine Zahl der
+  Seite ändert sich.
+
 ## 0.32.0 (2026-11-26), Kurzfassungen, gebaut und ausgeschaltet
 
 - **Kurzfassungen** (Vorhaben 20, `docs/decisions.md`, Punkt 83): der Schritt `summaries` schreibt mit

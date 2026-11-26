@@ -280,12 +280,6 @@ Gleich: der Filter trägt, `council.incremental` bleibt. Fehlen im inkrementelle
 stehen Gelöschte darin: `incremental = []` im Stadtprofil, und `consultations` holt wie die anderen
 beiden jedes Mal alles.
 
-## 32. Der wöchentliche Qualitätslauf ist rot
-
-Aufgenommen am 2026-11-26. `.github/workflows/quality.yml` scheitert seit dem 2026-11-16 (auch am
-2026-11-23) im Schritt „Reihenfolgeunabhaengigkeit der Tests", also `nox -s alone`; bis zum 2026-11-09
-war er grün. Die Ursache ist nicht untersucht.
-
 ## 33. Lokale Datenwurzeln neu rechnen
 
 Aufgenommen am 2026-11-26. Im Hauptklon meldet `georep status` fast jeden Schritt als offen

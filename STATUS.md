@@ -90,8 +90,6 @@ Entwurfsgrenzen in `docs/architecture.md`, Einwände gegen die Auswertungen in `
   vom 2026-11-26 stand ein Wahlbezirk in H1 und H3 von Vorhaben 22 eine Rangstelle anders, die Urteile
   blieben (Punkt 80, Nachtrag; `docs/todo.md`, Punkt 18). Die Nummern der Themen gelten nur für
   diesen Datenstand.
-- **Der wöchentliche Qualitätslauf ist rot** seit dem 2026-11-16 im Schritt
-  „Reihenfolgeunabhaengigkeit der Tests" (`nox -s alone`; `docs/todo.md`, Punkt 32).
 - **Die lokale Datenwurzel des Hauptklons ist „offen"** (2026-11-26): `georep status` meldet fast
   jeden Schritt als „Settings geändert" oder „Ausgabe fehlt", weil die Läufe der Vorverarbeitung in
   den Worktrees liefen (`docs/todo.md`, Punkt 33).
