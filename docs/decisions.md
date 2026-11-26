@@ -3588,6 +3588,28 @@ Moran's I der Residuen 0,341, 0,050, 0,262. 11 501 Unfälle im Zeitraum, 3 170 i
 611 134 Einwohner. Ein `slow`-Test (`tests/golden/test_need_numbers.py`) rechnet die Zahlen aus dem
 Paket nach.
 
+**Nachtrag 2026-11-26: die Klassenanteile gelten je Rechner.** Der CI-Lauf 45887973775 (0.29.0,
+Azure, vier Kerne, Python 3.14.10) rechnete H1 mit ρ = 0,3465 (95 % 0,0537 bis 0,6000), ohne die
+Wahlbezirke 1 und 10 0,4215, innerhalb der Stadtbezirke −0,0530; hier waren es auf jedem Lauf
+0,3427, 0,417 und −0,062, auch ohne Drosselung, mit 1, 4 und 13 Polars-Threads, 1 bis 16
+BLAS-Threads, zwei anderen OpenBLAS-Kernen, zwei Hash-Seeds und in der Folge der slow-Tests des CI.
+Alle CI-Werte samt beiden Bootstrap-Grenzen entstehen bitgleich, wenn Wahlbezirk 18 in
+`anteil_verkehr` eine Rangstelle höher steht, also ein Dokument mehr in `OVA` liegt; keine einzelne
+Änderung der Unfälle erzeugt sie. Die Ursache liegt vor 22: die logistische Regression des Schritts
+`committees` (Punkt 45) ist nur bis auf ihre Toleranz bestimmt. lbfgs hält mit `tol` 1e-4 nach 46
+Iterationen an, mit 1e-10 nach 132; dazwischen liegen die Wahrscheinlichkeiten bis 0,011 auseinander,
+und 18 von 19 033 Dokumenten wechseln die Klasse. Threads und BLAS-Kerne bewegen sie hier um höchstens
+1e-12, ein anderer Rechner hält an einer anderen Stelle. Wie beim Themenmodell (`STATUS.md`) gelten
+die Zahlen von H1 und H3 darum **je Rechner**; H2, die Paare ohne Klassen und alle Summen der
+Bedarfsseite hängen an keiner Klasse und sind überall gleich. Die vorab festgelegten Urteile
+halten: H1 bestätigt mit p_Holm 0,0414 im CI, 0,0411 mit `tol` 1e-10 und 0,0429 hier, H2 und H3
+nicht bestätigt. Der `slow`-Test prüft seither die Urteile, die Deutungen und p_Holm < 0,05 für
+H1 genau, H2 und die klassenfreien Zahlen wie gemessen, H1 und H3 mit 0,02 (Korrelationen, Grenzen,
+Moran's I) und 0,01 (p); gesehen waren höchstens 0,009. Offen, als Frage an Punkt 45 und nicht an
+22: eine engere Toleranz des Klassifikators machte die Klassen rechnerfest, verschöbe aber 18
+Dokumente und damit die gemessenen Zahlen von H1 und H3 (H1 ρ 0,3470) -- das wäre ein A/B-Bau und
+eine Entscheidung für sich.
+
 **Anders als der Bauplan, mit Grund.**
 
 - *Paket unter `snapshots/` als Parquet*, nicht CSV unter `context/` (Konflikt 11): `context/` hält
