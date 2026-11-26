@@ -4038,3 +4038,82 @@ ohne Text nach dem Kopf (`rumpf_leer` oder weniger als 50 Zeichen) gibt es keine
 20.6). Weil `read_span` anders liest als die Messung, trifft der Bau deren Cache nicht; das ist
 hingenommen. Verworfen: die Rollen aus 14 (sie sagen, wie ein Dokument zu einem anderen steht,
 nicht wer es einbringt); eine Zeile „beschließt" aus OParl (die Folge fehlt dort).
+
+## NN. Dubletten und Dokumentfamilien: verworfen, es gibt kaum Dubletten (Vorhaben 13, 2026-11-23)
+
+**Ergebnis zuerst.** Vorhaben 13 der Vorverarbeitung ist nach seiner vorab festgelegten Regel
+**verworfen**; es gibt keinen Schritt `families`, keine Datei `dokumentfamilien.parquet`, keine
+Gewichtsvariante `familie` und keine Familie im Dokumentdialog. Der Befund ist „es gibt kaum
+Dubletten": selbst an der besten Grenze lägen nur 0,5 % der Dokumente in Familien, und kein Wahlbezirk
+verlöre mehr als 1,4 % seiner Treffer. Messdokument: `docs/plans/13-dubletten.md` (Urteil § 5, Regeln
+des Schlichters § 9), Messskript daneben, Codebuch, Stichprobe und Labels unter
+`validierung/13-dubletten/`. Die Nummer bekommt der Eintrag beim Merge.
+
+**Verfahren und Kriterium.** Wort-Shingles der Länge 5 über den Korpustext, MinHash mit LSH in 32
+Bändern zu 4 Zeilen, für jeden Kandidaten die exakte Jaccard-Ähnlichkeit; nur die Hauptdatei, wie
+die Trefferquote. Kriterium aus dem Briefing (Meta-Plan § 11), unverändert: Präzision ≥ 0,95; weiter
+nur, wenn mindestens 3 % der Dokumente in Familien liegen oder ein Wahlbezirk mindestens 5 % seiner
+Treffer verliert. Vorab festgelegt war die Grenze τ* als kleinste der Grenzen 0,70, 0,80, 0,85, 0,90,
+0,95, an der die gewichtete Präzision über alle Paare mit J ≥ τ* mindestens 0,95 erreicht.
+
+**Gemessen** an 200 Paaren, kodiert von zwei KI-Kodierern und einem Schlichter desselben Modells
+(α 0,941; Frage 19): keine Grenze erreicht 0,95. Am nächsten liegt τ = 0,9 mit 0,948 (0,866–0,964,
+58 kodierte Paare); darunter fällt die Präzision auf 0,745 (0,85), 0,538 (0,8) und 0,411 (0,7), und
+ab 0,95 ist sie 0,812, weil dort drei wortgleiche Förderanträge verschiedener Jahre liegen. Das Urteil
+hängt nicht an der knappen Zahl bei 0,9: läge sie über 0,95, verfehlten 0,5 % der Dokumente und
+1,4 % Verlust beide Schwellen für „weiter".
+
+**Was bleibt.** Der MinHash-Prototyp und seine Parameter gingen an Vorhaben 23 (dort ebenfalls
+verworfen, nächster Eintrag); Fortschreibungen (`X/1`) deckt Vorhaben 14 über seine Nachtragskanten
+ab; Verteilervorlagen (dieselbe Vorlage an mehrere Bezirksvertretungen) sind dort zurückgestellt
+(`docs/plans/14-vorgaenge.md`, Frage 9.13).
+
+**Was eine Neumessung bräuchte.** Ein neues Vorhaben, keine zweite Runde an diesen Labels: ein
+Codebuch Fassung 2 mit den Regeln des Schlichters (ein an ein Haushaltsjahr gebundener Antrag ist je
+Jahr eine eigene Sache; die Endung `/1` ist ein Hinweis, kein Kriterium; dieselbe Vorlage an mehrere
+Bezirksvertretungen ist „gleich"; eine Wahl mit getauschter Person zur selben Besetzung ist „fast
+gleich"), dabei die Grenze für einen ungeklärten Längenrest vorab festgelegt (der Schlichter hat 2 %
+selbst gesetzt), eine frische Stichprobe und ein vorab festgelegtes Kriterium. Lohnen würde sie sich
+nur, wenn sich die Lage ändert, etwa wenn Anlagen in den Korpus kommen (Verteilervorlagen
+unterscheiden sich oft nur dort, Messdokument Frage 13.3).
+
+## NN. Textübernahme: verworfen, die Art der Übernahme trägt nicht (Vorhaben 23, 2026-11-23)
+
+**Ergebnis zuerst.** Vorhaben 23 der Vorverarbeitung ist nach seiner vorab festgelegten Regel
+**verworfen**; es gibt keinen Schritt `reuse`, keine Datei `textuebernahmen.parquet` und keinen
+Abschnitt auf `akteure.html`. Gemeinsamen Text findet das Verfahren zuverlässig, aber seine Einteilung
+in politische Arten erreicht das Kriterium nicht. Messdokument: `docs/plans/23-textuebernahme.md`
+(Urteil § 5, Regeln des Schlichters § 9), Messskript daneben, Codebuch und Stichprobe unter
+`validierung/23-textuebernahme/`; die Fremddaten (Korpus von Cherif, CC BY 4.0) liegen nur lokal. Die
+Nummer bekommt der Eintrag beim Merge.
+
+**Verfahren und Kriterium.** Kandidaten über MinHash auf Fenstern von rund 50 Wörtern (Prototyp aus
+Vorhaben 13), lokale Ausrichtung (Smith-Waterman auf Wörtern) auf den Kandidatenpaaren, dann eine
+Regel über Metadaten (Urheber, Parteien, Gremium, Verweise, Floskeln), die jedem Paar eine Art gibt.
+Kriterium aus dem Briefing: Präzision ≥ 0,9; weiter nur, wenn es Familien über Partei- oder
+Stadtgrenzen gibt. Vom Supervisor vor der Kodierung festgelegt (Frage 32): die Präzision gilt **je
+politischer Art** (Musterantrag; Übernahme über Fraktionsgrenzen), nicht über beide zusammen, damit
+837 gute Musteranträge nicht 76 schwache Übernahmen mittragen. Bauen nur, wenn beide Arten 0,9
+erreichen; umbauen, wenn nur die Musteranträge es tun; sonst verwerfen.
+
+**Gemessen** an 100 Paaren, kodiert von zwei KI-Kodierern und einem Schlichter desselben Modells
+(α 0,950; Frage 19): Musteranträge 0,889 (0,633–0,972), Übernahmen über Fraktionsgrenzen 0,296
+(0,117–0,595). Gemeinsamer Text waren alle 92 kodierten Paare über der Zufallsgrenze, der Recall der
+Kandidatensuche liegt bei 91,3 %. Familien über Grenzen gibt es (9 bestätigte Paare über
+Fraktionsgrenzen, 3 über Stadtgrenzen), aber die Musteranträge verfehlen 0,9, also verworfen. Die
+Entscheidung ist knapp: die Lesart eines einzigen Grenzfalls bewegt den Wert zwischen 0,64 und 0,89,
+ohne ihn liegt er bei 0,894. Der Befund: Textübernahme zwischen Ratsdokumenten ist vor allem
+Wiederholung derselben Urheber (24 398 Paare), Formular (68 125) und Zitat (Recht 14 352, Verfahren
+4 193); politische Übernahme ist selten, Übernahmen über Fraktionsgrenzen gibt es nur in der
+Größenordnung von 20 bis 25.
+
+**Was eine Neumessung bräuchte** (`docs/todo.md`, „Textübernahme neu messen"). Ein eigenes Vorhaben
+mit neuer Regel, neuem Codebuch und frischer Stichprobe, nicht eine zweite Runde an diesen Labels:
+die starken Kanten aus Vorhaben 14 statt der Nummernsuche im Text (die Fehler sind vor allem Zitate
+im selben Verfahren), die Abschnitte aus Vorhaben 11 (Briefkopf, Unterschrift) gegen Bausteine, die
+Antragsteller aus Vorhaben 15 als Datei, die Regeln des Schlichters für ein Codebuch Fassung 2
+(Musterantrag nur zwischen Gliederungen derselben Partei, ein Baustein-Test, die Regel der dritten
+Quelle, gleiche Forderungen zum selben Haushaltsposten), dazu optional Einbettungen aus Vorhaben 18
+als zweite Kandidatenquelle und die Musteranträge der kommunalpolitischen Vereinigungen als Korpus,
+um Vorlage und Wiederholung zu trennen (Messdokument, Fragen 23.2, 23.4). Die lokale Ausrichtung
+bleibt als Werkzeug im Messskript, etwa für Vorhaben 25.
