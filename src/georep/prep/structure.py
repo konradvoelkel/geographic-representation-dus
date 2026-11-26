@@ -240,6 +240,9 @@ class BodyNames:
     rules: BodyRules
     by_key: Mapping[str, str]
     district: tuple[re.Pattern[str], ...]  # „Bezirksvertretung 5", „BV5" -> Nummer in der Gruppe n
+    # Review 11, N4: die Bezirksvertretungen, die ``[bodies]`` kennt (aus ``organizations``,
+    # ``aliases`` und ``district_body_names``); eine andere Nummer ist kein Kürzel
+    districts: frozenset[str] = frozenset()
 
     @classmethod
     def from_settings(cls, settings: Settings) -> BodyNames:
@@ -262,7 +265,17 @@ class BodyNames:
             for word, tail in ((before.strip(), after.strip()), (rules.district_body, ""))
             if word
         ]
-        return cls(rules, by_key, tuple(re.compile(pattern, re.I) for pattern in district))
+        known = {*rules.organizations.values(), *rules.aliases.values(), *rules.district_body_names}
+        districts = frozenset(
+            code
+            for code in known
+            if rules.district_body
+            and code.startswith(rules.district_body)
+            and code[len(rules.district_body) :].isdecimal()
+        )
+        return cls(
+            rules, by_key, tuple(re.compile(pattern, re.I) for pattern in district), districts
+        )
 
     def code(self, name: str) -> str | None:
         """Das Kürzel zu einem geschriebenen Namen, ``None``, wenn ``[bodies]`` ihn nicht kennt."""
@@ -271,7 +284,8 @@ class BodyNames:
         )
         if district is not None and self.rules.district_body:
             code = f"{self.rules.district_body}{int(district.group('n'))}"
-            return self.by_key.get(name_key(name), code)
+            if code in self.districts:
+                return code
         return self.by_key.get(name_key(name))
 
     def name(self, code: str) -> str:

@@ -278,6 +278,8 @@ def test_an_empty_text_has_an_empty_body(rules: StructureRules, names: BodyNames
         ("AÖE", "AÖE"),
         ("Ausschuss für Mobilität", None),
         ("Bezirksvertretung", None),
+        ("Bezirksvertretung 11", None),  # Review 11, N4: die Stadt hat zehn Stadtbezirke
+        ("BV0", None),
     ],
 )
 def test_a_written_body_finds_its_code(names: BodyNames, written: str, code: str | None) -> None:
