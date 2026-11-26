@@ -163,6 +163,28 @@ validation.coding_root = "/media/konrad/xtraspace/georep/messdaten/kodierung"
 Ein gesetztes `coding_root` muss absolut sein und außerhalb des Arbeitsbaums liegen; ohne Eintrag
 liegen die Aufträge unter `<data_root>/kodierung/` (gitignored).
 
+**Welche Modelle kodieren** (Konrad, 2026-11-26, Frage 19 in `docs/plans/fragen-2026-11.md`).
+
+- **Neue Stichproben**: Kodierer B ist ein **anderes Modell** als Kodierer A und der Schlichter.
+  - A und der Schlichter: Agent-Werkzeug mit `model: "opus"` (`claude-opus-5-5`).
+  - B: `model: "sonnet"`, wenn das Messdokument vor der Kodierung kein anderes festlegt.
+  - Ein zweites Modell macht gemeinsame Fehler sichtbar, die zwei Kodierer desselben Modells teilen
+    (§ 1).
+- **Bisherige Labels**: alle bis zum 2026-11-26, je drei Agenten desselben Modells. Sie bleiben, wie
+  sie sind, und werden nicht nachkodiert.
+- **Was die Seite nennt**: je Vorhaben, wie geprüft wurde. README und `guete.json` führen das Modell
+  je Rolle.
+  - Der `satz` nennt beide Kodierer und die Schlichtung, etwa „geprüft von zwei KI-Kodierern
+    (claude-opus-5-5 und claude-sonnet-…), geschlichtet von claude-opus-5-5, an *n* …, nicht von
+    Menschen".
+  - Bei den bisherigen Labels heißt es „von zwei KI-Kodierern desselben Modells (claude-opus-5-5)".
+- **Was noch fehlt**: Heute nimmt `merge` nur ein `--model`, und der Satz nennt kein Modell. Ein
+  `--model` je Rolle und der neue Satz sind Teil des F4-Nachzugs
+  ([plan-zeigen-2026-11.md](plan-zeigen-2026-11.md), V3). Bis dahin trägt der Supervisor das Modell
+  von B in den Bericht der Messung ein.
+- **Was sich nicht ändert**: Kriterium und Schwelle (α ≥ 0,8) bleiben. Liegt α mit zwei Modellen
+  darunter, ist das Codebuch für sie zu unscharf, und das Vorhaben geht zurück in Stufe 1.
+
 ```bash
 V=11-struktur
 uv run georep validate sample $V                     # 1. Stichprobe; stichprobe.csv und .json committen
@@ -172,6 +194,7 @@ uv run georep validate tasks $V --coder B
 uv run georep validate merge $V --model claude-opus-5-5   # 4. Uneinigkeiten -> Auftrag der Schlichtung
 #                                                      5. Schlicht-Agent starten (§ 4.2)
 uv run georep validate merge $V --model claude-opus-5-5   # 6. labels.csv, README.md, guete.json; committen
+#   --model nennt heute ein Modell für alle Rollen; mit dem F4-Nachzug je Rolle (oben, „Welche Modelle")
 uv run georep validate score $V [--pred <ausgabe.parquet>]  # 7. Treffer und Güte in guete.json; committen
 ```
 
@@ -182,8 +205,9 @@ uv run georep validate score $V [--pred <ausgabe.parquet>]  # 7. Treffer und Gü
 2. **Aufträge.** Je Kodierer ein Ordner mit `auftrag.jsonl` (je Einheit die Fragen, Dokumente,
    Spannen), `antworten.jsonl` (je Einheit `id`, `codebuch_version`, je Frage `null`,
    `begruendung`) und `codebuch.md`. Beide sehen dieselben Einheiten in verschiedener Folge.
-3. **Kodieren.** Zwei **frische** Agenten (Agent-Werkzeug, `model: "opus"`), **kein Fork**: ein
-   Fork erbte den Kontext des Supervisors, darin die Ausgabe des Verfahrens. Über 200 Einheiten
+3. **Kodieren.** Zwei **frische** Agenten (Agent-Werkzeug; A mit `model: "opus"`, B mit einem
+   anderen Modell, oben „Welche Modelle kodieren"), **kein Fork**: ein Fork erbte den Kontext des
+   Supervisors, darin die Ausgabe des Verfahrens. Über 200 Einheiten
    oder 6 000 Zeichen je Ausschnitt teilt der Supervisor einen Kodierer in Läufe nach Zeilen.
 4. **Zusammenführen.** `merge` prüft beide Antwortdateien (jede Einheit genau einmal, dieselbe
    `codebuch_version`, jede gestellte Frage beantwortet, keine nicht gestellte) und meldet sonst
@@ -191,7 +215,7 @@ uv run georep validate score $V [--pred <ausgabe.parquet>]  # 7. Treffer und Gü
    die strittigen Fragen (`strittig`) und beide Kodierungen in einer je Einheit festen, aber
    wechselnden Folge. Haben A oder B danach neu kodiert, passt die Schlichtung nicht mehr; `merge`
    bricht dann ab, `merge --force` setzt `schlichtung/` zurück.
-5. **Schlichten.** Ein dritter frischer Agent mit dem Prompt aus § 4.2.
+5. **Schlichten.** Ein dritter frischer Agent mit dem Modell von A und dem Prompt aus § 4.2.
 6. **Labels.** Der zweite `merge` legt `labels.csv` (`id, frage, kodierer_a, kodierer_b,
    schlichtung, label`), `README.md` und `guete.json` ab und sagt je Frage, ob α die Schwelle
    erreicht. Liegt es darunter: das Codebuch schärfen, `version` hochzählen, neue Stichprobe.
@@ -200,7 +224,7 @@ uv run georep validate score $V [--pred <ausgabe.parquet>]  # 7. Treffer und Gü
    `frage`, `label` (bei einem Codebuch mit einer Frage darf `frage` fehlen), bei Rangfolgen
    `query`, `id`, `score`.
 8. **Auf die Seite.** Stufe 3 liest `validierung/<NN-name>/guete.json`: `satz` (wer geprüft hat,
-   an wie vielen Einheiten), je Frage `alpha_genuegt` und die Güte mit Intervall
+   mit welchen Modellen, an wie vielen Einheiten), je Frage `alpha_genuegt` und die Güte mit Intervall
    (`fragen.<frage>.treffer.grundgesamtheit`, `…verfahren`). Ohne `alpha_genuegt = true` zeigt die
    Seite die Kennzahl nicht (Plan, § 2.6); eine gewichtete Schätzung heißt auf der Seite so.
 
@@ -227,13 +251,16 @@ Was ins Repo kommt und was nicht:
 |---|---|---|
 | `codebuch.toml` | `validierung/<NN-name>/` | das Instrument |
 | `stichprobe.csv`, `stichprobe.json` | ebenda | Schlüssel, Schicht, `schicht_n`; Profil, Prüfsumme der Grundgesamtheit, Seed, Aufteilung |
-| `labels.csv`, `README.md` | ebenda | `id, frage, kodierer_a, kodierer_b, schlichtung, label`; Codebuch-Version, Modell, Datum, Übereinstimmung je Frage |
+| `labels.csv`, `README.md` | ebenda | `id, frage, kodierer_a, kodierer_b, schlichtung, label`; Codebuch-Version, Modell je Rolle (Kodierer A, Kodierer B, Schlichtung), Datum, Übereinstimmung je Frage |
 | `guete.json` | ebenda | Übereinstimmung, Labels, Treffer, Güte des Verfahrens je Frage, der Satz für die Seite |
 | `A/`, `B/`, `schlichtung/` | `validation.coding_root/<NN-name>/`, **nie im Repo** | Aufträge mit Ausschnitten aus Ratsdokumenten, Antworten mit Begründungen |
 
 ## 4. Prompt-Vorlagen
 
 Platzhalter in spitzen Klammern; `<ordner>` ist `<coding_root>/<NN-name>/<A|B|schlichtung>`.
+**Modelle** (§ 3, „Welche Modelle kodieren"): Kodierer A und der Schlicht-Agent laufen mit
+`model: "opus"`, Kodierer B mit einem anderen Modell (Vorgabe `sonnet`). Beide Kodierer bekommen
+denselben Prompt. Weder der Prompt noch der Ordner nennt das Modell des anderen Kodierers.
 
 ### 4.1 Kodier-Agent
 
