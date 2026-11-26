@@ -26,6 +26,7 @@ from importlib.resources.abc import Traversable
 from pathlib import Path
 from string import Formatter
 from typing import Any, Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import deal
 from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -1487,6 +1488,11 @@ class EmbeddingModel(_Strict):
     dimension: int = Field(default=768, ge=1)
     num_ctx: int = Field(default=512, ge=0)  # Fenster in Token; 0 = was das Modell mitbringt
     truncate: bool = True  # längere Texte hinten abschneiden; false: ein Fehler je solchem Text
+    # Vorhaben 18: die Präfixe gehören zum Modell (nomic-embed-text), nicht in den Code. Sie stehen
+    # nicht im Fingerprint (``[ml]``), aber in der Prompt-Version des Schritts, sobald sie von der
+    # gemessenen Fassung abweichen (``enrich.embeddings.chunk_prompt``).
+    document_prefix: str = "search_document: "
+    query_prefix: str = "search_query: "
 
 
 class GenerationModel(_Strict):
@@ -1518,6 +1524,15 @@ class Ml(_Strict):
     retry_rejected: bool = False  # abgewiesene Eingaben erneut fragen statt überspringen
     embedding: EmbeddingModel = EmbeddingModel()
     generation: GenerationModel = GenerationModel()
+    # Vorhaben 18 (Review Runde 1, N1): die flock-Sperre der GPU, die ``georep search`` nicht
+    # blockierend prüft; ist sie gehalten, sucht es mit BM25. ``None`` = keine Prüfung. Der Pfad
+    # ist rechnerspezifisch und gehört in ``settings.local.toml``, nie in die Defaults.
+    gpu_lock: Path | None = None
+
+    @field_validator("gpu_lock", mode="before")
+    @classmethod
+    def _no_lock(cls, value: object) -> object:
+        return None if value in ("", None) else value
 
     @model_validator(mode="after")
     def _local_unless_allowed(self) -> Ml:
@@ -1995,6 +2010,133 @@ class Procedures(_Strict):
         return self
 
 
+# --- Vorhaben 18: Einbettungen, Ähnlichkeit, Suche (docs/plans/18-einbettungen.md)
+class Bm25(_Strict):
+    """Okapi BM25 der Wortsuche (Fassung ``18-bm25-1``): Sättigung ``k1`` und Längennorm ``b``."""
+
+    k1: float = Field(default=1.2, gt=0)
+    b: float = Field(default=0.75, ge=0, le=1)
+
+
+class Embeddings(_Strict):
+    """Stücke, Dokumentvektoren, Nachbarn und die Suche über sie (Vorhaben 18).
+
+    ``chunk_chars``, ``title_chars`` und ``overlap_chars`` sind die Fassung ``18-stuecke-1``;
+    ``document_chunks`` macht den Dokumentvektor (``18-dokvektor-1``), ``neighbors`` die Zahl der
+    ähnlichen Dokumente. ``rrf_k`` und ``fusion_depth`` sind die Mischung (``18-rrf-1``); sie und
+    ``bm25`` liest nur ``georep search`` und stehen darum nicht im Fingerprint.
+    ``neighbors_package`` ist ein Pfad (nicht im Fingerprint): das Paket mit der Nachbartabelle,
+    das ``bootstrap`` nach ``raw/`` legt, für eine Kette ohne Dokumentvektoren.
+    """
+
+    enabled: bool = False
+    chunk_chars: int = Field(default=1600, ge=1)
+    title_chars: int = Field(default=200, ge=0)
+    overlap_chars: int = Field(default=200, ge=0)
+    document_chunks: int = Field(default=3, ge=1)
+    neighbors: int = Field(default=10, ge=1)
+    bm25: Bm25 = Bm25()
+    rrf_k: int = Field(default=60, ge=0)
+    fusion_depth: int = Field(default=100, ge=1)
+    neighbors_package: Path | None = None
+
+    @model_validator(mode="after")
+    def _a_title_leaves_room_for_the_body(self) -> Embeddings:
+        """Der längste Titel samt Leerzeile lässt dem Rumpf eines Stücks Platz, mehr als die Überlappung."""
+        room = self.chunk_chars - self.title_chars - 2
+        if room < 1 or self.overlap_chars >= room:
+            raise ValueError(
+                f"embeddings: chunk_chars {self.chunk_chars} lässt nach title_chars "
+                f"{self.title_chars} und der Leerzeile {room} Zeichen für den Rumpf; es braucht "
+                f"mindestens eines und mehr als overlap_chars ({self.overlap_chars})"
+            )
+        return self
+
+    @field_validator("neighbors_package", mode="before")
+    @classmethod
+    def _empty_is_none(cls, value: object) -> object:
+        return None if value in ("", None) else value
+
+
+class InstrumentTitle(_Strict):
+    """Ein Muster im Titel (klein), das ein Dokument einem Instrument zuordnet (Vorhaben 17, S1.5)."""
+
+    pattern: str
+    instrument: Literal["anfrage", "antrag"]
+
+    @field_validator("pattern")
+    @classmethod
+    def _pattern_compiles(cls, value: str) -> str:
+        return _compiles([value], "cycles.instrument_titles[].pattern")[0]
+
+
+class Cycles(_Strict):
+    """Rhythmus der Ratsarbeit und bundespolitisches Vokabular (Vorhaben 17, docs/plans/17-zeit.md).
+
+    Stadtneutral sind das Wahljahr, das Muster der Haushaltsanträge, die Wörter der Instrumente und
+    das Lexikon; die Wahltage stehen im Stadtprofil (``elections``, mit Quelle), die Perioden, über
+    die die vorab festgelegten Tests rechnen, im Profil, das sie rechnet (``periods``). Ohne
+    ``enabled`` fehlen die Schritte ``cycles``, ``vocabulary`` und ``cycle_tests``.
+    """
+
+    enabled: bool = False
+    year_start_month: int = Field(default=9, ge=1, le=12)
+    elections: list[date] = []
+    budget_pattern: str = r"haushalts(begleit)?-?antrag"
+    budget_minimum: int = Field(default=5, ge=1)
+    instrument_types: dict[str, Literal["anfrage", "antrag"]] = {}  # Präfix (klein) -> Instrument
+    instrument_titles: list[InstrumentTitle] = []
+    lexicon: str = Field(default="bundespolitik", pattern=r"^[a-z0-9][a-z0-9_-]*$")
+    head_chars: int = Field(default=2000, ge=1)
+    periods: list[str] = []  # Ordner der Profile der Stadt, in zeitlicher Folge
+
+    @field_validator("budget_pattern")
+    @classmethod
+    def _budget_compiles(cls, value: str) -> str:
+        return _compiles([value], "cycles.budget_pattern")[0]
+
+    @field_validator("elections")
+    @classmethod
+    def _elections_ordered(cls, value: list[date]) -> list[date]:
+        if value != sorted(set(value)):
+            raise ValueError("cycles.elections: Wahltage aufsteigend und ohne Doppel")
+        return value
+
+    @field_validator("periods")
+    @classmethod
+    def _periods_are_folders(cls, value: list[str]) -> list[str]:
+        for name in value:
+            _plain_name(name, "cycles.periods")
+        if len(set(value)) != len(value):
+            raise ValueError("cycles.periods: ein Profil steht zweimal")
+        return value
+
+    @model_validator(mode="after")
+    def _tests_need_elections(self) -> Cycles:
+        if self.periods and not self.elections:
+            raise ValueError(
+                "cycles.periods braucht cycles.elections: ohne Wahltag kein Vorwahljahr"
+            )
+        return self
+
+
+class Feeds(_Strict):
+    """Atom-Feed je Wahlbezirk (Vorhaben 17); nur für eine laufende Periode sinnvoll."""
+
+    enabled: bool = False
+    entries: int = Field(default=50, ge=1, le=500)
+    timezone: str = "Europe/Berlin"  # Zeitzone des Vorlagendatums: published um 00:00 Ortszeit
+
+    @field_validator("timezone")
+    @classmethod
+    def _known_zone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError) as error:
+            raise ValueError(f"feeds.timezone {value!r} ist keine bekannte Zeitzone") from error
+        return value
+
+
 # --- Vorhaben 26: Beschlusslage und Antragserfolg (docs/plans/26-beschluesse.md) -----------------
 # Die Klassen, die ein Wert von ``result`` tragen kann, je Stufe (Messdokument § 3.1, vorab
 # festgelegt): ``sache`` ist eine Entscheidung in der Sache und ersetzt jede frühere, ``stand`` ist
@@ -2155,7 +2297,10 @@ class Settings(BaseSettings):
         Majorities()
     )  # Vorhaben 15: Ratsmehrheiten, stadtweit (24, 28 lesen sie)
     procedures: Procedures = Procedures()  # Vorhaben 14: Vorgänge
+    embeddings: Embeddings = Embeddings()  # Vorhaben 18: Einbettungen, Ähnlichkeit, Suche
+    cycles: Cycles = Cycles()  # Vorhaben 17: Rhythmus, Vokabular, Tests über Perioden
     outcomes: Outcomes = Outcomes()  # Vorhaben 26: Beschlusslage und Antragserfolg
+    feeds: Feeds = Feeds()  # Vorhaben 17: Atom-Feed je Wahlbezirk
 
     @property
     def base_profile(self) -> str:
@@ -2348,6 +2493,9 @@ class Settings(BaseSettings):
                 # die offenen Eingaben eines Teillaufs stehen im Stamp des Modellschritts
                 # (``ModelUse``); hier ließen sie jeden Schritt neu laufen (Review 2026-11-23).
                 "ml": True,
+                # Vorhaben 18: der Pfad des Nachbarpakets (sein Inhalt steht im Stamp von
+                # neighbors) und was nur ``georep search`` liest, kein Schritt (Review, N4)
+                "embeddings": {"neighbors_package", "bm25", "rrf_k", "fusion_depth"},
                 # Vorhaben 14 und 26 (Review von 26, N5): die Pakete sind Pfade wie
                 # ``bodies.consultations``; ``bootstrap`` kopiert sie nach ``raw/``, und die Kopie
                 # steht mit ihrem SHA-256 als Eingabe im Stamp von ``references``, ``procedures``

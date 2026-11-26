@@ -56,6 +56,17 @@ k = 0                          # ohne Regression zeigt die Seite keine Sensitivi
 [bodies]
 consultations = ""
 
+# --- Vorhaben 18: Einbettungen, Ähnlichkeit, Suche (docs/plans/18-einbettungen.md) --------------
+[embeddings]
+neighbors_package = ""         # das Nachbarpaket gehört zur Hauptperiode; die Nachbarn dieser Periode rechnet `georep run --models` lokal, auf Pages bleibt die Tabelle leer
+
+# --- Vorhaben 17: Atom-Feed je Wahlbezirk (docs/plans/17-zeit.md, § 3.6) ------------------------
+# Nur die laufende Periode: ein Feed meldet Neues. Der Schritt feeds schreibt
+# site/feeds/wahlbezirk-NN.xml; der Monitor spiegelt sie mit der Seite (deploy/bin/georep-monitor.sh,
+# Schritt 7), GitHub Pages bekommt sie über die Kopie dieser Seite und `georep publish`.
+[feeds]
+enabled = true
+
 # --- Vorhaben 26: Beschlusslage (docs/plans/26-beschluesse.md); der Wortschatz kommt aus dem Stadtprofil
 [outcomes]
 package = "snapshots/duesseldorf-beschluesse/raw/tagesordnungspunkte-2025.parquet"

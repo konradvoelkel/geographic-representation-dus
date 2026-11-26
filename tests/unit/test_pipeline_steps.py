@@ -23,7 +23,9 @@ import pytest
 import georep.enrich
 from georep import __version__
 from georep.analysis.cosponsors import COSPONSORS_SCHEMA_VERSION
+from georep.analysis.cycles import CYCLE_TESTS_SCHEMA_VERSION, CYCLES_SCHEMA_VERSION
 from georep.analysis.functions import FUNCTIONS_SCHEMA_VERSION
+from georep.analysis.lexicon import VOCABULARY_SCHEMA_VERSION
 from georep.analysis.outcomes import OUTCOMES_SCHEMA_VERSION
 from georep.council import COUNCIL_SCHEMA_VERSION
 from georep.enrich.procedures import PROCEDURES_SCHEMA_VERSION
@@ -43,7 +45,9 @@ from georep.prep.bodies import BODIES_SCHEMA_VERSION
 from georep.prep.context import CONTEXT_SCHEMA_VERSION
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
+from georep.report.feeds import FEEDS_SCHEMA_VERSION
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION, stop_words_digest
+from georep.search.vectors import EMBEDDINGS_SCHEMA_VERSION, NEIGHBORS_SCHEMA_VERSION
 from georep.settings import Settings
 from georep.stores import RAW_TEXT_SCHEMA_VERSION
 from tests.fakes import FakeSession
@@ -81,6 +85,14 @@ VERSIONS = {
     # Vorhaben 14: zwei Schritte eines Beitrags (F2), beide aus dem Modul, das die Dateien schreibt
     "references": PROCEDURES_SCHEMA_VERSION,
     "procedures": PROCEDURES_SCHEMA_VERSION,
+    # Vorhaben 18: zwei Schritte eines Beitrags (``georep.enrich.embeddings``)
+    "embeddings": EMBEDDINGS_SCHEMA_VERSION,
+    "neighbors": NEIGHBORS_SCHEMA_VERSION,
+    # Vorhaben 17: vier Schritte eines Beitrags (``georep.enrich.cycles``)
+    "cycles": CYCLES_SCHEMA_VERSION,
+    "vocabulary": VOCABULARY_SCHEMA_VERSION,
+    "cycle_tests": CYCLE_TESTS_SCHEMA_VERSION,
+    "feeds": FEEDS_SCHEMA_VERSION,
     # Vorhaben 26: der Beratungsverlauf und die Beschlusslage, ein Modul für drei Dateien
     "council_results": OUTCOMES_SCHEMA_VERSION,
     "outcomes": OUTCOMES_SCHEMA_VERSION,
@@ -94,7 +106,12 @@ def steps(default_settings: Settings, tmp_path: Path) -> dict[str, int]:
     council = default_settings.council.model_copy(update={"enabled": True})
     # Vorhaben 14: die Schritte eines Beitrags stehen nur mit ihrem Schalter im Register
     procedures = default_settings.procedures.model_copy(update={"enabled": True})
-    settings = default_settings.model_copy(update={"council": council, "procedures": procedures})
+    # Vorhaben 17: die Tests über Perioden und die Feeds stehen nur mit ihren Schaltern im Register
+    cycles = default_settings.cycles.model_copy(update={"periods": ["2014-2020", "duesseldorf"]})
+    feeds = default_settings.feeds.model_copy(update={"enabled": True})
+    settings = default_settings.model_copy(
+        update={"council": council, "procedures": procedures, "cycles": cycles, "feeds": feeds}
+    )
     return {s.name: s.schema_version for s in build_steps(settings, layout)}
 
 
@@ -196,15 +213,23 @@ def test_the_topics_step_carries_the_hash_of_its_stop_word_list(
     assert stop_words_digest("gibtsnicht", folder) == ""
 
 
-def test_only_the_report_and_topics_steps_carry_an_extra(
+def test_only_the_report_topics_and_vocabulary_steps_carry_an_extra(
     default_settings: Settings, tmp_path: Path
 ) -> None:
-    """Der Zusatz ist die Ausnahme, nicht die Regel: ein alter Stamp bleibt sonst gültig."""
+    """Der Zusatz ist die Ausnahme, nicht die Regel: ein alter Stamp bleibt sonst gültig.
+
+    ``vocabulary`` (Vorhaben 17) trägt wie ``topics`` eine Paketdatei, die in keinem Eingabe-Hash
+    steht: Name, Version und Prüfsumme des Lexikons.
+    """
     layout = _layout(tmp_path)
     found = {s.name: s.extra for s in build_steps(default_settings, layout)}
     assert found["report"] == report_fingerprint(default_settings)
     assert len(found["report"]) == 16
-    assert sorted(name for name, extra in found.items() if extra) == ["report", "topics"]
+    assert sorted(name for name, extra in found.items() if extra) == [
+        "report",
+        "topics",
+        "vocabulary",
+    ]
 
 
 def test_a_changed_extra_makes_the_stamp_stale(default_settings: Settings, tmp_path: Path) -> None:
@@ -298,10 +323,11 @@ def test_the_stamp_version_is_the_version_of_the_file_it_stands_next_to(
     # Heute 19 im Kern: texts, raw_texts, voters, context, streets, pois, dictionary, corpus,
     # bodies, topics, committees, index, timeline, results, metrics, body_hits, weights, controls,
     # parties; dazu je ein Parquet-Schritt der Beiträge aus dem Register (Vorhaben 15: zwei).
+    # Ohne ``--models`` läuft ein Modellschritt nicht (Vorhaben 18: ``embeddings``), seine Datei fehlt
     contributed = [
         s
         for s in georep.enrich.contributed_steps(default_settings, mini_run, FakeSession({}))
-        if s.outputs[0].suffix == ".parquet"
+        if s.outputs[0].suffix == ".parquet" and s.models is None
     ]
     assert checked == 19 + len(contributed), checked
 
@@ -355,6 +381,10 @@ SCHEMA_CONSTANTS_WITHOUT_A_STEP = {
     # Vorhaben 14: wie die Beratungsfolge die Version der Datei, die ``georep pack --attachments``
     # schreibt; die Schritte ``references`` und ``procedures`` lesen sie nur.
     "georep.pack.ATTACHMENTS_SCHEMA_VERSION",
+    # Vorhaben 18: die Wortmatrix, die ``georep search`` beim ersten Aufruf baut und neben die
+    # Vektoren legt. Sie gehört zu einem Befehl wie die Beratungsfolge oben; ihr Schlüssel (Fassung,
+    # Korpus, Rohtextstore) steht in ihren Metadaten, und der Befehl baut sie neu, wenn er abweicht.
+    "georep.search.query.WORD_INDEX_SCHEMA_VERSION",
     # Vorhaben 26: die Version der Tabelle „Paper × Tagesordnungspunkt", die ``georep pack
     # --outcomes`` schreibt; wie bei Punkt 58 gehört sie zu einem Befehl, und der Schritt, der das
     # Paket liest, nennt die Version seiner eigenen Ausgabe.

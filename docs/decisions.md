@@ -3131,6 +3131,291 @@ der Wahl, gegen § 3.3). `PaperRecord` um die Anlagen erweitern (ein Schemasprun
 Golden-Master-Risiko; das Paket genügt, Synergie § 4); für die laufende Periode ist das der Weg
 danach, denn das Paket veraltet mit jedem Tag (Frage 9.1).
 
+## 77. Einbettungen über Stücke, ähnliche Dokumente als Paket, Suche mit der Einbettung als Vorgabe (Vorhaben 18, 2026-11-24)
+
+Vorhaben 18 der Vorverarbeitung (`docs/plans/18-einbettungen.md`, § 5 bis § 7 und § 10), Stufe 2.
+Die Messung hat zwei Fragen gegen zwei KI-Kodierer entschieden: die Suche nach Bedeutung schlägt die
+Wortsuche (nDCG@10 an 50 Fragen: Einbettung 0,883, Mischung 0,846, BM25 0,709), und die ähnlichen
+Dokumente tragen (Präzision@5 0,832 an 50 Ankern, TF-IDF 0,652 verfehlt die Schwelle). Gebaut ist
+genau das gemessene Verfahren; Punkt 45c (Einbettungen verworfen, Oktober) ist damit für Suche und
+Nachbarn überholt, für Cluster nicht (§ 3.5 der Messung: nicht bauen).
+
+**Was gebaut ist.** Der Beitrag `18-einbettungen` (`georep.enrich.embeddings`) hinter 15 und 14,
+mit zwei Schritten hinter `embeddings.enabled` (beide Stadtprofile, die Perioden erben):
+
+- `embeddings` ist ein **Schritt mit Modell** (F5, Punkt 72) und läuft nur mit
+  `georep run --models`. Je PDF-Datei mit Rohtext eine Einheit unter der kleinsten Korpus-ID
+  (`search.units`), der Rohtext mit den Formfeeds der Seiten zurück (`restore_form_feeds`), wie
+  die Messdatei ihn trug. Stücke nach `18-stuecke-1` (`prep.chunks.split_chunks`, das `zerteile`
+  der Messung mit denselben Schleifen und der Stelle jedes Stücks im Rohtext), Präfix aus
+  `[ml.embedding]`, `embed_texts` über den Modellcache. Nur lokal geschrieben:
+  `processed/einbettungen_stuecke.parquet` und `processed/einbettungen_dokumente.parquet`
+  (Mittel der ersten drei normierten Stückvektoren, normiert; eine Zeile je Korpus-ID mit
+  Rohtext). Eine Datei, deren erste drei Stücke nicht alle da sind (Teillauf, Abweisung), bekommt
+  keinen Dokumentvektor: das Mittel über die übrigen wäre ein anderer Vektor.
+- `neighbors` (offline) schreibt `processed/aehnliche_dokumente.parquet`, zehn Nachbarn je
+  Korpus-ID, nie die eigene Datei. Der Rang folgt der ungerundeten Ähnlichkeit (float32);
+  Gleichstände der ungerundeten Ähnlichkeit stehen nach ID, auch an der Grenze zum zehnten Platz
+  (`search.vectors._top` nimmt alle Werte gleich dem zehnten und sortiert sie). Die Spalte
+  `aehnlichkeit` ist auf vier Stellen gerundet; gleich gerundete Nachbarn stehen darum nicht immer
+  nach ID (in der Hauptperiode 647 von 1 300 solchen Paaren). Ohne
+  Dokumentvektoren nimmt er die Kopie des Pakets, die `bootstrap` nach
+  `raw/aehnliche_dokumente_paket.parquet` legt, ohne beides schreibt er eine leere Tabelle mit
+  demselben Schema. Beide Eingaben sind **optional** (`Step.optional`): so steht ihr Hash im Stamp,
+  und ein Modellschritt, der ohne `--models` nicht läuft, bricht die Kette nicht ab.
+- `georep pack --neighbors` packt nur die Nachbartabelle (`snapshots/duesseldorf-aehnlich/`,
+  905 998 Bytes), und nur, wenn sie aus den Dokumentvektoren daneben stammt (deren Hash im Stamp
+  von `neighbors`) und diese aus einem vollständigen Lauf (`open` 0 im Stamp von `embeddings`);
+  das README nennt Modell, Digest, Prompt-Version und Optionen. `bootstrap` übernimmt das Paket
+  nur, wenn jede ID und jeder Nachbar ein Paper des Datensatzes ist; die Perioden nehmen den
+  Schlüssel `neighbors_package` zurück.
+- `georep search "<frage>" [--method embedding|hybrid|bm25] [--n 10]` (`search/query.py`,
+  `search/command.py`), lokal; ohne Server oder ohne Stückvektoren BM25 mit einer Zeile dazu.
+
+**Wo die Nachbarn herkommen.** Ein Paket gibt es nur für die Hauptperiode; der Vergleich
+(`duesseldorf-vergleich`) rechnet in ihrem Ordner und erbt es. In 2014 bis 2020, der laufenden
+Periode und Mönchengladbach entsteht die Tabelle nur lokal aus den Vektoren eines Laufs mit
+`--models`; auf Pages und in CI bleibt sie dort leer. Eine Datenwurzel von vor diesem Stand bekommt
+die Paketkopie nur mit einem `georep bootstrap` (ohne `--force`). Ohne ihn schreibt `neighbors` auch
+in der Hauptperiode still eine leere Tabelle, wo es keine Dokumentvektoren gibt; nur die Laufzeile
+sagt es („keine Dokumentvektoren und kein Paket: leere Tabelle"). Kein Schritt der Seite liest die
+Tabelle vor Stufe 3, darum ist das kein Abbruch.
+
+**Die Zahl der IDs ohne Rohtext steht in der Laufzeile** von `embeddings` („… 76 ohne Rohtext …"),
+nicht im Stamp. Der Stamp trägt außer der Kennung des Modells kein Feld, das `georep status`
+zeigt, und `extra` ginge in den Vergleich des Stamps ein (er wäre nach jedem Lauf veraltet); sie
+dort zu zeigen, bräuchte eine Änderung am Kern (Review Runde 1, N9).
+
+**Gegen die Messung geprüft** (2026-11-24, Hauptperiode): alle 47 407 Stücktexte samt Präfix und
+Titel sind die des Messskripts, darum kamen alle 47 312 verschiedenen aus dem Modellcache (0 neu
+gerechnet); alle 190 320 Zeilen der Nachbartabelle (Nachbar und Ähnlichkeit) sind die der Probe
+`groessen/aehnliche_dokumente.parquet`; die Rangfolgen der 50 Suchfragen sind für Einbettung,
+Mischung und BM25 je 50 von 50 gleich `rangfolgen.parquet`. Ein `slow`-Test hält die Zahl der
+Stücke und die BM25-Rangfolgen aus den Paketen fest (`tests/unit/test_search_slow.py`), für die
+Einbettung nur Invarianten (das Paket in `test_data_packages.py`): die GPU rundet je Rechner anders.
+
+**Was das Modell sieht, steht in der Prompt-Version.** Die Präfixe `search_document: ` und
+`search_query: ` gehören zum Modell und stehen in `[ml.embedding]`, also außerhalb des
+Fingerprints (Punkt 72). Damit eine Änderung dort die Kennung im Stamp nicht verfehlt, hängt
+`chunk_prompt` an `18-stuecke-1` einen Hash, sobald Präfix oder Zuschnitt von der gemessenen Fassung
+abweichen (ebenso `query_prompt` an `18-anfrage-1`). Mit den gemessenen Werten trifft ein Lauf die
+Vektoren der Messung; der Cache-Schlüssel hängt ohnehin am SHA-256 des Texts samt Präfix.
+
+**Der Stemmer ist der klassische.** Die Messung hat den Snowball-Stemmer für Deutsch vor Snowball
+3.0 benutzt; 3.0 hat ihn 2023 bis 2025 geändert (ae/oe/ue, -erin, -ln, -et, Apostroph). Die
+Prüfliste kommt darum aus dem Datenrepositorium von snowballstem.org am letzten Stand vor der
+Änderung (Commit `8d35251e4561`), einmal abgerufen am 2026-11-24 (§ 10, Punkt 4 des
+Messdokuments); `search.stem.stem` trifft alle 35 033 Paare, im Repo liegt jedes 17.
+(`tests/fixtures/snowball/`, BSD-3-Clause, mit Prüfsummen). Eine eigene Umsetzung statt
+`snowballstemmer` (Frage 9.4), wie `krippendorff` in F4.
+
+**Ein Modellschritt zählt in den Tests wie ein Netzschritt.** Zehn bestehende Testdateien ließen
+„alle Schritte außer den Netzschritten" laufen oder zählten sie und verlangten „ausgeführt";
+`embeddings` ist ohne `--models` übersprungen. Sie nehmen ihn jetzt aus wie einen Netzschritt
+(`s.models is not None`).
+
+**Geprüft, dass die Seite gleich bleibt.** A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt
+66 (`ab/ab_bau.sh`, `ab/ab_vergleich.py`), `main` (`v0.25.0`) gegen diesen Branch, je in eigener
+Datenwurzel und mit `POLARS_MAX_THREADS=4`, `OMP_NUM_THREADS=2`: unter `site/` 194 Dateien in beiden,
+0 Abweichungen. Auf der B-Seite kam die Nachbartabelle der Hauptperiode (und des Vergleichs) aus dem
+Paket, die übrigen Profile schrieben eine leere; kein Schritt der Seite liest sie bis Stufe 3.
+
+**Laufzeit** (2026-11-24, Worktree, `nice -n 10`, Lastmittel 11 bis 18): `embeddings` in der
+Hauptperiode 7,4 s ohne neue Einbettung (alle aus dem Cache), `neighbors` 4,2 s. Die übrigen Profile unter der GPU-Sperre, je ein Lauf `georep run --models
+embeddings neighbors`, das ollama-Log mit „offloaded 13/13 layers to GPU", 1,5 GB Grafikspeicher:
+Mönchengladbach 2 931 Stücke in 49 s (650 Dateien), die laufende Periode 9 590 neue Stücke in
+150 s, 2014 bis 2020 59 750 neue in 908 s, je rund 65 Stücke je Sekunde unter einem Lastmittel
+von 13 bis 31 (ohne Fremdlast rund 90, Messdokument § 3.3). Zusammen rund 19 Minuten unter der
+Sperre, davon rund 18 GPU-Minuten Rechnung; die Hochrechnung der Messung lag bei 17.
+
+**Bekannt: Zeichensalat sprengt das Fenster.** In 2014 bis 2020 hat ein Dokument
+(`00330474.pdf`, eine defekte Schriftkodierung mit Steuerzeichen statt Buchstaben) neun Stücke über
+512 Token, und ollama 0.24.0 weist sie trotz `truncate` ab (400, „the input length exceeds the
+context length"). Die Annahme der Zerteilung, mindestens 3,47 Zeichen je Token, gilt für solchen
+Text nicht. Nach F5 sind die neun abgewiesen und erledigt (der Schritt sagt „aktuell, 9 Eingaben
+abgewiesen"); das Dokument hat keinen Dokumentvektor und keine Nachbarn, 21 713 von 21 714 Dateien
+haben einen. In der Hauptperiode, der laufenden Periode und Mönchengladbach kommt es nicht vor.
+`georep search` braucht beim ersten Aufruf 9,7 s für die Wortmatrix (danach 2,8 s zum Laden),
+die Einbettung 0,64 s je Frage aus dem Cache.
+
+**Abweichungen vom Bauplan** (§ 6 und § 10 des Messdokuments): `zerteile` heißt `split_chunks`
+(die Namen im Paket sind englisch) und hat dieselben Schleifen; geprüft gegen eine wörtliche Kopie
+als Orakel (`tests/property/oracle_chunks.py`, hypothesis) und über die Hauptperiode. Die
+Dokumentvektoren tragen zusätzlich `datei`, damit `neighbors` die Einheiten ohne den Korpus bildet.
+Die Paketkopie in `raw/` heißt `aehnliche_dokumente_paket.parquet` (siehe unten). Die
+Settings-Klassen heißen `Bm25` und `Embeddings` wie die übrigen Blöcke. Mönchengladbach schaltet
+die Schritte auch ein (Prüfstein der Stadtneutralität, § 6 „Profile"); ohne Paket bleibt seine
+Nachbartabelle auf Pages leer. Die Wortmatrix des Befehls ist `processed/suche_wortmatrix.parquet`,
+eine Zeile je Einheit mit Stämmen und Anzahlen.
+
+**Was das Review (Runde 1, 2026-11-24) geändert hat**, je ein Commit: `bm25`, `rrf_k` und
+`fusion_depth` stehen nicht mehr im Fingerprint, denn nur `georep search` liest sie (N4); der
+Client des Einbetters entsteht erst bei Bedarf (`DeferredEmbedder`), sodass ein verweigertes
+`ml.base_url` nur `embeddings` mit `--models` scheitern lässt und die Suche auf BM25 zurückfällt
+(N5); die Suche prüft neben Modell und Digest auch Prompt-Version und Fenster der Stücke (N2) und
+nimmt die GPU-Sperre aus `ml.gpu_lock` nicht blockierend, sonst BM25 (N1; die Vorgabe ist leer,
+der Pfad gehört in `settings.local.toml`); ohne Korpus nennt sie den Handgriff statt `[Errno 2]`,
+und die Hinweiszeile nennt die Zahl des gewählten Verfahrens und dass sie für die Hauptperiode gilt
+(N6). Dazu die Wortlaute oben zu Gleichständen (N3), Herkunft des Pakets (K1) und Stamp (N9).
+
+**Verworfen.** Vektoren ins Repo (Dokumentvektoren 7,5 bis 25,7 MiB, Stückvektoren 64 MiB für die
+Hauptperiode allein; die Seite braucht nur die IDs, und aus Einbettungen lässt sich Text teilweise
+zurückgewinnen, Fragen 9.1 und 9.7). Die Wortmatrix als Schritt der Kette (sie kostete jede Kette,
+auch auf Pages, 6 bis 10 s je Profil, und nur der lokale Befehl liest sie; sie liegt darum mit ihrem
+Schlüssel neben den Vektoren). Die Mischung als Vorgabe der Suche (bei Stichwörtern im Amtswortlaut
+war sie am besten, insgesamt die Einbettung; eine andere Vorgabe wäre eine neue Messung mit neuen
+Fragen, Frage 9.12). Der Stemmer von Snowball 3.0 (eine neue Fassung der Wortsuche, nicht gemessen).
+Die Paketkopie unter demselben Namen wie die Ausgabe (`georep steps` zeigte dann
+`aehnliche_dokumente.parquet -> aehnliche_dokumente.parquet`). Die Tempo-Probe vor dem ersten
+Stapel (Frage 9.5) in diesem Schritt: sie gehört nach F5 (`docs/todo.md`, Punkt 11 d); im Bau ist
+das Tempo von Hand geprüft. Cluster über Einbettungen (Messung § 3.5).
+
+## 78. Zeit und Neuigkeiten: Wahljahre statt Monate, ein Lexikon als Paketdatei, Spannen auf dem Rohtext, Feeds aus den Daten (Vorhaben 17, 2026-11-24)
+
+Vorhaben 17 der Vorverarbeitung (`docs/plans/17-zeit.md`, § 5 bis § 8 und § 10), Stufe 2. Die
+Messung hat drei Hypothesen vor dem ersten Lauf festgelegt (Commit `9c7b3d6`, 2026-11-23 19:45),
+das Lexikon bundespolitischer Begriffe an 100 Treffern kodieren lassen (94 richtig, α 0,957 und
+0,928) und 41 Feeds gegen RFC 4287 geprüft. Gebaut ist genau das, als zweiter Beitrag nach Punkt 69
+mit der Fabrik aus Punkt 74; alle vier Schritte sind offline und fragen den Transport nie.
+
+**Was gebaut ist.** Der Beitrag `17-zeit` (`georep.enrich.cycles`, die Rechnung rein in
+`analysis/cycles.py`, `analysis/lexicon.py`, `analysis/hypotheses.py` und `report/feeds.py`):
+
+- `cycles` schreibt `processed/zeit_monate.parquet` (Dokumente je Monat, Gremienart, Urheberklasse
+  und Instrument, mit Wahljahr, Dokumenten mit Text und Haushaltsanträgen; jede Kombination, die
+  vorkommt, steht in jedem Monat) und `processed/haushaltsmonate.parquet`. Je Monat summiert die
+  Tabelle zur Monatsreihe aus `timeline`, sonst bricht der Schritt ab.
+- `vocabulary` schreibt `processed/dokumente_bundesvokabular.parquet` (eine Zeile je Korpus-ID, die
+  Kategorien in Titel und Text und in Titel und den ersten 2 000 Zeichen, die Lexikonversion) und
+  die Treffer im Text als Spannen nach F3 (`processed/bundesvokabular_spannen.parquet`).
+- `cycle_tests` schreibt `processed/zeit_hypothesen.parquet`: die drei Haupttests mit Holm und ihre
+  Sensitivitäten aus § 8 als eigene Zeilen.
+- `feeds` schreibt je Wahlbezirk `site/feeds/wahlbezirk-NN.xml` und als erste Ausgabe die Liste
+  `processed/wahlbezirke_feeds.parquet`; Feeds von Wahlbezirken, die es nicht mehr gibt, nimmt er weg.
+
+Gegen das Messskript `docs/plans/17-zeit-messung.py` auf den Läufen vom 2026-11-24: jede Zahl aus
+§ 3.1 bis § 3.3 und § 8.5 gleich, auf die gedruckte Stelle (H17.1 −4,9 %, p = 0,847; H17.2
++83,1 %, p = 1/27 720, Holm 0,0001; H17.3 5,98 / 3,16 / 3,47 %, p = 0,987; alle 25 Zeilen), und
+die Feeds der laufenden Periode bis auf die Version im Kopf bytegleich mit dem Prototyp des
+Messskripts, 40 von 41; der Feed von Wahlbezirk 22 nennt sieben der neuesten 50 Dokumente nicht
+mehr, die nur über „schulweg" trafen, einen Begriff, den die Seite zählt, aber nicht zeigt
+(`search.hide_in_display`, Review N1). Ein
+slow-Test rechnet die Zahlen und die Präzision 94 von 100 aus `validierung/17-zeit/labels.csv` gegen
+die gebaute Ausgabe nach (`tests/golden/test_cycles_numbers.py`).
+
+**Wahljahr und Vorwahljahr aus Periode und Wahltagen, nicht aus einer Liste.** Das Messskript nannte
+die vollständigen Wahljahre je Datensatz von Hand. Gebaut ist die Regel dahinter: ein Wahljahr ist
+vollständig, wenn die Periode (`period.start` bis `period.end`, offen bis zum letzten Datum des
+Korpus) es abdeckt und nur sein erster Monat um die Tage vor dem Beginn gekürzt ist; die
+Hauptperiode beginnt am 13. September 2020 und hat das Wahljahr 2020/21, Juni bis August 2014 und
+der 1. bis 12. September 2020 der alten Periode gehören zu keinem. Sie ergibt dieselben zwölf
+Wahljahre. Das Vorwahljahr einer Wahl ist das letzte vollständige Wahljahr, das vor dem Wahltag
+endet, wenn es unmittelbar vor dem Wahljahr der Wahl liegt; die Wahltage stehen in
+`cycles.elections` im Stadtprofil mit Quelle (Synergien 2026-11, Konflikt 16: `period.election` ist
+die Wahl für Nenner und Zuschnitt). Das Anlaufjahr ist das erste vollständige Wahljahr einer
+Periode; H17.1 nimmt die Perioden, die ein Vorwahljahr haben.
+
+**H17.2 über Zellsummen.** Das Messskript zentrierte je Zuordnung die Indikatormatrix doppelt.
+Weil jede Zeile genau eine Eins trägt, ist der Nenner Σ TT² für jede Anordnung derselben Multimenge
+gleich (er hängt nur an der Zahl der Jahre je Haushaltsmonat), und der Zähler Σ TT·YT ist die Summe
+der zentrierten Zellen der Zuordnung, weil YT doppelt zentriert ist. So rechnet der Test die 27 720
+Zuordnungen in einem Schritt; ein hypothesis-Test hält ihn gegen die wörtliche Rechnung des
+Messskripts fest.
+
+**Der Kern der Hypothesentabellen** (Synergien 2026-11, § 1; nach dem Review vom 2026-11-24, K2
+und N7, so festgelegt, wie 22 ihn übernimmt): `hypothese`, `p`, `p_holm`, `ergebnis`, `n`,
+`festgelegt`, Zusatzspalten dahinter. **Die Familie sind die Zeilen mit `p_holm`**: dort sind
+Kennung, `p` in [0, 1], `n` und `festgelegt` Pflicht, jede Kennung steht einmal darin, und `p_holm`
+und `ergebnis` sind Holm über die Familie, wie sie in der Tabelle steht, bei der vorab festgelegten
+Familiengröße `m` (`check_hypotheses` rechnet nach). Fehlt einer festgelegten Hypothese die
+Eingabe, steht sie mit leerem `p`, `p_holm` und `ergebnis` außerhalb der Familie und zählt für Holm
+trotzdem mit: `holm`, `family` und `check_hypotheses` nehmen `m` (Vorgabe die Zahl der
+Familienzeilen, kleiner ist ein Vertragsbruch), und die fehlende Hypothese wirkt wie eine mit p = 1
+am Ende der Folge (Supervisor, 2026-11-26, der Fall von 22; bei 17 sind es drei Familienzeilen und
+m = 3). Außerhalb -- Sensitivität, Robustheit, explorativ, beschreibend -- stehen `p_holm` und
+`ergebnis` leer, damit niemand eine solche Zeile als bestätigt liest, und `p`, `n`, `festgelegt` und
+die Kennung dürfen leer sein (22 trägt Robustheit ohne p und Paare ohne Kennung). Eindeutig ist
+eine Zeile über einen Schlüssel, den der Aufrufer nennt (`key`, Vorgabe die Kennung). Die Schwelle
+ist ein Parameter: `strict=False` verwirft bei `p <= alpha / (m - j + 1)` (17), `strict=True` bei
+`<` (22, „p_Holm < 0,05"). Entschieden wird nach Holms Schrittregel, nicht über den Vergleich des
+angepassten Werts mit alpha: beides ist mathematisch gleich, in Gleitkommazahlen nicht (m = 11,
+p = 0,05/11 gibt 11 · p = 0,05000000000000001); ein hypothesis-Orakel hält die Schrittregel fest.
+Die Tabelle von `feat/22-bedarf` (32 Zeilen) geht so durch `check_hypotheses`
+(`tests/fixtures/hypotheses/bedarf_hypothesen_22.json`). `vorläufig` heißt: Holm hätte
+entschieden, aber das Maß ist nicht validiert; H17.3 ist es, solange `analysis.lexicon.VALIDATED`
+für die Lexikonversion keine Präzision von mindestens 0,9 nennt.
+
+**Das Lexikon als Paketdatei, Version 1 unverändert.** `src/georep/lexika/bundespolitik.toml` hat
+denselben Blob wie `docs/plans/17-zeit-lexikon.toml` im Commit der Festlegung; ein Test hält den
+SHA-256 gleich, ein anderer die bekannten Fehler von Version 1 fest (Energiesicherungsstelle,
+genderneutrale Toiletten, eine Webadresse, ukrainische Musik). Name, Version und Hash stehen im
+Stamp von `vocabulary` und `cycle_tests`; eine Version 2 bräuchte eine neue Stichprobe (Frage 9.16).
+Jedes Muster wird beim Laden mit Python `re` und mit Polars übersetzt: Polars zählt die Dokumente,
+Python findet die Stellen, und ein Muster, das nur eines kann (Lookbehind), wäre still verschieden.
+`pyproject.toml` bleibt, wie es ist: `uv_build` nimmt die Datei ins Rad.
+
+**Spannen auf dem Rohtext** (Konflikt 1, Punkt 74). Gesucht wird wie gemessen im
+kleingeschriebenen Text; `flatten_with_offsets` macht eine Stelle dort zu einer im Rohtext, mit Groß-
+und Kleinschreibung und einem Zeilenumbruch, wo das Wort über eine Zeile lief. `extractor` nennt den
+Rohtext und die Lexikonversion, `section` bleibt leer, bis Vorhaben 11 die Abschnitte bringt. Ein
+Treffer im Titel ist keine Stelle im Text und keine Spanne. Ein Dokument ohne Rohtext, oder mit einem,
+der nicht zu seinem Text plättet, hat keine Spannen und zählt in der Meldung des Schritts; seine
+Kategorien hat es trotzdem. Hauptperiode: 6 506 Spannen in 1 997 Dokumenten (36 über einen Zeilenumbruch), ohne Rohtext nur das
+verschlüsselte `00403713.pdf` (Punkt 73); 2014 bis 2020: 6 466 in 1 512 Dokumenten, ohne Rohtext nur
+`61/ 141/2016` (`00278070.pdf`), eines der 15 PDFs, die pypdf seit 6.21 an einer Schutzgrenze
+abweist und deren Text der Textstore aus pypdf 6.20.0 behält (Punkte 66 und 73); laufende Periode
+555, Mönchengladbach 407 (dort tragen 81 der 161 Dokumente mit Treffer ihn nur im Titel).
+
+**`cycle_tests` im Profil `duesseldorf-vergleich`** (Konflikt 13). Die Tests lesen die Ausgaben von
+drei Perioden; das Profil, das schon `compare` über zwei rechnet und auf Pages die Hauptseite
+zuletzt baut, nennt sie (`cycles.periods`). Fehlt eine Periode, bricht `run` mit dem Pfad der
+Datei ab, wie bei `compare`. Damit muss `.github/workflows/pages.yml` die laufende Periode **vor**
+`duesseldorf-vergleich` rechnen; die Änderung macht der Supervisor (das gh-Token hat keinen
+`workflow`-Scope). Die Perioden tragen Dateien gleichen Namens; seit Punkt 76
+(`pipeline.input_key`) stehen gleichnamige Eingaben mit ihrem Pfad im Stamp, und eine Änderung in
+jeder Periode macht den Schritt veraltet (ein Test ändert eine andere Periode und sieht das).
+
+**Feeds aus den Daten.** `feed/id` ist `urn:uuid:` aus Stadt, Ordner und Wahlbezirk, `feed/updated`
+das jüngste `updated` der Einträge und nie die Laufzeit, `entry/updated` OParls `modified` in der
+Zone des Profils, nie vor dem Vorlagendatum (00:00 Ortszeit, `feeds.timezone`); eine Zeit ohne Zone
+gilt in dieser Zone (Review N4), und sortiert und verglichen wird als Zeitpunkt, nicht als Text
+(N3). Dieselben Daten geben dieselben Bytes, ein Lauf ohne neues Dokument schreibt keinen Feed neu.
+Jeder Wahlbezirk des Wörterbuchs hat einen Feed, auch ohne Treffer: dann leer, mit dem Stand der
+Daten (letztes Vorlagendatum, 00:00 Ortszeit) als `updated`; weg kommt nur der Feed eines Bezirks,
+den das Wörterbuch nicht mehr kennt (N2). Ein Feed nennt nur Dokumente, die die Seite zeigt: ohne
+die Begriffe aus `search.hide_in_display`, die zählen, aber kein Dokument zeigen (N1). Kein `category` und kein `rel="self"` (Fragen 27 und
+28, Annahme). Ein Titel verliert nur, was XML 1.0 verbietet. Die Feeds sind keine Ausgaben des
+Registers (ihre Zahl kennt der Schritt erst beim Lauf); die Liste ist es. `atom_problems` prüft jeden
+Feed beim Schreiben ohne Netz und ohne lxml (normative Regeln, Form nach Anhang B, Projektregeln);
+gegen das RELAX-NG-Schema aus RFC 4287 sind die gebauten Feeds einmal mit lxml des System-Pythons
+geprüft (41 von 41 gültig, die Gegenprobe des Messdokuments fällt durch; 2026-11-24). lxml kommt nicht in die Entwicklungsgruppe (Frage 9.8): die Tests brauchen es nicht.
+
+**Abweichungen vom Bauplan** (§ 6 des Messdokuments). `zeit_monate` trägt zusätzlich das
+`instrument` im Schlüssel: S1.5 ist vorab festgelegt und braucht Anfragen und Anträge je Wahljahr;
+die Regel (Dokumentart, sonst Titelwort) steht in `defaults.toml`, die Arten `zAnfrage` und `zAntrag`
+im Stadtprofil. `zeit_hypothesen` trägt den Kern, dazu `rolle`, `effekt_unten`, `effekt_oben`
+(90 %, H17.1), `einheit`, `p_randomisierung`, `zuordnungen` und `anteile` (gepoolt je Periode,
+H17.3); die beschreibenden S1.6 und S2.3 sind keine Tests und stehen nicht darin, die Unterseite
+rechnet sie aus `zeit_monate`. Neu sind `cycles.head_chars` (S3.1), `cycles.instrument_types` und
+`instrument_titles` (S1.5) und `feeds.timezone`; `feeds` schreibt zusätzlich die Liste
+`wahlbezirke_feeds.parquet` (je Wahlbezirk Datei, Einträge, Dokumente, neue der letzten 30 Tage,
+Stand, Bytes), die Stufe 3 für die Linkliste liest.
+
+**Laufzeit** am 2026-11-24 unter Fremdlast (Lastmittel 18 bis 38, `nice -n 10`, Polars auf vier
+Threads): `cycles` 0,1 bis 0,6 s, `vocabulary` 0,4 s (Mönchengladbach) bis 7,2 s (2014 bis 2020),
+`cycle_tests` 0,9 s, `feeds` 0,7 s.
+
+**Verworfen.** Zwei Beiträge `cycles` und `feeds` (Synergien 2026-11, § 2.1: ein Beitrag je
+Vorhaben); `cycle_tests` im Hauptprofil (der erste `georep run` auf Pages und der Lauf des Monitors
+brächen ab, solange die anderen Perioden fehlen); ein eigenes Profil nur für die Tests (ein drittes
+Profil im Ordner der Hauptperiode mit eigenem Fingerprint: jeder Wechsel rechnete die Kette neu, und
+die Hauptseite käme von dem, das zuletzt lief); die Wahljahre je Datensatz als Liste im Profil
+(die Regel ergibt sie aus der Periode); das Instrument für S1.5 aus `dokumente_funktion` von
+Vorhaben 15 (validiert, aber nicht die vorab festgelegte Regel; S1.5 bleibt „nicht deutbar", § 3.1);
+S3.5 „ohne Migration" in der Tabelle (nachträglich und an eine Kategorie des Lexikons gebunden; die
+Unterseite kann es aus den Spalten rechnen); eine Datei je Feed als Ausgabe des Schritts (die
+Wahlbezirke kennt erst das Wörterbuch); lxml für den Test des Schemas.
+
 ## NN. Die Beschlusslage ist die letzte Entscheidung in der Sache; der Prüfauftrag bleibt eine Spalte (Vorhaben 26, 2026-11-24)
 
 Vorhaben 26 der Vorverarbeitung (`docs/plans/26-beschluesse.md`, § 5, § 6 und § 10), Stufe 2. Die

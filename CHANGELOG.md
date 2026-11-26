@@ -2,6 +2,35 @@
 
 Eine Zeile pro Änderung aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.27.0 (2026-11-26), Zeit und Neuigkeiten
+
+- **Zyklen und Bundesvokabular** (Vorhaben 17, `docs/decisions.md`, Punkt 78): `cycles` zählt die
+  Dokumente je Monat und Wahljahr, `vocabulary` findet bundespolitische Begriffe nach dem Lexikon
+  2026-11-23.1 (94 von 100 richtig, geprüft von zwei KI-Kodierern desselben Modells) als Spannen auf dem
+  Rohtext, `cycle_tests` rechnet die drei vorab festgelegten Hypothesen über die drei Perioden mit Holm
+  (H17.2 bestätigt, H17.1 und H17.3 nicht).
+- **Feeds**: je Wahlbezirk der laufenden Periode ein Atom-Feed unter `2025/feeds/` (nur Begriffe, die
+  auch die Seite zeigt; noch ohne Link auf der Seite).
+- **`analysis/hypotheses.py`**: der gemeinsame Kern für vorab festgelegte Hypothesen (Holm nach der
+  Schrittregel, vorab festgelegte Familiengröße `m`, Schwelle `strict`).
+- **Reihenfolge der Profile**: der Vergleich rechnet jetzt nach der laufenden Periode
+  (`duesseldorf-2014`, `duesseldorf-2025`, dann `duesseldorf-vergleich`), auf Pages wie lokal; fehlt
+  eine Periode, bricht `cycle_tests` mit dem Pfad ab. Keine Zahl der Seite ändert sich.
+
+## 0.26.0 (2026-11-24), Einbettungen und Suche
+
+- **Ähnliche Dokumente** (Vorhaben 18, `docs/decisions.md`, Punkt 77): der Schritt `embeddings` bettet
+  die Rohtexte in Stücken über ollama ein (nur mit `georep run --models`, nur lokal), `neighbors`
+  schreibt je Dokument die zehn ähnlichsten (`processed/aehnliche_dokumente.parquet`; Präzision@5 0,83,
+  geprüft von zwei KI-Kodierern desselben Modells). Ohne Vektoren, etwa auf Pages, kommt die Tabelle
+  der Hauptperiode aus dem Paket `snapshots/duesseldorf-aehnlich/`; Vektoren kommen nie ins Repo.
+- **`georep search "<frage>"`** mit `--method embedding|hybrid|bm25` (Vorgabe `embedding`, nDCG@10
+  0,883 gegen 0,709 für BM25): nur lokal; ohne ollama, ohne Vektoren oder bei belegter GPU-Sperre
+  (`ml.gpu_lock` in `settings.local.toml`) sucht es mit BM25 und sagt das.
+- **Nach dem Update einmal `georep bootstrap` je Profil** (legt das Nachbarpaket ab; ohne es schreibt
+  `neighbors` in der Hauptperiode still eine leere Tabelle). Die Seite zeigt noch nichts davon
+  (Stufe 3); keine Zahl der Seite ändert sich.
+
 ## 0.25.0 (2026-11-24), Vorgänge
 
 - **Vorgänge** (Vorhaben 14, `docs/decisions.md`, Punkt 76): `references` findet Verweise zwischen

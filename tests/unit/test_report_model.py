@@ -648,7 +648,9 @@ def test_without_the_parties_step_the_section_stays_empty(
             missing |= set(s.outputs)
         else:
             steps.append(s)
-    run_pipeline(steps, default_settings, [s.name for s in steps if not s.network])
+    run_pipeline(
+        steps, default_settings, [s.name for s in steps if not s.network and s.models is None]
+    )
     assert not layout.party_results.exists()
     model = build_report_model(
         layout, default_settings, now=dt.datetime(2026, 10, 12, tzinfo=dt.UTC)

@@ -36,12 +36,14 @@ from pathlib import Path
 
 import polars as pl
 
+from georep.enrich.embeddings import embedding_files
 from georep.errors import GeorepError
-from georep.io import atomic_path, write_parquet, write_text
+from georep.io import atomic_path, digest, write_parquet, write_text
 from georep.layout import Layout
 from georep.prep.bodies import CONSULTATION
 from georep.prep.raw_texts import RAW_SUFFIX
 from georep.prep.references import MASK, ReferenceRules, mask_person_names
+from georep.search.vectors import NEIGHBORS_SCHEMA, NEIGHBORS_SCHEMA_VERSION
 from georep.settings import Settings
 from georep.stores import RAW_TEXT_SCHEMA_VERSION, RawTextStore, TextStore
 
@@ -715,6 +717,125 @@ def pack_attachments(
         readme_written=not (target / README_NAME).exists(),
     )
     return _with_readme(report, settings, today, command="pack --attachments")
+
+
+# --- Vorhaben 18: ein Paket, das nur die ähnlichen Dokumente trägt ------------------------------
+
+NEIGHBORS_NAME = "raw/aehnliche_dokumente_paket.parquet"
+
+
+def _stamp_of(path: Path) -> dict[str, object]:
+    stamp = path.with_name(path.name + ".stamp.json")
+    if not stamp.is_file():
+        raise PackError(f"{stamp.name} fehlt; lief `georep run --models embeddings neighbors`?")
+    loaded = json.loads(stamp.read_text(encoding="utf-8"))
+    return loaded if isinstance(loaded, dict) else {}
+
+
+def neighbors_identity(layout: Layout) -> dict[str, object]:
+    """Modell, Digest und Prompt-Version der Vektoren, aus denen die Nachbartabelle stammt.
+
+    Geprüft wird die Kette: die Tabelle ist aus genau den Dokumentvektoren gerechnet, die jetzt
+    neben ihr liegen (ihr Hash steht im Stamp von ``neighbors``), und die Vektoren aus einem
+    vollständigen Lauf (kein ``open`` im Stamp von ``embeddings``). Eine Tabelle, die selbst aus
+    einem Paket kam, packt dieser Befehl nicht noch einmal.
+    """
+    files = embedding_files(layout)
+    for path in (files.neighbors, files.documents, layout.papers):
+        if not path.is_file():
+            raise PackError(f"{path} fehlt; lief `georep run --models` für dieses Profil?")
+    inputs = _stamp_of(files.neighbors).get("inputs")
+    recorded = inputs.get(files.documents.name) if isinstance(inputs, dict) else None
+    if recorded != digest(files.documents):
+        raise PackError(
+            f"{files.neighbors.name} ist nicht aus den Dokumentvektoren daneben gerechnet (aus "
+            "dem Paket oder einem älteren Stand); erst `georep run neighbors`"
+        )
+    models = _stamp_of(files.chunks).get("models")
+    if not isinstance(models, dict) or models.get("open"):
+        open_ = models.get("open") if isinstance(models, dict) else "?"
+        raise PackError(
+            f"die Einbettungen sind unvollständig ({open_} Eingaben offen); erst ein ganzer Lauf "
+            "`georep run --models embeddings neighbors`"
+        )
+    return {key: models.get(key) for key in ("model", "digest", "prompt", "options", "rejected")}
+
+
+def pack_neighbors(
+    layout: Layout,
+    settings: Settings,
+    target: Path,
+    *,
+    force: bool = False,
+    today: dt.date | None = None,
+    level: int = RAW_TEXTS_ZSTD_LEVEL,
+) -> PackReport:
+    """Nur die ähnlichen Dokumente packen: ``raw/aehnliche_dokumente_paket.parquet`` (Vorhaben 18).
+
+    Auf GitHub Pages rechnet kein Modell; die Nachbarn kommen dorthin nur als Paket, und
+    ``[embeddings].neighbors_package`` legt es beim Bootstrap nach ``raw/``. Die Vektoren kommen
+    nicht ins Repo (Messdokument § 3.4, Frage 9.1). Geprüft werden die Herkunft
+    (``neighbors_identity``) und dass jede ID und jeder Nachbar ein Paper dieser Periode ist; das
+    Paket ist derselbe Frame, mit zstd auf Stufe ``level`` neu geschrieben. Das README nennt Modell,
+    Digest und Prompt-Version.
+    """
+    claim_target(layout, target)
+    identity = neighbors_identity(layout)
+    frame = pl.read_parquet(embedding_files(layout).neighbors)
+    if dict(frame.schema) != NEIGHBORS_SCHEMA or not frame.height:
+        raise PackError(f"die Nachbartabelle ist leer oder hat andere Spalten: {frame.schema}")
+    papers = {
+        str(json.loads(line)["id"])
+        for line in layout.papers.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    }
+    strangers = sorted((set(frame.get_column("id")) | set(frame.get_column("nachbar"))) - papers)
+    if strangers:
+        raise PackError(
+            f"{len(strangers)} IDs der Nachbartabelle sind kein Paper in {layout.papers.name} "
+            f"({', '.join(strangers[:EXAMPLES])})"
+        )
+    destination = target / NEIGHBORS_NAME
+    skipped: list[str] = []
+    if destination.exists() and not force:
+        skipped.append(NEIGHBORS_NAME)
+    else:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        write_parquet(
+            frame, destination, schema_version=NEIGHBORS_SCHEMA_VERSION, compression_level=level
+        )
+    ids = frame.get_column("id").n_unique()
+    report = PackReport(
+        target=target,
+        files=(
+            PackedFile(
+                name=NEIGHBORS_NAME,
+                bytes=destination.stat().st_size,
+                sha256=sha256_of(destination),
+            ),
+        ),
+        skipped=tuple(skipped),
+        figures=(
+            ("Zeilen", frame.height),
+            ("Korpus-IDs", ids),
+            ("Nachbarn je ID", frame.height // ids),
+        ),
+        readme_written=not (target / README_NAME).exists(),
+    )
+    if report.readme_written:
+        skeleton = readme_skeleton(
+            report,
+            profile=settings.default_profile,
+            city=settings.city.name,
+            today=today or dt.date.today(),
+            command="pack --neighbors",
+        )
+        rows = "\n".join(f"| {key} | `{value}` |" for key, value in identity.items())
+        write_text(
+            target / README_NAME,
+            skeleton + f"\n## Modell der Vektoren\n\n| Angabe | Wert |\n|---|---|\n{rows}\n",
+        )
+    return report
 
 
 # --- Vorhaben 26: die Tabelle „Paper × Tagesordnungspunkt" für die Beschlusslage ---------------

@@ -1,0 +1,840 @@
+[
+ {
+  "id": "a01",
+  "anfrage": "Schulwegsicherheit",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100029",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99232",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108692",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97362",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105970",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108759",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107266",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94276",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106580",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107308"
+  ]
+ },
+ {
+  "id": "a02",
+  "anfrage": "Baumfällungen",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89902",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94142",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92800",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102649",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98355",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96316",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94856",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95784",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100059",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87945"
+  ]
+ },
+ {
+  "id": "a03",
+  "anfrage": "Anwohnerparken",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100344",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99776",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104062",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90980",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89983",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98709",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104873",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94398",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97174",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107537"
+  ]
+ },
+ {
+  "id": "a04",
+  "anfrage": "Tempo 30",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94697",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102281",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87894",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105611",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95136",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94321",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106464",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96884",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100203",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97280"
+  ]
+ },
+ {
+  "id": "a05",
+  "anfrage": "Ladesäulen für Elektroautos",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99964",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92940",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102785",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105773",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101416",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99345",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94228",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90860",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88185",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88848"
+  ]
+ },
+ {
+  "id": "a06",
+  "anfrage": "Hitzeschutz",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87774",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107475",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96533",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105264",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101102",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108022",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100362",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89541",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89725",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91143"
+  ]
+ },
+ {
+  "id": "a07",
+  "anfrage": "Photovoltaik auf städtischen Dächern",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99403",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92560",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106395",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87757",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100930",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108186",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101158",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89869",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101751",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108347"
+  ]
+ },
+ {
+  "id": "a08",
+  "anfrage": "Starkregen",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104052",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92015",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91746",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91448",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99428",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104627",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106953",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91401",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98041",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106744"
+  ]
+ },
+ {
+  "id": "a09",
+  "anfrage": "Fluglärm",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102684",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96364",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95473",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99365",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90939",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87724",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99908",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102689",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103140",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100771"
+  ]
+ },
+ {
+  "id": "a10",
+  "anfrage": "Umweltspuren",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/86963",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88187",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89425",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89451",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89452",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89129",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90367",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88039",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95170",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88923"
+  ]
+ },
+ {
+  "id": "a11",
+  "anfrage": "Stadttauben",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102699",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106634",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87953",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89825",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100694",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89498"
+  ]
+ },
+ {
+  "id": "a12",
+  "anfrage": "Bezahlkarte für Geflüchtete",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103032",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106732",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102736",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103727",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106883",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90450",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97018",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87011",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102098",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94896"
+  ]
+ },
+ {
+  "id": "a13",
+  "anfrage": "Waffenverbotszone",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104958",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108270",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97267",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98042"
+  ]
+ },
+ {
+  "id": "a14",
+  "anfrage": "Worringer Platz",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90248",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98706",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100518",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91736",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104287",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91946",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93053",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104216",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106922",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104324"
+  ]
+ },
+ {
+  "id": "a15",
+  "anfrage": "Unterbacher See",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97297",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/86942",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90788",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90509",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103341",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88188",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104022",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99279",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91386",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95370"
+  ]
+ },
+ {
+  "id": "a16",
+  "anfrage": "Opernhaus der Zukunft",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99572",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96080",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95565",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104677",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92845",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96745",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104392",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104672",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94052",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87030"
+  ]
+ },
+ {
+  "id": "a17",
+  "anfrage": "U81",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94212",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88284",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99947",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88389",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94210",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88766",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108537",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96583",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94211",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107081"
+  ]
+ },
+ {
+  "id": "a18",
+  "anfrage": "Glasmacherviertel",
+  "form": "wort",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94022",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106775",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95430",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96329",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93510",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94576",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92507",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104425",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103583",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99753"
+  ]
+ },
+ {
+  "id": "a19",
+  "anfrage": "Radverkehr",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94872",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106419",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101300",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95206",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105285",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97399",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105369",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107703",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101422",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100462"
+  ]
+ },
+ {
+  "id": "a20",
+  "anfrage": "Fahrradfahren sicherer machen",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100360",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94655",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108552",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104631",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97797",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97015",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103480",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99171",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89244",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87835"
+  ]
+ },
+ {
+  "id": "a21",
+  "anfrage": "Bäume in der Stadt pflanzen",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98333",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106968",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97241",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98201",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89336",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89054",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/109239",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106743",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103927",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107908"
+  ]
+ },
+ {
+  "id": "a22",
+  "anfrage": "Wohnungslose Menschen im Winter",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101904",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97304",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88942",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87883",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99750",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108062",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91326",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106151",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106150",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106147"
+  ]
+ },
+ {
+  "id": "a23",
+  "anfrage": "Lärm von Partys am Rheinufer",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88267",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90883",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96027",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107486",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96065",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95722",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89042",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88177",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103401",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105298"
+  ]
+ },
+ {
+  "id": "a24",
+  "anfrage": "Drogenszene am Hauptbahnhof",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105393",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93894",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98435",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101457",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101318",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104315",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108304",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96359",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102699",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94918"
+  ]
+ },
+ {
+  "id": "a25",
+  "anfrage": "Busse und Bahnen pünktlicher machen",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102348",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104483",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107798",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107958",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108874",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100357",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98570",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93300",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101254",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/86950"
+  ]
+ },
+ {
+  "id": "a26",
+  "anfrage": "Stadt grüner machen",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93974",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94514",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96287",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91759",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101327",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105108",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96401",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95207",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99151",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99350"
+  ]
+ },
+ {
+  "id": "a27",
+  "anfrage": "Barrieren für Rollstuhlfahrer",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102658",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102578",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106888",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89008",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106711",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100632",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88447",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100571",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89101",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94964"
+  ]
+ },
+ {
+  "id": "a28",
+  "anfrage": "Hundewiesen",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99270",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102651",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100574",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107026",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101838",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89804",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105445",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105891"
+  ]
+ },
+ {
+  "id": "a29",
+  "anfrage": "Müll in Parks",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93603",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98621",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89977",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103083",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103836",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87438",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91707",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100987",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102681",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107726"
+  ]
+ },
+ {
+  "id": "a30",
+  "anfrage": "Kinderbetreuung nach der Schule",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92126",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87451",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89579",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106138",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95557",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/86923",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87452",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93745",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88601",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92986"
+  ]
+ },
+ {
+  "id": "a31",
+  "anfrage": "E-Roller auf Gehwegen",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98795",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91408",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90592",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105023",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94721",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97919",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99367",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97948",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90839",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100899"
+  ]
+ },
+ {
+  "id": "a32",
+  "anfrage": "Schwimmbäder",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102553",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102707",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91968",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95249",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103016",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106073",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92417",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106088",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96199",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90205"
+  ]
+ },
+ {
+  "id": "a33",
+  "anfrage": "Raser und Autoposer",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96476",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106530",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98119",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100186",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89743",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88407",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90037",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106812",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88420",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98510"
+  ]
+ },
+ {
+  "id": "a34",
+  "anfrage": "bezahlbare Mieten",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106271",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89731",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107639",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97623",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102095",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102004",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98020",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104755",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93202",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101458"
+  ]
+ },
+ {
+  "id": "a35",
+  "anfrage": "Platz für Fahrräder am Bahnhof",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90895",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87553",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95927",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92590",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105431",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87347",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90405",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88500",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99125",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104243"
+  ]
+ },
+ {
+  "id": "a36",
+  "anfrage": "Hilfe bei Einsamkeit im Alter",
+  "form": "umschrieben",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87226",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95682",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94760",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94486",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95351",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94034",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/109219",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90454",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87223",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93051"
+  ]
+ },
+ {
+  "id": "a37",
+  "anfrage": "Was unternimmt die Stadt gegen Hitze in Schulen und Kitas?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91535",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100362",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90887",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87459",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107048",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97710",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90016",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106908",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92511",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95736"
+  ]
+ },
+ {
+  "id": "a38",
+  "anfrage": "Wo fehlen Kita-Plätze?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89074",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100613",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104963",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94407",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108856",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102951",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98351",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90050",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105852",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90670"
+  ]
+ },
+ {
+  "id": "a39",
+  "anfrage": "Welche Anträge gab es zu Zebrastreifen vor Schulen?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88347",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101155",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89839",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/109237",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98683",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104187",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98585",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88837",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94732",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89836"
+  ]
+ },
+ {
+  "id": "a40",
+  "anfrage": "Wann wird die Theodor-Heuss-Brücke saniert?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98991",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96383",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101764",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105894",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97939",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/96184",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102791",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93463",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103749",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90920"
+  ]
+ },
+ {
+  "id": "a41",
+  "anfrage": "Was passiert gegen leerstehende Läden in der Innenstadt?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89033",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89019",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89025",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89026",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101638",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94756",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89561",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107282",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92591",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103217"
+  ]
+ },
+ {
+  "id": "a42",
+  "anfrage": "Wie werden Geflüchtete aus der Ukraine untergebracht?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98990",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97018",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97111",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94047",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94911",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106150",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94253",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98314",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94271",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106151"
+  ]
+ },
+ {
+  "id": "a43",
+  "anfrage": "Hat der Ordnungsdienst genug Personal?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105048",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94925",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104473",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93338",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99560",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102734",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89900",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101401",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108942",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100434"
+  ]
+ },
+ {
+  "id": "a44",
+  "anfrage": "Welche Straßen werden umbenannt, weil ihre Namensgeber belastet sind?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104146",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93311",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102045",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100336",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100338",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102048",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100335",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102044",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89456",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100334"
+  ]
+ },
+ {
+  "id": "a45",
+  "anfrage": "Wie sicher ist die Altstadt nachts?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100072",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91592",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87012",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/92022",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94002",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100722",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90981",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106739",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89275",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89777"
+  ]
+ },
+ {
+  "id": "a46",
+  "anfrage": "Was kostet der Ausbau des Ganztags an Grundschulen?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97677",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98906",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104273",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97051",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/106650",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104801",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87869",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88074",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95155",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103087"
+  ]
+ },
+ {
+  "id": "a47",
+  "anfrage": "Was tut die Stadt gegen Ratten?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98004",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/95042",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89751",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94543",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/105906",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97979",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103797",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97178",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/89700",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102602"
+  ]
+ },
+ {
+  "id": "a48",
+  "anfrage": "Wo werden neue Schulen gebaut?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102481",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107711",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93744",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/98493",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101776",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/101252",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/102479",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88751",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108623",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91891"
+  ]
+ },
+ {
+  "id": "a49",
+  "anfrage": "Wie steht es um die Sanierung des Benrather Schlosses?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99674",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99978",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100272",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108313",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/88042",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103938",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/97615",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91104",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/90811",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/91391"
+  ]
+ },
+ {
+  "id": "a50",
+  "anfrage": "Wie kommt man mit Bus und Bahn besser in den Medienhafen?",
+  "form": "frage",
+  "bm25": [
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/104966",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/107244",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/87830",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99125",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/108870",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/94133",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/99493",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/100993",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/103596",
+   "http://ris-oparl.itk-rheinland.de/Oparl/bodies/0015/papers/vo/93386"
+  ]
+ }
+]

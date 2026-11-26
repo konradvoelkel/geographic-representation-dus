@@ -63,6 +63,14 @@
                -> verweise.parquet, vorgang_kanten.parquet
   procedures   <- papers.parquet, papers_gremien.parquet, vorgang_kanten.parquet
                -> dokumente_vorgang.parquet, antwortzeiten.parquet
+  embeddings   <- papers.parquet, rohtexte.parquet [Modell]
+               -> einbettungen_stuecke.parquet, einbettungen_dokumente.parquet
+  neighbors    <- einbettungen_dokumente.parquet (optional), aehnliche_dokumente_paket.parquet (optional)
+               -> aehnliche_dokumente.parquet
+  cycles       <- papers.parquet, dokumente_urheber.parquet, papers_gremien.parquet, monatsreihe.parquet
+               -> zeit_monate.parquet, haushaltsmonate.parquet
+  vocabulary   <- papers.parquet, rohtexte.parquet (optional)
+               -> dokumente_bundesvokabular.parquet, bundesvokabular_spannen.parquet
   council_results <- papers.parquet, meetings.jsonl (optional), agenda_items.jsonl (optional), consultations.jsonl (optional), tagesordnungspunkte.parquet (optional), meetings.progress.json (optional), consultations.progress.json (optional)
                -> beratungsverlauf.parquet
   outcomes     <- beratungsverlauf.parquet, papers.parquet, vorgang_kanten.parquet, dokumente_antragsteller.parquet, papers_gremien.parquet

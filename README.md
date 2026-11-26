@@ -53,9 +53,10 @@ Geprüft am 2026-10-11 aus einem frischen Klon, die Kontrollvariablen am 2026-10
 `publish` nach dem Umzug in den Stadtordner am 2026-10-13, die ganze Kette aus den Datenpaketen am 2026-10-14.
 Die Seite aus diesen zwei Befehlen trägt **einen** Link, der noch ins Leere zeigt: `2025/`, die Unterseite
 der laufenden Wahlperiode (`report.monitoring_url` im Stadtprofil). Der Abschnitt „Zwei Wahlperioden" und
-sein Link auf `2014-2020/` entstehen erst mit `georep --profile duesseldorf-vergleich run`, und die beiden
-Unterseiten selbst mit den Läufen ihrer Profile — unten „Zwei Wahlperioden" und „Laufende Wahlperiode", in
-CI `.github/workflows/pages.yml`. Wer die veröffentlichte Seite ganz nachbauen will, läuft die Blöcke dieses
+sein Link auf `2014-2020/` entstehen erst mit `georep --profile duesseldorf-vergleich run`, und das Profil
+liest die Läufe von `duesseldorf-2014` und `duesseldorf-2025`, die vorher laufen (Vergleich und die Tests
+über drei Perioden, Vorhaben 17); die beiden Unterseiten selbst entstehen mit den Läufen ihrer Profile —
+unten „Zwei Wahlperioden" und „Laufende Wahlperiode", in CI `.github/workflows/pages.yml`. Wer die veröffentlichte Seite ganz nachbauen will, läuft die Blöcke dieses
 Workflows der Reihe nach. Wer die Umgebung woanders ablegen will, setzt vor `uv sync`
 `UV_PROJECT_ENVIRONMENT` und `UV_CACHE_DIR`; wer Daten und Cache woanders haben will, schreibt `data_root`
 und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
@@ -171,8 +172,14 @@ Hauptperiode den Vergleich beider Perioden einschaltet.
 uv run georep --profile duesseldorf-2014 status      # Periode, Pfade, Frische jedes Schritts
 uv run georep --profile duesseldorf-2014 bootstrap   # Eingaben aus snapshots/2014-2020/
 uv run georep --profile duesseldorf-2014 run         # Kette der alten Periode, Seite unter data/2014-2020/site/
-uv run georep --profile duesseldorf-vergleich run    # Hauptperiode mit dem Abschnitt „Zwei Wahlperioden"
+uv run georep --profile duesseldorf-2025 bootstrap   # die laufende Periode (unten): ihre Ausgaben liest der Vergleich mit
+uv run georep --profile duesseldorf-2025 run
+uv run georep --profile duesseldorf-vergleich run    # Hauptperiode mit „Zwei Wahlperioden" und den Tests über drei Perioden
 ```
+
+`duesseldorf-vergleich` rechnet zwei Schritte über Perioden: `compare` liest die alte Periode,
+`cycle_tests` (Vorhaben 17, `cycles.periods`) die alte und die laufende. Fehlt eine ihrer Ausgaben,
+bricht der Lauf mit dem Pfad der Datei ab; darum stehen beide Läufe davor.
 
 Beide Perioden werden mit **demselben Wörterbuch** durchsucht (Straßen und Orte je Wahlbezirk 2025, Stand
 November 2025): `period.dictionary = "base"` liest die Rohdaten der Hauptperiode (sie liegt unter dem Slug
