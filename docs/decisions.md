@@ -3862,10 +3862,14 @@ Verzeichnis nennt („Bezirksverwaltungsstelle 10"), im Stadtprofil. Im Code ste
 Leerraum und die Teile zusammengesetzt sind; ein leerer Teil trifft nie. Die Muster aus dem
 Messskript stehen wörtlich in den Settings, jedes Teil in eine nicht fangende Gruppe gesetzt, was
 nichts an der Bedeutung ändert. Das **Ämterverzeichnis** (Name → Nummer) entsteht je Lauf aus den
-Kopffeldern des Korpus, wie in der Messung; die Synergie nennt dafür `dokumente_kopf` von 11. Ob
-dessen Verzeichnis gleich ist, prüft 12 nach dem Merge von 11, zusammen mit dem slow-Test, der das
-Kopf-Amt beider vergleicht (Konflikt 5). Ein Dezernat kommt nur aus dem Text („Dezernat 06"), keine
-Profiltabelle (sammelt 24).
+Kopffeldern des Korpus, wie in der Messung; die Synergie nennt dafür `dokumente_kopf` von 11.
+**Verglichen nach dem Merge von 11** (Konflikt 5, slow-Test `tests/golden/test_identifiers_heads.py`,
+2026-11-26): mit denselben Schwellen aus `dokumente_kopf` gebaut, enthielte das Verzeichnis alle 55
+Namen von 12 mit derselben Nummer und sieben mehr, und keiner davon ist ein Amt, das 12 im Text suchen
+sollte (zwei Ämter in einer Kopfzeile wie „Amt für Gebäudemanagement 67 - Stadtentwässerungsbetrieb",
+ein Verein hinter dem Sportamt, „Stadtkämmerin"). 12 bleibt darum beim validierten Verzeichnis aus
+den eigenen Kopffeldern; ein Wechsel auf das von 11 wäre eine neue Regel mit neuer Messung. Ein
+Dezernat kommt nur aus dem Text („Dezernat 06"), keine Profiltabelle (sammelt 24).
 
 **Verträge.** `identifier_spans` ist die Batch-Grenze: F3 mit `attr` dahinter (`check_spans`),
 `value` wörtlich der Text an der Stelle (Review N2; seit Vorhaben 11 mit der Prüfung von F3,
