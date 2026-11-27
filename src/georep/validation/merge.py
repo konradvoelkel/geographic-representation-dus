@@ -1,7 +1,10 @@
 """Zwei Kodierungen zusammenführen, Uneinigkeiten schlichten lassen, Labels ablegen (F4).
 
 ``georep validate merge <vorhaben> --model <name>`` liest die Antworten von A und B, je Einheit und
-Frage. Sind beide vollständig, gibt es zwei Ausgänge:
+Frage. ``--model`` nennt ein Modell für alle drei Rollen; ``--model-a``, ``--model-b`` und
+``--model-adjudicator`` nennen es je Rolle (Frage 19, Konrad 2026-11-26: für neue Messungen ist
+Kodierer B ein anderes Modell als A und die Schlichtung). Sind beide vollständig, gibt es zwei
+Ausgänge:
 
 1. Es gibt Uneinigkeiten, und die Schlichtung ist nicht vollständig: der Auftrag des
    Schlicht-Agenten entsteht unter ``<coding_root>/<vorhaben>/schlichtung/`` (je Einheit mit
@@ -63,6 +66,44 @@ UNIT_PLURAL = {
     "marking": "Dokumenten",
 }
 Values = dict[str, str | None]
+
+
+@dataclass(frozen=True)
+class Models:
+    """Wer kodiert und geschlichtet hat: das Modell je Rolle, wie README und guete.json es nennen."""
+
+    coder_a: str
+    coder_b: str
+    adjudicator: str
+
+    @classmethod
+    def same(cls, model: str) -> Models:
+        """Ein Modell für alle drei Rollen, wie bei allen Labels bis zum 2026-11-26."""
+        return cls(model, model, model)
+
+    def as_json(self) -> dict[str, str]:
+        return {
+            "kodierer_a": self.coder_a,
+            "kodierer_b": self.coder_b,
+            "schlichtung": self.adjudicator,
+        }
+
+
+def sentence(models: Models, units: int, unit: str, disputed: int) -> str:
+    """Der Satz für die Seite (``satz`` in guete.json): mit welchen Modellen an wie vielen Einheiten.
+
+    Gleiche Kodierer: „geprüft von zwei KI-Kodierern desselben Modells (M) an n …", sonst „… (A und
+    B) an n …". Die Schlichtung nennt der Satz mit „Schlichtung durch S", wo es Uneinigkeiten gab
+    und ihr Modell nicht das eine aller drei Rollen ist. Am Ende steht immer „nicht von Menschen"
+    (docs/decisions.md, Punkt 71).
+    """
+    if models.coder_a == models.coder_b:
+        coders = f"zwei KI-Kodierern desselben Modells ({models.coder_a})"
+    else:
+        coders = f"zwei KI-Kodierern ({models.coder_a} und {models.coder_b})"
+    one_model = models.coder_a == models.coder_b == models.adjudicator
+    adjudication = "" if disputed == 0 or one_model else f", Schlichtung durch {models.adjudicator}"
+    return f"geprüft von {coders} an {units} {UNIT_PLURAL[unit]}{adjudication}, nicht von Menschen"
 
 
 @dataclass(frozen=True)
@@ -343,22 +384,40 @@ def _adjudicated(disputed: int) -> str:
     return f"die {disputed} Uneinigkeiten entschied ein dritter Agent (Schlichtung)"
 
 
+def coders_line(disputed: int, origins: Mapping[str, int] | None = None) -> str:
+    """Die Zeile **Kodierer** im README: unabhängig, ohne die Ausgabe, wer die Uneinigkeiten entschied."""
+    other = "".join(
+        f"; davon {n} Einheit{'en' if n != 1 else ''}: {_cell(who)}"
+        for who, n in (origins or {}).items()
+    )
+    return (
+        "- **Kodierer**: zwei KI-Kodierer, unabhängig voneinander und ohne die Ausgabe des "
+        f"geprüften Verfahrens; {_adjudicated(disputed)}{other}. **Kein menschlicher "
+        "Goldstandard**: die Labels messen Übereinstimmung mit einem stärkeren Modell, nicht mit "
+        "Menschen."
+    )
+
+
+def models_line(models: Models) -> str:
+    """Die Zeile **Modelle** im README: das Modell je Rolle (Frage 19)."""
+    return (
+        f"- **Modelle**: Kodierer A `{_cell(models.coder_a)}`, Kodierer B "
+        f"`{_cell(models.coder_b)}`, Schlichtung `{_cell(models.adjudicator)}`."
+    )
+
+
 def readme(
     codebook: Codebook,
     meta: Mapping[str, Any],
     results: Sequence[Reliability],
     units: int,
     disputed: int,
-    model: str,
+    models: Models,
     today: dt.date,
     min_alpha: float,
     origins: Mapping[str, int] | None = None,
 ) -> str:
     stratum = meta.get("schicht") or ""
-    other = "".join(
-        f"; davon {n} Einheit{'en' if n != 1 else ''}: {_cell(who)}"
-        for who, n in (origins or {}).items()
-    )
     rows = [
         f"| `{_cell(r.question)}` | {r.scale} | {r.n} | {r.agreed} von {r.both} "
         f"({format_percent(r.share)}) | {format_number(r.kappa)} | {format_number(r.alpha())} | "
@@ -379,10 +438,8 @@ def readme(
             + (f"geschichtet nach `{stratum}`, " if stratum else "ungeschichtet, ")
             + ("selbstgewichtend" if meta.get("selbstgewichtend") else "gewichtet mit N_h/n_h")
             + " (`stichprobe.csv`, `stichprobe.json`).",
-            f"- **Kodierer**: zwei KI-Kodierer, Modell `{_cell(model)}`, unabhängig voneinander und "
-            f"ohne die Ausgabe des geprüften Verfahrens; {_adjudicated(disputed)}{other}. **Kein "
-            "menschlicher Goldstandard**: die Labels messen Übereinstimmung mit einem "
-            "stärkeren Modell, nicht mit Menschen.",
+            coders_line(disputed, origins),
+            models_line(models),
             f"- **Datum**: {today.isoformat()}.",
             "",
             f"Übereinstimmung A–B je Frage; Stufe 3 verlangt α ≥ {format_number(min_alpha, 2)} "
@@ -531,7 +588,7 @@ def merge_project(
     layout: Layout,
     project: str,
     *,
-    model: str,
+    models: Models,
     today: dt.date,
     force: bool = False,
 ) -> MergeReport:
@@ -595,7 +652,7 @@ def merge_project(
     min_alpha = settings.validation.min_alpha
     write_text(
         paths.readme,
-        readme(codebook, meta, results, len(ids), count, model, today, min_alpha, by_origin),
+        readme(codebook, meta, results, len(ids), count, models, today, min_alpha, by_origin),
     )
     write_json(
         paths.quality,
@@ -603,7 +660,7 @@ def merge_project(
             "vorhaben": project,
             "codebuch_version": codebook.version,
             "einheit": codebook.unit,
-            "modell": model,
+            "modelle": models.as_json(),
             "datum": today.isoformat(),
             "einheiten": len(ids),
             "uneinig": count,
@@ -613,8 +670,7 @@ def merge_project(
                 r.question: r.as_json() | {"alpha_genuegt": alpha_suffices(r, min_alpha)}
                 for r in results
             },
-            "satz": f"geprüft von zwei KI-Kodierern an {len(ids)} "
-            f"{UNIT_PLURAL[codebook.unit]}, nicht von Menschen",
+            "satz": sentence(models, len(ids), codebook.unit, count),
         },
     )
     return MergeReport(results, count, 0, paths.labels, None, len(passed))

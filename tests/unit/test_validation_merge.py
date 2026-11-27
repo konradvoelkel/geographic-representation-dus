@@ -12,10 +12,11 @@ import pytest
 
 from georep.cli import main
 from georep.validation.codebook import Question
-from georep.validation.merge import _first_is_a, mark_agreement
+from georep.validation.merge import Models, _first_is_a, mark_agreement, sentence
 from tests.validation_project import CODEBOOK, PROJECT, fill_answers, make_project
 
 MODEL = "claude-opus-5-5"
+OTHER = "anderes-modell"
 
 
 @pytest.fixture
@@ -58,6 +59,92 @@ def test_merge_needs_the_model(project: Path) -> None:
     assert exit_info.value.code == 2
 
 
+def test_merge_needs_a_model_for_every_role(
+    project: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Ohne ``--model`` braucht jede der drei Rollen ihr Modell; sonst ist es ein Bedienfehler."""
+    with pytest.raises(SystemExit) as exit_info:
+        main(["validate", "merge", PROJECT, "--model-a", MODEL, "--model-b", OTHER])
+    assert exit_info.value.code == 2
+    assert "--model-adjudicator" in capsys.readouterr().err
+
+
+def _disputed_two(project: Path) -> None:
+    """A sagt überall ja, B zweimal nein; die Schlichtung entscheidet beide für ja."""
+    ids = _ids(project)
+    fill(project, "A", lambda unit: "ja")
+    fill(project, "B", lambda unit: "nein" if unit in ids[:2] else "ja")
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    path = project / "lokal" / PROJECT / "schlichtung" / "antworten.jsonl"
+    rows = [r | {"bv": "ja"} for r in _lines(path)]
+    path.write_text(
+        "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows), encoding="utf-8"
+    )
+
+
+def test_merge_names_the_model_of_each_role(project: Path) -> None:
+    """Frage 19 (Konrad, 2026-11-26): B ist für neue Messungen ein anderes Modell als A und die
+    Schlichtung. README, guete.json und der Satz für die Seite nennen alle drei Rollen."""
+    _disputed_two(project)
+    args = ["--model-a", MODEL, "--model-b", OTHER, "--model-adjudicator", MODEL]
+    assert main(["validate", "merge", PROJECT, *args]) == 0
+    folder = project / "repo" / "validierung" / PROJECT
+    quality = json.loads((folder / "guete.json").read_text(encoding="utf-8"))
+    assert quality["modelle"] == {"kodierer_a": MODEL, "kodierer_b": OTHER, "schlichtung": MODEL}
+    assert quality["satz"] == (
+        f"geprüft von zwei KI-Kodierern ({MODEL} und {OTHER}) an 9 Dokumenten, "
+        f"Schlichtung durch {MODEL}, nicht von Menschen"
+    )
+    readme = (folder / "README.md").read_text(encoding="utf-8")
+    assert f"Kodierer A `{MODEL}`, Kodierer B `{OTHER}`, Schlichtung `{MODEL}`" in readme
+
+
+def test_model_is_the_default_of_every_role_without_its_own(project: Path) -> None:
+    _disputed_two(project)
+    assert main(["validate", "merge", PROJECT, "--model", MODEL, "--model-b", OTHER]) == 0
+    quality = json.loads(
+        (project / "repo" / "validierung" / PROJECT / "guete.json").read_text(encoding="utf-8")
+    )
+    assert quality["modelle"] == {"kodierer_a": MODEL, "kodierer_b": OTHER, "schlichtung": MODEL}
+
+
+@pytest.mark.parametrize(
+    ("models", "disputed", "expected"),
+    [
+        # die bisherigen Labels: alle drei Rollen ein Modell, auch mit Schlichtung
+        (
+            Models.same("m1"),
+            3,
+            "geprüft von zwei KI-Kodierern desselben Modells (m1) an 5 Dokumenten, "
+            "nicht von Menschen",
+        ),
+        # die neue Regel: B ein anderes Modell, die Schlichtung wie A
+        (
+            Models("m1", "m2", "m1"),
+            3,
+            "geprüft von zwei KI-Kodierern (m1 und m2) an 5 Dokumenten, Schlichtung durch m1, "
+            "nicht von Menschen",
+        ),
+        # ohne Uneinigkeit hat niemand geschlichtet: der Satz nennt keine Schlichtung
+        (
+            Models("m1", "m2", "m1"),
+            0,
+            "geprüft von zwei KI-Kodierern (m1 und m2) an 5 Dokumenten, nicht von Menschen",
+        ),
+        # A und B gleich, die Schlichtung ein anderes Modell
+        (
+            Models("m1", "m1", "m3"),
+            1,
+            "geprüft von zwei KI-Kodierern desselben Modells (m1) an 5 Dokumenten, "
+            "Schlichtung durch m3, nicht von Menschen",
+        ),
+    ],
+)
+def test_the_sentence_names_the_models(models: Models, disputed: int, expected: str) -> None:
+    """Die Form des Satzes steht in docs/decisions.md, Punkt 71 (F4-Nachzug, 2026-11-27)."""
+    assert sentence(models, 5, "document", disputed) == expected
+
+
 def test_agreeing_coders_give_labels_without_adjudication(
     project: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -72,12 +159,18 @@ def test_agreeing_coders_give_labels_without_adjudication(
     assert labels.get_column("label").to_list() == ["ja"] * 9
     assert labels.get_column("schlichtung").to_list() == [""] * 9
     readme = (folder / "README.md").read_text(encoding="utf-8")
-    assert f"Modell `{MODEL}`" in readme and "Kein menschlicher Goldstandard" in readme
+    assert "Kein menschlicher Goldstandard" in readme
+    assert f"Kodierer A `{MODEL}`, Kodierer B `{MODEL}`, Schlichtung `{MODEL}`" in readme
     assert "Version 1" in readme and "geschichtet nach `paper_type`" in readme
     assert "Uneinigkeiten gab es keine" in readme and "die 0 Uneinigkeiten" not in readme
     assert "α ≥ 0,80" in readme  # zwei Nachkommastellen (Befund 8)
     quality = json.loads((folder / "guete.json").read_text(encoding="utf-8"))
-    assert quality["satz"] == "geprüft von zwei KI-Kodierern an 9 Dokumenten, nicht von Menschen"
+    assert quality["satz"] == (
+        f"geprüft von zwei KI-Kodierern desselben Modells ({MODEL}) an 9 Dokumenten, "
+        "nicht von Menschen"
+    )
+    assert quality["modelle"] == {"kodierer_a": MODEL, "kodierer_b": MODEL, "schlichtung": MODEL}
+    assert "modell" not in quality
     # alle sagen ja: keine Streuung, α ist nicht definiert und genügt darum nie
     assert quality["fragen"]["bv"]["krippendorff_alpha_nominal"] is None
     assert quality["fragen"]["bv"]["alpha_genuegt"] is False

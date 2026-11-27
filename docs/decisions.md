@@ -2577,6 +2577,28 @@ Die übertragenen Vorhaben liegen in eigenen Ordnern `<NN-name>-f4` neben den Or
 von 11 und 12 taten („66 - Amt" gleich „66-Amt"): das ist eine Entscheidung über die Frage, nicht
 über die Form, und gehört, wenn überhaupt, als Einstellung je Frage ins Codebuch.
 
+**Das Modell je Rolle und die Form des Satzes (F4-Nachzug V3, 2026-11-27).** Seit Konrads
+Antwort auf Frage 19 (2026-11-26) ist Kodierer B für neue Messungen ein anderes Modell als A und
+die Schlichtung. `merge` nimmt darum das Modell je Rolle (`--model-a`, `--model-b`,
+`--model-adjudicator`; `--model` bleibt die Kurzform für alle drei, eine eigene Angabe geht vor,
+und fehlt einer Rolle ihr Modell, ist es ein Bedienfehler). `guete.json` führt `modelle` mit
+`kodierer_a`, `kodierer_b` und `schlichtung` an der Stelle des früheren `modell`, das README eine
+Zeile **Modelle**. Der `satz` hat genau eine von zwei Formen:
+
+- A und B dasselbe Modell: „geprüft von zwei KI-Kodierern desselben Modells (claude-opus-5-5) an
+  600 Textstellen, nicht von Menschen";
+- zwei Modelle: „geprüft von zwei KI-Kodierern (claude-opus-5-5 und *B*) an 52 Dokumentpaaren,
+  Schlichtung durch claude-opus-5-5, nicht von Menschen".
+
+„Schlichtung durch …" steht, wo es Uneinigkeiten gab und die Schlichtung nicht das eine Modell
+aller drei Rollen ist; sind alle drei gleich, sagt „desselben Modells" es für die Schlichtung mit
+(so lauten alle Sätze der Labels bis zum 2026-11-26). Ohne Uneinigkeit nennt der Satz keine
+Schlichtung, weil keine stattfand; README und `guete.json` nennen ihr Modell trotzdem. Die Zahl der
+Einheiten steht vor der Schlichtung, „nicht von Menschen" immer am Ende, damit eine Seite den Satz
+unverändert übernimmt. Verworfen: der Satz ohne Modell (er sagt nicht, ob ein Modell sich selbst
+geprüft hat) und „geschlichtet von …" vor der Zahl (der Satz läse sich, als hätte die Schlichtung
+alle Einheiten geprüft).
+
 ## 72. Lokale Modelle über ollama: eine Naht mit Cache, Kennung im Stamp und Schalter (2026-11-23, Fundament F5)
 
 Drei Vorhaben des Plans zur Vorverarbeitung brauchen ein Sprach- oder Einbettungsmodell

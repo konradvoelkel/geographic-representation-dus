@@ -14,7 +14,7 @@ from pathlib import Path
 from georep.layout import Layout
 from georep.settings import Settings
 from georep.validation.importer import import_project
-from georep.validation.merge import merge_project
+from georep.validation.merge import Models, merge_project
 from georep.validation.paths import CODERS
 from georep.validation.sample import sample_project
 from georep.validation.score import score_project
@@ -75,11 +75,7 @@ def add_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None
         "Uneinigkeiten, danach labels.csv, README.md und guete.json",
     )
     merge.add_argument("project", metavar="vorhaben", help=PROJECT_HELP)
-    merge.add_argument(
-        "--model",
-        required=True,
-        help="Modell der Kodier- und Schlicht-Agenten, wie es im README steht (etwa claude-opus-5-5)",
-    )
+    add_model_options(merge)
     merge.add_argument("--force", action="store_true", help="vorhandene Labels neu schreiben")
 
     imported = actions.add_parser(
@@ -104,6 +100,34 @@ def add_parser(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None
         type=Path,
         help="Ausgabe des Verfahrens als Parquet: id und label, bei query_document query, id, score",
     )
+
+
+def add_model_options(parser: argparse.ArgumentParser) -> None:
+    """``--model`` für alle drei Rollen, ``--model-a``, ``--model-b``, ``--model-adjudicator`` je Rolle."""
+    parser.add_argument(
+        "--model",
+        help="Modell aller drei Rollen, wo keine eigene Angabe steht, wie es im README steht "
+        "(etwa claude-opus-5-5)",
+    )
+    parser.add_argument("--model-a", help="Modell von Kodierer A")
+    parser.add_argument(
+        "--model-b",
+        help="Modell von Kodierer B; für neue Messungen ein anderes als A (docs/validierung.md, § 3)",
+    )
+    parser.add_argument("--model-adjudicator", help="Modell der Schlichtung")
+    parser.set_defaults(model_parser=parser)
+
+
+def models_of(args: argparse.Namespace) -> Models:
+    """Das Modell je Rolle; fehlt eines, ist es ein Bedienfehler (Exit 2 wie bei argparse)."""
+    found = [args.model_a or args.model, args.model_b or args.model]
+    found.append(args.model_adjudicator or args.model)
+    if not all(found):
+        args.model_parser.error(
+            "jede Rolle braucht ein Modell: --model für alle oder --model-a, --model-b und "
+            "--model-adjudicator"
+        )
+    return Models(*found)
 
 
 def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
@@ -139,7 +163,7 @@ def run(args: argparse.Namespace, settings: Settings, layout: Layout) -> int:
             settings,
             layout,
             args.project,
-            model=args.model,
+            models=models_of(args),
             today=dt.date.today(),
             force=args.force,
         )
