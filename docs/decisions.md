@@ -4389,7 +4389,10 @@ sind die Mischungen `--d1` bis `--d3` des Rahmens, deren Kontrast dort nachgerec
 Titel und ein versteckter Text in jeder Zelle nennen das Lager, die Farbe trägt nicht allein. Die
 beiden Matrizen schaltet ein eigenes Skript um, nicht `fieldset.switcher` des Rahmens: der tauscht
 Stufen der Rampen `q` und `d`, und ein Lager als `d`-Stufe hieße, dass dieselbe Klasse auf zwei
-Flächen zweierlei bedeutet (CLAUDE.md). Ohne JavaScript stehen beide Matrizen untereinander.
+Flächen zweierlei bedeutet (CLAUDE.md). Ohne JavaScript stehen beide Matrizen untereinander, und
+der Umschalter ist verborgen: das Attribut `hidden` allein genügte nicht, weil der Rahmen `fieldset`
+auf `inline-flex` setzt; `akteure.css` hebt das für `fieldset.matrix-ebene[hidden]` auf (Review
+2026-11-27, K1, mit Bildschirmfotos ohne Skripte belegt).
 
 **Zwei Nachzüge am Rahmen, die erst eine echte Seite zeigt.**
 
@@ -4476,9 +4479,9 @@ dritte Matrix „alle Gremien" (sie mischte die Ebene mit und ohne Lager); `link
   die Grenze 50 davon 42, 41 davon 27, 1 davon 0; beobachtet gegen erwartet in Variante B; CDU und
   Grüne in Rat und Ausschüssen der Hauptperiode 577, beide in der Mehrheit), die zweite Stadt ohne
   Konkordanz und explorativ, und jede Seite unter 500 KB.
-- Bildschirmfotos mit headless Chrome bei 1280 und 390 Pixeln Breite, hell und dunkel; ohne
-  JavaScript stehen beide Matrizen da, mit JavaScript ist der Umschalter sichtbar und die zweite
-  Matrix verborgen (`--dump-dom`).
+- Bildschirmfotos mit headless Chrome bei 1280 und 390 Pixeln Breite, hell und dunkel, und bei 390
+  ohne Skripte (`--blink-settings=scriptEnabled=false`): dort stehen beide Matrizen untereinander
+  und kein Umschalter; mit JavaScript ist der Umschalter sichtbar und die zweite Matrix verborgen.
 - A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66 (`scripts/ab_bau.sh`,
   `scripts/ab_vergleich.py`), `POLARS_MAX_THREADS=4 OMP_NUM_THREADS=2`, A aus `main` `344ecdc`
   (`git archive`), B aus `7453ad7`, Wurzeln `ab/15-a` und `ab/15-b` auf xtraspace, die fünf Profile

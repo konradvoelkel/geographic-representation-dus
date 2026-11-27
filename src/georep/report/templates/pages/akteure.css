@@ -48,6 +48,9 @@ table.matrix-tabelle td, table.matrix-tabelle th { padding: .3rem .4rem; }
 table.matrix-tabelle td.diag, table.matrix-tabelle td.zero { color: var(--muted); }
 table.matrix-tabelle .fn { text-decoration: none; padding-left: .1em; }
 fieldset.matrix-ebene { margin: .25rem 0 .5rem; }
+/* Ohne JavaScript bleibt der Umschalter verborgen: der Rahmen setzt fieldset auf inline-flex, und
+   das schlägt das hidden-Attribut (Review 2026-11-27, K1). Das Skript nimmt hidden weg. */
+fieldset.matrix-ebene[hidden] { display: none; }
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 #funktionen-tabelle th[scope="row"] { white-space: nowrap; }
 /* Die Titel der beiden Listen: auf einem schmalen Bildschirm sonst ein Wort je Zeile. */

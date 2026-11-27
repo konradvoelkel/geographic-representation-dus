@@ -1,6 +1,8 @@
 /* Vorhaben 15, akteure.html: der Umschalter der Matrix „Wer mit wem". Ohne JavaScript stehen beide
-   Matrizen untereinander und der Umschalter bleibt verborgen; mit JavaScript zeigt er eine. Kein
-   fieldset.switcher des Rahmens: der tauscht Klassen und Zahlen, hier wechselt die ganze Tabelle. */
+   Matrizen untereinander, und der Umschalter ist verborgen (hidden, dazu die Regel
+   fieldset.matrix-ebene[hidden] in akteure.css, weil der Rahmen fieldset auf inline-flex setzt);
+   dieses Skript nimmt hidden weg und zeigt eine Matrix. Kein fieldset.switcher des Rahmens: der
+   tauscht Klassen und Zahlen, hier wechselt die ganze Tabelle. */
 (function () {
   "use strict";
   var fieldset = document.getElementById("matrix-ebene");

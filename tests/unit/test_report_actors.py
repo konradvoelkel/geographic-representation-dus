@@ -541,3 +541,11 @@ def test_die_seite_nennt_die_definition_aus_dem_codebuch(default_settings: Setti
     page = _render(_check_settings(default_settings), ROWS)
     assert option.definition.strip() in page.replace("&#34;", '"').replace("&#39;", "'")
     assert "Erklärung oder Appell" in page and "Erklärung/Appell" in page
+
+
+# --- Review Runde 2 (2026-11-27) -------------------------------------------------------------------
+def test_ohne_javascript_ist_der_umschalter_nicht_zu_sehen(default_settings: Settings) -> None:
+    """K1: ``fieldset { display: inline-flex }`` im Rahmen schlägt ``[hidden]``; die Seite hebt es auf."""
+    page = _render(_check_settings(default_settings), ROWS)
+    assert '<fieldset class="matrix-ebene" id="matrix-ebene" hidden>' in page
+    assert "fieldset.matrix-ebene[hidden] { display: none; }" in page
