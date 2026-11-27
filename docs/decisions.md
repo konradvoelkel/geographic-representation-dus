@@ -4385,8 +4385,11 @@ seinem Datum. Wechselt die Mehrheit im Datensatz, kann ein Paar zwei Lager haben
 Hauptperiode Grüne und FDP (25 über die Grenze, 2 unter der Ampel bis zum 2020-10-31); die Zelle
 trägt das häufigere, ein Stern führt zur Fußnote mit beiden. Lager gibt es nur auf der Ebene der
 Ratsmehrheit (`majorities.body_kinds`); die Matrix der Bezirksvertretungen ist ungefärbt. Die Farben
-sind die Mischungen `--d1` bis `--d3` des Rahmens, deren Kontrast dort nachgerechnet ist; Legende,
-Titel und ein versteckter Text in jeder Zelle nennen das Lager, die Farbe trägt nicht allein. Die
+sind die Mischungen `--d1` bis `--d3` des Rahmens, deren Kontrast dort nachgerechnet ist. Als Tönung
+hinter Zahlen sind sie unter Rot-Grün-Schwäche nicht sicher zu trennen (Validator der Skill dataviz,
+alle Paare: Grau und Orange hell ΔE 3,0 unter Protanopie, dunkel 5,2 unter Deuteranopie); darum
+trägt jede gefärbte Zelle ein sichtbares Kürzel, M, Ü oder O, das die Legende erklärt, dazu den Titel
+und einen versteckten Text für Screenreader (Review 2026-11-27, K2). Die
 beiden Matrizen schaltet ein eigenes Skript um, nicht `fieldset.switcher` des Rahmens: der tauscht
 Stufen der Rampen `q` und `d`, und ein Lager als `d`-Stufe hieße, dass dieselbe Klasse auf zwei
 Flächen zweierlei bedeutet (CLAUDE.md). Ohne JavaScript stehen beide Matrizen untereinander, und

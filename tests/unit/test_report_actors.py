@@ -549,3 +549,17 @@ def test_ohne_javascript_ist_der_umschalter_nicht_zu_sehen(default_settings: Set
     page = _render(_check_settings(default_settings), ROWS)
     assert '<fieldset class="matrix-ebene" id="matrix-ebene" hidden>' in page
     assert "fieldset.matrix-ebene[hidden] { display: none; }" in page
+
+
+def test_jede_gefaerbte_zelle_traegt_ein_sichtbares_kuerzel(default_settings: Settings) -> None:
+    """K2: die Tönungen sind unter Rot-Grün-Schwäche nicht sicher zu trennen; das Kürzel trägt."""
+    page = _render(_check_settings(default_settings), ROWS)
+    cells = re.findall(r'<td class="num lager-([a-z_]+)"[^>]*>(.*?)</td>', page)
+    assert cells  # CDU und Grüne beide in der Mehrheit, CDU und SPD über die Grenze
+    short = {"gemeinsam_mehrheit": "M", "ueber_grenze": "Ü", "gemeinsam_opposition": "O"}
+    for camp, inner in cells:
+        assert f'<span class="lager-kuerzel" aria-hidden="true">{short[camp]}</span>' in inner
+    legend = page[page.index('<ul class="fn-legend lager-legende">') :]
+    legend = legend[: legend.index("</ul>")]
+    for camp, letter in short.items():
+        assert f'<span class="lager-kuerzel">{letter}</span>' in legend and camp in legend

@@ -134,11 +134,11 @@
 <div class="matrix" data-matrix="{{ matrix.key }}">
 <h3>{{ matrix.label }}</h3>
 {% if matrix.documents %}
-<p class="note">{{ matrix.documents|num }} gemeinsame Dokumente.{% if matrix.with_camps %} Die Farbe einer Zelle ist das Lager des Paars gegenüber der Ratsmehrheit am Datum des Dokuments; welche Fraktionen die Mehrheit bilden, steht unter <a href="#konkordanz">Konkordanz</a>.{% else %} Die Zellen tragen kein Lager{% if matrix.key == "stadt" %}: das Profil nennt keine Ratsmehrheit{% endif %}.{% endif %}</p>
+<p class="note">{{ matrix.documents|num }} gemeinsame Dokumente.{% if matrix.with_camps %} Farbe und Kürzel einer Zelle sind das Lager des Paars gegenüber der Ratsmehrheit am Datum des Dokuments; welche Fraktionen die Mehrheit bilden, steht unter <a href="#konkordanz">Konkordanz</a>.{% else %} Die Zellen tragen kein Lager{% if matrix.key == "stadt" %}: das Profil nennt keine Ratsmehrheit{% endif %}.{% endif %}</p>
 {% if matrix.with_camps %}
-<ul class="fn-legend">
+<ul class="fn-legend lager-legende">
 {% for value, label in data.camps %}
-<li><span class="swatch lager-{{ value }}"></span>{{ label }}</li>
+<li><span class="swatch lager-{{ value }}"></span><span class="lager-kuerzel">{{ data.camp_short[value] }}</span> {{ label }}</li>
 {% endfor %}
 </ul>
 {% endif %}
@@ -147,7 +147,7 @@
 <tbody>
 {% for row in matrix.cells %}
 {% set outer = loop %}
-<tr><th scope="row">{{ matrix.fractions[outer.index0][1] }}</th>{% for cell in row %}{% if cell is none %}<td class="num diag">–</td>{% elif cell.camp %}<td class="num lager-{{ cell.camp }}" title="{{ data.camp_names[cell.camp] }}">{{ cell.count|num }}{% if cell.camps %}<a href="#matrix-{{ matrix.key }}-wechsel" class="fn">*</a>{% endif %}<span class="vh"> ({{ data.camp_names[cell.camp] }})</span></td>{% else %}<td class="num{% if not cell.count %} zero{% endif %}">{{ cell.count|num }}</td>{% endif %}{% endfor %}<td class="num">{{ matrix.joint[outer.index0]|num }}</td></tr>
+<tr><th scope="row">{{ matrix.fractions[outer.index0][1] }}</th>{% for cell in row %}{% if cell is none %}<td class="num diag">–</td>{% elif cell.camp %}<td class="num lager-{{ cell.camp }}" title="{{ data.camp_names[cell.camp] }}">{{ cell.count|num }}{% if cell.camps %}<a href="#matrix-{{ matrix.key }}-wechsel" class="fn">*</a>{% endif %}<span class="lager-kuerzel" aria-hidden="true">{{ data.camp_short[cell.camp] }}</span><span class="vh"> ({{ data.camp_names[cell.camp] }})</span></td>{% else %}<td class="num{% if not cell.count %} zero{% endif %}">{{ cell.count|num }}</td>{% endif %}{% endfor %}<td class="num">{{ matrix.joint[outer.index0]|num }}</td></tr>
 {% endfor %}
 </tbody></table></div>
 {% if matrix.mixed %}

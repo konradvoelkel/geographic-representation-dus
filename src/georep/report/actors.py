@@ -128,6 +128,9 @@ CAMP_LABELS: dict[str, str] = {
     ACROSS: "über die Grenze",
     JOINT_OPPOSITION: "beide in der Opposition",
 }
+# Ein sichtbares Kürzel je Lager in der Zelle (Review 2026-11-27, K2): die drei Tönungen sind unter
+# Rot-Grün-Schwäche nicht sicher zu trennen, die Farbe trägt das Lager also nicht allein.
+CAMP_SHORT: dict[str, str] = {JOINT_MAJORITY: "M", ACROSS: "Ü", JOINT_OPPOSITION: "O"}
 DOCUMENT_COLUMNS = (
     "id",
     "name",
@@ -1021,6 +1024,7 @@ def page_data(model: ActorsModel, settings: Settings) -> Mapping[str, object]:
         "functions": tuple(FUNCTION_SHORT.items()),
         "camps": tuple((c, CAMP_LABELS[c]) for c in PAIR_CAMPS),
         "camp_names": CAMP_LABELS,
+        "camp_short": CAMP_SHORT,
         "labels": labels,
         "urls": repository_links(settings),
     }

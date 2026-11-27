@@ -40,7 +40,12 @@ p.leiste-kopf { margin: 0 0 .2rem; font-size: .9rem; }
 tfoot th, tfoot td { font-weight: 600; border-bottom: 0; }
 /* Das Lager eines Paars in der Matrix: die Mischungen des Rahmens (--d1 bis --d3), deren
    Kontrast zur Schrift dort nachgerechnet ist (hell mindestens 12,30, dunkel 9,88). Die Farbe
-   trägt nicht allein: Legende, Titel und ein versteckter Text in jeder Zelle nennen das Lager. */
+   trägt nicht allein: ein sichtbares Kürzel (M, Ü, O, in der Legende erklärt), der Titel und ein
+   versteckter Text für Screenreader nennen das Lager. Geprüft am 2026-11-27 mit dem Validator der
+   Skill dataviz, alle Paare: hell #b5cfee, #f6cab7, #d0d0cd -- Grau und Orange unter Protanopie
+   ΔE 3,0, Normalsicht Grau und Blau 5,6; dunkel #253f5e, #5b2f1d, #444341 -- Grau und Orange unter
+   Deuteranopie ΔE 5,2. Als Tönung hinter Zahlen können die Farben nicht kräftiger werden (Kontrast
+   der Schrift); darum das Kürzel (Review 2026-11-27, K2). */
 .lager-gemeinsam_mehrheit, .swatch.lager-gemeinsam_mehrheit { background: var(--d3); }
 .lager-ueber_grenze, .swatch.lager-ueber_grenze { background: var(--d1); }
 .lager-gemeinsam_opposition, .swatch.lager-gemeinsam_opposition { background: var(--d2); }
@@ -57,3 +62,5 @@ fieldset.matrix-ebene[hidden] { display: none; }
 #ueber-die-grenze td:nth-child(3), #erklaerungen-liste td:nth-child(3) { min-width: 14em; }
 /* Die Definition aus dem Codebuch, wörtlich: abgesetzt wie ein Zitat. */
 blockquote.definition { margin: .5rem 0 1rem; padding: .4rem .9rem; border-left: 3px solid var(--grid); color: var(--ink-2); max-width: 48em; }
+.lager-kuerzel { font-size: .75em; font-weight: 600; color: var(--ink-2); margin-left: .3em; }
+ul.lager-legende .lager-kuerzel { margin-left: 0; min-width: 1em; }
