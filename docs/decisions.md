@@ -4862,7 +4862,7 @@ Merge.
 **Der Dialog-Haken (V2).** Ein Beitrag hängt im Dokumentdialog der Hauptseite je Dokument eine Zeile
 an, ohne dass `dokumente.json` wächst: `Contribution.dialogs` trägt `report.dialog.DialogHook`
 (Name, Titel, Satz für die Downloads, Eingaben, Zeilen je Korpus-ID, Schalter), und `report` schreibt
-nach `dokumente.json` je Haken `data/<name>.json`. Format 1: Wörter (`labels`), eigene Ziele
+nach `dokumente.json` je Haken `data/<name>.json`. Format 2 (seit Review K3; 1 ohne `show`): Wörter (`labels`), die Felder eines Ziels als Text des Links (`show`), eigene Ziele
 (`documents`, je `[link, datum, drucksache, titel]`) und Zeilen `{Index in dokumente.json: [[wort],
 [wort, ziel], …]}`; ein Ziel ≥ 0 ist ein Index in `dokumente.json`, < 0 ein Dokument der Datei. Ein
 Eintrag ohne Ziel ist nur ein Wort („angenommen im Rat am …" für 26), ein Eintrag mit Ziel ein Wort
@@ -4883,12 +4883,13 @@ jedem Öffnen neu setzt. Ohne JavaScript gibt es keinen Dialog, die Seiten bleib
   `site/data/`. Ein Name unter `data/` ist nur einmal zu haben (nicht `dokumente`, `begriffe`,
   `schema`, `summary`). Die Datei steht ohne Leerzeichen nach den Trennern da (in der Hauptperiode
   rund ein Zehntel kleiner) und als JSON-Zeile in den Downloads.
-- *Größe*: das Skript des Rahmens wächst um 1 013 Byte, das Attribut um 24, zusammen 1 037 Byte auf
-  `index.html` und auf jeder Unterseite (die das Skript einbindet, das Attribut aber nicht trägt);
-  das Budget von „unter 1 KB" (Plan § 5) ist damit knapp überschritten. Die Erklärung steht als
-  Jinja-Kommentar in der Vorlage und kostet nichts; das Skript nutzt `line` des Rahmens (gibt das
-  Element jetzt zurück) und `new URL(link, base)`, das Datum eines Ziels steht nicht im Titel am
-  Link. Ein Test hält den Haken unter 1 000 Byte.
+- *Größe*: anfangs wuchs das Skript des Rahmens um 1 013 Byte auf jeder Seite; seit Review N1 steht
+  der Haken nur dort, wo der Dialog `data-extras` trägt (heute nur auf der Hauptseite), und mit den
+  Punkten K3 und N3 des Reviews (unten) wächst `index.html` um 1 541 Byte samt Attribut. Das
+  Budget von „unter 1 KB" (Plan § 5) ist damit überschritten; der Test misst die ganze Hauptseite
+  mit und ohne Haken und hält sie unter 1 600. Die Erklärung steht als Jinja-Kommentar in der
+  Vorlage und kostet nichts; das Skript nutzt `line` des Rahmens (gibt das Element dann zurück) und
+  `new URL(link, base)`.
 
 *Verworfen*: `dokumente.json` erweitern (Synergien § 1: es wächst nicht); Kennungen als Schlüssel
 (siehe oben); die Datei im Schritt der Unterseite schreiben (er kennt die Folge von `dokumente.json`
@@ -4898,7 +4899,8 @@ nicht, ohne sie nachzubauen); ein Skript je Haken (18 und 26 hängen sich nur mi
 Paketprofilen hinter `procedures.enabled`:
 
 1. *Antworten je Gremium*: Anfragen, Antwort im Ratsinformationssystem gefunden (Zahl und Anteil),
-   Median und Q3 der gültig datierten Antwortzeit, deren n daneben; eine Zeile je Gremium ab 30
+   Median und Q3 der gültig datierten Antwortzeit ab 30 datierten Antworten (Review K1), deren n
+   daneben; eine Zeile je Gremium ab 30
    Anfragen, Gremien beim Namen wie auf `akteure.html`. Darüber der Satz, dass ein fehlender Anhang
    keine fehlende Antwort ist, und für Gremien unter 20 % der Hinweis (†) auf die Sitzung und die
    Niederschrift. **Der Gast von 26 heißt `in-der-sitzung`**: steht er auf der Seite
@@ -4907,8 +4909,8 @@ Paketprofilen hinter `procedures.enabled`:
    einen anderen, ändert sich `procedures.SESSION_GUEST`.
 2. *Je Fraktion*, in jedem Datensatz „explorativ" (Frage 14): Anfragen, beobachtet gegen erwartet über
    `analysis.practice.observed_expected` (Schicht das Gremium, die Fraktionen aus den Antragstellern
-   von 15, Synergien Konflikt 10), daneben der Median der Antwortzeit ab 30 datierten Antworten mit
-   deren Zahl. Keine rohe Quote und keine Spalte, aus der sie folgte; der Median steht, wie er ist,
+   von 15, Synergien Konflikt 10) mit dem exakten 95-%-Intervall nach Poisson, nicht sortierbar
+   (Review K2), daneben der Median der Antwortzeit ab 30 datierten Antworten mit deren Zahl. Keine rohe Quote und keine Spalte, aus der sie folgte; der Median steht, wie er ist,
    und sortiert nicht (wie „Kontrolle roh" auf `akteure.html`). Eine Partei neben ihrer späteren
    Fraktion bekommt den Satz aus Punkt 88, aber nur, wenn ihre Anfragen alle vor dem Beginn der
    Fraktion liegen.
@@ -5037,3 +5039,44 @@ schwachen Kanten (73 % der Zeilen in der Hauptperiode) selbst eine Aussage (B ne
 die die Seite nennt; nur die starken hießen 2,55 statt 0,63 MB über alle vier Datensätze, das wäre
 eine andere Tabelle. In `antwortzeiten` ist jede Zeile eine Anfrage, und „keine" ist die Aussage,
 von der die Kandidaten handeln (0,85 MB zusammen).
+
+**Nachtrag: Review Runde 1 (2026-11-27).** Das Review von `0f75b71` fand keine falsche Zahl;
+nachgezogen, je Punkt ein Commit mit rotem Test:
+
+- *K1* (`7ea843c`): Median und Q3 je Gremium erst ab 30 datierten Antworten wie je Fraktion
+  (`procedures.at_least`); in der Hauptperiode steht bei 16 der 27 Gremien „unter 30".
+- *K2* (`c24873d`): hinter jedem Verhältnis je Fraktion das exakte 95-%-Intervall nach Poisson
+  (`poisson_ratio_interval`, Garwood), die Spalte sortiert nicht; in allen drei Düsseldorfer
+  Perioden enthält jedes Intervall 1, und der Satz unter der Tabelle sagt, was das heißt.
+- *K3* (`661a872`): der Haken trägt 18 und 26 jetzt wirklich nur mit Daten. Je Dokument und Haken
+  ein Platzhalter in Registerfolge, gleich in welcher Folge die Dateien ankommen; die Sätze der
+  Dateien unter der Liste; das Wort eines Eintrags nur beim Wechsel; `DialogHook.show` wählt die
+  Felder eines Ziels als Text des Links (Format 2 von `data/<name>.json`).
+- *N1* (`2d47ef0`): der Haken nur auf Seiten mit `data-extras`; die Unterseiten tragen das Skript
+  wieder wie `main`, Byte für Byte, und der Test misst die ganze Hauptseite mit und ohne Haken.
+- *N3* (`d3b4860`): ein Zähler je Öffnen, eine zu spät angekommene Datei schreibt nichts mehr; ein
+  Link, den `new URL` nicht lesen kann, kostet nur sich.
+- *N4* (`794b06f`): `write_dialogs` vergleicht auch den ersten und den letzten Link mit der Folge.
+- *K4*: `a72d76c` und `d7c4890` sind in zwei slow-Tests rot (`test_context_pipeline`,
+  `test_parties_numbers`: sie zählten die Datei des Hakens unter `site/data/` noch nicht mit);
+  `0f75b71` macht sie grün, ein Umschreiben der Geschichte über den Merge von `main` hinweg lohnt
+  nicht.
+- N2 (Seite 36 bis 132 KB statt unter 50) bleibt, im Budget von 500 KB; N5 steht in
+  `docs/todo.md`, Punkt 35.
+
+Vorher, auf Wunsch des Supervisors: `main` `cd9c143` (`v0.37.0`, Punkte 89 und 90) hereingenommen
+(`dbcb903`) und die CSV von `dokumente_vorgang` gekürzt (`809240a`, Nachtrag oben).
+
+*A/B-Bau nach Runde 1* wie oben, A aus `main` `cd9c143`, B aus `794b06f`, Wurzeln `ab/14s-a2` und
+`ab/14s-b2`. Unter `site/` 288 Dateien in A, 320 in B, 40 Abweichungen, alle erwartet: je Stadtseite
+neu `vorgaenge.html`, `vorgaenge.json` und die sechs Downloads, anders nur `index.html` und
+`schema.json`; `akteure.html`, `zeit.html`, `vergleich.html` und jede `summary.json` sind gleich.
+Über die Datenwurzeln 1 074 und 1 160 Dateien, 235 Abweichungen, keine unter `processed/` oder
+`interim/`: 100 unter den Seiten und 135 Stamps (109 nur `written`, 6 neue von `vorgaenge.html`,
+12 von `akteure.html` und `zeit.html` nur in `extra` -- `report_fingerprint` zählt die geänderten
+Vorlagen --, 6 von `index.html` in `extra` und den Eingaben, 2 nur in der Wurzel der absoluten
+Pfade). `index.html` vorher → nachher: Hauptperiode 957 828 → 966 522 (+8 694, davon der Haken
+1 541), `2014-2020/` 833 053 → 841 739, `2025/` 728 964 → 737 644, `moenchengladbach/`
+816 466 → 825 119. `vorgaenge.html` 82 069, 131 956, 49 257, 35 724 Byte; `vorgaenge.json`
+95 022 (gzip 30 499), 45 123, 20 635, 6 661. Die sechs Downloads je Datensatz 2,34, 1,61, 0,49
+und 0,12 MB; die veröffentlichte Seite wächst von 54,2 auf 59,3 MB.
