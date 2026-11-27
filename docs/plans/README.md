@@ -22,9 +22,8 @@ F5 Modellnaht (`v0.21.0`, Punkt 72; jeder Modelllauf unter `gpu-queue/gpu.lock`)
 Punkt 74: `early_steps`, `http` an den Beiträgen, Zusatzspalten an Spannen, `flatten_with_offsets`,
 Prüfung der Schrittfolge).
 
-**Offen als Nachzug vor Stufe 3**: in F2 Abschnitte aus fremden Beiträgen auf einer Unterseite
-(`report.pages.Page` kennt nur die Seite eines Beitrags; nötig für 26 auf `vorgaenge.html` und für 24,
-27, 28 auf `akteure.html`); in F4 die Ordner `12-kennungen-2-f4` (Runde 2 liegt nur als
+**Nachzug vor Stufe 3**: Abschnitte aus fremden Beiträgen auf einer Unterseite sind seit `v0.33.0` da
+(Vorarbeit V1, Punkt 86). Offen in F4 die Ordner `12-kennungen-2-f4` (Runde 2 liegt nur als
 `validierung/12-kennungen/labels-2.csv` vor), die Rückfallregel von 14 als Verfahren in `score` oder
 die Prüfstichprobe als `14-vorgaenge-3-f4`, `16-ortsbezug-f4`, die Labels von
 `12-kennungen-recall-f4` und ein Maß für „Kategorie im Thema-Set" (17). Der Satz in `guete.json`

@@ -4120,7 +4120,7 @@ als zweite Kandidatenquelle und die Musteranträge der kommunalpolitischen Verei
 um Vorlage und Wiederholung zu trennen (Messdokument, Fragen 23.2, 23.4). Die lokale Ausrichtung
 bleibt als Werkzeug im Messskript, etwa für Vorhaben 25.
 
-## NN. Abschnitte aus fremden Beiträgen: ein Feld am Beitrag, Folge nach Rang, eine fehlende Zielseite entfällt mit einer Zeile im Log (Vorarbeit V1, 2026-11-27)
+## 86. Abschnitte aus fremden Beiträgen: ein Feld am Beitrag, Folge nach Rang, eine fehlende Zielseite entfällt mit einer Zeile im Log (Vorarbeit V1, 2026-11-27)
 
 Vorarbeit V1 aus `docs/plan-zeigen-2026-11.md`, § 4, der F2-Nachzug, den die Synergien 2026-11
 (§ 1, „Unterseiten, die mehrere Vorhaben füllen") vor Stufe 3 von 23, 24 und 26 bis 28 verlangt

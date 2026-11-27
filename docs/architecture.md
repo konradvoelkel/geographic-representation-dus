@@ -589,7 +589,7 @@ als `model` und ihre Daten als `data`. Die Hauptseite nennt die Seiten im Abschn
 der ohne Unterseiten fehlt. So bleibt `index.html` im Budget, und kein Vorhaben ändert
 `report/model.py`.
 
-**Abschnitte aus fremden Beiträgen** (Vorarbeit V1, Punkt NN): ein Beitrag hängt mit
+**Abschnitte aus fremden Beiträgen** (Vorarbeit V1, Punkt 86): ein Beitrag hängt mit
 `Contribution.sections` einen Abschnitt an die Unterseite eines anderen (`report.pages.PageSection`:
 Zielseite, Name, Rang, Eingaben, Daten, Schalter, erlaubte Links), etwa 26 an `vorgaenge.html` von 14
 oder 28 an `akteure.html` von 15. Die Vorlage liegt unter `templates/pages/<seite>/<name>.html.j2`,

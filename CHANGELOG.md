@@ -2,6 +2,13 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.33.0 (2026-11-27), Abschnitte aus fremden Beiträgen
+
+- **Unterseiten mit Gästen** (Vorarbeit V1 der Phase „Zeigen", `docs/decisions.md`, Punkt 86): ein Beitrag
+  hängt über `Contribution.sections` einen Abschnitt an die Unterseite eines anderen; die Seite kennt
+  ihre Gäste (`guests`) und deren Anker (`<section id="<name>">`), fehlt die Zielseite in einem Profil,
+  entfällt der Abschnitt mit einer Zeile im Log. Noch nutzt ihn kein Beitrag; die Seite ist bytegleich.
+
 ## 0.32.1 (2026-11-27), Konsolidierung und technischer Nachzug
 
 - **Dokumente konsolidiert**: `STATUS.md` trägt nur noch Stand und Bekanntes (157 statt 1 133 Zeilen),
