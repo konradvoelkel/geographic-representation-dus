@@ -16,7 +16,7 @@
   var fmt = function (n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f"); };
   g.loadJson(SRC).then(start).catch(function () {
     var note = $("start-offline");
-    note.textContent = g.offlineNote("Die Daten der Karte", SRC);
+    note.textContent = g.offlineNote("Die Kartendatei", SRC);
     note.hidden = false;
   });
 
