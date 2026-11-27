@@ -368,6 +368,30 @@ class FractionRow:
     # beobachtet durch erwartet; None unter ``MIN_QUESTIONS`` oder ``MIN_EXPECTED``
     ratio: float | None
     times: Times  # Median erst ab ``MIN_DATED``
+    # Review K2: das exakte 95-%-Intervall nach Poisson für das Verhältnis; None ohne Verhältnis
+    interval: tuple[float, float] | None = None
+
+
+def _interval_holds(observed: int, expected: float, result: tuple[float, float]) -> bool:
+    low, high = result
+    return 0.0 <= low <= observed / expected <= high
+
+
+@deal.pre(lambda observed, expected: observed >= 0 and expected > 0)
+@deal.ensure(_interval_holds, message="das Intervall enthält beobachtet durch erwartet")
+def poisson_ratio_interval(observed: int, expected: float) -> tuple[float, float]:
+    """Das exakte 95-%-Intervall (Garwood) für beobachtet durch erwartet (Review K2).
+
+    Die beobachtete Zahl der Antworten gilt als Poisson-verteilt, die erwartete als fest; die Grenzen
+    sind die Quantile der Chi-Quadrat-Verteilung, halbiert und durch ``expected`` geteilt. Ohne eine
+    Beobachtung ist die untere Grenze 0. Enthält das Intervall 1, ist die Fraktion von der Praxis
+    ihrer Gremien nicht zu unterscheiden.
+    """
+    from scipy.stats import chi2
+
+    low = float(chi2.ppf(0.025, 2 * observed)) / 2 if observed > 0 else 0.0
+    high = float(chi2.ppf(0.975, 2 * (observed + 1))) / 2
+    return low / expected, high / expected
 
 
 def fraction_rows(questions: pl.DataFrame, labels: Mapping[str, str]) -> tuple[FractionRow, ...]:
@@ -397,6 +421,7 @@ def fraction_rows(questions: pl.DataFrame, labels: Mapping[str, str]) -> tuple[F
         days = exploded.filter(pl.col("fraktionen") == key).get_column("tage")
         times = answer_times_of(days)
         times = at_least(times, MIN_DATED)
+        shown = ratio is not None and int(n) >= MIN_QUESTIONS and expected >= MIN_EXPECTED
         rows.append(
             FractionRow(
                 key=str(key),
@@ -404,12 +429,9 @@ def fraction_rows(questions: pl.DataFrame, labels: Mapping[str, str]) -> tuple[F
                 questions=int(n),
                 answered=int(observed),
                 expected=float(expected),
-                ratio=(
-                    float(ratio)
-                    if ratio is not None and int(n) >= MIN_QUESTIONS and expected >= MIN_EXPECTED
-                    else None
-                ),
+                ratio=float(ratio) if shown else None,
                 times=times,
+                interval=poisson_ratio_interval(int(observed), float(expected)) if shown else None,
             )
         )
     return tuple(sorted(rows, key=lambda r: (-r.questions, r.label)))

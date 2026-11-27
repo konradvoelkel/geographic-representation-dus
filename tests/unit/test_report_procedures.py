@@ -262,8 +262,9 @@ def test_je_fraktion_nur_beobachtet_gegen_erwartet(default_settings: Settings) -
     assert rows["CDU"].questions == MIN_QUESTIONS + 10 and rows["CDU"].ratio == pytest.approx(1.0)
     assert rows["SPD"].ratio is None  # fragt nur im Rat, erwartet 0
     section = _section(_render(_check_settings(default_settings)), "fraktionen")
-    assert "(explorativ)" in section and "%" not in section.split("<table")[1]
-    assert '<th scope="col" class="num" data-sort="num">beob./erw.</th>' in section
+    body = section.split("<tbody>")[1].split("</tbody>")[0]
+    assert "(explorativ)" in section and "%" not in body  # keine rohe Quote in den Zeilen
+    assert '<th scope="col" class="num">beob./erw. (95 %)</th>' in section  # Review K2
     assert '<th scope="col" class="num">Median Tage</th>' in section  # roh, sortiert nicht
 
 
@@ -542,3 +543,28 @@ def test_ein_median_je_gremium_erst_ab_dreissig_datierten(default_settings: Sett
     full = _model(settings).answers
     assert full is not None
     assert next(b for b in full.bodies if b.code == "BV1").times.median is not None  # 36 datiert
+
+
+def test_das_verhaeltnis_je_fraktion_steht_mit_poisson_intervall_und_sortiert_nicht(
+    default_settings: Settings,
+) -> None:
+    """K2: 0,95 bis 1,11 in der Hauptperiode, und jedes exakte Intervall enthält 1; eine
+    Rangfolge nach den Punktwerten wäre keine."""
+    from scipy.stats import chi2
+
+    from georep.report.procedures import poisson_ratio_interval
+
+    low, high = poisson_ratio_interval(36, 36.0)
+    assert (low, high) == pytest.approx(
+        (chi2.ppf(0.025, 72) / 2 / 36, chi2.ppf(0.975, 74) / 2 / 36)
+    )
+    assert low < 1 < high
+    assert poisson_ratio_interval(0, 4.0)[0] == 0.0
+    city = _city()
+    rows = {r.key: r for r in fraction_rows(city["answers"].join(city["questions"], on="id"), {})}
+    assert rows["CDU"].interval == pytest.approx((low, high))
+    assert rows["SPD"].interval is None  # ohne Verhältnis kein Intervall
+    section = _section(_render(_check_settings(default_settings)), "fraktionen")
+    assert '<th scope="col" class="num">beob./erw. (95 %)</th>' in section
+    assert 'data-sort="num">beob./erw.' not in section
+    assert f"({low:.2f}–{high:.2f})".replace(".", ",") in section
