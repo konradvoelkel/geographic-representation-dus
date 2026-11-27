@@ -469,6 +469,26 @@ def test_css_und_javascript_der_abschnitte_stehen_auf_der_seite(
     assert "<script>\nvoid 'gast';\n</script>" in html
 
 
+def test_css_und_javascript_der_seite_stehen_vor_denen_der_gaeste(
+    default_settings: Settings,
+) -> None:
+    """Review N8: erst die Seite, dann die Gäste in der Folge der Seite (``sections_for``); ein
+    Gast kann so eine Regel der Seite überschreiben, nicht umgekehrt."""
+    env = _env(
+        {
+            "pages/probe.css": ".seite {}\n",
+            "pages/probe/zweiter.css": ".zweiter {}\n",
+            "pages/probe.js": "void 'seite';",
+            "pages/probe/zweiter.js": "void 'zweiter';",
+        }
+    )
+    html = _render(default_settings, (_section("gast", 10), _section("zweiter", 20)), env=env)
+    style = html[html.index("<style>") : html.index("</style>")]
+    assert style.index(".seite {}") < style.index(".gast {") < style.index(".zweiter {}")
+    assert html.index("void 'seite'") < html.index("void 'gast'") < html.index("void 'zweiter'")
+    assert html.index("</style>") < html.index("<main>") < html.index("void 'seite'")
+
+
 def test_jede_javascript_datei_bekommt_ein_eigenes_skript(default_settings: Settings) -> None:
     """Review N2: ein Fehler im Skript eines Gasts legt das der Seite und der anderen nicht still."""
     env = _env({"pages/probe.js": "void 'seite';", "pages/probe/zweiter.js": "void 'zweiter';"})
