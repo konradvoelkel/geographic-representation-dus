@@ -5150,7 +5150,7 @@ A/B-Vergleich um eine Zeile vergrößert. Die Unterseiten sprechen im Text von d
 (Dokumentdialog, Zählung je Partei); das gilt für `details.html` weiter, mit Stufe B trägt auch die
 Startseite den Dialog. `deploy/bin/georep-monitor.sh` misst als `PAGE_KB` jetzt die Startseite.
 
-## NN. Die Startseite: Kurzfassung aus dem Modell, Karte aus eigenen Vektordaten, Straßenpunkte als Paket, Zeitregler in Monaten (Startseite, Stufe B, 2026-11-27)
+## 93. Die Startseite: Kurzfassung aus dem Modell, Karte aus eigenen Vektordaten, Straßenpunkte als Paket, Zeitregler in Monaten (Startseite, Stufe B, 2026-11-27)
 
 [plan-startseite-2026-11.md](plan-startseite-2026-11.md), § 3 bis § 8, mit Konrads Antworten auf
 § 10 (S.3 ohne K5, S.4 `karte.html` unverändert, S.9 und S.10 nicht in B). Auf Punkt 92 (Stufe U)

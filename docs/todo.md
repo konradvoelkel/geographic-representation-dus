@@ -324,3 +324,21 @@ Tabelle, bei 15, 11/12, 17 und 14 je rund 3 bis 6 KB). Vor der nächsten Unterse
 nur noch in `schema.json` und auf einer kleinen eigenen Seite führen und auf der Hauptseite verlinken;
 eine Regel für das ganze Register (Reviews der Stufen 3 von 15, 11/12, 17 und 14).
 
+## 37. Allgemeine Wörter im Wörterbuch Mönchengladbachs
+
+Aufgenommen am 2026-11-27 mit der Startseite (Punkt 93): der häufigste Ort auf der Karte Mönchengladbachs
+ist „Stadt" im Wahlbezirk 30 (127 Dokumente). `combined_searchdict` führt dort `stadt`, im Wahlbezirk 2
+`bau` und `baum`; das sind Wörter der Alltagssprache, die als Straßen- oder Ortsnamen ins Wörterbuch kamen
+und jedes Dokument treffen, das sie enthält. Die Ausschlussliste des Profils Düsseldorf fängt solche
+Wörter, die Mönchengladbachs offenbar nicht alle. Zu tun: die kurzen und allgemeinen Begriffe des
+Wörterbuchs prüfen, die Ausschlussliste in `profiles/moenchengladbach.toml` ergänzen; die Zahlen
+Mönchengladbachs ändern sich, also A/B-Bau.
+
+## 38. Satz zur Wörterbuchgröße in der Methode nur bei starker Korrelation
+
+Aufgenommen am 2026-11-27 aus dem Bau der Startseite (Punkt 93). Die Kurzfassung der Startseite nennt
+die Verzerrung durch die Wörterbuchgröße erst ab r ≥ 0,5 (`BIAS_R`); der Absatz in `details.html`
+(`60-methode.html.j2`) sagt dagegen auch bei r = 0,18 (Mönchengladbach), die Trefferzahl hänge „vor
+allem" an der Größe des Wörterbuchs, sobald sich die Korrelation rechnen lässt. Dieselbe Grenze dort
+anlegen, mit A/B-Bau.
+

@@ -135,8 +135,9 @@ wenn sich ein Merge schiebt.
 
 **Neue Startseite.** Der Plan [plan-startseite-2026-11.md](plan-startseite-2026-11.md) (Startseite mit Karte,
 Zeitregler und Kurzfassung; der heutige Inhalt als `details.html`) ist freigegeben und sein Bau am
-2026-11-27 nach `v0.38.0` begonnen: U (Umzug nach `details.html`) als `v0.39.0`, B (Startseite) als
-`v0.40.0`, beide vor 22; die Versionen der Tabelle ab 22 rücken um zwei nach.
+2026-11-27 gebaut: U (Umzug nach `details.html`) als `v0.39.0`, B (Startseite) als `v0.40.0`, beide vor
+22; die Versionen der Tabelle ab 22 rücken um zwei nach. Seitdem gilt die Grenze von 1 000 000 Byte und
+das Ziel von höchstens 30 KB Zuwachs für `details.html`; die Startseite hat 150 000 Byte (§ 6).
 
 **Haltepunkte.**
 

@@ -2,6 +2,21 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.40.0 (2026-11-27), Startseite
+
+- **Neue Startseite** (`docs/decisions.md`, Punkt 93, `docs/plan-startseite-2026-11.md`): eine Kurzfassung in
+  drei bis vier Sätzen aus dem Modell, jeder mit Link auf die Stelle in `details.html`; eine Karte aus
+  eigenen Vektordaten (Wahlbezirke, Stadtbezirke, Stadtteilnamen, keine Kacheln von Dritten) mit einem
+  Punkt je Ort und Wahlbezirk; ein Zeitregler in Monaten, beim Öffnen die letzten zwölf Monate; ein Filter
+  „Gremium". Ein Klick auf einen Punkt öffnet die Dokumente im Dialog. Ohne JavaScript steht die Karte als
+  Fläche je Wahlbezirk.
+- Neue Datei `data/karte.json` je Profil und die Pakete `snapshots/duesseldorf-strassenpunkte/` und
+  `snapshots/moenchengladbach-strassenpunkte/` (Straßenpunkte aus den Gebäudereferenzen NRW, auf 25 m
+  gerundet, ohne Hausnummern; Netzschritt `street_points` nur mit Schalter, `georep pack --street-points`).
+- Budgets je Datei: Startseite 150 000 Byte, `karte.json` 500 000 Byte; `details.html` behält 1 000 000.
+- Die Dokumentliste öffnet sich auf jeder Seite über `georep.showDocumentList`; die Unterseiten sagen
+  „Details" und „Startseite" statt „Hauptseite"; der Monitor misst beide Seiten.
+
 ## 0.39.0 (2026-11-27), Details
 
 - **Die Auswertung steht als `details.html`** (Startseite, Stufe U, `docs/decisions.md`, Punkt 92): Inhalt
