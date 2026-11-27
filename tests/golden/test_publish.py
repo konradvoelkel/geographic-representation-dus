@@ -89,6 +89,10 @@ def test_publish_keeps_the_first_city_at_the_root_and_nests_the_others(
     assert (site / "data" / "summary.json").is_file()
     assert (site / "moenchengladbach" / "index.html").is_file()
     assert (site / "moenchengladbach" / "details.html").is_file()
+    # Punkt 36: das Spaltenschema je Stadt, ohne die Zeile „Weitere Städte" wie karte.html
+    for folder in (site, site / "moenchengladbach"):
+        columns = (folder / "spalten.html").read_text(encoding="utf-8")
+        assert NEIGHBOURS_MARKER not in columns and "Weitere Städte" not in columns
     assert (site / "moenchengladbach" / "data" / "summary.json").is_file()
     assert summary.cities == ("duesseldorf", "moenchengladbach") and not summary.missing
     assert summary.comparison and "2 Städte" in summary.line()
@@ -434,3 +438,10 @@ def test_a_budget_of_zero_leaves_no_page_over_it(both_cities: tuple[Path, Settin
     _, both = _publish(root, small)
     assert {"index.html", "data/karte.json"} <= set(both.over_budget)
     assert "details.html" not in both.over_budget
+    # Punkt 36: spalten.html gegen ihr eigenes Budget, nicht gegen das von details.html
+    assert "spalten.html" not in strict.over_budget
+    columns = settings.model_copy(
+        update={"report": settings.report.model_copy(update={"columns_budget_bytes": 1})}
+    )
+    _, only = _publish(root, columns)
+    assert set(only.over_budget) == {"spalten.html", "moenchengladbach/spalten.html"}

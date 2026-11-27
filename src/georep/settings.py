@@ -1585,6 +1585,9 @@ class Report(_Strict):
     # 150 000, Ziel 120 000), ``data/karte.json`` höchstens 500 000 Byte roh; 0 schaltet ab
     start_budget_bytes: int = Field(default=150_000, ge=0)
     map_budget_bytes: int = Field(default=500_000, ge=0)
+    # Punkt 36: ``spalten.html``, das Spaltenschema aller Tabellen, hat ein eigenes Budget; mit
+    # jeder neuen Tabelle wächst sie, und eine eigene Zahl merkt das früher als das der Seiten
+    columns_budget_bytes: int = Field(default=500_000, ge=0)
     start: StartSettings = StartSettings()
     notes: list[str] = []  # Sätze, die nur für diese Stadt in „Methode und Grenzen" gehören
     data_note: str = ""  # woher Straßen und Orte stammen, wenn kein Netzschritt gelaufen ist

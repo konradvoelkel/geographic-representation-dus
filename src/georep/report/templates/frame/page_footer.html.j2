@@ -1,0 +1,5 @@
+{# Der Fuß der Unterseiten (page.html.j2) und des Spaltenschemas (spalten.html.j2): Lizenzen, Verweis auf die Details für Quellen und Lizenzen der Daten, Zeitpunkt #}
+<footer>
+<p>Ergebnisse: <a href="{{ links.cc0 }}">CC0 1.0</a>; Quelltext: <a href="{{ links.gpl }}">GPL-3.0-or-later</a>. Quellen und Lizenzen der Daten nennen die <a href="details.html">Details</a>.</p>
+<p>Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}.</p>
+</footer>

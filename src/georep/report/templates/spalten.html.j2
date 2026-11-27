@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spaltenschema · {{ model.city.name }}, {{ model.period.title }}</title>
+<meta name="description" content="Spalte, Typ, Bedeutung und Einheit jeder Tabelle unter den Downloads der Ratsdokumente {{ model.city.genitive }}, {{ model.period.title }}.">
+<style>
+{% include "frame/style.css.j2" +%}
+{# Punkt 36: das Verzeichnis der Tabellen in so vielen Spalten, wie die Breite trägt #}
+ul.tables { columns: 17em; column-gap: 1.5rem; padding-left: 1.2em; max-width: none; }
+ul.tables li { break-inside: avoid; }
+{# Ein Spaltenname bricht nur hinter einem Unterstrich (<wbr>), sonst stand auf 390 px „wahlkr eis_id“ #}
+td:first-child code { overflow-wrap: normal; }
+</style>
+</head>
+<body>
+{# Punkt 36 (docs/todo.md): das Spaltenschema stand bis v0.40.0 unter den Downloads von details.html, je Tabelle ein <details>; dieselben Zeilen stehen in data/schema.json #}
+<header>
+<h1>Spaltenschema</h1>
+<p class="lead">Je Tabelle der Downloads ihre Spalten mit Typ, Bedeutung und Einheit; dieselben Angaben stehen maschinenlesbar in <a href="data/schema.json"><code>schema.json</code></a>.</p>
+<p class="meta"><a href="index.html">Zur Startseite: Ratsdokumente {{ model.city.genitive }}, {{ model.period.title }}</a> · <a href="details.html#downloads">Details: Downloads</a>. Gebaut mit georep {{ model.version }}; Quelltext und Daten im <a href="{{ links.repository }}">Repository</a>.</p>
+</header>
+<main>
+<nav aria-label="Tabellen"><ul class="tables">
+{% for table in tables %}
+<li><a href="#{{ table }}"><code>{{ table }}</code></a></li>
+{% endfor %}
+</ul></nav>
+{# Der Anker jedes Abschnitts ist der Name der Tabelle; render_columns prüft, dass er genau einmal dasteht #}
+{% for table in tables %}
+<section id="{{ table }}">
+<h2><code>{{ table }}</code></h2>
+{% if files[table] %}
+<p class="note">{{ files[table][0].description }}: {% for d in files[table] %}<a href="data/{{ d.name }}">{{ d.name }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+{% endif %}
+<div class="scroll"><table class="small">
+<thead><tr><th scope="col">Spalte</th><th scope="col">Typ</th><th scope="col">Bedeutung</th><th scope="col">Einheit</th></tr></thead>
+<tbody>
+{% for c in model.columns if c.table == table %}
+<tr><td><code>{% for part in c.column.split("_") %}{{ part }}{% if not loop.last %}_<wbr>{% endif %}{% endfor %}</code></td><td>{{ c.dtype }}</td><td>{{ c.description }}</td><td>{{ c.unit }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+</section>
+{% endfor %}
+</main>
+{% include "frame/page_footer.html.j2" +%}
+</body>
+</html>

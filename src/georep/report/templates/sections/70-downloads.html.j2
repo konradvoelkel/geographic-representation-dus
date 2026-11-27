@@ -7,23 +7,12 @@
 <thead><tr><th scope="col">Datei</th><th scope="col">Format</th><th scope="col" class="num">Zeilen</th><th scope="col" class="num">Größe</th><th scope="col">Beschreibung</th><th scope="col">SHA-256</th></tr></thead>
 <tbody>
 {% for d in model.downloads %}
-<tr><td><a href="data/{{ d.name }}">{{ d.name }}</a></td><td>{{ d.format }}</td><td class="num">{% if d.rows is not none %}{{ d.rows|num }}{% endif %}</td><td class="num">{{ d.bytes|kib }}</td><td>{{ d.description }}</td><td><code>{{ d.sha256 }}</code></td></tr>
+<tr><td><a href="data/{{ d.name }}">{{ d.name }}</a></td><td>{{ d.format }}</td><td class="num">{% if d.rows is not none %}{{ d.rows|num }}{% endif %}</td><td class="num">{{ d.bytes|kib }}</td><td>{{ d.description }}{% if d.table %} · <a href="spalten.html#{{ d.table }}">Spalten</a>{% endif %}</td><td><code>{{ d.sha256 }}</code></td></tr>
 {% endfor %}
 </tbody></table></div>
 {% for c in model.table_checks %}
 <p class="note"><code>{{ c.table }}</code>: {{ c.sentence }}</p>
 {% endfor %}
-<h3>Spaltenschema</h3>
-{% for table in tables %}
-<details>
-<summary><code>{{ table }}</code></summary>
-<div class="scroll"><table class="small">
-<thead><tr><th scope="col">Spalte</th><th scope="col">Typ</th><th scope="col">Bedeutung</th><th scope="col">Einheit</th></tr></thead>
-<tbody>
-{% for c in model.columns if c.table == table %}
-<tr><td><code>{{ c.column }}</code></td><td>{{ c.dtype }}</td><td>{{ c.description }}</td><td>{{ c.unit }}</td></tr>
-{% endfor %}
-</tbody></table></div>
-</details>
-{% endfor %}
+{# Punkt 36: das Spaltenschema steht auf spalten.html, je Tabelle ein Abschnitt; die Prüfsätze darüber betreffen den Download und bleiben hier #}
+<p>Was jede Spalte bedeutet, steht je Tabelle mit Typ und Einheit im <a href="spalten.html">Spaltenschema</a> auf einer eigenen Seite, maschinenlesbar in <a href="data/schema.json"><code>schema.json</code></a>.</p>
 </section>

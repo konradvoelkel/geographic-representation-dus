@@ -59,6 +59,7 @@ ALLOWED_LINKS = frozenset(
     }
 )
 _EXTERNAL = re.compile(r'(?:href|src)="(https?://[^"]*)"')
+_ID = re.compile(r'(?<![\w-])id="([^"]*)"')
 
 
 def model_links(model: ReportModel) -> frozenset[str]:
@@ -93,6 +94,8 @@ LEAFLET = {
     "js_sri": "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=",
 }
 MAP_ALLOWED_LINKS = frozenset({LEAFLET["css"], LEAFLET["js"], OSM_COPYRIGHT, REPOSITORY})
+# Punkt 36: das Spaltenschema verlinkt nach außen nur, was der Fuß der Unterseiten nennt
+COLUMNS_ALLOWED_LINKS = frozenset({REPOSITORY, CC0, GPL})
 LIGHT_RAMP = ("#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#0d366b")  # wie --q0 bis --q4 hell
 
 
@@ -253,7 +256,6 @@ def render_report(model: ReportModel, visuals: Visuals) -> str:
         sections=[s.template for s in parts],
         section_css="".join(s.css for s in parts if s.css),
         section_js="\n".join(s.js for s in parts if s.js),
-        tables=list(dict.fromkeys(column.table for column in model.columns)),
         search_json=_json_for_script(search_payload(model.search)),
         links={
             "repository": REPOSITORY,
@@ -293,4 +295,48 @@ def render_map(
         pois_json=_json_for_script(places),
         colors_json=_json_for_script(list(LIGHT_RAMP)),
         legend_json=_json_for_script([[entry.klass, entry.label] for entry in legend]),
+    )
+
+
+def column_tables(model: ReportModel) -> list[str]:
+    """Die Tabellen des Spaltenschemas in der Folge von ``schema.json``: Register, dann GeoJSON."""
+    return list(dict.fromkeys(column.table for column in model.columns))
+
+
+def anchors_once(model: ReportModel, result: str) -> bool:
+    """Nachbedingung von ``render_columns``: der Anker jeder Tabelle steht genau einmal auf der Seite.
+
+    Zweimal hieße: eine andere id der Seite heißt wie eine Tabelle, und ``spalten.html#<tabelle>``
+    zeigte nicht sicher auf ihren Abschnitt. Benannt, damit ein Test sie allein prüfen kann.
+    """
+    ids = _ID.findall(result)
+    return all(ids.count(table) == 1 for table in column_tables(model))
+
+
+@deal.ensure(anchors_once, message="der Anker jeder Tabelle genau einmal")
+@deal.post(lambda result: result.startswith("<!doctype html>") and 'lang="de"' in result)
+@deal.post(
+    lambda result: set(external_links(result)) <= COLUMNS_ALLOWED_LINKS,
+    message="das Spaltenschema verlinkt nur Repository und Lizenzen nach außen",
+)
+def render_columns(model: ReportModel) -> str:
+    """``spalten.html``: je Tabelle Spalte, Typ, Bedeutung und Einheit (Punkt 36).
+
+    Bis ``v0.40.0`` stand das unter den Downloads von ``details.html``, je Tabelle ein
+    ``<details>``; dieselben Zeilen schreibt ``build.write_schema`` nach ``schema.json``. Je
+    Tabelle ein Abschnitt mit ihrem Namen als Anker, darüber ein Inhaltsverzeichnis, unter dem
+    Namen die Dateien der Tabelle aus ``model.downloads``. Kopf und Fuß wie die Unterseiten, ohne
+    Skript und ohne Dialog.
+    """
+    tables = column_tables(model)
+    files = {table: [d for d in model.downloads if d.table == table] for table in tables}
+    return (
+        environment()
+        .get_template("spalten.html.j2")
+        .render(
+            model=model,
+            tables=tables,
+            files=files,
+            links={"repository": REPOSITORY, "cc0": CC0, "gpl": GPL},
+        )
     )

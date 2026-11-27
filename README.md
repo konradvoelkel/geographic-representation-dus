@@ -75,9 +75,9 @@ Tabelle je Wahlbezirk, Gremien, Begriffe mit Dokumentdialog, Monatsreihe, Method
 abgeleitete Daten, Literatur, Downloads, laufende Periode. Die Adresse ohne Dateinamen öffnet die
 Startseite `index.html` mit den Links zur Auswertung, zu den Unterseiten und zu den Downloads; alte
 Adressen mit Anker leitet sie auf `details.html` weiter. Daneben `karte.html` (Leaflet und
-OpenStreetMap-Kacheln, braucht Netz) und unter `site/data/` die 24 Ergebnistabellen als Parquet und
-CSV plus `wahlbezirke.geojson`, `schema.json`, `summary.json`, `dokumente.json` und `begriffe.json`,
-je mit Größe und SHA-256 auf der Seite.
+OpenStreetMap-Kacheln, braucht Netz), `spalten.html` mit dem Spaltenschema jeder Tabelle und unter
+`site/data/` die 24 Ergebnistabellen als Parquet und CSV plus `wahlbezirke.geojson`, `schema.json`,
+`summary.json`, `dokumente.json` und `begriffe.json`, je mit Größe und SHA-256 auf der Seite.
 
 **Was die Seite kann, Abschnitt für Abschnitt, steht in [docs/inhalt.md](docs/inhalt.md)**; was ihre
 Zahlen bedeuten und was gegen sie spricht, in [docs/statistik.md](docs/statistik.md); wie man damit

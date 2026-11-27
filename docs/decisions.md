@@ -5283,3 +5283,112 @@ um 59 554 Bytes.
 **Bewusst nicht in B.** E1 bis E5 und S.10 (Plan § 9, § 10); `karte.html` bleibt bis zu Frage S.4
 unverändert. Die Orte sind über die Tastatur nur über „Als Liste" und die Flächen der Wahlbezirke
 erreichbar, nicht einzeln. Die Grenze der Stadtbezirke in einem geteilten Wahlbezirk (oben).
+
+## NN. Das Spaltenschema auf `spalten.html`: je Tabelle ein Abschnitt mit ihrem Namen als Anker, auf keiner anderen Seite (Punkt 36, 2026-11-27)
+
+`docs/todo.md`, Punkt 36, Phase „Zeigen“ (`docs/plan-zeigen-2026-11.md`). `details.html` wog in der
+Hauptperiode 968 010 Byte (hart 1 000 000; Ziel der Phase höchstens 30 000 über den 937 528 vor
+`v0.33.0`). Der Abschnitt `downloads` war 78 843 Byte groß, davon 50 990 die Liste „Spaltenschema“: je
+Tabelle ein `<details>` mit Spalte, Typ, Bedeutung und Einheit. Jede Tabelle eines neuen Vorhabens
+wuchs dort mit (15, 11/12, 17 und 14 je rund 3 bis 6 KB), als Nächstes 22 mit zwei. Die Regel gilt
+für das ganze Register, nicht für einzelne Tabellen. Gebaut auf `feat/36-spalten` ab `main`
+`a8e4d42` (`v0.40.0`). Die Nummer bekommt der Eintrag beim Merge.
+
+**Was gebaut ist.**
+
+- *`spalten.html` je Profil*, geschrieben vom Schritt `report` neben `details.html` und `karte.html`
+  (`render.render_columns`, `templates/spalten.html.j2`), keine Beitragsseite und darum kein Schritt
+  `page_*`. Je Tabelle ein `<section id="<tabelle>">` mit dem Namen als Überschrift, einer Zeile mit
+  Beschreibung und Dateien der Tabelle (aus `model.downloads`) und der Tabelle Spalte, Typ, Bedeutung,
+  Einheit aus `model.columns`, also aus denselben Zeilen, die `write_schema` nach `schema.json`
+  schreibt, in derselben Folge; darüber ein Verzeichnis der Tabellen. Kopf mit „Zur Startseite“ und
+  „Details: Downloads“ (`details.html#downloads`) und dem Link auf `schema.json`, Fuß wie die
+  Unterseiten: `frame/page_footer.html.j2`, aus `page.html.j2` herausgezogen (eine Probeseite war mit
+  alter und neuer Rahmenvorlage bytegleich, der A/B-Bau zeigt es an allen Unterseiten). Der Stil des
+  Rahmens, kein Skript, kein Dialog. Nachbedingungen: jeder Anker genau einmal (`anchors_once`), nach
+  außen nur Repository und Lizenzen (`COLUMNS_ALLOWED_LINKS`).
+- *`details.html`*: jede Downloadzeile einer Tabelle, Parquet, CSV und `wahlbezirke.geojson`, trägt
+  hinter der Beschreibung „· Spalten“ mit Link auf `spalten.html#<tabelle>` (`Download.table`, gesetzt
+  in `write_tables` und beim GeoJSON); die JSON-Dateien tragen ihre Felder selbst und keinen. An der
+  Stelle der Überschrift „Spaltenschema“ steht ein Satz mit Link auf `spalten.html` und auf
+  `data/schema.json`. Die Abschnittsvorlage bekommt die Liste `tables` nicht mehr.
+- *Budget*: `report.columns_budget_bytes = 500000`; `publish` prüft es je Datei (`page_budgets`), und
+  die Meldung von `--strict-budget` nennt es. Wie bei `karte.json` prüft nur `publish` die eigene Grenze;
+  `SiteSummary` zählt die Seite unter Dateien und Bytes mit.
+- `spalten` ist als Seitenname reserviert (`pages.RESERVED`); `spalten.html` ist die fünfte Ausgabe von
+  `report`, der Stamp hängt weiter an der Startseite. `write_neighbours` bleibt bei `index.html` und
+  `details.html`: `spalten.html` trägt wie `karte.html` keine Zeile „Weitere Städte“.
+
+**Entscheidungen.**
+
+- *Der Anker ist der Tabellenname, ohne Präfix.* Die Seite hat sonst keine id (das Verzeichnis trägt
+  keine, Dialog und Tooltip fehlen), eine Kollision entsteht also erst, wenn jemand eine id hinzufügt,
+  die wie eine Tabelle heißt; dann bricht die Nachbedingung den Bau ab.
+- *Offene Abschnitte statt `<details>`*: auf einer eigenen Seite ist nichts zu sparen, und ein Sprung
+  auf `#<tabelle>` soll die Spalten zeigen, nicht einen Aufklapper.
+- *Spaltennamen brechen nur hinter einem Unterstrich.* Der Rahmen setzt `code` auf
+  `overflow-wrap: anywhere`; in den Aufklappern stand auf 390 px darum „wahlkr|eis_id“. Auf
+  `spalten.html` steht hinter jedem Unterstrich ein `<wbr>` (beim Kopieren unsichtbar, rund 800 Byte in
+  der Hauptperiode), und die Zelle des Namens bricht sonst nicht. Die Tabelle scrollt auf schmalen
+  Schirmen weiter waagrecht wie jede breite Tabelle der Seiten: die längsten Wörter der Beschreibungen
+  („Kommunalwahlbezirks“) und vier Spalten passen nicht in 358 px.
+- *Die Prüfsätze bleiben unter den Downloads.* Sie sagen, wie eine Tabelle geprüft ist (`TableCheck`,
+  Punkt 89), betreffen also den Download und keine einzelne Spalte. Hinweise, die eine Spalte erklären,
+  gab es unter den Schemablöcken keine; das steht in den Beschreibungen selbst und wandert mit ihnen.
+- *Der Link steht in der Zelle „Beschreibung“*, nicht in einer eigenen Spalte: die Tabelle behält
+  ihre sechs Spalten, und eine Zeile ohne Tabelle bekommt keine leere Zelle.
+- *Die Startseite bleibt unverändert.* Ihr Linkblock führt über „Downloads“ auf
+  `details.html#downloads`, und dort verlinkt jede Zeile ihr Schema; keine Verbindung fällt weg.
+- *Die Unterseiten* `akteure.html`, `vorgaenge.html` und `zeit.html` hatten keine eigenen
+  Schemablöcke; ihre Tabellen standen im Schema von `details.html` und stehen jetzt auf `spalten.html`.
+- Verworfen: das Schema nur in `schema.json` (ohne Werkzeug sähe niemand mehr die Bedeutung einer
+  Spalte); eine Seite je Tabelle (rund 30 Dateien mit je Kopf und Stil); das Schema per Skript in die
+  Downloads nachladen (aus `file://` leer, und die Zahl der Abschnitte bliebe an der Seite hängen).
+
+**Tests.** `tests/unit/test_report_columns.py`: keine Seite der Mini-Fixture außer `spalten.html`
+(Startseite, Auswertung, Karte, jede Unterseite des Profils) trägt eine Tabelle, deren Kopf „Spalte“ und
+„Typ“ nennt, `spalten.html` genau eine je Tabelle; jede Tabelle des Registers hat ihren Anker genau
+einmal, die Abschnitte stehen in der Folge von `schema.json` und tragen dessen Zeilen; jede
+Downloadzeile einer Tabelle verlinkt genau ihren Abschnitt, die übrigen keinen, jeder Link trifft einen
+Anker, und der Satz nennt Seite und `schema.json`; Kopf und Fuß wie die Unterseiten; das Budget;
+Escaping; die Nachbedingung allein. `test_report_render.py` liest die Spalten auf `spalten.html`,
+`test_report_pages.py` den reservierten Namen, `test_report_downloads.py` den Prüfsatz unter den
+Downloads und nicht auf `spalten.html` (am Lauf mit Rohtext, wo `dokumente_kopf` und `kennungen`
+erscheinen) und `spalten.html` in der Suche nach Namen, `test_report_actors.py` das Wort „symbol“
+auch dort, `test_cli.py` die Grenze in der Meldung. Golden: `test_publish.py` je Stadt die Seite ohne
+Städtezeile und ihr eigenes Budget; slow `test_published_page.py` an der vollen Referenz über alles,
+was `publish` ablegt, und die Seite unter 500 000 Byte. Rot vor der Änderung (die Quellen gestasht):
+Exit 1, acht Tests und zwei Module beim Sammeln (Liste im Commit).
+
+**A/B-Bau** aller fünf Profile wie `pages.yml` (`scripts/ab_bau.sh`, `POLARS_MAX_THREADS=4
+OMP_NUM_THREADS=2`), A aus `main` `a8e4d42` (`v0.40.0`, `ab/36-a`), B aus `8a5726d` (`ab/36-b`; der
+Doku-Commit danach ändert keine Seite). Unter `site/` 328 Dateien in A, 332 in B, acht Abweichungen,
+alle erwartet: neu die vier `spalten.html`, anders die vier `details.html`. Je `details.html` fehlen
+Überschrift und Aufklapper des Spaltenschemas (36, 30, 27 und 28 Tabellen, so viele wie in
+`schema.json`), 70, 59, 53 und 55 Downloadzeilen tragen den Link, dazu der Satz; sonst gleich bis auf
+Zeitstempel und Prüfsummen. Gleich sind die Startseiten, `karte.html`, `akteure.html`,
+`vorgaenge.html`, `zeit.html` (also auch der herausgezogene Fuß), `vergleich.html` und jede Datei unter
+`data/`; `schema.json` bis auf `generated_at`. Über die Datenwurzeln 1 191 und 1 201 Dateien: neu die
+zehn `spalten.html`, anders die zehn `details.html` und 135 Stamps (Schreibzeit); kein Parquet, kein
+JSON anders. `georep publish --strict-budget` lief in beiden Bauten durch.
+
+| | `details.html` A → B | gzip A → B | `spalten.html` | gzip |
+|---|---|---|---|---|
+| Hauptperiode | 968 010 → 921 158 (−46 852) | 205 493 → 198 055 | 77 302 | 15 581 |
+| `2014-2020/` | 843 227 → 810 574 (−32 653) | 184 512 → 179 630 | 60 234 | 12 592 |
+| `2025/` | 739 131 → 708 924 (−30 207) | 158 740 → 154 182 | 56 594 | 12 055 |
+| `moenchengladbach/` | 826 601 → 796 047 (−30 554) | 160 174 → 155 554 | 57 194 | 12 103 |
+
+`details.html` der Hauptperiode liegt damit 16 370 Byte unter dem Bau vor `v0.33.0` (937 528) und
+78 842 unter der harten Grenze. `spalten.html` ist größer als die entfernten Blöcke (50 990 Byte in der
+Hauptperiode), weil sie den Stil des Rahmens (rund 12 KB), das Verzeichnis und je Tabelle Überschrift
+und Dateizeile trägt; bis zur Grenze von 500 000 Byte bleiben rund 420 000.
+
+**Geprüft im Browser** (headless Chrome über Port 8778 auf dem B-Bau, je 390 und 1 280 px):
+`spalten.html` (Kopf, Verzeichnis, erste Tabelle, die Tabelle der Kontrollvariablen mit den längsten
+Namen) und der Abschnitt Downloads von `details.html`.
+
+**Nicht in diesem Punkt.** Auf 390 px ist die Download-Tabelle von `details.html` je Zeile rund 350 px
+hoch, in A genauso; vermutlich drückt die Spalte SHA-256 (`code`, `overflow-wrap: anywhere`) die
+Beschreibung zusammen, untersucht ist es nicht. Der Linkblock der Startseite nennt bei „Downloads“ weiter „mit
+Prüfsummen und Spaltenschema“; das Schema ist von dort einen Link weiter.

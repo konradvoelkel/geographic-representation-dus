@@ -118,7 +118,7 @@ def raw_run(
 
 # --- Kein Personenname ----------------------------------------------------------------------------
 def _downloads_section(page: str) -> str:
-    """Der Abschnitt „Downloads" mit Zeilen, Prüfsätzen und Spaltenschema, nicht die ganze Seite."""
+    """Der Abschnitt „Downloads" mit Zeilen und Prüfsätzen, nicht die ganze Seite."""
     start = page.index('<section id="downloads">')
     return page[start : page.index("</section>", start)]
 
@@ -132,6 +132,8 @@ def _published_text(layout: Layout) -> str:
         (data / "kennungen.csv").read_text(encoding="utf-8"),
         (data / "schema.json").read_text(encoding="utf-8"),
         _downloads_section(layout.site_details.read_text(encoding="utf-8")),
+        # Punkt 36: das Spaltenschema steht auf seiner eigenen Seite
+        (layout.site / "spalten.html").read_text(encoding="utf-8"),
     ]
     return "\n".join(parts)
 
@@ -324,14 +326,20 @@ def _quality(project: str) -> dict[str, Any]:
 
 
 def test_der_pruefsatz_steht_unter_den_downloads(raw_run: Layout) -> None:
-    page = raw_run.site_details.read_text(encoding="utf-8")
-    downloads = page[page.index('<section id="downloads">') : page.index("<h3>Spaltenschema</h3>")]
+    downloads = _downloads_section(raw_run.site_details.read_text(encoding="utf-8"))
     satz = _quality("11-struktur-f4")["satz"]
     assert f"<code>dokumente_kopf</code>: {satz[0].upper()}{satz[1:]}" in downloads
     for project in ("12-kennungen-f4", "12-kennungen-2-f4"):
         assert _quality(project)["satz"] in downloads
     notes = [line for line in downloads.splitlines() if line.startswith('<p class="note"><code>')]
     assert len(notes) == 2 and all(len(n.encode("utf-8")) < LINE_BUDGET for n in notes)
+    # Punkt 36: der Prüfsatz betrifft den Download und bleibt dort; das Spaltenschema der beiden
+    # Tabellen steht auf spalten.html, und ihre Downloadzeilen verlinken es
+    columns = (raw_run.site / "spalten.html").read_text(encoding="utf-8")
+    assert satz[1:] not in columns and '<p class="note"><code>' not in columns
+    for table in (HEAD, SPANS):
+        assert f'<section id="{table.name}">' in columns
+        assert f'href="spalten.html#{table.name}"' in downloads
 
 
 def test_der_pruefsatz_des_kopfs_nennt_die_zahlen_der_messung(default_settings: Settings) -> None:
