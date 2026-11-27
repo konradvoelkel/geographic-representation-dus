@@ -1,0 +1,304 @@
+"""Abschnitte aus fremden Beiträgen auf einer Unterseite (Vorarbeit V1, F2-Nachzug).
+
+``docs/plan-zeigen-2026-11.md``, § 4: ein Beitrag hängt einen Abschnitt an die Unterseite eines
+anderen (26 an ``vorgaenge.html`` von 14, 28 an ``akteure.html`` von 15). Heute registriert kein
+Beitrag eine Seite; geprüft wird darum mit einer Seite und Abschnitten, die nur diese Tests kennen,
+ihre Vorlagen in einem ``DictLoader``.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+from collections.abc import Callable, Iterator, Mapping
+from dataclasses import replace
+from importlib import resources
+from pathlib import Path
+
+import deal
+import pytest
+from jinja2 import ChoiceLoader, DictLoader, Environment
+from loguru import logger
+
+import georep.enrich
+import georep.report.pages
+from georep.enrich import CONTRIBUTIONS, Contribution
+from georep.layout import Layout
+from georep.pipeline import build_steps
+from georep.report.pages import (
+    Page,
+    PageSection,
+    SectionError,
+    build_page,
+    page_frame,
+    render_page,
+    section_problems,
+    sections_for,
+)
+from georep.report.render import environment
+from georep.settings import Settings
+
+NOW = dt.datetime(2026, 11, 27, 12, 0, tzinfo=dt.UTC)
+OWN = '<p id="eigen">{{ data.n }}</p>\n'
+# Eine Vorlage, die am Modell hängt, beginnt mit ``{% if … %}`` (CLAUDE.md); ohne Zeilen zeigt sie
+# nichts.
+GUEST = (
+    "{% if data.rows %}\n"
+    '<section id="{{ data.id }}"><h2>{{ data.id }}</h2>'
+    "{% for row in data.rows %}<p>{{ row }}</p>{% endfor %}</section>\n"
+    "{% endif %}\n"
+)
+TEMPLATES = {
+    "pages/probe.html.j2": OWN,
+    "pages/probe/gast.html.j2": GUEST,
+    "pages/probe/zweiter.html.j2": GUEST,
+    "pages/probe/dritter.html.j2": GUEST,
+    "pages/probe/gast.css": ".gast { color: var(--accent); }\n",
+    "pages/probe/gast.js": "void 'gast';",
+}
+
+
+def _env(extra: Mapping[str, str] | None = None) -> Environment:
+    env = environment()
+    assert env.loader is not None
+    env.loader = ChoiceLoader([DictLoader({**TEMPLATES, **(extra or {})}), env.loader])
+    return env
+
+
+def _page(**changes: object) -> Page:
+    page = Page(
+        "probe",
+        "Probe",
+        "Eine Seite, die nur der Test kennt.",
+        inputs=lambda layout, settings: (layout.corpus,),
+        data=lambda layout, settings: {"n": 3},
+    )
+    return replace(page, **changes)  # type: ignore[arg-type]
+
+
+def _section(name: str = "gast", rank: int = 10, **changes: object) -> PageSection:
+    section = PageSection(
+        page="probe",
+        name=name,
+        rank=rank,
+        inputs=lambda layout, settings: (layout.processed / f"{name}.parquet",),
+        data=lambda layout, settings: {"id": name, "rows": [f"Zeile von {name}"]},
+    )
+    return replace(section, **changes)  # type: ignore[arg-type]
+
+
+def _register(monkeypatch: pytest.MonkeyPatch, *contributions: Contribution) -> None:
+    monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", contributions)
+
+
+def _host(page: Page | None = None) -> Contribution:
+    return Contribution("14-gastgeber", pages=(page or _page(),))
+
+
+@pytest.fixture
+def log() -> Iterator[list[str]]:
+    lines: list[str] = []
+    sink = logger.add(lines.append, level="INFO", format="{message}")
+    try:
+        yield lines
+    finally:
+        logger.remove(sink)
+
+
+def _render(
+    settings: Settings,
+    sections: tuple[PageSection, ...],
+    env: Environment | None = None,
+    allowed: frozenset[str] = frozenset(),
+) -> str:
+    return render_page(
+        page_frame(settings, now=NOW, commit=None),
+        _page(),
+        {"n": 3},
+        allowed,
+        env or _env(),
+        tuple((s, s.data(Layout(Path("d"), Path("c"), Path("r")), settings)) for s in sections),
+    )
+
+
+# --- Register und Profil ------------------------------------------------------------------------
+
+
+def test_ein_abschnitt_haengt_an_der_seite_eines_anderen_beitrags(
+    default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    guest = _section()
+    _register(monkeypatch, _host(), Contribution("26-gast", sections=(guest,)))
+    assert sections_for(default_settings) == {"probe": (guest,)}
+
+
+def test_die_abschnitte_stehen_nach_rang_nicht_nach_register(
+    default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    late, early, middle = _section("gast", 30), _section("zweiter", 10), _section("dritter", 20)
+    _register(
+        monkeypatch,
+        Contribution("28-gast", sections=(late,)),
+        _host(),
+        Contribution("26-gast", sections=(early, middle)),
+    )
+    assert sections_for(default_settings) == {"probe": (early, middle, late)}
+
+
+def test_fehlt_die_zielseite_im_profil_entfaellt_der_abschnitt_mit_einer_zeile_im_log(
+    default_settings: Settings, monkeypatch: pytest.MonkeyPatch, log: list[str]
+) -> None:
+    off = _page(enabled=lambda settings: False)
+    _register(monkeypatch, _host(off), Contribution("26-gast", sections=(_section(),)))
+    assert sections_for(default_settings) == {}
+    assert len(log) == 1
+    assert "gast" in log[0] and "26-gast" in log[0] and "probe.html" in log[0]
+
+
+def test_ein_abgeschalteter_abschnitt_fehlt_ohne_zeile_im_log(
+    default_settings: Settings, monkeypatch: pytest.MonkeyPatch, log: list[str]
+) -> None:
+    off = _section(enabled=lambda settings: False)
+    _register(monkeypatch, _host(), Contribution("26-gast", sections=(off,)))
+    assert sections_for(default_settings) == {}
+    assert log == []
+
+
+def test_ein_ziel_ohne_registrierte_seite_ist_ein_fehler(
+    default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    typo = _section(page="prob")
+    _register(monkeypatch, _host(), Contribution("26-gast", sections=(typo,)))
+    with pytest.raises(SectionError, match=r"26-gast.*gast.*prob\.html"):
+        sections_for(default_settings)
+
+
+@pytest.mark.parametrize(
+    ("first", "second", "what"),
+    [
+        (_section("gast", 10), _section("zweiter", 10), "Rang 10"),
+        (_section("gast", 10), _section("gast", 20), "Name gast"),
+    ],
+)
+def test_rang_und_name_sind_je_seite_eindeutig(
+    default_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+    first: PageSection,
+    second: PageSection,
+    what: str,
+) -> None:
+    _register(
+        monkeypatch,
+        _host(),
+        Contribution("26-gast", sections=(first,)),
+        Contribution("28-gast", sections=(second,)),
+    )
+    with pytest.raises(SectionError, match=rf"probe\.html: {what} doppelt.*26-gast.*28-gast"):
+        sections_for(default_settings)
+
+
+def test_gleicher_rang_auf_zwei_seiten_ist_kein_fehler() -> None:
+    entries = [("26-gast", _section("gast", 10)), ("28-gast", _section("gast", 10, page="zweite"))]
+    assert section_problems({"probe", "zweite"}, entries) == []
+
+
+@pytest.mark.parametrize("target", ["Probe", "index", "karte", "vergleich", "a_b"])
+def test_das_ziel_ist_ein_seitenname(target: str) -> None:
+    with pytest.raises(ValueError, match="Zielseite"):
+        _section(page=target)
+
+
+@pytest.mark.parametrize("name", ["Gast", "1gast", "a_b", ""])
+def test_der_name_des_abschnitts_ist_ein_einfacher_dateiname(name: str) -> None:
+    with pytest.raises(ValueError, match="Abschnittsname"):
+        _section(name=name)
+
+
+def test_jedes_ziel_im_register_ist_eine_registrierte_seite() -> None:
+    """Über das echte Register: kein Ziel ohne Seite, kein Rang und kein Name doppelt je Seite."""
+    pages = {page.name for contribution in CONTRIBUTIONS for page in contribution.pages}
+    entries = [(c.name, s) for c in CONTRIBUTIONS for s in c.sections]
+    assert section_problems(pages, entries) == []
+
+
+def test_jede_abschnittsvorlage_im_register_liegt_im_paket_und_beginnt_mit_if() -> None:
+    folder = resources.files("georep.report") / "templates"
+    for contribution in CONTRIBUTIONS:
+        for section in contribution.sections:
+            source = folder.joinpath(*section.template.split("/")).read_text(encoding="utf-8")
+            assert source.lstrip().startswith("{% if "), (contribution.name, section.name)
+
+
+# --- Schritt ------------------------------------------------------------------------------------
+
+
+def test_der_schritt_der_seite_liest_auch_die_eingaben_ihrer_abschnitte(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    same = _section("zweiter", 20, inputs=lambda layout, settings: (layout.corpus,))
+    _register(monkeypatch, _host(), Contribution("26-gast", sections=(_section(), same)))
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    steps = {step.name: step for step in build_steps(default_settings, layout)}
+    # die Eingabe der Seite zuerst, dann die des Abschnitts; ``corpus`` liest auch ``zweiter``,
+    # steht aber nur einmal im Stamp
+    assert steps["page_probe"].inputs == (layout.corpus, layout.processed / "gast.parquet")
+
+
+def test_der_schritt_schreibt_die_seite_mit_ihren_abschnitten(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    env = _env()
+    monkeypatch.setattr(georep.report.pages, "environment", lambda: env)
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    line = build_page(layout, default_settings, _page(), (_section(),), now=NOW, commit=None)
+    html = (layout.site / "probe.html").read_text(encoding="utf-8")
+    assert line.startswith("probe.html, ")
+    assert '<section id="gast"><h2>gast</h2><p>Zeile von gast</p></section>' in html
+
+
+# --- Darstellung --------------------------------------------------------------------------------
+
+
+def test_die_fremden_abschnitte_stehen_nach_dem_eigenen_inhalt_in_main(
+    default_settings: Settings,
+) -> None:
+    html = _render(default_settings, (_section("gast", 10), _section("zweiter", 20)))
+    main = html[html.index("<main>") : html.index("</main>")]
+    assert main.index('<p id="eigen">3</p>') < main.index('id="gast"') < main.index('id="zweiter"')
+
+
+def test_jeder_abschnitt_sieht_nur_seine_eigenen_daten(default_settings: Settings) -> None:
+    probe = _env({"pages/probe/gast.html.j2": "{% if data %}<i>{{ data|length }}</i>{% endif %}\n"})
+    html = _render(default_settings, (_section(),), env=probe)
+    assert "<i>2</i>" in html  # ``id`` und ``rows``, nicht das ``n`` der Seite
+
+
+def test_ohne_zeilen_zeigt_der_abschnitt_nichts(default_settings: Settings) -> None:
+    empty = _section(data=lambda layout, settings: {"id": "gast", "rows": []})
+    assert 'id="gast"' not in _render(default_settings, (empty,))
+
+
+def test_ohne_abschnitte_bleibt_der_rahmen_wie_vorher(default_settings: Settings) -> None:
+    """Der Inhalt der Seite endet direkt vor ``</main>``, wie vor V1 (bytegleich)."""
+    assert '<main>\n<p id="eigen">3</p></main>\n<footer>' in _render(default_settings, ())
+
+
+def test_css_und_javascript_der_abschnitte_stehen_auf_der_seite(
+    default_settings: Settings,
+) -> None:
+    html = _render(default_settings, (_section(), _section("zweiter", 20)))
+    assert ".gast { color: var(--accent); }\n</style>" in html
+    assert "<script>\nvoid 'gast';\n</script>" in html
+
+
+def test_ein_abschnitt_bringt_seine_links_nach_aussen_mit(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    url = "https://example.org/ratsinfo"
+    env = _env({"pages/probe/gast.html.j2": f'{{% if data %}}<a href="{url}">R</a>{{% endif %}}\n'})
+    monkeypatch.setattr(georep.report.pages, "environment", lambda: env)
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    with pytest.raises(deal.PostContractError):
+        build_page(layout, default_settings, _page(), (_section(),), now=NOW, commit=None)
+    allowed: Callable[[Settings], frozenset[str]] = lambda settings: frozenset({url})  # noqa: E731
+    build_page(layout, default_settings, _page(), (_section(links=allowed),), now=NOW, commit=None)
+    assert f'<a href="{url}">R</a>' in (layout.site / "probe.html").read_text(encoding="utf-8")

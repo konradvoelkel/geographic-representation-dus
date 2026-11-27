@@ -20,6 +20,13 @@
 </header>
 <main>
 {% include page.template %}
+{# Vorarbeit V1: die Abschnitte fremder Beiträge, in der Folge aus sections_for, je mit ihren eigenen Daten #}
+{% for section, section_data in sections %}
+
+{% with data = section_data %}
+{% include section.template %}
+{% endwith %}
+{% endfor %}
 </main>
 <footer>
 <p>Ergebnisse: <a href="{{ links.cc0 }}">CC0 1.0</a>; Quelltext: <a href="{{ links.gpl }}">GPL-3.0-or-later</a>. Quellen und Lizenzen der Daten nennt die <a href="index.html">Hauptseite</a>.</p>
