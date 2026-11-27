@@ -695,7 +695,8 @@ Schlichtung durch claude-opus-5-5, nicht von Menschen".
 | `beziehung` | 49 / 50 | 0,961 | umsetzung 33, aenderung 13, nachfrage 2, antwort 1, fortsetzung 1 |
 
 Die eine Uneinigkeit (`a013463353a1`, ein Nachtrag zu einer Eingabe nach § 24 GO: A `umsetzung`,
-B `aenderung`) entschied der Schlichter zu `umsetzung`.
+B `aenderung`) entschied der Schlichter zu `umsetzung`. Die Unschärfe, die er nennt, steht als
+Frage 9.19 für ein Codebuch Fassung .3 in § 9; angewandt ist sie nicht.
 
 **Gegen das Kriterium.**
 
@@ -1006,6 +1007,7 @@ der Antwortquote als Maß.
 | 9.16 | Was, wenn die Stichprobe 2 das Kriterium verfehlt? | § 8 des Meta-Plans erlaubt eine Runde | Rückfallregel aus § 5 (nur Titel, Anlage, Nummer, Sammelbericht), vorab festgelegt — **eingetreten** (0,850, § 4.2; Rückfallregel 104 / 106, § 5.1) |
 | 9.17 | Eine spätere Fassung .3 für Textverweise, mit den Regeln des Schlichters der Bestätigung? | 11 307 Textkanten liegen schwach in den Daten; .2 trug zu 85 % | **Vorschlag, keine Runde jetzt** (§ 9.1 unten); nur mit neuer Ziehung und vorab festgelegtem Kriterium |
 | 9.18 | Eine eigene Stichprobe nur aus Rückfall-Kanten (rund 50, nach Typ geschichtet), um das Intervall über 0,95 zu heben? | die Präzision 0,981 ruht auf 106 Kanten aus zwei Ziehungen, die untere Grenze ist 0,934 | ja, als Prüfung neben Stufe 2, keine Umbau-Runde (sie ändert keine Regel) — **erledigt** am 2026-11-27 (§ 4.3, `validierung/14-vorgaenge-3-f4/`): 50 von 50, zusammen mit § 5.1 154 von 156, untere Wilson-Grenze 0,954 |
+| 9.19 | Meint „Nachtrag" in der Definition von `aenderung` das Etikett (dieselbe Nummer mit Zusatz) oder den Inhalt (B ändert, ergänzt oder ersetzt A)? | In der Prüfstichprobe (§ 4.3) legte ein Nachtrag (`a013463353a1`) dieselbe Eingabe nach § 24 GO mit einer Stellungnahme der Verwaltung nur erneut vor; A las `umsetzung`, B `aenderung`. Der Schlichter wählte `umsetzung`: `aenderung` passe über das Nachtragsformat auch, stehe aber später in der Liste, und B ändere A nicht. Die Rollenpräzision zählt beim Typ `nachtrag` nur `aenderung` | **Frage für ein Codebuch Fassung .3** (§ 9.1), nicht angewandt: dort entscheiden, ob „Nachtrag" den Inhalt meint (dann ist ein Nachtrag, der A nur mit Stellungnahme erneut vorlegt, `umsetzung`, und die Erwartung für den Typ `nachtrag` wird `aenderung` oder `umsetzung`) oder das Etikett (dann `aenderung`, vor der Reihenfolgeregel); die Labels von 14-vorgaenge-3-f4 bleiben, wie sie sind |
 
 ### 9.1 Vorschlag für eine Fassung .3 (nicht begonnen)
 
@@ -1024,7 +1026,8 @@ Sammelantrag), die auch einen der beiden Rückfall-Fehler erklärt.
 | f | Querverweis auf eine parallele Drucksache zum selben Thema („ebenfalls", „siehe auch", „es wird verwiesen auf"): nein | ein drittes Verweiszeichen zu R2, an einer neuen Ziehung zu messen |
 | g | Antrag, der ein mit A beschlossenes Vorgehen vorzieht oder abweichend festlegt: `aenderung`; der nächste Schritt im Rahmen von A: `fortsetzung` | Codebuch; im Verfahren nicht erkennbar |
 
-Dazu aus den Rückmeldungen: Mönchengladbacher Fraktionsanträge ohne Text sind nur aus dem Titel als
+Aus der Schlichtung der Prüfstichprobe (§ 4.3) kommt Frage 9.19 dazu: ob „Nachtrag" in `aenderung`
+das Etikett oder den Inhalt meint. Dazu aus den Rückmeldungen: Mönchengladbacher Fraktionsanträge ohne Text sind nur aus dem Titel als
 `aenderung` kodierbar (Kodierer A), und Anlagen, die einen Nachbarfall belegen (`e7a023ba6de0`), sind
 keine selbe Sache. Eine Fassung .3 hieße: neue Regeln für **Textverweise**, neue Ziehung, neues
 vorab festgelegtes Kriterium — ein eigenes Vorhaben nach Stufe 2, nicht eine weitere Runde dieser
