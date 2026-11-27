@@ -5393,7 +5393,7 @@ hoch, in A genauso; vermutlich drückt die Spalte SHA-256 (`code`, `overflow-wra
 Beschreibung zusammen, untersucht ist es nicht. Der Linkblock der Startseite nennt bei „Downloads“ weiter „mit
 Prüfsummen und Spaltenschema“; das Schema ist von dort einen Link weiter.
 
-## NN. Die Unterseite `bedarf.html`: die Klasse an Dokumenten ohne Ausschussberatung geprüft, ohne verlässliches Maß; der Stadtbezirk als Mittelpunkt statt als Farbe (Vorhaben 22, Stufe 3, 2026-11-27)
+## 95. Die Unterseite `bedarf.html`: die Klasse an Dokumenten ohne Ausschussberatung geprüft, ohne verlässliches Maß; der Stadtbezirk als Mittelpunkt statt als Farbe (Vorhaben 22, Stufe 3, 2026-11-27)
 
 Stufe 3 von Vorhaben 22 nach `docs/plans/22-bedarf.md`, § 7 mit § 10, und `docs/plan-zeigen-2026-11.md`
 (§ 5, Zeile zu 22; § 4, V5). Gebaut auf `feat/22-bedarf-seite` ab `main` `a8e4d42` (`v0.40.0`). Die

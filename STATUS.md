@@ -41,6 +41,10 @@ Stand 2026-11-26, `main` auf `v0.32.0`.
 - **`spalten.html`** (`v0.41.0`, Punkt 94): das Spaltenschema aller Tabellen steht je Profil auf einer eigenen
   Seite (Hauptperiode 77 302 Byte) und in `schema.json`, auf keiner anderen Seite; `details.html` der
   Hauptperiode wiegt damit 921 158 Byte, 16 KB unter dem Stand vor der Phase.
+- **`bedarf.html`** (`v0.42.0`, Punkt 95): Bedarf und Aufmerksamkeit je Wahlbezirk in der Hauptperiode
+  (242 267 Byte) und in Mönchengladbach ohne Klassen (133 866 Byte); H1 nach der vorab festgelegten Regel
+  bestätigt, aber nur zwischen den Stadtbezirken. Die Klasse „Ordnung und Verkehr“ ist an Dokumenten ohne
+  Ausschussberatung ohne verlässliches Maß geprüft (`docs/todo.md`, Punkt 40).
 - **`vorgaenge.html`** (`v0.38.0`): Antworten auf Anfragen, Kandidaten, Vorgänge; dazu der Dialog-Haken der
   Hauptseite, der Zeilen je Dokument beim Öffnen nachlädt. Die Hauptseite liegt damit bei 966 522 Byte,
   rund 29 KB über dem Stand vor der Phase (Ziel höchstens 30 KB, `docs/todo.md`, Punkt 36).

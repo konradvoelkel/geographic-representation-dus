@@ -2,6 +2,19 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.42.0 (2026-11-27), Bedarf
+
+- **Unterseite `bedarf.html`** (Vorhaben 22, Stufe 3, `docs/decisions.md`, Punkt 95): amtliche Zahlen zum
+  Bedarf je Wahlbezirk (Unfälle, Einwohner, Schulsozialindex, sozialer Handlungsbedarf, Anteil unter 18)
+  neben der Nennung in den Ratsdokumenten; die drei vorab festgelegten Tests mit Streudiagrammen, Moran's
+  I und der Rechnung innerhalb der Stadtbezirke. Hauptperiode und Mönchengladbach (dort ohne Klassen).
+- **Prüfung der Klasse „Ordnung und Verkehr"** an 100 Dokumenten ohne Ausschussberatung
+  (`validierung/22-bedarf-ova`, zwei KI-Kodierer verschiedener Modelle): einig bei 99 von 100, α 0,000;
+  nach der vorab festgelegten Regel nennt die Seite keine geprüfte Präzision.
+- Neue Downloads `wahlbezirke_bedarf` und `bedarf_hypothesen`; die Namensnennung der Bedarfsquellen sagt
+  „verändert".
+- `number_key` (Vorhaben 20) normalisiert Zahlen über 28 Stellen, ohne abzubrechen.
+
 ## 0.41.0 (2026-11-27), Spalten
 
 - **Das Spaltenschema steht auf `spalten.html`** (`docs/decisions.md`, Punkt 94; Rückstand 36): je Profil

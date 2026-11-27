@@ -135,9 +135,7 @@ es schon in `docs/plans/00-synergien.md`, § 8. Der Settings-Fingerprint
 ist global: `duesseldorf-vergleich` rechnet auf Pages jeden Schritt neu, weil `compare.period` ihn ändert
 (12: `identifiers` zweimal je rund 47 s), und die Periodenprofile rechnen ganz neu, wenn sich geerbte
 Hypothesen von `need` ändern, obwohl `need` dort aus ist (22, `robust_without`). Ein Fingerprint je Schritt
-aus den Schlüsseln, die er liest, behöbe beides; das ist eine Kernänderung mit eigenem A/B-Bau. Dazu für
-Stufe 3 von 22: die Namensnennung auf der Seite braucht den Hinweis „verändert" (`NeedAttribution` hat
-dafür noch kein Feld).
+aus den Schlüsseln, die er liest, behöbe beides; das ist eine Kernänderung mit eigenem A/B-Bau.
 
 ## 17. Kennungen: Rückstand aus dem Review von Vorhaben 12
 
@@ -340,4 +338,16 @@ von `details.html` rund 350 px hoch, schon vor Punkt 94; vermutlich drückt die 
 `overflow-wrap: anywhere`) die Beschreibung zusammen. Messen (headless Chrome, 390 px), dann etwa die
 Prüfsumme auf schmalen Schirmen kürzen oder unter die Zeile stellen. Dabei den Satz „mit Prüfsummen und
 Spaltenschema" im Linkblock der Startseite prüfen: das Schema ist seit Punkt 94 einen Link weiter.
+
+## 40. α bei fast konstanten Labels
+
+Aufgenommen am 2026-11-27 aus der Prüfung der Klasse `OVA` (Vorhaben 22, Punkt 95,
+`validierung/22-bedarf-ova`): zwei Kodierer stimmten bei 99 von 100 Dokumenten überein (Wilson
+0,946–0,998), aber fast alle Labels waren `ja`, und Krippendorffs α ist dann 0,000. Die Regel der vollen
+Einigkeit (`docs/validierung.md`, § 3, Schritt 8) greift nur bei 100 %; nach der vorab festgelegten Regel
+nennt die Seite darum keine geprüfte Präzision. Für künftige Messungen zu entscheiden, **vor** der
+nächsten Stichprobe: ob bei geringer erwarteter Uneinigkeit die untere Wilson-Grenze der beobachteten
+Übereinstimmung neben α genügen darf (eine Erweiterung der Regel der vollen Einigkeit), oder ob eine
+Stichprobe von vornherein Einheiten beider Klassen enthalten muss, damit α trägt (bei 22 etwa auch
+Dokumente anderer Klassen). Für 22 selbst gilt das Ergebnis, wie es vorab festgelegt war.
 
