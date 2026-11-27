@@ -1,7 +1,10 @@
 # Vorhaben 17: Zeit und Neuigkeiten
 
-**Stand 2026-11-26: Urteil bauen (§ 5), Stufe 2 auf `main` (`v0.27.0`, Punkt 78); Stufe 3
-(`zeit.html`, Feed-Liste der laufenden Periode) offen.** Der Branch ist gemerged und entfernt.
+**Stand 2026-11-27: Urteil bauen (§ 5), Stufe 2 auf `main` (`v0.27.0`, Punkt 78); Stufe 3
+(`zeit.html` mit der Feed-Liste der laufenden Periode, vier Downloads) gebaut auf
+`feat/17-zeit-seite`, der Entscheidungseintrag steht am Ende von `docs/decisions.md` und bekommt
+seine Nummer beim Merge; was anders ist als § 7, steht dort.** Der Branch der Stufe 2 ist gemerged
+und entfernt.
 
 Stufe 1 (Messen) vom 2026-11-23 auf dem Branch `feat/17-zeit`. Briefing:
 [../plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11 „17 Zeit und Neuigkeiten".

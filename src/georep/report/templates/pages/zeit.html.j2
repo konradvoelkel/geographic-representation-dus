@@ -1,0 +1,219 @@
+{#
+  Vorhaben 17, Stufe 3 (docs/plans/17-zeit.md, § 7; docs/plan-zeigen-2026-11.md, § 7), im Muster
+  von akteure.html (Punkt 88). Das Modell ist ``report.cycles.TimeModel``; jede Zahl kommt aus den
+  Daten, jeder Name aus dem Profil oder dem Lexikon. Für alle Fraktionen und Gremien gleich gebaut.
+  Was nicht vorab festgelegt war, heißt „explorativ"; ein Datensatz, an dem das Lexikon nicht
+  gemessen ist, beim Vokabular ebenso. „bestätigt" und „nicht bestätigt" stehen gleich groß.
+#}
+{% from "macros.html.j2" import more %}
+{% set m = data.zeit %}
+{% set c = m.check %}
+{% set r = m.rhythm %}
+{% set v = m.vocabulary %}
+{% set pre = m.preregistration %}
+{% set ex = " (explorativ)" if m.explorative else "" %}
+{% set fixed %}am {{ pre.when|date_de }} um {{ pre.when.strftime("%H:%M") }} Uhr in Commit <a href="{{ data.urls.commit }}"><code>{{ pre.commit }}</code></a>{% endset %}
+<section id="ueberblick">
+<p>Diese Seite ordnet die {{ m.documents|num }} Ratsdokumente der {{ model.period.title }}{% if m.first and m.last %} ({{ m.first|date_de }} bis {{ m.last|date_de }}){% endif %} in der Zeit: wann im Jahr sie entstehen und wer sie einbringt, ob die Fraktionen vor einer Wahl oder im Monat der Haushaltsberatung mehr einreichen und wie oft Begriffe der Bundespolitik in ihnen stehen. Gezählt wird nach dem Datum der Vorlage. Ein Wahljahr beginnt im {{ m.start_month }} und heißt nach dem Jahr, in dem es beginnt; Monate außerhalb vollständiger Wahljahre gehören zu keinem.</p>
+<ul class="toc">
+<li><a href="#rhythmus">Rhythmus der Ratsarbeit</a></li>
+<li><a href="#hypothesen">Vorab festgelegte Hypothesen</a></li>
+<li><a href="#vokabular">Bundespolitisches Vokabular</a></li>
+<li><a href="#ereignisse">Ereignisspuren</a></li>
+{% if m.feeds %}
+<li><a href="#neuigkeiten">Neuigkeiten je Wahlbezirk</a></li>
+{% endif %}
+</ul>
+<div class="pruefung" id="pruefung">
+<h2>Wie geprüft</h2>
+<ul>
+{% if m.tests or m.elsewhere %}
+<li><strong>Hypothesen</strong>: drei, festgelegt {{ fixed }}, bevor eine Ergebnisgröße gerechnet war ({{ pre.section }}); entschieden wird mit Holm über die drei bei α = {{ data.alpha|num(2) }}. Sensitivitäten und alles Explorative bestätigen und widerlegen nichts.</li>
+{% else %}
+<li><strong>Hypothesen</strong>: für diesen Datensatz ist keine vorab festgelegt; was hier steht, ist beschreibend oder explorativ.</li>
+{% endif %}
+<li><strong>Lexikon</strong> <code>{{ c.lexicon }}</code>: {% if c.validated %}{{ c.sentence }}. Richtig sind {{ c.right|num }} von {{ c.coded|num }} Treffern (Präzision {{ c.precision|num(2) }}, 95-%-Intervall {{ c.interval[0]|num(2) }}–{{ c.interval[1]|num(2) }}). Die Kodierer stimmten beim Thema in {{ c.topic.agreed|num }} von {{ c.topic.units|num }} Treffern überein (α = {{ c.topic.alpha|num(3) }}), bei der Ebene in {{ c.level.agreed|num }} von {{ c.level.units|num }} (α = {{ c.level.alpha|num(3) }}){% if c.same_model %}; bei zwei Kodierern desselben Modells ist das ein schwacher Beleg{% endif %}.{% else %}diese Version ist nicht an Labels geprüft; jede Zahl des Vokabulars ist vorläufig, und H17.3 heißt „vorläufig".{% endif %}</li>
+{% if not c.measured %}
+<li><strong>Explorativ</strong>: das Lexikon ist an {{ c.measured_datasets|join("; ") }} gemessen, nicht an diesem Datensatz. Was dort gilt, steht unten; das Vokabular dieser Seite ist darum explorativ.</li>
+{% endif %}
+<li><strong>Zählungen</strong>: Monatsbalken, Wahljahre und Haushaltsmonate zählen Dokumente nach Vorlagendatum und Urheberklasse; sie sind beschreibend und prüfen nichts.</li>
+</ul>
+<p class="note">Wie gemessen ist, steht im <a href="{{ data.urls.measurement }}">Messdokument</a>; Codebuch, Stichprobe und Labels im Ordner <a href="{{ data.urls.check }}">{{ data.urls.check_folder }}</a>.</p>
+{% if m.missing %}
+<p class="note">In diesem Profil fehlt:</p>
+<ul class="note">
+{% for line in m.missing %}
+<li>{{ line }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+</div>
+</section>
+
+<section id="rhythmus">
+<h2>Rhythmus der Ratsarbeit</h2>
+{% if r.months %}
+<p>Je Urheberklasse die Dokumente je Monat. Jede Reihe hat ihren eigenen Maßstab; ihr höchster Monat steht darüber, die Zahlen stehen in der Tabelle darunter.{% if r.has_budget %} Hinterlegt sind die Haushaltsmonate: in jedem vollständigen Wahljahr der Monat mit den meisten Haushaltsanträgen, wenn es im Wahljahr mindestens {{ r.budget_minimum }} sind.{% endif %} Die senkrechten Linien trennen die Wahljahre.</p>
+{% if r.has_budget %}
+<ul class="fn-legend"><li><span class="swatch haushalt"></span>Haushaltsmonat</li></ul>
+{% endif %}
+{% for panel in r.panels %}
+<div class="reihe">
+<p class="reihe-kopf">{{ panel.label }} <span class="count">{{ panel.total|num }} Dokumente{% if panel.peak_month %}, höchster Monat {{ panel.peak_month|month_de }} mit {{ panel.peak|num }}{% endif %}</span></p>
+<svg viewBox="0 0 {{ r.months|length }} 100" preserveAspectRatio="none" role="img" aria-label="{{ panel.label }} je Monat{% if panel.peak_month %}, höchster Monat {{ panel.peak_month|month_de }} mit {{ panel.peak }} Dokumenten{% endif %}">
+{% for i in r.budget_indexes %}<rect class="haushalt" x="{{ i }}" y="0" width="1" height="100"/>{% endfor %}
+{% for span in r.spans %}<line class="jahr" x1="{{ span.index }}" y1="0" x2="{{ span.index }}" y2="100"/>{% endfor %}
+<path class="balken" d="{{ panel.path }}"/>
+</svg>
+</div>
+{% endfor %}
+{% if r.spans %}
+<div class="jahre" aria-hidden="true">{% for span in r.spans %}<span style="left:{{ '%.2f'|format(100 * span.start) }}%;width:{{ '%.2f'|format(100 * span.width) }}%">{{ span.label }}</span>{% endfor %}</div>
+{% endif %}
+<h3>Die Wahljahre</h3>
+{% if r.years %}
+<p class="note">Die Rolle ist die in H17.1: das erste vollständige Wahljahr einer Periode ist ihr Anlaufjahr (Konstituierung, Besetzung der Ausschüsse) und bleibt aus dem Test; das letzte, das vor einer Wahl endet, ist ihr Vorwahljahr. Der Haushaltsmonat ist der Monat mit den meisten Haushaltsanträgen (Dokumentart oder Titel).</p>
+<div class="scroll"><table id="wahljahre">
+<thead><tr><th scope="col">Wahljahr</th><th scope="col">Rolle in H17.1</th><th scope="col" class="num">Dokumente</th><th scope="col" class="num">von Fraktionen</th><th scope="col" class="num">Anteil</th><th scope="col">Haushaltsmonat</th><th scope="col" class="num">Haushaltsanträge im Monat / im Jahr</th></tr></thead>
+<tbody>
+{% for y in r.years %}
+<tr><th scope="row">{{ y.label }}</th><td>{{ y.role }}{% if y.election %} (Wahl am {{ y.election|date_de }}){% endif %}</td><td class="num">{{ y.documents|num }}</td><td class="num">{{ y.fraction|num }}</td><td class="num">{{ y.share|pct(1) }}</td><td>{% if y.budget_month %}{{ data.months_de[y.budget_month - 1] }}{% else %}keiner{% endif %}</td><td class="num">{% if y.budget_in_month is not none %}{{ y.budget_in_month|num }} / {% endif %}{{ y.budget_motions|num }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% for n in r.notes %}
+<p class="note">Beschreibend (S1.6): im Vorwahljahr {{ n.label }} vor der Wahl am {{ n.election|date_de }} reichten die Fraktionen {{ n.fraction|num }} Dokumente ein, im Mittel der {{ n.middle_years }} mittleren Jahre derselben Periode {{ n.middle_mean|num(1) }} ({{ n.ratio|ratio }}; Rang {{ n.rank }} von {{ n.of }} Jahren ohne Anlaufjahr).{% if m.tests %} Ob das ein Wahlzyklus ist, entscheidet H17.1 unten.{% elif m.elsewhere %} Ob das ein Wahlzyklus ist, entscheidet H17.1 über die Perioden zusammen.{% else %} Ein Test dazu ist für diesen Datensatz nicht festgelegt.{% endif %}</p>
+{% endfor %}
+{% if not r.has_budget %}
+<p class="note">In keinem vollständigen Wahljahr dieses Datensatzes stehen mindestens {{ r.budget_minimum }} Haushaltsanträge, zusammen {{ r.budget_total|num }}: der Datensatz hat keinen Haushaltsmonat. Ob die Haushaltsanträge hier anders heißen oder anders eingereicht werden, zeigt die Zählung nicht.</p>
+{% endif %}
+{% else %}
+<p class="note">Der Datensatz deckt kein Wahljahr ganz ab.</p>
+{% endif %}
+{% if r.calendar %}
+<h3>Der Median je Kalendermonat</h3>
+<p class="note">Je Kalendermonat der Median über die {{ r.years|length }} vollständigen Wahljahre.{% if r.weakest %} Am schwächsten ist im Median der {{ data.months_de[r.weakest.month - 1] }} mit {{ r.weakest.documents|num(1 if r.weakest.documents % 1 else 0) }} Dokumenten.{% endif %}</p>
+<div class="scroll"><table id="kalendermonate">
+<thead><tr><th scope="col">Median</th>{% for cm in r.calendar %}<th scope="col" class="num">{{ cm.name }}</th>{% endfor %}</tr></thead>
+<tbody>
+<tr><th scope="row">alle Dokumente</th>{% for cm in r.calendar %}<td class="num">{{ cm.documents|num(1 if cm.documents % 1 else 0) }}</td>{% endfor %}</tr>
+<tr><th scope="row">von Fraktionen</th>{% for cm in r.calendar %}<td class="num">{{ cm.fraction|num(1 if cm.fraction % 1 else 0) }}</td>{% endfor %}</tr>
+</tbody></table></div>
+{% endif %}
+<h3>Je Monat</h3>
+{{ more("monate-zeit", r.months|length, model.preview_rows) }}
+<div class="scroll"><table id="monate-zeit" class="preview">
+<thead><tr><th scope="col">Monat</th><th scope="col">Wahljahr</th>{% for key, label, short in data.groups %}<th scope="col" class="num">{{ short }}</th>{% endfor %}<th scope="col" class="num">zusammen</th><th scope="col" class="num">Haushaltsanträge</th></tr></thead>
+<tbody>
+{% for row in r.months %}
+<tr{% if row.budget %} class="haushalt"{% endif %}><td>{{ row.month|month_de }}{% if row.budget %} (Haushaltsmonat){% endif %}</td><td>{{ row.label }}</td>{% for n in row.counts %}<td class="num">{{ n|num }}</td>{% endfor %}<td class="num">{{ row.total|num }}</td><td class="num">{{ row.budget_motions|num }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% if r.undated %}
+<p class="footnote">{{ r.undated|num }} Dokumente ohne Datum zählen zu keinem Monat.</p>
+{% endif %}
+{% else %}
+<p>Kein Dokument dieses Datensatzes hat ein Datum.</p>
+{% endif %}
+</section>
+
+<section id="hypothesen">
+<h2>Vorab festgelegte Hypothesen</h2>
+{% set t = m.tests %}
+{% if t %}
+<p>Drei Hypothesen aus der Literatur zur Ratsarbeit, festgelegt {{ fixed }}, bevor eine Ergebnisgröße gerechnet war. Sie rechnen über {{ t.periods_text }} zusammen{% if t.data_until %}, mit Daten bis {{ t.data_until|date_de }}{% endif %}. Einheit sind ganze Wahljahre oder derselbe Kalendermonat über Jahre, weil die Monate eines Jahres voneinander abhängen. Entschieden wird mit Holm über die drei bei α = {{ t.alpha|num(2) }}: „bestätigt“ heißt, die Hypothese hält nach Holm; „nicht bestätigt“, sie hält nicht.</p>
+<div class="scroll"><table id="hypothesen-tabelle">
+<thead><tr><th scope="col">Hypothese</th><th scope="col">Ergebnis</th><th scope="col">Effekt</th><th scope="col" class="num">p</th><th scope="col" class="num">p nach Holm</th><th scope="col" class="num">n</th></tr></thead>
+<tbody>
+{% for h in t.main %}
+<tr><th scope="row">{{ h.key }} {{ h.title }}</th><td><span class="ergebnis">{{ h.result }}</span></td><td>{{ h.effect }}</td><td class="num">{{ h.p_label }}</td><td class="num">{{ h.p_holm_label }}</td><td class="num">{{ h.n }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% for h in t.main %}
+<div class="hypothese">
+<h3>{{ h.key }} {{ h.title }}: <span class="ergebnis">{{ h.result }}</span></h3>
+<p class="these">{{ h.statement }}</p>
+<p class="note">Maß: {{ h.measure }}. Test: {{ h.test }}; n = {{ h.n }} Wahljahre. Festgelegt in Commit <a href="{{ data.urls.commit }}"><code>{{ h.fixed }}</code></a>.</p>
+{% for note in h.notes %}
+<p class="note">{{ note }}</p>
+{% endfor %}
+</div>
+{% endfor %}
+<h3>Sensitivitäten und je Kategorie</h3>
+<p class="note">Vorab mitfestgelegt, aber nicht in der Familie: sie zeigen, wie fest ein Ergebnis gegen eine andere Zählung steht, und bestätigen oder widerlegen nichts. Die Zeilen je Kategorie des Lexikons heißen explorativ. p ohne Korrektur, einseitig, wo nicht anders vermerkt.</p>
+{{ more("sensitivitaeten", t.others|length, model.preview_rows) }}
+<div class="scroll"><table id="sensitivitaeten" class="preview">
+<thead><tr><th scope="col">Kennung</th><th scope="col">Rolle</th><th scope="col">Maß</th><th scope="col">Effekt</th><th scope="col" class="num">p</th></tr></thead>
+<tbody>
+{% for s in t.others %}
+<tr><td>{{ s.key }}</td><td>{{ s.role }}</td><td>{{ s.measure }}</td><td>{{ s.effect }}</td><td class="num">{{ s.p_label }}{% if s.p is not none and s.two_sided %} zweiseitig{% endif %}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% elif m.elsewhere %}
+{% set e = m.elsewhere %}
+<p>Drei Hypothesen zu Wahljahr, Haushaltsmonat und Bundespolitik sind {{ fixed }} vorab festgelegt. Sie rechnen über {{ e.periods_text }} zusammen, weil ein Datensatz allein zu wenige Wahljahre hat.{% if e.computed_here %} Auf dieser Seite stehen sie erst im Lauf, der die Perioden vergleicht; in diesem Lauf fehlen sie.{% else %} Sie stehen auf dieser Seite für die {{ e.period }}.{% endif %}</p>
+{% else %}
+<p>Für diesen Datensatz ist keine Hypothese vorab festgelegt. Die Tests der Messung rechnen über die Perioden der Stadt, an der sie festgelegt sind; was hier steht, ist beschreibend oder explorativ.</p>
+{% endif %}
+</section>
+
+<section id="vokabular">
+<h2>Bundespolitisches Vokabular{{ ex }}</h2>
+<p>Je Kategorie des Lexikons der Anteil der Dokumente mit lesbarem Text, in deren Titel oder Text einer ihrer Begriffe steht, je vollständigem Wahljahr ({{ v.documents|num }} Dokumente mit Text). Strukturkategorien sind Gegenstände, die es in allen Perioden gab; Ereignisse gab es nicht in jeder. „Periode“ ist der Anteil über alle vollständigen Wahljahre zusammen; die Zeile der Strukturkategorien ist das Maß von H17.3, die Zeilen je Kategorie sind explorativ. Der kleine Balken zeigt den Verlauf in der Zeile: ihr höchster Wert füllt die Zelle.</p>
+{% if c.categories %}
+<p class="note">„richtig“: wie viele der kodierten Treffer der Kategorie die Kodierung bestätigt. „nennt die Bundesebene“: unter den richtigen, wie viele an der Fundstelle den Bund nennen; die übrigen sind örtliche Umsetzung oder Land und EU. Das Vokabular findet zuverlässig Gegenstände der Bundespolitik; ob ein Dokument den Bund selbst nennt oder seine Folgen in der Stadt behandelt, sagt erst diese Spalte. Die Stichprobe zieht zehn Treffer je Kategorie aus allen gemessenen Datensätzen zusammen.</p>
+{% endif %}
+<div class="scroll"><table id="vokabular-tabelle">
+<thead><tr><th scope="col">Kategorie, Anteil in %</th><th scope="col">Art</th>{% for y in v.years %}<th scope="col" class="num">{{ y }}</th>{% endfor %}<th scope="col" class="num">Periode</th>{% if c.categories %}<th scope="col" class="num">richtig</th><th scope="col" class="num">nennt die Bundesebene</th>{% endif %}</tr></thead>
+<tbody>
+{% for row in v.rows %}
+<tr{% if row.total %} class="summe"{% endif %}><th scope="row">{{ row.label }}</th><td>{{ row.kind }}</td>{% for cell in row.cells %}<td class="num anteil" title="{{ cell.hits|num }} Dokumente"><span class="balken" style="width:{{ '%.0f'|format(100 * cell.width) }}%"></span>{{ (100 * cell.share)|num(2) }}</td>{% endfor %}<td class="num">{{ (100 * row.pooled.share)|num(2) }}</td>{% if c.categories %}<td class="num">{% if row.check %}{{ row.check.right }} von {{ row.check.coded }}{% else %}–{% endif %}</td><td class="num">{% if row.check %}{{ row.check.federal }} von {{ row.check.right }}{% else %}–{% endif %}</td>{% endif %}</tr>
+{% endfor %}
+</tbody></table></div>
+<p class="note">Je Wahljahr Dokumente mit Text: {% for y in v.years %}{{ y }} {{ v.per_year[loop.index0]|num }}{{ ", " if not loop.last }}{% endfor %}. Ein Treffer im Titel zählt wie einer im Text.</p>
+</section>
+
+<section id="ereignisse">
+<h2>Ereignisspuren (explorativ)</h2>
+<p>Die Ereigniskategorien des Lexikons je Monat: der Anteil der Dokumente mit Text und Treffer, dazu die Gremien mit den meisten Treffern (ab {{ data.min_body_documents }} Dokumenten mit Text im Datensatz). Explorativ: nicht vorab festgelegt, kein Test, und das Fenster ist der ganze Datensatz. Ortsereignisse stehen nicht im Lexikon der Bundespolitik, sind nicht geprüft und fehlen hier.</p>
+{% for e in m.events %}
+<div class="ereignis">
+<h3>{{ e.label }}</h3>
+<p class="note">{{ e.hits|num }} Dokumente mit Treffer{% if e.peak_month %}; höchster Monat {{ e.peak_month|month_de }} mit {{ e.peak_hits|num }} von {{ e.peak_documents|num }} Dokumenten mit Text ({{ e.peak_share|pct(1) }}){% endif %}.{% if e.thin %} {{ e.thin|num }} von {{ e.months|num }} Monaten haben weniger als {{ data.min_month_documents }} Dokumente mit Text und bleiben leer.{% endif %}</p>
+{% if e.path %}
+<svg class="spur" viewBox="0 0 {{ e.months }} 100" preserveAspectRatio="none" role="img" aria-label="{{ e.label }}: Anteil je Monat{% if e.peak_month %}, höchster Monat {{ e.peak_month|month_de }}{% endif %}">{% for span in r.spans %}<line class="jahr" x1="{{ span.index }}" y1="0" x2="{{ span.index }}" y2="100"/>{% endfor %}<path d="{{ e.path }}"/></svg>
+{% if r.spans %}
+<div class="jahre" aria-hidden="true">{% for span in r.spans %}<span style="left:{{ '%.2f'|format(100 * span.start) }}%;width:{{ '%.2f'|format(100 * span.width) }}%">{{ span.label }}</span>{% endfor %}</div>
+{% endif %}
+{% endif %}
+{% if e.bodies %}
+<div class="scroll"><table class="gremien">
+<thead><tr><th scope="col">Gremium</th><th scope="col" class="num">Treffer</th><th scope="col" class="num">Dokumente mit Text</th><th scope="col" class="num">Anteil</th></tr></thead>
+<tbody>
+{% for b in e.bodies %}
+<tr><td>{{ b.name }}</td><td class="num">{{ b.hits|num }}</td><td class="num">{{ b.documents|num }}</td><td class="num">{{ b.share|pct(1) }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+</div>
+{% else %}
+<p class="note">Das Lexikon hat keine Ereigniskategorie, oder kein Dokument hat ein Datum.</p>
+{% endfor %}
+</section>
+{% if m.feeds %}
+{% set f = m.feeds %}
+
+<section id="neuigkeiten">
+<h2>Neuigkeiten je Wahlbezirk</h2>
+<p>Je Wahlbezirk ein Atom-Feed mit den höchstens {{ f.limit }} neuesten Dokumenten, in denen ein Straßen- oder Ortsname des Wahlbezirks vorkommt; das ist dieselbe Zuordnung wie die Zahl der Dokumente auf der Hauptseite. Ein Eintrag nennt Drucksache, Titel, Datum und den Link aufs PDF im Ratsinformationssystem, keinen Text und keine Personen. Ein Feedreader liest die Datei über ihre Adresse; es gibt keine Anmeldung und keine Mail.</p>
+<p class="stand"><strong>Stand der Daten: {% if f.stand %}{{ f.stand|date_de }}{% else %}unbekannt{% endif %}</strong> (das neueste Dokument).{% if not f.timer %} Ohne laufenden Abruf zeigen die Feeds diesen Stand: sie ändern sich erst mit einem neuen Schnappschuss der Periode oder wenn ein Timer die Periode fortschreibt.{% endif %}</p>
+{{ more("feeds", f.rows|length, model.preview_rows) }}
+<div class="scroll"><table id="feeds" class="preview">
+<thead><tr><th scope="col">Feed</th><th scope="col" class="num">Einträge</th><th scope="col" class="num">Dokumente in der Periode</th><th scope="col" class="num">neu in den 30 Tagen bis zum Stand</th><th scope="col">zuletzt geändert</th></tr></thead>
+<tbody>
+{% for row in f.rows %}
+<tr><td><a href="{{ row.href }}" type="application/atom+xml">Wahlbezirk {{ row.district }}</a></td><td class="num">{{ row.entries|num }}</td><td class="num">{{ row.documents|num }}</td><td class="num">{{ row.new|num }}</td><td>{% if row.updated %}{{ row.updated|date_de }}{% else %}–{% endif %}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<p class="footnote">{{ f.rows|length }} Feeds, zusammen {{ f.size|kib }}. Ein Feed ohne Treffer ist leer und trägt den Stand der Daten.</p>
+</section>
+{% endif %}

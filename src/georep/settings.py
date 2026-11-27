@@ -2296,6 +2296,9 @@ class Feeds(_Strict):
     enabled: bool = False
     entries: int = Field(default=50, ge=1, le=500)
     timezone: str = "Europe/Berlin"  # Zeitzone des Vorlagendatums: published um 00:00 Ortszeit
+    # Ein Timer schreibt die Periode fort (Monitor); sonst zeigen die Feeds den Stand des Pakets,
+    # und zeit.html sagt das (docs/plan-zeigen-2026-11.md, § 7)
+    timer: bool = False
 
     @field_validator("timezone")
     @classmethod

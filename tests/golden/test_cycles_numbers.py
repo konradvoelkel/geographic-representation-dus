@@ -16,6 +16,7 @@ Schritte ``cycles``, ``vocabulary`` und ``cycle_tests``.
 from __future__ import annotations
 
 import csv
+import datetime as dt
 import json
 import math
 import re
@@ -337,3 +338,152 @@ def test_every_span_of_the_main_period_is_a_hit_in_the_raw_text(
     # nur das verschlüsselte 00403713.pdf hat keinen Rohtext (Punkt 73)
     assert without <= 1
     assert spans.height > 6000
+
+
+# --- Stufe 3: die Zahlen der Unterseite zeit.html (Messdokument § 3 und § 4.1) ---------------------
+
+
+def _page_settings(profile: str) -> Settings:
+    settings = load_settings(profile=profile, cwd=NOWHERE)
+    return settings.model_copy(
+        update={"validation": settings.validation.model_copy(update={"root": REPO / "validierung"})}
+    )
+
+
+@pytest.fixture(scope="module")
+def pages(periods: dict[str, Period]) -> dict[str, Any]:
+    """Das Modell von ``zeit.html`` je Periode, aus denselben Tabellen wie oben; die Hauptperiode mit
+    den Tests über alle drei, wie im Profil ``duesseldorf-vergleich`` auf Pages."""
+    from georep.report.cycles import TimeInputs, build_time, read_check
+
+    rules = cycle_rules(load_settings(profile="duesseldorf-vergleich", cwd=NOWHERE))
+    frame = cycle_hypotheses([periods[p].data for p in PROFILES], rules, LEXICON)
+    found = {}
+    for profile, shown in (
+        ("duesseldorf-2014", "duesseldorf-2014"),
+        ("duesseldorf", "duesseldorf-vergleich"),
+        ("duesseldorf-2025", "duesseldorf-2025"),
+    ):
+        period = periods[profile]
+        settings = _page_settings(shown)
+        bodies = pl.read_parquet(
+            period.layout.papers_bodies, columns=["id", "gremium", "gremium_art", "stadtbezirk"]
+        )
+        documents = (
+            period.data.documents.select("id", "date", "mit_text", "urheber_art", "kategorien")
+            .join(bodies, on="id", how="left")
+            .sort("id")
+        )
+        inputs = TimeInputs(
+            months=period.data.months,
+            budget=period.data.budget,
+            documents=documents,
+            hypotheses=frame if settings.cycles.periods else None,
+            feeds=None,
+        )
+        found[profile] = (
+            build_time(inputs, settings, LEXICON, read_check(settings, LEXICON)),
+            settings,
+        )
+    return found
+
+
+def _shares(model: Any, key: str) -> list[float]:
+    row = next(r for r in model.vocabulary.rows if r.key == key)
+    return [round(100 * c.share, 2) for c in row.cells]
+
+
+@pytest.mark.parametrize(
+    ("profile", "fraction", "budget", "structure", "every"),
+    [
+        (
+            "duesseldorf-2014",
+            [1582, 1486, 1351, 1358, 1401, 1380],
+            [11] * 6,
+            [7.30, 9.37, 6.76, 5.35, 4.37, 2.97],
+            [7.33, 9.45, 6.76, 5.38, 4.37, 9.18],
+        ),
+        (
+            "duesseldorf",
+            [1653, 1634, 1644, 1442, 1434],
+            [2, 12, 12, 12, 12],
+            [2.79, 3.35, 3.97, 3.49, 2.22],
+            [18.09, 13.57, 9.86, 5.93, 4.06],
+        ),
+        ("duesseldorf-2025", [1499], [3], [3.47], [4.16]),
+    ],
+)
+def test_the_page_shows_the_years_and_the_vocabulary_of_paragraph_three(
+    pages: dict[str, Any],
+    profile: str,
+    fraction: list[int],
+    budget: list[int],
+    structure: list[float],
+    every: list[float],
+) -> None:
+    """§ 3.1 bis § 3.3: Fraktionsdokumente und Haushaltsmonat je Wahljahr, Anteile je Wahljahr."""
+    model, _ = pages[profile]
+    assert [y.fraction for y in model.rhythm.years] == fraction
+    assert [y.budget_month for y in model.rhythm.years] == budget
+    assert _shares(model, "struktur") == structure
+    assert _shares(model, "alle") == every  # S3.2, mit den Ereignissen
+
+
+def test_the_pre_election_years_against_the_middle_years(pages: dict[str, Any]) -> None:
+    """§ 3.1, S1.6: 2020 1 380 gegen 1 399,0 (Rang 3 von 5), 2025 1 434 gegen 1 573,3 (Rang 4 von 4)."""
+    old = pages["duesseldorf-2014"][0].rhythm.notes
+    main = pages["duesseldorf"][0].rhythm.notes
+    assert [(n.fraction, round(n.middle_mean, 1), n.rank, n.of) for n in old] == [
+        (1380, 1399.0, 3, 5)
+    ]
+    assert [(n.fraction, round(n.middle_mean, 1), n.rank, n.of) for n in main] == [
+        (1434, 1573.3, 4, 4)
+    ]
+    assert pages["duesseldorf-2025"][0].rhythm.notes == ()
+
+
+def test_the_page_shows_the_family_with_its_words(pages: dict[str, Any]) -> None:
+    model, _ = pages["duesseldorf"]
+    words = {h.key: (h.result, h.p_label, h.p_holm_label) for h in model.tests.main}
+    assert words == {
+        "H17.1": ("nicht bestätigt", "0,847", "1,000"),
+        "H17.2": ("bestätigt", "0,000036", "0,00011"),
+        "H17.3": ("nicht bestätigt", "0,987", "1,000"),
+    }
+    h171 = next(h for h in model.tests.main if h.key == "H17.1")
+    assert h171.effect.startswith("-4,9 % (90 %: -12,9 bis +3,8 %)")
+    h173 = next(h for h in model.tests.main if h.key == "H17.3")
+    assert h173.effect.startswith("5,98 / 3,16 / 3,47 % je Periode")
+    for profile in ("duesseldorf-2014", "duesseldorf-2025"):
+        other = pages[profile][0]
+        assert other.tests is None and other.elsewhere is not None
+        assert not other.elsewhere.computed_here
+
+
+def test_the_event_traces_of_paragraph_three_five(pages: dict[str, Any]) -> None:
+    """§ 3.5, explorativ: Corona im Juli 2021 bei 33 von 119, der Krieg im März 2022 bei 24 von 413."""
+    events = {e.key: e for e in pages["duesseldorf"][0].events}
+    corona, war = events["corona"], events["ukraine_krieg"]
+    assert (corona.peak_month, corona.peak_hits, corona.peak_documents) == (
+        dt.date(2021, 7, 1),
+        33,
+        119,
+    )
+    assert (war.peak_month, war.peak_hits, war.peak_documents) == (dt.date(2022, 3, 1), 24, 413)
+
+
+def test_each_page_stays_under_its_budget(pages: dict[str, Any]) -> None:
+    from georep.enrich.cycles import PAGE
+    from georep.layout import Layout
+    from georep.report.cycles import page_data, time_links
+    from georep.report.pages import page_frame, render_page
+
+    now = dt.datetime(2026, 11, 27, 12, tzinfo=dt.UTC)
+    for profile, (model, settings) in pages.items():
+        page = render_page(
+            page_frame(settings, now=now, commit=None),
+            PAGE,
+            page_data(model, settings),
+            time_links(Layout(NOWHERE, NOWHERE, NOWHERE), settings),
+        )
+        assert len(page.encode("utf-8")) < 500_000, profile

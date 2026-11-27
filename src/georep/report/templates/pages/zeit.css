@@ -1,0 +1,36 @@
+/* Vorhaben 17, Stufe 3: zeit.html. Eine Farbe für alle Balken (--q2, wie die Monatsreihe der
+   Hauptseite), die Haushaltsmonate als Band dahinter in --d1, der Mischung aus --selected, deren
+   Kontrast zur Fläche der Rahmen nachrechnet; die Wahljahre trennt eine Linie in --axis. Keine
+   Klasse hier tauscht ein Umschalter. Die Balken strecken sich mit der Breite
+   (preserveAspectRatio="none"); Linien behalten ihre Stärke (vector-effect), Beschriftungen
+   stehen als HTML darunter und bleiben auf jedem Bildschirm lesbar. */
+ul.toc { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; list-style: none; padding: 0; margin: .75rem 0; font-size: .9rem; }
+.pruefung { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: .25rem 1rem .75rem; margin: 1rem 0; }
+.pruefung h2 { margin-top: .75rem; font-size: 1.1rem; }
+.pruefung li { margin: .3rem 0; }
+ul.fn-legend { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; list-style: none; padding: 0; margin: .5rem 0 1rem; font-size: .85rem; }
+ul.fn-legend li { display: flex; align-items: center; gap: .4rem; }
+.swatch.haushalt { background: var(--d1); }
+.reihe { margin: .3rem 0 .6rem; }
+p.reihe-kopf { margin: 0 0 .15rem; font-size: .9rem; }
+.reihe svg, svg.spur { display: block; width: 100%; height: 4.5rem; background: var(--surface); border-radius: 4px; }
+svg.spur { height: 3rem; }
+.reihe path.balken, svg.spur path { fill: var(--q2); }
+rect.haushalt { fill: var(--d1); }
+line.jahr { stroke: var(--axis); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.jahre { position: relative; height: 1.3rem; font-size: .75rem; color: var(--muted); margin: 0 0 .8rem; font-variant-numeric: tabular-nums; }
+.jahre span { position: absolute; top: .1rem; text-align: center; overflow: hidden; white-space: nowrap; }
+tr.haushalt td:first-child { font-weight: 600; }
+tr.summe th, tr.summe td { font-weight: 600; }
+/* Der kleine Balken je Zelle des Vokabulars: unter der Zahl, so breit wie ihr Anteil am höchsten
+   Wert der Zeile; die Zahl steht daneben, die Farbe trägt also nichts allein. */
+td.anteil { position: relative; min-width: 3.5em; }
+td.anteil .balken { position: absolute; left: .4rem; bottom: .2rem; height: 3px; max-width: calc(100% - .8rem); background: var(--q1); border-radius: 1px; }
+#vokabular-tabelle th[scope="row"] { min-width: 12em; }
+/* „bestätigt" und „nicht bestätigt" gleich groß und gleich gesetzt (Messdokument § 7, Abschnitt 2). */
+.ergebnis { font-weight: 600; white-space: nowrap; }
+.hypothese { margin: 1rem 0; }
+.hypothese h3 { margin-bottom: .25rem; }
+p.these { margin: .25rem 0; font-style: italic; max-width: 48em; }
+p.stand { margin: .5rem 0 .75rem; }
+#sensitivitaeten td:nth-child(3) { min-width: 14em; }
