@@ -315,15 +315,6 @@ von 14 trägt `dokumente_vorgang.csv` nur die Dokumente in einem Vorgang (7,05 �
 vier Datensätze, `CsvPlan` aus Punkt 89 wie beim Vokabular von 17); offen bleibt die Regel für die
 übrigen Tabellen je Dokument (15: `dokumente_funktion`, `dokumente_antragsteller`).
 
-## 36. Spaltenschema nicht mehr auf der Hauptseite
-
-Aufgenommen am 2026-11-27 nach `vorgaenge.html` (Punkt 91): die Hauptseite der Hauptperiode wiegt 966 522
-Byte, rund 29 KB über dem Bau vor `v0.33.0` (Ziel der Phase höchstens 30 KB, hart 1 000 000). Den größten
-Teil des Zuwachses tragen die Spaltenschemata der neuen Tabellen (`<details>` unter „Spaltenschema" je
-Tabelle, bei 15, 11/12, 17 und 14 je rund 3 bis 6 KB). Vor der nächsten Unterseite (22) das Spaltenschema
-nur noch in `schema.json` und auf einer kleinen eigenen Seite führen und auf der Hauptseite verlinken;
-eine Regel für das ganze Register (Reviews der Stufen 3 von 15, 11/12, 17 und 14).
-
 ## 37. Allgemeine Wörter im Wörterbuch Mönchengladbachs
 
 Aufgenommen am 2026-11-27 mit der Startseite (Punkt 93): der häufigste Ort auf der Karte Mönchengladbachs
@@ -341,4 +332,12 @@ die Verzerrung durch die Wörterbuchgröße erst ab r ≥ 0,5 (`BIAS_R`); der Ab
 (`60-methode.html.j2`) sagt dagegen auch bei r = 0,18 (Mönchengladbach), die Trefferzahl hänge „vor
 allem" an der Größe des Wörterbuchs, sobald sich die Korrelation rechnen lässt. Dieselbe Grenze dort
 anlegen, mit A/B-Bau.
+
+## 39. Downloadtabelle auf schmalen Schirmen
+
+Aufgenommen am 2026-11-27 mit `spalten.html` (Punkt 94). Auf 390 px ist jede Zeile der Downloadtabelle
+von `details.html` rund 350 px hoch, schon vor Punkt 94; vermutlich drückt die Spalte SHA-256 (`code` mit
+`overflow-wrap: anywhere`) die Beschreibung zusammen. Messen (headless Chrome, 390 px), dann etwa die
+Prüfsumme auf schmalen Schirmen kürzen oder unter die Zeile stellen. Dabei den Satz „mit Prüfsummen und
+Spaltenschema" im Linkblock der Startseite prüfen: das Schema ist seit Punkt 94 einen Link weiter.
 

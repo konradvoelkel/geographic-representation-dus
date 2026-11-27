@@ -5284,7 +5284,7 @@ um 59 554 Bytes.
 unverändert. Die Orte sind über die Tastatur nur über „Als Liste" und die Flächen der Wahlbezirke
 erreichbar, nicht einzeln. Die Grenze der Stadtbezirke in einem geteilten Wahlbezirk (oben).
 
-## NN. Das Spaltenschema auf `spalten.html`: je Tabelle ein Abschnitt mit ihrem Namen als Anker, auf keiner anderen Seite (Punkt 36, 2026-11-27)
+## 94. Das Spaltenschema auf `spalten.html`: je Tabelle ein Abschnitt mit ihrem Namen als Anker, auf keiner anderen Seite (Punkt 36, 2026-11-27)
 
 `docs/todo.md`, Punkt 36, Phase „Zeigen“ (`docs/plan-zeigen-2026-11.md`). `details.html` wog in der
 Hauptperiode 968 010 Byte (hart 1 000 000; Ziel der Phase höchstens 30 000 über den 937 528 vor
