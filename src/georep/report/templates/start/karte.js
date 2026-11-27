@@ -139,10 +139,11 @@
       .forEach(function (i) {
         var c = document.createElementNS(NS, "circle");
         c.setAttribute("cx", places[i][0]); c.setAttribute("cy", places[i][1]);
+        c.setAttribute("display", "none");
         circles[i] = c;
         layer.appendChild(c);
       });
-    var counts = new Int32Array(places.length), dcount = {}, selected = [], wanted = [];
+    var counts = new Int32Array(places.length), dcount = {}, selected = [], drawn = [];
     function okBody(b) { var x = bodies[b]; return (!st.art || x[2] === st.art) && (!st.body || x[0] === st.body); }
     /* SVG-Einheiten je Bildschirmpixel; die Karte ist mittig eingepasst (meet), also zählt die
        knappere Richtung */
@@ -152,11 +153,13 @@
     }
     /* Auf einer schmalen Karte (Handy) werden die Kreise bis auf die Hälfte kleiner, sonst
        verdeckten sie die Stadt; die Legende folgt mit (point_radius in startkarte.py ist k = 1) */
-    function shrink() {
-      var drawn = svg.viewBox.baseVal.width / scale();
+    function shrink(s) {
+      var drawn = svg.viewBox.baseVal.width / s;
       return Math.max(0.5, Math.min(1, drawn / 800));
     }
-    function radius(count, s) { return (2.5 + 1.2 * Math.sqrt(count)) * shrink() * s; }
+    /* s ist scale(), einmal je Neuzeichnen gemessen: getBoundingClientRect je Kreis erzwänge
+       nach jedem gesetzten Radius ein neues Layout (3 146 Mal, gemessen 0,3 s statt 13 ms) */
+    function radius(count, s) { return (2.5 + 1.2 * Math.sqrt(count)) * shrink(s) * s; }
     /* Quantilklassen wie charts.classify (statistics.quantiles, method="inclusive") */
     function classify(values) {
       var sorted = values.slice().sort(function (a, b) { return a - b; });
@@ -199,14 +202,17 @@
       svg.classList.toggle("start-showlabels", svg.viewBox.baseVal.width / s >= 520 || !!zoom.value);
       document.querySelectorAll(".start-sizes circle").forEach(function (c) {
         if (!c.dataset.r) c.dataset.r = c.getAttribute("r");
-        c.setAttribute("r", (c.dataset.r * shrink()).toFixed(1));
+        c.setAttribute("r", (c.dataset.r * shrink(s)).toFixed(1));
       });
+      layer.style.strokeWidth = s.toFixed(2);  /* 1 px in Einheiten der viewBox, ohne vector-effect */
       for (var p = 0; p < places.length; p++) {
-        var c = circles[p];
-        if (counts[p] && st.mode === "punkte") {
-          c.setAttribute("r", radius(counts[p], s).toFixed(1));
-          c.removeAttribute("display");
-        } else c.setAttribute("display", "none");
+        /* nur, was sich ändert: jedes gesetzte Attribut kostet Stil und Zeichnen */
+        var c = circles[p], r = counts[p] && st.mode === "punkte" ? radius(counts[p], s).toFixed(1) : "";
+        if (r !== drawn[p]) {
+          if (r) { c.setAttribute("r", r); if (!drawn[p]) c.removeAttribute("display"); }
+          else c.setAttribute("display", "none");
+          drawn[p] = r;
+        }
         if (counts[p]) { shown++; if (best < 0 || counts[p] > counts[best]) best = p; }
       }
       svg.classList.toggle("start-plain", st.mode === "punkte");
@@ -308,11 +314,11 @@
     }
     function near(event) {
       if (st.mode !== "punkte") return [];
-      var u = toUser(event), limit = TAP * scale(), found = [];
+      var u = toUser(event), s = scale(), limit = TAP * s, found = [];
       for (var p = 0; p < places.length; p++) {
         if (!counts[p]) continue;
         var dx = places[p][0] - u.x, dy = places[p][1] - u.y, dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist <= Math.max(limit, radius(counts[p], scale()))) found.push([dist, p]);
+        if (dist <= Math.max(limit, radius(counts[p], s))) found.push([dist, p]);
       }
       return found.sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; });
     }

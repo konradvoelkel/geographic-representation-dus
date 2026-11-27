@@ -52,10 +52,11 @@
 <g class="start-borders" aria-hidden="true">
 {% for c in m.city_districts %}<path d="{{ c.path }}"/>{% endfor %}
 </g>
+<g class="start-points" aria-hidden="true"></g>
+{# die Namen über den Punkten, mit Rand in --surface: Orientierung vor Vollständigkeit #}
 <g class="start-labels" aria-hidden="true">
 {% for name, x, y in m.labels %}<text x="{{ x }}" y="{{ y }}">{{ name }}</text>{% endfor %}
 </g>
-<g class="start-points" aria-hidden="true"></g>
 </svg>
 <p id="start-status" class="start-status" aria-live="polite">{{ m.window_documents()|num }} Dokumente an {{ m.window_places()|num }} Orten, {{ m.window_label() }}, alle Gremien.</p>
 </div>

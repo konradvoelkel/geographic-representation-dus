@@ -20,7 +20,8 @@ svg.start-map { display: block; width: 100%; height: auto; max-height: 82vh; bac
 @media (max-width: 36em) { .start-labels { display: none; } }
 svg.start-map.start-showlabels .start-labels { display: inline; }
 .start-labels text { font-size: var(--label); fill: var(--ink-2); text-anchor: middle; dominant-baseline: middle; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; vector-effect: non-scaling-stroke; pointer-events: none; }
-.start-points circle { fill: var(--accent); fill-opacity: .4; stroke: var(--accent); stroke-width: 1px; vector-effect: non-scaling-stroke; pointer-events: none; }
+.start-points { stroke: var(--accent); stroke-width: 2; }
+.start-points circle { fill: var(--accent); fill-opacity: .4; pointer-events: none; }
 .start-status { margin: .5rem 0 0; font-size: .9rem; }
 .start-side fieldset { display: block; margin: 0 0 1rem; }
 .start-side legend { font-weight: 600; color: var(--ink); font-size: .9rem; margin-bottom: .25rem; }
