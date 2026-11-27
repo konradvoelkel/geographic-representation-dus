@@ -314,6 +314,71 @@ Verkehrsdokumente haben keine Ausschussberatung (vor allem Bezirksvertretungen),
 Klassifikator nie geprüft worden. Für Stufe 3 ist das eine Lücke, die die Seite nennen muss; eine
 Kodierung von 100 Bezirksvertretungsdokumenten der Klasse `OVA` würde sie schließen (§ 9, Frage 22.3).
 
+### 4.1 Prüfung der Klasse OVA an Dokumenten der Bezirksvertretungen, vorab festgelegt am 2026-11-27
+
+Festgelegt vom Supervisor der Phase „Zeigen" ([../plan-zeigen-2026-11.md](../plan-zeigen-2026-11.md),
+§ 5, Zeile zu 22; Frage 22.3: für Stufe 3 ja), geschrieben vom Bau-Agenten der Stufe 3 **vor** der
+Stichprobe, zusammen mit dem Codebuch
+[../../validierung/22-bedarf-ova/codebuch.toml](../../validierung/22-bedarf-ova/codebuch.toml)
+(Fassung 2026-11-27.1) und dem Messskript [22-bedarf-ova.py](22-bedarf-ova.py), in einem Commit.
+Nach der Stichprobe ändern sich weder Codebuch und Grenzfälle noch Maße und Kriterium; eine zweite
+Fassung wäre ein eigener Ordner mit neuer Stichprobe ([../validierung.md](../validierung.md), § 2).
+
+- **Projekt**: `validierung/22-bedarf-ova/`, im Format von F4, Einheit `document`.
+- **Grundgesamtheit**: Hauptperiode (Profil `duesseldorf`), Dokumente mit Treffer (in `paper_ids`
+  mindestens eines Wahlbezirks, wie `anteil_verkehr` sie zählt), deren Klasse im
+  Ausschussklassifikator (Punkt 45) `OVA` ist und die keine Ausschussberatung haben (das Gremium der
+  Drucksachennummer ist kein Ausschuss aus `[bodies.committees]`, wie in
+  `analysis.committees._labelled`). Das sind genau die Dokumente, die H1 ungeprüft trägt. Nachgerechnet
+  am 2026-11-27 auf dem Lauf des Worktrees: von den 1 827 Dokumenten der Klasse haben 1 084 keine
+  Ausschussberatung (die Zahl aus § 4, über alle Dokumente mit Text), 1 425 einen Treffer, und
+  **958** beides; das ist die Grundgesamtheit, 67,2 % des Zählers von `anteil_verkehr`. Nach Gremium:
+  Bezirksvertretungen 1 bis 10 zusammen 887 (8: 127, 9: 125, 6: 112, 7: 105, 1: 103, 4: 87, 5: 69,
+  3: 68, 2: 48, 10: 43), Rat 57, Jugendrat 7, Behindertenrat 6, Seniorenrat 1. Das Messskript
+  schreibt sie nach `interim/ova_ohne_ausschuss.parquet` der Datenwurzel, nicht ins Repo, mit `id`,
+  `gremium` und `dokumentart`; die Klasse steht nicht darin.
+- **Schlüssel** die Dokument-id; **Schicht** das Gremium, proportional, `size = 100`,
+  `seed = 20261127` (jedes Gremium mindestens ein Dokument; die drei Beiräte machen die Stichprobe
+  darum nicht selbstgewichtend, `score` gewichtet mit N_h/n_h).
+- **Material**: Titel und Textanfang (Rohtext, 1 500 Zeichen), als Kontext Dokumentart und Gremium.
+  Nicht gezeigt: die Ausschussklasse und alles, was das Verfahren ausgibt.
+- **Frage `ordnung_verkehr`**, nominal, `ja` / `nein` / `unklar`, `positive = ["ja"]`,
+  `ignore = ["unklar"]`: „Behandelt das Dokument überwiegend ein Thema des Ordnungs- und
+  Verkehrsausschusses?" `ja` heißt Verkehr oder öffentliche Ordnung (Straßen, Wege und Plätze als
+  Verkehrsraum, Parken, ÖPNV, Rad- und Fußverkehr, Verkehrssicherheit, Ampeln und Querungen,
+  Baustellen im Verkehrsraum; Sondernutzung, Sauberkeit und Ordnung im öffentlichen Raum,
+  Ordnungsdienst, Märkte und Veranstaltungen im Straßenraum), `nein`, dass ein anderes Thema
+  überwiegt (Bauleitplanung, Grün, Schule, Jugend, Soziales, Kultur, Haushalt ohne Verkehrsbezug,
+  Benennungen). Die Grenzfälle (Benennungen, Bäume am Straßenrand, Straßenbau gegen Bebauungsplan,
+  Leitungen, Schulweg, Grünanlagen, Sauberkeit, Lärm, Ordnung und soziale Hilfen, Sondernutzung,
+  Geld, Klima, Sammelvorlagen, Gleichstand) stehen im Codebuch, vor der Stichprobe.
+- **Kodierer**: A und die Schlichtung `claude-opus-5-5`, B ein anderes Modell (Sonnet), nach
+  [../validierung.md](../validierung.md), § 3 und § 4. Der Bau-Agent kodiert nicht und liest die
+  Antworten erst zum `merge`: er kennt die Ausgabe des Verfahrens.
+
+**Maße und Kriterium.**
+
+- Übereinstimmung: Krippendorffs α (nominal) ≥ 0,8, oder die Regel der vollen Einigkeit aus
+  [../validierung.md](../validierung.md), § 3, Schritt 8.
+- Präzision der Klasse auf dieser Grundgesamtheit: der gewichtete Anteil `ja` unter `ja` und `nein`
+  mit Wilson-Intervall bei Kishs effektivem n (`georep validate score 22-bedarf-ova --pred
+  interim/ova_vorhersage.parquet`, `treffer.grundgesamtheit`); `unklar` wird gezählt und genannt,
+  nicht gewertet.
+
+**Folge für die Seite** (`bedarf.html`), vorab:
+
+1. Genügt α und liegt die untere Grenze des Intervalls bei mindestens 0,8, nennt die Seite die
+   Präzision mit dem Prüfsatz aus `guete.json`, und H1 steht wie im Bauplan (§ 7).
+2. Genügt α und liegt die untere Grenze darunter, steht H1 trotzdem als vorab festgelegtes Ergebnis.
+   Neben dem Urteil steht dann deutlich „auf Dokumenten der Bezirksvertretungen trifft die Klasse nur
+   zu *x* % zu", und das Maß heißt unscharf.
+3. Liegt α unter der Schwelle (und gilt die Regel der vollen Einigkeit nicht), nennt die Seite keine
+   Präzision, sagt aber, dass die Prüfung kein verlässliches Maß ergab.
+
+Keiner der drei Ausgänge ändert eine Zahl von H1 bis H3 oder ein Urteil aus § 3.4: die Prüfung
+beschreibt die Güte des Maßes, sie ist kein vierter Test. Das Ergebnis steht nach der Kodierung
+unten in diesem Abschnitt.
+
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
 
 **Kriterium** (Briefing, unverändert): mindestens zwei Quellen mit passender Raumeinheit und freier

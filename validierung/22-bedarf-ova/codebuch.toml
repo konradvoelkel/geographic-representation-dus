@@ -1,0 +1,94 @@
+# Codebuch Vorhaben 22 „Bedarf und Aufmerksamkeit“, Prüfung der Klasse OVA an Dokumenten ohne
+# Ausschussberatung (Frage 22.3), Fassung 2026-11-27.1. Vorab festgelegt mit Grundgesamtheit, Seed,
+# Maßen und Kriterium in docs/plans/22-bedarf.md, § 4.1 (Supervisor der Phase „Zeigen“,
+# 2026-11-27), vor Stichprobe und Kodierung; die Grenzfälle unten stehen vor der Stichprobe hier
+# und werden danach nicht mehr geändert (docs/validierung.md, § 2).
+#
+# Kodierer nach docs/validierung.md, § 3 (Frage 19, Konrad 2026-11-26): A und die Schlichtung
+# Opus, B Sonnet; Prompts nach § 4. Der Bau-Agent von Stufe 3 kodiert nicht und liest die
+# Antworten erst zum merge: er kennt die Ausgabe des Verfahrens.
+#
+# Grundgesamtheit (docs/plans/22-bedarf-ova.py): Hauptperiode, Dokumente mit Treffer in mindestens
+# einem Wahlbezirk, deren passender Ausschuss nach dem Ausschussklassifikator (Punkt 45) der
+# Ordnungs- und Verkehrsausschuss ist und deren Drucksachennummer kein Ausschusskürzel trägt
+# (keine Ausschussberatung). Das sind die Dokumente im Zähler von anteil_verkehr (H1), an denen der
+# Klassifikator nie geprüft wurde. Die Klasse steht weder im Auftrag noch in der Grundgesamtheit.
+#
+# Auswertung (nur hier, nicht im Auftrag):
+# praezision = "Anteil ordnung_verkehr = ja unter ja und nein, gewichtet mit den Schichtgrößen (georep validate score --pred, treffer.grundgesamtheit); unklar wird gezählt und berichtet, nicht gewertet"
+# uebereinstimmung = "Krippendorffs alpha zwischen den beiden Kodierern (nominal); Stufe 3 verlangt alpha >= 0,8 oder die Regel der vollen Einigkeit (validierung.md, § 3, Schritt 8)"
+
+project = "22-bedarf-ova"
+version = "2026-11-27.1"
+unit = "document"
+instructions = """
+Einheit: Ein Dokument (eine Drucksache des Ratsinformationssystems) der Wahlperiode 2020 bis 2025, das in keinem Fachausschuss beraten wurde, meist aus einer Bezirksvertretung, seltener aus dem Rat oder einem Beirat.
+
+Material: Der Titel und der Anfang des Texts (bis 1 500 Zeichen, mit Groß- und Kleinschreibung und Zeilenumbrüchen). Unter kontext die Dokumentart (dokumentart) und das Gremium, in dem das Dokument steht (gremium). Was nicht im Ausschnitt steht, gibt es für dich nicht.
+
+Nicht gezeigt: Die Klasse, die das geprüfte Verfahren dem Dokument gibt (F4: ohne die Ausgabe des zu prüfenden Verfahrens).
+
+Hintergrund: Der Ordnungs- und Verkehrsausschuss einer Großstadt berät Verkehr (Straßen, Wege und Plätze als Verkehrsraum, Parken, Bus und Bahn, Rad- und Fußverkehr, Verkehrssicherheit) und öffentliche Ordnung (Sondernutzung, Sauberkeit und Ordnung im öffentlichen Raum, Ordnungsdienst, Märkte und Veranstaltungen im Straßenraum). Andere Ausschüsse beraten Planung und Bau, Grün und Umwelt, Schule, Jugend, Soziales, Kultur, Finanzen. Die Frage ist, ob das Dokument von seinem Gegenstand her in den Ordnungs- und Verkehrsausschuss gehörte, nicht, wo es tatsächlich beraten wurde.
+"""
+
+[[questions]]
+id = "ordnung_verkehr"
+question = "Behandelt das Dokument überwiegend ein Thema des Ordnungs- und Verkehrsausschusses?"
+scale = "nominal"
+instructions = """
+„Überwiegend“ heißt: der Gegenstand, über den das Gremium beschließen, den es zur Kenntnis nehmen oder zu dem es Auskunft bekommen soll, also der Beschlussvorschlag, die Fragen oder der Betreff. Nennt das Dokument mehrere Gegenstände (etwa ein Antrag mit drei Punkten), entscheidet der erste Punkt, es sei denn, die übrigen sind erkennbar die Mehrheit. Eine Sammelvorlage mit vielen Punkten (Mitteilungen der Verwaltung, Beschlusskontrolle, Liste offener Anträge): ja nur, wenn im Ausschnitt mehr als die Hälfte der Punkte ja wären; sonst nein. Die Dokumentart und das Gremium sagen nichts über das Thema.
+
+Grenzfälle, entschieden vor der Stichprobe (Fassung .1):
+- Benennung einer Straße, eines Platzes, eines Wegs, einer Brücke oder einer Haltestelle nach einer Person oder einem Ereignis: nein (Benennung). Ändert das Dokument dagegen, wie der Raum genutzt wird (Fußgängerzone, Spielstraße, Umwidmung), ist es ja.
+- Bäume und Grün am Straßenrand (Pflanzung, Pflege, Fällung, Baumscheiben, Grünstreifen, Beete): nein (Grün). Ja, wenn es um den Verkehrsraum geht: Bewuchs, der Sicht, Gehweg oder Radweg versperrt, Parkstände statt Baumscheiben, Wurzeln, die einen Gehweg anheben.
+- Bau oder Umbau einer Straße, eines Gehwegs, Radwegs oder Platzes, Fahrbahnsanierung, Beleuchtung von Straßen und Wegen, Absenkung von Bordsteinen, barrierefreie Haltestelle: ja (Verkehrsraum), auch wenn es als Baumaßnahme vorgelegt wird. Ein Bebauungsplan, eine Bauvoranfrage oder ein Hochbau, auch mit Verkehrsteil: nein (Bauleitplanung, Bau).
+- Leitungen, Kanal und Entwässerung unter der Straße: nein. Ja nur, wenn das Dokument die Baustelle im Verkehrsraum behandelt (Sperrung, Umleitung, Dauer, Parken während der Arbeiten).
+- Schulweg und Kita-Weg: ja, wenn es um den Weg geht (Querung, Lotsen, Tempo vor der Schule, Elterntaxis, Halteverbot). Schulgebäude, Schulhof, Schulplätze: nein.
+- Spielplatz, Park, Grünanlage, Friedhof, Kleingärten, auch Bänke, Beleuchtung oder Abfallbehälter darin: nein (Grün). Bänke, Abfallbehälter, Fahrradständer, Ladesäulen, Carsharing-Stellplätze, Poller auf Gehwegen, Straßen und Plätzen: ja.
+- Sauberkeit im öffentlichen Raum (wilder Müll, Sperrmüll am Straßenrand, Glascontainer-Standorte, Hundekot, Graffiti auf Straßen und Plätzen, Straßenreinigung): ja. Abfallwirtschaft als Ganzes (Gebühren, Wertstoffhöfe): nein.
+- Lärm: von Straßenverkehr, aus Gastronomie, Veranstaltungen oder Ansammlungen im öffentlichen Raum: ja. Lärmschutz als Teil eines Bebauungsplans: nein.
+- Ordnung und Sicherheit im öffentlichen Raum (Ordnungsdienst, Videobeobachtung, Alkohol- oder Drogenszene auf Plätzen, Angsträume, Verkehrskontrollen): ja. Soziale Hilfen für Menschen auf der Straße (Obdachlosenhilfe, Drogenhilfe als Angebot): nein (Soziales).
+- Märkte, Kirmes, Schützenfeste, Weihnachtsmärkte, Straßenfeste, Außengastronomie und andere Sondernutzungen im Straßenraum: ja. Eine Kulturveranstaltung, deren Inhalt der Gegenstand ist (Programm, Förderung): nein (Kultur).
+- Geld: Bezirkliche Mittel, Zuschüsse, Haushaltsanträge folgen dem Gegenstand, für den das Geld ist (Mittel für Poller: ja; Mittel für einen Verein, ein Fest ohne Straßenraumbezug, eine Schule: nein). Haushalt ohne Gegenstand oder über viele Gegenstände: nein.
+- Klima und Umwelt: ja, wenn es um Verkehr geht (Radverkehrskonzept, Parkraum, Tempo 30, E-Mobilität im Straßenraum); sonst nein.
+- Im Zweifel zwischen ja und nein, wenn beide Teile gleich viel Raum haben: nein.
+unklar: der Ausschnitt reicht für keine der beiden Antworten (etwa ein Deckblatt ohne Gegenstand, ein leerer oder unlesbarer Text und ein Titel ohne Hinweis); nicht raten.
+"""
+positive = ["ja"]  # Präzision der Klasse: Anteil ja unter ja und nein (Auswertung oben)
+ignore = ["unklar"]  # „unklar wird gezählt und berichtet, nicht gewertet“
+
+[[questions.options]]
+value = "ja"
+definition = """
+Verkehr oder öffentliche Ordnung: Straßen, Wege und Plätze als Verkehrsraum, Parken, Bus und Bahn (ÖPNV), Rad- und Fußverkehr, Verkehrssicherheit, Ampeln und Querungen, Baustellen im Verkehrsraum; Sondernutzung, Sauberkeit und Ordnung im öffentlichen Raum, Ordnungsdienst, Märkte und Veranstaltungen im Straßenraum.
+"""
+example = "Antrag: Die Bezirksvertretung bittet die Verwaltung, vor der Grundschule an der X-Straße einen Fußgängerüberweg einzurichten."
+
+[[questions.options]]
+value = "nein"
+definition = """
+Ein anderes Thema überwiegt: Bauleitplanung und Hochbau, Grün und Umwelt, Schule, Jugend, Soziales, Kultur, Sport, Haushalt ohne Verkehrsbezug, Benennungen, Wahlen und Besetzungen, Sitzungstermine.
+"""
+example = "Informationsvorlage: Neugestaltung des Spielplatzes im Y-Park."
+
+[[questions.options]]
+value = "unklar"
+definition = """
+Titel und Textanfang reichen für keine der beiden Antworten.
+"""
+
+[sample]
+# Grundgesamtheit aus docs/plans/22-bedarf-ova.py (Messdokument § 4.1); Schicht ist das Gremium,
+# in dem das Dokument steht (Bezirksvertretung, Rat oder Beirat), proportional. Jedes Gremium
+# bekommt mindestens ein Dokument.
+size = 100
+seed = 20261127
+stratum = "gremium"
+allocation = "proportional"
+population = "interim/ova_ohne_ausschuss.parquet"
+
+[text]
+source = "raw"   # der Rohtext (F1), mit Groß- und Kleinschreibung und Zeilenumbrüchen
+chars = 1500     # Textanfang je Dokument, wie bei 14 und 15
+context = ["dokumentart", "gremium"]
+context_chars = 80
