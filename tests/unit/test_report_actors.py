@@ -608,3 +608,25 @@ def test_kein_parteiname_im_text_der_seite_und_des_schemas() -> None:
     assert _named(_render(settings, rows)) == []
     docs = " ".join(doc[0] for table in TABLES for doc in table.columns.values())
     assert _named(docs + " ".join(t.description for t in TABLES)) == []
+
+
+@pytest.mark.parametrize(
+    ("key", "value"), [("codebuch_version", "2026-12-01.2"), ("einheiten", 151)]
+)
+def test_rule_check_gilt_nur_fuer_die_messung_aus_guete_json(
+    tmp_path: Path, default_settings: Settings, key: str, value: object
+) -> None:
+    """N1: eine neue Kodierung (anderes Codebuch, andere Stichprobe) macht ``RULE_CHECK`` ungültig."""
+    from georep.errors import SchemaError
+
+    folder = tmp_path / VALIDATION_PROJECT
+    folder.mkdir()
+    source = REPO / "validierung" / VALIDATION_PROJECT
+    for name in ("stichprobe.json", "codebuch.toml"):
+        shutil.copy(source / name, folder / name)
+    quality = _quality() | {key: value}
+    (folder / "guete.json").write_text(json.dumps(quality), encoding="utf-8")
+    with pytest.raises(SchemaError, match="RULE_CHECK"):
+        read_check(_check_settings(default_settings, tmp_path))
+    assert RULE_CHECK.codebook_version == _quality()["codebuch_version"]
+    assert RULE_CHECK.units == _quality()["einheiten"]

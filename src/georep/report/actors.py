@@ -179,6 +179,10 @@ class RuleCheck:
     # Die Variante, die an denselben Labels gewählt ist, an denen sie gemessen ist (§ 5): ihre Zahl
     # ist optimistisch, die der anderen die vorsichtige (Synergien § 10, Punkt 8).
     selected_on_labels: str
+    # Die Kodierung, an der diese Zahlen gemessen sind; ``read_check`` vergleicht sie mit
+    # ``guete.json`` (Review 2026-11-27, N1): eine neue Kodierung macht die Konstante ungültig.
+    codebook_version: str
+    units: int
 
 
 RULE_CHECK = RuleCheck(
@@ -190,6 +194,8 @@ RULE_CHECK = RuleCheck(
     fraction_named=119,
     fraction_labelled=138,
     selected_on_labels="B",
+    codebook_version="2026-11-23.1",
+    units=150,
 )
 
 
@@ -267,8 +273,15 @@ def read_check(settings: Settings, rule: RuleCheck = RULE_CHECK) -> Check:
         function = dict(quality["fragen"]["funktion"])
         agreed, units = int(function["einig"]), int(function["n"])
         profiles = tuple(p.strip() for p in str(sample["profil"]).split(",") if p.strip())
+        measured_on = (str(quality["codebuch_version"]), int(quality["einheiten"]))
     except (KeyError, TypeError, ValueError) as error:
         raise SchemaError(f"{quality_path} oder {sample_path}: Feld fehlt ({error})") from error
+    if measured_on != (rule.codebook_version, rule.units):
+        raise SchemaError(
+            f"{quality_path}: Codebuch {measured_on[0]} an {measured_on[1]} Einheiten, RULE_CHECK "
+            f"gilt für {rule.codebook_version} an {rule.units}; das Regelwerk ist gegen die neue "
+            "Kodierung nachzurechnen"
+        )
     variant = settings.functions.variant
     other = "A" if variant == "B" else "B"
     return Check(

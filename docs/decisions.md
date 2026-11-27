@@ -4362,7 +4362,10 @@ Regelwerk gegen die Endlabels: κ 0,905 (0,840–0,960) für B, 0,829 (0,748–0
 Dokumenten, 125 Treffer, Antragsteller 119/119 und 119/138. Das steht als `RULE_CHECK` in
 `report/actors.py`, und der slow-Test `tests/golden/test_functions_numbers.py` rechnet Treffer, κ und
 die Zahlen der Antragsteller aus `validierung/15-funktion/labels.csv` gegen genau diese Konstante
-nach; das Intervall ist der Bootstrap des Messskripts und wird nicht nachgerechnet. Der Satz „bei
+nach; das Intervall ist der Bootstrap des Messskripts und wird nicht nachgerechnet. `RULE_CHECK`
+trägt die Codebuchversion und die Zahl der Einheiten seiner Messung, und `read_check` bricht mit
+`SchemaError` ab, wenn `guete.json` eine andere Kodierung beschreibt (Review 2026-11-27, N1): sonst
+stünde nach einer neuen Kodierung ein neuer Satz neben alten Treffern. Der Satz „bei
 zwei Kodierern desselben Modells ist das ein schwacher Beleg" hängt an `modelle` (A gleich B), der
 Hinweis auf die vorsichtige Zahl der nicht gewählten Variante an `RULE_CHECK.selected_on_labels`
 (Synergien § 10, Punkt 8). Verworfen: `georep validate score --pred` über die 150 Dokumente laufen
