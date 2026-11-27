@@ -1,0 +1,209 @@
+# Codebuch Vorhaben 12-kennungen, Fassung 2026-11-23.2 (Mess-Agent Vorhaben 12, Bestätigung der
+# Fassung 2 des Extraktors), am 2026-11-27 ins Format von F4 (georep validate) übertragen: Arten,
+# Regeln und Fragen wörtlich aus validierung/12-kennungen/codebuch-2.toml, nur die Form ist neu.
+# Messdokument: docs/plans/12-kennungen.md, § 4.3 und § 4.4. Daneben unverändert, wie das
+# Messskript sie liest: validierung/12-kennungen/ (stichprobe-2.csv, labels-2.csv).
+#
+# Aus [meta] der vorläufigen Fassung, wörtlich:
+# version = 2026-11-23.2
+# vorgaenger = codebuch.toml (2026-11-23.1), Grundlage von labels.csv
+# kodierer = zwei unabhängige Kodier-Agenten und ein Schlicht-Agent nur für die Uneinigkeiten (Plan § 2.6, F4); kein menschlicher Goldstandard
+# nicht_gezeigt = Art, normalisierter Wert, Rolle und Funktion, die der Extraktor vergibt; gezeigt wird nur die markierte Stelle
+# offsets = Python-Zeichenindizes in den Rohtext (pypdf-7.1.0 roh), gebunden an pdf_sha256
+#
+# Übernommen sind die 360 Präzisionsaufgaben der Runde 2 (typ praezision); die 50
+# Recall-Dokumente (Frage spannen) gehören zum Recall, den F4 noch nicht auswertet
+# (docs/validierung.md, § 6). Die Labels kommen aus labels-2.csv ([provisional] unten):
+# Kodierer A und B wie dort, die Schlichtung aus der Spalte label, wo dort eine steht.
+
+project = "12-kennungen-2-f4"
+version = "2026-11-23.2"
+unit = "span"
+instructions = """
+Präzision: eine markierte Spanne (zwischen ⟦ und ⟧ im Ausschnitt).
+
+Arten. Jede Spanne hat genau eine Art; „keine“, wenn die Stelle keine der Arten ist.
+
+Regeln (Fassung .2):
+- R2: „leer bei keine“ ist JSON null, nie die leere Zeichenfolge.
+- umlaute: In Normwerten mit Wörtern (Termin-Zusätze, relative Termine) stehen ä, ö, ü, ß als ae, oe, ue, ss: 2023~fruehjahr.
+- leerraum: Ein Zeilenumbruch innerhalb einer Spanne zählt im Normwert als ein Leerzeichen; die Spanne selbst bleibt wie im Text.
+
+Runde 2: rolle und frist (beide fallen, Messdokument § 5); die Felder bleiben im Antwortformat und sind null.
+"""
+
+[[questions]]
+id = "art"
+question = "Welche Art ist die markierte Stelle?"
+scale = "nominal"
+
+[[questions.options]]
+value = "bplan"
+name = "1 Bauleitplanung"
+definition = """
+Nummer eines Bebauungsplans (auch Entwurf, Vorentwurf, vorhabenbezogen, Änderung, alter Fluchtlinien- oder Durchführungsplan)
+Spanne: nur die Nummer (5674/26, 03/017, 809/N), ohne „Bebauungsplan Nr.“ und ohne Planname
+Norm: Düsseldorf alte Nummern vierstellig/dreistellig (5674/26 → 5674/026), neue Bezirk/lfd. Nr. (06-018 → 06/018); Mönchengladbach Nummer/Bezirk (809/N)
+Plan Nr.: „Plan Nr. 5776/014“ zählt, wenn der Text dieselbe Nummer als Bebauungsplan behandelt (Aufstellung, Änderung, Geltungsbereich); Nummern von Wettbewerben, Workshops und Vorkaufsrechtssatzungen nicht
+Nicht: Drucksachennummern (Vorhaben 14); Hausnummern, Telefonnummern, Schuljahre
+"""
+
+[[questions.options]]
+value = "fnp"
+name = "1 Bauleitplanung"
+definition = """
+Nummer einer Änderung des Flächennutzungsplans, auch als Ordinalzahl („die 188. Änderung“) und in Tabellenköpfen („Flächennutzungsplanänderung Stellungnahmen Nr. 188“)
+Spanne: nur die Nummer, ohne Punkt der Ordinalzahl
+Norm: „FNP-Änderung 188“
+"""
+
+[[questions.options]]
+value = "produkt"
+name = "2 Haushalt"
+definition = """
+Nummer eines Produkts oder Profitcenters, auch als erstes Glied einer Kontierung („Konto 1111114 5/74990600“, „1111114/1000/5490200/2“, Tabellenzeile „1111115 13 52910000“) und nach „Produktes“
+Spanne: die Ziffernfolge mit ihren Leerzeichen
+Norm: nur Ziffern; acht Ziffern sind ein Sachkonto
+"""
+
+[[questions.options]]
+value = "sachkonto"
+name = "2 Haushalt"
+definition = """
+Sachkonto oder Kostenart, auch als Glied einer Kontierung („42 424 04 /78170100/ 7.90000278“, „11.111.05.001 52415900“); ein Kontenpaar („5/74990600“) ist eine Spanne mit der achtstelligen Nummer
+Spanne: nur die Kontonummer
+Norm: nur Ziffern
+"""
+
+[[questions.options]]
+value = "psp"
+name = "2 Haushalt"
+definition = """
+PSP-Element oder Kontierungsobjekt mit Punkten, auch ohne Schlüsselwort und als „Haushaltsstelle“ („1.10.36.365.01“, „1.10.11.111.05.001“, „11.111.05.001“); Investitionsmaßnahmen 7.… sind investition
+Spanne: das Element ohne Satzzeichen am Ende
+Norm: wie geschrieben
+"""
+
+[[questions.options]]
+value = "investition"
+name = "2 Haushalt"
+definition = """
+Investitionsmaßnahme (Düsseldorf 7.NNNNNNNN, auch „Maßnahme 790000724“; Mönchengladbach LDI)
+Spanne: die Nummer mit Suffix (.A0, .K0, .KO.99)
+Norm: R7: ohne Suffix, 7.NNNNNNNN; Mönchengladbach LDI-NNNN
+"""
+
+[[questions.options]]
+value = "betrag"
+name = "3 Betrag"
+definition = """
+Geldbetrag in Euro mit Einheit im Text, auch mit Einheit vorn („EUR 2.700“, „€ 40.000“, „Euro 172.000“) und die erste Zahl einer Spanne
+Spanne: Zahl mit Vorzeichen (auch „+“), Faktor und Einheit; ohne „ca.“, „brutto“, „/m²“
+Norm: Euro mit zwei Nachkommastellen, Punkt als Dezimalzeichen, Vorzeichen minus (−) wie im Text, plus ohne Zeichen
+Tabelle: Eine Zahl, deren Einheit nur im Kopf einer Spalte oder Zeile steht („Beträge in EUR“, Veränderungstabellen mit „-50.000 -150.000“), ist ein Betrag mit tabelle = true
+Nicht: eine Jahreszahl mit Einheit in einem Tabellenkopf („2021 Mio. EUR“, „2023 €“); Prozente, Mengen, Flächen
+"""
+
+[[questions.options]]
+value = "termin"
+name = "4 Termin"
+definition = """
+Zeitangabe mit Kalenderbezug oder relative Frist (wie .1), auch ISO-Daten in Dateinamen („2020-10-05 BV6 …“)
+Spanne: die Zeitangabe mit ihrem Zusatz („Ende Februar 2021“, „Mitte Juli 2021“, „nach der Sommerpause 2022“), ohne vorangestelltes „bis zur“, „bis zum“
+Norm: 2024-03-31; 2024-03; 2023-Q3, 2023-H1; Jahr mit Zusatz 2022~ende, 2022~herbst, 2023~fruehjahr; Monat mit Zusatz 2021-02~ende, 2021-07~mitte; relativ:naechste_sitzung (auch „bis zur“, „auf der nächsten Sitzung“), relativ:frist, relativ:jahresende, relativ:nach_sommerpause, relativ:vor_sommerpause
+R10: Keine Bereichsnorm: jede Zeitangabe einer Aufzählung oder Spanne ist eine eigene Spanne; die vorangestellte unvollständige („10.“ in „10. und 11. Juni 2023“, „März“ in „März bis Dezember 2021“) mit ihrem Text und vervollständigter Norm
+Nicht: Jahreszahlen allein; Gliederungsnummern; Uhrzeiten
+"""
+
+[[questions.options]]
+value = "recht"
+name = "5 Rechtsgrundlage"
+definition = """
+Zitat einer Vorschrift mit §, Art., „Paragraph“ oder „Artikel“ (R9: „Paragraph (§) 45 …“ beginnt bei „Paragraph“)
+Spanne: vom ersten § bis zum letzten Spezifizierer, dazu der Gesetzesname, wenn er unmittelbar folgt, mit Zusätzen wie „des Landes Nordrhein-Westfalen“ oder „der Landeshauptstadt …“; „(BauGB)“ in Klammern dahinter nicht
+R8: Kette über „i. V. m.“/„in Verbindung mit“, deren Glieder dasselbe Gesetz nennen: eine Spanne vom ersten § bis zum letzten Gesetzesnamen; Glieder mit verschiedenen Gesetzen: eine Spanne je Glied
+R3: Schreibung: „Abs.“, „Satz“ ausgeschrieben, „Nr.“, „i. V. m.“ mit Leerzeichen; Absatz in Klammern („(4)“, „§ 6 (2)“) als „Abs. n“; Buchstabe ohne Leerzeichen an der Zahl („Abs. 1b“)
+R4: Gesetz in amtlicher Abkürzung und Schreibung (BauGB, GO NRW, KomHVO NRW, APO-WbK, NKF-CIG), auch wenn der Text anders schreibt (GO NW, APO WbK) oder den Langtitel nennt; Ortsrecht mit vollem Namen (Zuständigkeitsordnung, nicht ZO; „Satzung der Deutschen Sektion des RGRE“)
+R5: Alle Spezifizierer der Spanne bleiben in der Norm („§ 52 Abs. 1 Nr. 5, 8 und 9“, „Abs. 1 bis 3“, „Nr. 1.2“); Nummern einer Verwaltungsvorschrift als „VV n.n.n“ hinter der Kette; ein unbezeichneter Spezifizierer („§ 6, 2“) bekommt die Bezeichnung, die der zitierte Text zeigt
+R6: Nur ein Gesetzesname im selben Satz zählt; ein Rückverweis auf einen Namen im Satz davor ergibt „? §“
+Norm: Gesetz, dann Kette: „BauGB § 13 Abs. 2 Nr. 2“; „? § 34“ ohne Gesetz im Satz
+Nicht: § im Namen eines Gremiums („AG § 78“): die Arbeitsgemeinschaft ist kein Zitat; recht mit „? § 78“ nur, wenn der Text die Vorschrift meint
+"""
+
+[[questions.options]]
+value = "amt"
+name = "6 Verwaltungseinheit"
+definition = """
+Amt, Institut, Fachbereich, Eigenbetrieb, Bezirksverwaltungsstelle (auch ohne Nummer im Text), mit Nummer oder Namen, auch gebeugt („des Umweltamts“, „des Stadtplanungsamtes“)
+Spanne: im Kopffeld der Wert ohne Feldnamen, bei mehreren Zeilen (mehrere Ämter) eine Spanne je Zeile; im Text der Name, eine direkt folgende Klammer mit Nummer gehört dazu; der volle Name („Feuerwehr, Rettungsdienst und Bevölkerungsschutz“, „64 - Amt für Wohnungswesen“)
+R1: Norm: Amtsnummer nur, wenn sie in der Spanne steht oder ihr im Ausschnitt direkt zugeordnet ist (Kopffeld, „Amt 66“, Klammer dahinter); sonst der Name wie in der Spanne (Zeilenumbruch = ein Leerzeichen, ohne Artikel, Grundform ohne Genitiv-s). Keine Nummer aus Weltwissen, anderen Vorlagen oder Codebuch-Beispielen; ein Abteilungskürzel im Briefkopf (66/5) ist keine direkte Zuordnung
+Auswertung: Der Vergleich mit dem Extraktor bildet Namen über das Amtsverzeichnis aus den Kopffeldern des Korpus auf die Nummer ab; die Kodierer schreiben trotzdem den Namen
+Nicht: Gremien; „die Verwaltung“, „das Fachamt“ ohne Namen; Behörden von Land und Bund (Finanzamt, Schulamt, Landesamt, Bundesamt …); „Ehrenamt“, „insgesamt“; städtische Gesellschaften; Personen, auch Beigeordnete: nie kodieren
+"""
+
+[[questions.options]]
+value = "dezernat"
+name = "6 Verwaltungseinheit"
+definition = """
+„Dezernat 06“, auch als Zwischenüberschrift einer Haushaltstabelle
+Spanne: „Dezernat 06“
+Norm: zweistellig
+"""
+
+[[questions.options]]
+value = "keine"
+definition = """
+keine Kennung der Arten oben
+"""
+
+[[questions]]
+id = "grenzen"
+question = "Ist die Spanne nach den Regeln oben richtig abgegrenzt? Wenn nein: der richtige Text, genau wie im Ausschnitt."
+scale = "nominal"
+only_if = { question = "art", values = ["bplan", "fnp", "produkt", "sachkonto", "psp", "investition", "betrag", "termin", "recht", "amt", "dezernat"] }
+
+[[questions.options]]
+value = "richtig"
+
+[[questions.options]]
+value = "zu_kurz"
+
+[[questions.options]]
+value = "zu_lang"
+
+[[questions.options]]
+value = "verschoben"
+
+[[questions]]
+id = "grenzen_korrigiert"
+question = "Die richtige Spanne, wenn grenzen nicht richtig ist: [start, end] im Rohtext."
+scale = "open"
+only_if = { question = "grenzen", values = ["zu_kurz", "zu_lang", "verschoben"] }
+instructions = """
+Der Kodierer schrieb den richtigen Text genau wie im Ausschnitt (text_korrigiert im Antwortformat der Fassung .2); labels-2.csv trägt statt des Texts seine Stelle im Rohtext, wie das Messskript sie bestimmt hat (Offsets statt Ausschnitten, Messdokument § 4.4).
+"""
+
+[[questions]]
+id = "norm"
+question = "Normalisierter Wert nach den Regeln der Art (für die korrigierte Spanne, wenn grenzen nicht richtig ist)."
+scale = "open"
+only_if = { question = "art", values = ["bplan", "fnp", "produkt", "sachkonto", "psp", "investition", "betrag", "termin", "recht", "amt", "dezernat"] }
+
+[sample]
+# gezogen vom Mess-Agenten (docs/plans/12-kennungen.md, § 4.3, Seed 12-2); nur die
+# Präzisionsaufgaben; gezogen wird nicht neu.
+size = 360
+seed = 12  # Seed 12-2 (ein Text), wie stichprobe.json ihn nennt
+stratum = "schicht"
+key = "aufgabe"
+
+[text]
+source = "raw"
+window = 400
+
+[provisional]
+# Die Labeldatei der Messung in langer Form (Werte als JSON); ein Objekt mit auswerter in der
+# Spalte schlichtung ist ein Entscheid des Auswerters nach dem Codebuch, nicht des Schlichters.
+key = "aufgabe"
+labels = "labels-2.csv"
+labels_auditor = "Auswerter nach dem Codebuch .2, Runde 2"

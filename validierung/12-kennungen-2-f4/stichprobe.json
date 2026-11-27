@@ -1,0 +1,88 @@
+{
+  "vorhaben": "12-kennungen-2-f4",
+  "codebuch_version": "2026-11-23.2",
+  "profil": "duesseldorf",
+  "einheit": "span",
+  "uebernommen": "validierung/12-kennungen/stichprobe-2.csv vom Mess-Agenten, typ praezision; kind ist die Artgruppe des Extraktors (nicht im Auftrag); die Schichten neu und alt tragen ihre Artgruppe davor (haushalt:neu, betrag:alt), weil derselbe Name in mehreren Arten steht und je Art eine andere Größe hat (Messdokument § 4.4, Nachtrag zur Gewichtung)",
+  "einheiten": 116651,
+  "groesse": 360,
+  "seed": "12-2",
+  "schicht": "schicht",
+  "aufteilung": "vom Mess-Agenten (Messdokument § 4.3)",
+  "selbstgewichtend": false,
+  "schichten": {
+    "amt:kopf": {
+      "grundgesamtheit": 9532,
+      "stichprobe": 21
+    },
+    "amt:name": {
+      "grundgesamtheit": 5887,
+      "stichprobe": 17
+    },
+    "amt:nummer": {
+      "grundgesamtheit": 464,
+      "stichprobe": 12
+    },
+    "betrag:alt": {
+      "grundgesamtheit": 24391,
+      "stichprobe": 10
+    },
+    "betrag:neu": {
+      "grundgesamtheit": 274,
+      "stichprobe": 20
+    },
+    "dezernat:nummer": {
+      "grundgesamtheit": 112,
+      "stichprobe": 12
+    },
+    "haushalt:neu": {
+      "grundgesamtheit": 1767,
+      "stichprobe": 45
+    },
+    "investition": {
+      "grundgesamtheit": 290,
+      "stichprobe": 13
+    },
+    "produkt": {
+      "grundgesamtheit": 1029,
+      "stichprobe": 15
+    },
+    "psp": {
+      "grundgesamtheit": 118,
+      "stichprobe": 12
+    },
+    "recht:gesetz": {
+      "grundgesamtheit": 5854,
+      "stichprobe": 32
+    },
+    "recht:gesetz_nah": {
+      "grundgesamtheit": 118,
+      "stichprobe": 12
+    },
+    "recht:neu": {
+      "grundgesamtheit": 488,
+      "stichprobe": 42
+    },
+    "recht:ohne_gesetz": {
+      "grundgesamtheit": 522,
+      "stichprobe": 14
+    },
+    "sachkonto": {
+      "grundgesamtheit": 1296,
+      "stichprobe": 15
+    },
+    "termin:alt": {
+      "grundgesamtheit": 59085,
+      "stichprobe": 10
+    },
+    "termin:neu": {
+      "grundgesamtheit": 2283,
+      "stichprobe": 20
+    },
+    "verwaltung:neu": {
+      "grundgesamtheit": 3141,
+      "stichprobe": 38
+    }
+  },
+  "gezogen": "2026-11-23"
+}

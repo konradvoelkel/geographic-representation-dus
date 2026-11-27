@@ -240,11 +240,23 @@ README und `guete.json` zählen sie. Eine vorläufige Schlichtung einer Einheit,
 übergeht `merge` und nennt die Zahl. Für Vorhaben 14 rechnet das die Zahlen des Messdokuments nach
 (`tests/unit/test_validation_projects.py`).
 
+Legte eine Messung statt der Antwortdateien ihre Labels im Repo ab (Vorhaben 12, Runde 2, und 16:
+`labels-2.csv`, `labels.csv`, Spalten wie `labels.csv` von F4 mit dem Schlüsselfeld vorn, Werte als
+JSON), nennt `[provisional] labels` diese Datei, und `--from` zeigt auf ihren Ordner. A und B kommen
+aus `kodierer_a` und `kodierer_b`; jede Einheit mit einem Eintrag unter `schlichtung` bekommt eine
+Schlichtungszeile mit ihren Labels. Steht dort ein Objekt mit `auswerter`, entschied der Auswerter
+nach dem Codebuch, und die Zeile trägt `labels_auditor` als `herkunft`. Eine Frage, die das Codebuch
+nicht kennt, ist bei einer Einheit der Stichprobe ein Fehler; Zeilen anderer Einheiten (die
+Recall-Aufgaben von 12) zählt der Import und lässt sie weg.
+
 **Wo die übertragenen Vorhaben liegen.** Die Messskripte der Vorhaben 11 bis 14
 (`docs/plans/*-messung.py`) lesen die vorläufigen Dateien unter `validierung/<NN-name>/` und
 prüfen, dass die gespeicherten Stichproben unverändert sind. Das Format von F4 liegt darum daneben,
-in `validierung/<NN-name>-f4/` (Runde 2 von 14: `14-vorgaenge-2-f4`, die Recall-Aufgaben von 12:
-`12-kennungen-recall-f4`); die alten Ordner bleiben, wie die Messung sie geschrieben hat. Ein neues
+in `validierung/<NN-name>-f4/` (Runde 2 von 14: `14-vorgaenge-2-f4`, Runde 2 von 12:
+`12-kennungen-2-f4`, die Runden von 16: `16-ortsbezug-f4` und `16-ortsbezug-2-f4`, die
+Recall-Aufgaben von 12: `12-kennungen-recall-f4`); die alten Ordner bleiben, wie die Messung sie
+geschrieben hat. Zwei Runden mit verschiedenen Codebüchern sind zwei Ordner, auch beim Übertragen
+(§ 2). Ein neues
 Vorhaben legt sein Codebuch gleich im Format von F4 an und braucht kein `-f4`.
 
 Was ins Repo kommt und was nicht:
@@ -354,10 +366,12 @@ zieht es im Messskript per Bootstrap über die Einheiten.
   im Messdokument) und misst Stufe 3 an diesem F1. Offen sind die Endlabels (eine Schlichtung je
   Markierung statt je Liste) und der Recall gegen die Spannen des Verfahrens mit strenger (gleiche
   Grenzen und Art) und milder Grenze (Überlappung und Art).
-- Übertragen sind 11 bis 15 und 17 (je `<NN-name>-f4`); 12 Runde 2 und 16 sind seit dem 2026-11-23
-  ausgewertet (`docs/plans/README.md`). Die
-  Präzision des Lexikons von 17 (Kategorie im Thema, 94/100) rechnet F4 nicht; sie vergleicht die
-  Ausgabe des Verfahrens mit einer Menge, nicht mit einem Label.
+- Übertragen sind 11, 12 und 14 bis 17 (je `<NN-name>-f4`, von 12, 14 und 16 auch die zweite
+  Runde). F4 rechnet dort die Übereinstimmung und Anteile je Frage, nicht die Maße, die mehrere
+  Fragen verbinden: die Präzision je Art von 12 (Art, Grenzen und Norm zusammen) und das F1 der
+  Regel von 16 rechnen ihre Messskripte. Die Präzision des Lexikons von 17 (Kategorie im Thema,
+  94/100) rechnet F4 nicht; sie vergleicht die Ausgabe des Verfahrens mit einer Menge, nicht mit
+  einem Label.
 - Der Ausschnitt ist der Anfang des Textes (`text.chars`); was dahinter steht, sehen die Kodierer
   nicht.
 - Eine HTML-Ansicht für Menschen gibt es nicht, solange niemand von Hand kodiert (Plan, § 7).

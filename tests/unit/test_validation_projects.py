@@ -161,6 +161,90 @@ def test_score_recomputes_the_agreement_of_project_11(
     assert round(questions["sitzung"]["krippendorff_alpha"], 2) == 0.99
 
 
+@pytest.mark.parametrize(
+    ("project", "measurement", "agreement", "share"),
+    [
+        # docs/plans/12-kennungen.md § 4.4: Art 360/360 (α 1,000), Grenzen 354/357 (α 0,939),
+        # Norm 340/357 (α 0,952); die Präzision je Art rechnet das Messskript, nicht F4
+        (
+            "12-kennungen-2-f4",
+            "12-kennungen",
+            {"art": (360, 360, 1.0), "grenzen": (354, 357, 0.939), "norm": (340, 357, 0.952)},
+            None,
+        ),
+        # docs/plans/16-ortsbezug.md § 4.1: bezug 195/200 (α 0,917), Begriffe 200/200; unsicher
+        # A 22, B 28, beide 15, also 180 gleich; Belegzeile ohne Label in 26; handelt von je
+        # Schicht 73/75, 40/49, 51/76, hochgerechnet 0,821
+        (
+            "16-ortsbezug-f4",
+            "16-ortsbezug",
+            {
+                "bezug": (195, 200, 0.917),
+                "begriffe_kein_bezug": (200, 200, 1.0),
+                "unsicher": (180, 200, None),
+                "beleg_zeile": (174, 200, None),
+            },
+            ({"titel_betreff": 73, "kern": 40, "begleit_rest": 51}, 0.821),
+        ),
+        # § 4.4: bezug 99/100 (α 0,974), Begriffe 100/100; unsicher A 11, B 8, beide 6, also 93
+        # gleich; Belegzeile ohne Label in 16; handelt von 32/34, 23/32, 22/34, hochgerechnet 0,783
+        (
+            "16-ortsbezug-2-f4",
+            "16-ortsbezug",
+            {
+                "bezug": (99, 100, 0.974),
+                "begriffe_kein_bezug": (100, 100, 1.0),
+                "unsicher": (93, 100, None),
+                "beleg_zeile": (84, 100, None),
+            },
+            ({"titel_betreff": 32, "kern": 23, "begleit_rest": 22}, 0.783),
+        ),
+    ],
+)
+def test_import_from_the_labels_of_a_measurement_rebuilds_its_numbers(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    project: str,
+    measurement: str,
+    agreement: dict[str, tuple[int, int, float | None]],
+    share: tuple[dict[str, int], float] | None,
+) -> None:
+    """V3, Punkt 4: aus den Labeldateien der Messungen (``validierung/<messung>/labels*.csv``, im
+    Repo) rechnen ``import``, ``merge`` und ``score`` die Zahlen der Messdokumente nach; Labels und
+    guete.json sind die im Repo, bis auf das Datum des Laufs."""
+    target = tmp_path / "repo" / "validierung" / project
+    target.mkdir(parents=True)
+    for name in ("codebuch.toml", "stichprobe.csv", "stichprobe.json"):
+        shutil.copy(VALIDATION / project / name, target / name)
+    (tmp_path / "repo" / "settings.toml").write_text(
+        f'data_root = "{tmp_path / "data"}"\n'
+        f'validation.root = "{tmp_path / "repo" / "validierung"}"\n'
+        f'validation.coding_root = "{tmp_path / "lokal"}"\n',
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path / "repo")
+    source = VALIDATION / measurement
+    assert main(["validate", "import", project, "--from", str(source)]) == 0
+    assert main(["validate", "merge", project, "--model", "claude-opus-5-5"]) == 0
+    assert main(["validate", "score", project]) == 0
+    assert (target / "labels.csv").read_bytes() == (
+        VALIDATION / project / "labels.csv"
+    ).read_bytes()
+    quality: dict[str, Any] = json.loads((target / "guete.json").read_text(encoding="utf-8"))
+    committed = json.loads((VALIDATION / project / "guete.json").read_text(encoding="utf-8"))
+    assert quality | {"datum": committed["datum"]} == committed
+    for question, (agreed, both, alpha) in agreement.items():
+        found = quality["fragen"][question]
+        assert (found["einig"], found["beide"]) == (agreed, both), question
+        if alpha is not None:
+            assert round(found["krippendorff_alpha"], 3) == alpha, question
+    if share is not None:
+        strata, weighted = share
+        hits = quality["fragen"]["bezug"]["treffer"]
+        assert {s: v["treffer"] for s, v in hits["je_schicht"].items()} == strata
+        assert round(hits["grundgesamtheit"]["schaetzer"], 3) == weighted
+
+
 def test_score_recomputes_the_agreement_of_project_12(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

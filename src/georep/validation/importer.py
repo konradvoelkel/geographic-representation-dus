@@ -9,6 +9,14 @@ schreibt daraus ``antworten.jsonl`` im Format von F4 nach ``<coding_root>/<vorha
 schlichtung>/``; danach rechnen ``merge`` und ``score`` wie bei jeder Kodierung. Die Quelldateien
 liest er nur. Zeilen, deren Schlüssel nicht in der Stichprobe steht, zählt er und lässt sie weg
 (bei Vorhaben 12 stehen Präzision und Recall in einer Datei).
+
+Vorhaben 12 (Runde 2) und 16 legten statt der Antwortdateien ihre Labels im Repo ab, in langer
+Form wie ``labels.csv`` von F4 (Schlüssel, ``frage``, ``kodierer_a``, ``kodierer_b``,
+``schlichtung``, ``label``), die Werte als JSON. Mit ``[provisional] labels`` liest der Import
+diese Datei: A und B aus ihren Spalten, und für jede Einheit mit einem Eintrag unter
+``schlichtung`` eine Schlichtungszeile aus ``label``. Steht dort ein Objekt mit ``auswerter``,
+entschied der Auswerter nach dem Codebuch; die Zeile trägt dann ``labels_auditor`` als
+``herkunft``, die README und guete.json zählen.
 """
 
 from __future__ import annotations
@@ -18,6 +26,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+import polars as pl
 
 from georep.errors import MissingInputError, SchemaError
 from georep.io import write_text
@@ -43,7 +53,76 @@ def convert(
         converted[question.id] = mapping.get(key, value) if mapping else value
     reasons = [str(renamed[f]) for f in rules.reason if renamed.get(f)]
     converted["begruendung"] = " / ".join(reasons)
+    if record.get("herkunft"):
+        converted["herkunft"] = str(record["herkunft"])  # wer entschied, wo nicht der Schlichter
     return converted
+
+
+LABEL_FILE_COLUMNS = ("frage", "kodierer_a", "kodierer_b", "schlichtung", "label")
+
+
+def _value(cell: str, where: str) -> object:
+    """Ein Wert der Labeldatei: JSON; eine leere Zelle heißt „nicht gestellt"."""
+    if not cell:
+        return None
+    try:
+        return json.loads(cell)
+    except json.JSONDecodeError as error:
+        raise SchemaError(f"{where}: kein JSON ({cell[:40]!r})") from error
+
+
+def from_labels(
+    path: Path, codebook: Codebook, rules: ProvisionalRules, units: set[str]
+) -> tuple[dict[Role, list[dict[str, Any]]], dict[Role, int]]:
+    """Die Antwortzeilen von A, B und der Schlichtung aus einer Labeldatei in langer Form.
+
+    Dazu je Rolle die Zahl der Zeilen, deren Einheit nicht in der Stichprobe steht. Eine Frage, die
+    weder im Codebuch noch unter ``fields`` steht, ist bei einer Einheit der Stichprobe ein Fehler:
+    sie fiele sonst still weg.
+    """
+    if not path.is_file():
+        raise MissingInputError(f"{path} fehlt")
+    frame = pl.read_csv(path, infer_schema=False).with_columns(pl.all().fill_null(""))
+    missing = [c for c in (rules.key, *LABEL_FILE_COLUMNS) if c not in frame.columns]
+    if missing:
+        raise SchemaError(f"{path}: Spalten {missing} fehlen")
+    cells: dict[str, dict[str, dict[str, str]]] = {}
+    for row in frame.iter_rows(named=True):
+        cells.setdefault(row[rules.key], {})[row["frage"]] = row
+    known = set(codebook.question_ids) | set(rules.fields)
+    records: dict[Role, list[dict[str, Any]]] = {"A": [], "B": [], "schlichtung": []}
+    skipped: dict[Role, int] = dict.fromkeys(records, 0)
+    for unit, questions in sorted(cells.items()):
+        decided = {q: row for q, row in questions.items() if row["schlichtung"]}
+        if unit not in units:
+            skipped["A"] += len(questions)
+            skipped["B"] += len(questions)
+            skipped["schlichtung"] += len(decided)
+            continue
+        unknown = sorted(set(questions) - known)
+        if unknown:
+            raise SchemaError(f"{path}: {unit} trägt Fragen außerhalb des Codebuchs {unknown}")
+        coders: tuple[tuple[Role, str], ...] = (("A", "kodierer_a"), ("B", "kodierer_b"))
+        for role, column in coders:
+            records[role].append(
+                {rules.key: unit}
+                | {
+                    q: _value(row[column], f"{path.name}: {unit} {q}")
+                    for q, row in questions.items()
+                }
+            )
+        if not decided:
+            continue
+        adjudicated = {rules.key: unit} | {
+            q: _value(row["label"], f"{path.name}: {unit} {q}") for q, row in questions.items()
+        }
+        notes = [
+            _value(row["schlichtung"], f"{path.name}: {unit} {q}") for q, row in decided.items()
+        ]
+        if rules.labels_auditor and any(isinstance(n, dict) and "auswerter" in n for n in notes):
+            adjudicated["herkunft"] = rules.labels_auditor
+        records["schlichtung"].append(adjudicated)
+    return records, skipped
 
 
 def pivot(records: list[dict[str, Any]], rules: ProvisionalRules) -> list[dict[str, Any]]:
@@ -88,6 +167,19 @@ def import_project(
     units = set(read_sample(paths, codebook).get_column(ID).to_list())
     written: dict[str, int] = {}
     skipped: dict[str, int] = {}
+    if rules.labels:
+        by_role, outside = from_labels(source / rules.labels, codebook, rules, units)
+        for role, found in by_role.items():
+            if role == "schlichtung" and not found:
+                continue
+            if answers_started(paths.answers(role)) and not force:
+                raise CodingError(
+                    f"{paths.answers(role)} trägt schon Antworten; --force übernimmt neu"
+                )
+            write_text(paths.answers(role), jsonl([convert(r, codebook, rules) for r in found]))
+            written[role] = len(found)
+            skipped[role] = outside[role]
+        return ImportReport(written, skipped)
     roles: dict[Role, str] = {
         "A": rules.coder_a,
         "B": rules.coder_b,

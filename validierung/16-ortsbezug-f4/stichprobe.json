@@ -1,0 +1,28 @@
+{
+  "vorhaben": "16-ortsbezug-f4",
+  "codebuch_version": "2026-11-23.1",
+  "profil": "duesseldorf",
+  "einheit": "document",
+  "uebernommen": "validierung/16-ortsbezug/stichprobe.csv vom Mess-Agenten (Runde 1); die Einheit ist das Paar aus Dokument und Wahlbezirk (aufgabe, dokument, wahlkreis_id); schicht_n ist die Zahl der Paare mit Stelle je Schicht aus dem Messdokument (gleich gewicht mal n_h)",
+  "einheiten": 29289,
+  "groesse": 200,
+  "seed": 20261123,
+  "schicht": "schicht",
+  "aufteilung": "proportional mit mindestens 30 je Schicht (Messdokument § 4.3)",
+  "selbstgewichtend": false,
+  "schichten": {
+    "begleit_rest": {
+      "grundgesamtheit": 12132,
+      "stichprobe": 76
+    },
+    "kern": {
+      "grundgesamtheit": 5060,
+      "stichprobe": 49
+    },
+    "titel_betreff": {
+      "grundgesamtheit": 12097,
+      "stichprobe": 75
+    }
+  },
+  "gezogen": "2026-11-23"
+}

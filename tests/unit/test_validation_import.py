@@ -161,3 +161,70 @@ def test_a_nested_adjudication_is_flattened(
         tmp_path / "repo" / "validierung" / PROJECT / "labels.csv", infer_schema=False
     )
     assert labels.filter(pl.col("id") == ids[0]).row(0, named=True)["label"] == "nein"
+
+
+LABEL_COLUMNS = ["aufgabe", "frage", "kodierer_a", "kodierer_b", "schlichtung", "label"]
+
+
+@pytest.fixture
+def label_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, list[str]]:
+    """Vorhaben 12 (Runde 2) und 16 legten ihre Labels als eine Datei in langer Form ab: je Einheit
+    und Frage ``kodierer_a``, ``kodierer_b``, ``schlichtung``, ``label``, die Werte als JSON."""
+    codebook = PROVISIONAL + 'labels = "labels-2.csv"\nlabels_auditor = "Auswerter, Runde 2"\n'
+    make_project(tmp_path, codebook)
+    monkeypatch.chdir(tmp_path / "repo")
+    assert main(["validate", "sample", PROJECT]) == 0
+    ids = (
+        pl.read_csv(tmp_path / "repo" / "validierung" / PROJECT / "stichprobe.csv")
+        .get_column("id")
+        .to_list()
+    )
+    rows = [(u, "beschluss", "true", "true", "", "true") for u in ids[2:]]
+    rows += [
+        (ids[0], "beschluss", "true", "false", "false", "false"),  # geschlichtet: nein
+        (ids[1], "beschluss", "true", "false", '{"auswerter": "A", "wahl": true}', "true"),
+        ("fremd", "spannen", "[]", "[]", "", "[]"),  # eine Recall-Aufgabe, nicht in der Stichprobe
+    ]
+    source = tmp_path / "messung"
+    source.mkdir()
+    pl.DataFrame(rows, schema=LABEL_COLUMNS, orient="row").write_csv(source / "labels-2.csv")
+    return source, ids
+
+
+def test_a_label_file_gives_both_coders_and_the_adjudication(
+    label_file: tuple[Path, list[str]], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    source, ids = label_file
+    before = hashlib.sha256((source / "labels-2.csv").read_bytes()).hexdigest()
+    assert main(["validate", "import", PROJECT, "--from", str(source)]) == 0
+    out = capsys.readouterr().out
+    assert "A: 9 Einheiten übernommen, 1 Zeilen nicht in der Stichprobe" in out
+    assert "schlichtung: 2 Einheiten übernommen" in out
+    assert main(["validate", "merge", PROJECT, "--model", "claude-opus-5-5"]) == 0
+    folder = tmp_path / "repo" / "validierung" / PROJECT
+    labels = pl.read_csv(folder / "labels.csv", infer_schema=False).with_columns(
+        pl.all().fill_null("")
+    )
+    found = {row["id"]: row for row in labels.iter_rows(named=True)}
+    assert (found[ids[0]]["kodierer_b"], found[ids[0]]["label"]) == ("nein", "nein")
+    assert (found[ids[1]]["schlichtung"], found[ids[1]]["label"]) == ("ja", "ja")
+    assert {found[u]["label"] for u in ids[2:]} == {"ja"}
+    quality = json.loads((folder / "guete.json").read_text(encoding="utf-8"))
+    assert quality["uneinig"] == 2
+    assert quality["schlichtung_herkunft"] == {"Auswerter, Runde 2": 1}
+    assert hashlib.sha256((source / "labels-2.csv").read_bytes()).hexdigest() == before
+
+
+def test_a_label_file_with_a_question_outside_the_codebook_is_refused(
+    label_file: tuple[Path, list[str]], capsys: pytest.CaptureFixture[str]
+) -> None:
+    source, ids = label_file
+    rows = pl.read_csv(source / "labels-2.csv", infer_schema=False).with_columns(
+        pl.all().fill_null("")
+    )
+    extra = pl.DataFrame(
+        [(ids[2], "rolle", "null", "null", "", "null")], schema=LABEL_COLUMNS, orient="row"
+    )
+    pl.concat([rows, extra]).write_csv(source / "labels-2.csv")
+    assert main(["validate", "import", PROJECT, "--from", str(source)]) == 1
+    assert "'rolle'" in capsys.readouterr().err

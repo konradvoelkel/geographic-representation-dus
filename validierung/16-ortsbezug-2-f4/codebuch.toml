@@ -1,0 +1,204 @@
+# Codebuch Vorhaben 16 „Ortsbezug verfeinern“, Fassung 2026-11-23.2 (Mess-Agent Vorhaben 16).
+# Runde 2 nach dem Umbau: stichprobe-2.csv, labels-2.csv (Messdokument § 5.3 bis § 5.5).
+# Am 2026-11-27 ins Format von F4 (georep validate) übertragen: Anweisung, Fragen und
+# Definitionen wörtlich aus validierung/16-ortsbezug/codebuch-2.toml, nur die Form ist neu.
+# Messdokument: docs/plans/16-ortsbezug.md, § 4. Daneben unverändert, wie das Messskript sie
+# liest: validierung/16-ortsbezug/.
+#
+# Aus [meta] der vorläufigen Fassung, wörtlich:
+# einheit = Ein Paar (Dokument, Wahlbezirk): ein Ratsdokument der Hauptperiode und ein Kommunalwahlbezirk, für den der Index der Arbeit mindestens einen Begriff aus dem Wörterbuch des Bezirks im Dokument findet (Straßennamen aus OpenStreetMap, Orte aus Wikidata und Wikipedia, je mit ihrer Lage im Bezirk).
+# stichprobe = validierung/16-ortsbezug/stichprobe-2.csv: 100 Paare aus 100 verschiedenen Dokumenten, keines aus Runde 1, geschichtet nach der besten Stelle des Treffers (drei Schichten), Seed 16-2
+# material = Je Aufgabe: Drucksache, Dokumentart, Datum, Titel, Nummer und Name des Wahlbezirks, neu in Fassung 2 der Stadtbezirk (`stadtbezirk`, eine Nummer, bei einem geteilten Wahlbezirk zwei) und die Stadtteile, die mindestens 5 % seiner Fläche decken, mit ihrem Anteil (`stadtteile_im_wahlbezirk`, aus den Stadtteilgrenzen 2025 des Open-Data-Portals), die Begriffe des Bezirks, die im Dokument stehen, je mit Art (Straße oder Ort) und den Zeilen, in denen sie stehen; der Rohtext als Liste von Zeilen (höchstens 600; Zeilen mit Begriffen weiter hinten kommen mit sechs Zeilen Rand als `auszug`).
+# nicht_gezeigt = Die Ausgabe des Verfahrens (handelt von / erwähnt), die Stelle, nach der es entscheidet, und die Schicht.
+#
+# Aus [mass], wörtlich (nur für die Auswertung, nicht im Auftrag):
+# kriterium_f1 = 0.8
+# uebereinstimmung = Krippendorffs α (nominal, drei Klassen) zwischen Kodierer A und B; unter 0,8 gilt Fassung 2 als zu unscharf, und es gilt die Rückfallregel (keine dritte Runde).
+# Das Hauptmaß (F1 der Regel, Bootstrap) rechnet das Messskript; score rechnet hier die
+# Übereinstimmung und den Anteil handelt_von je Schicht und hochgerechnet.
+
+project = "16-ortsbezug-2-f4"
+version = "2026-11-23.2"
+unit = "document"  # die Einheit ist das Paar aus Dokument und Wahlbezirk (aufgabe)
+instructions = """
+Jede Aufgabe ist ein Paar aus einem Ratsdokument und einem Wahlbezirk. `begriffe` nennt die
+Ortsnamen des Wörterbuchs dieses Bezirks, die im Dokument stehen, und die Zeilen (1-basiert,
+`zeilen[0]` ist Zeile 1), in denen sie stehen; `im_titel` sagt, ob der Begriff auch im Titel
+steht. Lies den Titel, den Betreff und die genannten Zeilen mit ihrem Zusammenhang; lies so viel
+vom übrigen Text, wie du brauchst, um zu sagen, worum es dem Dokument an dieser Stelle geht.
+
+Frage: Handelt das Dokument von einem Ort in diesem Wahlbezirk, oder erwähnt es ihn nur?
+
+Ein Begriff gehört für diese Kodierung zum Bezirk, weil das Wörterbuch es so sagt — außer der Text
+legt den Gegenstand in einen Stadtteil, der nicht unter `stadtteile_im_wahlbezirk` steht (Regel (a)
+unten). `stadtbezirk` und `stadtteile_im_wahlbezirk` sagen, wo der Wahlbezirk liegt. Läuft eine
+Straße durch mehrere Bezirke und nennt der Text keinen Stadtteil, prüfe nicht, welcher Abschnitt
+gemeint ist. Es genügt ein Begriff: steht einer der Begriffe für einen Ort, von dem das Dokument
+handelt, ist die Antwort handelt_von, auch wenn andere nur erwähnt sind.
+
+Die Regeln (a) bis (e) unter [[regel]] gehen den allgemeinen Beschreibungen der Klassen vor, wo
+beide passen.
+
+Datenschutz: Schreibe nie einen Personennamen und nie eine Anschrift in eine Antwort, auch nicht in
+die Bemerkung; nenne statt dessen die Zeilennummer.
+
+Regel (a): Gegenstand in einem Stadtteil außerhalb des Wahlbezirks
+Legt der Text den Gegenstand in einen Stadtteil, der nicht unter `stadtteile_im_wahlbezirk` steht —
+auch in einen benachbarten —, meint der Begriff an dieser Stelle keinen Ort im Bezirk: er kommt in
+`begriffe_kein_bezug`, und ist er der einzige Begriff, ist die Antwort kein_bezug. Das gilt, wenn
+der Text den Stadtteil nennt (im Titel, im Betreff, im Satz) oder ihn eindeutig zeigt (die
+Bezirksvertretung eines anderen Stadtbezirks berät eine Maßnahme in ihrem Gebiet). Ergibt sich die
+Lage nur aus deinem Wissen über die Stadt und nicht aus dem Text, folge dem Wörterbuch (der Begriff
+gehört zum Bezirk) und setze unsicher = true mit Bemerkung „(a) nur aus Weltwissen".
+Beispiel: Wahlbezirk mit `stadtteile_im_wahlbezirk` = Nordviertel (0,7), Mühlenfeld (0,3). Das Dokument prüft
+„ein weiteres Bewohnerparkgebiet in Südviertel" zwischen der A-Straße und der B-Straße; die A-Straße
+läuft auch durch Mühlenfeld. → A-Straße in begriffe_kein_bezug; ist sie der einzige Begriff:
+kein_bezug. Nennt der Text keinen Stadtteil und weiß man nur selbst, dass der Abschnitt in
+Südviertel liegt: handelt_von, unsicher = true, Bemerkung „(a) nur aus Weltwissen".
+
+Regel (b): Lineare Maßnahmen: Strecke, Anfang, Ende, bedienter Ort
+Bei Maßnahmen auf einer Strecke (Radweg, Buslinie, Leitung, Baustelle, Umleitung, Stadtbahn) handelt
+das Dokument von jedem Ort, an dem die Maßnahme liegt oder wirkt: von der Straße, auf der sie
+verläuft, von Anfang und Ende („von der A-Straße bis zur B-Straße") und von einem Ort, den sie
+bedient (eine Haltestelle, ein angebundener Platz). Nur erwähnt ist ein Ort, der Herkunft oder
+Richtung angibt („Busse in Richtung …", „von … kommend", „Fahrtrichtung …"), ohne dass dort etwas
+geschieht.
+Beispiel: „Schutzstreifen auf der C-Straße zwischen der A-Straße und der B-Straße; die Linie 7xx hält künftig
+am D-Platz und fährt weiter in Richtung E-Straße." → C-Straße, A-Straße, B-Straße und D-Platz:
+handelt_von; E-Straße allein: erwaehnt.
+
+Regel (c): Beispiele in Anfragen, Rückblicke in Sachstandslisten
+In einer Anfrage oder einem Antrag zu einem Thema der ganzen Stadt oder eines Stadtbezirks handelt
+das Dokument von einem Ort, der dort nur als Beispiel steht („z. B. an der …straße", „etwa im
+Bereich …"), nur dann, wenn sich eine Frage oder ein beantragter Schritt auf diesen Ort richtet
+(auch ohne ihn zu wiederholen: „an den genannten Stellen", „dort"). Sonst erwaehnt. In Sachstands-
+und Maßnahmenlisten ist ein Punkt, der nur als abgeschlossener Rückblick dasteht („2017
+abgeschlossen", „bereits umgesetzt", „entfällt") und über den nichts Neues gesagt wird, erwaehnt;
+ein Punkt mit eigenem Sachstand, eigener Maßnahme oder eigenem Betrag ist handelt_von.
+Beispiel: Anfrage zu Wohnungsleerstand im Stadtbezirk: „… z. B. an der A-Straße und der B-Straße." Fragen:
+„Wie viele Wohnungen stehen im Stadtbezirk leer?" → erwaehnt. Lautet eine Frage „Was unternimmt die
+Verwaltung an den genannten Straßen?" → handelt_von. Sachstandsbericht: „Fläche unter der C-Brücke:
+2017 abgeschlossen" → erwaehnt; „D-Platz: Bauausführung 2025, Kosten 1,2 Mio. €" → handelt_von.
+
+Regel (d): Ortsname im Namen einer Organisation
+Steht der Begriff im Namen einer Organisation (Kirchengemeinde, Verein, Schule, Firma, Initiative),
+entscheide nach Sitz und Gegenstand: handelt_von, wenn das Dokument etwas über die Organisation an
+ihrem Ort sagt (ihr Gebäude, ihre Fläche, ihre Einrichtung, ein Vorhaben dort) und der Sitz im
+Bezirk liegt; erwaehnt, wenn die Organisation nur als Antragsteller, Empfänger, Träger oder Absender
+genannt ist und der Gegenstand nicht an diesem Ort liegt oder der Text nicht sagt, wo er liegt; kein
+Bezug, wenn der Name gar keinen Ort meint (eine Person, nach der Straße und Schule heißen).
+Beispiel: „Zuschuss an die Kirchengemeinde St. X für das Aufhängen eines Reliefs" ohne Angabe, wo → erwaehnt;
+„Zuschuss an die Kirchengemeinde St. X für die Sanierung ihres Gemeindehauses an der Y-Straße" (im
+Bezirk) → handelt_von; „Förderverein der Z-Schule" als Antragsteller eines Festes im Stadtpark →
+erwaehnt für die Z-Schule.
+
+Regel (e): Veranstaltungen
+Steht ein Ort als Ort einer Veranstaltung (Fest, Kirmes, Markt, Ausstellung, Konzert, Sitzung)
+im Dokument, frage: Bliebe die Aussage des Dokuments gleich, wenn die Veranstaltung anderswo
+stattfände? Ja → erwaehnt (ein Ausstellungsprogramm, eine Sitzung, eine Förderung des Programms).
+Nein → handelt_von: die Aussage hängt am Ort (Verkehr, Lärm, Müll, Sperrungen, Sicherheit, Nutzung
+der Fläche, Genehmigung an diesem Platz).
+Beispiel: „Ausstellungsprogramm des Museums am A-Park im ersten Halbjahr" → A-Park: erwaehnt. „Verkehrs- und
+Sicherheitskonzept für die Kirmes auf den Rheinwiesen; Beschwerden über das Parken in der B-Straße
+und der C-Straße" → B-Straße, C-Straße: handelt_von.
+"""
+
+[[questions]]
+id = "bezug"
+question = "Handelt das Dokument von einem Ort in diesem Wahlbezirk, oder erwähnt es ihn nur?"
+scale = "nominal"
+instructions = """
+- Titel und Betreff zählen wie jeder andere Text: steht der Ort im Titel, handelt das Dokument meist
+  von ihm, aber nicht immer (ein Titel kann eine Anschrift oder einen Veranstaltungsnamen tragen).
+- Ein Bericht über eine Einrichtung, die dort liegt (Ausstellungsprogramm eines Museums im
+  Hofgarten), handelt vom Ort nur, wenn er etwas über den Ort oder die Einrichtung an diesem Ort
+  sagt (Bau, Betrieb, Nutzung des Ortes); ein Programm, das nur dort stattfindet, erwähnt ihn.
+- Ist das Dokument leer oder unlesbar an der Stelle (Text fehlt, nur Seitenkopf), antworte nach dem,
+  was lesbar ist, und setze unsicher = true.
+"""
+positive = ["handelt_von"]  # Anteil handelt_von je Schicht und hochgerechnet (Nebenmaß)
+
+[[questions.options]]
+value = "handelt_von"
+definition = """
+Das Dokument sagt etwas Eigenes über den Ort oder über etwas, das dort liegt: es beantragt,
+beschließt, fragt, berichtet, plant oder bewertet eine Maßnahme, einen Zustand, ein Problem, ein
+Vorhaben oder eine Einrichtung dort. Das gilt
+- wenn der Ort der Hauptgegenstand ist („Zebrastreifen auf der …straße", „Sanierung der Schule an
+  der …straße");
+- wenn er einer von mehreren Punkten einer Liste ist und der Punkt ihn betrifft: Maßnahmenlisten,
+  Bauunterhaltung, Förderlisten, Baumfällungen, Standorte von Stationen, Ergebnisse einer
+  Kommission, Zuschüsse je Vorhaben;
+- wenn der Ort einen Gegenstand verortet oder begrenzt: „Querungshilfe auf dem … Höhe …straße" (die
+  Stelle der Querung), „Plangebiet zwischen A-Straße und B-Straße", „im Kreuzungsbereich …";
+- wenn eine Einrichtung, um die es geht, nach dem Ort heißt oder dort liegt („Gemeinschafts-
+  grundschule …straße" als Schule, über die berichtet wird);
+- wenn der Ort als erwogener oder gewählter Standort einer Maßnahme besprochen wird.
+"""
+
+[[questions.options]]
+value = "erwaehnt"
+definition = """
+Der Ort steht im Dokument, aber über ihn wird nichts Eigenes gesagt:
+- Anschrift einer Dienststelle, eines Absenders, einer Fraktion, einer Person („Auslegung im
+  Katasteramt, …straße 5"), Sitzungs- oder Veranstaltungsort, um den es nicht geht;
+- Richtung, Strecke oder Bezugspunkt für etwas, das woanders liegt („Busse in Richtung …",
+  „von der … kommend");
+- Beispiel oder Vergleich für etwas Allgemeines („wie in der Testphase …allee", „etwa im Bereich
+  … gibt es Beschwerden" in einer Anfrage zu einem stadtweiten Thema);
+- früherer Vorgang an anderem Ort, abgelehnte Alternative ohne eigene Aussage, Name einer
+  Veranstaltung, Ausstellung oder Organisation, wenn es nicht um den Ort geht;
+- Liste ohne ortsbezogene Aussage (Verteiler, Adressliste, Aufzählung aller Straßen eines Gebiets
+  ohne Maßnahme je Straße).
+"""
+
+[[questions.options]]
+value = "kein_bezug"
+definition = """
+Kein Begriff der Aufgabe meint einen Ort in diesem Bezirk: ein gewöhnliches Wort („Schulweg" in
+„sicherer Schulweg", „Hellweg" als Teil eines Firmennamens), ein Personen- oder Firmenname, ein
+gleichnamiger Ort in einer anderen Stadt, ein Treffer mitten in einem anderen Namen, ein Begriff,
+der nur in einer Seitenkopfzeile oder einem Aktenzeichen steht.
+"""
+
+[[questions]]
+id = "begriffe_kein_bezug"
+question = "Welche Begriffe der Aufgabe meinen im Dokument keinen Ort im Bezirk (siehe kein_bezug)?"
+scale = "open"
+unordered = true  # eine Liste von Begriffen; die Folge zählt nicht
+
+[[questions]]
+id = "beleg_zeile"
+question = "Zeile, die das Urteil am stärksten trägt."
+scale = "interval"
+adjudicate = false  # ohne Schlichtung, ohne Label, wo A und B abweichen (README der Messung)
+
+[[questions]]
+id = "unsicher"
+question = "Ist die Antwort unsicher? Dann in `bemerkung` sagen, warum (ohne Namen und Anschriften)."
+scale = "binary"
+positive = ["ja"]
+adjudicate = false
+
+[[questions.options]]
+value = "ja"
+
+[[questions.options]]
+value = "nein"
+
+[sample]
+# gezogen vom Mess-Agenten (Messdokument § 4.3 und § 5.4); gezogen wird nicht neu
+size = 100
+seed = 16  # Seed 16-2 (ein Text), wie stichprobe.json ihn nennt
+stratum = "schicht"
+key = "aufgabe"
+
+[text]
+source = "raw"
+context = ["wahlkreis_id"]
+
+[provisional]
+# Die Labeldatei der Messung in langer Form (Werte als JSON); unsicher war true oder false.
+key = "aufgabe"
+labels = "labels-2.csv"
+values = { unsicher = { "true" = "ja", "false" = "nein" } }
