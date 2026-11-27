@@ -96,7 +96,10 @@ def _section(name: str = "gast", rank: int = 10, **changes: object) -> PageSecti
 
 
 def _register(monkeypatch: pytest.MonkeyPatch, *contributions: Contribution) -> None:
+    """Ein Register nur aus Probebeiträgen; die Vorlagen des Pakets (seit Vorhaben 15
+    ``akteure.html.j2``) wären darin verwaist, darum sieht ``check_page_files`` keinen Ordner."""
     monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", contributions)
+    monkeypatch.setattr(georep.report.pages, "pages_folder", lambda: Path("/nonexistent/pages"))
 
 
 def _host(page: Page | None = None) -> Contribution:
@@ -310,8 +313,8 @@ def test_das_register_prueft_die_dateien_des_pakets(
 ) -> None:
     """``sections_for`` prüft beim Aufbau der Schritte, wie ``render.sections`` beim Bericht."""
     folder = _files(tmp_path, "probe/gast.html.j2", "probe/vergessen.css")
-    monkeypatch.setattr(georep.report.pages, "pages_folder", lambda: folder)
     _register(monkeypatch, _host(), Contribution("26-gast", sections=(_section(),)))
+    monkeypatch.setattr(georep.report.pages, "pages_folder", lambda: folder)
     with pytest.raises(SchemaError, match="vergessen.css"):
         sections_for(default_settings)
 
@@ -331,7 +334,7 @@ def test_der_schritt_der_seite_liest_auch_die_eingaben_ihrer_abschnitte(
     assert steps["page_probe"].inputs == (layout.corpus, layout.processed / "gast.parquet")
 
 
-def _unproduced_page_inputs(steps: Sequence[Step]) -> list[str]:
+def _unproduced_page_inputs(steps: Sequence[Step], repo: Path | None = None) -> list[str]:
     """Eingaben eines ``page_*``, die im Lauf niemand bereitstellt (Review N1).
 
     Bereit ist, was ein früherer Schritt schreibt, außer einem Modellschritt (er läuft nur mit
@@ -339,6 +342,8 @@ def _unproduced_page_inputs(steps: Sequence[Step]) -> list[str]:
     es schreibt: das bringt ``bootstrap`` aus der Referenz oder einem Paket, sonst bräche schon
     jener Schritt ab (``check_step_order`` schließt aus, dass ein späterer es schreibt). Eine
     Datei, die erst die Seite liest und niemand schreibt, fehlt im Lauf, und ``page_*`` bricht ab.
+    Vorhaben 15: was unter ``repo`` liegt (``validation.root``, die Güte der Prüfung), bringt der
+    Klon selbst mit, wie die Vorlagen.
     """
     written: set[Path] = set()
     brought: set[Path] = set()
@@ -348,7 +353,9 @@ def _unproduced_page_inputs(steps: Sequence[Step]) -> list[str]:
             missing.extend(
                 f"{step.name}: {path}"
                 for path in step.inputs
-                if path not in written and path not in brought
+                if path not in written
+                and path not in brought
+                and not (repo is not None and path.is_relative_to(repo))
             )
             continue
         brought.update(path for path in step.inputs if path not in written)
@@ -359,11 +366,12 @@ def _unproduced_page_inputs(steps: Sequence[Step]) -> list[str]:
 
 @pytest.mark.parametrize("profile", available_profiles())
 def test_jede_eingabe_jeder_unterseite_entsteht_im_lauf(tmp_path: Path, profile: str) -> None:
-    """Über das echte Register in jedem Paketprofil; heute ohne Seiten, er greift ab dem ersten Gast."""
+    """Über das echte Register in jedem Paketprofil; seit Vorhaben 15 mit ``page_akteure``."""
     settings = load_settings(profile=profile, cwd=Path("/nonexistent")).model_copy(
         update={"data_root": tmp_path / "data", "cache_root": tmp_path / "cache"}
     )
-    assert _unproduced_page_inputs(build_steps(settings, Layout.from_settings(settings))) == []
+    steps = build_steps(settings, Layout.from_settings(settings))
+    assert _unproduced_page_inputs(steps, settings.validation.root) == []
 
 
 def test_die_pruefung_der_eingaben_findet_einen_gast_ohne_schreiber(
@@ -518,6 +526,8 @@ def test_ein_abschnitt_bringt_seine_links_nach_aussen_mit(
     layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
     with pytest.raises(deal.PostContractError):
         build_page(layout, default_settings, _page(), (_section(),), now=NOW, commit=None)
-    allowed: Callable[[Settings], frozenset[str]] = lambda settings: frozenset({url})  # noqa: E731
+    allowed: Callable[[Layout, Settings], frozenset[str]] = lambda layout, settings: frozenset(  # noqa: E731
+        {url}
+    )
     build_page(layout, default_settings, _page(), (_section(links=allowed),), now=NOW, commit=None)
     assert f'<a href="{url}">R</a>' in (layout.site / "probe.html").read_text(encoding="utf-8")

@@ -14,6 +14,7 @@ from georep.layout import Layout
 from georep.pipeline import build_steps
 from georep.report.tables import csv_plan
 from georep.settings import Settings, load_settings
+from tests.conftest import REPO
 
 
 @pytest.fixture
@@ -25,7 +26,10 @@ def project(tmp_path: Path, mini_root: Path, monkeypatch: pytest.MonkeyPatch) ->
         f'context.root = "{mini_root / "context"}"\n'
         # Vorhaben 14: die Pakete der Nachbarperioden und der Anlagen liegen relativ zum Repo; von
         # hier aus gibt es sie nicht, die Schritte laufen also nur über den eigenen Korpus.
-        'procedures.related = []\nprocedures.attachments = ""\n',
+        'procedures.related = []\nprocedures.attachments = ""\n'
+        # Vorhaben 15, Stufe 3: akteure.html liest die Prüfung aus validierung/ im Repo, relativ
+        # zum Arbeitsverzeichnis; der Test arbeitet woanders
+        f'validation.root = "{REPO / "validierung"}"\n',
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
@@ -355,10 +359,12 @@ def test_publish_turns_a_page_over_budget_into_an_exit_code(
     tight = project / "knapp.toml"
     tight.write_text("[report]\npage_budget_bytes = 1\n", encoding="utf-8")
     assert main(["--settings", str(tight), "publish"]) == 0  # ohne Schalter nur eine Zeile
-    assert "über dem Budget: index.html" in capsys.readouterr().out
+    # die Liste ist nach Dateinamen sortiert; seit Vorhaben 15 steht akteure.html vor index.html
+    over = re.compile(r"über dem Budget: [^\n]*\bindex\.html")
+    assert over.search(capsys.readouterr().out)
     assert main(["--settings", str(tight), "publish", "--strict-budget"]) == 1
     printed = capsys.readouterr()
-    assert "über dem Budget: index.html" in printed.out  # die Zeile steht auch im Fehlerfall
+    assert over.search(printed.out)  # die Zeile steht auch im Fehlerfall
     assert "Fehler: über dem Budget von 1 Byte" in printed.err
 
 

@@ -4327,3 +4327,124 @@ der Vermerk bei `selbe_sache` und die Zeile im README änderten sich). Ein neuer
 Ordner im Kratzordner zeigt nur einen weiteren, den die Regel ändert: `11-struktur-f4`,
 `bv_mehrteilig` (114 von 114, alle „nein"); dort ist `score` nicht neu gelaufen, weil er auch
 Felder nachtrüge, die spätere Fassungen von `score` schreiben.
+
+## NN. Die erste Unterseite `akteure.html`: Prüfsatz aus `guete.json`, Lager je Paar am Datum, Links und Tabellen der Beiträge mit Layout (Vorhaben 15, Stufe 3, 2026-11-27)
+
+Stufe 3 von Vorhaben 15 nach `docs/plans/15-funktion.md`, § 7 und § 10 (Punkt 8), und nach
+`docs/plan-zeigen-2026-11.md` (§ 5, `v0.35.0`). Die erste Unterseite nach F2 (Punkt 69): sie legt das
+Muster fest, nach dem 14, 17 und 22 folgen, und Konrad sieht sie an Haltepunkt Z1 an. Gebaut auf
+`feat/15-akteure` ab `main` `344ecdc` (`v0.34.0`). Die Nummer bekommt der Eintrag beim Merge.
+
+**Was gebaut ist.** Der Beitrag `15-funktion` trägt jetzt außer den Schritten die Seite und zwei
+Tabellen bei, alle hinter `functions_enabled` (`functions.enabled` und Urheber im Profil), also in
+allen fünf Paketprofilen:
+
+- `akteure.html` (`report/actors.py`, `templates/pages/akteure.html.j2`, `.css`, `.js`) mit den fünf
+  Abschnitten aus § 7: Funktionen der Dokumente (je Urheberklasse eine gestapelte Leiste als SVG
+  über die sechs Klassen, die Zahlen als Tabelle, die Instrumente), Instrumente je Fraktion
+  (Kontrolle roh und beobachtet gegen erwartet über `analysis.practice.observed_expected` mit dem
+  Gremium als Schicht, „explorativ", unter 30 Dokumenten kein Verhältnis), Wer mit wem (je Ebene
+  eine Matrix Fraktion × Fraktion), Konkordanz (K3 mit Wilson-Intervall und n, dasselbe mit
+  Anfragen, die Mehrheiten mit Vereinbarung und Drucksachen, alle Dokumente über die Grenze) und
+  Resolutionen und Appelle (die Liste, keine Rangfolge je Fraktion).
+- Die Downloads `dokumente_funktion` und `dokumente_antragsteller` (Parquet und CSV, Spaltendoku in
+  `schema.json`); der Name ist der aus § 10, Punkt 1, und Punkt 75, nicht `mitantraege`.
+- Der Linkblock auf `index.html` ist der Abschnitt `58-weitere` aus F2; er erscheint, sobald eine
+  Seite im Register steht. Neu auf `index.html` sind damit dieser Abschnitt und je Tabelle zwei
+  Zeilen in den Downloads und ein Eintrag im Spaltenschema.
+
+**Der Prüfsatz kommt aus `guete.json`, die Treffer des Regelwerks aus einer geprüften Konstante.**
+`validierung/15-funktion-f4/guete.json` trägt den Satz (Modelle, Einheiten, „nicht von Menschen"),
+die Modelle je Rolle und die Übereinstimmung der Kodierer (149 von 150 bei `funktion`); das liest
+`read_check`, und eine geänderte Datei ändert die Seite (Test). Was die Datei nicht trägt, ist das
+Regelwerk gegen die Endlabels: κ 0,905 (0,840–0,960) für B, 0,829 (0,748–0,900) für A an 135
+Dokumenten, 125 Treffer, Antragsteller 119/119 und 119/138. Das steht als `RULE_CHECK` in
+`report/actors.py`, und der slow-Test `tests/golden/test_functions_numbers.py` rechnet Treffer, κ und
+die Zahlen der Antragsteller aus `validierung/15-funktion/labels.csv` gegen genau diese Konstante
+nach; das Intervall ist der Bootstrap des Messskripts und wird nicht nachgerechnet. Der Satz „bei
+zwei Kodierern desselben Modells ist das ein schwacher Beleg" hängt an `modelle` (A gleich B), der
+Hinweis auf die vorsichtige Zahl der nicht gewählten Variante an `RULE_CHECK.selected_on_labels`
+(Synergien § 10, Punkt 8). Verworfen: `georep validate score --pred` über die 150 Dokumente laufen
+zu lassen, damit `guete.json` die Treffer trägt. `score` rechnet Präzision, Recall und Genauigkeit
+über alle gelabelten Einheiten, auch „unklar" und die Restklasse, also nicht die Basis nach Frage 17,
+und kein κ mit Bootstrap; und ein neuer `score` trüge Felder nach, die spätere Fassungen schreiben
+(Punkt 87). Ebenso verworfen: die Zahlen ins Stadtprofil (sie sind keine Einstellung einer Stadt).
+
+**Gemessen oder explorativ.** Ein Datensatz ist gemessen, wenn sein Ordner (`settings.profile`) der
+Ordner eines Profils aus `stichprobe.json` ist (`settings.profile_folder`): die drei Düsseldorfer
+Datensätze, mit ihnen `duesseldorf-vergleich`, das im Ordner der Hauptperiode rechnet;
+Mönchengladbach nicht. Dort heißt jede Überschrift „explorativ", und der Prüfsatz sagt, an welchen
+Profilen gemessen ist (Plan § 8, Gültigkeitsregel). Unabhängig davon tragen „Instrumente je
+Fraktion" und „Konkordanz" überall „explorativ" (Messdokument § 8, Frage 14).
+
+**Das Lager einer Zelle ist das des Paars am Datum jedes Dokuments.** Ein Dokument von vier
+Fraktionen über die Grenze ist für das Paar zweier Mehrheitsfraktionen darin „beide in der
+Mehrheit"; das rechnet `analysis.cosponsors.camp` mit genau den beiden Fraktionen und der Mehrheit an
+seinem Datum. Wechselt die Mehrheit im Datensatz, kann ein Paar zwei Lager haben: in der
+Hauptperiode Grüne und FDP (25 über die Grenze, 2 unter der Ampel bis zum 2020-10-31); die Zelle
+trägt das häufigere, ein Stern führt zur Fußnote mit beiden. Lager gibt es nur auf der Ebene der
+Ratsmehrheit (`majorities.body_kinds`); die Matrix der Bezirksvertretungen ist ungefärbt. Die Farben
+sind die Mischungen `--d1` bis `--d3` des Rahmens, deren Kontrast dort nachgerechnet ist; Legende,
+Titel und ein versteckter Text in jeder Zelle nennen das Lager, die Farbe trägt nicht allein. Die
+beiden Matrizen schaltet ein eigenes Skript um, nicht `fieldset.switcher` des Rahmens: der tauscht
+Stufen der Rampen `q` und `d`, und ein Lager als `d`-Stufe hieße, dass dieselbe Klasse auf zwei
+Flächen zweierlei bedeutet (CLAUDE.md). Ohne JavaScript stehen beide Matrizen untereinander.
+
+**Zwei Nachzüge am Rahmen, die erst eine echte Seite zeigt.**
+
+- `Page.links` und `PageSection.links` bekommen `(layout, settings)` wie `inputs` und `data`. Die
+  Seite verlinkt die PDF-Dateien ihrer Listen im Ratsinformationssystem, und die erlaubten Links
+  stehen damit in den Daten. Mit `Layout.from_settings(settings)` im Callable hätte die Mini-Kette
+  der Tests (eigenes `Layout`) den falschen Korpus gelesen. Erlaubt sind die PDF-Dateien des eigenen
+  Korpus, das Messdokument und das README der Prüfung.
+- Die Tabellen der Beiträge zählen im Stamp von `report` als optionale Eingaben
+  (`report.tables.contributed_table_files`): `report` kopiert sie nach `site/data/` und schreibt ihre
+  Prüfsummen auf die Seite, und ohne sie im Stamp blieb der Schritt nach einer geänderten Tabelle
+  aktuell. Optional, weil `published` eine optionale Tabelle ohne Datei auslässt;
+  `check_step_order` sieht trotzdem, dass ihr Schritt vorher läuft.
+
+`guete.json` und `stichprobe.json` sind Eingaben von `page_akteure`; sie liegen im Repo, nicht im
+Lauf. Der Test, dass jede Eingabe jedes `page_*` im Lauf entsteht (Punkt 86), lässt darum zu, was
+unter `validation.root` liegt. Tests, die das Register durch Probebeiträge ersetzen, ersetzen auch
+den Ordner `templates/pages/` (`pages_folder`), sonst wäre `akteure.html.j2` darin verwaist
+(`check_page_files`).
+
+**Für alle Fraktionen gleich gebaut.** Dieselben Spalten für jede Fraktion, die Folge nach
+Dokumenten, die Namen aus dem Profil (Kurznamen, „SPD/Volt" aus `[[functions.fractions]]`); ein Test
+verlangt, dass kein Parteiname eines Paketprofils in den Vorlagen steht. Der Satz aus § 3.12 über
+den Umgang mit Anträgen einer bestimmten Fraktion heißt darum auf der Seite „mit den Anträgen
+einzelner Fraktionen". Die Spalte Symbolpolitik bleibt in der Tabelle je Fraktion, wie § 7 sie
+nennt, ist aber nicht sortierbar; die Liste steht im letzten Abschnitt (Frage 9.8, § 10 Punkt 8).
+
+**Der Gast von 28 heißt `abstimmungen`.** Der Abschnitt Konkordanz verlinkt
+`{% if "abstimmungen" in guests %}` auf `#abstimmungen` (Punkt 86), sonst sagt er, dass Beschlüsse
+und Abstimmungen noch fehlen. Der Name folgt dem Bauplan von 28 (§ 7, „ein Abschnitt
+Abstimmungen"); wählt 28 einen anderen, ändert sich eine Zeile der Vorlage.
+
+**Bewusst anders als § 7.**
+
+1. `dokumente_antragsteller` statt `mitantraege` (§ 10, Punkt 1).
+2. Eine Leiste je Urheberklasse (Verwaltung, Fraktionen, einzelne Mandatsträger, Eingaben,
+   Urheber nicht erkannt) statt zweier für Verwaltung und Politik: die Klassen „Person" und
+   „unbekannt" zeigen ein anderes Verhältnis von Kontrolle und Initiative als die Fraktionen, und
+   eine Klasse ohne Dokumente fehlt.
+3. Die Seite ist 55 bis 99 KB groß statt 40 bis 70: der Rahmen allein (Stil und Skript der
+   Hauptseite) sind rund 31 KB, die beiden Listen in der Hauptperiode zusammen rund 40 KB. Das Budget
+   von 500 KB je Unterseite hält sie mit weitem Abstand.
+4. Unter „Über die Grenze" stehen alle Dokumente über die Grenze mit der Zahl ihrer Fraktionen, nicht
+   nur die „Allparteienanträge"; wie viele mindestens vier Fraktionen tragen, sagt ein Satz (27 von
+   41 in der Hauptperiode, 42 von 50 für 2014–2020, wie § 3.11).
+5. „Funktion nicht erkannt" heißt im Prüfsatz „fast alle Vorlagen ohne lesbaren Text oder mit einer
+   Anlage am Anfang" (§ 4.2) statt „Vorlagen ohne lesbaren Text": unter den 1 231 Dokumenten der
+   Periode 2014–2020 sind auch Vorlagen, deren Text mit einer Anlage beginnt.
+6. Beobachtet gegen erwartet ist das der gebauten Variante B; die Tabelle in § 3.7 ist an Variante A
+   gerechnet (Hauptperiode CDU 0,73 statt 0,74, Tierschutz/FW 1,64 statt 1,67, AfD 1,72 statt 1,75).
+   SPD vor dem 2020-11-01 und SPD/Volt danach sind zwei Fraktionen (Punkt 75), § 3.7 zählte sie
+   zusammen.
+7. Neben K3 steht dasselbe Maß mit Anfragen (§ 3.11, Spalte „alle Funktionen"), und die Matrix zählt
+   gemeinsame Dokumente aus Beiräten und ohne Gremium nicht, sondern nennt ihre Zahl.
+
+**Verworfen.** Ein Graph-Layout des Netzes und eine Bibliothek für die Leisten (§ 7); die Zellen der
+Matrix nach der Zahl einzufärben (die Zahl steht in der Zelle, die Farbe trägt das Lager); eine
+dritte Matrix „alle Gremien" (sie mischte die Ebene mit und ohne Lager); `links(settings)` mit
+`Layout.from_settings` (siehe oben).

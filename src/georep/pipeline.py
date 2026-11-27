@@ -118,6 +118,7 @@ from georep.report.build import (
 )
 from georep.report.geometry import district_shapes
 from georep.report.pages import Page, build_page, page_inputs, pages_for, sections_for
+from georep.report.tables import contributed_table_files
 
 # Punkt 45: nur die zwei Zahlen, nicht die Modelle -- ``analysis.topics`` und
 # ``analysis.committees`` bringen sklearn mit und werden erst im Schritt importiert.
@@ -1539,8 +1540,12 @@ def build_steps(
             # Vorlage oder Klassengrenze gültig.
             extra=report_fingerprint(settings),
             # Fundament F1, Review M1: eine Datenwurzel von vor F1 hat keinen Rohtextstore, und
-            # ``report`` brach dort als harte Eingabe ab; der Satz über den Rohtext fehlt dann
-            optional=(layout.raw_texts,),
+            # ``report`` brach dort als harte Eingabe ab; der Satz über den Rohtext fehlt dann.
+            # Vorhaben 15, Stufe 3: die Tabellen der Beiträge, die als Download auf der Seite
+            # stehen; ihr Hash zählt im Stamp, eine fehlende bricht nichts ab (``published``
+            # lässt eine optionale Tabelle ohne Datei aus), und ``check_step_order`` sieht, dass
+            # ihr Schritt vorher läuft.
+            optional=(layout.raw_texts, *contributed_table_files(layout, settings)),
         ),
         # --- Fundament F2: die Unterseiten der Beiträge
         *pages,

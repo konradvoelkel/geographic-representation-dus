@@ -15,6 +15,7 @@ import pytest
 from jinja2 import ChoiceLoader, DictLoader
 
 import georep.enrich
+import georep.report.pages
 from georep.enrich import Contribution
 from georep.layout import Layout
 from georep.pipeline import build_steps
@@ -71,6 +72,8 @@ def test_der_schritt_der_unterseite_steht_hinter_dem_bericht(
     tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", (Contribution("probe", pages=(_probe(),)),))
+    # die Vorlagen des Pakets gehören zu Seiten, die dieses Register nicht kennt (check_page_files)
+    monkeypatch.setattr(georep.report.pages, "pages_folder", lambda: Path("/nonexistent/pages"))
     layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
     steps = build_steps(default_settings, layout)
     names = [s.name for s in steps]
@@ -105,5 +108,5 @@ def test_die_hauptseite_nennt_die_unterseite(
 def test_ohne_unterseiten_gibt_es_den_abschnitt_nicht(
     mini_model: ReportModel, mini_visuals: Visuals
 ) -> None:
-    assert mini_model.pages == ()
-    assert 'id="weitere"' not in render_report(mini_model, mini_visuals)
+    """Seit Vorhaben 15 hat das Standardprofil eine Unterseite; ohne sie fehlt der Abschnitt."""
+    assert 'id="weitere"' not in render_report(replace(mini_model, pages=()), mini_visuals)

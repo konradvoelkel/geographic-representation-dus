@@ -13,6 +13,7 @@ import polars as pl
 import pytest
 
 import georep.enrich
+import georep.report.pages
 from georep.enrich import (
     Contribution,
     DuplicateOutputError,
@@ -24,9 +25,17 @@ from georep.http import Transport
 from georep.io import write_bytes
 from georep.layout import Layout
 from georep.pipeline import Step, build_steps, run_pipeline
+from georep.report.pages import pages_for
 from georep.report.tables import PublishedTable, all_tables, csv_plan, published
 from georep.settings import Settings, available_profiles, load_settings
 from tests.fakes import FakeSession, response
+
+
+@pytest.fixture(autouse=True)
+def _ohne_vorlagen_des_pakets(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Die Tests ersetzen das Register; die Vorlagen unter ``templates/pages/`` (seit Vorhaben 15
+    ``akteure.html.j2``) gehörten dann zu keiner Seite, und ``check_page_files`` bräche ab."""
+    monkeypatch.setattr(georep.report.pages, "pages_folder", lambda: Path("/nonexistent/pages"))
 
 
 def _layout(tmp_path: Path) -> Layout:
@@ -56,7 +65,7 @@ def test_ohne_beitraege_fehlen_genau_ihre_schritte(
             *georep.enrich.contributed_early_steps(default_settings, layout, http),
             *georep.enrich.contributed_steps(default_settings, layout, http),
         )
-    }
+    } | {f"page_{page.name}" for page in pages_for(default_settings)}  # seit Vorhaben 15, Stufe 3
     monkeypatch.setattr(georep.enrich, "CONTRIBUTIONS", ())
     core = [s.name for s in build_steps(default_settings, layout)]
     assert core == [name for name in before if name not in contributed]

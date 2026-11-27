@@ -150,6 +150,9 @@ def test_pipeline_runs_skips_and_reruns(
         # Vorhaben 12: liest Rohtexte und Korpus, beide unverändert
         "identifiers": "übersprungen",
         "report": "ausgeführt",
+        # Vorhaben 15, Stufe 3: die Unterseite liest Korpus, Urheber, Gremien, die beiden Tabellen
+        # von 15 und die Prüfung im Repo; die Orte ändern keines davon
+        "page_akteure": "übersprungen",
     }
     changed = next(o for o in third if o.step == "pois")
     assert changed.reason.startswith("Eingabe geändert")

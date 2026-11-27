@@ -53,6 +53,7 @@ from georep.prep.papers import CORPUS_SCHEMA_VERSION
 from georep.prep.structure import STRUCTURE_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
 from georep.report.feeds import FEEDS_SCHEMA_VERSION
+from georep.report.tables import contributed_table_files
 from georep.schema import ASSIGNMENT_SCHEMA_VERSION, TOPICS_SCHEMA_VERSION, stop_words_digest
 from georep.search.vectors import EMBEDDINGS_SCHEMA_VERSION, NEIGHBORS_SCHEMA_VERSION
 from georep.settings import Settings
@@ -262,7 +263,10 @@ def test_only_the_report_topics_and_vocabulary_steps_carry_an_extra(
     found = {s.name: s.extra for s in build_steps(default_settings, layout)}
     assert found["report"] == report_fingerprint(default_settings)
     assert len(found["report"]) == 16
+    # die Unterseiten (Punkt 69) tragen denselben Hash wie der Bericht; die erste ist akteure.html
+    assert found["page_akteure"] == found["report"]
     assert sorted(name for name, extra in found.items() if extra) == [
+        "page_akteure",
         "report",
         "topics",
         "vocabulary",
@@ -498,7 +502,9 @@ def test_the_report_runs_on_a_data_root_without_a_raw_text_store(
     outcomes = run_pipeline(steps, default_settings, ["report"], force=True)
     assert [(o.step, o.status) for o in outcomes] == [("report", "ausgeführt")]
     report = next(s for s in steps if s.name == "report")
-    assert report.optional == (layout.raw_texts,) and layout.texts in report.inputs
+    # Vorhaben 15, Stufe 3: dahinter die Tabellen der Beiträge, die als Download auf der Seite stehen
+    assert report.optional[0] == layout.raw_texts and layout.texts in report.inputs
+    assert report.optional[1:] == contributed_table_files(layout, default_settings)
     # Die fehlende Datei steht im Stamp; kommt sie dazu, ist der Stamp veraltet
     stamped = json.loads(report.stamp_path.read_text(encoding="utf-8"))
     assert stamped["inputs"][layout.raw_texts.name] == MISSING

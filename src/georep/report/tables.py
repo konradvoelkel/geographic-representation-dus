@@ -738,6 +738,23 @@ def all_tables() -> list[PublishedTable]:
     return result
 
 
+def contributed_table_files(layout: Layout, settings: Settings) -> tuple[Path, ...]:
+    """Die Dateien der Tabellen aus Beiträgen, deren Schalter in diesen Settings an ist.
+
+    Vorhaben 15, Stufe 3: der Schritt ``report`` kopiert sie nach ``site/data/`` und nennt ihre
+    Prüfsummen; ohne sie im Stamp blieb er nach einer geänderten Tabelle aktuell. Die Tabellen des
+    Kerns stehen schon als Eingaben dort. Import in der Funktion wie in ``all_tables``.
+    """
+    from georep.enrich import CONTRIBUTIONS
+
+    return tuple(
+        t.path(layout)
+        for c in CONTRIBUTIONS
+        for t in c.tables
+        if t.enabled is None or t.enabled(settings)
+    )
+
+
 @deal.post(_unique_names, message="jede Tabelle hat einen eigenen Namen")
 def published(layout: Layout, settings: Settings | None = None) -> list[PublishedTable]:
     """Die Tabellen der Seite in Reihenfolge; optionale nur, wenn ihre Datei vorliegt.
