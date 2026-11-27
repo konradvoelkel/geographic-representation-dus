@@ -2,7 +2,11 @@
   "vorhaben": "12-kennungen-f4",
   "codebuch_version": "1",
   "einheit": "span",
-  "modell": "claude-opus-5-5",
+  "modelle": {
+    "kodierer_a": "claude-opus-5-5",
+    "kodierer_b": "claude-opus-5-5",
+    "schlichtung": "claude-opus-5-5"
+  },
   "datum": "2026-11-23",
   "einheiten": 600,
   "uneinig": 62,
@@ -959,6 +963,6 @@
       }
     }
   },
-  "satz": "geprüft von zwei KI-Kodierern an 600 Textstellen, nicht von Menschen",
+  "satz": "geprüft von zwei KI-Kodierern desselben Modells (claude-opus-5-5) an 600 Textstellen, nicht von Menschen",
   "selbstgewichtend": false
 }

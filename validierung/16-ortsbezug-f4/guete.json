@@ -1,0 +1,292 @@
+{
+  "vorhaben": "16-ortsbezug-f4",
+  "codebuch_version": "2026-11-23.1",
+  "einheit": "document",
+  "modelle": {
+    "kodierer_a": "claude-opus-5-5",
+    "kodierer_b": "claude-opus-5-5",
+    "schlichtung": "claude-opus-5-5"
+  },
+  "datum": "2026-11-27",
+  "einheiten": 200,
+  "uneinig": 5,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "bezug": {
+      "n": 200,
+      "beide": 200,
+      "einig": 195,
+      "anteil": 0.975,
+      "anteil_wilson95": [
+        0.942821659593358,
+        0.9892752803482386
+      ],
+      "cohen_kappa": 0.9165623696287025,
+      "krippendorff_alpha_nominal": 0.9167674913429846,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9167674913429846,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "handelt_von": 164,
+        "erwaehnt": 31,
+        "kein_bezug": 5
+      },
+      "treffer": {
+        "positiv": [
+          "handelt_von"
+        ],
+        "stichprobe": {
+          "treffer": 164,
+          "gewertet": 200,
+          "ignoriert": 0,
+          "anteil": 0.82,
+          "wilson95": [
+            0.7608852497127511,
+            0.8670537414057983
+          ]
+        },
+        "grundgesamtheit": {
+          "schaetzer": 0.8209988768666422,
+          "wilson95_kish": [
+            0.7610713589132305,
+            0.8684927361378831
+          ],
+          "n_eff": 194.5078763979916,
+          "n": 29289,
+          "selbstgewichtend": false
+        },
+        "je_schicht": {
+          "begleit_rest": {
+            "treffer": 51,
+            "gewertet": 76,
+            "schicht_n": 12132,
+            "anteil": 0.6710526315789473,
+            "wilson95": [
+              0.5594380888358765,
+              0.7662072636418396
+            ]
+          },
+          "kern": {
+            "treffer": 40,
+            "gewertet": 49,
+            "schicht_n": 5060,
+            "anteil": 0.8163265306122449,
+            "wilson95": [
+              0.6864239739710013,
+              0.9002365893792968
+            ]
+          },
+          "titel_betreff": {
+            "treffer": 73,
+            "gewertet": 75,
+            "schicht_n": 12097,
+            "anteil": 0.9733333333333334,
+            "wilson95": [
+              0.9078851181224086,
+              0.9926563109938686
+            ]
+          }
+        }
+      }
+    },
+    "begriffe_kein_bezug": {
+      "n": 200,
+      "beide": 200,
+      "einig": 200,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9811546736227335,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "[\"düsseldorfer straße\"]": 1,
+        "[\"flughafenstr.\"]": 1,
+        "[\"franz jürgens\"]": 1,
+        "[\"marktplatz\"]": 1,
+        "[\"schulweg\"]": 1,
+        "[\"st. cäcilia\"]": 1,
+        "[]": 194
+      },
+      "treffer": null
+    },
+    "beleg_zeile": {
+      "n": 200,
+      "beide": 200,
+      "einig": 174,
+      "anteil": 0.87,
+      "anteil_wilson95": [
+        0.8163364812775159,
+        0.9097179772033067
+      ],
+      "cohen_kappa": 0.8670008696096987,
+      "krippendorff_alpha_nominal": 0.8672841480420126,
+      "krippendorff_alpha_skala": 0.9991556465183862,
+      "krippendorff_alpha": 0.9991556465183862,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "103": 1,
+        "107": 1,
+        "11": 1,
+        "116": 1,
+        "124": 1,
+        "126": 1,
+        "13": 1,
+        "132": 1,
+        "133": 1,
+        "137": 1,
+        "14": 2,
+        "148": 1,
+        "15": 2,
+        "16": 1,
+        "17": 6,
+        "171": 1,
+        "18": 2,
+        "183": 1,
+        "19": 5,
+        "191": 1,
+        "20": 6,
+        "21": 2,
+        "22": 6,
+        "222": 1,
+        "23": 4,
+        "24": 7,
+        "25": 8,
+        "26": 9,
+        "269": 1,
+        "27": 5,
+        "28": 6,
+        "29": 9,
+        "30": 4,
+        "305": 1,
+        "31": 4,
+        "32": 2,
+        "325": 1,
+        "33": 1,
+        "34": 1,
+        "35": 5,
+        "36": 6,
+        "37": 3,
+        "38": 2,
+        "39": 4,
+        "40": 3,
+        "42": 3,
+        "45": 1,
+        "46": 4,
+        "47": 1,
+        "48": 1,
+        "49": 3,
+        "52": 1,
+        "521": 1,
+        "53": 1,
+        "55": 2,
+        "56": 1,
+        "57": 1,
+        "6": 4,
+        "638": 1,
+        "67": 1,
+        "68": 2,
+        "69": 1,
+        "70": 2,
+        "73": 1,
+        "74": 1,
+        "8": 1,
+        "83": 1,
+        "84": 1,
+        "8679": 1,
+        "87": 1,
+        "89": 1,
+        "95": 1,
+        "99": 1
+      },
+      "treffer": null
+    },
+    "unsicher": {
+      "n": 200,
+      "beide": 200,
+      "einig": 180,
+      "anteil": 0.9,
+      "anteil_wilson95": [
+        0.8505941875672826,
+        0.9343295513309041
+      ],
+      "cohen_kappa": 0.5437956204379562,
+      "krippendorff_alpha_nominal": 0.544,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.544,
+      "markierungen": null,
+      "alpha_genuegt": false,
+      "labels": {
+        "ja": 15,
+        "nein": 165
+      },
+      "treffer": {
+        "positiv": [
+          "ja"
+        ],
+        "stichprobe": {
+          "treffer": 15,
+          "gewertet": 180,
+          "ignoriert": 0,
+          "anteil": 0.08333333333333333,
+          "wilson95": [
+            0.05114986208169917,
+            0.13292971951964502
+          ]
+        },
+        "grundgesamtheit": {
+          "schaetzer": 0.08091144745861534,
+          "wilson95_kish": [
+            0.04893201315039099,
+            0.13091409647087904
+          ],
+          "n_eff": 174.80718330542123,
+          "n": 29289,
+          "selbstgewichtend": false
+        },
+        "je_schicht": {
+          "begleit_rest": {
+            "treffer": 9,
+            "gewertet": 65,
+            "schicht_n": 12132,
+            "anteil": 0.13846153846153847,
+            "wilson95": [
+              0.07459090403153719,
+              0.24268097246345166
+            ]
+          },
+          "kern": {
+            "treffer": 6,
+            "gewertet": 44,
+            "schicht_n": 5060,
+            "anteil": 0.13636363636363635,
+            "wilson95": [
+              0.06402954497555872,
+              0.2670945304851544
+            ]
+          },
+          "titel_betreff": {
+            "treffer": 0,
+            "gewertet": 71,
+            "schicht_n": 12097,
+            "anteil": 0.0,
+            "wilson95": [
+              0.0,
+              0.05132795219689034
+            ]
+          }
+        }
+      }
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern desselben Modells (claude-opus-5-5) an 200 Dokumenten, nicht von Menschen",
+  "selbstgewichtend": false
+}

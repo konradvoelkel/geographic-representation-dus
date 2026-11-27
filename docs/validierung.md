@@ -1,7 +1,7 @@
 # Validierung mit zwei KI-Kodierern (Fundament F4)
 
-Stand 2026-11-23 (zweite Runde nach dem Review). Paket `georep.validation`, Befehl
-`georep validate sample|tasks|import|merge|score`.
+Stand 2026-11-27 (F4-Nachzug V3: Modell je Rolle, Labeldateien der Messungen, Positionsspannen).
+Paket `georep.validation`, Befehl `georep validate sample|tasks|import|merge|restate|score`.
 Auftrag: [plan-vorverarbeitung-2026-11.md](plan-vorverarbeitung-2026-11.md), § 2.6 und § 7 (F4);
 Gründe und verworfene Alternativen: [decisions.md](decisions.md), „Validierung mit zwei
 KI-Kodierern". Diese Datei ist das Handbuch für den Supervisor und die Vorlage für die Aufträge an
@@ -17,7 +17,8 @@ Uneinigkeiten. Daraus entstehen zwei Zahlen:
   Labels mit Wilson-Intervall). Sie sagt, ob das Codebuch eindeutig genug ist, dass zwei
   Durchgänge dasselbe Urteil fällen. Stufe 3 eines Vorhabens verlangt **α ≥ 0,8**
   (`validation.min_alpha`); darunter ist das Codebuch zu unscharf, und das Vorhaben geht zurück in
-  Stufe 1. Bei ordinaler Skala gilt das ordinale α, sonst das nominale.
+  Stufe 1. Bei ordinaler Skala gilt das ordinale α, sonst das nominale. Ist α nicht definiert,
+  weil beide überall dasselbe sagten, genügt volle Einigkeit an genug Einheiten (§ 3, Schritt 8).
 - **Güte des geprüften Verfahrens gegen die geschlichteten Labels** (Präzision, Recall, F1 je
   Klasse, mikro und makro; nDCG@k für Rangfolgen; bei binärer Skala der Anteil positiver Urteile,
   also die Präzision, wenn die Einheiten die Treffer des Verfahrens sind).
@@ -28,8 +29,11 @@ mit diesem Modell. Zwei Kodierer desselben Modells teilen dessen Fehler und Vorl
 heißt „das Codebuch ist für dieses Modell eindeutig", nicht „die Labels stimmen". Es liegt
 darum eher über dem, was zwei Menschen mit demselben Codebuch erreichten: ein niedriges α ist ein
 deutlicher Befund (das Codebuch ist unscharf), ein hohes nur eine notwendige Bedingung und kein
-Beleg der Richtigkeit. Die Seite sagt das wörtlich: **„geprüft
-von zwei KI-Kodierern an *n* Dokumenten, nicht von Menschen"** (`satz` in `guete.json`).
+Beleg der Richtigkeit. Die Seite sagt das wörtlich, mit den Modellen: **„geprüft von zwei
+KI-Kodierern desselben Modells (*M*) an *n* Dokumenten, nicht von Menschen"** oder, seit Kodierer B
+ein anderes Modell ist (§ 3), **„geprüft von zwei KI-Kodierern (*A* und *B*) an *n* Dokumenten,
+Schlichtung durch *S*, nicht von Menschen"** (`satz` in `guete.json`, Form in
+[decisions.md](decisions.md), Punkt 71).
 
 Darum ist die KI-Kodierung der **vierte** Weg und nicht der erste (Plan, § 2.6): zuerst
 deterministische Prüfungen (eine Drucksachennummer existiert oder nicht), dann Labels aus den Daten
@@ -135,7 +139,9 @@ das Dokument als `dokument`. Bei `unit = "span"` liest `tasks` `value` und `extr
 Grundgesamtheit (sie stehen nicht in `stichprobe.csv`, `value` ist Ratstext), prüft ihre Prüfsumme
 gegen `stichprobe.json`, alle Spannen mit `georep.spans.check_spans` gegen die Längen der gewählten
 Textquelle und `value` gegen den Text an der Stelle: Spannen aus dem Rohtext in einem Auftrag aus
-dem kleingeschriebenen Korpus säßen sonst still an der falschen Stelle.
+dem kleingeschriebenen Korpus säßen sonst still an der falschen Stelle. Leer darf `value` nur bei
+einer Positionsspanne sein (heute die Abschnitte aus Vorhaben 11), wie `check_spans(…, texts=…,
+positions=…)` es verlangt; dasselbe gilt für die hervorgehobenen Spannen aus `text.spans`.
 
 Gute Codebücher, aus der Literatur zur Inhaltsanalyse: die Optionen schließen einander aus und
 decken alles ab; jede hat eine Definition und, wo es geht, ein Beispiel aus der Ratsarbeit; die
@@ -171,17 +177,20 @@ liegen die Aufträge unter `<data_root>/kodierung/` (gitignored).
   - Ein zweites Modell macht gemeinsame Fehler sichtbar, die zwei Kodierer desselben Modells teilen
     (§ 1).
 - **Bisherige Labels**: alle bis zum 2026-11-26, je drei Agenten desselben Modells. Sie bleiben, wie
-  sie sind, und werden nicht nachkodiert.
-- **Was die Seite nennt**: je Vorhaben, wie geprüft wurde. README und `guete.json` führen das Modell
-  je Rolle.
-  - Der `satz` nennt beide Kodierer und die Schlichtung, etwa „geprüft von zwei KI-Kodierern
-    (claude-opus-5-5 und claude-sonnet-…), geschlichtet von claude-opus-5-5, an *n* …, nicht von
-    Menschen".
-  - Bei den bisherigen Labels heißt es „von zwei KI-Kodierern desselben Modells (claude-opus-5-5)".
-- **Was noch fehlt**: Heute nimmt `merge` nur ein `--model`, und der Satz nennt kein Modell. Ein
-  `--model` je Rolle und der neue Satz sind Teil des F4-Nachzugs
-  ([plan-zeigen-2026-11.md](plan-zeigen-2026-11.md), V3). Bis dahin trägt der Supervisor das Modell
-  von B in den Bericht der Messung ein.
+  sie sind, und werden nicht nachkodiert. `georep validate restate <V>` hat am 2026-11-27 ihre
+  `guete.json` und READMEs in die Form unten gebracht, aus dem Modell, das `guete.json` schon nannte;
+  Labels und Zahlen blieben bytegleich (F4-Nachzug V3).
+- **Was die Seite nennt**: je Vorhaben, wie geprüft wurde. `merge` nimmt das Modell je Rolle:
+  `--model-a`, `--model-b`, `--model-adjudicator`; `--model` ist die Kurzform für alle drei, eine
+  eigene Angabe geht vor, und fehlt einer Rolle ihr Modell, bricht der Befehl ab. Genannt wird das
+  Modell, mit dem der Agent lief, so wie das Agent-Werkzeug es meldet (etwa `claude-opus-5-5`).
+  README (Zeile **Modelle**) und `guete.json` (`modelle`: `kodierer_a`, `kodierer_b`,
+  `schlichtung`) führen alle drei.
+  - Zwei Modelle: „geprüft von zwei KI-Kodierern (claude-opus-5-5 und *B*) an *n* …, Schlichtung
+    durch claude-opus-5-5, nicht von Menschen"; ohne Uneinigkeit entfällt „Schlichtung durch …".
+  - Ein Modell für alle Rollen (die bisherigen Labels): „geprüft von zwei KI-Kodierern desselben
+    Modells (claude-opus-5-5) an *n* …, nicht von Menschen".
+  - Die genaue Form und warum: [decisions.md](decisions.md), Punkt 71.
 - **Was sich nicht ändert**: Kriterium und Schwelle (α ≥ 0,8) bleiben. Liegt α mit zwei Modellen
   darunter, ist das Codebuch für sie zu unscharf, und das Vorhaben geht zurück in Stufe 1.
 
@@ -191,11 +200,13 @@ uv run georep validate sample $V                     # 1. Stichprobe; stichprobe
 uv run georep validate tasks $V --coder A            # 2. Aufträge, lokal
 uv run georep validate tasks $V --coder B
 #                                                      3. zwei Kodier-Agenten starten (§ 4.1), parallel
-uv run georep validate merge $V --model claude-opus-5-5   # 4. Uneinigkeiten -> Auftrag der Schlichtung
+uv run georep validate merge $V --model-a claude-opus-5-5 --model-b <B> --model-adjudicator claude-opus-5-5
+#                                                      4. Uneinigkeiten -> Auftrag der Schlichtung
 #                                                      5. Schlicht-Agent starten (§ 4.2)
-uv run georep validate merge $V --model claude-opus-5-5   # 6. labels.csv, README.md, guete.json; committen
-#   --model nennt heute ein Modell für alle Rollen; mit dem F4-Nachzug je Rolle (oben, „Welche Modelle")
+uv run georep validate merge $V --model-a claude-opus-5-5 --model-b <B> --model-adjudicator claude-opus-5-5
+#                                                      6. labels.csv, README.md, guete.json; committen
 uv run georep validate score $V [--pred <ausgabe.parquet>]  # 7. Treffer und Güte in guete.json; committen
+uv run georep validate restate $V                    # nur für Labels bis 2026-11-26: Satz und Modellfelder
 ```
 
 1. **Stichprobe.** Einmal je Codebuch-Version; `--force` zieht neu und trennt die vorhandenen
@@ -217,8 +228,9 @@ uv run georep validate score $V [--pred <ausgabe.parquet>]  # 7. Treffer und Gü
    bricht dann ab, `merge --force` setzt `schlichtung/` zurück.
 5. **Schlichten.** Ein dritter frischer Agent mit dem Modell von A und dem Prompt aus § 4.2.
 6. **Labels.** Der zweite `merge` legt `labels.csv` (`id, frage, kodierer_a, kodierer_b,
-   schlichtung, label`), `README.md` und `guete.json` ab und sagt je Frage, ob α die Schwelle
-   erreicht. Liegt es darunter: das Codebuch schärfen, `version` hochzählen, neue Stichprobe.
+   schlichtung, label`), `README.md` und `guete.json` ab, beide mit dem Modell je Rolle, wie die
+   Agenten liefen, und sagt je Frage, ob α die Schwelle erreicht. Liegt es darunter: das Codebuch
+   schärfen, `version` hochzählen, neue Stichprobe.
 7. **Güte.** Ohne `--pred` je Frage mit `positive` der Anteil der Treffer: je Schicht, in der
    Stichprobe und für die Grundgesamtheit (§ 5). Mit `--pred` die Ausgabe eines Verfahrens: `id`,
    `frage`, `label` (bei einem Codebuch mit einer Frage darf `frage` fehlen), bei Rangfolgen
@@ -227,6 +239,17 @@ uv run georep validate score $V [--pred <ausgabe.parquet>]  # 7. Treffer und Gü
    mit welchen Modellen, an wie vielen Einheiten), je Frage `alpha_genuegt` und die Güte mit Intervall
    (`fragen.<frage>.treffer.grundgesamtheit`, `…verfahren`). Ohne `alpha_genuegt = true` zeigt die
    Seite die Kennzahl nicht (Plan, § 2.6); eine gewichtete Schätzung heißt auf der Seite so.
+   **Volle Einigkeit** (Supervisor, 2026-11-27, an `14-vorgaenge-3-f4`): ist α nicht definiert,
+   weil beide Kodierer jede Einheit, bei der die Frage gestellt war, beurteilt und überall gleich
+   und mit demselben Wert beurteilt haben (beobachtete Übereinstimmung 100 %, keine Streuung, also
+   kein Zufallsabgleich), dann ist `alpha_genuegt = true`, und die Frage trägt `alpha_vermerk`
+   („volle Einigkeit, α nicht definiert"), das README dasselbe in der Spalte „genügt". Das gilt
+   nur an genug Einheiten: die untere Wilson-Grenze der Übereinstimmung, n/(n + 1,96²), muss
+   `validation.min_alpha` erreichen (bei 0,8 ab 16 Einheiten). Ist α aus einem anderen Grund nicht
+   definiert (keine paarbare Einheit, zu wenige Einheiten, eine Einheit nur von einem Kodierer
+   beurteilt), bleibt es `false`. Das belegt nicht, dass das Codebuch Grenzfälle trennt; die Seite
+   nennt es so, wie der Vermerk lautet. Betroffen sind heute `14-vorgaenge-3-f4` (`selbe_sache`,
+   50 von 50) und, sobald `score` dort neu läuft, `11-struktur-f4` (`bv_mehrteilig`, 114 von 114).
 
 **Vorläufige Antworten** (Vorhaben 11 bis 14 kodierten vor F4): `[provisional]` im Codebuch sagt,
 wie ihre Dateien zu lesen sind (Schlüsselfeld; Felder, die anders heißen; Werte, die ein Label
@@ -238,11 +261,23 @@ README und `guete.json` zählen sie. Eine vorläufige Schlichtung einer Einheit,
 übergeht `merge` und nennt die Zahl. Für Vorhaben 14 rechnet das die Zahlen des Messdokuments nach
 (`tests/unit/test_validation_projects.py`).
 
+Legte eine Messung statt der Antwortdateien ihre Labels im Repo ab (Vorhaben 12, Runde 2, und 16:
+`labels-2.csv`, `labels.csv`, Spalten wie `labels.csv` von F4 mit dem Schlüsselfeld vorn, Werte als
+JSON), nennt `[provisional] labels` diese Datei, und `--from` zeigt auf ihren Ordner. A und B kommen
+aus `kodierer_a` und `kodierer_b`; jede Einheit mit einem Eintrag unter `schlichtung` bekommt eine
+Schlichtungszeile mit ihren Labels. Steht dort ein Objekt mit `auswerter`, entschied der Auswerter
+nach dem Codebuch, und die Zeile trägt `labels_auditor` als `herkunft`. Eine Frage, die das Codebuch
+nicht kennt, ist bei einer Einheit der Stichprobe ein Fehler; Zeilen anderer Einheiten (die
+Recall-Aufgaben von 12) zählt der Import und lässt sie weg.
+
 **Wo die übertragenen Vorhaben liegen.** Die Messskripte der Vorhaben 11 bis 14
 (`docs/plans/*-messung.py`) lesen die vorläufigen Dateien unter `validierung/<NN-name>/` und
 prüfen, dass die gespeicherten Stichproben unverändert sind. Das Format von F4 liegt darum daneben,
-in `validierung/<NN-name>-f4/` (Runde 2 von 14: `14-vorgaenge-2-f4`, die Recall-Aufgaben von 12:
-`12-kennungen-recall-f4`); die alten Ordner bleiben, wie die Messung sie geschrieben hat. Ein neues
+in `validierung/<NN-name>-f4/` (Runde 2 von 14: `14-vorgaenge-2-f4`, Runde 2 von 12:
+`12-kennungen-2-f4`, die Runden von 16: `16-ortsbezug-f4` und `16-ortsbezug-2-f4`, die
+Recall-Aufgaben von 12: `12-kennungen-recall-f4`); die alten Ordner bleiben, wie die Messung sie
+geschrieben hat. Zwei Runden mit verschiedenen Codebüchern sind zwei Ordner, auch beim Übertragen
+(§ 2). Ein neues
 Vorhaben legt sein Codebuch gleich im Format von F4 an und braucht kein `-f4`.
 
 Was ins Repo kommt und was nicht:
@@ -260,7 +295,10 @@ Was ins Repo kommt und was nicht:
 Platzhalter in spitzen Klammern; `<ordner>` ist `<coding_root>/<NN-name>/<A|B|schlichtung>`.
 **Modelle** (§ 3, „Welche Modelle kodieren"): Kodierer A und der Schlicht-Agent laufen mit
 `model: "opus"`, Kodierer B mit einem anderen Modell (Vorgabe `sonnet`). Beide Kodierer bekommen
-denselben Prompt. Weder der Prompt noch der Ordner nennt das Modell des anderen Kodierers.
+denselben Prompt. Weder der Prompt noch der Ordner nennt das Modell des anderen Kodierers. Der
+Supervisor notiert je Agent das Modell, das das Agent-Werkzeug für den Lauf meldet, und gibt es
+dem zweiten `merge` als `--model-a`, `--model-b` und `--model-adjudicator` mit (§ 3); das Modell
+eines Agenten steht nur dort, im README und in `guete.json`, nie in einem Auftrag.
 
 ### 4.1 Kodier-Agent
 
@@ -337,8 +375,10 @@ zieht es im Messskript per Bootstrap über die Einheiten.
 
 ## 6. Grenzen und Offenes
 
-- Beide Kodierer sind dasselbe Modell; ihre Fehler sind korreliert, α ist darum eine obere
-  Schätzung der Schärfe des Codebuchs (§ 1).
+- Bei allen Labels bis zum 2026-11-26 sind beide Kodierer dasselbe Modell; ihre Fehler sind
+  korreliert, α ist dort eine obere Schätzung der Schärfe des Codebuchs (§ 1). Seit Frage 19
+  kodiert B ein anderes Modell; zwei Modelle teilen weniger Fehler, aber nicht keine, und die
+  Schlichtung bleibt das Modell von A.
 - Die verschiedene Folge der Einheiten je Kodierer mildert Reihenfolgeeffekte, schließt sie nicht
   aus.
 - Offene Antworten werden bis auf zusammengezogenen Leerraum genau verglichen; mit
@@ -352,10 +392,12 @@ zieht es im Messskript per Bootstrap über die Einheiten.
   im Messdokument) und misst Stufe 3 an diesem F1. Offen sind die Endlabels (eine Schlichtung je
   Markierung statt je Liste) und der Recall gegen die Spannen des Verfahrens mit strenger (gleiche
   Grenzen und Art) und milder Grenze (Überlappung und Art).
-- Übertragen sind 11 bis 15 und 17 (je `<NN-name>-f4`); 12 Runde 2 und 16 sind seit dem 2026-11-23
-  ausgewertet (`docs/plans/README.md`). Die
-  Präzision des Lexikons von 17 (Kategorie im Thema, 94/100) rechnet F4 nicht; sie vergleicht die
-  Ausgabe des Verfahrens mit einer Menge, nicht mit einem Label.
+- Übertragen sind 11, 12 und 14 bis 17 (je `<NN-name>-f4`, von 12, 14 und 16 auch die zweite
+  Runde). F4 rechnet dort die Übereinstimmung und Anteile je Frage, nicht die Maße, die mehrere
+  Fragen verbinden: die Präzision je Art von 12 (Art, Grenzen und Norm zusammen) und das F1 der
+  Regel von 16 rechnen ihre Messskripte. Die Präzision des Lexikons von 17 (Kategorie im Thema,
+  94/100) rechnet F4 nicht; sie vergleicht die Ausgabe des Verfahrens mit einer Menge, nicht mit
+  einem Label.
 - Der Ausschnitt ist der Anfang des Textes (`text.chars`); was dahinter steht, sehen die Kodierer
   nicht.
 - Eine HTML-Ansicht für Menschen gibt es nicht, solange niemand von Hand kodiert (Plan, § 7).

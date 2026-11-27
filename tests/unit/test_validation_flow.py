@@ -138,8 +138,12 @@ def test_from_sample_to_number_with_fake_labels(project: Path) -> None:
     )
     expected = classify_scores(first, [guess[u] for u in ids], ["ja", "nein"])
     assert quality["fragen"]["fordert"]["verfahren"]["genauigkeit"] == expected.accuracy
-    assert quality["satz"] == "geprüft von zwei KI-Kodierern an 24 Dokumenten, nicht von Menschen"
-    assert quality["modell"] == MODEL and quality["codebuch_version"] == "2026-11-23"
+    assert quality["satz"] == (
+        f"geprüft von zwei KI-Kodierern desselben Modells ({MODEL}) an 24 Dokumenten, "
+        "nicht von Menschen"
+    )
+    assert quality["modelle"]["schlichtung"] == MODEL
+    assert quality["codebuch_version"] == "2026-11-23"
 
     # Im Repo-Ordner liegen nur Schlüssel, Labels und Zahlen, kein Ratstext.
     corpus = pl.read_parquet(Layout.from_settings(load_settings(cwd=project / "repo")).corpus)

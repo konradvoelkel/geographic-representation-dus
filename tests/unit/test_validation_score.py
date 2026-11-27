@@ -71,7 +71,7 @@ def test_score_weights_the_strata_and_keeps_the_sample_share_apart(
     positives = sum(1 for label in merged.values() if label == "ja")
     assert f"in der Stichprobe {positives} von 9" in out and "gewichtet mit N_h/n_h" in out
     assert "Stufe 3 verlangt ≥ 0,80" in out
-    assert "geprüft von zwei KI-Kodierern an 9 Dokumenten, nicht von Menschen" in out
+    assert f"geprüft von zwei KI-Kodierern desselben Modells ({MODEL}) an 9 Dokumenten" in out
     sample = _sample(project)
     hits: dict[str, tuple[int, int]] = {}
     for unit, layer in sample.select("id", "schicht").iter_rows():
@@ -85,7 +85,10 @@ def test_score_weights_the_strata_and_keeps_the_sample_share_apart(
     assert found["treffer"]["grundgesamtheit"]["schaetzer"] == expected.estimate
     assert found["treffer"]["grundgesamtheit"]["selbstgewichtend"] is False
     assert set(found["treffer"]["je_schicht"]) == {"Antrag", "Anfrage", "Vorlage"}
-    assert found["einig"] == 8 and _quality(project)["modell"] == MODEL
+    assert found["einig"] == 8
+    assert _quality(project)["modelle"] == dict.fromkeys(
+        ("kodierer_a", "kodierer_b", "schlichtung"), MODEL
+    )
 
 
 def test_score_with_predictions_is_classify_scores_against_the_final_labels(

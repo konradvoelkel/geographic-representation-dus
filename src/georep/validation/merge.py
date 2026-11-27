@@ -1,7 +1,10 @@
 """Zwei Kodierungen zusammenführen, Uneinigkeiten schlichten lassen, Labels ablegen (F4).
 
 ``georep validate merge <vorhaben> --model <name>`` liest die Antworten von A und B, je Einheit und
-Frage. Sind beide vollständig, gibt es zwei Ausgänge:
+Frage. ``--model`` nennt ein Modell für alle drei Rollen; ``--model-a``, ``--model-b`` und
+``--model-adjudicator`` nennen es je Rolle (Frage 19, Konrad 2026-11-26: für neue Messungen ist
+Kodierer B ein anderes Modell als A und die Schlichtung). Sind beide vollständig, gibt es zwei
+Ausgänge:
 
 1. Es gibt Uneinigkeiten, und die Schlichtung ist nicht vollständig: der Auftrag des
    Schlicht-Agenten entsteht unter ``<coding_root>/<vorhaben>/schlichtung/`` (je Einheit mit
@@ -24,6 +27,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -32,7 +36,7 @@ from typing import Any
 
 import polars as pl
 
-from georep.errors import MissingInputError
+from georep.errors import MissingInputError, SchemaError
 from georep.io import atomic_path, write_json, write_text
 from georep.layout import Layout
 from georep.settings import Settings
@@ -63,6 +67,44 @@ UNIT_PLURAL = {
     "marking": "Dokumenten",
 }
 Values = dict[str, str | None]
+
+
+@dataclass(frozen=True)
+class Models:
+    """Wer kodiert und geschlichtet hat: das Modell je Rolle, wie README und guete.json es nennen."""
+
+    coder_a: str
+    coder_b: str
+    adjudicator: str
+
+    @classmethod
+    def same(cls, model: str) -> Models:
+        """Ein Modell für alle drei Rollen, wie bei allen Labels bis zum 2026-11-26."""
+        return cls(model, model, model)
+
+    def as_json(self) -> dict[str, str]:
+        return {
+            "kodierer_a": self.coder_a,
+            "kodierer_b": self.coder_b,
+            "schlichtung": self.adjudicator,
+        }
+
+
+def sentence(models: Models, units: int, unit: str, disputed: int) -> str:
+    """Der Satz für die Seite (``satz`` in guete.json): mit welchen Modellen an wie vielen Einheiten.
+
+    Gleiche Kodierer: „geprüft von zwei KI-Kodierern desselben Modells (M) an n …", sonst „… (A und
+    B) an n …". Die Schlichtung nennt der Satz mit „Schlichtung durch S", wo es Uneinigkeiten gab
+    und ihr Modell nicht das eine aller drei Rollen ist. Am Ende steht immer „nicht von Menschen"
+    (docs/decisions.md, Punkt 71).
+    """
+    if models.coder_a == models.coder_b:
+        coders = f"zwei KI-Kodierern desselben Modells ({models.coder_a})"
+    else:
+        coders = f"zwei KI-Kodierern ({models.coder_a} und {models.coder_b})"
+    one_model = models.coder_a == models.coder_b == models.adjudicator
+    adjudication = "" if disputed == 0 or one_model else f", Schlichtung durch {models.adjudicator}"
+    return f"geprüft von {coders} an {units} {UNIT_PLURAL[unit]}{adjudication}, nicht von Menschen"
 
 
 @dataclass(frozen=True)
@@ -328,10 +370,49 @@ def _cell(text: str) -> str:
     return text.replace("|", "\\|")
 
 
+UNANIMOUS = "volle Einigkeit, α nicht definiert"  # Vermerk in guete.json und README
+
+
+def unanimous(result: Reliability, min_alpha: float) -> bool:
+    """α ist nicht definiert, weil beide Kodierer jede Einheit gleich und mit demselben Wert
+    beurteilten, und das an genug Einheiten (Supervisor, 2026-11-27, 14-vorgaenge-3-f4).
+
+    Beobachtet ist volle Übereinstimmung: jede Einheit, bei der die Frage gestellt war, haben beide
+    beurteilt, und beide gleich; einen Zufallsabgleich gibt es ohne Streuung nicht. Genug heißt: die
+    untere Wilson-Grenze der Übereinstimmung, n/(n + 1,96²), erreicht ``min_alpha`` (bei 0,8 ab 16
+    Einheiten). Ist α aus einem anderen Grund nicht definiert (keine paarbare Einheit, zu wenige,
+    eine Einheit nur bei einem Kodierer, Markierungen ohne eine einzige), gilt das nicht.
+    """
+    if result.scale == "spans" or result.alpha() is not None or result.both == 0:
+        return False
+    if result.both != result.n or result.agreed != result.both:
+        return False
+    return wilson_interval(result.agreed, result.both)[0] >= min_alpha
+
+
 def alpha_suffices(result: Reliability, min_alpha: float) -> bool:
-    """Stufe 3: α definiert und mindestens ``min_alpha``; ein undefiniertes α genügt nie."""
+    """Stufe 3: α definiert und mindestens ``min_alpha``, oder ``unanimous`` (volle Einigkeit an
+    genug Einheiten, α nicht definiert); jedes andere undefinierte α genügt nicht."""
     alpha = result.alpha()
-    return alpha is not None and alpha >= min_alpha
+    if alpha is None:
+        return unanimous(result, min_alpha)
+    return alpha >= min_alpha
+
+
+def quality_entry(result: Reliability, min_alpha: float) -> dict[str, Any]:
+    """Die Zahlen einer Frage für guete.json, mit ``alpha_genuegt`` und, bei voller Einigkeit ohne
+    definiertes α, dem Vermerk ``alpha_vermerk``; merge und score schreiben sie gleich."""
+    entry = result.as_json() | {"alpha_genuegt": alpha_suffices(result, min_alpha)}
+    if unanimous(result, min_alpha):
+        entry["alpha_vermerk"] = UNANIMOUS
+    return entry
+
+
+def _verdict(result: Reliability, min_alpha: float) -> str:
+    """Die Spalte „genügt" im README."""
+    if unanimous(result, min_alpha):
+        return f"ja ({UNANIMOUS})"
+    return "ja" if alpha_suffices(result, min_alpha) else "nein"
 
 
 def _adjudicated(disputed: int) -> str:
@@ -343,26 +424,44 @@ def _adjudicated(disputed: int) -> str:
     return f"die {disputed} Uneinigkeiten entschied ein dritter Agent (Schlichtung)"
 
 
+def coders_line(disputed: int, origins: Mapping[str, int] | None = None) -> str:
+    """Die Zeile **Kodierer** im README: unabhängig, ohne die Ausgabe, wer die Uneinigkeiten entschied."""
+    other = "".join(
+        f"; davon {n} Einheit{'en' if n != 1 else ''}: {_cell(who)}"
+        for who, n in (origins or {}).items()
+    )
+    return (
+        "- **Kodierer**: zwei KI-Kodierer, unabhängig voneinander und ohne die Ausgabe des "
+        f"geprüften Verfahrens; {_adjudicated(disputed)}{other}. **Kein menschlicher "
+        "Goldstandard**: die Labels messen Übereinstimmung mit einem stärkeren Modell, nicht mit "
+        "Menschen."
+    )
+
+
+def models_line(models: Models) -> str:
+    """Die Zeile **Modelle** im README: das Modell je Rolle (Frage 19)."""
+    return (
+        f"- **Modelle**: Kodierer A `{_cell(models.coder_a)}`, Kodierer B "
+        f"`{_cell(models.coder_b)}`, Schlichtung `{_cell(models.adjudicator)}`."
+    )
+
+
 def readme(
     codebook: Codebook,
     meta: Mapping[str, Any],
     results: Sequence[Reliability],
     units: int,
     disputed: int,
-    model: str,
+    models: Models,
     today: dt.date,
     min_alpha: float,
     origins: Mapping[str, int] | None = None,
 ) -> str:
     stratum = meta.get("schicht") or ""
-    other = "".join(
-        f"; davon {n} Einheit{'en' if n != 1 else ''}: {_cell(who)}"
-        for who, n in (origins or {}).items()
-    )
     rows = [
         f"| `{_cell(r.question)}` | {r.scale} | {r.n} | {r.agreed} von {r.both} "
         f"({format_percent(r.share)}) | {format_number(r.kappa)} | {format_number(r.alpha())} | "
-        f"{'ja' if alpha_suffices(r, min_alpha) else 'nein'} |"
+        f"{_verdict(r, min_alpha)} |"
         for r in results
     ]
     return "\n".join(
@@ -379,10 +478,8 @@ def readme(
             + (f"geschichtet nach `{stratum}`, " if stratum else "ungeschichtet, ")
             + ("selbstgewichtend" if meta.get("selbstgewichtend") else "gewichtet mit N_h/n_h")
             + " (`stichprobe.csv`, `stichprobe.json`).",
-            f"- **Kodierer**: zwei KI-Kodierer, Modell `{_cell(model)}`, unabhängig voneinander und "
-            f"ohne die Ausgabe des geprüften Verfahrens; {_adjudicated(disputed)}{other}. **Kein "
-            "menschlicher Goldstandard**: die Labels messen Übereinstimmung mit einem "
-            "stärkeren Modell, nicht mit Menschen.",
+            coders_line(disputed, origins),
+            models_line(models),
             f"- **Datum**: {today.isoformat()}.",
             "",
             f"Übereinstimmung A–B je Frage; Stufe 3 verlangt α ≥ {format_number(min_alpha, 2)} "
@@ -531,7 +628,7 @@ def merge_project(
     layout: Layout,
     project: str,
     *,
-    model: str,
+    models: Models,
     today: dt.date,
     force: bool = False,
 ) -> MergeReport:
@@ -595,7 +692,7 @@ def merge_project(
     min_alpha = settings.validation.min_alpha
     write_text(
         paths.readme,
-        readme(codebook, meta, results, len(ids), count, model, today, min_alpha, by_origin),
+        readme(codebook, meta, results, len(ids), count, models, today, min_alpha, by_origin),
     )
     write_json(
         paths.quality,
@@ -603,21 +700,95 @@ def merge_project(
             "vorhaben": project,
             "codebuch_version": codebook.version,
             "einheit": codebook.unit,
-            "modell": model,
+            "modelle": models.as_json(),
             "datum": today.isoformat(),
             "einheiten": len(ids),
             "uneinig": count,
             "schlichtung_herkunft": by_origin,
             "alpha_mindestens": min_alpha,
-            "fragen": {
-                r.question: r.as_json() | {"alpha_genuegt": alpha_suffices(r, min_alpha)}
-                for r in results
-            },
-            "satz": f"geprüft von zwei KI-Kodierern an {len(ids)} "
-            f"{UNIT_PLURAL[codebook.unit]}, nicht von Menschen",
+            "fragen": {r.question: quality_entry(r, min_alpha) for r in results},
+            "satz": sentence(models, len(ids), codebook.unit, count),
         },
     )
     return MergeReport(results, count, 0, paths.labels, None, len(passed))
+
+
+def recorded_models(quality: Mapping[str, Any]) -> Models:
+    """Das Modell je Rolle, wie guete.json es nennt; bis zum 2026-11-26 stand ``modell`` für alle."""
+    found = quality.get("modelle")
+    if isinstance(found, dict):
+        names = [found.get(role) for role in ("kodierer_a", "kodierer_b", "schlichtung")]
+        if all(isinstance(name, str) and name for name in names):
+            return Models(*(str(name) for name in names))
+        raise SchemaError(f"guete.json: modelle {found!r} nennt nicht jede Rolle")
+    single = quality.get("modell")
+    if isinstance(single, str) and single:
+        return Models.same(single)
+    raise SchemaError("guete.json nennt kein Modell (weder modelle noch modell)")
+
+
+def restated_quality(quality: Mapping[str, Any], models: Models) -> dict[str, Any]:
+    """guete.json mit ``modelle`` an der Stelle von ``modell`` und dem Satz nach Punkt 71.
+
+    Jeder andere Schlüssel bleibt mit seinem Wert an seiner Stelle; der Satz kommt aus
+    ``einheiten``, ``einheit`` und ``uneinig``, die merge geschrieben hat.
+    """
+    try:
+        text = sentence(models, quality["einheiten"], quality["einheit"], quality["uneinig"])
+    except KeyError as error:
+        raise SchemaError(f"guete.json ohne {error}; merge schreibt es") from error
+    out: dict[str, Any] = {}
+    for key, value in quality.items():
+        if key in ("modell", "modelle"):
+            out["modelle"] = models.as_json()
+        else:
+            out[key] = text if key == "satz" else value
+    return out
+
+
+def restated_readme(text: str, quality: Mapping[str, Any], models: Models) -> str:
+    """Das README mit den Zeilen **Kodierer** und **Modelle** in der Form von merge.
+
+    Die alte Zeile **Kodierer** nannte ``Modell `M``` für beide Kodierer; ohne diese Angabe muss
+    sie genau die Zeile sein, die merge aus ``uneinig`` und ``schlichtung_herkunft`` schriebe,
+    sonst stimmt das README nicht mit guete.json überein, und nichts wird geschrieben.
+    """
+    lines = text.split("\n")
+    found = [i for i, line in enumerate(lines) if line.startswith("- **Kodierer**:")]
+    if len(found) != 1:
+        raise SchemaError(f"README.md: {len(found)} Zeilen **Kodierer**, erwartet genau eine")
+    at = found[0]
+    expected = coders_line(int(quality["uneinig"]), quality.get("schlichtung_herkunft") or {})
+    if re.sub(r"Modell `[^`]*`, ", "", lines[at], count=1) != expected:
+        raise SchemaError(
+            "README.md: die Zeile **Kodierer** passt nicht zu guete.json (uneinig, "
+            "schlichtung_herkunft); merge schreibt beide neu"
+        )
+    lines[at] = expected
+    if at + 1 < len(lines) and lines[at + 1].startswith("- **Modelle**:"):
+        lines[at + 1] = models_line(models)
+    else:
+        lines.insert(at + 1, models_line(models))
+    return "\n".join(lines)
+
+
+def restate_project(settings: Settings, project: str) -> tuple[Path, str]:
+    """``georep validate restate``: Satz und Modellfelder neu, aus dem, was guete.json schon sagt.
+
+    Für die Labels bis zum 2026-11-26 (Frage 19): sie bleiben, wie sie sind, und ihre Seiten nennen
+    das Modell. Labels und Zahlen fasst der Lauf nicht an; ein zweiter Lauf ändert nichts.
+    """
+    paths = validation_paths(settings, project)
+    for path in (paths.quality, paths.readme):
+        if not path.is_file():
+            raise MissingInputError(f"{path} fehlt; `georep validate merge {project}` legt es an")
+    quality: dict[str, Any] = json.loads(paths.quality.read_text(encoding="utf-8"))
+    models = recorded_models(quality)
+    restated = restated_quality(quality, models)
+    readme_text = restated_readme(paths.readme.read_text(encoding="utf-8"), quality, models)
+    write_json(paths.quality, restated)
+    write_text(paths.readme, readme_text)
+    return paths.quality, str(restated["satz"])
 
 
 def write_labels(

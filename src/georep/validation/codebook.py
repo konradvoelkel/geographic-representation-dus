@@ -289,6 +289,14 @@ class ProvisionalRules(_Strict):
     adjudication_nested: str = (
         ""  # ein Feld der Schlichtung mit {Frage: Antwort} (Vorhaben 12: entscheid)
     )
+    # Statt der drei Antwortdateien eine Labeldatei der Messung in langer Form (Vorhaben 12 Runde
+    # 2, Vorhaben 16): je Zeile Schlüssel (key), frage, kodierer_a, kodierer_b, schlichtung, label,
+    # die Werte als JSON, leer wo nicht gestellt. A und B kommen aus kodierer_a und kodierer_b; eine
+    # Einheit mit einem Eintrag unter schlichtung bekommt eine Schlichtungszeile mit ihren Labels.
+    labels: str = ""
+    # herkunft dieser Schlichtungszeile, wo unter schlichtung ein Objekt mit "auswerter" steht: dort
+    # entschied der Auswerter nach dem Codebuch, nicht der Schlichter (Vorhaben 12, Runde 2)
+    labels_auditor: str = ""
 
 
 class Codebook(_Strict):

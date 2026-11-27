@@ -12,7 +12,7 @@ import pytest
 from georep.cli import main
 from georep.errors import SchemaError
 from georep.layout import Layout
-from georep.spans import SPAN_SCHEMA, sort_spans
+from georep.spans import SECTION_KIND, SPAN_SCHEMA, sort_spans
 from georep.validation.codebook import Codebook
 from georep.validation.tasks import Document, build_task, show_document
 from tests.validation_project import CODEBOOK, PROJECT, corpus_frame, make_project
@@ -231,6 +231,41 @@ def test_a_span_whose_value_is_not_its_text_names_both(
     assert main(args) == 1
     err = capsys.readouterr().err
     assert "'TEXT'" in err and "'text'" in err and "roh" in err
+
+
+def test_a_position_span_with_an_empty_value_is_shown(
+    antraege: dict[str, str], tmp_path: Path
+) -> None:
+    """F3: eine Positionsspanne (ein Abschnitt aus Vorhaben 11) hat ein leeres ``value``; ihren
+    Text liest man über die Stelle. ``tasks`` prüft wie ``check_spans(…, texts=…, positions=…)``
+    und bricht an ihr nicht ab (``docs/todo.md``, Punkt 14 (d))."""
+    spans = spans_frame([("d00", 0, 4, SECTION_KIND), ("d01", 4, 7, "wort")], antraege)
+    spans = spans.with_columns(
+        pl.when(pl.col("kind") == SECTION_KIND).then(pl.lit("")).otherwise("value").alias("value")
+    )
+    tasks = _tasks_with(tmp_path, spans)
+    assert tasks["d00"]["dokumente"][0]["spannen"] == [  # type: ignore[index]
+        {"start": 0, "end": 4, "text": "text"}
+    ]
+
+
+def test_an_empty_value_outside_the_position_spans_is_refused(
+    antraege: dict[str, str], tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Leer ist ``value`` nur bei einer Positionsspanne; sonst fehlt der Text, den F3 verlangt."""
+    spans = spans_frame([("d00", 0, 4, "wort")], antraege).with_columns(pl.lit("").alias("value"))
+    spans.write_parquet(tmp_path / "spannen.parquet")
+    args = [
+        "validate",
+        "tasks",
+        PROJECT,
+        "--coder",
+        "A",
+        "--spans",
+        str(tmp_path / "spannen.parquet"),
+    ]
+    assert main(args) == 1
+    assert "keine Positionsspanne" in capsys.readouterr().err
 
 
 SPAN_UNITS = (

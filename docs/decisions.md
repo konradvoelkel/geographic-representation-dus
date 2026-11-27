@@ -2577,6 +2577,28 @@ Die übertragenen Vorhaben liegen in eigenen Ordnern `<NN-name>-f4` neben den Or
 von 11 und 12 taten („66 - Amt" gleich „66-Amt"): das ist eine Entscheidung über die Frage, nicht
 über die Form, und gehört, wenn überhaupt, als Einstellung je Frage ins Codebuch.
 
+**Das Modell je Rolle und die Form des Satzes (F4-Nachzug V3, 2026-11-27).** Seit Konrads
+Antwort auf Frage 19 (2026-11-26) ist Kodierer B für neue Messungen ein anderes Modell als A und
+die Schlichtung. `merge` nimmt darum das Modell je Rolle (`--model-a`, `--model-b`,
+`--model-adjudicator`; `--model` bleibt die Kurzform für alle drei, eine eigene Angabe geht vor,
+und fehlt einer Rolle ihr Modell, ist es ein Bedienfehler). `guete.json` führt `modelle` mit
+`kodierer_a`, `kodierer_b` und `schlichtung` an der Stelle des früheren `modell`, das README eine
+Zeile **Modelle**. Der `satz` hat genau eine von zwei Formen:
+
+- A und B dasselbe Modell: „geprüft von zwei KI-Kodierern desselben Modells (claude-opus-5-5) an
+  600 Textstellen, nicht von Menschen";
+- zwei Modelle: „geprüft von zwei KI-Kodierern (claude-opus-5-5 und *B*) an 52 Dokumentpaaren,
+  Schlichtung durch claude-opus-5-5, nicht von Menschen".
+
+„Schlichtung durch …" steht, wo es Uneinigkeiten gab und die Schlichtung nicht das eine Modell
+aller drei Rollen ist; sind alle drei gleich, sagt „desselben Modells" es für die Schlichtung mit
+(so lauten alle Sätze der Labels bis zum 2026-11-26). Ohne Uneinigkeit nennt der Satz keine
+Schlichtung, weil keine stattfand; README und `guete.json` nennen ihr Modell trotzdem. Die Zahl der
+Einheiten steht vor der Schlichtung, „nicht von Menschen" immer am Ende, damit eine Seite den Satz
+unverändert übernimmt. Verworfen: der Satz ohne Modell (er sagt nicht, ob ein Modell sich selbst
+geprüft hat) und „geschlichtet von …" vor der Zahl (der Satz läse sich, als hätte die Schlichtung
+alle Einheiten geprüft).
+
 ## 72. Lokale Modelle über ollama: eine Naht mit Cache, Kennung im Stamp und Schalter (2026-11-23, Fundament F5)
 
 Drei Vorhaben des Plans zur Vorverarbeitung brauchen ein Sprach- oder Einbettungsmodell
@@ -4232,3 +4254,76 @@ beiden Fälle. Ein eigener Schritt je Abschnitt, der ein HTML-Stück schreibt, d
 einliest: eine Datei und ein Stamp mehr je Abschnitt für nichts, was die Eingaben im Stamp der
 Seite nicht schon leisten. Die Folge des Registers: sie hinge an der Merge-Reihenfolge. Ein Fehler,
 wenn die Zielseite in einem Profil fehlt: dann bräche jedes Profil, in dem der Gastgeber aus ist.
+
+## 87. Prüfsatz mit dem Modell je Rolle, die Labels von 12 Runde 2 und 16 im Format von F4, eine Prüfstichprobe der Rückfallregel (F4-Nachzug V3, 2026-11-27)
+
+Vorarbeit V3 des Plans [plan-zeigen-2026-11.md](plan-zeigen-2026-11.md) (§ 3, § 4) nach Konrads
+Antwort auf Frage 19 (2026-11-26): für neue Messungen ist Kodierer B ein anderes Modell als A und
+die Schlichtung, die bisherigen Labels bleiben, und jede Seite nennt, wie geprüft wurde. Die Nummer
+bekommt der Eintrag beim Merge.
+
+**Das Modell je Rolle** (`merge --model-a`, `--model-b`, `--model-adjudicator`; `--model` als
+Kurzform) und die Form des Satzes stehen in Punkt 71 (Nachtrag vom 2026-11-27). `guete.json` führt
+`modelle` an der Stelle von `modell`, das README eine Zeile **Modelle**.
+
+**Die bisherigen Labels bekommen Satz und Modellfelder aus dem, was `guete.json` schon sagt**
+(`georep validate restate`): das eine `modell` gilt für alle drei Rollen, und der Lauf schreibt nur
+`modelle`, `satz` und im README die Zeilen **Kodierer** und **Modelle**; jede andere Zeile und jeder
+andere Schlüssel bleibt an seiner Stelle. Die alte Zeile **Kodierer** muss ohne „Modell `M`," genau
+die sein, die merge aus `uneinig` und `schlichtung_herkunft` schriebe, sonst bricht der Lauf ab.
+Gelaufen über alle 15 Ordner mit `guete.json`; ein Test lässt ihn über den Stand im Repo laufen und
+verlangt Bytegleichheit. Verworfen: Modelle als Argumente des Laufs (er könnte dann Tatsachen
+ändern, nicht nur ihre Form; ein anderes Modell trägt `merge` ein) und das README ganz neu aus
+`guete.json` zu bauen (ältere READMEs stammen aus älteren Fassungen von `readme()` und änderten
+sich an Stellen, die mit den Modellen nichts zu tun haben).
+
+**Positionsspannen im Kodierauftrag** (`docs/todo.md`, Punkt 14 (d)): `tasks` prüft `value` wie
+`check_spans(…, texts=…, positions=…)`, leer nur bei den Abschnitten aus Vorhaben 11; die eigene
+Prüfung bleibt, weil ihre Meldung beide Texte und den Extraktor nennt.
+
+**Die Labels von 12 Runde 2 und von 16 kommen aus den Labeldateien der Messungen im Repo**
+(`validate import` mit `[provisional] labels`: `labels-2.csv`, `labels.csv`, Werte als JSON), nicht
+aus den lokalen Antwortdateien wie bei Runde 1 von 12. So rechnet ein Test in CI die Zahlen der
+Messdokumente aus Dateien im Repo nach (12 § 4.4: Art 360/360, Grenzen 354/357 α 0,939, Norm
+340/357 α 0,952; 16 § 4.1 und § 4.4: `bezug` 195/200 α 0,917 und 99/100 α 0,974, „handelt von"
+hochgerechnet 0,821 und 0,783), und jedes Endlabel gleicht dem der Messung. Ein Objekt mit
+`auswerter` in der Spalte `schlichtung` ist ein Entscheid des Auswerters und zählt als `herkunft`
+(12-2-0001). Die beiden Runden von 16 sind zwei Ordner (`16-ortsbezug-f4`, `16-ortsbezug-2-f4`),
+weil ihre Codebücher verschieden sind (§ 2 von validierung.md); in `12-kennungen-2-f4` tragen die
+Schichten „neu" und „alt" ihre Artgruppe davor, weil derselbe Name in mehreren Arten mit
+verschiedener Größe steht. Verworfen: ein Ordner für beide Runden von 16 (zwei Codebuchfassungen
+in einer Antwortdatei weist `merge` ab, und die Gewichte gehören je Ziehung); die Recall-Dokumente
+von 12 Runde 2 mitzunehmen (F4 wertet Markierungen noch nicht aus, § 6). Was F4 nicht rechnet,
+bleibt in den Messskripten: die Präzision je Art von 12 und das F1 der Regel von 16.
+
+**Die Prüfstichprobe der Rückfallregel von 14** (`14-vorgaenge-3-f4`, Messdokument § 4.3, vorab
+in einem eigenen Commit): 50 starke Kanten der Hauptperiode, proportional nach der Fundstelle
+(Titel 43, Nachtrag 4, Sammelbericht 2, Anlage 1), Codebuch Fassung .2 mit dem Material von F4,
+kodiert nach der neuen Regel. Proportional, weil die Frage 9.18 das Intervall der ganzen Regel
+schließen soll; verworfen: gleich viele je Fundstelle (Kishs
+n_eff 17, die untere Grenze bliebe auch ohne Fehler bei 0,817) und alle vier Datensätze in einer
+Stichprobe (`validate tasks` liest die Dokumente eines Profils; die Nachbarperioden heißen auf der
+Seite „explorativ"). Sie ist die erste Messung mit Kodierer B auf einem anderen Modell (A und
+Schlichtung `claude-opus-5-5`, B `claude-sonnet-5-5`); ihr Prüfsatz in `guete.json` lautet
+„geprüft von zwei KI-Kodierern (claude-opus-5-5 und claude-sonnet-5-5) an 50 Dokumentpaaren,
+Schlichtung durch claude-opus-5-5, nicht von Menschen". Ergebnis: 50 von 50, α von `selbe_sache`
+mangels Streuung nicht definiert und nach Entscheidung des Supervisors als vollständige
+Übereinstimmung erfüllt (Messdokument § 4.3).
+
+**Volle Einigkeit genügt, wo α nicht definiert ist** (Supervisor, 2026-11-27, nach dieser
+Messung; die Regel gehört nach F4, nicht in den Bau einer Seite). Urteilen beide Kodierer an jeder
+Einheit, bei der die Frage gestellt war, gleich und mit demselben Wert, ist die erwartete
+Uneinigkeit null und α nicht definiert; beobachtet ist aber volle Übereinstimmung, und einen
+Zufallsabgleich gibt es nicht. Dann ist `alpha_genuegt = true` mit dem Vermerk `alpha_vermerk`
+„volle Einigkeit, α nicht definiert" in `guete.json` und im README (`merge.unanimous`, von `merge`
+und `score` gleich geschrieben). Genug Einheiten heißt: die untere Wilson-Grenze der
+Übereinstimmung, n/(n + 1,96²), erreicht `validation.min_alpha`, bei 0,8 ab 16; so trägt die Regel
+dieselbe Schwelle wie α und keine neue Zahl. Jedes andere undefinierte α (keine paarbare Einheit,
+zu wenige, eine Einheit nur von einem Kodierer, Markierungen ohne eine einzige) genügt weiter
+nicht. Verworfen: die Ausnahme nur auf der Seite (dann sagte `guete.json` etwas anderes als die
+Seite) und volle Einigkeit an beliebig wenigen Einheiten (9 von 9 hat eine untere Wilson-Grenze von
+0,70). Gelaufen ist sie für `14-vorgaenge-3-f4` (erneuter merge und score: nur `alpha_genuegt` und
+der Vermerk bei `selbe_sache` und die Zeile im README änderten sich). Ein neuer `score` über alle
+Ordner im Kratzordner zeigt nur einen weiteren, den die Regel ändert: `11-struktur-f4`,
+`bv_mehrteilig` (114 von 114, alle „nein"); dort ist `score` nicht neu gelaufen, weil er auch
+Felder nachtrüge, die spätere Fassungen von `score` schreiben.

@@ -34,14 +34,60 @@ CONVERTED = sorted(p.parent.name for p in VALIDATION.glob("*-f4/codebuch.toml"))
 
 @pytest.mark.parametrize("folder", CONVERTED, ids=str)
 def test_every_codebook_in_the_repository_is_valid(folder: str) -> None:
-    """Jedes Codebuch unter validierung/ ist im Format von F4 und passt zu seiner Stichprobe."""
+    """Jedes Codebuch unter validierung/ ist im Format von F4 und passt zu seiner Stichprobe.
+
+    Ein Codebuch darf vor seiner Stichprobe im Repo stehen: Codebuch, Seed und Kriterium werden
+    vorab in einem eigenen Commit festgelegt (14-vorgaenge-3-f4, Messdokument 14, § 4.3)."""
     codebook = load_codebook(VALIDATION / folder / "codebuch.toml", folder)
     paths = ValidationPaths(folder, VALIDATION / folder, Path("/nirgends"))
+    if not paths.sample.is_file():
+        return
     sample = read_sample(paths, codebook)
     assert (
         sample.height == codebook.sample.size
         and sample.get_column("id").n_unique() == sample.height
     )
+
+
+# Jedes Vorhaben mit Labels: guete.json von merge, dazu README und die Labels.
+QUALITY = sorted(p.parent.name for p in VALIDATION.glob("*/guete.json"))
+ROLES = ("kodierer_a", "kodierer_b", "schlichtung")
+# Kodiert nach Frage 19 (Konrad, 2026-11-26): Kodierer B ein anderes Modell als A und die
+# Schlichtung. Alle übrigen Labels kodierten und schlichteten Agenten desselben Modells.
+TWO_MODELS = {"14-vorgaenge-3-f4": ("claude-opus-5-5", "claude-sonnet-5-5", "claude-opus-5-5")}
+
+
+@pytest.mark.parametrize("folder", QUALITY, ids=str)
+def test_every_quality_file_names_the_model_of_each_role(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, folder: str
+) -> None:
+    """Frage 19: alle Labels bis zum 2026-11-26 kodierten und schlichteten Agenten desselben
+    Modells, die Messungen danach mit B auf einem anderen Modell (``TWO_MODELS``). ``restate``
+    hat Satz und Modellfelder in die Form von Punkt 71 gebracht; ein Lauf über den Stand im Repo
+    ändert kein Byte, auch nicht an Labels und Zahlen (V3, Punkt 2)."""
+    source = VALIDATION / folder
+    files = ["guete.json", "README.md", *(p.name for p in source.glob("labels*.csv"))]
+    target = tmp_path / "repo" / "validierung" / folder
+    target.mkdir(parents=True)
+    for name in files:
+        shutil.copy(source / name, target / name)
+    (tmp_path / "repo" / "settings.toml").write_text(
+        f'data_root = "{tmp_path / "data"}"\n'
+        f'validation.root = "{tmp_path / "repo" / "validierung"}"\n',
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path / "repo")
+    assert main(["validate", "restate", folder]) == 0
+    for name in files:
+        assert (target / name).read_bytes() == (source / name).read_bytes(), name
+    quality: dict[str, Any] = json.loads((source / "guete.json").read_text(encoding="utf-8"))
+    a, b, s = TWO_MODELS.get(folder, ("claude-opus-5-5",) * 3)
+    assert quality["modelle"] == dict(zip(ROLES, (a, b, s), strict=True))
+    assert "modell" not in quality
+    coders = f"desselben Modells ({a})" if a == b else f"({a} und {b})"
+    assert quality["satz"].startswith(f"geprüft von zwei KI-Kodierern {coders} an ")
+    readme = (source / "README.md").read_text(encoding="utf-8")
+    assert f"- **Modelle**: Kodierer A `{a}`, Kodierer B `{b}`, Schlichtung `{s}`." in readme
 
 
 def _copy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, project: str) -> Path:
@@ -125,6 +171,90 @@ def test_score_recomputes_the_agreement_of_project_11(
     assert round(questions["sitzung"]["krippendorff_alpha"], 2) == 0.99
 
 
+@pytest.mark.parametrize(
+    ("project", "measurement", "agreement", "share"),
+    [
+        # docs/plans/12-kennungen.md § 4.4: Art 360/360 (α 1,000), Grenzen 354/357 (α 0,939),
+        # Norm 340/357 (α 0,952); die Präzision je Art rechnet das Messskript, nicht F4
+        (
+            "12-kennungen-2-f4",
+            "12-kennungen",
+            {"art": (360, 360, 1.0), "grenzen": (354, 357, 0.939), "norm": (340, 357, 0.952)},
+            None,
+        ),
+        # docs/plans/16-ortsbezug.md § 4.1: bezug 195/200 (α 0,917), Begriffe 200/200; unsicher
+        # A 22, B 28, beide 15, also 180 gleich; Belegzeile ohne Label in 26; handelt von je
+        # Schicht 73/75, 40/49, 51/76, hochgerechnet 0,821
+        (
+            "16-ortsbezug-f4",
+            "16-ortsbezug",
+            {
+                "bezug": (195, 200, 0.917),
+                "begriffe_kein_bezug": (200, 200, 1.0),
+                "unsicher": (180, 200, None),
+                "beleg_zeile": (174, 200, None),
+            },
+            ({"titel_betreff": 73, "kern": 40, "begleit_rest": 51}, 0.821),
+        ),
+        # § 4.4: bezug 99/100 (α 0,974), Begriffe 100/100; unsicher A 11, B 8, beide 6, also 93
+        # gleich; Belegzeile ohne Label in 16; handelt von 32/34, 23/32, 22/34, hochgerechnet 0,783
+        (
+            "16-ortsbezug-2-f4",
+            "16-ortsbezug",
+            {
+                "bezug": (99, 100, 0.974),
+                "begriffe_kein_bezug": (100, 100, 1.0),
+                "unsicher": (93, 100, None),
+                "beleg_zeile": (84, 100, None),
+            },
+            ({"titel_betreff": 32, "kern": 23, "begleit_rest": 22}, 0.783),
+        ),
+    ],
+)
+def test_import_from_the_labels_of_a_measurement_rebuilds_its_numbers(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    project: str,
+    measurement: str,
+    agreement: dict[str, tuple[int, int, float | None]],
+    share: tuple[dict[str, int], float] | None,
+) -> None:
+    """V3, Punkt 4: aus den Labeldateien der Messungen (``validierung/<messung>/labels*.csv``, im
+    Repo) rechnen ``import``, ``merge`` und ``score`` die Zahlen der Messdokumente nach; Labels und
+    guete.json sind die im Repo, bis auf das Datum des Laufs."""
+    target = tmp_path / "repo" / "validierung" / project
+    target.mkdir(parents=True)
+    for name in ("codebuch.toml", "stichprobe.csv", "stichprobe.json"):
+        shutil.copy(VALIDATION / project / name, target / name)
+    (tmp_path / "repo" / "settings.toml").write_text(
+        f'data_root = "{tmp_path / "data"}"\n'
+        f'validation.root = "{tmp_path / "repo" / "validierung"}"\n'
+        f'validation.coding_root = "{tmp_path / "lokal"}"\n',
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path / "repo")
+    source = VALIDATION / measurement
+    assert main(["validate", "import", project, "--from", str(source)]) == 0
+    assert main(["validate", "merge", project, "--model", "claude-opus-5-5"]) == 0
+    assert main(["validate", "score", project]) == 0
+    assert (target / "labels.csv").read_bytes() == (
+        VALIDATION / project / "labels.csv"
+    ).read_bytes()
+    quality: dict[str, Any] = json.loads((target / "guete.json").read_text(encoding="utf-8"))
+    committed = json.loads((VALIDATION / project / "guete.json").read_text(encoding="utf-8"))
+    assert quality | {"datum": committed["datum"]} == committed
+    for question, (agreed, both, alpha) in agreement.items():
+        found = quality["fragen"][question]
+        assert (found["einig"], found["beide"]) == (agreed, both), question
+        if alpha is not None:
+            assert round(found["krippendorff_alpha"], 3) == alpha, question
+    if share is not None:
+        strata, weighted = share
+        hits = quality["fragen"]["bezug"]["treffer"]
+        assert {s: v["treffer"] for s, v in hits["je_schicht"].items()} == strata
+        assert round(hits["grundgesamtheit"]["schaetzer"], 3) == weighted
+
+
 def test_score_recomputes_the_agreement_of_project_12(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -174,3 +304,15 @@ def test_score_recomputes_the_agreement_of_project_17(
     for question, alpha in (("thema", 0.957), ("ebene", 0.928)):
         assert questions[question]["einig"] == 96, question
         assert round(questions[question]["krippendorff_alpha"], 3) == alpha, question
+
+
+def test_full_agreement_counts_in_the_check_sample_of_14() -> None:
+    """Messdokument 14, § 4.3: beide Kodierer sagten bei allen 50 Kanten „dieselbe Sache"; α ist
+    nicht definiert, die volle Einigkeit genügt (Supervisor, 2026-11-27), und guete.json sagt es."""
+    quality = json.loads((VALIDATION / "14-vorgaenge-3-f4" / "guete.json").read_text("utf-8"))
+    found = quality["fragen"]["selbe_sache"]
+    assert (found["einig"], found["beide"], found["n"]) == (50, 50, 50)
+    assert found["krippendorff_alpha"] is None and found["alpha_genuegt"] is True
+    assert found["alpha_vermerk"] == "volle Einigkeit, α nicht definiert"
+    others = {q: v for q, v in quality["fragen"].items() if q != "selbe_sache"}
+    assert all("alpha_vermerk" not in v and v["alpha_genuegt"] for v in others.values())

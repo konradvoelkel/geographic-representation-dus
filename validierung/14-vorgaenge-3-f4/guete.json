@@ -1,0 +1,157 @@
+{
+  "vorhaben": "14-vorgaenge-3-f4",
+  "codebuch_version": "2026-11-27.1",
+  "einheit": "pair_with_span",
+  "modelle": {
+    "kodierer_a": "claude-opus-5-5",
+    "kodierer_b": "claude-sonnet-5-5",
+    "schlichtung": "claude-opus-5-5"
+  },
+  "datum": "2026-11-27",
+  "einheiten": 50,
+  "uneinig": 1,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "nummer_gemeint": {
+      "n": 50,
+      "beide": 50,
+      "einig": 50,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9286524008666414,
+        1.0
+      ],
+      "cohen_kappa": 1.0,
+      "krippendorff_alpha_nominal": 1.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 1.0,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "ja": 46,
+        "nein": 0,
+        "keine_fundstelle": 4
+      },
+      "treffer": null
+    },
+    "selbe_sache": {
+      "n": 50,
+      "beide": 50,
+      "einig": 50,
+      "anteil": 1.0,
+      "anteil_wilson95": [
+        0.9286524008666414,
+        1.0
+      ],
+      "cohen_kappa": null,
+      "krippendorff_alpha_nominal": null,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": null,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "alpha_vermerk": "volle Einigkeit, α nicht definiert",
+      "labels": {
+        "ja": 50,
+        "nein": 0,
+        "unklar": 0
+      },
+      "treffer": {
+        "positiv": [
+          "ja"
+        ],
+        "stichprobe": {
+          "treffer": 50,
+          "gewertet": 50,
+          "ignoriert": 0,
+          "anteil": 1.0,
+          "wilson95": [
+            0.9286524008666414,
+            1.0
+          ]
+        },
+        "grundgesamtheit": {
+          "schaetzer": 1.0,
+          "wilson95_kish": [
+            0.9284994384390975,
+            1.0
+          ],
+          "n_eff": 49.884816006141556,
+          "n": 1710,
+          "selbstgewichtend": false
+        },
+        "je_schicht": {
+          "anlage": {
+            "treffer": 1,
+            "gewertet": 1,
+            "schicht_n": 43,
+            "anteil": 1.0,
+            "wilson95": [
+              0.20654931437723745,
+              1.0
+            ]
+          },
+          "nummer": {
+            "treffer": 4,
+            "gewertet": 4,
+            "schicht_n": 124,
+            "anteil": 1.0,
+            "wilson95": [
+              0.5101091635454027,
+              1.0
+            ]
+          },
+          "sammelbericht": {
+            "treffer": 2,
+            "gewertet": 2,
+            "schicht_n": 63,
+            "anteil": 1.0,
+            "wilson95": [
+              0.34238022750665303,
+              1.0
+            ]
+          },
+          "titel": {
+            "treffer": 43,
+            "gewertet": 43,
+            "schicht_n": 1480,
+            "anteil": 1.0,
+            "wilson95": [
+              0.9179901967742088,
+              1.0
+            ]
+          }
+        }
+      }
+    },
+    "beziehung": {
+      "n": 50,
+      "beide": 50,
+      "einig": 49,
+      "anteil": 0.98,
+      "anteil_wilson95": [
+        0.8950455641036219,
+        0.9964607407283539
+      ],
+      "cohen_kappa": 0.9601910828025477,
+      "krippendorff_alpha_nominal": 0.9605734767025089,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.9605734767025089,
+      "markierungen": null,
+      "alpha_genuegt": true,
+      "labels": {
+        "antwort": 1,
+        "nachfrage": 2,
+        "umsetzung": 33,
+        "aenderung": 13,
+        "fortsetzung": 1,
+        "bezug": 0,
+        "kein_bezug": 0,
+        "unklar": 0
+      },
+      "treffer": null
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern (claude-opus-5-5 und claude-sonnet-5-5) an 50 Dokumentpaaren, Schlichtung durch claude-opus-5-5, nicht von Menschen",
+  "selbstgewichtend": false
+}

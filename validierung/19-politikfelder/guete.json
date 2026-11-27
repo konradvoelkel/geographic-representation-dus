@@ -2,7 +2,11 @@
   "vorhaben": "19-politikfelder",
   "codebuch_version": "2026-11-23.1",
   "einheit": "document",
-  "modell": "claude-opus-5-5",
+  "modelle": {
+    "kodierer_a": "claude-opus-5-5",
+    "kodierer_b": "claude-opus-5-5",
+    "schlichtung": "claude-opus-5-5"
+  },
   "datum": "2026-11-24",
   "einheiten": 300,
   "uneinig": 15,
@@ -1212,7 +1216,7 @@
       }
     }
   },
-  "satz": "geprüft von zwei KI-Kodierern an 300 Dokumenten, nicht von Menschen",
+  "satz": "geprüft von zwei KI-Kodierern desselben Modells (claude-opus-5-5) an 300 Dokumenten, nicht von Menschen",
   "selbstgewichtend": false,
   "vorhersage": {
     "datei": "pred_weg3b_test.parquet",
