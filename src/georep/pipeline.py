@@ -117,7 +117,7 @@ from georep.report.build import (
     report_fingerprint,
 )
 from georep.report.geometry import district_shapes
-from georep.report.pages import Page, build_page, pages_for
+from georep.report.pages import Page, build_page, page_inputs, pages_for, sections_for
 
 # Punkt 45: nur die zwei Zahlen, nicht die Modelle -- ``analysis.topics`` und
 # ``analysis.committees`` bringen sklearn mit und werden erst im Schritt importiert.
@@ -1081,17 +1081,28 @@ def build_steps(
     contributed_early = contributed_early_steps(settings, layout, contributed_http)
     contributed = contributed_steps(settings, layout, contributed_http)
 
+    attached = sections_for(settings)  # Vorarbeit V1: Abschnitte fremder Beiträge je Seite
+
     def page_step(page: Page) -> Step:
-        """Fundament F2: eine Unterseite, gebaut hinter ``report`` mit demselben Vorlagen-Hash."""
+        """Fundament F2: eine Unterseite, gebaut hinter ``report`` mit demselben Vorlagen-Hash.
+
+        Vorarbeit V1: mit den Abschnitten fremder Beiträge, deren Eingaben im Stamp mitzählen.
+        """
+        sections = attached.get(page.name, ())
 
         def run() -> str:
             return build_page(
-                layout, settings, page, now=dt.datetime.now(dt.UTC), commit=current_commit()
+                layout,
+                settings,
+                page,
+                sections,
+                now=dt.datetime.now(dt.UTC),
+                commit=current_commit(),
             )
 
         return Step(
             f"page_{page.name}",
-            page.inputs(layout, settings),
+            page_inputs(layout, settings, page, sections),
             (page.output(layout),),
             run,
             extra=report_fingerprint(settings),

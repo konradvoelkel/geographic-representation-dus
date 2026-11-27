@@ -25,6 +25,11 @@ Wo die Beiträge landen:
   späterer schreibt, oder wenn zwei Schritte dieselbe Datei schreiben.
 * ``tables`` — veröffentlichte Tabellen, hinter denen des Kerns (``report.tables.published``).
 * ``pages`` — Unterseiten neben ``index.html`` (``report.pages``), je ein Schritt nach ``report``.
+* ``sections`` — Abschnitte auf der Unterseite eines **anderen** Beitrags (``report.pages.PageSection``:
+  Zielseite, Name, Rang, Eingaben, Daten; Vorarbeit V1), etwa 26 auf ``vorgaenge.html`` von 14. Die
+  Seite zeigt sie nach ihrem eigenen Inhalt, nach Rang, nie nach der Folge hier; ihr Schritt
+  ``page_<name>`` liest ihre Eingaben mit. Wird die Zielseite in einem Profil nicht gebaut, entfällt
+  der Abschnitt mit einer Zeile im Log.
 
 ``pipeline`` und ``report.tables`` lesen das Register erst beim Aufruf (Import in der Funktion):
 die Beiträge bauen ``pipeline.Step`` und ``report.tables.PublishedTable``, und ein Import auf
@@ -46,7 +51,7 @@ if TYPE_CHECKING:
     from georep.http import Transport
     from georep.layout import Layout
     from georep.pipeline import Step
-    from georep.report.pages import Page
+    from georep.report.pages import Page, PageSection
     from georep.report.tables import PublishedTable
     from georep.settings import Settings
 
@@ -79,6 +84,9 @@ class Contribution:
     # Nachzug F2 (Synergien 2026-11, Konflikt 6): Schritte vor ``weights``. Am Ende, damit kein
     # Aufruf mit Positionen seine Bedeutung ändert.
     early_steps: Callable[[Settings, Layout, Transport], list[Step]] = no_steps
+    # Vorarbeit V1 (docs/plan-zeigen-2026-11.md, § 4): Abschnitte auf der Unterseite eines anderen
+    # Beitrags. Am Ende aus demselben Grund wie ``early_steps``.
+    sections: tuple[PageSection, ...] = ()
 
 
 # Je Vorhaben eine Zeile, in der Reihenfolge der Abhängigkeiten (Plan, § 3). Die Importe stehen hier

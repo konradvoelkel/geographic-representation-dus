@@ -4119,3 +4119,116 @@ Quelle, gleiche Forderungen zum selben Haushaltsposten), dazu optional Einbettun
 als zweite Kandidatenquelle und die Musteranträge der kommunalpolitischen Vereinigungen als Korpus,
 um Vorlage und Wiederholung zu trennen (Messdokument, Fragen 23.2, 23.4). Die lokale Ausrichtung
 bleibt als Werkzeug im Messskript, etwa für Vorhaben 25.
+
+## NN. Abschnitte aus fremden Beiträgen: ein Feld am Beitrag, Folge nach Rang, eine fehlende Zielseite entfällt mit einer Zeile im Log (Vorarbeit V1, 2026-11-27)
+
+Vorarbeit V1 aus `docs/plan-zeigen-2026-11.md`, § 4, der F2-Nachzug, den die Synergien 2026-11
+(§ 1, „Unterseiten, die mehrere Vorhaben füllen") vor Stufe 3 von 23, 24 und 26 bis 28 verlangt
+haben. Gebaut auf `fund/V1-abschnitte` ab `main` `b5d7038` (`v0.32.1`). Die Nummer bekommt der
+Eintrag beim Merge.
+
+**Das Problem.** F2 (Punkt 69) kennt nur die Seite eines Beitrags: `Contribution.pages` trägt
+`report.pages.Page`, und deren Vorlage schreibt der Beitrag selbst. 26 soll drei Abschnitte auf
+`vorgaenge.html` von 14 zeigen, 28 (später 24 und 27) einen auf `akteure.html` von 15. Ohne Nachzug
+hätte 26 die Seite von 14 ändern müssen, also genau die fremde Datei, die das Register vermeiden
+soll.
+
+**Die Lösung.** `Contribution.sections` ist ein Tupel von `report.pages.PageSection` mit Zielseite
+(`page`, ein `Page.name`), Name, Rang, Eingaben, Daten, optionalem Schalter und erlaubten Links; das
+Feld steht am Ende der Dataclass wie `early_steps` (Punkt 74). Die Vorlage liegt unter
+`templates/pages/<seite>/<name>.html.j2`, daneben optional `<name>.css` und `<name>.js`; der Pfad
+folgt aus Seite und Name, wie bei `Page`, darum steht er nicht als Feld da.
+
+- `sections_for(settings)` gibt die Abschnitte je gebauter Seite zurück, nach Rang aufsteigend, bei
+  gleichem Rang nach Name, nie nach der Folge des Registers. Die folgt der Merge-Reihenfolge
+  (Synergien, § 2.1) und soll auf der Seite nicht zu sehen sein.
+- Der Rahmen `templates/page.html.j2` bindet die Abschnitte nach dem eigenen Inhalt der Seite ein,
+  in `<main>`, jeden in `<section id="<name>">` und mit seinen eigenen Daten als `data`
+  (`{% with %}`), sodass er die Daten der Seite nicht sieht und seine Vorlage nicht an deren Namen
+  hängt. Ihr CSS steht hinter dem der Seite, ihr JavaScript ebenso, aber je Datei in einem eigenen
+  `<script>` (Review N2): ein Fehler im Skript eines Gasts hält das der Seite und der übrigen Gäste
+  nicht an. Die Hauptseite fasst das JavaScript ihrer Abschnitte weiter in einem Block zusammen und
+  bleibt, wie sie ist. CSS und JavaScript liest `render_page` jetzt über den Jinja-Loader statt über
+  `importlib.resources`, damit die Testnaht `env` auch sie trägt; für die Dateien im Paket ist das
+  derselbe Inhalt, auch bei den Zeilenenden: `\r\n` und `\r` werden `\n` wie bei `read_text`
+  (Review N3; der Loader liest Bytes, und eine CSS-Datei mit CRLF änderte die Seite um 4 Byte).
+- **Gastgeber und Gast wissen voneinander** (Review K1). 15 verlinkt auf den Abschnitt, den 28
+  anhängt (`docs/plans/15-funktion.md`, § 7, Konkordanz), und 26 ersetzt auf der Seite von 14 den
+  Hinweis „Antworten stehen in der Niederschrift" (`docs/plans/26-beschluesse.md`, § 7). Darum sieht
+  die Vorlage der Seite `guests`, die Namen ihrer Gäste in diesem Profil, und die Zusage dazu: steht
+  ein Name darin, gibt es `#<name>` auf der Seite. Der Link oder der Hinweis hängt an
+  `{% if "<name>" in guests %}`. Der Anker steht auch, wenn der Gast mit leeren Daten nichts zeigt,
+  damit ein Link nie ins Leere geht. Dass jeder Anker genau einmal vorkommt, also mit keiner ID der
+  Seite, des Rahmens (`docs`, `tooltip`) oder des Gasts selbst kollidiert, ist eine Nachbedingung
+  von `render_page`.
+- Der Schritt `page_<name>` liest die Eingaben seiner Abschnitte mit (`page_inputs`, jede Datei
+  einmal), und die Vorlagen unter `templates/pages/` zählen über `report_fingerprint` ohnehin im
+  Stamp mit (Punkt 53). Die Seite erlaubt die Links ihrer Abschnitte zu den eigenen.
+- **Verträge.** Unabhängig vom Profil prüft `section_problems` das Register: ein Ziel, das keine
+  registrierte Seite ist, und ein Rang oder Name, den zwei Abschnitte derselben Seite teilen, sind
+  ein `SectionError` beim Aufbau der Schritte, mit Beitrag und Abschnitt in der Meldung. Ein Test
+  prüft das echte Register, ein zweiter, dass jede Vorlage dort im Paket liegt und mit
+  `{% if data.` beginnt (Review N5; `data` trägt den Schlüssel immer, denn unter `StrictUndefined`
+  ist ein fehlender Schlüssel ein Fehler, kein falscher Wert). `order_sections` trägt dieselbe Eindeutigkeit als `deal.pre` und die Folge als
+  `deal.ensure`. Verwaiste Dateien unter `templates/pages/` sind ein `SchemaError`, wie bei den
+  Abschnitten der Hauptseite (Review N4, `check_page_files`): ein `.css` oder `.js` ohne Vorlage
+  gleichen Namens, ein Ordner `<seite>/` oder eine Vorlage `<seite>.html.j2` ohne registrierte
+  Seite, eine Vorlage im Ordner ohne registrierten Abschnitt.
+- **Profil.** Wird die Zielseite in einem Profil nicht gebaut, weil ihr Schalter aus ist, entfällt
+  der Abschnitt mit einer Zeile im Log (`INFO`, Name, Beitrag, Seite und Profil) und ohne Fehler.
+  Ein Abschnitt mit eigenem abgeschaltetem Schalter fehlt still, wie eine abgeschaltete Seite.
+  `enabled` und `inputs` folgen den Schaltern der eigenen Schritte (Review N1): ist der Schritt
+  eines Gasts in einem Profil aus, bleibt der Gast nach Plan § 6 („jede Seite sagt, was in diesem
+  Profil fehlt") an, `inputs` ist leer, und `data` sagt, was fehlt. Ein Test über das echte
+  Register und alle fünf Paketprofile prüft, dass jede Eingabe jedes `page_*` ein früherer Schritt
+  schreibt (kein Modellschritt) oder schon ein Schritt davor liest, also `bootstrap` sie bringt;
+  heute ohne Seiten, ein Probefall zeigt, dass er einen Gast ohne Schreiber findet.
+
+*Warum ein Rang, der je Seite eindeutig sein muss, und dennoch der Name als zweite Stufe.* Teilen
+sich zwei Vorhaben einen Rang, entschiede sonst der Name, den keiner von beiden mit Blick auf den
+anderen gewählt hat; der Fehler macht den Konflikt beim Merge sichtbar. Der Name im Schlüssel hält
+die Folge nur dort fest, wo die Prüfung nicht vorausgeht (`order_sections` allein, mit
+abgeschalteten Verträgen).
+
+*Warum ein Fehler für ein unbekanntes Ziel, aber nur eine Logzeile für eine abgeschaltete Seite.*
+Welche Unterseite in welchem Profil erscheint, hängt am Schalter ihres Beitrags (Plan, § 6: in
+2014–2020 und in der laufenden Periode gibt es nur `akteure`, `vorgaenge` und `zeit`); das ist
+erwartet. Ein Zielname, den keine Seite im Register trägt, ist ein Tippfehler und sähe im Lauf
+genauso aus.
+
+**Geprüft.**
+
+- Tests: `tests/unit/test_report_page_sections.py` mit einer Seite und Abschnitten, deren Vorlagen
+  nur ein `DictLoader` der Tests kennt (Register, Folge, Log, Fehler, Stamp, Schritt, Rahmen, CSS
+  und JavaScript, Links; nach dem Review: Anker und `guests`, Eingaben je Paketprofil, ein Skript
+  je Datei, Zeilenenden, verwaiste Dateien, `{% if data.`, Folge von CSS und JavaScript);
+  `tests/property/test_page_sections_props.py` (hypothesis): für jede Verteilung von Abschnitten
+  auf Beiträge und jede Folge der Beiträge und der Abschnitte darin dieselben Abschnitte je Seite,
+  nach Rang aufsteigend.
+- Rahmen ohne Abschnitte bytegleich: eine Probeseite ohne Abschnitte, mit `main` `b5d7038` und mit
+  diesem Stand gerendert, ist in beiden Fällen dieselbe Datei (27 154 Byte, `cmp` ohne Abweichung);
+  nach Runde 2 des Reviews ebenso eine Probeseite mit eigenem CSS und JavaScript, auf A aus dem
+  Paket gelesen, auf B über den Loader (27 258 Byte).
+- A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66 (`scripts/ab_bau.sh`,
+  `scripts/ab_vergleich.py`), `POLARS_MAX_THREADS=4 OMP_NUM_THREADS=2`, A aus `main` `b5d7038`,
+  B aus dem Baum dieses Eintrags, Wurzeln `ab/V1-a` und `ab/V1-b` auf xtraspace, die fünf Profile
+  mit `bootstrap` und `run`, dann `publish --strict-budget`; nach Runde 2 des Reviews B noch einmal
+  aus `30331e4` in frischer Wurzel `ab/V1-b2`, gegen dasselbe A, mit denselben Zahlen. Unter
+  `site/` 235 Dateien in beiden, 0 Abweichungen. Über die ganzen Datenwurzeln 932 Dateien in
+  beiden; abweichend sind nur 117 Stamps: 109 allein in der Zeit `written`, 6 dazu in `extra` (der
+  Stamp von `index.html` der vier Profile mit Seite und seine Kopien in den beiden Periodenordnern
+  der Stadtseite, weil `report_fingerprint` die geänderte Vorlage `page.html.j2` mitzählt) und 2 in
+  `inputs`, dort nur in der Wurzel der absoluten Pfade, mit denselben Hashes. Kein Beitrag trägt
+  einen Abschnitt; ändern kann sich erst etwas, wenn einer einträgt.
+
+**Verworfen.** Abschnitte in der `Page` des Gastgebers anmelden (`Page.sections`): dann änderte 26
+das Modul von 14, die Konfliktstelle, die F2 beseitigt hat. Eine Stelle für die fremden Abschnitte,
+die die Vorlage der Seite selbst setzt: jede Seite müsste ihre Gäste vorhersehen, und ein neuer Gast
+hieße, die Vorlage eines anderen anzufassen. Die Stelle ist darum fest, nach dem eigenen Inhalt; was
+die geplanten Gäste darüber hinaus brauchen, ist, dass der Gastgeber von ihnen weiß (der Link von 15
+auf 28, der Hinweis von 14, den 26 ersetzt), und das tragen `guests` und die Anker, nicht die Stelle.
+Die erste Fassung dieses Eintrags hielt die feste Stelle allein für genug; das Review (K1) fand die
+beiden Fälle. Ein eigener Schritt je Abschnitt, der ein HTML-Stück schreibt, das die Seite
+einliest: eine Datei und ein Stamp mehr je Abschnitt für nichts, was die Eingaben im Stamp der
+Seite nicht schon leisten. Die Folge des Registers: sie hinge an der Merge-Reihenfolge. Ein Fehler,
+wenn die Zielseite in einem Profil fehlt: dann bräche jedes Profil, in dem der Gastgeber aus ist.
