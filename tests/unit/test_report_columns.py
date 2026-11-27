@@ -32,6 +32,7 @@ _TH = re.compile(r"<th[^>]*>(.*?)</th>", re.S)
 _ROW = re.compile(r"<tr><td><code>(.*?)</code></td><td>(.*?)</td><td>(.*?)</td><td>(.*?)</td></tr>")
 _FOOTER = re.compile(r"<footer>.*?</footer>", re.S)
 _GENERATED = re.compile(r"Erzeugt am [^<]*")
+WBR = "<wbr>"  # die Stelle, an der ein Spaltenname umbrechen darf: hinter jedem Unterstrich
 
 
 def schema_tables(page: str) -> int:
@@ -92,9 +93,14 @@ def test_jede_tabelle_des_registers_hat_auf_spalten_ihren_abschnitt(
     assert [name for name in register if ids.count(name) != 1] == []
     assert _SECTION.findall(page) == register
     for name, columns in schema.items():
-        rows = [tuple(unescape(cell) for cell in row) for row in _ROW.findall(_section(page, name))]
+        found = _ROW.findall(_section(page, name))
+        rows = [tuple(unescape(cell.replace(WBR, "")) for cell in row) for row in found]
         expected = [(c["column"], c["dtype"], c["description"], c["unit"]) for c in columns]
         assert rows == expected, name
+        # Auf 390 px bricht ein Spaltenname nur hinter einem Unterstrich, nicht mitten im Wort
+        assert [row[0].count(WBR) for row in found] == [c["column"].count("_") for c in columns]
+        assert all(WBR not in cell for row in found for cell in row[1:])
+    assert "td:first-child code { overflow-wrap: normal; }" in page
 
 
 def test_jede_tabelle_der_downloads_verlinkt_ihren_abschnitt(

@@ -119,7 +119,7 @@ def test_every_district_download_and_column_is_on_the_page(page: str, model: Rep
     for download in DOWNLOADS:
         assert f'href="data/{download.name}"' in page and download.sha256 in page
     # Punkt 36: die Spalten stehen auf spalten.html, die Auswertung trägt kein Spaltenschema
-    columns = render_columns(model)
+    columns = render_columns(model).replace("<wbr>", "")  # Umbruch hinter jedem Unterstrich
     for column in model.columns:
         assert f"<code>{column.column}</code>" in columns
     assert schema_tables(page) == 0 and 'href="spalten.html"' in page

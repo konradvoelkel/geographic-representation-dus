@@ -10,6 +10,8 @@
 {# Punkt 36: das Verzeichnis der Tabellen in so vielen Spalten, wie die Breite trägt #}
 ul.tables { columns: 17em; column-gap: 1.5rem; padding-left: 1.2em; max-width: none; }
 ul.tables li { break-inside: avoid; }
+{# Ein Spaltenname bricht nur hinter einem Unterstrich (<wbr>), sonst stand auf 390 px „wahlkr eis_id“ #}
+td:first-child code { overflow-wrap: normal; }
 </style>
 </head>
 <body>
@@ -36,7 +38,7 @@ ul.tables li { break-inside: avoid; }
 <thead><tr><th scope="col">Spalte</th><th scope="col">Typ</th><th scope="col">Bedeutung</th><th scope="col">Einheit</th></tr></thead>
 <tbody>
 {% for c in model.columns if c.table == table %}
-<tr><td><code>{{ c.column }}</code></td><td>{{ c.dtype }}</td><td>{{ c.description }}</td><td>{{ c.unit }}</td></tr>
+<tr><td><code>{% for part in c.column.split("_") %}{{ part }}{% if not loop.last %}_<wbr>{% endif %}{% endfor %}</code></td><td>{{ c.dtype }}</td><td>{{ c.description }}</td><td>{{ c.unit }}</td></tr>
 {% endfor %}
 </tbody></table></div>
 </section>
