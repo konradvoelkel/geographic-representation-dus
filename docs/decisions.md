@@ -4170,6 +4170,12 @@ folgt aus Seite und Name, wie bei `Page`, darum steht er nicht als Feld da.
 - **Profil.** Wird die Zielseite in einem Profil nicht gebaut, weil ihr Schalter aus ist, entfällt
   der Abschnitt mit einer Zeile im Log (`INFO`, Name, Beitrag, Seite und Profil) und ohne Fehler.
   Ein Abschnitt mit eigenem abgeschaltetem Schalter fehlt still, wie eine abgeschaltete Seite.
+  `enabled` und `inputs` folgen den Schaltern der eigenen Schritte (Review N1): ist der Schritt
+  eines Gasts in einem Profil aus, bleibt der Gast nach Plan § 6 („jede Seite sagt, was in diesem
+  Profil fehlt") an, `inputs` ist leer, und `data` sagt, was fehlt. Ein Test über das echte
+  Register und alle fünf Paketprofile prüft, dass jede Eingabe jedes `page_*` ein früherer Schritt
+  schreibt (kein Modellschritt) oder schon ein Schritt davor liest, also `bootstrap` sie bringt;
+  heute ohne Seiten, ein Probefall zeigt, dass er einen Gast ohne Schreiber findet.
 
 *Warum ein Rang, der je Seite eindeutig sein muss, und dennoch der Name als zweite Stufe.* Teilen
 sich zwei Vorhaben einen Rang, entschiede sonst der Name, den keiner von beiden mit Blick auf den

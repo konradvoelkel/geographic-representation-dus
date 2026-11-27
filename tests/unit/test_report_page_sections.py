@@ -9,7 +9,7 @@ ihre Vorlagen in einem ``DictLoader``.
 from __future__ import annotations
 
 import datetime as dt
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import replace
 from importlib import resources
 from pathlib import Path
@@ -23,7 +23,7 @@ import georep.enrich
 import georep.report.pages
 from georep.enrich import CONTRIBUTIONS, Contribution
 from georep.layout import Layout
-from georep.pipeline import build_steps
+from georep.pipeline import Step, build_steps
 from georep.report.pages import (
     Page,
     PageSection,
@@ -35,7 +35,7 @@ from georep.report.pages import (
     sections_for,
 )
 from georep.report.render import environment
-from georep.settings import Settings
+from georep.settings import Settings, available_profiles, load_settings
 
 NOW = dt.datetime(2026, 11, 27, 12, 0, tzinfo=dt.UTC)
 OWN = '<p id="eigen">{{ data.n }}</p>\n'
@@ -247,6 +247,54 @@ def test_der_schritt_der_seite_liest_auch_die_eingaben_ihrer_abschnitte(
     # die Eingabe der Seite zuerst, dann die des Abschnitts; ``corpus`` liest auch ``zweiter``,
     # steht aber nur einmal im Stamp
     assert steps["page_probe"].inputs == (layout.corpus, layout.processed / "gast.parquet")
+
+
+def _unproduced_page_inputs(steps: Sequence[Step]) -> list[str]:
+    """Eingaben eines ``page_*``, die im Lauf niemand bereitstellt (Review N1).
+
+    Bereit ist, was ein früherer Schritt schreibt, außer einem Modellschritt (er läuft nur mit
+    ``--models``, auf Pages nie), und was schon ein früherer Schritt liest, ohne dass einer davor
+    es schreibt: das bringt ``bootstrap`` aus der Referenz oder einem Paket, sonst bräche schon
+    jener Schritt ab (``check_step_order`` schließt aus, dass ein späterer es schreibt). Eine
+    Datei, die erst die Seite liest und niemand schreibt, fehlt im Lauf, und ``page_*`` bricht ab.
+    """
+    written: set[Path] = set()
+    brought: set[Path] = set()
+    missing: list[str] = []
+    for step in steps:
+        if step.name.startswith("page_"):
+            missing.extend(
+                f"{step.name}: {path}"
+                for path in step.inputs
+                if path not in written and path not in brought
+            )
+            continue
+        brought.update(path for path in step.inputs if path not in written)
+        if step.models is None:
+            written.update(step.outputs)
+    return missing
+
+
+@pytest.mark.parametrize("profile", available_profiles())
+def test_jede_eingabe_jeder_unterseite_entsteht_im_lauf(tmp_path: Path, profile: str) -> None:
+    """Über das echte Register in jedem Paketprofil; heute ohne Seiten, er greift ab dem ersten Gast."""
+    settings = load_settings(profile=profile, cwd=Path("/nonexistent")).model_copy(
+        update={"data_root": tmp_path / "data", "cache_root": tmp_path / "cache"}
+    )
+    assert _unproduced_page_inputs(build_steps(settings, Layout.from_settings(settings))) == []
+
+
+def test_die_pruefung_der_eingaben_findet_einen_gast_ohne_schreiber(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``gast`` liest eine Datei, die kein Schritt schreibt; ``zweiter`` den Index des Kerns."""
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    index = layout.processed / "inverted_index.parquet"
+    fine = _section("zweiter", 20, inputs=lambda layout, settings: (index,))
+    _register(monkeypatch, _host(), Contribution("26-gast", sections=(_section(), fine)))
+    steps = build_steps(default_settings, layout)
+    assert index in {path for step in steps if step.name == "index" for path in step.outputs}
+    assert _unproduced_page_inputs(steps) == [f"page_probe: {layout.processed / 'gast.parquet'}"]
 
 
 def test_der_schritt_schreibt_die_seite_mit_ihren_abschnitten(

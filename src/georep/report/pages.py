@@ -118,6 +118,15 @@ class PageSection:
     der Gastgeber auf einen Gast oder lässt einen Hinweis weg, den der Gast ersetzt
     (``{% if "<name>" in guests %}``).
 
+    **Schalter** (Review N1): ``enabled`` und ``inputs`` folgen den Schaltern der eigenen
+    Schritte. Liest der Gast eine Ausgabe seines Beitrags, steht sie nur dann in ``inputs``, wenn
+    der Schritt, der sie schreibt, in diesem Profil gebaut wird; sonst fehlte dem Schritt der Seite
+    eine Eingabe. Das Muster nach ``docs/plan-zeigen-2026-11.md``, § 6 („jede Seite sagt, was in
+    diesem Profil fehlt"): ist der eigene Schritt aus, bleibt der Gast an, ``inputs`` gibt ``()``,
+    und ``data`` sagt, was fehlt. ``enabled`` ist nur dann aus, wenn der Gast in einem Profil gar
+    nicht auf die Seite gehört. Ein Test prüft über das echte Register und alle Paketprofile, dass
+    jede Eingabe jedes ``page_*`` im Lauf entsteht oder aus ``bootstrap`` kommt.
+
     ``rank`` ist die Stelle auf der Seite: kleiner zuerst, bei gleichem Rang der Name. Ein Rang ist je Seite eindeutig (``section_problems``); der Name als zweite Stufe
     hält die Folge auch dort fest, wo diese Prüfung nicht vorausgeht (``order_sections`` allein,
     mit abgeschalteten Verträgen).
