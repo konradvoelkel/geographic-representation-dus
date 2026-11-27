@@ -135,7 +135,9 @@ das Dokument als `dokument`. Bei `unit = "span"` liest `tasks` `value` und `extr
 Grundgesamtheit (sie stehen nicht in `stichprobe.csv`, `value` ist Ratstext), prüft ihre Prüfsumme
 gegen `stichprobe.json`, alle Spannen mit `georep.spans.check_spans` gegen die Längen der gewählten
 Textquelle und `value` gegen den Text an der Stelle: Spannen aus dem Rohtext in einem Auftrag aus
-dem kleingeschriebenen Korpus säßen sonst still an der falschen Stelle.
+dem kleingeschriebenen Korpus säßen sonst still an der falschen Stelle. Leer darf `value` nur bei
+einer Positionsspanne sein (heute die Abschnitte aus Vorhaben 11), wie `check_spans(…, texts=…,
+positions=…)` es verlangt; dasselbe gilt für die hervorgehobenen Spannen aus `text.spans`.
 
 Gute Codebücher, aus der Literatur zur Inhaltsanalyse: die Optionen schließen einander aus und
 decken alles ab; jede hat eine Definition und, wo es geht, ein Beispiel aus der Ratsarbeit; die

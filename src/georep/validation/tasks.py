@@ -28,7 +28,7 @@ from georep.errors import MissingInputError, SchemaError
 from georep.io import digest, write_text
 from georep.layout import Layout
 from georep.settings import Settings
-from georep.spans import check_spans
+from georep.spans import SECTION_KIND, check_spans
 from georep.spans import excerpt as span_excerpt
 from georep.validation import CodingError
 from georep.validation.codebook import Codebook, load_codebook
@@ -37,6 +37,9 @@ from georep.validation.sample import ID, population_path, rank, read_sample, sam
 
 MARK_OPEN, MARK_CLOSE = "⟦", "⟧"  # umschließen im Feld ``markiert`` die Spanne einer Einheit
 RAW_TEXT_FILE = "rohtexte.parquet"  # der Rohtextstore von F1, neben texts.parquet
+# Die Arten mit leerem ``value`` (F3): heute nur die Abschnitte aus Vorhaben 11, wie in
+# ``prep/structure.py`` und ``enrich/summaries.py``; jede andere Spanne trägt ihren Text.
+POSITION_KINDS = frozenset({SECTION_KIND})
 
 
 @dataclass(frozen=True)
@@ -90,7 +93,8 @@ def checked_spans(
     """Die Spannen (F3) der Stichprobendokumente, geprüft mit ``georep.spans.check_spans``.
 
     Geprüft wird gegen die Längen der gewählten Textquelle, dazu, dass ``value`` wörtlich der
-    Text an der Stelle ist: sonst zeigen die Positionen auf einen anderen Text (Befund 3).
+    Text an der Stelle ist oder leer bei einer Positionsspanne (wie ``check_spans(…, texts=…,
+    positions=POSITION_KINDS)``): sonst zeigen die Positionen auf einen anderen Text (Befund 3).
     """
     if not path.is_file():
         raise MissingInputError(f"Spannen {path} fehlen")
@@ -104,7 +108,17 @@ def checked_spans(
 
 
 def _check_value(document: Document, span: Mapping[str, Any]) -> None:
+    """Die Regel von ``check_spans`` mit ``texts`` und ``positions``, mit einer Meldung, die beide
+    Texte und den Extraktor nennt (``docs/todo.md``, Punkt 14 (d), Nachprüfung von 11)."""
     found = document.text[int(span["start"]) : int(span["end"])]
+    if not span.get("value"):
+        if span["kind"] in POSITION_KINDS:
+            return  # Positionsspanne: ihr Text ist die Stelle selbst (Vorhaben 11, Punkt 81)
+        raise SchemaError(
+            f"Spanne {span['start']}..{span['end']} in {document.id!r}: value leer, aber "
+            f"{span['kind']!r} ist keine Positionsspanne (nur {sorted(POSITION_KINDS)}); dort "
+            f"steht {found!r} (extractor {span.get('extractor')!r})"
+        )
     if span.get("value") != found:
         raise SchemaError(
             f"Spanne {span['start']}..{span['end']} in {document.id!r}: dort steht {found!r}, die "
