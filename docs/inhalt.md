@@ -110,17 +110,20 @@ Dokument nicht vorhanden".
 
 ## 2. Was die Seite kann
 
-Die Stadtseite ist **eine Datei** ohne externe Ressourcen (`index.html` unter einem Budget von
-1 000 000 Byte; die Größe jeder veröffentlichten Seite steht in `STATUS.md`, „Zahlen"): CSS,
-JavaScript und alle SVGs
-inline, nur relative
-Pfade, Deutsch mit englischer Kurzfassung, hell und dunkel über `prefers-color-scheme`. Daneben liegt
+Die ganze Auswertung einer Stadtseite ist **eine Datei** ohne externe Ressourcen (`details.html`
+unter einem Budget von 1 000 000 Byte, bis `v0.38.0` unter `index.html`; die Größe jeder
+veröffentlichten Seite steht in `STATUS.md`, „Zahlen"): CSS, JavaScript und alle SVGs inline, nur
+relative Pfade, Deutsch mit englischer Kurzfassung, hell und dunkel über `prefers-color-scheme`.
+Die Adresse ohne Dateinamen öffnet seit `v0.39.0` die Startseite `index.html` mit den Links zur
+Auswertung, zu den Unterseiten und zu den Downloads; eine alte Adresse mit Anker (`#suche=…`,
+`#karte`) leitet sie per Skript auf `details.html` mit demselben Anker weiter
+([plan-startseite-2026-11.md](plan-startseite-2026-11.md), § 3). Daneben liegt
 `karte.html` mit Leaflet und OpenStreetMap-Kacheln — die einzige Datei mit Fremdressourcen und die
 einzige, die Netz braucht.
 
 ### Suche „Straße oder Ort"
 
-Der Abschnitt [`#suche`](https://konradvoelkel.github.io/geographic-representation-dus/#suche)
+Der Abschnitt [`#suche`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#suche)
 durchsucht **4 063 Einträge** nach dem Combobox-Muster der WAI-ARIA Authoring Practices: Straßen
 (`s`), Orte (`o`) und Wahlbezirksnamen (`w`), je mit seinen Wahlbezirken und seiner Dokumentzahl; ein
 Name, der beides ist, trägt beide Marken (`benrather straße` steht als `so` da). Die
@@ -132,10 +135,10 @@ Adresse mit:
 
 | Adresse | zeigt |
 |---|---|
-| [`#suche=hofgarten`](https://konradvoelkel.github.io/geographic-representation-dus/#suche=hofgarten) | den Ort, 172 Dokumente, Wahlbezirk 1 |
-| [`#suche=grafenberger%20allee`](https://konradvoelkel.github.io/geographic-representation-dus/#suche=grafenberger%20allee) | die Straße mit der höchsten Dokumentzahl (205) in den Bezirken 7, 8, 9, 10, 28 |
-| [`#suche=Benrath`](https://konradvoelkel.github.io/geographic-representation-dus/#suche=Benrath) | den Wahlbezirk 39 mit seinen 811 Treffern |
-| [`#suche=luegallee`](https://konradvoelkel.github.io/geographic-representation-dus/#suche=luegallee) | eine Straße in zwei Bezirken (19, 20), 97 Dokumente |
+| [`#suche=hofgarten`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#suche=hofgarten) | den Ort, 172 Dokumente, Wahlbezirk 1 |
+| [`#suche=grafenberger%20allee`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#suche=grafenberger%20allee) | die Straße mit der höchsten Dokumentzahl (205) in den Bezirken 7, 8, 9, 10, 28 |
+| [`#suche=Benrath`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#suche=Benrath) | den Wahlbezirk 39 mit seinen 811 Treffern |
+| [`#suche=luegallee`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#suche=luegallee) | eine Straße in zwei Bezirken (19, 20), 97 Dokumente |
 
 Die Adresse ist teilbar: beim Laden zeigt die Seite das Ergebnis schon.
 
@@ -153,7 +156,7 @@ nicht erlaubt.
 
 ### Karten und ihre Umschalter
 
-Der Abschnitt [`#karte`](https://konradvoelkel.github.io/geographic-representation-dus/#karte) zeigt
+Der Abschnitt [`#karte`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#karte) zeigt
 die 41 Wahlbezirke als inline-SVG mit Tooltips und Klick-Markierung; die 1 196 Orte lassen sich als
 Punkte dazuschalten. **Sechs Einfärbungen** stehen zur Wahl, und dieselbe Klasse färbt die
 Kennzahlspalte der Bezirkstabelle mit:
@@ -234,10 +237,10 @@ nicht an der Wurzel.
 
 | Seite | Abschnitte | was fehlt und warum |
 |---|---|---|
-| [Wurzel](https://konradvoelkel.github.io/geographic-representation-dus/) (Düsseldorf 2020–2025) | alle siebzehn | — |
-| [`2014-2020/`](https://konradvoelkel.github.io/geographic-representation-dus/2014-2020/) | 13: kernzahlen, suche, karte, zusammenhang, gewichtung, parteien, wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | kein `kontrollvariablen` und `abgeleitete-daten` (die Fremddaten liegen auf dem Zuschnitt 2021 der Hauptperiode), kein `perioden` (eine Periode verglicht sich nicht mit sich selbst), kein `laufend` |
-| [`2025/`](https://konradvoelkel.github.io/geographic-representation-dus/2025/) | 11: kernzahlen, suche, karte, parteien, wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | **kein `zusammenhang`**: zu einer laufenden Periode gibt es keine Wahlbeteiligung, also keine Regression, kein Streudiagramm, keinen Umschalter darauf — Kopf und Kurzfassung sagen, warum; auch keine Gewichtungstabelle |
-| [`moenchengladbach/`](https://konradvoelkel.github.io/geographic-representation-dus/moenchengladbach/) | 13: kernzahlen, suche, karte, zusammenhang, gewichtung, parteien, wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | keine Kontrollvariablen (die Stadt hat keine Fremddaten im Profil), **keine „Dokumente je passendem Ausschuss"** (`classify.enabled = false`: nur 650 von 2 895 Dokumenten tragen Text) |
+| [Wurzel](https://konradvoelkel.github.io/geographic-representation-dus/details.html) (Düsseldorf 2020–2025) | alle siebzehn | — |
+| [`2014-2020/`](https://konradvoelkel.github.io/geographic-representation-dus/2014-2020/details.html) | 13: kernzahlen, suche, karte, zusammenhang, gewichtung, parteien, wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | kein `kontrollvariablen` und `abgeleitete-daten` (die Fremddaten liegen auf dem Zuschnitt 2021 der Hauptperiode), kein `perioden` (eine Periode verglicht sich nicht mit sich selbst), kein `laufend` |
+| [`2025/`](https://konradvoelkel.github.io/geographic-representation-dus/2025/details.html) | 11: kernzahlen, suche, karte, parteien, wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | **kein `zusammenhang`**: zu einer laufenden Periode gibt es keine Wahlbeteiligung, also keine Regression, kein Streudiagramm, keinen Umschalter darauf — Kopf und Kurzfassung sagen, warum; auch keine Gewichtungstabelle |
+| [`moenchengladbach/`](https://konradvoelkel.github.io/geographic-representation-dus/moenchengladbach/details.html) | 13: kernzahlen, suche, karte, zusammenhang, gewichtung, parteien, wahlbezirke, gremien, begriffe, monate, methode, literatur, downloads | keine Kontrollvariablen (die Stadt hat keine Fremddaten im Profil), **keine „Dokumente je passendem Ausschuss"** (`classify.enabled = false`: nur 650 von 2 895 Dokumenten tragen Text) |
 | [`vergleich.html`](https://konradvoelkel.github.io/geographic-representation-dus/vergleich.html) | vier: Die Städte nebeneinander, Trefferquote je Wahlbezirk, Trefferquote und Wahlbeteiligung, Vergleichbarkeit | eine eigene Seite; sie rechnet nichts selbst, sondern liest die `summary.json` der Stadtseiten; kein Suchfeld und keine Downloads |
 
 Die Größen der veröffentlichten Seiten stehen datiert in `STATUS.md`, „Zahlen".

@@ -22,7 +22,7 @@ Alle Adressen unten sind relativ zu
 
 ### Schritt 1: die Größenordnungen (eine Minute)
 
-Die [Kernzahlen](https://konradvoelkel.github.io/geographic-representation-dus/#kernzahlen) ganz oben
+Die [Kernzahlen](https://konradvoelkel.github.io/geographic-representation-dus/details.html#kernzahlen) ganz oben
 sagen, worüber geredet wird: 41 Wahlbezirke aus 306 Stimmbezirken, **19 108 Ratsdokumente** der
 Wahlperiode 2020 bis 2025, davon 19 033 mit Text, 5 727 Suchbegriffe, 10 739 Dokumente mit Treffer.
 Das ist der Rahmen: ein einzelner Wahlbezirk liegt zwischen 316 und 1 761 Treffern.
@@ -30,10 +30,10 @@ Das ist der Rahmen: ein einzelner Wahlbezirk liegt zwischen 316 und 1 761 Treffe
 ### Schritt 2: das eigene Gebiet markieren
 
 Ins Suchfeld unter
-[`#suche`](https://konradvoelkel.github.io/geographic-representation-dus/#suche) „Benrath" tippen
+[`#suche`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#suche) „Benrath" tippen
 oder die Adresse gleich teilbar aufrufen:
 
-**[`index.html#suche=Benrath`](https://konradvoelkel.github.io/geographic-representation-dus/#suche=Benrath)**
+**[`details.html#suche=Benrath`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#suche=Benrath)**
 
 Die Vorschlagsliste führt den Wahlbezirk („Benrath", Wahlbezirk 39, 811 Dokumente) **und** die
 Straßen, die seinen Namen tragen („benrather schloßallee" 29 Dokumente, „benrather marktplatz" 13).
@@ -42,7 +42,7 @@ im Streudiagramm, und die markierte Tabellenzeile klappt aus der Vorschau von se
 in der Leiste ist teilbar — ein Link an die Fraktion zeigt dort dieselbe Markierung.
 
 Die Zeile des Bezirks 39 in der Tabelle
-[`#wahlbezirke`](https://konradvoelkel.github.io/geographic-representation-dus/#wahlbezirke) sagt
+[`#wahlbezirke`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#wahlbezirke) sagt
 dann: 811 Treffer, 11 318 Wahlberechtigte, 6 650 Wähler, 58,8 % Wahlbeteiligung, Trefferquote 0,072,
 **189 Begriffe**, und als häufigste Begriffe „münchener straße (135), koblenzer straße (109), frankfurter
 straße (96), benrodestraße (67), bonner straße (62)". Die Spaltenköpfe sind Sortierschalter.
@@ -50,7 +50,7 @@ straße (96), benrodestraße (67), bonner straße (62)". Die Spaltenköpfe sind 
 ### Schritt 3: woran die Sichtbarkeit des Gebiets hängt
 
 Der Abschnitt
-[`#begriffe`](https://konradvoelkel.github.io/geographic-representation-dus/#begriffe) hat je
+[`#begriffe`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#begriffe) hat je
 Wahlbezirk eine aufklappbare Liste **aller** seiner Begriffe mit Dokumentzahl (sie wird beim ersten
 Aufklappen aus `data/begriffe.json` nachgeladen). Zwei Dinge sind dort gleich mitzulesen:
 
@@ -76,7 +76,7 @@ darum einen Webserver; aus dem Dateisystem geöffnet sagt die Seite das.
 ### Schritt 5: wo über das Gebiet beraten wurde
 
 Die Tabelle „Je Wahlbezirk" im Abschnitt
-[`#gremien`](https://konradvoelkel.github.io/geographic-representation-dus/#gremien) zerlegt die 811
+[`#gremien`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#gremien) zerlegt die 811
 Treffer nach dem Gremium, das das Dokument eingebracht hat:
 
 | Bezirk | Stadtbezirk | Treffer | eigene BV | andere BV | Rat | Ausschüsse | Beiräte | unbekannt |
@@ -101,7 +101,7 @@ der Folge.
 
 Wer wissen will, welche Bezirke stark und welche schwach an ihrer eigenen Bezirksvertretung hängen,
 schaltet die Karte unter
-[`#karte`](https://konradvoelkel.github.io/geographic-representation-dus/#karte) auf **„Anteil eigene
+[`#karte`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#karte) auf **„Anteil eigene
 Bezirksvertretung"** (die Klassen reichen von unter 37 % bis ab 62 %) — dieselbe Einfärbung erscheint
 dann als Zahl in der Kennzahlspalte der Bezirkstabelle.
 
@@ -110,7 +110,7 @@ dann als Zahl in der Kennzahlspalte der Bezirkstabelle.
 Für ein Thema gibt es zwei Zugänge, und beide sind Schätzungen, keine Volltextsuche.
 
 **Der Ausschuss.** Die zweite Tabelle unter
-[`#gremien`](https://konradvoelkel.github.io/geographic-representation-dus/#gremien), „Dokumente je
+[`#gremien`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#gremien), „Dokumente je
 passendem Ausschuss", ordnet jedem Dokument mit Text den Ausschuss zu, der sachlich zu ihm passt —
 auch einem, das nie in einem Ausschuss war:
 
@@ -129,7 +129,7 @@ Dokumente bleiben in der Restklasse — bei den Dokumenten der Bezirksvertretung
 fünf. **Das ist eine Vorsortierung, keine Auskunft.**
 
 **Das Thema.** Die Themen-Tabelle unter
-[`#gewichtung`](https://konradvoelkel.github.io/geographic-representation-dus/#gewichtung) nennt die
+[`#gewichtung`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#gewichtung) nennt die
 stärksten Wörter je Thema; Thema 0 heißt „Ordnungs- und Verkehrsausschuss (OVA)" und trägt „ordnungs,
 verkehrsausschuss, straße, verkehrsmanagement, rheinbahn, öpnv, radverkehr, verkehr, straßen, platz"
 über 2 425 Dokumente (13,9 % der Treffer). Die Zahlen daneben sind eine **Sensitivitätsrechnung** —
@@ -139,7 +139,7 @@ und keine Themensuche. Die Themennummern gelten nur für diesen Datenstand.
 ### Schritt 7: wer schreibt, und wohin die eigene Partei blickt
 
 Der Abschnitt
-[`#parteien`](https://konradvoelkel.github.io/geographic-representation-dus/#parteien) hat sechs
+[`#parteien`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#parteien) hat sechs
 kleine Karten, je eine Partei: welcher Anteil **ihrer eigenen** Dokumente einen Wahlbezirk erwähnt.
 Die Klassen sind je Partei gerechnet, die Karten sagen also „wohin eine Partei blickt", nicht „wie
 viel sie schreibt". Der Umschalter darüber rechnet jede Zelle zusätzlich als **Abweichung vom Mittel
@@ -158,7 +158,7 @@ Jede Zuordnung steht mit ihrer Quelle in `dokumente_urheber` zum Download.
 Für die **laufende** Wahlperiode seit dem 14.09.2025 gibt es eine eigene Seite:
 **[`2025/`](https://konradvoelkel.github.io/geographic-representation-dus/2025/)** — 4 095 Dokumente,
 4 075 mit Text, 2 173 mit Treffer, Karte, Begriffe, Gremien, Urheber und die **Monatsreihe** unter
-[`2025/#monate`](https://konradvoelkel.github.io/geographic-representation-dus/2025/#monate) mit zwei
+[`2025/#monate`](https://konradvoelkel.github.io/geographic-representation-dus/2025/details.html#monate) mit zwei
 Balken je Monat (alle Dokumente, die mit Treffer) über 14 Monate. Dort gibt es keine Regression und
 kein Streudiagramm, weil zu einer laufenden Periode keine Wahlbeteiligung gehört; Kopf und Kurzfassung
 sagen das. **Der Stand ist der Erstabruf vom 13.10.2026**, und die Seite nennt ihr Abrufdatum selbst —
@@ -167,13 +167,13 @@ der Timer, der die Periode fortschreibt, läuft noch nicht.
 Für den langen Blick zurück:
 [`2014-2020/`](https://konradvoelkel.github.io/geographic-representation-dus/2014-2020/) rechnet
 dieselbe Auswertung über 22 215 Dokumente der vorigen Periode, und der Abschnitt
-[`#perioden`](https://konradvoelkel.github.io/geographic-representation-dus/#perioden) der Hauptseite
+[`#perioden`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#perioden) der Hauptseite
 stellt beide nebeneinander. Benrath ist dort einer der Bezirke mit dem stärksten Rückgang: Quote
 0,1283 → 0,0717.
 
 ### Schritt 9: eigene Zahlen, ohne Programm
 
-[`#downloads`](https://konradvoelkel.github.io/geographic-representation-dus/#downloads) listet 53
+[`#downloads`](https://konradvoelkel.github.io/geographic-representation-dus/details.html#downloads) listet 53
 Dateien mit Format, Zeilenzahl, Größe, Beschreibung und SHA-256. Für eine Tabellenkalkulation sind
 diese vier der kürzeste Weg:
 
