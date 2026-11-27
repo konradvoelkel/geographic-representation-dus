@@ -1,0 +1,3 @@
+{# plan-startseite, § 3 und § 7: der Dokumentdialog mit data-extras (Vorarbeit V2) und der Tooltip, auf details.html und auf der Startseite #}
+<dialog id="docs" aria-labelledby="docs-title"{% if model.dialogs %} data-extras="{{ model.dialogs|join(' ') }}"{% endif %}><form method="dialog"><button type="submit">Schließen</button></form><h3 id="docs-title"></h3><p class="note"></p><ol></ol></dialog>
+<div id="tooltip" role="tooltip" hidden></div>

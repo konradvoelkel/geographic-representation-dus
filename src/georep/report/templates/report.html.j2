@@ -15,6 +15,7 @@
 <noscript><style>table.preview tbody tr { display: table-row !important; } p.more { display: none !important; }</style></noscript>
 {% endif %}
 </head>
+{% from "macros.html.j2" import english %}
 <body>
 <header>
 <h1>Geografische Repräsentation in {{ model.city.adjective }} Ratsdokumenten</h1>
@@ -27,24 +28,15 @@
 {% endif %}
 {# georep publish ersetzt die Marke durch die Zeile mit den Nachbarstädten, sobald deren Seiten wirklich daneben liegen #}
 <!--georep:weitere-staedte-->
-<p lang="en">This page summarises how visible each of the {{ model.figures.districts }} municipal election districts of {{ model.city.name }} is in the city council's documents of the {{ model.period.years }} term: every district has a dictionary of street and place names, {{ model.figures.documents|num }} council documents were searched, and the number of documents mentioning a district is divided by its eligible voters.{% if model.regression %} That rate is compared with the district's turnout in the {{ model.period.election.year }} local election; across all districts the linear regression gives p = {{ model.regression.all.p|num(3) }}{% if model.regression.all.p >= 0.05 %}, so no relationship is established{% endif %}.{% else %} There is no turnout figure for a term still under way, so this page shows no regression; it counts documents per month instead.{% endif %}{% if model.sensitivity %}{# Option 06 #} Under {{ model.sensitivity.significant_all }} of {{ model.sensitivity.rows|length }} weightings of the same documents, the unweighted count included, the relationship across all districts reaches the {{ model.sensitivity.level|pct(0) }} level.{% endif %} The results are available below as Parquet, CSV and GeoJSON, with a documented column schema.</p>
+{{ english(model) }}
 </header>
 <main>
 {% for section in sections %}
 {% include section %}
 {% endfor %}
 </main>
-<footer>
-<p>Ergebnisse: <a href="{{ links.cc0 }}">CC0 1.0</a>; Quelltext: <a href="{{ links.gpl }}">GPL-3.0-or-later</a>. Straßennamen abgeleitet aus OpenStreetMap, © <a href="{{ links.osm }}">OpenStreetMap-Mitwirkende</a>, <a href="{{ links.odbl }}">ODbL</a>. Orte aus <a href="{{ links.wikidata }}">Wikidata</a> (CC0) und Artikeltiteln der deutschsprachigen <a href="{{ links.wikipedia }}">Wikipedia</a>.{% if model.derived %} Kontrollvariablen abgeleitet aus: {{ model.derived.attribution }} (<a href="{{ model.derived.license_url }}">{{ model.derived.license }}</a>, Stand {{ model.derived.stand|date_de }}).{% endif %}</p>
-<p>Quellen der Stadt {{ model.city.name }}:
-{% for source in model.sources %}
-{{ source.name }} (<a href="{{ source.url }}">{{ source.publisher }}</a>{% if source.license and source.license_url %}, <a href="{{ source.license_url }}">{{ source.license }}</a>{% elif source.license %}, {{ source.license }}{% else %}, Lizenz laut Anbieter nicht angegeben{% endif %}{% if source.checked %}, geprüft am {{ source.checked|date_de }}{% endif %}){% if not loop.last %}; {% else %}.{% endif %}
-{% endfor %}
-&nbsp;Ratsdokumente aus dem Ratsinformationssystem der {{ model.city.publisher }}; die Seite nennt nur ihre Kennungen.</p>
-<p>Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}.</p>
-</footer>
-<dialog id="docs" aria-labelledby="docs-title"{% if model.dialogs %} data-extras="{{ model.dialogs|join(' ') }}"{% endif %}><form method="dialog"><button type="submit">Schließen</button></form><h3 id="docs-title"></h3><p class="note"></p><ol></ol></dialog>
-<div id="tooltip" role="tooltip" hidden></div>
+{% include "frame/footer.html.j2" +%}
+{% include "frame/dialog.html.j2" +%}
 <script>
 {% include "frame/script.js.j2" +%}
 </script>
