@@ -4675,3 +4675,179 @@ Prüfsatz nicht. Das Ziel der Phase (höchstens 30 KB über dem Bau vor `v0.33.0
   seit dem Bau vor `v0.33.0` +11 448, Ziel der Phase höchstens +30 KB), `schema.json` 40 717 →
   45 663; die anderen Seiten gleich groß. Die veröffentlichte Seite wächst um 6,1 MB (46,9 → 53,0
   MB), fast nur `kennungen.csv`.
+
+## NN. Die Unterseite `zeit.html`: Zählungen beschreibend, die Familie mit Wort und Commit, das Vokabular mit seiner Ebene, die Feeds mit ihrem Stand (Vorhaben 17, Stufe 3, 2026-11-27)
+
+Stufe 3 von Vorhaben 17 nach `docs/plans/17-zeit.md`, § 7 und § 10 (Punkte 8 und 9), und nach
+`docs/plan-zeigen-2026-11.md` (§ 5, `v0.38.0`; § 7, die Feeds), im Muster von `akteure.html`
+(Punkt 88). Gebaut auf `feat/17-zeit-seite` ab `main` `f27473f` (`v0.35.0`). Die Nummer bekommt der
+Eintrag beim Merge.
+
+**Was gebaut ist.** Der Beitrag `17-zeit` trägt außer den vier Schritten jetzt die Seite und vier
+Tabellen bei, hinter `time_enabled` (Schritt `cycles` an: `cycles.enabled` und Urheber), also in allen
+fünf Paketprofilen:
+
+- `zeit.html` (`report/cycles.py`, `templates/pages/zeit.html.j2`, `.css`) mit fünf Abschnitten:
+  *Rhythmus der Ratsarbeit* (je Urheberklasse eine Reihe Monatsbalken, die Haushaltsmonate als Band,
+  die vollständigen Wahljahre mit ihrer Rolle in H17.1 und ihrem Haushaltsmonat, beschreibend S1.6
+  je Vorwahljahr, der Median je Kalendermonat, die Zahlen je Monat als Tabelle); *Vorab festgelegte
+  Hypothesen*; *Bundespolitisches Vokabular*; *Ereignisspuren* (explorativ); *Neuigkeiten je
+  Wahlbezirk* (nur mit `feeds.enabled`).
+- Die Downloads `zeit_monate`, `haushaltsmonate`, `dokumente_bundesvokabular` (Kennung, Kategorien,
+  Kopf, Lexikon) und, nur im Profil mit `cycles.periods`, `zeit_hypothesen`, je Parquet und CSV mit
+  Spaltendoku in `schema.json`; die Listen trennt in der CSV „; ". Die CSV des Vokabulars trägt nur
+  die Dokumente mit Treffer und nicht die Spalte `lexikon` (`CsvPlan` aus Punkt 89, Review N2); das
+  Parquet bleibt vollständig, eine Zeile je Korpus-ID.
+- Der Linkblock „Weitere Auswertungen" auf `index.html` (Abschnitt `58-weitere`) trägt `zeit.html` in
+  jedem Profil. Einen Link auf die Feeds trägt `index.html` nicht, auch nicht in der laufenden Periode
+  (Plan § 7, Frage 9.11): die Liste erreicht man über den Linkblock, und „höchstens ein Link" heißt
+  hier keiner.
+
+**Der Prüfsatz kommt aus `guete.json`, die Zahlen je Kategorie aus den Labels, gebunden an
+`VALIDATED`.** `read_check` liest `validierung/17-zeit-f4/guete.json` (Satz, Modelle, Übereinstimmung
+bei Thema und Ebene) und zählt aus `stichprobe.csv` und `labels.csv` je Kategorie „richtig k von n"
+(„unklar" gezählt, nicht gewertet, Frage 9.13) und „nennt die Bundesebene m von k" unter den
+richtigen (§ 4.1). Die Summe muss `analysis.lexicon.VALIDATED` für die Version des Lexikons gleichen
+(94 von 100), sonst `SchemaError`: eine neue Kodierung macht die Konstante ungültig, wie `RULE_CHECK`
+bei `akteure.html` (Punkt 88, N1). Nennt `VALIDATED` die Version nicht, zeigt die Seite keine Zahl je
+Kategorie und sagt, dass die Version nicht geprüft ist. Verworfen: die Präzision als Konstante neben
+`VALIDATED` (zwei Stellen für eine Zahl) und die Zahlen je Kategorie als Konstante (sie stehen in
+Dateien im Repo, und ein Test rechnet sie aus ihnen nach).
+
+**Die Familie mit Wort, Holm und Commit; „nicht bestätigt" so groß wie „bestätigt".** Die Seite liest
+`zeit_hypothesen` und zeigt die Zeilen mit `p_holm` als Tabelle (Ergebnis, Effekt, p, Holm, n) und je
+Hypothese einen Absatz mit dem Satz aus § 8 (`HYPOTHESES`), Maß, Test und Commit der Festlegung
+(`PREREGISTRATION`: `9c7b3d6`, 2026-11-23 um 19:45, verlinkt). Beide Wörter stehen im selben Element
+mit derselben Klasse. H17.1 nennt die Randomisierung, die nicht entscheidet; H17.2 den Satz zu S2.1
+(Frage 9.14: ohne die Haushaltsanträge 12,9 % unter dem Kalendermonat, zweiseitig p = 0,246, also
+trägt der Haushalt die Spitze selbst); H17.3 seine Gültigkeit aus `VALIDATED` und `MIN_PRECISION`.
+Die übrigen Zeilen stehen darunter ohne Wort, je mit Rolle (Sensitivität, explorativ). Trägt die
+Tabelle eine Festlegung, die nicht `PREREGISTRATION` ist, oder eine Hypothese der Familie, die
+`HYPOTHESES` nicht kennt, ist das ein `SchemaError`. Die Tabelle gibt es nur im Profil, das die Tests
+rechnet; sonst sagt `tests_elsewhere` aus den Paketprofilen, über welche Perioden die Tests rechnen
+und auf welcher Seite sie stehen (2014–2020 und laufende Periode: auf der der Hauptperiode;
+Hauptperiode ohne Vergleich: erst im Lauf, der die Perioden vergleicht), oder dass für den Datensatz
+keine festgelegt sind (Mönchengladbach). Keine Seite verlinkt eine andere Periode: die Unterseiten
+liegen auf Pages unter der Stadtseite, im Monitor aber allein.
+
+**Gemessen oder explorativ.** Das Lexikon ist an den drei Düsseldorfer Datensätzen gemessen
+(`stichprobe.json`); ein Datensatz außerhalb heißt beim Vokabular „explorativ", mit Stadt und Periode
+der gemessenen (Punkt 88, N5). Die Ereignisspuren heißen es immer (§ 8.4), die Zeilen je Kategorie
+ebenso (S3.3). Die Zählungen des Rhythmus heißen „beschreibend": sie prüfen nichts.
+
+**Was einem Profil fehlt, sagt die Seite** (Plan § 6). Mönchengladbach hat in keinem Wahljahr einen
+Haushaltsmonat (`docs/todo.md`, Punkt 13 (d)): unter „In diesem Profil fehlt" und im Abschnitt steht,
+dass in keinem vollständigen Wahljahr fünf Haushaltsanträge stehen (zusammen 2), und dass die
+Zählung nicht zeigt, ob sie dort anders heißen. Die laufende Periode hat ein Wahljahr, also keinen
+Median je Kalendermonat und noch kein Vorwahljahr; beides steht dort.
+
+**Die Feeds mit dem Stand der Daten** (Plan § 7, Frage Z.3 mit ihrer Annahme). Der Abschnitt listet die
+Feeds aus `wahlbezirke_feeds` mit relativem Link auf `feeds/wahlbezirk-NN.xml` (Einträge, Dokumente
+der Periode, neue der letzten 30 Tage, zuletzt geändert), dazu den Stand: das neueste Vorlagendatum,
+dasselbe, das der Schritt `feeds` als Stand nimmt (13.10.2026 im Paket). Darunter der Satz, dass die
+Feeds ohne laufenden Abruf diesen Stand zeigen und sich erst mit einem neuen Schnappschuss oder einem
+Timer ändern. Damit der Satz wegfällt, wenn der Timer läuft, ist `feeds.timer` neu (Vorgabe aus;
+`deploy/monitor.env.example` setzt `GEOREP_FEEDS__TIMER=true`). Er ist reine Anzeige und steht
+darum nicht im Settings-Fingerprint, sondern im Zusatz von `report` und der Unterseiten
+(`report_fingerprint`, Review K2): ein Wechsel öffnet nur diese Schritte, ein Test prüft das. Verworfen: den Timer aus dem Stamp
+des Netzschritts `papers` zu erschließen (auf einem Rechner, der einmal abgerufen hat, fiele der Satz
+weg, ohne dass ein Timer läuft). Kein `rel="self"` (Frage 28), keine Straßennamen (Frage 27).
+
+**Für alle Fraktionen und Gremien gleich gebaut.** Die Seite nennt keine Fraktion; die Gremien der
+Ereignisspuren heißen beim Namen aus `[bodies]` (`actors.body_name`), nach Treffern geordnet, ab 20
+Dokumenten mit Text. Tests verlangen, dass kein Parteiname eines Paketprofils in den Vorlagen, im
+Text einer gerenderten Seite und in der Spaltendoku steht; die Vorlagen tragen kein Stadtwort
+(`test_report_city.py`).
+
+**Bewusst anders als § 7.**
+
+1. Keine feste Markierung der Sommerpause: welche Monate Ferien sind, ist je Land und Jahr anders und
+   stünde als Stadtwissen in der Seite. Die Seite nennt den schwächsten Kalendermonat im Median aus den
+   Daten (Hauptperiode: Juli, 130 Dokumente), die Monatstabelle zeigt den Rest.
+2. Drei Reihen (Verwaltung, Fraktionen, Übrige) mit je eigenem Maßstab statt gestapelter Balken: die
+   Tests zählen die Fraktionen, und in einem Stapel wären ihre Monate nicht abzulesen. Je Reihe ein
+   SVG-Pfad statt eines Rechtecks mit Titel je Monat (14 KB weniger in der Hauptperiode); die Zahlen
+   stehen in der Tabelle darunter, die Beschriftung der Wahljahre als HTML unter den Reihen, damit sie
+   bei 390 Pixeln lesbar bleibt (`preserveAspectRatio="none"` streckt nur die Balken).
+3. Die Hypothesen als Tabelle mit einer Zeile je Hypothese für die Zahlen und je Hypothese ein Absatz
+   für Satz, Maß, Test und Festlegung, statt alles in einer Zeile: auf einem schmalen Bildschirm
+   wäre die Zeile nicht zu lesen.
+4. Die Tabelle des Vokabulars zeigt die Wahljahre des eigenen Datensatzes; die Anteile aller drei
+   Perioden stehen bei H17.3. Der kleine Balken misst je Zeile (der höchste Wert der Zeile füllt die
+   Zelle), weil die Kategorien zwei Größenordnungen auseinanderliegen. Die Summenzeile der
+   Strukturkategorien heißt nur dort „das Maß von H17.3", wo für den Datensatz Tests festgelegt sind
+   (nicht in Mönchengladbach, Review N3).
+5. Ereignisspuren über den ganzen Datensatz und die Gremien nach Treffern mit ihrem Anteil im
+   Datensatz, nicht die Fenster und Vorjahre aus § 3.5: die waren nach dem Ansehen gewählt, und eine
+   feste Regel gilt für jede Stadt gleich. Ein Monat trägt einen Anteil erst ab 20 Dokumenten mit Text
+   (`MIN_MONTH_DOCUMENTS`, dieselbe Grenze wie für ein Gremium): in Mönchengladbach wäre sonst „2 von
+   3" im November 2021 die Spitze gewesen; dort bleiben 55 von 61 Monaten leer, und die Seite sagt
+   das. Einen höchsten Monat nennt die Seite erst ab fünf Treffern in ihm (`MIN_PEAK_HITS`, Review
+   N3: in der laufenden Periode war sonst ein Treffer unter 51 Dokumenten des angebrochenen Oktobers
+   2026 die Spitze des Kriegs). Der Monat des Datenstands heißt in der Monatstabelle und an einer
+   Spitze „angebrochen", wenn das neueste Dokument vor seinem Ende liegt. Ortsereignisse
+   (`[[lokal]]` im Lexikon) fehlen (Frage 9.12).
+6. Größe 59 bis 82 KB statt 40 bis 80: der Rahmen allein sind rund 31 KB (Zahlen unten).
+7. `analysis.cycles.wahljahr_of` ist öffentlich: die Seite zählt je Wahljahr mit derselben Zuordnung
+   wie H17.3.
+
+**Verworfen.** Ein eigenes Skript für die Seite (sie braucht keines; Tabellen und Vorschau kommen
+aus dem Rahmen); Links von einer Periodenseite auf die der Hauptperiode (siehe oben); die
+Sensitivitäten auf einer eigenen Seite (22 Zeilen, rund 4 KB).
+
+**Geprüft.**
+
+- Roter Lauf zuerst, ohne Registrierung von Seite und Tabellen, ohne `templates/pages/zeit.*` und
+  ohne `feeds.timer`: `uv run pytest tests/unit/test_report_cycles.py -n 3` mit Exit 1, 17 von 38
+  rot (Commit-Body nennt sie).
+- Tests: `tests/unit/test_report_cycles.py` (Bausteine an erfundenen Tabellen, Prüfsatz aus einer
+  geänderten `guete.json`, `VALIDATED` gegen geänderte Labels, eine ungeprüfte Lexikonversion, die
+  Wahljahre mit Rolle und S1.6, kein Haushaltsmonat, die Familie mit Wort und Commit, eine fremde
+  Festlegung, wo die Tests stehen je Profil, explorativ, die Feeds mit Stand und Satz und mit
+  `timer`, kein Parteiname, Register, Linkblock, kein Feed-Link auf `index.html`, Downloads mit
+  Spaltendoku, Stamp von `report`, Eingaben von `page_zeit` je Profil). Slow in
+  `tests/golden/test_cycles_numbers.py` die Zahlen der Seite in den drei Düsseldorfer Datensätzen:
+  Fraktionsdokumente und Haushaltsmonat je Wahljahr (§ 3.1, § 3.2), die Anteile der
+  Strukturkategorien und aller Kategorien je Wahljahr (§ 3.3, S3.2), S1.6 (1 380 gegen 1 399,0, Rang
+  3 von 5; 1 434 gegen 1 573,3, Rang 4 von 4), Wort, p und Holm der Familie, die Spitzen der
+  Ereignisse (§ 3.5: Corona im Juli 2021 mit 33 von 119, der Krieg im März 2022 mit 24 von 413) und
+  jede Seite unter 500 KB.
+- Bildschirmfotos mit headless Chrome bei 1280 und 390 Pixeln Breite und bei 390 ohne Skripte (an
+  einer Kopie ohne `<script>`, deren `<noscript>`-Stil wirkt), je für die Hauptperiode und die
+  laufende Periode mit der Feed-Liste: die Beschriftung der Wahljahre bleibt bei 390 Pixeln lesbar;
+  ohne JavaScript stehen alle Zeilen der Tabellen offen und kein Knopf „alle Zeilen zeigen". Danach
+  brechen der Name eines Feeds und der Monat nicht mehr um (Folgecommit, nur CSS).
+- Review Runde 1 (2026-11-27): K1 (der Ort der Tests auf den Periodenseiten), K2 (`feeds.timer`
+  nicht im Settings-Fingerprint), N2 (die CSV des Vokabulars), N3 (Spitze ab fünf Treffern, der
+  angebrochene Monat, die Summenzeile ohne Tests) je mit rotem Test zuerst; N1 (Spaltenschema nur in
+  `schema.json`) nimmt der Supervisor als Rückstand für das ganze Register auf.
+- A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66 (`scripts/ab_bau.sh`,
+  `scripts/ab_vergleich.py`), `POLARS_MAX_THREADS=4 OMP_NUM_THREADS=2`, A aus `main` `36fad29`
+  (`v0.36.0`, mit den Downloads von 11 und 12), B aus `a0c2ff1` (nach Runde 2 und dem Merge von
+  `36fad29`), beide über `git archive`, Wurzeln `ab/17s-a2` und `ab/17s-b2` auf xtraspace, die fünf
+  Profile mit `bootstrap` und `run` in der Folge von `pages.yml`, dann `publish --strict-budget`.
+  Unter `site/` 258 Dateien in A, 288 in B, 38 Abweichungen, alle erwartet: je Stadtseite
+  (Hauptperiode, 2014–2020, laufende Periode, Mönchengladbach) neu `zeit.html` und die sechs
+  Downloads von `zeit_monate`, `haushaltsmonate` und `dokumente_bundesvokabular`, in der
+  Hauptperiode dazu die zwei von `zeit_hypothesen`; anders nur `index.html` (Linkblock, Zahl der
+  Downloadzeilen, die neuen Zeilen in den Downloads, die Größe von `schema.json`, die Einträge im
+  Spaltenschema; sonst bytegleich bis auf die Prüfsummen, die an `generated_at` hängen) und
+  `schema.json` je Stadtseite. Die 41 Feeds unter `2025/feeds/` sind bytegleich, ebenso
+  `akteure.html`, `vergleich.html` und jede `summary.json`. Über die ganzen Datenwurzeln 994 und
+  1 074 Dateien, 223 Abweichungen: dieselben Seiten und Downloads in den Ordnern der Profile, kein
+  Parquet unter `processed/` oder `interim/` anders, und 129 Stamps: 6 neue von `zeit.html`, 109 nur
+  in der Schreibzeit (der Settings-Fingerprint ist nach K2 gleich; im ersten A/B-Bau gegen
+  `f27473f` standen dieselben 109 Stamps mit anderem Fingerprint da), 6 von `akteure.html` in
+  `extra`, weil die Vorlagen der Seiten im Hash des Berichts stehen, 6 von `index.html` in `extra`
+  und den neuen optionalen Eingaben, 2 nur in der Wurzel der absoluten Pfade
+  (`wahlbezirke_vergleich`, `zeit_hypothesen`).
+- Größen, veröffentlicht (`publish`): `index.html` der Hauptperiode 948 839 → 957 828 Byte
+  (+8 989, davon die Spaltendoku von `zeit_hypothesen` mit 19 Spalten; Budget 1 000 000; mit 15, 11
+  und 12 jetzt +20 300 über dem Bau vor `v0.33.0`, Ziel der Phase höchstens +30 KB),
+  `2014-2020/` 827 359 → 833 053 (+5 694), `2025/` 723 285 → 728 964 (+5 679),
+  `moenchengladbach/` 810 780 → 816 466 (+5 686). `zeit.html`: Hauptperiode 81 612, 2014–2020
+  77 643, laufende Periode 58 618, Mönchengladbach 68 901 Byte; mit `akteure.html` sind es je
+  Profil 126 bis 187 KB Unterseiten (Budget 1 MB). `dokumente_bundesvokabular.csv` nach N2:
+  Hauptperiode 1 965 933 → 176 649 Byte, 2014–2020 2 272 822 → 142 023, laufende Periode
+  420 986 → 16 413, Mönchengladbach 295 230 → 14 741. Die Downloads von 17 machen die
+  veröffentlichte Seite 1,2 MB größer (53,0 → 54,2 MB); die Pakete im Repo ändern sich nicht.

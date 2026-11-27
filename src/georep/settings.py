@@ -2327,6 +2327,9 @@ class Feeds(_Strict):
     enabled: bool = False
     entries: int = Field(default=50, ge=1, le=500)
     timezone: str = "Europe/Berlin"  # Zeitzone des Vorlagendatums: published um 00:00 Ortszeit
+    # Ein Timer schreibt die Periode fort (Monitor); sonst zeigen die Feeds den Stand des Pakets,
+    # und zeit.html sagt das (docs/plan-zeigen-2026-11.md, § 7)
+    timer: bool = False
 
     @field_validator("timezone")
     @classmethod
@@ -3076,6 +3079,8 @@ class Settings(BaseSettings):
         Vorhaben 22: ``context.need.package`` ist ein Pfad, die Namensnennungen der Bedarfsquellen
         sind Anzeige, ``context.need.fetch`` schaltet nur den Netzschritt ein; Archive, Band,
         Klassen und Hypothesen zählen.
+        Vorhaben 17: ``feeds.timer`` ist Anzeige (ein Satz auf ``zeit.html``) und steht im Zusatz
+        von ``report``.
         """
         payload = self.model_dump(
             mode="json",
@@ -3138,6 +3143,9 @@ class Settings(BaseSettings):
                 # Liste der Eingaben, nicht der Fingerprint.
                 "procedures": {"attachments"},
                 "outcomes": {"package"},
+                # Vorhaben 17, Review K2: ``feeds.timer`` ändert nur einen Satz auf zeit.html;
+                # er steht im Zusatz von ``report`` und der Unterseiten (``report_fingerprint``)
+                "feeds": {"timer"},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

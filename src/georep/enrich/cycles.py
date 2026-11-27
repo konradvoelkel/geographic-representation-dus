@@ -64,6 +64,7 @@ from georep.http import Transport
 from georep.io import write_parquet, write_text
 from georep.layout import Layout
 from georep.pipeline import Step
+from georep.report.cycles import PAGE_NAME, time_data, time_enabled, time_inputs, time_links
 from georep.report.feeds import (
     EMPTY_UPDATED,
     FEEDS_SCHEMA,
@@ -78,6 +79,8 @@ from georep.report.feeds import (
     render_feed,
     timestamp,
 )
+from georep.report.pages import Page
+from georep.report.tables import CsvPlan, PublishedTable
 from georep.search.index import PAPER_IDS, TERM
 from georep.settings import Settings
 from georep.spans import check_spans, sort_spans
@@ -413,4 +416,155 @@ def time_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
     return steps
 
 
-CONTRIBUTION = Contribution("17-zeit", steps=time_steps)
+# --- Stufe 3 (Messdokument § 7): die Tabellen als Downloads und die Unterseite zeit.html ----------
+def vocabulary_csv_rows(frame: pl.DataFrame) -> pl.DataFrame:
+    """Die CSV des Vokabulars: nur Dokumente mit Treffer, ohne ``lexikon`` (Review N2).
+
+    In der Hauptperiode tragen 2 002 von 19 108 Dokumenten einen Treffer; die übrigen Zeilen wären
+    leere Listen, und ``lexikon`` steht in jeder Zeile gleich (es steht in der Beschreibung und in
+    ``schema.json``). Das Parquet bleibt vollständig, eine Zeile je Korpus-ID.
+    """
+    return frame.filter(pl.col("kategorien").list.len() > 0).drop("lexikon")
+
+
+_ID = ("OParl-URL des Dokuments", "")
+_WAHLJAHR = (
+    "Wahljahr, benannt nach dem Jahr seines Beginns (2020 ist 2020/21); leer außerhalb der "
+    "vollständigen Wahljahre der Periode",
+    "",
+)
+TABLES = (
+    PublishedTable(
+        "zeit_monate",
+        lambda layout: time_files(layout).months,
+        "Ratsdokumente je Monat, Gremienart, Urheberklasse und Instrument, mit Wahljahr und "
+        "Haushaltsanträgen",
+        {
+            "monat": (
+                "erster Tag des Monats nach Vorlagendatum; leer für Dokumente ohne Datum",
+                "",
+            ),
+            "wahljahr": _WAHLJAHR,
+            "gremium_art": ("rat, ausschuss, bezirksvertretung, beirat; leer ohne Gremium", ""),
+            "urheber_art": (
+                "Verwaltung, Fraktion, Person, Eingabe oder unbekannt (wie dokumente_urheber)",
+                "",
+            ),
+            "instrument": (
+                "anfrage, antrag oder sonst, nach Dokumentart und Titelwort (die vorab festgelegte "
+                "Regel der Sensitivität S1.5)",
+                "",
+            ),
+            "dokumente": (
+                "Dokumente dieser Zeile; jede Kombination steht in jedem Monat",
+                "Dokumente",
+            ),
+            "mit_text": ("davon mit lesbarem Text", "Dokumente"),
+            "haushaltsantraege": (
+                "davon Haushaltsanträge (Dokumentart oder Titel wie haushalts(begleit)antrag)",
+                "Dokumente",
+            ),
+        },
+        optional=True,
+        enabled=time_enabled,
+    ),
+    PublishedTable(
+        "haushaltsmonate",
+        lambda layout: time_files(layout).budget,
+        "Haushaltsmonat je vollständigem Wahljahr: der Monat mit den meisten Haushaltsanträgen",
+        {
+            "wahljahr": ("Wahljahr, benannt nach dem Jahr seines Beginns", ""),
+            "monat_kalender": (
+                "Kalendermonat des Haushaltsmonats, 1 bis 12; leer unter der Mindestzahl "
+                "Haushaltsanträge im Wahljahr (dann gibt es keinen)",
+                "",
+            ),
+            "haushaltsantraege": ("Haushaltsanträge im ganzen Wahljahr", "Dokumente"),
+            "im_monat": ("davon im Haushaltsmonat; leer ohne Haushaltsmonat", "Dokumente"),
+        },
+        optional=True,
+        enabled=time_enabled,
+    ),
+    PublishedTable(
+        "dokumente_bundesvokabular",
+        lambda layout: time_files(layout).vocabulary,
+        "Kategorien des bundespolitischen Lexikons je Ratsdokument, in Titel und Text und in Titel "
+        "und Textanfang",
+        {
+            "id": _ID,
+            "kategorien": (
+                "Kategorien des Lexikons mit mindestens einem Treffer in Titel oder Text, in der "
+                "Folge des Lexikons",
+                "Liste",
+            ),
+            "kopf": (
+                "dieselben, gesucht nur in Titel und den ersten Zeichen des Texts (cycles.head_chars)",
+                "Liste",
+            ),
+            "lexikon": (
+                "Name und Version des Lexikons, mit dem gesucht ist; nur im Parquet, die CSV "
+                "trägt nur die Dokumente mit Treffer und diese Spalte nicht",
+                "",
+            ),
+        },
+        joins={"kategorien": "; ", "kopf": "; "},
+        csv=CsvPlan(vocabulary_csv_rows, "nur Dokumente mit Treffer, ohne die Spalte lexikon"),
+        optional=True,
+        enabled=lambda settings: settings.cycles.enabled,
+    ),
+    PublishedTable(
+        "zeit_hypothesen",
+        lambda layout: time_files(layout).hypotheses,
+        "Die vorab festgelegten Tests über die Perioden: drei Hypothesen mit Holm, ihre "
+        "Sensitivitäten und die Kategorien einzeln",
+        {
+            "hypothese": ("Kennung, etwa H17.1 oder H17.1/S1.2 für eine Sensitivität", ""),
+            "p": ("p-Wert des Tests, unkorrigiert", "Anteil 0 bis 1"),
+            "p_holm": (
+                "nach Holm angepasst, nur bei den drei Hypothesen; sonst leer",
+                "Anteil 0 bis 1",
+            ),
+            "ergebnis": (
+                "bestätigt, nicht bestätigt oder vorläufig; nur bei den drei Hypothesen",
+                "",
+            ),
+            "n": ("Einheiten des Tests (Wahljahre)", ""),
+            "festgelegt": ("Commit, in dem die Hypothese vor dem ersten Lauf festgelegt wurde", ""),
+            "rolle": ("Haupttest, Sensitivität oder explorativ", ""),
+            "mass": ("das Maß in Worten", ""),
+            "test": ("der Test in Worten", ""),
+            "statistik": ("t (H17.1), δ des Zwei-Wege-Modells (H17.2), JT (H17.3)", ""),
+            "effekt": (
+                "exp(δ) − 1 bei einheit relativ, sonst die Differenz zweier Anteile",
+                "Anteil",
+            ),
+            "effekt_unten": ("untere Grenze des 90-%-Intervalls (H17.1)", "Anteil"),
+            "effekt_oben": ("obere Grenze des 90-%-Intervalls (H17.1)", "Anteil"),
+            "einheit": ("relativ oder anteil", ""),
+            "p_randomisierung": (
+                "H17.1: Randomisierung des Vorwahljahrs, berichtet, entscheidet nicht",
+                "Anteil 0 bis 1",
+            ),
+            "zuordnungen": ("Zahl der Zuordnungen des exakten Tests", ""),
+            "anteile": ("H17.3: Anteil je Periode in zeitlicher Folge", "Liste"),
+            "lexikon": ("Name und Version des Lexikons", ""),
+            "daten_bis": ("letztes Vorlagendatum der Daten", ""),
+        },
+        joins={"anteile": "; "},
+        optional=True,
+        enabled=lambda settings: bool(settings.cycles.periods) and time_enabled(settings),
+    ),
+)
+
+PAGE = Page(
+    PAGE_NAME,
+    "Zeit: Rhythmus der Ratsarbeit und Bundespolitik",
+    "Wann im Jahr Ratsdokumente entstehen, was die vorab festgelegten Tests über Wahljahr und "
+    "Haushalt ergeben und wie oft Begriffe der Bundespolitik in den Dokumenten stehen.",
+    inputs=time_inputs,
+    data=time_data,
+    enabled=time_enabled,
+    links=time_links,
+)
+
+CONTRIBUTION = Contribution("17-zeit", steps=time_steps, tables=TABLES, pages=(PAGE,))

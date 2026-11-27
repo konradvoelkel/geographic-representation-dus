@@ -65,6 +65,7 @@ __all__ = [
     "multiset_permutations",
     "pre_election_test",
     "pre_election_years",
+    "wahljahr_of",
 ]
 
 
@@ -249,6 +250,15 @@ def _wahljahr_of(column: str, rules: CycleRules, years: Sequence[int]) -> pl.Exp
         pl.col(column).dt.year() - (pl.col(column).dt.month() < rules.start_month).cast(pl.Int32)
     ).cast(pl.Int32)
     return pl.when(year.is_in(list(years))).then(year).otherwise(None).cast(pl.Int32)
+
+
+def wahljahr_of(column: str, rules: CycleRules, years: Sequence[int]) -> pl.Expr:
+    """Das Wahljahr eines Datums in ``column``, leer außerhalb der vollständigen ``years``.
+
+    Dieselbe Zuordnung, mit der ``month_table`` und H17.3 zählen; die Unterseite ``zeit.html``
+    rechnet ihre Anteile je Wahljahr damit (Stufe 3).
+    """
+    return _wahljahr_of(column, rules, years)
 
 
 def _month_table_is_sound(
