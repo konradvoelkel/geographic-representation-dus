@@ -54,7 +54,10 @@ QUALITY = sorted(p.parent.name for p in VALIDATION.glob("*/guete.json"))
 ROLES = ("kodierer_a", "kodierer_b", "schlichtung")
 # Kodiert nach Frage 19 (Konrad, 2026-11-26): Kodierer B ein anderes Modell als A und die
 # Schlichtung. Alle übrigen Labels kodierten und schlichteten Agenten desselben Modells.
-TWO_MODELS = {"14-vorgaenge-3-f4": ("claude-opus-5-5", "claude-sonnet-5-5", "claude-opus-5-5")}
+TWO_MODELS = {
+    "14-vorgaenge-3-f4": ("claude-opus-5-5", "claude-sonnet-5-5", "claude-opus-5-5"),
+    "22-bedarf-ova": ("claude-opus-5-5", "claude-sonnet-5-5", "claude-opus-5-5"),
+}
 
 
 @pytest.mark.parametrize("folder", QUALITY, ids=str)

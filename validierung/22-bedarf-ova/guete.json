@@ -1,0 +1,305 @@
+{
+  "vorhaben": "22-bedarf-ova",
+  "codebuch_version": "2026-11-27.1",
+  "einheit": "document",
+  "modelle": {
+    "kodierer_a": "claude-opus-5-5",
+    "kodierer_b": "claude-sonnet-5-5",
+    "schlichtung": "claude-opus-5-5"
+  },
+  "datum": "2026-11-27",
+  "einheiten": 100,
+  "uneinig": 1,
+  "schlichtung_herkunft": {},
+  "alpha_mindestens": 0.8,
+  "fragen": {
+    "ordnung_verkehr": {
+      "n": 100,
+      "beide": 100,
+      "einig": 99,
+      "anteil": 0.99,
+      "anteil_wilson95": [
+        0.9455138038212946,
+        0.9982325679358593
+      ],
+      "cohen_kappa": 0.0,
+      "krippendorff_alpha_nominal": 0.0,
+      "krippendorff_alpha_skala": null,
+      "krippendorff_alpha": 0.0,
+      "markierungen": null,
+      "alpha_genuegt": false,
+      "labels": {
+        "ja": 99,
+        "nein": 1,
+        "unklar": 0
+      },
+      "treffer": {
+        "positiv": [
+          "ja"
+        ],
+        "stichprobe": {
+          "treffer": 99,
+          "gewertet": 100,
+          "ignoriert": 0,
+          "anteil": 0.99,
+          "wilson95": [
+            0.9455138038212946,
+            0.9982325679358593
+          ]
+        },
+        "grundgesamtheit": {
+          "schaetzer": 0.9900835073068893,
+          "wilson95_kish": [
+            0.9452390134562956,
+            0.9982714117804863
+          ],
+          "n_eff": 98.8759867473412,
+          "n": 958,
+          "selbstgewichtend": false
+        },
+        "je_schicht": {
+          "Behindertenrat": {
+            "treffer": 1,
+            "gewertet": 1,
+            "schicht_n": 6,
+            "anteil": 1.0,
+            "wilson95": [
+              0.20654931437723745,
+              1.0
+            ]
+          },
+          "Bezirksvertretung 1": {
+            "treffer": 11,
+            "gewertet": 11,
+            "schicht_n": 103,
+            "anteil": 1.0,
+            "wilson95": [
+              0.7411670330319684,
+              1.0
+            ]
+          },
+          "Bezirksvertretung 10": {
+            "treffer": 4,
+            "gewertet": 4,
+            "schicht_n": 43,
+            "anteil": 1.0,
+            "wilson95": [
+              0.5101091635454027,
+              1.0
+            ]
+          },
+          "Bezirksvertretung 2": {
+            "treffer": 5,
+            "gewertet": 5,
+            "schicht_n": 48,
+            "anteil": 1.0,
+            "wilson95": [
+              0.5655175352168251,
+              1.0
+            ]
+          },
+          "Bezirksvertretung 3": {
+            "treffer": 7,
+            "gewertet": 7,
+            "schicht_n": 68,
+            "anteil": 1.0,
+            "wilson95": [
+              0.6456695649333126,
+              1.0
+            ]
+          },
+          "Bezirksvertretung 4": {
+            "treffer": 9,
+            "gewertet": 9,
+            "schicht_n": 87,
+            "anteil": 1.0,
+            "wilson95": [
+              0.7008549515804559,
+              1.0
+            ]
+          },
+          "Bezirksvertretung 5": {
+            "treffer": 7,
+            "gewertet": 7,
+            "schicht_n": 69,
+            "anteil": 1.0,
+            "wilson95": [
+              0.6456695649333126,
+              1.0
+            ]
+          },
+          "Bezirksvertretung 6": {
+            "treffer": 11,
+            "gewertet": 11,
+            "schicht_n": 112,
+            "anteil": 1.0,
+            "wilson95": [
+              0.7411670330319684,
+              1.0
+            ]
+          },
+          "Bezirksvertretung 7": {
+            "treffer": 11,
+            "gewertet": 11,
+            "schicht_n": 105,
+            "anteil": 1.0,
+            "wilson95": [
+              0.7411670330319684,
+              1.0
+            ]
+          },
+          "Bezirksvertretung 8": {
+            "treffer": 13,
+            "gewertet": 13,
+            "schicht_n": 127,
+            "anteil": 1.0,
+            "wilson95": [
+              0.7719046276458016,
+              1.0
+            ]
+          },
+          "Bezirksvertretung 9": {
+            "treffer": 13,
+            "gewertet": 13,
+            "schicht_n": 125,
+            "anteil": 1.0,
+            "wilson95": [
+              0.7719046276458016,
+              1.0
+            ]
+          },
+          "Jugendrat": {
+            "treffer": 1,
+            "gewertet": 1,
+            "schicht_n": 7,
+            "anteil": 1.0,
+            "wilson95": [
+              0.20654931437723745,
+              1.0
+            ]
+          },
+          "Rat": {
+            "treffer": 5,
+            "gewertet": 6,
+            "schicht_n": 57,
+            "anteil": 0.8333333333333334,
+            "wilson95": [
+              0.43649717781352987,
+              0.9699466302516935
+            ]
+          },
+          "Seniorenrat": {
+            "treffer": 1,
+            "gewertet": 1,
+            "schicht_n": 1,
+            "anteil": 1.0,
+            "wilson95": [
+              0.20654931437723745,
+              1.0
+            ]
+          }
+        }
+      },
+      "verfahren": {
+        "n": 100,
+        "genauigkeit": 0.99,
+        "genauigkeit_wilson95": [
+          0.9455138038212946,
+          0.9982325679358593
+        ],
+        "mikro": {
+          "praezision": 0.99,
+          "recall": 0.99,
+          "f1": 0.99
+        },
+        "makro": {
+          "praezision": 0.495,
+          "recall": 0.5,
+          "f1": 0.49748743718592964
+        },
+        "klassen": [
+          {
+            "label": "ja",
+            "gold": 99,
+            "vorhergesagt": 100,
+            "richtig": 99,
+            "praezision": 0.99,
+            "praezision_wilson95": [
+              0.9455138038212946,
+              0.9982325679358593
+            ],
+            "recall": 1.0,
+            "recall_wilson95": [
+              0.9626467879321726,
+              1.0
+            ],
+            "f1": 0.9949748743718593
+          },
+          {
+            "label": "nein",
+            "gold": 1,
+            "vorhergesagt": 0,
+            "richtig": 0,
+            "praezision": null,
+            "praezision_wilson95": null,
+            "recall": 0.0,
+            "recall_wilson95": [
+              0.0,
+              0.7934506856227626
+            ],
+            "f1": null
+          },
+          {
+            "label": "unklar",
+            "gold": 0,
+            "vorhergesagt": 0,
+            "richtig": 0,
+            "praezision": null,
+            "praezision_wilson95": null,
+            "recall": null,
+            "recall_wilson95": null,
+            "f1": null
+          }
+        ],
+        "konfusion": {
+          "labels": [
+            "ja",
+            "nein",
+            "unklar"
+          ],
+          "zeilen_gold": [
+            [
+              99,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "genauigkeit_grundgesamtheit": {
+          "schaetzer": 0.9900835073068893,
+          "wilson95_kish": [
+            0.9452390134562956,
+            0.9982714117804863
+          ],
+          "n_eff": 98.8759867473412
+        }
+      }
+    }
+  },
+  "satz": "geprüft von zwei KI-Kodierern (claude-opus-5-5 und claude-sonnet-5-5) an 100 Dokumenten, Schlichtung durch claude-opus-5-5, nicht von Menschen",
+  "selbstgewichtend": false,
+  "vorhersage": {
+    "datei": "ova_vorhersage.parquet",
+    "sha256": "3cfd83ccb3117e1f54ace492cfa236ab643429a2e58bfced4809bb18584dba31"
+  }
+}

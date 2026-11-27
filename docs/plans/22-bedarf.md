@@ -379,6 +379,37 @@ Keiner der drei Ausgänge ändert eine Zahl von H1 bis H3 oder ein Urteil aus §
 beschreibt die Güte des Maßes, sie ist kein vierter Test. Das Ergebnis steht nach der Kodierung
 unten in diesem Abschnitt.
 
+**Ergebnis** (2026-11-27, `validierung/22-bedarf-ova/`, `guete.json` und `labels.csv`). Kodierer A
+`claude-opus-5-5`, Kodierer B `claude-sonnet-5-5`, Schlichtung `claude-opus-5-5`. A urteilte
+99-mal `ja` und einmal `nein`, B 100-mal `ja`; einig bei 99 von 100 (99,0 %, Wilson 0,946 bis
+0,998), Cohens κ 0,000, Krippendorffs α 0,000. Die eine Uneinigkeit, RAT/134/2025 (Gestaltung der
+Lärmschutzwände einer Bahnstrecke im Planfeststellungsverfahren), entschied die Schlichtung als
+`nein`. Endlabels: `ja` 99, `nein` 1, `unklar` 0; der gewichtete Anteil `ja` für die
+Grundgesamtheit wäre 0,990 (Wilson bei Kishs n_eff 98,9: 0,945 bis 0,998). **α genügt nicht**, und
+die Regel der vollen Einigkeit greift nicht (99 statt 100 von 100). Es gilt darum Fall 3: die Seite
+nennt keine geprüfte Präzision mit Intervall, sondern in einem Satz, was beobachtet wurde, und dass
+α bei fast keiner Streuung kein verlässliches Maß ist. α liegt hier nicht unter der Schwelle, weil
+die Kodierer oft verschieden urteilten, sondern weil fast alle Labels gleich sind: dann erwartet α
+fast so viel Übereinstimmung durch Zufall, wie es beobachtet, und eine einzige Abweichung reicht für
+0. Die Regel aus Fall 3 gilt trotzdem, wie vorab festgelegt; was daraus für künftige Messungen
+folgt, trägt der Supervisor in den Rückstand ein.
+
+**Unschärfen für eine Fassung 2** (vom Schlichter genannt, für eine neue Stichprobe in einem eigenen
+Ordner; das Codebuch der Fassung .1 bleibt, wie es ist):
+
+- *Betreff gegen Beschlussvorschlag*: „überwiegend" ist am Gegenstand des Beschlusses festgemacht;
+  nennt der Betreff ein Verkehrsprojekt, der Beschlussvorschlag aber etwas anderes (hier die
+  Gestaltung von Lärmschutzwänden), sagt das Codebuch nicht ausdrücklich, dass der
+  Beschlussvorschlag vorgeht.
+- *Regional- und Fernbahn*: das Codebuch nennt Bus und Bahn (ÖPNV), aber nicht, ob Regional- und
+  Fernverkehr der Eisenbahn (etwa RRX) dazugehört.
+- *Planfeststellung*: Stellungnahmen der Stadt in Planfeststellungsverfahren für Verkehrswege sind
+  weder bei Bauleitplanung noch beim Verkehrsraum genannt.
+- *Schienenlärm*: der Grenzfall Lärm nennt Straßenverkehr, Gastronomie und Veranstaltungen, nicht
+  den Lärm von Bahnstrecken.
+- *Stadtgestaltung*: die Gestaltung von Bauwerken an Verkehrswegen (Lärmschutzwände, Brücken)
+  steht in keiner Option.
+
 ## 5. Urteil gegen das Kriterium: bauen / umbauen / verwerfen
 
 **Kriterium** (Briefing, unverändert): mindestens zwei Quellen mit passender Raumeinheit und freier
