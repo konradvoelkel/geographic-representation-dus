@@ -1,0 +1,74 @@
+{
+  "vorhaben": "22-bedarf-ova",
+  "codebuch_version": "2026-11-27.1",
+  "profil": "duesseldorf",
+  "einheit": "document",
+  "grundgesamtheit": "interim/ova_ohne_ausschuss.parquet",
+  "grundgesamtheit_sha256": "dc0b269eda792b77dccae10713c6787f91062687f51acda4d793e41614bee58b",
+  "einheiten": 958,
+  "ohne_text": 0,
+  "groesse": 100,
+  "seed": 20261127,
+  "schicht": "gremium",
+  "aufteilung": "proportional",
+  "selbstgewichtend": false,
+  "schichten": {
+    "Behindertenrat": {
+      "grundgesamtheit": 6,
+      "stichprobe": 1
+    },
+    "Bezirksvertretung 1": {
+      "grundgesamtheit": 103,
+      "stichprobe": 11
+    },
+    "Bezirksvertretung 10": {
+      "grundgesamtheit": 43,
+      "stichprobe": 4
+    },
+    "Bezirksvertretung 2": {
+      "grundgesamtheit": 48,
+      "stichprobe": 5
+    },
+    "Bezirksvertretung 3": {
+      "grundgesamtheit": 68,
+      "stichprobe": 7
+    },
+    "Bezirksvertretung 4": {
+      "grundgesamtheit": 87,
+      "stichprobe": 9
+    },
+    "Bezirksvertretung 5": {
+      "grundgesamtheit": 69,
+      "stichprobe": 7
+    },
+    "Bezirksvertretung 6": {
+      "grundgesamtheit": 112,
+      "stichprobe": 11
+    },
+    "Bezirksvertretung 7": {
+      "grundgesamtheit": 105,
+      "stichprobe": 11
+    },
+    "Bezirksvertretung 8": {
+      "grundgesamtheit": 127,
+      "stichprobe": 13
+    },
+    "Bezirksvertretung 9": {
+      "grundgesamtheit": 125,
+      "stichprobe": 13
+    },
+    "Jugendrat": {
+      "grundgesamtheit": 7,
+      "stichprobe": 1
+    },
+    "Rat": {
+      "grundgesamtheit": 57,
+      "stichprobe": 6
+    },
+    "Seniorenrat": {
+      "grundgesamtheit": 1,
+      "stichprobe": 1
+    }
+  },
+  "gezogen": "2026-11-27"
+}

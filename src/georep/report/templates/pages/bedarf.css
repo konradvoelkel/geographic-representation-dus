@@ -1,0 +1,26 @@
+/* Vorhaben 22, Stufe 3: bedarf.html. Die Karten tragen die sequenzielle Rampe des Rahmens (--q0 bis
+   --q4); ein Wahlbezirk ohne Wert ist --grid mit einem Schraffurstrich, damit er nicht wie die
+   unterste Klasse liest. Die Streudiagramme färben nicht nach Stadtbezirk (zehn Kategorien, die
+   Skill dataviz trägt im Streudiagramm drei): die Nummer am Mittelpunkt und die Linien zu den
+   Wahlbezirken tragen die Schicht, in den Tokens des Rahmens (--axis, --ink-2, --surface). */
+ul.toc { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; list-style: none; padding: 0; margin: .75rem 0; font-size: .9rem; }
+.pruefung { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: .25rem 1rem .75rem; margin: 1rem 0; }
+.pruefung h2 { margin-top: .75rem; font-size: 1.1rem; }
+.pruefung li { margin: .3rem 0; }
+.karten { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; margin: 1rem 0; }
+figure.karte { margin: 0; }
+figure.karte figcaption { font-weight: 600; font-size: .95rem; margin: 0 0 .3rem; }
+figure.karte .legend ul, figure.karte ul.legend { list-style: none; padding: 0; margin: .4rem 0 0; display: flex; flex-wrap: wrap; gap: .1rem .9rem; font-size: .8rem; }
+figure.karte ul.legend li { display: flex; align-items: center; gap: .35rem; margin: 0; }
+.district.ohne { fill: var(--grid); }
+.swatch.ohne { background: repeating-linear-gradient(135deg, var(--grid) 0 3px, var(--axis) 3px 4px); }
+table.bedarf-tabelle { font-size: .85rem; }
+table.bedarf-tabelle td, table.bedarf-tabelle th { padding: .3rem .4rem; }
+table.bedarf-tabelle td:nth-child(2) { min-width: 10em; }  /* der Name bricht sonst in drei Zeilen */
+.test { margin: 1.5rem 0 2rem; }
+figure.streu { margin: .5rem 0; }
+figure.streu figcaption { max-width: 48em; }
+svg.need-scatter { max-width: 34em; }
+.need-scatter .spokes line { stroke: var(--axis); stroke-width: 1; }
+.need-scatter .centre { fill: var(--surface); stroke: var(--ink-2); stroke-width: 1.5; }
+.need-scatter .centre-label { font-size: 10px; font-weight: 600; fill: var(--ink); text-anchor: middle; dominant-baseline: central; pointer-events: none; }

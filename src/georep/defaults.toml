@@ -525,6 +525,7 @@ url = "https://www.opengeodata.nrw.de/produkte/transport_verkehr/unfallatlas/"
 license = "Datenlizenz Deutschland – Namensnennung – Version 2.0"
 license_url = "https://www.govdata.de/dl-de/by-2-0"
 stand = "Unfälle 2020 bis 2025, Jahrgang 2025 veröffentlicht am 2026-07-07"
+modified = "verändert: die Unfälle der Gemeinde ausgeschnitten, auf die Monate der Periode beschränkt und je Wahlbezirk gezählt, nahe einer Grenze zu gleichen Teilen"  # Veränderungshinweis, den dl-de/by-2-0 im Quellenvermerk verlangt (V5)
 
 [context.need.grid]            # Zensus 2022, 100-m-Gitter: Einwohner und durchschnittliche Nettokaltmiete je m²
 population_url = "https://www.destatis.de/static/DE/zensus/gitterdaten/Zensus2022_Bevoelkerungszahl.zip"
@@ -541,6 +542,7 @@ url = "https://www.destatis.de/static/DE/zensus/gitterdaten/Zensus2022_Bevoelker
 license = "Datenlizenz Deutschland – Namensnennung – Version 2.0"
 license_url = "https://www.govdata.de/dl-de/by-2-0"
 stand = "Stichtag 2022-05-15"
+modified = "verändert: die Gitterzellen der Gemeinde ausgeschnitten und je Wahlbezirk summiert, die Miete mit den Einwohnern der Zellen gewogen"
 
 [context.need.schools]         # amtliche Schuldaten NRW (Schulnummer, Schulform, Koordinate) und der Schulsozialindex des Landes (Stufe 1 bis 9 je Schule)
 schools_url = "https://apps.schulministerium.nrw.de/BiPo/OpenData/Schuldaten/schuldaten.csv"
@@ -556,6 +558,7 @@ url = "https://apps.schulministerium.nrw.de/BiPo/OpenData/Schuldaten/schuldaten.
 license = "Datenlizenz Deutschland – Namensnennung – Version 2.0"
 license_url = "https://www.govdata.de/dl-de/by-2-0"
 stand = "Schuljahr 2025/26"
+modified = "verändert: die Schulen der Gemeinde über die Schulnummer verbunden, die Stufen der Grundschulen je Wahlbezirk gemittelt"
 
 [context.need.classes]         # Klassen des passenden Ausschusses (Schritt committees), deren Anteil an den Dokumenten je Wahlbezirk zählt; im Stadtprofil. Leer: die Anteile fehlen, der Rest rechnet
 traffic = []

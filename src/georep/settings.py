@@ -877,6 +877,10 @@ class NeedAttribution(_Strict):
     license: str = ""
     license_url: str = ""
     stand: str = ""  # so genau, wie die Quelle es sagt („2025, veröffentlicht 2026-07")
+    # Vorarbeit V5 (docs/plan-zeigen-2026-11.md, § 4; docs/todo.md, Punkt 16): dl-de/by-2-0
+    # verlangt im Quellenvermerk einen Hinweis, wenn die Daten verändert sind. Der Satz sagt, was
+    # verändert ist („verändert: …"); leer heißt unverändert übernommen.
+    modified: str = ""
 
 
 class NeedAccidents(_Strict):
@@ -938,6 +942,9 @@ class NeedHypothesis(_Strict):
     # ohne 1 und 10). Vorab festgelegt wie die Hypothese, darum hier und nicht aus
     # ``analysis.exclude_districts``, das die Regression der Seite steuert und sich ändern darf.
     robust_without: list[int] = []
+    # Stufe 3 (Messdokument § 7): der Tag der Festlegung neben dem Commit auf der Seite. Anzeige,
+    # nicht im Fingerprint; der Commit zählt wie bisher. None: die Seite nennt nur den Commit.
+    fixed_on: date | None = None
 
 
 class NeedSettings(_Strict):
@@ -3186,6 +3193,8 @@ class Settings(BaseSettings):
                         "accidents": {"attribution"},
                         "grid": {"attribution"},
                         "schools": {"attribution"},
+                        # Stufe 3: der Tag der Festlegung ist Anzeige, der Commit zählt
+                        "hypotheses": {"__all__": {"fixed_on"}},
                     },
                 },
                 "period": {"label"},

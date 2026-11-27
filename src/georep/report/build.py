@@ -536,7 +536,9 @@ def report_fingerprint(settings: Settings, folder: Traversable | None = None) ->
     keine Nummer tragen (Punkt 58), ``period.label`` die Überschrift der Periode,
     ``context.dataset`` die Namensnennung der Fremddaten im Fuß und unter „Abgeleitete Daten", und
     die ``label`` der Gewichtungsregeln sind die Zeilenköpfe von Tabelle 5b. Eine geänderte
-    Namensnennung soll die Kette nicht neu rechnen lassen -- die Seite aber schon.
+    Namensnennung soll die Kette nicht neu rechnen lassen -- die Seite aber schon. Dasselbe gilt
+    seit Stufe 3 von Vorhaben 22 für die Namensnennungen der Bedarfsquellen und den Tag, an dem
+    ihre Hypothesen festgelegt wurden (``bedarf.html``).
 
     ``templates/vergleich.html.j2`` zählt mit, obwohl es zu ``georep publish`` gehört und nicht zum
     Schritt ``report``: der Preis dafür ist ein Seitenbau von 1,7 s, wenn jemand nur die
@@ -567,6 +569,19 @@ def report_fingerprint(settings: Settings, folder: Traversable | None = None) ->
         "weights.labels": [rule_set.label for rule_set in settings.weights.paper_type],
         # Vorhaben 17, Review K2: mit Timer entfällt auf zeit.html der Satz zum Schnappschuss
         "feeds.timer": settings.feeds.timer,
+        # Vorhaben 22, Stufe 3: Namensnennung mit Veränderungshinweis (V5) und Tag der Festlegung
+        # stehen auf bedarf.html, aber nicht im Fingerprint der Kette
+        "context.need.shown": {
+            "attribution": [
+                source.attribution.model_dump(mode="json")
+                for source in (
+                    settings.context.need.accidents,
+                    settings.context.need.grid,
+                    settings.context.need.schools,
+                )
+            ],
+            "fixed_on": [str(h.fixed_on) for h in settings.context.need.hypotheses],
+        },
     }
     digest.update(json.dumps(shown, sort_keys=True, default=str).encode("utf-8"))
     return digest.hexdigest()[:16]

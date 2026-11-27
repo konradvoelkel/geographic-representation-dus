@@ -23,7 +23,7 @@ from georep.report.pages import Page, PageSection, order_sections, sections_for
 from georep.settings import Settings, load_settings
 
 SETTINGS = load_settings(cwd=Path("/nonexistent"))
-PAGES = ("akteure", "vorgaenge", "zeit")
+PAGES = ("akteure", "bedarf", "vorgaenge", "zeit")
 NAMES = st.from_regex(r"[a-z][a-z0-9-]{0,6}", fullmatch=True)
 
 

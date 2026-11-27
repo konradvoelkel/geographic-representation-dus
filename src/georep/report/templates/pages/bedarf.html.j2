@@ -1,0 +1,167 @@
+{#
+  Vorhaben 22, Stufe 3 (docs/plans/22-bedarf.md, § 7 mit § 10), im Muster von akteure.html
+  (Punkt 88). Das Modell ist ``report.need.NeedModel``; jede Zahl kommt aus den Tabellen von 22,
+  jede Namensnennung aus den Settings, jede Zahl der Prüfung der Klasse aus ``guete.json``
+  (Messdokument § 4.1: drei Fälle, ``check.case``). Keine Rangfolge „Bedarf minus
+  Aufmerksamkeit", nichts je Partei, keine Personen. Was in diesem Profil fehlt, sagt ``missing``.
+#}
+{% from "macros.html.j2" import more %}
+{% set m = data.bedarf %}
+{% set c = m.check %}
+{% set acc = m.accidents %}
+{% set v = data.traffic %}
+{#
+  Die Prüfung der Klasse (Messdokument § 4.1) in Worten; ``c.case`` ist der Fall: 1 Präzision mit
+  Prüfsatz, 2 unscharf, 3 kein verlässliches Maß. Eine Vorlage im Ordner pages/bedarf/ wäre ein
+  Gast (``check_page_files``), darum ein Makro hier.
+#}
+{% macro klasse() %}Sie kommt aus dem Ausschussklassifikator: gelernt an Dokumenten, die in einem Ausschuss beraten wurden (dort trifft er in der Kreuzvalidierung {{ data.accuracy|pct(1) }}), und angewandt auf alle Dokumente mit Text. Von den {{ m.classes.with_hit|num }} Dokumenten der Klasse mit Treffer wurden {{ c.population|num }} ({{ (c.population / m.classes.with_hit)|pct(1) }}) in keinem Ausschuss beraten, vor allem Dokumente der Bezirksvertretungen. Eine Stichprobe dieser Dokumente ohne Ausschussberatung, geschichtet nach Gremium, ist {{ c.sentence }}{% if not c.measured %} (gemessen an {{ c.measured_datasets|join("; ") }}, für diesen Datensatz explorativ){% endif %}.
+{%- if c.case == 1 %} Die Klasse trifft bei {{ c.positive|num }} von {{ c.judged|num }} zu, für alle {{ c.population|num }} gewichtet zu {{ c.weighted|pct(1) }} (95 % {{ c.interval[0]|pct(1) }} bis {{ c.interval[1]|pct(1) }}).
+{%- elif c.case == 2 %} Auf Dokumenten ohne Ausschussberatung (vor allem Bezirksvertretungen) trifft die Klasse nur zu {{ c.weighted|pct(0) }} zu (gewichtet, 95 % {{ c.interval[0]|pct(1) }} bis {{ c.interval[1]|pct(1) }}); das Maß {{ v }} ist darum unscharf.
+{%- else %} Die beiden Kodierer stimmten bei {{ c.agreed|num }} von {{ c.both|num }} überein; nach der Schlichtung beurteilten sie {{ c.count("ja")|num }} als {{ v }}{% if c.count("nein") %}, {{ c.count("nein")|num }} nicht{% endif %}{% if c.count("unklar") %}, {{ c.count("unklar")|num }} als unklar{% endif %}. {% if c.alpha is none %}Krippendorffs α ist nicht definiert{% elif c.agreed >= 0.9 * c.both %}Weil es kaum Streuung gibt, ist Krippendorffs α ({{ c.alpha|num(3) }}) kein verlässliches Maß{% else %}Die Kodierer stimmten zu selten überein (Krippendorffs α {{ c.alpha|num(3) }}), die Prüfung ergab kein verlässliches Maß{% endif %}; eine geprüfte Präzision nennt die Seite darum nicht.
+{%- endif %}{% endmacro %}
+<section id="ueberblick">
+<p>Diese Seite stellt je Wahlbezirk amtliche Zahlen zum Bedarf neben die Ratsdokumente der {{ model.period.title }}, die den Wahlbezirk nennen: Unfälle mit Personenschaden, Einwohner, Miete und den Schulsozialindex{% if m.with_context %}, den sozialen Handlungsbedarf und den Anteil der Kinder und Jugendlichen{% endif %}. Ein Dokument nennt einen Wahlbezirk, wenn es mindestens einen Begriff aus dessen Wörterbuch trägt, wie bei der Trefferquote der <a href="details.html">Details</a>. Die Seite ersetzt keine Bedarfsplanung der Verwaltung; sie zeigt, wo die Dokumentlage und die amtlichen Zahlen auseinanderlaufen, mit Quelle, Stand und Unsicherheit.</p>
+<ul class="toc">
+<li><a href="#quellen">Quellen und Stand</a></li>
+<li><a href="#bedarf">Bedarf je Wahlbezirk</a></li>
+<li><a href="#nennung">Bedarf und Nennung</a></li>
+<li><a href="#grenzen">Was das nicht sagt</a></li>
+</ul>
+<div class="pruefung" id="pruefung">
+<h2>Wie geprüft</h2>
+<ul>
+<li><strong>Bedarfsdaten</strong> sind amtlich, ihre Umrechnung auf die Wahlbezirke ist deterministisch. Die Summen stimmen: {{ m.residents|num }} Einwohner des Zensus 2022 in den Wahlbezirken, {{ acc.located|num }} der {{ acc.total|num }} Unfälle der Periode liegen in einem Wahlbezirk{% if acc.outside %}, {{ acc.outside|num }} außerhalb aller{% endif %}.{% if acc.sharp_rank is not none %} Zwei Wege der Zuordnung, mit und ohne Randband, ergeben fast dieselbe Rangfolge der Wahlbezirke (Spearman {{ acc.sharp_rank|num(3) }}).{% endif %}{% if m.school_need %} Zwei unabhängige Maße der sozialen Lage, der Handlungsbedarf der Stadt und der Schulsozialindex des Landes, stimmen je Wahlbezirk mit ρ = {{ m.school_need[0]|num(3) }} überein.{% endif %} Prüfsummen der Fremddaten und weitere Gegenproben rechnet das Messskript (<a href="{{ data.urls.measurement }}">Messdokument</a>, § 4).</li>
+{% if c %}
+<li><strong>Klasse {{ v }}</strong>. {{ klasse() }}</li>
+{% endif %}
+</ul>
+{% if m.missing %}
+<p class="note">In diesem Profil fehlt:</p>
+<ul class="note">
+{% for line in m.missing %}
+<li>{{ line }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+</div>
+</section>
+
+<section id="quellen">
+<h2>Quellen und Stand</h2>
+<p>Alle Bedarfszahlen stammen aus amtlichen Daten unter der Datenlizenz Deutschland. Jede Quelle ist auf die Gemeinde zugeschnitten und auf die {{ m.districts|length|num }} Wahlbezirke umgerechnet, also verändert; die Namensnennung sagt, wie.</p>
+<div class="scroll"><table id="quellen-tabelle">
+<thead><tr><th scope="col">Quelle</th><th scope="col">Stand</th><th scope="col">Raumeinheit</th><th scope="col">Umrechnung</th><th scope="col">Abdeckung</th></tr></thead>
+<tbody>
+{% for s in m.sources %}
+<tr><th scope="row">{% if s.url %}<a href="{{ s.url }}">{{ s.title }}</a>{% else %}{{ s.title }}{% endif %}<br><span class="note">{{ s.publisher }}</span></th><td>{{ s.stand }}</td><td>{{ s.unit }}</td><td>{{ s.transform }}</td><td>{{ s.coverage }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+<p class="note">Namensnennung nach Lizenz:</p>
+<ul class="note">
+{% for s in m.sources %}
+<li>{{ s.publisher }}, {{ s.title }}, {% if s.license_url %}<a href="{{ s.license_url }}">{{ s.license }}</a>{% else %}{{ s.license }}{% endif %}{% if s.modified %}; {{ s.modified }}{% endif %}.</li>
+{% endfor %}
+</ul>
+<p><strong>Randband.</strong> Der Unfallatlas legt einen Unfall auf die Straßenachse, und Wahlbezirksgrenzen laufen oft auf Straßenmitten; auf welcher Seite der Grenze ein Unfall liegt, ist dort Zufall. Ein Unfall näher als {{ m.band_m|num }} m an mehr als einem Wahlbezirk zählt darum zu gleichen Teilen für jeden: {{ acc.shared|num }} der {{ acc.total|num }} Unfälle ({{ acc.shared_share|pct(1) }}). Die Zahlen je Wahlbezirk tragen darum Nachkommastellen.</p>
+<p><strong>Stand.</strong> Die Dokumente reichen vom {{ m.period_start }}{% if m.period_end %} bis zum {{ m.period_end }}{% else %} bis heute{% endif %}, die Unfälle über dieselben Monate. Die übrigen Bedarfsdaten sind Momente, je mit dem Stand in der Tabelle oben; eine Zeitreihe zeigt die Seite darum nicht.</p>
+</section>
+
+<section id="bedarf">
+<h2>Bedarf je Wahlbezirk</h2>
+<p>Die Karten färben die Wahlbezirke in Quantilklassen: jede Klasse trägt etwa gleich viele Wahlbezirke, und die Grenzen stehen in der Legende. Ein Klick auf eine Fläche markiert denselben Wahlbezirk in allen Karten, in den Streudiagrammen und in der Tabelle.</p>
+<div class="karten">
+{% for panel in m.maps %}
+<figure class="karte">
+<figcaption>{{ panel.title }}</figcaption>
+{{ panel.svg|safe }}
+<ul class="legend">
+{% for klass, label in panel.legend %}
+<li><span class="swatch {{ klass }}" aria-hidden="true"></span>{{ label }}</li>
+{% endfor %}
+</ul>
+</figure>
+{% endfor %}
+</div>
+{{ more("districts", m.districts|length, model.preview_rows) }}
+<div class="scroll"><table id="districts" class="preview bedarf-tabelle">
+<thead><tr><th scope="col" class="num" data-sort="num">Nr.</th><th scope="col" data-sort="text">Wahlbezirk</th><th scope="col" class="num" data-sort="num">Stadt&shy;bezirk</th><th scope="col" class="num" data-sort="num">Einwohner</th><th scope="col" class="num" data-sort="num">Unfälle</th><th scope="col" class="num" data-sort="num">je 1&#8239;000 EW</th><th scope="col" class="num" data-sort="num">mit Rad/Fuß</th><th scope="col" class="num" data-sort="num">Miete €/m²</th><th scope="col" class="num" data-sort="num">Schul&shy;sozialindex</th>{% if m.with_context %}<th scope="col" class="num" data-sort="num">Handlungs&shy;bedarf</th><th scope="col" class="num" data-sort="num">unter 18</th>{% endif %}<th scope="col" class="num" data-sort="num">Dokumente</th><th scope="col" class="num" data-sort="num">je 1&#8239;000 EW</th>{% if m.classes %}<th scope="col" class="num" data-sort="num">Anteil {{ v }}</th><th scope="col" class="num" data-sort="num">Anteil {{ data.youth }}</th>{% endif %}</tr></thead>
+<tbody>
+{% macro cell(value, decimals=1, suffix="") %}{% if value is not none %}<td class="num" data-value="{{ value }}">{{ value|num(decimals) }}{{ suffix }}</td>{% else %}<td class="num" data-value="-Infinity">–</td>{% endif %}{% endmacro %}
+{% macro share(value) %}{% if value is not none %}<td class="num" data-value="{{ value }}">{{ value|pct(1) }}</td>{% else %}<td class="num" data-value="-Infinity">–</td>{% endif %}{% endmacro %}
+{% for d in m.districts %}
+<tr data-id="{{ d.id }}"><td class="num" data-value="{{ d.id }}">{{ d.id }}</td><td>{{ d.name }}</td><td class="num" data-value="{{ d.stratum if d.stratum is not none else -1 }}">{{ d.stratum if d.stratum is not none else "–" }}</td>{{ cell(d.residents, 0) }}{{ cell(d.accidents, 1) }}{{ cell(d.accidents_rate, 1) }}{{ cell(d.accidents_vulnerable, 1) }}{{ cell(d.rent, 2) }}{{ cell(d.school_index, 1) }}{% if m.with_context %}{{ cell(d.need_score, 2) }}{{ cell(d.youth, 1, " %") }}{% endif %}{{ cell(d.documents, 0) }}{{ cell(d.documents_rate, 1) }}{% if m.classes %}{{ share(d.traffic) }}{{ share(d.youth_docs) }}{% endif %}</tr>
+{% endfor %}
+</tbody></table></div>
+<p class="note">Unfälle mit Personenschaden in den Monaten der Periode, unscharf zugeordnet (Randband oben); „mit Rad/Fuß“ heißt mit Beteiligung eines Fahrrads oder zu Fuß Gehender. Miete: durchschnittliche Nettokaltmiete des Zensus 2022, gewogen mit den Einwohnern der Gitterzellen. Schulsozialindex: Mittel der Stufen 1 (niedrige) bis 9 (hohe Belastung) der Schulen im Wahlbezirk; ohne Schule kein Wert.{% if m.with_context %} Handlungsbedarf: Score 1 bis 5 aus den Stufen des Datensatzes zur sozialen Lage; unter 18: Anteil an den Einwohnern in Prozent.{% endif %} Dokumente: Dokumente mit Treffer im Wörterbuch des Wahlbezirks, je 1&#8239;000 Einwohner des Zensus.{% if m.classes %} Die Anteile zählen die Dokumente der Klassen {{ v }} und {{ data.youth }} unter den Dokumenten mit Treffer.{% endif %} Sortieren nach einer Spalte ordnet nach dieser einen Zahl; eine Rangfolge aus Bedarf und Nennung zusammen ist das nicht.</p>
+</section>
+
+<section id="nennung">
+<h2>Bedarf und Nennung</h2>
+{% if m.tests %}
+<p>Drei Fragen sind vorab festgelegt, bevor eine Zahl der einen Seite gegen eine der anderen gerechnet wurde{% for commit, day in m.commits %}: {% if day %}am {{ day }}, {% endif %}Commit <a href="{{ data.urls['commit-' ~ commit] }}"><code>{{ commit }}</code></a>{% endfor %}. Einheit ist der Wahlbezirk (n = {{ m.districts|length|num }}), Maß Spearmans ρ, p aus einem Permutationstest; die Schwelle ist α = {{ m.alpha|num(2) }} nach Holm über alle {{ m.tests|length|num }} Tests. „Nicht bestätigt“ heißt nicht nachgewiesen, nicht widerlegt.</p>
+<div class="scroll"><table id="tests">
+<thead><tr><th scope="col">Test</th><th scope="col">Bedarf (x)</th><th scope="col">Aufmerksamkeit (y)</th><th scope="col">Richtung</th><th scope="col" class="num">ρ (95 %)</th><th scope="col" class="num">p</th><th scope="col" class="num">p nach Holm</th><th scope="col">Ergebnis</th></tr></thead>
+<tbody>
+{% for t in m.tests %}
+<tr><th scope="row"><a href="#test-{{ t.name|lower }}">{{ t.name }}</a></th><td>{{ t.need }}</td><td>{{ t.attention }}</td><td>{{ t.alternative }}</td>{% if t.rho is not none %}<td class="num">{{ t.rho|num(3) }}{% if t.interval %} <span class="note">({{ t.interval[0]|num(3) }} bis {{ t.interval[1]|num(3) }})</span>{% endif %}</td><td class="num">{{ data.p_text(t.p) }}</td><td class="num">{{ data.p_text(t.p_holm) }}</td><td><strong>{{ t.result }}</strong>{% if t.reading %} <span class="note">({{ t.reading }})</span>{% endif %}</td>{% else %}<td class="num" colspan="3">ohne Werte in diesem Lauf</td><td>–</td>{% endif %}</tr>
+{% endfor %}
+</tbody></table></div>
+<p class="note">ρ mit 95-%-Perzentil-Bootstrap-Intervall. {% if m.power %}Bei n = {{ m.districts|length|num }} erkennt ein einseitiger Test mit 80 % Power nur |ρ| ab rund {{ m.power[0]|num(2) }}, im ersten Holm-Schritt ab {{ m.power[1]|num(2) }}; kleinere Zusammenhänge kann diese Messung nicht ausschließen. {% endif %}{% if m.classes %}Die Anteile der Klassen und damit die Zahlen der Tests über sie sind nur je Rechner reproduzierbar: der Klassifikator hält auf einem anderen Rechner an einer leicht anderen Stelle an (<a href="{{ data.urls.decisions }}">Entscheidungspunkt 80</a>); die Ergebnisse halten.{% endif %}</p>
+{% for t in m.tests %}
+<div class="test" id="test-{{ t.name|lower }}">
+<h3>{{ t.name }}: {{ t.need }} und {{ t.attention }}</h3>
+{% if t.rho is not none %}
+<p>{% if t.confirmed %}Nach der vorab festgelegten Regel <strong>bestätigt</strong>{% else %}Nach der vorab festgelegten Regel <strong>nicht bestätigt</strong>{% endif %}{% if t.reading %} ({{ t.reading }}){% endif %}: ρ = {{ t.rho|num(3) }}, p nach Holm {{ data.p_text(t.p_holm) }}.{% for note in t.notes %} {{ note }}{% endfor %}{% if c and t.confirmed and t.attention_key == 'anteil_verkehr' %}{% if c.case == 2 %} Dabei ist das Maß unscharf: auf Dokumenten ohne Ausschussberatung (vor allem Bezirksvertretungen) trifft die Klasse nur zu {{ c.weighted|pct(0) }} zu.{% elif c.case == 3 %} Wie gut die Klasse auf Dokumenten ohne Ausschussberatung trifft, ergab die Prüfung kein verlässliches Maß (<a href="#pruefung">Wie geprüft</a>).{% endif %}{% endif %}</p>
+{% if t.scatter %}
+<figure class="streu">
+{{ t.scatter|safe }}
+<figcaption class="note">Ein Punkt je Wahlbezirk; die Zahl im Kreis ist der Stadtbezirk am Mittelpunkt seiner Wahlbezirke, die Linien führen zu ihnen. Steigen die Mittelpunkte, ohne dass die Punkte um einen Mittelpunkt eine Richtung zeigen, liegt der Zusammenhang zwischen den Stadtbezirken.</figcaption>
+</figure>
+{% endif %}
+<ul class="note">
+{% if t.robustness %}
+<li>Robustheit, vorab genannt, entscheidet nicht: {% for r in t.robustness %}{{ r.label }}{% if r.n != t.n %} (n = {{ r.n }}){% endif %} ρ = {{ r.rho|num(3) }}{{ "; " if not loop.last }}{% endfor %}.</li>
+{% endif %}
+{% if t.within %}
+<li>Explorativ, innerhalb der Stadtbezirke (Ränge um den Mittelwert ihres Stadtbezirks bereinigt): ρ = {{ t.within[0]|num(3) }}, p {{ data.p_text(t.within[1]) }}.</li>
+{% endif %}
+{% if t.moran %}
+<li>Explorativ, Moran's I (Nachbarn mit gemeinsamer Grenze): {% for i in t.moran %}{{ i.label }} {{ i.value|num(3) }} (p {{ data.p_text(i.p) }}){{ "; " if not loop.last }}{% endfor %}.</li>
+{% endif %}
+</ul>
+{% else %}
+<p>Dieser Test hat in diesem Lauf keine Werte: eine seiner Spalten fehlt (siehe <a href="#pruefung">In diesem Profil fehlt</a>).</p>
+{% endif %}
+</div>
+{% endfor %}
+{% if m.pairs %}
+<h3>Explorativ: weitere Paare</h3>
+<p>Nach dem ersten Lauf der Tests gerechnet; p ohne Korrektur (asymptotisch), nur zur Orientierung. Jedes Paar ist eine Frage für eine neue Festlegung, kein Befund.</p>
+<div class="scroll"><table id="paare">
+<thead><tr><th scope="col">Bedarf</th><th scope="col">Aufmerksamkeit oder Bezug</th><th scope="col" class="num" data-sort="num">ρ</th><th scope="col" class="num">p</th><th scope="col" class="num">n</th></tr></thead>
+<tbody>
+{% for p in m.pairs %}
+<tr><td>{{ p.need }}</td><td>{{ p.attention }}</td><td class="num" data-value="{{ p.rho }}">{{ p.rho|num(3) }}</td><td class="num">{{ data.p_text(p.p) }}</td><td class="num">{{ p.n }}</td></tr>
+{% endfor %}
+</tbody></table></div>
+{% endif %}
+{% else %}
+<p>Für diesen Datensatz sind keine Tests vorab festgelegt{% if not m.classes %}, und ohne Klassen gibt es keinen Anteil {{ v }} oder {{ data.youth }}{% endif %}. Die Zahlen oben beschreiben den Bedarf; ob die Dokumente ihm folgen, prüft die Seite hier nicht.</p>
+{% endif %}
+</section>
+
+<section id="grenzen">
+<h2>Was das nicht sagt</h2>
+<ul>
+<li><strong>Nichts über Menschen.</strong> Ein Zusammenhang über Wahlbezirke sagt nichts über die Menschen in ihnen (ökologischer Fehlschluss): ein Wahlbezirk mit vielen Unfällen und vielen Verkehrsdokumenten heißt nicht, dass die Betroffenen sich zu Wort melden.</li>
+<li><strong>Wenige Einheiten.</strong> {{ m.districts|length|num }} Wahlbezirke{% if m.power %}: nur |ρ| ab rund {{ m.power[0]|num(2) }} ist mit 80 % Power erkennbar{% endif %}. Ein nicht bestätigter Test ist kein Beleg, dass es keinen Zusammenhang gibt.</li>
+<li><strong>Stand der Daten.</strong> Die Bedarfsdaten sind zu verschiedenen Zeitpunkten erhoben (Quellen oben); nur die Unfälle liegen genau in der Periode der Dokumente.</li>
+{% if c %}
+<li><strong>Die Klasse {{ v }}</strong> zählt auch Ordnungsthemen (Sondernutzung, Sauberkeit, Märkte), nicht nur Verkehr, und sie ist an Dokumenten der Ausschüsse gelernt. {% if c.case == 1 %}Auf Dokumenten ohne Ausschussberatung (vor allem Bezirksvertretungen) trifft sie gewichtet zu {{ c.weighted|pct(1) }} zu.{% elif c.case == 2 %}Auf Dokumenten ohne Ausschussberatung (vor allem Bezirksvertretungen) trifft sie nur zu {{ c.weighted|pct(0) }} zu; das Maß ist unscharf.{% else %}Wie gut sie auf Dokumenten ohne Ausschussberatung (vor allem Bezirksvertretungen) trifft, ergab die Prüfung kein verlässliches Maß; {{ c.count("ja")|num }} von {{ c.units|num }} geprüften beurteilten zwei KI-Kodierer als {{ v }} (<a href="#pruefung">Wie geprüft</a>).{% endif %}</li>
+{% endif %}
+<li><strong>Keine Ursache.</strong> Mehr Dokumente heißen nicht, dass der Rat wegen des Bedarfs handelt; ein größeres Wörterbuch etwa (Innenstadt, viele Straßen und Orte) bringt mehr Treffer, ohne dass mehr gehandelt wird.</li>
+<li><strong>Keine Rangliste.</strong> Die Seite rechnet nicht „Bedarf minus Aufmerksamkeit“ und nennt keinen Wahlbezirk vernachlässigt: die beiden Größen haben verschiedene Einheiten, und ihre Differenz wäre eine Gewichtung, die niemand festgelegt hat.</li>
+</ul>
+<p class="note">Wie gemessen ist, steht im <a href="{{ data.urls.measurement }}">Messdokument</a>{% if c %}; Codebuch, Stichprobe und Labels der Prüfung der Klasse im Ordner <a href="{{ data.urls.check }}">{{ data.urls.check_folder }}</a>{% endif %}. Die Tabellen <code>wahlbezirke_bedarf</code>{% if m.tests or m.pairs %} und <code>bedarf_hypothesen</code>{% endif %} stehen auf den Details unter den <a href="details.html#downloads">Downloads</a>, ihre Spalten auf der Seite <a href="spalten.html#wahlbezirke_bedarf">Spalten</a>.</p>
+</section>
