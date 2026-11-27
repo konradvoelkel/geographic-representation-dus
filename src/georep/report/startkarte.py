@@ -154,9 +154,6 @@ class StartMap:
     def window_places(self) -> int:
         return sum(1 for n in self.place_counts() if n)
 
-    def window_collections(self) -> int:
-        return sum(1 for doc in self.docs if self.in_window(doc) and len(doc) > 2 and doc[2] < 0)
-
 
 def doc_districts(doc: Sequence[int], places: Sequence[Place]) -> set[int]:
     """Die Wahlbezirke eines Eintrags von ``docs``: aus seinen Orten oder, negativ, direkt."""
