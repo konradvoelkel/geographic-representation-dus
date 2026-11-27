@@ -183,22 +183,26 @@
 {% if hooks %}
 {% include "frame/dialog.js.j2" +%}
 {% endif %}
-  /* Zeigt die Dokumente eines oder mehrerer Begriffe (Array) im Dialog; die Indizes werden vereinigt
-     und aufsteigend sortiert, die Liste ist neueste zuerst. title ist die Ueberschrift des Dialogs. */
-  function showDocuments(terms, title) {
-    var list = Array.isArray(terms) ? terms : [terms];
-    var heading = dialog.querySelector("h3"), note = dialog.querySelector("p"), ol = dialog.querySelector("ol");
-    heading.textContent = title !== undefined ? title : list.join(", ");
+  /* Eine Liste von Dokumenten im Dialog (plan-startseite, § 7). pick sind die Indizes in
+     dokumente.json, aufsteigend (also neueste zuerst), oder eine Funktion, die sie aus der Datei
+     holt; say ist der Satz darueber oder eine Funktion der Indizes; more ein Link [href, Text].
+     Kommt die Datei erst an, wenn schon eine andere Liste offen ist, zeichnet sie nichts (calls). */
+  var calls = 0;
+  function showDocumentList(pick, title, say, more) {
+    var heading = dialog.querySelector("h3"), note = dialog.querySelector("p"), ol = dialog.querySelector("ol"), call = ++calls;
+    heading.textContent = title;
     note.textContent = "Lade data/dokumente.json …";
     ol.textContent = "";
-    if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "");
+    if (typeof dialog.showModal === "function") { if (!dialog.open) dialog.showModal(); } else dialog.setAttribute("open", "");
     loadJson(DOCUMENTS).then(function (data) {
-      var seen = {}, ids = [];
-      list.forEach(function (term) {
-        (data.terms[term] || []).forEach(function (i) { if (!seen[i]) { seen[i] = true; ids.push(i); } });
-      });
-      ids.sort(function (a, b) { return a - b; });
-      note.textContent = ids.length + " Dokumente mit " + (list.length > 1 ? "diesen Begriffen" : "diesem Begriff") + ", neueste zuerst.";
+      if (call !== calls) return;
+      var ids = typeof pick === "function" ? pick(data) : pick;
+      note.textContent = typeof say === "function" ? say(ids) : say;
+      if (more) {
+        var link = document.createElement("a");
+        link.href = more[0]; link.textContent = more[1];
+        note.append(" "); note.appendChild(link);
+      }
       {% if hooks %}
       var items = [];
       {% endif %}
@@ -228,6 +232,20 @@
     }).catch(function () {
       forget(DOCUMENTS);  /* ein zweiter Klick darf es noch einmal versuchen */
       note.textContent = offlineNote("Die Dokumentliste", DOCUMENTS);
+    });
+  }
+  /* Die Dokumente eines oder mehrerer Begriffe (Array): die Indizes vereinigt und aufsteigend.
+     title ist die Ueberschrift des Dialogs. */
+  function showDocuments(terms, title) {
+    var list = Array.isArray(terms) ? terms : [terms];
+    showDocumentList(function (data) {
+      var seen = {}, ids = [];
+      list.forEach(function (term) {
+        (data.terms[term] || []).forEach(function (i) { if (!seen[i]) { seen[i] = true; ids.push(i); } });
+      });
+      return ids.sort(function (a, b) { return a - b; });
+    }, title !== undefined ? title : list.join(", "), function (ids) {
+      return ids.length + " Dokumente mit " + (list.length > 1 ? "diesen Begriffen" : "diesem Begriff") + ", neueste zuerst.";
     });
   }
   /* Ein Zuhoerer am Dokument statt einer je Schaltflaeche: die Begriffe eines Wahlbezirks entstehen
@@ -277,6 +295,7 @@
   window.georep = {
     select: select,
     showDocuments: showDocuments,
+    showDocumentList: showDocumentList,  /* plan-startseite, § 7 */
     rows: rows,
     loadJson: loadJson,  /* Punkt 49 */
     forget: forget,

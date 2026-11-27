@@ -269,8 +269,11 @@ def test_sections_render_in_numeric_order(page: str) -> None:
     assert page.count("<section ") == len(shown)
     # Die Schnittstelle der Abschnitts-Skripte (Punkt 49: loadJson, forget, offlineNote dazu)
     interface = page.split("window.georep = {", 1)[1].split("};", 1)[0]
-    for member in ("select", "showDocuments", "rows", "loadJson", "forget", "offlineNote"):
+    # plan-startseite, § 7: showDocumentList(indizes, titel, satz), auf die showDocuments zurückgeht
+    members = ("select", "showDocuments", "showDocumentList", "rows", "loadJson", "forget")
+    for member in (*members, "offlineNote"):
         assert f"{member}: {member}" in interface, member
+    assert page.count("loadJson(DOCUMENTS)") == 1  # die Liste wird an einer Stelle gezeichnet
 
 
 def test_every_optional_section_hangs_on_a_model_part() -> None:
