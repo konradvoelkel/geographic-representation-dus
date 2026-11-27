@@ -16,6 +16,7 @@ figure.karte ul.legend li { display: flex; align-items: center; gap: .35rem; mar
 .swatch.ohne { background: repeating-linear-gradient(135deg, var(--grid) 0 3px, var(--axis) 3px 4px); }
 table.bedarf-tabelle { font-size: .85rem; }
 table.bedarf-tabelle td, table.bedarf-tabelle th { padding: .3rem .4rem; }
+table.bedarf-tabelle td:nth-child(2) { min-width: 10em; }  /* der Name bricht sonst in drei Zeilen */
 .test { margin: 1.5rem 0 2rem; }
 figure.streu { margin: .5rem 0; }
 figure.streu figcaption { max-width: 48em; }
