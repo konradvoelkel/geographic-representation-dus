@@ -318,8 +318,9 @@ def test_der_haken_steht_nur_auf_seiten_mit_dateien(
     assert "function extras" not in without and "function extras" in with_hooks
     grown = len(with_hooks.encode("utf-8")) - len(without.encode("utf-8"))
     # Plan § 5 schätzte unter 1 KB; mit Review K3 (Folge, Sätze unter der Liste, Wort beim Wechsel,
-    # Felder aus show) sind es 1 444 Byte samt data-extras, die Grenze ist darum 1 500
-    assert 0 < grown < 1_500
+    # Felder aus show) und N3 (Zähler je Aufruf, ein kaputter Link kostet nur sich) sind es rund
+    # 1,5 KB samt data-extras, die Grenze ist darum 1 600
+    assert 0 < grown < 1_600
     frame = page_frame(default_settings, now=NOW, commit=None)
     env = environment()
     from jinja2 import ChoiceLoader, DictLoader
@@ -328,3 +329,12 @@ def test_der_haken_steht_nur_auf_seiten_mit_dateien(
     env.loader = ChoiceLoader([DictLoader({"pages/akteure.html.j2": "<p>leer</p>"}), env.loader])
     page = render_page(frame, PAGE, {}, env=env)
     assert "function extras" not in page and "return el;" not in page
+
+
+# --- Review Runde 1, N3: schnelles Wiederöffnen und ein kaputter Link ---------------------------
+def test_ein_spaeter_ankommender_haken_schreibt_nicht_in_einen_neuen_dialog() -> None:
+    """Öffnet jemand den Dialog neu, bevor eine Datei da ist, hängt ihre Zeile nicht an die neue
+    Liste (Zähler je Aufruf); ein Link, den ``new URL`` nicht lesen kann, kostet nur sich selbst."""
+    hook = environment().get_template("frame/dialog.js.j2").render()
+    assert "var call = ++opened;" in hook and "if (call !== opened) return;" in hook
+    assert "try { if (d[0]) a.href = new URL(" in hook
