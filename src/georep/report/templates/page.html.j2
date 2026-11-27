@@ -30,10 +30,7 @@
 </section>
 {% endfor %}
 </main>
-<footer>
-<p>Ergebnisse: <a href="{{ links.cc0 }}">CC0 1.0</a>; Quelltext: <a href="{{ links.gpl }}">GPL-3.0-or-later</a>. Quellen und Lizenzen der Daten nennen die <a href="details.html">Details</a>.</p>
-<p>Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}.</p>
-</footer>
+{% include "frame/page_footer.html.j2" +%}
 <dialog id="docs" aria-labelledby="docs-title"><form method="dialog"><button type="submit">Schließen</button></form><h3 id="docs-title"></h3><p class="note"></p><ol></ol></dialog>
 <div id="tooltip" role="tooltip" hidden></div>
 <script>
