@@ -877,6 +877,10 @@ class NeedAttribution(_Strict):
     license: str = ""
     license_url: str = ""
     stand: str = ""  # so genau, wie die Quelle es sagt („2025, veröffentlicht 2026-07")
+    # Vorarbeit V5 (docs/plan-zeigen-2026-11.md, § 4; docs/todo.md, Punkt 16): dl-de/by-2-0
+    # verlangt im Quellenvermerk einen Hinweis, wenn die Daten verändert sind. Der Satz sagt, was
+    # verändert ist („verändert: …"); leer heißt unverändert übernommen.
+    modified: str = ""
 
 
 class NeedAccidents(_Strict):

@@ -130,3 +130,18 @@ def test_package_and_attribution_do_not_count_but_the_band_does() -> None:
         update={"archives": ["https://a.org/x.zip"]}
     )
     assert _need(settings, accidents=archives).fingerprint() != before
+
+
+def test_every_attribution_says_what_is_changed() -> None:
+    """V5 (docs/plan-zeigen-2026-11.md, § 4; docs/todo.md, Punkt 16): dl-de/by-2-0 verlangt einen
+    Veränderungshinweis im Quellenvermerk, wo die Daten bearbeitet sind. Alle drei Bedarfsquellen
+    sind auf die Gemeinde zugeschnitten und je Wahlbezirk umgerechnet; das Feld sagt es, leer
+    hieße unverändert. Es ist Anzeige und zählt nicht zum Fingerprint."""
+    assert gs.NeedAttribution().modified == ""
+    settings = load_settings(cwd=NOWHERE)
+    need = settings.context.need
+    for source in (need.accidents, need.grid, need.schools):
+        assert source.attribution.modified.startswith("verändert: ")
+    attribution = need.grid.attribution.model_copy(update={"modified": "verändert: anders"})
+    grid = need.grid.model_copy(update={"attribution": attribution})
+    assert _need(settings, grid=grid).fingerprint() == settings.fingerprint()
