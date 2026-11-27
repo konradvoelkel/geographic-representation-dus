@@ -610,6 +610,20 @@ def test_die_feeds_stehen_mit_datenstand_und_dem_satz_zum_schnappschuss() -> Non
     assert "Ohne laufenden Abruf" not in with_timer and "Stand der Daten" in with_timer
 
 
+def test_der_timer_oeffnet_nur_den_bericht_und_die_unterseiten(tmp_path: Path) -> None:
+    """Review K2: ``feeds.timer`` ist Anzeige. Ein Wechsel lässt den Settings-Fingerprint gleich
+    (sonst rechnete er jede Datenwurzel neu) und öffnet nur ``report`` und die Unterseiten."""
+    settings = _profile("duesseldorf-2025")
+    timed = _with_feeds(settings, timer=True)
+    assert timed.fingerprint() == settings.fingerprint()
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "ref", settings.profile)
+    before = {s.name: s.extra for s in build_steps(settings, layout)}
+    after = {s.name: s.extra for s in build_steps(timed, layout)}
+    changed = sorted(name for name in before if before[name] != after[name])
+    assert "report" in changed and "page_zeit" in changed
+    assert all(name == "report" or name.startswith("page_") for name in changed)
+
+
 def test_ohne_feeds_gibt_es_den_abschnitt_nicht() -> None:
     page = _render(_profile("duesseldorf"), _inputs())
     assert 'id="neuigkeiten"' not in page and "feeds/" not in page

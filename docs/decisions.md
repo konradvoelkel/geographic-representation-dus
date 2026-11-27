@@ -4607,7 +4607,9 @@ der Periode, neue der letzten 30 Tage, zuletzt geändert), dazu den Stand: das n
 dasselbe, das der Schritt `feeds` als Stand nimmt (13.10.2026 im Paket). Darunter der Satz, dass die
 Feeds ohne laufenden Abruf diesen Stand zeigen und sich erst mit einem neuen Schnappschuss oder einem
 Timer ändern. Damit der Satz wegfällt, wenn der Timer läuft, ist `feeds.timer` neu (Vorgabe aus;
-`deploy/monitor.env.example` setzt `GEOREP_FEEDS__TIMER=true`). Verworfen: den Timer aus dem Stamp
+`deploy/monitor.env.example` setzt `GEOREP_FEEDS__TIMER=true`). Er ist reine Anzeige und steht
+darum nicht im Settings-Fingerprint, sondern im Zusatz von `report` und der Unterseiten
+(`report_fingerprint`, Review K2): ein Wechsel öffnet nur diese Schritte, ein Test prüft das. Verworfen: den Timer aus dem Stamp
 des Netzschritts `papers` zu erschließen (auf einem Rechner, der einmal abgerufen hat, fiele der Satz
 weg, ohne dass ein Timer läuft). Kein `rel="self"` (Frage 28), keine Straßennamen (Frage 27).
 
@@ -4683,7 +4685,8 @@ Sensitivitäten auf einer eigenen Seite (22 Zeilen, rund 4 KB).
   bytegleich, ebenso `akteure.html`, `vergleich.html` und jede `summary.json`. Über die ganzen
   Datenwurzeln 988 und 1 068 Dateien, 223 Abweichungen: dieselben Seiten und Downloads in den
   Ordnern der Profile, kein Parquet unter `processed/` oder `interim/` anders, und 129 Stamps
-  (6 neue von `zeit.html`; 109 nur im Settings-Fingerprint, weil `feeds.timer` neu ist; 6 von
+  (6 neue von `zeit.html`; 109 nur im Settings-Fingerprint, weil `feeds.timer` dort zunächst
+  mitzählte -- nach Review K2 nicht mehr, siehe den A/B-Bau gegen `36fad29` unten; 6 von
   `akteure.html` in `extra`, weil die Vorlagen der Seiten im Hash des Berichts stehen; 6 von
   `index.html` in `extra` und den neuen optionalen Eingaben; 2 nur in der Wurzel der absoluten
   Pfade, `wahlbezirke_vergleich` und `zeit_hypothesen`).

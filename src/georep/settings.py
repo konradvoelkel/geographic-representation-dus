@@ -3048,6 +3048,8 @@ class Settings(BaseSettings):
         Vorhaben 22: ``context.need.package`` ist ein Pfad, die Namensnennungen der Bedarfsquellen
         sind Anzeige, ``context.need.fetch`` schaltet nur den Netzschritt ein; Archive, Band,
         Klassen und Hypothesen zählen.
+        Vorhaben 17: ``feeds.timer`` ist Anzeige (ein Satz auf ``zeit.html``) und steht im Zusatz
+        von ``report``.
         """
         payload = self.model_dump(
             mode="json",
@@ -3110,6 +3112,9 @@ class Settings(BaseSettings):
                 # Liste der Eingaben, nicht der Fingerprint.
                 "procedures": {"attachments"},
                 "outcomes": {"package"},
+                # Vorhaben 17, Review K2: ``feeds.timer`` ändert nur einen Satz auf zeit.html;
+                # er steht im Zusatz von ``report`` und der Unterseiten (``report_fingerprint``)
+                "feeds": {"timer"},
             },
         )
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()[:16]

@@ -388,7 +388,7 @@ periods = []                   # Ordner der Profile einer Stadt in zeitlicher Fo
 enabled = false
 entries = 50                   # neueste Dokumente je Feed; 50 reichen im Median 140 Tage zurück, rund 25 KB je Feed (Messdokument § 3.6)
 timezone = "Europe/Berlin"     # Zeitzone des Vorlagendatums: published ist 00:00 Ortszeit des Tages
-timer = false                  # true, wo ein Timer die laufende Periode fortschreibt (deploy/, GEOREP_FEEDS__TIMER in monitor.env): dann entfällt auf zeit.html der Satz, dass die Feeds nur den Stand eines Schnappschusses zeigen (docs/plan-zeigen-2026-11.md, § 7). Aus, weil Pages aus dem Paket baut und kein Lauf es dort fortschreibt
+timer = false                  # true, wo ein Timer die laufende Periode fortschreibt (deploy/, GEOREP_FEEDS__TIMER in monitor.env): dann entfällt auf zeit.html der Satz, dass die Feeds nur den Stand eines Schnappschusses zeigen (docs/plan-zeigen-2026-11.md, § 7). Aus, weil Pages aus dem Paket baut und kein Lauf es dort fortschreibt. Reine Anzeige: nicht im Settings-Fingerprint, nur im Zusatz von report und den Unterseiten
 
 # --- Vorhaben 26: Beschlusslage und Antragserfolg (docs/plans/26-beschluesse.md, § 3.1, § 6, § 10) ----
 [outcomes]                     # Beschlusslage je Ratsdokument aus dem Eintrag der Sitzungsleitung (OParl result am Tagesordnungspunkt) und Antragserfolg je Fraktion. Aus, bis ein Stadtprofil den Wortschatz nennt; die Sprache der Einträge ist je Stadt eine andere (Mönchengladbach, § 10)

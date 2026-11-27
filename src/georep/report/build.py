@@ -416,6 +416,8 @@ def report_fingerprint(settings: Settings, folder: Traversable | None = None) ->
         "period.label": settings.period.label,
         "context.dataset": settings.context.dataset.model_dump(mode="json"),
         "weights.labels": [rule_set.label for rule_set in settings.weights.paper_type],
+        # Vorhaben 17, Review K2: mit Timer entfällt auf zeit.html der Satz zum Schnappschuss
+        "feeds.timer": settings.feeds.timer,
     }
     digest.update(json.dumps(shown, sort_keys=True, default=str).encode("utf-8"))
     return digest.hexdigest()[:16]
