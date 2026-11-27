@@ -118,7 +118,7 @@ from georep.report.build import (
 )
 from georep.report.geometry import district_shapes
 from georep.report.pages import Page, build_page, page_inputs, pages_for, sections_for
-from georep.report.tables import contributed_table_files
+from georep.report.tables import contributed_check_files, contributed_table_files
 
 # Punkt 45: nur die zwei Zahlen, nicht die Modelle -- ``analysis.topics`` und
 # ``analysis.committees`` bringen sklearn mit und werden erst im Schritt importiert.
@@ -1533,7 +1533,10 @@ def build_steps(
             # Extraktor je Text (der Rohtextstore steht unten unter ``optional``)
             + (layout.texts,)
             # Vorhaben 15, Review N10: die Pflichttabellen der Beiträge (die optionalen unten)
-            + contributed_table_files(layout, settings, optional=False),
+            + contributed_table_files(layout, settings, optional=False)
+            # Vorhaben 11 und 12, Stufe 3: guete.json und stichprobe.json der Prüfsätze unter
+            # den Downloads; sie liegen im Repo wie die Eingaben von page_akteure
+            + contributed_check_files(settings),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
             # Punkt 53: der eine Schritt mit einem Zusatz im Stamp. Die Vorlagen des Pakets und

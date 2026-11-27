@@ -30,8 +30,15 @@ def _joined(frame: pl.DataFrame, joins: Mapping[str, str]) -> pl.DataFrame:
 
 def write_csv(parquet: Path, target: Path, joins: Mapping[str, str], separator: str) -> None:
     """Eine Parquet-Datei als CSV, atomar; Listen werden mit ihrem Trenner zu Text."""
+    write_csv_frame(pl.read_parquet(parquet), target, joins, separator)
+
+
+def write_csv_frame(
+    frame: pl.DataFrame, target: Path, joins: Mapping[str, str], separator: str
+) -> None:
+    """Dasselbe für eine Tabelle im Speicher (Vorhaben 12: die CSV trägt nur einen Teil der Zeilen)."""
     with atomic_path(target) as tmp:
-        _joined(pl.read_parquet(parquet), joins).write_csv(tmp, separator=separator)
+        _joined(frame, joins).write_csv(tmp, separator=separator)
 
 
 def export_csv(layout: Layout) -> list[Path]:
