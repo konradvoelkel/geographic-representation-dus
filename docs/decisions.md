@@ -4475,7 +4475,7 @@ Abstimmungen"); wählt 28 einen anderen, ändert sich eine Zeile der Vorlage.
    Urheber nicht erkannt) statt zweier für Verwaltung und Politik: die Klassen „Person" und
    „unbekannt" zeigen ein anderes Verhältnis von Kontrolle und Initiative als die Fraktionen, und
    eine Klasse ohne Dokumente fehlt.
-3. Die Seite ist 56 bis 101 KB groß statt 40 bis 70: der Rahmen allein (Stil und Skript der
+3. Die Seite ist 58 bis 106 KB groß statt 40 bis 70: der Rahmen allein (Stil und Skript der
    Hauptseite) sind rund 31 KB, die beiden Listen in der Hauptperiode zusammen rund 40 KB. Das Budget
    von 500 KB je Unterseite hält sie mit weitem Abstand (Zahlen unten).
 4. Unter „Über die Grenze" stehen alle Dokumente über die Grenze mit der Zahl ihrer Fraktionen, nicht
@@ -4508,27 +4508,32 @@ dritte Matrix „alle Gremien" (sie mischte die Ebene mit und ohne Lager); `link
   Grüne in Rat und Ausschüssen der Hauptperiode 577, beide in der Mehrheit), die zweite Stadt ohne
   Konkordanz und explorativ, und jede Seite unter 500 KB.
 - Bildschirmfotos mit headless Chrome bei 1280 und 390 Pixeln Breite, hell und dunkel, und bei 390
-  ohne Skripte (`--blink-settings=scriptEnabled=false`): dort stehen beide Matrizen untereinander
-  und kein Umschalter; mit JavaScript ist der Umschalter sichtbar und die zweite Matrix verborgen.
+  und 1280 ohne Skripte (an einer Kopie der Seite ohne `<script>`; mit
+  `--blink-settings=scriptEnabled=false` schreibt headless Chrome kein Bild): dort stehen beide
+  Matrizen untereinander und kein Umschalter; mit JavaScript ist der Umschalter sichtbar und die
+  zweite Matrix verborgen.
 - A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66 (`scripts/ab_bau.sh`,
   `scripts/ab_vergleich.py`), `POLARS_MAX_THREADS=4 OMP_NUM_THREADS=2`, A aus `main` `344ecdc`
-  (`git archive`), B aus `7453ad7`, Wurzeln `ab/15-a` und `ab/15-b` auf xtraspace, die fünf Profile
-  mit `bootstrap` und `run` in der Folge von `pages.yml`, dann `publish --strict-budget`. Unter
-  `site/` 235 Dateien in A, 255 in B, 28 Abweichungen, alle erwartet: je Stadtseite (Hauptperiode,
-  2014–2020, laufende Periode, Mönchengladbach) neu `akteure.html` und die vier Downloads, anders
-  `index.html` (Abschnitt „Weitere Auswertungen", vier Zeilen in den Downloads, ihre Zeilenzahl, die
-  Größe von `schema.json`, zwei Einträge im Spaltenschema; sonst bytegleich bis auf die
-  Prüfsummen, die an `generated_at` hängen) und `schema.json` (die beiden Tabellen);
-  `vergleich.html` und jede `summary.json` gleich. Über die ganzen Datenwurzeln 932 und 988
-  Dateien, 193 Abweichungen: dieselben Seiten und Downloads in den Ordnern der Profile, kein
-  Parquet unter `processed/` oder `interim/` anders, und 123 Stamps (109 allein in der Zeit
-  `written`, 6 neue von `akteure.html`, 6 von `index.html` in `extra`, weil die neuen Vorlagen
-  unter `templates/pages/` in `report_fingerprint` zählen, und in den optionalen Eingaben, den
-  beiden Tabellen; 2 nur in der Wurzel der absoluten Pfade).
-- Größen, veröffentlicht (`publish`): `index.html` der Hauptperiode 937 391 → 941 942 Byte
-  (+4 551; Budget 1 000 000, Ziel der Phase höchstens +30 KB), `2014-2020/` 822 762 → 827 313,
-  `2025/` 718 700 → 723 239, `moenchengladbach/` 806 195 → 810 734. `akteure.html`: Hauptperiode
-  101 180, 2014–2020 99 020, laufende Periode 63 833, Mönchengladbach 56 102 Byte; zusammen
-  320 135. Die Downloads machen die veröffentlichte Seite 10,2 MB größer (36,7 → 46,9 MB), vor
+  (`git archive`), B aus dem Stand nach Review Runde 2 (`9d372ab`), Wurzeln `ab/15-a` und
+  `ab/15-b` auf xtraspace, die fünf Profile mit `bootstrap` und `run` in der Folge von `pages.yml`,
+  dann `publish --strict-budget`. Unter `site/` 235 Dateien in A, 255 in B, 28 Abweichungen, alle
+  erwartet: je Stadtseite (Hauptperiode, 2014–2020, laufende Periode, Mönchengladbach) neu
+  `akteure.html` und die vier Downloads, anders `index.html` (je Profil fünf Stellen: Abschnitt
+  „Weitere Auswertungen", die Zahl der Downloadzeilen, vier Zeilen in den Downloads, die Größe von
+  `schema.json`, zwei Einträge im Spaltenschema; sonst bytegleich bis auf die Prüfsummen, die an
+  `generated_at` hängen) und `schema.json` (die beiden Tabellen); `vergleich.html` und jede
+  `summary.json` gleich, und kein veröffentlichter Text enthält „Symbol". Über die ganzen
+  Datenwurzeln 932 und 988 Dateien, 197 Abweichungen: dieselben Seiten und Downloads in den Ordnern
+  der Profile; von den Parquets unter `processed/` und `interim/` nur `dokumente_funktion` in allen
+  vier Datensätzen, und dort nur der umbenannte Wert (`symbol` → `erklaerung` bei 52, 55, 3 und 5
+  Dokumenten; nach Abbildung gleich); 123 Stamps (81 nur im Settings-Fingerprint, weil das Profil
+  der Stadt jetzt `erklaerung/resolution` sagt, 24 in Mönchengladbach nur in `written`, 6 neue von
+  `akteure.html`, 6 von `index.html` in `extra` und den optionalen Eingaben, 4 von
+  `dokumente_funktion` in der Schema-Version 2, 2 nur in der Wurzel der absoluten Pfade).
+- Größen, veröffentlicht (`publish`): `index.html` der Hauptperiode 937 391 → 941 988 Byte
+  (+4 597; Budget 1 000 000, Ziel der Phase höchstens +30 KB), `2014-2020/` 822 762 → 827 359,
+  `2025/` 718 700 → 723 285, `moenchengladbach/` 806 195 → 810 780. `akteure.html`: Hauptperiode
+  105 563, 2014–2020 102 499, laufende Periode 67 163, Mönchengladbach 58 198 Byte; zusammen
+  333 423. Die Downloads machen die veröffentlichte Seite 10,2 MB größer (36,7 → 46,9 MB), vor
   allem die CSV je Dokument (Hauptperiode 1,87 und 1,94 MB), wie bei `dokumente_urheber`; die
   Pakete im Repo ändern sich nicht.
