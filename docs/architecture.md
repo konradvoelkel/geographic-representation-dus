@@ -604,7 +604,9 @@ weglassen, den ein Gast ersetzt; jeder Anker steht genau einmal auf der Seite (N
 Schritt `page_<name>` liest die Eingaben der Abschnitte mit (`page_inputs`), und die Seite erlaubt
 ihre Links. Unabhängig vom Profil ist es ein `SectionError`, wenn ein Ziel keine registrierte Seite
 ist oder zwei Abschnitte derselben Seite einen Rang oder Namen teilen (`section_problems`; ein Test
-prüft das echte Register). Wird die Zielseite in einem Profil nicht gebaut, weil ihr Schalter aus
+prüft das echte Register), und ein `SchemaError`, wenn unter `templates/pages/` eine Datei ohne
+Gegenstück liegt (`check_page_files`: Stil oder Skript ohne Vorlage, Vorlage oder Ordner ohne Eintrag
+im Register). Wird die Zielseite in einem Profil nicht gebaut, weil ihr Schalter aus
 ist, entfällt der Abschnitt mit einer Zeile im Log und ohne Fehler; ein abgeschalteter Abschnitt
 fehlt still.
 

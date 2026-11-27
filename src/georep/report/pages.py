@@ -37,13 +37,15 @@ import datetime as dt
 import re
 from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass
+from importlib import resources
+from importlib.resources.abc import Traversable
 from pathlib import Path
 
 import deal
 from jinja2 import Environment, TemplateNotFound
 from loguru import logger
 
-from georep.errors import GeorepError
+from georep.errors import GeorepError, SchemaError
 from georep.io import write_text
 from georep.layout import Layout
 from georep.report.model import PageLink, PeriodInfo, period_info
@@ -259,7 +261,8 @@ def sections_for(settings: Settings) -> dict[str, tuple[PageSection, ...]]:
     """Die fremden Abschnitte je Unterseite, die für diese Settings gebaut wird, in fester Folge.
 
     Erst das Register, unabhängig vom Profil: ``SectionError``, wenn ``section_problems`` etwas
-    findet. Dann das Profil: ein abgeschalteter Abschnitt fehlt still, wie eine abgeschaltete Seite;
+    findet, ``SchemaError`` für eine verwaiste Datei unter ``templates/pages/``
+    (``check_page_files``). Dann das Profil: ein abgeschalteter Abschnitt fehlt still, wie eine abgeschaltete Seite;
     einer, dessen Zielseite hier nicht gebaut wird (ihr Schalter ist aus), entfällt mit einer Zeile
     im Log, ohne Fehler. Import in der Funktion wie in ``pages_for``.
     """
@@ -270,6 +273,7 @@ def sections_for(settings: Settings) -> dict[str, tuple[PageSection, ...]]:
     problems = section_problems(registered, entries)
     if problems:
         raise SectionError(f"Abschnitte im Register falsch: {'; '.join(problems)}")
+    check_page_files(registered, entries)
     built = {page.name for page in pages_for(settings)}
     kept: list[PageSection] = []
     for contribution, section in entries:
@@ -285,6 +289,58 @@ def sections_for(settings: Settings) -> dict[str, tuple[PageSection, ...]]:
     found: dict[str, tuple[PageSection, ...]] = {}
     for section in order_sections(kept):
         found[section.page] = (*found.get(section.page, ()), section)
+    return found
+
+
+def pages_folder() -> Traversable:
+    """``templates/pages/`` im Paket; eine eigene Funktion, damit ein Test einen Ordner unterschiebt."""
+    return resources.files("georep.report") / "templates" / "pages"
+
+
+@deal.raises(SchemaError)
+def check_page_files(
+    pages: Collection[str],
+    entries: Sequence[tuple[str, PageSection]],
+    folder: Traversable | None = None,
+) -> None:
+    """``SchemaError`` für verwaiste Dateien unter ``templates/pages/`` (Review N4).
+
+    Wie bei den Abschnitten der Hauptseite (``render.sections``) zeigt keine Datei ins Leere: ein
+    ``.css`` oder ``.js`` gehört zu einer Vorlage gleichen Namens daneben; eine Vorlage
+    ``<seite>.html.j2`` und ein Ordner ``<seite>/`` gehören zu einer registrierten Seite, eine
+    Vorlage darin zu einem registrierten Abschnitt dieser Seite. Unabhängig vom Profil, wie
+    ``section_problems``; fehlt der Ordner, gibt es nichts zu prüfen. ``folder`` ist die Testnaht.
+    """
+    root = pages_folder() if folder is None else folder
+    if not root.is_dir():
+        return
+    problems = _orphans(root, "", pages)
+    for sub in sorted(root.iterdir(), key=lambda entry: entry.name):
+        if not sub.is_dir() or sub.name.startswith((".", "__")):
+            continue
+        if sub.name not in pages:
+            problems.append(f"{sub.name}/: keine Seite im Register")
+            continue
+        names = {section.name for _, section in entries if section.page == sub.name}
+        problems.extend(_orphans(sub, f"{sub.name}/", names))
+    if problems:
+        raise SchemaError(f"Dateien unter templates/pages/ ohne Gegenstück: {'; '.join(problems)}")
+
+
+def _orphans(folder: Traversable, prefix: str, registered: Collection[str]) -> list[str]:
+    """Die Dateien eines Ordners ohne Gegenstück: Vorlage ohne Eintrag, Stil oder Skript ohne Vorlage."""
+    names = sorted(entry.name for entry in folder.iterdir() if entry.is_file())
+    stems = {name.removesuffix(".html.j2") for name in names if name.endswith(".html.j2")}
+    found = [
+        f"{prefix}{name}: kein Eintrag im Register"
+        for name in names
+        if name.endswith(".html.j2") and name.removesuffix(".html.j2") not in registered
+    ]
+    found.extend(
+        f"{prefix}{name}: keine Vorlage {name.rsplit('.', 1)[0]}.html.j2"
+        for name in names
+        if name.endswith((".css", ".js")) and name.rsplit(".", 1)[0] not in stems
+    )
     return found
 
 

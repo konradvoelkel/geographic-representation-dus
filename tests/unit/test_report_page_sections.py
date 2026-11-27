@@ -22,6 +22,7 @@ from loguru import logger
 import georep.enrich
 import georep.report.pages
 from georep.enrich import CONTRIBUTIONS, Contribution
+from georep.errors import SchemaError
 from georep.layout import Layout
 from georep.pipeline import Step, build_steps
 from georep.report.pages import (
@@ -29,6 +30,7 @@ from georep.report.pages import (
     PageSection,
     SectionError,
     build_page,
+    check_page_files,
     page_frame,
     render_page,
     section_problems,
@@ -232,6 +234,53 @@ def test_jede_abschnittsvorlage_im_register_liegt_im_paket_und_beginnt_mit_if() 
         for section in contribution.sections:
             source = folder.joinpath(*section.template.split("/")).read_text(encoding="utf-8")
             assert source.lstrip().startswith("{% if "), (contribution.name, section.name)
+
+
+# --- Dateien unter templates/pages/ (Review N4) ------------------------------------------------
+
+
+def _files(root: Path, *names: str) -> Path:
+    for name in names:
+        (root / name).parent.mkdir(parents=True, exist_ok=True)
+        (root / name).write_text("{% if data.rows %}{% endif %}\n", encoding="utf-8")
+    return root
+
+
+GUESTS = [("26-gast", _section())]
+
+
+def test_dateien_mit_gegenstueck_im_register_sind_in_ordnung(tmp_path: Path) -> None:
+    names = ("probe.html.j2", "probe.css", "probe/gast.html.j2", "probe/gast.css", "probe/gast.js")
+    check_page_files({"probe"}, GUESTS, _files(tmp_path, *names))
+    check_page_files({"probe"}, GUESTS, tmp_path / "fehlt")  # kein Ordner, nichts zu prüfen
+
+
+@pytest.mark.parametrize(
+    ("name", "why"),
+    [
+        ("probe/alt.css", "probe/alt.css: keine Vorlage alt.html.j2"),
+        ("probe/gast.js.bak.js", "keine Vorlage gast.js.bak.html.j2"),
+        ("probe/alt.html.j2", "probe/alt.html.j2: kein Eintrag im Register"),
+        ("fremd/gast.html.j2", "fremd/: keine Seite im Register"),
+        ("fremd.html.j2", "fremd.html.j2: kein Eintrag im Register"),
+        ("fremd.js", "fremd.js: keine Vorlage fremd.html.j2"),
+    ],
+)
+def test_eine_verwaiste_datei_ist_ein_schemafehler(tmp_path: Path, name: str, why: str) -> None:
+    folder = _files(tmp_path, "probe.html.j2", "probe/gast.html.j2", name)
+    with pytest.raises(SchemaError, match=why):
+        check_page_files({"probe"}, GUESTS, folder)
+
+
+def test_das_register_prueft_die_dateien_des_pakets(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``sections_for`` prüft beim Aufbau der Schritte, wie ``render.sections`` beim Bericht."""
+    folder = _files(tmp_path, "probe/gast.html.j2", "probe/vergessen.css")
+    monkeypatch.setattr(georep.report.pages, "pages_folder", lambda: folder)
+    _register(monkeypatch, _host(), Contribution("26-gast", sections=(_section(),)))
+    with pytest.raises(SchemaError, match="vergessen.css"):
+        sections_for(default_settings)
 
 
 # --- Schritt ------------------------------------------------------------------------------------

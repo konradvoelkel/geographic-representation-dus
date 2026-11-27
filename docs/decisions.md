@@ -4169,7 +4169,10 @@ folgt aus Seite und Name, wie bei `Page`, darum steht er nicht als Feld da.
   ein `SectionError` beim Aufbau der Schritte, mit Beitrag und Abschnitt in der Meldung. Ein Test
   prüft das echte Register, ein zweiter, dass jede Vorlage dort im Paket liegt und mit
   `{% if` beginnt. `order_sections` trägt dieselbe Eindeutigkeit als `deal.pre` und die Folge als
-  `deal.ensure`.
+  `deal.ensure`. Verwaiste Dateien unter `templates/pages/` sind ein `SchemaError`, wie bei den
+  Abschnitten der Hauptseite (Review N4, `check_page_files`): ein `.css` oder `.js` ohne Vorlage
+  gleichen Namens, ein Ordner `<seite>/` oder eine Vorlage `<seite>.html.j2` ohne registrierte
+  Seite, eine Vorlage im Ordner ohne registrierten Abschnitt.
 - **Profil.** Wird die Zielseite in einem Profil nicht gebaut, weil ihr Schalter aus ist, entfällt
   der Abschnitt mit einer Zeile im Log (`INFO`, Name, Beitrag, Seite und Profil) und ohne Fehler.
   Ein Abschnitt mit eigenem abgeschaltetem Schalter fehlt still, wie eine abgeschaltete Seite.
