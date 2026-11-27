@@ -409,7 +409,8 @@ def _cmd_publish(args: argparse.Namespace, settings: Settings, layout: Layout) -
         report = settings.report
         print(
             f"Fehler: über dem Budget von {report.page_budget_bytes} Byte (Startseite "
-            f"{report.start_budget_bytes}, karte.json {report.map_budget_bytes}): {pages}",
+            f"{report.start_budget_bytes}, karte.json {report.map_budget_bytes}, "
+            f"spalten.html {report.columns_budget_bytes}): {pages}",
             file=sys.stderr,
         )
         return 1

@@ -18,6 +18,7 @@ Fingerprints für nichts (``[compare]`` zählt mit).
 from __future__ import annotations
 
 import datetime as dt
+import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -31,6 +32,7 @@ from georep.report.publish import publish_sites
 from georep.report.render import sections
 from georep.settings import Settings, load_settings
 from tests.conftest import REFERENCE, REPO, within_budget
+from tests.unit.test_report_columns import schema_tables
 
 SNAPSHOT = REPO / "snapshots" / "2014-2020"
 PERIOD_PROFILE = "duesseldorf-2014"
@@ -185,6 +187,35 @@ def test_publish_reports_no_page_over_budget(published: PublishedRun, tmp_path: 
     report = published.settings.report
     assert published.layout.site_index.stat().st_size < report.start_budget_bytes
     assert (published.layout.site_data / "karte.json").stat().st_size < report.map_budget_bytes
+    # Punkt 36: spalten.html unter 500 000 Byte
+    columns = published.layout.site / "spalten.html"
+    assert within_budget(columns.stat().st_size, report.columns_budget_bytes)
+
+
+def test_only_spalten_carries_a_column_schema(published: PublishedRun, tmp_path: Path) -> None:
+    """Punkt 36: auf keiner veröffentlichten Seite außer ``spalten.html`` ein Spaltenschema.
+
+    Über alles, was ``publish`` ablegt: Startseite, Auswertung, Karte, Unterseiten, Vergleich.
+    """
+    publish_sites(
+        published.settings,
+        published.layout,
+        now=dt.datetime(2026, 10, 14, tzinfo=dt.UTC),
+        out=tmp_path / "site",
+    )
+    pages = sorted((tmp_path / "site").rglob("*.html"))
+    assert {"details.html", "akteure.html", "vorgaenge.html", "zeit.html", "spalten.html"} <= {
+        page.name for page in pages
+    }
+    found = {
+        page.relative_to(tmp_path / "site").as_posix(): schema_tables(
+            page.read_text(encoding="utf-8")
+        )
+        for page in pages
+    }
+    assert {name: n for name, n in found.items() if n and name != "spalten.html"} == {}
+    schema = json.loads((tmp_path / "site" / "data" / "schema.json").read_text(encoding="utf-8"))
+    assert found["spalten.html"] == len(schema["tables"])
 
 
 pytestmark = pytest.mark.slow

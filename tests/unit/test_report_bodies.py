@@ -276,10 +276,14 @@ def test_the_methods_section_explains_the_rule(built: str) -> None:
     assert "Drucksachennummer" in methods and "wahlbezirke_stadtbezirke" in methods
 
 
-def test_the_new_tables_are_downloads_with_a_schema(built: str) -> None:
+def test_the_new_tables_are_downloads_with_a_schema(built: str, mini_run: Layout) -> None:
+    # Punkt 36: das Schema steht auf spalten.html (dieselbe Fixture, dieselben Settings), und die
+    # Downloadzeilen verlinken es
+    columns = (mini_run.site / "spalten.html").read_text(encoding="utf-8")
     for name in ("wahlbezirke_gremien", "gremien", "wahlbezirke_stadtbezirke"):
         assert f"{name}.parquet" in built and f"{name}.csv" in built
-    assert "treffer_eigene_bv" in built and "anteil_eigener_stadtbezirk" in built
+        assert f'href="spalten.html#{name}"' in built and f'<section id="{name}">' in columns
+    assert "treffer_eigene_bv" in columns and "anteil_eigener_stadtbezirk" in columns
 
 
 # --- Punkt 45: die Tabelle der passenden Ausschüsse hängt am Schalter, nicht nur an der Datei --

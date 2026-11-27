@@ -123,6 +123,7 @@ from georep.prep.voters import (
 )
 from georep.records import PaperRecord
 from georep.report.build import (
+    COLUMNS_NAME,
     MAP_NAME,
     SCHEMA_NAME,
     build_site,
@@ -1651,6 +1652,7 @@ def build_steps(
                 layout.site_details,
                 layout.site_data / SCHEMA_NAME,
                 layout.site / MAP_NAME,
+                layout.site / COLUMNS_NAME,  # Punkt 36: das Spaltenschema
             ),
             report,
             # Punkt 53: der eine Schritt mit einem Zusatz im Stamp. Die Vorlagen des Pakets und

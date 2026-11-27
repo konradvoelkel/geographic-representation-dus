@@ -2,9 +2,9 @@
 
 Reihenfolge: erst die Dateien unter ``site/data/`` (Parquet kopiert, CSV mit den Regeln von
 ``georep export``, GeoJSON, ``schema.json``), dann das Modell mit ihren Prüfsummen, dann die
-SVGs, dann ``details.html`` (die ganze Auswertung, bis ``v0.38.0`` unter ``index.html``), zuletzt
-die Startseite ``index.html``; die trägt den Stamp (plan-startseite, § 3). Zeit und Commit sind
-Eingaben.
+SVGs, dann ``karte.html``, ``spalten.html`` (das Spaltenschema, Punkt 36) und ``details.html`` (die
+ganze Auswertung, bis ``v0.38.0`` unter ``index.html``), zuletzt die Startseite ``index.html``; die
+trägt den Stamp (plan-startseite, § 3). Zeit und Commit sind Eingaben.
 """
 
 from __future__ import annotations
@@ -81,7 +81,7 @@ from georep.report.model import (
     summary_payload,
 )
 from georep.report.pages import page_links
-from georep.report.render import Visuals, render_map, render_report
+from georep.report.render import Visuals, render_columns, render_map, render_report
 from georep.report.start import render_start
 from georep.report.startkarte import KARTE_NAME, StartMap, build_start_map, karte_payload
 from georep.report.tables import GEOJSON_TABLE, PublishedTable, all_rows, all_tables, published
@@ -95,12 +95,14 @@ SUMMARY_NAME = "summary.json"
 DOCUMENTS_NAME = "dokumente.json"
 TERMS_NAME = "begriffe.json"  # Punkt 49
 MAP_NAME = "karte.html"
+# Punkt 36: das Spaltenschema aller Tabellen, bis v0.40.0 unter den Downloads von details.html
+COLUMNS_NAME = "spalten.html"
 
 
 @dataclass(frozen=True)
 class SiteSummary:
     districts: int
-    files: int  # Downloads plus index.html, details.html und karte.html
+    files: int  # Downloads plus index.html, details.html, karte.html und spalten.html
     bytes: int
     # Punkt 50: die Seite selbst (seit dem Umzug ``details.html``) gegen ihr Budget. Beide 0 heißt
     # „nicht geprüft"; die Felder stehen mit Vorgabe am Ende, damit Tests die Zeile weiter
@@ -160,8 +162,11 @@ def current_commit(cwd: Path | None = None) -> str | None:
     return run.stdout.strip() or None
 
 
-def _download(path: Path, fmt: str, rows: int | None, description: str) -> Download:
-    return Download(path.name, fmt, rows, path.stat().st_size, digest(path), description)
+def _download(
+    path: Path, fmt: str, rows: int | None, description: str, table: str | None = None
+) -> Download:
+    """Eine Downloadzeile; ``table`` ist die Tabelle des Registers, deren Spalten die Datei trägt."""
+    return Download(path.name, fmt, rows, path.stat().st_size, digest(path), description, table)
 
 
 def _rows(parquet: Path) -> int:
@@ -216,7 +221,7 @@ def write_tables(layout: Layout, settings: Settings | None = None) -> list[Downl
             frame = table.published_frame(pl.read_parquet(parquet), settings)
             rows = frame.height
             _write_view(frame, parquet, target)
-        downloads.append(_download(target, "Parquet", rows, table.description))
+        downloads.append(_download(target, "Parquet", rows, table.description, table.name))
         if table.csv is None:
             continue
         csv_target = data_dir / f"{table.name}.csv"
@@ -229,7 +234,7 @@ def write_tables(layout: Layout, settings: Settings | None = None) -> list[Downl
             write_csv_frame(csv_frame, csv_target, table.joins, table.separator)
             csv_rows = csv_frame.height
             description += f" ({table.csv.note})" if table.csv.note else ""
-        downloads.append(_download(csv_target, "CSV", csv_rows, description))
+        downloads.append(_download(csv_target, "CSV", csv_rows, description, table.name))
     return downloads
 
 
@@ -602,6 +607,7 @@ def build_site(
             "GeoJSON",
             len(shapes),
             f"Flächen der Wahlbezirke in EPSG:4326 mit den Kennzahlen (Tabelle {GEOJSON_TABLE})",
+            GEOJSON_TABLE,
         )
     )
     model = replace(model, downloads=tuple(downloads))
@@ -701,6 +707,9 @@ def build_site(
         model, _map_districts(geojson, model, rate.classes), _places_geojson(pois), rate_legend
     )
     write_text(layout.guard_writable(layout.site / MAP_NAME), map_html)
+    # Punkt 36: das Spaltenschema auf seiner eigenen Seite, aus denselben Zeilen wie schema.json
+    columns_html = render_columns(model)
+    write_text(layout.guard_writable(layout.site / COLUMNS_NAME), columns_html)
     html = render_report(model, visuals)
     write_text(layout.guard_writable(layout.site_details), html)
     # plan-startseite, § 3: die Startseite liest dasselbe Modell; sie kommt zuletzt, weil an ihr
@@ -710,11 +719,15 @@ def build_site(
     page_bytes = len(html.encode("utf-8"))
     start_bytes = len(start.encode("utf-8"))
     total = (
-        sum(d.bytes for d in downloads) + page_bytes + start_bytes + len(map_html.encode("utf-8"))
+        sum(d.bytes for d in downloads)
+        + page_bytes
+        + start_bytes
+        + len(map_html.encode("utf-8"))
+        + len(columns_html.encode("utf-8"))
     )
     return SiteSummary(
         len(model.districts),
-        len(downloads) + 3,
+        len(downloads) + 4,
         total,
         page_bytes,
         settings.report.page_budget_bytes,

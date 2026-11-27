@@ -513,13 +513,14 @@ WORD = re.compile("symbol", re.IGNORECASE)
 def test_kein_leser_sieht_das_wort_symbol(mini_run: Layout) -> None:
     """Die Klasse heißt auf der Seite „Erklärung oder Appell", in den Daten ``erklaerung``.
 
-    Geprüft werden die gebaute Unterseite, die Hauptseite (Downloads und Spaltenschema),
+    Geprüft werden die gebaute Unterseite, die Hauptseite (Downloads), das Spaltenschema,
     ``schema.json`` und die beiden Tabellen als CSV.
     """
     files = [
         mini_run.site / "akteure.html",
         mini_run.site_index,
-        mini_run.site_details,  # plan-startseite, § 3: Downloads und Spaltenschema stehen hier
+        mini_run.site_details,  # plan-startseite, § 3: die Downloads stehen hier
+        mini_run.site / "spalten.html",  # Punkt 36: das Spaltenschema auf seiner eigenen Seite
         mini_run.site_data / "schema.json",
         *(mini_run.site_data / f"{table.name}.csv" for table in TABLES),
     ]
