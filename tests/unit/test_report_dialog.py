@@ -254,17 +254,16 @@ def test_der_dialog_nennt_seine_dateien_nur_mit_haken(
     assert '<dialog id="docs" aria-labelledby="docs-title" data-extras="a b"><form' in with_hooks
 
 
-def test_der_haken_bleibt_bei_rund_einem_kilobyte() -> None:
-    """Plan § 5: der Haken unter rund 1 KB auf ``index.html``; die Erklärung ist ein Jinja-Kommentar.
-
-    Review K3 (Folge in Registerfolge, Sätze unter der Liste, Wort nur beim Wechsel, Felder aus
-    ``show``) kostet rund 300 Byte; die Grenze ist darum 1 400, nicht 1 000.
-    """
+def test_der_haken_bleibt_bei_rund_einem_kilobyte(mini_model: ReportModel) -> None:
+    """Die Erklärung ist ein Jinja-Kommentar und steht nicht im Skript; der Haken steht im Skript nur
+    mit Dateien (Review N1). Die Größe misst ``test_der_haken_steht_nur_auf_seiten_mit_dateien`` an
+    der ganzen Seite."""
     env = environment()
     hook = env.get_template("frame/dialog.js.j2").render()
-    assert len(hook.encode("utf-8")) < 1_400
-    assert "Vorarbeit" not in hook  # kein Kommentar im ausgelieferten Skript
-    script = env.get_template("frame/script.js.j2").render()
+    assert "Vorarbeit" not in hook and "Review" not in hook
+    script = env.get_template("frame/script.js.j2").render(
+        model=replace(mini_model, dialogs=("a",))
+    )
     assert hook in script and "extras(items, data.documents);" in script
 
 
@@ -303,3 +302,29 @@ def test_das_skript_haelt_folge_notizen_und_woerter_nach_dem_format() -> None:
     assert 'line(dialog, "", "note extra")' in hook  # (b): hinter <ol>, also unter der Liste
     assert "e[0] === row[k - 1][0]" in hook  # (c)
     assert "x.show.map" in hook  # (d)
+
+
+# --- Review Runde 1, N1: der Haken nur auf Seiten mit data-extras --------------------------------
+def test_der_haken_steht_nur_auf_seiten_mit_dateien(
+    mini_model: ReportModel, mini_visuals: Visuals, default_settings: Settings
+) -> None:
+    """Eine Unterseite trägt keinen Dialog-Haken (kein ``data-extras``), die Hauptseite nur mit
+    einem; gemessen wird die ganze Seite mit und ohne Haken."""
+    from georep.enrich.functions import PAGE
+    from georep.report.pages import page_frame, render_page
+
+    without = render_report(replace(mini_model, dialogs=()), mini_visuals)
+    with_hooks = render_report(replace(mini_model, dialogs=("vorgaenge",)), mini_visuals)
+    assert "function extras" not in without and "function extras" in with_hooks
+    grown = len(with_hooks.encode("utf-8")) - len(without.encode("utf-8"))
+    # Plan § 5 schätzte unter 1 KB; mit Review K3 (Folge, Sätze unter der Liste, Wort beim Wechsel,
+    # Felder aus show) sind es 1 444 Byte samt data-extras, die Grenze ist darum 1 500
+    assert 0 < grown < 1_500
+    frame = page_frame(default_settings, now=NOW, commit=None)
+    env = environment()
+    from jinja2 import ChoiceLoader, DictLoader
+
+    assert env.loader is not None
+    env.loader = ChoiceLoader([DictLoader({"pages/akteure.html.j2": "<p>leer</p>"}), env.loader])
+    page = render_page(frame, PAGE, {}, env=env)
+    assert "function extras" not in page and "return el;" not in page
