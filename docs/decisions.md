@@ -4417,8 +4417,10 @@ den Ordner `templates/pages/` (`pages_folder`), sonst wäre `akteure.html.j2` da
 (`check_page_files`).
 
 **Für alle Fraktionen gleich gebaut.** Dieselben Spalten für jede Fraktion, die Folge nach
-Dokumenten, die Namen aus dem Profil (Kurznamen, „SPD/Volt" aus `[[functions.fractions]]`); ein Test
-verlangt, dass kein Parteiname eines Paketprofils in den Vorlagen steht. Der Satz aus § 3.12 über
+Dokumenten, die Namen aus dem Profil (Kurznamen, „SPD/Volt" aus `[[functions.fractions]]`); Tests
+verlangen, dass kein Parteiname eines Paketprofils in den Vorlagen steht, in einer mit neutralen
+Fraktionen gerenderten Seite und in der Spaltendoku der beiden Tabellen (Review 2026-11-27, K4:
+dort stand „wie SPD+VOLT", jetzt „wie A+B"). Der Satz aus § 3.12 über
 den Umgang mit Anträgen einer bestimmten Fraktion heißt darum auf der Seite „mit den Anträgen
 einzelner Fraktionen". Die Spalte Erklärung/Appell bleibt in der Tabelle je Fraktion, wie § 7 sie
 nennt, ist aber nicht sortierbar; die Liste steht im letzten Abschnitt (Frage 9.8, § 10 Punkt 8).

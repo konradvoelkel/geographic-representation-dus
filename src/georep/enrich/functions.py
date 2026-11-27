@@ -182,7 +182,7 @@ TABLES = (
             ),
             "fraktionen": (
                 "dieselben als Fraktionen am Datum des Dokuments (zwei Parteien einer Fraktion "
-                "sind ein Schlüssel wie SPD+VOLT)",
+                "sind ein Schlüssel wie A+B)",
                 "Liste",
             ),
             "quelle": (

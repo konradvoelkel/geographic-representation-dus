@@ -577,3 +577,34 @@ def test_in_einer_laufenden_periode_ist_ein_kleines_k3_noch_kein_befund(
     running = _render(_check_settings(default_settings.model_copy(update={"period": period})), ROWS)
     konkordanz = running[running.index('<section id="konkordanz">') :]
     assert "Die Periode läuft noch" in konkordanz[: konkordanz.index("</section>")]
+
+
+def _party_names() -> set[str]:
+    names: set[str] = set()
+    for profile in ("duesseldorf", "moenchengladbach"):
+        settings = load_settings(profile=profile, cwd=Path("/nonexistent"))
+        for party in (*settings.originators.parties, *settings.originators.groups):
+            names |= {n for n in (party.key, party.label, party.short) if n}
+        names |= {f.key for f in settings.functions.fractions}
+    return names
+
+
+def _named(text: str) -> list[str]:
+    return sorted(
+        n for n in _party_names() if re.search(rf"(?<![\w+]){re.escape(n)}(?![\w+])", text)
+    )
+
+
+def test_kein_parteiname_im_text_der_seite_und_des_schemas() -> None:
+    """K4: Namen kommen nur aus den Daten. Gerendert mit neutralen Fraktionen und ohne Mehrheit
+    bleibt keiner übrig; die Spaltendoku der beiden Tabellen nennt auch keinen."""
+    settings = _check_settings(mg_settings())
+    rows = [
+        _doc(1, fraktionen=["F1", "F2"], parteien=[]),
+        _doc(2, funktion="kontrolle", fraktionen=["F1"], parteien=[]),
+        _doc(3, funktion="erklaerung", fraktionen=["F2"], parteien=[]),
+        _doc(4, funktion="vollzug", urheber="Verwaltung", lager="ohne_partei"),
+    ]
+    assert _named(_render(settings, rows)) == []
+    docs = " ".join(doc[0] for table in TABLES for doc in table.columns.values())
+    assert _named(docs + " ".join(t.description for t in TABLES)) == []
