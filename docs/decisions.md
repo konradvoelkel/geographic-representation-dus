@@ -5149,3 +5149,126 @@ Bytes vorher → nachher:
 A/B-Vergleich um eine Zeile vergrößert. Die Unterseiten sprechen im Text von der „Hauptseite"
 (Dokumentdialog, Zählung je Partei); das gilt für `details.html` weiter, mit Stufe B trägt auch die
 Startseite den Dialog. `deploy/bin/georep-monitor.sh` misst als `PAGE_KB` jetzt die Startseite.
+
+## NN. Die Startseite: Kurzfassung aus dem Modell, Karte aus eigenen Vektordaten, Straßenpunkte als Paket, Zeitregler in Monaten (Startseite, Stufe B, 2026-11-27)
+
+[plan-startseite-2026-11.md](plan-startseite-2026-11.md), § 3 bis § 8, mit Konrads Antworten auf
+§ 10 (S.3 ohne K5, S.4 `karte.html` unverändert, S.9 und S.10 nicht in B). Auf Punkt 92 (Stufe U)
+folgt die eigentliche Startseite. Keine Zahl der Auswertung ändert sich; der Golden Master bleibt.
+
+**Was gebaut ist.**
+
+- *Kurzfassung* (`report/start.py`, `summary_sentences`): K1 Umfang (liegt der Anteil mit Text unter
+  90 %, sagt der Satz es zuerst), K2 der sichtbarste und der am wenigsten sichtbare Wahlbezirk mit dem
+  Vorbehalt der Wörterbuchgröße (`bias.hits_terms`), K3 die Leitfrage nur aus der Spalte über alle
+  Wahlbezirke (ohne Regression: der Satz zur laufenden Periode), K4 die Gremien der Dokumente mit
+  Treffer aus `model.bodies`. Jeder Satz verlinkt den Abschnitt von `details.html`, aus dem seine Zahl
+  stammt. Die englische Kurzfassung ist das Makro `english` auf beiden Seiten; auf der Startseite ohne
+  den Satz zur Sensitivität (K5) und mit dem Link auf die Downloads.
+- *Karte* (`report/startkarte.py`, `templates/start/`): je Ort (Begriff, Wahlbezirk) ein Punkt;
+  Lage aus Wikidata, aus dem Paket der Straßenpunkte, aus den Stimmbezirken des Straßenverzeichnisses
+  oder aus der Fläche des Wahlbezirks (`ART_*`, der Satz dazu steht im Dialog). Grundkarte als
+  inline-SVG in einer viewBox von 2 000 Breite (`compact_path`: ganze Zahlen, relative Schritte;
+  41 Wahlbezirke 18 KB statt rund 52 KB auf der Hauptkarte), Grenzen der Stadtbezirke, Namen der
+  Stadtteile; ohne Skript die Choroplethe der letzten zwölf Monate (`charts.classify`), dazu die Liste
+  der 20 Orte. Mit Skript Kreise mit Fläche proportional zur Zahl, Punkte/Flächen, Zeitregler,
+  Gremium, Ausschnitt je Stadtbezirk, Abstandssuche im Umkreis von 24 px, `aria-live`-Zeile, Dialog
+  über `georep.showDocumentList`.
+- *`data/karte.json`*, Format 1, mit Downloadzeile; *Straßenpunkte* als Netzschritt `street_points`,
+  Paket (`georep pack --street-points`) und `bootstrap`, nach dem Muster von Punkt 80.
+- *Budgets je Datei*: `report.start_budget_bytes` (150 000), `report.map_budget_bytes` (500 000);
+  `SiteSummary` nennt die Startseite über ihrem Budget, `publish` prüft `index.html` und
+  `karte.json` gegen ihre Grenze (`page_budgets`).
+- *Nachzug aus U* (Supervisor, 2026-11-27): die Unterseiten nennen Details und Startseite statt der
+  Hauptseite, die Kommentare im Rahmen `details.html#…`, der Monitor misst `details.html` als
+  `seite_kb` und die Startseite als `startseite_kb`.
+
+**Anders als der Plan oder dort offen, mit Grund.**
+
+- *Sammeldokumente zählen in den Flächen*: ein Dokument mit mehr als 20 Orten trägt in `docs` statt
+  der Orte seine Wahlbezirke als negative Zahlen. So steht es nicht als Punkt (§ 4.3), zählt aber in
+  der Choroplethe und im Dialog eines Wahlbezirks, wie in der Auswertung.
+- *Was die Karte zählt*: Dokumente aus `dokumente.json`, also über angezeigte Begriffe; die zehn
+  Dokumente, die nur an einem versteckten Begriff hängen, fehlen hier wie im Dialog. Die Flächen
+  zeigen Dokumente je Wahlbezirk, keine Quote; die Quote steht auf `details.html`.
+- *Grenzen der Stadtbezirke*: die Wahlbezirke, vereinigt nach ihrem größten Anteil in
+  `wahlbezirke_stadtbezirke`. Wahlbezirk 40 liegt in Düsseldorf zu 65 % in Stadtbezirk 9 und zu 35 % in
+  10 und zählt auf der Karte ganz zu 9; die kanonischen Stimmbezirke tragen keinen Stadtbezirk.
+- *Das Paket trägt alle Paare des Wörterbuchs*, nicht nur die mit Treffer (2 929 statt der 2 427 der
+  Messung): die Perioden teilen das Wörterbuch, und die laufende Periode bekommt neue Treffer. 36 491
+  und 23 063 Bytes statt der geschätzten 31 144.
+- *`[street_points]` steht nicht im Settings-Fingerprint*; der Stamp des Netzschritts trägt Quelle,
+  Raster und Namen als `extra` (Muster Punkt 53). Ein neuer Block im Fingerprint hätte jeden Schritt
+  jedes Profils veralten lassen.
+- *Medoid exakt*, nicht Median mit nächstem Punkt wie im Messskript des Entwurfs: der Punkt mit der
+  kleinsten Summe der Abstände, bei Gleichstand der kleinste Ost-, dann Nordwert (hypothesis-Test).
+- *`karte.json` trägt mehr als § 4.5*: `window` (die Voreinstellung), `ended` (für „Ende der
+  Wahlperiode"), `max_places`, `arten` (die Arten der Gremien mit Wort) und `arts` (der Satz zur Lage);
+  zusammen unter einem Kilobyte.
+- *`showDocumentList` hat ein viertes Argument* (ein Link unter dem Satz, „Alle Zahlen zu diesem
+  Begriff" auf `details.html#suche=…`), und `indizes` und `satz` dürfen Funktionen der Datei sein; so
+  geht `showDocuments` darauf zurück, und die Liste wird an einer Stelle gezeichnet.
+- *Adresse des Gremiums*: `#gremium=OVA` für ein Gremium, `#gremium=art:bezirksvertretung` für eine
+  Art.
+- *Größe der Kreise*: Radius 2,5 + 1,2 · √n Pixel; auf einer Karte unter 800 Pixeln Breite bis auf die
+  Hälfte kleiner, und die Namen stehen dort erst im Ausschnitt eines Stadtbezirks.
+- *Reihenfolge der Seite*: Kopf, Kurzfassung, Karte, Linkblock mit der englischen Kurzfassung, Fuß;
+  die englische steht hinter der Karte, damit die Karte bei 1 280 Pixeln in der ersten Bildschirmhöhe
+  beginnt. Die Karte ist höchstens 82 % der Fensterhöhe hoch.
+- *Schaltflächen der Orte* heißen `start-place`: auf `button.term` hört der Rahmen und öffnet die
+  Dokumente eines Begriffs.
+
+**Probeabruf.** Einmal, am 2026-11-27, `GEOREP_STREET_POINTS__FETCH=true georep fetch street_points`
+für Düsseldorf (mit der Quelle der Stadtteile aus der Shell, bevor das Profil sie nannte): die
+Gebäudereferenzen (90 258 596 Bytes) und die Stadtteilgrenzen (1 335 152 Bytes), beide mit den SHA-256
+der Kopien der Messung unter `fremddaten/opendata/`; 84 193 Hausnummern der Gemeinde, 2 929 von 3 589
+Paaren mit Punkt, 50 Stadtteile, 48 s. Mönchengladbach las dasselbe Archiv aus
+`cache_root/startkarte/` ohne Netz: 65 412 Hausnummern, 1 871 von 2 225 Paaren. Lage der 3 146 Orte
+mit Treffer in der Hauptperiode: 352 aus Wikidata, 2 368 am Medoid der Hausnummern, 426 auf den
+Stimmbezirken des Straßenverzeichnisses, keiner nur auf der Fläche des Wahlbezirks; von den
+Straßenorten liegen damit 84,8 % am Medoid (Messung: 84,9 %).
+
+**Leistung** (headless Chrome über Port 8777 auf dem B-Bau, vierfache CPU-Drossel, Hauptperiode mit
+3 146 Orten, 16 Zustände des Reglers vom ganzen Zeitraum über die Fenster von zwölf Monaten zurück;
+Zeit bis nach dem nächsten gezeichneten Bild, ein leeres Bild 16,5 ms): Neuzeichnen in JavaScript
+Median 14 ms, höchstens 41 ms; mit dem Bild Median 31 ms, höchstens 92 ms, bei 1 280 und bei 390
+Pixeln gleich; Umschalten auf die Flächen 40 ms. Über 50 ms liegt nur der Sprung auf den ganzen
+Zeitraum, bei dem alle 3 146 Kreise zugleich erscheinen. Canvas lohnt nicht (§ 4.3). Die erste
+Fassung brauchte 1,2 s: `getBoundingClientRect` je Kreis erzwang nach jedem gesetzten Radius ein
+neues Layout (`02b295c`).
+
+**Tests.** `tests/unit/test_report_start.py`: jede Zahl der Kurzfassung gegen das Modell an der
+Mini-Fixture, jeder Link trifft eine id auf `details.html`, kein Partei- oder Fraktionswort in
+Kurzfassung und Karte und keine Partei auf der ganzen Seite, kein Wort „Ressort", `karte.json` passt zu
+`dokumente.json` (je Dokument eine Zeile, Orte in der viewBox, kein Paar Name × Wahlbezirk doppelt),
+die Choroplethe ohne Skript ist die Zählung aus `karte.json`, Kontrast der Kreise mindestens 3:1 gegen
+`--surface` und die neutralen Flächen in beiden Modi, Budget der Startseite, Downloadzeile von
+`karte.json`. `tests/unit/test_street_points.py` und `tests/property/test_street_points_props.py`
+für Lesen, Medoid, Netzschritt, Paket und `bootstrap`; `test_data_packages.py` für die beiden Pakete
+(keine Hausnummer, jeder Punkt auf dem 25-m-Raster). Kein Stadtwort im Code
+(`test_report_city.py` läuft über die neuen Module und Vorlagen).
+
+**A/B-Bau** aller fünf Profile wie `pages.yml` (`scripts/ab_bau.sh`, `POLARS_MAX_THREADS=4
+OMP_NUM_THREADS=2`), A aus `main` `8784b82` (`v0.39.0`, `ab/st2-a`), B aus `9c715fb` (`ab/st2-b`;
+danach nur der Satz zur fehlenden Kartendatei und Doku). Unter `site/` 324 und 328 Dateien, 24
+Abweichungen, alle erwartet: neu die vier `data/karte.json`; anders die vier Startseiten, die vier
+`details.html` (Downloadzeile von `karte.json` und die Zeile über der Tabelle, `showDocumentList` im
+Rahmen, die Kommentare zu `details.html#…`) und je Stadt und Periode `akteure.html`,
+`vorgaenge.html`, `zeit.html` (`showDocumentList` im Rahmen, „Details" und „Startseite" statt
+„Hauptseite"). `karte.html`, `vergleich.html` und jede andere Datei unter `data/` sind gleich. Über die
+Datenwurzeln 1 170 und 1 191 Dateien: neu die Kopien der Pakete unter `external/startkarte/` und die
+`karte.json`, anders 135 Stamps und 50 Seiten; kein Parquet unter `processed/` oder `interim/` anders.
+
+| | `index.html` vorher → nachher | gzip | `details.html` vorher → nachher | `karte.json` | gzip |
+|---|---|---|---|---|---|
+| Hauptperiode | 15 848 → 92 713 | 29 449 | 966 597 → 968 010 | 382 585 | 113 175 |
+| `2014-2020/` | 15 661 → 92 303 | 29 337 | 841 814 → 843 227 | 448 872 | 127 884 |
+| `2025/` | 15 730 → 92 111 | 29 288 | 737 719 → 739 131 | 123 803 | 39 212 |
+| `moenchengladbach/` | 15 649 → 87 101 | 28 199 | 825 194 → 826 601 | 45 067 | 14 711 |
+
+Alle Startseiten unter dem Ziel von 120 000 Byte, jede `karte.json` unter 500 000. Die Pakete wachsen
+um 59 554 Bytes.
+
+**Bewusst nicht in B.** E1 bis E5 und S.10 (Plan § 9, § 10); `karte.html` bleibt bis zu Frage S.4
+unverändert. Die Orte sind über die Tastatur nur über „Als Liste" und die Flächen der Wahlbezirke
+erreichbar, nicht einzeln. Die Grenze der Stadtbezirke in einem geteilten Wahlbezirk (oben).

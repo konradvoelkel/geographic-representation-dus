@@ -135,6 +135,7 @@ Rohtext schreibt er seine Tabelle leer, statt den Lauf scheitern zu lassen.
 | `streets` | nein | Straßen je Stimmbezirk | `processed/wahlbezirke_strassen.parquet` |
 | `pois` | nein | Orte; mit `search.city_facilities` fallen Einrichtungen mit Stadtnamen aus beiden Ausgaben (decisions.md, Punkt 44a) | `processed/wikidata_vis.parquet`, `processed/wikidata_agg.parquet` |
 | `dictionary` | nein | Orte und Straßen je Wahlbezirk | `processed/combined_searchdict.parquet` |
+| `street_points` | ja | nur mit `street_points.fetch` (Startseite, `docs/plan-startseite-2026-11.md`, § 4.2): die Gebäudereferenzen NRW aus `street_points.url` und, wo das Profil eine Quelle nennt, die Stadtteile aus `street_points.labels.url` nach `cache_root/startkarte/`, eine Datei jünger als `cache.opendata_s` nicht noch einmal; die Stimmbezirke der gerechneten Wahlbezirke, die Straßen je Wahlbezirk | `external/startkarte/` mit `strassenpunkte.parquet` (je Paar Straße und Wahlbezirk des Wörterbuchs der Medoid der Hausnummern der Gemeinde `city.ags`, auf `round_m` gerundet, und ihre Zahl; keine Hausnummer), `stadtteile.parquet` (Name und Punkt auf der Fläche) und `quellen.json`; `georep pack --street-points` packt sie nach `snapshots/<stadt>-strassenpunkte/`, `bootstrap` kopiert das Paket aus `street_points.package` zurück. `[street_points]` steht nicht im Settings-Fingerprint, der Stamp trägt Quelle, Raster und Namen als `extra` |
 | `corpus` | nein | Metadaten und Texte | `interim/papers.parquet` |
 | `bodies` | nein | Korpus (`id`, `reference`, `consultation_organizations`), dazu `raw/beratungsfolge.parquet`, wo das Profil eines nennt (Punkt 58) | `processed/papers_gremien.parquet` |
 | `topics` | nein | Korpus (Texte), mit Saat auch die Gremien je Dokument | `processed/themen.parquet`, `processed/themen_dokumente.parquet`, `interim/themen_anteile.parquet` |
@@ -165,7 +166,7 @@ Rohtext schreibt er seine Tabelle leer, statt den Lauf scheitern zu lassen.
 | `need` | nein | Vorhaben 22: die Auszüge, Stimmbezirke, Auswertung, Stadtbezirke; mit Klassen im Profil und `classify.enabled` den passenden Ausschuss, mit Fremddaten und Hypothesen die Kontextvariablen | `processed/wahlbezirke_bedarf.parquet` (eine Zeile je Wahlbezirk: Einwohner, Unfälle mit Band von 20 m, scharf und geteilt, Miete, Schulen und Index, Dokumente und Anteile der Klassen) und, mit Hypothesen oder Paaren im Profil, `processed/bedarf_hypothesen.parquet` (Kern `hypothese`, `p`, `p_holm`, `ergebnis`, `n`, `festgelegt`, dann `deutung` mit den Wörtern aus § 8 des Messdokuments, Rechnung, Maß, Wert, Intervall) |
 | `identifiers` | nein | Vorhaben 12: Rohtextstore (`name`, `text`, `extractor`; eine andere Schema-Version gilt als leer), Korpus (`id`, `file_name`), als optionale Eingabe die Abschnitte aus `sections` (11); die Muster aus den Settings | `processed/kennungen.parquet` (Spannen nach F3 mit `attr` dahinter: `bplan`, `fnp`, `betrag`, `termin`, `amt`, `dezernat`; jede Korpus-ID der Datei, `section` aus den Abschnitten von 11) |
 | `summaries` | Modell | nur mit `summaries.enabled` (in allen Profilen aus) und `--models` (Vorhaben 20): Korpus, Rohtextstore, die Abschnitte und der Kopf aus `sections` (11); als optionale Eingaben Urheber, Antragsteller, Gremien je Dokument, Wörterbuch und, wo das Profil eines nennt, das Paket der Beratungsfolge | nur unter `cache_root/<profil>/summaries/`: `kurzfassungen.parquet` (je Korpus-ID Text oder Grund), `kurzfassungen_treue.parquet` (Zählung der Treueprüfung); nie unter `data_root`, nie auf der Seite |
-| `report` | nein | die Ergebnistabellen, Korpus, die kanonischen Stimmbezirke des gerechneten Zuschnitts (mit Vergleich auch dessen Tabelle), mit Fremddaten auch die drei Tabellen der Kontrollvariablen und die Erläuterung der Indikatoren, mit Straßenverzeichnis auch dieses; der Textstore (Extraktor je Text) und, als optionale Eingabe, der Rohtextstore für die Sätze über Extraktor und Rohtext in „Methode und Grenzen“; der zweite steht nur da, wenn der Store vollständig ist (`complete_raw_texts`); die Tabellen der Beiträge und, für die Prüfsätze unter den Downloads, `guete.json` und `stichprobe.json` aus `validierung/` (Vorhaben 11 und 12); die Eingaben der Dialog-Haken (Vorarbeit V2) | `site/index.html`, `site/karte.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`, `summary.json`, `dokumente.json`, je Dialog-Haken `data/<name>.json`, Vorarbeit V2) |
+| `report` | nein | die Ergebnistabellen, Korpus, die kanonischen Stimmbezirke des gerechneten Zuschnitts (mit Vergleich auch dessen Tabelle), mit Fremddaten auch die drei Tabellen der Kontrollvariablen und die Erläuterung der Indikatoren, mit Straßenverzeichnis auch dieses; der Textstore (Extraktor je Text) und, als optionale Eingabe, der Rohtextstore für die Sätze über Extraktor und Rohtext in „Methode und Grenzen“; der zweite steht nur da, wenn der Store vollständig ist (`complete_raw_texts`); die Tabellen der Beiträge und, für die Prüfsätze unter den Downloads, `guete.json` und `stichprobe.json` aus `validierung/` (Vorhaben 11 und 12); die Eingaben der Dialog-Haken (Vorarbeit V2) | `site/index.html` (Startseite mit Stamp), `site/details.html` (die Auswertung), `site/karte.html`, `site/data/` (Parquet, CSV, `wahlbezirke.geojson`, `schema.json`, `summary.json`, `dokumente.json`, `karte.json` für die Startkarte, je Dialog-Haken `data/<name>.json`, Vorarbeit V2) |
 
 Die Tabelle steht in der Reihenfolge des Registers, also in der Reihenfolge, in der `georep run`
 die Schritte plant (`georep steps` zeigt sie für ein Profil). Neben der ersten Ausgabe jedes
@@ -703,22 +704,43 @@ Auswertung als eine Datei `site/details.html` (`Layout.site_details`, bis `v0.38
 externe Ressourcen: CSS, JavaScript und beide SVGs inline, nur relative Pfade, Deutsch
 mit einer englischen Kurzfassung, hell und dunkel über `prefers-color-scheme`. Zuletzt schreibt er aus
 demselben Modell die **Startseite** `site/index.html` (`Layout.site_index`; an ihr hängen weiter Stamp,
-Existenzprüfung in `publish`, Monitor und `georep paths`): `report/start.py` mit `templates/start.html.j2`,
-in Stufe U der [plan-startseite-2026-11.md](plan-startseite-2026-11.md) nur Kopf, Linkblock (Details,
-Downloads, die Unterseiten aus `model.pages`, die anderen Perioden), ein `<noscript>`-Satz und ganz oben
-ein Skript unter 0,5 KB, das jede Adresse mit einem Anker, der kein Schlüssel der Startseite ist, per
-`location.replace` auf `details.html` mit demselben Anker umlenkt (`redirect_script`). Die ids der
-Startseite beginnen mit `start-`, ihre Schlüssel in der Adresse heißen `zeitraum` und `gremium`
+Existenzprüfung in `publish`, Monitor und `georep paths`; [plan-startseite-2026-11.md](plan-startseite-2026-11.md)):
+`report/start.py` mit `templates/start.html.j2`, Stil und Skript unter `templates/start/`. Sie trägt den
+Kopf mit Datenstand, die **Kurzfassung** K1 bis K4 (`summary_sentences`: Umfang, Spreizung mit dem
+Vorbehalt der Wörterbuchgröße, die Leitfrage nur über alle Wahlbezirke, die Gremien; jeder Satz aus dem
+`ReportModel` und mit einem Link auf den Abschnitt von `details.html`, aus dem seine Zahl stammt; nichts
+Exploratives, nichts KI-Kodiertes, keine Partei) und die englische Kurzfassung (Makro `english` in
+`macros.html.j2`, auf beiden Seiten). Die **Karte** baut `report/startkarte.py`: je Ort (Begriff,
+Wahlbezirk) ein Punkt an der Wikidata-Koordinate im Wahlbezirk, am Punkt aus dem Paket der
+Straßenpunkte (Schritt `street_points`), sonst auf der Fläche der Stimmbezirke, die das Straßenverzeichnis
+für die Straße nennt, sonst auf der Fläche des Wahlbezirks; die Grundkarte ist inline-SVG in einer
+viewBox von 2 000 Breite mit ganzen Zahlen und relativen Schritten (`compact_path`): Wahlbezirke, Grenzen
+der Stadtbezirke (Wahlbezirke nach ihrem größten Anteil in `wahlbezirke_stadtbezirke`), Namen der
+Stadtteile aus dem Paket oder der Stadtbezirke (`report.start.city_district_names`). `data/karte.json`
+(Format 1, mit Downloadzeile) trägt Monate, Gremien, Orte und je Dokument in der Folge von
+`dokumente.json` Monat, Gremium und Orte; ein Dokument mit mehr als `report.start.max_places` Orten
+trägt seine Wahlbezirke negativ und steht als Zeile unter der Karte. Ohne Skript und aus `file://` steht
+die Choroplethe der letzten `report.start.months` Monate bis zum neuesten Dokument, beim Bau gerechnet;
+mit Skript zeichnet `templates/start/karte.js` die Kreise (Fläche proportional zur Zahl), den Umschalter
+Punkte/Flächen mit denselben Quantilklassen, den Zeitregler, den Filter „Gremium" in zwei Stufen, die
+Adresse `#zeitraum=…&gremium=…`, die Abstandssuche im Umkreis von 24 px und den Dialog über
+`georep.showDocumentList`. Dialog, Tooltip und Fuß sind Teilvorlagen des Rahmens
+(`frame/dialog.html.j2`, `frame/footer.html.j2`), die `report.html.j2` und `start.html.j2` einbinden.
+Ganz oben auf der Startseite steht ein Skript unter 0,5 KB, das jede Adresse mit einem Anker, der kein
+Schlüssel der Startseite ist, per `location.replace` auf `details.html` mit demselben Anker umlenkt
+(`redirect_script`). Die ids der Startseite beginnen mit `start-` (dazu nur Dialog und Tooltip des
+Rahmens, `FRAME_IDS`), ihre Schlüssel in der Adresse heißen `zeitraum` und `gremium`
 (`START_PREFIX`, `START_KEYS`); `tests/unit/test_report_start.py` verlangt, dass keiner davon eine id auf
 `details.html` ist. `details.html` trägt im Kopf „Zur Startseite", die Unterseiten heißen dort ebenso und
 verweisen für Quellen und Lizenzen auf `details.html`, `karte.html` führt „zurück" dorthin. `publish`
 setzt die Zeile „Weitere Städte" in beide Seiten (`NEIGHBOUR_PAGES`) und prüft das Budget je Datei
-(`_over_budget` mit einer Grenze je Dateiname). Die Vorlage
+(`_over_budget` mit `page_budgets`: die Startseite gegen `report.start_budget_bytes`, `data/karte.json`
+gegen `report.map_budget_bytes`, alles andere gegen `report.page_budget_bytes`). Die Vorlage
 `templates/report.html.j2` ist der Rahmen (Kopf, Fuß, Dialog, Tooltip, Basis-JavaScript); die Abschnitte liegen
 als `templates/sections/NN-name.html.j2` in Nummernfolge, je mit optionalem `NN-name.css` und `NN-name.js`, die
 der Rahmen in den Stil- und einen eigenen Skriptblock einfügt (`render.sections`; ein `.css` oder `.js` ohne
 Vorlage ist ein Fehler). Das Basis-JavaScript bietet `window.georep` (`select(ids, scroll)`,
-`showDocuments(terms, title)`, `rows`) für die Skripte der Abschnitte. **Lange Tabellen zeigen eine
+`showDocuments(terms, title)`, `showDocumentList(indizes, titel, satz[, link])`, `rows`) für die Skripte der Abschnitte. **Lange Tabellen zeigen eine
 Vorschau** (Punkt 48): eine Tabelle mit `class="preview"` zeigt Kopf und die ersten
 `report.table_preview_rows` Zeilen, und das Makro `more(id, rows, preview)` aus
 `templates/macros.html.j2` setzt darunter die Schaltfläche „alle *n* Zeilen zeigen"
