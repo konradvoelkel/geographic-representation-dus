@@ -242,7 +242,11 @@ def test_without_full_texts_the_spread_sentence_is_left_out(mini_model: ReportMo
         figures = replace(mini_model.figures, documents=1_000, documents_with_text=with_text)
         low = replace(mini_model, figures=figures)
         assert spread_sentence(low) is None
-        assert [s.key for s in summary_sentences(low)] == ["K1", "K3", "K4"]
+        found = summary_sentences(low)
+        assert [s.key for s in found] == ["K1", "K3", "K4"]
+        # K3 steht dann ohne K2 davor: kein „dieser", und die Trefferquote erklärt sich selbst
+        k3 = found[1].text
+        assert "dieser" not in k3 and "Trefferquote eines Wahlbezirks (Dokumente je" in k3
     full = replace(
         mini_model, figures=replace(mini_model.figures, documents=1_000, documents_with_text=900)
     )

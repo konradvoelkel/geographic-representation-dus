@@ -220,7 +220,10 @@ def spread_sentence(model: ReportModel) -> Sentence | None:
 
 
 def question_sentence(model: ReportModel, has_months: bool) -> Sentence:
-    """K3: die Leitfrage, nur aus der Spalte über alle Wahlbezirke (die zweite ist explorativ)."""
+    """K3: die Leitfrage, nur aus der Spalte über alle Wahlbezirke (die zweite ist explorativ).
+
+    Der Satz steht für sich: ohne K2 davor (wenig Text) erklärt er die Trefferquote selbst.
+    """
     if model.regression is None:
         return Sentence(
             "K3",
@@ -232,12 +235,14 @@ def question_sentence(model: ReportModel, has_months: bool) -> Sentence:
     fit_all = model.regression.all
     if fit_all.p >= SIGNIFICANCE:
         text = (
-            "Einen Zusammenhang zwischen dieser Trefferquote und der Wahlbeteiligung belegt die "
+            "Einen Zusammenhang zwischen der Trefferquote eines Wahlbezirks (Dokumente je "
+            "Wahlberechtigtem) und seiner Wahlbeteiligung belegt die "
             f"Regression über alle {fit_all.n} Wahlbezirke nicht (p = {format_de(fit_all.p, 2)})."
         )
     else:
         text = (
-            f"Über alle {fit_all.n} Wahlbezirke hängen Trefferquote und Wahlbeteiligung auf dem "
+            f"Über alle {fit_all.n} Wahlbezirke hängen die Trefferquote eines Wahlbezirks "
+            "(Dokumente je Wahlberechtigtem) und seine Wahlbeteiligung auf dem "
             f"5-%-Niveau zusammen (p = {format_de(fit_all.p, 3)}, r = {format_de(fit_all.r, 2)})."
         )
     return Sentence("K3", text, "zusammenhang", "Trefferquote und Wahlbeteiligung")
