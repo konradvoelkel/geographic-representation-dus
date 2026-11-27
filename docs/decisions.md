@@ -4379,7 +4379,10 @@ Ordner eines Profils aus `stichprobe.json` ist (`settings.profile_folder`): die 
 Datensätze, mit ihnen `duesseldorf-vergleich`, das im Ordner der Hauptperiode rechnet;
 Mönchengladbach nicht. Dort heißt jede Überschrift „explorativ", und der Prüfsatz sagt, an welchen
 Profilen gemessen ist (Plan § 8, Gültigkeitsregel). Unabhängig davon tragen „Instrumente je
-Fraktion" und „Konkordanz" überall „explorativ" (Messdokument § 8, Frage 14).
+Fraktion" und „Konkordanz" in jedem Datensatz „explorativ" (Messdokument § 8, Frage 14), die
+Konkordanz aber nur, wo es sie gibt: in Mönchengladbach fehlt sie (keine Mehrheit im Profil), ihre
+Überschrift trägt dort kein „explorativ", weil darunter keine Zahl steht, sondern nur der Satz, was
+fehlt (Review 2026-11-27, N4).
 
 **Das Lager einer Zelle ist das des Paars am Datum jedes Dokuments.** Ein Dokument von vier
 Fraktionen über die Grenze ist für das Paar zweier Mehrheitsfraktionen darin „beide in der
