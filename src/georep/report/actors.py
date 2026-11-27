@@ -877,6 +877,7 @@ class ActorsModel:
     statements: tuple[DocumentRow, ...]
     missing: tuple[str, ...]  # was diesem Profil fehlt, je ein Satz (Plan § 6)
     variant: str
+    running: bool  # laufende Periode (``period.end`` leer): ein kleines K3 ist noch kein Befund
     min_documents: int = MIN_DOCUMENTS
     many_fractions: int = MANY_FRACTIONS
 
@@ -965,6 +966,7 @@ def build_actors(documents: pl.DataFrame, settings: Settings, check: Check) -> A
         statements=document_rows(documents.filter(pl.col("funktion") == STATEMENT), labels),
         missing=tuple(missing),
         variant=settings.functions.variant,
+        running=settings.period.end is None,
     )
 
 

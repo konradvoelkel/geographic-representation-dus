@@ -172,6 +172,9 @@
 <div class="tile"><div class="label">K3, Initiativen und Erklärungen</div><div class="value">{{ k.initiatives.share|pct(1) }}</div><div class="sub">{{ k.initiatives.hits|num }} von {{ k.initiatives.n|num }}{% if k.initiatives.n %}; 95 %: {{ k.initiatives.interval[0]|pct(1) }} bis {{ k.initiatives.interval[1]|pct(1) }}{% endif %}</div></div>
 <div class="tile"><div class="label">dasselbe mit Anfragen</div><div class="value">{{ k.all_functions.share|pct(1) }}</div><div class="sub">{{ k.all_functions.hits|num }} von {{ k.all_functions.n|num }}{% if k.all_functions.n %}; 95 %: {{ k.all_functions.interval[0]|pct(1) }} bis {{ k.all_functions.interval[1]|pct(1) }}{% endif %}</div></div>
 </div>
+{% if m.running %}
+<p class="note">Die Periode läuft noch, die Daten reichen bis {% if m.last %}{{ m.last|date_de }}{% else %}heute{% endif %}. Ein kleines K3 ist in einer laufenden Periode noch kein Befund: n ist klein und wächst mit jeder Sitzung, und ob die Zusammenarbeit über die Grenze selten bleibt, kann erst eine vorab festgelegte Prüfung an neuen Dokumenten zeigen.</p>
+{% endif %}
 <h3>Die Mehrheiten und ihre Quelle</h3>
 <p class="note">Die Mehrheit ist eine Annahme mit Beleg: die Vereinbarung der Partner und Drucksachen, in denen der Korpus sie selbst nennt. Aus den gemeinsamen Anträgen ist sie nicht abgeleitet; für dieses Maß wäre das zirkulär. Ein Wechsel innerhalb einer Wahlperiode ist nicht geprüft.</p>
 <div class="scroll"><table id="mehrheiten">

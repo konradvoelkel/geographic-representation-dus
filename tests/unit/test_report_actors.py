@@ -563,3 +563,17 @@ def test_jede_gefaerbte_zelle_traegt_ein_sichtbares_kuerzel(default_settings: Se
     legend = legend[: legend.index("</ul>")]
     for camp, letter in short.items():
         assert f'<span class="lager-kuerzel">{letter}</span>' in legend and camp in legend
+
+
+def test_in_einer_laufenden_periode_ist_ein_kleines_k3_noch_kein_befund(
+    default_settings: Settings,
+) -> None:
+    """K3 (Plan 15, § 9.11): die Seite nennt n und „laufend"."""
+    closed = _render(_check_settings(default_settings), ROWS)
+    assert "läuft noch" not in closed
+    period = default_settings.period.model_copy(
+        update={"end": None, "election": default_settings.period.election_day}
+    )
+    running = _render(_check_settings(default_settings.model_copy(update={"period": period})), ROWS)
+    konkordanz = running[running.index('<section id="konkordanz">') :]
+    assert "Die Periode läuft noch" in konkordanz[: konkordanz.index("</section>")]

@@ -4438,6 +4438,10 @@ sie stehen in keiner Ausgabe, und ein Umbenennen änderte jedes Stadtprofil. Das
 Messdokument bleiben, wie gemessen. Der Abschnitt heißt „Erklärungen und Appelle" (Anker
 `#erklaerungen`).
 
+**Eine laufende Periode heißt laufend** (Messdokument § 9.11, Review 2026-11-27, K3). Ist
+`period.end` leer, sagt die Konkordanz unter den Kacheln, bis wann die Daten reichen und dass ein
+kleines K3 dort noch kein Befund ist; in der Periode seit 2025 sind es 0 von 312.
+
 **Der Gast von 28 heißt `abstimmungen`.** Der Abschnitt Konkordanz verlinkt
 `{% if "abstimmungen" in guests %}` auf `#abstimmungen` (Punkt 86), sonst sagt er, dass Beschlüsse
 und Abstimmungen noch fehlen. Der Name folgt dem Bauplan von 28 (§ 7, „ein Abschnitt
