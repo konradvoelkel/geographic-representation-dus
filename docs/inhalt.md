@@ -119,7 +119,8 @@ Auswertung, zu den Unterseiten und zu den Downloads; eine alte Adresse mit Anker
 `#karte`) leitet sie per Skript auf `details.html` mit demselben Anker weiter
 ([plan-startseite-2026-11.md](plan-startseite-2026-11.md), § 3). Daneben liegt
 `karte.html` mit Leaflet und OpenStreetMap-Kacheln — die einzige Datei mit Fremdressourcen und die
-einzige, die Netz braucht.
+einzige, die Netz braucht — und `spalten.html`, das Spaltenschema aller Tabellen der Downloads
+(seit Punkt 36 nur noch dort, nicht mehr unter den Downloads von `details.html`).
 
 ### Startseite: Kurzfassung und Karte
 
@@ -209,7 +210,7 @@ Die Legenden liegen in einer `aria-live`-Region.
 | 13 | `#methode` | Verfahren in Prosa, die beiden eigenen Methodikregeln, die Grenzen, und der Absatz zur Größe des Wörterbuchs mit seinen Korrelationen. |
 | 14 | `#abgeleitete-daten` | je Kontrollvariable, aus welchem Indikator des Quartiersatlas sie entsteht und wie sie umgerechnet wird. |
 | 15 | `#literatur` | fünfzehn Einträge mit vollständiger Zitation und einem Satz zum Beitrag; zwei Lücken stehen sichtbar als „nachzutragen". |
-| 16 | `#downloads` | 53 Zeilen mit Format, Zeilenzahl, Größe, Beschreibung und SHA-256. |
+| 16 | `#downloads` | 53 Zeilen mit Format, Zeilenzahl, Größe, Beschreibung und SHA-256; jede Zeile einer Tabelle verlinkt ihre Spalten auf `spalten.html`. |
 | 17 | `#laufend` | ein Verweis auf die Unterseite der laufenden Wahlperiode. |
 
 Lange Tabellen zeigen Kopf und drei Zeilen (`report.table_preview_rows`) und klappen über „alle *n*
@@ -222,11 +223,13 @@ Tabellen 5, 6 und 6b — sie sind der Befund.
 Unter `data/` liegen neben jeder Seite **24 Ergebnistabellen als Parquet und als CSV** plus fünf
 weitere Dateien, zusammen 53 Zeilen in der Download-Tabelle; Parquet trägt Typen und Listen und ist
 das primäre Format, CSV verbindet Listen mit „; ", GeoJSON ist EPSG:4326. Größe und SHA-256 jeder
-Datei stehen auf der Seite.
+Datei stehen auf der Seite. Was jede Spalte bedeutet, steht je Tabelle mit Typ und Einheit auf
+`spalten.html`, einer eigenen Seite neben `details.html`: ein Abschnitt je Tabelle, ihr Name ist der
+Anker (`spalten.html#wahlbezirke_auswertung`), und jede Downloadzeile einer Tabelle verlinkt ihn.
 
 | Datei | Was |
 |---|---|
-| [`data/schema.json`](https://konradvoelkel.github.io/geographic-representation-dus/data/schema.json) | je Tabelle eine Liste von Spalten mit `column`, `dtype`, `description`, `unit` — das maschinenlesbare Spaltenschema, 25 Einträge (24 Tabellen plus `wahlbezirke`). |
+| [`data/schema.json`](https://konradvoelkel.github.io/geographic-representation-dus/data/schema.json) | je Tabelle eine Liste von Spalten mit `column`, `dtype`, `description`, `unit` — das maschinenlesbare Spaltenschema, 25 Einträge (24 Tabellen plus `wahlbezirke`); dieselben Zeilen zeigt `spalten.html`. |
 | [`data/summary.json`](https://konradvoelkel.github.io/geographic-representation-dus/data/summary.json) | die Schnittstelle der Stadtseite: `city`, `stand`, `figures` (Bezirke, Stimmbezirke, Dokumente, mit Text, mit Treffer, Begriffe, Quote als Median/Min/Max, Wahlbeteiligung als Median), `regression` mit beiden Spalten von Tabelle 5, `version`, `generated_at`. Daraus baut `georep publish` den Städtevergleich. |
 | [`data/begriffe.json`](https://konradvoelkel.github.io/geographic-representation-dus/data/begriffe.json) | je Wahlbezirk `[Begriff, Dokumente]` absteigend, 41 Einträge; wird beim Aufklappen einer Begriffsliste nachgeladen. |
 | [`data/dokumente.json`](https://konradvoelkel.github.io/geographic-representation-dus/data/dokumente.json) | 10 729 Dokumente als Feldlisten (`link, datum, drucksache, titel, art, urheber`) plus je Begriff die Indizes darauf; wird beim ersten Klick auf einen Begriff nachgeladen. |

@@ -186,8 +186,8 @@ diese vier der kürzeste Weg:
 
 Die Spalten sind in
 [`data/schema.json`](https://konradvoelkel.github.io/geographic-representation-dus/data/schema.json)
-maschinenlesbar beschrieben (je Spalte `column`, `dtype`, `description`, `unit`), und auf der Seite
-steht dieselbe Beschreibung als Tabelle. Prüfsummen sind SHA-256; Listen sind in CSV mit „; "
+maschinenlesbar beschrieben (je Spalte `column`, `dtype`, `description`, `unit`), und `spalten.html`
+neben der Auswertung zeigt dieselbe Beschreibung je Tabelle; jede Zeile der Downloads verlinkt sie. Prüfsummen sind SHA-256; Listen sind in CSV mit „; "
 verbunden, bei `paper_ids` mit „;".
 
 ## 2. Der Weg über die Kommandozeile
