@@ -612,7 +612,10 @@ keine Rangfolge je Fraktion, die Definition wörtlich aus dem Codebuch; die Klas
 Ordner einer der Profile aus `stichprobe.json` ist (`settings.profile_folder`); sonst heißt jede
 Überschrift „explorativ". Die Seite verlinkt die PDF-Dateien ihres Korpus (`actors_links`) und, wenn
 Vorhaben 28 ihn anhängt, den Gast `#abstimmungen`. `guete.json`, `stichprobe.json` und `codebuch.toml`
-sind Eingaben von `page_akteure` und liegen im Repo, nicht im Lauf.
+sind Eingaben von `page_akteure` und liegen im Repo, nicht im Lauf: `validation.root` ist relativ zum
+Arbeitsverzeichnis, `georep run` läuft darum aus der Wurzel des Repos (wie `pages.yml` und
+`scripts/ab_bau.sh`). Aus einem anderen Ordner bricht `page_akteure` mit den fehlenden Eingaben ab;
+wer dort rechnet, setzt `validation.root` absolut (die Tests in `tests/unit/test_cli.py` tun das).
 
 **Abschnitte aus fremden Beiträgen** (Vorarbeit V1, Punkt 86): ein Beitrag hängt mit
 `Contribution.sections` einen Abschnitt an die Unterseite eines anderen (`report.pages.PageSection`:
