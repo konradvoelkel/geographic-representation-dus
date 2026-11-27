@@ -516,8 +516,9 @@ def test_eine_fremde_festlegung_ist_ein_fehler() -> None:
 @pytest.mark.parametrize(
     ("profile", "sentence"),
     [
-        ("duesseldorf-2014", "Sie stehen auf dieser Seite für die Wahlperiode 2020 bis 2025."),
-        ("duesseldorf-2025", "Sie stehen auf dieser Seite für die Wahlperiode 2020 bis 2025."),
+        # Review K1: nicht „auf dieser Seite", das wäre die Seite der eigenen Periode
+        ("duesseldorf-2014", "Sie stehen auf der Seite „Zeit“ der Wahlperiode 2020 bis 2025."),
+        ("duesseldorf-2025", "Sie stehen auf der Seite „Zeit“ der Wahlperiode 2020 bis 2025."),
         ("duesseldorf", "erst im Lauf, der die Perioden vergleicht; in diesem Lauf fehlen sie."),
         ("moenchengladbach", "Für diesen Datensatz ist keine Hypothese vorab festgelegt."),
     ],
@@ -528,6 +529,7 @@ def test_ohne_tests_sagt_die_seite_wo_sie_stehen(profile: str, sentence: str) ->
     )
     section = _section(_render(settings, _inputs()), "hypothesen")
     assert sentence in section
+    assert "Sie stehen auf dieser Seite" not in section
     assert 'class="ergebnis"' not in section
 
 

@@ -150,7 +150,7 @@
 </tbody></table></div>
 {% elif m.elsewhere %}
 {% set e = m.elsewhere %}
-<p>Drei Hypothesen zu Wahljahr, Haushaltsmonat und Bundespolitik sind {{ fixed }} vorab festgelegt. Sie rechnen über {{ e.periods_text }} zusammen, weil ein Datensatz allein zu wenige Wahljahre hat.{% if e.computed_here %} Auf dieser Seite stehen sie erst im Lauf, der die Perioden vergleicht; in diesem Lauf fehlen sie.{% else %} Sie stehen auf dieser Seite für die {{ e.period }}.{% endif %}</p>
+<p>Drei Hypothesen zu Wahljahr, Haushaltsmonat und Bundespolitik sind {{ fixed }} vorab festgelegt. Sie rechnen über {{ e.periods_text }} zusammen, weil ein Datensatz allein zu wenige Wahljahre hat.{% if e.computed_here %} Auf dieser Seite stehen sie erst im Lauf, der die Perioden vergleicht; in diesem Lauf fehlen sie.{% else %} Sie stehen auf der Seite „Zeit“ der {{ e.period }}.{% endif %}</p>
 {% else %}
 <p>Für diesen Datensatz ist keine Hypothese vorab festgelegt. Die Tests der Messung rechnen über die Perioden der Stadt, an der sie festgelegt sind; was hier steht, ist beschreibend oder explorativ.</p>
 {% endif %}
