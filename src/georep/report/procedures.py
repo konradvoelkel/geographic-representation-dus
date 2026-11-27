@@ -266,6 +266,14 @@ def answer_times_of(days: pl.Series) -> Times:
     return Times(valid.len(), float(median), quantile(0.25), quantile(0.75), quantile(0.9))
 
 
+def at_least(times: Times, minimum: int) -> Times:
+    """Die Zahl der datierten Antworten bleibt, Median und Quartile erst ab ``minimum`` (Review K1).
+
+    Dieselbe Regel je Gremium und je Fraktion: an drei Antworten ist ein Median kein Befund.
+    """
+    return times if times.dated >= minimum else Times(times.dated, None, None, None, None)
+
+
 @dataclass(frozen=True)
 class BodyRow:
     code: str
@@ -330,7 +338,7 @@ def body_rows(
                 names.get(key, key or "Gremium nicht erkannt"),
                 n,
                 answered,
-                answer_times_of(group.get_column("tage")),
+                at_least(answer_times_of(group.get_column("tage")), MIN_DATED),
             )
         )
     return tuple(sorted(rows, key=lambda r: (-r.questions, r.name))), small, small_questions
@@ -388,8 +396,7 @@ def fraction_rows(questions: pl.DataFrame, labels: Mapping[str, str]) -> tuple[F
     ).iter_rows():
         days = exploded.filter(pl.col("fraktionen") == key).get_column("tage")
         times = answer_times_of(days)
-        if times.dated < MIN_DATED:
-            times = Times(times.dated, None, None, None, None)
+        times = at_least(times, MIN_DATED)
         rows.append(
             FractionRow(
                 key=str(key),

@@ -514,3 +514,31 @@ def test_die_csv_des_vorgangs_traegt_nur_dokumente_in_einem_vorgang(mini_run: La
     for name in ("vorgang_kanten", "antwortzeiten"):
         other = next(t for t in TABLES if t.name == name)
         assert other.csv is not None and other.csv.note == ""
+
+
+# --- Review Runde 1 (2026-11-27) ---------------------------------------------------------------------
+def _few_dated(city: dict[str, pl.DataFrame], dated: int) -> dict[str, pl.DataFrame]:
+    """Dieselbe Stadt, in der Bezirksvertretung nur ``dated`` gültig datierte Antworten."""
+    answers = city["answers"].with_columns(
+        pl.when(pl.col("id").is_in([_id(n) for n in range(dated, 40)]))
+        .then(None)
+        .otherwise(pl.col("tage"))
+        .alias("tage")
+    )
+    return city | {"answers": answers}
+
+
+def test_ein_median_je_gremium_erst_ab_dreissig_datierten(default_settings: Settings) -> None:
+    """K1: dieselbe Mindestzahl wie je Fraktion; an drei Antworten ist ein Median kein Befund."""
+    settings = _check_settings(default_settings)
+    model = _model(settings, _few_dated(_city(), 3))
+    assert model.answers is not None
+    row = next(b for b in model.answers.bodies if b.code == "BV1")
+    assert row.times.dated == 3 and row.times.median is None and row.times.q3 is None
+    page = _render(settings, _few_dated(_city(), 3))
+    table = page[page.index('<table id="antworten-gremien">') :]
+    cells = re.findall(r"<tr><th scope=\"row\">[^<]*Bezirksvertretung 1[^<]*</th>(.*?)</tr>", table)
+    assert cells and "unter 30" in cells[0]
+    full = _model(settings).answers
+    assert full is not None
+    assert next(b for b in full.bodies if b.code == "BV1").times.median is not None  # 36 datiert
