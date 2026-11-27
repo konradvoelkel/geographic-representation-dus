@@ -317,7 +317,9 @@ def _asset(env: Environment, path: str) -> str:
     """Eine Datei neben den Vorlagen (CSS, JavaScript); fehlt sie, ist sie leer.
 
     Über den Loader statt über ``importlib.resources``, damit die Testnaht ``env`` von
-    ``render_page`` auch das CSS und JavaScript der Abschnitte trägt (Vorarbeit V1).
+    ``render_page`` auch das CSS und JavaScript der Abschnitte trägt (Vorarbeit V1). Die
+    Zeilenenden wie bei ``read_text`` vor V1 (Review N3): der Loader liest die Bytes, ``\r\n`` und
+    ``\r`` werden ``\n``, sodass eine Datei aus einem Windows-Editor die Seite nicht ändert.
     """
     if env.loader is None:
         return ""
@@ -325,7 +327,7 @@ def _asset(env: Environment, path: str) -> str:
         source, _, _ = env.loader.get_source(env, path)
     except TemplateNotFound:
         return ""
-    return source
+    return source.replace("\r\n", "\n").replace("\r", "\n")
 
 
 SectionContent = tuple[PageSection, Mapping[str, object]]  # ein Abschnitt und seine Daten

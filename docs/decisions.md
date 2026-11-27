@@ -4150,7 +4150,8 @@ folgt aus Seite und Name, wie bei `Page`, darum steht er nicht als Feld da.
   nicht an. Die Hauptseite fasst das JavaScript ihrer Abschnitte weiter in einem Block zusammen und
   bleibt, wie sie ist. CSS und JavaScript liest `render_page` jetzt über den Jinja-Loader statt über
   `importlib.resources`, damit die Testnaht `env` auch sie trägt; für die Dateien im Paket ist das
-  derselbe Inhalt.
+  derselbe Inhalt, auch bei den Zeilenenden: `\r\n` und `\r` werden `\n` wie bei `read_text`
+  (Review N3; der Loader liest Bytes, und eine CSS-Datei mit CRLF änderte die Seite um 4 Byte).
 - **Gastgeber und Gast wissen voneinander** (Review K1). 15 verlinkt auf den Abschnitt, den 28
   anhängt (`docs/plans/15-funktion.md`, § 7, Konkordanz), und 26 ersetzt auf der Seite von 14 den
   Hinweis „Antworten stehen in der Niederschrift" (`docs/plans/26-beschluesse.md`, § 7). Darum sieht

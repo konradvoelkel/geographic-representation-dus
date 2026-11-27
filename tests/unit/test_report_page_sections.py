@@ -395,6 +395,18 @@ def test_jede_javascript_datei_bekommt_ein_eigenes_skript(default_settings: Sett
     assert blocks + "<script>\nvoid 'zweiter';\n</script>\n</body>" in html
 
 
+def test_css_und_javascript_mit_crlf_stehen_mit_lf_auf_der_seite(
+    default_settings: Settings,
+) -> None:
+    """Review N3: wie ``read_text`` vor V1; eine Datei aus einem Windows-Editor ändert die Seite nicht."""
+    env = _env(
+        {"pages/probe/gast.css": ".gast {}\r\n.b {}\r", "pages/probe/gast.js": "void 1;\r\n"}
+    )
+    html = _render(default_settings, (_section(),), env=env)
+    assert "\r" not in html
+    assert ".gast {}\n.b {}\n</style>" in html and "<script>\nvoid 1;\n\n</script>" in html
+
+
 def test_ein_abschnitt_bringt_seine_links_nach_aussen_mit(
     tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:
