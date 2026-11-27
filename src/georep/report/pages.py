@@ -110,7 +110,9 @@ class PageSection:
     ``page`` ist der Name der Zielseite (``Page.name``), ``name`` der des Abschnitts, eindeutig je
     Seite. Die Vorlage liegt unter ``templates/pages/<page>/<name>.html.j2``, daneben optional
     ``<name>.css`` und ``<name>.js``; sie hängt an ihren Daten und beginnt darum mit
-    ``{% if data.… %}``.
+    ``{% if data.<schlüssel> %}``. ``data`` trägt diesen Schlüssel immer, auch wenn sein Wert leer
+    ist (Review N5): der Rahmen rendert mit ``StrictUndefined``, ein fehlender Schlüssel ist ein
+    Fehler beim Bau der Seite, kein falscher Wert, und ``{% if %}`` fängt ihn nicht ab.
 
     **Anker** (Review K1): der Rahmen setzt jeden Gast in ``<section id="<name>">``, die Vorlage
     schreibt kein eigenes ``<section>``. Der Name ist damit eine ID der Seite und darf keine andere

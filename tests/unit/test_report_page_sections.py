@@ -12,6 +12,7 @@ import datetime as dt
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from dataclasses import replace
 from importlib import resources
+from importlib.resources.abc import Traversable
 from pathlib import Path
 
 import deal
@@ -228,12 +229,44 @@ def test_jedes_ziel_im_register_ist_eine_registrierte_seite() -> None:
     assert section_problems(pages, entries) == []
 
 
-def test_jede_abschnittsvorlage_im_register_liegt_im_paket_und_beginnt_mit_if() -> None:
+def _templates_without_data_guard(
+    folder: Traversable, entries: Sequence[tuple[str, PageSection]]
+) -> list[str]:
+    """Abschnitte, deren Vorlage fehlt oder nicht mit ``{% if data.`` beginnt (Review N5).
+
+    ``{% if model.`` oder ``{% if rows %}`` hinge nicht an den eigenen Daten: ``model`` ist der
+    Rahmen der Seite, und ein freier Name ist unter ``StrictUndefined`` ein Fehler.
+    """
+    found: list[str] = []
+    for contribution, section in entries:
+        path = folder.joinpath(*section.template.split("/"))
+        if not path.is_file():
+            found.append(f"{contribution} {section.name}: Vorlage fehlt")
+        elif not path.read_text(encoding="utf-8").lstrip().startswith("{% if data."):
+            found.append(f"{contribution} {section.name}: beginnt nicht mit {{% if data.")
+    return found
+
+
+def test_jede_abschnittsvorlage_im_register_liegt_im_paket_und_beginnt_mit_if_data() -> None:
     folder = resources.files("georep.report") / "templates"
-    for contribution in CONTRIBUTIONS:
-        for section in contribution.sections:
-            source = folder.joinpath(*section.template.split("/")).read_text(encoding="utf-8")
-            assert source.lstrip().startswith("{% if "), (contribution.name, section.name)
+    entries = [(c.name, s) for c in CONTRIBUTIONS for s in c.sections]
+    assert _templates_without_data_guard(folder, entries) == []
+
+
+def test_die_pruefung_der_vorlagen_verlangt_if_data(tmp_path: Path) -> None:
+    for name, source in (
+        ("gast", "{% if data.rows %}x{% endif %}\n"),
+        ("zweiter", "{% if model.city %}x{% endif %}\n"),
+        ("dritter", "{% if rows %}x{% endif %}\n"),
+    ):
+        (tmp_path / "pages" / "probe").mkdir(parents=True, exist_ok=True)
+        (tmp_path / "pages" / "probe" / f"{name}.html.j2").write_text(source, encoding="utf-8")
+    entries = [("26-gast", _section(name)) for name in ("gast", "zweiter", "dritter", "vierter")]
+    assert _templates_without_data_guard(tmp_path, entries) == [
+        "26-gast zweiter: beginnt nicht mit {% if data.",
+        "26-gast dritter: beginnt nicht mit {% if data.",
+        "26-gast vierter: Vorlage fehlt",
+    ]
 
 
 # --- Dateien unter templates/pages/ (Review N4) ------------------------------------------------

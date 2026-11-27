@@ -4168,7 +4168,8 @@ folgt aus Seite und Name, wie bei `Page`, darum steht er nicht als Feld da.
   registrierte Seite ist, und ein Rang oder Name, den zwei Abschnitte derselben Seite teilen, sind
   ein `SectionError` beim Aufbau der Schritte, mit Beitrag und Abschnitt in der Meldung. Ein Test
   prüft das echte Register, ein zweiter, dass jede Vorlage dort im Paket liegt und mit
-  `{% if` beginnt. `order_sections` trägt dieselbe Eindeutigkeit als `deal.pre` und die Folge als
+  `{% if data.` beginnt (Review N5; `data` trägt den Schlüssel immer, denn unter `StrictUndefined`
+  ist ein fehlender Schlüssel ein Fehler, kein falscher Wert). `order_sections` trägt dieselbe Eindeutigkeit als `deal.pre` und die Folge als
   `deal.ensure`. Verwaiste Dateien unter `templates/pages/` sind ein `SchemaError`, wie bei den
   Abschnitten der Hauptseite (Review N4, `check_page_files`): ein `.css` oder `.js` ohne Vorlage
   gleichen Namens, ein Ordner `<seite>/` oder eine Vorlage `<seite>.html.j2` ohne registrierte
