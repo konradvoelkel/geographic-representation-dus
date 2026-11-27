@@ -561,10 +561,9 @@ def test_explorativ_wo_es_verlangt_ist() -> None:
     assert "nicht an diesem Datensatz" in elsewhere and "nicht an diesem Datensatz" not in measured
 
 
-def test_die_ereignisse_nennen_monat_und_gremien() -> None:
-    """Ein Monat trägt einen Anteil erst ab 20 Dokumenten mit Text, ein Gremium ebenso."""
-    settings = _profile("duesseldorf")
-    dense = pl.DataFrame(
+def _dense(hits: int) -> pl.DataFrame:
+    """25 Dokumente mit Text im März 2023 im Rat, ``hits`` davon mit Corona."""
+    return pl.DataFrame(
         [
             {
                 "id": f"https://ris.example/papers/m{k:03d}",
@@ -574,22 +573,57 @@ def test_die_ereignisse_nennen_monat_und_gremien() -> None:
                 "gremium": "RAT",
                 "gremium_art": "rat",
                 "stadtbezirk": None,
-                "kategorien": ["corona"] if k < 4 else [],
+                "kategorien": ["corona"] if k < hits else [],
             }
             for k in range(25)
         ],
         schema=_documents().schema,
     )
+
+
+def test_die_ereignisse_nennen_monat_und_gremien() -> None:
+    """Ein Monat trägt einen Anteil erst ab 20 Dokumenten mit Text, ein Gremium ebenso; eine
+    Spitze braucht dazu mindestens fünf Treffer (Review N3)."""
+    settings = _profile("duesseldorf")
+    check = read_check(settings, LEXICON)
     inputs = _inputs()
-    inputs = replace(inputs, documents=pl.concat([inputs.documents, dense]))
-    model = build_time(inputs, settings, LEXICON, read_check(settings, LEXICON))
-    corona = next(e for e in model.events if e.key == "corona")
-    assert corona.hits == 9 and corona.months == 49
+
+    def corona(hits: int) -> Any:
+        documents = pl.concat([inputs.documents, _dense(hits)])
+        model = build_time(replace(inputs, documents=documents), settings, LEXICON, check)
+        assert [e.key for e in model.events] == list(LEXICON.of_kind("ereignis"))
+        return next(e for e in model.events if e.key == "corona")
+
+    found = corona(6)
+    assert found.hits == 11 and found.months == 49
     # die fünf Treffer von 2022 liegen in Monaten mit wenigen Dokumenten: keine Spitze dort
-    assert (corona.peak_month, corona.peak_hits) == (dt.date(2023, 3, 1), 4)
-    assert corona.peak_documents >= 25 and corona.thin == 48
-    assert all(b.documents >= 20 for b in corona.bodies)
-    assert [e.key for e in model.events] == list(LEXICON.of_kind("ereignis"))
+    assert (found.peak_month, found.peak_hits) == (dt.date(2023, 3, 1), 6)
+    assert found.peak_documents >= 25 and found.thin == 48
+    assert all(b.documents >= 20 for b in found.bodies)
+    assert corona(4).peak_month is None  # vier Treffer sind keine Spitze
+
+
+def test_der_monat_des_datenstands_heisst_angebrochen(default_settings: Settings) -> None:
+    """Review N3: der letzte Monat endet mit dem neuesten Dokument, nicht mit dem Monat."""
+    from georep.enrich.cycles import cycle_rules
+
+    rules = cycle_rules(default_settings)
+    model = rhythm(_months(), _budget(), rules, last=dt.date(2025, 9, 10))
+    assert [m.month for m in model.months if m.partial] == [dt.date(2025, 9, 1)]
+    full = rhythm(_months(), _budget(), rules, last=dt.date(2025, 9, 30))
+    assert not any(m.partial for m in full.months)
+    page = _render(_profile("duesseldorf"), _inputs())
+    last = _documents().get_column("date").max()
+    assert isinstance(last, dt.date)
+    assert f"(angebrochen, Daten bis {last:%d.%m.%Y})" in _section(page, "rhythmus")
+
+
+def test_ohne_tests_heisst_die_summenzeile_nicht_mass_von_h17_3() -> None:
+    """Review N3: in Mönchengladbach misst die Zeile keine Hypothese."""
+    elsewhere = _section(_render(_check_settings(mg_settings()), _inputs()), "vokabular")
+    measured = _section(_render(_profile("duesseldorf"), _inputs()), "vokabular")
+    assert "H17.3" not in elsewhere
+    assert "das Maß von H17.3" in measured
 
 
 # --- Neuigkeiten je Wahlbezirk ---------------------------------------------------------------------

@@ -76,6 +76,9 @@ MIN_BODY_DOCUMENTS = 20  # Ereignisspuren: ein Gremium erst ab so vielen Dokumen
 # schwankt er zu stark (Mönchengladbach: 2 von 3 im November 2021 wären die Spitze), dieselbe Grenze
 # wie für ein Gremium.
 MIN_MONTH_DOCUMENTS = 20
+# Eine Spitze braucht mindestens so viele Treffer im Monat (Review N3): ein Treffer unter 51
+# Dokumenten im angebrochenen Monat war in der laufenden Periode die „Spitze" des Kriegs.
+MIN_PEAK_HITS = 5
 TOP_BODIES = 5  # so viele Gremien je Ereignis
 MIN_MEDIAN_YEARS = 2  # ein Median je Kalendermonat erst über so viele vollständige Wahljahre
 UNCLEAR = "unklar"  # ein Thema, das gezählt, aber nicht gewertet wird (Messdokument § 4)
@@ -284,6 +287,7 @@ class MonthRow:
     budget_motions: int
     budget: bool  # der Haushaltsmonat seines Wahljahrs
     label: str  # das Wahljahr in Worten, „2020/21"; leer ohne
+    partial: bool = False  # der Monat des Datenstands, der vor seinem Ende aufhört (Review N3)
 
 
 @dataclass(frozen=True)
@@ -381,6 +385,7 @@ class Rhythm:
     undated: int
     budget_minimum: int
     budget_total: int  # Haushaltsanträge in vollständigen Wahljahren
+    last: dt.date | None = None  # das neueste Vorlagendatum
 
     @property
     def has_budget(self) -> bool:
@@ -400,7 +405,11 @@ def _group_of(art: str | None) -> int:
 
 
 def _rows_partition(
-    months: pl.DataFrame, budget: pl.DataFrame, rules: CycleRules, result: Rhythm | None = None
+    months: pl.DataFrame,
+    budget: pl.DataFrame,
+    rules: CycleRules,
+    last: dt.date | None = None,
+    result: Rhythm | None = None,
 ) -> bool:
     """Die Reihen summieren je Monat zum Monat, alle Monate zu den datierten Dokumenten."""
     assert result is not None
@@ -411,8 +420,14 @@ def _rows_partition(
 
 
 @deal.ensure(_rows_partition, message="die Reihen summieren je Monat zum Monat, alle zum Korpus")
-def rhythm(months: pl.DataFrame, budget: pl.DataFrame, rules: CycleRules) -> Rhythm:
-    """Der Abschnitt aus ``zeit_monate`` und ``haushaltsmonate``; reine Zählungen."""
+def rhythm(
+    months: pl.DataFrame, budget: pl.DataFrame, rules: CycleRules, last: dt.date | None = None
+) -> Rhythm:
+    """Der Abschnitt aus ``zeit_monate`` und ``haushaltsmonate``; reine Zählungen.
+
+    ``last`` ist das neueste Vorlagendatum: liegt es vor dem Ende seines Monats, heißt dieser
+    Monat angebrochen (Review N3), seine Zahl ist kein ganzer Monat.
+    """
     frame = months.with_columns(pl.col("urheber_art").fill_null("unbekannt"))
     dated = frame.filter(pl.col("monat").is_not_null())
     undated = int(frame.filter(pl.col("monat").is_null()).get_column("dokumente").sum() or 0)
@@ -444,6 +459,7 @@ def rhythm(months: pl.DataFrame, budget: pl.DataFrame, rules: CycleRules) -> Rhy
                 and chosen["monat_kalender"] is not None
                 and int(chosen["monat_kalender"]) == month.month,
                 label="" if year is None else year_label(year, rules.start_month),
+                partial=_partial(month, last),
             )
         )
     panels = []
@@ -487,7 +503,16 @@ def rhythm(months: pl.DataFrame, budget: pl.DataFrame, rules: CycleRules) -> Rhy
         undated=undated,
         budget_minimum=rules.budget_minimum,
         budget_total=sum(y.budget_motions for y in years),
+        last=last,
     )
+
+
+def _partial(month: dt.date, last: dt.date | None) -> bool:
+    """Der Monat des Datenstands, wenn das neueste Dokument vor seinem letzten Tag liegt."""
+    if last is None or (month.year, month.month) != (last.year, last.month):
+        return False
+    following = dt.date(last.year + (last.month == 12), last.month % 12 + 1, 1)
+    return last < following - dt.timedelta(days=1)
 
 
 def _year_rows(
@@ -898,8 +923,13 @@ def vocabulary(
     rules: CycleRules,
     lexicon: Lexicon,
     check: LexiconCheck,
+    *,
+    measure: bool = True,
 ) -> Vocabulary:
     """Anteil der Dokumente mit Text und Treffer je vollständigem Wahljahr und Kategorie.
+
+    ``measure``: die Summenzeile der Strukturkategorien ist das Maß von H17.3; ohne vorab
+    festgelegte Tests für den Datensatz heißt sie nicht so (Review N3).
 
     Wie H17.3 (§ 8.3): Nenner sind die Dokumente mit Text im Wahljahr, gezählt nach Vorlagendatum;
     „Periode" ist der Anteil über alle vollständigen Wahljahre zusammen, wie ``anteile`` in
@@ -922,7 +952,13 @@ def vocabulary(
     structure = lexicon.of_kind(STRUCTURE)
     kinds = {STRUCTURE: "Struktur", EVENT: "Ereignis"}
     plan: list[tuple[str, str, str, Sequence[str], bool]] = [
-        ("struktur", "Strukturkategorien zusammen (das Maß von H17.3)", "", structure, True),
+        (
+            "struktur",
+            "Strukturkategorien zusammen" + (" (das Maß von H17.3)" if measure else ""),
+            "",
+            structure,
+            True,
+        ),
         *((c.id, c.name, kinds.get(c.kind, c.kind), (c.id,), False) for c in lexicon.categories),
         ("alle", "alle Kategorien, auch die Ereignisse", "", lexicon.ids, True),
     ]
@@ -975,6 +1011,7 @@ class Event:
     peak_documents: int
     bodies: tuple[EventBody, ...]
     thin: int  # Monate unter ``MIN_MONTH_DOCUMENTS`` Dokumenten mit Text: ohne Anteil
+    peak_partial: bool = False  # die Spitze liegt im angebrochenen Monat des Datenstands
 
 
 def _step_path(shares: Sequence[float], top: float) -> str:
@@ -990,7 +1027,11 @@ def _step_path(shares: Sequence[float], top: float) -> str:
 
 
 def events(
-    documents: pl.DataFrame, lexicon: Lexicon, rules: BodyRules, months: Sequence[dt.date]
+    documents: pl.DataFrame,
+    lexicon: Lexicon,
+    rules: BodyRules,
+    months: Sequence[dt.date],
+    last: dt.date | None = None,
 ) -> tuple[Event, ...]:
     """Je Ereigniskategorie des Lexikons der Monatsanteil und die Gremien mit den meisten Treffern.
 
@@ -1021,7 +1062,11 @@ def events(
         usable = {m for m, (_, n) in counts.items() if n >= MIN_MONTH_DOCUMENTS}
         shares = [counts[m][0] / counts[m][1] if m in usable else 0.0 for m in months]
         top = max(shares, default=0.0)
-        peak = shares.index(top) if top else None
+        # Review N3: eine Spitze erst ab MIN_PEAK_HITS Treffern im Monat
+        candidates = [
+            i for i, m in enumerate(months) if m in usable and counts[m][0] >= MIN_PEAK_HITS
+        ]
+        peak = max(candidates, key=lambda i: (shares[i], -i)) if candidates else None
         per_body = (
             flagged.group_by("gremium")
             .agg(pl.col("treffer").sum().alias("a"), pl.len().alias("n"))
@@ -1046,11 +1091,12 @@ def events(
                 path=_step_path(shares, top),
                 months=len(months),
                 peak_month=months[peak] if peak is not None else None,
-                peak_share=top,
+                peak_share=shares[peak] if peak is not None else 0.0,
                 peak_hits=counts[months[peak]][0] if peak is not None else 0,
                 peak_documents=counts[months[peak]][1] if peak is not None else 0,
                 bodies=tuple(bodies),
                 thin=sum(1 for m in months if m not in usable),
+                peak_partial=peak is not None and _partial(months[peak], last),
             )
         )
     return tuple(found)
@@ -1189,7 +1235,10 @@ def build_time(
         raise SchemaError(f"{PAGE_NAME}.html: Spalten fehlen: {missing_columns}")
     rules = cycle_rules(settings)
     documents = inputs.documents.sort("id")
-    rhythm_model = rhythm(inputs.months, inputs.budget, rules)
+    dates = documents.get_column("date").drop_nulls()
+    first, last = dates.min(), dates.max()
+    newest = last if isinstance(last, dt.date) else None
+    rhythm_model = rhythm(inputs.months, inputs.budget, rules, newest)
     years = [y.year for y in rhythm_model.years]
     tests = (
         tests_model(
@@ -1202,8 +1251,6 @@ def build_time(
         else None
     )
     elsewhere = tests_elsewhere(settings) if tests is None else None
-    dates = documents.get_column("date").drop_nulls()
-    first, last = dates.min(), dates.max()
     running = settings.period.end is None
     feeds_model = (
         feeds(
@@ -1224,12 +1271,20 @@ def build_time(
         rhythm=rhythm_model,
         tests=tests,
         elsewhere=elsewhere,
-        vocabulary=vocabulary(documents, years, rules, lexicon, check),
+        vocabulary=vocabulary(
+            documents,
+            years,
+            rules,
+            lexicon,
+            check,
+            measure=tests is not None or elsewhere is not None,
+        ),
         events=events(
             documents,
             lexicon,
             BodyRules.from_settings(settings.bodies),
             [m.month for m in rhythm_model.months],
+            newest,
         ),
         feeds=feeds_model,
         missing=tuple(_missing(rhythm_model, tests, elsewhere, running)),
@@ -1321,6 +1376,7 @@ def page_data(model: TimeModel, settings: Settings) -> Mapping[str, object]:
         "alpha": ALPHA,
         "min_body_documents": MIN_BODY_DOCUMENTS,
         "min_month_documents": MIN_MONTH_DOCUMENTS,
+        "min_peak_hits": MIN_PEAK_HITS,
     }
 
 

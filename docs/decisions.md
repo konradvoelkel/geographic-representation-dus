@@ -4634,13 +4634,19 @@ Text einer gerenderten Seite und in der Spaltendoku steht; die Vorlagen tragen k
    wäre die Zeile nicht zu lesen.
 4. Die Tabelle des Vokabulars zeigt die Wahljahre des eigenen Datensatzes; die Anteile aller drei
    Perioden stehen bei H17.3. Der kleine Balken misst je Zeile (der höchste Wert der Zeile füllt die
-   Zelle), weil die Kategorien zwei Größenordnungen auseinanderliegen.
+   Zelle), weil die Kategorien zwei Größenordnungen auseinanderliegen. Die Summenzeile der
+   Strukturkategorien heißt nur dort „das Maß von H17.3", wo für den Datensatz Tests festgelegt sind
+   (nicht in Mönchengladbach, Review N3).
 5. Ereignisspuren über den ganzen Datensatz und die Gremien nach Treffern mit ihrem Anteil im
    Datensatz, nicht die Fenster und Vorjahre aus § 3.5: die waren nach dem Ansehen gewählt, und eine
    feste Regel gilt für jede Stadt gleich. Ein Monat trägt einen Anteil erst ab 20 Dokumenten mit Text
    (`MIN_MONTH_DOCUMENTS`, dieselbe Grenze wie für ein Gremium): in Mönchengladbach wäre sonst „2 von
    3" im November 2021 die Spitze gewesen; dort bleiben 55 von 61 Monaten leer, und die Seite sagt
-   das. Ortsereignisse (`[[lokal]]` im Lexikon) fehlen (Frage 9.12).
+   das. Einen höchsten Monat nennt die Seite erst ab fünf Treffern in ihm (`MIN_PEAK_HITS`, Review
+   N3: in der laufenden Periode war sonst ein Treffer unter 51 Dokumenten des angebrochenen Oktobers
+   2026 die Spitze des Kriegs). Der Monat des Datenstands heißt in der Monatstabelle und an einer
+   Spitze „angebrochen", wenn das neueste Dokument vor seinem Ende liegt. Ortsereignisse
+   (`[[lokal]]` im Lexikon) fehlen (Frage 9.12).
 6. Größe 59 bis 81 KB statt 40 bis 80: der Rahmen allein sind rund 31 KB (Zahlen unten).
 7. `analysis.cycles.wahljahr_of` ist öffentlich: die Seite zählt je Wahljahr mit derselben Zuordnung
    wie H17.3.

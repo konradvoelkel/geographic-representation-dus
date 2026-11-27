@@ -105,7 +105,7 @@
 <thead><tr><th scope="col">Monat</th><th scope="col">Wahljahr</th>{% for key, label, short in data.groups %}<th scope="col" class="num">{{ short }}</th>{% endfor %}<th scope="col" class="num">zusammen</th><th scope="col" class="num">Haushaltsanträge</th></tr></thead>
 <tbody>
 {% for row in r.months %}
-<tr{% if row.budget %} class="haushalt"{% endif %}><td>{{ row.month|month_de }}{% if row.budget %} (Haushaltsmonat){% endif %}</td><td>{{ row.label }}</td>{% for n in row.counts %}<td class="num">{{ n|num }}</td>{% endfor %}<td class="num">{{ row.total|num }}</td><td class="num">{{ row.budget_motions|num }}</td></tr>
+<tr{% if row.budget %} class="haushalt"{% endif %}><td>{{ row.month|month_de }}{% if row.budget %} (Haushaltsmonat){% endif %}{% if row.partial %} (angebrochen, Daten bis {{ r.last|date_de }}){% endif %}</td><td>{{ row.label }}</td>{% for n in row.counts %}<td class="num">{{ n|num }}</td>{% endfor %}<td class="num">{{ row.total|num }}</td><td class="num">{{ row.budget_motions|num }}</td></tr>
 {% endfor %}
 </tbody></table></div>
 {% if r.undated %}
@@ -158,7 +158,7 @@
 
 <section id="vokabular">
 <h2>Bundespolitisches Vokabular{{ ex }}</h2>
-<p>Je Kategorie des Lexikons der Anteil der Dokumente mit lesbarem Text, in deren Titel oder Text einer ihrer Begriffe steht, je vollständigem Wahljahr ({{ v.documents|num }} Dokumente mit Text). Strukturkategorien sind Gegenstände, die es in allen Perioden gab; Ereignisse gab es nicht in jeder. „Periode“ ist der Anteil über alle vollständigen Wahljahre zusammen; die Zeile der Strukturkategorien ist das Maß von H17.3, die Zeilen je Kategorie sind explorativ. Der kleine Balken zeigt den Verlauf in der Zeile: ihr höchster Wert füllt die Zelle.</p>
+<p>Je Kategorie des Lexikons der Anteil der Dokumente mit lesbarem Text, in deren Titel oder Text einer ihrer Begriffe steht, je vollständigem Wahljahr ({{ v.documents|num }} Dokumente mit Text). Strukturkategorien sind Gegenstände, die es in allen Perioden gab; Ereignisse gab es nicht in jeder. „Periode“ ist der Anteil über alle vollständigen Wahljahre zusammen{% if m.tests or m.elsewhere %}; die Zeile der Strukturkategorien ist das Maß von H17.3{% endif %}, die Zeilen je Kategorie sind explorativ. Der kleine Balken zeigt den Verlauf in der Zeile: ihr höchster Wert füllt die Zelle.</p>
 {% if c.categories %}
 <p class="note">„richtig“: wie viele der kodierten Treffer der Kategorie die Kodierung bestätigt. „nennt die Bundesebene“: unter den richtigen, wie viele an der Fundstelle den Bund nennen; die übrigen sind örtliche Umsetzung oder Land und EU. Das Vokabular findet zuverlässig Gegenstände der Bundespolitik; ob ein Dokument den Bund selbst nennt oder seine Folgen in der Stadt behandelt, sagt erst diese Spalte. Die Stichprobe zieht zehn Treffer je Kategorie aus allen gemessenen Datensätzen zusammen.</p>
 {% endif %}
@@ -174,11 +174,11 @@
 
 <section id="ereignisse">
 <h2>Ereignisspuren (explorativ)</h2>
-<p>Die Ereigniskategorien des Lexikons je Monat: der Anteil der Dokumente mit Text und Treffer, dazu die Gremien mit den meisten Treffern (ab {{ data.min_body_documents }} Dokumenten mit Text im Datensatz). Explorativ: nicht vorab festgelegt, kein Test, und das Fenster ist der ganze Datensatz. Ortsereignisse stehen nicht im Lexikon der Bundespolitik, sind nicht geprüft und fehlen hier.</p>
+<p>Die Ereigniskategorien des Lexikons je Monat: der Anteil der Dokumente mit Text und Treffer, dazu die Gremien mit den meisten Treffern (ab {{ data.min_body_documents }} Dokumenten mit Text im Datensatz). Einen höchsten Monat nennt die Seite erst ab {{ data.min_peak_hits }} Treffern in Monaten mit mindestens {{ data.min_month_documents }} Dokumenten mit Text. Explorativ: nicht vorab festgelegt, kein Test, und das Fenster ist der ganze Datensatz. Ortsereignisse stehen nicht im Lexikon der Bundespolitik, sind nicht geprüft und fehlen hier.</p>
 {% for e in m.events %}
 <div class="ereignis">
 <h3>{{ e.label }}</h3>
-<p class="note">{{ e.hits|num }} Dokumente mit Treffer{% if e.peak_month %}; höchster Monat {{ e.peak_month|month_de }} mit {{ e.peak_hits|num }} von {{ e.peak_documents|num }} Dokumenten mit Text ({{ e.peak_share|pct(1) }}){% endif %}.{% if e.thin %} {{ e.thin|num }} von {{ e.months|num }} Monaten haben weniger als {{ data.min_month_documents }} Dokumente mit Text und bleiben leer.{% endif %}</p>
+<p class="note">{{ e.hits|num }} Dokumente mit Treffer{% if e.peak_month %}; höchster Monat {{ e.peak_month|month_de }}{% if e.peak_partial %} (angebrochen){% endif %} mit {{ e.peak_hits|num }} von {{ e.peak_documents|num }} Dokumenten mit Text ({{ e.peak_share|pct(1) }}){% endif %}.{% if e.thin %} {{ e.thin|num }} von {{ e.months|num }} Monaten haben weniger als {{ data.min_month_documents }} Dokumente mit Text und bleiben leer.{% endif %}</p>
 {% if e.path %}
 <svg class="spur" viewBox="0 0 {{ e.months }} 100" preserveAspectRatio="none" role="img" aria-label="{{ e.label }}: Anteil je Monat{% if e.peak_month %}, höchster Monat {{ e.peak_month|month_de }}{% endif %}">{% for span in r.spans %}<line class="jahr" x1="{{ span.index }}" y1="0" x2="{{ span.index }}" y2="100"/>{% endfor %}<path d="{{ e.path }}"/></svg>
 {% if r.spans %}
