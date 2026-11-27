@@ -1,6 +1,6 @@
 # Plan: Startseite mit Karte, Zeitregler und Kurzfassung
 
-Stand 2026-11-27. **Freigegeben von Konrad am 2026-11-27, der Bau ist zurückgestellt** („warte mit dem Bau vorerst ab, da unsere Ressourcen begrenzt sind"); seine Antworten auf § 10 sind die Empfehlungen dort. Nichts davon ist gebaut. Auftrag von Konrad am selben Tag, sinngemäß: Die
+Stand 2026-11-27. **Freigegeben von Konrad am 2026-11-27, seine Antworten auf § 10 sind die Empfehlungen dort; der Bau ist am selben Tag freigegeben** (nach `v0.38.0`). Weil § 10 beantwortet ist, entfallen der Prototyp P und der Haltepunkt ZS1 (§ 9); die Leistungsmessung mit CPU-Drossel und die Messskripte gehen in B. Gebaut wird U, dann B, je mit eigenem Merge; ZS2 bleibt. Auftrag von Konrad am selben Tag, sinngemäß: Die
 heutige `index.html` ist zu lang und zu technisch; sie bleibt, wie sie ist, als Unterseite „Details".
 Die neue Startseite zeigt nur Links zu den Unterseiten, eine Kurzfassung und eine Version von
 „Politik bei uns": eine Karte, ein Schieberegler für den Zeitraum, die Dokumente als Punkte,

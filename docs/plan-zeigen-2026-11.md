@@ -134,8 +134,9 @@ wenn sich ein Merge schiebt.
 - 19 berührt keine Seite, bis seine Stufe 3 kommt.
 
 **Neue Startseite.** Der Plan [plan-startseite-2026-11.md](plan-startseite-2026-11.md) (Startseite mit Karte,
-Zeitregler und Kurzfassung; der heutige Inhalt als `details.html`) ist freigegeben, sein Bau aber
-zurückgestellt (Konrad, 2026-11-27, begrenzte Ressourcen); eingeplant wäre er nach `v0.38.0` und vor 22.
+Zeitregler und Kurzfassung; der heutige Inhalt als `details.html`) ist freigegeben und sein Bau am
+2026-11-27 nach `v0.38.0` begonnen: U (Umzug nach `details.html`) als `v0.39.0`, B (Startseite) als
+`v0.40.0`, beide vor 22; die Versionen der Tabelle ab 22 rücken um zwei nach.
 
 **Haltepunkte.**
 
@@ -149,6 +150,8 @@ zurückgestellt (Konrad, 2026-11-27, begrenzte Ressourcen); eingeplant wäre er 
 | Was | Grenze | Messung |
 |---|---|---|
 | `index.html` | hart 1 000 000 Byte (bestehender Test). Ziel für die Phase: höchstens 30 KB über dem Bau vor `v0.33.0`, für Linkblock, Downloadzeilen, Dialog-Haken und die Zeilen von 16 | Bytes vor und nach im Commit-Body jedes Merges |
+| Startseite `index.html` (ab `v0.40.0`) | hart 150 000 Byte (`report.start_budget_bytes`), Ziel 120 000; die Grenze von 1 000 000 gilt dann für `details.html` | `publish` je Datei |
+| `data/karte.json` | höchstens 500 000 Byte roh je Profil, getrennt von den nachgeladenen Dialogdateien | Bytes im Commit-Body |
 | jede Unterseite | unter 500 KB (Meta-Plan § 4) | `publish --strict-budget`, headless Chrome |
 | Unterseiten je Profil | zusammen höchstens 1 MB; geplant sind in der Hauptperiode rund 500 KB, mit `themen.html` rund 800 KB | `publish` je Profil |
 | nachgeladene Dateien je Profil (neu) | zusammen höchstens 1,5 MB; geplant rund 1,2 MB (`aehnlich.json`, `beschluesse.json`, `vorgaenge.json`) | Bytes im Commit-Body |
