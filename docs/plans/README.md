@@ -23,13 +23,11 @@ Punkt 74: `early_steps`, `http` an den Beiträgen, Zusatzspalten an Spannen, `fl
 Prüfung der Schrittfolge).
 
 **Nachzug vor Stufe 3**: Abschnitte aus fremden Beiträgen auf einer Unterseite sind seit `v0.33.0` da
-(Vorarbeit V1, Punkt 86). Offen in F4 die Ordner `12-kennungen-2-f4` (Runde 2 liegt nur als
-`validierung/12-kennungen/labels-2.csv` vor), die Rückfallregel von 14 als Verfahren in `score` oder
-die Prüfstichprobe als `14-vorgaenge-3-f4`, `16-ortsbezug-f4`, die Labels von
-`12-kennungen-recall-f4` und ein Maß für „Kategorie im Thema-Set" (17). Der Satz in `guete.json`
-nennt keine Modelle; nach Frage 19 (beantwortet 2026-11-26) nennt jede Seite, wie geprüft wurde, und
-der F4-Nachzug bringt den Satz mit den Modellen je Rolle (Plan der Fortsetzung, V3). Keine Stufe 3
-ist begonnen.
+(Vorarbeit V1, Punkt 86); seit `v0.34.0` nennt der Prüfsatz in `guete.json` das Modell je Rolle, und
+`12-kennungen-2-f4`, `16-ortsbezug-f4`, `16-ortsbezug-2-f4` und die Prüfstichprobe `14-vorgaenge-3-f4`
+(50 von 50 Kanten richtig, Kodierer B auf Sonnet) liegen im Format von F4 (Vorarbeit V3, Punkt 87).
+Offen in F4 bleiben `12-kennungen-recall-f4` und ein Maß für „Kategorie im Thema-Set" (17); beide sind
+nicht Teil der Phase „Zeigen". Keine Stufe 3 ist begonnen.
 
 | Nr. | Vorhaben | Urteil (Stufe 1) | Stufe 2 | Stufe 3 | Endzustand oder wartet auf |
 |---|---|---|---|---|---|

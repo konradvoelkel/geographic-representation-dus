@@ -2,6 +2,16 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.34.0 (2026-11-27), Prüfsatz mit Modellen
+
+- **Prüfsatz mit dem Modell je Rolle** (Vorarbeit V3, `docs/decisions.md`, Punkt 87): `georep validate
+  merge --model-a … --model-b … --model-adjudicator …`; `guete.json` und README nennen alle drei, und
+  `georep validate restate` schreibt den Satz in die bisherigen Ordner, ohne dass sich ein Label ändert.
+  Volle Einigkeit ohne Streuung genügt ab 16 Einheiten, wo α nicht definiert ist.
+- **Fehlende Güteangaben**: `12-kennungen-2-f4` und `16-ortsbezug-f4` aus vorhandenen Labels
+  (`validate import`), die Prüfstichprobe der Vorgänge `14-vorgaenge-3-f4`: 50 von 50 Kanten richtig,
+  die erste Messung mit Kodierer B auf einem anderen Modell. Keine Zahl der Seite ändert sich.
+
 ## 0.33.0 (2026-11-27), Abschnitte aus fremden Beiträgen
 
 - **Unterseiten mit Gästen** (Vorarbeit V1 der Phase „Zeigen", `docs/decisions.md`, Punkt 86): ein Beitrag
