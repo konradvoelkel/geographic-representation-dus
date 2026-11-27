@@ -116,6 +116,9 @@
 </tr>
 {% endfor %}
 </tbody></table></div>
+{% for split in m.split %}
+<p class="note">{{ split.alone }} und {{ split.joint }} stehen in zwei Zeilen: die Fraktion {{ split.joint }} gibt es ab {{ split.since|date_de }}; die {{ split.documents|num }} Dokumente von {{ split.alone }} allein sind älter und stammen von der Fraktion des Rates davor.</p>
+{% endfor %}
 <p class="note">Sortiert nach Dokumenten; die Spaltenköpfe sortieren um. Erklärungen und Appelle sind eine kleine Klasse; einzeln stehen sie unter <a href="#erklaerungen">Erklärungen und Appelle</a>, ohne Rangfolge je Fraktion.</p>
 {% else %}
 <p>Dieser Datensatz hat keine Fraktionsdokumente der Funktionen Kontrolle, Initiative und Erklärung oder Appell.</p>

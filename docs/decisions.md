@@ -4471,7 +4471,7 @@ Abstimmungen"); wählt 28 einen anderen, ändert sich eine Zeile der Vorlage.
 6. Beobachtet gegen erwartet ist das der gebauten Variante B; die Tabelle in § 3.7 ist an Variante A
    gerechnet (Hauptperiode CDU 0,73 statt 0,74, Tierschutz/FW 1,64 statt 1,67, AfD 1,72 statt 1,75).
    SPD vor dem 2020-11-01 und SPD/Volt danach sind zwei Fraktionen (Punkt 75), § 3.7 zählte sie
-   zusammen.
+   zusammen; ein Satz unter der Tabelle sagt das, aus `valid_from` der Fraktion (Review N2).
 7. Neben K3 steht dasselbe Maß mit Anfragen (§ 3.11, Spalte „alle Funktionen"), und die Matrix zählt
    gemeinsame Dokumente aus Beiräten und ohne Gremium nicht, sondern nennt ihre Zahl.
 

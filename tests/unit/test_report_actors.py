@@ -630,3 +630,19 @@ def test_rule_check_gilt_nur_fuer_die_messung_aus_guete_json(
         read_check(_check_settings(default_settings, tmp_path))
     assert RULE_CHECK.codebook_version == _quality()["codebuch_version"]
     assert RULE_CHECK.units == _quality()["einheiten"]
+
+
+def test_eine_partei_neben_ihrer_spaeteren_fraktion_ist_erklaert(
+    default_settings: Settings,
+) -> None:
+    """N2: „SPD" neben „SPD/Volt" sind die Fraktion des alten Rates und die ab ``valid_from``."""
+    rows = [
+        _doc(10, funktion="kontrolle", fraktionen=["SPD"], day=dt.date(2020, 10, 1)),
+        _doc(11, funktion="kontrolle", fraktionen=["SPD+VOLT"]),
+        _doc(12, fraktionen=["CDU", "GRUENE"], lager="gemeinsam_mehrheit"),
+    ]
+    page = _render(_check_settings(default_settings), rows)
+    section = page[page.index('<section id="fraktionen">') :]
+    section = section[: section.index("</section>")]
+    assert "SPD und SPD/Volt stehen in zwei Zeilen" in section
+    assert "ab 01.11.2020" in section

@@ -452,6 +452,51 @@ class FractionRow:
 
 
 @dataclass(frozen=True)
+class SplitFraction:
+    """Eine Partei allein neben der Fraktion, zu der sie erst ab einem Tag gehört (Review N2).
+
+    In der Hauptperiode stehen „SPD" (bis zum 31.10.2020, Fraktion des alten Rates) und „SPD/Volt"
+    (ab dem 01.11.2020) als zwei Zeilen da; ohne Satz sähe das wie eine doppelte Fraktion aus.
+    """
+
+    alone: str
+    joint: str
+    since: dt.date
+    documents: int  # Fraktionsdokumente der Partei allein, alle vor ``since``
+
+
+def split_fractions(
+    documents: pl.DataFrame, rows: Sequence[FractionRow], settings: Settings
+) -> tuple[SplitFraction, ...]:
+    """Je Fraktion aus mehreren Parteien, deren Partei allein vor ihrem Beginn Zeilen hat."""
+    by_key = {r.key: r for r in rows}
+    found = []
+    for fraction in settings.functions.fractions:
+        if fraction.key not in by_key:
+            continue
+        for party in fraction.parties:
+            if party not in by_key:
+                continue
+            dates = (
+                _political_fraction_documents(documents)
+                .filter(pl.col("fraktionen").list.contains(party))
+                .get_column("date")
+                .drop_nulls()
+            )
+            latest = dates.max()
+            if isinstance(latest, dt.date) and latest < fraction.valid_from:
+                found.append(
+                    SplitFraction(
+                        by_key[party].label,
+                        by_key[fraction.key].label,
+                        fraction.valid_from,
+                        by_key[party].documents,
+                    )
+                )
+    return tuple(found)
+
+
+@dataclass(frozen=True)
 class PracticeRow:
     """Der Kontrollanteil der Fraktionsdokumente je Gremienart: die Praxis, gegen die gemessen wird."""
 
@@ -882,6 +927,7 @@ class ActorsModel:
     table: FunctionTable
     instruments: tuple[InstrumentRow, ...]
     fractions: tuple[FractionRow, ...]
+    split: tuple[SplitFraction, ...]  # eine Partei neben ihrer späteren Fraktion (Review N2)
     practice: tuple[PracticeRow, ...]
     difference: CountingDifference
     matrices: tuple[Matrix, ...]
@@ -960,6 +1006,7 @@ def build_actors(documents: pl.DataFrame, settings: Settings, check: Check) -> A
         ),
     ]
     first, last = dates.min(), dates.max()
+    rows = fraction_rows(documents, labels)
     return ActorsModel(
         documents=documents.height,
         fraction_documents=int((documents.get_column("urheber_art") == "Fraktion").sum()),
@@ -970,7 +1017,8 @@ def build_actors(documents: pl.DataFrame, settings: Settings, check: Check) -> A
         bars=function_bars(documents),
         table=function_table(documents),
         instruments=instruments(documents),
-        fractions=fraction_rows(documents, labels),
+        fractions=rows,
+        split=split_fractions(documents, rows, settings),
         practice=practice_rows(documents),
         difference=counting_difference(documents),
         matrices=matrices,
