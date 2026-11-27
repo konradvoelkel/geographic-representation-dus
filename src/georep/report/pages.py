@@ -383,13 +383,13 @@ def render_page(
 
     ``sections`` sind die fremden Abschnitte mit ihren Daten, schon in der Folge der Seite
     (``sections_for``). Die Vorlage der Seite sieht ihre Namen als ``guests``. Ihr CSS steht hinter
-    dem der Seite, ihr JavaScript dahinter im selben Skriptblock, wie bei den Abschnitten der
-    Hauptseite (``render.render_report``).
+    dem der Seite; ihr JavaScript auch, aber je Datei in einem eigenen ``<script>`` (Review N2),
+    damit ein Fehler im Skript eines Gasts das der Seite und der übrigen nicht anhält.
     """
     env = env or environment()
     stems = [f"pages/{page.name}", *(section.stem for section, _ in sections)]
     css = "".join(_asset(env, f"{stem}.css") for stem in stems)
-    js = "\n".join(code for stem in stems if (code := _asset(env, f"{stem}.js")))
+    scripts = [code for stem in stems if (code := _asset(env, f"{stem}.js"))]
     return env.get_template("page.html.j2").render(
         model=frame,
         page=page,
@@ -397,7 +397,7 @@ def render_page(
         sections=sections,
         guests=frozenset(section.name for section, _ in sections),
         page_css=css,
-        page_js=js,
+        page_scripts=scripts,
         links={"repository": REPOSITORY, "cc0": CC0, "gpl": GPL},
     )
 

@@ -598,7 +598,7 @@ sammelt die Abschnitte je Seite und gibt sie in fester Folge zurück: nach dem e
 Seite, nach Rang, bei gleichem Rang nach Name, nie nach der Folge des Registers (hypothesis,
 `tests/property/test_page_sections_props.py`). Der Rahmen setzt jeden Gast in
 `<section id="<name>">` und bindet seine Vorlage mit seinen eigenen Daten als `data` ein, ihr CSS
-hinter dem der Seite, ihr JavaScript in denselben Skriptblock. Die Vorlage der Seite sieht `guests`,
+hinter dem der Seite, ihr JavaScript dahinter, je Datei in einem eigenen `<script>`. Die Vorlage der Seite sieht `guests`,
 die Namen ihrer Gäste in diesem Profil, und kann damit auf `#<name>` verlinken oder einen Hinweis
 weglassen, den ein Gast ersetzt; jeder Anker steht genau einmal auf der Seite (Nachbedingung). Der
 Schritt `page_<name>` liest die Eingaben der Abschnitte mit (`page_inputs`), und die Seite erlaubt

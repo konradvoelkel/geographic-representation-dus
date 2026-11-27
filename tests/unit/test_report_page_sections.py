@@ -387,6 +387,14 @@ def test_css_und_javascript_der_abschnitte_stehen_auf_der_seite(
     assert "<script>\nvoid 'gast';\n</script>" in html
 
 
+def test_jede_javascript_datei_bekommt_ein_eigenes_skript(default_settings: Settings) -> None:
+    """Review N2: ein Fehler im Skript eines Gasts legt das der Seite und der anderen nicht still."""
+    env = _env({"pages/probe.js": "void 'seite';", "pages/probe/zweiter.js": "void 'zweiter';"})
+    html = _render(default_settings, (_section(), _section("zweiter", 20)), env=env)
+    blocks = "<script>\nvoid 'seite';\n</script>\n<script>\nvoid 'gast';\n</script>\n"
+    assert blocks + "<script>\nvoid 'zweiter';\n</script>\n</body>" in html
+
+
 def test_ein_abschnitt_bringt_seine_links_nach_aussen_mit(
     tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -39,10 +39,11 @@
 <script>
 {% include "frame/script.js.j2" +%}
 </script>
-{% if page_js %}
+{# Review N2: je JavaScript-Datei ein eigenes Skript, die der Seite zuerst #}
+{% for code in page_scripts %}
 <script>
-{{ page_js|safe }}
+{{ code|safe }}
 </script>
-{% endif %}
+{% endfor %}
 </body>
 </html>
