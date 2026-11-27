@@ -291,3 +291,12 @@ eigenen Datenwurzeln liefen. Zu tun, ohne Netz: `georep bootstrap` und `georep r
 Aufgenommen am 2026-11-26 aus `STATUS.md` (Absicherung vom 2026-10-13, `docs/absicherung-2026-10.md`).
 `report/model.py`, `report/charts.py` und `report/build.py` (rund 3 500 Zeilen) sind nie mit
 `nox -s mutate` gemessen worden.
+
+## 35. Größe der Downloads je Dokument
+
+Aufgenommen am 2026-11-27 mit `akteure.html` (Punkt 88): die beiden Tabellen je Dokument von 15
+(`dokumente_funktion`, `dokumente_antragsteller`) machen die veröffentlichte Seite um rund 10 MB größer,
+fast nur CSV (rund 9,6 MB), davon rund 70 % die Spalte `id` (OParl-URL). Jede Tabelle im Register kommt
+als Parquet und CSV; eine Verkleinerung (CSV nur für die Hauptperiode, gzip, kürzere Kennung) wäre eine
+Regel für das ganze Register. Entscheiden, bevor weitere Tabellen je Dokument dazukommen (14, 26, 12).
+

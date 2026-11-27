@@ -27,6 +27,9 @@ Stand 2026-11-26, `main` auf `v0.32.0`.
 - **Die Zahlen der Seite** sind seit `v0.16.0` dieselben, bis auf eine Änderung in `v0.30.0`: sechs
   Ausschüsse tragen ihren Namen aus dem Kopf der Vorlagen, die Kürzel ohne gesicherten Namen sinken
   in der Hauptperiode von 11 auf 5, in den Perioden von 9 auf 3.
+- **Erste Unterseite** (`v0.35.0`, Phase „Zeigen“, `docs/plan-zeigen-2026-11.md`): `akteure.html` aus
+  Vorhaben 15 in allen fünf Profilen, verlinkt aus dem Abschnitt „weitere“ der Hauptseite (+4,6 KB);
+  dazu die Downloads `dokumente_funktion` und `dokumente_antragsteller`.
 - Die Worktrees, Venvs und Branches der Vorverarbeitung sind am 2026-11-26 entfernt; gearbeitet wird
   wieder nur auf `main`.
 

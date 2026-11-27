@@ -27,7 +27,7 @@ Prüfung der Schrittfolge).
 `12-kennungen-2-f4`, `16-ortsbezug-f4`, `16-ortsbezug-2-f4` und die Prüfstichprobe `14-vorgaenge-3-f4`
 (50 von 50 Kanten richtig, Kodierer B auf Sonnet) liegen im Format von F4 (Vorarbeit V3, Punkt 87).
 Offen in F4 bleiben `12-kennungen-recall-f4` und ein Maß für „Kategorie im Thema-Set" (17); beide sind
-nicht Teil der Phase „Zeigen". Keine Stufe 3 ist begonnen.
+nicht Teil der Phase „Zeigen". Die erste Stufe 3 ist `akteure.html` (`v0.35.0`).
 
 | Nr. | Vorhaben | Urteil (Stufe 1) | Stufe 2 | Stufe 3 | Endzustand oder wartet auf |
 |---|---|---|---|---|---|
@@ -35,7 +35,7 @@ nicht Teil der Phase „Zeigen". Keine Stufe 3 ist begonnen.
 | 12 | Kennungen und Beträge | **bauen** in vier Arten (2026-11-23, Bestätigung an frischer Stichprobe): Bauleitplanung (Fassung 1), Betrag (Fassung 1, ohne Rolle), Termin (Fassung 2, ohne Fristfunktion), Verwaltungseinheit (Fassung 2: Präzision 0,956, Recall 0,887); fallen: Haushalt, Rechtsgrundlage, Rolle eines Betrags, Fristfunktion (Frage 20) | `main`, `v0.31.0`, Punkt 82 | offen: Download `kennungen.parquet` | Stufe 3, nach dem F4-Nachzug `12-kennungen-2-f4` |
 | 13 | Dubletten und Dokumentfamilien | **verworfen** (2026-11-23, 200 Paare, α 0,941): keine Grenze erreicht die gewichtete Präzision 0,95 (τ = 0,9: 0,948); dort lägen 0,5 % der Dokumente in Familien, höchstens 1,4 % Verlust je Wahlbezirk | – | – | **Endzustand verworfen**; MinHash an 23, Fortschreibungen an 14 |
 | 14 | Vorgänge | **bauen, mit der Rückfallregel** (2026-11-23): stark nur Kanten aus Titel, Anlage, Nachtragsnummer, Sammelbericht; 104/106 = 0,981 (Wilson 0,934–0,995); 3 563 starke Kanten, 2 169 Vorgänge | `main`, `v0.25.0`, Punkt 76 | offen: `vorgaenge.html` und der allgemeine Haken des Dokumentdialogs, an den sich 18 und 26 hängen | Stufe 3, nach dem F4-Nachzug (104/106 steht nicht in `guete.json`) |
-| 15 | Dokumentfunktion und gemeinsame Anträge | **bauen, Variante B** (2026-11-23): κ 0,905; Antragsteller 119/119, Recall 0,86 | `main`, `v0.24.0`, Punkt 75 | offen: `akteure.html`, Grundseite für 24, 27, 28 | Stufe 3 |
+| 15 | Dokumentfunktion und gemeinsame Anträge | **bauen, Variante B** (2026-11-23): κ 0,905; Antragsteller 119/119, Recall 0,86 | `main`, `v0.24.0`, Punkt 75 | **`akteure.html` auf `main`** (`v0.35.0`, Punkt 88), Grundseite für 24, 27, 28 | gezeigt |
 | 16 | Ortsbezug verfeinern | **bauen** (2026-11-23): Stelle je Treffer (explorativ), Hausnummern (92,3 % verortbar), Nebenregel C als Gewichtsvariante `ortsbezug` (frische 100 Paare: F1 0,828, κ 0,249), nicht als Standardzählung | **nicht gebaut**; seine Voraussetzungen (F1, F7, 11, `point_shares` aus 22) liegen auf `main` | Gewichtungszeilen auf `index.html`; Radio auf der Karte nur auf Konrads Wunsch (Frage 45) | Stufe 2; vorher § 10 durch den Supervisor (§ 6 ist durch die Synergie überholt) |
 | 17 | Zeit und Neuigkeiten | **bauen** (2026-11-23): Lexikon 2026-11-23.1 mit Präzision 94/100, 41 von 41 Feeds gültig; H17.2 bestätigt, H17.1 und H17.3 nicht | `main`, `v0.27.0`, Punkt 78 | offen: `zeit.html`, Feed-Liste der laufenden Periode | Stufe 3 |
 | 18 | Einbettungen, Ähnlichkeit, Suche | **bauen** (2026-11-24): nDCG@10 Einbettung 0,883 gegen BM25 0,709; ähnliche Dokumente Präzision@5 0,832; keine Cluster; Vektoren nicht ins Repo (Frage 26) | `main`, `v0.26.0`, Punkt 77 (`georep search`, Nachbartabelle als Paket) | offen: „ähnliche Dokumente" im Dokumentdialog | Stufe 3, nach dem Dialog-Haken von 14; Lizenz der Modellgewichte (Frage 47) |

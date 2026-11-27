@@ -2,6 +2,16 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.35.0 (2026-11-27), Akteure
+
+- **Die erste Unterseite `akteure.html`** (Vorhaben 15, Stufe 3, `docs/decisions.md`, Punkt 88): welche
+  Funktion ein Ratsdokument hat (Kontrolle, Information, Initiative, Erklärung oder Appell, Vollzug), welche
+  Instrumente die Fraktionen nutzen (explorativ, ohne Rangfolge), wer mit wem gemeinsame Anträge stellt,
+  die Konkordanz über die Grenze der Ratsmehrheit und die Liste der Erklärungen und Appelle. Der Prüfsatz
+  kommt aus der Validierung; die Hauptseite verlinkt die Seite im Abschnitt „weitere".
+- Die Klasse `symbol` heißt in Daten und Seite jetzt `erklaerung` („Erklärung oder Appell"), die Definition
+  ist unverändert. Neue Downloads `dokumente_funktion` und `dokumente_antragsteller`.
+
 ## 0.34.0 (2026-11-27), Prüfsatz mit Modellen
 
 - **Prüfsatz mit dem Modell je Rolle** (Vorarbeit V3, `docs/decisions.md`, Punkt 87): `georep validate

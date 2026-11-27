@@ -4328,7 +4328,7 @@ Ordner im Kratzordner zeigt nur einen weiteren, den die Regel ändert: `11-struk
 `bv_mehrteilig` (114 von 114, alle „nein"); dort ist `score` nicht neu gelaufen, weil er auch
 Felder nachtrüge, die spätere Fassungen von `score` schreiben.
 
-## NN. Die erste Unterseite `akteure.html`: Prüfsatz aus `guete.json`, Lager je Paar am Datum, Links und Tabellen der Beiträge mit Layout (Vorhaben 15, Stufe 3, 2026-11-27)
+## 88. Die erste Unterseite `akteure.html`: Prüfsatz aus `guete.json`, Lager je Paar am Datum, Links und Tabellen der Beiträge mit Layout (Vorhaben 15, Stufe 3, 2026-11-27)
 
 Stufe 3 von Vorhaben 15 nach `docs/plans/15-funktion.md`, § 7 und § 10 (Punkt 8), und nach
 `docs/plan-zeigen-2026-11.md` (§ 5, `v0.35.0`). Die erste Unterseite nach F2 (Punkt 69): sie legt das

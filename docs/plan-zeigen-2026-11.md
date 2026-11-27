@@ -135,7 +135,8 @@ wenn sich ein Merge schiebt.
 
 **Haltepunkte.**
 
-- **Z1** nach `v0.35.0`: Konrad sieht die erste Unterseite an (Rahmen, Prüfsatz, Linkblock), bevor
+- **Z1** nach `v0.35.0` (erledigt am 2026-11-27: Konrad hat `akteure.html` angesehen; auf seinen Wunsch heißt
+  die Klasse `symbol` jetzt „Erklärung oder Appell"): Konrad sieht die erste Unterseite an (Rahmen, Prüfsatz, Linkblock), bevor
   die übrigen nach ihrem Muster folgen.
 - **Z2** am Ende der Phase: der Bericht nach dem Abschlusskriterium (§ 8).
 
