@@ -233,10 +233,9 @@ def _year(text: str | None) -> int | None:
 @deal.ensure(lambda value, result: Decimal(result) == value.normalize())
 def number_key(value: Decimal) -> str:
     """Eine Zahl als Text ohne überflüssige Nullen und ohne Exponent: 1500000, 12.5."""
-    normal = value.normalize()
-    if normal == normal.to_integral():
-        return format(normal.quantize(Decimal(1)), "f")
-    return format(normal, "f")
+    # Das Format "f" schreibt auch eine ganze Zahl im Exponenten aus (1.5E+6 -> 1500000); quantize
+    # dagegen bricht bei mehr als 28 Stellen mit InvalidOperation ab (2026-11-27, hypothesis)
+    return format(value.normalize(), "f")
 
 
 def _value(whole: str, fraction: str | None, unit: str | None) -> tuple[Decimal, Decimal | None]:
