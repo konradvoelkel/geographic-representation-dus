@@ -17,12 +17,14 @@ from typing import Any, cast
 
 import pytest
 
+from georep.analysis.scaling import DictionaryBias
 from georep.layout import Layout
 from georep.report.charts import rate_label
 from georep.report.model import ReportModel, format_de, percent_de
 from georep.report.pages import page_links
 from georep.report.render import sections
 from georep.report.start import (
+    BIAS_R,
     FRAME_IDS,
     KIND_PHRASES,
     START_KEYS,
@@ -31,6 +33,7 @@ from georep.report.start import (
     question_sentence,
     redirect_script,
     scope_sentence,
+    spread_sentence,
     summary_sentences,
 )
 from georep.report.startkarte import KARTE_NAME
@@ -183,7 +186,7 @@ def test_every_number_of_the_summary_comes_from_the_model(
     assert f"Wahlbezirk {high.id} {high.name}" in kurz and rate_label(high.rate) in kurz
     assert f"Wahlbezirk {low.id} {low.name}" in kurz and rate_label(low.rate) in kurz
     assert f"{format_de(high.rate / low.rate, 1)}-Fache" in kurz
-    if mini_model.bias is not None:
+    if mini_model.bias is not None and mini_model.bias.hits_terms >= BIAS_R:
         assert f"r = {format_de(mini_model.bias.hits_terms, 2)}" in kurz
     assert mini_model.regression is not None
     fit = mini_model.regression.all
@@ -229,6 +232,45 @@ def test_a_low_text_share_is_named_first(mini_model: ReportModel) -> None:
     sentence = scope_sentence(replace(mini_model, figures=figures))
     assert sentence.text.startswith("Nur 500 der 1 000 Ratsdokumente")
     assert "400 davon (80 %)" in sentence.text
+
+
+def test_without_full_texts_the_spread_sentence_is_left_out(mini_model: ReportModel) -> None:
+    """Review B (Supervisor, 2026-11-27): unter 90 % Dokumenten mit Text, derselben Grenze wie der
+    Zusatzsatz in K1, entfällt K2 ganz; Mönchengladbach nannte sonst bei 22 % Text das 28,9-Fache."""
+    assert spread_sentence(mini_model) is not None  # die Mini-Fixture hat zu jedem Dokument Text
+    for with_text in (899, 500):
+        figures = replace(mini_model.figures, documents=1_000, documents_with_text=with_text)
+        low = replace(mini_model, figures=figures)
+        assert spread_sentence(low) is None
+        assert [s.key for s in summary_sentences(low)] == ["K1", "K3", "K4"]
+    full = replace(
+        mini_model, figures=replace(mini_model.figures, documents=1_000, documents_with_text=900)
+    )
+    assert spread_sentence(full) is not None
+
+
+@pytest.mark.parametrize(("r", "named"), [(0.18, False), (0.49, False), (0.5, True), (0.76, True)])
+def test_the_dictionary_clause_needs_a_correlation_of_at_least_one_half(
+    mini_model: ReportModel, r: float, named: bool
+) -> None:
+    """Review B: „ein Teil davon liegt am Wörterbuch" trägt erst ein r ab 0,5. details.html nennt die
+    Verzerrung, sobald sie sich rechnen lässt (``{% if model.bias %}``), ohne Schwelle; also gilt die
+    Grenze des Reviews (decisions.md, Eintrag der Startseite)."""
+    bias = DictionaryBias(
+        districts=41,
+        hits_terms=r,
+        hits_eligible=0.1,
+        per_term_terms=-0.3,
+        terms_min=77,
+        terms_max=751,
+        eligible_spread=1.5,
+    )
+    sentence = spread_sentence(replace(mini_model, bias=bias))
+    assert sentence is not None
+    assert ("Wörterbuch" in sentence.text) is named
+    assert (f"r = {format_de(r, 2)}" in sentence.text) is named
+    without = spread_sentence(replace(mini_model, bias=None))
+    assert without is not None and "Wörterbuch" not in without.text
 
 
 def test_no_party_or_parliamentary_group_word_on_the_start_page(

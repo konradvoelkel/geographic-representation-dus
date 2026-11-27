@@ -134,8 +134,14 @@ def start_links(model: ReportModel) -> tuple[StartLink, ...]:
 
 # --- Kurzfassung (§ 8) --------------------------------------------------------------------------
 
-TEXT_SHARE = 0.9  # darunter sagt K1, wie viele Dokumente einen Text haben (Mönchengladbach 22 %)
+# Darunter sagt K1, wie viele Dokumente einen Text haben, und K2 entfällt (Mönchengladbach 22 %):
+# eine Spreizung zwischen Wahlbezirken misst dann vor allem, welche Dokumente lesbar sind
+TEXT_SHARE = 0.9
 SIGNIFICANCE = 0.05  # das vorab festgelegte Niveau von Tabelle 5
+# Ab diesem r (Treffer gegen Zahl der Begriffe) sagt K2 „ein Teil davon liegt am Wörterbuch".
+# details.html nennt die Verzerrung, sobald sie sich rechnen lässt, ohne Schwelle; die Grenze
+# setzt das Review von Stufe B (2026-11-27): Mönchengladbach hat 0,18, die Hauptperiode 0,76
+BIAS_R = 0.5
 # Woher die Dokumente kommen, als Satzglied nach „stammen" (K4); die Folge ist die der Anteile
 KIND_PHRASES = {
     "bezirksvertretung": "aus Bezirksvertretungen",
@@ -160,12 +166,18 @@ def _and(parts: Sequence[str]) -> str:
     return parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " und " + parts[-1]
 
 
+def _texts_complete(model: ReportModel) -> bool:
+    """Haben mindestens ``TEXT_SHARE`` der Dokumente einen Text? Die Grenze für K1 und K2."""
+    f = model.figures
+    return bool(f.documents) and f.documents_with_text / f.documents >= TEXT_SHARE
+
+
 def scope_sentence(model: ReportModel) -> Sentence:
     """K1: Umfang; liegt der Anteil mit Text unter 90 %, sagt der Satz das zuerst."""
     f = model.figures
     period = model.period.title
     places = f"mindestens eine Straße oder einen Ort aus dem Wörterbuch eines der {f.districts} Wahlbezirke"
-    if f.documents and f.documents_with_text / f.documents >= TEXT_SHARE:
+    if _texts_complete(model):
         text = (
             f"{format_de(f.documents_hit)} der {format_de(f.documents)} Ratsdokumente der {period} "
             f"({percent_de(f.documents_hit / f.documents, 0)}) nennen {places}."
@@ -181,9 +193,13 @@ def scope_sentence(model: ReportModel) -> Sentence:
 
 
 def spread_sentence(model: ReportModel) -> Sentence | None:
-    """K2: der sichtbarste und der am wenigsten sichtbare Wahlbezirk, mit dem Vorbehalt (r)."""
+    """K2: der sichtbarste und der am wenigsten sichtbare Wahlbezirk, mit dem Vorbehalt (r).
+
+    Nur, wenn fast alle Dokumente einen Text haben (``TEXT_SHARE``); der Halbsatz zum Wörterbuch
+    nur ab ``BIAS_R``, darunter trüge die Zahl die Behauptung nicht (Review B, 2026-11-27).
+    """
     rows = [d for d in model.districts if d.eligible > 0]
-    if len(rows) < 2:
+    if len(rows) < 2 or not _texts_complete(model):
         return None
     high = max(rows, key=lambda d: (d.rate, -d.id))
     low = min(rows, key=lambda d: (d.rate, d.id))
@@ -195,7 +211,7 @@ def spread_sentence(model: ReportModel) -> Sentence | None:
         f"{low.id} {low.name} am seltensten ({rate_label(low.rate)}), ein Unterschied um das "
         f"{format_de(high.rate / low.rate, 1)}-Fache."
     )
-    if model.bias is not None:
+    if model.bias is not None and model.bias.hits_terms >= BIAS_R:
         text += (
             " Ein Teil davon liegt am Wörterbuch: Wahlbezirke mit mehr Straßen und Orten haben "
             f"mehr Treffer (r = {format_de(model.bias.hits_terms, 2)})."
