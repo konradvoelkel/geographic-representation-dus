@@ -4200,20 +4200,25 @@ genauso aus.
 
 - Tests: `tests/unit/test_report_page_sections.py` mit einer Seite und Abschnitten, deren Vorlagen
   nur ein `DictLoader` der Tests kennt (Register, Folge, Log, Fehler, Stamp, Schritt, Rahmen, CSS
-  und JavaScript, Links); `tests/property/test_page_sections_props.py` (hypothesis): für jede
-  Verteilung von Abschnitten auf Beiträge und jede Folge der Beiträge und der Abschnitte darin
-  dieselben Abschnitte je Seite, nach Rang aufsteigend.
+  und JavaScript, Links; nach dem Review: Anker und `guests`, Eingaben je Paketprofil, ein Skript
+  je Datei, Zeilenenden, verwaiste Dateien, `{% if data.`, Folge von CSS und JavaScript);
+  `tests/property/test_page_sections_props.py` (hypothesis): für jede Verteilung von Abschnitten
+  auf Beiträge und jede Folge der Beiträge und der Abschnitte darin dieselben Abschnitte je Seite,
+  nach Rang aufsteigend.
 - Rahmen ohne Abschnitte bytegleich: eine Probeseite ohne Abschnitte, mit `main` `b5d7038` und mit
-  diesem Stand gerendert, ist in beiden Fällen dieselbe Datei (27 154 Byte, `cmp` ohne Abweichung).
+  diesem Stand gerendert, ist in beiden Fällen dieselbe Datei (27 154 Byte, `cmp` ohne Abweichung);
+  nach Runde 2 des Reviews ebenso eine Probeseite mit eigenem CSS und JavaScript, auf A aus dem
+  Paket gelesen, auf B über den Loader (27 258 Byte).
 - A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66 (`scripts/ab_bau.sh`,
   `scripts/ab_vergleich.py`), `POLARS_MAX_THREADS=4 OMP_NUM_THREADS=2`, A aus `main` `b5d7038`,
   B aus dem Baum dieses Eintrags, Wurzeln `ab/V1-a` und `ab/V1-b` auf xtraspace, die fünf Profile
-  mit `bootstrap` und `run`, dann `publish --strict-budget`. Unter `site/` 235 Dateien in beiden,
-  0 Abweichungen. Über die ganzen Datenwurzeln 932 Dateien in beiden; abweichend sind nur 117 Stamps:
-  109 allein in der Zeit `written`, 6 dazu in `extra` (der Stamp von `index.html` der vier Profile
-  mit Seite und seine Kopien in den beiden Periodenordnern der Stadtseite, weil `report_fingerprint`
-  die geänderte Vorlage `page.html.j2` mitzählt) und 2 in `inputs`, dort nur in
-  der Wurzel der absoluten Pfade (`ab/V1-a` gegen `ab/V1-b`), mit denselben Hashes. Kein Beitrag trägt
+  mit `bootstrap` und `run`, dann `publish --strict-budget`; nach Runde 2 des Reviews B noch einmal
+  aus `30331e4` in frischer Wurzel `ab/V1-b2`, gegen dasselbe A, mit denselben Zahlen. Unter
+  `site/` 235 Dateien in beiden, 0 Abweichungen. Über die ganzen Datenwurzeln 932 Dateien in
+  beiden; abweichend sind nur 117 Stamps: 109 allein in der Zeit `written`, 6 dazu in `extra` (der
+  Stamp von `index.html` der vier Profile mit Seite und seine Kopien in den beiden Periodenordnern
+  der Stadtseite, weil `report_fingerprint` die geänderte Vorlage `page.html.j2` mitzählt) und 2 in
+  `inputs`, dort nur in der Wurzel der absoluten Pfade, mit denselben Hashes. Kein Beitrag trägt
   einen Abschnitt; ändern kann sich erst etwas, wenn einer einträgt.
 
 **Verworfen.** Abschnitte in der `Page` des Gastgebers anmelden (`Page.sections`): dann änderte 26
