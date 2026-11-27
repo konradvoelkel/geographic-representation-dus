@@ -2,6 +2,16 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.39.0 (2026-11-27), Details
+
+- **Die Auswertung steht als `details.html`** (Startseite, Stufe U, `docs/decisions.md`, Punkt 92): Inhalt
+  unverändert bis auf „Zur Startseite" im Kopf; `index.html` ist vorläufig eine kurze Startseite mit
+  Linkblock. Ein Skript oben auf der Startseite leitet alte Adressen mit Anker (`#suche=…`, `#bezirk-17`)
+  auf `details.html` mit demselben Anker weiter.
+- Unterseiten zeigen „Zur Startseite", der Fuß verweist für Quellen und Lizenzen auf `details.html`;
+  `karte.html` führt zurück auf `details.html`. `publish` setzt die Nachbarstädte in beide Seiten und
+  prüft das Budget je Datei.
+
 ## 0.38.0 (2026-11-27), Vorgänge
 
 - **Unterseite `vorgaenge.html`** (Vorhaben 14, Stufe 3, `docs/decisions.md`, Punkt 91): Antworten auf

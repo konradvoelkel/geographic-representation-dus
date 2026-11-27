@@ -5081,7 +5081,7 @@ Pfade). `index.html` vorher → nachher: Hauptperiode 957 828 → 966 522 (+8 69
 95 022 (gzip 30 499), 45 123, 20 635, 6 661. Die sechs Downloads je Datensatz 2,34, 1,61, 0,49
 und 0,12 MB; die veröffentlichte Seite wächst von 54,2 auf 59,3 MB.
 
-## NN. Die Auswertung als `details.html`, eine vorläufige Startseite, alte Anker per Skript (Startseite, Stufe U, 2026-11-27)
+## 92. Die Auswertung als `details.html`, eine vorläufige Startseite, alte Anker per Skript (Startseite, Stufe U, 2026-11-27)
 
 [plan-startseite-2026-11.md](plan-startseite-2026-11.md), § 3 und § 9 (U), freigegeben von Konrad
 am 2026-11-27. Ein Umzug ohne neue Zahl: der Schritt `report` schreibt den bisherigen Inhalt von
