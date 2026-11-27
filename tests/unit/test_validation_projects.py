@@ -52,6 +52,9 @@ def test_every_codebook_in_the_repository_is_valid(folder: str) -> None:
 # Jedes Vorhaben mit Labels: guete.json von merge, dazu README und die Labels.
 QUALITY = sorted(p.parent.name for p in VALIDATION.glob("*/guete.json"))
 ROLES = ("kodierer_a", "kodierer_b", "schlichtung")
+# Kodiert nach Frage 19 (Konrad, 2026-11-26): Kodierer B ein anderes Modell als A und die
+# Schlichtung. Alle übrigen Labels kodierten und schlichteten Agenten desselben Modells.
+TWO_MODELS = {"14-vorgaenge-3-f4": ("claude-opus-5-5", "claude-sonnet-5-5", "claude-opus-5-5")}
 
 
 @pytest.mark.parametrize("folder", QUALITY, ids=str)
@@ -59,8 +62,9 @@ def test_every_quality_file_names_the_model_of_each_role(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, folder: str
 ) -> None:
     """Frage 19: alle Labels bis zum 2026-11-26 kodierten und schlichteten Agenten desselben
-    Modells. ``restate`` hat Satz und Modellfelder in die Form von Punkt 71 gebracht; ein Lauf über
-    den Stand im Repo ändert kein Byte, auch nicht an Labels und Zahlen (V3, Punkt 2)."""
+    Modells, die Messungen danach mit B auf einem anderen Modell (``TWO_MODELS``). ``restate``
+    hat Satz und Modellfelder in die Form von Punkt 71 gebracht; ein Lauf über den Stand im Repo
+    ändert kein Byte, auch nicht an Labels und Zahlen (V3, Punkt 2)."""
     source = VALIDATION / folder
     files = ["guete.json", "README.md", *(p.name for p in source.glob("labels*.csv"))]
     target = tmp_path / "repo" / "validierung" / folder
@@ -77,12 +81,13 @@ def test_every_quality_file_names_the_model_of_each_role(
     for name in files:
         assert (target / name).read_bytes() == (source / name).read_bytes(), name
     quality: dict[str, Any] = json.loads((source / "guete.json").read_text(encoding="utf-8"))
-    assert quality["modelle"] == dict.fromkeys(ROLES, "claude-opus-5-5") and "modell" not in quality
-    assert quality["satz"].startswith(
-        "geprüft von zwei KI-Kodierern desselben Modells (claude-opus-5-5) an "
-    )
+    a, b, s = TWO_MODELS.get(folder, ("claude-opus-5-5",) * 3)
+    assert quality["modelle"] == dict(zip(ROLES, (a, b, s), strict=True))
+    assert "modell" not in quality
+    coders = f"desselben Modells ({a})" if a == b else f"({a} und {b})"
+    assert quality["satz"].startswith(f"geprüft von zwei KI-Kodierern {coders} an ")
     readme = (source / "README.md").read_text(encoding="utf-8")
-    assert "- **Modelle**: Kodierer A `claude-opus-5-5`, Kodierer B `claude-opus-5-5`" in readme
+    assert f"- **Modelle**: Kodierer A `{a}`, Kodierer B `{b}`, Schlichtung `{s}`." in readme
 
 
 def _copy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, project: str) -> Path:
