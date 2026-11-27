@@ -646,3 +646,10 @@ def test_eine_partei_neben_ihrer_spaeteren_fraktion_ist_erklaert(
     section = section[: section.index("</section>")]
     assert "SPD und SPD/Volt stehen in zwei Zeilen" in section
     assert "ab 01.11.2020" in section
+
+
+def test_der_rohe_kontrollanteil_ist_keine_rangfolge(default_settings: Settings) -> None:
+    """N3 (Frage 14: je Fraktion nur standardisiert): „Kontrolle roh" steht daneben, sortiert nicht."""
+    page = _render(_check_settings(default_settings), ROWS)
+    assert '<th scope="col" class="num">Kontrolle roh</th>' in page
+    assert '<th scope="col" class="num" data-sort="num">beob./erw.</th>' in page

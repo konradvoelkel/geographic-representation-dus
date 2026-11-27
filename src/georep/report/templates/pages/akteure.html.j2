@@ -95,7 +95,7 @@
 <th scope="col" class="num" data-sort="num">Kontrolle</th>
 <th scope="col" class="num" data-sort="num">Initiative</th>
 <th scope="col" class="num">Erklärung/Appell</th>
-<th scope="col" class="num" data-sort="num">Kontrolle roh</th>
+<th scope="col" class="num">Kontrolle roh</th>
 <th scope="col" class="num" data-sort="num">beob./erw.</th>
 </tr></thead>
 <tbody>
@@ -107,7 +107,7 @@
 <td class="num" data-value="{{ f.control }}">{{ f.control|num }}</td>
 <td class="num" data-value="{{ f.initiative }}">{{ f.initiative|num }}</td>
 <td class="num">{{ f.statement|num }}</td>
-<td class="num" data-value="{{ f.control_share }}">{{ f.control_share|pct(1) }}</td>
+<td class="num">{{ f.control_share|pct(1) }}</td>
 {% if f.ratio is not none %}
 <td class="num" data-value="{{ f.ratio }}">{{ f.ratio|num(2) }}</td>
 {% else %}
@@ -119,7 +119,7 @@
 {% for split in m.split %}
 <p class="note">{{ split.alone }} und {{ split.joint }} stehen in zwei Zeilen: die Fraktion {{ split.joint }} gibt es ab {{ split.since|date_de }}; die {{ split.documents|num }} Dokumente von {{ split.alone }} allein sind älter und stammen von der Fraktion des Rates davor.</p>
 {% endfor %}
-<p class="note">Sortiert nach Dokumenten; die Spaltenköpfe sortieren um. Erklärungen und Appelle sind eine kleine Klasse; einzeln stehen sie unter <a href="#erklaerungen">Erklärungen und Appelle</a>, ohne Rangfolge je Fraktion.</p>
+<p class="note">Sortiert nach Dokumenten; die Spaltenköpfe sortieren um, außer „Kontrolle roh“ und „Erklärung/Appell“: der rohe Anteil steht nur neben dem Verhältnis, eine Rangfolge danach hinge an der Praxis der Gremien. Erklärungen und Appelle sind eine kleine Klasse; einzeln stehen sie unter <a href="#erklaerungen">Erklärungen und Appelle</a>, ohne Rangfolge je Fraktion.</p>
 {% else %}
 <p>Dieser Datensatz hat keine Fraktionsdokumente der Funktionen Kontrolle, Initiative und Erklärung oder Appell.</p>
 {% endif %}

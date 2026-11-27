@@ -4427,6 +4427,8 @@ dort stand „wie SPD+VOLT", jetzt „wie A+B"). Der Satz aus § 3.12 über
 den Umgang mit Anträgen einer bestimmten Fraktion heißt darum auf der Seite „mit den Anträgen
 einzelner Fraktionen". Die Spalte Erklärung/Appell bleibt in der Tabelle je Fraktion, wie § 7 sie
 nennt, ist aber nicht sortierbar; die Liste steht im letzten Abschnitt (Frage 9.8, § 10 Punkt 8).
+„Kontrolle roh" sortiert ebenso wenig (Frage 14: je Fraktion nur standardisiert; Review
+2026-11-27, N3); sortierbar ist das Verhältnis.
 
 **„Erklärung oder Appell" statt „Symbolpolitik"** (Konrad, 2026-11-27, nach den Bildschirmfotos:
 das Wort ist wertend). Die Klasse heißt überall, wo ein Leser sie sieht, „Erklärung oder Appell",
