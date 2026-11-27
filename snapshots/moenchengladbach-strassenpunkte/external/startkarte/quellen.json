@@ -1,0 +1,14 @@
+{
+  "ags": "05116000",
+  "raster_m": 25.0,
+  "namen": "",
+  "dateien": [
+    {
+      "url": "https://www.opengeodata.nrw.de/produkte/geobasis/lk/akt/gebref_txt/gebref_EPSG25832_ASCII.zip",
+      "datei": "gebref_EPSG25832_ASCII.zip",
+      "bytes": 90258596,
+      "sha256": "ff62bfc23a798f67a2371fa241ceec716a2275297a2706f88e94912a28043fce",
+      "abgerufen": "2026-11-27"
+    }
+  ]
+}
