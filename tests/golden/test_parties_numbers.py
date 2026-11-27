@@ -225,7 +225,7 @@ def test_the_page_carries_the_section_within_the_budget(
     bootstrap_from_settings(layout, settings)
     steps = build_steps(settings, layout)
     run_pipeline(steps, settings, [s.name for s in steps if not s.network and s.models is None])
-    page = layout.site_index.read_text(encoding="utf-8")
+    page = layout.site_details.read_text(encoding="utf-8")
     assert '<section id="parteien">' in page
     assert page.count('<path id="pm-') == 41  # die Flächen einmal in <defs>
     assert page.count('<use href="#pm-') == 41 * len(settings.originators.parties)
@@ -234,7 +234,7 @@ def test_the_page_carries_the_section_within_the_budget(
         settings.originators.parties
     )
     # Punkt 50: 0 schaltet die Prüfung ab, darum über den Helfer
-    assert within_budget(layout.site_index.stat().st_size, settings.report.page_budget_bytes)
+    assert within_budget(layout.site_details.stat().st_size, settings.report.page_budget_bytes)
     # Die drei neuen Tabellen stehen als Parquet und CSV zum Download
     names = {p.name for p in layout.site_data.iterdir()}
     for table in ("dokumente_urheber", "wahlbezirke_urheber", "wahlbezirke_parteien"):

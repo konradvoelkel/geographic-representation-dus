@@ -118,9 +118,9 @@ def test_the_whole_chain_on_the_reference_publishes_both_sections(
     assert "171 Sozialräume, 13 Variablen" in next(o for o in offline if o.step == "context").reason
     assert "32 von 32 Modellen" in next(o for o in offline if o.step == "controls").reason
 
-    page = layout.site_index.read_text(encoding="utf-8")
+    page = layout.site_details.read_text(encoding="utf-8")
     # Punkt 50: 0 schaltet die Prüfung ab, darum über den Helfer
-    assert within_budget(layout.site_index.stat().st_size, settings.report.page_budget_bytes)
+    assert within_budget(layout.site_details.stat().st_size, settings.report.page_budget_bytes)
     # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01);
     # Vorhaben 11 und 12: der Kopf ohne CSV, beide nur mit den Settings (gemessen, mit Rohtext);
     # dazu je Dialog-Haken seine Datei (Vorarbeit V2)

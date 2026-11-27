@@ -240,5 +240,5 @@ def mini_visuals(mini_model: ReportModel, mini_run: Layout, default_settings: Se
 
 @pytest.fixture(scope="session")
 def mini_page(mini_run: Layout) -> str:
-    """Die gebaute Seite der Mini-Fixture, wie der Schritt ``report`` sie geschrieben hat."""
-    return mini_run.site_index.read_text(encoding="utf-8")
+    """Die gebaute Auswertung der Mini-Fixture (``details.html``), wie ``report`` sie schrieb."""
+    return mini_run.site_details.read_text(encoding="utf-8")

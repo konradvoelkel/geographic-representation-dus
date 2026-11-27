@@ -451,7 +451,7 @@ def test_die_vorlage_nennt_keine_partei() -> None:
 # --- Register, Linkblock, Downloads, Größe auf der Mini-Fixture ----------------------------------
 def test_die_seite_steht_im_register_und_auf_der_hauptseite(mini_run: Layout) -> None:
     page = (mini_run.site / "akteure.html").read_text(encoding="utf-8")
-    index = mini_run.site_index.read_text(encoding="utf-8")
+    index = mini_run.site_details.read_text(encoding="utf-8")
     weitere = index[index.index('<section id="weitere">') :]
     assert '<a href="akteure.html">Akteure: Funktionen und gemeinsame Anträge</a>' in weitere
     assert len(page.encode("utf-8")) < PAGE_BUDGET
@@ -519,6 +519,7 @@ def test_kein_leser_sieht_das_wort_symbol(mini_run: Layout) -> None:
     files = [
         mini_run.site / "akteure.html",
         mini_run.site_index,
+        mini_run.site_details,  # plan-startseite, § 3: Downloads und Spaltenschema stehen hier
         mini_run.site_data / "schema.json",
         *(mini_run.site_data / f"{table.name}.csv" for table in TABLES),
     ]

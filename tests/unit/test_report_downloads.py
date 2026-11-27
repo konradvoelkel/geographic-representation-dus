@@ -131,7 +131,7 @@ def _published_text(layout: Layout) -> str:
         pl.read_parquet(data / "kennungen.parquet").write_json(),
         (data / "kennungen.csv").read_text(encoding="utf-8"),
         (data / "schema.json").read_text(encoding="utf-8"),
-        _downloads_section(layout.site_index.read_text(encoding="utf-8")),
+        _downloads_section(layout.site_details.read_text(encoding="utf-8")),
     ]
     return "\n".join(parts)
 
@@ -267,7 +267,7 @@ def test_ohne_rohtext_keine_zeile_und_kein_absatz(
         assert not (mini_run.site_data / table.path(mini_run).name).exists()
     names = {t.name for t in published(mini_run, _settings(default_settings))}
     assert not {"dokumente_kopf", "kennungen"} & names
-    page = mini_run.site_index.read_text(encoding="utf-8")
+    page = mini_run.site_details.read_text(encoding="utf-8")
     assert "dokumente_kopf" not in page and "kennungen" not in page
 
 
@@ -283,7 +283,7 @@ def test_mit_rohtext_parquet_und_die_csv_der_plaene_und_betraege(raw_run: Layout
     )
     assert {"termin", "amt"} <= set(spans.get_column("kind")) - set(csv.get_column("kind"))
     assert csv.columns == pl.read_parquet(data / "kennungen.parquet").columns
-    page = raw_run.site_index.read_text(encoding="utf-8")
+    page = raw_run.site_details.read_text(encoding="utf-8")
     rows = [line for line in page.splitlines() if '<a href="data/dokumente_kopf' in line]
     rows += [line for line in page.splitlines() if '<a href="data/kennungen' in line]
     assert len(rows) == 3
@@ -324,7 +324,7 @@ def _quality(project: str) -> dict[str, Any]:
 
 
 def test_der_pruefsatz_steht_unter_den_downloads(raw_run: Layout) -> None:
-    page = raw_run.site_index.read_text(encoding="utf-8")
+    page = raw_run.site_details.read_text(encoding="utf-8")
     downloads = page[page.index('<section id="downloads">') : page.index("<h3>Spaltenschema</h3>")]
     satz = _quality("11-struktur-f4")["satz"]
     assert f"<code>dokumente_kopf</code>: {satz[0].upper()}{satz[1:]}" in downloads

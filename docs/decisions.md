@@ -5080,3 +5080,72 @@ Pfade). `index.html` vorher → nachher: Hauptperiode 957 828 → 966 522 (+8 69
 816 466 → 825 119. `vorgaenge.html` 82 069, 131 956, 49 257, 35 724 Byte; `vorgaenge.json`
 95 022 (gzip 30 499), 45 123, 20 635, 6 661. Die sechs Downloads je Datensatz 2,34, 1,61, 0,49
 und 0,12 MB; die veröffentlichte Seite wächst von 54,2 auf 59,3 MB.
+
+## NN. Die Auswertung als `details.html`, eine vorläufige Startseite, alte Anker per Skript (Startseite, Stufe U, 2026-11-27)
+
+[plan-startseite-2026-11.md](plan-startseite-2026-11.md), § 3 und § 9 (U), freigegeben von Konrad
+am 2026-11-27. Ein Umzug ohne neue Zahl: der Schritt `report` schreibt den bisherigen Inhalt von
+`index.html` als `details.html` und an seine Stelle eine vorläufige Startseite; Karte, Zeitregler und
+Kurzfassung bringt Stufe B.
+
+**Was gebaut ist.**
+
+- `Layout.site_details` (`site/details.html`); `Layout.site_index` bleibt `index.html` und mit ihm
+  alles, was an der Startseite hängt: der Stamp des Schritts (erste Ausgabe), die Prüfung in
+  `publish`, ob eine Stadt gelaufen ist, das Monitor-Skript und `georep paths`. `details.html` ist
+  die zweite Ausgabe von `report`.
+- `details.html` trägt im Kopf eine Zeile „Zur Startseite"; Titel, Abschnitte und Skripte bleiben.
+- Die Startseite (`report/start.py`, `templates/start.html.j2`, aus demselben `ReportModel`): Kopf
+  mit Datenstand, Linkblock (Details, Downloads `details.html#downloads`, die Unterseiten aus
+  `model.pages`, die Hauptperiode, die ältere und die laufende Periode), die Marke für „Weitere
+  Städte", ein `<noscript>`-Satz und ganz oben, vor dem Stil, `redirect_script` (unter 0,5 KB): jede
+  Adresse, deren Anker kein Schlüssel der Startseite ist, ersetzt `location.replace` durch
+  `details.html` mit demselben Anker, ohne Eintrag in der Chronik. Schlüssel der Startseite sind ids
+  mit `start-` und in der Adresse `zeitraum` und `gremium` (`START_PREFIX`, `START_KEYS`).
+- Die Unterseiten heißen im Kopf „Zur Startseite" (weiter `index.html`, die Startseite derselben
+  Periode) und verweisen im Fuß für Quellen und Lizenzen auf `details.html`; `karte.html` führt
+  „zurück zur Auswertung" auf `details.html`. `details` ist als Seitenname reserviert.
+- `publish` setzt die Zeile „Weitere Städte" in beide Seiten (`NEIGHBOUR_PAGES`) und prüft das
+  Budget je Datei: `_over_budget(root, budget, by_name)` nimmt je Dateiname eine eigene Grenze, in U
+  noch keine; die 150 000 Byte der Startseite kommen mit Stufe B.
+- Die Links mit Anker aus `docs/inhalt.md` (6) und `docs/workflow-ratsmitglied.md` (13) zeigen auf
+  `details.html#…`, ebenso die Tabelle der Abschnitte je Seite in `inhalt.md`.
+
+**Tests.** `tests/unit/test_report_start.py`: `details.html` trägt jeden Abschnitt des Profils in
+der Folge der Nummern und die Startseite keinen; keine id auf `details.html` ist ein Schlüssel der
+Startseite, und jede id der Startseite beginnt mit `start-`; der reguläre Ausdruck der
+Weiterleitung, aus der Seite gelesen, lässt an zehn Ankern genau die richtigen stehen; jeder Link
+`details.html#…` des Linkblocks trifft eine id. `test_published_page.py` verlangt alle 18
+Abschnitte an der veröffentlichten Seite. Die 14 Testdateien, die den Inhalt der Auswertung
+lasen, lesen `details.html`; der Schnappschuss von `georep steps` nennt die zweite Ausgabe.
+
+**Geprüft im Browser** (headless Chrome über Port 8777 auf dem B-Bau): `/#suche=Benrath`,
+`/#bezirk-17`, `/#suche=grafenberger%20allee`, `/2025/#monate` und
+`/moenchengladbach/index.html#gremien` landen auf `details.html` mit demselben Anker;
+`/#start-links`, `/#gremium=OVA`, `/#zeitraum=2024-10..2025-09&gremium=OVA` und `/` bleiben.
+
+**A/B-Bau** aller fünf Profile wie `pages.yml` (`scripts/ab_bau.sh`, `POLARS_MAX_THREADS=4
+OMP_NUM_THREADS=2`), A aus `main` `a6b1aab` (`ab/st-a`), B aus `e74027b` (`ab/st-b`; der
+Doku-Commit danach ändert keine Seite). Verglichen wurde je Stadtseite und Periode das alte
+`index.html` mit dem neuen `details.html`, sonst wie `scripts/ab_vergleich.py`. Unter `site/` 320
+Dateien in A, 324 in B: neu sind die vier `details.html`. Je `details.html` genau eine Zeile anders
+als das alte `index.html`, die Zeile „Zur Startseite" (+75 Byte), sonst gleich bis auf Zeitstempel
+und Prüfsummen. Die übrigen 20 Abweichungen sind die erwarteten: je Seite der Stadt und Periode
+`akteure.html`, `vorgaenge.html` und `zeit.html` in Kopf und Fuß (zwei Zeilen) und `karte.html`
+im Rückweg (eine Zeile). `vergleich.html` und jede Datei unter `data/` sind gleich. Über die
+Datenwurzeln 1 160 und 1 170 Dateien: neu die zehn `details.html`, anders 135 Stamps (Schreibzeit)
+und 60 Seiten; kein Parquet, kein JSON unter `processed/`, `interim/` oder `site/data/` anders.
+Bytes vorher → nachher:
+
+| | `index.html` A | `details.html` B | `index.html` B (Startseite) |
+|---|---|---|---|
+| Hauptperiode | 966 522 | 966 597 | 15 848 |
+| `2014-2020/` | 841 739 | 841 814 | 15 661 |
+| `2025/` | 737 644 | 737 719 | 15 730 |
+| `moenchengladbach/` | 825 119 | 825 194 | 15 649 |
+
+**Bewusst nicht in U.** Der Kommentar in `15-suche.js` und im Rahmen nennt noch
+`index.html#suche=…` und `index.html#bezirk-17`; beide stehen in `details.html` und hätten den
+A/B-Vergleich um eine Zeile vergrößert. Die Unterseiten sprechen im Text von der „Hauptseite"
+(Dokumentdialog, Zählung je Partei); das gilt für `details.html` weiter, mit Stufe B trägt auch die
+Startseite den Dialog. `deploy/bin/georep-monitor.sh` misst als `PAGE_KB` jetzt die Startseite.

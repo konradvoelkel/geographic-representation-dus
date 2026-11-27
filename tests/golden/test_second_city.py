@@ -130,7 +130,7 @@ def test_the_sums_per_district_match_the_source(run: Layout, settings: Settings)
 
 
 def test_the_page_names_the_city_of_the_profile(run: Layout) -> None:
-    page = run.site_index.read_text(encoding="utf-8")
+    page = run.site_details.read_text(encoding="utf-8")
     assert "Mönchengladbacher Ratsdokumenten" in page
     assert "Stadt Mönchengladbach" in page
     assert page.count('id="bezirk-') == 3
@@ -195,7 +195,7 @@ def test_the_paper_type_carries_the_originator_of_the_second_city(run: Layout) -
     classes = dict(attribution.group_by("urheber_art").len().iter_rows())
     assert classes == {"Fraktion": 5, "Verwaltung": 1}
     assert set(attribution.get_column("quelle").to_list()) <= {"paper_type", "name", "text"}
-    page = run.site_index.read_text(encoding="utf-8")
+    page = run.site_details.read_text(encoding="utf-8")
     assert 'id="parteien"' in page and "Urheber und Parteien" in page
 
 
@@ -217,7 +217,7 @@ def test_directory_agreement_measures_the_geometry_against_the_directory(
 
 
 def test_the_page_names_the_agreement_and_the_date_of_the_geometry(run: Layout) -> None:
-    page = run.site_index.read_text(encoding="utf-8")
+    page = run.site_details.read_text(encoding="utf-8")
     assert "amtliche Straßenverzeichnis der Wahl kennt" in page
     assert "demselben Stimmbezirk" in page and "demselben Wahlbezirk" in page
     # Der Stand der Flächen, aus den Notizen des Profils: seit Punkt 65 der des Wahltags

@@ -1546,7 +1546,13 @@ def build_steps(
                 if path not in contributed_table_files(layout, settings, optional=False)
                 and path not in contributed_check_files(settings)
             ),
-            (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
+            # plan-startseite, § 3: der Stamp hängt weiter an der Startseite (erste Ausgabe)
+            (
+                layout.site_index,
+                layout.site_details,
+                layout.site_data / SCHEMA_NAME,
+                layout.site / MAP_NAME,
+            ),
             report,
             # Punkt 53: der eine Schritt mit einem Zusatz im Stamp. Die Vorlagen des Pakets und
             # ``[report]`` entscheiden über die Seite, stehen aber in keinem Eingabe-Hash und in

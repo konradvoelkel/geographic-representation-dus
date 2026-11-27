@@ -18,6 +18,7 @@ Fingerprints für nichts (``[compare]`` zählt mit).
 from __future__ import annotations
 
 import datetime as dt
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -27,6 +28,7 @@ from georep.bootstrap import bootstrap, bootstrap_from_settings
 from georep.layout import Layout
 from georep.pipeline import Outcome, build_steps, run_pipeline
 from georep.report.publish import publish_sites
+from georep.report.render import sections
 from georep.settings import Settings, load_settings
 from tests.conftest import REFERENCE, REPO, within_budget
 
@@ -118,11 +120,13 @@ def test_the_published_main_page_stays_within_the_budget(published: PublishedRun
     Entscheidung (einen Abschnitt kürzen oder die Zahl heben), kein Testdetail.
     """
     budget = published.settings.report.page_budget_bytes
-    size = published.layout.site_index.stat().st_size
+    size = published.layout.site_details.stat().st_size
     assert within_budget(size, budget), f"{size} von {budget} Byte"
-    page = published.layout.site_index.read_text(encoding="utf-8")
+    page = published.layout.site_details.read_text(encoding="utf-8")
     # Genau die Kombination, die vorher kein Test baute: beide Periodenabschnitte auf einer Seite
     assert '<section id="perioden">' in page and '<section id="laufend">' in page
+    # plan-startseite, § 9 (U): details.html trägt alle Abschnitte, in der Folge der Nummern
+    assert re.findall(r'<section id="([^"]*)"', page) == [s.name for s in sections()]
     assert 'href="2014-2020/"' in page and 'href="2025/"' in page
     assert published.layout.reference_root.resolve() == REFERENCE  # die volle Referenz der Arbeit
 
@@ -142,7 +146,7 @@ def test_the_downloads_of_11_and_12_stay_small(published: PublishedRun) -> None:
     sizes = {name: (data / name).stat().st_size for name in DOWNLOAD_LIMITS}
     assert all(sizes[name] < limit for name, limit in DOWNLOAD_LIMITS.items()), sizes
     assert not (data / "dokumente_kopf.csv").exists()
-    page = published.layout.site_index.read_text(encoding="utf-8")
+    page = published.layout.site_details.read_text(encoding="utf-8")
     lines = [
         line
         for line in page.splitlines()

@@ -168,13 +168,13 @@ def test_the_period_page_links_back_to_the_main_period(
     die Seite eine Ebene tiefer legen; die Hauptseite derselben Stadt hat den Link nicht.
     """
     assert period_run.settings.profile != period_run.settings.base_profile
-    page = period_run.layout.site_index.read_text(encoding="utf-8")
+    page = period_run.layout.site_details.read_text(encoding="utf-8")
     assert '<a href="../">Zur Hauptperiode Düsseldorfs</a>' in page
-    assert 'data-parent="1"' not in mini_run.site_index.read_text(encoding="utf-8")
+    assert 'data-parent="1"' not in mini_run.site_details.read_text(encoding="utf-8")
 
 
 def test_the_period_page_builds_on_the_target_districts(period_run: PeriodRun) -> None:
-    page = period_run.layout.site_index.read_text(encoding="utf-8")
+    page = period_run.layout.site_details.read_text(encoding="utf-8")
     assert "13.09.2020" in page  # der Wahltag, dessen Ergebnis den Nenner liefert
     assert page.count('id="bezirk-') == len(TARGET_DISTRICTS)
     assert (period_run.layout.site / "karte.html").is_file()
@@ -273,7 +273,7 @@ def test_the_comparison_needs_the_same_dictionary(compared: ComparedRun) -> None
 def test_the_period_page_names_its_period_and_publishes_the_assignment(
     period_run: PeriodRun,
 ) -> None:
-    page = period_run.layout.site_index.read_text(encoding="utf-8")
+    page = period_run.layout.site_details.read_text(encoding="utf-8")
     assert "Wahlperiode 2014 bis 2020" in page
     assert "umgerechnet" in page  # der Datenstand sagt, dass die Wahlzahlen umgerechnet sind
     assert '<section id="perioden">' not in page  # der Vergleich steht auf der Hauptseite
@@ -285,11 +285,11 @@ def test_the_period_page_names_its_period_and_publishes_the_assignment(
 
 
 def test_the_main_page_carries_the_comparison_section(compared: ComparedRun) -> None:
-    page = compared.layout.site_index.read_text(encoding="utf-8")
+    page = compared.layout.site_details.read_text(encoding="utf-8")
     # Punkt 50, Review 2026-10-13: die einzige Seite mit dem Abschnitt „Zwei Wahlperioden" -- und
     # damit die einzige Stelle, an der das Budget diesen Abschnitt mitprüft.
     assert within_budget(
-        compared.layout.site_index.stat().st_size, compared.settings.report.page_budget_bytes
+        compared.layout.site_details.stat().st_size, compared.settings.report.page_budget_bytes
     )
     assert '<section id="perioden">' in page
     assert "Wahlperiode 2014 bis 2020" in page and "Wahlperiode 2020 bis 2025" in page
@@ -312,7 +312,7 @@ def test_without_the_compare_profile_the_main_page_has_no_comparison(mini_run: L
     machen. Dass die beiden optionalen Tabellen dort fehlen, heißt: der Abschnitt und die
     Downloads entstehen nur mit das Profil ``duesseldorf-vergleich``.
     """
-    page = mini_run.site_index.read_text(encoding="utf-8")
+    page = mini_run.site_details.read_text(encoding="utf-8")
     assert '<section id="perioden">' not in page
     assert "Wahlperiode 2020 bis 2025" in page  # die Periodentexte stehen trotzdem im Kopf
     published = {p.name for p in mini_run.site_data.iterdir()}
@@ -334,7 +334,7 @@ YEAR_IN_TEXT = re.compile(r">[^<]*\b2025\b[^<]*<")
 
 def test_the_period_page_names_no_foreign_election_year(period_run: PeriodRun) -> None:
     # Ohne den Literaturabschnitt: er zitiert Veröffentlichungen mit eigenen Jahreszahlen (Punkt 47)
-    page = without_literature(period_run.layout.site_index.read_text(encoding="utf-8"))
+    page = without_literature(period_run.layout.site_details.read_text(encoding="utf-8"))
     for allowed in ALLOWED_OTHER_YEAR:
         assert allowed in page, allowed
         page = page.replace(allowed, "")

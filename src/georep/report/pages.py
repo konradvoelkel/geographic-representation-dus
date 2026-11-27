@@ -60,7 +60,8 @@ from georep.report.render import (
 from georep.settings import City, Settings
 
 PAGE_NAME = re.compile(r"^[a-z][a-z0-9-]*$")
-RESERVED = frozenset({"index", "karte", "vergleich"})  # Dateien, die es neben den Seiten schon gibt
+# Dateien, die es neben den Seiten schon gibt; ``details`` seit dem Umzug (plan-startseite, § 3)
+RESERVED = frozenset({"index", "details", "karte", "vergleich"})
 
 
 def _valid_name(name: str) -> bool:

@@ -220,7 +220,8 @@ data_root/                 Standard ./data, gitignored
                            (die Wortmatrix von `georep search`, Schlüssel in den Metadaten);
                            Vorhaben 26: beratungsverlauf, beschlusslage, antragserfolg;
                            Vorhaben 11: dokumente_abschnitte, dokumente_kopf
-    site/                  die Berichtsseite: index.html (mit Stamp), karte.html (Leaflet) und data/ mit den Download-Dateien
+    site/                  die Berichtsseite: index.html (Startseite, mit Stamp), details.html (die ganze Auswertung),
+                           karte.html (Leaflet) und data/ mit den Download-Dateien
     site/<periode>/        eine Unterseite, wenn eine zweite Wahlperiode gerechnet ist: der Pages-Workflow
                            legt sie hierher, weil der Abschnitt „Zwei Wahlperioden" sie relativ verlinkt
   kodierung/<vorhaben>/    Standard von validation.coding_root (bei Konrad messdaten/kodierung/ auf
@@ -581,13 +582,13 @@ Treueprüfung; für eine spätere Messung schaltet `GEOREP_SUMMARIES__ENABLED=tr
 ## Berichtsseite
 
 **Unterseiten** (Punkt 69): ein Beitrag in `georep.enrich.CONTRIBUTIONS` darf Seiten neben
-`index.html` tragen (`report.pages.Page`: Name, Titel, ein Satz, Eingaben, Daten, Schalter, erlaubte
+`index.html` und `details.html` tragen (`report.pages.Page`: Name, Titel, ein Satz, Eingaben, Daten, Schalter, erlaubte
 Links). Jede entsteht in einem eigenen Schritt `page_<name>` hinter `report` aus
 `templates/pages/<name>.html.j2` (optional mit `<name>.css` und `<name>.js` daneben) im Rahmen
 `templates/page.html.j2`, der dieselben Teilvorlagen einbindet wie die Hauptseite
 (`templates/frame/style.css.j2` und `templates/frame/script.js.j2`); die Vorlage sieht den Rahmen
 als `model` und ihre Daten als `data`. Die Hauptseite nennt die Seiten im Abschnitt `58-weitere`,
-der ohne Unterseiten fehlt. So bleibt `index.html` im Budget, und kein Vorhaben ändert
+der ohne Unterseiten fehlt, und die Startseite in ihrem Linkblock. So bleibt `details.html` im Budget, und kein Vorhaben ändert
 `report/model.py`. `Page.links` und `PageSection.links` bekommen `(layout, settings)` wie `inputs`
 und `data`: die PDF-Links einer Liste von Dokumenten stehen in den Daten, nicht in den Settings.
 Die Tabellen der Beiträge zählen im Stamp von `report` als optionale Eingaben
@@ -697,9 +698,22 @@ im Register). Wird die Zielseite in einem Profil nicht gebaut, weil ihr Schalter
 ist, entfällt der Abschnitt mit einer Zeile im Log und ohne Fehler; ein abgeschalteter Abschnitt
 fehlt still.
 
-Der letzte Schritt `report` (`georep.report.build.build_site`) macht aus den Parquet-Ergebnissen eine einzige
-`site/index.html` ohne externe Ressourcen: CSS, JavaScript und beide SVGs inline, nur relative Pfade, Deutsch
-mit einer englischen Kurzfassung, hell und dunkel über `prefers-color-scheme`. Die Vorlage
+Der letzte Schritt `report` (`georep.report.build.build_site`) macht aus den Parquet-Ergebnissen die ganze
+Auswertung als eine Datei `site/details.html` (`Layout.site_details`, bis `v0.38.0` unter `index.html`) ohne
+externe Ressourcen: CSS, JavaScript und beide SVGs inline, nur relative Pfade, Deutsch
+mit einer englischen Kurzfassung, hell und dunkel über `prefers-color-scheme`. Zuletzt schreibt er aus
+demselben Modell die **Startseite** `site/index.html` (`Layout.site_index`; an ihr hängen weiter Stamp,
+Existenzprüfung in `publish`, Monitor und `georep paths`): `report/start.py` mit `templates/start.html.j2`,
+in Stufe U der [plan-startseite-2026-11.md](plan-startseite-2026-11.md) nur Kopf, Linkblock (Details,
+Downloads, die Unterseiten aus `model.pages`, die anderen Perioden), ein `<noscript>`-Satz und ganz oben
+ein Skript unter 0,5 KB, das jede Adresse mit einem Anker, der kein Schlüssel der Startseite ist, per
+`location.replace` auf `details.html` mit demselben Anker umlenkt (`redirect_script`). Die ids der
+Startseite beginnen mit `start-`, ihre Schlüssel in der Adresse heißen `zeitraum` und `gremium`
+(`START_PREFIX`, `START_KEYS`); `tests/unit/test_report_start.py` verlangt, dass keiner davon eine id auf
+`details.html` ist. `details.html` trägt im Kopf „Zur Startseite", die Unterseiten heißen dort ebenso und
+verweisen für Quellen und Lizenzen auf `details.html`, `karte.html` führt „zurück" dorthin. `publish`
+setzt die Zeile „Weitere Städte" in beide Seiten (`NEIGHBOUR_PAGES`) und prüft das Budget je Datei
+(`_over_budget` mit einer Grenze je Dateiname). Die Vorlage
 `templates/report.html.j2` ist der Rahmen (Kopf, Fuß, Dialog, Tooltip, Basis-JavaScript); die Abschnitte liegen
 als `templates/sections/NN-name.html.j2` in Nummernfolge, je mit optionalem `NN-name.css` und `NN-name.js`, die
 der Rahmen in den Stil- und einen eigenen Skriptblock einfügt (`render.sections`; ein `.css` oder `.js` ohne

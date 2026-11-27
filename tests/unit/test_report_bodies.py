@@ -241,7 +241,7 @@ def built(
     build_site(
         layout, default_settings, now=dt.datetime(2026, 10, 12, 9, 0, tzinfo=dt.UTC), commit=None
     )
-    return layout.site_index.read_text(encoding="utf-8")
+    return layout.site_details.read_text(encoding="utf-8")
 
 
 def test_the_section_is_on_the_page_with_both_tables(built: str) -> None:

@@ -294,10 +294,10 @@ def test_pipeline_reproduces_the_thesis_results(
     # Vorhaben 18: ein Schritt mit Modell läuft ohne ``--models`` nicht
     models = {s.name for s in steps if s.models is not None}
     assert all(o.status == "ausgeführt" for o in outcomes if o.step not in NETWORK | models)
-    page = layout.site_index.read_text(encoding="utf-8")
+    page = layout.site_details.read_text(encoding="utf-8")
     assert "41 Kommunalwahlbezirke" in page and page.count('id="bezirk-') == 41
     # Budget der Seite: eine Zahl, in den Settings (Punkt 50, docs/seitengroesse-2026-10.md, § 7)
-    assert within_budget(layout.site_index.stat().st_size, settings.report.page_budget_bytes)
+    assert within_budget(layout.site_details.stat().st_size, settings.report.page_budget_bytes)
     _check_search_section(page)
     # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
     # und die Begriffe je Wahlbezirk (Punkt 49). Vorhaben 11 und 12: der Kopf hat keine CSV, und
@@ -521,9 +521,9 @@ def test_the_rules_change_the_reference_as_measured(
     # signifikantes p zeigt, verschwindet: sie haengt an der Groesse der Woerterbuecher.
     assert second.all.p > 0.05 and second.without.p > 0.05
 
-    page = layout.site_index.read_text(encoding="utf-8")
+    page = layout.site_details.read_text(encoding="utf-8")
     assert within_budget(
-        layout.site_index.stat().st_size, default_settings.report.page_budget_bytes
+        layout.site_details.stat().st_size, default_settings.report.page_budget_bytes
     )
     assert "Stadtweite Begriffe" in page and "Zwei Regeln weichen bewusst" in page
 
@@ -557,7 +557,7 @@ def test_the_text_package_moves_the_reference_as_measured(
     # Fundament F1: der Rohtext derselben PDFs kommt ebenso aus einem Paket, eines fehlt (AES)
     assert report.raw_texts == 19_091, report.summary()
     run_pipeline(build_steps(default_settings, layout), default_settings)
-    page = (layout.site / "index.html").read_text(encoding="utf-8")
+    page = layout.site_details.read_text(encoding="utf-8")
     method = page[page.index('<section id="methode">') :]
     method = method[: method.index("</section>")]
     assert "Gelesen sind die Texte mit pypdf 7.1.0 (19\u202f091 von 19\u202f092 PDFs)." in method

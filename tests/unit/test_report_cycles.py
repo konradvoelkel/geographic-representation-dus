@@ -712,7 +712,7 @@ def test_die_seite_verlinkt_messdokument_pruefung_und_commit() -> None:
 # --- Register, Linkblock, Downloads, Größe auf der Mini-Fixture -----------------------------------
 def test_die_seite_steht_im_register_und_auf_der_hauptseite(mini_run: Layout) -> None:
     page = (mini_run.site / "zeit.html").read_text(encoding="utf-8")
-    index = mini_run.site_index.read_text(encoding="utf-8")
+    index = mini_run.site_details.read_text(encoding="utf-8")
     weitere = index[index.index('<section id="weitere">') :]
     weitere = weitere[: weitere.index("</section>")]
     assert '<a href="zeit.html">Zeit: Rhythmus der Ratsarbeit und Bundespolitik</a>' in weitere
@@ -722,9 +722,11 @@ def test_die_seite_steht_im_register_und_auf_der_hauptseite(mini_run: Layout) ->
 
 
 def test_die_hauptseite_verlinkt_keinen_feed(mini_run: Layout) -> None:
-    """Plan § 7 und Frage 9.11: kein Feed-Link auf ``index.html``, kein ``rel="self"``."""
-    index = mini_run.site_index.read_text(encoding="utf-8")
-    assert "feeds/" not in index and 'rel="self"' not in index
+    """Plan § 7 und Frage 9.11: kein Feed-Link auf ``index.html``, kein ``rel="self"``; seit dem
+    Umzug (plan-startseite, § 3) auf der Startseite und auf ``details.html``."""
+    for page in (mini_run.site_index, mini_run.site_details):
+        index = page.read_text(encoding="utf-8")
+        assert "feeds/" not in index and 'rel="self"' not in index
 
 
 def test_die_tabellen_stehen_als_download_mit_spaltendoku(
@@ -761,7 +763,7 @@ def test_die_csv_des_vokabulars_traegt_nur_dokumente_mit_treffer(
     assert "lexikon" in parquet.columns
     table = next(t for t in TABLES if t.name == "dokumente_bundesvokabular")
     assert "nur im Parquet" in table.columns["lexikon"][0]
-    index = mini_run.site_index.read_text(encoding="utf-8")
+    index = mini_run.site_details.read_text(encoding="utf-8")
     assert "nur Dokumente mit Treffer, ohne die Spalte lexikon" in index
 
 

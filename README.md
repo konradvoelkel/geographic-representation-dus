@@ -43,7 +43,7 @@ git clone git@github.com:konradvoelkel/geographic-representation-dus.git
 cd geographic-representation-dus
 uv sync --locked                        # Umgebung aus dem Lockfile
 uv run georep bootstrap                 # Datensatz der Arbeit nach ./data/duesseldorf/ übernehmen
-uv run georep run                       # alle Offline-Schritte (georep steps zeigt sie); schreibt auch die Berichtsseite data/duesseldorf/site/index.html
+uv run georep run                       # alle Offline-Schritte (georep steps zeigt sie); schreibt auch die Berichtsseite data/duesseldorf/site/ (index.html, details.html)
 uv run georep publish                   # dieselbe Seite nach data/site/, der veröffentlichten Wurzel
 uv run georep regress --exclude 1 10    # Tabelle 5 der Arbeit
 uv run georep regress --controls        # Tabelle 6 mit den Kontrollvariablen
@@ -63,7 +63,7 @@ und `cache_root` in eine `settings.local.toml` (siehe Konfiguration).
 
 ## Berichtsseite
 
-`georep run` endet mit dem Schritt `report`: `data/duesseldorf/site/index.html` ist **eine** in sich
+`georep run` endet mit dem Schritt `report`: `data/duesseldorf/site/details.html` ist **eine** in sich
 geschlossene Seite (unter dem Budget von 1 000 000 Byte, die heutige Größe steht in
 [STATUS.md](STATUS.md), „Zahlen"; kein externes JavaScript, keine Kartenkacheln, offline aus dem
 Dateisystem zu öffnen) mit siebzehn
@@ -72,7 +72,9 @@ Einfärbungen, Regression (die Spalte „ohne Ausreißer" heißt im Kopf „expl
 steht, warum: sie ist nach dem Ansehen der Daten entstanden, und in der Wahlperiode 2014 bis 2020
 ist dieselbe Spalte nicht signifikant), Kontrollvariablen, Gewichtung, zwei Wahlperioden, Urheber und Parteien,
 Tabelle je Wahlbezirk, Gremien, Begriffe mit Dokumentdialog, Monatsreihe, Methode und Grenzen,
-abgeleitete Daten, Literatur, Downloads, laufende Periode. Daneben `karte.html` (Leaflet und
+abgeleitete Daten, Literatur, Downloads, laufende Periode. Die Adresse ohne Dateinamen öffnet die
+Startseite `index.html` mit den Links zur Auswertung, zu den Unterseiten und zu den Downloads; alte
+Adressen mit Anker leitet sie auf `details.html` weiter. Daneben `karte.html` (Leaflet und
 OpenStreetMap-Kacheln, braucht Netz) und unter `site/data/` die 24 Ergebnistabellen als Parquet und
 CSV plus `wahlbezirke.geojson`, `schema.json`, `summary.json`, `dokumente.json` und `begriffe.json`,
 je mit Größe und SHA-256 auf der Seite.

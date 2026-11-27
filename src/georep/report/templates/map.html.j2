@@ -20,7 +20,7 @@ html, body { margin: 0; height: 100%; font: 14px/1.4 system-ui, -apple-system, "
 </style>
 </head>
 <body>
-<div class="bar"><strong>Trefferquote je Wahlbezirk</strong><span>Dokumente mit Treffer je Wahlberechtigtem, Kommunalwahl {{ model.stand.election|date_de }}</span><a href="index.html">zurück zur Auswertung</a></div>
+<div class="bar"><strong>Trefferquote je Wahlbezirk</strong><span>Dokumente mit Treffer je Wahlberechtigtem, Kommunalwahl {{ model.stand.election|date_de }}</span><a href="details.html">zurück zur Auswertung</a></div>
 <div id="map" role="application" aria-label="Karte der Wahlbezirke"></div>
 <script id="districts" type="application/json">{{ districts_json|safe }}</script>
 <script id="places" type="application/json">{{ pois_json|safe }}</script>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+{# plan-startseite, § 3: alte Anker (bis v0.38.0 stand die Auswertung hier) nach details.html, bevor die Seite zeichnet #}
+<script>{{ redirect|safe }}</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ratsdokumente {{ model.city.genitive }} und ihre Orte, {{ model.period.title }}</title>
+<meta name="description" content="Wie sichtbar sind die {{ model.figures.districts }} Kommunalwahlbezirke {{ model.city.genitive }} in den Ratsdokumenten der {{ model.period.title }}? Startseite mit Links zur ganzen Auswertung, zu den Unterseiten und zu den Downloads.">
+<style>
+{% include "frame/style.css.j2" +%}
+ul.start-links { padding-left: 1.2em; }
+ul.start-links li { margin: .4rem 0; }
+</style>
+</head>
+<body>
+<header>
+<h1>Geografische Repräsentation in {{ model.city.adjective }} Ratsdokumenten</h1>
+<p class="lead">Wie sichtbar sind die {{ model.figures.districts }} Kommunalwahlbezirke {{ model.city.genitive }} in den {{ model.figures.documents|num }} Dokumenten des {{ model.city.council }}s der {{ model.period.title }}? Für jeden Wahlbezirk gibt es ein Wörterbuch aus Straßennamen und Orten, und gezählt wird, welche Dokumente einen davon nennen.</p>
+<p class="meta">Datenstand: {{ model.period.title }}, Kommunalwahl {{ model.stand.election|date_de }}; Dokumente {{ model.stand.period_start|date_de }} bis {% if model.stand.period_end %}{{ model.stand.period_end|date_de }}{% else %}heute (laufende Wahlperiode){% endif %}{% if model.stand.newest_document %}; neuestes Dokument vom {{ model.stand.newest_document|date_de }}{% endif %}. Gebaut mit georep {{ model.version }}; Quelltext und Daten im <a href="{{ links.repository }}">Repository</a>.</p>
+{% if model.parent_url %}
+<p class="meta" data-parent="1"><a href="{{ model.parent_url }}">Zur Hauptperiode {{ model.city.genitive }}</a></p>
+{% endif %}
+{# georep publish ersetzt die Marke durch die Zeile mit den Nachbarstädten, sobald deren Seiten wirklich daneben liegen #}
+<!--georep:weitere-staedte-->
+</header>
+<main>
+<noscript><p class="note">Ohne JavaScript führt eine alte Adresse mit Anker (etwa <code>#suche=…</code>) nicht von selbst zur Auswertung; dieselbe Adresse mit <a href="{{ details }}">{{ details }}</a> statt der Startseite zeigt sie.</p></noscript>
+<section id="start-links" aria-labelledby="start-links-title">
+<h2 id="start-links-title">Die Auswertung</h2>
+<ul class="start-links">
+{% for item in start_links %}
+<li><a href="{{ item.href }}">{{ item.title }}</a>: {{ item.lead }}</li>
+{% endfor %}
+</ul>
+</section>
+</main>
+<footer>
+<p>Ergebnisse: <a href="{{ links.cc0 }}">CC0 1.0</a>; Quelltext: <a href="{{ links.gpl }}">GPL-3.0-or-later</a>. Quellen und Lizenzen der Daten nennen die <a href="{{ details }}">Details</a>.</p>
+<p>Erzeugt am {{ model.generated_at|datetime_de }} mit georep {{ model.version }}{% if model.commit %}, Commit {{ model.commit }}{% endif %}.</p>
+</footer>
+</body>
+</html>
