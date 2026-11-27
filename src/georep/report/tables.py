@@ -97,6 +97,11 @@ class PublishedTable:
         """Die Spaltendoku dieser Tabelle, statisch oder aus den Settings abgeleitet."""
         return self.describe(settings) if self.describe is not None else self.columns
 
+    def download_names(self, layout: Layout) -> tuple[str, ...]:
+        """Die Dateien der Tabelle unter ``site/data/``: das Parquet und, wo sie eine hat, die CSV."""
+        parquet = self.path(layout).name
+        return (parquet, f"{self.name}.csv") if self.csv is not None else (parquet,)
+
     def published_frame(self, frame: pl.DataFrame, settings: Settings | None) -> pl.DataFrame:
         """Die Zeilen und Spalten, die veröffentlicht werden: die Sicht, sonst die Datei selbst."""
         if self.view is None:

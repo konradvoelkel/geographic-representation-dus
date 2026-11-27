@@ -150,9 +150,7 @@ def _remove_unpublished(layout: Layout, wanted: list[PublishedTable]) -> None:
     nach einem Lauf mit Themen), ließe sonst ihr Parquet und ihr CSV im Ordner stehen, ohne Link
     auf der Seite, aber mit im Pages-Paket. Fremde Dateien bleiben unberührt.
     """
-    keep = {t.path(layout).name for t in wanted} | {
-        f"{t.name}.csv" for t in wanted if t.csv is not None
-    }
+    keep = {name for t in wanted for name in t.download_names(layout)}
     for table in all_tables():
         for name in (table.path(layout).name, f"{table.name}.csv"):
             stale = layout.site_data / name
