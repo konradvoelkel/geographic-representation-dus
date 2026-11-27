@@ -4186,8 +4186,13 @@ bleibt in den Messskripten: die Präzision je Art von 12 und das F1 der Regel vo
 **Die Prüfstichprobe der Rückfallregel von 14** (`14-vorgaenge-3-f4`, Messdokument § 4.3, vorab
 in einem eigenen Commit): 50 starke Kanten der Hauptperiode, proportional nach der Fundstelle
 (Titel 43, Nachtrag 4, Sammelbericht 2, Anlage 1), Codebuch Fassung .2 mit dem Material von F4,
-zu kodieren nach der neuen Regel (A und Schlichtung Opus, B Sonnet). Proportional, weil die Frage
-9.18 das Intervall der ganzen Regel schließen soll; verworfen: gleich viele je Fundstelle (Kishs
+kodiert nach der neuen Regel. Proportional, weil die Frage 9.18 das Intervall der ganzen Regel
+schließen soll; verworfen: gleich viele je Fundstelle (Kishs
 n_eff 17, die untere Grenze bliebe auch ohne Fehler bei 0,817) und alle vier Datensätze in einer
 Stichprobe (`validate tasks` liest die Dokumente eines Profils; die Nachbarperioden heißen auf der
-Seite „explorativ").
+Seite „explorativ"). Sie ist die erste Messung mit Kodierer B auf einem anderen Modell (A und
+Schlichtung `claude-opus-5-5`, B `claude-sonnet-5-5`); ihr Prüfsatz in `guete.json` lautet
+„geprüft von zwei KI-Kodierern (claude-opus-5-5 und claude-sonnet-5-5) an 50 Dokumentpaaren,
+Schlichtung durch claude-opus-5-5, nicht von Menschen". Ergebnis: 50 von 50, α von `selbe_sache`
+mangels Streuung nicht definiert und nach Entscheidung des Supervisors als vollständige
+Übereinstimmung erfüllt (Messdokument § 4.3).
