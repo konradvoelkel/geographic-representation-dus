@@ -67,6 +67,7 @@ SCHEMA: dict[str, Any] = {
     "parteien": pl.List(pl.String),
     "gremium": pl.String,
     "gremium_art": pl.String,
+    "stadtbezirk": pl.Int64,
 }
 INSTRUMENT_OF = {"kontrolle": "anfrage", "initiative": "antrag", "erklaerung": "resolution"}
 
@@ -99,6 +100,7 @@ def _doc(
         "parteien": list(fraktionen if parteien is None else parteien),
         "gremium": gremium,
         "gremium_art": art,
+        "stadtbezirk": None,
     }
 
 
@@ -653,3 +655,23 @@ def test_der_rohe_kontrollanteil_ist_keine_rangfolge(default_settings: Settings)
     page = _render(_check_settings(default_settings), ROWS)
     assert '<th scope="col" class="num">Kontrolle roh</th>' in page
     assert '<th scope="col" class="num" data-sort="num">beob./erw.</th>' in page
+
+
+def test_listen_nennen_gremien_beim_namen_und_keine_profilnamen() -> None:
+    """N5: Gremium mit Namen aus ``[bodies]``, „Fraktion nicht erkannt" statt „Fraktionen", und der
+    Prüfsatz nennt Stadt und Periode der Stichprobe, keine Profilnamen."""
+    settings = _check_settings(mg_settings())
+    council, name = next(iter(settings.bodies.council.items()))
+    rows = [
+        _doc(1, funktion="erklaerung", fraktionen=["CDU"], gremium=council),
+        _doc(2, funktion="erklaerung", fraktionen=[], parteien=[], gremium="XYZ", art="unbekannt"),
+        _doc(3, funktion="vollzug", urheber="Verwaltung", lager="ohne_partei"),
+    ]
+    page = _render(settings, rows)
+    listing = page[page.index('<table id="erklaerungen-liste"') :]
+    listing = listing[: listing.index("</table>")]
+    assert f"<td>{name}</td>" in listing and "<td>XYZ</td>" in listing
+    assert "<td>Fraktion nicht erkannt</td>" in listing and "<td>Fraktionen</td>" not in listing
+    box = page[page.index('<div class="pruefung"') :]
+    box = box[: box.index("</div>")]
+    assert "duesseldorf" not in box and "Wahlperiode 2014 bis 2020" in box

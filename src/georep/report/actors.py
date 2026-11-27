@@ -56,13 +56,14 @@ from georep.analysis.parties import URHEBER_ARTEN
 from georep.analysis.practice import RATIO, observed_expected
 from georep.errors import MissingInputError, SchemaError
 from georep.layout import Layout
-from georep.prep.bodies import KIND_LABELS
+from georep.prep.bodies import KIND_LABELS, BodyRules
 from georep.settings import (
     CODEBOOK_FUNCTIONS,
     FUNCTION_CLASSES,
     Fraction,
     Majorities,
     Settings,
+    load_settings,
     profile_folder,
 )
 from georep.validation.codebook import load_codebook
@@ -147,6 +148,7 @@ DOCUMENT_COLUMNS = (
     "parteien",
     "gremium",
     "gremium_art",
+    "stadtbezirk",
 )
 
 
@@ -222,6 +224,7 @@ class Check:
         str, ...
     ]  # die Profile der Stichprobe, wie ``stichprobe.json`` sie nennt
     statement_definition: str  # die Definition der Klasse ``erklaerung``, wörtlich aus dem Codebuch
+    measured_datasets: tuple[str, ...]  # Stadt und Periode je Profil der Stichprobe (Review N5)
 
 
 def check_files(settings: Settings) -> tuple[Path, Path, Path]:
@@ -251,6 +254,17 @@ def _profile_folders(names: Sequence[str]) -> set[str]:
         except OSError, ValueError, SchemaError:
             continue
     return found
+
+
+def _dataset_name(profile: str) -> str:
+    """„Stadt, Wahlperiode …" eines Paketprofils; ein unbekanntes bleibt sein Name."""
+    from georep.report.model import period_info
+
+    try:
+        settings = load_settings(profile=profile, cwd=Path("/nonexistent"))
+    except OSError, ValueError, SchemaError:
+        return profile
+    return f"{settings.city.name}, {period_info(settings).title}"
 
 
 @deal.raises(MissingInputError, SchemaError)
@@ -300,6 +314,7 @@ def read_check(settings: Settings, rule: RuleCheck = RULE_CHECK) -> Check:
         measured=settings.profile in _profile_folders(profiles),
         measured_profiles=profiles,
         statement_definition=statement_definition(codebook_path),
+        measured_datasets=tuple(_dataset_name(p) for p in profiles),
     )
 
 
@@ -816,10 +831,27 @@ def _authors(row: Mapping[str, Any], labels: Mapping[str, str]) -> str:
     fractions = [str(f) for f in row["fraktionen"] or ()]
     if fractions:
         return ", ".join(labels.get(f, f) for f in fractions)
+    if row["urheber_art"] == "Fraktion":
+        return "Fraktion nicht erkannt"  # Review N5: eine Fraktion ohne Namen, nicht „Fraktionen"
     return ORIGINATOR_LABELS.get(str(row["urheber_art"]), str(row["urheber_art"]))
 
 
-def document_rows(documents: pl.DataFrame, labels: Mapping[str, str]) -> tuple[DocumentRow, ...]:
+def body_name(row: Mapping[str, Any], rules: BodyRules) -> str:
+    """Das Gremium beim Namen aus ``[bodies]``, sonst sein Kürzel (Review N5), wie die Hauptseite."""
+    code = str(row["gremium"] or "")
+    if row["gremium_art"] == DISTRICT_LEVEL:
+        named = rules.district_body_names.get(code)
+        if named:
+            return named
+        if row.get("stadtbezirk") is not None:
+            return rules.district_body_name.format(n=row["stadtbezirk"])
+        return code
+    return rules.names.get(code) or code or "Gremium nicht erkannt"
+
+
+def document_rows(
+    documents: pl.DataFrame, labels: Mapping[str, str], rules: BodyRules
+) -> tuple[DocumentRow, ...]:
     """Die Dokumente als Zeilen einer Liste, nach Datum, dann Drucksache (fest in jeder Folge)."""
     rows = [
         DocumentRow(
@@ -829,7 +861,7 @@ def document_rows(documents: pl.DataFrame, labels: Mapping[str, str]) -> tuple[D
             url=_https(row["download_url"]),
             authors=_authors(row, labels),
             fractions=len(row["fraktionen"] or ()),
-            body=str(row["gremium"] or ""),
+            body=body_name(row, rules),
             instrument=INSTRUMENT_LABELS.get(str(row["instrument"]), str(row["instrument"])),
         )
         for row in documents.iter_rows(named=True)
@@ -890,7 +922,7 @@ def concordance(
         initiatives=_k3(documents, INITIATIVES),
         all_functions=_k3(documents, POLITICAL),
         majorities=tuple(majorities),
-        across=document_rows(across, labels),
+        across=document_rows(across, labels, BodyRules.from_settings(settings.bodies)),
         many=int((across.get_column("fraktionen").list.len() >= MANY_FRACTIONS).sum()),
         level=level[0],
         level_dative=level[1],
@@ -1024,7 +1056,11 @@ def build_actors(documents: pl.DataFrame, settings: Settings, check: Check) -> A
         matrices=matrices,
         other_joint=joint_total - sum(m.documents for m in matrices),
         concordance=concordance_model,
-        statements=document_rows(documents.filter(pl.col("funktion") == STATEMENT), labels),
+        statements=document_rows(
+            documents.filter(pl.col("funktion") == STATEMENT),
+            labels,
+            BodyRules.from_settings(settings.bodies),
+        ),
         missing=tuple(missing),
         variant=settings.functions.variant,
         running=settings.period.end is None,
@@ -1070,7 +1106,9 @@ def read_documents(layout: Layout) -> pl.DataFrame:
             how="left",
         )
         .join(
-            pl.read_parquet(layout.papers_bodies, columns=["id", "gremium", "gremium_art"]),
+            pl.read_parquet(
+                layout.papers_bodies, columns=["id", "gremium", "gremium_art", "stadtbezirk"]
+            ),
             on="id",
             how="left",
         )

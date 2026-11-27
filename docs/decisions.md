@@ -4378,7 +4378,7 @@ und kein κ mit Bootstrap; und ein neuer `score` trüge Felder nach, die später
 Ordner eines Profils aus `stichprobe.json` ist (`settings.profile_folder`): die drei Düsseldorfer
 Datensätze, mit ihnen `duesseldorf-vergleich`, das im Ordner der Hauptperiode rechnet;
 Mönchengladbach nicht. Dort heißt jede Überschrift „explorativ", und der Prüfsatz sagt, an welchen
-Profilen gemessen ist (Plan § 8, Gültigkeitsregel). Unabhängig davon tragen „Instrumente je
+Datensätzen gemessen ist, mit Stadt und Periode aus deren Profilen, nicht mit Profilnamen (Review N5) (Plan § 8, Gültigkeitsregel). Unabhängig davon tragen „Instrumente je
 Fraktion" und „Konkordanz" in jedem Datensatz „explorativ" (Messdokument § 8, Frage 14), die
 Konkordanz aber nur, wo es sie gibt: in Mönchengladbach fehlt sie (keine Mehrheit im Profil), ihre
 Überschrift trägt dort kein „explorativ", weil darunter keine Zahl steht, sondern nur der Satz, was
@@ -4451,6 +4451,11 @@ Messdokument bleiben, wie gemessen. Der Abschnitt heißt „Erklärungen und App
 **Eine laufende Periode heißt laufend** (Messdokument § 9.11, Review 2026-11-27, K3). Ist
 `period.end` leer, sagt die Konkordanz unter den Kacheln, bis wann die Daten reichen und dass ein
 kleines K3 dort noch kein Befund ist; in der Periode seit 2025 sind es 0 von 312.
+
+**Die Listen nennen Gremien beim Namen** (Review 2026-11-27, N5): wie die Hauptseite aus `[bodies]`
+(Rat, Ausschüsse, Beiräte; eine Bezirksvertretung über `district_body_name` und den Stadtbezirk),
+sonst das Kürzel. Ein Fraktionsdokument ohne genannte Fraktion heißt in der Spalte Antragsteller
+„Fraktion nicht erkannt", nicht „Fraktionen".
 
 **Der Gast von 28 heißt `abstimmungen`.** Der Abschnitt Konkordanz verlinkt
 `{% if "abstimmungen" in guests %}` auf `#abstimmungen` (Punkt 86), sonst sagt er, dass Beschlüsse

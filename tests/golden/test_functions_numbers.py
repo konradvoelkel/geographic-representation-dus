@@ -80,7 +80,7 @@ def _period(profile: str, root: Path) -> Period:
     documents = (
         corpus.select("id", "date", "paper_type", "name", "reference", "download_url")
         .join(originators.select("id", "urheber_art", "parteien"), on="id")
-        .join(bodies.select("id", "gremium", "gremium_art"), on="id", how="left")
+        .join(bodies.select("id", "gremium", "gremium_art", "stadtbezirk"), on="id", how="left")
         .join(
             classify_functions(corpus, originators, a).select(
                 "id", pl.col("funktion").alias("funktion_a")

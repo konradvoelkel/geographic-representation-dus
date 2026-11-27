@@ -22,7 +22,7 @@
 <h2>Wie geprüft</h2>
 <ul>
 {% if not c.measured %}
-<li><strong>Explorativ</strong>: gemessen ist an den Profilen {{ c.measured_profiles|join(", ") }}, nicht an diesem Datensatz. Was dort gilt, steht unten; jede Zahl auf dieser Seite ist darum explorativ.</li>
+<li><strong>Explorativ</strong>: gemessen ist an {{ c.measured_datasets|join("; ") }}, nicht an diesem Datensatz. Was dort gilt, steht unten; jede Zahl auf dieser Seite ist darum explorativ.</li>
 {% endif %}
 <li><strong>Funktion und Antragsteller</strong> {{ c.sentence }}. An den {{ c.chosen.basis|num }} Dokumenten, denen das Regelwerk eine Funktion gibt, stimmt es in {{ c.chosen.hits|num }} mit ihnen überein, κ = {{ c.chosen.kappa|num(2) }} (95-%-Intervall {{ c.chosen.interval[0]|num(2) }}–{{ c.chosen.interval[1]|num(2) }}; Variante {{ c.variant }}).{% if c.variant == c.selected_on_labels %} Diese Variante ist an denselben Labels gewählt, an denen sie gemessen ist; die vorsichtige Zahl ist die der nicht gewählten Variante {{ c.other_variant }}, κ = {{ c.other.kappa|num(2) }} ({{ c.other.interval[0]|num(2) }}–{{ c.other.interval[1]|num(2) }}).{% else %} Die nicht gewählte Variante {{ c.other_variant }}: κ = {{ c.other.kappa|num(2) }} ({{ c.other.interval[0]|num(2) }}–{{ c.other.interval[1]|num(2) }}).{% endif %} Die Kodierer stimmten untereinander bei der Funktion in {{ c.agreed|num }} von {{ c.units|num }} überein{% if c.same_model %}; bei zwei Kodierern desselben Modells ist das ein schwacher Beleg{% endif %}.</li>
 <li><strong>Antragsteller</strong>: {{ c.fraction_hits|num }} von {{ c.fraction_named|num }} genannten Fraktionen bestätigt, {{ c.fraction_hits|num }} von {{ c.fraction_labelled|num }} gefunden.</li>
