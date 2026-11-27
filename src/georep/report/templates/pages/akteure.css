@@ -10,18 +10,18 @@
    den Leisten jede Zahl (Entlastungsregel); keine Klasse hier tauscht ein Umschalter. */
 :root {
   --fn-kontrolle: #2a78d6; --fn-information: #eb6834; --fn-initiative: #1baf7a;
-  --fn-symbol: #eda100; --fn-vollzug: #6250d6; --fn-rest: #898781;
+  --fn-erklaerung: #eda100; --fn-vollzug: #6250d6; --fn-rest: #898781;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --fn-kontrolle: #3987e5; --fn-information: #d95926; --fn-initiative: #199e70;
-    --fn-symbol: #c98500; --fn-vollzug: #9085e9; --fn-rest: #898781;
+    --fn-erklaerung: #c98500; --fn-vollzug: #9085e9; --fn-rest: #898781;
   }
 }
 .fn-kontrolle { fill: var(--fn-kontrolle); } .swatch.fn-kontrolle { background: var(--fn-kontrolle); }
 .fn-information { fill: var(--fn-information); } .swatch.fn-information { background: var(--fn-information); }
 .fn-initiative { fill: var(--fn-initiative); } .swatch.fn-initiative { background: var(--fn-initiative); }
-.fn-symbol { fill: var(--fn-symbol); } .swatch.fn-symbol { background: var(--fn-symbol); }
+.fn-erklaerung { fill: var(--fn-erklaerung); } .swatch.fn-erklaerung { background: var(--fn-erklaerung); }
 .fn-vollzug { fill: var(--fn-vollzug); } .swatch.fn-vollzug { background: var(--fn-vollzug); }
 .fn-rest { fill: var(--fn-rest); } .swatch.fn-rest { background: var(--fn-rest); }
 ul.toc { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; list-style: none; padding: 0; margin: .75rem 0; font-size: .9rem; }
@@ -51,4 +51,6 @@ fieldset.matrix-ebene { margin: .25rem 0 .5rem; }
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 #funktionen-tabelle th[scope="row"] { white-space: nowrap; }
 /* Die Titel der beiden Listen: auf einem schmalen Bildschirm sonst ein Wort je Zeile. */
-#ueber-die-grenze td:nth-child(3), #resolutionen-liste td:nth-child(3) { min-width: 14em; }
+#ueber-die-grenze td:nth-child(3), #erklaerungen-liste td:nth-child(3) { min-width: 14em; }
+/* Die Definition aus dem Codebuch, wörtlich: abgesetzt wie ein Zitat. */
+blockquote.definition { margin: .5rem 0 1rem; padding: .4rem .9rem; border-left: 3px solid var(--grid); color: var(--ink-2); max-width: 48em; }

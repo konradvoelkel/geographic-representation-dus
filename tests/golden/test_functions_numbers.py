@@ -42,7 +42,7 @@ from georep.report.actors import (
     read_check,
 )
 from georep.report.pages import page_frame, render_page
-from georep.settings import Settings, load_settings
+from georep.settings import CODEBOOK_FUNCTIONS, Settings, load_settings
 from georep.validation.measures import cohen_kappa
 
 pytestmark = pytest.mark.slow
@@ -104,9 +104,9 @@ def periods(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Period]:
 
 
 # --- Abdeckung (§ 3.2, § 3.3) ---------------------------------------------------------------------
-# Variante B je Periode: Kontrolle, Information, Initiative, Symbol, Vollzug, Rest. Variante A in
-# § 3.2; B verschiebt 186 Berichtsanträge in die Kontrolle (77, 89, 20) und 71 Erklärungen ins
-# Symbol (32, 37, 2), in Mönchengladbach 27 Berichtsanträge.
+# Variante B je Periode: Kontrolle, Information, Initiative, Erklärung, Vollzug, Rest. Variante A in
+# § 3.2; B verschiebt 186 Berichtsanträge in die Kontrolle (77, 89, 20) und 71 Erklärungen aus dem
+# Beschlusstext in die Klasse erklaerung (32, 37, 2), in Mönchengladbach 27 Berichtsanträge.
 COVERAGE_B = {
     "duesseldorf-2014": (5_395, 3_790, 6_049, 55, 5_695, 1_231),
     "duesseldorf": (4_039, 4_203, 5_084, 52, 5_730, 0),
@@ -158,7 +158,7 @@ K3 = {"duesseldorf-2014": (49, 653), "duesseldorf": (41, 1_333), "duesseldorf-20
 @pytest.mark.parametrize("profile", list(K3))
 def test_k3_on_the_city_level(periods: dict[str, Period], profile: str) -> None:
     initiatives = periods[profile].documents.filter(
-        pl.col("funktion").is_in(["initiative", "symbol"])
+        pl.col("funktion").is_in(["initiative", "erklaerung"])
     )
     counts = dict(initiatives.group_by("lager").len().iter_rows())
     opposition = sum(
@@ -168,7 +168,7 @@ def test_k3_on_the_city_level(periods: dict[str, Period], profile: str) -> None:
 
 
 # --- Kontrolle je Fraktion gegen die Praxis der Gremien (§ 3.7) ---------------------------------
-# Beobachtet durch erwartet, Fraktionsdokumente der Funktionen Kontrolle, Initiative und Symbol
+# Beobachtet durch erwartet, Fraktionsdokumente der Funktionen Kontrolle, Initiative und Erklärung
 # (Variante A wie in der Messung), Schicht das Gremium. 2020-2025 und ab 2025 sind es die Zahlen
 # der Messung. 2014-2020 nicht: 105 Fraktionsdokumente haben dort kein Gremium, und das Messskript
 # gab ihnen beim Join ohne null-Schlüssel keine Erwartung (CDU 0,99, SPD 0,79, Tierschutz/FW 1,53);
@@ -188,7 +188,7 @@ def test_control_against_the_practice_of_the_bodies(
         periods[profile]
         .documents.filter(
             (pl.col("urheber_art") == "Fraktion")
-            & pl.col("funktion_a").is_in(["kontrolle", "initiative", "symbol"])
+            & pl.col("funktion_a").is_in(["kontrolle", "initiative", "erklaerung"])
         )
         .with_columns((pl.col("funktion_a") == "kontrolle").alias("kontrolle"))
     )
@@ -252,7 +252,13 @@ def test_kappa_of_the_function_stays_where_the_coding_put_it(sample: Sample) -> 
     assert len(basis) == b.basis == a.basis == 135  # die Zahlen des Prüfsatzes auf akteure.html
     for column, hits, kappa in (("funktion", b.hits, b.kappa), ("funktion_a", a.hits, a.kappa)):
         rule = [str(sample.rows[i][column]) for i in basis]
-        label = [str(sample.labels[i]["funktion"]) for i in basis]
+        # im Codebuch heißt die Klasse ``erklaerung`` noch ``symbol`` (dieselbe Definition)
+        label = [
+            CODEBOOK_FUNCTIONS.get(
+                str(sample.labels[i]["funktion"]), str(sample.labels[i]["funktion"])
+            )
+            for i in basis
+        ]
         assert sum(r == lab for r, lab in zip(rule, label, strict=True)) == hits
         found = cohen_kappa(rule, label)
         assert found is not None and round(found, 3) == kappa
@@ -283,7 +289,7 @@ def test_the_cosponsors_are_right_wherever_they_name_a_fraction(sample: Sample) 
 
 
 # --- Die Unterseite akteure.html (Stufe 3, Messdokument § 7) --------------------------------------
-# Die Zahlen der Seite aus denselben Tabellen wie oben, über ``build_actors``: Symbolpolitik, die
+# Die Zahlen der Seite aus denselben Tabellen wie oben, über ``build_actors``: Erklärungen, die
 # beiden Zählungen der Parteien (Frage 25; zusammen 330, davon 281 mit mehr und 49 mit weniger
 # Parteien, wie § 3.8), K3 über alle Funktionen und die Dokumente über die Grenze mit mindestens
 # vier Fraktionen (§ 3.11: 42 von 50 für 2014-2020; die Hauptperiode zählt seit Punkt 75 die Ampel
@@ -291,7 +297,7 @@ def test_the_cosponsors_are_right_wherever_they_name_a_fraction(sample: Sample) 
 # gegen erwartet in Variante B (oben steht Variante A, wie gemessen).
 @dataclass(frozen=True)
 class PageNumbers:
-    symbols: int
+    statements: int
     difference: tuple[int, int, int]  # verschieden, mehr, weniger
     k3_all: tuple[int, int]
     across: tuple[int, int]  # über die Grenze, davon mit mindestens vier Fraktionen
@@ -301,14 +307,14 @@ class PageNumbers:
 
 PAGE_NUMBERS = {
     "duesseldorf-2014": PageNumbers(
-        symbols=55,
+        statements=55,
         difference=(144, 107, 37),
         k3_all=(50, 1_565),
         across=(50, 42),
         ratios={"CDU": 0.98, "SPD": 0.77, "GRUENE": 0.8, "FDP": 0.61, "T_FW": 1.44},
     ),
     "duesseldorf": PageNumbers(
-        symbols=52,
+        statements=52,
         difference=(179, 169, 10),
         k3_all=(41, 2_731),
         across=(41, 27),
@@ -316,7 +322,7 @@ PAGE_NUMBERS = {
         city_pair=("CDU", "GRUENE", 577, "gemeinsam_mehrheit"),
     ),
     "duesseldorf-2025": PageNumbers(
-        symbols=3,
+        statements=3,
         difference=(7, 5, 2),
         k3_all=(1, 778),
         across=(1, 0),
@@ -340,7 +346,7 @@ def _model(period: Period) -> ActorsModel:
 @pytest.mark.parametrize("profile", list(PAGE_NUMBERS))
 def test_the_numbers_of_the_page(periods: dict[str, Period], profile: str) -> None:
     model, expected = _model(periods[profile]), PAGE_NUMBERS[profile]
-    assert len(model.symbols) == expected.symbols
+    assert len(model.statements) == expected.statements
     d = model.difference
     assert (d.different, d.more, d.fewer) == expected.difference
     assert model.concordance is not None and model.check.measured

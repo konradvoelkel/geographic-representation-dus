@@ -68,7 +68,7 @@ SCHEMA: dict[str, Any] = {
     "gremium": pl.String,
     "gremium_art": pl.String,
 }
-INSTRUMENT_OF = {"kontrolle": "anfrage", "initiative": "antrag", "symbol": "resolution"}
+INSTRUMENT_OF = {"kontrolle": "anfrage", "initiative": "antrag", "erklaerung": "resolution"}
 
 
 def _doc(
@@ -330,7 +330,7 @@ ROWS = [
     _doc(2, funktion="kontrolle", fraktionen=["SPD"], lager="allein_opposition"),
     _doc(3, fraktionen=["CDU", "GRUENE"], lager="gemeinsam_mehrheit"),
     _doc(4, fraktionen=["CDU", "SPD"], lager="ueber_grenze"),
-    _doc(5, funktion="symbol", fraktionen=["GRUENE"], lager="allein_mehrheit"),
+    _doc(5, funktion="erklaerung", fraktionen=["GRUENE"], lager="allein_mehrheit"),
 ]
 
 
@@ -342,6 +342,7 @@ def test_eine_geaenderte_guete_json_aendert_die_seite(
     folder.mkdir()
     source = REPO / "validierung" / VALIDATION_PROJECT
     shutil.copy(source / "stichprobe.json", folder / "stichprobe.json")
+    shutil.copy(source / "codebuch.toml", folder / "codebuch.toml")
     quality = _quality()
     original = _render(_check_settings(default_settings), ROWS)
     assert quality["satz"] in original and "schwacher Beleg" in original
@@ -372,7 +373,7 @@ def test_der_pruefsatz_nennt_die_zahlen_der_messung(default_settings: Settings) 
 
 
 # --- Die Seite: Abschnitte, explorativ, Gäste -----------------------------------------------------
-SECTIONS = ("ueberblick", "funktionen", "fraktionen", "wer-mit-wem", "konkordanz", "resolutionen")
+SECTIONS = ("ueberblick", "funktionen", "fraktionen", "wer-mit-wem", "konkordanz", "erklaerungen")
 
 
 def _headings(page: str) -> dict[str, str]:
@@ -500,3 +501,43 @@ def test_jede_spalte_der_seite_ist_da(default_settings: Settings) -> None:
     with pytest.raises(SchemaError, match="lager"):
         build_actors(frame, default_settings, read_check(_check_settings(default_settings)))
     assert "lager" in DOCUMENT_COLUMNS
+
+
+# --- Konrad, 2026-11-27: „Erklärung oder Appell", nicht „Symbolpolitik" -------------------------
+WORD = re.compile("symbol", re.IGNORECASE)
+
+
+def test_kein_leser_sieht_das_wort_symbol(mini_run: Layout) -> None:
+    """Die Klasse heißt auf der Seite „Erklärung oder Appell", in den Daten ``erklaerung``.
+
+    Geprüft werden die gebaute Unterseite, die Hauptseite (Downloads und Spaltenschema),
+    ``schema.json`` und die beiden Tabellen als CSV.
+    """
+    files = [
+        mini_run.site / "akteure.html",
+        mini_run.site_index,
+        mini_run.site_data / "schema.json",
+        *(mini_run.site_data / f"{table.name}.csv" for table in TABLES),
+    ]
+    found = {path.name: WORD.findall(path.read_text(encoding="utf-8")) for path in files}
+    assert {name: hits for name, hits in found.items() if hits} == {}
+
+
+def test_die_vorlagen_nennen_das_wort_symbol_nicht() -> None:
+    folder = REPO / "src" / "georep" / "report" / "templates" / "pages"
+    found = sorted(
+        p.name for p in folder.rglob("akteure*") if WORD.search(p.read_text(encoding="utf-8"))
+    )
+    assert found == []
+
+
+def test_die_seite_nennt_die_definition_aus_dem_codebuch(default_settings: Settings) -> None:
+    """Die Definition steht wörtlich da; im Codebuch heißt die Klasse noch ``symbol``."""
+    from georep.validation.codebook import load_codebook
+
+    folder = REPO / "validierung" / VALIDATION_PROJECT
+    codebook = load_codebook(folder / "codebuch.toml", VALIDATION_PROJECT)
+    option = next(o for o in codebook.question("funktion").options if o.value == "symbol")
+    page = _render(_check_settings(default_settings), ROWS)
+    assert option.definition.strip() in page.replace("&#34;", '"').replace("&#39;", "'")
+    assert "Erklärung oder Appell" in page and "Erklärung/Appell" in page

@@ -4346,7 +4346,8 @@ allen fünf Paketprofilen:
   Gremium als Schicht, „explorativ", unter 30 Dokumenten kein Verhältnis), Wer mit wem (je Ebene
   eine Matrix Fraktion × Fraktion), Konkordanz (K3 mit Wilson-Intervall und n, dasselbe mit
   Anfragen, die Mehrheiten mit Vereinbarung und Drucksachen, alle Dokumente über die Grenze) und
-  Resolutionen und Appelle (die Liste, keine Rangfolge je Fraktion).
+  Erklärungen und Appelle (die Liste, keine Rangfolge je Fraktion, mit der Definition aus dem
+  Codebuch).
 - Die Downloads `dokumente_funktion` und `dokumente_antragsteller` (Parquet und CSV, Spaltendoku in
   `schema.json`); der Name ist der aus § 10, Punkt 1, und Punkt 75, nicht `mitantraege`.
 - Der Linkblock auf `index.html` ist der Abschnitt `58-weitere` aus F2; er erscheint, sobald eine
@@ -4403,8 +4404,8 @@ Flächen zweierlei bedeutet (CLAUDE.md). Ohne JavaScript stehen beide Matrizen u
   aktuell. Optional, weil `published` eine optionale Tabelle ohne Datei auslässt;
   `check_step_order` sieht trotzdem, dass ihr Schritt vorher läuft.
 
-`guete.json` und `stichprobe.json` sind Eingaben von `page_akteure`; sie liegen im Repo, nicht im
-Lauf. Der Test, dass jede Eingabe jedes `page_*` im Lauf entsteht (Punkt 86), lässt darum zu, was
+`guete.json`, `stichprobe.json` und `codebuch.toml` sind Eingaben von `page_akteure`; sie liegen im
+Repo, nicht im Lauf. Der Test, dass jede Eingabe jedes `page_*` im Lauf entsteht (Punkt 86), lässt darum zu, was
 unter `validation.root` liegt. Tests, die das Register durch Probebeiträge ersetzen, ersetzen auch
 den Ordner `templates/pages/` (`pages_folder`), sonst wäre `akteure.html.j2` darin verwaist
 (`check_page_files`).
@@ -4413,8 +4414,23 @@ den Ordner `templates/pages/` (`pages_folder`), sonst wäre `akteure.html.j2` da
 Dokumenten, die Namen aus dem Profil (Kurznamen, „SPD/Volt" aus `[[functions.fractions]]`); ein Test
 verlangt, dass kein Parteiname eines Paketprofils in den Vorlagen steht. Der Satz aus § 3.12 über
 den Umgang mit Anträgen einer bestimmten Fraktion heißt darum auf der Seite „mit den Anträgen
-einzelner Fraktionen". Die Spalte Symbolpolitik bleibt in der Tabelle je Fraktion, wie § 7 sie
+einzelner Fraktionen". Die Spalte Erklärung/Appell bleibt in der Tabelle je Fraktion, wie § 7 sie
 nennt, ist aber nicht sortierbar; die Liste steht im letzten Abschnitt (Frage 9.8, § 10 Punkt 8).
+
+**„Erklärung oder Appell" statt „Symbolpolitik"** (Konrad, 2026-11-27, nach den Bildschirmfotos:
+das Wort ist wertend). Die Klasse heißt überall, wo ein Leser sie sieht, „Erklärung oder Appell",
+kurz „Erklärung/Appell" in Leisten, Legenden und Spalten; in `dokumente_funktion` ist der Wert
+`erklaerung` statt `symbol` (`FUNCTIONS_SCHEMA_VERSION` 2), in den Tabellen der Settings ebenso
+(`FUNCTION_CLASSES`, `FUNCTION_INSTRUMENTS`, im Stadtprofil `erklaerung/resolution`). Die Klasse
+hieß in Messung und Codebuch `symbol`; die Definition ist unverändert, und die Validierung gilt
+weiter: `settings.CODEBOOK_FUNCTIONS` übersetzt das Label des Codebuchs, und der slow-Test rechnet
+κ mit dieser Übersetzung nach (dieselben 125 Treffer). Die Seite zeigt die Definition wörtlich aus
+`validierung/15-funktion-f4/codebuch.toml` (eine weitere Eingabe von `page_akteure`); ein Test
+verlangt, dass die gebaute Unterseite, die Hauptseite, `schema.json` und die CSV der beiden Tabellen
+das Wort nicht enthalten. Intern bleiben die Namen der Settings `symbol_title` und `symbol_text`:
+sie stehen in keiner Ausgabe, und ein Umbenennen änderte jedes Stadtprofil. Das Messskript und das
+Messdokument bleiben, wie gemessen. Der Abschnitt heißt „Erklärungen und Appelle" (Anker
+`#erklaerungen`).
 
 **Der Gast von 28 heißt `abstimmungen`.** Der Abschnitt Konkordanz verlinkt
 `{% if "abstimmungen" in guests %}` auf `#abstimmungen` (Punkt 86), sonst sagt er, dass Beschlüsse
@@ -4455,7 +4471,7 @@ dritte Matrix „alle Gremien" (sie mischte die Ebene mit und ohne Lager); `link
   geänderten `guete.json`, gemessen oder explorativ je Paketprofil, Abschnitte und Überschriften,
   der Link auf den Gast, keine Partei in den Vorlagen, Register, Linkblock, Downloads mit
   Spaltendoku, Stamp von `report`, erlaubte Links); slow in `tests/golden/test_functions_numbers.py`
-  die Zahlen der Seite in den drei Düsseldorfer Datensätzen (Symbolpolitik 55, 52, 3; die zwei
+  die Zahlen der Seite in den drei Düsseldorfer Datensätzen (Erklärungen 55, 52, 3; die zwei
   Zählungen 144, 179, 7, zusammen 330 wie § 3.8; K3 mit Anfragen 50/1 565, 41/2 731, 1/778; über
   die Grenze 50 davon 42, 41 davon 27, 1 davon 0; beobachtet gegen erwartet in Variante B; CDU und
   Grüne in Rat und Ausschüssen der Hauptperiode 577, beide in der Mehrheit), die zweite Stadt ohne

@@ -139,12 +139,13 @@ TABLES = (
     PublishedTable(
         "dokumente_funktion",
         lambda layout: functions_files(layout).functions,
-        "Funktion je Ratsdokument: Kontrolle, Information, Initiative, Symbolpolitik, Vollzug, "
+        "Funktion je Ratsdokument: Kontrolle, Information, Initiative, Erklärung oder Appell, Vollzug, "
         "mit Instrument und Quelle",
         {
             "id": _ID,
             "funktion": (
-                "kontrolle, information, initiative, symbol, vollzug oder rest (auf der Seite "
+                "kontrolle, information, initiative, erklaerung (Erklärung oder Appell), vollzug oder rest "
+                "(auf der Seite "
                 "„Funktion nicht erkannt“); genau eine je Dokument",
                 "",
             ),
@@ -160,7 +161,7 @@ TABLES = (
             ),
             "variante": (
                 "Variante des Regelwerks, A oder B; B liest den Beschlusstext eines Antrags "
-                "(Erklärung als Symbol, Berichtswunsch als Kontrolle)",
+                "(Erklärung als erklaerung, Berichtswunsch als Kontrolle)",
                 "",
             ),
         },

@@ -261,7 +261,7 @@ think = false                  # die Denkspur von qwen3.6 und gemma4 aus: sie ko
 # --- Vorhaben 15: Dokumentfunktion und gemeinsame Anträge (docs/plans/15-funktion.md) -------------
 [functions]                    # Funktion je Ratsdokument (Schritt functions) und Antragsteller je Fraktionsdokument (Schritt cosponsors). Hier steht nur die Sprache der Ratsdokumente, an beiden Stadtprofilen ohne Änderung gemessen (Messdokument § 3.3); Dokumentarten, Sammelarten mit ihren Textregeln, Briefkopf und Fraktionen aus mehreren Parteien stehen im Stadtprofil. Alle Muster kleingeschrieben, eine Liste ist eine Alternative
 enabled = false                # Schalter beider Schritte; ein Stadtprofil schaltet ihn ein, wenn es die Tabellen trägt. Ohne Urheber (Option 04, [originators]) fehlen beide Schritte ohnehin
-variant = "B"                  # B liest den Beschlusstext eines Antrags (Erklärung -> symbol) und zählt den Berichtsantrag als Kontrolle; gewählt nach der Kodierung (kappa 0,905 gegen A 0,829, Messdokument § 5). A bleibt als Schalter
+variant = "B"                  # B liest den Beschlusstext eines Antrags (Erklärung -> erklaerung) und zählt den Berichtsantrag als Kontrolle; gewählt nach der Kodierung (kappa 0,905 gegen A 0,829, Messdokument § 5). A bleibt als Schalter
 head_chars = 700               # Textkopf, in dem die Regeln der Sammelarten suchen (Instrumentwort, Kenntnis gegen Beschluss, Briefkopf)
 wide_chars = 3000              # zweiter Blick in eine Sammelart der Verwaltung, wenn Kopf und Titel nichts sagen
 decision_chars = 1200          # Variante B: so viel Beschlusstext eines Antrags wird gelesen

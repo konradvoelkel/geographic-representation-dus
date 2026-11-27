@@ -1717,7 +1717,10 @@ class Ml(_Strict):
 # Funktion die Instrumente (Unterart, nicht Teil des validierten Kriteriums). Die Tabellen stehen
 # hier und nicht im Modul ``analysis.functions``, weil die Dokumentarten des Profils beim Laden gegen
 # sie geprüft werden: ein Tippfehler wie „vollzug/beschlusvorlage" fällt vor dem ersten Lauf auf.
-FUNCTION_CLASSES = ("kontrolle", "information", "initiative", "symbol", "vollzug", "rest")
+# ``erklaerung`` („Erklärung oder Appell") hieß in Messung und Codebuch ``symbol``; die Definition
+# ist dieselbe (Konrad, 2026-11-27: „Symbolpolitik" ist wertend). ``CODEBOOK_FUNCTIONS`` übersetzt.
+FUNCTION_CLASSES = ("kontrolle", "information", "initiative", "erklaerung", "vollzug", "rest")
+CODEBOOK_FUNCTIONS = {"symbol": "erklaerung"}  # Label im Codebuch 15 -> Wert in den Daten
 FUNCTION_INSTRUMENTS: dict[str, tuple[str, ...]] = {
     "kontrolle": ("anfrage", "nachfrage", "berichtsantrag"),
     "information": ("informationsvorlage", "berichtsvorlage"),
@@ -1729,7 +1732,7 @@ FUNCTION_INSTRUMENTS: dict[str, tuple[str, ...]] = {
         "berichtsantrag",  # Variante A; Variante B zählt ihn als Kontrolle
         "eingabe",
     ),
-    "symbol": ("resolution", "erklaerung_text"),
+    "erklaerung": ("resolution", "erklaerung_text"),
     "vollzug": (
         "beschlussvorlage",
         "satzung",

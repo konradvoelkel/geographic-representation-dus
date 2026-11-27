@@ -604,14 +604,15 @@ wem* (je Ebene eine Matrix Fraktion × Fraktion, `majorities.body_kinds` und Bez
 eigenes Skript schaltet zwischen ihnen um und lässt ohne JavaScript beide stehen; nur auf der Ebene
 der Ratsmehrheit trägt eine Zelle das Lager des Paars am Datum jedes Dokuments); *Konkordanz* (K3
 mit Wilson-Intervall und n, die Mehrheiten mit Vereinbarung und Drucksachen, die Dokumente über die
-Grenze; ohne `[majorities]` sagt der Abschnitt, was fehlt); *Resolutionen und Appelle* (die Liste,
-keine Rangfolge je Fraktion). Oben steht der Prüfsatz: Satz und Übereinstimmung der Kodierer aus
+Grenze; ohne `[majorities]` sagt der Abschnitt, was fehlt); *Erklärungen und Appelle* (die Liste,
+keine Rangfolge je Fraktion, die Definition wörtlich aus dem Codebuch; die Klasse heißt in den Daten
+`erklaerung`, im Codebuch `symbol`, `settings.CODEBOOK_FUNCTIONS` übersetzt). Oben steht der Prüfsatz: Satz und Übereinstimmung der Kodierer aus
 `validierung/15-funktion-f4/guete.json`, die Treffer des Regelwerks gegen die Labels aus
 `report.actors.RULE_CHECK` (der slow-Test rechnet sie nach). Gemessen ist ein Datensatz, wenn sein
 Ordner einer der Profile aus `stichprobe.json` ist (`settings.profile_folder`); sonst heißt jede
 Überschrift „explorativ". Die Seite verlinkt die PDF-Dateien ihres Korpus (`actors_links`) und, wenn
-Vorhaben 28 ihn anhängt, den Gast `#abstimmungen`. `guete.json` und `stichprobe.json` sind Eingaben
-von `page_akteure` und liegen im Repo, nicht im Lauf.
+Vorhaben 28 ihn anhängt, den Gast `#abstimmungen`. `guete.json`, `stichprobe.json` und `codebuch.toml`
+sind Eingaben von `page_akteure` und liegen im Repo, nicht im Lauf.
 
 **Abschnitte aus fremden Beiträgen** (Vorarbeit V1, Punkt 86): ein Beitrag hängt mit
 `Contribution.sections` einen Abschnitt an die Unterseite eines anderen (`report.pages.PageSection`:

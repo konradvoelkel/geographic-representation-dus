@@ -5,7 +5,7 @@ erste Unterseite nach F2 (Punkt 69). Fünf Abschnitte, **für alle Fraktionen gl
 
 1. *Funktionen der Dokumente*: je Urheberklasse eine gestapelte Leiste über die sechs Klassen, dazu
    die Tabelle der Zahlen und die Instrumente;
-2. *Instrumente je Fraktion*: Dokumente, davon gemeinsam, Kontrolle, Initiative, Symbol, der
+2. *Instrumente je Fraktion*: Dokumente, davon gemeinsam, Kontrolle, Initiative, Erklärung, der
    Kontrollanteil roh und **beobachtet gegen erwartet** gegen die Praxis der Gremien
    (``analysis.practice``), „explorativ"; unter ``MIN_DOCUMENTS`` Dokumenten kein Verhältnis;
 3. *Wer mit wem*: je Ebene (Rat und Ausschüsse, Bezirksvertretungen) eine Matrix Fraktion ×
@@ -14,7 +14,9 @@ erste Unterseite nach F2 (Punkt 69). Fünf Abschnitte, **für alle Fraktionen gl
 4. *Konkordanz*: K3 (wie oft trägt eine Fraktion der Mehrheit eine Initiative mit, an der die
    Opposition beteiligt ist) mit Wilson-Intervall und n, die Mehrheiten mit ihrer Quelle, die
    Dokumente über die Grenze; nur, wenn das Profil eine Mehrheit kennt;
-5. *Resolutionen und Appelle*: die Symbolpolitik als Liste, ohne Rangfolge je Fraktion.
+5. *Erklärungen und Appelle*: die Klasse ``erklaerung`` als Liste, ohne Rangfolge je Fraktion,
+   mit ihrer Definition wörtlich aus dem Codebuch (dort heißt sie ``symbol``; Konrad, 2026-11-27:
+   kein Leser sieht das Wort „Symbolpolitik", es ist wertend).
 
 Die Prüfung steht oben auf der Seite: der Satz und die Übereinstimmung der Kodierer aus
 ``guete.json`` (F4, Punkt 87), die Treffer des Regelwerks gegen die Labels aus ``RULE_CHECK``. Ein
@@ -49,42 +51,45 @@ from georep.analysis.cosponsors import (
     camp,
     fractions_on,
 )
+from georep.analysis.functions import STATEMENT
 from georep.analysis.parties import URHEBER_ARTEN
 from georep.analysis.practice import RATIO, observed_expected
 from georep.errors import MissingInputError, SchemaError
 from georep.layout import Layout
 from georep.prep.bodies import KIND_LABELS
 from georep.settings import (
+    CODEBOOK_FUNCTIONS,
     FUNCTION_CLASSES,
     Fraction,
     Majorities,
     Settings,
     profile_folder,
 )
+from georep.validation.codebook import load_codebook
 from georep.validation.measures import wilson_interval
 
 PAGE_NAME = "akteure"
 VALIDATION_PROJECT = "15-funktion-f4"  # der Ordner unter ``validation.root`` mit ``guete.json``
 MIN_DOCUMENTS = 30  # darunter kein Verhältnis je Fraktion (Messdokument § 7, Abschnitt 2)
 MANY_FRACTIONS = 4  # „Allparteienantrag": mindestens so viele Fraktionen (Messdokument § 3.11)
-POLITICAL = ("kontrolle", "initiative", "symbol")  # die Funktionen der Fraktionsdokumente
-INITIATIVES = (
-    "initiative",
-    "symbol",
-)  # K3 zählt Initiativen (Anfragen stellt man selten gemeinsam)
+POLITICAL = ("kontrolle", "initiative", STATEMENT)  # die Funktionen der Fraktionsdokumente
+# K3 zählt Initiativen (Anfragen stellt man selten gemeinsam)
+INITIATIVES = ("initiative", STATEMENT)
 DISTRICT_LEVEL = "bezirksvertretung"  # die Gremienart der zweiten Matrix
 OPPOSITION_TAKES_PART = (ALONE_OPPOSITION, JOINT_OPPOSITION, ACROSS)
 # Das Lager eines Paars zweier Fraktionen; ``camp`` gibt für zwei verschiedene genau eines davon.
 PAIR_CAMPS = (JOINT_MAJORITY, ACROSS, JOINT_OPPOSITION)
 
+# Die Funktionen in Worten: lang im Text, kurz in Leisten, Legenden und Spalten (Konrad, 2026-11-27).
 FUNCTION_LABELS: dict[str, str] = {
     "kontrolle": "Kontrolle",
     "information": "Information",
     "initiative": "Initiative",
-    "symbol": "Symbolpolitik",
+    STATEMENT: "Erklärung oder Appell",
     "vollzug": "Vollzug",
     "rest": "Funktion nicht erkannt",  # Messdokument § 4.2: kein Dokument ohne Funktion
 }
+FUNCTION_SHORT: dict[str, str] = FUNCTION_LABELS | {STATEMENT: "Erklärung/Appell"}
 # Die Instrumente aus ``settings.FUNCTION_INSTRUMENTS`` in Worten; ein Test hält beide gleich.
 INSTRUMENT_LABELS: dict[str, str] = {
     "anfrage": "Anfrage",
@@ -207,12 +212,25 @@ class Check:
     measured_profiles: tuple[
         str, ...
     ]  # die Profile der Stichprobe, wie ``stichprobe.json`` sie nennt
+    statement_definition: str  # die Definition der Klasse ``erklaerung``, wörtlich aus dem Codebuch
 
 
-def check_files(settings: Settings) -> tuple[Path, Path]:
-    """``guete.json`` und ``stichprobe.json`` des Vorhabens, im Repo unter ``validation.root``."""
+def check_files(settings: Settings) -> tuple[Path, Path, Path]:
+    """``guete.json``, ``stichprobe.json`` und ``codebuch.toml`` im Repo unter ``validation.root``."""
     folder = settings.validation.root / VALIDATION_PROJECT
-    return folder / "guete.json", folder / "stichprobe.json"
+    return folder / "guete.json", folder / "stichprobe.json", folder / "codebuch.toml"
+
+
+def statement_definition(codebook_path: Path) -> str:
+    """Die Definition der Klasse ``erklaerung`` aus dem Codebuch, wo sie ``symbol`` heißt."""
+    codebook = load_codebook(codebook_path, VALIDATION_PROJECT)
+    names = {data: label for label, data in CODEBOOK_FUNCTIONS.items()}
+    try:
+        question = codebook.question("funktion")
+        option = next(o for o in question.options if o.value == names.get(STATEMENT, STATEMENT))
+    except (KeyError, StopIteration) as error:
+        raise SchemaError(f"{codebook_path}: keine Option für {STATEMENT}") from error
+    return option.definition.strip()
 
 
 def _profile_folders(names: Sequence[str]) -> set[str]:
@@ -234,8 +252,8 @@ def read_check(settings: Settings, rule: RuleCheck = RULE_CHECK) -> Check:
     Profile ist, aus denen die Stichprobe gezogen ist: das Vergleichsprofil rechnet im Ordner der
     Hauptperiode und ist damit gemessen, eine zweite Stadt nicht.
     """
-    quality_path, sample_path = check_files(settings)
-    for path in (quality_path, sample_path):
+    quality_path, sample_path, codebook_path = check_files(settings)
+    for path in (quality_path, sample_path, codebook_path):
         if not path.is_file():
             raise MissingInputError(f"{path} fehlt; die Seite {PAGE_NAME}.html nennt ihre Prüfung")
     quality: dict[str, Any] = json.loads(quality_path.read_text(encoding="utf-8"))
@@ -265,6 +283,7 @@ def read_check(settings: Settings, rule: RuleCheck = RULE_CHECK) -> Check:
         selected_on_labels=rule.selected_on_labels,
         measured=settings.profile in _profile_folders(profiles),
         measured_profiles=profiles,
+        statement_definition=statement_definition(codebook_path),
     )
 
 
@@ -346,7 +365,7 @@ def function_bars(documents: pl.DataFrame) -> tuple[FunctionBar, ...]:
             n = counts.get((art, function), 0)
             if n:
                 segments.append(
-                    Segment(function, FUNCTION_LABELS[function], n, n / total, x, n / total)
+                    Segment(function, FUNCTION_SHORT[function], n, n / total, x, n / total)
                 )
                 x += n / total
         bars.append(FunctionBar(art, ORIGINATOR_LABELS[art], total, tuple(segments)))
@@ -363,7 +382,7 @@ def function_table(documents: pl.DataFrame) -> FunctionTable:
     rows = tuple(
         FunctionRow(
             function,
-            FUNCTION_LABELS[function],
+            FUNCTION_SHORT[function],
             tuple(counts.get((a, function), 0) for a in arts),
             sum(counts.get((a, function), 0) for a in arts),
         )
@@ -389,7 +408,7 @@ def instruments(documents: pl.DataFrame) -> tuple[InstrumentRow, ...]:
         rows.extend(
             InstrumentRow(
                 function,
-                FUNCTION_LABELS[function],
+                FUNCTION_SHORT[function],
                 instrument,
                 INSTRUMENT_LABELS.get(instrument, instrument),
                 n,
@@ -405,11 +424,11 @@ def instruments(documents: pl.DataFrame) -> tuple[InstrumentRow, ...]:
 class FractionRow:
     key: str
     label: str
-    documents: int  # Fraktionsdokumente der Funktionen Kontrolle, Initiative und Symbol
+    documents: int  # Fraktionsdokumente der Funktionen Kontrolle, Initiative und Erklärung
     joint: int
     control: int
     initiative: int
-    symbol: int
+    statement: int
     control_share: float  # roh: Kontrolle durch Dokumente
     ratio: (
         float | None
@@ -473,7 +492,7 @@ def fraction_rows(documents: pl.DataFrame, labels: Mapping[str, str]) -> tuple[F
             pl.col("gemeinsam").sum().alias("joint"),
             (pl.col("funktion") == "kontrolle").sum().alias("control"),
             (pl.col("funktion") == "initiative").sum().alias("initiative"),
-            (pl.col("funktion") == "symbol").sum().alias("symbol"),
+            (pl.col("funktion") == STATEMENT).sum().alias("statement"),
         )
     )
     rows = [
@@ -484,17 +503,17 @@ def fraction_rows(documents: pl.DataFrame, labels: Mapping[str, str]) -> tuple[F
             joint=int(joint),
             control=int(control),
             initiative=int(initiative),
-            symbol=int(symbol),
+            statement=int(statement),
             control_share=int(control) / int(n),
             ratio=ratio_of.get(str(key)) if int(n) >= MIN_DOCUMENTS else None,
         )
-        for key, n, joint, control, initiative, symbol in counts.iter_rows()
+        for key, n, joint, control, initiative, statement in counts.iter_rows()
     ]
     return tuple(sorted(rows, key=lambda r: (-r.documents, r.label)))
 
 
 def practice_rows(documents: pl.DataFrame) -> tuple[PracticeRow, ...]:
-    """Der Kontrollanteil der Fraktionsdokumente (Kontrolle, Initiative, Symbol) je Gremienart."""
+    """Der Kontrollanteil der Fraktionsdokumente (Kontrolle, Initiative, Erklärung) je Gremienart."""
     political = _political_fraction_documents(documents)
     found = (
         political.with_columns(pl.col("gremium_art").fill_null("unbekannt"))
@@ -718,7 +737,7 @@ class Concordance:
     """K3 in Rat und Ausschüssen (Messdokument § 3.11), die Mehrheiten und die Dokumente über die Grenze."""
 
     initiatives: Share  # K3: über die Grenze / Initiativen mit Beteiligung der Opposition
-    all_functions: Share  # dasselbe über Kontrolle, Initiative und Symbol
+    all_functions: Share  # dasselbe über Kontrolle, Initiative und Erklärung
     majorities: tuple[MajorityRow, ...]
     across: tuple[DocumentRow, ...]  # alle Dokumente über die Grenze, nach Datum
     many: int  # davon mit mindestens ``MANY_FRACTIONS`` Fraktionen
@@ -852,7 +871,7 @@ class ActorsModel:
     matrices: tuple[Matrix, ...]
     other_joint: int  # gemeinsame Dokumente außerhalb beider Matrizen (Beiräte, Gremium unbekannt)
     concordance: Concordance | None
-    symbols: tuple[DocumentRow, ...]
+    statements: tuple[DocumentRow, ...]
     missing: tuple[str, ...]  # was diesem Profil fehlt, je ein Satz (Plan § 6)
     variant: str
     min_documents: int = MIN_DOCUMENTS
@@ -940,7 +959,7 @@ def build_actors(documents: pl.DataFrame, settings: Settings, check: Check) -> A
         matrices=matrices,
         other_joint=joint_total - sum(m.documents for m in matrices),
         concordance=concordance_model,
-        symbols=document_rows(documents.filter(pl.col("funktion") == "symbol"), labels),
+        statements=document_rows(documents.filter(pl.col("funktion") == STATEMENT), labels),
         missing=tuple(missing),
         variant=settings.functions.variant,
     )
@@ -999,7 +1018,7 @@ def page_data(model: ActorsModel, settings: Settings) -> Mapping[str, object]:
     labels, _ = labels_of(settings)
     return {
         "akteure": model,
-        "functions": tuple(FUNCTION_LABELS.items()),
+        "functions": tuple(FUNCTION_SHORT.items()),
         "camps": tuple((c, CAMP_LABELS[c]) for c in PAIR_CAMPS),
         "camp_names": CAMP_LABELS,
         "labels": labels,

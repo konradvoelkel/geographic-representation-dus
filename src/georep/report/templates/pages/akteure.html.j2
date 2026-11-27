@@ -2,7 +2,7 @@
   Vorhaben 15, Stufe 3 (docs/plans/15-funktion.md, § 7): die erste Unterseite nach F2. Das Modell
   ist ``report.actors.ActorsModel``; jede Zahl kommt aus den Daten, jeder Name einer Fraktion aus
   dem Profil. Die Seite ist für alle Fraktionen gleich gebaut: dieselben Spalten, dieselbe Folge
-  (nach Dokumenten), keine Rangfolge der Symbolpolitik. Ein Datensatz, an dem nicht gemessen ist,
+  (nach Dokumenten), keine Rangfolge der Erklärungen und Appelle. Ein Datensatz, an dem nicht gemessen ist,
   heißt in jeder Überschrift „explorativ" (docs/plan-zeigen-2026-11.md, § 8).
 #}
 {% from "macros.html.j2" import more %}
@@ -10,13 +10,13 @@
 {% set c = m.check %}
 {% set ex = " (explorativ)" if m.explorative else "" %}
 <section id="ueberblick">
-<p>Diese Seite gibt jedem der {{ m.documents|num }} Ratsdokumente der {{ model.period.title }}{% if m.first and m.last %} ({{ m.first|date_de }} bis {{ m.last|date_de }}){% endif %} eine <em>Funktion</em>: was das Gremium mit dem Dokument tun soll, nicht sein Thema. Kontrolle heißt fragen (Anfrage), Information mitteilen (Informations- und Berichtsvorlage), Initiative etwas anstoßen (Antrag, Prüfauftrag), Symbolpolitik eine Haltung erklären (Resolution, Appell), Vollzug entscheiden und ausführen (Beschlussvorlage, Satzung, Haushalt). Für die {{ m.fraction_documents|num }} Dokumente von Fraktionen nennt sie die <em>Antragsteller</em>, also auch, wer mit wem Anträge stellt.</p>
+<p>Diese Seite gibt jedem der {{ m.documents|num }} Ratsdokumente der {{ model.period.title }}{% if m.first and m.last %} ({{ m.first|date_de }} bis {{ m.last|date_de }}){% endif %} eine <em>Funktion</em>: was das Gremium mit dem Dokument tun soll, nicht sein Thema. Kontrolle heißt fragen (Anfrage), Information mitteilen (Informations- und Berichtsvorlage), Initiative etwas anstoßen (Antrag, Prüfauftrag), Erklärung oder Appell eine Haltung erklären oder Dritte auffordern (Resolution, Appell), Vollzug entscheiden und ausführen (Beschlussvorlage, Satzung, Haushalt). Für die {{ m.fraction_documents|num }} Dokumente von Fraktionen nennt sie die <em>Antragsteller</em>, also auch, wer mit wem Anträge stellt.</p>
 <ul class="toc">
 <li><a href="#funktionen">Funktionen der Dokumente</a></li>
 <li><a href="#fraktionen">Instrumente je Fraktion</a></li>
 <li><a href="#wer-mit-wem">Wer mit wem</a></li>
 <li><a href="#konkordanz">Konkordanz</a></li>
-<li><a href="#resolutionen">Resolutionen und Appelle</a></li>
+<li><a href="#erklaerungen">Erklärungen und Appelle</a></li>
 </ul>
 <div class="pruefung" id="pruefung">
 <h2>Wie geprüft</h2>
@@ -85,7 +85,7 @@
 <section id="fraktionen">
 <h2>Instrumente je Fraktion (explorativ)</h2>
 {% if m.fractions %}
-<p>Fraktionsdokumente der Funktionen Kontrolle, Initiative und Symbolpolitik; ein gemeinsames Dokument zählt für jede beteiligte Fraktion. Wie viel eine Fraktion fragt, ist zum großen Teil Praxis des Gremiums, in dem sie das Dokument stellt{% if m.practice %} (Anteil Kontrolle {% for p in m.practice %}{{ p.label }} {{ p.share|num(2) }}{{ ", " if not loop.last }}{% endfor %}){% endif %}. Darum steht neben dem rohen Anteil <em>beobachtet gegen erwartet</em>: erwartet ist, wie oft die Fraktion fragte, wenn sie in jedem ihrer Gremien so handelte wie alle Fraktionen dort. Über 1 heißt mehr als die Praxis ihrer Gremien. Explorativ heißt: das Verhältnis ist nach dem Ansehen der Daten gerechnet und prüft keine vorab festgelegte Hypothese. Unter {{ m.min_documents }} Dokumenten steht kein Verhältnis. In der Tabelle heißt der rohe Anteil „Kontrolle roh“ und das Verhältnis „beob./erw.“.</p>
+<p>Fraktionsdokumente der Funktionen Kontrolle, Initiative und Erklärung oder Appell; ein gemeinsames Dokument zählt für jede beteiligte Fraktion. Wie viel eine Fraktion fragt, ist zum großen Teil Praxis des Gremiums, in dem sie das Dokument stellt{% if m.practice %} (Anteil Kontrolle {% for p in m.practice %}{{ p.label }} {{ p.share|num(2) }}{{ ", " if not loop.last }}{% endfor %}){% endif %}. Darum steht neben dem rohen Anteil <em>beobachtet gegen erwartet</em>: erwartet ist, wie oft die Fraktion fragte, wenn sie in jedem ihrer Gremien so handelte wie alle Fraktionen dort. Über 1 heißt mehr als die Praxis ihrer Gremien. Explorativ heißt: das Verhältnis ist nach dem Ansehen der Daten gerechnet und prüft keine vorab festgelegte Hypothese. Unter {{ m.min_documents }} Dokumenten steht kein Verhältnis. In der Tabelle heißt der rohe Anteil „Kontrolle roh“ und das Verhältnis „beob./erw.“.</p>
 <p class="note">Die Hauptseite zählt Dokumente je Partei aus der Urheberspalte <code>parteien</code>, die die erste Quelle mit Treffer nimmt (Dokumentart, Titel oder Textkopf); diese Seite vereinigt Dokumentart, den Autorenteil des Titels und den Briefkopf. Bei {{ m.difference.different|num }} von {{ m.difference.documents|num }} Fraktionsdokumenten nennen die beiden Zählungen verschiedene Parteien: {{ m.difference.more|num }} mit mehr Parteien hier, {{ m.difference.fewer|num }} mit weniger{% if m.difference.other %}, {{ m.difference.other|num }} mit gleich vielen, aber anderen{% endif %}.</p>
 <div class="scroll"><table id="fraktionen-tabelle">
 <thead><tr>
@@ -94,7 +94,7 @@
 <th scope="col" class="num" data-sort="num">gemeinsam</th>
 <th scope="col" class="num" data-sort="num">Kontrolle</th>
 <th scope="col" class="num" data-sort="num">Initiative</th>
-<th scope="col" class="num">Symbolpolitik</th>
+<th scope="col" class="num">Erklärung/Appell</th>
 <th scope="col" class="num" data-sort="num">Kontrolle roh</th>
 <th scope="col" class="num" data-sort="num">beob./erw.</th>
 </tr></thead>
@@ -106,7 +106,7 @@
 <td class="num" data-value="{{ f.joint }}">{{ f.joint|num }}</td>
 <td class="num" data-value="{{ f.control }}">{{ f.control|num }}</td>
 <td class="num" data-value="{{ f.initiative }}">{{ f.initiative|num }}</td>
-<td class="num">{{ f.symbol|num }}</td>
+<td class="num">{{ f.statement|num }}</td>
 <td class="num" data-value="{{ f.control_share }}">{{ f.control_share|pct(1) }}</td>
 {% if f.ratio is not none %}
 <td class="num" data-value="{{ f.ratio }}">{{ f.ratio|num(2) }}</td>
@@ -116,9 +116,9 @@
 </tr>
 {% endfor %}
 </tbody></table></div>
-<p class="note">Sortiert nach Dokumenten; die Spaltenköpfe sortieren um. Die Symbolpolitik ist eine kleine Klasse; einzeln steht sie unter <a href="#resolutionen">Resolutionen und Appelle</a>, ohne Rangfolge je Fraktion.</p>
+<p class="note">Sortiert nach Dokumenten; die Spaltenköpfe sortieren um. Erklärungen und Appelle sind eine kleine Klasse; einzeln stehen sie unter <a href="#erklaerungen">Erklärungen und Appelle</a>, ohne Rangfolge je Fraktion.</p>
 {% else %}
-<p>Dieser Datensatz hat keine Fraktionsdokumente der Funktionen Kontrolle, Initiative und Symbolpolitik.</p>
+<p>Dieser Datensatz hat keine Fraktionsdokumente der Funktionen Kontrolle, Initiative und Erklärung oder Appell.</p>
 {% endif %}
 </section>
 
@@ -169,7 +169,7 @@
 <h2>Konkordanz (explorativ)</h2>
 <p>Wie oft trägt eine Fraktion der Ratsmehrheit eine Initiative mit, an der die Opposition beteiligt ist? Das Maß heißt im Messdokument K3: Dokumente über die Grenze (mindestens eine Fraktion jeder Seite) durch alle Dokumente mit einer Fraktion der Opposition, gezählt in {{ k.level_dative }}, wo die Mehrheit des Rates gilt, und je Dokument mit der Mehrheit an seinem Datum. Ein hoher Wert spräche für Konkordanz, ein niedriger für Konkurrenz zwischen Mehrheit und Opposition. Explorativ: das Maß prüft keine vorab festgelegte Hypothese.</p>
 <div class="tiles">
-<div class="tile"><div class="label">K3, Initiativen und Symbolpolitik</div><div class="value">{{ k.initiatives.share|pct(1) }}</div><div class="sub">{{ k.initiatives.hits|num }} von {{ k.initiatives.n|num }}{% if k.initiatives.n %}; 95 %: {{ k.initiatives.interval[0]|pct(1) }} bis {{ k.initiatives.interval[1]|pct(1) }}{% endif %}</div></div>
+<div class="tile"><div class="label">K3, Initiativen und Erklärungen</div><div class="value">{{ k.initiatives.share|pct(1) }}</div><div class="sub">{{ k.initiatives.hits|num }} von {{ k.initiatives.n|num }}{% if k.initiatives.n %}; 95 %: {{ k.initiatives.interval[0]|pct(1) }} bis {{ k.initiatives.interval[1]|pct(1) }}{% endif %}</div></div>
 <div class="tile"><div class="label">dasselbe mit Anfragen</div><div class="value">{{ k.all_functions.share|pct(1) }}</div><div class="sub">{{ k.all_functions.hits|num }} von {{ k.all_functions.n|num }}{% if k.all_functions.n %}; 95 %: {{ k.all_functions.interval[0]|pct(1) }} bis {{ k.all_functions.interval[1]|pct(1) }}{% endif %}</div></div>
 </div>
 <h3>Die Mehrheiten und ihre Quelle</h3>
@@ -202,19 +202,21 @@
 {% endif %}
 </section>
 
-<section id="resolutionen">
-<h2>Resolutionen und Appelle{{ ex }}</h2>
-{% if m.symbols %}
-<p>Die {{ m.symbols|length|num }} Dokumente der Symbolpolitik: Initiativen aus der Politik, die eine Haltung erklären oder Dritte auffordern, erkannt am Titel (Resolution, Appell, Solidarität, Verurteilung){% if m.variant == "B" %} oder am Beschlusstext („der Rat verurteilt, appelliert, bekräftigt …“){% endif %}. Eine kleine Klasse; die Seite zeigt sie als Liste, nicht als Anteil oder Rangfolge je Fraktion.</p>
-{{ more("resolutionen-liste", m.symbols|length, model.preview_rows) }}
-<div class="scroll"><table id="resolutionen-liste" class="preview">
+<section id="erklaerungen">
+<h2>Erklärungen und Appelle{{ ex }}</h2>
+<p>Die Klasse „Erklärung oder Appell“ ist im Codebuch der Prüfung so bestimmt:</p>
+<blockquote class="definition">{{ c.statement_definition }}</blockquote>
+{% if m.statements %}
+<p>In diesem Datensatz sind es {{ m.statements|length|num }} Dokumente: Initiativen aus der Politik, die das Regelwerk an Wörtern im Titel erkennt{% if m.variant == "B" %} oder an einer Erklärung im Beschlusstext{% endif %}; die Wörter stehen in den Settings des Profils. Eine kleine Klasse; die Seite zeigt sie als Liste, nicht als Anteil oder Rangfolge je Fraktion.</p>
+{{ more("erklaerungen-liste", m.statements|length, model.preview_rows) }}
+<div class="scroll"><table id="erklaerungen-liste" class="preview">
 <thead><tr><th scope="col" data-sort="num">Datum</th><th scope="col" data-sort="text">Drucksache</th><th scope="col" data-sort="text">Titel</th><th scope="col" data-sort="text">Antragsteller</th><th scope="col" data-sort="text">Gremium</th><th scope="col" data-sort="text">Instrument</th></tr></thead>
 <tbody>
-{% for d in m.symbols %}
+{% for d in m.statements %}
 <tr><td class="num" data-value="{{ d.date.strftime('%Y%m%d') if d.date else 0 }}">{% if d.date %}{{ d.date|date_de }}{% endif %}</td><td>{% if d.url %}<a href="{{ d.url }}">{{ d.reference }}</a>{% else %}{{ d.reference }}{% endif %}</td><td>{{ d.title }}</td><td>{{ d.authors }}</td><td>{{ d.body }}</td><td>{{ d.instrument }}</td></tr>
 {% endfor %}
 </tbody></table></div>
 {% else %}
-<p>Kein Dokument dieses Datensatzes ist Symbolpolitik.</p>
+<p>Kein Dokument dieses Datensatzes ist eine Erklärung oder ein Appell.</p>
 {% endif %}
 </section>
