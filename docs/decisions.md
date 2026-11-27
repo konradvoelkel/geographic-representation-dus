@@ -5185,6 +5185,17 @@ folgt die eigentliche Startseite. Keine Zahl der Auswertung ändert sich; der Go
 
 **Anders als der Plan oder dort offen, mit Grund.**
 
+- *K2 nur bei vollem Text, der Halbsatz zum Wörterbuch erst ab r = 0,5* (Review von B, Supervisor,
+  2026-11-27). Haben weniger als 90 % der Dokumente einen Text (dieselbe Grenze wie der Zusatzsatz in
+  K1, `TEXT_SHARE`), entfällt K2 ganz, und die Kurzfassung hat drei Sätze: Mönchengladbach (650 von
+  2 895 Dokumenten mit Text) nannte sonst das 28,9-Fache zwischen 0,065 und 0,002, eine Spreizung, die
+  vor allem misst, welche Dokumente lesbar sind. Der Halbsatz „ein Teil davon liegt am Wörterbuch"
+  sollte derselben Bedingung folgen, unter der `details.html` auf die Verzerrung hinweist. Dort steht
+  der Absatz zur Größe des Wörterbuchs, sobald sich die Korrelationen rechnen lassen
+  (`{% if model.bias %}` in `60-methode.html.j2`, `None` nur ohne Streuung): eine technische
+  Bedingung, keine über die Stärke. Darum gilt die Grenze des Reviews, r ≥ 0,5 (`BIAS_R`, Treffer
+  gegen Zahl der Begriffe). Mit ihr nennen die Hauptperiode (0,76), 2014–2020 (0,55) und die laufende
+  Periode (0,69) den Halbsatz; Mönchengladbach (0,18) hätte ihn nicht, dort entfällt K2 ohnehin.
 - *Sammeldokumente zählen in den Flächen*: ein Dokument mit mehr als 20 Orten trägt in `docs` statt
   der Orte seine Wahlbezirke als negative Zahlen. So steht es nicht als Punkt (§ 4.3), zählt aber in
   der Choroplethe und im Dialog eines Wahlbezirks, wie in der Auswertung.
