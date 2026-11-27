@@ -1524,6 +1524,34 @@ class Diverging(_Strict):
         return self
 
 
+class NameGuard(_Strict):
+    """Vorhaben 11 und 12, Stufe 3: woran ein Download einen Personennamen erkennt.
+
+    Ein Wert, in dem hinter einem dieser Titel (mit oder ohne Doppelpunkt) ein groß geschriebener
+    Buchstabe folgt, trägt vermutlich einen Namen: der Kopf eines Dokuments läuft dort in das Feld
+    der Dezernentin oder des Dezernenten hinein (in der Hauptperiode viermal). Das Muster gilt in
+    Polars (Rust-Syntax), darum ohne Lookarounds; ``report.downloads.named`` setzt es zusammen.
+    """
+
+    person_titles: str = (
+        r"Herrn?|Frau|Dr\.|Prof\.|Ratsherrn?|Ratsfrau|Ratsmitglied|Bürgermitglied"
+        r"|(?:Ober|Bezirks)?[Bb]ürgermeister(?:in)?|Beigeordnete[rn]?|Stadtdirektor(?:in)?"
+        r"|Stadtkämmer(?:er|in)|Dezernent(?:in)?|Amtsleiter(?:in)?|Bezirksvertreter(?:in)?"
+        r"|Fraktionsvorsitzende[rn]?|Vorsitzende[rn]?|Sprecher(?:in)?|Geschäftsführer(?:in)?"
+    )
+
+    @field_validator("person_titles")
+    @classmethod
+    def _titles_compile_without_lookaround(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("report.names.person_titles: leer hieße, kein Download prüft Namen")
+        if any(mark in value for mark in ("(?=", "(?!", "(?<")):
+            raise ValueError(
+                f"report.names.person_titles {value!r}: Polars kennt keine Lookarounds"
+            )
+        return _compiles([value], "report.names.person_titles")[0]
+
+
 class Report(_Strict):
     """Was im Kopf und Fuß der Seite steht und nicht aus den Daten kommt."""
 
@@ -1552,6 +1580,9 @@ class Report(_Strict):
     )
     # Punkt 46: die Grenzen der divergierenden Varianten; je Stadt änderbar, siehe Diverging
     diverging: Diverging = Diverging()
+    # Vorhaben 11 und 12, Stufe 3: kein Personenname in einem Download. Unter [report], weil es
+    # nur die Seite betrifft und im Stamp von ``report`` zählt, nicht im Settings-Fingerprint
+    names: NameGuard = NameGuard()
 
     @field_validator("monitoring_url")
     @classmethod

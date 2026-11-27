@@ -208,6 +208,14 @@ class ColumnDoc:
 
 
 @dataclass(frozen=True)
+class TableCheckLine:
+    """Vorhaben 11 und 12, Stufe 3: wie eine Tabelle der Downloads geprüft ist, ein Absatz darunter."""
+
+    table: str
+    sentence: str
+
+
+@dataclass(frozen=True)
 class DataStand:
     election: dt.date
     period_start: dt.date
@@ -777,6 +785,9 @@ class ReportModel:
     # docs/todo.md, Punkt 7, und Fundament F1: Extraktor je Text und die Zahl der Rohtexte für
     # „Methode und Grenzen"; None ohne Textstore oder mit einem leeren
     extraction: Extraction | None = None
+    # Vorhaben 11 und 12, Stufe 3: die Prüfsätze der Downloads, die einen tragen; leer heißt
+    # „kein Absatz unter den Downloads", und die Seite bleibt bytegleich
+    table_checks: tuple[TableCheckLine, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -812,8 +823,12 @@ def percent_de(share: float, decimals: int = 1) -> str:
 
 
 def _table_docs(table: PublishedTable, path: Path, settings: Settings) -> list[ColumnDoc]:
-    """Spalten einer Parquet-Datei mit ihrer Bedeutung aus dem Register; beide Richtungen müssen passen."""
-    schema = pl.read_parquet_schema(path)
+    """Spalten einer Parquet-Datei mit ihrer Bedeutung aus dem Register; beide Richtungen müssen passen.
+
+    Vorhaben 11 und 12: eine Tabelle mit veröffentlichter Sicht (``view``) beschreibt deren
+    Spalten, nicht die der Datei.
+    """
+    schema = table.published_schema(path, settings)
     known = table.column_docs(settings)
     undocumented = [c for c in schema if c not in known]
     stale = [c for c in known if c not in schema]
@@ -842,6 +857,15 @@ def column_docs(layout: Layout, settings: Settings) -> tuple[ColumnDoc, ...]:
         for column, text in GEOJSON_COLUMNS.items()
     )
     return tuple(docs)
+
+
+def table_checks(layout: Layout, settings: Settings) -> tuple[TableCheckLine, ...]:
+    """Die Prüfsätze der veröffentlichten Tabellen, die einen tragen (Vorhaben 11 und 12)."""
+    return tuple(
+        TableCheckLine(table.name, table.check.sentence(settings))
+        for table in published(layout, settings)
+        if table.check is not None
+    )
 
 
 # --- Modell ---------------------------------------------------------------------------------------
@@ -1993,6 +2017,7 @@ def build_report_model(
         parent_url="../" if settings.profile != settings.base_profile else "",
         preview_rows=settings.report.table_preview_rows,  # Punkt 48
         extraction=extraction_figures(layout),  # docs/todo.md, Punkt 7; Fundament F1
+        table_checks=table_checks(layout, settings),  # Vorhaben 11 und 12, Stufe 3
     )
 
 

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,6 +28,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from georep.enrich.identifiers import ROUND_1, ROUND_2
 from georep.prep.identifiers import IdentifierRules, identifier_spans, office_directory
 from georep.settings import load_settings
 
@@ -95,7 +97,31 @@ def _by_file(spans: pl.DataFrame) -> dict[str, list[tuple[int, int, str]]]:
 
 
 def _precision(round_: Round, art: str, *, overlap: bool = False) -> tuple[float, int]:
-    """Gewichtete strenge Präzision und Zahl der Aufgaben einer Art.
+    """Gewichtete strenge Präzision und Zahl der Aufgaben einer Art (``_hits``)."""
+    hits = _hits(round_, art, overlap=overlap)
+    total = sum(w for _, w in hits)
+    return sum(w for ok, w in hits if ok) / total, len(hits)
+
+
+def _wilson(k: float, n: float, z: float = 1.96) -> tuple[float, float]:
+    """Wilson mit reellem n, wie ``wilson`` im Messskript (``docs/plans/12-kennungen-messung.py``)."""
+    p = k / n
+    centre = (p + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / (1 + z * z / n)
+    return max(0.0, centre - half), min(1.0, centre + half)
+
+
+def _interval(round_: Round, art: str) -> tuple[float, float]:
+    """Das 95-%-Intervall der gewichteten Präzision: Wilson mit dem effektiven n nach Kish."""
+    hits = _hits(round_, art)
+    total = sum(w for _, w in hits)
+    share = sum(w for ok, w in hits if ok) / total
+    n_eff = total * total / sum(w * w for _, w in hits)
+    return _wilson(share * n_eff, n_eff)
+
+
+def _hits(round_: Round, art: str, *, overlap: bool = False) -> list[tuple[bool, float]]:
+    """Je Präzisionsaufgabe einer Art: richtig (streng) und Gewicht.
 
     Die Quote einer Schicht zählt wie im Messskript über alle Präzisionsaufgaben der Stichprobe.
     Ohne ``overlap`` muss jede Aufgabe genau als Spanne der Ausgabe stehen; mit ``overlap`` zählt
@@ -129,8 +155,7 @@ def _precision(round_: Round, art: str, *, overlap: bool = False) -> tuple[float
             corrected = label.get("grenzen_korrigiert")
             bounds = (int(corrected[0]), int(corrected[1])) if isinstance(corrected, list) else None
         hits.append((right_art and bounds == (best[0], best[1]), weight))
-    total = sum(w for _, w in hits)
-    return sum(w for ok, w in hits if ok) / total, len(hits)
+    return hits
 
 
 def _recall(round_: Round, art: str) -> tuple[int, int]:
@@ -184,3 +209,21 @@ def test_termin_und_verwaltungseinheit_an_runde_1(built: tuple[Round, Round]) ->
     precision, _ = _precision(first, "6 Verwaltungseinheit", overlap=True)
     assert round(precision, 3) == 0.976
     assert _recall(first, "6 Verwaltungseinheit") == (51, 52)
+
+
+def test_der_pruefsatz_der_downloads_traegt_diese_zahlen(built: tuple[Round, Round]) -> None:
+    """Stufe 3: ``ROUND_1`` und ``ROUND_2`` nennen Anteil, n und Intervall, wie sie hier entstehen."""
+    arts = {
+        "Bauleitplanung": "1 Bauleitplanung",
+        "Betrag": "3 Betrag",
+        "Termin": "4 Termin",
+        "Verwaltungseinheit": "6 Verwaltungseinheit",
+    }
+    for check, round_ in zip((ROUND_1, ROUND_2), built, strict=True):
+        for measure in check.measures:
+            share, n = _precision(round_, arts[measure.label])
+            low, high = _interval(round_, arts[measure.label])
+            assert measure.share is not None and measure.interval is not None
+            assert (round(share, 3), n) == (measure.share, measure.units), measure.label
+            assert (round(low, 3), round(high, 3)) == measure.interval, measure.label
+    assert [c.project for c in (ROUND_1, ROUND_2)] == ["12-kennungen-f4", "12-kennungen-2-f4"]

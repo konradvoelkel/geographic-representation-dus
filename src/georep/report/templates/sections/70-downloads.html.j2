@@ -10,6 +10,9 @@
 <tr><td><a href="data/{{ d.name }}">{{ d.name }}</a></td><td>{{ d.format }}</td><td class="num">{% if d.rows is not none %}{{ d.rows|num }}{% endif %}</td><td class="num">{{ d.bytes|kib }}</td><td>{{ d.description }}</td><td><code>{{ d.sha256 }}</code></td></tr>
 {% endfor %}
 </tbody></table></div>
+{% for c in model.table_checks %}
+<p class="note"><code>{{ c.table }}</code>: {{ c.sentence }}</p>
+{% endfor %}
 <h3>Spaltenschema</h3>
 {% for table in tables %}
 <details>
