@@ -738,12 +738,17 @@ def all_tables() -> list[PublishedTable]:
     return result
 
 
-def contributed_table_files(layout: Layout, settings: Settings) -> tuple[Path, ...]:
+def contributed_table_files(
+    layout: Layout, settings: Settings, *, optional: bool
+) -> tuple[Path, ...]:
     """Die Dateien der Tabellen aus Beiträgen, deren Schalter in diesen Settings an ist.
 
     Vorhaben 15, Stufe 3: der Schritt ``report`` kopiert sie nach ``site/data/`` und nennt ihre
     Prüfsummen; ohne sie im Stamp blieb er nach einer geänderten Tabelle aktuell. Die Tabellen des
-    Kerns stehen schon als Eingaben dort. Import in der Funktion wie in ``all_tables``.
+    Kerns stehen schon als Eingaben dort. ``optional`` wählt nach ``PublishedTable.optional``
+    (Review 2026-11-27, N10): eine optionale Tabelle ist eine optionale Eingabe von ``report``
+    (``published`` lässt sie ohne Datei aus), jede andere eine harte, deren Fehlen den Schritt
+    abbricht. Import in der Funktion wie in ``all_tables``.
     """
     from georep.enrich import CONTRIBUTIONS
 
@@ -751,7 +756,7 @@ def contributed_table_files(layout: Layout, settings: Settings) -> tuple[Path, .
         t.path(layout)
         for c in CONTRIBUTIONS
         for t in c.tables
-        if t.enabled is None or t.enabled(settings)
+        if t.optional == optional and (t.enabled is None or t.enabled(settings))
     )
 
 

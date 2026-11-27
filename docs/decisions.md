@@ -4410,11 +4410,12 @@ auf `inline-flex` setzt; `akteure.css` hebt das für `fieldset.matrix-ebene[hidd
   stehen damit in den Daten. Mit `Layout.from_settings(settings)` im Callable hätte die Mini-Kette
   der Tests (eigenes `Layout`) den falschen Korpus gelesen. Erlaubt sind die PDF-Dateien des eigenen
   Korpus, das Messdokument und das README der Prüfung.
-- Die Tabellen der Beiträge zählen im Stamp von `report` als optionale Eingaben
-  (`report.tables.contributed_table_files`): `report` kopiert sie nach `site/data/` und schreibt ihre
-  Prüfsummen auf die Seite, und ohne sie im Stamp blieb der Schritt nach einer geänderten Tabelle
-  aktuell. Optional, weil `published` eine optionale Tabelle ohne Datei auslässt;
-  `check_step_order` sieht trotzdem, dass ihr Schritt vorher läuft.
+- Die Tabellen der Beiträge zählen im Stamp von `report` (`report.tables.contributed_table_files`):
+  `report` kopiert sie nach `site/data/` und schreibt ihre Prüfsummen auf die Seite, und ohne sie im
+  Stamp blieb der Schritt nach einer geänderten Tabelle aktuell. Eine Tabelle mit `optional=True`
+  (beide von 15) ist eine optionale Eingabe, weil `published` sie ohne Datei auslässt, jede andere
+  eine harte (Review 2026-11-27, N10); `check_step_order` sieht in beiden Fällen, dass ihr Schritt
+  vorher läuft.
 
 `guete.json`, `stichprobe.json` und `codebuch.toml` sind Eingaben von `page_akteure`; sie liegen im
 Repo, nicht im Lauf. Der Test, dass jede Eingabe jedes `page_*` im Lauf entsteht (Punkt 86), lässt darum zu, was

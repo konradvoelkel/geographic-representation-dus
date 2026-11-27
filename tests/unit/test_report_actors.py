@@ -14,6 +14,7 @@ import json
 import re
 import shutil
 from collections.abc import Sequence
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -691,3 +692,28 @@ def test_die_beiden_randfaelle_k3_ohne_nenner_und_gremium_unbekannt(
     tiles = tiles[: tiles.index("</div>\n</div>")]
     assert "keine Initiative mit Beteiligung der Opposition" in tiles and "0,0" not in tiles
     assert "Gremium unbekannt 1,00" in page
+
+
+def test_eine_pflichttabelle_eines_beitrags_ist_eine_harte_eingabe_des_berichts(
+    tmp_path: Path, default_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """N10: nur eine optionale Tabelle (``optional=True``) steht unter ``optional`` von ``report``."""
+    import georep.enrich
+    import georep.report.pages
+    from georep.enrich import Contribution
+    from georep.report.tables import PublishedTable
+
+    hard = PublishedTable(
+        "probe_pflicht", lambda layout: layout.processed / "pflicht.parquet", "P", {}
+    )
+    soft = replace(hard, name="probe_kann", path=lambda layout: layout.processed / "kann.parquet")
+    soft = replace(soft, optional=True)
+    monkeypatch.setattr(
+        georep.enrich, "CONTRIBUTIONS", (Contribution("probe", tables=(hard, soft)),)
+    )
+    monkeypatch.setattr(georep.report.pages, "pages_folder", lambda: Path("/nonexistent/pages"))
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    report = next(s for s in build_steps(default_settings, layout) if s.name == "report")
+    assert layout.processed / "pflicht.parquet" in report.inputs
+    assert layout.processed / "pflicht.parquet" not in report.optional
+    assert layout.processed / "kann.parquet" in report.optional

@@ -504,7 +504,7 @@ def test_the_report_runs_on_a_data_root_without_a_raw_text_store(
     report = next(s for s in steps if s.name == "report")
     # Vorhaben 15, Stufe 3: dahinter die Tabellen der Beiträge, die als Download auf der Seite stehen
     assert report.optional[0] == layout.raw_texts and layout.texts in report.inputs
-    assert report.optional[1:] == contributed_table_files(layout, default_settings)
+    assert report.optional[1:] == contributed_table_files(layout, default_settings, optional=True)
     # Die fehlende Datei steht im Stamp; kommt sie dazu, ist der Stamp veraltet
     stamped = json.loads(report.stamp_path.read_text(encoding="utf-8"))
     assert stamped["inputs"][layout.raw_texts.name] == MISSING

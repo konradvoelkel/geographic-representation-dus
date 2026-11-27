@@ -1531,7 +1531,9 @@ def build_steps(
             )
             # --- docs/todo.md, Punkt 7, und Fundament F1: „Methode und Grenzen" nennt den
             # Extraktor je Text (der Rohtextstore steht unten unter ``optional``)
-            + (layout.texts,),
+            + (layout.texts,)
+            # Vorhaben 15, Review N10: die Pflichttabellen der Beiträge (die optionalen unten)
+            + contributed_table_files(layout, settings, optional=False),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
             # Punkt 53: der eine Schritt mit einem Zusatz im Stamp. Die Vorlagen des Pakets und
@@ -1545,7 +1547,10 @@ def build_steps(
             # stehen; ihr Hash zählt im Stamp, eine fehlende bricht nichts ab (``published``
             # lässt eine optionale Tabelle ohne Datei aus), und ``check_step_order`` sieht, dass
             # ihr Schritt vorher läuft.
-            optional=(layout.raw_texts, *contributed_table_files(layout, settings)),
+            optional=(
+                layout.raw_texts,
+                *contributed_table_files(layout, settings, optional=True),
+            ),
         ),
         # --- Fundament F2: die Unterseiten der Beiträge
         *pages,
