@@ -4428,9 +4428,9 @@ Abstimmungen"); wählt 28 einen anderen, ändert sich eine Zeile der Vorlage.
    Urheber nicht erkannt) statt zweier für Verwaltung und Politik: die Klassen „Person" und
    „unbekannt" zeigen ein anderes Verhältnis von Kontrolle und Initiative als die Fraktionen, und
    eine Klasse ohne Dokumente fehlt.
-3. Die Seite ist 55 bis 99 KB groß statt 40 bis 70: der Rahmen allein (Stil und Skript der
+3. Die Seite ist 56 bis 101 KB groß statt 40 bis 70: der Rahmen allein (Stil und Skript der
    Hauptseite) sind rund 31 KB, die beiden Listen in der Hauptperiode zusammen rund 40 KB. Das Budget
-   von 500 KB je Unterseite hält sie mit weitem Abstand.
+   von 500 KB je Unterseite hält sie mit weitem Abstand (Zahlen unten).
 4. Unter „Über die Grenze" stehen alle Dokumente über die Grenze mit der Zahl ihrer Fraktionen, nicht
    nur die „Allparteienanträge"; wie viele mindestens vier Fraktionen tragen, sagt ein Satz (27 von
    41 in der Hauptperiode, 42 von 50 für 2014–2020, wie § 3.11).
@@ -4448,3 +4448,40 @@ Abstimmungen"); wählt 28 einen anderen, ändert sich eine Zeile der Vorlage.
 Matrix nach der Zahl einzufärben (die Zahl steht in der Zelle, die Farbe trägt das Lager); eine
 dritte Matrix „alle Gremien" (sie mischte die Ebene mit und ohne Lager); `links(settings)` mit
 `Layout.from_settings` (siehe oben).
+
+**Geprüft.**
+
+- Tests: `tests/unit/test_report_actors.py` (Bausteine an erfundenen Tabellen, Prüfsatz aus einer
+  geänderten `guete.json`, gemessen oder explorativ je Paketprofil, Abschnitte und Überschriften,
+  der Link auf den Gast, keine Partei in den Vorlagen, Register, Linkblock, Downloads mit
+  Spaltendoku, Stamp von `report`, erlaubte Links); slow in `tests/golden/test_functions_numbers.py`
+  die Zahlen der Seite in den drei Düsseldorfer Datensätzen (Symbolpolitik 55, 52, 3; die zwei
+  Zählungen 144, 179, 7, zusammen 330 wie § 3.8; K3 mit Anfragen 50/1 565, 41/2 731, 1/778; über
+  die Grenze 50 davon 42, 41 davon 27, 1 davon 0; beobachtet gegen erwartet in Variante B; CDU und
+  Grüne in Rat und Ausschüssen der Hauptperiode 577, beide in der Mehrheit), die zweite Stadt ohne
+  Konkordanz und explorativ, und jede Seite unter 500 KB.
+- Bildschirmfotos mit headless Chrome bei 1280 und 390 Pixeln Breite, hell und dunkel; ohne
+  JavaScript stehen beide Matrizen da, mit JavaScript ist der Umschalter sichtbar und die zweite
+  Matrix verborgen (`--dump-dom`).
+- A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66 (`scripts/ab_bau.sh`,
+  `scripts/ab_vergleich.py`), `POLARS_MAX_THREADS=4 OMP_NUM_THREADS=2`, A aus `main` `344ecdc`
+  (`git archive`), B aus `7453ad7`, Wurzeln `ab/15-a` und `ab/15-b` auf xtraspace, die fünf Profile
+  mit `bootstrap` und `run` in der Folge von `pages.yml`, dann `publish --strict-budget`. Unter
+  `site/` 235 Dateien in A, 255 in B, 28 Abweichungen, alle erwartet: je Stadtseite (Hauptperiode,
+  2014–2020, laufende Periode, Mönchengladbach) neu `akteure.html` und die vier Downloads, anders
+  `index.html` (Abschnitt „Weitere Auswertungen", vier Zeilen in den Downloads, ihre Zeilenzahl, die
+  Größe von `schema.json`, zwei Einträge im Spaltenschema; sonst bytegleich bis auf die
+  Prüfsummen, die an `generated_at` hängen) und `schema.json` (die beiden Tabellen);
+  `vergleich.html` und jede `summary.json` gleich. Über die ganzen Datenwurzeln 932 und 988
+  Dateien, 193 Abweichungen: dieselben Seiten und Downloads in den Ordnern der Profile, kein
+  Parquet unter `processed/` oder `interim/` anders, und 123 Stamps (109 allein in der Zeit
+  `written`, 6 neue von `akteure.html`, 6 von `index.html` in `extra`, weil die neuen Vorlagen
+  unter `templates/pages/` in `report_fingerprint` zählen, und in den optionalen Eingaben, den
+  beiden Tabellen; 2 nur in der Wurzel der absoluten Pfade).
+- Größen, veröffentlicht (`publish`): `index.html` der Hauptperiode 937 391 → 941 942 Byte
+  (+4 551; Budget 1 000 000, Ziel der Phase höchstens +30 KB), `2014-2020/` 822 762 → 827 313,
+  `2025/` 718 700 → 723 239, `moenchengladbach/` 806 195 → 810 734. `akteure.html`: Hauptperiode
+  101 180, 2014–2020 99 020, laufende Periode 63 833, Mönchengladbach 56 102 Byte; zusammen
+  320 135. Die Downloads machen die veröffentlichte Seite 10,2 MB größer (36,7 → 46,9 MB), vor
+  allem die CSV je Dokument (Hauptperiode 1,87 und 1,94 MB), wie bei `dokumente_urheber`; die
+  Pakete im Repo ändern sich nicht.
