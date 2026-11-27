@@ -40,12 +40,18 @@ from georep.settings import Settings
 NOW = dt.datetime(2026, 11, 27, 12, 0, tzinfo=dt.UTC)
 OWN = '<p id="eigen">{{ data.n }}</p>\n'
 # Eine Vorlage, die am Modell hängt, beginnt mit ``{% if … %}`` (CLAUDE.md); ohne Zeilen zeigt sie
-# nichts.
+# nichts. Das ``<section id="…">`` setzt der Rahmen (Review K1).
 GUEST = (
     "{% if data.rows %}\n"
-    '<section id="{{ data.id }}"><h2>{{ data.id }}</h2>'
-    "{% for row in data.rows %}<p>{{ row }}</p>{% endfor %}</section>\n"
+    "<h2>{{ data.id }}</h2>{% for row in data.rows %}<p>{{ row }}</p>{% endfor %}\n"
     "{% endif %}\n"
+)
+# Der Gastgeber weiß von seinen Gästen: ein Link auf den Abschnitt, wenn es ihn gibt, sonst der
+# Hinweis, den der Gast ersetzt (15 verlinkt auf 28, 26 ersetzt einen Hinweis von 14).
+HOST_WITH_HINT = (
+    '<p id="gaeste">{{ guests|sort|join(",") }}</p>\n'
+    '{% if "gast" in guests %}<p><a href="#gast">Antworten unten</a></p>'
+    '{% else %}<p id="hinweis">Antworten stehen in der Niederschrift.</p>{% endif %}\n'
 )
 TEMPLATES = {
     "pages/probe.html.j2": OWN,
@@ -252,7 +258,7 @@ def test_der_schritt_schreibt_die_seite_mit_ihren_abschnitten(
     line = build_page(layout, default_settings, _page(), (_section(),), now=NOW, commit=None)
     html = (layout.site / "probe.html").read_text(encoding="utf-8")
     assert line.startswith("probe.html, ")
-    assert '<section id="gast"><h2>gast</h2><p>Zeile von gast</p></section>' in html
+    assert '<section id="gast">\n<h2>gast</h2><p>Zeile von gast</p></section>' in html
 
 
 # --- Darstellung --------------------------------------------------------------------------------
@@ -272,9 +278,52 @@ def test_jeder_abschnitt_sieht_nur_seine_eigenen_daten(default_settings: Setting
     assert "<i>2</i>" in html  # ``id`` und ``rows``, nicht das ``n`` der Seite
 
 
-def test_ohne_zeilen_zeigt_der_abschnitt_nichts(default_settings: Settings) -> None:
+def test_ohne_zeilen_bleibt_vom_abschnitt_nur_sein_anker(default_settings: Settings) -> None:
+    """Der Anker steht, sobald der Gast in ``guests`` steht; ein Link des Gastgebers bleibt gültig."""
     empty = _section(data=lambda layout, settings: {"id": "gast", "rows": []})
-    assert 'id="gast"' not in _render(default_settings, (empty,))
+    assert '<section id="gast">\n</section>' in _render(default_settings, (empty,))
+
+
+@pytest.mark.parametrize("with_guest", [True, False])
+def test_die_seite_kennt_ihre_gaeste_und_ersetzt_damit_einen_hinweis(
+    tmp_path: Path,
+    default_settings: Settings,
+    monkeypatch: pytest.MonkeyPatch,
+    with_guest: bool,
+) -> None:
+    """Review K1: ``guests`` sind die Namen der Gäste in diesem Profil, jeder mit Anker."""
+    env = _env({"pages/probe.html.j2": HOST_WITH_HINT})
+    monkeypatch.setattr(georep.report.pages, "environment", lambda: env)
+    guest = _section(enabled=lambda settings: with_guest)
+    off = _section("zweiter", 20, enabled=lambda settings: False)
+    _register(monkeypatch, _host(), Contribution("26-gast", sections=(guest, off)))
+    layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
+    attached = sections_for(default_settings).get("probe", ())
+    build_page(layout, default_settings, _page(), attached, now=NOW, commit=None)
+    html = (layout.site / "probe.html").read_text(encoding="utf-8")
+    if with_guest:
+        assert '<p id="gaeste">gast</p>' in html  # ``zweiter`` ist aus und fehlt
+        assert '<a href="#gast">' in html and '<section id="gast">' in html
+        assert 'id="hinweis"' not in html
+    else:
+        assert '<p id="gaeste"></p>' in html
+        assert '<p id="hinweis">' in html and 'href="#gast"' not in html
+        assert 'id="gast"' not in html
+
+
+@pytest.mark.parametrize(
+    ("templates", "name"),
+    [
+        ({"pages/probe.html.j2": '<p id="gast">eigen</p>\n'}, "gast"),  # ID der Seite
+        ({"pages/probe/gast.html.j2": '{% if data.id %}<p id="gast">x</p>{% endif %}\n'}, "gast"),
+        ({"pages/probe/docs.html.j2": GUEST}, "docs"),  # der Dokumentdialog des Rahmens
+    ],
+)
+def test_der_anker_eines_gasts_kollidiert_mit_keiner_id_der_seite(
+    default_settings: Settings, templates: dict[str, str], name: str
+) -> None:
+    with pytest.raises(deal.PostContractError):
+        _render(default_settings, (_section(name),), env=_env(templates))
 
 
 def test_ohne_abschnitte_bleibt_der_rahmen_wie_vorher(default_settings: Settings) -> None:

@@ -596,8 +596,11 @@ oder 28 an `akteure.html` von 15. Die Vorlage liegt unter `templates/pages/<seit
 daneben optional `<name>.css` und `<name>.js`, und beginnt mit `{% if data.… %}`. `sections_for`
 sammelt die Abschnitte je Seite und gibt sie in fester Folge zurück: nach dem eigenen Inhalt der
 Seite, nach Rang, bei gleichem Rang nach Name, nie nach der Folge des Registers (hypothesis,
-`tests/property/test_page_sections_props.py`). Der Rahmen bindet jede Vorlage mit ihren eigenen
-Daten als `data` ein, ihr CSS hinter dem der Seite, ihr JavaScript in denselben Skriptblock. Der
+`tests/property/test_page_sections_props.py`). Der Rahmen setzt jeden Gast in
+`<section id="<name>">` und bindet seine Vorlage mit seinen eigenen Daten als `data` ein, ihr CSS
+hinter dem der Seite, ihr JavaScript in denselben Skriptblock. Die Vorlage der Seite sieht `guests`,
+die Namen ihrer Gäste in diesem Profil, und kann damit auf `#<name>` verlinken oder einen Hinweis
+weglassen, den ein Gast ersetzt; jeder Anker steht genau einmal auf der Seite (Nachbedingung). Der
 Schritt `page_<name>` liest die Eingaben der Abschnitte mit (`page_inputs`), und die Seite erlaubt
 ihre Links. Unabhängig vom Profil ist es ein `SectionError`, wenn ein Ziel keine registrierte Seite
 ist oder zwei Abschnitte derselben Seite einen Rang oder Namen teilen (`section_problems`; ein Test

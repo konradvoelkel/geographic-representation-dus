@@ -20,12 +20,14 @@
 </header>
 <main>
 {% include page.template %}
-{# Vorarbeit V1: die Abschnitte fremder Beiträge, in der Folge aus sections_for, je mit ihren eigenen Daten #}
+{# Vorarbeit V1: die Abschnitte fremder Beiträge, in der Folge aus sections_for, je mit ihren eigenen Daten und dem Anker #<name> (Review K1) #}
 {% for section, section_data in sections %}
 
+<section id="{{ section.name }}">
 {% with data = section_data %}
 {% include section.template %}
 {% endwith %}
+</section>
 {% endfor %}
 </main>
 <footer>

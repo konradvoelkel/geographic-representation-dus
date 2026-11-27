@@ -4143,11 +4143,21 @@ folgt aus Seite und Name, wie bei `Page`, darum steht er nicht als Feld da.
   gleichem Rang nach Name, nie nach der Folge des Registers. Die folgt der Merge-Reihenfolge
   (Synergien, § 2.1) und soll auf der Seite nicht zu sehen sein.
 - Der Rahmen `templates/page.html.j2` bindet die Abschnitte nach dem eigenen Inhalt der Seite ein,
-  in `<main>`, jede Vorlage mit ihren eigenen Daten als `data` (`{% with %}`), sodass sie die Daten
-  der Seite nicht sieht und ihre Vorlage nicht an deren Namen hängt. Ihr CSS steht hinter dem der
+  in `<main>`, jeden in `<section id="<name>">` und mit seinen eigenen Daten als `data`
+  (`{% with %}`), sodass er die Daten der Seite nicht sieht und seine Vorlage nicht an deren Namen
+  hängt. Ihr CSS steht hinter dem der
   Seite, ihr JavaScript im selben Skriptblock, wie bei den Abschnitten der Hauptseite. CSS und
   JavaScript liest `render_page` jetzt über den Jinja-Loader statt über `importlib.resources`,
   damit die Testnaht `env` auch sie trägt; für die Dateien im Paket ist das derselbe Inhalt.
+- **Gastgeber und Gast wissen voneinander** (Review K1). 15 verlinkt auf den Abschnitt, den 28
+  anhängt (`docs/plans/15-funktion.md`, § 7, Konkordanz), und 26 ersetzt auf der Seite von 14 den
+  Hinweis „Antworten stehen in der Niederschrift" (`docs/plans/26-beschluesse.md`, § 7). Darum sieht
+  die Vorlage der Seite `guests`, die Namen ihrer Gäste in diesem Profil, und die Zusage dazu: steht
+  ein Name darin, gibt es `#<name>` auf der Seite. Der Link oder der Hinweis hängt an
+  `{% if "<name>" in guests %}`. Der Anker steht auch, wenn der Gast mit leeren Daten nichts zeigt,
+  damit ein Link nie ins Leere geht. Dass jeder Anker genau einmal vorkommt, also mit keiner ID der
+  Seite, des Rahmens (`docs`, `tooltip`) oder des Gasts selbst kollidiert, ist eine Nachbedingung
+  von `render_page`.
 - Der Schritt `page_<name>` liest die Eingaben seiner Abschnitte mit (`page_inputs`, jede Datei
   einmal), und die Vorlagen unter `templates/pages/` zählen über `report_fingerprint` ohnehin im
   Stamp mit (Punkt 53). Die Seite erlaubt die Links ihrer Abschnitte zu den eigenen.
@@ -4196,8 +4206,11 @@ genauso aus.
 **Verworfen.** Abschnitte in der `Page` des Gastgebers anmelden (`Page.sections`): dann änderte 26
 das Modul von 14, die Konfliktstelle, die F2 beseitigt hat. Eine Stelle für die fremden Abschnitte,
 die die Vorlage der Seite selbst setzt: jede Seite müsste ihre Gäste vorhersehen, und ein neuer Gast
-hieße, die Vorlage eines anderen anzufassen; nach dem eigenen Inhalt ist fest und reicht für die
-geplanten Gäste. Ein eigener Schritt je Abschnitt, der ein HTML-Stück schreibt, das die Seite
+hieße, die Vorlage eines anderen anzufassen. Die Stelle ist darum fest, nach dem eigenen Inhalt; was
+die geplanten Gäste darüber hinaus brauchen, ist, dass der Gastgeber von ihnen weiß (der Link von 15
+auf 28, der Hinweis von 14, den 26 ersetzt), und das tragen `guests` und die Anker, nicht die Stelle.
+Die erste Fassung dieses Eintrags hielt die feste Stelle allein für genug; das Review (K1) fand die
+beiden Fälle. Ein eigener Schritt je Abschnitt, der ein HTML-Stück schreibt, das die Seite
 einliest: eine Datei und ein Stamp mehr je Abschnitt für nichts, was die Eingaben im Stamp der
 Seite nicht schon leisten. Die Folge des Registers: sie hinge an der Merge-Reihenfolge. Ein Fehler,
 wenn die Zielseite in einem Profil fehlt: dann bräche jedes Profil, in dem der Gastgeber aus ist.

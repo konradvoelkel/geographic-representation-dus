@@ -14,16 +14,19 @@ auf eigene Seiten, wie ``karte.html`` und die Periodenseiten. Eine Unterseite
 * steht auf der Hauptseite im Abschnitt „Weitere Auswertungen" (``ReportModel.pages``).
 
 Die Vorlage der Seite bekommt ``model`` (der Rahmen: Stadt, Periode, Version, Zeitpunkt; dieselben
-Namen wie auf der Hauptseite, damit die Teilvorlagen unverändert gelten) und ``data``, das Mapping
-aus ``Page.data``. Links nach außen: nur die der Hauptseite und die, die der Aufrufer ausdrücklich
-erlaubt.
+Namen wie auf der Hauptseite, damit die Teilvorlagen unverändert gelten), ``data``, das Mapping
+aus ``Page.data``, und ``guests``, die Namen der fremden Abschnitte, die in diesem Profil auf der
+Seite stehen (unten). Links nach außen: nur die der Hauptseite und die, die der Aufrufer
+ausdrücklich erlaubt.
 
 **Abschnitte aus fremden Beiträgen** (Vorarbeit V1, ``docs/plan-zeigen-2026-11.md``, § 4): ein
 Beitrag hängt mit ``PageSection`` (``Contribution.sections``) einen Abschnitt an die Unterseite eines
 anderen, etwa 26 an ``vorgaenge.html`` von 14. Die Seite zeigt ihre fremden Abschnitte nach ihrem
-eigenen Inhalt, nach Rang, dann Name; jede Vorlage sieht ``data`` aus ihrem eigenen
-``PageSection.data``. Der Schritt ``page_<name>`` liest die Eingaben der Abschnitte mit, ihre Links
-nach außen sind erlaubt. Ein Ziel, das keine registrierte Seite ist, und ein Rang oder Name, den zwei
+eigenen Inhalt, nach Rang, dann Name, jede in ``<section id="<name>">``; jede Vorlage sieht
+``data`` aus ihrem eigenen ``PageSection.data``. Gastgeber und Gast wissen voneinander: die Seite
+sieht ``guests`` und kann auf ``#<name>`` verlinken oder einen Hinweis weglassen, den ein Gast
+ersetzt. Der Schritt ``page_<name>`` liest die Eingaben der Abschnitte mit, ihre Links nach außen
+sind erlaubt. Ein Ziel, das keine registrierte Seite ist, und ein Rang oder Name, den zwei
 Abschnitte derselben Seite teilen, sind ein ``SectionError``; wird die Zielseite in einem Profil nicht
 gebaut, entfällt der Abschnitt mit einer Zeile im Log.
 """
@@ -105,8 +108,17 @@ class PageSection:
     ``page`` ist der Name der Zielseite (``Page.name``), ``name`` der des Abschnitts, eindeutig je
     Seite. Die Vorlage liegt unter ``templates/pages/<page>/<name>.html.j2``, daneben optional
     ``<name>.css`` und ``<name>.js``; sie hängt an ihren Daten und beginnt darum mit
-    ``{% if data.… %}``. ``rank`` ist die Stelle auf der Seite: kleiner zuerst, bei gleichem Rang
-    der Name. Ein Rang ist je Seite eindeutig (``section_problems``); der Name als zweite Stufe
+    ``{% if data.… %}``.
+
+    **Anker** (Review K1): der Rahmen setzt jeden Gast in ``<section id="<name>">``, die Vorlage
+    schreibt kein eigenes ``<section>``. Der Name ist damit eine ID der Seite und darf keine andere
+    sein, weder des Gastgebers noch des Rahmens (``docs``, ``tooltip``): ``render_page`` prüft, dass
+    jeder Anker genau einmal vorkommt. Die Seite sieht ``guests``, die Namen ihrer Gäste in diesem
+    Profil, und darf zusagen: steht ein Name darin, gibt es ``#<name>`` auf der Seite. So verlinkt
+    der Gastgeber auf einen Gast oder lässt einen Hinweis weg, den der Gast ersetzt
+    (``{% if "<name>" in guests %}``).
+
+    ``rank`` ist die Stelle auf der Seite: kleiner zuerst, bei gleichem Rang der Name. Ein Rang ist je Seite eindeutig (``section_problems``); der Name als zweite Stufe
     hält die Folge auch dort fest, wo diese Prüfung nicht vorausgeht (``order_sections`` allein,
     mit abgeschalteten Verträgen).
     """
@@ -308,6 +320,26 @@ def _asset(env: Environment, path: str) -> str:
 
 
 SectionContent = tuple[PageSection, Mapping[str, object]]  # ein Abschnitt und seine Daten
+_ID = re.compile(r'(?<![\w-])id="([^"]*)"')
+
+
+def _anchors_unique(
+    frame: PageFrame,
+    page: Page,
+    data: Mapping[str, object],
+    allowed: frozenset[str] = frozenset(),
+    env: Environment | None = None,
+    sections: Sequence[SectionContent] = (),
+    result: str = "",
+) -> bool:
+    """Nachbedingung von ``render_page``: der Anker jedes Gasts steht genau einmal auf der Seite.
+
+    Zweimal hieße: die Seite, der Rahmen oder der Gast selbst trägt dieselbe ID, und ``#<name>``
+    zeigte nicht sicher auf den Gast (Review K1). Benannt aus demselben Grund wie
+    ``_only_allowed_links``.
+    """
+    ids = _ID.findall(result)
+    return all(ids.count(section.name) == 1 for section, _ in sections)
 
 
 def _only_allowed_links(
@@ -328,6 +360,7 @@ def _only_allowed_links(
 
 
 @deal.ensure(_only_allowed_links, message="nur die erlaubten Links nach außen")
+@deal.ensure(_anchors_unique, message="der Anker jedes Gasts genau einmal")
 @deal.post(lambda result: result.startswith("<!doctype html>") and 'lang="de"' in result)
 def render_page(
     frame: PageFrame,
@@ -340,8 +373,9 @@ def render_page(
     """Die Unterseite als HTML; ``env`` ist die Testnaht für Vorlagen außerhalb des Pakets.
 
     ``sections`` sind die fremden Abschnitte mit ihren Daten, schon in der Folge der Seite
-    (``sections_for``). Ihr CSS steht hinter dem der Seite, ihr JavaScript dahinter im selben
-    Skriptblock, wie bei den Abschnitten der Hauptseite (``render.render_report``).
+    (``sections_for``). Die Vorlage der Seite sieht ihre Namen als ``guests``. Ihr CSS steht hinter
+    dem der Seite, ihr JavaScript dahinter im selben Skriptblock, wie bei den Abschnitten der
+    Hauptseite (``render.render_report``).
     """
     env = env or environment()
     stems = [f"pages/{page.name}", *(section.stem for section, _ in sections)]
@@ -352,6 +386,7 @@ def render_page(
         page=page,
         data=data,
         sections=sections,
+        guests=frozenset(section.name for section, _ in sections),
         page_css=css,
         page_js=js,
         links={"repository": REPOSITORY, "cc0": CC0, "gpl": GPL},
