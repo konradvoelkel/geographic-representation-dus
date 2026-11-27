@@ -1,0 +1,34 @@
+{
+  "vorhaben": "14-vorgaenge-3-f4",
+  "codebuch_version": "2026-11-27.1",
+  "profil": "duesseldorf",
+  "einheit": "pair_with_span",
+  "grundgesamtheit": "interim/vorgang_kanten_rueckfall.parquet",
+  "grundgesamtheit_sha256": "715c21d8070b6f0141c82cfa2a747eab252d0b9146ef9a2fcba24876940f2e72",
+  "einheiten": 1710,
+  "ohne_text": 30,
+  "groesse": 50,
+  "seed": 20261127,
+  "schicht": "quelle",
+  "aufteilung": "proportional",
+  "selbstgewichtend": false,
+  "schichten": {
+    "anlage": {
+      "grundgesamtheit": 43,
+      "stichprobe": 1
+    },
+    "nummer": {
+      "grundgesamtheit": 124,
+      "stichprobe": 4
+    },
+    "sammelbericht": {
+      "grundgesamtheit": 63,
+      "stichprobe": 2
+    },
+    "titel": {
+      "grundgesamtheit": 1480,
+      "stichprobe": 43
+    }
+  },
+  "gezogen": "2026-11-27"
+}
