@@ -4787,7 +4787,7 @@ Text einer gerenderten Seite und in der Spaltendoku steht; die Vorlagen tragen k
    2026 die Spitze des Kriegs). Der Monat des Datenstands heißt in der Monatstabelle und an einer
    Spitze „angebrochen", wenn das neueste Dokument vor seinem Ende liegt. Ortsereignisse
    (`[[lokal]]` im Lexikon) fehlen (Frage 9.12).
-6. Größe 59 bis 81 KB statt 40 bis 80: der Rahmen allein sind rund 31 KB (Zahlen unten).
+6. Größe 59 bis 82 KB statt 40 bis 80: der Rahmen allein sind rund 31 KB (Zahlen unten).
 7. `analysis.cycles.wahljahr_of` ist öffentlich: die Seite zählt je Wahljahr mit derselben Zuordnung
    wie H17.3.
 
@@ -4817,31 +4817,37 @@ Sensitivitäten auf einer eigenen Seite (22 Zeilen, rund 4 KB).
   laufende Periode mit der Feed-Liste: die Beschriftung der Wahljahre bleibt bei 390 Pixeln lesbar;
   ohne JavaScript stehen alle Zeilen der Tabellen offen und kein Knopf „alle Zeilen zeigen". Danach
   brechen der Name eines Feeds und der Monat nicht mehr um (Folgecommit, nur CSS).
+- Review Runde 1 (2026-11-27): K1 (der Ort der Tests auf den Periodenseiten), K2 (`feeds.timer`
+  nicht im Settings-Fingerprint), N2 (die CSV des Vokabulars), N3 (Spitze ab fünf Treffern, der
+  angebrochene Monat, die Summenzeile ohne Tests) je mit rotem Test zuerst; N1 (Spaltenschema nur in
+  `schema.json`) nimmt der Supervisor als Rückstand für das ganze Register auf.
 - A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66 (`scripts/ab_bau.sh`,
-  `scripts/ab_vergleich.py`), `POLARS_MAX_THREADS=4 OMP_NUM_THREADS=2`, A aus `main` `f27473f`
-  (`git archive`), B aus `8d6f612` (`git archive`), Wurzeln `ab/17s-a` und `ab/17s-b` auf
-  xtraspace, die fünf Profile mit `bootstrap` und `run` in der Folge von `pages.yml`, dann
-  `publish --strict-budget`. Unter `site/` 255 Dateien in A, 285 in B, 38 Abweichungen, alle
-  erwartet: je Stadtseite (Hauptperiode, 2014–2020, laufende Periode, Mönchengladbach) neu
-  `zeit.html` und die sechs Downloads von `zeit_monate`, `haushaltsmonate` und
-  `dokumente_bundesvokabular`, in der Hauptperiode dazu die zwei von `zeit_hypothesen`; anders nur
-  `index.html` (Linkblock, Zahl der Downloadzeilen, die neuen Zeilen in den Downloads, die Größe
-  von `schema.json`, die Einträge im Spaltenschema; sonst bytegleich bis auf die Prüfsummen, die an
-  `generated_at` hängen) und `schema.json` je Stadtseite. Die 41 Feeds unter `2025/feeds/` sind
-  bytegleich, ebenso `akteure.html`, `vergleich.html` und jede `summary.json`. Über die ganzen
-  Datenwurzeln 988 und 1 068 Dateien, 223 Abweichungen: dieselben Seiten und Downloads in den
-  Ordnern der Profile, kein Parquet unter `processed/` oder `interim/` anders, und 129 Stamps
-  (6 neue von `zeit.html`; 109 nur im Settings-Fingerprint, weil `feeds.timer` dort zunächst
-  mitzählte -- nach Review K2 nicht mehr, siehe den A/B-Bau gegen `36fad29` unten; 6 von
-  `akteure.html` in `extra`, weil die Vorlagen der Seiten im Hash des Berichts stehen; 6 von
-  `index.html` in `extra` und den neuen optionalen Eingaben; 2 nur in der Wurzel der absoluten
-  Pfade, `wahlbezirke_vergleich` und `zeit_hypothesen`).
-- Größen, veröffentlicht (`publish`): `index.html` der Hauptperiode 941 988 → 950 844 Byte
-  (+8 856, davon die Spaltendoku von `zeit_hypothesen` mit 19 Spalten; Budget 1 000 000, mit 15 jetzt
-  +13 316 über dem Bau vor `v0.33.0`, Ziel der Phase höchstens +30 KB), `2014-2020/` 827 359 →
-  832 920 (+5 561), `2025/` 723 285 → 728 831 (+5 546), `moenchengladbach/` 810 780 → 816 333
-  (+5 553). `zeit.html`: Hauptperiode 81 469, 2014–2020 77 703, laufende Periode 58 678,
-  Mönchengladbach 68 939 Byte; mit `akteure.html` sind es je Profil 126 bis 187 KB Unterseiten
-  (Budget 1 MB). Die Downloads machen die veröffentlichte Seite 5,8 MB größer (46,9 → 52,8 MB), vor
-  allem `dokumente_bundesvokabular.csv` (Hauptperiode 1,97 MB, 2014–2020 2,27 MB), wie die übrigen
-  CSV je Dokument; die Pakete im Repo ändern sich nicht.
+  `scripts/ab_vergleich.py`), `POLARS_MAX_THREADS=4 OMP_NUM_THREADS=2`, A aus `main` `36fad29`
+  (`v0.36.0`, mit den Downloads von 11 und 12), B aus `a0c2ff1` (nach Runde 2 und dem Merge von
+  `36fad29`), beide über `git archive`, Wurzeln `ab/17s-a2` und `ab/17s-b2` auf xtraspace, die fünf
+  Profile mit `bootstrap` und `run` in der Folge von `pages.yml`, dann `publish --strict-budget`.
+  Unter `site/` 258 Dateien in A, 288 in B, 38 Abweichungen, alle erwartet: je Stadtseite
+  (Hauptperiode, 2014–2020, laufende Periode, Mönchengladbach) neu `zeit.html` und die sechs
+  Downloads von `zeit_monate`, `haushaltsmonate` und `dokumente_bundesvokabular`, in der
+  Hauptperiode dazu die zwei von `zeit_hypothesen`; anders nur `index.html` (Linkblock, Zahl der
+  Downloadzeilen, die neuen Zeilen in den Downloads, die Größe von `schema.json`, die Einträge im
+  Spaltenschema; sonst bytegleich bis auf die Prüfsummen, die an `generated_at` hängen) und
+  `schema.json` je Stadtseite. Die 41 Feeds unter `2025/feeds/` sind bytegleich, ebenso
+  `akteure.html`, `vergleich.html` und jede `summary.json`. Über die ganzen Datenwurzeln 994 und
+  1 074 Dateien, 223 Abweichungen: dieselben Seiten und Downloads in den Ordnern der Profile, kein
+  Parquet unter `processed/` oder `interim/` anders, und 129 Stamps: 6 neue von `zeit.html`, 109 nur
+  in der Schreibzeit (der Settings-Fingerprint ist nach K2 gleich; im ersten A/B-Bau gegen
+  `f27473f` standen dieselben 109 Stamps mit anderem Fingerprint da), 6 von `akteure.html` in
+  `extra`, weil die Vorlagen der Seiten im Hash des Berichts stehen, 6 von `index.html` in `extra`
+  und den neuen optionalen Eingaben, 2 nur in der Wurzel der absoluten Pfade
+  (`wahlbezirke_vergleich`, `zeit_hypothesen`).
+- Größen, veröffentlicht (`publish`): `index.html` der Hauptperiode 948 839 → 957 828 Byte
+  (+8 989, davon die Spaltendoku von `zeit_hypothesen` mit 19 Spalten; Budget 1 000 000; mit 15, 11
+  und 12 jetzt +20 300 über dem Bau vor `v0.33.0`, Ziel der Phase höchstens +30 KB),
+  `2014-2020/` 827 359 → 833 053 (+5 694), `2025/` 723 285 → 728 964 (+5 679),
+  `moenchengladbach/` 810 780 → 816 466 (+5 686). `zeit.html`: Hauptperiode 81 612, 2014–2020
+  77 643, laufende Periode 58 618, Mönchengladbach 68 901 Byte; mit `akteure.html` sind es je
+  Profil 126 bis 187 KB Unterseiten (Budget 1 MB). `dokumente_bundesvokabular.csv` nach N2:
+  Hauptperiode 1 965 933 → 176 649 Byte, 2014–2020 2 272 822 → 142 023, laufende Periode
+  420 986 → 16 413, Mönchengladbach 295 230 → 14 741. Die Downloads von 17 machen die
+  veröffentlichte Seite 1,2 MB größer (53,0 → 54,2 MB); die Pakete im Repo ändern sich nicht.
