@@ -1,8 +1,11 @@
 # Vorhaben 12: Kennungen und Beträge
 
-**Stand 2026-11-26: Urteil bauen in vier Arten (§ 5), Stufe 2 auf `main` (`v0.31.0`, Punkt 82);
-Stufe 3 (Download) wartet auf den F4-Nachzug `12-kennungen-2-f4` (§ 10, Punkt 8).** Der Branch
-`feat/12-kennungen` ist gemerged und entfernt.
+**Stand 2026-11-27: Urteil bauen in vier Arten (§ 5), Stufe 2 auf `main` (`v0.31.0`, Punkt 82);
+Stufe 3 gebaut auf `feat/11-12-downloads` (Entscheidungspunkt „Downloads von 11 und 12"):
+`kennungen` als Parquet, als CSV nur Bauleitplanung und Beträge, in den Downloads der Hauptperiode,
+mit der Präzision je Art aus Runde 1 (`12-kennungen-f4`: Bauleitplanung, Betrag) und Runde 2
+(`12-kennungen-2-f4`: Termin, Verwaltungseinheit); den Recall nennt die Zeile nicht
+(`12-kennungen-recall-f4` steht aus).** Der Branch `feat/12-kennungen` ist gemerged und entfernt.
 
 Stufe 1 vom 2026-11-23 mit Kodierung. Briefing: [plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md),
 § 11. Messskript: [12-kennungen-messung.py](12-kennungen-messung.py). Codebuch, Stichprobe und Labels:

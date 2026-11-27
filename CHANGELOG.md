@@ -2,6 +2,14 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.36.0 (2026-11-27), Kopf und Kennungen als Download
+
+- **Downloads von 11 und 12** (Stufe 3, `docs/decisions.md`, Punkt 89): `dokumente_kopf` (Amt, Dezernat
+  als Amtsbezeichnung, Beratungsfolge, Sitzung, Beschlussvorschlag; nur Parquet, ohne Namen) und
+  `kennungen` (Bebauungspläne, Beträge, Termine, Verwaltungseinheiten; CSV nur für Bauleitplanung und
+  Beträge), je mit Spaltendoku und dem Prüfsatz aus der Validierung, nur in gemessenen Datensätzen mit
+  Rohtext (auf Pages die Hauptperiode). Die Hauptseite wächst um 6,9 KB.
+
 ## 0.35.0 (2026-11-27), Akteure
 
 - **Die erste Unterseite `akteure.html`** (Vorhaben 15, Stufe 3, `docs/decisions.md`, Punkt 88): welche

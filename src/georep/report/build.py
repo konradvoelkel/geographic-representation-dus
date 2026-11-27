@@ -24,7 +24,7 @@ import polars as pl
 
 from georep.analysis.hits import DISTRICT
 from georep.analysis.ols import CONSTANT, model_frame, partial_residuals
-from georep.export import write_csv
+from georep.export import write_csv, write_csv_frame
 from georep.geo import LONLAT, read_canonical_precincts, transformer
 from georep.io import atomic_path, digest, write_json, write_text
 from georep.layout import Layout
@@ -71,9 +71,10 @@ from georep.report.model import (
 )
 from georep.report.pages import page_links
 from georep.report.render import Visuals, render_map, render_report
-from georep.report.tables import GEOJSON_TABLE, PublishedTable, all_tables, published
+from georep.report.tables import GEOJSON_TABLE, PublishedTable, all_rows, all_tables, published
 from georep.report.terms import pairs, terms_payload
 from georep.settings import Settings
+from georep.stores import stored_schema_version
 
 GEOJSON_NAME = "wahlbezirke.geojson"
 SCHEMA_NAME = "schema.json"
@@ -149,7 +150,7 @@ def _remove_unpublished(layout: Layout, wanted: list[PublishedTable]) -> None:
     nach einem Lauf mit Themen), ließe sonst ihr Parquet und ihr CSV im Ordner stehen, ohne Link
     auf der Seite, aber mit im Pages-Paket. Fremde Dateien bleiben unberührt.
     """
-    keep = {t.path(layout).name for t in wanted} | {f"{t.name}.csv" for t in wanted}
+    keep = {name for t in wanted for name in t.download_names(layout)}
     for table in all_tables():
         for name in (table.path(layout).name, f"{table.name}.csv"):
             stale = layout.site_data / name
@@ -157,22 +158,53 @@ def _remove_unpublished(layout: Layout, wanted: list[PublishedTable]) -> None:
                 stale.unlink()
 
 
+def _write_view(frame: pl.DataFrame, source: Path, target: Path) -> None:
+    """Die veröffentlichte Sicht einer Tabelle als Parquet, mit der Schema-Version ihrer Quelle."""
+    version = stored_schema_version(source)
+    with atomic_path(target) as tmp:
+        frame.write_parquet(
+            tmp,
+            compression="zstd",
+            metadata={"georep.schema_version": version} if version is not None else None,
+        )
+
+
 def write_tables(layout: Layout, settings: Settings | None = None) -> list[Download]:
-    """Die Tabellen des Registers als Parquet (kopiert) und CSV nach ``site/data/``."""
+    """Die Tabellen des Registers als Parquet (kopiert) und CSV nach ``site/data/``.
+
+    Vorhaben 11 und 12, Stufe 3: eine Tabelle mit ``view`` erscheint als diese Sicht (ohne eine
+    Spalte, ohne Werte mit Namen) statt als Kopie; ``csv`` wählt die Zeilen der CSV oder lässt sie
+    weg.
+    """
     data_dir = layout.guard_writable(layout.site_data)
     downloads: list[Download] = []
     wanted = published(layout, settings)
     _remove_unpublished(layout, wanted)
     for table in wanted:
         parquet = table.path(layout)
-        rows = _rows(parquet)
         target = data_dir / parquet.name
-        with atomic_path(target) as tmp:
-            shutil.copyfile(parquet, tmp)
+        if table.view is None:
+            rows = _rows(parquet)
+            with atomic_path(target) as tmp:
+                shutil.copyfile(parquet, tmp)
+        else:
+            frame = table.published_frame(pl.read_parquet(parquet), settings)
+            rows = frame.height
+            _write_view(frame, parquet, target)
         downloads.append(_download(target, "Parquet", rows, table.description))
+        if table.csv is None:
+            continue
         csv_target = data_dir / f"{table.name}.csv"
-        write_csv(parquet, csv_target, table.joins, table.separator)
-        downloads.append(_download(csv_target, "CSV", rows, f"{table.description}, als CSV"))
+        description = f"{table.description}, als CSV"
+        if table.view is None and table.csv.rows is all_rows:
+            write_csv(parquet, csv_target, table.joins, table.separator)
+            csv_rows = rows
+        else:
+            csv_frame = table.csv.rows(pl.read_parquet(target))
+            write_csv_frame(csv_frame, csv_target, table.joins, table.separator)
+            csv_rows = csv_frame.height
+            description += f" ({table.csv.note})" if table.csv.note else ""
+        downloads.append(_download(csv_target, "CSV", csv_rows, description))
     return downloads
 
 

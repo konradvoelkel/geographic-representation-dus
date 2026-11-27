@@ -31,13 +31,12 @@ def test_site_has_index_map_and_every_download_file(mini_run: Layout) -> None:
     names = sorted(p.name for p in mini_run.site_data.iterdir())
     tables = published(mini_run)
     expected = sorted(
-        [t.path(mini_run).name for t in tables]
-        + [f"{t.name}.csv" for t in tables]
+        [name for t in tables for name in t.download_names(mini_run)]
         + [GEOJSON_NAME, SCHEMA_NAME, DOCUMENTS_NAME, SUMMARY_NAME, TERMS_NAME]
     )
-    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
-    # und die Begriffe je Wahlbezirk (Punkt 49)
-    assert names == expected and len(names) == 2 * len(tables) + 5
+    # Je Tabelle Parquet und CSV (Vorhaben 11: der Kopf ohne CSV), dazu GeoJSON, Schema,
+    # Dokumentliste, summary.json (Option 01) und die Begriffe je Wahlbezirk (Punkt 49)
+    assert names == expected
     assert mini_run.site_index.with_name("index.html.stamp.json").is_file()
 
 

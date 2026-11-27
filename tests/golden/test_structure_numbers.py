@@ -30,7 +30,7 @@ import polars as pl
 import pytest
 
 from georep.bootstrap import bootstrap_from_settings
-from georep.enrich.sections import raw_text_frame, sections_files
+from georep.enrich.sections import HEAD_CHECK, raw_text_frame, sections_files
 from georep.layout import Layout
 from georep.pipeline import build_steps, run_pipeline
 from georep.prep.bodies import CONSULTATION, merge_consultations
@@ -252,6 +252,20 @@ def test_the_head_fields_are_right_as_validated(score: Score) -> None:
     assert score.beratung_placeholder == (168, 168)
     assert score.briefdatum == (73, 73)
     assert score.sitzung_datum == (48, 48)
+
+
+def test_the_download_check_carries_these_numbers(score: Score) -> None:
+    """Stufe 3: der Prüfsatz unter den Downloads (``HEAD_CHECK``) nennt genau diese Zahlen."""
+    measured = {m.label: (m.hits, m.units) for m in HEAD_CHECK.measures}
+    assert measured == {
+        "Beschlussvorschlag zeilengenau": (score.strict, 200),
+        "Amt": score.amt,
+        "Amtsbezeichnung": score.dezernat,
+        "Zeilen der Beratungsfolge": score.beratung,
+        "Briefdatum": score.briefdatum,
+        "Datum der Sitzung": score.sitzung_datum,
+    }
+    assert (HEAD_CHECK.project, HEAD_CHECK.units) == (VALIDATION.name, len(_tasks()))
 
 
 def test_the_session_is_named_like_the_coders_name_it(score: Score) -> None:

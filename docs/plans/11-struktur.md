@@ -1,8 +1,11 @@
 # Vorhaben 11: Struktur der Dokumente
 
-**Stand 2026-11-26: Urteil bauen (nach der Kodierung, § 4.1, § 5), Stufe 2 auf `main` (`v0.30.0`,
-Punkt 81: `struktur-1` unverändert, früher Schritt vor `weights`); Stufe 3 (Downloadzeile) offen.** Wo
-§ 5 bis § 7 von § 10 abweichen, gilt § 10.
+**Stand 2026-11-27: Urteil bauen (nach der Kodierung, § 4.1, § 5), Stufe 2 auf `main` (`v0.30.0`,
+Punkt 81: `struktur-1` unverändert, früher Schritt vor `weights`); Stufe 3 gebaut auf
+`feat/11-12-downloads` (Entscheidungspunkt „Downloads von 11 und 12"): `dokumente_kopf` als Parquet
+in den Downloads der Hauptperiode, ohne CSV, ohne die Rolle des Unterzeichners und ohne Werte, die
+einen Namen tragen, mit dem Prüfsatz aus `11-struktur-f4` und den Zahlen aus § 4.1.** Wo § 5 bis § 7
+von § 10 abweichen, gilt § 10.
 
 Stufe 1 (Messen) vom 2026-11-23 auf dem Branch `feat/11-struktur` (gemerged, entfernt). Briefing:
 [plan-vorverarbeitung-2026-11.md](../plan-vorverarbeitung-2026-11.md), § 11. Messskript:

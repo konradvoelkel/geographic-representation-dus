@@ -297,8 +297,12 @@ def test_pipeline_reproduces_the_thesis_results(
     assert within_budget(layout.site_index.stat().st_size, settings.report.page_budget_bytes)
     _check_search_section(page)
     # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
-    # und die Begriffe je Wahlbezirk (Punkt 49)
-    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 5
+    # und die Begriffe je Wahlbezirk (Punkt 49). Vorhaben 11 und 12: der Kopf hat keine CSV, und
+    # beide erscheinen nur mit den Settings (gemessen, mit Rohtext aus dem Paket)
+    tables = published(layout, settings)
+    assert {"dokumente_kopf", "kennungen"} <= {t.name for t in tables}
+    files = [n for t in tables for n in t.download_names(layout)]
+    assert len(list(layout.site_data.iterdir())) == len(files) + 5
     assert (layout.site / "karte.html").stat().st_size < 1_000_000
     _compare_results(
         _results_as_legacy(layout.results),

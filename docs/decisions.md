@@ -4538,6 +4538,144 @@ dritte Matrix „alle Gremien" (sie mischte die Ebene mit und ohne Lager); `link
   allem die CSV je Dokument (Hauptperiode 1,87 und 1,94 MB), wie bei `dokumente_urheber`; die
   Pakete im Repo ändern sich nicht.
 
+## 89. Die Downloads von 11 und 12: nur gemessen und mit Rohtext, eine Sicht ohne Namen, der Prüfsatz unter der Tabelle (Vorhaben 11 und 12, Stufe 3, 2026-11-27)
+
+Stufe 3 von Vorhaben 11 und 12 nach `docs/plans/11-struktur.md` und `docs/plans/12-kennungen.md`
+(je § 7 und § 10) und nach `docs/plan-zeigen-2026-11.md` (§ 5, `v0.37.0`; V5: `sitzung_gremium` in
+`schema.json`). Keine Unterseite, je eine Zeile in den Downloads der Hauptseite. Gebaut auf
+`feat/11-12-downloads` ab `main` `f27473f` (`v0.35.0`), parallel zu 14 und 17. Die Nummer bekommt
+der Eintrag beim Merge.
+
+**Was veröffentlicht wird.**
+
+- `dokumente_kopf.parquet` (11), nur als Parquet: die Beratungsfolge ist eine Liste von Strukturen
+  ohne CSV-Form, und als CSV wäre der Kopf fünf- bis achtmal so groß (§ 7). Ohne die Spalte
+  `unterzeichner_rolle`: sie stammt aus der Liste des Profils und ist kein Name, aber
+  „Oberbürgermeister" oder „Fraktionsvorsitzender" unter einem Brief zeigt auf eine Person, und § 7
+  sieht keinen Unterzeichner vor. `dezernat_titel` bleibt, es ist nur die Amtsbezeichnung aus der
+  Liste des Profils (Nachbedingung von `structure_tables`). Die Abschnitte selbst nicht (Rohtext).
+- `kennungen.parquet` (12) mit allen sechs Arten, dazu `kennungen.csv` nur mit Bebauungsplänen,
+  FNP-Änderungen und Beträgen (§ 7): alle Arten wären als CSV 17,8 MB.
+- Unter der Download-Tabelle je Tabelle ein Absatz mit dem Prüfsatz; `schema.json` und das
+  Spaltenschema der Seite beschreiben jede veröffentlichte Spalte, `sitzung_gremium` mit beiden
+  Formen (Name aus dem Profil, wo `sitzung_kuerzel` gesetzt ist, sonst wie im Text; `docs/todo.md`,
+  Punkt 14 (e)).
+
+**Nur gemessen und nur mit Rohtext.** Ein Download erscheint, wo der Datensatz zur Stichprobe gehört
+(`report.downloads.measured`, dieselbe Regel wie `akteure.html`: der Ordner eines Profils aus
+`stichprobe.json`; das Vergleichsprofil rechnet im Ordner der Hauptperiode; ein Profil, das es im
+Paket nicht gibt, ist ein Fehler, kein stilles „nicht gemessen") und die Tabelle Zeilen
+aus einem Rohtext hat (`has_extracted_rows`). Auf Pages ist das die Hauptperiode, wie § 6 des Plans
+es erwartet; die anderen Profile haben dort keinen Rohtext und bekommen weder Zeile noch Satz. Lokal
+haben 2014 bis 2020, die laufende Periode und Mönchengladbach Rohtext, aber ihr Kopf ist nicht
+gemessen, und in 2014 bis 2020 läuft er oft in fremde Felder: 168 Amtszeilen tragen dort das Feld
+der Dezernentin oder des Dezernenten mit Namen, zwölf Zeilen der Beratungsfolge sind Textreste mit
+Namen („… Herr …"), 13 Ämter von 12 heißen „Beigeordnete …". Ein Satz „explorativ" hätte die
+Zahlen gerettet, nicht die Namen. Verworfen: die Downloads in jedem Profil mit Rohtext und
+„explorativ" (die Gültigkeitsregel des Plans, § 8) — der Namensschutz unten fängt nur Namen hinter
+einem Titel, und „Dezernentin: …" ohne Titel stand dort schon vor ihm.
+
+**Ohne Namen: eine Sicht statt der Kopie.** Ein Eintrag im Register kann jetzt eine Sicht
+veröffentlichen (`PublishedTable.view`): `head_view` lässt `unterzeichner_rolle` weg und leert einen
+Freitext (`formular`, `amt_name`, `sitzung_gremium`, das Gremium einer Zeile der Beratungsfolge), in
+dem hinter einem Titel ein Name beginnt; `spans_view` lässt eine solche Spanne ganz weg, weil F3 ein
+leeres `value` nur bei Positionsspannen kennt. Den Titel nennt `report.names.person_titles`
+(Verwaltungsdeutsch in `defaults.toml`, die Anreden wie `summaries.person_titles` und die Rollen aus
+`structure.head.signer_roles`; Polars, also ohne Lookarounds), das Muster setzt `named` zusammen:
+Titel, Leerraum oder Doppelpunkt, ein Großbuchstabe. So trifft es „Beigeordneter Hans …",
+„Stadtkämmerin…" ohne Leerraum und „Dezernentin: …", nicht „Büro Oberbürgermeister" und nicht
+„Stadtdirektor und Dezernat für …". Eine Nachbedingung der beiden Sichten prüft, dass danach kein
+Wert mehr trifft. In der Hauptperiode leert die Sicht vier Amtszeilen und lässt keine Kennung weg
+(gezählt am 2026-11-27 über alle Spalten mit Text); in 2014 bis 2020 wären es 168 und zwölf und 13,
+in der laufenden Periode zwei Amtszeilen der Form „Stadtkämmerin Amt für …" (ein Fehltreffer, der
+nichts kostet), in Mönchengladbach keine. `report.names` steht unter `[report]`, weil es nur die
+Seite betrifft: es zählt im Stamp von `report` (`report_fingerprint`), nicht im Settings-Fingerprint,
+und kein anderer Schritt rechnet neu. Die Abschnitte von 11 bleiben, wie validiert; die Amtszeile am
+nächsten Feldlabel zu schneiden, wäre eine neue Regel für `struktur-2` (`docs/todo.md`, Punkt 14 (f)).
+Verworfen: den Namen im Wert abschneiden statt den Wert zu leeren (ein Schnitt am Label ließe einen
+Namen ohne Label stehen); `unterzeichner_rolle` aus `dokumente_kopf` selbst nehmen (das änderte die
+Ausgabe der Stufe 2 und ihr Schema); eine eigene Datei für den Download (doppelt).
+
+**Der Prüfsatz kommt aus `guete.json`, die Zahlen aus einer geprüften Konstante** (wie `RULE_CHECK`
+von 15, Punkt 88). `read_quality` liest `satz`, `modelle` und `uneinig` und bricht mit `SchemaError`
+ab, wenn Codebuch oder Zahl der Einheiten nicht die der Messung sind. Wo Kodierer und Schlichtung
+dasselbe Modell sind und es Uneinigkeiten gab, hängt „geschlichtet von demselben Modell" an den Satz
+(`merge.sentence` nennt die Schlichtung dann nicht; § 7 von 12 will es sagen). Die Zahlen:
+
+- 11 (`HEAD_CHECK`, `11-struktur-f4`): Beschlussvorschlag zeilengenau 188 von 200, im Kopf Amt
+  125/125, Amtsbezeichnung 69/69, Zeilen der Beratungsfolge 160/168, Briefdatum 73/73, Datum der
+  Sitzung 48/48, je mit dem Intervall nach Wilson (§ 4.1; 0,898–0,965 und so fort, ein Test hält die
+  Werte des Messdokuments fest). Der slow-Test `test_structure_numbers.py` vergleicht die Konstante
+  mit den Zahlen, die er aus `labels.csv` rechnet. Die Gremien der Sitzung (48/48 nach der
+  Normalisierung) stehen nicht im Satz: die Normalisierung kam nach der Kodierung.
+- 12 (`ROUND_1`, `ROUND_2`): die Präzision je Art (Art und Grenzen richtig, gewichtet mit
+  `schicht_n`, Wilson mit dem effektiven n nach Kish), Bauleitplanung 1,000 (0,957–1,000; n 100)
+  und Betrag 0,962 (0,885–0,988; n 100) aus Runde 1 (`12-kennungen-f4`), Termin 1,000 (0,726–1,000;
+  n 30) und Verwaltungseinheit 0,956 (0,851–0,988; n 100) aus der Bestätigung in Runde 2
+  (`12-kennungen-2-f4`). Beide Ordner, weil die Arten an verschiedenen Runden gemessen sind; der
+  Auftrag nannte nur Runde 2, die Bauleitplanung und Beträge aber nicht trägt. Der slow-Test
+  `test_identifiers_labels.py` rechnet Anteil, n und Intervall aus den Labels nach. Der Recall steht
+  nicht im Satz (Plan, § 4, V3). Dazu: Beträge tragen keine Rolle, Termine keine Frist.
+
+`guete.json` und `stichprobe.json` der drei Ordner sind Eingaben von `report`
+(`contributed_check_files`), wie die von `page_akteure`.
+
+**Volle Einigkeit bei `bv_mehrteilig`** (Punkt 87): nicht nachgetragen. Ein `georep validate score
+11-struktur-f4` in einem Kratzordner ändert außer `alpha_genuegt` und `alpha_vermerk` dieser Frage
+an allen zehn Fragen einen Schlüssel (`markierungen: null`, den spätere Fassungen von `score`
+schreiben), und das README schreibt `score` nicht neu: dort stünde weiter „genügt nein". Der Prüfsatz
+liest `alpha_genuegt` nicht; `bv_mehrteilig` steht in keiner Zahl der Zeile.
+
+**Vier Felder am Register**, alle am Ende von `PublishedTable`, damit kein Aufruf mit Positionen
+seine Bedeutung ändert: `csv` (`CsvPlan`: die Zeilen der CSV und ein Satz für ihre Downloadzeile;
+`None` heißt keine CSV, und `csv_plan` lässt die Tabelle dann aus, sonst bräche `georep export` an
+der Liste von Strukturen ab), `view`, `shown` (an Datei und Settings; ohne Settings kein Download)
+und `check` (`TableCheck`: Dateien und Satz). Eine Sicht wird mit der Schema-Version ihrer Quelle
+geschrieben, ihre Spaltendoku an einer leeren Tabelle bestimmt.
+
+**Größen.** Hauptperiode, veröffentlicht: `dokumente_kopf.parquet` 204 485 Byte, `kennungen.parquet`
+1 245 173, `kennungen.csv` 4 593 264 (30 180 Zeilen, 2,1 MB davon die Spalte `id`; `docs/todo.md`,
+Punkt 35). Auf `index.html` der Hauptperiode: drei Downloadzeilen (390, 371, 419 Byte), zwei
+Prüfsätze (578 und 701 Byte) und zwei Einträge im Spaltenschema (rund 2,7 und 1,7 KB). Das sind
+rund 7 KB statt „je unter 1 KB" aus § 5 des Plans: die Schätzung zählte das Spaltenschema und den
+Prüfsatz nicht. Das Ziel der Phase (höchstens 30 KB über dem Bau vor `v0.33.0`) hält es.
+
+**Geprüft.**
+
+- Tests: `tests/unit/test_report_downloads.py` (eine Kette mit zwei erfundenen Rohtexten, in deren
+  Kopf ein Name steht: kein Name in einem veröffentlichten Text, kein Unterzeichner; die Sichten an
+  erfundenen Zeilen; jede veröffentlichte Spalte beschrieben, auch in `schema.json`; nur gemessene
+  Datensätze; ohne Rohtext weder Zeile noch Absatz; CSV nur mit Plänen und Beträgen, keine vom Kopf,
+  `georep export` ohne sie; die Prüfdateien im Stamp von `report`; der Prüfsatz aus `guete.json`, ein
+  geänderter Satz ändert ihn, eine andere Kodierung bricht ab). Rot vor der Änderung, gegen `main`
+  `f27473f`: Exit 1, `test_mit_rohtext_parquet_und_die_csv_der_plaene_und_betraege`,
+  `test_der_bericht_liest_die_pruefung_mit`, `test_der_pruefsatz_steht_unter_den_downloads`
+  (die übrigen brauchen Namen, die es dort nicht gibt: Exit 2 beim Sammeln). Slow:
+  `test_structure_numbers.py` und `test_identifiers_labels.py` binden die Konstanten an die Labels,
+  `test_published_page.py` die Größen der drei Dateien und der fünf Zeilen auf der Seite. Drei
+  slow-Tests der vollen Kette zählten zwei Dateien je Tabelle und lasen `published` ohne Settings
+  (rot nach `f755777`, etwa `assert 52 == ((2 * 22) + 5)`); sie zählen jetzt über
+  `PublishedTable.download_names` (`76b327c`, die Ausgabe von `report` bleibt gleich).
+- A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66 (`scripts/ab_bau.sh`,
+  `scripts/ab_vergleich.py`), `POLARS_MAX_THREADS=4 OMP_NUM_THREADS=2`, A aus `main` `f27473f`
+  (`git archive`), B aus `f755777`, Wurzeln `ab/1112-a` und `ab/1112-b` auf xtraspace, die fünf
+  Profile in der Folge von `pages.yml`, dann `publish --strict-budget`. Unter `site/` 255 Dateien in
+  A, 258 in B, 5 Abweichungen, alle erwartet: neu `data/dokumente_kopf.parquet`,
+  `data/kennungen.parquet` und `data/kennungen.csv` der Hauptperiode, anders deren `index.html`
+  (die drei Downloadzeilen, die Zahl der Zeilen im Knopf, 60 statt 57, die Größe von
+  `schema.json`, die zwei Prüfsätze, zwei Einträge im Spaltenschema; sonst bytegleich bis auf die
+  Prüfsummen, die an `generated_at` hängen) und `schema.json` (die beiden Tabellen). Die Seiten von
+  2014–2020, der laufenden Periode und Mönchengladbach, `vergleich.html`, `akteure.html` und jede
+  `summary.json` sind gleich, bis auf Zeitstempel. Über die ganzen Datenwurzeln 988 und 994
+  Dateien, 133 Abweichungen: dieselben Seiten und Downloads im Ordner der Hauptperiode, kein Parquet
+  unter `processed/` und `interim/`, 123 Stamps (109 nur in `written`, der Settings-Fingerprint ist
+  gleich; 6 von `index.html` in `extra` und den neuen Eingaben, 6 von `akteure.html` in `extra`, weil
+  der Vorlagen-Hash `70-downloads` mitzählt; 2 nur in der Wurzel der absoluten Pfade).
+- Größen, veröffentlicht (`publish`): `index.html` der Hauptperiode 941 988 → 948 839 Byte (+6 851;
+  seit dem Bau vor `v0.33.0` +11 448, Ziel der Phase höchstens +30 KB), `schema.json` 40 717 →
+  45 663; die anderen Seiten gleich groß. Die veröffentlichte Seite wächst um 6,1 MB (46,9 → 53,0
+  MB), fast nur `kennungen.csv`.
+
 ## NN. Die Unterseite `zeit.html`: Zählungen beschreibend, die Familie mit Wort und Commit, das Vokabular mit seiner Ebene, die Feeds mit ihrem Stand (Vorhaben 17, Stufe 3, 2026-11-27)
 
 Stufe 3 von Vorhaben 17 nach `docs/plans/17-zeit.md`, § 7 und § 10 (Punkte 8 und 9), und nach

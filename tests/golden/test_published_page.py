@@ -127,6 +127,35 @@ def test_the_published_main_page_stays_within_the_budget(published: PublishedRun
     assert published.layout.reference_root.resolve() == REFERENCE  # die volle Referenz der Arbeit
 
 
+# Vorhaben 11 und 12, Stufe 3 (docs/todo.md, Punkt 35: die Größen nennen, klein halten). Gemessen
+# am 2026-11-27 an der Hauptperiode: 204 485, 1 245 173 und 4 593 264 Byte
+DOWNLOAD_LIMITS = {
+    "dokumente_kopf.parquet": 300_000,
+    "kennungen.parquet": 1_500_000,
+    "kennungen.csv": 5_000_000,
+}
+
+
+def test_the_downloads_of_11_and_12_stay_small(published: PublishedRun) -> None:
+    """Der Kopf nur als Parquet, die Kennungen als Parquet und als CSV der Pläne und Beträge."""
+    data = published.layout.site_data
+    sizes = {name: (data / name).stat().st_size for name in DOWNLOAD_LIMITS}
+    assert all(sizes[name] < limit for name, limit in DOWNLOAD_LIMITS.items()), sizes
+    assert not (data / "dokumente_kopf.csv").exists()
+    page = published.layout.site_index.read_text(encoding="utf-8")
+    lines = [
+        line
+        for line in page.splitlines()
+        if '<a href="data/dokumente_kopf' in line
+        or '<a href="data/kennungen' in line
+        or line.startswith(
+            ('<p class="note"><code>dokumente_kopf', '<p class="note"><code>kennungen')
+        )
+    ]
+    assert len(lines) == 5  # drei Downloadzeilen, zwei Prüfsätze
+    assert all(len(line.encode("utf-8")) < 1_000 for line in lines)
+
+
 def test_publish_reports_no_page_over_budget(published: PublishedRun, tmp_path: Path) -> None:
     """``PublishSummary.over_budget`` ist die Prüfung, die ``--strict-budget`` in CI rot macht."""
     summary = publish_sites(

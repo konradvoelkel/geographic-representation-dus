@@ -120,8 +120,10 @@ def test_the_whole_chain_on_the_reference_publishes_both_sections(
     page = layout.site_index.read_text(encoding="utf-8")
     # Punkt 50: 0 schaltet die Prüfung ab, darum über den Helfer
     assert within_budget(layout.site_index.stat().st_size, settings.report.page_budget_bytes)
-    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
-    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 5
+    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01);
+    # Vorhaben 11 und 12: der Kopf ohne CSV, beide nur mit den Settings (gemessen, mit Rohtext)
+    files = [n for t in published(layout, settings) for n in t.download_names(layout)]
+    assert len(list(layout.site_data.iterdir())) == len(files) + 5
     assert '<section id="kontrollvariablen">' in page and "Modell C" in page
     assert '<section id="abgeleitete-daten">' in page
     assert settings.context.dataset.license in page  # Namensnennung aus den Settings
