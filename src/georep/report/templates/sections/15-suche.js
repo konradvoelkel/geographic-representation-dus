@@ -348,7 +348,8 @@
     });
   }
 
-  /* Teilbare Adresse: index.html#suche=<begriff> zeigt das Ergebnis schon beim Laden. */
+  /* Teilbare Adresse: details.html#suche=<begriff> zeigt das Ergebnis schon beim Laden; die
+     Startseite leitet index.html#suche=… dorthin weiter (plan-startseite, § 3). */
   (function fromHash() {
     var hash = window.location.hash || "";
     if (hash.indexOf("#suche=") !== 0) return;

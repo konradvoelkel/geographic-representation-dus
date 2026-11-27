@@ -1,6 +1,7 @@
 {#
   Review N1: der Dialog-Haken (Vorarbeit V2) steht nur auf Seiten, deren Dialog data-extras trägt,
-  heute nur auf der Hauptseite mit einem Haken; eine Unterseite (PageFrame) hat kein Feld dialogs.
+  heute auf details.html und der Startseite, wenn ein Haken an ist; eine Unterseite (PageFrame)
+  hat kein Feld dialogs.
 #}
 {% set hooks = model.dialogs if model.dialogs is defined else () %}
 (function () {
