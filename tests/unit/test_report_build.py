@@ -8,7 +8,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from georep.export import write_csv
+from georep.export import write_csv, write_csv_frame
 from georep.io import digest
 from georep.layout import Layout
 from georep.report.build import (
@@ -22,7 +22,7 @@ from georep.report.build import (
     current_commit,
 )
 from georep.report.dialog import dialogs_for
-from georep.report.tables import GEOJSON_COLUMNS, csv_plan, published
+from georep.report.tables import GEOJSON_COLUMNS, all_rows, csv_plan, published
 from georep.settings import Settings
 from tests.conftest import within_budget
 
@@ -35,15 +35,15 @@ def test_site_has_index_map_and_every_download_file(
     tables = published(mini_run)
     hooks = [hook.file_name for hook in dialogs_for(default_settings)]
     expected = sorted(
-        [t.path(mini_run).name for t in tables]
-        + [f"{t.name}.csv" for t in tables]
+        [name for t in tables for name in t.download_names(mini_run)]
         + [GEOJSON_NAME, SCHEMA_NAME, DOCUMENTS_NAME, SUMMARY_NAME, TERMS_NAME]
         + hooks
     )
-    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01),
-    # die Begriffe je Wahlbezirk (Punkt 49) und je Dialog-Haken seine Datei (Vorarbeit V2)
+    # Je Tabelle Parquet und CSV (Vorhaben 11: der Kopf ohne CSV), dazu GeoJSON, Schema,
+    # Dokumentliste, summary.json (Option 01), die Begriffe je Wahlbezirk (Punkt 49) und je
+    # Dialog-Haken seine Datei (Vorarbeit V2)
     assert hooks == ["vorgaenge.json"]
-    assert names == expected and len(names) == 2 * len(tables) + 5 + len(hooks)
+    assert names == expected
     assert mini_run.site_index.with_name("index.html.stamp.json").is_file()
 
 
@@ -61,18 +61,27 @@ def test_parquet_copies_are_byte_identical(mini_run: Layout) -> None:
 
 
 def test_csv_downloads_follow_the_export_rules(mini_run: Layout, tmp_path: Path) -> None:
+    """Dieselben Trenner wie ``georep export``; eine Tabelle mit eigenem ``CsvPlan`` (Punkt 89,
+    Vorhaben 17: das Vokabular nur mit Treffern) schreibt die Zeilen und Spalten ihres Plans."""
     plan = {parquet: (joins, sep) for parquet, joins, sep in csv_plan(mini_run)}
     for table in published(mini_run):
+        if table.csv is None:
+            continue
         name, parquet = table.name, table.path(mini_run)
         joins, separator = plan[parquet]
-        write_csv(parquet, tmp_path / f"{name}.csv", joins, separator)
+        if table.csv.rows is all_rows:
+            write_csv(parquet, tmp_path / f"{name}.csv", joins, separator)
+        else:
+            rows = table.csv.rows(pl.read_parquet(parquet))
+            write_csv_frame(rows, tmp_path / f"{name}.csv", joins, separator)
         assert (mini_run.site_data / f"{name}.csv").read_bytes() == (
             tmp_path / f"{name}.csv"
         ).read_bytes()
         frame = pl.read_csv(
             mini_run.site_data / f"{name}.csv", separator=separator, infer_schema=False
         )
-        assert frame.columns == list(pl.read_parquet_schema(parquet))
+        empty = pl.DataFrame(schema=pl.read_parquet_schema(parquet))
+        assert frame.columns == table.csv.rows(empty).columns
 
 
 def test_geojson_and_schema_are_consistent_with_the_tables(mini_run: Layout) -> None:

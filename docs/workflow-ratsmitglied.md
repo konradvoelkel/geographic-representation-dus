@@ -314,11 +314,13 @@ endet und nicht dort bleibt.
   ausgewiesener Unsicherheit: 62,4 % der Dokumente bleiben in der Restklasse, bei den Dokumenten der
   Bezirksvertretungen vier von fünf. Ein Dokument, das kein Thema trifft, ist deswegen nicht
   themenlos.
-- **Keine Benachrichtigung auf der Seite.** Seit `v0.27.0` gibt es je Wahlbezirk der laufenden
-  Periode einen Atom-Feed (`2025/feeds/wahlbezirk-NN.xml`, etwa
-  `2025/feeds/wahlbezirk-39.xml`), aber noch keinen Link darauf auf der Seite; er trägt den Stand
-  des Schnappschusses, solange kein Timer die Periode fortschreibt. Sonst bleibt die Abo-Funktion
-  des Ratsinformationssystems, wenn es eine hat.
+- **Neuigkeiten je Wahlbezirk als Feed, keine Benachrichtigung per Mail.** Seit `v0.27.0` gibt es je
+  Wahlbezirk der laufenden Periode einen Atom-Feed (`2025/feeds/wahlbezirk-NN.xml`, etwa
+  `2025/feeds/wahlbezirk-39.xml`); die Liste mit Links und dem Stand der Daten steht auf
+  `2025/zeit.html` unter „Neuigkeiten je Wahlbezirk" (Vorhaben 17, Stufe 3), die Hauptseite verlinkt
+  keinen Feed. Ein Feed trägt den Stand des Schnappschusses, solange kein Timer die Periode
+  fortschreibt, und die Seite sagt das. Wer eine Mail will, nimmt die Abo-Funktion des
+  Ratsinformationssystems, wenn es eine hat.
 - **Keine Beschlusslage, keine Sitzungstermine, keine Beratungsfolge je Dokument.** Die Seite sagt,
   welches Gremium ein Dokument eingebracht hat, nicht was beschlossen wurde oder wann die nächste
   Sitzung ist. Die Beratungsfolge (`consultation`, bei 18 708 von 19 109 Dokumenten der

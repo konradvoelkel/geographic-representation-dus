@@ -109,8 +109,11 @@ diesem Formular ist die Amtsbezeichnung das letzte Kopffeld -- 3 599 der 4 095 h
 Beratungsfolge, aber davor --, also endet der Kopf am Ende des Titels, und der Abschnitt
 `kopf_dezernat` wird dort geteilt. Schneiden müsste er am Ende der Zeile des letzten Kopffelds. Nicht jetzt, weil Vorhaben 16 genau
 diese Grenze vermessen hat; mit `struktur-2` und 16 zusammen.
-(e) `sitzung_gremium` in `dokumente_kopf` mischt Profilnamen (dann ist
-`sitzung_kuerzel` gesetzt) und die wörtliche Form; das gehört in `schema.json` der Stufe 3.
+(f) Der Kopf läuft in die nächste Zeile oder das nächste Feld: in der Hauptperiode trägt `amt_name`
+viermal das Feld der Dezernentin oder des Dezernenten mit Namen („Kulturamt Dezernentin/Dezernent:
+…"), in 2014 bis 2020 168-mal, dort dazu zwölf Zeilen der Beratungsfolge aus Textresten. Der
+Download leert solche Werte (Stufe 3, `report.names`); schneiden müsste `struktur-2` die Amtszeile
+am nächsten Feldlabel, auch ohne Doppelpunkt und mit anderer Schreibweise des Labels.
 
 
 ## 15. Beschlusslage: Rückstand aus dem Review von Vorhaben 26
@@ -300,7 +303,10 @@ Aufgenommen am 2026-11-27 mit `akteure.html` (Punkt 88): die beiden Tabellen je 
 (`dokumente_funktion`, `dokumente_antragsteller`) machen die veröffentlichte Seite um rund 10 MB größer,
 fast nur CSV (rund 9,6 MB), davon rund 70 % die Spalte `id` (OParl-URL). Jede Tabelle im Register kommt
 als Parquet und CSV; eine Verkleinerung (CSV nur für die Hauptperiode, gzip, kürzere Kennung) wäre eine
-Regel für das ganze Register. Entscheiden, bevor weitere Tabellen je Dokument dazukommen (14, 26, 12).
+Regel für das ganze Register. Entscheiden, bevor weitere Tabellen je Dokument dazukommen (14, 26).
+Mit Stufe 3 von 11 und 12 (2026-11-27) kamen in der Hauptperiode `dokumente_kopf.parquet` (204 KB,
+ohne CSV), `kennungen.parquet` (1,25 MB) und `kennungen.csv` (4,6 MB, nur Bauleitplanung und Beträge,
+30 180 Zeilen; davon 2,1 MB die Spalte `id`) dazu; als CSV nur Bauleitplanung wären es 0,33 MB.
 Stand mit Stufe 3 von 14 (2026-11-27): `dokumente_vorgang` (je Dokument), `vorgang_kanten` und
 `antwortzeiten` kommen in allen vier Datensätzen dazu; in der Hauptperiode als CSV 2,80, 1,27 und
 0,42 MB (Parquet 0,08, 0,08, 0,03 MB), über alle vier Datensätze zusammen 10,9 MB, die

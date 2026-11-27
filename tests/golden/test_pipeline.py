@@ -154,6 +154,9 @@ def test_pipeline_runs_skips_and_reruns(
         # Vorhaben 15, Stufe 3: die Unterseite liest Korpus, Urheber, Gremien, die beiden Tabellen
         # von 15 und die Prüfung im Repo; die Orte ändern keines davon
         "page_akteure": "übersprungen",
+        # Vorhaben 17, Stufe 3: zeit.html liest die Tabellen von 17, Korpus, Urheber, Gremien und
+        # die Prüfung im Repo; die Orte ändern keines davon
+        "page_zeit": "übersprungen",
         # Vorhaben 14, Stufe 3: dieselben Eingaben ohne Orte, dazu die Tabellen von 14
         "page_vorgaenge": "übersprungen",
     }
@@ -296,10 +299,15 @@ def test_pipeline_reproduces_the_thesis_results(
     # Budget der Seite: eine Zahl, in den Settings (Punkt 50, docs/seitengroesse-2026-10.md, § 7)
     assert within_budget(layout.site_index.stat().st_size, settings.report.page_budget_bytes)
     _check_search_section(page)
-    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01),
-    # die Begriffe je Wahlbezirk (Punkt 49) und je Dialog-Haken seine Datei (Vorarbeit V2)
+    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
+    # und die Begriffe je Wahlbezirk (Punkt 49). Vorhaben 11 und 12: der Kopf hat keine CSV, und
+    # beide erscheinen nur mit den Settings (gemessen, mit Rohtext aus dem Paket). Dazu je
+    # Dialog-Haken seine Datei (Vorarbeit V2)
+    tables = published(layout, settings)
+    assert {"dokumente_kopf", "kennungen"} <= {t.name for t in tables}
+    files = [n for t in tables for n in t.download_names(layout)]
     hooks = len(dialogs_for(settings))
-    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 5 + hooks
+    assert len(list(layout.site_data.iterdir())) == len(files) + 5 + hooks
     assert (layout.site / "karte.html").stat().st_size < 1_000_000
     _compare_results(
         _results_as_legacy(layout.results),

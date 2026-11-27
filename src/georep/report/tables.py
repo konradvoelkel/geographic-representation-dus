@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import deal
+import polars as pl
 
 from georep.analysis.ols import MODELS_SCHEMA
 from georep.crosswalk import UNIT, UNIT_NAME, WEIGHT
@@ -31,6 +32,35 @@ from georep.prep.voters import (
     party_share,
 )
 from georep.settings import Settings
+
+
+def all_rows(frame: pl.DataFrame) -> pl.DataFrame:
+    """Die CSV einer Tabelle trägt alle ihre Zeilen (die Vorgabe)."""
+    return frame
+
+
+@dataclass(frozen=True)
+class CsvPlan:
+    """Welche Zeilen die CSV einer Tabelle trägt (Vorhaben 12, Stufe 3).
+
+    ``note`` nennt sie in der Downloadzeile der CSV, wenn es nicht alle sind; sonst stünde dort
+    dieselbe Beschreibung wie beim Parquet neben einer anderen Zeilenzahl.
+    """
+
+    rows: Callable[[pl.DataFrame], pl.DataFrame] = all_rows
+    note: str = ""
+
+
+@dataclass(frozen=True)
+class TableCheck:
+    """Wie eine Tabelle geprüft ist (Vorhaben 11 und 12, Stufe 3): der Satz unter den Downloads.
+
+    ``files`` sind die Dateien, aus denen der Satz kommt (``guete.json``, ``stichprobe.json`` im
+    Repo); sie sind Eingaben des Schritts ``report``, damit eine neue Kodierung die Seite neu baut.
+    """
+
+    files: Callable[[Settings], tuple[Path, ...]]
+    sentence: Callable[[Settings], str]
 
 
 @dataclass(frozen=True)
@@ -50,9 +80,42 @@ class PublishedTable:
     # beschreiben sich erst zur Laufzeit; ``columns`` bleibt dann leer.
     describe: Callable[[Settings], Mapping[str, tuple[str, str]]] | None = None
 
+    # --- Vorhaben 11 und 12, Stufe 3 (Messdokumente § 7). Am Ende, damit kein Aufruf mit
+    # Positionen seine Bedeutung ändert.
+    # Die CSV daneben; ``None`` heißt keine (eine Liste von Strukturen hat keine CSV-Form, und der
+    # Kopf von 11 wäre als CSV fünf- bis achtmal so groß wie als Parquet).
+    csv: CsvPlan | None = CsvPlan()
+    # Was veröffentlicht wird, wenn nicht die Datei selbst: ohne eine Spalte, ohne Werte, die einen
+    # Namen tragen. Die Spaltendoku beschreibt dann diese Sicht, nicht die Datei.
+    view: Callable[[pl.DataFrame, Settings], pl.DataFrame] | None = None
+    # Nur veröffentlichen, wenn die vorhandene Datei in diesen Settings etwas zu zeigen hat (ohne
+    # Rohtext ist sie leer; gemessen ist nur ein Datensatz). Ohne Settings: nicht veröffentlicht.
+    shown: Callable[[Path, Settings], bool] | None = None
+    check: TableCheck | None = None  # der Prüfsatz unter den Downloads
+
     def column_docs(self, settings: Settings) -> Mapping[str, tuple[str, str]]:
         """Die Spaltendoku dieser Tabelle, statisch oder aus den Settings abgeleitet."""
         return self.describe(settings) if self.describe is not None else self.columns
+
+    def download_names(self, layout: Layout) -> tuple[str, ...]:
+        """Die Dateien der Tabelle unter ``site/data/``: das Parquet und, wo sie eine hat, die CSV."""
+        parquet = self.path(layout).name
+        return (parquet, f"{self.name}.csv") if self.csv is not None else (parquet,)
+
+    def published_frame(self, frame: pl.DataFrame, settings: Settings | None) -> pl.DataFrame:
+        """Die Zeilen und Spalten, die veröffentlicht werden: die Sicht, sonst die Datei selbst."""
+        if self.view is None:
+            return frame
+        if settings is None:
+            raise SchemaError(f"{self.name}: die veröffentlichte Sicht braucht die Settings")
+        return self.view(frame, settings)
+
+    def published_schema(self, path: Path, settings: Settings | None) -> pl.Schema:
+        """Das Schema der veröffentlichten Datei; eine Sicht wird an einer leeren Tabelle bestimmt."""
+        schema = pl.read_parquet_schema(path)
+        if self.view is None:
+            return pl.Schema(schema)
+        return self.published_frame(pl.DataFrame(schema=schema), settings).schema
 
 
 # Option 01: ohne Spannweite — wie viele Wahlbezirke es gibt, steht in den Kernzahlen und ist je
@@ -717,7 +780,13 @@ def _unique_names(result: list[PublishedTable]) -> bool:
 def _wanted(table: PublishedTable, layout: Layout, settings: Settings | None) -> bool:
     if table.enabled is not None and settings is not None and not table.enabled(settings):
         return False
-    return not table.optional or table.path(layout).exists()
+    if table.optional and not table.path(layout).exists():
+        return False
+    # Vorhaben 11 und 12: ``shown`` braucht Settings und eine Datei; ohne beide kein Download
+    if table.shown is not None:
+        path = table.path(layout)
+        return settings is not None and path.exists() and table.shown(path, settings)
+    return True
 
 
 def all_tables() -> list[PublishedTable]:
@@ -771,5 +840,32 @@ def published(layout: Layout, settings: Settings | None = None) -> list[Publishe
 
 
 def csv_plan(layout: Layout) -> list[tuple[Path, dict[str, str], str]]:
-    """(Parquet-Datei, Listen-Spalte -> Trenner, Spaltentrenner) je Tabelle, wie der Altcode."""
-    return [(t.path(layout), dict(t.joins), t.separator) for t in (*all_tables(), *EXPORT_ONLY)]
+    """(Parquet-Datei, Listen-Spalte -> Trenner, Spaltentrenner) je Tabelle, wie der Altcode.
+
+    Eine Tabelle ohne CSV (``csv=None``, Vorhaben 11) fehlt: ihre Listen von Strukturen haben
+    keine CSV-Form, ``georep export`` bräche sonst an ihr ab.
+    """
+    return [
+        (t.path(layout), dict(t.joins), t.separator)
+        for t in (*all_tables(), *EXPORT_ONLY)
+        if t.csv is not None
+    ]
+
+
+def contributed_check_files(settings: Settings) -> tuple[Path, ...]:
+    """Die Dateien der Prüfsätze aller Beitragstabellen, deren Schalter in diesen Settings an ist.
+
+    Vorhaben 11 und 12, Stufe 3: ``guete.json`` und ``stichprobe.json`` im Repo sind Eingaben von
+    ``report`` (wie die von ``page_akteure``), damit eine neue Kodierung den Prüfsatz der Seite neu
+    schreibt. Je Datei einmal, in Registerfolge. Import in der Funktion wie in ``all_tables``.
+    """
+    from georep.enrich import CONTRIBUTIONS
+
+    files = (
+        path
+        for c in CONTRIBUTIONS
+        for t in c.tables
+        if t.check is not None and (t.enabled is None or t.enabled(settings))
+        for path in t.check.files(settings)
+    )
+    return tuple(dict.fromkeys(files))
