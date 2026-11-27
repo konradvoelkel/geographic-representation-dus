@@ -4538,7 +4538,7 @@ dritte Matrix „alle Gremien" (sie mischte die Ebene mit und ohne Lager); `link
   allem die CSV je Dokument (Hauptperiode 1,87 und 1,94 MB), wie bei `dokumente_urheber`; die
   Pakete im Repo ändern sich nicht.
 
-## NN. Die Downloads von 11 und 12: nur gemessen und mit Rohtext, eine Sicht ohne Namen, der Prüfsatz unter der Tabelle (Vorhaben 11 und 12, Stufe 3, 2026-11-27)
+## 89. Die Downloads von 11 und 12: nur gemessen und mit Rohtext, eine Sicht ohne Namen, der Prüfsatz unter der Tabelle (Vorhaben 11 und 12, Stufe 3, 2026-11-27)
 
 Stufe 3 von Vorhaben 11 und 12 nach `docs/plans/11-struktur.md` und `docs/plans/12-kennungen.md`
 (je § 7 und § 10) und nach `docs/plan-zeigen-2026-11.md` (§ 5, `v0.37.0`; V5: `sitzung_gremium` in

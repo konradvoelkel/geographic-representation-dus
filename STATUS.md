@@ -30,6 +30,7 @@ Stand 2026-11-26, `main` auf `v0.32.0`.
 - **Erste Unterseite** (`v0.35.0`, Phase „Zeigen“, `docs/plan-zeigen-2026-11.md`): `akteure.html` aus
   Vorhaben 15 in allen fünf Profilen, verlinkt aus dem Abschnitt „weitere“ der Hauptseite (+4,6 KB);
   dazu die Downloads `dokumente_funktion` und `dokumente_antragsteller`.
+- **Downloads von 11 und 12** (`v0.36.0`): `dokumente_kopf` und `kennungen`, nur in der Hauptperiode.
 - Die Worktrees, Venvs und Branches der Vorverarbeitung sind am 2026-11-26 entfernt. Für die Phase
   „Zeigen“ arbeiten Bau-Agenten wieder auf eigenen Branches in Worktrees (Konrad, 2026-11-27; `CLAUDE.md`).
 
