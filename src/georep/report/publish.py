@@ -34,6 +34,7 @@ from georep import __version__
 from georep.errors import GeorepError
 from georep.io import write_text
 from georep.layout import Layout, ReferenceWriteError
+from georep.report.build import COLUMNS_NAME
 from georep.report.comparison import (
     CitySite,
     ComparisonModel,
@@ -258,11 +259,13 @@ def page_budgets(settings: Settings) -> dict[str, int]:
     """Die Grenzen je Dateiname neben ``page_budget_bytes`` (plan-startseite, § 3; Phase Zeigen, § 6).
 
     Die Startseite ``index.html`` gegen ``start_budget_bytes``, ``data/karte.json`` gegen
-    ``map_budget_bytes``; ``details.html`` und jede Unterseite gegen ``page_budget_bytes``.
+    ``map_budget_bytes``, ``spalten.html`` gegen ``columns_budget_bytes`` (Punkt 36);
+    ``details.html`` und jede Unterseite gegen ``page_budget_bytes``.
     """
     return {
         "index.html": settings.report.start_budget_bytes,
         "karte.json": settings.report.map_budget_bytes,
+        COLUMNS_NAME: settings.report.columns_budget_bytes,
     }
 
 

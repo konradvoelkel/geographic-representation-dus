@@ -38,6 +38,9 @@ Stand 2026-11-26, `main` auf `v0.32.0`.
   Kurzfassung, Karte aus eigenen Vektordaten, Zeitregler und Filter „Gremium“ (86 742 bis 92 759 Byte je
   Profil, Budget 150 000), dazu `data/karte.json` (höchstens 448 872 Byte, Budget 500 000) und die Pakete
   `snapshots/*-strassenpunkte/`. Konrad hat die Seite noch nicht auf Pages gesehen (Haltepunkt ZS2).
+- **`spalten.html`** (`v0.41.0`, Punkt 94): das Spaltenschema aller Tabellen steht je Profil auf einer eigenen
+  Seite (Hauptperiode 77 302 Byte) und in `schema.json`, auf keiner anderen Seite; `details.html` der
+  Hauptperiode wiegt damit 921 158 Byte, 16 KB unter dem Stand vor der Phase.
 - **`vorgaenge.html`** (`v0.38.0`): Antworten auf Anfragen, Kandidaten, Vorgänge; dazu der Dialog-Haken der
   Hauptseite, der Zeilen je Dokument beim Öffnen nachlädt. Die Hauptseite liegt damit bei 966 522 Byte,
   rund 29 KB über dem Stand vor der Phase (Ziel höchstens 30 KB, `docs/todo.md`, Punkt 36).

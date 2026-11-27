@@ -196,6 +196,9 @@ class Download:
     bytes: int
     sha256: str
     description: str
+    # Punkt 36: die Tabelle des Registers, deren Spalten ``spalten.html`` unter diesem Anker
+    # beschreibt (Parquet, CSV, GeoJSON); None für die JSON-Dateien, die ihre Felder selbst tragen
+    table: str | None = None
 
 
 @dataclass(frozen=True)

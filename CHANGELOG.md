@@ -2,6 +2,13 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.41.0 (2026-11-27), Spalten
+
+- **Das Spaltenschema steht auf `spalten.html`** (`docs/decisions.md`, Punkt 94; Rückstand 36): je Profil
+  eine Seite mit allen Tabellen des Registers, je Tabelle ein Abschnitt mit ihrem Namen als Anker;
+  `details.html` verlinkt aus jeder Downloadzeile dorthin und trägt kein Schema mehr (Hauptperiode
+  −46 852 Byte). Budget der neuen Seite 500 000 Byte (`report.columns_budget_bytes`).
+
 ## 0.40.0 (2026-11-27), Startseite
 
 - **Neue Startseite** (`docs/decisions.md`, Punkt 93, `docs/plan-startseite-2026-11.md`): eine Kurzfassung in

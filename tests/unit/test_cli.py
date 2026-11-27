@@ -367,6 +367,7 @@ def test_publish_turns_a_page_over_budget_into_an_exit_code(
     printed = capsys.readouterr()
     assert over.search(printed.out)  # die Zeile steht auch im Fehlerfall
     assert "Fehler: über dem Budget von 1 Byte" in printed.err
+    assert "spalten.html 500000" in printed.err  # Punkt 36: die eigene Grenze steht dabei
 
 
 # --- Option 07: Monitoring -------------------------------------------------------------------

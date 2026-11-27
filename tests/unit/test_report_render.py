@@ -34,10 +34,18 @@ from georep.report.model import (
     ReportModel,
     build_report_model,
 )
-from georep.report.render import Visuals, external_links, kib, render_map, render_report
+from georep.report.render import (
+    Visuals,
+    external_links,
+    kib,
+    render_columns,
+    render_map,
+    render_report,
+)
 from georep.report.search import SearchEntry, search_payload
 from georep.settings import Settings
 from tests.conftest import without_literature
+from tests.unit.test_report_columns import schema_tables
 
 DOWNLOADS = (
     Download(
@@ -110,8 +118,11 @@ def test_every_district_download_and_column_is_on_the_page(page: str, model: Rep
         assert district.name in page and f'id="bezirk-{district.id}"' in page
     for download in DOWNLOADS:
         assert f'href="data/{download.name}"' in page and download.sha256 in page
+    # Punkt 36: die Spalten stehen auf spalten.html, die Auswertung trägt kein Spaltenschema
+    columns = render_columns(model).replace("<wbr>", "")  # Umbruch hinter jedem Unterstrich
     for column in model.columns:
-        assert f"<code>{column.column}</code>" in page
+        assert f"<code>{column.column}</code>" in columns
+    assert schema_tables(page) == 0 and 'href="spalten.html"' in page
     assert "schulweg" in page  # Fußnote zu versteckten Begriffen
     assert "ohne 1 und 10" not in page  # Mini: keine zweite Regression
     assert "<script src=" not in page and "<link " not in page and "@import" not in page
