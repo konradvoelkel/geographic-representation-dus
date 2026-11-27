@@ -218,7 +218,7 @@ def test_summary_payload_matches_the_model(mini_run: Layout, default_settings: S
 def test_summary_is_a_download_and_the_schema_describes_it(mini_run: Layout) -> None:
     schema = json.loads((mini_run.site_data / "schema.json").read_text(encoding="utf-8"))
     assert "figures.districts" in schema["summary"]
-    assert "data/summary.json" in mini_run.site_index.read_text(encoding="utf-8")
+    assert "data/summary.json" in mini_run.site_details.read_text(encoding="utf-8")
 
 
 def test_the_report_step_links_no_other_city(mini_run: Layout, mini_page: str) -> None:

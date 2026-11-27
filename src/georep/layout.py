@@ -215,14 +215,20 @@ class Layout:
     def results(self) -> Path:
         return self.processed / "wahlbezirke_auswertung.parquet"
 
-    # Die Berichtsseite: eine in sich geschlossene index.html, daneben die Download-Dateien
+    # Die Berichtsseite: Startseite und details.html, in sich geschlossen, daneben die Downloads
     @property
     def site(self) -> Path:
         return self.root / "site"
 
     @property
     def site_index(self) -> Path:
+        """Die Startseite; an ihr hängen Stamp, Existenzprüfung in ``publish``, Monitor, ``paths``."""
         return self.site / "index.html"
+
+    @property
+    def site_details(self) -> Path:
+        """Die ganze Auswertung, bis ``v0.38.0`` unter ``index.html`` (plan-startseite, § 3)."""
+        return self.site / "details.html"
 
     @property
     def site_data(self) -> Path:

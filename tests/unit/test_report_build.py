@@ -48,7 +48,7 @@ def test_site_has_index_map_and_every_download_file(
 
 
 def test_page_lists_every_file_with_its_checksum(mini_run: Layout) -> None:
-    page = mini_run.site_index.read_text(encoding="utf-8")
+    page = mini_run.site_details.read_text(encoding="utf-8")
     for path in mini_run.site_data.iterdir():
         assert f'href="data/{path.name}"' in page
         assert digest(path) in page
@@ -187,7 +187,7 @@ def test_topics_switched_off_leave_no_trace_on_the_page(
 
     import re
 
-    page = layout.site_index.read_text(encoding="utf-8")
+    page = layout.site_details.read_text(encoding="utf-8")
     assert "Die 20 Themen" not in page and "stärkste Wörter" not in page
     section = re.search(r'<section id="gewichtung">.*?</section>', page, re.S)
     assert section is not None  # die Gewichtung selbst bleibt
@@ -204,7 +204,7 @@ def test_topics_switched_off_leave_no_trace_on_the_page(
 
 
 def test_the_month_section_and_its_two_tables_are_on_the_page(mini_run: Layout) -> None:
-    page = mini_run.site_index.read_text(encoding="utf-8")
+    page = mini_run.site_details.read_text(encoding="utf-8")
     assert '<section id="monate">' in page and 'class="bars"' in page
     assert page.count('class="bars"') == 1 and page.count('class="scatter"') == 1
     names = {p.name for p in mini_run.site_data.iterdir()}

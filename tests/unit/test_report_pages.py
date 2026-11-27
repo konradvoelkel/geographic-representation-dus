@@ -62,7 +62,9 @@ def test_die_unterseite_steht_im_rahmen_der_hauptseite(default_settings: Setting
     assert "Commit abc1234" in html
 
 
-@pytest.mark.parametrize("name", ["Probe", "1probe", "index", "karte", "vergleich", "a_b"])
+@pytest.mark.parametrize(
+    "name", ["Probe", "1probe", "index", "details", "karte", "vergleich", "a_b"]
+)
 def test_ein_seitenname_ist_ein_einfacher_dateiname(name: str) -> None:
     with pytest.raises(ValueError, match="Seitenname"):
         _probe(name=name)

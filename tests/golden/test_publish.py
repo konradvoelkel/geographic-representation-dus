@@ -85,8 +85,10 @@ def test_publish_keeps_the_first_city_at_the_root_and_nests_the_others(
     root, settings = both_cities
     site, summary = _publish(root, settings)
     assert (site / "index.html").is_file() and (site / "karte.html").is_file()
+    assert (site / "details.html").is_file()  # plan-startseite, § 3
     assert (site / "data" / "summary.json").is_file()
     assert (site / "moenchengladbach" / "index.html").is_file()
+    assert (site / "moenchengladbach" / "details.html").is_file()
     assert (site / "moenchengladbach" / "data" / "summary.json").is_file()
     assert summary.cities == ("duesseldorf", "moenchengladbach") and not summary.missing
     assert summary.comparison and "2 Städte" in summary.line()

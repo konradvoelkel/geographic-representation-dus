@@ -431,7 +431,7 @@ def test_kein_parteiname_in_vorlage_seite_und_spaltendoku() -> None:
 # --- Register, Linkblock, Downloads, Haken, Größe auf der Mini-Fixture ------------------------------
 def test_die_seite_steht_im_register_und_auf_der_hauptseite(mini_run: Layout) -> None:
     page = (mini_run.site / "vorgaenge.html").read_text(encoding="utf-8")
-    index = mini_run.site_index.read_text(encoding="utf-8")
+    index = mini_run.site_details.read_text(encoding="utf-8")
     weitere = index[index.index('<section id="weitere">') :]
     assert '<a href="vorgaenge.html">Vorgänge: Anfragen, Antworten, Verbindungen</a>' in weitere
     assert len(page.encode("utf-8")) < PAGE_BUDGET
@@ -457,7 +457,7 @@ def test_die_drei_tabellen_stehen_als_download_mit_spaltendoku(
 
 
 def test_der_dialog_der_hauptseite_laedt_die_vorgaenge(mini_run: Layout) -> None:
-    index = mini_run.site_index.read_text(encoding="utf-8")
+    index = mini_run.site_details.read_text(encoding="utf-8")
     assert '<dialog id="docs" aria-labelledby="docs-title" data-extras="vorgaenge">' in index
     listed = json.loads((mini_run.site_data / "dokumente.json").read_text(encoding="utf-8"))
     hook = mini_run.site_data / "vorgaenge.json"
@@ -507,7 +507,7 @@ def test_die_csv_des_vorgangs_traegt_nur_dokumente_in_einem_vorgang(mini_run: La
     assert parquet.height == pl.read_parquet(mini_run.corpus, columns=["id"]).height
     csv = pl.read_csv(mini_run.site_data / "dokumente_vorgang.csv", schema=parquet.schema)
     assert csv.equals(parquet.filter(pl.col("groesse") > 1))
-    index = mini_run.site_index.read_text(encoding="utf-8")
+    index = mini_run.site_details.read_text(encoding="utf-8")
     assert f"als CSV ({table.csv.note})" in index and "Vorgang" in table.csv.note
     assert "die CSV trägt nur" in table.columns["groesse"][0]
     # die beiden anderen CSV bleiben vollständig: eine schwache Kante und eine Anfrage ohne

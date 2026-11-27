@@ -68,6 +68,8 @@ def test_site_lies_under_data_root(tmp_path: Path) -> None:
     layout = Layout(tmp_path / "data", tmp_path / "cache", tmp_path / "reference")
     assert layout.site == tmp_path / "data" / "site"
     assert layout.site_index == tmp_path / "data" / "site" / "index.html"
+    # plan-startseite, § 3: die Auswertung steht neben der Startseite
+    assert layout.site_details == tmp_path / "data" / "site" / "details.html"
     assert layout.site_data == tmp_path / "data" / "site" / "data"
     assert layout.site in layout.runtime_dirs() and layout.site_data in layout.runtime_dirs()
 

@@ -1,8 +1,10 @@
-"""Der Schritt ``report``: Download-Dateien, Schema, Karte, Diagramm, Seite.
+"""Der Schritt ``report``: Download-Dateien, Schema, Karte, Diagramm, Seiten.
 
 Reihenfolge: erst die Dateien unter ``site/data/`` (Parquet kopiert, CSV mit den Regeln von
 ``georep export``, GeoJSON, ``schema.json``), dann das Modell mit ihren Prüfsummen, dann die
-SVGs, zuletzt ``index.html``; die trägt den Stamp. Zeit und Commit sind Eingaben.
+SVGs, dann ``details.html`` (die ganze Auswertung, bis ``v0.38.0`` unter ``index.html``), zuletzt
+die Startseite ``index.html``; die trägt den Stamp (plan-startseite, § 3). Zeit und Commit sind
+Eingaben.
 """
 
 from __future__ import annotations
@@ -79,6 +81,7 @@ from georep.report.model import (
 )
 from georep.report.pages import page_links
 from georep.report.render import Visuals, render_map, render_report
+from georep.report.start import render_start
 from georep.report.tables import GEOJSON_TABLE, PublishedTable, all_rows, all_tables, published
 from georep.report.terms import pairs, terms_payload
 from georep.settings import Settings
@@ -95,10 +98,11 @@ MAP_NAME = "karte.html"
 @dataclass(frozen=True)
 class SiteSummary:
     districts: int
-    files: int  # Downloads plus index.html und karte.html
+    files: int  # Downloads plus index.html, details.html und karte.html
     bytes: int
-    # Punkt 50: die Seite selbst gegen ihr Budget. Beide 0 heißt „nicht geprüft"; die Felder
-    # stehen mit Vorgabe am Ende, damit Tests die Zeile weiter positional bauen können.
+    # Punkt 50: die Seite selbst (seit dem Umzug ``details.html``) gegen ihr Budget. Beide 0 heißt
+    # „nicht geprüft"; die Felder stehen mit Vorgabe am Ende, damit Tests die Zeile weiter
+    # positional bauen können.
     page_bytes: int = 0
     budget: int = 0
 
@@ -649,12 +653,21 @@ def build_site(
     )
     write_text(layout.guard_writable(layout.site / MAP_NAME), map_html)
     html = render_report(model, visuals)
-    write_text(layout.guard_writable(layout.site_index), html)
+    write_text(layout.guard_writable(layout.site_details), html)
+    # plan-startseite, § 3: die Startseite liest dasselbe Modell; sie kommt zuletzt, weil an ihr
+    # der Stamp hängt (``Layout.site_index``)
+    start = render_start(model)
+    write_text(layout.guard_writable(layout.site_index), start)
     page_bytes = len(html.encode("utf-8"))
-    total = sum(d.bytes for d in downloads) + page_bytes + len(map_html.encode("utf-8"))
+    total = (
+        sum(d.bytes for d in downloads)
+        + page_bytes
+        + len(start.encode("utf-8"))
+        + len(map_html.encode("utf-8"))
+    )
     return SiteSummary(
         len(model.districts),
-        len(downloads) + 2,
+        len(downloads) + 3,
         total,
         page_bytes,
         settings.report.page_budget_bytes,
