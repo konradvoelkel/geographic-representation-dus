@@ -5472,5 +5472,40 @@ der Vorlage).
 die drei Fälle an geänderten Kopien von `guete.json`, die echte Seite der Mini-Fixture mit
 Linkblöcken, Namensnennung und Veränderungshinweis, Tag und Commit, Downloads mit Spaltendoku, ohne
 Fremddaten, Klassen und Hypothesen, Eingaben des Schritts, der Zusatz im Stamp) und
-`tests/unit/test_need_settings.py` (V5, `fixed_on`). Größen, A/B-Bau und Bildschirmfotos folgen
-unten.
+`tests/unit/test_need_settings.py` (V5, `fixed_on`); slow `tests/golden/test_need_page.py` an den
+Paketen (Hauptperiode: 958 von rund 1 425, Fall 3, drei Tests, drei Karten, 11 501 Unfälle, Spearman
+0,980, ρ 0,772, Power 0,39 und 0,46; die zweite Stadt ohne Klassen und Tests, zwei Karten, drei Sätze;
+beide unter 500 KB). Seit Punkt 94 stehen beide Tabellen auf `spalten.html`, jede Downloadzeile
+verlinkt ihren Abschnitt, und die Seite verweist auf `spalten.html#wahlbezirke_bedarf`.
+
+- A/B-Bau aller fünf Profile wie `pages.yml` (`scripts/ab_bau.sh`, `POLARS_MAX_THREADS=4
+  OMP_NUM_THREADS=2`), A aus `main` `e50762c` (`v0.41.0`, `ab/22s-a`), B aus `9643fb7` (`ab/22s-b`;
+  danach kamen nur dieser Eintrag und `main` `3b0c486`, das `enrich/fidelity.py` von Vorhaben 20
+  ändert, dessen Schritt überall aus ist). Unter `site/` 332 Dateien in A, 340 in B, 16 Abweichungen,
+  alle erwartet: neu `bedarf.html` und die Downloads (Hauptperiode vier, Mönchengladbach zwei, ohne
+  `bedarf_hypothesen`), anders je Stadtseite `index.html` (der Linkblock, +213 Byte), `details.html`
+  (Linkblock, die Zahl der Downloadzeilen, die neuen Zeilen mit Link auf `spalten.html`, die Größe von
+  `schema.json`; sonst nur Prüfsummen von `dokumente.json`, `vorgaenge.json`, `begriffe.json`,
+  `karte.json` und `summary.json`, die an `generated_at` hängen), `spalten.html` (die zwei
+  beziehungsweise eine neue Tabelle) und `schema.json`. Die Perioden 2014–2020 und ab 2025 und
+  `vergleich.html` sind gleich. Über die Datenwurzeln 1 201 und 1 219 Dateien, 169 Abweichungen: neben
+  denselben Seiten und Downloads in den Ordnern der Profile nur Stamps, kein Parquet unter
+  `processed/` oder `interim/` (keine Zahl der Auswertung ändert sich). Von den 137 Stamps tragen 109
+  nur eine andere Schreibzeit, 18 den neuen Zusatz (`report_fingerprint`) der Unterseiten
+  `akteure.html`, `vorgaenge.html` und `zeit.html`, 4 dazu nur die Wurzel der absoluten Pfade (die
+  Startseiten der Perioden), 2 nur die Wurzel (`wahlbezirke_vergleich`, `zeit_hypothesen`), 2 sind
+  neu (`bedarf.html`), und die Startseiten der Hauptperiode und Mönchengladbachs lesen die zwei
+  Tabellen als Eingaben.
+- Größen (veröffentlicht, B): `bedarf.html` Hauptperiode 242 267 Byte, Mönchengladbach 133 866
+  (Budget 500 000; geplant 150 bis 250 KB: drei Karten zu je rund 36 KB, drei Streudiagramme zu je
+  rund 17 KB, die Tabelle je Wahlbezirk rund 33 KB). `details.html` Hauptperiode 921 158 → 923 125
+  (+1 967), Mönchengladbach 796 047 → 797 144 (+1 097), nur Linkblock und Downloadzeilen; `index.html`
+  je +213;
+  `spalten.html` 77 302 → 85 247 und 57 194 → 61 890; `schema.json` 56 870 → 65 598 und
+  36 974 → 42 100.
+- Bildschirmfotos mit headless Chrome über `http://127.0.0.1:8779` (eine Kopie der Seite von B) bei
+  1280 und 390 Pixeln, hell, dunkel (`--blink-settings=preferredColorScheme=0`) und ohne Skripte (eine
+  Kopie ohne `<script>`, `<noscript>` ausgepackt): die Karten stehen bei 1280 nebeneinander, bei 390
+  untereinander; ohne Skripte steht die ganze Tabelle da, mit Skripten die Vorschau; dunkel tragen
+  Karten, Streudiagramme und der Kasten die Farben des Rahmens. Bei 1280 brach der Name des
+  Wahlbezirks in drei bis vier Zeilen; eine Mindestbreite der Spalte hält ihn bei zwei.
