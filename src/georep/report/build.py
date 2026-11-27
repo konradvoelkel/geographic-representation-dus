@@ -23,12 +23,13 @@ from pathlib import Path
 
 import deal
 import polars as pl
+from shapely.geometry.base import BaseGeometry
 
 from georep.analysis.hits import DISTRICT
 from georep.analysis.ols import CONSTANT, model_frame, partial_residuals
 from georep.errors import SchemaError
 from georep.export import write_csv, write_csv_frame
-from georep.geo import LONLAT, read_canonical_precincts, transformer
+from georep.geo import LONLAT, Precinct, read_canonical_precincts, transformer
 from georep.io import atomic_path, digest, write_json, write_text
 from georep.layout import Layout
 from georep.prep.voters import TURNOUT
@@ -82,6 +83,7 @@ from georep.report.model import (
 from georep.report.pages import page_links
 from georep.report.render import Visuals, render_map, render_report
 from georep.report.start import render_start
+from georep.report.startkarte import KARTE_NAME, StartMap, build_start_map, karte_payload
 from georep.report.tables import GEOJSON_TABLE, PublishedTable, all_rows, all_tables, published
 from georep.report.terms import pairs, terms_payload
 from georep.settings import Settings
@@ -105,9 +107,15 @@ class SiteSummary:
     # positional bauen können.
     page_bytes: int = 0
     budget: int = 0
+    # plan-startseite, § 3: die Startseite gegen ihr eigenes Budget, ebenso 0 = „nicht geprüft"
+    start_bytes: int = 0
+    start_budget: int = 0
 
     def over_budget(self) -> bool:
         return self.budget > 0 and self.page_bytes > self.budget
+
+    def start_over_budget(self) -> bool:
+        return self.start_budget > 0 and self.start_bytes > self.start_budget
 
     def line(self) -> str:
         """Die Zeile, die ``georep run`` zeigt; über dem Budget sagt sie das selbst.
@@ -124,6 +132,11 @@ class SiteSummary:
             line += (
                 f"; Seite über dem Budget ({format_de(self.page_bytes / 1e6, 2)} von "
                 f"{format_de(self.budget / 1e6, 2)} MB)"
+            )
+        if self.start_over_budget():
+            line += (
+                f"; Startseite über dem Budget ({format_de(self.start_bytes / 1e3, 1)} von "
+                f"{format_de(self.start_budget / 1e3, 1)} KB)"
             )
         return line
 
@@ -366,6 +379,39 @@ def write_terms(layout: Layout, model: ReportModel) -> Download:
     )
 
 
+def write_start_map(
+    layout: Layout,
+    settings: Settings,
+    model: ReportModel,
+    precincts: list[Precinct],
+    shapes: dict[int, BaseGeometry],
+) -> tuple[StartMap, Download]:
+    """``data/karte.json``: die Karte der Startseite (plan-startseite, § 4.5), nach ``dokumente.json``.
+
+    Die Folge der Dokumente kommt aus derselben Funktion wie dort (``document_order``), die
+    Indizes je Begriff aus der eben geschriebenen Datei; deren Länge muss zur Folge passen.
+    """
+    corpus = pl.read_parquet(layout.corpus, columns=DOCUMENT_COLUMNS)
+    order = document_order(corpus, pl.read_parquet(layout.index), model.hidden_terms)
+    listed = json.loads((layout.site_data / DOCUMENTS_NAME).read_text(encoding="utf-8"))
+    if len(listed["documents"]) != len(order):
+        raise SchemaError(
+            f"{DOCUMENTS_NAME}: {len(listed['documents'])} Dokumente, die Folge kennt {len(order)}"
+        )
+    start_map = build_start_map(layout, settings, model, precincts, shapes, listed["terms"], order)
+    target = layout.guard_writable(layout.site_data / KARTE_NAME)
+    payload = karte_payload(start_map, version=model.version, generated_at=model.generated_at)
+    # Ohne Leerzeichen nach Komma und Doppelpunkt, wie die Dateien der Dialog-Haken
+    write_text(target, json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
+    return start_map, _download(
+        target,
+        "JSON",
+        len(start_map.docs),
+        "Orte und Dokumente der Startkarte: je Ort Punkt in der Karte, Wahlbezirk, Art der Lage und "
+        "Name; je Dokument Monat, Gremium und Orte, in der Folge von dokumente.json",
+    )
+
+
 def _places_geojson(pois: pl.DataFrame) -> dict[str, object]:
     return {
         "type": "FeatureCollection",
@@ -537,6 +583,9 @@ def build_site(
     downloads.append(write_documents(layout, model, settings))
     downloads.extend(write_dialogs(layout, model, settings))  # Vorarbeit V2
     downloads.append(write_terms(layout, model))  # Punkt 49
+    # plan-startseite, § 4.5: die Daten der Startkarte, mit Downloadzeile wie jede Datei (Punkt 49)
+    start_map, map_download = write_start_map(layout, settings, model, precincts, shapes)
+    downloads.append(map_download)
 
     geojson = wahlbezirke_geojson(
         shapes,
@@ -656,14 +705,12 @@ def build_site(
     write_text(layout.guard_writable(layout.site_details), html)
     # plan-startseite, § 3: die Startseite liest dasselbe Modell; sie kommt zuletzt, weil an ihr
     # der Stamp hängt (``Layout.site_index``)
-    start = render_start(model)
+    start = render_start(model, start_map)
     write_text(layout.guard_writable(layout.site_index), start)
     page_bytes = len(html.encode("utf-8"))
+    start_bytes = len(start.encode("utf-8"))
     total = (
-        sum(d.bytes for d in downloads)
-        + page_bytes
-        + len(start.encode("utf-8"))
-        + len(map_html.encode("utf-8"))
+        sum(d.bytes for d in downloads) + page_bytes + start_bytes + len(map_html.encode("utf-8"))
     )
     return SiteSummary(
         len(model.districts),
@@ -671,4 +718,6 @@ def build_site(
         total,
         page_bytes,
         settings.report.page_budget_bytes,
+        start_bytes,
+        settings.report.start_budget_bytes,
     )

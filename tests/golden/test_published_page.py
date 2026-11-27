@@ -180,7 +180,11 @@ def test_publish_reports_no_page_over_budget(published: PublishedRun, tmp_path: 
         now=dt.datetime(2026, 10, 14, tzinfo=dt.UTC),
         out=tmp_path / "site",
     )
-    assert "index.html" in strict.over_budget and "über dem Budget" in strict.line()
+    assert "details.html" in strict.over_budget and "über dem Budget" in strict.line()
+    # plan-startseite, § 3: die Startseite unter 150 000 Byte, karte.json unter 500 000
+    report = published.settings.report
+    assert published.layout.site_index.stat().st_size < report.start_budget_bytes
+    assert (published.layout.site_data / "karte.json").stat().st_size < report.map_budget_bytes
 
 
 pytestmark = pytest.mark.slow

@@ -243,7 +243,7 @@ def test_the_page_carries_the_section_within_the_budget(
     # Vorhaben 11 und 12: der Kopf ohne CSV, beide nur mit den Settings (gemessen, mit Rohtext);
     # dazu je Dialog-Haken seine Datei (Vorarbeit V2)
     files = {n for t in published(layout, settings) for n in t.download_names(layout)}
-    assert files <= names and len(names) == len(files) + 5 + len(dialogs_for(settings))
+    assert files <= names and len(names) == len(files) + 6 + len(dialogs_for(settings))
 
 
 # --- Punkt 60: die Urheber der Wahlperiode 2014 bis 2020 ----------------------------------------

@@ -119,8 +119,9 @@ def test_the_subpage_of_a_period_comes_along_and_counts_against_the_budget(
     # Ein zweiter Lauf ersetzt den ganzen Zielordner; die Unterseite muss wieder da sein
     site, _ = _publish(root, settings)
     assert (site / SUBPAGE / "index.html").is_file()
+    # plan-startseite, § 3: eine index.html gilt gegen das Budget der Startseite
     tight = settings.model_copy(
-        update={"report": settings.report.model_copy(update={"page_budget_bytes": 1000})}
+        update={"report": settings.report.model_copy(update={"start_budget_bytes": 1000})}
     )
     narrow = publish_sites(tight, _layout_of(root, tight), now=NOW, commit=None)
     assert f"{SUBPAGE}/index.html" in narrow.over_budget and "über dem Budget" in narrow.line()
@@ -420,4 +421,16 @@ def test_a_budget_of_zero_leaves_no_page_over_it(both_cities: tuple[Path, Settin
         update={"report": settings.report.model_copy(update={"page_budget_bytes": 1})}
     )
     _, strict = _publish(root, tiny)
-    assert "index.html" in " ".join(strict.over_budget) and len(strict.over_budget) >= 2
+    assert "details.html" in strict.over_budget and len(strict.over_budget) >= 2
+    assert "index.html" not in strict.over_budget  # die Startseite hat ihr eigenes Budget
+    # plan-startseite, § 3 und Phase Zeigen, § 6: Startseite und karte.json je mit eigener Grenze
+    small = settings.model_copy(
+        update={
+            "report": settings.report.model_copy(
+                update={"start_budget_bytes": 1, "map_budget_bytes": 1}
+            )
+        }
+    )
+    _, both = _publish(root, small)
+    assert {"index.html", "data/karte.json"} <= set(both.over_budget)
+    assert "details.html" not in both.over_budget

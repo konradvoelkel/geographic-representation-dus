@@ -1,0 +1,40 @@
+/* Die Startseite (docs/plan-startseite-2026-11.md, § 3 bis § 8). Die Kreise tragen --accent mit
+   einem vollen Rand in derselben Farbe; gegen die Flächen der Karte nachgerechnet wie Punkt 48
+   (WCAG 1.4.11, mindestens 3:1), tests/unit/test_report_start.py rechnet es nach:
+     hell   #1f68c0 auf --surface #fcfcfb 5,38, auf --grid #e1e0d9 4,18
+     dunkel #3987e5 auf --surface #1a1a19 4,79, auf --grid #2c2c2a 3,85 */
+.start-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+ul.start-kurz, ul.start-links { padding-left: 1.2em; }
+ul.start-kurz li, ul.start-links li { margin: .4rem 0; }
+.start-grid { display: grid; grid-template-columns: minmax(0, 1fr) 17em; gap: .75rem 1.5rem; align-items: start; }
+@media (max-width: 52em) { .start-grid { grid-template-columns: minmax(0, 1fr); } }
+.start-caption { margin: 0 0 .4rem; font-weight: 600; }
+/* Die Karte passt in eine Bildschirmhöhe; was schmaler wird, bleibt mittig (preserveAspectRatio) */
+svg.start-map { display: block; width: 100%; height: auto; max-height: 82vh; background: var(--surface); border-radius: 6px; touch-action: manipulation; --label: 24px; }
+.start-area { stroke: var(--surface); stroke-width: 1px; vector-effect: non-scaling-stroke; cursor: pointer; }
+.start-area:focus { outline: none; stroke: var(--selected); stroke-width: 3px; }
+.start-plain .start-area { fill: var(--grid); }
+.start-plain .start-area:hover { fill: color-mix(in srgb, var(--grid) 70%, var(--ink-2)); }
+.start-borders path { fill: none; stroke: var(--ink-2); stroke-width: 1.5px; vector-effect: non-scaling-stroke; pointer-events: none; }
+/* Auf dem Handy stehen die Namen erst im Ausschnitt eines Stadtbezirks (karte.js setzt start-showlabels) */
+@media (max-width: 36em) { .start-labels { display: none; } }
+svg.start-map.start-showlabels .start-labels { display: inline; }
+.start-labels text { font-size: var(--label); fill: var(--ink-2); text-anchor: middle; dominant-baseline: middle; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; vector-effect: non-scaling-stroke; pointer-events: none; }
+.start-points circle { fill: var(--accent); fill-opacity: .4; stroke: var(--accent); stroke-width: 1px; vector-effect: non-scaling-stroke; pointer-events: none; }
+.start-status { margin: .5rem 0 0; font-size: .9rem; }
+.start-side fieldset { display: block; margin: 0 0 1rem; }
+.start-side legend { font-weight: 600; color: var(--ink); font-size: .9rem; margin-bottom: .25rem; }
+.start-side label { display: block; margin: .3rem 0; font-size: .9rem; }
+.start-side select { font: inherit; max-width: 100%; }
+.start-side input[type="range"] { display: block; width: 100%; height: 2rem; accent-color: var(--accent); margin: 0; }
+.start-strip { display: block; width: 100%; height: 2rem; }
+.start-strip rect { fill: var(--grid); }
+.start-strip rect.in { fill: var(--accent); }
+.start-presets { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .3rem; }
+.start-presets button { font: inherit; font-size: .8rem; padding: .25rem .5rem; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--ink); cursor: pointer; }
+.start-presets button:hover, .start-presets button:focus { border-color: var(--accent); }
+.start-sizes { width: 150px; height: 36px; }
+.start-sizes circle { fill: var(--accent); fill-opacity: .4; stroke: var(--accent); }
+.start-sizes text { font-size: 11px; fill: var(--ink-2); }
+button.start-place { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+button.start-place:hover, button.start-place:focus { text-decoration: underline; }

@@ -1667,6 +1667,10 @@ def build_steps(
             optional=(
                 layout.raw_texts,
                 *contributed_table_files(layout, settings, optional=True),
+                # plan-startseite, § 4.2: die Straßenpunkte und Namen der Stadtteile aus dem Paket
+                # oder aus street_points; ohne sie liegt eine Straße auf ihren Stimmbezirken
+                spoints.points,
+                spoints.labels,
             ),
         ),
         # --- Fundament F2: die Unterseiten der Beiträge

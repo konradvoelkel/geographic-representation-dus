@@ -357,10 +357,11 @@ def test_publish_turns_a_page_over_budget_into_an_exit_code(
     assert main(["publish"]) == 0
     assert "über dem Budget" not in capsys.readouterr().out
     tight = project / "knapp.toml"
-    tight.write_text("[report]\npage_budget_bytes = 1\n", encoding="utf-8")
+    # plan-startseite, § 3: details.html gegen page_budget_bytes, die Startseite gegen ihr eigenes
+    tight.write_text("[report]\npage_budget_bytes = 1\nstart_budget_bytes = 1\n", encoding="utf-8")
     assert main(["--settings", str(tight), "publish"]) == 0  # ohne Schalter nur eine Zeile
     # die Liste ist nach Dateinamen sortiert; seit Vorhaben 15 steht akteure.html vor index.html
-    over = re.compile(r"über dem Budget: [^\n]*\bindex\.html")
+    over = re.compile(r"über dem Budget: [^\n]*\bdetails\.html[^\n]*\bindex\.html")
     assert over.search(capsys.readouterr().out)
     assert main(["--settings", str(tight), "publish", "--strict-budget"]) == 1
     printed = capsys.readouterr()

@@ -50,7 +50,7 @@ from georep.prep.context import (
 )
 from georep.prep.identifiers import IDENTIFIERS_SCHEMA_VERSION
 from georep.prep.papers import CORPUS_SCHEMA_VERSION
-from georep.prep.streetpoints import STREET_POINTS_SCHEMA_VERSION
+from georep.prep.streetpoints import STREET_POINTS_SCHEMA_VERSION, street_point_files
 from georep.prep.structure import STRUCTURE_SCHEMA_VERSION
 from georep.report.build import report_fingerprint
 from georep.report.feeds import FEEDS_SCHEMA_VERSION
@@ -517,7 +517,11 @@ def test_the_report_runs_on_a_data_root_without_a_raw_text_store(
     report = next(s for s in steps if s.name == "report")
     # Vorhaben 15, Stufe 3: dahinter die Tabellen der Beiträge, die als Download auf der Seite stehen
     assert report.optional[0] == layout.raw_texts and layout.texts in report.inputs
-    assert report.optional[1:] == contributed_table_files(layout, default_settings, optional=True)
+    tables = contributed_table_files(layout, default_settings, optional=True)
+    assert report.optional[1 : 1 + len(tables)] == tables
+    # plan-startseite, § 4.2: zuletzt die Straßenpunkte und Stadtteile der Startkarte
+    files = street_point_files(layout)
+    assert report.optional[1 + len(tables) :] == (files.points, files.labels)
     # Die fehlende Datei steht im Stamp; kommt sie dazu, ist der Stamp veraltet
     stamped = json.loads(report.stamp_path.read_text(encoding="utf-8"))
     assert stamped["inputs"][layout.raw_texts.name] == MISSING

@@ -243,12 +243,27 @@ def _over_budget(
     Verabredung über die Seite, die ein Leser lädt.
     """
     limits = by_name or {}
+    pages = set(root.rglob("*.html"))
+    # Eine Datei, die kein HTML ist, prüft nur eine eigene Grenze (``data/karte.json``)
+    pages |= {path for name in limits if not name.endswith(".html") for path in root.rglob(name)}
     found = sorted(
         str(path.relative_to(root))
-        for path in root.rglob("*.html")
+        for path in pages
         if (limit := limits.get(path.name, budget)) and path.stat().st_size > limit
     )
     return tuple(found)
+
+
+def page_budgets(settings: Settings) -> dict[str, int]:
+    """Die Grenzen je Dateiname neben ``page_budget_bytes`` (plan-startseite, § 3; Phase Zeigen, § 6).
+
+    Die Startseite ``index.html`` gegen ``start_budget_bytes``, ``data/karte.json`` gegen
+    ``map_budget_bytes``; ``details.html`` und jede Unterseite gegen ``page_budget_bytes``.
+    """
+    return {
+        "index.html": settings.report.start_budget_bytes,
+        "karte.json": settings.report.map_budget_bytes,
+    }
 
 
 def publish_sites(
@@ -295,5 +310,5 @@ def publish_sites(
         files=files,
         bytes=size,
         comparison=comparison,
-        over_budget=_over_budget(root, settings.report.page_budget_bytes),
+        over_budget=_over_budget(root, settings.report.page_budget_bytes, page_budgets(settings)),
     )
