@@ -49,7 +49,8 @@
       "krippendorff_alpha_skala": null,
       "krippendorff_alpha": null,
       "markierungen": null,
-      "alpha_genuegt": false,
+      "alpha_genuegt": true,
+      "alpha_vermerk": "volle Einigkeit, α nicht definiert",
       "labels": {
         "ja": 50,
         "nein": 0,

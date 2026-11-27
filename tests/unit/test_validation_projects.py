@@ -304,3 +304,15 @@ def test_score_recomputes_the_agreement_of_project_17(
     for question, alpha in (("thema", 0.957), ("ebene", 0.928)):
         assert questions[question]["einig"] == 96, question
         assert round(questions[question]["krippendorff_alpha"], 3) == alpha, question
+
+
+def test_full_agreement_counts_in_the_check_sample_of_14() -> None:
+    """Messdokument 14, § 4.3: beide Kodierer sagten bei allen 50 Kanten „dieselbe Sache"; α ist
+    nicht definiert, die volle Einigkeit genügt (Supervisor, 2026-11-27), und guete.json sagt es."""
+    quality = json.loads((VALIDATION / "14-vorgaenge-3-f4" / "guete.json").read_text("utf-8"))
+    found = quality["fragen"]["selbe_sache"]
+    assert (found["einig"], found["beide"], found["n"]) == (50, 50, 50)
+    assert found["krippendorff_alpha"] is None and found["alpha_genuegt"] is True
+    assert found["alpha_vermerk"] == "volle Einigkeit, α nicht definiert"
+    others = {q: v for q, v in quality["fragen"].items() if q != "selbe_sache"}
+    assert all("alpha_vermerk" not in v and v["alpha_genuegt"] for v in others.values())

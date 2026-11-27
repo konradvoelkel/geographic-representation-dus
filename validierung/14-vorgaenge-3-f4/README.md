@@ -13,7 +13,7 @@ Erzeugt von `georep validate merge` am 2026-11-27; nicht von Hand ändern. Der A
 | Frage | Skala | gestellt | gleich | Cohens κ | Krippendorffs α | genügt |
 |---|---|---|---|---|---|---|
 | `nummer_gemeint` | nominal | 50 | 50 von 50 (100,0 %) | 1,000 | 1,000 | ja |
-| `selbe_sache` | nominal | 50 | 50 von 50 (100,0 %) | nicht definiert | nicht definiert | nein |
+| `selbe_sache` | nominal | 50 | 50 von 50 (100,0 %) | nicht definiert | nicht definiert | ja (volle Einigkeit, α nicht definiert) |
 | `beziehung` | nominal | 50 | 49 von 50 (98,0 %) | 0,960 | 0,961 | ja |
 
 ## labels.csv

@@ -55,6 +55,7 @@ from georep.validation.merge import (
     alpha_suffices,
     format_number,
     format_percent,
+    quality_entry,
     reliability,
 )
 from georep.validation.paths import ValidationPaths, validation_paths
@@ -436,7 +437,8 @@ def score_project(
     meta = sample_meta(paths)
     for r in results:
         entry = quality.setdefault("fragen", {}).setdefault(r.question, {})
-        entry |= r.as_json() | {"alpha_genuegt": alpha_suffices(r, min_alpha)}
+        entry.pop("alpha_vermerk", None)  # ein alter Vermerk gilt nur, wenn die Regel noch trägt
+        entry |= quality_entry(r, min_alpha)
         entry["labels"] = counts[r.question]
         entry["treffer"] = shares[r.question].as_json() if r.question in shares else None
         if r.question in methods:

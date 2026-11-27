@@ -370,10 +370,49 @@ def _cell(text: str) -> str:
     return text.replace("|", "\\|")
 
 
+UNANIMOUS = "volle Einigkeit, α nicht definiert"  # Vermerk in guete.json und README
+
+
+def unanimous(result: Reliability, min_alpha: float) -> bool:
+    """α ist nicht definiert, weil beide Kodierer jede Einheit gleich und mit demselben Wert
+    beurteilten, und das an genug Einheiten (Supervisor, 2026-11-27, 14-vorgaenge-3-f4).
+
+    Beobachtet ist volle Übereinstimmung: jede Einheit, bei der die Frage gestellt war, haben beide
+    beurteilt, und beide gleich; einen Zufallsabgleich gibt es ohne Streuung nicht. Genug heißt: die
+    untere Wilson-Grenze der Übereinstimmung, n/(n + 1,96²), erreicht ``min_alpha`` (bei 0,8 ab 16
+    Einheiten). Ist α aus einem anderen Grund nicht definiert (keine paarbare Einheit, zu wenige,
+    eine Einheit nur bei einem Kodierer, Markierungen ohne eine einzige), gilt das nicht.
+    """
+    if result.scale == "spans" or result.alpha() is not None or result.both == 0:
+        return False
+    if result.both != result.n or result.agreed != result.both:
+        return False
+    return wilson_interval(result.agreed, result.both)[0] >= min_alpha
+
+
 def alpha_suffices(result: Reliability, min_alpha: float) -> bool:
-    """Stufe 3: α definiert und mindestens ``min_alpha``; ein undefiniertes α genügt nie."""
+    """Stufe 3: α definiert und mindestens ``min_alpha``, oder ``unanimous`` (volle Einigkeit an
+    genug Einheiten, α nicht definiert); jedes andere undefinierte α genügt nicht."""
     alpha = result.alpha()
-    return alpha is not None and alpha >= min_alpha
+    if alpha is None:
+        return unanimous(result, min_alpha)
+    return alpha >= min_alpha
+
+
+def quality_entry(result: Reliability, min_alpha: float) -> dict[str, Any]:
+    """Die Zahlen einer Frage für guete.json, mit ``alpha_genuegt`` und, bei voller Einigkeit ohne
+    definiertes α, dem Vermerk ``alpha_vermerk``; merge und score schreiben sie gleich."""
+    entry = result.as_json() | {"alpha_genuegt": alpha_suffices(result, min_alpha)}
+    if unanimous(result, min_alpha):
+        entry["alpha_vermerk"] = UNANIMOUS
+    return entry
+
+
+def _verdict(result: Reliability, min_alpha: float) -> str:
+    """Die Spalte „genügt" im README."""
+    if unanimous(result, min_alpha):
+        return f"ja ({UNANIMOUS})"
+    return "ja" if alpha_suffices(result, min_alpha) else "nein"
 
 
 def _adjudicated(disputed: int) -> str:
@@ -422,7 +461,7 @@ def readme(
     rows = [
         f"| `{_cell(r.question)}` | {r.scale} | {r.n} | {r.agreed} von {r.both} "
         f"({format_percent(r.share)}) | {format_number(r.kappa)} | {format_number(r.alpha())} | "
-        f"{'ja' if alpha_suffices(r, min_alpha) else 'nein'} |"
+        f"{_verdict(r, min_alpha)} |"
         for r in results
     ]
     return "\n".join(
@@ -667,10 +706,7 @@ def merge_project(
             "uneinig": count,
             "schlichtung_herkunft": by_origin,
             "alpha_mindestens": min_alpha,
-            "fragen": {
-                r.question: r.as_json() | {"alpha_genuegt": alpha_suffices(r, min_alpha)}
-                for r in results
-            },
+            "fragen": {r.question: quality_entry(r, min_alpha) for r in results},
             "satz": sentence(models, len(ids), codebook.unit, count),
         },
     )

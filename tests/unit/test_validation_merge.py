@@ -12,7 +12,14 @@ import pytest
 
 from georep.cli import main
 from georep.validation.codebook import Question
-from georep.validation.merge import Models, _first_is_a, mark_agreement, sentence
+from georep.validation.merge import (
+    Models,
+    Reliability,
+    _first_is_a,
+    alpha_suffices,
+    mark_agreement,
+    sentence,
+)
 from tests.validation_project import CODEBOOK, PROJECT, fill_answers, make_project
 
 MODEL = "claude-opus-5-5"
@@ -220,10 +227,58 @@ def test_agreeing_coders_give_labels_without_adjudication(
     )
     assert quality["modelle"] == {"kodierer_a": MODEL, "kodierer_b": MODEL, "schlichtung": MODEL}
     assert "modell" not in quality
-    # alle sagen ja: keine Streuung, α ist nicht definiert und genügt darum nie
+    # alle sagen ja: keine Streuung, α ist nicht definiert; volle Einigkeit an 9 Einheiten sind zu
+    # wenige (untere Wilson-Grenze 0,70 unter 0,8), α genügt darum nicht
     assert quality["fragen"]["bv"]["krippendorff_alpha_nominal"] is None
     assert quality["fragen"]["bv"]["alpha_genuegt"] is False
+    assert "alpha_vermerk" not in quality["fragen"]["bv"]
     assert not (project / "lokal" / PROJECT / "schlichtung").exists()
+
+
+def test_full_agreement_without_spread_suffices_at_enough_units(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Supervisor, 2026-11-27 (14-vorgaenge-3-f4): urteilen beide Kodierer an jeder gestellten
+    Einheit gleich und mit demselben Wert, ist α nicht definiert, aber die Übereinstimmung voll;
+    das genügt, wenn die untere Wilson-Grenze der Übereinstimmung die Schwelle erreicht."""
+    make_project(tmp_path, CODEBOOK.replace("size = 9", "size = 20"))
+    monkeypatch.chdir(tmp_path / "repo")
+    assert main(["validate", "sample", PROJECT]) == 0
+    for coder in ("A", "B"):
+        assert main(["validate", "tasks", PROJECT, "--coder", coder]) == 0
+        fill_answers(tmp_path / "lokal", PROJECT, coder, lambda unit: "ja")
+    assert main(["validate", "merge", PROJECT, "--model", MODEL]) == 0
+    folder = tmp_path / "repo" / "validierung" / PROJECT
+    found = json.loads((folder / "guete.json").read_text(encoding="utf-8"))["fragen"]["bv"]
+    assert found["krippendorff_alpha"] is None and found["alpha_genuegt"] is True
+    assert found["alpha_vermerk"] == "volle Einigkeit, α nicht definiert"
+    readme = (folder / "README.md").read_text(encoding="utf-8")
+    assert "| nicht definiert | ja (volle Einigkeit, α nicht definiert) |" in readme
+    assert main(["validate", "score", PROJECT]) == 0  # score hält die Regel
+    found = json.loads((folder / "guete.json").read_text(encoding="utf-8"))["fragen"]["bv"]
+    assert found["alpha_genuegt"] is True and found["alpha_vermerk"]
+
+
+def _result(n: int, both: int, agreed: int, alpha: float | None = None) -> Reliability:
+    return Reliability("bv", "binary", n, both, agreed, None, None, None, alpha, None)
+
+
+@pytest.mark.parametrize(
+    ("result", "expected"),
+    [
+        (_result(50, 50, 50), True),  # 14-vorgaenge-3-f4, selbe_sache
+        (_result(16, 16, 16), True),  # die kleinste Zahl: 16/(16 + 1,96²) = 0,806
+        (_result(15, 15, 15), False),  # zu wenige Einheiten: 0,796
+        (_result(0, 0, 0), False),  # keine paarbare Einheit
+        (_result(51, 50, 50), False),  # eine Einheit nur bei einem Kodierer beurteilt
+        (_result(50, 50, 50, 0.9), True),  # α definiert: es entscheidet α
+        (_result(50, 50, 49, 0.7), False),
+    ],
+)
+def test_alpha_suffices_with_full_agreement_only_at_enough_units(
+    result: Reliability, expected: bool
+) -> None:
+    assert alpha_suffices(result, 0.8) is expected
 
 
 def test_disagreements_go_to_adjudication_and_then_into_the_labels(

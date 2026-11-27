@@ -17,7 +17,8 @@ Uneinigkeiten. Daraus entstehen zwei Zahlen:
   Labels mit Wilson-Intervall). Sie sagt, ob das Codebuch eindeutig genug ist, dass zwei
   Durchgänge dasselbe Urteil fällen. Stufe 3 eines Vorhabens verlangt **α ≥ 0,8**
   (`validation.min_alpha`); darunter ist das Codebuch zu unscharf, und das Vorhaben geht zurück in
-  Stufe 1. Bei ordinaler Skala gilt das ordinale α, sonst das nominale.
+  Stufe 1. Bei ordinaler Skala gilt das ordinale α, sonst das nominale. Ist α nicht definiert,
+  weil beide überall dasselbe sagten, genügt volle Einigkeit an genug Einheiten (§ 3, Schritt 8).
 - **Güte des geprüften Verfahrens gegen die geschlichteten Labels** (Präzision, Recall, F1 je
   Klasse, mikro und makro; nDCG@k für Rangfolgen; bei binärer Skala der Anteil positiver Urteile,
   also die Präzision, wenn die Einheiten die Treffer des Verfahrens sind).
@@ -238,6 +239,17 @@ uv run georep validate restate $V                    # nur für Labels bis 2026-
    mit welchen Modellen, an wie vielen Einheiten), je Frage `alpha_genuegt` und die Güte mit Intervall
    (`fragen.<frage>.treffer.grundgesamtheit`, `…verfahren`). Ohne `alpha_genuegt = true` zeigt die
    Seite die Kennzahl nicht (Plan, § 2.6); eine gewichtete Schätzung heißt auf der Seite so.
+   **Volle Einigkeit** (Supervisor, 2026-11-27, an `14-vorgaenge-3-f4`): ist α nicht definiert,
+   weil beide Kodierer jede Einheit, bei der die Frage gestellt war, beurteilt und überall gleich
+   und mit demselben Wert beurteilt haben (beobachtete Übereinstimmung 100 %, keine Streuung, also
+   kein Zufallsabgleich), dann ist `alpha_genuegt = true`, und die Frage trägt `alpha_vermerk`
+   („volle Einigkeit, α nicht definiert"), das README dasselbe in der Spalte „genügt". Das gilt
+   nur an genug Einheiten: die untere Wilson-Grenze der Übereinstimmung, n/(n + 1,96²), muss
+   `validation.min_alpha` erreichen (bei 0,8 ab 16 Einheiten). Ist α aus einem anderen Grund nicht
+   definiert (keine paarbare Einheit, zu wenige Einheiten, eine Einheit nur von einem Kodierer
+   beurteilt), bleibt es `false`. Das belegt nicht, dass das Codebuch Grenzfälle trennt; die Seite
+   nennt es so, wie der Vermerk lautet. Betroffen sind heute `14-vorgaenge-3-f4` (`selbe_sache`,
+   50 von 50) und, sobald `score` dort neu läuft, `11-struktur-f4` (`bv_mehrteilig`, 114 von 114).
 
 **Vorläufige Antworten** (Vorhaben 11 bis 14 kodierten vor F4): `[provisional]` im Codebuch sagt,
 wie ihre Dateien zu lesen sind (Schlüsselfeld; Felder, die anders heißen; Werte, die ein Label

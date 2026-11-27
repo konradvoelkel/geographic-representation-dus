@@ -4196,3 +4196,21 @@ Schlichtung `claude-opus-5-5`, B `claude-sonnet-5-5`); ihr Prüfsatz in `guete.j
 Schlichtung durch claude-opus-5-5, nicht von Menschen". Ergebnis: 50 von 50, α von `selbe_sache`
 mangels Streuung nicht definiert und nach Entscheidung des Supervisors als vollständige
 Übereinstimmung erfüllt (Messdokument § 4.3).
+
+**Volle Einigkeit genügt, wo α nicht definiert ist** (Supervisor, 2026-11-27, nach dieser
+Messung; die Regel gehört nach F4, nicht in den Bau einer Seite). Urteilen beide Kodierer an jeder
+Einheit, bei der die Frage gestellt war, gleich und mit demselben Wert, ist die erwartete
+Uneinigkeit null und α nicht definiert; beobachtet ist aber volle Übereinstimmung, und einen
+Zufallsabgleich gibt es nicht. Dann ist `alpha_genuegt = true` mit dem Vermerk `alpha_vermerk`
+„volle Einigkeit, α nicht definiert" in `guete.json` und im README (`merge.unanimous`, von `merge`
+und `score` gleich geschrieben). Genug Einheiten heißt: die untere Wilson-Grenze der
+Übereinstimmung, n/(n + 1,96²), erreicht `validation.min_alpha`, bei 0,8 ab 16; so trägt die Regel
+dieselbe Schwelle wie α und keine neue Zahl. Jedes andere undefinierte α (keine paarbare Einheit,
+zu wenige, eine Einheit nur von einem Kodierer, Markierungen ohne eine einzige) genügt weiter
+nicht. Verworfen: die Ausnahme nur auf der Seite (dann sagte `guete.json` etwas anderes als die
+Seite) und volle Einigkeit an beliebig wenigen Einheiten (9 von 9 hat eine untere Wilson-Grenze von
+0,70). Gelaufen ist sie für `14-vorgaenge-3-f4` (erneuter merge und score: nur `alpha_genuegt` und
+der Vermerk bei `selbe_sache` und die Zeile im README änderten sich). Ein neuer `score` über alle
+Ordner im Kratzordner zeigt nur einen weiteren, den die Regel ändert: `11-struktur-f4`,
+`bv_mehrteilig` (114 von 114, alle „nein"); dort ist `score` nicht neu gelaufen, weil er auch
+Felder nachtrüge, die spätere Fassungen von `score` schreiben.

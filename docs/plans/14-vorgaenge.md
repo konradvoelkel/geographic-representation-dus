@@ -707,9 +707,9 @@ Frage 9.19 für ein Codebuch Fassung .3 in § 9; angewandt ist sie nicht.
   nicht definiert. **Entscheidung des Supervisors (2026-11-27): das zählt als erfüllt**, als
   vollständige Übereinstimmung, bei der kein Zufallsabgleich möglich ist. Die Grenze: das belegt
   nicht, dass das Codebuch Grenzfälle trennt, denn in diesen 50 Kanten kam keiner vor, an dem die
-  Kodierer hätten auseinandergehen können. `guete.json` sagt weiter `alpha_genuegt = false`, weil F4
-  ein undefiniertes α nie genügen lässt; die Stufe 3 von 14 stützt die Anzeige darum auf diese
-  Entscheidung.
+  Kodierer hätten auseinandergehen können. Die Regel steht seit dem 2026-11-27 in F4
+  (validierung.md, § 3, Schritt 8): `guete.json` sagt für `selbe_sache` `alpha_genuegt = true` mit
+  dem Vermerk „volle Einigkeit, α nicht definiert".
 - **Urteil: erfüllt.** Nach „Was folgt" oben zeigt Stufe 3 von 14 die Präzision der Rückfallregel
   aus `guete.json`, für die Hauptperiode gemessen.
 
