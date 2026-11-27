@@ -1535,8 +1535,13 @@ def build_steps(
             + (layout.texts,)
             # Vorhaben 15, Review N10: die Pflichttabellen der Beiträge (die optionalen unten)
             + contributed_table_files(layout, settings, optional=False)
-            # Vorarbeit V2: was die Dialog-Haken lesen; ``report`` schreibt ihre ``data/<name>.json``
-            + contributed_dialog_files(layout, settings),
+            # Vorarbeit V2: was die Dialog-Haken lesen; ``report`` schreibt ihre ``data/<name>.json``.
+            # Eine Datei, die schon als Tabelle dasteht (14: die Kanten), nur einmal.
+            + tuple(
+                path
+                for path in contributed_dialog_files(layout, settings)
+                if path not in contributed_table_files(layout, settings, optional=False)
+            ),
             (layout.site_index, layout.site_data / SCHEMA_NAME, layout.site / MAP_NAME),
             report,
             # Punkt 53: der eine Schritt mit einem Zusatz im Stamp. Die Vorlagen des Pakets und

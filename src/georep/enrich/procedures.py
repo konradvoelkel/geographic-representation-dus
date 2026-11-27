@@ -56,6 +56,18 @@ from georep.prep.bodies import BODY
 from georep.prep.raw_texts import flatten_with_offsets
 from georep.prep.references import ReferenceRules
 from georep.records import PaperRecord
+from georep.report.dialog import DialogHook
+from georep.report.pages import Page
+from georep.report.procedures import (
+    DIALOG_TITLE,
+    PAGE_NAME,
+    dialog_inputs,
+    dialog_rows,
+    procedures_data,
+    procedures_inputs,
+    procedures_links,
+)
+from georep.report.tables import PublishedTable
 from georep.settings import profile_folder
 from georep.spans import check_spans
 from georep.stores import PaperStore, RawTextStore
@@ -384,4 +396,135 @@ def procedure_steps(settings: Settings, layout: Layout, http: Transport) -> list
     ]
 
 
-CONTRIBUTION = Contribution(name="14-vorgaenge", steps=procedure_steps)
+def procedures_enabled(settings: Settings) -> bool:
+    """Der Schalter der Schritte, der Tabellen, der Seite und des Dialogs: ``procedures.enabled``."""
+    return settings.procedures.enabled
+
+
+# --- Stufe 3 (docs/plans/14-vorgaenge.md, § 7): Tabellen, Seite, Dialog ----------------------------
+# ``verweise.parquet`` steht nicht im Register: wo die Spannen liegen, hängt vom Rechner ab (lokal
+# auf dem Rohtext aller Profile, auf Pages nur in der Hauptperiode; docs/todo.md, Punkt 12 (e)), und
+# eine Datei, deren Stellen je Rechner andere Zeichen meinen, ist kein Download (Entscheidungseintrag).
+_ID = ("OParl-URL der Drucksache", "")
+TABLES = (
+    PublishedTable(
+        "vorgang_kanten",
+        lambda layout: procedure_files(layout).edges,
+        "Verbindungen zwischen Drucksachen über ihre Nummer: wer wen nennt, Typ, Fundstelle, "
+        "stark nach der Rückfallregel",
+        {
+            "von": ("OParl-URL der nennenden Drucksache (B), immer aus diesem Datensatz", ""),
+            "nach": ("OParl-URL der genannten Drucksache (A), auch aus einer Nachbarperiode", ""),
+            "typ": (
+                "was B zu A ist: antwort, kontrolle (B ist ein Sammelbericht), nachfrage, "
+                "umsetzung, aenderung, fortsetzung, bau (Ausführungs- zu Bedarfsbeschluss), "
+                "nachtrag (dieselbe Nummer mit Zusatz) oder bezug (ohne Typ)",
+                "",
+            ),
+            "felder": (
+                "wo B die Nummer von A nennt: titel, text, anlage (Name einer Anlage), nummer "
+                "(Nachtrag über die eigene Nummer)",
+                "Liste",
+            ),
+            "stark": (
+                "zählt für Vorgang und Antwort: Fundstelle im Titel, im Anlagennamen, Nachtrag "
+                "oder B ein Sammelbericht; falsch heißt nur im Text",
+                "",
+            ),
+            "quelle": (
+                "die stärkste Fundstelle in der Folge titel, nummer, anlage, sammelbericht, text",
+                "",
+            ),
+            "tage": ("Datum von B minus Datum von A; leer ohne Datum", "Tage"),
+            "nach_periode": (
+                "Profil der Nachbarperiode, aus der A stammt; leer, wenn A in diesem Datensatz liegt",
+                "",
+            ),
+        },
+        joins={"felder": "; "},
+        enabled=procedures_enabled,
+    ),
+    PublishedTable(
+        "dokumente_vorgang",
+        lambda layout: procedure_files(layout).documents,
+        "Vorgang je Ratsdokument: Wurzel, Rolle, Tiefe und Größe des Baums",
+        {
+            "id": _ID,
+            "vorgang": (
+                "OParl-URL der Wurzel des Vorgangs: des ältesten Dokuments, an dem die Kette der "
+                "starken Verbindungen mit Typ endet, auch in einer Nachbarperiode; das Dokument "
+                "selbst, wenn es Wurzel oder allein ist",
+                "",
+            ),
+            "rolle": (
+                "wurzel, ohne (allein, Vorgang aus einem Dokument) oder der Typ der Verbindung zum "
+                "Vorgänger (antwort, nachfrage, umsetzung, aenderung, nachtrag, bau, fortsetzung)",
+                "",
+            ),
+            "tiefe": ("Schritte bis zur Wurzel; 0 bei Wurzel und allein", "Schritte"),
+            "groesse": ("Dokumente im Vorgang, auch die der Nachbarperioden", "Dokumente"),
+        },
+        enabled=procedures_enabled,
+    ),
+    PublishedTable(
+        "antwortzeiten",
+        lambda layout: procedure_files(layout).answers,
+        "Antwort je Anfrage im Ratsinformationssystem: Quelle, Datum, Tage, Praxis des Gremiums",
+        {
+            "id": ("OParl-URL der Anfrage", ""),
+            "quelle": (
+                "anlage (eine Anlage der Anfrage heißt nach einer Antwort der Verwaltung), "
+                "drucksache (eine Informationsvorlage nennt die Anfrage im Titel), beide oder "
+                "keine; keine heißt keine Antwort im Datensatz, nicht unbeantwortet",
+                "",
+            ),
+            "antwort_datum": (
+                "frühestes gültiges Datum der Antwort im System; leer ohne Antwort oder wenn die "
+                "Anlage nur den Tag einer Umstellung des Systems trägt",
+                "",
+            ),
+            "tage": (
+                "antwort_datum minus Datum der Anfrage; leer ohne Datum oder wenn die Antwort davor "
+                "datiert ist",
+                "Tage",
+            ),
+            "antwort_id": ("OParl-URL der antwortenden Drucksache; leer ohne", ""),
+            "alter_am_abruf": ("Tage von der Anfrage bis zum Abruf der Anlagen", "Tage"),
+            "gremium": ("Kürzel des Gremiums der Anfrage; leer, wenn keines erkannt ist", ""),
+            "praxis_gremium": (
+                "Anteil der Anfragen desselben Gremiums in diesem Datensatz mit Antwort im System",
+                "Anteil 0 bis 1",
+            ),
+        },
+        enabled=procedures_enabled,
+    ),
+)
+
+PAGE = Page(
+    PAGE_NAME,
+    "Vorgänge: Anfragen, Antworten, Verbindungen",
+    "Welche Anfrage eine Antwort im Ratsinformationssystem hat, wie lange sie brauchte, und "
+    "welche Drucksachen über ihre Nummer zu einem Vorgang gehören.",
+    inputs=procedures_inputs,
+    data=procedures_data,
+    enabled=procedures_enabled,
+    links=procedures_links,
+)
+
+DIALOG = DialogHook(
+    PAGE_NAME,
+    DIALOG_TITLE,
+    "Vorgang je Dokument des Dialogs: die starken Verbindungen mit Rolle; der Dokumentdialog "
+    "lädt die Datei beim ersten Öffnen nach",
+    inputs=dialog_inputs,
+    rows=dialog_rows,
+    enabled=procedures_enabled,
+)
+
+CONTRIBUTION = Contribution(
+    name="14-vorgaenge",
+    steps=procedure_steps,
+    tables=TABLES,
+    pages=(PAGE,),
+    dialogs=(DIALOG,),
+)

@@ -4537,3 +4537,142 @@ dritte Matrix „alle Gremien" (sie mischte die Ebene mit und ohne Lager); `link
   333 423. Die Downloads machen die veröffentlichte Seite 10,2 MB größer (36,7 → 46,9 MB), vor
   allem die CSV je Dokument (Hauptperiode 1,87 und 1,94 MB), wie bei `dokumente_urheber`; die
   Pakete im Repo ändern sich nicht.
+
+## NN. Die Unterseite `vorgaenge.html` und der allgemeine Dialog-Haken: Prüfsatz aus drei `guete.json`, gemessen nur die Hauptperiode, `verweise` kein Download (Vorhaben 14, Stufe 3, und Vorarbeit V2, 2026-11-27)
+
+Stufe 3 von Vorhaben 14 nach `docs/plans/14-vorgaenge.md`, § 7 und § 10, und Vorarbeit V2 nach
+`docs/plan-zeigen-2026-11.md` (§ 4, § 5, `v0.36.0`), im Muster von `akteure.html` (Punkt 88). Gebaut
+auf `feat/14-vorgaenge-seite` ab `main` `f27473f` (`v0.35.0`). Die Nummer bekommt der Eintrag beim
+Merge.
+
+**Der Dialog-Haken (V2).** Ein Beitrag hängt im Dokumentdialog der Hauptseite je Dokument eine Zeile
+an, ohne dass `dokumente.json` wächst: `Contribution.dialogs` trägt `report.dialog.DialogHook`
+(Name, Titel, Satz für die Downloads, Eingaben, Zeilen je Korpus-ID, Schalter), und `report` schreibt
+nach `dokumente.json` je Haken `data/<name>.json`. Format 1: Wörter (`labels`), eigene Ziele
+(`documents`, je `[link, datum, drucksache, titel]`) und Zeilen `{Index in dokumente.json: [[wort],
+[wort, ziel], …]}`; ein Ziel ≥ 0 ist ein Index in `dokumente.json`, < 0 ein Dokument der Datei. Ein
+Eintrag ohne Ziel ist nur ein Wort („angenommen im Rat am …" für 26), ein Eintrag mit Ziel ein Wort
+und eine Drucksache mit Link (14) oder eine Liste ähnlicher Dokumente (18). `data-extras` am
+`<dialog>` nennt die Dateien; `frame/dialog.js.j2` lädt jede beim ersten Öffnen einmal
+(`loadJson`), hängt „Titel: Wort Drucksache; …" unter jedes Dokument mit einer Zeile und den Satz
+der Datei (`note`, etwa der Prüfsatz) hinter den Hinweis oben im Dialog, den `showDocuments` bei
+jedem Öffnen neu setzt. Ohne JavaScript gibt es keinen Dialog, die Seiten bleiben lesbar.
+
+- *Indizes statt Kennungen*: `dokumente.json` trägt keine Korpus-IDs, und fünf Ziffern sind kürzer
+  als eine OParl-URL (in der Hauptperiode rund 75 Zeichen). Beide Dateien schreibt derselbe Schritt
+  aus derselben Folge (`documents.document_order`, aus der `documents_payload` seine Liste baut, ein
+  Refactoring mit denselben Bytes); `write_dialogs` liest Präfix und Länge der eben geschriebenen
+  `dokumente.json` und bricht ab, wenn die Länge nicht zur Folge passt. Zeilen gibt es nur für
+  Dokumente, die der Dialog zeigen kann.
+- Die Eingaben der Haken stehen im Stamp von `report` (`dialog.contributed_dialog_files`, eine Datei,
+  die schon als Tabelle dasteht, nur einmal); die Datei eines abgeschalteten Hakens fliegt aus
+  `site/data/`. Ein Name unter `data/` ist nur einmal zu haben (nicht `dokumente`, `begriffe`,
+  `schema`, `summary`). Die Datei steht ohne Leerzeichen nach den Trennern da (in der Hauptperiode
+  rund ein Zehntel kleiner) und als JSON-Zeile in den Downloads.
+- *Größe*: das Skript des Rahmens wächst um 1 012 Byte, das Attribut um 24, zusammen 1 036 Byte auf
+  `index.html` und auf jeder Unterseite (die das Skript einbindet, das Attribut aber nicht trägt);
+  das Budget von „unter 1 KB" (Plan § 5) ist damit knapp überschritten. Die Erklärung steht als
+  Jinja-Kommentar in der Vorlage und kostet nichts; das Skript nutzt `line` des Rahmens (gibt das
+  Element jetzt zurück) und `new URL(link, base)`, das Datum eines Ziels steht nicht im Titel am
+  Link. Ein Test hält den Haken unter 1 000 Byte.
+
+*Verworfen*: `dokumente.json` erweitern (Synergien § 1: es wächst nicht); Kennungen als Schlüssel
+(siehe oben); die Datei im Schritt der Unterseite schreiben (er kennt die Folge von `dokumente.json`
+nicht, ohne sie nachzubauen); ein Skript je Haken (18 und 26 hängen sich nur mit Daten an).
+
+**Was `vorgaenge.html` zeigt** (`report/procedures.py`, `templates/pages/vorgaenge.*`), in allen fünf
+Paketprofilen hinter `procedures.enabled`:
+
+1. *Antworten je Gremium*: Anfragen, Antwort im Ratsinformationssystem gefunden (Zahl und Anteil),
+   Median und Q3 der gültig datierten Antwortzeit, deren n daneben; eine Zeile je Gremium ab 30
+   Anfragen, Gremien beim Namen wie auf `akteure.html`. Darüber der Satz, dass ein fehlender Anhang
+   keine fehlende Antwort ist, und für Gremien unter 20 % der Hinweis (†) auf die Sitzung und die
+   Niederschrift. **Der Gast von 26 heißt `in-der-sitzung`**: steht er auf der Seite
+   (`{% if data.session_guest in guests %}`, Punkt 86), verlinkt der Satz dorthin, und † fällt weg.
+   Der Name folgt dem Bauplan von 26 (§ 7, Abschnitt 3 „in der Sitzung beantwortet"); wählt 26
+   einen anderen, ändert sich `procedures.SESSION_GUEST`.
+2. *Je Fraktion*, in jedem Datensatz „explorativ" (Frage 14): Anfragen, beobachtet gegen erwartet über
+   `analysis.practice.observed_expected` (Schicht das Gremium, die Fraktionen aus den Antragstellern
+   von 15, Synergien Konflikt 10), daneben der Median der Antwortzeit ab 30 datierten Antworten mit
+   deren Zahl. Keine rohe Quote und keine Spalte, aus der sie folgte; der Median steht, wie er ist,
+   und sortiert nicht (wie „Kontrolle roh" auf `akteure.html`). Eine Partei neben ihrer späteren
+   Fraktion bekommt den Satz aus Punkt 88, aber nur, wenn ihre Anfragen alle vor dem Beginn der
+   Fraktion liegen.
+3. *Ohne gefundene Antwort: Kandidaten*: Drucksache mit Link, Datum, Gremium, Urheber, Tage beim
+   Abruf; nur Gremien mit einer Praxis ab 70 % in der Periode und älter als P90 der Antwortzeit.
+4. *Vorgänge*: Zahl, Dokumente, Größenverteilung (Tabelle mit Balken), die starken Kanten nach Typ
+   und Fundstelle, die schwachen als Zahl mit dem Grund, warum sie nicht zählen.
+
+Die Downloads `vorgang_kanten` (mit `stark`), `dokumente_vorgang` und `antwortzeiten` als Parquet und
+CSV mit Spaltendoku; kein Parteiname und kein Stadtwort in Vorlage, Spaltendoku und gerenderter
+Seite (Tests).
+
+**Der Prüfsatz kommt aus drei `guete.json`, nicht aus zweien.** Die Kennzahl ist die Prüfstichprobe der
+Rückfallregel (`14-vorgaenge-3-f4`, Punkt 87): 50 von 50 Verbindungen als dieselbe Sache bestätigt,
+für die 1 710 Verbindungen gewichtet 1,000 (Wilson bei Kishs n 0,928–1,000), mit dem Satz und den
+Modellen daraus und der Folge der Schichten (Titel 43, Nachtrag 4, Sammelbericht 2, Anlage 1; „je
+Fundstelle keine Prüfung"). Warum Nummern nur im Text nicht zählen, sagen die beiden Stichproben davor:
+Regelfassung .1 an Stichprobe 1 (`14-vorgaenge-f4`, 139 von 150) und Regelfassung .2 an der
+Bestätigung (`14-vorgaenge-2-f4`, 85 von 100), beide unter dem vorab festgelegten 0,95, beide von
+Kodierern desselben Modells. Der Auftrag nannte `-f4` und `-3-f4`; den Satz aus § 7 („weil sie an 100
+geprüften Kanten nur zu 85 % trugen") trägt aber die Bestätigung, und eine Zahl auf der Seite kommt
+nur aus `guete.json` (Synergien § 10). Die 104 von 106 und die 154 von 156 aus § 5.1 und § 4.3
+stehen nicht auf der Seite: sie sind keine Zahl einer `guete.json`. Die Namensregel der
+Antwortanlagen (712 verschiedene Namen an den Anfragen der Hauptperiode) ist von keinem Kodierer
+geprüft (Frage 48, Messdokument Frage 9.5); die Seite sagt das.
+
+**Gemessen ist nur die Hauptperiode.** `stichprobe.json` der Prüfstichprobe nennt `duesseldorf`; mit
+ihr gilt `duesseldorf-vergleich` als gemessen (derselbe Ordner). Die beiden anderen Düsseldorfer
+Perioden und die zweite Stadt heißen in jeder Überschrift „explorativ" (Gültigkeitsregel, Plan § 8;
+Messdokument § 4.3, „Was folgt"). Das ist anders als bei `akteure.html`, wo die Stichprobe aus allen
+drei Düsseldorfer Perioden gezogen ist. Die zweite Stadt ist der Prüfstein: ohne die Rolle Anfrage
+im Profil sagen die drei ersten Abschnitte, was fehlt, und nur die Vorgänge stehen da.
+
+**Der Vorgang im Dialog** (der Haken `vorgaenge`, `procedures.dialog_rows`): je Dokument seine
+starken Kanten in beide Richtungen mit einem Wort je Typ und Richtung („Antwort auf", „beantwortet
+in", „umgesetzt in", „geändert durch", „genannt im Sammelbericht", …), neueste zuerst; `bezug`
+höchstens fünf, dann „und N weitere Nennungen" (Frage 9.7). Keine Textkante, auch nicht als
+„ungeprüft" (§ 5.1). Ziele in einer Nachbarperiode kommen mit Link aus deren Paket (0,2 s). Der Satz
+der Datei nennt die Regel und die Prüfung aus `guete.json`, außerhalb der Hauptperiode mit
+„explorativ". Grenze: eine Kante, die eine Drucksache einer *späteren* Periode auf ein Dokument
+legt, kennt nur das spätere Profil; im Dialog des früheren fehlt sie (`docs/todo.md`, Punkt 12 (g)).
+
+**`verweise.parquet` ist kein Download** (todo 12 (e)). Wo seine Spannen liegen, hängt vom Rechner
+ab: lokal auf dem Rohtext aller Profile, auf Pages nur in der Hauptperiode, deren Paket einen
+Rohtextstore trägt; dieselbe Zeile meint dann je nach Rechner andere Zeichen, und nur `extractor`
+sagt es. Eine veröffentlichte Datei soll auf jedem Rechner dasselbe heißen. Die Kanten und die
+Vorgänge hängen nicht am Rohtext (sie kommen aus dem Textstore und den Titeln) und sind Downloads.
+Wenn jedes Profil einen Rohtext trägt oder die Spannen immer auf dem Textstore liegen, kann die
+Tabelle nachkommen.
+
+**Bewusst anders als § 7.**
+
+1. Drei `guete.json` statt der „104 von 106" (siehe oben).
+2. Ein Verhältnis je Fraktion erst ab 10 *erwarteten* Antworten, nicht nur ab 30 Anfragen: in der
+   Hauptperiode hat eine Fraktion 129 Anfragen, fragt aber fast nur im Rat, der in der Sitzung
+   antwortet; erwartet sind rund zwei Antworten, und das Verhältnis (1,45) hinge an einer einzigen.
+3. Kandidaten nur aus Gremien, deren Praxis an mindestens 30 Anfragen gemessen ist (wie § 3.8: „27
+   Gremien mit mindestens 30 Anfragen"); sonst stand ein Ausschuss mit drei von vier Antworten (0,75)
+   unter den Gremien mit Praxis.
+4. Die Seite ist 36 bis 132 KB groß statt unter 50: der Rahmen allein ist rund 31 KB (wie bei
+   `akteure.html`), die Kandidaten in 2014–2020 sind 301 Zeilen (82 KB). Das Budget von 500 KB je
+   Unterseite hält sie mit Abstand.
+5. Der Median je Fraktion sortiert nicht, nur Anfragen und das Verhältnis (Frage 14).
+6. Neben den Typen stehen die Fundstellen der starken Kanten als zweite kleine Tabelle; eine
+   Grafik gibt es nur als Balken in der Tabelle der Größen.
+7. Titel der Ziele im Dialog sind auf 100 Zeichen gekürzt und stehen nur als `title` am Link: so
+   bleibt `vorgaenge.json` der Hauptperiode unter 100 KB (95 011 Byte, gzip 30 491).
+
+**Geprüft.**
+
+- Tests: `tests/unit/test_report_dialog.py` (Format, Indizes, Ziele, die Folge von `dokumente.json`,
+  Register, Stamp von `report`, Schreiben und Aufräumen, eine fremde Folge bricht ab, Attribut am
+  Dialog, Größe des Hakens); `tests/unit/test_report_procedures.py` (Bausteine an einer erfundenen
+  Stadt, Prüfsatz aus `guete.json` je Paketprofil, eine geänderte `guete.json` ändert die Seite,
+  explorativ außerhalb der Hauptperiode, der Gast `in-der-sitzung`, kein Parteiname, Register,
+  Linkblock, Downloads mit Spaltendoku, der Haken auf der Hauptseite, erlaubte Links); slow in
+  `tests/golden/test_procedures_page.py` die Zahlen der Hauptperiode aus den Paketen (3 952
+  Anfragen, 1 239 mit Antwort, 1 223 als Anlage; Median 18 Tage, Q1 13, Q3 71, P90 139 an 1 238;
+  27 Gremien, 15 unter 20 %; 110 Kandidaten; 1 525 Vorgänge mit 3 100 Dokumenten, 1 346 Paare;
+  1 960 von 7 310 Kanten stark; beobachtet gegen erwartet je Fraktion), die zweite Stadt ohne
+  Anfragen und explorativ, beide Seiten unter 500 KB.

@@ -290,7 +290,9 @@ def write_dialogs(layout: Layout, model: ReportModel, settings: Settings) -> lis
             generated_at=model.generated_at,
         )
         target = layout.guard_writable(layout.site_data / hook.file_name)
-        write_json(target, payload, indent=None)
+        # Ohne Leerzeichen nach Komma und Doppelpunkt: die Datei besteht fast nur aus kurzen
+        # Listen, und die Trenner machten sie in der Hauptperiode um rund ein Zehntel größer.
+        write_text(target, json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
         rows = payload["rows"]
         assert isinstance(rows, dict)
         downloads.append(_download(target, "JSON", len(rows), hook.description))

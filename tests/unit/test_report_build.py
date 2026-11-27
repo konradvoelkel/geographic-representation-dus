@@ -21,23 +21,29 @@ from georep.report.build import (
     SiteSummary,
     current_commit,
 )
+from georep.report.dialog import dialogs_for
 from georep.report.tables import GEOJSON_COLUMNS, csv_plan, published
 from georep.settings import Settings
 from tests.conftest import within_budget
 
 
-def test_site_has_index_map_and_every_download_file(mini_run: Layout) -> None:
+def test_site_has_index_map_and_every_download_file(
+    mini_run: Layout, default_settings: Settings
+) -> None:
     assert mini_run.site_index.is_file() and (mini_run.site / MAP_NAME).is_file()
     names = sorted(p.name for p in mini_run.site_data.iterdir())
     tables = published(mini_run)
+    hooks = [hook.file_name for hook in dialogs_for(default_settings)]
     expected = sorted(
         [t.path(mini_run).name for t in tables]
         + [f"{t.name}.csv" for t in tables]
         + [GEOJSON_NAME, SCHEMA_NAME, DOCUMENTS_NAME, SUMMARY_NAME, TERMS_NAME]
+        + hooks
     )
-    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
-    # und die Begriffe je Wahlbezirk (Punkt 49)
-    assert names == expected and len(names) == 2 * len(tables) + 5
+    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01),
+    # die Begriffe je Wahlbezirk (Punkt 49) und je Dialog-Haken seine Datei (Vorarbeit V2)
+    assert hooks == ["vorgaenge.json"]
+    assert names == expected and len(names) == 2 * len(tables) + 5 + len(hooks)
     assert mini_run.site_index.with_name("index.html.stamp.json").is_file()
 
 

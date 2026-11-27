@@ -19,6 +19,7 @@ from georep.errors import MissingInputError
 from georep.layout import Layout
 from georep.pipeline import Outcome, UnknownStepError, build_steps, run_pipeline
 from georep.prep.voters import TURNOUT
+from georep.report.dialog import dialogs_for
 from georep.report.search import fold, fold_ascii
 from georep.report.tables import published
 from georep.settings import Settings, load_settings
@@ -153,6 +154,8 @@ def test_pipeline_runs_skips_and_reruns(
         # Vorhaben 15, Stufe 3: die Unterseite liest Korpus, Urheber, Gremien, die beiden Tabellen
         # von 15 und die Prüfung im Repo; die Orte ändern keines davon
         "page_akteure": "übersprungen",
+        # Vorhaben 14, Stufe 3: dieselben Eingaben ohne Orte, dazu die Tabellen von 14
+        "page_vorgaenge": "übersprungen",
     }
     changed = next(o for o in third if o.step == "pois")
     assert changed.reason.startswith("Eingabe geändert")
@@ -293,9 +296,10 @@ def test_pipeline_reproduces_the_thesis_results(
     # Budget der Seite: eine Zahl, in den Settings (Punkt 50, docs/seitengroesse-2026-10.md, § 7)
     assert within_budget(layout.site_index.stat().st_size, settings.report.page_budget_bytes)
     _check_search_section(page)
-    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01)
-    # und die Begriffe je Wahlbezirk (Punkt 49)
-    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 5
+    # Je Tabelle Parquet und CSV, dazu GeoJSON, Schema, Dokumentliste, summary.json (Option 01),
+    # die Begriffe je Wahlbezirk (Punkt 49) und je Dialog-Haken seine Datei (Vorarbeit V2)
+    hooks = len(dialogs_for(settings))
+    assert len(list(layout.site_data.iterdir())) == 2 * len(published(layout)) + 5 + hooks
     assert (layout.site / "karte.html").stat().st_size < 1_000_000
     _compare_results(
         _results_as_legacy(layout.results),

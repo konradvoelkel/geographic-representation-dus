@@ -264,9 +264,10 @@ def test_only_the_report_topics_and_vocabulary_steps_carry_an_extra(
     assert found["report"] == report_fingerprint(default_settings)
     assert len(found["report"]) == 16
     # die Unterseiten (Punkt 69) tragen denselben Hash wie der Bericht; die erste ist akteure.html
-    assert found["page_akteure"] == found["report"]
+    assert found["page_akteure"] == found["report"] == found["page_vorgaenge"]
     assert sorted(name for name, extra in found.items() if extra) == [
         "page_akteure",
+        "page_vorgaenge",
         "report",
         "topics",
         "vocabulary",
