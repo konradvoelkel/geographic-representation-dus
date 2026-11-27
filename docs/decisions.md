@@ -4569,7 +4569,7 @@ jedem Öffnen neu setzt. Ohne JavaScript gibt es keinen Dialog, die Seiten bleib
   `site/data/`. Ein Name unter `data/` ist nur einmal zu haben (nicht `dokumente`, `begriffe`,
   `schema`, `summary`). Die Datei steht ohne Leerzeichen nach den Trennern da (in der Hauptperiode
   rund ein Zehntel kleiner) und als JSON-Zeile in den Downloads.
-- *Größe*: das Skript des Rahmens wächst um 1 012 Byte, das Attribut um 24, zusammen 1 036 Byte auf
+- *Größe*: das Skript des Rahmens wächst um 1 013 Byte, das Attribut um 24, zusammen 1 037 Byte auf
   `index.html` und auf jeder Unterseite (die das Skript einbindet, das Attribut aber nicht trägt);
   das Budget von „unter 1 KB" (Plan § 5) ist damit knapp überschritten. Die Erklärung steht als
   Jinja-Kommentar in der Vorlage und kostet nichts; das Skript nutzt `line` des Rahmens (gibt das
@@ -4676,3 +4676,39 @@ Tabelle nachkommen.
   27 Gremien, 15 unter 20 %; 110 Kandidaten; 1 525 Vorgänge mit 3 100 Dokumenten, 1 346 Paare;
   1 960 von 7 310 Kanten stark; beobachtet gegen erwartet je Fraktion), die zweite Stadt ohne
   Anfragen und explorativ, beide Seiten unter 500 KB.
+- Bildschirmfotos mit headless Chrome von `vorgaenge.html` der Hauptperiode bei 1280 Pixeln hell
+  und dunkel, bei 390 Pixeln und bei 390 ohne Skripte (an einer Kopie ohne `<script>` und mit dem
+  Inhalt von `<noscript>`: alle 110 Kandidaten stehen da, keine Schaltfläche), der zweiten Stadt bei
+  1280, und vom Dokumentdialog der Hauptseite über einen lokalen Webserver, geöffnet für einen
+  Begriff mit neun Dokumenten: acht tragen ihre Zeile „Vorgang: …" mit verlinkter Drucksache, der
+  Satz zur Prüfung steht oben. Die Fotos fanden die Tabelle der Gremien, die mit `nowrap` über die
+  Breite ging (bei 1280 fiel die Spalte Median heraus), und einen verschluckten Zeilenumbruch im
+  Skript; beides in `d7c4890` behoben.
+- A/B-Bau aller Seiten aus den Datenpaketen wie in Punkt 66 (`scripts/ab_bau.sh`,
+  `scripts/ab_vergleich.py`), `POLARS_MAX_THREADS=4 OMP_NUM_THREADS=2`, A aus `main` `f27473f`
+  (`git archive`), B aus `d7c4890`, Wurzeln `ab/14s-a` und `ab/14s-b` auf xtraspace, die fünf
+  Profile in der Folge von `pages.yml`, dann `publish --strict-budget`. Unter `site/` 255 Dateien
+  in A, 287 in B, 44 Abweichungen, alle erwartet: je Stadtseite (Hauptperiode, 2014–2020, laufende
+  Periode, Mönchengladbach) neu `vorgaenge.html`, `data/vorgaenge.json` und die sechs Downloads;
+  anders `index.html` (der Eintrag unter „Weitere Auswertungen", sieben Zeilen in den Downloads,
+  die Zahl der Downloadzeilen, die Größe von `schema.json`, drei Einträge im Spaltenschema,
+  `data-extras` am Dialog und der Haken im Skript; sonst bytegleich bis auf die Prüfsummen, die an
+  `generated_at` hängen), `akteure.html` (nur der Haken im Skript des Rahmens, 1 013 Byte) und
+  `schema.json` (die drei Tabellen); `vergleich.html` und jede `summary.json` gleich. Über die
+  ganzen Datenwurzeln 988 und 1 074 Dateien, 239 Abweichungen: dieselben Seiten und Downloads in
+  den Ordnern der Profile, **kein Parquet unter `processed/` oder `interim/`**, und 129 Stamps
+  (109 nur in `written`, 6 neue von `vorgaenge.html`, 6 von `akteure.html` in `extra`, weil
+  `report_fingerprint` die geänderten Vorlagen zählt, 6 von `index.html` in `extra` und den
+  Eingaben, 2 nur in der Wurzel der absoluten Pfade).
+- Größen, veröffentlicht (`publish`): `index.html` der Hauptperiode 941 988 → 950 043 Byte
+  (+8 055: Haken 1 037, das Übrige Linkblock, Downloadzeilen und Spaltenschema; Budget 1 000 000,
+  mit `akteure.html` zusammen 12,7 KB des Ziels von höchstens +30 KB der Phase), `2014-2020/`
+  827 359 → 835 406, `2025/` 723 285 → 731 326, `moenchengladbach/` 810 780 → 818 794.
+  `vorgaenge.html`: Hauptperiode 82 308, 2014–2020 132 066, laufende Periode 49 674,
+  Mönchengladbach 36 737 Byte. `vorgaenge.json`: 95 011 (gzip 30 491), 45 112, 20 624, 6 650 Byte;
+  zusammen rund 167 KB nachgeladen, im Budget von 1,5 MB je Profil. Die Downloads machen die
+  veröffentlichte Seite 11,4 MB größer (46,9 → 58,4 MB): je Profil 4,67, 4,68, 1,02 und 0,51 MB,
+  fast alles CSV und davon am meisten `dokumente_vorgang.csv` (2,80, 3,22, 0,60, 0,42 MB, eine
+  Zeile je Dokument mit zwei OParl-URLs). Ohne die Zeilen mit `rolle = ohne` (84 % in der
+  Hauptperiode) wären es rund 6 MB weniger; das wäre eine Regel für Tabellen je Dokument und gehört
+  zu `docs/todo.md`, Punkt 35. Die Pakete im Repo ändern sich nicht.
