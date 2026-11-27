@@ -34,3 +34,5 @@ td.anteil .balken { position: absolute; left: .4rem; bottom: .2rem; height: 3px;
 p.these { margin: .25rem 0; font-style: italic; max-width: 48em; }
 p.stand { margin: .5rem 0 .75rem; }
 #sensitivitaeten td:nth-child(3) { min-width: 14em; }
+/* Der Name eines Feeds und der Monat bleiben bei 390 Pixeln auf einer Zeile. */
+#feeds td:first-child, #monate-zeit td:first-child { white-space: nowrap; }
