@@ -173,7 +173,7 @@
     var p = iso.split("-");
     return p.length === 3 ? p[2] + "." + p[1] + "." + p[0] : iso;
   }
-{% include "frame/dialog.js.j2" %}
+{% include "frame/dialog.js.j2" +%}
   /* Zeigt die Dokumente eines oder mehrerer Begriffe (Array) im Dialog; die Indizes werden vereinigt
      und aufsteigend sortiert, die Liste ist neueste zuerst. title ist die Ueberschrift des Dialogs. */
   function showDocuments(terms, title) {
