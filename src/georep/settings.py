@@ -942,6 +942,9 @@ class NeedHypothesis(_Strict):
     # ohne 1 und 10). Vorab festgelegt wie die Hypothese, darum hier und nicht aus
     # ``analysis.exclude_districts``, das die Regression der Seite steuert und sich ändern darf.
     robust_without: list[int] = []
+    # Stufe 3 (Messdokument § 7): der Tag der Festlegung neben dem Commit auf der Seite. Anzeige,
+    # nicht im Fingerprint; der Commit zählt wie bisher. None: die Seite nennt nur den Commit.
+    fixed_on: date | None = None
 
 
 class NeedSettings(_Strict):
@@ -3187,6 +3190,8 @@ class Settings(BaseSettings):
                         "accidents": {"attribution"},
                         "grid": {"attribution"},
                         "schools": {"attribution"},
+                        # Stufe 3: der Tag der Festlegung ist Anzeige, der Commit zählt
+                        "hypotheses": {"__all__": {"fixed_on"}},
                     },
                 },
                 "period": {"label"},

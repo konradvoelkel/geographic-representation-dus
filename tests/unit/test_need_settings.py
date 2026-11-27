@@ -145,3 +145,21 @@ def test_every_attribution_says_what_is_changed() -> None:
     attribution = need.grid.attribution.model_copy(update={"modified": "verändert: anders"})
     grid = need.grid.model_copy(update={"attribution": attribution})
     assert _need(settings, grid=grid).fingerprint() == settings.fingerprint()
+
+
+def test_the_day_of_the_fixing_is_shown_but_does_not_count() -> None:
+    """Stufe 3 (Messdokument § 7): die Seite sagt „vorab festgelegt am 2026-11-23, Commit
+    67f7250". Der Commit zählt zum Fingerprint wie bisher, der Tag ist Anzeige."""
+    import datetime as dt
+
+    settings = load_settings(cwd=NOWHERE)
+    hypotheses = settings.context.need.hypotheses
+    assert [(h.fixed, h.fixed_on) for h in hypotheses] == [("67f7250", dt.date(2026, 11, 23))] * 3
+    moved = [h.model_copy(update={"fixed_on": dt.date(2026, 1, 1)}) for h in hypotheses]
+    assert _need(settings, hypotheses=moved).fingerprint() == settings.fingerprint()
+    assert (
+        gs.NeedHypothesis(
+            name="H", need="x", attention="y", alternative="greater", fixed="abc"
+        ).fixed_on
+        is None
+    )
