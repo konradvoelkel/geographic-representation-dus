@@ -16,7 +16,7 @@ from decimal import Decimal
 from functools import cache
 from pathlib import Path
 
-from hypothesis import given
+from hypothesis import example, given
 from hypothesis import strategies as st
 
 from georep.enrich.fidelity import Lexicon, claims, evidence, normalize_text, number_key
@@ -71,6 +71,9 @@ filler = st.text(
 
 
 @given(st.lists(blocks, min_size=1, max_size=8), filler, filler)
+# 2026-11-27, Gegenbeispiel aus dem Worktree von 22: 29 Stellen nach dem Text lassen
+# number_key(Decimal("1E+28")) mit quantize über die Kontextgenauigkeit von 28 Stellen laufen
+@example(parts=["1 €"], before="", after="1" + "0" * 28)
 def test_what_is_found_in_a_text_is_supported_by_it(
     parts: list[str], before: str, after: str
 ) -> None:
@@ -89,6 +92,7 @@ def test_text_normalisation_is_idempotent(text: str) -> None:
 
 
 @given(st.decimals(min_value=0, max_value=10**12, allow_nan=False, places=4))
+@example(Decimal("1E+28"))
 def test_number_normalisation_is_idempotent(value: Decimal) -> None:
     once = number_key(value)
     assert number_key(Decimal(once)) == once
