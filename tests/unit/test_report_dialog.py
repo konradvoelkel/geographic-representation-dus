@@ -255,10 +255,51 @@ def test_der_dialog_nennt_seine_dateien_nur_mit_haken(
 
 
 def test_der_haken_bleibt_bei_rund_einem_kilobyte() -> None:
-    """Plan § 5: der Haken unter rund 1 KB auf ``index.html``; die Erklärung ist ein Jinja-Kommentar."""
+    """Plan § 5: der Haken unter rund 1 KB auf ``index.html``; die Erklärung ist ein Jinja-Kommentar.
+
+    Review K3 (Folge in Registerfolge, Sätze unter der Liste, Wort nur beim Wechsel, Felder aus
+    ``show``) kostet rund 300 Byte; die Grenze ist darum 1 400, nicht 1 000.
+    """
     env = environment()
     hook = env.get_template("frame/dialog.js.j2").render()
-    assert len(hook.encode("utf-8")) < 1_000
+    assert len(hook.encode("utf-8")) < 1_400
     assert "Vorarbeit" not in hook  # kein Kommentar im ausgelieferten Skript
     script = env.get_template("frame/script.js.j2").render()
-    assert hook in script and "extras(items, data.documents, note);" in script
+    assert hook in script and "extras(items, data.documents);" in script
+
+
+# --- Review Runde 1, K3 (2026-11-27): 18 und 26 hängen sich wirklich nur mit Daten an ------------
+def test_ein_haken_waehlt_die_felder_seiner_ziele() -> None:
+    """(d): 18 zeigt je Vorschlag Drucksache, Datum und Titel sichtbar, 14 nur die Drucksache."""
+    rows = DialogRows(labels=("ähnlich",), rows={"a": ((0, "x"),)}, targets={"x": _target(7)})
+    payload = dialog_payload(
+        rows,
+        ["a"],
+        BASE,
+        title="Ähnlich",
+        version="0",
+        generated_at=NOW,
+        show=("drucksache", "datum", "titel"),
+    )
+    assert payload["format"] == DIALOG_FORMAT == 2
+    assert payload["show"] == [2, 1, 3]
+    assert _payload(rows, ["a"])["show"] == [2]  # die Vorgabe: nur die Drucksache
+    with pytest.raises(ValueError, match="show"):
+        DialogHook(
+            "probe",
+            "T",
+            "D",
+            inputs=lambda layout, s: (),
+            rows=lambda layout, s: _empty(),
+            show=("link",),
+        )
+
+
+def test_das_skript_haelt_folge_notizen_und_woerter_nach_dem_format() -> None:
+    """(a) je Haken ein Platzhalter in der Folge von data-extras, nicht in der Ankunftsfolge;
+    (b) die Sätze unter der Liste; (c) ein Wort nur, wenn es wechselt; (d) die Felder aus ``show``."""
+    hook = environment().get_template("frame/dialog.js.j2").render()
+    assert "EXTRAS.map" in hook  # (a) und (b): Platzhalter je Haken, angelegt vor dem Laden
+    assert 'line(dialog, "", "note extra")' in hook  # (b): hinter <ol>, also unter der Liste
+    assert "e[0] === row[k - 1][0]" in hook  # (c)
+    assert "x.show.map" in hook  # (d)

@@ -320,6 +320,7 @@ def write_dialogs(layout: Layout, model: ReportModel, settings: Settings) -> lis
             title=hook.title,
             version=model.version,
             generated_at=model.generated_at,
+            show=hook.show,
         )
         target = layout.guard_writable(layout.site_data / hook.file_name)
         # Ohne Leerzeichen nach Komma und Doppelpunkt: die Datei besteht fast nur aus kurzen

@@ -209,7 +209,7 @@
         items.push([i, li]);
       });
       {# Vorarbeit V2: die Zeilen der Dialog-Haken #}
-      extras(items, data.documents, note);
+      extras(items, data.documents);
     }).catch(function () {
       forget(DOCUMENTS);  /* ein zweiter Klick darf es noch einmal versuchen */
       note.textContent = offlineNote("Die Dokumentliste", DOCUMENTS);

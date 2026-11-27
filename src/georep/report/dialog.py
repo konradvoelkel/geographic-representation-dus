@@ -11,15 +11,21 @@ Dialogs einmal nach (``loadJson``, Punkt 49) und hängt unter jedes Dokument, da
 ``<dialog>`` der Hauptseite. Ein zweiter Beitrag (18 ``aehnlich.json``, 26 ``beschluesse.json``)
 hängt sich nur mit Daten an: ein ``DialogHook`` im eigenen Modul, kein JavaScript.
 
-**Format 1 von ``data/<name>.json``**::
+**Format 2 von ``data/<name>.json``** (2 seit Review K3: ``show``)::
 
-    {"format": 1, "version": …, "generated_at": …,
+    {"format": 2, "version": …, "generated_at": …,
      "title": "Vorgang",              # Vorspann der Zeile je Dokument
      "note": "…",                     # ein Satz unter der Liste: woher, wie geprüft (darf leer sein)
+     "show": [2],                     # Felder eines Ziels als Text des Links (1 Datum, 2 Nr., 3 Titel)
      "labels": ["Antwort auf", …],    # die Wörter der Einträge, je einmal
      "base": "https://…/",            # dasselbe Präfix wie in dokumente.json
      "documents": [[link, datum, drucksache, titel], …],   # Ziele außerhalb von dokumente.json
      "rows": {"<Index in dokumente.json>": [[label], [label, ziel], …], …}}
+
+Unter jedem Dokument steht je Haken eine Zeile in der Folge von ``data-extras`` (der Registerfolge),
+gleich in welcher Folge die Dateien ankommen; das Wort eines Eintrags steht nur, wenn es sich gegen
+den vorigen ändert („umgesetzt in A, B; geändert durch C"). Die Sätze der Dateien stehen unter der
+Liste, je Haken einer, ebenfalls in Registerfolge.
 
 Ein Eintrag ist ``[label]`` (nur das Wort, etwa „angenommen im Rat am 12.03.2024") oder
 ``[label, ziel]``: ``ziel >= 0`` ist der Index eines Dokuments in ``dokumente.json``, ``ziel < 0``
@@ -44,10 +50,13 @@ import deal
 from georep.layout import Layout
 from georep.settings import Settings
 
-DIALOG_FORMAT = 1
+DIALOG_FORMAT = 2  # 2 seit Review K3: ``show`` wählt die Felder eines Ziels
 DIALOG_NAME = re.compile(r"^[a-z][a-z0-9-]*$")
 # Dateien, die es unter ``data/`` schon als JSON gibt (``report.build``)
 RESERVED = frozenset({"dokumente", "begriffe", "schema", "summary"})
+# Die Felder eines Ziels, die ein Haken als Text des Links zeigen kann, mit ihrer Stelle in einer
+# Zeile von ``documents`` (und von ``dokumente.json``): Stelle 0 ist der Link selbst.
+SHOWN_FIELDS: dict[str, int] = {"datum": 1, "drucksache": 2, "titel": 3}
 
 Entry = tuple[int, str | None]  # Index in ``DialogRows.labels`` und die Korpus-ID des Ziels
 
@@ -85,13 +94,20 @@ class DialogHook:
     description: str  # ein Satz für die Downloads der Hauptseite
     inputs: Callable[[Layout, Settings], tuple[Path, ...]]  # was ``report`` dafür liest (Stamp)
     rows: Callable[[Layout, Settings], DialogRows]
-    enabled: Callable[[Settings], bool] | None = (
-        None  # None: immer, wenn der Beitrag im Register ist
-    )
+    # None: immer, wenn der Beitrag im Register ist
+    enabled: Callable[[Settings], bool] | None = None
+    # Review K3 (d): die Felder eines Ziels als Text des Links, in dieser Folge; 18 zeigt je Vorschlag
+    # Drucksache, Datum und Titel (Plan 18, § 7), 14 nur die Drucksache. Der Titel steht immer auch
+    # als ``title`` am Link.
+    show: tuple[str, ...] = ("drucksache",)
 
     def __post_init__(self) -> None:
         if not DIALOG_NAME.fullmatch(self.name) or self.name in RESERVED:
             raise ValueError(f"Haken {self.name!r}: [a-z][a-z0-9-]*, nicht {sorted(RESERVED)}")
+        if not self.show or not set(self.show) <= set(SHOWN_FIELDS):
+            raise ValueError(
+                f"Haken {self.name!r}: show aus {sorted(SHOWN_FIELDS)}, nicht {self.show}"
+            )
 
     @property
     def file_name(self) -> str:
@@ -152,6 +168,7 @@ def _indices_resolve(
     title: str,
     version: str,
     generated_at: dt.datetime,
+    show: Sequence[str] = ("drucksache",),
     result: dict[str, object] | None = None,
 ) -> bool:
     """Jeder Schlüssel und jedes Ziel zeigt auf ein Dokument, das es gibt."""
@@ -178,6 +195,7 @@ def dialog_payload(
     title: str,
     version: str,
     generated_at: dt.datetime,
+    show: Sequence[str] = ("drucksache",),
 ) -> dict[str, object]:
     """``data/<name>.json`` aus den Zeilen eines Beitrags und der Folge von ``dokumente.json``.
 
@@ -214,6 +232,7 @@ def dialog_payload(
         "generated_at": generated_at.isoformat(),
         "title": title,
         "note": rows.note,
+        "show": [SHOWN_FIELDS[name] for name in show],
         "labels": list(rows.labels),
         "base": base,
         "documents": documents,
