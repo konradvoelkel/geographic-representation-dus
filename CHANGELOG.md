@@ -2,6 +2,16 @@
 
 Ein Eintrag je Version, die Änderungen aus Sicht eines Nutzers, neueste oben. Versionen sind Git-Tags.
 
+## 0.37.0 (2026-11-27), Zeit
+
+- **Unterseite `zeit.html`** (Vorhaben 17, Stufe 3, `docs/decisions.md`, Punkt 90): der Rhythmus der
+  Ratsarbeit über die Wahljahre und Haushaltsmonate, die drei vorab festgelegten Hypothesen mit Ergebnis,
+  Holm und Festlegung, das Bundesvokabular mit Prüfsatz (94 von 100) und Ereignisspuren (explorativ). In
+  der laufenden Periode listet die Seite die Feeds je Wahlbezirk mit ihrem Datenstand.
+- Neue Downloads `zeit_monate`, `haushaltsmonate`, `dokumente_bundesvokabular` (CSV nur mit Treffern) und,
+  in der Hauptperiode, `zeit_hypothesen`. Neue Einstellung `feeds.timer` (Anzeige, nicht im
+  Fingerprint).
+
 ## 0.36.0 (2026-11-27), Kopf und Kennungen als Download
 
 - **Downloads von 11 und 12** (Stufe 3, `docs/decisions.md`, Punkt 89): `dokumente_kopf` (Amt, Dezernat

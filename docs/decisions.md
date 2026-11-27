@@ -4676,7 +4676,7 @@ Prüfsatz nicht. Das Ziel der Phase (höchstens 30 KB über dem Bau vor `v0.33.0
   45 663; die anderen Seiten gleich groß. Die veröffentlichte Seite wächst um 6,1 MB (46,9 → 53,0
   MB), fast nur `kennungen.csv`.
 
-## NN. Die Unterseite `zeit.html`: Zählungen beschreibend, die Familie mit Wort und Commit, das Vokabular mit seiner Ebene, die Feeds mit ihrem Stand (Vorhaben 17, Stufe 3, 2026-11-27)
+## 90. Die Unterseite `zeit.html`: Zählungen beschreibend, die Familie mit Wort und Commit, das Vokabular mit seiner Ebene, die Feeds mit ihrem Stand (Vorhaben 17, Stufe 3, 2026-11-27)
 
 Stufe 3 von Vorhaben 17 nach `docs/plans/17-zeit.md`, § 7 und § 10 (Punkte 8 und 9), und nach
 `docs/plan-zeigen-2026-11.md` (§ 5, `v0.38.0`; § 7, die Feeds), im Muster von `akteure.html`
