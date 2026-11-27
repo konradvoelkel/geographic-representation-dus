@@ -159,6 +159,9 @@ def test_pipeline_runs_skips_and_reruns(
         "page_zeit": "übersprungen",
         # Vorhaben 14, Stufe 3: dieselben Eingaben ohne Orte, dazu die Tabellen von 14
         "page_vorgaenge": "übersprungen",
+        # Vorhaben 22, Stufe 3: bedarf.html liest die Tabellen von 22 und die Auswertung
+        # (Dokumente je Wahlbezirk), also auch die geänderten Orte
+        "page_bedarf": "ausgeführt",
     }
     changed = next(o for o in third if o.step == "pois")
     assert changed.reason.startswith("Eingabe geändert")

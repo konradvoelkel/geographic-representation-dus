@@ -55,6 +55,9 @@ from georep.prep.context import (
     read_schools,
     schools_by_district,
 )
+from georep.report.need import PAGE_NAME, need_data, need_enabled, need_inputs, need_links
+from georep.report.pages import Page
+from georep.report.tables import PublishedTable
 from georep.settings import NeedSettings, Settings, archive_name
 from georep.sources.opendata import fetch_csv, fetch_zip
 
@@ -358,4 +361,146 @@ def need_steps(settings: Settings, layout: Layout, http: Transport) -> list[Step
     ]
 
 
-CONTRIBUTION = Contribution("22-bedarf", steps=need_steps)
+# --- Stufe 3 (docs/plans/22-bedarf.md, § 7 mit § 10): Tabellen und Seite ------------------------
+_DISTRICT = ("Nummer des Kommunalwahlbezirks", "")
+_ACCIDENTS = "Unfälle mit Personenschaden der Monate der Periode"
+TABLES = (
+    PublishedTable(
+        "wahlbezirke_bedarf",
+        lambda layout: need_files(layout).table,
+        "Bedarf und Aufmerksamkeit je Wahlbezirk: Unfälle, Einwohner, Miete, Schulsozialindex, "
+        "Dokumente mit Treffer und Anteile der Klassen",
+        {
+            "wahlkreis_id": _DISTRICT,
+            "stadtbezirk": (
+                "Stadtbezirk mit den meisten Wahlberechtigten des Wahlbezirks (die Schicht der "
+                "Rechnung innerhalb der Stadtbezirke)",
+                "",
+            ),
+            "flaeche_km2": ("Fläche des Wahlbezirks aus den Stimmbezirken", "km²"),
+            "einwohner_zensus": (
+                "Einwohner des Zensus 2022 in den Gitterzellen mit Mittelpunkt im Wahlbezirk",
+                "Personen",
+            ),
+            "unfaelle": (
+                f"{_ACCIDENTS}; nahe einer Grenze zu gleichen Teilen an jeden Wahlbezirk im "
+                "Randband (context.need.band_m)",
+                "Unfälle",
+            ),
+            "unfaelle_schwer": ("davon mit Getöteten oder Schwerverletzten", "Unfälle"),
+            "unfaelle_rad_fuss": (
+                "davon mit Beteiligung eines Fahrrads oder zu Fuß Gehender",
+                "Unfälle",
+            ),
+            "unfaelle_scharf": ("dieselben Unfälle scharf zugeordnet (Punkt in Fläche)", "Unfälle"),
+            "unfaelle_geteilt": (
+                "Anteile aus Unfällen, die auf mehrere Wahlbezirke gehen",
+                "Unfälle",
+            ),
+            "unfaelle_je_1000": ("unfaelle je 1 000 Einwohner des Zensus", "je 1 000 Einwohner"),
+            "unfaelle_scharf_je_1000": ("unfaelle_scharf je 1 000 Einwohner", "je 1 000 Einwohner"),
+            "unfaelle_je_km2": ("unfaelle je km² Fläche", "je km²"),
+            "miete_qm": (
+                "durchschnittliche Nettokaltmiete des Zensus 2022, gewogen mit den Einwohnern der "
+                "Zellen mit Wert",
+                "Euro je m²",
+            ),
+            "miete_abdeckung": ("Anteil der Einwohner in Zellen mit Mietwert", "Anteil 0 bis 1"),
+            "schulen": (
+                "Schulen der Formen aus context.need.schools.forms im Wahlbezirk",
+                "Schulen",
+            ),
+            "schulen_mit_index": ("davon mit Stufe im Schulsozialindex", "Schulen"),
+            "sozialindex_schulen": (
+                "Mittel der Stufen des Schulsozialindex dieser Schulen; leer ohne Schule mit Stufe",
+                "Stufe 1 bis 9",
+            ),
+            "begriffe": ("Begriffe im Wörterbuch des Wahlbezirks", "Begriffe"),
+            "dok": ("Dokumente mit mindestens einem Treffer im Wörterbuch", "Dokumente"),
+            "dok_mit_text": (
+                "davon die Dokumente, die eine Klasse tragen (also Text haben); leer ohne Klassifikator",
+                "Dokumente",
+            ),
+            "dok_verkehr": (
+                "davon in den Klassen context.need.classes.traffic (auf der Seite „Ordnung und "
+                "Verkehr“); leer ohne Klassifikator",
+                "Dokumente",
+            ),
+            "dok_jugend": (
+                "davon in den Klassen context.need.classes.youth (Jugend und Schule); leer ohne "
+                "Klassifikator",
+                "Dokumente",
+            ),
+            "anteil_verkehr": ("dok_verkehr durch dok_mit_text", "Anteil 0 bis 1"),
+            "anteil_jugend": ("dok_jugend durch dok_mit_text", "Anteil 0 bis 1"),
+            "dok_je_1000_ew": ("dok je 1 000 Einwohner des Zensus", "je 1 000 Einwohner"),
+            "dok_verkehr_je_1000_ew": (
+                "dok_verkehr je 1 000 Einwohner; leer ohne Klassifikator",
+                "je 1 000 Einwohner",
+            ),
+        },
+        enabled=need_enabled,
+    ),
+    PublishedTable(
+        "bedarf_hypothesen",
+        lambda layout: need_files(layout).tests,
+        "Die vorab festgelegten Tests von Bedarf gegen Aufmerksamkeit, Robustheit und die "
+        "explorativen Rechnungen, je Zeile eine Rechnung",
+        {
+            "hypothese": (
+                "Kennung der vorab festgelegten Hypothese, etwa H1; leer bei einem Paar",
+                "",
+            ),
+            "p": ("p-Wert der Rechnung, unkorrigiert; leer bei der Robustheit", "Anteil 0 bis 1"),
+            "p_holm": (
+                "nach Holm über alle vorab festgelegten Tests, nur beim Haupttest",
+                "Anteil 0 bis 1",
+            ),
+            "ergebnis": ("bestätigt oder nicht bestätigt, nur beim Haupttest", ""),
+            "n": ("Wahlbezirke der Rechnung", ""),
+            "festgelegt": (
+                "Commit, in dem die Hypothese vor der ersten Rechnung festgelegt wurde",
+                "",
+            ),
+            "deutung": (
+                "Aufmerksamkeit folgt dem Bedarf, ungleiche Aufmerksamkeit oder kein "
+                "Zusammenhang nachweisbar; nur beim Haupttest",
+                "",
+            ),
+            "rechnung": (
+                "haupttest, robustheit, innerhalb (Stadtbezirke), moran_residuen, moran_bedarf, "
+                "moran_aufmerksamkeit oder paar",
+                "",
+            ),
+            "explorativ": ("nach dem ersten Lauf gerechnet, ohne Korrektur", ""),
+            "bedarf": ("Spalte des Bedarfs (x)", ""),
+            "aufmerksamkeit": ("Spalte der Aufmerksamkeit (y)", ""),
+            "kontrolle": ("Spalte, bei deren festem Wert partiell gerechnet ist; sonst leer", ""),
+            "ohne": ("Wahlbezirke, ohne die gerechnet ist", "Liste"),
+            "mass": ("spearman (ρ) oder moran_i", ""),
+            "wert": ("das Maß", ""),
+            "ci_lo": ("untere Grenze des 95-%-Bootstrap-Intervalls, nur beim Haupttest", ""),
+            "ci_hi": ("obere Grenze des 95-%-Bootstrap-Intervalls, nur beim Haupttest", ""),
+            "test": ("permutation oder asymptotisch", ""),
+            "alternative": ("greater (einseitig, ρ > 0) oder two-sided", ""),
+            "permutationen": ("Zahl der Permutationen", ""),
+            "seed": ("Seed des Zufallsgenerators", ""),
+        },
+        joins={"ohne": "; "},
+        optional=True,
+        enabled=need_enabled,
+    ),
+)
+
+PAGE = Page(
+    PAGE_NAME,
+    "Bedarf und Aufmerksamkeit je Wahlbezirk",
+    "Wo amtliche Zahlen viel Bedarf zeigen, bei Unfällen, sozialer Lage und Kindern, und wie oft "
+    "die Ratsdokumente diese Wahlbezirke nennen.",
+    inputs=need_inputs,
+    data=need_data,
+    enabled=need_enabled,
+    links=need_links,
+)
+
+CONTRIBUTION = Contribution("22-bedarf", steps=need_steps, tables=TABLES, pages=(PAGE,))

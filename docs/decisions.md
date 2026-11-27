@@ -5283,3 +5283,85 @@ um 59 554 Bytes.
 **Bewusst nicht in B.** E1 bis E5 und S.10 (Plan § 9, § 10); `karte.html` bleibt bis zu Frage S.4
 unverändert. Die Orte sind über die Tastatur nur über „Als Liste" und die Flächen der Wahlbezirke
 erreichbar, nicht einzeln. Die Grenze der Stadtbezirke in einem geteilten Wahlbezirk (oben).
+
+## NN. Die Unterseite `bedarf.html`: die Klasse an Dokumenten ohne Ausschussberatung geprüft, ohne verlässliches Maß; der Stadtbezirk als Mittelpunkt statt als Farbe (Vorhaben 22, Stufe 3, 2026-11-27)
+
+Stufe 3 von Vorhaben 22 nach `docs/plans/22-bedarf.md`, § 7 mit § 10, und `docs/plan-zeigen-2026-11.md`
+(§ 5, Zeile zu 22; § 4, V5). Gebaut auf `feat/22-bedarf-seite` ab `main` `a8e4d42` (`v0.40.0`). Die
+Nummer bekommt der Eintrag beim Merge.
+
+**Die Prüfung der Klasse kam zuerst** (Frage 22.3: für Stufe 3 ja). H1 zählt im Anteil „Ordnung und
+Verkehr" 1 425 Dokumente mit Treffer, und 958 davon (67,2 %) wurden in keinem Ausschuss beraten; an
+solchen ist der Ausschussklassifikator (Punkt 45) nie geprüft worden. Der Supervisor legte die
+Prüfung am 2026-11-27 fest, der Bau-Agent schrieb sie vor der Stichprobe als § 4.1 ins
+Messdokument, mit Codebuch (Fassung 2026-11-27.1, Grenzfälle eingeschlossen) und Messskript
+(`docs/plans/22-bedarf-ova.py`), in einem Commit: 100 der 958, geschichtet nach Gremium, Seed
+20261127; Kodierer A und Schlichtung `claude-opus-5-5`, B `claude-sonnet-5-5` (Frage 19); der
+Bau-Agent kodierte nicht. Ergebnis: einig bei 99 von 100, A einmal `nein`, B nie; κ 0,000,
+Krippendorffs α 0,000; die eine Uneinigkeit (Lärmschutzwände einer Bahnstrecke) entschied die
+Schlichtung als `nein`. Endlabels `ja` 99, `nein` 1. α genügt nicht, und die Regel der vollen
+Einigkeit (`validierung.md`, § 3, Schritt 8) greift nicht. Es gilt darum der vorab festgelegte Fall 3:
+die Seite nennt keine geprüfte Präzision, sondern den Satz, was beobachtet wurde, und dass α bei fast
+keiner Streuung kein verlässliches Maß ist. α ist hier nicht klein, weil die Kodierer oft verschieden
+urteilten, sondern weil fast alle Labels gleich sind; die Regel bleibt trotzdem, wie sie festgelegt
+war, und was daraus für künftige Messungen folgt, steht im Rückstand (Supervisor). Die Unschärfen,
+die der Schlichter nennt, stehen als „Fassung 2" in § 4.1; das Codebuch bleibt.
+
+**Was gebaut ist.** Der Beitrag `22-bedarf` trägt außer den Schritten die Seite und zwei Tabellen
+bei, alle hinter `need_enabled` (`context.need.enabled`):
+
+- `bedarf.html` (`report/need.py`, `templates/pages/bedarf.html.j2`, `.css`) mit den vier Abschnitten
+  aus § 7 und dem Kasten „Wie geprüft" (Summen, scharf gegen unscharf, Handlungsbedarf gegen
+  Schulsozialindex aus den Tabellen; die Klasse aus `guete.json`).
+- Die Downloads `wahlbezirke_bedarf` und, wo das Profil Hypothesen oder Paare nennt,
+  `bedarf_hypothesen` (Parquet und CSV, die Liste `ohne` mit „; "), mit Spaltendoku.
+- V5: `NeedAttribution.modified`, der Veränderungshinweis, den dl-de/by-2-0 im Quellenvermerk
+  verlangt; die drei Quellen in `defaults.toml` sagen, was verändert ist, der Quartiersatlas auf der
+  Seite „auf Wahlbezirke umgerechnet". `NeedHypothesis.fixed_on` trägt den Tag der Festlegung
+  (2026-11-23) neben dem Commit. Beide sind Anzeige und stehen nicht im Fingerprint (die Fingerprints
+  der Hauptperiode und des Vergleichsprofils sind unverändert), aber im Zusatz von `report` und den
+  Unterseiten (`report_fingerprint`, Punkt 53): sonst bliebe die Seite nach einer geänderten
+  Namensnennung aktuell.
+
+**Je Profil** (Plan § 6): in der Hauptperiode (und im Vergleichsprofil, das in ihrem Ordner rechnet)
+alles; in Mönchengladbach Bedarf ohne Klassen: keine Fremddaten zur sozialen Lage, also die Karte des
+Schulsozialindex statt des Handlungsbedarfs, keine Anteile der Klassen, keine Tests, und die Seite
+sagt in drei Sätzen, was fehlt. Die Perioden 2014–2020 und ab 2025 schalten `context.need` ab
+(Fragen 22.5 und 22.10) und haben die Seite nicht.
+
+**Bewusst anders als § 7.**
+
+1. *Der Stadtbezirk als Mittelpunkt, nicht als Farbe.* Zehn Stadtbezirke sind zehn Kategorien; ein
+   Streudiagramm trägt nach der Skill `dataviz` höchstens drei unterscheidbare Farben (alle Paare
+   liegen nebeneinander), und eine zehnte Farbe wäre Rauschen. Jeder Stadtbezirk trägt darum seine
+   Nummer im Mittelpunkt seiner Wahlbezirke, und dünne Linien führen zu ihnen: steigen die
+   Mittelpunkte, ohne dass die Linien um einen Mittelpunkt eine Richtung zeigen, liegt der
+   Zusammenhang zwischen den Stadtbezirken (H1); umgekehrt bei H3.
+2. *Die Sätze zu „innerhalb" und Moran's I entstehen aus den Zahlen*, nicht aus einem festen Text:
+   „besteht zwischen den Stadtbezirken, nicht innerhalb", wenn der Test bestätigt ist und die
+   Rechnung innerhalb p ≥ 0,05 hat; „zeigt sich innerhalb", wenn er nicht bestätigt ist und sie
+   p < 0,05 hat; der Satz zur räumlichen Abhängigkeit, wenn Moran's I der Residuen p < 0,05 hat. Für
+   H1 sagt das genau den Satz aus § 7.
+3. *Keine Lesart je Paar.* Das Messdokument deutet jedes explorative Paar in einer Spalte; die Seite
+   zeigt ρ, p und n und den Satz, dass jedes Paar eine Frage für eine neue Festlegung ist.
+4. *Die Gegenprobe der Einwohner* (Zensus gegen Quartiersatlas, r 0,947) und die Prüfsummen stehen
+   nicht als Zahl auf der Seite: sie rechnet nur das Messskript aus den Fremddaten. Die Seite nennt
+   die Gegenproben, die sich aus den Tabellen nachrechnen lassen, und verweist für die übrigen auf
+   § 4.
+5. *Die Genauigkeit des Klassifikators an Ausschussdokumenten* (0,941, Kreuzvalidierung 2026-10,
+   Punkt 45) steht als Konstante `CLASS_CHECK_ACCURACY` in `report/need.py`; sie ist eine Messung
+   der Hauptperiode und keine Einstellung einer Stadt.
+
+**Verworfen.** Eine Farbe je Stadtbezirk (oben); die Präzision 0,990 mit Intervall trotz α unter der
+Schwelle (Fall 3 ist vorab festgelegt); die Klassen „Ordnung und Verkehr" und „Jugend und Schule" als
+Anzeigenamen in den Settings (sie hängen an den Klassen des Ausschussklassifikators, Frage 22.11,
+und stehen als Konstanten in `report/need.py`); eine Teilvorlage `pages/bedarf/klasse.html.j2` für
+den Satz zur Prüfung (`check_page_files` hielte sie für einen Gast ohne Eintrag; sie ist ein Makro in
+der Vorlage).
+
+**Geprüft.** Tests in `tests/unit/test_report_need.py` (Bausteine, die Prüfung im Repo als Fall 3,
+die drei Fälle an geänderten Kopien von `guete.json`, die echte Seite der Mini-Fixture mit
+Linkblöcken, Namensnennung und Veränderungshinweis, Tag und Commit, Downloads mit Spaltendoku, ohne
+Fremddaten, Klassen und Hypothesen, Eingaben des Schritts, der Zusatz im Stamp) und
+`tests/unit/test_need_settings.py` (V5, `fixed_on`). Größen, A/B-Bau und Bildschirmfotos folgen
+unten.
