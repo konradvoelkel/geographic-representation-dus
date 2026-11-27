@@ -310,6 +310,8 @@ ohne CSV), `kennungen.parquet` (1,25 MB) und `kennungen.csv` (4,6 MB, nur Baulei
 Stand mit Stufe 3 von 14 (2026-11-27): `dokumente_vorgang` (je Dokument), `vorgang_kanten` und
 `antwortzeiten` kommen in allen vier Datensätzen dazu; in der Hauptperiode als CSV 2,80, 1,27 und
 0,42 MB (Parquet 0,08, 0,08, 0,03 MB), über alle vier Datensätze zusammen 10,9 MB, die
-veröffentlichte Seite wächst von 46,9 auf 58,4 MB. Der größte Posten ist `dokumente_vorgang.csv`
-(zusammen 7,0 MB); 84 % seiner Zeilen sind Dokumente ohne Vorgang (`rolle = ohne`).
+veröffentlichte Seite wuchs damit von 46,9 auf 58,4 MB. Seit dem Nachtrag zum Entscheidungseintrag
+von 14 trägt `dokumente_vorgang.csv` nur die Dokumente in einem Vorgang (7,05 → 0,73 MB über die
+vier Datensätze, `CsvPlan` aus Punkt 89 wie beim Vokabular von 17); offen bleibt die Regel für die
+übrigen Tabellen je Dokument (15: `dokumente_funktion`, `dokumente_antragsteller`).
 

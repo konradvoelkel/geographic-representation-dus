@@ -67,7 +67,7 @@ from georep.report.procedures import (
     procedures_inputs,
     procedures_links,
 )
-from georep.report.tables import PublishedTable
+from georep.report.tables import CsvPlan, PublishedTable
 from georep.settings import profile_folder
 from georep.spans import check_spans
 from georep.stores import PaperStore, RawTextStore
@@ -396,6 +396,17 @@ def procedure_steps(settings: Settings, layout: Layout, http: Transport) -> list
     ]
 
 
+def procedure_csv_rows(frame: pl.DataFrame) -> pl.DataFrame:
+    """Die CSV von ``dokumente_vorgang``: nur Dokumente in einem Vorgang (Supervisor, 2026-11-27).
+
+    Ein Dokument ohne Vorgang (``rolle = ohne``, ``groesse = 1``; in der Hauptperiode 16 008 von
+    19 108) trägt nichts als „allein", und das folgt aus seinem Fehlen. Derselbe ``CsvPlan`` aus
+    Punkt 89 wie beim Vokabular von 17 (Punkt 90); das Parquet bleibt vollständig, eine Zeile je
+    Korpus-ID. Die CSV der Hauptperiode schrumpft von 2,80 auf 0,46 MB.
+    """
+    return frame.filter(pl.col("groesse") > 1)
+
+
 def procedures_enabled(settings: Settings) -> bool:
     """Der Schalter der Schritte, der Tabellen, der Seite und des Dialogs: ``procedures.enabled``."""
     return settings.procedures.enabled
@@ -462,8 +473,13 @@ TABLES = (
                 "",
             ),
             "tiefe": ("Schritte bis zur Wurzel; 0 bei Wurzel und allein", "Schritte"),
-            "groesse": ("Dokumente im Vorgang, auch die der Nachbarperioden", "Dokumente"),
+            "groesse": (
+                "Dokumente im Vorgang, auch die der Nachbarperioden; die CSV trägt nur die Zeilen "
+                "ab 2 (Dokumente in einem Vorgang), das Parquet jedes Dokument",
+                "Dokumente",
+            ),
         },
+        csv=CsvPlan(procedure_csv_rows, "nur Dokumente in einem Vorgang, groesse ab 2"),
         enabled=procedures_enabled,
     ),
     PublishedTable(

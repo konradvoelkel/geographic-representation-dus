@@ -489,3 +489,28 @@ def test_die_seite_darf_die_pdf_dateien_ihres_korpus_verlinken(
     assert first.replace("http://", "https://", 1) in allowed
     assert any(link.endswith("/docs/plans/14-vorgaenge.md") for link in allowed)
     assert any(link.endswith(f"/{RULE_PROJECT}/README.md") for link in allowed)
+
+
+# --- Supervisor 2026-11-27: die CSV je Dokument nur mit Zeilen, die einen Vorgang tragen ----------
+def test_die_csv_des_vorgangs_traegt_nur_dokumente_in_einem_vorgang(mini_run: Layout) -> None:
+    """Wie das Vokabular von 17 (Punkt 90) über den ``CsvPlan`` aus Punkt 89: ein Dokument ohne
+    Vorgang (``rolle = ohne``, in der Hauptperiode 84 %) trägt in der CSV nichts. Das Parquet bleibt
+    vollständig, eine Zeile je Korpus-ID; Downloadzeile und Spaltendoku sagen es."""
+    from georep.enrich.procedures import procedure_csv_rows
+
+    table = next(t for t in TABLES if t.name == "dokumente_vorgang")
+    assert table.csv is not None and table.csv.rows is procedure_csv_rows
+    rows = procedure_csv_rows(_city()["forest"])
+    assert rows.height == 5 and (rows.get_column("groesse") > 1).all()
+    parquet = pl.read_parquet(mini_run.site_data / "dokumente_vorgang.parquet")
+    assert parquet.height == pl.read_parquet(mini_run.corpus, columns=["id"]).height
+    csv = pl.read_csv(mini_run.site_data / "dokumente_vorgang.csv", schema=parquet.schema)
+    assert csv.equals(parquet.filter(pl.col("groesse") > 1))
+    index = mini_run.site_index.read_text(encoding="utf-8")
+    assert f"als CSV ({table.csv.note})" in index and "Vorgang" in table.csv.note
+    assert "die CSV trägt nur" in table.columns["groesse"][0]
+    # die beiden anderen CSV bleiben vollständig: eine schwache Kante und eine Anfrage ohne
+    # gefundene Antwort sind selbst eine Aussage
+    for name in ("vorgang_kanten", "antwortzeiten"):
+        other = next(t for t in TABLES if t.name == name)
+        assert other.csv is not None and other.csv.note == ""

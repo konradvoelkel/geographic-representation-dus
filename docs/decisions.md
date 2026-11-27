@@ -5023,6 +5023,17 @@ Tabelle nachkommen.
   zusammen rund 167 KB nachgeladen, im Budget von 1,5 MB je Profil. Die Downloads machen die
   veröffentlichte Seite 11,4 MB größer (46,9 → 58,4 MB): je Profil 4,67, 4,68, 1,02 und 0,51 MB,
   fast alles CSV und davon am meisten `dokumente_vorgang.csv` (2,80, 3,22, 0,60, 0,42 MB, eine
-  Zeile je Dokument mit zwei OParl-URLs). Ohne die Zeilen mit `rolle = ohne` (84 % in der
-  Hauptperiode) wären es rund 6 MB weniger; das wäre eine Regel für Tabellen je Dokument und gehört
-  zu `docs/todo.md`, Punkt 35. Die Pakete im Repo ändern sich nicht.
+  Zeile je Dokument mit zwei OParl-URLs). Die Pakete im Repo ändern sich nicht.
+
+**Nachtrag (Supervisor, 2026-11-27, vor dem Review): die CSV von `dokumente_vorgang` trägt nur die
+Dokumente in einem Vorgang.** Ein Dokument mit `rolle = ohne` (`groesse = 1`, in der Hauptperiode
+16 008 von 19 108) sagt in der CSV nichts, was nicht aus seinem Fehlen folgt. Gebaut über den
+`CsvPlan` aus Punkt 89 (`procedure_csv_rows`), wie das Vokabular von 17 (Punkt 90); das Parquet
+bleibt vollständig, Downloadzeile und Spaltendoku (`groesse`) sagen es. Die CSV schrumpft je
+Datensatz von 2,80 auf 0,46 MB (Hauptperiode, 3 100 Zeilen), 3,22 auf 0,15 (2014–2020, 1 042),
+0,60 auf 0,08 (laufende Periode, 501) und 0,42 auf 0,03 MB (Mönchengladbach, 217), zusammen von
+7,05 auf 0,73 MB. Die beiden anderen CSV bleiben vollständig: in `vorgang_kanten` sind die
+schwachen Kanten (73 % der Zeilen in der Hauptperiode) selbst eine Aussage (B nennt A im Text),
+die die Seite nennt; nur die starken hießen 2,55 statt 0,63 MB über alle vier Datensätze, das wäre
+eine andere Tabelle. In `antwortzeiten` ist jede Zeile eine Anfrage, und „keine" ist die Aussage,
+von der die Kandidaten handeln (0,85 MB zusammen).
